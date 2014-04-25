@@ -199,11 +199,11 @@ protected:
 	CTabID** mpp_Stack;
 	int mn_MaxCount, mn_Used;
 protected:
-	MSection* mp_Section;
+	CRITICAL_SECTION mc_Section;
 	int  mn_UpdatePos;
 	bool mb_FarUpdateMode;
-	void AppendInt(CTabID* pTab, BOOL abMoveFirst, MSectionLock* pSC);
-	void RequestSize(int anCount, MSectionLock* pSC);
+	void AppendInt(CTabID* pTab, BOOL abMoveFirst, MSectionLockSimple* pSC);
+	void RequestSize(int anCount, MSectionLockSimple* pSC);
 public:
 	CTabStack();
 	~CTabStack();
@@ -216,7 +216,7 @@ public:
 	bool GetTabDrawRect(int anIndex, RECT* rcTab);
 	bool SetTabDrawRect(int anIndex, const RECT& rcTab);
 
-	void LockTabs(MSectionLock* pLock);
+	void LockTabs(MSectionLockSimple* pLock);
 
 	HANDLE UpdateBegin();
 	bool UpdateFarWindow(HANDLE hUpdate, CVirtualConsole* apVCon, LPCWSTR asName, CEFarWindowType anType, int anPID, int anFarWindowID, int anViewEditID);

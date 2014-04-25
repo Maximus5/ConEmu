@@ -288,7 +288,7 @@ CTabStack::CTabStack()
 	mn_MaxCount = 16;
 	#endif
 	mpp_Stack = (CTabID**)calloc(mn_MaxCount,sizeof(CTabID**));
-	mp_Section = new MSection;
+	InitializeCriticalSection(&mc_Section);
 	//mp_UpdateLock = NULL;
 	mn_UpdatePos = -1;
 	mb_FarUpdateMode = false;
@@ -306,17 +306,13 @@ CTabStack::~CTabStack()
 	//	delete mp_UpdateLock;
 	//	mp_UpdateLock = NULL;
 	//}
-	if (mp_Section)
-	{
-		delete mp_Section;
-		mp_Section = NULL;
-	}
+	DeleteCriticalSection(&mc_Section);
 }
 //const CTabID* CTabStack::CreateOrFind(CVirtualConsole* apVCon, LPCWSTR asName, int anType, int anPID, int anFarWindowID, int anViewEditID, CEFarWindowType anFlags)
 //{
 //	CTabID* pTab = NULL;
 //
-//	MSectionLock SC; SC.Lock(mp_Section);
+//	MSectionLockSimple SC; SC.Lock(&mc_Section);
 //
 //	if (mpp_Stack && mn_Used > 0)
 //	{
@@ -350,7 +346,7 @@ CTabStack::~CTabStack()
 //	return pTab;
 //}
 
-void CTabStack::RequestSize(int anCount, MSectionLock* pSC)
+void CTabStack::RequestSize(int anCount, MSectionLockSimple* pSC)
 {
 	if (!mpp_Stack || (anCount > mn_MaxCount))
 	{
@@ -373,14 +369,22 @@ void CTabStack::RequestSize(int anCount, MSectionLock* pSC)
 	}
 }
 
-void CTabStack::AppendInt(CTabID* pTab, BOOL abMoveFirst, MSectionLock* pSC)
+void CTabStack::AppendInt(CTabID* pTab, BOOL abMoveFirst, MSectionLockSimple* pSC)
 {
 	// Сразу накрутить счетчик таба
 	pTab->AddRef();
 
 	// Если требуется модификация списка
+	#ifdef _DEBUG
 	if (!mpp_Stack || (mn_Used == mn_MaxCount) || abMoveFirst)
+	{
+		#if 1
+		_ASSERTE(pSC->isLocked());
+		#else
 		pSC->RelockExclusive();
+		#endif
+	}
+	#endif
 
 	if (!mpp_Stack || (mn_Used == mn_MaxCount))
 	{
@@ -420,7 +424,7 @@ int CTabStack::GetCount()
 bool CTabStack::GetTabInfoByIndex(int anIndex, /*OUT*/ TabInfo& rInfo)
 {
 	bool lbFound = false;
-	MSectionLock SC; SC.Lock(mp_Section);
+	MSectionLockSimple SC; SC.Lock(&mc_Section);
 	if (anIndex >= 0 && anIndex < mn_Used)
 	{
 		if (mpp_Stack[anIndex])
@@ -434,7 +438,7 @@ bool CTabStack::GetTabInfoByIndex(int anIndex, /*OUT*/ TabInfo& rInfo)
 }
 bool CTabStack::GetTabByIndex(int anIndex, /*OUT*/ CTab& rTab)
 {
-	MSectionLock SC; SC.Lock(mp_Section);
+	MSectionLockSimple SC; SC.Lock(&mc_Section);
 
 	if (anIndex >= 0 && anIndex < mn_Used)
 	{
@@ -451,7 +455,7 @@ bool CTabStack::GetTabByIndex(int anIndex, /*OUT*/ CTab& rTab)
 }
 int CTabStack::GetIndexByTab(const CTabID* pTab)
 {
-	MSectionLock SC; SC.Lock(mp_Section);
+	MSectionLockSimple SC; SC.Lock(&mc_Section);
 	int nIndex = -1;
 	for (int i = 0; i < mn_Used; i++)
 	{
@@ -466,7 +470,7 @@ int CTabStack::GetIndexByTab(const CTabID* pTab)
 }
 bool CTabStack::GetNextTab(const CTabID* pTab, BOOL abForward, /*OUT*/ CTab& rTab)
 {
-	MSectionLock SC; SC.Lock(mp_Section);
+	MSectionLockSimple SC; SC.Lock(&mc_Section);
 	CTabID* pNextTab = NULL;
 	for (int i = 0; i < mn_Used; i++)
 	{
@@ -492,7 +496,7 @@ bool CTabStack::GetNextTab(const CTabID* pTab, BOOL abForward, /*OUT*/ CTab& rTa
 bool CTabStack::GetTabDrawRect(int anIndex, RECT* rcTab)
 {
 	bool lbExist = false;
-	MSectionLock SC; SC.Lock(mp_Section);
+	MSectionLockSimple SC; SC.Lock(&mc_Section);
 	if (anIndex >= 0 && anIndex < mn_Used)
 	{
 		CTabID* pTab = mpp_Stack[anIndex];
@@ -517,7 +521,7 @@ bool CTabStack::GetTabDrawRect(int anIndex, RECT* rcTab)
 bool CTabStack::SetTabDrawRect(int anIndex, const RECT& rcTab)
 {
 	bool lbExist = false;
-	MSectionLock SC; SC.Lock(mp_Section);
+	MSectionLockSimple SC; SC.Lock(&mc_Section);
 	if (anIndex >= 0 && anIndex < mn_Used)
 	{
 		CTabID* pTab = mpp_Stack[anIndex];
@@ -542,14 +546,14 @@ bool CTabStack::SetTabDrawRect(int anIndex, const RECT& rcTab)
 	SC.Unlock();
 	return lbExist;
 }
-void CTabStack::LockTabs(MSectionLock* pLock)
+void CTabStack::LockTabs(MSectionLockSimple* pLock)
 {
-	pLock->Lock(mp_Section);
+	pLock->Lock(&mc_Section);
 }
 // Должен вызываться перед UpdateOrCreate и UpdateEnd
 HANDLE CTabStack::UpdateBegin()
 {
-	MSectionLock* pUpdateLock = new MSectionLock;
+	MSectionLockSimple* pUpdateLock = new MSectionLockSimple;
 	LockTabs(pUpdateLock);
 	mn_UpdatePos = 0;
 	return (HANDLE)pUpdateLock;
@@ -577,7 +581,7 @@ HANDLE CTabStack::UpdateBegin()
 // Возвращает "true" если были изменения
 bool CTabStack::UpdateFarWindow(HANDLE hUpdate, CVirtualConsole* apVCon, LPCWSTR asName, CEFarWindowType anType, int anPID, int anFarWindowID, int anViewEditID)
 {
-	MSectionLock* pUpdateLock = (MSectionLock*)hUpdate;
+	MSectionLockSimple* pUpdateLock = (MSectionLockSimple*)hUpdate;
 
 	// Функция должна вызваться ТОЛЬКО между UpdateBegin & UpdateEnd
 	if (mn_UpdatePos < 0 || !pUpdateLock)
@@ -661,7 +665,11 @@ bool CTabStack::UpdateFarWindow(HANDLE hUpdate, CVirtualConsole* apVCon, LPCWSTR
 		{
 			if ((i+1) < mn_Used)
 			{
+				#if 1
+				_ASSERTE(pUpdateLock->isLocked());
+				#else
 				pUpdateLock->RelockExclusive();
+				#endif
 				// Все что между {mn_UpdatePos .. (i-1)} теперь уже забито NULL
 				memmove(mpp_Stack+mn_UpdatePos, mpp_Stack+i, (mn_Used - i) * sizeof(CTabID**));
 			}
@@ -693,7 +701,7 @@ void CTabStack::UpdateAppend(HANDLE hUpdate, CTab& Tab, BOOL abMoveFirst)
 
 void CTabStack::UpdateAppend(HANDLE hUpdate, CTabID* pTab, BOOL abMoveFirst)
 {
-	MSectionLock* pUpdateLock = (MSectionLock*)hUpdate;
+	MSectionLockSimple* pUpdateLock = (MSectionLockSimple*)hUpdate;
 
 	// Функция должна вызваться ТОЛЬКО между UpdateBegin & UpdateEnd
 	if (mn_UpdatePos < 0 || !pUpdateLock)
@@ -725,8 +733,16 @@ void CTabStack::UpdateAppend(HANDLE hUpdate, CTabID* pTab, BOOL abMoveFirst)
 	if (!abMoveFirst)
 	{
 		// "Обычное" население
+		#ifdef _DEBUG
 		if (nIndex == -1 || nIndex != mn_UpdatePos)
+		{
+			#if 1
+			_ASSERTE(pUpdateLock->isLocked());
+			#else
 			pUpdateLock->RelockExclusive();
+			#endif
+		}
+		#endif
 		RequestSize(mn_UpdatePos+1, pUpdateLock);
 		if (nIndex != -1 && nIndex != mn_UpdatePos)
 		{
@@ -751,7 +767,11 @@ void CTabStack::UpdateAppend(HANDLE hUpdate, CTabID* pTab, BOOL abMoveFirst)
 		else if (abMoveFirst && nIndex > 0)
 		{
 			// Таб нужно переместить в начало списка
+			#if 1
+			_ASSERTE(pUpdateLock->isLocked());
+			#else
 			pUpdateLock->RelockExclusive();
+			#endif
 			memmove(mpp_Stack+1, mpp_Stack, sizeof(CTabID**) * (nIndex-1));
 			mpp_Stack[0] = pTab; // AddRef не нужен, таб уже у нас в списке!
 		}
@@ -792,7 +812,7 @@ void CTabStack::UpdateAppend(HANDLE hUpdate, CTabID* pTab, BOOL abMoveFirst)
 // Возвращает "true" если были изменения в КОЛИЧЕСТВЕ табов (ЗДЕСЬ больше ничего не проверяется)
 bool CTabStack::UpdateEnd(HANDLE hUpdate, BOOL abForceReleaseTail)
 {
-	MSectionLock* pUpdateLock = (MSectionLock*)hUpdate;
+	MSectionLockSimple* pUpdateLock = (MSectionLockSimple*)hUpdate;
 
 	// Функция должна вызваться ТОЛЬКО между UpdateBegin & UpdateEnd
 	if (mn_UpdatePos < 0)
@@ -827,7 +847,11 @@ bool CTabStack::UpdateEnd(HANDLE hUpdate, BOOL abForceReleaseTail)
 
 	if (abForceReleaseTail && mn_UpdatePos < mn_Used)
 	{
+		#if 1
+		_ASSERTE(pUpdateLock->isLocked());
+		#else
 		pUpdateLock->RelockExclusive();
+		#endif
 		// Освободить все элементы за mn_UpdatePos
 		for (int i = mn_UpdatePos; i < mn_Used; i++)
 		{
@@ -853,7 +877,7 @@ void CTabStack::ReleaseTabs(BOOL abInvalidOnly /*= TRUE*/)
 	if (!this || !mpp_Stack || !mn_Used || !mn_MaxCount)
 		return;
 
-	MSectionLock SC; SC.Lock(mp_Section, TRUE); // Сразу Exclusive lock
+	MSectionLockSimple SC; SC.Lock(&mc_Section, TRUE); // Сразу Exclusive lock
 
 	// Идем сзади, т.к. нужно будет сдвигать элементы
 	for (int i = (mn_Used - 1); i >= 0; i--)
