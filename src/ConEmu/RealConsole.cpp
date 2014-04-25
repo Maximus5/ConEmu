@@ -2517,7 +2517,28 @@ DWORD CRealConsole::MonitorThreadWorker(bool bDetached, bool& rbChildProcessCrea
 			}
 
 			if (hConWnd || m_ChildGui.hGuiWnd)  // Если знаем хэндл окна -
-				GetWindowText(m_ChildGui.isGuiWnd() ? m_ChildGui.hGuiWnd : hConWnd, TitleCmp, countof(TitleCmp)-2);
+			{
+				int iLen = GetWindowText(m_ChildGui.isGuiWnd() ? m_ChildGui.hGuiWnd : hConWnd, TitleCmp, countof(TitleCmp)-2);
+				if (iLen <= 0)
+				{
+					// Validation
+					TitleCmp[0] = 0;
+				}
+				else
+				{
+					// Some validation
+					if (iLen >= countof(TitleCmp))
+					{
+						iLen = countof(TitleCmp)-2;
+						TitleCmp[iLen+1] = 0;
+					}
+					// Trim trailing spaces
+					while ((iLen > 0) && (TitleCmp[iLen-1] == L' '))
+					{
+						TitleCmp[--iLen] = 0;
+					}
+				}
+			}
 
 			if (mb_ForceTitleChanged
 				|| lbForceUpdateProgress
