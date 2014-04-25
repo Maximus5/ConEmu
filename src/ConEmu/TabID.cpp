@@ -146,12 +146,12 @@ void CTabID::ReleaseDrawRegion()
 		DrawInfo.rgnTab = NULL;
 	}
 }
-bool CTabID::IsEqual(CVirtualConsole* apVCon, LPCWSTR asName, CEFarWindowType anType, int anPID, int anViewEditID)
+bool CTabID::IsEqual(CVirtualConsole* apVCon, LPCWSTR asName, CEFarWindowType anType, int anPID, int anViewEditID, CEFarWindowType FlagMask)
 {
 	TabName t(asName);
-	return IsEqual(apVCon, t, anType, anPID, anViewEditID);
+	return IsEqual(apVCon, t, anType, anPID, anViewEditID, FlagMask);
 }
-bool CTabID::IsEqual(CVirtualConsole* apVCon, const TabName& asName, CEFarWindowType anType, int anPID, int anViewEditID)
+bool CTabID::IsEqual(CVirtualConsole* apVCon, const TabName& asName, CEFarWindowType anType, int anPID, int anViewEditID, CEFarWindowType FlagMask)
 {
 	if (!this)
 		return false; // Invalid arguments
@@ -173,7 +173,7 @@ bool CTabID::IsEqual(CVirtualConsole* apVCon, const TabName& asName, CEFarWindow
 	//		return false;
 	//}
 
-	if ((anType & (fwt_TypeMask|fwt_CompareFlags)) != (this->Info.Type & (fwt_TypeMask|fwt_CompareFlags)))
+	if ((anType & FlagMask) != (this->Info.Type & FlagMask))
 		return false;
 
 	//// Для редактора/вьювера проверям ИД процесса FAR & ИД редактора/вьювера
@@ -201,7 +201,8 @@ bool CTabID::IsEqual(CVirtualConsole* apVCon, const TabName& asName, CEFarWindow
 	// OK, различия не найдены, закладки совпадают
 	return true;
 }
-bool CTabID::IsEqual(const CTabID* pTabId, bool abIgnoreWindowId /*= false*/)
+#if 0
+bool CTabID::IsEqual(const CTabID* pTabId, bool abIgnoreWindowId /*= false*/, CEFarWindowType FlagMask)
 {
 	if (!this || !pTabId)
 		return false; // Invalid arguments
@@ -223,7 +224,7 @@ bool CTabID::IsEqual(const CTabID* pTabId, bool abIgnoreWindowId /*= false*/)
 	}
 
 	return IsEqual( (CVirtualConsole*)pTabId->Info.pVCon, pTabId->Name, pTabId->Info.Type, pTabId->Info.nPID,
-					pTabId->Info.nViewEditID );
+					pTabId->Info.nViewEditID, FlagMask );
 
 	//if (pTabId->pVCon != this->pVCon)
 	//	return false;
@@ -265,6 +266,7 @@ bool CTabID::IsEqual(const CTabID* pTabId, bool abIgnoreWindowId /*= false*/)
 	//// OK, различия не найдены, закладки совпадают
 	//return true;
 }
+#endif
 //UINT CTabID::Flags()
 //{
 //	return Info.Flags;
@@ -611,7 +613,7 @@ bool CTabStack::UpdateFarWindow(HANDLE hUpdate, CVirtualConsole* apVCon, LPCWSTR
 			// Изменился?
 			bChanged = (pTab->Info.nFarWindowID != anFarWindowID)
 				|| (pTab->Info.Status == tisEmpty || pTab->Info.Status == tisInvalid)
-				|| (!pTab->IsEqual(apVCon, asName, anType, anPID, anViewEditID));
+				|| (!pTab->IsEqual(apVCon, asName, anType, anPID, anViewEditID, (fwt_TypeMask|fwt_CompareFlags)));
 			// Обновляем все подряд. Вместо панелей теперь может быть модальный редактор/вьювер
 			pTab->Set(asName, anType, anPID, anFarWindowID, anViewEditID);
 		}
@@ -627,13 +629,21 @@ bool CTabStack::UpdateFarWindow(HANDLE hUpdate, CVirtualConsole* apVCon, LPCWSTR
 		// 2. Закрыта может быть любая вкладка
 
 		pTab = NULL;
-		int i = 0;
+		int i = mn_UpdatePos;
 		while (i < mn_Used)
 		{
-			if (mpp_Stack[i]->IsEqual(apVCon, asName, anType, anPID, anViewEditID))
+			if (mpp_Stack[i]->IsEqual(apVCon, asName, anType, anPID, anViewEditID, fwt_TypeMask))
 			{
 				// OK, таб совпадает
 				pTab = mpp_Stack[i];
+
+				// Сменились флаги (Modifed/Current/...)?
+				if ((anType & fwt_CompareFlags) != (mpp_Stack[i]->Info.Type & fwt_CompareFlags))
+				{
+					CEFarWindowType newFlags = (mpp_Stack[i]->Info.Type & ~fwt_CompareFlags);
+					newFlags |= (anType & fwt_CompareFlags);
+					mpp_Stack[i]->Info.Type = newFlags;
+				}
 
 				// Закончили
 				break;

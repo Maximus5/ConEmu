@@ -164,9 +164,11 @@ public:
 	// Methods
 	void Set(LPCWSTR asName, CEFarWindowType anType, int anPID, int anFarWindowID, int anViewEditID);
 
-	bool IsEqual(const CTabID* pTabId, bool abIgnoreWindowId = false);
-	bool IsEqual(CVirtualConsole* apVCon, const TabName& asName, CEFarWindowType anType, int anPID, int anViewEditID);
-	bool IsEqual(CVirtualConsole* apVCon, LPCWSTR asName, CEFarWindowType anType, int anPID, int anViewEditID);
+	#if 0
+	bool IsEqual(const CTabID* pTabId, bool abIgnoreWindowId, CEFarWindowType FlagMask);
+	#endif
+	bool IsEqual(CVirtualConsole* apVCon, const TabName& asName, CEFarWindowType anType, int anPID, int anViewEditID, CEFarWindowType FlagMask);
+	bool IsEqual(CVirtualConsole* apVCon, LPCWSTR asName, CEFarWindowType anType, int anPID, int anViewEditID, CEFarWindowType FlagMask);
 
 	void ReleaseDrawRegion();
 };
