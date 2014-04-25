@@ -1671,7 +1671,7 @@ void CVConGroup::Update(bool isForce /*= false*/)
 
 bool CVConGroup::isActive(CVirtualConsole* apVCon, bool abAllowGroup /*= true*/)
 {
-	if (!isValid(apVCon))
+	if (!gp_VActive || !isValid(apVCon))
 		return false;
 
 	if (apVCon == gp_VActive)
@@ -1920,7 +1920,8 @@ bool CVConGroup::isPictureView()
 
 	for (size_t i = 0; !lbRc && i < countof(gp_VCon); i++)
 	{
-		CVirtualConsole* pVCon = gp_VCon[i];
+		CVConGuard VCon(gp_VCon[i]);
+		CVirtualConsole* pVCon = VCon.VCon();
 		// Было isVisible, но некорректно блокировать другие сплиты, в которых PicView нету
 		if (!pVCon || !isActive(pVCon) || !pVCon->RCon())
 			continue;
