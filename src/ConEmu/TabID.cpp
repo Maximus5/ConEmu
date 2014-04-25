@@ -603,6 +603,11 @@ bool CTabStack::UpdateFarWindow(HANDLE hUpdate, CVirtualConsole* apVCon, LPCWSTR
 		else
 		{
 			pTab = mpp_Stack[0];
+			if (!pTab)
+			{
+				_ASSERTE(pTab!=NULL);
+				return false;
+			}
 			// Изменился?
 			bChanged = (pTab->Info.nFarWindowID != anFarWindowID)
 				|| (pTab->Info.Status == tisEmpty || pTab->Info.Status == tisInvalid)
