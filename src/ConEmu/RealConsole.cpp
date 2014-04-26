@@ -10956,14 +10956,6 @@ void CRealConsole::OnTitleChanged()
 
 	wcscat_c(TitleFull, TitleCmp);
 
-	CTab panels;
-	if (tabs.m_Tabs.GetTabByIndex(0, panels))
-	if (panels->Type() == fwt_Panels)
-	{
-		panels->Name.Set(TitleFull);
-	}
-
-
 	// Обновляем на что нашли
 	setProgress(nNewProgress);
 
@@ -10981,6 +10973,13 @@ void CRealConsole::OnTitleChanged()
 
 	if (Title[0] == L'{' || Title[0] == L'(')
 		CheckPanelTitle();
+
+	CTab panels;
+	if (tabs.m_Tabs.GetTabByIndex(0, panels))
+	if (panels->Type() == fwt_Panels)
+	{
+		panels->SetName(GetPanelTitle());
+	}
 
 	// заменил на GetProgress, т.к. он еще учитывает mn_PreWarningProgress
 	nNewProgress = GetProgress(NULL);
