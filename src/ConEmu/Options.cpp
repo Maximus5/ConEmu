@@ -533,8 +533,13 @@ void Settings::InitSettings()
 	isExtendUCharMap = true;
 	isDownShowHiddenMessage = false;
 	ParseCharRanges(L"2013-25C4", mpc_FixFarBorderValues);
+	#ifndef _DEBUG
 	wndWidth.Set(true, ss_Standard, 80);
 	wndHeight.Set(false, ss_Standard, 25);
+	#else
+	wndWidth.Set(true, ss_Standard, 110);
+	wndHeight.Set(false, ss_Standard, 35);
+	#endif
 	ntvdmHeight = 0; // Подбирать автоматически
 	mb_IntegralSize = false;
 	_WindowMode = rNormal;
