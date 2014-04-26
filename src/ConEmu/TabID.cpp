@@ -648,6 +648,11 @@ bool CTabStack::UpdateFarWindow(HANDLE hUpdate, CVirtualConsole* apVCon, LPCWSTR
 		int i = mn_UpdatePos;
 		while (i < mn_Used)
 		{
+			if (!mpp_Stack[i])
+			{
+				i++;
+				continue;
+			}
 			if (mpp_Stack[i]->IsEqual(apVCon, asName, anType, anPID, anViewEditID, fwt_TypeMask))
 			{
 				// OK, таб совпадает
@@ -660,6 +665,14 @@ bool CTabStack::UpdateFarWindow(HANDLE hUpdate, CVirtualConsole* apVCon, LPCWSTR
 					newFlags |= (anType & fwt_CompareFlags);
 					mpp_Stack[i]->Info.Type = newFlags;
 				}
+				// Сменился номер окна в фаре?
+				if (anFarWindowID != mpp_Stack[i]->Info.nFarWindowID)
+				{
+					mpp_Stack[i]->Info.nFarWindowID = anFarWindowID;
+				}
+				// По идее больше ничего меняться не должно? А при SaveAs в редакторе?
+				_ASSERTE(mpp_Stack[i]->Info.nViewEditID == anViewEditID);
+				_ASSERTE(lstrcmpi(mpp_Stack[i]->Name.Ptr(), asName) == 0);
 
 				// Закончили
 				break;
@@ -675,7 +688,7 @@ bool CTabStack::UpdateFarWindow(HANDLE hUpdate, CVirtualConsole* apVCon, LPCWSTR
 		// Если перед совпавшим найдены закрытые - следует сдвинуть список табов
 		if (i > mn_UpdatePos)
 		{
-			if ((i+1) < mn_Used)
+			if (i < mn_Used)
 			{
 				#if 1
 				_ASSERTE(pUpdateLock->isLocked());
