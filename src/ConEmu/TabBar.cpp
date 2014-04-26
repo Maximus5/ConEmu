@@ -32,6 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define SHOWDEBUGSTR
 
 #define DEBUGSTRTABS(s) //DEBUGSTR(s)
+#define DEBUGSTRRECENT(s) DEBUGSTR(s)
 
 #include <windows.h>
 #include <commctrl.h>
@@ -517,6 +518,7 @@ void CTabBarClass::Update(BOOL abPosted/*=FALSE*/)
 	HANDLE hUpdate = m_Tabs.UpdateBegin();
 	_ASSERTE(hUpdate!=NULL);
 
+	bool bStackChanged = false;
 
 	/* ********************* */
 	/*          Go           */
@@ -644,7 +646,8 @@ void CTabBarClass::Update(BOOL abPosted/*=FALSE*/)
 					#endif
 
 					nCurTab = tabIdx;
-					AddStack(tab);
+					if (AddStack(tab))
+						bStackChanged = true;
 				}
 
 				rFound++;
@@ -680,7 +683,11 @@ void CTabBarClass::Update(BOOL abPosted/*=FALSE*/)
 	m_Tabs.UpdateEnd(hUpdate, TRUE);
 
 	// Проверим стек последних выбранных
-	CheckStack();
+	if (CheckStack())
+		bStackChanged = true;
+
+	if (bStackChanged)
+		PrintRecentStack();
 
 	// удалить лишние закладки (визуально)
 	int nCurCount = GetItemCount();
@@ -1452,12 +1459,37 @@ int CTabBarClass::PrepareTab(CTab& pTab, CVirtualConsole *apVCon)
 
 // Переключение табов
 
+void CTabBarClass::PrintRecentStack()
+{
+#ifdef _DEBUG
+	wchar_t szDbg[100];
+	DEBUGSTRRECENT(L"=== Printing recent tab stack ===\n");
+	for (INT_PTR i = 0; i < m_TabStack.size(); i++)
+	{
+		CTabID* p = m_TabStack[i];
+		if (p == mp_DummyTab)
+			continue;
+		_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"%2u: %s", i+1,
+			(p->Info.Status == tisPassive) ? L"<passive> " :
+			(p->Info.Status == tisEmpty) ? L"<not_init> " :
+			(p->Info.Status == tisInvalid) ? L"<invalid> " :
+			L"");
+		lstrcpyn(szDbg+lstrlen(szDbg), m_TabStack[i]->GetLabel(), 60);
+		wcscat_c(szDbg, L"\n");
+		DEBUGSTRRECENT(szDbg);
+	}
+	DEBUGSTRRECENT(L"===== Recent tab stack done =====\n");
+#endif
+}
+
 int CTabBarClass::GetNextTab(BOOL abForward, BOOL abAltStyle/*=FALSE*/)
 {
 	BOOL lbRecentMode = (gpSet->isTabs != 0) &&
 	                    (((abAltStyle == FALSE) ? gpSet->isTabRecent : !gpSet->isTabRecent));
 	int nNewSel = -1;
 	int nCurSel = GetCurSel();
+
+	PrintRecentStack();
 
 #if 1
 
@@ -1657,8 +1689,9 @@ void CTabBarClass::SwitchRollback()
 }
 
 // Убьет из стека старые, и добавит новые
-void CTabBarClass::CheckStack()
+bool CTabBarClass::CheckStack()
 {
+	bool bStackChanged = false;
 	_ASSERTE(gpConEmu->isMainThread());
 	INT_PTR i, j;
 
@@ -1674,6 +1707,7 @@ void CTabBarClass::CheckStack()
 		{
 			m_TabStack[j]->Release();
 			m_TabStack.erase(j);
+			bStackChanged = true;
 		}
 		else
 		{
@@ -1698,13 +1732,17 @@ void CTabBarClass::CheckStack()
 		if (!lbExist)
 		{
 			m_TabStack.push_back(tab.AddRef());
+			bStackChanged = true;
 		}
 	}
+
+	return bStackChanged;
 }
 
 // Убьет из стека отсутствующих и поместит tab на верх стека
-void CTabBarClass::AddStack(CTab& tab)
+bool CTabBarClass::AddStack(CTab& tab)
 {
+	bool bStackChanged = false;
 	_ASSERTE(gpConEmu->isMainThread());
 	BOOL lbExist = FALSE;
 
@@ -1727,6 +1765,7 @@ void CTabBarClass::AddStack(CTab& tab)
 				{
 					pTab = m_TabStack[iter];
 					m_TabStack.erase(iter);
+					bStackChanged = true;
 				}
 
 				break;
@@ -1742,7 +1781,10 @@ void CTabBarClass::AddStack(CTab& tab)
 		if (!pTab)
 			pTab = tab.AddRef();
 		m_TabStack.insert(0, pTab);
+		bStackChanged = true;
 	}
+
+	return bStackChanged;
 }
 
 BOOL CTabBarClass::CanActivateTab(int nTabIdx)

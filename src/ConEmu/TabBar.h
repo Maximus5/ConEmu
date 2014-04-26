@@ -101,6 +101,7 @@ class CTabBarClass
 		WCHAR  ms_TmpTabText[MAX_PATH];
 		BOOL CanActivateTab(int nTabIdx);
 		BOOL mb_InKeySwitching;
+		void PrintRecentStack();
 		int GetNextTab(BOOL abForward, BOOL abAltStyle=FALSE);
 		int GetCurSel();
 		int GetItemCount();
@@ -134,8 +135,8 @@ class CTabBarClass
 		CTabID* mp_DummyTab; // Для показа чего-нибудь когда консолей вообще нет
 		//MArray<VConTabs> m_Tab2VCon;
 		//MArray<VConTabs> m_TabStack;
-		void CheckStack(); // Убьет из стека отсутствующих
-		void AddStack(CTab& tab); // Убьет из стека отсутствующих и поместит tab на верх стека
+		bool CheckStack(); // Убьет из стека отсутствующих
+		bool AddStack(CTab& tab); // Убьет из стека отсутствующих и поместит tab на верх стека
 
 		BOOL mb_DisableRedraw;
 
