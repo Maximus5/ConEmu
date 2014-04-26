@@ -579,7 +579,7 @@ HWND CTabPanelWin::CreateTabbar()
 
 	// Добавляет закладку, или меняет (при необходимости) заголовок существующей
 	//AddTab(gpConEmu->isFar() ? gpSet->szTabPanels : gpSet->pszTabConsole, 0);
-	AddTabInt(gpConEmu->GetLastTitle(), 0, gpConEmu->mb_IsUacAdmin, -1);
+	AddTabInt(gpConEmu->GetDefaultTabLabel(), 0, gpConEmu->mb_IsUacAdmin, -1);
 	// нас интересует смещение клиентской области. Т.е. начало - из 0. Остальное не важно
 	rcClient = MakeRect(600, 400);
 	//rcClient = gpConEmu->GetGuiClientRect();
