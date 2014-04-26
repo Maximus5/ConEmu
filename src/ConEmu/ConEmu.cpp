@@ -80,7 +80,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #define DEBUGSTRSYS(s) //DEBUGSTR(s)
-#define DEBUGSTRSIZE(s) DEBUGSTR(s)
+#define DEBUGSTRSIZE(s) //DEBUGSTR(s)
 #define DEBUGSTRCONS(s) //DEBUGSTR(s)
 #define DEBUGSTRTABS(s) //DEBUGSTR(s)
 #define DEBUGSTRLANG(s) DEBUGSTR(s)// ; Sleep(2000)
@@ -9290,12 +9290,10 @@ void CConEmuMain::CheckNeedUpdateTitle(LPCWSTR asRConTitle)
 }
 
 // !!!Warning!!! Никаких return. в конце функции вызывается необходимый CheckProcesses
-void CConEmuMain::UpdateTitle(/*LPCTSTR asNewTitle*/)
+void CConEmuMain::UpdateTitle()
 {
 	if (GetCurrentThreadId() != mn_MainThreadId)
 	{
-		/*if (TitleCmp != asNewTitle) -- можем наколоться на многопоточности. Лучше получим повторно
-		    wcscpy(TitleCmp, asNewTitle);*/
 		PostMessage(ghWnd, mn_MsgUpdateTitle, 0, 0);
 		return;
 	}
@@ -9320,8 +9318,6 @@ void CConEmuMain::UpdateTitle(/*LPCTSTR asNewTitle*/)
 
 	if (!pszNewTitle)
 	{
-		//if ((pszNewTitle = mp_ VActive->RCon()->GetTitle()) == NULL)
-		//	return;
 		pszNewTitle = GetDefaultTitle();
 	}
 
@@ -10247,9 +10243,6 @@ LPCTSTR CConEmuMain::GetLastTitle(bool abUseDefault/*=true*/)
 
 LPCTSTR CConEmuMain::GetVConTitle(int nIdx)
 {
-	//if (nIdx < 0 || nIdx >= MAX_CONSOLE_COUNT)
-	//	return NULL;
-
 	CVConGuard VCon;
 	if (!CVConGroup::GetVCon(nIdx, &VCon))
 		return NULL;

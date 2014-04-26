@@ -628,7 +628,21 @@ void CTabBarClass::Update(BOOL abPosted/*=FALSE*/)
 				if (lbActive && (tab->Flags() & fwt_CurrentFarWnd))
 				{
 					// !!! RCon must return ONLY ONE active tab !!!
-					_ASSERTE(nCurTab == -1);
+					// with only temorarily exception during edit/view activation from panels
+
+					#ifdef _DEBUG
+					static int iFails = 0;
+					if (nCurTab == -1)
+					{
+						iFails = 0;
+					}
+					else
+					{
+						_ASSERTE((nCurTab == -1) || (nCurTab == 0 && iFails == 0 && tab->Type() == fwt_Panels));
+						iFails++;
+					}
+					#endif
+
 					nCurTab = tabIdx;
 					AddStack(tab);
 				}

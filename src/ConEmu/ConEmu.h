@@ -775,7 +775,7 @@ class CConEmuMain :
 	public:
 		void UpdateTextColorSettings(BOOL ChangeTextAttr = TRUE, BOOL ChangePopupAttr = TRUE);
 		void CheckNeedUpdateTitle(LPCWSTR asRConTitle);
-		void UpdateTitle(/*LPCTSTR asNewTitle*/);
+		void UpdateTitle();
 		void UpdateProgress(/*BOOL abUpdateTitle*/);
 		void UpdateWindowRgn(int anX=-1, int anY=-1, int anWndWidth=-1, int anWndHeight=-1);
 		static LRESULT CALLBACK MainWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);

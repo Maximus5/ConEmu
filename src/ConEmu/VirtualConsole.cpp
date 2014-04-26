@@ -83,7 +83,7 @@ FEFF    ZERO WIDTH NO-BREAK SPACE
 #define DEBUGDRAW_VERTICALS VK_SCROLL // -- при включенном ScrollLock отрисовать прямоугольники, соответсвующие граням диалогов (которые строго выравниваются по ячейкам)
 #endif
 
-#define DEBUGSTRDRAW(s) DEBUGSTR(s)
+#define DEBUGSTRDRAW(s) //DEBUGSTR(s)
 #define DEBUGSTRCOORD(s) //DEBUGSTR(s)
 #define DEBUGSTRFAIL(s) DEBUGSTR(s)
 

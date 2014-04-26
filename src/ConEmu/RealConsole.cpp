@@ -166,8 +166,6 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 	m_ConsoleKeyShortcuts = 0;
 	memset(Title,0,sizeof(Title)); memset(TitleCmp,0,sizeof(TitleCmp));
 
-	ms_PanelTitle[0] = 0;
-
 	// Tabs
 	tabs.mn_tabsCount = 0;
 	tabs.mn_ActiveTab = 0;

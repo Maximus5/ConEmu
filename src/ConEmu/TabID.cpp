@@ -282,11 +282,8 @@ bool CTabID::IsEqual(const CTabID* pTabId, bool abIgnoreWindowId /*= false*/, CE
 CTabStack::CTabStack()
 {
 	mn_Used = 0;
-	#ifdef _DEBUG
+	// Thought, most of users will get only one tab per console
 	mn_MaxCount = 1;
-	#else
-	mn_MaxCount = 16;
-	#endif
 	mpp_Stack = (CTabID**)calloc(mn_MaxCount,sizeof(CTabID**));
 	InitializeCriticalSection(&mc_Section);
 	//mp_UpdateLock = NULL;
