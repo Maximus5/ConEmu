@@ -71,7 +71,7 @@ int TabName::Length() const
 }
 bool TabName::Empty() const
 {
-	return (sz[0] != 0);
+	return (sz[0] == 0);
 }
 
 
