@@ -49,6 +49,8 @@ LPCWSTR TabName::Set(LPCWSTR asName)
 	nLen = asName ? lstrlenW(asName) : -1;
 	if ((nLen <= 0) || (nLen > 0 && asName[nLen-1] == L' '))
 		nLen = nLen;
+	if (asName && lstrcmp(asName, sz) != 0)
+		nLen = nLen;
 	#endif
 
 	lstrcpynW(sz, asName ? asName : L"", countof(sz));
@@ -103,16 +105,26 @@ CTabID::CTabID(CVirtualConsole* apVCon, LPCWSTR asName, CEFarWindowType anType, 
 LPCWSTR CTabID::GetName()
 {
 	LPCWSTR pszName = ((Info.Type & fwt_Renamed) && (Renamed.Length() > 0)) ? Renamed.Ptr() : Name.Ptr();
-	if (!pszName || !*pszName)
-		pszName = gpConEmu->GetDefaultTabLabel();
+	// Empty strings must be substed in CRealConsole::GetTabTitle only!
 	return pszName;
+}
+void CTabID::SetName(LPCWSTR asName)
+{
+	Name.Set(asName);
 }
 LPCWSTR CTabID::GetLabel()
 {
 	LPCWSTR pszLabel = DrawInfo.Display.Ptr();
 	if (!pszLabel || !*pszLabel)
+	{
+		_ASSERTE(FALSE && "Display.Ptr() must be initialized already!");
 		pszLabel = GetName();
+	}
 	return pszLabel;
+}
+void CTabID::SetLabel(LPCWSTR asLabel)
+{
+	DrawInfo.Display.Set(asLabel);
 }
 void CTabID::Set(LPCWSTR asName, CEFarWindowType anType, int anPID, int anFarWindowID, int anViewEditID)
 {
@@ -123,7 +135,7 @@ void CTabID::Set(LPCWSTR asName, CEFarWindowType anType, int anPID, int anFarWin
 	Info.nFarWindowID = anFarWindowID;
 	Info.nViewEditID = anViewEditID;
 	// Name
-	Name.Set(asName);
+	SetName(asName);
 	//Upper.Set(asName);
 	//Upper.MakeUpper();
 }
@@ -154,7 +166,10 @@ bool CTabID::IsEqual(CVirtualConsole* apVCon, LPCWSTR asName, CEFarWindowType an
 bool CTabID::IsEqual(CVirtualConsole* apVCon, const TabName& asName, CEFarWindowType anType, int anPID, int anViewEditID, CEFarWindowType FlagMask)
 {
 	if (!this)
+	{
+		_ASSERTE(FALSE && "Invalid pointer");
 		return false; // Invalid arguments
+	}
 
 	// Невалидный таб (процесс был завершен)
 	if (Info.Status == tisEmpty || Info.Status == tisInvalid)

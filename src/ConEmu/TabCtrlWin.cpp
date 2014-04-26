@@ -847,6 +847,8 @@ void CTabPanelWin::AddTabInt(LPCWSTR text, int i, bool bAdmin, int iTabIcon)
 
 	int iIconIdx = mp_Owner->GetTabIcon(bAdmin);
 
+	_ASSERTE(text && *text);
+
 	TCITEM tie;
 	// иконку обновляем всегда. она может измениться для таба
 	tie.mask = TCIF_TEXT | (mp_Owner->GetTabIcons() ? TCIF_IMAGE : 0);
@@ -856,6 +858,7 @@ void CTabPanelWin::AddTabInt(LPCWSTR text, int i, bool bAdmin, int iTabIcon)
 
 	if (i>=nCurCount)
 	{
+		DEBUGSTRTABS(text);
 		TabCtrl_InsertItem(mh_Tabbar, i, &tie);
 	}
 	else
@@ -866,7 +869,7 @@ void CTabPanelWin::AddTabInt(LPCWSTR text, int i, bool bAdmin, int iTabIcon)
 			tie.mask &= ~TCIF_TEXT;
 		#ifdef _DEBUG
 		else
-			tie.mask |= TCIF_TEXT;
+			DEBUGSTRTABS(text);
 		#endif
 
 		// Изменилась ли иконка

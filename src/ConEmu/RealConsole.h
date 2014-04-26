@@ -423,6 +423,8 @@ class CRealConsole
 		HWND isPictureView(BOOL abIgnoreNonModal=FALSE);
 		BOOL isWindowVisible();
 		LPCTSTR GetTitle(bool abGetRenamed=false);
+		LPCWSTR GetPanelTitle();
+		LPCWSTR GetTabTitle(CTab& tab);
 		void GetConsoleScreenBufferInfo(CONSOLE_SCREEN_BUFFER_INFO* sbi);
 		//void GetConsoleCursorPos(COORD *pcr);
 		void GetConsoleCursorInfo(CONSOLE_CURSOR_INFO *ci, COORD *cr = NULL);

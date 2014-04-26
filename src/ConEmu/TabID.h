@@ -156,10 +156,12 @@ public:
 	TabName Name, Renamed;
 	// С учетом возможного переименования
 	LPCWSTR GetName();
+	void SetName(LPCWSTR asName);
 
 	// Для внутреннего использования
 	TabDrawInfo DrawInfo;
 	LPCWSTR GetLabel();
+	void SetLabel(LPCWSTR asLabel);
 
 	// Methods
 	void Set(LPCWSTR asName, CEFarWindowType anType, int anPID, int anFarWindowID, int anViewEditID);

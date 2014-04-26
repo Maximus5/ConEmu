@@ -671,7 +671,7 @@ void CTabBarClass::Update(BOOL abPosted/*=FALSE*/)
 		m_Tabs.UpdateAppend(hUpdate, mp_DummyTab, FALSE);
 
 		// Физически (WinAPI) добавляет закладку, или меняет (при необходимости) заголовок существующей
-		mp_Rebar->AddTabInt(mp_DummyTab->GetName(), tabIdx, gpConEmu->mb_IsUacAdmin, -1);
+		mp_Rebar->AddTabInt(gpConEmu->GetDefaultTabLabel(), tabIdx, gpConEmu->mb_IsUacAdmin, -1);
 
 		nCurTab = tabIdx;
 		tabIdx++;
@@ -944,7 +944,7 @@ LRESULT CTabBarClass::OnNotify(LPNMHDR nmhdr)
 			if (!VCon->RCon()->GetTab(wndIndex, tab))
 				return 0;
 
-			lstrcpyn(ms_TmpTabText, tab->GetName(), countof(ms_TmpTabText));
+			lstrcpyn(ms_TmpTabText, VCon->RCon()->GetTabTitle(tab), countof(ms_TmpTabText));
 			pDisp->lpszText = ms_TmpTabText;
 		}
 
@@ -1224,7 +1224,7 @@ int CTabBarClass::PrepareTab(CTab& pTab, CVirtualConsole *apVCon)
 		iTabIcon = apVCon->RCon()->GetRootProcessIcon();
 	}
 
-	LPCWSTR pszTabName = pTab->GetName();
+	LPCWSTR pszTabName = pRCon->GetTabTitle(pTab);
 
 	if (pTab->Name.Empty() || (pTab->Type() == fwt_Panels))
 	{
@@ -1442,7 +1442,7 @@ int CTabBarClass::PrepareTab(CTab& pTab, CVirtualConsole *apVCon)
 		*pszDst = 0;
 	#endif
 
-	pTab->DrawInfo.Display.Set(dummy);
+	pTab->SetLabel(dummy);
 	
 	MCHKHEAP;
 

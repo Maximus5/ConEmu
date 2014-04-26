@@ -5239,6 +5239,7 @@ LPCTSTR CRealConsole::GetTitle(bool abGetRenamed/*=false*/)
 	if (!this /*|| !mn_ProcessCount*/)
 		return NULL;
 
+	// Если убирать - иметь в виду, что здесь нужно возвращать "переименованным" активный таб, а не только первый
 	if (abGetRenamed && *tabs.ms_RenameFirstTab)
 	{
 		return tabs.ms_RenameFirstTab;
@@ -5257,6 +5258,35 @@ LPCTSTR CRealConsole::GetTitle(bool abGetRenamed/*=false*/)
 	}
 
 	return TitleFull;
+}
+
+// В отличие от GetTitle, который возвращает заголовок "вообще", в том числе и для редакторов/вьюверов
+// эта функция возвращает заголовок панелей фара, которые сейчас могут быть не активны (т.е. это будет не Title)
+LPCWSTR CRealConsole::GetPanelTitle()
+{
+	if (isFar() && ms_PanelTitle[0])  // скорее всего - это Panels?
+		return ms_PanelTitle;
+	return TitleFull;
+}
+
+LPCWSTR CRealConsole::GetTabTitle(CTab& tab)
+{
+	LPCWSTR pszName = tab->GetName();
+
+	if (!pszName || !*pszName)
+	{
+		if (tab->Type() == fwt_Panels)
+		{
+			pszName = GetPanelTitle();
+		}
+		// If still not retrieved - show dummy title "ConEmu"
+		if (!pszName || !*pszName)
+		{
+			pszName = gpConEmu->GetDefaultTabLabel();
+		}
+	}
+
+	return pszName;
 }
 
 LRESULT CRealConsole::OnScroll(int nDirection)
