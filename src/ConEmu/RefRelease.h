@@ -28,11 +28,19 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#ifdef _DEBUG
+#include "../common/MMap.h"
+#endif
+
 class CRefRelease
 {
 private:
 	LONG volatile mn_RefCount;
 	static const LONG REF_FINALIZE = 0x7FFFFFFF;
+private:
+	#ifdef _DEBUG
+	MMap<DWORD,LONG> m_Locks;
+	#endif
 
 protected:
 	virtual void FinalRelease() = 0;
@@ -41,6 +49,10 @@ public:
 	CRefRelease()
 	{
 		mn_RefCount = 1;
+		#ifdef _DEBUG
+		m_Locks.Init(32,true);
+		m_Locks.Set(GetCurrentThreadId(), 1);
+		#endif
 	};
 	
 	void AddRef()
@@ -53,6 +65,15 @@ public:
 	
 		_ASSERTE(mn_RefCount != REF_FINALIZE);
 		InterlockedIncrement(&mn_RefCount);
+
+		#ifdef _DEBUG
+		DWORD nTID = GetCurrentThreadId(); LONG nLocks = 0;
+		if (!m_Locks.Get(nTID, &nLocks))
+			nLocks = 1;
+		else
+			nLocks++;
+		m_Locks.Set(nTID, nLocks);
+		#endif
 	};
 
 	int Release()
@@ -67,6 +88,18 @@ public:
 		}
 		InterlockedDecrement(&mn_RefCount);
 	
+		#ifdef _DEBUG
+		DWORD nTID = GetCurrentThreadId(); LONG nLocks = 0;
+		if (m_Locks.Get(nTID, &nLocks))
+		{
+			nLocks--;
+			if (nLocks > 0)
+				m_Locks.Set(nTID, nLocks);
+			else
+				m_Locks.Del(nTID);
+		}
+		#endif
+
 		_ASSERTE(mn_RefCount>=0);
 		if (mn_RefCount <= 0)
 		{
@@ -90,5 +123,8 @@ protected:
 	virtual ~CRefRelease()
 	{
 		_ASSERTE(mn_RefCount==REF_FINALIZE);
+		#ifdef _DEBUG
+		m_Locks.Release();
+		#endif
 	};
 };
