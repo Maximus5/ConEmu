@@ -52,6 +52,11 @@ public:
 	virtual ~CTabPanelBase();
 
 public:
+	LRESULT OnMouseRebar(UINT uMsg, int x, int y);
+	LRESULT OnMouseTabbar(UINT uMsg, int nTabIdx, int x, int y);
+	LRESULT OnMouseToolbar(UINT uMsg, int nCmdId, int x, int y);
+
+public:
 	virtual void AddTabInt(LPCWSTR text, int i, bool bAdmin, int iTabIcon) = 0;
 	virtual void CreateRebar() = 0;
 	virtual void DeleteItemInt(int I) = 0;

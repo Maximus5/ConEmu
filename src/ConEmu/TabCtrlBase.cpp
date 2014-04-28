@@ -241,3 +241,120 @@ CVirtualConsole* CTabPanelBase::FarSendChangeTab(int tabIndex)
 
 	return pVCon;
 }
+
+LRESULT CTabPanelBase::OnMouseRebar(UINT uMsg, int x, int y)
+{
+	if (!gpSet->isTabs)
+		return 0;
+
+	if (uMsg == WM_LBUTTONDBLCLK)
+	{
+		if ((gpSet->nTabBarDblClickAction == 2)
+			|| ((gpSet->nTabBarDblClickAction == 1) && gpSet->isCaptionHidden()))
+		{
+			// Чтобы клик случайно не провалился в консоль
+			gpConEmu->mouse.state |= MOUSE_SIZING_DBLCKL;
+			// Аналог AltF9
+			gpConEmu->DoMaximizeRestore();
+		}
+		else if ((gpSet->nTabBarDblClickAction == 3)
+			|| ((gpSet->nTabBarDblClickAction == 1) && !gpSet->isCaptionHidden()))
+		{
+			gpConEmu->RecreateAction(cra_CreateTab/*FALSE*/, gpSet->isMultiNewConfirm || isPressed(VK_SHIFT));
+		}
+	}
+	else if (uMsg == WM_RBUTTONUP)
+	{
+		POINT ptScr; GetCursorPos(&ptScr);
+		gpConEmu->mp_Menu->ShowSysmenu(ptScr.x, ptScr.y/*-32000*/);
+	}
+	else if ((gpConEmu->WindowMode == wmNormal) && gpSet->isCaptionHidden())
+	{
+		// WM_NC* messages needs screen coords in lParam
+		POINT ptScr; GetCursorPos(&ptScr);
+		LPARAM lParamMain = MAKELONG(ptScr.x,ptScr.y);
+		gpConEmu->WndProc(ghWnd, uMsg-(WM_MOUSEMOVE-WM_NCMOUSEMOVE), HTCAPTION, lParamMain);
+	}
+	else if (uMsg == WM_MBUTTONUP)
+	{
+		gpConEmu->RecreateAction(cra_CreateTab/*FALSE*/, gpSet->isMultiNewConfirm || isPressed(VK_SHIFT));
+	}
+
+	return 0;
+}
+
+LRESULT CTabPanelBase::OnMouseTabbar(UINT uMsg, int nTabIdx, int x, int y)
+{
+	if (nTabIdx == -1)
+		nTabIdx = GetTabFromPoint(MakePoint(x,y), false);
+
+	if (uMsg == WM_LBUTTONDOWN)
+	{
+		// Приходит, например, из ReBar по клику НАД табами
+		int lnCurTab = GetCurSelInt();
+		if (lnCurTab != nTabIdx)
+		{
+			FarSendChangeTab(nTabIdx);
+		}
+	}
+	else if ((uMsg == WM_MBUTTONUP)
+		|| (uMsg == WM_RBUTTONUP)
+		|| ((uMsg == WM_LBUTTONDBLCLK) && gpSet->nTabBtnDblClickAction))
+	{
+		if (nTabIdx >= 0)
+		{
+			CVirtualConsole* pVCon = NULL;
+			// для меню нужны экранные координаты, получим их сразу, чтобы менюшка вплывала на клике
+			// а то вдруг мышка уедет, во время активации таба...
+			POINT ptCur = {0,0}; GetCursorPos(&ptCur);
+			pVCon = FarSendChangeTab(nTabIdx);
+
+			if (pVCon)
+			{
+				CVConGuard guard(pVCon);
+				BOOL lbCtrlPressed = isPressed(VK_CONTROL);
+
+				if (uMsg == WM_LBUTTONDBLCLK)
+				{
+					switch (gpSet->nTabBtnDblClickAction)
+					{
+					case 1:
+						// Чтобы клик случайно не провалился в консоль
+						gpConEmu->mouse.state |= MOUSE_SIZING_DBLCKL;
+						// Аналог AltF9
+						gpConEmu->DoMaximizeRestore();
+						break;
+					case 2:
+						guard->RCon()->CloseTab();
+						break;
+					case 3:
+						gpConEmu->mp_Menu->ExecPopupMenuCmd(tmp_None, guard.VCon(), IDM_RESTART);
+						break;
+					case 4:
+						gpConEmu->mp_Menu->ExecPopupMenuCmd(tmp_None, guard.VCon(), IDM_DUPLICATE);
+						break;
+					}
+				}
+				else if (uMsg == WM_RBUTTONUP && !lbCtrlPressed)
+				{
+					gpConEmu->mp_Menu->ShowPopupMenu(guard.VCon(), ptCur);
+				}
+				else
+				{
+					guard->RCon()->CloseTab();
+				}
+
+				// борьба с оптимизатором в релизе
+				gpConEmu->isValid(pVCon);
+			}
+		}
+	}
+
+	return 0;
+}
+
+LRESULT CTabPanelBase::OnMouseToolbar(UINT uMsg, int nCmdId, int x, int y)
+{
+	//TODO:
+	return 0;
+}

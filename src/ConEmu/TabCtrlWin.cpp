@@ -146,53 +146,14 @@ LRESULT CTabPanelWin::ReBarProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 			{
 				if (TabHitTest(true, &nOverTabHit) == HTCAPTION)
 				{
-					if (uMsg == WM_LBUTTONDBLCLK)
-					{
-						if ((gpSet->nTabBarDblClickAction == 2)
-							|| ((gpSet->nTabBarDblClickAction == 1) && gpSet->isCaptionHidden()))
-						{
-							// Чтобы клик случайно не провалился в консоль
-							gpConEmu->mouse.state |= MOUSE_SIZING_DBLCKL;
-							// Аналог AltF9
-							gpConEmu->DoMaximizeRestore();
-						}
-						else if ((gpSet->nTabBarDblClickAction == 3)
-							|| ((gpSet->nTabBarDblClickAction == 1) && !gpSet->isCaptionHidden()))
-						{
-							gpConEmu->RecreateAction(cra_CreateTab/*FALSE*/, gpSet->isMultiNewConfirm || isPressed(VK_SHIFT));
-						}
-					}
-					else if (uMsg == WM_RBUTTONUP)
-					{
-						POINT ptScr; GetCursorPos(&ptScr);
-						gpConEmu->mp_Menu->ShowSysmenu(ptScr.x, ptScr.y/*-32000*/);
-					}
-					else if ((gpConEmu->WindowMode == wmNormal) && gpSet->isCaptionHidden())
-					{
-						POINT ptScr; GetCursorPos(&ptScr);
-						// WM_NC* messages needs screen coords in lParam
-						LPARAM lParamMain = MAKELONG(ptScr.x,ptScr.y);
-						gpConEmu->WndProc(ghWnd, uMsg-(WM_MOUSEMOVE-WM_NCMOUSEMOVE), HTCAPTION, lParamMain);
-					}
-					else if (uMsg == WM_MBUTTONUP)
-					{
-						gpConEmu->RecreateAction(cra_CreateTab/*FALSE*/, gpSet->isMultiNewConfirm || isPressed(VK_SHIFT));
-					}
+					OnMouseRebar(uMsg, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
 				}
-				else if ((nOverTabHit >= 0) && (uMsg != WM_MOUSEMOVE))
+				else if (nOverTabHit >= 0)
 				{
-					if (uMsg == WM_LBUTTONDOWN)
-					{
-						int lnCurTab = GetCurSelInt();
-						if (lnCurTab != nOverTabHit)
-						{
-							FarSendChangeTab(nOverTabHit);
-						}
-					}
-					else if (uMsg > WM_LBUTTONUP)
-					{
-						mp_Owner->OnMouse(uMsg, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
-					}
+					POINT ptTab = {GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)};
+					if (uMsg != WM_MOUSEWHEEL || uMsg != WM_MOUSEHWHEEL)
+						MapWindowPoints(mh_Rebar, mh_Tabbar, &ptTab, 1);
+					OnMouseTabbar(uMsg, nOverTabHit, ptTab.x, ptTab.y);
 				}
 			}
 
@@ -245,7 +206,7 @@ LRESULT CTabPanelWin::TabProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam
 		case WM_RBUTTONUP:
 		case WM_LBUTTONDBLCLK:
 		{
-			mp_Owner->OnMouse(uMsg, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
+			OnMouseTabbar(uMsg, -1, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
 			return 0;
 		}
 		case WM_SETFOCUS:
