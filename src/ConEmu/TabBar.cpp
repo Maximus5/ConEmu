@@ -33,6 +33,14 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define DEBUGSTRTABS(s) //DEBUGSTR(s)
 #define DEBUGSTRRECENT(s) DEBUGSTR(s)
+#define DEBUGSTRCOUNT(s) DEBUGSTR(s)
+
+#ifdef _DEBUG
+#define PRINT_RECENT_STACK
+//#undef PRINT_RECENT_STACK
+#else
+#undef PRINT_RECENT_STACK
+#endif
 
 #include <windows.h>
 #include <commctrl.h>
@@ -691,8 +699,19 @@ void CTabBarClass::Update(BOOL abPosted/*=FALSE*/)
 	if (CheckStack())
 		bStackChanged = true;
 
+	#ifdef PRINT_RECENT_STACK
 	if (bStackChanged)
 		PrintRecentStack();
+	#endif
+
+	#ifdef _DEBUG
+	{
+		wchar_t szDbg[100];
+		_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"*** Tab list updated. Visible:%u, Stacked:%u, StackChanged:%s\n",
+			m_Tabs.GetCount(), m_TabStack.size(), bStackChanged ? L"Yes" : L"No");
+		DEBUGSTRCOUNT(szDbg);
+	}
+	#endif
 
 	// удалить лишние закладки (визуально)
 	int nCurCount = GetItemCount();
@@ -1372,7 +1391,7 @@ int CTabBarClass::PrepareTab(CTab& pTab, CVirtualConsole *apVCon)
 
 void CTabBarClass::PrintRecentStack()
 {
-#ifdef _DEBUG
+#ifdef PRINT_RECENT_STACK
 	wchar_t szDbg[100];
 	DEBUGSTRRECENT(L"=== Printing recent tab stack ===\n");
 	for (INT_PTR i = 0; i < m_TabStack.size(); i++)
