@@ -2632,8 +2632,13 @@ void CVConGroup::OnVConClosed(CVirtualConsole* apVCon)
 			if (apVCon == gp_VActive)
 			{
 				gpConEmu->mp_TabBar->SwitchRollback();
+				if (gp_VCon[1] == NULL)
+				{
+					// if there is only one console left - no chance to "change" it...
+					_ASSERTE(GetConCount() <= 1);
+				}
 				// Firstly, try to activate pane in the same group
-				if (!ActivateNextPane(apVCon))
+				else if (!ActivateNextPane(apVCon))
 				{
 					if (gpSet->isTabRecent)
 						gpConEmu->mp_TabBar->SwitchNext();
