@@ -1405,7 +1405,41 @@ int CTabBarClass::GetNextTab(BOOL abForward, BOOL abAltStyle/*=FALSE*/)
 #if 1
 
     WARNING("!!!CTabBarClass::GetNextTab!!!");
-	nNewSel = nCurSel;
+	int nCurCount = GetItemCount();
+
+	if (abForward)
+	{
+		for (int i = nCurSel+1; nNewSel == -1 && i < nCurCount; i++)
+		{
+			if (CanActivateTab(i))
+				nNewSel = i;
+		}
+
+		for (int i = 0; nNewSel == -1 && i < nCurSel; i++)
+		{
+			if (CanActivateTab(i))
+				nNewSel = i;
+		}
+	}
+	else
+	{
+		for (int i = nCurSel-1; nNewSel == -1 && i >= 0; i++)
+		{
+			if (CanActivateTab(i))
+				nNewSel = i;
+		}
+
+		for (int i = nCurCount-1; nNewSel == -1 && i > nCurSel; i++)
+		{
+			if (CanActivateTab(i))
+				nNewSel = i;
+		}
+	}
+
+	if (nNewSel == -1 && nCurCount > 0)
+	{
+		_ASSERTE(FALSE && "One tab must be <active> any time");
+	}
 
 #else
 
