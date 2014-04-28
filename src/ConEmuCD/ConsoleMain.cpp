@@ -5073,9 +5073,25 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 	args.ProcessNewConArg();
 	args.pszSpecialCmd = NULL; // Чтобы не разрушилась память отведенная в gpszRunCmd
 	// Если указана рабочая папка
-	if (args.pszStartupDir)
+	if (args.pszStartupDir && *args.pszStartupDir)
 	{
-		SetCurrentDirectory(args.pszStartupDir);
+		// Support environment variables and delay expansion
+		// That was specially for -cur_console:d:"!USERPROFILE!"
+		LPCWSTR pszNewWorkDir = args.pszStartupDir;
+		wchar_t* pszBuf = NULL;
+		int nLen = lstrlen(args.pszStartupDir);
+		if (args.pszStartupDir[0] == L'!' && args.pszStartupDir[nLen-1] == L'!')
+		{
+			args.pszStartupDir[0] = L'%'; args.pszStartupDir[nLen-1] = L'%';
+		}
+		if (args.pszStartupDir[0] == L'%' && args.pszStartupDir[nLen-1] == L'%')
+		{
+			pszBuf = ExpandEnvStr(args.pszStartupDir);
+			if (pszBuf)
+				pszNewWorkDir = pszBuf;
+		}
+		// Let do CD
+		SetCurrentDirectory(pszNewWorkDir);
 	}
 	//
 	gbRunInBackgroundTab = (args.BackgroundTab == crb_On);

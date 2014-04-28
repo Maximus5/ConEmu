@@ -3074,6 +3074,11 @@ LPCWSTR CRealConsole::GetStartupDir()
 		// When starting under another credentials - try to use %USERPROFILE% instead of "system32"
 		if (!pszStartupDir || !*pszStartupDir)
 		{
+			// Issue 1557: switch -new_console:u:"other_user:password" lock the account of other_user
+			// So, just return NULL to force SetCurrentDirectory("%USERPROFILE%") in the server
+			return NULL;
+
+			#if 0
 			HANDLE hLogonToken = m_Args.CheckUserToken();
 			if (hLogonToken)
 			{
@@ -3102,6 +3107,7 @@ LPCWSTR CRealConsole::GetStartupDir()
 
 				CloseHandle(hLogonToken);
 			}
+			#endif
 		}
 	}
 
@@ -3472,7 +3478,7 @@ BOOL CRealConsole::StartProcess()
 		//Box("Cannot execute the command.");
 		//DWORD dwLastError = GetLastError();
 		DEBUGSTRPROC(L"CreateProcess failed\n");
-		size_t nErrLen = _tcslen(psCurCmd)+120+(lpszWorkDir ? _tcslen(lpszWorkDir) : 0);
+		size_t nErrLen = _tcslen(psCurCmd)+120+(lpszWorkDir ? _tcslen(lpszWorkDir) : 16/*"%USERPROFILE%"*/);
 
 		LPCWSTR pszDefaultCmd = bAllowDefaultCmd ? gpSetCls->GetDefaultCmd() : NULL;
 		nErrLen += pszDefaultCmd ? (100 + _tcslen(pszDefaultCmd)) : 0;
@@ -3501,7 +3507,7 @@ BOOL CRealConsole::StartProcess()
 		_wcscat_c(psz, nErrLen, L"\r\n");
 		_wcscat_c(psz, nErrLen, psCurCmd);
 		_wcscat_c(psz, nErrLen, L"\r\n\r\nWorking folder:\r\n\"");
-		_wcscat_c(psz, nErrLen, lpszWorkDir ? lpszWorkDir : L"");
+		_wcscat_c(psz, nErrLen, lpszWorkDir ? lpszWorkDir : L"%USERPROFILE%");
 		_wcscat_c(psz, nErrLen, L"\"");
 
 
@@ -3823,6 +3829,8 @@ BOOL CRealConsole::CreateOrRunAs(CRealConsole* pRCon, RConStartArgs& Args,
 {
 	BOOL lbRc = FALSE;
 
+	lpszWorkDir = pRCon->GetStartupDir();
+
 	SetLastError(0);
 
 	// Если сам ConEmu запущен под админом - нет смысла звать ShellExecuteEx("RunAs")
@@ -3834,10 +3842,22 @@ BOOL CRealConsole::CreateOrRunAs(CRealConsole* pRCon, RConStartArgs& Args,
 		if (Args.pszUserName != NULL)
 		{
 			// When starting under another credentials - try to use %USERPROFILE% instead of "system32"
-			lpszWorkDir = pRCon->GetStartupDir();
+			HRESULT hr = E_FAIL;
+			wchar_t szUserDir[MAX_PATH] = L"";
+			wchar_t* pszChangedCmd = NULL;
+			// Issue 1557: switch -new_console:u:"other_user:password" lock the account of other_user
+			if (!lpszWorkDir || !*lpszWorkDir)
+			{
+				hr = SHGetFolderPath(NULL, CSIDL_SYSTEM, NULL, SHGFP_TYPE_CURRENT, szUserDir);
+				if (FAILED(hr) || !*szUserDir)
+					wcscpy_c(szUserDir, L"C:\\");
+				lpszWorkDir = szUserDir;
+				// Force SetCurrentDirectory("%USERPROFILE%") in the server
+				pszChangedCmd = lstrmerge(psCurCmd, L" -cur_console:d:\"!USERPROFILE!\"");
+			}
 
 			lbRc = CreateProcessWithLogonW(Args.pszUserName, Args.pszDomain, Args.szUserPassword,
-				                        LOGON_WITH_PROFILE, NULL, psCurCmd,
+				                        LOGON_WITH_PROFILE, NULL, pszChangedCmd ? pszChangedCmd : psCurCmd,
 				                        NORMAL_PRIORITY_CLASS|CREATE_DEFAULT_ERROR_MODE|CREATE_NEW_CONSOLE
 										, NULL, lpszWorkDir, &si, &pi);
 				//if (CreateProcessAsUser(Args.hLogonToken, NULL, psCurCmd, NULL, NULL, FALSE,
@@ -3847,10 +3867,10 @@ BOOL CRealConsole::CreateOrRunAs(CRealConsole* pRCon, RConStartArgs& Args,
 			dwLastError = GetLastError();
 
 			SecureZeroMemory(Args.szUserPassword, sizeof(Args.szUserPassword));
+			SafeFree(pszChangedCmd);
 		}
 		else if (Args.RunAsRestricted == crb_On)
 		{
-			lpszWorkDir = pRCon->GetStartupDir();
 			lbRc = CreateProcessRestricted(NULL, psCurCmd, NULL, NULL, FALSE,
 				                    NORMAL_PRIORITY_CLASS|CREATE_DEFAULT_ERROR_MODE|CREATE_NEW_CONSOLE
 				                    , NULL, lpszWorkDir, &si, &pi, &dwLastError);
@@ -3859,7 +3879,6 @@ BOOL CRealConsole::CreateOrRunAs(CRealConsole* pRCon, RConStartArgs& Args,
 		}
 		else
 		{
-			lpszWorkDir = pRCon->GetStartupDir();
 			lbRc = CreateProcess(NULL, psCurCmd, NULL, NULL, FALSE,
 				                    NORMAL_PRIORITY_CLASS|CREATE_DEFAULT_ERROR_MODE|CREATE_NEW_CONSOLE
 				                    //|CREATE_NEW_PROCESS_GROUP - низя! перестает срабатывать Ctrl-C
@@ -3891,8 +3910,6 @@ BOOL CRealConsole::CreateOrRunAs(CRealConsole* pRCon, RConStartArgs& Args,
 			}
 
 			wchar_t szCurrentDirectory[MAX_PATH+1];
-
-			lpszWorkDir = pRCon->GetStartupDir();
 			wcscpy(szCurrentDirectory, lpszWorkDir);
 
 			int nWholeSize = sizeof(SHELLEXECUTEINFO)
