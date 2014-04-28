@@ -102,7 +102,8 @@ class CTabBarClass
 		BOOL CanActivateTab(int nTabIdx);
 		BOOL mb_InKeySwitching;
 		void PrintRecentStack();
-		int GetNextTab(BOOL abForward, BOOL abAltStyle=FALSE);
+		int GetNextTab(bool abForward, bool abAltStyle=false);
+		int GetNextTabHelper(int idxFrom, bool abForward, bool abRecent);
 		int GetCurSel();
 		int GetItemCount();
 		void DeleteItem(int I);

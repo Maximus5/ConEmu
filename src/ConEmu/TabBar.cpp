@@ -1412,188 +1412,150 @@ void CTabBarClass::PrintRecentStack()
 #endif
 }
 
-int CTabBarClass::GetNextTab(BOOL abForward, BOOL abAltStyle/*=FALSE*/)
+int CTabBarClass::GetNextTab(bool abForward, bool abAltStyle/*=false*/)
 {
 	BOOL lbRecentMode = (gpSet->isTabs != 0) &&
 	                    (((abAltStyle == FALSE) ? gpSet->isTabRecent : !gpSet->isTabRecent));
 	int nNewSel = -1;
+
+	// We need "visible" position (selected tab from tabbar)
+	// It may differs from actual active tab during switching
 	int nCurSel = GetCurSel();
-
-	PrintRecentStack();
-
-#if 1
-
-    WARNING("!!!CTabBarClass::GetNextTab!!!");
 	int nCurCount = GetItemCount();
 
-	if (abForward)
+	#ifdef PRINT_RECENT_STACK
+	// Debug method
+	PrintRecentStack();
+	#endif
+
+	if (lbRecentMode)
 	{
-		for (int i = nCurSel+1; nNewSel == -1 && i < nCurCount; i++)
+		// index in the m_TabStack
+		int idxCur = -1;
+
+		// service descriptor
+		CTab tabCur(__FILE__,__LINE__);
+
+		// find m_TabStack's index of the current tab
+		if (m_Tabs.GetTabByIndex(nCurSel, tabCur))
 		{
-			if (CanActivateTab(i))
-				nNewSel = i;
+			for (int i = 0; i < m_TabStack.size(); i++)
+			{
+				if (m_TabStack[i] == tabCur.Tab())
+				{
+					idxCur = i; break;
+				}
+			}
 		}
 
-		for (int i = 0; nNewSel == -1 && i < nCurSel; i++)
-		{
-			if (CanActivateTab(i))
-				nNewSel = i;
-		}
-	}
-	else
-	{
-		for (int i = nCurSel-1; nNewSel == -1 && i >= 0; i++)
-		{
-			if (CanActivateTab(i))
-				nNewSel = i;
-		}
+		_ASSERTE(idxCur!=-1);
 
-		for (int i = nCurCount-1; nNewSel == -1 && i > nCurSel; i++)
-		{
-			if (CanActivateTab(i))
-				nNewSel = i;
-		}
+		nNewSel = GetNextTabHelper(idxCur, abForward, true);
+
+		// Succeeded?
+		if (nNewSel >= 0)
+			return nNewSel;
+
+		_ASSERTE(nNewSel >= 0);
 	}
+
+	// Choose tab straightly
+	nNewSel = GetNextTabHelper(nCurSel, abForward, false);
+
+	// Succeeded?
+	if (nNewSel >= 0)
+		return nNewSel;
 
 	if (nNewSel == -1 && nCurCount > 0)
 	{
 		_ASSERTE(FALSE && "One tab must be <active> any time");
 	}
 
-#else
+	// There is no "another" tab?
+	return -1;
+}
 
-	int nCurCount = GetItemCount();
-	VConTabs cur = {NULL};
+int CTabBarClass::GetNextTabHelper(int idxFrom, bool abForward, bool abRecent)
+{
+	int nNewSel = -1, iTab;
 
-	#ifdef _DEBUG
-	if (nCurCount != m_Tab2VCon.size())
+	// What we iterate
+	int nCurCount = abRecent ? m_TabStack.size() : GetItemCount();
+	if (idxFrom >= nCurCount)
 	{
-		_ASSERTE(nCurCount == m_Tab2VCon.size());
-	}
-	#endif
-
-	if (nCurCount < 1)
-		return 0; // хотя такого и не должно быть
-
-	if (lbRecentMode && (nCurSel >= 0) && (nCurSel < m_Tab2VCon.size()))
-	{
-		cur = m_Tab2VCon[nCurSel];
+		_ASSERTE(idxFrom < nCurCount);
+		idxFrom = -1;
 	}
 
-	TODO("Добавить возможность переключаться а'ля RecentScreens");
-
+	// Lets check
 	if (abForward)
 	{
-		if (lbRecentMode)
-		{
-			int iter = 0;
+		if (idxFrom == -1)
+			idxFrom = 0; // Assert already shown
 
-			while (iter < m_TabStack.GetCount())
+		for (int idx = idxFrom+1; idx < nCurCount; idx++)
+		{
+			if (abRecent && (m_TabStack[idx]->Info.Status != tisValid))
+				continue;
+
+			iTab = abRecent ? m_Tabs.GetIndexByTab(m_TabStack[idx]) : idx;
+
+			if (CanActivateTab(iTab))
 			{
-				VConTabs Item = m_TabStack[iter]; // *iter;
-
-				// Найти в стеке выделенный таб
-				if (Item == cur)
-				{
-					int iCur = iter;
-
-					// Определить следующий таб, который мы можем активировать
-					do
-					{
-						++iter;
-
-                        // Если дошли до конца (сейчас выделен последний таб) вернуть первый
-						if (iter >= m_TabStack.size())
-						{
-							iter = 0;
-						}
-
-						// Определить индекс в m_Tab2VCon
-						i = GetIndexByTab(m_TabStack[iter]);
-
-						if (CanActivateTab(i))
-						{
-							return i;
-						}
-					}
-					while (iter != iCur);
-
-					break;
-				}
-
-				++iter;
+				nNewSel = iTab;
+				goto wrap;
 			}
-		} // Если не смогли в стиле Recent - идем простым путем
-
-		for (i = nCurSel+1; nNewSel == -1 && i < nCurCount; i++)
-		{
-			if (CanActivateTab(i))
-				nNewSel = i;
 		}
 
-		for (i = 0; nNewSel == -1 && i < nCurSel; i++)
+		for (int idx = 0; idx < idxFrom; idx++)
 		{
-			if (CanActivateTab(i))
-				nNewSel = i;
+			if (abRecent && (m_TabStack[idx]->Info.Status != tisValid))
+				continue;
+
+			iTab = abRecent ? m_Tabs.GetIndexByTab(m_TabStack[idx]) : idx;
+
+			if (CanActivateTab(iTab))
+			{
+				nNewSel = iTab;
+				goto wrap;
+			}
 		}
 	}
 	else
 	{
-		if (lbRecentMode)
-		{
-			int iter = m_TabStack.size()-1;
+		if (idxFrom == -1)
+			idxFrom = nCurCount - 1; // Assert already shown
 
-			while (iter >= 0)
+		for (int idx = idxFrom-1; idx >= 0; idx--)
+		{
+			if (abRecent && (m_TabStack[idx]->Info.Status != tisValid))
+				continue;
+
+			iTab = abRecent ? m_Tabs.GetIndexByTab(m_TabStack[idx]) : idx;
+
+			if (CanActivateTab(iTab))
 			{
-				VConTabs Item = m_TabStack[iter]; // *iter;
-
-				// Найти в стеке выделенный таб
-				if (Item == cur)
-				{
-					int iCur = iter;
-
-					// Определить следующий таб, который мы можем активировать
-					do
-					{
-						iter--;
-
-                        // Если дошли до конца (сейчас выделен последний таб) вернуть первый
-						if (iter < 0)
-						{
-							iter = m_TabStack.size()-1;
-						}
-
-						// Определить индекс в m_Tab2VCon
-						i = GetIndexByTab(m_TabStack[iter]);
-
-						if (CanActivateTab(i))
-						{
-							return i;
-						}
-					}
-					while (iter != iCur);
-
-					break;
-				}
-
-				iter--;
+				nNewSel = iTab;
+				goto wrap;
 			}
-		} // Если не смогли в стиле Recent - идем простым путем
-
-		for (i = nCurSel-1; nNewSel == -1 && i >= 0; i++)
-		{
-			if (CanActivateTab(i))
-				nNewSel = i;
 		}
 
-		for (i = nCurCount-1; nNewSel == -1 && i > nCurSel; i++)
+		for (int idx = nCurCount-1; idx > idxFrom; idx--)
 		{
-			if (CanActivateTab(i))
-				nNewSel = i;
+			if (abRecent && (m_TabStack[idx]->Info.Status != tisValid))
+				continue;
+
+			iTab = abRecent ? m_Tabs.GetIndexByTab(m_TabStack[idx]) : idx;
+
+			if (CanActivateTab(iTab))
+			{
+				nNewSel = iTab;
+				goto wrap;
+			}
 		}
 	}
-#endif
 
+wrap:
 	return nNewSel;
 }
 
