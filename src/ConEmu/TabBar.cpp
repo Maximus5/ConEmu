@@ -1621,7 +1621,7 @@ bool CTabBarClass::CheckStack()
 	_ASSERTE(gpConEmu->isMainThread());
 	INT_PTR i, j;
 
-	BOOL lbExist = FALSE;
+	bool lbExist = false;
 	j = 0;
 
 	// Remove all absent items
@@ -1648,13 +1648,16 @@ bool CTabBarClass::CheckStack()
 
 	for (i = 0; m_Tabs.GetTabByIndex(i, tab); ++i)
 	{
-		lbExist = FALSE;
+		if (tab.Tab() == mp_DummyTab)
+			continue;
+
+		lbExist = false;
 
 		for (j = 0; j < m_TabStack.size(); ++j)
 		{
 			if (tab.Tab() == m_TabStack[j])
 			{
-				lbExist = TRUE; break;
+				lbExist = true; break;
 			}
 		}
 
@@ -1671,6 +1674,9 @@ bool CTabBarClass::CheckStack()
 // Убьет из стека отсутствующих и поместит tab на верх стека
 bool CTabBarClass::AddStack(CTab& tab)
 {
+	if (tab.Tab() == mp_DummyTab)
+		return false;
+
 	bool bStackChanged = false;
 	_ASSERTE(gpConEmu->isMainThread());
 	BOOL lbExist = FALSE;
