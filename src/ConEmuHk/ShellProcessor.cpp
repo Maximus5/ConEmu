@@ -1518,7 +1518,8 @@ int CShellProc::PrepareExecuteParms(
 	// Service object (moved to members: RConStartArgs m_Args)
 	_ASSERTEX(m_Args.pszSpecialCmd == NULL); // Must not be touched yet!
 
-	BOOL bDebugWasRequested = FALSE, bVsNetHostRequested = FALSE;
+	bool bDebugWasRequested = false;
+	bool bVsNetHostRequested = false;
 	bool bIgnoreSuspended = false;
 	mb_DebugWasRequested = FALSE;
 	mb_PostInjectWasRequested = FALSE;
@@ -1605,12 +1606,17 @@ int CShellProc::PrepareExecuteParms(
 		if (mb_WasSuspended && anCreateFlags)
 		{
 			_ASSERTE(anCreateFlags && ((*anCreateFlags) & CREATE_SUSPENDED));
-			wchar_t szExecutable[MAX_PATH] = L"";
-			GetModuleFileName(NULL, szExecutable, countof(szExecutable));
-			LPCWSTR pszName = PointToName(szExecutable);
-			if (lstrcmpi(pszName, L"explorer.exe") == 0 || lstrcmpi(pszName, L"taskmgr.exe") == 0)
+			_ASSERTE(aCmd == eCreateProcess);
+			_ASSERTE(gbPrepareDefaultTerminal);
+			// Actually, this branch can be activated from any GUI application
+			// For example, Issue 1516: Dopus, notepad, etc.
+			if (!((*anCreateFlags) & (DEBUG_PROCESS|DEBUG_ONLY_THIS_PROCESS)))
 			{
-				// Running from explorer?
+				// Well, there is a chance, that CREATE_SUSPENDED was intended for
+				// setting hooks from current process with SetThreadContext, but
+				// on the other hand, we get here if only user himself activates
+				// "Default terminal" feature for this process. So, I believe,
+				// this decision is almost safe.
 				bIgnoreSuspended = true;
 			}
 		}
@@ -1629,7 +1635,7 @@ int CShellProc::PrepareExecuteParms(
 			else
 			#endif
 			{
-				bDebugWasRequested = TRUE;
+				bDebugWasRequested = true;
 			}
 			// Пока продолжим, нам нужно определить, а консольное ли это приложение?
 		}
@@ -1780,7 +1786,16 @@ int CShellProc::PrepareExecuteParms(
 			lbSubsystemOk = TRUE;
 			if (gbPrepareDefaultTerminal)
 			{
-				bVsNetHostRequested = IsVsNetHostExe(ms_ExeTmp); // *.vshost.exe
+				if (IsVsNetHostExe(ms_ExeTmp))
+				{
+					// *.vshost.exe
+					bVsNetHostRequested = true;
+					// Intended for .Net debugging?
+					if (anCreateFlags && ((*anCreateFlags) & CREATE_SUSPENDED))
+					{
+						bDebugWasRequested = true;
+					}
+				}
 			}
 		}
 
