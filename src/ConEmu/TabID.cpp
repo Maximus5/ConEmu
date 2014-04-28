@@ -841,14 +841,13 @@ void CTabStack::UpdateAppend(HANDLE hUpdate, CTabID* pTab, BOOL abMoveFirst)
 		RequestSize(mn_UpdatePos+1, pUpdateLock);
 		if (nIndex != -1 && nIndex != mn_UpdatePos)
 		{
-			if (mpp_Stack[mn_UpdatePos])
-			{
-				#ifdef TAB_REF_PLACE
-				mpp_Stack[mn_UpdatePos]->DelPlace(m_rp);
-				#endif
-				mpp_Stack[mn_UpdatePos]->Release();
-			}
-			mpp_Stack[nIndex] = NULL;
+			_ASSERTE(nIndex > mn_UpdatePos);
+			// Do NOT release tab here! Behavior can differs by arguments of UpdateEnd!
+			CTabID* p = mpp_Stack[mn_UpdatePos];
+			mpp_Stack[mn_UpdatePos] = mpp_Stack[nIndex];
+			mpp_Stack[nIndex] = p;
+			// At the moment vector must be realigned!
+			_ASSERTE(mpp_Stack[mn_UpdatePos] == pTab);
 		}
 		if (mpp_Stack[mn_UpdatePos] != pTab)
 		{
