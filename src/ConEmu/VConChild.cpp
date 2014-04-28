@@ -670,6 +670,7 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 				CVirtualConsole* pVCon = (CVirtualConsole*)lParam;
 
 				#ifdef _DEBUG
+				_ASSERTE(pVCon == guard.VCon());
 				int i = -100;
 				wchar_t szDbg[200];
 				wchar_t szTmp[128];
