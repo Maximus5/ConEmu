@@ -1648,7 +1648,7 @@ bool CTabBarClass::CheckStack()
 	{
 		// If refcount was decreased to 1, that means that CTabID is left only in m_TabStack
 		// All other references was eliminated
-		if (m_TabStack[j]->RefCount() <= 1)
+		if (m_TabStack[j]->Info.Status == tisInvalid)
 		{
 			#ifdef TAB_REF_PLACE
 			m_TabStack[j]->DelPlace("TabBar.cpp:m_TabStack",0);
