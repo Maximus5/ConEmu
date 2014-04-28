@@ -4969,7 +4969,12 @@ void CRealConsole::StopSignal()
 
 		// Чтобы при закрытии не было попытки активировать
 		// другую вкладку ЭТОЙ консоли
-		_ASSERTE(IsSwitchFarWindowAllowed() == false);
+		#ifdef _DEBUG
+		if (IsSwitchFarWindowAllowed())
+		{
+			_ASSERTE(IsSwitchFarWindowAllowed() == false);
+		}
+		#endif
 
 		// Очистка массива консолей и обновление вкладок
 		CConEmuChild::ProcessVConClosed(mp_VCon);
@@ -8115,8 +8120,10 @@ BOOL CRealConsole::RecreateProcessStart()
 		ms_VConServer_Pipe[0] = 0;
 		m_RConServer.Stop();
 
+		// Superfluous? Or may be changed in other threads?
 		ResetEvent(mh_TermEvent);
 		mn_TermEventTick = 0;
+
 		ResetEvent(mh_StartExecuted);
 
 		mb_NeedStartProcess = TRUE;
@@ -9716,7 +9723,7 @@ bool CRealConsole::IsSwitchFarWindowAllowed()
 {
 	if (!this)
 		return false;
-	if (mb_InCloseConsole)
+	if (mb_InCloseConsole || mn_TermEventTick)
 		return false;
 	return true;
 }
