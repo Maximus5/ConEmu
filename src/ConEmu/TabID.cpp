@@ -374,7 +374,6 @@ CTabStack::CTabStack()
 	mn_MaxCount = 1;
 	mpp_Stack = (CTabID**)calloc(mn_MaxCount,sizeof(CTabID**));
 	InitializeCriticalSection(&mc_Section);
-	//mp_UpdateLock = NULL;
 	mn_UpdatePos = -1;
 	mb_FarUpdateMode = false;
 	#ifdef TAB_REF_PLACE
@@ -389,50 +388,8 @@ CTabStack::~CTabStack()
 		free(mpp_Stack);
 		mpp_Stack = NULL;
 	}
-	//if (mp_UpdateLock)
-	//{
-	//	delete mp_UpdateLock;
-	//	mp_UpdateLock = NULL;
-	//}
 	DeleteCriticalSection(&mc_Section);
 }
-//const CTabID* CTabStack::CreateOrFind(CVirtualConsole* apVCon, LPCWSTR asName, int anType, int anPID, int anFarWindowID, int anViewEditID, CEFarWindowType anFlags)
-//{
-//	CTabID* pTab = NULL;
-//
-//	MSectionLockSimple SC; SC.Lock(&mc_Section);
-//
-//	if (mpp_Stack && mn_Used > 0)
-//	{
-//		TabName upr; upr.Init(asName); upr.Upper();
-//		for (int i = 0; i < mn_Used; i++)
-//		{
-//			if (!mpp_Stack[i]) continue;
-//			if (mpp_Stack[i]->IsEqual(apVCon, upr.Ptr(), anType,
-//					anPID, anFarWindowID, anViewEditID, anFlags, true/*abIgnoreWindowId*/))
-//			{
-//				pTab = mpp_Stack[i];
-//				break;
-//			}
-//		}
-//		upr.Release();
-//		if (pTab)
-//		{
-//			// Просто обновить некоторые параметры
-//			pTab->Info.nFarWindowID = anFarWindowID;
-//			pTab->Info.Flags = anFlags;
-//			pTab->Info.Type = anType;
-//			pTab->Info.nPID = anPID;
-//			return pTab; // Уже есть в списке
-//		}
-//	}
-//
-//	pTab = new CTabID(apVCon, asName, anType, anPID, anFarWindowID, anViewEditID, anFlags);
-//
-//	AppendInt(pTab, FALSE/*abMoveFirst*/, &SC);
-//
-//	return pTab;
-//}
 
 void CTabStack::RequestSize(int anCount, MSectionLockSimple* pSC)
 {
@@ -953,7 +910,6 @@ bool CTabStack::UpdateEnd(HANDLE hUpdate, BOOL abForceReleaseTail)
 			_ASSERTE(mn_UpdatePos>0 || CVConGroup::GetConCount()==0);
 			pUpdateLock->Unlock();
 			delete pUpdateLock;
-			//mp_UpdateLock = NULL;
 			mn_UpdatePos = -1;
 			return false;
 		}
@@ -990,7 +946,6 @@ bool CTabStack::UpdateEnd(HANDLE hUpdate, BOOL abForceReleaseTail)
 
 	pUpdateLock->Unlock();
 	delete pUpdateLock;
-	//mp_UpdateLock = NULL;
 
 	return bChanged;
 }
