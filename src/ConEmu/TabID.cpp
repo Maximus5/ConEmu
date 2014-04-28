@@ -675,8 +675,11 @@ bool CTabStack::UpdateFarWindow(HANDLE hUpdate, CVirtualConsole* apVCon, LPCWSTR
 		if (mn_Used == 0)
 		{
 			pTab = new CTabID(apVCon, asName, anType, anPID, anFarWindowID, anViewEditID);
+			_ASSERTE(pTab->RefCount()==1);
 			// Вобщем-то без разницы abMoveFirst или нет - массив сейчас все-равно пуст (консоль только что открыта)
 			AppendInt(pTab, TRUE/*abMoveFirst*/, pUpdateLock);
+			_ASSERTE(pTab->RefCount()==2);
+			pTab->Release();
 			bChanged = true;
 		}
 		else
@@ -771,8 +774,11 @@ bool CTabStack::UpdateFarWindow(HANDLE hUpdate, CVirtualConsole* apVCon, LPCWSTR
 		{
 			// это новая вкладка, добавляемая в конец
 			pTab = new CTabID(apVCon, asName, anType, anPID, anFarWindowID, anViewEditID);
+			_ASSERTE(pTab->RefCount()==1);
 			_ASSERTE(mn_Used == mn_UpdatePos);
 			AppendInt(pTab, FALSE/*abMoveFirst*/, pUpdateLock);
+			_ASSERTE(pTab->RefCount()==2);
+			pTab->Release();
 			bChanged = true;
 		}
 
