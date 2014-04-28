@@ -33,6 +33,18 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmu.h"
 #include "VConGroup.h"
 
+#ifdef _DEBUG
+#define DEBUG_TAB_LIST
+#else
+#undef DEBUG_TAB_LIST
+#endif
+#ifdef DEBUG_TAB_LIST
+#include "../common/MMap.h"
+MMap<CTabID*,bool> gTabIdList;
+static bool bTabIdListInit = false;
+#endif
+
+
 /* Simple fixed-max-length string class { struct } */
 TabName::TabName()
 {
@@ -101,6 +113,15 @@ CTabID::CTabID(CVirtualConsole* apVCon, LPCWSTR asName, CEFarWindowType anType, 
 	//Name.Init(asName);
 	//Upper.Init(asName);
 	//Upper.MakeUpper();
+
+	#ifdef DEBUG_TAB_LIST
+	if (!bTabIdListInit)
+	{
+		gTabIdList.Init(256,true);
+		bTabIdListInit = true;
+	}
+	gTabIdList.Set(this, true);
+	#endif
 }
 LPCWSTR CTabID::GetName()
 {
@@ -144,6 +165,10 @@ CTabID::~CTabID()
 	Name.Release();
 	Renamed.Release();
 	ReleaseDrawRegion();
+
+	#ifdef DEBUG_TAB_LIST
+	gTabIdList.Del(this);
+	#endif
 }
 void CTabID::FinalRelease()
 {
