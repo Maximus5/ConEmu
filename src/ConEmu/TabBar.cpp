@@ -108,6 +108,11 @@ CTabBarClass::CTabBarClass()
 	ms_TmpTabText[0] = 0;
 	mn_InUpdate = 0;
 	mp_DummyTab = new CTabID(NULL, NULL, fwt_Panels, 0, 0, 0);
+	_ASSERTE(mp_DummyTab->RefCount()==1);
+
+	#ifdef TAB_REF_PLACE
+	m_Tabs.SetPlace("TabBar.cpp:tabs.m_Tabs",0);
+	#endif
 
 	mp_Rebar = new CTabPanelWin(this);
 }
@@ -327,7 +332,7 @@ void CTabBarClass::RequestPostUpdate()
 bool CTabBarClass::GetVConFromTab(int nTabIdx, CVConGuard* rpVCon, DWORD* rpWndIndex)
 {
 	bool lbRc = false;
-	CTab tab;
+	CTab tab(__FILE__,__LINE__);
 	CVConGuard VCon;
 	DWORD wndIndex = 0;
 
@@ -599,7 +604,7 @@ void CTabBarClass::Update(BOOL abPosted/*=FALSE*/)
 						continue;
 				}
 
-				CTab tab;
+				CTab tab(__FILE__,__LINE__);
 				if (!pRCon->GetTab(I, tab))
 					break;
 
@@ -947,7 +952,7 @@ LRESULT CTabBarClass::OnNotify(LPNMHDR nmhdr)
 			if (!GetVConFromTab(iPage, &VCon, &wndIndex))
 				return 0;
 
-			CTab tab;
+			CTab tab(__FILE__,__LINE__);
 			if (!VCon->RCon()->GetTab(wndIndex, tab))
 				return 0;
 
@@ -1611,6 +1616,9 @@ bool CTabBarClass::CheckStack()
 		// All other references was eliminated
 		if (m_TabStack[j]->RefCount() <= 1)
 		{
+			#ifdef TAB_REF_PLACE
+			m_TabStack[j]->DelPlace("TabBar.cpp:m_TabStack",0);
+			#endif
 			m_TabStack[j]->Release();
 			m_TabStack.erase(j);
 			bStackChanged = true;
@@ -1621,7 +1629,7 @@ bool CTabBarClass::CheckStack()
 		}
 	}
 
-	CTab tab;
+	CTab tab("TabBar.cpp:CheckStack",__LINE__);
 
 	for (i = 0; m_Tabs.GetTabByIndex(i, tab); ++i)
 	{
@@ -1637,7 +1645,7 @@ bool CTabBarClass::CheckStack()
 
 		if (!lbExist)
 		{
-			m_TabStack.push_back(tab.AddRef());
+			m_TabStack.push_back(tab.AddRef("TabBar.cpp:m_TabStack",0));
 			bStackChanged = true;
 		}
 	}
@@ -1685,7 +1693,7 @@ bool CTabBarClass::AddStack(CTab& tab)
 	if (!lbExist)
 	{
 		if (!pTab)
-			pTab = tab.AddRef();
+			pTab = tab.AddRef("TabBar.cpp:m_TabStack",0);
 		m_TabStack.insert(0, pTab);
 		bStackChanged = true;
 	}
@@ -1786,7 +1794,7 @@ int CTabBarClass::ActiveTabByName(int anType, LPCWSTR asName, CVirtualConsole** 
 
 		for (I = 0; TRUE; I++)
 		{
-			CTab tab;
+			CTab tab(__FILE__,__LINE__);
 			if (!pRCon->GetTab(I, tab))
 				break;
 

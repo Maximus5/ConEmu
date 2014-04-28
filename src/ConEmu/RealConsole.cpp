@@ -171,6 +171,10 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 	tabs.mn_ActiveTab = 0;
 	tabs.mb_TabsWasChanged = false;
 
+	#ifdef TAB_REF_PLACE
+	tabs.m_Tabs.SetPlace("RealConsole.cpp:tabs.m_Tabs",0);
+	#endif
+
 	TODO("tabs.ms_RenameFirstTab pending to remove, all must be in tabs.m_Tabs[]->Renamed");
 	lstrcpyn(tabs.ms_RenameFirstTab, args->pszRenameTab ? args->pszRenameTab : L"", countof(tabs.ms_RenameFirstTab));
 
@@ -9004,7 +9008,7 @@ INT_PTR CRealConsole::renameProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lP
 			}
 			else
 			{
-				CTab tab;
+				CTab tab(__FILE__,__LINE__);
 				if (pRCon->GetTab(0, tab))
 				{
 					nLen = lstrlen(tab->Name.Ptr());
@@ -9396,7 +9400,7 @@ bool CRealConsole::GetTab(int tabIdx, /*OUT*/ CTab& rTab)
 			if (tabIdx > 0)
 				return false;
 
-			CTab Test;
+			CTab Test(__FILE__,__LINE__);
 			for (int i = 0; i < tabs.mn_tabsCount; i++)
 			{
 				if (tabs.m_Tabs.GetTabByIndex(iGetTabIdx, Test)
@@ -10974,7 +10978,7 @@ void CRealConsole::OnTitleChanged()
 	if (Title[0] == L'{' || Title[0] == L'(')
 		CheckPanelTitle();
 
-	CTab panels;
+	CTab panels(__FILE__,__LINE__);
 	if (tabs.m_Tabs.GetTabByIndex(0, panels))
 	if (panels->Type() == fwt_Panels)
 	{

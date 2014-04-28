@@ -679,7 +679,7 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 					i = CVConGroup::GetVConIndex(pVCon);
 					if (i >= 1)
 					{
-						CTab tab;
+						CTab tab(__FILE__,__LINE__);
 						if (pVCon->RCon()->GetTab(0, tab))
 							lstrcpyn(szTmp, tab->Name.Ptr(), countof(szTmp)); // чтобы не вылезло из szDbg
 						else

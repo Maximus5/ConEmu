@@ -1352,7 +1352,7 @@ int CVConGroup::isFarExist(CEFarWindowType anWindowType/*=fwt_Any*/, LPWSTR asNa
 				else
 				{
 					// Нужны доп.проверки окон фара
-					CTab tab;
+					CTab tab(__FILE__,__LINE__);
 					LPCWSTR pszNameOnly = (anWindowType & fwt_FarFullPathReq) ? NULL : asName ? PointToName(asName) : NULL;
 					if (pszNameOnly)
 					{

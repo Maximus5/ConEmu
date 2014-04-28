@@ -1651,7 +1651,7 @@ HMENU CConEmuMenu::CreateVConListPopupMenu(HMENU ahExist, BOOL abFirstTabOnly)
 		}
 		else
 		{
-			CTab tab;
+			CTab tab(__FILE__,__LINE__);
 			int R = 0;
 			if (!pRCon->GetTab(R, tab))
 			{

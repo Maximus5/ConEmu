@@ -1521,7 +1521,7 @@ size_t CConEmuCtrl::GetOpenedTabs(CESERVER_REQ_GETALLTABS::TabInfo*& pTabs)
 		if (!pRCon)
 			continue;
 
-		CTab tab;
+		CTab tab(__FILE__,__LINE__);
 		wchar_t szMark[6];
 		for (int T = 0; pRCon->GetTab(T, tab); T++)
 		{

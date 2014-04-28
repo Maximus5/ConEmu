@@ -286,8 +286,81 @@ bool CTabID::IsEqual(const CTabID* pTabId, bool abIgnoreWindowId /*= false*/, CE
 //{
 //	return Info.Flags;
 //}
+#ifdef TAB_REF_PLACE
+void CTabID::AddPlace(LPCSTR asName, int anLine)
+{
+	TabRefPlace rp; rp.SetPlace(asName, anLine);
+	m_Places.push_back(rp);
+}
+void CTabID::DelPlace(LPCSTR asName, int anLine)
+{
+	for (INT_PTR i = 0; i < m_Places.size(); i++)
+	{
+		const TabRefPlace& rp = m_Places[i];
+		if ((rp.fileline == anLine) && (lstrcmpA(rp.filename, asName) == 0))
+		{
+			m_Places.erase(i);
+			break;
+		}
+	}
+}
+void CTabID::DelPlace(const TabRefPlace& drp)
+{
+	DelPlace(drp.filename, drp.fileline);
+}
+#endif
 
 
+
+
+
+CTab::CTab(LPCSTR asFile, int anLine)
+{
+	mp_Tab = NULL;
+	#ifdef TAB_REF_PLACE
+	m_RefPlace.SetPlace(asFile, anLine);
+	#endif
+}
+CTab::~CTab()
+{
+	if (mp_Tab)
+	{
+		#ifdef TAB_REF_PLACE
+		mp_Tab->DelPlace(m_RefPlace);
+		#endif
+		mp_Tab->Release();
+	}
+}
+void CTab::Init(CTabID* apTab)
+{
+	if (mp_Tab)
+	{
+		#ifdef TAB_REF_PLACE
+		mp_Tab->DelPlace(m_RefPlace);
+		#endif
+		mp_Tab->Release();
+	}
+	if (apTab)
+	{
+		apTab->AddRef();
+		#ifdef TAB_REF_PLACE
+		apTab->AddPlace(m_RefPlace.filename, m_RefPlace.fileline);
+		#endif
+	}
+	mp_Tab = apTab;
+}
+void CTab::Init(CTab& Tab)
+{
+	Init(Tab.mp_Tab);
+}
+CTabID* CTab::AddRef(LPCSTR asFile, int anLine)
+{
+	mp_Tab->AddRef();
+	#ifdef TAB_REF_PLACE
+	mp_Tab->AddPlace(asFile, anLine);
+	#endif
+	return mp_Tab;
+}
 
 
 
@@ -304,6 +377,9 @@ CTabStack::CTabStack()
 	//mp_UpdateLock = NULL;
 	mn_UpdatePos = -1;
 	mb_FarUpdateMode = false;
+	#ifdef TAB_REF_PLACE
+	m_rp.SetPlace(__FILE__,__LINE__);
+	#endif
 }
 CTabStack::~CTabStack()
 {
@@ -385,6 +461,9 @@ void CTabStack::AppendInt(CTabID* pTab, BOOL abMoveFirst, MSectionLockSimple* pS
 {
 	// Сразу накрутить счетчик таба
 	pTab->AddRef();
+	#ifdef TAB_REF_PLACE
+	pTab->AddPlace(m_rp.filename, m_rp.fileline);
+	#endif
 
 	// Если требуется модификация списка
 	#ifdef _DEBUG
@@ -680,6 +759,9 @@ bool CTabStack::UpdateFarWindow(HANDLE hUpdate, CVirtualConsole* apVCon, LPCWSTR
 			// таб был закрыт
 			bChanged = true;
 			mpp_Stack[i]->Info.Status = tisInvalid;
+			#ifdef TAB_REF_PLACE
+			mpp_Stack[i]->DelPlace(m_rp);
+			#endif
 			mpp_Stack[i]->Release();
 			mpp_Stack[i] = NULL;
 			i++;
@@ -772,15 +854,27 @@ void CTabStack::UpdateAppend(HANDLE hUpdate, CTabID* pTab, BOOL abMoveFirst)
 		if (nIndex != -1 && nIndex != mn_UpdatePos)
 		{
 			if (mpp_Stack[mn_UpdatePos])
+			{
+				#ifdef TAB_REF_PLACE
+				mpp_Stack[mn_UpdatePos]->DelPlace(m_rp);
+				#endif
 				mpp_Stack[mn_UpdatePos]->Release();
+			}
 			mpp_Stack[nIndex] = NULL;
 		}
 		if (mpp_Stack[mn_UpdatePos] != pTab)
+		{
 			pTab->AddRef();
+			#ifdef TAB_REF_PLACE
+			pTab->AddPlace(m_rp.filename, m_rp.fileline);
+			#endif
+		}
 		mpp_Stack[mn_UpdatePos] = pTab;
 		mn_UpdatePos++;
 		if (mn_UpdatePos > mn_Used)
+		{
 			mn_Used = mn_UpdatePos;
+		}
 	}
 	else
 	{
@@ -885,6 +979,9 @@ bool CTabStack::UpdateEnd(HANDLE hUpdate, BOOL abForceReleaseTail)
 			if (pTab)
 			{
 				pTab->Info.Status = tisInvalid;
+				#ifdef TAB_REF_PLACE
+				pTab->DelPlace(m_rp);
+				#endif
 				pTab->Release();
 			}
 		}
@@ -916,6 +1013,9 @@ void CTabStack::ReleaseTabs(BOOL abInvalidOnly /*= TRUE*/)
 		}
 		CTabID *p = mpp_Stack[i];
 		mpp_Stack[i] = NULL;
+		#ifdef TAB_REF_PLACE
+		p->DelPlace(m_rp);
+		#endif
 		// Именно Release, т.к. ИД может быть использован в других стеках
 		p->Release();
 

@@ -31,6 +31,15 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/common.hpp"
 #include "RefRelease.h"
 
+#ifdef _DEBUG
+#define TAB_REF_PLACE
+#else
+#undef TAB_REF_PLACE
+#endif
+#ifdef TAB_REF_PLACE
+#include "../common/MArray.h"
+#endif
+
 // Forwards
 struct TabName;
 //struct TabID;
@@ -138,6 +147,20 @@ struct TabInfo
 	int nViewEditID;  // а это нам нужно потому, что во вьюверах может быть открыто несколько копий одного файла
 };
 
+#ifdef TAB_REF_PLACE
+struct TabRefPlace
+{
+	char filename[32];
+	int  fileline;
+	// Usage: SetPlace(__FILE__,__LINE__)
+	void SetPlace(LPCSTR asFile, int anLine)
+	{
+		LPCSTR pszSlash = asFile ? strrchr(asFile, '\\') : NULL;
+		lstrcpynA(filename, pszSlash ? (pszSlash+1) : asFile ? asFile : "<NULL>", countof(filename));
+		fileline = anLine;
+	}
+};
+#endif
 
 /* Uniqualizer for Each tab */
 class CTabID : public CRefRelease
@@ -173,6 +196,15 @@ public:
 	bool IsEqual(CVirtualConsole* apVCon, LPCWSTR asName, CEFarWindowType anType, int anPID, int anViewEditID, CEFarWindowType FlagMask);
 
 	void ReleaseDrawRegion();
+
+	#ifdef TAB_REF_PLACE
+	protected:
+	MArray<TabRefPlace> m_Places;
+	public:
+	void AddPlace(LPCSTR asName, int anLine);
+	void DelPlace(LPCSTR asName, int anLine);
+	void DelPlace(const TabRefPlace& drp);
+	#endif
 };
 
 // Класс для автоматического AddRef/Release
@@ -181,18 +213,21 @@ class CTab
 protected:
 	CTabID* mp_Tab;
 	friend class CTabStack;
+protected:
+	#ifdef TAB_REF_PLACE
+	TabRefPlace m_RefPlace;
+	#endif
 public:
-	CTab() { mp_Tab = NULL; }
-	~CTab() { if (mp_Tab) mp_Tab->Release(); }
+	CTab(LPCSTR asFile, int anLine);
+	~CTab();
 
-	void Init(CTabID* apTab) { if (mp_Tab) mp_Tab->Release(); if (apTab) apTab->AddRef(); mp_Tab = apTab; }
-	void Init(CTab& Tab) { Init(Tab.mp_Tab); }
+	void Init(CTabID* apTab);
+	void Init(CTab& Tab);
+	CTabID* AddRef(LPCSTR asFile, int anLine);
 
+public:
 	CTabID* operator -> () { return mp_Tab; }
-
 	const CTabID* Tab() { return mp_Tab; }
-
-	CTabID* AddRef() { mp_Tab->AddRef(); return mp_Tab; }
 };
 
 class CTabStack
@@ -206,6 +241,12 @@ protected:
 	bool mb_FarUpdateMode;
 	void AppendInt(CTabID* pTab, BOOL abMoveFirst, MSectionLockSimple* pSC);
 	void RequestSize(int anCount, MSectionLockSimple* pSC);
+protected:
+	#ifdef TAB_REF_PLACE
+	TabRefPlace m_rp;
+	public:
+	void SetPlace(LPCSTR asPlace, int anLine) { m_rp.SetPlace(asPlace,anLine); };
+	#endif
 public:
 	CTabStack();
 	~CTabStack();
