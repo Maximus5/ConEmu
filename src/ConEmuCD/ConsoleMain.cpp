@@ -5957,27 +5957,21 @@ void LogString(LPCSTR asText)
 	DWORD dwId = GetCurrentThreadId();
 
 	if (dwId == gdwMainThreadId)
-		pszThread = " MainThread";
+		pszThread = "MainThread";
 	else if (gpSrv->CmdServer.IsPipeThread(dwId))
-		pszThread = " ServerThread";
+		pszThread = "ServThread";
 	else if (dwId == gpSrv->dwRefreshThread)
-		pszThread = " RefreshThread";
+		pszThread = "RefrThread";
 	//#ifdef USE_WINEVENT_SRV
 	//else if (dwId == gpSrv->dwWinEventThread)
 	//	pszThread = " WinEventThread";
 	//#endif
 	else if (gpSrv->InputServer.IsPipeThread(dwId))
-		pszThread = " InputPipeThread";
+		pszThread = "InptThread";
 	else if (gpSrv->DataServer.IsPipeThread(dwId))
-		pszThread = " DataPipeThread";
+		pszThread = "DataThread";
 
-	SYSTEMTIME st; GetLocalTime(&st);
-	_wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "%i:%02i:%02i.%03i ",
-	           st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
-	int nCur = lstrlenA(szInfo);
-	lstrcpynA(szInfo+nCur, asText ? asText : "", 255-nCur-3);
-	//StringCchCatA(szInfo, countof(szInfo), "\r\n");
-	gpLogSize->LogString(szInfo, false, pszThread);
+	gpLogSize->LogString(asText, true, pszThread);
 }
 
 void LogSize(COORD* pcrSize, LPCSTR pszLabel)
@@ -5985,54 +5979,47 @@ void LogSize(COORD* pcrSize, LPCSTR pszLabel)
 	if (!gpLogSize) return;
 
 	CONSOLE_SCREEN_BUFFER_INFO lsbi = {{0,0}};
-	// В дебажный лог помещаем реальный значения
+	// В дебажный лог помещаем реальные значения
 	GetConsoleScreenBufferInfo(ghConOut ? ghConOut : GetStdHandle(STD_OUTPUT_HANDLE), &lsbi);
 	char szInfo[192]; szInfo[0] = 0;
-	LPCSTR pszThread = "<unknown thread>";
-	DWORD dwId = GetCurrentThreadId();
-
-	if (dwId == gdwMainThreadId)
-		pszThread = "MainThread";
-	else if (gpSrv->CmdServer.IsPipeThread(dwId))
-		pszThread = "ServerThread";
-	else if (dwId == gpSrv->dwRefreshThread)
-		pszThread = "RefreshThread";
-	//#ifdef USE_WINEVENT_SRV
-	//else if (dwId == gpSrv->dwWinEventThread)
-	//	pszThread = "WinEventThread";
-	//#endif
-	else if (gpSrv->InputServer.IsPipeThread(dwId))
-		pszThread = "InputPipeThread";
-	else if (gpSrv->DataServer.IsPipeThread(dwId))
-		pszThread = "DataPipeThread";
-
-	/*HDESK hDesk = GetThreadDesktop ( GetCurrentThreadId() );
-	HDESK hInp = OpenInputDesktop ( 0, FALSE, GENERIC_READ );*/
-	SYSTEMTIME st; GetLocalTime(&st);
-	//char szMapSize[32]; szMapSize[0] = 0;
-	//if (gpSrv->pConsoleMap->IsValid()) {
-	//	StringCchPrintfA(szMapSize, countof(szMapSize), " CurMapSize={%ix%ix%i}",
-	//		gpSrv->pConsoleMap->Ptr()->sbi.dwSize.X, gpSrv->pConsoleMap->Ptr()->sbi.dwSize.Y,
-	//		gpSrv->pConsoleMap->Ptr()->sbi.srWindow.Bottom-gpSrv->pConsoleMap->Ptr()->sbi.srWindow.Top+1);
-	//}
 
 	if (pcrSize)
 	{
-		_wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "%i:%02i:%02i.%03i CurSize={%ix%i} ChangeTo={%ix%i} %s %s",
-		           st.wHour, st.wMinute, st.wSecond, st.wMilliseconds,
-		           lsbi.dwSize.X, lsbi.dwSize.Y, pcrSize->X, pcrSize->Y, pszThread, (pszLabel ? pszLabel : ""));
+		_wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "CurSize={%ix%i} ChangeTo={%ix%i} %s",
+		           lsbi.dwSize.X, lsbi.dwSize.Y, pcrSize->X, pcrSize->Y, (pszLabel ? pszLabel : ""));
 	}
 	else
 	{
-		_wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "%i:%02i:%02i.%03i CurSize={%ix%i} %s %s",
-		           st.wHour, st.wMinute, st.wSecond, st.wMilliseconds,
-		           lsbi.dwSize.X, lsbi.dwSize.Y, pszThread, (pszLabel ? pszLabel : ""));
+		_wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "CurSize={%ix%i} %s",
+		           lsbi.dwSize.X, lsbi.dwSize.Y, (pszLabel ? pszLabel : ""));
 	}
 
-	//if (hInp) CloseDesktop ( hInp );
-	DWORD dwLen = 0;
-	gpLogSize->LogString(szInfo, false, NULL, true);
+	LogFunction(szInfo);
 }
+
+int CLogFunction::m_FnLevel = 0; // Simple, without per-thread devision
+CLogFunction::CLogFunction(const char* asFnName)
+{
+	LONG lLevel = InterlockedIncrement((LONG*)&m_FnLevel);
+
+	if (!gpLogSize) return;
+
+	if (lLevel > 20) lLevel = 20;
+	char cFnInfo[120];
+	char* pc = cFnInfo;
+	for (LONG l = 1; l < lLevel; l++)
+	{
+		*(pc++) = ' '; *(pc++) = ' '; *(pc++) = ' ';
+	}
+	lstrcpynA(pc, asFnName, countof(cFnInfo) - (pc - cFnInfo));
+
+	LogString(cFnInfo);
+}
+CLogFunction::~CLogFunction()
+{
+	InterlockedDecrement((LONG*)&m_FnLevel);
+}
+
 
 
 void ProcessCountChanged(BOOL abChanged, UINT anPrevCount, MSectionLock *pCS)
@@ -9244,12 +9231,12 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
 			_wsprintfA(szLogInfo, SKIPLEN(countof(szLogInfo)) "Console font size H=%i W=%i N=", curSizeY, curSizeX);
 			int nLen = lstrlenA(szLogInfo);
 			WideCharToMultiByte(CP_UTF8, 0, sFontName, -1, szLogInfo+nLen, countof(szLogInfo)-nLen, NULL, NULL);
-			LogString(szLogInfo);
+			LogFunction(szLogInfo);
 		}
 	}
 	else
 	{
-		LogString("Function GetConsoleFontSize is not available");
+		LogFunction("Function GetConsoleFontSize is not available");
 	}
 
 
@@ -9845,9 +9832,9 @@ bool IsKeyboardLayoutChanged(DWORD* pdwLayout)
 				if (gpLogSize)
 				{
 					char szInfo[128]; wchar_t szWide[128];
-					_wsprintf(szWide, SKIPLEN(countof(szWide)) L"ConEmuC: ConsKeybLayout changed from %s to %s", gpSrv->szKeybLayout, szCurKeybLayout);
+					_wsprintf(szWide, SKIPLEN(countof(szWide)) L"ConsKeybLayout changed from %s to %s", gpSrv->szKeybLayout, szCurKeybLayout);
 					WideCharToMultiByte(CP_ACP,0,szWide,-1,szInfo,128,0,0);
-					LogString(szInfo);
+					LogFunction(szInfo);
 				}
 
 				// Сменился

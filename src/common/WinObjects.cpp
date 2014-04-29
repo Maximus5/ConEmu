@@ -2807,14 +2807,14 @@ void MFileLog::LogString(LPCWSTR asText, bool abWriteTime /*= true*/, LPCWSTR as
 	size_t cchThrdLen = asThreadName ? lstrlen(asThreadName) : 0;
 	size_t cchMax = (cchTextLen + cchThrdLen)*3 + 32;
 	char szBuffer[1024];
-	char* pszBuffer;
+	char *pszBuffer, *pszTemp = NULL;
 	if (cchMax < countof(szBuffer))
 	{
 		pszBuffer = szBuffer;
 	}
 	else
 	{
-		pszBuffer = (char*)malloc(cchMax);
+		pszTemp = pszBuffer = (char*)malloc(cchMax);
 	}
 	if (!pszBuffer)
 		return;
@@ -2836,6 +2836,7 @@ void MFileLog::LogString(LPCWSTR asText, bool abWriteTime /*= true*/, LPCWSTR as
 		int nLen = WideCharToMultiByte(CP_UTF8, 0, asThreadName, -1, pszBuffer+cchCur, (int)cchThrdLen*3+1, NULL, NULL);
 		if (nLen > 1) // including terminating null char
 			cchCur += (nLen-1);
+		pszBuffer[cchCur++] = L' ';
 	}
 
 	if (asText && *asText)
@@ -2866,6 +2867,8 @@ void MFileLog::LogString(LPCWSTR asText, bool abWriteTime /*= true*/, LPCWSTR as
 		DEBUGSTRLOG(asText);
 		#endif
 	}
+
+	SafeFree(pszTemp);
 
 #if 0
 	if (!this)

@@ -61,6 +61,17 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGLOGSIZE(s) DEBUGSTR(s)
 #define DEBUGLOGLANG(s) //DEBUGSTR(s) //; Sleep(2000)
 
+class CLogFunction
+{
+protected:
+	static int m_FnLevel; // without per-thread devision
+public:
+	CLogFunction(const char* asFnName);
+	~CLogFunction();
+};
+#define LogFunction(fn) CLogFunction logFunction(fn)
+#define LogFunction2(fn) CLogFunction logFunction2(fn)
+
 #ifdef _DEBUG
 //CRITICAL_ SECTION gcsHeap;
 //#define MCHKHEAP { Enter CriticalSection(&gcsHeap); int MDEBUG_CHK=_CrtCheckMemory(); _ASSERTE(MDEBUG_CHK); LeaveCriticalSection(&gcsHeap); }
