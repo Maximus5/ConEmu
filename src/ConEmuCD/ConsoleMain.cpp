@@ -3872,6 +3872,18 @@ void UpdateConsoleTitle(LPCWSTR lsCmdLine, BOOL& lbNeedCutStartEndQuot, bool bEx
 	}
 }
 
+void CdToProfileDir()
+{
+	BOOL bRc = FALSE;
+	wchar_t szPath[MAX_PATH] = L"";
+	HRESULT hr = SHGetFolderPath(NULL, CSIDL_PROFILE, NULL, 0, szPath);
+	if (FAILED(hr))
+		GetEnvironmentVariable(L"USERPROFILE", szPath, countof(szPath));
+	if (szPath)
+		bRc = SetCurrentDirectory(szPath);
+	if (gpLogSize) LogString(bRc ? "Work dir changed to %USERPROFILE%" : "Failed cd to %USERPROFILE%");
+}
+
 // Разбор параметров командной строки
 int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackgroundTab*/)
 {
@@ -4563,6 +4575,10 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 		{
 			gpSrv->DbgInfo.nDebugDumpProcess = 3;
 		}
+		else if (lstrcmpi(szArg, L"/PROFILECD")==0)
+		{
+			CdToProfileDir();
+		}
 		else if (wcscmp(szArg, L"/A")==0 || wcscmp(szArg, L"/a")==0)
 		{
 			gnCmdUnicodeMode = 1;
@@ -5075,23 +5091,7 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 	// Если указана рабочая папка
 	if (args.pszStartupDir && *args.pszStartupDir)
 	{
-		// Support environment variables and delay expansion
-		// That was specially for -cur_console:d:"!USERPROFILE!"
-		LPCWSTR pszNewWorkDir = args.pszStartupDir;
-		wchar_t* pszBuf = NULL;
-		int nLen = lstrlen(args.pszStartupDir);
-		if (args.pszStartupDir[0] == L'!' && args.pszStartupDir[nLen-1] == L'!')
-		{
-			args.pszStartupDir[0] = L'%'; args.pszStartupDir[nLen-1] = L'%';
-		}
-		if (args.pszStartupDir[0] == L'%' && args.pszStartupDir[nLen-1] == L'%')
-		{
-			pszBuf = ExpandEnvStr(args.pszStartupDir);
-			if (pszBuf)
-				pszNewWorkDir = pszBuf;
-		}
-		// Let do CD
-		SetCurrentDirectory(pszNewWorkDir);
+		SetCurrentDirectory(args.pszStartupDir);
 	}
 	//
 	gbRunInBackgroundTab = (args.BackgroundTab == crb_On);

@@ -3848,12 +3848,16 @@ BOOL CRealConsole::CreateOrRunAs(CRealConsole* pRCon, RConStartArgs& Args,
 			// Issue 1557: switch -new_console:u:"other_user:password" lock the account of other_user
 			if (!lpszWorkDir || !*lpszWorkDir)
 			{
+				// We need something existing in both account to run our server process
 				hr = SHGetFolderPath(NULL, CSIDL_SYSTEM, NULL, SHGFP_TYPE_CURRENT, szUserDir);
 				if (FAILED(hr) || !*szUserDir)
 					wcscpy_c(szUserDir, L"C:\\");
 				lpszWorkDir = szUserDir;
 				// Force SetCurrentDirectory("%USERPROFILE%") in the server
-				pszChangedCmd = lstrmerge(psCurCmd, L" -cur_console:d:\"!USERPROFILE!\"");
+				CmdArg exe;
+				LPCWSTR pszTemp = psCurCmd;
+				if (NextArg(&pszTemp, exe) == 0)
+					pszChangedCmd = lstrmerge(exe, L" /PROFILECD ", pszTemp);
 			}
 
 			lbRc = CreateProcessWithLogonW(Args.pszUserName, Args.pszDomain, Args.szUserPassword,
