@@ -12,6 +12,12 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
 
+2014.04.29
+[%] Issue 1557: Switch -new_console:u:"other_user:password" may lock the account of other_user (another way).
+    Also, bad behavior of "-cur_console" reverted (15cff21 regression)
+[*] Some internal changes.
+
+
 2014.04.28
 [%] Shield was not set on ‘Restart’ button in ‘Recreate’ dialog.
 [%] github#5: Console was not started as admin when ‘Create new console’ dialog was skipped.
