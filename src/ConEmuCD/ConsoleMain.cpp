@@ -357,12 +357,7 @@ BOOL WINAPI DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 					{
 						if (pInfo->hConEmuRoot && IsWindow(pInfo->hConEmuRoot))
 						{
-							ghConEmuWnd = pInfo->hConEmuRoot;
-							if (pInfo->hConEmuWndDc && IsWindow(pInfo->hConEmuWndDc)
-								&& pInfo->hConEmuWndBack && IsWindow(pInfo->hConEmuWndBack))
-							{
-								SetConEmuWindows(pInfo->hConEmuWndDc, pInfo->hConEmuWndBack);
-							}
+							SetConEmuWindows(pInfo->hConEmuRoot, pInfo->hConEmuWndDc, pInfo->hConEmuWndBack);
 						}
 						if (pInfo->nServerPID && pInfo->nServerPID != gnSelfPID)
 						{
@@ -2109,7 +2104,7 @@ int WINAPI RequestLocalServer(/*[IN/OUT]*/RequestLocalServerParm* Parm)
 		_ASSERTE(gpSrv == NULL);
 		_ASSERTE(gnRunMode == RM_UNDEFINED);
 
-		HWND hConEmu = GetConEmuHWND(TRUE);
+		HWND hConEmu = GetConEmuHWND(1/*Gui Main window*/);
 		if (!hConEmu || !IsWindow(hConEmu))
 		{
 			iRc = CERR_GUI_NOT_FOUND;
@@ -2336,7 +2331,9 @@ void RegisterConsoleFontHKLM(LPCWSTR pszFontFace)
 
 int CheckAttachProcess()
 {
-	HWND hConEmu = GetConEmuHWND(TRUE);
+	LogFunction("CheckAttachProcess");
+
+	HWND hConEmu = GetConEmuHWND(1/*Gui Main window*/);
 
 	if (hConEmu && IsWindow(hConEmu))
 	{
@@ -3801,6 +3798,7 @@ wchar_t* ParseConEmuSubst(LPCWSTR asCmd, bool bUpdateTitle /*= false*/)
 
 BOOL SetTitle(bool bExpandVars, LPCWSTR lsTitle)
 {
+	LogFunction("SetTitle");
 	wchar_t* pszExpanded = (bExpandVars && lsTitle) ? ParseConEmuSubst(lsTitle, false) : NULL;
 	#ifdef SHOW_SETCONTITLE_MSGBOX
 	MessageBox(NULL, pszExpanded ? pszExpanded : lsTitle ? lsTitle : L"", WIN3264TEST(L"ConEmuCD - set title",L"ConEmuCD64 - set title"), MB_SYSTEMMODAL);
@@ -3812,6 +3810,8 @@ BOOL SetTitle(bool bExpandVars, LPCWSTR lsTitle)
 
 void UpdateConsoleTitle(LPCWSTR lsCmdLine, BOOL& lbNeedCutStartEndQuot, bool bExpandVars)
 {
+	LogFunction("UpdateConsoleTitle");
+
 	if (gpszForcedTitle)
 	{
 		lsCmdLine = gpszForcedTitle;
@@ -3914,6 +3914,7 @@ void CdToProfileDir()
 		GetEnvironmentVariable(L"USERPROFILE", szPath, countof(szPath));
 	if (szPath)
 		bRc = SetCurrentDirectory(szPath);
+	// Смысла логировать нет, т.к. gpLogSize еще не инициализирован
 	if (gpLogSize) LogString(bRc ? "Work dir changed to %USERPROFILE%" : "Failed cd to %USERPROFILE%");
 }
 
@@ -5371,6 +5372,8 @@ void SetTerminateEvent(SetTerminateEventPlace eFrom)
 
 void SendStarted()
 {
+	LogFunction("SendStarted");
+
 	WARNING("Подозрение, что слишком много вызовов при старте сервера. Неаккуратно");
 
 	static bool bSent = false;
@@ -5693,10 +5696,10 @@ void SendStarted()
 			bSent = true;
 			BOOL  bAlreadyBufferHeight = pOut->StartStopRet.bWasBufferHeight;
 			DWORD nGuiPID = pOut->StartStopRet.dwPID;
-			ghConEmuWnd = pOut->StartStopRet.hWnd;
-			SetConEmuWindows(pOut->StartStopRet.hWndDc, pOut->StartStopRet.hWndBack);
+			SetConEmuWindows(pOut->StartStopRet.hWnd, pOut->StartStopRet.hWndDc, pOut->StartStopRet.hWndBack);
 			if (gpSrv)
 			{
+				_ASSERTE(gpSrv->dwGuiPID == pOut->StartStopRet.dwPID);
 				gpSrv->dwGuiPID = pOut->StartStopRet.dwPID;
 				#ifdef _DEBUG
 				DWORD dwPID; GetWindowThreadProcessId(ghConEmuWnd, &dwPID);
@@ -5785,6 +5788,8 @@ void SendStarted()
 
 CESERVER_REQ* SendStopped(CONSOLE_SCREEN_BUFFER_INFO* psbi)
 {
+	LogFunction("SendStopped");
+
 	int iHookRc = -1;
 	if (gnRunMode == RM_ALTSERVER)
 	{
@@ -7502,7 +7507,7 @@ BOOL cmd_DetachCon(CESERVER_REQ& in, CESERVER_REQ** out)
 
 	gpSrv->bWasDetached = TRUE;
 	ghConEmuWnd = NULL;
-	SetConEmuWindows(NULL, NULL);
+	SetConEmuWindows(NULL, NULL, NULL);
 	gpSrv->dwGuiPID = 0;
 	UpdateConsoleMapHeader();
 

@@ -2801,6 +2801,8 @@ void MFileLog::LogString(LPCWSTR asText, bool abWriteTime /*= true*/, LPCWSTR as
 
 	if (!asText) return;
 
+	//DEBUGTEST(abWriteTime = false);
+
 	size_t cchTextLen = asText ? lstrlen(asText) : 0;
 	size_t cchThrdLen = asThreadName ? lstrlen(asThreadName) : 0;
 	size_t cchMax = (cchTextLen + cchThrdLen)*3 + 32;

@@ -228,7 +228,7 @@ BOOL ReloadGuiSettings(ConEmuGuiMapping* apFromCmd)
 
 		//wchar_t szHWND[16]; _wsprintf(szHWND, SKIPLEN(countof(szHWND)) L"0x%08X", gpSrv->guiSettings.hGuiWnd.u);
 		//SetEnvironmentVariableW(ENV_CONEMUHWND_VAR_W, szHWND);
-		SetConEmuEnvVar(gpSrv->guiSettings.hGuiWnd);
+		SetConEmuWindows(gpSrv->guiSettings.hGuiWnd, ghConEmuWndDC, ghConEmuWndBack);
 
 		if (gpSrv->pConsole)
 		{
@@ -778,7 +778,7 @@ void ServerInitEnvVars()
 
 		//wchar_t szHWND[16]; _wsprintf(szHWND, SKIPLEN(countof(szHWND)) L"0x%08X", gpSrv->guiSettings.hGuiWnd.u);
 		//SetEnvironmentVariableW(ENV_CONEMUHWND_VAR_W, szHWND);
-		SetConEmuEnvVar(gpSrv->guiSettings.hGuiWnd);
+		SetConEmuWindows(gpSrv->guiSettings.hGuiWnd, ghConEmuWndDC, ghConEmuWndBack);
 
 		#ifdef _DEBUG
 		bool bNewConArg = ((gpSrv->guiSettings.Flags & CECF_ProcessNewCon) != 0);
@@ -2025,15 +2025,65 @@ HWND FindConEmuByPID()
 	return hConEmuWnd;
 }
 
-void SetConEmuWindows(HWND hDcWnd, HWND hBackWnd)
+void SetConEmuWindows(HWND hRootWnd, HWND hDcWnd, HWND hBackWnd)
 {
 	LogFunction("SetConEmuWindows");
 
-	_ASSERTE(ghConEmuWnd!=NULL || (hDcWnd==NULL && hBackWnd==NULL));
-	ghConEmuWndDC = hDcWnd;
-	ghConEmuWndBack = hBackWnd;
+	if (!gpSrv)
+	{
+		_ASSERTE(gpSrv!=NULL);
+		return;
+	}
 
-	SetConEmuEnvVarChild(hDcWnd, hBackWnd);
+	char szInfo[100] = "";
+
+	// Main ConEmu window
+	if (hRootWnd && !IsWindow(hRootWnd))
+	{
+		_ASSERTE(FALSE && "hRootWnd is invalid");
+		hRootWnd = NULL;
+	}
+	// Changed?
+	if (ghConEmuWnd != hRootWnd)
+	{
+		_wsprintfA(szInfo+lstrlenA(szInfo), SKIPLEN(30) "ConEmuWnd=x%08X ", (DWORD)(DWORD_PTR)hRootWnd);
+		ghConEmuWnd = hRootWnd;
+	}
+	// Do AllowSetForegroundWindow
+	if (hRootWnd)
+	{
+		DWORD dwGuiThreadId = GetWindowThreadProcessId(hRootWnd, &gpSrv->dwGuiPID);
+		AllowSetForegroundWindow(gpSrv->dwGuiPID);
+	}
+	// "ConEmuHWND"="0x%08X", "ConEmuPID"="%u"
+	SetConEmuEnvVar(ghConEmuWnd);
+
+	// Drawing canvas & Background windows
+	_ASSERTE(ghConEmuWnd!=NULL || (hDcWnd==NULL && hBackWnd==NULL));
+	if (hDcWnd && !IsWindow(hDcWnd))
+	{
+		_ASSERTE(FALSE && "hDcWnd is invalid");
+		hDcWnd = NULL;
+	}
+	if (hBackWnd && !IsWindow(hBackWnd))
+	{
+		_ASSERTE(FALSE && "hBackWnd is invalid");
+		hBackWnd = NULL;
+	}
+	// Set new descriptors
+	if ((ghConEmuWndDC != hDcWnd) || (ghConEmuWndBack != hBackWnd))
+	{
+		_wsprintfA(szInfo+lstrlenA(szInfo), SKIPLEN(60) "WndDC=x%08X WndBack=x%08X", (DWORD)(DWORD_PTR)hDcWnd, (DWORD)(DWORD_PTR)hBackWnd);
+		ghConEmuWndDC = hDcWnd;
+		ghConEmuWndBack = hBackWnd;
+		// "ConEmuDrawHWND"="0x%08X", "ConEmuBackHWND"="0x%08X"
+		SetConEmuEnvVarChild(hDcWnd, hBackWnd);
+	}
+
+	if (gpLogSize && *szInfo)
+	{
+		LogFunction2(szInfo);
+	}
 }
 
 void CheckConEmuHwnd()
@@ -2081,7 +2131,8 @@ void CheckConEmuHwnd()
 	if (ghConEmuWnd == NULL)
 	{
 		// Если уж ничего не помогло...
-		ghConEmuWnd = GetConEmuHWND(TRUE/*abRoot*/);
+		LogFunction2("GetConEmuHWND");
+		ghConEmuWnd = GetConEmuHWND(1/*Gui Main window*/);
 	}
 
 	if (ghConEmuWnd)
@@ -2089,6 +2140,7 @@ void CheckConEmuHwnd()
 		if (!ghConEmuWndDC)
 		{
 			// ghConEmuWndDC по идее уже должен быть получен из GUI через пайпы
+			LogFunction2("Warning, ghConEmuWndDC still not initialized");
 			_ASSERTE(ghConEmuWndDC!=NULL);
 			HWND hBack = NULL, hDc = NULL;
 			wchar_t szClass[128];
@@ -2102,7 +2154,7 @@ void CheckConEmuHwnd()
 					hDc = (HWND)(DWORD)GetWindowLong(hBack, 4);
 					if (IsWindow(hDc) && GetClassName(hDc, szClass, countof(szClass) && !lstrcmp(szClass, VirtualConsoleClass)))
 					{
-						SetConEmuWindows(hDc, hBack);
+						SetConEmuWindows(ghConEmuWnd, hDc, hBack);
 						break;
 					}
 				}
@@ -2111,9 +2163,7 @@ void CheckConEmuHwnd()
 		}
 
 		// Установить переменную среды с дескриптором окна
-		SetConEmuEnvVar(ghConEmuWnd);
-		dwGuiThreadId = GetWindowThreadProcessId(ghConEmuWnd, &gpSrv->dwGuiPID);
-		AllowSetForegroundWindow(gpSrv->dwGuiPID);
+		SetConEmuWindows(ghConEmuWnd, ghConEmuWndDC, ghConEmuWndBack);
 
 		//if (hWndFore == ghConWnd || hWndFocus == ghConWnd)
 		//if (hWndFore != ghConEmuWnd)
@@ -2151,7 +2201,8 @@ bool TryConnect2Gui(HWND hGui, CESERVER_REQ* pIn)
 	// открыть дескриптор процесса сервера. Нужно будет ему помочь.
 	if (pIn->hdr.nCmd == CECMD_ATTACH2GUI)
 	{
-		_ASSERTE(pIn->DataSize() == sizeof(pIn->StartStop));
+		// CESERVER_REQ_STARTSTOP::sCmdLine[1] is variable length!
+		_ASSERTE(pIn->DataSize() >= sizeof(pIn->StartStop));
 		pIn->StartStop.hServerProcessHandle = NULL;
 
 		if (pIn->StartStop.bUserIsAdmin || gbAttachMode)
@@ -2265,8 +2316,8 @@ bool TryConnect2Gui(HWND hGui, CESERVER_REQ* pIn)
 
 	if (!gbAttachMode) // Часть с "обычным" запуском сервера
 	{
-		ghConEmuWnd = pStartStopRet->hWnd;
-		SetConEmuWindows(pStartStopRet->hWndDc, pStartStopRet->hWndBack);
+		SetConEmuWindows(pStartStopRet->hWnd, pStartStopRet->hWndDc, pStartStopRet->hWndBack);
+		_ASSERTE(gpSrv->dwGuiPID == pStartStopRet->dwPID);
 		gpSrv->dwGuiPID = pStartStopRet->dwPID;
 
 		// Limited logging of console contents (same output as processed by CECF_ProcessAnsi)
@@ -2293,8 +2344,8 @@ bool TryConnect2Gui(HWND hGui, CESERVER_REQ* pIn)
 	}
 	else // Запуск сервера "с аттачем" (это может быть RunAsAdmin и т.п.)
 	{
-		ghConEmuWnd = pStartStopRet->hWnd;
-		SetConEmuWindows(pStartStopRet->hWndDc, pStartStopRet->hWndBack);
+		SetConEmuWindows(pOut->StartStopRet.hWnd, pOut->StartStopRet.hWndDc, pOut->StartStopRet.hWndBack);
+		_ASSERTE(gpSrv->dwGuiPID == pOut->StartStopRet.dwPID);
 		gpSrv->dwGuiPID = pStartStopRet->dwPID;
 
 		// Limited logging of console contents (same output as processed by CECF_ProcessAnsi)
@@ -2340,7 +2391,7 @@ bool TryConnect2Gui(HWND hGui, CESERVER_REQ* pIn)
 		}
 
 		// Установить переменную среды с дескриптором окна
-		SetConEmuEnvVar(ghConEmuWnd);
+		SetConEmuWindows(ghConEmuWnd, ghConEmuWndDC, ghConEmuWndBack);
 
 		// Только если подцепились успешно
 		if (ghConEmuWnd)
@@ -4446,7 +4497,7 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 		{
 			gpSrv->bWasDetached = TRUE;
 			ghConEmuWnd = NULL;
-			SetConEmuWindows(NULL, NULL);
+			SetConEmuWindows(NULL, NULL, NULL);
 			gpSrv->dwGuiPID = 0;
 			UpdateConsoleMapHeader();
 			EmergencyShow(ghConWnd);
