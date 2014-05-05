@@ -12,6 +12,25 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
 
+2014.05.05
+[!] Limited logging of console contents.
+    Option ‘Inject ConEmuHk’ must be enabled to get that feature!
+    Only ‘Standard output’ will be logged (the same activity as processed
+    with ‘ANSI X3.64’ processor). So, certain Windows console API functions
+    will not be logged (Far Manager panels, for example).
+    You may choose folder for storing log-files, default is "%ConEmuDir%\Logs\".
+    Note! Default folder may be write-protected, if you've installed
+    ConEmu to "Program Files". So, you may need to choose write-enabled
+    folder.
+    Each console will share its own log-file, example: "ConEmu-YYYY-MM-DD-pPID.log".
+    So, if several processes will write to console output simultaneously,
+    you may get unpredictable result in your log-file.
+    By default, logging is disabled.
+[%] ANSI. Fix ‘no-color’ on new line.
+[%] ANSI. Fix ‘bad color cell’ on EOL.
+[*] ANSI. Do not break "\r\n" in two physical writes.
+
+
 2014.04.29
 [%] Issue 1557: Switch -new_console:u:"other_user:password" may lock the account of other_user (another way).
     Also, bad behavior of "-cur_console" reverted (15cff21 regression)
