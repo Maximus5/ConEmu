@@ -1064,7 +1064,7 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 		*/
 
 		SHORT ForceDumpX = 0;
-		bool BS = false;
+		bool BSRN = false;
 
 		// Обработка символов, которые двигают курсор
 		switch (*pCur)
@@ -1080,11 +1080,13 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 		case L'\r':
 			ForceDumpX = x2;
 			x2 = 0;
+			BSRN = true;
 			break;
 		case L'\n':
 			ForceDumpX = x2;
 			x2 = 0; y2++;
 			_ASSERTE(bWrap);
+			BSRN = true;
 			break;
 		case 7:
 			//Beep (no spacing)
@@ -1095,7 +1097,7 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 				ForceDumpX = x2;
 			if (x2>0)
 				x2--;
-			BS = true;
+			BSRN = true;
 			break;
 		default:
 			// Просто буква.
@@ -1123,7 +1125,7 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 		}
 
 		// После BS - сменить "начальную" координату
-		if (BS)
+		if (BSRN)
 			x = x2;
 
 		// При смене строки
