@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _COMMON_HEADER_HPP_
 
 // Interface version
-#define CESERVER_REQ_VER    136
+#define CESERVER_REQ_VER    137
 
 // Max tabs/panes count
 #define MAX_CONSOLE_COUNT 30
@@ -121,6 +121,7 @@ typedef struct _CONSOLE_SELECTION_INFO
 #define ENV_CONEMUBACK_VAR_W L"ConEmuBackHWND"
 #define ENV_CONEMUANSI_VAR_A  "ConEmuANSI"
 #define ENV_CONEMUANSI_VAR_W L"ConEmuANSI"
+#define ENV_CONEMUANSILOG_VAR_W L"ConEmuAnsiLog"
 #define ENV_CONEMUFAKEDT_VAR L"ConEmuFakeDT"
 #define ENV_CONEMUANSI_BUILD_W L"ConEmuBuild"
 #define ENV_CONEMUANSI_CONFIG_W L"ConEmuConfig"
@@ -176,6 +177,9 @@ typedef struct _CONSOLE_SELECTION_INFO
 #define CEDEFAULTTERMHOOKOK L"ConEmuDefaultTermOK.%u" // Взводится в ConEmuHk когда инициализация DefTerm началась (CEDEFAULTTERMHOOK больше не нужен)
 #define CEDEFAULTTERMHOOKWAIT 0 // Don't need timeout, because we wait for remote thread - WaitForSingleObject(hThread, INFINITE);
 //#define CEDEFAULTTERMMUTEX  L"IsConEmuDefaultTerm.%u" // Если Mutex есть - значит какая-то версия длл-ки уже была загружена в обрабатываемый процесс
+
+// File name format for AnsiLog
+#define CEANSILOGNAMEFMT    L"ConEmu-%u-%02u-%02u-p%u.log"
 
 // Events
 #define CEDATAREADYEVENT    L"ConEmuSrvDataReady.%u"
@@ -1300,6 +1304,16 @@ struct CEFAR_INFO_MAPPING
 };
 
 
+// Limited logging of console contents (same output as processed by CECF_ProcessAnsi)
+// Initialized during CECMD_SRVSTARTSTOP
+struct ConEmuAnsiLog
+{
+	BOOL    Enabled;
+	// Full path with name of log-file
+	wchar_t Path[MAX_PATH];
+};
+
+
 // CECONMAPNAME
 struct CESERVER_CONSOLE_MAPPING_HDR
 {
@@ -1340,6 +1354,9 @@ struct CESERVER_CONSOLE_MAPPING_HDR
 	//BOOL  bUseTrueColor; // включен флажок "TrueMod support"
 	//BOOL  bProcessAnsi;  // ANSI X3.64 & XTerm-256-colors Support
 	//DWORD bUseClink;     // использовать расширение командной строки (ReadConsole). 0 - нет, 1 - старая версия (0.1.1), 2 - новая версия
+
+	// Limited logging of console contents (same output as processed by CECF_ProcessAnsi)
+	ConEmuAnsiLog AnsiLog;
 	
 	// Перехват реестра
 	DWORD   isHookRegistry; // bitmask. 1 - supported, 2 - current
@@ -1517,6 +1534,7 @@ enum SrvStartStopType
 	srv_Stopped = 101,
 };
 
+// CECMD_SRVSTARTSTOP
 struct CESERVER_REQ_SRVSTARTSTOP
 {
 	SrvStartStopType Started;
@@ -1625,6 +1643,8 @@ struct CESERVER_REQ_STARTSTOPRET
 	u64   NewConsoleLang;
 	// Используется при CECMD_ATTACH2GUI
 	CESERVER_REQ_SETFONT Font;
+	// Limited logging of console contents (same output as processed by CECF_ProcessAnsi)
+	ConEmuAnsiLog AnsiLog;
 };
 
 struct CESERVER_REQ_POSTMSG

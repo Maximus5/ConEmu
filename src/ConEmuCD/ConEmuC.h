@@ -311,6 +311,7 @@ void _printf(LPCSTR asFormat, DWORD dw1, DWORD dw2, LPCWSTR asAddLine=NULL);
 #define _printf printf
 //#define _wprintf(s) wprintf(L"%s",s)
 #endif
+void print_error(DWORD dwErr = 0, LPCSTR asFormat = NULL);
 HWND Attach2Gui(DWORD nTimeout);
 
 int InjectRemote(DWORD nRemotePID, bool abDefTermOnly = false);
@@ -331,6 +332,7 @@ int CreateMapHeader();
 void CloseMapHeader();
 void CopySrvMapFromGuiMap();
 void UpdateConsoleMapHeader();
+void InitAnsiLog(const ConEmuAnsiLog& AnsiLog);
 int Compare(const CESERVER_CONSOLE_MAPPING_HDR* p1, const CESERVER_CONSOLE_MAPPING_HDR* p2);
 BOOL ReloadGuiSettings(ConEmuGuiMapping* apFromCmd);
 
@@ -544,6 +546,9 @@ struct SrvInfo
 	wchar_t szConsoleFont[LF_FACESIZE];
 	//wchar_t szConsoleFontFile[MAX_PATH]; -- не помогает
 	SHORT nConFontWidth, nConFontHeight;
+
+	// Limited logging of console contents (same output as processed by CECF_ProcessAnsi)
+	ConEmuAnsiLog AnsiLog;
 
 	// Когда была последняя пользовательская активность
 	DWORD dwLastUserTick;

@@ -124,10 +124,15 @@ public:
 	static bool IsAnsiCapable(HANDLE hFile, bool* bIsConsoleOutput = NULL);
 	static bool IsOutputHandle(HANDLE hFile, DWORD* pMode = NULL);
 
+	static void InitAnsiLog(LPCWSTR asFilePath);
+	static void DoneAnsiLog();
+
 	static void GetFeatures(bool* pbAnsiAllowed, bool* pbSuppressBells);
 
 	static HANDLE ghLastAnsiCapable /*= NULL*/;
 	static HANDLE ghLastAnsiNotCapable /*= NULL*/;
+	static HANDLE ghAnsiLogFile /*= NULL*/;
+	static CRITICAL_SECTION gcsAnsiLogFile;
 
 	static bool gbWasXTermOutput;
 
@@ -169,6 +174,7 @@ protected:
 	void WriteAnsiCode_VIM(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, AnsiEscCode& Code, BOOL& lbApply);
 	BOOL ReportString(LPCWSTR asRet);
 	void ReportConsoleTitle();
+	static void WriteAnsiLog(LPCWSTR lpBuffer, DWORD nChars);
 public:
 
 	void ReSetDisplayParm(HANDLE hConsoleOutput, BOOL bReset, BOOL bApply);

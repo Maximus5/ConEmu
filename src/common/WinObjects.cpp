@@ -2463,7 +2463,6 @@ BOOL MSectionLock::isLocked(BOOL abExclusiveOnly/*=FALSE*/)
 
 
 
-#ifndef CONEMU_MINIMAL
 MSectionLockSimple::MSectionLockSimple()
 {
 	mp_S = NULL;
@@ -2553,7 +2552,6 @@ BOOL MSectionLockSimple::isLocked()
 {
 	return mb_Locked;
 }
-#endif
 
 
 

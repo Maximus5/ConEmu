@@ -291,6 +291,8 @@ void Settings::ReleasePointers()
 	SafeFree(psCmdHistory); isSaveCmdHistory = true;
 	SafeFree(psDefaultTerminalApps);
 
+	SafeFree(pszAnsiLog);
+
 	FreeCmdTasks();
 	CmdTaskCount = 0;
 
@@ -579,6 +581,8 @@ void Settings::InitSettings()
 	SetDefaultTerminalApps(L"explorer.exe"/* to default value */); // "|"-delimited string -> MSZ
 
 	isProcessAnsi = true;
+	isAnsiLog = false;
+	pszAnsiLog = lstrdup(L"%ConEmuDir%\\Logs\\");
 	isProcessNewConArg = true;
 	isSuppressBells = false; // пока не доделано - false
 	isConsoleExceptionHandler = false; // по умолчанию - false
@@ -2313,6 +2317,8 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla, const SettingsStorage* ap
 		}
 
 		reg->Load(L"ProcessAnsi", isProcessAnsi);
+		reg->Load(L"AnsiLog", isAnsiLog);
+		reg->Load(L"AnsiLogPath", &pszAnsiLog);
 		reg->Load(L"ProcessNewConArg", isProcessNewConArg);
 
 		reg->Load(L"SuppressBells", isSuppressBells);
@@ -3314,6 +3320,8 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		}
 
 		reg->Save(L"ProcessAnsi", isProcessAnsi);
+		reg->Save(L"AnsiLog", isAnsiLog);
+		reg->Save(L"AnsiLogPath", pszAnsiLog);
 		reg->Save(L"ProcessNewConArg", isProcessNewConArg);
 
 		_ASSERTE(isSuppressBells==false); // пока не доделано - не сохраняем

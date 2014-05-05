@@ -217,7 +217,6 @@ class MSectionLock
 };
 
 
-#ifndef CONEMU_MINIMAL
 class MSectionLockSimple
 {
 	protected:
@@ -234,7 +233,6 @@ class MSectionLockSimple
 		MSectionLockSimple();
 		~MSectionLockSimple();
 };
-#endif
 
 
 #ifndef CONEMU_MINIMAL

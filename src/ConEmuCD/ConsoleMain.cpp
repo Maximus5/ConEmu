@@ -9691,6 +9691,21 @@ void _printf(LPCSTR asBuffer)
 
 #endif
 
+void print_error(DWORD dwErr/*= 0*/, LPCSTR asFormat/*= NULL*/)
+{
+	if (!dwErr)
+		dwErr = GetLastError();
+
+	wchar_t* lpMsgBuf = NULL;
+	FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM, NULL, dwErr, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPWSTR)&lpMsgBuf, 0, NULL);
+
+	_printf(asFormat ? asFormat : "\nErrCode=0x%08X, Description:\n", dwErr);
+	_wprintf((lpMsgBuf == NULL) ? L"<Unknown error>" : lpMsgBuf);
+
+	if (lpMsgBuf) LocalFree(lpMsgBuf);
+	SetLastError(dwErr);
+}
+
 bool IsOutputRedirected()
 {
 	static int isRedirected = 0;

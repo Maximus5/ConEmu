@@ -1348,6 +1348,10 @@ struct Settings
 		bool isUseInjects; // 0 - off, 1 - always /*, 2 - only executable*/. Note, Root process is infiltrated always.
 		//reg->Load(L"ProcessAnsi", isProcessAnsi);
 		bool isProcessAnsi; // ANSI X3.64 & XTerm-256-colors Support
+		//reg->Load(L"AnsiLog", isAnsiLog);
+		bool isAnsiLog; // Limited logging of console contents (same output as processed by CECF_ProcessAnsi)
+		//reg->Load(L"AnsiLogPath", &pszAnsiLog);
+		wchar_t* pszAnsiLog;
 		//reg->Load(L"ProcessNewConArg", isProcessNewConArg)
 		bool isProcessNewConArg; // Enable processing of '-new_console' and '-cur_console' switches in your shell prompt, scripts etc. started in ConEmu tabs
 		//reg->Load(L"UseClink", mb_UseClink);

@@ -93,9 +93,70 @@ static bool gbVimTermWasChangedBuffer = false;
 
 HANDLE CEAnsi::ghLastAnsiCapable = NULL;
 HANDLE CEAnsi::ghLastAnsiNotCapable = NULL;
+HANDLE CEAnsi::ghAnsiLogFile = NULL;
+CRITICAL_SECTION CEAnsi::gcsAnsiLogFile;
 
 // VIM, etc. Some programs waiting control keys as xterm sequences. Need to inform ConEmu GUI.
 bool CEAnsi::gbWasXTermOutput = false;
+
+void CEAnsi::InitAnsiLog(LPCWSTR asFilePath)
+{
+	// Already initialized?
+	if (ghAnsiLogFile)
+		return;
+
+	InitializeCriticalSection(&gcsAnsiLogFile);
+	HANDLE hLog = CreateFile(asFilePath, GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+	if (hLog && (hLog != INVALID_HANDLE_VALUE))
+	{
+		// Succeeded
+		ghAnsiLogFile = hLog;
+	}
+	else
+	{
+		DeleteCriticalSection(&gcsAnsiLogFile);
+	}
+}
+
+void CEAnsi::DoneAnsiLog()
+{
+	HANDLE h;
+	if (ghAnsiLogFile)
+	{
+		h = ghAnsiLogFile;
+		ghAnsiLogFile = NULL;
+		CloseHandle(h);
+		DeleteCriticalSection(&gcsAnsiLogFile);
+	}
+}
+
+void CEAnsi::WriteAnsiLog(LPCWSTR lpBuffer, DWORD nChars)
+{
+	if (!ghAnsiLogFile)
+		return;
+	char sBuf[80*3]; // Will be enough for most cases
+	BOOL bWrite = FALSE;
+	DWORD nWritten = 0;
+	int nNeed = WideCharToMultiByte(CP_UTF8, 0, lpBuffer, nChars, NULL, 0, NULL, NULL);
+	if (nNeed < 1)
+		return;
+	char* pszBuf = (nNeed <= countof(sBuf)) ? sBuf : (char*)malloc(nNeed);
+	if (!pszBuf)
+		return;
+	int nLen = WideCharToMultiByte(CP_UTF8, 0, lpBuffer, nChars, pszBuf, nNeed, NULL, NULL);
+	// Must be OK, but check it
+	if (nLen > 0 && nLen <= nNeed)
+	{
+		// Handle multi-thread writers
+		// But multi-process writers can't be handled correctly
+		MSectionLockSimple lock; lock.Lock(&gcsAnsiLogFile, 500);
+		SetFilePointer(ghAnsiLogFile, 0, NULL, FILE_END);
+		bWrite = WriteFile(ghAnsiLogFile, pszBuf, nLen, &nWritten, NULL);
+	}
+	if (pszBuf != sBuf)
+		free(pszBuf);
+	UNREFERENCED_PARAMETER(bWrite);
+}
 
 void CEAnsi::GetFeatures(bool* pbAnsiAllowed, bool* pbSuppressBells)
 {
@@ -876,6 +937,9 @@ BOOL /*WINAPI*/ CEAnsi::OnWriteConsoleW(HANDLE hConsoleOutput, const VOID *lpBuf
 
 	if (lpBuffer && nNumberOfCharsToWrite && IsAnsiCapable(hConsoleOutput, &bIsConOut))
 	{
+		if (ghAnsiLogFile)
+			CEAnsi::WriteAnsiLog((LPCWSTR)lpBuffer, nNumberOfCharsToWrite);
+
 		pObj = CEAnsi::Object();
 		if (pObj)
 		{
@@ -2342,7 +2406,7 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 					}
 					break;
 				case 21:
-					// 2 1 --> Report xterm window�s title as OSC l title ST 
+					// 2 1 --> Report xterm window�s title as OSC l title ST
 					ReportConsoleTitle();
 					break;
 				default:

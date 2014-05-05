@@ -414,6 +414,12 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 				ppReply->StartStopRet.hWndDc = hWndDC;
 				ppReply->StartStopRet.hWndBack = hWndBack;
 				ppReply->StartStopRet.dwPID = GetCurrentProcessId();
+				// Limited logging of console contents (same output as processed by CECF_ProcessAnsi)
+				ppReply->StartStopRet.AnsiLog.Enabled = gpSet->isAnsiLog;
+				// Max path = (MAX_PATH - "ConEmu-yyyy-mm-dd-p12345.log")
+				lstrcpyn(ppReply->StartStopRet.AnsiLog.Path,
+					(gpSet->isAnsiLog && gpSet->pszAnsiLog) ? gpSet->pszAnsiLog : L"",
+					countof(ppReply->StartStopRet.AnsiLog.Path)-32);
 			}
 			else if (pIn->SrvStartStop.Started == srv_Stopped)
 			{

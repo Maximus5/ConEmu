@@ -401,6 +401,7 @@ CESERVER_CONSOLE_MAPPING_HDR* GetConMap(BOOL abForceRecreate/*=FALSE*/)
 {
 	static bool bLastAnsi = false;
 	bool bAnsi = false;
+	bool bAnsiLog = false;
 
 	if (gpConInfo && !abForceRecreate)
 		goto wrap;
@@ -466,6 +467,11 @@ wrap:
 		#endif
 		bLastAnsi = bAnsi;
 		SetEnvironmentVariable(ENV_CONEMUANSI_VAR_W, bAnsi ? L"ON" : L"OFF");
+	}
+	bAnsiLog = ((gpConInfo != NULL) && (gpConInfo->AnsiLog.Enabled && *gpConInfo->AnsiLog.Path));
+	if (bAnsiLog)
+	{
+		CEAnsi::InitAnsiLog(gpConInfo->AnsiLog.Path);
 	}
 	return gpConInfo;
 }
@@ -1391,6 +1397,8 @@ void DllStop()
 	{
 		CEAnsi::StopVimTerm();
 	}
+
+	CEAnsi::DoneAnsiLog();
 
 	TODO("Stop redirection of ConIn/ConOut to our pipes to achieve PTTY in bash");
 	#ifdef _DEBUG
