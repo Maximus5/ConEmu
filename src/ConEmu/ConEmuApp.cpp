@@ -3453,6 +3453,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	bool LoadCfgFilePrm = false; TCHAR* LoadCfgFile = NULL;
 	bool SaveCfgFilePrm = false; TCHAR* SaveCfgFile = NULL;
 	bool UpdateSrcSetPrm = false; TCHAR* UpdateSrcSet = NULL;
+	bool AnsiLogPathPrm = false; TCHAR* AnsiLogPath = NULL;
 	bool SetUpDefaultTerminal = false;
 	bool ExitAfterActionPrm = false;
 #if 0
@@ -4072,6 +4073,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 						return 100;
 					}
 				}
+				else if (!klstricmp(curCommand, _T("/AnsiLog")) && i + 1 < params)
+				{
+					// используем последний из параметров, если их несколько
+					if (!GetCfgParm(i, curCommand, AnsiLogPathPrm, AnsiLogPath, MAX_PATH-40, true))
+					{
+						return 100;
+					}
+				}
 				else if (!klstricmp(curCommand, _T("/SetDefTerm")))
 				{
 					SetUpDefaultTerminal = true;
@@ -4195,6 +4204,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	if (UpdateSrcSetPrm)
 	{
 		gpSet->UpdSet.SetUpdateVerLocation(UpdateSrcSet);
+	}
+
+	// Force "AnsiLog" feature
+	if (AnsiLogPathPrm)
+	{
+		gpSet->isAnsiLog = (AnsiLogPath && *AnsiLogPath);
+		SafeFree(gpSet->pszAnsiLog);
+		gpSet->pszAnsiLog = AnsiLogPath;
+		AnsiLogPath = NULL;
 	}
 
 	gpConEmu->LogString(L"SettingsLoaded");
