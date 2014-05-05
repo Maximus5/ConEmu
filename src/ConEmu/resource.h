@@ -1008,6 +1008,9 @@
 #define gbExtendFonts                   2676
 #define gbAntiAliasing                  2677
 #define gbMainConFont                   2678
+#define cbAnsiLog                       2679
+#define sAnsiLogPath                    2680
+#define tAnsiLogPath                    2680
 
 // Next default values for new objects
 // 
@@ -1015,7 +1018,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        224
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2679
+#define _APS_NEXT_CONTROL_VALUE         2681
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif

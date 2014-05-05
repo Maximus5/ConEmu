@@ -2440,6 +2440,9 @@ LRESULT CSettings::OnInitDialog_Ext(HWND hWnd2)
 
 	checkDlgButton(hWnd2, cbProcessAnsi, gpSet->isProcessAnsi);
 
+	checkDlgButton(hWnd2, cbAnsiLog, gpSet->isAnsiLog);
+	SetDlgItemText(hWnd2, tAnsiLogPath, gpSet->pszAnsiLog ? gpSet->pszAnsiLog : L"");
+
 	checkDlgButton(hWnd2, cbProcessNewConArg, gpSet->isProcessNewConArg);
 
 	checkDlgButton(hWnd2, cbSuppressBells, gpSet->isSuppressBells);
@@ -5471,6 +5474,9 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			gpSet->isProcessAnsi = IsChecked(hWnd2, cbProcessAnsi);
 			gpConEmu->OnGlobalSettingsChanged();
 			break;
+		case cbAnsiLog:
+			gpSet->isAnsiLog = IsChecked(hWnd2, cbAnsiLog);
+			break;
 		case cbProcessNewConArg:
 			gpSet->isProcessNewConArg = IsChecked(hWnd2, cbProcessNewConArg);
 			gpConEmu->OnGlobalSettingsChanged();
@@ -7342,6 +7348,12 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		}
 		break;
 
+	case tAnsiLogPath:
+		{
+			SafeFree(gpSet->pszAnsiLog);
+			gpSet->pszAnsiLog = GetDlgItemText(hWnd2, tAnsiLogPath);
+		}
+		break;
 
 	/* *** GUI Macro - hotkeys *** */
 	case tGuiMacro:
