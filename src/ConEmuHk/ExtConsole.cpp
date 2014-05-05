@@ -1078,12 +1078,14 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 			}
 			break;
 		case L'\r':
-			ForceDumpX = x2;
+			if (x2 > 0)
+				ForceDumpX = x2-1;
 			x2 = 0;
 			BSRN = true;
 			break;
 		case L'\n':
-			ForceDumpX = x2;
+			if (x2 > 0)
+				ForceDumpX = x2-1;
 			x2 = 0; y2++;
 			_ASSERTE(bWrap);
 			BSRN = true;
