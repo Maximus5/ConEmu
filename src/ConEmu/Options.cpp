@@ -293,6 +293,10 @@ void Settings::ReleasePointers()
 
 	SafeFree(pszAnsiLog);
 
+	SafeFree(pszCTSIntelligentExceptions);
+	SafeFree(sFarGotoEditor);
+	SafeFree(pszTabSkipWords);
+
 	FreeCmdTasks();
 	CmdTaskCount = 0;
 
