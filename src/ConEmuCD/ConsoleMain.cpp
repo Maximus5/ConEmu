@@ -4717,7 +4717,12 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 		return iFRc;
 	}
 
+	// Параметры из комстроки разобраны. Здесь могут уже быть известны
+	// gpSrv->hGuiWnd {/GHWND}, gpSrv->dwGuiPID {/GPID}, gpSrv->dwGuiAID {/AID}
+	// gbAttachMode для ключей {/ADMIN}, {/ATTACH}, {/AUTOATTACH}, {/GUIATTACH}
 
+	// В принципе, gbAttachMode включается и при "/ADMIN", но при запуске из ConEmu такого быть не может,
+	// будут установлены и gpSrv->hGuiWnd, и gpSrv->dwGuiPID
 
 	// Issue 364, например, идет билд в VS, запускается CustomStep, в этот момент автоаттач нафиг не нужен
 	// Теоретически, в Студии не должно бы быть запуска ConEmuC.exe, но он может оказаться в "COMSPEC", так что проверим.
@@ -4748,6 +4753,9 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 
 		if (!gbAlternativeAttach && !gpSrv->dwRootProcess)
 		{
+			// В принципе, сюда мы можем попасть при запуске, например: "ConEmuC.exe /ADMIN /ROOT cmd"
+			// Но только не при запуске "из ConEmu" (т.к. будут установлены gpSrv->hGuiWnd, gpSrv->dwGuiPID)
+
 			// Из батника убрал, покажем инфу тут
 			PrintVersion();
 			char szAutoRunMsg[128];
