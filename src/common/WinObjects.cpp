@@ -91,13 +91,13 @@ void getWindowInfo(HWND ahWnd, wchar_t (&rsInfo)[1024])
 	else
 	{
 		wchar_t szClass[256], szTitle[512];
-		
+
 		// Избежать статической линковки для user32.dll
 		typedef int (WINAPI* GetClassName_t)(HWND hWnd,LPWSTR lpClassName,int nMaxCount);
 		static GetClassName_t GetClassName_f = NULL;
 		typedef int (WINAPI* GetWindowText_t)(HWND hWnd, LPWSTR lpString, int nMaxCount);
 		static GetWindowText_t GetWindowText_f = NULL;
-		
+
 		if (!GetClassName_f)
 		{
 			HMODULE hUser32 = GetModuleHandle(L"user32.dll");
@@ -113,7 +113,7 @@ void getWindowInfo(HWND ahWnd, wchar_t (&rsInfo)[1024])
 				GetWindowText_f = (GetWindowText_t)GetProcAddress(hUser32,"GetWindowTextW");
 			}
 		}
-		
+
 		if (!GetClassName_f || !GetClassName_f(ahWnd, szClass, 256)) wcscpy_c(szClass, L"<GetClassName failed>");
 		if (!GetWindowText_f || !GetWindowText_f(ahWnd, szTitle, 512)) szTitle[0] = 0;
 
@@ -135,8 +135,8 @@ BOOL apiSetForegroundWindow(HWND ahWnd)
 #endif
 
 #ifndef CONEMU_MINIMAL
-// If the window was previously visible, the return value is nonzero. 
-// If the window was previously hidden, the return value is zero. 
+// If the window was previously visible, the return value is nonzero.
+// If the window was previously hidden, the return value is zero.
 BOOL apiShowWindow(HWND ahWnd, int anCmdShow)
 {
 #ifdef _DEBUG
@@ -517,7 +517,7 @@ BOOL GetShortFileName(LPCWSTR asFullPath, int cchShortNameMax, wchar_t* rsShortN
 	{
 		return FALSE;
 	}
-	
+
 	if (lstrlen(fnd.cFileName) >= cchShortNameMax) //-V303
 		return FALSE;
 	_wcscpy_c(rsShortName, cchShortNameMax, fnd.cFileName); //-V106
@@ -528,13 +528,13 @@ wchar_t* GetShortFileNameEx(LPCWSTR asLong, BOOL abFavorLength/*=TRUE*/)
 {
 	if (!asLong)
 		return NULL;
-	
+
 	int nSrcLen = lstrlenW(asLong); //-V303
 	wchar_t* pszLong = lstrdup(asLong);
-	
+
 	int nMaxLen = nSrcLen + MAX_PATH; // "короткое" имя может более MAX_PATH
 	wchar_t* pszShort = (wchar_t*)calloc(nMaxLen, sizeof(wchar_t)); //-V106
-	
+
 	wchar_t* pszResult = NULL;
 	wchar_t* pszSrc = pszLong;
 	//wchar_t* pszDst = pszShort;
@@ -542,7 +542,7 @@ wchar_t* GetShortFileNameEx(LPCWSTR asLong, BOOL abFavorLength/*=TRUE*/)
 	wchar_t* szName = (wchar_t*)malloc((MAX_PATH+1)*sizeof(wchar_t));
 	bool     lbNetwork = false;
 	int      nLen, nCurLen = 0;
-	
+
 	// Если путь сетевой (или UNC?) пропустить префиксы/серверы
 	if (pszSrc[0] == L'\\' && pszSrc[1] == '\\')
 	{
@@ -569,10 +569,10 @@ wchar_t* GetShortFileNameEx(LPCWSTR asLong, BOOL abFavorLength/*=TRUE*/)
 			lbNetwork = true;
 		}
 	}
-	
+
 	if (pszSrc[0] == 0)
 		goto wrap;
-	
+
 	if (lbNetwork)
 	{
 		pszSlash = wcschr(pszSrc, L'\\');
@@ -594,16 +594,16 @@ wchar_t* GetShortFileNameEx(LPCWSTR asLong, BOOL abFavorLength/*=TRUE*/)
 		pszSlash = pszSrc + 2;
 		_wcscatn_c(pszShort, nMaxLen, pszSrc, (pszSlash-pszSrc+1)); // память выделяется calloc!
 	}
-	
+
 	nCurLen = lstrlenW(pszShort);
-	
+
 	while (pszSlash && (*pszSlash == L'\\'))
 	{
 		pszSrc = pszSlash;
 		pszSlash = wcschr(pszSrc+1, L'\\');
 		if (pszSlash)
 			*pszSlash = 0;
-		
+
 		if (!GetShortFileName(pszLong, MAX_PATH+1, szName, abFavorLength))
 			goto wrap;
 		nLen = lstrlenW(szName);
@@ -619,7 +619,7 @@ wchar_t* GetShortFileNameEx(LPCWSTR asLong, BOOL abFavorLength/*=TRUE*/)
 			pszShort[nCurLen++] = L'\\'; // память выделяется calloc!
 		}
 	}
-	
+
 	nLen = lstrlenW(pszShort);
 
 	if ((nLen > 0) && (pszShort[nLen-1] == L'\\'))
@@ -738,7 +738,7 @@ bool GetLogonSID (HANDLE hToken, wchar_t **ppszSID)
 	if (NULL == ppszSID)
 		goto Cleanup;
 	*ppszSID = NULL;
-		
+
 	if (!hToken)
 		bFreeToken = OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &hToken);
 
@@ -749,9 +749,9 @@ bool GetLogonSID (HANDLE hToken, wchar_t **ppszSID)
 		(LPVOID) ptu,   // pointer to TOKEN_USER buffer
 		0,              // size of buffer
 		&dwLength       // receives required buffer size
-	)) 
+	))
 	{
-		if (GetLastError() != ERROR_INSUFFICIENT_BUFFER) 
+		if (GetLastError() != ERROR_INSUFFICIENT_BUFFER)
 			goto Cleanup;
 
 		ptu = (PTOKEN_USER)calloc(dwLength,1);
@@ -768,7 +768,7 @@ bool GetLogonSID (HANDLE hToken, wchar_t **ppszSID)
 		(LPVOID) ptu,   // pointer to TOKEN_USER buffer
 		dwLength,       // size of buffer
 		&dwLength       // receives required buffer size
-	)) 
+	))
 	{
 		goto Cleanup;
 	}
@@ -778,14 +778,14 @@ bool GetLogonSID (HANDLE hToken, wchar_t **ppszSID)
 
 	bSuccess = true;
 
-Cleanup: 
+Cleanup:
 
 	// Free the buffer for the token groups.
 	if ((ptu != NULL) && (ptu != &user))
 		free(ptu);
 	if (bFreeToken && hToken)
 		CloseHandle(hToken);
-	
+
 	return bSuccess;
 }
 #endif
@@ -1262,7 +1262,7 @@ bool CheckCallbackPtr(HMODULE hModule, size_t ProcCount, FARPROC* CallBack, BOOL
 void RemoveOldComSpecC()
 {
 	wchar_t szComSpec[MAX_PATH], szComSpecC[MAX_PATH], szRealComSpec[MAX_PATH];
-	//110202 - comspec более не переопределяется, поэтому вернем "cmd", 
+	//110202 - comspec более не переопределяется, поэтому вернем "cmd",
 	// если был переопреден и унаследован от старой версии conemu
 	if (GetEnvironmentVariable(L"ComSpecC", szComSpecC, countof(szComSpecC)) && szComSpecC[0] != 0)
 	{
@@ -1392,7 +1392,7 @@ wchar_t* ExpandMacroValues(LPCWSTR pszFormat, LPCWSTR* pszValues, size_t nValCou
 		}
 
 		wchar_t* pDst = pszCommand;
-		
+
 		for (LPCWSTR pSrc = pszFormat; *pSrc; pSrc++)
 		{
 			LPCWSTR pszMacro = NULL;
@@ -1506,7 +1506,7 @@ wchar_t* GetFullPathNameEx(LPCWSTR asPath)
 			SafeFree(pszResult);
 		}
 	}
-	
+
 	if (!pszResult)
 	{
 		_ASSERTEX(pszResult!=NULL);
@@ -2393,9 +2393,9 @@ MSectionLock::~MSectionLock()
 		DWORD nCurTID = GetCurrentThreadId();
 
 		Unlock();
-		
+
 		#ifdef _DEBUG
-		wchar_t szDbg[80];		
+		wchar_t szDbg[80];
 		msprintf(szDbg, countof(szDbg), L"::~MSectionLock, TID=%u\n", nCurTID);
 		DebugString(szDbg);
 		#endif
@@ -2494,7 +2494,7 @@ BOOL MSectionLockSimple::Lock(CRITICAL_SECTION* apS, DWORD anTimeout/*=-1*/)
 	}
 
 	_ASSERTEX(!mb_Locked);
-	
+
 	bool bLocked = false;
 	DWORD nStartTick = GetTickCount();
 	DWORD nDelta;
@@ -2703,7 +2703,7 @@ HRESULT MFileLog::CreateLogFile(LPCWSTR asName /*= NULL*/, DWORD anPID /*= 0*/, 
 	            ms_FilePathName = (wchar_t*)calloc(cchMax,sizeof(*ms_FilePathName));
 	            if (!ms_FilePathName)
 	            	return -1;
-				
+
 	        	_wcscpy_c(ms_FilePathName, cchMax, szDesktop);
 	        	_wcscat_c(ms_FilePathName, cchMax, (szDesktop[cchDirLen-1] != L'\\') ? L"\\ConEmuLogs" : L"ConEmuLogs");
 				CreateDirectory(ms_FilePathName, NULL);
@@ -3009,7 +3009,7 @@ void MFileLog::LogStartEnv(CEStartupEnv* apStartEnv)
 		}
 		LogString(szSI, false);
 	}
-	
+
 	LogString("CmdLine: ", false, NULL, false);
 	LogString(apStartEnv->pszCmdLine ? apStartEnv->pszCmdLine : L"<NULL>", false, NULL, true);
 	LogString("ExecMod: ", false, NULL, false);
@@ -3111,7 +3111,7 @@ void CToolTip::ShowTip(HWND ahOwner, HWND ahControl, LPCWSTR asText, BOOL abBall
 	if (!asText || !*asText)
 		return;
 
-	
+
 	int nTipLen = lstrlen(asText);
 	if (!mpsz_LastTip || (nTipLen >= mn_LastTipCchMax))
 	{
@@ -3121,9 +3121,9 @@ void CToolTip::ShowTip(HWND ahOwner, HWND ahControl, LPCWSTR asText, BOOL abBall
 		mpsz_LastTip = (wchar_t*)malloc(mn_LastTipCchMax*sizeof(wchar_t));
 	}
 	_wcscpy_c(mpsz_LastTip, mn_LastTipCchMax, asText);
-	
+
 	TOOLINFO *pti = abBalloon ? (&mti_Ball) : (&mti_Tip);
-	
+
 	if (abBalloon)
 	{
 		if (!mh_Ball || !IsWindow(mh_Ball))
@@ -3165,16 +3165,16 @@ void CToolTip::ShowTip(HWND ahOwner, HWND ahControl, LPCWSTR asText, BOOL abBall
 			SendMessage(mh_Tip, TTM_SETDELAYTIME, TTDT_AUTOPOP, 30000);
 		}
 	}
-	
+
 	mb_LastTipBalloon = abBalloon;
-	
+
 	HWND hTip = abBalloon ? (mh_Ball) : (mh_Tip);
 	if (!hTip)
 	{
 		_ASSERTE(hTip != NULL);
 		return;
 	}
-	
+
 	pti->lpszText = mpsz_LastTip;
 
 	SendMessage(hTip, TTM_UPDATETIPTEXT, 0, (LPARAM)pti);
@@ -3183,14 +3183,14 @@ void CToolTip::ShowTip(HWND ahOwner, HWND ahControl, LPCWSTR asText, BOOL abBall
 	//int pty = (rcControl.top + rcControl.bottom) / 2;
 	SendMessage(hTip, TTM_TRACKPOSITION, 0, MAKELONG(pt.x,pt.y));
 	SendMessage(hTip, TTM_TRACKACTIVATE, TRUE, (LPARAM)pti);
-	
+
 	//SetTimer(hDlg, FAILED_FONT_TIMERID, nTimeout/*FAILED_FONT_TIMEOUT*/, 0);
 }
 void CToolTip::HideTip()
 {
 	HWND hTip = (mb_LastTipBalloon == 0) ? mh_Tip : mh_Ball;
 	TOOLINFO *pti = (mb_LastTipBalloon == 0) ? (&mti_Tip) : (&mti_Ball);
-	
+
 	if (hTip)
 		SendMessage(hTip, TTM_TRACKACTIVATE, FALSE, (LPARAM)pti);
 }
@@ -3463,7 +3463,7 @@ void FindComspec(ConEmuComspec* pOpt, bool bCmdAlso /*= true*/)
 		// Попытаться "в лоб" из "Program Files"
 		if (!*pOpt->Comspec32 && !*pOpt->Comspec64)
 		{
-			
+
 			const wchar_t* pszTcmd  = L"C:\\Program Files\\JPSoft\\TCMD13\\tcc.exe";
 			const wchar_t* pszTccLe = L"C:\\Program Files\\JPSoft\\TCCLE13\\tcc.exe";
 			if (FileExists(pszTcmd))
@@ -3644,7 +3644,7 @@ void UpdateComspec(ConEmuComspec* pOpt, bool DontModifyPath /*= false*/)
 
 					// Need to find exact match!
 					bool bFound = false;
-						
+
 					LPCWSTR pszFind = wcsstr(pszUpr, pszDirUpr);
 					while (pszFind)
 					{
@@ -3682,7 +3682,7 @@ void UpdateComspec(ConEmuComspec* pOpt, bool DontModifyPath /*= false*/)
 			}
 
 			MCHKHEAP;
-				
+
 			SafeFree(pszUpr);
 			SafeFree(pszDirUpr);
 
