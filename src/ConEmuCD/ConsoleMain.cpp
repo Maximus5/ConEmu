@@ -2362,7 +2362,7 @@ int CheckAttachProcess()
 	}
 	else if (pfnGetConsoleProcessList==NULL)
 	{
-		wcscpy_c(szFailMsg, L"Attach to GUI was requested, but required WinXP or higher!");
+		wcscpy_c(szFailMsg, L"Attach to console app was requested, but required WinXP or higher!");
 		lbArgsFailed = TRUE;
 		// will return CERR_CARGUMENT
 	}
@@ -2375,7 +2375,7 @@ int CheckAttachProcess()
 		// иначе смысла в аттаче нет
 		if (nProcCount < 2)
 		{
-			wcscpy_c(szFailMsg, L"Attach to GUI was requested, but there is no console processes!");
+			wcscpy_c(szFailMsg, L"Attach to console app was requested, but there is no console processes!");
 			lbArgsFailed = TRUE;
 			//will return CERR_CARGUMENT
 		}
