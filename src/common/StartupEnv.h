@@ -112,6 +112,7 @@ CEStartupEnv* LoadStartupEnv()
 		DWORD nRights = KEY_READ|WIN3264TEST((IsWindows64() ? KEY_WOW64_64KEY : 0),0);
 		if (0 == RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Console\\TrueTypeFont", 0, nRights, &hk))
 		{
+			bool bIsDBCS = (GetSystemMetrics(SM_DBCSENABLED) != 0);
 			DWORD idx = 0, cchName = countof(szName), cchValue = sizeof(szValue)-2, dwType;
 			LONG iRc;
 			wchar_t* psz = pszFonts;
@@ -121,13 +122,29 @@ CEStartupEnv* LoadStartupEnv()
 				int nNameLen = lstrlen(szName);
 				int nValLen = lstrlen(szValue);
 				int nLen = nNameLen+nValLen+3;
-				if (nLen < nLenMax)
+
+				wchar_t* pszEndPtr = NULL;
+				int cp = wcstol(szName, &pszEndPtr, 10);
+				// Standard console fonts are stored with named "0", "00", "000", etc.
+				// But some hieroglyph fonts can be stored for special codepages ("950", "936", etc)
+				if (cp)
 				{
-					if (idx > 1) *(psz++) = L'\t';
+					// Is codepage supported by our console host?
+					// No way to check that...
+					// All function reporting "Valid CP"
+					// Checked: GetCPInfo, GetCPInfoEx, IsValidCodePage, WideCharToMultiByte
+					if (!bIsDBCS)
+						cp = -1; // No need to store this font
+				}
+
+				if ((cp != -1) && (nLen < nLenMax))
+				{
+					if (*pszFonts) *(psz++) = L'\t';
 					lstrcpy(psz, szName); psz+= nNameLen;
 					*(psz++) = L'\t';
 					lstrcpy(psz, szValue); psz+= nValLen;
 				}
+
 				cchName = countof(szName); cchValue = sizeof(szValue)-2;
 			}
 			RegCloseKey(hk);
