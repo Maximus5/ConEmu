@@ -572,6 +572,8 @@ void OnProcessCreatedDbg(BOOL bRc, DWORD dwErr, LPPROCESS_INFORMATION pProcessIn
 
 BOOL createProcess(BOOL abSkipWowChange, LPCWSTR lpApplicationName, LPWSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment, LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation)
 {
+	LogFunction("createProcess");
+
 	MWow64Disable wow;
 	if (!abSkipWowChange)
 		wow.Disable();
@@ -2683,6 +2685,8 @@ enum ConEmuStateCheck
 
 bool DoStateCheck(ConEmuStateCheck eStateCheck)
 {
+	LogFunction("DoStateCheck");
+
 	bool bOn = false;
 
 	switch (eStateCheck)
@@ -4688,6 +4692,7 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 		}
 	}
 
+	LogFunction("ParseCommandLine{in-progress}");
 
 	// Some checks or actions
 	if (eStateCheck || eExecAction)

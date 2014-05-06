@@ -146,7 +146,7 @@ void ServerInitFont()
 				_wsprintfA(szLogInfo, SKIPLEN(countof(szLogInfo)) "Console font size H=%i W=%i N=", curSizeY, curSizeX);
 				int nLen = lstrlenA(szLogInfo);
 				WideCharToMultiByte(CP_UTF8, 0, sFontName, -1, szLogInfo+nLen, countof(szLogInfo)-nLen, NULL, NULL);
-				LogFunction2(szLogInfo);
+				LogFunction(szLogInfo);
 			}
 		}
 
@@ -2082,7 +2082,7 @@ void SetConEmuWindows(HWND hRootWnd, HWND hDcWnd, HWND hBackWnd)
 
 	if (gpLogSize && *szInfo)
 	{
-		LogFunction2(szInfo);
+		LogFunction(szInfo);
 	}
 }
 
@@ -2131,7 +2131,7 @@ void CheckConEmuHwnd()
 	if (ghConEmuWnd == NULL)
 	{
 		// Если уж ничего не помогло...
-		LogFunction2("GetConEmuHWND");
+		LogFunction("GetConEmuHWND");
 		ghConEmuWnd = GetConEmuHWND(1/*Gui Main window*/);
 	}
 
@@ -2140,7 +2140,7 @@ void CheckConEmuHwnd()
 		if (!ghConEmuWndDC)
 		{
 			// ghConEmuWndDC по идее уже должен быть получен из GUI через пайпы
-			LogFunction2("Warning, ghConEmuWndDC still not initialized");
+			LogFunction("Warning, ghConEmuWndDC still not initialized");
 			_ASSERTE(ghConEmuWndDC!=NULL);
 			HWND hBack = NULL, hDc = NULL;
 			wchar_t szClass[128];
@@ -3279,6 +3279,7 @@ void CloseMapHeader()
 // Limited logging of console contents (same output as processed by CECF_ProcessAnsi)
 void InitAnsiLog(const ConEmuAnsiLog& AnsiLog)
 {
+	LogFunction("InitAnsiLog");
 	// Reset first
 	SetEnvironmentVariable(ENV_CONEMUANSILOG_VAR_W, L"");
 	gpSrv->AnsiLog.Enabled = FALSE;

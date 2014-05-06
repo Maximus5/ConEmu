@@ -69,8 +69,9 @@ public:
 	CLogFunction(const char* asFnName);
 	~CLogFunction();
 };
-#define LogFunction(fn) CLogFunction logFunction(fn)
-#define LogFunction2(fn) CLogFunction logFunction2(fn)
+#define LogFunction_Cat2(n,i) n##i
+#define LogFunction_Cat1(n,i) LogFunction_Cat2(n,i)
+#define LogFunction(fn) CLogFunction LogFunction_Cat1(logFunction,__COUNTER__)(fn)
 
 #ifdef _DEBUG
 //CRITICAL_ SECTION gcsHeap;
