@@ -5960,8 +5960,8 @@ void CreateLogSizeFile(int nLevel)
 		else
 		{
 			// Иначе - попытаться найти соответствующий файл GUI
-			wcscat_c(szDir, WIN3264TEST(L"\\ConEmu.exe", L"\\ConEmu64.exe"));
-			if (FileExists(szDir))
+			wchar_t szGuiFiles[] = L"\\ConEmu.exe" L"\0" L"\\ConEmu64.exe" L"\0\0";
+			if (FilesExists(szDir, szGuiFiles))
 			{
 				pszDir = szFile; // GUI лежит в той же папке, что и "сервер"
 			}
@@ -5969,8 +5969,7 @@ void CreateLogSizeFile(int nLevel)
 			{
 				// На уровень выше?
 				*pszDir = 0;
-				wcscat_c(szDir, WIN3264TEST(L"\\ConEmu.exe", L"\\ConEmu64.exe"));
-				if (FileExists(szDir))
+				if (FilesExists(szDir, szGuiFiles))
 				{
 					*pszDir = 0;
 					pszDir = szDir; // GUI лежит в родительской папке
