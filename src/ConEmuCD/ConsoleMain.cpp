@@ -171,7 +171,7 @@ BOOL    gbAutoDisableConfirmExit = FALSE; // если корневой проц�
 BOOL    gbRootAliveLess10sec = FALSE; // корневой процесс проработал менее CHECK_ROOTOK_TIMEOUT
 int     gbRootWasFoundInCon = 0;
 BOOL    gbComspecInitCalled = FALSE;
-AttachModeEnum gbAttachMode = am_None; // сервер запущен НЕ из conemu.exe (а из плагина, из CmdAutoAttach, или -new_console, или /GUIATTACH)
+AttachModeEnum gbAttachMode = am_None; // сервер запущен НЕ из conemu.exe (а из плагина, из CmdAutoAttach, или -new_console, или /GUIATTACH, или /ADMIN)
 BOOL    gbAlienMode = FALSE;  // сервер НЕ является владельцем консоли (корневым процессом этого консольного окна)
 BOOL    gbForceHideConWnd = FALSE;
 DWORD   gdwMainThreadId = 0;
@@ -2355,6 +2355,7 @@ int CheckAttachProcess()
 			_wsprintf(szFailMsg, SKIPLEN(countof(szFailMsg)) L"Attach of GUI application was requested,\n"
 				L"but required HWND(0x%08X) not found!", (DWORD)gpSrv->hRootProcessGui);
 			lbArgsFailed = TRUE;
+			// will return CERR_CARGUMENT
 		}
 		else
 		{
@@ -2365,6 +2366,7 @@ int CheckAttachProcess()
 					L"but PID(%u) of HWND(0x%08X) does not match Root(%u)!",
 					nPid, (DWORD)gpSrv->hRootProcessGui, gpSrv->dwRootProcess);
 				lbArgsFailed = TRUE;
+				// will return CERR_CARGUMENT
 			}
 		}
 	}
@@ -2372,11 +2374,7 @@ int CheckAttachProcess()
 	{
 		wcscpy_c(szFailMsg, L"Attach to GUI was requested, but required WinXP or higher!");
 		lbArgsFailed = TRUE;
-		//_wprintf (GetCommandLineW());
-		//_printf ("\n");
-		//_ASSERTE(FALSE);
-		//gbInShutdown = TRUE; // чтобы в консоль не гадить
-		//return CERR_CARGUMENT;
+		// will return CERR_CARGUMENT
 	}
 	else
 	{
@@ -2389,10 +2387,7 @@ int CheckAttachProcess()
 		{
 			wcscpy_c(szFailMsg, L"Attach to GUI was requested, but there is no console processes!");
 			lbArgsFailed = TRUE;
-			//_wprintf (GetCommandLineW());
-			//_printf ("\n");
-			//_ASSERTE(FALSE);
-			//return CERR_CARGUMENT;
+			//will return CERR_CARGUMENT
 		}
 		// не помню, зачем такая проверка была введена, но (nProcCount > 2) мешает аттачу.
 		// в момент запуска сервера (/ATTACH /PID=n) еще жив родительский (/ATTACH /NOCMD)
@@ -2435,22 +2430,19 @@ int CheckAttachProcess()
 			{
 				_wsprintf(szFailMsg, SKIPLEN(countof(szFailMsg)) L"Attach to GUI was requested, but\n" L"root process (%u) does not exists", gpSrv->dwRootProcess);
 				lbArgsFailed = TRUE;
+				//will return CERR_CARGUMENT
 			}
 			else if ((gpSrv->dwRootProcess == 0) && (nProcCount > 2))
 			{
 				_wsprintf(szFailMsg, SKIPLEN(countof(szFailMsg)) L"Attach to GUI was requested, but\n" L"there is more than 2 console processes: %s\n", szProc);
 				lbArgsFailed = TRUE;
+				//will return CERR_CARGUMENT
 			}
-
-			//PRINT_COMSPEC(L"Attach to GUI was requested, but there is more then 2 console processes: %s\n", szProc);
-			//_ASSERTE(FALSE);
-			//return CERR_CARGUMENT;
 		}
 	}
 
 	if (lbArgsFailed)
 	{
-
 		LPCWSTR pszCmdLine = GetCommandLineW(); if (!pszCmdLine) pszCmdLine = L"";
 
 		int nCmdLen = lstrlen(szFailMsg) + lstrlen(pszCmdLine) + 16;
@@ -2461,6 +2453,7 @@ int CheckAttachProcess()
 		wchar_t szTitle[64]; _wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuC, PID=%u", GetCurrentProcessId());
 		MessageBox(NULL, pszMsg, szTitle, MB_ICONSTOP|MB_SYSTEMMODAL);
 		free(pszMsg);
+
 		gbInShutdown = TRUE;
 		return CERR_CARGUMENT;
 	}
@@ -4790,6 +4783,7 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 
 	xf_check();
 
+	// iRc is result of our ‘NextArg(&lsCmdLine,...)’
 	if (iRc != 0)
 	{
 		if (iRc == CERR_CMDLINEEMPTY)
