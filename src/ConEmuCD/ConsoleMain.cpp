@@ -3911,8 +3911,13 @@ void CdToProfileDir()
 		GetEnvironmentVariable(L"USERPROFILE", szPath, countof(szPath));
 	if (szPath)
 		bRc = SetCurrentDirectory(szPath);
-	// Смысла логировать нет, т.к. gpLogSize еще не инициализирован
-	if (gpLogSize) LogString(bRc ? "Work dir changed to %USERPROFILE%" : "Failed cd to %USERPROFILE%");
+	// Write action to log file
+	if (gpLogSize)
+	{
+		wchar_t* pszMsg = lstrmerge(bRc ? L"Work dir changed to %USERPROFILE%: " : L"CD failed to %USERPROFILE%: ", szPath);
+		gpLogSize->LogString(pszMsg);
+		SafeFree(pszMsg);
+	}
 }
 
 // Разбор параметров командной строки
@@ -3939,6 +3944,7 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 	LPCWSTR pwszStartCmdLine = asCmdLine;
 	LPCWSTR lsCmdLine = asCmdLine;
 	BOOL lbNeedCutStartEndQuot = FALSE;
+	bool lbNeedCdToProfileDir = false;
 
 	ConEmuStateCheck eStateCheck = ec_None;
 	ConEmuExecAction eExecAction = ea_None;
@@ -4619,7 +4625,7 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 		}
 		else if (lstrcmpi(szArg, L"/PROFILECD")==0)
 		{
-			CdToProfileDir();
+			lbNeedCdToProfileDir = true;
 		}
 		else if (wcscmp(szArg, L"/A")==0 || wcscmp(szArg, L"/a")==0)
 		{
@@ -4686,6 +4692,13 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 	}
 
 	LogFunction("ParseCommandLine{in-progress}");
+
+	// Switch "/PROFILECD" used when server to be started under different credentials as GUI.
+	// So, we need to do "cd %USERPROFILE%" which is more suitable to user.
+	if (lbNeedCdToProfileDir)
+	{
+		CdToProfileDir();
+	}
 
 	// Some checks or actions
 	if (eStateCheck || eExecAction)
