@@ -4605,11 +4605,11 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 		{
 			gpSrv->DbgInfo.nDebugDumpProcess = 1;
 		}
-		else if (lstrcmpi(szArg, L"/MINIDUMP")==0 || (gpSrv->DbgInfo.bDebugProcess && lstrcmpi(szArg, L"/MINI")==0))
+		else if (lstrcmpi(szArg, L"/MINIDUMP")==0 || lstrcmpi(szArg, L"/MINI")==0)
 		{
 			gpSrv->DbgInfo.nDebugDumpProcess = 2;
 		}
-		else if (lstrcmpi(szArg, L"/FULLDUMP")==0 || (gpSrv->DbgInfo.bDebugProcess && lstrcmpi(szArg, L"/FULL")==0))
+		else if (lstrcmpi(szArg, L"/FULLDUMP")==0 || lstrcmpi(szArg, L"/FULL")==0)
 		{
 			gpSrv->DbgInfo.nDebugDumpProcess = 3;
 		}
