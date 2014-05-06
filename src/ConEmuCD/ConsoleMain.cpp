@@ -4420,6 +4420,8 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 			if (lstrcmpi(szArg+7, L"NEW") == 0)
 			{
 				gpSrv->hGuiWnd = NULL;
+				_ASSERTE(gpSrv->dwGuiPID == 0);
+				gpSrv->dwGuiPID = 0;
 				gpSrv->bRequestNewGuiWnd = TRUE;
 			}
 			else
@@ -4438,6 +4440,11 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 					_ASSERTE(FALSE && "Invalid window was specified in /GHWND arg");
 					return CERR_CARGUMENT;
 				}
+
+				DWORD nPID = 0;
+				GetWindowThreadProcessId(gpSrv->hGuiWnd, &nPID);
+				_ASSERTE(gpSrv->dwGuiPID == 0 || gpSrv->dwGuiPID == nPID);
+				gpSrv->dwGuiPID = nPID;
 			}
 		}
 		else if (wcsncmp(szArg, L"/TA=", 4)==0)
