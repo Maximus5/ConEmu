@@ -4718,10 +4718,6 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 	}
 
 
-	if ((gnRunMode == RM_SERVER) && gpSrv->hGuiWnd)
-	{
-		ReloadGuiSettings(NULL);
-	}
 
 	// Issue 364, например, идет билд в VS, запускается CustomStep, в этот момент автоаттач нафиг не нужен
 	// Теоретически, в Студии не должно бы быть запуска ConEmuC.exe, но он может оказаться в "COMSPEC", так что проверим.
@@ -4820,6 +4816,18 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 		_printf("\n");
 		_ASSERTE(FALSE);
 		return CERR_CARGUMENT;
+	}
+
+	xf_check();
+
+	// Prepare our environment and GUI window
+	if (gnRunMode == RM_SERVER)
+	{
+		// We need to reserve or start new ConEmu tab/window...
+
+		// Если уже известен HWND ConEmu (root window)
+		if (gpSrv->hGuiWnd)
+			ReloadGuiSettings(NULL);
 	}
 
 	xf_check();
