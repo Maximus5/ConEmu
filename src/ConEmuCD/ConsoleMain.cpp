@@ -2335,16 +2335,6 @@ int CheckAttachProcess()
 {
 	LogFunction("CheckAttachProcess");
 
-	HWND hConEmu = GetConEmuHWND(1/*Gui Main window*/);
-
-	if (hConEmu && IsWindow(hConEmu))
-	{
-		// Console already attached
-		// Ругаться наверное вообще не будем
-		gbInShutdown = TRUE;
-		return CERR_CARGUMENT;
-	}
-
 	BOOL lbArgsFailed = FALSE;
 	wchar_t szFailMsg[512]; szFailMsg[0] = 0;
 
