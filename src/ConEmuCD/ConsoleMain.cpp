@@ -4758,33 +4758,37 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 
 	xf_check();
 
-	if ((gnRunMode == RM_SERVER) || (gpSrv->DbgInfo.bDebugProcess && (gnRunMode == RM_UNDEFINED)))
+	// Debugger or minidump requested?
+	// Switches ‘/DEBUGPID=PID1[,PID2[...]]’ to debug already running process
+	// or ‘/DEBUGEXE <your command line>’ or ‘/DEBUGTREE <your command line>’
+	// to start new process and debug it (and its children if ‘/DEBUGTREE’)
+	if (gpSrv->DbgInfo.bDebugProcess)
 	{
-		if (gpSrv->DbgInfo.bDebugProcess)
+		_ASSERTE(gnRunMode == RM_UNDEFINED);
+		// Run debugger thread and wait for its completion
+		int iDbgRc = RunDebugger();
+		return iDbgRc;
+	}
+
+	// Validate Сonsole (find it may be) or ChildGui process we need to attach into ConEmu window
+	if ((gnRunMode == RM_SERVER) && (gbNoCreateProcess && gbAttachMode))
+	{
+		// Проверить процессы в консоли, подобрать тот, который будем считать "корневым"
+		int nChk = CheckAttachProcess();
+
+		if (nChk != 0)
+			return nChk;
+
+		gpszRunCmd = (wchar_t*)calloc(1,2);
+
+		if (!gpszRunCmd)
 		{
-			// Запустить поток дебаггера и дождаться его завершения
-			int iDbgRc = RunDebugger();
-			return iDbgRc;
+			_printf("Can't allocate 1 wchar!\n");
+			return CERR_NOTENOUGHMEM1;
 		}
-		else if (gbNoCreateProcess && gbAttachMode)
-		{
-			// Проверить процессы в консоли, подобрать тот, который будем считать "корневым"
-			int nChk = CheckAttachProcess();
 
-			if (nChk != 0)
-				return nChk;
-
-			gpszRunCmd = (wchar_t*)calloc(1,2);
-
-			if (!gpszRunCmd)
-			{
-				_printf("Can't allocate 1 wchar!\n");
-				return CERR_NOTENOUGHMEM1;
-			}
-
-			gpszRunCmd[0] = 0;
-			return 0;
-		}
+		gpszRunCmd[0] = 0;
+		return 0;
 	}
 
 	xf_check();
