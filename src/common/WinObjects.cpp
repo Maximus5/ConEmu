@@ -284,6 +284,49 @@ bool FileExists(LPCWSTR asFilePath, DWORD* pnSize /*= NULL*/)
 	return lbFound;
 }
 
+// asDirectory - folder, where to check files (doesn't have to have trailing "\")
+// asFileList  - "\0" separated, "\0\0" teminated list of file names (may have subfolders)
+bool FilesExists(LPCWSTR asDirectory, LPCWSTR asFileList, bool abAll /*= false*/)
+{
+	if (!asDirectory || !*asDirectory)
+		return false;
+	if (!asFileList || !*asFileList)
+		return false;
+
+	bool bFound = false;
+	wchar_t* pszBuf = NULL;
+	LPCWSTR pszCur = asFileList;
+	int nDirLen = lstrlen(asDirectory);
+
+	while (*pszCur)
+	{
+		int nNameLen = lstrlen(pszCur);
+		if (asDirectory[nDirLen-1] != L'\\' && *pszCur != L'\\')
+			pszBuf = lstrmerge(asDirectory, L"\\", pszCur);
+		else
+			pszBuf = lstrmerge(asDirectory, pszCur);
+
+		bool bFile = FileExists(pszBuf);
+		SafeFree(pszBuf);
+
+		if (bFile)
+		{
+			bFound = true;
+			if (!abAll)
+				break;
+		}
+		else if (abAll)
+		{
+			bFound = false;
+			break;
+		}
+
+		pszCur += nNameLen+1;
+	}
+
+	return bFound;
+}
+
 bool FileExistsSearch(wchar_t* rsFilePath, size_t cchPathMax)
 {
 	if (!rsFilePath || !*rsFilePath)
