@@ -923,7 +923,7 @@ int ServerInit(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/)
 	// при показе консоли через Ctrl+Win+Alt+Space
 	// Но вот если консоль уже видима, и это "/root", тогда
 	// попытаемся поставить окну консоли флаг "OnTop"
-	if (!gbNoCreateProcess && !gpSrv->DbgInfo.bDebugProcess && !gbIsWine /*&& !gnDefPopupColors*/)
+	if (!gbNoCreateProcess && !gbIsWine)
 	{
 		//if (!gbVisibleOnStartup)
 		//	ShowWindow(ghConWnd, SW_HIDE);
