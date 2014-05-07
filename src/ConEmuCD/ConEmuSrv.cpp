@@ -607,7 +607,7 @@ int ServerInitGuiTab()
 	LogFunction("ServerInitGuiTab");
 
 	int iRc = CERR_ATTACH_NO_GUIWND;
-
+	DWORD nWaitRc = 99;
 	HWND hGuiWnd = FindConEmuByPID();
 
 	if (hGuiWnd == NULL)
@@ -616,7 +616,8 @@ int ServerInitGuiTab()
 		{
 			// Если запускается сервер - то он должен смочь найти окно ConEmu в которое его просят
 			_ASSERTEX((hGuiWnd!=NULL));
-			return CERR_ATTACH_NO_GUIWND;
+			_ASSERTE(iRc == CERR_ATTACH_NO_GUIWND);
+			goto wrap;
 		}
 		else
 		{
@@ -631,7 +632,8 @@ int ServerInitGuiTab()
 		if (!pIn)
 		{
 			_ASSERTEX(pIn);
-			return CERR_NOTENOUGHMEM1;
+			iRc = CERR_NOTENOUGHMEM1;
+			goto wrap;
 		}
 		pIn->SrvStartStop.Started = srv_Started; // сервер запущен
 		pIn->SrvStartStop.hConWnd = ghConWnd;
@@ -642,11 +644,14 @@ int ServerInitGuiTab()
 		{
 			iRc = 0;
 		}
+		else
+		{
+			ASSERTE(FALSE && "TryConnect2Gui failed");
+		}
 
 		ExecuteFreeResult(pIn);
 	}
 
-	DWORD nWaitRc = 99;
 	if (gpSrv->hConEmuGuiAttached)
 	{
 		DEBUGTEST(DWORD t1 = GetTickCount());
@@ -663,7 +668,7 @@ int ServerInitGuiTab()
 	}
 
 	CheckConEmuHwnd();
-
+wrap:
 	return iRc;
 }
 
