@@ -353,15 +353,19 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 
 		case CECMD_ATTACH2GUI:
 		{
+			MCHKHEAP;
+
 			// Получен запрос на Attach из сервера
-			pcbReplySize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_STARTSTOPRET);
+			pcbReplySize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_SRVSTARTSTOPRET);
 			if (!ExecuteNewCmd(ppReply, pcbMaxReplySize, pIn->hdr.nCmd, pcbReplySize))
 				goto wrap;
 			//CESERVER_REQ* pOut = ExecuteNewCmd(CECMD_ATTACH2GUI, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_STARTSTOPRET));
 
-			CVConGroup::AttachRequested(pIn->StartStop.hWnd, &(pIn->StartStop), &(ppReply->StartStopRet));
+			CVConGroup::AttachRequested(pIn->StartStop.hWnd, &(pIn->StartStop), &(ppReply->SrvStartStopRet));
 
 			_ASSERTE((ppReply->StartStopRet.nBufferHeight == 0) || ((int)ppReply->StartStopRet.nBufferHeight > (pIn->StartStop.sbi.srWindow.Bottom-pIn->StartStop.sbi.srWindow.Top)));
+
+			MCHKHEAP;
 
 			lbRc = TRUE;
 			//ExecuteFreeResult(pOut);
@@ -370,7 +374,9 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 
 		case CECMD_SRVSTARTSTOP:
 		{
-			pcbReplySize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_STARTSTOPRET);
+			MCHKHEAP;
+
+			pcbReplySize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_SRVSTARTSTOPRET);
 			if (!ExecuteNewCmd(ppReply, pcbMaxReplySize, pIn->hdr.nCmd, pcbReplySize))
 				goto wrap;
 
@@ -410,16 +416,14 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 				//pIn->dwData[0] = (DWORD)ghWnd; //-V205
 				//pIn->dwData[1] = (DWORD)dwRc; //-V205
 				//pIn->dwData[0] = (l == 0) ? 0 : 1;
-				ppReply->StartStopRet.hWnd = ghWnd;
-				ppReply->StartStopRet.hWndDc = hWndDC;
-				ppReply->StartStopRet.hWndBack = hWndBack;
-				ppReply->StartStopRet.dwPID = GetCurrentProcessId();
+				ppReply->SrvStartStopRet.Info.hWnd = ghWnd;
+				ppReply->SrvStartStopRet.Info.hWndDc = hWndDC;
+				ppReply->SrvStartStopRet.Info.hWndBack = hWndBack;
+				ppReply->SrvStartStopRet.Info.dwPID = GetCurrentProcessId();
 				// Limited logging of console contents (same output as processed by CECF_ProcessAnsi)
-				ppReply->StartStopRet.AnsiLog.Enabled = gpSet->isAnsiLog;
-				// Max path = (MAX_PATH - "ConEmu-yyyy-mm-dd-p12345.log")
-				lstrcpyn(ppReply->StartStopRet.AnsiLog.Path,
-					(gpSet->isAnsiLog && gpSet->pszAnsiLog) ? gpSet->pszAnsiLog : L"",
-					countof(ppReply->StartStopRet.AnsiLog.Path)-32);
+				gpConEmu->GetAnsiLogInfo(ppReply->SrvStartStopRet.AnsiLog);
+				// Return GUI info, let it be in one place
+				gpConEmu->GetGuiInfo(ppReply->SrvStartStopRet.GuiMapping);
 			}
 			else if (pIn->SrvStartStop.Started == srv_Stopped)
 			{
@@ -449,6 +453,8 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 			{
 				_ASSERTE((pIn->dwData[0] == 1) || (pIn->dwData[0] == 101));
 			}
+
+			MCHKHEAP;
 
 			lbRc = TRUE;
 			//// Отправляем

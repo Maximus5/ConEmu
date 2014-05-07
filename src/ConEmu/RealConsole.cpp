@@ -798,7 +798,7 @@ void CRealConsole::SyncConsole2Window(BOOL abNtvdmOff/*=FALSE*/, LPRECT prcNewWn
 
 // Вызывается при аттаче (после детача), или после RunAs?
 // sbi передавать не ссылкой, а копией, ибо та же память
-BOOL CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, const CESERVER_REQ_STARTSTOP* rStartStop, CESERVER_REQ_STARTSTOPRET* pRet)
+BOOL CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, const CESERVER_REQ_STARTSTOP* rStartStop, CESERVER_REQ_SRVSTARTSTOPRET* pRet)
 {
 	DWORD dwErr = 0;
 	HANDLE hProcess = NULL;
@@ -957,28 +957,32 @@ BOOL CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, const CESER
 	//SetConsoleSize(MakeCoord(TextWidth,TextHeight));
 	// Командой - низя, т.к. сервер сейчас только что запустился и ждет GUI
 	//SetConsoleSize(rcCon.right,rcCon.bottom);
-	pRet->bWasBufferHeight = bCurBufHeight;
-	pRet->hWnd = ghWnd;
-	pRet->hWndDc = mp_VCon->GetView();
-	pRet->hWndBack = mp_VCon->GetBack();
-	pRet->dwPID = GetCurrentProcessId();
-	pRet->nBufferHeight = bCurBufHeight ? lsbi.dwSize.Y : 0;
-	pRet->nWidth = rcCon.right;
-	pRet->nHeight = rcCon.bottom;
-	pRet->dwMainSrvPID = anConemuC_PID;
-	pRet->dwAltSrvPID = 0;
-	pRet->bNeedLangChange = TRUE;
+	pRet->Info.bWasBufferHeight = bCurBufHeight;
+	pRet->Info.hWnd = ghWnd;
+	pRet->Info.hWndDc = mp_VCon->GetView();
+	pRet->Info.hWndBack = mp_VCon->GetBack();
+	pRet->Info.dwPID = GetCurrentProcessId();
+	pRet->Info.nBufferHeight = bCurBufHeight ? lsbi.dwSize.Y : 0;
+	pRet->Info.nWidth = rcCon.right;
+	pRet->Info.nHeight = rcCon.bottom;
+	pRet->Info.dwMainSrvPID = anConemuC_PID;
+	pRet->Info.dwAltSrvPID = 0;
+	pRet->Info.bNeedLangChange = TRUE;
 	TODO("Проверить на x64, не будет ли проблем с 0xFFFFFFFFFFFFFFFFFFFFF");
-	pRet->NewConsoleLang = gpConEmu->GetActiveKeyboardLayout();
+	pRet->Info.NewConsoleLang = gpConEmu->GetActiveKeyboardLayout();
 	// Установить шрифт для консоли
 	pRet->Font.cbSize = sizeof(pRet->Font);
 	pRet->Font.inSizeY = gpSet->ConsoleFont.lfHeight;
 	pRet->Font.inSizeX = gpSet->ConsoleFont.lfWidth;
 	lstrcpy(pRet->Font.sFontName, gpSet->ConsoleFont.lfFaceName);
+	// Limited logging of console contents (same output as processed by CECF_ProcessAnsi)
+	gpConEmu->GetAnsiLogInfo(pRet->AnsiLog);
+	// Return GUI info, let it be in one place
+	gpConEmu->GetGuiInfo(pRet->GuiMapping);
 	// Передернуть нить MonitorThread
 	SetMonitorThreadEvent();
 
-	_ASSERTE((pRet->nBufferHeight == 0) || ((int)pRet->nBufferHeight > (rStartStop->sbi.srWindow.Bottom-rStartStop->sbi.srWindow.Top)));
+	_ASSERTE((pRet->Info.nBufferHeight == 0) || ((int)pRet->Info.nBufferHeight > (rStartStop->sbi.srWindow.Bottom-rStartStop->sbi.srWindow.Top)));
 
 	return TRUE;
 }

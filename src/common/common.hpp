@@ -1641,10 +1641,19 @@ struct CESERVER_REQ_STARTSTOPRET
 	DWORD dwPrevAltServerPID;
 	BOOL  bNeedLangChange;
 	u64   NewConsoleLang;
+};
+
+// Result of CESERVER_REQ_SRVSTARTSTOP
+struct CESERVER_REQ_SRVSTARTSTOPRET
+{
+	// Main values
+	CESERVER_REQ_STARTSTOPRET Info;
 	// Используется при CECMD_ATTACH2GUI
 	CESERVER_REQ_SETFONT Font;
 	// Limited logging of console contents (same output as processed by CECF_ProcessAnsi)
 	ConEmuAnsiLog AnsiLog;
+	// Avoid space calls, let do all in one place
+	ConEmuGuiMapping GuiMapping;
 };
 
 struct CESERVER_REQ_POSTMSG
@@ -1937,6 +1946,7 @@ struct CESERVER_REQ
 		CESERVER_REQ_OUTPUTFILE OutputFile;
 		CESERVER_REQ_NEWCMD NewCmd;
 		CESERVER_REQ_SRVSTARTSTOP SrvStartStop;
+		CESERVER_REQ_SRVSTARTSTOPRET SrvStartStopRet;
 		CESERVER_REQ_STARTSTOP StartStop;
 		CESERVER_REQ_STARTSTOPRET StartStopRet;
 		CESERVER_REQ_CONEMUTAB Tabs;

@@ -2608,6 +2608,21 @@ void CConEmuMain::InitComSpecStr(ConEmuComspec& ComSpec)
 	wcscpy_c(ComSpec.ConEmuBaseDir, ms_ConEmuBaseDir);
 }
 
+void CConEmuMain::GetGuiInfo(ConEmuGuiMapping& GuiInfo)
+{
+	GuiInfo = m_GuiInfo;
+}
+
+void CConEmuMain::GetAnsiLogInfo(ConEmuAnsiLog &AnsiLog)
+{
+	// Limited logging of console contents (same output as processed by CECF_ProcessAnsi)
+	AnsiLog.Enabled = gpSet->isAnsiLog;
+	// Max path = (MAX_PATH - "ConEmu-yyyy-mm-dd-p12345.log")
+	lstrcpyn(AnsiLog.Path,
+		(gpSet->isAnsiLog && gpSet->pszAnsiLog) ? gpSet->pszAnsiLog : L"",
+		countof(AnsiLog.Path)-32);
+}
+
 void CConEmuMain::UpdateGuiInfoMapping()
 {
 	m_GuiInfo.nProtocolVersion = CESERVER_REQ_VER;

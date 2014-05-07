@@ -192,6 +192,10 @@ class CConEmuMain :
 		ConEmuGuiMapping m_GuiInfo;
 		MFileMapping<ConEmuGuiMapping> m_GuiInfoMapping;
 		MFileMapping<ConEmuGuiMapping> m_GuiAttachMapping;
+	public:
+		void GetGuiInfo(ConEmuGuiMapping& GuiInfo);
+		void GetAnsiLogInfo(ConEmuAnsiLog &AnsiLog);
+	private:
 		void FillConEmuMainFont(ConEmuMainFont* pFont);
 		void UpdateGuiInfoMapping();
 		static bool UpdateGuiInfoMappingFill(CVirtualConsole* pVCon, LPARAM lParam);

@@ -2293,9 +2293,9 @@ bool TryConnect2Gui(HWND hGui, CESERVER_REQ* pIn)
 	}
 
 	// Этот блок if-else нужно вынести в отдельную функцию инициализции сервера (для аттача и обычный)
-	CESERVER_REQ_STARTSTOPRET* pStartStopRet = (pOut->DataSize() >= sizeof(CESERVER_REQ_STARTSTOPRET)) ? &pOut->StartStopRet : NULL;
+	CESERVER_REQ_SRVSTARTSTOPRET* pStartStopRet = (pOut->DataSize() >= sizeof(CESERVER_REQ_SRVSTARTSTOPRET)) ? &pOut->SrvStartStopRet : NULL;
 
-	if (!pStartStopRet || !pStartStopRet->hWnd || !pStartStopRet->hWndDc || !pStartStopRet->hWndBack)
+	if (!pStartStopRet || !pStartStopRet->Info.hWnd || !pStartStopRet->Info.hWndDc || !pStartStopRet->Info.hWndBack)
 	{
 		gpSrv->ConnectInfo.nErr = GetLastError();
 
@@ -2308,9 +2308,9 @@ bool TryConnect2Gui(HWND hGui, CESERVER_REQ* pIn)
 			L"hWnd=x%08X, hWndDC=x%08X, hWndBack=x%08X",
 			szServerPipe, (pOut ? pOut->hdr.nCmd : 0),
 			gpSrv->ConnectInfo.nErr, (pOut ? L"OK" : L"NULL"), pOut->DataSize(),
-			pStartStopRet ? (DWORD)pStartStopRet->hWnd : 0,
-			pStartStopRet ? (DWORD)pStartStopRet->hWndDc : 0,
-			pStartStopRet ? (DWORD)pStartStopRet->hWndBack : 0);
+			pStartStopRet ? (DWORD)pStartStopRet->Info.hWnd : 0,
+			pStartStopRet ? (DWORD)pStartStopRet->Info.hWndDc : 0,
+			pStartStopRet ? (DWORD)pStartStopRet->Info.hWndBack : 0);
 		MessageBox(NULL, szDbgMsg, szTitle, MB_SYSTEMMODAL);
 		SetLastError(gpSrv->ConnectInfo.nErr);
 		#endif
@@ -2318,27 +2318,21 @@ bool TryConnect2Gui(HWND hGui, CESERVER_REQ* pIn)
 		goto wrap;
 	}
 
+	_ASSERTE(pStartStopRet->GuiMapping.cbSize == sizeof(pStartStopRet->GuiMapping));
+
+	SetConEmuWindows(pStartStopRet->Info.hWnd, pStartStopRet->Info.hWndDc, pStartStopRet->Info.hWndBack);
+	_ASSERTE(gpSrv->dwGuiPID == pStartStopRet->Info.dwPID);
+	gpSrv->dwGuiPID = pStartStopRet->Info.dwPID;
+	_ASSERTE(ghConEmuWnd!=NULL && "Must be set!");
+
+	// Refresh settings
+	ReloadGuiSettings(&pStartStopRet->GuiMapping);
+
+	// Limited logging of console contents (same output as processed by CECF_ProcessAnsi)
+	InitAnsiLog(pStartStopRet->AnsiLog);
 
 	if (!gbAttachMode) // Часть с "обычным" запуском сервера
 	{
-		SetConEmuWindows(pStartStopRet->hWnd, pStartStopRet->hWndDc, pStartStopRet->hWndBack);
-		_ASSERTE(gpSrv->dwGuiPID == pStartStopRet->dwPID);
-		gpSrv->dwGuiPID = pStartStopRet->dwPID;
-
-		// Limited logging of console contents (same output as processed by CECF_ProcessAnsi)
-		InitAnsiLog(pOut->StartStopRet.AnsiLog);
-
-		// Обновить настройки через GuiMapping
-		if (ghConEmuWnd)
-		{
-			ReloadGuiSettings(NULL);
-			bConnected = true;
-		}
-		else
-		{
-			_ASSERTE(ghConEmuWnd!=NULL && "Must be set!");
-		}
-
 		#ifdef _DEBUG
 		DWORD nGuiPID; GetWindowThreadProcessId(ghConEmuWnd, &nGuiPID);
 		_ASSERTEX(pOut->hdr.nSrcPID==nGuiPID);
@@ -2349,20 +2343,15 @@ bool TryConnect2Gui(HWND hGui, CESERVER_REQ* pIn)
 	}
 	else // Запуск сервера "с аттачем" (это может быть RunAsAdmin и т.п.)
 	{
-		SetConEmuWindows(pOut->StartStopRet.hWnd, pOut->StartStopRet.hWndDc, pOut->StartStopRet.hWndBack);
-		_ASSERTE(gpSrv->dwGuiPID == pOut->StartStopRet.dwPID);
-		gpSrv->dwGuiPID = pStartStopRet->dwPID;
-
-		// Limited logging of console contents (same output as processed by CECF_ProcessAnsi)
-		InitAnsiLog(pOut->StartStopRet.AnsiLog);
-
+		_ASSERTE(pOut->hdr.nCmd==CECMD_ATTACH2GUI);
 		_ASSERTE(gpSrv->pConsoleMap != NULL); // мэппинг уже должен быть создан,
 		_ASSERTE(gpSrv->pConsole != NULL); // и локальная копия тоже
+
 		//gpSrv->pConsole->info.nGuiPID = pStartStopRet->dwPID;
 		CESERVER_CONSOLE_MAPPING_HDR *pMap = gpSrv->pConsoleMap->Ptr();
 		if (pMap)
 		{
-			pMap->nGuiPID = pStartStopRet->dwPID;
+			pMap->nGuiPID = pStartStopRet->Info.dwPID;
 			pMap->hConEmuRoot = ghConEmuWnd;
 			pMap->hConEmuWndDc = ghConEmuWndDC;
 			pMap->hConEmuWndBack = ghConEmuWndBack;
@@ -2389,28 +2378,25 @@ bool TryConnect2Gui(HWND hGui, CESERVER_REQ* pIn)
 				ServerInitFont();
 			}
 
-			COORD crNewSize = {(SHORT)pStartStopRet->nWidth, (SHORT)pStartStopRet->nHeight};
+			COORD crNewSize = {(SHORT)pStartStopRet->Info.nWidth, (SHORT)pStartStopRet->Info.nHeight};
 			//SMALL_RECT rcWnd = {0,pIn->StartStop.sbi.srWindow.Top};
 			SMALL_RECT rcWnd = {0};
-			SetConsoleSize((USHORT)pStartStopRet->nBufferHeight, crNewSize, rcWnd, "Attach2Gui:Ret");
+			SetConsoleSize((USHORT)pStartStopRet->Info.nBufferHeight, crNewSize, rcWnd, "Attach2Gui:Ret");
 		}
+	}
 
-		// Установить переменную среды с дескриптором окна
-		SetConEmuWindows(ghConEmuWnd, ghConEmuWndDC, ghConEmuWndBack);
-
-		// Только если подцепились успешно
-		if (ghConEmuWnd)
-		{
-			CheckConEmuHwnd();
-			bConnected = true;
-		}
-		else
-		{
-			//-- не надо, это сделает вызывающая функция
-			//SetTerminateEvent(ste_Attach2GuiFailed);
-			//DisableAutoConfirmExit();
-			_ASSERTE(bConnected == false);
-		}
+	// Только если подцепились успешно
+	if (ghConEmuWnd)
+	{
+		CheckConEmuHwnd();
+		bConnected = true;
+	}
+	else
+	{
+		//-- не надо, это сделает вызывающая функция
+		//SetTerminateEvent(ste_Attach2GuiFailed);
+		//DisableAutoConfirmExit();
+		_ASSERTE(bConnected == false);
 	}
 
 wrap:

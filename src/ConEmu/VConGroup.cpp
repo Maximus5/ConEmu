@@ -3063,7 +3063,7 @@ int CVConGroup::GetConCount(bool bNoDetached /*= false*/)
 	return nCount;
 }
 
-BOOL CVConGroup::AttachRequested(HWND ahConWnd, const CESERVER_REQ_STARTSTOP* pStartStop, CESERVER_REQ_STARTSTOPRET* pRet)
+BOOL CVConGroup::AttachRequested(HWND ahConWnd, const CESERVER_REQ_STARTSTOP* pStartStop, CESERVER_REQ_SRVSTARTSTOPRET* pRet)
 {
 	CVConGuard VCon;
 	bool bFound = false;
