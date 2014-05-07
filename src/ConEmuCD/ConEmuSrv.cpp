@@ -1093,7 +1093,8 @@ int ServerInit(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/)
 
 
 	// Проверка. Для дебаггера должен быть RM_UNDEFINED!
-	_ASSERTE(!(gpSrv->DbgInfo.bDebuggerActive || gpSrv->DbgInfo.bDebugProcess || gpSrv->DbgInfo.bDebugProcessTree) || gnRunMode == RM_UNDEFINED);
+	// И он не должен быть "сервером" - работает как обычное приложение!
+	_ASSERTE(!(gpSrv->DbgInfo.bDebuggerActive || gpSrv->DbgInfo.bDebugProcess || gpSrv->DbgInfo.bDebugProcessTree));
 
 	if (!gbAttachMode && !gpSrv->DbgInfo.bDebuggerActive)
 	{
