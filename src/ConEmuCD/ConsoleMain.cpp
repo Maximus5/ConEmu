@@ -5057,30 +5057,19 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 	}
 	else
 	{
-		// Если определена ComSpecC - значит ConEmuC переопределил стандартный ComSpec
-		//WARNING("TCC/ComSpec");
-		if (!GetEnvironmentVariable(L"ComSpecC", gszComSpec, MAX_PATH) || gszComSpec[0] == 0)
-			if (!GetEnvironmentVariable(L"ComSpec", gszComSpec, MAX_PATH) || gszComSpec[0] == 0)
-				gszComSpec[0] = 0;
+		gszComSpec[0] = 0;
 
-		if (gszComSpec[0] != 0)
+		#ifdef _DEBUG
+		// ComSpec больше не переопределяется.
+		// Для надежности и проверки уже был вызван RemoveOldComSpecC()
+		if (GetEnvironmentVariable(L"ComSpecC", gszComSpec, MAX_PATH))
 		{
-			// Только если это (случайно) не conemuc.exe
-			//pwszCopy = wcsrchr(gszComSpec, L'\\'); if (!pwszCopy) pwszCopy = gszComSpec;
-			LPCWSTR pwszCopy = PointToName(gszComSpec);
-#ifndef __GNUC__
-#pragma warning( push )
-#pragma warning(disable : 6400)
-#endif
+			_ASSERTE(gszComSpec[0] == 0);
+        }
+		#endif
 
-			if (lstrcmpiW(pwszCopy, L"ConEmuC")==0 || lstrcmpiW(pwszCopy, L"ConEmuC.exe")==0
-			        /*|| lstrcmpiW(pwszCopy, L"ConEmuC64")==0 || lstrcmpiW(pwszCopy, L"ConEmuC64.exe")==0*/)
-				gszComSpec[0] = 0;
-
-#ifndef __GNUC__
-#pragma warning( pop )
-#endif
-		}
+		if (!GetEnvironmentVariable(L"ComSpec", gszComSpec, MAX_PATH) || gszComSpec[0] == 0)
+			gszComSpec[0] = 0;
 
 		// ComSpec/ComSpecC не определен, используем cmd.exe
 		if (gszComSpec[0] == 0)
