@@ -354,6 +354,21 @@ int NextArg(const wchar_t** asCmdLine, CmdArg &rsArg, const wchar_t** rsArgStart
 }
 
 
+int AddEndSlash(wchar_t* rsPath, int cchMax)
+{
+	if (!rsPath || !*rsPath)
+		return 0;
+	int nLen = lstrlen(rsPath);
+	if (rsPath[nLen-1] != L'\\')
+	{
+		if (cchMax >= (nLen+2))
+		{
+			rsPath[nLen++] = L'\\'; rsPath[nLen] = 0;
+		}
+	}
+	return nLen;
+}
+
 
 const wchar_t* SkipNonPrintable(const wchar_t* asParams)
 {

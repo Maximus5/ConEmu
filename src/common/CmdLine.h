@@ -68,6 +68,7 @@ public:
 
 int NextArg(const wchar_t** asCmdLine, CmdArg &rsArg, const wchar_t** rsArgStart=NULL);
 
+int AddEndSlash(wchar_t* rsPath, int cchMax);
 const wchar_t* SkipNonPrintable(const wchar_t* asParams);
 bool CompareFileMask(const wchar_t* asFileName, const wchar_t* asMask);
 LPCWSTR GetDrive(LPCWSTR pszPath, wchar_t* szDrive, int/*countof(szDrive)*/ cchDriveMax);

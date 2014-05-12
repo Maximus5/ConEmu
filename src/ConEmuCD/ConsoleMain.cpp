@@ -3931,6 +3931,45 @@ void CdToProfileDir()
 	}
 }
 
+#ifndef WIN64
+void CheckNeedSkipWowChange(LPCWSTR asCmdLine)
+{
+	LogFunction("CheckNeedSkipWowChange");
+
+	// Команды вида: C:\Windows\SysNative\reg.exe Query "HKCU\Software\Far2"|find "Far"
+	// Для них нельзя отключать редиректор (wow.Disable()), иначе SysNative будет недоступен
+	if (IsWindows64())
+	{
+		LPCWSTR pszTest = asCmdLine;
+		CmdArg szApp;
+
+		if (NextArg(&pszTest, szApp) == 0)
+		{
+			wchar_t szSysnative[MAX_PATH+32];
+			int nLen = GetWindowsDirectory(szSysnative, MAX_PATH);
+
+			if (nLen >= 2 && nLen < MAX_PATH)
+			{
+				AddEndSlash(szSysnative, countof(szSysnative));
+				wcscat_c(szSysnative, L"Sysnative\\");
+				nLen = lstrlenW(szSysnative);
+				int nAppLen = lstrlenW(szApp);
+
+				if (nAppLen > nLen)
+				{
+					szApp.ms_Arg[nLen] = 0;
+
+					if (lstrcmpiW(szApp, szSysnative) == 0)
+					{
+						gbSkipWowChange = TRUE;
+					}
+				}
+			}
+		}
+	}
+}
+#endif
+
 // Разбор параметров командной строки
 int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackgroundTab*/)
 {
@@ -5001,45 +5040,13 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 		}
 	}
 
-#ifndef WIN64
 
+	#ifndef WIN64
 	// Команды вида: C:\Windows\SysNative\reg.exe Query "HKCU\Software\Far2"|find "Far"
 	// Для них нельзя отключать редиректор (wow.Disable()), иначе SysNative будет недоступен
-	if (IsWindows64())
-	{
-		LPCWSTR pszTest = lsCmdLine;
-		CmdArg szApp;
+	CheckNeedSkipWowChange(lsCmdLine);
+	#endif
 
-		if (NextArg(&pszTest, szApp) == 0)
-		{
-			wchar_t szSysnative[MAX_PATH+32];
-			int nLen = GetWindowsDirectory(szSysnative, MAX_PATH);
-
-			if (nLen >= 2 && nLen < MAX_PATH)
-			{
-				if (szSysnative[nLen-1] != L'\\')
-				{
-					szSysnative[nLen++] = L'\\'; szSysnative[nLen] = 0;
-				}
-
-				lstrcatW(szSysnative, L"Sysnative\\");
-				nLen = lstrlenW(szSysnative);
-				int nAppLen = lstrlenW(szApp);
-
-				if (nAppLen > nLen)
-				{
-					szApp.ms_Arg[nLen] = 0;
-
-					if (lstrcmpiW(szApp, szSysnative) == 0)
-					{
-						gbSkipWowChange = TRUE;
-					}
-				}
-			}
-		}
-	}
-
-#endif
 	nCmdLine = lstrlenW(lsCmdLine);
 
 	if (!gbRunViaCmdExe)
