@@ -1342,19 +1342,6 @@ void RemoveOldComSpecC()
 		SetEnvironmentVariable(L"ComSpec", szRealComSpec);
 		SetEnvironmentVariable(L"ComSpecC", NULL);
 	}
-		//// Только если это (случайно) не conemuc.exe
-		//wchar_t* pwszCopy = (wchar_t*)PointToName(szComSpec); //wcsrchr(szComSpec, L'\\');
-		////if (!pwszCopy) pwszCopy = szComSpec;
-
-		//if (lstrcmpiW(pwszCopy, L"ConEmuC")==0 || lstrcmpiW(pwszCopy, L"ConEmuC.exe")==0
-		//        /*|| lstrcmpiW(pwszCopy, L"ConEmuC64")==0 || lstrcmpiW(pwszCopy, L"ConEmuC64.exe")==0*/)
-		//	szComSpec[0] = 0;
-		//#pragma warning( pop )
-
-		//if (szComSpec[0])
-		//{
-		//}
-
 }
 #endif
 

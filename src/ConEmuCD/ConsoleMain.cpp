@@ -5128,47 +5128,16 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 		CheckUnicodeMode();
 
 		// -- для унификации - окавычиваем всегда
-		//if (wcschr(gszComSpec, L' '))
-		{
-			gpszRunCmd[0] = L'"';
-			_wcscpy_c(gpszRunCmd+1, nCchLen-1, gszComSpec);
+		gpszRunCmd[0] = L'"';
+		_wcscpy_c(gpszRunCmd+1, nCchLen-1, gszComSpec);
 
-			if (gnCmdUnicodeMode)
-				_wcscat_c(gpszRunCmd, nCchLen, (gnCmdUnicodeMode == 2) ? L" /U" : L" /A");
+		if (gnCmdUnicodeMode)
+			_wcscat_c(gpszRunCmd, nCchLen, (gnCmdUnicodeMode == 2) ? L" /U" : L" /A");
 
-			_wcscat_c(gpszRunCmd, nCchLen, gpSrv->bK ? L"\" /K " : L"\" /C ");
-		}
-		//else
-		//{
-		//	_wcscpy_c(gpszRunCmd, nCchLen, gszComSpec);
+		_wcscat_c(gpszRunCmd, nCchLen, gpSrv->bK ? L"\" /K " : L"\" /C ");
 
-		//	if (gnCmdUnicodeMode)
-		//		_wcscat_c(gpszRunCmd, nCchLen, (gnCmdUnicodeMode == 2) ? L" /U" : L" /A");
-
-		//	_wcscat_c(gpszRunCmd, nCchLen, gpSrv->bK ? L" /K " : L" /C ");
-		//}
-
-		// Наверное можно положиться на фар, и не кавычить самостоятельно
-		//BOOL lbNeedQuatete = FALSE;
-		// Команды в cmd.exe лучше передавать так:
-		// ""c:\program files\arc\7z.exe" -?"
-		//int nLastChar = lstrlenW(lsCmdLine) - 1;
-		//if (lsCmdLine[0] == L'"' && lsCmdLine[nLastChar] == L'"') {
-		//	// Наверное можно положиться на фар, и не кавычить самостоятельно
-		//	if (gnRunMode == RM_COMSPEC)
-		//		lbNeedQuatete = FALSE;
-		//	//if (lsCmdLine[1] == L'"' && lsCmdLine[2])
-		//	//	lbNeedQuatete = FALSE; // уже
-		//	//else if (wcschr(lsCmdLine+1, L'"') == (lsCmdLine+nLastChar))
-		//	//	lbNeedQuatete = FALSE; // не требуется. внутри кавычек нет
-		//}
-		//if (lbNeedQuatete) { // надо
-		//	lstrcatW(gpszRunCmd, L"\"" );
-		//}
 		// Собственно, командная строка
 		_wcscat_c(gpszRunCmd, nCchLen, lsCmdLine);
-		//if (lbNeedQuatete)
-		//	lstrcatW(gpszRunCmd, L"\"" );
 	}
 	else if (lbNeedCutStartEndQuot)
 	{
@@ -5214,9 +5183,9 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 		ServerInitConsoleMode();
 	}
 
-#ifdef _DEBUG
+	#ifdef _DEBUG
 	OutputDebugString(gpszRunCmd); OutputDebugString(L"\n");
-#endif
+	#endif
 	UNREFERENCED_PARAMETER(pwszStartCmdLine);
 	_ASSERTE(pwszStartCmdLine==asCmdLine);
 	return 0;
