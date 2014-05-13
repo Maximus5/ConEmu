@@ -866,6 +866,7 @@
     <ClInclude Include="..\common\WinObjects.h" />
     <ClInclude Include="..\ConEmuHk\Injects.h" />
     <ClInclude Include="ConEmuC.h" />
+    <ClInclude Include="ConsoleHelp.h" />
     <ClInclude Include="Debugger.h" />
     <ClInclude Include="Downloader.h" />
     <ClInclude Include="ExitCodes.h" />

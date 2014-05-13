@@ -108,6 +108,9 @@
     <ClInclude Include="..\common\ConsoleMixAttr.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="ConsoleHelp.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="ConEmuCD.rc">
