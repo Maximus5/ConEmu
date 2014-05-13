@@ -228,7 +228,10 @@ BOOL  gbParmVisibleSize = FALSE;
 BOOL  gbParmBufSize = FALSE;
 SHORT gnBufferHeight = 0;
 SHORT gnBufferWidth = 0; // Определяется в MyGetConsoleScreenBufferInfo
+
+#ifdef _DEBUG
 wchar_t* gpszPrevConTitle = NULL;
+#endif
 
 MFileLog* gpLogSize = NULL;
 
@@ -1993,17 +1996,20 @@ wrap:
 	/* *** "Общее" завершение *** */
 	/* ************************** */
 
-	// Наверное, не нужно возвращать заголовок консоли в режиме сервера
+	#ifdef _DEBUG
+	#if 0
 	if (gnRunMode == RM_COMSPEC)
 	{
 		if (gpszPrevConTitle)
 		{
 			if (ghConWnd)
-				SetTitle(false, gpszPrevConTitle);
+				SetTitle(gpszPrevConTitle);
 
-			free(gpszPrevConTitle);
 		}
 	}
+	#endif
+	SafeFree(gpszPrevConTitle);
+	#endif
 
 	SafeCloseHandle(ghRootProcessFlag);
 
@@ -3871,6 +3877,7 @@ void UpdateConsoleTitle(LPCWSTR lsCmdLine, BOOL& lbNeedCutStartEndQuot, bool bEx
 			pszEndQ = NULL;
 		}
 
+		#ifdef _DEBUG
 		int nLen = 4096; //GetWindowTextLength(ghConWnd); -- KIS2009 гундит "Посылка оконного сообщения"...
 
 		if (nLen > 0)
@@ -3885,6 +3892,7 @@ void UpdateConsoleTitle(LPCWSTR lsCmdLine, BOOL& lbNeedCutStartEndQuot, bool bEx
 				}
 			}
 		}
+		#endif
 
 		SetTitle(bExpandVars/*true*/, pszTitle);
 
@@ -3895,6 +3903,7 @@ void UpdateConsoleTitle(LPCWSTR lsCmdLine, BOOL& lbNeedCutStartEndQuot, bool bEx
 
 	if (*lsCmdLine)
 	{
+		#ifdef _DEBUG
 		int nLen = 4096; //GetWindowTextLength(ghConWnd); -- KIS2009 гундит "Посылка оконного сообщения"...
 
 		if (nLen > 0)
@@ -3909,6 +3918,7 @@ void UpdateConsoleTitle(LPCWSTR lsCmdLine, BOOL& lbNeedCutStartEndQuot, bool bEx
 				}
 			}
 		}
+		#endif
 
 		SetTitle(bExpandVars/*true*/, lsCmdLine);
 	}

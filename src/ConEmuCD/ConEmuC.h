@@ -637,7 +637,6 @@ void PrintVersion();
 extern COORD gcrVisibleSize;
 extern BOOL  gbParmVisibleSize, gbParmBufSize;
 extern SHORT gnBufferHeight, gnBufferWidth;
-extern wchar_t* gpszPrevConTitle;
 
 //extern HANDLE ghLogSize;
 //extern wchar_t* wpszLogSizeFile;
