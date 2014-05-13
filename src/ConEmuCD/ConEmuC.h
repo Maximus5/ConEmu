@@ -65,8 +65,12 @@ class CLogFunction
 {
 protected:
 	static int m_FnLevel; // without per-thread devision
+	bool mb_Logged;
 public:
+	CLogFunction();
 	CLogFunction(const char* asFnName);
+	CLogFunction(const wchar_t* asFnName);
+	void DoLogFunction(const wchar_t* asFnName);
 	~CLogFunction();
 };
 #define LogFunction_Cat2(n,i) n##i
@@ -259,6 +263,7 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
 void CreateLogSizeFile(int nLevel);
 void LogSize(COORD* pcrSize, LPCSTR pszLabel);
 void LogString(LPCSTR asText);
+void LogString(LPCWSTR asText);
 void PrintExecuteError(LPCWSTR asCmd, DWORD dwErr, LPCWSTR asSpecialInfo=NULL);
 BOOL MyReadConsoleOutput(HANDLE hOut, CHAR_INFO *pData, COORD& bufSize, SMALL_RECT& rgn);
 BOOL MyWriteConsoleOutput(HANDLE hOut, CHAR_INFO *pData, COORD& bufSize, COORD& crBufPos, SMALL_RECT& rgn);

@@ -3719,7 +3719,12 @@ void SetWorkEnvVar()
 wchar_t* ParseConEmuSubst(LPCWSTR asCmd, bool bUpdateTitle /*= false*/)
 {
 	if (!asCmd || !*asCmd)
+	{
+		LogFunction("ParseConEmuSubst - skipped");
 		return NULL;
+	}
+
+	LogFunction("ParseConEmuSubst");
 
 	// Другие имена нет смысла передавать через "!" вместо "%"
 	LPCWSTR szNames[] = {ENV_CONEMUHWND_VAR_W, ENV_CONEMUDRAW_VAR_W, ENV_CONEMUBACK_VAR_W, ENV_CONEMUWORKDIR_VAR_W};
@@ -3733,6 +3738,7 @@ wchar_t* ParseConEmuSubst(LPCWSTR asCmd, bool bUpdateTitle /*= false*/)
 		GetEnvironmentVariable(pszName, szDbg, countof(szDbg));
 		if (!*szDbg)
 		{
+			LogFunction("Variables must be set already!");
 			_ASSERTE(*szDbg && "Variables must be set already!");
 			break; // другие не проверять - лишние ассерты
 		}
@@ -3791,10 +3797,21 @@ BOOL SetTitle(bool bExpandVars, LPCWSTR lsTitle)
 	LogFunction("SetTitle");
 
 	wchar_t* pszExpanded = (bExpandVars && lsTitle) ? ParseConEmuSubst(lsTitle, false) : NULL;
+	LPCWSTR pszSetTitle = pszExpanded ? pszExpanded : lsTitle ? lsTitle : L"";
+
 	#ifdef SHOW_SETCONTITLE_MSGBOX
-	MessageBox(NULL, pszExpanded ? pszExpanded : lsTitle ? lsTitle : L"", WIN3264TEST(L"ConEmuCD - set title",L"ConEmuCD64 - set title"), MB_SYSTEMMODAL);
+	MessageBox(NULL, pszSetTitle, WIN3264TEST(L"ConEmuCD - set title",L"ConEmuCD64 - set title"), MB_SYSTEMMODAL);
 	#endif
-	BOOL bRc = SetConsoleTitle(pszExpanded ? pszExpanded : lsTitle ? lsTitle : L"");
+
+	BOOL bRc = SetConsoleTitle(pszSetTitle);
+
+	if (gpLogSize)
+	{
+		wchar_t* pszLog = lstrmerge(bRc ? L"Done: " : L"Fail: ", pszSetTitle);
+		LogFunction(pszLog);
+		SafeFree(pszLog);
+	}
+
 	SafeFree(pszExpanded);
 	return bRc;
 }
@@ -3909,7 +3926,7 @@ void CdToProfileDir()
 	if (gpLogSize)
 	{
 		wchar_t* pszMsg = lstrmerge(bRc ? L"Work dir changed to %USERPROFILE%: " : L"CD failed to %USERPROFILE%: ", szPath);
-		gpLogSize->LogString(pszMsg);
+		LogFunction(pszMsg);
 		SafeFree(pszMsg);
 	}
 }
@@ -4958,6 +4975,7 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 
 		if (gnRunMode == RM_SERVER)
 		{
+			LogFunction("ProcessSetEnvCmd {set, title, chcp, etc.}");
 			// Console may be started as follows:
 			// "set PATH=C:\Program Files;%PATH%" & ... & cmd
 			// Supported commands:
@@ -6060,6 +6078,28 @@ void LogString(LPCSTR asText)
 	gpLogSize->LogString(asText, true, pszThread);
 }
 
+void LogString(LPCWSTR asText)
+{
+	if (!gpLogSize) return;
+
+	wchar_t szInfo[255]; szInfo[0] = 0;
+	LPCWSTR pszThread = L" <unknown thread>";
+	DWORD dwId = GetCurrentThreadId();
+
+	if (dwId == gdwMainThreadId)
+		pszThread = L"MainThread";
+	else if (gpSrv->CmdServer.IsPipeThread(dwId))
+		pszThread = L"ServThread";
+	else if (dwId == gpSrv->dwRefreshThread)
+		pszThread = L"RefrThread";
+	else if (gpSrv->InputServer.IsPipeThread(dwId))
+		pszThread = L"InptThread";
+	else if (gpSrv->DataServer.IsPipeThread(dwId))
+		pszThread = L"DataThread";
+
+	gpLogSize->LogString(asText, true, pszThread);
+}
+
 void LogSize(COORD* pcrSize, LPCSTR pszLabel)
 {
 	if (!gpLogSize) return;
@@ -6084,25 +6124,68 @@ void LogSize(COORD* pcrSize, LPCSTR pszLabel)
 }
 
 int CLogFunction::m_FnLevel = 0; // Simple, without per-thread devision
-CLogFunction::CLogFunction(const char* asFnName)
+CLogFunction::CLogFunction() : mb_Logged(false)
 {
+}
+CLogFunction::CLogFunction(const char* asFnName) : mb_Logged(false)
+{
+	int nLen = MultiByteToWideChar(CP_ACP, 0, asFnName, -1, NULL, 0);
+	wchar_t sBuf[80] = L"";
+	wchar_t *pszBuf = NULL;
+	if (nLen >= 80)
+		pszBuf = (wchar_t*)calloc(nLen+1,sizeof(*pszBuf));
+	else
+		pszBuf = sBuf;
+
+	MultiByteToWideChar(CP_ACP, 0, asFnName, -1, pszBuf, nLen+1);
+
+	DoLogFunction(pszBuf);
+
+	if (pszBuf != sBuf)
+		SafeFree(pszBuf);
+}
+CLogFunction::CLogFunction(const wchar_t* asFnName) : mb_Logged(false)
+{
+	DoLogFunction(asFnName);
+}
+void CLogFunction::DoLogFunction(const wchar_t* asFnName)
+{
+	if (mb_Logged)
+		return;
+
 	LONG lLevel = InterlockedIncrement((LONG*)&m_FnLevel);
+	mb_Logged = true;
 
 	if (!gpLogSize) return;
 
 	if (lLevel > 20) lLevel = 20;
-	char cFnInfo[120];
-	char* pc = cFnInfo;
+	wchar_t cFnInfo[120];
+	wchar_t* pc = cFnInfo;
 	for (LONG l = 1; l < lLevel; l++)
 	{
-		*(pc++) = ' '; *(pc++) = ' '; *(pc++) = ' ';
+		*(pc++) = L' '; *(pc++) = L' '; *(pc++) = L' ';
 	}
-	lstrcpynA(pc, asFnName, countof(cFnInfo) - (pc - cFnInfo));
+	*pc = 0;
 
-	LogString(cFnInfo);
+	INT_PTR nPrefix = (pc - cFnInfo);
+	INT_PTR nFnLen = lstrlen(asFnName);
+
+	if (nFnLen < ((INT_PTR)countof(cFnInfo) - nPrefix))
+	{
+		lstrcpyn(pc, asFnName, countof(cFnInfo) - (pc - cFnInfo));
+		LogString(cFnInfo);
+	}
+	else
+	{
+		wchar_t* pszMrg = lstrmerge(cFnInfo, asFnName);
+		LogString(pszMrg);
+		SafeFree(pszMrg);
+	}
 }
 CLogFunction::~CLogFunction()
 {
+	if (!mb_Logged)
+		return;
 	InterlockedDecrement((LONG*)&m_FnLevel);
 }
 
