@@ -4993,7 +4993,7 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 	}
 
 	size_t nCchLen = nCmdLine+1; // nCmdLine учитывает длинну lsCmdLine + gszComSpec + еще чуть-чуть на "/C" и прочее
-	gpszRunCmd = (wchar_t*)calloc(nCchLen,2);
+	gpszRunCmd = (wchar_t*)calloc(nCchLen,sizeof(wchar_t));
 
 	if (!gpszRunCmd)
 	{
