@@ -5120,9 +5120,6 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 	}
 	// !!! gpszRunCmd может поменяться ниже!
 
-	// Сменим заголовок консоли
-	UpdateConsoleTitle(lsCmdLine, /* IN/OUT */lbNeedCutStartEndQuot, true);
-
 	// ====
 	if (gbRunViaCmdExe)
 	{
