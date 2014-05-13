@@ -3789,6 +3789,7 @@ wchar_t* ParseConEmuSubst(LPCWSTR asCmd, bool bUpdateTitle /*= false*/)
 BOOL SetTitle(bool bExpandVars, LPCWSTR lsTitle)
 {
 	LogFunction("SetTitle");
+
 	wchar_t* pszExpanded = (bExpandVars && lsTitle) ? ParseConEmuSubst(lsTitle, false) : NULL;
 	#ifdef SHOW_SETCONTITLE_MSGBOX
 	MessageBox(NULL, pszExpanded ? pszExpanded : lsTitle ? lsTitle : L"", WIN3264TEST(L"ConEmuCD - set title",L"ConEmuCD64 - set title"), MB_SYSTEMMODAL);
@@ -4958,7 +4959,12 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 		if (gnRunMode == RM_SERVER)
 		{
 			// Console may be started as follows:
-			// "set PATH=C:\Program Files;%PATH%" & set abc=def & cmd
+			// "set PATH=C:\Program Files;%PATH%" & ... & cmd
+			// Supported commands:
+			//  set abc=val
+			//  "set PATH=C:\Program Files;%PATH%"
+			//  chcp [utf8|ansi|oem|<cp_no>]
+			//  title "Console init title"
 			CmdArg lsForcedTitle;
 			ProcessSetEnvCmd(lsCmdLine, true, &lsForcedTitle);
 			if (!lsForcedTitle.IsEmpty())

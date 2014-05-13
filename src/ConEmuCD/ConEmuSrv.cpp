@@ -1299,7 +1299,7 @@ int ServerInit(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/)
 		_wsprintf(szPipe, SKIPLEN(countof(szPipe)) CEHOOKSPIPENAME, L".", gpSrv->dwRootProcess);
 		DumpInitStatus("\nServerInit: CECMD_ATTACHGUIAPP");
 		CESERVER_REQ* pOut = ExecuteCmd(szPipe, pIn, GUIATTACH_TIMEOUT, ghConWnd);
-		if (!pOut 
+		if (!pOut
 			|| (pOut->hdr.cbSize < (sizeof(CESERVER_REQ_HDR)+sizeof(DWORD)))
 			|| (pOut->dwData[0] != (DWORD)gpSrv->hRootProcessGui))
 		{
@@ -2701,7 +2701,7 @@ HWND Attach2Gui(DWORD nTimeout)
 					// то цепляемся ТОЛЬКО к этому PID!
 					GetWindowThreadProcessId(hFindGui, &nFindPID);
 					if (nFindPID != nStartedGuiPID)
-						continue;					
+						continue;
 				}
 
 				// On success, it will set ghConEmuWndDC and others...

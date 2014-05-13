@@ -703,6 +703,6 @@ namespace InputLogger
 		DEBUGTEST(g_evt[i].time = GetTickCount();)
 		// Fill info
 		g_evt[i].val = val;
-		g_evt[i].ir = ir;		
+		g_evt[i].ir = ir;
 	}
 }

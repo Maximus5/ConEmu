@@ -878,6 +878,11 @@ static DWORD WINAPI OurSetConsoleCPThread(LPVOID lpParameter)
 
 // Return true if "SetEnvironmentVariable" was processed
 // if (bDoSet==false) - just skip all "set" commands
+// Supported commands:
+//  set abc=val
+//  "set PATH=C:\Program Files;%PATH%"
+//  chcp [utf8|ansi|oem|<cp_no>]
+//  title "Console init title"
 bool ProcessSetEnvCmd(LPCWSTR& asCmdLine, bool bDoSet, CmdArg* rpsTitle /*= NULL*/)
 {
 	LPCWSTR lsCmdLine = asCmdLine;
