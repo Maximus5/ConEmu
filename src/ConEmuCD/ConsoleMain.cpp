@@ -573,7 +573,7 @@ void OnProcessCreatedDbg(BOOL bRc, DWORD dwErr, LPPROCESS_INFORMATION pProcessIn
 
 BOOL createProcess(BOOL abSkipWowChange, LPCWSTR lpApplicationName, LPWSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment, LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation)
 {
-	LogFunction("createProcess");
+	LogFunction(L"createProcess");
 
 	MWow64Disable wow;
 	if (!abSkipWowChange)
@@ -2337,7 +2337,7 @@ void RegisterConsoleFontHKLM(LPCWSTR pszFontFace)
 
 int CheckAttachProcess()
 {
-	LogFunction("CheckAttachProcess");
+	LogFunction(L"CheckAttachProcess");
 
 	BOOL lbArgsFailed = FALSE;
 	wchar_t szFailMsg[512]; szFailMsg[0] = 0;
@@ -2672,7 +2672,7 @@ enum ConEmuStateCheck
 
 bool DoStateCheck(ConEmuStateCheck eStateCheck)
 {
-	LogFunction("DoStateCheck");
+	LogFunction(L"DoStateCheck");
 
 	bool bOn = false;
 
@@ -3721,11 +3721,11 @@ wchar_t* ParseConEmuSubst(LPCWSTR asCmd, bool bUpdateTitle /*= false*/)
 {
 	if (!asCmd || !*asCmd)
 	{
-		LogFunction("ParseConEmuSubst - skipped");
+		LogFunction(L"ParseConEmuSubst - skipped");
 		return NULL;
 	}
 
-	LogFunction("ParseConEmuSubst");
+	LogFunction(L"ParseConEmuSubst");
 
 	// Другие имена нет смысла передавать через "!" вместо "%"
 	LPCWSTR szNames[] = {ENV_CONEMUHWND_VAR_W, ENV_CONEMUDRAW_VAR_W, ENV_CONEMUBACK_VAR_W, ENV_CONEMUWORKDIR_VAR_W};
@@ -3739,7 +3739,7 @@ wchar_t* ParseConEmuSubst(LPCWSTR asCmd, bool bUpdateTitle /*= false*/)
 		GetEnvironmentVariable(pszName, szDbg, countof(szDbg));
 		if (!*szDbg)
 		{
-			LogFunction("Variables must be set already!");
+			LogFunction(L"Variables must be set already!");
 			_ASSERTE(*szDbg && "Variables must be set already!");
 			break; // другие не проверять - лишние ассерты
 		}
@@ -3819,7 +3819,7 @@ BOOL SetTitle(bool bExpandVars, LPCWSTR lsTitle)
 
 void UpdateConsoleTitle(LPCWSTR lsCmdLine, BOOL& lbNeedCutStartEndQuot, bool bExpandVars)
 {
-	LogFunction("UpdateConsoleTitle");
+	LogFunction(L"UpdateConsoleTitle");
 
 	if (gpszForcedTitle)
 	{
@@ -3935,7 +3935,7 @@ void CdToProfileDir()
 #ifndef WIN64
 void CheckNeedSkipWowChange(LPCWSTR asCmdLine)
 {
-	LogFunction("CheckNeedSkipWowChange");
+	LogFunction(L"CheckNeedSkipWowChange");
 
 	// Команды вида: C:\Windows\SysNative\reg.exe Query "HKCU\Software\Far2"|find "Far"
 	// Для них нельзя отключать редиректор (wow.Disable()), иначе SysNative будет недоступен
@@ -4749,7 +4749,7 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 		}
 	}
 
-	LogFunction("ParseCommandLine{in-progress}");
+	LogFunction(L"ParseCommandLine{in-progress}");
 
 	// Switch "/PROFILECD" used when server to be started under different credentials as GUI.
 	// So, we need to do "cd %USERPROFILE%" which is more suitable to user.
@@ -5015,7 +5015,7 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 
 		if (gnRunMode == RM_SERVER)
 		{
-			LogFunction("ProcessSetEnvCmd {set, title, chcp, etc.}");
+			LogFunction(L"ProcessSetEnvCmd {set, title, chcp, etc.}");
 			// Console may be started as follows:
 			// "set PATH=C:\Program Files;%PATH%" & ... & cmd
 			// Supported commands:
@@ -5394,7 +5394,7 @@ void SetTerminateEvent(SetTerminateEventPlace eFrom)
 
 void SendStarted()
 {
-	LogFunction("SendStarted");
+	LogFunction(L"SendStarted");
 
 	WARNING("Подозрение, что слишком много вызовов при старте сервера. Неаккуратно");
 
@@ -5810,7 +5810,7 @@ void SendStarted()
 
 CESERVER_REQ* SendStopped(CONSOLE_SCREEN_BUFFER_INFO* psbi)
 {
-	LogFunction("SendStopped");
+	LogFunction(L"SendStopped");
 
 	int iHookRc = -1;
 	if (gnRunMode == RM_ALTSERVER)
@@ -9371,7 +9371,7 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
 	}
 	else
 	{
-		LogFunction("Function GetConsoleFontSize is not available");
+		LogFunction(L"Function GetConsoleFontSize is not available");
 	}
 
 

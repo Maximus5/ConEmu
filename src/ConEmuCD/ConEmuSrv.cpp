@@ -75,7 +75,7 @@ bool TryConnect2Gui(HWND hGui, CESERVER_REQ* pIn);
 // Установить мелкий шрифт, иначе может быть невозможно увеличение размера GUI окна
 void ServerInitFont()
 {
-	LogFunction("ServerInitFont");
+	LogFunction(L"ServerInitFont");
 
 	// Размер шрифта и Lucida. Обязательно для серверного режима.
 	if (gpSrv->szConsoleFont[0])
@@ -156,7 +156,7 @@ void ServerInitFont()
 
 BOOL LoadGuiSettings(ConEmuGuiMapping& GuiMapping)
 {
-	LogFunction("LoadGuiSettings");
+	LogFunction(L"LoadGuiSettings");
 
 	BOOL lbRc = FALSE;
 	HWND hGuiWnd = ghConEmuWnd ? ghConEmuWnd : gpSrv->hGuiWnd;
@@ -191,7 +191,7 @@ BOOL LoadGuiSettings(ConEmuGuiMapping& GuiMapping)
 
 BOOL ReloadGuiSettings(ConEmuGuiMapping* apFromCmd)
 {
-	LogFunction("ReloadGuiSettings");
+	LogFunction(L"ReloadGuiSettings");
 
 	BOOL lbRc = FALSE;
 	if (apFromCmd)
@@ -259,7 +259,7 @@ bool IsAutoAttachAllowed()
 // Вызывается при запуске сервера: (gbNoCreateProcess && (gbAttachMode || gpSrv->DbgInfo.bDebuggerActive))
 int AttachRootProcess()
 {
-	LogFunction("AttachRootProcess");
+	LogFunction(L"AttachRootProcess");
 
 	DWORD dwErr = 0;
 
@@ -448,7 +448,7 @@ int AttachRootProcess()
 
 BOOL ServerInitConsoleMode()
 {
-	LogFunction("ServerInitConsoleMode");
+	LogFunction(L"ServerInitConsoleMode");
 
 	BOOL bConRc = FALSE;
 
@@ -478,7 +478,7 @@ BOOL ServerInitConsoleMode()
 
 int ServerInitCheckExisting(bool abAlternative)
 {
-	LogFunction("ServerInitCheckExisting");
+	LogFunction(L"ServerInitCheckExisting");
 
 	int iRc = 0;
 	CESERVER_CONSOLE_MAPPING_HDR test = {};
@@ -533,7 +533,7 @@ wrap:
 
 int ServerInitConsoleSize()
 {
-	LogFunction("ServerInitConsoleSize");
+	LogFunction(L"ServerInitConsoleSize");
 
 	if ((gbParmVisibleSize || gbParmBufSize) && gcrVisibleSize.X && gcrVisibleSize.Y)
 	{
@@ -562,7 +562,7 @@ int ServerInitConsoleSize()
 
 int ServerInitAttach2Gui()
 {
-	LogFunction("ServerInitAttach2Gui");
+	LogFunction(L"ServerInitAttach2Gui");
 
 	int iRc = 0;
 
@@ -604,7 +604,7 @@ wrap:
 // (!gbAttachMode && !gpSrv->DbgInfo.bDebuggerActive)
 int ServerInitGuiTab()
 {
-	LogFunction("ServerInitGuiTab");
+	LogFunction(L"ServerInitGuiTab");
 
 	int iRc = CERR_ATTACH_NO_GUIWND;
 	DWORD nWaitRc = 99;
@@ -674,7 +674,7 @@ wrap:
 
 bool AltServerWasStarted(DWORD nPID, HANDLE hAltServer, bool ForceThaw)
 {
-	LogFunction("AltServerWasStarted");
+	LogFunction(L"AltServerWasStarted");
 
 	_ASSERTE(nPID!=0);
 
@@ -762,7 +762,7 @@ DWORD WINAPI SetOemCpProc(LPVOID lpParameter)
 
 void ServerInitEnvVars()
 {
-	LogFunction("ServerInitEnvVars");
+	LogFunction(L"ServerInitEnvVars");
 
 	//wchar_t szValue[32];
 	//DWORD nRc;
@@ -803,7 +803,7 @@ void ServerInitEnvVars()
 // Создать необходимые события и нити
 int ServerInit(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/)
 {
-	LogFunction("ServerInit");
+	LogFunction(L"ServerInit");
 
 	int iRc = 0;
 	DWORD dwErr = 0;
@@ -1332,7 +1332,7 @@ wrap:
 // Завершить все нити и закрыть дескрипторы
 void ServerDone(int aiRc, bool abReportShutdown /*= false*/)
 {
-	LogFunction("ServerDone");
+	LogFunction(L"ServerDone");
 
 	gbQuit = true;
 	gbTerminateOnExit = FALSE;
@@ -1610,7 +1610,7 @@ void ConOutCloseHandle()
 
 bool CmdOutputOpenMap(CONSOLE_SCREEN_BUFFER_INFO& lsbi, CESERVER_CONSAVE_MAPHDR*& pHdr, CESERVER_CONSAVE_MAP*& pData)
 {
-	LogFunction("CmdOutputOpenMap");
+	LogFunction(L"CmdOutputOpenMap");
 
 	pHdr = NULL;
 	pData = NULL;
@@ -1752,7 +1752,7 @@ wrap:
 // Сохранить данные ВСЕЙ консоли в gpStoredOutput
 void CmdOutputStore(bool abCreateOnly /*= false*/)
 {
-	LogFunction("CmdOutputStore");
+	LogFunction(L"CmdOutputStore");
 
 	CONSOLE_SCREEN_BUFFER_INFO lsbi = {{0,0}};
 	CESERVER_CONSAVE_MAPHDR* pHdr = NULL;
@@ -1825,7 +1825,7 @@ void CmdOutputStore(bool abCreateOnly /*= false*/)
 //                       задел на будущее для выполнения команд из Far (без /w), mc, или еще кого.
 void CmdOutputRestore(bool abSimpleMode)
 {
-	LogFunction("CmdOutputRestore");
+	LogFunction(L"CmdOutputRestore");
 
 	if (!abSimpleMode)
 	{
@@ -1972,7 +1972,7 @@ static BOOL CALLBACK FindConEmuByPidProc(HWND hwnd, LPARAM lParam)
 
 HWND FindConEmuByPID()
 {
-	LogFunction("FindConEmuByPID");
+	LogFunction(L"FindConEmuByPID");
 
 	HWND hConEmuWnd = NULL;
 	DWORD dwGuiThreadId = 0, dwGuiProcessId = 0;
@@ -2033,7 +2033,7 @@ HWND FindConEmuByPID()
 
 void SetConEmuWindows(HWND hRootWnd, HWND hDcWnd, HWND hBackWnd)
 {
-	LogFunction("SetConEmuWindows");
+	LogFunction(L"SetConEmuWindows");
 
 	char szInfo[100] = "";
 
@@ -2088,7 +2088,7 @@ void SetConEmuWindows(HWND hRootWnd, HWND hDcWnd, HWND hBackWnd)
 
 void CheckConEmuHwnd()
 {
-	LogFunction("CheckConEmuHwnd");
+	LogFunction(L"CheckConEmuHwnd");
 
 	WARNING("Подозрение, что слишком много вызовов при старте сервера");
 
@@ -2131,7 +2131,7 @@ void CheckConEmuHwnd()
 	if (ghConEmuWnd == NULL)
 	{
 		// Если уж ничего не помогло...
-		LogFunction("GetConEmuHWND");
+		LogFunction(L"GetConEmuHWND");
 		ghConEmuWnd = GetConEmuHWND(1/*Gui Main window*/);
 	}
 
@@ -2140,7 +2140,7 @@ void CheckConEmuHwnd()
 		if (!ghConEmuWndDC)
 		{
 			// ghConEmuWndDC по идее уже должен быть получен из GUI через пайпы
-			LogFunction("Warning, ghConEmuWndDC still not initialized");
+			LogFunction(L"Warning, ghConEmuWndDC still not initialized");
 			_ASSERTE(ghConEmuWndDC!=NULL);
 			HWND hBack = NULL, hDc = NULL;
 			wchar_t szClass[128];
@@ -2180,7 +2180,7 @@ void CheckConEmuHwnd()
 
 bool TryConnect2Gui(HWND hGui, CESERVER_REQ* pIn)
 {
-	LogFunction("TryConnect2Gui");
+	LogFunction(L"TryConnect2Gui");
 
 	bool bConnected = false;
 
@@ -2401,7 +2401,7 @@ wrap:
 
 HWND Attach2Gui(DWORD nTimeout)
 {
-	LogFunction("Attach2Gui");
+	LogFunction(L"Attach2Gui");
 
 	if (isTerminalMode())
 	{
@@ -2723,7 +2723,7 @@ HWND Attach2Gui(DWORD nTimeout)
 
 void CopySrvMapFromGuiMap()
 {
-	LogFunction("CopySrvMapFromGuiMap");
+	LogFunction(L"CopySrvMapFromGuiMap");
 
 	if (!gpSrv || !gpSrv->pConsole)
 	{
@@ -2799,7 +2799,7 @@ void CopySrvMapFromGuiMap()
 
 int CreateMapHeader()
 {
-	LogFunction("CreateMapHeader");
+	LogFunction(L"CreateMapHeader");
 
 	int iRc = 0;
 	//wchar_t szMapName[64];
@@ -2991,7 +2991,7 @@ int Compare(const CESERVER_CONSOLE_MAPPING_HDR* p1, const CESERVER_CONSOLE_MAPPI
 
 void UpdateConsoleMapHeader()
 {
-	LogFunction("UpdateConsoleMapHeader");
+	LogFunction(L"UpdateConsoleMapHeader");
 
 	WARNING("***ALT*** не нужно обновлять мэппинг одновременно и в сервере и в альт.сервере");
 
@@ -3108,7 +3108,7 @@ void UpdateConsoleMapHeader()
 
 int CreateColorerHeader(bool bForceRecreate /*= false*/)
 {
-	LogFunction("CreateColorerHeader");
+	LogFunction(L"CreateColorerHeader");
 
 	if (!gpSrv)
 	{
@@ -3239,7 +3239,7 @@ wrap:
 
 void CloseMapHeader()
 {
-	LogFunction("CloseMapHeader");
+	LogFunction(L"CloseMapHeader");
 
 	if (gpSrv->pConsoleMap)
 	{
@@ -3265,7 +3265,7 @@ void CloseMapHeader()
 // Limited logging of console contents (same output as processed by CECF_ProcessAnsi)
 void InitAnsiLog(const ConEmuAnsiLog& AnsiLog)
 {
-	LogFunction("InitAnsiLog");
+	LogFunction(L"InitAnsiLog");
 	// Reset first
 	SetEnvironmentVariable(ENV_CONEMUANSILOG_VAR_W, L"");
 	gpSrv->AnsiLog.Enabled = FALSE;
