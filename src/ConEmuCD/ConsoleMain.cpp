@@ -143,6 +143,7 @@ DWORD   gnSelfPID = 0;
 BOOL    gbTerminateOnExit = FALSE;
 //HANDLE  ghConIn = NULL, ghConOut = NULL;
 HWND    ghConWnd = NULL;
+DWORD   gnConEmuPID = 0; // PID of ConEmu[64].exe (ghConEmuWnd)
 HWND    ghConEmuWnd = NULL; // Root! window
 HWND    ghConEmuWndDC = NULL; // ConEmu DC window
 HWND    ghConEmuWndBack = NULL; // ConEmu Back window
@@ -880,7 +881,7 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 
 		if (ghConEmuWnd)
 		{
-			GetWindowThreadProcessId(ghConEmuWnd, &gpSrv->dwGuiPID);
+			GetWindowThreadProcessId(ghConEmuWnd, &gnConEmuPID);
 		}
 	}
 
@@ -1052,7 +1053,7 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 		gbAlienMode = TRUE;
 		gpSrv->dwRootProcess = GetCurrentProcessId();
 		gpSrv->hRootProcess = GetCurrentProcess();
-		//gpSrv->dwGuiPID = ...;
+		//gnConEmuPID = ...;
 		gpszRunCmd = (wchar_t*)calloc(1,2);
 		CreateColorerHeader();
 	}
@@ -4457,9 +4458,9 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 		{
 			gnRunMode = RM_SERVER;
 			wchar_t* pszEnd = NULL;
-			gpSrv->dwGuiPID = wcstoul(szArg+5, &pszEnd, 10);
+			gnConEmuPID = wcstoul(szArg+5, &pszEnd, 10);
 
-			if (gpSrv->dwGuiPID == 0)
+			if (gnConEmuPID == 0)
 			{
 				_printf("Invalid GUI PID specified:\n");
 				_wprintf(GetCommandLineW());
@@ -4480,8 +4481,8 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 			if (lstrcmpi(szArg+7, L"NEW") == 0)
 			{
 				gpSrv->hGuiWnd = NULL;
-				_ASSERTE(gpSrv->dwGuiPID == 0);
-				gpSrv->dwGuiPID = 0;
+				_ASSERTE(gnConEmuPID == 0);
+				gnConEmuPID = 0;
 				gpSrv->bRequestNewGuiWnd = TRUE;
 			}
 			else
@@ -4503,8 +4504,8 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 
 				DWORD nPID = 0;
 				GetWindowThreadProcessId(gpSrv->hGuiWnd, &nPID);
-				_ASSERTE(gpSrv->dwGuiPID == 0 || gpSrv->dwGuiPID == nPID);
-				gpSrv->dwGuiPID = nPID;
+				_ASSERTE(gnConEmuPID == 0 || gnConEmuPID == nPID);
+				gnConEmuPID = nPID;
 			}
 		}
 		else if (wcsncmp(szArg, L"/TA=", 4)==0)
@@ -4778,15 +4779,15 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 	}
 
 	// Параметры из комстроки разобраны. Здесь могут уже быть известны
-	// gpSrv->hGuiWnd {/GHWND}, gpSrv->dwGuiPID {/GPID}, gpSrv->dwGuiAID {/AID}
+	// gpSrv->hGuiWnd {/GHWND}, gnConEmuPID {/GPID}, gpSrv->dwGuiAID {/AID}
 	// gbAttachMode для ключей {/ADMIN}, {/ATTACH}, {/AUTOATTACH}, {/GUIATTACH}
 
 	// В принципе, gbAttachMode включается и при "/ADMIN", но при запуске из ConEmu такого быть не может,
-	// будут установлены и gpSrv->hGuiWnd, и gpSrv->dwGuiPID
+	// будут установлены и gpSrv->hGuiWnd, и gnConEmuPID
 
 	// Issue 364, например, идет билд в VS, запускается CustomStep, в этот момент автоаттач нафиг не нужен
 	// Теоретически, в Студии не должно бы быть запуска ConEmuC.exe, но он может оказаться в "COMSPEC", так что проверим.
-	if (gbAttachMode && (gnRunMode == RM_SERVER) && (gpSrv->dwGuiPID == 0))
+	if (gbAttachMode && (gnRunMode == RM_SERVER) && (gnConEmuPID == 0))
 	{
 		_ASSERTE(!gbAlternativeAttach && "Alternative mode must be already processed!");
 
@@ -4814,7 +4815,7 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 		if (!gbAlternativeAttach && !gpSrv->dwRootProcess)
 		{
 			// В принципе, сюда мы можем попасть при запуске, например: "ConEmuC.exe /ADMIN /ROOT cmd"
-			// Но только не при запуске "из ConEmu" (т.к. будут установлены gpSrv->hGuiWnd, gpSrv->dwGuiPID)
+			// Но только не при запуске "из ConEmu" (т.к. будут установлены gpSrv->hGuiWnd, gnConEmuPID)
 
 			// Из батника убрал, покажем инфу тут
 			PrintVersion();
@@ -5465,7 +5466,7 @@ void SendStarted()
 	}
 	else
 	{
-		nGuiPID = gpSrv->dwGuiPID;
+		nGuiPID = gnConEmuPID;
 	}
 
 	CESERVER_REQ *pIn = NULL, *pOut = NULL, *pSrvOut = NULL;
@@ -5720,11 +5721,11 @@ void SendStarted()
 			SetConEmuWindows(pOut->StartStopRet.hWnd, pOut->StartStopRet.hWndDc, pOut->StartStopRet.hWndBack);
 			if (gpSrv)
 			{
-				_ASSERTE(gpSrv->dwGuiPID == pOut->StartStopRet.dwPID);
-				gpSrv->dwGuiPID = pOut->StartStopRet.dwPID;
+				_ASSERTE(gnConEmuPID == pOut->StartStopRet.dwPID);
+				gnConEmuPID = pOut->StartStopRet.dwPID;
 				#ifdef _DEBUG
 				DWORD dwPID; GetWindowThreadProcessId(ghConEmuWnd, &dwPID);
-				_ASSERTE(ghConEmuWnd==NULL || dwPID==gpSrv->dwGuiPID);
+				_ASSERTE(ghConEmuWnd==NULL || dwPID==gnConEmuPID);
 				#endif
 			}
 
@@ -7593,7 +7594,7 @@ BOOL cmd_DetachCon(CESERVER_REQ& in, CESERVER_REQ** out)
 	gpSrv->bWasDetached = TRUE;
 	ghConEmuWnd = NULL;
 	SetConEmuWindows(NULL, NULL, NULL);
-	gpSrv->dwGuiPID = 0;
+	gnConEmuPID = 0;
 	UpdateConsoleMapHeader();
 
 	HWND hGuiApp = NULL;
@@ -7808,7 +7809,7 @@ BOOL cmd_CmdStartStop(CESERVER_REQ& in, CESERVER_REQ** out)
 		(*out)->StartStopRet.hWnd = ghConEmuWnd;
 		(*out)->StartStopRet.hWndDc = ghConEmuWndDC;
 		(*out)->StartStopRet.hWndBack = ghConEmuWndBack;
-		(*out)->StartStopRet.dwPID = gpSrv->dwGuiPID;
+		(*out)->StartStopRet.dwPID = gnConEmuPID;
 		(*out)->StartStopRet.nBufferHeight = gnBufferHeight;
 		(*out)->StartStopRet.nWidth = gpSrv->sbi.dwSize.X;
 		(*out)->StartStopRet.nHeight = (gpSrv->sbi.srWindow.Bottom - gpSrv->sbi.srWindow.Top + 1);

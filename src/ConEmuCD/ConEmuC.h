@@ -122,6 +122,7 @@ void SetTerminateEvent(SetTerminateEventPlace eFrom);
 extern DWORD   gnSelfPID;
 //HANDLE  ghConIn = NULL, ghConOut = NULL;
 extern HWND    ghConWnd;
+extern DWORD   gnConEmuPID; // PID of ConEmu[64].exe (ghConEmuWnd)
 extern HWND    ghConEmuWnd; // Root! window
 extern HWND    ghConEmuWndDC; // ConEmu DC window
 extern HWND    ghConEmuWndBack; // ConEmu Back window
@@ -453,7 +454,6 @@ struct SrvInfo
 
 	HWND   hRootProcessGui; // Если работаем в Gui-режиме (Notepad, Putty, ...), ((HWND)-1) пока фактичеки окно еще не создано, но exe-шник уже есть
 	DebuggerInfo DbgInfo;
-	DWORD  dwGuiPID; // GUI PID (ИД процесса графической части ConEmu)
 	DWORD  dwGuiAID; // ConEmu internal ID of started CRealConsole
 	HWND   hGuiWnd; // передается через аргумент "/GHWND=%08X", чтобы окно не искать
 	BOOL   bRequestNewGuiWnd;

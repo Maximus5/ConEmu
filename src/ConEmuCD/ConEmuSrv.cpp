@@ -265,7 +265,7 @@ int AttachRootProcess()
 
 	_ASSERTE((gpSrv->hRootProcess == NULL || gpSrv->hRootProcess == GetCurrentProcess()) && "Must not be opened yet");
 
-	if (!gpSrv->DbgInfo.bDebuggerActive && !IsWindowVisible(ghConWnd) && !(gpSrv->dwGuiPID || gbAttachFromFar))
+	if (!gpSrv->DbgInfo.bDebuggerActive && !IsWindowVisible(ghConWnd) && !(gnConEmuPID || gbAttachFromFar))
 	{
 		PRINT_COMSPEC(L"Console windows is not visible. Attach is unavailable. Exiting...\n", 0);
 		DisableAutoConfirmExit();
@@ -963,7 +963,7 @@ int ServerInit(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/)
 	}
 
 	//2009-08-27 Перенес снизу
-	if (!gpSrv->hConEmuGuiAttached && (!gpSrv->DbgInfo.bDebugProcess || gpSrv->dwGuiPID || gpSrv->hGuiWnd))
+	if (!gpSrv->hConEmuGuiAttached && (!gpSrv->DbgInfo.bDebugProcess || gnConEmuPID || gpSrv->hGuiWnd))
 	{
 		wchar_t szTempName[MAX_PATH];
 		_wsprintf(szTempName, SKIPLEN(countof(szTempName)) CEGUIRCONSTARTED, (DWORD)ghConWnd); //-V205
@@ -1955,7 +1955,7 @@ static BOOL CALLBACK FindConEmuByPidProc(HWND hwnd, LPARAM lParam)
 {
 	DWORD dwPID;
 	GetWindowThreadProcessId(hwnd, &dwPID);
-	if (dwPID == gpSrv->dwGuiPID)
+	if (dwPID == gnConEmuPID)
 	{
 		wchar_t szClass[128];
 		if (GetClassName(hwnd, szClass, countof(szClass)))
@@ -1978,7 +1978,7 @@ HWND FindConEmuByPID()
 	DWORD dwGuiThreadId = 0, dwGuiProcessId = 0;
 
 	// В большинстве случаев PID GUI передан через параметры
-	if (gpSrv->dwGuiPID == 0)
+	if (gnConEmuPID == 0)
 	{
 		// GUI может еще "висеть" в ожидании или в отладчике, так что пробуем и через Snapshoot
 		HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS,0);
@@ -1993,7 +1993,7 @@ HWND FindConEmuByPID()
 				{
 					if (prc.th32ProcessID == gnSelfPID)
 					{
-						gpSrv->dwGuiPID = prc.th32ParentProcessID;
+						gnConEmuPID = prc.th32ParentProcessID;
 						break;
 					}
 				}
@@ -2004,7 +2004,7 @@ HWND FindConEmuByPID()
 		}
 	}
 
-	if (gpSrv->dwGuiPID)
+	if (gnConEmuPID)
 	{
 		HWND hGui = NULL;
 
@@ -2012,7 +2012,7 @@ HWND FindConEmuByPID()
 		{
 			dwGuiThreadId = GetWindowThreadProcessId(hGui, &dwGuiProcessId);
 
-			if (dwGuiProcessId == gpSrv->dwGuiPID)
+			if (dwGuiProcessId == gnConEmuPID)
 			{
 				hConEmuWnd = hGui;
 				break;
@@ -2035,12 +2035,6 @@ void SetConEmuWindows(HWND hRootWnd, HWND hDcWnd, HWND hBackWnd)
 {
 	LogFunction("SetConEmuWindows");
 
-	if (!gpSrv)
-	{
-		_ASSERTE(gpSrv!=NULL);
-		return;
-	}
-
 	char szInfo[100] = "";
 
 	// Main ConEmu window
@@ -2058,8 +2052,8 @@ void SetConEmuWindows(HWND hRootWnd, HWND hDcWnd, HWND hBackWnd)
 	// Do AllowSetForegroundWindow
 	if (hRootWnd)
 	{
-		DWORD dwGuiThreadId = GetWindowThreadProcessId(hRootWnd, &gpSrv->dwGuiPID);
-		AllowSetForegroundWindow(gpSrv->dwGuiPID);
+		DWORD dwGuiThreadId = GetWindowThreadProcessId(hRootWnd, &gnConEmuPID);
+		AllowSetForegroundWindow(gnConEmuPID);
 	}
 	// "ConEmuHWND"="0x%08X", "ConEmuPID"="%u"
 	SetConEmuEnvVar(ghConEmuWnd);
@@ -2109,7 +2103,7 @@ void CheckConEmuHwnd()
 
 		if (ghConEmuWnd)
 		{
-			GetWindowThreadProcessId(ghConEmuWnd, &gpSrv->dwGuiPID);
+			GetWindowThreadProcessId(ghConEmuWnd, &gnConEmuPID);
 			// Просто для информации
 			hDcWnd = FindWindowEx(ghConEmuWnd, NULL, VirtualConsoleClass, NULL);
 		}
@@ -2322,8 +2316,8 @@ bool TryConnect2Gui(HWND hGui, CESERVER_REQ* pIn)
 	_ASSERTE(pStartStopRet->GuiMapping.cbSize == sizeof(pStartStopRet->GuiMapping));
 
 	SetConEmuWindows(pStartStopRet->Info.hWnd, pStartStopRet->Info.hWndDc, pStartStopRet->Info.hWndBack);
-	_ASSERTE(gpSrv->dwGuiPID == pStartStopRet->Info.dwPID);
-	gpSrv->dwGuiPID = pStartStopRet->Info.dwPID;
+	_ASSERTE(gnConEmuPID == pStartStopRet->Info.dwPID);
+	gnConEmuPID = pStartStopRet->Info.dwPID;
 	_ASSERTE(ghConEmuWnd!=NULL && "Must be set!");
 
 	// Refresh settings
@@ -2437,7 +2431,7 @@ HWND Attach2Gui(DWORD nTimeout)
 		gpSrv->pConsoleMap->Ptr()->bDataReady = FALSE;
 	}
 
-	if (gpSrv->bRequestNewGuiWnd && !gpSrv->dwGuiPID && !gpSrv->hGuiWnd)
+	if (gpSrv->bRequestNewGuiWnd && !gnConEmuPID && !gpSrv->hGuiWnd)
 	{
 		bNeedStartGui = TRUE;
 		hGui = (HWND)-1;
@@ -2445,12 +2439,12 @@ HWND Attach2Gui(DWORD nTimeout)
 	else if (gpSrv->hGuiWnd)
 	{
 		// Only HWND may be (was) specified, especially when running from batches
-		if (!gpSrv->dwGuiPID)
-			GetWindowThreadProcessId(gpSrv->hGuiWnd, &gpSrv->dwGuiPID);
+		if (!gnConEmuPID)
+			GetWindowThreadProcessId(gpSrv->hGuiWnd, &gnConEmuPID);
 
 		wchar_t szClass[128] = L"";
 		GetClassName(gpSrv->hGuiWnd, szClass, countof(szClass));
-		if (gpSrv->dwGuiPID && lstrcmp(szClass, VirtualConsoleClassMain) == 0)
+		if (gnConEmuPID && lstrcmp(szClass, VirtualConsoleClassMain) == 0)
 			hGui = gpSrv->hGuiWnd;
 		else
 			gpSrv->hGuiWnd = NULL;
@@ -2930,7 +2924,7 @@ int CreateMapHeader()
 	_ASSERTE(gpSrv->dwMainServerPID!=0);
 	gpSrv->pConsole->hdr.nServerPID = gpSrv->dwMainServerPID;
 	gpSrv->pConsole->hdr.nAltServerPID = (gnRunMode==RM_ALTSERVER) ? GetCurrentProcessId() : gpSrv->dwAltServerPID;
-	gpSrv->pConsole->hdr.nGuiPID = gpSrv->dwGuiPID;
+	gpSrv->pConsole->hdr.nGuiPID = gnConEmuPID;
 	gpSrv->pConsole->hdr.hConEmuRoot = ghConEmuWnd;
 	gpSrv->pConsole->hdr.hConEmuWndDc = ghConEmuWndDC;
 	gpSrv->pConsole->hdr.hConEmuWndBack = ghConEmuWndBack;
@@ -3046,7 +3040,7 @@ void UpdateConsoleMapHeader()
 			// Какая прокрутка допустима. Пока - любая.
 			gpSrv->pConsole->hdr.rbsAllowed = rbs_Any;
 		}
-		gpSrv->pConsole->hdr.nGuiPID = gpSrv->dwGuiPID;
+		gpSrv->pConsole->hdr.nGuiPID = gnConEmuPID;
 		gpSrv->pConsole->hdr.hConEmuRoot = ghConEmuWnd;
 		gpSrv->pConsole->hdr.hConEmuWndDc = ghConEmuWndDC;
 		gpSrv->pConsole->hdr.hConEmuWndBack = ghConEmuWndBack;
@@ -4491,7 +4485,7 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 			gpSrv->bWasDetached = TRUE;
 			ghConEmuWnd = NULL;
 			SetConEmuWindows(NULL, NULL, NULL);
-			gpSrv->dwGuiPID = 0;
+			gnConEmuPID = 0;
 			UpdateConsoleMapHeader();
 			EmergencyShow(ghConWnd);
 		}
