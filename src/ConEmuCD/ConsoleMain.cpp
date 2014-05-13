@@ -164,6 +164,7 @@ BOOL    gbInExitWaitForKey = FALSE;
 BOOL    gbStopExitWaitForKey = FALSE;
 BOOL    gbCtrlBreakStopWaitingShown = FALSE;
 BOOL    gbTerminateOnCtrlBreak = FALSE;
+BOOL    gbPrintRetErrLevel = FALSE; // Вывести в StdOut код завершения процесса (RM_COMSPEC в основном)
 int     gnConfirmExitParm = 0; // 1 - CONFIRM, 2 - NOCONFIRM
 BOOL    gbAlwaysConfirmExit = FALSE;
 BOOL    gbAutoDisableConfirmExit = FALSE; // если корневой процесс проработал достаточно (10 сек) - будет сброшен gbAlwaysConfirmExit
@@ -1816,6 +1817,16 @@ wrap:
 	// Ассерт может быть если был запрос на аттач, который не удался
 	_ASSERTE(gnExitCode!=STILL_ACTIVE || (iRc==CERR_ATTACHFAILED) || (iRc==CERR_RUNNEWCONSOLE));
 
+	if (gbPrintRetErrLevel)
+	{
+		wchar_t szInfo[80];
+		if (gnExitCode >= 0x80000000)
+			_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"\nProcess exit code: %u (%i) {x%08X}\n", gnExitCode, (int)gnExitCode, gnExitCode);
+		else
+			_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"\nProcess exit code: %u {x%08X}\n", gnExitCode, gnExitCode);
+		_wprintf(szInfo);
+	}
+
 	if (iRc && (gbAttachMode == am_Auto))
 	{
 		// Issue 1003: Non zero exit codes leads to problems in some applications...
@@ -2731,6 +2742,7 @@ enum ConEmuExecAction
 	ea_ExportAll,  // export env.vars to all opened tabs of current ConEmu window
 	ea_Download,   // after "/download" switch may be unlimited pairs of {"url","file"},{"url","file"},...
 	ea_ParseArgs,  // debug test of NextArg function... print args to STDOUT
+	ea_ErrorLevel, // return specified errorlevel
 };
 
 int DoInjectHooks(LPWSTR asCmdArg)
@@ -3476,8 +3488,12 @@ wrap:
 
 int DoParseArgs(LPCWSTR asCmdLine)
 {
+	int iShellCount = 0;
+	LPWSTR* ppszShl = CommandLineToArgvW(asCmdLine, &iShellCount);
+
 	int i = 0;
 	CmdArg szArg;
+	_printf("ConEmu `NextArg` splitter\n");
 	while (NextArg(&asCmdLine, szArg) == 0)
 	{
 		_printf("%u: `", ++i);
@@ -3485,6 +3501,17 @@ int DoParseArgs(LPCWSTR asCmdLine)
 		_printf("`\n");
 	}
 	_printf("Total arguments parsed: %u\n", i);
+
+	_printf("Standard shell splitter\n");
+	for (int j = 0; j < iShellCount; j++)
+	{
+		printf("%u: `", j);
+		_wprintf(ppszShl[j]);
+		_printf("`\n");
+	}
+	_printf("Total arguments parsed: %u\n", iShellCount);
+	LocalFree(ppszShl);
+
 	return i;
 }
 
@@ -3672,6 +3699,12 @@ int DoExecAction(ConEmuExecAction eExecAction, LPCWSTR asCmdArg /* rest of cmdli
 	case ea_ParseArgs:
 		{
 			iRc = DoParseArgs(asCmdArg);
+			break;
+		}
+	case ea_ErrorLevel:
+		{
+			wchar_t* pszEnd = NULL;
+			iRc = wcstol(asCmdArg, &pszEnd, 10);
 			break;
 		}
 	default:
@@ -3956,7 +3989,28 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 		else
 		#endif
 
-		if (wcsncmp(szArg, L"/REGCONFONT=", 12)==0)
+		// **** Unit tests ****
+		if (lstrcmpi(szArg, L"/Args")==0 || lstrcmpi(szArg, L"/ParseArgs")==0)
+		{
+			eExecAction = ea_ParseArgs;
+			break;
+		}
+		else if (lstrcmpi(szArg, L"/CheckUnicode")==0)
+		{
+			eExecAction = ea_CheckUnicodeFont;
+			break;
+		}
+		else if (lstrcmpi(szArg, L"/ErrorLevel")==0)
+		{
+			eExecAction = ea_ErrorLevel;
+			break;
+		}
+		else if (lstrcmpi(szArg, L"/Result")==0)
+		{
+			gbPrintRetErrLevel = TRUE;
+		}
+		// **** Regular use ****
+		else if (wcsncmp(szArg, L"/REGCONFONT=", 12)==0)
 		{
 			eExecAction = ea_RegConFont;
 			lsCmdLine = szArg+12;
@@ -3988,11 +4042,6 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 			eExecAction = ea_GuiMacro;
 			break;
 		}
-		else if (lstrcmpi(szArg, L"/CHECKUNICODE")==0)
-		{
-			eExecAction = ea_CheckUnicodeFont;
-			break;
-		}
 		else if (lstrcmpni(szArg, L"/EXPORT", 7)==0)
 		{
 			//_ASSERTE(FALSE && "Continue to export");
@@ -4022,11 +4071,6 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 		else if (lstrcmpi(szArg, L"/IsAnsi")==0)
 		{
 			eStateCheck = ec_IsAnsi;
-			break;
-		}
-		else if (lstrcmpi(szArg, L"/ParseArgs")==0)
-		{
-			eExecAction = ea_ParseArgs;
 			break;
 		}
 		else if (wcscmp(szArg, L"/CONFIRM")==0)
