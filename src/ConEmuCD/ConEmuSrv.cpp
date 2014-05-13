@@ -1267,11 +1267,14 @@ int ServerInit(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/)
 	//DumpInitStatus("\nServerInit: UpdateConsoleMapHeader");
 	UpdateConsoleMapHeader();
 
-	if (!gpSrv->DbgInfo.bDebuggerActive)
+	// Set console title in server mode
+	if (gnRunMode == RM_SERVER)
 	{
-		DumpInitStatus("\nServerInit: SendStarted");
-		SendStarted();
+		UpdateConsoleTitle();
 	}
+
+	DumpInitStatus("\nServerInit: SendStarted");
+	SendStarted();
 
 	CheckConEmuHwnd();
 

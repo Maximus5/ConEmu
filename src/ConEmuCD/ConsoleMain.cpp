@@ -1243,7 +1243,7 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 		nExitPlaceStep = 350;
 
 		// Process environment variables
-		wchar_t* pszExpandedCmd = ParseConEmuSubst(gpszRunCmd, true/*UpdateTitle*/);
+		wchar_t* pszExpandedCmd = ParseConEmuSubst(gpszRunCmd);
 		if (pszExpandedCmd)
 		{
 			free(gpszRunCmd);
@@ -3723,7 +3723,7 @@ void SetWorkEnvVar()
 
 // 1. Заменить подстановки вида: !ConEmuHWND!, !ConEmuDrawHWND!, !ConEmuBackHWND!, !ConEmuWorkDir!
 // 2. Развернуть переменные окружения (PowerShell, например, не признает переменные в качестве параметров)
-wchar_t* ParseConEmuSubst(LPCWSTR asCmd, bool bUpdateTitle /*= false*/)
+wchar_t* ParseConEmuSubst(LPCWSTR asCmd)
 {
 	if (!asCmd || !*asCmd)
 	{
@@ -3788,23 +3788,17 @@ wchar_t* ParseConEmuSubst(LPCWSTR asCmd, bool bUpdateTitle /*= false*/)
 		asCmd = pszCmdCopy;
 	}
 
-	wchar_t* pszExpand = ExpandEnvStr(asCmd);
-	if (bUpdateTitle && pszExpand)
-	{
-		BOOL lbNeedCutStartEndQuot = (pszExpand[0] == L'"');
-		UpdateConsoleTitle(pszExpand, /* IN/OUT */lbNeedCutStartEndQuot, false);
-	}
+	wchar_t* pszExpand = ExpandEnvStr(pszCmdCopy ? pszCmdCopy : asCmd);
 
 	SafeFree(pszCmdCopy);
 	return pszExpand;
 }
 
-BOOL SetTitle(bool bExpandVars, LPCWSTR lsTitle)
+BOOL SetTitle(LPCWSTR lsTitle)
 {
-	LogFunction("SetTitle");
+	LogFunction(L"SetTitle");
 
-	wchar_t* pszExpanded = (bExpandVars && lsTitle) ? ParseConEmuSubst(lsTitle, false) : NULL;
-	LPCWSTR pszSetTitle = pszExpanded ? pszExpanded : lsTitle ? lsTitle : L"";
+	LPCWSTR pszSetTitle = lsTitle ? lsTitle : L"";
 
 	#ifdef SHOW_SETCONTITLE_MSGBOX
 	MessageBox(NULL, pszSetTitle, WIN3264TEST(L"ConEmuCD - set title",L"ConEmuCD64 - set title"), MB_SYSTEMMODAL);
@@ -3819,109 +3813,50 @@ BOOL SetTitle(bool bExpandVars, LPCWSTR lsTitle)
 		SafeFree(pszLog);
 	}
 
-	SafeFree(pszExpanded);
 	return bRc;
 }
 
-void UpdateConsoleTitle(LPCWSTR lsCmdLine, BOOL& lbNeedCutStartEndQuot, bool bExpandVars)
+void UpdateConsoleTitle()
 {
 	LogFunction(L"UpdateConsoleTitle");
 
-	if (gpszForcedTitle)
+	CmdArg   szTemp;
+	wchar_t *pszBuffer = NULL;
+	LPCWSTR  pszSetTitle = NULL, pszCopy;
+	LPCWSTR  pszReq = gpszForcedTitle ? gpszForcedTitle : gpszRunCmd;
+
+	pszBuffer = ParseConEmuSubst(pszReq);
+	if (pszBuffer)
+		pszReq = pszBuffer;
+	pszCopy = pszReq;
+
+	if (!gpszForcedTitle && (NextArg(&pszCopy, szTemp) == 0))
 	{
-		lsCmdLine = gpszForcedTitle;
+		wchar_t* pszName = (wchar_t*)PointToName(szTemp.ms_Arg);
+		wchar_t* pszExt = (wchar_t*)PointToExt(pszName);
+		if (pszExt)
+			*pszExt = 0;
+		pszSetTitle = pszName;
+	}
+	else
+	{
+		pszSetTitle = pszReq;
 	}
 
-	// Сменим заголовок консоли
-	if (*lsCmdLine == L'"' && lsCmdLine[1])
-	{
-		wchar_t *pszBuffer = lstrdup(lsCmdLine);;
-		wchar_t *pszTitle = pszBuffer;
-		wchar_t *pszEndQ = pszTitle + lstrlenW(pszTitle) - 1;
-
-		if (pszEndQ > (pszTitle+1) && *pszEndQ == L'"'
-			    && wcschr(pszTitle+1, L'"') == pszEndQ)
-		{
-			*pszEndQ = 0; pszTitle ++;
-			bool lbCont = true;
-
-			// "F:\Temp\1\ConsoleTest.exe ." - кавычки не нужны, после программы идут параметры
-			if (lbCont && (*pszTitle != L'"') && ((*(pszEndQ-1) == L'.') ||(*(pszEndQ-1) == L' ')))
-			{
-				LPCWSTR pwszCopy = pszTitle;
-				CmdArg szTemp;
-
-				if (NextArg(&pwszCopy, szTemp) == 0)
-				{
-					// В полученном пути к файлу (исполняемому) не должно быть пробелов?
-					if (!wcschr(szTemp, ' ') && IsFilePath(szTemp) && FileExists(szTemp))
-					{
-						lbCont = false;
-						lbNeedCutStartEndQuot = TRUE;
-					}
-				}
-			}
-
-			// "C:\Program Files\FAR\far.exe" - кавычки нужны, иначе не запустится
-			if (lbCont)
-			{
-				if (IsFilePath(pszTitle) && FileExists(pszTitle))
-				{
-					lbCont = false;
-					lbNeedCutStartEndQuot = FALSE;
-				}
-			}
-		}
-		else
-		{
-			pszEndQ = NULL;
-		}
-
-		#ifdef _DEBUG
-		int nLen = 4096; //GetWindowTextLength(ghConWnd); -- KIS2009 гундит "Посылка оконного сообщения"...
-
-		if (nLen > 0)
-		{
-			gpszPrevConTitle = (wchar_t*)calloc(nLen+1,2);
-
-			if (gpszPrevConTitle)
-			{
-				if (!GetConsoleTitleW(gpszPrevConTitle, nLen+1))
-				{
-					free(gpszPrevConTitle); gpszPrevConTitle = NULL;
-				}
-			}
-		}
-		#endif
-
-		SetTitle(bExpandVars/*true*/, pszTitle);
-
-		SafeFree(pszBuffer);
-
-		return; // Done
-	}
-
-	if (*lsCmdLine)
+	// Need to change title? Do it.
+	if (pszSetTitle && pszSetTitle)
 	{
 		#ifdef _DEBUG
 		int nLen = 4096; //GetWindowTextLength(ghConWnd); -- KIS2009 гундит "Посылка оконного сообщения"...
-
-		if (nLen > 0)
-		{
-			gpszPrevConTitle = (wchar_t*)calloc(nLen+1,2);
-
-			if (gpszPrevConTitle)
-			{
-				if (!GetConsoleTitleW(gpszPrevConTitle, nLen+1))
-				{
-					free(gpszPrevConTitle); gpszPrevConTitle = NULL;
-				}
-			}
-		}
+		gpszPrevConTitle = (wchar_t*)calloc(nLen+1,2);
+		if (gpszPrevConTitle)
+			GetConsoleTitleW(gpszPrevConTitle, nLen+1);
 		#endif
 
-		SetTitle(bExpandVars/*true*/, lsCmdLine);
+		SetTitle(pszSetTitle);
 	}
+
+	SafeFree(pszBuffer);
 }
 
 void CdToProfileDir()
@@ -8367,7 +8302,7 @@ BOOL cmd_SetConTitle(CESERVER_REQ& in, CESERVER_REQ** out)
 
 	if ((*out) != NULL)
 	{
-		(*out)->dwData[0] = SetTitle(false, (wchar_t*)in.wData);
+		(*out)->dwData[0] = SetTitle((LPCWSTR)in.wData);
 	}
 	else
 	{

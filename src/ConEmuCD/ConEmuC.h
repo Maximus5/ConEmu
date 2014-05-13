@@ -325,9 +325,9 @@ int InjectRemote(DWORD nRemotePID, bool abDefTermOnly = false);
 int InfiltrateDll(HANDLE hProcess, LPCWSTR dll);
 
 int ParseCommandLine(LPCWSTR asCmdLine /*, wchar_t** psNewCmd, BOOL* pbRunInBackgroundTab*/); // Разбор параметров командной строки
-wchar_t* ParseConEmuSubst(LPCWSTR asCmd, bool bUpdateTitle = false);
-void UpdateConsoleTitle(LPCWSTR lsCmdLine, BOOL& lbNeedCutStartEndQuot, bool bExpandVars);
-BOOL SetTitle(bool bExpandVars, LPCWSTR lsTitle);
+wchar_t* ParseConEmuSubst(LPCWSTR asCmd);
+void UpdateConsoleTitle();
+BOOL SetTitle(LPCWSTR lsTitle);
 void Help();
 void DosBoxHelp();
 int  ExitWaitForKey(WORD* pvkKeys, LPCWSTR asConfirm, BOOL abNewLine, BOOL abDontShowConsole);
