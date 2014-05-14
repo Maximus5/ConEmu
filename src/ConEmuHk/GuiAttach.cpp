@@ -679,8 +679,9 @@ void OnGuiWindowAttached(HWND hWindow, HMENU hMenu, LPCSTR asClassA, LPCWSTR asC
 				DWORD nConEmuPID = 0; user->getWindowThreadProcessId(ghConEmuWnd, &nConEmuPID);
                 if (nFocusPID != GetCurrentProcessId() && nFocusPID != nConEmuPID)
                 {                                                    
-                    _ASSERTE(hFocus==NULL || (nFocusPID==GetCurrentProcessId() || nFocusPID == nConEmuPID));
-                    hFocus = NULL;
+					// Допустимая ситуация, когда одновременно во вкладки цепляется
+					// несколько ChildGui. Например, при запуске из bat-файла...
+					hFocus = hWindow;
                 }
             }
 			#endif
