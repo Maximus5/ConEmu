@@ -585,7 +585,7 @@ class CRealConsole
 		const CEFAR_INFO_MAPPING *GetFarInfo(); // FarVer и прочее
 		bool InCreateRoot();
 		bool InRecreate();
-		BOOL GuiAppAttachAllowed(LPCWSTR asAppFileName, DWORD anAppPID);
+		BOOL GuiAppAttachAllowed(DWORD anServerPID, LPCWSTR asAppFileName, DWORD anAppPID);
 		//LPCWSTR GetLngNameTime();
 		void ShowPropertiesDialog();
 		void LogInput(UINT uMsg, WPARAM wParam, LPARAM lParam, LPCWSTR pszTranslatedChars = NULL);

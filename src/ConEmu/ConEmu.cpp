@@ -7237,18 +7237,20 @@ void CConEmuMain::AttachToDialog()
 	mp_AttachDlg->AttachDlg();
 }
 
-CRealConsole* CConEmuMain::AttachRequestedGui(LPCWSTR asAppFileName, DWORD anAppPID)
+CRealConsole* CConEmuMain::AttachRequestedGui(DWORD anServerPID, LPCWSTR asAppFileName, DWORD anAppPID)
 {
 	wchar_t szLogInfo[MAX_PATH];
 
+	_ASSERTE(anServerPID!=0);
+
 	if (gpSetCls->isAdvLogging!=0)
 	{
-		_wsprintf(szLogInfo, SKIPLEN(countof(szLogInfo)) L"AttachRequestedGui. AppPID=%u, FileName=", anAppPID);
+		_wsprintf(szLogInfo, SKIPLEN(countof(szLogInfo)) L"AttachRequestedGui. SrvPID=%u. AppPID=%u, FileName=", anServerPID, anAppPID);
 		lstrcpyn(szLogInfo+_tcslen(szLogInfo), asAppFileName ? asAppFileName : L"<NULL>", 128);
 		LogString(szLogInfo);
 	}
 
-	CRealConsole* pRCon = CVConGroup::AttachRequestedGui(asAppFileName, anAppPID);
+	CRealConsole* pRCon = CVConGroup::AttachRequestedGui(anServerPID, asAppFileName, anAppPID);
 
 	if (gpSetCls->isAdvLogging!=0)
 	{
@@ -7257,7 +7259,7 @@ CRealConsole* CConEmuMain::AttachRequestedGui(LPCWSTR asAppFileName, DWORD anApp
 			_wsprintf(szRc, SKIPLEN(countof(szRc)) L"Succeeded. ServerPID=%u", pRCon->GetServerPID());
 		else
 			wcscpy_c(szRc, L"Rejected");
-		_wsprintf(szLogInfo, SKIPLEN(countof(szLogInfo)) L"AttachRequestedGui. AppPID=%u. %s", anAppPID, szRc);
+		_wsprintf(szLogInfo, SKIPLEN(countof(szLogInfo)) L"AttachRequestedGui. SrvPID=%u. AppPID=%u. %s", anServerPID, anAppPID, szRc);
 		LogString(szLogInfo);
 	}
 

@@ -1155,6 +1155,11 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 				}
 			}
 
+			if (!gnServerPID && GetEnvironmentVariable(ENV_CONEMUSERVERPID_VAR_W, szVar, countof(szVar)))
+			{
+				gnServerPID = wcstoul(szVar, &psz, 10);
+			}
+
 			if (dwConEmuHwnd)
 			{
 				// Предварительное уведомление ConEmu GUI, что запущено GUI приложение
@@ -1162,6 +1167,8 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 				DWORD nSize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_ATTACHGUIAPP);
 				CESERVER_REQ *pIn = (CESERVER_REQ*)malloc(nSize);
 				ExecutePrepareCmd(pIn, CECMD_ATTACHGUIAPP, nSize);
+				_ASSERTE(gnServerPID!=0);
+				pIn->AttachGuiApp.nServerPID = gnServerPID;
 				pIn->AttachGuiApp.nPID = GetCurrentProcessId();
 				GetModuleFileName(NULL, pIn->AttachGuiApp.sAppFilePathName, countof(pIn->AttachGuiApp.sAppFilePathName));
 				pIn->AttachGuiApp.hkl = (DWORD)(LONG)(LONG_PTR)GetKeyboardLayout(0);
@@ -1190,7 +1197,8 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 							ghConWnd = pOut->AttachGuiApp.hSrvConWnd;
 							_ASSERTE(ghConEmuWndDC && user->isWindow(ghConEmuWndDC));
 							grcConEmuClient = pOut->AttachGuiApp.rcWindow;
-							gnServerPID = pOut->AttachGuiApp.nPID;
+							_ASSERTE(pOut->AttachGuiApp.nServerPID && (pOut->AttachGuiApp.nPID == pOut->AttachGuiApp.nServerPID));
+							gnServerPID = pOut->AttachGuiApp.nServerPID;
 							//gbGuiClientHideCaption = pOut->AttachGuiApp.bHideCaption;
 							gGuiClientStyles = pOut->AttachGuiApp.Styles;
 							if (pOut->AttachGuiApp.hkl)
@@ -2330,6 +2338,7 @@ BOOL WINAPI HookServerCommand(LPVOID pInst, CESERVER_REQ* pCmd, CESERVER_REQ* &p
 					ghConEmuWnd = pCmd->AttachGuiApp.hConEmuWnd;
 				}
 			}
+			_ASSERTE(gnServerPID && (gnServerPID == pCmd->AttachGuiApp.nServerPID));
 			gbGuiClientExternMode = FALSE;
 			gGuiClientStyles = pCmd->AttachGuiApp.Styles;
 			//ghConEmuWndDC -- еще нету

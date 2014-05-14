@@ -514,7 +514,7 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 			#endif
 
 			// Уведомить ожидающую вкладку
-			CRealConsole* pRCon = gpConEmu->AttachRequestedGui(pIn->AttachGuiApp.sAppFilePathName, pIn->AttachGuiApp.nPID);
+			CRealConsole* pRCon = gpConEmu->AttachRequestedGui(pIn->AttachGuiApp.nServerPID, pIn->AttachGuiApp.sAppFilePathName, pIn->AttachGuiApp.nPID);
 			if (pRCon)
 			{
 				CVConGuard VCon(pRCon->VCon());
@@ -534,7 +534,8 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 				pRCon->SetGuiMode(pIn->AttachGuiApp.nFlags, pIn->AttachGuiApp.hAppWindow, pIn->AttachGuiApp.Styles.nStyle, pIn->AttachGuiApp.Styles.nStyleEx, pIn->AttachGuiApp.sAppFilePathName, pIn->AttachGuiApp.nPID, rcPrev);
 
 				ppReply->AttachGuiApp.nFlags = agaf_Success | (pRCon->isActive(false) ? 0 : agaf_Inactive);
-				ppReply->AttachGuiApp.nPID = pRCon->GetServerPID();
+				ppReply->AttachGuiApp.nServerPID = pRCon->GetServerPID();
+				ppReply->AttachGuiApp.nPID = ppReply->AttachGuiApp.nServerPID;
 				ppReply->AttachGuiApp.hConEmuDc = pRCon->GetView();
 				ppReply->AttachGuiApp.hConEmuBack = hBack;
 				ppReply->AttachGuiApp.hConEmuWnd = ghWnd;

@@ -45,6 +45,7 @@ extern HWND    ghConEmuWnd;     // Root! ConEmu window
 extern HWND    ghConEmuWndDC;   // ConEmu DC window
 extern HWND    ghConEmuWndBack; // ConEmu Back window - holder for GUI client
 extern DWORD   gnHookMainThreadId;
+extern DWORD   gnServerPID;
 
 // Этот TID может отличаться от основного потока.
 // Например, VLC создает окна не в главном, а в фоновом потоке.
@@ -624,6 +625,7 @@ void OnGuiWindowAttached(HWND hWindow, HMENU hMenu, LPCSTR asClassA, LPCWSTR asC
 	}
 	pIn->AttachGuiApp.nFlags = gnAttachGuiClientFlags;
 	pIn->AttachGuiApp.nPID = GetCurrentProcessId();
+	pIn->AttachGuiApp.nServerPID = gnServerPID;
 	pIn->AttachGuiApp.hAppWindow = hWindow;
 	pIn->AttachGuiApp.Styles.nStyle = nCurStyle; // стили могли измениться после создания окна,
 	pIn->AttachGuiApp.Styles.nStyleEx = nCurStyleEx; // поэтому получим актуальные
@@ -813,6 +815,8 @@ void OnShowGuiClientWindow(HWND hWnd, int &nCmdShow, BOOL &rbGuiAttach, BOOL &rb
 			DWORD nSize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_ATTACHGUIAPP);
 			CESERVER_REQ *pIn = ExecuteNewCmd(CECMD_ATTACHGUIAPP, nSize);
 
+			_ASSERTE(gnServerPID!=0);
+			pIn->AttachGuiApp.nServerPID = gnServerPID;
 			pIn->AttachGuiApp.nFlags = gnAttachGuiClientFlags;
 			pIn->AttachGuiApp.nPID = GetCurrentProcessId();
 			pIn->AttachGuiApp.hAppWindow = hWnd;

@@ -1298,6 +1298,8 @@ int ServerInit(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/)
 		_ASSERTE(IsWindow(ghConEmuWndDC));
 		_ASSERTE(IsWindow(ghConEmuWndBack));
 		_ASSERTE(IsWindow(gpSrv->hRootProcessGui));
+		_ASSERTE(gpSrv->dwMainServerPID && (gpSrv->dwMainServerPID==GetCurrentProcessId()));
+		pIn->AttachGuiApp.nServerPID = gpSrv->dwMainServerPID;
 		pIn->AttachGuiApp.hConEmuWnd = ghConEmuWnd;
 		pIn->AttachGuiApp.hConEmuDc = ghConEmuWndDC;
 		pIn->AttachGuiApp.hConEmuBack = ghConEmuWndBack;

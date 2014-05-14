@@ -3184,7 +3184,7 @@ BOOL CVConGroup::AttachRequested(HWND ahConWnd, const CESERVER_REQ_STARTSTOP* pS
 	return bFound;
 }
 
-CRealConsole* CVConGroup::AttachRequestedGui(LPCWSTR asAppFileName, DWORD anAppPID)
+CRealConsole* CVConGroup::AttachRequestedGui(DWORD anServerPID, LPCWSTR asAppFileName, DWORD anAppPID)
 {
 	CRealConsole* pRCon;
 
@@ -3192,7 +3192,7 @@ CRealConsole* CVConGroup::AttachRequestedGui(LPCWSTR asAppFileName, DWORD anAppP
 	{
 		if (gp_VCon[i] && (pRCon = gp_VCon[i]->RCon()) != NULL)
 		{
-			if (pRCon->GuiAppAttachAllowed(asAppFileName, anAppPID))
+			if (pRCon->GuiAppAttachAllowed(anServerPID, asAppFileName, anAppPID))
 				return pRCon;
 		}
 	}

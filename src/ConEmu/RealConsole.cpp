@@ -13131,12 +13131,15 @@ bool CRealConsole::InRecreate()
 }
 
 // Можно ли к этой консоли прицепить GUI приложение
-BOOL CRealConsole::GuiAppAttachAllowed(LPCWSTR asAppFileName, DWORD anAppPID)
+BOOL CRealConsole::GuiAppAttachAllowed(DWORD anServerPID, LPCWSTR asAppFileName, DWORD anAppPID)
 {
 	if (!this)
 		return false;
 	// Если даже сервер еще не запущен
 	if (InCreateRoot())
+		return false;
+
+	if (anServerPID && mn_MainSrv_PID && (anServerPID != mn_MainSrv_PID))
 		return false;
 
 	// PortableApps launcher?

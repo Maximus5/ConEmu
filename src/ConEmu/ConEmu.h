@@ -607,7 +607,7 @@ class CConEmuMain :
 		void AskChangeBufferHeight();
 		void AskChangeAlternative();
 		void AttachToDialog();
-		CRealConsole* AttachRequestedGui(LPCWSTR asAppFileName, DWORD anAppPID);
+		CRealConsole* AttachRequestedGui(DWORD anServerPID, LPCWSTR asAppFileName, DWORD anAppPID);
 		void AutoSizeFont(RECT arFrom, enum ConEmuRect tFrom);
 		RECT CalcMargins(DWORD/*enum ConEmuMargins*/ mg, ConEmuWindowMode wmNewMode = wmCurrent);
 		RECT CalcRect(enum ConEmuRect tWhat, CVirtualConsole* pVCon=NULL);

@@ -192,7 +192,7 @@ public:
 	static bool ConActivateNext(bool abNext);
 	static bool PaneActivateNext(bool abNext);
 	static DWORD CheckProcesses();
-	static CRealConsole* AttachRequestedGui(LPCWSTR asAppFileName, DWORD anAppPID);
+	static CRealConsole* AttachRequestedGui(DWORD anServerPID, LPCWSTR asAppFileName, DWORD anAppPID);
 	static BOOL AttachRequested(HWND ahConWnd, const CESERVER_REQ_STARTSTOP* pStartStop, CESERVER_REQ_SRVSTARTSTOPRET* pRet);
 	static int GetConCount(bool bNoDetached = false);
 	static int ActiveConNum();

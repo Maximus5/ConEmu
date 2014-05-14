@@ -1804,6 +1804,7 @@ struct CESERVER_REQ_ATTACHGUIAPP
 {
 	DWORD nFlags;
 	DWORD nPID;
+	DWORD nServerPID;
 	DWORD hkl;
 	HWND2 hConEmuWnd;   // Root
 	HWND2 hConEmuDc;    // DC Window
