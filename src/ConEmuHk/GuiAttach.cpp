@@ -225,7 +225,7 @@ bool CheckCanCreateWindow(LPCSTR lpClassNameA, LPCWSTR lpClassNameW, DWORD& dwSt
 		lbAfxFrameOrView90 = true;
 	}
 #endif
-	
+
 	if (gbAttachGuiClient && ghConEmuWndBack)
 	{
 		#ifdef _DEBUG
@@ -319,7 +319,7 @@ bool CheckCanCreateWindow(LPCSTR lpClassNameA, LPCWSTR lpClassNameW, DWORD& dwSt
 #else
 	if (gnHookMainThreadId && gnHookMainThreadId != GetCurrentThreadId())
 		return true; // Разрешено, отдается на откуп консольной программе/плагинам
-	
+
 	if ((dwStyle & (WS_POPUP|DS_MODALFRAME)) == (WS_POPUP|DS_MODALFRAME))
 	{
 		// Это скорее всего обычный диалог, разрешим, но пока для отладчика - assert
@@ -333,7 +333,7 @@ bool CheckCanCreateWindow(LPCSTR lpClassNameA, LPCWSTR lpClassNameW, DWORD& dwSt
 		// Что-то системное
 		return true;
 	}
-	
+
 	// Окно на любой чих создается. dwStyle == 0x88000000.
 	if ((lpClassNameW && lstrcmpW(lpClassNameW, L"CicMarshalWndClass") == 0)
 		|| (lpClassNameA && lstrcmpA(lpClassNameA, "CicMarshalWndClass") == 0)
@@ -363,7 +363,7 @@ bool CheckCanCreateWindow(LPCSTR lpClassNameA, LPCWSTR lpClassNameW, DWORD& dwSt
 	//SetLastError(ERROR_THREAD_MODE_NOT_BACKGROUND);
 	//return false;
 	#endif
-	
+
 	// Разрешить? По настройке?
 	return true;
 #endif
@@ -398,7 +398,7 @@ void ReplaceGuiAppWindow(BOOL abStyleHidden)
 
 	// Позвать user->getWindowRect(ghAttachGuiClient, &grcAttachGuiClientOrig); если надо
 	CheckOrigGuiClientRect();
-	
+
 	if (!gbGuiClientExternMode)
 	{
 		// DotNet: если не включить WS_CHILD - не работают toolStrip & menuStrip
@@ -411,7 +411,7 @@ void ReplaceGuiAppWindow(BOOL abStyleHidden)
 			user->setWindowLongPtrW(ghAttachGuiClient, GWL_STYLE, dwNewStyle);
 
 		/*
-		
+
 		DWORD_PTR dwNewStyleEx = (dwStyleEx|WS_EX_CONTROLPARENT);
 		if (dwStyleEx != dwNewStyleEx)
 			user->setWindowLongPtrW(ghAttachGuiClient, GWL_EXSTYLE, dwNewStyleEx);
@@ -425,14 +425,14 @@ void ReplaceGuiAppWindow(BOOL abStyleHidden)
 		}
 
 		RECT rcGui = AttachGuiClientPos();
-		
+
 		if (user->setWindowPos(ghAttachGuiClient, HWND_TOP, rcGui.left,rcGui.top, rcGui.right-rcGui.left, rcGui.bottom-rcGui.top,
 			SWP_DRAWFRAME | SWP_NOCOPYBITS | /*SWP_FRAMECHANGED |*/ (abStyleHidden ? SWP_SHOWWINDOW : 0)))
 		{
 			if (abStyleHidden && IsWindowVisible(ghAttachGuiClient))
 				abStyleHidden = FALSE;
 		}
-		
+
 		// !!! OnSetForegroundWindow не подходит - он дергает Cmd.
 		user->setForegroundWindow(ghConEmuWnd);
 
@@ -658,7 +658,7 @@ void OnGuiWindowAttached(HWND hWindow, HMENU hMenu, LPCSTR asClassA, LPCWSTR asC
 		{
 			_ASSERTE((pOut->AttachGuiApp.nFlags & agaf_Success) == agaf_Success);
 
-            BOOL lbRc = FALSE;
+			BOOL lbRc = FALSE;
 
 			_ASSERTE(pOut->AttachGuiApp.hConEmuBack && pOut->AttachGuiApp.hConEmuDc && (HWND)pOut->AttachGuiApp.hConEmuDc!=(HWND)pOut->AttachGuiApp.hConEmuBack);
 			_ASSERTE((ghConEmuWndBack==NULL) || (pOut->AttachGuiApp.hConEmuBack==ghConEmuWndBack));
@@ -668,24 +668,24 @@ void OnGuiWindowAttached(HWND hWindow, HMENU hMenu, LPCSTR asClassA, LPCWSTR asC
 
 			//gbGuiClientHideCaption = pOut->AttachGuiApp.bHideCaption;
 			gGuiClientStyles = pOut->AttachGuiApp.Styles;
-            
+
 			#ifdef _DEBUG
-            HWND hFocus = user->getFocus();
-            DWORD nFocusPID = 0;
-            
-            if (hFocus)
-            {
-                user->getWindowThreadProcessId(hFocus, &nFocusPID);
+			HWND hFocus = user->getFocus();
+			DWORD nFocusPID = 0;
+
+			if (hFocus)
+			{
+				user->getWindowThreadProcessId(hFocus, &nFocusPID);
 				DWORD nConEmuPID = 0; user->getWindowThreadProcessId(ghConEmuWnd, &nConEmuPID);
-                if (nFocusPID != GetCurrentProcessId() && nFocusPID != nConEmuPID)
-                {                                                    
+				if (nFocusPID != GetCurrentProcessId() && nFocusPID != nConEmuPID)
+				{
 					// Допустимая ситуация, когда одновременно во вкладки цепляется
 					// несколько ChildGui. Например, при запуске из bat-файла...
 					hFocus = hWindow;
-                }
-            }
+				}
+			}
 			#endif
-            
+
 			if (pOut->AttachGuiApp.hkl)
 			{
 				LONG_PTR hkl = (LONG_PTR)(LONG)pOut->AttachGuiApp.hkl;
@@ -693,8 +693,8 @@ void OnGuiWindowAttached(HWND hWindow, HMENU hMenu, LPCSTR asClassA, LPCWSTR asC
 				UNREFERENCED_PARAMETER(lbRc);
 			}
 
-            //grcAttachGuiClientPos = pOut->AttachGuiApp.rcWindow;
-            ReplaceGuiAppWindow(abStyleHidden);
+			//grcAttachGuiClientPos = pOut->AttachGuiApp.rcWindow;
+			ReplaceGuiAppWindow(abStyleHidden);
 
 			//if (hPreFocus)
 			//{
@@ -847,12 +847,12 @@ void OnShowGuiClientWindow(HWND hWnd, int &nCmdShow, BOOL &rbGuiAttach, BOOL &rb
 			//OnSetParent(hWnd, ghConEmuWndBack);
 		}
 
-        ReplaceGuiAppWindow(FALSE);
-		
+		ReplaceGuiAppWindow(FALSE);
+
 		//RECT rcGui = grcAttachGuiClientPos;
 		//user->setWindowPos(hWnd, HWND_TOP, rcGui.left,rcGui.top, rcGui.right-rcGui.left, rcGui.bottom-rcGui.top,
 		//	SWP_FRAMECHANGED);
-	
+
 		nCmdShow = SW_SHOWNORMAL;
 		gbForceShowGuiClient = FALSE; // Один раз?
 		rbGuiAttach = TRUE;
@@ -926,7 +926,7 @@ RECT AttachGuiClientPos(DWORD anStyle /*= 0*/, DWORD anStyleEx /*= 0*/)
 	{
 		_ASSERTEX(ghConEmuWndBack!=NULL);
 		_ASSERTEX(ghAttachGuiClient!=NULL);
-		user->getWindowRect(ghConEmuWndBack, &rcPos);		
+		user->getWindowRect(ghConEmuWndBack, &rcPos);
 	}
 
 	return rcPos;
@@ -957,7 +957,7 @@ void SetGuiExternMode(BOOL abUseExternMode, LPRECT prcOldPos /*= NULL*/)
 	if (gbGuiClientExternMode != abUseExternMode)
 	{
 		gbGuiClientExternMode = abUseExternMode;
-		
+
 		if (!abUseExternMode)
 		{
 			ReplaceGuiAppWindow(FALSE);
@@ -976,7 +976,7 @@ void SetGuiExternMode(BOOL abUseExternMode, LPRECT prcOldPos /*= NULL*/)
 				user->setWindowLongPtrW(ghAttachGuiClient, GWL_EXSTYLE, gnAttachGuiClientStyleEx);
 			}
 			user->setParent(ghAttachGuiClient, NULL);
-			
+
 			TODO("Вернуть старый размер?");
 			user->setWindowPos(ghAttachGuiClient, ghConEmuWnd, rcGui.left,rcGui.top, rcGui.right-rcGui.left, rcGui.bottom-rcGui.top,
 				SWP_DRAWFRAME | SWP_SHOWWINDOW | SWP_ASYNCWINDOWPOS | SWP_NOACTIVATE);
