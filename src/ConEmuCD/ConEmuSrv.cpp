@@ -764,12 +764,18 @@ void ServerInitEnvVars()
 {
 	LogFunction(L"ServerInitEnvVars");
 
-	//wchar_t szValue[32];
+	wchar_t szValue[32];
 	//DWORD nRc;
 	//nRc = GetEnvironmentVariable(ENV_CONEMU_HOOKS, szValue, countof(szValue));
 	//if ((nRc == 0) && (GetLastError() == ERROR_ENVVAR_NOT_FOUND)) ...
 
 	SetEnvironmentVariable(ENV_CONEMU_HOOKS, ENV_CONEMU_HOOKS_ENABLED);
+
+	if (gnRunMode == RM_SERVER)
+	{
+		_wsprintf(szValue, SKIPLEN(countof(szValue)) L"%u", GetCurrentProcessId());
+		SetEnvironmentVariable(ENV_CONEMUSERVERPID_VAR_W, szValue);
+	}
 
 	if (gpSrv && (gpSrv->guiSettings.cbSize == sizeof(gpSrv->guiSettings)))
 	{
