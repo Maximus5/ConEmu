@@ -153,7 +153,7 @@ typedef struct _CONSOLE_SELECTION_INFO
 #define CESERVERQUERYNAME   L"\\\\%s\\pipe\\ConEmuSrvQuery%u" // ConEmuC_PID
 #define CESERVERWRITENAME   L"\\\\%s\\pipe\\ConEmuSrvWrite%u" // ConEmuC_PID
 #define CESERVERREADNAME    L"\\\\%s\\pipe\\ConEmuSrvRead%u"  // ConEmuC_PID
-#define CEGUIPIPENAME       L"\\\\%s\\pipe\\ConEmuGui%u"      // GetConsoleWindow() // необходимо, чтобы плагин мог общаться с GUI
+#define CEGUIPIPENAME       L"\\\\%s\\pipe\\ConEmuGui.%08X"   // GetConsoleWindow() // необходимо, чтобы плагин мог общаться с GUI
 															  // ghConEmuWndRoot --> CConEmuMain::GuiServerThreadCommand
 #define CEPLUGINPIPENAME    L"\\\\%s\\pipe\\ConEmuPlugin%u"   // Far_PID
 #define CEHOOKSPIPENAME     L"\\\\%s\\pipe\\ConEmuHk%u"       // PID процесса, в котором крутится Pipe
