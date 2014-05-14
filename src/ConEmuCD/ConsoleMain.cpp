@@ -4878,7 +4878,6 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 				HWND hConEmu = ghConEmuWnd;
 				if (!hConEmu || !IsWindow(hConEmu))
 				{
-					_ASSERTE(ghConEmuWnd!=NULL && IsWindow(ghConEmuWnd));
 					// попытаться найти открытый ConEmu
 					hConEmu = FindWindowEx(NULL, NULL, VirtualConsoleClassMain, NULL);
 					if (hConEmu)
