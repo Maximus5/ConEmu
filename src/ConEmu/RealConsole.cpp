@@ -9402,7 +9402,7 @@ bool CRealConsole::GetTab(int tabIdx, /*OUT*/ CTab& rTab)
 	if (mn_ProgramStatus & CES_FARACTIVE)
 	{
 		// Only Far Manager can get several tab in one console
-
+		#if 0
 		// Есть модальный редактор/вьювер?
 		if (tabs.mb_HasModalWindow)
 		{
@@ -9420,6 +9420,7 @@ bool CRealConsole::GetTab(int tabIdx, /*OUT*/ CTab& rTab)
 				}
 			}
 		}
+		#endif
 	}
 	else if (tabIdx > 0)
 	{
