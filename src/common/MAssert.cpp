@@ -40,8 +40,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 AppMsgBox_t AssertMsgBox = NULL;
 
 #ifdef _DEBUG
-bool gbInMyAssertTrap = false;
-bool gbInMyAssertPipe = false;
+LONG gnInMyAssertTrap = 0;
+LONG gnInMyAssertPipe = 0;
 //bool gbAllowAssertThread = false;
 CEAssertMode gAllowAssertThread = am_Default;
 HANDLE ghInMyAssertTrap = NULL;
@@ -51,7 +51,7 @@ extern HWND ghConEmuWnd;
 #endif
 DWORD WINAPI MyAssertThread(LPVOID p)
 {
-	if (gbInMyAssertTrap)
+	if (gnInMyAssertTrap > 0)
 	{
 		// Если уже в трапе - то повторно не вызывать, иначе может вывалиться серия окон, что затруднит отладку
 		return IDCANCEL;
@@ -67,7 +67,7 @@ DWORD WINAPI MyAssertThread(LPVOID p)
 	gnInMyAssertThread = GetCurrentThreadId();
 	if (ghInMyAssertTrap)
 		ResetEvent(ghInMyAssertTrap);
-	gbInMyAssertTrap = true;
+	InterlockedIncrement(&gnInMyAssertTrap);
 	
 	DWORD nRc = 
 		#ifdef CONEMU_MINIMAL
@@ -78,7 +78,7 @@ DWORD WINAPI MyAssertThread(LPVOID p)
 		#endif
 			
 
-	gbInMyAssertTrap = false;
+	InterlockedDecrement(&gnInMyAssertTrap);
 	if (ghInMyAssertTrap)
 		SetEvent(ghInMyAssertTrap);
 	gnInMyAssertThread = 0;
@@ -140,23 +140,23 @@ int MyAssertProc(const wchar_t* pszFile, int nLine, const wchar_t* pszTest, bool
 		//}
 		//#endif
 
-		if (hGuiWnd && !gbInMyAssertTrap)
+		if (hGuiWnd && gnInMyAssertTrap <= 0)
 		{
-			gbInMyAssertTrap = true;
-			gbInMyAssertPipe = true;
+			InterlockedIncrement(&gnInMyAssertTrap);
+			InterlockedIncrement(&gnInMyAssertPipe);
 			gnInMyAssertThread = GetCurrentThreadId();
 			ResetEvent(ghInMyAssertTrap);
 			
 			dwCode = GuiMessageBox(abNoPipe ? NULL : hGuiWnd, pa->szDebugInfo, pa->szTitle, MB_SETFOREGROUND|MB_SYSTEMMODAL|MB_RETRYCANCEL);
-			gbInMyAssertTrap = false;
-			gbInMyAssertPipe = false;
+			InterlockedDecrement(&gnInMyAssertTrap);
+			InterlockedDecrement(&gnInMyAssertPipe);
 			SetEvent(ghInMyAssertTrap);
 			gnInMyAssertThread = 0;
 			goto wrap;
 		}
 	}
 
-	while (gbInMyAssertPipe && (gnInMyAssertThread != GetCurrentThreadId()))
+	while (gnInMyAssertPipe>0 && (gnInMyAssertThread != GetCurrentThreadId()))
 	{
 		Sleep(250);
 	}
@@ -178,11 +178,11 @@ void MyAssertShutdown()
 {
 	if (ghInMyAssertTrap != NULL)
 	{
-		if (gbInMyAssertTrap)
+		if (gnInMyAssertTrap > 0)
 		{
 			if (!gnInMyAssertThread)
 			{
-				_ASSERTE(gbInMyAssertTrap && gnInMyAssertThread);
+				_ASSERTE(gnInMyAssertTrap>0 && gnInMyAssertThread);
 			}
 			else
 			{

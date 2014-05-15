@@ -55,7 +55,7 @@ extern AppMsgBox_t AssertMsgBox;
 	int MyAssertProc(const wchar_t* pszFile, int nLine, const wchar_t* pszTest, bool abNoPipe);
 	void MyAssertTrap();
 	void MyAssertShutdown();
-	extern bool gbInMyAssertTrap;
+	extern LONG gnInMyAssertTrap;
 
 	#define MY_ASSERT_EXPR(expr, msg, nopipe) \
 		if (!(expr)) { \

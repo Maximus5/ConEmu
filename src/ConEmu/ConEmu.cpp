@@ -3138,9 +3138,9 @@ void CConEmuMain::Destroy()
 	}
 
 	#ifdef _DEBUG
-	if (gbInMyAssertTrap)
+	if (gnInMyAssertTrap > 0)
 	{
-		LogString(L"-- Destroy skipped due to gbInMyAssertTrap");
+		LogString(L"-- Destroy skipped due to gnInMyAssertTrap");
 		mb_DestroySkippedInAssert = true;
 		return;
 	}
@@ -17440,11 +17440,11 @@ void CConEmuMain::OnTimer_Main(CVirtualConsole* pVCon)
 	#ifdef _DEBUG
 	if (mb_DestroySkippedInAssert)
 	{
-		if (!gbInMyAssertTrap)
+		if (gnInMyAssertTrap <= 0)
 		{
 			if (CVConGroup::GetConCount() == 0)
 			{
-				LogString(L"-- Destroy was skipped due to gbInMyAssertTrap, reposting");
+				LogString(L"-- Destroy was skipped due to gnInMyAssertTrap, reposting");
 				Destroy();
 				return;
 			}

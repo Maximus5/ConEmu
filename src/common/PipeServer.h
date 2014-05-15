@@ -1229,6 +1229,18 @@ struct PipeServer
 			//}
 			return nResult;
 		};
+		static void TerminatePipeThread(HANDLE hThread)
+		{
+			#ifdef _DEBUG
+			while (gnInMyAssertTrap > 0)
+			{
+				MessageBeep(MB_ICONSTOP);
+				Sleep(10000);
+			}
+			#endif
+
+			TerminateThread(hThread, 100);
+		}
 	//public:
 	//	CPipeServer()
 	//	{
@@ -1405,7 +1417,7 @@ struct PipeServer
 						{
 							// CreateThread was called, but thread routine was not entered yet.
 							PLOG3(i,"TerminateThread/STARTING_STATE",0);
-							TerminateThread(m_Pipes[i].hThread, 100);
+							TerminatePipeThread(m_Pipes[i].hThread);
 							m_Pipes[i].dwState = THREAD_FINISHED_STATE;
 							PLOG3(i,"TerminateThread/STARTING_STATE done",0);
 						}
@@ -1481,7 +1493,7 @@ struct PipeServer
 
 							// When "C:\Program Files (x86)\F-Secure\apps\ComputerSecurity\HIPS\fshook64.dll"
 							// is loaded, possible TerminateThread locks together
-							TerminateThread(m_Pipes[i].hThread, 100);
+							TerminatePipeThread(m_Pipes[i].hThread);
 							m_Pipes[i].dwState = THREAD_FINISHED_STATE;
 							PLOG3(i,"TerminateThread/Timeout done",m_Pipes[i].dwState);
 						}

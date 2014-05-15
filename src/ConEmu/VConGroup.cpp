@@ -2199,9 +2199,9 @@ bool CVConGroup::OnCloseQuery(bool* rbMsgConfirmed /*= NULL*/)
 	gpConEmu->SetScClosePending(true);
 
 	#ifdef _DEBUG
-	if (gbInMyAssertTrap)
+	if (gnInMyAssertTrap > 0)
 	{
-		gpConEmu->LogString(L"CloseQuery skipped due to gbInMyAssertTrap");
+		gpConEmu->LogString(L"CloseQuery skipped due to gnInMyAssertTrap");
 		return false;
 	}
 	#endif
