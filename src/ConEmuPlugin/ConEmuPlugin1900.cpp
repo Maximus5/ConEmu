@@ -985,8 +985,13 @@ void PostMacroW1900(const wchar_t* asMacro, INPUT_RECORD* apRec)
 			size_t cchMax = (Result->ErrSrc ? lstrlen(Result->ErrSrc) : 0) + lstrlen(asMacro) + 255;
 			pszErrText = (wchar_t*)malloc(cchMax*sizeof(wchar_t));
 			_wsprintf(pszErrText, SKIPLEN(cchMax)
-				L"Error in Macro. Far %u.%u build %u r%u\nCode: %u, Line: %u, Col: %u%s%s\n----------------------------------\n%s",
+				L"Error in Macro. Far %u.%u build %u r%u\n"
+				L"ConEmu plugin %02u%02u%02u%s[%u] {1900}\n"
+				L"Code: %u, Line: %u, Col: %u%s%s\n"
+				L"----------------------------------\n"
+				L"%s",
 				gFarVersion.dwVerMajor, gFarVersion.dwVerMinor, gFarVersion.dwBuild, gFarVersion.Bis ? 1 : 0,
+				MVV_1, MVV_2, MVV_3, _CRT_WIDE(MVV_4a), WIN3264TEST(32,64),
 				Result->ErrCode, (UINT)(int)Result->ErrPos.Y+1, (UINT)(int)Result->ErrPos.X+1,
 				Result->ErrSrc ? L", Hint: " : L"", Result->ErrSrc ? Result->ErrSrc : L"",
 				asMacro);
@@ -998,8 +1003,12 @@ void PostMacroW1900(const wchar_t* asMacro, INPUT_RECORD* apRec)
 			size_t cchMax = lstrlen(asMacro) + 255;
 			pszErrText = (wchar_t*)malloc(cchMax*sizeof(wchar_t));
 			_wsprintf(pszErrText, SKIPLEN(cchMax)
-				L"Error in Macro. Far %u.%u build %u r%u\n----------------------------------\n%s",
+				L"Error in Macro. Far %u.%u build %u r%u\n"
+				L"ConEmu plugin %02u%02u%02u%s[%u] {1900}\n"
+				L"----------------------------------\n"
+				L"%s",
 				gFarVersion.dwVerMajor, gFarVersion.dwVerMinor, gFarVersion.dwBuild, gFarVersion.Bis ? 1 : 0,
+				MVV_1, MVV_2, MVV_3, _CRT_WIDE(MVV_4a), WIN3264TEST(32,64),
 				asMacro);
 		}
 
