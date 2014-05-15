@@ -60,9 +60,14 @@ LPCWSTR TabName::Set(LPCWSTR asName)
 	#ifdef _DEBUG
 	nLen = asName ? lstrlenW(asName) : -1;
 	if ((nLen <= 0) || (nLen > 0 && asName[nLen-1] == L' '))
+	{
 		nLen = nLen;
+	}
 	if (asName && lstrcmp(asName, sz) != 0)
-		nLen = nLen;
+	{
+		if (sz[0] && lstrcmp(asName, L"ConEmu") == 0)
+			nLen = nLen;
+	}
 	#endif
 
 	lstrcpynW(sz, asName ? asName : L"", countof(sz));
