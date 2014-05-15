@@ -536,6 +536,7 @@ class CRealConsole
 		BOOL CanCloseTab(BOOL abPluginRequired = FALSE);
 		void CloseTab();
 		bool isConsoleClosing();
+		bool isConsoleReady();
 		void OnServerClosing(DWORD anSrvPID);
 		void Paste(CEPasteMode PasteMode = pm_Standard, LPCWSTR asText = NULL, bool abNoConfirm = false, bool abCygWin = false);
 		void LogString(LPCSTR asText, BOOL abShowTime = FALSE);

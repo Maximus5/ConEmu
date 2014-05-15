@@ -2524,7 +2524,7 @@ DWORD CRealConsole::MonitorThreadWorker(bool bDetached, bool& rbChildProcessCrea
 				}
 			}
 
-			if (hConWnd || m_ChildGui.hGuiWnd)  // Если знаем хэндл окна -
+			if (isConsoleReady() || m_ChildGui.hGuiWnd)  // Если знаем хэндл окна -
 			{
 				int iLen = GetWindowText(m_ChildGui.isGuiWnd() ? m_ChildGui.hGuiWnd : hConWnd, TitleCmp, countof(TitleCmp)-2);
 				if (iLen <= 0)
@@ -2553,6 +2553,8 @@ DWORD CRealConsole::MonitorThreadWorker(bool bDetached, bool& rbChildProcessCrea
 			if (TitleCmp[0] == 0)
 				iDbg = 0;
 			#endif
+
+			DEBUGTEST(BOOL bWasForceTitleChanged = mb_ForceTitleChanged);
 
 			if (mb_ForceTitleChanged
 				|| lbForceUpdateProgress
@@ -10281,6 +10283,13 @@ bool CRealConsole::isConsoleClosing()
 	if ((hConWnd == NULL) || mb_InCloseConsole)
 		return true;
 
+	return false;
+}
+
+bool CRealConsole::isConsoleReady()
+{
+	if (hConWnd && mn_MainSrv_PID && mb_MainSrv_Ready)
+		return true;
 	return false;
 }
 
