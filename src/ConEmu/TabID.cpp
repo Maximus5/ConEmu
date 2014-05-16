@@ -808,6 +808,29 @@ bool CTabStack::UpdateFarWindow(HANDLE hUpdate, CVirtualConsole* apVCon, LPCWSTR
 	return bChanged;
 }
 
+#if 0
+void CTabStack::TabDeleted(MSectionLockSimple* pUpdateLock, int i)
+{
+	PRAGMA_ERROR("FAIL. Нужно убрать из стека все NULL-ячейки");
+	if ((i >= 0) && (i < mn_MaxCount))
+	{
+		if (i < mn_Used)
+		{
+			#if 1
+			_ASSERTE(pUpdateLock->isLocked());
+			#else
+			pUpdateLock->RelockExclusive();
+			#endif
+			// Все что между {mn_UpdatePos .. (i-1)} теперь уже забито NULL
+			memmove(mpp_Stack+mn_UpdatePos, mpp_Stack+i, (mn_Used - i) * sizeof(CTabID**));
+		}
+		mn_Used -= (i - mn_UpdatePos);
+		_ASSERTE(mn_Used>0);
+		memset(mpp_Stack+mn_Used, 0, (i - mn_UpdatePos) * sizeof(CTabID**));
+	}
+}
+#endif
+
 void CTabStack::UpdateAppend(HANDLE hUpdate, CTab& Tab, BOOL abMoveFirst)
 {
 	UpdateAppend(hUpdate, Tab.mp_Tab, abMoveFirst);
@@ -1045,6 +1068,67 @@ bool CTabStack::UpdateEnd(HANDLE hUpdate, DWORD anActiveFarPID)
 
 	return bChanged;
 }
+
+#if 0
+void CTabStack::RecheckPassive()
+{
+	if (mn_UpdatePos < mn_Used)
+	{
+
+		// Освободить все элементы за mn_UpdatePos
+		int i = mn_UpdatePos;
+		DEBUGTEST(int iPrev = mn_Used);
+		while (i < mn_Used)
+		{
+			CTabID *pTab = mpp_Stack[i];
+
+			if (pTab)
+			{
+				_ASSERTE(pTab->Info.pVCon!=NULL);
+				if (abRConTabs && pTab->Info.pVCon)
+				{
+					bool bVConValid = false, bPidValid = false, bPassive = false;
+					// Only for RCon->tabs.m_Tabs we must to check, if tab is:
+					// 'Still Alive'
+					// 'Hidden' (Another started Far hides editor/viewer of parent Far)
+					// 'Terminated' (Editor/viewer was closed or Far instance terminated)
+					CVConGroup::CheckTabValid(pTab, bVConValid, bPidValid, bPassive);
+
+					if (bPidValid)
+					{
+						if (bPassive)
+						{
+							// Пока оставить этот таб
+							i++;
+							continue;
+						}
+					}
+				}
+
+				// If we get here - tab was terminated
+
+				if (abRConTabs)
+					pTab->Info.Status = tisInvalid;
+
+				#ifdef TAB_REF_PLACE
+				pTab->DelPlace(m_rp);
+				#endif
+
+				// Kill this tab
+				pTab->Release();
+				mpp_Stack[i] = NULL;
+			}
+
+			DEBUGTEST(iPrev = mn_Used);
+			PRAGMA_ERROR("FAIL. Нужно убрать из стека все NULL-ячейки");
+			TabDeleted(pUpdateLock, i);
+			_ASSERTE(mn_Used < iPrev);
+		}
+
+		mn_Used = mn_UpdatePos;
+	}
+}
+#endif
 
 void CTabStack::CleanNulls()
 {

@@ -242,6 +242,10 @@ protected:
 	void AppendInt(CTabID* pTab, BOOL abMoveFirst, MSectionLockSimple* pSC);
 	void RequestSize(int anCount, MSectionLockSimple* pSC);
 	void CleanNulls();
+	#if 0
+	void TabDeleted(MSectionLockSimple* pUpdateLock, int i);
+	void RecheckPassive();
+	#endif
 protected:
 	#ifdef TAB_REF_PLACE
 	TabRefPlace m_rp;
