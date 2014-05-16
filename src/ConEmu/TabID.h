@@ -241,6 +241,7 @@ protected:
 	bool mb_FarUpdateMode;
 	void AppendInt(CTabID* pTab, BOOL abMoveFirst, MSectionLockSimple* pSC);
 	void RequestSize(int anCount, MSectionLockSimple* pSC);
+	void CleanNulls();
 protected:
 	#ifdef TAB_REF_PLACE
 	TabRefPlace m_rp;
@@ -265,7 +266,7 @@ public:
 	bool UpdateFarWindow(HANDLE hUpdate, CVirtualConsole* apVCon, LPCWSTR asName, CEFarWindowType anType, int anPID, int anFarWindowID, int anViewEditID);
 	void UpdateAppend(HANDLE hUpdate, CTab& Tab, BOOL abMoveFirst);
 	void UpdateAppend(HANDLE hUpdate, CTabID* pTab, BOOL abMoveFirst);
-	bool UpdateEnd(HANDLE hUpdate, BOOL abForceReleaseTail);
+	bool UpdateEnd(HANDLE hUpdate, DWORD anActiveFarPID);
 
 	void ReleaseTabs(BOOL abInvalidOnly = TRUE);
 };

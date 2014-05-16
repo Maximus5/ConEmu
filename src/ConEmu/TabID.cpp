@@ -730,6 +730,7 @@ bool CTabStack::UpdateFarWindow(HANDLE hUpdate, CVirtualConsole* apVCon, LPCWSTR
 				|| (!pTab->IsEqual(apVCon, asName, anType, anPID, anViewEditID, (fwt_TypeMask|fwt_CompareFlags)));
 			// Обновляем все подряд. Вместо панелей теперь может быть модальный редактор/вьювер
 			pTab->Set(asName, anType, anPID, anFarWindowID, anViewEditID);
+			_ASSERTE(pTab->Info.Status == tisValid);
 		}
 		// Следующий
 		mn_UpdatePos = 1;
@@ -756,6 +757,9 @@ bool CTabStack::UpdateFarWindow(HANDLE hUpdate, CVirtualConsole* apVCon, LPCWSTR
 				// OK, таб совпадает
 				pTab = mpp_Stack[i];
 
+				// Refresh status
+				pTab->Info.Status = tisValid;
+
 				// Сменились флаги (Modifed/Current/...)?
 				if ((anType & fwt_CompareFlags) != (mpp_Stack[i]->Info.Type & fwt_CompareFlags))
 				{
@@ -775,33 +779,14 @@ bool CTabStack::UpdateFarWindow(HANDLE hUpdate, CVirtualConsole* apVCon, LPCWSTR
 				// Закончили
 				break;
 			}
-			// таб был закрыт
+			// Tab was closed or gone to background
 			bChanged = true;
-			mpp_Stack[i]->Info.Status = tisInvalid;
-			#ifdef TAB_REF_PLACE
-			mpp_Stack[i]->DelPlace(m_rp);
-			#endif
-			mpp_Stack[i]->Release();
-			mpp_Stack[i] = NULL;
+			mpp_Stack[i]->Info.Status = tisPassive;
 			i++;
 		}
 
-		// Если перед совпавшим найдены закрытые - следует сдвинуть список табов
-		if (i > mn_UpdatePos)
-		{
-			if (i < mn_Used)
-			{
-				#if 1
-				_ASSERTE(pUpdateLock->isLocked());
-				#else
-				pUpdateLock->RelockExclusive();
-				#endif
-				// Все что между {mn_UpdatePos .. (i-1)} теперь уже забито NULL
-				memmove(mpp_Stack+mn_UpdatePos, mpp_Stack+i, (mn_Used - i) * sizeof(CTabID**));
-			}
-			mn_Used -= (i - mn_UpdatePos);
-			memset(mpp_Stack+mn_Used, 0, (i - mn_UpdatePos) * sizeof(CTabID**));
-		}
+		DEBUGTEST(if (mn_UpdatePos != i))
+		mn_UpdatePos = i;
 
 		// Если таб новый
 		if (pTab == NULL)
@@ -950,7 +935,7 @@ void CTabStack::UpdateAppend(HANDLE hUpdate, CTabID* pTab, BOOL abMoveFirst)
 //}
 
 // Возвращает "true" если были изменения в КОЛИЧЕСТВЕ табов (ЗДЕСЬ больше ничего не проверяется)
-bool CTabStack::UpdateEnd(HANDLE hUpdate, BOOL abForceReleaseTail)
+bool CTabStack::UpdateEnd(HANDLE hUpdate, DWORD anActiveFarPID)
 {
 	MSectionLockSimple* pUpdateLock = (MSectionLockSimple*)hUpdate;
 
@@ -961,11 +946,13 @@ bool CTabStack::UpdateEnd(HANDLE hUpdate, BOOL abForceReleaseTail)
 		return false;
 	}
 
+	bool bVConClosed = false;
+
 	if (!mb_FarUpdateMode && (mn_UpdatePos == 0))
 	{
 		if (!CVConGroup::isVConExists(0))
 		{
-			abForceReleaseTail = TRUE;
+			bVConClosed = true;
 		}
 		else
 		{
@@ -979,40 +966,118 @@ bool CTabStack::UpdateEnd(HANDLE hUpdate, BOOL abForceReleaseTail)
 		}
 	}
 
-	if (!abForceReleaseTail && mn_UpdatePos > 1)
-		abForceReleaseTail = TRUE;
-
 	bool bChanged = (mn_Used != mn_UpdatePos);
 
-	if (abForceReleaseTail && mn_UpdatePos < mn_Used)
+	#if 1
+	_ASSERTE(pUpdateLock->isLocked());
+	#else
+	pUpdateLock->RelockExclusive();
+	#endif
+
+	if (mb_FarUpdateMode)
 	{
-		#if 1
-		_ASSERTE(pUpdateLock->isLocked());
-		#else
-		pUpdateLock->RelockExclusive();
-		#endif
-		// Освободить все элементы за mn_UpdatePos
+		_ASSERTE(mn_UpdatePos > 0);
+
+		// Все табы ПОСЛЕ последнего добавленного/обновленного - помечаем неактивными
 		for (int i = mn_UpdatePos; i < mn_Used; i++)
 		{
 			CTabID *pTab = mpp_Stack[i];
-			mpp_Stack[i] = NULL;
-			if (pTab)
+			if (pTab && (pTab->Info.Status != tisInvalid))
 			{
+				pTab->Info.Status = tisPassive;
+			}
+		}
+
+		// Активен Far? ВСЕ tisPassive табы этого Far-а - разрушаем
+		if (anActiveFarPID)
+		{
+			for (int i = 0; i < mn_Used; i++)
+			{
+				CTabID *pTab = mpp_Stack[i];
+
+				// Проверяем только табы активного фара (пассивные [Far -> Far -> Far] не трогаем)
+				if (!pTab || (pTab->Info.nPID != anActiveFarPID))
+					continue;
+				// Панели и табы с не пассивным статусом - не трогаем
+				if ((pTab->Type() == fwt_Panels) || (pTab->Info.Status != tisPassive))
+					continue;
+
+				// Таб (редактор/вьювер) был закрыт, разрушаем
+				_ASSERTE(pTab->Type()==fwt_Editor || pTab->Type()==fwt_Viewer);
+
+				// Kill this tab
 				pTab->Info.Status = tisInvalid;
 				#ifdef TAB_REF_PLACE
 				pTab->DelPlace(m_rp);
 				#endif
 				pTab->Release();
+				// Remove from list
+				mpp_Stack[i] = NULL;
+
+				bChanged = true;
 			}
 		}
-		mn_Used = mn_UpdatePos;
 	}
+	else
+	{
+		// Для самого таббара - весь хвост просто выкинуть из списка, но сами CTabID не разрушать (tisInvalid не ставить)
+		for (int i = mn_UpdatePos; i < mn_Used; i++)
+		{
+			CTabID *pTab = mpp_Stack[i];
+			if (pTab)
+			{
+				if (!CVConGroup::isValid((CVirtualConsole*)pTab->Info.pVCon))
+					pTab->Info.Status = tisInvalid;
+				#ifdef TAB_REF_PLACE
+				pTab->DelPlace(m_rp);
+				#endif
+				pTab->Release();
+				// Remove from list
+				mpp_Stack[i] = NULL;
+			}
+		}
+	}
+
+	CleanNulls();
 
 	pUpdateLock->Unlock();
 	delete pUpdateLock;
 
 	return bChanged;
 }
+
+void CTabStack::CleanNulls()
+{
+	// Убрать дырки (NULL) из списка
+	int i = 0;
+	while (i < mn_Used)
+	{
+		// Empty cell?
+		if (!(mpp_Stack[i]))
+		{
+			int j = i+1;
+			while (j < mn_Used)
+			{
+				if (mpp_Stack[j])
+				{
+					mpp_Stack[i] = mpp_Stack[j];
+					mpp_Stack[j] = NULL;
+					break;
+				}
+				j++;
+			}
+		}
+
+		// Still NULL?
+		if (!(mpp_Stack[i]))
+			break;
+
+		i++;
+	}
+
+	mn_Used = mn_UpdatePos = i;
+}
+
 void CTabStack::ReleaseTabs(BOOL abInvalidOnly /*= TRUE*/)
 {
 	if (!this || !mpp_Stack || !mn_Used || !mn_MaxCount)

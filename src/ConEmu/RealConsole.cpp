@@ -8972,7 +8972,7 @@ void CRealConsole::SetTabs(ConEmuTab* apTabs, int anTabsCount)
 	tabs.mn_ActiveTab = nActiveTab;
 	tabs.mb_HasModalWindow = bHasModal;
 
-	if (tabs.m_Tabs.UpdateEnd(hUpdate, FALSE))
+	if (tabs.m_Tabs.UpdateEnd(hUpdate, GetFarPID(true)))
 		tabs.mb_TabsWasChanged = true;
 
 	// Передернуть gpConEmu->mp_TabBar->..

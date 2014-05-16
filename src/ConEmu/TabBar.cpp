@@ -138,7 +138,13 @@ CTabBarClass::~CTabBarClass()
 	_ASSERTE(gpConEmu->isMainThread());
 	for (INT_PTR i = 0; i < m_TabStack.size(); i++)
 	{
-		m_TabStack[i]->Release();
+		if (m_TabStack[i])
+		{
+			#ifdef TAB_REF_PLACE
+			m_TabStack[i]->DelPlace("TabBar.cpp:m_TabStack",0);
+			#endif
+			m_TabStack[i]->Release();
+		}
 	}
 	m_TabStack.clear();
 }
@@ -693,7 +699,7 @@ void CTabBarClass::Update(BOOL abPosted/*=FALSE*/)
 		tabIdx++;
 	}
 
-	m_Tabs.UpdateEnd(hUpdate, TRUE);
+	m_Tabs.UpdateEnd(hUpdate, 0);
 
 	// Проверим стек последних выбранных
 	if (CheckStack())
@@ -1614,7 +1620,7 @@ void CTabBarClass::SwitchRollback()
 	}
 }
 
-// Убьет из стека старые, и добавит новые
+// Убьет из стека старые, и добавит новые (неучтенные)
 bool CTabBarClass::CheckStack()
 {
 	bool bStackChanged = false;
@@ -1679,9 +1685,7 @@ bool CTabBarClass::AddStack(CTab& tab)
 
 	bool bStackChanged = false;
 	_ASSERTE(gpConEmu->isMainThread());
-	BOOL lbExist = FALSE;
-
-	CTabID* pTab = NULL;
+	bool lbExist = false;
 
 	if (!m_TabStack.empty())
 	{
@@ -1691,18 +1695,15 @@ bool CTabBarClass::AddStack(CTab& tab)
 		{
 			if (m_TabStack[iter] == tab.Tab())
 			{
-				if (iter == 0)
+				if (iter > 0)
 				{
-					// Already first
-					lbExist = TRUE;
-				}
-				else
-				{
-					pTab = m_TabStack[iter];
+					CTabID* pTab = m_TabStack[iter];
 					m_TabStack.erase(iter);
+					m_TabStack.insert(0, pTab);
 					bStackChanged = true;
 				}
 
+				lbExist = true;
 				break;
 			}
 
@@ -1713,8 +1714,7 @@ bool CTabBarClass::AddStack(CTab& tab)
 	// поместить наверх стека
 	if (!lbExist)
 	{
-		if (!pTab)
-			pTab = tab.AddRef("TabBar.cpp:m_TabStack",0);
+		CTabID* pTab = tab.AddRef("TabBar.cpp:m_TabStack",0);
 		m_TabStack.insert(0, pTab);
 		bStackChanged = true;
 	}

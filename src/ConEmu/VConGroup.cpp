@@ -1240,6 +1240,37 @@ bool CVConGroup::isValid(CVirtualConsole* apVCon)
 	return false;
 }
 
+void CVConGroup::CheckTabValid(CTabID* apTab, bool& rbVConValid, bool& rbPidValid, bool& rbPassive)
+{
+	bool bVConValid = false, bPidValid = false, bPassive = false;
+
+	if (apTab)
+	{
+		DWORD nCurFarPid;
+		CVirtualConsole* pVCon = (CVirtualConsole*)apTab->Info.pVCon;
+		bVConValid = isValid(pVCon);
+
+		if (bVConValid)
+		{
+			if (apTab->Info.nPID)
+			{
+				bPidValid = pVCon->RCon()->isProcessExist(apTab->Info.nPID);
+				nCurFarPid = pVCon->RCon()->GetFarPID(true);
+				bPassive = (nCurFarPid != apTab->Info.nPID);
+			}
+			else
+			{
+				_ASSERTE(FALSE && "Must be filled? What about simple consoles?");
+				bPidValid = true;
+			}
+		}
+	}
+
+	rbVConValid = bVConValid;
+	rbPidValid = bPidValid;
+	rbPassive = bPassive;
+}
+
 bool CVConGroup::isVConExists(int nIdx)
 {
 	if (nIdx < 0 || nIdx >= (int)countof(gp_VCon))

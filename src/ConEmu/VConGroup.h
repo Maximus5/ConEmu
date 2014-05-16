@@ -35,6 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 class CVirtualConsole;
 class CVConGuard;
+class CTabID;
 
 enum EnumVConFlags
 {
@@ -145,6 +146,7 @@ public:
 	static bool isVConHWND(HWND hChild, CVConGuard* rpVCon = NULL);
 	static bool isConsolePID(DWORD nPID);
 	static DWORD GetFarPID(BOOL abPluginRequired=FALSE);
+	static void CheckTabValid(CTabID* apTab, bool& rbVConValid, bool& rbPidValid, bool& rbPassive);
 
 	static bool EnumVCon(EnumVConFlags what, EnumVConProc pfn, LPARAM lParam);
 
