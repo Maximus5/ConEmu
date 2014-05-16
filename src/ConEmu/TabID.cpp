@@ -27,6 +27,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #define HIDE_USE_EXCEPTION_INFO
+
+#define SHOWDEBUGSTR
+
+#define DEBUGSTRDEL(s) DEBUGSTR(s)
+
 #include "Header.h"
 #include "TabID.h"
 #include "../common/WinObjects.h"
@@ -167,6 +172,16 @@ void CTabID::Set(LPCWSTR asName, CEFarWindowType anType, int anPID, int anFarWin
 }
 CTabID::~CTabID()
 {
+	#ifdef _DEBUG
+	wchar_t szDbg[120];
+	_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"~CTabID(PID=%u IDX=%u TYP=%u '",
+		Info.nPID, Info.nFarWindowID, (UINT)Type());
+	int nDbgLen = lstrlen(szDbg);
+	lstrcpyn(szDbg+nDbgLen, GetName(), countof(szDbg)-nDbgLen-5);
+	wcscat_c(szDbg, L"')\n");
+	DEBUGSTRDEL(szDbg);
+	#endif
+
 	Name.Release();
 	Renamed.Release();
 	ReleaseDrawRegion();
