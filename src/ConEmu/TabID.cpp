@@ -425,6 +425,7 @@ CTabStack::CTabStack()
 	m_rp.SetPlace(__FILE__,__LINE__);
 	#endif
 }
+
 CTabStack::~CTabStack()
 {
 	if (mpp_Stack)
@@ -510,10 +511,12 @@ void CTabStack::AppendInt(CTabID* pTab, BOOL abMoveFirst, MSectionLockSimple* pS
 	mpp_Stack[abMoveFirst ? 0 : mn_Used] = pTab;
 	mn_Used++;
 }
+
 int CTabStack::GetCount()
 {
 	return mn_Used;
 }
+
 bool CTabStack::GetTabInfoByIndex(int anIndex, /*OUT*/ TabInfo& rInfo)
 {
 	bool lbFound = false;
@@ -529,6 +532,7 @@ bool CTabStack::GetTabInfoByIndex(int anIndex, /*OUT*/ TabInfo& rInfo)
 	SC.Unlock();
 	return lbFound;
 }
+
 bool CTabStack::GetTabByIndex(int anIndex, /*OUT*/ CTab& rTab)
 {
 	MSectionLockSimple SC; SC.Lock(&mc_Section);
@@ -546,6 +550,7 @@ bool CTabStack::GetTabByIndex(int anIndex, /*OUT*/ CTab& rTab)
 
 	return (rTab.Tab() != NULL);
 }
+
 int CTabStack::GetIndexByTab(const CTabID* pTab)
 {
 	MSectionLockSimple SC; SC.Lock(&mc_Section);
@@ -561,6 +566,7 @@ int CTabStack::GetIndexByTab(const CTabID* pTab)
 	SC.Unlock();
 	return nIndex;
 }
+
 bool CTabStack::GetNextTab(const CTabID* pTab, BOOL abForward, /*OUT*/ CTab& rTab)
 {
 	MSectionLockSimple SC; SC.Lock(&mc_Section);
@@ -586,6 +592,7 @@ bool CTabStack::GetNextTab(const CTabID* pTab, BOOL abForward, /*OUT*/ CTab& rTa
 	SC.Unlock();
 	return (pNextTab!=NULL);
 }
+
 bool CTabStack::GetTabDrawRect(int anIndex, RECT* rcTab)
 {
 	bool lbExist = false;
@@ -611,6 +618,7 @@ bool CTabStack::GetTabDrawRect(int anIndex, RECT* rcTab)
 	SC.Unlock();
 	return lbExist;
 }
+
 bool CTabStack::SetTabDrawRect(int anIndex, const RECT& rcTab)
 {
 	bool lbExist = false;
@@ -639,10 +647,12 @@ bool CTabStack::SetTabDrawRect(int anIndex, const RECT& rcTab)
 	SC.Unlock();
 	return lbExist;
 }
+
 void CTabStack::LockTabs(MSectionLockSimple* pLock)
 {
 	pLock->Lock(&mc_Section);
 }
+
 // Должен вызываться перед UpdateOrCreate и UpdateEnd
 HANDLE CTabStack::UpdateBegin()
 {
@@ -657,6 +667,7 @@ HANDLE CTabStack::UpdateBegin()
 	//		mpp_Stack[i]->bExisted = false;
 	//}
 }
+
 // Должен вызываться после UpdateBegin и перед UpdateEnd
 //void CTabStack::ProcessMark(int anExistPID)
 //{

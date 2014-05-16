@@ -498,7 +498,7 @@ HWND CTabPanelWin::CreateTabbar()
 	{
 		_ASSERTE(ghWnd!=NULL && "ConEmu main window must be created already!");
 	}
-	
+
 	DWORD nPlacement = TCS_SINGLELINE|WS_VISIBLE|WS_CHILD/*|TCS_BUTTONS*//*|TCS_TOOLTIPS*/;
 			//|((gpSet->nTabsLocation == 1) ? TCS_BOTTOM : 0);
 
@@ -565,7 +565,7 @@ HWND CTabPanelWin::CreateToolbar()
 	                            TBSTYLE_TOOLTIPS|TBSTYLE_TRANSPARENT,
 	                            0, 0, 0, 0, mh_Rebar,
 	                            NULL, NULL, NULL);
-	
+
 	TabPanelWinMap map = {this}; //{ CTabPanelWin* object; HWND hWnd; WNDPROC defaultProc; };
 	map.defaultProc = (WNDPROC)SetWindowLongPtr(mh_Toolbar, GWLP_WNDPROC, (LONG_PTR)_ToolProc);
 	map.hWnd = mh_Toolbar;
@@ -579,7 +579,7 @@ HWND CTabPanelWin::CreateToolbar()
 	TBADDBITMAP bmp = {g_hInstance,IDB_MAIN_TOOLBAR};
 	int nFirst = SendMessage(mh_Toolbar, TB_ADDBITMAP, BID_TOOLBAR_LAST_IDX, (LPARAM)&bmp);
 	_ASSERTE(BID_TOOLBAR_LAST_IDX==37);
-	
+
 	//DWORD nLoadErr = 0;
 	if (gnOsVer >= 0x600)
 	{
@@ -611,7 +611,7 @@ HWND CTabPanelWin::CreateToolbar()
 	_ASSERTE(nScrollBmp == (BID_TOOLBAR_LAST_IDX+1));
 	if (nScrollBmp < (BID_TOOLBAR_LAST_IDX+1))
 		nScrollBmp = BID_TOOLBAR_LAST_IDX+1;
-		
+
 
 	//buttons
 	TBBUTTON btn = {0, 0, TBSTATE_ENABLED, TBSTYLE_CHECKGROUP};
@@ -793,7 +793,7 @@ bool CTabPanelWin::GetToolBtnRect(int nCmd, RECT* rcBtnRect)
 		_ASSERTE(mh_Toolbar);
 		return false;
 	}
-	
+
 	SendMessage(mh_Toolbar, TB_GETRECT, nCmd/*например TID_CREATE_CON*/, (LPARAM)rcBtnRect);
 	MapWindowPoints(mh_Toolbar, ghWnd, (LPPOINT)rcBtnRect, 2);
 

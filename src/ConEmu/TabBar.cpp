@@ -526,7 +526,7 @@ void CTabBarClass::Update(BOOL abPosted/*=FALSE*/)
 	#endif
 
 
-	
+
 	MCHKHEAP
 	HANDLE hUpdate = m_Tabs.UpdateBegin();
 	_ASSERTE(hUpdate!=NULL);
@@ -1186,7 +1186,7 @@ int CTabBarClass::PrepareTab(CTab& pTab, CVirtualConsole *apVCon)
 	}
 	else
 	{
-		
+
 		LPTSTR tFileName = NULL;
 		if (GetFullPathName(pszTabName, countof(dummy), dummy, &tFileName) && tFileName && *tFileName)
 			lstrcpyn(fileName, tFileName, countof(fileName));
@@ -1262,7 +1262,7 @@ int CTabBarClass::PrepareTab(CTab& pTab, CVirtualConsole *apVCon)
 	TCHAR* pszDst = dummy;
 	TCHAR* pszStart = pszDst;
 	TCHAR* pszEnd = dummy + countof(dummy) - 1; // в конце еще нужно зарезервировать место для '\0'
-	
+
 	if (!pszFmt || !*pszFmt)
 	{
 		pszFmt = _T("%s");
@@ -1280,10 +1280,10 @@ int CTabBarClass::PrepareTab(CTab& pTab, CVirtualConsole *apVCon)
 				pszFmt = _T("%s");
 		}
 	}
-	
+
 	TCHAR szTmp[64];
 	bool  bAppendAdmin = gpSet->isAdminSuffix() && (pTab->Flags() & fwt_Elevated);
-	
+
 	while (*pszFmt && pszDst < pszEnd)
 	{
 		if (*pszFmt == _T('%'))
@@ -1380,7 +1380,7 @@ int CTabBarClass::PrepareTab(CTab& pTab, CVirtualConsole *apVCon)
 	#endif
 
 	pTab->SetLabel(dummy);
-	
+
 	MCHKHEAP;
 
 	return iTabIcon;

@@ -74,7 +74,7 @@ void CTabPanelBase::UpdateTabFontInt()
 	// CreateFont
 	HFONT hFont = CreateFont(gpSet->nTabFontHeight, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, gpSet->nTabFontCharSet, OUT_DEFAULT_PRECIS,
 		CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_SWISS, gpSet->sTabFontFace);
-	
+
 	// virtual
 	SetTabbarFont(hFont);
 
