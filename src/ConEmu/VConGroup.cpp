@@ -613,7 +613,7 @@ void CVConGroup::GetAllTextSize(SIZE& sz, bool abMinimal /*= false*/)
 //	{
 //		CVConGuard VCon1(mp_Grp1->mp_Item);
 //		CVConGuard VCon2(mp_Grp2->mp_Item);
-//	
+//
 //		if (mp_Grp1)
 //		{
 //			nSize += mp_Grp1->AllTextHeight();
@@ -622,7 +622,7 @@ void CVConGroup::GetAllTextSize(SIZE& sz, bool abMinimal /*= false*/)
 //		{
 //			_ASSERTE(mp_Grp1!=NULL);
 //		}
-//		
+//
 //		if (mp_Grp2 && (m_SplitType == RConStartArgs::eSplitVert))
 //		{
 //			nSize += mp_Grp2->AllTextHeight();

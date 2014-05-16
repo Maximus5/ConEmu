@@ -46,7 +46,7 @@ LPCWSTR ConEmuUpdateSettings::UpdateVerLocation()
 
 LPCWSTR ConEmuUpdateSettings::UpdateVerLocationDefault()
 {
-	static LPCWSTR pszDefault = 
+	static LPCWSTR pszDefault =
 		//L"file://C:\\ConEmu-Update\\version.ini"
 		//L"http://conemu.ru/version.ini"
 		L"http://conemu-maximus5.googlecode.com/svn/trunk/ConEmu/version.ini"
@@ -205,8 +205,8 @@ void ConEmuUpdateSettings::LoadFrom(ConEmuUpdateSettings* apFrom)
 	isUpdateDownloadSetup = apFrom->isUpdateDownloadSetup; // 0-Auto, 1-Installer (ConEmuSetup.exe), 2-7z archieve (ConEmu.7z), WinRar or 7z required
 	isSetupDetected = apFrom->isSetupDetected;
 	// "%1"-archive or setup file, "%2"-ConEmu base dir, "%3"-x86/x64, "%4"-ConEmu PID
-	szUpdateExeCmdLine = lstrdup(apFrom->szUpdateExeCmdLine); 
-	szUpdateExeCmdLineDef = lstrdup(apFrom->szUpdateExeCmdLineDef); 
+	szUpdateExeCmdLine = lstrdup(apFrom->szUpdateExeCmdLine);
+	szUpdateExeCmdLineDef = lstrdup(apFrom->szUpdateExeCmdLineDef);
 	szUpdateArcCmdLine = lstrdup(apFrom->szUpdateArcCmdLine);
 	szUpdateArcCmdLineDef = lstrdup(apFrom->szUpdateArcCmdLineDef);
 	szUpdateDownloadPath = lstrdup(apFrom->szUpdateDownloadPath); // "%TEMP%"

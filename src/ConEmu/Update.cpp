@@ -215,7 +215,7 @@ void CConEmuUpdate::StartCheckProcedure(BOOL abShowMessages)
 		return;
 	}
 
-	mb_InCheckProcedure = TRUE;	
+	mb_InCheckProcedure = TRUE;
 	mh_CheckThread = CreateThread(NULL, 0, CheckThreadProc, this, 0, &mn_CheckThreadId);
 	if (!mh_CheckThread)
 	{
@@ -1078,7 +1078,7 @@ wchar_t* CConEmuUpdate::CreateBatchFile(LPCWSTR asPackage)
 	WRITE_BATCH_W(pszCommand);
 	WRITE_BATCH_A("\r\nif errorlevel 1 goto err\r\n");
 
-	// Если юзер просил что-то выполнить после распаковки установки	
+	// Если юзер просил что-то выполнить после распаковки установки
 	if (mp_Set->szUpdatePostUpdateCmd && *mp_Set->szUpdatePostUpdateCmd)
 	{
 		WRITE_BATCH_A("\r\n");
@@ -1363,7 +1363,7 @@ BOOL CConEmuUpdate::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDst
 	args[0].argType = at_Str;  args[0].strArg = asSource;
 	args[1].argType = at_Str;  args[1].strArg = asTarget;
 	args[2].argType = at_Uint; args[2].uintArg = (DWORD_PTR)hDstFile;
-	args[3].argType = at_Uint; args[3].uintArg = (mb_ManualCallMode || abPackage); 
+	args[3].argType = at_Uint; args[3].uintArg = (mb_ManualCallMode || abPackage);
 
 	lbRc = Inet.DownloadCommand(dc_DownloadFile, 4, args);
 	if (lbRc)
@@ -1415,7 +1415,7 @@ void CConEmuUpdate::ReportError(LPCWSTR asFormat, LPCWSTR asArg, DWORD nErrCode)
 	if (pszErrInfo)
 	{
 		_wsprintf(pszErrInfo, SKIPLEN(cchMax) asFormat, asArg, nErrCode);
-		ReportErrorInt(pszErrInfo);	
+		ReportErrorInt(pszErrInfo);
 	}
 }
 

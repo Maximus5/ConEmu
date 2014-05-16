@@ -68,7 +68,7 @@ protected:
 	LRESULT OnActivate(WPARAM wParam, LPARAM lParam);
 	LRESULT OnTimer(WPARAM TimerID);
 	LRESULT OnCreate();
-	
+
 public:
 	CTaskBarGhost(CVirtualConsole* apVCon);
 	virtual ~CTaskBarGhost();

@@ -46,7 +46,7 @@ private:
 	CVirtualConsole *mp_Ref;
 	int mi_Valid;
 	DWORD mn_Tick;
-	
+
 public:
 	CVConGuard();
 	CVConGuard(CVirtualConsole* apRef);
@@ -54,7 +54,7 @@ public:
 	void Release();
 
 	bool Attach(CVirtualConsole* apRef);
-	
+
 
 public:
 	// Dereference

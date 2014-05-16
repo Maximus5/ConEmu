@@ -71,10 +71,10 @@ protected:
 public:
 	CTaskBar();
 	virtual ~CTaskBar();
-	
+
 	void Taskbar_Init();
 	void Taskbar_Release();
-	
+
 	HRESULT Taskbar_SetActiveTab(HWND hBtn);
 	HRESULT Taskbar_RegisterTab(HWND hBtn, BOOL abSetActive = FALSE);
 	HRESULT Taskbar_UnregisterTab(HWND hBtn);
@@ -82,7 +82,7 @@ public:
 	HRESULT Taskbar_DeleteTabXP(HWND hBtn);
 	HRESULT Taskbar_SetProgressValue(int nProgress);
 	HRESULT Taskbar_SetProgressState(UINT/*TBPFLAG*/ nState);
-	
+
 	bool Taskbar_GhostSnapshootRequired();
 
 	void Taskbar_SetShield(bool abShield);

@@ -45,7 +45,7 @@ ATOM CTaskBarGhost::mh_Class = 0;
 CTaskBarGhost::CTaskBarGhost(CVirtualConsole* apVCon)
 {
 	mp_VCon = apVCon;
-	
+
 	mh_Ghost = NULL;
 	memset(&m_TabSize, 0, sizeof(m_TabSize));
 	mh_Snap = NULL;
@@ -234,7 +234,7 @@ BOOL CTaskBarGhost::CreateTabSnapshoot()
 		}
 		//abForce = TRUE;
 	}
-	
+
 	//if (!abForce)
 	//{
 	//	DWORD dwDelta = GetTickCount() - mn_LastUpdate;
@@ -267,7 +267,7 @@ BOOL CTaskBarGhost::CreateTabSnapshoot()
 				memset(mpb_DS, 0, PtSize.x*PtSize.y*sizeof(COLORREF));
 			}
         }
-        
+
         if (mh_Snap != NULL)
         {
 			HBITMAP hOld = (HBITMAP)SelectObject(hdcMem, mh_Snap);
@@ -508,7 +508,7 @@ LPCWSTR CTaskBarGhost::CheckTitle(BOOL abSkipValidation /*= FALSE*/)
 		pszTitle = gpConEmu->GetDefaultTitle();
 		_ASSERTE(pszTitle!=NULL);
 	}
-	
+
 	if (mh_Ghost)
 	{
 		if (wcsncmp(ms_LastTitle, pszTitle, countof(ms_LastTitle)) != 0)
@@ -522,7 +522,7 @@ LPCWSTR CTaskBarGhost::CheckTitle(BOOL abSkipValidation /*= FALSE*/)
 	wchar_t szInfo[1024];
 	getWindowInfo(mh_Ghost, szInfo);
 #endif
-	
+
 	return pszTitle;
 }
 

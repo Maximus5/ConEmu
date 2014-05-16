@@ -79,7 +79,7 @@ class TrayIcon
 	public:
 		bool isWindowInTray() { return mb_WindowInTray; }
 		bool isHidingToTray() { return mb_InHidingToTray; }
-		
+
 
 		TrayIcon();
 		~TrayIcon();
@@ -94,6 +94,6 @@ class TrayIcon
 		LRESULT OnTryIcon(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 		void AddTrayIcon();
 		void RemoveTrayIcon(bool bForceRemove = false);
-		
+
 		void OnTaskbarCreated();
 };

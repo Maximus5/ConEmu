@@ -60,7 +60,7 @@ CToolBarClass::CToolBarClass()
 CToolBarClass::~CToolBarClass()
 {
 	EnterCriticalSection(&m_CS);
-	
+
 	// Освободить память и ресурсы
 	for (INT_PTR i = m_Panels.size(); i--;)
 	{
@@ -101,7 +101,7 @@ int CToolBarClass::GetWidth(int anMaxWidth /*= -1*/)
 	int nWidth = 0;
 	EnterCriticalSection(&m_CS);
 	bool lbShown = false;
-	
+
 	for (INT_PTR i = 0; i < m_Panels.size(); i++)
 	{
 		if ((anMaxWidth >= 0) && (nWidth + mn_SeparatorWidth) > anMaxWidth)
@@ -149,7 +149,7 @@ int CToolBarClass::CreatePane(int anPane, int anPriority, bool abShow, HBITMAP a
 
 	_ASSERTE(OnToolbarCommand!=NULL);
 	_ASSERTE(ahBmp!=NULL);
-	
+
 	if (anPane)
 	{
 		for (INT_PTR i = m_Panels.size(); i--;)
@@ -195,7 +195,7 @@ int CToolBarClass::CreatePane(int anPane, int anPriority, bool abShow, HBITMAP a
 	pane->OnToolBarDraw = OnToolBarDraw;
 
 	m_Panels.push_back(pane);
-	
+
 	return pane->nPane;
 }
 
@@ -206,7 +206,7 @@ bool CToolBarClass::ShowPane(int anPane, bool abShow)
 		_ASSERTE(mb_Locked && "Must be locked before modifications");
 		return false;
 	}
-	
+
 	bool lbChanged = false;
 
 	for (INT_PTR i = m_Panels.size(); i--;)
@@ -243,7 +243,7 @@ bool CToolBarClass::DeletePane(int anPane)
 		_ASSERTE(mb_Locked && "Must be locked before modifications");
 		return false;
 	}
-	
+
 	bool lbFound = false;
 
 	for (INT_PTR i = m_Panels.size(); i--;)
@@ -275,7 +275,7 @@ bool CToolBarClass::DeletePane(int anPane)
 
 			m_Panels.erase(i);
 			free(pane);
-			
+
 			break;
 		}
 	}
@@ -496,7 +496,7 @@ void CToolBarClass::Paint(const PaintDC& dc, const RECT& rcTB)
 		{
 			pane->bVisible = FALSE;
 		}
-		
+
 		//nWidth += mn_PaddingWidth; // ???
 	}
 
@@ -530,13 +530,13 @@ void CToolBarClass::PaintPane(const PaintDC& dc, const RECT& rcTB, PaneInfo* p, 
 		mh_PaneDC = CreateCompatibleDC(dc.hDC);
 		hOld = (HBITMAP)SelectObject(mh_PaneDC, p->hBmp);
 	}
-	
+
 	p->rcPane.left = x;
 	p->rcPane.top = y;
 	p->rcPane.bottom = y + mn_ToolHeight;
 
 	x += mn_PaddingWidth;
-	
+
 	for (int t = 0; t < p->nCount; t++)
 	{
 		if (p->pTool[t].nFlags & TIS_SEPARATOR)
@@ -551,7 +551,7 @@ void CToolBarClass::PaintPane(const PaintDC& dc, const RECT& rcTB, PaneInfo* p, 
 				+ ((p->pTool[t].nFlags & TIS_DROPDOWN) ? mn_DropArrowWidth : 0);
 		}
 	}
-	
+
 	p->rcPane.right = x;
 
 	if (hOld)
@@ -581,12 +581,12 @@ void CToolBarClass::PaintTool(const PaintDC& dc, const RECT& rcTB, PaneInfo* p, 
 	{
 		t->rcArrow.left = t->rcArrow.right = t->rcArrow.top = t->rcArrow.bottom = 0;
 	}
-	
+
 	bool lbHover = (m_Hover.nID == t->ID.nID);
 	bool lbClicked = lbHover && (m_Clicked.nID == t->ID.nID);
 	bool lbChecked = ((t->nFlags & TIS_CHECKED) != FALSE);
-	
-	
+
+
 	if (lbHover || lbChecked)
 	{
 		//POINT ptFrame[] = {
@@ -604,7 +604,7 @@ void CToolBarClass::PaintTool(const PaintDC& dc, const RECT& rcTB, PaneInfo* p, 
 		::Rectangle(dc.hDC, x1-3, y1-3, x2+3, y2+3);
 
 		RECT rcAlpha = {x1-3, y1-3, x2+4, y2+4};
-		
+
 		// Отрисовка рамки вокруг стрелки
 		if (t->nFlags & TIS_DROPDOWN)
 		{
@@ -620,13 +620,13 @@ void CToolBarClass::PaintTool(const PaintDC& dc, const RECT& rcTB, PaneInfo* p, 
 
 		if (mb_Aero)
 			gpConEmu->BufferedPaintSetAlpha(dc, &rcAlpha, 255);
-			
+
 		SelectObject(dc.hDC, hp);
 		//if (lbChecked)
 		SelectObject(dc.hDC, hb);
 	}
-	
-	
+
+
 	// Отрисовка стрелки
 	if (t->nFlags & TIS_DROPDOWN)
 	{
@@ -636,12 +636,12 @@ void CToolBarClass::PaintTool(const PaintDC& dc, const RECT& rcTB, PaneInfo* p, 
 			{xs1, ys1}, {xs1+4, ys1},
 			{xs1+2, ys1+2}, {xs1, ys1}
 		};
-		
+
 		HPEN hp = (HPEN)SelectObject(dc.hDC, GetStockObject(mb_Aero ? WHITE_PEN : BLACK_PEN));
 		HBRUSH hb = (HBRUSH)SelectObject(dc.hDC, GetStockObject(mb_Aero ? WHITE_BRUSH : BLACK_BRUSH));
-		
+
 		Polygon(dc.hDC, ptArrow, countof(ptArrow));
-		
+
 		SelectObject(dc.hDC, hp);
 		SelectObject(dc.hDC, hb);
 	}
@@ -796,13 +796,13 @@ void CToolBarClass::UnHover()
 bool CToolBarClass::MouseEvent(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, POINT ptClient, LRESULT &lResult)
 {
 	bool lbRedraw = false;
-	
+
 	POINT point = ptClient;
 	bool lbArrow = false;
 	//RECT wr; GetWindowRect(hWnd, &wr);
 	//point.x = LOWORD(lParam) - wr.left - ((gpConEmu->DrawType() == fdt_Aero) ? gpConEmu->GetFrameWidth() : 0);
 	//point.y = HIWORD(lParam) - wr.top;
-	
+
 	EnterCriticalSection(&m_CS);
 	ToolId hover = {{{-1,-1}}};
 	PaneInfo* hoverPane = NULL;
@@ -852,13 +852,13 @@ bool CToolBarClass::MouseEvent(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 		}
 	}
 	LeaveCriticalSection(&m_CS);
-	
+
 	if (m_Hover.nID != hover.nID)
 	{
 		m_Hover = hover;
 		lbRedraw = true;
 	}
-	
+
 	if ((uMsg == WM_NCLBUTTONDOWN) || (uMsg == WM_LBUTTONDOWN))
 	{
 		mb_ArrowClicked = lbArrow;
@@ -926,9 +926,9 @@ bool CToolBarClass::MouseEvent(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 			lbRedraw = true;
 		}
 	}
-	
-	
-	
+
+
+
 	if (lbRedraw)
 	{
 		Invalidate();

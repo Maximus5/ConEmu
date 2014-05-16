@@ -80,7 +80,7 @@ protected:
 	bool ReSizeSplitter(int iCells);
 
 	CVConGroup* FindNextPane(const RECT& rcPrev, int nHorz /*= 0*/, int nVert /*= 0*/);
-	
+
 protected:
 	//static CVirtualConsole* mp_VCon[MAX_CONSOLE_COUNT];
 
@@ -96,13 +96,13 @@ protected:
 
 private:
 	static CVirtualConsole* CreateVCon(RConStartArgs *args, CVirtualConsole*& ppVConI);
-	
+
 	static CVConGroup* CreateVConGroup();
 	CVConGroup* SplitVConGroup(RConStartArgs::SplitType aSplitType = RConStartArgs::eSplitHorz/*eSplitVert*/, UINT anPercent10 = 500);
 	int GetGroupPanes(MArray<CVConGuard*>* rPanes);
 	static void FreePanesArray(MArray<CVConGuard*> &rPanes);
 	static bool CloseQuery(MArray<CVConGuard*>* rpPanes, bool* rbMsgConfirmed /*= NULL*/, bool bForceKill = false, bool bNoGroup = false);
-	
+
 	CVConGroup(CVConGroup *apParent);
 
 protected:
@@ -242,14 +242,14 @@ class CGroupGuard
 {
 private:
 	CVConGroup *mp_Ref;
-	
+
 public:
 	CGroupGuard(CVConGroup* apRef);
 	~CGroupGuard();
-	
+
 	void Release();
 	bool Attach(CVConGroup* apRef);
-	
+
 
 public:
 	// Dereference

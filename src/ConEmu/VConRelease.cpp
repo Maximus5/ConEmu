@@ -55,7 +55,7 @@ void CVConRelease::DeleteFromMainThread()
 //CVConRelease::CVConRelease()
 //{
 //	mn_RefCount = 1;
-//	
+//
 //	#ifdef _DEBUG
 //	CVirtualConsole* pVCon = (CVirtualConsole*)this;
 //	_ASSERTE((void*)pVCon == (void*)this);
@@ -74,7 +74,7 @@ void CVConRelease::DeleteFromMainThread()
 //		_ASSERTE(this!=NULL);
 //		return;
 //	}
-//	
+//
 //	InterlockedIncrement(&mn_RefCount);
 //}
 //
@@ -84,7 +84,7 @@ void CVConRelease::DeleteFromMainThread()
 //		return 0;
 //
 //	InterlockedDecrement(&mn_RefCount);
-//	
+//
 //	_ASSERTE(mn_RefCount>=0);
 //	if (mn_RefCount <= 0)
 //	{

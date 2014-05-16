@@ -96,30 +96,30 @@ void CTaskBar::Taskbar_Init()
 		// В PostCreate это выполняется дольше всего. По идее мешать не должно,
 		// т.к. серверная нить уже запущена.
 		hr = CoCreateInstance(CLSID_TaskbarList,NULL,CLSCTX_INPROC_SERVER,IID_ITaskbarList,(void**)&mp_TaskBar1);
-	
+
 		if (hr == S_OK && mp_TaskBar1)
 		{
 			hr = mp_TaskBar1->HrInit();
 		}
-	
+
 		if (hr != S_OK && mp_TaskBar1)
 		{
 			if (mp_TaskBar1) mp_TaskBar1->Release();
-	
+
 			mp_TaskBar1 = NULL;
 		}
 	}
-	
+
 	if (!mp_TaskBar2 && mp_TaskBar1)
 	{
 		hr = mp_TaskBar1->QueryInterface(IID_ITaskbarList2, (void**)&mp_TaskBar2);
 	}
-	
+
 	if (!mp_TaskBar3 && mp_TaskBar2)
 	{
 		hr = mp_TaskBar2->QueryInterface(IID_ITaskbarList3, (void**)&mp_TaskBar3);
 	}
-	
+
 	if (!mp_TaskBar4 && mp_TaskBar2)
 	{
 		hr = mp_TaskBar2->QueryInterface(IID_ITaskbarList4, (void**)&mp_TaskBar4);
@@ -188,7 +188,7 @@ HRESULT CTaskBar::Taskbar_RegisterTab(HWND hBtn, BOOL abSetActive)
 
 	// mp_TaskBar1 may be NULL if NO task bar is created (e.g. 'explorer.exe' is closed)
 	_ASSERTE(mp_TaskBar1!=NULL || FindWindowEx(NULL, NULL, L"Shell_TrayWnd", NULL)==NULL);
-	
+
     // Tell the taskbar about this tab window
 	if (mp_TaskBar3)
 	{
@@ -204,7 +204,7 @@ HRESULT CTaskBar::Taskbar_RegisterTab(HWND hBtn, BOOL abSetActive)
 	{
 		hr = E_NOINTERFACE;
 	}
-	
+
 	if (SUCCEEDED(hr) && abSetActive)
 	{
 		hr = Taskbar_SetActiveTab(hBtn);
@@ -214,14 +214,14 @@ HRESULT CTaskBar::Taskbar_RegisterTab(HWND hBtn, BOOL abSetActive)
 	{
 		hr = mp_TaskBar4->SetTabProperties(hBtn, STPF_NONE/*STPF_USEAPPTHUMBNAILWHENACTIVE|STPF_USEAPPPEEKWHENACTIVE*/);
 	}
-	
+
 	return hr;
 }
 
 HRESULT CTaskBar::Taskbar_UnregisterTab(HWND hBtn)
 {
 	HRESULT hr;
-	
+
 	if (mp_TaskBar3)
 	{
 		hr = mp_TaskBar3->UnregisterTab(hBtn);
@@ -234,7 +234,7 @@ HRESULT CTaskBar::Taskbar_UnregisterTab(HWND hBtn)
 	{
 		hr = E_NOINTERFACE;
 	}
-	
+
 	return hr;
 }
 
@@ -277,7 +277,7 @@ HRESULT CTaskBar::Taskbar_DeleteTabXP(HWND hBtn)
 HRESULT CTaskBar::Taskbar_SetProgressValue(int nProgress)
 {
 	HRESULT hr = S_FALSE;
-	
+
 	if (mp_TaskBar3)
 	{
 		if (nProgress >= 0)
@@ -289,19 +289,19 @@ HRESULT CTaskBar::Taskbar_SetProgressValue(int nProgress)
 			hr = mp_TaskBar3->SetProgressState(ghWnd, TBPF_NOPROGRESS);
 		}
 	}
-	
+
 	return hr;
 }
 
 HRESULT CTaskBar::Taskbar_SetProgressState(UINT/*TBPFLAG*/ nState)
 {
 	HRESULT hr = S_FALSE;
-	
+
 	if (mp_TaskBar3)
 	{
 		hr = mp_TaskBar3->SetProgressState(ghWnd, (TBPFLAG)nState);
 	}
-	
+
 	return hr;
 }
 

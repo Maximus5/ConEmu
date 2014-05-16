@@ -134,7 +134,7 @@ public:
 	void Commit();
 
 	void Paint(const PaintDC& dc, const RECT& rcTB);
-	
+
 	void UnHover();
 	bool MouseEvent(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, POINT ptClient, LRESULT &lResult);
 	//void* ToolFromPoint(POINT pt);
