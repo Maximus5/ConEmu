@@ -87,6 +87,7 @@ void TabName::Release()
 }
 LPCWSTR TabName::Ptr() const
 {
+	// Must not return NULL. Never.
 	return sz;
 }
 int TabName::Length() const
@@ -135,8 +136,10 @@ CTabID::CTabID(CVirtualConsole* apVCon, LPCWSTR asName, CEFarWindowType anType, 
 }
 LPCWSTR CTabID::GetName()
 {
-	LPCWSTR pszName = ((Info.Type & fwt_Renamed) && (Renamed.Length() > 0)) ? Renamed.Ptr() : Name.Ptr();
 	// Empty strings must be substed in CRealConsole::GetTabTitle only!
+	LPCWSTR pszName = ((Info.Type & fwt_Renamed) && (Renamed.Length() > 0)) ? Renamed.Ptr() : Name.Ptr();
+	// Must not return NULL
+	_ASSERTE(pszName != NULL);
 	return pszName;
 }
 void CTabID::SetName(LPCWSTR asName)
