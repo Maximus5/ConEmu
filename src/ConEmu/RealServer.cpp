@@ -51,7 +51,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmuPipe.h"
 #include "Macro.h"
 
-#define DEBUGSTRCMD(s) DEBUGSTR(s)
+#define DEBUGSTRCMD(s) //DEBUGSTR(s)
 #define DEBUGSTRLANG(s) //DEBUGSTR(s)// ; Sleep(2000)
 
 

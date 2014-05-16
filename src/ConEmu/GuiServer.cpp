@@ -27,6 +27,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #define HIDE_USE_EXCEPTION_INFO
+
+#define SHOWDEBUGSTR
+#define DEBUGSTRCMD(s) //DEBUGSTR(s)
+
 #include "Header.h"
 #include "../common/PipeServer.h"
 
@@ -149,7 +153,7 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 		case CECMD_NEWCMD:
 		{
 			// Приходит из другой копии ConEmu.exe, когда она запущена с ключом /single, /showhide, /showhideTSA
-			DEBUGSTR(L"GUI recieved CECMD_NEWCMD\n");
+			DEBUGSTRCMD(L"GUI recieved CECMD_NEWCMD\n");
 
 			if (pIn->NewCmd.isAdvLogging && !gpSetCls->isAdvLogging)
 			{
@@ -242,7 +246,7 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 		case CECMD_TABSCMD:
 		{
 			// 0: спрятать/показать табы, 1: перейти на следующую, 2: перейти на предыдущую, 3: commit switch
-			DEBUGSTR(L"GUI recieved CECMD_TABSCMD\n");
+			DEBUGSTRCMD(L"GUI recieved CECMD_TABSCMD\n");
 			_ASSERTE(nDataSize>=1);
 			DWORD nTabCmd = pIn->Data[0];
 			gpConEmu->TabCommand((ConEmuTabCommand)nTabCmd);
