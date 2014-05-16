@@ -1100,7 +1100,7 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="!ToDo.!111!.txt" />
-    <Text Include="..\..\..\Maximus5\src\ConEmu\!Todo.txt" />
+    <Text Include="!ToDo.Tabs.txt" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="Copy24.bmp" />
