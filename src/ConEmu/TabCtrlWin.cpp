@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define SHOWDEBUGSTR
 
-#define DEBUGSTRTABS(s) DEBUGSTR(s)
+#define DEBUGSTRTABS(l,i,s) { wchar_t szLbl[80]; _wsprintf(szLbl,SKIPLEN(countof(szLbl)) L"CTabPanelWin(%s,%i): ",l,i+1); wchar_t* pszDbg = lstrmerge(szLbl,s); DEBUGSTR(pszDbg); SafeFree(pszDbg); }
 
 #include <windows.h>
 #include "header.h"
@@ -819,7 +819,7 @@ void CTabPanelWin::AddTabInt(LPCWSTR text, int i, bool bAdmin, int iTabIcon)
 
 	if (i>=nCurCount)
 	{
-		DEBUGSTRTABS(text);
+		DEBUGSTRTABS(L"Add", i, text);
 		TabCtrl_InsertItem(mh_Tabbar, i, &tie);
 	}
 	else
@@ -830,7 +830,7 @@ void CTabPanelWin::AddTabInt(LPCWSTR text, int i, bool bAdmin, int iTabIcon)
 			tie.mask &= ~TCIF_TEXT;
 		#ifdef _DEBUG
 		else
-			DEBUGSTRTABS(text);
+			DEBUGSTRTABS(L"Set", i, text);
 		#endif
 
 		// Изменилась ли иконка

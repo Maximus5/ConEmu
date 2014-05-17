@@ -74,7 +74,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define DEBUGSTRMOVE(s) //DEBUGSTR(s)
 #define DEBUGSTRTIMER(s) //DEBUGSTR(s)
-#define DEBUGSTRSETHOTKEY(s) DEBUGSTR(s)
+#define DEBUGSTRSETHOTKEY(s) //DEBUGSTR(s)
+#define DEBUGSTRSHUTSTEP(s) //DEBUGSTR(s)
 
 WARNING("Заменить все MBoxAssert, _ASSERT, _ASSERTE на WaitForSingleObject(CreateThread(out,Title,dwMsgFlags),INFINITE);");
 
@@ -487,7 +488,7 @@ void ShutdownGuiStep(LPCWSTR asInfo, int nParm1 /*= 0*/, int nParm2 /*= 0*/, int
 		msprintf(szFull+nLen, countof(szFull)-nLen, asInfo, nParm1, nParm2, nParm3, nParm4);
 	}
 	lstrcat(szFull, L"\n");
-	OutputDebugString(szFull);
+	DEBUGSTRSHUTSTEP(szFull);
 #endif
 }
 
