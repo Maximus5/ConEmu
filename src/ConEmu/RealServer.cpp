@@ -721,6 +721,7 @@ CESERVER_REQ* CRealServer::cmdTabsChanged(LPVOID pInst, CESERVER_REQ* pIn, UINT 
 			if (mp_RCon->isActive()) gpConEmu->UpdateProcessDisplay(FALSE);  // обновить PID в окне настройки
 		}
 
+		mp_RCon->tabs.m_Tabs.MarkTabsInvalid(CTabStack::MatchNonPanel, pIn->hdr.nSrcPID);
 		mp_RCon->SetTabs(NULL, 1);
 	}
 	else

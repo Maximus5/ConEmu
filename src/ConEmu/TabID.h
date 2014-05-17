@@ -273,4 +273,11 @@ public:
 	bool UpdateEnd(HANDLE hUpdate, DWORD anActiveFarPID);
 
 	void ReleaseTabs(BOOL abInvalidOnly = TRUE);
+
+public:
+	enum MatchTabEnum {
+		MatchAll,
+		MatchNonPanel,
+	};
+	void MarkTabsInvalid(MatchTabEnum MatchTab, DWORD nFarPID);
 };

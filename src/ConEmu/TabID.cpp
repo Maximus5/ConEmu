@@ -1031,14 +1031,6 @@ bool CTabStack::UpdateEnd(HANDLE hUpdate, DWORD anActiveFarPID)
 
 				// Kill this tab
 				pTab->Info.Status = tisInvalid;
-				#ifdef TAB_REF_PLACE
-				pTab->DelPlace(m_rp);
-				#endif
-				pTab->Release();
-				// Remove from list
-				mpp_Stack[i] = NULL;
-
-				bChanged = true;
 			}
 		}
 	}
@@ -1058,8 +1050,28 @@ bool CTabStack::UpdateEnd(HANDLE hUpdate, DWORD anActiveFarPID)
 				pTab->Release();
 				// Remove from list
 				mpp_Stack[i] = NULL;
+
+				bChanged = true;
 			}
 		}
+	}
+
+	for (int i = 0; i < mn_Used; i++)
+	{
+		CTabID *pTab = mpp_Stack[i];
+
+		// Kill all invalid tabs
+		if (!pTab || (pTab->Info.Status != tisInvalid))
+			continue;
+
+		#ifdef TAB_REF_PLACE
+		pTab->DelPlace(m_rp);
+		#endif
+		pTab->Release();
+		// Remove from list
+		mpp_Stack[i] = NULL;
+
+		bChanged = true;
 	}
 
 	CleanNulls();
@@ -1191,9 +1203,42 @@ void CTabStack::ReleaseTabs(BOOL abInvalidOnly /*= TRUE*/)
 		mn_Used--;
 
 		// Сдвинуть хвост, если есть
-		if ((mn_Used > 1) && (i < (mn_Used-1)))
+		if (abInvalidOnly && (mn_Used > 1) && (i < (mn_Used-1)))
 		{
 			memmove(mpp_Stack+i, mpp_Stack+i+1, sizeof(CTabID**) * (mn_Used - i));
 		}
+	}
+}
+
+void CTabStack::MarkTabsInvalid(MatchTabEnum MatchTab, DWORD nFarPID)
+{
+	MSectionLockSimple SC; SC.Lock(&mc_Section); // Сразу Exclusive lock
+	int iSkipped = 0;
+
+	for (int i = 0; i < mn_Used; i++)
+	{
+		if (!mpp_Stack[i])
+			continue;
+
+		if (MatchTab == MatchNonPanel)
+		{
+			// При [ре]старте консоли - таб панелей оставить
+			// или при закрытии фара - убить все его редакторы/вьюверы
+			if (nFarPID)
+			{
+				if (mpp_Stack[i]->Info.nPID != nFarPID)
+				{
+					iSkipped++;
+					continue;
+				}
+			}
+			else if (!iSkipped && (mpp_Stack[i]->Type() == fwt_Panels))
+			{
+				iSkipped++;
+				continue;
+			}
+		}
+
+		mpp_Stack[i]->Info.Status = tisInvalid;
 	}
 }

@@ -402,6 +402,7 @@ CRealConsole::~CRealConsole()
 
 	tabs.mn_ActiveTab = 0;
 	tabs.mn_tabsCount = 0;
+	tabs.m_Tabs.MarkTabsInvalid(CTabStack::MatchAll, 0);
 	tabs.m_Tabs.ReleaseTabs(FALSE);
 
 	//
@@ -3294,6 +3295,7 @@ void CRealConsole::ResetVarsOnStart()
 	mb_WasForceTerminated = FALSE;
 
 	// Обновить закладки
+	tabs.m_Tabs.MarkTabsInvalid(CTabStack::MatchNonPanel, 0);
 	SetTabs(NULL,1);
 }
 
