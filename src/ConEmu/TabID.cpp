@@ -1167,7 +1167,7 @@ void CTabStack::ReleaseTabs(BOOL abInvalidOnly /*= TRUE*/)
 	if (!this || !mpp_Stack || !mn_Used || !mn_MaxCount)
 		return;
 
-	MSectionLockSimple SC; SC.Lock(&mc_Section, TRUE); // Сразу Exclusive lock
+	MSectionLockSimple SC; SC.Lock(&mc_Section); // Сразу Exclusive lock
 
 	// Идем сзади, т.к. нужно будет сдвигать элементы
 	for (int i = (mn_Used - 1); i >= 0; i--)
