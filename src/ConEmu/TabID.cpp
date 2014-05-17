@@ -63,6 +63,7 @@ TabName::TabName(LPCWSTR asName)
 LPCWSTR TabName::Set(LPCWSTR asName)
 {
 	#ifdef _DEBUG
+	// For breakpoints only...
 	nLen = asName ? lstrlenW(asName) : -1;
 	if ((nLen <= 0) || (nLen > 0 && asName[nLen-1] == L' '))
 	{
