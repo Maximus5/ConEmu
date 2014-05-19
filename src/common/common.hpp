@@ -1083,9 +1083,9 @@ struct ConEmuGuiMapping
 typedef unsigned int CEFarWindowType;
 static const CEFarWindowType
 	fwt_Any            = 0,
-	fwt_Panels         = 1,
-	fwt_Viewer         = 2,
-	fwt_Editor         = 3,
+	fwt_Panels         = 1,       // _ASSERTE(fwt_Panels == WTYPE_PANELS)
+	fwt_Viewer         = 2,       // _ASSERTE(fwt_Viewer == WTYPE_VIEWER)
+	fwt_Editor         = 3,       // _ASSERTE(fwt_Viewer == WTYPE_EDITOR)
 	fwt_TypeMask       = 0x00FF,
 
 	fwt_Elevated       = 0x00100,
