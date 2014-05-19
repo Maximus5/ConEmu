@@ -706,8 +706,7 @@ void CTabBarClass::Update(BOOL abPosted/*=FALSE*/)
 		bStackChanged = true;
 
 	#ifdef PRINT_RECENT_STACK
-	if (bStackChanged)
-		PrintRecentStack();
+	PrintRecentStack();
 	#endif
 
 	#ifdef _DEBUG
@@ -1398,6 +1397,8 @@ int CTabBarClass::PrepareTab(CTab& pTab, CVirtualConsole *apVCon)
 void CTabBarClass::PrintRecentStack()
 {
 #ifdef PRINT_RECENT_STACK
+	if (!this)
+		return;
 	wchar_t szDbg[100];
 	DEBUGSTRRECENT(L"=== Printing recent tab stack ===\n");
 	for (INT_PTR i = 0; i < m_TabStack.size(); i++)

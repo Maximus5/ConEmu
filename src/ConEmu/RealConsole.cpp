@@ -405,6 +405,7 @@ CRealConsole::~CRealConsole()
 	tabs.mn_tabsCount = 0;
 	tabs.m_Tabs.MarkTabsInvalid(CTabStack::MatchAll, 0);
 	tabs.m_Tabs.ReleaseTabs(FALSE);
+	gpConEmu->mp_TabBar->PrintRecentStack();
 
 	//
 	CloseLogFiles();
@@ -3298,6 +3299,7 @@ void CRealConsole::ResetVarsOnStart()
 	// Обновить закладки
 	tabs.m_Tabs.MarkTabsInvalid(CTabStack::MatchNonPanel, 0);
 	SetTabs(NULL,1);
+	gpConEmu->mp_TabBar->PrintRecentStack();
 }
 
 BOOL CRealConsole::StartProcess()

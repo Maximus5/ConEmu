@@ -101,7 +101,6 @@ class CTabBarClass
 		WCHAR  ms_TmpTabText[MAX_PATH];
 		BOOL CanActivateTab(int nTabIdx);
 		BOOL mb_InKeySwitching;
-		void PrintRecentStack();
 		int GetNextTab(bool abForward, bool abAltStyle=false);
 		int GetNextTabHelper(int idxFrom, bool abForward, bool abRecent);
 		int GetCurSel();
@@ -115,6 +114,7 @@ class CTabBarClass
 		// Tabs updating (populating)
 		void Update(BOOL abPosted=FALSE);
 		bool NeedPostUpdate();
+		void PrintRecentStack();
 
 	private:
 		int  mn_InUpdate;
