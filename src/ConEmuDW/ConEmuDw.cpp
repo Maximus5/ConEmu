@@ -95,9 +95,6 @@ DWORD   gnBatchRegPID = 0;
 
 CESERVER_CONSOLE_MAPPING_HDR SrvMapping = {};
 
-HMODULE ghSrvDll = NULL;
-RequestLocalServer_t gfRequestLocalServer = NULL;
-
 AnnotationHeader* gpTrueColor = NULL;
 HANDLE ghTrueColor = NULL;
 HANDLE ghFarCommitUpdateSrv = NULL;
@@ -276,32 +273,38 @@ int WINAPI RequestLocalServer(/*[IN/OUT]*/RequestLocalServerParm* Parm)
 		goto wrap;
 	}
 
-	if (!ghSrvDll || !gfRequestLocalServer)
+	HMODULE hHkDll = NULL;
+	RequestLocalServer_t fRequestLocalServer = NULL;
+	wchar_t *pszSlash, szFile[MAX_PATH+1] = {};
+	LPCWSTR pszSrvName = WIN3264TEST(L"ConEmuHk.dll",L"ConEmuHk64.dll");
+
+	GetModuleFileName(ghOurModule, szFile, MAX_PATH);
+	pszSlash = wcsrchr(szFile, L'\\');
+	if (!pszSlash)
+		goto wrap;
+	pszSlash[1] = 0;
+	wcscat_c(szFile, pszSrvName);
+
+	hHkDll = GetModuleHandle(szFile);
+	if (!hHkDll)
 	{
-		LPCWSTR pszSrvName = WIN3264TEST(L"ConEmuCD.dll",L"ConEmuCD64.dll");
-
-		wchar_t *pszSlash, szFile[MAX_PATH+1] = {};
-
-		GetModuleFileName(ghOurModule, szFile, MAX_PATH);
-		pszSlash = wcsrchr(szFile, L'\\');
-		if (!pszSlash)
-			goto wrap;
-		pszSlash[1] = 0;
-		wcscat_c(szFile, pszSrvName);
-
-		ghSrvDll = LoadLibrary(szFile);
-		if (!ghSrvDll)
-			goto wrap;
-
-		gfRequestLocalServer = (RequestLocalServer_t)GetProcAddress(ghSrvDll, "PrivateEntry");
+		_ASSERTE(hHkDll && "Must be already injected");
+		hHkDll = LoadLibrary(szFile);
 	}
-
-	if (!gfRequestLocalServer)
+	if (!hHkDll)
 		goto wrap;
 
-	_ASSERTE(CheckCallbackPtr(ghSrvDll, 1, (FARPROC*)&gfRequestLocalServer, TRUE));
+	fRequestLocalServer = (RequestLocalServer_t)GetProcAddress(hHkDll, "RequestLocalServer");
 
-	iRc = gfRequestLocalServer(Parm);
+	if (!fRequestLocalServer)
+	{
+		_ASSERTE(fRequestLocalServer && "RequestLocalServer export not found in ConEmuHk");
+		goto wrap;
+	}
+
+	_ASSERTE(CheckCallbackPtr(hHkDll, 1, (FARPROC*)&fRequestLocalServer, TRUE));
+
+	iRc = fRequestLocalServer(Parm);
 
 wrap:
 	return iRc;
