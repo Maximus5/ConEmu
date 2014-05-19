@@ -565,34 +565,6 @@ bool CVirtualConsole::isVisible()
 	return gpConEmu->isVisible(this);
 }
 
-int CVirtualConsole::GetTabCount()
-{
-	if (!this)
-	{
-		_ASSERTE(this!=NULL);
-		return 0;
-	}
-	if (!mp_RCon)
-	{
-		return 1;
-	}
-	return mp_RCon->GetTabCount();
-}
-
-int CVirtualConsole::GetActiveTab()
-{
-	if (!this)
-	{
-		_ASSERTE(this!=NULL);
-		return 0;
-	}
-	if (!mp_RCon)
-	{
-		return 0;
-	}
-	return mp_RCon->GetActiveTab();
-}
-
 void CVirtualConsole::PointersInit()
 {
 	mb_PointersAllocated = false;
