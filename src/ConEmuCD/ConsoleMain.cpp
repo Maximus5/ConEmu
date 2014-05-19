@@ -8519,7 +8519,12 @@ BOOL cmd_SetConScrBuf(CESERVER_REQ& in, CESERVER_REQ** out)
 				LogString(szLog);
 			}
 			// Блокируем нить чтения и дождемся пока она перейдет в режим ожидания
-			_ASSERTE(gpSrv->hInWaitForSetConBufThread==NULL);
+			#ifdef _DEBUG
+			if (gpSrv->hInWaitForSetConBufThread)
+			{
+				_ASSERTE(gpSrv->hInWaitForSetConBufThread==NULL);
+			}
+			#endif
 			gpSrv->hInWaitForSetConBufThread = hInEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 			gpSrv->hOutWaitForSetConBufThread = hOutEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 			gpSrv->hWaitForSetConBufThread = hWaitEvent = in.SetConScrBuf.hRequestor ? in.SetConScrBuf.hRequestor : INVALID_HANDLE_VALUE;
