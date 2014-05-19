@@ -110,21 +110,8 @@ CTabID::CTabID(CVirtualConsole* apVCon, LPCWSTR asName, CEFarWindowType anType, 
 	memset(&Info, 0, sizeof(Info));
 	memset(&DrawInfo, 0, sizeof(DrawInfo));
 
-	//bExisted = true;
 	Info.pVCon = apVCon;
 	Set(asName, anType, anPID, anFarWindowID, anViewEditID);
-
-
-	//Info.Status = tisValid;
-	//Info.Flags = anFlags;
-	//Info.Type = anType; // etfPanels/etfEditor/etfViewer
-	//Info.nPID = anPID; // ИД процесса, содержащего таб (актуально для редакторов/вьюверов)
-	//Info.nFarWindowID = anFarWindowID;
-	//Info.nViewEditID = anViewEditID;
-	//// Name
-	//Name.Init(asName);
-	//Upper.Init(asName);
-	//Upper.MakeUpper();
 
 	#ifdef DEBUG_TAB_LIST
 	if (!bTabIdListInit)
@@ -135,6 +122,7 @@ CTabID::CTabID(CVirtualConsole* apVCon, LPCWSTR asName, CEFarWindowType anType, 
 	gTabIdList.Set(this, true);
 	#endif
 }
+
 LPCWSTR CTabID::GetName()
 {
 	// Empty strings must be substed in CRealConsole::GetTabTitle only!
@@ -144,9 +132,11 @@ LPCWSTR CTabID::GetName()
 	return pszName;
 }
 void CTabID::SetName(LPCWSTR asName)
+
 {
 	Name.Set(asName);
 }
+
 LPCWSTR CTabID::GetLabel()
 {
 	LPCWSTR pszLabel = DrawInfo.Display.Ptr();
@@ -157,11 +147,13 @@ LPCWSTR CTabID::GetLabel()
 	}
 	return pszLabel;
 }
+
 void CTabID::SetLabel(LPCWSTR asLabel)
 {
 	DrawInfo.Display.Set(asLabel);
 }
 void CTabID::Set(LPCWSTR asName, CEFarWindowType anType, int anPID, int anFarWindowID, int anViewEditID)
+
 {
 	//bExisted = true;
 	Info.Status = tisValid;
@@ -174,6 +166,7 @@ void CTabID::Set(LPCWSTR asName, CEFarWindowType anType, int anPID, int anFarWin
 	//Upper.Set(asName);
 	//Upper.MakeUpper();
 }
+
 CTabID::~CTabID()
 {
 	#ifdef _DEBUG
@@ -194,11 +187,13 @@ CTabID::~CTabID()
 	gTabIdList.Del(this);
 	#endif
 }
+
 void CTabID::FinalRelease()
 {
 	CTabID* p = this;
 	delete p;
 }
+
 void CTabID::ReleaseDrawRegion()
 {
 	if (DrawInfo.rgnTab)
@@ -207,6 +202,7 @@ void CTabID::ReleaseDrawRegion()
 		DrawInfo.rgnTab = NULL;
 	}
 }
+
 bool CTabID::IsEqual(CVirtualConsole* apVCon, LPCWSTR asName, CEFarWindowType anType, int anPID, int anViewEditID, CEFarWindowType FlagMask)
 {
 	TabName t(asName);
@@ -341,6 +337,7 @@ void CTabID::AddPlace(LPCSTR asName, int anLine)
 	TabRefPlace rp; rp.SetPlace(asName, anLine);
 	m_Places.push_back(rp);
 }
+
 void CTabID::DelPlace(LPCSTR asName, int anLine)
 {
 	for (INT_PTR i = 0; i < m_Places.size(); i++)
@@ -353,6 +350,7 @@ void CTabID::DelPlace(LPCSTR asName, int anLine)
 		}
 	}
 }
+
 void CTabID::DelPlace(const TabRefPlace& drp)
 {
 	DelPlace(drp.filename, drp.fileline);
@@ -487,23 +485,6 @@ void CTabStack::AppendInt(CTabID* pTab, BOOL abMoveFirst, MSectionLockSimple* pS
 	if (!mpp_Stack || (mn_Used == mn_MaxCount))
 	{
 		RequestSize(mn_Used+1, pSC);
-		//int nNewMaxCount = mn_Used;
-		//#ifdef _DEBUG
-		//nNewMaxCount += 1;
-		//#else
-		//nNewMaxCount += 16;
-		//#endif
-		//
-		//CTabID** ppNew = (CTabID**)calloc(nNewMaxCount, sizeof(CTabID**));
-		//if (mpp_Stack)
-		//{
-		//	if (mn_Used > 0)
-		//		memmove(ppNew, mpp_Stack, sizeof(CTabID**)*mn_Used);
-		//	free(mpp_Stack);
-		//}
-		//
-		//mpp_Stack = ppNew;
-		//mn_MaxCount = nNewMaxCount;
 	}
 
 	if (abMoveFirst && mn_Used > 0)
