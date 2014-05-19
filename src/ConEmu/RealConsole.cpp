@@ -80,6 +80,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRFOCUS(s) //LogFocusInfo(s)
 #define DEBUGSTRGUICHILDPOS(s) //DEBUGSTR(s)
 #define DEBUGSTRPROGRESS(s) //DEBUGSTR(s)
+#define DEBUGSTRFARPID(s) DEBUGSTR(s)
 
 // Иногда не отрисовывается диалог поиска полностью - только бежит текущая сканируемая директория.
 // Иногда диалог отрисовался, но часть до текста "..." отсутствует
@@ -6403,11 +6404,18 @@ void CRealConsole::SetFarPID(DWORD nFarPID)
 void CRealConsole::SetFarPluginPID(DWORD nFarPluginPID)
 {
 	bool bNeedUpdate = (mn_FarPID_PluginDetected != nFarPluginPID);
+
+	#ifdef _DEBUG
+	wchar_t szDbg[100];
+	_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"SetFarPluginPID: New=%u, Old=%u\n", nFarPluginPID, mn_FarPID_PluginDetected);
+	#endif
+
 	mn_FarPID_PluginDetected = nFarPluginPID;
 
 	// Для фара могут быть настроены другие параметры фона и прочего...
 	if (bNeedUpdate)
 	{
+		DEBUGSTRFARPID(szDbg);
 		mp_VCon->Update(true);
 	}
 }
