@@ -753,13 +753,12 @@ class CRealConsole
 		struct _TabsInfo
 		{
 			wchar_t    ms_RenameFirstTab[MAX_RENAME_TAB_LEN/*128*/];
-			//MSection   msc_Tabs;
 			CTabStack m_Tabs;
-			//int mn_tabsCount, mn_MaxTabs, mn_ActiveTab;
 			int  mn_tabsCount; // Число текущих табов. Может отличаться (в меньшую сторону) от m_Tabs.GetCount()
-			int  mn_ActiveTab;
 			bool mb_TabsWasChanged;
 			bool mb_HasModalWindow; // Far Manager modal editor/viewer
+			CEFarWindowType nActiveType;
+			int nActiveFarWindow;
 		} tabs;
 		void CheckPanelTitle();
 		//

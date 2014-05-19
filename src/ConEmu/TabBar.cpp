@@ -115,7 +115,7 @@ CTabBarClass::CTabBarClass()
 	mb_InKeySwitching = FALSE;
 	ms_TmpTabText[0] = 0;
 	mn_InUpdate = 0;
-	mp_DummyTab = new CTabID(NULL, NULL, fwt_Panels, 0, 0, 0);
+	mp_DummyTab = new CTabID(NULL, NULL, fwt_Panels|fwt_CurrentFarWnd, 0, 0, 0);
 	_ASSERTE(mp_DummyTab->RefCount()==1);
 
 	#ifdef TAB_REF_PLACE

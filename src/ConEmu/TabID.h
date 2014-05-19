@@ -239,9 +239,10 @@ protected:
 	CRITICAL_SECTION mc_Section;
 	int  mn_UpdatePos;
 	bool mb_FarUpdateMode;
-	void AppendInt(CTabID* pTab, BOOL abMoveFirst, MSectionLockSimple* pSC);
+	int  AppendInt(CTabID* pTab, BOOL abMoveFirst, MSectionLockSimple* pSC);
 	void RequestSize(int anCount, MSectionLockSimple* pSC);
 	void CleanNulls();
+	int  GetVisualToRealIndex(int anVisual);
 	#if 0
 	void TabDeleted(MSectionLockSimple* pUpdateLock, int i);
 	void RecheckPassive();
@@ -256,10 +257,10 @@ public:
 	CTabStack();
 	~CTabStack();
 
-	int GetCount();
+	int  GetCount();
 	bool GetTabInfoByIndex(int anIndex, /*OUT*/ TabInfo& rInfo);
 	bool GetTabByIndex(int anIndex, /*OUT*/ CTab& rTab);
-	int GetIndexByTab(const CTabID* pTab);
+	int  GetIndexByTab(const CTabID* pTab);
 	bool GetNextTab(const CTabID* pTab, BOOL abForward, /*OUT*/ CTab& rTab);
 	bool GetTabDrawRect(int anIndex, RECT* rcTab);
 	bool SetTabDrawRect(int anIndex, const RECT& rcTab);
@@ -267,7 +268,7 @@ public:
 	void LockTabs(MSectionLockSimple* pLock);
 
 	HANDLE UpdateBegin();
-	bool UpdateFarWindow(HANDLE hUpdate, CVirtualConsole* apVCon, LPCWSTR asName, CEFarWindowType anType, int anPID, int anFarWindowID, int anViewEditID);
+	bool UpdateFarWindow(HANDLE hUpdate, CVirtualConsole* apVCon, LPCWSTR asName, CEFarWindowType anType, int anPID, int anFarWindowID, int anViewEditID, CTab& rActiveTab);
 	void UpdateAppend(HANDLE hUpdate, CTab& Tab, BOOL abMoveFirst);
 	void UpdateAppend(HANDLE hUpdate, CTabID* pTab, BOOL abMoveFirst);
 	bool UpdateEnd(HANDLE hUpdate, DWORD anActiveFarPID);
@@ -280,5 +281,5 @@ public:
 		MatchNonPanel,
 	};
 	void MarkTabsInvalid(MatchTabEnum MatchTab, DWORD nFarPID);
-	bool RefreshFarStatus(DWORD nFarPID);
+	bool RefreshFarStatus(DWORD nFarPID, CTab& rActiveTab, int& rnActiveCount);
 };

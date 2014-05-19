@@ -170,8 +170,9 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 
 	// Tabs
 	tabs.mn_tabsCount = 0;
-	tabs.mn_ActiveTab = 0;
 	tabs.mb_TabsWasChanged = false;
+	tabs.nActiveFarWindow = 0;
+	tabs.nActiveType = fwt_Panels|fwt_CurrentFarWnd;
 
 	#ifdef TAB_REF_PLACE
 	tabs.m_Tabs.SetPlace("RealConsole.cpp:tabs.m_Tabs",0);
@@ -401,7 +402,6 @@ CRealConsole::~CRealConsole()
 	}
 
 
-	tabs.mn_ActiveTab = 0;
 	tabs.mn_tabsCount = 0;
 	tabs.m_Tabs.MarkTabsInvalid(CTabStack::MatchAll, 0);
 	tabs.m_Tabs.ReleaseTabs(FALSE);
@@ -6418,8 +6418,11 @@ void CRealConsole::SetFarPluginPID(DWORD nFarPluginPID)
 	if (bNeedUpdate)
 	{
 		DEBUGSTRFARPID(szDbg);
-		if (tabs.m_Tabs.RefreshFarStatus(nFarPluginPID))
+		CTab ActiveTab("RealConsole.cpp:ActiveTab",__LINE__);
+		if (tabs.m_Tabs.RefreshFarStatus(nFarPluginPID, ActiveTab, tabs.mn_tabsCount))
+		{
 			gpConEmu->mp_TabBar->Update();
+		}
 		mp_VCon->Update(true);
 	}
 }
@@ -8891,33 +8894,47 @@ void CRealConsole::SetTabs(ConEmuTab* apTabs, int anTabsCount)
 	ConEmuTab lTmpTabs = {0};
 
 	// Табы нужно проверить и подготовить
-	int nActiveTab = 0, i;
-
 	if (apTabs && (anTabsCount > 0))
 	{
 		_ASSERTE(apTabs->Type>1 || !apTabs->Modified);
 
 		// иначе вместо "Panels" будет то что в заголовке консоли. Например "edit - doc1.doc"
 		// это например, в процессе переключения закладок
-		if (anTabsCount > 1 && apTabs[0].Type == 1/*WTYPE_PANELS*/ && apTabs[0].Current)
+		if (anTabsCount > 1 && apTabs[0].Type == fwt_Panels && apTabs[0].Current)
 			apTabs[0].Name[0] = 0;
 
-		if (anTabsCount == 1)  // принудительно. вдруг флажок не установлен
-			apTabs[0].Current = 1;
+		// Ensure that "far /e file.txt" will produce "Modal" tab
+		if (anTabsCount == 1 && (apTabs[0].Type == fwt_Viewer || apTabs[0].Type == fwt_Editor))
+			apTabs[0].Modal = 1;
+
+		int nActiveTab = -1;
 
 		// найти активную закладку
-		for (i = (anTabsCount-1); i >= 0; i--)
+		for (int i = (anTabsCount-1); i >= 0; i--)
 		{
 			if (apTabs[i].Current)
 			{
-				nActiveTab = i; break;
+				// Active tab found
+				nActiveTab = i;
+				// Avoid possible faults with modal editors/viewers
+				for (int j = (i - 1); j >= 0; j--)
+				{
+					if (apTabs[j].Current)
+						apTabs[j].Current = 0;
+				}
+				break;
 			}
 		}
 
+		// вдруг флажок не установлен
+		if (nActiveTab < 0)
+		{
+			apTabs[0].Current = 1;
+		}
 
 		#ifdef _DEBUG
 		// отладочно: имена закладок (редакторов/вьюверов) должны быть заданы!
-		for (i = 1; i < anTabsCount; i++)
+		for (int i = 1; i < anTabsCount; i++)
 		{
 			if (apTabs[i].Name[0] == 0)
 			{
@@ -8950,6 +8967,11 @@ void CRealConsole::SetTabs(ConEmuTab* apTabs, int anTabsCount)
 			_ASSERTE(FALSE && "RootProcessName or DefTitle must be known already!")
 		}
 	}
+	else
+	{
+		_ASSERTE(FALSE && "Must not get here!");
+		return;
+	}
 
 	// Already must be
 	_ASSERTE(anTabsCount>0 && apTabs!=NULL);
@@ -8958,7 +8980,7 @@ void CRealConsole::SetTabs(ConEmuTab* apTabs, int anTabsCount)
 	if (isAdministrator() && (gpSet->isAdminShield() || gpSet->isAdminSuffix()))
 	{
 		// В идеале - иконкой на закладке (если пользователь это выбрал) или суффиксом (добавляется в GetTab)
-		for (i = 0; i < anTabsCount; i++)
+		for (int i = 0; i < anTabsCount; i++)
 		{
 			apTabs[i].Type |= fwt_Elevated;
 		}
@@ -8967,8 +8989,9 @@ void CRealConsole::SetTabs(ConEmuTab* apTabs, int anTabsCount)
 	HANDLE hUpdate = tabs.m_Tabs.UpdateBegin();
 
 	bool bHasModal = false;
+	CTab ActiveTab("RealConsole.cpp:ActiveTab",__LINE__);
 
-	for (i = 0; i < anTabsCount; i++)
+	for (int i = 0; i < anTabsCount; i++)
 	{
 		CEFarWindowType TypeAndFlags = apTabs[i].Type
 			| (apTabs[i].Modified ? fwt_ModifiedFarWnd : fwt_Any)
@@ -8979,16 +9002,30 @@ void CRealConsole::SetTabs(ConEmuTab* apTabs, int anTabsCount)
 
 		bHasModal |= (TypeAndFlags & fwt_ModalFarWnd) == fwt_ModalFarWnd;
 
-		if (tabs.m_Tabs.UpdateFarWindow(hUpdate, mp_VCon, apTabs[i].Name, TypeAndFlags, nPID, apTabs[i].Pos, apTabs[i].EditViewId))
+		if (tabs.m_Tabs.UpdateFarWindow(hUpdate, mp_VCon, apTabs[i].Name, TypeAndFlags, nPID, apTabs[i].Pos, apTabs[i].EditViewId, ActiveTab))
 			tabs.mb_TabsWasChanged = true;
 	}
 
 	tabs.mn_tabsCount = anTabsCount;
-	tabs.mn_ActiveTab = nActiveTab;
 	tabs.mb_HasModalWindow = bHasModal;
+	if (ActiveTab.Tab())
+	{
+		tabs.nActiveFarWindow = ActiveTab->Info.nFarWindowID;
+		tabs.nActiveType = ActiveTab->Info.Type;
+	}
+	else
+	{
+		_ASSERTE(FALSE && "Active tab must be detected!");
+		tabs.nActiveFarWindow = 0;
+		tabs.nActiveType = fwt_Panels|fwt_CurrentFarWnd;
+	}
 
 	if (tabs.m_Tabs.UpdateEnd(hUpdate, GetFarPID(true)))
 		tabs.mb_TabsWasChanged = true;
+
+	#ifdef _DEBUG
+	GetActiveTabType();
+	#endif
 
 	// Передернуть gpConEmu->mp_TabBar->..
 	if (gpConEmu->isValid(mp_VCon))    // Во время создания консоли она еще не добавлена в список...
@@ -9310,7 +9347,7 @@ int CRealConsole::GetTabCount(BOOL abVisibleOnly /*= FALSE*/)
 	//if (tabs.mn_tabsCount > 1 && gpSet->bHideDisabledConsoleTabs)
 	//{
 	//	int nCount = 0;
-	//	for (int i = 0; i < tabs.mn_tabsCount; i++)
+	//	for (int i = 0; i < tabs.m_Tabs.GetCount(); i++)
 	//	{
 	//		if (CanActivateFarWindow(i))
 	//			nCount++;
@@ -9331,8 +9368,7 @@ int CRealConsole::GetActiveTab()
 	if (!this)
 		return 0;
 
-	int nCount = GetTabCount();
-	return (tabs.mn_ActiveTab < nCount) ? tabs.mn_ActiveTab : 0;
+	return tabs.nActiveFarWindow;
 }
 
 // (Panels=1, Viewer=2, Editor=3) |(Elevated=0x100) |(NotElevated=0x200) |(Modal=0x400)
@@ -9340,6 +9376,7 @@ CEFarWindowType CRealConsole::GetActiveTabType()
 {
 	int nType = fwt_Any/*0*/;
 
+	#ifdef _DEBUG
 	if (tabs.mn_tabsCount < 1)
 	{
 		_ASSERTE(tabs.mn_tabsCount>=1);
@@ -9348,12 +9385,19 @@ CEFarWindowType CRealConsole::GetActiveTabType()
 	else
 	{
 		TabInfo rInfo;
+		MSectionLockSimple SC;
+		tabs.m_Tabs.LockTabs(&SC);
 		int iModal = -1;
-		for (int i = 0; i < tabs.mn_tabsCount; i++)
+		int iTabCount = tabs.m_Tabs.GetCount();
+		for (int i = 0; i < iTabCount; i++)
 		{
-			if (tabs.m_Tabs.GetTabInfoByIndex(i, rInfo) && (rInfo.Type & fwt_ModalFarWnd))
+			if (tabs.m_Tabs.GetTabInfoByIndex(i, rInfo)
+				&& (rInfo.Status == tisValid)
+				&& (rInfo.Type & fwt_ModalFarWnd))
 			{
 				iModal = i;
+				_ASSERTE(tabs.nActiveFarWindow == i);
+				_ASSERTE((rInfo.Type & fwt_CurrentFarWnd) == fwt_CurrentFarWnd);
 				nType = rInfo.Type;
 				break;
 			}
@@ -9361,24 +9405,38 @@ CEFarWindowType CRealConsole::GetActiveTabType()
 
 		if (iModal == -1)
 		{
-			int iActive = GetActiveTab();
-			if (tabs.m_Tabs.GetTabInfoByIndex(iActive, rInfo))
+			for (int i = 0; i < iTabCount; i++)
 			{
-				nType = rInfo.Type;
+				if (tabs.m_Tabs.GetTabInfoByIndex(i, rInfo)
+					&& (rInfo.Status == tisValid)
+					&& (rInfo.Type & fwt_CurrentFarWnd))
+				{
+					nType = rInfo.Type;
+					_ASSERTE(tabs.nActiveFarWindow == i);
+				}
 			}
 		}
 	}
 
-	TODO("Надо/не надо?");
-	if (isAdministrator() && (gpSet->isAdminShield() || gpSet->isAdminSuffix()))
+	_ASSERTE(tabs.nActiveType == nType);
+	#endif
+
+	// And release code
+	nType = tabs.nActiveType;
+
+	#ifdef _DEBUG
+	if (isAdministrator() /*&& (gpSet->isAdminShield() || gpSet->isAdminSuffix())*/)
 	{
 		_ASSERTE((nType&fwt_Elevated)==fwt_Elevated);
 
+		#if 0
 		if (gpSet->isAdminShield())
 		{
 			nType |= fwt_Elevated;
 		}
+		#endif
 	}
+	#endif
 
 	return nType;
 }
@@ -9408,6 +9466,7 @@ bool CRealConsole::GetTab(int tabIdx, /*OUT*/ CTab& rTab)
 	// Должен быть как минимум один (хотя бы пустой) таб
 	_ASSERTE(tabs.mn_tabsCount>0);
 
+	// Здесь именно mn_tabsCount, т.к. возвращаются "визуальные" табы, а не "ушедшие в фон"
 	if ((tabIdx < 0) || (tabIdx >= tabs.mn_tabsCount))
 		return false;
 
@@ -9619,7 +9678,8 @@ void CRealConsole::CheckPanelTitle()
 
 	if (tabs.mn_tabsCount > 0)
 	{
-		if ((tabs.mn_ActiveTab >= 0 && tabs.mn_ActiveTab < tabs.mn_tabsCount) || tabs.mn_tabsCount == 1)
+		CEFarWindowType wt = GetActiveTabType();
+		if ((wt & fwt_TypeMask) == fwt_Panels)
 		{
 			WCHAR szPanelTitle[CONEMUTABMAX];
 
@@ -9643,8 +9703,6 @@ DWORD CRealConsole::CanActivateFarWindow(int anWndIndex)
 	if (!dwPID)
 	{
 		return -1; // консоль активируется без разбора по вкладкам (фара нет)
-		//if (anWndIndex == tabs.mn_ActiveTab)
-		//return 0;
 	}
 
 	// Если есть меню: ucBoxDblDownRight ucBoxDblHorz ucBoxDblHorz ucBoxDblHorz (первая или вторая строка консоли) - выходим
@@ -9658,7 +9716,7 @@ DWORD CRealConsole::CanActivateFarWindow(int anWndIndex)
 	}
 
 	// Добавил такую проверочку. По идее, у нас всегда должен быть актуальный номер текущего окна.
-	if (tabs.mn_ActiveTab == anWndIndex)
+	if (tabs.nActiveFarWindow == anWndIndex)
 		return (DWORD)-1; // Нужное окно уже выделено, лучше не дергаться...
 
 	if (isPictureView(TRUE))
@@ -9704,13 +9762,10 @@ DWORD CRealConsole::CanActivateFarWindow(int anWndIndex)
 
 	BOOL lbMenuOrMacro = FALSE;
 
-	if (tabs.mn_ActiveTab >= 0 && tabs.mn_ActiveTab < tabs.mn_tabsCount)
+	// Меню может быть только в панелях
+	if ((GetActiveTabType() & fwt_TypeMask) == fwt_Panels)
 	{
-		// Меню может быть только в панелях
-		if ((GetActiveTabType() & fwt_TypeMask) == fwt_Panels)
-		{
-			lbMenuOrMacro = mp_RBuf->isFarMenuOrMacro();
-		}
+		lbMenuOrMacro = mp_RBuf->isFarMenuOrMacro();
 	}
 
 	// Если строка меню отображается всегда:
@@ -9771,8 +9826,11 @@ BOOL CRealConsole::ActivateFarWindow(int anWndIndex)
 		DWORD nData[2] = {(DWORD)anWndIndex,0};
 
 		// Если в панелях висит QSearch - его нужно предварительно "снять"
-		if (!tabs.mn_ActiveTab && (mp_ABuf && (mp_ABuf->GetDetector()->GetFlags() & FR_QSEARCH)))
+		if (((tabs.nActiveType & fwt_TypeMask) == fwt_Panels)
+			&& (mp_ABuf && (mp_ABuf->GetDetector()->GetFlags() & FR_QSEARCH)))
+		{
 			nData[1] = TRUE;
+		}
 
 		DEBUGSTRCMD(L"GUI send CMD_SETWINDOW\n");
 		if (pipe.Execute(CMD_SETWINDOW, nData, 8))
@@ -10770,17 +10828,14 @@ void CRealConsole::CheckFarStates()
 	{
 		// Сначала пытаемся проверить статус по закладкам: если к нам из плагина пришло,
 		// что активен "viewer/editor" - то однозначно ставим CES_VIEWER/CES_EDITOR
-		if (tabs.mn_ActiveTab >= 0 && tabs.mn_ActiveTab < tabs.mn_tabsCount)
-		{
-			CEFarWindowType nActiveType = (GetActiveTabType() & fwt_TypeMask);
+		CEFarWindowType nActiveType = (GetActiveTabType() & fwt_TypeMask);
 
-			if (nActiveType != fwt_Panels)
-			{
-				if (nActiveType == fwt_Viewer)
-					nNewState |= CES_VIEWER;
-				else if (nActiveType == fwt_Editor)
-					nNewState |= CES_EDITOR;
-			}
+		if (nActiveType != fwt_Panels)
+		{
+			if (nActiveType == fwt_Viewer)
+				nNewState |= CES_VIEWER;
+			else if (nActiveType == fwt_Editor)
+				nNewState |= CES_EDITOR;
 		}
 
 		// Если по закладкам ничего не определили - значит может быть либо панель, либо
