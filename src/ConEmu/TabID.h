@@ -179,7 +179,7 @@ public:
 	TabName Name, Renamed;
 	// С учетом возможного переименования
 	LPCWSTR GetName();
-	void SetName(LPCWSTR asName);
+	bool SetName(LPCWSTR asName);
 
 	// Для внутреннего использования
 	TabDrawInfo DrawInfo;
@@ -187,7 +187,7 @@ public:
 	void SetLabel(LPCWSTR asLabel);
 
 	// Methods
-	void Set(LPCWSTR asName, CEFarWindowType anType, int anPID, int anFarWindowID, int anViewEditID);
+	bool Set(LPCWSTR asName, CEFarWindowType anType, int anPID, int anFarWindowID, int anViewEditID, CEFarWindowType anFlagMask = fwt_Any);
 
 	#if 0
 	bool IsEqual(const CTabID* pTabId, bool abIgnoreWindowId, CEFarWindowType FlagMask);

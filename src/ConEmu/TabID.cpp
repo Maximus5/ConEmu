@@ -131,10 +131,23 @@ LPCWSTR CTabID::GetName()
 	_ASSERTE(pszName != NULL);
 	return pszName;
 }
-void CTabID::SetName(LPCWSTR asName)
 
+bool CTabID::SetName(LPCWSTR asName)
 {
+	int nCmpLen = asName ? lstrlen(asName) : 0;
+	int nNameLen = Name.Length();
+	if (nCmpLen == nNameLen)
+	{
+		LPCWSTR psz = Name.Ptr();
+		if (asName && (wmemcmp(psz, asName, nNameLen) == 0))
+		{
+			// No changes
+			return false;
+		}
+	}
+
 	Name.Set(asName);
+	return true;
 }
 
 LPCWSTR CTabID::GetLabel()
@@ -152,19 +165,60 @@ void CTabID::SetLabel(LPCWSTR asLabel)
 {
 	DrawInfo.Display.Set(asLabel);
 }
-void CTabID::Set(LPCWSTR asName, CEFarWindowType anType, int anPID, int anFarWindowID, int anViewEditID)
 
+bool CTabID::Set(LPCWSTR asName, CEFarWindowType anType, int anPID, int anFarWindowID, int anViewEditID, CEFarWindowType anFlagMask /*= fwt_Any*/)
 {
-	//bExisted = true;
-	Info.Status = tisValid;
-	Info.Type = anType; // enum CEFarWindowType (fwt_...)
-	Info.nPID = anPID; // ИД процесса, содержащего таб (актуально для редакторов/вьюверов)
-	Info.nFarWindowID = anFarWindowID;
-	Info.nViewEditID = anViewEditID;
+	bool bChanged = false;
+
+	if (Info.Status != tisValid)
+	{
+		Info.Status = tisValid;
+		bChanged = true;
+	}
+
+	// enum CEFarWindowType (fwt_...)
+	if (anFlagMask == fwt_Any)
+	{
+		if (Info.Type != anType)
+		{
+			Info.Type = anType;
+			bChanged = true;
+		}
+	}
+	else if ((anType & anFlagMask) != (Info.Type & anFlagMask))
+	{
+		_ASSERTE((anType & fwt_TypeMask) == (Info.Type & fwt_TypeMask));
+		CEFarWindowType newFlags = (Info.Type & ~anFlagMask);
+		newFlags |= (anType & anFlagMask);
+		Info.Type = newFlags;
+		bChanged = true;
+	}
+
+	// ИД процесса, содержащего таб (актуально для редакторов/вьюверов)
+	DWORD nSetPID = ((anType & fwt_TypeMask) == fwt_Panels) ? 0 : anPID;
+	if (Info.nPID != nSetPID)
+	{
+		Info.nPID = nSetPID;
+		bChanged = true;
+	}
+
+	if (Info.nFarWindowID != anFarWindowID)
+	{
+		Info.nFarWindowID = anFarWindowID;
+		bChanged = true;
+	}
+
+	if (Info.nViewEditID != anViewEditID)
+	{
+		Info.nViewEditID = anViewEditID;
+		bChanged = true;
+	}
+
 	// Name
-	SetName(asName);
-	//Upper.Set(asName);
-	//Upper.MakeUpper();
+	if (SetName(asName))
+		bChanged = true;
+
+	return bChanged;
 }
 
 CTabID::~CTabID()
@@ -205,11 +259,6 @@ void CTabID::ReleaseDrawRegion()
 
 bool CTabID::IsEqual(CVirtualConsole* apVCon, LPCWSTR asName, CEFarWindowType anType, int anPID, int anViewEditID, CEFarWindowType FlagMask)
 {
-	TabName t(asName);
-	return IsEqual(apVCon, t, anType, anPID, anViewEditID, FlagMask);
-}
-bool CTabID::IsEqual(CVirtualConsole* apVCon, const TabName& asName, CEFarWindowType anType, int anPID, int anViewEditID, CEFarWindowType FlagMask)
-{
 	if (!this)
 	{
 		_ASSERTE(FALSE && "Invalid pointer");
@@ -219,118 +268,41 @@ bool CTabID::IsEqual(CVirtualConsole* apVCon, const TabName& asName, CEFarWindow
 	// Невалидный таб (процесс был завершен)
 	if (Info.Status == tisEmpty || Info.Status == tisInvalid)
 		return false;
+	if (this->Info.Status == tisEmpty || this->Info.Status == tisInvalid)
+		return false;
 
 	if (apVCon != this->Info.pVCon)
 		return false;
 
-	//// Модальный редактор должет бы соответвтсовать панелям (по логике переключений?)
-	//if (anFarWindowID == 0 && this->Info.nFarWindowID == 0)
-	//	return true; // OK, Это ГЛАВНЫЙ таб КОНСОЛИ
-
-	//if (!abIgnoreWindowId)
-	//{
-	//	if (anFarWindowID != this->Info.nFarWindowID)
-	//		return false;
-	//}
+	// Do not do excess TabName creation for ‘Panels’
+	if ((FlagMask == fwt_TypeMask)
+			&& ((anType & fwt_TypeMask) == fwt_Panels)
+			&& ((this->Info.Type & fwt_TypeMask) == fwt_Panels))
+		return true;
 
 	if ((anType & FlagMask) != (this->Info.Type & FlagMask))
 		return false;
 
-	//// Для редактора/вьювера проверям ИД процесса FAR & ИД редактора/вьювера
-	//// FAR обещает уникальность ИД редактора/вьювера в пределах сессии
-	//if (this->Info.Type == etfViewer || this->Info.Type == etfEditor)
-	//{
-	//	if ((anFarWindowID == 0) != (this->Info.nFarWindowID == 0))
-	//		return false; // "Модальность" должна совпадать. (У модальных - WindowID==0)
-	//
-	//	// Редакторы считаются совпадающими только в том же процессе FAR & ИД вьювера/редактора
-	//	if (anPID != this->Info.nPID
-	//		|| anViewEditID != this->Info.nViewEditID)
-	//		return false;
-	//}
+	// If anPID specified, that must be exact Far instance
+	if (anPID && (this->Info.nPID != anPID))
+		return false;
 
-	// -- достаточно бы заложиться на ViewerEditorID, но его пока нет
-	LPCWSTR psz1 = asName.Ptr();
-	LPCWSTR psz2 = this->Name.Ptr();
+	WARNING("Will be better to check ViewerEditorID, if available");
+
+	int nCmpLen = asName ? lstrlen(asName) : 0;
 	int nNameLen = this->Name.Length();
-	if (asName.Length() != nNameLen)
-		return false;
-	if (wmemcmp(psz1, psz2, nNameLen))
+	if (nCmpLen != nNameLen)
 		return false;
 
-	// OK, различия не найдены, закладки совпадают
+	LPCWSTR psz = this->Name.Ptr();
+	_ASSERTE(psz!=NULL);
+	if (asName && wmemcmp(psz, asName, nNameLen))
+		return false;
+
+	// No difference found, tabs are equal
 	return true;
 }
-#if 0
-bool CTabID::IsEqual(const CTabID* pTabId, bool abIgnoreWindowId /*= false*/, CEFarWindowType FlagMask)
-{
-	if (!this || !pTabId)
-		return false; // Invalid arguments
 
-	// Невалидный таб (процесс был завершен)
-	if (Info.Status == tisEmpty || Info.Status == tisInvalid)
-		return false;
-	if (!CVConGroup::isValid((CVirtualConsole*)Info.pVCon))
-		return false;
-	if (pTabId->Info.Status == tisEmpty || pTabId->Info.Status == tisInvalid)
-		return false;
-	if (!CVConGroup::isValid((CVirtualConsole*)pTabId->Info.pVCon))
-		return false;
-
-	if (!abIgnoreWindowId)
-	{
-		if (pTabId->Info.nFarWindowID != this->Info.nFarWindowID)
-			return false;
-	}
-
-	return IsEqual( (CVirtualConsole*)pTabId->Info.pVCon, pTabId->Name, pTabId->Info.Type, pTabId->Info.nPID,
-					pTabId->Info.nViewEditID, FlagMask );
-
-	//if (pTabId->pVCon != this->pVCon)
-	//	return false;
-	//
-	////// Модальный редактор должет бы соответвтсовать панелям (по логике переключений?)
-	////if (pTabId->Info.nFarWindowID == 0 && this->Info.nFarWindowID == 0)
-	////	return true; // OK, Это ГЛАВНЫЙ таб КОНСОЛИ
-	//
-	//if (!abIgnoreWindowId)
-	//{
-	//	if (pTabId->Info.nFarWindowID != this->Info.nFarWindowID)
-	//		return false;
-	//}
-	//
-	//if (pTabId->Info.Type != this->Info.Type)
-	//	return false;
-	//
-	////// Для редактора/вьювера проверям ИД процесса FAR & ИД редактора/вьювера
-	////// FAR обещает уникальность ИД редактора/вьювера в пределах сессии
-	////if (this->Info.Type == etfViewer || this->Info.Type == etfEditor)
-	////{
-	////	if ((pTabId->Info.nFarWindowID == 0) != (this->Info.nFarWindowID == 0))
-	////		return false; // "Модальность" должна совпадать. (У модальных - WindowID==0)
-	////
-	////	// Редакторы считаются совпадающими только в том же процессе FAR & ИД вьювера/редактора
-	////	if (pTabId->Info.nPID != this->Info.nPID
-	////		|| pTabId->Info.nViewEditID != this->Info.nViewEditID)
-	////		return false;
-	////}
-	//
-	//// -- достаточно бы заложиться на ViewerEditorID, но его пока нет
-	//LPCWSTR psz1 = pTabId->Upper.Ptr();
-	//LPCWSTR psz2 = this->Upper.Ptr();
-	//if (pTabId->Upper.Length() != this->Upper.Length())
-	//	return false;
-	//if (memcmp(psz1, psz2, (this->Upper.Length()+1)*2))
-	//	return false;
-	//
-	//// OK, различия не найдены, закладки совпадают
-	//return true;
-}
-#endif
-//UINT CTabID::Flags()
-//{
-//	return Info.Flags;
-//}
 #ifdef TAB_REF_PLACE
 void CTabID::AddPlace(LPCSTR asName, int anLine)
 {
@@ -380,6 +352,9 @@ CTab::~CTab()
 }
 void CTab::Init(CTabID* apTab)
 {
+	if (mp_Tab == apTab)
+		return;
+
 	if (mp_Tab)
 	{
 		#ifdef TAB_REF_PLACE
