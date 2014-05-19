@@ -6416,6 +6416,8 @@ void CRealConsole::SetFarPluginPID(DWORD nFarPluginPID)
 	if (bNeedUpdate)
 	{
 		DEBUGSTRFARPID(szDbg);
+		if (tabs.m_Tabs.RefreshFarStatus(nFarPluginPID))
+			gpConEmu->mp_TabBar->Update();
 		mp_VCon->Update(true);
 	}
 }

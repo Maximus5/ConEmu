@@ -1242,3 +1242,34 @@ void CTabStack::MarkTabsInvalid(MatchTabEnum MatchTab, DWORD nFarPID)
 		mpp_Stack[i]->Info.Status = tisInvalid;
 	}
 }
+
+bool CTabStack::RefreshFarStatus(DWORD nFarPID)
+{
+	MSectionLockSimple SC; SC.Lock(&mc_Section); // Сразу Exclusive lock
+	bool bChanged = false;
+
+	for (int i = 0; i < mn_Used; i++)
+	{
+		if (!mpp_Stack[i] || (mpp_Stack[i]->Type() == fwt_Panels))
+			continue;
+		// When returning to Far - mark its editors/viewers as Valid
+		if (mpp_Stack[i]->Info.nPID == nFarPID)
+		{
+			if (mpp_Stack[i]->Info.Status == tisPassive)
+			{
+				mpp_Stack[i]->Info.Status = tisValid;
+				bChanged = true;
+			}
+		}
+		else
+		{
+			if (mpp_Stack[i]->Info.Status == tisValid)
+			{
+				mpp_Stack[i]->Info.Status = tisPassive;
+				bChanged = true;
+			}
+		}
+	}
+
+	return bChanged;
+}
