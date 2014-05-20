@@ -12,6 +12,18 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
 
+2014.05.19
+[!] Refactoring of Server startup.
+[!] Refactoring of Tabs-related internal code.
+[%] Typo: overrided -> overriden.
+[+] Debug. Switches in ConEmuC: /Args, /CheckUnicode, /ErrorLevel, /Result.
+[+] New environment variable ConEmuServerPID set during server init.
+[%] Issue 1505: Fix attach of several ChildGui at the same time.
+[+] Issue 1214: Support overtab clicks for activate/close/menu
+[%] Fix panel tab title blinking during edit/view opening.
+[%] Issue 436: Do not lose recent tab (editor/viewer) history after cmd execution from Far.
+
+
 2014.05.05
 [!] Limited logging of console contents.
     Option ‘Inject ConEmuHk’ must be enabled to get that feature!
