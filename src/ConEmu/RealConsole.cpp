@@ -7208,7 +7208,7 @@ BOOL CRealConsole::WaitConsoleSize(int anWaitSize, DWORD nTimeout)
 
 #ifdef _DEBUG
 	wchar_t szDbg[128]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"CRealConsole::WaitConsoleSize(H=%i, Timeout=%i)\n", anWaitSize, nTimeout);
-	DEBUGSTRTABS(szDbg);
+	DEBUGSTRSIZE(szDbg);
 #endif
 	WARNING("Вообще, команду в сервер может и не посылать? Сам справится? Просто проверять значения из FileMap");
 
@@ -7230,7 +7230,7 @@ BOOL CRealConsole::WaitConsoleSize(int anWaitSize, DWORD nTimeout)
 	}
 
 	_ASSERTE(lbRc && "WaitConsoleSize");
-	DEBUGSTRTABS(lbRc ? L"CRealConsole::WaitConsoleSize SUCCEEDED\n" : L"CRealConsole::WaitConsoleSize FAILED!!!\n");
+	DEBUGSTRSIZE(lbRc ? L"CRealConsole::WaitConsoleSize SUCCEEDED\n" : L"CRealConsole::WaitConsoleSize FAILED!!!\n");
 	return lbRc;
 }
 
