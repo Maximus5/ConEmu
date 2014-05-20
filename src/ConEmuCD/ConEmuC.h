@@ -296,8 +296,6 @@ int CALLBACK FontEnumProc(ENUMLOGFONTEX *lpelfe, NEWTEXTMETRICEX *lpntme, DWORD 
 typedef DWORD (WINAPI* FGetConsoleProcessList)(LPDWORD lpdwProcessList, DWORD dwProcessCount);
 extern FGetConsoleProcessList pfnGetConsoleProcessList;
 //BOOL HookWinEvents(int abEnabled);
-BOOL CheckProcessCount(BOOL abForce = FALSE);
-BOOL ProcessAdd(DWORD nPID, MSectionLock *pCS = NULL);
 void SendStarted();
 CESERVER_REQ* SendStopped(CONSOLE_SCREEN_BUFFER_INFO* psbi = NULL);
 BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount);

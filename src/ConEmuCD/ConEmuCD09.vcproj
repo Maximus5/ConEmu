@@ -1609,6 +1609,7 @@
 			<File RelativePath="..\common\WinObjects.h" />
 			<File RelativePath="..\ConEmuHk\Console2.h" />
 			<File RelativePath="..\ConEmuHk\Injects.h" />
+			<File RelativePath=".\ConProcess.h" />
 			<File RelativePath=".\ConEmuC.h" />
 			<File RelativePath=".\ConsoleHelp.h" />
 			<File RelativePath=".\Debugger.h" />
@@ -1659,6 +1660,7 @@
 			<File RelativePath="..\ConEmuHk\Injects.cpp" />
 			<File RelativePath=".\ConEmuCmd.cpp" />
 			<File RelativePath=".\ConEmuSrv.cpp" />
+			<File RelativePath=".\ConProcess.cpp" />
 			<File RelativePath=".\ConsoleMain.cpp" />
 			<File RelativePath=".\Debugger.cpp" />
 			<File RelativePath=".\Downloader.cpp" />

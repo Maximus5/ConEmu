@@ -31,6 +31,7 @@ $(OBJDIR)\GuiHooks.obj \
 $(OBJDIR)\RegPrepare.obj \
 $(OBJDIR)\ConEmuCmd.obj \
 $(OBJDIR)\ConEmuSrv.obj \
+$(OBJDIR)\ConProcess.obj \
 $(OBJDIR)\Debugger.obj \
 $(OBJDIR)\Downloader.obj \
 $(OBJDIR)\Injects.obj \
@@ -282,6 +283,8 @@ $(OBJDIR)\Common.obj: ../common/Common.cpp
 $(OBJDIR)\ConEmuCmd.obj: ConEmuCmd.cpp ../common/PipeServer.h
 
 $(OBJDIR)\ConEmuSrv.obj: ConEmuSrv.cpp ../common/PipeServer.h
+
+$(OBJDIR)\ConProcess.obj: ConProcess.cpp
 
 $(OBJDIR)\Debugger.obj: Debugger.cpp Debugger.h
 

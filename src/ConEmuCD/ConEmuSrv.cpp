@@ -39,6 +39,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/SetEnvVar.h"
 #include "../common/WinConsole.h"
 //#include "TokenHelper.h"
+#include "ConProcess.h"
 #include "SrvPipes.h"
 #include "Queue.h"
 

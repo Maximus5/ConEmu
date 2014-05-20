@@ -866,6 +866,7 @@
     <ClInclude Include="..\common\WinObjects.h" />
     <ClInclude Include="..\ConEmuHk\Injects.h" />
     <ClInclude Include="ConEmuC.h" />
+    <ClInclude Include="ConProcess.h" />
     <ClInclude Include="ConsoleHelp.h" />
     <ClInclude Include="Debugger.h" />
     <ClInclude Include="Downloader.h" />
@@ -1185,6 +1186,7 @@
     <ClCompile Include="..\ConEmuHk\Injects.cpp" />
     <ClCompile Include="ConEmuCmd.cpp" />
     <ClCompile Include="ConEmuSrv.cpp" />
+    <ClCompile Include="ConProcess.cpp" />
     <ClCompile Include="ConsoleMain.cpp" />
     <ClCompile Include="Debugger.cpp" />
     <ClCompile Include="Downloader.cpp" />
