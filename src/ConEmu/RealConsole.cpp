@@ -73,7 +73,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRSENDMSG(s) //DEBUGSTR(s)
 #define DEBUGSTRLOG(s) //OutputDebugStringA(s)
 #define DEBUGSTRALIVE(s) //DEBUGSTR(s)
-#define DEBUGSTRTABS(s) //DEBUGSTR(s)
+#define DEBUGSTRTABS(s) DEBUGSTR(s)
 #define DEBUGSTRMACRO(s) //DEBUGSTR(s)
 #define DEBUGSTRALTSRV(s) //DEBUGSTR(s)
 #define DEBUGSTRSTOP(s) //DEBUGSTR(s)
@@ -8936,9 +8936,30 @@ void CRealConsole::SetTabs(ConEmuTab* apTabs, int anTabsCount)
 		if (anTabsCount == 1 && (apTabs[0].Type == fwt_Viewer || apTabs[0].Type == fwt_Editor))
 			apTabs[0].Modal = 1;
 
-		int nActiveTab = -1;
+		// Far may fails sometimes when closing modal editor (when editor can't save changes on ShiftF10)
+		int nModalTab = -1;
+		for (int i = (anTabsCount-1); i >= 0; i--)
+		{
+			if (apTabs[i].Modal)
+			{
+				_ASSERTE((i == (anTabsCount-1)) && "Modal tabs can be at the tail only");
+				if (!apTabs[i].Current)
+				{
+					if (i == (anTabsCount-1))
+					{
+						DEBUGSTRTABS(L"!!! Last 'Modal' tab was not 'Current'\n");
+						apTabs[i].Current = 1;
+					}
+					else
+					{
+						_ASSERTE(apTabs[i].Current && "Modal tab can be only current?");
+					}
+				}
+			}
+		}
 
-		// найти активную закладку
+		// Find active tab. Start from the tail (Far can fails during opening new editor/viewer)
+		int nActiveTab = -1;
 		for (int i = (anTabsCount-1); i >= 0; i--)
 		{
 			if (apTabs[i].Current)
@@ -8955,7 +8976,7 @@ void CRealConsole::SetTabs(ConEmuTab* apTabs, int anTabsCount)
 			}
 		}
 
-		// вдруг флажок не установлен
+		// Ensure, at least one tab is current
 		if (nActiveTab < 0)
 		{
 			apTabs[0].Current = 1;
