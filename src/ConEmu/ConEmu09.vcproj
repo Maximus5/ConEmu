@@ -1834,6 +1834,14 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath=".\TabCtrlBase.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\TabCtrlWin.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\TabBarEx.cpp"
 				>
 				<FileConfiguration
@@ -2310,6 +2318,14 @@
 						Name="VCCustomBuildTool"
 					/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\TabCtrlBase.h"
+				>
+			</File>
+			<File
+				RelativePath=".\TabCtrlWin.h"
+				>
 			</File>
 			<File
 				RelativePath=".\TabBarEx.h"

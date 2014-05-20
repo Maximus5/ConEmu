@@ -982,6 +982,8 @@
     <ClCompile Include="ScreenDump.cpp" />
     <ClCompile Include="Status.cpp" />
     <ClCompile Include="TabBar.cpp" />
+    <ClCompile Include="TabCtrlBase.cpp" />
+    <ClCompile Include="TabCtrlWin.cpp" />
     <ClCompile Include="TabID.cpp" />
     <ClCompile Include="TaskBar.cpp" />
     <ClCompile Include="TaskBarGhost.cpp" />
@@ -1055,6 +1057,8 @@
     <ClInclude Include="ScreenDump.h" />
     <ClInclude Include="Status.h" />
     <ClInclude Include="TabBar.h" />
+    <ClInclude Include="TabCtrlBase.h" />
+    <ClInclude Include="TabCtrlWin.h" />
     <ClInclude Include="TabID.h" />
     <ClInclude Include="TaskBar.h" />
     <ClInclude Include="TaskBarGhost.h" />
