@@ -76,6 +76,8 @@ $(INTDIR)\RgnDetect.obj \
 $(INTDIR)\ScreenDump.obj \
 $(INTDIR)\Status.obj \
 $(INTDIR)\TabBar.obj \
+$(INTDIR)\TabCtrlBase.obj \
+$(INTDIR)\TabCtrlWin.obj \
 $(INTDIR)\TabID.obj \
 $(INTDIR)\TaskBar.obj \
 $(INTDIR)\TaskBarGhost.obj \
@@ -337,7 +339,11 @@ $(INTDIR)\ScreenDump.obj: ScreenDump.cpp
 
 $(INTDIR)\Status.obj: Status.cpp
 
-$(INTDIR)\TabBar.obj: TabBar.cpp
+$(INTDIR)\TabBar.obj: TabBar.cpp TabCtrlBase.h TabID.h
+
+$(INTDIR)\TabCtrlBase.obj: TabCtrlBase.cpp TabCtrlBase.h
+
+$(INTDIR)\TabCtrlWin.obj: TabCtrlWin.cpp TabCtrlBase.h TabCtrlWin.h
 
 $(INTDIR)\TabID.obj: TabID.cpp
 

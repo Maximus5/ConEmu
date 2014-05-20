@@ -39,6 +39,8 @@ SRCS =  \
 		TabBar.cpp         \
 		TabID.cpp          \
 		TaskBar.cpp        \
+		TabCtrlBase.cpp    \
+		TabCtrlWin.cpp     \
 		TaskBarGhost.cpp   \
 		TrayIcon.cpp       \
 		Update.cpp         \
