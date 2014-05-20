@@ -6383,6 +6383,11 @@ void CRealConsole::SetFarPID(DWORD nFarPID)
 {
 	bool bNeedUpdate = (mn_FarPID != nFarPID);
 
+	#ifdef _DEBUG
+	wchar_t szDbg[100];
+	_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"SetFarPID: New=%u, Old=%u\n", nFarPID, mn_FarPID);
+	#endif
+
 	if (nFarPID)
 	{
 		if ((mn_ProgramStatus & (CES_FARACTIVE|CES_FARINSTACK)) != (CES_FARACTIVE|CES_FARINSTACK))
@@ -6399,6 +6404,8 @@ void CRealConsole::SetFarPID(DWORD nFarPID)
 	// Для фара могут быть настроены другие параметры фона и прочего...
 	if (bNeedUpdate)
 	{
+		DEBUGSTRFARPID(szDbg);
+		tabs.RefreshFarPID(nFarPID);
 		mp_VCon->Update(true);
 	}
 }
@@ -6418,11 +6425,7 @@ void CRealConsole::SetFarPluginPID(DWORD nFarPluginPID)
 	if (bNeedUpdate)
 	{
 		DEBUGSTRFARPID(szDbg);
-		CTab ActiveTab("RealConsole.cpp:ActiveTab",__LINE__);
-		if (tabs.m_Tabs.RefreshFarStatus(nFarPluginPID, ActiveTab, tabs.mn_tabsCount))
-		{
-			gpConEmu->mp_TabBar->Update();
-		}
+		tabs.RefreshFarPID(nFarPluginPID);
 		mp_VCon->Update(true);
 	}
 }
@@ -8883,6 +8886,32 @@ void CRealConsole::UpdateScrollInfo()
 	mp_VCon->SetScroll(mp_ABuf->isScroll()/*con.bBufferHeight*/, nLastTop, nLastWndHeight, nLastHeight);
 }
 
+void CRealConsole::_TabsInfo::RefreshFarPID(DWORD nNewPID)
+{
+	CTab ActiveTab("RealConsole.cpp:ActiveTab",__LINE__);
+	if (m_Tabs.RefreshFarStatus(nNewPID, ActiveTab, mn_tabsCount, mb_HasModalWindow))
+	{
+		StoreActiveTab(ActiveTab.Tab());
+		mb_TabsWasChanged = true;
+		gpConEmu->mp_TabBar->Update();
+	}
+}
+
+void CRealConsole::_TabsInfo::StoreActiveTab(const CTabID* apActiveTab)
+{
+	if (apActiveTab)
+	{
+		nActiveFarWindow = apActiveTab->Info.nFarWindowID;
+		nActiveType = apActiveTab->Info.Type;
+	}
+	else
+	{
+		_ASSERTE(FALSE && "Active tab must be detected!");
+		nActiveFarWindow = 0;
+		nActiveType = fwt_Panels|fwt_CurrentFarWnd;
+	}
+}
+
 void CRealConsole::SetTabs(ConEmuTab* apTabs, int anTabsCount)
 {
 #ifdef _DEBUG
@@ -9008,17 +9037,7 @@ void CRealConsole::SetTabs(ConEmuTab* apTabs, int anTabsCount)
 
 	tabs.mn_tabsCount = anTabsCount;
 	tabs.mb_HasModalWindow = bHasModal;
-	if (ActiveTab.Tab())
-	{
-		tabs.nActiveFarWindow = ActiveTab->Info.nFarWindowID;
-		tabs.nActiveType = ActiveTab->Info.Type;
-	}
-	else
-	{
-		_ASSERTE(FALSE && "Active tab must be detected!");
-		tabs.nActiveFarWindow = 0;
-		tabs.nActiveType = fwt_Panels|fwt_CurrentFarWnd;
-	}
+	tabs.StoreActiveTab(ActiveTab.Tab());
 
 	if (tabs.m_Tabs.UpdateEnd(hUpdate, GetFarPID(true)))
 		tabs.mb_TabsWasChanged = true;

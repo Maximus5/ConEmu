@@ -759,6 +759,8 @@ class CRealConsole
 			bool mb_HasModalWindow; // Far Manager modal editor/viewer
 			CEFarWindowType nActiveType;
 			int nActiveFarWindow;
+			void StoreActiveTab(const CTabID* apActiveTab);
+			void RefreshFarPID(DWORD nNewPID);
 		} tabs;
 		void CheckPanelTitle();
 		//

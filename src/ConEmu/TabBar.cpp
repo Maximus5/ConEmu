@@ -710,11 +710,16 @@ void CTabBarClass::Update(BOOL abPosted/*=FALSE*/)
 	#endif
 
 	#ifdef _DEBUG
+	static int nPrevVisible, nPrevStacked;
 	{
 		wchar_t szDbg[100];
+		int nNewVisible = m_Tabs.GetCount();
+		int nNewStacked = m_TabStack.size();
 		_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"*** Tab list updated. Visible:%u, Stacked:%u, StackChanged:%s\n",
-			m_Tabs.GetCount(), m_TabStack.size(), bStackChanged ? L"Yes" : L"No");
+			nNewVisible, nNewStacked, bStackChanged ? L"Yes" : L"No");
 		DEBUGSTRCOUNT(szDbg);
+		nPrevVisible = nNewVisible;
+		nPrevStacked = nNewStacked;
 	}
 	#endif
 

@@ -1212,7 +1212,7 @@ void CTabStack::MarkTabsInvalid(MatchTabEnum MatchTab, DWORD nFarPID)
 	}
 }
 
-bool CTabStack::RefreshFarStatus(DWORD nFarPID, CTab& rActiveTab, int& rnActiveCount)
+bool CTabStack::RefreshFarStatus(DWORD nFarPID, CTab& rActiveTab, int& rnActiveCount, bool& rbHasModalTab)
 {
 	MSectionLockSimple SC; SC.Lock(&mc_Section); // Сразу Exclusive lock
 	bool bChanged = false;
@@ -1220,6 +1220,7 @@ bool CTabStack::RefreshFarStatus(DWORD nFarPID, CTab& rActiveTab, int& rnActiveC
 	int iActive = -1;
 	DEBUGTEST(int iPanels = 0);
 	bool bPanels;
+	bool bHasModal = false;
 
 	for (int i = 0; i < mn_Used; i++)
 	{
@@ -1259,11 +1260,17 @@ bool CTabStack::RefreshFarStatus(DWORD nFarPID, CTab& rActiveTab, int& rnActiveC
 				_ASSERTE(iActive == -1 && "Only one active tab per console!");
 				iActive = i;
 			}
+			if (mpp_Stack[i]->Info.Type & fwt_ModalFarWnd)
+			{
+				_ASSERTE((mpp_Stack[i]->Info.Type & fwt_CurrentFarWnd) && "Modal must be current");
+				bHasModal = true;
+			}
 		}
 	}
 
 	_ASSERTE(iPanels==1);
 
+	rbHasModalTab = bHasModal;
 	rnActiveCount = iCount;
 	rActiveTab.Init((iActive >= 0) ? mpp_Stack[iActive] : NULL);
 
