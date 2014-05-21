@@ -9,3 +9,4 @@ EXPORTS
 	GetLoadLibraryW
 	GetWriteConsoleW
 	RequestLocalServer
+	WriteProcessed

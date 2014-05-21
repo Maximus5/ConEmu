@@ -99,6 +99,18 @@ CRITICAL_SECTION CEAnsi::gcsAnsiLogFile;
 // VIM, etc. Some programs waiting control keys as xterm sequences. Need to inform ConEmu GUI.
 bool CEAnsi::gbWasXTermOutput = false;
 
+/* ************ Export ANSI printings ************ */
+LONG gnWriteProcessed = 0;
+BOOL WINAPI WriteProcessed(LPCWSTR lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten)
+{
+	HANDLE hConsoleOutput = GetStdHandle(STD_OUTPUT_HANDLE);
+	InterlockedIncrement(&gnWriteProcessed);
+	BOOL bRc = CEAnsi::OnWriteConsoleW(hConsoleOutput, lpBuffer, nNumberOfCharsToWrite, lpNumberOfCharsWritten, NULL);
+	InterlockedDecrement(&gnWriteProcessed);
+	return bRc;
+}
+/* ************ Export ANSI printings ************ */
+
 void CEAnsi::InitAnsiLog(LPCWSTR asFilePath)
 {
 	// Already initialized?
@@ -2664,7 +2676,7 @@ void CEAnsi::WriteAnsiCode_OSC(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsole
 
 void CEAnsi::WriteAnsiCode_VIM(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, AnsiEscCode& Code, BOOL& lbApply)
 {
-	if (!gbWasXTermOutput)
+	if (!gbWasXTermOutput && !gnWriteProcessed)
 	{
 		gbWasXTermOutput = true;
 		CEAnsi::StartXTermMode(true);
