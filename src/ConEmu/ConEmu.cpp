@@ -819,6 +819,9 @@ void CConEmuMain::StoreWorkDir(LPCWSTR asNewCurDir /*= NULL*/)
 		if (*asNewCurDir)
 		{
 			wcscpy_c(ms_ConEmuWorkDir, asNewCurDir);
+			// The root of the drive must have trailing '\'
+			if (ms_ConEmuWorkDir[1] == L':' && !ms_ConEmuWorkDir[2])
+				wcscat_c(ms_ConEmuWorkDir, L"\\");
 		}
 	}
 	else
@@ -831,7 +834,8 @@ void CConEmuMain::StoreWorkDir(LPCWSTR asNewCurDir /*= NULL*/)
 			//ms_ConEmuWorkDir[0] = 0;
 			wcscpy_c(ms_ConEmuWorkDir, ms_ConEmuExeDir);
 		}
-		else if (ms_ConEmuWorkDir[nDirLen-1] == L'\\')
+		// If it not a root of the drive
+		else if ((nDirLen > 3) && (ms_ConEmuWorkDir[nDirLen-1] == L'\\'))
 		{
 			ms_ConEmuWorkDir[nDirLen-1] = 0; // пусть будет БЕЗ слеша, для однообразия с ms_ConEmuExeDir
 		}
