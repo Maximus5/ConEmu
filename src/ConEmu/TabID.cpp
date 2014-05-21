@@ -1218,9 +1218,11 @@ bool CTabStack::RefreshFarStatus(DWORD nFarPID, CTab& rActiveTab, int& rnActiveC
 	bool bChanged = false;
 	int iCount = 0;
 	int iActive = -1;
-	DEBUGTEST(int iPanels = 0);
+	int iModal = -1;
+	int iFirstAvailable = -1;
+	int iFirstPanels = -1;
+	DEBUGTEST(int iPanelsCount = 0);
 	bool bPanels;
-	bool bHasModal = false;
 
 	for (int i = 0; i < mn_Used; i++)
 	{
@@ -1230,11 +1232,11 @@ bool CTabStack::RefreshFarStatus(DWORD nFarPID, CTab& rActiveTab, int& rnActiveC
 		// fwt_Panels всегда должен быть
 		bPanels = (mpp_Stack[i]->Type() == fwt_Panels);
 		#ifdef _DEBUG
-		if (bPanels) iPanels++;
+		if (bPanels) iPanelsCount++;
 		#endif
 
 		// When returning to Far - mark its editors/viewers as Valid
-		if (mpp_Stack[i]->Info.nPID == nFarPID)
+		if (nFarPID && (mpp_Stack[i]->Info.nPID == nFarPID))
 		{
 			if (mpp_Stack[i]->Info.Status == tisPassive)
 			{
@@ -1263,14 +1265,47 @@ bool CTabStack::RefreshFarStatus(DWORD nFarPID, CTab& rActiveTab, int& rnActiveC
 			if (mpp_Stack[i]->Info.Type & fwt_ModalFarWnd)
 			{
 				_ASSERTE((mpp_Stack[i]->Info.Type & fwt_CurrentFarWnd) && "Modal must be current");
-				bHasModal = true;
+				iModal = i;
 			}
+			if (iFirstAvailable < 0)
+			{
+				iFirstAvailable = i;
+			}
+		}
+		else if ((iFirstPanels < 0) && bPanels && (mpp_Stack[i]->Info.Status == tisPassive))
+		{
+			// May be when returning from "far /e ..." to cmd or another std Far instance
+			iFirstPanels = i;
 		}
 	}
 
-	_ASSERTE(iPanels==1);
+	_ASSERTE(iPanelsCount==1);
 
-	rbHasModalTab = bHasModal;
+	// Во время закрытия фара могут быть пертурбации
+	if (iActive < 0)
+	{
+		if (iModal >= 0)
+		{
+			iActive = iModal;
+		}
+		else if (iFirstAvailable >= 0)
+		{
+			iActive = iFirstAvailable;
+		}
+		else if (iFirstPanels >= 0)
+		{
+			iActive = iFirstPanels;
+			// There was no one "Active" tab. Mark panels tab as active!
+			_ASSERTE(nFarPID == 0); // returning from "far /e ..."?
+			_ASSERTE(mpp_Stack[iFirstPanels] != NULL); // Protected with CS, no need to check
+			mpp_Stack[iFirstPanels]->Info.Status = tisValid;
+		}
+		// Check return value
+		if (!bChanged)
+			bChanged = (iActive >= 0);
+	}
+
+	rbHasModalTab = (iModal >= 0);
 	rnActiveCount = iCount;
 	rActiveTab.Init((iActive >= 0) ? mpp_Stack[iActive] : NULL);
 

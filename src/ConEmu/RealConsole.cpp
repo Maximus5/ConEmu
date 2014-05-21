@@ -6411,7 +6411,7 @@ void CRealConsole::SetFarPID(DWORD nFarPID)
 	if (bNeedUpdate)
 	{
 		DEBUGSTRFARPID(szDbg);
-		tabs.RefreshFarPID(nFarPID);
+		tabs.RefreshFarPID((mn_ProgramStatus & CES_FARACTIVE) ? nFarPID : 0);
 		mp_VCon->Update(true);
 	}
 }
@@ -9438,6 +9438,8 @@ CEFarWindowType CRealConsole::GetActiveTabType()
 	int nType = fwt_Any/*0*/;
 
 	#ifdef _DEBUG
+	TabInfo rInfo;
+	int iModal = -1, iTabCount;
 	if (tabs.mn_tabsCount < 1)
 	{
 		_ASSERTE(tabs.mn_tabsCount>=1);
@@ -9445,11 +9447,10 @@ CEFarWindowType CRealConsole::GetActiveTabType()
 	}
 	else
 	{
-		TabInfo rInfo;
+		nType = fwt_Panels;
 		MSectionLockSimple SC;
 		tabs.m_Tabs.LockTabs(&SC);
-		int iModal = -1;
-		int iTabCount = tabs.m_Tabs.GetCount();
+		iTabCount = tabs.m_Tabs.GetCount();
 		for (int i = 0; i < iTabCount; i++)
 		{
 			if (tabs.m_Tabs.GetTabInfoByIndex(i, rInfo)
