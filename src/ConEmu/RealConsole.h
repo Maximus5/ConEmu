@@ -640,6 +640,8 @@ class CRealConsole
 		WCHAR Title[MAX_TITLE_SIZE+1], TitleCmp[MAX_TITLE_SIZE+1];
 		// А здесь содержится то, что отображается в ConEmu (может быть добавлено " (Admin)")
 		WCHAR TitleFull[MAX_TITLE_SIZE+96], TitleAdmin[MAX_TITLE_SIZE+192];
+		// Буфер для CRealConsole::GetTitle
+		wchar_t TempTitleRenamed[MAX_RENAME_TAB_LEN/*128*/];
 		// Принудительно дернуть OnTitleChanged, например, при изменении процентов в консоли
 		BOOL mb_ForceTitleChanged;
 		// Здесь сохраняется заголовок окна (с панелями), когда FAR фокус с панелей уходит (переходит в редактор...).
@@ -752,7 +754,6 @@ class CRealConsole
 		//
 		struct _TabsInfo
 		{
-			wchar_t    ms_RenameFirstTab[MAX_RENAME_TAB_LEN/*128*/];
 			CTabStack m_Tabs;
 			int  mn_tabsCount; // Число текущих табов. Может отличаться (в меньшую сторону) от m_Tabs.GetCount()
 			bool mb_TabsWasChanged;

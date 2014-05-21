@@ -721,7 +721,7 @@ bool CTabStack::UpdateFarWindow(HANDLE hUpdate, CVirtualConsole* apVCon, LPCWSTR
 			pTab = mpp_Stack[i];
 
 			// Refresh status and title
-			if (pTab->Set(asName, anType, anPID, anFarWindowID, anViewEditID, fwt_CompareFlags))
+			if (pTab->Set(asName, anType, anPID, anFarWindowID, anViewEditID, fwt_UpdateFlags))
 				bChanged = true;
 
 			_ASSERTE(pTab->Info.Status == tisValid);
