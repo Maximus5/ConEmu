@@ -3906,3 +3906,111 @@ void ApplyExportEnvVar(LPCWSTR asEnvNameVal)
 		asEnvNameVal = pszNext;
 	}
 }
+
+
+#ifndef CONEMU_MINIMAL
+int ReadTextFile(LPCWSTR asPath, DWORD cchMax, wchar_t*& rsBuffer, DWORD& rnChars, DWORD& rnErrCode, DWORD DefaultCP /*= 0*/)
+{
+	HANDLE hFile = CreateFile(asPath, GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, 0, 0);
+
+	if (!hFile || hFile == INVALID_HANDLE_VALUE)
+	{
+		rnErrCode = GetLastError();
+		return -1;
+	}
+
+	DWORD nSize = GetFileSize(hFile, NULL);
+
+	if (!nSize || nSize >= cchMax)
+	{
+		rnErrCode = GetLastError();
+		CloseHandle(hFile);
+		return -2;
+	}
+
+	char* pszDataA = (char*)malloc(nSize+5);
+	if (!pszDataA)
+	{
+		_ASSERTE(pszDataA);
+		CloseHandle(hFile);
+		return -3;
+	}
+	pszDataA[nSize] = 0; pszDataA[nSize+1] = 0; pszDataA[nSize+2] = 0; pszDataA[nSize+3] = 0; pszDataA[nSize+4] = 0;
+
+	DWORD nRead = 0;
+	BOOL  bRead = ReadFile(hFile, pszDataA, nSize, &nRead, 0);
+	rnErrCode = GetLastError();
+	CloseHandle(hFile);
+
+	if (!bRead || (nRead != nSize))
+	{
+		free(pszDataA);
+		return -4;
+	}
+
+	// Опредлить код.страницу файла
+	if ((DefaultCP == CP_UTF8) || (pszDataA[0] == '\xEF' && pszDataA[1] == '\xBB' && pszDataA[2] == '\xBF'))
+	{
+		bool BOM = (pszDataA[0] == '\xEF' && pszDataA[1] == '\xBB' && pszDataA[2] == '\xBF');
+		LPCSTR pszNoBom = pszDataA + (BOM ? 3 : 0);
+		DWORD  nLenNoBom = nSize - (BOM ? 3 : 0);
+		// UTF-8 BOM
+		rsBuffer = (wchar_t*)calloc(nSize+2,2);
+		if (!rsBuffer)
+		{
+			_ASSERTE(rsBuffer);
+			free(pszDataA);
+			return -5;
+		}
+		int nLen = MultiByteToWideChar(CP_UTF8, 0, pszNoBom, nLenNoBom, rsBuffer, nSize);
+		if ((nLen < 0) || (nLen > (int)nSize))
+		{
+			SafeFree(pszDataA);
+			SafeFree(rsBuffer);
+			return -6;
+		}
+		rnChars = nLen;
+	}
+	else if ((DefaultCP == 1200) || (pszDataA[0] == '\xFF' && pszDataA[1] == '\xFE'))
+	{
+		bool BOM = (pszDataA[0] == '\xFF' && pszDataA[1] == '\xFE');
+		if (!BOM)
+		{
+			rsBuffer = (wchar_t*)pszDataA;
+			pszDataA = NULL;
+			rnChars = (nSize >> 1);
+		}
+		else
+		{
+			LPCSTR pszNoBom = pszDataA + 2;
+			DWORD  nLenNoBom = nSize - 2;
+			// CP-1200 BOM
+			rsBuffer = lstrdup((wchar_t*)pszNoBom);
+			if (!rsBuffer)
+			{
+				_ASSERTE(rsBuffer);
+				SafeFree(pszDataA);
+				return -7;
+			}
+			rnChars = (nLenNoBom >> 1);
+		}
+	}
+	else
+	{
+		// Plain ANSI
+		rsBuffer = (wchar_t*)calloc(nSize+2,2);
+		_ASSERTE(rsBuffer);
+		int nLen = MultiByteToWideChar(DefaultCP ? DefaultCP : CP_ACP, 0, pszDataA, nSize, rsBuffer, nSize+1);
+		if ((nLen < 0) || (nLen > (int)nSize))
+		{
+			SafeFree(pszDataA);
+			SafeFree(rsBuffer);
+			return -8;
+		}
+		rnChars = nLen;
+	}
+
+	SafeFree(pszDataA);
+	return 0;
+}
+#endif

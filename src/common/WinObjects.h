@@ -152,6 +152,10 @@ wchar_t* GetComspec(const ConEmuComspec* pOpt);
 bool IsExportEnvVarAllowed(LPCWSTR szName);
 void ApplyExportEnvVar(LPCWSTR asEnvNameVal);
 
+#ifndef CONEMU_MINIMAL
+int ReadTextFile(LPCWSTR asPath, DWORD cchMax, wchar_t*& rsBuffer, DWORD& rnChars, DWORD& rnErrCode, DWORD DefaultCP = 0);
+#endif
+
 //------------------------------------------------------------------------
 ///| Section |////////////////////////////////////////////////////////////
 //------------------------------------------------------------------------
