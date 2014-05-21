@@ -11080,11 +11080,11 @@ wchar_t* CConEmuMain::LoadConsoleBatch_File(LPCWSTR asSource)
 	if (asSource && (*asSource == CmdFilePrefix))
 	{
 		// В качестве "команды" указан "пакетный файл" одновременного запуска нескольких консолей
-		HANDLE hFile = CreateFile(asSource+1, GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, 0, 0);
+		DWORD nSize = 0, nErrCode = 0;
+		int iRead = ReadTextFile(asSource+1, (1<<20), pszDataW, nSize, nErrCode);
 
-		if (!hFile || hFile == INVALID_HANDLE_VALUE)
+		if (iRead == -1)
 		{
-			DWORD dwErr = GetLastError();
 			wchar_t szCurDir[MAX_PATH*2]; szCurDir[0] = 0; GetCurrentDirectory(countof(szCurDir), szCurDir);
 			size_t cchMax = _tcslen(asSource)+100+_tcslen(szCurDir);
 			wchar_t* pszErrMsg = (wchar_t*)calloc(cchMax,2);
@@ -11093,64 +11093,28 @@ wchar_t* CConEmuMain::LoadConsoleBatch_File(LPCWSTR asSource)
 			_wcscat_c(pszErrMsg, cchMax, L"\x2019"/*’*/ L"\nCurrent directory:\n" L"\x2018"/*‘*/);
 			_wcscat_c(pszErrMsg, cchMax, szCurDir);
 			_wcscat_c(pszErrMsg, cchMax, L"\x2019"/*’*/);
-			DisplayLastError(pszErrMsg, dwErr);
+			DisplayLastError(pszErrMsg, nErrCode);
 			free(pszErrMsg);
 			//Destroy(); -- must caller
 			return NULL;
 		}
-
-		DWORD nSize = GetFileSize(hFile, NULL);
-
-		if (!nSize || nSize > (1<<20))
+		else if (iRead == -2)
 		{
-			DWORD dwErr = GetLastError();
-			CloseHandle(hFile);
 			wchar_t* pszErrMsg = (wchar_t*)calloc(_tcslen(asSource)+100,2);
 			lstrcpy(pszErrMsg, L"Console batch file is too large or empty:\n" L"\x2018"/*‘*/); lstrcat(pszErrMsg, asSource+1); lstrcat(pszErrMsg, L"\x2019"/*’*/);
-			DisplayLastError(pszErrMsg, dwErr);
+			DisplayLastError(pszErrMsg, nErrCode);
 			free(pszErrMsg);
 			//Destroy(); -- must caller
 			return NULL;
 		}
-
-		char* pszDataA = (char*)calloc(nSize+4,1); //-V112
-		_ASSERTE(pszDataA);
-		DWORD nRead = 0;
-		BOOL lbRead = ReadFile(hFile, pszDataA, nSize, &nRead, 0);
-		DWORD dwErr = GetLastError();
-		CloseHandle(hFile);
-
-		if (!lbRead || nRead != nSize)
+		else if (iRead < 0)
 		{
-			free(pszDataA);
 			wchar_t* pszErrMsg = (wchar_t*)calloc(_tcslen(asSource)+100,2);
 			lstrcpy(pszErrMsg, L"Reading console batch file failed:\n" L"\x2018"/*‘*/); lstrcat(pszErrMsg, asSource+1); lstrcat(pszErrMsg, L"\x2019"/*’*/);
-			DisplayLastError(pszErrMsg, dwErr);
+			DisplayLastError(pszErrMsg, nErrCode);
 			free(pszErrMsg);
 			//Destroy(); -- must caller
 			return NULL;
-		}
-
-		// Опредлить код.страницу файла
-		if (pszDataA[0] == '\xEF' && pszDataA[1] == '\xBB' && pszDataA[2] == '\xBF')
-		{
-			// UTF-8 BOM
-			pszDataW = (wchar_t*)calloc(nSize+2,2);
-			_ASSERTE(pszDataW);
-			MultiByteToWideChar(CP_UTF8, 0, pszDataA+3, -1, pszDataW, nSize);
-		}
-		else if (pszDataA[0] == '\xFF' && pszDataA[1] == '\xFE')
-		{
-			// CP-1200 BOM
-			pszDataW = lstrdup((wchar_t*)(pszDataA+2));
-			_ASSERTE(pszDataW);
-		}
-		else
-		{
-			// Plain ANSI
-			pszDataW = (wchar_t*)calloc(nSize+2,2);
-			_ASSERTE(pszDataW);
-			MultiByteToWideChar(CP_ACP, 0, pszDataA, -1, pszDataW, nSize+1);
 		}
 
 	}
