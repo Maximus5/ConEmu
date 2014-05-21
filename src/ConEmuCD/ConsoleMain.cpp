@@ -1065,6 +1065,9 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 		goto wrap;
 	}
 
+	if (gbInShutdown)
+		goto wrap;
+
 	// По идее, при вызове дебаггера ParseCommandLine сразу должна послать на выход.
 	_ASSERTE(!(gpSrv->DbgInfo.bDebuggerActive || gpSrv->DbgInfo.bDebugProcess || gpSrv->DbgInfo.bDebugProcessTree))
 
