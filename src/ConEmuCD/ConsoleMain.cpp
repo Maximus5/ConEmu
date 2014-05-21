@@ -2718,6 +2718,8 @@ enum ConEmuExecAction
 	ea_Download,   // after "/download" switch may be unlimited pairs of {"url","file"},{"url","file"},...
 	ea_ParseArgs,  // debug test of NextArg function... print args to STDOUT
 	ea_ErrorLevel, // return specified errorlevel
+	ea_OutEcho,    // echo "string" with ANSI processing
+	ea_OutType,    // print file contents with ANSI processing
 };
 
 int DoInjectHooks(LPWSTR asCmdArg)
@@ -3626,6 +3628,256 @@ int DoGuiMacro(LPCWSTR asCmdArg, HWND hMacroInstance = NULL)
 	return iRc;
 }
 
+int DoOutput(ConEmuExecAction eExecAction, LPCWSTR asCmdArg)
+{
+	int iRc = 0;
+	wchar_t* pszTemp = NULL;
+	wchar_t* pszLine = NULL;
+	char*    pszOem = NULL;
+	char*    pszFile = NULL;
+	LPCWSTR  pszText = NULL;
+	DWORD    cchLen = 0, dwWritten = 0;
+	HANDLE   hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+	bool     bAddNewLine = true;
+	bool     bProcessed = true;
+	bool     bToBottom = false;
+	CmdArg   szArg;
+	HANDLE   hFile = NULL;
+	DWORD    DefaultCP = 0;
+
+	_ASSERTE(asCmdArg && (*asCmdArg != L' '));
+	asCmdArg = SkipNonPrintable(asCmdArg);
+
+	while ((*asCmdArg == L'-' || *asCmdArg == L'/') && (NextArg(&asCmdArg, szArg) == 0))
+	{
+		wchar_t* psz;
+
+		// Make uniform
+		if (szArg.ms_Arg[0] == L'/')
+			szArg.ms_Arg[0] = L'-';
+
+		// Do not CRLF after printing
+		if (lstrcmpi(szArg, L"-n") == 0)
+			bAddNewLine = false;
+		// ‘RAW’: Do not process ANSI and specials (^e^[^r^n^t^b...)
+		else if (lstrcmpi(szArg, L"-r") == 0)
+			bProcessed = false;
+		// Scroll to bottom of screen buffer (ConEmu TrueColor buffer compatible)
+		else if (lstrcmpi(szArg, L"-b") == 0)
+			bToBottom = true;
+		// Forced codepage of typed text file
+		else if (isDigit(szArg.ms_Arg[1]))
+			DefaultCP = wcstoul(szArg, &psz, 10);
+	}
+
+	_ASSERTE(asCmdArg && (*asCmdArg != L' '));
+	asCmdArg = SkipNonPrintable(asCmdArg);
+
+	if (eExecAction == ea_OutType)
+	{
+		if (NextArg(&asCmdArg, szArg) == 0)
+		{
+			DWORD nSize = 0, nErrCode = 0;
+			int iRead = ReadTextFile(szArg, (1<<24), pszTemp, cchLen, nErrCode, DefaultCP);
+			if (iRead < 0)
+			{
+				wchar_t szInfo[100];
+				_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"\r\nCode=%i, Error=%u\r\n", iRead, nErrCode);
+				pszTemp = lstrmerge(L"Reading source file failed!\r\n", szArg, szInfo);
+				cchLen = pszTemp ? lstrlen(pszTemp) : 0;
+				iRc = 4;
+			}
+			pszText = pszTemp;
+		}
+	}
+	else if (eExecAction == ea_OutEcho)
+	{
+		// Get the string
+		int nLen = lstrlen(asCmdArg);
+		if ((nLen < 1) && !bAddNewLine)
+			goto wrap;
+
+		// Cut double-quotes, trailing spaces, process ASCII analogues
+		if (nLen > 0)
+		{
+			int j = nLen-1;
+			pszLine = lstrdup(asCmdArg,2/*Add two extra wchar_t*/);
+			if (!pszLine)
+			{
+				iRc = 100; goto wrap;
+			}
+
+			while ((j > 0) && (pszLine[j] == L' '))
+			{
+				pszLine[j--] = 0;
+			}
+
+			if (((nLen > 2) && (asCmdArg[0] == L'"'))
+				&& ((j > 0) && (pszLine[j] == L'"')))
+			{
+				pszLine[j] = 0;
+				asCmdArg = pszLine + 1;
+			}
+			else
+			{
+				asCmdArg = pszLine;
+				j++;
+				_ASSERTE(j >= 0 && j <= nLen);
+			}
+
+			if (bAddNewLine)
+			{
+				pszLine[j++] = L'\r';
+				pszLine[j++] = L'\n';
+				pszLine[j] = 0;
+				bAddNewLine = false; // Already prepared
+			}
+
+			// Process special symbols: ^e^[^r^n^t^b
+			if (bProcessed)
+			{
+				wchar_t* pszDst = wcschr(pszLine, L'^');
+				if (pszDst)
+				{
+					const wchar_t* pszSrc = pszDst;
+					const wchar_t* pszEnd = pszLine + j;
+					while (pszSrc < pszEnd)
+					{
+						if (*pszSrc == L'^')
+						{
+							switch (*(++pszSrc))
+							{
+							case L'^':
+								*pszDst = L'^'; break;
+							case L'r': case L'R':
+								*pszDst = L'\r'; break;
+							case L'n': case L'N':
+								*pszDst = L'\n'; break;
+							case L't': case L'T':
+								*pszDst = L'\t'; break;
+							case L'b': case L'B':
+								*pszDst = L'\b'; break;
+							case L'e': case L'E': case L'[':
+								*pszDst = 27; break;
+							default:
+								// Unknown ctrl-sequence, bypass
+								*(pszDst++) = *(pszSrc++);
+								continue;
+							}
+							*pszDst++; *pszSrc++;
+						}
+						else
+						{
+							*(pszDst++) = *(pszSrc++);
+						}
+					}
+					// Was processed? Zero terminate it.
+					*pszDst = 0;
+				}
+			}
+		}
+
+		if (bAddNewLine)
+		{
+			pszTemp = lstrmerge(asCmdArg, L"\r\n");
+			pszText = pszTemp;
+		}
+		else
+		{
+			pszText = asCmdArg;
+		}
+		cchLen = pszText ? lstrlen(pszText) : 0;
+	}
+
+	if (bToBottom)
+	{
+		CONSOLE_SCREEN_BUFFER_INFO csbi = {};
+		if (GetConsoleScreenBufferInfo(hOut, &csbi))
+		{
+			COORD crBottom = {0, csbi.dwSize.Y-1};
+			SetConsoleCursorPosition(hOut, crBottom);
+			int Y1 = crBottom.Y - (csbi.srWindow.Bottom-csbi.srWindow.Top);
+			SMALL_RECT srWindow = {0, Y1, csbi.srWindow.Right-srWindow.Left, crBottom.Y};
+			SetConsoleWindowInfo(hOut, TRUE, &srWindow);
+		}
+	}
+
+	if (!pszText || !cchLen)
+	{
+		iRc = 1;
+		goto wrap;
+	}
+
+	if (!IsOutputRedirected())
+	{
+		BOOL bRc;
+		typedef BOOL (WINAPI* WriteProcessed_t)(LPCWSTR lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten);
+		WriteProcessed_t WriteProcessed = NULL;
+		HMODULE hHooks = NULL;
+		if (bProcessed)
+		{
+			LPCWSTR pszHooksName = WIN3264TEST(L"ConEmuHk.dll",L"ConEmuHk64.dll");
+			if ((hHooks = GetModuleHandle(pszHooksName)) == NULL)
+			{
+				wchar_t szSelf[MAX_PATH];
+				if (GetModuleFileName(ghOurModule, szSelf, countof(szSelf)))
+				{
+					wchar_t* pszName = (wchar_t*)PointToName(szSelf);
+					int nSelfName = lstrlen(pszName);
+					_ASSERTE(nSelfName == lstrlen(pszHooksName));
+					lstrcpyn(pszName, pszHooksName, nSelfName+1);
+					hHooks = LoadLibrary(szSelf);
+				}
+			}
+			if (hHooks)
+			{
+				WriteProcessed = (WriteProcessed_t)GetProcAddress(hHooks, "WriteProcessed");
+			}
+		}
+
+		// If possible - use processed (with ANSI support) output
+		if (WriteProcessed)
+		{
+			bRc = WriteProcessed(pszText, cchLen, &dwWritten);
+		}
+		else
+		{
+			bRc = WriteConsoleW(hOut, pszText, cchLen, &dwWritten, 0);
+		}
+
+		if (!bRc)
+			iRc = 3;
+	}
+	else
+	{
+		// Current process output was redirected to file!
+
+		UINT  cp = GetConsoleOutputCP();
+		int   nDstLen = WideCharToMultiByte(cp, 0, pszText, cchLen, NULL, 0, NULL, NULL);
+		if (nDstLen < 1)
+		{
+			iRc = 2;
+			goto wrap;
+		}
+
+		pszOem = (char*)malloc(nDstLen);
+		if (pszOem)
+		{
+			int nWrite = WideCharToMultiByte(cp, 0, pszText, cchLen, pszOem, nDstLen, NULL, NULL);
+			if (nWrite > 1)
+			{
+				WriteFile(hOut, pszOem, nWrite, &dwWritten, 0);
+			}
+		}
+	}
+
+wrap:
+	SafeFree(pszLine);
+	SafeFree(pszTemp);
+	SafeFree(pszOem);
+	return iRc;
+}
+
 int DoExecAction(ConEmuExecAction eExecAction, LPCWSTR asCmdArg /* rest of cmdline */, HWND hMacroInstance = NULL)
 {
 	int iRc = CERR_CARGUMENT;
@@ -3680,6 +3932,12 @@ int DoExecAction(ConEmuExecAction eExecAction, LPCWSTR asCmdArg /* rest of cmdli
 		{
 			wchar_t* pszEnd = NULL;
 			iRc = wcstol(asCmdArg, &pszEnd, 10);
+			break;
+		}
+	case ea_OutEcho:
+	case ea_OutType:
+		{
+			iRc = DoOutput(eExecAction, asCmdArg);
 			break;
 		}
 	default:
@@ -3989,6 +4247,16 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 		else if (lstrcmpi(szArg, L"/Result")==0)
 		{
 			gbPrintRetErrLevel = TRUE;
+		}
+		else if (lstrcmpi(szArg, L"/echo")==0 || lstrcmpi(szArg, L"/e")==0)
+		{
+			eExecAction = ea_OutEcho;
+			break;
+		}
+		else if (lstrcmpi(szArg, L"/type")==0 || lstrcmpi(szArg, L"/t")==0)
+		{
+			eExecAction = ea_OutType;
+			break;
 		}
 		// **** Regular use ****
 		else if (wcsncmp(szArg, L"/REGCONFONT=", 12)==0)

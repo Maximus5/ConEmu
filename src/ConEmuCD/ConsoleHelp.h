@@ -44,6 +44,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 		L"   or: ConEmuC /IsConEmu | /IsAnsi | /IsTerm\r\n" \
 		L"   or: ConEmuC /DEBUGPID=<Debugging PID> [/DUMP | /MINI | /FULL]\r\n" \
 		L"   or: ConEmuC /EXPORT[=CON|ALL] [Var1 [Var2 [...]]]\r\n" \
+		L"   or: ConEmuC /ECHO | /TYPE [...]\r\n" \
 _DBGHLP(L"   or: ConEmuC /REGCONFONT=<FontName> -> RegisterConsoleFontHKLM\r\n") \
 		L"   or: ConEmuC /?\r\n" \
 		L"Switches:\r\n" \
@@ -65,6 +66,7 @@ _DBGHLP(L"   or: ConEmuC /REGCONFONT=<FontName> -> RegisterConsoleFontHKLM\r\n")
 		L"     /IsConEmu       - returns 1 as errorlevel if running in ConEmu tab, 2 if not\r\n" \
 		L"     /IsTerm         - returns 1 as errorlevel if running in telnet, 2 if not\r\n" \
 		L"     /Log[N]         - create (debug) log file, N is number from 0 to 3\r\n" \
+		L"     /Echo | /Type   - http://code.google.com/p/conemu-maximus5/wiki/ConEmuC#Echo_and_Type\r\n" \
 _DBGHLP(L"     -- following switches are visible in debug builds only--\r\n") \
 _DBGHLP(L"     /CHECKUNICODE -> print some colorized text with unicode characters\r\n") \
 _DBGHLP(L"     /CINMODE==<hex:gnConsoleModeFlags>\r\n") \
