@@ -172,6 +172,13 @@ int RunDebugger()
 
 	gpszRunCmd[0] = 0;
 	gpSrv->DbgInfo.bDebuggerActive = TRUE;
+
+	// And wait for debugger thread completion
+	_ASSERTE(gnRunMode == RM_UNDEFINED);
+	DWORD nDebugThread = WaitForSingleObject(gpSrv->DbgInfo.hDebugThread, INFINITE);
+	_ASSERTE(nDebugThread == WAIT_OBJECT_0); UNREFERENCED_PARAMETER(nDebugThread);
+
+	gbInShutdown = TRUE;
 	return 0;
 }
 

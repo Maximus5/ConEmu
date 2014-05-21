@@ -1071,14 +1071,6 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 	// По идее, при вызове дебаггера ParseCommandLine сразу должна послать на выход.
 	_ASSERTE(!(gpSrv->DbgInfo.bDebuggerActive || gpSrv->DbgInfo.bDebugProcess || gpSrv->DbgInfo.bDebugProcessTree))
 
-	if ((gnRunMode == RM_UNDEFINED) && gpSrv->DbgInfo.bDebugProcess)
-	{
-		DWORD nDebugThread = WaitForSingleObject(gpSrv->DbgInfo.hDebugThread, INFINITE);
-		_ASSERTE(nDebugThread == WAIT_OBJECT_0); UNREFERENCED_PARAMETER(nDebugThread);
-
-		goto wrap;
-	}
-
 #ifdef _DEBUG
 	if (gnRunMode == RM_SERVER)
 	{
@@ -1693,34 +1685,20 @@ wait:
 		// По крайней мере один процесс в консоли запустился. Ждем пока в консоли не останется никого кроме нас
 		nWait = WAIT_TIMEOUT; nWaitExitEvent = -2;
 
-		if (!gpSrv->DbgInfo.bDebuggerActive)
+		_ASSERTE(!gpSrv->DbgInfo.bDebuggerActive);
+
+		#ifdef _DEBUG
+		while (nWait == WAIT_TIMEOUT)
 		{
-			#ifdef _DEBUG
-			while (nWait == WAIT_TIMEOUT)
-			{
-				nWait = nWaitExitEvent = WaitForSingleObject(ghExitQueryEvent, 100);
-				// Что-то при загрузке компа иногда все-таки не дожидается, когда процесс в консоли появится
-				_ASSERTE(!(gbCtrlBreakStopWaitingShown && (nWait != WAIT_TIMEOUT)));
-			}
-			#else
-			nWait = nWaitExitEvent = WaitForSingleObject(ghExitQueryEvent, INFINITE);
+			nWait = nWaitExitEvent = WaitForSingleObject(ghExitQueryEvent, 100);
+			// Что-то при загрузке компа иногда все-таки не дожидается, когда процесс в консоли появится
 			_ASSERTE(!(gbCtrlBreakStopWaitingShown && (nWait != WAIT_TIMEOUT)));
-			#endif
-			ShutdownSrvStep(L"ghExitQueryEvent was set");
 		}
-		else
-		{
-			// Перенес обработку отладочных событий в отдельную нить, чтобы случайно не заблокироваться с главной
-			nWaitDebugExit = WaitForSingleObject(gpSrv->DbgInfo.hDebugThread, INFINITE);
-			nWait = WAIT_OBJECT_0;
-			//while (nWait == WAIT_TIMEOUT)
-			//{
-			//	ProcessDebugEvent();
-			//	nWait = WaitForSingleObject(ghExitQueryEvent, 0);
-			//}
-			//gbAlwaysConfirmExit = TRUE;
-			ShutdownSrvStep(L"DebuggerThread terminated");
-		}
+		#else
+		nWait = nWaitExitEvent = WaitForSingleObject(ghExitQueryEvent, INFINITE);
+		_ASSERTE(!(gbCtrlBreakStopWaitingShown && (nWait != WAIT_TIMEOUT)));
+		#endif
+		ShutdownSrvStep(L"ghExitQueryEvent was set");
 
 		#ifdef _DEBUG
 		xf_validate(NULL);
