@@ -491,12 +491,12 @@ wchar_t* lstrdupW(const char* asText, UINT cp /*= CP_ACP*/)
 	return psz;
 }
 
-wchar_t* lstrmerge(const wchar_t* asStr1, const wchar_t* asStr2, const wchar_t* asStr3 /*= NULL*/, const wchar_t* asStr4 /*= NULL*/)
+wchar_t* lstrmerge(const wchar_t* asStr1, const wchar_t* asStr2, const wchar_t* asStr3 /*= NULL*/, const wchar_t* asStr4 /*= NULL*/, const wchar_t* asStr5 /*= NULL*/)
 {
 	size_t cchMax = 1;
-	const size_t Count = 4;
+	const size_t Count = 5;
 	size_t cch[Count] = {};
-	const wchar_t* pszStr[Count] = {asStr1, asStr2, asStr3, asStr4};
+	const wchar_t* pszStr[Count] = {asStr1, asStr2, asStr3, asStr4, asStr5};
 
 	for (size_t i = 0; i < Count; i++)
 	{
@@ -522,11 +522,11 @@ wchar_t* lstrmerge(const wchar_t* asStr1, const wchar_t* asStr2, const wchar_t* 
 	return pszRet;
 }
 
-bool lstrmerge(wchar_t** apsStr1, const wchar_t* asStr2, const wchar_t* asStr3 /*= NULL*/, const wchar_t* asStr4 /*= NULL*/)
+bool lstrmerge(wchar_t** apsStr1, const wchar_t* asStr2, const wchar_t* asStr3 /*= NULL*/, const wchar_t* asStr4 /*= NULL*/, const wchar_t* asStr5 /*= NULL*/)
 {
 	_ASSERTE(apsStr1!=NULL);
 
-	wchar_t* pszNew = lstrmerge(*apsStr1, asStr2, asStr3, asStr4);
+	wchar_t* pszNew = lstrmerge(*apsStr1, asStr2, asStr3, asStr4, asStr5);
 	if (!pszNew)
 		return false;
 
