@@ -117,7 +117,7 @@ static INT_PTR CALLBACK CheckOptionsFastProc(HWND hDlg, UINT messg, WPARAM wPara
 
 			CheckDlgButton(hDlg, cbUseKeyboardHooksFast, gpSet->isKeyboardHooks(true));
 
-			
+
 
 			// Debug purposes only. ConEmu.exe switch "/nokeyhooks"
 			#ifdef _DEBUG
@@ -158,7 +158,7 @@ static INT_PTR CALLBACK CheckOptionsFastProc(HWND hDlg, UINT messg, WPARAM wPara
 					HWND h = GetDlgItem(hDlg, IDOK);
 					GetWindowRect(h, &rcBtn); MapWindowPoints(NULL, hDlg, (LPPOINT)&rcBtn, 2);
 					SetWindowPos(h, NULL, rcBtn.left, rcBtn.top - nShift, 0,0, SWP_NOSIZE|SWP_NOZORDER);
-					
+
 					h = GetDlgItem(hDlg, IDCANCEL);
 					GetWindowRect(h, &rcBtn); MapWindowPoints(NULL, hDlg, (LPPOINT)&rcBtn, 2);
 					SetWindowPos(h, NULL, rcBtn.left, rcBtn.top - nShift, 0,0, SWP_NOSIZE|SWP_NOZORDER);
@@ -256,7 +256,7 @@ static INT_PTR CALLBACK CheckOptionsFastProc(HWND hDlg, UINT messg, WPARAM wPara
 
 					/* Save settings */
 					SettingsBase* reg = NULL;
-					
+
 					if (!bVanilla)
 					{
 						if ((reg = gpSet->CreateSettings(NULL)) == NULL)
@@ -285,7 +285,7 @@ static INT_PTR CALLBACK CheckOptionsFastProc(HWND hDlg, UINT messg, WPARAM wPara
 								// Fast configuration done
 								reg->CloseKey();
 							}
-				
+
 							delete reg;
 						}
 					}
@@ -370,7 +370,7 @@ void CheckOptionsFast(LPCWSTR asTitle, SettingsLoadedFlags slfFlags)
 		//	;;    в 'ConIme.ex1' (видимо это возможно только в безопасном режиме).
 		//	;;    Запретить автозапуск: Внесите в реестр и перезагрузитесь
 		long  lbStopWarning = FALSE;
-		
+
 		SettingsBase* reg = gpSet->CreateSettings(NULL);
 		if (reg)
 		{
@@ -548,7 +548,7 @@ void CreateDefaultTasks(bool bForceAdd /*= false*/)
 		// Far Manager
 		// -- {L"Far Manager",         L"%ConEmuDir%\\far.exe"}, 
 		{L"Far Manager",         L"far.exe"},
-		
+
 		// TakeCommand
 		{L"TCC",                 L"tcc.exe",                           NULL},
 		{L"TCC (Admin)",         L"tcc.exe",                           L" -new_console:a"},
@@ -582,9 +582,9 @@ void CreateDefaultTasks(bool bForceAdd /*= false*/)
 		{L"bash",           L"sh.exe",                                 L" --login -i"}, // Last chance for bash
 		// Putty?
 		{L"Putty",          L"Putty.exe",                              NULL},
-		
+
 		// C++ build environments (Visual Studio) - !!!TODO!!!
-		
+
 		// FIN
 		{NULL}
 	};
@@ -685,7 +685,7 @@ void CreateDefaultTasks(bool bForceAdd /*= false*/)
 				}
 				RegCloseKey(hkVer);
 			}
-			
+
 			cchMax = countof(szVer) - 1;
 		}
 		RegCloseKey(hk);
