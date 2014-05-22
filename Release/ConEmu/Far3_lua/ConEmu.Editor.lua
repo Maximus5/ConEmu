@@ -14,7 +14,8 @@ Macro {
   k = akey(1,1);
 
   if   not APanel.Empty  and  (APanel.Current~="..") then 
-    s=APanel.Path..mf.iif(mf.substr(s,mf.len(s)-1)=="\\","","\\")..APanel.Current;
+    s=APanel.Path;
+    s=s..mf.iif(mf.substr(s,mf.len(s)-1)=="\\","","\\")..APanel.Current;
     -- msgbox("Current item", %s)
     c = mf.substr(k,mf.len(k)-1,1);
     cmd = mf.iif(c=="4","FindEditor:","FindViewer:")..s;

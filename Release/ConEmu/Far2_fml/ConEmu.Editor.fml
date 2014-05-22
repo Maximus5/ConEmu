@@ -14,7 +14,8 @@ macro Descr="ConEmu: Auto switch to Editor Tab"
 {{
   %k = Key(#AKey);
   $if (!APanel.Empty && (APanel.Current!=".."))
-    %s=APanel.Path+iif(substr(%s,len(%s)-1)=="\\","","\\")+APanel.Current;
+    %s=APanel.Path;
+    %s=%s+iif(substr(%s,len(%s)-1)=="\\","","\\")+APanel.Current;
     //MsgBox("Current item", %s)
     %c = substr(%k,len(%k)-1,1);
     %cmd = iif(%c=="4","FindEditor:","FindViewer:")+%s;
