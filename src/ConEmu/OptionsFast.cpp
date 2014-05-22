@@ -636,6 +636,11 @@ void CreateDefaultTasks(bool bForceAdd /*= false*/)
 		gpSet->CmdTaskSet(iCreatIdx++, L"cmd 64/32", L"", L">\"%windir%\\system32\\cmd.exe\" /k ver & echo This is Native cmd.exe\r\n\r\n\"%windir%\\syswow64\\cmd.exe\" /k ver & echo This is 32 bit cmd.exe -new_console:s50V");
 	}
 
+	// IRSSI
+	// L"\"set PATH=C:\\irssi\\bin;%PATH%\" & set PERL5LIB=lib/perl5/5.8 & set TERMINFO_DIRS=terminfo & "
+	// L"C:\\irssi\\bin\\irssi.exe"
+	// L" -cur_console:d:\"C:\\irssi\""
+
 	// Type ANSI color codes
 	// cmd /k type "%ConEmuBaseDir%\Addons\AnsiColors16t.ans" -cur_console:n
 	if (FindOnDrives(NULL, L"%ConEmuBaseDir%\\Addons\\AnsiColors16t.ans", szFound, bNeedQuot))
