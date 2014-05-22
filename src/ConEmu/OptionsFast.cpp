@@ -542,7 +542,7 @@ void CreateDefaultTasks(bool bForceAdd /*= false*/)
 	*/
 
 	struct {
-		LPCWSTR asName, asExePath, asArgs, asGuiArg;
+		LPCWSTR asName, asExePath, asArgs, asPrefix, asGuiArg;
 		LPWSTR  pszFound;
 	} FindTasks[] = {
 		// Far Manager
@@ -569,7 +569,7 @@ void CreateDefaultTasks(bool bForceAdd /*= false*/)
 		// HKLM\SOFTWARE\Wow6432Node\Cygwin\setup\rootdir
 		// HKLM\SOFTWARE\Cygwin\setup\rootdir
 		// HKCU\Software\Cygwin\setup\rootdir
-		{L"CygWin bash",    L"\\CygWin\\bin\\sh.exe",                  L" --login -i"},
+		{L"CygWin bash",    L"\\CygWin\\bin\\sh.exe",                  L" --login -i", L"set CHERE_INVOKING=1 & "},
 
 //		{L"CygWin mintty",  L"\\CygWin\\bin\\mintty.exe",              L" -"},
 		{L"MinGW bash",     L"\\MinGW\\msys\\1.0\\bin\\sh.exe",        L" --login -i"},
@@ -579,7 +579,9 @@ void CreateDefaultTasks(bool bForceAdd /*= false*/)
 		#ifdef _WIN64
 		{L"Git bash",       L"%ProgramFiles(x86)%\\Git\\bin\\sh.exe",  L" --login -i"},
 		#endif
-		{L"bash",           L"sh.exe",                                 L" --login -i"}, // Last chance for bash
+		// Last chance for bash
+		{L"bash",           L"sh.exe",                                 L" --login -i", L"set CHERE_INVOKING=1 & "},
+
 		// Putty?
 		{L"Putty",          L"Putty.exe",                              NULL},
 
@@ -616,9 +618,9 @@ void CreateDefaultTasks(bool bForceAdd /*= false*/)
 
 		// Spaces in path? (use expanded path)
 		if (bNeedQuot)
-			pszFull = lstrmerge(L"\"", pszFound, L"\"", FindTasks[i].asArgs);
+			pszFull = lstrmerge(FindTasks[i].asPrefix, L"\"", pszFound, L"\"", FindTasks[i].asArgs);
 		else
-			pszFull = lstrmerge(pszFound, FindTasks[i].asArgs);
+			pszFull = lstrmerge(FindTasks[i].asPrefix, pszFound, FindTasks[i].asArgs);
 
 		// Create task
 		if (pszFull)
