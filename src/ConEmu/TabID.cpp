@@ -1294,16 +1294,20 @@ bool CTabStack::RefreshFarStatus(DWORD nFarPID, CTab& rActiveTab, int& rnActiveC
 		}
 		else if (iFirstPanels >= 0)
 		{
+			_ASSERTE(iCount==0);
 			iActive = iFirstPanels;
 			// There was no one "Active" tab. Mark panels tab as active!
 			_ASSERTE(nFarPID == 0); // returning from "far /e ..."?
 			_ASSERTE(mpp_Stack[iFirstPanels] != NULL); // Protected with CS, no need to check
 			mpp_Stack[iFirstPanels]->Info.Status = tisValid;
+			iCount = 1;
 		}
 		// Check return value
 		if (!bChanged)
 			bChanged = (iActive >= 0);
 	}
+
+	_ASSERTE(iCount>0 && "At least one tab must be available");
 
 	rbHasModalTab = (iModal >= 0);
 	rnActiveCount = iCount;
