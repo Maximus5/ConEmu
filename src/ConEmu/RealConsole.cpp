@@ -9865,23 +9865,23 @@ bool CRealConsole::IsSwitchFarWindowAllowed()
 	return true;
 }
 
-BOOL CRealConsole::ActivateFarWindow(int anWndIndex)
+bool CRealConsole::ActivateFarWindow(int anWndIndex)
 {
 	if (!IsSwitchFarWindowAllowed())
-		return FALSE;
+		return false;
 
 	DWORD dwPID = CanActivateFarWindow(anWndIndex);
 
 	if (!dwPID)
 	{
-		return FALSE;
+		return false;
 	}
 	else if (dwPID == (DWORD)-1)
 	{
-		return TRUE; // Нужное окно уже выделено, лучше не дергаться...
+		return true; // Нужное окно уже выделено, лучше не дергаться...
 	}
 
-	BOOL lbRc = FALSE;
+	bool lbRc = false;
 	//DWORD nWait = -1;
 	CConEmuPipe pipe(dwPID, 100);
 
@@ -9924,7 +9924,7 @@ BOOL CRealConsole::ActivateFarWindow(int anWndIndex)
 					if ((anWndIndex >= 0) && ((DWORD)anWndIndex < TabHdr.nTabCount) && (TabHdr.nTabCount > 0))
 					{
 						if (tabs[anWndIndex].Current)
-							lbRc = TRUE;
+							lbRc = true;
 					}
 				}
 

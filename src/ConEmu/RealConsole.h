@@ -524,7 +524,7 @@ class CRealConsole
 		CEFarWindowType GetActiveTabType();
 		bool GetTab(int tabIdx, /*OUT*/ CTab& rTab);
 		int GetModifiedEditors();
-		BOOL ActivateFarWindow(int anWndIndex);
+		bool ActivateFarWindow(int anWndIndex);
 		DWORD CanActivateFarWindow(int anWndIndex);
 		bool IsSwitchFarWindowAllowed();
 		void OnConsoleKeyboardLayout(DWORD dwNewLayout);
