@@ -415,9 +415,6 @@ void CConEmuMenu::OnNewConPopupMenu(POINT* ptWhere /*= NULL*/, DWORD nFlags /*= 
 	else if (gpConEmu->mp_TabBar && gpConEmu->mp_TabBar->IsTabsShown())
 	{
 		gpConEmu->mp_TabBar->Toolbar_GetBtnRect(TID_CREATE_CON, &rcBtnRect);
-		//SendMessage(mh_Toolbar, TB_GETRECT, TID_CREATE_CON, (LPARAM)&rcBtnRect);
-		//MapWindowPoints(mh_Toolbar, NULL, (LPPOINT)&rcBtnRect, 2);
-		MapWindowPoints(ghWnd, NULL, (LPPOINT)&rcBtnRect, 2);
 		lpExcl = &rcBtnRect;
 	}
 	else

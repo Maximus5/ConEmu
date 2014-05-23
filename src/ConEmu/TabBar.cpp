@@ -1789,7 +1789,6 @@ void CTabBarClass::OnChooseTabPopup()
 {
 	RECT rcBtnRect = {0};
 	mp_Rebar->GetToolBtnRect(TID_ACTIVE_NUMBER, &rcBtnRect);
-	MapWindowPoints(ghWnd, NULL, (LPPOINT)&rcBtnRect, 2);
 	POINT pt = {rcBtnRect.right,rcBtnRect.bottom};
 
 	gpConEmu->ChooseTabFromMenu(FALSE, pt, TPM_RIGHTALIGN|TPM_TOPALIGN);

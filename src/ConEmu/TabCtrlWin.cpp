@@ -782,6 +782,7 @@ int CTabPanelWin::GetTabFromPoint(POINT ptCur, bool bScreen /*= true*/, bool bOv
 	return iTabIndex;
 }
 
+// Screen(!) coordinates!
 bool CTabPanelWin::GetToolBtnRect(int nCmd, RECT* rcBtnRect)
 {
 	if (!mp_Owner->IsTabsShown())
@@ -795,7 +796,7 @@ bool CTabPanelWin::GetToolBtnRect(int nCmd, RECT* rcBtnRect)
 	}
 
 	SendMessage(mh_Toolbar, TB_GETRECT, nCmd/*например TID_CREATE_CON*/, (LPARAM)rcBtnRect);
-	MapWindowPoints(mh_Toolbar, ghWnd, (LPPOINT)rcBtnRect, 2);
+	MapWindowPoints(mh_Toolbar, NULL, (LPPOINT)rcBtnRect, 2);
 
 	return true;
 }
