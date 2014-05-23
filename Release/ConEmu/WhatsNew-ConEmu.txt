@@ -12,6 +12,18 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
 
+2014.05.22
+[%] Some fixes related to new tabs internals.
+[%] Issue 1583: Fix ConEmu.Editor.lua bug.
+[%] Wrong startup directory used when starting at the drive root.
+[+] Allow rename any Far tab, not only panels.
+[+] Two new switches (commands actually) in ConEmuC: "-e" and "-t".
+    ConEmuC -e [-n] [-r] [-b] "string" for printing some string
+    ConEmuC -t [-r] [-b] "file" for printing some text file
+    Read more in wiki: http://code.google.com/p/conemu-maximus5/wiki/ConEmuC#Echo_and_Type
+[*] Force "CHERE_INVOKING" in default tasks for cygwin.
+
+
 2014.05.19
 [!] Refactoring of Server startup.
 [!] Refactoring of Tabs-related internal code.
