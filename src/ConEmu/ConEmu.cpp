@@ -7547,6 +7547,11 @@ CVirtualConsole* CConEmuMain::CreateConGroup(LPCWSTR apszScript, bool abForceAsA
 				if (lbRunAdmin) // don't reset one that may come from apDefArgs
 					args.RunAsAdministrator = crb_On;
 
+				// If any previous tab was marked as "active"/"foreground" for starting group,
+				// we need to run others tabs in "background"
+				if (pSetActive && CVConGroup::isValid(pSetActive))
+					args.BackgroundTab = crb_On;
+
 				pVCon = CreateCon(&args, false, true);
 
 				if (!pVCon)
