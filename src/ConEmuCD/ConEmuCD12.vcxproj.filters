@@ -111,6 +111,9 @@
     <ClInclude Include="ConsoleHelp.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="ConProcess.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="ConEmuCD.rc">
@@ -236,6 +239,9 @@
       <Filter>0 - Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\common\ConsoleMixAttr.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ConProcess.cpp">
       <Filter>0 - Source Files</Filter>
     </ClCompile>
   </ItemGroup>
