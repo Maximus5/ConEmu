@@ -9867,6 +9867,12 @@ bool CRealConsole::IsSwitchFarWindowAllowed()
 
 bool CRealConsole::ActivateFarWindow(int anWndIndex)
 {
+	if (!this)
+		return false;
+
+	if ((anWndIndex == tabs.nActiveFarWindow) || (!anWndIndex && (tabs.mn_tabsCount <= 1)))
+		return true;
+
 	if (!IsSwitchFarWindowAllowed())
 		return false;
 
