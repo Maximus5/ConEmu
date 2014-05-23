@@ -5309,6 +5309,12 @@ LPCWSTR CRealConsole::GetTabTitle(CTab& tab)
 		}
 	}
 
+	if (!pszName)
+	{
+		_ASSERTE(pszName!=NULL);
+		pszName = L"???";
+	}
+
 	return pszName;
 }
 

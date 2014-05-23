@@ -1570,7 +1570,7 @@ size_t CConEmuCtrl::GetOpenedTabs(CESERVER_REQ_GETALLTABS::TabInfo*& pTabs)
 			}
 
 			int nCurLen = lstrlen(pTabs[cchCount].Title);
-			lstrcpyn(pTabs[cchCount].Title+nCurLen, tab->Name.Ptr(), countof(pTabs[cchCount].Title)-nCurLen);
+			lstrcpyn(pTabs[cchCount].Title+nCurLen, pRCon->GetTabTitle(tab), countof(pTabs[cchCount].Title)-nCurLen);
 
 			cchCount++;
 		}

@@ -1423,6 +1423,7 @@ int CVConGroup::isFarExist(CEFarWindowType anWindowType/*=fwt_Any*/, LPWSTR asNa
 						// Если ищем конкретный редактор/вьювер
 						if (asName && *asName)
 						{
+							// Note. Для панелей - тут пустая строка
 							LPCWSTR tabName = tab->Name.Ptr();
 							if (lstrcmpi(tabName, asName) == 0)
 							{

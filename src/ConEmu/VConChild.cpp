@@ -682,7 +682,7 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 					{
 						CTab tab(__FILE__,__LINE__);
 						if (pVCon->RCon()->GetTab(0, tab))
-							lstrcpyn(szTmp, tab->Name.Ptr(), countof(szTmp)); // чтобы не вылезло из szDbg
+							lstrcpyn(szTmp, pVCon->RCon()->GetTabTitle(tab), countof(szTmp)); // чтобы не вылезло из szDbg
 						else
 							wcscpy_c(szTmp, L"<GetTab(0) failed>");
 						wsprintf(szDbg+_tcslen(szDbg), L": #%i: %s", i, szTmp);
