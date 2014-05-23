@@ -358,3 +358,23 @@ LRESULT CTabPanelBase::OnMouseToolbar(UINT uMsg, int nCmdId, int x, int y)
 	//TODO:
 	return 0;
 }
+
+bool CTabPanelBase::OnSetCursorRebar()
+{
+	if (gpSet->isTabs && !gpSet->isQuakeStyle
+		&& (gpConEmu->GetWindowMode() == wmNormal)
+		&& gpSet->isCaptionHidden())
+	{
+		POINT ptCur = {};
+		GetCursorPos(&ptCur);
+		int nHitTest = GetTabFromPoint(ptCur);
+
+		if (nHitTest == -1)
+		{
+			SetCursor(/*gpSet->isQuakeStyle ? gpConEmu->mh_CursorArrow :*/ gpConEmu->mh_CursorMove);
+			return true;
+		}
+	}
+
+	return false;
+}

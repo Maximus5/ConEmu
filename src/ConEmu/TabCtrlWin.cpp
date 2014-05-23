@@ -117,20 +117,11 @@ LRESULT CTabPanelWin::ReBarProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 			return 0;
 		}
 		case WM_SETCURSOR:
-
-			if (gpSet->isTabs && !gpSet->isQuakeStyle
-				&& (gpConEmu->GetWindowMode() == wmNormal)
-				&& gpSet->isCaptionHidden())
-			{
-				if (TabHitTest() == HTCAPTION)
-				{
-					SetCursor(/*gpSet->isQuakeStyle ? gpConEmu->mh_CursorArrow :*/ gpConEmu->mh_CursorMove);
-					return TRUE;
-				}
-			}
-
+		{
+			if (OnSetCursorRebar())
+				return TRUE;
 			break;
-
+		}
 		case WM_MOUSEMOVE:
 		case WM_LBUTTONDOWN:
 		case WM_LBUTTONUP:

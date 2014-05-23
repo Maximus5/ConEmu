@@ -55,6 +55,8 @@ public:
 	LRESULT OnMouseRebar(UINT uMsg, int x, int y);
 	LRESULT OnMouseTabbar(UINT uMsg, int nTabIdx, int x, int y);
 	LRESULT OnMouseToolbar(UINT uMsg, int nCmdId, int x, int y);
+public:
+	bool OnSetCursorRebar();
 
 public:
 	virtual void AddTabInt(LPCWSTR text, int i, bool bAdmin, int iTabIcon) = 0;
