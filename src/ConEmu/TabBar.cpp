@@ -249,12 +249,16 @@ int CTabBarClass::GetTabIcon(bool bAdmin)
 
 void CTabBarClass::SelectTab(int i)
 {
-	mn_CurSelTab = mp_Rebar->SelectTabInt(i); // Меняем выделение, только если оно реально меняется
+	if (mp_Rebar->IsTabbarCreated())
+		mn_CurSelTab = mp_Rebar->SelectTabInt(i); // Меняем выделение, только если оно реально меняется
+	else if (i >= 0 && i < GetItemCount())
+		mn_CurSelTab = i;
 }
 
 int CTabBarClass::GetCurSel()
 {
-	mn_CurSelTab = mp_Rebar->GetCurSelInt();
+	if (mp_Rebar->IsTabbarCreated())
+		mn_CurSelTab = mp_Rebar->GetCurSelInt();
 	return mn_CurSelTab;
 }
 
