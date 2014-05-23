@@ -355,7 +355,51 @@ LRESULT CTabPanelBase::OnMouseTabbar(UINT uMsg, int nTabIdx, int x, int y)
 
 LRESULT CTabPanelBase::OnMouseToolbar(UINT uMsg, int nCmdId, int x, int y)
 {
-	//TODO:
+	switch (uMsg)
+	{
+		case WM_RBUTTONUP:
+		{
+			switch (nCmdId)
+			{
+				case TID_ACTIVE_NUMBER:
+				{
+					CVConGuard VCon;
+					CVirtualConsole* pVCon = (gpConEmu->GetActiveVCon(&VCon) >= 0) ? VCon.VCon() : NULL;
+					if (pVCon)
+					{
+						RECT rcBtnRect = {0};
+						GetToolBtnRect(nCmdId, &rcBtnRect);
+						POINT pt = {rcBtnRect.right,rcBtnRect.bottom};
+
+						gpConEmu->mp_Menu->ShowPopupMenu(pVCon, pt, TPM_RIGHTALIGN|TPM_TOPALIGN);
+					}
+					break;
+				}
+
+				case TID_MINIMIZE:
+				case TID_APPCLOSE:
+				{
+					Icon.HideWindowToTray();
+					break;
+				}
+
+				case TID_MAXIMIZE:
+				{
+					gpConEmu->DoFullScreen();
+					break;
+				}
+
+				case TID_CREATE_CON:
+				{
+					gpConEmu->RecreateAction(cra_CreateTab/*FALSE*/, TRUE);
+					break;
+				}
+			}
+
+			break;
+		} // WM_RBUTTONUP
+	}
+
 	return 0;
 }
 

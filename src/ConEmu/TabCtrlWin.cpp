@@ -261,61 +261,20 @@ LRESULT CTabPanelWin::ToolProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 		} break;
 		case WM_RBUTTONUP:
 		{
+			TBBUTTON tb = {};
 			POINT pt = {(int)(short)LOWORD(lParam),(int)(short)HIWORD(lParam)};
 			int nIdx = SendMessage(hwnd, TB_HITTEST, 0, (LPARAM)&pt);
-
 			// If the return value is zero or a positive value, it is
 			// the zero-based index of the nonseparator item in which the point lies.
-			//if (nIdx >= 0 && nIdx < MAX_CONSOLE_COUNT)
-			_ASSERTE(TID_ACTIVE_NUMBER==1);
-			if (nIdx == (TID_ACTIVE_NUMBER-1))
+			if ((nIdx >= 0) && SendMessage(hwnd, TB_GETBUTTON, nIdx, (LPARAM)&tb))
 			{
-				CVConGuard VCon;
-				CVirtualConsole* pVCon = (gpConEmu->GetActiveVCon(&VCon) >= 0) ? VCon.VCon() : NULL;
-
-				if (!gpConEmu->isActive(pVCon, false))
-				{
-					if (!gpConEmu->ConActivate(nIdx))
-					{
-						if (!gpConEmu->isActive(pVCon, false))
-						{
-							return 0;
-						}
-					}
-				}
-
-				//ClientToScreen(hwnd, &pt);
-				RECT rcBtnRect = {0};
-				SendMessage(hwnd, TB_GETRECT, TID_ACTIVE_NUMBER, (LPARAM)&rcBtnRect);
-				MapWindowPoints(hwnd, NULL, (LPPOINT)&rcBtnRect, 2);
-				POINT pt = {rcBtnRect.right,rcBtnRect.bottom};
-
-				gpConEmu->mp_Menu->ShowPopupMenu(pVCon, pt, TPM_RIGHTALIGN|TPM_TOPALIGN);
+				OnMouseToolbar(WM_RBUTTONUP, tb.idCommand, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
 			}
-			else
-			{
-				LRESULT nTestIdxMin = SendMessage(hwnd, TB_COMMANDTOINDEX, TID_MINIMIZE, 0);
-				LRESULT nTestIdxClose = SendMessage(hwnd, TB_COMMANDTOINDEX, TID_APPCLOSE, 0);
-				if ((nIdx == nTestIdxMin) || (nIdx == nTestIdxClose))
-				{
-					Icon.HideWindowToTray();
-					return 0;
-				}
-
-				LRESULT nTestIdxMax = SendMessage(hwnd, TB_COMMANDTOINDEX, TID_MAXIMIZE, 0);
-				if (nIdx == nTestIdxMax)
-				{
-					gpConEmu->DoFullScreen();
-					return 0;
-				}
-
-				LRESULT nTestIdx = SendMessage(hwnd, TB_COMMANDTOINDEX, TID_CREATE_CON, 0);
-				if (nIdx == nTestIdx)
-				{
-					gpConEmu->RecreateAction(cra_CreateTab/*FALSE*/, TRUE);
-				}
-			}
-
+			break;
+		}
+		case WM_SETFOCUS:
+		{
+			gpConEmu->setFocus();
 			return 0;
 		}
 	}
