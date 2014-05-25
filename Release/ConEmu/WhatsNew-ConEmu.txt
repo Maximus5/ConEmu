@@ -12,6 +12,14 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
 
+2014.05.23
+[%] Do not push ‘background’ tabs on top of recent stack during task creation.
+[%] Do not block tab activation (VCon actually) if VCon has the only tab or that tab already active.
+[%] Issue 1582: Ctrl+Tab was broken if Tab bar is not visible (NewTabs regression).
+[%] NewTabs: Fix empty tab title in some cases (VConMenu, etc.)
+[%] Fix wrong behavior of right clicks on tool bar buttons
+
+
 2014.05.22
 [%] Some fixes related to new tabs internals.
 [%] Issue 1583: Fix ConEmu.Editor.lua bug.
