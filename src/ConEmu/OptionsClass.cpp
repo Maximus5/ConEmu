@@ -78,7 +78,8 @@ const wchar_t szRasterAutoError[] = L"Font auto size is not allowed for a fixed 
 // Хотя, наверное все же лучше не включать "AI", а дать пользователю задать то, что хочется ему.
 #define CurFontSizeY gpSet->FontSizeY/*LF.lfHeight*/ 		
 #undef UPDATE_FONTSIZE_RECREATE
-
+#define FontDefWidthMin 0
+#define FontDefWidthMax 99
 
 #define TEST_FONT_WIDTH_STRING_EN L"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 #define TEST_FONT_WIDTH_STRING_RU L"АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ"
@@ -11465,8 +11466,8 @@ void CSettings::RecreateFont(WORD wFromID)
 			LF.lfQuality = CLEARTYPE_NATURAL_QUALITY;
 
 		GetDlgItemText(mh_Tabs[thi_Main], tFontFace2, LogFont2.lfFaceName, countof(LogFont2.lfFaceName));
-		gpSet->FontSizeX2 = GetNumber(mh_Tabs[thi_Main], tFontSizeX2);
-		gpSet->FontSizeX3 = GetNumber(mh_Tabs[thi_Main], tFontSizeX3);
+		gpSet->FontSizeX2 = GetNumber(mh_Tabs[thi_Main], tFontSizeX2, FontDefWidthMin, FontDefWidthMax);
+		gpSet->FontSizeX3 = GetNumber(mh_Tabs[thi_Main], tFontSizeX3, FontDefWidthMin, FontDefWidthMax);
 
 		if (isAdvLogging)
 		{
@@ -11475,7 +11476,11 @@ void CSettings::RecreateFont(WORD wFromID)
 		}
 	}
 
+	_ASSERTE(LF.lfWidth >= 0 && LF.lfHeight > 0);
+
 	CEFONT hf = CreateFontIndirectMy(&LF);
+
+	_ASSERTE(LF.lfWidth >= 0 && LF.lfHeight > 0);
 
 	if (hf.IsSet())
 	{
@@ -12161,7 +12166,10 @@ CEFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
 			m_tm->tmMaxCharWidth = m_tm->tmHeight; // иначе зашкалит - текст очень сильно разъедется
 
 		// Лучше поставим AveCharWidth. MaxCharWidth для "условно моноширного" Consolas почти равен высоте.
-		inFont->lfWidth = gpSet->FontSizeX3 ? gpSet->FontSizeX3 : m_tm->tmAveCharWidth;
+		if (gpSet->FontSizeX3 && ((int)gpSet->FontSizeX3 > FontDefWidthMin) && ((int)gpSet->FontSizeX3 <= FontDefWidthMax))
+			inFont->lfWidth = (int)gpSet->FontSizeX3;
+		else
+			inFont->lfWidth = m_tm->tmAveCharWidth;
 		// Обновлять реальный размер шрифта в диалоге настройки не будем, были случаи, когда
 		// tmHeight был меньше, чем запрашивалось, однако, если пытаться создать шрифт с этим "обновленным"
 		// размером - в реале создавался совсем другой шрифт...
@@ -12408,7 +12416,7 @@ void CSettings::EnableDlgItems(HWND hParent, const WORD* pnCtrlIds, size_t nCoun
 	}
 }
 
-int CSettings::GetNumber(HWND hParent, WORD nCtrlId)
+int CSettings::GetNumber(HWND hParent, WORD nCtrlId, int nMin /*= 0*/, int nMax /*= 0*/)
 {
 #ifdef _DEBUG
 	HWND hChild = GetDlgItem(hParent, nCtrlId);
@@ -12423,6 +12431,9 @@ int CSettings::GetNumber(HWND hParent, WORD nCtrlId)
 			nValue = 255; // 0xFF для gpSet->AppStd.nFontNormalColor, gpSet->AppStd.nFontBoldColor, gpSet->AppStd.nFontItalicColor;
 		else
 			nValue = klatoi((szNumber[0]==L' ') ? (szNumber+1) : szNumber);
+		// Validation?
+		if (nMin < nMax)
+			nValue = min(nMax,max(nMin,nValue));
 	}
 
 	return nValue;
@@ -12913,6 +12924,7 @@ LONG CSettings::FontWidth()
 	}
 
 	_ASSERTE(gpSetCls->mn_FontWidth==LogFont.lfWidth);
+	_ASSERTE((int)gpSetCls->mn_FontWidth > 0);
 	return gpSetCls->mn_FontWidth;
 }
 

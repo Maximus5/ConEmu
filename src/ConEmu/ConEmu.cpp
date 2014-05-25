@@ -4066,9 +4066,9 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 		case CER_CONSOLE_CUR: // switch (tWhat)
 		case CER_CONSOLE_NTVDMOFF: // switch (tWhat)
 		{
-			rc = CVConGroup::CalcRect(tWhat, rc, tFromNow, pVCon, tTabAction);
-			_ASSERTE(rc.right>rc.left && rc.bottom>rc.top);
-			return rc;
+			RECT rcRet = CVConGroup::CalcRect(tWhat, rc, tFromNow, pVCon, tTabAction);
+			_ASSERTE(rcRet.right>rcRet.left && rcRet.bottom>rcRet.top);
+			return rcRet;
 		} break;
 
 		case CER_MONITOR:    // switch (tWhat)
