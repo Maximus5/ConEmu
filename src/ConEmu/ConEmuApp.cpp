@@ -76,6 +76,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRTIMER(s) //DEBUGSTR(s)
 #define DEBUGSTRSETHOTKEY(s) //DEBUGSTR(s)
 #define DEBUGSTRSHUTSTEP(s) //DEBUGSTR(s)
+#define DEBUGSTRSTARTUP(s) DEBUGSTR(WIN3264TEST(L"ConEmu.exe: ",L"ConEmu64.exe: ") s L"\n")
+#define DEBUGSTRSTARTUPLOG(s) {if (gpConEmu) gpConEmu->LogString(s);} DEBUGSTRSTARTUP(s)
 
 WARNING("Заменить все MBoxAssert, _ASSERT, _ASSERTE на WaitForSingleObject(CreateThread(out,Title,dwMsgFlags),INFINITE);");
 
@@ -3297,6 +3299,7 @@ void ResetEnvironmentVariables()
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
+	DEBUGSTRSTARTUP(L"WinMain entered");
 	int iMainRc = 0;
 
 	if (!IsDebuggerPresent())
@@ -3361,6 +3364,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	}
 
 	ResetEnvironmentVariables();
+
+	DEBUGSTRSTARTUP(L"Environment checked");
 
 	gpSetCls = new CSettings;
 	gpConEmu = new CConEmuMain;
@@ -3495,7 +3500,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	uint  params = 0;
 	bool  isScript = false;
 
-	// [OUT] params = (uint)-1, если в первый аргумент не начинается с '/'
+	DEBUGSTRSTARTUP(L"Parsing command line");
+
+	// [OUT] params = (uint)-1, если первый аргумент не начинается с '/'
 	// т.е. комстрока такая "ConEmu.exe c:\tools\far.exe", 
 	// а не такая "ConEmu.exe /cmd c:\tools\far.exe", 
 	if (!PrepareCommandLine(/*OUT*/cmdLine, /*OUT*/cmdNew, /*OUT*/isScript, /*OUT*/params))
@@ -4133,6 +4140,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	if (gpSetCls->isAdvLogging)
 	{
+		DEBUGSTRSTARTUP(L"Creating log file");
 		gpConEmu->CreateLog();
 	}
 
@@ -4142,6 +4150,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	if (psUnknown)
 	{
+		DEBUGSTRSTARTUP(L"Unknown switch, exiting!");
 		TCHAR* psMsg = (TCHAR*)calloc(_tcslen(psUnknown)+100,sizeof(TCHAR));
 		_tcscpy(psMsg, _T("Unknown switch specified:\r\n"));
 		_tcscat(psMsg, psUnknown);
@@ -4159,17 +4168,18 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	// set config name before settings (i.e. where to load from)
 	if (ConfigPrm)
 	{
-		//_tcscat(gpSet->Config, _T("\\"));
-		//_tcscat(gpSet->Config, ConfigVal);
+		DEBUGSTRSTARTUP(L"Initializing configuration name");
 		gpSetCls->SetConfigName(ConfigVal);
 	}
 
 	// Сразу инициализировать событие для SingleInstance. Кто первый схватит.
+	DEBUGSTRSTARTUP(L"Checking for first instance");
 	gpConEmu->isFirstInstance();
 
 	// special config file
 	if (LoadCfgFilePrm)
 	{
+		DEBUGSTRSTARTUP(L"Exact cfg file was specified");
 		// При ошибке - не выходим, просто покажем ее пользователю
 		gpConEmu->SetConfigFile(LoadCfgFile);
 		// Release mem
@@ -4180,17 +4190,21 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	bool bNeedCreateVanilla = false;
 	if (ResetSettings)
 	{
-		gpSet->IsConfigNew = true; // force this config as "new"
+		// force this config as "new"
+		DEBUGSTRSTARTUP(L"Clear config was requested");
+		gpSet->IsConfigNew = true;
 	}
 	else
 	{
 		// load settings from registry
+		DEBUGSTRSTARTUP(L"Loading config from settings storage");
 		gpSet->LoadSettings(&bNeedCreateVanilla);
 	}
 	SettingsLoadedFlags slfFlags = slf_OnStartupLoad | slf_AllowFastConfig
 		| (bNeedCreateVanilla ? slf_NeedCreateVanilla : slf_None)
 		| (ResetSettings ? slf_DefaultSettings : slf_None);
 	// выполнить дополнительные действия в классе настроек здесь
+	DEBUGSTRSTARTUP(L"Config loaded, post checks");
 	gpSetCls->SettingsLoaded(slfFlags, cmdNew);
 
 	// Для gpSet->isQuakeStyle - принудительно включается gpSetCls->SingleInstanceArg
@@ -4216,7 +4230,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		AnsiLogPath = NULL;
 	}
 
-	gpConEmu->LogString(L"SettingsLoaded");
+	DEBUGSTRSTARTUPLOG(L"SettingsLoaded");
 
 
 //------------------------------------------------------------------------
@@ -4229,6 +4243,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	if (gpConEmu->mb_UpdateJumpListOnStartup && ExitAfterActionPrm)
 	{
+		DEBUGSTRSTARTUP(L"Updating Win7 task list");
 		if (!UpdateWin7TaskList(true/*bForce*/, true/*bNoSuccMsg*/))
 		{
 			if (!iMainRc) iMainRc = 10;
@@ -4239,6 +4254,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	if (SaveCfgFilePrm)
 	{
 		// Сохранять конфиг только если получилось сменить путь (создать файл)
+		DEBUGSTRSTARTUP(L"Force write current config to settings storage");
 		if (!gpConEmu->SetConfigFile(SaveCfgFile, true/*abWriteReq*/))
 		{
 			if (!iMainRc) iMainRc = 11;
@@ -4273,11 +4289,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	// Actions done
 	if (ExitAfterActionPrm)
 	{
+		DEBUGSTRSTARTUP(L"Exit was requrested");
 		goto wrap;
 	}
 
 
 	// Update package was dropped on ConEmu icon?
+	// params == (uint)-1, если первый аргумент не начинается с '/'
 	if (cmdNew && *cmdNew && (params == (uint)-1))
 	{
 		CmdArg szPath;
@@ -4286,6 +4304,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		{
 			if (CConEmuUpdate::IsUpdatePackage(szPath))
 			{
+				DEBUGSTRSTARTUP(L"Update package was dropped on ConEmu, updating");
+
 				// Чтобы при запуске НОВОЙ версии опять не пошло обновление - грохнуть ком-строку
 				SafeFree(gpConEmu->mpsz_ConEmuArgs);
 
@@ -4307,6 +4327,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	// mh_InsideParentWND инициализируется вызовом InsideFindParent из Settings::LoadSettings()
 	if (gpConEmu->mp_Inside && (gpConEmu->mp_Inside->mh_InsideParentWND == INSIDE_PARENT_NOT_FOUND))
 	{
+		DEBUGSTRSTARTUP(L"Bad InsideParentHWND, exiting");
 		return 100;
 	}
 
@@ -4314,6 +4335,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	// Проверить наличие необходимых файлов (перенес сверху, чтобы учитывался флажок "Inject ConEmuHk")
 	if (!gpConEmu->CheckRequiredFiles())
 	{
+		DEBUGSTRSTARTUP(L"Required files were not found, exiting");
 		return 100;
 	}
 
@@ -4362,6 +4384,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	// Установка параметров из командной строки
 	if (cmdNew)
 	{
+		DEBUGSTRSTARTUP(L"Preparing command line");
+
 		MCHKHEAP
 		const wchar_t* pszDefCmd = NULL;
 		wchar_t* pszReady = NULL;
@@ -4379,7 +4403,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		{
 			int nLen = _tcslen(cmdNew)+8;
 
-			// params = (uint)-1, если в первый аргумент не начинается с '/'
+			// params == (uint)-1, если в первый аргумент не начинается с '/'
 			// т.е. комстрока такая "ConEmu.exe c:\tools\far.exe"
 			if ((params == (uint)-1)
 				&& (gpSet->nStartType == 0)
@@ -4430,6 +4454,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					gpSet->HistoryAdd(pszReady);
 				}
 			}
+			// params == (uint)-1, если первый аргумент не начинается с '/'
 			else if (params == (uint)-1)
 			{
 				*pszReady = DropLnkPrefix; // Признак того, что это передача набрасыванием на ярлык
@@ -4481,7 +4506,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	//	}
 	//}
 
-	gpConEmu->LogString(L"Registering fonts");
+	DEBUGSTRSTARTUPLOG(L"Registering local fonts");
 
 	gpSetCls->RegisterFonts();
 	gpSetCls->InitFont(
@@ -4495,7 +4520,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	// Нет смысла проверять и искать, если наш экземпляр - первый.
 	if (gpSetCls->IsSingleInstanceArg() && !gpConEmu->isFirstInstance())
 	{
-		gpConEmu->LogString(L"SingleInstanceArg");
+		DEBUGSTRSTARTUPLOG(L"Checking for existing instance");
 
 		HWND hConEmuHwnd = FindWindowExW(NULL, NULL, VirtualConsoleClassMain, NULL);
 		// При запуске серии закладок из cmd файла второму экземпляру лучше чуть-чуть подождать
@@ -4547,7 +4572,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 		while (!gpConEmu->isFirstInstance())
 		{
-			gpConEmu->LogString(L"Waiting for RunSingleInstance");
+			DEBUGSTRSTARTUPLOG(L"Waiting for RunSingleInstance");
 
 			if (gpConEmu->RunSingleInstance())
 			{
@@ -4562,6 +4587,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			if ((GetTickCount() - dwStart) > 10*1000)
 				break;
 		}
+
+		DEBUGSTRSTARTUPLOG(L"Existing instance was terminated, continue as first instance");
 	}
 
 //------------------------------------------------------------------------
@@ -4587,7 +4614,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 ///| Initializing |///////////////////////////////////////////////////////
 //------------------------------------------------------------------------
 
-	gpConEmu->LogString(L"gpConEmu->Init");
+	DEBUGSTRSTARTUPLOG(L"gpConEmu->Init");
 
 	// Тут загружаются иконки, Affinity, SetCurrentDirectory и т.п.
 	if (!gpConEmu->Init())
@@ -4609,6 +4636,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 ///| Creating window |////////////////////////////////////////////////////
 //------------------------------------------------------------------------
 
+	DEBUGSTRSTARTUPLOG(L"gpConEmu->CreateMainWindow");
+
 	if (!gpConEmu->CreateMainWindow())
 	{
 		free(cmdLine);
@@ -4619,6 +4648,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 //------------------------------------------------------------------------
 ///| Misc |///////////////////////////////////////////////////////////////
 //------------------------------------------------------------------------
+	DEBUGSTRSTARTUP(L"gpConEmu->PostCreate");
 	gpConEmu->PostCreate();
 //------------------------------------------------------------------------
 ///| Main message loop |//////////////////////////////////////////////////
@@ -4627,6 +4657,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	MessageLoop();
 
 done:
+	DEBUGSTRSTARTUP(L"Terminating");
 	ShutdownGuiStep(L"MessageLoop terminated");
 //------------------------------------------------------------------------
 ///| Deinitialization |///////////////////////////////////////////////////
@@ -4662,7 +4693,7 @@ done:
 	ShutdownGuiStep(L"Gui terminated");
 
 wrap:
-	// Нельзя. Еще живут глобальные объекты
-	//HeapDeinitialize();
+	// HeapDeinitialize() - Нельзя. Еще живут глобальные объекты
+	DEBUGSTRSTARTUP(L"WinMain exit");
 	return iMainRc;
 }
