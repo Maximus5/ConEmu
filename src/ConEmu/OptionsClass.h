@@ -72,9 +72,10 @@ class CSettings
 		// Default terminal installation
 		bool ibExitAfterDefTermSetup;
 		// Для отладочных целей.
-		bool isResetBasicSettings;
-		bool isFastSetupDisabled;
-		bool isDontCascade;
+		//bool isResetBasicSettings;
+		//bool isFastSetupDisabled;
+		//bool isDontCascade;
+
 		// === Запрет сохранения опций при выходе ===
 		bool ibDisableSaveSettingsOnExit;
 
@@ -83,9 +84,9 @@ class CSettings
 		bool IsMulti();
 		RecreateActionParm GetDefaultCreateAction();
 
-		SingleInstanceArgEnum SingleInstanceArg; // по умолчанию = sgl_Default, но для Quake переключается на = sgl_Enabled
+		//SingleInstanceArgEnum SingleInstanceArg; // по умолчанию = sgl_Default, но для Quake переключается на = sgl_Enabled
 		bool IsSingleInstanceArg();
-		SingleInstanceShowHideType SingleInstanceShowHide; // по умолчанию = sih_None
+		//SingleInstanceShowHideType SingleInstanceShowHide; // по умолчанию = sih_None
 		void ResetCmdArg();
 		bool ResetCmdHistory(HWND hParent = NULL);
 		void SetSaveCmdHistory(bool bSaveHistory);

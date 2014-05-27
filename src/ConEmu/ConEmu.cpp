@@ -65,7 +65,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "LoadImg.h"
 #include "Macro.h"
 #include "Menu.h"
-#include "options.h"
+#include "Options.h"
+#include "OptionsCur.h"
 #include "RealBuffer.h"
 #include "Recreate.h"
 #include "RunQueue.h"
@@ -316,10 +317,8 @@ CConEmuMain::CConEmuMain()
 	mb_InSetQuakeMode = false;
 	changeFromWindowMode = wmNotChanging;
 	//isRestoreFromMinimized = false;
-	WindowStartMinimized = false;
 	WindowStartTsa = false;
 	WindowStartNoClose = false;
-	ForceMinimizeToTray = false;
 	mb_InCreateWindow = true;
 	mb_InShowMinimized = false;
 	mb_LastTransparentFocused = false;
@@ -4515,7 +4514,7 @@ BOOL CConEmuMain::ShowWindow(int anCmdShow, DWORD nAnimationMS /*= (DWORD)-1*/)
 	BOOL lbRc = FALSE;
 	bool bUseApi = true;
 
-	if (mb_InCreateWindow && (WindowStartTsa || (WindowStartMinimized && gpSet->isMinToTray())))
+	if (mb_InCreateWindow && (gpSetCur->HasWindowStartTSA() || (gpSetCur->HasWindowStartMinimized() && gpSet->isMinToTray())))
 	{
 		_ASSERTE(anCmdShow == SW_SHOWMINNOACTIVE || anCmdShow == SW_HIDE);
 		_ASSERTE(::IsWindowVisible(ghWnd) == FALSE);
@@ -5434,7 +5433,7 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 
 			if (!IsWindowVisible(ghWnd))
 			{
-				ShowWindow((abFirstShow && WindowStartMinimized) ? SW_SHOWMINNOACTIVE : SW_SHOWNORMAL);
+				ShowWindow((abFirstShow && gpSetCur->HasWindowStartMinimized()) ? SW_SHOWMINNOACTIVE : SW_SHOWNORMAL);
 			}
 
 			#ifdef _DEBUG
@@ -5443,7 +5442,7 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 
 			// Если это во время загрузки - то до первого ShowWindow - isIconic возвращает FALSE
 			// Нужен реальный IsZoomed (FullScreen теперь тоже Zoomed)
-			if (!(abFirstShow && WindowStartMinimized) && (isIconic() || ::IsZoomed(ghWnd)))
+			if (!(abFirstShow && gpSetCur->HasWindowStartMinimized()) && (isIconic() || ::IsZoomed(ghWnd)))
 			{
 				ShowWindow(SW_SHOWNORMAL); // WM_SYSCOMMAND использовать не хочется...
 				// что-то после AltF9, AltF9 уголки остаются не срезанными...
@@ -5537,7 +5536,7 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 			if (!IsWindowVisible(ghWnd))
 			{
 				mb_IgnoreSizeChange = true;
-				ShowWindow((abFirstShow && WindowStartMinimized) ? SW_SHOWMINNOACTIVE : SW_SHOWMAXIMIZED);
+				ShowWindow((abFirstShow && gpSetCur->HasWindowStartMinimized()) ? SW_SHOWMINNOACTIVE : SW_SHOWMAXIMIZED);
 				mb_IgnoreSizeChange = false;
 
 				if (gpSetCls->isAdvLogging) LogString("OnSize(false).3");
@@ -5595,7 +5594,7 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 			{
 	 				mb_IgnoreSizeChange = true;
 				//120820 для четкости, в FullScreen тоже ставим Maximized, а не Normal
-				ShowWindow((abFirstShow && WindowStartMinimized) ? SW_SHOWMINNOACTIVE : SW_SHOWMAXIMIZED);
+				ShowWindow((abFirstShow && gpSetCur->HasWindowStartMinimized()) ? SW_SHOWMINNOACTIVE : SW_SHOWMAXIMIZED);
 
 				//// Сбросить
 				//if (mb_MaximizedHideCaption)
@@ -5641,7 +5640,7 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 			if (!IsWindowVisible(ghWnd))
 			{
 				mb_IgnoreSizeChange = true;
-				ShowWindow((abFirstShow && WindowStartMinimized) ? SW_SHOWMINNOACTIVE : SW_SHOWNORMAL);
+				ShowWindow((abFirstShow && gpSetCur->HasWindowStartMinimized()) ? SW_SHOWMINNOACTIVE : SW_SHOWNORMAL);
 				mb_IgnoreSizeChange = false;
 				//WindowMode = inMode; // Запомним!
 
@@ -8886,12 +8885,12 @@ BOOL CConEmuMain::RunSingleInstance(HWND hConEmuWnd /*= NULL*/, LPCWSTR apszCmd 
 				pIn->NewCmd.ShowHide = gpSetCls->SingleInstanceShowHide;
 				if (gpSetCls->SingleInstanceShowHide == sih_None)
 				{
-					if (gpConEmu->mb_StartDetached)
+					if (gpSetCur->StartDetachedParm)
 						pIn->NewCmd.ShowHide = sih_StartDetached;
 				}
 				else
 				{
-					_ASSERTE(gpConEmu->mb_StartDetached==FALSE);
+					_ASSERTE(gpSetCur->StartDetachedParm==false);
 				}
 
 				//GetCurrentDirectory(countof(pIn->NewCmd.szCurDir), pIn->NewCmd.szCurDir);
@@ -10889,7 +10888,7 @@ BOOL CConEmuMain::setWindowPos(HWND hWndInsertAfter, int X, int Y, int cx, int c
 
 	if (bInCreate)
 	{
-		if (WindowStartTsa || (WindowStartMinimized && gpSet->isMinToTray()))
+		if (gpSetCur->HasWindowStartTSA() || (gpSetCur->HasWindowStartMinimized() && gpSet->isMinToTray()))
 		{
 			uFlags |= SWP_NOACTIVATE;
 			uFlags &= ~SWP_SHOWWINDOW;
@@ -11377,7 +11376,10 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 
 		CheckActiveLayoutName();
 
-		//session.SetSessionNotification(true);
+		// SetSessionNotification(false) в некоторых случаях зависает при выходе
+		// Поэтому включаем только по параметру ком-строки "/session"
+		if (gpSetCur->SessionParm.GetBool())
+			session.SetSessionNotification(true);
 
 		if (gpSet->isHideCaptionAlways())
 		{
@@ -11496,7 +11498,7 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 		gpSet->CheckHotkeyUnique();
 
 
-		if (!isVConExists(0) || !gpConEmu->mb_StartDetached)  // Консоль уже может быть создана, если пришел Attach из ConEmuC
+		if (!isVConExists(0) || !gpSetCur->StartDetachedParm)  // Консоль уже может быть создана, если пришел Attach из ConEmuC
 		{
 			// Если надо - подготовить портабельный реестр
 			if (mb_PortableRegExist)
@@ -11544,7 +11546,7 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 
 				lbCreated = TRUE;
 			}
-			else if ((*pszCmd == CmdFilePrefix || *pszCmd == TaskBracketLeft || lstrcmpi(pszCmd,AutoStartTaskName) == 0) && !gpConEmu->mb_StartDetached)
+			else if ((*pszCmd == CmdFilePrefix || *pszCmd == TaskBracketLeft || lstrcmpi(pszCmd,AutoStartTaskName) == 0) && !gpSetCur->StartDetachedParm)
 			{
 				RConStartArgs args;
 				// В качестве "команды" указан "пакетный файл" или "группа команд" одновременного запуска нескольких консолей
@@ -11564,20 +11566,13 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 
 				SafeFree(pszDataW);
 
-				//// Если ConEmu был запущен с ключом "/single /cmd xxx" то после окончания
-				//// загрузки - сбросить команду, которая пришла из "/cmd" - загрузить настройку
-				//if (gpSetCls->SingleInstanceArg)
-				//{
-				//	gpSetCls->ResetCmdArg();
-				//}
-
 				lbCreated = TRUE;
 			}
 
-			if (!lbCreated && !gpConEmu->mb_StartDetached)
+			if (!lbCreated && !gpSetCur->StartDetachedParm)
 			{
 				RConStartArgs args;
-				args.Detached = gpConEmu->mb_StartDetached ? crb_On : crb_Off;
+				args.Detached = gpSetCur->StartDetachedParm ? crb_On : crb_Off;
 
 				if (args.Detached != crb_On)
 				{
@@ -11593,8 +11588,8 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 			}
 		}
 
-		if (gpConEmu->mb_StartDetached)
-			gpConEmu->mb_StartDetached = FALSE;  // действует только на первую консоль
+		if (gpSetCur->StartDetachedParm)
+			gpSetCur->StartDetachedParm.Disable();  // действует только на первую консоль
 
 		//// Может быть в настройке указано - всегда показывать иконку в TSA
 		//Icon.SettingsChanged();
@@ -11647,16 +11642,16 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 				apiSetForegroundWindow(mp_Inside->mh_InsideParentRoot);
 			SetWindowPos(ghWnd, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE|SWP_NOSIZE);
 		}
-		else if ((hCurForeground == ghWnd) && !WindowStartMinimized)
+		else if ((hCurForeground == ghWnd) && !gpSetCur->HasWindowStartMinimized())
 		{
 			apiSetForegroundWindow(ghWnd);
 		}
 
-		if (WindowStartMinimized)
+		if (gpSetCur->HasWindowStartMinimized())
 		{
-			_ASSERTE(!WindowStartNoClose || (WindowStartTsa && WindowStartNoClose));
+			_ASSERTE(!WindowStartNoClose || (gpSetCur->HasWindowStartTSA() && WindowStartNoClose));
 
-			if (WindowStartTsa || gpConEmu->ForceMinimizeToTray)
+			if (gpSetCur->HasWindowStartTSA() || gpSetCur->ForceMinTSAParm.GetBool())
 			{
 				Icon.HideWindowToTray();
 
@@ -13611,7 +13606,7 @@ void CConEmuMain::DoMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 			}
 			else
 			{
-				// SC_MINIMIZE сам обработает (gpSet->isMinToTray || gpConEmu->ForceMinimizeToTray)
+				// SC_MINIMIZE сам обработает (gpSet->isMinToTray || gpSetCur->ForceMinTSAParm.GetBool())
 				SendMessage(ghWnd, WM_SYSCOMMAND, SC_MINIMIZE, 0);
 			}
 		}
@@ -17151,7 +17146,7 @@ void CConEmuMain::OnDesktopMode()
 
 	Icon.SettingsChanged();
 
-	if (WindowStartMinimized || ForceMinimizeToTray)
+	if (WindowStartMinimized || gpSetCur->ForceMinTSAParm.GetBool())
 		return;
 
 #ifndef CHILD_DESK_MODE

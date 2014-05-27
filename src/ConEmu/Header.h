@@ -285,6 +285,12 @@ BOOL CreateProcessRestricted(LPCWSTR lpApplicationName, LPWSTR lpCommandLine,
 							 LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation,
 							 LPDWORD pdwLastError = NULL);
 
+BOOL CreateProcessDemoted(LPCWSTR lpApplicationName, LPWSTR lpCommandLine,
+							 LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes,
+							 BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment,
+							 LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation,
+							 LPDWORD pdwLastError);
+
 
 #include "../common/RConStartArgs.h"
 

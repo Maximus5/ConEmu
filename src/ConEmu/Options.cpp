@@ -48,6 +48,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "LoadImg.h"
 #include "Macro.h"
 #include "Options.h"
+#include "OptionsCur.h"
 #include "OptionsFast.h"
 #include "RealConsole.h"
 #include "Status.h"
@@ -4323,7 +4324,7 @@ bool Settings::isMinimizeOnLoseFocus()
 bool Settings::isMinToTray(bool bRawOnly /*= false*/)
 {
 	// Сворачивать в TSA только если включен флажок. Юзер его мог принудительно отключить.
-	return (mb_MinToTray || /*(m_isTabsOnTaskBar == 3) ||*/ gpConEmu->ForceMinimizeToTray);
+	return (mb_MinToTray || /*(m_isTabsOnTaskBar == 3) ||*/ gpSetCur->ForceMinTSAParm.GetBool());
 }
 
 void Settings::SetMinToTray(bool bMinToTray)

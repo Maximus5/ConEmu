@@ -158,8 +158,6 @@ class CConEmuMain :
 		wchar_t ms_PortableTempDir[MAX_PATH];
 		HKEY mh_PortableRoot; // Это открытый ключ
 		bool PreparePortableReg();
-		bool mb_UpdateJumpListOnStartup;
-		bool mb_FindBugMode;
 		UINT mn_LastTransparentValue;
 	private:
 		struct
@@ -255,21 +253,23 @@ class CConEmuMain :
 		CESize WndWidth, WndHeight;  // в символах/пикселях/процентах
 		int    wndX, wndY;           // в пикселях
 
-		bool  WindowStartMinimized; // ключик "/min" или "Свернуть" в свойствах ярлыка
-		bool  WindowStartTsa;       // ключики "/StartTSA" или "/MinTSA"
-		bool  WindowStartNoClose;   // ключик "/MinTSA"
-		bool  ForceMinimizeToTray;  // ключики "/tsa" или "/tray"
-		bool  DisableAutoUpdate;    // ключик "/noupdate"
-		bool  DisableKeybHooks;     // ключик "/nokeyhook"
-		bool  DisableAllMacro;      // ключик "/nomacro"
-		bool  DisableAllHotkeys;    // ключик "/nohotkey"
-		bool  DisableSetDefTerm;    // ключик "/nodeftrm"
-		bool  DisableRegisterFonts; // ключик "/noregfont"
-		bool  DisableCloseConfirm;  // ключик "/nocloseconfirm"
+		//bool  WindowStartMinimized; // ключик "/min" или "Свернуть" в свойствах ярлыка
+		//bool  WindowStartTsa;       // ключики "/StartTSA" или "/MinTSA"
+		//bool  WindowStartNoClose;   // ключик "/MinTSA"
+		//bool  ForceMinimizeToTray;  // ключики "/tsa" или "/tray"
+		//bool  DisableAutoUpdate;    // ключик "/noupdate"
+		//bool  DisableKeybHooks;     // ключик "/nokeyhook"
+		//bool  DisableAllMacro;      // ключик "/nomacro"
+		//bool  DisableAllHotkeys;    // ключик "/nohotkey"
+		//bool  DisableSetDefTerm;    // ключик "/nodeftrm"
+		//bool  DisableRegisterFonts; // ключик "/noregfont"
+		//bool  DisableCloseConfirm;  // ключик "/nocloseconfirm"
+		//BOOL  mb_StartDetached;     // ключик "/detached"
+		//bool  mb_UpdateJumpListOnStartup; // "/updatejumplist"
+		//bool mb_FindBugMode;        // "/FindBugMode"
 
 		BOOL  mb_ExternalHidden;
 		
-		BOOL  mb_StartDetached;
 
 		enum StartupStage {
 			ss_Starting,

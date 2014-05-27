@@ -1170,13 +1170,6 @@ struct Settings
 		//reg->Load(L"ScrollBarDisappearDelay", nScrollBarDisappearDelay);
 		DWORD nScrollBarDisappearDelay;
 		
-		////reg->Load(L"TabMargins", rcTabMargins);
-		//RECT rcTabMargins;
-		////reg->Load(L"TabFrame", isTabFrame);
-		//bool isTabFrame;
-
-		//reg->Load(L"MinimizeRestore", vmMinimizeRestore);
-		//DWORD vmMinimizeRestore;
 		//reg->Load(L"SingleInstance", isSingleInstance);
 		bool isSingleInstance;
 		//reg->Load(L"ShowHelpTooltips", isShowHelpTooltips);

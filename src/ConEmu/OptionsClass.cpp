@@ -52,6 +52,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Inside.h"
 #include "LoadImg.h"
 #include "Options.h"
+#include "OptionsCur.h"
 #include "OptionsFast.h"
 #include "OptionsHelp.h"
 #include "RealConsole.h"
@@ -283,9 +284,6 @@ CSettings::CSettings()
 
 	// Go
 	ibExitAfterDefTermSetup = false;
-	isResetBasicSettings = false;
-	isFastSetupDisabled = false;
-	isDontCascade = false;
 	ibDisableSaveSettingsOnExit = false;
 	isAdvLogging = 0;
 	m_ActivityLoggingType = glt_None; mn_ActivityCmdStartTick = 0;
@@ -2068,7 +2066,7 @@ LRESULT CSettings::OnInitDialog_Show(HWND hWnd2, bool abInitial)
 LRESULT CSettings::OnInitDialog_Taskbar(HWND hWnd2, bool abInitial)
 {
 	checkDlgButton(hWnd2, cbMinToTray, gpSet->mb_MinToTray);
-	EnableWindow(GetDlgItem(hWnd2, cbMinToTray), !gpConEmu->ForceMinimizeToTray);
+	EnableWindow(GetDlgItem(hWnd2, cbMinToTray), !gpSetCur->ForceMinTSAParm.GetBool());
 
 	checkDlgButton(hWnd2, cbAlwaysShowTrayIcon, gpSet->isAlwaysShowTrayIcon());
 
@@ -12828,15 +12826,20 @@ RecreateActionParm CSettings::GetDefaultCreateAction()
 	return IsMulti() ? cra_CreateTab : cra_CreateWindow;
 }
 
+// true  - если разрешен запуск нескольких консолей (табов) в одном экземпляре ConEmu
+// false - только одна консоль, запуск второй приведет к запуску нового ConEmu.exe
 bool CSettings::IsMulti()
 {
-	if (!gpSet->mb_isMulti)
+	bool bMulti = (!gpSetCur->NoMultiConParm && (gpSet->mb_isMulti || gpSetCur->MultiConParm));
+
+	if (!bMulti)
 	{
 		// "SingleInstance" has more weight
 		if (!IsSingleInstanceArg())
 			return false;
 		// Otherwise we'll get infinite loop
 	}
+
 	return true;
 }
 
