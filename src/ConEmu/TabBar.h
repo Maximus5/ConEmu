@@ -106,9 +106,15 @@ class CTabBarClass
 		int GetCurSel();
 		int GetItemCount();
 		void DeleteItem(int I);
-		//void AddTab2VCon(VConTabs& vct);
 		void ShowTabError(LPCTSTR asInfo, int tabIndex);
-		//void CheckTheming();
+		enum UpdateAddTabFlags {
+			uat_AnyTab             = 0x000,
+			uat_PanelsOrModalsOnly = 0x001,
+			uat_NonModals          = 0x002,
+			uat_NonPanels          = 0x004,
+			uat_PanelsOnly         = 0x008,
+		};
+		int UpdateAddTab(HANDLE hUpdate, int& tabIdx, int& nCurTab, bool& bStackChanged, CVirtualConsole* pVCon, DWORD nFlags/*UpdateAddTabFlags*/);
 
 	public:
 		// Tabs updating (populating)
