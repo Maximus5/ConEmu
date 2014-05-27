@@ -1444,6 +1444,9 @@ wchar_t* ExpandEnvStr(LPCWSTR pszCommand)
 	if (!pszCommand || !*pszCommand)
 		return NULL;
 
+	if (!wcschr(pszCommand, L'%'))
+		return lstrdup(pszCommand);
+
 	DWORD cchMax = ExpandEnvironmentStrings(pszCommand, NULL, 0);
 	if (!cchMax)
 		return lstrdup(pszCommand);
@@ -1460,6 +1463,8 @@ wchar_t* ExpandEnvStr(LPCWSTR pszCommand)
 			return pszExpand;
 
 		SafeFree(pszExpand);
+
+		return lstrdup(pszCommand);
 	}
 	return NULL;
 }
