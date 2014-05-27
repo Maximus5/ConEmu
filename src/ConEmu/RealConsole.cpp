@@ -249,6 +249,7 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 	mn_SelectModeSkipVk = 0;
 	mn_ProcessCount = mn_ProcessClientCount = 0;
 	mn_FarPID = mn_ActivePID = 0; //mn_FarInputTID = 0;
+	mn_FarNoPanelsCheck = 0;
 	mn_LastProcessNamePID = 0; ms_LastProcessName[0] = 0; mn_LastAppSettingsId = -1;
 	memset(m_FarPlugPIDs, 0, sizeof(m_FarPlugPIDs)); mn_FarPlugPIDsCount = 0;
 	memset(m_TerminatedPIDs, 0, sizeof(m_TerminatedPIDs)); mn_TerminatedIdx = 0;
@@ -3285,6 +3286,8 @@ void CRealConsole::ResetVarsOnStart()
 	ZeroStruct(m_ServerClosing);
 
 	hConWnd = NULL;
+
+	mn_FarNoPanelsCheck = 0;
 
 	// setXXX для удобства
 	setGuiWndPID(NULL, 0, NULL); // set m_ChildGui.nGuiWndPID to 0
@@ -11171,6 +11174,53 @@ void CRealConsole::OnTitleChanged()
 	{
 		gpConEmu->mp_TabBar->Update(); // сменить заголовок закладки?
 	}
+}
+
+// Если фар запущен как "far /e ..." то панелей в нем вообще нет
+bool CRealConsole::isFarPanelAllowed()
+{
+	if (!this)
+		return false;
+	// Если текущий процесс НЕ фар - то и проверять нечего, "консоль" считается за "панель"
+	DWORD nActivePID = GetActivePID();
+	bool  bRootIsFar = IsFarExe(ms_RootProcessName);
+	if (!nActivePID && !bRootIsFar)
+		return true;
+	// Известен PID фара?
+	DWORD nFarPID = GetFarPID();
+	if (nFarPID)
+	{
+		// Проверим, получена ли информация из плагина
+		const CEFAR_INFO_MAPPING *pFar = GetFarInfo();
+		if (pFar)
+		{
+			// Если получено из плагина
+			return pFar->bFarPanelAllowed;
+		}
+	}
+	// Пытаемся разобрать строку аргументов
+	if (bRootIsFar && (!nActivePID || (nActivePID == nFarPID)))
+	{
+		if (mn_FarNoPanelsCheck)
+			return (mn_FarNoPanelsCheck == 1);
+		CmdArg szArg;
+		LPCWSTR pszCmdLine = GetCmd();
+		while (NextArg(&pszCmdLine, szArg) == 0)
+		{
+			LPCWSTR ps = szArg.ms_Arg;
+			if ((ps[0] == L'-' || ps[0] == L'/')
+				&& (ps[1] == L'e' || ps[1] == L'E' || ps[1] == L'v' || ps[1] == L'V')
+				&& (ps[2] == 0))
+			{
+				// Считаем что фар запущен как редактор, панелей нет
+				mn_FarNoPanelsCheck = 2;
+				return false;
+			}
+		}
+		mn_FarNoPanelsCheck = 1;
+	}
+	// Во всех остальных случаях, считаем что "панели есть"
+	return true;
 }
 
 bool CRealConsole::isFilePanel(bool abPluginAllowed/*=false*/, bool abSkipEditViewCheck /*= false*/)

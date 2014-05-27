@@ -543,6 +543,7 @@ class CRealConsole
 		void LogString(LPCWSTR asText, BOOL abShowTime = FALSE);
 		bool isActive(bool abAllowGroup = false);
 		bool isInFocus();
+		bool isFarPanelAllowed();
 		bool isFilePanel(bool abPluginAllowed = false, bool abSkipEditViewCheck = false);
 		bool isEditor();
 		bool isEditorModified();
@@ -745,6 +746,7 @@ class CRealConsole
 		DWORD m_TerminatedPIDs[128]; UINT mn_TerminatedIdx;
 		//
 		DWORD mn_FarPID;
+		int   mn_FarNoPanelsCheck; // "Far /e ..."
 		DWORD mn_ActivePID;
 		void SetActivePID(DWORD anNewPID);
 		DWORD mn_LastSetForegroundPID; // PID процесса, которому в последний раз было разрешено AllowSetForegroundWindow
