@@ -1415,12 +1415,17 @@ void CTabBarClass::PrintRecentStack()
 		CTabID* p = m_TabStack[i];
 		if (p == mp_DummyTab)
 			continue;
+		if (!p)
+		{
+			_ASSERTE(p!=NULL);
+			continue;
+		}
 		_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"%2u: %s", i+1,
 			(p->Info.Status == tisPassive) ? L"<passive> " :
 			(p->Info.Status == tisEmpty) ? L"<not_init> " :
 			(p->Info.Status == tisInvalid) ? L"<invalid> " :
 			L"");
-		lstrcpyn(szDbg+lstrlen(szDbg), m_TabStack[i]->GetLabel(), 60);
+		lstrcpyn(szDbg+lstrlen(szDbg), p->GetLabel(), 60);
 		wcscat_c(szDbg, L"\n");
 		DEBUGSTRRECENT(szDbg);
 	}
