@@ -3304,6 +3304,7 @@ bool CVConGroup::ConActivateNext(bool abNext)
 	return false;
 }
 
+// Если rPanes==NULL - просто вернуть количество сплитов
 int CVConGroup::GetGroupPanes(MArray<CVConGuard*>* rPanes)
 {
 	if (!this)
