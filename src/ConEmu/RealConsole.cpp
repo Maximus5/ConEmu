@@ -11086,6 +11086,23 @@ void CRealConsole::OnTitleChanged()
 	wcscpy(Title, TitleCmp);
 	SetWindowText(mp_VCon->GetView(), TitleCmp);
 
+	if (tabs.nActiveType & (fwt_Viewer|fwt_Editor))
+	{
+		// После Ctrl-F10 в редакторе фара меняется текущая панель (директория)
+		// В заголовке консоли панель фара?
+		if ((TitleCmp[0] == L'{')
+			&& ((TitleCmp[1] == L'\\' && TitleCmp[2] == L'\\')
+				|| (isDriveLetter(TitleCmp[1]) && (TitleCmp[2] == L':' && TitleCmp[3] == L'\\'))))
+		{
+			if ((wcsstr(TitleCmp, L"} - ") != NULL)
+				&& (wcscmp(ms_PanelTitle, TitleCmp) != 0))
+			{
+				wcscpy_c(ms_PanelTitle, TitleCmp);
+				gpConEmu->mp_TabBar->Update();
+			}
+		}
+	}
+
 	// Обработка прогресса операций
 	//short nLastProgress = m_Progress.Progress;
 	short nNewProgress;
