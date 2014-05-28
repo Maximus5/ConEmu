@@ -6224,6 +6224,10 @@ ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In/Out]*/, COOR
 			// abc.py (3): some message
 			// ASM - подсвечивать нужно "test.asasm(1,1)"
 			// object.Exception@assembler.d(1239): test.asasm(1,1):
+			// Issue 1594
+			// /src/class.c:123:m_func(...)
+			// /src/class.c:123: m_func(...)
+
 			// -- URL's
 			// file://c:\temp\qqq.html
 			// http://www.farmanager.com
@@ -6320,8 +6324,9 @@ ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In/Out]*/, COOR
 					{
 						// Validation
 						if (((pChar[lcrTo.X] == L':')
-								&& (wcschr(pszSpacing, pChar[lcrTo.X+1])
-									|| wcschr(pszDigits, pChar[lcrTo.X+1])))
+								// Issue 1594: /src/class.c:123:m_func(...)
+								/* && (wcschr(pszSpacing, pChar[lcrTo.X+1])
+									|| wcschr(pszDigits, pChar[lcrTo.X+1]))*/)
 						// Если номер строки обрамлен скобками - скобки должны быть сбалансированы
 						|| ((pChar[lcrTo.X] == L')') && (iBracket == 1)
 								&& ((pChar[lcrTo.X+1] == L':')
