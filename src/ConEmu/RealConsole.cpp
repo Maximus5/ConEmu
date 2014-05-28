@@ -10350,7 +10350,11 @@ void CRealConsole::Paste(CEPasteMode PasteMode /*= pm_Standard*/, LPCWSTR asText
 			// Move Dest pointer and add one trailing space (line delimiter)
 			pszDst += cchLine;
 			// No need to check ptr, memory for space-termination was reserved
-			*(pszDst++) = L' ';
+			if (pszSrc < pszEnd)
+			{
+				// Delimit lines with space
+				*(pszDst++) = L' ';
+			}
 		}
 		// Z-terminate our string
 		*pszDst = 0;
