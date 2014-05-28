@@ -6207,7 +6207,7 @@ ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In/Out]*/, COOR
 			TODO("Можно бы и просто открытие файлов прикрутить, без требования 'строки с ошибкой'");
 
 			// -- VC
-			// 1>t:\vcproject\conemu\realconsole.cpp(8104) : error C2065: 'qqq' : undeclared identifier
+			// 1>c:\sources\conemu\realconsole.cpp(8104) : error C2065: 'qqq' : undeclared identifier
 			// DefResolve.cpp(18) : error C2065: 'sdgagasdhsahd' : undeclared identifier
 			// DefResolve.cpp(18): warning: note xxx
 			// -- GCC
@@ -6217,7 +6217,7 @@ ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In/Out]*/, COOR
 			// CPP Check
 			// [common\PipeServer.h:1145]: (style) C-style pointer casting
 			// Delphi
-			// T:\VCProject\FarPlugin\$FarPlugins\MaxRusov\far-plugins-read-only\FarLib\FarCtrl.pas(1002) Error: Undeclared identifier: 'PCTL_GETPLUGININFO'
+			// c:\sources\FarLib\FarCtrl.pas(1002) Error: Undeclared identifier: 'PCTL_GETPLUGININFO'
 			// FPC
 			// FarCtrl.pas(1002,49) Error: Identifier not found "PCTL_GETPLUGININFO"
 			// -- Possible?
