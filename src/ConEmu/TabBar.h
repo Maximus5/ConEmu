@@ -106,7 +106,6 @@ class CTabBarClass
 		int GetCurSel();
 		int GetItemCount();
 		void DeleteItem(int I);
-		void ShowTabError(LPCTSTR asInfo, int tabIndex);
 		enum UpdateAddTabFlags {
 			uat_AnyTab             = 0x000,
 			uat_PanelsOrModalsOnly = 0x001,
@@ -121,6 +120,7 @@ class CTabBarClass
 		void Update(BOOL abPosted=FALSE);
 		bool NeedPostUpdate();
 		void PrintRecentStack();
+		void ShowTabError(LPCTSTR asInfo, int tabIndex);
 
 	private:
 		int  mn_InUpdate;

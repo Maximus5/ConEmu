@@ -9055,6 +9055,7 @@ void CRealConsole::SetTabs(ConEmuTab* apTabs, int anTabsCount)
 
 	HANDLE hUpdate = tabs.m_Tabs.UpdateBegin();
 
+	bool bTabsChanged = false;
 	bool bHasModal = false;
 	CTab ActiveTab("RealConsole.cpp:ActiveTab",__LINE__);
 
@@ -9070,7 +9071,7 @@ void CRealConsole::SetTabs(ConEmuTab* apTabs, int anTabsCount)
 		bHasModal |= (TypeAndFlags & fwt_ModalFarWnd) == fwt_ModalFarWnd;
 
 		if (tabs.m_Tabs.UpdateFarWindow(hUpdate, mp_VCon, apTabs[i].Name, TypeAndFlags, nPID, apTabs[i].Pos, apTabs[i].EditViewId, ActiveTab))
-			tabs.mb_TabsWasChanged = true;
+			bTabsChanged = true;
 	}
 
 	_ASSERTE(!bRenameByArgs || (anTabsCount==1));
@@ -9089,6 +9090,9 @@ void CRealConsole::SetTabs(ConEmuTab* apTabs, int anTabsCount)
 	tabs.StoreActiveTab(ActiveTab.Tab());
 
 	if (tabs.m_Tabs.UpdateEnd(hUpdate, GetFarPID(true)))
+		bTabsChanged = true;
+
+	if (bTabsChanged)
 		tabs.mb_TabsWasChanged = true;
 
 	#ifdef _DEBUG
@@ -9098,6 +9102,12 @@ void CRealConsole::SetTabs(ConEmuTab* apTabs, int anTabsCount)
 	// Передернуть gpConEmu->mp_TabBar->..
 	if (gpConEmu->isValid(mp_VCon))    // Во время создания консоли она еще не добавлена в список...
 	{
+		// Если была показана ошибка "This tab can't be activated now"
+		if (bTabsChanged && gpConEmu->isActive(mp_VCon, false))
+		{
+			// скрыть ее
+			gpConEmu->mp_TabBar->ShowTabError(NULL, 0);
+		}
 		// На время появления автотабов - отключалось
 		gpConEmu->mp_TabBar->SetRedraw(TRUE);
 		gpConEmu->mp_TabBar->Update();
