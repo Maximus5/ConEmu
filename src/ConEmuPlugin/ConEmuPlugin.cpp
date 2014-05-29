@@ -450,6 +450,8 @@ HANDLE OpenPluginWcmn(int OpenFrom,INT_PTR Item,bool FromMacro)
 			}
 			else if (Item >= SETWND_CALLPLUGIN_BASE)
 			{
+				// Переключение табов выполняется макросом, чтобы "убрать" QSearch и выполнить проверки
+				// (посылается из OnMainThreadActivated: gnReqCommand == CMD_SETWINDOW)
 				DEBUGSTRCMD(L"Plugin: SETWND_CALLPLUGIN_BASE\n");
 				gnPluginOpenFrom = OPEN_PLUGINSMENU;
 				DWORD nTab = (DWORD)(Item - SETWND_CALLPLUGIN_BASE);
