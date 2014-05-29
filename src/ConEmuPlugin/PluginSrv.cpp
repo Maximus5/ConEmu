@@ -599,10 +599,18 @@ BOOL WINAPI PlugServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &pp
 				nSetWindowWait = WaitForSingleObject(ghSetWndSendTabsEvent, nTimeout);
 			}
 
-			DEBUGSTRCMD(L"Plugin: PlugServerThreadCommand: CMD_SETWINDOW finished\n");
+			if (nSetWindowWait == WAIT_TIMEOUT)
+			{
+				gbForceSendTabs = TRUE;
+				DEBUGSTRCMD(L"Plugin: PlugServerThreadCommand: CMD_SETWINDOW timeout !!!\n");
+			}
+			else
+			{
+				DEBUGSTRCMD(L"Plugin: PlugServerThreadCommand: CMD_SETWINDOW finished\n");
+			}
 		}
 
-		if (gpTabs)
+		if (gpTabs && (nSetWindowWait != WAIT_TIMEOUT))
 		{
 			//fSuccess = WriteFile(hPipe, gpTabs, gpTabs->hdr.cbSize, &cbWritten, NULL);
 			pcbReplySize = gpTabs->hdr.cbSize;
