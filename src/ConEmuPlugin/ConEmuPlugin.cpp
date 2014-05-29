@@ -2322,7 +2322,7 @@ typedef HANDLE(WINAPI *OpenPlugin_t)(int OpenFrom,INT_PTR Item);
 WARNING("Обязательно сделать возможность отваливаться по таймауту, если плагин не удалось активировать");
 // Проверку можно сделать чтением буфера ввода - если там еще есть событие отпускания F11 - значит
 // меню плагинов еще загружается. Иначе можно еще чуть-чуть подождать, и отваливаться - активироваться не получится
-BOOL ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData, CESERVER_REQ** ppResult /*= NULL*/)
+BOOL ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData, CESERVER_REQ** ppResult /*= NULL*/, bool bForceSendTabs /*= false*/)
 {
 	BOOL lbSucceeded = FALSE;
 	CESERVER_REQ* pCmdRet = NULL;
@@ -2695,7 +2695,7 @@ BOOL ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData, CESERV
 				DEBUGSTRCMD(L"Plugin: ACTL_COMMIT finished\n");
 
 				gbIgnoreUpdateTabs = FALSE;
-				UpdateConEmuTabs(false);
+				UpdateConEmuTabs(bForceSendTabs);
 
 				DEBUGSTRCMD(L"Plugin: Tabs updated\n");
 			}
@@ -5745,7 +5745,7 @@ void ShowPluginMenu(PluginCallCommands nCallID /*= pcc_None*/)
 							default:
 								gnPluginOpenFrom = -1;
 							}
-							ProcessCommand(CMD_SETWINDOW, FALSE, &nTab);
+							ProcessCommand(CMD_SETWINDOW, FALSE, &nTab, NULL, true/*bForceSendTabs*/);
 						}
 						else if (!pOut->GetAllTabs.Tabs[nMenuRc].ActiveConsole || !pOut->GetAllTabs.Tabs[nMenuRc].ActiveTab)
 						{
