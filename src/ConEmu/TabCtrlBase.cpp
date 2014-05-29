@@ -32,6 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define SHOWDEBUGSTR
 
 #define DEBUGSTRTABS(s) //DEBUGSTR(s)
+#define DEBUGSTRWARN(s) DEBUGSTR(s)
 
 #include <windows.h>
 #include "header.h"
@@ -209,7 +210,11 @@ CVirtualConsole* CTabPanelBase::FarSendChangeTab(int tabIndex)
 	else
 	{
 		nCallEnd = TimeGetTime();
-		_ASSERTE((nCallEnd - nCallStart) < ACTIVATE_TAB_CRITICAL);
+		if ((nCallEnd - nCallStart) > ACTIVATE_TAB_CRITICAL)
+		{
+			DEBUGSTRWARN(L"*** Long Far tab activation duration! ***\n");
+			_ASSERTE(((nCallEnd - nCallStart) <= ACTIVATE_TAB_CRITICAL) || IsDebuggerPresent());
+		}
 	}
 
 	// Чтобы лишнее не мелькало - активируем консоль
