@@ -12,6 +12,11 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
 
+2014.05.29
+[*] Hide tab error tooltip after receiving tabs from Far plugin.
+[*] Active tab was not changed if Far window was switched from ConEmu plugin (F12 macro).
+
+
 2014.05.28
 [*] Issue 1588: Crash when setting ‘Settings > Main > Cell = -1’.
 [*] Show Far editors/viewers tabs from all panes, but not active VCon only.
