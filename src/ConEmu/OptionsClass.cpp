@@ -345,6 +345,7 @@ CSettings::CSettings()
 	mb_TabHotKeyRegistered = FALSE;
 	//hMain = hExt = hFar = hTabs = hKeys = hColors = hCmdTasks = hViews = hInfo = hDebug = hUpdate = hSelection = NULL;
 	memset(mh_Tabs, 0, sizeof(mh_Tabs));
+	mn_LastActivedTab = 0;
 	hwndTip = NULL; hwndBalloon = NULL;
 	mb_IgnoreCmdGroupEdit = mb_IgnoreCmdGroupList = false;
 	hConFontDlg = NULL; hwndConFontBalloon = NULL; bShowConFontError = FALSE; sConFontError[0] = 0; bConsoleFontChecked = FALSE;
@@ -8423,6 +8424,7 @@ LRESULT CSettings::OnPage(LPNMHDR phdr)
 						SendMessage(mh_Tabs[m_Pages[i].PageIndex], mn_ActivateTabMsg, 1, (LPARAM)&(m_Pages[i]));
 					}
 					ShowWindow(mh_Tabs[m_Pages[i].PageIndex], SW_SHOW);
+					mn_LastActivedTab = gpSetCls->m_Pages[i].PageID;
 				}
 				else if (p->itemOld.hItem == m_Pages[i].hTI)
 				{
@@ -8463,6 +8465,9 @@ void CSettings::Dialog(int IdShowPage /*= 0*/)
 	}
 
 	apiShowWindow(ghOpWnd, SW_SHOWNORMAL);
+
+	if (!IdShowPage && gpSetCls->mn_LastActivedTab)
+		IdShowPage = gpSetCls->mn_LastActivedTab;
 
 	if (IdShowPage != 0)
 	{

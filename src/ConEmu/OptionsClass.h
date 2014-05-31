@@ -227,6 +227,7 @@ class CSettings
 			thi_Last
 		};
 		HWND mh_Tabs[thi_Last];
+		int  mn_LastActivedTab;
 
 		//static void CenterDialog(HWND hWnd2);
 		void OnClose();
