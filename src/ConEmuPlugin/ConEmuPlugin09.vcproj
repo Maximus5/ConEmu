@@ -1625,82 +1625,28 @@
 			Filter="cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx"
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
-			<File
-				RelativePath="..\common\CmdLine.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\common\Common.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\common\ConEmuCheck.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\common\ConEmuCheckEx.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\common\SetEnvVar.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\ConEmuInjects.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\ConEmuPlugin.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\ConEmuPlugin1900.cpp"
-				>
-				<FileConfiguration
-					Name="Debug_F|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						ShowIncludes="false"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug_F2|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						ShowIncludes="false"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug_F3|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						ShowIncludes="false"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath=".\ConEmuPlugin2800.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\ConEmuPlugin995.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\ConEmuPluginA.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\common\execute.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\export.release.def"
-				>
-			</File>
+			<File RelativePath="..\common\CmdLine.cpp" />
+			<File RelativePath="..\common\Common.cpp" />
+			<File RelativePath="..\common\ConEmuCheck.cpp" />
+			<File RelativePath="..\common\ConEmuCheckEx.cpp" />
+			<File RelativePath="..\common\execute.cpp" />
+			<File RelativePath="..\common\MAssert.cpp" />
+			<File RelativePath="..\common\Memory.cpp" />
+			<File RelativePath="..\common\Monitors.cpp" />
+			<File RelativePath="..\common\MSecurity.cpp" />
+			<File RelativePath="..\common\MStrSafe.cpp" />
+			<File RelativePath="..\common\SetEnvVar.cpp" />
+			<File RelativePath="..\common\WinConsole.cpp" />
+			<File RelativePath="..\common\WinObjects.cpp" />
+			<File RelativePath=".\ConEmuInjects.cpp" />
+			<File RelativePath=".\ConEmuPlugin.cpp" />
+			<File RelativePath=".\ConEmuPlugin1900.cpp" />
+			<File RelativePath=".\ConEmuPlugin2800.cpp" />
+			<File RelativePath=".\ConEmuPlugin995.cpp" />
+			<File RelativePath=".\ConEmuPluginA.cpp" />
+			<File RelativePath=".\export.release.def" />
+			<File RelativePath=".\PluginBackground.cpp" />
+			<File RelativePath=".\PluginSrv.cpp" />
 			<File
 				RelativePath=".\KeyEvents.cpp"
 				>
@@ -1737,132 +1683,33 @@
 					/>
 				</FileConfiguration>
 			</File>
-			<File
-				RelativePath="..\common\MAssert.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\common\Memory.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\common\Monitors.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\common\MSecurity.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\common\MStrSafe.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\PluginBackground.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\PluginSrv.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\common\WinConsole.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\common\WinObjects.cpp"
-				>
-			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
-			<File
-				RelativePath="..\common\CmdLine.h"
-				>
-			</File>
-			<File
-				RelativePath="..\common\common.hpp"
-				>
-			</File>
-			<File
-				RelativePath=".\ConEmu_Lang.h"
-				>
-			</File>
-			<File
-				RelativePath="..\common\ConEmuCheck.h"
-				>
-			</File>
-			<File
-				RelativePath="..\common\ConEmuCheckEx.h"
-				>
-			</File>
-			<File
-				RelativePath="..\common\SetEnvVar.h"
-				>
-			</File>
-			<File
-				RelativePath="..\common\ConsoleAnnotation.h"
-				>
-			</File>
-			<File
-				RelativePath="..\common\defines.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Dialogs.h"
-				>
-			</File>
-			<File
-				RelativePath="..\ConEmu\DragDrop.h"
-				>
-			</File>
-			<File
-				RelativePath="..\common\farcolor.hpp"
-				>
-			</File>
-			<File
-				RelativePath="..\common\Memory.h"
-				>
-			</File>
-			<File
-				RelativePath="..\common\Monitors.h"
-				>
-			</File>
-			<File
-				RelativePath="..\common\MSecurity.h"
-				>
-			</File>
-			<File
-				RelativePath="..\common\MStrSafe.h"
-				>
-			</File>
-			<File
-				RelativePath=".\PluginBackground.h"
-				>
-			</File>
-			<File
-				RelativePath=".\PluginHeader.h"
-				>
-			</File>
-			<File
-				RelativePath=".\PluginSrv.h"
-				>
-			</File>
-			<File
-				RelativePath="..\ConEmuHk\SetHook.h"
-				>
-			</File>
-			<File
-				RelativePath="..\common\WinConsole.h"
-				>
-			</File>
-			<File
-				RelativePath="..\common\WinObjects.h"
-				>
-			</File>
+			<File RelativePath="..\common\CmdLine.h" />
+			<File RelativePath="..\common\common.hpp" />
+			<File RelativePath="..\common\ConEmuCheck.h" />
+			<File RelativePath="..\common\ConEmuCheckEx.h" />
+			<File RelativePath="..\common\ConsoleAnnotation.h" />
+			<File RelativePath="..\common\defines.h" />
+			<File RelativePath="..\common\farcolor.hpp" />
+			<File RelativePath="..\common\Memory.h" />
+			<File RelativePath="..\common\Monitors.h" />
+			<File RelativePath="..\common\MSecurity.h" />
+			<File RelativePath="..\common\MStrSafe.h" />
+			<File RelativePath="..\common\SetEnvVar.h" />
+			<File RelativePath="..\common\WinConsole.h" />
+			<File RelativePath="..\common\WinObjects.h" />
+			<File RelativePath="..\ConEmu\DragDrop.h" />
+			<File RelativePath="..\ConEmuHk\SetHook.h" />
+			<File RelativePath=".\ConEmu_Lang.h" />
+			<File RelativePath=".\Dialogs.h" />
+			<File RelativePath=".\PluginBackground.h" />
+			<File RelativePath=".\PluginHeader.h" />
+			<File RelativePath=".\PluginSrv.h" />
 		</Filter>
 		<Filter
 			Name="Resource Files"
