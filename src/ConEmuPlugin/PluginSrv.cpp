@@ -246,14 +246,14 @@ bool PlugServerStart()
 {
 	bool lbStarted = false;
 	DWORD dwCurProcId = GetCurrentProcessId();
-	
+
 	_wsprintf(gszPluginServerPipe, SKIPLEN(countof(gszPluginServerPipe)) CEPLUGINPIPENAME, L".", dwCurProcId);
 
 	ghServerTerminateEvent = CreateEvent(NULL,TRUE,FALSE,NULL);
 	_ASSERTE(ghServerTerminateEvent!=NULL);
 
 	if (ghServerTerminateEvent) ResetEvent(ghServerTerminateEvent);
-	
+
 	//gnPlugServerThreadId = 0;
 	//ghPlugServerThread = CreateThread(NULL, 0, PlugServerThread, (LPVOID)NULL, 0, &gnPlugServerThreadId);
 	//_ASSERTE(ghPlugServerThread!=NULL);
@@ -265,11 +265,11 @@ bool PlugServerStart()
 		gpPlugServer->SetOverlapped(true);
 		gpPlugServer->SetLoopCommands(false);
 		gpPlugServer->SetDummyAnswerSize(sizeof(CESERVER_REQ_HDR));
-		
+
 		lbStarted = gpPlugServer->StartPipeServer(gszPluginServerPipe, NULL, LocalSecurity(), PlugServerCommand, PlugServerFree);
 	}
 	_ASSERTE(gpPlugServer!=NULL && lbStarted);
-	
+
 	return lbStarted;
 }
 
@@ -278,7 +278,7 @@ void PlugServerStop(bool abDelete)
 	if (gpPlugServer)
 	{
 		gpPlugServer->StopPipeServer(true);
-		
+
 		if (abDelete)
 		{
 			SafeFree(gpPlugServer);
@@ -595,7 +595,7 @@ BOOL WINAPI PlugServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &pp
 				#ifdef _DEBUG
 				if (IsDebuggerPresent()) nTimeout = 120000;
 				#endif
-				
+
 				nSetWindowWait = WaitForSingleObject(ghSetWndSendTabsEvent, nTimeout);
 			}
 
@@ -705,7 +705,7 @@ BOOL WINAPI PlugServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &pp
 		const wchar_t *pszUserMacro = (wchar_t*)(crMouse+1);
 #endif
 		DWORD ClickArg[2] = {TRUE, MAKELONG(crMouse->X, crMouse->Y)};
-		
+
 		// Выделить файл под курсором
 		DEBUGSTRMENU(L"\n*** ServerThreadCommand->ProcessCommand(CMD_LEFTCLKSYNC) begin\n");
 		BOOL lb1 = ProcessCommand(CMD_LEFTCLKSYNC, TRUE/*bReqMainThread*/, ClickArg/*pIn->Data*/);
@@ -740,7 +740,7 @@ BOOL WINAPI PlugServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &pp
 		{
 			lbRc = TRUE;
 			ppReply->dwData[0] = nDataSize;
-		}		
+		}
 	}
 	else
 	{

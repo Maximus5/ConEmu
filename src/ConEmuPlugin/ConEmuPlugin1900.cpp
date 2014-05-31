@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2012 Maximus5
+Copyright (c) 2009-2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -61,7 +61,7 @@ static wchar_t* GetPanelDir(HANDLE hPanel)
 {
 	wchar_t* pszDir = NULL;
 	size_t nSize;
-	
+
 	PanelInfo pi = {sizeof(pi)};
 	nSize = InfoW1900->PanelControl(hPanel, FCTL_GETPANELINFO, 0, &pi);
 
@@ -141,7 +141,7 @@ void ProcessDragFromW1900()
 	WCHAR *szCurDir = NULL;
 	InfoW1900->PanelControl(PANEL_ACTIVE, FCTL_GETPANELINFO, NULL, &PInfo);
 
-	if ((PInfo.PanelType == PTYPE_FILEPANEL || PInfo.PanelType == PTYPE_TREEPANEL) 
+	if ((PInfo.PanelType == PTYPE_FILEPANEL || PInfo.PanelType == PTYPE_TREEPANEL)
 		&& (PInfo.Flags & PFLAGS_VISIBLE))
 	{
 		szCurDir = GetPanelDir(PANEL_ACTIVE);
@@ -400,7 +400,7 @@ void ProcessDragToW1900()
 		pfpi->ActiveRect=PAInfo.PanelRect;
 
 		if (!(PAInfo.Flags & PFLAGS_PLUGIN)
-			&& (PAInfo.PanelType == PTYPE_FILEPANEL || PAInfo.PanelType == PTYPE_TREEPANEL) 
+			&& (PAInfo.PanelType == PTYPE_FILEPANEL || PAInfo.PanelType == PTYPE_TREEPANEL)
 			&& (PAInfo.Flags & PFLAGS_VISIBLE))
 		{
 			if (szADir[0])
@@ -418,7 +418,7 @@ void ProcessDragToW1900()
 		pfpi->PassiveRect=PPInfo.PanelRect;
 
 		if (!(PPInfo.Flags & PFLAGS_PLUGIN)
-			&& (PPInfo.PanelType == PTYPE_FILEPANEL || PPInfo.PanelType == PTYPE_TREEPANEL) 
+			&& (PPInfo.PanelType == PTYPE_FILEPANEL || PPInfo.PanelType == PTYPE_TREEPANEL)
 			&& (PPInfo.Flags & PFLAGS_VISIBLE))
 		{
 			if (szPDir[0])
@@ -592,7 +592,7 @@ bool UpdateConEmuTabsW1900(int anEvent, bool losingFocus, bool editorSave, void*
 	WindowInfo WActive = {sizeof(WActive)};
 	WActive.Pos = -1;
 	bool bActiveInfo = InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETWINDOWINFO, 0, &WActive)!=0;
-	// Если фар запущен с ключом "/e" (как standalone редактор) - будет ассерт при первой попытке 
+	// Если фар запущен с ключом "/e" (как standalone редактор) - будет ассерт при первой попытке
 	// считать информацию об окне (редактор еще не создан?, а панелей вообще нет)
 	_ASSERTE(bActiveInfo && (WActive.Flags & WIF_CURRENT));
 	static WindowInfo WLastActive;
@@ -981,7 +981,7 @@ void PostMacroW1900(const wchar_t* asMacro, INPUT_RECORD* apRec)
 			Result->StructSize = sizeof(*Result);
 			_ASSERTE(FALSE && "Check MCTL_GETLASTERROR");
 			InfoW1900->MacroControl(&guid_ConEmu, MCTL_GETLASTERROR, iRcSize, Result);
-			
+
 			size_t cchMax = (Result->ErrSrc ? lstrlen(Result->ErrSrc) : 0) + lstrlen(asMacro) + 255;
 			pszErrText = (wchar_t*)malloc(cchMax*sizeof(wchar_t));
 			_wsprintf(pszErrText, SKIPLEN(cchMax)
@@ -1191,14 +1191,14 @@ void WaitEndSynchroW1900()
 
 		{DI_BUTTON,     0,  2,  0,  0, {0},  0, 0, DIF_FOCUS|DIF_CENTERGROUP|DIF_DEFAULTBUTTON, GetMsgW1900(CEStopSynchroWaiting)},
 	};
-	
+
 	//GUID ConEmuWaitEndSynchro = { /* d0f369dc-2800-4833-a858-43dd1c115370 */
 	//	    0xd0f369dc,
 	//	    0x2800,
 	//	    0x4833,
 	//	    {0xa8, 0x58, 0x43, 0xdd, 0x1c, 0x11, 0x53, 0x70}
 	//	  };
-	
+
 	ghSyncDlg = InfoW1900->DialogInit(&guid_ConEmu, &guid_ConEmuWaitEndSynchro,
 			-1,-1, 55, 5, NULL, items, countof(items), 0, 0, NULL, 0);
 
@@ -1329,7 +1329,7 @@ bool RunExternalProgramW1900(wchar_t* pszCommand)
 				pszExpand = (wchar_t*)calloc(cchMax,sizeof(*pszExpand));
 				nExpLen = ExpandEnvironmentStrings(pszCommand, pszExpand, cchMax);
 			}
-			
+
 			if (nExpLen && (nExpLen <= cchMax))
 			{
 				pszCommand = pszExpand;
@@ -1348,12 +1348,12 @@ bool RunExternalProgramW1900(wchar_t* pszCommand)
 	}
 
 	bool bSilent = (wcsstr(pszCommand, L"-new_console") != NULL);
-	
+
 	if (!bSilent)
 		InfoW1900->PanelControl(INVALID_HANDLE_VALUE,FCTL_GETUSERSCREEN,0,0);
-		
+
 	RunExternalProgramW(pszCommand, pszCurDir, bSilent);
-	
+
 	if (!bSilent)
 		InfoW1900->PanelControl(INVALID_HANDLE_VALUE,FCTL_SETUSERSCREEN,0,0);
 	InfoW1900->AdvControl(&guid_ConEmu,ACTL_REDRAWALL,0, 0);
@@ -1545,7 +1545,7 @@ BOOL ReloadFarInfoW1900(/*BOOL abFull*/)
 		default:
 			gpFarInfo->nMacroArea = fma_Unknown;
 	}
-	    
+
 	gpFarInfo->bFarPanelAllowed = InfoW1900->PanelControl(PANEL_NONE, FCTL_CHECKPANELSEXIST, 0, 0)!=0;
 	gpFarInfo->bFarPanelInfoFilled = FALSE;
 	gpFarInfo->bFarLeftPanel = FALSE;
@@ -1640,7 +1640,7 @@ static void CopyPanelInfoW(PanelInfo* pInfo, PaintBackgroundArg::BkPanelInfo* pB
 		{
 			InfoW1900->PanelControl(hPanel, FCTL_GETPANELPREFIX, BkPanelInfo_FormatMax, pBk->szFormat);
 		}
-		
+
 		InfoW1900->PanelControl(hPanel, FCTL_GETPANELHOSTFILE, BkPanelInfo_HostFileMax, pBk->szHostFile);
 	}
 	else
@@ -1759,7 +1759,7 @@ int GetActiveWindowTypeW1900()
 //
 //	HANDLE hDlg = InfoW1900->DialogInitW1900(&guid_ConEmu, ConEmuCallGuiMacro,
 //									-1, -1, 76, height,
-//									NULL/*L"Configure"*/, items, nCount, 
+//									NULL/*L"Configure"*/, items, nCount,
 //									0, 0/*Flags*/, (FARWINDOWPROC)CallGuiMacroDlg, 0);
 //	return hDlg;
 //}
@@ -1784,14 +1784,14 @@ void WINAPI GetGlobalInfoW(struct GlobalInfo *Info)
 	//static wchar_t szTitle[16]; _wcscpy_c(szTitle, L"ConEmu");
 	//static wchar_t szDescr[64]; _wcscpy_c(szTitle, L"ConEmu support for Far Manager");
 	//static wchar_t szAuthr[64]; _wcscpy_c(szTitle, L"ConEmu.Maximus5@gmail.com");
-	
+
 	//Info->StructSize = sizeof(GlobalInfo);
 	_ASSERTE(Info->StructSize >= sizeof(GlobalInfo));
 	Info->MinFarVersion = FARMANAGERVERSION;
 
 	// Build: YYMMDDX (YY - две цифры года, MM - месяц, DD - день, X - 0 и выше-номер подсборки)
 	Info->Version = MAKEFARVERSION(MVV_1,MVV_2,MVV_3,((MVV_1 % 100)*100000) + (MVV_2*1000) + (MVV_3*10) + (MVV_4 % 10),VS_RELEASE);
-	
+
 	Info->Guid = guid_ConEmu;
 	Info->Title = L"ConEmu";
 	Info->Description = L"ConEmu support for Far Manager";
@@ -1806,7 +1806,7 @@ HANDLE WINAPI OpenW1900(const void* apInfo)
 
 	if (!gbInfoW_OK)
 		return NULL;
-	
+
 	INT_PTR Item = Info->Data;
 	if ((Info->OpenFrom & OPEN_FROM_MASK) == OPEN_FROMMACRO)
 	{

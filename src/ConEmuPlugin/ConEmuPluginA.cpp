@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2012 Maximus5
+Copyright (c) 2009-2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -989,7 +989,7 @@ bool RunExternalProgramA(char* pszCommand)
 				pszExpand = (wchar_t*)realloc(pszExpand, cchMax*sizeof(*pszExpand));
 				nExpLen = ExpandEnvironmentStrings(pwszCommand, pszExpand, cchMax);
 			}
-			
+
 			if (nExpLen && (nExpLen <= cchMax))
 			{
 				free(pwszCommand);
@@ -998,14 +998,14 @@ bool RunExternalProgramA(char* pszCommand)
 		}
 	}
 
-	
+
 	bool bSilent = (wcsstr(pwszCommand, L"-new_console") != NULL);
-	
+
 	if (!bSilent)
 		InfoA->Control(INVALID_HANDLE_VALUE,FCTL_GETUSERSCREEN,0);
-		
+
 	RunExternalProgramW(pwszCommand, strCurDir, bSilent);
-	
+
 	if (!bSilent)
 		InfoA->Control(INVALID_HANDLE_VALUE,FCTL_SETUSERSCREEN,0);
 	InfoA->AdvControl(InfoA->ModuleNumber,ACTL_REDRAWALL,0);
@@ -1070,7 +1070,7 @@ void LoadFarColorsA(BYTE (&nFarColors)[col_LastIndex])
 static void LoadFarSettingsA(CEFarInterfaceSettings* pInterface, CEFarPanelSettings* pPanel)
 {
 	DWORD nSet;
-	
+
 	nSet = (DWORD)InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETINTERFACESETTINGS, 0);
 	if (pInterface)
 	{
@@ -1078,7 +1078,7 @@ static void LoadFarSettingsA(CEFarInterfaceSettings* pInterface, CEFarPanelSetti
 		_ASSERTE((pInterface->AlwaysShowMenuBar != 0) == ((nSet & FIS_ALWAYSSHOWMENUBAR) != 0));
 		_ASSERTE((pInterface->ShowKeyBar != 0) == ((nSet & FIS_SHOWKEYBAR) != 0));
 	}
-	    
+
 	nSet = (DWORD)InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETPANELSETTINGS, 0);
 	if (pPanel)
 	{
@@ -1122,7 +1122,7 @@ BOOL ReloadFarInfoA(/*BOOL abFull*/)
 
 #endif
 	gpFarInfo->nFarConsoleMode = ldwConsoleMode;
-	
+
 	LoadFarColorsA(gpFarInfo->nFarColors);
 
 	//_ASSERTE(FPS_SHOWCOLUMNTITLES==0x20 && FPS_SHOWSTATUSLINE==0x40); //-V112
@@ -1130,10 +1130,10 @@ BOOL ReloadFarInfoA(/*BOOL abFull*/)
 
 	//gpFarInfo->nFarConfirmationSettings =
 	//    (DWORD)InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETCONFIRMATIONS, 0);
-	
+
 	gpFarInfo->bMacroActive = IsMacroActiveW995();
 	gpFarInfo->nMacroArea = fma_Unknown; // в Far 1.7x не поддерживается
-	
+
 	gpFarInfo->bFarPanelAllowed = InfoA->Control(INVALID_HANDLE_VALUE, FCTL_CHECKPANELSEXIST, 0);
 	gpFarInfo->bFarPanelInfoFilled = FALSE;
 	gpFarInfo->bFarLeftPanel = FALSE;

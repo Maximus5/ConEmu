@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2012 Maximus5
+Copyright (c) 2009-2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -569,7 +569,7 @@ void CPluginBackground::UpdateBackground()
 	bi.biPlanes = 1;
 	bi.biBitCount = 32; //-V112
 	bi.biCompression = BI_RGB;
-	
+
 	//_ASSERTE(Arg.LeftPanel.bVisible || Arg.RightPanel.bVisible);
 	HDC hScreen = GetDC(NULL);
 
@@ -623,7 +623,7 @@ void CPluginBackground::UpdateBackground()
 		hDib = CreateDIBSection(hScreen, (BITMAPINFO*)&bi, DIB_RGB_COLORS, (void**)&pBits, NULL, 0);
 	}
 	ReleaseDC(NULL, hScreen); hScreen = NULL;
-	
+
 	Arg.hdc = hdc;
 
 	if (SETBACKGROUND_USE_EMF==1)
@@ -651,7 +651,7 @@ void CPluginBackground::UpdateBackground()
 		}
 
 		hOld = (HBITMAP)SelectObject(hdc, hDib);
-	
+
 		// Залить черным - по умолчанию
 		#ifdef _DEBUG
 			memset(pBits, 128, bi.biWidth*bi.biHeight*4); //-V112
@@ -784,7 +784,7 @@ void CPluginBackground::UpdateBackground()
 			pIn->Background.bmp.bfSize = nBitSize+sizeof(BITMAPFILEHEADER)+sizeof(BITMAPINFOHEADER); //-V119
 			pIn->Background.bmp.bfOffBits = sizeof(BITMAPFILEHEADER)+sizeof(BITMAPINFOHEADER); //-V119
 			pIn->Background.bi = bi;
-			
+
 			if (SETBACKGROUND_USE_EMF==1)
 			{
 				LPBYTE pBits = ((LPBYTE)&pIn->Background)+sizeof(pIn->Background);
@@ -858,8 +858,6 @@ void CPluginBackground::UpdateBackground()
 			hEmf = NULL;
 		}
 	}
-
-	
 }
 
 BOOL CPluginBackground::LoadThSet(BOOL abFromMainThread)

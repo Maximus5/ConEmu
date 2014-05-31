@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2012 Maximus5
+Copyright (c) 2009-2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -68,7 +68,7 @@ static wchar_t* GetPanelDir(HANDLE hPanel)
 	return pszDir;
 }
 
-	
+
 // minimal(?) FAR version 2.0 alpha build FAR_X_VER
 int WINAPI _export GetMinFarVersionW(void)
 {
@@ -76,7 +76,7 @@ int WINAPI _export GetMinFarVersionW(void)
 	//	// FarColorer TrueMod?
 	//	return MAKEFARVERSION(2,0,1721);
 	//#else
-	
+
 	// svs 19.12.2010 22:52:53 +0300 - build 1765: Новая команда в FARMACROCOMMAND - MCMD_GETAREA
 	return MAKEFARVERSION(2,0,1765);
 
@@ -1030,7 +1030,7 @@ bool RunExternalProgramW995(wchar_t* pszCommand)
 				pszExpand = (wchar_t*)calloc(cchMax,sizeof(*pszExpand));
 				nExpLen = ExpandEnvironmentStrings(pszCommand, pszExpand, cchMax);
 			}
-			
+
 			if (nExpLen && (nExpLen <= cchMax))
 			{
 				pszCommand = pszExpand;
@@ -1059,14 +1059,14 @@ bool RunExternalProgramW995(wchar_t* pszCommand)
 			return TRUE;
 		lstrcpy(pszCurDir, L"C:\\");
 	}
-	
+
 	bool bSilent = (wcsstr(pszCommand, L"-new_console") != NULL);
 
 	if (!bSilent)
 		InfoW995->Control(INVALID_HANDLE_VALUE,FCTL_GETUSERSCREEN,0,0);
-		
+
 	RunExternalProgramW(pszCommand, pszCurDir, bSilent);
-	
+
 	if (!bSilent)
 		InfoW995->Control(INVALID_HANDLE_VALUE,FCTL_SETUSERSCREEN,0,0);
 	InfoW995->AdvControl(InfoW995->ModuleNumber,ACTL_REDRAWALL,0);
@@ -1140,7 +1140,7 @@ static void LoadFarSettingsW995(CEFarInterfaceSettings* pInterface, CEFarPanelSe
 		_ASSERTE((pInterface->AlwaysShowMenuBar != 0) == ((nSet & FIS_ALWAYSSHOWMENUBAR) != 0));
 		_ASSERTE((pInterface->ShowKeyBar != 0) == ((nSet & FIS_SHOWKEYBAR) != 0));
 	}
-	    
+
 	nSet = (DWORD)InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETPANELSETTINGS, 0);
 	if (pPanel)
 	{
@@ -1184,7 +1184,7 @@ BOOL ReloadFarInfoW995(/*BOOL abFull*/)
 
 #endif
 	gpFarInfo->nFarConsoleMode = ldwConsoleMode;
-	
+
 	LoadFarColorsW995(gpFarInfo->nFarColors);
 
 	//_ASSERTE(FPS_SHOWCOLUMNTITLES==0x20 && FPS_SHOWSTATUSLINE==0x40); //-V112
@@ -1383,7 +1383,7 @@ int GetActiveWindowTypeW995()
 
 	//_ASSERTE(GetCurrentThreadId() == gnMainThreadId);
 
-	
+
 	ActlKeyMacro area = {MCMD_GETAREA};
 	INT_PTR nArea = InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_KEYMACRO, &area);
 
@@ -1415,12 +1415,12 @@ int GetActiveWindowTypeW995()
 		//default:
 		//	return -1;
 	}
-	
+
 	//WindowInfo WInfo = {-1};
 	//_ASSERTE(GetCurrentThreadId() == gnMainThreadId);
 	//InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETSHORTWINDOWINFO, (void*)&WInfo);
 	//return WInfo.Type;
-	
+
 	return -1;
 }
 
