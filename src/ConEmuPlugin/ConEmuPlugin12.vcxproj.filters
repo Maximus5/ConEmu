@@ -81,6 +81,9 @@
     <ClCompile Include="..\common\SetEnvVar.cpp">
       <Filter>0 - Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\common\CmdLine.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="export.release.def">
@@ -167,6 +170,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\common\SetEnvVar.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\CmdLine.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

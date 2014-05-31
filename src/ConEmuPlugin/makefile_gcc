@@ -7,6 +7,7 @@ SRCS = ConEmuPlugin.cpp \
        ConEmuInjects.cpp \
        PluginBackground.cpp \
        PluginSrv.cpp \
+       ../common/CmdLine.cpp \
        ../common/Common.cpp \
        ../common/ConEmuCheck.cpp \
        ../common/ConEmuCheckEx.cpp \

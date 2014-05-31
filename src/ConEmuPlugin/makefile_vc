@@ -28,6 +28,7 @@ $(OBJDIR)\ConEmuPlugin2800.obj \
 $(OBJDIR)\ConEmuPluginA.obj \
 $(OBJDIR)\PluginBackground.obj \
 $(OBJDIR)\PluginSrv.obj \
+$(OBJDIR)\CmdLine.obj \
 $(OBJDIR)\Common.obj \
 $(OBJDIR)\Execute.obj \
 $(OBJDIR)\ConEmuCheck.obj \
@@ -243,6 +244,8 @@ $(OBJDIR)\ConEmuPluginA.obj: ConEmuPluginA.cpp
 $(OBJDIR)\PluginBackground.obj: PluginBackground.cpp
 
 $(OBJDIR)\PluginSrv.obj: PluginSrv.cpp ../common/PipeServer.h
+
+$(OBJDIR)\CmdLine.obj: ..\common\CmdLine.cpp
 
 $(OBJDIR)\Common.obj: ..\common\Common.cpp
 
