@@ -50,6 +50,8 @@ public:
 	wchar_t ms_LastTokenSave[32];
 	#endif
 
+	bool mb_RestorePath; // Если используется для сохранения переменной %PATH%, восстановить при закрытии объекта
+
 public:
 	operator LPCWSTR() const { return ms_Arg; };
 
@@ -58,6 +60,7 @@ public:
 	void Empty();
 	bool IsEmpty();
 	LPCWSTR Set(LPCWSTR asNewValue, int anChars = -1);
+	void SavePathVar(LPCWSTR asCurPath);
 	void SetAt(INT_PTR nIdx, wchar_t wc);
 
 	void GetPosFrom(const CmdArg& arg);

@@ -36,10 +36,15 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 CmdArg::CmdArg()
 {
 	mn_MaxLen = 0; ms_Arg = NULL;
+	mb_RestorePath = false;
 	Empty();
 }
 CmdArg::~CmdArg()
 {
+	if (mb_RestorePath && !IsEmpty())
+	{
+		SetEnvironmentVariable(L"PATH", ms_Arg);
+	}
 	SafeFree(ms_Arg);
 }
 wchar_t* CmdArg::GetBuffer(INT_PTR cchMaxLen)
@@ -88,6 +93,7 @@ void CmdArg::Empty()
 	ms_LastTokenEnd = NULL;
 	ms_LastTokenSave[0] = 0;
 	#endif
+	mb_RestorePath = false;
 }
 bool CmdArg::IsEmpty()
 {
@@ -114,6 +120,11 @@ LPCWSTR CmdArg::Set(LPCWSTR asNewValue, int anChars /*= -1*/)
 		Empty();
 	}
 	return ms_Arg;
+}
+void CmdArg::SavePathVar(LPCWSTR asCurPath)
+{
+	if (Set(asCurPath))
+		mb_RestorePath = true;
 }
 void CmdArg::SetAt(INT_PTR nIdx, wchar_t wc)
 {
