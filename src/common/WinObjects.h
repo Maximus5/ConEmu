@@ -66,7 +66,7 @@ bool FilesExists(LPCWSTR asDirectory, LPCWSTR asFileList, bool abAll = false, in
 bool FileExistsSearch(wchar_t* rsFilePath, size_t cchPathMax);
 bool DirectoryExists(LPCWSTR asPath);
 bool MyCreateDirectory(wchar_t* asPath);
-bool IsFilePath(LPCWSTR asFilePath);
+bool IsFilePath(LPCWSTR asFilePath, bool abFullRequired = false);
 bool IsPathNeedQuot(LPCWSTR asPath);
 bool IsUserAdmin();
 bool GetLogonSID (HANDLE hToken, wchar_t **ppszSID);

@@ -506,8 +506,11 @@ bool MyCreateDirectory(wchar_t* asPath)
 }
 
 // Первичная проверка, может ли asFilePath быть путем
-bool IsFilePath(LPCWSTR asFilePath)
+bool IsFilePath(LPCWSTR asFilePath, bool abFullRequired /*= false*/)
 {
+	if (!asFilePath || !*asFilePath)
+		return false;
+
 	// Если в пути встречаются недопустимые символы
 	if (wcschr(asFilePath, L'"') ||
 	        wcschr(asFilePath, L'>') ||
@@ -531,6 +534,14 @@ bool IsFilePath(LPCWSTR asFilePath)
 
 		if (wcschr(pszColon+1, L':'))
 			return false;
+	}
+
+	if (abFullRequired)
+	{
+		if ((asFilePath[0] == L'\\' && asFilePath[1] == L'\\' && asFilePath[2] && wcschr(asFilePath+3,L'\\'))
+				|| (isDriveLetter(asFilePath[0]) && asFilePath[1] == L':' && asFilePath[2]))
+			return true;
+		return false;
 	}
 
 	// May be file path
