@@ -12562,6 +12562,72 @@ void CRealConsole::GetConsoleScreenBufferInfo(CONSOLE_SCREEN_BUFFER_INFO* sbi)
 	mp_ABuf->ConsoleScreenBufferInfo(sbi);
 }
 
+// pszSrc содержит либо полный путь, либо часть его
+// допускаются как прямые так и обратные слеши
+// путь может быть указан в cygwin формате
+// также, функция может выполнить автопоиск в 1-м уровне подпапок "текущей" директории
+LPCWSTR CRealConsole::GetFileFromConsole(LPCWSTR asSrc, CmdArg& szFull)
+{
+	szFull.Empty();
+
+	if (!this || !asSrc || !*asSrc)
+	{
+		_ASSERTE(this && asSrc && *asSrc);
+		return NULL;
+	}
+
+	CmdArg szWinPath;
+	LPCWSTR pszWinPath = szWinPath.Attach(MakeWinPath(asSrc));
+	if (!pszWinPath || !*pszWinPath)
+	{
+		_ASSERTE(pszWinPath && *pszWinPath);
+		return NULL;
+	}
+
+	if (IsFilePath(pszWinPath, true))
+	{
+		szFull.Attach(szWinPath.Detach());
+	}
+	else
+	{
+		CmdArg szDir;
+		LPCWSTR pszDir = GetConsoleCurDir(szDir);
+		_ASSERTE(pszDir && wcschr(pszDir,L'/')==NULL);
+
+		if (!FilesExists(pszDir, pszWinPath, true, 1))
+		{
+			TODO("Попытаться просканировать один уровень подпапок");
+			return szFull.Attach(szWinPath.Detach());
+		}
+
+		bool bDirSlash  = (pszDir && *pszDir) ? (pszDir[lstrlen(pszDir)-1] == L'\\') : false;
+		bool bFileSlash = (pszWinPath[0] == L'\\');
+
+		if (bDirSlash && bFileSlash)
+			szFull.Attach(lstrmerge(pszDir, pszWinPath+1));
+		else if (bDirSlash || bFileSlash)
+			szFull.Attach(lstrmerge(pszDir, pszWinPath));
+		else
+			szFull.Attach(lstrmerge(pszDir, L"\\", pszWinPath));
+	}
+
+	return szFull;
+}
+
+LPCWSTR CRealConsole::GetConsoleCurDir(CmdArg& szDir)
+{
+	if (!this)
+	{
+		_ASSERTE(this);
+		return NULL;
+	}
+
+	WARNING("!!! Нужно переделеать! Пытаться получать реальную папку из консоли !!!");
+	LPCWSTR pszWordDir = gpConEmu->WorkDir(m_Args.pszStartupDir);
+	szDir.Set(pszWordDir);
+	return szDir.IsEmpty() ? NULL : (LPCWSTR)szDir;
+}
+
 //void CRealConsole::GetConsoleCursorPos(COORD *pcr)
 //{
 //	if (!this) return;

@@ -579,6 +579,8 @@ class CRealConsole
 		bool IsLogShellStarted();
 		wchar_t ms_LogShellActivity[MAX_PATH]; bool mb_ShellActivityLogged;
 		int GetStatusLineCount(int nLeftPanelEdge);
+		LPCWSTR GetFileFromConsole(LPCWSTR asSrc, CmdArg& szFull);
+		LPCWSTR GetConsoleCurDir(CmdArg& szDir);
 
 	public:
 		BOOL IsConsoleThread();
