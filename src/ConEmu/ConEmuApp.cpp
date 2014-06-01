@@ -958,6 +958,79 @@ wchar_t* DupCygwinPath(LPCWSTR asWinPath, bool bAutoQuote)
 	return pszResult;
 }
 
+// Вернуть путь с обратными слешами, если диск указан в cygwin-формате - добавить двоеточие
+// asAnyPath может быть полным или относительным путем, например
+// C:\Src\file.c
+// C:/Src/file.c
+// /C/Src/file.c
+// //server/share/file
+// \\server\share/path/file
+// /cygdrive/C/Src/file.c
+// ..\folder/file.c
+wchar_t* MakeWinPath(LPCWSTR asAnyPath)
+{
+	// Drop spare prefix, point to "/" after "/cygdrive"
+	int iSkip = startswith(asAnyPath, L"/cygdrive/", true);
+	LPCWSTR pszSrc = asAnyPath + ((iSkip > 0) ? (iSkip-1) : 0);
+
+	// Prepare buffer
+	int iLen = lstrlen(pszSrc);
+	if (iLen < 1)
+	{
+		_ASSERTE(lstrlen(pszSrc) > 0);
+		return NULL;
+	}
+
+	// Диск в cygwin формате?
+	wchar_t cDrive = 0;
+	if ((pszSrc[0] == L'/' || pszSrc[0] == L'\\')
+		&& isDriveLetter(pszSrc[1])
+		&& (pszSrc[2] == L'/' || pszSrc[2] == L'\\'))
+	{
+		cDrive = pszSrc[1];
+		CharUpperBuff(&cDrive, 1);
+		pszSrc += 2;
+	}
+
+	// Формируем буфер
+	wchar_t* pszRc = (wchar_t*)malloc((iLen+1)*sizeof(wchar_t));
+	if (!pszRc)
+	{
+		_ASSERTE(pszRc && "malloc failed");
+		return NULL;
+	}
+	// Make path
+	wchar_t* pszDst = pszRc;
+	if (cDrive)
+	{
+		*(pszDst++) = cDrive;
+		*(pszDst++) = L':';
+		iLen -= 2;
+	}
+	_wcscpy_c(pszDst, iLen+1, pszSrc);
+	// Convert slashes
+	pszDst = wcschr(pszDst, L'/');
+	while (pszDst)
+	{
+		*pszDst = L'\\';
+		pszDst = wcschr(pszDst+1, L'/');
+	}
+	// Ready
+	return pszRc;
+}
+
+wchar_t* MakeStraightSlashPath(LPCWSTR asWinPath)
+{
+	wchar_t* pszSlashed = lstrdup(asWinPath);
+	wchar_t* p = wcschr(pszSlashed, L'\\');
+	while (p)
+	{
+		*p = L'/';
+		p = wcschr(p+1, L'\\');
+	}
+	return pszSlashed;
+}
+
 wchar_t* SelectFolder(LPCWSTR asTitle, LPCWSTR asDefFolder /*= NULL*/, HWND hParent /*= ghWnd*/, bool bAutoQuote /*= true*/, bool bCygwin /*= false*/)
 {
 	wchar_t* pszResult = NULL;
