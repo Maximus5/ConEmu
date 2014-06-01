@@ -2869,7 +2869,7 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom, bool bUpdateScre
 											wchar_t* pszPrevPath = NULL;
 											if (NextArg(&pszTemp, szExe) == 0)
 											{
-												if (SearchAppPaths((LPCWSTR)szExe, szExe, &szPrevPath))
+												if (SearchAppPaths((LPCWSTR)szExe, szExe, true, &szPrevPath))
 												{
 													wchar_t* pszChanged = MergeCmdLine(szExe, pszTemp);
 													if (pszChanged)
