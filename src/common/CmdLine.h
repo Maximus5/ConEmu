@@ -57,6 +57,7 @@ public:
 
 	wchar_t* GetBuffer(INT_PTR cchMaxLen);
 	wchar_t* Detach();
+	LPCWSTR  Attach(wchar_t* asPtr);
 	void Empty();
 	bool IsEmpty();
 	LPCWSTR Set(LPCWSTR asNewValue, int anChars = -1);

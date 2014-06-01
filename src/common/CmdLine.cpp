@@ -81,6 +81,17 @@ wchar_t* CmdArg::Detach()
 	mn_MaxLen = 0;
 	return psz;
 }
+LPCWSTR CmdArg::Attach(wchar_t* asPtr)
+{
+	Empty();
+	SafeFree(ms_Arg);
+	if (asPtr)
+	{
+		ms_Arg = asPtr;
+		mn_MaxLen = lstrlen(asPtr+1);
+	}
+	return ms_Arg;
+}
 void CmdArg::Empty()
 {
 	if (ms_Arg)
@@ -112,6 +123,7 @@ LPCWSTR CmdArg::Set(LPCWSTR asNewValue, int anChars /*= -1*/)
 		}
 		else if (GetBuffer(nNewLen))
 		{
+			_ASSERTE(mn_MaxLen > nNewLen); // Must be set in GetBuffer
 			_wcscpyn_c(ms_Arg, mn_MaxLen, asNewValue, nNewLen);
 		}
 	}
