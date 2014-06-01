@@ -912,11 +912,20 @@ void PostMacroW2800(const wchar_t* asMacro, INPUT_RECORD* apRec)
 	MacroSendMacroText mcr = {sizeof(MacroSendMacroText)};
 	//mcr.Flags = 0; // По умолчанию - вывод на экран разрешен
 
-	if (*asMacro == L'@' && asMacro[1] && asMacro[1] != L' ')
+	while ((asMacro[0] == L'@' || asMacro[0] == L'^') && asMacro[1] && asMacro[1] != L' ')
 	{
-		mcr.Flags |= KMFLAGS_DISABLEOUTPUT;
-		asMacro ++;
+		switch (*asMacro)
+		{
+		case L'@':
+			mcr.Flags |= KMFLAGS_DISABLEOUTPUT;
+			break;
+		case L'^':
+			mcr.Flags |= KMFLAGS_NOSENDKEYSTOPLUGINS;
+			break;
+		}
+		asMacro++;
 	}
+
 
 	// This macro was not adopted to Lua?
 	_ASSERTE(*asMacro && *asMacro != L'$');

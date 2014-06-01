@@ -731,10 +731,18 @@ void PostMacroW995(const wchar_t* asMacro, INPUT_RECORD* apRec)
 	mcr.Command = MCMD_POSTMACROSTRING;
 	mcr.Param.PlainText.Flags = 0; // По умолчанию - вывод на экран разрешен
 
-	if (*asMacro == L'@' && asMacro[1] && asMacro[1] != L' ')
+	while ((asMacro[0] == L'@' || asMacro[0] == L'^') && asMacro[1] && asMacro[1] != L' ')
 	{
-		mcr.Param.PlainText.Flags |= KSFLAGS_DISABLEOUTPUT;
-		asMacro ++;
+		switch (*asMacro)
+		{
+		case L'@':
+			mcr.Param.PlainText.Flags |= KSFLAGS_DISABLEOUTPUT;
+			break;
+		case L'^':
+			mcr.Param.PlainText.Flags |= KSFLAGS_NOSENDKEYSTOPLUGINS;
+			break;
+		}
+		asMacro++;
 	}
 
 	mcr.Param.PlainText.Flags |= KSFLAGS_SILENTCHECK;

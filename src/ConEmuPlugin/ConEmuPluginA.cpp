@@ -795,10 +795,18 @@ void PostMacroA(char* asMacro, INPUT_RECORD* apRec)
 	mcr.Command = MCMD_POSTMACROSTRING;
 	mcr.Param.PlainText.Flags = 0; // По умолчанию - вывод на экран разрешен
 
-	if (*asMacro == '@' && asMacro[1] && asMacro[1] != ' ')
+	while ((asMacro[0] == '@' || asMacro[0] == '^') && asMacro[1] && asMacro[1] != ' ')
 	{
-		mcr.Param.PlainText.Flags |= KSFLAGS_DISABLEOUTPUT;
-		asMacro ++;
+		switch (*asMacro)
+		{
+		case '@':
+			mcr.Param.PlainText.Flags |= KSFLAGS_DISABLEOUTPUT;
+			break;
+		case '^':
+			mcr.Param.PlainText.Flags |= KSFLAGS_NOSENDKEYSTOPLUGINS;
+			break;
+		}
+		asMacro++;
 	}
 
 	mcr.Param.PlainText.SequenceText = asMacro;
