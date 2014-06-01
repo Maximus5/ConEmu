@@ -443,6 +443,20 @@ int lstrcmpni(LPCWSTR asStr1, LPCWSTR asStr2, int cchMax)
 	return nCmp;
 }
 
+// Returns 0 - if does not match
+// If match - returns length of the asPattern
+int startswith(LPCWSTR asStr, LPCWSTR asPattern, bool abIgnoreCase)
+{
+	if (!asStr || !*asStr || !asPattern || !*asPattern)
+		return 0;
+	int iCmp;
+	int iLen = lstrlen(asPattern);
+	if (abIgnoreCase)
+		iCmp = lstrcmpni(asStr, asPattern, iLen);
+	else
+		iCmp = wcsncmp(asStr, asPattern, iLen);
+	return (iCmp == 0) ? iLen : 0;
+}
 
 #if defined(_DEBUG) && !defined(STRSAFE_DISABLE)
 int swprintf_c(wchar_t* Buffer, INT_PTR size, const wchar_t *Format, ...)
