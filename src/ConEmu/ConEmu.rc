@@ -809,17 +809,17 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "Hyperlinks and compiler errors (goto editor)",IDC_STATIC,4,1,319,45
+    GROUPBOX        "Hyperlinks and compiler errors (goto editor)",IDC_STATIC,4,1,319,73
     CONTROL         "Highlight and goto",cbFarGotoEditor,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,13,76,8
     COMBOBOX        lbFarGotoEditorVk,94,11,56,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     RTEXT           "External editor, when Far not started:",stGotoEditorCmd,158,14,139,8
-    EDITTEXT        tGotoEditorCmd,11,27,287,13,ES_AUTOHSCROLL
+    COMBOBOX        lbGotoEditorCmd,11,27,287,13,CBS_DROPDOWN | CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
     PUSHBUTTON      "...",bGotoEditorCmd,301,27,16,12
-    GROUPBOX        "Highlight rows/columns",IDC_STATIC,4,54,319,43
+    GROUPBOX        "Highlight rows/columns",IDC_STATIC,4,80,319,43
     CONTROL         "Hightlight whole row under mouse cursor",cbHighlightMouseRow,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,68,305,8
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,94,305,8
     CONTROL         "Hightlight whole column under mouse cursor",cbHighlightMouseCol,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,81,305,8
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,107,305,8
 END
 
 IDD_SPG_PASTE DIALOGEX 0, 0, 328, 235

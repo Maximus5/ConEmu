@@ -628,7 +628,7 @@
 #define vkMultiNewPopup                 2252
 #define cbProcessAnsi                   2253
 #define vkMultiAltCon                   2254
-#define tGotoEditorCmd                  2255
+#define lbGotoEditorCmd                 2255
 #define stGotoEditorCmd                 2256
 #define cbCTSFreezeBeforeSelect         2257
 #define bGotoEditor                     2259
@@ -1011,6 +1011,7 @@
 #define cbAnsiLog                       2679
 #define sAnsiLogPath                    2680
 #define tAnsiLogPath                    2680
+#define stGotoEditorCmdHelp             2681
 
 // Next default values for new objects
 // 
@@ -1018,7 +1019,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        224
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2681
+#define _APS_NEXT_CONTROL_VALUE         2682
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif

@@ -2577,7 +2577,15 @@ LRESULT CSettings::OnInitDialog_Hilight(HWND hWnd2)
 	checkDlgButton(hWnd2, cbFarGotoEditor, gpSet->isFarGotoEditor);
 	DWORD VkMod = gpSet->GetHotkeyById(vkFarGotoEditorVk);
 	FillListBoxByte(hWnd2, lbFarGotoEditorVk, SettingsNS::KeysAct, VkMod);
-	SetDlgItemText(hWnd2, tGotoEditorCmd, gpSet->sFarGotoEditor);
+
+	LPCWSTR ppszDefEditors[] = {
+		HI_GOTO_EDITOR_FAR,    // Far Manager
+		HI_GOTO_EDITOR_SCITE,  // SciTE (Scintilla)
+		HI_GOTO_EDITOR_NPADP,  // Notepad++
+		HI_GOTO_EDITOR_VIMW,   // Vim, official, using Windows paths
+		HI_GOTO_EDITOR_SUBLM,  // Sublime text
+		NULL};
+	FillCBList(GetDlgItem(hWnd2, lbGotoEditorCmd), true/*abInitial*/, ppszDefEditors, gpSet->sFarGotoEditor);
 
 	// Highlight full row/column under mouse cursor
 	checkDlgButton(hWnd2, cbHighlightMouseRow, gpSet->isHighlightMouseRow);
@@ -6351,7 +6359,14 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			{
 				wchar_t szPath[MAX_PATH+1] = {};
 				wchar_t szInitialDir[MAX_PATH+1]; GetCurrentDirectory(countof(szInitialDir), szInitialDir);
-				lstrcpyn(szPath, gpSet->sFarGotoEditor, countof(szPath));
+
+				LPCWSTR pszTemp = gpSet->sFarGotoEditor;
+				CmdArg szExe;
+				if (NextArg(&pszTemp, szExe) == 0)
+				{
+					lstrcpyn(szPath, szExe, countof(szPath));
+				}
+
 				OPENFILENAME ofn = {sizeof(ofn)};
 				ofn.hwndOwner = ghOpWnd;
 				ofn.lpstrFilter = L"Executables (*.exe)\0*.exe\0\0";
@@ -6366,7 +6381,14 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 
 				if (GetSaveFileName(&ofn))
 				{
-					SetDlgItemText(hWnd2, tGotoEditorCmd, szPath);
+					wchar_t *pszBuf = MergeCmdLine(szPath, pszTemp);
+					if (pszBuf)
+					{
+						SetDlgItemText(hWnd2, lbGotoEditorCmd, pszBuf);
+
+						SafeFree(gpSet->sFarGotoEditor);
+						gpSet->sFarGotoEditor = pszBuf;
+					}
 				}
 			}
 			break;
@@ -7379,13 +7401,6 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		break;
 
 
-	case tGotoEditorCmd:
-		{
-			size_t cchMax = gpSet->sFarGotoEditor ? (lstrlen(gpSet->sFarGotoEditor)+1) : 0;
-			MyGetDlgItemText(hWnd2, tGotoEditorCmd, cchMax, gpSet->sFarGotoEditor);
-		}
-		break;
-
 	case tQuakeAnimation:
 		{
 			WORD TB = LOWORD(wParam);
@@ -8049,6 +8064,15 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		break;
 	} // lbCmdTasks:
 
+
+	case lbGotoEditorCmd:
+	{
+		if ((HIWORD(wParam) == CBN_EDITCHANGE) || (HIWORD(wParam) == CBN_SELCHANGE))
+		{
+			GetString(hWnd2, lbGotoEditorCmd, &gpSet->sFarGotoEditor, NULL, (HIWORD(wParam) == CBN_SELCHANGE));
+		}
+		break;
+	} // lbGotoEditorCmd
 
 	// Far macros:
 	case tRClickMacro:

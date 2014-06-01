@@ -649,7 +649,7 @@ void Settings::InitSettings()
 	isPasteConfirmEnter = true;
 	nPasteConfirmLonger = 200;
 	isFarGotoEditor = true; //isFarGotoEditorVk = VK_LCONTROL;
-	sFarGotoEditor = lstrdup(L"far.exe /e%1:%2 \"%3\"");
+	sFarGotoEditor = lstrdup(HI_GOTO_EDITOR_FAR);
 	isHighlightMouseRow = false; // Not turned on by default
 	isHighlightMouseCol = false; // Not turned on by default
 
