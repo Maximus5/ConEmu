@@ -129,6 +129,8 @@ CRealBuffer::CRealBuffer(CRealConsole* apRCon, RealBufferType aType/*=rbt_Primar
 	InitializeCriticalSection(&m_TrueMode.csLock);
 	m_TrueMode.mp_Cmp = NULL;
 	m_TrueMode.nCmpMax = 0;
+
+	mpp_RunHyperlink = NULL;
 }
 
 CRealBuffer::~CRealBuffer()
@@ -148,6 +150,12 @@ CRealBuffer::~CRealBuffer()
 
 	DeleteCriticalSection(&m_TrueMode.csLock);
 	SafeFree(m_TrueMode.mp_Cmp);
+
+	if (mpp_RunHyperlink)
+	{
+		SafeCloseHandle(mpp_RunHyperlink->hProcess);
+		SafeFree(mpp_RunHyperlink);
+	}
 }
 
 void CRealBuffer::ReleaseMem()
@@ -2785,16 +2793,43 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom, bool bUpdateScre
 						}
 						else
 						{
+							// Если явно указан другой внешний редактор - всегда использовать его
+							bool bUseExtEditor = false;
+							LPCWSTR pszTemp = gpSet->sFarGotoEditor;
+							CmdArg szExe;
+							if (NextArg(&pszTemp, szExe) == 0)
+							{
+								if (!IsFarExe(PointToName(szExe)))
+									bUseExtEditor = true;
+							}
+
+							CmdArg szWinPath;
+							LPCWSTR pszWinPath = mp_RCon->GetFileFromConsole(cmd.szFile, szWinPath);
+							if (pszWinPath)
+							{
+								// May be too long?
+								lstrcpyn(cmd.szFile, pszWinPath, countof(cmd.szFile));
+							}
+							else
+							{
+								_ASSERTE(pszWinPath!=NULL); // must not be here!
+								pszWinPath = cmd.szFile;
+							}
+
 							CVConGuard VCon;
-							if (!CVConGroup::isFarExist(fwt_NonModal|fwt_PluginRequired, NULL, &VCon))
+							if (bUseExtEditor || !CVConGroup::isFarExist(fwt_NonModal|fwt_PluginRequired, NULL, &VCon))
 							{
 								if (gpSet->sFarGotoEditor && *gpSet->sFarGotoEditor)
 								{
 									wchar_t szRow[32], szCol[32];
 									_wsprintf(szRow, SKIPLEN(countof(szRow)) L"%u", cmd.nLine);
 									_wsprintf(szCol, SKIPLEN(countof(szCol)) L"%u", cmd.nColon);
-									//LPCWSTR pszVar[] = {L"%1", L"%2", L"%3"};
-									LPCWSTR pszVal[] = {szRow, szCol, cmd.szFile};
+									//LPCWSTR pszVar[] = {L"%1", L"%2", L"%3", ...};
+									//%3’ - C:\\Path\\File, ‘%4’ - C:/Path/File, ‘%5’ - /C/Path/File
+
+									CmdArg szSlashed; szSlashed.Attach(MakeStraightSlashPath(pszWinPath));
+									CmdArg szCygwin;  szCygwin.Attach(DupCygwinPath(pszWinPath, false));
+									LPCWSTR pszVal[] = {szRow, szCol, pszWinPath, (LPCWSTR)szSlashed, (LPCWSTR)szCygwin};
 									//_ASSERTE(countof(pszVar)==countof(pszVal));
 									wchar_t* pszCmd = ExpandMacroValues(gpSet->sFarGotoEditor, pszVal, countof(pszVal));
 									if (!pszCmd)
@@ -2804,7 +2839,17 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom, bool bUpdateScre
 									else
 									{
 										RConStartArgs args;
-										args.pszSpecialCmd = pszCmd; pszCmd = NULL;
+										bool bRunOutside = (pszCmd[0] == L'#');
+										if (bRunOutside)
+										{
+											args.pszSpecialCmd = lstrdup(pszCmd+1);
+											SafeFree(pszCmd);
+										}
+										else
+										{
+											args.pszSpecialCmd = pszCmd; pszCmd = NULL;
+										}
+
 										WARNING("Здесь нужно бы попытаться взять текущую директорию из шелла. Точнее, из консоли НА МОМЕНТ выдачи этой строки.");
 										args.pszStartupDir = mp_RCon->m_Args.pszStartupDir ? lstrdup(mp_RCon->m_Args.pszStartupDir) : NULL;
 										args.RunAsAdministrator = mp_RCon->m_Args.RunAsAdministrator;
@@ -2816,7 +2861,46 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom, bool bUpdateScre
 										args.BufHeight = crb_On;
 										//args.eConfirmation = RConStartArgs::eConfNever;
 
-										gpConEmu->CreateCon(&args);
+										if (bRunOutside)
+										{
+											// Need to check registry for 'App Paths' and set up '%PATH%'
+											LPCWSTR pszTemp = args.pszSpecialCmd;
+											CmdArg szExe, szPrevPath;
+											wchar_t* pszPrevPath = NULL;
+											if (NextArg(&pszTemp, szExe) == 0)
+											{
+												if (SearchAppPaths((LPCWSTR)szExe, szExe, &szPrevPath))
+												{
+													wchar_t* pszChanged = MergeCmdLine(szExe, pszTemp);
+													if (pszChanged)
+													{
+														SafeFree(args.pszSpecialCmd);
+														args.pszSpecialCmd = pszChanged;
+													}
+												}
+											}
+
+											DWORD dwLastError = 0;
+											LPCWSTR pszDir = args.pszStartupDir;
+											STARTUPINFO si = {sizeof(si)};
+											PROCESS_INFORMATION pi = {};
+
+											if (CRealConsole::CreateOrRunAs(mp_RCon, args, args.pszSpecialCmd, pszDir, si, pi, mpp_RunHyperlink, dwLastError))
+											{
+												if (mpp_RunHyperlink)
+												{
+													SafeCloseHandle(mpp_RunHyperlink->hProcess);
+													SafeFree(mpp_RunHyperlink);
+												}
+												SafeCloseHandle(pi.hProcess);
+												SafeCloseHandle(pi.hThread);
+											}
+											DisplayLastError(args.pszSpecialCmd, dwLastError);
+										}
+										else
+										{
+											gpConEmu->CreateCon(&args);
+										}
 									}
 								}
 								else

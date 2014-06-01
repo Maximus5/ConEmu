@@ -153,12 +153,13 @@ enum AdminTabStyle
 #define TABBAR_DEFAULT_CLICK_ACTION 1
 #define TABBTN_DEFAULT_CLICK_ACTION 0
 
-// ‘%1’ - line number, ‘%2’ - column number, ‘%3’ - C:\\Path\\File
+// ‘%1’ - line number, ‘%2’ - column number, ‘%3’ - C:\\Path\\File, ‘%4’ - C:/Path/File, ‘%5’ - /C/Path/File
 #define HI_GOTO_EDITOR_FAR     L"far.exe /e%1:%2 \"%3\""
 #define HI_GOTO_EDITOR_VIMW    L"vim.exe +%1 \"%3\""
-#define HI_GOTO_EDITOR_SCITE   L"scite.exe \"-open:%4\" -goto:%1,%2"
-#define HI_GOTO_EDITOR_NPADP   L"notepad++.exe -n%1 \"%3\""
-#define HI_GOTO_EDITOR_SUBLM   L"sublime_text.exe \"%3:%1:%2\""
+// Use '#' prefix to run GUI editor outside of ConEmu
+#define HI_GOTO_EDITOR_SCITE   L"#scite.exe \"-open:%4\" -goto:%1,%2"
+#define HI_GOTO_EDITOR_NPADP   L"#notepad++.exe -n%1 \"%3\""
+#define HI_GOTO_EDITOR_SUBLM   L"#sublime_text.exe \"%3:%1:%2\""
 
 struct Settings
 {

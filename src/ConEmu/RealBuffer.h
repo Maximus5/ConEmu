@@ -128,6 +128,7 @@ private:
 	int  GetSelectionCharCount(bool bStreamMode, int srSelection_X1, int srSelection_Y1, int srSelection_X2, int srSelection_Y2, int* pnSelWidth, int* pnSelHeight, int nNewLineLen);
 	bool PatchMouseCoords(int& x, int& y, COORD& crMouse);
 	bool CanProcessHyperlink(const COORD& crMouse);
+	SHELLEXECUTEINFO* mpp_RunHyperlink;
 
 public:
 	void OnTimerCheckSelection();
