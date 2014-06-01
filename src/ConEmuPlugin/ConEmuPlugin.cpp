@@ -1748,6 +1748,7 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 }
 
 #if defined(CRTSTARTUP)
+#pragma message("!!!CRTSTARTUP defined!!!")
 extern "C" {
 	BOOL WINAPI _DllMainCRTStartup(HANDLE hDll,DWORD dwReason,LPVOID lpReserved);
 };
