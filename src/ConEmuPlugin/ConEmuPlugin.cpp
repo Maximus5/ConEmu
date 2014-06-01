@@ -2906,12 +2906,14 @@ BOOL ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData, CESERV
 			}
 			else
 			{
+				// Добавим префикс "^", чтобы не вообще посылать "нажатия кнопок" в плагины
+				// Иначе, если например активна панель с RegEditor'ом, то результат будет неожиданным )
 				if (gFarVersion.dwVerMajor==1)
-					_wcscpy_c(pszMacro, cchMax, L"@$if(Viewer || Editor) F12 0 $end $if(Shell) ShiftF4 \"");
+					_wcscpy_c(pszMacro, cchMax, L"@^$if(Viewer || Editor) F12 0 $end $if(Shell) ShiftF4 \"");
 				else if (!gFarVersion.IsFarLua())
-					_wcscpy_c(pszMacro, cchMax, L"@$if(Viewer || Editor) F12 0 $end $if(Shell) ShiftF4 print(\"");
+					_wcscpy_c(pszMacro, cchMax, L"@^$if(Viewer || Editor) F12 0 $end $if(Shell) ShiftF4 print(\"");
 				else
-					_wcscpy_c(pszMacro, cchMax, L"@if Area.Viewer or Area.Editor then Keys(\"F12 0\") end if Area.Shell then Keys(\"ShiftF4\") print(\"");
+					_wcscpy_c(pszMacro, cchMax, L"@^if Area.Viewer or Area.Editor then Keys(\"F12 0\") end if Area.Shell then Keys(\"ShiftF4\") print(\"");
 				wchar_t* pDst = pszMacro + lstrlen(pszMacro);
 				while (*pSrc)
 				{
