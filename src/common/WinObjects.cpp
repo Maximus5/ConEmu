@@ -286,7 +286,8 @@ bool FileExists(LPCWSTR asFilePath, DWORD* pnSize /*= NULL*/)
 
 // asDirectory - folder, where to check files (doesn't have to have trailing "\")
 // asFileList  - "\0" separated, "\0\0" teminated list of file names (may have subfolders)
-bool FilesExists(LPCWSTR asDirectory, LPCWSTR asFileList, bool abAll /*= false*/)
+// but if (anListCount != -1) - only first anListCount files in asFileList will be checked
+bool FilesExists(LPCWSTR asDirectory, LPCWSTR asFileList, bool abAll /*= false*/, int anListCount /*= -1*/)
 {
 	if (!asDirectory || !*asDirectory)
 		return false;
@@ -321,7 +322,16 @@ bool FilesExists(LPCWSTR asDirectory, LPCWSTR asFileList, bool abAll /*= false*/
 			break;
 		}
 
-		pszCur += nNameLen+1;
+		if (anListCount == -1)
+		{
+			pszCur += nNameLen+1;
+		}
+		else
+		{
+			anListCount--;
+			if (anListCount < 1)
+				break;
+		}
 	}
 
 	return bFound;

@@ -62,7 +62,7 @@ typedef BOOL (WINAPI* AttachConsole_t)(DWORD dwProcessId);
 wchar_t* GetShortFileNameEx(LPCWSTR asLong, BOOL abFavorLength=TRUE);
 bool FileCompare(LPCWSTR asFilePath1, LPCWSTR asFilePath2);
 bool FileExists(LPCWSTR asFilePath, DWORD* pnSize = NULL);
-bool FilesExists(LPCWSTR asDirectory, LPCWSTR asFileList, bool abAll = false);
+bool FilesExists(LPCWSTR asDirectory, LPCWSTR asFileList, bool abAll = false, int anListCount = -1);
 bool FileExistsSearch(wchar_t* rsFilePath, size_t cchPathMax);
 bool DirectoryExists(LPCWSTR asPath);
 bool MyCreateDirectory(wchar_t* asPath);
