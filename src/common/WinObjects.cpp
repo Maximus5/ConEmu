@@ -3537,17 +3537,27 @@ void FindComspec(ConEmuComspec* pOpt, bool bCmdAlso /*= true*/)
 		GetComspecFromEnvVar(pOpt->Comspec64, countof(pOpt->Comspec64), csb_x64);
 }
 
-wchar_t* GetEnvVar(LPCWSTR VarName, DWORD cchDefaultMax /*= 2000*/)
+wchar_t* GetEnvVar(LPCWSTR VarName)
 {
 	if (!VarName || !*VarName)
 	{
 		return NULL;
 	}
 
-	_ASSERTE(cchDefaultMax >= MAX_PATH);
+	DWORD cchMax, nRc, nErr;
 
-	DWORD cchMax = cchDefaultMax, nRc, nErr;
-	wchar_t* pszVal = (wchar_t*)malloc(cchMax*sizeof(*pszVal));
+	nRc = GetEnvironmentVariable(VarName, NULL, 0);
+	if (nRc == 0)
+	{
+		// Weird. This may be empty variable or not existing variable
+		nErr = GetLastError();
+		if (nErr == ERROR_ENVVAR_NOT_FOUND)
+			return NULL;
+		return lstrdup(L"");
+	}
+
+	cchMax = nRc+1;
+	wchar_t* pszVal = (wchar_t*)calloc(cchMax,sizeof(*pszVal));
 	if (!pszVal)
 	{
 		_ASSERTE((pszVal!=NULL) && "GetEnvVar memory allocation failed");
@@ -3555,33 +3565,10 @@ wchar_t* GetEnvVar(LPCWSTR VarName, DWORD cchDefaultMax /*= 2000*/)
 	}
 
 	nRc = GetEnvironmentVariable(VarName, pszVal, cchMax);
-	if (nRc == 0)
+	if ((nRc == 0) || (nRc >= cchMax))
 	{
-		// Weird. This may be empty variable or not existing variable
-		nErr = GetLastError();
-		if (nErr == ERROR_ENVVAR_NOT_FOUND)
-			SafeFree(pszVal);
-		return pszVal;
-	}
-
-	// If buffer is not large enough to hold the data, the return value is the buffer size,
-	// in characters, required to hold the string and its terminating null character.
-	if (nRc >= cchMax)
-	{
-		cchMax = nRc+1;
-		pszVal = (wchar_t*)realloc(pszVal, cchMax*sizeof(*pszVal));
-		if (!pszVal)
-		{
-			_ASSERTE((pszVal!=NULL) && "GetEnvVar memory reallocation failed");
-			return NULL;
-		}
-
-		nRc = GetEnvironmentVariable(VarName, pszVal, cchMax);
-		if ((nRc == 0) || (nRc >= cchMax))
-		{
-			_ASSERTE(nRc > 0 && nRc < cchMax);
-			SafeFree(pszVal);
-		}
+		_ASSERTE(nRc > 0 && nRc < cchMax);
+		SafeFree(pszVal);
 	}
 
 	return pszVal;
