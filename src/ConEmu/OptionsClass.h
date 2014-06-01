@@ -384,6 +384,7 @@ class CSettings
 		void OnSaveActivityLogFile(HWND hListView);
 		LRESULT OnActivityLogNotify(HWND hWnd2, WPARAM wParam, LPARAM lParam);
 		void FillHotKeysList(HWND hWnd2, BOOL abInitial);
+		void FillCBList(HWND hCombo, bool abInitial, LPCWSTR* ppszPredefined, LPCWSTR pszUser);
 		LRESULT OnHotkeysNotify(HWND hWnd2, WPARAM wParam, LPARAM lParam);
 		static int CALLBACK HotkeysCompare(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort);
 		wchar_t szSelectionModError[512];

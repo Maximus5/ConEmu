@@ -2736,28 +2736,40 @@ LRESULT CSettings::OnInitDialog_FarMacro(HWND hWnd2, BOOL abInitial)
 	{
 		HWND hCombo = GetDlgItem(hWnd2, p->nDlgItem);
 
-		// Variants
-		bool bUser = true;
-		if (abInitial)
-		{
-			for (LPCWSTR* ppsz = p->pszVariants; *ppsz; ppsz++)
-			{
-				SendMessageW(hCombo, CB_ADDSTRING, 0, (LPARAM)*ppsz);
-				if (p->pszEditor && (lstrcmp(*ppsz, p->pszEditor) == 0))
-					bUser = false; // This is our predefined macro
-			}
-			// Add user defined macro to list
-			if (bUser)
-				SendMessageW(hCombo, CB_ADDSTRING, 0, (LPARAM)p->pszEditor);
-		}
-
-		if (abInitial || GetWindowTextLength(hCombo) == 0)
-		{
-			SetWindowText(hCombo, p->pszEditor);
-		}
+		FillCBList(hCombo, abInitial, p->pszVariants, p->pszEditor);
 	}
 
 	return 0;
+}
+
+void CSettings::FillCBList(HWND hCombo, bool abInitial, LPCWSTR* ppszPredefined, LPCWSTR pszUser)
+{
+	bool bUser = (pszUser != NULL);
+
+	if (abInitial)
+	{
+		// Variants
+		if (ppszPredefined)
+		{
+			for (LPCWSTR* ppsz = ppszPredefined; *ppsz; ppsz++)
+			{
+				SendMessageW(hCombo, CB_ADDSTRING, 0, (LPARAM)*ppsz);
+				if (pszUser && (lstrcmp(*ppsz, pszUser) == 0))
+					bUser = false; // This is our predefined string
+			}
+		}
+
+		// Add user defined string to list
+		if (bUser)
+		{
+			SendMessageW(hCombo, CB_ADDSTRING, 0, (LPARAM)pszUser);
+		}
+	}
+
+	if (pszUser && (abInitial || GetWindowTextLength(hCombo) == 0))
+	{
+		SetWindowText(hCombo, pszUser);
+	}
 }
 
 void CSettings::FillHotKeysList(HWND hWnd2, BOOL abInitial)
