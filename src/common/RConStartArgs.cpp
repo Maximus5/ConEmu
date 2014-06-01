@@ -584,7 +584,7 @@ wchar_t* RConStartArgs::CreateCommandLine(bool abForTasks /*= false*/) const
 				const wchar_t* pS = p->pVal;
 				while (*pS)
 				{
-					if (wcschr(L"<>()&|^\"", *pS))
+					if (wcschr(CmdEscapeNeededChars/* L"<>()&|^\"" */, *pS))
 						*(pD++) = (*pS == L'"') ? L'"' : L'^';
 					*(pD++) = *(pS++);
 				}

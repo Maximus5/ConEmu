@@ -28,6 +28,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#define CmdEscapeNeededChars  L"<>()&|^\""
+#define QuotationNeededChars  (L" " CmdEscapeNeededChars)
+
 struct CmdArg
 {
 public:
@@ -82,4 +85,7 @@ bool IsFarExe(LPCWSTR asModuleName);
 BOOL IsNeedCmd(BOOL bRootCmd, LPCWSTR asCmdLine, LPCWSTR* rsArguments, BOOL *rbNeedCutStartEndQuot,
 			   CmdArg &szExe,
 			   BOOL& rbRootIsCmdExe, BOOL& rbAlwaysConfirmExit, BOOL& rbAutoDisableConfirmExit);
+bool IsQuotationNeeded(LPCWSTR pszPath);
 bool ProcessSetEnvCmd(LPCWSTR& asCmdLine, bool bDoSet, CmdArg* rpsTitle = NULL);
+
+wchar_t* MergeCmdLine(LPCWSTR asExe, LPCWSTR asParams);

@@ -906,6 +906,16 @@ bool IsFarExe(LPCWSTR asModuleName)
 	return false;
 }
 
+bool IsQuotationNeeded(LPCWSTR pszPath)
+{
+	bool bNeeded = false;
+	if (pszPath)
+	{
+		bNeeded = (wcspbrk(pszPath, QuotationNeededChars) != 0);
+	}
+	return bNeeded;
+}
+
 static DWORD WINAPI OurSetConsoleCPThread(LPVOID lpParameter)
 {
 	UINT nCP = (UINT)lpParameter;
@@ -1066,4 +1076,19 @@ bool ProcessSetEnvCmd(LPCWSTR& asCmdLine, bool bDoSet, CmdArg* rpsTitle /*= NULL
 	}
 
 	return bEnvChanged;
+}
+
+wchar_t* MergeCmdLine(LPCWSTR asExe, LPCWSTR asParams)
+{
+	bool bNeedQuot = IsQuotationNeeded(asExe);
+	if (asParams && !*asParams)
+		asParams = NULL;
+
+	wchar_t* pszRet;
+	if (bNeedQuot)
+		pszRet = lstrmerge(L"\"", asExe, asParams ? L"\" " : L"\"", asParams);
+	else
+		pszRet = lstrmerge(asExe, asParams ? L" " : NULL, asParams);
+
+	return pszRet;
 }
