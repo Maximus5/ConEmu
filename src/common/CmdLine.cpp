@@ -624,7 +624,7 @@ BOOL IsNeedCmd(BOOL bRootCmd, LPCWSTR asCmdLine, LPCWSTR* rsArguments, BOOL *rbN
 			}
 
 			// Обработка переменных окружения и поиск в PATH
-			if (FileExistsSearch(/*IN|OUT*/szExe.GetBuffer(MAX_PATH), MAX_PATH))
+			if (FileExistsSearch((LPCWSTR)szExe, szExe))
 			{
 				if (rsArguments)
 					*rsArguments = pchEnd;
@@ -656,7 +656,7 @@ BOOL IsNeedCmd(BOOL bRootCmd, LPCWSTR asCmdLine, LPCWSTR* rsArguments, BOOL *rbN
 			}
 
 			// Обработка переменных окружения и поиск в PATH
-			if (FileExistsSearch(/*IN|OUT*/szExe.GetBuffer(MAX_PATH), MAX_PATH))
+			if (FileExistsSearch((LPCWSTR)szExe, szExe))
 			{
 				if (rsArguments)
 					*rsArguments = pwszCopy;
@@ -1077,6 +1077,214 @@ bool ProcessSetEnvCmd(LPCWSTR& asCmdLine, bool bDoSet, CmdArg* rpsTitle /*= NULL
 
 	return bEnvChanged;
 }
+
+bool FileExistsSearch(LPCWSTR asFilePath, CmdArg& rsFound, bool abSetPath/*= true*/)
+{
+	if (!asFilePath || !*asFilePath)
+	{
+		_ASSERTEX(asFilePath && *asFilePath);
+		return false;
+	}
+
+	if (FileExists(asFilePath))
+	{
+		return true;
+	}
+
+	// Развернуть переменные окружения
+	if (wcschr(asFilePath, L'%'))
+	{
+		bool bFound = false;
+		wchar_t* pszExpand = ExpandEnvStr(asFilePath);
+		if (pszExpand && FileExists(pszExpand))
+		{
+			// asFilePath will be invalid after .Set
+			rsFound.Set(pszExpand);
+			bFound = true;
+		}
+		SafeFree(pszExpand);
+
+		if (bFound)
+		{
+			return true;
+		}
+	}
+
+	#ifndef CONEMU_MINIMAL
+	// В ConEmuHk этот блок не активен, потому что может быть "только" перехват CreateProcess,
+	// а о его параметрах должно заботиться вызывающее (текущее) приложение
+	if (wcschr(asFilePath, L'\\') == NULL)
+	{
+		// Если в asFilePath НЕ указан путь - искать приложение в реестре,
+		// и там могут быть указаны доп. параметры (пока только добавка в %PATH%)
+		if (SearchAppPaths(asFilePath, rsFound, abSetPath))
+		{
+			// Нашли по реестру, возможно обновили %PATH%
+			return true;
+		}
+	}
+	#endif
+
+	// Search "Path"
+	LPCWSTR pszSearchFile = asFilePath;
+	LPCWSTR pszSlash = wcsrchr(asFilePath, L'\\');
+	if (pszSlash && ((pszSlash - asFilePath) >= MAX_PATH))
+	{
+		// Too long path?
+		_ASSERTE((pszSlash - asFilePath) < MAX_PATH);
+		// No need to continue, this is invalid path to executable
+		return FALSE;
+	}
+
+	wchar_t* pszSearchPath = NULL;
+	if (pszSlash)
+	{
+		if ((pszSearchPath = lstrdup(asFilePath)) != NULL)
+		{
+			pszSearchFile = pszSlash + 1;
+			pszSearchPath[pszSearchFile - asFilePath] = 0;
+		}
+	}
+
+	// Попытаемся найти "по путям" (%PATH%)
+	wchar_t *pszFilePart;
+	wchar_t szFind[MAX_PATH+1];
+	LPCWSTR pszExt = PointToExt(asFilePath);
+
+	DWORD nLen = SearchPath(pszSearchPath, pszSearchFile, pszExt ? NULL : L".exe", countof(szFind), szFind, &pszFilePart);
+
+	SafeFree(pszSearchPath);
+
+	if (nLen && (nLen < countof(szFind)))
+	{
+		// asFilePath will be invalid after .Set
+		rsFound.Set(szFind);
+		return true;
+	}
+
+	return false;
+}
+
+#ifndef CONEMU_MINIMAL
+// Returns true, if application was found in registry:
+// [HKCU|HKLM]\Software\Microsoft\Windows\CurrentVersion\App Paths
+// Also, function may change local process %PATH% variable
+bool SearchAppPaths(LPCWSTR asFilePath, CmdArg& rsFound, bool abSetPath, CmdArg* rpsPathRestore /*= NULL*/)
+{
+	if (rpsPathRestore)
+		rpsPathRestore->Empty();
+
+	if (!asFilePath || !*asFilePath)
+		return false;
+
+	LPCWSTR pszSearchFile = PointToName(asFilePath);
+	LPCWSTR pszExt = PointToExt(pszSearchFile);
+
+	// Lets try find it in "App Paths"
+	// "HKCU\Software\Microsoft\Windows\CurrentVersion\App Paths\"
+	// "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\"
+	LPCWSTR pszRoot = L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\App Paths\\";
+	HKEY hk; LONG lRc;
+	CmdArg lsName; lsName.Attach(lstrmerge(pszRoot, pszSearchFile, pszExt ? NULL : L".exe"));
+	// Seems like 32-bit and 64-bit registry branches are the same now, but just in case - will check both
+	DWORD nWOW[2] = {WIN3264TEST(KEY_WOW64_32KEY,KEY_WOW64_64KEY), WIN3264TEST(KEY_WOW64_64KEY,KEY_WOW64_32KEY)};
+	for (int i = 0; i < 3; i++)
+	{
+		bool bFound = false;
+		DWORD nFlags = ((i && IsWindows64()) ? nWOW[i-1] : 0);
+		if ((i == 2) && !nFlags)
+			break; // This is 32-bit OS
+		lRc = RegOpenKeyEx(i ? HKEY_LOCAL_MACHINE : HKEY_CURRENT_USER, lsName, 0, KEY_READ|nFlags, &hk);
+		if (lRc != 0) continue;
+		wchar_t szVal[MAX_PATH+1] = L"";
+		DWORD nType, nSize = sizeof(szVal)-sizeof(szVal[0]);
+		lRc = RegQueryValueEx(hk, NULL, NULL, &nType, (LPBYTE)szVal, &nSize);
+		if (lRc == 0)
+		{
+			wchar_t *pszCheck = NULL;
+			if (nType == REG_SZ)
+			{
+				pszCheck = szVal;
+			}
+			else if (nType == REG_EXPAND_SZ)
+			{
+				pszCheck = ExpandEnvStr(szVal);
+			}
+			// May be quoted
+			if (pszCheck)
+			{
+				LPCWSTR pszPath = Unquote(pszCheck, true);
+				if (FileExists(pszPath))
+				{
+					// asFilePath will be invalid after .Set
+					rsFound.Set(pszPath);
+					bFound = true;
+
+					if (pszCheck != szVal)
+						free(pszCheck);
+
+					// The program may require additional "%PATH%". So, if allowed...
+					if (abSetPath)
+					{
+						nSize = 0;
+						lRc = RegQueryValueEx(hk, L"PATH", NULL, &nType, NULL, &nSize);
+						if (lRc == 0 && nSize)
+						{
+							wchar_t* pszCurPath = GetEnvVar(L"PATH");
+							wchar_t* pszAddPath = (wchar_t*)calloc(nSize+4,1);
+							wchar_t* pszNewPath = NULL;
+							if (pszAddPath)
+							{
+								lRc = RegQueryValueEx(hk, L"PATH", NULL, &nType, (LPBYTE)pszAddPath, &nSize);
+								if (lRc == 0 && *pszAddPath)
+								{
+									// Если в "%PATH%" этого нет (в начале) - принудительно добавить
+									int iCurLen = pszCurPath ? lstrlen(pszCurPath) : 0;
+									int iAddLen = lstrlen(pszAddPath);
+									bool bNeedAdd = true;
+									if ((iCurLen >= iAddLen) && (pszCurPath[iAddLen] == L';' || pszCurPath[iAddLen] == 0))
+									{
+										wchar_t ch = pszCurPath[iAddLen]; pszCurPath[iAddLen] = 0;
+										if (lstrcmpi(pszCurPath, pszAddPath) == 0)
+											bNeedAdd = false;
+										pszCurPath[iAddLen] = ch;
+									}
+									// Если пути еще нет
+									if (bNeedAdd)
+									{
+										if (rpsPathRestore)
+										{
+											rpsPathRestore->SavePathVar(pszCurPath);
+										}
+										pszNewPath = lstrmerge(pszAddPath, L";", pszCurPath);
+										if (pszNewPath)
+										{
+											SetEnvironmentVariable(L"PATH", pszNewPath);
+										}
+										else
+										{
+											_ASSERTE(pszNewPath!=NULL && "Allocation failed?");
+										}
+									}
+								}
+							}
+							SafeFree(pszAddPath);
+							SafeFree(pszCurPath);
+							SafeFree(pszNewPath);
+						}
+					}
+				}
+			}
+		}
+		RegCloseKey(hk);
+
+		if (bFound)
+			return true;
+	}
+
+	return false;
+}
+#endif
 
 wchar_t* MergeCmdLine(LPCWSTR asExe, LPCWSTR asParams)
 {

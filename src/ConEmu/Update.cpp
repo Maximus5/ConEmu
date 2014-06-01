@@ -1557,7 +1557,7 @@ bool CConEmuUpdate::Check7zipInstalled()
 		return false;
 	}
 
-	if (FileExistsSearch(sz7zip.GetBuffer(MAX_PATH), MAX_PATH))
+	if (FileExistsSearch((LPCWSTR)sz7zip, sz7zip, false))
 		return true;
 
 	WARNING("TODO: Suggest to download 7zip");
