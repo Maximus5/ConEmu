@@ -8357,6 +8357,13 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 				}
 			} // if (HIWORD(wParam) == CBN_SELCHANGE)
 		} // else if (hWnd2 == mh_Tabs[thi_KeybMouse])
+		else
+		{
+			if (HIWORD(wParam) == CBN_SELCHANGE)
+			{
+				_ASSERTE(FALSE && "ListBox was not processed");
+			}
+		}
 	} // switch (wId)
 	return 0;
 }
