@@ -11377,7 +11377,7 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 
 		CheckActiveLayoutName();
 
-		session.SetSessionNotification(true);
+		//session.SetSessionNotification(true);
 
 		if (gpSet->isHideCaptionAlways())
 		{
