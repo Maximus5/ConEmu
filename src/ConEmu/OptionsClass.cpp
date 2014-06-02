@@ -9118,13 +9118,13 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 
 		if (bInitial)
 		{
-		_ASSERTE(p->PageIndex>=0 && p->PageIndex<countof(gpSetCls->mh_Tabs) && gpSetCls->mh_Tabs[p->PageIndex]==NULL);
-		gpSetCls->mh_Tabs[p->PageIndex] = hWnd2;
+			_ASSERTE(p->PageIndex>=0 && p->PageIndex<countof(gpSetCls->mh_Tabs) && gpSetCls->mh_Tabs[p->PageIndex]==NULL);
+			gpSetCls->mh_Tabs[p->PageIndex] = hWnd2;
 
-		HWND hPlace = GetDlgItem(ghOpWnd, tSetupPagePlace);
-		RECT rcClient; GetWindowRect(hPlace, &rcClient);
-		MapWindowPoints(NULL, ghOpWnd, (LPPOINT)&rcClient, 2);
-		MoveWindow(hWnd2, rcClient.left, rcClient.top, rcClient.right-rcClient.left, rcClient.bottom-rcClient.top, 0);
+			HWND hPlace = GetDlgItem(ghOpWnd, tSetupPagePlace);
+			RECT rcClient; GetWindowRect(hPlace, &rcClient);
+			MapWindowPoints(NULL, ghOpWnd, (LPPOINT)&rcClient, 2);
+			MoveWindow(hWnd2, rcClient.left, rcClient.top, rcClient.right-rcClient.left, rcClient.bottom-rcClient.top, 0);
 		}
 		else
 		{
@@ -9132,7 +9132,7 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 			// обновить контролы страничек при активации вкладки
 		}
 
-		switch (((ConEmuSetupPages*)lParam)->PageID)
+		switch (p->PageID)
 		{
 		case IDD_SPG_MAIN:
 			if (bInitial)
@@ -9245,11 +9245,13 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 
 		default:
 			// Чтобы не забыть добавить вызов инициализации
-			_ASSERTE(((ConEmuSetupPages*)lParam)->PageID==IDD_SPG_MAIN);
+			_ASSERTE(FALSE && "Unhandled PageID!");
 		} // switch (((ConEmuSetupPages*)lParam)->PageID)
 
 		if (bInitial)
-		gpSetCls->RegisterTipsFor(hWnd2);
+		{
+			gpSetCls->RegisterTipsFor(hWnd2);
+		}
 	}
 	else if ((messg == WM_HELP) || (messg == HELP_WM_HELP))
 	{
