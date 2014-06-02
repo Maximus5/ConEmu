@@ -750,8 +750,10 @@ void FixSshThreads(int iStep)
 					if ((module.th32OwnerProcessID == dwPID) && (gnHookMainThreadId != module.th32ThreadID))
 					{
 						// Наши потоки - не морозить
+						#ifdef USE_PIPE_SERVER
 						if (gpHookServer && gpHookServer->IsPipeThread(module.th32ThreadID))
 							continue;
+						#endif
 
 						hThread = OpenThread(THREAD_SUSPEND_RESUME, FALSE, module.th32ThreadID);
 						if (!hThread)
