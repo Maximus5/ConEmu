@@ -2571,7 +2571,7 @@ LRESULT CSettings::OnInitDialog_Paste(HWND hWnd2)
 	return 0;
 }
 
-LRESULT CSettings::OnInitDialog_Hilight(HWND hWnd2)
+LRESULT CSettings::OnInitDialog_Hilight(HWND hWnd2, bool abInitial)
 {
 	// Hyperlinks & compiler errors
 	checkDlgButton(hWnd2, cbFarGotoEditor, gpSet->isFarGotoEditor);
@@ -2585,7 +2585,7 @@ LRESULT CSettings::OnInitDialog_Hilight(HWND hWnd2)
 		HI_GOTO_EDITOR_VIMW,   // Vim, official, using Windows paths
 		HI_GOTO_EDITOR_SUBLM,  // Sublime text
 		NULL};
-	FillCBList(GetDlgItem(hWnd2, lbGotoEditorCmd), true/*abInitial*/, ppszDefEditors, gpSet->sFarGotoEditor);
+	FillCBList(GetDlgItem(hWnd2, lbGotoEditorCmd), abInitial, ppszDefEditors, gpSet->sFarGotoEditor);
 
 	// Highlight full row/column under mouse cursor
 	checkDlgButton(hWnd2, cbHighlightMouseRow, gpSet->isHighlightMouseRow);
@@ -9160,7 +9160,7 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 			gpSetCls->OnInitDialog_Paste(hWnd2);
 			break;
 		case IDD_SPG_HIGHLIGHT:
-			gpSetCls->OnInitDialog_Hilight(hWnd2);
+			gpSetCls->OnInitDialog_Hilight(hWnd2, true);
 			break;
 		case IDD_SPG_FEATURE_FAR:
 			gpSetCls->OnInitDialog_Far(hWnd2, TRUE);
@@ -9265,7 +9265,9 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 			break;
 		case IDD_SPG_MARKCOPY: /*gpSetCls->OnInitDialog_MarkCopy(hWnd2);*/    break;
 		case IDD_SPG_PASTE: /*gpSetCls->OnInitDialog_Paste(hWnd2);*/    break;
-		case IDD_SPG_HIGHLIGHT: /*gpSetCls->OnInitDialog_Hilight(hWnd2);*/    break;
+		case IDD_SPG_HIGHLIGHT:
+			gpSetCls->OnInitDialog_Hilight(hWnd2, false);
+			break;
 		case IDD_SPG_FEATURE_FAR:
 			gpSetCls->OnInitDialog_Far(hWnd2, FALSE);
 			break;

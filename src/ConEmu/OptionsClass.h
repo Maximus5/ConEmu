@@ -340,7 +340,7 @@ class CSettings
 		//LRESULT OnInitDialog_Output(HWND hWnd2, bool abInitial);
 		LRESULT OnInitDialog_MarkCopy(HWND hWnd2);
 		LRESULT OnInitDialog_Paste(HWND hWnd2);
-		LRESULT OnInitDialog_Hilight(HWND hWnd2);
+		LRESULT OnInitDialog_Hilight(HWND hWnd2, bool abInitial);
 		LRESULT OnInitDialog_Far(HWND hWnd2, BOOL abInitial);
 		LRESULT OnInitDialog_FarMacro(HWND hWnd2, BOOL abInitial);
 		LRESULT OnInitDialog_Keys(HWND hWnd2, BOOL abInitial);
