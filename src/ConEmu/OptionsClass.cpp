@@ -8308,6 +8308,23 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 				}
 			} // if (HIWORD(wParam) == CBN_SELCHANGE)
 		} // else if (hWnd2 == hSelection)
+		else if (hWnd2 == mh_Tabs[thi_Hilight])
+		{
+			if (HIWORD(wParam) == CBN_SELCHANGE)
+			{
+				switch (wId)
+				{
+				case lbFarGotoEditorVk:
+					{
+						BYTE VkMod = 0;
+						GetListBoxByte(hWnd2, lbFarGotoEditorVk, SettingsNS::KeysAct, VkMod);
+						gpSet->SetHotkeyById(vkFarGotoEditorVk, VkMod);
+					} break;
+				default:
+					_ASSERTE(FALSE && "ListBox was not processed");
+				}
+			}
+		}
 		else if (hWnd2 == mh_Tabs[thi_KeybMouse])
 		{
 			if (HIWORD(wParam) == CBN_SELCHANGE)
@@ -8320,12 +8337,6 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 						GetListBoxByte(hWnd2, lbCTSClickPromptPosition, SettingsNS::KeysAct, VkMod);
 						gpSet->SetHotkeyById(vkCTSVkPromptClk, VkMod);
 						CheckSelectionModifiers(hWnd2);
-					} break;
-				case lbFarGotoEditorVk:
-					{
-						BYTE VkMod = 0;
-						GetListBoxByte(hWnd2, lbFarGotoEditorVk, SettingsNS::KeysAct, VkMod);
-						gpSet->SetHotkeyById(vkFarGotoEditorVk, VkMod);
 					} break;
 				case lbCTSActAlways:
 					{
