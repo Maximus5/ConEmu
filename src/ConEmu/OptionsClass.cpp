@@ -9105,16 +9105,19 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 {
 	static bool bSkipSelChange = false;
 
-	if (messg == WM_INITDIALOG)
+	if ((messg == WM_INITDIALOG) || (messg == gpSetCls->mn_ActivateTabMsg))
 	{
-		//_ASSERTE(gpSetCls->hMain==NULL || gpSetCls->hMain==hWnd2);
 		if (!lParam)
 		{
 			_ASSERTE(lParam!=0);
 			return 0;
 		}
+
 		ConEmuSetupPages* p = (ConEmuSetupPages*)lParam;
-		//_ASSERTE(((ConEmuSetupPages*)lParam)->hPage!=NULL && *((ConEmuSetupPages*)lParam)->hPage==NULL && ((ConEmuSetupPages*)lParam)->PageID!=0);
+		bool bInitial = (messg == WM_INITDIALOG);
+
+		if (bInitial)
+		{
 		_ASSERTE(p->PageIndex>=0 && p->PageIndex<countof(gpSetCls->mh_Tabs) && gpSetCls->mh_Tabs[p->PageIndex]==NULL);
 		gpSetCls->mh_Tabs[p->PageIndex] = hWnd2;
 
@@ -9122,201 +9125,131 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 		RECT rcClient; GetWindowRect(hPlace, &rcClient);
 		MapWindowPoints(NULL, ghOpWnd, (LPPOINT)&rcClient, 2);
 		MoveWindow(hWnd2, rcClient.left, rcClient.top, rcClient.right-rcClient.left, rcClient.bottom-rcClient.top, 0);
+		}
+		else
+		{
+			_ASSERTE(p->PageIndex>=0 && p->PageIndex<countof(gpSetCls->mh_Tabs) && gpSetCls->mh_Tabs[p->PageIndex]!=NULL && gpSetCls->mh_Tabs[p->PageIndex]==hWnd2);
+			// обновить контролы страничек при активации вкладки
+		}
 
 		switch (((ConEmuSetupPages*)lParam)->PageID)
 		{
 		case IDD_SPG_MAIN:
-			gpSetCls->OnInitDialog_Main(hWnd2);
+			if (bInitial)
+				gpSetCls->OnInitDialog_Main(hWnd2);
 			break;
 		case IDD_SPG_WNDSIZEPOS:
 			{
 			bool lbOld = bSkipSelChange; bSkipSelChange = true;
-			gpSetCls->OnInitDialog_WndPosSize(hWnd2, true);
+			gpSetCls->OnInitDialog_WndPosSize(hWnd2, bInitial);
 			bSkipSelChange = lbOld;
 			}
 			break;
 		case IDD_SPG_SHOW:
-			gpSetCls->OnInitDialog_Show(hWnd2, true);
+			gpSetCls->OnInitDialog_Show(hWnd2, bInitial);
 			break;
 		case IDD_SPG_TASKBAR:
-			gpSetCls->OnInitDialog_Taskbar(hWnd2, true);
+			gpSetCls->OnInitDialog_Taskbar(hWnd2, bInitial);
 			break;
 		case IDD_SPG_CURSOR:
-			gpSetCls->OnInitDialog_Cursor(hWnd2, true);
+			gpSetCls->OnInitDialog_Cursor(hWnd2, bInitial);
 			break;
 		case IDD_SPG_STARTUP:
-			gpSetCls->OnInitDialog_Startup(hWnd2, true);
+			gpSetCls->OnInitDialog_Startup(hWnd2, bInitial);
 			break;
 		case IDD_SPG_FEATURE:
-			gpSetCls->OnInitDialog_Ext(hWnd2);
+			if (bInitial)
+				gpSetCls->OnInitDialog_Ext(hWnd2);
 			break;
 		case IDD_SPG_COMSPEC:
-			gpSetCls->OnInitDialog_Comspec(hWnd2, true);
+			gpSetCls->OnInitDialog_Comspec(hWnd2, bInitial);
 			break;
 		case IDD_SPG_MARKCOPY:
-			gpSetCls->OnInitDialog_MarkCopy(hWnd2);
+			if (bInitial)
+				gpSetCls->OnInitDialog_MarkCopy(hWnd2);
 			break;
 		case IDD_SPG_PASTE:
-			gpSetCls->OnInitDialog_Paste(hWnd2);
+			if (bInitial)
+				gpSetCls->OnInitDialog_Paste(hWnd2);
 			break;
 		case IDD_SPG_HIGHLIGHT:
-			gpSetCls->OnInitDialog_Hilight(hWnd2, true);
+			gpSetCls->OnInitDialog_Hilight(hWnd2, bInitial);
 			break;
 		case IDD_SPG_FEATURE_FAR:
-			gpSetCls->OnInitDialog_Far(hWnd2, true);
+			gpSetCls->OnInitDialog_Far(hWnd2, bInitial);
 			break;
 		case IDD_SPG_FARMACRO:
-			gpSetCls->OnInitDialog_FarMacro(hWnd2, true);
+			gpSetCls->OnInitDialog_FarMacro(hWnd2, bInitial);
 			break;
 		case IDD_SPG_KEYS:
 			{
 			bool lbOld = bSkipSelChange; bSkipSelChange = true;
-			gpSetCls->OnInitDialog_Keys(hWnd2, true);
+			gpSetCls->OnInitDialog_Keys(hWnd2, bInitial);
 			bSkipSelChange = lbOld;
 			}
 			break;
 		case IDD_SPG_CONTROL:
-			gpSetCls->OnInitDialog_Control(hWnd2, true);
+			gpSetCls->OnInitDialog_Control(hWnd2, bInitial);
 			break;
 		case IDD_SPG_TABS:
-			gpSetCls->OnInitDialog_Tabs(hWnd2);
+			if (bInitial)
+				gpSetCls->OnInitDialog_Tabs(hWnd2);
 			break;
 		case IDD_SPG_STATUSBAR:
-			gpSetCls->OnInitDialog_Status(hWnd2, true);
+			gpSetCls->OnInitDialog_Status(hWnd2, bInitial);
 			break;
 		case IDD_SPG_COLORS:
-			gpSetCls->OnInitDialog_Color(hWnd2);
+			if (bInitial)
+				gpSetCls->OnInitDialog_Color(hWnd2);
 			break;
 		case IDD_SPG_TRANSPARENT:
-			gpSetCls->OnInitDialog_Transparent(hWnd2);
+			if (bInitial)
+				gpSetCls->OnInitDialog_Transparent(hWnd2);
 			break;
 		case IDD_SPG_CMDTASKS:
 			{
 			bool lbOld = bSkipSelChange; bSkipSelChange = true;
-			gpSetCls->OnInitDialog_Tasks(hWnd2, true);
+			gpSetCls->OnInitDialog_Tasks(hWnd2, bInitial);
 			bSkipSelChange = lbOld;
 			}
 			break;
 		case IDD_SPG_APPDISTINCT:
-			gpSetCls->OnInitDialog_Apps(hWnd2, true);
+			gpSetCls->OnInitDialog_Apps(hWnd2, bInitial);
 			break;
 		case IDD_SPG_INTEGRATION:
-			gpSetCls->OnInitDialog_Integr(hWnd2, true);
+			gpSetCls->OnInitDialog_Integr(hWnd2, bInitial);
 			break;
 		case IDD_SPG_DEFTERM:
 			{
 			bool lbOld = bSkipSelChange; bSkipSelChange = true;
-			gpSetCls->OnInitDialog_DefTerm(hWnd2, true);
+			gpSetCls->OnInitDialog_DefTerm(hWnd2, bInitial);
 			bSkipSelChange = lbOld;
 			}
 			break;
 		case IDD_SPG_VIEWS:
-			gpSetCls->OnInitDialog_Views(hWnd2);
+			if (bInitial)
+				gpSetCls->OnInitDialog_Views(hWnd2);
 			break;
 		case IDD_SPG_DEBUG:
-			gpSetCls->OnInitDialog_Debug(hWnd2);
+			if (bInitial)
+				gpSetCls->OnInitDialog_Debug(hWnd2);
 			break;
 		case IDD_SPG_UPDATE:
-			gpSetCls->OnInitDialog_Update(hWnd2);
+			if (bInitial)
+				gpSetCls->OnInitDialog_Update(hWnd2);
 			break;
 		case IDD_SPG_INFO:
-			gpSetCls->OnInitDialog_Info(hWnd2);
+			if (bInitial)
+				gpSetCls->OnInitDialog_Info(hWnd2);
 			break;
 
 		default:
 			// Чтобы не забыть добавить вызов инициализации
 			_ASSERTE(((ConEmuSetupPages*)lParam)->PageID==IDD_SPG_MAIN);
-		}
+		} // switch (((ConEmuSetupPages*)lParam)->PageID)
 
+		if (bInitial)
 		gpSetCls->RegisterTipsFor(hWnd2);
-	}
-	else if (messg == gpSetCls->mn_ActivateTabMsg)
-	{
-		ConEmuSetupPages* p = (ConEmuSetupPages*)lParam;
-		//_ASSERTE(((ConEmuSetupPages*)lParam)->hPage!=NULL && *((ConEmuSetupPages*)lParam)->hPage==hWnd2 && ((ConEmuSetupPages*)lParam)->PageID!=0);
-		_ASSERTE(p->PageIndex>=0 && p->PageIndex<countof(gpSetCls->mh_Tabs) && gpSetCls->mh_Tabs[p->PageIndex]!=NULL && gpSetCls->mh_Tabs[p->PageIndex]==hWnd2);
-
-		// Здесь можно обновить контролы страничек при активации вкладки
-		switch (p->PageID)
-		{
-		case IDD_SPG_MAIN:    /*gpSetCls->OnInitDialog_Main(hWnd2);*/   break;
-		case IDD_SPG_WNDSIZEPOS:
-			{
-			bool lbOld = bSkipSelChange; bSkipSelChange = true;
-			gpSetCls->OnInitDialog_WndPosSize(hWnd2, false);
-			bSkipSelChange = lbOld;
-			}
-			break;
-		case IDD_SPG_SHOW:
-			gpSetCls->OnInitDialog_Show(hWnd2, false);
-			break;
-		case IDD_SPG_TASKBAR:
-			gpSetCls->OnInitDialog_Taskbar(hWnd2, false);
-			break;
-		case IDD_SPG_CURSOR:
-			gpSetCls->OnInitDialog_Cursor(hWnd2, false);
-			break;
-		case IDD_SPG_STARTUP:
-			gpSetCls->OnInitDialog_Startup(hWnd2, false);
-			break;
-		case IDD_SPG_FEATURE: /*gpSetCls->OnInitDialog_Ext(hWnd2);*/    break;
-		case IDD_SPG_COMSPEC:
-			gpSetCls->OnInitDialog_Comspec(hWnd2, false);
-			break;
-		case IDD_SPG_MARKCOPY: /*gpSetCls->OnInitDialog_MarkCopy(hWnd2);*/    break;
-		case IDD_SPG_PASTE: /*gpSetCls->OnInitDialog_Paste(hWnd2);*/    break;
-		case IDD_SPG_HIGHLIGHT:
-			gpSetCls->OnInitDialog_Hilight(hWnd2, false);
-			break;
-		case IDD_SPG_FEATURE_FAR:
-			gpSetCls->OnInitDialog_Far(hWnd2, false);
-			break;
-		case IDD_SPG_FARMACRO:
-			gpSetCls->OnInitDialog_FarMacro(hWnd2, false);
-			break;
-		case IDD_SPG_KEYS:
-			{
-			bool lbOld = bSkipSelChange; bSkipSelChange = true;
-			gpSetCls->OnInitDialog_Keys(hWnd2, false);
-			bSkipSelChange = lbOld;
-			}
-			break;
-		case IDD_SPG_CONTROL:
-			gpSetCls->OnInitDialog_Control(hWnd2, false);
-			break;
-		case IDD_SPG_TABS:    /*gpSetCls->OnInitDialog_Tabs(hWnd2);*/   break;
-		case IDD_SPG_STATUSBAR:
-			gpSetCls->OnInitDialog_Status(hWnd2, false);
-			break;
-		case IDD_SPG_COLORS:  /*gpSetCls->OnInitDialog_Color(hWnd2);*/  break;
-		case IDD_SPG_TRANSPARENT:
-			gpSetCls->OnInitDialog_Transparent(hWnd2);
-			break;
-		case IDD_SPG_CMDTASKS:
-			gpSetCls->OnInitDialog_Tasks(hWnd2, false);
-			break;
-		case IDD_SPG_APPDISTINCT:
-			gpSetCls->OnInitDialog_Apps(hWnd2, false);
-			break;
-		case IDD_SPG_INTEGRATION:
-			gpSetCls->OnInitDialog_Integr(hWnd2, false);
-			break;
-		case IDD_SPG_DEFTERM:
-			{
-			bool lbOld = bSkipSelChange; bSkipSelChange = true;
-			gpSetCls->OnInitDialog_DefTerm(hWnd2, false);
-			bSkipSelChange = lbOld;
-			}
-			break;
-		case IDD_SPG_VIEWS:   /*gpSetCls->OnInitDialog_Views(hWnd2);*/  break;
-		case IDD_SPG_DEBUG:   /*gpSetCls->OnInitDialog_Debug(hWnd2);*/  break;
-		case IDD_SPG_UPDATE:  /*gpSetCls->OnInitDialog_Update(hWnd2);*/ break;
-		case IDD_SPG_INFO:    /*gpSetCls->OnInitDialog_Info(hWnd2);*/   break;
-
-		default:
-			// Чтобы не забыть добавить вызов инициализации
-			_ASSERTE(((ConEmuSetupPages*)lParam)->PageID==IDD_SPG_MAIN);
-		}
 	}
 	else if ((messg == WM_HELP) || (messg == HELP_WM_HELP))
 	{
