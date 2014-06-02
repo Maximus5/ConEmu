@@ -110,6 +110,8 @@ BOOL OnReadConsoleClick(SHORT xPos, SHORT yPos, bool bForce, bool bBashMargin);
 BOOL OnPromptBsDeleteWord(bool bForce, bool bBashMargin);
 BOOL OnExecutePromptCmd(LPCWSTR asCmd);
 
+void CheckHookServer();
+
 /* ************ Globals for Far ************ */
 extern bool    gbIsFarProcess;
 extern InQueue gInQueue;

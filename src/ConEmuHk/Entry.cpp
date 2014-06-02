@@ -509,8 +509,14 @@ BOOL WINAPI HookServerCommand(LPVOID pInst, CESERVER_REQ* pCmd, CESERVER_REQ* &p
 BOOL WINAPI HookServerReady(LPVOID pInst, LPARAM lParam);
 void WINAPI HookServerFree(CESERVER_REQ* pReply, LPARAM lParam);
 
+LONG   gnHookServerNeedStart = 0;
+HANDLE ghHookServerStarted = NULL;
+void   StartHookServer();
+
 PipeServer<CESERVER_REQ> *gpHookServer = NULL;
 #endif
+
+void CheckHookServer();
 
 bool gbShowExeMsgBox = false;
 
@@ -1057,12 +1063,17 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 			gpHookServer->SetLoopCommands(false);
 			gpHookServer->SetDummyAnswerSize(sizeof(CESERVER_REQ_HDR));
 
-			if (!gpHookServer->StartPipeServer(szPipeName, (LPARAM)gpHookServer, LocalSecurity(), HookServerCommand, HookServerFree, NULL, NULL, HookServerReady))
+			gnHookServerNeedStart = 1;
+
+			if (gnImageSubsystem != IMAGE_SUBSYSTEM_WINDOWS_CUI)
 			{
-				_ASSERTEX(FALSE); // Ошибка запуска Pipes?
-				gpHookServer->StopPipeServer(true);
-				free(gpHookServer);
-				gpHookServer = NULL;
+				// For GUI applications - start server thread immediately
+				StartHookServer();
+			}
+			else
+			{
+				// Console application - use delayed startup (from first console input read function)
+				ghHookServerStarted = CreateEvent(NULL, FALSE, FALSE, NULL);
 			}
 		}
 		else
@@ -1461,6 +1472,7 @@ void DllStop()
 		DLOG0("StopPipeServer",0);
 		print_timings(L"StopPipeServer");
 		gpHookServer->StopPipeServer(true);
+		SafeCloseHandle(ghHookServerStarted);
 		free(gpHookServer);
 		gpHookServer = NULL;
 		DLOGEND();
@@ -2319,6 +2331,7 @@ HWND WINAPI GetRealConsoleWindow()
 }
 
 
+#ifdef USE_PIPE_SERVER
 // Для облегчения жизни - сервер кеширует данные, калбэк может использовать ту же память (*pcbMaxReplySize)
 BOOL WINAPI HookServerCommand(LPVOID pInst, CESERVER_REQ* pCmd, CESERVER_REQ* &ppReply, DWORD &pcbReplySize, DWORD &pcbMaxReplySize, LPARAM lParam)
 {
@@ -2538,6 +2551,43 @@ BOOL WINAPI HookServerReady(LPVOID pInst, LPARAM lParam)
 void WINAPI HookServerFree(CESERVER_REQ* pReply, LPARAM lParam)
 {
 	ExecuteFreeResult(pReply);
+}
+
+void StartHookServer()
+{
+	DWORD nSaveErr = GetLastError();
+
+	// Multithread aware
+	LONG lNeedStart = InterlockedDecrement(&gnHookServerNeedStart);
+
+	// And go
+	if (lNeedStart == 0)
+	{
+		// Start server!
+		wchar_t szPipeName[128];
+		msprintf(szPipeName, countof(szPipeName), CEHOOKSPIPENAME, L".", GetCurrentProcessId());
+
+		if (!gpHookServer->StartPipeServer(szPipeName, (LPARAM)gpHookServer, LocalSecurity(), HookServerCommand, HookServerFree, NULL, NULL, HookServerReady))
+		{
+			_ASSERTEX(FALSE); // Ошибка запуска Pipes?
+			gpHookServer->StopPipeServer(true);
+			free(gpHookServer);
+			gpHookServer = NULL;
+		}
+	}
+
+	SetLastError(nSaveErr);
+}
+#endif
+
+void CheckHookServer()
+{
+	#ifdef USE_PIPE_SERVER
+	if (gnHookServerNeedStart == 1)
+	{
+		StartHookServer();
+	}
+	#endif
 }
 
 

@@ -3428,6 +3428,10 @@ void OnReadConsoleStart(BOOL bUnicode, HANDLE hConsoleInput, LPVOID lpBuffer, DW
 	GetCurrentDirectory(countof(szCurDir), szCurDir);
 #endif
 
+	// To minimize startup duration and possible problems
+	// hook server will start on first 'user interaction'
+	CheckHookServer();
+
 	bool bCatch = false;
 	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
 	HANDLE hConOut = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -4786,6 +4790,10 @@ BOOL WINAPI OnReadConsoleInputA(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DW
 	#endif
 	#endif
 
+	// To minimize startup duration and possible problems
+	// hook server will start on first 'user interaction'
+	CheckHookServer();
+
 	if (ph && ph->PreCallBack)
 	{
 		SETARGS4(&lbRc,hConsoleInput,lpBuffer,nLength,lpNumberOfEventsRead);
@@ -4827,6 +4835,10 @@ BOOL WINAPI OnReadConsoleInputW(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DW
 	//if (gpFarInfo && bMainThread)
 	//	TouchReadPeekConsoleInputs(0);
 	BOOL lbRc = FALSE;
+
+	// To minimize startup duration and possible problems
+	// hook server will start on first 'user interaction'
+	CheckHookServer();
 
 	if (ph && ph->PreCallBack)
 	{
