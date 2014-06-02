@@ -2203,14 +2203,14 @@ void CSettings::InitCursorCtrls(HWND hWnd2, const Settings::AppSettings* pApp)
 	SetDlgItemInt(hWnd2, tInactiveCursorMinSize, pApp->CursorInactive.MinSize, FALSE);
 }
 
-LRESULT CSettings::OnInitDialog_Cursor(HWND hWnd2, BOOL abInitial)
+LRESULT CSettings::OnInitDialog_Cursor(HWND hWnd2, bool abInitial)
 {
 	InitCursorCtrls(hWnd2, &gpSet->AppStd);
 
 	return 0;
 }
 
-LRESULT CSettings::OnInitDialog_Startup(HWND hWnd2, BOOL abInitial)
+LRESULT CSettings::OnInitDialog_Startup(HWND hWnd2, bool abInitial)
 {
 	pageOpProc_Start(hWnd2, WM_INITDIALOG, 0, abInitial);
 
@@ -2663,7 +2663,7 @@ void CSettings::CheckSelectionModifiers(HWND hWnd2)
 	}
 }
 
-LRESULT CSettings::OnInitDialog_Far(HWND hWnd2, BOOL abInitial)
+LRESULT CSettings::OnInitDialog_Far(HWND hWnd2, bool abInitial)
 {
 	// Сначала - то что обновляется при активации вкладки
 
@@ -2717,7 +2717,7 @@ LRESULT CSettings::OnInitDialog_Far(HWND hWnd2, BOOL abInitial)
 	return 0;
 }
 
-LRESULT CSettings::OnInitDialog_FarMacro(HWND hWnd2, BOOL abInitial)
+LRESULT CSettings::OnInitDialog_FarMacro(HWND hWnd2, bool abInitial)
 {
 	_ASSERTE(gpSet->isRClickSendKey==0 || gpSet->isRClickSendKey==1 || gpSet->isRClickSendKey==2);
 
@@ -3204,7 +3204,7 @@ int CSettings::HotkeysCompare(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort)
 	return nCmp;
 }
 
-LRESULT CSettings::OnInitDialog_Control(HWND hWnd2, BOOL abInitial)
+LRESULT CSettings::OnInitDialog_Control(HWND hWnd2, bool abInitial)
 {
 	checkDlgButton(hWnd2, cbEnableMouse, !gpSet->isDisableMouse);
 	checkDlgButton(hWnd2, cbSkipActivation, gpSet->isMouseSkipActivation);
@@ -3245,7 +3245,7 @@ LRESULT CSettings::OnInitDialog_Control(HWND hWnd2, BOOL abInitial)
 	return 0;
 }
 
-LRESULT CSettings::OnInitDialog_Keys(HWND hWnd2, BOOL abInitial)
+LRESULT CSettings::OnInitDialog_Keys(HWND hWnd2, bool abInitial)
 {
 	if (!abInitial)
 	{
@@ -3708,14 +3708,14 @@ LRESULT CSettings::OnInitDialog_Apps(HWND hWnd2, bool abForceReload)
 	return 0;
 }
 
-LRESULT CSettings::OnInitDialog_Integr(HWND hWnd2, BOOL abInitial)
+LRESULT CSettings::OnInitDialog_Integr(HWND hWnd2, bool abInitial)
 {
 	pageOpProc_Integr(hWnd2, WM_INITDIALOG, 0, abInitial);
 
 	return 0;
 }
 
-LRESULT CSettings::OnInitDialog_DefTerm(HWND hWnd2, BOOL abInitial)
+LRESULT CSettings::OnInitDialog_DefTerm(HWND hWnd2, bool abInitial)
 {
 	// Default terminal apps
 	CheckDlgButton(hWnd2, cbDefaultTerminal, gpSet->isSetDefaultTerminal);
@@ -9142,10 +9142,10 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 			gpSetCls->OnInitDialog_Taskbar(hWnd2, true);
 			break;
 		case IDD_SPG_CURSOR:
-			gpSetCls->OnInitDialog_Cursor(hWnd2, TRUE);
+			gpSetCls->OnInitDialog_Cursor(hWnd2, true);
 			break;
 		case IDD_SPG_STARTUP:
-			gpSetCls->OnInitDialog_Startup(hWnd2, TRUE);
+			gpSetCls->OnInitDialog_Startup(hWnd2, true);
 			break;
 		case IDD_SPG_FEATURE:
 			gpSetCls->OnInitDialog_Ext(hWnd2);
@@ -9163,20 +9163,20 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 			gpSetCls->OnInitDialog_Hilight(hWnd2, true);
 			break;
 		case IDD_SPG_FEATURE_FAR:
-			gpSetCls->OnInitDialog_Far(hWnd2, TRUE);
+			gpSetCls->OnInitDialog_Far(hWnd2, true);
 			break;
 		case IDD_SPG_FARMACRO:
-			gpSetCls->OnInitDialog_FarMacro(hWnd2, TRUE);
+			gpSetCls->OnInitDialog_FarMacro(hWnd2, true);
 			break;
 		case IDD_SPG_KEYS:
 			{
 			bool lbOld = bSkipSelChange; bSkipSelChange = true;
-			gpSetCls->OnInitDialog_Keys(hWnd2, TRUE);
+			gpSetCls->OnInitDialog_Keys(hWnd2, true);
 			bSkipSelChange = lbOld;
 			}
 			break;
 		case IDD_SPG_CONTROL:
-			gpSetCls->OnInitDialog_Control(hWnd2, TRUE);
+			gpSetCls->OnInitDialog_Control(hWnd2, true);
 			break;
 		case IDD_SPG_TABS:
 			gpSetCls->OnInitDialog_Tabs(hWnd2);
@@ -9254,10 +9254,10 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 			gpSetCls->OnInitDialog_Taskbar(hWnd2, false);
 			break;
 		case IDD_SPG_CURSOR:
-			gpSetCls->OnInitDialog_Cursor(hWnd2, FALSE);
+			gpSetCls->OnInitDialog_Cursor(hWnd2, false);
 			break;
 		case IDD_SPG_STARTUP:
-			gpSetCls->OnInitDialog_Startup(hWnd2, FALSE);
+			gpSetCls->OnInitDialog_Startup(hWnd2, false);
 			break;
 		case IDD_SPG_FEATURE: /*gpSetCls->OnInitDialog_Ext(hWnd2);*/    break;
 		case IDD_SPG_COMSPEC:
@@ -9269,20 +9269,20 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 			gpSetCls->OnInitDialog_Hilight(hWnd2, false);
 			break;
 		case IDD_SPG_FEATURE_FAR:
-			gpSetCls->OnInitDialog_Far(hWnd2, FALSE);
+			gpSetCls->OnInitDialog_Far(hWnd2, false);
 			break;
 		case IDD_SPG_FARMACRO:
-			gpSetCls->OnInitDialog_FarMacro(hWnd2, FALSE);
+			gpSetCls->OnInitDialog_FarMacro(hWnd2, false);
 			break;
 		case IDD_SPG_KEYS:
 			{
 			bool lbOld = bSkipSelChange; bSkipSelChange = true;
-			gpSetCls->OnInitDialog_Keys(hWnd2, FALSE);
+			gpSetCls->OnInitDialog_Keys(hWnd2, false);
 			bSkipSelChange = lbOld;
 			}
 			break;
 		case IDD_SPG_CONTROL:
-			gpSetCls->OnInitDialog_Control(hWnd2, FALSE);
+			gpSetCls->OnInitDialog_Control(hWnd2, false);
 			break;
 		case IDD_SPG_TABS:    /*gpSetCls->OnInitDialog_Tabs(hWnd2);*/   break;
 		case IDD_SPG_STATUSBAR:

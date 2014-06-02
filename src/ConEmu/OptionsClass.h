@@ -333,18 +333,18 @@ class CSettings
 		LRESULT OnInitDialog_WndPosSize(HWND hWnd2, bool abInitial);
 		LRESULT OnInitDialog_Show(HWND hWnd2, bool abInitial);
 		LRESULT OnInitDialog_Taskbar(HWND hWnd2, bool abInitial);
-		LRESULT OnInitDialog_Cursor(HWND hWnd2, BOOL abInitial);
-		LRESULT OnInitDialog_Startup(HWND hWnd2, BOOL abInitial);
+		LRESULT OnInitDialog_Cursor(HWND hWnd2, bool abInitial);
+		LRESULT OnInitDialog_Startup(HWND hWnd2, bool abInitial);
 		LRESULT OnInitDialog_Ext(HWND hWnd2);
 		LRESULT OnInitDialog_Comspec(HWND hWnd2, bool abInitial);
 		//LRESULT OnInitDialog_Output(HWND hWnd2, bool abInitial);
 		LRESULT OnInitDialog_MarkCopy(HWND hWnd2);
 		LRESULT OnInitDialog_Paste(HWND hWnd2);
 		LRESULT OnInitDialog_Hilight(HWND hWnd2, bool abInitial);
-		LRESULT OnInitDialog_Far(HWND hWnd2, BOOL abInitial);
-		LRESULT OnInitDialog_FarMacro(HWND hWnd2, BOOL abInitial);
-		LRESULT OnInitDialog_Keys(HWND hWnd2, BOOL abInitial);
-		LRESULT OnInitDialog_Control(HWND hWnd2, BOOL abInitial);
+		LRESULT OnInitDialog_Far(HWND hWnd2, bool abInitial);
+		LRESULT OnInitDialog_FarMacro(HWND hWnd2, bool abInitial);
+		LRESULT OnInitDialog_Keys(HWND hWnd2, bool abInitial);
+		LRESULT OnInitDialog_Control(HWND hWnd2, bool abInitial);
 		LRESULT OnInitDialog_Tabs(HWND hWnd2);
 		LRESULT OnInitDialog_Status(HWND hWnd2, bool abInitial);
 		void OnInitDialog_StatusItems(HWND hWnd2);
@@ -352,8 +352,8 @@ class CSettings
 		LRESULT OnInitDialog_Transparent(HWND hWnd2);
 		LRESULT OnInitDialog_Tasks(HWND hWnd2, bool abForceReload);
 		LRESULT OnInitDialog_Apps(HWND hWnd2, bool abForceReload);
-		LRESULT OnInitDialog_Integr(HWND hWnd2, BOOL abInitial);
-		LRESULT OnInitDialog_DefTerm(HWND hWnd2, BOOL abInitial);
+		LRESULT OnInitDialog_Integr(HWND hWnd2, bool abInitial);
+		LRESULT OnInitDialog_DefTerm(HWND hWnd2, bool abInitial);
 		LRESULT OnInitDialog_Views(HWND hWnd2);
 		void OnInitDialog_CopyFonts(HWND hWnd2, int nList1, ...); // скопировать список шрифтов с вкладки hMain
 		LRESULT OnInitDialog_Debug(HWND hWnd2);
