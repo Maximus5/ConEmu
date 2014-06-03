@@ -3,6 +3,14 @@ English: http://code.google.com/p/conemu-maximus5/wiki/Whats_New?wl=en
 Russian: http://code.google.com/p/conemu-maximus5/wiki/Whats_New?wl=ru
 SVN: http://conemu-maximus5.googlecode.com/svn/trunk/ConEmu/Release/ConEmu/WhatsNew-ConEmu.txt
 
+
+Please VOTE!
+ConEmu has been selected to be on the ballot for the
+June Community Choice SourceForge project of the Month!
+Please vote for ‘conemu’ here (SF account required, one per user):
+https://sourceforge.net/p/potm/discussion/vote/thread/f3309aea/
+
+
 You can show your appreciation and support future development by donating.
 Donate (PayPal) button located on project website under ConEmu sketch (upper right of page)
 http://code.google.com/p/conemu-maximus5
@@ -10,6 +18,24 @@ http://code.google.com/p/conemu-maximus5
 Votes and awards (vote for ConEmu, if you please)
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
+
+
+2014.06.02
+[*] Issue1598: When reopening Settings dialog, show last selected section.
+[*] Allow prefix '^' in Far macros (through ConEmu) do not send keys to plugins (KMFLAGS_NOSENDKEYSTOPLUGINS).
+[*] Opening compiler error (hyperlink) in Far editor fails if active plugin panel was processing ShiftF4 itself.
+[*] Some new features in ‘Ctrl+LClick’ on compiler error (Highlight and goto)
+    * Use dropdown for external editor (Ctrl+LClick on compiler errors).
+    * New macro ‘%4’ and ‘%5’ for ‘slashed’ paths, so the full macro list is:
+      ‘%1’ - line number, ‘%2’ - column number, ‘%3’ - C:\\Path\\File, ‘%4’ - C:/Path/File, ‘%5’ - /C/Path/File
+    * New predefined (available in list) editor command lines for Vim, SciTE, Notepad++ and Sublime.
+    * Prefix ‘#’ means ‘run editor outside of ConEmu tab’.
+    * Check registry for ‘App Paths’ when no path was specified for editor executable.
+    * Force run specified external editor instead of open file in the existing Far instance.
+[*] GitHub#13: Was unable to save 'Highlight and goto' modifier.
+[*] Issue1596: Rust-compiled apps were crashed in ConEmu.
+[*] Use ‘PATH’ defined in the ‘App Paths’ registry key if running application without full path.
+[*] Internal. Do not turn on session.SetSessionNotification on startup.
 
 
 2014.05.29
