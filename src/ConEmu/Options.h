@@ -543,15 +543,9 @@ struct Settings
 							break;
 						if (*szArg && pszDir)
 						{
-							wchar_t* pszExpand = NULL;
-
 							// Например, "%USERPROFILE%"
-							if (wcschr(szArg, L'%'))
-							{
-								pszExpand = ExpandEnvStr(szArg);
-							}
-
-							*pszDir = pszExpand ? pszExpand : lstrdup(szArg);
+							*pszDir = ExpandEnvStr(szArg);
+							_ASSERTE(*pszDir != NULL);
 						}
 					}
 					else if (lstrcmpi(szArg, L"/icon") == 0)
@@ -560,15 +554,9 @@ struct Settings
 							break;
 						if (*szArg && pszIcon)
 						{
-							wchar_t* pszExpand = NULL;
-
 							// Например, "%USERPROFILE%"
-							if (wcschr(szArg, L'%'))
-							{
-								pszExpand = ExpandEnvStr(szArg);
-							}
-
-							*pszIcon = pszExpand ? pszExpand : lstrdup(szArg);
+							*pszIcon = ExpandEnvStr(szArg);
+							_ASSERTE(*pszIcon != NULL);
 						}
 					}
 					else if (lstrcmpi(szArg, L"/single") == 0)

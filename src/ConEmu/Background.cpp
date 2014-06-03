@@ -1220,7 +1220,7 @@ bool CBackgroundInfo::LoadBackgroundFile(bool abShowErrors)
 	{
 		wchar_t* exPath = ExpandEnvStr(ms_BgImage);
 
-		if (!exPath || !*exPath)
+		if (!exPath)
 		{
 			if (abShowErrors)
 			{

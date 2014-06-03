@@ -1055,8 +1055,7 @@ bool ProcessSetEnvCmd(LPCWSTR& asCmdLine, bool bDoSet, CmdArg* rpsTitle /*= NULL
 				*(pszEq++) = 0;
 				// Expand value
 				wchar_t* pszExpanded = ExpandEnvStr(pszEq);
-				LPCWSTR pszSet = pszExpanded ? pszExpanded : pszEq;
-				SetEnvironmentVariable(lsNameVal, (pszSet && *pszSet) ? pszSet : NULL);
+				SetEnvironmentVariable(lsNameVal, pszExpanded);
 				SafeFree(pszExpanded);
 			}
 

@@ -1466,6 +1466,7 @@ wchar_t* ExpandEnvStr(LPCWSTR pszCommand)
 
 		return lstrdup(pszCommand);
 	}
+
 	return NULL;
 }
 
