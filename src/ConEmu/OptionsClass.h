@@ -41,13 +41,6 @@ class CBackgroundInfo;
 struct DebugLogShellActivity;
 struct CEHelpPopup;
 
-enum SingleInstanceArgEnum
-{
-	sgl_Default  = 0,
-	sgl_Enabled  = 1,
-	sgl_Disabled = 2,
-};
-
 class CSettings
 {
 	public:

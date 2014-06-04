@@ -334,7 +334,6 @@ CSettings::CSettings()
 	// Теперь установим умолчания настроек
 	gpSet->InitSettings();
 
-	SingleInstanceArg = sgl_Default;
 	SingleInstanceShowHide = sih_None;
 	mb_StopRegisterFonts = FALSE;
 	mb_IgnoreEditChanged = FALSE;
@@ -948,16 +947,17 @@ void CSettings::SettingsLoaded(SettingsLoadedFlags slfFlags, LPCWSTR pszCmdLine 
 		CheckOptionsFast(szTitle, slfFlags);
 
 		// Single instance?
-		if (gpSet->isSingleInstance && (gpSetCls->SingleInstanceArg == sgl_Default))
+		if (gpSet->isSingleInstance && !gpSetCur->HasSingleParms())
 		{
-			if ((pszCmdLine && *pszCmdLine) || gpConEmu->mb_StartDetached)
+			if ((pszCmdLine && *pszCmdLine) || gpSetCur->StartDetachedParm)
 			{
 				// Должен быть "sih_None" иначе существующая копия не запустит команду
-				_ASSERTE(SingleInstanceShowHide == sih_None);
+				_ASSERTE(gpSetCur->SingleInstanceShowHide() == sih_None);
 			}
 			else
 			{
-				SingleInstanceShowHide = sih_ShowMinimize;
+				gpSetCur->ShowHideParm.SetBool(true);
+				_ASSERTE(gpSetCur->SingleInstanceShowHide() == sih_ShowMinimize);
 			}
 		}
 	}
@@ -12819,28 +12819,6 @@ LPCTSTR CSettings::GetDefaultCmd()
 {
 	_ASSERTE(szDefCmd[0]!=0);
 	return szDefCmd;
-}
-
-RecreateActionParm CSettings::GetDefaultCreateAction()
-{
-	return IsMulti() ? cra_CreateTab : cra_CreateWindow;
-}
-
-// true  - если разрешен запуск нескольких консолей (табов) в одном экземпляре ConEmu
-// false - только одна консоль, запуск второй приведет к запуску нового ConEmu.exe
-bool CSettings::IsMulti()
-{
-	bool bMulti = (!gpSetCur->NoMultiConParm && (gpSet->mb_isMulti || gpSetCur->MultiConParm));
-
-	if (!bMulti)
-	{
-		// "SingleInstance" has more weight
-		if (!IsSingleInstanceArg())
-			return false;
-		// Otherwise we'll get infinite loop
-	}
-
-	return true;
 }
 
 bool CSettings::IsSingleInstanceArg()

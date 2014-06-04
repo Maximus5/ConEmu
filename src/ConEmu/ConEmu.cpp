@@ -8836,12 +8836,16 @@ int CConEmuMain::RecreateDlg(RConStartArgs* apArg)
 
 
 
-BOOL CConEmuMain::RunSingleInstance(HWND hConEmuWnd /*= NULL*/, LPCWSTR apszCmd /*= NULL*/)
+bool CConEmuMain::RunSingleInstance(HWND hConEmuWnd, LPCWSTR apszCmd, SingleInstanceShowHideType sht)
 {
-	BOOL lbAccepted = FALSE;
+	bool lbAccepted = false;
+	PRAGMA_ERROR("Убрать аргумент apszCmd, брать данные из gpSetCur, учитывать ключ -cmdlist");
 	LPCWSTR lpszCmd = apszCmd ? apszCmd : gpSetCls->GetCmd();
 
-	if ((lpszCmd && *lpszCmd) || (gpSetCls->SingleInstanceShowHide != sih_None))
+	// Только если есть что передать в существующий инстанс:
+	// * команду запуска нового таба (консоли)
+	// * или команду свернуть/развернуть (клики по таскбару или трею, например)
+	if ((lpszCmd && *lpszCmd) || (sht != sih_None))
 	{
 		HWND ConEmuHwnd = hConEmuWnd ? hConEmuWnd : FindWindowExW(NULL, NULL, VirtualConsoleClassMain, NULL);
 		MArray<HWND> hConEmuS;
@@ -8882,8 +8886,8 @@ BOOL CConEmuMain::RunSingleInstance(HWND hConEmuWnd /*= NULL*/, LPCWSTR apszCmd 
 
 				pIn->NewCmd.isAdvLogging = gpSetCls->isAdvLogging;
 
-				pIn->NewCmd.ShowHide = gpSetCls->SingleInstanceShowHide;
-				if (gpSetCls->SingleInstanceShowHide == sih_None)
+				pIn->NewCmd.ShowHide = gpSetCur->SingleInstanceShowHide();
+				if (pIn->NewCmd.ShowHide == sih_None)
 				{
 					if (gpSetCur->StartDetachedParm)
 						pIn->NewCmd.ShowHide = sih_StartDetached;
@@ -8908,7 +8912,7 @@ BOOL CConEmuMain::RunSingleInstance(HWND hConEmuWnd /*= NULL*/, LPCWSTR apszCmd 
 				pOut = ExecuteGuiCmd(ConEmuHwnd, pIn, NULL);
 
 				if (pOut && pOut->Data[0])
-					lbAccepted = TRUE;
+					lbAccepted = true;
 			}
 
 			if (pIn) ExecuteFreeResult(pIn);

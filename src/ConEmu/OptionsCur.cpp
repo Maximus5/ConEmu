@@ -39,6 +39,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "OptionsClass.h"
 #include "OptionsCur.h"
 
+
+PRAGMA_ERROR("Коррекция для SingleInstanceArg / SingleInstanceShowHide");
+
+
 #define DEBUGSTRSTARTUP(s) DEBUGSTR(WIN3264TEST(L"ConEmu.exe: ",L"ConEmu64.exe: ") s L"\n")
 
 CSettingsCur* gpSetCur = NULL;
@@ -299,14 +303,92 @@ bool CSettingsCur::HasResetSettings()
 	return bRc;
 }
 
-SingleInstanceArgEnum CSettingsCur::SingleInstance()
+bool CSettingsCur::HasMultiParms()
 {
-	SingleInstanceArgEnum sgl = sgl_Default;
+	bool bRc = (NoMultiConParm.Exists || MultiConParm.Exists);
+	return bRc;
+}
+
+bool CSettingsCur::HasSingleParms()
+{
+	bool bRc = (SingleParm.Exists || NoSingleParm.Exists || ShowHideParm.Exists || ShowHideTSAParm.Exists);
+	return bRc;
+}
+
+RecreateActionParm CSettingsCur::GetDefaultCreateAction()
+{
+	return IsMulti() ? cra_CreateTab : cra_CreateWindow;
+}
+
+// true  - если разрешен запуск нескольких консолей (табов) в одном экземпляре ConEmu
+// false - только одна консоль, запуск второй приведет к запуску нового ConEmu.exe
+bool CSettingsCur::IsMulti()
+{
+	bool bMulti = (!gpSetCur->NoMultiConParm && (gpSet->mb_isMulti || gpSetCur->MultiConParm));
+
+	if (!bMulti)
+	{
+		// "SingleInstance" has more weight
+		if (!IsSingleInstanceArg())
+			return false;
+		// Otherwise we'll get infinite loop
+	}
+
+	return true;
+}
+
+bool CSettingsCur::IsSingleInstance()
+{
+	// "/nosingle" has priority!
+	if (NoSingleParm && !gpSet->isQuakeStyle)
+		return false;
+
+	if (SingleParm || ShowHideParm || ShowHideTSAParm)
+		return true;
+
+	if (gpSet->isSingleInstance || gpSet->isQuakeStyle)
+		return true;
+
+	return false;
+}
+
+bool CSettingsCur::LockedSingleInstance()
+{
+	bool bRc = (gpSet->isQuakeStyle || HasSingleParms());
+	return bRc;
+}
+
+bool CSettingsCur::LockedMulti()
+{
+	return HasMultiParms();
 }
 
 SingleInstanceShowHideType CSettingsCur::SingleInstanceShowHide()
 {
 	SingleInstanceShowHideType sht = sih_None;
+
+	if (ShowHideParm)
+		sht = sih_ShowMinimize;
+
+	if (gpSet->isSingleInstance && !gpSetCur->HasSingleParms())
+	{
+		if ((pszCmdLine && *pszCmdLine) || gpSetCur->StartDetachedParm)
+		{
+			// Должен быть "sih_None" иначе существующая копия не запустит команду
+			_ASSERTE(gpSetCur->SingleInstanceShowHide() == sih_None);
+		}
+		else
+		{
+			SingleInstanceShowHide = sih_ShowMinimize;
+		}
+	}
+
+}
+
+void CSettingsCur::ResetSingleInstanceShowHide()
+{
+	ShowHideParm.Disable();
+	ShowHideTSAParm.Disable();
 }
 
 int CSettingsCur::Arg_AutoSetup(CESwitch& Sw, LPCWSTR pszArg, LPCWSTR& pszRest)

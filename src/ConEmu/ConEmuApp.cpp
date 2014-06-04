@@ -3351,27 +3351,27 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	// Для gpSet->isQuakeStyle - принудительно включается gpSetCls->SingleInstanceArg
 
 	// When "/Palette <name>" is specified
-	if (gpSetCur->PalettePrm)
+	if (gpSetCur->PaletteParm)
 	{
 		TODO("--> OptionsCur?");
-		gpSet->PaletteSetActive(gpSetCur->PaletteVal);
+		gpSet->PaletteSetActive(gpSetCur->PaletteParm.GetStr());
 	}
 
 	// Set another update location (-UpdateSrcSet <URL>)
-	if (gpSetCur->UpdateSrcSetPrm)
+	if (gpSetCur->UpdateSrcSetParm)
 	{
 		TODO("--> OptionsCur?");
-		gpSet->UpdSet.SetUpdateVerLocation(gpSetCur->UpdateSrcSet);
+		gpSet->UpdSet.SetUpdateVerLocation(gpSetCur->UpdateSrcSetParm.GetStr());
 	}
 
 	// Force "AnsiLog" feature
-	if (gpSetCur->AnsiLogPathPrm)
+	if (gpSetCur->AnsiLogPathParm)
 	{
 		TODO("--> OptionsCur?");
-		gpSet->isAnsiLog = (gpSetCur->AnsiLogPath && *gpSetCur->AnsiLogPath);
+		LPCWSTR pszAnsiLog = gpSetCur->AnsiLogPathParm.GetStr();
+		gpSet->isAnsiLog = (pszAnsiLog && *pszAnsiLog);
 		SafeFree(gpSet->pszAnsiLog);
-		gpSet->pszAnsiLog = gpSetCur->AnsiLogPath;
-		AnsiLogPath = NULL;
+		gpSet->pszAnsiLog = lstrdup(pszAnsiLog);
 	}
 
 	DEBUGSTRSTARTUPLOG(L"SettingsLoaded");
@@ -3429,7 +3429,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	}
 
 	// Actions done
-	if (gpSetCur->ExitAfterActionPrm)
+	if (gpSetCur->ExitAfterActionParm)
 	{
 		DEBUGSTRSTARTUP(L"Exit was requrested");
 		goto wrap;
@@ -3506,7 +3506,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		gpSet->_WindowMode = (ConEmuWindowMode)gpSetCur->WindowModeParm.Int;
 	}
 
-	if (gpSetCur->MultiConPrm)
+	if (gpSetCur->MultiConParm)
 		gpSet->mb_isMulti = gpSetCur->MultiConValue;
 
 	if (gpSetCur->VisValue)
@@ -3650,7 +3650,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		HWND hConEmuHwnd = FindWindowExW(NULL, NULL, VirtualConsoleClassMain, NULL);
 		// При запуске серии закладок из cmd файла второму экземпляру лучше чуть-чуть подождать
 		// чтобы успело "появиться" главное окно ConEmu
-		if ((hConEmuHwnd == NULL) && (gpSetCls->SingleInstanceShowHide == sih_None))
+		if ((hConEmuHwnd == NULL) && (gpSetCur->SingleInstanceShowHide() == sih_None))
 		{
 			// Если окна нет, и других процессов (ConEmu.exe, ConEmu64.exe) нет
 			// то ждать смысла нет
@@ -3699,7 +3699,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		{
 			DEBUGSTRSTARTUPLOG(L"Waiting for RunSingleInstance");
 
-			if (gpConEmu->RunSingleInstance())
+			if (gpConEmu->RunSingleInstance(NULL, NULL, gpSetCur->SingleInstanceShowHide()))
 			{
 				gpConEmu->LogString(L"Passed to first instance, exiting");
 				return 0; // командная строка успешно запущена в существующем экземпляре

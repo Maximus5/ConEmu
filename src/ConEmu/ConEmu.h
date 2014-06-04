@@ -718,7 +718,7 @@ class CConEmuMain :
 		void RequestExitUpdate();
 		void RequestPostUpdateTabs();
 		void ReSize(BOOL abCorrect2Ideal = FALSE);
-		BOOL RunSingleInstance(HWND hConEmuWnd = NULL, LPCWSTR apszCmd = NULL);
+		bool RunSingleInstance(HWND hConEmuWnd, LPCWSTR apszCmd, SingleInstanceShowHideType sht);
 		bool ScreenToVCon(LPPOINT pt, CVirtualConsole** ppVCon);
 		void SetDragCursor(HCURSOR hCur);
 		bool SetSkipOnFocus(bool abSkipOnFocus);

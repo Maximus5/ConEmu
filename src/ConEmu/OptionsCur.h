@@ -163,14 +163,24 @@ public:
 	CESwitch WorkDirParm;
 
 public:
+	bool HasMultiParms();
+	bool HasResetSettings();
+	bool HasSingleParms();
 	bool HasWindowParms();
 	bool HasWindowStartMinimized();
 	bool HasWindowStartTSA();
 	bool HasWindowStartNoClose();
-	bool HasResetSettings();
 public:
-	SingleInstanceArgEnum SingleInstance();
+	bool IsMulti();
+	bool IsSingleInstance();
+public:
+	bool LockedSingleInstance();
+	bool LockedMulti();
+public:
 	SingleInstanceShowHideType SingleInstanceShowHide();
+	RecreateActionParm GetDefaultCreateAction();
+public:
+	void ResetSingleInstanceShowHide();
 
 private:
 	static LPCWSTR SkipToCmdArg(LPCWSTR pszRest);

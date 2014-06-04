@@ -354,10 +354,9 @@ HWND CConEmuInside::InsideFindParent()
     {
     	_ASSERTE(FALSE && "Continue to create tab in existing instance");
     	// Если в проводнике уже есть ConEmu - открыть в нем новую вкладку
-    	gpSetCls->SingleInstanceShowHide = sih_None;
     	LPCWSTR pszCmdLine = GetCommandLine();
     	LPCWSTR pszCmd = StrStrI(pszCmdLine, L" /cmd ");
-    	gpConEmu->RunSingleInstance(hExistConEmu, pszCmd ? (pszCmd + 6) : NULL);
+    	gpConEmu->RunSingleInstance(hExistConEmu, pszCmd ? (pszCmd + 6) : NULL, sih_None);
 
 		mh_InsideParentWND = INSIDE_PARENT_NOT_FOUND;
 		return mh_InsideParentWND; // Закрыться!
