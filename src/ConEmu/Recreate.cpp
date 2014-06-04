@@ -29,7 +29,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define HIDE_USE_EXCEPTION_INFO
 #include "Header.h"
 #include <lm.h>
+#pragma warning(disable: 4091)
 #include <ShlObj.h>
+#pragma warning(default: 4091)
 #include "ConEmu.h"
 #include "Recreate.h"
 #include "VirtualConsole.h"

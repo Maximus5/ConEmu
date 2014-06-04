@@ -3,7 +3,9 @@
 #define SHOWDEBUGSTR
 
 #include "header.h"
+#pragma warning(disable: 4091)
 #include <shlobj.h>
+#pragma warning(default: 4091)
 #include <tchar.h>
 
 #ifdef __GNUC__

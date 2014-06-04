@@ -39,7 +39,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <TlHelp32.h>
 
 #ifndef CONEMU_MINIMAL
+#pragma warning(disable: 4091)
 #include <shlobj.h>
+#pragma warning(default: 4091)
 #include "Monitors.h"
 #endif
 

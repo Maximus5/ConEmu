@@ -35,7 +35,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "Header.h"
 #include <Tlhelp32.h>
+#pragma warning(disable: 4091)
 #include <ShlObj.h>
+#pragma warning(default: 4091)
 
 #include "../common/ConEmuCheck.h"
 #include "../common/ConEmuPipeMode.h"
