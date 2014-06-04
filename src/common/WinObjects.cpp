@@ -2805,14 +2805,14 @@ void MFileLog::LogString(LPCWSTR asText, bool abWriteTime /*= true*/, LPCWSTR as
 	if (!pszBuffer)
 		return;
 
-	size_t cchCur = 0, dwLen;
+	size_t cchCur = 0;
 
 	if (abWriteTime)
 	{
 		SYSTEMTIME st; GetLocalTime(&st);
 		char szTime[32];
 		_wsprintfA(szTime, SKIPLEN(countof(szTime)) "%i:%02i:%02i.%03i ", st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
-		dwLen = lstrlenA(szTime);
+		INT_PTR dwLen = lstrlenA(szTime);
 		memmove(pszBuffer+cchCur, szTime, dwLen);
 		cchCur += dwLen;
 	}
@@ -3327,7 +3327,7 @@ void FindComspec(ConEmuComspec* pOpt, bool bCmdAlso /*= true*/)
 				if (!RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"SOFTWARE\\JP Software", 0, KEY_READ|nOpt, &hk))
 				{
 					wchar_t szName[MAX_PATH+1]; DWORD nLen;
-					for (DWORD n = 0; !bFound && !RegEnumKeyEx(hk, n, szName, &(nLen = countof(szName)-1), 0,0,0,0); n++)
+					for (DWORD k = 0; !bFound && !RegEnumKeyEx(hk, k, szName, &(nLen = countof(szName)-1), 0,0,0,0); k++)
 					{
 						HKEY hk2;
 						if (!RegOpenKeyEx(hk, szName, 0, KEY_READ|nOpt, &hk2))
@@ -3337,7 +3337,7 @@ void FindComspec(ConEmuComspec* pOpt, bool bCmdAlso /*= true*/)
 
 							for (size_t n = 0; n < countof(rsNames); n++)
 							{
-								memset(szPath, 0, sizeof(szPath)); DWORD nSize = (countof(szPath)-1)*sizeof(szPath[0]);
+								ZeroStruct(szPath); DWORD nSize = (countof(szPath)-1)*sizeof(szPath[0]);
 								if (!RegQueryValueExW(hk2, rsNames[n], NULL, NULL, (LPBYTE)szPath, &nSize) && *szPath)
 								{
 									wchar_t* psz, *pszEnd;
@@ -3401,7 +3401,7 @@ void FindComspec(ConEmuComspec* pOpt, bool bCmdAlso /*= true*/)
 						HKEY hk2;
 						if (!RegOpenKeyEx(hk, szName, 0, KEY_READ|nOpt, &hk2))
 						{
-							wchar_t szPath[MAX_PATH+1] = {}; DWORD nSize = (countof(szPath)-1)*sizeof(szPath[0]);
+							ZeroStruct(szPath); DWORD nSize = (countof(szPath) - 1)*sizeof(szPath[0]);
 							if (!RegQueryValueExW(hk2, L"Publisher", NULL, NULL, (LPBYTE)szPath, &nSize)
 								&& !lstrcmpi(szPath, L"JP Software"))
 							{

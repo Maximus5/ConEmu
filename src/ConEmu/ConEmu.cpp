@@ -5254,7 +5254,7 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 	}
 
 	#ifdef _DEBUG
-	DWORD_PTR dwStyleDbg = GetWindowLongPtr(ghWnd, GWL_STYLE);
+	DWORD_PTR dwStyleDbg1 = GetWindowLongPtr(ghWnd, GWL_STYLE);
 	#endif
 
 	if (isPictureView())
@@ -5720,7 +5720,7 @@ wrap:
 	mp_TabBar->OnWindowStateChanged();
 
 	#ifdef _DEBUG
-	dwStyle = GetWindowLongPtr(ghWnd, GWL_STYLE);
+	DWORD_PTR dwStyleDbg2 = GetWindowLongPtr(ghWnd, GWL_STYLE);
 	#endif
 
 	// Transparency styles may was changed occasionally, check them

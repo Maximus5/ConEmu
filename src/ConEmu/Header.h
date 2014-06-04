@@ -644,9 +644,9 @@ union CESize
 		return true;
 	};
 
-	void SetFromRaw(bool IsWidth, DWORD Raw)
+	void SetFromRaw(bool IsWidth, DWORD aRaw)
 	{
-		CESize v; v.Raw = Raw;
+		CESize v; v.Raw = aRaw;
 		if (v.Style == ss_Standard || v.Style == ss_Pixels || v.Style == ss_Percents)
 		{
 			this->Set(IsWidth, v.Style, v.Value);
