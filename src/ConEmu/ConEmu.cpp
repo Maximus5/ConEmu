@@ -1236,9 +1236,9 @@ LPCWSTR CConEmuMain::ConEmuCExeFull(LPCWSTR asCmdLine/*=NULL*/)
 						{
 							wchar_t szRoot[MAX_PATH+1];
 							wcscpy_c(szRoot, ms_ConEmuExeDir);
-							wchar_t* pszSlash = wcsrchr(szRoot, L'\\');
-							if (pszSlash)
-								*pszSlash = 0;
+							wchar_t* pszRootSlash = wcsrchr(szRoot, L'\\');
+							if (pszRootSlash)
+								*pszRootSlash = 0;
 							nLen = SearchPath(szRoot, pszSearchFile, pszExt ? NULL : L".exe", countof(szFind), szFind, &pszFilePart);
 						}
 						if (nLen && (nLen < countof(szFind)))
@@ -5254,7 +5254,7 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 	}
 
 	#ifdef _DEBUG
-	DWORD_PTR dwStyle = GetWindowLongPtr(ghWnd, GWL_STYLE);
+	DWORD_PTR dwStyleDbg = GetWindowLongPtr(ghWnd, GWL_STYLE);
 	#endif
 
 	if (isPictureView())

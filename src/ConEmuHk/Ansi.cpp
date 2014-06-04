@@ -368,7 +368,7 @@ static const wchar_t szAnalogues[32] =
 	if (!GetConsoleScreenBufferInfo(hIn, &csbi))
 		return (clrDefault = 7);
 
-	static DWORD Con2Ansi[16] = {0,4,2,6,1,5,3,7,8|0,8|4,8|2,8|6,8|1,8|5,8|3,8|7};
+	static SHORT Con2Ansi[16] = {0,4,2,6,1,5,3,7,8|0,8|4,8|2,8|6,8|1,8|5,8|3,8|7};
 	clrDefault = Con2Ansi[CONFORECOLOR(csbi.wAttributes)]
 		| (Con2Ansi[CONBACKCOLOR(csbi.wAttributes)] << 4);
 
@@ -1996,7 +1996,7 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 			if (nChars > 0)
 			{
 				ExtFillOutputParm fill = {sizeof(fill), efof_Current|efof_Attribute|efof_Character,
-					hConsoleOutput, {}, L' ', cr0, nChars};
+					hConsoleOutput, {}, L' ', cr0, (DWORD)nChars};
 				ExtFillOutput(&fill);
 				//DWORD nWritten = 0;
 				//FillConsoleOutputAttribute(hConsoleOutput, GetDefaultTextAttr(), nChars, cr0, &nWritten);
@@ -2051,7 +2051,7 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 			if (nChars > 0)
 			{
 				ExtFillOutputParm fill = {sizeof(fill), efof_Current|efof_Attribute|efof_Character,
-					hConsoleOutput, {}, L' ', cr0, nChars};
+					hConsoleOutput, {}, L' ', cr0, (DWORD)nChars };
 				ExtFillOutput(&fill);
 				//DWORD nWritten = 0;
 				//FillConsoleOutputAttribute(hConsoleOutput, GetDefaultTextAttr(), nChars, cr0, &nWritten);
@@ -2493,7 +2493,7 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 			if (nChars > 0)
 			{
 				ExtFillOutputParm fill = {sizeof(fill), efof_Current|efof_Attribute|efof_Character,
-					hConsoleOutput, {}, L' ', cr0, nChars};
+					hConsoleOutput, {}, L' ', cr0, (DWORD)nChars };
 				ExtFillOutput(&fill);
 			}
 		} // case L'X':
@@ -2836,8 +2836,9 @@ void CEAnsi::StopVimTerm()
 	{
 		WORD nDefAttr = GetDefaultTextAttr();
 		// Сброс только расширенных атрибутов
-		ExtFillOutputParm fill = {sizeof(fill), /*efof_ResetExt|*/efof_Attribute/*|efof_Character*/,
-			hOut, {CECF_NONE,nDefAttr&0xF,(nDefAttr&0xF0)>>4}, L' ', {0,0}, csbi.dwSize.X * csbi.dwSize.Y};
+		ExtFillOutputParm fill = {sizeof(fill), /*efof_ResetExt|*/efof_Attribute/*|efof_Character*/, hOut,
+			{CECF_NONE,(COLORREF)(nDefAttr&0xF),COLORREF((nDefAttr&0xF0)>>4)},
+			L' ', {0,0}, (DWORD)(csbi.dwSize.X * csbi.dwSize.Y)};
 		ExtFillOutput(&fill);
 		CEAnsi* pObj = CEAnsi::Object();
 		if (pObj)
