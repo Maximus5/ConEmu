@@ -195,6 +195,15 @@
     <ClCompile Include="..\common\SetEnvVar.cpp">
       <Filter>0 - Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="AboutDlg.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="TabCtrlBase.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="TabCtrlWin.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Attach.h">
@@ -438,6 +447,15 @@
     <ClInclude Include="..\common\Dump.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="AboutDlg.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TabCtrlBase.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TabCtrlWin.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Circles.bmp">
@@ -536,6 +554,15 @@
       <Filter>Resource Files</Filter>
     </Image>
     <Image Include="Shield16.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="donate.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="flattr.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Search.ico">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>

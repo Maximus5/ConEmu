@@ -1629,922 +1629,155 @@
 			Filter="cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx"
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
-			<File
-				RelativePath=".\AboutDlg.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Attach.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Background.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\BaseDragDrops.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\common\CmdLine.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\common\SetEnvVar.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\common\Common.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\ConEmu.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\ConEmuApp.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\common\ConEmuCheck.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\ConEmuCtrl.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\ConEmuPipe.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\ConfirmDlg.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\CustomFonts.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\DefaultTerm.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\DragDrop.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\DragDropData.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\DwmHelper.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\common\execute.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\FindDlg.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\FrameHolder.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\GestureEngine.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\GuiServer.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Hotkeys.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\IconList.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Inside.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\LoadImg.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Macro.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\common\MAssert.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\common\Memory.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Menu.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\common\Monitors.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\common\MSecurity.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\common\MStrSafe.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Options.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\OptionsClass.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\OptionsFast.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\OptionsHelp.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\common\RConStartArgs.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\RealBuffer.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\RealConsole.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\RealServer.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Recreate.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Registry.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\common\RgnDetect.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\RunQueue.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\ScreenDump.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Status.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\TabBar.cpp"
-				>
-				<FileConfiguration
-					Name="Debug_F2|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath=".\TabCtrlBase.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\TabCtrlWin.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\TabBarEx.cpp"
-				>
-				<FileConfiguration
-					Name="Debug_E|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug_E|x64"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|x64"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug_C|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug_C|x64"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Instrument|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Instrument|x64"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug_R|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug_R|x64"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug_F|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug_F|x64"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release_PDB|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release_PDB|x64"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug_F2|x64"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug_F3|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug_F3|x64"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug_M|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug_M|x64"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath=".\TabID.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\TaskBar.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\TaskBarGhost.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\TrayIcon.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Update.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\UpdateSet.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\VConChild.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\VConGroup.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\VConRelease.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\VirtualConsole.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\common\WinConsole.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\common\WinObjects.cpp"
-				>
-			</File>
+			<File RelativePath="..\common\CmdLine.cpp" />
+			<File RelativePath="..\common\Common.cpp" />
+			<File RelativePath="..\common\ConEmuCheck.cpp" />
+			<File RelativePath="..\common\execute.cpp" />
+			<File RelativePath="..\common\MAssert.cpp" />
+			<File RelativePath="..\common\Memory.cpp" />
+			<File RelativePath="..\common\Monitors.cpp" />
+			<File RelativePath="..\common\MSecurity.cpp" />
+			<File RelativePath="..\common\MStrSafe.cpp" />
+			<File RelativePath="..\common\RConStartArgs.cpp" />
+			<File RelativePath="..\common\RgnDetect.cpp" />
+			<File RelativePath="..\common\SetEnvVar.cpp" />
+			<File RelativePath="..\common\WinConsole.cpp" />
+			<File RelativePath="..\common\WinObjects.cpp" />
+			<File RelativePath=".\AboutDlg.cpp" />
+			<File RelativePath=".\Attach.cpp" />
+			<File RelativePath=".\Background.cpp" />
+			<File RelativePath=".\BaseDragDrops.cpp" />
+			<File RelativePath=".\ConEmu.cpp" />
+			<File RelativePath=".\ConEmuApp.cpp" />
+			<File RelativePath=".\ConEmuCtrl.cpp" />
+			<File RelativePath=".\ConEmuPipe.cpp" />
+			<File RelativePath=".\ConfirmDlg.cpp" />
+			<File RelativePath=".\CustomFonts.cpp" />
+			<File RelativePath=".\DefaultTerm.cpp" />
+			<File RelativePath=".\DragDrop.cpp" />
+			<File RelativePath=".\DragDropData.cpp" />
+			<File RelativePath=".\DwmHelper.cpp" />
+			<File RelativePath=".\FindDlg.cpp" />
+			<File RelativePath=".\FrameHolder.cpp" />
+			<File RelativePath=".\GestureEngine.cpp" />
+			<File RelativePath=".\GuiServer.cpp" />
+			<File RelativePath=".\Hotkeys.cpp" />
+			<File RelativePath=".\IconList.cpp" />
+			<File RelativePath=".\Inside.cpp" />
+			<File RelativePath=".\LoadImg.cpp" />
+			<File RelativePath=".\Macro.cpp" />
+			<File RelativePath=".\Menu.cpp" />
+			<File RelativePath=".\Options.cpp" />
+			<File RelativePath=".\OptionsClass.cpp" />
+			<File RelativePath=".\OptionsFast.cpp" />
+			<File RelativePath=".\OptionsHelp.cpp" />
+			<File RelativePath=".\RealBuffer.cpp" />
+			<File RelativePath=".\RealConsole.cpp" />
+			<File RelativePath=".\RealServer.cpp" />
+			<File RelativePath=".\Recreate.cpp" />
+			<File RelativePath=".\Registry.cpp" />
+			<File RelativePath=".\RunQueue.cpp" />
+			<File RelativePath=".\ScreenDump.cpp" />
+			<File RelativePath=".\Status.cpp" />
+			<File RelativePath=".\TabBar.cpp" />
+			<File RelativePath=".\TabCtrlBase.cpp" />
+			<File RelativePath=".\TabCtrlWin.cpp" />
+			<File RelativePath=".\TabID.cpp" />
+			<File RelativePath=".\TaskBar.cpp" />
+			<File RelativePath=".\TaskBarGhost.cpp" />
+			<File RelativePath=".\TrayIcon.cpp" />
+			<File RelativePath=".\Update.cpp" />
+			<File RelativePath=".\UpdateSet.cpp" />
+			<File RelativePath=".\VConChild.cpp" />
+			<File RelativePath=".\VConGroup.cpp" />
+			<File RelativePath=".\VConRelease.cpp" />
+			<File RelativePath=".\VirtualConsole.cpp" />
 		</Filter>
 		<Filter
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
-			<File
-				RelativePath=".\About.h"
-				>
-			</File>
-			<File
-				RelativePath=".\AboutDlg.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Attach.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Background.h"
-				>
-			</File>
-			<File
-				RelativePath=".\BaseDragDrops.h"
-				>
-			</File>
-			<File
-				RelativePath="..\common\CmdLine.h"
-				>
-			</File>
-			<File
-				RelativePath="..\common\SetEnvVar.h"
-				>
-			</File>
-			<File
-				RelativePath="..\common\common.hpp"
-				>
-			</File>
-			<File
-				RelativePath=".\ConEmu.h"
-				>
-			</File>
-			<File
-				RelativePath=".\ConEmuApp.h"
-				>
-			</File>
-			<File
-				RelativePath="..\common\ConEmuCheck.h"
-				>
-			</File>
-			<File
-				RelativePath=".\ConEmuCtrl.h"
-				>
-			</File>
-			<File
-				RelativePath=".\ConEmuPipe.h"
-				>
-			</File>
-			<File
-				RelativePath="..\common\ConEmuPipeMode.h"
-				>
-			</File>
-			<File
-				RelativePath=".\ConfirmDlg.h"
-				>
-			</File>
-			<File
-				RelativePath="..\common\ConsoleAnnotation.h"
-				>
-			</File>
-			<File
-				RelativePath="..\ConEmuCD\ConsoleHelp.h"
-				>
-			</File>
-			<File
-				RelativePath=".\CustomFonts.h"
-				>
-			</File>
-			<File
-				RelativePath=".\DefaultTerm.h"
-				>
-			</File>
-			<File
-				RelativePath="..\common\defines.h"
-				>
-			</File>
-			<File
-				RelativePath=".\DragDrop.h"
-				>
-			</File>
-			<File
-				RelativePath=".\DragDropData.h"
-				>
-			</File>
-			<File
-				RelativePath="..\common\Dump.h"
-				>
-			</File>
-			<File
-				RelativePath=".\DwmHelper.h"
-				>
-			</File>
-			<File
-				RelativePath="..\common\execute.h"
-				>
-			</File>
-			<File
-				RelativePath="..\common\far3color.h"
-				>
-			</File>
-			<File
-				RelativePath=".\FindDlg.h"
-				>
-			</File>
-			<File
-				RelativePath=".\FrameHolder.h"
-				>
-			</File>
-			<File
-				RelativePath=".\GestureEngine.h"
-				>
-			</File>
-			<File
-				RelativePath=".\globals.h"
-				>
-			</File>
-			<File
-				RelativePath="..\ConEmuCD\GuiHooks.h"
-				>
-			</File>
-			<File
-				RelativePath=".\GuiServer.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Header.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Hotkeys.h"
-				>
-			</File>
-			<File
-				RelativePath=".\IconList.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Inside.h"
-				>
-			</File>
-			<File
-				RelativePath=".\kl_parts.h"
-				>
-			</File>
-			<File
-				RelativePath=".\LoadImg.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Macro.h"
-				>
-			</File>
-			<File
-				RelativePath="..\common\Memory.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Menu.h"
-				>
-			</File>
-			<File
-				RelativePath=".\MenuIds.h"
-				>
-			</File>
-			<File
-				RelativePath="..\common\Monitors.h"
-				>
-			</File>
-			<File
-				RelativePath="..\common\MPipe.h"
-				>
-			</File>
-			<File
-				RelativePath="..\common\MSecurity.h"
-				>
-			</File>
-			<File
-				RelativePath="..\common\MStrSafe.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Options.h"
-				>
-			</File>
-			<File
-				RelativePath=".\OptionsClass.h"
-				>
-			</File>
-			<File
-				RelativePath=".\OptionsFast.h"
-				>
-			</File>
-			<File
-				RelativePath=".\OptionsHelp.h"
-				>
-			</File>
-			<File
-				RelativePath="..\common\PipeServer.h"
-				>
-			</File>
-			<File
-				RelativePath="..\common\RConStartArgs.h"
-				>
-			</File>
-			<File
-				RelativePath=".\RealBuffer.h"
-				>
-			</File>
-			<File
-				RelativePath=".\RealConsole.h"
-				>
-			</File>
-			<File
-				RelativePath=".\RealServer.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Recreate.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Registry.h"
-				>
-			</File>
-			<File
-				RelativePath="..\common\RgnDetect.h"
-				>
-			</File>
-			<File
-				RelativePath=".\RunQueue.h"
-				>
-			</File>
-			<File
-				RelativePath=".\ScreenDump.h"
-				>
-			</File>
-			<File
-				RelativePath="..\common\StartupEnv.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Status.h"
-				>
-			</File>
-			<File
-				RelativePath=".\TabBar.h"
-				>
-				<FileConfiguration
-					Name="Debug_R|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug_F2|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath=".\TabCtrlBase.h"
-				>
-			</File>
-			<File
-				RelativePath=".\TabCtrlWin.h"
-				>
-			</File>
-			<File
-				RelativePath=".\TabBarEx.h"
-				>
-				<FileConfiguration
-					Name="Debug_E|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug_E|x64"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|x64"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug_C|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug_C|x64"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Instrument|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Instrument|x64"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug_R|Win32"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug_R|x64"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug_F|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug_F|x64"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release_PDB|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release_PDB|x64"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug_F2|Win32"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug_F2|x64"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug_F3|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug_F3|x64"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug_M|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug_M|x64"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath=".\TabID.h"
-				>
-			</File>
-			<File
-				RelativePath=".\TaskBar.h"
-				>
-			</File>
-			<File
-				RelativePath=".\TaskBarGhost.h"
-				>
-			</File>
-			<File
-				RelativePath=".\TrayIcon.h"
-				>
-			</File>
-			<File
-				RelativePath="..\common\UnicodeChars.h"
-				>
-			</File>
-			<File
-				RelativePath="..\common\UnicodeChars_gcc.h"
-				>
-			</File>
-			<File
-				RelativePath="..\common\UnicodeChars_vc.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Update.h"
-				>
-			</File>
-			<File
-				RelativePath=".\UpdateSet.h"
-				>
-			</File>
-			<File
-				RelativePath=".\VConChild.h"
-				>
-			</File>
-			<File
-				RelativePath=".\VConRelease.h"
-				>
-			</File>
-			<File
-				RelativePath=".\VirtualConsole.h"
-				>
-			</File>
-			<File
-				RelativePath="..\common\WinConsole.h"
-				>
-			</File>
-			<File
-				RelativePath="..\common\WinObjects.h"
-				>
-			</File>
+			<File RelativePath="..\common\CmdLine.h" />
+			<File RelativePath="..\common\common.hpp" />
+			<File RelativePath="..\common\ConEmuCheck.h" />
+			<File RelativePath="..\common\ConEmuPipeMode.h" />
+			<File RelativePath="..\common\ConsoleAnnotation.h" />
+			<File RelativePath="..\common\defines.h" />
+			<File RelativePath="..\common\Dump.h" />
+			<File RelativePath="..\common\execute.h" />
+			<File RelativePath="..\common\far3color.h" />
+			<File RelativePath="..\common\Memory.h" />
+			<File RelativePath="..\common\Monitors.h" />
+			<File RelativePath="..\common\MPipe.h" />
+			<File RelativePath="..\common\MSecurity.h" />
+			<File RelativePath="..\common\MStrSafe.h" />
+			<File RelativePath="..\common\PipeServer.h" />
+			<File RelativePath="..\common\RConStartArgs.h" />
+			<File RelativePath="..\common\RgnDetect.h" />
+			<File RelativePath="..\common\SetEnvVar.h" />
+			<File RelativePath="..\common\StartupEnv.h" />
+			<File RelativePath="..\common\UnicodeChars.h" />
+			<File RelativePath="..\common\UnicodeChars_gcc.h" />
+			<File RelativePath="..\common\UnicodeChars_vc.h" />
+			<File RelativePath="..\common\WinConsole.h" />
+			<File RelativePath="..\common\WinObjects.h" />
+			<File RelativePath="..\ConEmuCD\ConsoleHelp.h" />
+			<File RelativePath="..\ConEmuCD\GuiHooks.h" />
+			<File RelativePath=".\About.h" />
+			<File RelativePath=".\AboutDlg.h" />
+			<File RelativePath=".\Attach.h" />
+			<File RelativePath=".\Background.h" />
+			<File RelativePath=".\BaseDragDrops.h" />
+			<File RelativePath=".\ConEmu.h" />
+			<File RelativePath=".\ConEmuApp.h" />
+			<File RelativePath=".\ConEmuCtrl.h" />
+			<File RelativePath=".\ConEmuPipe.h" />
+			<File RelativePath=".\ConfirmDlg.h" />
+			<File RelativePath=".\CustomFonts.h" />
+			<File RelativePath=".\DefaultTerm.h" />
+			<File RelativePath=".\DragDrop.h" />
+			<File RelativePath=".\DragDropData.h" />
+			<File RelativePath=".\DwmHelper.h" />
+			<File RelativePath=".\FindDlg.h" />
+			<File RelativePath=".\FrameHolder.h" />
+			<File RelativePath=".\GestureEngine.h" />
+			<File RelativePath=".\globals.h" />
+			<File RelativePath=".\GuiServer.h" />
+			<File RelativePath=".\Header.h" />
+			<File RelativePath=".\Hotkeys.h" />
+			<File RelativePath=".\IconList.h" />
+			<File RelativePath=".\Inside.h" />
+			<File RelativePath=".\kl_parts.h" />
+			<File RelativePath=".\LoadImg.h" />
+			<File RelativePath=".\Macro.h" />
+			<File RelativePath=".\Menu.h" />
+			<File RelativePath=".\MenuIds.h" />
+			<File RelativePath=".\Options.h" />
+			<File RelativePath=".\OptionsClass.h" />
+			<File RelativePath=".\OptionsFast.h" />
+			<File RelativePath=".\OptionsHelp.h" />
+			<File RelativePath=".\RealBuffer.h" />
+			<File RelativePath=".\RealConsole.h" />
+			<File RelativePath=".\RealServer.h" />
+			<File RelativePath=".\Recreate.h" />
+			<File RelativePath=".\Registry.h" />
+			<File RelativePath=".\RunQueue.h" />
+			<File RelativePath=".\ScreenDump.h" />
+			<File RelativePath=".\Status.h" />
+			<File RelativePath=".\TabBar.h" />
+			<File RelativePath=".\TabCtrlBase.h" />
+			<File RelativePath=".\TabCtrlWin.h" />
+			<File RelativePath=".\TabID.h" />
+			<File RelativePath=".\TaskBar.h" />
+			<File RelativePath=".\TaskBarGhost.h" />
+			<File RelativePath=".\TrayIcon.h" />
+			<File RelativePath=".\Update.h" />
+			<File RelativePath=".\UpdateSet.h" />
+			<File RelativePath=".\VConChild.h" />
+			<File RelativePath=".\VConRelease.h" />
+			<File RelativePath=".\version.h" />
+			<File RelativePath=".\VirtualConsole.h" />
 		</Filter>
 		<Filter
 			Name="Resource Files"
@@ -3546,10 +2779,6 @@
 		</File>
 		<File
 			RelativePath="..\..\Release\ConEmu\Settings-ConEmu.reg"
-			>
-		</File>
-		<File
-			RelativePath=".\version.h"
 			>
 		</File>
 		<File
