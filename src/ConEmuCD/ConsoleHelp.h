@@ -88,7 +88,7 @@ _DBGHLP(L"     /Result -> print errorlevel of /C <command>\r\n") \
 		L"  Switch: -new_console[:switches]\r\n" \
 		L"     a - RunAs shell verb (as Admin on Vista+, user/pwd in Win2k and WinXP)\r\n" \
 		L"     b - Create background tab\r\n" \
-		L"     c - force enable 'Press Enter or Esc to close console' (default)\r\n" \
+		L"     c - force enable 'Press Enter or Esc to close console' confirmation (default)\r\n" \
 		L"     C - see below\r\n" \
 		L"     d - see below\r\n" \
 		L"     f - force starting console active, useful when starting several consoles simultaneously\r\n" \
@@ -96,7 +96,7 @@ _DBGHLP(L"     /Result -> print errorlevel of /C <command>\r\n") \
 		L"     i - don't inject ConEmuHk into starting process\r\n" \
 		L"     I - (GuiMacro only) forces inheriting of root process contents, like \"Duplicate root\"\r\n" \
 _DBGHLP(L"     l - lock console size, do not sync it to ConEmu window\r\n") \
-		L"     n - disable 'Press Enter or Esc to close console'\r\n" \
+		L"     n - disable 'Press Enter or Esc to close console' confirmation\r\n" \
 		L"     o - don't enable 'Long console output' when starting command from Far Manager\r\n" \
 		L"     P - see below\r\n" \
 		L"     r - run as restricted user\r\n" \
