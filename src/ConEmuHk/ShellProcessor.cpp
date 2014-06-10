@@ -2579,13 +2579,37 @@ void CShellProc::OnAllocConsoleFinished()
 
 	BOOL bAttachCreated = FALSE;
 	_ASSERTEX(gbPrepareDefaultTerminal && gbIsNetVsHost);
+	if (!m_GuiMapping.cbSize)
+	{
+		_ASSERTEX(m_GuiMapping.cbSize);
+		m_GuiMapping.sConEmuArgs[0] = 0;
+	}
 
+	bool bForceNewWnd = false;
 	size_t cchMax = MAX_PATH+80;
 	wchar_t* pszCmdLine = (wchar_t*)malloc(cchMax*sizeof(*pszCmdLine));
 	if (pszCmdLine)
 	{
 		_ASSERTEX(m_SrvMapping.ComSpec.ConEmuBaseDir[0]!=0);
-		msprintf(pszCmdLine, cchMax, L"\"%s\\%s\" /ATTACH /TRMPID=%u", m_SrvMapping.ComSpec.ConEmuBaseDir, WIN3264TEST(L"ConEmuC.exe",L"ConEmuC64.exe"), gnSelfPID);
+
+		if (m_GuiMapping.cbSize && m_GuiMapping.sConEmuArgs[0] && wcsstr(m_GuiMapping.sConEmuArgs, L"-new_console:"))
+		{
+			RConStartArgs args;
+			args.pszSpecialCmd = lstrdup(m_GuiMapping.sConEmuArgs);
+			if (args.ProcessNewConArg() > 0)
+			{
+				bForceNewWnd = (args.ForceNewWindow == crb_On);
+			}
+		}
+
+		TODO("По идее, здесь еще должны быть и другие аргументы из m_GuiMapping.sConEmuArgs. Конфиг, например");
+
+		msprintf(pszCmdLine, cchMax, L"\"%s\\%s\" /ATTACH /TRMPID=%u%s",
+			m_SrvMapping.ComSpec.ConEmuBaseDir,
+			WIN3264TEST(L"ConEmuC.exe",L"ConEmuC64.exe"),
+			gnSelfPID,
+			bForceNewWnd ? L" /GHWND=NEW" : L"");
+
 		STARTUPINFO si = {sizeof(si)};
 		PROCESS_INFORMATION pi = {};
 		bAttachCreated = CreateProcess(NULL, pszCmdLine, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL, m_SrvMapping.ComSpec.ConEmuBaseDir, &si, &pi);
