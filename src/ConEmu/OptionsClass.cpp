@@ -1717,6 +1717,22 @@ void CSettings::SearchForControls()
 		RECT rcControl; GetWindowRect(hCtrl, &rcControl);
 		int ptx = /*bLeftAligh ?*/ (rcControl.left + 10) /*: (rcControl.right - 10)*/;
 		int pty = rcControl.top + 10; //bLeftAligh ? rcControl.bottom : (rcControl.top + rcControl.bottom) / 2;
+		if ((lstrcmpi(szClass, L"ListBox") == 0) && (lFind >= 0))
+		{
+			RECT rcItem = {};
+			if (SendMessage(hCtrl, LB_GETITEMRECT, lFind, (LPARAM)&rcItem) != LB_ERR)
+			{
+				pty += rcItem.top;
+			}
+		}
+		else if ((lstrcmpi(szClass, L"SysListView32") == 0) && (lFind >= 0))
+		{
+			RECT rcList = {};
+			if (ListView_GetItemRect(hCtrl, lFind, &rcList, LVIR_LABEL))
+			{
+				pty += rcList.top;
+			}
+		}
 		SendMessage(hBall, TTM_TRACKPOSITION, 0, MAKELONG(ptx,pty));
 		SendMessage(hBall, TTM_TRACKACTIVATE, TRUE, (LPARAM)pti);
 		SetTimer(hCurTab, BALLOON_MSG_TIMERID, CONTROL_FOUND_TIMEOUT, 0);
