@@ -1354,10 +1354,11 @@ FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
     DEFPUSHBUTTON   "OK",IDOK,368,187,50,14
     ICON            IDI_ICON1,pIconCtrl,7,7,20,20,WS_DISABLED
-    CONTROL         "",tbAboutTabs,"SysTabControl32",TCS_BUTTONS | WS_TABSTOP,6,33,412,16
+    CONTROL         "",tbAboutTabs,"SysTabControl32",TCS_BUTTONS | WS_TABSTOP,6,33,356,16
     EDITTEXT        tAboutText,7,50,411,131,ES_MULTILINE | ES_AUTOVSCROLL | ES_NOHIDESEL | ES_READONLY | WS_VSCROLL
     LTEXT           "Console emulation program. Visit home page:",stConEmuAbout,104,7,268,8
     LTEXT           "http://conemu-maximus5.googlecode.com",stConEmuUrl,104,18,268,8,SS_NOTIFY
+    EDITTEXT        tAboutSearch,365,33,53,13,ES_AUTOHSCROLL | ES_WANTRETURN
 END
 
 IDD_ACTION DIALOGEX 0, 0, 325, 157
@@ -1425,6 +1426,10 @@ BEGIN
         RIGHTMARGIN, 318
         TOPMARGIN, 7
         BOTTOMMARGIN, 198
+    END
+
+    IDD_FIND, DIALOG
+    BEGIN
     END
 
     IDD_ATTACHDLG, DIALOG
@@ -1557,10 +1562,6 @@ BEGIN
 
     IDD_ABOUT, DIALOG
     BEGIN
-        LEFTMARGIN, 7
-        RIGHTMARGIN, 372
-        TOPMARGIN, 7
-        BOTTOMMARGIN, 143
     END
 
     IDD_ACTION, DIALOG

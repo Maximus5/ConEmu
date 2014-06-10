@@ -37,6 +37,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmu.h"
 #include "OptionsClass.h"
 #include "RealConsole.h"
+#include "SearchCtrl.h"
 #include "VirtualConsole.h"
 #include "VConChild.h"
 #include "version.h"
@@ -49,6 +50,7 @@ namespace ConEmuAbout
 	DWORD nLastCrashReported = 0;
 
 	INT_PTR WINAPI aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam);
+	void searchProc(HWND hDlg, HWND hSearch, bool bReentr);
 
 	void OnInfo_DonateLink();
 	void OnInfo_FlattrLink();
@@ -89,7 +91,8 @@ namespace ConEmuAbout
 INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam)
 {
 	INT_PTR lRc = 0;
-	if (DonateBtns_Process(hDlg, messg, wParam, lParam, lRc))
+	if (DonateBtns_Process(hDlg, messg, wParam, lParam, lRc)
+		|| EditIconHint_Process(hDlg, messg, wParam, lParam, lRc))
 	{
 		SetWindowLongPtr(hDlg, DWLP_MSGRESULT, lRc);
 		return TRUE;
@@ -129,6 +132,9 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 			SetDlgItemText(hDlg, stConEmuUrl, gsHomePage);
 
 			DonateBtns_Add(hDlg, pIconCtrl, IDOK);
+
+			EditIconHint_Set(hDlg, GetDlgItem(hDlg, tAboutSearch), true, L"Search", false, UM_SEARCH, IDOK);
+			EditIconHint_Subclass(hDlg);
 
 			HWND hTab = GetDlgItem(hDlg, tbAboutTabs);
 			size_t nPage = 0;
@@ -236,6 +242,14 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 			break;
 		}
 
+		case UM_SEARCH:
+			searchProc(hDlg, (HWND)lParam, false);
+			break;
+
+		case UM_EDIT_KILL_FOCUS:
+			SendMessage((HWND)lParam, EM_GETSEL, (WPARAM)&nTextSelStart, (LPARAM)&nTextSelEnd);
+			break;
+
 		case WM_CLOSE:
 			//if (ghWnd == NULL)
 			gpConEmu->OnOurDialogClosed();
@@ -253,6 +267,81 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 	}
 
 	return FALSE;
+}
+
+void ConEmuAbout::searchProc(HWND hDlg, HWND hSearch, bool bReentr)
+{
+	HWND hEdit = GetDlgItem(hDlg, tAboutText);
+	wchar_t* pszPart = GetDlgItemText(hSearch, 0);
+	wchar_t* pszText = GetDlgItemText(hEdit, 0);
+	bool bRetry = false;
+
+	if (pszPart && *pszPart && pszText && *pszText)
+	{
+		LPCWSTR pszFrom = pszText;
+
+		DWORD nStart = 0, nEnd = 0;
+		SendMessage(hEdit, EM_GETSEL, (WPARAM)&nStart, (LPARAM)&nEnd);
+
+		size_t cchMax = wcslen(pszText);
+		size_t cchFrom = max(nStart,nEnd);
+		if (cchMax > cchFrom)
+			pszFrom += cchFrom;
+
+		LPCWSTR pszFind = StrStrI(pszFrom, pszPart);
+		if (!pszFind && (pszFrom != pszText))
+			pszFind = StrStrI(pszText, pszPart);
+
+		if (pszFind)
+		{
+			const wchar_t szBrkChars[] = L"()[]<>{}:;,.-=\\/ \t\r\n";
+			LPCWSTR pszEnd = wcspbrk(pszFind, szBrkChars);
+			INT_PTR nPartLen = wcslen(pszPart);
+			if (!pszEnd || ((pszEnd - pszFind) > max(nPartLen,60)))
+				pszEnd = pszFind + nPartLen;
+			while ((pszFind > pszFrom) && !wcschr(szBrkChars, *(pszFind-1)))
+				pszFind--;
+			//SetFocus(hEdit);
+			nTextSelStart = (DWORD)(pszEnd-pszText);
+			nTextSelEnd = (DWORD)(pszFind-pszText);
+			SendMessage(hEdit, EM_SETSEL, nTextSelStart, nTextSelEnd);
+			SendMessage(hEdit, EM_SCROLLCARET, 0, 0);
+		}
+		else if (!bReentr)
+		{
+			HWND hTab = GetDlgItem(hDlg, tbAboutTabs);
+			int iPage = TabCtrl_GetCurSel(hTab);
+			int iFound = -1;
+			for (int s = 0; (iFound == -1) && (s <= 1); s++)
+			{
+				int iFrom = (s == 0) ? (iPage+1) : 0;
+				int iTo = (s == 0) ? (int)countof(Pages) : (iPage-1);
+				for (int i = iFrom; i < iTo; i++)
+				{
+					if (StrStrI(Pages[i].Title, pszPart)
+						|| StrStrI(Pages[i].Text, pszPart))
+					{
+						iFound = i; break;
+					}
+				}
+			}
+			if (iFound >= 0)
+			{
+				SetDlgItemText(hDlg, tAboutText, Pages[iFound].Text);
+				TabCtrl_SetCurSel(hTab, iFound);
+				//SetFocus(hEdit);
+				bRetry = true;
+			}
+		}
+	}
+
+	SafeFree(pszPart);
+	SafeFree(pszText);
+
+	if (bRetry)
+	{
+		searchProc(hDlg, hSearch, true);
+	}
 }
 
 void ConEmuAbout::InitCommCtrls()

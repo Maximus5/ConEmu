@@ -133,7 +133,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"Grzegorz Kozub: new toolbar images"
 
 #define pAboutTitle \
-	L"Console emulation program. Visit home page:"
+	L"Console Emulation program (local terminal)"
 //#define pAboutUrl
 //	L"http://conemu-maximus5.googlecode.com"
 
