@@ -88,7 +88,7 @@ BOOL IsNeedCmd(BOOL bRootCmd, LPCWSTR asCmdLine, LPCWSTR* rsArguments, BOOL *rbN
 bool IsQuotationNeeded(LPCWSTR pszPath);
 bool ProcessSetEnvCmd(LPCWSTR& asCmdLine, bool bDoSet, CmdArg* rpsTitle = NULL);
 
-bool FileExistsSearch(LPCWSTR asFilePath, CmdArg& rsFound, bool abSetPath = true);
+bool FileExistsSearch(LPCWSTR asFilePath, CmdArg& rsFound, bool abSetPath = true, bool abRegSearch = true);
 
 #ifndef CONEMU_MINIMAL
 bool SearchAppPaths(LPCWSTR asFilePath, CmdArg& rsFound, bool abSetPath, CmdArg* rpsPathRestore = NULL);

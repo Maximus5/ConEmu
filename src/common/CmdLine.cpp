@@ -1078,7 +1078,7 @@ bool ProcessSetEnvCmd(LPCWSTR& asCmdLine, bool bDoSet, CmdArg* rpsTitle /*= NULL
 	return bEnvChanged;
 }
 
-bool FileExistsSearch(LPCWSTR asFilePath, CmdArg& rsFound, bool abSetPath/*= true*/)
+bool FileExistsSearch(LPCWSTR asFilePath, CmdArg& rsFound, bool abSetPath/*= true*/, bool abRegSearch /*= true*/)
 {
 	if (!asFilePath || !*asFilePath)
 	{
@@ -1113,7 +1113,7 @@ bool FileExistsSearch(LPCWSTR asFilePath, CmdArg& rsFound, bool abSetPath/*= tru
 	#ifndef CONEMU_MINIMAL
 	// В ConEmuHk этот блок не активен, потому что может быть "только" перехват CreateProcess,
 	// а о его параметрах должно заботиться вызывающее (текущее) приложение
-	if (wcschr(asFilePath, L'\\') == NULL)
+	if (abRegSearch && !wcschr(asFilePath, L'\\'))
 	{
 		// Если в asFilePath НЕ указан путь - искать приложение в реестре,
 		// и там могут быть указаны доп. параметры (пока только добавка в %PATH%)
