@@ -1,0 +1,597 @@
+﻿
+/*
+Copyright (c) 2014 Maximus5
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+1. Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in the
+   documentation and/or other materials provided with the distribution.
+3. The name of the authors may not be used to endorse or promote products
+   derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE AUTHOR ''AS IS'' AND ANY EXPRESS OR
+IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
+#define HIDE_USE_EXCEPTION_INFO
+#define SHOWDEBUGSTR
+
+#include "Header.h"
+#include "Resource.h"
+#include "../common/MMap.h"
+
+#define CE_ICON_SPACING 6
+#define SEARCH_CTRL_TIMERID 1001
+#define SEARCH_CTRL_TIMER   1500
+#define SEARCH_CTRL_REFRID  1002
+#define SEARCH_CTRL_REFR    250
+
+struct CEIconHintInfo
+{
+	HWND     hEditCtrl;
+	HWND     hRootDlg;
+	WNDPROC  lpPrevWndFunc;
+	HICON    hIcon;
+	HFONT    hFont;
+	DWORD    nMargins;
+	wchar_t  sHint[80];
+	COLORREF clrHint;
+	DWORD    nSearchMsg;
+	DWORD    nDefBtnID;
+};
+
+struct CEIconHintOthers
+{
+	HWND     hCtrl;
+	HWND     hRootDlg;
+	WNDPROC  lpPrevWndFunc;
+};
+
+static MMap<HWND,CEIconHintInfo>* gpIconHints = NULL;
+static MMap<HWND,CEIconHintOthers>* gpIconOthers = NULL;
+
+static LRESULT EditIconHintPaint(HWND hEditCtrl, CEIconHintInfo* p, UINT Msg = WM_PAINT)
+{
+	LRESULT lRc = 0;
+
+	int iLen = GetWindowTextLength(hEditCtrl);
+	PAINTSTRUCT ps = {};
+	HDC hdc; bool bReleaseDC = false;
+	bool bDrawHint = ((*p->sHint) && p->hFont && (iLen == 0) && (GetFocus() != hEditCtrl));
+
+	if (!bDrawHint || !p->hIcon || (Msg != WM_PAINT))
+	{
+		if (Msg == WM_PAINT)
+		{
+			if (p->lpPrevWndFunc)
+				lRc = CallWindowProc(p->lpPrevWndFunc, hEditCtrl, WM_PAINT, 0, 0);
+			else
+				lRc = DefWindowProc(hEditCtrl, WM_PAINT, 0, 0);
+		}
+		// Need to draw icon?
+		if (!p->hIcon)
+			goto wrap;
+		// If drawing after standard procedure
+		hdc = GetDC(hEditCtrl);
+		bReleaseDC = true;
+	}
+	else
+	{
+		hdc = BeginPaint(hEditCtrl, &ps);
+	}
+
+	if (hdc)
+	{
+		RECT rect = {};
+		if (GetClientRect(hEditCtrl, &rect))
+		{
+			int iw = GetSystemMetrics(SM_CXSMICON);
+			int ih = GetSystemMetrics(SM_CYSMICON);
+
+			// Paint background
+			HBRUSH hBr = GetSysColorBrush(COLOR_WINDOW);
+			RECT rcFill = rect;
+			// Draw only icon?
+			if (!bDrawHint)
+			{
+				rcFill.right -= HIWORD(p->nMargins);
+				rcFill.left = rcFill.right - (iw + CE_ICON_SPACING);
+			}
+			FillRect(hdc, &rcFill, hBr);
+
+			// Cut initial margins
+			rect.left  += LOWORD(p->nMargins);
+			rect.right -= HIWORD(p->nMargins);
+
+			// Draw "Search" icon
+			if (p->hIcon)
+			{
+				int X1 = rect.right - iw - 1;
+				int Y1 = max(1,((rect.bottom-rect.top-ih)>>1));
+
+				DrawIconEx(hdc, X1, Y1, p->hIcon, iw, ih, 0, NULL, DI_NORMAL);
+
+				rect.right -= (iw + CE_ICON_SPACING);
+			}
+
+			// Draw "Hint"
+			if (bDrawHint)
+			{
+				HFONT hOldFont = (HFONT)SelectObject(hdc, p->hFont);
+				COLORREF OldColor = GetTextColor(hdc);
+				SetTextColor(hdc, p->clrHint);
+				DrawText(hdc, p->sHint, -1, &rect, DT_LEFT|DT_SINGLELINE|DT_EDITCONTROL);
+				SetTextColor(hdc, OldColor);
+				SelectObject(hdc, hOldFont);
+			}
+		}
+
+		// Finalize DC
+		if (bReleaseDC)
+			ReleaseDC(hEditCtrl, hdc);
+		else
+			EndPaint(hEditCtrl, &ps);
+	}
+
+wrap:
+	return lRc;
+}
+
+static bool EditIconHintOverIcon(HWND hEditCtrl, CEIconHintInfo* p, LPARAM* lpParam)
+{
+	RECT rcClient = {}; GetClientRect(hEditCtrl, &rcClient);
+	rcClient.right -= HIWORD(p->nMargins);
+	rcClient.left = rcClient.right - GetSystemMetrics(SM_CXSMICON);
+
+	POINT ptCur = {};
+	if (lpParam)
+	{
+		ptCur = MakePoint((short)LOWORD(*lpParam),(short)HIWORD(*lpParam));
+	}
+	else
+	{
+		GetCursorPos(&ptCur);
+		MapWindowPoints(NULL, hEditCtrl, &ptCur, 1);
+	}
+
+	bool bOverIcon = (PtInRect(&rcClient, ptCur) != 0);
+	return bOverIcon;
+}
+
+static BOOL CALLBACK EditIconHint_FindScrollCtrl(HWND hwnd, LPARAM lParam)
+{
+	if (!IsWindowVisible(hwnd))
+		return TRUE;
+	DWORD_PTR dwStyles = GetWindowLongPtr(hwnd, GWL_STYLE);
+	if (!(dwStyles & WS_VSCROLL))
+		return TRUE;
+
+	RECT rcItem = {}; GetWindowRect(hwnd, &rcItem);
+	POINT ptCur = {}; GetCursorPos(&ptCur);
+	if (!PtInRect(&rcItem, ptCur))
+		return TRUE;
+
+	*((HWND*)lParam) = hwnd;
+
+	wchar_t szClass[64] = L""; GetClassName(hwnd, szClass, countof(szClass));
+	if (lstrcmp(szClass, L"#32770") != 0)
+		return FALSE; // Нашли
+
+	return TRUE;
+}
+
+static LRESULT WINAPI EditIconHintProc(HWND hEditCtrl, UINT Msg, WPARAM wParam, LPARAM lParam)
+{
+	LRESULT lRc = 0;
+	CEIconHintInfo hi = {};
+	bool bKnown = gpIconHints->Get(hEditCtrl, &hi, (Msg == WM_DESTROY));
+
+	switch (Msg)
+	{
+	case WM_PAINT:
+		lRc = EditIconHintPaint(hEditCtrl, &hi);
+		goto wrap;
+	case WM_ERASEBKGND:
+		break;
+
+	case WM_LBUTTONDOWN:
+	case WM_LBUTTONUP:
+	case WM_LBUTTONDBLCLK:
+	case WM_RBUTTONDOWN:
+	case WM_RBUTTONUP:
+	case WM_RBUTTONDBLCLK:
+	case WM_SETCURSOR:
+		if (hi.hIcon)
+		{
+			// Cursor over icon?
+			if (EditIconHintOverIcon(hEditCtrl, &hi, (Msg==WM_SETCURSOR)?NULL:&lParam))
+			{
+				switch (Msg)
+				{
+				case WM_SETCURSOR:
+					SetCursor(LoadCursor(NULL, IDC_ARROW));
+					lRc = TRUE;
+					break;
+				default:
+					if ((Msg == WM_LBUTTONDOWN || Msg == WM_LBUTTONDBLCLK)
+						&& (GetWindowTextLength(hEditCtrl) > 0))
+					{
+						SendMessage(GetParent(hEditCtrl), hi.nSearchMsg, GetWindowLongPtr(hEditCtrl, GWLP_ID), (LPARAM)hEditCtrl);
+					}
+				}
+				goto wrap;
+			}
+			else if (Msg != WM_SETCURSOR)
+			{
+				// Redraw search icon
+				SetTimer(hEditCtrl, SEARCH_CTRL_REFRID, SEARCH_CTRL_REFR, NULL);
+			}
+		}
+		break;
+
+	case WM_MOUSEWHEEL:
+		{
+			POINT ptCur = {}; GetCursorPos(&ptCur);
+			HWND hPrevParent = NULL;
+			HWND hParent = hi.hRootDlg;
+			while (hParent)
+			{
+				MapWindowPoints(hPrevParent, hParent, &ptCur, 1);
+				HWND hCtrlOver = ChildWindowFromPointEx(hParent, ptCur, CWP_SKIPDISABLED|CWP_SKIPINVISIBLE|CWP_SKIPTRANSPARENT);
+				if (!hCtrlOver || (hParent == hCtrlOver))
+					break;
+				wchar_t szClass[64] = L""; GetClassName(hCtrlOver, szClass, countof(szClass));
+				if (lstrcmp(szClass, L"#32770") == 0)
+				{
+					HWND hSubItem = NULL;
+					EnumChildWindows(hCtrlOver, EditIconHint_FindScrollCtrl, (LPARAM)&hSubItem);
+					hCtrlOver = hSubItem;
+				}
+				if (hCtrlOver)
+					SendMessage(hCtrlOver, Msg, wParam, lParam);
+				break;
+			}
+		}
+		break;
+
+	case WM_TIMER:
+		switch ((DWORD)wParam)
+		{
+		case SEARCH_CTRL_TIMERID:
+			{
+				int iLen = GetWindowTextLength(hEditCtrl);
+				KillTimer(hEditCtrl, SEARCH_CTRL_TIMERID);
+				if (iLen > 0)
+				{
+					SendMessage(GetParent(hEditCtrl), hi.nSearchMsg, GetWindowLongPtr(hEditCtrl, GWLP_ID), (LPARAM)hEditCtrl);
+				}
+				goto wrap;
+			} break;
+
+		case SEARCH_CTRL_REFRID:
+			{
+				KillTimer(hEditCtrl, SEARCH_CTRL_REFRID);
+				EditIconHintPaint(hEditCtrl, &hi, 0);
+				goto wrap;
+			} break;
+		}
+		break; // WM_TIMER
+
+	case WM_SETFOCUS:
+	case WM_KILLFOCUS:
+		if (hi.nDefBtnID)
+		{
+			DWORD dwStyle;
+			HWND hDefBtn = GetDlgItem(hi.hRootDlg, hi.nDefBtnID);
+			if (Msg == WM_SETFOCUS)
+			{
+				dwStyle = GetWindowLong(hDefBtn, GWL_STYLE);
+				SetWindowLong(hDefBtn, GWL_STYLE, dwStyle & ~BS_DEFPUSHBUTTON);
+			}
+			else
+			{
+				dwStyle = GetWindowLong(hDefBtn, GWL_STYLE);
+				SetWindowLong(hDefBtn, GWL_STYLE, dwStyle | BS_DEFPUSHBUTTON);
+			}
+			::InvalidateRect(hDefBtn, NULL, FALSE);
+		}
+		break;
+
+	case WM_KEYDOWN:
+	case WM_KEYUP:
+	case WM_CHAR:
+		if (wParam == VK_RETURN)
+		{
+			if (Msg == WM_KEYUP)
+			{
+				PostMessage(hEditCtrl, WM_TIMER, SEARCH_CTRL_TIMERID, 0);
+			}
+			goto wrap;
+		}
+		//else if (hi.lpPrevWndFunc)
+		//{
+		//	// Try to fix ugly icon flickering?
+		//	lRc = CallWindowProc(hi.lpPrevWndFunc, hEditCtrl, Msg, wParam, lParam);
+		//	KillTimer(hEditCtrl, SEARCH_CTRL_REFRID);
+		//	EditIconHintPaint(hEditCtrl, &hi, 0);
+		//	goto wrap;
+		//}
+		break;
+	}
+
+	// Not handled, default window procedure
+	if (hi.lpPrevWndFunc)
+		lRc = CallWindowProc(hi.lpPrevWndFunc, hEditCtrl, Msg, wParam, lParam);
+	else
+		lRc = DefWindowProc(hEditCtrl, Msg, wParam, lParam);
+wrap:
+	// Done
+	return lRc;
+}
+
+// That helper function called from root dialog
+bool EditIconHint_Process(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam, INT_PTR& lResult)
+{
+	bool bProcessed = false;
+
+	switch (messg)
+	{
+	case WM_COMMAND:
+		{
+			WORD wCode = HIWORD(wParam);
+			WORD wID = LOWORD(wParam);
+
+			switch (wCode)
+			{
+			case BN_CLICKED:
+				{
+					HWND hEdit = GetFocus();
+					CEIconHintInfo hi = {};
+					if (!gpIconHints->Get(hEdit, &hi))
+						break;
+
+					KillTimer(hEdit, SEARCH_CTRL_TIMERID);
+
+					switch (wID)
+					{
+					case IDOK:
+						//It will be processed in WM_KEYUP
+						//PostMessage(hEdit, WM_TIMER, SEARCH_CTRL_TIMERID, 0);
+						break;
+					case IDCANCEL:
+						if (GetWindowTextLength(hEdit) > 0)
+							SetWindowText(hEdit, L"");
+						else
+							SetFocus(GetNextDlgTabItem(hDlg, hEdit, TRUE));
+						break;
+					}
+
+					lResult = 0;
+					bProcessed = true;
+				}
+				// BN_CLICKED
+				break;
+
+			case EN_CHANGE:
+			case EN_UPDATE:
+				{
+					HWND hEdit = GetDlgItem(hDlg, wID);
+
+					CEIconHintInfo hi = {};
+					if (!gpIconHints->Get(hEdit, &hi))
+						break;
+
+					switch (wCode)
+					{
+					case EN_UPDATE:
+						// Redraw search icon
+						SetTimer(hEdit, SEARCH_CTRL_REFRID, SEARCH_CTRL_REFR, NULL);
+						break;
+					case EN_CHANGE:
+						// Start search delay on typing
+						if (GetWindowTextLength(hEdit) > 0)
+							SetTimer(hEdit, SEARCH_CTRL_TIMERID, SEARCH_CTRL_TIMER, 0);
+						else
+							KillTimer(hEdit, SEARCH_CTRL_TIMERID);
+						break;
+					}
+
+					lResult = 0;
+					bProcessed = true;
+					break;
+				} // EN_CHANGE, EN_UPDATE
+
+			case EN_SETFOCUS:
+				{
+					// Autosel text in search control
+					HWND hEdit = (HWND)lParam;
+
+					CEIconHintInfo hi = {};
+					if (!gpIconHints->Get(hEdit, &hi))
+						break;
+
+					SendMessage(hEdit, EM_SETSEL, 0, -1);
+
+					lResult = 0;
+					bProcessed = true;
+					break;
+				} // EN_SETFOCUS
+
+			} // switch (wCode) in WM_COMMAND
+		} break; // WM_COMMAND
+
+	case UM_SEARCH_FOCUS:
+		{
+			CEIconHintInfo hi = {};
+			HWND h = NULL;
+			while (gpIconHints->GetNext(h ? &h : NULL, &h, &hi))
+			{
+				if (hi.hRootDlg == hDlg)
+				{
+					SetFocus(GetDlgItem(hDlg, tAboutSearch));
+				}
+			}
+		} break;
+
+	}
+
+	return bProcessed;
+}
+
+static bool EditIconHint_ProcessKeys(HWND hCtrl, UINT Msg, WPARAM wParam, LPARAM lParam, LRESULT& lRc)
+{
+	bool bProcessed = false;
+
+	switch (Msg)
+	{
+	case WM_KEYDOWN:
+	case WM_KEYUP:
+		// Use Ctrl+F to set focus to the search field
+		if (wParam == 'F')
+		{
+			if (isPressed(VK_CONTROL) && !isPressed(VK_MENU) && !isPressed(VK_SHIFT))
+			{
+				if (Msg == WM_KEYDOWN)
+				{
+					CEIconHintOthers iho = {};
+					if (!gpIconOthers->Get(hCtrl, &iho))
+						break;
+					PostMessage(iho.hRootDlg, UM_SEARCH_FOCUS, 0, 0);
+				}
+				lRc = 0;
+				bProcessed = true;
+			}
+		}
+		break;
+	}
+
+	return bProcessed;
+}
+
+static LRESULT WINAPI EditIconHintOtherProc(HWND hCtrl, UINT Msg, WPARAM wParam, LPARAM lParam)
+{
+	LRESULT lRc = 0;
+	if (EditIconHint_ProcessKeys(hCtrl, Msg, wParam, lParam, lRc))
+		return lRc;
+	CEIconHintOthers iho = {};
+	if (!gpIconOthers->Get(hCtrl, &iho, (Msg==WM_DESTROY)))
+		return DefWindowProc(hCtrl, Msg, wParam, lParam);
+
+	WORD wID;
+
+	switch (Msg)
+	{
+	case WM_KILLFOCUS:
+		// Problem with tAboutText is that it autoselect whole contents
+		// when focused via Tab keypress (can't be disabled with styles?)
+		wID = GetWindowLong(hCtrl, GWL_ID);
+		if (wID == tAboutText)
+		{
+			SendMessage(iho.hRootDlg, UM_EDIT_KILL_FOCUS, 0, (LPARAM)hCtrl);
+		}
+		break;
+	}
+
+	return CallWindowProc(iho.lpPrevWndFunc, hCtrl, Msg, wParam, lParam);
+}
+
+static BOOL CALLBACK EditIconHint_Enum(HWND hCtrl, LPARAM lParam)
+{
+	if (!gpIconHints || gpIconHints->Get(hCtrl, NULL))
+		return TRUE;
+	if (!gpIconOthers || gpIconOthers->Get(hCtrl, NULL))
+		return TRUE;
+	CEIconHintOthers add = {hCtrl, (HWND)lParam};
+	if ((add.lpPrevWndFunc = (WNDPROC)SetWindowLongPtr(hCtrl, GWLP_WNDPROC, (LONG_PTR)EditIconHintOtherProc)) != NULL)
+	{
+		gpIconOthers->Set(hCtrl, add);
+	}
+	return TRUE;
+}
+
+void EditIconHint_Subclass(HWND hDlg, HWND hRootDlg /*= NULL*/)
+{
+	if (!hRootDlg)
+		hRootDlg = hDlg;
+
+	EnumChildWindows(hDlg, EditIconHint_Enum, (LPARAM)hRootDlg);
+}
+
+void EditIconHint_Set(HWND hRootDlg, HWND hEditCtrl, bool bSearchIcon, LPCWSTR sHint, bool bRedraw, UINT nSearchMsg, WORD nDefBtnID)
+{
+	if (!hEditCtrl)
+		return;
+
+	static HICON hIcon = NULL;
+	static HFONT hFont = NULL;
+
+	if (!hIcon)
+	{
+		hIcon = (HICON)LoadImage(GetModuleHandle(0), MAKEINTRESOURCE(IDI_SEARCH), IMAGE_ICON,
+                    GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), LR_DEFAULTCOLOR);
+        _ASSERTE(hIcon!=NULL);
+	}
+	if (!hFont)
+	{
+		int nFontHeight = 14;
+		hFont = CreateFont(nFontHeight, 0, 0, 0, FW_NORMAL, TRUE/*Italic*/, FALSE, 0,
+					DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_SWISS,
+					L"Tahoma");
+		_ASSERTE(hFont!=NULL);
+	}
+	// First init
+	if (!gpIconHints)
+	{
+		gpIconHints = (MMap<HWND,CEIconHintInfo>*)calloc(sizeof(*gpIconHints),1);
+		gpIconHints->Init(32, true);
+	}
+	if (!gpIconOthers)
+	{
+		gpIconOthers = (MMap<HWND,CEIconHintOthers>*)calloc(sizeof(*gpIconHints),1);
+		gpIconOthers->Init(2048, true);
+	}
+
+	CEIconHintInfo hi = {hEditCtrl, hRootDlg};
+	hi.lpPrevWndFunc = (WNDPROC)GetWindowLongPtr(hEditCtrl, GWLP_WNDPROC);
+	_ASSERTE(hi.lpPrevWndFunc!=NULL);
+	if (sHint)
+	{
+		lstrcpyn(hi.sHint, sHint, countof(hi.sHint));
+		hi.clrHint = GetSysColor(COLOR_GRAYTEXT);
+	}
+	hi.hIcon = bSearchIcon ? hIcon : NULL;
+	hi.hFont = hFont;
+	DWORD_PTR nMargins = SendMessage(hEditCtrl, EM_GETMARGINS, 0, 0);
+	hi.nMargins = (DWORD)nMargins;
+	hi.nSearchMsg = nSearchMsg;
+	hi.nDefBtnID = nDefBtnID;
+
+	gpIconHints->Set(hEditCtrl, hi);
+
+	// Subclass control
+	SetWindowLongPtr(hEditCtrl, GWLP_WNDPROC, (LONG_PTR)EditIconHintProc);
+
+	// Margins
+	if (hi.hIcon)
+	{
+		int IconWidth = GetSystemMetrics(SM_CXSMICON);
+		SendMessage(hEditCtrl, EM_SETMARGINS, EC_RIGHTMARGIN, MAKELPARAM(LOWORD(nMargins),HIWORD(nMargins)+IconWidth+CE_ICON_SPACING));
+	}
+
+	// Done
+	if (bRedraw)
+		InvalidateRect(hEditCtrl, NULL, TRUE);
+}

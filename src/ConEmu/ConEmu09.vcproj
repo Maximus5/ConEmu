@@ -1678,6 +1678,7 @@
 			<File RelativePath=".\Registry.cpp" />
 			<File RelativePath=".\RunQueue.cpp" />
 			<File RelativePath=".\ScreenDump.cpp" />
+			<File RelativePath=".\SearchCtrl.cpp" />
 			<File RelativePath=".\Status.cpp" />
 			<File RelativePath=".\TabBar.cpp" />
 			<File RelativePath=".\TabCtrlBase.cpp" />
@@ -1764,6 +1765,7 @@
 			<File RelativePath=".\Registry.h" />
 			<File RelativePath=".\RunQueue.h" />
 			<File RelativePath=".\ScreenDump.h" />
+			<File RelativePath=".\SearchCtrl.h" />
 			<File RelativePath=".\Status.h" />
 			<File RelativePath=".\TabBar.h" />
 			<File RelativePath=".\TabCtrlBase.h" />

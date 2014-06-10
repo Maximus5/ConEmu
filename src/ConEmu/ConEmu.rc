@@ -1626,6 +1626,7 @@ IDI_ICON1               ICON                    "ConEmu.ico"
 IDI_ICON2               ICON                    "Far.ico"
 IDI_ICON3               ICON                    "Far2.ico"
 IDI_SHIELD              ICON                    "shield.ico"
+IDI_SEARCH              ICON                    "Search.ico"
 #endif    // English (United States) resources
 /////////////////////////////////////////////////////////////////////////////
 

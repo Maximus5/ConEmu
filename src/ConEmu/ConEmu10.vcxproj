@@ -982,6 +982,7 @@
     <ClCompile Include="Registry.cpp" />
     <ClCompile Include="RunQueue.cpp" />
     <ClCompile Include="ScreenDump.cpp" />
+    <ClCompile Include="SearchCtrl.cpp" />
     <ClCompile Include="Status.cpp" />
     <ClCompile Include="TabBar.cpp" />
     <ClCompile Include="TabCtrlBase.cpp" />
@@ -1060,6 +1061,7 @@
     <ClInclude Include="resource.h" />
     <ClInclude Include="RunQueue.h" />
     <ClInclude Include="ScreenDump.h" />
+    <ClInclude Include="SearchCtrl.h" />
     <ClInclude Include="Status.h" />
     <ClInclude Include="TabBar.h" />
     <ClInclude Include="TabCtrlBase.h" />

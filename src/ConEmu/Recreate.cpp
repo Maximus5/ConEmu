@@ -140,9 +140,6 @@ void CRecreateDlg::Close()
 
 INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam)
 {
-#define UM_USER_CONTROLS (WM_USER+121)
-#define UM_FILL_CMDLIST (WM_USER+122)
-
 	CRecreateDlg* pDlg = NULL;
 	if (messg == WM_INITDIALOG)
 	{

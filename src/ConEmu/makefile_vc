@@ -74,6 +74,7 @@ $(INTDIR)\Registry.obj \
 $(INTDIR)\SetEnvVar.obj \
 $(INTDIR)\RgnDetect.obj \
 $(INTDIR)\ScreenDump.obj \
+$(INTDIR)\SearchCtrl.obj \
 $(INTDIR)\Status.obj \
 $(INTDIR)\TabBar.obj \
 $(INTDIR)\TabCtrlBase.obj \
@@ -336,6 +337,8 @@ $(INTDIR)\SetEnvVar.obj: ../common/SetEnvVar.cpp
 $(INTDIR)\RgnDetect.obj: ../common/RgnDetect.cpp
 
 $(INTDIR)\ScreenDump.obj: ScreenDump.cpp
+
+$(INTDIR)\SearchCtrl.obj: SearchCtrl.cpp
 
 $(INTDIR)\Status.obj: Status.cpp
 

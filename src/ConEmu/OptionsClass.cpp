@@ -94,8 +94,6 @@ const wchar_t szRasterAutoError[] = L"Font auto size is not allowed for a fixed 
 #define SEARCH_CONTROL_TIMERID 102
 #define SEARCH_CONTROL_TIMEOUT 1500
 
-#define UM_RELOAD_HERE_LIST (WM_USER+32)
-#define UM_RELOAD_AUTORUN   (WM_USER+33)
 
 //const WORD HostkeyCtrlIds[] = {cbHostWin, cbHostApps, cbHostLCtrl, cbHostRCtrl, cbHostLAlt, cbHostRAlt, cbHostLShift, cbHostRShift};
 //const BYTE HostkeyVkIds[]   = {VK_LWIN,   VK_APPS,    VK_LCONTROL, VK_RCONTROL, VK_LMENU,   VK_RMENU,   VK_LSHIFT,    VK_RSHIFT};
