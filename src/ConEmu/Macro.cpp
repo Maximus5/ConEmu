@@ -157,7 +157,7 @@ namespace ConEmuMacro
 	LPWSTR MsgBox(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Palette([<Cmd>[,"<NewPalette>"]])
 	LPWSTR Palette(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
-	// Paste (<Cmd>[,"<Text>"])
+	// Paste (<Cmd>[,"<Text>"[,"<Text2>"[...]]])
 	LPWSTR Paste(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// PasteFile (<Cmd>[,"<File>"])
 	LPWSTR PasteFile(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
@@ -1707,6 +1707,7 @@ LPWSTR ConEmuMacro::Paste(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 		else if (nCommand == 9 || nCommand == 10)
 		{
 			PasteMode = pm_OneLine;
+			_ASSERTE((nCommand != 10) || bNoConfirm);
 		}
 
 		apRCon->Paste(PasteMode, pszText, bNoConfirm, (nCommand == 8)/*abCygWin*/);
