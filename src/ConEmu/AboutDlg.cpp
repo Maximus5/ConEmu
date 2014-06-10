@@ -189,8 +189,9 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 			break;
 
 		case WM_COMMAND:
-			if (HIWORD(wParam) == BN_CLICKED)
+			switch (HIWORD(wParam))
 			{
+			case BN_CLICKED:
 				switch (LOWORD(wParam))
 				{
 					case IDOK:
@@ -201,8 +202,9 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 					case stConEmuUrl:
 						ConEmuAbout::OnInfo_HomePage();
 						return 1;
-				}
-			}
+				} // BN_CLICKED
+				break;
+			} // switch (HIWORD(wParam))
 			break;
 
 		case WM_NOTIFY:
