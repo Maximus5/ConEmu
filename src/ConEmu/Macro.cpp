@@ -159,6 +159,8 @@ namespace ConEmuMacro
 	LPWSTR Palette(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Paste (<Cmd>[,"<Text>"])
 	LPWSTR Paste(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
+	// PasteFile (<Cmd>[,"<File>"])
+	LPWSTR PasteFile(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// print("<Text>") - alias for Paste(2,"<Text>")
 	LPWSTR Print(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Progress(<Type>[,<Value>])
@@ -224,6 +226,7 @@ namespace ConEmuMacro
 		{MsgBox, {L"MsgBox"}},
 		{Palette, {L"Palette"}},
 		{Paste, {L"Paste"}},
+		{PasteFile, {L"PasteFile"}},
 		{Print, {L"Print"}},
 		{Progress, {L"Progress"}},
 		{Rename, {L"Rename"}},
@@ -1710,6 +1713,59 @@ LPWSTR ConEmuMacro::Paste(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 
 		SafeFree(pszChooseBuf);
 		return lstrdup(L"OK");
+	}
+
+	return lstrdup(L"InvalidArg");
+}
+
+// PasteFile (<Cmd>[,"<File>"])
+LPWSTR ConEmuMacro::PasteFile(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
+{
+	bool bOk = false;
+	int nCommand = 0;
+	LPWSTR pszFile = NULL;
+	wchar_t* ptrBuf = NULL;
+	DWORD nBufSize = 0, nErrCode = 0;
+
+	if (!apRCon)
+		return lstrdup(L"InvalidArg");
+
+	if (p->GetIntArg(0, nCommand))
+	{
+		CEPasteMode PasteMode = (nCommand & 1) ? pm_FirstLine : pm_Standard;
+		bool bNoConfirm = (nCommand & 2) != 0;
+
+		wchar_t* pszChooseBuf = NULL;
+
+		if (!(nCommand >= 0 && nCommand <= 10))
+		{
+			return lstrdup(L"InvalidArg");
+		}
+
+		if (!p->GetStrArg(1, pszFile) || !pszFile || !*pszFile)
+		{
+			pszChooseBuf = SelectFile(L"Choose file for paste", NULL, NULL, NULL, false);
+			if (!pszChooseBuf)
+				return lstrdup(L"NoFileSelected");
+			pszFile = pszChooseBuf;
+		}
+
+		if (nCommand == 9 || nCommand == 10)
+		{
+			PasteMode = pm_OneLine;
+			_ASSERTE((nCommand != 10) || bNoConfirm);
+		}
+
+		if ((ReadTextFile(pszFile, 0x100000, ptrBuf, nBufSize, nErrCode) == 0) && nBufSize)
+		{
+			apRCon->Paste(PasteMode, ptrBuf, bNoConfirm);
+			bOk = true;
+		}
+
+		SafeFree(pszChooseBuf);
+		SafeFree(ptrBuf);
+
+		return bOk ? lstrdup(L"OK") : lstrdup(L"ReadFileFailed");
 	}
 
 	return lstrdup(L"InvalidArg");
