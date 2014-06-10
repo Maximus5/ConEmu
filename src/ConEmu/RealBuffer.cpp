@@ -4435,41 +4435,22 @@ bool CRealBuffer::DoSelectionCopyInt(CECopyMode CopyMode, bool bStreamMode, int 
 	// Asked to save it to file instead of clipboard?
 	if (pszDstFile)
 	{
-		bool bWriteRc = false;
+		int iWriteRc = -1; DWORD nErrCode = 0;
 		LPCWSTR pszSrc = (LPCWSTR)GlobalLock(hUnicode);
 		if (pszSrc)
 		{
-			int iUtf8Len = WideCharToMultiByte(CP_UTF8, 0, pszSrc, -1, NULL, 0, NULL, NULL);
-			if (iUtf8Len > 0)
-			{
-				char* pszUtf8 = (char*)malloc(iUtf8Len);
-				if (pszUtf8)
-				{
-					iUtf8Len = WideCharToMultiByte(CP_UTF8, 0, pszSrc, -1, pszUtf8, iUtf8Len, NULL, NULL);
-					HANDLE hFile;
-					if ((iUtf8Len > 0)
-						&& ((hFile = CreateFile(pszDstFile, GENERIC_WRITE, FILE_SHARE_READ, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL)) != INVALID_HANDLE_VALUE))
-					{
-						DWORD nWritten = 0;
-						if (WriteFile(hFile, pszUtf8, (DWORD)iUtf8Len, &nWritten, NULL))
-						{
-							bWriteRc = (iUtf8Len == nWritten);
-						}
-						CloseHandle(hFile);
-					}
-				}
-				SafeFree(pszUtf8);
-			}
+			iWriteRc = WriteTextFile(pszDstFile, pszSrc, -1, CP_UTF8, false/*WriteBOM*/, &nErrCode);
 			GlobalUnlock(hUnicode);
 		}
 		GlobalFree(hUnicode);
-		if (!bWriteRc)
+		if (iWriteRc < 0)
 		{
 			wchar_t* pszErr = lstrmerge(L"Failed to create file\n", pszDstFile);
-			DisplayLastError(pszErr);
+			DisplayLastError(pszErr, nErrCode);
 			SafeFree(pszErr);
+			return false;
 		}
-		return bWriteRc;
+		return true;
 	}
 
 	// Открыть буфер обмена
