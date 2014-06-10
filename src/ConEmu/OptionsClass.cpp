@@ -58,6 +58,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "OptionsHelp.h"
 #include "RealConsole.h"
 #include "Recreate.h"
+#include "SearchCtrl.h"
 #include "Status.h"
 #include "TabBar.h"
 #include "TrayIcon.h"
@@ -91,9 +92,6 @@ const wchar_t szRasterAutoError[] = L"Font auto size is not allowed for a fixed 
 #define FAILED_CONFONT_TIMEOUT 30000
 #define FAILED_SELMOD_TIMEOUT 5000
 #define CONTROL_FOUND_TIMEOUT 3000
-#define SEARCH_CONTROL_TIMERID 102
-#define SEARCH_CONTROL_TIMEOUT 1500
-
 
 //const WORD HostkeyCtrlIds[] = {cbHostWin, cbHostApps, cbHostLCtrl, cbHostRCtrl, cbHostLAlt, cbHostRAlt, cbHostLShift, cbHostRShift};
 //const BYTE HostkeyVkIds[]   = {VK_LWIN,   VK_APPS,    VK_LCONTROL, VK_RCONTROL, VK_LMENU,   VK_RMENU,   VK_LSHIFT,    VK_RSHIFT};
@@ -1660,7 +1658,12 @@ LRESULT CSettings::OnInitDialog()
 	_ASSERTE(!mh_Tabs[thi_Main] /*...*/);
 	memset(mh_Tabs, 0, sizeof(mh_Tabs));
 
+	ConEmuAbout::DonateBtns_Add(ghOpWnd, tOptionSearch, bSaveSettings);
+
 	gbLastColorsOk = FALSE;
+
+	EditIconHint_Set(ghOpWnd, GetDlgItem(ghOpWnd, tOptionSearch), true, L"Search (Ctrl+F)", false, UM_SEARCH, bSaveSettings);
+	EditIconHint_Subclass(ghOpWnd);
 
 	RECT rcEdt = {}, rcBtn = {};
 	if (GetWindowRect(GetDlgItem(ghOpWnd, tOptionSearch), &rcEdt))
@@ -1668,7 +1671,7 @@ LRESULT CSettings::OnInitDialog()
 		MapWindowPoints(NULL, ghOpWnd, (LPPOINT)&rcEdt, 2);
 
 		// Hate non-strict alignment...
-		WORD nCtrls[] = {cbOptionSearch, cbExportConfig};
+		WORD nCtrls[] = {cbExportConfig};
 		for (size_t i = 0; i < countof(nCtrls); i++)
 		{
 			HWND hBtn = GetDlgItem(ghOpWnd, nCtrls[i]);
@@ -8745,6 +8748,14 @@ INT_PTR CSettings::ProcessTipHelp(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM 
 // DlgProc для окна настроек (IDD_SETTINGS)
 INT_PTR CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
 {
+	INT_PTR lRc = 0;
+	if (ConEmuAbout::DonateBtns_Process(hWnd2, messg, wParam, lParam, lRc)
+		|| EditIconHint_Process(hWnd2, messg, wParam, lParam, lRc))
+	{
+		SetWindowLongPtr(hWnd2, DWLP_MSGRESULT, lRc);
+		return TRUE;
+	}
+
 	PatchMsgBoxIcon(hWnd2, messg, wParam, lParam);
 
 	switch (messg)
@@ -8827,29 +8838,19 @@ INT_PTR CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPara
 								return 0;
 							}
 
-							HWND hFocus = GetFocus();
-							WORD wFocusID = GetDlgCtrlID(hFocus);
 							bool isShiftPressed = isPressed(VK_SHIFT);
 
-							if (wFocusID == tOptionSearch)
+							// были изменения в полях размера/положения?
+							if (gpSetCls->mh_Tabs[thi_SizePos]
+								&& IsWindowEnabled(GetDlgItem(gpSetCls->mh_Tabs[thi_SizePos], cbApplyPos)))
 							{
-								// По Enter - искать следующий контрол, раз фокус в поле ввода
-								gpSetCls->SearchForControls();
+								gpSetCls->OnButtonClicked(gpSetCls->mh_Tabs[thi_SizePos], cbApplyPos, 0);
 							}
-							else
-							{
-								// были изменения в полях размера/положения?
-								if (gpSetCls->mh_Tabs[thi_SizePos]
-									&& IsWindowEnabled(GetDlgItem(gpSetCls->mh_Tabs[thi_SizePos], cbApplyPos)))
-								{
-									gpSetCls->OnButtonClicked(gpSetCls->mh_Tabs[thi_SizePos], cbApplyPos, 0);
-								}
 
-								if (gpSet->SaveSettings())
-								{
-									if (!isShiftPressed)
-										SendMessage(ghOpWnd,WM_COMMAND,IDOK,0);
-								}
+							if (gpSet->SaveSettings())
+							{
+								if (!isShiftPressed)
+									SendMessage(ghOpWnd,WM_COMMAND,IDOK,0);
 							}
 						}
 						break;
@@ -8863,10 +8864,6 @@ INT_PTR CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPara
 						break;
 					case bImportSettings:
 						gpSetCls->ImportSettings();
-						break;
-
-					case cbOptionSearch:
-						gpSetCls->SearchForControls();
 						break;
 
 					case IDOK:
@@ -8888,18 +8885,7 @@ INT_PTR CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPara
 
 				case EN_CHANGE:
 				{
-					if (LOWORD(wParam) == tOptionSearch)
-					{
-						// Start search delay on typing
-						if (GetWindowTextLength(GetDlgItem(hWnd2, tOptionSearch)) > 0)
-							SetTimer(hWnd2, SEARCH_CONTROL_TIMERID, SEARCH_CONTROL_TIMEOUT, 0);
-						else
-							KillTimer(hWnd2, SEARCH_CONTROL_TIMERID);
-					}
-					else
-					{
-						gpSetCls->OnEditChanged(hWnd2, wParam, lParam);
-					}
+					gpSetCls->OnEditChanged(hWnd2, wParam, lParam);
 				}
 				break;
 
@@ -8909,43 +8895,11 @@ INT_PTR CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPara
 					gpSetCls->OnComboBox(hWnd2, wParam, lParam);
 				}
 				break;
-
-				case EN_SETFOCUS:
-				case EN_KILLFOCUS:
-				{
-					if (LOWORD(wParam) == tOptionSearch)
-					{
-						DWORD dwStyle;
-						HWND hSearch = GetDlgItem(hWnd2, cbOptionSearch);
-						HWND hSave = GetDlgItem(hWnd2, bSaveSettings);
-						if (HIWORD(wParam) == EN_SETFOCUS)
-						{
-							dwStyle = GetWindowLong(hSave, GWL_STYLE);
-							SetWindowLong(hSave, GWL_STYLE, dwStyle & ~BS_DEFPUSHBUTTON);
-							dwStyle = GetWindowLong(hSearch, GWL_STYLE);
-							SetWindowLong(hSearch, GWL_STYLE, dwStyle | BS_DEFPUSHBUTTON);
-						}
-						else
-						{
-							dwStyle = GetWindowLong(hSearch, GWL_STYLE);
-							SetWindowLong(hSearch, GWL_STYLE, dwStyle & ~BS_DEFPUSHBUTTON);
-							dwStyle = GetWindowLong(hSave, GWL_STYLE);
-							SetWindowLong(hSave, GWL_STYLE, dwStyle | BS_DEFPUSHBUTTON);
-						}
-						InvalidateCtrl(hSearch, FALSE);
-						InvalidateCtrl(hSave, FALSE);
-					}
-				}
-				break;
 			}
-
 			break;
-		case WM_TIMER:
-			if (wParam == SEARCH_CONTROL_TIMERID)
-			{
-				KillTimer(hWnd2, SEARCH_CONTROL_TIMERID);
-				gpSetCls->SearchForControls();
-			}
+
+		case UM_SEARCH:
+			gpSetCls->SearchForControls();
 			break;
 
 		case WM_NOTIFY:
