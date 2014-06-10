@@ -441,7 +441,7 @@ bool EditIconHint_Process(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam, I
 			{
 				if (hi.hRootDlg == hDlg)
 				{
-					SetFocus(GetDlgItem(hDlg, tAboutSearch));
+					SetFocus(hi.hEditCtrl);
 				}
 			}
 		} break;

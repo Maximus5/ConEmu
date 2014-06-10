@@ -576,11 +576,11 @@ CAPTION "Settings..."
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     CONTROL         "List1",tvSetupCategories,"SysTreeView32",TVS_HASBUTTONS | TVS_HASLINES | TVS_LINESATROOT | TVS_SHOWSELALWAYS | WS_BORDER | WS_HSCROLL | WS_TABSTOP,4,19,90,232
+    EDITTEXT        tOptionSearch,4,3,90,13,ES_AUTOHSCROLL | ES_WANTRETURN
     LTEXT           " ",tSetupPagePlace,95,19,326,234,WS_BORDER
     DEFPUSHBUTTON   "Save settings",bSaveSettings,351,258,70,14
     PUSHBUTTON      "Reset...",bResetSettings,164,258,51,14
     PUSHBUTTON      "Reload...",bReloadSettings,222,258,51,14
-    EDITTEXT        tOptionSearch,4,3,90,13,ES_AUTOHSCROLL | ES_WANTRETURN
     LTEXT           "Storage:",stStorage,106,5,29,8
     EDITTEXT        tStorage,141,3,227,13,ES_AUTOHSCROLL | ES_READONLY
     PUSHBUTTON      "Export...",cbExportConfig,371,2,50,14
