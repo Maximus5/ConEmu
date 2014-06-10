@@ -218,7 +218,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"    Format==0: plain text, not formatting\r\n" \
 	L"    Format==1: copy HTML format\r\n" \
 	L"    Format==2: copy as HTML\r\n" \
-	L"    File: if specified, save to file instead of clipboard\r\n" \
+	L"    File: if specified - save to file instead of clipboard\r\n" \
 	L"FindEditor(\"<FullEditFileName>\")\r\n" \
 	L"FindViewer(\"<FullViewerFileName>\")\r\n" \
 	L"FindFarWindow(<WindowType>,\"<WindowTitle>\")\r\n" \
