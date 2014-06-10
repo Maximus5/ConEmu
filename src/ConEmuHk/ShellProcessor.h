@@ -39,23 +39,23 @@ private:
 	RConStartArgs m_Args;
 
 	UINT mn_CP; // = AreFileApisANSI() ? CP_ACP : CP_OEMCP;
-	
+
 	// Для конвертации параметров Ansi функций (работаем через Unicode для унификации)
 	LPWSTR mpwsz_TempAction; // = str2wcs(asAction, nCP);
 	LPWSTR mpwsz_TempFile; // = str2wcs(asFile, nCP);
 	LPWSTR mpwsz_TempParam; // = str2wcs(asParam, nCP);
-	
+
 	LPSTR  mpsz_TempRetFile;
 	LPSTR  mpsz_TempRetParam;
 	LPSTR  mpsz_TempRetDir;
 	LPWSTR mpwsz_TempRetFile;
 	LPWSTR mpwsz_TempRetParam;
 	LPWSTR mpwsz_TempRetDir;
-	
+
 	// Копии для ShellExecuteEx - менять мы можем только свою память
 	LPSHELLEXECUTEINFOA mlp_ExecInfoA, mlp_SaveExecInfoA;
 	LPSHELLEXECUTEINFOW mlp_ExecInfoW, mlp_SaveExecInfoW;
-	
+
 	// Информация о запускаемом процессе
 	DWORD mn_ImageSubsystem, mn_ImageBits;
 	CmdArg ms_ExeTmp;

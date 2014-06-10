@@ -1817,10 +1817,10 @@ int CShellProc::PrepareExecuteParms(
 	mb_NeedInjects = FALSE;
 	//wchar_t szBaseDir[MAX_PATH+2]; szBaseDir[0] = 0;
 	CESERVER_REQ *pIn = NULL;
-	pIn = NewCmdOnCreate(aCmd, 
-			asAction, asFile, asParam, 
-			anShellFlags, anCreateFlags, anStartFlags, anShowCmd, 
-			mn_ImageBits, mn_ImageSubsystem, 
+	pIn = NewCmdOnCreate(aCmd,
+			asAction, asFile, asParam,
+			anShellFlags, anCreateFlags, anStartFlags, anShowCmd,
+			mn_ImageBits, mn_ImageSubsystem,
 			hIn, hOut, hErr/*, szBaseDir, mb_DosBoxAllowed*/);
 	if (pIn)
 	{
@@ -1892,7 +1892,7 @@ int CShellProc::PrepareExecuteParms(
 	}
 	// Если GUI приложение работает во вкладке ConEmu - запускать консольные приложение в новой вкладке ConEmu
 	// Use mb_isCurrentGuiClient instead of ghAttachGuiClient, because of 'CommandPromptPortable.exe' for example
-	if (!bNewConsoleArg 
+	if (!bNewConsoleArg
 		&& mb_isCurrentGuiClient && (mn_ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI)
 		&& ((anShowCmd == NULL) || (*anShowCmd != SW_HIDE)))
 	{
@@ -2009,7 +2009,7 @@ int CShellProc::PrepareExecuteParms(
 		goto wrap; // гуй - не перехватывать (если только не указан "-new_console")
 	}
 
-	// Подставлять ConEmuC.exe нужно только для того, чтобы 
+	// Подставлять ConEmuC.exe нужно только для того, чтобы
 	//	1. в фаре включить длинный буфер и запомнить длинный результат в консоли (ну и ConsoleAlias обработать)
 	//	2. при вызовах ShellExecute/ShellExecuteEx, т.к. не факт,
 	//     что этот ShellExecute вызовет CreateProcess из kernel32 (который перехвачен).
@@ -2044,7 +2044,7 @@ int CShellProc::PrepareExecuteParms(
 		bGoChangeParm = ((bLongConsoleOutput)
 			|| (lbGuiApp && (bNewConsoleArg || bForceNewConsole)) // хотят GUI прицепить к новой вкладке в ConEmu, или новую консоль из GUI
 			// eCreateProcess перехватывать не нужно (сами сделаем InjectHooks после CreateProcess)
-			|| ((mn_ImageBits != 16) && (m_SrvMapping.bUseInjects & 1) 
+			|| ((mn_ImageBits != 16) && (m_SrvMapping.bUseInjects & 1)
 				&& (bNewConsoleArg
 					|| (bLongConsoleOutput && (aCmd == eShellExecute))
 					|| (bCurConsoleArg && (m_Args.LongOutputDisable != crb_On))
@@ -2130,10 +2130,10 @@ int CShellProc::PrepareExecuteParms(
 				}
 				#endif
 			}
-			pIn = NewCmdOnCreate(eParmsChanged, 
-					asAction, *psFile, *psParam, 
-					anShellFlags, anCreateFlags, anStartFlags, anShowCmd, 
-					mn_ImageBits, mn_ImageSubsystem, 
+			pIn = NewCmdOnCreate(eParmsChanged,
+					asAction, *psFile, *psParam,
+					anShellFlags, anCreateFlags, anStartFlags, anShowCmd,
+					mn_ImageBits, mn_ImageSubsystem,
 					hIn, hOut, hErr/*, szBaseDir, mb_DosBoxAllowed*/);
 			if (pIn)
 			{
@@ -2147,7 +2147,7 @@ int CShellProc::PrepareExecuteParms(
 	}
 	else
 	{
-		//lbChanged = ChangeExecuteParms(aCmd, asFile, asParam, pszBaseDir, 
+		//lbChanged = ChangeExecuteParms(aCmd, asFile, asParam, pszBaseDir,
 		//				ms_ExeTmp, mn_ImageBits, mn_ImageSubsystem, psFile, psParam);
 		// Хуки нельзя ставить в 16битные приложение - будет облом, ntvdm.exe игнорировать!
 		// И если просили не ставить хуки (-new_console:i) - тоже
@@ -2331,8 +2331,8 @@ BOOL CShellProc::FixShellArgs(DWORD afMask, HWND ahWnd, DWORD* pfMask, HWND* phW
 		if (GetVersionEx((LPOSVERSIONINFO)&osv))
 		{
 			if ((osv.dwMajorVersion >= 6)
-				|| (osv.dwMajorVersion == 5 
-				&& (osv.dwMinorVersion > 1 
+				|| (osv.dwMajorVersion == 5
+				&& (osv.dwMinorVersion > 1
 				|| (osv.dwMinorVersion == 1 && osv.wServicePackMajor >= 1))))
 			{
 				(*pfMask) |= SEE_MASK_NOZONECHECKS;
@@ -2617,12 +2617,12 @@ void CShellProc::OnCreateProcessFinished(BOOL abSucceeded, PROCESS_INFORMATION *
 		{
 			if (!abSucceeded)
 			{
-				msprintf(pszDbgMsg, cchLen, L"Create(ParentPID=%u): Failed, ErrCode=0x%08X", 
+				msprintf(pszDbgMsg, cchLen, L"Create(ParentPID=%u): Failed, ErrCode=0x%08X",
 					GetCurrentProcessId(), GetLastError());
 			}
 			else
 			{
-				msprintf(pszDbgMsg, cchLen, L"Create(ParentPID=%u): Ok, PID=%u", 
+				msprintf(pszDbgMsg, cchLen, L"Create(ParentPID=%u): Ok, PID=%u",
 					GetCurrentProcessId(), lpPI->dwProcessId);
 				if (WaitForSingleObject(lpPI->hProcess, 0) == WAIT_OBJECT_0)
 				{
