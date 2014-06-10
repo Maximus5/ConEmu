@@ -954,8 +954,8 @@ BEGIN
     CONTROL         "Vertical",cbStatusVertSep,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,96,58,42,8
     CONTROL         "System colors",cbStatusSystemColors,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,250,58,61,8
     LTEXT           "Available columns:",IDC_STATIC,11,76,60,8
-    LTEXT           "Selected columns:",IDC_STATIC,181,76,58,8
     LISTBOX         lbStatusAvailable,9,86,137,137,LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_HSCROLL | WS_TABSTOP
+    LTEXT           "Selected columns:",IDC_STATIC,181,76,58,8
     LISTBOX         lbStatusSelected,179,86,137,137,LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_HSCROLL | WS_TABSTOP
     PUSHBUTTON      ">>",cbStatusAddAll,151,95,23,14
     PUSHBUTTON      ">",cbStatusAddSelected,151,111,23,14
