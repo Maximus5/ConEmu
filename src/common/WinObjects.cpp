@@ -3956,4 +3956,88 @@ int ReadTextFile(LPCWSTR asPath, DWORD cchMax, wchar_t*& rsBuffer, DWORD& rnChar
 	SafeFree(pszDataA);
 	return 0;
 }
+
+// Returns negative numbers on errors
+int WriteTextFile(LPCWSTR asPath, const wchar_t* asBuffer, int anSrcLen/* = -1*/, DWORD OutCP /*= CP_UTF8*/, bool WriteBOM /*= true*/, LPDWORD rnErrCode /*= NULL*/)
+{
+	int iRc = 0;
+	int iWriteLen = 0;
+	DWORD nWritten = 0;
+	LPCVOID ptrBuf = NULL;
+	char* pszMultibyte = NULL;
+	HANDLE hFile = NULL;
+
+	if (OutCP == 1200)
+	{
+		ptrBuf = asBuffer;
+		iWriteLen = (anSrcLen >= 0) ? (anSrcLen * sizeof(*asBuffer)) : (lstrlen(asBuffer) * sizeof(*asBuffer));
+	}
+	else //if (DefaultCP == CP_UTF8)
+	{
+		int iMBLen = WideCharToMultiByte(OutCP, 0, asBuffer, anSrcLen, NULL, 0, NULL, NULL);
+		if (iMBLen < 0)
+		{
+			iRc = -2;
+			goto wrap;
+		}
+
+		pszMultibyte = (char*)malloc(iMBLen);
+		if (!pszMultibyte)
+		{
+			iRc = -3;
+			goto wrap;
+		}
+
+		iWriteLen = WideCharToMultiByte(OutCP, 0, asBuffer, anSrcLen, pszMultibyte, iMBLen, NULL, NULL);
+	}
+
+	if (iWriteLen < 0)
+	{
+		iRc = -2;
+		goto wrap;
+	}
+
+	hFile = CreateFile(asPath, GENERIC_WRITE, FILE_SHARE_READ, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+	if (!hFile || (hFile == INVALID_HANDLE_VALUE))
+	{
+		iRc = -1;
+		goto wrap;
+	}
+
+	if (WriteBOM)
+	{
+		BYTE UTF8BOM[] = {'\xEF','\xBB','\xBF'};
+		BYTE CP1200BOM[] = {'\xFF','\xFE'};
+		BOOL bWrite = TRUE; DWORD nBomSize = 0;
+
+		switch (OutCP)
+		{
+		case CP_UTF8:
+			iRc = (WriteFile(hFile, UTF8BOM, 3, &nBomSize, NULL) && (nBomSize == 3)) ? nBomSize : -4;
+			break;
+		case 1200:
+			iRc = (WriteFile(hFile, CP1200BOM, 2, &nBomSize, NULL) && (nBomSize == 2)) ? nBomSize : -4;
+			break;
+		}
+
+		if (iRc < 0)
+			goto wrap;
+	}
+
+	if (!WriteFile(hFile, ptrBuf, (DWORD)iWriteLen, &nWritten, NULL) || ((DWORD)iWriteLen != nWritten))
+	{
+		iRc = -5;
+		goto wrap;
+	}
+
+	_ASSERTE(iRc >= 0);
+	iRc += nWritten;
+wrap:
+	if (rnErrCode)
+		*rnErrCode = GetLastError();
+	if (hFile && (hFile != INVALID_HANDLE_VALUE))
+		CloseHandle(hFile);
+	SafeFree(pszMultibyte);
+	return iRc;
+}
 #endif

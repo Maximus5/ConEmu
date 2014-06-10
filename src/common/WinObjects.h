@@ -153,6 +153,7 @@ void ApplyExportEnvVar(LPCWSTR asEnvNameVal);
 
 #ifndef CONEMU_MINIMAL
 int ReadTextFile(LPCWSTR asPath, DWORD cchMax, wchar_t*& rsBuffer, DWORD& rnChars, DWORD& rnErrCode, DWORD DefaultCP = 0);
+int WriteTextFile(LPCWSTR asPath, const wchar_t* asBuffer, int anSrcLen = -1, DWORD OutCP = CP_UTF8, bool WriteBOM = true, LPDWORD rnErrCode = NULL);
 #endif
 
 //------------------------------------------------------------------------
