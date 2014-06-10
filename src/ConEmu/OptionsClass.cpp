@@ -8113,6 +8113,10 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 	} // case tRClickMacro, tSafeFarCloseMacro, tCloseTabMacro, tSaveAllMacro
 
 
+	case lbStatusAvailable:
+	case lbStatusSelected:
+		break;
+
 
 	default:
 		if (hWnd2 == gpSetCls->mh_Tabs[thi_Views])
