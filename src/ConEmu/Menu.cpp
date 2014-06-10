@@ -2056,8 +2056,8 @@ LRESULT CConEmuMenu::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 				CVConGuard VCon;
 				if (gpConEmu->GetActiveVCon(&VCon) >= 0)
 				{
-					bool bCopyAll = (wParam == ID_CON_COPY_ALL);
-					VCon->RCon()->DoSelectionCopy(bCopyAll);
+					CECopyMode CopyMode = (wParam == ID_CON_COPY_ALL) ? cm_CopyAll : cm_CopySel;
+					VCon->RCon()->DoSelectionCopy(CopyMode);
 				}
 			}
 			return 0;

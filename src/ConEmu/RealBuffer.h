@@ -124,7 +124,7 @@ public:
 
 private:
 	bool OnMouseSelection(UINT messg, WPARAM wParam, int x, int y);
-	bool DoSelectionCopyInt(bool bCopyAll, bool bStreamMode, int srSelection_X1, int srSelection_Y1, int srSelection_X2, int srSelection_Y2, BYTE nFormat = 0xFF /* use gpSet->isCTSHtmlFormat */);
+	bool DoSelectionCopyInt(CECopyMode CopyMode, bool bStreamMode, int srSelection_X1, int srSelection_Y1, int srSelection_X2, int srSelection_Y2, BYTE nFormat = 0xFF /* use gpSet->isCTSHtmlFormat */, LPCWSTR pszDstFile = NULL);
 	int  GetSelectionCharCount(bool bStreamMode, int srSelection_X1, int srSelection_Y1, int srSelection_X2, int srSelection_Y2, int* pnSelWidth, int* pnSelHeight, int nNewLineLen);
 	bool PatchMouseCoords(int& x, int& y, COORD& crMouse);
 	bool CanProcessHyperlink(const COORD& crMouse);
@@ -137,7 +137,7 @@ public:
 	void ExpandSelection(SHORT anX, SHORT anY, bool bWasSelection);
 	bool DoSelectionFinalize(bool abCopy, WPARAM wParam = 0);
 	void DoSelectionStop();
-	bool DoSelectionCopy(bool bCopyAll = false, BYTE nFormat = 0xFF /* use gpSet->isCTSHtmlFormat */);
+	bool DoSelectionCopy(CECopyMode CopyMode = cm_CopySel, BYTE nFormat = 0xFF /* use gpSet->isCTSHtmlFormat */, LPCWSTR pszDstFile = NULL);
 	void UpdateSelection();
 	bool isConSelectMode();
 	bool isSelfSelectMode();

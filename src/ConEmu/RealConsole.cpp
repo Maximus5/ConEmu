@@ -4508,13 +4508,16 @@ void CRealConsole::OnSelectionChanged()
 	SetConStatus(szSelInfo);
 }
 
-bool CRealConsole::DoSelectionCopy(bool bCopyAll /*= false*/, BYTE nFormat /*= 0xFF*/ /* use gpSet->isCTSHtmlFormat */)
+bool CRealConsole::DoSelectionCopy(CECopyMode CopyMode /*= cm_CopySel*/, BYTE nFormat /*= 0xFF*/ /* use gpSet->isCTSHtmlFormat */, LPCWSTR pszDstFile /*= NULL*/)
 {
 	bool bCopyRc = false;
 	bool bReturnPrimary = false;
 	CRealBuffer* pBuf = mp_ABuf;
 
-	if (bCopyAll)
+	if (nFormat == 0xFF)
+		nFormat = gpSet->isCTSHtmlFormat;
+
+	if (CopyMode == cm_CopyAll)
 	{
 		if (pBuf->m_Type == rbt_Primary)
 		{
@@ -4538,8 +4541,18 @@ bool CRealConsole::DoSelectionCopy(bool bCopyAll /*= false*/, BYTE nFormat /*= 0
 			goto wrap;
 		}
 	}
+	else if (CopyMode == cm_CopyVis)
+	{
+		CONSOLE_SCREEN_BUFFER_INFO sbi = {};
+		pBuf = mp_ABuf;
+		pBuf->ConsoleScreenBufferInfo(&sbi);
+		// Start Block mode for HTML (nFormat!=0), we need to "represent" screen contents
+		// And Stream mode for plain text (nFormat==0)
+		pBuf->StartSelection((nFormat==0), sbi.srWindow.Left, sbi.srWindow.Top);
+		pBuf->ExpandSelection(sbi.srWindow.Right, sbi.srWindow.Bottom, false);
+	}
 
-	bCopyRc = pBuf->DoSelectionCopy(bCopyAll, nFormat);
+	bCopyRc = pBuf->DoSelectionCopy(CopyMode, nFormat, pszDstFile);
 wrap:
 	if (bReturnPrimary)
 	{

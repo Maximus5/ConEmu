@@ -549,6 +549,13 @@ enum CEStatusFlags
 	csf_NoVerticalPad       = 0x00000008,
 };
 
+enum CECopyMode
+{
+	cm_CopySel = 0, // Copy current selection (old bCopyAll==false)
+	cm_CopyAll = 1, // Copy full buffer (old bCopyAll==true)
+	cm_CopyVis = 2, // Copy visible screen area
+};
+
 enum CEPasteMode
 {
 	pm_Standard  = 0, // Paste with possible "Return" keypresses

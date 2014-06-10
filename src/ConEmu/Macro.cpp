@@ -1606,24 +1606,47 @@ LPWSTR ConEmuMacro::Copy(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 		return lstrdup(L"InvalidArg");
 
 	bool bCopy = false;
+	CECopyMode CopyMode;
+	CmdArg szDstBuf;
+	LPWSTR pszDstFile = NULL;
 
 	if (p->GetIntArg(0, nWhat))
 	{
+		LPWSTR pszTemp;
 		if (!p->GetIntArg(1, nFormat))
+		{
 			nFormat = gpSet->isCTSHtmlFormat;
+		}
+		else if (p->GetStrArg(2, pszTemp))
+		{
+			pszDstFile = pszTemp;
+			// Cygwin style path?
+			if (wcschr(pszTemp, L'/'))
+			{
+				if (szDstBuf.Attach(MakeWinPath(pszTemp)))
+					pszDstFile = szDstBuf.ms_Arg;
+			}
+		}
 
 		switch (nWhat)
 		{
 		case 0:
+			CopyMode = cm_CopySel; break;
 		case 1:
-			bCopy = apRCon->DoSelectionCopy((nWhat==1), nFormat);
-			break;
+			CopyMode = cm_CopyAll; break;
+		case 2:
+			CopyMode = cm_CopyVis; break;
+		default:
+			goto wrap;
 		}
+
+		bCopy = apRCon->DoSelectionCopy(CopyMode, nFormat, pszDstFile);
 
 		if (bCopy)
 			return lstrdup(L"OK");
 	}
 
+wrap:
 	return lstrdup(L"InvalidArg");
 }
 

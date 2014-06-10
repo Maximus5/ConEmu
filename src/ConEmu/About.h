@@ -210,13 +210,15 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"    close active tab or group (6)\r\n" \
 	L"    close all active processes of the active group (7)\r\n" \
 	L"    close all tabs (8)\r\n" \
-	L"Copy(<What>[,<Format>])\r\n" \
+	L"Copy(<What>[,<Format>[,\"<File>\"]])\r\n" \
 	L"  - Copy active console contents\r\n" \
 	L"    What==0: current selection\r\n" \
 	L"    What==1: all buffer contents\r\n" \
+	L"    What==2: visible area contents\r\n" \
 	L"    Format==0: plain text, not formatting\r\n" \
 	L"    Format==1: copy HTML format\r\n" \
 	L"    Format==2: copy as HTML\r\n" \
+	L"    File: if specified, save to file instead of clipboard\r\n" \
 	L"FindEditor(\"<FullEditFileName>\")\r\n" \
 	L"FindViewer(\"<FullViewerFileName>\")\r\n" \
 	L"FindFarWindow(<WindowType>,\"<WindowTitle>\")\r\n" \

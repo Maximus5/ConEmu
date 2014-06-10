@@ -3966,7 +3966,7 @@ void CRealBuffer::DoSelectionStop()
 	con.m_sel.dwFlags = 0;
 }
 
-bool CRealBuffer::DoSelectionCopy(bool bCopyAll /*= false*/, BYTE nFormat /*= 0xFF*/ /* use gpSet->isCTSHtmlFormat */)
+bool CRealBuffer::DoSelectionCopy(CECopyMode CopyMode /*= cm_CopySel*/, BYTE nFormat /*= 0xFF*/ /* use gpSet->isCTSHtmlFormat */, LPCWSTR pszDstFile /*= NULL*/)
 {
 	bool bRc = false;
 
@@ -3997,7 +3997,7 @@ bool CRealBuffer::DoSelectionCopy(bool bCopyAll /*= false*/, BYTE nFormat /*= 0x
 			{
 				if (mp_RCon->LoadAlternativeConsole(lam_FullBuffer) && (mp_RCon->mp_ABuf != this))
 				{
-					bRc = mp_RCon->mp_ABuf->DoSelectionCopyInt(bCopyAll, lbStreamMode, con.m_sel.srSelection.Left, con.m_sel.srSelection.Top, con.m_sel.srSelection.Right, con.m_sel.srSelection.Bottom, nFormat);
+					bRc = mp_RCon->mp_ABuf->DoSelectionCopyInt(CopyMode, lbStreamMode, con.m_sel.srSelection.Left, con.m_sel.srSelection.Top, con.m_sel.srSelection.Right, con.m_sel.srSelection.Bottom, nFormat, pszDstFile);
 					lbProcessed = true;
 					bufType = rbt_Selection;
 				}
@@ -4010,7 +4010,7 @@ bool CRealBuffer::DoSelectionCopy(bool bCopyAll /*= false*/, BYTE nFormat /*= 0x
 
 		if (!lbProcessed)
 		{
-			bRc = DoSelectionCopyInt(bCopyAll, lbStreamMode, con.m_sel.srSelection.Left, con.m_sel.srSelection.Top, con.m_sel.srSelection.Right, con.m_sel.srSelection.Bottom, nFormat);
+			bRc = DoSelectionCopyInt(CopyMode, lbStreamMode, con.m_sel.srSelection.Left, con.m_sel.srSelection.Top, con.m_sel.srSelection.Right, con.m_sel.srSelection.Bottom, nFormat, pszDstFile);
 		}
 	}
 
@@ -4074,7 +4074,8 @@ int CRealBuffer::GetSelectionCharCount(bool bStreamMode, int srSelection_X1, int
 	return nCharCount;
 }
 
-bool CRealBuffer::DoSelectionCopyInt(bool bCopyAll, bool bStreamMode, int srSelection_X1, int srSelection_Y1, int srSelection_X2, int srSelection_Y2, BYTE nFormat /*= 0xFF*/ /* use gpSet->isCTSHtmlFormat */)
+// Здесь CopyMode уже не используется, передается для информации
+bool CRealBuffer::DoSelectionCopyInt(CECopyMode CopyMode, bool bStreamMode, int srSelection_X1, int srSelection_Y1, int srSelection_X2, int srSelection_Y2, BYTE nFormat /*= 0xFF*/ /* use gpSet->isCTSHtmlFormat */, LPCWSTR pszDstFile /*= NULL*/)
 {
 	// Warning!!! Здесь уже нельзя ориентироваться на con.m_sel !!!
 
@@ -4429,6 +4430,46 @@ bool CRealBuffer::DoSelectionCopyInt(bool bCopyAll, bool bStreamMode, int srSele
 		hUnicode = hHtml;
 		hHtml = NULL;
 		bUseHtml = false;
+	}
+
+	// Asked to save it to file instead of clipboard?
+	if (pszDstFile)
+	{
+		bool bWriteRc = false;
+		LPCWSTR pszSrc = (LPCWSTR)GlobalLock(hUnicode);
+		if (pszSrc)
+		{
+			int iUtf8Len = WideCharToMultiByte(CP_UTF8, 0, pszSrc, -1, NULL, 0, NULL, NULL);
+			if (iUtf8Len > 0)
+			{
+				char* pszUtf8 = (char*)malloc(iUtf8Len);
+				if (pszUtf8)
+				{
+					iUtf8Len = WideCharToMultiByte(CP_UTF8, 0, pszSrc, -1, pszUtf8, iUtf8Len, NULL, NULL);
+					HANDLE hFile;
+					if ((iUtf8Len > 0)
+						&& ((hFile = CreateFile(pszDstFile, GENERIC_WRITE, FILE_SHARE_READ, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL)) != INVALID_HANDLE_VALUE))
+					{
+						DWORD nWritten = 0;
+						if (WriteFile(hFile, pszUtf8, (DWORD)iUtf8Len, &nWritten, NULL))
+						{
+							bWriteRc = (iUtf8Len == nWritten);
+						}
+						CloseHandle(hFile);
+					}
+				}
+				SafeFree(pszUtf8);
+			}
+			GlobalUnlock(hUnicode);
+		}
+		GlobalFree(hUnicode);
+		if (!bWriteRc)
+		{
+			wchar_t* pszErr = lstrmerge(L"Failed to create file\n", pszDstFile);
+			DisplayLastError(pszErr);
+			SafeFree(pszErr);
+		}
+		return bWriteRc;
 	}
 
 	// Открыть буфер обмена

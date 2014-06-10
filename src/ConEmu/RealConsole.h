@@ -473,7 +473,7 @@ class CRealConsole
 		void AutoCopyTimer(); // Чтобы разрулить "Auto Copy" & "Double click - select word"
 		void StartSelection(BOOL abTextMode, SHORT anX=-1, SHORT anY=-1, BOOL abByMouse=FALSE);
 		void ExpandSelection(SHORT anX, SHORT anY);
-		bool DoSelectionCopy(bool bCopyAll = false, BYTE nFormat = 0xFF /* use gpSet->isCTSHtmlFormat */);
+		bool DoSelectionCopy(CECopyMode CopyMode = cm_CopySel, BYTE nFormat = 0xFF /* use gpSet->isCTSHtmlFormat */, LPCWSTR pszDstFile = NULL);
 		void DoSelectionStop();
 		void OnSelectionChanged();
 		void DoFindText(int nDirection);
