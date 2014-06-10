@@ -1441,17 +1441,27 @@ DWORD CSettings::EnumFontsThread(LPVOID apArg)
 
 void CSettings::SearchForControls()
 {
-	wchar_t* pszPart = GetDlgItemText(ghOpWnd, tOptionSearch);
+	HWND hSearchEdit = GetDlgItem(ghOpWnd, tOptionSearch);
+	wchar_t* pszPart = GetDlgItemText(hSearchEdit, 0);
 	if (!pszPart || !*pszPart)
 	{
 		SafeFree(pszPart);
 		return;
 	}
 
+	TOOLINFO toolInfo = { 44, TTF_IDISHWND, ghOpWnd, (UINT_PTR)hSearchEdit }; //sizeof(toolInfo); -- need to work on Win2k and compile with Vista+
+	SendMessage(hwndTip, TTM_DELTOOL, 0, (LPARAM)&toolInfo);
+
 	size_t i, s, iTab, iCurTab;
+	INT_PTR lFind = -1;
 	HWND hSelTab = NULL, hCurTab = NULL, hCtrl = NULL;
 	static HWND hLastTab, hLastCtrl;
+	INT_PTR lLastListFind = -1;
 	wchar_t szText[255], szClass[80];
+	static wchar_t szLastText[255];
+
+	#define ResetLastList() { lLastListFind = -1; szLastText[0] = 0; }
+	#define ResetLastCtrl() { hLastCtrl = NULL; ResetLastList(); }
 
 	SetCursor(LoadCursor(NULL,IDC_WAIT));
 
@@ -1472,11 +1482,18 @@ void CSettings::SearchForControls()
 	}
 
 	if (hLastTab != hSelTab)
-		hLastCtrl = NULL;
+	{
+		ResetLastCtrl();
+	}
 
 	for (s = 0; s <= 2; s++)
 	{
 		size_t iFrom = iTab, iTo = iTab + 1;
+
+		if (s)
+		{
+			ResetLastCtrl();
+		}
 
 		if (s == 1)
 		{
@@ -1510,68 +1527,135 @@ void CSettings::SearchForControls()
 				continue;
 			}
 
-			hCtrl = (hCurTab == hLastTab) ? hLastCtrl : NULL;
+			_ASSERTE(hCtrl==NULL);
 
-			while ((hCtrl = FindWindowEx(hCurTab, hCtrl, NULL, NULL)) != NULL)
+			if (hCurTab == hLastTab)
 			{
-				if (!(GetWindowLong(hCtrl, GWL_STYLE) & WS_VISIBLE))
-					continue;
-
-				if (!GetClassName(hCtrl, szClass, countof(szClass)))
-					continue;
-
-				if (lstrcmpi(szClass, L"ListBox") == 0)
+				if (hLastCtrl && GetClassName(hLastCtrl, szClass, countof(szClass)))
 				{
-					LRESULT lFind = SendMessage(hCtrl, LB_FINDSTRING, -1, (LPARAM)pszPart);
-					// LB_FINDSTRING search from begin of string, but may be "In string"?
-					if (lFind < 0)
+					if (lstrcmpi(szClass, L"ListBox") == 0)
 					{
-						INT_PTR iCount = SendMessage(hCtrl, LB_GETCOUNT, 0, 0);
-						for (INT_PTR i = 0; i < iCount; i++)
+						INT_PTR iCount = SendMessage(hLastCtrl, LB_GETCOUNT, 0, 0);
+						lLastListFind = SendMessage(hLastCtrl, LB_GETCURSEL, 0, 0);
+						if ((iCount > 0) && (lLastListFind + 1) < iCount)
+							hCtrl = hLastCtrl;
+					}
+					else if (lstrcmpi(szClass, L"SysListView32") == 0)
+					{
+						INT_PTR iCount = ListView_GetItemCount(hLastCtrl);
+						lLastListFind = ListView_GetNextItem(hLastCtrl, -1, LVNI_SELECTED);
+						if ((iCount > 0) && (lLastListFind + 1) < iCount)
+							hCtrl = hLastCtrl;
+					}
+					else
+					{
+						ResetLastList();
+					}
+				}
+				else
+				{
+					ResetLastCtrl();
+				}
+			}
+
+			// If next item not available in the list
+			if (!hCtrl)
+			{
+				hCtrl = FindWindowEx(hCurTab, hLastCtrl, NULL, NULL);
+			}
+
+			if (hCtrl == hLastCtrl)
+				wcscpy_c(szText, szLastText);
+			else if (!hCtrl || (hCtrl != hLastCtrl))
+				lLastListFind = -1;
+
+			while (hCtrl != NULL)
+			{
+				if ((GetWindowLong(hCtrl, GWL_STYLE) & WS_VISIBLE)
+					&& GetClassName(hCtrl, szClass, countof(szClass)))
+				{
+					if (lstrcmpi(szClass, L"ListBox") == 0)
+					{
+						lFind = SendMessage(hCtrl, LB_FINDSTRING, lLastListFind, (LPARAM)pszPart);
+						// LB_FINDSTRING search from begin of string, but may be "In string"?
+						if (lFind < 0)
 						{
-							INT_PTR iLen = SendMessage(hCtrl, LB_GETTEXTLEN, 0, 0);
-							if (iLen >= (INT_PTR)countof(szText))
+							INT_PTR iCount = SendMessage(hCtrl, LB_GETCOUNT, 0, 0);
+							for (INT_PTR i = lLastListFind+1; i < iCount; i++)
 							{
-								_ASSERTE(iLen < countof(szText));
-							}
-							else
-							{
-								SendMessage(hCtrl, LB_GETTEXT, i, (LPARAM)szText);
-								if (StrStrI(szText, pszPart) != NULL)
+								INT_PTR iLen = SendMessage(hCtrl, LB_GETTEXTLEN, 0, 0);
+								if (iLen >= (INT_PTR)countof(szText))
 								{
-									lFind = i;
-									break;
+									_ASSERTE(iLen < countof(szText));
+								}
+								else
+								{
+									SendMessage(hCtrl, LB_GETTEXT, i, (LPARAM)szText);
+									if (StrStrI(szText, pszPart) != NULL)
+									{
+										lFind = i;
+										break;
+									}
 								}
 							}
 						}
+
+						if ((lFind >= 0) && (lFind > lLastListFind))
+						{
+							lLastListFind = lFind;
+							SendMessage(hCtrl, LB_SETCURSEL, lFind, 0);
+							break; // Нашли
+						}
 					}
+					else if (lstrcmpi(szClass, L"SysListView32") == 0)
+					{
+						LVITEM lvi = {LVIF_TEXT|LVIF_STATE|LVIF_PARAM};
+						lvi.pszText = szText;
+						INT_PTR iCount = ListView_GetItemCount(hCtrl);
+						lFind = -1;
 
-					if (lFind >= 0)
-						break; // Нашли
+						for (INT_PTR i = lLastListFind+1; (i < iCount) && (lFind == -1); i++)
+						{
+							for (lvi.iSubItem = 0; lvi.iSubItem <= 32; lvi.iSubItem++)
+							{
+								lvi.cchTextMax = countof(szText);
+								if (SendMessage(hCtrl, LVM_GETITEMTEXT, i, (LPARAM)&lvi) > 0)
+								{
+									if (StrStrI(szText, pszPart) != NULL)
+									{
+										lFind = i;
+										break;
+									}
+								}
+							}
+						}
 
-					continue;
+						if ((lFind >= 0) && (lFind > lLastListFind))
+						{
+							lLastListFind = lFind;
+							ListView_SetItemState(hCtrl, lFind, LVIS_SELECTED, LVIS_SELECTED);
+							ListView_SetSelectionMark(hCtrl, lFind);
+							ListView_EnsureVisible(hCtrl, lFind, FALSE);
+							break; // Нашли
+						}
+					}
+					else if (((lstrcmpi(szClass, L"Button") == 0) || (lstrcmpi(szClass, L"Static") != 0))
+						&& GetWindowText(hCtrl, szText, countof(szText)) && *szText)
+					{
+						// В контроле может быть акселератор (&) мешающий поиску
+						wchar_t* p = wcschr(szText, L'&');
+						while (p)
+						{
+							wmemmove(p, p+1, wcslen(p));
+							p = wcschr(p+1, L'&');
+						}
+
+						if (StrStrI(szText, pszPart) != NULL)
+							break;
+					}
 				}
 
-				if ((lstrcmpi(szClass, L"Button") != 0)
-					&& (lstrcmpi(szClass, L"Static") != 0)
-					)
-				{
-					continue;
-				}
-
-				if (!GetWindowText(hCtrl, szText, countof(szText)) || !*szText)
-					continue;
-
-				// В контроле может быть акселератор (&) мешающий поиску
-				wchar_t* p = wcschr(szText, L'&');
-				while (p)
-				{
-					wmemmove(p, p+1, wcslen(p));
-					p = wcschr(p+1, L'&');
-				}
-
-				if (StrStrI(szText, pszPart) != NULL)
-					break;
+				hCtrl = FindWindowEx(hCurTab, hCtrl, NULL, NULL);
 			}
 
 			if (hCtrl)
@@ -1616,9 +1700,11 @@ void CSettings::SearchForControls()
 		if (!*szHint)
 		{
 			// Show text of original control.
+			// szText contains text from previous label ("Static")
 			wcscpy_c(szHint, szText);
 		}
 
+		wcscpy_c(szLastText, szText);
 
 		HWND hBall = gpSetCls->hwndBalloon;
 		TOOLINFO *pti = &gpSetCls->tiBalloon;
