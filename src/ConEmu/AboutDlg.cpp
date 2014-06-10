@@ -69,10 +69,7 @@ namespace ConEmuAbout
 
 	HWND hwndTip = NULL;
 	void RegisterTip(HWND hDlg);
-};
 
-INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam)
-{
 	static struct {LPCWSTR Title; LPCWSTR Text;} Pages[] =
 	{
 		{L"About", pAbout},
@@ -86,6 +83,10 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 		{L"License", pAboutLicense},
 	};
 
+};
+
+INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam)
+{
 	INT_PTR lRc = 0;
 	if (DonateBtns_Process(hDlg, messg, wParam, lParam, lRc))
 	{
