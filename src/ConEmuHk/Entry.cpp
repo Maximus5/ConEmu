@@ -953,7 +953,8 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 		gbIsVStudio = true;
 	}
 
-	if ((lstrcmpi(pszName, L"chrome.exe") == 0)
+	if (gbIsNetVsHost
+		|| (lstrcmpi(pszName, L"chrome.exe") == 0)
 		|| (lstrcmpi(pszName, L"firefox.exe") == 0)
 		|| (lstrcmpi(pszName, L"link.exe") == 0))
 	{
@@ -1246,7 +1247,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 		#ifdef _DEBUG
 		//wchar_t szModule[MAX_PATH+1]; szModule[0] = 0;
 		//GetModuleFileName(NULL, szModule, countof(szModule));
-		_ASSERTE((gnImageSubsystem==IMAGE_SUBSYSTEM_WINDOWS_CUI) || (lstrcmpi(pszName, L"DosBox.exe")==0) || gbAttachGuiClient || gbPrepareDefaultTerminal);
+		_ASSERTE((gnImageSubsystem==IMAGE_SUBSYSTEM_WINDOWS_CUI) || (lstrcmpi(pszName, L"DosBox.exe")==0) || gbAttachGuiClient || gbPrepareDefaultTerminal || (gbIsNetVsHost && ghConWnd));
 		//if (!lstrcmpi(pszName, L"far.exe") || !lstrcmpi(pszName, L"mingw32-make.exe"))
 		//if (!lstrcmpi(pszName, L"as.exe"))
 		//	MessageBoxW(NULL, L"as.exe loaded!", L"ConEmuHk", MB_SYSTEMMODAL);

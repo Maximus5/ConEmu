@@ -5064,7 +5064,9 @@ BOOL WINAPI OnAllocConsole(void)
 	GetModuleFileName(NULL, szFile, countof(szFile));
 	msprintf(szAlloc, countof(szAlloc), L"OnAllocConsole\nOld=x%08X, New=x%08X, ghConWnd=x%08X\ngbPrepareDefaultTerminal=%i, gbIsNetVsHost=%i\n%s",
 		(DWORD)hOldConWnd, (DWORD)hNewConWnd, (DWORD)ghConWnd, gbPrepareDefaultTerminal, gbIsNetVsHost, szFile);
-	MessageBox(NULL, szAlloc, L"OnAllocConsole called", MB_SYSTEMMODAL);
+	// VisualStudio host file calls AllocConsole TWICE(!)
+	// Second call is totally spare (console already created)
+	//MessageBox(NULL, szAlloc, L"OnAllocConsole called", MB_SYSTEMMODAL);
 	#endif
 
 	if (hNewConWnd && (hNewConWnd != hOldConWnd) && gbPrepareDefaultTerminal && gbIsNetVsHost)
