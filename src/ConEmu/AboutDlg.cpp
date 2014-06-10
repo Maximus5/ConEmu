@@ -83,6 +83,7 @@ namespace ConEmuAbout
 		{L"License", pAboutLicense},
 	};
 
+	DWORD nTextSelStart = 0, nTextSelEnd = 0;
 };
 
 INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam)
@@ -204,6 +205,22 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 						return 1;
 				} // BN_CLICKED
 				break;
+			case EN_SETFOCUS:
+				switch (LOWORD(wParam))
+				{
+				case tAboutText:
+					{
+						// Do not autosel all text
+						HWND hEdit = (HWND)lParam;
+						DWORD nStart = 0, nEnd = 0;
+						SendMessage(hEdit, EM_GETSEL, (WPARAM)&nStart, (LPARAM)&nEnd);
+						if (nStart != nEnd)
+						{
+							SendMessage(hEdit, EM_SETSEL, nTextSelStart, nTextSelEnd);
+						}
+					}
+					break;
+				}
 			} // switch (HIWORD(wParam))
 			break;
 
