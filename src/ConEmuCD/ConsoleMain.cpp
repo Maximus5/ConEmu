@@ -4982,6 +4982,13 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 		return iFRc;
 	}
 
+	if (gbAttachDefTerm && !gbParmVisibleSize)
+	{
+		// To avoid "small" and trimmed text after starting console
+		_ASSERTE(gcrVisibleSize.X==80 && gcrVisibleSize.Y==25);
+		gbParmVisibleSize = TRUE;
+	}
+
 	// Параметры из комстроки разобраны. Здесь могут уже быть известны
 	// gpSrv->hGuiWnd {/GHWND}, gnConEmuPID {/GPID}, gpSrv->dwGuiAID {/AID}
 	// gbAttachMode для ключей {/ADMIN}, {/ATTACH}, {/AUTOATTACH}, {/GUIATTACH}
