@@ -126,6 +126,14 @@ public:
 public:
 	// Helper
 	int StartDefTermHooker(DWORD nForePID);
+	bool GetLinkProperties(LPCWSTR asLnkFile, CmdArg& rsExe, CmdArg& rsArgs, CmdArg& rsWorkDir);
+	bool InitOle32();
+protected:
+	HMODULE hOle32;
+	typedef HRESULT (WINAPI* CoInitializeEx_t)(LPVOID pvReserved, DWORD dwCoInit);
+	typedef HRESULT (WINAPI* CoCreateInstance_t)(REFCLSID rclsid, LPUNKNOWN pUnkOuter, DWORD dwClsContext, REFIID riid, LPVOID *ppv);
+	CoInitializeEx_t CoInitializeEx_f;
+	CoCreateInstance_t CoCreateInstance_f;
 };
 
 // Service functions

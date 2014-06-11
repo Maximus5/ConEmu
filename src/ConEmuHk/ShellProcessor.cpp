@@ -30,6 +30,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <TCHAR.h>
 #include <Tlhelp32.h>
 #include <shlwapi.h>
+#pragma warning(disable: 4091)
+#include <Shlobj.h>
+#pragma warning(default: 4091)
+#include "../ConEmu/ShObjIdl_Part.h"
 #include "../common/common.hpp"
 #include "../common/ConEmuCheck.h"
 #include "SetHook.h"
@@ -135,6 +139,8 @@ CShellProc::CShellProc()
 	mb_TempConEmuWnd = FALSE;
 	mh_PreConEmuWnd = ghConEmuWnd; mh_PreConEmuWndDC = ghConEmuWndDC;
 
+	hOle32 = NULL;
+
 	// Current application is GUI subsystem run in ConEmu tab?
 	CheckIsCurrentGuiClient();
 
@@ -182,6 +188,11 @@ CShellProc::~CShellProc()
 		free(mlp_ExecInfoA);
 	if (mlp_ExecInfoW)
 		free(mlp_ExecInfoW);
+
+	if (hOle32)
+	{
+		FreeLibrary(hOle32);
+	}
 }
 
 int CShellProc::StartDefTermHooker(DWORD nForePID)
@@ -190,6 +201,83 @@ int CShellProc::StartDefTermHooker(DWORD nForePID)
 	DWORD nResult = 0, nErrCode = 0;
 	int iRc = ::StartDefTermHooker(nForePID, hProcess, nResult, m_SrvMapping.ComSpec.ConEmuBaseDir, nErrCode);
 	return iRc;
+}
+
+bool CShellProc::InitOle32()
+{
+	if (hOle32)
+		return true;
+
+	hOle32 = LoadLibrary(L"Ole32.dll");
+	if (!hOle32)
+		return false;
+
+	CoInitializeEx_f = (CoInitializeEx_t)GetProcAddress(hOle32, "CoInitializeEx");
+	CoCreateInstance_f = (CoCreateInstance_t)GetProcAddress(hOle32, "CoCreateInstance");
+	if (!CoInitializeEx_f || !CoCreateInstance_f)
+	{
+		_ASSERTEX(CoInitializeEx_f && CoCreateInstance_f);
+		FreeLibrary(hOle32);
+		return false;
+	}
+
+	return true;
+}
+
+bool CShellProc::GetLinkProperties(LPCWSTR asLnkFile, CmdArg& rsExe, CmdArg& rsArgs, CmdArg& rsWorkDir)
+{
+	bool bRc = false;
+	IPersistFile* pFile = NULL;
+	IShellLinkW*  pShellLink = NULL;
+	HRESULT hr;
+	DWORD nLnkSize;
+	wchar_t szPath[MAX_PATH+1];
+	static bool bCoInitialized = false;
+
+	if (!FileExists(asLnkFile, &nLnkSize))
+		goto wrap;
+
+	if (!InitOle32())
+		goto wrap;
+
+	hr = CoCreateInstance_f(CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER, IID_IShellLinkW, (void**)&pShellLink);
+	if (FAILED(hr) && !bCoInitialized)
+	{
+		bCoInitialized = true;
+		hr = CoInitializeEx_f(NULL, COINIT_MULTITHREADED);
+		if (SUCCEEDED(hr))
+			hr = CoCreateInstance_f(CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER, IID_IShellLinkW, (void**)&pShellLink);
+	}
+	if (FAILED(hr) || !pShellLink)
+		goto wrap;
+
+	hr = pShellLink->QueryInterface(IID_IPersistFile, (void**)&pFile);
+	if (FAILED(hr) || !pFile)
+		goto wrap;
+
+	hr = pFile->Load(asLnkFile, STGM_READ);
+	if (FAILED(hr))
+		goto wrap;
+
+	hr = pShellLink->GetPath(rsExe.GetBuffer(MAX_PATH), MAX_PATH, NULL, 0);
+	if (FAILED(hr) || !*szPath)
+		goto wrap;
+
+	hr = pShellLink->GetWorkingDirectory(rsWorkDir.GetBuffer(MAX_PATH+1), MAX_PATH+1);
+	if (FAILED(hr))
+		goto wrap;
+
+	hr = pShellLink->GetArguments(rsArgs.GetBuffer(nLnkSize), nLnkSize);
+	if (FAILED(hr))
+		goto wrap;
+
+	bRc = true;
+wrap:
+	if (pFile)
+		pFile->Release();
+	if (pShellLink)
+		pShellLink->Release();
+	return bRc;
 }
 
 HWND CShellProc::FindCheckConEmuWindow()
@@ -1423,6 +1511,21 @@ int CShellProc::PrepareExecuteParms(
 	if (!ghConEmuWndDC && !isDefaultTerminalEnabled())
 		return 0; // Перехватывать только под ConEmu
 
+	CmdArg szLnkExe, szLnkArg, szLnkDir;
+	if (asFile && (aCmd == eShellExecute))
+	{
+		LPCWSTR pszExt = PointToExt(asFile);
+		if (pszExt && (lstrcmpi(pszExt, L".lnk") == 0))
+		{
+			if (GetLinkProperties(asFile, szLnkExe, szLnkArg, szLnkDir))
+			{
+				_ASSERTE(asParam == NULL);
+				asFile = szLnkExe.ms_Arg;
+				asParam = szLnkArg.ms_Arg;
+			}
+		}
+	}
+
 	bool bAnsiCon = false;
 	for (int i = 0; (i <= 1); i++)
 	{
@@ -2221,6 +2324,11 @@ wrap:
 				}
 			}
 		}
+	}
+
+	if (lbChanged && (psStartDir && !*psStartDir) && !szLnkDir.IsEmpty())
+	{
+		*psStartDir = szLnkDir.Detach();
 	}
 
 	return lbChanged ? 1 : 0;
