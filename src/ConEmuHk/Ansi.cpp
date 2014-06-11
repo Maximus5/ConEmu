@@ -503,7 +503,9 @@ void CEAnsi::DumpEscape(LPCWSTR buf, size_t cchLen, int iUnknown)
 {
 	if (!buf || !cchLen)
 	{
-		_ASSERTEX((buf && cchLen) || (gszClinkCmdLine && buf));
+		// В общем, много кто грешит попытками записи "пустых строк"
+		// Например, clink, perl, ...
+		//_ASSERTEX((buf && cchLen) || (gszClinkCmdLine && buf));
 	}
 	else if (iUnknown == 1)
 	{
