@@ -139,6 +139,8 @@ public:
 
 	short GetUpdateProgress();
 
+	wchar_t* GetCurVerInfo();
+
 protected:
 	void RequestTerminate();
 	bool mb_RequestTerminate;

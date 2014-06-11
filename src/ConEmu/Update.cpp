@@ -1926,6 +1926,23 @@ short CConEmuUpdate::GetUpdateProgress()
 	return -1;
 }
 
+wchar_t* CConEmuUpdate::GetCurVerInfo()
+{
+	wchar_t* pszVerInfo = NULL;
+
+	if (lstrcmpi(ms_NewVersion, ms_OurVersion) > 0)
+	{
+		pszVerInfo = lstrmerge(L"Obsolete, recommended update to ", ms_NewVersion,
+			(mp_Set->isUpdateUseBuilds==1) ? L" " CV_STABLE : (mp_Set->isUpdateUseBuilds==3) ? L" " CV_PREVIEW : L" " CV_DEVEL);
+	}
+	else if (ms_CurVerInfo[0])
+		pszVerInfo = lstrdup(ms_CurVerInfo);
+	else
+		pszVerInfo = lstrdup(ms_OurVersion);
+
+	return pszVerInfo;
+}
+
 void CConEmuUpdate::WaitAllInstances()
 {
 	while (true)
