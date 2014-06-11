@@ -1176,7 +1176,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 
 		if (aCmd == eShellExecute)
 		{
-			_wcscat_c((*psParam), nCchSize, L" /AUTOATTACH /ROOT ");
+			_wcscat_c((*psParam), nCchSize, L" /ATTACHDEFTERM /ROOT ");
 		}
 		else
 		{

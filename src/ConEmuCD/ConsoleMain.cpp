@@ -202,6 +202,7 @@ UINT  gnPTYmode = 0; // 1 enable PTY, 2 - disable PTY (work as plain console), 0
 BOOL  gbRootIsCmdExe = TRUE;
 BOOL  gbAttachFromFar = FALSE;
 BOOL  gbAlternativeAttach = FALSE; // Подцепиться к существующей консоли, без внедрения в процесс ConEmuHk.dll
+BOOL  gbAttachDefTerm = FALSE;
 BOOL  gbSkipWowChange = FALSE;
 BOOL  gbConsoleModeFlags = TRUE;
 DWORD gnConsoleModeFlags = 0; //(ENABLE_QUICK_EDIT_MODE|ENABLE_INSERT_MODE);
@@ -4370,7 +4371,7 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 				gbAttachMode = am_Simple;
 			gnRunMode = RM_SERVER;
 		}
-		else if (wcscmp(szArg, L"/AUTOATTACH")==0)
+		else if ((wcscmp(szArg, L"/AUTOATTACH")==0) || (wcscmp(szArg, L"/ATTACHDEFTERM")==0))
 		{
 			#if defined(SHOW_ATTACH_MSGBOX)
 			if (!IsDebuggerPresent())
@@ -4385,6 +4386,7 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 			gbAttachMode = am_Auto;
 			gbAlienMode = TRUE;
 			gbNoCreateProcess = TRUE;
+			gbAttachDefTerm = (wcscmp(szArg, L"/ATTACHDEFTERM")==0);
 
 			// Еще может быть "/GHWND=NEW" но оно ниже. Там ставится "gpSrv->bRequestNewGuiWnd=TRUE"
 
@@ -5014,7 +5016,7 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 			}
 		}
 
-		if (!gbAlternativeAttach && !gpSrv->dwRootProcess)
+		if (!gbAlternativeAttach && !gbAttachDefTerm && !gpSrv->dwRootProcess)
 		{
 			// В принципе, сюда мы можем попасть при запуске, например: "ConEmuC.exe /ADMIN /ROOT cmd"
 			// Но только не при запуске "из ConEmu" (т.к. будут установлены gpSrv->hGuiWnd, gnConEmuPID)
