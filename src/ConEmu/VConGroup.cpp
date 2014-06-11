@@ -3189,6 +3189,7 @@ BOOL CVConGroup::AttachRequested(HWND ahConWnd, const CESERVER_REQ_STARTSTOP* pS
 		RConStartArgs* pArgs = new RConStartArgs;
 		pArgs->Detached = crb_On;
 		pArgs->BackgroundTab = pStartStop->bRunInBackgroundTab ? crb_On : crb_Undefined;
+		pArgs->RunAsAdministrator = pStartStop->bUserIsAdmin ? crb_On : crb_Undefined;
 		_ASSERTE(pStartStop->sCmdLine[0]!=0);
 		pArgs->pszSpecialCmd = lstrdup(pStartStop->sCmdLine);
 
