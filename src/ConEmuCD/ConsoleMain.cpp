@@ -31,6 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifdef _DEBUG
 //  Раскомментировать, чтобы сразу после запуска процесса (conemuc.exe) показать MessageBox, чтобы прицепиться дебаггером
 //	#define SHOW_STARTED_MSGBOX
+//	#define SHOW_ADMIN_STARTED_MSGBOX
 //	#define SHOW_MAIN_MSGBOX
 //	#define SHOW_ALTERNATIVE_MSGBOX
 //  #define SHOW_DEBUG_STARTED_MSGBOX
@@ -818,8 +819,15 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 {
 	TODO("можно при ошибках показать консоль, предварительно поставив 80x25 и установив крупный шрифт");
 
-	#ifdef SHOW_MAIN_MSGBOX
-	if (!IsDebuggerPresent())
+	#if defined(SHOW_MAIN_MSGBOX) || defined(SHOW_ADMIN_STARTED_MSGBOX)
+	bool bShowWarn = false;
+	#if defined(SHOW_MAIN_MSGBOX)
+	if (!IsDebuggerPresent()) bShowWarn = true;
+	#endif
+	#if defined(SHOW_ADMIN_STARTED_MSGBOX)
+	if (IsUserAdmin()) bShowWarn = true;
+	#endif
+	if (bShowWarn)
 	{
 		char szMsg[MAX_PATH+128]; msprintf(szMsg, countof(szMsg), WIN3264TEST("ConEmuCD.dll","ConEmuCD64.dll") " loaded, PID=%u, TID=%u\r\n", GetCurrentProcessId(), GetCurrentThreadId());
 		int nMsgLen = lstrlenA(szMsg);
