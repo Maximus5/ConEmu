@@ -157,9 +157,12 @@ struct SettingsXML : public SettingsBase
 		int mi_Level;
 		bool mb_Empty;
 		bool mb_KeyEmpty;
+		uint mn_access;
 		//wchar_t ms_LevelPrefix[64];
 		//BSTR mbs_LevelPrefix, mbs_LevelSuffix;
 		static IXMLDOMDocument* CreateDomDocument(wchar_t* pszErr = NULL, size_t cchErrMax = 0);
+		bool OpenStorage(uint access, wchar_t (&szErr)[512]);
+		void CloseStorage();
 	public:
 		static bool IsXmlAllowed();
 		virtual bool OpenKey(const wchar_t *regPath, uint access, BOOL abSilent = FALSE) override;

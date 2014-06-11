@@ -364,10 +364,11 @@ SettingsXML::SettingsXML(const SettingsStorage& Storage)
 	mi_Level = 0;
 	mb_Empty = false;
 	mb_KeyEmpty = false;
+	mn_access = 0;
 }
 SettingsXML::~SettingsXML()
 {
-	CloseKey();
+	CloseStorage();
 }
 
 IXMLDOMDocument* SettingsXML::CreateDomDocument(wchar_t* pszErr /*= NULL*/, size_t cchErrMax /*= 0*/)
@@ -504,83 +505,95 @@ bool SettingsXML::IsXmlAllowed()
 	return (pFile != NULL);
 }
 
-bool SettingsXML::OpenKey(const wchar_t *regPath, uint access, BOOL abSilent /*= FALSE*/)
+bool SettingsXML::OpenStorage(uint access, wchar_t (&szErr)[512])
 {
-	// That may occures if Basic settings and "Export" button was pressed
-	_ASSERTE(!gpConEmu->IsResetBasicSettings() || ((access & KEY_WRITE)!=KEY_WRITE));
-
-	bool lbRc = false;
+	bool bRc = false;
+	bool bNeedReopen = (mp_File == NULL);
+	LPCWSTR pszXmlFile;
 	HRESULT hr = S_OK;
-	wchar_t szErr[512]; szErr[0] = 0;
-	wchar_t szName[MAX_PATH];
-	const wchar_t* psz = NULL;
 	VARIANT_BOOL bSuccess;
 	IXMLDOMParseError* pErr = NULL;
-	//IXMLDOMNodeList* pList = NULL;
-	IXMLDOMNode* pKey = NULL;
-	IXMLDOMNode* pChild = NULL;
 	VARIANT vt; VariantInit(&vt);
 	bool bAllowCreate = (access & KEY_WRITE) == KEY_WRITE;
-	CloseKey(); // на всякий
 
-	if (!regPath || !*regPath)
-	{
-		return false;
-	}
+	szErr[0] = 0;
 
-	HANDLE hFile = NULL;
-	DWORD dwAccess = GENERIC_READ;
-
-	if ((access & KEY_WRITE) == KEY_WRITE)
-		dwAccess |= GENERIC_WRITE;
-
-	LPCWSTR pszXmlFile;
 	if (m_Storage.pszFile && *m_Storage.pszFile)
 	{
 		pszXmlFile = m_Storage.pszFile;
 	}
 	else
 	{
+		// Must be already initialized
 		_ASSERTE(m_Storage.pszFile && *m_Storage.pszFile);
-		m_Storage.pszFile = pszXmlFile = gpConEmu->ConEmuXml();
-	}
-
-	if (!pszXmlFile || !*pszXmlFile)
-	{
-		return false;
-	}
-
-	hFile = CreateFile(pszXmlFile, dwAccess, FILE_SHARE_READ|FILE_SHARE_WRITE,
-	                   NULL, OPEN_EXISTING, 0, 0);
-
-	// XML-файл отсутсвует
-	if (hFile == INVALID_HANDLE_VALUE)
-	{
-		return false;
-	}
-	else
-	{
-		BY_HANDLE_FILE_INFORMATION bfi = {0};
-		if (GetFileInformationByHandle(hFile, &bfi))
-			mb_Empty = (bfi.nFileSizeHigh == 0 && bfi.nFileSizeLow == 0);
-		CloseHandle(hFile); hFile = NULL;
-		if (mb_Empty && bAllowCreate)
+		pszXmlFile = gpConEmu->ConEmuXml();
+		if (!pszXmlFile || !*pszXmlFile)
 		{
-			hFile = CreateFile(pszXmlFile, GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE,
-	                   NULL, OPEN_EXISTING, 0, 0);
-			if (hFile != INVALID_HANDLE_VALUE)
-			{
-				LPCSTR pszDefault = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\r\n<key name=\"Software\">\r\n\t<key name=\"ConEmu\">\r\n\t</key>\r\n</key>\r\n";
-				DWORD nLen = lstrlenA(pszDefault);
-				WriteFile(hFile, pszDefault, nLen, &nLen, NULL);
-				CloseHandle(hFile);
-			}
-			hFile = NULL;
+			goto wrap;
 		}
 	}
 
+	m_Storage.pszFile = pszXmlFile;
+
+	// Changed access type?
+	if (bNeedReopen || (mn_access != access))
+	{
+		DWORD dwAccess = GENERIC_READ;
+		DWORD dwMode = OPEN_EXISTING;
+
+		if ((access & KEY_WRITE) == KEY_WRITE)
+		{
+			dwAccess |= GENERIC_WRITE;
+			dwMode = OPEN_ALWAYS;
+		}
+
+		HANDLE hFile = CreateFile(pszXmlFile, dwAccess, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, dwMode, 0, 0);
+
+		// XML-файл отсутсвует
+		if (!hFile || (hFile == INVALID_HANDLE_VALUE))
+		{
+			goto wrap;
+		}
+		else
+		{
+			BY_HANDLE_FILE_INFORMATION bfi = {0};
+			if (GetFileInformationByHandle(hFile, &bfi))
+				mb_Empty = (bfi.nFileSizeHigh == 0 && bfi.nFileSizeLow == 0);
+			CloseHandle(hFile); hFile = NULL;
+			if (mb_Empty && bAllowCreate)
+			{
+				bNeedReopen = true;
+				hFile = CreateFile(pszXmlFile, GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_ALWAYS, 0, 0);
+				if (!hFile || (hFile == INVALID_HANDLE_VALUE))
+				{
+					goto wrap;
+				}
+				else
+				{
+					LPCSTR pszDefault = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\r\n"
+						"<key name=\"Software\">\r\n"
+						"\t<key name=\"ConEmu\">\r\n"
+						"\t</key>\r\n"
+						"</key>\r\n";
+					DWORD nLen = lstrlenA(pszDefault);
+					WriteFile(hFile, pszDefault, nLen, &nLen, NULL);
+					CloseHandle(hFile);
+				}
+				hFile = NULL;
+			}
+		}
+	}
+
+	if (!bNeedReopen)
+	{
+		bRc = true;
+		goto wrap;
+	}
+
 	if (mb_Empty && !bAllowCreate)
-		return false;
+		goto wrap;
+
+	CloseStorage();
 
 	SAFETRY
 	{
@@ -625,6 +638,52 @@ bool SettingsXML::OpenKey(const wchar_t *regPath, uint access, BOOL abSilent /*=
 
 			goto wrap;
 		}
+
+		mn_access = access;
+		bRc = true;
+
+	} SAFECATCH
+	{
+		lstrcpy(szErr, L"Exception in SettingsXML::OpenStorage");
+		bRc = false;
+	}
+
+wrap:
+	SafeRelease(pErr);
+	if (!bRc)
+		CloseStorage();
+	return bRc;
+}
+
+bool SettingsXML::OpenKey(const wchar_t *regPath, uint access, BOOL abSilent /*= FALSE*/)
+{
+	// That may occures if Basic settings and "Export" button was pressed
+	_ASSERTE(!gpConEmu->IsResetBasicSettings() || ((access & KEY_WRITE)!=KEY_WRITE));
+
+	bool lbRc = false;
+	HRESULT hr = S_OK;
+	wchar_t szErr[512]; szErr[0] = 0;
+	wchar_t szName[MAX_PATH];
+	const wchar_t* psz = NULL;
+	IXMLDOMNode* pKey = NULL;
+	IXMLDOMNode* pChild = NULL;
+	bool bAllowCreate = (access & KEY_WRITE) == KEY_WRITE;
+
+	CloseKey(); // на всякий
+
+	if (!regPath || !*regPath)
+	{
+		return false;
+	}
+
+	if (!OpenStorage(access, szErr))
+	{
+		goto wrap;
+	}
+
+	SAFETRY
+	{
+		_ASSERTE(mp_File != NULL);
 
 		hr = mp_File->QueryInterface(IID_IXMLDOMNode, (void **)&pKey);
 
@@ -696,12 +755,8 @@ bool SettingsXML::OpenKey(const wchar_t *regPath, uint access, BOOL abSilent /*=
 		lbRc = false;
 	}
 wrap:
-
-	if (pErr) { pErr->Release(); pErr = NULL; }
-
-	if (pChild) { pChild->Release(); pChild = NULL; }
-
-	if (pKey) { pKey->Release(); pKey = NULL; }
+	SafeRelease(pChild);
+	SafeRelease(pKey);
 
 	if (!lbRc && szErr[0] && !abSilent)
 	{
@@ -711,12 +766,13 @@ wrap:
 	return lbRc;
 }
 
-void SettingsXML::CloseKey()
+void SettingsXML::CloseStorage()
 {
 	HRESULT hr = S_OK;
 	HANDLE hFile = NULL;
 	bool bCanSave = false;
-	mi_Level = 0;
+
+	CloseKey();
 
 	if (mb_Modified && mp_File)
 	{
@@ -753,13 +809,18 @@ void SettingsXML::CloseKey()
 		}
 	}
 
-	if (mp_Key) { mp_Key->Release(); mp_Key = NULL; }
-
-	if (mp_File) { mp_File->Release(); mp_File = NULL; }
+	SafeRelease(mp_File);
 
 	mb_Modified = false;
 	mb_Empty = false;
+	mn_access = 0;
+}
+
+void SettingsXML::CloseKey()
+{
+	SafeRelease(mp_Key);
 	mb_KeyEmpty = false;
+	mi_Level = 0;
 }
 
 BSTR SettingsXML::GetAttr(IXMLDOMNode* apNode, const wchar_t* asName)
