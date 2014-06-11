@@ -204,6 +204,9 @@
     <ClCompile Include="TabCtrlWin.cpp">
       <Filter>0 - Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="SearchCtrl.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Attach.h">
@@ -454,6 +457,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="TabCtrlWin.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SearchCtrl.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
