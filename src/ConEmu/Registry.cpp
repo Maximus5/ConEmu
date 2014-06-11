@@ -636,7 +636,7 @@ bool SettingsXML::OpenKey(const wchar_t *regPath, uint access, BOOL abSilent /*=
 
 		mi_Level = 0;
 
-		while(*regPath)
+		while (*regPath)
 		{
 			// Получить следующий токен
 			psz = wcschr(regPath, L'\\');
@@ -940,7 +940,7 @@ IXMLDOMNode* SettingsXML::FindItem(IXMLDOMNode* apFrom, const wchar_t* asType, c
 	{
 		hr = pList->reset();
 
-		while((hr = pList->nextNode(&pIXMLDOMNode)) == S_OK && pIXMLDOMNode)
+		while ((hr = pList->nextNode(&pIXMLDOMNode)) == S_OK && pIXMLDOMNode)
 		{
 			lbEmpty = FALSE;
 			hr = pIXMLDOMNode->get_attributes(&pAttrs);
@@ -1116,7 +1116,7 @@ bool SettingsXML::Load(const wchar_t *regName, wchar_t **value)
 			{
 				hr = pList->reset();
 
-				while((hr = pList->nextNode(&pNode)) == S_OK && pNode)
+				while ((hr = pList->nextNode(&pNode)) == S_OK && pNode)
 				{
 					bsData = GetAttr(pNode, L"data");
 					pNode->Release(); pNode = NULL;
@@ -1367,7 +1367,7 @@ bool SettingsXML::Load(const wchar_t *regName, LPBYTE value, DWORD nSize)
 				}
 			}
 
-			while(nSize--)  // очистить хвост
+			while (nSize--)  // очистить хвост
 				*(pCur++) = 0;
 		}
 	}
@@ -1476,7 +1476,7 @@ void SettingsXML::Save(const wchar_t *regName, LPCBYTE value, DWORD nType, DWORD
 				wchar_t* psz = (wchar_t*)bsValue;
 				LPCBYTE  ptr = value;
 
-				while(nSize)
+				while (nSize)
 				{
 					_wsprintf(psz, SKIPLEN(nLen-(psz-bsValue)) L"%02x", (DWORD)*ptr);
 					ptr++; nSize--; psz+=2;
@@ -1571,7 +1571,7 @@ void SettingsXML::Save(const wchar_t *regName, LPCBYTE value, DWORD nType, DWORD
 
 		if (bHasChild)
 		{
-			while((hr = pChild->get_firstChild(&pNode)) == S_OK && pNode)
+			while ((hr = pChild->get_firstChild(&pNode)) == S_OK && pNode)
 			{
 				hr = pNode->get_nodeType(&nodeType);
 #ifdef _DEBUG
@@ -1596,7 +1596,7 @@ void SettingsXML::Save(const wchar_t *regName, LPCBYTE value, DWORD nType, DWORD
 		long nAllLen = nSize/2; // длина в wchar_t
 		long nLen = 0;
 
-		while(psz && *psz && nAllLen > 0)
+		while (psz && *psz && nAllLen > 0)
 		{
 			hr = mp_File->createNode(vtType, bsNodeType, L"", &pNode);
 
