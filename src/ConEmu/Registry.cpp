@@ -931,9 +931,27 @@ IXMLDOMNode* SettingsXML::FindItem(IXMLDOMNode* apFrom, const wchar_t* asType, c
 	}
 	else
 	{
-		bsText = ::SysAllocString(asType);
+		long lFound = 0;
+		// key[@name="abc"], but it is case-sensitive, and may fails in theory
+		bsText = lstrmerge(asType, L"[@name=\"", asName, L"\"]");
 		hr = apFrom->selectNodes(bsText, &pList);
-		::SysFreeString(bsText); bsText = NULL;
+		if (SUCCEEDED(hr))
+		{
+			hr = pList->get_length(&lFound);
+			if (FAILED(hr) || (lFound < 1))
+			{
+				SafeRelease(pList);
+			}
+		}
+		SafeFree(bsText);
+		// May be case-insensitive search will be succeeded?
+		// However, it is very slow
+		if (!pList)
+		{
+			bsText = ::SysAllocString(asType);
+			hr = apFrom->selectNodes(bsText, &pList);
+			::SysFreeString(bsText); bsText = NULL;
+		}
 	}
 
 	if (SUCCEEDED(hr) && pList)
