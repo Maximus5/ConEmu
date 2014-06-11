@@ -1354,9 +1354,10 @@ BEGIN
     ICON            IDI_ICON1,pIconCtrl,7,7,20,20,WS_DISABLED
     CONTROL         "",tbAboutTabs,"SysTabControl32",TCS_BUTTONS | WS_TABSTOP,6,33,356,16
     EDITTEXT        tAboutText,7,50,411,131,ES_MULTILINE | ES_AUTOVSCROLL | ES_NOHIDESEL | ES_READONLY | WS_VSCROLL
-    LTEXT           "Console emulation program. Visit home page:",stConEmuAbout,104,7,268,8
-    LTEXT           "http://conemu-maximus5.googlecode.com",stConEmuUrl,104,18,268,8,SS_NOTIFY
     EDITTEXT        tAboutSearch,365,33,53,13,ES_AUTOHSCROLL | ES_WANTRETURN
+    CTEXT           "Console Emulation program (local terminal)",stConEmuAbout,32,7,312,8
+    CTEXT           "http://conemu-maximus5.googlecode.com",stConEmuUrl,167,189,185,8,SS_NOTIFY
+    CTEXT           "Version status:",stConEmuVersion,32,17,312,8
 END
 
 IDD_ACTION DIALOGEX 0, 0, 325, 157

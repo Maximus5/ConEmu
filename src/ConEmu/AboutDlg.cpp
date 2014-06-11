@@ -38,6 +38,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "OptionsClass.h"
 #include "RealConsole.h"
 #include "SearchCtrl.h"
+#include "Update.h"
 #include "VirtualConsole.h"
 #include "VConChild.h"
 #include "version.h"
@@ -135,6 +136,35 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 
 			EditIconHint_Set(hDlg, GetDlgItem(hDlg, tAboutSearch), true, L"Search", false, UM_SEARCH, IDOK);
 			EditIconHint_Subclass(hDlg);
+
+			wchar_t* pszLabel = GetDlgItemText(hDlg, stConEmuVersion);
+			if (pszLabel)
+			{
+				wchar_t* pszSet = NULL;
+
+				if (gpUpd)
+				{
+					wchar_t* pszVerInfo = gpUpd->GetCurVerInfo();
+					if (pszVerInfo)
+					{
+						pszSet = lstrmerge(pszLabel, L" ", pszVerInfo);
+						free(pszVerInfo);
+					}
+				}
+
+				if (!pszSet)
+				{
+					pszSet = lstrmerge(pszLabel, L" ", L"Please check for updates manually");
+				}
+
+				if (pszSet)
+				{
+					SetDlgItemText(hDlg, stConEmuVersion, pszSet);
+					free(pszSet);
+				}
+
+				free(pszLabel);
+			}
 
 			HWND hTab = GetDlgItem(hDlg, tbAboutTabs);
 			size_t nPage = 0;
