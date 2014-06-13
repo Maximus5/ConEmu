@@ -159,7 +159,7 @@ BOOL gbDllStopCalled = FALSE;
 
 //BOOL gbSkipInjects = FALSE;
 BOOL gbHooksWasSet = false;
-BOOL gbDllDeinitialized = false; 
+BOOL gbDllDeinitialized = false;
 
 extern BOOL StartupHooks(HMODULE ahOurDll);
 extern void ShutdownHooks();
@@ -1145,7 +1145,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 			gnGuiPID = GuiMapping->nGuiPID;
 			ghConEmuWnd = GuiMapping->hGuiWnd;
 			bAttachExistingWindow = gbAttachGuiClient = TRUE;
-			//ghAttachGuiClient = 
+			//ghAttachGuiClient =
 		}
 		else
 		{
@@ -1723,7 +1723,7 @@ BOOL WINAPI DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 			_ASSERTEX(FALSE && "Hooks starting in background thread?");
 			//HANDLE hEvents[2];
 			//hEvents[0] = CreateEvent(NULL, FALSE, FALSE, NULL);
-			//hEvents[1] = 
+			//hEvents[1] =
 			ghStartThread = CreateThread(NULL, 0, DllStart, NULL/*(LPVOID)(hEvents[0])*/, 0, &gnStartThreadID);
 			if (ghStartThread == NULL)
 			{
@@ -2130,8 +2130,8 @@ void StartPTY()
 		return;
 	}
 
-	gpCEIO_In = (ConEmuInOutPipe*)calloc(sizeof(ConEmuInOutPipe),1); 
-	gpCEIO_Out = (ConEmuInOutPipe*)calloc(sizeof(ConEmuInOutPipe),1); 
+	gpCEIO_In = (ConEmuInOutPipe*)calloc(sizeof(ConEmuInOutPipe),1);
+	gpCEIO_Out = (ConEmuInOutPipe*)calloc(sizeof(ConEmuInOutPipe),1);
 	gpCEIO_Err = (ConEmuInOutPipe*)calloc(sizeof(ConEmuInOutPipe),1);
 
 	HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE);
