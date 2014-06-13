@@ -1,7 +1,3 @@
-## Please VOTE! - ConEmu has been selected to be on the ballot for the June Community Choice SourceForge project of the Month!
-
-Please vote for ‘conemu’ here (SF account required, one per user): https://sourceforge.net/p/potm/discussion/vote/thread/f3309aea/
-
 ## About ConEmu
 ConEmu-Maximus5 is a Windows console emulator with tabs, which represents
 multiple consoles as one customizable GUI window with various features.
