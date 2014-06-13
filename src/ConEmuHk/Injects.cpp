@@ -113,6 +113,8 @@ UINT_PTR GetLdrGetDllHandleByNameAddress()
 }
 
 // The handle must have the PROCESS_CREATE_THREAD, PROCESS_QUERY_INFORMATION, PROCESS_VM_OPERATION, PROCESS_VM_WRITE, and PROCESS_VM_READ
+// The function may start appropriate bitness of ConEmuC.exe with "/SETHOOKS=..." switch
+// If bitness matches, use WriteProcessMemory and SetThreadContext immediately
 int InjectHooks(PROCESS_INFORMATION pi, BOOL abLogProcess)
 {
 	int iRc = 0;
@@ -499,6 +501,7 @@ wrap:
 		wchar_t szEvtName[64];
 		SafeCloseHandle(ghInjectsInMainThread);
 		
+		// ResumeThread was not called yet, set event
 		msprintf(szEvtName, countof(szEvtName), CECONEMUROOTTHREAD, pi.dwProcessId);
 		ghInjectsInMainThread = CreateEvent(LocalSecurity(), TRUE, TRUE, szEvtName);
 		if (ghInjectsInMainThread)

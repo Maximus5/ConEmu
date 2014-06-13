@@ -16,6 +16,7 @@ struct InjectHookFunctions
 	UINT_PTR fnLdrGetDllHandleByName;
 };
 
+// Use WriteProcessMemory and SetThreadContext
 int InjectHookDLL(PROCESS_INFORMATION pi, InjectHookFunctions* pfn /*UINT_PTR fnLoadLibrary*/, int ImageBits/*32/64*/, LPCWSTR apszHookDllPath, DWORD_PTR* ptrAllocated, DWORD* pnAllocated)
 {
 	int         iRc = -1000;

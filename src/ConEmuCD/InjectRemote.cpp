@@ -280,6 +280,8 @@ wrap:
 	return iRc;
 }
 
+// 0 - OK, 1 - Already injected, иначе - ошибка
+// Здесь вызывается CreateRemoteThread
 int InjectRemote(DWORD nRemotePID, bool abDefTermOnly /*= false */)
 {
 	int iRc = -1;
