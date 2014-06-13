@@ -807,6 +807,7 @@ DoExecute:
 
 	lbRc = true;
 wrap:
+	SafeCloseHandle(hProcTest);
 	UNREFERENCED_PARAMETER(nErrCode);
 	UNREFERENCED_PARAMETER(nWrapperWait);
 	ExecuteFreeResult(pIn);
