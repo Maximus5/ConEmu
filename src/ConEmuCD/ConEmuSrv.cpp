@@ -1221,7 +1221,7 @@ int ServerInit(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/)
 			if (gpSrv->dwRootProcess)
 			{
 				int iRemote = InjectRemote(gpSrv->dwRootProcess);
-				if (iRemote != 0)
+				if (iRemote != 0 && iRemote != 1)
 				{
 					_printf("ServerInit warning: InjectRemote failed, Code=%i\n", iRemote);
 				}

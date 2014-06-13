@@ -2843,111 +2843,13 @@ int DoInjectRemote(LPWSTR asCmdArg, bool abDefTermOnly)
 		}
 		#endif
 
-		// Preparing Events
-		wchar_t szName[64]; HANDLE hEvent = NULL, hEventReady = NULL;
-		_wsprintf(szName, SKIPLEN(countof(szName)) CEDEFAULTTERMHOOK, nRemotePID);
-		if (!abDefTermOnly)
-		{
-			// When running in normal mode (NOT set up as default terminal)
-			// we need full initialization procedure, not a light one when hooking explorer.exe
-			hEvent = OpenEvent(EVENT_MODIFY_STATE|SYNCHRONIZE, FALSE, szName);
-			if (hEvent)
-			{
-				ResetEvent(hEvent);
-				CloseHandle(hEvent);
-			}
-		}
-		else
-		{
-			hEvent = CreateEvent(LocalSecurity(), FALSE, FALSE, szName);
-			SetEvent(hEvent);
-			_wsprintf(szName, SKIPLEN(countof(szName)) CEDEFAULTTERMHOOKOK, nRemotePID);
-			hEventReady = CreateEvent(LocalSecurity(), FALSE, FALSE, szName);
-			ResetEvent(hEventReady);
-		}
-		// Creating as remote thread, need to determine MainThread?
-		_wsprintf(szName, SKIPLEN(countof(szName)) CECONEMUROOTTHREAD, nRemotePID);
-		hEvent = OpenEvent(EVENT_MODIFY_STATE|SYNCHRONIZE, FALSE, szName);
-		if (hEvent)
-		{
-			ResetEvent(hEvent);
-			CloseHandle(hEvent);
-		}
-
-		int iHookRc = -1;
-		bool bAlreadyInjected = false;
-		// Hey, may be ConEmuHk.dll is already loaded?
-		HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, nRemotePID);
-		MODULEENTRY32 mi = {sizeof(mi)};
-		if (hSnap && Module32First(hSnap, &mi))
-		{
-			// 130829 - Let load newer(!) ConEmuHk.dll into target process.
-
-			LPCWSTR pszConEmuHk = WIN3264TEST(L"conemuhk.", L"conemuhk64.");
-			size_t nDllNameLen = lstrlen(pszConEmuHk);
-			// Out preferred module name
-			wchar_t szOurName[40] = {};
-			wchar_t szMinor[8] = L""; lstrcpyn(szMinor, _T(MVV_4a), countof(szMinor));
-			_wsprintf(szOurName, SKIPLEN(countof(szOurName))
-				CEDEFTERMDLLFORMAT /*L"ConEmuHk%s.%02u%02u%02u%s.dll"*/,
-				WIN3264TEST(L"",L"64"), MVV_1, MVV_2, MVV_3, szMinor);
-			CharLowerBuff(szOurName, lstrlen(szOurName));
-
-			// Go to enumeration
-			wchar_t szName[64];
-			do {
-				LPCWSTR pszName = PointToName(mi.szModule);
-				// Name of hooked module may be changed (copied to %APPDATA%)
-				if (pszName && *pszName)
-				{
-					lstrcpyn(szName, pszName, countof(szName));
-					CharLowerBuff(szName, lstrlen(szName));
-					// ConEmuHk*.*.dll?
-					if (wmemcmp(szName, pszConEmuHk, nDllNameLen) == 0
-						&& wmemcmp(szName+lstrlen(szName)-4, L".dll", 4) == 0)
-					{
-						// Yes! ConEmuHk.dll already loaded into nRemotePID!
-						// But what is the version? Let don't downgrade loaded version!
-						if (lstrcmp(szName, szOurName) >= 0)
-						{
-							// OK, szName is newer or equal to our build
-							iHookRc = 0;
-							bAlreadyInjected = true;
-						}
-						// Stop enumeration
-						break;
-					}
-				}
-			} while (Module32Next(hSnap, &mi));
-
-			// Check done
-		}
-		SafeCloseHandle(hSnap);
-
-
 		// Go to hook
-		if (iHookRc == -1)
-		{
-			// InjectRemote waits for thread termination
-			iHookRc = InjectRemote(nRemotePID, abDefTermOnly);
-			// But check the result of the operation
-			if ((iHookRc == 0) && hEventReady)
-			{
-				_ASSERTE(abDefTermOnly);
-				DWORD nWaitReady = WaitForSingleObject(hEventReady, CEDEFAULTTERMHOOKWAIT/*==0*/);
-				if (nWaitReady == WAIT_TIMEOUT)
-				{
-					iHookRc = -300; // Failed to start hooking thread in remote process
-				}
-			}
-		}
+		// InjectRemote waits for thread termination
+		int iHookRc = InjectRemote(nRemotePID, abDefTermOnly);
 
-		SafeCloseHandle(hEvent);
-		SafeCloseHandle(hEventReady);
-
-		if (iHookRc == 0)
+		if (iHookRc == 0 || iHookRc == 1)
 		{
-			return bAlreadyInjected ? CERR_HOOKS_WAS_ALREADY_SET : CERR_HOOKS_WAS_SET;
+			return iHookRc ? CERR_HOOKS_WAS_ALREADY_SET : CERR_HOOKS_WAS_SET;
 		}
 
 		// Ошибку (пока во всяком случае) лучше показать, для отлова возможных проблем

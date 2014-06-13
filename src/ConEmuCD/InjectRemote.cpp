@@ -291,6 +291,12 @@ int InjectRemote(DWORD nRemotePID, bool abDefTermOnly /*= false */)
 	HANDLE hProc = NULL;
 	wchar_t szSelf[MAX_PATH+16], szHooks[MAX_PATH+16];
 	wchar_t *pszNamePtr, szArgs[32];
+	wchar_t szName[64];
+	HANDLE hEvent = NULL;
+	HANDLE hDefTermReady = NULL;
+	bool bAlreadyHooked = false;
+	HANDLE hSnap = NULL;
+	MODULEENTRY32 mi = {sizeof(mi)};
 
 	if (!GetModuleFileName(NULL, szSelf, MAX_PATH))
 	{
@@ -305,12 +311,107 @@ int InjectRemote(DWORD nRemotePID, bool abDefTermOnly /*= false */)
 		goto wrap;
 	}
 
+
+	// Hey, may be ConEmuHk.dll is already loaded?
+	hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, nRemotePID);
+	if (hSnap && Module32First(hSnap, &mi))
+	{
+		// 130829 - Let load newer(!) ConEmuHk.dll into target process.
+
+		LPCWSTR pszConEmuHk = WIN3264TEST(L"conemuhk.", L"conemuhk64.");
+		size_t nDllNameLen = lstrlen(pszConEmuHk);
+		// Out preferred module name
+		wchar_t szOurName[40] = {};
+		wchar_t szMinor[8] = L""; lstrcpyn(szMinor, _CRT_WIDE(MVV_4a), countof(szMinor));
+		_wsprintf(szOurName, SKIPLEN(countof(szOurName))
+			CEDEFTERMDLLFORMAT /*L"ConEmuHk%s.%02u%02u%02u%s.dll"*/,
+			WIN3264TEST(L"",L"64"), MVV_1, MVV_2, MVV_3, szMinor);
+		CharLowerBuff(szOurName, lstrlen(szOurName));
+
+		// Go to enumeration
+		wchar_t szName[64];
+		do {
+			LPCWSTR pszName = PointToName(mi.szModule);
+			// Name of hooked module may be changed (copied to %APPDATA%)
+			if (pszName && *pszName)
+			{
+				lstrcpyn(szName, pszName, countof(szName));
+				CharLowerBuff(szName, lstrlen(szName));
+				// ConEmuHk*.*.dll?
+				if (wmemcmp(szName, pszConEmuHk, nDllNameLen) == 0
+					&& wmemcmp(szName+lstrlen(szName)-4, L".dll", 4) == 0)
+				{
+					// Yes! ConEmuHk.dll already loaded into nRemotePID!
+					// But what is the version? Let don't downgrade loaded version!
+					if (lstrcmp(szName, szOurName) >= 0)
+					{
+						// OK, szName is newer or equal to our build
+						bAlreadyHooked = true;
+					}
+					// Stop enumeration
+					break;
+				}
+			}
+		} while (Module32Next(hSnap, &mi));
+
+		// Check done
+	}
+	SafeCloseHandle(hSnap);
+
+
+	// Already hooked?
+	if (bAlreadyHooked)
+	{
+		iRc = 1;
+		goto wrap;
+	}
+
+
+	// Check, if we can access that process
 	hProc = OpenProcess(PROCESS_CREATE_THREAD|PROCESS_QUERY_INFORMATION|PROCESS_VM_OPERATION|PROCESS_VM_WRITE|PROCESS_VM_READ, FALSE, nRemotePID);
 	if (hProc == NULL)
 	{
 		iRc = -201;
 		goto wrap;
 	}
+
+
+	// Go to hook
+
+	// Preparing Events
+	_wsprintf(szName, SKIPLEN(countof(szName)) CEDEFAULTTERMHOOK, nRemotePID);
+	if (!abDefTermOnly)
+	{
+		// When running in normal mode (NOT set up as default terminal)
+		// we need full initialization procedure, not a light one when hooking explorer.exe
+		hEvent = OpenEvent(EVENT_MODIFY_STATE|SYNCHRONIZE, FALSE, szName);
+		if (hEvent)
+		{
+			ResetEvent(hEvent);
+			CloseHandle(hEvent);
+		}
+	}
+	else
+	{
+		hEvent = CreateEvent(LocalSecurity(), FALSE, FALSE, szName);
+		SetEvent(hEvent);
+		_wsprintf(szName, SKIPLEN(countof(szName)) CEDEFAULTTERMHOOKOK, nRemotePID);
+		hDefTermReady = CreateEvent(LocalSecurity(), FALSE, FALSE, szName);
+		ResetEvent(hDefTermReady);
+	}
+
+	// Creating as remote thread.
+	// Resetting this event notify ConEmuHk about
+	// 1) need to determine MainThreadId
+	// 2) need to start pipe server
+	_wsprintf(szName, SKIPLEN(countof(szName)) CECONEMUROOTTHREAD, nRemotePID);
+	hEvent = OpenEvent(EVENT_MODIFY_STATE|SYNCHRONIZE, FALSE, szName);
+	if (hEvent)
+	{
+		ResetEvent(hEvent);
+		CloseHandle(hEvent);
+	}
+
 
 	// Определить битность процесса, Если он 32битный, а текущий - ConEmuC64.exe
 	// Перезапустить 32битную версию ConEmuC.exe
@@ -404,5 +505,15 @@ int InjectRemote(DWORD nRemotePID, bool abDefTermOnly /*= false */)
 wrap:
 	if (hProc != NULL)
 		CloseHandle(hProc);
+	// But check the result of the operation
+	if ((iRc == 0) && hDefTermReady)
+	{
+		_ASSERTE(abDefTermOnly);
+		DWORD nWaitReady = WaitForSingleObject(hDefTermReady, CEDEFAULTTERMHOOKWAIT/*==0*/);
+		if (nWaitReady == WAIT_TIMEOUT)
+		{
+			iRc = -300; // Failed to start hooking thread in remote process
+		}
+	}
 	return iRc;
 }
