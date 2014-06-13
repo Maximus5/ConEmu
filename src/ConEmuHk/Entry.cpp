@@ -179,6 +179,7 @@ extern HHOOK ghGuiClientRetHook;
 CEStartupEnv* gpStartEnv = NULL;
 DWORD   gnSelfPID = 0;
 BOOL    gbSelfIsRootConsoleProcess = FALSE;
+BOOL    gbForceStartPipeServer = FALSE;
 DWORD   gnServerPID = 0;
 DWORD   gnPrevAltServerPID = 0;
 BOOL    gbWasSucceededInRead = FALSE;
@@ -1066,7 +1067,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 
 			gnHookServerNeedStart = 1;
 
-			if (gnImageSubsystem != IMAGE_SUBSYSTEM_WINDOWS_CUI)
+			if (gbForceStartPipeServer || (gnImageSubsystem != IMAGE_SUBSYSTEM_WINDOWS_CUI))
 			{
 				// For GUI applications - start server thread immediately
 				StartHookServer();
@@ -1640,6 +1641,9 @@ BOOL WINAPI DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 			else
 				gEvtThreadRoot.nErrCode = GetLastError();
 			//SafeCloseHandle(gEvtThreadRoot.hProcessFlag);
+
+			// When calling Attach (Win+G) from ConEmu GUI
+			gbForceStartPipeServer = (!bCurrentThreadIsMain);
 
 			if (!gbSelfIsRootConsoleProcess)
 			{
