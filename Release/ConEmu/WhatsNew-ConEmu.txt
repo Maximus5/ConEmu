@@ -4,13 +4,6 @@ Russian: http://code.google.com/p/conemu-maximus5/wiki/Whats_New?wl=ru
 SVN: http://conemu-maximus5.googlecode.com/svn/trunk/ConEmu/Release/ConEmu/WhatsNew-ConEmu.txt
 
 
-Please VOTE!
-ConEmu has been selected to be on the ballot for the
-June Community Choice SourceForge project of the Month!
-Please vote for ‘conemu’ here (SF account required, one per user):
-https://sourceforge.net/p/potm/discussion/vote/thread/f3309aea/
-
-
 You can show your appreciation and support future development by donating.
 Donate (PayPal) button located on project website under ConEmu sketch (upper right of page)
 http://code.google.com/p/conemu-maximus5
@@ -18,6 +11,40 @@ http://code.google.com/p/conemu-maximus5
 Votes and awards (vote for ConEmu, if you please)
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
+Disappointment. About 50 users from thousands voted for ConEmu.
+https://sourceforge.net/p/potm/discussion/vote/thread/f3309aea/
+
+
+
+2014.06.12
+[*] VC14 solution files.
+[*] GuiMacro. Two new options in `Copy(<What>[,<Format>[,"<File>"]])` function.
+    * What==2: copy visible area contents.
+    * File: if specified, save to file instead of clipboard.
+[*] GuiMacro: New function `PasteFile(<Cmd>[,"<File>"])`, for pasting <File> contents.
+    Paste <File> contents, omit <File> to show selection dialog
+    Cmd==0: paste all lines
+    Cmd==1: paste first line
+    Cmd==2: paste all lines, without confirmations
+    Cmd==3: paste first line, without confirmations
+    Cmd==9: paste all lines space-separated
+    Cmd==10: paste all lines space-separated, without confirmations
+[*] Add search ability to the About dialog.
+    Do not autoselect text in the About dialog (on Tab press).
+[*] New design of search control in the Settings dialog.
+    Add ability to search within hotkeys in the Settings dialog.
+    Display found-hint in place of listbox/listview item.
+    Add ‘(Quake-style hotkey also)’ to ‘Minimize/Restore’ hotkey description.
+[*] DefTerm. Unchecked option ‘Use existing ConEmu window if available’ was ignored in C# VS debugger.
+[*] DefTerm. Fix external console attach (Win+G) from ConEmu window.
+[*] DefTerm. Hook ‘Command prompt (Administrator)’ too.
+[*] Admin sign was not shown after auto-attach of external console.
+[*] Show version state in the About dialog (stable/preview/alpha/obsolete).
+[*] Do not show ‘Starting attach autorun’ for default terminal consoles (cmd as Admin).
+[*] Speed up xml load/save.
+[*] Issue 1611: GuiMacro. Optional <IsRelative> argument in SetOption function.
+    Set IsRelative=1 to use relative instead of absolute for some options,
+    for example, SetOption("bgImageDarker",-10,1) to make background darker.
 
 
 2014.06.02
