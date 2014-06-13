@@ -296,8 +296,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"     Type=2: set error state in progress\r\n" \
 	L"Rename(<Type>,[\"<Title>\"])\r\n" \
 	L"  - Rename tab (Type=0) or console title (Type=1)\r\n" \
-	L"SetOption(\"<Name>\",<Value>)\r\n" \
+	L"SetOption(\"<Name>\",<Value>[,<IsRelative>])\r\n" \
 	L"  - Name=one of allowed for changing ConEmu options\r\n" \
+	L"    IsRelative=1 to use relative instead of absolute for some options\r\n" \
 	L"    \"AlphaValue\": set transparency level of active window\r\n" \
 	L"      Value: 40 .. 255 (255==Opaque)\r\n" \
 	L"    \"AlphaValueInactive\": set transparency level of inactive window\r\n" \

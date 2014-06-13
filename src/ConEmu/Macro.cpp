@@ -2212,6 +2212,7 @@ LPWSTR ConEmuMacro::SetOption(GuiMacro* p, CRealConsole* apRCon, bool abFromPlug
 	LPWSTR pszResult = NULL;
 	LPWSTR pszName = NULL;
 	int nValue = 0;
+	int nRel = 0;
 
 	if (!p->GetStrArg(0, pszName))
 		return lstrdup(L"InvalidArg");
@@ -2243,6 +2244,8 @@ LPWSTR ConEmuMacro::SetOption(GuiMacro* p, CRealConsole* apRCon, bool abFromPlug
 	{
 		if (p->GetIntArg(1, nValue))
 		{
+			if (p->GetIntArg(2, nRel) && nRel) // Use relative values?
+				nValue = max(0,min(255,(((int)(UINT)gpSet->bgImageDarker)+nValue)));
 			if (nValue >= 0 && nValue < 256 && nValue != (int)(UINT)gpSet->bgImageDarker)
 			{
 				gpSetCls->SetBgImageDarker(nValue, true);
@@ -2274,12 +2277,12 @@ LPWSTR ConEmuMacro::SetOption(GuiMacro* p, CRealConsole* apRCon, bool abFromPlug
 	else if (!lstrcmpi(pszName, L"AlphaValue"))
 	{
 		if (p->GetIntArg(1, nValue))
-			pszResult = TransparencyHelper(0, nValue);
+			pszResult = TransparencyHelper((p->GetIntArg(2, nRel) && nRel) ? 1 : 0, nValue);
 	}
 	else if (!lstrcmpi(pszName, L"AlphaValueInactive"))
 	{
 		if (p->GetIntArg(1, nValue))
-			pszResult = TransparencyHelper(2, nValue);
+			pszResult = TransparencyHelper((p->GetIntArg(2, nRel) && nRel) ? 3 : 2, nValue);
 	}
 	else if (!lstrcmpi(pszName, L"AlphaValueSeparate"))
 	{
