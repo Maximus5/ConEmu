@@ -1880,6 +1880,20 @@ LPWSTR ConEmuMacro::Keys(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 					pszKey = NULL;
 			}
 
+			if (!(dwControlState & (SHIFT_PRESSED|RIGHT_ALT_PRESSED|LEFT_ALT_PRESSED|RIGHT_CTRL_PRESSED|LEFT_CTRL_PRESSED))
+				&& !(pszKey && *pszKey))
+			{
+				switch (VK)
+				{
+				case VK_RETURN:
+					wcscpy_c(szSeq, L"\r"); pszKey = szSeq; break;
+				case VK_TAB:
+					wcscpy_c(szSeq, L"\t"); pszKey = szSeq; break;
+				case VK_BACK:
+					wcscpy_c(szSeq, L"\b"); pszKey = szSeq; break;
+				}
+			}
+
 			// Send it...
 			apRCon->PostKeyPress(VK, dwControlState, pszKey ? *pszKey : 0, iScanCode);
 			continue;
