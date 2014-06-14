@@ -1783,7 +1783,7 @@ HRESULT OurShellExecCmdLine(HWND hwnd, LPCWSTR pwszCommand, LPCWSTR pwszStartDir
 	// "Run as admin" was requested?
 	if (bRunAsAdmin)
 	{
-		SHELLEXECUTEINFO sei = {sizeof(sei), 0, hwnd, L"runas", pszFile, pszParm, pwszStartDir, SW_HIDE};
+		SHELLEXECUTEINFO sei = {sizeof(sei), 0, hwnd, L"runas", pszFile, pszParm, pwszStartDir, SW_SHOWNORMAL};
 		bShell = OnShellExecuteExW(&sei);
 	}
 	else
@@ -1814,7 +1814,8 @@ HRESULT WINAPI OnShellExecCmdLine(HWND hwnd, LPCWSTR pwszCommand, LPCWSTR pwszSt
 
 	// This is used from "Run" dialog too. We need to process command internally, because
 	// otherwise Win can pass CREATE_SUSPENDED into CreateProcessW, so console will flickers.
-	if (nShow && !(dwSeclFlags & 0x10/*SECL_USE_IDLIST*/) && pwszCommand && pwszStartDir)
+	// From Win7 start menu: "cmd" and Ctrl+Shift+Enter - dwSeclFlags==0x79
+	if (nShow && pwszCommand && pwszStartDir)
 	{
 		if (!IsBadStringPtrW(pwszCommand, MAX_PATH) && !IsBadStringPtrW(pwszStartDir, MAX_PATH))
 		{
