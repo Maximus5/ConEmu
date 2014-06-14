@@ -1813,6 +1813,7 @@ LPWSTR ConEmuMacro::Keys(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 		DWORD dwControlState = 0, dwScan = 0;
 		int iScanCode = -1;
 		bool  bRight = false;
+		wchar_t* p;
 		// + the key
 		UINT VK = 0;
 		// Parse modifiers
@@ -1848,6 +1849,11 @@ LPWSTR ConEmuMacro::Keys(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 		}
 
 	DoPost:
+		if (*pszKey == L'{' && ((p = wcschr(pszKey+2,L'}')) != NULL))
+		{
+			// Trim brackets from "{Enter}" for example
+			pszKey++; *p = 0;
+		}
 		VK = ConEmuHotKey::GetVkByKeyName(pszKey, &iScanCode, &dwControlState);
 		switch (VK)
 		{
