@@ -166,22 +166,38 @@ bool IsNeedDequote(LPCWSTR asCmdLine, bool abFromCmdCK, LPCWSTR* rsEndQuote/*=NU
 		return false;
 
 	bool bDeQu = false;
+	LPCWSTR pszQE, pszSP;
 	if (asCmdLine[0] == L'"')
 	{
 		bDeQu = (asCmdLine[1] == L'"');
 		// Всегда - нельзя. Иначе парсинг строки запуска некорректно идет
 		// L"\"C:\\ConEmu\\ConEmuC64.exe\"  /PARENTFARPID=1 /C \"C:\\GIT\\cmdw\\ad.cmd CE12.sln & ci -m \"Solution debug build properties\"\""
-		if (!bDeQu && abFromCmdCK)
+		if (!bDeQu)
 		{
 			size_t nLen = lstrlen(asCmdLine);
-			bDeQu = ((asCmdLine[nLen-1] == L'"') && (asCmdLine[nLen-2] == L'"'));
+			if (abFromCmdCK)
+			{
+				bDeQu = ((asCmdLine[nLen-1] == L'"') && (asCmdLine[nLen-2] == L'"'));
+			}
+			if (!bDeQu && (asCmdLine[nLen-1] == L'"'))
+			{
+				pszSP = wcschr(asCmdLine+1, L' ');
+				pszQE = wcschr(asCmdLine+1, L'"');
+				if (pszSP && pszQE && (pszSP < pszQE)
+					&& ((pszSP - asCmdLine) < MAX_PATH))
+				{
+					CmdArg lsTmp;
+					lsTmp.Set(asCmdLine+1, pszSP-asCmdLine-1);
+					bDeQu = (IsFilePath(lsTmp, true) && IsExecutable(lsTmp));
+				}
+			}
 		}
 	}
 	if (!bDeQu)
 		return false;
 
 	// Don't dequote?
-	LPCWSTR pszQE = wcsrchr(asCmdLine+2, L'"');
+	pszQE = wcsrchr(asCmdLine+2, L'"');
 	if (!pszQE)
 		return false;
 
@@ -536,13 +552,13 @@ BOOL IsNeedCmd(BOOL bRootCmd, LPCWSTR asCmdLine, LPCWSTR* rsArguments, BOOL *rbN
 
 	if (pwszCopy[0] == L'"' && pwszCopy[nLastChar] == L'"')
 	{
-		if (pwszCopy[1] == L'"' && pwszCopy[2])
-		{
-			pwszCopy ++; // Отбросить первую кавычку в командах типа: ""c:\program files\arc\7z.exe" -?"
+		//if (pwszCopy[1] == L'"' && pwszCopy[2])
+		//{
+		//	pwszCopy ++; // Отбросить первую кавычку в командах типа: ""c:\program files\arc\7z.exe" -?"
 
-			if (rbNeedCutStartEndQuot) *rbNeedCutStartEndQuot = TRUE;
-		}
-		else
+		//	if (rbNeedCutStartEndQuot) *rbNeedCutStartEndQuot = TRUE;
+		//}
+		//else
 			// глючила на ""F:\VCProject\FarPlugin\#FAR180\far.exe  -new_console""
 			//if (wcschr(pwszCopy+1, L'"') == (pwszCopy+nLastChar)) {
 			//	LPCWSTR pwszTemp = pwszCopy;
@@ -556,8 +572,14 @@ BOOL IsNeedCmd(BOOL bRootCmd, LPCWSTR asCmdLine, LPCWSTR* rsArguments, BOOL *rbN
 			//	if (rbNeedCutStartEndQuot) *rbNeedCutStartEndQuot = TRUE;
 			//} else
 		{
-			// отбросить первую кавычку в: "C:\GCC\msys\bin\make.EXE -f "makefile" COMMON="../../../plugins/common""
-			LPCWSTR pwszTemp = pwszCopy + 1;
+			// Will be dequoted in 'NextArg' function. Examples
+			// "C:\GCC\msys\bin\make.EXE -f "makefile" COMMON="../../../plugins/common""
+			// ""F:\VCProject\FarPlugin\#FAR180\far.exe  -new_console""
+			// ""cmd""
+			// cmd /c ""c:\program files\arc\7z.exe" -?"   // да еще и внутри могут быть двойными...
+			// cmd /c "dir c:\"
+
+			LPCWSTR pwszTemp = pwszCopy;
 
 			// Получим первую команду (исполняемый файл?)
 			if ((iRc = NextArg(&pwszTemp, szExe)) != 0)
