@@ -821,8 +821,7 @@ void CConEmuMain::StoreWorkDir(LPCWSTR asNewCurDir /*= NULL*/)
 		{
 			wcscpy_c(ms_ConEmuWorkDir, asNewCurDir);
 			// The root of the drive must have trailing '\'
-			if (ms_ConEmuWorkDir[1] == L':' && !ms_ConEmuWorkDir[2])
-				wcscat_c(ms_ConEmuWorkDir, L"\\");
+			FixDirEndSlash(ms_ConEmuWorkDir);
 		}
 	}
 	else
