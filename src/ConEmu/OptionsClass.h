@@ -62,7 +62,8 @@ class CSettings
 	public:
 
 		private:
-			wchar_t ConfigPath[MAX_PATH], ConfigName[240];
+			wchar_t ConfigPath[MAX_PATH];
+			wchar_t ConfigName[MAX_CONFIG_NAME];
 		public:
 		LPCWSTR GetConfigPath();
 		LPCWSTR GetConfigName();
