@@ -568,7 +568,7 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 				{
 					case IDC_CHOOSE:
 					{
-						wchar_t *pszFilePath = SelectFile(L"Choose program to run", NULL, hDlg, L"Executables (*.exe)\0*.exe\0All files (*.*)\0*.*\0\0", true, false, false);
+						wchar_t *pszFilePath = SelectFile(L"Choose program to run", NULL, NULL, hDlg, L"Executables (*.exe)\0*.exe\0All files (*.*)\0*.*\0\0", sff_AutoQuote);
 						if (pszFilePath)
 						{
 							SetDlgItemText(hDlg, IDC_RESTART_CMD, pszFilePath);
@@ -579,7 +579,7 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 					case IDC_CHOOSE_DIR:
 					{
 						wchar_t* pszDefFolder = GetDlgItemText(hDlg, IDC_STARTUP_DIR);
-						wchar_t* pszFolder = SelectFolder(L"Choose startup directory", pszDefFolder, hDlg, false, false);
+						wchar_t* pszFolder = SelectFolder(L"Choose startup directory", pszDefFolder, hDlg, sff_Default);
 						if (pszFolder)
 						{
 							SetDlgItemText(hDlg, IDC_STARTUP_DIR, pszFolder);

@@ -277,8 +277,15 @@ wchar_t* DupCygwinPath(LPCWSTR asWinPath, bool bAutoQuote);
 wchar_t* MakeWinPath(LPCWSTR asAnyPath);
 wchar_t* MakeStraightSlashPath(LPCWSTR asWinPath);
 bool FixDirEndSlash(wchar_t* rsPath);
-wchar_t* SelectFolder(LPCWSTR asTitle, LPCWSTR asDefFolder = NULL, HWND hParent = ghWnd, bool bAutoQuote = true, bool bCygwin = false);
-wchar_t* SelectFile(LPCWSTR asTitle, LPCWSTR asDefFile = NULL, HWND hParent = ghWnd, LPCWSTR asFilter = NULL, bool abAutoQuote = true, bool bCygwin = false, bool bSaveNewFile = false);
+enum CESelectFileFlags
+{
+	sff_Default      = 0,
+	sff_AutoQuote    = 1,
+	sff_Cygwin       = 2,
+	sff_SaveNewFile  = 4,
+};
+wchar_t* SelectFolder(LPCWSTR asTitle, LPCWSTR asDefFolder = NULL, HWND hParent = ghWnd, DWORD/*CESelectFileFlags*/ nFlags = sff_AutoQuote /*bool bAutoQuote = true, bool bCygwin = false*/);
+wchar_t* SelectFile(LPCWSTR asTitle, LPCWSTR asDefFile = NULL, LPCWSTR asDefPath = NULL, HWND hParent = ghWnd, LPCWSTR asFilter = NULL, DWORD/*CESelectFileFlags*/ nFlags = sff_AutoQuote /*bool abAutoQuote = true, bool bCygwin = false, bool bSaveNewFile = false*/);
 
 BOOL CreateProcessRestricted(LPCWSTR lpApplicationName, LPWSTR lpCommandLine,
 							 LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes,

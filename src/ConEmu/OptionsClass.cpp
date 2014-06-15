@@ -2423,7 +2423,7 @@ INT_PTR CSettings::pageOpProc_Start(HWND hWnd2, UINT messg, WPARAM wParam, LPARA
 								pszTitle = L"Choose command file";
 							}
 
-							wchar_t* pszRet = SelectFile(pszTitle, temp, ghOpWnd, pszFilter, (CB==cbCmdLine)/*abAutoQuote*/);
+							wchar_t* pszRet = SelectFile(pszTitle, temp, NULL, ghOpWnd, pszFilter, (CB==cbCmdLine)?sff_AutoQuote:sff_Default);
 
 							if (pszRet)
 							{
@@ -8746,7 +8746,7 @@ void CSettings::OnResetOrReload(bool abResetOnly, SettingsStorage* pXmlStorage /
 
 void CSettings::ExportSettings()
 {
-	wchar_t *pszFile = SelectFile(L"Export settings", L"*.xml", ghOpWnd, L"XML files (*.xml)\0*.xml\0", false, false, true);
+	wchar_t *pszFile = SelectFile(L"Export settings", L"*.xml", NULL, ghOpWnd, L"XML files (*.xml)\0*.xml\0", sff_SaveNewFile);
 	if (pszFile)
 	{
 		SetCursor(LoadCursor(NULL,IDC_WAIT));
@@ -8781,7 +8781,7 @@ void CSettings::ExportSettings()
 
 void CSettings::ImportSettings()
 {
-	wchar_t *pszFile = SelectFile(L"Import settings", L"*.xml", ghOpWnd, L"XML files (*.xml)\0*.xml\0", false, false, false);
+	wchar_t *pszFile = SelectFile(L"Import settings", L"*.xml", NULL, ghOpWnd, L"XML files (*.xml)\0*.xml\0", sff_Default);
 	if (pszFile)
 	{
 		// Import using ".Vanilla" configuration!

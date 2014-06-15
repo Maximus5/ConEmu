@@ -1051,7 +1051,7 @@ bool FixDirEndSlash(wchar_t* rsPath)
 	return false;
 }
 
-wchar_t* SelectFolder(LPCWSTR asTitle, LPCWSTR asDefFolder /*= NULL*/, HWND hParent /*= ghWnd*/, bool bAutoQuote /*= true*/, bool bCygwin /*= false*/)
+wchar_t* SelectFolder(LPCWSTR asTitle, LPCWSTR asDefFolder /*= NULL*/, HWND hParent /*= ghWnd*/, DWORD/*CESelectFileFlags*/ nFlags /*= sff_AutoQuote*/)
 {
 	wchar_t* pszResult = NULL;
 
@@ -1071,11 +1071,11 @@ wchar_t* SelectFolder(LPCWSTR asTitle, LPCWSTR asDefFolder /*= NULL*/, HWND hPar
 	{
 		if (SHGetPathFromIDList(pRc, szFolder))
 		{
-			if (bCygwin)
+			if (nFlags & sff_Cygwin)
 			{
-				pszResult = DupCygwinPath(szFolder, bAutoQuote);
+				pszResult = DupCygwinPath(szFolder, (nFlags & sff_AutoQuote));
 			}
-			else if (bAutoQuote && (wcschr(szFolder, L' ') != NULL))
+			else if ((nFlags & sff_AutoQuote) && (wcschr(szFolder, L' ') != NULL))
 			{
 				size_t cchLen = _tcslen(szFolder);
 				pszResult = (wchar_t*)malloc((cchLen+3)*sizeof(*pszResult));
@@ -1099,7 +1099,7 @@ wchar_t* SelectFolder(LPCWSTR asTitle, LPCWSTR asDefFolder /*= NULL*/, HWND hPar
 	return pszResult;
 }
 
-wchar_t* SelectFile(LPCWSTR asTitle, LPCWSTR asDefFile /*= NULL*/, HWND hParent /*= ghWnd*/, LPCWSTR asFilter /*= NULL*/, bool abAutoQuote /*= true*/, bool bCygwin /*= false*/, bool bSaveNewFile /*= false*/)
+wchar_t* SelectFile(LPCWSTR asTitle, LPCWSTR asDefFile /*= NULL*/, LPCWSTR asDefPath /*= NULL*/, HWND hParent /*= ghWnd*/, LPCWSTR asFilter /*= NULL*/, DWORD/*CESelectFileFlags*/ nFlags /*= sff_AutoQuote*/)
 {
 	wchar_t* pszResult = NULL;
 
@@ -1112,12 +1112,13 @@ wchar_t* SelectFile(LPCWSTR asTitle, LPCWSTR asDefFile /*= NULL*/, HWND hParent 
 	ofn.lpstrFilter = asFilter ? asFilter : L"All files (*.*)\0*.*\0Text files (*.txt,*.ini,*.log)\0*.txt;*.ini;*.log\0Executables (*.exe,*.com,*.bat,*.cmd)\0*.exe;*.com;*.bat;*.cmd\0Scripts (*.vbs,*.vbe,*.js,*.jse)\0*.vbs;*.vbe;*.js;*.jse\0\0";
 	//ofn.lpstrFilter = L"All files (*.*)\0*.*\0\0";
 	ofn.lpstrFile = temp+1;
+	ofn.lpstrInitialDir = asDefPath;
 	ofn.nMaxFile = countof(temp)-10;
 	ofn.lpstrTitle = asTitle ? asTitle : L"Choose file";
 	ofn.Flags = OFN_ENABLESIZING|OFN_NOCHANGEDIR
-		| OFN_PATHMUSTEXIST|OFN_EXPLORER|OFN_HIDEREADONLY|(bSaveNewFile ? OFN_OVERWRITEPROMPT : OFN_FILEMUSTEXIST);
+		| OFN_PATHMUSTEXIST|OFN_EXPLORER|OFN_HIDEREADONLY|((nFlags & sff_SaveNewFile) ? OFN_OVERWRITEPROMPT : OFN_FILEMUSTEXIST);
 
-	BOOL bRc = bSaveNewFile
+	BOOL bRc = (nFlags & sff_SaveNewFile)
 		? GetSaveFileName(&ofn)
 		: GetOpenFileName(&ofn);
 
@@ -1125,13 +1126,13 @@ wchar_t* SelectFile(LPCWSTR asTitle, LPCWSTR asDefFile /*= NULL*/, HWND hParent 
 	{
 		LPCWSTR pszName = temp+1;
 
-		if (bCygwin)
+		if (nFlags & sff_Cygwin)
 		{
-			pszResult = DupCygwinPath(pszName, abAutoQuote);
+			pszResult = DupCygwinPath(pszName, (nFlags & sff_AutoQuote));
 		}
 		else
 		{
-			if (abAutoQuote && (wcschr(pszName, L' ') != NULL))
+			if ((nFlags & sff_AutoQuote) && (wcschr(pszName, L' ') != NULL))
 			{
 				temp[0] = L'"';
 				wcscat_c(temp, L"\"");

@@ -1677,8 +1677,13 @@ LPWSTR ConEmuMacro::Paste(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 		if (p->GetRestStrArgs(1, pszText))
 		{
 			// Пустая строка допускается только при выборе файла/папки для вставки
-			if (!*pszText && !((nCommand >= 4) && (nCommand <= 7)))
-				return lstrdup(L"InvalidArg");
+			if (!*pszText)
+			{
+				if (!((nCommand >= 4) && (nCommand <= 7)))
+					return lstrdup(L"InvalidArg");
+				else
+					pszText = NULL;
+			}
 		}
 		else
 		{
@@ -1687,10 +1692,13 @@ LPWSTR ConEmuMacro::Paste(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 
 		if ((nCommand >= 4) && (nCommand <= 7))
 		{
+			CmdArg szDir;
+			LPCWSTR pszDefPath = apRCon->GetConsoleCurDir(szDir);
+
 			if ((nCommand == 4) || (nCommand == 6))
-				pszChooseBuf = SelectFile(L"Choose file pathname for paste", pszText, NULL, NULL, true, (nCommand == 6));
+				pszChooseBuf = SelectFile(L"Choose file pathname for paste", pszText, pszDefPath, ghWnd, NULL, sff_AutoQuote|((nCommand == 6)?sff_Cygwin:sff_Default));
 			else
-				pszChooseBuf = SelectFolder(L"Choose folder path for paste", pszText, NULL, true, (nCommand == 7));
+				pszChooseBuf = SelectFolder(L"Choose folder path for paste", pszText?pszText:pszDefPath, ghWnd, sff_AutoQuote|((nCommand == 6)?sff_Cygwin:sff_Default));
 
 			if (!pszChooseBuf)
 				return lstrdup(L"Cancelled");
@@ -1745,7 +1753,7 @@ LPWSTR ConEmuMacro::PasteFile(GuiMacro* p, CRealConsole* apRCon, bool abFromPlug
 
 		if (!p->GetStrArg(1, pszFile) || !pszFile || !*pszFile)
 		{
-			pszChooseBuf = SelectFile(L"Choose file for paste", NULL, NULL, NULL, false);
+			pszChooseBuf = SelectFile(L"Choose file for paste", NULL, NULL, NULL, NULL, sff_Default);
 			if (!pszChooseBuf)
 				return lstrdup(L"NoFileSelected");
 			pszFile = pszChooseBuf;
