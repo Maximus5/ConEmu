@@ -16,6 +16,19 @@ https://sourceforge.net/p/potm/discussion/vote/thread/f3309aea/
 
 
 
+2014.06.15
+[*] GuiMacro. Keys("Enter"), Keys("Tab"), Keys("Backspace") was not working.
+[*] GuiMacro. Support alternative notation, e.g. Keys("{Enter}").
+[*] Issue 1125: cmd.exe in administrator mode was not autoattached to ConEmu (Ctrl+Shift+Enter from start menu)
+[*] Force working directory to %UserProfile% if ConEmu.exe was started from %WinDir%, %WinDir%\system32 or %ConEmuDir%.
+    If you really need to use these working directories - force them with '/dir' switch:
+    ConEmu.exe /dir C:\Windows\System32 /cmd PowerShell.exe
+[*] Do not run spare 'cmd.exe' when running ""cmd"" ('cmd' from Windows start menu).
+[*] Issue 1598: Let Ctrl+Shift+[F|D] start from current console startup directory (current directory in future).
+[*] Issue 1564: Add tasks to history too.
+[*] Issue 1615: Op 'New console' fails when used startup task.
+
+
 2014.06.12
 [*] VC14 solution files.
 [*] GuiMacro. Two new options in `Copy(<What>[,<Format>[,"<File>"]])` function.
