@@ -3937,7 +3937,7 @@ void Settings::HistoryAdd(LPCWSTR asCmd)
 		int nLen;
 		HEAPVAL;
 
-		while(nCount < MAX_CMD_HISTORY && *pszOld /*&& psz < pszEnd*/)
+		while (nCount < MAX_CMD_HISTORY && *pszOld /*&& psz < pszEnd*/)
 		{
 			const wchar_t *pszCur = pszOld;
 			pszOld += _tcslen(pszOld) + 1;
