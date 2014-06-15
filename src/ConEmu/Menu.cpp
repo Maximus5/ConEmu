@@ -514,7 +514,8 @@ void CConEmuMenu::OnNewConPopupMenu(POINT* ptWhere /*= NULL*/, DWORD nFlags /*= 
 
 				CVConGroup::Redraw();
 			}
-			else if (itm.ItemType == CmdTaskPopupItem::eCmd)
+			// Issue 1564: Add tasks to history too
+			else if ((itm.ItemType == CmdTaskPopupItem::eCmd) || (itm.ItemType == CmdTaskPopupItem::eTaskPopup))
 			{
 				gpSet->HistoryAdd(con.pszSpecialCmd);
 			}

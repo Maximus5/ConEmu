@@ -3901,16 +3901,15 @@ void Settings::HistoryAdd(LPCWSTR asCmd)
 	if (!isSaveCmdHistory)
 		return;
 
-	// Группы и так отображаются в диалоге/меню. В историю их не пишем
-	if (!asCmd || !*asCmd || (*asCmd == TaskBracketLeft))
+	// Issue 1564: Add tasks to history too
+	if (!asCmd || !*asCmd)
 		return;
 
 	if (psStartSingleApp && lstrcmp(psStartSingleApp, asCmd)==0)
 		return;
 	if (psStartTasksFile && lstrcmp(psStartTasksFile, asCmd)==0)
 		return;
-	if (psStartTasksName && lstrcmp(psStartTasksName, asCmd)==0)
-		return;
+	// Issue 1564: Add tasks to history too
 
 	LPCWSTR psCurCmd = gpSetCls->GetCurCmd();
 	if (psCurCmd && lstrcmp(psCurCmd, asCmd)==0)
