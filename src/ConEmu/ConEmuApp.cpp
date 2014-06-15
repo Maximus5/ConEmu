@@ -1033,6 +1033,24 @@ wchar_t* MakeStraightSlashPath(LPCWSTR asWinPath)
 	return pszSlashed;
 }
 
+bool FixDirEndSlash(wchar_t* rsPath)
+{
+	int nLen = rsPath ? lstrlen(rsPath) : 0;
+	// Do not cut slash from "C:\"
+	if ((nLen > 3) && (rsPath[nLen-1] == L'\\'))
+	{
+		rsPath[nLen-1] = 0;
+		return true;
+	}
+	else if ((nLen > 0) && (rsPath[nLen-1] == L':'))
+	{
+		// The root of drive must have end slash
+		rsPath[nLen] = L'\\'; rsPath[nLen+1] = 0;
+		return true;
+	}
+	return false;
+}
+
 wchar_t* SelectFolder(LPCWSTR asTitle, LPCWSTR asDefFolder /*= NULL*/, HWND hParent /*= ghWnd*/, bool bAutoQuote /*= true*/, bool bCygwin /*= false*/)
 {
 	wchar_t* pszResult = NULL;
