@@ -3604,13 +3604,13 @@ CVirtualConsole* CVConGroup::CreateCon(RConStartArgs *args, bool abAllowScripts 
 		_ASSERTE(args->pszSpecialCmd==NULL);
 
 		// Сюда мы попадаем, если юзер жмет Win+W (создание без подтверждения)
-		LPCWSTR pszSysCmd = gpSetCls->GetCmd(NULL, true);
+		LPCWSTR pszSysCmd = gpSetCls->GetCmd(NULL, !abAllowScripts);
 		LPCWSTR pszSysDir = NULL;
 		CVConGuard vActive;
-		// OK, если ConEmu стартовал с задачей (именованой или <Startup>)
+		// Не задано?
 		if (!pszSysCmd || !*pszSysCmd)
 		{
-			// То нельзя запускать _консоль_ с _задачей_ или вообще "без команды"
+			// То нельзя запускать _консоль_ с _задачей_ (если !abAllowScripts) или вообще "без команды"
 			if (GetActiveVCon(&vActive) >= 0)
 			{
 				// Попробовать взять команду из текущей консоли?
