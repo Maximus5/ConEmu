@@ -491,14 +491,13 @@ CConEmuMain::CConEmuMain()
 		return;
 	}
 
-	// Запомнить текущую папку (на момент запуска)
-	StoreWorkDir();
-
-	//LoadVersionInfo(ms_ConEmuExe);
 	// Папка программы
 	wcscpy_c(ms_ConEmuExeDir, ms_ConEmuExe);
 	pszSlash = wcsrchr(ms_ConEmuExeDir, L'\\');
 	*pszSlash = 0;
+
+	// Запомнить текущую папку (на момент запуска)
+	StoreWorkDir();
 
 	bool lbBaseFound = false;
 
