@@ -843,13 +843,19 @@ void CConEmuMain::StoreWorkDir(LPCWSTR asNewCurDir /*= NULL*/)
 		}
 
 		// Prepare WinDir for comparision
-		wchar_t szWinDir[MAX_PATH+1] = L"";
-		if (GetWindowsDirectory(szWinDir, MAX_PATH))
+		wchar_t szWinDir[MAX_PATH] = L"";
+		if (GetWindowsDirectory(szWinDir, MAX_PATH-10))
 			FixDirEndSlash(szWinDir);
+		wchar_t szSysDir[MAX_PATH];
+		wcscpy_c(szSysDir, szWinDir);
+		wcscat_c(szSysDir, L"\\system32");
 
 		// If current directory is C:\Windows, or C:\Windows\System32, or just %ConEmuDir%
 		// force working directory to the %UserProfile%
-		if (!*szDir || (lstrcmpi(szDir, szWinDir) == 0) || (lstrcmpi(szDir, ms_ConEmuExeDir) == 0))
+		if (!*szDir
+			|| (lstrcmpi(szDir, szWinDir) == 0)
+			|| (lstrcmpi(szDir, szSysDir) == 0)
+			|| (lstrcmpi(szDir, ms_ConEmuExeDir) == 0))
 		{
 			if (SHGetSpecialFolderPath(NULL, szDir, CSIDL_PROFILE, FALSE))
 			{
