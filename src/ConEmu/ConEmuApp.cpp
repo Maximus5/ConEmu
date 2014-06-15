@@ -3329,9 +3329,36 @@ void DebugFileExistTests()
 	b = FileExists(L"C:\\Documents and Settings\\Maks\\.ipython\\.");
 }
 
+void DebugNeedCmdUnitTests()
+{
+	BOOL b;
+	struct strTests { LPCWSTR pszCmd; BOOL bNeed; }
+	Tests[] = {
+		{L"\"C:\\cygwin\\bin\\make.exe -f \"makefile\" COMMON=\"../../../plugins/common\"\"", FALSE},
+		{L"\"\"C:\\FAR\\Far.exe  -new_console\"\"", FALSE},
+		{L"\"\"cmd\"\"", FALSE},
+		{L"cmd /c \"\"C:\\Program Files\\Windows NT\\Accessories\\wordpad.exe\" -?\"", FALSE},
+		{L"cmd /c \"dir c:\\\"", FALSE},
+		{L"abc.cmd", TRUE},
+		{L"pskill explorer & start explorer", TRUE},
+	};
+	LPCWSTR psArgs;
+	BOOL bNeedCut, bRootIsCmd, bAlwaysConfirm, bAutoDisable;
+	CmdArg szExe;
+	for (INT_PTR i = 0; i < countof(Tests); i++)
+	{
+		szExe.Empty();
+		RConStartArgs rcs; rcs.pszSpecialCmd = lstrdup(Tests[i].pszCmd);
+		rcs.ProcessNewConArg();
+		b = IsNeedCmd(TRUE, rcs.pszSpecialCmd, &psArgs, &bNeedCut, szExe, bRootIsCmd, bAlwaysConfirm, bAutoDisable);
+		_ASSERTE(b == Tests[i].bNeed);
+	}
+}
+
 void DebugUnitTests()
 {
 	RConStartArgs::RunArgTests();
+	DebugNeedCmdUnitTests();
 	UnitMaskTests();
 	UnitDriveTests();
 	UnitExpandTest();
