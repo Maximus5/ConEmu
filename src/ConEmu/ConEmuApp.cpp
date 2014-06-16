@@ -3335,8 +3335,8 @@ void DebugNeedCmdUnitTests()
 	BOOL b;
 	struct strTests { LPCWSTR pszCmd; BOOL bNeed; }
 	Tests[] = {
-		{L"\"C:\\cygwin\\bin\\make.exe -f \"makefile\" COMMON=\"../../../plugins/common\"\"", FALSE},
-		{L"\"\"C:\\FAR\\Far.exe  -new_console\"\"", FALSE},
+		{L"\"C:\\windows\\notepad.exe -f \"makefile\" COMMON=\"../../../plugins/common\"\"", FALSE},
+		{L"\"\"C:\\windows\\notepad.exe  -new_console\"\"", FALSE},
 		{L"\"\"cmd\"\"", FALSE},
 		{L"cmd /c \"\"C:\\Program Files\\Windows NT\\Accessories\\wordpad.exe\" -?\"", FALSE},
 		{L"cmd /c \"dir c:\\\"", FALSE},
