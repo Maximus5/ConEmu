@@ -760,6 +760,9 @@ bool NextLine(const wchar_t*& pszFrom, wchar_t** pszLine);
 // pszWords - '|'separated
 void StripWords(wchar_t* pszText, const wchar_t* pszWords);
 
+// pszCommentMark - for example L"#"
+void StripLines(wchar_t* pszText, LPCWSTR pszCommentMark);
+
 // One message cycle step
 bool ProcessMessage(MSG& Msg);
 

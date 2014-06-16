@@ -1222,6 +1222,55 @@ void StripWords(wchar_t* pszText, const wchar_t* pszWords)
 	}
 }
 
+void StripLines(wchar_t* pszText, LPCWSTR pszCommentMark)
+{
+	if (!pszText || !*pszText || !pszCommentMark || !*pszCommentMark)
+		return;
+
+	wchar_t* pszSrc = pszText;
+	wchar_t* pszDst = pszText;
+	INT_PTR iLeft = wcslen(pszText) + 1;
+	INT_PTR iCmp = wcslen(pszCommentMark);
+
+	while (iLeft > 1)
+	{
+		wchar_t* pszEOL = wcspbrk(pszSrc, L"\r\n");
+		if (!pszEOL)
+			pszEOL = pszSrc + iLeft;
+		else if (pszEOL[0] == L'\r' && pszEOL[1] == L'\n')
+			pszEOL += 2;
+		else
+			pszEOL ++;
+
+		INT_PTR iLine = pszEOL - pszSrc;
+
+		if (wcsncmp(pszSrc, pszCommentMark, iCmp) == 0)
+		{
+			// Drop this line
+			if (iLeft <= iLine)
+			{
+				_ASSERTE(iLeft >= iLine);
+				*pszDst = 0;
+				break;
+			}
+			else
+			{
+				wmemmove(pszDst, pszEOL, iLeft - iLine);
+				iLeft -= iLine;
+			}
+		}
+		else
+		{
+			// Skip to next line
+            iLeft -= iLine;
+            pszSrc += iLine;
+            pszDst += iLine;
+		}
+	}
+
+	*pszDst = 0;
+}
+
 BOOL CreateProcessRestricted(LPCWSTR lpApplicationName, LPWSTR lpCommandLine,
 							 LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes,
 							 BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment,
