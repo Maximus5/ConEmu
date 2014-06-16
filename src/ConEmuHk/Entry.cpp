@@ -1040,6 +1040,15 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 	gnImageSubsystem = IMAGE_SUBSYSTEM_WINDOWS_CUI;
 	// Определим тип (CUI/GUI)
 	GetImageSubsystem(gnImageSubsystem, gnImageBits);
+	// *.vshost.exe is used for debugging purpose in VC#
+	// And that PE is compiled as GUI executable, console allocated with AllocConsole
+	if (gbIsNetVsHost && (gnImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_GUI) && ghConWnd)
+	{
+		// We can get here, if *.vshost.exe was started 'normally'
+		// and Win+G (attach) was initiated from ConEmu by user
+		_ASSERTE(ghConWnd == GetConsoleWindow());
+		gnImageSubsystem = IMAGE_SUBSYSTEM_WINDOWS_CUI;
+	}
 	// Проверка чего получилось
 	_ASSERTE(gnImageBits==WIN3264TEST(32,64));
 	_ASSERTE(gnImageSubsystem==IMAGE_SUBSYSTEM_WINDOWS_GUI || gnImageSubsystem==IMAGE_SUBSYSTEM_WINDOWS_CUI);
