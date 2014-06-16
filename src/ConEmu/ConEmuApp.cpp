@@ -3405,6 +3405,25 @@ void DebugNeedCmdUnitTests()
 	}
 }
 
+void DebugStrUnitTest()
+{
+	struct strTests { wchar_t szTest[100], szCmp[100]; }
+	Tests[] = {
+		{L"Line1\n#Comment1\nLine2\r\n#Comment2\r\nEnd of file", L"Line1\nLine2\r\nEnd of file"},
+		{L"Line1\n#Comment1\r\n", L"Line1\n"}
+	};
+	int iCmp;
+	for (INT_PTR i = 0; i < countof(Tests); i++)
+	{
+		StripLines(Tests[i].szTest, L"#");
+		iCmp = wcscmp(Tests[i].szTest, Tests[i].szCmp);
+		_ASSERTE(iCmp == 0);
+		StripLines(Tests[i].szTest, L"#");
+		iCmp = wcscmp(Tests[i].szTest, Tests[i].szCmp);
+		_ASSERTE(iCmp == 0);
+	}
+}
+
 void DebugUnitTests()
 {
 	RConStartArgs::RunArgTests();
@@ -3417,6 +3436,7 @@ void DebugUnitTests()
 	DebugVersionTest();
 	DebugFileExistTests();
 	ConEmuMacro::UnitTests();
+	DebugStrUnitTest();
 }
 #endif
 
