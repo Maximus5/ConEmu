@@ -159,7 +159,7 @@ namespace ConEmuMacro
 	LPWSTR Palette(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Paste (<Cmd>[,"<Text>"[,"<Text2>"[...]]])
 	LPWSTR Paste(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
-	// PasteFile (<Cmd>[,"<File>"])
+	// PasteFile (<Cmd>[,"<File>"[,"<CommentMark>"]])
 	LPWSTR PasteFile(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// print("<Text>") - alias for Paste(2,"<Text>")
 	LPWSTR Print(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
@@ -1727,7 +1727,7 @@ LPWSTR ConEmuMacro::Paste(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 	return lstrdup(L"InvalidArg");
 }
 
-// PasteFile (<Cmd>[,"<File>"])
+// PasteFile (<Cmd>[,"<File>"[,"<CommentMark>"]])
 LPWSTR ConEmuMacro::PasteFile(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 {
 	bool bOk = false;
@@ -1767,6 +1767,14 @@ LPWSTR ConEmuMacro::PasteFile(GuiMacro* p, CRealConsole* apRCon, bool abFromPlug
 
 		if ((ReadTextFile(pszFile, 0x100000, ptrBuf, nBufSize, nErrCode) == 0) && nBufSize)
 		{
+			// Need to drop lines with comment marks?
+			LPWSTR pszCommentMark = NULL;
+			if (p->GetStrArg(2, pszCommentMark) && *pszCommentMark)
+			{
+				StripLines(ptrBuf, pszCommentMark);
+			}
+
+			// And PASTE
 			apRCon->Paste(PasteMode, ptrBuf, bNoConfirm);
 			bOk = true;
 		}

@@ -279,7 +279,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"     Cmd==8: paste path from clipboard converted to CygWin style\r\n" \
 	L"     Cmd==9: paste all lines space-separated\r\n" \
 	L"     Cmd==10: paste all lines space-separated, without confirmations\r\n" \
-	L"PasteFile(<Cmd>[,\"<File>\"])\r\n" \
+	L"PasteFile(<Cmd>[,\"<File>\"[,\"<CommentMark>\"]])\r\n" \
 	L"  - Paste <File> contents, omit <File> to show selection dialog\r\n" \
 	L"     Cmd==0: paste all lines\r\n" \
 	L"     Cmd==1: paste first line\r\n" \
@@ -287,6 +287,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"     Cmd==3: paste first line, without confirmations\r\n" \
 	L"     Cmd==9: paste all lines space-separated\r\n" \
 	L"     Cmd==10: paste all lines space-separated, without confirmations\r\n" \
+	L"     If \"<CommentMark>\" specified - skip all lines starting with prefix\r\n" \
 	L"Print([\"<Text>\"[,\"<Text2>\"[...]]])\r\n" \
 	L"  - Alias for Paste(2,\"<Text>\")\r\n" \
 	L"Progress(<Type>[,<Value>])\r\n" \
