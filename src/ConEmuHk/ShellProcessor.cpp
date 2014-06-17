@@ -613,10 +613,8 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 		return FALSE;
 
 	BOOL lbRc = FALSE;
-	//size_t cchComspec = MAX_PATH+20;
 	wchar_t *szComspec = NULL;
-	size_t cchConEmuC = MAX_PATH+16;
-	wchar_t *szConEmuC = NULL; // ConEmuC64.exe
+	wchar_t *pszOurExe = NULL; // ConEmuC64.exe или ConEmu64.exe (для DefTerm)
 	BOOL lbUseDosBox = FALSE;
 	size_t cchDosBoxExe = MAX_PATH+16, cchDosBoxCfg = MAX_PATH+16;
 	wchar_t *szDosBoxExe = NULL, *szDosBoxCfg = NULL;
@@ -629,32 +627,11 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 	bool lbNewConsoleFromGui = false;
 	BOOL lbComSpecK = FALSE; // TRUE - если нужно запустить /K, а не /C
 
-	szConEmuC = (wchar_t*)malloc(cchConEmuC*sizeof(*szConEmuC)); // ConEmuC64.exe
-	if (!szConEmuC)
-	{
-		_ASSERTE(szConEmuC!=NULL);
-		goto wrap;
-	}
-	szConEmuC[0] = 0;
-
 	_ASSERTEX(m_SrvMapping.sConEmuExe[0]!=0 && m_SrvMapping.ComSpec.ConEmuBaseDir[0]!=0);
-
 	if (gbPrepareDefaultTerminal)
 	{
 		_ASSERTEX(ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI || ImageSubsystem == IMAGE_SUBSYSTEM_BATCH_FILE);
-		if (aCmd != eShellExecute)
-		{
-			_wcscpy_c(szConEmuC, cchConEmuC, m_SrvMapping.sConEmuExe);
-		}
-		// Для "runas" для "Default terminal" будем работать через /AUTOATTACH
 	}
-
-	if (!*szConEmuC)
-	{
-		_wcscpy_c(szConEmuC, cchConEmuC, m_SrvMapping.ComSpec.ConEmuBaseDir);
-		_wcscat_c(szConEmuC, cchConEmuC, L"\\");
-	}
-
 	_ASSERTE(aCmd==eShellExecute || aCmd==eCreateProcess);
 
 
@@ -967,20 +944,20 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 
 	if (gbPrepareDefaultTerminal)
 	{
-		// szConEmuC already has m_SrvMapping.sConEmuExe);
 		lbUseDosBox = FALSE; // Don't set now
 		if (aCmd == eShellExecute)
 		{
-			wcscat_c(szConEmuC, (ImageBits == 32) ? L"ConEmuC.exe" : L"ConEmuC64.exe"); //-V112
+			// Тут предполагается запуск как "runas", запускаемся через "ConEmuC.exe"
+			pszOurExe = lstrmerge(m_SrvMapping.ComSpec.ConEmuBaseDir, L"\\", (ImageBits == 32) ? L"ConEmuC.exe" : L"ConEmuC64.exe"); //-V112
+		}
+		else
+		{
+			pszOurExe = lstrdup(m_SrvMapping.sConEmuExe);
 		}
 	}
-	else if (ImageBits == 32) //-V112
+	else if ((ImageBits == 32) || (ImageBits == 64)) //-V112
 	{
-		wcscat_c(szConEmuC, L"ConEmuC.exe");
-	}
-	else if (ImageBits == 64)
-	{
-		wcscat_c(szConEmuC, L"ConEmuC64.exe");
+		pszOurExe = lstrmerge(m_SrvMapping.ComSpec.ConEmuBaseDir, L"\\", (ImageBits == 32) ? L"ConEmuC.exe" : L"ConEmuC64.exe");
 	}
 	else if (ImageBits == 16)
 	{
@@ -999,7 +976,8 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 				goto wrap;
 			}
 
-			wcscat_c(szConEmuC, L"ConEmuC.exe");
+			// DosBox.exe - 32-битный
+			pszOurExe = lstrmerge(m_SrvMapping.ComSpec.ConEmuBaseDir, L"\\", L"ConEmuC.exe");
 			lbUseDosBox = TRUE;
 		}
 		else
@@ -1014,7 +992,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 			}
 			else
 			{
-				wcscat_c(szConEmuC, L"ConEmuC.exe");
+				pszOurExe = lstrmerge(m_SrvMapping.ComSpec.ConEmuBaseDir, L"\\", L"ConEmuC.exe");
 			}
 		}
 	}
@@ -1022,9 +1000,14 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 	{
 		// Если не смогли определить что это и как запускается - лучше не трогать
 		_ASSERTE(ImageBits==16||ImageBits==32||ImageBits==64);
-		//wcscat_c(szConEmuC, L"ConEmuC.exe");
 		lbRc = FALSE;
-		//return FALSE;
+		goto wrap;
+	}
+
+	if (!pszOurExe)
+	{
+		_ASSERTE(pszOurExe!=NULL);
+		lbRc = FALSE;
 		goto wrap;
 	}
 
@@ -1036,22 +1019,22 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 		nCchSize = (nCchSize*2) + lstrlen(szDosBoxExe) + lstrlen(szDosBoxCfg) + 128 + MAX_PATH*2/*на cd и прочую фигню*/;
 	}
 
-	if (!FileExists(szConEmuC))
+	if (!FileExists(pszOurExe))
 	{
 		wchar_t szInfo[MAX_PATH+128], szTitle[64];
 		wcscpy_c(szInfo, L"ConEmu executable not found!\n");
-		wcscat_c(szInfo, szConEmuC);
+		wcscat_c(szInfo, pszOurExe);
 		msprintf(szTitle, countof(szTitle), L"ConEmuHk, PID=%i", GetCurrentProcessId());
 		GuiMessageBox(ghConEmuWnd, szInfo, szTitle, MB_ICONSTOP);
 	}
 
 	if (aCmd == eShellExecute)
 	{
-		*psFile = lstrdup(szConEmuC);
+		*psFile = lstrdup(pszOurExe);
 	}
 	else
 	{
-		nCchSize += lstrlen(szConEmuC)+1;
+		nCchSize += lstrlen(pszOurExe)+1;
 		*psFile = NULL;
 	}
 
@@ -1101,7 +1084,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 	if (aCmd == eCreateProcess)
 	{
 		(*psParam)[0] = L'"';
-		_wcscpy_c((*psParam)+1, nCchSize-1, szConEmuC);
+		_wcscpy_c((*psParam)+1, nCchSize-1, pszOurExe);
 		_wcscat_c((*psParam), nCchSize, L"\"");
 	}
 
@@ -1173,10 +1156,12 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 
 		if (aCmd == eShellExecute)
 		{
+			// Здесь предполагается "runas", поэтому запускается сервер (ConEmuC.exe)
 			_wcscat_c((*psParam), nCchSize, L" /ATTACHDEFTERM /ROOT ");
 		}
 		else
 		{
+			// Запускается GUI
 			if (args.ForceNewWindow == crb_On)
 				_wcscat_c((*psParam), nCchSize, L" /nosingle /cmd ");
 			else
@@ -1426,57 +1411,12 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 	}
 #endif
 
-	//if (aCmd == eShellExecute)
-	//{
-	//	if (asFile && *asFile)
-	//	{
-	//		lbEndQuote = TRUE;
-	//		if (lbUseDosBox)
-	//			_wcscat_c((*psParam), nCchSize, L" /DOSBOX");
-	//		_wcscat_c((*psParam), nCchSize, lbComSpecK ? L" /K " : L" /C ");
-	//		_wcscat_c((*psParam), nCchSize, L"\"\"");
-	//		_wcscat_c((*psParam), nCchSize, asFile ? asFile : L"");
-	//		_wcscat_c((*psParam), nCchSize, L"\"");
-	//	}
-	//	else
-	//	{
-	//		if (lbUseDosBox)
-	//			_wcscat_c((*psParam), nCchSize, L" /DOSBOX");
-	//		_wcscat_c((*psParam), nCchSize, lbComSpecK ? L" /K " : L" /C ");
-	//	}
-	//}
-	//else
-	//{
-	//	//(*psParam)[0] = L'"';
-	//	//_wcscpy_c((*psParam)+1, nCchSize-1, szConEmuC);
-	//	//_wcscat_c((*psParam), nCchSize, L"\"");
-
-	//	if (lbUseDosBox)
-	//		_wcscat_c((*psParam), nCchSize, L" /DOSBOX");
-	//	_wcscat_c((*psParam), nCchSize, lbComSpecK ? L" /K " : L" /C ");
-	//	// Это CreateProcess. Исполняемый файл может быть уже указан в asParam
-	//	if (asFile && *asFile)
-	//	{
-	//		_wcscat_c((*psParam), nCchSize, L"\"");
-	//		_ASSERTE(asFile!=NULL);
-	//		_wcscat_c((*psParam), nCchSize, asFile);
-	//		_wcscat_c((*psParam), nCchSize, L"\"");
-	//	}
-	//}
-	//if (asParam && *asParam)
-	//{
-	//	_wcscat_c((*psParam), nCchSize, L" ");
-	//	_wcscat_c((*psParam), nCchSize, asParam);
-	//}
-	//if (lbEndQuote)
-	//	_wcscat_c((*psParam), nCchSize, L" \"");
-
 	lbRc = TRUE;
 wrap:
 	if (szComspec)
 		free(szComspec);
-	if (szConEmuC)
-		free(szConEmuC);
+	if (pszOurExe)
+		free(pszOurExe);
 	if (szDosBoxExe)
 		free(szDosBoxExe);
 	if (szDosBoxCfg)
