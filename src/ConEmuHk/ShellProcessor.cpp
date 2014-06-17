@@ -366,8 +366,6 @@ const RConStartArgs* CShellProc::GetArgs()
 
 BOOL CShellProc::LoadSrvMapping(BOOL bLightCheck /*= FALSE*/)
 {
-	_ASSERTEX(user);
-
 	if (gbPrepareDefaultTerminal)
 	{
 		// ghConWnd may be NULL (if was started for devenv.exe) or NOT NULL (after AllocConsole in *.vshost.exe)

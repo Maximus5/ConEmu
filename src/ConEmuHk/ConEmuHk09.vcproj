@@ -1710,10 +1710,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\UserImp.h"
-				>
-			</File>
-			<File
 				RelativePath="..\common\WinConsole.h"
 				>
 			</File>
@@ -1819,10 +1815,6 @@
 			</File>
 			<File
 				RelativePath=".\ShellProcessor.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\UserImp.cpp"
 				>
 			</File>
 			<File

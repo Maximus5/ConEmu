@@ -2601,7 +2601,7 @@ BOOL WINAPI OnGetWindowPlacement(HWND hWnd, WINDOWPLACEMENT *lpwndpl)
 		lbRc = F(GetWindowPlacement)(hWnd, lpwndpl);
 
 	if (lbRc && ghConEmuWndDC && !gbGuiClientExternMode && ghAttachGuiClient
-		&& hWnd == ghAttachGuiClient && user)
+		&& hWnd == ghAttachGuiClient)
 	{
 		MapWindowPoints(ghConEmuWndDC, NULL, (LPPOINT)&lpwndpl->rcNormalPosition, 2);
 	}

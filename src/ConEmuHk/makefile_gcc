@@ -8,7 +8,6 @@ SRCS = Entry.cpp \
        SetHook.cpp \
        ShellProcessor.cpp \
        GuiAttach.cpp \
-       UserImp.cpp \
        ../common/CmdLine.cpp \
        ../common/Common.cpp \
        ../common/ConEmuCheck.cpp \

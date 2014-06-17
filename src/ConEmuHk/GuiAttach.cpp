@@ -481,7 +481,6 @@ LRESULT CALLBACK AttachGuiWindowCallback(int nCode, WPARAM wParam, LPARAM lParam
 void AttachGuiWindow(HWND hOurWindow)
 {
 	_ASSERTEX(gbAttachGuiClient); // Уже должен был быть установлен?
-	_ASSERTEX(user);
 	gnAttachMsgId = RegisterWindowMessageW(L"ConEmu:Attach2Gui");
 	if (gnAttachMsgId)
 	{

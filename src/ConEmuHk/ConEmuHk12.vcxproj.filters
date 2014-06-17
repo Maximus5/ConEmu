@@ -63,9 +63,6 @@
     <ClInclude Include="ShellProcessor.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="UserImp.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\common\WinObjects.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -137,9 +134,6 @@
       <Filter>0 - Source Files</Filter>
     </ClCompile>
     <ClCompile Include="ShellProcessor.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="UserImp.cpp">
       <Filter>0 - Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\common\WinObjects.cpp">

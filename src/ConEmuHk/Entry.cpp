@@ -76,7 +76,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmuHooks.h"
 #include "RegHooks.h"
 #include "ShellProcessor.h"
-#include "UserImp.h"
 #include "GuiAttach.h"
 #include "Injects.h"
 #include "Ansi.h"
@@ -1615,7 +1614,6 @@ BOOL WINAPI DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 			gnSelfPID = GetCurrentProcessId();
 			ghWorkingModule = (u64)hModule;
 			gfGetRealConsoleWindow = GetConsoleWindow;
-			user = (UserImp*)calloc(1, sizeof(*user));
 			DLOGEND1();
 
 
@@ -1720,9 +1718,6 @@ BOOL WINAPI DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 			//_ASSERTE(ghHeap == NULL);
 			//ghHeap = HeapCreate(HEAP_GENERATE_EXCEPTIONS, 200000, 0);
 
-			if (gbPrepareDefaultTerminal)
-				user->setAllowLoadLibrary();
-
 
 			DLOG1_("DllMain.DllStart",ul_reason_for_call);
 			#ifdef HOOK_USE_DLLTHREAD
@@ -1758,8 +1753,6 @@ BOOL WINAPI DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 			}
 			#endif
 			DLOGEND1();
-
-			user->setAllowLoadLibrary();
 
 			if (gbIsSshProcess && bCurrentThreadIsMain && (GetCurrentThreadId() == gnHookMainThreadId))
 			{

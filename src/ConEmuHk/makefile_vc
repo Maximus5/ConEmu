@@ -68,8 +68,7 @@ $(OBJDIR)\Memory.obj \
 $(OBJDIR)\MSecurity.obj \
 $(OBJDIR)\MStrSafe.obj \
 $(OBJDIR)\GuiAttach.obj \
-$(OBJDIR)\RConStartArgs.obj \
-$(OBJDIR)\UserImp.obj
+$(OBJDIR)\RConStartArgs.obj
 
 USERLIBS = 
 
