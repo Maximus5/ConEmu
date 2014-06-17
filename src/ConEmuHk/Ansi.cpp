@@ -37,7 +37,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/ConEmuCheck.h"
 #include "SetHook.h"
 #include "ConEmuHooks.h"
-#include "UserImp.h"
 #include "../common/ConsoleAnnotation.h"
 #include "ExtConsole.h"
 #include "../common/WinConsole.h"
@@ -49,7 +48,7 @@ DWORD AnsiTlsIndex = 0;
 ///* ***************** */
 
 #undef isPressed
-#define isPressed(inp) ((user->getKeyState(inp) & 0x8000) == 0x8000)
+#define isPressed(inp) ((GetKeyState(inp) & 0x8000) == 0x8000)
 
 #define ANSI_MAP_CHECK_TIMEOUT 1000
 

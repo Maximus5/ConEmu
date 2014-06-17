@@ -33,7 +33,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 #include <windows.h>
-#include "UserImp.h"
 #include "GuiAttach.h"
 #include "../common/common.hpp"
 #include "../common/CmdLine.h"
@@ -81,7 +80,7 @@ LRESULT CALLBACK GuiClientMsgHook(int nCode, WPARAM wParam, LPARAM lParam)
 			break;
 		}
 	}
-	return user->callNextHookEx(ghGuiClientMsgHook, nCode, wParam, lParam);
+	return CallNextHookEx(ghGuiClientMsgHook, nCode, wParam, lParam);
 }
 LRESULT CALLBACK GuiClientCallHook(int nCode, WPARAM wParam, LPARAM lParam)
 {
@@ -95,7 +94,7 @@ LRESULT CALLBACK GuiClientCallHook(int nCode, WPARAM wParam, LPARAM lParam)
 		{
 			case WM_DESTROY:
 			{
-				user->getClassNameW(p->hwnd, szClass, countof(szClass));
+				GetClassName(p->hwnd, szClass, countof(szClass));
 				msprintf(szDbg, countof(szDbg), L"WM_DESTROY on 0x%08X (%s)\n", (DWORD)p->hwnd, szClass);
 				break;
 			}
@@ -119,7 +118,7 @@ LRESULT CALLBACK GuiClientCallHook(int nCode, WPARAM wParam, LPARAM lParam)
 					{
 						if ((wp->x > 0 || wp->y > 0) && !isPressed(VK_LBUTTON))
 						{
-							if (user->getParent(p->hwnd) == ghConEmuWndBack)
+							if (GetParent(p->hwnd) == ghConEmuWndBack)
 							{
 								//_ASSERTEX(!(wp->x > 0 || wp->y > 0));
 								break;
@@ -137,7 +136,7 @@ LRESULT CALLBACK GuiClientCallHook(int nCode, WPARAM wParam, LPARAM lParam)
 		}
 	}
 
-	return user->callNextHookEx(ghGuiClientCallHook, nCode, wParam, lParam);
+	return CallNextHookEx(ghGuiClientCallHook, nCode, wParam, lParam);
 }
 LRESULT CALLBACK GuiClientRetHook(int nCode, WPARAM wParam, LPARAM lParam)
 {
@@ -151,7 +150,7 @@ LRESULT CALLBACK GuiClientRetHook(int nCode, WPARAM wParam, LPARAM lParam)
 		{
 			case WM_DESTROY:
 			{
-				user->getClassNameW(p->hwnd, szClass, countof(szClass));
+				GetClassName(p->hwnd, szClass, countof(szClass));
 				msprintf(szDbg, countof(szDbg), L"WM_DESTROY on 0x%08X (%s)\n", (DWORD)p->hwnd, szClass);
 				break;
 			}
@@ -179,7 +178,7 @@ LRESULT CALLBACK GuiClientRetHook(int nCode, WPARAM wParam, LPARAM lParam)
 					{
 						if ((wp->x > 0 || wp->y > 0) && !isPressed(VK_LBUTTON))
 						{
-							if (user->getParent(p->hwnd) == ghConEmuWndBack)
+							if (GetParent(p->hwnd) == ghConEmuWndBack)
 							{
 								//_ASSERTEX(!(wp->x > 0 || wp->y > 0));
 								break;
@@ -197,7 +196,7 @@ LRESULT CALLBACK GuiClientRetHook(int nCode, WPARAM wParam, LPARAM lParam)
 		}
 	}
 
-	return user->callNextHookEx(ghGuiClientRetHook, nCode, wParam, lParam);
+	return CallNextHookEx(ghGuiClientRetHook, nCode, wParam, lParam);
 }
 #endif
 
@@ -240,7 +239,7 @@ bool CheckCanCreateWindow(LPCSTR lpClassNameA, LPCWSTR lpClassNameW, DWORD& dwSt
 		DWORD nTID = GetCurrentThreadId();
 		if ((nTID != gnHookMainThreadId) && (gnAttachGuiClientThreadId && nTID != gnAttachGuiClientThreadId))
 		{
-			_ASSERTEX(nTID==gnHookMainThreadId || !gnAttachGuiClientThreadId || (ghAttachGuiClient && user->isWindow(ghAttachGuiClient)));
+			_ASSERTEX(nTID==gnHookMainThreadId || !gnAttachGuiClientThreadId || (ghAttachGuiClient && IsWindow(ghAttachGuiClient)));
 		}
 		else
 		{
@@ -290,7 +289,7 @@ bool CheckCanCreateWindow(LPCSTR lpClassNameA, LPCWSTR lpClassNameW, DWORD& dwSt
 
 				#ifdef _DEBUG
 				if (!ghGuiClientRetHook)
-					ghGuiClientRetHook = user->setWindowsHookExW(WH_CALLWNDPROCRET, GuiClientRetHook, NULL, GetCurrentThreadId());
+					ghGuiClientRetHook = SetWindowsHookExW(WH_CALLWNDPROCRET, GuiClientRetHook, NULL, GetCurrentThreadId());
 				//if (!ghGuiClientCallHook)
 				//	ghGuiClientCallHook = user->setWindowsHookExW(WH_CALLWNDPROC, GuiClientCallHook, NULL, GetCurrentThreadId());
 				//if (!ghGuiClientMsgHook)
@@ -375,7 +374,7 @@ void CheckOrigGuiClientRect()
 	if (grcAttachGuiClientOrig.left==grcAttachGuiClientOrig.right && grcAttachGuiClientOrig.bottom==grcAttachGuiClientOrig.top)
 	{
 		_ASSERTEX(ghAttachGuiClient!=NULL);
-		user->getWindowRect(ghAttachGuiClient, &grcAttachGuiClientOrig);
+		GetWindowRect(ghAttachGuiClient, &grcAttachGuiClientOrig);
 	}
 }
 
@@ -387,8 +386,8 @@ void ReplaceGuiAppWindow(BOOL abStyleHidden)
 		return;
 	}
 
-	DWORD_PTR dwStyle = user->getWindowLongPtrW(ghAttachGuiClient, GWL_STYLE);
-	DWORD_PTR dwStyleEx = user->getWindowLongPtrW(ghAttachGuiClient, GWL_EXSTYLE);
+	DWORD_PTR dwStyle = GetWindowLongPtr(ghAttachGuiClient, GWL_STYLE);
+	DWORD_PTR dwStyleEx = GetWindowLongPtr(ghAttachGuiClient, GWL_EXSTYLE);
 
 	if (!gbAttachGuiClientStyleOk)
 	{
@@ -409,25 +408,25 @@ void ReplaceGuiAppWindow(BOOL abStyleHidden)
 			dwNewStyle = (dwNewStyle|WS_CHILD/*|DS_CONTROL*/) & ~(WS_POPUP);
 
 		if (dwStyle != dwNewStyle)
-			user->setWindowLongPtrW(ghAttachGuiClient, GWL_STYLE, dwNewStyle);
+			SetWindowLongPtr(ghAttachGuiClient, GWL_STYLE, dwNewStyle);
 
 		/*
 
 		DWORD_PTR dwNewStyleEx = (dwStyleEx|WS_EX_CONTROLPARENT);
 		if (dwStyleEx != dwNewStyleEx)
-			user->setWindowLongPtrW(ghAttachGuiClient, GWL_EXSTYLE, dwNewStyleEx);
+			SetWindowLongPtr(ghAttachGuiClient, GWL_EXSTYLE, dwNewStyleEx);
 		*/
 
-		HWND hCurParent = user->getParent(ghAttachGuiClient);
-		_ASSERTEX(ghConEmuWndBack && user->isWindow(ghConEmuWndBack));
+		HWND hCurParent = GetParent(ghAttachGuiClient);
+		_ASSERTEX(ghConEmuWndBack && IsWindow(ghConEmuWndBack));
 		if (hCurParent != ghConEmuWndBack)
 		{
-			user->setParent(ghAttachGuiClient, ghConEmuWndBack);
+			SetParent(ghAttachGuiClient, ghConEmuWndBack);
 		}
 
 		RECT rcGui = AttachGuiClientPos();
 
-		if (user->setWindowPos(ghAttachGuiClient, HWND_TOP, rcGui.left,rcGui.top, rcGui.right-rcGui.left, rcGui.bottom-rcGui.top,
+		if (SetWindowPos(ghAttachGuiClient, HWND_TOP, rcGui.left,rcGui.top, rcGui.right-rcGui.left, rcGui.bottom-rcGui.top,
 			SWP_DRAWFRAME | SWP_NOCOPYBITS | /*SWP_FRAMECHANGED |*/ (abStyleHidden ? SWP_SHOWWINDOW : 0)))
 		{
 			if (abStyleHidden && IsWindowVisible(ghAttachGuiClient))
@@ -435,9 +434,9 @@ void ReplaceGuiAppWindow(BOOL abStyleHidden)
 		}
 
 		// !!! OnSetForegroundWindow не подходит - он дергает Cmd.
-		user->setForegroundWindow(ghConEmuWnd);
+		SetForegroundWindow(ghConEmuWnd);
 
-		user->postMessageW(ghAttachGuiClient, WM_NCPAINT, 0, 0);
+		PostMessageW(ghAttachGuiClient, WM_NCPAINT, 0, 0);
 	}
 }
 
@@ -463,10 +462,10 @@ LRESULT CALLBACK AttachGuiWindowCallback(int nCode, WPARAM wParam, LPARAM lParam
 			_ASSERTEX(args->MsgId==gnAttachMsgId && args->hConEmu==ghConEmuWnd && args->hProcessed==p->hwnd);
 
 			HWND hOurWindow = p->hwnd;
-			HMENU hMenu = user->getMenu(hOurWindow);
-			wchar_t szClassName[255]; user->getClassNameW(hOurWindow, szClassName, countof(szClassName));
-			DWORD nCurStyle = (DWORD)user->getWindowLongPtrW(hOurWindow, GWL_STYLE);
-			DWORD nCurStyleEx = (DWORD)user->getWindowLongPtrW(hOurWindow, GWL_EXSTYLE);
+			HMENU hMenu = GetMenu(hOurWindow);
+			wchar_t szClassName[255]; GetClassName(hOurWindow, szClassName, countof(szClassName));
+			DWORD nCurStyle = (DWORD)GetWindowLongPtr(hOurWindow, GWL_STYLE);
+			DWORD nCurStyleEx = (DWORD)GetWindowLongPtr(hOurWindow, GWL_EXSTYLE);
 			//BOOL bWasVisible = IsWindowVisible(hOurWindow);
 			_ASSERTEX(IsWindowVisible(hOurWindow));
 			OnGuiWindowAttached(hOurWindow, hMenu, NULL, szClassName, nCurStyle, nCurStyleEx, FALSE, SW_SHOW);
@@ -476,26 +475,26 @@ LRESULT CALLBACK AttachGuiWindowCallback(int nCode, WPARAM wParam, LPARAM lParam
 		}
 	}
 
-	return user->callNextHookEx(ghAttachMsgHook, nCode, wParam, lParam);
+	return CallNextHookEx(ghAttachMsgHook, nCode, wParam, lParam);
 }
 
 void AttachGuiWindow(HWND hOurWindow)
 {
 	_ASSERTEX(gbAttachGuiClient); // Уже должен был быть установлен?
 	_ASSERTEX(user);
-	gnAttachMsgId = user->registerWindowMessageW(L"ConEmu:Attach2Gui");
+	gnAttachMsgId = RegisterWindowMessageW(L"ConEmu:Attach2Gui");
 	if (gnAttachMsgId)
 	{
-		DWORD nWndTID = user->getWindowThreadProcessId(hOurWindow, NULL);
-		ghAttachMsgHook = user->setWindowsHookExW(WH_CALLWNDPROC, AttachGuiWindowCallback, NULL, nWndTID);
+		DWORD nWndTID = GetWindowThreadProcessId(hOurWindow, NULL);
+		ghAttachMsgHook = SetWindowsHookExW(WH_CALLWNDPROC, AttachGuiWindowCallback, NULL, nWndTID);
 
 		// Поскольку аттач хорошо бы выполнять в той нити, в которой крутится окно - то через хук
 		AttachMsgArg args = {gnAttachMsgId, 0, ghConEmuWnd, hOurWindow};
-		LRESULT lRc = user->sendMessageW(hOurWindow, gnAttachMsgId, gnAttachMsgId, (LPARAM)&args);
+		LRESULT lRc = SendMessageW(hOurWindow, gnAttachMsgId, gnAttachMsgId, (LPARAM)&args);
 		_ASSERTEX(args.Result == gnAttachMsgId);
 		UNREFERENCED_PARAMETER(lRc);
 
-		user->unhookWindowsHookEx(ghAttachMsgHook);
+		UnhookWindowsHookEx(ghAttachMsgHook);
 		ghAttachMsgHook = NULL;
 	}
 }
@@ -513,7 +512,7 @@ bool IsDotNetWindow(HWND hWindow)
 	int nNeedLen = lstrlen(szWindowsForms);
 
 	// WindowsForms10.Window.8.app.0.378734a
-	int nLen = user->getClassNameW(hWindow, szClass, countof(szClass));
+	int nLen = GetClassName(hWindow, szClass, countof(szClass));
 	if (nLen > nNeedLen)
 	{
 		szClass[nNeedLen] = 0;
@@ -549,10 +548,10 @@ bool IsQtWindow(LPCSTR asClassA, LPCWSTR asClassW)
 // Если (anFromShowWindow != -1), значит функу зовут из ShowWindow
 void OnGuiWindowAttached(HWND hWindow, HMENU hMenu, LPCSTR asClassA, LPCWSTR asClassW, DWORD anStyle, DWORD anStyleEx, BOOL abStyleHidden, int anFromShowWindow/*=-1*/)
 {
-	DWORD nCurStyle = (DWORD)user->getWindowLongPtrW(hWindow, GWL_STYLE);
-	DWORD nCurStyleEx = (DWORD)user->getWindowLongPtrW(hWindow, GWL_EXSTYLE);
+	DWORD nCurStyle = (DWORD)GetWindowLongPtr(hWindow, GWL_STYLE);
+	DWORD nCurStyleEx = (DWORD)GetWindowLongPtr(hWindow, GWL_EXSTYLE);
 
-	user->allowSetForegroundWindow(ASFW_ANY);
+	AllowSetForegroundWindow(ASFW_ANY);
 
 	// VLC создает несколько "подходящих" окон, но ShowWindow зовет
 	// только для одного из них. Поэтому фактический аттач делаем
@@ -564,7 +563,7 @@ void OnGuiWindowAttached(HWND hWindow, HMENU hMenu, LPCSTR asClassA, LPCWSTR asC
 	}
 
 	ghAttachGuiClient = hWindow;
-	gnAttachGuiClientThreadId = user->getWindowThreadProcessId(hWindow, NULL);
+	gnAttachGuiClientThreadId = GetWindowThreadProcessId(hWindow, NULL);
 	gbForceShowGuiClient = TRUE;
 	gbAttachGuiClient = FALSE; // Только одно окно приложения. Пока?
 
@@ -616,7 +615,7 @@ void OnGuiWindowAttached(HWND hWindow, HMENU hMenu, LPCSTR asClassA, LPCWSTR asC
 	}
 	// Если в окне нет меню - работаем с ним как с WS_CHILD
 	// так не возникает проблем с активацией и т.д.
-	else if (user->getMenu(hWindow) == NULL)
+	else if (GetMenu(hWindow) == NULL)
 	{
 		if (IsQtWindow(asClassA, asClassW))
 			gnAttachGuiClientFlags |= (agaf_NoMenu|agaf_QtWindow|agaf_WS_CHILD);
@@ -629,7 +628,7 @@ void OnGuiWindowAttached(HWND hWindow, HMENU hMenu, LPCSTR asClassA, LPCWSTR asC
 	pIn->AttachGuiApp.hAppWindow = hWindow;
 	pIn->AttachGuiApp.Styles.nStyle = nCurStyle; // стили могли измениться после создания окна,
 	pIn->AttachGuiApp.Styles.nStyleEx = nCurStyleEx; // поэтому получим актуальные
-	user->getWindowRect(hWindow, &pIn->AttachGuiApp.rcWindow);
+	GetWindowRect(hWindow, &pIn->AttachGuiApp.rcWindow);
 	GetModuleFileName(NULL, pIn->AttachGuiApp.sAppFilePathName, countof(pIn->AttachGuiApp.sAppFilePathName));
 	pIn->AttachGuiApp.hkl = (DWORD)(LONG)(LONG_PTR)GetKeyboardLayout(0);
 
@@ -638,14 +637,14 @@ void OnGuiWindowAttached(HWND hWindow, HMENU hMenu, LPCSTR asClassA, LPCWSTR asC
 
 
 	// AttachThreadInput
-	DWORD nConEmuTID = user->getWindowThreadProcessId(ghConEmuWnd, NULL);
+	DWORD nConEmuTID = GetWindowThreadProcessId(ghConEmuWnd, NULL);
 	DWORD nTID = GetCurrentThreadId();
 	_ASSERTEX(nTID==gnHookMainThreadId || nTID==gnAttachGuiClientThreadId);
-	BOOL bAttachRc = user->attachThreadInput(nTID, nConEmuTID, TRUE);
+	BOOL bAttachRc = AttachThreadInput(nTID, nConEmuTID, TRUE);
 	DWORD nAttachErr = GetLastError();
 	UNREFERENCED_PARAMETER(bAttachRc); UNREFERENCED_PARAMETER(nAttachErr);
 
-	HWND hPreFocus = user->getFocus();
+	HWND hPreFocus = GetFocus();
 
 
 	CESERVER_REQ* pOut = ExecuteCmd(szGuiPipeName, pIn, 0/*Default timeout*/, NULL);
@@ -672,13 +671,13 @@ void OnGuiWindowAttached(HWND hWindow, HMENU hMenu, LPCSTR asClassA, LPCWSTR asC
 			gGuiClientStyles = pOut->AttachGuiApp.Styles;
 
 			#ifdef _DEBUG
-			HWND hFocus = user->getFocus();
+			HWND hFocus = GetFocus();
 			DWORD nFocusPID = 0;
 
 			if (hFocus)
 			{
-				user->getWindowThreadProcessId(hFocus, &nFocusPID);
-				DWORD nConEmuPID = 0; user->getWindowThreadProcessId(ghConEmuWnd, &nConEmuPID);
+				GetWindowThreadProcessId(hFocus, &nFocusPID);
+				DWORD nConEmuPID = 0; GetWindowThreadProcessId(ghConEmuWnd, &nConEmuPID);
 				if (nFocusPID != GetCurrentProcessId() && nFocusPID != nConEmuPID)
 				{
 					// Допустимая ситуация, когда одновременно во вкладки цепляется
@@ -702,8 +701,8 @@ void OnGuiWindowAttached(HWND hWindow, HMENU hMenu, LPCSTR asClassA, LPCWSTR asC
 			//{
 			//	user->setFocus(hPreFocus);
 			//}
-			UINT nMsgID = user->registerWindowMessageW(CONEMUMSG_RESTORECHILDFOCUS);
-			user->postMessageW(ghConEmuWndBack, nMsgID, 0,0);
+			UINT nMsgID = RegisterWindowMessageW(CONEMUMSG_RESTORECHILDFOCUS);
+			PostMessageW(ghConEmuWndBack, nMsgID, 0,0);
 
 			//// !!! OnSetForegroundWindow не подходит - он дергает Cmd.
 			////user->setForegroundWindow(ghConEmuWnd);
@@ -747,7 +746,7 @@ void OnGuiWindowAttached(HWND hWindow, HMENU hMenu, LPCSTR asClassA, LPCWSTR asC
 
 	if (abStyleHidden)
 	{
-		user->showWindow(hWindow, SW_SHOW);
+		ShowWindow(hWindow, SW_SHOW);
 	}
 }
 
@@ -779,10 +778,10 @@ void OnShowGuiClientWindow(HWND hWnd, int &nCmdShow, BOOL &rbGuiAttach, BOOL &rb
 		// VLC создает несколько "подходящих" окон, но ShowWindow зовет
 		// только для одного из них. Поэтому фактический аттач делаем
 		// только в том случае, если окно "видимое"
-		HMENU hMenu = user->getMenu(hWnd);
-		wchar_t szClassName[255]; user->getClassNameW(hWnd, szClassName, countof(szClassName));
-		DWORD nCurStyle = (DWORD)user->getWindowLongPtrW(hWnd, GWL_STYLE);
-		DWORD nCurStyleEx = (DWORD)user->getWindowLongPtrW(hWnd, GWL_EXSTYLE);
+		HMENU hMenu = GetMenu(hWnd);
+		wchar_t szClassName[255]; GetClassName(hWnd, szClassName, countof(szClassName));
+		DWORD nCurStyle = (DWORD)GetWindowLongPtr(hWnd, GWL_STYLE);
+		DWORD nCurStyleEx = (DWORD)GetWindowLongPtr(hWnd, GWL_EXSTYLE);
 		BOOL bAttachGui = TRUE;
 
 		if (ghAttachGuiClient == NULL)
@@ -806,11 +805,11 @@ void OnShowGuiClientWindow(HWND hWnd, int &nCmdShow, BOOL &rbGuiAttach, BOOL &rb
 		//if (nCmdShow == SW_HIDE)
 		//	nCmdShow = SW_SHOWNORMAL;
 
-		HWND hCurParent = user->getParent(hWnd);
+		HWND hCurParent = GetParent(hWnd);
 		if (hCurParent != ghConEmuWndBack)
 		{
-			DWORD nCurStyle = (DWORD)user->getWindowLongPtrW(hWnd, GWL_STYLE);
-			DWORD nCurStyleEx = (DWORD)user->getWindowLongPtrW(hWnd, GWL_EXSTYLE);
+			DWORD nCurStyle = (DWORD)GetWindowLongPtr(hWnd, GWL_STYLE);
+			DWORD nCurStyleEx = (DWORD)GetWindowLongPtr(hWnd, GWL_EXSTYLE);
 
 			DWORD nSize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_ATTACHGUIAPP);
 			CESERVER_REQ *pIn = ExecuteNewCmd(CECMD_ATTACHGUIAPP, nSize);
@@ -822,7 +821,7 @@ void OnShowGuiClientWindow(HWND hWnd, int &nCmdShow, BOOL &rbGuiAttach, BOOL &rb
 			pIn->AttachGuiApp.hAppWindow = hWnd;
 			pIn->AttachGuiApp.Styles.nStyle = nCurStyle; // стили могли измениться после создания окна,
 			pIn->AttachGuiApp.Styles.nStyleEx = nCurStyleEx; // поэтому получим актуальные
-			user->getWindowRect(hWnd, &pIn->AttachGuiApp.rcWindow);
+			GetWindowRect(hWnd, &pIn->AttachGuiApp.rcWindow);
 			GetModuleFileName(NULL, pIn->AttachGuiApp.sAppFilePathName, countof(pIn->AttachGuiApp.sAppFilePathName));
 
 			wchar_t szGuiPipeName[128];
@@ -869,8 +868,8 @@ void OnPostShowGuiClientWindow(HWND hWnd, int nCmdShow)
 
 	RECT rcGui = {0,0,grcAttachGuiClientOrig.right-grcAttachGuiClientOrig.left,grcAttachGuiClientOrig.bottom-grcAttachGuiClientOrig.top};
 
-	user->getClientRect(hWnd, &rcGui);
-	user->sendMessageW(hWnd, WM_SIZE, SIZE_RESTORED, MAKELONG((rcGui.right-rcGui.left),(rcGui.bottom-rcGui.top)));
+	GetClientRect(hWnd, &rcGui);
+	SendMessageW(hWnd, WM_SIZE, SIZE_RESTORED, MAKELONG((rcGui.right-rcGui.left),(rcGui.bottom-rcGui.top)));
 }
 
 void CorrectGuiChildRect(DWORD anStyle, DWORD anStyleEx, RECT& rcGui)
@@ -916,13 +915,13 @@ RECT AttachGuiClientPos(DWORD anStyle /*= 0*/, DWORD anStyleEx /*= 0*/)
 
 	if (ghConEmuWndBack)
 	{
-		user->getClientRect(ghConEmuWndBack, &rcPos);
+		GetClientRect(ghConEmuWndBack, &rcPos);
 		// AttachGuiClientPos may be called from CheckCanCreateWindow
 		// and ghAttachGuiClient is NULL at this point
 		_ASSERTEX(ghAttachGuiClient!=NULL || (anStyle||anStyleEx));
 
-		DWORD nStyle = (anStyle || anStyleEx) ? anStyle : (DWORD)user->getWindowLongPtrW(ghAttachGuiClient, GWL_STYLE);
-		DWORD nStyleEx = (anStyle || anStyleEx) ? anStyleEx : (DWORD)user->getWindowLongPtrW(ghAttachGuiClient, GWL_EXSTYLE);
+		DWORD nStyle = (anStyle || anStyleEx) ? anStyle : (DWORD)GetWindowLongPtr(ghAttachGuiClient, GWL_STYLE);
+		DWORD nStyleEx = (anStyle || anStyleEx) ? anStyleEx : (DWORD)GetWindowLongPtr(ghAttachGuiClient, GWL_EXSTYLE);
 
 		CorrectGuiChildRect(nStyle, nStyleEx, rcPos);
 	}
@@ -930,7 +929,7 @@ RECT AttachGuiClientPos(DWORD anStyle /*= 0*/, DWORD anStyleEx /*= 0*/)
 	{
 		_ASSERTEX(ghConEmuWndBack!=NULL);
 		_ASSERTEX(ghAttachGuiClient!=NULL);
-		user->getWindowRect(ghConEmuWndBack, &rcPos);
+		GetWindowRect(ghConEmuWndBack, &rcPos);
 	}
 
 	return rcPos;
@@ -976,13 +975,13 @@ void SetGuiExternMode(BOOL abUseExternMode, LPRECT prcOldPos /*= NULL*/)
 
 			if (gbAttachGuiClientStyleOk)
 			{
-				user->setWindowLongPtrW(ghAttachGuiClient, GWL_STYLE, gnAttachGuiClientStyle & ~WS_VISIBLE);
-				user->setWindowLongPtrW(ghAttachGuiClient, GWL_EXSTYLE, gnAttachGuiClientStyleEx);
+				SetWindowLongPtr(ghAttachGuiClient, GWL_STYLE, gnAttachGuiClientStyle & ~WS_VISIBLE);
+				SetWindowLongPtr(ghAttachGuiClient, GWL_EXSTYLE, gnAttachGuiClientStyleEx);
 			}
-			user->setParent(ghAttachGuiClient, NULL);
+			SetParent(ghAttachGuiClient, NULL);
 
 			TODO("Вернуть старый размер?");
-			user->setWindowPos(ghAttachGuiClient, ghConEmuWnd, rcGui.left,rcGui.top, rcGui.right-rcGui.left, rcGui.bottom-rcGui.top,
+			SetWindowPos(ghAttachGuiClient, ghConEmuWnd, rcGui.left,rcGui.top, rcGui.right-rcGui.left, rcGui.bottom-rcGui.top,
 				SWP_DRAWFRAME | SWP_SHOWWINDOW | SWP_ASYNCWINDOWPOS | SWP_NOACTIVATE);
 		}
 	}

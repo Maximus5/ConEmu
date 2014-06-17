@@ -436,8 +436,8 @@ CESERVER_CONSOLE_MAPPING_HDR* GetConMap(BOOL abForceRecreate/*=FALSE*/)
 
 			// Проверка. Но если в GUI аттачится существующая консоль - ConEmuHk может загрузиться раньше,
 			// чем создадутся HWND, т.е. GuiPID известен, но HWND еще вообще нету.
-			_ASSERTE(!ghConEmuWnd || ghConEmuWndDC && user->isWindow(ghConEmuWndDC));
-			_ASSERTE(!ghConEmuWnd || ghConEmuWndBack && user->isWindow(ghConEmuWndBack));
+			_ASSERTE(!ghConEmuWnd || ghConEmuWndDC && IsWindow(ghConEmuWndDC));
+			_ASSERTE(!ghConEmuWnd || ghConEmuWndBack && IsWindow(ghConEmuWndBack));
 
 			gnServerPID = gpConInfo->nServerPID;
 		}
@@ -484,11 +484,8 @@ void OnConWndChanged(HWND ahNewConWnd)
 	if (ahNewConWnd)
 	{
 		#ifdef _DEBUG
-		if (user)
-		{
-			wchar_t sClass[64]; user->getClassNameW(ahNewConWnd, sClass, countof(sClass));
+			wchar_t sClass[64]; GetClassName(ahNewConWnd, sClass, countof(sClass));
 			_ASSERTEX(isConsoleClass(sClass));
-		}
 		#endif
 
 		if (ghConWnd != ahNewConWnd)
@@ -1170,9 +1167,9 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 				if (szVar[0] == L'0' && szVar[1] == L'x')
 				{
 					dwConEmuHwnd = wcstoul(szVar+2, &psz, 16);
-					if (!user->isWindow((HWND)dwConEmuHwnd))
+					if (!IsWindow((HWND)dwConEmuHwnd))
 						dwConEmuHwnd = 0;
-					else if (!user->getClassNameW((HWND)dwConEmuHwnd, szVar, countof(szVar)))
+					else if (!GetClassName((HWND)dwConEmuHwnd, szVar, countof(szVar)))
 						dwConEmuHwnd = 0;
 					else if (lstrcmp(szVar, VirtualConsoleClassMain) != 0)
 						dwConEmuHwnd = 0;
@@ -1210,7 +1207,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 					{
 						if (pOut->AttachGuiApp.nFlags & agaf_Success)
 						{
-							user->allowSetForegroundWindow(pOut->hdr.nSrcPID); // PID ConEmu.
+							AllowSetForegroundWindow(pOut->hdr.nSrcPID); // PID ConEmu.
 							_ASSERTEX(gnGuiPID==0 || gnGuiPID==pOut->hdr.nSrcPID);
 							gnGuiPID = pOut->hdr.nSrcPID;
 							//ghConEmuWnd = (HWND)dwConEmuHwnd;
@@ -1219,7 +1216,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 							ghConEmuWnd = pOut->AttachGuiApp.hConEmuWnd;
 							SetConEmuHkWindows(pOut->AttachGuiApp.hConEmuDc, pOut->AttachGuiApp.hConEmuBack);
 							ghConWnd = pOut->AttachGuiApp.hSrvConWnd;
-							_ASSERTE(ghConEmuWndDC && user->isWindow(ghConEmuWndDC));
+							_ASSERTE(ghConEmuWndDC && IsWindow(ghConEmuWndDC));
 							grcConEmuClient = pOut->AttachGuiApp.rcWindow;
 							_ASSERTE(pOut->AttachGuiApp.nServerPID && (pOut->AttachGuiApp.nPID == pOut->AttachGuiApp.nServerPID));
 							gnServerPID = pOut->AttachGuiApp.nServerPID;
@@ -1495,7 +1492,7 @@ void DllStop()
 	{
 		DLOG0("unhookWindowsHookEx",0);
 		print_timings(L"unhookWindowsHookEx");
-		user->unhookWindowsHookEx(ghGuiClientRetHook);
+		UnhookWindowsHookEx(ghGuiClientRetHook);
 		DLOGEND();
 	}
 	#endif
@@ -2063,8 +2060,8 @@ void SendStarted()
 				ghConEmuWnd = pOut->StartStopRet.hWnd;
 				_ASSERTE(ghConEmuWnd==NULL || gnGuiPID!=0);
 				SetConEmuHkWindows(pOut->StartStopRet.hWndDc, pOut->StartStopRet.hWndBack);
-				_ASSERTE(ghConEmuWndDC && user->isWindow(ghConEmuWndDC));
-				_ASSERTE(ghConEmuWndBack && user->isWindow(ghConEmuWndBack));
+				_ASSERTE(ghConEmuWndDC && IsWindow(ghConEmuWndDC));
+				_ASSERTE(ghConEmuWndBack && IsWindow(ghConEmuWndBack));
 
 				gnServerPID = pOut->StartStopRet.dwMainSrvPID;
 				ExecuteFreeResult(pOut); pOut = NULL;
@@ -2293,7 +2290,7 @@ int DuplicateRoot(CESERVER_REQ_DUPLICATE* Duplicate)
 		pszCmdLine);
 
 	si.dwFlags |= STARTF_USESHOWWINDOW;
-	si.wShowWindow = user->isWindowVisible(ghConWnd) ? SW_SHOWNORMAL : SW_HIDE;
+	si.wShowWindow = IsWindowVisible(ghConWnd) ? SW_SHOWNORMAL : SW_HIDE;
 
 	if (Duplicate->nColors)
 	{
@@ -2338,7 +2335,7 @@ HWND WINAPI GetRealConsoleWindow()
 	_ASSERTE(gfGetRealConsoleWindow);
 	HWND hConWnd = gfGetRealConsoleWindow ? gfGetRealConsoleWindow() : NULL; //GetConsoleWindow();
 #ifdef _DEBUG
-	wchar_t sClass[64]; user->getClassNameW(hConWnd, sClass, countof(sClass));
+	wchar_t sClass[64]; GetClassName(hConWnd, sClass, countof(sClass));
 	_ASSERTEX(hConWnd==NULL || isConsoleClass(sClass));
 #endif
 	return hConWnd;
@@ -2362,7 +2359,7 @@ BOOL WINAPI HookServerCommand(LPVOID pInst, CESERVER_REQ* pCmd, CESERVER_REQ* &p
 			if (!ghConEmuWnd)
 			{
 				// gnGuiPID мог остаться от предыдущего 'detach'
-				if (user->getWindowThreadProcessId(pCmd->AttachGuiApp.hConEmuWnd, &gnGuiPID) && gnGuiPID)
+				if (GetWindowThreadProcessId(pCmd->AttachGuiApp.hConEmuWnd, &gnGuiPID) && gnGuiPID)
 				{
 					ghConEmuWnd = pCmd->AttachGuiApp.hConEmuWnd;
 				}
@@ -2496,7 +2493,7 @@ BOOL WINAPI HookServerCommand(LPVOID pInst, CESERVER_REQ* pCmd, CESERVER_REQ* &p
 						pCmd->NewServer.nGuiPID, (DWORD)pCmd->NewServer.hGuiWnd, GetCurrentProcessId());
 				}
 
-				if (user->isWindowVisible(ghConWnd))
+				if (IsWindowVisible(ghConWnd))
 				{
 					si.dwFlags |= STARTF_USESHOWWINDOW;
 					si.wShowWindow = SW_SHOWNORMAL;

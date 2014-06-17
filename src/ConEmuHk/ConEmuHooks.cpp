@@ -77,7 +77,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmuHooks.h"
 #include "RegHooks.h"
 #include "ShellProcessor.h"
-#include "UserImp.h"
 #include "GuiAttach.h"
 #include "Ansi.h"
 #include "../common/CmdLine.h"
@@ -110,7 +109,7 @@ void PatchDialogParentWnd(HWND& hWndParent);
 
 
 #undef isPressed
-#define isPressed(inp) ((user->getKeyState(inp) & 0x8000) == 0x8000)
+#define isPressed(inp) ((GetKeyState(inp) & 0x8000) == 0x8000)
 
 //110131 попробуем просто добвавить ее в ExcludedModules
 //#include <WinInet.h>
@@ -974,7 +973,7 @@ BOOL StartupHooks(HMODULE ahOurDll)
 	wchar_t sClass[128];
 	if (ghConWnd)
 	{
-		user->getClassNameW(ghConWnd, sClass, countof(sClass));
+		GetClassName(ghConWnd, sClass, countof(sClass));
 		_ASSERTE(isConsoleClass(sClass));
 	}
 
@@ -2059,7 +2058,7 @@ BOOL WINAPI OnShowWindow(HWND hWnd, int nCmdShow)
 		if (!bShowWndCalled)
 		{
 			bShowWndCalled = true;
-			if (!lbRc && nCmdShow && !user->isWindowVisible(hWnd))
+			if (!lbRc && nCmdShow && !IsWindowVisible(hWnd))
 			{
 				F(ShowWindow)(hWnd, nCmdShow);
 			}
@@ -2068,7 +2067,7 @@ BOOL WINAPI OnShowWindow(HWND hWnd, int nCmdShow)
 		// Если вкладка НЕ активная - то вернуть фокус в ConEmu
 		if (lbGuiAttach && lbInactiveTab && nCmdShow && ghConEmuWnd)
 		{
-			user->setForegroundWindow(ghConEmuWnd);
+			SetForegroundWindow(ghConEmuWnd);
 		}
 	}
 	DWORD dwErr = GetLastError();
@@ -2220,7 +2219,7 @@ HWND WINAPI OnGetAncestor(HWND hWnd, UINT gaFlags)
 			else
 			{
 				wchar_t szName[255];
-				user->getClassNameW(hWnd, szName, countof(szName));
+				GetClassName(hWnd, szName, countof(szName));
 				if (wcsncmp(szName, L"WindowsForms", 12) == 0)
 				{
 					GetWindowText(hWnd, szName, countof(szName));
@@ -2371,11 +2370,11 @@ BOOL WINAPI OnSetMenu(HWND hWnd, HMENU hMenu)
 		if ((gnAttachGuiClientFlags & (agaf_WS_CHILD|agaf_NoMenu|agaf_DotNet)) == (agaf_WS_CHILD|agaf_NoMenu))
 		{
 			gnAttachGuiClientFlags &= ~(agaf_WS_CHILD|agaf_NoMenu);
-			DWORD_PTR dwStyle = user->getWindowLongPtrW(ghAttachGuiClient, GWL_STYLE);
+			DWORD_PTR dwStyle = GetWindowLongPtr(ghAttachGuiClient, GWL_STYLE);
 			DWORD_PTR dwNewStyle = (dwStyle & ~WS_CHILD) | (gnAttachGuiClientStyle & WS_POPUP);
 			if (dwStyle != dwNewStyle)
 			{
-				user->setWindowLongPtrW(ghAttachGuiClient, GWL_STYLE, dwNewStyle);
+				SetWindowLongPtr(ghAttachGuiClient, GWL_STYLE, dwNewStyle);
 			}
 		}
 	}
@@ -2604,7 +2603,7 @@ BOOL WINAPI OnGetWindowPlacement(HWND hWnd, WINDOWPLACEMENT *lpwndpl)
 	if (lbRc && ghConEmuWndDC && !gbGuiClientExternMode && ghAttachGuiClient
 		&& hWnd == ghAttachGuiClient && user)
 	{
-		user->mapWindowPoints(ghConEmuWndDC, NULL, (LPPOINT)&lpwndpl->rcNormalPosition, 2);
+		MapWindowPoints(ghConEmuWndDC, NULL, (LPPOINT)&lpwndpl->rcNormalPosition, 2);
 	}
 
 	return lbRc;
@@ -2971,8 +2970,8 @@ HWND WINAPI OnCreateDialogIndirectParamA(HINSTANCE hInstance, LPCDLGTEMPLATE lpT
 
 		if (hWnd && bAttachGui)
 		{
-			lStyle = (DWORD)user->getWindowLongPtrW(hWnd, GWL_STYLE);
-			lStyleEx = (DWORD)user->getWindowLongPtrW(hWnd, GWL_EXSTYLE);
+			lStyle = (DWORD)GetWindowLongPtr(hWnd, GWL_STYLE);
+			lStyleEx = (DWORD)GetWindowLongPtr(hWnd, GWL_EXSTYLE);
 			if (CheckCanCreateWindow((LPCSTR)32770, NULL, lStyle, lStyleEx, hWndParent, bAttachGui, bStyleHidden) && bAttachGui)
 			{
 				OnGuiWindowAttached(hWnd, NULL, (LPCSTR)32770, NULL, lStyle, lStyleEx, bStyleHidden);
@@ -3009,8 +3008,8 @@ HWND WINAPI OnCreateDialogIndirectParamW(HINSTANCE hInstance, LPCDLGTEMPLATE lpT
 
 		if (hWnd && bAttachGui)
 		{
-			lStyle = (DWORD)user->getWindowLongPtrW(hWnd, GWL_STYLE);
-			lStyleEx = (DWORD)user->getWindowLongPtrW(hWnd, GWL_EXSTYLE);
+			lStyle = (DWORD)GetWindowLongPtr(hWnd, GWL_STYLE);
+			lStyleEx = (DWORD)GetWindowLongPtr(hWnd, GWL_EXSTYLE);
 			if (CheckCanCreateWindow((LPCSTR)32770, NULL, lStyle, lStyleEx, hWndParent, bAttachGui, bStyleHidden) && bAttachGui)
 			{
 				OnGuiWindowAttached(hWnd, NULL, NULL, (LPCWSTR)32770, lStyle, lStyleEx, bStyleHidden);
@@ -5122,7 +5121,7 @@ HWND WINAPI OnGetConsoleWindow(void)
 
 	_ASSERTE(F(GetConsoleWindow) != GetRealConsoleWindow);
 
-	if (ghConEmuWndDC && user->isWindow(ghConEmuWndDC) /*ghConsoleHwnd*/)
+	if (ghConEmuWndDC && IsWindow(ghConEmuWndDC) /*ghConsoleHwnd*/)
 	{
 		if (ghAttachGuiClient)
 		{
@@ -5348,18 +5347,15 @@ INT_PTR CALLBACK SimpleApiDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPA
 {
 	SimpleApiFunctionArg* P = NULL;
 
-	//typedef LONG_PTR (WINAPI* SetWindowLongPtr_t)(HWND,int,LONG_PTR);
-	//SetWindowLongPtr_t SetWindowLongPtr_f = (SetWindowLongPtr_t)GetProcAddress(ghUser32,WIN3264TEST("SetWindowLongW","SetWindowLongPtrW"));
-	
 	if (uMsg == WM_INITDIALOG)
 	{
 		P = (SimpleApiFunctionArg*)lParam;
-		user->setWindowLongPtrW(hwndDlg, GWLP_USERDATA, lParam);
-		
+		SetWindowLongPtr(hwndDlg, GWLP_USERDATA, lParam);
+
 		int x = 0, y = 0;
 		RECT rcDC = {};
-		if (!user->getWindowRect(ghConEmuWndDC, &rcDC))
-			user->systemParametersInfoW(SPI_GETWORKAREA, 0, &rcDC, 0);
+		if (!GetWindowRect(ghConEmuWndDC, &rcDC))
+			SystemParametersInfoW(SPI_GETWORKAREA, 0, &rcDC, 0);
 		if (rcDC.right > rcDC.left && rcDC.bottom > rcDC.top)
 		{
 			x = max(rcDC.left, ((rcDC.right+rcDC.left-300)>>1));
@@ -5374,23 +5370,23 @@ INT_PTR CALLBACK SimpleApiDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPA
 		{
 			case SimpleApiFunctionArg::sft_ChooseColorA:
 				((LPCHOOSECOLORA)P->pArg)->hwndOwner = hwndDlg;
-				user->setWindowTextW(hwndDlg, L"ConEmu ColorPicker");
+				SetWindowTextW(hwndDlg, L"ConEmu ColorPicker");
 				break;
 			case SimpleApiFunctionArg::sft_ChooseColorW:
 				((LPCHOOSECOLORW)P->pArg)->hwndOwner = hwndDlg;
-				user->setWindowTextW(hwndDlg, L"ConEmu ColorPicker");
+				SetWindowTextW(hwndDlg, L"ConEmu ColorPicker");
 				break;
 		}
-		
-		user->setWindowPos(hwndDlg, HWND_TOP, x, y, 0, 0, SWP_SHOWWINDOW);
-		
+
+		SetWindowPos(hwndDlg, HWND_TOP, x, y, 0, 0, SWP_SHOWWINDOW);
+
 		P->bResult = P->funcPtr(P->pArg);
 		P->nLastError = GetLastError();
 		
 		//typedef BOOL (WINAPI* EndDialog_t)(HWND,INT_PTR);
 		//EndDialog_t EndDialog_f = (EndDialog_t)GetProcAddress(ghUser32, "EndDialog");
-		user->endDialog(hwndDlg, 1);
-		
+		EndDialog(hwndDlg, 1);
+
 		return FALSE;
 	}
 
@@ -5400,7 +5396,7 @@ INT_PTR CALLBACK SimpleApiDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPA
 		{
 			MINMAXINFO* p = (MINMAXINFO*)lParam;
 			p->ptMinTrackSize.x = p->ptMinTrackSize.y = 0;
-			user->setWindowLongPtrW(hwndDlg, DWLP_MSGRESULT, 0);
+			SetWindowLongPtr(hwndDlg, DWLP_MSGRESULT, 0);
 		}
 		return TRUE;
 	}
@@ -5427,23 +5423,14 @@ BOOL MyChooseColor(SimpleApiFunction_t funcPtr, void* lpcc, BOOL abUnicode)
 		return Arg.bResult;
 	}
 	pTempl->style = WS_POPUP|/*DS_MODALFRAME|DS_CENTER|*/DS_SETFOREGROUND;
-	
-	
-	//typedef INT_PTR (WINAPI* DialogBoxIndirectParam_t)(HINSTANCE,LPCDLGTEMPLATE,HWND,DLGPROC,LPARAM);
-	//DialogBoxIndirectParam_t DialogBoxIndirectParam_f = (DialogBoxIndirectParam_t)GetProcAddress(ghUser32, "DialogBoxIndirectParamW");
-	
-	//if (DialogBoxIndirectParam_f)
-	//{
 
-	INT_PTR iRc = user->dialogBoxIndirectParamW(ghOurModule, pTempl, NULL, SimpleApiDialogProc, (LPARAM)&Arg);
+	INT_PTR iRc = DialogBoxIndirectParam(ghOurModule, pTempl, NULL, SimpleApiDialogProc, (LPARAM)&Arg);
 	if (iRc == 1)
 	{
 		lbRc = Arg.bResult;
 		SetLastError(Arg.nLastError);
 	}
 
-	//}
-	
 	return lbRc;
 }
 
@@ -5479,7 +5466,7 @@ BOOL WINAPI OnSetConsoleKeyShortcuts(BOOL bSet, BYTE bReserveKeys, LPVOID p1, DW
 	if (F(SetConsoleKeyShortcuts))
 		lbRc = F(SetConsoleKeyShortcuts)(bSet, bReserveKeys, p1, n1);
 
-	if (ghConEmuWnd && user->isWindow(ghConEmuWnd))
+	if (ghConEmuWnd && IsWindow(ghConEmuWnd))
 	{
 		DWORD nLastErr = GetLastError();
 		DWORD nSize = sizeof(CESERVER_REQ_HDR)+sizeof(BYTE)*2;
@@ -5755,8 +5742,8 @@ BOOL GuiSetForeground(HWND hWnd)
 			ExecutePrepareCmd(pIn, CECMD_SETFOREGROUND, sizeof(CESERVER_REQ_HDR)+sizeof(u64)); //-V119
 
 			DWORD nConEmuPID = ASFW_ANY;
-			user->getWindowThreadProcessId(ghConEmuWndDC, &nConEmuPID);
-			user->allowSetForegroundWindow(nConEmuPID);
+			GetWindowThreadProcessId(ghConEmuWndDC, &nConEmuPID);
+			AllowSetForegroundWindow(nConEmuPID);
 
 			pIn->qwData[0] = (u64)hWnd;
 			HWND hConWnd = GetRealConsoleWindow();
@@ -6538,7 +6525,7 @@ void PatchDialogParentWnd(HWND& hWndParent)
 
 	if (ghConEmuWndDC)
 	{
-		if (!hWndParent || !user->isWindowVisible(hWndParent))
+		if (!hWndParent || !IsWindowVisible(hWndParent))
 			hWndParent = ghConEmuWnd;
 	}
 }

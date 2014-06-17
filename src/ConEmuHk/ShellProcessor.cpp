@@ -45,7 +45,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/WinObjects.h"
 #include "../common/CmdLine.h"
 #include "../common/DefTermHooker.h"
-#include "UserImp.h"
 
 #ifndef SEE_MASK_NOZONECHECKS
 #define SEE_MASK_NOZONECHECKS 0x800000
@@ -287,7 +286,7 @@ HWND CShellProc::FindCheckConEmuWindow()
 
 	if (ghConEmuWnd)
 	{
-		if (user->isWindow(ghConEmuWnd))
+		if (IsWindow(ghConEmuWnd))
 		{
 			return ghConEmuWnd; // OK, живое
 		}
@@ -297,13 +296,13 @@ HWND CShellProc::FindCheckConEmuWindow()
 		mb_TempConEmuWnd = TRUE;
 	}
 
-	HWND h = user->findWindowEx(NULL, NULL, VirtualConsoleClassMain, NULL);
+	HWND h = FindWindowEx(NULL, NULL, VirtualConsoleClassMain, NULL);
 	if (h)
 	{
 		ghConEmuWnd = h;
-		HWND hWork = user->findWindowEx(h, NULL, VirtualConsoleClassWork, NULL);
+		HWND hWork = FindWindowEx(h, NULL, VirtualConsoleClassWork, NULL);
 		_ASSERTEX(hWork!=NULL && "Workspace must be inside ConEmu"); // код расчитан на это
-		ghConEmuWndDC = user->findWindowEx(h, NULL, VirtualConsoleClass, NULL);
+		ghConEmuWndDC = FindWindowEx(h, NULL, VirtualConsoleClass, NULL);
 		if (!ghConEmuWndDC)
 		{
 			// This may be, if ConEmu was started in "Detached" more,
@@ -396,7 +395,7 @@ BOOL CShellProc::LoadSrvMapping(BOOL bLightCheck /*= FALSE*/)
 		else
 		{
 			DWORD nGuiPID;
-			if (!user->getWindowThreadProcessId(ghConEmuWnd, &nGuiPID) || !nGuiPID)
+			if (!GetWindowThreadProcessId(ghConEmuWnd, &nGuiPID) || !nGuiPID)
 			{
 				_ASSERTEX(FALSE && "LoadGuiMapping failed, getWindowThreadProcessId failed");
 				return FALSE;
@@ -437,14 +436,14 @@ BOOL CShellProc::LoadSrvMapping(BOOL bLightCheck /*= FALSE*/)
 		return TRUE;
 	}
 
-	if (!m_SrvMapping.cbSize || (m_SrvMapping.hConEmuWndDc && !user->isWindow(m_SrvMapping.hConEmuWndDc)))
+	if (!m_SrvMapping.cbSize || (m_SrvMapping.hConEmuWndDc && !IsWindow(m_SrvMapping.hConEmuWndDc)))
 	{
 		if (!::LoadSrvMapping(ghConWnd, m_SrvMapping))
 			return FALSE;
 		_ASSERTE(m_SrvMapping.ComSpec.ConEmuExeDir[0] && m_SrvMapping.ComSpec.ConEmuBaseDir[0]);
 	}
 
-	if (!m_SrvMapping.hConEmuWndDc || !user->isWindow(m_SrvMapping.hConEmuWndDc))
+	if (!m_SrvMapping.hConEmuWndDc || !IsWindow(m_SrvMapping.hConEmuWndDc))
 		return FALSE;
 
 	return TRUE;
