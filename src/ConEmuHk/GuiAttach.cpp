@@ -291,9 +291,9 @@ bool CheckCanCreateWindow(LPCSTR lpClassNameA, LPCWSTR lpClassNameW, DWORD& dwSt
 				if (!ghGuiClientRetHook)
 					ghGuiClientRetHook = SetWindowsHookExW(WH_CALLWNDPROCRET, GuiClientRetHook, NULL, GetCurrentThreadId());
 				//if (!ghGuiClientCallHook)
-				//	ghGuiClientCallHook = user->setWindowsHookExW(WH_CALLWNDPROC, GuiClientCallHook, NULL, GetCurrentThreadId());
+				//	ghGuiClientCallHook = SetWindowsHookExW(WH_CALLWNDPROC, GuiClientCallHook, NULL, GetCurrentThreadId());
 				//if (!ghGuiClientMsgHook)
-				//	ghGuiClientMsgHook = user->setWindowsHookExW(WH_GETMESSAGE, GuiClientMsgHook, NULL, GetCurrentThreadId());
+				//	ghGuiClientMsgHook = SetWindowsHookExW(WH_GETMESSAGE, GuiClientMsgHook, NULL, GetCurrentThreadId());
 				#endif
 
 				//gnAttachGuiClientThreadId = nTID; -- перенес к "ghAttachGuiClient = hWindow;"
@@ -396,7 +396,7 @@ void ReplaceGuiAppWindow(BOOL abStyleHidden)
 		gnAttachGuiClientStyleEx = (DWORD)dwStyleEx;
 	}
 
-	// Позвать user->getWindowRect(ghAttachGuiClient, &grcAttachGuiClientOrig); если надо
+	// Позвать GetWindowRect(ghAttachGuiClient, &grcAttachGuiClientOrig); если надо
 	CheckOrigGuiClientRect();
 
 	if (!gbGuiClientExternMode)
@@ -699,22 +699,22 @@ void OnGuiWindowAttached(HWND hWindow, HMENU hMenu, LPCSTR asClassA, LPCWSTR asC
 
 			//if (hPreFocus)
 			//{
-			//	user->setFocus(hPreFocus);
+			//	SetFocus(hPreFocus);
 			//}
 			UINT nMsgID = RegisterWindowMessageW(CONEMUMSG_RESTORECHILDFOCUS);
 			PostMessageW(ghConEmuWndBack, nMsgID, 0,0);
 
 			//// !!! OnSetForegroundWindow не подходит - он дергает Cmd.
-			////user->setForegroundWindow(ghConEmuWnd);
+			////SetForegroundWindow(ghConEmuWnd);
 			//#if 0
-			//wchar_t szClass[64] = {}; user->getClassNameW(hFocus, szClass, countof(szClass));
+			//wchar_t szClass[64] = {}; GetClassName(hFocus, szClass, countof(szClass));
 			//MessageBox(NULL, szClass, L"WasFocused", MB_SYSTEMMODAL);
 			//#endif
 			////if (!(nCurStyle & WS_CHILDWINDOW))
 			//{
 			//	// Если ставить WS_CHILD - пропадет меню!
 			//	//nCurStyle = (nCurStyle | WS_CHILDWINDOW|WS_TABSTOP); // & ~(WS_THICKFRAME/*|WS_CAPTION|WS_MINIMIZEBOX|WS_MAXIMIZEBOX*/);
-			//	//user->setWindowLongPtrW(hWindow, GWL_STYLE, nCurStyle);
+			//	//SetWindowLongPtr(hWindow, GWL_STYLE, nCurStyle);
 			//	if (gnAttachGuiClientFlags & agaf_DotNet)
 			//	{
 			//	}
@@ -725,7 +725,7 @@ void OnGuiWindowAttached(HWND hWindow, HMENU hMenu, LPCSTR asClassA, LPCWSTR asC
 			//}
 			//
 			//RECT rcGui = grcAttachGuiClientPos = pOut->AttachGuiApp.rcWindow;
-			//if (user->setWindowPos(hWindow, HWND_TOP, rcGui.left,rcGui.top, rcGui.right-rcGui.left, rcGui.bottom-rcGui.top,
+			//if (SetWindowPos(hWindow, HWND_TOP, rcGui.left,rcGui.top, rcGui.right-rcGui.left, rcGui.bottom-rcGui.top,
 			//	SWP_DRAWFRAME | /*SWP_FRAMECHANGED |*/ (abStyleHidden ? SWP_SHOWWINDOW : 0)))
 			//{
 			//	if (abStyleHidden)
@@ -733,13 +733,13 @@ void OnGuiWindowAttached(HWND hWindow, HMENU hMenu, LPCSTR asClassA, LPCWSTR asC
 			//}
 			//
 			//// !!! OnSetForegroundWindow не подходит - он дергает Cmd.
-			//user->setForegroundWindow(ghConEmuWnd);
+			//SetForegroundWindow(ghConEmuWnd);
 			////if (hFocus)
 			////SetFocus(hFocus ? hFocus : hWindow); // hFocus==NULL, эффекта нет
 			////OnSetForegroundWindow(hWindow);
-			////user->postMessage(ghConEmuWnd, WM_NCACTIVATE, TRUE, 0);
-			////user->postMessage(ghConEmuWnd, WM_NCPAINT, 0, 0);
-			//user->postMessage(hWindow, WM_NCPAINT, 0, 0);
+			////PostMessageW(ghConEmuWnd, WM_NCACTIVATE, TRUE, 0);
+			////PostMessageW(ghConEmuWnd, WM_NCPAINT, 0, 0);
+			//PostMessageW(hWindow, WM_NCPAINT, 0, 0);
 		}
 		ExecuteFreeResult(pOut);
 	}
@@ -761,14 +761,14 @@ void OnShowGuiClientWindow(HWND hWnd, int &nCmdShow, BOOL &rbGuiAttach, BOOL &rb
 
 	//if (ghConEmuWnd)
 	//{
-	//	DWORD nConEmuExStyle = user->getWindowLongPtrW(ghConEmuWnd, GWL_EXSTYLE);
+	//	DWORD nConEmuExStyle = GetWindowLongPtr(ghConEmuWnd, GWL_EXSTYLE);
 	//	if (nConEmuExStyle & WS_EX_TOPMOST)
 	//	{
-	//		DWORD nExtStyle = user->getWindowLongPtrW(hWnd, GWL_EXSTYLE);
+	//		DWORD nExtStyle = GetWindowLongPtr(hWnd, GWL_EXSTYLE);
 	//		if (!(nExtStyle & WS_EX_TOPMOST))
 	//		{
 	//			nExtStyle |= WS_EX_TOPMOST;
-	//			user->setWindowLongPtrW(hWnd, GWL_EXSTYLE, nExtStyle);
+	//			SetWindowLongPtr(hWnd, GWL_EXSTYLE, nExtStyle);
 	//		}
 	//	}
 	//}
@@ -853,7 +853,7 @@ void OnShowGuiClientWindow(HWND hWnd, int &nCmdShow, BOOL &rbGuiAttach, BOOL &rb
 		ReplaceGuiAppWindow(FALSE);
 
 		//RECT rcGui = grcAttachGuiClientPos;
-		//user->setWindowPos(hWnd, HWND_TOP, rcGui.left,rcGui.top, rcGui.right-rcGui.left, rcGui.bottom-rcGui.top,
+		//SetWindowPos(hWnd, HWND_TOP, rcGui.left,rcGui.top, rcGui.right-rcGui.left, rcGui.bottom-rcGui.top,
 		//	SWP_FRAMECHANGED);
 
 		nCmdShow = SW_SHOWNORMAL;
@@ -942,7 +942,7 @@ bool OnSetGuiClientWindowPos(HWND hWnd, HWND hWndInsertAfter, int &X, int &Y, in
 	if (ghAttachGuiClient && hWnd == ghAttachGuiClient)
 	{
 		// -- что-то GetParent возвращает NULL (для cifirica по крайней мере)
-		//if (user->getParent(hWnd) == ghConEmuWndBack)
+		//if (GetParent(hWnd) == ghConEmuWndBack)
 		{
 			RECT rcGui = AttachGuiClientPos();
 			X = rcGui.left;

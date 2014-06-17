@@ -1930,7 +1930,7 @@ BOOL WINAPI DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 //					//if (hConEmu)
 //					//{
 //					//	wchar_t szClass[64];
-//					//	if (GetClassNameW(hConEmu, szClass, 63) && lstrcmpW(szClass, VirtualConsoleClass)==0)
+//					//	if (GetClassName(hConEmu, szClass, 63) && lstrcmpW(szClass, VirtualConsoleClass)==0)
 //					//	{
 //					//		//if (!gnMsgActivateCon) --> DllMain
 //					//		//	gnMsgActivateCon = RegisterWindowMessage(CONEMUMSG_LLKEYHOOK);
