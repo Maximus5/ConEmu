@@ -880,7 +880,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 		wcscat_c(gsExeName, L".exe");
 	}
 
-	if ((lstrcmpi(pszName, L"powershell.exe") == 0) || (lstrcmpi(pszName, L"powershell") == 0))
+	if (lstrcmpi(gsExeName, L"powershell.exe") == 0)
 	{
 		HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
 		if (CEAnsi::IsOutputHandle(hStdOut))
@@ -899,20 +899,20 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 			}
 		}
 	}
-	else if ((lstrcmpi(pszName, L"far.exe") == 0) || (lstrcmpi(pszName, L"far64.exe") == 0) || (lstrcmpi(pszName, L"far32.exe") == 0))
+	else if ((lstrcmpi(gsExeName, L"far.exe") == 0) || (lstrcmpi(gsExeName, L"far64.exe") == 0) || (lstrcmpi(gsExeName, L"far32.exe") == 0))
 	{
 		gbIsFarProcess = true;
 	}
-	else if ((lstrcmpi(pszName, L"cmd.exe") == 0) || (lstrcmpi(pszName, L"cmd") == 0))
+	else if (lstrcmpi(gsExeName, L"cmd.exe") == 0)
 	{
 		gbIsCmdProcess = true;
 		#if 0
 		CreateThread(NULL, 0, DummyLibLoaderCmdThread, NULL, 0, &gnDummyLibLoaderCmdThreadTID);
 		#endif
 	}
-	else if ((lstrcmpi(pszName, L"sh.exe") == 0) || (lstrcmpi(pszName, L"sh") == 0)
-		|| (lstrcmpi(pszName, L"bash.exe") == 0) || (lstrcmpi(pszName, L"bash") == 0)
-		|| (lstrcmpi(pszName, L"isatty.exe") == 0)
+	else if ((lstrcmpi(gsExeName, L"sh.exe") == 0)
+		|| (lstrcmpi(gsExeName, L"bash.exe") == 0)
+		|| (lstrcmpi(gsExeName, L"isatty.exe") == 0)
 		)
 	{
 		//_ASSERTEX(FALSE && "settings gbIsBashProcess");
@@ -920,11 +920,11 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 
 		TODO("Start redirection of ConIn/ConOut to our pipes to achieve PTTY in bash");
 		#if 0
-		if (lstrcmpi(pszName, L"isatty.exe") == 0)
+		if (lstrcmpi(gsExeName, L"isatty.exe") == 0)
 			StartPTY();
 		#endif
 	}
-	else if ((lstrcmpi(pszName, L"ssh.exe") == 0) || (lstrcmpi(pszName, L"ssh") == 0))
+	else if (lstrcmpi(gsExeName, L"ssh.exe") == 0)
 	{
 		gbIsSshProcess = true;
 		#if 0
@@ -934,40 +934,40 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 		CreateThread(NULL, 0, DummyLibLoaderThread, NULL, 0, &gnDummyLibLoaderThreadTID);
 		#endif
 	}
-	else if ((lstrcmpi(pszName, L"hiew32.exe") == 0) || (lstrcmpi(pszName, L"hiew32") == 0))
+	else if (lstrcmpi(gsExeName, L"hiew32.exe") == 0)
 	{
 		gbIsHiewProcess = true;
 	}
-	else if ((lstrcmpi(pszName, L"dosbox.exe") == 0) || (lstrcmpi(pszName, L"dosbox") == 0))
+	else if (lstrcmpi(gsExeName, L"dosbox.exe") == 0)
 	{
 		gbDosBoxProcess = true;
 	}
-	else if ((lstrcmpi(pszName, L"vim.exe") == 0) || (lstrcmpi(pszName, L"vim") == 0))
+	else if (lstrcmpi(gsExeName, L"vim.exe") == 0)
 	{
 		gbIsVimProcess = true;
 		//CEAnsi::StartVimTerm(true);
 	}
-	else if (lstrcmpni(pszName, L"mintty", 6) == 0)
+	else if (lstrcmpni(gsExeName, L"mintty", 6) == 0) // Without extension? Or may be "minttyXXX.exe"?
 	{
 		gbIsMinTtyProcess = true;
 	}
-	else if ((lstrcmpi(pszName, L"notepad.exe") == 0) || (lstrcmpi(pszName, L"notepad") == 0))
+	else if (lstrcmpi(gsExeName, L"notepad.exe") == 0)
 	{
 		//_ASSERTE(FALSE && "Notepad.exe started!");
 	}
-	else if (IsVsNetHostExe(pszName)) // "*.vshost.exe"
+	else if (IsVsNetHostExe(pszName)) // "*.vshost.exe", "*" may be long, so we use pszName instead of limited gsExeName
 	{
 		gbIsNetVsHost = true;
 	}
-	else if ((lstrcmpi(pszName, L"devenv.exe") == 0) || (lstrcmpi(pszName, L"WDExpress.exe") == 0))
+	else if ((lstrcmpi(gsExeName, L"devenv.exe") == 0) || (lstrcmpi(gsExeName, L"WDExpress.exe") == 0))
 	{
 		gbIsVStudio = true;
 	}
 
 	if (gbIsNetVsHost
-		|| (lstrcmpi(pszName, L"chrome.exe") == 0)
-		|| (lstrcmpi(pszName, L"firefox.exe") == 0)
-		|| (lstrcmpi(pszName, L"link.exe") == 0))
+		|| (lstrcmpi(gsExeName, L"chrome.exe") == 0)
+		|| (lstrcmpi(gsExeName, L"firefox.exe") == 0)
+		|| (lstrcmpi(gsExeName, L"link.exe") == 0))
 	{
 		gbSkipVirtualAllocErr = true;
 	}
