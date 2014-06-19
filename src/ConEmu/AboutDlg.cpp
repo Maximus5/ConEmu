@@ -327,7 +327,7 @@ void ConEmuAbout::searchProc(HWND hDlg, HWND hSearch, bool bReentr)
 			pszFrom += cchFrom;
 
 		LPCWSTR pszFind = StrStrI(pszFrom, pszPart);
-		if (!pszFind && (pszFrom != pszText))
+		if (!pszFind && bReentr && (pszFrom != pszText))
 			pszFind = StrStrI(pszText, pszPart);
 
 		if (pszFind)
