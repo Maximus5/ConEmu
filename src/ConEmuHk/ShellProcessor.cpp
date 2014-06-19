@@ -1855,7 +1855,6 @@ int CShellProc::PrepareExecuteParms(
 		}
 	}
 
-
 	BOOL lbChanged = FALSE;
 	mb_NeedInjects = FALSE;
 	//wchar_t szBaseDir[MAX_PATH+2]; szBaseDir[0] = 0;
@@ -1879,7 +1878,12 @@ int CShellProc::PrepareExecuteParms(
 	}
 
 	// When user set env var "ConEmuHooks=OFF" - don't set hooks
-	if (mb_Opt_DontInject)
+	if (mb_Opt_DontInject
+		// Running "ssh-agent", it will copy itself for detaching from console
+		// And we need leave unhooked both of them, otherwise parent will fails
+		// to communicate with child (different kernel function addresses)
+		|| (lstrcmpi(PointToName(ms_ExeTmp), L"ssh-agent.exe") == 0)
+		)
 	{
 		mb_NeedInjects = FALSE;
 		goto wrap;
