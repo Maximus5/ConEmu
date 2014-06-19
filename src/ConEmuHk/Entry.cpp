@@ -397,6 +397,11 @@ void SetConEmuHkWindows(HWND hDcWnd, HWND hBackWnd)
 	ghConEmuWndBack = hBackWnd;
 }
 
+void SetServerPID(DWORD anMainSrvPID)
+{
+	gnServerPID = anMainSrvPID;
+}
+
 
 MFileMapping<CESERVER_CONSOLE_MAPPING_HDR> *gpConMap = NULL;
 CESERVER_CONSOLE_MAPPING_HDR* gpConInfo = NULL;
@@ -442,7 +447,7 @@ CESERVER_CONSOLE_MAPPING_HDR* GetConMap(BOOL abForceRecreate/*=FALSE*/)
 			_ASSERTE(!ghConEmuWnd || ghConEmuWndDC && IsWindow(ghConEmuWndDC));
 			_ASSERTE(!ghConEmuWnd || ghConEmuWndBack && IsWindow(ghConEmuWndBack));
 
-			gnServerPID = gpConInfo->nServerPID;
+			SetServerPID(gpConInfo->nServerPID);
 		}
 		else
 		{
@@ -1186,7 +1191,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 
 			if (!gnServerPID && GetEnvironmentVariable(ENV_CONEMUSERVERPID_VAR_W, szVar, countof(szVar)))
 			{
-				gnServerPID = wcstoul(szVar, &psz, 10);
+				SetServerPID(wcstoul(szVar, &psz, 10));
 			}
 
 			if (dwConEmuHwnd)
@@ -1227,7 +1232,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 							_ASSERTE(ghConEmuWndDC && IsWindow(ghConEmuWndDC));
 							grcConEmuClient = pOut->AttachGuiApp.rcWindow;
 							_ASSERTE(pOut->AttachGuiApp.nServerPID && (pOut->AttachGuiApp.nPID == pOut->AttachGuiApp.nServerPID));
-							gnServerPID = pOut->AttachGuiApp.nServerPID;
+							SetServerPID(pOut->AttachGuiApp.nServerPID);
 							//gbGuiClientHideCaption = pOut->AttachGuiApp.bHideCaption;
 							gGuiClientStyles = pOut->AttachGuiApp.Styles;
 							if (pOut->AttachGuiApp.hkl)
@@ -2065,7 +2070,7 @@ void SendStarted()
 				_ASSERTE(ghConEmuWndDC && IsWindow(ghConEmuWndDC));
 				_ASSERTE(ghConEmuWndBack && IsWindow(ghConEmuWndBack));
 
-				gnServerPID = pOut->StartStopRet.dwMainSrvPID;
+				SetServerPID(pOut->StartStopRet.dwMainSrvPID);
 				ExecuteFreeResult(pOut); pOut = NULL;
 			}
 		}
@@ -2367,6 +2372,7 @@ BOOL WINAPI HookServerCommand(LPVOID pInst, CESERVER_REQ* pCmd, CESERVER_REQ* &p
 				}
 			}
 			_ASSERTE(gnServerPID && (gnServerPID == pCmd->AttachGuiApp.nServerPID));
+			SetServerPID(pCmd->AttachGuiApp.nServerPID);
 			gbGuiClientExternMode = FALSE;
 			gGuiClientStyles = pCmd->AttachGuiApp.Styles;
 			//ghConEmuWndDC -- еще нету
@@ -2407,7 +2413,7 @@ BOOL WINAPI HookServerCommand(LPVOID pInst, CESERVER_REQ* pCmd, CESERVER_REQ* &p
 				ghAttachGuiClient = NULL;
 				ghConEmuWnd = NULL;
 				SetConEmuHkWindows(NULL, NULL);
-				gnServerPID = 0;
+				SetServerPID(0);
 			}
 
 		} // CECMD_SETGUIEXTERN
@@ -2506,6 +2512,8 @@ BOOL WINAPI HookServerCommand(LPVOID pInst, CESERVER_REQ* pCmd, CESERVER_REQ* &p
 				{
 					CloseHandle(pi.hProcess); CloseHandle(pi.hThread);
 					nErrCode = 0;
+					_ASSERTE(gnServerPID==0 && "Must not be set yet");
+					SetServerPID(pi.dwProcessId);
 				}
 				else
 				{
