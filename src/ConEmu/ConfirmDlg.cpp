@@ -44,6 +44,15 @@ static HRESULT CALLBACK TaskDlgCallback(HWND hwnd, UINT uNotification, WPARAM wP
 	{
 		case TDN_CREATED:
 		{
+			DWORD nStyleEx = GetWindowLong(hwnd, GWL_EXSTYLE);
+			if (!(nStyleEx & WS_EX_TOPMOST))
+			{
+				if ((ghWnd && ((nStyleEx = GetWindowLong(ghWnd, GWL_EXSTYLE)) & WS_EX_TOPMOST))
+					|| (ghOpWnd && ((nStyleEx = GetWindowLong(ghOpWnd, GWL_EXSTYLE)) & WS_EX_TOPMOST)))
+				{
+					SetWindowPos(hwnd, HWND_TOPMOST, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
+				}
+			}
 			//if (!gbAlreadyAdmin)
 			//{
 			//	SendMessage(hwnd, TDM_SET_BUTTON_ELEVATION_REQUIRED_STATE, Ver86, 1);
