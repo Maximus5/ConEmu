@@ -2228,6 +2228,81 @@ int DuplicateRoot(CESERVER_REQ_DUPLICATE* Duplicate)
 	if (!gpStartEnv)
 		return -1;
 
+	if ((Duplicate->sCommand[0] == 0) && (ghAttachGuiClient && IsWindow(ghAttachGuiClient)))
+	{
+		// Putty/Kitty?
+		if (lstrcmpi(gsExeName, L"PUTTY.EXE") == 0
+			|| lstrcmpi(gsExeName, L"KITTY.EXE") == 0 || lstrcmpi(gsExeName, L"KITTY_PORTABLE.EXE") == 0)
+		{
+			// Let's try to duplicate using PUTTY ability
+			const UINT IDM_DUPSESS = 0x0030; // from PUTTY's "WINDOW.C"
+
+			CShellProc::mn_LastStartedPID = 0;
+			CShellProc::mb_StartingNewGuiChildTab = true;
+			LRESULT lRc = SendMessage(ghAttachGuiClient, WM_SYSCOMMAND, IDM_DUPSESS, 0);
+			CShellProc::mb_StartingNewGuiChildTab = false;
+
+			if (lRc == 0)
+			{
+				DWORD nCreatedPID = CShellProc::mn_LastStartedPID;
+				HWND  hCreatedWnd = NULL;
+				if (nCreatedPID)
+				{
+					// Find create PUTTY/KITTY window
+					wchar_t szClass[100] = L"", szTest[100] = L"";
+					DWORD nPID;
+					GetClassName(ghAttachGuiClient, szClass, countof(szClass));
+					DWORD nStarted = GetTickCount(), nDelta, nMaxWait = 5000;
+					while ((nDelta = (GetTickCount() - nStarted)) < nMaxWait)
+					{
+						if ((hCreatedWnd = FindWindow(szClass, NULL)) != NULL)
+						{
+							if ((hCreatedWnd != ghAttachGuiClient)
+								&& GetWindowThreadProcessId(hCreatedWnd, &nPID)
+								&& (nPID == nCreatedPID))
+							{
+								break;
+							}
+							else
+							{
+								hCreatedWnd = NULL;
+							}
+						}
+						Sleep(200);
+					}
+
+					if (hCreatedWnd)
+					{
+						// Run new server, if window found
+						// ConEmuC.exe /GID=4984 /GHWND=00140500 /GUIATTACH=0009128A /PID=4656
+						wchar_t szSrvCmd[MAX_PATH+128] = L"", szSelf[MAX_PATH] = L"", *pch;
+						if (GetModuleFileName(ghOurModule, szSelf, countof(szSelf)))
+						{
+							pch = wcsrchr(szSelf, L'\\');
+							if (pch) *(pch+1) = 0;
+							msprintf(szSrvCmd, countof(szSrvCmd), L"\"%s%s\" /GID=%u /GHWND=%08X /GUIATTACH=%08X /PID=%u",
+								szSelf, WIN3264TEST(L"ConEmuC.exe",L"ConEmuC64.exe"),
+								gnGuiPID, (DWORD)(DWORD_PTR)ghConEmuWnd, (DWORD)(DWORD_PTR)hCreatedWnd, nCreatedPID);
+
+							STARTUPINFO si = {sizeof(si)};
+							si.wShowWindow = SW_HIDE;
+							si.dwFlags = STARTF_USESHOWWINDOW;
+							PROCESS_INFORMATION pi = {};
+							DWORD nCreateFlags = NORMAL_PRIORITY_CLASS|CREATE_NEW_CONSOLE;
+							if (CreateProcess(NULL, szSrvCmd, NULL, NULL, FALSE, nCreateFlags, NULL, NULL, &si, &pi))
+							{
+								CloseHandle(pi.hProcess);
+								CloseHandle(pi.hThread);
+							}
+						}
+					}
+				}
+
+				return 0;
+			}
+		}
+	}
+
 	// Well, allow user to run anything inheriting active process state
 	LPCWSTR pszCmdLine = Duplicate->sCommand[0] ? Duplicate->sCommand : gpStartEnv->pszCmdLine;
 
