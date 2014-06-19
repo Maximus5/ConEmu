@@ -115,6 +115,9 @@ int gnInShellExecuteEx = 0;
 extern struct HookModeFar gFarMode;
 extern DWORD  gnHookMainThreadId;
 
+bool  CShellProc::mb_StartingNewGuiChildTab = 0;
+DWORD CShellProc::mn_LastStartedPID = 0;
+
 CShellProc::CShellProc()
 {
 	mn_CP = AreFileApisANSI() ? CP_ACP : CP_OEMCP;
@@ -2712,6 +2715,8 @@ void CShellProc::OnCreateProcessFinished(BOOL abSucceeded, PROCESS_INFORMATION *
 
 	if (abSucceeded)
 	{
+		CShellProc::mn_LastStartedPID = lpPI->dwProcessId;
+
 		if (gnAttachPortableGuiCui && gnServerPID)
 		{
 			CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_PORTABLESTART, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_PORTABLESTARTED));

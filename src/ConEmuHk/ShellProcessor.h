@@ -35,6 +35,10 @@ struct RConStartArgs;
 
 class CShellProc
 {
+public:
+	static bool  mb_StartingNewGuiChildTab;
+	static DWORD mn_LastStartedPID;
+
 private:
 	RConStartArgs m_Args;
 
