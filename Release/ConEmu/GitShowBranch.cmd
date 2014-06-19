@@ -100,7 +100,7 @@ if "%TEMP:~-1%" == "\" (set gitlogpath=%TEMP:~0,-1%) else (set gitlogpath=%TEMP%
 set git_out=%gitlogpath%\conemu_git_1.log
 set git_err=%gitlogpath%\conemu_git_2.log
 
-call %ConEmuGitPath%  -c color.status=false status --short --branch 1>"%git_out%" 2>"%git_err%"
+call %ConEmuGitPath% -c color.status=false status --short --branch --porcelain 1>"%git_out%" 2>"%git_err%"
 if errorlevel 1 (
 del "%git_out%">nul
 del "%git_err%">nul
