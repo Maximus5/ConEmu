@@ -138,6 +138,10 @@ extern HMODULE ghOurModule;
 //UINT gnMsgActivateCon = 0; //RegisterWindowMessage(CONEMUMSG_LLKEYHOOK);
 //SECURITY_ATTRIBUTES* gpLocalSecurity = NULL;
 
+/* ************ Executable name ************ */
+wchar_t gsExeName[80] = L"";
+/* ************ Executable name ************ */
+
 #define isPressed(inp) ((GetKeyState(inp) & 0x8000) == 0x8000)
 
 extern DWORD  gnHookMainThreadId;
@@ -863,8 +867,13 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 	}
 	#endif
 
-	// Must be extension?
-	_ASSERTEX(wcschr(pszName,L'.')!=NULL);
+	lstrcpyn(gsExeName, pszName, countof(gsExeName)-5);
+	if (!wcschr(gsExeName, L'.'))
+	{
+		// Must be extension?
+		_ASSERTEX(wcschr(pszName,L'.')!=NULL);
+		wcscat_c(gsExeName, L".exe");
+	}
 
 	if ((lstrcmpi(pszName, L"powershell.exe") == 0) || (lstrcmpi(pszName, L"powershell") == 0))
 	{
