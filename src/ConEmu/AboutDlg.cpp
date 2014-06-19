@@ -171,7 +171,7 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 			}
 
 			HWND hTab = GetDlgItem(hDlg, tbAboutTabs);
-			size_t nPage = 0;
+			INT_PTR nPage = -1;
 
 			for (size_t i = 0; i < countof(Pages); i++)
 			{
@@ -185,7 +185,7 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 			}
 
 
-			if (nPage != 0)
+			if (nPage >= 0)
 			{
 				TabSelected(hDlg, nPage);
 				TabCtrl_SetCurSel(hTab, (int)nPage);
