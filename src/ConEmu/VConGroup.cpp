@@ -3581,7 +3581,7 @@ void CVConGroup::OnCreateGroupEnd()
 	gb_InCreateGroup = false;
 
 	// А вот теперь можно начинать запускать процессы
-	gpConEmu->mp_RunQueue->ProcessRunQueue(true);
+	gpConEmu->mp_RunQueue->AdvanceQueue();
 }
 
 CVirtualConsole* CVConGroup::CreateCon(RConStartArgs *args, bool abAllowScripts /*= false*/, bool abForceCurConsole /*= false*/)

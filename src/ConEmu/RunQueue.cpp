@@ -38,19 +38,36 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "VirtualConsole.h"
 
 #define RUNQUEUE_TIMER_DELAY 100
-#define RUNQUEUE_DELAY_LIMIT (((RUNQUEUE_TIMER_DELAY) * 3) >> 2)
-
+#define RUNQUEUE_CREATE_LAG  100
+#define RUNQUEUE_WAIT_TERMINATION 1000
 
 CRunQueue::CRunQueue()
 {
 	mn_LastExecutionTick = 0;
-	mb_PostRequested = false;
 	mb_InExecution = false;
 	InitializeCriticalSection(&mcs_QueueLock);
+
+	mn_ThreadId = 0;
+	mb_Terminate = false;
+	mh_AdvanceEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+	mh_Thread = CreateThread(NULL, 0, RunQueueThreadHelper, this, 0, &mn_ThreadId);
+	_ASSERTE(mh_Thread!=NULL);
 }
 
 CRunQueue::~CRunQueue()
 {
+	if (mh_Thread)
+	{
+		mb_Terminate = true;
+		SetEvent(mh_AdvanceEvent);
+		DWORD nWait = WaitForSingleObject(mh_Thread, RUNQUEUE_WAIT_TERMINATION);
+		if (nWait == WAIT_TIMEOUT)
+		{
+			TerminateThread(mh_Thread, 100);
+		}
+		CloseHandle(mh_Thread);
+	}
+
 	DeleteCriticalSection(&mcs_QueueLock);
 }
 
@@ -62,7 +79,8 @@ void CRunQueue::RequestRConStartup(CRealConsole* pRCon)
 	// Должен вызываться в главной нити, чтобы соблюсти порядок создания при запуске группы
 	_ASSERTE(gpConEmu->isMainThread() == true);
 
-	EnterCriticalSection(&mcs_QueueLock);
+	MSectionLockSimple cs;
+	cs.Lock(&mcs_QueueLock);
 
 	// May be exist already in queue?
 	for (INT_PTR i = m_RunQueue.size(); (--i) >= 0;)
@@ -81,96 +99,103 @@ void CRunQueue::RequestRConStartup(CRealConsole* pRCon)
 		m_RunQueue.push_back(item);
 	}
 
-	// Call "in section" to avoid "KillTimer" from main thread
-	AdvanceQueue();
+	cs.Unlock();
 
-	LeaveCriticalSection(&mcs_QueueLock);
+	// Trigger our thread
+	AdvanceQueue();
 }
 
-void CRunQueue::ProcessRunQueue(bool bFromPostMessage)
+bool CRunQueue::isRunnerThread()
 {
-	// Previous execution was not finished yet?
+	DWORD dwTID = GetCurrentThreadId();
+	return dwTID == mn_ThreadId;
+}
+
+DWORD CRunQueue::RunQueueThreadHelper(LPVOID lpParameter)
+{
+	CRunQueue* p = (CRunQueue*)lpParameter;
+	DWORD nRc = p ? p->RunQueueThread() : 999;
+	_ASSERTE(nRc == 0);
+	return nRc;
+}
+
+DWORD CRunQueue::RunQueueThread()
+{
+	DWORD nWait;
+	bool  bPending = false;
+
+	while (!mb_Terminate)
+	{
+		nWait = WaitForSingleObject(mh_AdvanceEvent, RUNQUEUE_TIMER_DELAY);
+		if (nWait == WAIT_TIMEOUT)
+		{
+			if (m_RunQueue.empty())
+				bPending = false;
+			if (CVConGroup::InCreateGroup())
+				continue;
+		}
+		else if (nWait == WAIT_OBJECT_0)
+		{
+			bPending = !m_RunQueue.empty();
+		}
+
+		ProcessRunQueue();
+	}
+
+	return 0;
+}
+
+void CRunQueue::ProcessRunQueue()
+{
+	#ifdef _DEBUG
+	// We run in self thread
 	if (mb_InExecution)
 	{
-		if (!m_RunQueue.empty())
-		{
-			// Ensure timer is ON
-			gpConEmu->SetRunQueueTimer(true, RUNQUEUE_TIMER_DELAY);
-		}
-
-		// Skip this timer
-		return;
+		_ASSERTE(!mb_InExecution);
 	}
+	#endif
 
-	if (bFromPostMessage)
+	// Block adding new requests from other threads
+	MArray<RunQueueItem> Stack;
+	MSectionLockSimple cs;
+	cs.Lock(&mcs_QueueLock);
+	RunQueueItem item = {};
+	while (m_RunQueue.pop_back(item))
 	{
-		mb_PostRequested = false;
+		//item = m_RunQueue[0];
+		//m_RunQueue.erase(0);
+
+		Stack.push_back(item);
 	}
-	else if (RUNQUEUE_DELAY_LIMIT > 0)
-	{
-		// This is from WM_TIMER, check delay (if not first call)
-		if (mn_LastExecutionTick != 0)
-		{
-			DWORD nCurDelay = (GetTickCount() - mn_LastExecutionTick);
+	cs.Unlock();
 
-			if (nCurDelay < RUNQUEUE_DELAY_LIMIT)
+	DWORD nCurDelay, nWaitExtra;
+	bool bOpt;
+
+	// And process stack
+	while (!mb_Terminate && Stack.pop_back(item))
+	{
+		if (!gpConEmu->isValid(item.pVCon))
+			continue;
+
+		CVConGuard VCon(item.pVCon);
+
+		if (!VCon.VCon())
+			continue;
+
+		// Avoid too fast process creation?
+		if (mn_LastExecutionTick)
+		{
+			nCurDelay = (GetTickCount() - mn_LastExecutionTick);
+			if (nCurDelay < RUNQUEUE_CREATE_LAG)
 			{
-				// Timeout was not passed till last execution
-
-				if (!m_RunQueue.empty())
-				{
-					// Ensure timer is ON
-					gpConEmu->SetRunQueueTimer(true, RUNQUEUE_TIMER_DELAY);
-				}
-
-				return;
+				nWaitExtra = (RUNQUEUE_CREATE_LAG - nCurDelay);
+				Sleep(nWaitExtra);
 			}
 		}
-	}
 
-	_ASSERTE(gpConEmu->isMainThread() == true);
-
-	if (CVConGroup::InCreateGroup())
-	{
-		if (!m_RunQueue.empty())
-		{
-			// Ensure timer is ON
-			gpConEmu->SetRunQueueTimer(true, RUNQUEUE_TIMER_DELAY);
-		}
-
-		return;
-	}
-
-	CVConGuard VCon;
-
-	EnterCriticalSection(&mcs_QueueLock);
-	// Nothing to run?
-	if (m_RunQueue.empty())
-	{
-		gpConEmu->SetRunQueueTimer(false, 0);
-	}
-	else
-	{
-		while (!m_RunQueue.empty())
-		{
-			RunQueueItem item = m_RunQueue[0];
-			m_RunQueue.erase(0);
-
-			if (gpConEmu->isValid(item.pVCon))
-			{
-				VCon = item.pVCon;
-				break;
-			}
-		}
-	}
-	LeaveCriticalSection(&mcs_QueueLock);
-
-
-	// Queue is empty now?
-	if (VCon.VCon())
-	{
 		mb_InExecution = true;
-		bool bOpt = gpConEmu->ExecuteProcessPrepare();
+		bOpt = gpConEmu->ExecuteProcessPrepare();
 
 		VCon->RCon()->OnStartProcessAllowed();
 
@@ -180,44 +205,28 @@ void CRunQueue::ProcessRunQueue(bool bFromPostMessage)
 		// Remember last execution moment
 		mn_LastExecutionTick = GetTickCount();
 	}
-	else
-	{
-		#ifdef _DEBUG
-		if (!m_RunQueue.empty())
-		{
-			_ASSERTE(m_RunQueue.empty());
-		}
-		#endif
-	}
-
-
-	// Trigger next RCon execution
-	if (!m_RunQueue.empty())
-	{
-		AdvanceQueue();
-	}
 }
 
 void CRunQueue::AdvanceQueue()
 {
+	// Nothing to do?
 	if (m_RunQueue.empty())
-	{
 		return;
-	}
 
-	DWORD nCurDelay = (GetTickCount() - mn_LastExecutionTick);
+	// Execution will starts after group (task or -cmdlist) creates all RCon's
+	// AdvanceQueue will be called from CVConGroup::OnCreateGroupEnd()
+	if (CVConGroup::InCreateGroup())
+		return;
 
-	if ((mn_LastExecutionTick == 0) // this is first attempt to start console, run it NOW
-		|| (nCurDelay >= RUNQUEUE_DELAY_LIMIT)) // Timeout passed till last execution
+	// Trigger our thread
+	if (mh_Thread)
 	{
-		// Just trigger execution in main thread
-		if (!mb_PostRequested)
-		{
-			mb_PostRequested = true;
-			PostMessage(ghWnd, gpConEmu->mn_MsgRequestRunProcess, 0, 0);
-		}
+		SetEvent(mh_AdvanceEvent);
 	}
-
-	// Ensure timer is ON
-	gpConEmu->SetRunQueueTimer(true, RUNQUEUE_TIMER_DELAY);
+	else
+	{
+		_ASSERTE(mh_Thread);
+		// In case that thread was not started?
+		ProcessRunQueue();
+	}
 }

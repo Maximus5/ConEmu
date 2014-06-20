@@ -764,7 +764,6 @@ CConEmuMain::CConEmuMain()
 	mn_MsgTaskBarCreated = RegisterMessage("TaskbarCreated",L"TaskbarCreated");
 	mn_MsgTaskBarBtnCreated = RegisterMessage("TaskbarButtonCreated",L"TaskbarButtonCreated");
 	mn_MsgSheelHook = RegisterMessage("SHELLHOOK",L"SHELLHOOK");
-	mn_MsgRequestRunProcess = RegisterMessage("RequestRunProcess");
 	mn_MsgDeleteVConMainThread = RegisterMessage("DeleteVConMainThread");
 	mn_MsgReqChangeCurPalette = RegisterMessage("ChangeCurrentPalette");
 	mn_MsgMacroExecSync = RegisterMessage("MacroExecSync");
@@ -17402,10 +17401,6 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
 			OnTimer_AdmShield();
 			break;
 
-		case TIMER_RUNQUEUE_ID:
-			mp_RunQueue->ProcessRunQueue(false);
-			break;
-
 		case TIMER_QUAKE_AUTOHIDE_ID:
 			OnTimer_QuakeFocus();
 			break;
@@ -17421,23 +17416,6 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
 
 	mb_InTimer = FALSE;
 	return result;
-}
-
-void CConEmuMain::SetRunQueueTimer(bool bSet, UINT uElapse)
-{
-	static bool bLastSet = false;
-
-	if (bSet)
-	{
-		if (!bLastSet)
-			SetKillTimer(true, TIMER_RUNQUEUE_ID, uElapse);
-	}
-	else
-	{
-		SetKillTimer(false, TIMER_RUNQUEUE_ID, 0);
-	}
-
-	bLastSet = bSet;
 }
 
 void CConEmuMain::OnTimer_Main(CVirtualConsole* pVCon)
@@ -19161,11 +19139,6 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 				this->OnTaskbarButtonCreated();
 				result = DefWindowProc(hWnd, messg, wParam, lParam);
 				return result;
-			}
-			else if (messg == this->mn_MsgRequestRunProcess)
-			{
-				this->mp_RunQueue->ProcessRunQueue(true);
-				return 0;
 			}
 			else if (messg == this->mn_MsgDeleteVConMainThread)
 			{

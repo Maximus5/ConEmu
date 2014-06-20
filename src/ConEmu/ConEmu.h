@@ -563,13 +563,10 @@ class CConEmuMain :
 		UINT mn_MsgTaskBarCreated;
 		UINT mn_MsgPanelViewMapCoord;
 		UINT mn_MsgTaskBarBtnCreated;
-		UINT mn_MsgRequestRunProcess;
 		UINT mn_MsgDeleteVConMainThread;
 		UINT mn_MsgReqChangeCurPalette;
 		UINT mn_MsgMacroExecSync;
 		UINT mn_MsgActivateVCon;
-
-		void SetRunQueueTimer(bool bSet, UINT uElapse);
 
 		//
 		virtual void OnUseGlass(bool abEnableGlass) override;

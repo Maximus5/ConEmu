@@ -40,8 +40,23 @@ public:
 public:
 	void RequestRConStartup(CRealConsole* pRCon);
 
-public:
-	void ProcessRunQueue(bool bFromPostMessage);
+	// Вызывается из CVConGroup::OnCreateGroupEnd()
+	void AdvanceQueue();
+
+	// Informational
+	bool isRunnerThread();
+
+private:
+	static DWORD WINAPI RunQueueThreadHelper(LPVOID lpParameter);
+	DWORD RunQueueThread();
+
+	DWORD mn_ThreadId;
+	HANDLE mh_Thread;
+	HANDLE mh_AdvanceEvent;
+	bool mb_Terminate;
+
+private:
+	void ProcessRunQueue();
 
 private:
 	struct RunQueueItem
@@ -51,10 +66,6 @@ private:
 	MArray<RunQueueItem> m_RunQueue;
 	// We need simple lock here, without overhead
 	CRITICAL_SECTION mcs_QueueLock;
-	// Is "Post" was requested?
-	bool mb_PostRequested;
-	// Advancing
-	void AdvanceQueue();
 	// Execution now?
 	bool mb_InExecution;
 	// as is
