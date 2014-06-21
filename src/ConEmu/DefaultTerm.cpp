@@ -31,6 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "DefaultTerm.h"
 #include "ConEmu.h"
 #include "Options.h"
+#include "Status.h"
 #include "TrayIcon.h"
 #include "../ConEmuCD/ExitCodes.h"
 #include "../common/DefTermHooker.h" // iHookerRc = StartDefTermHooker(nForePID, hProcess, nResult, gpConEmu->ms_ConEmuBaseDir, nErrCode);
@@ -524,11 +525,16 @@ bool CDefaultTerminal::CheckForeground(HWND hFore, DWORD nForePID, bool bRunInTh
 
 	_ASSERTE(isDefaultTerminalAllowed());
 
-	TODO("Show status in status line?");
+	{
+		wchar_t szInfo[200] = L"";
+		msprintf(szInfo, countof(szInfo), L"DefTerm setup: PID=%u", nForePID);
+		gpConEmu->mp_Status->SetStatus(szInfo);
+	}
 
 	lbConHostLocked = gpConEmu->LockConhostStart();
 	iHookerRc = StartDefTermHooker(nForePID, hProcess, nResult, gpConEmu->ms_ConEmuBaseDir, nErrCode);
 	if (lbConHostLocked) gpConEmu->UnlockConhostStart();
+	gpConEmu->mp_Status->SetStatus(NULL);
 	if (iHookerRc != 0)
 	{
 		mh_LastIgnoredWnd = hFore;
