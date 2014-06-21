@@ -1,6 +1,13 @@
 ﻿
 #pragma once
 
+#ifdef _DEBUG
+//#define CONEMUHK_BEEP_ON_THREAD_START
+#undef CONEMUHK_BEEP_ON_THREAD_START
+#else
+#undef CONEMUHK_BEEP_ON_THREAD_START
+#endif
+
 // This portion of code inherited from Console2
 
 //////////////////////////////////////////////////////////////////////////////
@@ -100,6 +107,10 @@ int InjectHookDLL(PROCESS_INFORMATION pi, InjectHookFunctions* pfn /*UINT_PTR fn
 
 	codeSize = 20;
 #endif
+
+	#ifdef CONEMUHK_BEEP_ON_THREAD_START
+	codeSize += 128;
+	#endif
 
 	if (!apszHookDllPath || (lstrlen(apszHookDllPath) >= (MAX_PATH - lstrlen(pszDllName) - 1)))
 	{
@@ -215,6 +226,9 @@ int InjectHookDLL(PROCESS_INFORMATION pi, InjectHookFunctions* pfn /*UINT_PTR fn
 #ifdef _WIN64
 	*ip.pL++ = context.Rip;          // адрес возврата
 	*ip.pL++ = pfn->fnLdrGetDllHandleByName ? pfn->fnLdrGetDllHandleByName : pfn->fnLoadLibrary;        // адрес вызываемой процедуры
+	#ifdef CONEMUHK_BEEP_ON_THREAD_START
+	*ip.pL++ = (ULONGLONG)Beep;
+	#endif
 	*ip.pB++ = 0x9C;					// pushfq
 	*ip.pB++ = 0x50;					// push  rax
 	*ip.pB++ = 0x51;					// push  rcx
@@ -235,6 +249,16 @@ int InjectHookDLL(PROCESS_INFORMATION pi, InjectHookFunctions* pfn /*UINT_PTR fn
 	*ip.pB++ = 0x83;
 	*ip.pB++ = 0xEC;
 	*ip.pB++ = 0x28;
+
+	#ifdef CONEMUHK_BEEP_ON_THREAD_START
+	*ip.pB++ = 0xba;					// mov         edx,3E8h // Dur
+	*ip.pI++ = 1000;
+	*ip.pB++ = 0xb9;					// mov         ecx,4B0h // Freq
+	*ip.pI++ = 1200;
+	*ip.pB++ = 0xFF;					// call  Beep
+	*ip.pB++ = 0x15;
+	*ip.pI   = -(int)(ip.pB + 4 - code - 16);  ip.pI++; // -- указатель на адрес процедуры // GCC do the INC before rvalue eval
+	#endif
 
 	// Due to ASLR of Kernel32.dll in Windows 8 RC x64 we need this workaround
 	// JIC expanded to Windows 7 too.
@@ -267,13 +291,35 @@ int InjectHookDLL(PROCESS_INFORMATION pi, InjectHookFunctions* pfn /*UINT_PTR fn
 	*ip.pI   = -(int)(ip.pB - code + 4 - 8);  ip.pI++;  // -- указатель на адрес процедуры (code+8)  // GCC do the INC before rvalue eval
 	}
 
+	#ifdef CONEMUHK_BEEP_ON_THREAD_START
+	*ip.pB++ = 0xba;					// mov         edx,3E8h // Dur
+	*ip.pI++ = 1000;
+	*ip.pB++ = 0xb9;					// mov         ecx,4B0h // Freq
+	*ip.pI++ = 1800;
+	*ip.pB++ = 0xFF;					// call  Beep
+	*ip.pB++ = 0x15;
+	*ip.pI   = -(int)(ip.pB + 4 - code - 16);  ip.pI++; // -- указатель на адрес процедуры // GCC do the INC before rvalue eval
+	#endif
+
 	*ip.pB++ = 0x48;					// lea	 rcx, "path\to\our.dll"
 	*ip.pB++ = 0x8D;
 	*ip.pB++ = 0x0D;
 	*ip.pI   = (int)(codeSize + code - ip.pB - 4);  ip.pI++;  // 45; -- указатель на "path\to\our.dll"  // GCC do the INC before rvalue eval
+
 	*ip.pB++ = 0xFF;					// call  LoadLibraryW
 	*ip.pB++ = 0x15;
 	*ip.pI   = -(int)(ip.pB - code + 4 - 8);  ip.pI++;  // -49; -- указатель на адрес процедуры (code+8)  // GCC do the INC before rvalue eval
+
+	#ifdef CONEMUHK_BEEP_ON_THREAD_START
+	*ip.pB++ = 0xba;					// mov         edx,3E8h // Dur
+	*ip.pI++ = 1000;
+	*ip.pB++ = 0xb9;					// mov         ecx,4B0h // Freq
+	*ip.pI++ = 2400;
+	*ip.pB++ = 0xFF;					// call  Beep
+	*ip.pB++ = 0x15;
+	*ip.pI   = -(int)(ip.pB + 4 - code - 16);  ip.pI++; // -- указатель на адрес процедуры // GCC do the INC before rvalue eval
+	#endif
+
 	*ip.pB++ = 0x48;					// add   rsp, 40
 	*ip.pB++ = 0x83;
 	*ip.pB++ = 0xC4;
@@ -300,6 +346,9 @@ int InjectHookDLL(PROCESS_INFORMATION pi, InjectHookFunctions* pfn /*UINT_PTR fn
 	/* 0x5B */
 
 	context.Rip = (UINT_PTR)mem + 16;	// начало (иструкция pushfq)
+	#ifdef CONEMUHK_BEEP_ON_THREAD_START
+	context.Rip += 8;
+	#endif
 #else
 	*ip.pB++ = 0x68;			// push  eip
 	*ip.pI++ = context.Eip;
