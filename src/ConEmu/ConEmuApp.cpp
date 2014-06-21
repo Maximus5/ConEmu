@@ -4180,8 +4180,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				{
 					gpSetCls->isAdvLogging = (BYTE)(curCommand[4] - L'0'); // 1..4
 				}
-				else if (!klstricmp(curCommand, _T("/single")))
+				else if (!klstricmp(curCommand, _T("/single")) || !klstricmp(curCommand, _T("/reuse")))
 				{
+					// "/reuse" switch to be remastered
 					gpSetCls->SingleInstanceArg = sgl_Enabled;
 				}
 				else if (!klstricmp(curCommand, _T("/nosingle")))
