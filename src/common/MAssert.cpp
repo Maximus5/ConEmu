@@ -40,6 +40,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 AppMsgBox_t AssertMsgBox = NULL;
 
 #ifdef _DEBUG
+bool gbAllowChkHeap = false;
+#endif
+
+#ifdef _DEBUG
 LONG gnInMyAssertTrap = 0;
 LONG gnInMyAssertPipe = 0;
 //bool gbAllowAssertThread = false;

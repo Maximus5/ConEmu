@@ -67,7 +67,8 @@ extern AppMsgBox_t AssertMsgBox;
 	//extern char gsz_MDEBUG_TRAP_MSG_APPEND[2000];
 	//#define MDEBUG_TRAP1(S1) {strcpy(gsz_MDEBUG_TRAP_MSG_APPEND,(S1));_MDEBUG_TRAP(__FILE__,__LINE__);}
 	#if !defined(__GNUC__)
-	#define MCHKHEAP MY_ASSERT_EXPR(_CrtCheckMemory(),L"_CrtCheckMemory failed",false);
+	extern bool gbAllowChkHeap;
+	#define MCHKHEAP MY_ASSERT_EXPR(!gbAllowChkHeap||_CrtCheckMemory(),L"_CrtCheckMemory failed",false);
 	#else
 	#define MCHKHEAP
 	#define _CrtDbgBreak()

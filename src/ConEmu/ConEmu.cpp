@@ -633,8 +633,8 @@ CConEmuMain::CConEmuMain()
 	// Добавить в окружение переменную с папкой к ConEmu.exe
 	SetEnvironmentVariable(ENV_CONEMUDIR_VAR_W, ms_ConEmuExeDir);
 	SetEnvironmentVariable(ENV_CONEMUBASEDIR_VAR_W, ms_ConEmuBaseDir);
-	SetEnvironmentVariable(ENV_CONEMUANSI_BUILD_W, ms_ConEmuBuild);
-	SetEnvironmentVariable(ENV_CONEMUANSI_CONFIG_W, L"");
+	SetEnvironmentVariable(ENV_CONEMU_BUILD_W, ms_ConEmuBuild);
+	SetEnvironmentVariable(ENV_CONEMU_CONFIG_W, L"");
 	// переменная "ConEmuArgs" заполняется в ConEmuApp.cpp:PrepareCommandLine
 
 	wchar_t szDrive[MAX_PATH];

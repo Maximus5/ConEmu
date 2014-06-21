@@ -3493,6 +3493,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	DEBUGSTRSTARTUP(L"WinMain entered");
 	int iMainRc = 0;
 
+#ifdef _DEBUG
+	gbAllowChkHeap = true;
+#endif
+
 	if (!IsDebuggerPresent())
 	{
 		SetUnhandledExceptionFilter(CreateDumpOnException);
