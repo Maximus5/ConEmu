@@ -4799,6 +4799,17 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 		{
 			gnCmdUnicodeMode = 2;
 		}
+		else if (lstrcmpi(szArg, L"/CONFIG")==0)
+		{
+			if ((iRc = NextArg(&lsCmdLine, szArg)) != 0)
+			{
+				_ASSERTE(FALSE && "Config name was not specified!");
+				_wprintf(L"Config name was not specified!\r\n");
+				break;
+			}
+			// Reuse config if starting "ConEmu.exe" from console server!
+			SetEnvironmentVariable(ENV_CONEMU_CONFIG_W, szArg);
+		}
 		// После этих аргументов - идет то, что передается в CreateProcess!
 		else if (wcscmp(szArg, L"/ROOT")==0 || wcscmp(szArg, L"/root")==0)
 		{
