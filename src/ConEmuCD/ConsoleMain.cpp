@@ -3869,6 +3869,12 @@ void SetWorkEnvVar()
 	SetEnvironmentVariable(ENV_CONEMUWORKDRIVE_VAR_W, GetDrive(szPath, szDrive, countof(szDrive)));
 	GetModuleFileName(ghOurModule, szPath, countof(szPath));
 	SetEnvironmentVariable(ENV_CONEMUDRIVE_VAR_W, GetDrive(szPath, szDrive, countof(szDrive)));
+
+	// Same as gpConEmu->ms_ConEmuBuild
+	wchar_t szVer4[8] = L""; lstrcpyn(szVer4, _T(MVV_4a), countof(szVer4));
+	msprintf(szDrive, countof(szDrive), L"%02u%02u%02u%s%s",
+		(MVV_1%100), MVV_2, MVV_3, szVer4[0]&&szVer4[1]?L"-":L"", szVer4);
+	SetEnvironmentVariable(ENV_CONEMU_BUILD_W, szDrive);
 }
 
 // 1. Заменить подстановки вида: !ConEmuHWND!, !ConEmuDrawHWND!, !ConEmuBackHWND!, !ConEmuWorkDir!
