@@ -6454,6 +6454,8 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 					RedrawWindow(hWnd2, NULL, NULL, RDW_UPDATENOW|RDW_ALLCHILDREN);
 					// Инициировать эксплорер, если он еще не был обработан
 					gpConEmu->mp_DefTrm->PostCreated(true, true);
+					// Вернуть фокус в окно настроек
+					SetForegroundWindow(ghOpWnd);
 				}
 			}
 			break;
