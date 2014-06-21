@@ -207,14 +207,7 @@ extern "C" {
 
 	#define getThreadId() WIN3264TEST(((DWORD*) __readfsdword(24))[9],GetCurrentThreadId())
 
-	#if !defined(_DEBUG)
-		#define getTime GetTickCount
-	#elif defined(__GNUC__)
-		#define getTime GetTickCount
-	#else
-		#define getTime timeGetTime
-		#pragma comment(lib, "winmm.lib")
-	#endif
+	#define getTime GetTickCount
 
 	// Originally from http://preshing.com/20120522/lightweight-in-memory-logging
 	namespace HookLogger

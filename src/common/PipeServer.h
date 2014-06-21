@@ -54,8 +54,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	//#pragma message("--PipeServer.h in __GNUC__ mode")
 	#define PipeOutputDbg(x)
 #else
+	#if defined(CONEMU_MINIMAL)
+	#define _GetTime GetTickCount
+	#else
 	#define _GetTime timeGetTime
 	#pragma comment(lib, "winmm.lib")
+	#endif
 	//#pragma message("--PipeServer.h in _DEBUG mode")
 	#define PipeOutputDbg(x) OutputDebugStringW(x)
 #endif
