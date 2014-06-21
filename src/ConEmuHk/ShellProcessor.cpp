@@ -448,31 +448,6 @@ BOOL CShellProc::LoadSrvMapping(BOOL bLightCheck /*= FALSE*/)
 		return FALSE;
 
 	return TRUE;
-
-	//// Проверим, а можно ли?
-	//DWORD dwGuiProcessId = 0;
-	//if (!ghConEmuWnd || !GetWindowThreadProcessId(ghConEmuWnd, &dwGuiProcessId))
-	//	return FALSE;
-
-	//MFileMapping<ConEmuGuiMapping> GuiInfoMapping;
-	//GuiInfoMapping.InitName(CEGUIINFOMAPNAME, dwGuiProcessId);
-	//const ConEmuGuiMapping* pInfo = GuiInfoMapping.Open();
-	//if (!pInfo)
-	//	return FALSE;
-	//else if (pInfo->nProtocolVersion != CESERVER_REQ_VER)
-	//	return FALSE;
-	//else
-	//{
-	//	memmove(&m_GuiMapping, pInfo, min(pInfo->cbSize, sizeof(m_GuiMapping)));
-	//	/*bDosBoxAllowed = pInfo->bDosBox;
-	//	wcscpy_c(szBaseDir, pInfo->sConEmuBaseDir);
-	//	wcscat_c(szBaseDir, L"\\");
-	//	if (pInfo->nLoggingType != glt_Processes)
-	//		return NULL;*/
-	//}
-	//GuiInfoMapping.CloseMap();
-
-	//return (m_GuiMapping.cbSize != 0);
 }
 
 CESERVER_REQ* CShellProc::NewCmdOnCreate(enum CmdOnCreateType aCmd,
