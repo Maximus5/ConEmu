@@ -125,6 +125,8 @@ private:
 
 	RECT mrc_LastStatus;
 
+	wchar_t ms_Status[200];
+
 	RECT mrc_LastResizeCol;
 	bool mb_StatusResizing;
 	POINT mpt_StatusResizePt;
@@ -182,6 +184,8 @@ public:
 	void PaintStatus(HDC hPaint, LPRECT prcStatus = NULL);
 	void UpdateStatusBar(bool abForce = false, bool abRepaintNow = false);
 	void InvalidateStatusBar(LPRECT rcInvalidated = NULL);
+
+	void SetStatus(LPCWSTR asStatus);
 
 	void OnTimer();
 	void OnWindowReposition(const RECT* prcNew = NULL);

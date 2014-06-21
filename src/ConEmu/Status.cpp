@@ -238,6 +238,8 @@ CStatus::CStatus()
 	mb_Caps = mb_Num = mb_Scroll = false;
 	mhk_Locale = 0;
 
+	ms_Status[0] = 0;
+
 	ZeroStruct(m_Items);
 	ZeroStruct(m_Values);
 	ZeroStruct(mrc_LastStatus);
@@ -501,6 +503,7 @@ void CStatus::PaintStatus(HDC hPaint, LPRECT prcStatus /*= NULL*/)
 					((mb_InSetupMenu && m_ClickedItemDesc == csi_Info)
 						|| (m_ClickedItemDesc > csi_Info && m_ClickedItemDesc < csi_Last))
 					? m_Values[m_ClickedItemDesc].sHelp :
+					ms_Status[0] ? ms_Status :
 					pRCon ? pRCon->GetConStatus() : NULL;
 
 				if (pszTmp && *pszTmp)
@@ -897,6 +900,18 @@ wrap:
 
 	mrc_LastStatus = rcStatus;
 	mn_LastPaintTick = GetTickCount();
+}
+
+void CStatus::SetStatus(LPCWSTR asStatus)
+{
+	lstrcpyn(ms_Status, asStatus ? asStatus : L"", countof(ms_Status));
+
+	if (ms_Status[0] && gpSetCls->isAdvLogging)
+	{
+		gpConEmu->LogString(ms_Status);
+	}
+
+	UpdateStatusBar(true, false);
 }
 
 // true = обновлять строго, сменился шрифт, размер, или еще что...
