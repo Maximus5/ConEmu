@@ -2579,7 +2579,7 @@ DWORD GetMainThreadId(bool bUseCurrentAsMain)
 	#ifdef _DEBUG
 	char szInfo[100];
 	msprintf(szInfo, countof(szInfo), "GetMainThreadId()=%u, TID=%u\n", gnHookMainThreadId, GetCurrentThreadId());
-	OutputDebugStringA(szInfo);
+	//OutputDebugStringA(szInfo);
 	#endif
 
 	_ASSERTE(gnHookMainThreadId!=0);
