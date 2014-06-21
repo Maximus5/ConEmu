@@ -604,6 +604,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 	#endif
 	bool lbNewConsoleFromGui = false;
 	BOOL lbComSpecK = FALSE; // TRUE - если нужно запустить /K, а не /C
+	CmdArg szDefTermArg, szDefTermArg2;
 
 	_ASSERTEX(m_SrvMapping.sConEmuExe[0]!=0 && m_SrvMapping.ComSpec.ConEmuBaseDir[0]!=0);
 	if (gbPrepareDefaultTerminal)
@@ -612,6 +613,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 	}
 	_ASSERTE(aCmd==eShellExecute || aCmd==eCreateProcess);
 
+	LPCWSTR pszConEmuBaseDir = m_SrvMapping.ComSpec.ConEmuBaseDir;
 
 	if (aCmd == eCreateProcess)
 	{
@@ -1050,8 +1052,11 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 
 	if (gbPrepareDefaultTerminal)
 	{
-		// reserve space for m_GuiMapping.sDefaultTermArg
-		nCchSize += lstrlen(m_GuiMapping.sDefaultTermArg)+16;
+		// reserve space for Default terminal arguments (server additional)
+		// "runas" (Shell) - запуск сервера
+		// CreateProcess - запуск через GUI (ConEmu.exe)
+		_ASSERTEX(aCmd==eCreateProcess || aCmd==eShellExecute);
+		nCchSize += GetSrvAddArgs((aCmd == eCreateProcess), szDefTermArg, szDefTermArg2);
 	}
 
 	// В ShellExecute необходимо "ConEmuC.exe" вернуть в psFile, а для CreatePocess - в psParam
@@ -1102,34 +1107,9 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 
 	if (gbPrepareDefaultTerminal)
 	{
-		LPCWSTR pszNewCon = NULL;
-		RConStartArgs args;
-		if (m_GuiMapping.sDefaultTermArg[0])
+		if (!szDefTermArg.IsEmpty())
 		{
-			args.pszSpecialCmd = lstrdup(m_GuiMapping.sDefaultTermArg);
-			args.ProcessNewConArg();
-		}
-
-		if (m_GuiMapping.sDefaultTermArg[0] == L'/')
-		{
-			// "/config", параметры для "confirm" и "no-injects"
-			_wcscat_c((*psParam), nCchSize, L" ");
-			pszNewCon = wcsstr(m_GuiMapping.sDefaultTermArg, L"-new_console");
-			if (!pszNewCon)
-			{
-				_wcscat_c((*psParam), nCchSize, m_GuiMapping.sDefaultTermArg);
-			}
-			else
-			{
-				if (*(pszNewCon-1) == L'"') pszNewCon--; // For future use. Some "-new_console:t:..." args may be quoted
-				// sDefaultTermArg contains something like this:
-				// "/config CfgName -new_console:c"
-				lstrcpyn((*psParam)+lstrlen(*psParam), m_GuiMapping.sDefaultTermArg, (DWORD)(DWORD_PTR)(pszNewCon - m_GuiMapping.sDefaultTermArg + 1));
-			}
-		}
-		else if (m_GuiMapping.sDefaultTermArg[0] == L'-')
-		{
-			pszNewCon = m_GuiMapping.sDefaultTermArg;
+			_wcscat_c((*psParam), nCchSize, szDefTermArg);
 		}
 
 		if (aCmd == eShellExecute)
@@ -1140,19 +1120,12 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 		else
 		{
 			// Запускается GUI
-			if (args.ForceNewWindow == crb_On)
-				_wcscat_c((*psParam), nCchSize, L" /nosingle /cmd ");
-			else
-				_wcscat_c((*psParam), nCchSize, L" /single /cmd ");
+			_wcscat_c((*psParam), nCchSize, L" /cmd ");
 		}
 
-		if (pszNewCon && *pszNewCon)
+		if (!szDefTermArg2.IsEmpty())
 		{
-			_wcscat_c((*psParam), nCchSize, pszNewCon);
-			// We need space after switches!
-			int nLen = lstrlen(pszNewCon);
-			if (pszNewCon[nLen-1] != L' ')
-				_wcscat_c((*psParam), nCchSize, L" ");
+			_wcscat_c((*psParam), nCchSize, szDefTermArg2);
 		}
 	}
 	// 111211 - "-new_console" передается в GUI
@@ -2601,8 +2574,11 @@ BOOL CShellProc::OnCreateProcessW(LPCWSTR* asFile, LPCWSTR* asCmdLine, LPCWSTR* 
 
 void CShellProc::OnAllocConsoleFinished()
 {
-	if (!LoadSrvMapping() || !m_SrvMapping.ComSpec.ConEmuBaseDir[0])
+	if (!LoadSrvMapping() || !m_SrvMapping.ComSpec.ConEmuBaseDir[0] || !gbPrepareDefaultTerminal)
+	{
+		_ASSERTEX(FALSE && "Must be called in DefTerm mode only");
 		return;
+	}
 
 	BOOL bAttachCreated = FALSE;
 	_ASSERTEX(gbPrepareDefaultTerminal && gbIsNetVsHost);
@@ -2612,34 +2588,29 @@ void CShellProc::OnAllocConsoleFinished()
 		m_GuiMapping.sConEmuArgs[0] = 0;
 	}
 
+	CmdArg szAddArgs, szAddArgs2;
+	size_t cchAddArgLen = GetSrvAddArgs(false, szAddArgs, szAddArgs2);
+	_ASSERTE(m_SrvMapping.ComSpec.ConEmuBaseDir[0] != 0);
+	LPCWSTR pszConEmuBaseDir = m_SrvMapping.ComSpec.ConEmuBaseDir;
+
 	bool bForceNewWnd = false;
-	size_t cchMax = MAX_PATH+80;
+	size_t cchMax = MAX_PATH+80+cchAddArgLen;
 	wchar_t* pszCmdLine = (wchar_t*)malloc(cchMax*sizeof(*pszCmdLine));
 	if (pszCmdLine)
 	{
-		_ASSERTEX(m_SrvMapping.ComSpec.ConEmuBaseDir[0]!=0);
-
-		if (m_GuiMapping.cbSize && m_GuiMapping.sConEmuArgs[0] && wcsstr(m_GuiMapping.sConEmuArgs, L"-new_console:"))
-		{
-			RConStartArgs args;
-			args.pszSpecialCmd = lstrdup(m_GuiMapping.sConEmuArgs);
-			if (args.ProcessNewConArg() > 0)
-			{
-				bForceNewWnd = (args.ForceNewWindow == crb_On);
-			}
-		}
-
-		TODO("По идее, здесь еще должны быть и другие аргументы из m_GuiMapping.sConEmuArgs. Конфиг, например");
-
-		msprintf(pszCmdLine, cchMax, L"\"%s\\%s\" /ATTACH /TRMPID=%u%s",
-			m_SrvMapping.ComSpec.ConEmuBaseDir,
+		msprintf(pszCmdLine, cchMax, L"\"%s\\%s\" /ATTACH /TRMPID=%u",
+			pszConEmuBaseDir,
 			WIN3264TEST(L"ConEmuC.exe",L"ConEmuC64.exe"),
-			gnSelfPID,
-			bForceNewWnd ? L" /GHWND=NEW" : L"");
+			gnSelfPID);
+
+		if (!szAddArgs.IsEmpty())
+			_wcscat_c(pszCmdLine, cchMax, szAddArgs);
+
+		_ASSERTEX(szAddArgs2.IsEmpty()); // No "-new_console" switches are expected here!
 
 		STARTUPINFO si = {sizeof(si)};
 		PROCESS_INFORMATION pi = {};
-		bAttachCreated = CreateProcess(NULL, pszCmdLine, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL, m_SrvMapping.ComSpec.ConEmuBaseDir, &si, &pi);
+		bAttachCreated = CreateProcess(NULL, pszCmdLine, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL, pszConEmuBaseDir, &si, &pi);
 		if (bAttachCreated)
 		{
 			CloseHandle(pi.hProcess);
@@ -2827,4 +2798,76 @@ void CShellProc::OnShellFinished(BOOL abSucceeded, HINSTANCE ahInstApp, HANDLE a
 			gnInShellExecuteEx--;
 		mb_InShellExecuteEx = FALSE;
 	}
+}
+
+size_t CShellProc::GetSrvAddArgs(bool bGuiArgs, CmdArg& rsArgs, CmdArg& rsNewCon)
+{
+	rsArgs.Empty();
+	rsNewCon.Empty();
+
+	if (!this || (m_GuiMapping.sDefaultTermArg[0] == 0))
+		return 0;
+
+	wchar_t* pszConfigName = NULL;
+
+	size_t cchMax = 64 + lstrlen(m_GuiMapping.sDefaultTermArg);
+	wchar_t* psz = rsArgs.GetBuffer(cchMax);
+
+	_wcscpy_c(psz, cchMax, L" ");
+
+	// Пока m_GuiMapping.sDefaultTermArg может содержать только '/config "xxx"' и '-new_console:...'
+	RConStartArgs args;
+	if (m_GuiMapping.sDefaultTermArg[0] == L'/')
+	{
+		_wcscat_c(psz, cchMax, m_GuiMapping.sDefaultTermArg);
+		wchar_t* pszNewCon = wcsstr(psz, L"-new_console");
+		if (pszNewCon)
+		{
+			_ASSERTE(*(pszNewCon-1) == L' ');
+			*(pszNewCon-1) = 0;
+			rsNewCon.Attach(lstrmerge(L" ", pszNewCon));
+		}
+		else
+		{
+			rsNewCon.Set(L"");
+		}
+	}
+	else
+	{
+		_ASSERTE(m_GuiMapping.sDefaultTermArg[0] == L'-');
+		rsNewCon.Attach(lstrmerge(L" ", m_GuiMapping.sDefaultTermArg));
+	}
+
+	if (!rsNewCon.IsEmpty())
+	{
+		args.pszSpecialCmd = lstrdup(rsNewCon);
+		args.ProcessNewConArg();
+	}
+
+	// Do not inject ConEmuHk in the target process?
+	if ((args.InjectsDisable == crb_On) && !bGuiArgs)
+		_wcscat_c(psz, cchMax, L" /NOINJECT");
+
+	// New or existing window we shall use?
+	if ((args.ForceNewWindow == crb_On) && !bGuiArgs)
+		_wcscat_c(psz, cchMax, L" /GHWND=NEW");
+	else if (args.ForceNewWindow == crb_On)
+		_wcscat_c(psz, cchMax, L" /NOSINGLE");
+	else if (bGuiArgs)
+		_wcscat_c(psz, cchMax, L" /REUSE");
+
+	// Confirmations
+	if (args.eConfirmation == RConStartArgs::eConfAlways)
+	{
+		if (!bGuiArgs)
+			_wcscat_c(psz, cchMax, L" /CONFIRM");
+	}
+	else if (args.eConfirmation == RConStartArgs::eConfNever)
+	{
+		if (!bGuiArgs)
+			_wcscat_c(psz, cchMax, L" /NOCONFIRM");
+	}
+
+	size_t cchLen = wcslen(psz) + wcslen(rsNewCon);
+	return cchLen;
 }

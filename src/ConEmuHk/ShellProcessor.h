@@ -100,6 +100,7 @@ private:
 				LPWSTR* psFile, LPWSTR* psParam);
 	BOOL FixShellArgs(DWORD afMask, HWND ahWnd, DWORD* pfMask, HWND* phWnd);
 	HWND FindCheckConEmuWindow();
+	size_t GetSrvAddArgs(bool bGuiArgs, CmdArg& rsArgs, CmdArg& rsNewCon);
 public:
 	CESERVER_REQ* NewCmdOnCreate(enum CmdOnCreateType aCmd,
 				LPCWSTR asAction, LPCWSTR asFile, LPCWSTR asParam,
