@@ -2576,7 +2576,7 @@ HWND Attach2Gui(DWORD nTimeout)
 
 		// "/config"!
 		wchar_t szConfigName[MAX_PATH] = {};
-		DWORD nCfgNameLen = GetEnvironmentVariable(ENV_CONEMUANSI_CONFIG_W, szConfigName, countof(szConfigName));
+		DWORD nCfgNameLen = GetEnvironmentVariable(ENV_CONEMU_CONFIG_W, szConfigName, countof(szConfigName));
 		if (nCfgNameLen && (nCfgNameLen < countof(szConfigName)) && *szConfigName)
 		{
 			lstrcatW(pszSelf, L" /config \"");

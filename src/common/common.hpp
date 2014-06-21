@@ -123,9 +123,9 @@ typedef struct _CONSOLE_SELECTION_INFO
 #define ENV_CONEMUANSI_VAR_W L"ConEmuANSI"
 #define ENV_CONEMUANSILOG_VAR_W L"ConEmuAnsiLog"
 #define ENV_CONEMUFAKEDT_VAR L"ConEmuFakeDT"
-#define ENV_CONEMUANSI_BUILD_W L"ConEmuBuild"
-#define ENV_CONEMUANSI_CONFIG_W L"ConEmuConfig"
-#define ENV_CONEMUANSI_WAITKEY L"ConEmuWaitKey"
+#define ENV_CONEMU_BUILD_W L"ConEmuBuild"
+#define ENV_CONEMU_CONFIG_W L"ConEmuConfig"
+#define ENV_CONEMU_WAITKEY L"ConEmuWaitKey"
 #define ENV_CONEMUREPORTEXE_VAR_W L"ConEmuReportExe"
 #define ENV_CONEMU_HOOKS L"ConEmuHooks" // Modifies behavior of starting processes inside ConEmu tab
 #define ENV_CONEMU_HOOKS_ENABLED L"Enabled" // Informational

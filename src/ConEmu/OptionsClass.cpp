@@ -900,7 +900,7 @@ void CSettings::SetConfigName(LPCWSTR asConfigName)
 		wcscpy_c(ConfigPath, CONEMU_ROOT_KEY L"\\.Vanilla");
 		ConfigName[0] = 0;
 	}
-	SetEnvironmentVariable(ENV_CONEMUANSI_CONFIG_W, ConfigName);
+	SetEnvironmentVariable(ENV_CONEMU_CONFIG_W, ConfigName);
 }
 
 bool CSettings::SetOption(LPCWSTR asName, int anValue)
