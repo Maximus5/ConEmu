@@ -288,7 +288,13 @@ int WINAPI RequestLocalServer(/*[IN/OUT]*/RequestLocalServerParm* Parm)
 	hHkDll = GetModuleHandle(szFile);
 	if (!hHkDll)
 	{
-		_ASSERTE(hHkDll && "Must be already injected");
+		#ifdef _DEBUG
+		// Unless hooks were disabled (with env var for example)
+		wchar_t szEnv[64] = L""; GetEnvironmentVariable(ENV_CONEMU_HOOKS, szEnv, countof(szEnv));
+		CharUpperBuff(szEnv, lstrlen(szEnv));
+		_ASSERTE((hHkDll || wcsstr(szEnv,ENV_CONEMU_HOOKS_DISABLED)) && "Must be already injected");
+		#endif
+
 		hHkDll = LoadLibrary(szFile);
 	}
 	if (!hHkDll)
