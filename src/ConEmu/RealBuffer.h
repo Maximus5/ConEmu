@@ -123,6 +123,7 @@ public:
 	void SetRBtnDrag(BOOL abRBtnDrag, const COORD* pcrMouse = NULL);
 
 private:
+	bool IsFileLineTerminator(LPCWSTR pChar, LPCWSTR pszTermint);
 	bool OnMouseSelection(UINT messg, WPARAM wParam, int x, int y);
 	bool DoSelectionCopyInt(CECopyMode CopyMode, bool bStreamMode, int srSelection_X1, int srSelection_Y1, int srSelection_X2, int srSelection_Y2, BYTE nFormat = 0xFF /* use gpSet->isCTSHtmlFormat */, LPCWSTR pszDstFile = NULL);
 	int  GetSelectionCharCount(bool bStreamMode, int srSelection_X1, int srSelection_Y1, int srSelection_X2, int srSelection_Y2, int* pnSelWidth, int* pnSelHeight, int nNewLineLen);

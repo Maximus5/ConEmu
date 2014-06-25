@@ -6233,6 +6233,38 @@ wrap:
 	return lbRc;
 }
 
+bool CRealBuffer::IsFileLineTerminator(LPCWSTR pChar, LPCWSTR pszTermint)
+{
+	// Расчитано на закрывающие : или ) или ] или ,
+	if (wcschr(pszTermint, *pChar))
+		return true;
+	// Script.ps1:35 знак:23
+	if (*pChar == L' ')
+	{
+		// few chars, colon, digits
+		for (int i = 1; i < 20; i++)
+		{
+			if (pChar[i] == 0 || !isAlpha(pChar[i])) //wcschr(L" \t\xA0", pChar[i]))
+				break;
+			if (pChar[i+1] == L':')
+			{
+				if (isDigit(pChar[i+2]))
+				{
+					for (int j = i+3; j < 25; j++)
+					{
+						if (isDigit(pChar[j]))
+							continue;
+						if (isSpace(pChar[j]))
+							return true;
+					}
+				}
+				break;
+			}
+		}
+	}
+	return false;
+}
+
 ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In/Out]*/, COORD& crTo/*[Out]*/, ExpandTextRangeType etr, wchar_t* pszText /*= NULL*/, size_t cchTextMax /*= 0*/)
 {
 	ExpandTextRangeType result = etr_None;
@@ -6326,6 +6358,8 @@ ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In/Out]*/, COOR
 			// c:\sources\FarLib\FarCtrl.pas(1002) Error: Undeclared identifier: 'PCTL_GETPLUGININFO'
 			// FPC
 			// FarCtrl.pas(1002,49) Error: Identifier not found "PCTL_GETPLUGININFO"
+			// PowerShell
+			// Script.ps1:35 знак:23
 			// -- Possible?
 			// abc.py (3): some message
 			// ASM - подсвечивать нужно "test.asasm(1,1)"
@@ -6426,10 +6460,11 @@ ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In/Out]*/, COOR
 
 					// Расчитано на закрывающие : или ) или ] или ,
 					_ASSERTE(pszTermint[0]==L':' && pszTermint[1]==L')' && pszTermint[2]==L']' && pszTermint[3]==L',' && pszTermint[5]==0);
-					if (bDigits && wcschr(pszTermint, pChar[lcrTo.X]) /*pChar[lcrTo.X] == L':'*/)
+					// Script.ps1:35 знак:23
+					if (bDigits && IsFileLineTerminator(pChar+lcrTo.X, pszTermint))
 					{
 						// Validation
-						if (((pChar[lcrTo.X] == L':')
+						if (((pChar[lcrTo.X] == L':' || pChar[lcrTo.X] == L' ')
 								// Issue 1594: /src/class.c:123:m_func(...)
 								/* && (wcschr(pszSpacing, pChar[lcrTo.X+1])
 									|| wcschr(pszDigits, pChar[lcrTo.X+1]))*/)
