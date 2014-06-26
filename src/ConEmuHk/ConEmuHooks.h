@@ -164,6 +164,7 @@ extern bool gbSkipVirtualAllocErr;
 extern bool gbPrepareDefaultTerminal;
 extern bool gbIsNetVsHost;
 extern bool gbIsVStudio;
+extern int  gnVsHostStartConsole;
 /* ************ Globals for "Default terminal ************ */
 
 void GuiSetProgress(WORD st, WORD pr, LPCWSTR pszName = NULL);

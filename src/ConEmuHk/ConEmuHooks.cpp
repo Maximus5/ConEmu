@@ -2019,6 +2019,13 @@ BOOL WINAPI OnShowWindow(HWND hWnd, int nCmdShow)
 	BOOL lbRc = FALSE, lbGuiAttach = FALSE, lbInactiveTab = FALSE;
 	static bool bShowWndCalled = false;
 
+	if (gbPrepareDefaultTerminal && ghConWnd && (hWnd == ghConWnd) && nCmdShow && (gnVsHostStartConsole > 0))
+	{
+		DefTermMsg(L"ShowWindow(hConWnd) calling");
+		nCmdShow = SW_HIDE;
+		gnVsHostStartConsole--;
+	}
+
 	if (ghConEmuWndDC && (hWnd == ghConEmuWndDC || hWnd == ghConWnd))
 	{
 		#ifdef _DEBUG
@@ -4999,6 +5006,14 @@ BOOL WINAPI OnAllocConsole(void)
 
 		if (!ph->PreCallBack(&args))
 			return lbRc;
+	}
+
+	if (gbPrepareDefaultTerminal && gbIsNetVsHost)
+	{
+		if (!ghConWnd)
+			gnVsHostStartConsole = 2;
+		else
+			gnVsHostStartConsole = 0;
 	}
 
 	// GUI приложение во вкладке. Если окна консоли еще нет - попробовать прицепиться
