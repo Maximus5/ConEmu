@@ -1110,6 +1110,7 @@
     <Image Include="donate.bmp" />
     <Image Include="flattr.bmp" />
     <Image Include="Scroll.bmp" />
+    <Image Include="Search.ico" />
     <Image Include="Shield16.bmp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

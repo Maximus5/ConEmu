@@ -2690,6 +2690,7 @@
 				RelativePath=".\Scroll.bmp"
 				>
 			</File>
+			<File RelativePath="Search.ico" />
 			<File
 				RelativePath=".\Shield.bmp"
 				>

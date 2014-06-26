@@ -1094,6 +1094,7 @@
     <None Include="hourglass.bmp" />
     <None Include="hsplit.cur" />
     <None Include="Scroll.bmp" />
+    <None Include="Search.ico" />
     <None Include="Shield.bmp" />
     <None Include="Shield.ico" />
     <None Include="Shield16.bmp" />
