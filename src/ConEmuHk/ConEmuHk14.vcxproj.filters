@@ -1,0 +1,170 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav</Extensions>
+    </Filter>
+    <Filter Include="0 - Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\common\common.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\ConEmuCheck.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmuHooks.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Console2.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\defines.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\Execute.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GuiAttach.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Injects.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\Memory.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\MSecurity.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\MStrSafe.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\PipeServer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="RegHooks.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SetHook.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ShellProcessor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\WinObjects.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ExtConsole.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\InQueue.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\RConStartArgs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\WinConsole.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\CmdLine.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\DefTermHooker.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\ConsoleMixAttr.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="ConEmuHk.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\common\Common.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\ConEmuCheck.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmuHooks.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Entry.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\Execute.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GuiAttach.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Injects.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\MAssert.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\Memory.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\MSecurity.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\MStrSafe.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="RegHooks.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SetHook.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ShellProcessor.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\WinObjects.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Ansi.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ExtConsole.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\InQueue.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\RConStartArgs.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\WinConsole.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\CmdLine.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\ConsoleMixAttr.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="export.def">
+      <Filter>0 - Source Files</Filter>
+    </None>
+    <None Include="!Todo.txt" />
+  </ItemGroup>
+</Project>
