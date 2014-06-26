@@ -370,6 +370,7 @@ public:
 		// GO
 
 		bool lbRc = false;
+		int  iHookerRc = -1;
 		bool lbLocked = false;
 		bool lbConHostLocked = false;
 		DWORD nResult = 0;
@@ -379,7 +380,6 @@ public:
 		bool bNotified = false;
 		HANDLE hProcess = NULL;
 		DWORD nErrCode = 0;
-		int iHookerRc = -1;
 
 
 		if (bRunInThread && (hFore == mh_LastCall))
@@ -888,7 +888,7 @@ protected:
 	};
 
 protected:
-	// Чтобы избежать возможного зависания в процессе установки
+	// Чтобы избежать возможного зависания ConEmu.exe в процессе установки
 	// хука в процесс шелла (explorer.exe) при старте ConEmu и загрузке ConEmuHk
 	static DWORD WINAPI PostCheckThread(LPVOID lpParameter)
 	{
