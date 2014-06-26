@@ -12833,6 +12833,9 @@ void CConEmuMain::OnTaskbarCreated()
 	// И передернуть все TaskBarGhost
 	CVConGroup::OnTaskbarCreated();
 
+	// Refresh DefTerm hooking
+	if (mp_DefTrm) mp_DefTrm->OnTaskbarCreated();
+
 	// Dummy
 	if (mp_DragDrop) mp_DragDrop->OnTaskbarCreated();
 }

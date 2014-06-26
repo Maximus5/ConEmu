@@ -149,6 +149,14 @@ void CDefaultTerminal::StartGuiDefTerm(bool bManual, bool bNoThreading /*= false
 	Initialize(bManual/*bWaitForReady*/, bManual/*bShowErrors*/, bNoThreading);
 }
 
+void CDefaultTerminal::OnTaskbarCreated()
+{
+	if (!isDefaultTerminalAllowed(true))
+		return;
+
+	CheckShellWindow();
+}
+
 void CDefaultTerminal::PreCreateThread()
 {
 	// Write to [HKCU\Software\Microsoft\Windows\CurrentVersion\Run]

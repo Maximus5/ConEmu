@@ -38,6 +38,7 @@ public:
 	virtual ~CDefaultTerminal();
 
 	void StartGuiDefTerm(bool bManual, bool bNoThreading = false);
+	void OnTaskbarCreated();
 
 	void CheckRegisterOsStartup();
 	void ApplyAndSave();
