@@ -36,6 +36,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <TlHelp32.h>
 
 #define DEF_TERM_ALIVE_CHECK_TIMEOUT 750
+#define DEF_TERM_INSTALL_TIMEOUT 30000
 
 /* *********** Default terminal settings *********** */
 struct CEDefTermOpt
@@ -674,7 +675,7 @@ private:
 	}
 
 protected:
-	void Initialize(bool bWaitForReady /*= false*/, bool bShowErrors /*= false*/)
+	void Initialize(bool bWaitForReady /*= false*/, bool bShowErrors /*= false*/, bool bNoThreading /*= false*/)
 	{
 		// Once
 		if (!mb_Initialized)
@@ -721,10 +722,12 @@ protected:
 		{
 			if (bWaitForReady)
 			{
-				// Wait for 30 seconds
-				DWORD nStart = GetTickCount();
+				// Wait for 30 seconds or infinite if bNoThreading specifed (used for ConEmu.exe /SetDefTerm /Exit)
+				DWORD nWaitTimeout = bNoThreading ? INFINITE : DEF_TERM_INSTALL_TIMEOUT;
+				// Do wait
 				SetCursor(LoadCursor(NULL, IDC_WAIT));
-				nWait = WaitForSingleObject(hPostThread, 30000);
+				DWORD nStart = GetTickCount();
+				nWait = WaitForSingleObject(hPostThread, nWaitTimeout);
 				SetCursor(LoadCursor(NULL, IDC_ARROW));
 				DWORD nDuration = GetTickCount() - nStart;
 				if (nWait == WAIT_OBJECT_0)

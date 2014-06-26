@@ -154,7 +154,7 @@ void CDefaultTerminal::StartGuiDefTerm(bool bManual, bool bNoThreading /*= false
 	}
 
 	// Will call ReloadSettings(), PreCreateThread(), PostCreateThreadFinished()
-	Initialize(bManual/*bWaitForReady*/, bManual/*bShowErrors*/);
+	Initialize(bManual/*bWaitForReady*/, bManual/*bShowErrors*/, false);
 }
 
 void CDefaultTerminal::PreCreateThread()

@@ -185,7 +185,7 @@ CDefTermHk::~CDefTermHk()
 
 void CDefTermHk::StartDefTerm()
 {
-	Initialize(false, false);
+	Initialize(false, false, false);
 }
 
 void CDefTermHk::StopHookers()
