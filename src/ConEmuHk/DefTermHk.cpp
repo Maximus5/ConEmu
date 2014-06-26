@@ -158,6 +158,8 @@ bool InitDefaultTerm()
 	DebugStr(L"InitDefaultTerm finished\n");
 	#endif
 
+	gpDefTerm->StartDefTerm();
+
 	return lbRc;
 }
 
@@ -179,6 +181,11 @@ CDefTermHk::CDefTermHk()
 
 CDefTermHk::~CDefTermHk()
 {
+}
+
+void CDefTermHk::StartDefTerm()
+{
+	Initialize(false, false);
 }
 
 void CDefTermHk::StopHookers()

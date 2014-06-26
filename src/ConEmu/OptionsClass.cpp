@@ -3829,6 +3829,7 @@ LRESULT CSettings::OnInitDialog_DefTerm(HWND hWnd2, bool abInitial)
 	CheckDlgButton(hWnd2, cbDefaultTerminalStartup, bRegister);
 	CheckDlgButton(hWnd2, cbDefaultTerminalTSA, bLeaveInTSA);
 	EnableWindow(GetDlgItem(hWnd2, cbDefaultTerminalTSA), bRegister);
+	CheckDlgButton(hWnd2, cbDefTermAgressive, gpSet->isRegisterAgressive);
 	CheckDlgButton(hWnd2, cbDefaultTerminalNoInjects, gpSet->isDefaultTerminalNoInjects);
 	CheckDlgButton(hWnd2, cbDefaultTerminalUseExisting, !gpSet->isDefaultTerminalNewWindow);
 	CheckRadioButton(hWnd2, rbDefaultTerminalConfAuto, rbDefaultTerminalConfNever, rbDefaultTerminalConfAuto+gpSet->nDefaultTerminalConfirmClose);
@@ -6396,7 +6397,8 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 					break;
 				case cbDefaultTerminalStartup:
 				case cbDefaultTerminalTSA:
-					if (IsChecked(hWnd2, cbDefaultTerminalStartup))
+				case cbDefTermAgressive:
+					if (IsChecked(hWnd2, cbDefaultTerminalStartup) || IsChecked(hWnd2, cbDefTermAgressive))
 					{
 						if (!gpSet->isSetDefaultTerminal)
 						{
@@ -6416,6 +6418,7 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 						gpSet->isRegisterOnOsStartup = false;
 					}
 					gpSet->isRegisterOnOsStartupTSA = IsChecked(hWnd2, cbDefaultTerminalTSA);
+					gpSet->isRegisterAgressive = IsChecked(hWnd2, cbDefTermAgressive);
 					EnableWindow(GetDlgItem(hWnd2, cbDefaultTerminalTSA), gpSet->isRegisterOnOsStartup);
 					// And update registry
 					gpConEmu->mp_DefTrm->CheckRegisterOsStartup();

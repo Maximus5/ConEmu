@@ -38,6 +38,8 @@ public:
 	CDefTermHk();
 	virtual ~CDefTermHk();
 
+	void StartDefTerm();
+
 	virtual bool isDefaultTerminalAllowed(bool bDontCheckName = false); // !(gpConEmu->DisableSetDefTerm || !gpSet->isSetDefaultTerminal)
 	virtual void StopHookers();
 	virtual void ReloadSettings(); // Copy from gpSet or load from [HKCU]
