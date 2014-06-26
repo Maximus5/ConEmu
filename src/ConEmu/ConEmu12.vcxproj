@@ -1060,15 +1060,20 @@
     <ClInclude Include="VirtualConsole.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\..\Release\ConEmu\About-ConEmu.txt" />
+    <None Include="..\..\Release\ConEmu\FAQ-ConEmu.txt" />
+    <None Include="..\..\Release\ConEmu\License.txt" />
+    <None Include="..\..\Release\ConEmu\Settings-ConEmu.reg" />
+    <None Include="..\..\Release\ConEmu\WhatsNew-ConEmu.txt" />
     <None Include="Circles.bmp" />
-    <CustomBuild Include="ConEmu.ico" />
+    <None Include="ConEmu.ico" />
     <None Include="ConEmu.rc2" />
     <None Include="Copy.bmp" />
-    <CustomBuild Include="CursorDragCopy.cur" />
-    <CustomBuild Include="CursorDragLink.cur" />
-    <CustomBuild Include="CursorDragMove.cur" />
-    <CustomBuild Include="Far.ico" />
-    <CustomBuild Include="FAR2.ico" />
+    <None Include="CursorDragCopy.cur" />
+    <None Include="CursorDragLink.cur" />
+    <None Include="CursorDragMove.cur" />
+    <None Include="Far.ico" />
+    <None Include="FAR2.ico" />
     <None Include="hourglass.bmp" />
     <None Include="hsplit.cur" />
     <None Include="Shield.bmp" />
@@ -1076,13 +1081,6 @@
     <None Include="toolbar1.bmp" />
     <None Include="Version.rc2" />
     <None Include="vsplit.cur" />
-    <None Include="!Todo.Tablet.txt" />
-    <None Include="..\..\Release\ConEmu\About-ConEmu.txt" />
-    <None Include="ClassDiagram1.cd" />
-    <None Include="..\..\Release\ConEmu\FAQ-ConEmu.txt" />
-    <None Include="..\..\Release\ConEmu\License.txt" />
-    <None Include="..\..\Release\ConEmu\Settings-ConEmu.reg" />
-    <None Include="..\..\Release\ConEmu\WhatsNew-ConEmu.txt" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="ConEmu.rc">
@@ -1099,10 +1097,6 @@
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug_F3|x64'">_DEBUG;WIN64;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug_F2|x64'">_DEBUG;WIN64;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <Text Include="!ToDo.!111!.txt" />
-    <Text Include="!ToDo.Tabs.txt" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="Copy24.bmp" />

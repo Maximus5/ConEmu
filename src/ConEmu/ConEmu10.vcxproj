@@ -1079,18 +1079,22 @@
     <ClInclude Include="VirtualConsole.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="!ToDo.!000!.txt" />
+    <None Include="..\..\Release\ConEmu\About-ConEmu.txt" />
+    <None Include="..\..\Release\ConEmu\FAQ-ConEmu.txt" />
+    <None Include="..\..\Release\ConEmu\License.txt" />
+    <None Include="..\..\Release\ConEmu\Settings-ConEmu.reg" />
+    <None Include="..\..\Release\ConEmu\WhatsNew-ConEmu.txt" />
     <None Include="Circles.bmp" />
-    <CustomBuildStep Include="ConEmu.ico" />
+    <None Include="ConEmu.ico" />
     <None Include="ConEmu.rc2" />
     <None Include="Copy.bmp" />
-    <CustomBuildStep Include="CursorDragCopy.cur" />
-    <CustomBuildStep Include="CursorDragLink.cur" />
-    <CustomBuildStep Include="CursorDragMove.cur" />
-    <CustomBuildStep Include="Far.ico" />
-    <CustomBuildStep Include="FAR2.ico" />
     <None Include="Copy24.bmp" />
     <None Include="Copy4.bmp" />
+    <None Include="CursorDragCopy.cur" />
+    <None Include="CursorDragLink.cur" />
+    <None Include="CursorDragMove.cur" />
+    <None Include="Far.ico" />
+    <None Include="FAR2.ico" />
     <None Include="hourglass.bmp" />
     <None Include="hsplit.cur" />
     <None Include="Scroll.bmp" />
@@ -1101,14 +1105,6 @@
     <None Include="toolbar1.bmp" />
     <None Include="Version.rc2" />
     <None Include="vsplit.cur" />
-    <None Include="!Todo.Tablet.txt" />
-    <None Include="!Todo.txt" />
-    <None Include="..\..\Release\ConEmu\About-ConEmu.txt" />
-    <None Include="ClassDiagram1.cd" />
-    <None Include="..\..\Release\ConEmu\FAQ-ConEmu.txt" />
-    <None Include="..\..\Release\ConEmu\License.txt" />
-    <None Include="..\..\Release\ConEmu\Settings-ConEmu.reg" />
-    <None Include="..\..\Release\ConEmu\WhatsNew-ConEmu.txt" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="ConEmu.rc">

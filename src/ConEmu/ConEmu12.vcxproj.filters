@@ -494,9 +494,7 @@
     <None Include="vsplit.cur">
       <Filter>Resource Files</Filter>
     </None>
-    <None Include="!Todo.Tablet.txt" />
     <None Include="..\..\Release\ConEmu\About-ConEmu.txt" />
-    <None Include="ClassDiagram1.cd" />
     <None Include="..\..\Release\ConEmu\FAQ-ConEmu.txt" />
     <None Include="..\..\Release\ConEmu\License.txt" />
     <None Include="..\..\Release\ConEmu\Settings-ConEmu.reg" />
@@ -546,10 +544,6 @@
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="!ToDo.!111!.txt" />
-    <Text Include="!ToDo.Tabs.txt" />
-  </ItemGroup>
-  <ItemGroup>
     <Image Include="Copy24.bmp">
       <Filter>Resource Files</Filter>
     </Image>
@@ -566,6 +560,9 @@
       <Filter>Resource Files</Filter>
     </Image>
     <Image Include="flattr.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Search.ico">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>
