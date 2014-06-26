@@ -42,6 +42,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	#define DebugStr(s)
 #endif
 
+#ifdef _DEBUG
+	#define DefTermMsg(s) //MessageBox(NULL, s, L"ConEmuHk", MB_SYSTEMMODAL)
+#else
+	#define DefTermMsg(s) //MessageBox(NULL, s, L"ConEmuHk", MB_SYSTEMMODAL)
+#endif
+
 extern HMODULE ghOurModule; // Хэндл нашей dll'ки (здесь хуки не ставятся)
 
 /* ************ Globals for "Default terminal ************ */
@@ -259,11 +265,13 @@ void CDefTermHk::ReloadSettings()
 
 int CDefTermHk::DisplayLastError(LPCWSTR asLabel, DWORD dwError/*=0*/, DWORD dwMsgFlags/*=0*/, LPCWSTR asTitle/*=NULL*/, HWND hParent/*=NULL*/)
 {
+	DefTermMsg(asLabel);
 	return 0;
 }
 
 void CDefTermHk::ShowTrayIconError(LPCWSTR asErrText)
 {
+	DefTermMsg(asErrText);
 }
 
 size_t CDefTermHk::GetSrvAddArgs(bool bGuiArgs, CmdArg& rsArgs, CmdArg& rsNewCon)

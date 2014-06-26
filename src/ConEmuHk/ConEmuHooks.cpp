@@ -34,6 +34,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	#undef REPORT_VIRTUAL_ALLOC
 #endif
 
+#ifdef _DEBUG
+	#define DefTermMsg(s) //MessageBox(NULL, s, L"ConEmuHk", MB_SYSTEMMODAL)
+#else
+	#define DefTermMsg(s) //MessageBox(NULL, s, L"ConEmuHk", MB_SYSTEMMODAL)
+#endif
+
 #define DROP_SETCP_ON_WIN2K3R2
 //#define SHOWDEBUGSTR -- специально отключено, CONEMU_MINIMAL, OutputDebugString могут нарушать работу процессов
 //#define SKIPHOOKLOG
@@ -5000,6 +5006,8 @@ BOOL WINAPI OnAllocConsole(void)
 		}
 	}
 
+	DefTermMsg(L"AllocConsole calling");
+
 	if (!lbAllocated && F(AllocConsole))
 	{
 		lbRc = F(AllocConsole)();
@@ -5049,6 +5057,7 @@ BOOL WINAPI OnAllocConsole(void)
 
 	if (hNewConWnd && (hNewConWnd != hOldConWnd) && gbPrepareDefaultTerminal && gbIsNetVsHost)
 	{
+		DefTermMsg(L"Calling sp->OnAllocConsoleFinished");
 		CShellProc* sp = new CShellProc();
 		if (sp)
 		{
@@ -5056,6 +5065,14 @@ BOOL WINAPI OnAllocConsole(void)
 			delete sp;
 		}
 		SetLastError(0);
+	}
+	else if (hNewConWnd)
+	{
+		DefTermMsg(L"Console was already allocated");
+	}
+	else
+	{
+		DefTermMsg(L"Something was wrong");
 	}
 
 	TODO("Можно бы по настройке установить параметры. Кодовую страницу, например");

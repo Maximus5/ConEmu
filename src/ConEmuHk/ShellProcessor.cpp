@@ -53,6 +53,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define SEE_MASK_NOASYNC 0x00000100
 #endif
 
+#ifdef _DEBUG
+	#define DefTermMsg(s) //MessageBox(NULL, s, L"ConEmuHk", MB_SYSTEMMODAL)
+#else
+	#define DefTermMsg(s) //MessageBox(NULL, s, L"ConEmuHk", MB_SYSTEMMODAL)
+#endif
+
 
 #ifdef _DEBUG
 #ifndef CONEMU_MINIMAL
@@ -2590,7 +2596,7 @@ void CShellProc::OnAllocConsoleFinished()
 	_ASSERTEX(bConWasVisible);
 	// Чтобы минимизировать "мелькания" - сразу спрячем его
 	ShowWindow(ghConWnd, SW_HIDE);
-	DEBUGTEST(MessageBox(NULL, L"Console window hided", L"ConEmuHk", MB_SYSTEMMODAL));
+	DefTermMsg(L"Console window hided");
 
 	gpDefTerm->ReloadSettings();
 	_ASSERTEX(isDefaultTerminalEnabled() && gbIsNetVsHost);
@@ -2644,9 +2650,11 @@ void CShellProc::OnAllocConsoleFinished()
 	}
 
 wrap:
-	if (!bAttachCreated && bConWasVisible)
+	if (!bAttachCreated)
 	{
-		ShowWindow(ghConWnd, SW_SHOW);
+		if (bConWasVisible)
+			ShowWindow(ghConWnd, SW_SHOW);
+		DefTermMsg(L"Starting attach server failed?");
 	}
 }
 
