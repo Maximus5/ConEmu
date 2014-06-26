@@ -2585,6 +2585,13 @@ void CShellProc::OnAllocConsoleFinished()
 	wchar_t* pszCmdLine;
 	DWORD nErr = 0;
 
+	// По идее, после AllocConsole окно RealConsole всегда видимо
+	BOOL bConWasVisible = IsWindowVisible(ghConWnd);
+	_ASSERTEX(bConWasVisible);
+	// Чтобы минимизировать "мелькания" - сразу спрячем его
+	ShowWindow(ghConWnd, SW_HIDE);
+	DEBUGTEST(MessageBox(NULL, L"Console window hided", L"ConEmuHk", MB_SYSTEMMODAL));
+
 	gpDefTerm->ReloadSettings();
 	_ASSERTEX(isDefaultTerminalEnabled() && gbIsNetVsHost);
 
@@ -2637,7 +2644,10 @@ void CShellProc::OnAllocConsoleFinished()
 	}
 
 wrap:
-	return;
+	if (!bAttachCreated && bConWasVisible)
+	{
+		ShowWindow(ghConWnd, SW_SHOW);
+	}
 }
 
 void CShellProc::OnCreateProcessFinished(BOOL abSucceeded, PROCESS_INFORMATION *lpPI)
