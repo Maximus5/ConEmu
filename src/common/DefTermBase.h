@@ -295,6 +295,10 @@ protected:
 	HANDLE mh_PostThread;
 	DWORD  mn_PostThreadId;
 	CRITICAL_SECTION mcs;
+protected:
+	// Shell may not like injecting immediately after start-up
+	// If so, set (mb_ExplorerHookAllowed = false) in constructor
+	bool   mb_ExplorerHookAllowed;
 
 protected:
 	CEDefTermOpt m_Opt;
@@ -329,6 +333,7 @@ public:
 		mn_PostThreadId = 0;
 		mb_PostCreatedThread = false;
 		mb_Initialized = false;
+		mb_ExplorerHookAllowed = true;
 		InitializeCriticalSection(&mcs);
 	};
 
@@ -343,7 +348,7 @@ public:
 		return (this && mb_Initialized && mb_ReadyToHook);
 	};
 
-	bool CheckForeground(HWND hFore, DWORD nForePID, bool bRunInThread = true)
+	bool CheckForeground(HWND hFore, DWORD nForePID, bool bRunInThread = true, bool bSkipShell = true)
 	{
 		if (!isDefaultTerminalAllowed())
 			return false;
@@ -380,6 +385,8 @@ public:
 		bool bNotified = false;
 		HANDLE hProcess = NULL;
 		DWORD nErrCode = 0;
+		bool bShellTrayWnd = false; // task bar
+		bool bShellWnd = false; // one of explorer windows (folder browsers)
 
 
 		if (bRunInThread && (hFore == mh_LastCall))
@@ -424,8 +431,12 @@ public:
 		// Check window class
 		if (GetClassName(hFore, szClass, countof(szClass)))
 		{
+			bShellTrayWnd = (lstrcmp(szClass, L"Shell_TrayWnd") == 0);
+			bShellWnd = (lstrcmp(szClass, L"CabinetWClass") == 0) || (lstrcmp(szClass, L"ExploreWClass") == 0);
+
 			if ((lstrcmp(szClass, VirtualConsoleClass) == 0)
 				//|| (lstrcmp(szClass, L"#32770") == 0) // Ignore dialogs // -- Process dialogs too (Application may be dialog-based)
+				|| ((bSkipShell || !mb_ExplorerHookAllowed) && bShellTrayWnd) // Do not hook explorer windows?
 				|| isConsoleClass(szClass))
 			{
 				mh_LastIgnoredWnd = hFore;
@@ -896,7 +907,7 @@ protected:
 		ThreadArg* pArg = (ThreadArg*)lpParameter;
 		if (pArg)
 		{
-			bRc = pArg->pTerm->CheckForeground(pArg->hFore, pArg->nForePID, false);
+			bRc = pArg->pTerm->CheckForeground(pArg->hFore, pArg->nForePID, false, !pArg->pTerm->mb_ExplorerHookAllowed);
 			free(pArg);
 		}
 		return bRc;
@@ -942,7 +953,7 @@ protected:
 		{
 			if (GetWindowThreadProcessId(hShell, &nShellPID) && nShellPID)
 			{
-				bHooked = CheckForeground(hShell, nShellPID, false);
+				bHooked = CheckForeground(hShell, nShellPID, false, !mb_ExplorerHookAllowed);
 			}
 		}
 
@@ -951,7 +962,7 @@ protected:
 			if (GetWindowThreadProcessId(hTrayWnd, &nTrayPID) && nTrayPID
 				&& (nTrayPID != nShellPID))
 			{
-				bHooked = CheckForeground(hTrayWnd, nTrayPID, false);
+				bHooked = CheckForeground(hTrayWnd, nTrayPID, false, !mb_ExplorerHookAllowed);
 			}
 		}
 
@@ -960,7 +971,7 @@ protected:
 			if (GetWindowThreadProcessId(hDesktop, &nDesktopPID) && nDesktopPID
 				&& (nDesktopPID != nTrayPID) && (nDesktopPID != nShellPID))
 			{
-				bHooked = CheckForeground(hDesktop, nDesktopPID, false);
+				bHooked = CheckForeground(hDesktop, nDesktopPID, false, !mb_ExplorerHookAllowed);
 			}
 		}
 

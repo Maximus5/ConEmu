@@ -40,6 +40,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 CDefaultTerminal::CDefaultTerminal()
 	: CDefTermBase()
 {
+	mb_ExplorerHookAllowed = true;
 }
 
 CDefaultTerminal::~CDefaultTerminal()
