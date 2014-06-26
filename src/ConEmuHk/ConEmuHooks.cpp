@@ -643,38 +643,43 @@ bool InitHooksDefaultTrm()
 		{(void*)OnWinExec,				"WinExec",				kernel32},
 		// Need for hook "Run as administrator"
 		{(void*)OnShellExecuteExW,		"ShellExecuteExW",		shell32},
+		{0}
+	};
+	HookItem HooksCmdLine[] =
+	{
 		// Issue 1125: "Run as administrator" too. Must be last export
 		{(void*)OnShellExecCmdLine,		"ShellExecCmdLine",		shell32,   265},
+		{0}
+	};
+	HookItem HooksVshost[] =
+	{
 		// Issue 1312: .Net applications runs in "*.vshost.exe" helper GUI apllication when debugging
 		{(void*)OnAllocConsole,			"AllocConsole",			kernel32}, // Only for "*.vshost.exe"?
+		{(void*)OnShowWindow,			"ShowWindow",			user32},
 		/* ************************ */
 		{0}
 	};
 
-	size_t iNullIdx = countof(HooksCommon)-1;
-	size_t iAllocIdx = countof(HooksCommon)-2;
-	size_t iCmdLineIdx = countof(HooksCommon)-3;
-
-	//if (GetModuleHandle(L"MSCOREE.DLL") != NULL) -- excess check?
-	_ASSERTE(HooksCommon[iAllocIdx].NewAddress == (void*)OnAllocConsole);
-	if (!gbIsNetVsHost)
-	{
-		HooksCommon[iAllocIdx] = HooksCommon[iNullIdx];
-	}
+	InitHooks(HooksCommon);
 
 	// Windows 8. There is new undocumented function "ShellExecCmdLine" used by Explorer
-	if (!(gpStartEnv->os.dwMajorVersion == 6 && gpStartEnv->os.dwMinorVersion <= 2))
+	#ifndef _WIN32_WINNT_WIN8
+		#define _WIN32_WINNT_WIN8 0x602
+	#endif
+	_ASSERTE(_WIN32_WINNT_WIN8==0x602);
+	OSVERSIONINFOEXW osvi = {sizeof(osvi), HIBYTE(_WIN32_WINNT_WIN8), LOBYTE(_WIN32_WINNT_WIN8)};
+	DWORDLONG const dwlConditionMask = VerSetConditionMask(VerSetConditionMask(0, VER_MAJORVERSION, VER_GREATER_EQUAL), VER_MINORVERSION, VER_GREATER_EQUAL);
+	BOOL isWindows8 = VerifyVersionInfoW(&osvi, VER_MAJORVERSION | VER_MINORVERSION, dwlConditionMask);
+	if (isWindows8)
 	{
-		_ASSERTEX(HooksCommon[iCmdLineIdx].NameOrdinal == 265);
-		HooksCommon[iCmdLineIdx] = HooksCommon[iAllocIdx];
-		HooksCommon[iAllocIdx] = HooksCommon[iNullIdx];
-	}
-	else
-	{
-		//_ASSERTEX(FALSE && "Continue to hook");
+		InitHooks(HooksCmdLine);
 	}
 
-	InitHooks(HooksCommon);
+	// "*.vshost.exe" uses special helper
+	if (gbIsNetVsHost)
+	{
+		InitHooks(HooksVshost);
+	}
 
 	return true;
 }
