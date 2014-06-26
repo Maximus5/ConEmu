@@ -37,7 +37,7 @@ public:
 	CDefaultTerminal();
 	virtual ~CDefaultTerminal();
 
-	void PostCreated(bool bWaitForReady = false, bool bShowErrors = false);
+	void StartGuiDefTerm(bool bManual, bool bNoThreading = false);
 
 	void CheckRegisterOsStartup();
 	void ApplyAndSave();

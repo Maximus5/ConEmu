@@ -142,7 +142,7 @@ void CDefaultTerminal::CheckRegisterOsStartup()
 	}
 }
 
-void CDefaultTerminal::PostCreated(bool bWaitForReady /*= false*/, bool bShowErrors /*= false*/)
+void CDefaultTerminal::StartGuiDefTerm(bool bManual, bool bNoThreading /*= false*/)
 {
 	if (!ghWnd)
 	{
@@ -154,7 +154,7 @@ void CDefaultTerminal::PostCreated(bool bWaitForReady /*= false*/, bool bShowErr
 	}
 
 	// Will call ReloadSettings(), PreCreateThread(), PostCreateThreadFinished()
-	Initialize(bWaitForReady, bShowErrors);
+	Initialize(bManual/*bWaitForReady*/, bManual/*bShowErrors*/);
 }
 
 void CDefaultTerminal::PreCreateThread()

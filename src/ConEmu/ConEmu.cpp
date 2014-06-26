@@ -11702,7 +11702,7 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 			SetKillTimer(true, TIMER_ADMSHIELD_ID, TIMER_ADMSHIELD_ELAPSE);
 		}
 
-		mp_DefTrm->PostCreated();
+		mp_DefTrm->StartGuiDefTerm(false);
 	}
 
 	mn_StartupFinished = abReceived ? ss_PostCreate2Finished : ss_PostCreate1Finished;

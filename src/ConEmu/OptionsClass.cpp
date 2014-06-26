@@ -6447,7 +6447,7 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 					// Redraw checkboxes to avoid lags in painting while installing hooks
 					RedrawWindow(hWnd2, NULL, NULL, RDW_UPDATENOW|RDW_ALLCHILDREN);
 					// Инициировать эксплорер, если он еще не был обработан
-					gpConEmu->mp_DefTrm->PostCreated(true, true);
+					gpConEmu->mp_DefTrm->StartGuiDefTerm(true);
 					// Вернуть фокус в окно настроек
 					SetForegroundWindow(ghOpWnd);
 				}
