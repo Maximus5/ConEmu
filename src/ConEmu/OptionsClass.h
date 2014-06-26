@@ -70,8 +70,6 @@ class CSettings
 		void SetConfigName(LPCWSTR asConfigName);
 
 		// === Аргументы из командной строки ===
-		// Default terminal installation
-		bool ibExitAfterDefTermSetup;
 		// Для отладочных целей.
 		bool isResetBasicSettings;
 		bool isFastSetupDisabled;

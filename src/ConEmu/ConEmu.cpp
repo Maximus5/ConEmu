@@ -1372,7 +1372,7 @@ bool CConEmuMain::IsFastSetupDisabled()
 
 bool CConEmuMain::IsAllowSaveSettingsOnExit()
 {
-	return !(gpSetCls->ibDisableSaveSettingsOnExit || gpSetCls->ibExitAfterDefTermSetup || IsResetBasicSettings());
+	return !(gpSetCls->ibDisableSaveSettingsOnExit || IsResetBasicSettings());
 }
 
 void CConEmuMain::OnUseGlass(bool abEnableGlass)

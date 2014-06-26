@@ -145,17 +145,8 @@ void CDefaultTerminal::CheckRegisterOsStartup()
 
 void CDefaultTerminal::StartGuiDefTerm(bool bManual, bool bNoThreading /*= false*/)
 {
-	if (!ghWnd)
-	{
-		// Main ConEmu window must be created
-		// It is required for initialization of ConEmuHk.dll
-		// wich will be injected into hooked processes
-		_ASSERTE(ghWnd!=NULL);
-		return;
-	}
-
 	// Will call ReloadSettings(), PreCreateThread(), PostCreateThreadFinished()
-	Initialize(bManual/*bWaitForReady*/, bManual/*bShowErrors*/, false);
+	Initialize(bManual/*bWaitForReady*/, bManual/*bShowErrors*/, bNoThreading);
 }
 
 void CDefaultTerminal::PreCreateThread()
@@ -169,12 +160,6 @@ void CDefaultTerminal::PreCreateThread()
 
 void CDefaultTerminal::PostCreateThreadFinished()
 {
-	// Просили выйти после установки хуков?
-	if (gpSetCls->ibExitAfterDefTermSetup)
-	{
-		// Если уже все захукано - выходим
-		gpConEmu->PostScClose();
-	}
 }
 
 int CDefaultTerminal::DisplayLastError(LPCWSTR asLabel, DWORD dwError/*=0*/, DWORD dwMsgFlags/*=0*/, LPCWSTR asTitle/*=NULL*/, HWND hParent/*=NULL*/)

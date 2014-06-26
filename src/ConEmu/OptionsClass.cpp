@@ -280,7 +280,6 @@ CSettings::CSettings()
 	UpdateDpi();
 
 	// Go
-	ibExitAfterDefTermSetup = false;
 	isResetBasicSettings = false;
 	isFastSetupDisabled = false;
 	isDontCascade = false;

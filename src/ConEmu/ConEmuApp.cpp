@@ -4469,17 +4469,25 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	// Only when ExitAfterActionPrm, otherwise - it will be called from ConEmu's PostCreate
 	if (SetUpDefaultTerminal)
 	{
-		if (ExitAfterActionPrm)
-		{
-			//Just will exit after all running processes will be infiltrated
-			//MessageBox(L"'/Exit' switch can not be used together with '/SetDefTerm'!", MB_ICONSTOP);
-			gpSetCls->ibExitAfterDefTermSetup = true;
-			gpSetCls->ibDisableSaveSettingsOnExit = true;
-			ExitAfterActionPrm = false;
-		}
+		_ASSERTE(!gpConEmu->DisableSetDefTerm);
 
 		gpSet->isSetDefaultTerminal = true;
 		gpSet->isRegisterOnOsStartup = true;
+
+		if (ExitAfterActionPrm)
+		{
+			if (gpConEmu->mp_DefTrm)
+			{
+				gpConEmu->mp_DefTrm->StartGuiDefTerm(true, true);
+			}
+			else
+			{
+				_ASSERTE(gpConEmu->mp_DefTrm);
+			}
+
+			// Exit now
+			gpSetCls->ibDisableSaveSettingsOnExit = true;
+		}
 	}
 
 	// Actions done
