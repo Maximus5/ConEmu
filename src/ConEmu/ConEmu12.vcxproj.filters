@@ -441,9 +441,6 @@
     <ClInclude Include="..\common\SetEnvVar.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\common\DefTermHooker.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\common\MAssert.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -460,6 +457,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="SearchCtrl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\DefTermBase.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

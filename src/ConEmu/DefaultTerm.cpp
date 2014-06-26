@@ -34,52 +34,23 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Status.h"
 #include "TrayIcon.h"
 #include "../ConEmuCD/ExitCodes.h"
-#include "../common/DefTermHooker.h" // iHookerRc = StartDefTermHooker(nForePID, hProcess, nResult, gpConEmu->ms_ConEmuBaseDir, nErrCode);
 
 #define StartupValueName L"ConEmuDefaultTerminal"
 
 CDefaultTerminal::CDefaultTerminal()
+	: CDefTermBase()
 {
-	mh_LastWnd = mh_LastIgnoredWnd = mh_LastCall = NULL;
-	mb_ReadyToHook = FALSE;
-	//mh_SignEvent = NULL;
-	mn_PostThreadId = 0;
-	mb_PostCreatedThread = false;
-	mb_Initialized = false;
-	InitializeCriticalSection(&mcs);
 }
 
 CDefaultTerminal::~CDefaultTerminal()
 {
-	ClearThreads(true);
-
-	ClearProcessed(true);
-
-	DeleteCriticalSection(&mcs);
-
-	//SafeCloseHandle(mh_SignEvent);
 }
 
-void CDefaultTerminal::ClearThreads(bool bForceTerminate)
+bool CDefaultTerminal::isDefaultTerminalAllowed(bool bDontCheckName /*= false*/)
 {
-	for (INT_PTR i = m_Threads.size(); i--;)
-	{
-		HANDLE hProcess = m_Threads[i];
-		if (WaitForSingleObject(hProcess, 0) != WAIT_OBJECT_0)
-		{
-			if (bForceTerminate)
-			{
-				TerminateThread(hProcess, 100);
-			}
-			else
-			{
-				continue; // Эта нить еще не закончила
-			}
-		}
-		SafeCloseHandle(hProcess);
-
-		m_Threads.erase(i);
-	}
+	if (gpConEmu->DisableSetDefTerm || !gpSet->isSetDefaultTerminal)
+		return false;
+	return true;
 }
 
 bool CDefaultTerminal::IsRegisteredOsStartup(wchar_t* rsValue, DWORD cchMax, bool* pbLeaveInTSA)
@@ -112,6 +83,14 @@ bool CDefaultTerminal::IsRegisteredOsStartup(wchar_t* rsValue, DWORD cchMax, boo
 	if (pbLeaveInTSA)
 		*pbLeaveInTSA = bLeaveTSA;
 	return bCurState;
+}
+
+void CDefaultTerminal::ApplyAndSave()
+{
+	// Get new values from gpSet
+	ReloadSettings();
+	// And save to [HKCU\Software\ConEmu]
+	m_Opt.Serialize(true);
 }
 
 void CDefaultTerminal::CheckRegisterOsStartup()
@@ -163,29 +142,6 @@ void CDefaultTerminal::CheckRegisterOsStartup()
 	}
 }
 
-void CDefaultTerminal::OnHookedListChanged()
-{
-	if (!mb_Initialized)
-		return;
-	if (!isDefaultTerminalAllowed())
-		return;
-
-	EnterCriticalSection(&mcs);
-	ClearProcessed(true);
-	LeaveCriticalSection(&mcs);
-
-	// Если проводника в списке НЕ было, а сейчас появился...
-	// Проверить процесс шелла
-	CheckShellWindow();
-}
-
-bool CDefaultTerminal::isDefaultTerminalAllowed()
-{
-	if (gpConEmu->DisableSetDefTerm || !gpSet->isSetDefaultTerminal)
-		return false;
-	return true;
-}
-
 void CDefaultTerminal::PostCreated(bool bWaitForReady /*= false*/, bool bShowErrors /*= false*/)
 {
 	if (!ghWnd)
@@ -197,403 +153,98 @@ void CDefaultTerminal::PostCreated(bool bWaitForReady /*= false*/, bool bShowErr
 		return;
 	}
 
-	mb_Initialized = true;
-
-	if (!isDefaultTerminalAllowed())
-	{
-		_ASSERTE(bWaitForReady == false);
-		if (bShowErrors && gpConEmu->DisableSetDefTerm)
-		{
-			DisplayLastError(L"Default terminal feature was blocked\n"
-				L"with '/NoDefTerm' ConEmu command line argument!", -1);
-		}
-		return;
-	}
-
-	if (mb_PostCreatedThread)
-	{
-		if (!bShowErrors)
-			return;
-		ClearThreads(false);
-		if (m_Threads.size() > 0)
-		{
-			Icon.ShowTrayIcon(L"Previous Default Terminal setup cycle was not finished yet", tsa_Default_Term);
-			return;
-		}
-	}
-
-	CheckRegisterOsStartup();
-
-	mb_ReadyToHook = TRUE;
-
-	// Этот процесс занимает некоторое время, чтобы не блокировать основной поток - запускаем фоновый
-	mb_PostCreatedThread = true;
-	DWORD  nWait = WAIT_FAILED;
-	HANDLE hPostThread = CreateThread(NULL, 0, PostCreatedThread, this, 0, &mn_PostThreadId);
-	
-	if (hPostThread)
-	{
-		if (bWaitForReady)
-		{
-			// Wait for 30 seconds
-			DWORD nStart = GetTickCount();
-			SetCursor(LoadCursor(NULL, IDC_WAIT));
-			nWait = WaitForSingleObject(hPostThread, 30000);
-			SetCursor(LoadCursor(NULL, IDC_ARROW));
-			DWORD nDuration = GetTickCount() - nStart;
-			if (nWait == WAIT_OBJECT_0)
-			{
-				CloseHandle(hPostThread);
-				return;
-			}
-			else
-			{
-				//_ASSERTE(nWait == WAIT_OBJECT_0);
-				DisplayLastError(L"PostCreatedThread was not finished in 30 seconds");
-				UNREFERENCED_PARAMETER(nDuration);
-			}
-		}
-
-		m_Threads.push_back(hPostThread);
-	}
-	else
-	{
-		if (bShowErrors)
-		{
-			DisplayLastError(L"Failed to start PostCreatedThread");
-		}
-		_ASSERTE(hPostThread!=NULL);
-		mb_PostCreatedThread = false;
-	}
+	// Will call ReloadSettings(), PreCreateThread(), PostCreateThreadFinished()
+	Initialize(bWaitForReady, bShowErrors);
 }
 
-DWORD CDefaultTerminal::PostCreatedThread(LPVOID lpParameter)
+void CDefaultTerminal::PreCreateThread()
 {
-	CDefaultTerminal *pTerm = (CDefaultTerminal*)lpParameter;
+	// Write to [HKCU\Software\Microsoft\Windows\CurrentVersion\Run]
+	CheckRegisterOsStartup();
 
-	// Проверит Shell (Taskbar) и активное окно (GetForegroundWindow)
-	pTerm->CheckShellWindow();
+	// Write to [HKCU\Software\ConEmu]
+	m_Opt.Serialize(true);
+}
 
-	// Done
-	pTerm->mb_PostCreatedThread = false;
-
+void CDefaultTerminal::PostCreateThreadFinished()
+{
 	// Просили выйти после установки хуков?
 	if (gpSetCls->ibExitAfterDefTermSetup)
 	{
+		// Если уже все захукано - выходим
 		gpConEmu->PostScClose();
 	}
-
-	return 0;
 }
 
-// Поставить хук в процесс шелла (explorer.exe)
-bool CDefaultTerminal::CheckShellWindow()
+int CDefaultTerminal::DisplayLastError(LPCWSTR asLabel, DWORD dwError/*=0*/, DWORD dwMsgFlags/*=0*/, LPCWSTR asTitle/*=NULL*/, HWND hParent/*=NULL*/)
 {
-	bool bHooked = false;
-	HWND hFore = GetForegroundWindow();
-	HWND hDesktop = GetDesktopWindow(); //csrss.exe on Windows 8
-	HWND hShell = GetShellWindow();
-	HWND hTrayWnd = FindWindowEx(NULL, NULL, L"Shell_TrayWnd", NULL);
-	DWORD nDesktopPID = 0, nShellPID = 0, nTrayPID = 0, nForePID = 0;
-
-	if (!bHooked && hShell)
-	{
-		if (GetWindowThreadProcessId(hShell, &nShellPID) && nShellPID)
-		{
-			bHooked = CheckForeground(hShell, nShellPID, false);
-		}
-	}
-
-	if (!bHooked && hTrayWnd)
-	{
-		if (GetWindowThreadProcessId(hTrayWnd, &nTrayPID) && nTrayPID
-			&& (nTrayPID != nShellPID))
-		{
-			bHooked = CheckForeground(hTrayWnd, nTrayPID, false);
-		}
-	}
-
-	if (!bHooked && hDesktop)
-	{
-		if (GetWindowThreadProcessId(hDesktop, &nDesktopPID) && nDesktopPID
-			&& (nDesktopPID != nTrayPID) && (nDesktopPID != nShellPID))
-		{
-			bHooked = CheckForeground(hDesktop, nDesktopPID, false);
-		}
-	}
-
-	// Поскольку это выполняется на старте, то ConEmu могли запустить специально
-	// для установки перехвата терминала. Поэтому нужно проверить и ForegroundWindow!
-	if (hFore)
-	{
-		if (GetWindowThreadProcessId(hFore, &nForePID)
-			&& (nForePID != nShellPID) && (nForePID != nDesktopPID) && (nForePID != nTrayPID))
-		{
-			CheckForeground(hFore, nForePID, false);
-		}
-	}
-
-	return bHooked;
+	return ::DisplayLastError(asLabel, dwError, dwMsgFlags, asTitle, hParent);
 }
 
-// Чтобы избежать возможного зависания в процессе установки
-// хука в процесс шелла (explorer.exe) при старте ConEmu
-DWORD CDefaultTerminal::PostCheckThread(LPVOID lpParameter)
+void CDefaultTerminal::ShowTrayIconError(LPCWSTR asErrText)
 {
-	bool bRc = false;
-	ThreadArg* pArg = (ThreadArg*)lpParameter;
-	if (pArg)
-	{
-		bRc = pArg->pTerm->CheckForeground(pArg->hFore, pArg->nForePID, false);
-		free(pArg);
-	}
-	return bRc;
+	Icon.ShowTrayIcon(asErrText, tsa_Default_Term);
 }
 
-// Проверка окна переднего плана. Если оно принадлежит к хукаемым процесса - вставить хук.
-bool CDefaultTerminal::CheckForeground(HWND hFore, DWORD nForePID, bool bRunInThread /*= true*/)
+void CDefaultTerminal::ReloadSettings()
 {
-	if (!isDefaultTerminalAllowed())
-		return false;
+	m_Opt.bUseDefaultTerminal = gpSet->isSetDefaultTerminal;
 
-	bool lbRc = false;
-	bool lbLocked = false;
-	bool lbConHostLocked;
-	DWORD nResult = 0;
-	wchar_t szClass[MAX_PATH]; szClass[0] = 0;
-	PROCESSENTRY32 prc;
-	bool bMonitored = false;
-	const wchar_t* pszMonitored = NULL;
-	HANDLE hProcess = NULL;
-	//int nBits = 0;
-	//wchar_t szCmdLine[MAX_PATH*3];
-	//wchar_t szName[64];
-	//PROCESS_INFORMATION pi = {};
-	//STARTUPINFO si = {sizeof(si)};
-	//BOOL bStarted = FALSE;
-	DWORD nErrCode = 0;
-	int iHookerRc = -1;
+	m_Opt.bAgressive = gpSet->isRegisterAgressive;
+	m_Opt.bNoInjects = gpSet->isDefaultTerminalNoInjects;
+	m_Opt.bNewWindow = gpSet->isDefaultTerminalNewWindow;
+	m_Opt.nDefaultTerminalConfirmClose = gpSet->nDefaultTerminalConfirmClose;
 
-	// Если главное окно еще не создано
-	if (!mb_ReadyToHook)
-	{
-		// Сразу выходим
-		goto wrap;
-	}
+	ConEmuGuiMapping GuiInfo = {};
+	gpConEmu->GetGuiInfo(GuiInfo);
+	m_Opt.nConsoleFlags = GuiInfo.Flags;
 
-	//_ASSERTE(gpConEmu->isMainThread());
-	if (!hFore || !nForePID)
-	{
-		_ASSERTE(hFore && nForePID);
-		goto wrap;
-	}
-
-	if (hFore == mh_LastWnd || hFore == mh_LastIgnoredWnd)
-	{
-		// Это окно уже проверялось
-		lbRc = (hFore == mh_LastWnd);
-		goto wrap;
-	}
-
-	if (bRunInThread && (hFore == mh_LastCall))
-	{
-		// Просто выйти. Это проверка на частые фоновые вызовы.
-		goto wrap;
-	}
-	mh_LastCall = hFore;
-
-	if (bRunInThread)
-	{
-		if (gpConEmu->isMainThread())
-		{
-			// Clear finished threads
-			ClearThreads(false);
-		}
-
-		HANDLE hPostThread = NULL; DWORD nThreadId = 0;
-		ThreadArg* pArg = (ThreadArg*)malloc(sizeof(ThreadArg));
-		if (!pArg)
-		{
-			_ASSERTE(pArg);
-			goto wrap;
-		}
-		pArg->pTerm = this;
-		pArg->hFore = hFore;
-		pArg->nForePID = nForePID;
-
-		hPostThread = CreateThread(NULL, 0, PostCheckThread, pArg, 0, &nThreadId);
-		_ASSERTE(hPostThread!=NULL);
-		if (hPostThread)
-		{
-			m_Threads.push_back(hPostThread);
-		}
-
-		lbRc = (hPostThread != NULL); // вернуть OK?
-		goto wrap;
-	}
-
-	EnterCriticalSection(&mcs);
-	lbLocked = true;
-
-	// Clear dead processes and windows
-	ClearProcessed(false);
-
-	// Check window class
-	if (GetClassName(hFore, szClass, countof(szClass)))
-	{
-		if ((lstrcmp(szClass, VirtualConsoleClass) == 0)
-			//|| (lstrcmp(szClass, L"#32770") == 0) // Ignore dialogs // -- Process dialogs too (Application may be dialog-based)
-			|| isConsoleClass(szClass))
-		{
-			mh_LastIgnoredWnd = hFore;
-			goto wrap;
-		}
-	}
-
-	// Go and check
-	if (!GetProcessInfo(nForePID, &prc))
-	{
-		mh_LastIgnoredWnd = hFore;
-		goto wrap;
-	}
-
-	CharLowerBuff(prc.szExeFile, lstrlen(prc.szExeFile));
-
-	if (lstrcmp(prc.szExeFile, L"csrss.exe") == 0)
-	{
-		// This is "System" process and may not be hooked
-		mh_LastIgnoredWnd = hFore;
-		goto wrap;
-	}
-
-	// Is it in monitored applications?
-	pszMonitored = gpSet->GetDefaultTerminalAppsMSZ();
-	if (pszMonitored)
-	{
-		// All strings are lower case
-		const wchar_t* psz = pszMonitored;
-		while (*psz)
-		{
-			if (_tcscmp(psz, prc.szExeFile) == 0)
-			{
-				bMonitored = true;
-				break;
-			}
-			psz += _tcslen(psz)+1;
-		}
-	}
-
-	// And how it is?
-	if (!bMonitored)
-	{
-		mh_LastIgnoredWnd = hFore;
-		goto wrap;
-	}
-
-	// Need to process
-	for (INT_PTR i = m_Processed.size(); i--;)
-	{
-		if (m_Processed[i].nPID == nForePID)
-		{
-			bMonitored = false;
-			break; // already hooked
-		}
-	}
-
-	// May be hooked already?
-	if (!bMonitored)
-	{
-		mh_LastWnd = hFore;
-		lbRc = true;
-		goto wrap;
-	}
-
-	_ASSERTE(isDefaultTerminalAllowed());
-
-	{
-		wchar_t szInfo[200] = L"";
-		msprintf(szInfo, countof(szInfo), L"DefTerm setup: PID=%u", nForePID);
-		gpConEmu->mp_Status->SetStatus(szInfo);
-	}
-
-	lbConHostLocked = gpConEmu->LockConhostStart();
-	iHookerRc = StartDefTermHooker(nForePID, hProcess, nResult, gpConEmu->ms_ConEmuBaseDir, nErrCode);
-	if (lbConHostLocked) gpConEmu->UnlockConhostStart();
-	gpConEmu->mp_Status->SetStatus(NULL);
-	if (iHookerRc != 0)
-	{
-		mh_LastIgnoredWnd = hFore;
-		if (iHookerRc == -3)
-			DisplayLastError(L"Failed to start hooking application!\nDefault terminal feature will not be available!", nErrCode);
-		goto wrap;
-	}
-
-	// And what?
-	if ((nResult == (UINT)CERR_HOOKS_WAS_SET) || (nResult == (UINT)CERR_HOOKS_WAS_ALREADY_SET))
-	{
-		mh_LastWnd = hFore;
-		ProcessInfo inf = {};
-		inf.hProcess = hProcess;
-		hProcess = NULL; // его закрывать НЕ нужно, сохранен в массиве
-		inf.nPID = nForePID;
-		//inf.bHooksSucceeded = (nResult == (UINT)CERR_HOOKS_WAS_ALREADY_SET);
-		inf.nHookTick = GetTickCount();
-		m_Processed.push_back(inf);
-		lbRc = true;
-		goto wrap;
-	}
-	// Failed, remember this
-	CloseHandle(hProcess);
-	mh_LastIgnoredWnd = hFore;
-	_ASSERTE(lbRc == false);
-wrap:
-	if (lbLocked)
-	{
-		LeaveCriticalSection(&mcs);
-	}
-	return lbRc;
+	m_Opt.bExternalPointers = true;
+	m_Opt.pszConEmuExe = gpConEmu->ms_ConEmuExe;
+	m_Opt.pszConEmuBaseDir = gpConEmu->ms_ConEmuBaseDir;
+	m_Opt.pszConfigName = (wchar_t*)gpSetCls->GetConfigName();
+	m_Opt.pszzHookedApps = (wchar_t*)gpSet->GetDefaultTerminalAppsMSZ(); // ASCIIZZ
 }
 
-void CDefaultTerminal::ClearProcessed(bool bForceAll)
+void CDefaultTerminal::AutoClearThreads()
 {
-	//_ASSERTE(gpConEmu->isMainThread());
+	if (!gpConEmu->isMainThread())
+		return;
 
-	for (INT_PTR i = m_Processed.size(); i--;)
+	// Clear finished threads
+	ClearThreads(false);
+}
+
+void CDefaultTerminal::ConhostLocker(bool bLock, bool& bWasLocked)
+{
+	if (bLock)
 	{
-		bool bTerm = bForceAll;
-		HANDLE hProcess = m_Processed[i].hProcess;
+		bWasLocked = gpConEmu->LockConhostStart();
+	}
+	else if (bWasLocked)
+	{
+		gpConEmu->UnlockConhostStart();
+	}
+}
 
-		if (hProcess)
+// nPID = 0 when hooking is done (remove status bar notification)
+// sName is executable name or window class name
+bool CDefaultTerminal::NotifyHookingStatus(DWORD nPID, LPCWSTR sName)
+{
+	wchar_t szInfo[200] = L"";
+
+	if (nPID)
+	{
+		msprintf(szInfo, countof(szInfo), L"DefTerm setup: PID=%u", nPID);
+		if (sName && *sName)
 		{
-			if (!bTerm)
-			{
-				DWORD nWait = WaitForSingleObject(hProcess, 0);
-				if (nWait == WAIT_OBJECT_0)
-				{
-					bTerm = true;
-				}
-			}
-
-			if (bTerm)
-			{
-				CloseHandle(hProcess);
-			}
-		}
-
-		if (bTerm)
-		{
-			m_Processed.erase(i);
+			wcscat_c(szInfo, L", ");
+			int nLen = lstrlen(szInfo);
+			lstrcpyn(szInfo+nLen, sName, countof(szInfo)-nLen);
 		}
 	}
 
-	if (mh_LastWnd && (bForceAll || !IsWindow(mh_LastWnd)))
-	{
-		if (mh_LastIgnoredWnd == mh_LastWnd)
-			mh_LastIgnoredWnd = NULL;
-		mh_LastWnd = NULL;
-	}
-	if (mh_LastIgnoredWnd && (bForceAll || !IsWindow(mh_LastIgnoredWnd)))
-	{
-		mh_LastIgnoredWnd = NULL;
-	}
+	gpConEmu->mp_Status->SetStatus(szInfo);
+	// descendant must return true if status bar was changed
+	return true;
 }

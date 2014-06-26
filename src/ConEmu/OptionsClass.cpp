@@ -6386,14 +6386,12 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		case rbDefaultTerminalConfAlways:
 		case rbDefaultTerminalConfNever:
 			{
-				bool bUpdateGuiMapping = false;
 				bool bSetupDefaultTerminal = false;
 
 				switch (CB)
 				{
 				case cbDefaultTerminal:
 					gpSet->isSetDefaultTerminal = IsChecked(hWnd2, cbDefaultTerminal);
-					bUpdateGuiMapping = true;
 					bSetupDefaultTerminal = gpSet->isSetDefaultTerminal;
 					break;
 				case cbDefaultTerminalStartup:
@@ -6409,7 +6407,6 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 							}
 							gpSet->isSetDefaultTerminal = true;
 							checkDlgButton(hWnd2, cbDefaultTerminal, BST_CHECKED);
-							bUpdateGuiMapping = true;
 							bSetupDefaultTerminal = true;
 						}
 						gpSet->isRegisterOnOsStartup = true;
@@ -6425,11 +6422,9 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 					break;
 				case cbDefaultTerminalNoInjects:
 					gpSet->isDefaultTerminalNoInjects = IsChecked(hWnd2, cbDefaultTerminalNoInjects);
-					bUpdateGuiMapping = true;
 					break;
 				case cbDefaultTerminalUseExisting:
 					gpSet->isDefaultTerminalNewWindow = !IsChecked(hWnd2, cbDefaultTerminalUseExisting);
-					bUpdateGuiMapping = true;
 					break;
 				case rbDefaultTerminalConfAuto:
 				case rbDefaultTerminalConfAlways:
@@ -6437,14 +6432,10 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 					gpSet->nDefaultTerminalConfirmClose =
 						IsChecked(hWnd2, rbDefaultTerminalConfAuto) ? 0 :
 						IsChecked(hWnd2, rbDefaultTerminalConfAlways) ? 1 : 2;
-					bUpdateGuiMapping = true;
 					break;
 				}
 
-				if (bUpdateGuiMapping)
-				{
-					gpConEmu->OnGlobalSettingsChanged();
-				}
+				gpConEmu->mp_DefTrm->ApplyAndSave();
 
 				if (gpSet->isSetDefaultTerminal && bSetupDefaultTerminal)
 				{

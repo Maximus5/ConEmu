@@ -199,6 +199,7 @@ struct Settings
 		bool isSetDefaultTerminal;
 		bool isRegisterOnOsStartup;
 		bool isRegisterOnOsStartupTSA;
+		bool isRegisterAgressive;
 		bool isDefaultTerminalNoInjects;
 		bool isDefaultTerminalNewWindow;
 		BYTE nDefaultTerminalConfirmClose; // "Press Enter to close console". 0 - Auto, 1 - Always, 2 - Never

@@ -226,33 +226,11 @@ bool gbDosBoxProcess = false;
 bool gbSkipVirtualAllocErr = false;
 /* ************ Don't show VirtualAlloc errors ************ */
 
-/* ************ Globals for "Default terminal ************ */
-bool gbPrepareDefaultTerminal = false;
-bool gbIsNetVsHost = false;
-bool gbIsVStudio = false;
-//HANDLE ghDefaultTerminalReady = NULL; //
-ConEmuGuiMapping* gpDefaultTermParm = NULL;
-// forward and external
-bool InitHooksDefaultTrm();
-extern bool InitDefaultTerm();
-// helper
-bool isDefaultTerminalEnabled()
-{
-	if (!gbPrepareDefaultTerminal || !gpDefaultTermParm)
-		return false;
-	if ((gpDefaultTermParm->cbSize != sizeof(*gpDefaultTermParm)) || (gpDefaultTermParm->nProtocolVersion != CESERVER_REQ_VER))
-		return false;
-	if (!*gpDefaultTermParm->sConEmuExe || !gpDefaultTermParm->bUseDefaultTerminal)
-		return false;
-	return true;
-}
-/* ************ Globals for "Default terminal ************ */
-
-
 /* ************ From Entry.cpp ************ */
 #if defined(__GNUC__)
 extern "C"
 #endif
+// Вызывается из OnTerminateProcess и OnTerminateThread
 BOOL WINAPI DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpReserved);
 /* ************ From Entry.cpp ************ */
 

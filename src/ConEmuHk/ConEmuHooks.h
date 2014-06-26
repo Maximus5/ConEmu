@@ -164,9 +164,6 @@ extern bool gbSkipVirtualAllocErr;
 extern bool gbPrepareDefaultTerminal;
 extern bool gbIsNetVsHost;
 extern bool gbIsVStudio;
-//extern HANDLE ghDefaultTerminalReady;
-extern ConEmuGuiMapping* gpDefaultTermParm; // полный путь к ConEmu.exe (GUI), "/config", параметры для "confirm" и "no-injects"
-bool isDefaultTerminalEnabled();
 /* ************ Globals for "Default terminal ************ */
 
 void GuiSetProgress(WORD st, WORD pr, LPCWSTR pszName = NULL);

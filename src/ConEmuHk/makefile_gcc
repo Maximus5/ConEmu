@@ -2,6 +2,7 @@ NAME = ConEmuHk
 SRCS = Entry.cpp \
        Ansi.cpp \
        ConEmuHooks.cpp \
+       DefTermHk.cpp \
        ExtConsole.cpp \
        Injects.cpp \
        RegHooks.cpp \

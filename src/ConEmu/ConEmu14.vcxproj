@@ -987,7 +987,7 @@
     <ClInclude Include="..\common\ConEmuCheck.h" />
     <ClInclude Include="..\common\ConsoleAnnotation.h" />
     <ClInclude Include="..\common\defines.h" />
-    <ClInclude Include="..\common\DefTermHooker.h" />
+    <ClInclude Include="..\common\DefTermBase.h" />
     <ClInclude Include="..\common\Dump.h" />
     <ClInclude Include="..\common\execute.hpp" />
     <ClInclude Include="..\common\far3color.h" />

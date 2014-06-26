@@ -2709,33 +2709,7 @@ void CConEmuMain::UpdateGuiInfoMapping()
 	_wcscpyn_c(m_GuiInfo.sConEmuArgs, countof(m_GuiInfo.sConEmuArgs), mpsz_ConEmuArgs ? mpsz_ConEmuArgs : L"", countof(m_GuiInfo.sConEmuArgs));
 
 	/* Default terminal begin */
-	m_GuiInfo.bUseDefaultTerminal = gpSet->isSetDefaultTerminal;
-	wchar_t szOpt[16] = {}; wchar_t* pszOpt = szOpt;
-	LPCWSTR pszConfig = gpSetCls->GetConfigName();
-	switch (gpSet->nDefaultTerminalConfirmClose)
-	{
-		case 0: break; // auto
-		case 1: *(pszOpt++) = L'c'; break; // always
-		case 2: *(pszOpt++) = L'n'; break; // never
-	}
-	if (gpSet->isDefaultTerminalNoInjects)
-		*(pszOpt++) = L'i';
-	if (gpSet->isDefaultTerminalNewWindow)
-		*(pszOpt++) = L'N';
-	_ASSERTE(pszOpt < (szOpt+countof(szOpt)));
-	// Preparing arguments
-	m_GuiInfo.sDefaultTermArg[0] = 0;
-	if (pszConfig && *pszConfig)
-	{
-		wcscat_c(m_GuiInfo.sDefaultTermArg, L"/config \"");
-		wcscat_c(m_GuiInfo.sDefaultTermArg, pszConfig);
-		wcscat_c(m_GuiInfo.sDefaultTermArg, L"\" ");
-	}
-	if (*szOpt)
-	{
-		wcscat_c(m_GuiInfo.sDefaultTermArg, L"-new_console:");
-		wcscat_c(m_GuiInfo.sDefaultTermArg, szOpt);
-	}
+	mp_DefTrm->ApplyAndSave();
 	/* Default terminal end */
 
 	// *********************
@@ -10516,7 +10490,7 @@ bool CConEmuMain::isMeForeground(bool abRealAlso/*=false*/, bool abDialogsAlso/*
 		bLastRealAlso = abRealAlso;
 		bLastDialogsAlso = abDialogsAlso;
 
-		if (!isMe && nForePID && mp_DefTrm && gpSet->isSetDefaultTerminal && gpConEmu->isMainThread())
+		if (!isMe && nForePID && mp_DefTrm->IsReady() && gpSet->isSetDefaultTerminal && gpConEmu->isMainThread())
 		{
 			// If user want to use ConEmu as default terminal for CUI apps
 			// we need to hook GUI applications (e.g. explorer)
@@ -12894,6 +12868,8 @@ void CConEmuMain::OnDefaultTermChanged()
 {
 	if (!this || !mp_DefTrm)
 		return;
+
+	mp_DefTrm->ApplyAndSave();
 
 	mp_DefTrm->OnHookedListChanged();
 }

@@ -79,6 +79,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "GuiAttach.h"
 #include "Injects.h"
 #include "Ansi.h"
+#include "DefTermHk.h"
 #include "../ConEmu/version.h"
 #include "../ConEmuCD/ExitCodes.h"
 #include "../common/CmdLine.h"
@@ -525,97 +526,6 @@ PipeServer<CESERVER_REQ> *gpHookServer = NULL;
 void CheckHookServer();
 
 bool gbShowExeMsgBox = false;
-
-bool InitDefaultTerm()
-{
-	bool lbRc = true;
-
-	#ifdef _DEBUG
-	char szInfo[100];
-	msprintf(szInfo, countof(szInfo), "!!! TH32CS_SNAPMODULE, TID=%u, InitDefaultTerm\n", GetCurrentThreadId());
-	OutputDebugStringA(szInfo);
-	#endif
-
-	gpDefaultTermParm = (ConEmuGuiMapping*)calloc(sizeof(*gpDefaultTermParm),1);
-
-	CShellProc sp;
-	sp.LoadSrvMapping(TRUE);
-
-	HMODULE hPrevHooks = NULL;
-	_ASSERTEX(gnSelfPID!=0 && ghOurModule!=NULL);
-	HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, gnSelfPID);
-	if (hSnap != INVALID_HANDLE_VALUE)
-	{
-		MODULEENTRY32 mi = {sizeof(mi)};
-		//wchar_t szOurName[MAX_PATH] = L"";
-		//GetModuleFileName(ghOurModule, szOurName, MAX_PATH);
-		wchar_t szMinor[8] = L""; lstrcpyn(szMinor, WSTRING(MVV_4a), countof(szMinor));
-		wchar_t szAddName[40];
-		msprintf(szAddName, countof(szAddName),
-			CEDEFTERMDLLFORMAT /*L"ConEmuHk%s.%02u%02u%02u%s.dll"*/,
-			WIN3264TEST(L"",L"64"), MVV_1, MVV_2, MVV_3, szMinor);
-		//LPCWSTR pszOurName = PointToName(szOurName);
-		wchar_t* pszDot = wcschr(szAddName, L'.');
-		wchar_t szCheckName[MAX_PATH+1];
-
-		if (pszDot && Module32First(hSnap, &mi))
-		{
-			pszDot[1] = 0; // Need to check only name, without version number
-			int nCurLen = lstrlen(szAddName);
-			do {
-				if (mi.hModule == ghOurModule)
-					continue;
-				lstrcpyn(szCheckName, PointToName(mi.szExePath), nCurLen+1);
-				if (lstrcmpi(szCheckName, szAddName) == 0)
-				{
-					hPrevHooks = mi.hModule;
-					break; // Prev (old version) instance found!
-				}
-			} while (Module32Next(hSnap, &mi));
-		}
-
-		CloseHandle(hSnap);
-	}
-
-	//ghDefaultTerminalReady  = ... ;
-	if (hPrevHooks)
-	{
-		if (!FreeLibrary(hPrevHooks))
-		{
-			lbRc = false;
-		}
-	}
-
-	// For Visual Studio check all spawned processes (children of gnSelfPID), find *.vshost.exe
-	if (gbIsVStudio)
-	{
-		//_ASSERTE(FALSE && "Continue to find existing *.vshost.exe");
-		HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-		if (hSnap != INVALID_HANDLE_VALUE)
-		{
-			PROCESSENTRY32 pe = {sizeof(pe)};
-			if (Process32First(hSnap, &pe)) do
-			{
-				if (pe.th32ParentProcessID == gnSelfPID)
-				{
-					if (IsVsNetHostExe(pe.szExeFile)) // *.vshost.exe
-					{
-						// Found! Hook it!
-						sp.StartDefTermHooker(pe.th32ProcessID);
-						break;
-					}
-				}
-			} while (Process32Next(hSnap, &pe));
-			CloseHandle(hSnap);
-		}
-	}
-
-	#ifdef _DEBUG
-	OutputDebugStringA("InitDefaultTerm finished\n");
-	#endif
-
-	return lbRc;
-}
 
 #if 0
 
@@ -1446,6 +1356,11 @@ void DllStop()
 	#ifdef _DEBUG
 	StopPTY();
 	#endif
+
+	if (gpDefTerm)
+	{
+		gpDefTerm->StopHookers();
+	}
 
 	print_timings(L"DllStop");
 	//gbDllStopCalled = TRUE; -- в конце

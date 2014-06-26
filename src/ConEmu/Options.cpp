@@ -608,7 +608,8 @@ void Settings::InitSettings()
 
 	isSetDefaultTerminal = false;
 	isRegisterOnOsStartup = false;
-	isRegisterOnOsStartupTSA = true;
+	isRegisterOnOsStartupTSA = false;
+	isRegisterAgressive = true;
 	isDefaultTerminalNoInjects = false;
 	isDefaultTerminalNewWindow = false;
 	nDefaultTerminalConfirmClose = 1 /* Always */;
@@ -2340,6 +2341,7 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla, const SettingsStorage* ap
 		reg->Load(L"SetDefaultTerminal", isSetDefaultTerminal);
 		reg->Load(L"SetDefaultTerminalStartup", isRegisterOnOsStartup);
 		reg->Load(L"SetDefaultTerminalStartupTSA", isRegisterOnOsStartupTSA);
+		reg->Load(L"DefaultTerminalAgressive", isRegisterAgressive);
 		reg->Load(L"DefaultTerminalNoInjects", isDefaultTerminalNoInjects);
 		reg->Load(L"DefaultTerminalNewWindow", isDefaultTerminalNewWindow);
 		reg->Load(L"DefaultTerminalConfirm", nDefaultTerminalConfirmClose);
@@ -3344,6 +3346,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		reg->Save(L"SetDefaultTerminal", isSetDefaultTerminal);
 		reg->Save(L"SetDefaultTerminalStartup", isRegisterOnOsStartup);
 		reg->Save(L"SetDefaultTerminalStartupTSA", isRegisterOnOsStartupTSA);
+		reg->Save(L"DefaultTerminalAgressive", isRegisterAgressive);
 		reg->Save(L"DefaultTerminalNoInjects", isDefaultTerminalNoInjects);
 		reg->Save(L"DefaultTerminalNewWindow", isDefaultTerminalNewWindow);
 		reg->Save(L"DefaultTerminalConfirm", nDefaultTerminalConfirmClose);

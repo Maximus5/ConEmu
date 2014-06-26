@@ -1619,6 +1619,7 @@
 			<File RelativePath="..\common\ConEmuPipeMode.h" />
 			<File RelativePath="..\common\ConsoleMixAttr.h" />
 			<File RelativePath="..\common\defines.h" />
+			<File RelativePath="..\common\DefTermBase.h" />
 			<File RelativePath="..\common\Execute.h" />
 			<File RelativePath="..\common\InQueue.h" />
 			<File RelativePath="..\common\Memory.h" />
@@ -1670,6 +1671,7 @@
 			<File RelativePath="..\common\WinObjects.cpp" />
 			<File RelativePath="Ansi.cpp" />
 			<File RelativePath="ConEmuHooks.cpp" />
+			<File RelativePath="DefTermHk.cpp" />
 			<File RelativePath="Entry.cpp" />
 			<File RelativePath="export.def" />
 			<File RelativePath="ExtConsole.cpp" />

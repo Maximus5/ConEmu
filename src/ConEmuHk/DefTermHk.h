@@ -30,30 +30,32 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include "../common/DefTermBase.h"
+#include "../common/CmdLine.h"
 
-class CDefaultTerminal : public CDefTermBase
+class CDefTermHk : public CDefTermBase
 {
 public:
-	CDefaultTerminal();
-	virtual ~CDefaultTerminal();
-
-	void PostCreated(bool bWaitForReady = false, bool bShowErrors = false);
-
-	void CheckRegisterOsStartup();
-	void ApplyAndSave();
-	bool IsRegisteredOsStartup(wchar_t* rsValue, DWORD cchMax, bool* pbLeaveInTSA);
+	CDefTermHk();
+	virtual ~CDefTermHk();
 
 	virtual bool isDefaultTerminalAllowed(bool bDontCheckName = false); // !(gpConEmu->DisableSetDefTerm || !gpSet->isSetDefaultTerminal)
+	virtual void StopHookers();
+	virtual void ReloadSettings(); // Copy from gpSet or load from [HKCU]
+
+	size_t GetSrvAddArgs(bool bGuiArgs, CmdArg& rsArgs, CmdArg& rsNewCon);
+
+protected:
+	HANDLE  mh_StopEvent;
+	wchar_t ms_ExeName[MAX_PATH];
+	DWORD   mn_LastCheck;
 
 protected:
 	virtual int  DisplayLastError(LPCWSTR asLabel, DWORD dwError=0, DWORD dwMsgFlags=0, LPCWSTR asTitle=NULL, HWND hParent=NULL);
 	virtual void ShowTrayIconError(LPCWSTR asErrText); // Icon.ShowTrayIcon(asErrText, tsa_Default_Term);
-	virtual void ReloadSettings(); // Copy from gpSet or load from [HKCU]
-	virtual void PreCreateThread();
 	virtual void PostCreateThreadFinished();
-	virtual void AutoClearThreads();
-	virtual void ConhostLocker(bool bLock, bool& bWasLocked);
-	// nPID = 0 when hooking is done (remove status bar notification)
-	// sName is executable name or window class name
-	virtual bool NotifyHookingStatus(DWORD nPID, LPCWSTR sName);
 };
+
+extern CDefTermHk* gpDefTerm;
+
+bool InitDefaultTerm();
+bool isDefaultTerminalEnabled();

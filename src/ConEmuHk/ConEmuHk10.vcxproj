@@ -840,6 +840,7 @@
     <ClInclude Include="..\common\ConEmuCheck.h" />
     <ClInclude Include="..\common\ConsoleMixAttr.h" />
     <ClInclude Include="..\common\defines.h" />
+    <ClInclude Include="..\common\DefTermBase.h" />
     <ClInclude Include="..\common\Execute.h" />
     <ClInclude Include="..\common\InQueue.h" />
     <ClInclude Include="..\common\Memory.h" />
@@ -878,6 +879,7 @@
     <ClCompile Include="..\common\WinObjects.cpp" />
     <ClCompile Include="Ansi.cpp" />
     <ClCompile Include="ConEmuHooks.cpp" />
+    <ClCompile Include="DefTermHk.cpp" />
     <ClCompile Include="Entry.cpp" />
     <ClCompile Include="ExtConsole.cpp" />
     <ClCompile Include="GuiAttach.cpp" />

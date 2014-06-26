@@ -79,7 +79,6 @@ private:
 	BOOL mb_InShellExecuteEx;
 
 	CESERVER_CONSOLE_MAPPING_HDR m_SrvMapping;
-	ConEmuGuiMapping m_GuiMapping;
 
 	HWND mh_PreConEmuWnd, mh_PreConEmuWndDC;
 	BOOL mb_TempConEmuWnd;
@@ -100,7 +99,6 @@ private:
 				LPWSTR* psFile, LPWSTR* psParam);
 	BOOL FixShellArgs(DWORD afMask, HWND ahWnd, DWORD* pfMask, HWND* phWnd);
 	HWND FindCheckConEmuWindow();
-	size_t GetSrvAddArgs(bool bGuiArgs, CmdArg& rsArgs, CmdArg& rsNewCon);
 public:
 	CESERVER_REQ* NewCmdOnCreate(enum CmdOnCreateType aCmd,
 				LPCWSTR asAction, LPCWSTR asFile, LPCWSTR asParam,
@@ -130,7 +128,6 @@ public:
 	void OnAllocConsoleFinished();
 public:
 	// Helper
-	int StartDefTermHooker(DWORD nForePID);
 	bool GetLinkProperties(LPCWSTR asLnkFile, CmdArg& rsExe, CmdArg& rsArgs, CmdArg& rsWorkDir);
 	bool InitOle32();
 protected:
