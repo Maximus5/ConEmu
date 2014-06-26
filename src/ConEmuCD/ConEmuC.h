@@ -388,6 +388,7 @@ extern int  gnCmdUnicodeMode;
 extern BOOL gbUseDosBox;
 extern BOOL gbRootIsCmdExe;
 extern BOOL gbAttachFromFar;
+extern BOOL gbDefTermCall;
 extern BOOL gbConsoleModeFlags;
 extern DWORD gnConsoleModeFlags;
 extern WORD  gnDefTextColors, gnDefPopupColors;

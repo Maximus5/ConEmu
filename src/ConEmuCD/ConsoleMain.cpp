@@ -176,6 +176,7 @@ int     gbRootWasFoundInCon = 0;
 BOOL    gbComspecInitCalled = FALSE;
 AttachModeEnum gbAttachMode = am_None; // сервер запущен НЕ из conemu.exe (а из плагина, из CmdAutoAttach, или -new_console, или /GUIATTACH, или /ADMIN)
 BOOL    gbAlienMode = FALSE;  // сервер НЕ является владельцем консоли (корневым процессом этого консольного окна)
+BOOL    gbDefTermCall = FALSE; // сервер запущен из DefTerm приложения (*.vshost.exe), конcоль может быть скрыта
 BOOL    gbForceHideConWnd = FALSE;
 DWORD   gdwMainThreadId = 0;
 wchar_t* gpszRunCmd = NULL;
@@ -4356,6 +4357,7 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 			if (wcsncmp(szArg, L"/TRMPID=", 8)==0)
 			{
 				// This is called from *.vshost.exe when "AllocConsole" just created
+				gbDefTermCall = TRUE;
 				gbDontInjectConEmuHk = TRUE;
 				pszStart = szArg.ms_Arg+8;
 			}
@@ -4923,7 +4925,9 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 
 		BOOL lbIsWindowVisible = FALSE;
 		// Добавим проверку на telnet
-		if (!ghConWnd || !(lbIsWindowVisible = IsWindowVisible(ghConWnd)) || isTerminalMode())
+		if (!ghConWnd
+			|| !(lbIsWindowVisible = IsAutoAttachAllowed())
+			|| isTerminalMode())
 		{
 			// Но это может быть все-таки наше окошко. Как проверить...
 			// Найдем первый параметр
