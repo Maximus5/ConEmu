@@ -387,6 +387,8 @@ public:
 		DWORD nErrCode = 0;
 		bool bShellTrayWnd = false; // task bar
 		bool bShellWnd = false; // one of explorer windows (folder browsers)
+		LRESULT lMsgRc;
+		DWORD_PTR dwResult = 0;
 
 
 		if (bRunInThread && (hFore == mh_LastCall))
@@ -419,6 +421,19 @@ public:
 			}
 
 			lbRc = (hPostThread != NULL); // вернуть OK?
+			goto wrap;
+		}
+
+		// To be sure that application is responsive (started successfully and is not hunged)
+		// However, that does not guarantee that explorer.exe will be hooked properly
+		// During several restarts of explorer.exe from TaskMgr - sometimes it hungs...
+		// So, that is the last change but not sufficient (must be handled in GUI too)
+		lMsgRc = SendMessageTimeout(hFore, WM_NULL, 0,0, SMTO_NORMAL|SMTO_ERRORONEXIT, DEF_TERM_ALIVE_CHECK_TIMEOUT, &dwResult);
+		if (lMsgRc == 0)
+		{
+			// That app is not ready for hooking
+			if (mh_LastCall == hFore)
+				mh_LastCall = NULL;
 			goto wrap;
 		}
 
