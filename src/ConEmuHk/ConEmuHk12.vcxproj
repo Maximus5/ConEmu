@@ -879,8 +879,10 @@
     <ClInclude Include="..\common\MStrSafe.h" />
     <ClInclude Include="..\common\PipeServer.h" />
     <ClInclude Include="..\common\RConStartArgs.h" />
+    <ClInclude Include="..\common\StartupEnv.h" />
     <ClInclude Include="..\common\WinConsole.h" />
     <ClInclude Include="..\common\WinObjects.h" />
+    <ClInclude Include="Ansi.h" />
     <ClInclude Include="ConEmuHooks.h" />
     <ClInclude Include="Console2.h" />
     <ClInclude Include="ExtConsole.h" />
