@@ -86,12 +86,15 @@ bool CDefaultTerminal::IsRegisteredOsStartup(wchar_t* rsValue, DWORD cchMax, boo
 	return bCurState;
 }
 
-void CDefaultTerminal::ApplyAndSave()
+void CDefaultTerminal::ApplyAndSave(bool bApply, bool bSaveToReg)
 {
 	// Get new values from gpSet
-	ReloadSettings();
+	if (bApply)
+		ReloadSettings();
+
 	// And save to [HKCU\Software\ConEmu]
-	m_Opt.Serialize(true);
+	if (bSaveToReg)
+		m_Opt.Serialize(true);
 }
 
 void CDefaultTerminal::CheckRegisterOsStartup()
@@ -145,6 +148,21 @@ void CDefaultTerminal::CheckRegisterOsStartup()
 
 void CDefaultTerminal::StartGuiDefTerm(bool bManual, bool bNoThreading /*= false*/)
 {
+	// Do not need to run init procedure, if feature is disabled
+	if (!isDefaultTerminalAllowed())
+	{
+		return;
+	}
+
+	// if bManual - this was called from Settings (user interaction) and ApplyAndSave must be called already
+	// if !bManual - this was called from ConEmu window startup
+	if (!bManual)
+	{
+		// Refresh settings in the registry
+		_ASSERTE(gpConEmu->mn_StartupFinished == gpConEmu->ss_PostCreate2Called);
+		ApplyAndSave(true, true);
+	}
+
 	// Will call ReloadSettings(), PreCreateThread(), PostCreateThreadFinished()
 	Initialize(bManual/*bWaitForReady*/, bManual/*bShowErrors*/, bNoThreading);
 }

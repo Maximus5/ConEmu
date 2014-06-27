@@ -6437,7 +6437,7 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 					break;
 				}
 
-				gpConEmu->mp_DefTrm->ApplyAndSave();
+				gpConEmu->mp_DefTrm->ApplyAndSave(true, true);
 
 				if (gpSet->isSetDefaultTerminal && bSetupDefaultTerminal)
 				{

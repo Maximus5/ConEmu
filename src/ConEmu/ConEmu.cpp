@@ -2708,10 +2708,6 @@ void CConEmuMain::UpdateGuiInfoMapping()
 	//wcscpy_c(m_GuiInfo.sConEmuBaseDir, ms_ConEmuBaseDir);
 	_wcscpyn_c(m_GuiInfo.sConEmuArgs, countof(m_GuiInfo.sConEmuArgs), mpsz_ConEmuArgs ? mpsz_ConEmuArgs : L"", countof(m_GuiInfo.sConEmuArgs));
 
-	/* Default terminal begin */
-	mp_DefTrm->ApplyAndSave();
-	/* Default terminal end */
-
 	// *********************
 	// *** ComSpec begin ***
 	// *********************
@@ -12872,7 +12868,8 @@ void CConEmuMain::OnDefaultTermChanged()
 	if (!this || !mp_DefTrm)
 		return;
 
-	mp_DefTrm->ApplyAndSave();
+	// Save to registry only from Settings window or ConEmu startup
+	mp_DefTrm->ApplyAndSave(true, false);
 
 	mp_DefTrm->OnHookedListChanged();
 }

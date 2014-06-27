@@ -4478,6 +4478,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		{
 			if (gpConEmu->mp_DefTrm)
 			{
+				// Update registry with ‘DefTerm-...’ settings
+				gpConEmu->mp_DefTrm->ApplyAndSave(true, true);
+				// Hook all required processes and exit
 				gpConEmu->mp_DefTrm->StartGuiDefTerm(true, true);
 			}
 			else

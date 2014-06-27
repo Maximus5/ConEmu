@@ -41,7 +41,7 @@ public:
 	void OnTaskbarCreated();
 
 	void CheckRegisterOsStartup();
-	void ApplyAndSave();
+	void ApplyAndSave(bool bApply, bool bSaveToReg);
 	bool IsRegisteredOsStartup(wchar_t* rsValue, DWORD cchMax, bool* pbLeaveInTSA);
 
 	virtual bool isDefaultTerminalAllowed(bool bDontCheckName = false); // !(gpConEmu->DisableSetDefTerm || !gpSet->isSetDefaultTerminal)
