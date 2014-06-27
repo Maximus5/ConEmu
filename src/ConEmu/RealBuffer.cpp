@@ -1966,12 +1966,6 @@ BOOL CRealBuffer::LoadDataFromSrv(DWORD CharCount, CHAR_INFO* pData)
 	wchar_t* lpChar = con.pConChar;
 	WORD* lpAttr = con.pConAttr;
 
-	if (mp_RCon->m_ConStatus.Options & CRealConsole::cso_ResetOnConsoleReady)
-	{
-		ZeroStruct(mp_RCon->m_ConStatus);
-	}
-
-
 	_ASSERTE(sizeof(*con.pDataCmp) == sizeof(*pData));
 
 	lbScreenChanged = (memcmp(con.pDataCmp, pData, nCharCmp*sizeof(*pData)) != 0);
@@ -2402,6 +2396,12 @@ BOOL CRealBuffer::ApplyConsoleInfo()
 						}
 					}
 				}
+			}
+
+			if (mp_RCon->m_ConStatus.Options & CRealConsole::cso_ResetOnConsoleReady)
+			{
+				mp_RCon->SetConStatus(NULL);
+				//_ASSERTE(mp_RCon->m_ConStatus.Options==0);
 			}
 		}
 
