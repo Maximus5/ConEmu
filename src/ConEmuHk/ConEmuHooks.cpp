@@ -4964,6 +4964,13 @@ BOOL WINAPI OnWriteConsoleInputW(HANDLE hConsoleInput, const INPUT_RECORD *lpBuf
 	return lbRc;
 }
 
+AttachConsole_t GetAttachConsoleProc()
+{
+	static HMODULE hKernel = GetModuleHandle(L"kernel32.dll");
+	static AttachConsole_t _AttachConsole = hKernel ? (AttachConsole_t)GetProcAddress(hKernel, "AttachConsole") : NULL;
+	return _AttachConsole;
+}
+
 bool AttachServerConsole()
 {
 	bool lbAttachRc = false;
@@ -4972,9 +4979,7 @@ bool AttachServerConsole()
 	if (hCurCon == NULL && gnServerPID != 0)
 	{
 		// функция есть только в WinXP и выше
-		typedef BOOL (WINAPI* AttachConsole_t)(DWORD dwProcessId);
-		HMODULE hKernel = GetModuleHandle(L"kernel32.dll");
-		AttachConsole_t _AttachConsole = hKernel ? (AttachConsole_t)GetProcAddress(hKernel, "AttachConsole") : NULL;
+		AttachConsole_t _AttachConsole = GetAttachConsoleProc();
 		if (_AttachConsole)
 		{
 			lbAttachRc = _AttachConsole(gnServerPID);

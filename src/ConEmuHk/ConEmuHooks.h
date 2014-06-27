@@ -74,6 +74,8 @@ extern CEStartupEnv* gpStartEnv;
 CESERVER_CONSOLE_MAPPING_HDR* GetConMap(BOOL abForceRecreate=FALSE);
 void OnConWndChanged(HWND ahNewConWnd);
 bool AttachServerConsole();
+typedef BOOL (WINAPI* AttachConsole_t)(DWORD dwProcessId);
+AttachConsole_t GetAttachConsoleProc();
 
 typedef HWND (WINAPI* GetConsoleWindow_T)();
 extern GetConsoleWindow_T gfGetRealConsoleWindow;
