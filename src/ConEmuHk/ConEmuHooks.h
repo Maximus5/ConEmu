@@ -69,6 +69,8 @@ extern CEStartupEnv* gpStartEnv;
 #include "../common/InQueue.h"
 #include "../common/MMap.h"
 
+void SetServerPID(DWORD anMainSrvPID);
+
 //extern MFileMapping<CESERVER_CONSOLE_MAPPING_HDR> *gpConMap;
 //extern CESERVER_CONSOLE_MAPPING_HDR* gpConInfo;
 CESERVER_CONSOLE_MAPPING_HDR* GetConMap(BOOL abForceRecreate=FALSE);
