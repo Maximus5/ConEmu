@@ -40,6 +40,11 @@ public:
 
 	void StartDefTerm();
 
+	// Запустить сервер, и подцепиться к его консоли
+	HWND AllocHiddenConsole();
+	// Вызывается из хуков после успешного AllocConsole (Win2k only? а смысл?)
+	void OnAllocConsoleFinished();
+
 	virtual bool isDefaultTerminalAllowed(bool bDontCheckName = false); // !(gpConEmu->DisableSetDefTerm || !gpSet->isSetDefaultTerminal)
 	virtual void StopHookers();
 	virtual void ReloadSettings(); // Copy from gpSet or load from [HKCU]
@@ -50,6 +55,8 @@ protected:
 	HANDLE  mh_StopEvent;
 	wchar_t ms_ExeName[MAX_PATH];
 	DWORD   mn_LastCheck;
+
+	DWORD   StartConsoleServer(bool bNewConWnd, PHANDLE phSrvProcess);
 
 protected:
 	virtual int  DisplayLastError(LPCWSTR asLabel, DWORD dwError=0, DWORD dwMsgFlags=0, LPCWSTR asTitle=NULL, HWND hParent=NULL);

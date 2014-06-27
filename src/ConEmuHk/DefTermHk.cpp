@@ -275,6 +275,173 @@ void CDefTermHk::ShowTrayIconError(LPCWSTR asErrText)
 	DefTermMsg(asErrText);
 }
 
+HWND CDefTermHk::AllocHiddenConsole()
+{
+	// функция AttachConsole есть только в WinXP и выше
+	AttachConsole_t _AttachConsole = GetAttachConsoleProc();
+	if (!_AttachConsole)
+		return NULL;
+
+	DefTermMsg(L"AllocHiddenConsole");
+
+	ReloadSettings();
+	_ASSERTEX(isDefaultTerminalEnabled() && gbIsNetVsHost);
+
+	if (!isDefaultTerminalEnabled())
+	{
+		// Disabled in settings or registry
+		return NULL;
+	}
+
+	HANDLE hSrvProcess = NULL;
+	DWORD nSrvPID = StartConsoleServer(true, &hSrvProcess);
+	if (!nSrvPID)
+	{
+		// Failed to start process?
+		return NULL;
+	}
+	_ASSERTEX(hSrvProcess!=NULL);
+
+	HWND hCreatedCon = NULL;
+
+	// Do while server process is alive
+	DWORD nStart = GetTickCount(), nMaxDelta = 30000, nDelta = 0;
+	DWORD nWait = WaitForSingleObject(hSrvProcess, 0);
+	while (nWait != WAIT_OBJECT_0)
+	{
+		if (_AttachConsole(nSrvPID))
+		{
+			hCreatedCon = GetRealConsoleWindow();
+			if (hCreatedCon)
+				break;
+		}
+
+		nWait = WaitForSingleObject(hSrvProcess, 150);
+
+		nDelta = (GetTickCount() - nStart);
+		if (nDelta > nMaxDelta)
+			break;
+	}
+
+	return hCreatedCon;
+}
+
+DWORD CDefTermHk::StartConsoleServer(bool bNewConWnd, PHANDLE phSrvProcess)
+{
+	// Options must be loaded already
+	const CEDefTermOpt* pOpt = GetOpt();
+	if (!pOpt || !isDefaultTerminalEnabled())
+	{
+		return 0;
+	}
+
+	bool bAttachCreated = false;
+
+	CmdArg szAddArgs, szAddArgs2;
+	size_t cchAddArgLen;
+	size_t cchMax;
+	wchar_t* pszCmdLine;
+	DWORD nErr = 0;
+	STARTUPINFO si = {sizeof(si)};
+	PROCESS_INFORMATION pi = {};
+
+	cchAddArgLen = GetSrvAddArgs(false, szAddArgs, szAddArgs2);
+
+	cchMax = MAX_PATH+100+cchAddArgLen;
+	pszCmdLine = (wchar_t*)malloc(cchMax*sizeof(*pszCmdLine));
+	if (pszCmdLine)
+	{
+		msprintf(pszCmdLine, cchMax, L"\"%s\\%s\" /ATTACH /TRMPID=%u",
+			pOpt->pszConEmuBaseDir,
+			WIN3264TEST(L"ConEmuC.exe",L"ConEmuC64.exe"),
+			gnSelfPID);
+
+		if (bNewConWnd)
+			_wcscat_c(pszCmdLine, cchMax, L" /CREATECON");
+
+		if (!szAddArgs.IsEmpty())
+			_wcscat_c(pszCmdLine, cchMax, szAddArgs);
+
+		_ASSERTEX(szAddArgs2.IsEmpty()); // No "-new_console" switches are expected here!
+
+		DWORD nCreateFlags = NORMAL_PRIORITY_CLASS | (bNewConWnd ? CREATE_NEW_CONSOLE : 0);
+		if (bNewConWnd)
+		{
+			si.wShowWindow = SW_HIDE;
+			si.dwFlags = STARTF_USESHOWWINDOW;
+		}
+
+		if (CreateProcess(NULL, pszCmdLine, NULL, NULL, FALSE, nCreateFlags, NULL, pOpt->pszConEmuBaseDir, &si, &pi))
+		{
+			bAttachCreated = true;
+			if (phSrvProcess)
+				*phSrvProcess = pi.hProcess;
+			else
+				CloseHandle(pi.hProcess);
+			CloseHandle(pi.hThread);
+			SetServerPID(pi.dwProcessId);
+		}
+		else
+		{
+			nErr = GetLastError();
+			wchar_t* pszErrMsg = (wchar_t*)malloc(MAX_PATH*3*sizeof(*pszErrMsg));
+			if (pszErrMsg)
+			{
+				msprintf(pszErrMsg, MAX_PATH*3, L"ConEmuHk: Failed to start attach server, Err=%u! %s\n", nErr, pszCmdLine);
+				wchar_t szTitle[64];
+				msprintf(szTitle, countof(szTitle), WIN3264TEST(L"ConEmuHk",L"ConEmuHk64") L", PID=%u", GetCurrentProcessId());
+				//OutputDebugString(pszErrMsg);
+				MessageBox(NULL, pszErrMsg, szTitle, MB_ICONSTOP|MB_SYSTEMMODAL);
+				free(pszErrMsg);
+			}
+			// Failed to start, pi.dwProcessId must be 0
+			_ASSERTEX(pi.dwProcessId==0);
+			pi.dwProcessId = 0;
+		}
+		free(pszCmdLine);
+	}
+
+	return pi.dwProcessId;
+}
+
+void CDefTermHk::OnAllocConsoleFinished()
+{
+	if (!gbPrepareDefaultTerminal || !this)
+	{
+		_ASSERTEX((gbPrepareDefaultTerminal && gpDefTerm) && "Must be called in DefTerm mode only");
+		return;
+	}
+
+	if (!ghConWnd || !IsWindow(ghConWnd))
+	{
+		_ASSERTEX(FALSE && "ghConWnd must be initialized already!");
+		return;
+	}
+
+	ReloadSettings();
+	_ASSERTEX(isDefaultTerminalEnabled() && gbIsNetVsHost);
+
+	if (!isDefaultTerminalEnabled())
+	{
+		// Disabled in settings or registry
+		return;
+	}
+
+	// По идее, после AllocConsole окно RealConsole всегда видимо
+	BOOL bConWasVisible = IsWindowVisible(ghConWnd);
+	_ASSERTEX(bConWasVisible);
+	// Чтобы минимизировать "мелькания" - сразу спрячем его
+	ShowWindow(ghConWnd, SW_HIDE);
+	DefTermMsg(L"Console window hided");
+
+	if (!StartConsoleServer(false, NULL))
+	{
+		if (bConWasVisible)
+			ShowWindow(ghConWnd, SW_SHOW);
+		DefTermMsg(L"Starting attach server failed?");
+	}
+}
+
 size_t CDefTermHk::GetSrvAddArgs(bool bGuiArgs, CmdArg& rsArgs, CmdArg& rsNewCon)
 {
 	rsArgs.Empty();

@@ -177,6 +177,7 @@ BOOL    gbComspecInitCalled = FALSE;
 AttachModeEnum gbAttachMode = am_None; // сервер запущен НЕ из conemu.exe (а из плагина, из CmdAutoAttach, или -new_console, или /GUIATTACH, или /ADMIN)
 BOOL    gbAlienMode = FALSE;  // сервер НЕ является владельцем консоли (корневым процессом этого консольного окна)
 BOOL    gbDefTermCall = FALSE; // сервер запущен из DefTerm приложения (*.vshost.exe), конcоль может быть скрыта
+BOOL    gbCreatingHiddenConsole = FALSE; // Используется для "тихого" открытия окна RealConsole из *.vshost.exe
 BOOL    gbForceHideConWnd = FALSE;
 DWORD   gdwMainThreadId = 0;
 wchar_t* gpszRunCmd = NULL;
@@ -2376,6 +2377,20 @@ int CheckAttachProcess()
 	{
 		nProcCount = pfnGetConsoleProcessList(nProcesses, 20);
 
+		if ((nProcCount == 1) && gbCreatingHiddenConsole)
+		{
+			// Подождать, пока вызвавший процесс прицепится к нашей созданной консоли
+			DWORD nStart = GetTickCount(), nMaxDelta = 30000, nDelta = 0;
+			while (nDelta < nMaxDelta)
+			{
+				Sleep(100);
+				nProcCount = pfnGetConsoleProcessList(nProcesses, 20);
+				if (nProcCount > 1)
+					break;
+				nDelta = (GetTickCount() - nStart);
+			}
+		}
+
 		// 2 процесса, потому что это мы сами и минимум еще один процесс в этой консоли,
 		// иначе смысла в аттаче нет
 		if (nProcCount < 2)
@@ -4348,6 +4363,11 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 			wchar_t* pszEnd = NULL, *pszStart;
 			pszStart = szArg.ms_Arg+14;
 			gpSrv->dwParentFarPID = wcstoul(pszStart, &pszEnd, 10);
+		}
+		else if (wcscmp(szArg, L"/CREATECON")==0)
+		{
+			gbCreatingHiddenConsole = TRUE;
+			//_ASSERTE(FALSE && "Continue to create con");
 		}
 		else if (wcsncmp(szArg, L"/PID=", 5)==0 || wcsncmp(szArg, L"/TRMPID=", 8)==0
 			|| wcsncmp(szArg, L"/FARPID=", 8)==0 || wcsncmp(szArg, L"/CONPID=", 8)==0)

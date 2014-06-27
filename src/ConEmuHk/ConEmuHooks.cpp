@@ -81,6 +81,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "SetHook.h"
 #include "../common/execute.h"
 #include "ConEmuHooks.h"
+#include "DefTermHk.h"
 #include "RegHooks.h"
 #include "ShellProcessor.h"
 #include "GuiAttach.h"
@@ -5021,12 +5022,24 @@ BOOL WINAPI OnAllocConsole(void)
 			gnVsHostStartConsole = 0;
 	}
 
+	// Попытаться создать консольное окно "по тихому"
+	if (gpDefTerm && !hOldConWnd && !gnServerPID)
+	{
+		HWND hCreatedCon = gpDefTerm->AllocHiddenConsole();
+		if (hCreatedCon)
+		{
+			hOldConWnd = hCreatedCon;
+			lbAllocated = TRUE;
+		}
+	}
+
 	// GUI приложение во вкладке. Если окна консоли еще нет - попробовать прицепиться
 	// к родительской консоли (консоли серверного процесса)
 	if ((gbAttachGuiClient || ghAttachGuiClient) && !gbPrepareDefaultTerminal)
 	{
 		if (AttachServerConsole())
 		{
+			hOldConWnd = GetRealConsoleWindow();
 			lbAllocated = TRUE; // Консоль уже есть, ничего не надо
 		}
 	}
@@ -5080,15 +5093,10 @@ BOOL WINAPI OnAllocConsole(void)
 	//MessageBox(NULL, szAlloc, L"OnAllocConsole called", MB_SYSTEMMODAL);
 	#endif
 
-	if (hNewConWnd && (hNewConWnd != hOldConWnd) && gbPrepareDefaultTerminal && gbIsNetVsHost)
+	if (hNewConWnd && (hNewConWnd != hOldConWnd) && gpDefTerm && gbIsNetVsHost)
 	{
-		DefTermMsg(L"Calling sp->OnAllocConsoleFinished");
-		CShellProc* sp = new CShellProc();
-		if (sp)
-		{
-			sp->OnAllocConsoleFinished();
-			delete sp;
-		}
+		DefTermMsg(L"Calling gpDefTerm->OnAllocConsoleFinished");
+		gpDefTerm->OnAllocConsoleFinished();
 		SetLastError(0);
 	}
 	else if (hNewConWnd)

@@ -70,6 +70,7 @@ _DBGHLP(L"   or: ConEmuC /REGCONFONT=<FontName> -> RegisterConsoleFontHKLM\r\n")
 _DBGHLP(L"     -- following switches are visible in debug builds only--\r\n") \
 _DBGHLP(L"     /CHECKUNICODE -> print some colorized text with unicode characters\r\n") \
 _DBGHLP(L"     /CINMODE==<hex:gnConsoleModeFlags>\r\n") \
+_DBGHLP(L"     /CREATECON -> used internally for hidden console creation\r\n") \
 _DBGHLP(L"     /DOSBOX -> use DosBox\r\n") \
 _DBGHLP(L"     /FN=<ConFontName> /FH=<FontHeight> /FW=<FontWidth>\r\n") \
 _DBGHLP(L"     /GHWND=<ConEmu.exe HWND>\r\n") \
