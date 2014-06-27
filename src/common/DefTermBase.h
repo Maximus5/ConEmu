@@ -428,7 +428,8 @@ public:
 		// However, that does not guarantee that explorer.exe will be hooked properly
 		// During several restarts of explorer.exe from TaskMgr - sometimes it hungs...
 		// So, that is the last change but not sufficient (must be handled in GUI too)
-		lMsgRc = SendMessageTimeout(hFore, WM_NULL, 0,0, SMTO_NORMAL|SMTO_ERRORONEXIT, DEF_TERM_ALIVE_CHECK_TIMEOUT, &dwResult);
+		// -- SMTO_ERRORONEXIT exist in Vista only
+		lMsgRc = SendMessageTimeout(hFore, WM_NULL, 0,0, SMTO_NORMAL, DEF_TERM_ALIVE_CHECK_TIMEOUT, &dwResult);
 		if (lMsgRc == 0)
 		{
 			// That app is not ready for hooking
