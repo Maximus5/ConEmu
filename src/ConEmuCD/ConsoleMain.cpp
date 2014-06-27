@@ -5506,7 +5506,8 @@ wrap:
 	#if defined(_DEBUG) && defined(SHOW_EXITWAITKEY_MSGBOX)
 	wchar_t szTitle[128];
 	_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuC[Srv]: PID=%u", GetCurrentProcessId());
-	MessageBox(NULL, asConfirm ? asConfirm : L"???", szTitle, MB_ICONEXCLAMATION|MB_SYSTEMMODAL);
+	if (!gbStopExitWaitForKey)
+		MessageBox(NULL, asConfirm ? asConfirm : L"???", szTitle, MB_ICONEXCLAMATION|MB_SYSTEMMODAL);
 	#endif
 	return nKeyPressed;
 }
