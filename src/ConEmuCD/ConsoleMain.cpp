@@ -2336,8 +2336,13 @@ int CheckAttachProcess()
 {
 	LogFunction(L"CheckAttachProcess");
 
-	BOOL lbArgsFailed = FALSE;
+	int liArgsFailed = 0;
 	wchar_t szFailMsg[512]; szFailMsg[0] = 0;
+	DWORD nProcesses[20] = {};
+	DWORD nProcCount;
+	BOOL lbRootExists = FALSE;
+	wchar_t szProc[255] = {}, szTmp[10] = {};
+	DWORD nFindId;
 
 	if (gpSrv->hRootProcessGui)
 	{
@@ -2345,7 +2350,7 @@ int CheckAttachProcess()
 		{
 			_wsprintf(szFailMsg, SKIPLEN(countof(szFailMsg)) L"Attach of GUI application was requested,\n"
 				L"but required HWND(0x%08X) not found!", (DWORD)gpSrv->hRootProcessGui);
-			lbArgsFailed = TRUE;
+			liArgsFailed = 1;
 			// will return CERR_CARGUMENT
 		}
 		else
@@ -2356,7 +2361,7 @@ int CheckAttachProcess()
 				_wsprintf(szFailMsg, SKIPLEN(countof(szFailMsg)) L"Attach of GUI application was requested,\n"
 					L"but PID(%u) of HWND(0x%08X) does not match Root(%u)!",
 					nPid, (DWORD)gpSrv->hRootProcessGui, gpSrv->dwRootProcess);
-				lbArgsFailed = TRUE;
+				liArgsFailed = 2;
 				// will return CERR_CARGUMENT
 			}
 		}
@@ -2364,20 +2369,19 @@ int CheckAttachProcess()
 	else if (pfnGetConsoleProcessList==NULL)
 	{
 		wcscpy_c(szFailMsg, L"Attach to console app was requested, but required WinXP or higher!");
-		lbArgsFailed = TRUE;
+		liArgsFailed = 3;
 		// will return CERR_CARGUMENT
 	}
 	else
 	{
-		DWORD nProcesses[20];
-		DWORD nProcCount = pfnGetConsoleProcessList(nProcesses, 20);
+		nProcCount = pfnGetConsoleProcessList(nProcesses, 20);
 
 		// 2 процесса, потому что это мы сами и минимум еще один процесс в этой консоли,
 		// иначе смысла в аттаче нет
 		if (nProcCount < 2)
 		{
 			wcscpy_c(szFailMsg, L"Attach to console app was requested, but there is no console processes!");
-			lbArgsFailed = TRUE;
+			liArgsFailed = 4;
 			//will return CERR_CARGUMENT
 		}
 		// не помню, зачем такая проверка была введена, но (nProcCount > 2) мешает аттачу.
@@ -2385,10 +2389,9 @@ int CheckAttachProcess()
 		//// Если cmd.exe запущен из cmd.exe (в консоли уже больше двух процессов) - ничего не делать
 		else if ((gpSrv->dwRootProcess != 0) || (nProcCount > 2))
 		{
-			BOOL lbRootExists = (gpSrv->dwRootProcess == 0);
+			lbRootExists = (gpSrv->dwRootProcess == 0);
 			// И ругаться только под отладчиком
-			wchar_t szProc[255] = {0}, szTmp[10]; //StringCchPrintf(szProc, countof(szProc), L"%i, %i, %i", nProcesses[0], nProcesses[1], nProcesses[2]);
-			DWORD nFindId = 0;
+			nFindId = 0;
 
 			for (int n = ((int)nProcCount-1); n >= 0; n--)
 			{
@@ -2420,19 +2423,19 @@ int CheckAttachProcess()
 			if ((gpSrv->dwRootProcess != 0) && !lbRootExists)
 			{
 				_wsprintf(szFailMsg, SKIPLEN(countof(szFailMsg)) L"Attach to GUI was requested, but\n" L"root process (%u) does not exists", gpSrv->dwRootProcess);
-				lbArgsFailed = TRUE;
+				liArgsFailed = 5;
 				//will return CERR_CARGUMENT
 			}
 			else if ((gpSrv->dwRootProcess == 0) && (nProcCount > 2))
 			{
 				_wsprintf(szFailMsg, SKIPLEN(countof(szFailMsg)) L"Attach to GUI was requested, but\n" L"there is more than 2 console processes: %s\n", szProc);
-				lbArgsFailed = TRUE;
+				liArgsFailed = 6;
 				//will return CERR_CARGUMENT
 			}
 		}
 	}
 
-	if (lbArgsFailed)
+	if (liArgsFailed)
 	{
 		LPCWSTR pszCmdLine = GetCommandLineW(); if (!pszCmdLine) pszCmdLine = L"";
 
