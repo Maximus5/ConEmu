@@ -13090,7 +13090,11 @@ void CRealConsole::SetConStatus(LPCWSTR asStatus, DWORD/*enum ConStatusOption*/ 
 
 	SafeFree(pszInfo);
 
-	lstrcpyn(m_ConStatus.szText, asStatus, countof(m_ConStatus.szText));
+	size_t cchMax = countof(m_ConStatus.szText);
+	if (asStatus[0])
+		lstrcpyn(m_ConStatus.szText, asStatus, cchMax);
+	else
+		wmemset(m_ConStatus.szText, 0, cchMax);
 	m_ConStatus.Options = Options;
 
 	if (!gpSet->isStatusBarShow && !(Options & cso_Critical) && (asStatus && *asStatus))
