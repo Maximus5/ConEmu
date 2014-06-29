@@ -11,9 +11,38 @@ http://code.google.com/p/conemu-maximus5
 Votes and awards (vote for ConEmu, if you please)
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
-Disappointment. About 50 users from thousands voted for ConEmu.
-https://sourceforge.net/p/potm/discussion/vote/thread/f3309aea/
 
+
+2014.06.28
+[*] Fix attaching (Win+G from ConEmu) of *.vshost.exe console.
+[*] GuiMacro. PasteFile able to skip lines started with "<CommentMark>" prefix.
+    PasteFile(<Cmd>[,"<File>"[,"<CommentMark>"]])
+[*] Issue 1620: Support PuTTY's duplicate session in ‘Duplicate root’ function.
+[*] GitShowBranch.cmd: drop remote name from branch name (drop tail after first ‘.’).
+[*] When reopening About dialog, show last selected section.
+[*] Search in about dialog was on first page with found text.
+[*] Update confirmation dialogs was not visible if ConEmu was ‘Always on top’.
+[*] Do not hook ‘ssh-agent.exe’, console-outside process was blocking updating of ConEmuHk.dll.
+[*] Move process creation to separate thread (ConEmu.exe).
+[*] Added ‘Tomorrow’ color schemes (by Michael Mims).
+[*] Support ‘Script.ps1:35 char:23’ error format. However, column is ignored as yet.
+[*] Status ‘Console server started...’ sometimes was not cleared on startup.
+[*] DefTerm. Feature was rewritten almost from scratch.
+    * For accessibility reasons DefTerm settings are mirrored in registry [HKCU\Software\ConEmu].
+      That means, for example, user may change ‘DefTerm-Enabled’ value to 0 to disable feature
+      any time, even if ConEmu is not running at the moment.
+    * Save to registry only from Settings window (DefTerm page clicks) or ConEmu startup (if DefTerm is enabled).
+    * Update status bar during DefTerm installation.
+    * It is possible to hook processes by their window class name.
+    * New ‘Agressive’ mode of DefTerm hooking.
+      Sample usecase:
+      The `explorer.exe` was hooked (for example with ‘Register on OS startup’ option),
+      when you start new `devenv.exe`, started process will be hooked from `explorer.exe`,
+      even if you have not have ConEmu loaded at the moment of `devenv.exe` start.
+    * Allow windowless ‘Register on OS startup’.
+    * Server startup fails sometimes if console window was hidden.
+    * Seamless startup from VC# debugger, no RealConsole flickering.
+    * Many internal changes.
 
 
 2014.06.15

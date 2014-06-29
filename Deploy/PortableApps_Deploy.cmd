@@ -63,7 +63,7 @@ echo Updating ini files with version info
 "%~dp0..\src\tools\SetIni.exe" %SetIniCmd%
 
 echo Creating PortableApps.com installer
-start "Portable" /MIN /WAIT "%~d0\Utils\Portable\PortableApps\PortableApps.comInstaller\PortableApps.comInstaller.exe" "%AppSetup%"
+start "Portable" /MIN /WAIT "%~d0\Portable\PortableApps\PortableApps.comInstaller\PortableApps.comInstaller.exe" "%AppSetup%"
 if errorlevel 1 goto err
 echo Installer created successfully
 
