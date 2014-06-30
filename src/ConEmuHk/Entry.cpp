@@ -1716,6 +1716,7 @@ BOOL WINAPI DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 			DLOG0("DllMain.DLL_THREAD_DETACH",ul_reason_for_call);
 
 			DWORD nTID = GetCurrentThreadId();
+			bool bNeedDllStop = false;
 
 			#ifdef SHOW_SHUTDOWN_STEPS
 			gnDbgPresent = 0;
@@ -1727,14 +1728,23 @@ BOOL WINAPI DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 			// DLL_PROCESS_DETACH зовется как выяснилось не всегда
 			if (gnHookMainThreadId && (nTID == gnHookMainThreadId) && !gbDllDeinitialized)
 			{
-				gbDllDeinitialized = true;
+				gbDllDeinitialized = bNeedDllStop = true;
+			}
+
+			if (ghHeap)
+			{
+				gStartedThreads.Del(nTID);
+			}
+
+			if (bNeedDllStop)
+			{
 				DLOG1("DllMain.DllStop",ul_reason_for_call);
 				//WARNING!!! OutputDebugString must NOT be used from ConEmuHk::DllMain(DLL_PROCESS_DETACH). See Issue 465
 				DllStop();
 				DLOGEND1();
 			}
+
 			gnDllThreadCount--;
-			gStartedThreads.Del(nTID);
 			ShutdownStep(L"DLL_THREAD_DETACH done, left=%i", gnDllThreadCount);
 
 			#if 0
