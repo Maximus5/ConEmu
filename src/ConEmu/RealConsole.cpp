@@ -4048,20 +4048,19 @@ BOOL CRealConsole::CreateOrRunAs(CRealConsole* pRCon, RConStartArgs& Args,
 	return lbRc;
 }
 
-// Инициализировать имена пайпов, событий, мэппингов и т.п.
-// Только имена - реальных хэндлов еще может не быть!
+// Инициализировать/обновить имена пайпов, событий, мэппингов и т.п.
 void CRealConsole::InitNames()
 {
+	DWORD nSrvPID = mn_AltSrv_PID ? mn_AltSrv_PID : mn_MainSrv_PID;
 	// Имя пайпа для управления ConEmuC
-	_wsprintf(ms_ConEmuC_Pipe, SKIPLEN(countof(ms_ConEmuC_Pipe)) CESERVERPIPENAME, L".", mn_MainSrv_PID);
+	_wsprintf(ms_ConEmuC_Pipe, SKIPLEN(countof(ms_ConEmuC_Pipe)) CESERVERPIPENAME, L".", nSrvPID);
 	_wsprintf(ms_MainSrv_Pipe, SKIPLEN(countof(ms_MainSrv_Pipe)) CESERVERPIPENAME, L".", mn_MainSrv_PID);
 	_wsprintf(ms_ConEmuCInput_Pipe, SKIPLEN(countof(ms_ConEmuCInput_Pipe)) CESERVERINPUTNAME, L".", mn_MainSrv_PID);
 	// Имя событие измененности данных в консоли
-	m_ConDataChanged.InitName(CEDATAREADYEVENT, mn_MainSrv_PID);
+	m_ConDataChanged.InitName(CEDATAREADYEVENT, nSrvPID);
 	//swprintf_c(ms_ConEmuC_DataReady, CEDATAREADYEVENT, mn_MainSrv_PID);
 	MCHKHEAP;
-	_ASSERTE(mn_AltSrv_PID==0); // Инициализация должна идти на основной сервер
-	m_GetDataPipe.InitName(gpConEmu->GetDefaultTitle(), CESERVERREADNAME, L".", mn_MainSrv_PID);
+	m_GetDataPipe.InitName(gpConEmu->GetDefaultTitle(), CESERVERREADNAME, L".", nSrvPID);
 	// Enable overlapped mode and termination by event
 	_ASSERTE(mh_TermEvent!=NULL);
 	m_GetDataPipe.SetTermEvent(mh_TermEvent);
@@ -6319,7 +6318,9 @@ bool CRealConsole::InitAltServer(DWORD nAltServerPID/*, HANDLE hAltServer*/)
 
 bool CRealConsole::ReopenServerPipes()
 {
+	#ifdef _DEBUG
 	DWORD nSrvPID = mn_AltSrv_PID ? mn_AltSrv_PID : mn_MainSrv_PID;
+	#endif
 	HANDLE hSrvHandle = mh_MainSrv; // (nSrvPID == mn_MainSrv_PID) ? mh_MainSrv : mh_AltSrv;
 
 	if (isServerClosing())
@@ -6327,8 +6328,9 @@ bool CRealConsole::ReopenServerPipes()
 		_ASSERTE(FALSE && "ReopenServerPipes was called in MainServerClosing");
 	}
 
+	InitNames();
+
 	// переоткрыть event изменений в консоли
-	m_ConDataChanged.InitName(CEDATAREADYEVENT, nSrvPID);
 	if (m_ConDataChanged.Open() == NULL)
 	{
 		bool bSrvClosed = (WaitForSingleObject(hSrvHandle, 0) == WAIT_OBJECT_0);
@@ -6337,7 +6339,6 @@ bool CRealConsole::ReopenServerPipes()
 	}
 
 	// переоткрыть m_GetDataPipe
-	m_GetDataPipe.InitName(gpConEmu->GetDefaultTitle(), CESERVERREADNAME, L".", nSrvPID);
 	bool bOpened = m_GetDataPipe.Open();
 	if (!bOpened)
 	{
@@ -6345,10 +6346,6 @@ bool CRealConsole::ReopenServerPipes()
 		Assert((bOpened || mb_InCloseConsole) && "m_GetDataPipe.Open() failed"); UNREFERENCED_PARAMETER(bSrvClosed);
 		return false;
 	}
-
-	// обновить имя "серверного" пайпа
-	_wsprintf(ms_ConEmuC_Pipe, SKIPLEN(countof(ms_ConEmuC_Pipe)) CESERVERPIPENAME, L".", nSrvPID);
-	_wsprintf(ms_MainSrv_Pipe, SKIPLEN(countof(ms_MainSrv_Pipe)) CESERVERPIPENAME, L".", mn_MainSrv_PID);
 
 	bool bActive = isActive();
 
