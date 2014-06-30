@@ -64,7 +64,6 @@ protected:
 	};
 	MArray<txt> m_Items; // UTF-8
 	size_t mn_AllItemsLen, mn_TextStart, mn_TextEnd;
-	COLORREF mcr_Fore, mcr_Back;
 	bool mb_Finalized, mb_ParOpened;
 	wchar_t szTemp[2000], szBack[64], szFore[64], szBold[20], szItalic[20], szId[8];
 	char szUTF8[6001]; // (szTemp*3 + \0)
@@ -78,7 +77,7 @@ protected:
 public:
 	CHtmlCopy()
 	{
-		mcr_Fore = 7; mcr_Back = 0; mn_AllItemsLen = 0; mb_Finalized = mb_ParOpened = false;
+		mn_AllItemsLen = 0; mb_Finalized = mb_ParOpened = false;
 		mn_TextStart = 0; mn_TextEnd = 0;
 		bPlainHtml = false;
 	}
@@ -91,18 +90,15 @@ public:
 			L"<HEAD>\r\n"
 			L"<META http-equiv=\"content-type\" content=\"text/html; charset=utf-8\">\r\n"
 			L"<META name=\"GENERATOR\" content=\"ConEmu %s[%u]\">\n"
-			L"<STYLE>\r\n"
-			L"P { margin:0 }\r\n"
-			L"</STYLE>\r\n"
 			L"</HEAD>\r\n"
 			L"<BODY>\r\n";
 		_wsprintf(szTemp, SKIPLEN(countof(szTemp)) pszHtml, asBuild, WIN3264TEST(32,64));
 		RawAdd(szTemp, _tcslen(szTemp));
 
 		mn_TextStart = mn_AllItemsLen; mn_TextEnd = 0;
-		_wsprintf(szTemp, SKIPLEN(countof(szTemp))
-			L"<DIV class=\"%s\" style=\"font-family: '%s'; font-size: %upx; background-color: %s; color: %s; text-align: start; text-indent: 0px;\">\r\n",
-			asBuild, asFont, anFontHeight, FormatColor(crBack, szBack), FormatColor(crFore, szFore));
+		msprintf(szTemp, countof(szTemp),
+			L"<DIV class=\"%s\" style=\"font-family: '%s'; font-size: %upx; text-align: start; text-indent: 0px; margin: 0;\">\r\n",
+			asBuild, asFont, anFontHeight);
 		RawAdd(szTemp, _tcslen(szTemp));
 	};
 
@@ -115,8 +111,8 @@ public:
 
 	void ParBegin()
 	{
-		LPCWSTR pszPar = mb_ParOpened ? L"</p>\r\n<p>" : L"<p>";
-		RawAdd(pszPar, _tcslen(pszPar));
+		if (mb_ParOpened)
+			ParEnd();
 		mb_ParOpened = true;
 	}
 	void ParEnd()
@@ -124,39 +120,18 @@ public:
 		if (!mb_ParOpened)
 			return;
 		mb_ParOpened = false;
-		LPCWSTR pszPar = L"</p>\r\n";
-		RawAdd(pszPar, _tcslen(pszPar));
+		RawAdd(L"<br>\r\n", 6);
 	}
 
 	void TextAdd(LPCWSTR asText, INT_PTR cchLen, COLORREF crFore, COLORREF crBack, bool Bold = false, bool Italic = false)
 	{
-		bool bSpan = (mcr_Fore != crFore) || (mcr_Back != crBack);
 		// Open (special colors, fonts, outline?)
-		if (bSpan)
-		{
-			if (mcr_Fore != crFore)
-				_wsprintf(szFore, SKIPLEN(countof(szFore)) L"color: %s; ", FormatColor(crFore, szId));
-			else
-				szFore[0] = 0;
-
-			if (mcr_Back != crBack)
-				_wsprintf(szBack, SKIPLEN(countof(szBack)) L"background-color: %s; ", FormatColor(crBack, szId));
-			else
-				szBack[0] = 0;
-
-			if (Bold)
-				wcscpy_c(szBold, L"font-weight: bold; ");
-			else
-				szBold[0] = 0;
-
-			if (Italic)
-				wcscpy_c(szItalic, L"font-style: italic; ");
-			else
-				szItalic[0] = 0;
-
-			_wsprintf(szTemp, SKIPLEN(countof(szTemp)) L"<span style=\"%s%s%s%s\">", szFore, szBack, szBold, szItalic);
-			RawAdd(szTemp, _tcslen(szTemp));
-		}
+		_wsprintf(szFore, SKIPLEN(countof(szFore)) L"color: %s; ", FormatColor(crFore, szId));
+		_wsprintf(szBack, SKIPLEN(countof(szBack)) L"background-color: %s; ", FormatColor(crBack, szId));
+		wcscpy_c(szBold, Bold ? L"font-weight: bold; " : L"");
+		wcscpy_c(szItalic, Italic ? L"font-style: italic; " : L"");
+		_wsprintf(szTemp, SKIPLEN(countof(szTemp)) L"<span style=\"%s%s%s%s\">", szFore, szBack, szBold, szItalic);
+		RawAdd(szTemp, _tcslen(szTemp));
 
 		// Text
 		LPCWSTR pszEnd = asText + cchLen;
@@ -218,10 +193,7 @@ public:
 		}
 
 		// Fin
-		if (bSpan)
-		{
-			RawAdd(L"</span>", 7);
-		}
+		RawAdd(L"</span>", 7);
 	}
 
 	void LineAdd(LPCWSTR asText, const WORD* apAttr, const COLORREF* pPal, INT_PTR nLen)
