@@ -2683,6 +2683,7 @@ enum ConEmuStateCheck
 	ec_IsConEmu,
 	ec_IsTerm,
 	ec_IsAnsi,
+	ec_IsAdmin,
 };
 
 bool DoStateCheck(ConEmuStateCheck eStateCheck)
@@ -2720,6 +2721,9 @@ bool DoStateCheck(ConEmuStateCheck eStateCheck)
 			}
 			SafeFree(pInfo);
 		}
+		break;
+	case ec_IsAdmin:
+		bOn = IsUserAdmin();
 		break;
 	case ec_IsTerm:
 		bOn = isTerminalMode();
@@ -4256,6 +4260,11 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 		else if (lstrcmpi(szArg, L"/IsAnsi")==0)
 		{
 			eStateCheck = ec_IsAnsi;
+			break;
+		}
+		else if (lstrcmpi(szArg, L"/IsAdmin")==0)
+		{
+			eStateCheck = ec_IsAdmin;
 			break;
 		}
 		else if (wcscmp(szArg, L"/CONFIRM")==0)

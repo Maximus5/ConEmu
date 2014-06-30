@@ -41,7 +41,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 		L"   or: ConEmuC /ATTACH /NOCMD\r\n" \
 		L"   or: ConEmuC /ATTACH [/GHWND=NEW|<HWND>] /[FAR|CON|TRM]PID=<PID>\r\n" \
 		L"   or: ConEmuC /GUIMACRO[:PID|HWND] <ConEmu GUI macro command>\r\n" \
-		L"   or: ConEmuC /IsConEmu | /IsAnsi | /IsTerm\r\n" \
+		L"   or: ConEmuC /IsConEmu | /IsAnsi | /IsAdmin | /IsTerm\r\n" \
 		L"   or: ConEmuC /DEBUGPID=<Debugging PID> [/DUMP | /MINI | /FULL]\r\n" \
 		L"   or: ConEmuC /EXPORT[=CON|ALL] [Var1 [Var2 [...]]]\r\n" \
 		L"   or: ConEmuC /ECHO | /TYPE [...]\r\n" \
@@ -62,6 +62,7 @@ _DBGHLP(L"   or: ConEmuC /REGCONFONT=<FontName> -> RegisterConsoleFontHKLM\r\n")
 		L"     /F{N|W|H}       - define console font name, width, height\r\n" \
 		L"     /GuiMacro ...   - http://code.google.com/p/conemu-maximus5/wiki/GuiMacro\r\n" \
 		L"     /Export[...]    - http://code.google.com/p/conemu-maximus5/wiki/ConEmuEnvironment#Export_variables\r\n" \
+		L"     /IsAdmin        - returns 1 as errorlevel if current user has elevated privileges, 2 if not\r\n" \
 		L"     /IsAnsi         - returns 1 as errorlevel if ANSI are processed, 2 if not\r\n" \
 		L"     /IsConEmu       - returns 1 as errorlevel if running in ConEmu tab, 2 if not\r\n" \
 		L"     /IsTerm         - returns 1 as errorlevel if running in telnet, 2 if not\r\n" \
