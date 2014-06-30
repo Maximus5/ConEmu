@@ -4221,7 +4221,7 @@ bool CRealBuffer::DoSelectionCopyInt(CECopyMode CopyMode, bool bStreamMode, int 
 	}
 
 
-	TODO("Переделать на GetConsoleLine! Иначе могут не будут работать расширенные атрибуты");
+	TODO("Переделать на GetConsoleLine/GetConsoleData! Иначе могут не будут работать расширенные атрибуты");
 	if (!bStreamMode)
 	{
 		// Блоковое выделение

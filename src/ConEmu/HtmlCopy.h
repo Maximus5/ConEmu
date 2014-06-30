@@ -65,7 +65,8 @@ protected:
 	MArray<txt> m_Items; // UTF-8
 	size_t mn_AllItemsLen, mn_TextStart, mn_TextEnd;
 	bool mb_Finalized, mb_ParOpened;
-	wchar_t szTemp[2000], szBack[64], szFore[64], szBold[20], szItalic[20], szId[8];
+	wchar_t szTemp[2000], szBack[64], szFore[64], szId[8];
+	wchar_t szBold[20], szItalic[20], szUnderline[20];
 	char szUTF8[6001]; // (szTemp*3 + \0)
 protected:
 	LPCWSTR FormatColor(COLORREF clr, wchar_t* rsBuf)
@@ -123,14 +124,15 @@ public:
 		RawAdd(L"<br>\r\n", 6);
 	}
 
-	void TextAdd(LPCWSTR asText, INT_PTR cchLen, COLORREF crFore, COLORREF crBack, bool Bold = false, bool Italic = false)
+	void TextAdd(LPCWSTR asText, INT_PTR cchLen, COLORREF crFore, COLORREF crBack, bool Bold = false, bool Italic = false, bool Underline = false)
 	{
 		// Open (special colors, fonts, outline?)
 		_wsprintf(szFore, SKIPLEN(countof(szFore)) L"color: %s; ", FormatColor(crFore, szId));
 		_wsprintf(szBack, SKIPLEN(countof(szBack)) L"background-color: %s; ", FormatColor(crBack, szId));
 		wcscpy_c(szBold, Bold ? L"font-weight: bold; " : L"");
 		wcscpy_c(szItalic, Italic ? L"font-style: italic; " : L"");
-		_wsprintf(szTemp, SKIPLEN(countof(szTemp)) L"<span style=\"%s%s%s%s\">", szFore, szBack, szBold, szItalic);
+		wcscpy_c(szUnderline, Underline ? L"text-decoration: underline; " : L"");
+		_wsprintf(szTemp, SKIPLEN(countof(szTemp)) L"<span style=\"%s%s%s%s%s\">", szFore, szBack, szBold, szItalic, szUnderline);
 		RawAdd(szTemp, _tcslen(szTemp));
 
 		// Text
@@ -226,7 +228,7 @@ public:
 			pa++; ps++;
 			if (!nLen || (pa->All != a.All))
 			{
-				TextAdd(asText, ps - asText, a.crForeColor, a.crBackColor, (a.nFontIndex&1)==1, (a.nFontIndex&2)==2);
+				TextAdd(asText, ps - asText, a.crForeColor, a.crBackColor, (a.nFontIndex&1)==1, (a.nFontIndex&2)==2, (a.nFontIndex&4)==4);
 				asText = ps; apAttr = pa;
 				a = *apAttr;
 			}
