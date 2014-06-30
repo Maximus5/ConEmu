@@ -2450,7 +2450,11 @@ HWND Attach2Gui(DWORD nTimeout)
 	DWORD dwErr = 0;
 	DWORD dwStartWaitIdleResult = -1;
 	// Будем подцепляться заново
-	gpSrv->bWasDetached = FALSE;
+	if (gpSrv->bWasDetached)
+	{
+		gpSrv->bWasDetached = FALSE;
+		gbAttachMode = am_Simple;
+	}
 
 	if (!gpSrv->pConsoleMap)
 	{
@@ -2653,6 +2657,13 @@ HWND Attach2Gui(DWORD nTimeout)
 	pIn->StartStop.nSubSystem = gnImageSubsystem;
 	// Сразу передать текущий KeyboardLayout
 	IsKeyboardLayoutChanged(&pIn->StartStop.dwKeybLayout);
+	// После детача/аттача
+	DWORD nAltWait;
+	if (gpSrv->dwAltServerPID && gpSrv->hAltServer
+		&& (WAIT_OBJECT_0 != (nAltWait = WaitForSingleObject(gpSrv->hAltServer, 0))))
+	{
+		pIn->StartStop.nAltServerPID = gpSrv->dwAltServerPID;
+	}
 
 	if (gbAttachFromFar)
 		pIn->StartStop.bRootIsCmdExe = FALSE;

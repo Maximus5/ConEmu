@@ -1587,6 +1587,8 @@ struct CESERVER_REQ_STARTSTOP
 	BOOL bRunInBackgroundTab;
 	// При запуске в режиме RM_COMSPEC, сохранение "длинного вывода"
 	DWORD nParentFarPID;
+	// После детача/аттача мог остаться "альтернативный" сервер
+	DWORD nAltServerPID;
 	// Если был успешный вызов функций типа ReadConsole/ReadConsoleInput
 	BOOL bWasSucceededInRead;
 	// CmdLine

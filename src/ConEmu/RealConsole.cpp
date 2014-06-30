@@ -950,6 +950,8 @@ BOOL CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, const CESER
 	//mh_MainSrv = hProcess;
 	//mn_MainSrv_PID = anConemuC_PID;
 	SetMainSrvPID(anConemuC_PID, hProcess);
+	//Current AltServer
+	SetAltSrvPID(rStartStop->nAltServerPID);
 
 	SetHwnd(ahConWnd);
 	ProcessUpdate(&anConemuC_PID, 1);
