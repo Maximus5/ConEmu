@@ -2149,9 +2149,11 @@ void PatchMsgBoxIcon(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 			wchar_t szClass[32] = L""; GetClassName(hFore, szClass, countof(szClass));
 			if (lstrcmp(szClass, L"#32770") == 0)
 			{
+				// Reset immediately, to avoid stack overflow
+				ghDlgPendingFrom = NULL;
+				// And patch the icon
 				SendMessage(hFore, WM_SETICON, ICON_BIG, (LPARAM)hClassIcon);
 				SendMessage(hFore, WM_SETICON, ICON_SMALL, (LPARAM)hClassIconSm);
-				ghDlgPendingFrom = NULL;
 			}
 		}
 	}
