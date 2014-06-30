@@ -2391,7 +2391,23 @@ bool TryConnect2Gui(HWND hGui, CESERVER_REQ* pIn)
 			COORD crNewSize = {(SHORT)pStartStopRet->Info.nWidth, (SHORT)pStartStopRet->Info.nHeight};
 			//SMALL_RECT rcWnd = {0,pIn->StartStop.sbi.srWindow.Top};
 			SMALL_RECT rcWnd = {0};
-			SetConsoleSize((USHORT)pStartStopRet->Info.nBufferHeight, crNewSize, rcWnd, "Attach2Gui:Ret");
+
+			CESERVER_REQ *pSizeIn = NULL, *pSizeOut = NULL;
+			if (gpSrv->dwAltServerPID && ((pSizeIn = ExecuteNewCmd(CECMD_SETSIZESYNC, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_SETSIZE))) != NULL))
+			{
+				pSizeIn->SetSize.nBufferHeight = pStartStopRet->Info.nBufferHeight;
+				pSizeIn->SetSize.size = crNewSize;
+				pSizeIn->SetSize.nSendTopLine = -1;
+				pSizeIn->SetSize.rcWindow = rcWnd;
+
+				pSizeOut = ExecuteSrvCmd(gpSrv->dwAltServerPID, pSizeIn, ghConWnd);
+			}
+			else
+			{
+				SetConsoleSize((USHORT)pStartStopRet->Info.nBufferHeight, crNewSize, rcWnd, "Attach2Gui:Ret");
+			}
+			ExecuteFreeResult(pSizeIn);
+			ExecuteFreeResult(pSizeOut);
 		}
 	}
 
