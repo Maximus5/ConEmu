@@ -12991,7 +12991,7 @@ LONG CSettings::FontHeight()
 	return gpSetCls->mn_FontHeight;
 }
 
-LONG CSettings::FontHeightPx()
+LONG CSettings::FontHeightPx(bool bCharHeight /*= false*/)
 {
 	if (!LogFont.lfHeight)
 	{
@@ -12999,14 +12999,24 @@ LONG CSettings::FontHeightPx()
 		return 12;
 	}
 
+	int iHeight, iLineGap = 0;
+
 	if (m_otm[0] && (m_otm[0]->otmrcFontBox.top > 0))
 	{
 		_ASSERTE(((m_otm[0]->otmrcFontBox.top * 1.3) >= LogFont.lfHeight) && (m_otm[0]->otmrcFontBox.top <= LogFont.lfHeight));
-		return m_otm[0]->otmrcFontBox.top;
+		iHeight = m_otm[0]->otmrcFontBox.top;
+		if ((m_otm[0]->otmTextMetrics.tmInternalLeading < (iHeight/2)) && (m_otm[0]->otmTextMetrics.tmInternalLeading > 1))
+			iLineGap = m_otm[0]->otmTextMetrics.tmInternalLeading - 1;
+	}
+	else
+	{
+		_ASSERTE(gpSetCls->mn_FontHeight==LogFont.lfHeight);
+		iHeight = gpSetCls->mn_FontHeight;
+		if ((m_tm[0].tmInternalLeading < (iHeight/2)) && (m_tm[0].tmInternalLeading > 1))
+			iLineGap = m_tm[0].tmInternalLeading - 1;
 	}
 
-	_ASSERTE(gpSetCls->mn_FontHeight==LogFont.lfHeight);
-	return gpSetCls->mn_FontHeight;
+	return (iHeight - iLineGap);
 }
 
 BOOL CSettings::FontBold()

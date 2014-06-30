@@ -4217,7 +4217,7 @@ bool CRealBuffer::DoSelectionCopyInt(CECopyMode CopyMode, bool bStreamMode, int 
 		}
 
 		//wchar_t szClass[64]; _wsprintf(szClass, SKIPLEN(countof(szClass)) L"ConEmu%s%s", gpConEmu->ms_ConEmuBuild, WIN3264TEST(L"x32",L"x64"));
-		html.Init((nFormat == 2), gpConEmu->ms_ConEmuBuild, gpSetCls->FontFaceName(), gpSetCls->FontHeightPx(), crFore, crBack);
+		html.Init((nFormat == 2), gpConEmu->ms_ConEmuBuild, gpSetCls->FontFaceName(), gpSetCls->FontHeightPx(true), crFore, crBack);
 	}
 
 
