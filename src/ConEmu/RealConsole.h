@@ -847,7 +847,7 @@ class CRealConsole
 		void CloseMapHeader();
 		BOOL ApplyConsoleInfo();
 		bool mb_DataChanged;
-		void OnServerStarted(DWORD anServerPID, HANDLE ahServerHandle, DWORD dwKeybLayout);
+		void OnServerStarted(DWORD anServerPID, HANDLE ahServerHandle, DWORD dwKeybLayout, BOOL abFromAttach = FALSE);
 		void OnStartedSuccess();
 		BOOL mb_RConStartedSuccess;
 		//

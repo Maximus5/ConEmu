@@ -957,17 +957,19 @@ BOOL CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, const CESER
 	ProcessUpdate(&anConemuC_PID, 1);
 
 	CreateLogFiles();
+
 	// Инициализировать имена пайпов, событий, мэппингов и т.п.
 	InitNames();
-	//// Имя пайпа для управления ConEmuC
-	//swprintf_c(ms_ConEmuC_Pipe, CESERVERPIPENAME, L".", mn_MainSrv_PID);
-	//swprintf_c(ms_ConEmuCInput_Pipe, CESERVERINPUTNAME, L".", mn_MainSrv_PID);
-	//MCHKHEAP
-	// Открыть map с данными, он уже должен быть создан
-	OpenMapHeader(TRUE);
-	//SetConsoleSize(MakeCoord(TextWidth,TextHeight));
-	// Командой - низя, т.к. сервер сейчас только что запустился и ждет GUI
-	//SetConsoleSize(rcCon.right,rcCon.bottom);
+
+	// Открыть/создать map с данными
+	OnServerStarted(anConemuC_PID, hProcess, rStartStop->dwKeybLayout, TRUE);
+
+	#ifdef _DEBUG
+	DWORD nSrvWait = WaitForSingleObject(mh_MainSrv, 0);
+	_ASSERTE(nSrvWait == WAIT_TIMEOUT);
+	#endif
+
+	// Prepare result
 	pRet->Info.bWasBufferHeight = bCurBufHeight;
 	pRet->Info.hWnd = ghWnd;
 	pRet->Info.hWndDc = mp_VCon->GetView();
@@ -6228,6 +6230,11 @@ void CRealConsole::SetMainSrvPID(DWORD anMainSrvPID, HANDLE ahMainSrv)
 
 	DEBUGTEST(isServerAlive());
 
+	#ifdef _DEBUG
+	DWORD nSrvWait = WaitForSingleObject(ahMainSrv, 0);
+	_ASSERTE(nSrvWait == WAIT_TIMEOUT);
+	#endif
+
 	mh_MainSrv = ahMainSrv;
 	mn_MainSrv_PID = anMainSrvPID;
 
@@ -7531,7 +7538,7 @@ void CRealConsole::ShowConsole(int nMode) // -1 Toggle 0 - Hide 1 - Show
 //}
 
 // Вызывается при окончании инициализации сервера из ConEmuC.exe:SendStarted (CECMD_CMDSTARTSTOP)
-void CRealConsole::OnServerStarted(DWORD anServerPID, HANDLE ahServerHandle, DWORD dwKeybLayout)
+void CRealConsole::OnServerStarted(DWORD anServerPID, HANDLE ahServerHandle, DWORD dwKeybLayout, BOOL abFromAttach /*= FALSE*/)
 {
 	_ASSERTE(anServerPID && (anServerPID == mn_MainSrv_PID));
 	if (ahServerHandle != NULL)
@@ -7549,13 +7556,12 @@ void CRealConsole::OnServerStarted(DWORD anServerPID, HANDLE ahServerHandle, DWO
 		_ASSERTE(mn_MainSrv_PID == anServerPID);
 	}
 
-	//if (!mp_ConsoleInfo)
-	if (!m_ConsoleMap.IsValid())
+	if (abFromAttach || !m_ConsoleMap.IsValid())
 	{
 		// Инициализировать имена пайпов, событий, мэппингов и т.п.
 		InitNames();
 		// Открыть map с данными, теперь он уже должен быть создан
-		OpenMapHeader();
+		OpenMapHeader(abFromAttach);
 	}
 
 	// И атрибуты Colorer
