@@ -2741,6 +2741,20 @@ void PatchGuiMessage(bool bReceived, HWND& hWnd, UINT& Msg, WPARAM& wParam, LPAR
 					ExecuteFreeResult(pOut);
 				}
 			}
+			#if 0
+			// Если окно ChildGui активируется кликом - то ConEmu (holder)
+			// может остаться "под" предыдущим окном бывшим в фокусе...
+			// Победить пока не получается.
+			DWORD nTID = 0, nPID = 0;
+			HWND hFore = GetForegroundWindow();
+			if (hFore && ((nTID = GetWindowThreadProcessId(hFore, &nPID)) != 0))
+			{
+				if ((nPID != GetCurrentProcessId()) && (nPID != gnGuiPID))
+				{
+					SetForegroundWindow(ghConEmuWnd);
+				}
+			}
+			#endif
 		}
 		break;
 
