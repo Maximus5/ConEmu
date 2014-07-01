@@ -5654,6 +5654,17 @@ LPVOID WINAPI OnVirtualAlloc(LPVOID lpAddress, SIZE_T dwSize, DWORD flAllocation
 		// clink use bunch of VirtualAlloc to try to find suitable memory location
 		// Some processes raises that error too often (in debug)
 		bool bReport = (!gbIsCmdProcess || (dwSize != 0x1000)) && !gbSkipVirtualAllocErr;
+		if (bReport)
+		{
+			// Do not report for .Net application
+			static int iNetChecked = 0;
+			if (!iNetChecked)
+			{
+				HMODULE hClr = GetModuleHandle(L"mscoree.dll");
+				iNetChecked = hClr ? 2 : 1;
+			}
+			bReport = (iNetChecked == 1);
+		}
 		int iBtn = bReport ? GuiMessageBox(NULL, szText, szTitle, MB_SYSTEMMODAL|MB_OKCANCEL|MB_ICONSTOP) : IDCANCEL;
 		if (iBtn == IDOK)
 		{
