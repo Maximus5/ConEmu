@@ -17602,6 +17602,11 @@ void CConEmuMain::OnTimer_Main(CVirtualConsole* pVCon)
 			pVCon->mb_LastFadeFlag = bNewFade;
 			pVCon->Invalidate();
 		}
+
+		if (hForeWnd && (hForeWnd == pVCon->GuiWnd()))
+		{
+			pVCon->RCon()->GuiWndFocusStore();
+		}
 	}
 
 	if (mh_ConEmuAliveEvent && !mb_ConEmuAliveOwned)

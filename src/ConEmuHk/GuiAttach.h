@@ -14,6 +14,7 @@ enum GuiCui
 extern GuiCui  gnAttachPortableGuiCui; // XxxPortable.exe запускает xxx.exe который уже и нужно цеплять (IMAGE_SUBSYSTEM_WINDOWS_[G|C]UI)
 extern struct GuiStylesAndShifts gGuiClientStyles; // Запомнить сдвиги окна внутри ConEmu
 extern HWND    ghAttachGuiClient; // Чтобы ShowWindow перехватить
+extern HWND    ghAttachGuiFocused; // Последний SetFocus из ChildGui
 extern DWORD   gnAttachGuiClientFlags; // enum ATTACHGUIAPP_FLAGS
 extern DWORD   gnAttachGuiClientStyle, gnAttachGuiClientStyleEx;
 

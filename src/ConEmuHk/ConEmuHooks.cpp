@@ -355,6 +355,7 @@ BOOL WINAPI OnChooseColorW(LPCHOOSECOLORW lpcc);
 //HWND WINAPI OnCreateWindowW(LPCWSTR lpClassName, LPCWSTR lpWindowName, DWORD dwStyle, int x, int y, int nWidth, int nHeight, HWND hWndParent, HMENU hMenu, HINSTANCE hInstance, LPVOID lpParam);
 HWND WINAPI OnCreateWindowExA(DWORD dwExStyle, LPCSTR lpClassName, LPCSTR lpWindowName, DWORD dwStyle, int x, int y, int nWidth, int nHeight, HWND hWndParent, HMENU hMenu, HINSTANCE hInstance, LPVOID lpParam);
 HWND WINAPI OnCreateWindowExW(DWORD dwExStyle, LPCWSTR lpClassName, LPCWSTR lpWindowName, DWORD dwStyle, int x, int y, int nWidth, int nHeight, HWND hWndParent, HMENU hMenu, HINSTANCE hInstance, LPVOID lpParam);
+HWND WINAPI OnSetFocus(HWND hWnd);
 BOOL WINAPI OnShowWindow(HWND hWnd, int nCmdShow);
 BOOL WINAPI OnShowCursor(BOOL bShow);
 HWND WINAPI OnSetParent(HWND hWndChild, HWND hWndNewParent);
@@ -710,6 +711,7 @@ bool InitHooksUser32()
 		{(void*)OnCreateWindowExW,		"CreateWindowExW",		user32},
 		{(void*)OnShowCursor,			"ShowCursor",			user32},
 		{(void*)OnShowWindow,			"ShowWindow",			user32},
+		{(void*)OnSetFocus,				"SetFocus",				user32},
 		{(void*)OnSetParent,			"SetParent",			user32},
 		{(void*)OnGetParent,			"GetParent",			user32},
 		{(void*)OnGetWindow,			"GetWindow",			user32},
@@ -2011,6 +2013,24 @@ BOOL WINAPI OnShowCursor(BOOL bShow)
 	}
 
 	return bRc;
+}
+
+HWND WINAPI OnSetFocus(HWND hWnd)
+{
+	typedef HWND (WINAPI* OnSetFocus_t)(HWND hWnd);
+	ORIGINALFASTEX(SetFocus,NULL);
+	HWND hRet = NULL;
+	DWORD nPID = 0, nTID = 0;
+
+	if (ghAttachGuiClient && ((nTID = GetWindowThreadProcessId(hWnd, &nPID)) != 0))
+	{
+		ghAttachGuiFocused = (nPID == GetCurrentProcessId()) ? hWnd : NULL;
+	}
+
+	if (F(SetFocus))
+		hRet = F(SetFocus)(hWnd);
+
+	return hRet;
 }
 
 BOOL WINAPI OnShowWindow(HWND hWnd, int nCmdShow)

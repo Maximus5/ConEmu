@@ -57,6 +57,7 @@ BOOL 	gbGuiClientExternMode = FALSE; // Если нужно показать Gui
 GuiCui  gnAttachPortableGuiCui = e_Alone; // XxxPortable.exe запускает xxx.exe который уже и нужно цеплять (IMAGE_SUBSYSTEM_WINDOWS_[G|C]UI)
 struct GuiStylesAndShifts gGuiClientStyles = {}; // Запомнить сдвиги окна внутри ConEmu
 HWND 	ghAttachGuiClient = NULL;
+HWND    ghAttachGuiFocused = NULL;
 DWORD 	gnAttachGuiClientFlags = 0;
 DWORD 	gnAttachGuiClientStyle = 0, gnAttachGuiClientStyleEx = 0;
 BOOL  	gbAttachGuiClientStyleOk = FALSE;

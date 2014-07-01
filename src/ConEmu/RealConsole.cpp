@@ -12034,17 +12034,20 @@ void CRealConsole::GuiWndFocusStore()
 
 	DWORD nPID = 0, nGetPID = 0, nErr = 0;
 	BOOL bAttached = FALSE, bAttachCalled = FALSE;
+	bool bHwndChanged = false;
 
 	DWORD nTID = GetWindowThreadProcessId(m_ChildGui.hGuiWnd, &nPID);
 
 	DEBUGTEST(BOOL bGuiInfo = )
 	GetGUIThreadInfo(nTID, &gti);
 
-	if (gti.hwndFocus)
+	if (gti.hwndFocus && (m_ChildGui.hGuiWndFocusStore != gti.hwndFocus))
 	{
 		GetWindowThreadProcessId(gti.hwndFocus, &nGetPID);
 		if (nGetPID != GetCurrentProcessId())
 		{
+			bHwndChanged = true;
+
 			m_ChildGui.hGuiWndFocusStore = gti.hwndFocus;
 
 			GuiWndFocusThread(gti.hwndFocus, bAttached, bAttachCalled, nErr);
@@ -12053,7 +12056,7 @@ void CRealConsole::GuiWndFocusStore()
 		}
 	}
 
-	if (gpSetCls->isAdvLogging)
+	if (gpSetCls->isAdvLogging && bHwndChanged)
 	{
 		wchar_t szInfo[100];
 		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"GuiWndFocusStore for PID=%u, hWnd=x%08X", nPID, (DWORD)m_ChildGui.hGuiWndFocusStore);
