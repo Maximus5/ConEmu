@@ -6030,7 +6030,28 @@ bool GetTime(bool bSystem, LPSYSTEMTIME lpSystemTime)
 {
 	bool bHacked = false;
 	wchar_t szEnvVar[32] = L""; // 2013-01-01T15:16:17.95
-	if (GetEnvironmentVariable(ENV_CONEMUFAKEDT_VAR, szEnvVar, countof(szEnvVar)) && *szEnvVar)
+
+	static wchar_t szEnvVarSave[32] = L"";
+	static DWORD nEnvVarLastCheck = 0;
+	DWORD nCurTick = GetTickCount();
+	DWORD nCheckDelta = nCurTick - nEnvVarLastCheck;
+	const DWORD nCheckDeltaMax = 1000;
+	if (!nEnvVarLastCheck || (nCheckDelta >= nCheckDeltaMax))
+	{
+		nEnvVarLastCheck = nCurTick;
+		GetEnvironmentVariable(ENV_CONEMUFAKEDT_VAR, szEnvVar, countof(szEnvVar));
+		lstrcpyn(szEnvVarSave, szEnvVar, countof(szEnvVarSave));
+	}
+	else if (*szEnvVarSave)
+	{
+		lstrcpyn(szEnvVar, szEnvVarSave, countof(szEnvVar));
+	}
+	else
+	{
+		goto wrap;
+	}
+
+	if (*szEnvVar)
 	{
 		SYSTEMTIME st = {0}; FILETIME ft; wchar_t* p = szEnvVar;
 
