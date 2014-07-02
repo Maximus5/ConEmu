@@ -3885,6 +3885,19 @@ BOOL CRealConsole::CreateOrRunAs(CRealConsole* pRCon, RConStartArgs& Args,
 	MWow64Disable wow;
 	wow.Disable();
 
+	// Function may be used for starting GUI applications (errors & hyperlinks)
+	bool bConsoleProcess = true;
+	{
+		CmdArg szExe;
+		DWORD nSubSys = 0, nBits = 0, nAttrs = 0;
+		if (!IsNeedCmd(TRUE, psCurCmd, szExe))
+		{
+			if (GetImageSubsystem(szExe, nSubSys, nBits, nAttrs))
+				if (nSubSys == IMAGE_SUBSYSTEM_WINDOWS_GUI)
+					bConsoleProcess = false;
+		}
+	}
+
 	SetLastError(0);
 
 	// Если сам ConEmu запущен под админом - нет смысла звать ShellExecuteEx("RunAs")
@@ -3916,7 +3929,8 @@ BOOL CRealConsole::CreateOrRunAs(CRealConsole* pRCon, RConStartArgs& Args,
 
 			lbRc = CreateProcessWithLogonW(Args.pszUserName, Args.pszDomain, Args.szUserPassword,
 				                        LOGON_WITH_PROFILE, NULL, pszChangedCmd ? pszChangedCmd : psCurCmd,
-				                        NORMAL_PRIORITY_CLASS|CREATE_DEFAULT_ERROR_MODE|CREATE_NEW_CONSOLE
+				                        NORMAL_PRIORITY_CLASS|CREATE_DEFAULT_ERROR_MODE
+										|(bConsoleProcess ? CREATE_NEW_CONSOLE : 0)
 										, NULL, lpszWorkDir, &si, &pi);
 				//if (CreateProcessAsUser(Args.hLogonToken, NULL, psCurCmd, NULL, NULL, FALSE,
 				//	NORMAL_PRIORITY_CLASS|CREATE_DEFAULT_ERROR_MODE|CREATE_NEW_CONSOLE
@@ -3930,7 +3944,8 @@ BOOL CRealConsole::CreateOrRunAs(CRealConsole* pRCon, RConStartArgs& Args,
 		else if (Args.RunAsRestricted == crb_On)
 		{
 			lbRc = CreateProcessRestricted(NULL, psCurCmd, NULL, NULL, FALSE,
-				                    NORMAL_PRIORITY_CLASS|CREATE_DEFAULT_ERROR_MODE|CREATE_NEW_CONSOLE
+				                    NORMAL_PRIORITY_CLASS|CREATE_DEFAULT_ERROR_MODE
+									|(bConsoleProcess ? CREATE_NEW_CONSOLE : 0)
 				                    , NULL, lpszWorkDir, &si, &pi, &dwLastError);
 
 			dwLastError = GetLastError();
@@ -3938,7 +3953,8 @@ BOOL CRealConsole::CreateOrRunAs(CRealConsole* pRCon, RConStartArgs& Args,
 		else
 		{
 			lbRc = CreateProcess(NULL, psCurCmd, NULL, NULL, FALSE,
-				                    NORMAL_PRIORITY_CLASS|CREATE_DEFAULT_ERROR_MODE|CREATE_NEW_CONSOLE
+				                    NORMAL_PRIORITY_CLASS|CREATE_DEFAULT_ERROR_MODE
+									|(bConsoleProcess ? CREATE_NEW_CONSOLE : 0)
 				                    //|CREATE_NEW_PROCESS_GROUP - низя! перестает срабатывать Ctrl-C
 				                    , NULL, lpszWorkDir, &si, &pi);
 
@@ -3983,7 +3999,7 @@ BOOL CRealConsole::CreateOrRunAs(CRealConsole* pRCon, RConStartArgs& Args,
 			//pp_sei->hwnd = /*NULL; */ ghWnd; // почему я тут NULL ставил?
 
 			// 121025 - remove SEE_MASK_NOCLOSEPROCESS
-			pp_sei->fMask = SEE_MASK_NO_CONSOLE|SEE_MASK_NOASYNC;
+			pp_sei->fMask = SEE_MASK_NOASYNC | (bConsoleProcess ? SEE_MASK_NO_CONSOLE : 0);
 			// Issue 791: Console server fails to duplicate self Process handle to GUI
 			pp_sei->fMask |= SEE_MASK_NOCLOSEPROCESS;
 
