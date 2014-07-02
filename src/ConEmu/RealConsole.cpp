@@ -3882,6 +3882,9 @@ BOOL CRealConsole::CreateOrRunAs(CRealConsole* pRCon, RConStartArgs& Args,
 
 	lpszWorkDir = pRCon->GetStartupDir();
 
+	MWow64Disable wow;
+	wow.Disable();
+
 	SetLastError(0);
 
 	// Если сам ConEmu запущен под админом - нет смысла звать ShellExecuteEx("RunAs")
