@@ -497,12 +497,23 @@ LPCWSTR GetDrive(LPCWSTR pszPath, wchar_t* szDrive, int/*countof(szDrive)*/ cchD
 // кроме того, если команда содержит "?" или "*" - тоже не пытаться.
 const wchar_t* gsInternalCommands = L"ACTIVATE\0ALIAS\0ASSOC\0ATTRIB\0BEEP\0BREAK\0CALL\0CDD\0CHCP\0COLOR\0COPY\0DATE\0DEFAULT\0DEL\0DELAY\0DESCRIBE\0DETACH\0DIR\0DIRHISTORY\0DIRS\0DRAWBOX\0DRAWHLINE\0DRAWVLINE\0ECHO\0ECHOERR\0ECHOS\0ECHOSERR\0ENDLOCAL\0ERASE\0ERRORLEVEL\0ESET\0EXCEPT\0EXIST\0EXIT\0FFIND\0FOR\0FREE\0FTYPE\0GLOBAL\0GOTO\0HELP\0HISTORY\0IF\0IFF\0INKEY\0INPUT\0KEYBD\0KEYS\0LABEL\0LIST\0LOG\0MD\0MEMORY\0MKDIR\0MOVE\0MSGBOX\0NOT\0ON\0OPTION\0PATH\0PAUSE\0POPD\0PROMPT\0PUSHD\0RD\0REBOOT\0REN\0RENAME\0RMDIR\0SCREEN\0SCRPUT\0SELECT\0SET\0SETDOS\0SETLOCAL\0SHIFT\0SHRALIAS\0START\0TEE\0TIME\0TIMER\0TITLE\0TOUCH\0TREE\0TRUENAME\0TYPE\0UNALIAS\0UNSET\0VER\0VERIFY\0VOL\0VSCRPUT\0WINDOW\0Y\0\0";
 
-BOOL IsNeedCmd(BOOL bRootCmd, LPCWSTR asCmdLine, LPCWSTR* rsArguments, BOOL *rbNeedCutStartEndQuot,
-			   CmdArg &szExe,
-			   BOOL& rbRootIsCmdExe, BOOL& rbAlwaysConfirmExit, BOOL& rbAutoDisableConfirmExit)
+bool IsNeedCmd(BOOL bRootCmd, LPCWSTR asCmdLine, CmdArg &szExe,
+			   LPCWSTR* rsArguments /*= NULL*/, BOOL* rpbNeedCutStartEndQuot /*= NULL*/,
+			   BOOL* rpbRootIsCmdExe /*= NULL*/, BOOL* rpbAlwaysConfirmExit /*= NULL*/, BOOL* rpbAutoDisableConfirmExit /*= NULL*/)
 {
 	_ASSERTE(asCmdLine && *asCmdLine);
-	rbRootIsCmdExe = TRUE;
+
+	bool rbNeedCutStartEndQuot = false;
+	bool rbRootIsCmdExe = true;
+	bool rbAlwaysConfirmExit = false;
+	bool rbAutoDisableConfirmExit = false;
+	if (rsArguments) *rsArguments = NULL;
+
+	bool lbRc = false;
+	int iRc = 0;
+	BOOL lbFirstWasGot = FALSE;
+	LPCWSTR pwszCopy;
+	int nLastChar;
 
 	#ifdef _DEBUG
 	// Это минимальные проверки, собственно к коду - не относятся
@@ -520,35 +531,23 @@ BOOL IsNeedCmd(BOOL bRootCmd, LPCWSTR asCmdLine, LPCWSTR* rsArguments, BOOL *rbN
 	if (!szExe.GetBuffer(MAX_PATH))
 	{
 		_ASSERTE(FALSE && "Failed to allocate MAX_PATH");
-		return TRUE;
+		lbRc = true;
+		goto wrap;
 	}
 	szExe.Empty();
 
 	if (!asCmdLine || *asCmdLine == 0)
 	{
 		_ASSERTE(asCmdLine && *asCmdLine);
-		return TRUE;
+		lbRc = true;
+		goto wrap;
 	}
 
-	//110202 перенес вниз, т.к. это уже может быть cmd.exe, и тогда у него сносит крышу
-	//// Если есть одна из команд перенаправления, или слияния - нужен CMD.EXE
-	//if (wcschr(asCmdLine, L'&') ||
-	//        wcschr(asCmdLine, L'>') ||
-	//        wcschr(asCmdLine, L'<') ||
-	//        wcschr(asCmdLine, L'|') ||
-	//        wcschr(asCmdLine, L'^') // или экранирования
-	//  )
-	//{
-	//	return TRUE;
-	//}
 
-	//wchar_t szArg[MAX_PATH+10] = {0};
-	int iRc = 0;
-	BOOL lbFirstWasGot = FALSE;
-	LPCWSTR pwszCopy = asCmdLine;
+	pwszCopy = asCmdLine;
 	// cmd /c ""c:\program files\arc\7z.exe" -?"   // да еще и внутри могут быть двойными...
 	// cmd /c "dir c:\"
-	int nLastChar = lstrlenW(pwszCopy) - 1;
+	nLastChar = lstrlenW(pwszCopy) - 1;
 
 	if (pwszCopy[0] == L'"' && pwszCopy[nLastChar] == L'"')
 	{
@@ -565,7 +564,7 @@ BOOL IsNeedCmd(BOOL bRootCmd, LPCWSTR asCmdLine, LPCWSTR* rsArguments, BOOL *rbN
 			//	// Получим первую команду (исполняемый файл?)
 			//	if ((iRc = NextArg(&pwszTemp, szArg)) != 0) {
 			//		//Parsing command line failed
-			//		return TRUE;
+			//		lbRc = true; goto wrap;
 			//	}
 			//	pwszCopy ++; // Отбросить первую кавычку в командах типа: "c:\arc\7z.exe -?"
 			//	lbFirstWasGot = TRUE;
@@ -588,7 +587,7 @@ BOOL IsNeedCmd(BOOL bRootCmd, LPCWSTR asCmdLine, LPCWSTR* rsArguments, BOOL *rbN
 				#ifdef WARN_NEED_CMD
 				_ASSERTE(FALSE);
 				#endif
-				return TRUE;
+				lbRc = true; goto wrap;
 			}
 
 			if (lstrcmpiW(szExe, L"start") == 0)
@@ -597,7 +596,7 @@ BOOL IsNeedCmd(BOOL bRootCmd, LPCWSTR asCmdLine, LPCWSTR* rsArguments, BOOL *rbN
 				#ifdef WARN_NEED_CMD
 				_ASSERTE(FALSE);
 				#endif
-				return TRUE;
+				lbRc = true; goto wrap;
 			}
 
 			LPCWSTR pwszQ = pwszCopy + 1 + lstrlen(szExe);
@@ -616,7 +615,7 @@ BOOL IsNeedCmd(BOOL bRootCmd, LPCWSTR asCmdLine, LPCWSTR* rsArguments, BOOL *rbN
 						*rsArguments = pwszQ;
 				}
 
-				if (rbNeedCutStartEndQuot) *rbNeedCutStartEndQuot = TRUE;
+				rbNeedCutStartEndQuot = true;
 			}
 		}
 	}
@@ -642,7 +641,7 @@ BOOL IsNeedCmd(BOOL bRootCmd, LPCWSTR asCmdLine, LPCWSTR* rsArguments, BOOL *rbN
 				#ifdef WARN_NEED_CMD
 				_ASSERTE(FALSE);
 				#endif
-				return TRUE;
+				lbRc = true; goto wrap;
 			}
 
 			// Обработка переменных окружения и поиск в PATH
@@ -665,7 +664,7 @@ BOOL IsNeedCmd(BOOL bRootCmd, LPCWSTR asCmdLine, LPCWSTR* rsArguments, BOOL *rbN
 				#ifdef WARN_NEED_CMD
 				_ASSERTE(FALSE);
 				#endif
-				return TRUE;
+				lbRc = true; goto wrap;
 			}
 
 			if (lstrcmpiW(szExe, L"start") == 0)
@@ -674,7 +673,7 @@ BOOL IsNeedCmd(BOOL bRootCmd, LPCWSTR asCmdLine, LPCWSTR* rsArguments, BOOL *rbN
 				#ifdef WARN_NEED_CMD
 				_ASSERTE(FALSE);
 				#endif
-				return TRUE;
+				lbRc = true; goto wrap;
 			}
 
 			// Обработка переменных окружения и поиск в PATH
@@ -700,7 +699,7 @@ BOOL IsNeedCmd(BOOL bRootCmd, LPCWSTR asCmdLine, LPCWSTR* rsArguments, BOOL *rbN
 		if (wcspbrk(szExe, L"?*<>|"))
 		{
 			rbRootIsCmdExe = TRUE; // запуск через "процессор"
-			return TRUE; // добавить "cmd.exe"
+			lbRc = true; goto wrap; // добавить "cmd.exe"
 		}
 
 		// если "путь" не указан
@@ -740,7 +739,7 @@ BOOL IsNeedCmd(BOOL bRootCmd, LPCWSTR asCmdLine, LPCWSTR* rsArguments, BOOL *rbN
 					_ASSERTE(FALSE);
 					#endif
 					rbRootIsCmdExe = TRUE; // запуск через "процессор"
-					return TRUE; // добавить "cmd.exe"
+					lbRc = true; goto wrap; // добавить "cmd.exe"
 				}
 			}
 
@@ -772,7 +771,7 @@ BOOL IsNeedCmd(BOOL bRootCmd, LPCWSTR asCmdLine, LPCWSTR* rsArguments, BOOL *rbN
 		_ASSERTE(FALSE);
 		#endif
 		rbRootIsCmdExe = TRUE; // запуск через "процессор"
-		return TRUE; // добавить "cmd.exe"
+		lbRc = true; goto wrap; // добавить "cmd.exe"
 	}
 
 	//pwszCopy = wcsrchr(szArg, L'\\'); if (!pwszCopy) pwszCopy = szArg; else pwszCopy ++;
@@ -796,7 +795,7 @@ BOOL IsNeedCmd(BOOL bRootCmd, LPCWSTR asCmdLine, LPCWSTR* rsArguments, BOOL *rbN
 		rbRootIsCmdExe = TRUE; // уже должен быть выставлен, но проверим
 		rbAlwaysConfirmExit = TRUE; rbAutoDisableConfirmExit = FALSE;
 		_ASSERTE(!bIsBatch);
-		return FALSE; // уже указан командный процессор, cmd.exe в начало добавлять не нужно
+		lbRc = false; goto wrap; // уже указан командный процессор, cmd.exe в начало добавлять не нужно
 	}
 
 
@@ -816,7 +815,7 @@ BOOL IsNeedCmd(BOOL bRootCmd, LPCWSTR asCmdLine, LPCWSTR* rsArguments, BOOL *rbN
 			#ifdef WARN_NEED_CMD
 			_ASSERTE(FALSE);
 			#endif
-			return TRUE;
+			lbRc = true; goto wrap;
 		}
 	}
 
@@ -841,7 +840,7 @@ BOOL IsNeedCmd(BOOL bRootCmd, LPCWSTR asCmdLine, LPCWSTR* rsArguments, BOOL *rbN
 			rbAutoDisableConfirmExit = TRUE;
 			rbRootIsCmdExe = FALSE; // FAR!
 			_ASSERTE(!bIsBatch);
-			return FALSE; // уже указан исполняемый файл, cmd.exe в начало добавлять не нужно
+			lbRc = false; goto wrap; // уже указан исполняемый файл, cmd.exe в начало добавлять не нужно
 		}
 	}
 
@@ -849,7 +848,7 @@ BOOL IsNeedCmd(BOOL bRootCmd, LPCWSTR asCmdLine, LPCWSTR* rsArguments, BOOL *rbN
 	{
 		rbRootIsCmdExe = FALSE; // Для других программ - буфер не включаем
 		_ASSERTE(!bIsBatch);
-		return FALSE; // Запускается конкретная консольная программа. cmd.exe не требуется
+		lbRc = false; goto wrap; // Запускается конкретная консольная программа. cmd.exe не требуется
 	}
 
 	//Можно еще Доделать поиски с: SearchPath, GetFullPathName, добавив расширения .exe & .com
@@ -861,7 +860,18 @@ BOOL IsNeedCmd(BOOL bRootCmd, LPCWSTR asCmdLine, LPCWSTR* rsArguments, BOOL *rbN
 #ifndef __GNUC__
 #pragma warning( pop )
 #endif
-	return TRUE;
+
+	lbRc = true;
+wrap:
+	if (rpbNeedCutStartEndQuot)
+		*rpbNeedCutStartEndQuot = rbNeedCutStartEndQuot;
+	if (rpbRootIsCmdExe)
+		*rpbRootIsCmdExe = rbRootIsCmdExe;
+	if (rpbAlwaysConfirmExit)
+		*rpbAlwaysConfirmExit = rbAlwaysConfirmExit;
+	if (rpbAutoDisableConfirmExit)
+		*rpbAutoDisableConfirmExit = rbAutoDisableConfirmExit;
+	return lbRc;
 }
 
 #ifndef __GNUC__

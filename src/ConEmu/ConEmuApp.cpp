@@ -3402,7 +3402,7 @@ void DebugNeedCmdUnitTests()
 		szExe.Empty();
 		RConStartArgs rcs; rcs.pszSpecialCmd = lstrdup(Tests[i].pszCmd);
 		rcs.ProcessNewConArg();
-		b = IsNeedCmd(TRUE, rcs.pszSpecialCmd, &psArgs, &bNeedCut, szExe, bRootIsCmd, bAlwaysConfirm, bAutoDisable);
+		b = IsNeedCmd(TRUE, rcs.pszSpecialCmd, szExe, &psArgs, &bNeedCut, &bRootIsCmd, &bAlwaysConfirm, &bAutoDisable);
 		_ASSERTE(b == Tests[i].bNeed);
 	}
 }

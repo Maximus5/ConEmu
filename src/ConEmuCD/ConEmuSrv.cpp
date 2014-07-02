@@ -2647,9 +2647,8 @@ HWND Attach2Gui(DWORD nTimeout)
 
 	if (gpszRunCmd && *gpszRunCmd)
 	{
-		BOOL lbNeedCutQuot = FALSE, lbRootIsCmd = FALSE, lbConfirmExit = FALSE, lbAutoDisable = FALSE;
 		CmdArg lsExe;
-		IsNeedCmd(true, gpszRunCmd, NULL, &lbNeedCutQuot, lsExe, lbRootIsCmd, lbConfirmExit, lbAutoDisable);
+		IsNeedCmd(true, gpszRunCmd, lsExe);
 		lstrcpyn(pIn->StartStop.sModuleName, lsExe, countof(pIn->StartStop.sModuleName));
 		lstrcpy(pIn->StartStop.sCmdLine, gpszRunCmd);
 	}
