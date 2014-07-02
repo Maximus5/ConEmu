@@ -293,66 +293,75 @@ LRESULT CTabPanelBase::OnMouseTabbar(UINT uMsg, int nTabIdx, int x, int y)
 	if (nTabIdx == -1)
 		nTabIdx = GetTabFromPoint(MakePoint(x,y), false);
 
-	if (uMsg == WM_LBUTTONDOWN)
+	switch (uMsg)
 	{
-		// Приходит, например, из ReBar по клику НАД табами
-		int lnCurTab = GetCurSelInt();
-		if (lnCurTab != nTabIdx)
+	case WM_LBUTTONDOWN:
 		{
-			FarSendChangeTab(nTabIdx);
-		}
-	}
-	else if ((uMsg == WM_MBUTTONUP)
-		|| (uMsg == WM_RBUTTONUP)
-		|| ((uMsg == WM_LBUTTONDBLCLK) && gpSet->nTabBtnDblClickAction))
-	{
-		if (nTabIdx >= 0)
-		{
-			CVirtualConsole* pVCon = NULL;
-			// для меню нужны экранные координаты, получим их сразу, чтобы менюшка вплывала на клике
-			// а то вдруг мышка уедет, во время активации таба...
-			POINT ptCur = {0,0}; GetCursorPos(&ptCur);
-			pVCon = FarSendChangeTab(nTabIdx);
-
-			if (pVCon)
+			// Может приходить и из ReBar по клику НАД табами
+			GetCursorPos(&mpt_DragStart);
+			int lnCurTab = GetCurSelInt();
+			if (lnCurTab != nTabIdx)
 			{
-				CVConGuard guard(pVCon);
-				BOOL lbCtrlPressed = isPressed(VK_CONTROL);
-
-				if (uMsg == WM_LBUTTONDBLCLK)
-				{
-					switch (gpSet->nTabBtnDblClickAction)
-					{
-					case 1:
-						// Чтобы клик случайно не провалился в консоль
-						gpConEmu->mouse.state |= MOUSE_SIZING_DBLCKL;
-						// Аналог AltF9
-						gpConEmu->DoMaximizeRestore();
-						break;
-					case 2:
-						guard->RCon()->CloseTab();
-						break;
-					case 3:
-						gpConEmu->mp_Menu->ExecPopupMenuCmd(tmp_None, guard.VCon(), IDM_RESTART);
-						break;
-					case 4:
-						gpConEmu->mp_Menu->ExecPopupMenuCmd(tmp_None, guard.VCon(), IDM_DUPLICATE);
-						break;
-					}
-				}
-				else if (uMsg == WM_RBUTTONUP && !lbCtrlPressed)
-				{
-					gpConEmu->mp_Menu->ShowPopupMenu(guard.VCon(), ptCur);
-				}
-				else
-				{
-					guard->RCon()->CloseTab();
-				}
-
-				// борьба с оптимизатором в релизе
-				gpConEmu->isValid(pVCon);
+				FarSendChangeTab(nTabIdx);
 			}
+			break;
 		}
+	case WM_MBUTTONUP:
+	case WM_RBUTTONUP:
+	case WM_LBUTTONDBLCLK:
+		{
+			if (((uMsg == WM_LBUTTONDBLCLK) && !gpSet->nTabBtnDblClickAction))
+				break;
+
+			if (nTabIdx >= 0)
+			{
+				CVirtualConsole* pVCon = NULL;
+				// для меню нужны экранные координаты, получим их сразу, чтобы менюшка вплывала на клике
+				// а то вдруг мышка уедет, во время активации таба...
+				POINT ptCur = {0,0}; GetCursorPos(&ptCur);
+				pVCon = FarSendChangeTab(nTabIdx);
+
+				if (pVCon)
+				{
+					CVConGuard guard(pVCon);
+					BOOL lbCtrlPressed = isPressed(VK_CONTROL);
+
+					if (uMsg == WM_LBUTTONDBLCLK)
+					{
+						switch (gpSet->nTabBtnDblClickAction)
+						{
+						case 1:
+							// Чтобы клик случайно не провалился в консоль
+							gpConEmu->mouse.state |= MOUSE_SIZING_DBLCKL;
+							// Аналог AltF9
+							gpConEmu->DoMaximizeRestore();
+							break;
+						case 2:
+							guard->RCon()->CloseTab();
+							break;
+						case 3:
+							gpConEmu->mp_Menu->ExecPopupMenuCmd(tmp_None, guard.VCon(), IDM_RESTART);
+							break;
+						case 4:
+							gpConEmu->mp_Menu->ExecPopupMenuCmd(tmp_None, guard.VCon(), IDM_DUPLICATE);
+							break;
+						}
+					}
+					else if (uMsg == WM_RBUTTONUP && !lbCtrlPressed)
+					{
+						gpConEmu->mp_Menu->ShowPopupMenu(guard.VCon(), ptCur);
+					}
+					else
+					{
+						guard->RCon()->CloseTab();
+					}
+
+					// борьба с оптимизатором в релизе
+					gpConEmu->isValid(pVCon);
+				}
+			}
+			break;
+		} // WM_MBUTTONUP, WM_RBUTTONUP, WM_LBUTTONDBLCLK
 	}
 
 	return 0;
