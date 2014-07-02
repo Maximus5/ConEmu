@@ -13,6 +13,15 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
 
+2014.07.01
+[*] Wrong deinitialization ConEmuHk sequence may cause crash on application exit.
+[*] HTML format copy: Eliminate line spacing and try to match font height.
+[*] Stack overflow may occurs sometimes on ConEmu dialog popup.
+[*] New switch: ConEmuC /IsAdmin - returns 1 as errorlevel if current user has elevated privileges, 2 if not.
+[*] Issue 1626: Fix focus restore with some ChildGui on ConEmu window activation.
+[*] Issue 1617: Fix performance drawback on GetSystemTime.
+
+
 2014.06.28
 [*] Fix attaching (Win+G from ConEmu) of *.vshost.exe console.
 [*] GuiMacro. PasteFile able to skip lines started with "<CommentMark>" prefix.
