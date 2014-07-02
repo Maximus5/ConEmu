@@ -2705,7 +2705,7 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom, bool bUpdateScre
 
 	if ((rc == etr_FileAndLine) || (rc == etr_Url))
 	{
-		if ((messg == WM_LBUTTONDOWN) && *szText)
+		if ((messg == WM_LBUTTONUP || messg == WM_LBUTTONDBLCLK) && *szText)
 		{
 			if (rc == etr_Url)
 			{
