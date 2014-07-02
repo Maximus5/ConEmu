@@ -3876,7 +3876,7 @@ BOOL CRealConsole::StartProcessInt(LPCWSTR& lpszCmd, wchar_t*& psCurCmd, LPCWSTR
 BOOL CRealConsole::CreateOrRunAs(CRealConsole* pRCon, RConStartArgs& Args,
 				   LPWSTR psCurCmd, LPCWSTR& lpszWorkDir,
 				   STARTUPINFO& si, PROCESS_INFORMATION& pi, SHELLEXECUTEINFO*& pp_sei,
-				   DWORD& dwLastError)
+				   DWORD& dwLastError, bool bExternal /*= false*/)
 {
 	BOOL lbRc = FALSE;
 
@@ -3903,7 +3903,7 @@ BOOL CRealConsole::CreateOrRunAs(CRealConsole* pRCon, RConStartArgs& Args,
 	// Если сам ConEmu запущен под админом - нет смысла звать ShellExecuteEx("RunAs")
 	if ((Args.RunAsAdministrator != crb_On) || gpConEmu->mb_IsUacAdmin)
 	{
-		LockSetForegroundWindow(LSFW_LOCK);
+		LockSetForegroundWindow(bExternal ? LSFW_UNLOCK : LSFW_LOCK);
 		pRCon->SetConStatus(L"Starting root process...", cso_ResetOnConsoleReady|cso_Critical);
 
 		if (Args.pszUserName != NULL)
@@ -3963,7 +3963,10 @@ BOOL CRealConsole::CreateOrRunAs(CRealConsole* pRCon, RConStartArgs& Args,
 
 		DEBUGSTRPROC(L"CreateProcess finished\n");
 		//if (Args.hLogonToken) { CloseHandle(Args.hLogonToken); Args.hLogonToken = NULL; }
-		LockSetForegroundWindow(LSFW_UNLOCK);
+		if (!bExternal)
+			LockSetForegroundWindow(LSFW_UNLOCK);
+		else if (lbRc && pi.dwProcessId)
+			AllowSetForegroundWindow(pi.dwProcessId);
 	}
 	else // Args.bRunAsAdministrator
 	{
