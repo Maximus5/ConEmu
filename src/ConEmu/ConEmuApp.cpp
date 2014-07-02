@@ -1423,8 +1423,8 @@ BOOL CreateProcessDemoted(LPCWSTR lpApplicationName, LPWSTR lpCommandLine,
 	}
 
 	//  ------------------------------------------------------
-	//  Create an instance of the Task Service. 
-	hr = CoCreateInstance( CLSID_TaskScheduler, NULL, CLSCTX_INPROC_SERVER, IID_ITaskService, (void**)&pService );  
+	//  Create an instance of the Task Service.
+	hr = CoCreateInstance( CLSID_TaskScheduler, NULL, CLSCTX_INPROC_SERVER, IID_ITaskService, (void**)&pService );
 	if (FAILED(hr))
 	{
 		DisplayLastError(L"Failed to CoCreate an instance of the TaskService class: 0x%08X", hr);
@@ -1484,7 +1484,7 @@ BOOL CreateProcessDemoted(LPCWSTR lpApplicationName, LPWSTR lpCommandLine,
 	SafeRelease(pTrigger);
 
 	//  ------------------------------------------------------
-	//  Add an Action to the task.     
+	//  Add an Action to the task.
 
 	//  Get the task action collection pointer.
 	hr = pTask->get_Actions(&pActionCollection);
@@ -1570,7 +1570,7 @@ BOOL CreateProcessDemoted(LPCWSTR lpApplicationName, LPWSTR lpCommandLine,
 		free(pszErr);
 	}
 	else
-	{	
+	{
 		// OK, считаем что успешно запустились
 		lbRc = TRUE;
 
@@ -1823,12 +1823,12 @@ wrap:
 			GetTokenInformation(hTokenDesktop, TokenSessionId, &nDeskSessionId, sizeof(nDeskSessionId), &cbRet);
 			#endif
 
-			lbRc = 
+			lbRc =
 				CreateProcessWithTokenW(hTokenDesktop, LOGON_WITH_PROFILE,
 				//CreateProcessAsUserW(hTokenDesktop,
 				//CreateProcessW(
 					lpApplicationName, lpCommandLine,
-					//lpProcessAttributes, lpThreadAttributes, bInheritHandles, 
+					//lpProcessAttributes, lpThreadAttributes, bInheritHandles,
 					dwCreationFlags, lpEnvironment,
 					lpCurrentDirectory, lpStartupInfo, lpProcessInformation);
 
@@ -1961,7 +1961,7 @@ LRESULT CALLBACK AppWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 	return result;
 }
 
-// z120713 - В потоке CRealConsole::MonitorThread возвращаются 
+// z120713 - В потоке CRealConsole::MonitorThread возвращаются
 // отличные от основного потока HWND. В результате, а также из-за
 // отложенного выполнения, UpdateServerActive передавал Thaw==FALSE
 HWND ghLastForegroundWindow = NULL;
@@ -2299,7 +2299,7 @@ int DisplayLastError(LPCTSTR asLabel, DWORD dwError /* =0 */, DWORD dwMsgFlags /
 	MCHKHEAP
 	if (lpMsgBuf)
 		LocalFree(lpMsgBuf);
-	if (out)	
+	if (out)
 		delete [] out;
 	MCHKHEAP
 	return nBtn;
@@ -3146,9 +3146,9 @@ bool UpdateWin7TaskList(bool bForce, bool bNoSuccMsg /*= false*/)
 
 	//HRESULT hres;
 	//IShellLink* phsl = NULL;
-	//// Get a pointer to the IShellLink interface. 
-	//hres = CoCreateInstance(CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER, 
-	//					   IID_IShellLink, (LPVOID*)&phsl); 
+	//// Get a pointer to the IShellLink interface.
+	//hres = CoCreateInstance(CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER,
+	//					   IID_IShellLink, (LPVOID*)&phsl);
 	//if (SUCCEEDED(hres))
 	//{
 	//	STARTUPINFO si = {sizeof(si)};
@@ -3600,7 +3600,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 //	if (pszShort) free(pszShort);
 //	pszShort = GetShortFileNameEx(L"\\\\MAX\\X-change\\GoogleDesktopEnterprise\\AdminGuide.pdf");
 //	if (pszShort) free(pszShort);
-//	
+//
 //
 //	DWORD ImageSubsystem, ImageBits;
 //	GetImageSubsystem(ImageSubsystem,ImageBits);
@@ -3700,8 +3700,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	DEBUGSTRSTARTUP(L"Parsing command line");
 
 	// [OUT] params = (uint)-1, если первый аргумент не начинается с '/'
-	// т.е. комстрока такая "ConEmu.exe c:\tools\far.exe", 
-	// а не такая "ConEmu.exe /cmd c:\tools\far.exe", 
+	// т.е. комстрока такая "ConEmu.exe c:\tools\far.exe",
+	// а не такая "ConEmu.exe /cmd c:\tools\far.exe",
 	if (!PrepareCommandLine(/*OUT*/cmdLine, /*OUT*/cmdNew, /*OUT*/isScript, /*OUT*/params))
 		return 100;
 
