@@ -2895,7 +2895,10 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom, bool bUpdateScre
 												SafeCloseHandle(pi.hProcess);
 												SafeCloseHandle(pi.hThread);
 											}
-											DisplayLastError(args.pszSpecialCmd, dwLastError);
+											else
+											{
+												DisplayLastError(args.pszSpecialCmd, dwLastError);
+											}
 										}
 										else
 										{
