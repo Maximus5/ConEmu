@@ -47,6 +47,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Status.h"
 #include "Menu.h"
 
+#define TAB_DRAG_START_DELTA 5
 
 CTabPanelBase::CTabPanelBase(CTabBarClass* ap_Owner)
 {
@@ -56,6 +57,8 @@ CTabPanelBase::CTabPanelBase(CTabBarClass* ap_Owner)
 	ms_TabErrText[0] = 0;
 	memset(&tiBalloon,0,sizeof(tiBalloon));
 	mn_prevTab = -1;
+	mn_LBtnDrag = 0;
+	mh_DragCursor = NULL;
 }
 
 CTabPanelBase::~CTabPanelBase()
@@ -288,6 +291,91 @@ LRESULT CTabPanelBase::OnMouseRebar(UINT uMsg, int x, int y)
 	return 0;
 }
 
+void CTabPanelBase::DoTabDrag(UINT uMsg)
+{
+	if (mn_LBtnDrag && !isPressed(VK_LBUTTON))
+	{
+		EndTabDrag();
+		return;
+	}
+
+	POINT ptCur = {}; GetCursorPos(&ptCur);
+	if (mn_LBtnDrag == 1)
+	{
+		if (_abs(ptCur.x - mpt_DragStart.x) <= TAB_DRAG_START_DELTA)
+		{
+			// Еще не начали
+			return;
+		}
+
+		mn_LBtnDrag = 2;
+
+		if (!mh_DragCursor)
+			mh_DragCursor = LoadCursor(g_hInstance, MAKEINTRESOURCE(IDC_MOVE));
+		if (mh_DragCursor)
+			SetCursor(mh_DragCursor);
+	}
+
+	int iHover = GetTabFromPoint(ptCur, true, false);
+	int iActiveTab = GetCurSelInt();
+	if ((iHover >= 0) && (iActiveTab >= 0) && (iHover != iActiveTab))
+	{
+		CVConGuard VHover, VActive;
+		DWORD nHoverWnd = 0, nActiveWnd = 0;
+		RECT rcHover = {}, rcActive = {};
+		int iHoverWidth, iActiveWidth;
+
+		if (!mp_Owner->GetVConFromTab(iHover, &VHover, &nHoverWnd))
+			goto wrap;
+		if (!mp_Owner->GetVConFromTab(iActiveTab, &VActive, &nActiveWnd))
+			goto wrap;
+		if (VHover.VCon() == VActive.VCon())
+			goto wrap;
+
+		if (!GetTabRect(iHover, &rcHover) || !GetTabRect(iActiveTab, &rcActive))
+			goto wrap;
+
+		// Если текущий таб короче нового - то нужны доп.проверки
+		// чтобы при драге таб не стал мельтешить вправо/влево
+		iHoverWidth = (rcHover.right - rcHover.left);
+		iActiveWidth = (rcActive.right - rcActive.left);
+		if (iActiveWidth < iHoverWidth)
+		{
+			if (iHover < iActiveTab)
+			{
+				// Драг влево
+				//if ((rcActive.right - iHoverWidth) > (rcHover.left + iActiveWidth))
+				if (ptCur.x > (rcHover.left + iActiveWidth))
+					goto wrap;
+			}
+			else
+			{
+				// Драг вправо
+				//if ((rcActive.left + iHoverWidth) < (rcHover.right - iActiveWidth))
+				if (ptCur.x < (rcHover.right - iActiveWidth))
+					goto wrap;
+			}
+		}
+
+		CVConGroup::MoveActiveTab(VActive.VCon(), (iHover < iActiveTab));
+	}
+
+wrap:
+	if (uMsg == WM_LBUTTONUP)
+	{
+		EndTabDrag();
+	}
+}
+
+void CTabPanelBase::EndTabDrag()
+{
+	if (!mn_LBtnDrag)
+		return;
+
+	mn_LBtnDrag = 0;
+	SetCursor(LoadCursor(NULL, IDC_ARROW));
+}
+
 LRESULT CTabPanelBase::OnMouseTabbar(UINT uMsg, int nTabIdx, int x, int y)
 {
 	if (nTabIdx == -1)
@@ -298,6 +386,7 @@ LRESULT CTabPanelBase::OnMouseTabbar(UINT uMsg, int nTabIdx, int x, int y)
 	case WM_LBUTTONDOWN:
 		{
 			// Может приходить и из ReBar по клику НАД табами
+			mn_LBtnDrag = 1;
 			GetCursorPos(&mpt_DragStart);
 			int lnCurTab = GetCurSelInt();
 			if (lnCurTab != nTabIdx)
@@ -305,6 +394,45 @@ LRESULT CTabPanelBase::OnMouseTabbar(UINT uMsg, int nTabIdx, int x, int y)
 				FarSendChangeTab(nTabIdx);
 			}
 			break;
+		}
+	case WM_LBUTTONUP:
+		{
+			if (mn_LBtnDrag)
+			{
+				DoTabDrag(uMsg);
+			}
+			break;
+		}
+	case WM_MOUSEMOVE:
+		{
+			if (mn_LBtnDrag)
+				DoTabDrag(uMsg);
+			break;
+		}
+	case WM_SETCURSOR:
+		{
+			if (mn_LBtnDrag)
+			{
+				if (isPressed(VK_LBUTTON))
+				{
+					if (mh_DragCursor)
+					{
+						POINT ptCur = {}; GetCursorPos(&ptCur);
+						if (_abs(ptCur.x - mpt_DragStart.x) > TAB_DRAG_START_DELTA)
+						{
+							SetCursor(mh_DragCursor);
+							if (mn_LBtnDrag == 1)
+								mn_LBtnDrag = 2;
+							return TRUE;
+						}
+					}
+				}
+				else
+				{
+					EndTabDrag();
+				}
+			}
+			return FALSE;
 		}
 	case WM_MBUTTONUP:
 	case WM_RBUTTONUP:
@@ -363,6 +491,9 @@ LRESULT CTabPanelBase::OnMouseTabbar(UINT uMsg, int nTabIdx, int x, int y)
 			break;
 		} // WM_MBUTTONUP, WM_RBUTTONUP, WM_LBUTTONDBLCLK
 	}
+
+	if (mn_LBtnDrag && !isPressed(VK_LBUTTON))
+		EndTabDrag();
 
 	return 0;
 }
