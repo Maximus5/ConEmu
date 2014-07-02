@@ -2132,6 +2132,34 @@ void SkipOneShowWindow()
 	return;
 }
 
+struct FindProcessWindowArg
+{
+	HWND  hwnd;
+	DWORD nPID;
+};
+
+static BOOL CALLBACK FindProcessWindowEnum(HWND hwnd, LPARAM lParam)
+{
+	FindProcessWindowArg* pArg = (FindProcessWindowArg*)lParam;
+
+	if (!IsWindowVisible(hwnd))
+		return TRUE; // next window
+
+	DWORD nPID = 0;
+	if (!GetWindowThreadProcessId(hwnd, &nPID) || (nPID != pArg->nPID))
+		return TRUE; // next window
+
+	pArg->hwnd = hwnd;
+	return FALSE; // found
+}
+
+HWND FindProcessWindow(DWORD nPID)
+{
+	FindProcessWindowArg args = {NULL, nPID};
+	EnumWindows(FindProcessWindowEnum, (LPARAM)&args);
+	return args.hwnd;
+}
+
 HWND ghDlgPendingFrom = NULL;
 void PatchMsgBoxIcon(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 {

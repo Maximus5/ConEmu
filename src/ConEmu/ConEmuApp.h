@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2012 Maximus5
+Copyright (c) 2009-2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -34,6 +34,8 @@ BOOL CreateMainWindow();
 BOOL CheckCreateAppWindow();
 
 void SkipOneShowWindow();
+
+HWND FindProcessWindow(DWORD nPID);
 
 bool UpdateWin7TaskList(bool bForce, bool bNoSuccMsg = false);
 
