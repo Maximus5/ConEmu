@@ -112,7 +112,7 @@ CTabBarClass::CTabBarClass()
 	mn_PostUpdateTick = 0;
 	//mn_MsgUpdateTabs = RegisterWindowMessage(CONEMUMSG_UPDATETABS);
 	memset(&m_Tab4Tip, 0, sizeof(m_Tab4Tip));
-	mb_InKeySwitching = FALSE;
+	mb_InKeySwitching = false;
 	ms_TmpTabText[0] = 0;
 	mn_InUpdate = 0;
 	mp_DummyTab = new CTabID(NULL, NULL, fwt_Panels|fwt_CurrentFarWnd, 0, 0, 0);
@@ -832,7 +832,7 @@ void CTabBarClass::Update(BOOL abPosted/*=FALSE*/)
 	if (mb_InKeySwitching)
 	{
 		if (mn_CurSelTab >= nCurCount)  // Если выбранный таб вылез за границы
-			mb_InKeySwitching = FALSE;
+			mb_InKeySwitching = false;
 	}
 
 	if (!mb_InKeySwitching && nCurTab != -1)
@@ -1677,19 +1677,19 @@ void CTabBarClass::Switch(BOOL abForward, BOOL abAltStyle/*=FALSE*/)
 		// mh_Tabbar может быть и создан, Но отключен пользователем!
 		if (gpSet->isTabLazy && mp_Rebar->IsTabbarCreated() && gpSet->isTabs)
 		{
-			mb_InKeySwitching = TRUE;
+			mb_InKeySwitching = true;
 			// Пока Ctrl не отпущен - только подсвечиваем таб, а не переключаем реально
 			SelectTab(nNewSel);
 		}
 		else
 		{
 			mp_Rebar->FarSendChangeTab(nNewSel);
-			mb_InKeySwitching = FALSE;
+			mb_InKeySwitching = false;
 		}
 	}
 }
 
-BOOL CTabBarClass::IsInSwitch()
+bool CTabBarClass::IsInSwitch()
 {
 	return mb_InKeySwitching;
 }
@@ -1699,7 +1699,7 @@ void CTabBarClass::SwitchCommit()
 	if (!mb_InKeySwitching) return;
 
 	int nCurSel = GetCurSel();
-	mb_InKeySwitching = FALSE;
+	mb_InKeySwitching = false;
 	CVirtualConsole* pVCon = mp_Rebar->FarSendChangeTab(nCurSel);
 	UNREFERENCED_PARAMETER(pVCon);
 }
@@ -1708,7 +1708,7 @@ void CTabBarClass::SwitchRollback()
 {
 	if (mb_InKeySwitching)
 	{
-		mb_InKeySwitching = FALSE;
+		mb_InKeySwitching = false;
 		Update();
 	}
 }

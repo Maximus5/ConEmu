@@ -100,7 +100,7 @@ class CTabBarClass
 		ConEmuTab m_Tab4Tip;
 		WCHAR  ms_TmpTabText[MAX_PATH];
 		BOOL CanActivateTab(int nTabIdx);
-		BOOL mb_InKeySwitching;
+		bool mb_InKeySwitching;
 		int GetNextTab(bool abForward, bool abAltStyle=false);
 		int GetNextTabHelper(int idxFrom, bool abForward, bool abRecent);
 		int GetCurSel();
@@ -185,11 +185,11 @@ class CTabBarClass
 		void OnCommand(WPARAM wParam, LPARAM lParam);
 		LRESULT OnTimer(WPARAM wParam);
 		// Переключение табов
+		bool IsInSwitch();
 		void Switch(BOOL abForward, BOOL abAltStyle=FALSE);
+		void SwitchCommit();
 		void SwitchNext(BOOL abAltStyle=FALSE);
 		void SwitchPrev(BOOL abAltStyle=FALSE);
-		BOOL IsInSwitch();
-		void SwitchCommit();
 		void SwitchRollback();
 		BOOL OnKeyboard(UINT messg, WPARAM wParam, LPARAM lParam);
 		void SetRedraw(BOOL abEnableRedraw);
