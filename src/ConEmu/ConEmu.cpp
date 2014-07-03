@@ -18448,7 +18448,10 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		{
 			#if !defined(CONEMU_TABBAR_EX)
 			if (this->mp_TabBar)
-				result = this->mp_TabBar->OnNotify((LPNMHDR)lParam);
+			{
+				if (this->mp_TabBar->OnNotify((LPNMHDR)lParam, result))
+					return result;
+			}
 			#endif
 
 			break;

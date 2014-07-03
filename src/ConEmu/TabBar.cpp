@@ -378,11 +378,11 @@ bool CTabBarClass::GetVConFromTab(int nTabIdx, CVConGuard* rpVCon, DWORD* rpWndI
 	return lbRc;
 }
 
-LRESULT CTabBarClass::OnTimer(WPARAM wParam)
+bool CTabBarClass::OnTimer(WPARAM wParam)
 {
 	if (mp_Rebar)
 		return mp_Rebar->OnTimerInt(wParam);
-	return 0;
+	return false;
 }
 
 bool CTabBarClass::IsTabsActive()
@@ -946,26 +946,24 @@ void CTabBarClass::Reposition()
 	mp_Rebar->RepositionInt();
 }
 
-LRESULT CTabBarClass::OnNotify(LPNMHDR nmhdr)
+bool CTabBarClass::OnNotify(LPNMHDR nmhdr, LRESULT& lResult)
 {
 	if (!this)
 		return false;
 
 	if (!_active)
-	{
 		return false;
-	}
 
-	LRESULT lResult = 0;
+	lResult = 0;
 
 	if (mp_Rebar->OnNotifyInt(nmhdr, lResult))
-		return lResult;
+		return true;
 
 
 	if (nmhdr->code == TBN_GETINFOTIP && mp_Rebar->IsToolbarNotify(nmhdr))
 	{
 		if (!gpSet->isMultiShowButtons)
-			return 0;
+			return false;
 
 		LPNMTBGETINFOTIP pDisp = (LPNMTBGETINFOTIP)nmhdr;
 
@@ -973,7 +971,7 @@ LRESULT CTabBarClass::OnNotify(LPNMHDR nmhdr)
 		if (pDisp->iItem == TID_ACTIVE_NUMBER)
 		{
 			if (!pDisp->pszText || !pDisp->cchTextMax)
-				return false;
+				return true;
 
 			CVConGuard VCon;
 			CVirtualConsole* pVCon = (gpConEmu->GetActiveVCon(&VCon) >= 0) ? VCon.VCon() : NULL;
@@ -1038,7 +1036,8 @@ LRESULT CTabBarClass::OnNotify(LPNMHDR nmhdr)
 			gpConEmu->mp_Menu->OnNewConPopupMenu(NULL, 0, isPressed(VK_SHIFT));
 			break;
 		}
-		return TBDDRET_DEFAULT;
+		lResult = TBDDRET_DEFAULT;
+		return true;
 	}
 
 	if (nmhdr->code == TTN_GETDISPINFO && mp_Rebar->IsTabbarNotify(nmhdr))
@@ -1055,17 +1054,17 @@ LRESULT CTabBarClass::OnNotify(LPNMHDR nmhdr)
 		{
 			// Если в табе нет "…" - тип не нужен
 			if (!mp_Rebar->GetTabText(iPage, ms_TmpTabText, countof(ms_TmpTabText)))
-				return 0;
+				return true;
 			if (!wcschr(ms_TmpTabText, L'\x2026' /*"…"*/))
-				return 0;
+				return true;
 
 			CVConGuard VCon;
 			if (!GetVConFromTab(iPage, &VCon, &wndIndex))
-				return 0;
+				return true;
 
 			CTab tab(__FILE__,__LINE__);
 			if (!VCon->RCon()->GetTab(wndIndex, tab))
-				return 0;
+				return true;
 
 			lstrcpyn(ms_TmpTabText, VCon->RCon()->GetTabTitle(tab), countof(ms_TmpTabText));
 			pDisp->lpszText = ms_TmpTabText;
@@ -1815,21 +1814,21 @@ bool CTabBarClass::AddStack(CTab& tab)
 	return bStackChanged;
 }
 
-BOOL CTabBarClass::CanActivateTab(int nTabIdx)
+bool CTabBarClass::CanActivateTab(int nTabIdx)
 {
 	CVConGuard VCon;
 	DWORD wndIndex = 0;
 
 	if (!GetVConFromTab(nTabIdx, &VCon, &wndIndex))
-		return FALSE;
+		return false;
 
 	if (!VCon->RCon()->CanActivateFarWindow(wndIndex))
-		return FALSE;
+		return false;
 
-	return TRUE;
+	return true;
 }
 
-BOOL CTabBarClass::OnKeyboard(UINT messg, WPARAM wParam, LPARAM lParam)
+bool CTabBarClass::OnKeyboard(UINT messg, WPARAM wParam, LPARAM lParam)
 {
 	//if (!IsShown()) return FALSE; -- всегда. Табы теперь есть в памяти
 	BOOL lbAltPressed = isPressed(VK_MENU);
@@ -1841,7 +1840,7 @@ BOOL CTabBarClass::OnKeyboard(UINT messg, WPARAM wParam, LPARAM lParam)
 		else
 			SwitchPrev(lbAltPressed);
 
-		return TRUE;
+		return true;
 	}
 	else if (mb_InKeySwitching && messg == WM_KEYDOWN && !lbAltPressed
 	        && (wParam == VK_UP || wParam == VK_DOWN || wParam == VK_LEFT || wParam == VK_RIGHT))
@@ -1852,10 +1851,10 @@ BOOL CTabBarClass::OnKeyboard(UINT messg, WPARAM wParam, LPARAM lParam)
 		Switch(bForward);
 		gpSet->isTabRecent = bRecent;
 
-		return TRUE;
+		return true;
 	}
 
-	return FALSE;
+	return false;
 }
 
 void CTabBarClass::SetRedraw(BOOL abEnableRedraw)

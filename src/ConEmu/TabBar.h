@@ -99,7 +99,7 @@ class CTabBarClass
 		int PrepareTab(CTab& pTab, CVirtualConsole *apVCon);
 		ConEmuTab m_Tab4Tip;
 		WCHAR  ms_TmpTabText[MAX_PATH];
-		BOOL CanActivateTab(int nTabIdx);
+		bool CanActivateTab(int nTabIdx);
 		bool mb_InKeySwitching;
 		int GetNextTab(bool abForward, bool abAltStyle=false);
 		int GetNextTabHelper(int idxFrom, bool abForward, bool abRecent);
@@ -153,37 +153,38 @@ class CTabBarClass
 	public:
 		CTabBarClass();
 		virtual ~CTabBarClass();
-		//virtual bool OnMenuSelected(HMENU hMenu, WORD nID, WORD nFlags) override;
-		//void Enable(BOOL abEnabled);
-		//void Refresh(BOOL abFarActive);
-		void Retrieve();
-		void Reset();
+
+		void Activate(BOOL abPreSyncConsole=FALSE);
+		int  ActiveTabByName(int anType, LPCWSTR asName, CVirtualConsole** ppVCon);
+		int  CreateTabIcon(LPCWSTR asIconDescr, bool bAdmin, LPCWSTR asWorkDir);
+		void Deactivate(BOOL abPreSyncConsole=FALSE);
+		bool GetActiveTabRect(RECT* rcTab);
+		RECT GetMargins();
+		bool GetRebarClientRect(RECT* rc);
+		int  GetTabbarHeight();
 		void Invalidate();
 		bool IsTabsActive();
 		bool IsTabsShown();
-		//BOOL IsAllowed();
-		RECT GetMargins();
-		void Activate(BOOL abPreSyncConsole=FALSE);
-		int GetTabbarHeight();
-		void Deactivate(BOOL abPreSyncConsole=FALSE);
+		void OnAlternative(BOOL abAlternative);
+		void OnBufferHeight(BOOL abBufferHeight);
+		void OnCaptionHidden();
+		void OnChooseTabPopup();
+		void OnCommand(WPARAM wParam, LPARAM lParam);
+		void OnConsoleActivated(int nConNumber); //0-based
+		bool OnKeyboard(UINT messg, WPARAM wParam, LPARAM lParam);
+		bool OnNotify(LPNMHDR nmhdr, LRESULT& lResult);
+		void OnShowButtonsChanged();
+		bool OnTimer(WPARAM wParam);
+		void OnWindowStateChanged();
 		void RePaint();
-		bool GetRebarClientRect(RECT* rc);
-		int CreateTabIcon(LPCWSTR asIconDescr, bool bAdmin, LPCWSTR asWorkDir);
+		void Reposition();
+		void Reset();
+		void Retrieve();
+		void SetRedraw(BOOL abEnableRedraw);
 		void UpdatePosition();
 		void UpdateTabFont();
-		void Reposition();
-		void OnConsoleActivated(int nConNumber); //0-based
 		void UpdateToolConsoles(bool abForcePos=false);
-		void OnCaptionHidden();
-		void OnWindowStateChanged();
-		void OnBufferHeight(BOOL abBufferHeight);
-		void OnAlternative(BOOL abAlternative);
-		LRESULT OnNotify(LPNMHDR nmhdr);
-		void OnChooseTabPopup();
-		//void OnNewConPopupMenu(POINT* ptWhere = NULL, DWORD nFlags = 0);
-		//void OnNewConPopupMenuRClick(HMENU hMenu, UINT nItemPos);
-		void OnCommand(WPARAM wParam, LPARAM lParam);
-		LRESULT OnTimer(WPARAM wParam);
+
 		// Переключение табов
 		bool IsInSwitch();
 		void Switch(BOOL abForward, BOOL abAltStyle=FALSE);
@@ -191,23 +192,17 @@ class CTabBarClass
 		void SwitchNext(BOOL abAltStyle=FALSE);
 		void SwitchPrev(BOOL abAltStyle=FALSE);
 		void SwitchRollback();
-		BOOL OnKeyboard(UINT messg, WPARAM wParam, LPARAM lParam);
-		void SetRedraw(BOOL abEnableRedraw);
-		//void PaintHeader(HDC hdc, RECT rcPaint);
-		int  ActiveTabByName(int anType, LPCWSTR asName, CVirtualConsole** ppVCon);
-		bool GetActiveTabRect(RECT* rcTab);
-		void OnShowButtonsChanged();
 
 		// Из Samples\Tabs
 		bool ProcessNcTabMouseEvent(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT &lResult) { return false; };
-		int GetHoverTab() { return -1; };
-		void HoverTab(int anTab) {};
-		void Toolbar_UnHover() {};
 		bool ProcessTabKeyboardEvent(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT &lResult) { return false; };
-		void PaintTabs(const PaintDC& dc, const RECT &rcCaption, const RECT &rcTabs) {};
-		int TabFromCursor(POINT point, DWORD *pnFlags = NULL) { return -1; };
-		int TabBtnFromCursor(POINT point, DWORD *pnFlags = NULL) { return -1; };
 		bool Toolbar_GetBtnRect(int nCmd, RECT* rcBtnRect);
+		int  GetHoverTab() { return -1; };
+		int  TabBtnFromCursor(POINT point, DWORD *pnFlags = NULL) { return -1; };
+		int  TabFromCursor(POINT point, DWORD *pnFlags = NULL) { return -1; };
+		void HoverTab(int anTab) {};
+		void PaintTabs(const PaintDC& dc, const RECT &rcCaption, const RECT &rcTabs) {};
+		void Toolbar_UnHover() {};
 };
 
 #endif // #if !defined(CONEMU_TABBAR_EX)

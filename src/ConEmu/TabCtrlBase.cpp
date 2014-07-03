@@ -123,15 +123,16 @@ void CTabPanelBase::ShowTabErrorInt(LPCTSTR asInfo, int tabIndex)
 //	return m_TabIcons.GetTabIcon(bAdmin);
 //}
 
-LRESULT CTabPanelBase::OnTimerInt(WPARAM wParam)
+bool CTabPanelBase::OnTimerInt(WPARAM wParam)
 {
 	if (wParam == TIMER_FAILED_TABBAR_ID)
 	{
 		gpConEmu->SetKillTimer(false, TIMER_FAILED_TABBAR_ID, 0);
 		SendMessage(mh_Balloon, TTM_TRACKACTIVATE, FALSE, (LPARAM)&tiBalloon);
 		SendMessage(mh_TabTip, TTM_ACTIVATE, TRUE, 0);
+		return true;
 	}
-	return 0;
+	return false;
 }
 
 //void CTabPanelBase::InitIconList()
