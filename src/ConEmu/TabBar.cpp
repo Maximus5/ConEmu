@@ -378,6 +378,50 @@ bool CTabBarClass::GetVConFromTab(int nTabIdx, CVConGuard* rpVCon, DWORD* rpWndI
 	return lbRc;
 }
 
+// Для поиска табов консоли (если показываются редакторы/вьюверы)
+int CTabBarClass::GetFirstLastVConTab(CVirtualConsole* pVCon, bool bFirst, int nFromTab /*= -1*/)
+{
+	int iFound = -1;
+	CTab tab(__FILE__,__LINE__);
+	int iFrom, iTo, iStep, iCount;
+
+	iCount = m_Tabs.GetCount();
+	if (iCount < 1)
+		goto wrap;
+
+	if ((nFromTab < -1) || (nFromTab >= iCount))
+		nFromTab = -1;
+
+	if (bFirst)
+	{
+		// Ищем крайний левый
+		iFrom = (nFromTab >= 0) ? nFromTab : (iCount - 1);
+		iTo = -1;
+		iStep = -1;
+	}
+	else
+	{
+		// Ищем крайний правый
+		iFrom = (nFromTab >= 0) ? nFromTab : 0;
+		iTo = iCount;
+		iStep = 1;
+	}
+
+	for (int i = iFrom; i != iTo; i = i+iStep)
+	{
+		if (!m_Tabs.GetTabByIndex(i, tab))
+			break;
+
+		if (pVCon == (CVirtualConsole*)tab->Info.pVCon)
+			iFound = i;
+		else
+			break;
+	}
+
+wrap:
+	return iFound;
+}
+
 bool CTabBarClass::OnTimer(WPARAM wParam)
 {
 	if (mp_Rebar)

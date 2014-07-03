@@ -149,6 +149,7 @@ class CTabBarClass
 
 
 		bool GetVConFromTab(int nTabIdx, CVConGuard* rpVCon, DWORD* rpWndIndex);
+		int  GetFirstLastVConTab(CVirtualConsole* pVCon, bool bFirst, int nFromTab = -1);
 
 	public:
 		CTabBarClass();
