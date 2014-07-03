@@ -317,48 +317,72 @@ void CTabPanelBase::DoTabDrag(UINT uMsg)
 			SetCursor(mh_DragCursor);
 	}
 
-	int iHover = GetTabFromPoint(ptCur, true, false);
+	int iHoverTab = GetTabFromPoint(ptCur, true, false);
 	int iActiveTab = GetCurSelInt();
-	if ((iHover >= 0) && (iActiveTab >= 0) && (iHover != iActiveTab))
+	if ((iHoverTab >= 0) && (iActiveTab >= 0) && (iHoverTab != iActiveTab))
 	{
+		bool bLeftward = (iHoverTab < iActiveTab);
 		CVConGuard VHover, VActive;
 		DWORD nHoverWnd = 0, nActiveWnd = 0;
 		RECT rcHover = {}, rcActive = {};
+		RECT rcNew = {}, rcOld = {};
 		int iHoverWidth, iActiveWidth;
+		int iFindNew, iFindOld;
 
-		if (!mp_Owner->GetVConFromTab(iHover, &VHover, &nHoverWnd))
+		if (!mp_Owner->GetVConFromTab(iHoverTab, &VHover, &nHoverWnd))
 			goto wrap;
 		if (!mp_Owner->GetVConFromTab(iActiveTab, &VActive, &nActiveWnd))
 			goto wrap;
+
+		TODO("Драг редакторов/вьюверах в пределах табов одного VCon");
 		if (VHover.VCon() == VActive.VCon())
 			goto wrap;
 
-		if (!GetTabRect(iHover, &rcHover) || !GetTabRect(iActiveTab, &rcActive))
+		if (!GetTabRect(iActiveTab, &rcActive))
 			goto wrap;
+
+		if (!GetTabRect(iHoverTab, &rcHover))
+			goto wrap;
+
+		// Если отображаются табы редакторов/вьюверов - нужны доп.телодвижения,
+		// иначе rcNew/rcOld будут содержать "крайние/активные" координаты,
+		// а после рокировки табов они поменяются.
+		// Например, слева от текущего - три таба редактора и только потом панель,
+		// и если тащится только один таб с "cmd", то он "прыгнет" не на одну влево
+		// а через три, в итоге при движении мышки будет постоянное мельтешение.
+		iFindNew = mp_Owner->GetFirstLastVConTab(VHover.VCon(), bLeftward, iHoverTab);
+		if ((iFindNew < 0) || !GetTabRect(iFindNew, &rcNew))
+			rcNew = rcHover;
+		iFindOld = mp_Owner->GetFirstLastVConTab(VActive.VCon(), !bLeftward, iActiveTab);
+		if ((iFindOld < 0) || !GetTabRect(iFindOld, &rcOld))
+			rcOld = rcActive;
 
 		// Если текущий таб короче нового - то нужны доп.проверки
 		// чтобы при драге таб не стал мельтешить вправо/влево
-		iHoverWidth = (rcHover.right - rcHover.left);
-		iActiveWidth = (rcActive.right - rcActive.left);
+		iHoverWidth = (max(rcHover.right,rcNew.right) - min(rcHover.left,rcNew.left));
+		_ASSERTE(iHoverWidth>0);
+		iActiveWidth = (max(rcActive.right,rcOld.right) - min(rcActive.left,rcOld.left));
+		_ASSERTE(iActiveWidth>0);
+
 		if (iActiveWidth < iHoverWidth)
 		{
-			if (iHover < iActiveTab)
+			if (bLeftward)
 			{
 				// Драг влево
 				//if ((rcActive.right - iHoverWidth) > (rcHover.left + iActiveWidth))
-				if (ptCur.x > (rcHover.left + iActiveWidth))
+				if (ptCur.x > (rcNew.left + iActiveWidth))
 					goto wrap;
 			}
 			else
 			{
 				// Драг вправо
 				//if ((rcActive.left + iHoverWidth) < (rcHover.right - iActiveWidth))
-				if (ptCur.x < (rcHover.right - iActiveWidth))
+				if (ptCur.x < (rcNew.right - iActiveWidth))
 					goto wrap;
 			}
 		}
 
-		CVConGroup::MoveActiveTab(VActive.VCon(), (iHover < iActiveTab));
+		CVConGroup::MoveActiveTab(VActive.VCon(), bLeftward);
 	}
 
 wrap:
