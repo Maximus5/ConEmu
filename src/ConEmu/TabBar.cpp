@@ -1064,6 +1064,10 @@ bool CTabBarClass::OnNotify(LPNMHDR nmhdr, LRESULT& lResult)
 		{
 			lstrcpyn(pDisp->pszText, _T("Show copying queue"), pDisp->cchTextMax);
 		}
+		else
+		{
+			_ASSERTE(FALSE && "Tooltip was not processed");
+		}
 
 		return true;
 	}
@@ -1079,6 +1083,10 @@ bool CTabBarClass::OnNotify(LPNMHDR nmhdr, LRESULT& lResult)
 		case TID_CREATE_CON:
 			gpConEmu->mp_Menu->OnNewConPopupMenu(NULL, 0, isPressed(VK_SHIFT));
 			break;
+		#ifdef _DEBUG
+		default:
+			_ASSERTE(FALSE && "DropDown was not processed");
+		#endif
 		}
 		lResult = TBDDRET_DEFAULT;
 		return true;
@@ -1182,6 +1190,10 @@ void CTabBarClass::OnCommand(WPARAM wParam, LPARAM lParam)
 	else if (wParam == TID_COPYING)
 	{
 		gpConEmu->OnCopyingState();
+	}
+	else
+	{
+		_ASSERTE(FALSE && "Toolbar click was not processed");
 	}
 }
 

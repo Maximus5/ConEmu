@@ -564,6 +564,11 @@ LRESULT CTabPanelBase::OnMouseToolbar(UINT uMsg, int nCmdId, int x, int y)
 					gpConEmu->RecreateAction(cra_CreateTab/*FALSE*/, TRUE);
 					break;
 				}
+
+				#ifdef _DEBUG
+				default:
+					_ASSERTE(FALSE && "Toolbar RClick was not processed");
+				#endif
 			}
 
 			break;
