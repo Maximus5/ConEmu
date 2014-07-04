@@ -607,7 +607,7 @@ HWND CTabPanelWin::CreateToolbar()
 	// Buffer height mode
 	btn.iBitmap = nFirst + BID_ALTERNATIVE_IDX; btn.idCommand = TID_ALTERNATIVE; btn.fsState = TBSTATE_ENABLED;
 	SendMessage(mh_Toolbar, TB_ADDBUTTONS, 1, (LPARAM)&btn);
-	// Show copying state
+	// Show scroll state
 	btn.iBitmap = nScrollBmp; btn.idCommand = TID_SCROLL;
 	SendMessage(mh_Toolbar, TB_ADDBUTTONS, 1, (LPARAM)&btn);
 	// Separator before min/max/close
