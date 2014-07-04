@@ -268,6 +268,8 @@ BEGIN
     GROUPBOX        "Confirm actions",gbConfirmActions,4,1,319,65
     CONTROL         "Confirm creating new console/tab (Win+W, toolbar [+])",cbNewConfirm,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,14,307,8
+    CONTROL         "Confirm tab duplicating (Duplicate root menu item)",cbDupConfirm,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,26,307,10
     CONTROL         "Confirm tab closing",cbCloseConsoleConfirm,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,39,307,8
     CONTROL         "Confirm Far Editor/Viewer tab closing",cbCloseEditViewConfirm,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,51,307,8

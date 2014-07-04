@@ -1017,6 +1017,7 @@
 #define tDefTermWikiLink                2685
 #define gbConfirmActions                2686
 #define gbConfirmMisc                   2687
+#define cbDupConfirm                    2688
 #define IDC_STATIC                      -1
 
 // Next default values for new objects

@@ -1233,6 +1233,8 @@ struct Settings
 		bool isMultiIterate;
 		//reg->Load(L"Multi.NewConfirm", isMultiNewConfirm);
 		bool isMultiNewConfirm;
+		//reg->Load(L"Multi.DupConfirm", isMultiDupConfirm);
+		bool isMultiDupConfirm;
 		//reg->Load(L"Multi.UseNumbers", isUseWinNumber);
 		bool isUseWinNumber;
 		//reg->Load(L"Multi.UseWinTab", isUseWinTab);

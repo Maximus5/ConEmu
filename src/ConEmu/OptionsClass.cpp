@@ -2170,6 +2170,7 @@ LRESULT CSettings::OnInitDialog_Show(HWND hWnd2, bool abInitial)
 LRESULT CSettings::OnInitDialog_Confirm(HWND hWnd2, bool abInitial)
 {
 	checkDlgButton(hWnd2, cbNewConfirm, gpSet->isMultiNewConfirm);
+	checkDlgButton(hWnd2, cbDupConfirm, gpSet->isMultiDupConfirm);
 	checkDlgButton(hWnd2, cbCloseConsoleConfirm, gpSet->isCloseConsoleConfirm);
 	checkDlgButton(hWnd2, cbCloseEditViewConfirm, gpSet->isCloseEditViewConfirm);
 	checkDlgButton(hWnd2, cbShowWasHiddenMsg, gpSet->isDownShowHiddenMessage ? BST_UNCHECKED : BST_CHECKED);
@@ -5073,6 +5074,9 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			break;
 		case cbNewConfirm:
 			gpSet->isMultiNewConfirm = IsChecked(hWnd2, cbNewConfirm);
+			break;
+		case cbDupConfirm:
+			gpSet->isMultiDupConfirm = IsChecked(hWnd2, cbDupConfirm);
 			break;
 		case cbLongOutput:
 			gpSet->AutoBufferHeight = IsChecked(hWnd2, cbLongOutput);

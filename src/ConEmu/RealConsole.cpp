@@ -9290,7 +9290,8 @@ bool CRealConsole::DuplicateRoot(bool bSkipMsg /*= false*/, bool bRunAsAdmin /*=
 	{
 		wchar_t szConfirm[255];
 		_wsprintf(szConfirm, SKIPLEN(countof(szConfirm)) L"Do you want to duplicate tab with root '%s'?", p->Name);
-		if (bSkipMsg || ((MsgBox(szConfirm, MB_OKCANCEL|MB_ICONQUESTION) == IDOK)))
+		if (bSkipMsg || !gpSet->isMultiDupConfirm
+			|| ((MsgBox(szConfirm, MB_OKCANCEL|MB_ICONQUESTION) == IDOK)))
 		{
 			bool bRootCmdRedefined = false;
 			RConStartArgs args;
