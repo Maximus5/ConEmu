@@ -2,7 +2,6 @@
 // Microsoft Visual C++ generated include file.
 // Used by ConEmu.rc
 //
-#define IDC_STATIC                      -1
 #define IDI_ICON1                       1
 #define IDI_ICON2                       2
 #define IDI_ICON3                       3
@@ -1018,6 +1017,7 @@
 #define tDefTermWikiLink                2685
 #define gbConfirmActions                2686
 #define gbConfirmMisc                   2687
+#define IDC_STATIC                      -1
 
 // Next default values for new objects
 // 
