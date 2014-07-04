@@ -47,7 +47,7 @@ public:
 	POINT CalcTabMenuPos(CVirtualConsole* apVCon);
 	HMENU GetSysMenu(BOOL abInitial = FALSE);
 
-	void ShowSysmenu(int x=-32000, int y=-32000, bool bAlignUp = false);
+	void ShowSysmenu(int x=-32000, int y=-32000, DWORD nFlags = 0);
 	void OnNcIconLClick();
 
 	HMENU CreateDebugMenuPopup();

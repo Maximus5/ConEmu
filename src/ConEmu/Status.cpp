@@ -1299,7 +1299,7 @@ void CStatus::ShowStatusSetupMenu()
 		// (ну так, на всякий случай, чтобы и статусное меню можно было показать)
 		&& (ptClient.x <= min(80,(m_Items[0].rcClient.right/2))))
 	{
-		gpConEmu->mp_Menu->ShowSysmenu(ptCur.x, ptCur.y, true);
+		gpConEmu->mp_Menu->ShowSysmenu(ptCur.x, ptCur.y, TPM_BOTTOMALIGN);
 		return;
 	}
 

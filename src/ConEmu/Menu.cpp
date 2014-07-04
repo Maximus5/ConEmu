@@ -1474,7 +1474,7 @@ void CConEmuMenu::OnNcIconLClick()
 	}
 }
 
-void CConEmuMenu::ShowSysmenu(int x, int y, bool bAlignUp /*= false*/)
+void CConEmuMenu::ShowSysmenu(int x, int y, DWORD nFlags /*= 0*/)
 {
 	//if (!Wnd)
 	//	Wnd = ghWnd;
@@ -1535,7 +1535,7 @@ void CConEmuMenu::ShowSysmenu(int x, int y, bool bAlignUp /*= false*/)
 	POINT ptCurBefore = {}; GetCursorPos(&ptCurBefore);
 
 	int command = trackPopupMenu(tmp_System, systemMenu,
-		 TPM_RETURNCMD | TPM_LEFTBUTTON | TPM_RIGHTBUTTON | (bAlignUp ? TPM_BOTTOMALIGN : 0),
+		 TPM_RETURNCMD | TPM_LEFTBUTTON | TPM_RIGHTBUTTON | nFlags,
 		 x, y, ghWnd);
 	//mb_InTrackSysMenu = FALSE;
 	if (command == 0)
