@@ -763,33 +763,33 @@ void CSettings::InitVars_Pages()
 	ConEmuSetupPages Pages[] =
 	{
 		// При добавлении вкладки нужно добавить OnInitDialog_XXX в pageOpProc
-		{IDD_SPG_MAIN,        0, L"Main",           thi_Main/*,    OnInitDialog_Main*/},
-		{IDD_SPG_WNDSIZEPOS,  1, L"Size & Pos",     thi_SizePos/*, OnInitDialog_WndPosSize*/},
-		{IDD_SPG_SHOW,        1, L"Appearance",     thi_Show/*, OnInitDialog_Show*/},
-		{IDD_SPG_TASKBAR,     1, L"Task bar",       thi_Taskbar/*, OnInitDialog_Taskbar*/},
-		{IDD_SPG_UPDATE,      1, L"Update",         thi_Update/*,  OnInitDialog_Update*/},
-		{IDD_SPG_STARTUP,     0, L"Startup",        thi_Startup/*, OnInitDialog_Startup*/},
-		{IDD_SPG_CMDTASKS,    1, L"Tasks",          thi_Tasks/*,   OnInitDialog_CmdTasks*/},
-		{IDD_SPG_COMSPEC,     1, L"ComSpec",        thi_Comspec/*, OnInitDialog_Comspec*/},
-		{IDD_SPG_FEATURE,     0, L"Features",       thi_Ext/*,     OnInitDialog_Ext*/},
-		{IDD_SPG_CURSOR,      1, L"Text cursor",    thi_Cursor/*,  OnInitDialog_Cursor*/},
-		{IDD_SPG_COLORS,      1, L"Colors",         thi_Colors/*,  OnInitDialog_Color*/},
-		{IDD_SPG_TRANSPARENT, 1, L"Transparency",   thi_Transparent/*, OnInitDialog_Transparent*/},
-		{IDD_SPG_TABS,        1, L"Tabs",           thi_Tabs/*,    OnInitDialog_Tabs*/},
-		{IDD_SPG_STATUSBAR,   1, L"Status bar",     thi_Status,/*  OnInitDialog_Status*/},
-		{IDD_SPG_APPDISTINCT, 1, L"App distinct",   thi_Apps/*,    OnInitDialog_CmdTasks*/},
-		{IDD_SPG_INTEGRATION, 0, L"Integration",    thi_Integr/*,  OnInitDialog_Integr*/},
-		{IDD_SPG_DEFTERM,     1, L"Default term",   thi_DefTerm/*,  OnInitDialog_DefTerm*/},
-		{IDD_SPG_KEYS,        0, L"Keys & Macro",   thi_Keys/*,    OnInitDialog_Keys*/},
-		{IDD_SPG_CONTROL,     1, L"Controls",       thi_KeybMouse/*,OnInitDialog_Control*/},
-		{IDD_SPG_MARKCOPY,    1, L"Mark/Copy",      thi_MarkCopy/*OnInitDialog_MarkCopy*/},
-		{IDD_SPG_PASTE,       1, L"Paste",          thi_Paste/*OnInitDialog_Paste*/},
-		{IDD_SPG_HIGHLIGHT,   1, L"Highlight",      thi_Hilight/*OnInitDialog_Hilight*/},
-		{IDD_SPG_FEATURE_FAR, 0, L"Far Manager",    thi_Far/*,     OnInitDialog_Far*/, true/*Collapsed*/},
-		{IDD_SPG_FARMACRO,    1, L"Far macros",     thi_FarMacro/*, OnInitDialog_FarMacro*/},
-		{IDD_SPG_VIEWS,       1, L"Views",          thi_Views/*,   OnInitDialog_Views*/},
-		{IDD_SPG_INFO,        0, L"Info",           thi_Info/*,    OnInitDialog_Info*/, RELEASEDEBUGTEST(true,false)/*Collapsed in Release*/},
-		{IDD_SPG_DEBUG,       1, L"Debug",          thi_Debug/*,   OnInitDialog_Debug*/},
+		{IDD_SPG_MAIN,        0, L"Main",           thi_Main       /* OnInitDialog_Main */},
+		{IDD_SPG_WNDSIZEPOS,  1, L"Size & Pos",     thi_SizePos    /* OnInitDialog_WndPosSize */},
+		{IDD_SPG_SHOW,        1, L"Appearance",     thi_Show       /* OnInitDialog_Show */},
+		{IDD_SPG_TASKBAR,     1, L"Task bar",       thi_Taskbar    /* OnInitDialog_Taskbar */},
+		{IDD_SPG_UPDATE,      1, L"Update",         thi_Update     /* OnInitDialog_Update */},
+		{IDD_SPG_STARTUP,     0, L"Startup",        thi_Startup    /* OnInitDialog_Startup */},
+		{IDD_SPG_CMDTASKS,    1, L"Tasks",          thi_Tasks      /* OnInitDialog_CmdTasks */},
+		{IDD_SPG_COMSPEC,     1, L"ComSpec",        thi_Comspec    /* OnInitDialog_Comspec */},
+		{IDD_SPG_FEATURE,     0, L"Features",       thi_Ext        /* OnInitDialog_Ext */},
+		{IDD_SPG_CURSOR,      1, L"Text cursor",    thi_Cursor     /* OnInitDialog_Cursor */},
+		{IDD_SPG_COLORS,      1, L"Colors",         thi_Colors     /* OnInitDialog_Color */},
+		{IDD_SPG_TRANSPARENT, 1, L"Transparency",   thi_Transparent/* OnInitDialog_Transparent */},
+		{IDD_SPG_TABS,        1, L"Tabs",           thi_Tabs       /* OnInitDialog_Tabs */},
+		{IDD_SPG_STATUSBAR,   1, L"Status bar",     thi_Status     /* OnInitDialog_Status */},
+		{IDD_SPG_APPDISTINCT, 1, L"App distinct",   thi_Apps       /* OnInitDialog_CmdTasks */},
+		{IDD_SPG_INTEGRATION, 0, L"Integration",    thi_Integr     /* OnInitDialog_Integr */},
+		{IDD_SPG_DEFTERM,     1, L"Default term",   thi_DefTerm    /* OnInitDialog_DefTerm */},
+		{IDD_SPG_KEYS,        0, L"Keys & Macro",   thi_Keys       /* OnInitDialog_Keys */},
+		{IDD_SPG_CONTROL,     1, L"Controls",       thi_KeybMouse  /* OnInitDialog_Control */},
+		{IDD_SPG_MARKCOPY,    1, L"Mark/Copy",      thi_MarkCopy   /* OnInitDialog_MarkCopy */},
+		{IDD_SPG_PASTE,       1, L"Paste",          thi_Paste      /* OnInitDialog_Paste */},
+		{IDD_SPG_HIGHLIGHT,   1, L"Highlight",      thi_Hilight    /* OnInitDialog_Hilight */},
+		{IDD_SPG_FEATURE_FAR, 0, L"Far Manager",    thi_Far        /* OnInitDialog_Far */, true/*Collapsed*/},
+		{IDD_SPG_FARMACRO,    1, L"Far macros",     thi_FarMacro   /* OnInitDialog_FarMacro */},
+		{IDD_SPG_VIEWS,       1, L"Views",          thi_Views      /* OnInitDialog_Views */},
+		{IDD_SPG_INFO,        0, L"Info",           thi_Info       /* OnInitDialog_Info */, RELEASEDEBUGTEST(true,false)/*Collapsed in Release*/},
+		{IDD_SPG_DEBUG,       1, L"Debug",          thi_Debug      /* OnInitDialog_Debug */},
 		// End
 		{},
 	};
@@ -3405,13 +3405,6 @@ LRESULT CSettings::OnInitDialog_Keys(HWND hWnd2, bool abInitial)
 
 LRESULT CSettings::OnInitDialog_Tabs(HWND hWnd2)
 {
-	//checkDlgButton(hWnd2, cbMultiCon, gpSet->mb_isMulti);
-	//checkDlgButton(hWnd2, cbNewConfirm, gpSet->isMultiNewConfirm);
-	//checkDlgButton(hWnd2, cbCloseConsoleConfirm, gpSet->isCloseConsoleConfirm);
-	//checkDlgButton(hWnd2, cbCloseEditViewConfirm, gpSet->isCloseEditViewConfirm);
-	//checkDlgButton(hWnd2, cbMultiLeaveOnClose, gpSet->isMultiLeaveOnClose);
-
-	//checkDlgButton(hWnd2, cbTabs, gpSet->isTabs);
 	checkRadioButton(hWnd2, rbTabsAlways, rbTabsNone, (gpSet->isTabs == 2) ? rbTabsAuto : gpSet->isTabs ? rbTabsAlways : rbTabsNone);
 
 	checkDlgButton(hWnd2, cbTabsLocationBottom, (gpSet->nTabsLocation == 1) ? BST_CHECKED : BST_UNCHECKED);
