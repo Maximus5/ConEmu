@@ -766,6 +766,8 @@ void CSettings::InitVars_Pages()
 		{IDD_SPG_MAIN,        0, L"Main",           thi_Main       /* OnInitDialog_Main */},
 		{IDD_SPG_WNDSIZEPOS,  1, L"Size & Pos",     thi_SizePos    /* OnInitDialog_WndPosSize */},
 		{IDD_SPG_SHOW,        1, L"Appearance",     thi_Show       /* OnInitDialog_Show */},
+		{IDD_SPG_TABS,        1, L"Tabs",           thi_Tabs       /* OnInitDialog_Tabs */},
+		{IDD_SPG_CONFIRM,     1, L"Confirm",        thi_Confirm    /* OnInitDialog_Confirm */},
 		{IDD_SPG_TASKBAR,     1, L"Task bar",       thi_Taskbar    /* OnInitDialog_Taskbar */},
 		{IDD_SPG_UPDATE,      1, L"Update",         thi_Update     /* OnInitDialog_Update */},
 		{IDD_SPG_STARTUP,     0, L"Startup",        thi_Startup    /* OnInitDialog_Startup */},
@@ -775,7 +777,6 @@ void CSettings::InitVars_Pages()
 		{IDD_SPG_CURSOR,      1, L"Text cursor",    thi_Cursor     /* OnInitDialog_Cursor */},
 		{IDD_SPG_COLORS,      1, L"Colors",         thi_Colors     /* OnInitDialog_Color */},
 		{IDD_SPG_TRANSPARENT, 1, L"Transparency",   thi_Transparent/* OnInitDialog_Transparent */},
-		{IDD_SPG_TABS,        1, L"Tabs",           thi_Tabs       /* OnInitDialog_Tabs */},
 		{IDD_SPG_STATUSBAR,   1, L"Status bar",     thi_Status     /* OnInitDialog_Status */},
 		{IDD_SPG_APPDISTINCT, 1, L"App distinct",   thi_Apps       /* OnInitDialog_CmdTasks */},
 		{IDD_SPG_INTEGRATION, 0, L"Integration",    thi_Integr     /* OnInitDialog_Integr */},
@@ -2157,14 +2158,21 @@ LRESULT CSettings::OnInitDialog_Show(HWND hWnd2, bool abInitial)
 
 	checkDlgButton(hWnd2, cbMultiCon, gpSet->mb_isMulti);
 	checkDlgButton(hWnd2, cbMultiShowButtons, gpSet->isMultiShowButtons);
-	checkDlgButton(hWnd2, cbNewConfirm, gpSet->isMultiNewConfirm);
-	checkDlgButton(hWnd2, cbCloseConsoleConfirm, gpSet->isCloseConsoleConfirm);
-	checkDlgButton(hWnd2, cbCloseEditViewConfirm, gpSet->isCloseEditViewConfirm);
 
 	checkDlgButton(hWnd2, cbSingleInstance, IsSingleInstanceArg());
 	EnableDlgItem(hWnd2, cbSingleInstance, (gpSet->isQuakeStyle == 0));
 
 	checkDlgButton(hWnd2, cbShowHelpTooltips, gpSet->isShowHelpTooltips);
+
+	return 0;
+}
+
+LRESULT CSettings::OnInitDialog_Confirm(HWND hWnd2, bool abInitial)
+{
+	checkDlgButton(hWnd2, cbNewConfirm, gpSet->isMultiNewConfirm);
+	checkDlgButton(hWnd2, cbCloseConsoleConfirm, gpSet->isCloseConsoleConfirm);
+	checkDlgButton(hWnd2, cbCloseEditViewConfirm, gpSet->isCloseEditViewConfirm);
+	checkDlgButton(hWnd2, cbShowWasHiddenMsg, gpSet->isDownShowHiddenMessage ? BST_UNCHECKED : BST_CHECKED);
 
 	return 0;
 }
@@ -2563,8 +2571,6 @@ LRESULT CSettings::OnInitDialog_Ext(HWND hWnd2)
 	EnableWindow(GetDlgItem(hWnd2, cbDosBox), !gpConEmu->mb_DosBoxExists);
 	//EnableWindow(GetDlgItem(hWnd2, bDosBoxSettings), FALSE); // изменение пока запрещено
 	ShowWindow(GetDlgItem(hWnd2, bDosBoxSettings), SW_HIDE);
-
-	checkDlgButton(hWnd2, cbShowWasHiddenMsg, gpSet->isDownShowHiddenMessage ? BST_UNCHECKED : BST_CHECKED);
 
 	checkDlgButton(hWnd2, cbDisableAllFlashing, gpSet->isDisableAllFlashing);
 
@@ -9195,6 +9201,9 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 			break;
 		case IDD_SPG_SHOW:
 			gpSetCls->OnInitDialog_Show(hWnd2, bInitial);
+			break;
+		case IDD_SPG_CONFIRM:
+			gpSetCls->OnInitDialog_Confirm(hWnd2, bInitial);
 			break;
 		case IDD_SPG_TASKBAR:
 			gpSetCls->OnInitDialog_Taskbar(hWnd2, bInitial);

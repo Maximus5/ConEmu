@@ -223,13 +223,9 @@ BEGIN
     CONTROL         "Single instance mode (use existing window instead of running new instance)",cbSingleInstance,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,14,310,8
     CONTROL         "Multiple consoles in one ConEmu window",cbMultiCon,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,27,155,8
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,27,310,8
     CONTROL         "Show buttons (toolbar) in tab bar",cbMultiShowButtons,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,168,27,148,8
-    CONTROL         "Create confirmation ( Win+W, toolbar [+] )",cbNewConfirm,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,40,155,8
-    CONTROL         "Close confirmation",cbCloseConsoleConfirm,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,168,40,77,8
-    CONTROL         "Far Editor/Viewer",cbCloseEditViewConfirm,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,246,40,72,8
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,40,310,8
     GROUPBOX        "Appearance",gbFeatureAppear,4,60,319,40
     CONTROL         "Enhance progressbars and scrollbars",cbEnhanceGraphics,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,73,140,8
@@ -262,6 +258,21 @@ BEGIN
     RTEXT           "Animation:",stQuakeAnimation,227,214,43,8
     EDITTEXT        tQuakeAnimation,273,212,40,12,ES_AUTOHSCROLL
     CONTROL         "Show balloon help tooltips",cbShowHelpTooltips,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,85,142,8
+END
+
+IDD_SPG_CONFIRM DIALOGEX 0, 0, 328, 235
+STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
+EXSTYLE WS_EX_CONTROLPARENT
+FONT 8, "MS Shell Dlg", 0, 0, 0x1
+BEGIN
+    GROUPBOX        "Confirm actions",gbConfirmActions,4,1,319,65
+    CONTROL         "Confirm creating new console/tab (Win+W, toolbar [+])",cbNewConfirm,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,14,307,8
+    CONTROL         "Confirm tab closing",cbCloseConsoleConfirm,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,39,307,8
+    CONTROL         "Confirm Far Editor/Viewer tab closing",cbCloseEditViewConfirm,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,51,307,8
+    CONTROL         "Show ‘was hidden’ warning",cbShowWasHiddenMsg,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,85,307,8
+    GROUPBOX        "Miscellaneous",gbConfirmMisc,4,72,319,28
 END
 
 IDD_SPG_TASKBAR DIALOGEX 0, 0, 328, 235
@@ -638,7 +649,6 @@ BEGIN
     CONTROL         "Debug steps in caption",cbDebugSteps,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,27,87,8
     CONTROL         "Sleep in background",cbSleepInBackground,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,132,27,87,8
     CONTROL         "Focus in child windows",cbFocusInChildWindows,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,231,27,87,8
-    CONTROL         "Show ‘was hidden’ warning",cbShowWasHiddenMsg,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,41,119,8
     CONTROL         "Retard inactive panes",cbRetardInactivePanes,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,132,41,87,8
     CONTROL         "Disable all flashing",cbDisableAllFlashing,"Button",BS_AUTO3STATE | WS_TABSTOP,231,41,89,8
     GROUPBOX        "In-console options",IDC_STATIC,4,62,319,71
@@ -1442,6 +1452,14 @@ BEGIN
     END
 
     IDD_SPG_MAIN, DIALOG
+    BEGIN
+    END
+
+    IDD_SPG_SHOW, DIALOG
+    BEGIN
+    END
+
+    IDD_SPG_CONFIRM, DIALOG
     BEGIN
     END
 

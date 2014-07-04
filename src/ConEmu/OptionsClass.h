@@ -198,6 +198,7 @@ class CSettings
 			thi_Main = 0,     // "Main"
 			thi_SizePos,      //   "Size & Pos"
 			thi_Show,         //   "Appearance"
+			thi_Confirm,      //   "Confirmations"
 			thi_Taskbar,      //   "Task bar"
 			thi_Update,       //   "Update"
 			thi_Startup,      // "Startup"
@@ -331,6 +332,7 @@ class CSettings
 		LRESULT OnInitDialog_Main(HWND hWnd2);
 		LRESULT OnInitDialog_WndPosSize(HWND hWnd2, bool abInitial);
 		LRESULT OnInitDialog_Show(HWND hWnd2, bool abInitial);
+		LRESULT OnInitDialog_Confirm(HWND hWnd2, bool abInitial);
 		LRESULT OnInitDialog_Taskbar(HWND hWnd2, bool abInitial);
 		LRESULT OnInitDialog_Cursor(HWND hWnd2, bool abInitial);
 		LRESULT OnInitDialog_Startup(HWND hWnd2, bool abInitial);
