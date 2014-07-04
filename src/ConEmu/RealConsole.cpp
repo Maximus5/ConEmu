@@ -7543,10 +7543,11 @@ void CRealConsole::OnServerStarted(DWORD anServerPID, HANDLE ahServerHandle, DWO
 			SetMainSrvPID(mn_MainSrv_PID, ahServerHandle);
 			//mh_MainSrv = ahServerHandle;
 		}
-		else
+		else if (ahServerHandle != mh_MainSrv)
 		{
 			SafeCloseHandle(ahServerHandle); // не нужен, у нас уже есть дескриптор процесса сервера
 		}
+		_ASSERTE(mn_MainSrv_PID == anServerPID);
 	}
 
 	//if (!mp_ConsoleInfo)
