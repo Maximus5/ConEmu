@@ -3426,6 +3426,11 @@ DWORD WINAPI MonitorThreadProcW(LPVOID lpParameter)
 				{
 					EmergencyShow(FarHwnd);
 				}
+				else if (!gbWasDetached)
+				{
+					gbWasDetached = TRUE;
+					ConEmuHwnd = NULL;
+				}
 			}
 		}
 
