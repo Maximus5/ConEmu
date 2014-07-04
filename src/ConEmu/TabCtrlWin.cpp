@@ -542,7 +542,7 @@ HWND CTabPanelWin::CreateToolbar()
 
 	TBADDBITMAP bmp = {g_hInstance,IDB_MAIN_TOOLBAR};
 	int nFirst = SendMessage(mh_Toolbar, TB_ADDBITMAP, BID_TOOLBAR_LAST_IDX, (LPARAM)&bmp);
-	_ASSERTE(BID_TOOLBAR_LAST_IDX==37);
+	_ASSERTE(BID_TOOLBAR_LAST_IDX==38);
 
 	//DWORD nLoadErr = 0;
 	if (gnOsVer >= 0x600)
@@ -560,7 +560,7 @@ HWND CTabPanelWin::CreateToolbar()
 	}
 
 	int nCopyBmp = SendMessage(mh_Toolbar, TB_ADDBITMAP, 1, (LPARAM)&bmp);
-	// Должен 37 возвращать
+	// Должен 38 возвращать
 	_ASSERTE(nCopyBmp == BID_TOOLBAR_LAST_IDX);
 	if (nCopyBmp < BID_TOOLBAR_LAST_IDX)
 		nCopyBmp = BID_TOOLBAR_LAST_IDX;
@@ -571,7 +571,7 @@ HWND CTabPanelWin::CreateToolbar()
 		bmp.nID = (UINT_PTR)CreateMappedBitmap(g_hInstance, IDB_SCROLL, 0, &colorMap, 1);
 	}
 	int nScrollBmp = SendMessage(mh_Toolbar, TB_ADDBITMAP, 1, (LPARAM)&bmp);
-	// Должен 38 возвращать
+	// Должен 39 возвращать
 	_ASSERTE(nScrollBmp == (BID_TOOLBAR_LAST_IDX+1));
 	if (nScrollBmp < (BID_TOOLBAR_LAST_IDX+1))
 		nScrollBmp = BID_TOOLBAR_LAST_IDX+1;
@@ -609,6 +609,9 @@ HWND CTabPanelWin::CreateToolbar()
 	SendMessage(mh_Toolbar, TB_ADDBUTTONS, 1, (LPARAM)&btn);
 	// Show scroll state
 	btn.iBitmap = nScrollBmp; btn.idCommand = TID_SCROLL;
+	SendMessage(mh_Toolbar, TB_ADDBUTTONS, 1, (LPARAM)&btn);
+	// Button for system menu
+	btn.iBitmap = nFirst + BID_SYSMENU_IDX; btn.idCommand = TID_SYSMENU; btn.fsState = TBSTATE_ENABLED;
 	SendMessage(mh_Toolbar, TB_ADDBUTTONS, 1, (LPARAM)&btn);
 	// Separator before min/max/close
 	sep.fsState |= TBSTATE_HIDDEN; sep.idCommand = TID_MINIMIZE_SEP;

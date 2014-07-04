@@ -1064,6 +1064,10 @@ bool CTabBarClass::OnNotify(LPNMHDR nmhdr, LRESULT& lResult)
 		{
 			lstrcpyn(pDisp->pszText, _T("Show copying queue"), pDisp->cchTextMax);
 		}
+		else if (pDisp->iItem == TID_SYSMENU)
+		{
+			lstrcpyn(pDisp->pszText, _T("Show system menu (RClick for Settings)"), pDisp->cchTextMax);
+		}
 		else
 		{
 			_ASSERTE(FALSE && "Tooltip was not processed");
@@ -1190,6 +1194,13 @@ void CTabBarClass::OnCommand(WPARAM wParam, LPARAM lParam)
 	else if (wParam == TID_COPYING)
 	{
 		gpConEmu->OnCopyingState();
+	}
+	else if (wParam == TID_SYSMENU)
+	{
+		RECT rcBtnRect = {0};
+		mp_Rebar->GetToolBtnRect(TID_SYSMENU, &rcBtnRect);
+		DWORD nAddFlags = ((gpSet->nTabsLocation == 1) ? TPM_BOTTOMALIGN : 0) | TPM_RIGHTALIGN;
+		gpConEmu->mp_Menu->ShowSysmenu(rcBtnRect.right,rcBtnRect.bottom, nAddFlags);
 	}
 	else
 	{
