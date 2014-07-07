@@ -265,7 +265,7 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "Confirm actions",gbConfirmActions,4,1,319,65
+    GROUPBOX        "Confirm actions",gbConfirmActions,4,1,319,78
     CONTROL         "Confirm creating new console/tab (Win+W, toolbar [+])",cbNewConfirm,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,14,307,8
     CONTROL         "Confirm tab duplicating (Duplicate root menu item)",cbDupConfirm,
@@ -273,8 +273,9 @@ BEGIN
     CONTROL         "Confirm tab closing",cbCloseConsoleConfirm,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,39,307,8
     CONTROL         "Confirm Far Editor/Viewer tab closing",cbCloseEditViewConfirm,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,51,307,8
-    CONTROL         "Show ‘was hidden’ warning",cbShowWasHiddenMsg,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,85,307,8
-    GROUPBOX        "Miscellaneous",gbConfirmMisc,4,72,319,28
+    CONTROL         "Confirm console detach",cbConfirmDetach,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,64,307,8
+    GROUPBOX        "Miscellaneous",gbConfirmMisc,4,83,319,28
+    CONTROL         "Show ‘was hidden’ warning",cbShowWasHiddenMsg,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,96,307,8
 END
 
 IDD_SPG_TASKBAR DIALOGEX 0, 0, 328, 235

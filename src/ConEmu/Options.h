@@ -1235,6 +1235,8 @@ struct Settings
 		bool isMultiNewConfirm;
 		//reg->Load(L"Multi.DupConfirm", isMultiDupConfirm);
 		bool isMultiDupConfirm;
+		//reg->Load(L"Multi.DetachConfirm", isMultiDetachConfirm);
+		bool isMultiDetachConfirm;
 		//reg->Load(L"Multi.UseNumbers", isUseWinNumber);
 		bool isUseWinNumber;
 		//reg->Load(L"Multi.UseWinTab", isUseWinTab);

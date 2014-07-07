@@ -13584,8 +13584,11 @@ void CRealConsole::Detach(bool bPosted /*= false*/, bool bSendCloseConsole /*= f
 	{
 		if (!bPosted)
 		{
-			if (MsgBox(L"Detach console from ConEmu?", MB_ICONQUESTION|MB_YESNO|MB_DEFBUTTON2, GetTitle()) != IDYES)
+			if (gpSet->isMultiDetachConfirm
+				&& (MsgBox(L"Detach console from ConEmu?", MB_ICONQUESTION|MB_YESNO|MB_DEFBUTTON2, GetTitle()) != IDYES))
+			{
 				return;
+			}
 
 			mp_VCon->PostDetach(bSendCloseConsole);
 			return;

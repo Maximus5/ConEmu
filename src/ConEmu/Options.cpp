@@ -383,6 +383,7 @@ void Settings::InitSettings()
 	isMultiMinByEsc = 2; isMapShiftEscToEsc = true; // isMapShiftEscToEsc used only when isMultiMinByEsc==1 and only for console apps
 	isMultiNewConfirm = true;
 	isMultiDupConfirm = true;
+	isMultiDetachConfirm = true;
 	isCloseConsoleConfirm = true;
 	isUseWinNumber = true; isUseWinArrows = false; isUseWinTab = false;
 	nSplitWidth = nSplitHeight = 4;
@@ -2436,6 +2437,7 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla, const SettingsStorage* ap
 		//LoadVkMod(reg, L"Multi.CmdKey", vmMultiCmd, vmMultiCmd);
 		reg->Load(L"Multi.NewConfirm", isMultiNewConfirm);
 		reg->Load(L"Multi.DupConfirm", isMultiDupConfirm);
+		reg->Load(L"Multi.DetachConfirm", isMultiDetachConfirm);
 		//LoadVkMod(reg, L"Multi.Buffer", vmMultiBuffer, vmMultiBuffer);
 		reg->Load(L"Multi.UseArrows", isUseWinArrows);
 		reg->Load(L"Multi.UseNumbers", isUseWinNumber);
@@ -3409,6 +3411,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		//reg->Save(L"Multi.CmdKey", vmMultiCmd);
 		reg->Save(L"Multi.NewConfirm", isMultiNewConfirm);
 		reg->Save(L"Multi.DupConfirm", isMultiDupConfirm);
+		reg->Save(L"Multi.DetachConfirm", isMultiDetachConfirm);
 		//reg->Save(L"Multi.Buffer", vmMultiBuffer);
 		reg->Save(L"Multi.UseArrows", isUseWinArrows);
 		reg->Save(L"Multi.UseNumbers", isUseWinNumber);
