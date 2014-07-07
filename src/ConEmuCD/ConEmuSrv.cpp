@@ -2193,6 +2193,14 @@ void CheckConEmuHwnd()
 	}
 }
 
+void FixConsoleMappingHdr(CESERVER_CONSOLE_MAPPING_HDR *pMap)
+{
+	pMap->nGuiPID = gnConEmuPID;
+	pMap->hConEmuRoot = ghConEmuWnd;
+	pMap->hConEmuWndDc = ghConEmuWndDC;
+	pMap->hConEmuWndBack = ghConEmuWndBack;
+}
+
 bool TryConnect2Gui(HWND hGui, CESERVER_REQ* pIn)
 {
 	LogFunction(L"TryConnect2Gui");
@@ -2361,10 +2369,8 @@ bool TryConnect2Gui(HWND hGui, CESERVER_REQ* pIn)
 		CESERVER_CONSOLE_MAPPING_HDR *pMap = gpSrv->pConsoleMap->Ptr();
 		if (pMap)
 		{
-			pMap->nGuiPID = pStartStopRet->Info.dwPID;
-			pMap->hConEmuRoot = ghConEmuWnd;
-			pMap->hConEmuWndDc = ghConEmuWndDC;
-			pMap->hConEmuWndBack = ghConEmuWndBack;
+			_ASSERTE(gnConEmuPID == pStartStopRet->Info.dwPID);
+			FixConsoleMappingHdr(pMap);
 			_ASSERTE(pMap->hConEmuRoot==NULL || pMap->nGuiPID!=0);
 		}
 
@@ -3165,14 +3171,13 @@ int CreateColorerHeader(bool bForceRecreate /*= false*/)
 
 	EnterCriticalSection(&gpSrv->csColorerMappingCreate);
 
-	_ASSERTE(gpSrv->pColorerMapping == NULL);
+	// По идее, не должно быть пересоздания TrueColor мэппинга, разве что при Detach/Attach
+	_ASSERTE((gpSrv->pColorerMapping == NULL) || (gbAttachMode == am_Simple));
 
 	if (bForceRecreate)
 	{
 		if (gpSrv->pColorerMapping)
 		{
-			// По идее, не должно быть пересоздания TrueColor мэппинга
-			_ASSERTE(FALSE && "Recreating pColorerMapping?");
 			delete gpSrv->pColorerMapping;
 			gpSrv->pColorerMapping = NULL;
 		}

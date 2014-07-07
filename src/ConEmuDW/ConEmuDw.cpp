@@ -332,7 +332,7 @@ BOOL CheckBuffers(bool abWrite /*= false*/)
 		}
 	}
 
-	// Проверить, не изменился ли HWND консоли...
+	// Проверить, не изменился ли HWND окна отрисовки (DC)...
 	HWND hCon = GetConEmuHWND(0);
 	if (!hCon)
 	{

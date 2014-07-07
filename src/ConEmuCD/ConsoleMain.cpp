@@ -7999,6 +7999,7 @@ BOOL cmd_UpdConMapHdr(CESERVER_REQ& in, CESERVER_REQ** out)
 
 			if (gpSrv->pConsoleMap)
 			{
+				FixConsoleMappingHdr(&in.ConInfo);
 				gpSrv->pConsoleMap->SetFrom(&in.ConInfo);
 			}
 
