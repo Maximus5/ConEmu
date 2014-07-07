@@ -707,6 +707,16 @@ void SetupCreateDumpOnException()
 	}
 }
 
+#ifdef SHOW_SERVER_STARTED_MSGBOX
+void ShowServerStartedMsgBox()
+{
+	wchar_t szTitle[100]; _wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuC [Server] started (PID=%i)", gnSelfPID);
+	const wchar_t* pszCmdLine = GetCommandLineW();
+	MessageBox(NULL,pszCmdLine,szTitle,0);
+}
+#endif
+
+
 
 // Main entry point for ConEmuC.exe
 #if defined(__GNUC__)
@@ -1005,11 +1015,9 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 
 
 	#ifdef SHOW_SERVER_STARTED_MSGBOX
-	if ((gnRunMode == RM_SERVER || gnRunMode == RM_ALTSERVER) && !IsDebuggerPresent())
+	if ((gnRunMode == RM_SERVER || gnRunMode == RM_ALTSERVER) && !IsDebuggerPresent() && gbNoCreateProcess)
 	{
-		wchar_t szTitle[100]; _wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuC [Server] started (PID=%i)", gnSelfPID);
-		const wchar_t* pszCmdLine = GetCommandLineW();
-		MessageBox(NULL,pszCmdLine,szTitle,0);
+		ShowServerStartedMsgBox();
 	}
 	#endif
 
@@ -4747,6 +4755,9 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 		// После этих аргументов - идет то, что передается в CreateProcess!
 		else if (wcscmp(szArg, L"/ROOT")==0 || wcscmp(szArg, L"/root")==0)
 		{
+			#ifdef SHOW_SERVER_STARTED_MSGBOX
+			ShowServerStartedMsgBox();
+			#endif
 			gnRunMode = RM_SERVER; gbNoCreateProcess = FALSE;
 			SetWorkEnvVar();
 			break; // lsCmdLine уже указывает на запускаемую программу
