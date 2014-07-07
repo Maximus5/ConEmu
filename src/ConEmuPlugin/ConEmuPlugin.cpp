@@ -1807,6 +1807,7 @@ HWND WINAPI GetFarHWND2(int anConEmuOnly)
 		ghConEmuWndDC = NULL;
 		//
 		SetConEmuEnvVar(NULL);
+		SetConEmuEnvVarChild(NULL,NULL);
 	}
 
 	if (anConEmuOnly)
@@ -3301,6 +3302,7 @@ BOOL WINAPI OnConsoleDetaching(HookCallbackArg* pArgs)
 	CloseMapHeader();
 	ghConEmuWndDC = NULL;
 	SetConEmuEnvVar(NULL);
+	SetConEmuEnvVarChild(NULL,NULL);
 	// Потом еще и FarHwnd сбросить нужно будет... Ну этим MonitorThreadProcW займется
 	return TRUE; // продолжить выполнение функции
 }
@@ -3441,6 +3443,8 @@ DWORD WINAPI MonitorThreadProcW(LPVOID lpParameter)
 			{
 				gbWasDetached = FALSE;
 				ghConEmuWndDC = (HWND)gpConMapInfo->hConEmuWndDc;
+				SetConEmuEnvVar(gpConMapInfo->hConEmuRoot);
+				SetConEmuEnvVarChild(gpConMapInfo->hConEmuWndDc, gpConMapInfo->hConEmuWndBack);
 			}
 
 			//MFileMapping<CESERVER_CONSOLE_MAPPING_HDR> ConMap;
@@ -3453,12 +3457,13 @@ DWORD WINAPI MonitorThreadProcW(LPVOID lpParameter)
 
 			if (ghConEmuWndDC)
 			{
-				SetConEmuEnvVar(ghConEmuWndDC);
 				InitResources();
 
 				// Обновить ТАБЫ после детача!
 				if (gnCurTabCount && gpTabs)
 					SendTabs(gnCurTabCount, TRUE);
+
+				_ASSERTE(FALSE && "Need to send current Far PID to ConEmu GUI");
 			}
 		}
 
@@ -3804,6 +3809,11 @@ int OpenMapHeader()
 
 			if (gpConMapInfo)
 			{
+				if (gpConMapInfo->hConEmuWndDc)
+				{
+					SetConEmuEnvVar(gpConMapInfo->hConEmuRoot);
+					SetConEmuEnvVarChild(gpConMapInfo->hConEmuWndDc, gpConMapInfo->hConEmuWndBack);
+				}
 				//if (gpConMapInfo->nLogLevel)
 				//	InstallTrapHandler();
 				iRc = 0;
@@ -3903,7 +3913,6 @@ void InitHWND(/*HWND ahFarHwnd*/)
 	//        ==2: Console window
 	FarHwnd = GetConEmuHWND(2/*Console window*/);
 	ghConEmuWndDC = GetConEmuHWND(0/*Gui console DC window*/);
-	SetConEmuEnvVar(ghConEmuWndDC);
 
 
 	{
@@ -3937,7 +3946,6 @@ void InitHWND(/*HWND ahFarHwnd*/)
 	//memset(hEventCmd, 0, sizeof(HANDLE)*MAXCMDCOUNT);
 	//int nChk = 0;
 	//ghConEmuWndDC = GetConEmuHWND(FALSE/*abRoot*/  /*, &nChk*/);
-	//SetConEmuEnvVar(ghConEmuWndDC);
 	gnMsgTabChanged = RegisterWindowMessage(CONEMUTABCHANGED);
 
 	if (!ghSetWndSendTabsEvent) ghSetWndSendTabsEvent = CreateEvent(0,0,0,0);
