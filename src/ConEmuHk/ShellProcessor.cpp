@@ -2524,6 +2524,8 @@ BOOL CShellProc::OnCreateProcessW(LPCWSTR* asFile, LPCWSTR* asCmdLine, LPCWSTR* 
 	{
 		if (gbPrepareDefaultTerminal)
 		{
+			_ASSERTE(m_Args.NoDefaultTerm != crb_On);
+
 			if (mb_PostInjectWasRequested)
 			{
 				lbRc = FALSE; // Stop other changes?
