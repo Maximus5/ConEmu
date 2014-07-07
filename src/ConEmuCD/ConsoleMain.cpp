@@ -586,108 +586,8 @@ BOOL createProcess(BOOL abSkipWowChange, LPCWSTR lpApplicationName, LPWSTR lpCom
 	if (!abSkipWowChange)
 		wow.Disable();
 
-	wchar_t* pszOrigPath = NULL;
-
-	// We need to check [HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths]
-	// when starting our "root" or "comspec" command
-	if (lpApplicationName == NULL)
-	{
-		LPCWSTR pszTemp = lpCommandLine;
-		CmdArg szExe;
-		if (NextArg(&pszTemp, szExe) == 0)
-		{
-			LPCWSTR pszName = PointToName(szExe);
-			if (!pszName || !*pszName)
-			{
-				_ASSERTE(pszName && *pszName);
-			}
-			else
-			{
-				DWORD nRegFlags = KEY_READ;
-
-				//Seems that key does not have both (32-bit and 64-bit) versions
-				//if (IsWindows64())
-				//{
-				//}
-
-				bool bFound = false;
-				DWORD cchMax = 65537;
-				wchar_t* pszValue = (wchar_t*)calloc(cchMax,sizeof(*pszValue));
-				if (!pszValue)
-				{
-					SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-					return FALSE;
-				}
-
-				wchar_t szKey[MAX_PATH*2];
-				wcscpy_c(szKey, L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\App Paths\\");
-				wcscat_c(szKey, pszName);
-
-				HKEY hk;
-				for (int i = 0; !bFound && (i <= 1); i++)
-				{
-					LONG lRc = RegOpenKeyEx(
-						(!i) ? HKEY_CURRENT_USER : HKEY_LOCAL_MACHINE, szKey, 0,
-						(!i) ? KEY_READ : nRegFlags, &hk);
-					if (lRc != 0)
-					{
-						// Приложение не зарегистрировано
-						continue;
-					}
-
-					DWORD nSize = (cchMax-2)*sizeof(*pszValue);
-					lRc = RegQueryValueEx(hk, L"Path", NULL, NULL, (LPBYTE)pszValue, &nSize);
-					if (lRc == 0)
-					{
-						bFound = true;
-
-						if (*pszValue)
-						{
-							int nLen = lstrlen(pszValue);
-							if (pszValue[nLen-1] != L';')
-							{
-								pszValue[nLen++] = L';';
-								_ASSERTE(pszValue[nLen] == 0);
-							}
-
-							// Получить текущий PATH и добавить в его начало дополнительные пути
-							DWORD cchMax = 65535;
-							pszOrigPath = (wchar_t*)calloc(cchMax, sizeof(*pszOrigPath));
-							if (!pszOrigPath)
-							{
-								RegCloseKey(hk);
-								free(pszValue);
-								SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-								return FALSE;
-							}
-							DWORD nEnvLen = GetEnvironmentVariable(L"PATH", pszOrigPath, cchMax);
-							if (nEnvLen > 0)
-							{
-								wchar_t* pszNewPath = lstrmerge(pszValue, pszOrigPath);
-								if (!pszNewPath)
-								{
-									RegCloseKey(hk);
-									free(pszValue);
-									SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-									return FALSE;
-								}
-								SetEnvironmentVariable(L"PATH", pszNewPath);
-								free(pszNewPath);
-							}
-							else
-							{
-								SafeFree(pszOrigPath);
-							}
-						}
-					}
-
-					RegCloseKey(hk);
-				}
-
-				free(pszValue);
-			}
-		}
-	}
+	// %PATHS% from [HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths]
+	// must be already processed in IsNeedCmd >> FileExistsSearch >> SearchAppPaths
 
 #if defined(SHOW_STARTED_PRINT_LITE)
 	DWORD nStartTick = GetTickCount();
@@ -721,12 +621,6 @@ BOOL createProcess(BOOL abSkipWowChange, LPCWSTR lpApplicationName, LPWSTR lpCom
 	if (!abSkipWowChange)
 	{
 		wow.Restore();
-	}
-
-	if (pszOrigPath && *pszOrigPath)
-	{
-		SetEnvironmentVariable(L"PATH", pszOrigPath);
-		free(pszOrigPath);
 	}
 
 	SetLastError(dwErr);
