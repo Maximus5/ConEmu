@@ -123,7 +123,7 @@ static LONG_PTR WINAPI CallGuiMacroDlg(HANDLE hDlg, int Msg, int Param1, LONG_PT
 		#endif
 		CESERVER_REQ *pIn = NULL, *pOut = NULL;
 
-		if (!ConEmuHwnd)
+		if (!ghConEmuWndDC)
 		{
 			SetEnvironmentVariable(CEGUIMACRORETENVVAR, NULL);
 		}

@@ -67,7 +67,7 @@ extern WCHAR gszRootKey[MAX_PATH*2];
 extern int maxTabCount, lastWindowCount;
 extern CESERVER_REQ* tabs; //(ConEmuTab*) calloc(maxTabCount, sizeof(ConEmuTab));
 extern CESERVER_REQ* gpCmdRet;
-extern HWND ConEmuHwnd;
+extern HWND ghConEmuWndDC;
 extern HWND FarHwnd;
 extern FarVersion gFarVersion;
 //#define IsFarLua ((gFarVersion.dwVerMajor > 3) || ((gFarVersion.dwVerMajor == 3) && (gFarVersion.dwBuild >= 2851)))

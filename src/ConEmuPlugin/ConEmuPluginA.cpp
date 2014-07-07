@@ -512,7 +512,7 @@ DWORD GetEditorModifiedStateA()
 // watch non-modified -> modified editor status change
 int WINAPI _export ProcessEditorInput(const INPUT_RECORD *Rec)
 {
-	if (/*!ConEmuHwnd ||*/ !InfoA)  // иногда событие от QuickView приходит ДО инициализации плагина
+	if (/*!ghConEmuWndDC ||*/ !InfoA)  // иногда событие от QuickView приходит ДО инициализации плагина
 		return 0; // Даже если мы не под эмулятором - просто запомним текущее состояние
 
 	// only key events with virtual codes > 0 are likely to cause status change (?)
@@ -580,7 +580,7 @@ bool UpdateConEmuTabsA(int anEvent, bool losingFocus, bool editorSave, void *Par
 	if (!InfoA || gbIgnoreUpdateTabs)
 		return false;
 
-	if (ConEmuHwnd && FarHwnd)
+	if (ghConEmuWndDC && FarHwnd)
 		CheckResources(FALSE);
 
 	MSectionLock SC; SC.Lock(csTabs);
@@ -820,17 +820,17 @@ int ShowPluginMenuA(ConEmuPluginMenuItem* apItems, int Count)
 
 	//FarMenuItemEx items[] =
 	//{
-	//	{MIF_USETEXTPTR|(ConEmuHwnd ? MIF_SELECTED : MIF_DISABLE)},
-	//	{MIF_USETEXTPTR|(ConEmuHwnd ? 0 : MIF_DISABLE)},
+	//	{MIF_USETEXTPTR|(ghConEmuWndDC ? MIF_SELECTED : MIF_DISABLE)},
+	//	{MIF_USETEXTPTR|(ghConEmuWndDC ? 0 : MIF_DISABLE)},
 	//	{MIF_SEPARATOR},
-	//	{MIF_USETEXTPTR|(ConEmuHwnd ? 0 : MIF_DISABLE)},
-	//	{MIF_USETEXTPTR|(ConEmuHwnd ? 0 : MIF_DISABLE)},
-	//	{MIF_USETEXTPTR|(ConEmuHwnd ? 0 : MIF_DISABLE)},
-	//	{MIF_USETEXTPTR|(ConEmuHwnd ? 0 : MIF_DISABLE)},
+	//	{MIF_USETEXTPTR|(ghConEmuWndDC ? 0 : MIF_DISABLE)},
+	//	{MIF_USETEXTPTR|(ghConEmuWndDC ? 0 : MIF_DISABLE)},
+	//	{MIF_USETEXTPTR|(ghConEmuWndDC ? 0 : MIF_DISABLE)},
+	//	{MIF_USETEXTPTR|(ghConEmuWndDC ? 0 : MIF_DISABLE)},
 	//	{MIF_SEPARATOR},
 	//	{MIF_USETEXTPTR|0},
 	//	{MIF_SEPARATOR},
-	//	{MIF_USETEXTPTR|(ConEmuHwnd||IsTerminalMode() ? MIF_DISABLE : MIF_SELECTED)},
+	//	{MIF_USETEXTPTR|(ghConEmuWndDC||IsTerminalMode() ? MIF_DISABLE : MIF_SELECTED)},
 	//	{MIF_SEPARATOR},
 	//	//#ifdef _DEBUG
 	//	//		{MIF_USETEXTPTR},

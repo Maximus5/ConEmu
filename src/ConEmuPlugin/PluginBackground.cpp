@@ -105,7 +105,7 @@ CPluginBackground::CPluginBackground()
 	//m_Default.pszRightHostFile = ms_RightHostFile; ms_RightHostFile[0] = 0;
 	mb_ThNeedLoad = TRUE;
 
-	if (ConEmuHwnd && IsWindow(ConEmuHwnd))
+	if (ghConEmuWndDC && IsWindow(ghConEmuWndDC))
 	{
 		LoadThSet(FALSE);
 	}
@@ -417,7 +417,7 @@ void CPluginBackground::CheckPanelFolders(int anForceSetPlace /*= 0*/)
 
 	WARNING("Нужно бы перечитать его, при изменении данных в ConEmu!");
 
-	if (mb_ThNeedLoad && ConEmuHwnd)
+	if (mb_ThNeedLoad && ghConEmuWndDC)
 	{
 		LoadThSet(TRUE/*мы уже в главной нити*/);
 	}
@@ -491,7 +491,7 @@ void CPluginBackground::UpdateBackground()
 	if (!mn_BgPluginsCount)
 		return;
 
-	if (!ConEmuHwnd || !IsWindow(ConEmuHwnd))
+	if (!ghConEmuWndDC || !IsWindow(ghConEmuWndDC))
 		return;
 
 	if (mb_ThNeedLoad)
@@ -499,7 +499,7 @@ void CPluginBackground::UpdateBackground()
 		LoadThSet(TRUE/*Мы уже в главной нити*/);
 	}
 
-	//RECT rcClient; GetClientRect(ConEmuHwnd, &rcClient);
+	//RECT rcClient; GetClientRect(ghConEmuWndDC, &rcClient);
 	struct PaintBackgroundArg Arg = m_Default;
 	Arg.cbSize = sizeof(struct PaintBackgroundArg);
 	//m_Default.dcSizeX = Arg.dcSizeX = rcClient.right+1;
@@ -862,9 +862,9 @@ void CPluginBackground::UpdateBackground()
 
 BOOL CPluginBackground::LoadThSet(BOOL abFromMainThread)
 {
-	if (!ConEmuHwnd || !IsWindow(ConEmuHwnd))
+	if (!ghConEmuWndDC || !IsWindow(ghConEmuWndDC))
 	{
-		_ASSERTE(ConEmuHwnd!=NULL);
+		_ASSERTE(ghConEmuWndDC!=NULL);
 		return FALSE;
 	}
 
@@ -872,7 +872,7 @@ BOOL CPluginBackground::LoadThSet(BOOL abFromMainThread)
 	BOOL lbRc = FALSE;
 	MFileMapping<PanelViewSetMapping> ThSetMap;
 	DWORD nGuiPID = 0;
-	GetWindowThreadProcessId(ConEmuHwnd, &nGuiPID);
+	GetWindowThreadProcessId(ghConEmuWndDC, &nGuiPID);
 	ThSetMap.InitName(CECONVIEWSETNAME, nGuiPID);
 
 	if (ThSetMap.Open())
@@ -910,7 +910,7 @@ BOOL CPluginBackground::LoadThSet(BOOL abFromMainThread)
 
 void CPluginBackground::MonitorBackground()
 {
-	if (mn_BgPluginsCount == 0 || !ConEmuHwnd || !IsWindow(ConEmuHwnd))
+	if (mn_BgPluginsCount == 0 || !ghConEmuWndDC || !IsWindow(ghConEmuWndDC))
 		return;
 
 	BOOL lbUpdateRequired = FALSE;
@@ -942,7 +942,7 @@ void CPluginBackground::MonitorBackground()
 		//	// Проверим, а не изменился ли размер окна?
 		//	if (IsConsoleActive())
 		//	{
-		//		RECT rcClient; GetClientRect(ConEmuHwnd, &rcClient);
+		//		RECT rcClient; GetClientRect(ghConEmuWndDC, &rcClient);
 		//		if ((m_Default.dcSizeX != (rcClient.right+1))
 		//			|| (m_Default.dcSizeY != (rcClient.bottom+1)))
 		//		{

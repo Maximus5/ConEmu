@@ -103,7 +103,7 @@ BOOL StartupHooks(HMODULE ahOurDll)
 		#endif
 		ghHooksModule = GetModuleHandle(szHkModule);
 
-		if ((ghHooksModule == NULL) && (ConEmuHwnd != NULL))
+		if ((ghHooksModule == NULL) && (ghConEmuWndDC != NULL))
 		{
 			// Попробовать выполнить LoadLibrary? в некоторых случаях GetModuleHandle может обламываться
 			ghHooksModule = LoadLibrary(szHkModule);
@@ -113,7 +113,7 @@ BOOL StartupHooks(HMODULE ahOurDll)
 
 		if (ghHooksModule == NULL)
 		{
-			if (ConEmuHwnd != NULL)
+			if (ghConEmuWndDC != NULL)
 			{
 				_ASSERTE(ghHooksModule!=NULL);
 				wchar_t szErrMsg[128];
@@ -128,7 +128,7 @@ BOOL StartupHooks(HMODULE ahOurDll)
 		}
 	}
 
-	_ASSERTE(ConEmuHwnd!=NULL);
+	_ASSERTE(ghConEmuWndDC!=NULL);
 
 	if (!SetHookCallbacks || !SetLoadLibraryCallback)
 	{
