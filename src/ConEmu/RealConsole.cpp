@@ -3886,9 +3886,6 @@ BOOL CRealConsole::CreateOrRunAs(CRealConsole* pRCon, RConStartArgs& Args,
 
 	lpszWorkDir = pRCon->GetStartupDir();
 
-	MWow64Disable wow;
-	wow.Disable();
-
 	// Function may be used for starting GUI applications (errors & hyperlinks)
 	bool bConsoleProcess = true;
 	{
@@ -3909,6 +3906,9 @@ BOOL CRealConsole::CreateOrRunAs(CRealConsole* pRCon, RConStartArgs& Args,
 	{
 		LockSetForegroundWindow(bExternal ? LSFW_UNLOCK : LSFW_LOCK);
 		pRCon->SetConStatus(L"Starting root process...", cso_ResetOnConsoleReady|cso_Critical);
+
+		MWow64Disable wow;
+		wow.Disable();
 
 		if (Args.pszUserName != NULL)
 		{
