@@ -2460,6 +2460,8 @@ HWND Attach2Gui(DWORD nTimeout)
 	{
 		gpSrv->bWasDetached = FALSE;
 		gbAttachMode = am_Simple;
+		if (gpSrv->pConsole)
+			gpSrv->pConsole->bDataChanged = TRUE;
 	}
 
 	if (!gpSrv->pConsoleMap)
@@ -4535,6 +4537,22 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 			gnConEmuPID = 0;
 			UpdateConsoleMapHeader();
 			EmergencyShow(ghConWnd);
+		}
+
+		// Reattach?
+		if (!ghConEmuWndDC && gpSrv->bWasDetached && (gnRunMode == RM_ALTSERVER))
+		{
+			CESERVER_CONSOLE_MAPPING_HDR* pMap = gpSrv->pConsoleMap->Ptr();
+			if (pMap && pMap->hConEmuWndDc && IsWindow(pMap->hConEmuWndDc))
+			{
+				// Reset GUI HWND's
+				_ASSERTE(!gnConEmuPID);
+				SetConEmuWindows(pMap->hConEmuRoot, pMap->hConEmuWndDc, pMap->hConEmuWndBack);
+				_ASSERTE(gnConEmuPID && ghConEmuWnd && ghConEmuWndDC && ghConEmuWndBack);
+
+				// To be sure GUI will be updated with full info
+				gpSrv->pConsole->bDataChanged = TRUE;
+			}
 		}
 
 		// 17.12.2009 Maks - попробую убрать
