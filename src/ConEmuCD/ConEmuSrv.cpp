@@ -4526,11 +4526,12 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 		}
 		#endif
 
-		if (ghConEmuWnd && !IsWindow(ghConEmuWnd))
+		// GUI отвалился или был Detach
+		if (ghConEmuWndDC && !IsWindow(ghConEmuWndDC))
 		{
 			gpSrv->bWasDetached = TRUE;
-			ghConEmuWnd = NULL;
 			SetConEmuWindows(NULL, NULL, NULL);
+			_ASSERTE(!ghConEmuWnd && !ghConEmuWndDC && !ghConEmuWndBack);
 			gnConEmuPID = 0;
 			UpdateConsoleMapHeader();
 			EmergencyShow(ghConWnd);
