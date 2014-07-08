@@ -3436,34 +3436,26 @@ DWORD WINAPI MonitorThreadProcW(LPVOID lpParameter)
 			}
 		}
 
-		if (!gbWasDetached && !ghConEmuWndDC)
+		if (gbWasDetached && !ghConEmuWndDC)
 		{
 			// ConEmu могло подцепиться
 			if (gpConMapInfo && gpConMapInfo->hConEmuWndDc)
 			{
 				gbWasDetached = FALSE;
 				ghConEmuWndDC = (HWND)gpConMapInfo->hConEmuWndDc;
+
+				// Update our in-process env vars
 				SetConEmuEnvVar(gpConMapInfo->hConEmuRoot);
 				SetConEmuEnvVarChild(gpConMapInfo->hConEmuWndDc, gpConMapInfo->hConEmuWndBack);
-			}
 
-			//MFileMapping<CESERVER_CONSOLE_MAPPING_HDR> ConMap;
-			//ConMap.InitName(CECONMAPNAME, (DWORD)FarHwnd);
-			//if (ConMap.Open())
-			//{
-			//	ghConEmuWndDC = (HWND)ConMap.Ptr()->hConEmuWnd;
-			//	ConMap.CloseMap();
-			//}
-
-			if (ghConEmuWndDC)
-			{
+				// Inform GUI about our Far/Plugin
 				InitResources();
 
-				// Обновить ТАБЫ после детача!
+				// Обновить ТАБЫ после реаттача
 				if (gnCurTabCount && gpTabs)
+				{
 					SendTabs(gnCurTabCount, TRUE);
-
-				_ASSERTE(FALSE && "Need to send current Far PID to ConEmu GUI");
+				}
 			}
 		}
 
