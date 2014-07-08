@@ -13,6 +13,16 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
 
+2014.07.07
+[+] Show SystemMenu button on the toolbar (RClick opens Settings dialog).
+[%] Issue 1125: ‘Run as’ was hooked in DefTerm if ConEmu window is already opened only.
+[%] Issue 1628: Detach/Re-Attach was failed.
+[+] Option to disable console detach confirmation.
+[*] Fix [App Path] search sequence (‘far’ was not started from ConEmu folder).
+[%] Error was occured while starting admin console (32779f4 regression).
+[*] Internal changes.
+
+
 2014.07.03
 [*] Support tabs dragging (reordering).
 [*] Highlight&Goto: Issue 1624: Don't warn after starting external editor successfully.
