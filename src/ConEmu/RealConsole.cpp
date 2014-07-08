@@ -6232,7 +6232,7 @@ void CRealConsole::SetMainSrvPID(DWORD anMainSrvPID, HANDLE ahMainSrv)
 	DEBUGTEST(isServerAlive());
 
 	#ifdef _DEBUG
-	DWORD nSrvWait = WaitForSingleObject(ahMainSrv, 0);
+	DWORD nSrvWait = ahMainSrv ? WaitForSingleObject(ahMainSrv, 0) : WAIT_TIMEOUT;
 	_ASSERTE(nSrvWait == WAIT_TIMEOUT);
 	#endif
 
