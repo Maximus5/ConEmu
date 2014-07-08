@@ -1802,8 +1802,7 @@ HWND WINAPI GetFarHWND2(int anConEmuOnly)
 			return ghConEmuWndDC;
 		}
 
-		// Дескриптор уже должен быть сброшен!
-		_ASSERTE(ghConEmuWndDC==NULL);
+		//
 		ghConEmuWndDC = NULL;
 		//
 		SetConEmuEnvVar(NULL);
