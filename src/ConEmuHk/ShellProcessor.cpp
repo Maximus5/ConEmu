@@ -2225,7 +2225,7 @@ wrap:
 // returns FALSE if need to block execution
 BOOL CShellProc::OnShellExecuteA(LPCSTR* asAction, LPCSTR* asFile, LPCSTR* asParam, LPCSTR* asDir, DWORD* anFlags, DWORD* anShowCmd)
 {
-	if (!ghConEmuWndDC || !isWindow(ghConEmuWndDC))
+	if ((!ghConEmuWndDC || !isWindow(ghConEmuWndDC)) && !isDefaultTerminalEnabled())
 		return TRUE; // Перехватывать только под ConEmu
 
 	mb_InShellExecuteEx = TRUE;
@@ -2278,7 +2278,7 @@ BOOL CShellProc::OnShellExecuteA(LPCSTR* asAction, LPCSTR* asFile, LPCSTR* asPar
 // returns FALSE if need to block execution
 BOOL CShellProc::OnShellExecuteW(LPCWSTR* asAction, LPCWSTR* asFile, LPCWSTR* asParam, LPCWSTR* asDir, DWORD* anFlags, DWORD* anShowCmd)
 {
-	if (!ghConEmuWndDC || !isWindow(ghConEmuWndDC))
+	if ((!ghConEmuWndDC || !isWindow(ghConEmuWndDC)) && !isDefaultTerminalEnabled())
 		return TRUE; // Перехватывать только под ConEmu
 
 	mb_InShellExecuteEx = TRUE;
@@ -2350,7 +2350,10 @@ BOOL CShellProc::FixShellArgs(DWORD afMask, HWND ahWnd, DWORD* pfMask, HWND* phW
 // returns FALSE if need to block execution
 BOOL CShellProc::OnShellExecuteExA(LPSHELLEXECUTEINFOA* lpExecInfo)
 {
-	if (!ghConEmuWndDC || !isWindow(ghConEmuWndDC) || !lpExecInfo)
+	if (!lpExecInfo)
+		return TRUE;
+
+	if ((!ghConEmuWndDC || !isWindow(ghConEmuWndDC)) && !isDefaultTerminalEnabled())
 		return TRUE; // Перехватывать только под ConEmu
 
 	mlp_SaveExecInfoA = *lpExecInfo;
@@ -2375,8 +2378,11 @@ BOOL CShellProc::OnShellExecuteExA(LPSHELLEXECUTEINFOA* lpExecInfo)
 // returns FALSE if need to block execution
 BOOL CShellProc::OnShellExecuteExW(LPSHELLEXECUTEINFOW* lpExecInfo)
 {
-	if (!ghConEmuWndDC || !isWindow(ghConEmuWndDC) || !lpExecInfo)
-		return TRUE; // Перехватывать только под ConEmu
+	if (!lpExecInfo)
+		return TRUE;
+
+	if ((!ghConEmuWndDC || !isWindow(ghConEmuWndDC)) && !isDefaultTerminalEnabled())
+		return TRUE; // Перехватывать только под ConEmu или в DefTerm
 
 	mlp_SaveExecInfoW = *lpExecInfo;
 	mlp_ExecInfoW = (LPSHELLEXECUTEINFOW)malloc((*lpExecInfo)->cbSize);
