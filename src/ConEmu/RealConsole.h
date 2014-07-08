@@ -832,6 +832,7 @@ class CRealConsole
 		MFileMapping<AnnotationHeader> m_TrueColorerMap;
 		AnnotationHeader m_TrueColorerHeader;
 		const AnnotationInfo *mp_TrueColorerData;
+		int mn_TrueColorMaxCells;
 		DWORD mn_LastColorFarID;
 		void CreateColorMapping(); // Открыть мэппинг колорера (по HWND)
 		//void CheckColorMapping(DWORD dwPID); // Проверить валидность буфера - todo

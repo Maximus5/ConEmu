@@ -2044,6 +2044,7 @@ BOOL CRealBuffer::IsTrueColorerBufferChanged()
 	BOOL lbChanged = FALSE;
 	AnnotationHeader aHdr;
 	int nCmp = 0;
+	int nCurMax;
 
 	if (!gpSet->isTrueColorer || !mp_RCon->mp_TrueColorerData)
 		goto wrap;
@@ -2056,10 +2057,13 @@ BOOL CRealBuffer::IsTrueColorerBufferChanged()
 	if (mp_RCon->m_TrueColorerHeader.flushCounter == aHdr.flushCounter)
 		goto wrap;
 
+	nCurMax = min(con.nTextWidth*con.nTextHeight,mp_RCon->mn_TrueColorMaxCells);
+	if (nCurMax <= 0)
+		goto wrap;
+
 	// Compare data
 	EnterCriticalSection(&m_TrueMode.csLock);
 	{
-		int nCurMax = max(con.nTextWidth*con.nTextHeight,aHdr.bufferSize);
 		size_t cbCurSize = nCurMax*sizeof(*m_TrueMode.mp_Cmp);
 
 		if (!m_TrueMode.mp_Cmp || (nCurMax > m_TrueMode.nCmpMax))

@@ -319,6 +319,7 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 	m_UseLogs = gpSetCls->isAdvLogging;
 
 	mp_TrueColorerData = NULL;
+	mn_TrueColorMaxCells = 0;
 	memset(&m_TrueColorerHeader, 0, sizeof(m_TrueColorerHeader));
 
 	//mb_PluginDetected = FALSE;
@@ -12776,6 +12777,7 @@ void CRealConsole::CloseColorMapping()
 	//	UnmapViewOfFile(mp_ColorHdr);
 	//mp_ColorHdr = NULL;
 	mp_TrueColorerData = NULL;
+	mn_TrueColorMaxCells = 0;
 	//}
 	//if (mh_ColorMapping) {
 	//	CloseHandle(mh_ColorMapping);
@@ -12807,6 +12809,12 @@ void CRealConsole::CreateColorMapping()
 	if (!this)
 	{
 		_ASSERTE(this!=NULL);
+		return;
+	}
+
+	if (mp_TrueColorerData)
+	{
+		// Mapping was already created
 		return;
 	}
 
@@ -12852,6 +12860,7 @@ void CRealConsole::CreateColorMapping()
 	//	goto wrap;
 	//}
 	pHdr = m_TrueColorerMap.Ptr();
+	mn_TrueColorMaxCells = nMapCells;
 	mp_TrueColorerData = (const AnnotationInfo*)(((LPBYTE)pHdr)+pHdr->struct_size);
 	lbResult = TRUE;
 wrap:
