@@ -3438,7 +3438,7 @@ DWORD WINAPI MonitorThreadProcW(LPVOID lpParameter)
 		if (gbWasDetached && !ghConEmuWndDC)
 		{
 			// ConEmu могло подцепиться
-			if (gpConMapInfo && gpConMapInfo->hConEmuWndDc)
+			if (gpConMapInfo && gpConMapInfo->hConEmuWndDc && IsWindow(gpConMapInfo->hConEmuWndDc))
 			{
 				gbWasDetached = FALSE;
 				ghConEmuWndDC = (HWND)gpConMapInfo->hConEmuWndDc;
