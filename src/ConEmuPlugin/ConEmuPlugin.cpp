@@ -3447,6 +3447,9 @@ DWORD WINAPI MonitorThreadProcW(LPVOID lpParameter)
 				SetConEmuEnvVar(gpConMapInfo->hConEmuRoot);
 				SetConEmuEnvVarChild(gpConMapInfo->hConEmuWndDc, gpConMapInfo->hConEmuWndBack);
 
+				// Передернуть отрисовку, чтобы обновить TrueColor
+				RedrawAll();
+
 				// Inform GUI about our Far/Plugin
 				InitResources();
 
