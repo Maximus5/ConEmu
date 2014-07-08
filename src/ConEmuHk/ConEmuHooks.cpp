@@ -664,15 +664,12 @@ bool InitHooksDefaultTrm()
 
 	InitHooks(HooksCommon);
 
-	// Windows 8. There is new undocumented function "ShellExecCmdLine" used by Explorer
-	#ifndef _WIN32_WINNT_WIN8
-		#define _WIN32_WINNT_WIN8 0x602
-	#endif
-	_ASSERTE(_WIN32_WINNT_WIN8==0x602);
-	OSVERSIONINFOEXW osvi = {sizeof(osvi), HIBYTE(_WIN32_WINNT_WIN8), LOBYTE(_WIN32_WINNT_WIN8)};
+	// Windows 7. There is new undocumented function "ShellExecCmdLine" used by Explorer
+	_ASSERTE(_WIN32_WINNT_WIN7==0x601);
+	OSVERSIONINFOEXW osvi = {sizeof(osvi), HIBYTE(_WIN32_WINNT_WIN7), LOBYTE(_WIN32_WINNT_WIN7)};
 	DWORDLONG const dwlConditionMask = VerSetConditionMask(VerSetConditionMask(0, VER_MAJORVERSION, VER_GREATER_EQUAL), VER_MINORVERSION, VER_GREATER_EQUAL);
-	BOOL isWindows8 = VerifyVersionInfoW(&osvi, VER_MAJORVERSION | VER_MINORVERSION, dwlConditionMask);
-	if (isWindows8)
+	BOOL isWindows7 = VerifyVersionInfoW(&osvi, VER_MAJORVERSION | VER_MINORVERSION, dwlConditionMask);
+	if (isWindows7)
 	{
 		InitHooks(HooksCmdLine);
 	}
