@@ -4303,7 +4303,7 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 			}
 			else if (wcsncmp(szArg, L"/CONPID=", 8)==0)
 			{
-				_ASSERTE(FALSE && "Continue to alternative attach mode");
+				//_ASSERTE(FALSE && "Continue to alternative attach mode");
 				gbAlternativeAttach = TRUE;
 				gbRootIsCmdExe = FALSE;
 				pszStart = szArg.ms_Arg+8;
@@ -4443,7 +4443,7 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 				_printf("Attach to GUI was requested, but invalid PID specified:\n");
 				_wprintf(GetCommandLineW());
 				_printf("\n");
-				_ASSERTE(FALSE);
+				_ASSERTE(FALSE && "Attach to GUI was requested, but invalid PID specified");
 				return CERR_CARGUMENT;
 			}
 		}
@@ -4858,7 +4858,8 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 	// Теоретически, в Студии не должно бы быть запуска ConEmuC.exe, но он может оказаться в "COMSPEC", так что проверим.
 	if (gbAttachMode && (gnRunMode == RM_SERVER) && (gnConEmuPID == 0))
 	{
-		_ASSERTE(!gbAlternativeAttach && "Alternative mode must be already processed!");
+		//-- ассерт не нужен вроде
+		//_ASSERTE(!gbAlternativeAttach && "Alternative mode must be already processed!");
 
 		BOOL lbIsWindowVisible = FALSE;
 		// Добавим проверку на telnet
