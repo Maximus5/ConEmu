@@ -275,7 +275,7 @@ void CDefTermHk::ShowTrayIconError(LPCWSTR asErrText)
 	DefTermMsg(asErrText);
 }
 
-HWND CDefTermHk::AllocHiddenConsole()
+HWND CDefTermHk::AllocHiddenConsole(bool bTempForVS)
 {
 	// функция AttachConsole есть только в WinXP и выше
 	AttachConsole_t _AttachConsole = GetAttachConsoleProc();
@@ -285,7 +285,7 @@ HWND CDefTermHk::AllocHiddenConsole()
 	DefTermMsg(L"AllocHiddenConsole");
 
 	ReloadSettings();
-	_ASSERTEX(isDefaultTerminalEnabled() && gbIsNetVsHost);
+	_ASSERTEX(isDefaultTerminalEnabled() && (gbIsNetVsHost || bTempForVS));
 
 	if (!isDefaultTerminalEnabled())
 	{
@@ -294,7 +294,8 @@ HWND CDefTermHk::AllocHiddenConsole()
 	}
 
 	HANDLE hSrvProcess = NULL;
-	DWORD nSrvPID = StartConsoleServer(true, &hSrvProcess);
+	DWORD nAttachPID = bTempForVS ? 0 : gnSelfPID;
+	DWORD nSrvPID = StartConsoleServer(nAttachPID, true, &hSrvProcess);
 	if (!nSrvPID)
 	{
 		// Failed to start process?
@@ -326,7 +327,7 @@ HWND CDefTermHk::AllocHiddenConsole()
 	return hCreatedCon;
 }
 
-DWORD CDefTermHk::StartConsoleServer(bool bNewConWnd, PHANDLE phSrvProcess)
+DWORD CDefTermHk::StartConsoleServer(DWORD nAttachPID, bool bNewConWnd, PHANDLE phSrvProcess)
 {
 	// Options must be loaded already
 	const CEDefTermOpt* pOpt = GetOpt();
@@ -351,13 +352,13 @@ DWORD CDefTermHk::StartConsoleServer(bool bNewConWnd, PHANDLE phSrvProcess)
 	pszCmdLine = (wchar_t*)malloc(cchMax*sizeof(*pszCmdLine));
 	if (pszCmdLine)
 	{
-		msprintf(pszCmdLine, cchMax, L"\"%s\\%s\" /ATTACH /TRMPID=%u",
+		_ASSERTE(nAttachPID || bNewConWnd);
+
+		msprintf(pszCmdLine, cchMax, L"\"%s\\%s\" /ATTACH %s/TRMPID=%u",
 			pOpt->pszConEmuBaseDir,
 			WIN3264TEST(L"ConEmuC.exe",L"ConEmuC64.exe"),
-			gnSelfPID);
-
-		if (bNewConWnd)
-			_wcscat_c(pszCmdLine, cchMax, L" /CREATECON");
+			bNewConWnd ? L"/CREATECON " : L"",
+			nAttachPID);
 
 		if (!szAddArgs.IsEmpty())
 			_wcscat_c(pszCmdLine, cchMax, szAddArgs);
@@ -434,7 +435,7 @@ void CDefTermHk::OnAllocConsoleFinished()
 	ShowWindow(ghConWnd, SW_HIDE);
 	DefTermMsg(L"Console window hided");
 
-	if (!StartConsoleServer(false, NULL))
+	if (!StartConsoleServer(gnSelfPID, false, NULL))
 	{
 		if (bConWasVisible)
 			ShowWindow(ghConWnd, SW_SHOW);

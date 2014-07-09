@@ -41,7 +41,7 @@ public:
 	void StartDefTerm();
 
 	// Запустить сервер, и подцепиться к его консоли
-	HWND AllocHiddenConsole();
+	HWND AllocHiddenConsole(bool bTempForVS);
 	// Вызывается из хуков после успешного AllocConsole (Win2k only? а смысл?)
 	void OnAllocConsoleFinished();
 
@@ -56,7 +56,7 @@ protected:
 	wchar_t ms_ExeName[MAX_PATH];
 	DWORD   mn_LastCheck;
 
-	DWORD   StartConsoleServer(bool bNewConWnd, PHANDLE phSrvProcess);
+	DWORD   StartConsoleServer(DWORD nAttachPID, bool bNewConWnd, PHANDLE phSrvProcess);
 
 protected:
 	virtual int  DisplayLastError(LPCWSTR asLabel, DWORD dwError=0, DWORD dwMsgFlags=0, LPCWSTR asTitle=NULL, HWND hParent=NULL);

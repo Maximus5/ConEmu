@@ -66,6 +66,7 @@ private:
 	BOOL mb_WasSuspended; // Если TRUE - значит при вызове CreateProcessXXX уже был флаг CREATE_SUSPENDED
 	BOOL mb_NeedInjects;
 	BOOL mb_DebugWasRequested;
+	BOOL mb_HiddenConsoleDetachNeed;
 	BOOL mb_PostInjectWasRequested;
 	//BOOL mb_DosBoxAllowed;
 	bool mb_Opt_DontInject; // ConEmuHooks=OFF

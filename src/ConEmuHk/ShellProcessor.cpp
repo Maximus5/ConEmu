@@ -137,6 +137,7 @@ CShellProc::CShellProc()
 	mb_Opt_DontInject = false;
 	mb_Opt_SkipNewConsole = false;
 	mb_DebugWasRequested = FALSE;
+	mb_HiddenConsoleDetachNeed = FALSE;
 	mb_PostInjectWasRequested = FALSE;
 	// int CShellProc::mn_InShellExecuteEx = 0; <-- static
 	mb_InShellExecuteEx = FALSE;
@@ -2562,6 +2563,38 @@ BOOL CShellProc::OnCreateProcessW(LPCWSTR* asFile, LPCWSTR* asCmdLine, LPCWSTR* 
 			*asFile = mpwsz_TempRetFile;
 		}
 	}
+	// Avoid flickering of RealConsole while starting debugging with DefTerm feature
+	else if (isDefaultTerminalEnabled() && !bConsoleNoWindow && nShowCmd && anCreationFlags && lpSI)
+	{
+		switch (mn_ImageSubsystem)
+		{
+		case IMAGE_SUBSYSTEM_WINDOWS_CUI:
+			if (((*anCreationFlags) & (DEBUG_ONLY_THIS_PROCESS|DEBUG_PROCESS))
+				&& ((*anCreationFlags) & CREATE_NEW_CONSOLE))
+			{
+				// Запуск отладчика Win32 приложения из VisualStudio (например)
+				// Финт ушами для избежания мелькания RealConsole window
+				HWND hConWnd = GetConsoleWindow();
+				if (hConWnd == NULL)
+				{
+					_ASSERTE(gnServerPID==0);
+					// Alloc hidden console and attach it to our VS GUI window
+					if (gpDefTerm->AllocHiddenConsole(true))
+					{
+						_ASSERTE(gnServerPID!=0);
+						// Удалось создать скрытое консольное окно, приложение можно запустить в нем
+						mb_HiddenConsoleDetachNeed = TRUE;
+						// Do not need to "Show" it
+						lpSI->wShowWindow = SW_HIDE;
+						lpSI->dwFlags |= STARTF_USESHOWWINDOW;
+						// Reuse existing console
+						(*anCreationFlags) &= ~CREATE_NEW_CONSOLE;
+					}
+				}
+			}
+			break; // IMAGE_SUBSYSTEM_WINDOWS_CUI
+		}
+	}
 
 	if (lbRc || mpwsz_TempRetParam)
 	{
@@ -2652,7 +2685,7 @@ void CShellProc::OnCreateProcessFinished(BOOL abSucceeded, PROCESS_INFORMATION *
 				UNREFERENCED_PARAMETER(iHookRc);
 			}
 			// Starting debugging session from VS (for example)?
-			else if (mb_DebugWasRequested)
+			else if (mb_DebugWasRequested && !mb_HiddenConsoleDetachNeed)
 			{
 				// We need to start console app directly, but it will be nice
 				// to attach it to the existing or new ConEmu window.
@@ -2723,6 +2756,12 @@ void CShellProc::OnCreateProcessFinished(BOOL abSucceeded, PROCESS_INFORMATION *
 			if (!mb_WasSuspended)
 				ResumeThread(lpPI->hThread);
 		}
+	}
+
+	if (mb_HiddenConsoleDetachNeed)
+	{
+		FreeConsole();
+		SetServerPID(0);
 	}
 }
 

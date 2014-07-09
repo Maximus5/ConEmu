@@ -3997,6 +3997,55 @@ void CheckNeedSkipWowChange(LPCWSTR asCmdLine)
 }
 #endif
 
+// When DefTerm debug console is started for Win32 app
+// we need to allocate hidden console, and there is no
+// active process, until parent DevEnv successfully starts
+// new debugging process session
+DWORD WaitForRootConsoleProcess(DWORD nTimeout)
+{
+	if (pfnGetConsoleProcessList==NULL)
+	{
+		_ASSERTE(FALSE && "Attach to console app was requested, but required WinXP or higher!");
+		return 0;
+	}
+
+	_ASSERTE(gbCreatingHiddenConsole);
+	_ASSERTE(ghConWnd!=NULL);
+
+	DWORD nFoundPID = 0;
+	DWORD nStart = GetTickCount(), nDelta = 0;
+	DWORD nProcesses[20] = {}, nProcCount, i;
+
+	PROCESSENTRY32 pi = {};
+	GetProcessInfo(gnSelfPID, &pi);
+
+	while (!nFoundPID && (nDelta < nTimeout))
+	{
+		Sleep(50);
+		nProcCount = pfnGetConsoleProcessList(nProcesses, countof(nProcesses));
+
+		for (i = 0; i < nProcCount; i++)
+		{
+			DWORD nPID = nProcesses[i];
+			if (nPID && (nPID != gnSelfPID) && (nPID != pi.th32ParentProcessID))
+			{
+				nFoundPID = nPID;
+				break;
+			}
+		}
+
+		nDelta = (GetTickCount() - nStart);
+	}
+
+	if (!nFoundPID)
+	{
+		ShowWindow(ghConWnd, SW_SHOWNORMAL);
+		_ASSERTE(FALSE && "Was unable to find starting process");
+	}
+
+	return nFoundPID;
+}
+
 // Разбор параметров командной строки
 int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackgroundTab*/)
 {
@@ -4314,6 +4363,11 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 			}
 
 			gpSrv->dwRootProcess = wcstoul(pszStart, &pszEnd, 10);
+
+			if ((gpSrv->dwRootProcess == 0) && gbCreatingHiddenConsole)
+			{
+				gpSrv->dwRootProcess = WaitForRootConsoleProcess(30000);
+			}
 
 			// --
 			//if (gpSrv->dwRootProcess)
