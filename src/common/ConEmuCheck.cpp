@@ -318,10 +318,13 @@ HANDLE ExecuteOpenPipe(const wchar_t* szPipeName, wchar_t (&szErr)[MAX_PATH*2], 
 		// Сделаем так, чтобы хотя бы пару раз он попробовал повторить
 		if ((nTries <= 0) || (nDuration > nOpenPipeTimeout))
 		{
-			msprintf(szErr, countof(szErr), L"%s.%u: CreateFile(%s) failed, code=%u%s%s",
+			#ifdef _DEBUG
+			msprintf(szErr, countof(szErr), L"%s.%u\nCreateFile(%s) failed\ncode=%u%s%s",
 			          ModuleName(szModule), GetCurrentProcessId(), szPipeName, dwErr,
 			          (nTries <= 0) ? L", Tries" : L"", (nDuration > nOpenPipeTimeout) ? L", Duration" : L"");
-			_ASSERTEX(FALSE && "Pipe open failed with timeout!");
+			//_ASSERTEX(FALSE && "Pipe open failed with timeout!");
+			MessageBox(NULL, szErr, L"Pipe open failed with timeout!", MB_ICONSTOP|MB_SYSTEMMODAL);
+			#endif
 			SetLastError(dwErr);
 			return NULL;
 		}
