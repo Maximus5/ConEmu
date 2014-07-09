@@ -105,11 +105,17 @@ void CDefaultTerminal::CheckRegisterOsStartup()
 	HKEY hk;
 	DWORD nSize; //, nType = 0;
 	wchar_t szCurValue[MAX_PATH*3] = {};
-	wchar_t szNeedValue[MAX_PATH+80] = {};
+	wchar_t szNeedValue[MAX_PATH*2+80] = {};
 	LONG lRc;
 	bool bPrevTSA = false;
 
-	_wsprintf(szNeedValue, SKIPLEN(countof(szNeedValue)) L"\"%s\" /SetDefTerm /Detached /MinTSA%s", gpConEmu->ms_ConEmuExe,
+	LPCWSTR pszConfigName = gpSetCls->GetConfigName();
+	if (pszConfigName && !*pszConfigName)
+		pszConfigName = NULL;
+
+	_wsprintf(szNeedValue, SKIPLEN(countof(szNeedValue)) L"\"%s\" %s%s%s/SetDefTerm /Detached /MinTSA%s",
+		gpConEmu->ms_ConEmuExe,
+		pszConfigName ? L"/Config \"" : L"", pszConfigName ? pszConfigName : L"", pszConfigName ? L"\" " : L"",
 		gpSet->isRegisterOnOsStartupTSA ? L"" : L" /Exit");
 
 	if (IsRegisteredOsStartup(szCurValue, countof(szCurValue)-1, &bPrevTSA) && *szCurValue)
