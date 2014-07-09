@@ -36,7 +36,7 @@ BEGIN
         BEGIN
             VALUE "FileDescription", "ConEmu Installer"
             VALUE "FileVersion", CONEMUVERS
-            VALUE "LegalCopyright", "(C) 2011 Maximus5"
+            VALUE "LegalCopyright", "(C) 2011-present Maximus5"
             VALUE "OriginalFilename", "ConEmuSetup.exe"
             VALUE "ProductName", "ConEmu"
             VALUE "ProductVersion", CONEMUVERS

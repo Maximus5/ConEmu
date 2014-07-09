@@ -73,7 +73,7 @@ BEGIN
         BEGIN
             VALUE "FileDescription", "VerInfo for ConEmu Thumbnails"
             VALUE "FileVersion", CONEMUVERS
-            VALUE "LegalCopyright", "Copyright © 2010 Maximus5"
+            VALUE "LegalCopyright", "(C) 2010-present Maximus5"
             VALUE "OriginalFilename", "pe"
             VALUE "ProductName", "ConEmu Thumbnails"
             VALUE "ProductVersion", CONEMUVERS

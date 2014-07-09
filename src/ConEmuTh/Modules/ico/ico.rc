@@ -73,7 +73,7 @@ BEGIN
         BEGIN
             VALUE "FileDescription", "ICO for ConEmu Thumbnails"
             VALUE "FileVersion", "1.0"
-            VALUE "LegalCopyright", "Copyright © 2010 Maximus5"
+            VALUE "LegalCopyright", "(C) 2010-present Maximus5"
             VALUE "OriginalFilename", "ico"
             VALUE "ProductName", "ConEmu Thumbnails"
             VALUE "ProductVersion", "1.0"

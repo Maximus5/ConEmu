@@ -73,7 +73,7 @@ BEGIN
         BEGIN
             VALUE "FileDescription", "ConEmu Underlines for FAR manager 1.7x, 2.x, 3.x" CONEMUPLTFRM
             VALUE "FileVersion", CONEMUVERS
-            VALUE "LegalCopyright", "(C) 2010 Maximus5"
+            VALUE "LegalCopyright", "(C) 2010-present Maximus5"
             VALUE "OriginalFilename", "ConEmuLn.dll"
             VALUE "ProductName", "ConEmu"
             VALUE "ProductVersion", CONEMUVERS

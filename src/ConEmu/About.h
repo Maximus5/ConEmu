@@ -165,7 +165,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"By default this program launches \"Far.exe\" (if exists) or \"tcc.exe\"/\"cmd.exe\".\r\n" \
 	L"\r\n" \
 	L"\x00A9 2006-2008 Zoin (based on console emulator by SEt)\r\n" \
-	CECOPYRIGHTSTRING_W /*\x00A9 2009-2011 ConEmu.Maximus5@gmail.com*/ L"\r\n" \
+	CECOPYRIGHTSTRING_W /*\x00A9 2009-present ConEmu.Maximus5@gmail.com*/ L"\r\n" \
 	L"\r\n" \
 	L"Online documentation: http://code.google.com/p/conemu-maximus5/wiki/ConEmu\r\n" \
 	L"\r\n" \

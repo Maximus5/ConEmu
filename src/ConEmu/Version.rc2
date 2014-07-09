@@ -28,7 +28,7 @@ BEGIN
         BEGIN
             VALUE "FileDescription", "Console Emulator" CONEMUPLTFRM
             VALUE "FileVersion", CONEMUVERS
-            VALUE "LegalCopyright", "(C) 2006-2008 Zoin; (C) 2009-2011 Maximus5"
+            VALUE "LegalCopyright", "(C) 2006-2008 Zoin; (C) 2009-present Maximus5"
             VALUE "OriginalFilename", "ConEmu.exe"
             VALUE "ProductName", "ConEmu"
             VALUE "ProductVersion", CONEMUVERS

@@ -73,7 +73,7 @@ BEGIN
         BEGIN
             VALUE "FileDescription", "ConEmu console server" CONEMUPLTFRM
             VALUE "FileVersion", CONEMUVERS
-            VALUE "LegalCopyright", "(C) 2009-2011 Maximus5"
+            VALUE "LegalCopyright", "(C) 2009-present Maximus5"
             VALUE "OriginalFilename", "ConEmuCD*.dll"
             VALUE "ProductName", "ConEmu"
             VALUE "ProductVersion", CONEMUVERS

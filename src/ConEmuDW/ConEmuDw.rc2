@@ -32,7 +32,7 @@ BEGIN
         BEGIN
             VALUE "FileDescription", "ConEmu R/W handler" CONEMUPLTFRM
             VALUE "FileVersion", CONEMUVERS
-            VALUE "LegalCopyright", "(C) 2009-2011 Maximus5"
+            VALUE "LegalCopyright", "(C) 2009-present Maximus5"
             VALUE "OriginalFilename", "ConEmuDw*.dll"
             VALUE "ProductName", "ConEmu"
             VALUE "ProductVersion", CONEMUVERS
