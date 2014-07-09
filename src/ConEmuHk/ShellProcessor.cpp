@@ -2657,11 +2657,18 @@ void CShellProc::OnCreateProcessFinished(BOOL abSucceeded, PROCESS_INFORMATION *
 				// We need to start console app directly, but it will be nice
 				// to attach it to the existing or new ConEmu window.
 				size_t cchMax = MAX_PATH+80;
+				CmdArg szSrvArgs, szNewCon;
+				cchMax += gpDefTerm->GetSrvAddArgs(false, szSrvArgs, szNewCon);
+				_ASSERTE(szNewCon.IsEmpty());
+
 				wchar_t* pszCmdLine = (wchar_t*)malloc(cchMax*sizeof(*pszCmdLine));
 				if (pszCmdLine)
 				{
 					_ASSERTEX(m_SrvMapping.ComSpec.ConEmuBaseDir[0]!=0);
-					msprintf(pszCmdLine, cchMax, L"\"%s\\%s\" /ATTACH /CONPID=%u", m_SrvMapping.ComSpec.ConEmuBaseDir, WIN3264TEST(L"ConEmuC.exe",L"ConEmuC64.exe"), lpPI->dwProcessId);
+					msprintf(pszCmdLine, cchMax, L"\"%s\\%s\" /ATTACH /CONPID=%u%s",
+						m_SrvMapping.ComSpec.ConEmuBaseDir, WIN3264TEST(L"ConEmuC.exe",L"ConEmuC64.exe"),
+						lpPI->dwProcessId,
+						(LPCWSTR)szSrvArgs);
 					STARTUPINFO si = {sizeof(si)};
 					PROCESS_INFORMATION pi = {};
 					bAttachCreated = CreateProcess(NULL, pszCmdLine, NULL, NULL, FALSE, CREATE_NO_WINDOW, NULL, m_SrvMapping.ComSpec.ConEmuBaseDir, &si, &pi);
