@@ -2593,6 +2593,23 @@ BOOL CShellProc::OnCreateProcessW(LPCWSTR* asFile, LPCWSTR* asCmdLine, LPCWSTR* 
 				}
 			}
 			break; // IMAGE_SUBSYSTEM_WINDOWS_CUI
+
+		case IMAGE_SUBSYSTEM_WINDOWS_GUI:
+			if (!((*anCreationFlags) & (DEBUG_ONLY_THIS_PROCESS|DEBUG_PROCESS))
+				&& !((*anCreationFlags) & CREATE_NEW_CONSOLE))
+			{
+				// Запуск msvsmon.exe?
+				LPCWSTR pszExeName = PointToName(ms_ExeTmp);
+				if (pszExeName && (lstrcmpi(pszExeName, L"msvsmon.exe") == 0))
+				{
+					// Теоретически, хорошо бы хукать только те отладчики, которые запускаются
+					// для работы с локальными процессами: msvsmon.exe ... /hostname [::1] /port ... /__pseudoremote
+					mb_PostInjectWasRequested = TRUE;
+					if (!mb_WasSuspended)
+						(*anCreationFlags) |= CREATE_SUSPENDED;
+				}
+			}
+			break; // IMAGE_SUBSYSTEM_WINDOWS_GUI
 		}
 	}
 
@@ -2683,6 +2700,9 @@ void CShellProc::OnCreateProcessFinished(BOOL abSucceeded, PROCESS_INFORMATION *
 				int iHookRc = gpDefTerm->StartDefTermHooker(lpPI->dwProcessId, lpPI->hProcess);
 				//SafeCloseHandle(hProcess); // This is a handle of started "ConEmuC.exe /DEFTRM=..."
 				UNREFERENCED_PARAMETER(iHookRc);
+				// Отпустить процесс
+				if (!mb_WasSuspended)
+					ResumeThread(lpPI->hThread);
 			}
 			// Starting debugging session from VS (for example)?
 			else if (mb_DebugWasRequested && !mb_HiddenConsoleDetachNeed)
