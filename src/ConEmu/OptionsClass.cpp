@@ -282,7 +282,7 @@ CSettings::CSettings()
 	// Go
 	isResetBasicSettings = false;
 	isFastSetupDisabled = false;
-	isDontCascade = false;
+	isDontCascade = false; // -nocascade or -dontcascade switch
 	ibDisableSaveSettingsOnExit = false;
 	isAdvLogging = 0;
 	m_ActivityLoggingType = glt_None; mn_ActivityCmdStartTick = 0;
