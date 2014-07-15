@@ -42,6 +42,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ShObjIdl_Part.h"
 #endif // __GNUC__
 
+#include "../common/Monitors.h"
 #include "../ConEmuCD/ExitCodes.h"
 #include "../ConEmuCD/GuiHooks.h"
 #include "../ConEmuPlugin/FarDefaultMacros.h"
@@ -1084,23 +1085,8 @@ void CSettings::SettingsLoaded(SettingsLoadedFlags slfFlags, LPCWSTR pszCmdLine 
 	{
 		// Сдвиг при каскаде
 		int nShift = (GetSystemMetrics(SM_CYSIZEFRAME)+GetSystemMetrics(SM_CYCAPTION))*1.5;
-		// Координаты и размер виртуальной рабочей области
-		RECT rcScreen = MakeRect(800,600);
-		int nMonitors = GetSystemMetrics(SM_CMONITORS);
-
-		if (nMonitors > 1)
-		{
-			// Размер виртуального экрана по всем мониторам
-			rcScreen.left = GetSystemMetrics(SM_XVIRTUALSCREEN); // may be <0
-			rcScreen.top  = GetSystemMetrics(SM_YVIRTUALSCREEN);
-			rcScreen.right = rcScreen.left + GetSystemMetrics(SM_CXVIRTUALSCREEN);
-			rcScreen.bottom = rcScreen.top + GetSystemMetrics(SM_CYVIRTUALSCREEN);
-			TODO("Хорошо бы исключить из рассмотрения Taskbar...");
-		}
-		else
-		{
-			SystemParametersInfo(SPI_GETWORKAREA, 0, &rcScreen, 0);
-		}
+		// Monitor information
+		MONITORINFO mi;
 
 		HWND hPrev = isDontCascade ? NULL : FindWindow(VirtualConsoleClassMain, NULL);
 
@@ -1118,12 +1104,13 @@ void CSettings::SettingsLoaded(SettingsLoadedFlags slfFlags, LPCWSTR pszCmdLine 
 			}
 
 			// Screen coordinates!
-			RECT rcWnd; GetWindowRect(hPrev, &rcWnd);
+			RECT rcWnd = {}; GetWindowRect(hPrev, &rcWnd);
+			GetNearestMonitorInfo(&mi, NULL, &rcWnd);
 
 			if (wpl.showCmd == SW_HIDE || !IsWindowVisible(hPrev)
 			        || wpl.showCmd == SW_SHOWMINIMIZED || wpl.showCmd == SW_SHOWMAXIMIZED
 			        /* Max в режиме скрытия заголовка */
-			        || (wpl.rcNormalPosition.left<rcScreen.left || wpl.rcNormalPosition.top<rcScreen.top))
+			        || (wpl.rcNormalPosition.left<mi.rcWork.left || wpl.rcNormalPosition.top<mi.rcWork.top))
 			{
 				hPrev = FindWindowEx(NULL, hPrev, VirtualConsoleClassMain, NULL);
 				continue;
