@@ -1081,7 +1081,7 @@ void CSettings::SettingsLoaded(SettingsLoadedFlags slfFlags, LPCWSTR pszCmdLine 
 		gpConEmu->SetWindowMode((ConEmuWindowMode)gpSet->_WindowMode);
 	}
 
-	if (gpSet->wndCascade && (ghWnd == NULL))
+	if (gpSet->wndCascade && (ghWnd == NULL) && (gpConEmu->WindowMode == wmNormal) && gpConEmu->IsSizePosFree(gpConEmu->WindowMode))
 	{
 		// Сдвиг при каскаде
 		int nShift = (GetSystemMetrics(SM_CYSIZEFRAME)+GetSystemMetrics(SM_CYCAPTION))*1.5;
@@ -1090,6 +1090,7 @@ void CSettings::SettingsLoaded(SettingsLoadedFlags slfFlags, LPCWSTR pszCmdLine 
 
 		HWND hPrev = isDontCascade ? NULL : FindWindow(VirtualConsoleClassMain, NULL);
 
+		// Find first visible existing ConEmu window with normal state
 		while (hPrev)
 		{
 			/*if (Is Iconic(hPrev) || Is Zoomed(hPrev)) {
