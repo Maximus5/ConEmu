@@ -296,12 +296,13 @@ CConEmuMain::CConEmuMain()
 		ms_ConEmuBuild, WIN3264TEST(32,64), RELEASEDEBUGTEST(L"",L"D"));
 
 	mp_Menu = new CConEmuMenu;
-	mp_TabBar = NULL; /*m_Macro = NULL;*/ mp_Tip = NULL;
+	mp_Tip = NULL;
 	mp_Status = new CStatus;
+	mp_TabBar = new CTabBarClass;
 	mp_DefTrm = new CDefaultTerminal;
 	mp_Inside = NULL;
 	mp_Find = new CEFindDlg;
-	mp_RunQueue = new CRunQueue();
+	mp_RunQueue = new CRunQueue;
 
 	ms_ConEmuAliveEvent[0] = 0;	mb_AliveInitialized = FALSE;
 	mh_ConEmuAliveEvent = NULL; mb_ConEmuAliveOwned = false; mn_ConEmuAliveEventErr = 0;
@@ -1300,7 +1301,7 @@ LPCWSTR CConEmuMain::ConEmuCExeFull(LPCWSTR asCmdLine/*=NULL*/)
 
 BOOL CConEmuMain::Init()
 {
-	_ASSERTE(mp_TabBar == NULL);
+	_ASSERTE(mp_TabBar != NULL);
 
 	// Чтобы не блокировать папку запуска - CD
 	SetCurrentDirectory(ms_ConEmuExeDir);
@@ -1322,7 +1323,6 @@ BOOL CConEmuMain::Init()
 	LoadIcons();
 
 	mp_Tip = new CToolTip();
-	mp_TabBar = new CTabBarClass();
 	//m_Child = new CConEmuChild();
 	//m_Back = new CConEmuBack();
 	//m_Macro = new CConEmuMacro();
