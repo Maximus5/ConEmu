@@ -9369,8 +9369,22 @@ bool CRealConsole::DuplicateRoot(bool bSkipMsg /*= false*/, bool bRunAsAdmin /*=
 					_wcscpy_c(pIn->Duplicate.sCommand, cchCmdLen+1, pszCmdRedefined);
 
 				// Go
-				CESERVER_REQ* pOut = ExecuteHkCmd(p->ProcessID, pIn, ghWnd);
-				int nFRc = (pOut->DataSize() >= sizeof(DWORD)) ? (int)(pOut->dwData[0]) : -100;
+				int nFRc = -1;
+				CESERVER_REQ* pOut = NULL;
+				if (m_Args.InjectsDisable != crb_On)
+				{
+					pOut = ExecuteHkCmd(p->ProcessID, pIn, ghWnd);
+					nFRc = (pOut->DataSize() >= sizeof(DWORD)) ? (int)(pOut->dwData[0]) : -100;
+				}
+
+				// If ConEmuHk was not enabled in the console or due to another reason
+				// duplicate root was failed - just start new console with the same options
+				if ((nFRc != 0) && args.pszSpecialCmd && *args.pszSpecialCmd)
+				{
+					pRCon->RequestStartup(true);
+					nFRc = 0;
+				}
+
 				if (nFRc != 0)
 				{
 					if (!bSkipMsg)
