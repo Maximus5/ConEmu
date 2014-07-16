@@ -58,17 +58,26 @@ CRunQueue::~CRunQueue()
 {
 	if (mh_Thread)
 	{
+		Terminate();
+		SafeCloseHandle(mh_Thread);
+	}
+
+	DeleteCriticalSection(&mcs_QueueLock);
+}
+
+void CRunQueue::Terminate()
+{
+	if (this && mh_Thread)
+	{
 		mb_Terminate = true;
 		SetEvent(mh_AdvanceEvent);
+
 		DWORD nWait = WaitForSingleObject(mh_Thread, RUNQUEUE_WAIT_TERMINATION);
 		if (nWait == WAIT_TIMEOUT)
 		{
 			TerminateThread(mh_Thread, 100);
 		}
-		CloseHandle(mh_Thread);
 	}
-
-	DeleteCriticalSection(&mcs_QueueLock);
 }
 
 void CRunQueue::RequestRConStartup(CRealConsole* pRCon)

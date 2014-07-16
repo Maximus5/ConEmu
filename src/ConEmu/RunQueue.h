@@ -36,6 +36,7 @@ class CRunQueue
 public:
 	CRunQueue();
 	~CRunQueue();
+	void Terminate();
 
 public:
 	void RequestRConStartup(CRealConsole* pRCon);
