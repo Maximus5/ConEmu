@@ -9396,6 +9396,8 @@ bool CRealConsole::DuplicateRoot(bool bSkipMsg /*= false*/, bool bRunAsAdmin /*=
 						_wsprintf(szConfirm, SKIPLEN(countof(szConfirm)) L"Duplicate tab with root '%s' failed, code=%i", p->Name, nFRc);
 						DisplayLastError(szConfirm, -1);
 					}
+					// Do not leave 'hunging' tab if duplicating was failed
+					pRCon->CloseConsole(false, false, false);
 				}
 				else
 				{
