@@ -1917,8 +1917,12 @@ wrap:
 		}
 	}
 
-	// А это чтобы не осталось висеть окно ConEmu, раз всё уже закрыто
-	gpConEmu->OnRConStartedSuccess(NULL);
+	// Только если процесс был успешно запущен
+	if (pRCon->mb_StartResult)
+	{
+		// А это чтобы не осталось висеть окно ConEmu, раз всё уже закрыто
+		gpConEmu->OnRConStartedSuccess(NULL);
+	}
 
 	ShutdownGuiStep(L"StopSignal");
 
