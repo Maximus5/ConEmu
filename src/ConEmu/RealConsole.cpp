@@ -9389,7 +9389,7 @@ bool CRealConsole::DuplicateRoot(bool bSkipMsg /*= false*/, bool bRunAsAdmin /*=
 				{
 					if (!bSkipMsg)
 					{
-						_wsprintf(szConfirm, SKIPLEN(countof(szConfirm)) L"Duplicate tab with root '%s' failed, code=%i?", p->Name, nFRc);
+						_wsprintf(szConfirm, SKIPLEN(countof(szConfirm)) L"Duplicate tab with root '%s' failed, code=%i", p->Name, nFRc);
 						DisplayLastError(szConfirm, -1);
 					}
 				}
