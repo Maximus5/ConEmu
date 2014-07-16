@@ -3134,6 +3134,10 @@ HRGN CConEmuMain::CreateWindowRgn(bool abTestOnly/*=false*/,bool abRoundTitle/*=
 void CConEmuMain::Destroy()
 {
 	LogString(L"CConEmuMain::Destroy()");
+
+	// Ensure "RCon starting queue" is terminated
+	mp_RunQueue->Terminate();
+
 	CVConGroup::StopSignalAll();
 
 	if (gbInDisplayLastError)
@@ -3169,6 +3173,10 @@ CConEmuMain::~CConEmuMain()
 	_ASSERTE(ghWnd==NULL || !IsWindow(ghWnd));
 	MCHKHEAP;
 	//ghWnd = NULL;
+
+	// Ensure "RCon starting queue" is terminated
+	if (mp_RunQueue)
+		mp_RunQueue->Terminate();
 
 	SafeDelete(mp_DefTrm);
 
@@ -11733,9 +11741,11 @@ LRESULT CConEmuMain::OnDestroy(HWND hWnd)
 	WARNING("Подозрение на зависание в некоторых случаях");
 	session.SetSessionNotification(false);
 
+	// Ensure "RCon starting queue" is terminated
+	mp_RunQueue->Terminate();
+
 	// Нужно проверить, вдруг окно закрылось без нашего ведома (InsideIntegration)
 	CVConGroup::OnDestroyConEmu();
-
 
 	if (mp_AttachDlg)
 	{
