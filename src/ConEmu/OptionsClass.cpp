@@ -1087,6 +1087,8 @@ void CSettings::SettingsLoaded(SettingsLoadedFlags slfFlags, LPCWSTR pszCmdLine 
 		int nShift = (GetSystemMetrics(SM_CYSIZEFRAME)+GetSystemMetrics(SM_CYCAPTION))*1.5;
 		// Monitor information
 		MONITORINFO mi;
+		// Prefered window size
+		int nDefWidth = 0, nDefHeight = 0;
 
 		HWND hPrev = isDontCascade ? NULL : FindWindow(VirtualConsoleClassMain, NULL);
 
@@ -1117,8 +1119,23 @@ void CSettings::SettingsLoaded(SettingsLoadedFlags slfFlags, LPCWSTR pszCmdLine 
 				continue;
 			}
 
-			gpConEmu->wndX = rcWnd.left + nShift;
-			gpConEmu->wndY = rcWnd.top + nShift;
+			if (!nDefWidth || !nDefHeight)
+			{
+				RECT rcDef = gpConEmu->GetDefaultRect();
+				nDefWidth = rcDef.right - rcDef.left;
+				nDefHeight = rcDef.bottom - rcDef.top;
+			}
+
+			if (nDefWidth > 0 && nDefHeight > 0)
+			{
+				gpConEmu->wndX = min(rcWnd.left + nShift, mi.rcWork.right - nDefWidth);
+				gpConEmu->wndY = min(rcWnd.top + nShift, mi.rcWork.bottom - nDefHeight);
+			}
+			else
+			{
+				gpConEmu->wndX = rcWnd.left + nShift;
+				gpConEmu->wndY = rcWnd.top + nShift;
+			}
 			break; // нашли, сдвинулись, выходим
 		}
 	}
