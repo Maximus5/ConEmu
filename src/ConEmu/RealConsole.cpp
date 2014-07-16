@@ -351,8 +351,7 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 	if (mb_NeedStartProcess)
 	{
 		// Push request to "startup queue"
-		mb_WaitingRootStartup = TRUE;
-		gpConEmu->mp_RunQueue->RequestRConStartup(this);
+		RequestStartup();
 	}
 
 	return true;
@@ -8160,6 +8159,21 @@ BOOL CRealConsole::RecreateProcess(RConStartArgs *args)
 	return true;
 }
 
+void CRealConsole::RequestStartup(bool bForce)
+{
+	_ASSERTE(this);
+	// Created as detached?
+	if (bForce)
+	{
+		mb_NeedStartProcess = true;
+		mb_WasStartDetached = false;
+		m_Args.Detached = crb_Off;
+	}
+	// Push request to "startup queue"
+	mb_WaitingRootStartup = TRUE;
+	gpConEmu->mp_RunQueue->RequestRConStartup(this);
+}
+
 // И запустить ее заново
 BOOL CRealConsole::RecreateProcessStart()
 {
@@ -8210,11 +8224,8 @@ BOOL CRealConsole::RecreateProcessStart()
 		// Взведем флажочек, т.к. консоль как бы отключилась от нашего VCon
 		mb_WasStartDetached = TRUE;
 
-		{
-			// Push request to "startup queue"
-			mb_WaitingRootStartup = TRUE;
-			gpConEmu->mp_RunQueue->RequestRConStartup(this);
-		}
+		// Push request to "startup queue"
+		RequestStartup();
 
 		lbRc = StartMonitorThread();
 

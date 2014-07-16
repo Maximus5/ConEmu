@@ -805,6 +805,7 @@ class CRealConsole
 		void LogInput(INPUT_RECORD* pRec);
 		//void LogPacket(CESERVER_REQ* pInfo);
 		BOOL RecreateProcessStart();
+		void RequestStartup(bool bForce = false);
 		// Прием и обработка пакетов
 		//MSection csPKT; //DWORD ncsTPKT;
 		//DWORD mn_LastProcessedPkt; //HANDLE mh_PacketArrived;
