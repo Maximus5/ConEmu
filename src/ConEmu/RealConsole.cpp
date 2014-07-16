@@ -9342,6 +9342,7 @@ bool CRealConsole::DuplicateRoot(bool bSkipMsg /*= false*/, bool bRunAsAdmin /*=
 			wchar_t* pszCmdRedefined = bRootCmdRedefined ? lstrdup(args.pszSpecialCmd) : NULL;
 
 			args.Detached = crb_On;
+			args.eSplit = RConStartArgs::eSplitNone;
 			CVirtualConsole *pVCon = gpConEmu->CreateCon(&args);
 
 			if (pVCon)
