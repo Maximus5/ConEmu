@@ -906,8 +906,13 @@ void CTabBarClass::Update(BOOL abPosted/*=FALSE*/)
 
 RECT CTabBarClass::GetMargins()
 {
-	_ASSERTE(this);
 	RECT rcNewMargins = {0,0};
+
+	if (!this)
+	{
+		_ASSERTE(this);
+		return rcNewMargins;
+	}
 
 	if (_active || (gpSet->isTabs == 1))
 	{
