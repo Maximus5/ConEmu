@@ -9345,8 +9345,15 @@ bool CRealConsole::DuplicateRoot(bool bSkipMsg /*= false*/, bool bRunAsAdmin /*=
 			// Нужно оставить там "new_console", иначе не отключается подтверждение закрытия например
 			wchar_t* pszCmdRedefined = bRootCmdRedefined ? lstrdup(args.pszSpecialCmd) : NULL;
 
+			// Mark as detached, because the new console will be started from active shell process,
+			// but not from ConEmu (yet, behavior planned to be changed)
 			args.Detached = crb_On;
+
+			// Reset "split" settings, the actual must be passed within asNewConsole switches
+			// and the will be processed during the following gpConEmu->CreateCon(&args) call
 			args.eSplit = RConStartArgs::eSplitNone;
+
+			// Create (detached) tab ready for attach
 			CVirtualConsole *pVCon = gpConEmu->CreateCon(&args);
 
 			if (pVCon)

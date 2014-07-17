@@ -7296,14 +7296,6 @@ bool CConEmuMain::ConActivate(int nCon)
 	return CVConGroup::ConActivate(nCon);
 }
 
-// args должен быть выделен через "new"
-// по завершении - на него будет вызван "delete"
-void CConEmuMain::PostCreateCon(RConStartArgs *pArgs)
-{
-	_ASSERTE((pArgs->pszStartupDir == NULL) || (*pArgs->pszStartupDir != 0));
-	PostMessage(ghWnd, mn_MsgCreateCon, mn_MsgCreateCon+1, (LPARAM)pArgs);
-}
-
 bool CConEmuMain::CreateWnd(RConStartArgs *args)
 {
 	if (!args || !args->pszSpecialCmd || !*args->pszSpecialCmd)
@@ -7384,6 +7376,7 @@ bool CConEmuMain::CreateWnd(RConStartArgs *args)
 	return (bStart != FALSE);
 }
 
+// Also, called from mn_MsgCreateCon
 CVirtualConsole* CConEmuMain::CreateCon(RConStartArgs *args, bool abAllowScripts /*= false*/, bool abForceCurConsole /*= false*/)
 {
 	_ASSERTE(args!=NULL);
@@ -7397,6 +7390,14 @@ CVirtualConsole* CConEmuMain::CreateCon(RConStartArgs *args, bool abAllowScripts
 	CVirtualConsole* pVCon = CVConGroup::CreateCon(args, abAllowScripts, abForceCurConsole);
 
 	return pVCon;
+}
+
+// args должен быть выделен через "new"
+// по завершении - на него будет вызван "delete"
+void CConEmuMain::PostCreateCon(RConStartArgs *pArgs)
+{
+	_ASSERTE((pArgs->pszStartupDir == NULL) || (*pArgs->pszStartupDir != 0));
+	PostMessage(ghWnd, mn_MsgCreateCon, mn_MsgCreateCon+1, (LPARAM)pArgs);
 }
 
 LPCWSTR CConEmuMain::ParseScriptLineOptions(LPCWSTR apszLine, bool* rpbAsAdmin, bool* rpbSetActive, size_t cchNameMax, wchar_t* rsName/*[MAX_RENAME_TAB_LEN]*/)

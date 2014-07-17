@@ -600,6 +600,7 @@ bool CConEmuCtrl::key_DuplicateRoot(DWORD VkMod, bool TestOnly, const ConEmuHotK
 	if (TestOnly)
 		return true;
 
+	// Almost the same as GuiMacro Shell("new_console:I") except of duplicate confirmation setting
 	pRCon->DuplicateRoot();
 	return true;
 }
