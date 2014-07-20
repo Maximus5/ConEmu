@@ -6464,6 +6464,16 @@ void CRealConsole::SetFarPID(DWORD nFarPID)
 	{
 		DEBUGSTRFARPID(szDbg);
 		tabs.RefreshFarPID((mn_ProgramStatus & CES_FARACTIVE) ? nFarPID : 0);
+
+		if ((GetActiveTabType() & fwt_TypeMask) == fwt_Panels)
+		{
+			CTab panels(__FILE__,__LINE__);
+			if ((tabs.m_Tabs.GetTabByIndex(0, panels)) && (panels->Type() == fwt_Panels))
+			{
+				panels->SetName(GetPanelTitle());
+			}
+		}
+
 		mp_VCon->Update(true);
 	}
 }
