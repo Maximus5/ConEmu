@@ -4756,6 +4756,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	    ClearTypePrm ? ClearTypeVal : -1
 	);
 
+	if (gpSet->wndCascade)
+	{
+		gpConEmu->CascadedPosFix();
+	}
+
 ///////////////////////////////////
 
 	// Нет смысла проверять и искать, если наш экземпляр - первый.

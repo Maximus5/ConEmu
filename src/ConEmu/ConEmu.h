@@ -612,6 +612,7 @@ class CConEmuMain :
 		RECT CalcRect(enum ConEmuRect tWhat, CVirtualConsole* pVCon=NULL);
 		RECT CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmuRect tFrom, CVirtualConsole* pVCon=NULL, enum ConEmuMargins tTabAction=CEM_TAB);
 		bool FixWindowRect(RECT& rcWnd, DWORD nBorders /* enum of ConEmuBorders */, bool bPopupDlg = false);
+		void CascadedPosFix();
 		void CheckFocus(LPCWSTR asFrom);
 		bool CheckRequiredFiles();
 		void CheckUpdates(BOOL abShowMessages);

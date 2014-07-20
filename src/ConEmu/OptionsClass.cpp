@@ -1081,65 +1081,6 @@ void CSettings::SettingsLoaded(SettingsLoadedFlags slfFlags, LPCWSTR pszCmdLine 
 		gpConEmu->SetWindowMode((ConEmuWindowMode)gpSet->_WindowMode);
 	}
 
-	if (gpSet->wndCascade && (ghWnd == NULL) && (gpConEmu->WindowMode == wmNormal) && gpConEmu->IsSizePosFree(gpConEmu->WindowMode))
-	{
-		// Сдвиг при каскаде
-		int nShift = (GetSystemMetrics(SM_CYSIZEFRAME)+GetSystemMetrics(SM_CYCAPTION))*1.5;
-		// Monitor information
-		MONITORINFO mi;
-		// Prefered window size
-		int nDefWidth = 0, nDefHeight = 0;
-
-		HWND hPrev = isDontCascade ? NULL : FindWindow(VirtualConsoleClassMain, NULL);
-
-		// Find first visible existing ConEmu window with normal state
-		while (hPrev)
-		{
-			/*if (Is Iconic(hPrev) || Is Zoomed(hPrev)) {
-				hPrev = FindWindowEx(NULL, hPrev, VirtualConsoleClassMain, NULL);
-				continue;
-			}*/
-			WINDOWPLACEMENT wpl = {sizeof(WINDOWPLACEMENT)}; // Workspace coordinates!!!
-
-			if (!GetWindowPlacement(hPrev, &wpl))
-			{
-				break;
-			}
-
-			// Screen coordinates!
-			RECT rcWnd = {}; GetWindowRect(hPrev, &rcWnd);
-			GetNearestMonitorInfo(&mi, NULL, &rcWnd);
-
-			if (wpl.showCmd == SW_HIDE || !IsWindowVisible(hPrev)
-			        || wpl.showCmd == SW_SHOWMINIMIZED || wpl.showCmd == SW_SHOWMAXIMIZED
-			        /* Max в режиме скрытия заголовка */
-			        || (wpl.rcNormalPosition.left<mi.rcWork.left || wpl.rcNormalPosition.top<mi.rcWork.top))
-			{
-				hPrev = FindWindowEx(NULL, hPrev, VirtualConsoleClassMain, NULL);
-				continue;
-			}
-
-			if (!nDefWidth || !nDefHeight)
-			{
-				RECT rcDef = gpConEmu->GetDefaultRect();
-				nDefWidth = rcDef.right - rcDef.left;
-				nDefHeight = rcDef.bottom - rcDef.top;
-			}
-
-			if (nDefWidth > 0 && nDefHeight > 0)
-			{
-				gpConEmu->wndX = min(rcWnd.left + nShift, mi.rcWork.right - nDefWidth);
-				gpConEmu->wndY = min(rcWnd.top + nShift, mi.rcWork.bottom - nDefHeight);
-			}
-			else
-			{
-				gpConEmu->wndX = rcWnd.left + nShift;
-				gpConEmu->wndY = rcWnd.top + nShift;
-			}
-			break; // нашли, сдвинулись, выходим
-		}
-	}
-
 	if (!gpConEmu->InCreateWindow())
 	{
 		gpConEmu->OnGlobalSettingsChanged();
