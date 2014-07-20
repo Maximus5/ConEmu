@@ -11267,9 +11267,11 @@ void CRealConsole::OnTitleChanged()
 
 	CTab panels(__FILE__,__LINE__);
 	if (tabs.m_Tabs.GetTabByIndex(0, panels))
-	if (panels->Type() == fwt_Panels)
 	{
-		panels->SetName(GetPanelTitle());
+		if (panels->Type() == fwt_Panels)
+		{
+			panels->SetName(GetPanelTitle());
+		}
 	}
 
 	// заменил на GetProgress, т.к. он еще учитывает mn_PreWarningProgress
