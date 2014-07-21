@@ -95,6 +95,8 @@ typedef struct _CONSOLE_SELECTION_INFO
 #define CEREPORTBUG    L"http://code.google.com/p/conemu-maximus5/issues/entry"
 #define CEREPORTCRASH  L"http://code.google.com/p/conemu-maximus5/issues/entry"
 #define CEWHATSNEW     L"http://code.google.com/p/conemu-maximus5/wiki/Whats_New"
+#define CEMSBUGWIKI    L"http://code.google.com/p/conemu-maximus5/wiki/MicrosoftBugs"
+#define CEHOOKSWIKI    L"http://code.google.com/p/conemu-maximus5/wiki/ConEmuHk"
 #define CEDONATEPAGE   L"https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=3LV8XTRBK9K4E"
 #define CEFLATTRPAGE   L"http://flattr.com/thing/2002773/Maximus5ConEmu-on-GitHub"
 
