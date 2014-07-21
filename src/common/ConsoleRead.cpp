@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2013 Maximus5
+Copyright (c) 2009-2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -32,6 +32,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 //#define DUMP_TEST_READS
 #undef DUMP_TEST_READS
+
+// For reporting purposes
+LONG gnInReadConsoleOutput = 0;
 
 BOOL AreCpInfoLeads(DWORD nCP, UINT* pnMaxCharSize)
 {
@@ -120,8 +123,10 @@ BOOL ReadConsoleOutputEx(HANDLE hOut, CHAR_INFO *pData, COORD bufSize, SMALL_REC
 
 	if (!bDBCS_CP && (nCurSize <= MAX_CONREAD_SIZE))
 	{
+		InterlockedIncrement(&gnInReadConsoleOutput);
 		if (ReadConsoleOutputW(hOut, pData, bufSize, bufCoord, &rgn))
 			lbRc = TRUE;
+		InterlockedDecrement(&gnInReadConsoleOutput);
 		nTick3 = GetTickCount();
 	}
 
@@ -153,7 +158,9 @@ BOOL ReadConsoleOutputEx(HANDLE hOut, CHAR_INFO *pData, COORD bufSize, SMALL_REC
 				bSbiTmp = GetConsoleScreenBufferInfo(hOut, &sbi_tmp);
 				#endif
 
+				InterlockedIncrement(&gnInReadConsoleOutput);
 				lbRc = ReadConsoleOutputW(hOut, pLine, bufSize, bufCoord, &rgn);
+				InterlockedDecrement(&gnInReadConsoleOutput);
 
 				#ifdef DUMP_TEST_READS
 				UNREFERENCED_PARAMETER(sbi_tmp.dwSize.Y);
@@ -179,7 +186,9 @@ BOOL ReadConsoleOutputEx(HANDLE hOut, CHAR_INFO *pData, COORD bufSize, SMALL_REC
 				bSbiTmp = GetConsoleScreenBufferInfo(hOut, &sbi_tmp);
 				#endif
 
+				InterlockedIncrement(&gnInReadConsoleOutput);
 				lbRc = ReadConsoleOutputW(hOut, pLine, bufSize, bufCoord, &rgn);
+				InterlockedDecrement(&gnInReadConsoleOutput);
 
 				#ifdef DUMP_TEST_READS
 				UNREFERENCED_PARAMETER(sbi_tmp.dwSize.Y);

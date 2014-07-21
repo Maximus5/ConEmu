@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2013 Maximus5
+Copyright (c) 2009-2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -35,6 +35,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // Issue 924: "30000" was too large
 #define MAX_CONREAD_SIZE 8000 // in "cells"
+
+// For reporting purposes
+extern LONG gnInReadConsoleOutput;
 
 BOOL AreCpInfoLeads(DWORD nCP, UINT* pnMaxCharSize);
 BOOL ReadConsoleOutputEx(HANDLE hOut, CHAR_INFO *pData, COORD bufSize, SMALL_RECT rgn);
