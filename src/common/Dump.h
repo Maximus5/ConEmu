@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2013 Maximus5
+Copyright (c) 2013-2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -43,7 +43,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 // Возвращает текст с информацией о пути к сохраненному дампу
-DWORD CreateDumpForReport(LPEXCEPTION_POINTERS ExceptionInfo, wchar_t (&szFullInfo)[1024], LPWSTR pszComment = NULL)
+DWORD CreateDumpForReport(LPEXCEPTION_POINTERS ExceptionInfo, wchar_t (&szFullInfo)[1024], wchar_t (&dmpfile)[MAX_PATH+64], LPWSTR pszComment = NULL)
 {
 	DWORD dwErr = 0;
 	const wchar_t *pszError = NULL;
@@ -54,7 +54,7 @@ DWORD CreateDumpForReport(LPEXCEPTION_POINTERS ExceptionInfo, wchar_t (&szFullIn
 	//bool bDumpSucceeded = false;
 	HANDLE hDmpFile = NULL;
 	HMODULE hDbghelp = NULL;
-	wchar_t dmpfile[MAX_PATH+64] = L"";
+	ZeroStruct(dmpfile);
 	typedef BOOL (WINAPI* MiniDumpWriteDump_t)(HANDLE hProcess, DWORD ProcessId, HANDLE hFile, MINIDUMP_TYPE DumpType,
 	        PMINIDUMP_EXCEPTION_INFORMATION ExceptionParam, PMINIDUMP_USER_STREAM_INFORMATION UserStreamParam,
 	        PMINIDUMP_CALLBACK_INFORMATION CallbackParam);
@@ -224,13 +224,9 @@ wrap:
 			wcscpy_c(what, L"Assertion");
 		}
 
-		_wsprintf(szFullInfo, SKIPLEN(countof(szFullInfo)) L"%s was occurred (%s, PID=%u)\r\nConEmu build %02u%02u%02u%s %s\r\n\r\n"
-			L"Memory dump was saved to\r\n%s\r\n\r\n"
-			L"Please Zip it and send to developer (via DropBox etc.)\r\n"
-			L"%s" /*gsReportCrash -> http://code.google.com/p/conemu-maximus5/... */,
+		_wsprintf(szFullInfo, SKIPLEN(countof(szFullInfo)) L"%s was occurred (%s, PID=%u)\r\nConEmu build %02u%02u%02u%s %s",
 			what, pszExeName, GetCurrentProcessId(),
-			(MVV_1%100),MVV_2,MVV_3,_T(MVV_4a), WIN3264TEST(L"",L"64"),
-			dmpfile, CEREPORTCRASH);
+			(MVV_1%100),MVV_2,MVV_3,_T(MVV_4a), WIN3264TEST(L"",L"64"));
 	}
 	if (hDmpFile != INVALID_HANDLE_VALUE && hDmpFile != NULL)
 	{

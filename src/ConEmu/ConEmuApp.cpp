@@ -2222,8 +2222,10 @@ void AssertBox(LPCTSTR szText, LPCTSTR szFile, UINT nLine, LPEXCEPTION_POINTERS 
 	DWORD    nPreCode = GetLastError();
 	wchar_t  szAssertInfo[4096], szCodes[128];
 	wchar_t  szFullInfo[1024] = L"";
+	wchar_t  szDmpFile[MAX_PATH+64] = L"";
 	size_t   cchMax = (szText ? _tcslen(szText) : 0) + (szFile ? _tcslen(szFile) : 0) + 300;
 	wchar_t* pszFull = (cchMax <= countof(szAssertInfo)) ? szAssertInfo : (wchar_t*)malloc(cchMax*sizeof(*pszFull));
+	wchar_t* pszDumpMessage = NULL;
 
 	LPCWSTR  pszTitle = gpConEmu ? gpConEmu->GetDefaultTitle() : NULL;
 	if (!pszTitle || !*pszTitle) pszTitle = L"?ConEmu?";
@@ -2273,27 +2275,32 @@ void AssertBox(LPCTSTR szText, LPCTSTR szFile, UINT nLine, LPEXCEPTION_POINTERS 
 			//EXCEPTION_POINTERS ex0 = {&er0};
 			//if (!ExceptionInfo) ExceptionInfo = &ex0;
 
-			CreateDumpForReport(ExceptionInfo, szFullInfo, pszFull);
+			CreateDumpForReport(ExceptionInfo, szFullInfo, szDmpFile, pszFull);
 		}
 
 		if (szFullInfo[0])
 		{
-			wchar_t* pszAdd = lstrmerge(pszFull, L"\r\n\r\n", szFullInfo);
-			CopyToClipboard(pszAdd ? pszAdd : szFullInfo);
-			SafeFree(pszAdd);
+			wchar_t* pszFileMsg = szDmpFile[0] ? lstrmerge(L"\r\n\r\n" L"Memory dump was saved to\r\n", szDmpFile,
+				L"\r\n\r\n" L"Please Zip it and send to developer (via DropBox etc.)\r\n",
+				CEREPORTCRASH /* http://code.google.com/p/conemu-maximus5/... */) : NULL;
+			pszDumpMessage = lstrmerge(pszFull, L"\r\n\r\n", szFullInfo, pszFileMsg);
+			CopyToClipboard(pszDumpMessage ? pszDumpMessage : szFullInfo);
+			SafeFree(pszFileMsg);
 		}
 		else if (pszFull)
 		{
 			CopyToClipboard(pszFull);
 		}
 
-		ConEmuAbout::OnInfo_ReportCrash(szFullInfo[0] ? szFullInfo : NULL);
+		ConEmuAbout::OnInfo_ReportCrash(pszDumpMessage ? pszDumpMessage : pszFull);
 	}
 
 	if (pszFull && pszFull != szAssertInfo)
 	{
 		free(pszFull);
 	}
+
+	SafeFree(pszDumpMessage);
 }
 
 BOOL gbInDisplayLastError = FALSE;
@@ -3491,9 +3498,17 @@ void GnuUnitTests()
 LONG WINAPI CreateDumpOnException(LPEXCEPTION_POINTERS ExceptionInfo)
 {
 	wchar_t szFull[1024] = L"";
-	DWORD dwErr = CreateDumpForReport(ExceptionInfo, szFull);
-	wchar_t szAdd[1200];
+	wchar_t szDmpFile[MAX_PATH+64] = L"";
+	DWORD dwErr = CreateDumpForReport(ExceptionInfo, szFull, szDmpFile);
+	wchar_t szAdd[1500];
 	wcscpy_c(szAdd, szFull);
+	if (szDmpFile[0])
+	{
+		wcscat_c(szAdd, L"\r\n\r\n" L"Memory dump was saved to\r\n");
+		wcscat_c(szAdd, szDmpFile);
+		wcscat_c(szAdd, L"\r\n\r\n" L"Please Zip it and send to developer (via DropBox etc.)\r\n");
+		wcscat_c(szAdd, CEREPORTCRASH /* http://code.google.com/p/conemu-maximus5/... */);
+	}
 	wcscat_c(szAdd, L"\r\n\r\nPress <Yes> to copy this text to clipboard\r\nand open project web page");
 
 	int nBtn = DisplayLastError(szAdd, dwErr ? dwErr : -1, MB_YESNO|MB_ICONSTOP|MB_SYSTEMMODAL);

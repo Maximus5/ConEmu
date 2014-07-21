@@ -664,22 +664,62 @@ bool CopyToClipboard(LPCWSTR asText)
 LPTOP_LEVEL_EXCEPTION_FILTER gpfnPrevExFilter = NULL;
 LONG WINAPI CreateDumpOnException(LPEXCEPTION_POINTERS ExceptionInfo)
 {
-	wchar_t szFull[1024] = L"";
-	DWORD dwErr = CreateDumpForReport(ExceptionInfo, szFull);
-	wchar_t szAdd[1200];
-	wcscpy_c(szAdd, szFull);
-	wcscat_c(szAdd, L"\r\n\r\nPress <Yes> to copy this text to clipboard\r\nand open project web page");
+	bool bKernelTrap = (gnInReadConsoleOutput > 0);
+	wchar_t szExcptInfo[1024] = L"";
+	wchar_t szDmpFile[MAX_PATH+64] = L"";
+	wchar_t szAdd[2000];
+
+	DWORD dwErr = CreateDumpForReport(ExceptionInfo, szExcptInfo, szDmpFile);
+
+	szAdd[0] = 0;
+
+	if (bKernelTrap)
+	{
+		wcscat_c(szAdd, L"Due to Microsoft kernel bug the crash was occurred\r\n");
+		wcscat_c(szAdd, CEMSBUGWIKI /* http://code.google.com/p/conemu-maximus5/wiki/... */);
+		wcscat_c(szAdd, L"\r\n\r\n" L"The only possible workaround: enabling ‘Inject ConEmuHk’\r\n");
+		wcscat_c(szAdd, CEHOOKSWIKI /* http://code.google.com/p/conemu-maximus5/wiki/... */);
+		wcscat_c(szAdd, L"\r\n\r\n");
+	}
+
+	wcscat_c(szAdd, szExcptInfo);
+
+	if (szDmpFile[0])
+	{
+		wcscat_c(szAdd, L"\r\n\r\n" L"Memory dump was saved to\r\n");
+		wcscat_c(szAdd, szDmpFile);
+
+		if (!bKernelTrap)
+		{
+			wcscat_c(szAdd, L"\r\n\r\n" L"Please Zip it and send to developer (via DropBox etc.)\r\n");
+			wcscat_c(szAdd, CEREPORTCRASH /* http://code.google.com/p/conemu-maximus5/... */);
+		}
+	}
+
+	wcscat_c(szAdd, L"\r\n\r\nPress <Yes> to copy this text to clipboard");
+	if (!bKernelTrap)
+	{
+		wcscat_c(szAdd, L"\r\nand open project web page");
+	}
+
+	// Message title
 	wchar_t szTitle[100], szExe[MAX_PATH] = L"", *pszExeName;
 	GetModuleFileName(NULL, szExe, countof(szExe));
 	pszExeName = (wchar_t*)PointToName(szExe);
 	if (pszExeName && lstrlen(pszExeName) > 63) pszExeName[63] = 0;
 	_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"%s crashed, PID=%u", pszExeName ? pszExeName : L"<process>", GetCurrentProcessId());
 
-	int nBtn = MessageBox(NULL, szAdd, szTitle, MB_YESNO|MB_ICONSTOP|MB_SYSTEMMODAL);
+	DWORD nMsgFlags = MB_YESNO|MB_ICONSTOP|MB_SYSTEMMODAL
+		| (bKernelTrap ? MB_DEFBUTTON2 : 0);
+
+	int nBtn = MessageBox(NULL, szAdd, szTitle, nMsgFlags);
 	if (nBtn == IDYES)
 	{
-		CopyToClipboard(szFull);
-		ShellExecute(NULL, L"open", CEREPORTCRASH, NULL, NULL, SW_SHOWNORMAL);
+		CopyToClipboard(szAdd);
+		if (!bKernelTrap)
+		{
+			ShellExecute(NULL, L"open", CEREPORTCRASH, NULL, NULL, SW_SHOWNORMAL);
+		}
 	}
 
 	LONG lExRc = EXCEPTION_EXECUTE_HANDLER;
