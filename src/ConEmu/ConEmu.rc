@@ -231,6 +231,7 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,73,140,8
     CONTROL         "Desktop mode",cbDesktopMode,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,158,73,73,8
     CONTROL         "Always on top",cbAlwaysOnTop,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,234,73,78,8
+    CONTROL         "Show balloon help tooltips",cbShowHelpTooltips,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,85,142,8
     GROUPBOX        "Scrollbar",IDC_STATIC,4,104,319,29
     CONTROL         "Hide",rbScrollbarHide,"Button",BS_AUTORADIOBUTTON | WS_GROUP,10,117,30,8
     CONTROL         "Show",rbScrollbarShow,"Button",BS_AUTORADIOBUTTON,48,117,35,8
@@ -257,7 +258,6 @@ BEGIN
     CONTROL         "Auto-hide on focus lose",cbQuakeAutoHide,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,131,214,94,8
     RTEXT           "Animation:",stQuakeAnimation,227,214,43,8
     EDITTEXT        tQuakeAnimation,273,212,40,12,ES_AUTOHSCROLL
-    CONTROL         "Show balloon help tooltips",cbShowHelpTooltips,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,85,142,8
 END
 
 IDD_SPG_CONFIRM DIALOGEX 0, 0, 328, 235
