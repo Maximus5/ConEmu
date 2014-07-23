@@ -8296,7 +8296,7 @@ BOOL ProcessSrvCommand(CESERVER_REQ& in, CESERVER_REQ** out)
 	BOOL lbRc;
 	MCHKHEAP;
 
-	switch(in.hdr.nCmd)
+	switch (in.hdr.nCmd)
 	{
 		//case CECMD_GETCONSOLEINFO:
 		//case CECMD_REQUESTCONSOLEINFO:

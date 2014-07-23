@@ -3396,7 +3396,7 @@ BOOL CorrectVisibleRect(CONSOLE_SCREEN_BUFFER_INFO* pSbi)
 		nTop = 0;
 		nBottom = pSbi->dwSize.Y - 1;
 	}
-	else if (gpSrv->nTopVisibleLine!=-1)
+	else if (gpSrv->nTopVisibleLine != -1)
 	{
 		// А для 'буферного' режима позиция может быть заблокирована
 		nTop = gpSrv->nTopVisibleLine;
