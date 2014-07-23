@@ -13,6 +13,21 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
 
+2014.07.23
+[%] Issue 1608: DefTerm. /config parameter registered for startup was cleared after OS restart.
+[*] DefTerm. Started debugging session of Win32 app from VS was ignored DefTerm options.
+[*] DefTerm. Support flickerless start of Win32 console app debugging session (same bitness as devenv).
+[*] Make Win+S hotkey for ‘Duplicate root’ by default.
+[*] Ensure cascaded window will not pass outside of monitor working area.
+[*] Allow ‘Duplicate root’ even if injects were disabled.
+[*] Do not leave ‘hunging’ tab if duplicating was failed.
+[%] Tab title was not changed sometimes during command execution from Far panels.
+[*] Due to many reports crashdump message was changed (aka MicrosoftBugs, ConEmuHk).
+[*] Immediate reaction on "ConEmuFakeDT" changing in batch files (7a8e61f regression).
+[*] Issue 1379: Use ‘Appearance -> Animation’ in ‘normal’ mode too.
+[*] Many internal changes.
+
+
 2014.07.07
 [+] Show SystemMenu button on the toolbar (RClick opens Settings dialog).
 [%] Issue 1125: ‘Run as’ was hooked in DefTerm if ConEmu window is already opened only.
