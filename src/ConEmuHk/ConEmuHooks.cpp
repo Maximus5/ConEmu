@@ -437,6 +437,8 @@ BOOL WINAPI OnStretchBlt(HDC hdcDest, int nXOriginDest, int nYOriginDest, int nW
 //BOOL WINAPI OnSetConsoleMode(HANDLE hConsoleHandle, DWORD dwMode);
 //#endif
 //#endif
+BOOL WINAPI OnSetEnvironmentVariableA(LPCSTR lpName, LPCSTR lpValue);
+BOOL WINAPI OnSetEnvironmentVariableW(LPCWSTR lpName, LPCWSTR lpValue);
 DWORD WINAPI OnGetEnvironmentVariableA(LPCSTR lpName, LPSTR lpBuffer, DWORD nSize);
 DWORD WINAPI OnGetEnvironmentVariableW(LPCWSTR lpName, LPWSTR lpBuffer, DWORD nSize);
 #if 0
@@ -577,6 +579,8 @@ bool InitHooksCommon()
 			kernel32
 		},
 		#endif
+		{(void*)OnSetEnvironmentVariableA,	"SetEnvironmentVariableA",	kernel32},
+		{(void*)OnSetEnvironmentVariableW,	"SetEnvironmentVariableW",	kernel32},
 		{(void*)OnGetEnvironmentVariableA,	"GetEnvironmentVariableA",	kernel32},
 		{(void*)OnGetEnvironmentVariableW,	"GetEnvironmentVariableW",	kernel32},
 		#if 0
@@ -5949,6 +5953,42 @@ void CheckVariables()
 {
 	// Пока что он проверяет и меняет только ENV_CONEMUANSI_VAR_W ("ConEmuANSI")
 	GetConMap(FALSE);
+}
+
+BOOL WINAPI OnSetEnvironmentVariableA(LPCSTR lpName, LPCSTR lpValue)
+{
+	typedef BOOL (WINAPI* OnSetEnvironmentVariableA_t)(LPCSTR lpName, LPCSTR lpValue);
+	ORIGINALFAST(SetEnvironmentVariableA);
+
+	if (lpName && *lpName)
+	{
+		if (lstrcmpiA(lpName, ENV_CONEMUFAKEDT_VAR_A) == 0)
+		{
+			MultiByteToWideChar(CP_OEMCP, 0, lpValue ? lpValue : "", -1, gszTimeEnvVarSave, countof(gszTimeEnvVarSave)-1);
+		}
+	}
+
+	BOOL b = F(SetEnvironmentVariableA)(lpName, lpValue);
+
+	return b;
+}
+
+BOOL WINAPI OnSetEnvironmentVariableW(LPCWSTR lpName, LPCWSTR lpValue)
+{
+	typedef BOOL (WINAPI* OnSetEnvironmentVariableW_t)(LPCWSTR lpName, LPCWSTR lpValue);
+	ORIGINALFAST(SetEnvironmentVariableW);
+
+	if (lpName && *lpName)
+	{
+		if (lstrcmpi(lpName, ENV_CONEMUFAKEDT_VAR_W) == 0)
+		{
+			lstrcpyn(gszTimeEnvVarSave, lpValue ? lpValue : L"", countof(gszTimeEnvVarSave));
+		}
+	}
+
+	BOOL b = F(SetEnvironmentVariableW)(lpName, lpValue);
+
+	return b;
 }
 
 DWORD WINAPI OnGetEnvironmentVariableA(LPCSTR lpName, LPSTR lpBuffer, DWORD nSize)
