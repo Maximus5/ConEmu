@@ -233,6 +233,12 @@ bool gbDosBoxProcess = false;
 bool gbSkipVirtualAllocErr = false;
 /* ************ Don't show VirtualAlloc errors ************ */
 
+/* ************ Hooking time functions ************ */
+DWORD gnTimeEnvVarLastCheck = 0;
+wchar_t gszTimeEnvVarSave[32] = L"";
+/* ************ Hooking time functions ************ */
+
+
 /* ************ From Entry.cpp ************ */
 #if defined(__GNUC__)
 extern "C"
@@ -6028,20 +6034,18 @@ bool GetTime(bool bSystem, LPSYSTEMTIME lpSystemTime)
 	bool bHacked = false;
 	wchar_t szEnvVar[32] = L""; // 2013-01-01T15:16:17.95
 
-	static wchar_t szEnvVarSave[32] = L"";
-	static DWORD nEnvVarLastCheck = 0;
 	DWORD nCurTick = GetTickCount();
-	DWORD nCheckDelta = nCurTick - nEnvVarLastCheck;
+	DWORD nCheckDelta = nCurTick - gnTimeEnvVarLastCheck;
 	const DWORD nCheckDeltaMax = 1000;
-	if (!nEnvVarLastCheck || (nCheckDelta >= nCheckDeltaMax))
+	if (!gnTimeEnvVarLastCheck || (nCheckDelta >= nCheckDeltaMax))
 	{
-		nEnvVarLastCheck = nCurTick;
+		gnTimeEnvVarLastCheck = nCurTick;
 		GetEnvironmentVariable(ENV_CONEMUFAKEDT_VAR_W, szEnvVar, countof(szEnvVar));
-		lstrcpyn(szEnvVarSave, szEnvVar, countof(szEnvVarSave));
+		lstrcpyn(gszTimeEnvVarSave, szEnvVar, countof(gszTimeEnvVarSave));
 	}
-	else if (*szEnvVarSave)
+	else if (*gszTimeEnvVarSave)
 	{
-		lstrcpyn(szEnvVar, szEnvVarSave, countof(szEnvVar));
+		lstrcpyn(szEnvVar, gszTimeEnvVarSave, countof(szEnvVar));
 	}
 	else
 	{
