@@ -1019,6 +1019,7 @@
 #define gbConfirmMisc                   2687
 #define cbDupConfirm                    2688
 #define cbConfirmDetach                 2689
+#define gbQuakeAnimation                2690
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
@@ -1027,7 +1028,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        225
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2690
+#define _APS_NEXT_CONTROL_VALUE         2691
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif

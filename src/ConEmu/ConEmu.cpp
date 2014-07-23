@@ -4580,7 +4580,7 @@ BOOL CConEmuMain::ShowWindow(int anCmdShow, DWORD nAnimationMS /*= (DWORD)-1*/)
 
 	if (nAnimationMS == (DWORD)-1)
 	{
-		nAnimationMS = gpSet->isQuakeStyle ? gpSet->nQuakeAnimation : QUAKEANIMATION_DEF;
+		nAnimationMS = (((int)gpSet->nQuakeAnimation) >= 0) ? gpSet->nQuakeAnimation : QUAKEANIMATION_DEF;
 	}
 
 	BOOL lbRc = FALSE;
@@ -4601,7 +4601,7 @@ BOOL CConEmuMain::ShowWindow(int anCmdShow, DWORD nAnimationMS /*= (DWORD)-1*/)
 	// When Caption is visible - Windows animates window itself.
 	// Also, animation brakes transparency
 	DWORD nStyleEx = GetWindowLong(ghWnd, GWL_EXSTYLE);
-	if (!gpSet->isQuakeStyle && gpSet->isCaptionHidden() && !(nStyleEx & WS_EX_LAYERED) )
+	if (nAnimationMS && !gpSet->isQuakeStyle && gpSet->isCaptionHidden() && !(nStyleEx & WS_EX_LAYERED) )
 	{
 		// Well, Caption is hidden, Windows does not animates our window.
 		if (anCmdShow == SW_HIDE)
@@ -4731,10 +4731,6 @@ bool CConEmuMain::SetQuakeMode(BYTE NewQuakeMode, ConEmuWindowMode nNewWindowMod
 	if (hWnd2)
 	{
 		EnableWindow(GetDlgItem(hWnd2, cbQuakeAutoHide), gpSet->isQuakeStyle);
-		//EnableWindow(GetDlgItem(hWnd2, tHideCaptionAlwaysFrame), gpSet->isQuakeStyle); -- always enabled on "Appearance" page!
-		//EnableWindow(GetDlgItem(hWnd2, stHideCaptionAlwaysFrame), gpSet->isQuakeStyle);
-		EnableWindow(GetDlgItem(hWnd2, stQuakeAnimation), gpSet->isQuakeStyle);
-		EnableWindow(GetDlgItem(hWnd2, tQuakeAnimation), gpSet->isQuakeStyle);
 		gpSetCls->checkDlgButton(hWnd2, cbQuakeStyle, gpSet->isQuakeStyle!=0);
 		gpSetCls->checkDlgButton(hWnd2, cbQuakeAutoHide, gpSet->isQuakeStyle==2);
 

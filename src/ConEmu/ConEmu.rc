@@ -253,10 +253,11 @@ BEGIN
     CONTROL         "Always show numbers [n/m]",cbNumberInCaption,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,181,117,8
     CONTROL         "Hide caption of child GUI windows started in ConEmu",cbHideChildCaption,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,131,181,189,8
-    GROUPBOX        "Quake style",IDC_STATIC,4,201,319,29
+    GROUPBOX        "Quake style",IDC_STATIC,4,201,236,29
     CONTROL         "Quake style slide down",cbQuakeStyle,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,214,100,8
     CONTROL         "Auto-hide on focus lose",cbQuakeAutoHide,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,131,214,94,8
-    RTEXT           "Animation:",stQuakeAnimation,227,214,43,8
+    GROUPBOX        "Animation time",gbQuakeAnimation,247,201,76,29
+    RTEXT           "ms:",stQuakeAnimation,250,214,20,8
     EDITTEXT        tQuakeAnimation,273,212,40,12,ES_AUTOHSCROLL
 END
 
