@@ -5058,7 +5058,7 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 					else
 					{
 						int nShiftRows = (con.m_sbi.dwSize.Y - nHeight) - con.m_sbi.srWindow.Top;
-						_ASSERTE(nShiftRows>=0);
+
 						if (nShiftRows > 0)
 						{
 							#ifdef _DEBUG
@@ -5071,6 +5071,12 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 							bUseColorData = FALSE;
 							bStartUseColorData = TRUE;
 						}
+						#ifdef _DEBUG
+						else if (nShiftRows < 0)
+						{
+							_ASSERTE(nShiftRows>=0);
+						}
+						#endif
 					}
 				}
 			}
