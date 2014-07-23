@@ -323,7 +323,12 @@ HANDLE ExecuteOpenPipe(const wchar_t* szPipeName, wchar_t (&szErr)[MAX_PATH*2], 
 			          ModuleName(szModule), GetCurrentProcessId(), szPipeName, dwErr,
 			          (nTries <= 0) ? L", Tries" : L"", (nDuration > nOpenPipeTimeout) ? L", Duration" : L"");
 			//_ASSERTEX(FALSE && "Pipe open failed with timeout!");
-			MessageBox(NULL, szErr, L"Pipe open failed with timeout!", MB_ICONSTOP|MB_SYSTEMMODAL);
+			int iBtn = MessageBox(NULL, szErr, L"Pipe open failed with timeout!", MB_ICONSTOP|MB_SYSTEMMODAL|MB_RETRYCANCEL);
+			if (iBtn == IDRETRY)
+			{
+				nTries = 1;
+				continue;
+			}
 			#endif
 			SetLastError(dwErr);
 			return NULL;
