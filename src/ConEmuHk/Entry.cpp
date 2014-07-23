@@ -1168,6 +1168,14 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 		{
 			TODO("Show error message?");
 		}
+		#if 0
+		else
+		{
+			wchar_t szText[80]; msprintf(szText, countof(szText), L"PID=%u, ConEmuHk, DefTerm enabled", GetCurrentProcessId());
+			wchar_t szPath[MAX_PATH]; GetModuleFileName(NULL, szPath, countof(szPath));
+			MessageBox(NULL, szPath, szText, MB_ICONINFORMATION|MB_SYSTEMMODAL);
+		}
+		#endif
 	}
 
 	//if (!gbSkipInjects)
