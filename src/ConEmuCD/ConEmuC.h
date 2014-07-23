@@ -150,6 +150,7 @@ enum AttachModeEnum
 extern AttachModeEnum gbAttachMode; // сервер запущен НЕ из conemu.exe (а из плагина, из CmdAutoAttach, или -new_console)
 extern BOOL    gbAlternativeAttach; // TRUE - Подцепиться к существующей консоли, без внедрения в процесс ConEmuHk.dll
 extern BOOL    gbAlienMode;  // сервер НЕ является владельцем консоли (корневым процессом этого консольного окна)
+extern BOOL    gbDontInjectConEmuHk;
 extern BOOL    gbForceHideConWnd;
 extern DWORD   gdwMainThreadId;
 //int       gnBufferHeight = 0;

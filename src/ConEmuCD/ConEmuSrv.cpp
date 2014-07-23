@@ -1219,7 +1219,7 @@ int ServerInit(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/)
 		if (iRc != 0)
 			goto wrap;
 		// ConEmuHk еще не загружен, а он необходим для многих функций
-		if (!gbAlternativeAttach && gbNoCreateProcess && gbAlienMode)
+		if (!gbAlternativeAttach && gbNoCreateProcess && gbAlienMode && !gbDontInjectConEmuHk)
 		{
 			if (gpSrv->dwRootProcess)
 			{
