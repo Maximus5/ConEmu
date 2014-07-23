@@ -1445,7 +1445,9 @@ void DllStop()
 		DLOGEND();
 	}
 
-	if (gbSelfIsRootConsoleProcess)
+	// Do not send CECMD_CMDSTARTSTOP(sst_AppStop) to server
+	// when that is 'DefTerm' process - avoid termination lagging
+	if (gbSelfIsRootConsoleProcess && !gpDefTerm)
 	{
 		// To avoid cmd-execute lagging - send Start/Stop info only for root(!) process
 		DLOG0("SendStopped",0);
@@ -1945,6 +1947,10 @@ WARNING("Попробовать SendStarted пыполнять не из DllMain
 
 void SendStarted()
 {
+	// When SendStarted is called in DefTerm mode (gbPrepareDefaultTerminal)
+	// for '*.vshost.exe' process, there is neither console nor server process yet
+	// So, server will not receive CECMD_CMDSTARTSTOP(sst_AppStart) message
+
 	if (gnServerPID == 0)
 	{
 		gbNonGuiMode = TRUE; // Не посылать ExecuteGuiCmd при выходе. Это не наша консоль
