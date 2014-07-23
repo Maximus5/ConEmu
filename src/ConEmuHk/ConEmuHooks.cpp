@@ -6036,7 +6036,7 @@ bool GetTime(bool bSystem, LPSYSTEMTIME lpSystemTime)
 	if (!nEnvVarLastCheck || (nCheckDelta >= nCheckDeltaMax))
 	{
 		nEnvVarLastCheck = nCurTick;
-		GetEnvironmentVariable(ENV_CONEMUFAKEDT_VAR, szEnvVar, countof(szEnvVar));
+		GetEnvironmentVariable(ENV_CONEMUFAKEDT_VAR_W, szEnvVar, countof(szEnvVar));
 		lstrcpyn(szEnvVarSave, szEnvVar, countof(szEnvVarSave));
 	}
 	else if (*szEnvVarSave)

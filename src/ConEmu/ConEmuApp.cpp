@@ -3533,7 +3533,7 @@ void RaiseTestException()
 // Clear some rubbish in the environment
 void ResetEnvironmentVariables()
 {
-	SetEnvironmentVariable(ENV_CONEMUFAKEDT_VAR, NULL);
+	SetEnvironmentVariable(ENV_CONEMUFAKEDT_VAR_W, NULL);
 	SetEnvironmentVariable(ENV_CONEMU_HOOKS, NULL);
 }
 
