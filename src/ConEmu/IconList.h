@@ -38,6 +38,7 @@ protected:
 		BOOL bAdmin;
 		int nIconIdx;
 	};
+	CRITICAL_SECTION mcs;
 	MArray<TabIconCache> m_Icons;
 	int CreateTabIconInt(LPCWSTR asIconDescr, bool bAdmin, LPCWSTR asWorkDir);
 public:
