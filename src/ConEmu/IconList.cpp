@@ -134,6 +134,13 @@ int CIconList::CreateTabIcon(LPCWSTR asIconDescr, bool bAdmin, LPCWSTR asWorkDir
 	}
 
 	iCreatedIcon = CreateTabIconInt(asIconDescr, bAdmin, asWorkDir);
+
+	if (iCreatedIcon == -1)
+	{
+		// To avoid numerous CreateTabIconInt calls - just remember "No icon" for that asIconDescr
+		TabIconCache DummyIcon = {lstrdup(asIconDescr), bAdmin, -1};
+		m_Icons.push_back(DummyIcon);
+	}
 wrap:
 	return iCreatedIcon;
 }
