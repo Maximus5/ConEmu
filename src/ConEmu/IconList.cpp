@@ -119,6 +119,8 @@ int CIconList::CreateTabIcon(LPCWSTR asIconDescr, bool bAdmin, LPCWSTR asWorkDir
 	if (!asIconDescr || !*asIconDescr)
 		return GetTabIcon(bAdmin);
 
+	int iCreatedIcon = -1;
+
 	for (INT_PTR i = 0; i < m_Icons.size(); i++)
 	{
 		const TabIconCache& icn = m_Icons[i];
@@ -127,9 +129,17 @@ int CIconList::CreateTabIcon(LPCWSTR asIconDescr, bool bAdmin, LPCWSTR asWorkDir
 		if (lstrcmpi(icn.pszIconDescr, asIconDescr) != 0)
 			continue;
 		// Already was created!
-		return icn.nIconIdx;
+		iCreatedIcon = icn.nIconIdx;
+		goto wrap;
 	}
 
+	iCreatedIcon = CreateTabIconInt(asIconDescr, bAdmin, asWorkDir);
+wrap:
+	return iCreatedIcon;
+}
+
+int CIconList::CreateTabIconInt(LPCWSTR asIconDescr, bool bAdmin, LPCWSTR asWorkDir)
+{
 	wchar_t* pszExpanded = ExpandEnvStr(asIconDescr);
 
 	// Need to be created!
