@@ -3819,7 +3819,7 @@ bool IsExportEnvVarAllowed(LPCWSTR szName)
 		return false;
 
 	// Хотя некоторые внутренние переменные менять можно
-	if (lstrcmpi(szName, ENV_CONEMU_SLEEP_INDICATE) == 0)
+	if (lstrcmpi(szName, ENV_CONEMU_SLEEP_INDICATE_W) == 0)
 		return true;
 
 	// Но большинство внутренних переменных ConEmu запрещено менять (экспортировать)

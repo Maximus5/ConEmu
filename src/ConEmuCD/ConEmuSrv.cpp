@@ -773,7 +773,7 @@ void ServerInitEnvVars()
 	//nRc = GetEnvironmentVariable(ENV_CONEMU_HOOKS, szValue, countof(szValue));
 	//if ((nRc == 0) && (GetLastError() == ERROR_ENVVAR_NOT_FOUND)) ...
 
-	SetEnvironmentVariable(ENV_CONEMU_HOOKS, ENV_CONEMU_HOOKS_ENABLED);
+	SetEnvironmentVariable(ENV_CONEMU_HOOKS_W, ENV_CONEMU_HOOKS_ENABLED);
 
 	if (gnRunMode == RM_SERVER)
 	{
@@ -4044,7 +4044,7 @@ BOOL CheckIndicateSleepNum()
 	if (!nLastCheckTick || ((GetTickCount() - nLastCheckTick) >= 3000))
 	{
 		wchar_t szVal[32];
-		DWORD nLen = GetEnvironmentVariable(ENV_CONEMU_SLEEP_INDICATE, szVal, countof(szVal));
+		DWORD nLen = GetEnvironmentVariable(ENV_CONEMU_SLEEP_INDICATE_W, szVal, countof(szVal));
 		if (nLen && (nLen < countof(szVal)))
 		{
 			szVal[3] = 0; // только "NUM" - хвост отрезать (возможные пробелы не интересуют)

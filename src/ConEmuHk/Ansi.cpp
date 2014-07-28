@@ -2631,7 +2631,7 @@ void CEAnsi::WriteAnsiCode_OSC(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsole
 							|| (r.Event.KeyEvent.wVirtualKeyCode == VK_SPACE)
 							|| (r.Event.KeyEvent.wVirtualKeyCode == VK_ESCAPE)))
 				{
-					SetEnvironmentVariable(ENV_CONEMU_WAITKEY,
+					SetEnvironmentVariable(ENV_CONEMU_WAITKEY_W,
 						(r.Event.KeyEvent.wVirtualKeyCode == VK_RETURN) ? L"RETURN" :
 						(r.Event.KeyEvent.wVirtualKeyCode == VK_SPACE)  ? L"SPACE" :
 						(r.Event.KeyEvent.wVirtualKeyCode == VK_ESCAPE) ? L"ESC" :
@@ -2639,7 +2639,7 @@ void CEAnsi::WriteAnsiCode_OSC(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsole
 				}
 				else
 				{
-					SetEnvironmentVariable(ENV_CONEMU_WAITKEY, L"");
+					SetEnvironmentVariable(ENV_CONEMU_WAITKEY_W, L"");
 				}
 			}
 			else if (Code.ArgSZ[2] == L'6' && Code.ArgSZ[3] == L';')

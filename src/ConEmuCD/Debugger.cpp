@@ -345,7 +345,7 @@ DWORD WINAPI DebugThread(LPVOID lpvParam)
 
 		if (gpSrv->DbgInfo.bDebugProcessTree)
 		{
-			SetEnvironmentVariable(ENV_CONEMU_BLOCKCHILDDEBUGGERS, ENV_CONEMU_BLOCKCHILDDEBUGGERS_YES);
+			SetEnvironmentVariable(ENV_CONEMU_BLOCKCHILDDEBUGGERS_W, ENV_CONEMU_BLOCKCHILDDEBUGGERS_YES);
 		}
 
 		if (!CreateProcess(NULL, gpSrv->DbgInfo.pszDebuggingCmdLine, NULL, NULL, FALSE,

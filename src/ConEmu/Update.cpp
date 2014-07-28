@@ -137,7 +137,7 @@ CConEmuUpdate::~CConEmuUpdate()
 		_wsprintf(pszParm, SKIPLEN(cchParmMax) L"/c \"\"%s\"\"", mpsz_PendingBatchFile);
 
 		// Наверное на Elevated процесс это не распространится, но для четкости - взведем флажок
-		SetEnvironmentVariable(ENV_CONEMU_INUPDATE, ENV_CONEMU_INUPDATE_YES);
+		SetEnvironmentVariable(ENV_CONEMU_INUPDATE_W, ENV_CONEMU_INUPDATE_YES);
 
 		// ghWnd уже закрыт
 		INT_PTR nShellRc = (INT_PTR)ShellExecute(NULL, bNeedRunElevation ? L"runas" : L"open", pszCmd, pszParm, NULL, SW_SHOWMINIMIZED);
@@ -990,7 +990,7 @@ wchar_t* CConEmuUpdate::CreateBatchFile(LPCWSTR asPackage)
 	WRITE_BATCH_A("@echo off\r\n");
 
 	// "set ConEmuInUpdate=YES"
-	WRITE_BATCH_W(L"\r\nset " ENV_CONEMU_INUPDATE L"=" ENV_CONEMU_INUPDATE_YES L"\r\n");
+	WRITE_BATCH_W(L"\r\nset " ENV_CONEMU_INUPDATE_W L"=" ENV_CONEMU_INUPDATE_YES L"\r\n");
 
 	WRITE_BATCH_A("cd /d \"");
 	WRITE_BATCH_W(gpConEmu->ms_ConEmuExeDir);
@@ -1089,7 +1089,7 @@ wchar_t* CConEmuUpdate::CreateBatchFile(LPCWSTR asPackage)
 	}
 
 	// Сброс переменной окружения: "set ConEmuInUpdate="
-	WRITE_BATCH_W(L"\r\nset " ENV_CONEMU_INUPDATE L"=\r\n");
+	WRITE_BATCH_W(L"\r\nset " ENV_CONEMU_INUPDATE_W L"=\r\n");
 
 	// Перезапуск ConEmu
 	WRITE_BATCH_A("\r\necho Starting ConEmu...\r\nstart \"ConEmu\" \"");

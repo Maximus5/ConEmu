@@ -624,13 +624,13 @@ CConEmuMain::CConEmuMain()
 	if (IsDebuggerPresent())
 	{
 		wchar_t szDebuggers[32];
-		if (GetEnvironmentVariable(ENV_CONEMU_BLOCKCHILDDEBUGGERS, szDebuggers, countof(szDebuggers)))
+		if (GetEnvironmentVariable(ENV_CONEMU_BLOCKCHILDDEBUGGERS_W, szDebuggers, countof(szDebuggers)))
 		{
 			m_DbgInfo.bBlockChildrenDebuggers = (lstrcmp(szDebuggers, ENV_CONEMU_BLOCKCHILDDEBUGGERS_YES) == 0);
 		}
 	}
 	// И сразу сбросить ее, чтобы не было мусора
-	SetEnvironmentVariable(ENV_CONEMU_BLOCKCHILDDEBUGGERS, NULL);
+	SetEnvironmentVariable(ENV_CONEMU_BLOCKCHILDDEBUGGERS_W, NULL);
 
 
 	// Добавить в окружение переменную с папкой к ConEmu.exe

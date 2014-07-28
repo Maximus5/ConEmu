@@ -290,7 +290,7 @@ int WINAPI RequestLocalServer(/*[IN/OUT]*/RequestLocalServerParm* Parm)
 	{
 		#ifdef _DEBUG
 		// Unless hooks were disabled (with env var for example)
-		wchar_t szEnv[64] = L""; GetEnvironmentVariable(ENV_CONEMU_HOOKS, szEnv, countof(szEnv));
+		wchar_t szEnv[64] = L""; GetEnvironmentVariable(ENV_CONEMU_HOOKS_W, szEnv, countof(szEnv));
 		CharUpperBuff(szEnv, lstrlen(szEnv));
 		_ASSERTE((hHkDll || wcsstr(szEnv,ENV_CONEMU_HOOKS_DISABLED)) && "Must be already injected");
 		#endif

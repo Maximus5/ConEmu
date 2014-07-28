@@ -3713,7 +3713,7 @@ wrap:
 	mb_NeedStartProcess = FALSE;
 	SetEvent(mh_StartExecuted);
 	#ifdef _DEBUG
-	SetEnvironmentVariable(ENV_CONEMU_MONITOR_INTERNAL, NULL);
+	SetEnvironmentVariable(ENV_CONEMU_MONITOR_INTERNAL_W, NULL);
 	#endif
 	return lbRc;
 }
@@ -3818,7 +3818,7 @@ BOOL CRealConsole::StartProcessInt(LPCWSTR& lpszCmd, wchar_t*& psCurCmd, LPCWSTR
 
 	#ifdef _DEBUG
 	wchar_t szMonitorID[20]; _wsprintf(szMonitorID, SKIPLEN(countof(szMonitorID)) L"%u", nAID);
-	SetEnvironmentVariable(ENV_CONEMU_MONITOR_INTERNAL, szMonitorID);
+	SetEnvironmentVariable(ENV_CONEMU_MONITOR_INTERNAL_W, szMonitorID);
 	#endif
 
 	if (bNeedConHostSearch)

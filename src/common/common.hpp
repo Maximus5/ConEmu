@@ -60,6 +60,11 @@ typedef struct _CONSOLE_SELECTION_INFO
 
 #endif
 
+#ifndef _CRT_WIDE
+#define __CRT_WIDE(_String) L ## _String
+#define _CRT_WIDE(_String) __CRT_WIDE(_String)
+#endif
+
 
 
 //#define MAXCONMAPCELLS      (600*400)
@@ -89,8 +94,9 @@ typedef struct _CONSOLE_SELECTION_INFO
 #define CECOPYRIGHTSTRING_A "(c) 2009-2014, ConEmu.Maximus5@gmail.com"
 #define CECOPYRIGHTSTRING_W L"© 2009-2014 ConEmu.Maximus5@gmail.com"
 
-#define CEHOMEPAGE     L"http://conemu-maximus5.googlecode.com"
+
 #define CEHOMEPAGE_A    "http://conemu-maximus5.googlecode.com"
+#define CEHOMEPAGE     _CRT_WIDE(CEHOMEPAGE_A)
 #define CEDOWNLPAGE    L"http://www.fosshub.com/ConEmu.html"
 #define CEREPORTBUG    L"http://code.google.com/p/conemu-maximus5/issues/entry"
 #define CEREPORTCRASH  L"http://code.google.com/p/conemu-maximus5/issues/entry"
@@ -103,44 +109,59 @@ typedef struct _CONSOLE_SELECTION_INFO
 
 // EnvVars
 #define ENV_CONEMUDIR_VAR_A  "ConEmuDir"
-#define ENV_CONEMUDIR_VAR_W L"ConEmuDir"
+#define ENV_CONEMUDIR_VAR_W              _CRT_WIDE(ENV_CONEMUDIR_VAR_A)
 #define ENV_CONEMUBASEDIR_VAR_A  "ConEmuBaseDir"
-#define ENV_CONEMUBASEDIR_VAR_W L"ConEmuBaseDir"
+#define ENV_CONEMUBASEDIR_VAR_W          _CRT_WIDE(ENV_CONEMUBASEDIR_VAR_A)
 #define ENV_CONEMUWORKDIR_VAR_A  "ConEmuWorkDir"
-#define ENV_CONEMUWORKDIR_VAR_W L"ConEmuWorkDir"
+#define ENV_CONEMUWORKDIR_VAR_W          _CRT_WIDE(ENV_CONEMUWORKDIR_VAR_A)
 #define ENV_CONEMUDRIVE_VAR_A  "ConEmuDrive"
-#define ENV_CONEMUDRIVE_VAR_W L"ConEmuDrive"
+#define ENV_CONEMUDRIVE_VAR_W            _CRT_WIDE(ENV_CONEMUDRIVE_VAR_A)
 #define ENV_CONEMUWORKDRIVE_VAR_A  "ConEmuWorkDrive"
-#define ENV_CONEMUWORKDRIVE_VAR_W L"ConEmuWorkDrive"
+#define ENV_CONEMUWORKDRIVE_VAR_W        _CRT_WIDE(ENV_CONEMUWORKDRIVE_VAR_A)
 #define ENV_CONEMUHWND_VAR_A  "ConEmuHWND"
-#define ENV_CONEMUHWND_VAR_W L"ConEmuHWND"
+#define ENV_CONEMUHWND_VAR_W             _CRT_WIDE(ENV_CONEMUHWND_VAR_A)
 #define ENV_CONEMUPID_VAR_A   "ConEmuPID"
-#define ENV_CONEMUPID_VAR_W  L"ConEmuPID"
-#define ENV_CONEMUSERVERPID_VAR_W  L"ConEmuServerPID"
+#define ENV_CONEMUPID_VAR_W              _CRT_WIDE(ENV_CONEMUPID_VAR_A)
+#define ENV_CONEMUSERVERPID_VAR_A  "ConEmuServerPID"
+#define ENV_CONEMUSERVERPID_VAR_W        _CRT_WIDE(ENV_CONEMUSERVERPID_VAR_A)
 #define ENV_CONEMUDRAW_VAR_A  "ConEmuDrawHWND"
-#define ENV_CONEMUDRAW_VAR_W L"ConEmuDrawHWND"
+#define ENV_CONEMUDRAW_VAR_W             _CRT_WIDE(ENV_CONEMUDRAW_VAR_A)
 #define ENV_CONEMUBACK_VAR_A  "ConEmuBackHWND"
-#define ENV_CONEMUBACK_VAR_W L"ConEmuBackHWND"
+#define ENV_CONEMUBACK_VAR_W             _CRT_WIDE(ENV_CONEMUBACK_VAR_A)
 #define ENV_CONEMUANSI_VAR_A  "ConEmuANSI"
-#define ENV_CONEMUANSI_VAR_W L"ConEmuANSI"
-#define ENV_CONEMUANSILOG_VAR_W L"ConEmuAnsiLog"
+#define ENV_CONEMUANSI_VAR_W             _CRT_WIDE(ENV_CONEMUANSI_VAR_A)
+#define ENV_CONEMUANSILOG_VAR_A  "ConEmuAnsiLog"
+#define ENV_CONEMUANSILOG_VAR_W          _CRT_WIDE(ENV_CONEMUANSILOG_VAR_A)
 #define ENV_CONEMUFAKEDT_VAR_A "ConEmuFakeDT"
-#define ENV_CONEMUFAKEDT_VAR_W L"ConEmuFakeDT"
-#define ENV_CONEMU_BUILD_W L"ConEmuBuild"
-#define ENV_CONEMU_CONFIG_W L"ConEmuConfig"
-#define ENV_CONEMU_WAITKEY L"ConEmuWaitKey"
-#define ENV_CONEMUREPORTEXE_VAR_W L"ConEmuReportExe"
-#define ENV_CONEMU_HOOKS L"ConEmuHooks" // Modifies behavior of starting processes inside ConEmu tab
+#define ENV_CONEMUFAKEDT_VAR_W           _CRT_WIDE(ENV_CONEMUFAKEDT_VAR_A)
+#define ENV_CONEMU_BUILD_A  "ConEmuBuild"
+#define ENV_CONEMU_BUILD_W               _CRT_WIDE(ENV_CONEMU_BUILD_A)
+#define ENV_CONEMU_CONFIG_A  "ConEmuConfig"
+#define ENV_CONEMU_CONFIG_W              _CRT_WIDE(ENV_CONEMU_CONFIG_A)
+#define ENV_CONEMU_WAITKEY_A "ConEmuWaitKey"
+#define ENV_CONEMU_WAITKEY_W             _CRT_WIDE(ENV_CONEMU_WAITKEY_A)
+#define ENV_CONEMUREPORTEXE_VAR_A "ConEmuReportExe"
+#define ENV_CONEMUREPORTEXE_VAR_W        _CRT_WIDE(ENV_CONEMUREPORTEXE_VAR_A)
+// Modifies behavior of starting processes inside ConEmu tab
+#define ENV_CONEMU_HOOKS_A  "ConEmuHooks"
+#define ENV_CONEMU_HOOKS_W               _CRT_WIDE(ENV_CONEMU_HOOKS_A)
 #define ENV_CONEMU_HOOKS_ENABLED L"Enabled" // Informational
 #define ENV_CONEMU_HOOKS_DISABLED L"OFF" // don't set hooks from "ConEmuHk.dll"
 #define ENV_CONEMU_HOOKS_NOARGS L"NOARG" // don't process -new_console & -cur_console arguments
-#define ENV_CONEMU_INUPDATE L"ConEmuInUpdate" // This is set to "YES" during AutoUpdate script execution
+// This is set to "YES" during AutoUpdate script execution
+#define ENV_CONEMU_INUPDATE_A  "ConEmuInUpdate"
+#define ENV_CONEMU_INUPDATE_W            _CRT_WIDE(ENV_CONEMU_INUPDATE_A)
 #define ENV_CONEMU_INUPDATE_YES L"YES" // This is set to "YES" during AutoUpdate script execution
-#define ENV_CONEMU_BLOCKCHILDDEBUGGERS L"ConEmuBlockChildDebuggers" // When ConEmuC tries to debug process tree - force disable DEBUG_PROCESS/DEBUG_ONLY_THIS_PROCESS flags when creating subchildren
+// When ConEmuC tries to debug process tree - force disable DEBUG_PROCESS/DEBUG_ONLY_THIS_PROCESS flags when creating subchildren
+#define ENV_CONEMU_BLOCKCHILDDEBUGGERS_A  "ConEmuBlockChildDebuggers"
+#define ENV_CONEMU_BLOCKCHILDDEBUGGERS_W _CRT_WIDE(ENV_CONEMU_BLOCKCHILDDEBUGGERS_A)
 #define ENV_CONEMU_BLOCKCHILDDEBUGGERS_YES L"YES"
-#define ENV_CONEMU_MONITOR_INTERNAL L"ConEmuMonitorThreadId" // Used internally
+// Used internally
+#define ENV_CONEMU_MONITOR_INTERNAL_A  "ConEmuMonitorThreadId"
+#define ENV_CONEMU_MONITOR_INTERNAL_W    _CRT_WIDE(ENV_CONEMU_MONITOR_INTERNAL_A)
 // Don't forget add exclusion to IsExportEnvVarAllowed
-#define ENV_CONEMU_SLEEP_INDICATE L"ConEmuSleepIndicator"
+#define ENV_CONEMU_SLEEP_INDICATE_A  "ConEmuSleepIndicator"
+#define ENV_CONEMU_SLEEP_INDICATE_W      _CRT_WIDE(ENV_CONEMU_SLEEP_INDICATE_A)
 #define ENV_CONEMU_SLEEP_INDICATE_NUM L"NUM"
 
 #define CONEMU_CONHOST_CREATED_MSG L"ConEmu: ConHost was created PID=" // L"%u\n"
@@ -2099,11 +2120,6 @@ struct RequestLocalServerParm
 	/*[OUT]*/ HANDLE hCursorChangeEvent;
 };
 
-
-#ifndef _CRT_WIDE
-#define __CRT_WIDE(_String) L ## _String
-#define _CRT_WIDE(_String) __CRT_WIDE(_String)
-#endif
 
 #include "MAssert.h"
 #include "MSecurity.h"

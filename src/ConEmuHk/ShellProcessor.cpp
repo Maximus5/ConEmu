@@ -560,7 +560,7 @@ void CShellProc::CheckHooksDisabled()
 	bool bHooksSkipNewConsole = false;
 
 	wchar_t szVar[32] = L"";
-	if (GetEnvironmentVariable(ENV_CONEMU_HOOKS, szVar, countof(szVar)))
+	if (GetEnvironmentVariable(ENV_CONEMU_HOOKS_W, szVar, countof(szVar)))
 	{
 		CharUpperBuff(szVar, lstrlen(szVar));
 

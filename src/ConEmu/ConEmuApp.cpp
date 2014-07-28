@@ -3534,7 +3534,7 @@ void RaiseTestException()
 void ResetEnvironmentVariables()
 {
 	SetEnvironmentVariable(ENV_CONEMUFAKEDT_VAR_W, NULL);
-	SetEnvironmentVariable(ENV_CONEMU_HOOKS, NULL);
+	SetEnvironmentVariable(ENV_CONEMU_HOOKS_W, NULL);
 }
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
