@@ -46,6 +46,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#include <crtdbg.h>
 //#endif
 
+#undef SetCurrentDirectory
+#define SetCurrentDirectory "gpConEmu->ChangeWorkDir() must be used!"
+
 #include "../common/Memory.h"
 #include "../common/MAssert.h"
 

@@ -36,6 +36,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <windows.h>
 #include <commctrl.h>
 #include "header.h"
+#include "ConEmu.h"
 #include "IconList.h"
 #include "Options.h"
 
@@ -161,11 +162,11 @@ int CIconList::CreateTabIconInt(LPCWSTR asIconDescr, bool bAdmin, LPCWSTR asWork
 	LPCWSTR pszLoadFile = pszExpanded ? pszExpanded : asIconDescr;
 	LPCWSTR lpszExt = (wchar_t*)PointToExt(pszLoadFile);
 
-	wchar_t szCurDir[MAX_PATH*2] = L"";
-	if (asWorkDir && *asWorkDir && GetCurrentDirectory(countof(szCurDir), szCurDir) && *szCurDir)
+	bool bDirChanged = false;
+	if (asWorkDir && *asWorkDir)
 	{
 		// Executable (or icon) file may be not availbale by %PATH%, let "cd" to it...
-		SetCurrentDirectory(asWorkDir);
+		bDirChanged = gpConEmu->ChangeWorkDir(asWorkDir);
 	}
 
 	if (!lpszExt)
@@ -231,8 +232,10 @@ int CIconList::CreateTabIconInt(LPCWSTR asIconDescr, bool bAdmin, LPCWSTR asWork
 	}
 
 wrap:
-	if (*szCurDir)
-		SetCurrentDirectory(szCurDir);
+	if (bDirChanged)
+	{
+		gpConEmu->ChangeWorkDir(NULL);
+	}
 	SafeFree(pszExpanded);
 	return iIconIdx;
 }

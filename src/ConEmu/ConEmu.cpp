@@ -895,6 +895,30 @@ LPCWSTR CConEmuMain::WorkDir(LPCWSTR asOverrideCurDir /*= NULL*/)
 	return pszWorkDir;
 }
 
+bool CConEmuMain::ChangeWorkDir(LPCWSTR asTempCurDir)
+{
+	bool bChanged = false;
+	BOOL bApi = FALSE; DWORD nApiErr = 0;
+
+	if (asTempCurDir)
+	{
+		bApi = SetCurrentDirectoryW(asTempCurDir);
+		if (bApi)
+			bChanged = true;
+		else
+			nApiErr = GetLastError();
+	}
+	else
+	{
+		bApi = SetCurrentDirectoryW(ms_ConEmuExeDir);
+		nApiErr = bApi ? 0 : GetLastError();
+	}
+
+	UNREFERENCED_PARAMETER(bApi);
+	UNREFERENCED_PARAMETER(nApiErr);
+	return bChanged;
+}
+
 bool CConEmuMain::CheckRequiredFiles()
 {
 	wchar_t szPath[MAX_PATH+32];
@@ -1304,7 +1328,7 @@ BOOL CConEmuMain::Init()
 	_ASSERTE(mp_TabBar != NULL);
 
 	// Чтобы не блокировать папку запуска - CD
-	SetCurrentDirectory(ms_ConEmuExeDir);
+	ChangeWorkDir(NULL);
 
 	// Только по настройке, а то дочерние процессы с тем же Affinity запускаются...
 	// На тормоза - не влияет. Но вроде бы на многопроцессорных из-за глюков в железе могут быть ошибки подсчета производительности, если этого не сделать
