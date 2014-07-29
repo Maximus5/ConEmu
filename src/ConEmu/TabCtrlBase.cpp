@@ -546,6 +546,16 @@ LRESULT CTabPanelBase::OnMouseToolbar(UINT uMsg, int nCmdId, int x, int y)
 					break;
 				}
 
+				case TID_ALTERNATIVE:
+				{
+					break;
+				}
+
+				case TID_SCROLL:
+				{
+					break;
+				}
+
 				case TID_MINIMIZE:
 				case TID_APPCLOSE:
 				{
