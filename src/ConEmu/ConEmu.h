@@ -796,7 +796,6 @@ class CConEmuMain :
 		void OnBufferHeight();
 		void OnConsoleKey(WORD vk, LPARAM Mods);
 		void OnConsoleResize(BOOL abPosted=FALSE);
-		void OnCopyingState();
 		LRESULT OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate);
 		void OnDesktopMode();
 		LRESULT OnDestroy(HWND hWnd);

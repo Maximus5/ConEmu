@@ -544,26 +544,25 @@ HWND CTabPanelWin::CreateToolbar()
 	int nFirst = SendMessage(mh_Toolbar, TB_ADDBITMAP, BID_TOOLBAR_LAST_IDX, (LPARAM)&bmp);
 	_ASSERTE(BID_TOOLBAR_LAST_IDX==38);
 
-	//DWORD nLoadErr = 0;
-	if (gnOsVer >= 0x600)
-	{
-		bmp.hInst = g_hInstance;
-		bmp.nID = IDB_COPY24;
-	}
-	else
-	{
-		bmp.hInst = NULL;
-		COLORMAP colorMap = {RGB(255,0,0),GetSysColor(COLOR_BTNFACE)};
-		bmp.nID = (UINT_PTR)CreateMappedBitmap(g_hInstance, IDB_COPY4, 0, &colorMap, 1);
-		//bmp.nID = (UINT_PTR)LoadImage(g_hInstance, MAKEINTRESOURCE(IDB_COPY24), IMAGE_BITMAP, 0,0, LR_LOADTRANSPARENT|LR_LOADMAP3DCOLORS);
-		//nLoadErr = GetLastError();
-	}
+	//if (gnOsVer >= 0x600)
+	//{
+	//	bmp.hInst = g_hInstance;
+	//	bmp.nID = IDB_COPY24;
+	//}
+	//else
+	//{
+	//	bmp.hInst = NULL;
+	//	COLORMAP colorMap = {RGB(255,0,0),GetSysColor(COLOR_BTNFACE)};
+	//	bmp.nID = (UINT_PTR)CreateMappedBitmap(g_hInstance, IDB_COPY4, 0, &colorMap, 1);
+	//	//bmp.nID = (UINT_PTR)LoadImage(g_hInstance, MAKEINTRESOURCE(IDB_COPY24), IMAGE_BITMAP, 0,0, LR_LOADTRANSPARENT|LR_LOADMAP3DCOLORS);
+	//	//nLoadErr = GetLastError();
+	//}
 
-	int nCopyBmp = SendMessage(mh_Toolbar, TB_ADDBITMAP, 1, (LPARAM)&bmp);
-	// Должен 38 возвращать
-	_ASSERTE(nCopyBmp == BID_TOOLBAR_LAST_IDX);
-	if (nCopyBmp < BID_TOOLBAR_LAST_IDX)
-		nCopyBmp = BID_TOOLBAR_LAST_IDX;
+	//int nCopyBmp = SendMessage(mh_Toolbar, TB_ADDBITMAP, 1, (LPARAM)&bmp);
+	//// Должен 38 возвращать
+	//_ASSERTE(nCopyBmp == BID_TOOLBAR_LAST_IDX);
+	//if (nCopyBmp < BID_TOOLBAR_LAST_IDX)
+	//	nCopyBmp = BID_TOOLBAR_LAST_IDX;
 
 	{
 		bmp.hInst = NULL;
@@ -572,9 +571,9 @@ HWND CTabPanelWin::CreateToolbar()
 	}
 	int nScrollBmp = SendMessage(mh_Toolbar, TB_ADDBITMAP, 1, (LPARAM)&bmp);
 	// Должен 39 возвращать
-	_ASSERTE(nScrollBmp == (BID_TOOLBAR_LAST_IDX+1));
-	if (nScrollBmp < (BID_TOOLBAR_LAST_IDX+1))
-		nScrollBmp = BID_TOOLBAR_LAST_IDX+1;
+	_ASSERTE(nScrollBmp == (BID_TOOLBAR_LAST_IDX));
+	if (nScrollBmp < (BID_TOOLBAR_LAST_IDX))
+		nScrollBmp = BID_TOOLBAR_LAST_IDX;
 
 
 	//buttons
@@ -597,13 +596,12 @@ HWND CTabPanelWin::CreateToolbar()
 	SendMessage(mh_Toolbar, TB_ADDBUTTONS, 1, (LPARAM)&btn);
 
 	btn.fsStyle = BTNS_BUTTON;
+
+	//// Show copying state
+	//btn.iBitmap = nCopyBmp; btn.idCommand = TID_COPYING;
+	//SendMessage(mh_Toolbar, TB_ADDBUTTONS, 1, (LPARAM)&btn);
 	//SendMessage(mh_Toolbar, TB_ADDBUTTONS, 1, (LPARAM)&sep); sep.idCommand++;
-#if 0 //defined(_DEBUG)
-	// Show copying state
-	btn.iBitmap = nCopyBmp; btn.idCommand = TID_COPYING;
-	SendMessage(mh_Toolbar, TB_ADDBUTTONS, 1, (LPARAM)&btn);
-	SendMessage(mh_Toolbar, TB_ADDBUTTONS, 1, (LPARAM)&sep); sep.idCommand++;
-#endif
+
 	// Buffer height mode
 	btn.iBitmap = nFirst + BID_ALTERNATIVE_IDX; btn.idCommand = TID_ALTERNATIVE; btn.fsState = TBSTATE_ENABLED;
 	SendMessage(mh_Toolbar, TB_ADDBUTTONS, 1, (LPARAM)&btn);

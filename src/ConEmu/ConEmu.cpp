@@ -8147,10 +8147,10 @@ void CConEmuMain::LoadIcons()
 //	return true;
 //}
 
-void CConEmuMain::OnCopyingState()
-{
-	TODO("CConEmuMain::OnCopyingState()");
-}
+//void CConEmuMain::OnCopyingState()
+//{
+//	TODO("CConEmuMain::OnCopyingState()");
+//}
 
 void CConEmuMain::PostDragCopy(BOOL abMove, BOOL abReceived/*=FALSE*/)
 {

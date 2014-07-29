@@ -1065,10 +1065,10 @@ bool CTabBarClass::OnNotify(LPNMHDR nmhdr, LRESULT& lResult)
 		{
 			lstrcpyn(pDisp->pszText, _T("Close ALL consoles"), pDisp->cchTextMax);
 		}
-		else if (pDisp->iItem == TID_COPYING)
-		{
-			lstrcpyn(pDisp->pszText, _T("Show copying queue"), pDisp->cchTextMax);
-		}
+		//else if (pDisp->iItem == TID_COPYING)
+		//{
+		//	lstrcpyn(pDisp->pszText, _T("Show copying queue"), pDisp->cchTextMax);
+		//}
 		else if (pDisp->iItem == TID_SYSMENU)
 		{
 			lstrcpyn(pDisp->pszText, _T("Show system menu (RClick for Settings)"), pDisp->cchTextMax);
@@ -1196,10 +1196,10 @@ void CTabBarClass::OnCommand(WPARAM wParam, LPARAM lParam)
 	{
 		gpConEmu->PostScClose();
 	}
-	else if (wParam == TID_COPYING)
-	{
-		gpConEmu->OnCopyingState();
-	}
+	//else if (wParam == TID_COPYING)
+	//{
+	//	gpConEmu->OnCopyingState();
+	//}
 	else if (wParam == TID_SYSMENU)
 	{
 		RECT rcBtnRect = {0};
