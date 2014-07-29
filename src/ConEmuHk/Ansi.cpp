@@ -641,7 +641,7 @@ void CEAnsi::OnReadConsoleBefore(HANDLE hConOut, const CONSOLE_SCREEN_BUFFER_INF
 	// Succeesfull mark?
 	_ASSERTEX(((pObj->m_RowMarks.RowId[0] || pObj->m_RowMarks.RowId[1]) && (pObj->m_RowMarks.RowId[0] != pObj->m_RowMarks.RowId[1])) || (!csbi.dwCursorPosition.X && !csbi.dwCursorPosition.Y));
 }
-void CEAnsi::OnReadConsoleAfter(bool bFinal)
+void CEAnsi::OnReadConsoleAfter(bool bFinal, bool bNoLineFeed)
 {
 	CEAnsi* pObj = CEAnsi::Object();
 	if (!pObj)
@@ -667,7 +667,10 @@ void CEAnsi::OnReadConsoleAfter(bool bFinal)
 		{
 			if (pObj->m_RowMarks.SaveRow[i] == nMarkedRow)
 			{
-				_ASSERTEX((pObj->m_RowMarks.csbi.dwCursorPosition.Y < (pObj->m_RowMarks.csbi.dwSize.Y-1)) && "Nothing was changed? Strange, scrolling was expected");
+				_ASSERTEX(
+					((pObj->m_RowMarks.csbi.dwCursorPosition.Y < (pObj->m_RowMarks.csbi.dwSize.Y-1))
+						|| (bNoLineFeed && (pObj->m_RowMarks.csbi.dwCursorPosition.Y == (pObj->m_RowMarks.csbi.dwSize.Y-1))))
+					&& "Nothing was changed? Strange, scrolling was expected");
 				goto wrap;
 			}
 			// Well, we get scroll distance

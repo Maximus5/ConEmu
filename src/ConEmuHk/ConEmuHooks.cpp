@@ -3522,7 +3522,23 @@ void OnReadConsoleEnd(BOOL bSucceeded, BOOL bUnicode, HANDLE hConsoleInput, LPVO
 		TODO("Отослать в ConEmu считанную строку?");
 	}
 
-	CEAnsi::OnReadConsoleAfter(true);
+	bool bNoLineFeed = true;
+	if (bSucceeded)
+	{
+		// Empty line was "readed" (Ctrl+C)?
+		// Or 'Tab'-eneded when Tab was pressed (for completion)?
+		if (lpNumberOfCharsRead && lpBuffer)
+		{
+			if (!*lpNumberOfCharsRead)
+				bNoLineFeed = true; // empty line
+			else if (bUnicode && (((wchar_t*)lpBuffer)[*lpNumberOfCharsRead] == L'\t'))
+				bNoLineFeed = true; // completion was requested
+			else if (!bUnicode && (((char*)lpBuffer)[*lpNumberOfCharsRead] == '\t'))
+				bNoLineFeed = true; // completion was requested
+		}
+	}
+
+	CEAnsi::OnReadConsoleAfter(true, bNoLineFeed);
 
 	// Сброс кешированных значений
 	GetConsoleScreenBufferInfoCached(NULL, NULL);

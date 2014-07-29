@@ -119,7 +119,7 @@ public:
 	static void StopVimTerm();
 
 	static void OnReadConsoleBefore(HANDLE hConOut, const CONSOLE_SCREEN_BUFFER_INFO& csbi);
-	static void OnReadConsoleAfter(bool bFinal);
+	static void OnReadConsoleAfter(bool bFinal, bool bNoLineFeed);
 
 	static bool IsAnsiCapable(HANDLE hFile, bool* bIsConsoleOutput = NULL);
 	static bool IsOutputHandle(HANDLE hFile, DWORD* pMode = NULL);
