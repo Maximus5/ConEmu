@@ -41,6 +41,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Options.h"
 #include "ConEmu.h"
 #include "VirtualConsole.h"
+#include "ToolImg.h"
 #include "TrayIcon.h"
 #include "VConChild.h"
 #include "VConGroup.h"
@@ -67,11 +68,13 @@ CTabPanelWin::CTabPanelWin(CTabBarClass* ap_Owner)
 	gp_TabPanelWinMap = (MMap<HWND,TabPanelWinMap>*)calloc(1,sizeof(*gp_TabPanelWinMap));
 	gp_TabPanelWinMap->Init(8);
 	mn_TabHeight = 0;
+	mp_ToolImg = new CToolImg();
 }
 
 CTabPanelWin::~CTabPanelWin()
 {
 	SafeFree(gp_TabPanelWinMap);
+	SafeDelete(mp_ToolImg);
 }
 
 
@@ -538,43 +541,37 @@ HWND CTabPanelWin::CreateToolbar()
 	DWORD lExStyle = ((DWORD)SendMessage(mh_Toolbar, TB_GETEXTENDEDSTYLE, 0, 0)) | TBSTYLE_EX_DRAWDDARROWS;
 	SendMessage(mh_Toolbar, TB_SETEXTENDEDSTYLE, 0, lExStyle);
 	SendMessage(mh_Toolbar, TB_BUTTONSTRUCTSIZE, (WPARAM) sizeof(TBBUTTON), 0);
-	SendMessage(mh_Toolbar, TB_SETBITMAPSIZE, 0, MAKELONG(14,14));
 
-	TBADDBITMAP bmp = {g_hInstance,IDB_MAIN_TOOLBAR};
-	int nFirst = SendMessage(mh_Toolbar, TB_ADDBITMAP, BID_TOOLBAR_LAST_IDX, (LPARAM)&bmp);
-	_ASSERTE(BID_TOOLBAR_LAST_IDX==38);
+	// The default
+	int nBtnSize = 14;
+	// Nearest size of scaled resource
+	int nSize125 = nBtnSize * 125 / 100;
+	int nSize150 = nBtnSize * 150 / 100;
+	int nSize200 = nBtnSize * 2;
+	// Preferred size of button?
+	int nPrefSize = mn_TabHeight - 10;
+	// Use fixed scales (may be special resources in future)
+	if (nPrefSize > nSize200)
+		nBtnSize = nSize200;
+	else if (nPrefSize > nSize150)
+		nBtnSize = nSize150;
+	else if (nPrefSize > nSize125)
+		nBtnSize = nSize125;
 
-	//if (gnOsVer >= 0x600)
-	//{
-	//	bmp.hInst = g_hInstance;
-	//	bmp.nID = IDB_COPY24;
-	//}
-	//else
-	//{
-	//	bmp.hInst = NULL;
-	//	COLORMAP colorMap = {RGB(255,0,0),GetSysColor(COLOR_BTNFACE)};
-	//	bmp.nID = (UINT_PTR)CreateMappedBitmap(g_hInstance, IDB_COPY4, 0, &colorMap, 1);
-	//	//bmp.nID = (UINT_PTR)LoadImage(g_hInstance, MAKEINTRESOURCE(IDB_COPY24), IMAGE_BITMAP, 0,0, LR_LOADTRANSPARENT|LR_LOADMAP3DCOLORS);
-	//	//nLoadErr = GetLastError();
-	//}
+	SendMessage(mh_Toolbar, TB_SETBITMAPSIZE, 0, MAKELONG(nBtnSize,nBtnSize));
 
-	//int nCopyBmp = SendMessage(mh_Toolbar, TB_ADDBITMAP, 1, (LPARAM)&bmp);
-	//// Должен 38 возвращать
-	//_ASSERTE(nCopyBmp == BID_TOOLBAR_LAST_IDX);
-	//if (nCopyBmp < BID_TOOLBAR_LAST_IDX)
-	//	nCopyBmp = BID_TOOLBAR_LAST_IDX;
-
+	int iCreated = 0;
+	if (mp_ToolImg->Create(nBtnSize, nBtnSize, BID_TOOLBAR_LAST_IDX+1, GetSysColor(COLOR_BTNFACE)))
 	{
-		bmp.hInst = NULL;
-		COLORMAP colorMap = {0xC0C0C0,GetSysColor(COLOR_BTNFACE)};
-		bmp.nID = (UINT_PTR)CreateMappedBitmap(g_hInstance, IDB_SCROLL, 0, &colorMap, 1);
+		iCreated += mp_ToolImg->AddButtonsMapped(g_hInstance, IDB_MAIN_TOOLBAR, 1, 0, GetSysColor(COLOR_BTNFACE));
+		iCreated += mp_ToolImg->AddButtonsMapped(g_hInstance, IDB_SCROLL, 1, 0xC0C0C0, GetSysColor(COLOR_BTNFACE));
+		_ASSERTE(iCreated == (BID_TOOLBAR_LAST_IDX+1));
 	}
-	int nScrollBmp = SendMessage(mh_Toolbar, TB_ADDBITMAP, 1, (LPARAM)&bmp);
-	// Должен 39 возвращать
-	_ASSERTE(nScrollBmp == (BID_TOOLBAR_LAST_IDX));
-	if (nScrollBmp < (BID_TOOLBAR_LAST_IDX))
-		nScrollBmp = BID_TOOLBAR_LAST_IDX;
 
+	TBADDBITMAP bmp = {NULL, (UINT_PTR)mp_ToolImg->GetBitmap()};
+	int nFirst = SendMessage(mh_Toolbar, TB_ADDBITMAP, iCreated, (LPARAM)&bmp);
+	_ASSERTE(BID_TOOLBAR_LAST_IDX==38);
+	int nScrollBmp = BID_TOOLBAR_LAST_IDX;
 
 	//buttons
 	TBBUTTON btn = {0, 0, TBSTATE_ENABLED, TBSTYLE_CHECKGROUP};

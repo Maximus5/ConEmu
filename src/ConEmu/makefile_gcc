@@ -43,6 +43,7 @@ SRCS =  \
 		TabCtrlBase.cpp    \
 		TabCtrlWin.cpp     \
 		TaskBarGhost.cpp   \
+		ToolImg.cpp        \
 		TrayIcon.cpp       \
 		Update.cpp         \
 		UpdateSet.cpp      \

@@ -28,6 +28,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+class CToolImg;
+
 class CTabPanelWin : public CTabPanelBase
 {
 private:
@@ -36,6 +38,9 @@ private:
 	int  mn_LastToolbarWidth;
 	int  mn_ThemeHeightDiff;
 	int  mn_TabHeight;
+
+private:
+	CToolImg* mp_ToolImg;
 
 public:
 	CTabPanelWin(CTabBarClass* ap_Owner);
