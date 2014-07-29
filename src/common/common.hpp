@@ -108,59 +108,59 @@ typedef struct _CONSOLE_SELECTION_INFO
 
 
 // EnvVars
-#define ENV_CONEMUDIR_VAR_A  "ConEmuDir"
+#define ENV_CONEMUDIR_VAR_A            "ConEmuDir"
 #define ENV_CONEMUDIR_VAR_W              _CRT_WIDE(ENV_CONEMUDIR_VAR_A)
-#define ENV_CONEMUBASEDIR_VAR_A  "ConEmuBaseDir"
+#define ENV_CONEMUBASEDIR_VAR_A        "ConEmuBaseDir"
 #define ENV_CONEMUBASEDIR_VAR_W          _CRT_WIDE(ENV_CONEMUBASEDIR_VAR_A)
-#define ENV_CONEMUWORKDIR_VAR_A  "ConEmuWorkDir"
+#define ENV_CONEMUWORKDIR_VAR_A        "ConEmuWorkDir"
 #define ENV_CONEMUWORKDIR_VAR_W          _CRT_WIDE(ENV_CONEMUWORKDIR_VAR_A)
-#define ENV_CONEMUDRIVE_VAR_A  "ConEmuDrive"
+#define ENV_CONEMUDRIVE_VAR_A          "ConEmuDrive"
 #define ENV_CONEMUDRIVE_VAR_W            _CRT_WIDE(ENV_CONEMUDRIVE_VAR_A)
-#define ENV_CONEMUWORKDRIVE_VAR_A  "ConEmuWorkDrive"
+#define ENV_CONEMUWORKDRIVE_VAR_A      "ConEmuWorkDrive"
 #define ENV_CONEMUWORKDRIVE_VAR_W        _CRT_WIDE(ENV_CONEMUWORKDRIVE_VAR_A)
-#define ENV_CONEMUHWND_VAR_A  "ConEmuHWND"
+#define ENV_CONEMUHWND_VAR_A           "ConEmuHWND"
 #define ENV_CONEMUHWND_VAR_W             _CRT_WIDE(ENV_CONEMUHWND_VAR_A)
-#define ENV_CONEMUPID_VAR_A   "ConEmuPID"
+#define ENV_CONEMUPID_VAR_A            "ConEmuPID"
 #define ENV_CONEMUPID_VAR_W              _CRT_WIDE(ENV_CONEMUPID_VAR_A)
-#define ENV_CONEMUSERVERPID_VAR_A  "ConEmuServerPID"
+#define ENV_CONEMUSERVERPID_VAR_A      "ConEmuServerPID"
 #define ENV_CONEMUSERVERPID_VAR_W        _CRT_WIDE(ENV_CONEMUSERVERPID_VAR_A)
-#define ENV_CONEMUDRAW_VAR_A  "ConEmuDrawHWND"
+#define ENV_CONEMUDRAW_VAR_A           "ConEmuDrawHWND"
 #define ENV_CONEMUDRAW_VAR_W             _CRT_WIDE(ENV_CONEMUDRAW_VAR_A)
-#define ENV_CONEMUBACK_VAR_A  "ConEmuBackHWND"
+#define ENV_CONEMUBACK_VAR_A           "ConEmuBackHWND"
 #define ENV_CONEMUBACK_VAR_W             _CRT_WIDE(ENV_CONEMUBACK_VAR_A)
-#define ENV_CONEMUANSI_VAR_A  "ConEmuANSI"
+#define ENV_CONEMUANSI_VAR_A           "ConEmuANSI"
 #define ENV_CONEMUANSI_VAR_W             _CRT_WIDE(ENV_CONEMUANSI_VAR_A)
-#define ENV_CONEMUANSILOG_VAR_A  "ConEmuAnsiLog"
+#define ENV_CONEMUANSILOG_VAR_A        "ConEmuAnsiLog"
 #define ENV_CONEMUANSILOG_VAR_W          _CRT_WIDE(ENV_CONEMUANSILOG_VAR_A)
-#define ENV_CONEMUFAKEDT_VAR_A "ConEmuFakeDT"
+#define ENV_CONEMUFAKEDT_VAR_A         "ConEmuFakeDT"
 #define ENV_CONEMUFAKEDT_VAR_W           _CRT_WIDE(ENV_CONEMUFAKEDT_VAR_A)
-#define ENV_CONEMU_BUILD_A  "ConEmuBuild"
+#define ENV_CONEMU_BUILD_A             "ConEmuBuild"
 #define ENV_CONEMU_BUILD_W               _CRT_WIDE(ENV_CONEMU_BUILD_A)
-#define ENV_CONEMU_CONFIG_A  "ConEmuConfig"
+#define ENV_CONEMU_CONFIG_A            "ConEmuConfig"
 #define ENV_CONEMU_CONFIG_W              _CRT_WIDE(ENV_CONEMU_CONFIG_A)
-#define ENV_CONEMU_WAITKEY_A "ConEmuWaitKey"
+#define ENV_CONEMU_WAITKEY_A           "ConEmuWaitKey"
 #define ENV_CONEMU_WAITKEY_W             _CRT_WIDE(ENV_CONEMU_WAITKEY_A)
-#define ENV_CONEMUREPORTEXE_VAR_A "ConEmuReportExe"
+#define ENV_CONEMUREPORTEXE_VAR_A      "ConEmuReportExe"
 #define ENV_CONEMUREPORTEXE_VAR_W        _CRT_WIDE(ENV_CONEMUREPORTEXE_VAR_A)
 // Modifies behavior of starting processes inside ConEmu tab
-#define ENV_CONEMU_HOOKS_A  "ConEmuHooks"
+#define ENV_CONEMU_HOOKS_A             "ConEmuHooks"
 #define ENV_CONEMU_HOOKS_W               _CRT_WIDE(ENV_CONEMU_HOOKS_A)
-#define ENV_CONEMU_HOOKS_ENABLED L"Enabled" // Informational
-#define ENV_CONEMU_HOOKS_DISABLED L"OFF" // don't set hooks from "ConEmuHk.dll"
-#define ENV_CONEMU_HOOKS_NOARGS L"NOARG" // don't process -new_console & -cur_console arguments
+#define ENV_CONEMU_HOOKS_ENABLED      L"Enabled" // Informational
+#define ENV_CONEMU_HOOKS_DISABLED     L"OFF" // don't set hooks from "ConEmuHk.dll"
+#define ENV_CONEMU_HOOKS_NOARGS       L"NOARG" // don't process -new_console & -cur_console arguments
 // This is set to "YES" during AutoUpdate script execution
-#define ENV_CONEMU_INUPDATE_A  "ConEmuInUpdate"
+#define ENV_CONEMU_INUPDATE_A          "ConEmuInUpdate"
 #define ENV_CONEMU_INUPDATE_W            _CRT_WIDE(ENV_CONEMU_INUPDATE_A)
-#define ENV_CONEMU_INUPDATE_YES L"YES" // This is set to "YES" during AutoUpdate script execution
+#define ENV_CONEMU_INUPDATE_YES       L"YES" // This is set to "YES" during AutoUpdate script execution
 // When ConEmuC tries to debug process tree - force disable DEBUG_PROCESS/DEBUG_ONLY_THIS_PROCESS flags when creating subchildren
-#define ENV_CONEMU_BLOCKCHILDDEBUGGERS_A  "ConEmuBlockChildDebuggers"
+#define ENV_CONEMU_BLOCKCHILDDEBUGGERS_A    "ConEmuBlockChildDebuggers"
 #define ENV_CONEMU_BLOCKCHILDDEBUGGERS_W _CRT_WIDE(ENV_CONEMU_BLOCKCHILDDEBUGGERS_A)
 #define ENV_CONEMU_BLOCKCHILDDEBUGGERS_YES L"YES"
 // Used internally
 #define ENV_CONEMU_MONITOR_INTERNAL_A  "ConEmuMonitorThreadId"
 #define ENV_CONEMU_MONITOR_INTERNAL_W    _CRT_WIDE(ENV_CONEMU_MONITOR_INTERNAL_A)
 // Don't forget add exclusion to IsExportEnvVarAllowed
-#define ENV_CONEMU_SLEEP_INDICATE_A  "ConEmuSleepIndicator"
+#define ENV_CONEMU_SLEEP_INDICATE_A    "ConEmuSleepIndicator"
 #define ENV_CONEMU_SLEEP_INDICATE_W      _CRT_WIDE(ENV_CONEMU_SLEEP_INDICATE_A)
 #define ENV_CONEMU_SLEEP_INDICATE_NUM L"NUM"
 
