@@ -90,8 +90,6 @@ bool CToolImg::Create(int nBtnWidth, int nBtnHeight, int nMaxCount, COLORREF clr
 	if (nBtnWidth <= 0 || nBtnHeight <= 0 || nMaxCount <= 0)
 		return false;
 
-	_ASSERTE(nBtnWidth == nBtnHeight);
-
 	// Init vars
 	mn_BtnWidth = nBtnHeight; mn_BtnHeight = nBtnHeight;
 	mn_BtnCount = 0; mn_MaxBtnCount = nMaxCount;
@@ -122,7 +120,7 @@ bool CToolImg::Create(int nBtnWidth, int nBtnHeight, int nMaxCount, COLORREF clr
 	return true;
 }
 
-int CToolImg::AddBitmap(HBITMAP hbm)
+int CToolImg::AddBitmap(HBITMAP hbm, int iNumBtns)
 {
 	BITMAP bm = {};
 	int ccb = hbm ? GetObject(hbm, sizeof(bm), &bm) : -1;
@@ -132,7 +130,8 @@ int CToolImg::AddBitmap(HBITMAP hbm)
 		return 0;
 	}
 
-	int iAdded = bm.bmWidth / _abs(bm.bmHeight);
+	int iSrcBtnWidth = bm.bmWidth / iNumBtns;
+	int iAdded = iNumBtns;
 	if (iAdded > (mn_MaxBtnCount - mn_BtnCount))
 	{
 		iAdded = (mn_MaxBtnCount - mn_BtnCount);
@@ -143,7 +142,7 @@ int CToolImg::AddBitmap(HBITMAP hbm)
 		}
 	}
 	int iSrcHeight = _abs(bm.bmHeight);
-	int iSrcWidth = iAdded * iSrcHeight;
+	int iSrcWidth = iAdded * iSrcBtnWidth;
 
 	HDC hdc = CreateCompatibleDC(NULL);
 	if (!hdc)
@@ -180,13 +179,13 @@ int CToolImg::AddBitmap(HBITMAP hbm)
 	return iAdded;
 }
 
-int CToolImg::AddButtons(HINSTANCE hinst, INT_PTR resId)
+int CToolImg::AddButtons(HINSTANCE hinst, INT_PTR resId, int iNumBtns)
 {
 	int iAdded = 0;
 	HBITMAP hbm = (HBITMAP)LoadImage(hinst, (LPCWSTR)resId, IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION);
 	if (hbm)
 	{
-		iAdded = AddBitmap(hbm);
+		iAdded = AddBitmap(hbm, iNumBtns);
 		DeleteObject(hbm);
 	}
 	else
@@ -196,7 +195,7 @@ int CToolImg::AddButtons(HINSTANCE hinst, INT_PTR resId)
 	return iAdded;
 }
 
-int CToolImg::AddButtonsMapped(HINSTANCE hinst, INT_PTR resId, int iNumMaps, COLORREF from, COLORREF to, ...)
+int CToolImg::AddButtonsMapped(HINSTANCE hinst, INT_PTR resId, int iNumBtns, int iNumMaps, COLORREF from, COLORREF to, ...)
 {
 	int iAdded = 0;
 	_ASSERTE(iNumMaps <= 1);
@@ -204,7 +203,7 @@ int CToolImg::AddButtonsMapped(HINSTANCE hinst, INT_PTR resId, int iNumMaps, COL
 	HBITMAP hbm = CreateMappedBitmap(hinst, resId, 0, &colorMap, 1);
 	if (hbm)
 	{
-		iAdded = AddBitmap(hbm);
+		iAdded = AddBitmap(hbm, iNumBtns);
 		DeleteObject(hbm);
 	}
 	else

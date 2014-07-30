@@ -42,7 +42,7 @@ protected:
 
 	void FreeDC();
 	void FreeBMP();
-	int  AddBitmap(HBITMAP hbm);
+	int  AddBitmap(HBITMAP hbm, int iNumBtns);
 
 public:
 	CToolImg();
@@ -52,6 +52,6 @@ public:
 
 public:
 	bool Create(int nBtnWidth, int nBtnHeight, int nMaxCount, COLORREF clrBackground);
-	int  AddButtons(HINSTANCE hinst, INT_PTR resId);
-	int  AddButtonsMapped(HINSTANCE hinst, INT_PTR resId, int iNumMaps, COLORREF from, COLORREF to, ...);
+	int  AddButtons(HINSTANCE hinst, INT_PTR resId, int iNumBtns);
+	int  AddButtonsMapped(HINSTANCE hinst, INT_PTR resId, int iNumBtns, int iNumMaps, COLORREF from, COLORREF to, ...);
 };

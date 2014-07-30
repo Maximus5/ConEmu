@@ -563,8 +563,8 @@ HWND CTabPanelWin::CreateToolbar()
 	int iCreated = 0;
 	if (mp_ToolImg->Create(nBtnSize, nBtnSize, BID_TOOLBAR_LAST_IDX+1, GetSysColor(COLOR_BTNFACE)))
 	{
-		iCreated += mp_ToolImg->AddButtonsMapped(g_hInstance, IDB_MAIN_TOOLBAR, 1, 0, GetSysColor(COLOR_BTNFACE));
-		iCreated += mp_ToolImg->AddButtonsMapped(g_hInstance, IDB_SCROLL, 1, 0xC0C0C0, GetSysColor(COLOR_BTNFACE));
+		iCreated += mp_ToolImg->AddButtonsMapped(g_hInstance, IDB_MAIN_TOOLBAR, 38, 1, 0, GetSysColor(COLOR_BTNFACE));
+		iCreated += mp_ToolImg->AddButtonsMapped(g_hInstance, IDB_SCROLL, 1, 1, 0xC0C0C0, GetSysColor(COLOR_BTNFACE));
 		_ASSERTE(iCreated == (BID_TOOLBAR_LAST_IDX+1));
 	}
 
