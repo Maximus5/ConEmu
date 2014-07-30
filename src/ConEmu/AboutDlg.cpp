@@ -1,4 +1,4 @@
-
+п»ї
 // WM_DRAWITEM, SS_OWNERDRAW|SS_NOTIFY, Bmp & hBmp -> global vars
 // DPI resize.
 
@@ -535,8 +535,8 @@ void ConEmuAbout::OnInfo_Help()
 			// lstrcat(szHelpFile, L::/Intro.htm");
 			#define HH_HELP_CONTEXT 0x000F
 			#define HH_DISPLAY_TOC  0x0001
-			//fHTMLHelpW(NULL /*чтобы окно не блокировалось*/, szHelpFile, HH_HELP_CONTEXT, contextID);
-			fHTMLHelpW(NULL /*чтобы окно не блокировалось*/, szHelpFile, HH_DISPLAY_TOC, 0);
+			//fHTMLHelpW(NULL /*С‡С‚РѕР±С‹ РѕРєРЅРѕ РЅРµ Р±Р»РѕРєРёСЂРѕРІР°Р»РѕСЃСЊ*/, szHelpFile, HH_HELP_CONTEXT, contextID);
+			fHTMLHelpW(NULL /*С‡С‚РѕР±С‹ РѕРєРЅРѕ РЅРµ Р±Р»РѕРєРёСЂРѕРІР°Р»РѕСЃСЊ*/, szHelpFile, HH_DISPLAY_TOC, 0);
 		}
 	}
 }
@@ -693,7 +693,7 @@ void ConEmuAbout::DonateBtns_Add(HWND hDlg, int AlignLeftId, int AlignVCenterId)
 		if (!m_Btns[i].hBmp)
 			continue; // Image was failed
 
-		TODO("Вертикальное центрирование по объекту AlignVCenterId");
+		TODO("Р’РµСЂС‚РёРєР°Р»СЊРЅРѕРµ С†РµРЅС‚СЂРёСЂРѕРІР°РЅРёРµ РїРѕ РѕР±СЉРµРєС‚Сѓ AlignVCenterId");
 
 		int nDispW = m_Btns[i].bmp.bmWidth * nDisplayDpi / 96;
 		int nDispH = m_Btns[i].bmp.bmHeight * nDisplayDpi / 96;
