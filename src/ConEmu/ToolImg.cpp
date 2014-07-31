@@ -95,6 +95,11 @@ bool CToolImg::Create(int nBtnWidth, int nBtnHeight, int nMaxCount, COLORREF clr
 	mn_BtnCount = 0; mn_MaxBtnCount = nMaxCount;
 	mcr_Background = clrBackground;
 
+	return CreateField(nBtnWidth*nMaxCount, nBtnHeight, clrBackground);
+}
+
+bool CToolImg::CreateField(int nImgWidth, int nImgHeight, COLORREF clrBackground)
+{
 	// Create memory DC
 	mh_BmpDc = CreateCompatibleDC(NULL);
 	if (!mh_BmpDc)
@@ -103,7 +108,7 @@ bool CToolImg::Create(int nBtnWidth, int nBtnHeight, int nMaxCount, COLORREF clr
 	}
 
 	// Create memory bitmap (WinXP and lower toolbar has some problem with true-color buttons, so - 8bit)
-	mh_Bmp = CreateBitmap(nBtnWidth*nMaxCount, nBtnHeight, 1, (gnOsVer >= 0x600) ? 32 : 8, NULL);
+	mh_Bmp = CreateBitmap(nImgWidth, nImgHeight, 1, (gnOsVer >= 0x600) ? 32 : 8, NULL);
 	if (!mh_Bmp)
 	{
 		FreeDC();
@@ -112,7 +117,7 @@ bool CToolImg::Create(int nBtnWidth, int nBtnHeight, int nMaxCount, COLORREF clr
 	mh_OldBmp = (HBITMAP)SelectObject(mh_BmpDc, mh_Bmp);
 
 	// Prefill with background
-	RECT rcFill = {0, 0, nBtnWidth*nMaxCount, nBtnHeight};
+	RECT rcFill = {0, 0, nImgWidth, nImgHeight};
 	HBRUSH hbr = CreateSolidBrush(clrBackground);
 	FillRect(mh_BmpDc, &rcFill, hbr);
 	DeleteObject(hbr);
@@ -144,26 +149,11 @@ int CToolImg::AddBitmap(HBITMAP hbm, int iNumBtns)
 	int iSrcHeight = _abs(bm.bmHeight);
 	int iSrcWidth = iAdded * iSrcBtnWidth;
 
-	HDC hdc = CreateCompatibleDC(NULL);
-	if (!hdc)
-		return 0;
-	HBITMAP hOld = (HBITMAP)SelectObject(hdc, hbm);
-
 	// Where we must paint to
 	int x = mn_BtnCount * mn_BtnWidth;
 
 	// And go
-	BOOL blitRc;
-	if (bm.bmHeight != mn_BtnHeight)
-	{
-		// Need stretch
-		blitRc = StretchBlt(mh_BmpDc, x, 0, iAdded*mn_BtnWidth, mn_BtnHeight, hdc, 0, 0, iSrcWidth, iSrcHeight, SRCCOPY);
-	}
-	else
-	{
-		// Just blit
-		blitRc = BitBlt(mh_BmpDc, x, 0, iAdded*mn_BtnWidth, mn_BtnHeight, hdc, 0, 0, SRCCOPY);
-	}
+	bool blitRc = PaintBitmap(hbm, iSrcWidth, iSrcHeight, mh_BmpDc, x, 0, iAdded*mn_BtnWidth, mn_BtnHeight);
 
 	// Check result
 	if (blitRc)
@@ -174,9 +164,33 @@ int CToolImg::AddBitmap(HBITMAP hbm, int iNumBtns)
 	_ASSERTE(mn_BtnCount <= mn_MaxBtnCount);
 
 	// Done
+	return iAdded;
+}
+
+bool CToolImg::PaintBitmap(HBITMAP hbmSrc, int nSrcWidth, int nSrcHeight, HDC hdcDst, int nDstX, int nDstY, int nDstWidth, int nDstHeight)
+{
+	HDC hdc = CreateCompatibleDC(NULL);
+	if (!hdc)
+		return false;
+	HBITMAP hOld = (HBITMAP)SelectObject(hdc, hbmSrc);
+
+	// And go
+	BOOL blitRc;
+	if (nSrcHeight != nDstHeight)
+	{
+		// Need stretch
+		blitRc = StretchBlt(hdcDst, nDstX, nDstY, nDstWidth, nDstHeight, hdc, 0, 0, nSrcWidth, nSrcHeight, SRCCOPY);
+	}
+	else
+	{
+		// Just blit
+		blitRc = BitBlt(hdcDst, nDstX, nDstY, nDstWidth, nDstHeight, hdc, 0, 0, SRCCOPY);
+	}
+
 	SelectObject(hdc, hOld);
 	DeleteDC(hdc);
-	return iAdded;
+
+	return (blitRc != FALSE);
 }
 
 int CToolImg::AddButtons(HINSTANCE hinst, INT_PTR resId, int iNumBtns)

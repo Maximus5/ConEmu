@@ -43,6 +43,8 @@ protected:
 	void FreeDC();
 	void FreeBMP();
 	int  AddBitmap(HBITMAP hbm, int iNumBtns);
+	bool CreateField(int nImgWidth, int nImgHeight, COLORREF clrBackground);
+	bool PaintBitmap(HBITMAP hbmSrc, int nSrcWidth, int nSrcHeight, HDC hdcDst, int nDstX, int nDstY, int nDstWidth, int nDstHeight);
 
 public:
 	CToolImg();
