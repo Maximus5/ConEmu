@@ -878,33 +878,33 @@
     <ClCompile Include="..\common\Common.cpp" />
     <ClCompile Include="..\common\ConEmuCheck.cpp" />
     <ClCompile Include="..\common\ConEmuCheckEx.cpp" />
+    <ClCompile Include="..\common\execute.cpp" />
+    <ClCompile Include="..\common\MAssert.cpp" />
+    <ClCompile Include="..\common\Memory.cpp" />
+    <ClCompile Include="..\common\Monitors.cpp" />
+    <ClCompile Include="..\common\MSecurity.cpp" />
+    <ClCompile Include="..\common\MStrSafe.cpp" />
     <ClCompile Include="..\common\SetEnvVar.cpp" />
+    <ClCompile Include="..\common\WinConsole.cpp" />
+    <ClCompile Include="..\common\WinObjects.cpp" />
     <ClCompile Include="ConEmuInjects.cpp" />
     <ClCompile Include="ConEmuPlugin.cpp" />
-    <ClCompile Include="ConEmuPlugin1900.cpp">
-      <ShowIncludes Condition="'$(Configuration)|$(Platform)'=='Debug_F2|Win32'">false</ShowIncludes>
-      <ShowIncludes Condition="'$(Configuration)|$(Platform)'=='Debug_F3|Win32'">false</ShowIncludes>
-      <ShowIncludes Condition="'$(Configuration)|$(Platform)'=='Debug_F|Win32'">false</ShowIncludes>
-    </ClCompile>
     <ClCompile Include="ConEmuPlugin2800.cpp" />
     <ClCompile Include="ConEmuPlugin995.cpp" />
     <ClCompile Include="ConEmuPluginA.cpp" />
-    <ClCompile Include="..\common\execute.cpp" />
+    <ClCompile Include="PluginBackground.cpp" />
+    <ClCompile Include="PluginSrv.cpp" />
     <ClCompile Include="KeyEvents.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_PDB|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_PDB|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="..\common\MAssert.cpp" />
-    <ClCompile Include="..\common\Memory.cpp" />
-    <ClCompile Include="..\common\Monitors.cpp" />
-    <ClCompile Include="..\common\MSecurity.cpp" />
-    <ClCompile Include="..\common\MStrSafe.cpp" />
-    <ClCompile Include="PluginBackground.cpp" />
-    <ClCompile Include="PluginSrv.cpp" />
-    <ClCompile Include="..\common\WinConsole.cpp" />
-    <ClCompile Include="..\common\WinObjects.cpp" />
+    <ClCompile Include="ConEmuPlugin1900.cpp">
+      <ShowIncludes Condition="'$(Configuration)|$(Platform)'=='Debug_F2|Win32'">false</ShowIncludes>
+      <ShowIncludes Condition="'$(Configuration)|$(Platform)'=='Debug_F3|Win32'">false</ShowIncludes>
+      <ShowIncludes Condition="'$(Configuration)|$(Platform)'=='Debug_F|Win32'">false</ShowIncludes>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="export.release.def" />
@@ -984,32 +984,32 @@
   <ItemGroup>
     <ClInclude Include="..\common\CmdLine.h" />
     <ClInclude Include="..\common\common.hpp" />
-    <ClInclude Include="..\common\SetEnvVar.h" />
-    <ClInclude Include="ConEmu_Lang.h" />
     <ClInclude Include="..\common\ConEmuCheck.h" />
     <ClInclude Include="..\common\ConEmuCheckEx.h" />
+    <ClInclude Include="..\common\ConEmuColors.h" />
+    <ClInclude Include="..\common\ConEmuColors3.h" />
     <ClInclude Include="..\common\ConsoleAnnotation.h" />
     <ClInclude Include="..\common\defines.h" />
-    <ClInclude Include="Dialogs.h" />
-    <ClInclude Include="..\ConEmu\DragDrop.h" />
     <ClInclude Include="..\common\farcolor.hpp" />
     <ClInclude Include="..\common\Memory.h" />
     <ClInclude Include="..\common\Monitors.h" />
     <ClInclude Include="..\common\MSecurity.h" />
     <ClInclude Include="..\common\MStrSafe.h" />
-    <ClInclude Include="PluginBackground.h" />
-    <ClInclude Include="PluginHeader.h" />
-    <ClInclude Include="PluginSrv.h" />
-    <ClInclude Include="..\ConEmuHk\SetHook.h" />
-    <ClInclude Include="..\common\WinConsole.h" />
-    <ClInclude Include="..\common\WinObjects.h" />
-    <ClInclude Include="..\common\ConEmuColors.h" />
-    <ClInclude Include="..\common\ConEmuColors3.h" />
     <ClInclude Include="..\common\plugin_helper.h" />
     <ClInclude Include="..\common\pluginA.hpp" />
     <ClInclude Include="..\common\pluginW1761.hpp" />
     <ClInclude Include="..\common\pluginW1900.hpp" />
+    <ClInclude Include="..\common\SetEnvVar.h" />
+    <ClInclude Include="..\common\WinConsole.h" />
+    <ClInclude Include="..\common\WinObjects.h" />
+    <ClInclude Include="..\ConEmu\DragDrop.h" />
     <ClInclude Include="..\ConEmu\version.h" />
+    <ClInclude Include="..\ConEmuHk\SetHook.h" />
+    <ClInclude Include="ConEmu_Lang.h" />
+    <ClInclude Include="Dialogs.h" />
+    <ClInclude Include="PluginBackground.h" />
+    <ClInclude Include="PluginHeader.h" />
+    <ClInclude Include="PluginSrv.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="ConEmu.rc">

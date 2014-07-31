@@ -889,6 +889,12 @@ if exist C:\Utils\FAR170\Plugins\ConEmu\Thumbs\ConEmuTh.dll copy "$(TargetDir)Co
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\common\Common.cpp" />
+    <ClCompile Include="..\common\MAssert.cpp" />
+    <ClCompile Include="..\common\Memory.cpp" />
+    <ClCompile Include="..\common\MSecurity.cpp" />
+    <ClCompile Include="..\common\MStrSafe.cpp" />
+    <ClCompile Include="..\common\RgnDetect.cpp" />
+    <ClCompile Include="..\common\WinObjects.cpp" />
     <ClCompile Include="ConEmuTh.cpp" />
     <ClCompile Include="ConEmuTh1900.cpp" />
     <ClCompile Include="ConEmuTh2800.cpp" />
@@ -896,12 +902,6 @@ if exist C:\Utils\FAR170\Plugins\ConEmu\Thumbs\ConEmuTh.dll copy "$(TargetDir)Co
     <ClCompile Include="ConEmuThA.cpp" />
     <ClCompile Include="Display.cpp" />
     <ClCompile Include="ImgCache.cpp" />
-    <ClCompile Include="..\common\MAssert.cpp" />
-    <ClCompile Include="..\common\Memory.cpp" />
-    <ClCompile Include="..\common\MSecurity.cpp" />
-    <ClCompile Include="..\common\MStrSafe.cpp" />
-    <ClCompile Include="..\common\RgnDetect.cpp" />
-    <ClCompile Include="..\common\WinObjects.cpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuildStep Include="export.def" />
@@ -979,24 +979,24 @@ if exist C:\Utils\FAR170\Plugins\ConEmu\Thumbs\ConEmuTh.dll copy "$(TargetDir)Co
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\common\common.hpp" />
-    <ClInclude Include="ConEmuTh.h" />
-    <ClInclude Include="ConEmuTh_Lang.h" />
-    <ClInclude Include="Display.h" />
-    <ClInclude Include="ImgCache.h" />
+    <ClInclude Include="..\common\ConEmuColors.h" />
+    <ClInclude Include="..\common\ConEmuColors3.h" />
     <ClInclude Include="..\common\Memory.h" />
     <ClInclude Include="..\common\MSecurity.h" />
     <ClInclude Include="..\common\MStrSafe.h" />
-    <ClInclude Include="QueueProcessor.h" />
-    <ClInclude Include="resource.h" />
-    <ClInclude Include="..\common\RgnDetect.h" />
-    <ClInclude Include="Modules\ThumbSDK.h" />
-    <ClInclude Include="..\common\WinObjects.h" />
-    <ClInclude Include="..\common\ConEmuColors.h" />
-    <ClInclude Include="..\common\ConEmuColors3.h" />
     <ClInclude Include="..\common\plugin_helper.h" />
     <ClInclude Include="..\common\pluginA.hpp" />
     <ClInclude Include="..\common\pluginW1761.hpp" />
     <ClInclude Include="..\common\pluginW1900.hpp" />
+    <ClInclude Include="..\common\RgnDetect.h" />
+    <ClInclude Include="..\common\WinObjects.h" />
+    <ClInclude Include="ConEmuTh.h" />
+    <ClInclude Include="ConEmuTh_Lang.h" />
+    <ClInclude Include="Display.h" />
+    <ClInclude Include="ImgCache.h" />
+    <ClInclude Include="Modules\ThumbSDK.h" />
+    <ClInclude Include="QueueProcessor.h" />
+    <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="ConEmuTh.rc" />

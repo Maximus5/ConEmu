@@ -822,10 +822,10 @@
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="gdip.cpp" />
     <ClCompile Include="..\..\..\common\MAssert.cpp" />
     <ClCompile Include="..\..\..\common\Memory.cpp" />
     <ClCompile Include="..\..\..\common\MStrSafe.cpp" />
+    <ClCompile Include="gdip.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="gdip.def" />
@@ -833,8 +833,8 @@
   <ItemGroup>
     <ClInclude Include="..\..\..\common\Memory.h" />
     <ClInclude Include="..\..\..\common\MStrSafe.h" />
-    <ClInclude Include="resource.h" />
     <ClInclude Include="..\ThumbSDK.h" />
+    <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="gdip.rc" />

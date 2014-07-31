@@ -430,14 +430,6 @@
       <File RelativePath=".\ConEmuCD.rc" />
     </Filter>
     <Filter Name="0 - Source Files" Filter="cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx" UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}">
-      <File RelativePath=".\Infiltrate.cpp">
-        <FileConfiguration Name="Debug_F3|Win32">
-          <Tool Name="VCCLCompilerTool" BasicRuntimeChecks="0" BufferSecurityCheck="false" />
-        </FileConfiguration>
-        <FileConfiguration Name="Debug_F3|x64">
-          <Tool Name="VCCLCompilerTool" BasicRuntimeChecks="0" BufferSecurityCheck="false" />
-        </FileConfiguration>
-      </File>
       <File RelativePath="..\common\CmdLine.cpp" />
       <File RelativePath="..\common\Common.cpp" />
       <File RelativePath="..\common\ConEmuCheck.cpp" />
@@ -468,6 +460,14 @@
       <File RelativePath=".\Queue.cpp" />
       <File RelativePath=".\RegPrepare.cpp" />
       <File RelativePath=".\SrvPipes.cpp" />
+      <File RelativePath=".\Infiltrate.cpp">
+        <FileConfiguration Name="Debug_F3|Win32">
+          <Tool Name="VCCLCompilerTool" BasicRuntimeChecks="0" BufferSecurityCheck="false" />
+        </FileConfiguration>
+        <FileConfiguration Name="Debug_F3|x64">
+          <Tool Name="VCCLCompilerTool" BasicRuntimeChecks="0" BufferSecurityCheck="false" />
+        </FileConfiguration>
+      </File>
     </Filter>
     <Filter Name="1 - Registry">
       <File RelativePath=".\header.h">

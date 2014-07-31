@@ -964,8 +964,8 @@
   <ItemGroup>
     <ClInclude Include="..\..\..\common\Memory.h" />
     <ClInclude Include="..\..\..\common\MStrSafe.h" />
-    <ClInclude Include="resource.h" />
     <ClInclude Include="..\ThumbSDK.h" />
+    <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="pe.rc">

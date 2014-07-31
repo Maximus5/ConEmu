@@ -852,15 +852,15 @@
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="ConEmuC.cpp" />
     <ClCompile Include="..\common\MAssert.cpp" />
     <ClCompile Include="..\common\MStrSafe.cpp" />
+    <ClCompile Include="ConEmuC.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\common\MStrSafe.h" />
+    <ClInclude Include="..\ConEmu\version.h" />
     <ClInclude Include="..\ConEmuCD\ExitCodes.h" />
     <ClInclude Include="resource.h" />
-    <ClInclude Include="..\ConEmu\version.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\ConEmu\ConEmu.ico" />

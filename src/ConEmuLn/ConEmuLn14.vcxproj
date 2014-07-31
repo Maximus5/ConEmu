@@ -902,14 +902,14 @@ if exist C:\Utils\FAR170\Plugins\ConEmu\Lines\ConEmuLn.dll copy "$(TargetDir)Con
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\common\MAssert.cpp" />
+    <ClCompile Include="..\common\Memory.cpp" />
+    <ClCompile Include="..\common\MStrSafe.cpp" />
     <ClCompile Include="ConEmuLn.cpp" />
     <ClCompile Include="ConEmuLn1900.cpp" />
     <ClCompile Include="ConEmuLn2800.cpp" />
     <ClCompile Include="ConEmuLn995.cpp" />
     <ClCompile Include="ConEmuLnA.cpp" />
-    <ClCompile Include="..\common\MAssert.cpp" />
-    <ClCompile Include="..\common\Memory.cpp" />
-    <ClCompile Include="..\common\MStrSafe.cpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="export.def" />
@@ -948,16 +948,16 @@ if exist C:\Utils\FAR170\Plugins\ConEmu\Lines\ConEmuLn.dll copy "$(TargetDir)Con
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\common\common.hpp" />
-    <ClInclude Include="ConEmuLn.h" />
-    <ClInclude Include="ConEmuLn_Lang.h" />
-    <ClInclude Include="Configure.h" />
     <ClInclude Include="..\common\Memory.h" />
     <ClInclude Include="..\common\MStrSafe.h" />
-    <ClInclude Include="resource.h" />
     <ClInclude Include="..\common\plugin_helper.h" />
     <ClInclude Include="..\common\pluginA.hpp" />
     <ClInclude Include="..\common\pluginW1761.hpp" />
     <ClInclude Include="..\common\pluginW1900.hpp" />
+    <ClInclude Include="ConEmuLn.h" />
+    <ClInclude Include="ConEmuLn_Lang.h" />
+    <ClInclude Include="Configure.h" />
+    <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="ConEmuLn.rc" />

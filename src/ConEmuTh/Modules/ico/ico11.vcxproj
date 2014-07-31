@@ -779,10 +779,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="ico.cpp" />
     <ClCompile Include="..\..\..\common\MAssert.cpp" />
     <ClCompile Include="..\..\..\common\Memory.cpp" />
     <ClCompile Include="..\..\..\common\MStrSafe.cpp" />
+    <ClCompile Include="ico.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="ico.def" />
@@ -790,8 +790,8 @@
   <ItemGroup>
     <ClInclude Include="..\..\..\common\Memory.h" />
     <ClInclude Include="..\..\..\common\MStrSafe.h" />
-    <ClInclude Include="resource.h" />
     <ClInclude Include="..\ThumbSDK.h" />
+    <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="ico.rc" />

@@ -1160,12 +1160,6 @@
     <ResourceCompile Include="ConEmuCD.rc" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Infiltrate.cpp">
-      <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Debug_F3|Win32'">Default</BasicRuntimeChecks>
-      <BufferSecurityCheck Condition="'$(Configuration)|$(Platform)'=='Debug_F3|Win32'">false</BufferSecurityCheck>
-      <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Debug_F3|x64'">Default</BasicRuntimeChecks>
-      <BufferSecurityCheck Condition="'$(Configuration)|$(Platform)'=='Debug_F3|x64'">false</BufferSecurityCheck>
-    </ClCompile>
     <ClCompile Include="..\common\CmdLine.cpp" />
     <ClCompile Include="..\common\Common.cpp" />
     <ClCompile Include="..\common\ConEmuCheck.cpp" />
@@ -1195,6 +1189,12 @@
     <ClCompile Include="Queue.cpp" />
     <ClCompile Include="RegPrepare.cpp" />
     <ClCompile Include="SrvPipes.cpp" />
+    <ClCompile Include="Infiltrate.cpp">
+      <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Debug_F3|Win32'">Default</BasicRuntimeChecks>
+      <BufferSecurityCheck Condition="'$(Configuration)|$(Platform)'=='Debug_F3|Win32'">false</BufferSecurityCheck>
+      <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Debug_F3|x64'">Default</BasicRuntimeChecks>
+      <BufferSecurityCheck Condition="'$(Configuration)|$(Platform)'=='Debug_F3|x64'">false</BufferSecurityCheck>
+    </ClCompile>
     <ClCompile Include="RE_Config.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_C|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_C|x64'">true</ExcludedFromBuild>

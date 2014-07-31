@@ -392,92 +392,35 @@
   </References>
   <Files>
     <Filter Name="0 - Source Files" Filter="cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx" UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}">
-      <File RelativePath=".\ConEmuLn.cpp">
-      </File>
-      <File RelativePath=".\ConEmuLn1900.cpp">
-      </File>
-      <File RelativePath=".\ConEmuLn2800.cpp">
-      </File>
-      <File RelativePath=".\ConEmuLn995.cpp">
-      </File>
-      <File RelativePath=".\ConEmuLnA.cpp">
-      </File>
-      <File RelativePath=".\export.def">
-        <FileConfiguration Name="Debug_C|Win32">
-          <Tool Name="VCCustomBuildTool" />
-        </FileConfiguration>
-        <FileConfiguration Name="Debug_C|x64">
-          <Tool Name="VCCustomBuildTool" />
-        </FileConfiguration>
-        <FileConfiguration Name="Debug_R|Win32">
-          <Tool Name="VCCustomBuildTool" />
-        </FileConfiguration>
-        <FileConfiguration Name="Debug_R|x64">
-          <Tool Name="VCCustomBuildTool" />
-        </FileConfiguration>
-        <FileConfiguration Name="Debug_F|Win32">
-          <Tool Name="VCCustomBuildTool" />
-        </FileConfiguration>
-        <FileConfiguration Name="Debug_F|x64">
-          <Tool Name="VCCustomBuildTool" />
-        </FileConfiguration>
-        <FileConfiguration Name="Debug_F2|Win32">
-          <Tool Name="VCCustomBuildTool" />
-        </FileConfiguration>
-        <FileConfiguration Name="Debug_F2|x64">
-          <Tool Name="VCCustomBuildTool" />
-        </FileConfiguration>
-        <FileConfiguration Name="Debug_F3|Win32">
-          <Tool Name="VCCustomBuildTool" />
-        </FileConfiguration>
-        <FileConfiguration Name="Debug_F3|x64">
-          <Tool Name="VCCustomBuildTool" />
-        </FileConfiguration>
-        <FileConfiguration Name="Debug_M|Win32">
-          <Tool Name="VCCustomBuildTool" />
-        </FileConfiguration>
-        <FileConfiguration Name="Debug_M|x64">
-          <Tool Name="VCCustomBuildTool" />
-        </FileConfiguration>
-      </File>
-      <File RelativePath="..\common\MAssert.cpp">
-      </File>
-      <File RelativePath="..\common\Memory.cpp">
-      </File>
-      <File RelativePath="..\common\MStrSafe.cpp">
-      </File>
+      <File RelativePath="..\common\MAssert.cpp" />
+      <File RelativePath="..\common\Memory.cpp" />
+      <File RelativePath="..\common\MStrSafe.cpp" />
+      <File RelativePath=".\ConEmuLn.cpp" />
+      <File RelativePath=".\ConEmuLn1900.cpp" />
+      <File RelativePath=".\ConEmuLn2800.cpp" />
+      <File RelativePath=".\ConEmuLn995.cpp" />
+      <File RelativePath=".\ConEmuLnA.cpp" />
+      <File RelativePath=".\export.def" />
     </Filter>
     <Filter Name="Header Files" Filter="h;hpp;hxx;hm;inl;inc;xsd" UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}">
-      <File RelativePath="..\common\common.hpp">
-      </File>
-      <File RelativePath=".\ConEmuLn.h">
-      </File>
-      <File RelativePath=".\ConEmuLn_Lang.h">
-      </File>
-      <File RelativePath=".\Configure.h">
-      </File>
-      <File RelativePath="..\common\Memory.h">
-      </File>
-      <File RelativePath="..\common\MStrSafe.h">
-      </File>
-      <File RelativePath=".\resource.h">
-      </File>
+      <File RelativePath="..\common\common.hpp" />
+      <File RelativePath="..\common\Memory.h" />
+      <File RelativePath="..\common\MStrSafe.h" />
+      <File RelativePath=".\ConEmuLn.h" />
+      <File RelativePath=".\ConEmuLn_Lang.h" />
+      <File RelativePath=".\Configure.h" />
+      <File RelativePath=".\resource.h" />
     </Filter>
     <Filter Name="Resource Files" Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav" UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}">
       <File RelativePath=".\ConEmuLn.rc">
       </File>
     </Filter>
     <Filter Name="Far-Api">
-      <File RelativePath="..\common\FarVersion.h">
-      </File>
-      <File RelativePath="..\common\plugin_helper.h">
-      </File>
-      <File RelativePath="..\common\pluginA.hpp">
-      </File>
-      <File RelativePath="..\common\pluginW1761.hpp">
-      </File>
-      <File RelativePath="..\common\pluginW1900.hpp">
-      </File>
+      <File RelativePath="..\common\FarVersion.h" />
+      <File RelativePath="..\common\plugin_helper.h" />
+      <File RelativePath="..\common\pluginA.hpp" />
+      <File RelativePath="..\common\pluginW1761.hpp" />
+      <File RelativePath="..\common\pluginW1900.hpp" />
     </Filter>
     <File RelativePath=".\Lang.templ">
       <FileConfiguration Name="Debug_E|Win32" ExcludedFromBuild="true">

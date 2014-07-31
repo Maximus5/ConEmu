@@ -917,19 +917,19 @@
   <ItemGroup>
     <ClInclude Include="..\common\ConEmuCheck.h" />
     <ClInclude Include="..\common\ConEmuColors3.h" />
-    <ClInclude Include="..\common\FarVersion.h" />
-    <ClInclude Include="..\ConEmuCD\ExitCodes.h" />
-    <ClInclude Include="ConEmuDw.h" />
     <ClInclude Include="..\common\ConsoleAnnotation.h" />
     <ClInclude Include="..\common\ConsoleRead.h" />
+    <ClInclude Include="..\common\FarVersion.h" />
     <ClInclude Include="..\common\MAssert.h" />
     <ClInclude Include="..\common\Memory.h" />
     <ClInclude Include="..\common\MSecurity.h" />
     <ClInclude Include="..\common\MStrSafe.h" />
     <ClInclude Include="..\common\pluginW1900.hpp" />
-    <ClInclude Include="resource.h" />
     <ClInclude Include="..\common\WinObjects.h" />
     <ClInclude Include="..\ConEmu\version.h" />
+    <ClInclude Include="..\ConEmuCD\ExitCodes.h" />
+    <ClInclude Include="ConEmuDw.h" />
+    <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="ConEmuDw.rc" />
@@ -961,12 +961,12 @@
     <ClCompile Include="..\common\Common.cpp" />
     <ClCompile Include="..\common\ConEmuCheck.cpp" />
     <ClCompile Include="..\common\ConsoleRead.cpp" />
-    <ClCompile Include="ConEmuDw.cpp" />
     <ClCompile Include="..\common\MAssert.cpp" />
     <ClCompile Include="..\common\Memory.cpp" />
     <ClCompile Include="..\common\MSecurity.cpp" />
     <ClCompile Include="..\common\MStrSafe.cpp" />
     <ClCompile Include="..\common\WinObjects.cpp" />
+    <ClCompile Include="ConEmuDw.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
