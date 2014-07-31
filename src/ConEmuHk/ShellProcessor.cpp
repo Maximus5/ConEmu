@@ -33,6 +33,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma warning(disable: 4091)
 #include <Shlobj.h>
 #pragma warning(default: 4091)
+#include "../ConEmuCD/ExitCodes.h"
 #include "../ConEmu/ShObjIdl_Part.h"
 #include "../common/common.hpp"
 #include "../common/ConEmuCheck.h"
@@ -2757,9 +2758,9 @@ void CShellProc::OnCreateProcessFinished(BOOL abSucceeded, PROCESS_INFORMATION *
 			OutputDebugString(szDbgMsg);
 			#endif
 
-			int iHookRc = InjectHooks(*lpPI, (m_SrvMapping.cbSize && (m_SrvMapping.nLoggingType == glt_Processes)));
+			CINJECTHK_EXIT_CODES iHookRc = InjectHooks(*lpPI, (m_SrvMapping.cbSize && (m_SrvMapping.nLoggingType == glt_Processes)));
 
-			if (iHookRc != 0)
+			if (iHookRc != CIH_OK/*0*/)
 			{
 				DWORD nErrCode = GetLastError();
 				// Хуки не получится установить для некоторых системных процессов типа ntvdm.exe,

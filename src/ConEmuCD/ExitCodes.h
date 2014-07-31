@@ -96,3 +96,36 @@ const CINFILTRATE_EXIT_CODES
 	CIR_AlreadyInjected = 1,
 	CIR_OK = 0
 	;
+
+// ConsoleMain2 | DoInjectHooks | OnCreateProcessFinished -> InjectHooks
+typedef int CINJECTHK_EXIT_CODES;
+const CINJECTHK_EXIT_CODES
+	CIH_GeneralError = -1,
+	//
+	CIH_GetModuleFileName = -501,
+	CIH_CreateProcess = -502,
+	CIH_GetLoadLibraryAddress = -503,
+	CIH_WrapperGeneral = -504,
+	CIH_WrapperFailed = -505,
+	CIH_ProcessWasTerminated = -506,
+	CIH_WrongHandleBitness = -509,
+	CIH_KernelNotLoaded = -510,
+	CIH_OsVerFailed = -511,
+	CIH_NtdllNotLoaded = -512,
+	CIH_GetLdrHandleAddress = -514,
+	//
+	CIH_AsmBadCodePointer = -601,
+	CIH_AsmMemBadSize = -602,
+	CIH_AsmVirtualAllocEx = -703,
+	CIH_AsmGetThreadContext = -710,
+	CIH_AsmWriteProcessMemory = -730,
+	CIH_AsmFlushInstructionCode = -731,
+	CIH_AsmSetThreadContext = -732,
+	CIH_AsmBitnessNot64 = -801,
+	CIH_AsmBitmessNot32 = -802,
+	CIH_AsmBadDllPathName = -803,
+	CIH_AsmBadProcShift = -814,
+	CIH_AsmGeneralError = -1000,
+	//
+	CIH_OK = 0
+	;

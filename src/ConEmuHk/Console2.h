@@ -26,7 +26,7 @@ struct InjectHookFunctions
 // Use WriteProcessMemory and SetThreadContext
 int InjectHookDLL(PROCESS_INFORMATION pi, InjectHookFunctions* pfn /*UINT_PTR fnLoadLibrary*/, int ImageBits/*32/64*/, LPCWSTR apszHookDllPath, DWORD_PTR* ptrAllocated, DWORD* pnAllocated)
 {
-	int         iRc = -1000;
+	CINJECTHK_EXIT_CODES iRc = CIH_AsmGeneralError/*-1000*/;
 	CONTEXT		context = {};
 	void*		mem		 = NULL;
 	size_t		memLen	 = 0;
@@ -69,7 +69,7 @@ int InjectHookDLL(PROCESS_INFORMATION pi, InjectHookFunctions* pfn /*UINT_PTR fn
 	{
 		_ASSERTE(ImageBits==64);
 		dwErrCode = GetLastError();
-		iRc = -801;
+		iRc = CIH_AsmBitnessNot64/*-801*/;
 		goto wrap;
 	}
 
@@ -88,7 +88,7 @@ int InjectHookDLL(PROCESS_INFORMATION pi, InjectHookFunctions* pfn /*UINT_PTR fn
 		if (nLoadLibraryProcShift != (DWORD)nLoadLibraryProcShift)
 		{
 			_ASSERTE(nLoadLibraryProcShift == (DWORD)nLoadLibraryProcShift);
-			iRc = -814;
+			iRc = CIH_AsmBadProcShift/*-814*/;
 			goto wrap;
 		}
 	}
@@ -101,7 +101,7 @@ int InjectHookDLL(PROCESS_INFORMATION pi, InjectHookFunctions* pfn /*UINT_PTR fn
 	{
 		_ASSERTE(ImageBits==32);
 		dwErrCode = GetLastError();
-		iRc = -802;
+		iRc = CIH_AsmBitmessNot32/*-802*/;
 		goto wrap;
 	}
 
@@ -114,7 +114,7 @@ int InjectHookDLL(PROCESS_INFORMATION pi, InjectHookFunctions* pfn /*UINT_PTR fn
 
 	if (!apszHookDllPath || (lstrlen(apszHookDllPath) >= (MAX_PATH - lstrlen(pszDllName) - 1)))
 	{
-		iRc = -803;
+		iRc = CIH_AsmBadDllPathName/*-803*/;
 		goto wrap;
 	}
 	wcscpy_c(strHookDllPath, apszHookDllPath);
@@ -125,7 +125,7 @@ int InjectHookDLL(PROCESS_INFORMATION pi, InjectHookFunctions* pfn /*UINT_PTR fn
 	if (memLen > MAX_PATH*sizeof(wchar_t))
 	{
 		dwErrCode = GetLastError();
-		iRc = -602;
+		iRc = CIH_AsmMemBadSize/*-602*/;
 		goto wrap;
 	}
 
@@ -157,7 +157,7 @@ int InjectHookDLL(PROCESS_INFORMATION pi, InjectHookFunctions* pfn /*UINT_PTR fn
 		#endif
 			(NULL, L"GetThreadContext failed", L"Injects", MB_OK|MB_SYSTEMMODAL);
 		#endif
-		iRc = -710;
+		iRc = CIH_AsmGetThreadContext/*-710*/;
 		goto wrap;
 	}
 
@@ -192,7 +192,7 @@ int InjectHookDLL(PROCESS_INFORMATION pi, InjectHookFunctions* pfn /*UINT_PTR fn
 	if (!mem)
 	{
 		dwErrCode = GetLastError();
-		iRc = -703;
+		iRc = CIH_AsmVirtualAllocEx/*-703*/;
 		goto wrap;
 	}
 
@@ -368,21 +368,21 @@ int InjectHookDLL(PROCESS_INFORMATION pi, InjectHookFunctions* pfn /*UINT_PTR fn
 	if ((INT_PTR)(ip.pB - code) > (INT_PTR)codeSize)
 	{
 		_ASSERTE((INT_PTR)(ip.pB - code) == (INT_PTR)codeSize);
-		iRc = -601;
+		iRc = CIH_AsmBadCodePointer/*-601*/;
 		goto wrap;
 	}
 
 	if (!::WriteProcessMemory(pi.hProcess, mem, code, memLen, NULL))
 	{
 		dwErrCode = GetLastError();
-		iRc = -730;
+		iRc = CIH_AsmWriteProcessMemory/*-730*/;
 		goto wrap;
 	}
 
 	if (!::FlushInstructionCache(pi.hProcess, mem, memLen))
 	{
 		dwErrCode = GetLastError();
-		iRc = -731;
+		iRc = CIH_AsmFlushInstructionCode/*-731*/;
 		goto wrap;
 	}
 
@@ -401,7 +401,7 @@ int InjectHookDLL(PROCESS_INFORMATION pi, InjectHookFunctions* pfn /*UINT_PTR fn
 		#endif
 			(NULL, L"SetThreadContext failed", L"Injects", MB_OK|MB_SYSTEMMODAL);
 		#endif
-		iRc = -732;
+		iRc = CIH_AsmSetThreadContext/*-732*/;
 		goto wrap;
 	}
 
@@ -428,18 +428,18 @@ int InjectHookDLL(PROCESS_INFORMATION pi, InjectHookFunctions* pfn /*UINT_PTR fn
 	if (pnAllocated)
 		*pnAllocated = (DWORD)memLen;
 
-	iRc = 0; // OK
+	iRc = CIH_OK/*0*/; // OK
 wrap:
 
 	if (code != NULL)
 		free(code);
 		
 #ifdef _DEBUG
-	if (iRc != 0)
+	if (iRc != CIH_OK/*0*/)
 	{
 		// Хуки не получится установить для некоторых системных процессов типа ntvdm.exe,
 		// но при запуске dos приложений мы сюда дойти не должны
-		_ASSERTE(iRc == 0);
+		_ASSERTE(iRc == CIH_OK/*0*/);
 	}
 #endif
 

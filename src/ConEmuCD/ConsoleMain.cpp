@@ -1365,12 +1365,12 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 				//#ifdef _DEBUG
 				//gbLogProcess = TRUE;
 				//#endif
-				int iHookRc = -1;
+				CINJECTHK_EXIT_CODES iHookRc = CIH_GeneralError/*-1*/;
 				if (((gnImageSubsystem == IMAGE_SUBSYSTEM_DOS_EXECUTABLE) || (gnImageBits == 16))
 					&& !gbUseDosBox)
 				{
 					// Если запускается ntvdm.exe - все-равно хук поставить не даст
-					iHookRc = 0;
+					iHookRc = CIH_OK/*0*/;
 				}
 				else
 				{
@@ -1392,7 +1392,7 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 					iHookRc = InjectHooks(pi, gbLogProcess);
 				}
 
-				if (iHookRc != 0)
+				if (iHookRc != CIH_OK/*0*/)
 				{
 					DWORD nErrCode = GetLastError();
 					//_ASSERTE(iHookRc == 0); -- ассерт не нужен, есть MsgBox
@@ -2747,9 +2747,9 @@ int DoInjectHooks(LPWSTR asCmdArg)
 	if (pi.hProcess && pi.hThread && pi.dwProcessId && pi.dwThreadId)
 	{
 		// Аргумент abForceGui не использовался
-		int iHookRc = InjectHooks(pi, /*lbForceGui,*/ gbLogProcess);
+		CINJECTHK_EXIT_CODES iHookRc = InjectHooks(pi, /*lbForceGui,*/ gbLogProcess);
 
-		if (iHookRc == 0)
+		if (iHookRc == CIH_OK/*0*/)
 		{
 			return CERR_HOOKS_WAS_SET;
 		}

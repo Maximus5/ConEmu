@@ -69,6 +69,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/PipeServer.h"
 #include "../common/ConEmuInOut.h"
 
+#include "../ConEmuCD/ExitCodes.h"
+
 #ifdef _DEBUG
 #include "DbgHooks.h"
 #endif
@@ -81,7 +83,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Ansi.h"
 #include "DefTermHk.h"
 #include "../ConEmu/version.h"
-#include "../ConEmuCD/ExitCodes.h"
 #include "../common/CmdLine.h"
 #include "../common/ConsoleAnnotation.h"
 #include "../common/RConStartArgs.h"

@@ -115,9 +115,9 @@ UINT_PTR GetLdrGetDllHandleByNameAddress()
 // The handle must have the PROCESS_CREATE_THREAD, PROCESS_QUERY_INFORMATION, PROCESS_VM_OPERATION, PROCESS_VM_WRITE, and PROCESS_VM_READ
 // The function may start appropriate bitness of ConEmuC.exe with "/SETHOOKS=..." switch
 // If bitness matches, use WriteProcessMemory and SetThreadContext immediately
-int InjectHooks(PROCESS_INFORMATION pi, BOOL abLogProcess)
+CINJECTHK_EXIT_CODES InjectHooks(PROCESS_INFORMATION pi, BOOL abLogProcess)
 {
-	int iRc = 0;
+	CINJECTHK_EXIT_CODES iRc = CIH_OK/*0*/;
 #ifndef CONEMUHK_EXPORTS
 	_ASSERTE(FALSE)
 #endif
@@ -152,12 +152,12 @@ int InjectHooks(PROCESS_INFORMATION pi, BOOL abLogProcess)
 
 	if (!hKernel)
 	{
-		iRc = -510;
+		iRc = CIH_KernelNotLoaded/*-510*/;
 		goto wrap;
 	}
 	if (!nOsVer)
 	{
-		iRc = -511;
+		iRc = CIH_OsVerFailed/*-511*/;
 		goto wrap;
 	}
 	if (nOsVer >= 0x0601)
@@ -166,7 +166,7 @@ int InjectHooks(PROCESS_INFORMATION pi, BOOL abLogProcess)
 		// Windows7 +
 		if (!hNtDll)
 		{
-			iRc = -512;
+			iRc = CIH_NtdllNotLoaded/*-512*/;
 			goto wrap;
 		}
 	}
@@ -175,7 +175,7 @@ int InjectHooks(PROCESS_INFORMATION pi, BOOL abLogProcess)
 	nWait = WaitForSingleObject(pi.hProcess, 0);
 	if (nWait == WAIT_OBJECT_0)
 	{
-		iRc = -506;
+		iRc = CIH_ProcessWasTerminated/*-506*/;
 		goto wrap;
 	}
 
@@ -186,7 +186,7 @@ int InjectHooks(PROCESS_INFORMATION pi, BOOL abLogProcess)
 		_CrtDbgBreak();
 		#endif
 		//_printf("GetModuleFileName failed! ErrCode=0x%08X\n", dwErr);
-		iRc = -501;
+		iRc = CIH_GetModuleFileName/*-501*/;
 		goto wrap;
 	}
 
@@ -281,7 +281,7 @@ int InjectHooks(PROCESS_INFORMATION pi, BOOL abLogProcess)
 		if (((DWORD)hProcess != (DWORD_PTR)hProcess) || ((DWORD)hThread != (DWORD_PTR)hThread))
 		{
 			_ASSERTE(((DWORD)hProcess == (DWORD_PTR)hProcess) && ((DWORD)hThread == (DWORD_PTR)hThread));
-			iRc = -509;
+			iRc = CIH_WrongHandleBitness/*-509*/;
 			goto wrap;
 		}
 		#endif
@@ -305,7 +305,7 @@ int InjectHooks(PROCESS_INFORMATION pi, BOOL abLogProcess)
 		{
 			nErrCode = GetLastError();
 			// Ошибки показывает вызывающая функция/процесс
-			iRc = -502;
+			iRc = CIH_CreateProcess/*-502*/;
 			
 			CloseHandle(hProcess); CloseHandle(hThread);
 			goto wrap;
@@ -322,12 +322,12 @@ int InjectHooks(PROCESS_INFORMATION pi, BOOL abLogProcess)
 
 			if (((int)nErrCode == CERR_HOOKS_WAS_SET) || ((int)nErrCode == CERR_HOOKS_WAS_ALREADY_SET))
 			{
-				iRc = 0;
+				iRc = CIH_OK/*0*/;
 				goto wrap;
 			}
 			else if ((int)nErrCode == CERR_HOOKS_FAILED)
 			{
-				iRc = -505;
+				iRc = CIH_WrapperFailed/*-505*/;
 				goto wrap;
 			}
 
@@ -336,7 +336,7 @@ int InjectHooks(PROCESS_INFORMATION pi, BOOL abLogProcess)
 		
 		// Уже все ветки должны были быть обработаны!
 		_ASSERTE(FALSE);
-		iRc = -504;
+		iRc = CIH_WrapperGeneral/*-504*/;
 		goto wrap;
 		
 	}
@@ -347,13 +347,13 @@ int InjectHooks(PROCESS_INFORMATION pi, BOOL abLogProcess)
 		if (!GetLoadLibraryAddress())
 		{
 			_ASSERTE(gfnLoadLibrary!=NULL);
-			iRc = -503;
+			iRc = CIH_GetLoadLibraryAddress/*-503*/;
 			goto wrap;
 		}
 		else if ((nOsVer >= 0x0601) && !GetLdrGetDllHandleByNameAddress())
 		{
 			_ASSERTE(gfnLdrGetDllHandleByName!=NULL);
-			iRc = -514;
+			iRc = CIH_GetLdrHandleAddress/*-514*/;
 			goto wrap;
 		}
 		else
@@ -369,7 +369,7 @@ int InjectHooks(PROCESS_INFORMATION pi, BOOL abLogProcess)
 			//	_ASSERTE(nBits == ImageBits);
 			//	if (lbIsGui)
 			//	{
-			//		iRc = 0;
+			//		iRc = CIH_OK/*0*/;
 			//		goto wrap;
 			//	}
 			//}
@@ -384,18 +384,18 @@ int InjectHooks(PROCESS_INFORMATION pi, BOOL abLogProcess)
 			InjectHookFunctions fnArg = {hKernel, gfnLoadLibrary, hNtDll, gfnLdrGetDllHandleByName};
 			iRc = InjectHookDLL(pi, &fnArg, ImageBits, szPluginPath, &ptrAllocated, &nAllocated);
 
-			if (abLogProcess || (iRc !=0 ))
+			if (abLogProcess || (iRc != CIH_OK/*0*/))
 			{
 				int ImageSystem = 0;
 				wchar_t szInfo[128];
-				if (iRc != 0)
+				if (iRc != CIH_OK/*0*/)
 				{
 					DWORD nErr = GetLastError();
 					msprintf(szInfo, countof(szInfo), L"InjectHookDLL failed, code=%i:0x%08X", iRc, nErr);
 				}
 				#ifdef _WIN64
 				_ASSERTE(SelfImageBits == 64);
-				if (iRc == 0)
+				if (iRc == CIH_OK/*0*/)
 				{
 					if ((DWORD)(ptrAllocated >> 32)) //-V112
 					{
@@ -410,7 +410,7 @@ int InjectHooks(PROCESS_INFORMATION pi, BOOL abLogProcess)
 				}
 				#else
 				_ASSERTE(SelfImageBits == 32);
-				if (iRc == 0)
+				if (iRc == CIH_OK/*0*/)
 				{
 					msprintf(szInfo, countof(szInfo), L"Alloc: 0x" WIN3264TEST(L"%08X",L"%X%08X") L", Size: %u", WIN3264WSPRINT(ptrAllocated), nAllocated);
 				}
@@ -433,13 +433,13 @@ int InjectHooks(PROCESS_INFORMATION pi, BOOL abLogProcess)
 //#endif
 	//if (iFindAddress != 0)
 	//{
-	//	iRc = -1;
+	////	iRc = CIH_GeneralError/*-1*/;
 	//	goto wrap;
 	//}
 	//fnLoadLibrary = (UINT_PTR)fLoadLibrary;
 	//if (!lbInj)
 	//{
- 	//	iRc = -1;
+ 	//	iRc = CIH_GeneralError/*-1*/;
 	//	goto wrap;
 	//}
 	//WARNING("The process handle must have the PROCESS_VM_OPERATION access right!");
@@ -496,7 +496,7 @@ int InjectHooks(PROCESS_INFORMATION pi, BOOL abLogProcess)
 	//
 wrap:
 //#endif
-	if (iRc == 0)
+	if (iRc == CIH_OK/*0*/)
 	{
 		wchar_t szEvtName[64];
 		SafeCloseHandle(ghInjectsInMainThread);
