@@ -39,11 +39,18 @@ protected:
 	int      mn_BtnWidth, mn_BtnHeight;
 	COLORREF mcr_Background;
 	int      mn_BtnCount, mn_MaxBtnCount;
+	LPRECT   mprc_Btns;
+
+	struct ButtonFieldInfo
+	{
+		LPCWSTR szName; int nWidth, nHeight;
+	};
 
 	void FreeDC();
 	void FreeBMP();
 	int  AddBitmap(HBITMAP hbm, int iNumBtns);
 	bool CreateField(int nImgWidth, int nImgHeight, COLORREF clrBackground);
+	bool CreateButtonField(COLORREF clrBackground, ButtonFieldInfo* pBtns, int nBtnCount, int& nDefWidth, int& nDefHeight);
 	bool PaintBitmap(HBITMAP hbmSrc, int nSrcWidth, int nSrcHeight, HDC hdcDst, int nDstX, int nDstY, int nDstWidth, int nDstHeight);
 
 public:
@@ -52,8 +59,12 @@ public:
 
 	HBITMAP GetBitmap();
 
+	bool PaintButton(int iBtn, HDC hdcDst, int nDstX, int nDstY, int nDstWidth, int nDstHeight);
+
 public:
 	bool Create(int nBtnWidth, int nBtnHeight, int nMaxCount, COLORREF clrBackground);
+	bool CreateDonateButton(COLORREF clrBackground, int& nDefWidth, int& nDefHeight);
+	bool CreateFlattrButton(COLORREF clrBackground, int& nDefWidth, int& nDefHeight);
 	int  AddButtons(HINSTANCE hinst, INT_PTR resId, int iNumBtns);
 	int  AddButtonsMapped(HINSTANCE hinst, INT_PTR resId, int iNumBtns, int iNumMaps, COLORREF from, COLORREF to, ...);
 };

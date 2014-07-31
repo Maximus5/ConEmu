@@ -34,6 +34,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "header.h"
 #include "ToolImg.h"
 
+#ifdef _DEBUG
+#include "LoadImg.h"
+#endif
+
 CToolImg::CToolImg()
 {
 	mh_Bmp = NULL;
@@ -43,6 +47,7 @@ CToolImg::CToolImg()
 	mcr_Background = GetSysColor(COLOR_BTNFACE);
 	mn_BtnCount = 0;
 	mn_MaxBtnCount = 0;
+	mprc_Btns = NULL;
 }
 
 CToolImg::~CToolImg()
@@ -68,6 +73,8 @@ void CToolImg::FreeDC()
 		DeleteDC(mh_BmpDc);
 		mh_BmpDc = NULL;
 	}
+
+	SafeFree(mprc_Btns);
 }
 
 void CToolImg::FreeBMP()
@@ -121,6 +128,135 @@ bool CToolImg::CreateField(int nImgWidth, int nImgHeight, COLORREF clrBackground
 	HBRUSH hbr = CreateSolidBrush(clrBackground);
 	FillRect(mh_BmpDc, &rcFill, hbr);
 	DeleteObject(hbr);
+
+	return true;
+}
+
+bool CToolImg::CreateDonateButton(COLORREF clrBackground, int& nDefWidth, int& nDefHeight)
+{
+	ButtonFieldInfo Btns[] = {
+		{L"DONATE21", 74, 21},
+		{L"DONATE26", 92, 26},
+		{L"DONATE42", 148,42},
+	};
+
+	return CreateButtonField(clrBackground, Btns, (int)countof(Btns), nDefWidth, nDefHeight);
+}
+
+bool CToolImg::CreateFlattrButton(COLORREF clrBackground, int& nDefWidth, int& nDefHeight)
+{
+	ButtonFieldInfo Btns[] = {
+		{L"FLATTR", 89, 18},
+	};
+
+	return CreateButtonField(clrBackground, Btns, (int)countof(Btns), nDefWidth, nDefHeight);
+}
+
+bool CToolImg::CreateButtonField(COLORREF clrBackground, ButtonFieldInfo* pBtns, int nBtnCount, int& nDefWidth, int& nDefHeight)
+{
+	FreeDC();
+	FreeBMP();
+
+	nDefWidth = pBtns[0].nWidth;
+	nDefHeight = pBtns[0].nHeight;
+
+	mprc_Btns = (LPRECT)calloc(nBtnCount, sizeof(*mprc_Btns));
+	if (!mprc_Btns)
+		return false;
+	mn_MaxBtnCount = nBtnCount;
+
+	int nFieldWidth = pBtns[0].nWidth;
+	int nFieldHeight = pBtns[0].nHeight;
+	for (int i = 1; i < nBtnCount; i++)
+	{
+		nFieldWidth = max(nFieldWidth, pBtns[i].nWidth);
+		nFieldHeight += 1 + pBtns[i].nHeight;
+	}
+
+	if (!CreateField(nFieldWidth, nFieldHeight, clrBackground))
+		return false;
+
+	COLORMAP colorMap = {0xC0C0C0, clrBackground/*GetSysColor(COLOR_BTNFACE)*/};
+
+	bool bRc = true;
+
+	_ASSERTE(mn_BtnCount == 0);
+
+	int nDstY = 0;
+	DWORD nErrCode = 0;
+
+	for (int i = 0; i < nBtnCount; i++)
+	{
+		//HBITMAP hbm = CreateMappedBitmap(g_hInstance, (INT_PTR)pBtns[i].szName, 0, &colorMap, 1);
+		HBITMAP hbm = (HBITMAP)LoadImage(g_hInstance, pBtns[i].szName, IMAGE_BITMAP, 0, 0, LR_LOADTRANSPARENT|LR_LOADMAP3DCOLORS);
+		if (hbm == NULL)
+		{
+			nErrCode = GetLastError();
+			bRc = false;
+			continue;
+		}
+		else
+		{
+			RECT rc = {0, nDstY, pBtns[i].nWidth, nDstY+pBtns[i].nHeight};
+			mprc_Btns[i] = rc;
+
+			if (!PaintBitmap(hbm, pBtns[i].nWidth, pBtns[i].nHeight, mh_BmpDc, 0, nDstY, pBtns[i].nWidth, pBtns[i].nHeight))
+			{
+				nErrCode = GetLastError();
+				bRc = false;
+			}
+
+			DeleteObject(hbm);
+		}
+
+		nDstY += 1 + pBtns[i].nHeight;
+	}
+
+	#ifdef _DEBUG
+	//SaveImageEx(L"T:\\BtnField.png", mh_Bmp);
+	#endif
+
+	mn_BtnCount = mn_MaxBtnCount;
+
+	return true;
+}
+
+bool CToolImg::PaintButton(int iBtn, HDC hdcDst, int nDstX, int nDstY, int nDstWidth, int nDstHeight)
+{
+	if (!mh_BmpDc || !mh_Bmp || !mprc_Btns || (iBtn >= mn_BtnCount) || (mn_BtnCount <= 0))
+		return false;
+
+	if (iBtn < 0)
+	{
+		int iFoundHeight = 0;
+		iBtn = mn_BtnCount - 1;
+
+		for (int i = 0; i < mn_BtnCount; i++)
+		{
+			int h = (mprc_Btns[i].bottom - mprc_Btns[i].top);
+			if ((h <= nDstHeight) && (h > iFoundHeight))
+			{
+				iBtn = i;
+				iFoundHeight = h;
+			}
+			// Continue enum, may be better choice will be found
+		}
+	}
+
+	RECT rc = mprc_Btns[iBtn];
+
+	int y = nDstY;
+	int w = min(nDstWidth, (rc.right - rc.left));
+	int h = nDstHeight;
+
+	if (nDstHeight > (rc.bottom - rc.top))
+	{
+		h = rc.bottom - rc.top;
+		y += ((nDstHeight - h) >> 1);
+	}
+
+	if (!BitBlt(hdcDst, nDstX, y, w, h, mh_BmpDc, rc.left, rc.top, SRCCOPY))
+		return false;
 
 	return true;
 }
