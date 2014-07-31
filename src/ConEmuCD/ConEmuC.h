@@ -169,6 +169,7 @@ extern HANDLE ghFarInExecuteEvent;
 #include "../common/WinObjects.h"
 #include "../common/ConsoleAnnotation.h"
 #include "../common/InQueue.h"
+#include "ExitCodes.h"
 
 #ifdef _DEBUG
 extern wchar_t gszDbgModLabel[6];
@@ -320,8 +321,8 @@ void _printf(LPCSTR asFormat, DWORD dw1, DWORD dw2, LPCWSTR asAddLine=NULL);
 void print_error(DWORD dwErr = 0, LPCSTR asFormat = NULL);
 HWND Attach2Gui(DWORD nTimeout);
 
-int InjectRemote(DWORD nRemotePID, bool abDefTermOnly = false);
-int InfiltrateDll(HANDLE hProcess, LPCWSTR dll);
+CINFILTRATE_EXIT_CODES InjectRemote(DWORD nRemotePID, bool abDefTermOnly = false);
+CINFILTRATE_EXIT_CODES InfiltrateDll(HANDLE hProcess, LPCWSTR dll);
 
 int ParseCommandLine(LPCWSTR asCmdLine /*, wchar_t** psNewCmd, BOOL* pbRunInBackgroundTab*/); // Разбор параметров командной строки
 wchar_t* ParseConEmuSubst(LPCWSTR asCmd);

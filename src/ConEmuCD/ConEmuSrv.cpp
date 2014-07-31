@@ -1223,8 +1223,8 @@ int ServerInit(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/)
 		{
 			if (gpSrv->dwRootProcess)
 			{
-				int iRemote = InjectRemote(gpSrv->dwRootProcess);
-				if (iRemote != 0 && iRemote != 1)
+				CINFILTRATE_EXIT_CODES iRemote = InjectRemote(gpSrv->dwRootProcess);
+				if (iRemote != CIR_OK/*0*/ && iRemote != CIR_AlreadyInjected/*1*/)
 				{
 					_printf("ServerInit warning: InjectRemote PID=%u failed, Code=%i\n", gpSrv->dwRootProcess, iRemote);
 				}

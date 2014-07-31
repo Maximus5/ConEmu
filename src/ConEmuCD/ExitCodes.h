@@ -58,3 +58,41 @@ const CERR_EXIT_CODES
 	;
 
 #define CERR_LASTEXITCODE (CERR_FIRSTEXITCODE+100)
+
+// ServerInit | DoInjectRemote -> InjectRemote -> PrepareHookModule | [InfiltrateDll -> CreateRemoteThread]
+typedef int CINFILTRATE_EXIT_CODES;
+const CINFILTRATE_EXIT_CODES
+	CIR_GeneralError = -1,
+	// InfiltrateDll codes
+	CIR_WrongBitness = -100,
+	CIR_TooLongHookPath = -101,
+	CIR_VirtualAllocEx = -102,
+	CIR_WriteProcessMemory = -103,
+	CIR_LoadKernel = -104,
+	CIR_NoKernelExport = -105,
+	CIR_VirtualAllocEx2 = -106,
+	CIR_WriteProcessMemory2 = -107,
+	CIR_CreateRemoteThread = -108,
+	CIR_ReadProcessMemory = -109,
+	CIR_InInjectedCodeError = -100,
+	CIR_CheckKernelExportAddr = -111,
+	CIR_InfiltrateGeneral = -150,
+	//
+	CIR_GetModuleFileName = -200,
+	// Different bitness, running matching ConEmuC[64]
+	CIR_OpenProcess = -201,
+	CIR_CreateProcess = -202,
+	CIR_WrapperResult = -203,
+	//
+	CIR_ConEmuHkNotFound = -250,
+	// Prepare hook module (copy proper ConEmuHk[64] to %TEMP%)
+	CIR_SHGetFolderPath = -251,
+	CIR_TooLongTempPath = -252,
+	CIR_CreateTempDirectory = -253,
+	CIR_CopyHooksFile = -254,
+	// Waiting thread result?
+	CIR_DefTermWaitingFailed = -300,
+	// Succeeded
+	CIR_AlreadyInjected = 1,
+	CIR_OK = 0
+	;

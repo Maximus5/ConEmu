@@ -2811,9 +2811,9 @@ int DoInjectRemote(LPWSTR asCmdArg, bool abDefTermOnly)
 
 		// Go to hook
 		// InjectRemote waits for thread termination
-		int iHookRc = InjectRemote(nRemotePID, abDefTermOnly);
+		CINFILTRATE_EXIT_CODES iHookRc = InjectRemote(nRemotePID, abDefTermOnly);
 
-		if (iHookRc == 0 || iHookRc == 1)
+		if (iHookRc == CIR_OK/*0*/ || iHookRc == CIR_AlreadyInjected/*1*/)
 		{
 			return iHookRc ? CERR_HOOKS_WAS_ALREADY_SET : CERR_HOOKS_WAS_SET;
 		}

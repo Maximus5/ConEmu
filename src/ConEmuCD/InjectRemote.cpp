@@ -38,9 +38,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // 0 - OK, иначе - ошибка
 // Здесь вызывается CreateRemoteThread
-int InfiltrateDll(HANDLE hProcess, LPCWSTR asConEmuHk)
+CINFILTRATE_EXIT_CODES InfiltrateDll(HANDLE hProcess, LPCWSTR asConEmuHk)
 {
-	int iRc = -150;
+	CINFILTRATE_EXIT_CODES iRc = CIR_InfiltrateGeneral/*-150*/;
 
 	//if (iRc != -150)
 	//{
@@ -66,13 +66,13 @@ int InfiltrateDll(HANDLE hProcess, LPCWSTR asConEmuHk)
 	if (cbCode != WIN3264TEST(68,79))
 	{
 		_ASSERTE(cbCode == WIN3264TEST(68,79));
-		iRc = -100;
+		iRc = CIR_WrongBitness/*-100*/;
 		goto wrap;
 	}
 
 	if (lstrlen(asConEmuHk) >= (int)countof(dat.szConEmuHk))
 	{
-		iRc = -101;
+		iRc = CIR_TooLongHookPath/*-101*/;
 		goto wrap;
 	}
 
@@ -85,7 +85,7 @@ int InfiltrateDll(HANDLE hProcess, LPCWSTR asConEmuHk)
 		PAGE_EXECUTE_READWRITE); // Protections
 	if (!pRemoteProc)
 	{
-		iRc = -102;
+		iRc = CIR_VirtualAllocEx/*-102*/;
 		goto wrap;
 	}
 	if (!WriteProcessMemory(
@@ -95,7 +95,7 @@ int InfiltrateDll(HANDLE hProcess, LPCWSTR asConEmuHk)
 		cbCode,			// Code length
 		NULL))			// We don't care
 	{
-		iRc = -103;
+		iRc = CIR_WriteProcessMemory/*-103*/;
 		goto wrap;
 	}
 
@@ -106,7 +106,7 @@ int InfiltrateDll(HANDLE hProcess, LPCWSTR asConEmuHk)
 	hKernel = LoadLibrary(L"Kernel32.dll");
 	if (!hKernel)
 	{
-		iRc = -104;
+		iRc = CIR_LoadKernel/*-104*/;
 		goto wrap;
 	}
 
@@ -125,7 +125,7 @@ int InfiltrateDll(HANDLE hProcess, LPCWSTR asConEmuHk)
 	dat._LoadLibraryW = (LoadLibraryW_t)GetLoadLibraryAddress(); // GetProcAddress(hKernel, "LoadLibraryW");
 	if (!_CreateRemoteThread || !dat._LoadLibraryW || !dat._SetLastError || !dat._GetLastError)
 	{
-		iRc = -105;
+		iRc = CIR_NoKernelExport/*-105*/;
 		goto wrap;
 	}
 	else
@@ -137,7 +137,7 @@ int InfiltrateDll(HANDLE hProcess, LPCWSTR asConEmuHk)
 		{
 			// Если функции перехвачены - попытка выполнить код по этим адресам
 			// скорее всего приведет к ошибке доступа, что не есть гут.
-			iRc = -111;
+			iRc = CIR_CheckKernelExportAddr/*-111*/;
 			goto wrap;
 		}
 	}
@@ -146,12 +146,12 @@ int InfiltrateDll(HANDLE hProcess, LPCWSTR asConEmuHk)
 	pRemoteDat = VirtualAllocEx(hProcess, NULL, sizeof(InfiltrateArg), MEM_COMMIT, PAGE_READWRITE);
 	if (!pRemoteDat)
 	{
-		iRc = -106;
+		iRc = CIR_VirtualAllocEx2/*-106*/;
 		goto wrap;
 	}
 	if (!WriteProcessMemory(hProcess, pRemoteDat, &dat, sizeof(InfiltrateArg), NULL))
 	{
-		iRc = -107;
+		iRc = CIR_WriteProcessMemory2/*-107*/;
 		goto wrap;
 	}
 
@@ -167,7 +167,7 @@ int InfiltrateDll(HANDLE hProcess, LPCWSTR asConEmuHk)
 		&id);
 	if (!hThread)
 	{
-		iRc = -108;
+		iRc = CIR_CreateRemoteThread/*-108*/;
 		goto wrap;
 	}
 
@@ -182,13 +182,13 @@ int InfiltrateDll(HANDLE hProcess, LPCWSTR asConEmuHk)
 		sizeof(InfiltrateArg),	// Size
 		NULL))			// We don't care
 	{
-		iRc = -109;
+		iRc = CIR_ReadProcessMemory/*-109*/;
 		goto wrap;
 	}
 
 	// Вернуть результат загрузки
 	SetLastError((dat.hInst != NULL) ? 0 : (DWORD)dat.ErrCode);
-	iRc = (dat.hInst != NULL) ? 0 : -110;
+	iRc = (dat.hInst != NULL) ? CIR_OK/*0*/ : CIR_InInjectedCodeError/*-110*/;
 wrap:
 	if (hKernel)
 		FreeLibrary(hKernel);
@@ -201,9 +201,9 @@ wrap:
 	return iRc;
 }
 
-int PrepareHookModule(wchar_t (&szModule)[MAX_PATH+16])
+CINFILTRATE_EXIT_CODES PrepareHookModule(wchar_t (&szModule)[MAX_PATH+16])
 {
-	int iRc = -251;
+	CINFILTRATE_EXIT_CODES iRc = CIR_GeneralError/*-1*/;
 	wchar_t szNewPath[MAX_PATH+16] = {}, szAddName[40] = {};
 	wchar_t szMinor[8] = L""; lstrcpyn(szMinor, WSTRING(MVV_4a), countof(szMinor));
 	INT_PTR nLen = 0;
@@ -213,7 +213,7 @@ int PrepareHookModule(wchar_t (&szModule)[MAX_PATH+16])
 	HRESULT hr = SHGetFolderPath(NULL, CSIDL_LOCAL_APPDATA, NULL, 0/*SHGFP_TYPE_CURRENT*/, szNewPath);
 	if ((hr != S_OK) || !*szNewPath)
 	{
-		iRc = -251;
+		iRc = CIR_SHGetFolderPath/*-251*/;
 		goto wrap;
 	}
 
@@ -229,7 +229,7 @@ int PrepareHookModule(wchar_t (&szModule)[MAX_PATH+16])
 
 	if ((nLen + lstrlen(szAddName) + 8) >= countof(szNewPath))
 	{
-		iRc = -252;
+		iRc = CIR_TooLongTempPath/*-252*/;
 		goto wrap;
 	}
 
@@ -238,7 +238,7 @@ int PrepareHookModule(wchar_t (&szModule)[MAX_PATH+16])
 	{
 		if (!CreateDirectory(szNewPath, NULL))
 		{
-			iRc = -253;
+			iRc = CIR_CreateTempDirectory/*-253*/;
 			goto wrap;
 		}
 	}
@@ -269,22 +269,22 @@ int PrepareHookModule(wchar_t (&szModule)[MAX_PATH+16])
 
 		if (!CopyFile(szModule, szNewPath, FALSE))
 		{
-			iRc = -254;
+			iRc = CIR_CopyHooksFile/*-254*/;
 			goto wrap;
 		}
 	}
 
 	wcscpy_c(szModule, szNewPath);
-	iRc = 0;
+	iRc = CIR_OK/*0*/;
 wrap:
 	return iRc;
 }
 
-// 0 - OK, 1 - Already injected, иначе - ошибка
+// CIR_OK=0 - OK, CIR_AlreadyInjected=1 - Already injected, иначе - ошибка
 // Здесь вызывается CreateRemoteThread
-int InjectRemote(DWORD nRemotePID, bool abDefTermOnly /*= false */)
+CINFILTRATE_EXIT_CODES InjectRemote(DWORD nRemotePID, bool abDefTermOnly /*= false */)
 {
-	int iRc = -1;
+	CINFILTRATE_EXIT_CODES iRc = CIR_GeneralError/*-1*/;
 	bool lbWin64 = WIN3264TEST((IsWindows64()!=0),true);
 	bool is32bit;
 	DWORD nWrapperWait = (DWORD)-1, nWrapperResult = (DWORD)-1;
@@ -300,14 +300,14 @@ int InjectRemote(DWORD nRemotePID, bool abDefTermOnly /*= false */)
 
 	if (!GetModuleFileName(NULL, szSelf, MAX_PATH))
 	{
-		iRc = -200;
+		iRc = CIR_GetModuleFileName/*-200*/;
 		goto wrap;
 	}
 	wcscpy_c(szHooks, szSelf);
 	pszNamePtr = (wchar_t*)PointToName(szHooks);
 	if (!pszNamePtr)
 	{
-		iRc = -200;
+		iRc = CIR_GetModuleFileName/*-200*/;
 		goto wrap;
 	}
 
@@ -362,7 +362,7 @@ int InjectRemote(DWORD nRemotePID, bool abDefTermOnly /*= false */)
 	// Already hooked?
 	if (bAlreadyHooked)
 	{
-		iRc = 1;
+		iRc = CIR_AlreadyInjected/*1*/;
 		goto wrap;
 	}
 
@@ -371,7 +371,7 @@ int InjectRemote(DWORD nRemotePID, bool abDefTermOnly /*= false */)
 	hProc = OpenProcess(PROCESS_CREATE_THREAD|PROCESS_QUERY_INFORMATION|PROCESS_VM_OPERATION|PROCESS_VM_WRITE|PROCESS_VM_READ, FALSE, nRemotePID);
 	if (hProc == NULL)
 	{
-		iRc = -201;
+		iRc = CIR_OpenProcess/*-201*/;
 		goto wrap;
 	}
 
@@ -459,7 +459,7 @@ int InjectRemote(DWORD nRemotePID, bool abDefTermOnly /*= false */)
 
 		if (!CreateProcess(szHooks, szArgs, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL, NULL, &si, &pi))
 		{
-			iRc = -202;
+			iRc = CIR_CreateProcess/*-202*/;
 			goto wrap;
 		}
 		nWrapperWait = WaitForSingleObject(pi.hProcess, INFINITE);
@@ -468,12 +468,12 @@ int InjectRemote(DWORD nRemotePID, bool abDefTermOnly /*= false */)
 		CloseHandle(pi.hThread);
 		if ((nWrapperResult != CERR_HOOKS_WAS_SET) && (nWrapperResult != CERR_HOOKS_WAS_ALREADY_SET))
 		{
-			iRc = -203;
+			iRc = CIR_WrapperResult/*-203*/;
 			SetLastError(nWrapperResult);
 			goto wrap;
 		}
 		// Значит всю работу сделал враппер
-		iRc = 0;
+		iRc = CIR_OK/*0*/;
 		goto wrap;
 	}
 
@@ -481,13 +481,13 @@ int InjectRemote(DWORD nRemotePID, bool abDefTermOnly /*= false */)
 	_wcscpy_c(pszNamePtr, 16, is32bit ? L"ConEmuHk.dll" : L"ConEmuHk64.dll");
 	if (!FileExists(szHooks))
 	{
-		iRc = -250;
+		iRc = CIR_ConEmuHkNotFound/*-250*/;
 		goto wrap;
 	}
 
 	if (abDefTermOnly)
 	{
-		int iFRc = PrepareHookModule(szHooks);
+		CINFILTRATE_EXIT_CODES iFRc = PrepareHookModule(szHooks);
 		if (iFRc != 0)
 		{
 			iRc = iFRc;
@@ -512,7 +512,7 @@ wrap:
 		DWORD nWaitReady = WaitForSingleObject(hDefTermReady, CEDEFAULTTERMHOOKWAIT/*==0*/);
 		if (nWaitReady == WAIT_TIMEOUT)
 		{
-			iRc = -300; // Failed to start hooking thread in remote process
+			iRc = CIR_DefTermWaitingFailed/*-300*/; // Failed to start hooking thread in remote process
 		}
 	}
 	return iRc;
