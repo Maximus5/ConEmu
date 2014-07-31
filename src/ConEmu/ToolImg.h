@@ -46,11 +46,22 @@ protected:
 		LPCWSTR szName; int nWidth, nHeight;
 	};
 
+	struct ButtonRowInfo
+	{
+		// Size of one button in a row
+		int nWidth, nHeight;
+		// Start Y coord
+		int nY;
+		// Count of buttons in a row (==1?)
+		int nCount;
+	};
+
 	void FreeDC();
 	void FreeBMP();
 	int  AddBitmap(HBITMAP hbm, int iNumBtns);
 	bool CreateField(int nImgWidth, int nImgHeight, COLORREF clrBackground);
 	bool CreateButtonField(COLORREF clrBackground, ButtonFieldInfo* pBtns, int nBtnCount, int& nDefWidth, int& nDefHeight);
+	bool CreateButtonField(LPCWSTR szImgRes, COLORREF clrBackground, ButtonRowInfo* pBtns, int nRowCount, int& nDefWidth, int& nDefHeight);
 	bool PaintBitmap(HBITMAP hbmSrc, int nSrcWidth, int nSrcHeight, HDC hdcDst, int nDstX, int nDstY, int nDstWidth, int nDstHeight);
 
 public:

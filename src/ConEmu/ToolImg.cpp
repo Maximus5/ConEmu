@@ -138,13 +138,20 @@ bool CToolImg::CreateField(int nImgWidth, int nImgHeight, COLORREF clrBackground
 
 bool CToolImg::CreateDonateButton(COLORREF clrBackground, int& nDefWidth, int& nDefHeight)
 {
-	ButtonFieldInfo Btns[] = {
-		{L"DONATE21", 74, 21},
-		{L"DONATE26", 92, 26},
-		{L"DONATE42", 148,42},
+	ButtonRowInfo Btns[] = {
+		{74,  21},
+		{92,  26},
+		{111, 31},
+		{148, 42},
 	};
+	int nY = 0;
+	for (size_t i = 0; i < countof(Btns); i++)
+	{
+		Btns[i].nY = nY; Btns[i].nCount = 1;
+		nY += 1 + Btns[i].nHeight;
+	}
 
-	return CreateButtonField(clrBackground, Btns, (int)countof(Btns), nDefWidth, nDefHeight);
+	return CreateButtonField(L"DONATE4", clrBackground, Btns, (int)countof(Btns), nDefWidth, nDefHeight);
 }
 
 bool CToolImg::CreateFlattrButton(COLORREF clrBackground, int& nDefWidth, int& nDefHeight)
@@ -221,6 +228,74 @@ bool CToolImg::CreateButtonField(COLORREF clrBackground, ButtonFieldInfo* pBtns,
 	#endif
 
 	mn_BtnCount = mn_MaxBtnCount;
+
+	return true;
+}
+
+bool CToolImg::CreateButtonField(LPCWSTR szImgRes, COLORREF clrBackground, ButtonRowInfo* pBtns, int nRowCount, int& nDefWidth, int& nDefHeight)
+{
+	FreeDC();
+	FreeBMP();
+
+	nDefWidth = pBtns[0].nWidth;
+	nDefHeight = pBtns[0].nHeight;
+
+	mprc_Btns = (LPRECT)calloc(nRowCount, sizeof(*mprc_Btns));
+	if (!mprc_Btns)
+		return false;
+	mn_MaxBtnCount = nRowCount;
+
+	int nFieldWidth = pBtns[0].nWidth;
+	int nFieldHeight = pBtns[0].nHeight;
+	for (int i = 1; i < nRowCount; i++)
+	{
+		nFieldWidth = max(nFieldWidth, pBtns[i].nWidth);
+		nFieldHeight += 1 + pBtns[i].nHeight;
+	}
+
+	if (!CreateField(nFieldWidth, nFieldHeight, clrBackground))
+		return false;
+
+	COLORMAP colorMap = {0xC0C0C0, clrBackground/*GetSysColor(COLOR_BTNFACE)*/};
+
+	bool bRc = true;
+
+	_ASSERTE(mn_BtnCount == 0);
+
+	DWORD nErrCode = 0;
+
+	//HBITMAP hbm = CreateMappedBitmap(g_hInstance, (INT_PTR)pBtns[i].szName, 0, &colorMap, 1);
+	HBITMAP hbm = (HBITMAP)LoadImage(g_hInstance, szImgRes, IMAGE_BITMAP, 0, 0, LR_LOADTRANSPARENT|LR_LOADMAP3DCOLORS);
+	if (hbm == NULL)
+	{
+		nErrCode = GetLastError();
+		bRc = false;
+	}
+	else
+	{
+		if (!PaintBitmap(hbm, nFieldWidth, nFieldHeight, mh_BmpDc, 0, 0, nFieldWidth, nFieldHeight))
+		{
+			nErrCode = GetLastError();
+			bRc = false;
+		}
+
+		DeleteObject(hbm);
+	}
+
+	if (bRc)
+	{
+		for (int i = 0; i < nRowCount; i++)
+		{
+			RECT rc = {0, pBtns[i].nY, pBtns[i].nWidth, pBtns[i].nY + pBtns[i].nHeight};
+			mprc_Btns[i] = rc;
+		}
+
+		#ifdef _DEBUG
+		//SaveImageEx(L"T:\\BtnField.png", mh_Bmp);
+		#endif
+
+		mn_BtnCount = mn_MaxBtnCount;
+	}
 
 	return true;
 }
