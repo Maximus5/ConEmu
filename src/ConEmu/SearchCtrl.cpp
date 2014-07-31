@@ -30,6 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define SHOWDEBUGSTR
 
 #include "Header.h"
+#include "OptionsClass.h"
 #include "Resource.h"
 #include "../common/MMap.h"
 
@@ -547,6 +548,9 @@ void EditIconHint_Set(HWND hRootDlg, HWND hEditCtrl, bool bSearchIcon, LPCWSTR s
 	if (!hFont)
 	{
 		int nFontHeight = 14;
+		int nDisplayDpi = gpSetCls->QueryDpi();
+		if (nDisplayDpi > 96)
+			nFontHeight = nFontHeight * nDisplayDpi / 96;
 		hFont = CreateFont(nFontHeight, 0, 0, 0, FW_NORMAL, TRUE/*Italic*/, FALSE, 0,
 					DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_SWISS,
 					L"Tahoma");
