@@ -783,6 +783,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\common\MStrSafe.h" />
+    <ClInclude Include="..\ConEmuCD\ExitCodes.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="..\ConEmu\version.h" />
   </ItemGroup>

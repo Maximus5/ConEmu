@@ -484,6 +484,7 @@
       <File RelativePath="..\common\WinConsole.h" />
       <File RelativePath="..\common\WinObjects.h" />
       <File RelativePath="..\ConEmuCD\ConsoleHelp.h" />
+      <File RelativePath="..\ConEmuCD\ExitCodes.h" />
       <File RelativePath="..\ConEmuCD\GuiHooks.h" />
       <File RelativePath=".\About.h" />
       <File RelativePath=".\AboutDlg.h" />

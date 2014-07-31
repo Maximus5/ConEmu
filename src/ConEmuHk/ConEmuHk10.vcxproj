@@ -851,6 +851,7 @@
     <ClInclude Include="..\common\StartupEnv.h" />
     <ClInclude Include="..\common\WinConsole.h" />
     <ClInclude Include="..\common\WinObjects.h" />
+    <ClInclude Include="..\ConEmuCD\ExitCodes.h" />
     <ClInclude Include="Ansi.h" />
     <ClInclude Include="ConEmuHooks.h" />
     <ClInclude Include="Console2.h" />

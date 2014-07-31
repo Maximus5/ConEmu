@@ -999,6 +999,7 @@
     <ClInclude Include="..\common\WinConsole.h" />
     <ClInclude Include="..\common\WinObjects.h" />
     <ClInclude Include="..\ConEmuCD\ConsoleHelp.h" />
+    <ClInclude Include="..\ConEmuCD\ExitCodes.h" />
     <ClInclude Include="..\ConEmuCD\GuiHooks.h" />
     <ClInclude Include="About.h" />
     <ClInclude Include="AboutDlg.h" />

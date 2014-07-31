@@ -1021,6 +1021,7 @@
     <ClInclude Include="..\common\UnicodeChars_vc.h" />
     <ClInclude Include="..\common\WinConsole.h" />
     <ClInclude Include="..\common\WinObjects.h" />
+    <ClInclude Include="..\ConEmuCD\ExitCodes.h" />
     <ClInclude Include="..\ConEmuCD\GuiHooks.h" />
     <ClInclude Include="AboutDlg.h" />
     <ClInclude Include="Attach.h" />

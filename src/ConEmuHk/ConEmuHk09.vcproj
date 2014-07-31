@@ -409,6 +409,7 @@
       <File RelativePath="..\common\StartupEnv.h" />
       <File RelativePath="..\common\WinConsole.h" />
       <File RelativePath="..\common\WinObjects.h" />
+      <File RelativePath="..\ConEmuCD\ExitCodes.h" />
       <File RelativePath="Ansi.h" />
       <File RelativePath="ConEmuHooks.h" />
       <File RelativePath="Console2.h" />

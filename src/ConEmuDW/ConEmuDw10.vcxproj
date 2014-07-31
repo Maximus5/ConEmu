@@ -953,6 +953,7 @@
     <ClInclude Include="..\common\ConEmuCheck.h" />
     <ClInclude Include="..\common\ConsoleRead.h" />
     <ClInclude Include="..\common\ConEmuColors3.h" />
+    <ClInclude Include="..\ConEmuCD\ExitCodes.h" />
     <ClInclude Include="ConEmuDw.h" />
     <ClInclude Include="..\common\ConsoleAnnotation.h" />
     <ClInclude Include="..\common\MAssert.h" />

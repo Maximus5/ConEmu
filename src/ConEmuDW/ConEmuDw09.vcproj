@@ -396,6 +396,7 @@
       </File>
       <File RelativePath="..\common\ConEmuColors3.h">
       </File>
+      <File RelativePath="..\ConEmuCD\ExitCodes.h" />
       <File RelativePath=".\ConEmuDw.h">
       </File>
       <File RelativePath="..\common\ConsoleAnnotation.h">
