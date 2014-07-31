@@ -38,6 +38,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "OptionsClass.h"
 #include "RealConsole.h"
 #include "SearchCtrl.h"
+#include "ToolImg.h"
 #include "Update.h"
 #include "VirtualConsole.h"
 #include "VConChild.h"
@@ -59,10 +60,10 @@ namespace ConEmuAbout
 	struct BtnInfo
 	{
 		LPCWSTR ResId;
-		HBITMAP hBmp;
-		BITMAP bmp;
+		CToolImg* pImg;
 		LPWSTR pszUrl;
 		UINT nCtrlId;
+		int nDefWidth, nDefHeight;
 	} m_Btns[2] = {};
 
 	void LoadResources();
@@ -627,51 +628,44 @@ void ConEmuAbout::OnInfo_ThrowTrapException(bool bMainThread)
 
 void ConEmuAbout::LoadResources()
 {
-	struct ImgLoadInfo
+	for (size_t i = 0; i < countof(m_Btns); i++)
 	{
-		LPCWSTR ResId; UINT nCtrlId; int nWidth; int nHeight;
-	} Images[] = {
-		{L"DONATE", pLinkDonate, 74, 21},
-		{L"FLATTR", pLinkFlattr, 89, 18},
-	};
-	_ASSERTE(countof(m_Btns) == countof(Images));
-
-	for (size_t i = 0; i < countof(Images); i++)
-	{
-		if (m_Btns[i].hBmp)
+		if (m_Btns[i].pImg)
 			continue; // Already loaded
 
-		m_Btns[i].ResId = Images[i].ResId;
-		m_Btns[i].nCtrlId = Images[i].nCtrlId;
-		m_Btns[i].pszUrl = (Images[i].nCtrlId == pLinkDonate) ? gsDonatePage : gsFlattrPage;
-		m_Btns[i].hBmp = (HBITMAP)LoadImage(g_hInstance, Images[i].ResId, IMAGE_BITMAP, 0, 0, LR_LOADTRANSPARENT|LR_LOADMAP3DCOLORS);
-
-		if (m_Btns[i].hBmp == NULL)
+		switch (i)
 		{
-			#ifdef _DEBUG
+		case 0:
+			m_Btns[i].ResId = L"DONATE";
+			m_Btns[i].pImg = new CToolImg();
+			if (m_Btns[i].pImg && !m_Btns[i].pImg->CreateDonateButton(GetSysColor(COLOR_BTNFACE), m_Btns[i].nDefWidth, m_Btns[i].nDefHeight))
+				SafeDelete(m_Btns[i].pImg);
+			m_Btns[i].nCtrlId = pLinkDonate;
+			m_Btns[i].pszUrl = gsDonatePage;
+			break;
+		case 1:
+			m_Btns[i].ResId = L"FLATTR";
+			m_Btns[i].pImg = new CToolImg();
+			if (m_Btns[i].pImg && !m_Btns[i].pImg->CreateFlattrButton(GetSysColor(COLOR_BTNFACE), m_Btns[i].nDefWidth, m_Btns[i].nDefHeight))
+				SafeDelete(m_Btns[i].pImg);
+			m_Btns[i].nCtrlId = pLinkFlattr;
+			m_Btns[i].pszUrl = gsFlattrPage;
+			break;
+		}
+
+		#ifdef _DEBUG
+		if (m_Btns[i].pImg == NULL)
+		{
 			DWORD nErr = GetLastError();
 			DisplayLastError(L"Failed to load button image!", nErr);
-			#endif
-			m_Btns[i].bmp.bmWidth = Images[i].nWidth; m_Btns[i].bmp.bmHeight = Images[i].nHeight;
 		}
-		else
-		{
-			ZeroStruct(m_Btns[i].bmp);
-			if (!GetObject(m_Btns[i].hBmp, sizeof(m_Btns[i].bmp), &m_Btns[i].bmp) || m_Btns[i].bmp.bmWidth <= 0 || m_Btns[i].bmp.bmHeight <= 0)
-			{
-				#ifdef _DEBUG
-				DWORD nErr = GetLastError();
-				DisplayLastError(L"GetObject() on button image failed!", nErr);
-				#endif
-				m_Btns[i].bmp.bmWidth = Images[i].nWidth; m_Btns[i].bmp.bmHeight = Images[i].nHeight;
-			}
-		}
+		#endif
 	}
 }
 
 void ConEmuAbout::DonateBtns_Add(HWND hDlg, int AlignLeftId, int AlignVCenterId)
 {
-	if (!m_Btns[0].hBmp)
+	if (!m_Btns[0].pImg)
 		LoadResources();
 
 	RECT rcLeft = {}, rcTop = {};
@@ -690,13 +684,13 @@ void ConEmuAbout::DonateBtns_Add(HWND hDlg, int AlignLeftId, int AlignVCenterId)
 
 	for (size_t i = 0; i < countof(m_Btns); i++)
 	{
-		if (!m_Btns[i].hBmp)
+		if (!m_Btns[i].pImg)
 			continue; // Image was failed
 
 		TODO("Вертикальное центрирование по объекту AlignVCenterId");
 
-		int nDispW = m_Btns[i].bmp.bmWidth * nDisplayDpi / 96;
-		int nDispH = m_Btns[i].bmp.bmHeight * nDisplayDpi / 96;
+		int nDispW = m_Btns[i].nDefWidth * nDisplayDpi / 96;
+		int nDispH = m_Btns[i].nDefHeight * nDisplayDpi / 96;
 		int nY = rcTop.top + ((rcTop.bottom - rcTop.top - nDispH + 1) / 2);
 
 		hCtrl = CreateWindow(L"STATIC", m_Btns[i].ResId,
@@ -757,19 +751,10 @@ bool ConEmuAbout::DonateBtns_Process(HWND hDlg, UINT messg, WPARAM wParam, LPARA
 		case pLinkDonate:
 		case pLinkFlattr:
 			iBtnIdx = (LOWORD(wParam) == pLinkDonate)?0:1;
-			if (m_Btns[iBtnIdx].hBmp)
+			if (m_Btns[iBtnIdx].pImg)
 			{
-				bool bRc = false;
 				DRAWITEMSTRUCT* p = (DRAWITEMSTRUCT*)lParam;
-				HDC hdcComp = CreateCompatibleDC(p->hDC);
-				if (hdcComp)
-				{
-					HBITMAP hOld = (HBITMAP)SelectObject(hdcComp, m_Btns[iBtnIdx].hBmp);
-					bRc = (StretchBlt(p->hDC, p->rcItem.left, p->rcItem.top, p->rcItem.right-p->rcItem.left, p->rcItem.bottom-p->rcItem.top,
-						hdcComp, 0, 0, m_Btns[iBtnIdx].bmp.bmWidth, m_Btns[iBtnIdx].bmp.bmHeight, SRCCOPY) != 0);
-					SelectObject(hdcComp, hOld);
-					DeleteDC(hdcComp);
-				}
+				bool bRc = m_Btns[iBtnIdx].pImg->PaintButton(-1, p->hDC, p->rcItem.left, p->rcItem.top, p->rcItem.right-p->rcItem.left, p->rcItem.bottom-p->rcItem.top);
 				if (bRc)
 				{
 					lResult = TRUE;
