@@ -34,6 +34,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "header.h"
 #include "ToolImg.h"
 
+/*
+#include "Options.h"
+*/
+
 #ifdef _DEBUG
 #include "LoadImg.h"
 #endif
@@ -362,3 +366,33 @@ int CToolImg::AddButtonsMapped(HINSTANCE hinst, INT_PTR resId, int iNumBtns, int
 	}
 	return iAdded;
 }
+
+/*
+HBITMAP CToolImg::LoadImageForWindow(HWND hwnd, HINSTANCE hinst, INT_PTR resId, int iStdWidth, int iStdHeight, COLORREF clrBackground, int iNumMaps, COLORREF from, COLORREF to, ...)
+{
+	FreeDC();
+	FreeBMP();
+
+	TODO("hwnd must be used to determine monitor DPI (per/mon dpi)");
+	int nDisplayDpi = gpSetCls->QueryDpi();
+
+	if (!Create(iStdWidth * nDisplayDpi / 96, iStdHeight * nDisplayDpi / 96, 1, clrBackground))
+		return NULL;
+
+	int iAdded = 0;
+	_ASSERTE(iNumMaps <= 1);
+	COLORMAP colorMap = {from, to};
+	HBITMAP hbm = CreateMappedBitmap(hinst, resId, 0, &colorMap, 1);
+	if (hbm)
+	{
+		iAdded = AddBitmap(hbm, 1);
+		DeleteObject(hbm);
+	}
+	else
+	{
+		_ASSERTE(FALSE && "CreateMappedBitmap failed");
+	}
+
+	return mh_Bmp;
+}
+*/

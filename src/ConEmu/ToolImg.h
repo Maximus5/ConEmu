@@ -61,6 +61,10 @@ public:
 
 	bool PaintButton(int iBtn, HDC hdcDst, int nDstX, int nDstY, int nDstWidth, int nDstHeight);
 
+	/*
+	HBITMAP LoadImageForWindow(HWND hwnd, HINSTANCE hinst, INT_PTR resId, int iStdWidth, int iStdHeight, COLORREF clrBackground, int iNumMaps, COLORREF from, COLORREF to, ...);
+	*/
+
 public:
 	bool Create(int nBtnWidth, int nBtnHeight, int nMaxCount, COLORREF clrBackground);
 	bool CreateDonateButton(COLORREF clrBackground, int& nDefWidth, int& nDefHeight);
