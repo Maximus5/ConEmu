@@ -51,6 +51,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "AboutDlg.h"
 #include "Options.h"
 #include "ConEmu.h"
+#include "DpiAware.h"
 #ifdef _DEBUG
 #include "Macro.h"
 #endif
@@ -3559,6 +3560,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	HeapInitialize();
 	RemoveOldComSpecC();
 	AssertMsgBox = MsgBox;
+
+	// On Vista and higher ensure our process will be
+	// marked as fully dpi-aware, regardless of mainfest
+	if (gnOsVer >= 0x600)
+	{
+		CDpiAware::setProcessDPIAwareness();
+	}
 
 	/* *** DEBUG PURPOSES */
 	gpStartEnv = LoadStartupEnv();
