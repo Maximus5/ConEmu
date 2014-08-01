@@ -1013,6 +1013,7 @@
     <ClInclude Include="ConfirmDlg.h" />
     <ClInclude Include="CustomFonts.h" />
     <ClInclude Include="DefaultTerm.h" />
+    <ClInclude Include="DpiAware.h" />
     <ClInclude Include="DragDrop.h" />
     <ClInclude Include="DragDropData.h" />
     <ClInclude Include="DwmHelper.h" />

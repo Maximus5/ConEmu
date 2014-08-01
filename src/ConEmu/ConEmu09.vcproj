@@ -498,6 +498,7 @@
       <File RelativePath=".\ConfirmDlg.h" />
       <File RelativePath=".\CustomFonts.h" />
       <File RelativePath=".\DefaultTerm.h" />
+      <File RelativePath=".\DpiAware.h" />
       <File RelativePath=".\DragDrop.h" />
       <File RelativePath=".\DragDropData.h" />
       <File RelativePath=".\DwmHelper.h" />

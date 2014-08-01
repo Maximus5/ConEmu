@@ -35,6 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "About.h"
 #include "AboutDlg.h"
 #include "ConEmu.h"
+#include "DpiAware.h"
 #include "OptionsClass.h"
 #include "RealConsole.h"
 #include "SearchCtrl.h"
@@ -50,6 +51,7 @@ namespace ConEmuAbout
 	bool mb_CommCtrlsInitialized = false;
 	HWND mh_AboutDlg = NULL;
 	DWORD nLastCrashReported = 0;
+	CDpiForDialog* mp_DpiAware;
 
 	INT_PTR WINAPI aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam);
 	void searchProc(HWND hDlg, HWND hSearch, bool bReentr);
@@ -111,6 +113,11 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 		{
 			gpConEmu->OnOurDialogOpened();
 			mh_AboutDlg = hDlg;
+
+			if (mp_DpiAware)
+			{
+				mp_DpiAware->Attach(hDlg, gpSetCls->QueryDpi());
+			}
 
 			if ((ghOpWnd && IsWindow(ghOpWnd)) || (WS_EX_TOPMOST & GetWindowLongPtr(ghWnd, GWL_EXSTYLE)))
 			{
@@ -291,6 +298,8 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 		case WM_CLOSE:
 			//if (ghWnd == NULL)
 			gpConEmu->OnOurDialogClosed();
+			if (mp_DpiAware)
+				mp_DpiAware->Detach();
 			EndDialog(hDlg, IDOK);
 			//else
 			//	DestroyWindow(hDlg);
@@ -452,6 +461,8 @@ void ConEmuAbout::OnInfo_About(LPCWSTR asPageName /*= NULL*/)
 
 	{
 		DontEnable de;
+		if (!mp_DpiAware)
+			mp_DpiAware = new CDpiForDialog();
 		HWND hParent = (ghOpWnd && IsWindowVisible(ghOpWnd)) ? ghOpWnd : ghWnd;
 		// Modal dialog
 		INT_PTR iRc = DialogBoxParam(g_hInstance, MAKEINTRESOURCE(IDD_ABOUT), hParent, aboutProc, (LPARAM)asPageName);
