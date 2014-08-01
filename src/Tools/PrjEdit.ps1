@@ -58,14 +58,14 @@ function Prj-XmlEdit([String]$project, [Array]$cpp, [Array]$hpp)
       # cpp
       if (($cpp.length -gt 0) -And ($igi.Filter.Contains("cpp"))) {
         for ($j = 0; $j -lt $cpp.length; $j++) {
-          if (-Not $cpp[$j].StartsWith(".")) { $cpp[$j] = ".\" + $cpp[$j] }
-          Prj-AppendFile $igi $cpp[$j] "File" "RelativePath"
+          if (-Not $cpp[$j].StartsWith(".")) { $add = ".\" + $cpp[$j] } else { $add = $cpp[$j] }
+          Prj-AppendFile $igi $add "File" "RelativePath"
         }
         $cpp = @()
       } elseif (($hpp.length -gt 0) -And ($igi.Filter.Contains("hpp"))) {
         for ($j = 0; $j -lt $hpp.length; $j++) {
-          if (-Not $hpp[$j].StartsWith(".")) { $hpp[$j] = ".\" + $hpp[$j] }
-          Prj-AppendFile $igi $hpp[$j] "File" "RelativePath"
+          if (-Not $hpp[$j].StartsWith(".")) { $add = ".\" + $hpp[$j] } else { $add = $hpp[$j] }
+          Prj-AppendFile $igi $add "File" "RelativePath"
         }
         $hpp = @()
       }
