@@ -63,7 +63,6 @@ namespace ConEmuAbout
 		CToolImg* pImg;
 		LPWSTR pszUrl;
 		UINT nCtrlId;
-		int nDefWidth, nDefHeight;
 	} m_Btns[2] = {};
 
 	void LoadResources();
@@ -638,7 +637,7 @@ void ConEmuAbout::LoadResources()
 		case 0:
 			m_Btns[i].ResId = L"DONATE";
 			m_Btns[i].pImg = new CToolImg();
-			if (m_Btns[i].pImg && !m_Btns[i].pImg->CreateDonateButton(GetSysColor(COLOR_BTNFACE), m_Btns[i].nDefWidth, m_Btns[i].nDefHeight))
+			if (m_Btns[i].pImg && !m_Btns[i].pImg->CreateDonateButton(GetSysColor(COLOR_BTNFACE)))
 				SafeDelete(m_Btns[i].pImg);
 			m_Btns[i].nCtrlId = pLinkDonate;
 			m_Btns[i].pszUrl = gsDonatePage;
@@ -646,7 +645,7 @@ void ConEmuAbout::LoadResources()
 		case 1:
 			m_Btns[i].ResId = L"FLATTR";
 			m_Btns[i].pImg = new CToolImg();
-			if (m_Btns[i].pImg && !m_Btns[i].pImg->CreateFlattrButton(GetSysColor(COLOR_BTNFACE), m_Btns[i].nDefWidth, m_Btns[i].nDefHeight))
+			if (m_Btns[i].pImg && !m_Btns[i].pImg->CreateFlattrButton(GetSysColor(COLOR_BTNFACE)))
 				SafeDelete(m_Btns[i].pImg);
 			m_Btns[i].nCtrlId = pLinkFlattr;
 			m_Btns[i].pszUrl = gsFlattrPage;
@@ -689,8 +688,13 @@ void ConEmuAbout::DonateBtns_Add(HWND hDlg, int AlignLeftId, int AlignVCenterId)
 
 		TODO("Вертикальное центрирование по объекту AlignVCenterId");
 
-		int nDispW = m_Btns[i].nDefWidth * nDisplayDpi / 96;
-		int nDispH = m_Btns[i].nDefHeight * nDisplayDpi / 96;
+		int nDispW = 0, nDispH = 0;
+		if (!m_Btns[i].pImg->GetSizePerDpi(nDisplayDpi, nDispW, nDispH))
+		{
+			_ASSERTE(FALSE && "Image not available for dpi?");
+			continue; // Image was failed?
+		}
+		_ASSERTE(nDispW>0 && nDispH>0);
 		int nY = rcTop.top + ((rcTop.bottom - rcTop.top - nDispH + 1) / 2);
 
 		hCtrl = CreateWindow(L"STATIC", m_Btns[i].ResId,

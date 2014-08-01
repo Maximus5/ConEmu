@@ -136,7 +136,7 @@ bool CToolImg::CreateField(int nImgWidth, int nImgHeight, COLORREF clrBackground
 	return true;
 }
 
-bool CToolImg::CreateDonateButton(COLORREF clrBackground, int& nDefWidth, int& nDefHeight)
+bool CToolImg::CreateDonateButton(COLORREF clrBackground)
 {
 	ButtonRowInfo Btns[] = {
 		{74,  21},
@@ -151,25 +151,31 @@ bool CToolImg::CreateDonateButton(COLORREF clrBackground, int& nDefWidth, int& n
 		nY += 1 + Btns[i].nHeight;
 	}
 
-	return CreateButtonField(L"DONATE4", clrBackground, Btns, (int)countof(Btns), nDefWidth, nDefHeight);
+	return CreateButtonField(L"DONATE4", clrBackground, Btns, (int)countof(Btns));
 }
 
-bool CToolImg::CreateFlattrButton(COLORREF clrBackground, int& nDefWidth, int& nDefHeight)
+bool CToolImg::CreateFlattrButton(COLORREF clrBackground)
 {
-	ButtonFieldInfo Btns[] = {
-		{L"FLATTR", 89, 18},
+	ButtonRowInfo Btns[] = {
+		{55,  19},
+		{68,  24},
+		{82,  29},
+		{110, 38},
 	};
+	int nY = 0;
+	for (size_t i = 0; i < countof(Btns); i++)
+	{
+		Btns[i].nY = nY; Btns[i].nCount = 1;
+		nY += 1 + Btns[i].nHeight;
+	}
 
-	return CreateButtonField(clrBackground, Btns, (int)countof(Btns), nDefWidth, nDefHeight);
+	return CreateButtonField(L"FLATTR4", clrBackground, Btns, (int)countof(Btns));
 }
 
-bool CToolImg::CreateButtonField(COLORREF clrBackground, ButtonFieldInfo* pBtns, int nBtnCount, int& nDefWidth, int& nDefHeight)
+bool CToolImg::CreateButtonField(COLORREF clrBackground, ButtonFieldInfo* pBtns, int nBtnCount)
 {
 	FreeDC();
 	FreeBMP();
-
-	nDefWidth = pBtns[0].nWidth;
-	nDefHeight = pBtns[0].nHeight;
 
 	mprc_Btns = (LPRECT)calloc(nBtnCount, sizeof(*mprc_Btns));
 	if (!mprc_Btns)
@@ -232,13 +238,10 @@ bool CToolImg::CreateButtonField(COLORREF clrBackground, ButtonFieldInfo* pBtns,
 	return true;
 }
 
-bool CToolImg::CreateButtonField(LPCWSTR szImgRes, COLORREF clrBackground, ButtonRowInfo* pBtns, int nRowCount, int& nDefWidth, int& nDefHeight)
+bool CToolImg::CreateButtonField(LPCWSTR szImgRes, COLORREF clrBackground, ButtonRowInfo* pBtns, int nRowCount)
 {
 	FreeDC();
 	FreeBMP();
-
-	nDefWidth = pBtns[0].nWidth;
-	nDefHeight = pBtns[0].nHeight;
 
 	mprc_Btns = (LPRECT)calloc(nRowCount, sizeof(*mprc_Btns));
 	if (!mprc_Btns)
@@ -298,6 +301,52 @@ bool CToolImg::CreateButtonField(LPCWSTR szImgRes, COLORREF clrBackground, Butto
 	}
 
 	return true;
+}
+
+bool CToolImg::GetSizePerDpi(int nDisplayDpi, int& nDispW, int& nDispH)
+{
+	if (nDisplayDpi <= 0)
+		return false;
+	if (this == NULL || mn_BtnCount <= 0 || mprc_Btns == NULL)
+		return false;
+
+	// 100%, 125%, 150%, 200%
+	_ASSERTE(mn_BtnCount == 4);
+
+	// Find max size (for 200% dpi)
+	int nMaxW = 0, nMaxH = 0;
+	for (int i = 0; i < mn_BtnCount; i++)
+	{
+		int h = (mprc_Btns[i].bottom - mprc_Btns[i].top);
+		if (h > nMaxH)
+		{
+			nMaxH = h;
+			nMaxW = (mprc_Btns[i].right - mprc_Btns[i].left);
+		}
+	}
+
+	if (nMaxW <= 0 || nMaxH <= 0)
+		return false;
+
+	bool byWidth = (nMaxW > nMaxH);
+
+	int nNeed = (byWidth ? nMaxW : nMaxH) * nDisplayDpi * 100 / (96 * 200);
+	nDispW = 0; nDispH = 0;
+
+	for (int i = 0; i < mn_BtnCount; i++)
+	{
+		int w = (mprc_Btns[i].right - mprc_Btns[i].left);
+		int h = (mprc_Btns[i].bottom - mprc_Btns[i].top);
+		int n = (byWidth ? w : h);
+
+		if ((n <= nNeed) && (n > (byWidth ? nDispW : nDispH)))
+		{
+			nDispW = w; nDispH = h;
+		}
+		// Continue enum, may be better choice will be found
+	}
+
+	return (nDispH > 0);
 }
 
 bool CToolImg::PaintButton(int iBtn, HDC hdcDst, int nDstX, int nDstY, int nDstWidth, int nDstHeight)

@@ -60,8 +60,8 @@ protected:
 	void FreeBMP();
 	int  AddBitmap(HBITMAP hbm, int iNumBtns);
 	bool CreateField(int nImgWidth, int nImgHeight, COLORREF clrBackground);
-	bool CreateButtonField(COLORREF clrBackground, ButtonFieldInfo* pBtns, int nBtnCount, int& nDefWidth, int& nDefHeight);
-	bool CreateButtonField(LPCWSTR szImgRes, COLORREF clrBackground, ButtonRowInfo* pBtns, int nRowCount, int& nDefWidth, int& nDefHeight);
+	bool CreateButtonField(COLORREF clrBackground, ButtonFieldInfo* pBtns, int nBtnCount);
+	bool CreateButtonField(LPCWSTR szImgRes, COLORREF clrBackground, ButtonRowInfo* pBtns, int nRowCount);
 	bool PaintBitmap(HBITMAP hbmSrc, int nSrcWidth, int nSrcHeight, HDC hdcDst, int nDstX, int nDstY, int nDstWidth, int nDstHeight);
 
 public:
@@ -71,6 +71,7 @@ public:
 	HBITMAP GetBitmap();
 
 	bool PaintButton(int iBtn, HDC hdcDst, int nDstX, int nDstY, int nDstWidth, int nDstHeight);
+	bool GetSizePerDpi(int nDisplayDpi, int& nDispW, int& nDispH);
 
 	/*
 	HBITMAP LoadImageForWindow(HWND hwnd, HINSTANCE hinst, INT_PTR resId, int iStdWidth, int iStdHeight, COLORREF clrBackground, int iNumMaps, COLORREF from, COLORREF to, ...);
@@ -78,8 +79,8 @@ public:
 
 public:
 	bool Create(int nBtnWidth, int nBtnHeight, int nMaxCount, COLORREF clrBackground);
-	bool CreateDonateButton(COLORREF clrBackground, int& nDefWidth, int& nDefHeight);
-	bool CreateFlattrButton(COLORREF clrBackground, int& nDefWidth, int& nDefHeight);
+	bool CreateDonateButton(COLORREF clrBackground);
+	bool CreateFlattrButton(COLORREF clrBackground);
 	int  AddButtons(HINSTANCE hinst, INT_PTR resId, int iNumBtns);
 	int  AddButtonsMapped(HINSTANCE hinst, INT_PTR resId, int iNumBtns, int iNumMaps, COLORREF from, COLORREF to, ...);
 };
