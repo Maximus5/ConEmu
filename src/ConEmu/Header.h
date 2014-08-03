@@ -346,6 +346,7 @@ struct SettingsStorage
 #define IsWindowsVista (gOSVer.dwMajorVersion >= 6)
 #define IsWindows7 ((gOSVer.dwMajorVersion > 6) || (gOSVer.dwMajorVersion == 6 && gOSVer.dwMinorVersion > 0))
 #define IsWindows8 ((gOSVer.dwMajorVersion > 6) || (gOSVer.dwMajorVersion == 6 && gOSVer.dwMinorVersion > 1))
+#define IsWindows8_1 ((gOSVer.dwMajorVersion > 6) || (gOSVer.dwMajorVersion == 6 && gOSVer.dwMinorVersion > 2))
 
 #define SafeRelease(p) if ((p)!=NULL) { (p)->Release(); (p)=NULL; }
 
