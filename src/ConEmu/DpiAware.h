@@ -28,15 +28,18 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include "../common/MArray.h"
+#include "../common/MMap.h"
+
 enum ProcessDpiAwareness
-{ 
+{
 	Process_DPI_Unaware            = 0,
 	Process_System_DPI_Aware       = 1,
 	Process_Per_Monitor_DPI_Aware  = 2
 };
 
 enum MonitorDpiType
-{ 
+{
   MDT_Effective_DPI  = 0,
   MDT_Angular_DPI    = 1,
   MDT_Raw_DPI        = 2,
@@ -253,12 +256,21 @@ class CDpiForDialog
 protected:
 	HWND mh_Dlg;
 
+	DpiValue m_InitDpi;
 	int mn_InitFontHeight;
 	LOGFONT mlf_InitFont;
+	DpiValue m_CurDpi;
 	int mn_CurFontHeight;
 	LOGFONT mlf_CurFont;
 
 	HFONT mh_OldFont, mh_CurFont;
+
+	struct DlgItem
+	{
+		HWND h;
+		RECT r;
+	};
+	MMap<int, MArray<DlgItem>*> m_Items;
 
 public:
 	CDpiForDialog()
@@ -269,10 +281,12 @@ public:
 		mn_CurFontHeight = 0;
 		ZeroStruct(mlf_CurFont);
 		mh_OldFont = mh_CurFont = NULL;
+		m_Items.Init(8, true);
 	};
 
 	~CDpiForDialog()
 	{
+		Detach();
 	};
 
 	bool Attach(HWND hWnd, int nCurDpi)
@@ -301,20 +315,39 @@ public:
 		// we need to re-scale our dialog manually!
 		// But if one dpi was choosed for all monitors?
 
-		/*
-		if (nCurDpi != 96)
+		CDpiAware::QueryDpi(hWnd, &m_InitDpi);
+
+		if (CDpiAware::IsPerMonitorDpi())
 		{
-			if (!SetDialogDPI(nCurDpi))
-				return false;
+			MArray<DlgItem>* p = LoadDialogItems(hWnd);
+			m_Items.Set(m_InitDpi.Ydpi, p);
+
+			m_CurDpi.SetDpi(96, 96);
+
+			if (m_InitDpi.Ydpi != 96)
+			{
+				if (!SetDialogDPI(m_InitDpi))
+					return false;
+			}
 		}
-		*/
+		else
+		{
+			m_CurDpi.SetDpi(m_InitDpi.Xdpi, m_InitDpi.Ydpi);
+		}
 
 		return true;
 	}
 
-	bool SetDialogDPI(int dpi)
+	bool SetDialogDPI(const DpiValue& newDpi, LPRECT lprcSuggested = NULL)
 	{
-		mn_CurFontHeight = (mn_InitFontHeight * dpi / 92);
+		if (newDpi.Ydpi <= 0 || newDpi.Xdpi <= 0)
+			return false;
+		if (m_CurDpi.Ydpi <= 0 || m_CurDpi.Xdpi <= 0)
+			return false;
+		if (m_CurDpi.Equals(newDpi))
+			return false;
+
+		mn_CurFontHeight = (mn_InitFontHeight * newDpi.Ydpi / 92);
 		mlf_CurFont = mlf_InitFont;
 		mlf_CurFont.lfHeight = mn_CurFontHeight;
 		mlf_CurFont.lfWidth = 0; // Font mapper fault
@@ -322,37 +355,83 @@ public:
 		if (mn_CurFontHeight == 0 || mn_InitFontHeight == 0)
 			return false;
 
-		DWORD dwStyle = GetWindowLong(mh_Dlg, GWL_STYLE);
-		DWORD dwStyleEx = GetWindowLong(mh_Dlg, GWL_EXSTYLE);
+		MArray<DlgItem>* p = NULL;
+		if (!m_Items.Get(newDpi.Ydpi, &p))
+		{
+			MArray<DlgItem>* pOrig = NULL;
+			int iOrigDpi = 0;
+			if (!m_Items.GetNext(NULL, &iOrigDpi, &pOrig) || !pOrig || (iOrigDpi <= 0))
+				return false;
+			int iNewDpi = newDpi.Ydpi;
 
-		RECT rcClient = {};
-		if (!GetClientRect(mh_Dlg, &rcClient))
-			return false;
+			p = new MArray<DlgItem>();
 
-		_ASSERTE(rcClient.left==0 && rcClient.top==0);
-		RECT rcWnd = {0, 0, rcClient.right * mn_CurFontHeight / mn_InitFontHeight, rcClient.bottom * mn_CurFontHeight / mn_InitFontHeight};
-		if (!AdjustWindowRectEx(&rcWnd, dwStyle, FALSE, dwStyleEx))
-			return false;
+			DWORD dwStyle = GetWindowLong(mh_Dlg, GWL_STYLE);
+			DWORD dwStyleEx = GetWindowLong(mh_Dlg, GWL_EXSTYLE);
+
+			RECT rcClient = {}, rcCurWnd = {};
+			if (!GetClientRect(mh_Dlg, &rcClient) || !GetWindowRect(mh_Dlg, &rcCurWnd))
+			{
+				delete p;
+				return false;
+			}
+
+			_ASSERTE(rcClient.left==0 && rcClient.top==0);
+			int calcDlgWidth = rcClient.right * newDpi.Xdpi / m_CurDpi.Xdpi;
+			int calcDlgHeight = rcClient.bottom * newDpi.Ydpi / m_CurDpi.Ydpi;
+
+			DlgItem i = {mh_Dlg};
+
+			// Windows DWM manager do not resize NonClient areas of per-monitor dpi aware applications
+			// So, we can not use AdjustWindowRectEx to determine full window rectangle
+			// Just use current NonClient dimensions
+			i.r.right = calcDlgWidth + ((rcCurWnd.right - rcCurWnd.left) - rcClient.right);
+			i.r.bottom = calcDlgHeight + ((rcCurWnd.bottom - rcCurWnd.top) - rcClient.bottom);
+
+			// .right and .bottom are width and height of the dialog
+			_ASSERTE(i.r.left==0 && i.r.top==0);
+			p->push_back(i);
+
+			for (INT_PTR k = 1; k < pOrig->size(); k++)
+			{
+				const DlgItem& iOrig = (*pOrig)[k];
+				i.h = iOrig.h;
+				i.r.left = iOrig.r.left * iNewDpi / iOrigDpi;
+				i.r.top = iOrig.r.top * iNewDpi / iOrigDpi;
+				i.r.right = iOrig.r.right * iNewDpi / iOrigDpi;
+				i.r.bottom = iOrig.r.bottom * iNewDpi / iOrigDpi;
+				p->push_back(i);
+			}
+
+			m_Items.Set(iNewDpi, p);
+		}
 
 		HFONT hf = CreateFontIndirect(&mlf_CurFont);
 		if (hf == NULL)
 			return false;
 
-		SendMessage(mh_Dlg, WM_SETFONT, (WPARAM)hf, FALSE);
-		SetWindowPos(mh_Dlg, NULL, 0, 0, rcWnd.right-rcWnd.left, rcWnd.bottom-rcWnd.top, SWP_NOMOVE|SWP_NOZORDER);
-
-		HWND hc = NULL;
-		while ((hc = FindWindowEx(mh_Dlg, hc, NULL, NULL)) != NULL)
+		for (INT_PTR k = p->size() - 1; k >= 0; k--)
 		{
-			RECT rcChild = {};
-			if (GetWindowRect(hc, &rcChild) && MapWindowPoints(NULL, mh_Dlg, (LPPOINT)&rcChild, 2))
+			const DlgItem& di = (*p)[k];
+			if (!k)
 			{
-				int newX = rcChild.left   * mn_CurFontHeight / mn_InitFontHeight;
-				int newY = rcChild.top    * mn_CurFontHeight / mn_InitFontHeight;
-				int newW = (rcChild.right - rcChild.left) * mn_CurFontHeight / mn_InitFontHeight;
-				int newH = (rcChild.bottom - rcChild.top) * mn_CurFontHeight / mn_InitFontHeight;
-				SetWindowPos(hc, NULL, newX, newY, newW, newH, SWP_NOZORDER);
-				SendMessage(hc, WM_SETFONT, (WPARAM)hf, TRUE/*Redraw immediately*/);
+				SendMessage(mh_Dlg, WM_SETFONT, (WPARAM)hf, FALSE);
+				DWORD nWndFlags = SWP_NOZORDER | (lprcSuggested ? 0 : SWP_NOMOVE);
+				SetWindowPos(mh_Dlg, NULL,
+					lprcSuggested ? lprcSuggested->left : 0, lprcSuggested ? lprcSuggested->top : 0,
+					di.r.right, di.r.bottom,
+					nWndFlags);
+				RECT rc = {}; GetClientRect(mh_Dlg, &rc);
+				InvalidateRect(mh_Dlg, NULL, TRUE);
+				RedrawWindow(mh_Dlg, &rc, NULL, /*RDW_ERASE|*/RDW_ALLCHILDREN/*|RDW_INVALIDATE|RDW_UPDATENOW|RDW_INTERNALPAINT*/);
+			}
+			else
+			{
+				int newW = di.r.right - di.r.left;
+				int newH = di.r.bottom - di.r.top;
+				MoveWindow(di.h, di.r.left, di.r.top, newW, newH, FALSE);
+				SendMessage(di.h, WM_SETFONT, (WPARAM)hf, FALSE/*immediately*/);
+				InvalidateRect(di.h, NULL, TRUE);
 			}
 		}
 
@@ -360,10 +439,65 @@ public:
 			DeleteObject(mh_CurFont);
 		mh_CurFont = hf;
 
+		m_CurDpi.SetDpi(newDpi);
+
 		return true;
 	};
 
 	void Detach()
 	{
+		if (m_Items.Initialized())
+		{
+			MArray<DlgItem>* p = NULL;
+			int iDpi = 0;
+			while (m_Items.GetNext(iDpi ? &iDpi : NULL, &iDpi, &p))
+			{
+				if (p)
+					delete p;
+			}
+			m_Items.Release();
+		}
+	};
+
+public:
+	bool ProcessMessages(HWND hWnd, UINT nMsg, WPARAM wParam, LPARAM lParam, INT_PTR& lRc)
+	{
+		switch (nMsg)
+		{
+		case WM_DPICHANGED:
+			{
+				DpiValue dpi(wParam);
+				LPRECT lprcSuggested = (LPRECT)lParam;
+				SetDialogDPI(dpi, lprcSuggested);
+				lRc = 0;
+			}
+			return true;
+		}
+		return false;
+	};
+
+protected:
+	static MArray<DlgItem>* LoadDialogItems(HWND hDlg)
+	{
+		MArray<DlgItem>* p = new MArray<DlgItem>();
+		DlgItem i = {hDlg};
+		if (!GetWindowRect(hDlg, &i.r))
+		{
+			delete p;
+			return NULL;
+		}
+		OffsetRect(&i.r, -i.r.left, -i.r.top);
+		p->push_back(i);
+
+		i.h = NULL;
+		while ((i.h = FindWindowEx(hDlg, i.h, NULL, NULL)) != NULL)
+		{
+			if (GetWindowRect(i.h, &i.r) && MapWindowPoints(NULL, hDlg, (LPPOINT)&i.r, 2))
+			{
+				p->push_back(i);
+			}
+		}
+
+		return p;
 	};
 };
