@@ -107,12 +107,20 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 
 	PatchMsgBoxIcon(hDlg, messg, wParam, lParam);
 
+	if (mp_DpiAware && mp_DpiAware->ProcessMessages(hDlg, messg, wParam, lParam, lRc))
+	{
+		SetWindowLongPtr(hDlg, DWLP_MSGRESULT, lRc);
+		return TRUE;
+	}
+
 	switch (messg)
 	{
 		case WM_INITDIALOG:
 		{
 			gpConEmu->OnOurDialogOpened();
 			mh_AboutDlg = hDlg;
+
+			DonateBtns_Add(hDlg, pIconCtrl, IDOK);
 
 			if (mp_DpiAware)
 			{
@@ -142,8 +150,6 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 
 			SetDlgItemText(hDlg, stConEmuAbout, pAboutTitle);
 			SetDlgItemText(hDlg, stConEmuUrl, gsHomePage);
-
-			DonateBtns_Add(hDlg, pIconCtrl, IDOK);
 
 			EditIconHint_Set(hDlg, GetDlgItem(hDlg, tAboutSearch), true, L"Search", false, UM_SEARCH, IDOK);
 			EditIconHint_Subclass(hDlg);
@@ -469,6 +475,8 @@ void ConEmuAbout::OnInfo_About(LPCWSTR asPageName /*= NULL*/)
 		bOk = (iRc != 0 && iRc != -1);
 
 		mh_AboutDlg = NULL;
+		if (mp_DpiAware)
+			mp_DpiAware->Detach();
 
 		#ifdef _DEBUG
 		// Any problems with dialog resource?
