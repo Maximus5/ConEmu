@@ -158,7 +158,7 @@ bool CToolImg::CreateFlattrButton(COLORREF clrBackground)
 {
 	ButtonRowInfo Btns[] = {
 		{55,  19},
-		{68,  24},
+		{69,  24},
 		{82,  29},
 		{110, 38},
 	};
