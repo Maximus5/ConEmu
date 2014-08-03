@@ -43,6 +43,66 @@ enum MonitorDpiType
   MDT_Default        = MDT_Effective_DPI
 };
 
+#ifndef WM_DPICHANGED
+#define WM_DPICHANGED 0x02E0
+#endif
+
+struct DpiValue
+{
+public:
+	int Ydpi;
+	int Xdpi;
+
+public:
+	DpiValue()
+	{
+		Xdpi = Ydpi = 96;
+	};
+
+	DpiValue(WPARAM wParam)
+	{
+		Xdpi = Ydpi = 96;
+		OnDpiChanged(wParam);
+	};
+
+	DpiValue(const DpiValue& dpi)
+	{
+		Xdpi = dpi.Xdpi; Ydpi = dpi.Ydpi;
+	};
+
+public:
+	operator int() const
+	{
+		return Ydpi;
+	};
+	struct DpiValue& operator=(WORD dpi)
+	{
+		Xdpi = dpi;
+		Ydpi = dpi;
+		return *this;
+	};
+	bool Equals(const DpiValue& dpi) const
+	{
+		return ((Xdpi == dpi.Xdpi) && (Ydpi == dpi.Ydpi));
+	};
+	void SetDpi(int xdpi, int ydpi)
+	{
+		Xdpi = xdpi; Ydpi = ydpi;
+	};
+	void SetDpi(const DpiValue& dpi)
+	{
+		SetDpi(dpi.Xdpi, dpi.Ydpi);
+	};
+	void OnDpiChanged(WPARAM wParam)
+	{
+		// That comes from WM_DPICHANGED notification message
+		if ((int)LOWORD(wParam) > 0 && (int)HIWORD(wParam) > 0)
+		{
+			SetDpi((int)LOWORD(wParam), (int)HIWORD(wParam));
+			_ASSERTE(Ydpi >= 96 && Xdpi >= 96);
+		}
+	};
+};
 
 class CDpiAware
 {
@@ -79,6 +139,113 @@ public:
 	wrap:
 		return hr;
 	}
+
+public:
+	static bool IsPerMonitorDpi()
+	{
+		// Checkbox 'Let me choose one scaling level for all my displays'
+		// on the 'Control Panel\ Appearance and Personalization\Display user interface (UI)'
+		// Changes will be applied on the next logon only
+
+		static int iPerMonitor = 0;
+
+		if (iPerMonitor == 0)
+		{
+			HKEY hk;
+			if (IsWindows8_1 && (0 == RegOpenKeyEx(HKEY_CURRENT_USER, L"Control Panel\\Desktop", 0, KEY_READ, &hk)))
+			{
+				DWORD nValue = 0, nSize = sizeof(nValue);
+				if (0 == RegQueryValueEx(hk, L"Win8DpiScaling", NULL, NULL, (LPBYTE)&nValue, &nSize) && nSize == sizeof(nValue))
+				{
+					iPerMonitor = (nValue == 0) ? 1 : -1;
+				}
+				else
+				{
+					iPerMonitor = -1;
+				}
+				RegCloseKey(hk);
+			}
+			else
+			{
+				iPerMonitor = -1;
+			}
+		}
+
+		return (iPerMonitor == 1);
+	};
+
+public:
+	static int QueryDpi(HWND hWnd = NULL, DpiValue* pDpi = NULL)
+	{
+		if (hWnd && IsPerMonitorDpi())
+		{
+			HMONITOR hMon = MonitorFromWindow(hWnd, MONITOR_DEFAULTTONEAREST);
+			if (hMon)
+			{
+				return QueryDpiForMonitor(hMon, pDpi);
+			}
+		}
+
+		return QueryDpiForWindow(hWnd, pDpi);
+	}
+
+	// if hWnd is NULL - returns DC's dpi
+	static int QueryDpiForWindow(HWND hWnd = NULL, DpiValue* pDpi = NULL)
+	{
+		int dpi = 96;
+		HDC desktopDc = GetDC(hWnd);
+		if (desktopDc != NULL)
+		{
+			// Get native resolution
+			int x = GetDeviceCaps(desktopDc, LOGPIXELSX);
+			int y = GetDeviceCaps(desktopDc, LOGPIXELSY);
+			ReleaseDC(NULL, desktopDc);
+			if (x >= 96 && y >= 96)
+			{
+				if (pDpi)
+				{
+					pDpi->Xdpi = x; pDpi->Ydpi = y;
+				}
+				dpi = y;
+			}
+		}
+		return dpi;
+	};
+
+	static int QueryDpiForMonitor(HMONITOR hmon, DpiValue* pDpi = NULL)
+	{
+		int dpi = 96;
+
+		static HMODULE Shcore = NULL;
+		typedef HRESULT (WINAPI* GetDPIForMonitor_t)(HMONITOR hmonitor, MonitorDpiType dpiType, UINT *dpiX, UINT *dpiY);
+		static GetDPIForMonitor_t getDPIForMonitor = NULL;
+
+		if (Shcore == NULL)
+		{
+			Shcore = LoadLibrary(L"Shcore.dll");
+			getDPIForMonitor = Shcore ? (GetDPIForMonitor_t)GetProcAddress(Shcore, "GetDPIForMonitor") : NULL;
+
+			if ((Shcore == NULL) || (getDPIForMonitor == NULL))
+			{
+				Shcore = (HMODULE)INVALID_HANDLE_VALUE;
+			}
+		}
+
+		UINT x = 0, y = 0;
+		if (Shcore != (HMODULE)INVALID_HANDLE_VALUE)
+		{
+			if (getDPIForMonitor(hmon, MDT_Effective_DPI, &x, &y) && (x > 0) && (y > 0))
+			{
+				if (pDpi)
+				{
+					pDpi->Xdpi = (int)x; pDpi->Ydpi = (int)y;
+				}
+				dpi = (int)y;
+			}
+		}
+
+		return dpi;
+	};
 };
 
 class CDpiForDialog
