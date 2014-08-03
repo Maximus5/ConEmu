@@ -468,7 +468,6 @@ void ConEmuAbout::OnInfo_About(LPCWSTR asPageName /*= NULL*/)
 		INT_PTR iRc = DialogBoxParam(g_hInstance, MAKEINTRESOURCE(IDD_ABOUT), hParent, aboutProc, (LPARAM)asPageName);
 		bOk = (iRc != 0 && iRc != -1);
 
-		ZeroStruct(m_Btns);
 		mh_AboutDlg = NULL;
 
 		#ifdef _DEBUG
