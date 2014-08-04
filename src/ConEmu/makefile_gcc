@@ -1,5 +1,18 @@
 NAME = ConEmu
-SRCS =  \
+SRCS = \
+		../common/CmdLine.cpp       \
+		../common/Common.cpp        \
+		../common/ConEmuCheck.cpp   \
+		../common/execute.cpp       \
+		../common/Memory.cpp        \
+		../common/Monitors.cpp      \
+		../common/MSecurity.cpp     \
+		../common/MStrSafe.cpp      \
+		../common/RConStartArgs.cpp \
+		../common/RgnDetect.cpp     \
+		../common/SetEnvVar.cpp     \
+		../common/WinConsole.cpp    \
+		../common/WinObjects.cpp    \
 		AboutDlg.cpp       \
 		Attach.cpp         \
 		Background.cpp     \
@@ -31,17 +44,17 @@ SRCS =  \
 		RealBuffer.cpp     \
 		RealConsole.cpp    \
 		RealServer.cpp     \
-		RunQueue.cpp       \
 		Recreate.cpp       \
 		Registry.cpp       \
+		RunQueue.cpp       \
 		ScreenDump.cpp     \
 		SearchCtrl.cpp     \
 		Status.cpp         \
 		TabBar.cpp         \
-		TabID.cpp          \
-		TaskBar.cpp        \
 		TabCtrlBase.cpp    \
 		TabCtrlWin.cpp     \
+		TabID.cpp          \
+		TaskBar.cpp        \
 		TaskBarGhost.cpp   \
 		ToolImg.cpp        \
 		TrayIcon.cpp       \
@@ -50,20 +63,7 @@ SRCS =  \
 		VConChild.cpp      \
 		VConGroup.cpp      \
 		VConRelease.cpp    \
-		VirtualConsole.cpp \
-		../common/CmdLine.cpp        \
-		../common/Common.cpp        \
-		../common/ConEmuCheck.cpp   \
-		../common/execute.cpp       \
-		../common/Memory.cpp        \
-		../common/Monitors.cpp      \
-		../common/MSecurity.cpp     \
-		../common/MStrSafe.cpp      \
-		../common/RConStartArgs.cpp \
-		../common/RgnDetect.cpp     \
-		../common/SetEnvVar.cpp     \
-        ../common/WinConsole.cpp    \
-        ../common/WinObjects.cpp
+		VirtualConsole.cpp
 
 USERLIBS = -lversion -lshlwapi -loleaut32 -lNetapi32 -lwinmm
 ENCFLAGS = -finput-charset=utf-8

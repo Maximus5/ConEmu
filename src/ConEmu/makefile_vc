@@ -54,9 +54,9 @@ $(INTDIR)\IconList.obj \
 $(INTDIR)\Inside.obj \
 $(INTDIR)\LoadImg.obj \
 $(INTDIR)\Macro.obj \
-$(INTDIR)\Menu.obj \
 $(INTDIR)\MAssert.obj \
 $(INTDIR)\Memory.obj \
+$(INTDIR)\Menu.obj \
 $(INTDIR)\Monitors.obj \
 $(INTDIR)\MSecurity.obj \
 $(INTDIR)\MStrSafe.obj \
@@ -68,13 +68,13 @@ $(INTDIR)\RConStartArgs.obj \
 $(INTDIR)\RealBuffer.obj \
 $(INTDIR)\RealConsole.obj \
 $(INTDIR)\RealServer.obj \
-$(INTDIR)\RunQueue.obj \
 $(INTDIR)\Recreate.obj \
 $(INTDIR)\Registry.obj \
-$(INTDIR)\SetEnvVar.obj \
 $(INTDIR)\RgnDetect.obj \
+$(INTDIR)\RunQueue.obj \
 $(INTDIR)\ScreenDump.obj \
 $(INTDIR)\SearchCtrl.obj \
+$(INTDIR)\SetEnvVar.obj \
 $(INTDIR)\Status.obj \
 $(INTDIR)\TabBar.obj \
 $(INTDIR)\TabCtrlBase.obj \
@@ -245,6 +245,10 @@ MSG=echo generating $@
 #	$(MSG)
 #	$(M4) $@.m4 > $@
 
+
+################
+#LINK_OBJS begin
+
 $(INTDIR)\AboutDlg.obj: AboutDlg.cpp AboutDlg.h About.h ../ConEmuCD/ConsoleHelp.h
 
 $(INTDIR)\Attach.obj: Attach.cpp Attach.h ../common/ProcList.h
@@ -299,11 +303,11 @@ $(INTDIR)\LoadImg.obj: LoadImg.cpp LoadImg.h
 
 $(INTDIR)\Macro.obj: Macro.cpp Macro.h
 
-$(INTDIR)\Menu.obj: Menu.cpp Menu.h MenuIds.h FindDlg.h
-
 $(INTDIR)\MAssert.obj: ../common/MAssert.cpp
 
 $(INTDIR)\Memory.obj: ../common/Memory.cpp
+
+$(INTDIR)\Menu.obj: Menu.cpp Menu.h MenuIds.h FindDlg.h
 
 $(INTDIR)\Monitors.obj: ../common/Monitors.cpp
 
@@ -327,19 +331,19 @@ $(INTDIR)\RealConsole.obj: RealConsole.cpp RealConsole.h RealServer.h ../common/
 
 $(INTDIR)\RealServer.obj: RealServer.cpp RealConsole.h RealServer.h ../common/Common.hpp ../common/PipeServer.h
 
-$(INTDIR)\RunQueue.obj: RunQueue.cpp RunQueue.h
-
 $(INTDIR)\Recreate.obj: Recreate.cpp Recreate.h
 
 $(INTDIR)\Registry.obj: Registry.cpp Registry.h
 
-$(INTDIR)\SetEnvVar.obj: ../common/SetEnvVar.cpp
-
 $(INTDIR)\RgnDetect.obj: ../common/RgnDetect.cpp
+
+$(INTDIR)\RunQueue.obj: RunQueue.cpp RunQueue.h
 
 $(INTDIR)\ScreenDump.obj: ScreenDump.cpp
 
 $(INTDIR)\SearchCtrl.obj: SearchCtrl.cpp
+
+$(INTDIR)\SetEnvVar.obj: ../common/SetEnvVar.cpp
 
 $(INTDIR)\Status.obj: Status.cpp
 
@@ -374,6 +378,9 @@ $(INTDIR)\VirtualConsole.obj: VirtualConsole.cpp VConRelease.h VirtualConsole.h 
 $(INTDIR)\WinConsole.obj: ../common/WinConsole.cpp
 
 $(INTDIR)\WinObjects.obj: ../common/WinObjects.cpp
+
+#LINK_OBJS end
+##############
 
 .PHONY: CLEAN
 CLEAN:
