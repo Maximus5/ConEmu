@@ -22,7 +22,12 @@ function Prj-AppendFile($root, $file, $node, $attr)
 
   for ($i = 0; $i -lt $cur.Count; $i++) {
     $item = $cur[$i]
-    if ($item.GetAttribute($attr) -gt $file) {
+    $cur_attr = $item.GetAttribute($attr)
+    # Do not add it twice
+    if ($cur_attr -eq $file) {
+      return
+    }
+    if ($cur_attr -gt $file) {
       $before = $item
       break
     }
@@ -102,23 +107,6 @@ function Prj-XmlEdit([String]$project, [Array]$cpp, [Array]$hpp)
   return $x
 }
 
-function Prj-List([String]$path)
-{
-  "Listing: $Script_Working_path"
-
-  #$extlist = @("*.vcproj")
-  $extlist = @("*.vcproj", "*.vcxproj")
-
-  (Get-ChildItem -Path (Join-Path $path "*") -Include $extlist) | foreach {
-    $xml_path = Join-Path $path $_.Name
-      ("    prj: " + $_.Name)
-      $x = Prj-XmlEdit $xml_path $script:add_cpp $script:add_hpp
-      #$xml_path2 = $xml_path + ".new"
-      #$x.Save($xml_path2)
-      $x.Save($xml_path)
-  }
-}
-
 function Prj-CheckName([String]$file)
 {
   $file = $file.Replace("/","\")
@@ -159,6 +147,23 @@ if (($script:add_cpp.length -eq 0) -And ($script:add_hpp.length -eq 0)) {
   } else {
     Write-Host -Foregroundcolor Red "There is nothing to add!"
     return
+  }
+}
+
+function Prj-List([String]$path)
+{
+  "Listing: $Script_Working_path"
+
+  #$extlist = @("*.vcproj")
+  $extlist = @("*.vcproj", "*.vcxproj")
+
+  (Get-ChildItem -Path (Join-Path $path "*") -Include $extlist) | foreach {
+    $xml_path = Join-Path $path $_.Name
+      ("    prj: " + $_.Name)
+      $x = Prj-XmlEdit $xml_path $script:add_cpp $script:add_hpp
+      #$xml_path2 = $xml_path + ".new"
+      #$x.Save($xml_path2)
+      $x.Save($xml_path)
   }
 }
 
