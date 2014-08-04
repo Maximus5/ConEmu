@@ -417,6 +417,7 @@
       <File RelativePath=".\ConfirmDlg.cpp" />
       <File RelativePath=".\CustomFonts.cpp" />
       <File RelativePath=".\DefaultTerm.cpp" />
+      <File RelativePath=".\DpiAware.cpp" />
       <File RelativePath=".\DragDrop.cpp" />
       <File RelativePath=".\DragDropData.cpp" />
       <File RelativePath=".\DwmHelper.cpp" />

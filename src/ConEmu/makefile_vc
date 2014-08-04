@@ -41,6 +41,7 @@ $(INTDIR)\ConEmuPipe.obj \
 $(INTDIR)\ConfirmDlg.obj \
 $(INTDIR)\CustomFonts.obj \
 $(INTDIR)\DefaultTerm.obj \
+$(INTDIR)\DpiAware.obj \
 $(INTDIR)\DragDrop.obj \
 $(INTDIR)\DragDropData.obj \
 $(INTDIR)\DwmHelper.obj \
@@ -276,6 +277,8 @@ $(INTDIR)\ConfirmDlg.obj: ConfirmDlg.cpp ConfirmDlg.h
 $(INTDIR)\CustomFonts.obj: CustomFonts.cpp CustomFonts.h
 
 $(INTDIR)\DefaultTerm.obj: DefaultTerm.cpp DefaultTerm.h
+
+$(INTDIR)\DpiAware.obj: DpiAware.cpp DpiAware.h
 
 $(INTDIR)\DragDrop.obj: DragDrop.cpp BaseDragDrops.h DragDrop.h DragDropData.h
 

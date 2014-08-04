@@ -24,6 +24,7 @@ SRCS = \
 		ConfirmDlg.cpp     \
 		CustomFonts.cpp    \
 		DefaultTerm.cpp    \
+		DpiAware.cpp       \
 		DragDrop.cpp       \
 		DragDropData.cpp   \
 		DwmHelper.cpp      \

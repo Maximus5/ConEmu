@@ -916,6 +916,7 @@
     <ClCompile Include="ConfirmDlg.cpp" />
     <ClCompile Include="CustomFonts.cpp" />
     <ClCompile Include="DefaultTerm.cpp" />
+    <ClCompile Include="DpiAware.cpp" />
     <ClCompile Include="DragDrop.cpp" />
     <ClCompile Include="DragDropData.cpp" />
     <ClCompile Include="DwmHelper.cpp" />
