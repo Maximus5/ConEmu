@@ -2693,7 +2693,7 @@ void CConEmuMain::UpdateGuiInfoMapping()
 	m_GuiInfo.hGuiWnd = ghWnd;
 	m_GuiInfo.nGuiPID = GetCurrentProcessId();
 
-	m_GuiInfo.nLoggingType = (ghOpWnd && gpSetCls->mh_Tabs[gpSetCls->thi_Debug]) ? gpSetCls->m_ActivityLoggingType : glt_None;
+	m_GuiInfo.nLoggingType = gpSetCls->GetPage(gpSetCls->thi_Debug) ? gpSetCls->m_ActivityLoggingType : glt_None;
 	m_GuiInfo.bUseInjects = (gpSet->isUseInjects ? 1 : 0) ; // ((gpSet->isUseInjects == BST_CHECKED) ? 1 : (gpSet->isUseInjects == BST_INDETERMINATE) ? 3 : 0);
 	SetConEmuFlags(m_GuiInfo.Flags,CECF_UseTrueColor,(gpSet->isTrueColorer ? CECF_UseTrueColor : 0));
 	SetConEmuFlags(m_GuiInfo.Flags,CECF_ProcessAnsi,(gpSet->isProcessAnsi ? CECF_ProcessAnsi : 0));
@@ -4752,7 +4752,7 @@ bool CConEmuMain::SetQuakeMode(BYTE NewQuakeMode, ConEmuWindowMode nNewWindowMod
 		gpConEmu->OnDesktopMode();
 	}
 
-	HWND hWnd2 = ghOpWnd ? gpSetCls->mh_Tabs[CSettings::thi_Show] : NULL; // Страничка с настройками
+	HWND hWnd2 = gpSetCls->GetPage(CSettings::thi_Show); // Страничка с настройками
 	if (hWnd2)
 	{
 		EnableWindow(GetDlgItem(hWnd2, cbQuakeAutoHide), gpSet->isQuakeStyle);
@@ -4765,7 +4765,7 @@ bool CConEmuMain::SetQuakeMode(BYTE NewQuakeMode, ConEmuWindowMode nNewWindowMod
 		gpSetCls->checkDlgButton(hWnd2, cbDesktopMode, gpSet->isDesktopMode);
 	}
 
-	hWnd2 = ghOpWnd ? gpSetCls->mh_Tabs[CSettings::thi_SizePos] : NULL; // Страничка с настройками
+	hWnd2 = gpSetCls->GetPage(CSettings::thi_SizePos); // Страничка с настройками
 	if (hWnd2)
 	{
 		gpSetCls->checkDlgButton(hWnd2, cbTryToCenter, gpSet->isTryToCenter);
@@ -4790,7 +4790,7 @@ bool CConEmuMain::SetQuakeMode(BYTE NewQuakeMode, ConEmuWindowMode nNewWindowMod
 	}
 
 
-	HWND hTabsPg = ghOpWnd ? gpSetCls->mh_Tabs[CSettings::thi_Show] : NULL; // Страничка с настройками
+	HWND hTabsPg = gpSetCls->GetPage(CSettings::thi_Show); // Страничка с настройками
 	if (hTabsPg)
 	{
 		gpSetCls->checkDlgButton(hTabsPg, cbHideCaptionAlways, gpSet->isHideCaptionAlways() ? BST_CHECKED : BST_UNCHECKED);
@@ -4818,8 +4818,8 @@ bool CConEmuMain::SetQuakeMode(BYTE NewQuakeMode, ConEmuWindowMode nNewWindowMod
 
 	//if (hWnd2)
 	//	SetDlgItemInt(hWnd2, tHideCaptionAlwaysFrame, gpSet->HideCaptionAlwaysFrame(), TRUE);
-	if (ghOpWnd && gpSetCls->mh_Tabs[CSettings::thi_Show])
-		SetDlgItemInt(gpSetCls->mh_Tabs[CSettings::thi_Show], tHideCaptionAlwaysFrame, gpSet->HideCaptionAlwaysFrame(), TRUE);
+	if (gpSetCls->GetPage(CSettings::thi_Show))
+		SetDlgItemInt(gpSetCls->GetPage(CSettings::thi_Show), tHideCaptionAlwaysFrame, gpSet->HideCaptionAlwaysFrame(), TRUE);
 
 	// Save current rect, JIC
 	StoreIdealRect();
@@ -5762,10 +5762,10 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 	//	VCon->RCon()->SyncGui2Window();
 	//}
 
-	//if (ghOpWnd && (gpSetCls->mh_Tabs[CSettings::thi_SizePos]))
+	//if (gpSetCls->GetPage(CSettings::thi_SizePos))
 	//{
 	//	bool canEditWindowSizes = (inMode == wmNormal);
-	//	HWND hSizePos = gpSetCls->mh_Tabs[CSettings::thi_SizePos];
+	//	HWND hSizePos = gpSetCls->GetPage(CSettings::thi_SizePos);
 	//	EnableWindow(GetDlgItem(hSizePos, tWndWidth), canEditWindowSizes);
 	//	EnableWindow(GetDlgItem(hSizePos, tWndHeight), canEditWindowSizes);
 	//}
@@ -9272,7 +9272,7 @@ void CConEmuMain::UpdateProcessDisplay(BOOL abForce)
 		return;
 	}
 
-	HWND hInfo = gpSetCls->mh_Tabs[gpSetCls->thi_Info];
+	HWND hInfo = gpSetCls->GetPage(gpSetCls->thi_Info);
 
 	CVConGuard VCon;
 	wchar_t szNo[32], szFlags[255]; szNo[0] = szFlags[0] = 0;
@@ -9326,7 +9326,7 @@ void CConEmuMain::UpdateCursorInfo(const CONSOLE_SCREEN_BUFFER_INFO* psbi, COORD
 	else
 		mp_Status->OnCursorChanged(&crCursor, &cInfo);
 
-	if (!ghOpWnd || !gpSetCls->mh_Tabs[gpSetCls->thi_Info]) return;
+	if (!gpSetCls->GetPage(gpSetCls->thi_Info)) return;
 
 	if (!isMainThread())
 	{
@@ -9340,7 +9340,7 @@ void CConEmuMain::UpdateCursorInfo(const CONSOLE_SCREEN_BUFFER_INFO* psbi, COORD
 	_wsprintf(szCursor, SKIPLEN(countof(szCursor)) _T("%ix%i, %i %s"),
 		(int)crCursor.X, (int)crCursor.Y,
 		cInfo.dwSize, cInfo.bVisible ? L"vis" : L"hid");
-	SetDlgItemText(gpSetCls->mh_Tabs[gpSetCls->thi_Info], tCursorPos, szCursor);
+	SetDlgItemText(gpSetCls->GetPage(gpSetCls->thi_Info), tCursorPos, szCursor);
 }
 
 void CConEmuMain::UpdateSizes()
@@ -9348,7 +9348,7 @@ void CConEmuMain::UpdateSizes()
 	POINT ptCur = {}; GetCursorPos(&ptCur);
 	HWND hPoint = WindowFromPoint(ptCur);
 
-	HWND hInfo = gpSetCls->mh_Tabs[gpSetCls->thi_Info];
+	HWND hInfo = gpSetCls->GetPage(gpSetCls->thi_Info);
 
 	if (!ghOpWnd || !hInfo)
 	{
@@ -17370,7 +17370,7 @@ void CConEmuMain::OnDesktopMode()
 		{
 			gpSet->isDesktopMode = false;
 
-			HWND hExt = gpSetCls->mh_Tabs[gpSetCls->thi_Ext];
+			HWND hExt = gpSetCls->GetPage(gpSetCls->thi_Ext);
 
 			if (ghOpWnd && hExt)
 			{

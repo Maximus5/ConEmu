@@ -4993,17 +4993,17 @@ void CVirtualConsole::UpdateInfo()
 
 	if (!mp_RCon)
 	{
-		SetDlgItemText(gpSetCls->mh_Tabs[gpSetCls->thi_Info], tConSizeChr, L"(None)");
-		SetDlgItemText(gpSetCls->mh_Tabs[gpSetCls->thi_Info], tConSizePix, L"(None)");
-		SetDlgItemText(gpSetCls->mh_Tabs[gpSetCls->thi_Info], tPanelLeft, L"(None)");
-		SetDlgItemText(gpSetCls->mh_Tabs[gpSetCls->thi_Info], tPanelRight, L"(None)");
+		SetDlgItemText(gpSetCls->GetPage(gpSetCls->thi_Info), tConSizeChr, L"(None)");
+		SetDlgItemText(gpSetCls->GetPage(gpSetCls->thi_Info), tConSizePix, L"(None)");
+		SetDlgItemText(gpSetCls->GetPage(gpSetCls->thi_Info), tPanelLeft,  L"(None)");
+		SetDlgItemText(gpSetCls->GetPage(gpSetCls->thi_Info), tPanelRight, L"(None)");
 	}
 	else
 	{
 		_wsprintf(szSize, SKIPLEN(countof(szSize)) _T("%ix%i"), mp_RCon->TextWidth(), mp_RCon->TextHeight());
-		SetDlgItemText(gpSetCls->mh_Tabs[gpSetCls->thi_Info], tConSizeChr, szSize);
+		SetDlgItemText(gpSetCls->GetPage(gpSetCls->thi_Info), tConSizeChr, szSize);
 		_wsprintf(szSize, SKIPLEN(countof(szSize)) _T("%ix%i"), Width, Height);
-		SetDlgItemText(gpSetCls->mh_Tabs[gpSetCls->thi_Info], tConSizePix, szSize);
+		SetDlgItemText(gpSetCls->GetPage(gpSetCls->thi_Info), tConSizePix, szSize);
 		RECT rcPanel;
 		RCon()->GetPanelRect(FALSE, &rcPanel);
 
@@ -5012,7 +5012,7 @@ void CVirtualConsole::UpdateInfo()
 		else
 			wcscpy_c(szSize, L"<Absent>");
 
-		SetDlgItemText(gpSetCls->mh_Tabs[gpSetCls->thi_Info], tPanelLeft, szSize);
+		SetDlgItemText(gpSetCls->GetPage(gpSetCls->thi_Info), tPanelLeft, szSize);
 		RCon()->GetPanelRect(TRUE, &rcPanel);
 
 		if (rcPanel.right>rcPanel.left)
@@ -5020,7 +5020,7 @@ void CVirtualConsole::UpdateInfo()
 		else
 			wcscpy_c(szSize, L"<Absent>");
 
-		SetDlgItemText(gpSetCls->mh_Tabs[gpSetCls->thi_Info], tPanelRight, szSize);
+		SetDlgItemText(gpSetCls->GetPage(gpSetCls->thi_Info), tPanelRight, szSize);
 	}
 }
 

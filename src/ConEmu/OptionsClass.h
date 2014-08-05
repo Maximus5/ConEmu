@@ -226,9 +226,13 @@ class CSettings
 			//
 			thi_Last
 		};
+		HWND GetPage(TabHwndIndex nPage);
+
+	private:
 		HWND mh_Tabs[thi_Last];
 		int  mn_LastActivedTab;
 
+	public:
 		//static void CenterDialog(HWND hWnd2);
 		void OnClose();
 		DWORD BalloonStyle();

@@ -2097,7 +2097,7 @@ LRESULT CConEmuMenu::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 				gpSet->isAlwaysOnTop = !gpSet->isAlwaysOnTop;
 				gpConEmu->OnAlwaysOnTop();
 
-				HWND hExt = gpSetCls->mh_Tabs[gpSetCls->thi_Ext];
+				HWND hExt = gpSetCls->GetPage(gpSetCls->thi_Ext);
 
 				if (ghOpWnd && hExt)
 				{

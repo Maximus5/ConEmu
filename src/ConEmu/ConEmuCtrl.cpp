@@ -1349,8 +1349,8 @@ bool CConEmuCtrl::key_ShowCaption(DWORD VkMod, bool TestOnly, const ConEmuHotKey
 
 	if (ghOpWnd)
 	{
-		if (gpSetCls->mh_Tabs[CSettings::thi_Ext])
-			CheckDlgButton(gpSetCls->mh_Tabs[CSettings::thi_Ext], cbHideCaptionAlways, gpSet->isHideCaptionAlways());
+		if (gpSetCls->GetPage(CSettings::thi_Ext))
+			CheckDlgButton(gpSetCls->GetPage(CSettings::thi_Ext), cbHideCaptionAlways, gpSet->isHideCaptionAlways());
 		apiSetForegroundWindow(ghOpWnd);
 	}
 

@@ -15371,3 +15371,13 @@ bool CSettings::isDialogMessage(MSG &Msg)
 
 	return false;
 }
+
+HWND CSettings::GetPage(CSettings::TabHwndIndex nPage)
+{
+	HWND hPage = NULL;
+	if (ghOpWnd && ((int)nPage >= thi_Main) && ((int)nPage < (int)countof(mh_Tabs)))
+	{
+		hPage = mh_Tabs[nPage];
+	}
+	return hPage;
+}
