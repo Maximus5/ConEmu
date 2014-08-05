@@ -28,6 +28,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "Header.h"
 #include "DpiAware.h"
+#include "SearchCtrl.h"
 
 
 /*
@@ -420,6 +421,7 @@ bool CDpiForDialog::SetDialogDPI(const DpiValue& newDpi, LPRECT lprcSuggested /*
 			int newH = di.r.bottom - di.r.top;
 			MoveWindow(di.h, di.r.left, di.r.top, newW, newH, FALSE);
 			SendMessage(di.h, WM_SETFONT, (WPARAM)hf, FALSE/*immediately*/);
+			EditIconHint_ResChanged(di.h);
 			InvalidateRect(di.h, NULL, TRUE);
 		}
 	}

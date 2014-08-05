@@ -40,13 +40,19 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define SEARCH_CTRL_REFRID  1002
 #define SEARCH_CTRL_REFR    250
 
+struct CEIconDrawHandles
+{
+	HICON    hIcon;
+	HFONT    hFont;
+};
+
 struct CEIconHintInfo
 {
 	HWND     hEditCtrl;
 	HWND     hRootDlg;
 	WNDPROC  lpPrevWndFunc;
-	HICON    hIcon;
-	HFONT    hFont;
+	int      iRes; // Index for gpIconHandles
+	BOOL     bSearchIcon;
 	DWORD    nMargins;
 	wchar_t  sHint[80];
 	COLORREF clrHint;
@@ -63,17 +69,114 @@ struct CEIconHintOthers
 
 static MMap<HWND,CEIconHintInfo>* gpIconHints = NULL;
 static MMap<HWND,CEIconHintOthers>* gpIconOthers = NULL;
+// Map the font height (actually CEIconHintInfo.iRes) to hFont and hIcon
+static MMap<int,CEIconDrawHandles>* gpIconHandles = NULL;
+
+// Returns the index (new or existing) in the gpIconHandles
+static int EditIconHintCreateHandles(HWND hEditCtrl, HICON* phIcon = NULL, HFONT* phFont = NULL)
+{
+	if (phIcon)
+		*phIcon = NULL;
+	if (phFont)
+		*phFont = NULL;
+
+	if (!gpIconHandles)
+	{
+		_ASSERTE(gpIconHandles!=NULL && "Must be already initialized!");
+		return 0;
+	}
+
+	// Current control font
+	HFONT hf = (HFONT)SendMessage(hEditCtrl, WM_GETFONT, 0, 0);
+	LOGFONT lf = {};
+	RECT rcClient = {}; GetClientRect(hEditCtrl, &rcClient);
+	//CreateFont(nFontHeight, 0, 0, 0, FW_NORMAL, TRUE/*Italic*/, FALSE, 0,
+	//           DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_SWISS,
+	//           L"Tahoma");
+	if ((hf == NULL)
+		|| (GetObject(hf, sizeof(lf), &lf) <= 0))
+	{
+		ZeroStruct(lf);
+		lf.lfHeight = rcClient.bottom - 4;
+		lf.lfCharSet = DEFAULT_CHARSET;
+		lf.lfOutPrecision = OUT_DEFAULT_PRECIS;
+		lf.lfClipPrecision = CLIP_DEFAULT_PRECIS;
+	}
+	// And change other properties to our font style
+	lf.lfWidth = 0;
+	lf.lfEscapement = 0;
+	lf.lfOrientation = 0;
+	lf.lfWeight = FW_NORMAL;
+	lf.lfItalic = TRUE;
+	lf.lfUnderline = 0;
+	lf.lfStrikeOut = 0;
+	lf.lfCharSet = DEFAULT_CHARSET;
+	lf.lfQuality = DEFAULT_QUALITY;
+	lf.lfPitchAndFamily = DEFAULT_PITCH | FF_SWISS;
+	lstrcpyn(lf.lfFaceName, L"Tahoma", countof(lf.lfFaceName));
+
+	// Check first, if there is already created handles for that resolution?
+	CEIconDrawHandles dh = {};
+	if (!gpIconHandles->Get(lf.lfHeight, &dh))
+	{
+		// Need to be created
+		TODO("Load appropriate icon resolution");
+		dh.hIcon = (HICON)LoadImage(GetModuleHandle(0), MAKEINTRESOURCE(IDI_SEARCH), IMAGE_ICON,
+                    GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), LR_DEFAULTCOLOR);
+        _ASSERTE(dh.hIcon!=NULL);
+
+        dh.hFont = CreateFontIndirect(&lf);
+        if (!dh.hFont)
+        {
+			_ASSERTE(dh.hFont!=NULL);
+			return 0;
+		}
+
+		gpIconHandles->Set(lf.lfHeight, dh);
+	}
+
+	if (phIcon)
+		*phIcon = dh.hIcon;
+	if (phFont)
+		*phFont = dh.hFont;
+
+	return lf.lfHeight;
+}
+
+// Returns handles from gpIconHandles
+static bool EditIconHintGetHandles(int iRes, CEIconDrawHandles& dh)
+{
+	ZeroStruct(dh);
+
+	if (!gpIconHandles)
+	{
+		_ASSERTE(gpIconHandles!=NULL && "Must be already initialized!");
+		return false;
+	}
+
+	if (iRes && gpIconHandles->Get(iRes, &dh))
+	{
+		return true;
+	}
+
+	return false;
+}
 
 static LRESULT EditIconHintPaint(HWND hEditCtrl, CEIconHintInfo* p, UINT Msg = WM_PAINT)
 {
 	LRESULT lRc = 0;
 
+	_ASSERTE(p!=NULL);
+
+	CEIconDrawHandles dh = {};
+	gpIconHandles->Get(p->iRes, &dh);
+
 	int iLen = GetWindowTextLength(hEditCtrl);
 	PAINTSTRUCT ps = {};
 	HDC hdc; bool bReleaseDC = false;
-	bool bDrawHint = ((*p->sHint) && p->hFont && (iLen == 0) && (GetFocus() != hEditCtrl));
+	bool bDrawHint = ((*p->sHint) && dh.hFont && (iLen == 0) && (GetFocus() != hEditCtrl));
 
-	if (!bDrawHint || !p->hIcon || (Msg != WM_PAINT))
+	if (!bDrawHint || !dh.hIcon || (Msg != WM_PAINT))
 	{
 		if (Msg == WM_PAINT)
 		{
@@ -83,7 +186,7 @@ static LRESULT EditIconHintPaint(HWND hEditCtrl, CEIconHintInfo* p, UINT Msg = W
 				lRc = DefWindowProc(hEditCtrl, WM_PAINT, 0, 0);
 		}
 		// Need to draw icon?
-		if (!p->hIcon)
+		if (!dh.hIcon)
 			goto wrap;
 		// If drawing after standard procedure
 		hdc = GetDC(hEditCtrl);
@@ -118,12 +221,12 @@ static LRESULT EditIconHintPaint(HWND hEditCtrl, CEIconHintInfo* p, UINT Msg = W
 			rect.right -= HIWORD(p->nMargins);
 
 			// Draw "Search" icon
-			if (p->hIcon)
+			if (dh.hIcon)
 			{
 				int X1 = rect.right - iw - 1;
 				int Y1 = max(1,((rect.bottom-rect.top-ih)>>1));
 
-				DrawIconEx(hdc, X1, Y1, p->hIcon, iw, ih, 0, NULL, DI_NORMAL);
+				DrawIconEx(hdc, X1, Y1, dh.hIcon, iw, ih, 0, NULL, DI_NORMAL);
 
 				rect.right -= (iw + CE_ICON_SPACING);
 			}
@@ -131,10 +234,11 @@ static LRESULT EditIconHintPaint(HWND hEditCtrl, CEIconHintInfo* p, UINT Msg = W
 			// Draw "Hint"
 			if (bDrawHint)
 			{
-				HFONT hOldFont = (HFONT)SelectObject(hdc, p->hFont);
+				rect.bottom--;
+				HFONT hOldFont = (HFONT)SelectObject(hdc, dh.hFont);
 				COLORREF OldColor = GetTextColor(hdc);
 				SetTextColor(hdc, p->clrHint);
-				DrawText(hdc, p->sHint, -1, &rect, DT_LEFT|DT_SINGLELINE|DT_EDITCONTROL);
+				DrawText(hdc, p->sHint, -1, &rect, DT_LEFT|DT_SINGLELINE|DT_EDITCONTROL|DT_VCENTER);
 				SetTextColor(hdc, OldColor);
 				SelectObject(hdc, hOldFont);
 			}
@@ -198,6 +302,7 @@ static LRESULT WINAPI EditIconHintProc(HWND hEditCtrl, UINT Msg, WPARAM wParam, 
 {
 	LRESULT lRc = 0;
 	CEIconHintInfo hi = {};
+	CEIconDrawHandles dh = {};
 	bool bKnown = gpIconHints->Get(hEditCtrl, &hi, (Msg == WM_DESTROY));
 
 	switch (Msg)
@@ -215,7 +320,7 @@ static LRESULT WINAPI EditIconHintProc(HWND hEditCtrl, UINT Msg, WPARAM wParam, 
 	case WM_RBUTTONUP:
 	case WM_RBUTTONDBLCLK:
 	case WM_SETCURSOR:
-		if (hi.hIcon)
+		if (gpIconHandles->Get(hi.iRes, &dh) && dh.hIcon)
 		{
 			// Cursor over icon?
 			if (EditIconHintOverIcon(hEditCtrl, &hi, (Msg==WM_SETCURSOR)?NULL:&lParam))
@@ -341,6 +446,20 @@ static LRESULT WINAPI EditIconHintProc(HWND hEditCtrl, UINT Msg, WPARAM wParam, 
 wrap:
 	// Done
 	return lRc;
+}
+
+// Windows 8.1
+// when the dialog is dragged to the another monitor with different dpi value
+void EditIconHint_ResChanged(HWND hEditCtrl)
+{
+	if (!gpIconHints || !gpIconHandles)
+		return;
+	CEIconHintInfo hi = {};
+	if (!gpIconHints->Get(hEditCtrl, &hi))
+		return;
+	// Refresh hFont and hIcon
+	hi.iRes = EditIconHintCreateHandles(hEditCtrl);
+	gpIconHints->Set(hEditCtrl, hi);
 }
 
 // That helper function called from root dialog
@@ -536,27 +655,12 @@ void EditIconHint_Set(HWND hRootDlg, HWND hEditCtrl, bool bSearchIcon, LPCWSTR s
 	if (!hEditCtrl)
 		return;
 
-	static HICON hIcon = NULL;
-	static HFONT hFont = NULL;
-
-	if (!hIcon)
-	{
-		hIcon = (HICON)LoadImage(GetModuleHandle(0), MAKEINTRESOURCE(IDI_SEARCH), IMAGE_ICON,
-                    GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), LR_DEFAULTCOLOR);
-        _ASSERTE(hIcon!=NULL);
-	}
-	if (!hFont)
-	{
-		int nFontHeight = 14;
-		int nDisplayDpi = gpSetCls->QueryDpi();
-		if (nDisplayDpi > 96)
-			nFontHeight = nFontHeight * nDisplayDpi / 96;
-		hFont = CreateFont(nFontHeight, 0, 0, 0, FW_NORMAL, TRUE/*Italic*/, FALSE, 0,
-					DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_SWISS,
-					L"Tahoma");
-		_ASSERTE(hFont!=NULL);
-	}
 	// First init
+	if (!gpIconHandles)
+	{
+		gpIconHandles = (MMap<int,CEIconDrawHandles>*)calloc(sizeof(*gpIconHandles),1);
+		gpIconHandles->Init(32, true);
+	}
 	if (!gpIconHints)
 	{
 		gpIconHints = (MMap<HWND,CEIconHintInfo>*)calloc(sizeof(*gpIconHints),1);
@@ -576,8 +680,9 @@ void EditIconHint_Set(HWND hRootDlg, HWND hEditCtrl, bool bSearchIcon, LPCWSTR s
 		lstrcpyn(hi.sHint, sHint, countof(hi.sHint));
 		hi.clrHint = GetSysColor(COLOR_GRAYTEXT);
 	}
-	hi.hIcon = bSearchIcon ? hIcon : NULL;
-	hi.hFont = hFont;
+	HICON hIcon = NULL;
+	hi.iRes = EditIconHintCreateHandles(hEditCtrl, bSearchIcon ? &hIcon : NULL);
+	hi.bSearchIcon = bSearchIcon;
 	DWORD_PTR nMargins = SendMessage(hEditCtrl, EM_GETMARGINS, 0, 0);
 	hi.nMargins = (DWORD)nMargins;
 	hi.nSearchMsg = nSearchMsg;
@@ -589,7 +694,7 @@ void EditIconHint_Set(HWND hRootDlg, HWND hEditCtrl, bool bSearchIcon, LPCWSTR s
 	SetWindowLongPtr(hEditCtrl, GWLP_WNDPROC, (LONG_PTR)EditIconHintProc);
 
 	// Margins
-	if (hi.hIcon)
+	if (hIcon)
 	{
 		int IconWidth = GetSystemMetrics(SM_CXSMICON);
 		SendMessage(hEditCtrl, EM_SETMARGINS, EC_RIGHTMARGIN, MAKELPARAM(LOWORD(nMargins),HIWORD(nMargins)+IconWidth+CE_ICON_SPACING));
