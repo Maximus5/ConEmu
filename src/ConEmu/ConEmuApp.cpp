@@ -3153,7 +3153,7 @@ bool UpdateWin7TaskList(bool bForce, bool bNoSuccMsg /*= false*/)
 							{
 								if (!bNoSuccMsg)
 								{
-									MessageBox(ghOpWnd, L"Taskbar jump list was updated successfully", gpConEmu->GetDefaultTitle(), MB_ICONINFORMATION);
+									MsgBox(L"Taskbar jump list was updated successfully", MB_ICONINFORMATION, gpConEmu->GetDefaultTitle(), ghOpWnd, true);
 								}
 
 								bSucceeded = true;
