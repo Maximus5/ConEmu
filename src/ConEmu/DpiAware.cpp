@@ -207,7 +207,7 @@ int CDpiAware::QueryDpiForMonitor(HMONITOR hmon, DpiValue* pDpi /*= NULL*/)
 	if (Shcore == NULL)
 	{
 		Shcore = LoadLibrary(L"Shcore.dll");
-		getDPIForMonitor = Shcore ? (GetDPIForMonitor_t)GetProcAddress(Shcore, "GetDPIForMonitor") : NULL;
+		getDPIForMonitor = Shcore ? (GetDPIForMonitor_t)GetProcAddress(Shcore, "GetDpiForMonitor") : NULL;
 
 		if ((Shcore == NULL) || (getDPIForMonitor == NULL))
 		{
@@ -216,9 +216,11 @@ int CDpiAware::QueryDpiForMonitor(HMONITOR hmon, DpiValue* pDpi /*= NULL*/)
 	}
 
 	UINT x = 0, y = 0;
+	HRESULT hr;
 	if (Shcore != (HMODULE)INVALID_HANDLE_VALUE)
 	{
-		if (getDPIForMonitor(hmon, MDT_Effective_DPI, &x, &y) && (x > 0) && (y > 0))
+		hr = getDPIForMonitor(hmon, MDT_Effective_DPI, &x, &y);
+		if (SUCCEEDED(hr) && (x > 0) && (y > 0))
 		{
 			if (pDpi)
 			{
