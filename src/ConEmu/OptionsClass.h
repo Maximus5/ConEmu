@@ -227,9 +227,10 @@ class CSettings
 			thi_Last
 		};
 		HWND GetPage(TabHwndIndex nPage);
+		TabHwndIndex GetPageId(HWND hPage);
 
 	private:
-		HWND mh_Tabs[thi_Last];
+		// mh_Tabs moved to the m_Pages
 		int  mn_LastActivedTab;
 
 	public:
@@ -624,7 +625,10 @@ class CSettings
 			// Filled after creation
 			HTREEITEM        hTI;
 			ConEmuSetupItem* pItems;
+			HWND             hPage;
 		};
 		ConEmuSetupPages *m_Pages;
+		int mn_PagesCount;
 		static void SelectTreeItem(HWND hTree, HTREEITEM hItem, bool bPost = false);
+		void ClearPages();
 };
