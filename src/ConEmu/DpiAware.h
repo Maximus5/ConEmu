@@ -114,7 +114,7 @@ public:
 
 	~CDpiForDialog();
 
-	bool Attach(HWND hWnd, int nCurDpi);
+	bool Attach(HWND hWnd);
 
 	bool SetDialogDPI(const DpiValue& newDpi, LPRECT lprcSuggested = NULL);
 

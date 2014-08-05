@@ -269,7 +269,7 @@ CDpiForDialog::~CDpiForDialog()
 	Detach();
 }
 
-bool CDpiForDialog::Attach(HWND hWnd, int nCurDpi)
+bool CDpiForDialog::Attach(HWND hWnd)
 {
 	mh_Dlg = hWnd;
 
