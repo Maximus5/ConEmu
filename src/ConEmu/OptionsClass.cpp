@@ -1452,8 +1452,7 @@ void CSettings::SearchForControls()
 		{
 			if (m_Pages[i].hPage == NULL)
 			{
-				m_Pages[i].hPage = CreateDialogParam((HINSTANCE)GetModuleHandle(NULL),
-					MAKEINTRESOURCE(m_Pages[i].PageID), ghOpWnd, pageOpProc, (LPARAM)&(m_Pages[i]));
+				CreatePage(&(m_Pages[i]));
 			}
 
 			iCurTab = i;
@@ -1830,10 +1829,8 @@ LRESULT CSettings::OnInitDialog()
 
 		mb_IgnoreSelPage = false;
 
-		m_Pages[0].hPage = CreateDialogParam((HINSTANCE)GetModuleHandle(NULL),
-			MAKEINTRESOURCE(m_Pages[0].PageID), ghOpWnd, pageOpProc, (LPARAM)&(m_Pages[0]));
+		CreatePage(&(m_Pages[0]));
 		//MoveWindow(m_Pages[0].hPage, rcClient.left, rcClient.top, rcClient.right-rcClient.left, rcClient.bottom-rcClient.top, 0);
-
 
 		apiShowWindow(m_Pages[0].hPage, SW_SHOW);
 	}
@@ -8547,8 +8544,7 @@ LRESULT CSettings::OnPage(LPNMHDR phdr)
 						//HWND hPlace = GetDlgItem(ghOpWnd, tSetupPagePlace);
 						//RECT rcClient; GetWindowRect(hPlace, &rcClient);
 						//MapWindowPoints(NULL, ghOpWnd, (LPPOINT)&rcClient, 2);
-						m_Pages[i].hPage = CreateDialogParam((HINSTANCE)GetModuleHandle(NULL),
-							MAKEINTRESOURCE(m_Pages[i].PageID), ghOpWnd, pageOpProc, (LPARAM)&(m_Pages[i]));
+						CreatePage(&(m_Pages[i]));
 						//MoveWindow(m_Pages[i].hPage, rcClient.left, rcClient.top, rcClient.right-rcClient.left, rcClient.bottom-rcClient.top, 0);
 					}
 					else
@@ -15400,6 +15396,13 @@ bool CSettings::isDialogMessage(MSG &Msg)
 	}
 
 	return false;
+}
+
+HWND CSettings::CreatePage(ConEmuSetupPages* p)
+{
+	p->hPage = CreateDialogParam((HINSTANCE)GetModuleHandle(NULL),
+					MAKEINTRESOURCE(p->PageID), ghOpWnd, pageOpProc, (LPARAM)p);
+	return p->hPage;
 }
 
 HWND CSettings::GetPage(CSettings::TabHwndIndex nPage)

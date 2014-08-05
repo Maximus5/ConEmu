@@ -631,4 +631,5 @@ class CSettings
 		int mn_PagesCount;
 		static void SelectTreeItem(HWND hTree, HTREEITEM hItem, bool bPost = false);
 		void ClearPages();
+		HWND CreatePage(ConEmuSetupPages* p);
 };
