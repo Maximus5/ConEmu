@@ -632,4 +632,5 @@ class CSettings
 		static void SelectTreeItem(HWND hTree, HTREEITEM hItem, bool bPost = false);
 		void ClearPages();
 		HWND CreatePage(ConEmuSetupPages* p);
+		TabHwndIndex GetPageId(HWND hPage, ConEmuSetupPages** pp);
 };

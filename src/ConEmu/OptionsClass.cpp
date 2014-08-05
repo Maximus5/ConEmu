@@ -15424,23 +15424,30 @@ HWND CSettings::GetPage(CSettings::TabHwndIndex nPage)
 	return hPage;
 }
 
-CSettings::TabHwndIndex CSettings::GetPageId(HWND hPage)
+CSettings::TabHwndIndex CSettings::GetPageId(HWND hPage, ConEmuSetupPages** pp)
 {
 	TabHwndIndex pgId = thi_Last;
 
 	if (ghOpWnd && m_Pages && hPage)
 	{
-		for (const ConEmuSetupPages* p = m_Pages; p->PageID; p++)
+		for (ConEmuSetupPages* p = m_Pages; p->PageID; p++)
 		{
 			if (p->hPage == hPage)
 			{
 				pgId = p->PageIndex;
+				if (pp)
+					*pp = p;
 				break;
 			}
 		}
 	}
 
 	return pgId;
+}
+
+CSettings::TabHwndIndex CSettings::GetPageId(HWND hPage)
+{
+	return GetPageId(hPage, NULL);
 }
 
 void CSettings::ClearPages()
