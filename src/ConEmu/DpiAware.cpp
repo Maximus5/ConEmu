@@ -272,7 +272,7 @@ CDpiForDialog::~CDpiForDialog()
 	Detach();
 }
 
-bool CDpiForDialog::Attach(HWND hWnd)
+bool CDpiForDialog::Attach(HWND hWnd, DpiValue* pCurDpi /*= NULL*/)
 {
 	mh_Dlg = hWnd;
 
@@ -318,6 +318,9 @@ bool CDpiForDialog::Attach(HWND hWnd)
 		{
 			if (!SetDialogDPI(m_InitDpi))
 				return false;
+
+			if (pCurDpi)
+				pCurDpi->SetDpi(m_InitDpi);
 		}
 	}
 	else
