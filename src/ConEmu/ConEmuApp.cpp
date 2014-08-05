@@ -2811,6 +2811,7 @@ HRESULT _CreateShellLink(PCWSTR pszArguments, PCWSTR pszPrefix, PCWSTR pszTitle,
 						pszTemp = pszBatch;
 					}
 
+					szTmp.Empty();
 					if (NextArg(&pszTemp, szTmp) == 0)
 						pszIcon = szTmp;
 					break;
