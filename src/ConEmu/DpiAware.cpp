@@ -263,7 +263,7 @@ CDpiForDialog::CDpiForDialog()
 	mn_CurFontHeight = 0;
 	ZeroStruct(mlf_CurFont);
 	mh_OldFont = mh_CurFont = NULL;
-	m_Items.Init(8, true);
+	ZeroStruct(m_Items);
 }
 
 CDpiForDialog::~CDpiForDialog()
@@ -298,6 +298,9 @@ bool CDpiForDialog::Attach(HWND hWnd)
 	// But if one dpi was choosed for all monitors?
 
 	CDpiAware::QueryDpi(hWnd, &m_InitDpi);
+
+	if (!m_Items.Initialized())
+		m_Items.Init(8);
 
 	if (CDpiAware::IsPerMonitorDpi())
 	{
