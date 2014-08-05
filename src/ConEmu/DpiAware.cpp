@@ -304,12 +304,16 @@ bool CDpiForDialog::Attach(HWND hWnd)
 
 	if (CDpiAware::IsPerMonitorDpi())
 	{
-		MArray<DlgItem>* p = LoadDialogItems(hWnd);
-		m_Items.Set(m_InitDpi.Ydpi, p);
-
+		// When Windows 8.1 is in per-monitor mode
+		// and application is marked as per-monitor-dpi aware
+		// Windows does not resize dialogs automatically.
+		// Our resources are designed for standard 96 dpi.
 		m_CurDpi.SetDpi(96, 96);
+		MArray<DlgItem>* p = LoadDialogItems(hWnd);
+		m_Items.Set(m_CurDpi.Ydpi, p);
 
-		if (m_InitDpi.Ydpi != 96)
+		// Need to resize the dialog?
+		if (m_InitDpi.Ydpi != m_CurDpi.Ydpi)
 		{
 			if (!SetDialogDPI(m_InitDpi))
 				return false;
