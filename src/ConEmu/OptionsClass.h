@@ -40,6 +40,8 @@ class CBackground;
 class CBackgroundInfo;
 struct DebugLogShellActivity;
 struct CEHelpPopup;
+class CDpiForDialog;
+struct DpiValue;
 
 enum SingleInstanceArgEnum
 {
@@ -175,6 +177,7 @@ class CSettings
 		#else
 		CBackgroundInfo* mp_BgInfo;
 		#endif
+		CDpiForDialog* mp_DpiAware;
 	public:
 		void SetBgImageDarker(u8 newValue, bool bUpdate);
 		#ifndef APPDISTINCTBACKGROUND
@@ -623,14 +626,19 @@ class CSettings
 			TabHwndIndex     PageIndex;    // mh_Tabs[...]
 			bool             Collapsed;
 			// Filled after creation
+			bool             DpiChanged;
 			HTREEITEM        hTI;
 			ConEmuSetupItem* pItems;
 			HWND             hPage;
+			CDpiForDialog*   pDpiAware;
 		};
 		ConEmuSetupPages *m_Pages;
 		int mn_PagesCount;
 		static void SelectTreeItem(HWND hTree, HTREEITEM hItem, bool bPost = false);
 		void ClearPages();
 		HWND CreatePage(ConEmuSetupPages* p);
+		CDpiForDialog* mp_DpiDistinct2;
+		DpiValue* mp_CurDpi;
+		void ProcessDpiChange(ConEmuSetupPages* p);
 		TabHwndIndex GetPageId(HWND hPage, ConEmuSetupPages** pp);
 };

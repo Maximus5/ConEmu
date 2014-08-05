@@ -52,6 +52,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmuApp.h"
 #include "ConEmuCtrl.h"
 #include "DefaultTerm.h"
+#include "DpiAware.h"
 #include "Inside.h"
 #include "LoadImg.h"
 #include "Options.h"
@@ -371,6 +372,9 @@ CSettings::CSettings()
 	#else
 	mp_BgInfo = NULL;
 	#endif
+	mp_DpiAware = NULL;
+	mp_CurDpi = NULL;
+	mp_DpiDistinct2 = NULL;
 	ZeroStruct(mh_Font);
 	mh_Font2 = NULL;
 	ZeroStruct(m_tm);
@@ -1698,6 +1702,11 @@ LRESULT CSettings::OnInitDialog()
 	ClearPages();
 
 	ConEmuAbout::DonateBtns_Add(ghOpWnd, tOptionSearch, bSaveSettings);
+
+	if (mp_DpiAware)
+	{
+		mp_DpiAware->Attach(ghOpWnd, mp_CurDpi);
+	}
 
 	gbLastColorsOk = FALSE;
 
@@ -8550,6 +8559,7 @@ LRESULT CSettings::OnPage(LPNMHDR phdr)
 					else
 					{
 						SendMessage(m_Pages[i].hPage, mn_ActivateTabMsg, 1, (LPARAM)&(m_Pages[i]));
+						ProcessDpiChange(&(m_Pages[i]));
 					}
 					ShowWindow(m_Pages[i].hPage, SW_SHOW);
 					mn_LastActivedTab = gpSetCls->m_Pages[i].PageID;
@@ -8576,6 +8586,12 @@ void CSettings::Dialog(int IdShowPage /*= 0*/)
 
 		// Сначала обновить DC, чтобы некрасивостей не было
 		gpConEmu->UpdateWindowChild(NULL);
+
+		if (!gpSetCls->mp_DpiAware && CDpiAware::IsPerMonitorDpi())
+		{
+			gpSetCls->mp_DpiAware = new CDpiForDialog();
+			gpSetCls->mp_CurDpi = new DpiValue();
+		}
 
 		//2009-05-03. DialogBox создает МОДАЛЬНЫЙ диалог, а нам нужен НЕмодальный
 		HWND hOpt = CreateDialog(g_hInstance, MAKEINTRESOURCE(IDD_SETTINGS), NULL, wndOpProc);
@@ -8828,6 +8844,28 @@ INT_PTR CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPara
 	}
 
 	PatchMsgBoxIcon(hWnd2, messg, wParam, lParam);
+
+	if (gpSetCls->mp_DpiAware && gpSetCls->mp_DpiAware->ProcessMessages(hWnd2, messg, wParam, lParam, lRc))
+	{
+		// Store active dpi
+		gpSetCls->mp_CurDpi->OnDpiChanged(wParam);
+
+		// Refresh the visible page and mark 'to be changed' others
+		for (ConEmuSetupPages* p = gpSetCls->m_Pages; p->PageID; p++)
+		{
+			if (p->hPage)
+			{
+				p->DpiChanged = true;
+				if (IsWindowVisible(p->hPage))
+				{
+					gpSetCls->ProcessDpiChange(p);
+				}
+			}
+		}
+
+		SetWindowLongPtr(hWnd2, DWLP_MSGRESULT, lRc);
+		return TRUE;
+	}
 
 	switch (messg)
 	{
@@ -9131,7 +9169,18 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 {
 	static bool bSkipSelChange = false;
 
-	TabHwndIndex pgId = gpSetCls->GetPageId(hWnd2);
+	ConEmuSetupPages* pPage = NULL;
+	TabHwndIndex pgId = gpSetCls->GetPageId(hWnd2, &pPage);
+
+	if (pPage && pPage->pDpiAware)
+	{
+		INT_PTR lRc = 0;
+		if (pPage->pDpiAware->ProcessMessages(hWnd2, messg, wParam, lParam, lRc))
+		{
+			SetWindowLongPtr(hWnd2, DWLP_MSGRESULT, lRc);
+			return TRUE;
+		}
+	}
 
 	if ((messg == WM_INITDIALOG) || (messg == gpSetCls->mn_ActivateTabMsg))
 	{
@@ -9503,6 +9552,16 @@ INT_PTR CSettings::pageOpProc_AppsChild(HWND hWnd2, UINT messg, WPARAM wParam, L
 {
 	static int nLastScrollPos = 0;
 
+	if (gpSetCls->mp_DpiDistinct2)
+	{
+		INT_PTR lRc = 0;
+		if (gpSetCls->mp_DpiDistinct2->ProcessMessages(hWnd2, messg, wParam, lParam, lRc))
+		{
+			SetWindowLongPtr(hWnd2, DWLP_MSGRESULT, lRc);
+			return TRUE;
+		}
+	}
+
 	switch (messg)
 	{
 	case WM_INITDIALOG:
@@ -9637,6 +9696,12 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 				return 0;
 			}
 			SetWindowLongPtr(hChild, GWLP_ID, IDD_SPG_APPDISTINCT2);
+
+			if (!mp_DpiDistinct2 && mp_DpiAware)
+			{
+				mp_DpiDistinct2 = new CDpiForDialog();
+				mp_DpiDistinct2->Attach(hChild);
+			}
 
 			HWND hHolder = GetDlgItem(hWnd2, tAppDistinctHolder);
 			RECT rcPos = {}; GetWindowRect(hHolder, &rcPos);
@@ -15402,7 +15467,35 @@ HWND CSettings::CreatePage(ConEmuSetupPages* p)
 {
 	p->hPage = CreateDialogParam((HINSTANCE)GetModuleHandle(NULL),
 					MAKEINTRESOURCE(p->PageID), ghOpWnd, pageOpProc, (LPARAM)p);
+	if (p->hPage && !p->pDpiAware && mp_DpiAware)
+	{
+		p->DpiChanged = false;
+		p->pDpiAware = new CDpiForDialog();
+		p->pDpiAware->Attach(p->hPage);
+	}
 	return p->hPage;
+}
+
+void CSettings::ProcessDpiChange(ConEmuSetupPages* p)
+{
+	if (!p->hPage || !p->pDpiAware)
+		return;
+
+	HWND hPlace = GetDlgItem(ghOpWnd, tSetupPagePlace);
+	RECT rcClient; GetWindowRect(hPlace, &rcClient);
+	MapWindowPoints(NULL, ghOpWnd, (LPPOINT)&rcClient, 2);
+
+	p->DpiChanged = false;
+	p->pDpiAware->SetDialogDPI(*mp_CurDpi, &rcClient);
+
+	if ((p->PageID == thi_Apps) && mp_DpiDistinct2)
+	{
+		HWND hHolder = GetDlgItem(p->hPage, tAppDistinctHolder);
+		RECT rcPos = {}; GetWindowRect(hHolder, &rcPos);
+		MapWindowPoints(NULL, p->hPage, (LPPOINT)&rcPos, 2);
+
+		mp_DpiDistinct2->SetDialogDPI(*mp_CurDpi, &rcPos);
+	}
 }
 
 HWND CSettings::GetPage(CSettings::TabHwndIndex nPage)
@@ -15458,10 +15551,14 @@ void CSettings::ClearPages()
 		return;
 	}
 
+	if (mp_DpiDistinct2)
+		mp_DpiDistinct2->Detach();
+
 	for (ConEmuSetupPages *p = m_Pages; p->PageID; p++)
 	{
 		if (p->pDpiAware)
 			p->pDpiAware->Detach();
 		p->hPage = NULL;
+		p->DpiChanged = false;
 	}
 }
