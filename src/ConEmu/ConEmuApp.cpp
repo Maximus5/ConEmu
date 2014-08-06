@@ -3713,6 +3713,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	bool SaveCfgFilePrm = false; TCHAR* SaveCfgFile = NULL;
 	bool UpdateSrcSetPrm = false; TCHAR* UpdateSrcSet = NULL;
 	bool AnsiLogPathPrm = false; TCHAR* AnsiLogPath = NULL;
+	bool QuakePrm = false; BYTE QuakeMode = 0;
 	bool SetUpDefaultTerminal = false;
 	bool ExitAfterActionPrm = false;
 #if 0
@@ -4247,6 +4248,18 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				{
 					gpSetCls->SingleInstanceArg = sgl_Disabled;
 				}
+				else if (!klstricmp(curCommand, _T("/quake"))
+					|| !klstricmp(curCommand, _T("/quakeauto"))
+					|| !klstricmp(curCommand, _T("/noquake")))
+				{
+					QuakePrm = true;
+					if (!klstricmp(curCommand, _T("/quake")))
+						QuakeMode = 1;
+					else if (!klstricmp(curCommand, _T("/quakeauto")))
+						QuakeMode = 2;
+					else
+						QuakeMode = 0;
+				}
 				else if (!klstricmp(curCommand, _T("/showhide")) || !klstricmp(curCommand, _T("/showhideTSA")))
 				{
 					gpSetCls->SingleInstanceArg = sgl_Enabled;
@@ -4779,6 +4792,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	    SizePrm ? SizeVal : -1,
 	    ClearTypePrm ? ClearTypeVal : -1
 	);
+
+	// Quake/NoQuake?
+	if (QuakePrm)
+	{
+		gpConEmu->SetQuakeMode(QuakeMode);
+	}
 
 	if (gpSet->wndCascade)
 	{

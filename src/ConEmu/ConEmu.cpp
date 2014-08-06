@@ -4811,7 +4811,8 @@ bool CConEmuMain::SetQuakeMode(BYTE NewQuakeMode, ConEmuWindowMode nNewWindowMod
 		mrc_StoredNormalRect = rcWnd;
 	}
 
-	gpConEmu->SetWindowMode(nNewWindowMode, TRUE);
+	if (ghWnd)
+		gpConEmu->SetWindowMode(nNewWindowMode, TRUE);
 
 	if (m_QuakePrevSize.bWaitReposition)
 		m_QuakePrevSize.bWaitReposition = false;
@@ -4822,9 +4823,11 @@ bool CConEmuMain::SetQuakeMode(BYTE NewQuakeMode, ConEmuWindowMode nNewWindowMod
 		SetDlgItemInt(gpSetCls->GetPage(CSettings::thi_Show), tHideCaptionAlwaysFrame, gpSet->HideCaptionAlwaysFrame(), TRUE);
 
 	// Save current rect, JIC
-	StoreIdealRect();
+	if (ghWnd)
+		StoreIdealRect();
 
-	apiSetForegroundWindow(ghOpWnd ? ghOpWnd : ghWnd);
+	if (ghWnd)
+		apiSetForegroundWindow(ghOpWnd ? ghOpWnd : ghWnd);
 
 	mb_InSetQuakeMode = false;
 	return true;
