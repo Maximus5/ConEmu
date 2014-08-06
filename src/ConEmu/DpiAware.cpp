@@ -129,6 +129,10 @@ wrap:
 
 bool CDpiAware::IsPerMonitorDpi()
 {
+	#if defined(_DEBUG) && defined(DPI_144)
+	return true;
+	#endif
+
 	// Checkbox 'Let me choose one scaling level for all my displays'
 	// on the 'Control Panel\ Appearance and Personalization\Display user interface (UI)'
 	// Changes will be applied on the next logon only
@@ -162,6 +166,11 @@ bool CDpiAware::IsPerMonitorDpi()
 
 int CDpiAware::QueryDpi(HWND hWnd /*= NULL*/, DpiValue* pDpi /*= NULL*/)
 {
+	#if defined(_DEBUG) && defined(DPI_144)
+	if (pDpi) pDpi->SetDpi(144,144);
+	return 144;
+	#endif
+
 	if (hWnd && IsPerMonitorDpi())
 	{
 		HMONITOR hMon = MonitorFromWindow(hWnd, MONITOR_DEFAULTTONEAREST);
