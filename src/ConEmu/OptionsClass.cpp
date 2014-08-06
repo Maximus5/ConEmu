@@ -9203,6 +9203,8 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 			HWND hPlace = GetDlgItem(ghOpWnd, tSetupPagePlace);
 			RECT rcClient; GetWindowRect(hPlace, &rcClient);
 			MapWindowPoints(NULL, ghOpWnd, (LPPOINT)&rcClient, 2);
+			if (p->pDpiAware)
+				p->pDpiAware->Attach(hWnd2);
 			MoveWindow(hWnd2, rcClient.left, rcClient.top, rcClient.right-rcClient.left, rcClient.bottom-rcClient.top, 0);
 		}
 		else
@@ -15467,15 +15469,14 @@ bool CSettings::isDialogMessage(MSG &Msg)
 
 HWND CSettings::CreatePage(ConEmuSetupPages* p)
 {
-	p->hPage = CreateDialogParam((HINSTANCE)GetModuleHandle(NULL),
-					MAKEINTRESOURCE(p->PageID), ghOpWnd, pageOpProc, (LPARAM)p);
-	if (p->hPage && mp_DpiAware)
+	if (mp_DpiAware)
 	{
 		if (!p->pDpiAware)
 			p->pDpiAware = new CDpiForDialog();
 		p->DpiChanged = false;
-		p->pDpiAware->Attach(p->hPage);
 	}
+	p->hPage = CreateDialogParam((HINSTANCE)GetModuleHandle(NULL),
+					MAKEINTRESOURCE(p->PageID), ghOpWnd, pageOpProc, (LPARAM)p);
 	return p->hPage;
 }
 
