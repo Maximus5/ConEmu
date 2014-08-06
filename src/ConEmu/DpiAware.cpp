@@ -442,30 +442,33 @@ bool CDpiForDialog::SetDialogDPI(const DpiValue& newDpi, LPRECT lprcSuggested /*
 	if (hf == NULL)
 		return false;
 
+	DEBUGTEST(wchar_t szClass[100]);
+
 	for (INT_PTR k = p->size() - 1; k >= 0; k--)
 	{
 		const DlgItem& di = (*p)[k];
-		if (!k)
-		{
-			SendMessage(mh_Dlg, WM_SETFONT, (WPARAM)hf, FALSE);
-			DWORD nWndFlags = SWP_NOZORDER | (lprcSuggested ? 0 : SWP_NOMOVE);
-			SetWindowPos(mh_Dlg, NULL,
-				lprcSuggested ? lprcSuggested->left : 0, lprcSuggested ? lprcSuggested->top : 0,
-				di.r.right, di.r.bottom,
-				nWndFlags);
-			RECT rc = {}; GetClientRect(mh_Dlg, &rc);
-			InvalidateRect(mh_Dlg, NULL, TRUE);
-			RedrawWindow(mh_Dlg, &rc, NULL, /*RDW_ERASE|*/RDW_ALLCHILDREN/*|RDW_INVALIDATE|RDW_UPDATENOW|RDW_INTERNALPAINT*/);
-		}
-		else
-		{
-			int newW = di.r.right - di.r.left;
-			int newH = di.r.bottom - di.r.top;
-			MoveWindow(di.h, di.r.left, di.r.top, newW, newH, FALSE);
-			SendMessage(di.h, WM_SETFONT, (WPARAM)hf, FALSE/*immediately*/);
-			EditIconHint_ResChanged(di.h);
-			InvalidateRect(di.h, NULL, TRUE);
-		}
+		DEBUGTEST(GetClassName(di.h, szClass, countof(szClass)));
+
+		int newW = di.r.right - di.r.left;
+		int newH = di.r.bottom - di.r.top;
+		MoveWindow(di.h, di.r.left, di.r.top, newW, newH, FALSE);
+		SendMessage(di.h, WM_SETFONT, (WPARAM)hf, FALSE/*immediately*/);
+		EditIconHint_ResChanged(di.h);
+		InvalidateRect(di.h, NULL, TRUE);
+	}
+
+	if (p->size() > 0)
+	{
+		const DlgItem& di = (*p)[0];
+		SendMessage(mh_Dlg, WM_SETFONT, (WPARAM)hf, FALSE);
+		DWORD nWndFlags = SWP_NOZORDER | (lprcSuggested ? 0 : SWP_NOMOVE);
+		SetWindowPos(mh_Dlg, NULL,
+			lprcSuggested ? lprcSuggested->left : 0, lprcSuggested ? lprcSuggested->top : 0,
+			di.r.right, di.r.bottom,
+			nWndFlags);
+		RECT rc = {}; GetClientRect(mh_Dlg, &rc);
+		InvalidateRect(mh_Dlg, NULL, TRUE);
+		RedrawWindow(mh_Dlg, &rc, NULL, /*RDW_ERASE|*/RDW_ALLCHILDREN/*|RDW_INVALIDATE|RDW_UPDATENOW|RDW_INTERNALPAINT*/);
 	}
 
 	if (mh_CurFont != hf)
