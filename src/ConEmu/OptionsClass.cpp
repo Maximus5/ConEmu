@@ -1705,6 +1705,11 @@ LRESULT CSettings::OnInitDialog()
 
 	if (mp_DpiAware)
 	{
+		if (mp_CurDpi == NULL)
+		{
+			_ASSERTE(mp_CurDpi!=NULL);
+			mp_CurDpi = new DpiValue();
+		}
 		mp_DpiAware->Attach(ghOpWnd, ghWnd, mp_CurDpi);
 	}
 
