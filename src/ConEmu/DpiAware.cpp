@@ -319,7 +319,10 @@ bool CDpiForDialog::Attach(HWND hWnd, DpiValue* pCurDpi /*= NULL*/)
 		// Windows does not resize dialogs automatically.
 		// Our resources are designed for standard 96 dpi.
 		m_CurDpi.SetDpi(96, 96);
-		MArray<DlgItem>* p = LoadDialogItems(hWnd);
+		MArray<DlgItem>* p = NULL;
+		if (m_Items.Get(m_CurDpi.Ydpi, &p) && p)
+			delete p;
+		p = LoadDialogItems(hWnd);
 		m_Items.Set(m_CurDpi.Ydpi, p);
 
 		// Need to resize the dialog?
