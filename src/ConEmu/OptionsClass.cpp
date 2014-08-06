@@ -9114,8 +9114,9 @@ INT_PTR CSettings::OnMeasureFontItem(HWND hWnd2, UINT messg, WPARAM wParam, LPAR
 		|| wID == tTabFontFace || wID == tStatusFontFace)
 	{
 		MEASUREITEMSTRUCT *pItem = (MEASUREITEMSTRUCT*)lParam;
-		_ASSERTE(_dpiY >= 96);
-		pItem->itemHeight = 15 * _dpiY / 96;
+		int nDpi = GetDialogDpi();
+		_ASSERTE(nDpi >= 96);
+		pItem->itemHeight = 15 * nDpi / 96;
 	}
 
 	return TRUE;
@@ -9152,7 +9153,8 @@ INT_PTR CSettings::OnDrawFontItem(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM 
 		FillRect(pItem->hDC, &rc, hBr);
 		DeleteObject(hBr);
 		rc.left++;
-		HFONT hFont = CreateFont(-8*_dpiY/72, 0,0,0,(bAlmostMonospace==1)?FW_BOLD:FW_NORMAL,0,0,0,
+		int nDpi = GetDialogDpi();
+		HFONT hFont = CreateFont(-8*nDpi/72, 0,0,0,(bAlmostMonospace==1)?FW_BOLD:FW_NORMAL,0,0,0,
 		                         ANSI_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH,
 		                         L"MS Shell Dlg");
 		HFONT hOldF = (HFONT)SelectObject(pItem->hDC, hFont);
