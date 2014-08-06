@@ -128,6 +128,10 @@ BEGIN
     CONTROL         "&Monospace",cbMonospace,"Button",BS_AUTO3STATE | WS_TABSTOP,88,33,56,8
     CONTROL         "Auto size (fixed console size in cells)",cbFontAuto,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,169,33,140,8
+    CONTROL         "Admit monitor dpi with font size",cbFontMonitorDpi,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,47,144,8
+    CONTROL         "Treat font height as device units",cbFontAsDeviceUnits,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,169,47,140,8
     GROUPBOX        "Anti-aliasing",gbAntiAliasing,10,59,154,28,WS_GROUP
     CONTROL         "&None",rNoneAA,"Button",BS_AUTORADIOBUTTON | WS_GROUP,17,72,36,8
     CONTROL         "&Standard",rStandardAA,"Button",BS_AUTORADIOBUTTON,57,72,47,8
