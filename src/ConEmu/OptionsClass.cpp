@@ -1705,7 +1705,7 @@ LRESULT CSettings::OnInitDialog()
 
 	if (mp_DpiAware)
 	{
-		mp_DpiAware->Attach(ghOpWnd, mp_CurDpi);
+		mp_DpiAware->Attach(ghOpWnd, ghWnd, mp_CurDpi);
 	}
 
 	gbLastColorsOk = FALSE;
@@ -9188,7 +9188,7 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 			RECT rcClient; GetWindowRect(hPlace, &rcClient);
 			MapWindowPoints(NULL, ghOpWnd, (LPPOINT)&rcClient, 2);
 			if (p->pDpiAware)
-				p->pDpiAware->Attach(hWnd2);
+				p->pDpiAware->Attach(hWnd2, ghOpWnd);
 			MoveWindow(hWnd2, rcClient.left, rcClient.top, rcClient.right-rcClient.left, rcClient.bottom-rcClient.top, 0);
 		}
 		else
@@ -9688,7 +9688,7 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 			if (!mp_DpiDistinct2 && mp_DpiAware)
 			{
 				mp_DpiDistinct2 = new CDpiForDialog();
-				mp_DpiDistinct2->Attach(hChild);
+				mp_DpiDistinct2->Attach(hChild, hWnd2);
 			}
 
 			HWND hHolder = GetDlgItem(hWnd2, tAppDistinctHolder);

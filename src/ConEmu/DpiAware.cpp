@@ -308,7 +308,7 @@ CDpiForDialog::~CDpiForDialog()
 	Detach();
 }
 
-bool CDpiForDialog::Attach(HWND hWnd, DpiValue* pCurDpi /*= NULL*/)
+bool CDpiForDialog::Attach(HWND hWnd, HWND hCenterParent, DpiValue* pCurDpi /*= NULL*/)
 {
 	mh_Dlg = hWnd;
 
@@ -334,7 +334,7 @@ bool CDpiForDialog::Attach(HWND hWnd, DpiValue* pCurDpi /*= NULL*/)
 	// we need to re-scale our dialog manually!
 	// But if one dpi was choosed for all monitors?
 
-	CDpiAware::QueryDpi(hWnd, &m_InitDpi);
+	CDpiAware::QueryDpi(hCenterParent ? hCenterParent : hWnd, &m_InitDpi);
 
 	if (!m_Items.Initialized())
 		m_Items.Init(8);

@@ -124,7 +124,7 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 
 			if (mp_DpiAware)
 			{
-				mp_DpiAware->Attach(hDlg);
+				mp_DpiAware->Attach(hDlg, ghWnd);
 			}
 
 			if ((ghOpWnd && IsWindow(ghOpWnd)) || (WS_EX_TOPMOST & GetWindowLongPtr(ghWnd, GWL_EXSTYLE)))
