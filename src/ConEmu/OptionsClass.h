@@ -641,4 +641,5 @@ class CSettings
 		DpiValue* mp_CurDpi;
 		void ProcessDpiChange(ConEmuSetupPages* p);
 		TabHwndIndex GetPageId(HWND hPage, ConEmuSetupPages** pp);
+		int GetDialogDpi();
 };

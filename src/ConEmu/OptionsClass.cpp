@@ -15566,3 +15566,10 @@ void CSettings::ClearPages()
 	if (mp_DpiAware)
 		mp_DpiAware->Detach();
 }
+
+int CSettings::GetDialogDpi()
+{
+	if (mp_CurDpi)
+		return mp_CurDpi->Ydpi;
+	return _dpiY;
+}
