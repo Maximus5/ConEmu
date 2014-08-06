@@ -15467,10 +15467,11 @@ HWND CSettings::CreatePage(ConEmuSetupPages* p)
 {
 	p->hPage = CreateDialogParam((HINSTANCE)GetModuleHandle(NULL),
 					MAKEINTRESOURCE(p->PageID), ghOpWnd, pageOpProc, (LPARAM)p);
-	if (p->hPage && !p->pDpiAware && mp_DpiAware)
+	if (p->hPage && mp_DpiAware)
 	{
+		if (!p->pDpiAware)
+			p->pDpiAware = new CDpiForDialog();
 		p->DpiChanged = false;
-		p->pDpiAware = new CDpiForDialog();
 		p->pDpiAware->Attach(p->hPage);
 	}
 	return p->hPage;
@@ -15561,4 +15562,7 @@ void CSettings::ClearPages()
 		p->hPage = NULL;
 		p->DpiChanged = false;
 	}
+
+	if (mp_DpiAware)
+		mp_DpiAware->Detach();
 }
