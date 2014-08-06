@@ -58,6 +58,7 @@
 #define IDD_ACTION                      222
 #define IDD_HOTKEY                      223
 #define IDI_SEARCH                      224
+#define IDD_SPG_BACK                    225
 #define c0                              1000
 #define c1                              1001
 #define c2                              1002
@@ -1024,7 +1025,7 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        225
+#define _APS_NEXT_RESOURCE_VALUE        226
 #define _APS_NEXT_COMMAND_VALUE         40010
 #define _APS_NEXT_CONTROL_VALUE         2691
 #define _APS_NEXT_SYMED_VALUE           130

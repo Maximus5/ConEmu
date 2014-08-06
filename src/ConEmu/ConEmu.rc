@@ -1426,6 +1426,32 @@ BEGIN
     LTEXT           "Modifiers:",IDC_STATIC,7,30,37,8
 END
 
+IDD_SPG_BACK DIALOGEX 0, 0, 328, 235
+STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
+EXSTYLE WS_EX_CONTROLPARENT
+FONT 8, "MS Shell Dlg", 0, 0, 0x1
+BEGIN
+    CONTROL         "Back&ground image (bmp, jpg, png, tif):",cbBgImage,
+                    "Button",BS_AUTO3STATE | WS_TABSTOP,10,1,139,8
+    GROUPBOX        "",gbBgImage,4,1,319,98
+    LTEXT           "Path:",stBgImage,10,15,18,8
+    EDITTEXT        tBgImage,34,13,261,12,ES_AUTOHSCROLL
+    PUSHBUTTON      "...",bBgImage,299,13,16,12
+    CONTROL         "Transparent",rbBgReplaceTransparent,"Button",BS_AUTORADIOBUTTON | WS_DISABLED | WS_GROUP,10,32,59,8
+    CONTROL         "Replace color indexes",rbBgReplaceIndexes,"Button",BS_AUTORADIOBUTTON,70,32,86,8
+    EDITTEXT        tBgImageColors,160,30,43,12,ES_AUTOHSCROLL
+    RTEXT           "Placement:",stBgPlacement,205,32,45,8
+    COMBOBOX        lbBgPlacement,254,30,61,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Darkening:",stDarker,10,50,36,8
+    CONTROL         "",slDarker,"msctls_trackbar32",TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,52,49,228,12
+    EDITTEXT        tDarker,285,49,30,12,ES_AUTOHSCROLL | ES_NUMBER
+    CONTROL         "Allow background plugins (Far Manager)",cbBgAllowPlugin,
+                    "Button",BS_AUTO3STATE | WS_TABSTOP,10,67,144,10
+    LTEXT           "Darkening:",stDarkerPlugin,10,81,36,8,WS_DISABLED
+    CONTROL         "",slDarkerPlugin,"msctls_trackbar32",TBS_BOTH | TBS_NOTICKS | WS_DISABLED | WS_TABSTOP,52,80,228,12
+    EDITTEXT        tDarkerPlugin,285,80,30,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -1608,6 +1634,10 @@ BEGIN
         RIGHTMARGIN, 166
         TOPMARGIN, 7
         BOTTOMMARGIN, 63
+    END
+
+    IDD_SPG_BACK, DIALOG
+    BEGIN
     END
 END
 #endif    // APSTUDIO_INVOKED
