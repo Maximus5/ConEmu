@@ -29,6 +29,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Header.h"
 #include "DpiAware.h"
 #include "SearchCtrl.h"
+#include "../common/Monitors.h"
 
 
 /*
@@ -241,6 +242,32 @@ int CDpiAware::QueryDpiForMonitor(HMONITOR hmon, DpiValue* pDpi /*= NULL*/)
 	}
 
 	return dpi;
+}
+
+void CDpiAware::GetCenteredRect(HWND hWnd, RECT& rcCentered)
+{
+	bool lbCentered = false;
+	HMONITOR hMon;
+
+	if (hWnd)
+		hMon = MonitorFromWindow(hWnd, MONITOR_DEFAULTTONEAREST);
+	else
+		hMon = MonitorFromRect(&rcCentered, MONITOR_DEFAULTTONEAREST);
+
+	MONITORINFO mi = {};
+	GetNearestMonitorInfo(&mi, NULL, hWnd ? NULL : &rcCentered, hWnd);
+
+	int iWidth  = rcCentered.right - rcCentered.left;
+	int iHeight = rcCentered.bottom - rcCentered.top;
+
+	RECT rcNew = {
+			(mi.rcWork.left + mi.rcWork.right - iWidth)/2,
+			(mi.rcWork.top + mi.rcWork.bottom - iHeight)/2
+	};
+	rcNew.right = rcNew.left + iWidth;
+	rcNew.bottom = rcNew.top + iHeight;
+
+	rcCentered = rcNew;
 }
 
 

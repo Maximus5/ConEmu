@@ -1845,28 +1845,12 @@ LRESULT CSettings::OnInitDialog()
 	}
 	MCHKHEAP
 	{
-		RECT rect;
-		GetWindowRect(ghOpWnd, &rect);
-
-		BOOL lbCentered = FALSE;
-		HMONITOR hMon = MonitorFromWindow(ghOpWnd, MONITOR_DEFAULTTONEAREST);
-
-		if (hMon)
+		RECT rect = {};
+		if (GetWindowRect(ghOpWnd, &rect))
 		{
-			MONITORINFO mi; mi.cbSize = sizeof(mi);
-
-			if (GetMonitorInfo(hMon, &mi))
-			{
-				lbCentered = TRUE;
-				MoveWindow(ghOpWnd,
-				(mi.rcWork.left+mi.rcWork.right-rect.right+rect.left)/2,
-				(mi.rcWork.top+mi.rcWork.bottom-rect.bottom+rect.top)/2,
-				rect.right - rect.left, rect.bottom - rect.top, false);
-			}
+			CDpiAware::GetCenteredRect(ghWnd, rect);
+			MoveWindow(ghOpWnd, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, false);
 		}
-
-		if (!lbCentered)
-			MoveWindow(ghOpWnd, GetSystemMetrics(SM_CXSCREEN)/2 - (rect.right - rect.left)/2, GetSystemMetrics(SM_CYSCREEN)/2 - (rect.bottom - rect.top)/2, rect.right - rect.left, rect.bottom - rect.top, false);
 	}
 	return 0;
 }

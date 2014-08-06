@@ -86,6 +86,9 @@ public:
 	static int QueryDpiForWindow(HWND hWnd = NULL, DpiValue* pDpi = NULL);
 
 	static int QueryDpiForMonitor(HMONITOR hmon, DpiValue* pDpi = NULL);
+
+	// Dialog helper
+	static void GetCenteredRect(HWND hWnd, RECT& rcCentered);
 };
 
 class CDpiForDialog
