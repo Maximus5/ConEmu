@@ -13003,9 +13003,9 @@ LPCWSTR CSettings::FontFaceName()
 
 LONG CSettings::FontWidth()
 {
-	if (!LogFont.lfWidth)
+	if (LogFont.lfWidth <= 0)
 	{
-		_ASSERTE(LogFont.lfWidth!=0);
+		_ASSERTE(LogFont.lfWidth>0);
 		return 8;
 	}
 
@@ -13016,9 +13016,9 @@ LONG CSettings::FontWidth()
 
 LONG CSettings::FontHeight()
 {
-	if (!LogFont.lfHeight)
+	if (LogFont.lfHeight <= 0)
 	{
-		_ASSERTE(LogFont.lfHeight!=0);
+		_ASSERTE(LogFont.lfHeight>0);
 		return 12;
 	}
 
@@ -13029,9 +13029,9 @@ LONG CSettings::FontHeight()
 // Возможно скорректированный размер шрифта для выгрузки фрагмента в HTML
 LONG CSettings::FontHeightHtml()
 {
-	if (!LogFont.lfHeight)
+	if (LogFont.lfHeight <= 0)
 	{
-		_ASSERTE(LogFont.lfHeight!=0);
+		_ASSERTE(LogFont.lfHeight>0);
 		return 12;
 	}
 
