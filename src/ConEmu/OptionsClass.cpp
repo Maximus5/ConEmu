@@ -79,9 +79,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 SIZE szRasterSizes[100] = {{0,0}}; // {{16,8},{6,9},{8,9},{5,12},{7,12},{8,12},{16,12},{12,16},{10,18}};
 const wchar_t szRasterAutoError[] = L"Font auto size is not allowed for a fixed raster font size. Select 'Terminal' instead of '[Raster Fonts ...]'";
 
-// Тут можно бы оставить "LF.lfHeight". При выборе другого шрифта - может меняться высота?
-// Хотя, наверное все же лучше не включать "AI", а дать пользователю задать то, что хочется ему.
-#define CurFontSizeY gpSet->FontSizeY/*LF.lfHeight*/
 #undef UPDATE_FONTSIZE_RECREATE
 #define FontDefWidthMin 0
 #define FontDefWidthMax 99
@@ -1208,11 +1205,10 @@ void CSettings::InitFont(LPCWSTR asFontName/*=NULL*/, int anFontHeight/*=-1*/, i
 	}
 
 	mh_Font[0] = CreateFontIndirectMy(&LogFont);
+
 	//2009-06-07 Реальный размер созданного шрифта мог измениться
-	SaveFontSizes(&LogFont, (mn_AutoFontWidth == -1), false);
-	// Перенесено в SaveFontSizes
-	//// Применить в Mapping (там заодно и палитра копируется)
-	//gpConEmu->OnPanelViewSettingsChanged(FALSE);
+	SaveFontSizes((mn_AutoFontWidth == -1), false);
+
 	MCHKHEAP
 }
 
@@ -1953,7 +1949,7 @@ LRESULT CSettings::OnInitDialog_Main(HWND hWnd2)
 
 		checkDlgButton(hWnd2, cbFontAuto, gpSet->isFontAutoSize);
 
-		_wsprintf(temp, SKIPLEN(countof(temp)) L"%i", CurFontSizeY);
+		_wsprintf(temp, SKIPLEN(countof(temp)) L"%i", gpSet->FontSizeY);
 		//upToFontHeight = LogFont.lfHeight;
 		SelectStringExact(hWnd2, tFontSizeY, temp);
 		_wsprintf(temp, SKIPLEN(countof(temp)) L"%i", gpSet->FontSizeX);
@@ -11472,10 +11468,14 @@ void CSettings::MacroFontSetName(LPCWSTR pszFontName, WORD anHeight /*= 0*/, WOR
 	{
 		// SaveFontSizes выполним после обновления LogFont, т.к. там зовется gpConEmu->OnPanelViewSettingsChanged
 		CEFONT hOldF = mh_Font[0];
+
 		LogFont = LF;
+
 		mh_Font[0] = hf;
 		hOldF.Delete();
-		SaveFontSizes(&LF, (mn_AutoFontWidth == -1), true);
+
+		SaveFontSizes((mn_AutoFontWidth == -1), true);
+
 		gpConEmu->Update(true);
 
 		if (gpConEmu->WindowMode == wmNormal)
@@ -11489,7 +11489,7 @@ void CSettings::MacroFontSetName(LPCWSTR pszFontName, WORD anHeight /*= 0*/, WOR
 	if (ghOpWnd)
 	{
 		wchar_t szSize[10];
-		_wsprintf(szSize, SKIPLEN(countof(szSize)) L"%i", CurFontSizeY);
+		_wsprintf(szSize, SKIPLEN(countof(szSize)) L"%i", gpSet->FontSizeY);
 		SetDlgItemText(GetPage(thi_Main), tFontSizeY, szSize);
 		UpdateFontInfo();
 		ShowFontErrorTip(gpSetCls->szFontError);
@@ -11574,13 +11574,16 @@ void CSettings::RecreateFont(WORD wFromID)
 	{
 		// SaveFontSizes выполним после обновления LogFont, т.к. там зовется gpConEmu->OnPanelViewSettingsChanged
 		CEFONT hOldF = mh_Font[0];
+
 		LogFont = LF;
+
 		mh_Font[0] = hf;
 		if (hOldF != hf)
 		{
 			hOldF.Delete();
 		}
-		SaveFontSizes(&LF, (mn_AutoFontWidth == -1), true);
+
+		SaveFontSizes((mn_AutoFontWidth == -1), true);
 
 		if (wFromID != (WORD)-1)
 		{
@@ -11598,7 +11601,7 @@ void CSettings::RecreateFont(WORD wFromID)
 	if (ghOpWnd && wFromID == tFontFace)
 	{
 		wchar_t szSize[10];
-		_wsprintf(szSize, SKIPLEN(countof(szSize)) L"%i", CurFontSizeY);
+		_wsprintf(szSize, SKIPLEN(countof(szSize)) L"%i", gpSet->FontSizeY);
 		SetDlgItemText(hMainPg, tFontSizeY, szSize);
 	}
 
@@ -11623,15 +11626,17 @@ void CSettings::ShowFontErrorTip(LPCTSTR asInfo)
 	             gpSetCls->hwndBalloon, &gpSetCls->tiBalloon, gpSetCls->hwndTip, FAILED_FONT_TIMEOUT);
 }
 
-void CSettings::SaveFontSizes(LOGFONT *pCreated, bool bAuto, bool bSendChanges)
+void CSettings::SaveFontSizes(bool bAuto, bool bSendChanges)
 {
+	LOGFONT *pCreated = &LogFont;
+
 	mn_FontWidth = pCreated->lfWidth;
 	mn_FontHeight = pCreated->lfHeight;
 
 	if (bAuto)
 	{
-		mn_AutoFontWidth = pCreated->lfWidth;
-		mn_AutoFontHeight = pCreated->lfHeight;
+		mn_AutoFontWidth = mn_FontWidth;
+		mn_AutoFontHeight = mn_FontHeight;
 	}
 
 	// Применить в Mapping (там заодно и палитра копируется)
@@ -11710,11 +11715,15 @@ bool CSettings::MacroFontSetSize(int nRelative/*+1/-2*/, int nValue/*1,2,...*/)
 		{
 			// SaveFontSizes выполним после обновления LogFont, т.к. там зовется gpConEmu->OnPanelViewSettingsChanged
 			CEFONT hOldF = mh_Font[0];
+
 			LogFont = LF;
+
 			mh_Font[0] = hf;
 			hOldF.Delete();
+
 			// Запомнить размер шрифта (AutoFontWidth/Height - может быть другим, он запоминается выше)
-			SaveFontSizes(&LF, false, true);
+			SaveFontSizes(false, true);
+
 			// Передернуть размер консоли
 			gpConEmu->OnSize();
 			// Передернуть флажки, что шрифт поменялся
@@ -11728,7 +11737,7 @@ bool CSettings::MacroFontSetSize(int nRelative/*+1/-2*/, int nValue/*1,2,...*/)
 				if (hMainPg)
 				{
 					wchar_t temp[16];
-					_wsprintf(temp, SKIPLEN(countof(temp)) L"%i", CurFontSizeY);
+					_wsprintf(temp, SKIPLEN(countof(temp)) L"%i", gpSet->FontSizeY);
 					SelectStringExact(hMainPg, tFontSizeY, temp);
 					_wsprintf(temp, SKIPLEN(countof(temp)) L"%i", gpSet->FontSizeX);
 					SelectStringExact(hMainPg, tFontSizeX, temp);
@@ -11807,11 +11816,15 @@ bool CSettings::AutoRecreateFont(int nFontW, int nFontH)
 	{
 		// SaveFontSizes выполним после обновления LogFont, т.к. там зовется gpConEmu->OnPanelViewSettingsChanged
 		CEFONT hOldF = mh_Font[0];
+
 		LogFont = LF;
+
 		mh_Font[0] = hf;
 		hOldF.Delete();
+
 		// Запомнить размер шрифта (AutoFontWidth/Height - может быть другим, он запоминается выше)
-		SaveFontSizes(&LF, false, true);
+		SaveFontSizes(false, true);
+
 		// Передернуть флажки, что шрифт поменялся
 		gpConEmu->Update(true);
 		return true;

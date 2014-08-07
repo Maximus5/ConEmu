@@ -124,7 +124,7 @@ class CSettings
 		LPOUTLINETEXTMETRIC m_otm[MAX_FONT_STYLES];
 		BOOL mb_Name1Ok, mb_Name2Ok;
 		void ResetFontWidth();
-		void SaveFontSizes(LOGFONT *pCreated, bool bAuto, bool bSendChanges);
+		void SaveFontSizes(bool bAuto, bool bSendChanges);
 		LPOUTLINETEXTMETRIC LoadOutline(HDC hDC, HFONT hFont);
 		void DumpFontMetrics(LPCWSTR szType, HDC hDC, HFONT hFont, LPOUTLINETEXTMETRIC lpOutl = NULL);
 
@@ -146,16 +146,16 @@ class CSettings
 		void    SetDefaultCmd(LPCWSTR asCmd);
 		/* OUR(!) startup info */
 		STARTUPINFOW ourSI;
-		
+
 	protected:
-		
+
 		BYTE isMonospaceSelected; // 0 - proportional, 1 - monospace, 2 - forcemonospace
 	public:
 		char isAllowDetach;
 
 		// Debugging - "c:\\temp\\ConEmuVCon-%i-%i.dat"
 		BYTE isAdvLogging;
-		
+
 		//
 		enum GuiLoggingType m_ActivityLoggingType;
 		DWORD mn_ActivityCmdStartTick;
@@ -381,8 +381,8 @@ class CSettings
 		INT_PTR pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM wParam, LPARAM lParam);
 		INT_PTR pageOpProc_Start(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
 		//LRESULT OnColorButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam);
-		//LRESULT OnColorComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam);		
-		//LRESULT OnColorEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam);				
+		//LRESULT OnColorComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam);
+		//LRESULT OnColorEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam);
 		LRESULT OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam);
 		bool OnEditChanged_Cursor(HWND hWnd2, WPARAM wParam, LPARAM lParam, Settings::AppSettings* pApp);
 		LRESULT OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam);
@@ -583,7 +583,7 @@ class CSettings
 			wchar_t szExtra[128];
 		};
 		void debugLogCommand(HWND hWnd2, LogCommandsData* apData);
-		
+
 		enum ConEmuSetupItemType
 		{
 			sit_Bool      = 1,
@@ -611,7 +611,7 @@ class CSettings
 			ConEmuSetupItemType nListType; // Тип данных в pListData
 			const void* pListData; // Для DDLB - можно задать список
 			size_t nListItems; // количество элементов в списке
-			
+
 			#ifdef _DEBUG
 			BOOL bFound; // для отладки корректности настройки
 			#endif
