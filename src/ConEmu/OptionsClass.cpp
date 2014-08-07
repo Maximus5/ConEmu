@@ -13026,7 +13026,8 @@ LONG CSettings::FontHeight()
 	return gpSetCls->mn_FontHeight;
 }
 
-LONG CSettings::FontHeightPx(bool bCharHeight /*= false*/)
+// Возможно скорректированный размер шрифта для выгрузки фрагмента в HTML
+LONG CSettings::FontHeightHtml()
 {
 	if (!LogFont.lfHeight)
 	{

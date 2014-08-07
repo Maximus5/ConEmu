@@ -105,7 +105,7 @@ class CSettings
 		LPCWSTR FontFaceName();
 		LONG FontWidth();
 		LONG FontHeight();
-		LONG FontHeightPx(bool bCharHeight = false);
+		LONG FontHeightHtml();
 		LPCWSTR BorderFontFaceName();
 		LONG BorderFontWidth();
 		BYTE FontCharSet();
