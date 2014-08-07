@@ -419,51 +419,30 @@ void Settings::InitSettings()
 
 	bool bIsDbcs = (GetSystemMetrics(SM_DBCSENABLED) != 0);
 
-	//WARNING("InitSettings() может вызываться из интерфейса настройки, не промахнуться с хэндлами");
-	//// Шрифты
-	//memset(m_Fonts, 0, sizeof(m_Fonts));
-	////TODO: OLD - на переделку
-	//memset(&LogFont, 0, sizeof(LogFont));
-	//memset(&LogFont2, 0, sizeof(LogFont2));
-	/*LogFont.lfHeight = mn_FontHeight =*/
 	FontSizeY = 16 * gpSetCls->_dpiY / 96;
 	//-- Issue 577: Для иероглифов - сделаем "пошире", а то глифы в консоль не влезут...
 	//-- пошире не будем. DBCS консоль хитрая, на каждый иероглиф отводится 2 ячейки
 	//-- "не влезть" может только если выполнить "chcp 65001", что врядли, а у если надо - руками пусть ставят
 	FontSizeX3 = 0; // bIsDbcs ? 15 : 0;
-	//LogFont.lfWidth = mn_FontWidth = FontSizeX = mn_BorderFontWidth = 0;
-	//FontSizeX2 = 0; FontSizeX3 = 0;
-	//LogFont.lfEscapement = LogFont.lfOrientation = 0;
-	/*LogFont.lfWeight = FW_NORMAL;*/ isBold = false;
-	/*LogFont.lfItalic = LogFont.lfUnderline = LogFont.lfStrikeOut = FALSE;*/ isItalic = false;
-	/*LogFont.lfCharSet*/ mn_LoadFontCharSet = DEFAULT_CHARSET;
-	//LogFont.lfOutPrecision = OUT_TT_PRECIS;
-	//LogFont.lfClipPrecision = CLIP_DEFAULT_PRECIS;
-	/*LogFont.lfQuality =*/
+	isBold = false;
+	isItalic = false;
+	mn_LoadFontCharSet = DEFAULT_CHARSET;
 	BOOL bClearType = FALSE; if (SystemParametersInfo(SPI_GETCLEARTYPE, 0, &bClearType, 0) && bClearType)
 		mn_AntiAlias = CLEARTYPE_NATURAL_QUALITY;
 	else
 		mn_AntiAlias = ANTIALIASED_QUALITY;
-	//LogFont.lfPitchAndFamily = FIXED_PITCH | FF_MODERN;
 	inFont[0] = inFont2[0] = 0;
-	//wcscpy_c(inFont, gsLucidaConsole);
-	//wcscpy_c(inFont2, gsLucidaConsole);
-	//mb_Name1Ok = FALSE; mb_Name2Ok = FALSE;
 	isTryToCenter = false;
 	nCenterConsolePad = 0;
 	isAlwaysShowScrollbar = 2;
 	nScrollBarAppearDelay = 100;
 	nScrollBarDisappearDelay = 1000;
-	//isTabFrame = true;
-	//isForceMonospace = false; isProportional = false;
 
 	//Issue 577: Для иероглифов - по умолчанию отключим моноширность
 	isMonospace = bIsDbcs ? 0 : 1;
 
 	mb_MinToTray = false;
 	mb_AlwaysShowTrayIcon = false;
-	//memset(&rcTabMargins, 0, sizeof(rcTabMargins));
-	//isFontAutoSize = false; mn_AutoFontWidth = mn_AutoFontHeight = -1;
 
 	ConsoleFont.lfHeight = 5;
 	ConsoleFont.lfWidth = 3;
