@@ -531,9 +531,9 @@ bool CGestures::ProcessMove(HWND hWnd, const LONG ldx, const LONG ldy)
 		CRealConsole* pRCon = (CVConGroup::GetActiveVCon(&VCon) >= 0) ? VCon->RCon() : NULL;
 		if (pRCon)
 		{
-			TODO("Если можно будет задавать разный шрифт для разных консолей - заменить gpSet->FontSizeY");
+			TODO("Если можно будет задавать разный шрифт для разных консолей - заменить gpSet->FontHeight()");
 			// Соотнести Pan с высотой шрифта
-			int dy = ((ldy < 0) ? -ldy : ldy) / gpSet->FontSizeY;
+			int dy = ((ldy < 0) ? -ldy : ldy) / gpSetCls->FontHeight();
 			if (dy > 0)
 			{
 				short Delta = ((ldy < 0) ? -120 : 120) * dy;
