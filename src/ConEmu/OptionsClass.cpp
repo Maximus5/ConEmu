@@ -8689,11 +8689,17 @@ void CSettings::OnResetOrReload(bool abResetOnly, SettingsStorage* pXmlStorage /
 	// Почистить макросы и сбросить на умолчания
 	InitVars_Hotkeys();
 
-	// Если надо - загрузить из реестра/xml
 	if (!abResetOnly)
 	{
+		// Если надо - загрузить из реестра/xml
 		bool bNeedCreateVanilla = false;
 		gpSet->LoadSettings(&bNeedCreateVanilla, pXmlStorage);
+	}
+	else
+	{
+		// Иначе - какие-то настройки могут быть модифицированы, как для "Новой конфигурации"
+		gpSet->IsConfigNew = true;
+		gpSet->InitVanilla();
 	}
 
 

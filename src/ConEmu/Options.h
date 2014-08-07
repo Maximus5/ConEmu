@@ -1423,6 +1423,7 @@ struct Settings
 	public:
 		void LoadSettings(bool *rbNeedCreateVanilla, const SettingsStorage* apStorage = NULL);
 		void InitSettings();
+		void InitVanilla();
 		void LoadCmdTasks(SettingsBase* reg, bool abFromOpDlg = false);
 		void LoadPalettes(SettingsBase* reg);
 		void CreatePredefinedPalettes(int iAddUserCount);

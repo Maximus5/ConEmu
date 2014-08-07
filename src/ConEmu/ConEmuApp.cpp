@@ -4460,6 +4460,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		// force this config as "new"
 		DEBUGSTRSTARTUP(L"Clear config was requested");
 		gpSet->IsConfigNew = true;
+		gpSet->InitVanilla();
 	}
 	else
 	{

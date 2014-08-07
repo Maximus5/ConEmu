@@ -771,6 +771,16 @@ void Settings::InitSettings()
 	UpdSet.ResetToDefaults();
 }
 
+// Здесь можно включить настройки, которые должны включаться только для новых конфигураций!
+void Settings::InitVanilla()
+{
+	if (!IsConfigNew)
+	{
+		_ASSERTE(IsConfigNew == true);
+		return;
+	}
+}
+
 void Settings::ResetSavedOnExit()
 {
 	mb_ExitSettingsAutoSaved = false;
@@ -2288,7 +2298,8 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla, const SettingsStorage* ap
 	if (*rbNeedCreateVanilla)
 	{
 		IsConfigNew = true;
-		TODO("Здесь можно включить настройки, которые должны включаться только для новых конфигураций!");
+		// Здесь можно включить настройки, которые должны включаться только для новых конфигураций!
+		InitVanilla();
 	}
 	else
 	{
