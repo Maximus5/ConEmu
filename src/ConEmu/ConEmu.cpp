@@ -9035,8 +9035,20 @@ BOOL CConEmuMain::RunSingleInstance(HWND hConEmuWnd /*= NULL*/, LPCWSTR apszCmd 
 				wcscpy_c(pIn->NewCmd.szConEmu, ms_ConEmuExeDir);
 
 				lstrcpyW(pIn->NewCmd.szCommand, lpszCmd ? lpszCmd : L"");
-				DWORD dwPID = 0;
 
+				// Task? That may have "/dir" switch in task parameters
+				if (lpszCmd && (*lpszCmd == TaskBracketLeft))
+				{
+					RConStartArgs args;
+					wchar_t* pszDataW = LoadConsoleBatch(lpszCmd, &args.pszStartupDir, &args.pszIconFile);
+					SafeFree(pszDataW);
+					if (args.pszStartupDir && *args.pszStartupDir)
+					{
+						lstrcpyn(pIn->NewCmd.szCurDir, args.pszStartupDir, countof(pIn->NewCmd.szCurDir));
+					}
+				}
+
+				DWORD dwPID = 0;
 				if (GetWindowThreadProcessId(ConEmuHwnd, &dwPID))
 					AllowSetForegroundWindow(dwPID);
 
