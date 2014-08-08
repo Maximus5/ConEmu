@@ -169,6 +169,8 @@ namespace ConEmuMacro
 	LPWSTR Rename(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Select(<Type>,<DX>,<DY>)
 	LPWSTR Select(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
+	// SetDpi(dpi)
+	LPWSTR SetDpi(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// SetOption("<Name>",<Value>)
 	LPWSTR SetOption(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Диалог Settings
@@ -231,6 +233,7 @@ namespace ConEmuMacro
 		{Progress, {L"Progress"}},
 		{Rename, {L"Rename"}},
 		{Select, {L"Select"}},
+		{SetDpi, {L"SetDpi"}},
 		{SetOption, {L"SetOption"}},
 		{Settings, {L"Settings"}},
 		{Shell, {L"Shell", L"ShellExecute"}},
@@ -2238,6 +2241,19 @@ LPWSTR ConEmuMacro::Select(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 		if (nHomeEnd)
 			apRCon->ExpandSelection((nHomeEnd < 0) ? 0 : apRCon->BufferWidth()-1, cr.Y);
 	}
+
+	return lstrdup(L"OK");
+}
+
+// SetDpi(dpi)
+LPWSTR ConEmuMacro::SetDpi(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
+{
+	int nValue = 0;
+
+	if (!p->GetIntArg(0, nValue))
+		return lstrdup(L"InvalidArg");
+
+	gpConEmu->OnDpiChanged(nValue, nValue, NULL);
 
 	return lstrdup(L"OK");
 }
