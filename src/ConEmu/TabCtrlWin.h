@@ -49,6 +49,7 @@ public:
 public:
 	virtual void AddTabInt(LPCWSTR text, int i, bool bAdmin, int iTabIcon) override;
 	virtual void CreateRebar() override;
+	virtual void DestroyRebar() override;
 	virtual void DeleteItemInt(int I) override;
 	virtual bool IsCreated() override;
 	virtual bool IsTabbarCreated() override;

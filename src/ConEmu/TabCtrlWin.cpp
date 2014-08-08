@@ -84,7 +84,7 @@ LRESULT CALLBACK CTabPanelWin::_ReBarProc(HWND hwnd, UINT uMsg, WPARAM wParam, L
 {
 	LRESULT lRc;
 	TabPanelWinMap map = {NULL};
-	if (gp_TabPanelWinMap && gp_TabPanelWinMap->Get(hwnd, &map))
+	if (gp_TabPanelWinMap && gp_TabPanelWinMap->Get(hwnd, &map, (uMsg == WM_DESTROY)))
 		lRc = map.object->ReBarProc(hwnd, uMsg, wParam, lParam, map.defaultProc);
 	else
 		lRc = ::DefWindowProc(hwnd, uMsg, wParam, lParam);
@@ -162,7 +162,7 @@ LRESULT CALLBACK CTabPanelWin::_TabProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPA
 {
 	LRESULT lRc;
 	TabPanelWinMap map = {NULL};
-	if (gp_TabPanelWinMap && gp_TabPanelWinMap->Get(hwnd, &map))
+	if (gp_TabPanelWinMap && gp_TabPanelWinMap->Get(hwnd, &map, (uMsg == WM_DESTROY)))
 		lRc = map.object->TabProc(hwnd, uMsg, wParam, lParam, map.defaultProc);
 	else
 		lRc = ::DefWindowProc(hwnd, uMsg, wParam, lParam);
@@ -232,7 +232,7 @@ LRESULT CALLBACK CTabPanelWin::_ToolProc(HWND hwnd, UINT uMsg, WPARAM wParam, LP
 {
 	LRESULT lRc;
 	TabPanelWinMap map = {NULL};
-	if (gp_TabPanelWinMap && gp_TabPanelWinMap->Get(hwnd, &map))
+	if (gp_TabPanelWinMap && gp_TabPanelWinMap->Get(hwnd, &map, (uMsg == WM_DESTROY)))
 		lRc = map.object->ToolProc(hwnd, uMsg, wParam, lParam, map.defaultProc);
 	else
 		lRc = ::DefWindowProc(hwnd, uMsg, wParam, lParam);
@@ -415,6 +415,17 @@ void CTabPanelWin::CreateRebar()
 	//	m_Margins = MakeRect(0,mn_TabHeight,0,0);
 	//gpSet->UpdateMargins(m_Margins);
 	//_hwndTab = mh_Rebar; // пока...
+}
+
+void CTabPanelWin::DestroyRebar()
+{
+	HWND* pWnd[] = {&mh_Toolbar, &mh_Tabbar, &mh_Rebar};
+	for (INT_PTR i = 0; i < countof(pWnd); i++)
+	{
+		HWND h = *(pWnd[i]);
+		*(pWnd[i]) = NULL;
+		if (h) DestroyWindow(h);
+	}
 }
 
 HWND CTabPanelWin::CreateTabbar()

@@ -455,19 +455,7 @@ bool CTabBarClass::IsTabsShown()
 
 void CTabBarClass::Activate(BOOL abPreSyncConsole/*=FALSE*/)
 {
-	if (!mp_Rebar->IsCreated())
-	{
-		if (!m_TabIcons.IsInitialized())
-		{
-			m_TabIcons.Initialize();
-		}
-		// Создать
-		mp_Rebar->CreateRebar();
-		// Узнать высоту созданного
-		_tabHeight = mp_Rebar->QueryTabbarHeight();
-		// Передернуть
-		OnCaptionHidden();
-	}
+	CheckRebarCreated();
 
 	_active = true;
 	if (abPreSyncConsole && (gpConEmu->WindowMode == wmNormal))
@@ -477,6 +465,51 @@ void CTabBarClass::Activate(BOOL abPreSyncConsole/*=FALSE*/)
 	}
 	gpConEmu->OnTabbarActivated(true);
 	UpdatePosition();
+}
+
+void CTabBarClass::Recreate()
+{
+	bool bWasVisible = IsTabsShown();
+
+	if (mp_Rebar)
+	{
+		mp_Rebar->DestroyRebar();
+	}
+
+	if (bWasVisible)
+	{
+		CheckRebarCreated();
+		Update();
+		_active = true;
+	}
+}
+
+void CTabBarClass::CheckRebarCreated()
+{
+	if (!mp_Rebar)
+	{
+		_ASSERTE(mp_Rebar!=NULL);
+		return;
+	}
+
+	if (mp_Rebar->IsCreated())
+	{
+		return;
+	}
+
+	if (!m_TabIcons.IsInitialized())
+	{
+		m_TabIcons.Initialize();
+	}
+
+	// Создать
+	mp_Rebar->CreateRebar();
+
+	// Узнать высоту созданного
+	_tabHeight = mp_Rebar->QueryTabbarHeight();
+
+	// Передернуть
+	OnCaptionHidden();
 }
 
 void CTabBarClass::Deactivate(BOOL abPreSyncConsole/*=FALSE*/)
