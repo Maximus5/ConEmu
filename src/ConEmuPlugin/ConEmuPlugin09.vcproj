@@ -436,7 +436,7 @@
       <File RelativePath="..\common\ConEmuCheckEx.h" />
       <File RelativePath="..\common\ConsoleAnnotation.h" />
       <File RelativePath="..\common\defines.h" />
-      <File RelativePath="..\common\farcolor.hpp" />
+      <File RelativePath="..\common\farcolor1.hpp" />
       <File RelativePath="..\common\Memory.h" />
       <File RelativePath="..\common\Monitors.h" />
       <File RelativePath="..\common\MSecurity.h" />

@@ -112,9 +112,6 @@
     <ClInclude Include="..\ConEmu\DragDrop.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\common\farcolor.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\common\Memory.h">
       <Filter>Header Files</Filter>
     </ClInclude>

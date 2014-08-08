@@ -251,9 +251,6 @@
     <ClInclude Include="DwmHelper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\common\far3color.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="FrameHolder.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -345,12 +342,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\common\UnicodeChars.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\common\UnicodeChars_gcc.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\common\UnicodeChars_vc.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Update.h">

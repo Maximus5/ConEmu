@@ -463,12 +463,12 @@
       <File RelativePath="..\common\CmdLine.h" />
       <File RelativePath="..\common\common.hpp" />
       <File RelativePath="..\common\ConEmuCheck.h" />
+      <File RelativePath="..\common\ConEmuColors.h" />
       <File RelativePath="..\common\ConEmuPipeMode.h" />
       <File RelativePath="..\common\ConsoleAnnotation.h" />
       <File RelativePath="..\common\defines.h" />
       <File RelativePath="..\common\Dump.h" />
       <File RelativePath="..\common\execute.h" />
-      <File RelativePath="..\common\far3color.h" />
       <File RelativePath="..\common\Memory.h" />
       <File RelativePath="..\common\Monitors.h" />
       <File RelativePath="..\common\MPipe.h" />
@@ -480,8 +480,6 @@
       <File RelativePath="..\common\SetEnvVar.h" />
       <File RelativePath="..\common\StartupEnv.h" />
       <File RelativePath="..\common\UnicodeChars.h" />
-      <File RelativePath="..\common\UnicodeChars_gcc.h" />
-      <File RelativePath="..\common\UnicodeChars_vc.h" />
       <File RelativePath="..\common\WinConsole.h" />
       <File RelativePath="..\common\WinObjects.h" />
       <File RelativePath="..\ConEmuCD\ConsoleHelp.h" />

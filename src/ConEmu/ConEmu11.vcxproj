@@ -962,12 +962,12 @@
     <ClInclude Include="..\common\CmdLine.h" />
     <ClInclude Include="..\common\common.hpp" />
     <ClInclude Include="..\common\ConEmuCheck.h" />
+    <ClInclude Include="..\common\ConEmuColors.h" />
     <ClInclude Include="..\common\ConsoleAnnotation.h" />
     <ClInclude Include="..\common\defines.h" />
     <ClInclude Include="..\common\DefTermBase.h" />
     <ClInclude Include="..\common\Dump.h" />
-    <ClInclude Include="..\common\execute.hpp" />
-    <ClInclude Include="..\common\far3color.h" />
+    <ClInclude Include="..\common\execute.h" />
     <ClInclude Include="..\common\MAssert.h" />
     <ClInclude Include="..\common\Memory.h" />
     <ClInclude Include="..\common\Monitors.h" />
@@ -979,8 +979,6 @@
     <ClInclude Include="..\common\RgnDetect.h" />
     <ClInclude Include="..\common\SetEnvVar.h" />
     <ClInclude Include="..\common\UnicodeChars.h" />
-    <ClInclude Include="..\common\UnicodeChars_gcc.h" />
-    <ClInclude Include="..\common\UnicodeChars_vc.h" />
     <ClInclude Include="..\common\WinConsole.h" />
     <ClInclude Include="..\common\WinObjects.h" />
     <ClInclude Include="..\ConEmuCD\ConsoleHelp.h" />

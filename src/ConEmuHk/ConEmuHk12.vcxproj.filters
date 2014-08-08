@@ -81,10 +81,19 @@
     <ClInclude Include="..\common\CmdLine.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\common\DefTermHooker.h">
+    <ClInclude Include="..\common\ConsoleMixAttr.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\common\ConsoleMixAttr.h">
+    <ClInclude Include="..\common\DefTermBase.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\StartupEnv.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ConEmuCD\ExitCodes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Ansi.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -158,6 +167,9 @@
       <Filter>0 - Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\common\ConsoleMixAttr.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DefTermHk.cpp">
       <Filter>0 - Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -1055,7 +1055,7 @@
     <ClInclude Include="..\common\ConEmuColors3.h" />
     <ClInclude Include="..\common\ConsoleAnnotation.h" />
     <ClInclude Include="..\common\defines.h" />
-    <ClInclude Include="..\common\farcolor.hpp" />
+    <ClInclude Include="..\common\farcolor1.hpp" />
     <ClInclude Include="..\common\Memory.h" />
     <ClInclude Include="..\common\Monitors.h" />
     <ClInclude Include="..\common\MSecurity.h" />

@@ -35,6 +35,9 @@
     <ClInclude Include="..\ConEmu\version.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\ConEmuCD\ExitCodes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\ConEmu\ConEmu.ico">
