@@ -75,9 +75,15 @@ void CTabPanelBase::UpdateTabFontInt()
 	if (!IsTabbarCreated())
 		return;
 
+	LOGFONT lf = {};
+	lf.lfWeight = FW_DONTCARE;
+	lf.lfCharSet = gpSet->nTabFontCharSet;
+	lf.lfPitchAndFamily = DEFAULT_PITCH | FF_SWISS;
+	wcscpy_c(lf.lfFaceName, gpSet->sTabFontFace);
+	gpSetCls->EvalLogfontSizes(lf, gpSet->nTabFontHeight, 0);
+
 	// CreateFont
-	HFONT hFont = CreateFont(gpSet->nTabFontHeight, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, gpSet->nTabFontCharSet, OUT_DEFAULT_PRECIS,
-		CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_SWISS, gpSet->sTabFontFace);
+	HFONT hFont = CreateFontIndirect(&lf);
 
 	// virtual
 	SetTabbarFont(hFont);
