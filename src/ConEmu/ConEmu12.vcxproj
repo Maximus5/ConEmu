@@ -932,9 +932,7 @@
     <ClCompile Include="ConfirmDlg.cpp" />
     <ClCompile Include="CustomFonts.cpp" />
     <ClCompile Include="DefaultTerm.cpp" />
-    <ClCompile Include="DpiAware.cpp">
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug_C|Win32'">DPI_144;WIN32;_DEBUG;_WINDOWS;MSGLOGGER;HIDE_TODO;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-    </ClCompile>
+    <ClCompile Include="DpiAware.cpp" />
     <ClCompile Include="DragDrop.cpp" />
     <ClCompile Include="DragDropData.cpp" />
     <ClCompile Include="DwmHelper.cpp" />
