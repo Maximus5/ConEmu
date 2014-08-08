@@ -329,6 +329,7 @@ class CSettings
 		int UpdateDpi();
 	public:
 		int QueryDpi();
+		bool OnDpiChanged(int dpiX, int dpiY, LPRECT prcSuggested);
 	private:
 		static void ShowErrorTip(LPCTSTR asInfo, HWND hDlg, int nCtrlID, wchar_t* pszBuffer, int nBufferSize, HWND hBall, TOOLINFO *pti, HWND hTip, DWORD nTimeout, bool bLeftAligh = false);
 	protected:

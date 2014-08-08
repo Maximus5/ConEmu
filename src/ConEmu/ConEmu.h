@@ -834,7 +834,7 @@ class CConEmuMain :
 		LRESULT OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 		LRESULT OnQueryEndSession(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 		LRESULT OnSessionChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-		LRESULT OnDpiChanged(UINT dpiX, UINT dpiY, LPRECT rcSuggested);
+		LRESULT OnDpiChanged(UINT dpiX, UINT dpiY, LPRECT prcSuggested);
 		LRESULT OnDisplayChanged(UINT bpp, UINT screenWidth, UINT screenHeight);
 		void OnSizePanels(COORD cr);
 		LRESULT OnShellHook(WPARAM wParam, LPARAM lParam);

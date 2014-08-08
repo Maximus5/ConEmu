@@ -459,6 +459,22 @@ int CSettings::QueryDpi()
 	return _dpiY;
 }
 
+bool CSettings::OnDpiChanged(int dpiX, int dpiY, LPRECT prcSuggested)
+{
+	if ((_dpiY == dpiY) || (dpiY < 72) || (dpiY > 960))
+	{
+		_ASSERTE(dpiY >= 72 && dpiY <= 960);
+		return false;
+	}
+
+	_dpiY = dpiY;
+	//Raster fonts???
+	EvalLogfontSizes(LogFont, gpSet->FontSizeY, gpSet->FontSizeX);
+	RecreateFont(-1);
+
+	return true;
+}
+
 void CSettings::ReleaseHotkeys()
 {
 	if (mp_HotKeys)

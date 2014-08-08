@@ -7081,14 +7081,31 @@ LRESULT CConEmuMain::OnSessionChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 	return 0; // Return value ignored
 }
 
-LRESULT CConEmuMain::OnDpiChanged(UINT dpiX, UINT dpiY, LPRECT rcSuggested)
+LRESULT CConEmuMain::OnDpiChanged(UINT dpiX, UINT dpiY, LPRECT prcSuggested)
 {
 	wchar_t szInfo[100];
-	RECT rc = {}; if (rcSuggested) rc = *rcSuggested;
+	RECT rc = {}; if (prcSuggested) rc = *prcSuggested;
 	_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"WM_DPICHANGED: dpi={%u,%u}, rect={%i,%i}-{%i,%i} (%ix%i)\r\n",
 		dpiX, dpiY, rc.left, rc.top, rc.right, rc.bottom, rc.right-rc.left, rc.bottom-rc.top);
 	DEBUGSTRDPI(szInfo);
 	LogString(szInfo, true, false);
+
+	gpSetCls->OnDpiChanged(dpiX, dpiY, prcSuggested);
+
+	if (IsSizePosFree())
+	{
+		if (mp_TabBar)
+			mp_TabBar->Recreate();
+
+		RECT rcNew = GetDefaultRect();
+		// If Windows DWM sends new preferred RECT?
+		if (prcSuggested)
+		{
+			;
+		}
+		MoveWindow(ghWnd, rcNew.left, rcNew.top, rcNew.right - rcNew.left, rcNew.bottom - rcNew.top, TRUE);
+	}
+
 	return 0;
 }
 
