@@ -121,6 +121,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define pAboutContributors \
 	L"Thanks to all testers and reporters! You help to make the ConEmu better.\r\n" \
 	L"\r\n" \
+	L"Code signing certificate\r\n" \
+	VCGCCTEST(L"––––––––––––––––––––––\r\n",L"----------------------\r\n") \
+	L"Thanks to Certum for Open Source Developer certificate\r\n" \
+	L"\r\n" \
 	L"Special Thanks\r\n" \
 	VCGCCTEST(L"––––––––––––––––––––––\r\n",L"----------------------\r\n") \
 	L"Rick Sladkey: bugfixes\r\n" \
