@@ -3733,11 +3733,20 @@ int Settings::StatusBarFontHeight()
 
 int Settings::StatusBarHeight()
 {
-	int iHeight = StatusBarFontHeight();
+	LOGFONT lf = {};
+	gpSetCls->EvalLogfontSizes(lf, StatusBarFontHeight(), 0);
+
+	int iHeight = 0;
+	if (lf.lfHeight > 0)
+		iHeight = lf.lfHeight;
+	else
+		iHeight = -MulDiv(lf.lfHeight, 96, 84);
+
 	if (isStatusBarFlags & csf_NoVerticalPad)
 		iHeight += (isStatusBarFlags & csf_HorzDelim) ? 1 : 0;
 	else
 		iHeight += (isStatusBarFlags & csf_HorzDelim) ? 2 : 1;
+
 	return iHeight;
 }
 

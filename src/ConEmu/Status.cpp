@@ -416,9 +416,14 @@ void CStatus::PaintStatus(HDC hPaint, LPRECT prcStatus /*= NULL*/)
 	HPEN hDash = CreatePen(PS_SOLID, 1, crDash);
 	HPEN hOldP = (HPEN)SelectObject(hDrawDC, hDash);
 
-	TODO("sStatusFontFace");
-	HFONT hFont = CreateFont(gpSet->StatusBarFontHeight(), 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, gpSet->nStatusFontCharSet, OUT_DEFAULT_PRECIS,
-		CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_SWISS, gpSet->sStatusFontFace);
+	LOGFONT lf = {};
+	lf.lfWeight = FW_DONTCARE;
+	lf.lfCharSet = gpSet->nStatusFontCharSet;
+	lf.lfPitchAndFamily = DEFAULT_PITCH | FF_SWISS;
+	wcscpy_c(lf.lfFaceName, gpSet->sStatusFontFace);
+	gpSetCls->EvalLogfontSizes(lf, gpSet->StatusBarFontHeight(), 0);
+
+	HFONT hFont = CreateFontIndirect(&lf);
 	HFONT hOldF = (HFONT)SelectObject(hDrawDC, hFont);
 
 	RECT rcFill = {ptUL.x, ptUL.y, ptUL.x+nStatusWidth, ptUL.y+nStatusHeight};
