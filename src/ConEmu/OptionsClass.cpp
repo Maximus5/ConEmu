@@ -1045,8 +1045,11 @@ void CSettings::SettingsLoaded(SettingsLoadedFlags slfFlags, LPCWSTR pszCmdLine 
 	// Инициализация кастомной палитры для диалога выбора цвета
 	memmove(acrCustClr, gpSet->Colors, sizeof(COLORREF)*16);
 
+	/*
 	LogFont.lfHeight = mn_FontHeight = gpSet->FontSizeY;
 	LogFont.lfWidth = mn_FontWidth = gpSet->FontSizeX;
+	*/
+	EvalLogfontSizes(LogFont, gpSet->FontSizeY, gpSet->FontSizeX);
 	lstrcpyn(LogFont.lfFaceName, gpSet->inFont, countof(LogFont.lfFaceName));
 	lstrcpyn(LogFont2.lfFaceName, gpSet->inFont2, countof(LogFont2.lfFaceName));
 	LogFont.lfQuality = gpSet->mn_AntiAlias;
@@ -1119,6 +1122,49 @@ void CSettings::SettingsPreSave()
 }
 
 
+// Сюда приходят значения из gpSet->FontSize[Y|X] или заданные пользователем через макрос
+// Функция должна учесть:
+// * текущий dpi (FontUseDpi);
+// * масштаб (пока нету);
+// * FontUseUnits (положительный или отрицательный LF.lfHeight)
+void CSettings::EvalLogfontSizes(LOGFONT& LF, LONG lfHeight, LONG lfWidth)
+{
+	if (lfHeight == 0)
+	{
+		_ASSERTE(lfHeight != 0);
+		lfHeight = gpSet->FontUseUnits ? 12 : 16;
+	}
+
+	LONG iMul = 1, iDiv = 1;
+
+	// DPI текущего(!) монитора
+	if (gpSet->FontUseDpi)
+	{
+		iMul *= _dpiY;
+		iDiv *= 96;
+	}
+
+	// TODO: Zoom
+
+	// Сейчас множитель-делитель должны быть >0
+	_ASSERTE(iMul>0 && iDiv>0);
+
+	// Units (char height) or pixels (cell height)?
+	if (gpSet->FontUseUnits && (lfHeight > 0))
+	{
+		iMul = -iMul;
+	}
+
+	LF.lfHeight = MulDiv(lfHeight, iMul, iDiv);
+	LF.lfWidth = MulDiv(lfWidth, iMul, iDiv);
+}
+
+
+LONG CSettings::EvalCellWidth()
+{
+	return (LONG)gpSet->FontSizeX3;
+}
+
 
 void CSettings::InitFont(LPCWSTR asFontName/*=NULL*/, int anFontHeight/*=-1*/, int anQuality/*=-1*/)
 {
@@ -1126,15 +1172,21 @@ void CSettings::InitFont(LPCWSTR asFontName/*=NULL*/, int anFontHeight/*=-1*/, i
 	if ((asFontName && *asFontName) || *gpSet->inFont)
 		mb_Name1Ok = TRUE;
 
-	if (anFontHeight!=-1)
+	if (anFontHeight && (anFontHeight != -1))
 	{
+		/*
 		LogFont.lfHeight = mn_FontHeight = anFontHeight;
 		LogFont.lfWidth = mn_FontWidth = 0;
+		*/
+		EvalLogfontSizes(LogFont, anFontHeight, 0);
 	}
 	else
 	{
+		/*
 		LogFont.lfHeight = mn_FontHeight = gpSet->FontSizeY;
 		LogFont.lfWidth = mn_FontWidth = gpSet->FontSizeX;
+		*/
+		EvalLogfontSizes(LogFont, gpSet->FontSizeY, gpSet->FontSizeX);
 	}
 
 	_ASSERTE(anQuality==-1 || anQuality==NONANTIALIASED_QUALITY || anQuality==ANTIALIASED_QUALITY || anQuality==CLEARTYPE_NATURAL_QUALITY);
@@ -11529,8 +11581,9 @@ void CSettings::RecreateFont(WORD wFromID)
 		LF.lfClipPrecision = CLIP_DEFAULT_PRECIS;
 		LF.lfPitchAndFamily = FIXED_PITCH | FF_MODERN;
 		GetDlgItemText(hMainPg, tFontFace, LF.lfFaceName, countof(LF.lfFaceName));
-		LF.lfHeight = gpSet->FontSizeY = GetNumber(hMainPg, tFontSizeY);
-		LF.lfWidth = gpSet->FontSizeX = GetNumber(hMainPg, tFontSizeX);
+		gpSet->FontSizeY = GetNumber(hMainPg, tFontSizeY);
+		gpSet->FontSizeX = GetNumber(hMainPg, tFontSizeX);
+		EvalLogfontSizes(LF, gpSet->FontSizeY, gpSet->FontSizeX);
 		LF.lfWeight = IsChecked(hMainPg, cbBold) ? FW_BOLD : FW_NORMAL;
 		LF.lfItalic = IsChecked(hMainPg, cbItalic);
 		LF.lfCharSet = gpSet->mn_LoadFontCharSet;
@@ -11564,7 +11617,7 @@ void CSettings::RecreateFont(WORD wFromID)
 		}
 	}
 
-	_ASSERTE(LF.lfWidth >= 0 && LF.lfHeight > 0);
+	_ASSERTE(LF.lfWidth >= 0 && LF.lfHeight != 0);
 
 	CEFONT hf = CreateFontIndirectMy(&LF);
 
@@ -11628,10 +11681,13 @@ void CSettings::ShowFontErrorTip(LPCTSTR asInfo)
 
 void CSettings::SaveFontSizes(bool bAuto, bool bSendChanges)
 {
-	LOGFONT *pCreated = &LogFont;
+	// Even if font was created with FontUseUnits option (negative lfHeight)
+	// CreateFontIndirectMy MUST return in the lfHeight & lfWidth ACTUAL
+	// bounding rectangle, so we can just store them
+	_ASSERTE(LogFont.lfWidth > 0 && LogFont.lfHeight);
 
-	mn_FontWidth = pCreated->lfWidth;
-	mn_FontHeight = pCreated->lfHeight;
+	mn_FontWidth = LogFont.lfWidth;
+	mn_FontHeight = LogFont.lfHeight;
 
 	if (bAuto)
 	{
@@ -11690,6 +11746,8 @@ bool CSettings::MacroFontSetSize(int nRelative/*+1/-2*/, int nValue/*1,2,...*/)
 		gpConEmu->LogString(L"-- Warning! New absolute value can't be less than 5");
 		LF.lfHeight = 5;
 	}
+
+	_ASSERTE(FALSE && "Must use Zoom instead of direct LF manupulation!");
 
 	// Если задана ширина - подкорректировать
 	if (gpSet->FontSizeX && gpSet->FontSizeY)
@@ -11957,9 +12015,22 @@ void CSettings::RecreateBorderFont(const LOGFONT *inFont)
 	MBoxAssert(hDC);
 	HFONT hOldF = NULL;
 
-	//int width = gpSet->FontSizeX2 ? gpSet->FontSizeX2 : inFont->lfWidth;
-	LogFont2.lfWidth = mn_BorderFontWidth = gpSet->FontSizeX2 ? gpSet->FontSizeX2 : inFont->lfWidth;
+	// Font width?
+	if (gpSet->FontSizeX2 > 0)
+	{
+		// Eval first, width was defined in settings
+		EvalLogfontSizes(LogFont2, gpSet->FontSizeY, gpSet->FontSizeX2);
+		mn_BorderFontWidth = LogFont2.lfWidth;
+	}
+	else
+	{
+		// Use main font width
+		LogFont2.lfWidth = mn_BorderFontWidth = inFont->lfWidth;
+	}
+	// Force the same height in pixels as main font
+	_ASSERTE((inFont->lfHeight > 0) && "Must be already in cell pixels");
 	LogFont2.lfHeight = abs(inFont->lfHeight);
+
 	// Иначе рамки прерывистыми получаются... поставил NONANTIALIASED_QUALITY
 	mh_Font2 = CEFONT(CreateFont(LogFont2.lfHeight, LogFont2.lfWidth, 0, 0, FW_NORMAL,
 	                             0, 0, 0, DEFAULT_CHARSET, OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS,
@@ -12272,7 +12343,7 @@ CEFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
 
 		// Лучше поставим AveCharWidth. MaxCharWidth для "условно моноширного" Consolas почти равен высоте.
 		if (gpSet->FontSizeX3 && ((int)gpSet->FontSizeX3 > FontDefWidthMin) && ((int)gpSet->FontSizeX3 <= FontDefWidthMax))
-			inFont->lfWidth = (int)gpSet->FontSizeX3;
+			inFont->lfWidth = EvalCellWidth();
 		else
 			inFont->lfWidth = m_tm->tmAveCharWidth;
 		// Обновлять реальный размер шрифта в диалоге настройки не будем, были случаи, когда
@@ -13033,6 +13104,12 @@ LONG CSettings::FontWidth()
 	return gpSetCls->mn_FontWidth;
 }
 
+LONG CSettings::FontCellWidth()
+{
+	// В mn_FontWidth сохраняется ширина шрифта с учетом FontSizeX3, поэтому возвращаем
+	return FontWidth();
+}
+
 LONG CSettings::FontHeight()
 {
 	if (LogFont.lfHeight <= 0)
@@ -13099,6 +13176,7 @@ LPCWSTR CSettings::BorderFontFaceName()
 	return LogFont2.lfFaceName;
 }
 
+// Returns real pixels
 LONG CSettings::BorderFontWidth()
 {
 	_ASSERTE(LogFont2.lfWidth);

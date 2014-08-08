@@ -2273,7 +2273,7 @@ void CConEmuMain::FillConEmuMainFont(ConEmuMainFont* pFont)
 	lstrcpy(pFont->sFontName, gpSetCls->FontFaceName());
 	pFont->nFontHeight = gpSetCls->FontHeight();
 	pFont->nFontWidth = gpSetCls->FontWidth();
-	pFont->nFontCellWidth = gpSet->FontSizeX3 ? gpSet->FontSizeX3 : gpSetCls->FontWidth();
+	pFont->nFontCellWidth = gpSetCls->FontCellWidth();
 	pFont->nFontQuality = gpSetCls->FontQuality();
 	pFont->nFontCharSet = gpSetCls->FontCharSet();
 	pFont->Bold = gpSetCls->FontBold();

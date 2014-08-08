@@ -104,6 +104,7 @@ class CSettings
 
 		LPCWSTR FontFaceName();
 		LONG FontWidth();
+		LONG FontCellWidth();
 		LONG FontHeight();
 		LONG FontHeightHtml();
 		LPCWSTR BorderFontFaceName();
@@ -115,6 +116,7 @@ class CSettings
 		BYTE FontQuality();
 		HFONT CreateOtherFont(const wchar_t* asFontName);
 		void GetMainLogFont(LOGFONT& lf);
+		void EvalLogfontSizes(LOGFONT& LF, LONG lfHeight, LONG lfWidth);
 	private:
 		LOGFONT LogFont, LogFont2;
 		LONG mn_AutoFontWidth, mn_AutoFontHeight; // размеры шрифтов, которые были запрошены при авторесайзе шрифта
@@ -124,6 +126,7 @@ class CSettings
 		LPOUTLINETEXTMETRIC m_otm[MAX_FONT_STYLES];
 		BOOL mb_Name1Ok, mb_Name2Ok;
 		void ResetFontWidth();
+		LONG EvalCellWidth();
 		void SaveFontSizes(bool bAuto, bool bSendChanges);
 		LPOUTLINETEXTMETRIC LoadOutline(HDC hDC, HFONT hFont);
 		void DumpFontMetrics(LPCWSTR szType, HDC hDC, HFONT hFont, LPOUTLINETEXTMETRIC lpOutl = NULL);

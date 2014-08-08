@@ -419,19 +419,30 @@ void Settings::InitSettings()
 
 	bool bIsDbcs = (GetSystemMetrics(SM_DBCSENABLED) != 0);
 
+	// Font initialization (all fields must be already zeroed)
+	_ASSERTE(!FontSizeY && !FontSizeX && !FontSizeX2 && !FontSizeX3 && !FontUseDpi && !FontUseUnits);
+	// Let take into account monitor dpi
+	FontUseDpi = true;
+	// Font height in pixels
+	WARNING("That must be changed! dpi must not be embedded into FontSizeY!");
 	FontSizeY = 16 * gpSetCls->_dpiY / 96;
 	//-- Issue 577: Для иероглифов - сделаем "пошире", а то глифы в консоль не влезут...
 	//-- пошире не будем. DBCS консоль хитрая, на каждый иероглиф отводится 2 ячейки
 	//-- "не влезть" может только если выполнить "chcp 65001", что врядли, а у если надо - руками пусть ставят
 	FontSizeX3 = 0; // bIsDbcs ? 15 : 0;
+	// Bold/Italic
 	isBold = false;
 	isItalic = false;
+	// Charset. That may be very important for raster fonts.
 	mn_LoadFontCharSet = DEFAULT_CHARSET;
+	// Antialias style, the defaults
 	BOOL bClearType = FALSE; if (SystemParametersInfo(SPI_GETCLEARTYPE, 0, &bClearType, 0) && bClearType)
 		mn_AntiAlias = CLEARTYPE_NATURAL_QUALITY;
 	else
 		mn_AntiAlias = ANTIALIASED_QUALITY;
+	// Some resets?
 	inFont[0] = inFont2[0] = 0;
+
 	isTryToCenter = false;
 	nCenterConsolePad = 0;
 	isAlwaysShowScrollbar = 2;
@@ -778,6 +789,19 @@ void Settings::InitVanilla()
 	{
 		_ASSERTE(IsConfigNew == true);
 		return;
+	}
+
+	// For new users, let use ‘standard’ font heights? Meaning of display units and character height
+	if (gpSetCls->_dpiY > 0)
+	{
+		FontUseUnits = true;
+		WARNING("That must be changed! dpi must not be embedded into FontSizeY!");
+		// To avoid fatal conflicts with old versions - we are storing only positive values
+		FontSizeY = MulDiv(FontSizeY, 84/*72*/, gpSetCls->_dpiY);
+	}
+	else
+	{
+		_ASSERTE(gpSetCls->_dpiY > 0);
 	}
 }
 
@@ -2449,6 +2473,8 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla, const SettingsStorage* ap
 		reg->Load(L"FontAutoSize", isFontAutoSize);
 		reg->Load(L"FontSize", FontSizeY);
 		reg->Load(L"FontSizeX", FontSizeX);
+		reg->Load(L"FontUseDpi", FontUseDpi);
+		reg->Load(L"FontUseUnits", FontUseUnits);
 		reg->Load(L"FontSizeX3", FontSizeX3);
 		reg->Load(L"FontSizeX2", FontSizeX2);
 		reg->Load(L"FontCharSet", mn_LoadFontCharSet); mb_CharSetWasSet = FALSE;
@@ -3430,6 +3456,8 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		reg->Save(L"FontAutoSize", isFontAutoSize);
 		reg->Save(L"FontSize", FontSizeY);
 		reg->Save(L"FontSizeX", FontSizeX);
+		reg->Save(L"FontUseDpi", FontUseDpi);
+		reg->Save(L"FontUseUnits", FontUseUnits);
 		reg->Save(L"FontSizeX2", FontSizeX2);
 		reg->Save(L"FontSizeX3", FontSizeX3);
 		reg->Save(L"FontCharSet", mn_LoadFontCharSet);
