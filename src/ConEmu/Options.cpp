@@ -155,7 +155,7 @@ const CONEMUDEFCOLORS DefColors[] =
 	{
 		L"<Solarized (John Doe)>", {
 			0x00362b00, 0x00423607, 0x00756e58, 0x00837b65, 0x002f32dc, 0x00c4716c, 0x00164bcb, 0x00d5e8ee,
-			0x00a1a193, 0x00d28b26, 0x00009985, 0x0098a12a, 0x00969483, 0x008236d3, 0x000089b5, 0x00e3f6fd		
+			0x00a1a193, 0x00d28b26, 0x00009985, 0x0098a12a, 0x00969483, 0x008236d3, 0x000089b5, 0x00e3f6fd
 		}
 	},
 	{
@@ -227,7 +227,7 @@ const CONEMUDEFCOLORS DefColors[] =
 	{
 		L"<Ubuntu>", { // Need to set up backround "picture" with colorfill #300A24
 			0x0036342e, 0x00a46534, 0x00069a4e, 0x009a9806, 0x000000cc, 0x007b5075, 0x0000a0c4, 0x00cfd7d3,
-			0x00535755, 0x00cf9f72, 0x0034e28a, 0x00e2e234, 0x002929ef, 0x00a87fad, 0x004fe9fc, 0x00eceeee			
+			0x00535755, 0x00cf9f72, 0x0034e28a, 0x00e2e234, 0x002929ef, 0x00a87fad, 0x004fe9fc, 0x00eceeee
 		}, {15, 0, 0, 0}, {true, 0x00240A30}
 	},
 	{
@@ -287,7 +287,7 @@ Settings::Settings()
 	ResetSettings();
 
 	// Умолчания устанавливаются в CSettings::CSettings
-	//-- // Теперь установим умолчания настроек	
+	//-- // Теперь установим умолчания настроек
 	//-- InitSettings();
 }
 
@@ -352,7 +352,7 @@ void Settings::InitSettings()
 	if (gpConEmu) gpConEmu->LogString(L"Settings::InitSettings()");
 	MCHKHEAP
 
-	// Освободить память, т.к. функция может быть вызвана из окна интерфейса настроек	
+	// Освободить память, т.к. функция может быть вызвана из окна интерфейса настроек
 	ReleasePointers();
 
 	// Сброс переменных
@@ -1299,7 +1299,7 @@ bool Settings::LoadCmdTask(SettingsBase* reg, CommandTasks* &pTask, int iIndex)
 					if ((k+1) < iCmdCount)
 						lstrcat(psz, L"\r\n\r\n"); // для визуальности редактирования
 
-					psz += lstrlen(psz);	
+					psz += lstrlen(psz);
 				}
 			}
 		}
@@ -2621,41 +2621,41 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla, const SettingsStorage* ap
 		//mszCharRanges[0] = 0;
 
 		TODO("Это вообще нужно будет расширить, определяя произвольное количество групп шрифтов");
-		// max 100 ranges x 10 chars + a little ;)		
-		wchar_t szCharRanges[1024] = {};		
-		if (!reg->Load(L"FixFarBordersRanges", szCharRanges, countof(szCharRanges)))		
+		// max 100 ranges x 10 chars + a little ;)
+		wchar_t szCharRanges[1024] = {};
+		if (!reg->Load(L"FixFarBordersRanges", szCharRanges, countof(szCharRanges)))
 		{
 			wcscpy_c(szCharRanges, L"2013-25C4"); // default
 		}
-		//{		
-		//	int n = 0, nMax = countof(icFixFarBorderRanges);		
-		//	wchar_t *pszRange = mszCharRanges, *pszNext = NULL;		
-		//	wchar_t cBegin, cEnd;		
-		//		
-		//	while(*pszRange && n < nMax)		
-		//	{		
-		//		cBegin = (wchar_t)wcstol(pszRange, &pszNext, 16);		
-		//		
-		//		if (!cBegin || cBegin == 0xFFFF || *pszNext != L'-') break;		
-		//		
-		//		pszRange = pszNext + 1;		
-		//		cEnd = (wchar_t)wcstol(pszRange, &pszNext, 16);		
-		//		
-		//		if (!cEnd || cEnd == 0xFFFF) break;		
-		//		
-		//		icFixFarBorderRanges[n].bUsed = true;		
-		//		icFixFarBorderRanges[n].cBegin = cBegin;		
-		//		icFixFarBorderRanges[n].cEnd = cEnd;		
-		//		n ++;		
-		//		
-		//		if (*pszNext != L';') break;		
-		//		
-		//		pszRange = pszNext + 1;		
-		//	}		
-		//		
-		//	for(; n < nMax; n++)		
-		//		icFixFarBorderRanges[n].bUsed = false;		
-		//}		
+		//{
+		//	int n = 0, nMax = countof(icFixFarBorderRanges);
+		//	wchar_t *pszRange = mszCharRanges, *pszNext = NULL;
+		//	wchar_t cBegin, cEnd;
+		//
+		//	while(*pszRange && n < nMax)
+		//	{
+		//		cBegin = (wchar_t)wcstol(pszRange, &pszNext, 16);
+		//
+		//		if (!cBegin || cBegin == 0xFFFF || *pszNext != L'-') break;
+		//
+		//		pszRange = pszNext + 1;
+		//		cEnd = (wchar_t)wcstol(pszRange, &pszNext, 16);
+		//
+		//		if (!cEnd || cEnd == 0xFFFF) break;
+		//
+		//		icFixFarBorderRanges[n].bUsed = true;
+		//		icFixFarBorderRanges[n].cBegin = cBegin;
+		//		icFixFarBorderRanges[n].cEnd = cEnd;
+		//		n ++;
+		//
+		//		if (*pszNext != L';') break;
+		//
+		//		pszRange = pszNext + 1;
+		//	}
+		//
+		//	for(; n < nMax; n++)
+		//		icFixFarBorderRanges[n].bUsed = false;
+		//}
 		ParseCharRanges(szCharRanges, mpc_FixFarBorderValues);
 
 		reg->Load(L"ExtendUCharMap", isExtendUCharMap);
@@ -2720,7 +2720,7 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla, const SettingsStorage* ap
 		reg->Load(L"AlphaValue", nTransparent); MinMax(nTransparent, MIN_ALPHA_VALUE, 255);
 		reg->Load(L"AlphaValueSeparate", isTransparentSeparate);
 		if (!reg->Load(L"AlphaValueInactive", nTransparentInactive))
-		{	
+		{
 			nTransparentInactive = nTransparent;
 		}
 		else
@@ -2759,7 +2759,7 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla, const SettingsStorage* ap
 
 		reg->Load(L"KeyBarRClick", isKeyBarRClick);
 
-		reg->Load(L"DebugSteps", isDebugSteps);				
+		reg->Load(L"DebugSteps", isDebugSteps);
 
 		mb_StatusSettingsWasChanged = false;
 		reg->Load(L"StatusBar.Show", isStatusBarShow);
@@ -2972,7 +2972,7 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla, const SettingsStorage* ap
 	//		_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"%s fast configuration (%s) %s", pszDef, pszConfig, szType);
 	//	else
 	//		_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"%s fast configuration %s", pszDef, szType);
-	//	
+	//
 	//	CheckOptionsFast(szTitle, lbNeedCreateVanilla);
 	//}
 	//
@@ -3461,7 +3461,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		reg->Save(L"FontSizeX2", FontSizeX2);
 		reg->Save(L"FontSizeX3", FontSizeX3);
 		reg->Save(L"FontCharSet", mn_LoadFontCharSet);
-		if (ghOpWnd != NULL)			
+		if (ghOpWnd != NULL)
 			mb_CharSetWasSet = FALSE;
 		reg->Save(L"Anti-aliasing", mn_AntiAlias);
 		reg->Save(L"FontBold", isBold);
@@ -4211,7 +4211,7 @@ void Settings::CheckConsoleSettings()
 		if (gOSVer.dwMajorVersion >= 6)
 		{
 			wchar_t szWarning[512];
-			_wsprintf(szWarning, SKIPLEN(countof(szWarning)) 
+			_wsprintf(szWarning, SKIPLEN(countof(szWarning))
 				L"Warning!\n"
 				L"Dangerous values detected in yours registry\n\n"
 				L"Please check [HKEY_CURRENT_USER\\Console] and [HKEY_CURRENT_USER\\Console\\ConEmu] keys\n\n"

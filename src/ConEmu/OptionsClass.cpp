@@ -12265,7 +12265,7 @@ CEFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
 		// Теперь - можно и reset сделать
 		ResetFontWidth();
 
-		for(int i=0; i<MAX_FONT_STYLES; i++)
+		for (int i=0; i<MAX_FONT_STYLES; i++)
 		{
 			if (m_otm[i]) {free(m_otm[i]); m_otm[i] = NULL;}
 		}
