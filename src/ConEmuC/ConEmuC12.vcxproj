@@ -405,6 +405,9 @@
     <ResourceCompile>
       <PreprocessorDefinitions>_DEBUG;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
+    <PostBuildEvent>
+      <Command>if exist "$(SolutionDir)sign3.bat" call "$(SolutionDir)sign3.bat" "$(TargetPath)"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug_E|x64'">
     <Midl>
@@ -431,6 +434,9 @@
     <ResourceCompile>
       <PreprocessorDefinitions>_DEBUG;WIN64;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
+    <PostBuildEvent>
+      <Command>if exist "$(SolutionDir)sign3.bat" call "$(SolutionDir)sign3.bat" "$(TargetPath)"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -454,6 +460,9 @@
     <Manifest>
       <AdditionalManifestFiles>$(SolutionDir)ConEmu\conemu.manifest %(AdditionalManifestFiles)</AdditionalManifestFiles>
     </Manifest>
+    <PostBuildEvent>
+      <Command>if exist "$(SolutionDir)sign3.bat" call "$(SolutionDir)sign3.bat" "$(TargetPath)"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <Midl>
@@ -483,6 +492,9 @@
     <ResourceCompile>
       <PreprocessorDefinitions>WIN64;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
+    <PostBuildEvent>
+      <Command>if exist "$(SolutionDir)sign3.bat" call "$(SolutionDir)sign3.bat" "$(TargetPath)"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug_C|Win32'">
     <ClCompile>
@@ -507,6 +519,9 @@
     <ResourceCompile>
       <PreprocessorDefinitions>_DEBUG;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
+    <PostBuildEvent>
+      <Command>if exist "$(SolutionDir)sign3.bat" call "$(SolutionDir)sign3.bat" "$(TargetPath)"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug_C|x64'">
     <Midl>
@@ -533,6 +548,9 @@
     <ResourceCompile>
       <PreprocessorDefinitions>_DEBUG;WIN64;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
+    <PostBuildEvent>
+      <Command>if exist "$(SolutionDir)sign3.bat" call "$(SolutionDir)sign3.bat" "$(TargetPath)"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Instrument|Win32'">
     <ClCompile>
@@ -611,6 +629,9 @@
     <ResourceCompile>
       <PreprocessorDefinitions>_DEBUG;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
+    <PostBuildEvent>
+      <Command>if exist "$(SolutionDir)sign3.bat" call "$(SolutionDir)sign3.bat" "$(TargetPath)"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug_R|x64'">
     <Midl>
@@ -637,6 +658,9 @@
     <ResourceCompile>
       <PreprocessorDefinitions>_DEBUG;WIN64;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
+    <PostBuildEvent>
+      <Command>if exist "$(SolutionDir)sign3.bat" call "$(SolutionDir)sign3.bat" "$(TargetPath)"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug_F|Win32'">
     <ClCompile>
@@ -660,6 +684,9 @@
     <ResourceCompile>
       <PreprocessorDefinitions>_DEBUG;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
+    <PostBuildEvent>
+      <Command>if exist "$(SolutionDir)sign3.bat" call "$(SolutionDir)sign3.bat" "$(TargetPath)"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug_F|x64'">
     <Midl>
@@ -681,8 +708,7 @@
       <TargetMachine>MachineX64</TargetMachine>
     </Link>
     <PostBuildEvent>
-      <Command>
-      </Command>
+      <Command>if exist "$(SolutionDir)sign3.bat" call "$(SolutionDir)sign3.bat" "$(TargetPath)"</Command>
     </PostBuildEvent>
     <Manifest>
       <AdditionalManifestFiles>$(SolutionDir)ConEmu\conemu.manifest %(AdditionalManifestFiles)</AdditionalManifestFiles>
@@ -713,6 +739,9 @@
     <Manifest>
       <AdditionalManifestFiles>$(SolutionDir)ConEmu\conemu.manifest %(AdditionalManifestFiles)</AdditionalManifestFiles>
     </Manifest>
+    <PostBuildEvent>
+      <Command>if exist "$(SolutionDir)sign3.bat" call "$(SolutionDir)sign3.bat" "$(TargetPath)"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release_PDB|x64'">
     <Midl>
@@ -742,6 +771,9 @@
     <ResourceCompile>
       <PreprocessorDefinitions>WIN64;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
+    <PostBuildEvent>
+      <Command>if exist "$(SolutionDir)sign3.bat" call "$(SolutionDir)sign3.bat" "$(TargetPath)"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug_F2|Win32'">
     <ClCompile>
@@ -765,6 +797,9 @@
     <ResourceCompile>
       <PreprocessorDefinitions>_DEBUG;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
+    <PostBuildEvent>
+      <Command>if exist "$(SolutionDir)sign3.bat" call "$(SolutionDir)sign3.bat" "$(TargetPath)"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug_F2|x64'">
     <Midl>
@@ -791,6 +826,9 @@
     <ResourceCompile>
       <PreprocessorDefinitions>_DEBUG;WIN64;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
+    <PostBuildEvent>
+      <Command>if exist "$(SolutionDir)sign3.bat" call "$(SolutionDir)sign3.bat" "$(TargetPath)"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug_F3|Win32'">
     <ClCompile>
@@ -815,6 +853,9 @@
     <ResourceCompile>
       <PreprocessorDefinitions>_DEBUG;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
+    <PostBuildEvent>
+      <Command>if exist "$(SolutionDir)sign3.bat" call "$(SolutionDir)sign3.bat" "$(TargetPath)"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug_F3|x64'">
     <Midl>
@@ -841,6 +882,9 @@
     <ResourceCompile>
       <PreprocessorDefinitions>_DEBUG;WIN64;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
+    <PostBuildEvent>
+      <Command>if exist "$(SolutionDir)sign3.bat" call "$(SolutionDir)sign3.bat" "$(TargetPath)"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\common\MAssert.cpp" />
