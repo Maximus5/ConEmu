@@ -94,6 +94,15 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define MAX_SPLITTER_SIZE 32
 
+// That is positive value for LF.lfHeight
+#define DEF_FONTSIZEY_P   16
+#define DEF_TABFONTY_P    16
+#define DEF_STATUSFONTY_P 14
+// That is positive value for LF.lfHeight
+#define DEF_FONTSIZEY_U   14
+#define DEF_TABFONTY_U    13
+#define DEF_STATUSFONTY_U 12
+
 
 struct CONEMUDEFCOLORS
 {
@@ -424,8 +433,7 @@ void Settings::InitSettings()
 	// Let take into account monitor dpi
 	FontUseDpi = true;
 	// Font height in pixels
-	WARNING("That must be changed! dpi must not be embedded into FontSizeY!");
-	FontSizeY = 16 * gpSetCls->_dpiY / 96;
+	FontSizeY = DEF_FONTSIZEY_P; // dpi must not be embedded into font height!
 	//-- Issue 577: Для иероглифов - сделаем "пошире", а то глифы в консоль не влезут...
 	//-- пошире не будем. DBCS консоль хитрая, на каждый иероглиф отводится 2 ячейки
 	//-- "не влезть" может только если выполнить "chcp 65001", что врядли, а у если надо - руками пусть ставят
@@ -682,7 +690,7 @@ void Settings::InitSettings()
 	nStatusBarLight = RGB(255,255,255);
 	nStatusBarDark = RGB(160,160,160);
 	wcscpy_c(sStatusFontFace, gsDefMUIFont); nStatusFontCharSet = ANSI_CHARSET;
-	nStatusFontHeight = 14 * gpSetCls->_dpiY / 96;
+	nStatusFontHeight = DEF_STATUSFONTY_P; // dpi must not be embedded into font height!
 	//nHideStatusColumns = ces_CursorInfo;
 	_ASSERTE(countof(isStatusColumnHidden)>csi_Last);
 	memset(isStatusColumnHidden, 0, sizeof(isStatusColumnHidden));
@@ -723,7 +731,7 @@ void Settings::InitSettings()
 	#endif
 
 	wcscpy_c(sTabFontFace, gsDefMUIFont); nTabFontCharSet = ANSI_CHARSET;
-	nTabFontHeight = 16 * gpSetCls->_dpiY / 96;
+	nTabFontHeight = DEF_TABFONTY_P; // dpi must not be embedded into font height!
 	sTabCloseMacro = sSaveAllMacro = NULL;
 	nToolbarAddSpace = 0;
 	// Show only shield (szAdminTitleSuffix is ignored if ats_Shield)
@@ -792,17 +800,12 @@ void Settings::InitVanilla()
 	}
 
 	// For new users, let use ‘standard’ font heights? Meaning of display units and character height
-	if (gpSetCls->_dpiY > 0)
-	{
-		FontUseUnits = true;
-		WARNING("That must be changed! dpi must not be embedded into FontSizeY!");
-		// To avoid fatal conflicts with old versions - we are storing only positive values
-		FontSizeY = MulDiv(FontSizeY, 84/*72*/, gpSetCls->_dpiY);
-	}
-	else
-	{
-		_ASSERTE(gpSetCls->_dpiY > 0);
-	}
+	FontUseUnits = true;
+	// dpi must not be embedded into font height!
+	// To avoid fatal conflicts with old versions - we are storing only positive values
+	FontSizeY = DEF_FONTSIZEY_U;
+	nStatusFontHeight = DEF_STATUSFONTY_U;
+	nTabFontHeight = DEF_TABFONTY_U;
 }
 
 void Settings::ResetSavedOnExit()
