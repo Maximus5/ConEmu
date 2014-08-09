@@ -138,19 +138,19 @@ BEGIN
     CONTROL         "&Clear Type",rCTAA,"Button",BS_AUTORADIOBUTTON,110,72,48,8
     RTEXT           "Font charset:",stFontCharset,170,72,57,8
     COMBOBOX        tFontCharset,231,70,86,67,CBS_DROPDOWNLIST | CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
-    CONTROL         "Change pseudographics font",cbFixFarBorders,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,99,145,8
     GROUPBOX        "",gbFixFarBorders,4,99,194,29
+    CONTROL         "Change pseudographics font",cbFixFarBorders,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,99,145,8
     COMBOBOX        tFontFace2,10,111,119,72,CBS_DROPDOWN | CBS_OWNERDRAWFIXED | CBS_AUTOHSCROLL | CBS_SORT | CBS_HASSTRINGS | WS_VSCROLL | WS_TABSTOP
     RTEXT           "Width:",stFontSizeX2,135,112,24,8
     COMBOBOX        tFontSizeX2,163,111,30,66,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
-    CONTROL         "Extend fonts",cbExtendFonts,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,210,99,77,8
     GROUPBOX        "",gbExtendFonts,204,99,119,29
+    CONTROL         "Extend fonts",cbExtendFonts,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,210,99,77,8
     COMBOBOX        lbExtendFontBoldIdx,210,111,32,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
     COMBOBOX        lbExtendFontItalicIdx,248,111,32,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
     COMBOBOX        lbExtendFontNormalIdx,286,111,32,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    GROUPBOX        "",gbBgImage,4,132,319,98
     CONTROL         "Back&ground image (bmp, jpg, png, tif):",cbBgImage,
                     "Button",BS_AUTO3STATE | WS_TABSTOP,10,132,139,8
-    GROUPBOX        "",gbBgImage,4,132,319,98
     LTEXT           "Path:",stBgImage,10,146,18,8
     EDITTEXT        tBgImage,34,144,261,12,ES_AUTOHSCROLL
     PUSHBUTTON      "...",bBgImage,299,144,16,12
@@ -1435,9 +1435,9 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
+    GROUPBOX        "",gbBgImage,4,1,319,98
     CONTROL         "Back&ground image (bmp, jpg, png, tif):",cbBgImage,
                     "Button",BS_AUTO3STATE | WS_TABSTOP,10,1,139,8
-    GROUPBOX        "",gbBgImage,4,1,319,98
     LTEXT           "Path:",stBgImage,10,15,18,8
     EDITTEXT        tBgImage,34,13,261,12,ES_AUTOHSCROLL
     PUSHBUTTON      "...",bBgImage,299,13,16,12
