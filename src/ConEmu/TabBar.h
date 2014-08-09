@@ -185,7 +185,6 @@ class CTabBarClass
 		void Retrieve();
 		void SetRedraw(BOOL abEnableRedraw);
 		void UpdatePosition();
-		void UpdateTabFont();
 		void UpdateToolConsoles(bool abForcePos=false);
 
 		// Переключение табов

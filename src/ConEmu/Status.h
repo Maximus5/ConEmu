@@ -208,6 +208,4 @@ public:
 
 	bool GetStatusBarClientRect(RECT* rc);
 	bool GetStatusBarItemRect(CEStatusItems nID, RECT* rc);
-
-	void UpdateStatusFont();
 };

@@ -6658,8 +6658,7 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 						gpSet->isStatusBarFlags |= csf_HorzDelim;
 					else
 						gpSet->isStatusBarFlags &= ~csf_HorzDelim;
-					gpConEmu->mp_Status->UpdateStatusFont();
-					gpConEmu->mp_Status->UpdateStatusBar(true);
+					gpConEmu->RecreateControls(false, true, true);
 					break;
 
 				case cbStatusVertPad:
@@ -6667,8 +6666,7 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 						gpSet->isStatusBarFlags |= csf_NoVerticalPad;
 					else
 						gpSet->isStatusBarFlags &= ~csf_NoVerticalPad;
-					gpConEmu->mp_Status->UpdateStatusFont();
-					gpConEmu->mp_Status->UpdateStatusBar(true);
+					gpConEmu->RecreateControls(false, true, true);
 					break;
 
 				case cbStatusSystemColors:
@@ -8158,7 +8156,7 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 					gpSet->nTabFontCharSet = DEFAULT_CHARSET;
 			}
 		}
-		gpConEmu->mp_TabBar->UpdateTabFont();
+		gpConEmu->RecreateControls(true, false, true);
 		break;
 	} // tTabFontFace, tTabFontHeight, tTabFontCharset
 
@@ -8206,7 +8204,6 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			case tStatusFontHeight:
 				gpSet->nStatusFontHeight = GetNumber(hWnd2, wId); break;
 			}
-			gpConEmu->mp_Status->UpdateStatusFont();
 		}
 		else if (HIWORD(wParam) == CBN_SELCHANGE)
 		{
@@ -8227,8 +8224,8 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 				else
 					gpSet->nStatusFontCharSet = DEFAULT_CHARSET;
 			}
-			gpConEmu->mp_Status->UpdateStatusFont();
 		}
+		gpConEmu->RecreateControls(false, true, true);
 		break;
 	} // tStatusFontFace, tStatusFontHeight, tStatusFontCharset
 

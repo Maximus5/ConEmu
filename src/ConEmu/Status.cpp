@@ -2065,16 +2065,6 @@ void CStatus::ShowTransparencyMenu(POINT pt)
 	OnTransparency();
 }
 
-void CStatus::UpdateStatusFont()
-{
-	if (!gpSet->isStatusBarShow)
-		return;
-
-	UpdateStatusBar(true);
-	gpConEmu->OnSize();
-	gpConEmu->InvalidateGaps();
-}
-
 // Прямоугольник в клиентских координатах ghWnd!
 bool CStatus::GetStatusBarClientRect(RECT* rc)
 {

@@ -2055,11 +2055,6 @@ int CTabBarClass::ActiveTabByName(int anType, LPCWSTR asName, CVirtualConsole** 
 	return nTab;
 }
 
-void CTabBarClass::UpdateTabFont()
-{
-	mp_Rebar->UpdateTabFontInt();
-}
-
 // Прямоугольник в клиентских координатах ghWnd!
 bool CTabBarClass::GetRebarClientRect(RECT* rc)
 {

@@ -7092,11 +7092,21 @@ LRESULT CConEmuMain::OnDpiChanged(UINT dpiX, UINT dpiY, LPRECT prcSuggested)
 
 	gpSetCls->OnDpiChanged(dpiX, dpiY, prcSuggested);
 
-	if (IsSizePosFree())
-	{
-		if (mp_TabBar)
-			mp_TabBar->Recreate();
+	RecreateControls(true/*bRecreateTabbar*/, true/*bRecreateStatus*/, true);
 
+	return 0;
+}
+
+void CConEmuMain::RecreateControls(bool bRecreateTabbar, bool bRecreateStatus, bool bResizeWindow, LPRECT prcSuggested /*= NULL*/)
+{
+	if (bRecreateTabbar && mp_TabBar)
+		mp_TabBar->Recreate();
+
+	if (bRecreateStatus && mp_Status)
+		mp_Status->UpdateStatusBar(true);
+
+	if (bResizeWindow && IsSizePosFree())
+	{
 		RECT rcNew = GetDefaultRect();
 		// If Windows DWM sends new preferred RECT?
 		if (prcSuggested)
@@ -7105,8 +7115,11 @@ LRESULT CConEmuMain::OnDpiChanged(UINT dpiX, UINT dpiY, LPRECT prcSuggested)
 		}
 		MoveWindow(ghWnd, rcNew.left, rcNew.top, rcNew.right - rcNew.left, rcNew.bottom - rcNew.top, TRUE);
 	}
-
-	return 0;
+	else
+	{
+		gpConEmu->OnSize();
+		gpConEmu->InvalidateGaps();
+	}
 }
 
 LRESULT CConEmuMain::OnDisplayChanged(UINT bpp, UINT screenWidth, UINT screenHeight)

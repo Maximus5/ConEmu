@@ -719,6 +719,7 @@ class CConEmuMain :
 		LRESULT SyncExecMacro(WPARAM wParam, LPARAM lParam);
 		bool PtDiffTest(POINT C, int aX, int aY, UINT D); //(((abs(C.x-LOWORD(lParam)))<D) && ((abs(C.y-HIWORD(lParam)))<D))
 		void RecreateAction(RecreateActionParm aRecreate, BOOL abConfirm, RConBoolArg bRunAs = crb_Undefined);
+		void RecreateControls(bool bRecreateTabbar, bool bRecreateStatus, bool bResizeWindow, LPRECT prcSuggested = NULL);
 		int RecreateDlg(RConStartArgs* apArg);
 		bool ReportUpdateConfirmation();
 		void ReportUpdateError();
