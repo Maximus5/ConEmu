@@ -117,6 +117,7 @@ class CSettings
 		HFONT CreateOtherFont(const wchar_t* asFontName);
 		void GetMainLogFont(LOGFONT& lf);
 		void EvalLogfontSizes(LOGFONT& LF, LONG lfHeight, LONG lfWidth);
+		LONG EvalSize(LONG nSize, bool bVert, bool bCanUseUnits, bool bUseZoom);
 	private:
 		LOGFONT LogFont, LogFont2;
 		LONG mn_AutoFontWidth, mn_AutoFontHeight; // размеры шрифтов, которые были запрошены при авторесайзе шрифта

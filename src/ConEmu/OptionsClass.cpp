@@ -1151,28 +1151,56 @@ void CSettings::EvalLogfontSizes(LOGFONT& LF, LONG lfHeight, LONG lfWidth)
 		lfHeight = gpSet->FontUseUnits ? 12 : 16;
 	}
 
-	LONG iMul = 1, iDiv = 1;
+	LF.lfHeight = EvalSize(lfHeight, true, true, true);
+	LF.lfWidth  = lfWidth ? EvalSize(lfWidth, false, false, true) : 0;
+}
+
+// Помножить размер на масштаб * dpi * юниты(-1)
+LONG CSettings::EvalSize(LONG nSize, bool bVert, bool bCanUseUnits, bool bUseZoom)
+{
+	if (nSize <= 0)
+	{
+		// Must not be used for "units"!
+		// This must be used for evaluate "pixels" or sort of.
+		// Positive values only...
+		_ASSERTE(nSize >= 0);
+		return 0;
+	}
+
+	LONG iMul = 1, iDiv = 1, iResult;
 
 	// DPI текущего(!) монитора
 	if (gpSet->FontUseDpi)
 	{
-		iMul *= _dpiY;
-		iDiv *= 96;
+		if (_dpiY > 0)
+		{
+			TODO("bVert - horz/vert dpi")
+			iMul *= _dpiY;
+			iDiv *= 96;
+		}
+		else
+		{
+			_ASSERTE(_dpiY > 0);
+		}
 	}
 
-	// TODO: Zoom
+	// Zooming, current, is not stored in the settings
+	if (bUseZoom)
+	{
+		TODO("Zoom");
+	}
 
 	// Сейчас множитель-делитель должны быть >0
 	_ASSERTE(iMul>0 && iDiv>0);
 
 	// Units (char height) or pixels (cell height)?
-	if (gpSet->FontUseUnits && (lfHeight > 0))
+	if (bCanUseUnits && gpSet->FontUseUnits && (nSize > 0))
 	{
 		iMul = -iMul;
 	}
 
-	LF.lfHeight = MulDiv(lfHeight, iMul, iDiv);
-	LF.lfWidth = MulDiv(lfWidth, iMul, iDiv);
+	iResult = MulDiv(nSize, iMul, iDiv);
+	return iResult;
 }
 
 
