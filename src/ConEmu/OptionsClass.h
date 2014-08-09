@@ -118,6 +118,7 @@ class CSettings
 		void GetMainLogFont(LOGFONT& lf);
 		void EvalLogfontSizes(LOGFONT& LF, LONG lfHeight, LONG lfWidth);
 		LONG EvalSize(LONG nSize, bool bVert, bool bCanUseUnits, bool bUseZoom);
+		LONG EvalFontHeight(LPCWSTR lfFaceName, LONG lfHeight, BYTE nFontCharSet);
 	private:
 		LOGFONT LogFont, LogFont2;
 		LONG mn_AutoFontWidth, mn_AutoFontHeight; // размеры шрифтов, которые были запрошены при авторесайзе шрифта
@@ -131,6 +132,18 @@ class CSettings
 		void SaveFontSizes(bool bAuto, bool bSendChanges);
 		LPOUTLINETEXTMETRIC LoadOutline(HDC hDC, HFONT hFont);
 		void DumpFontMetrics(LPCWSTR szType, HDC hDC, HFONT hFont, LPOUTLINETEXTMETRIC lpOutl = NULL);
+		// When font size is used as character size (negative LF.lfHeight)
+		// we need to evaluate real font size... Only for vector fonts!
+		struct FontHeightInfo
+		{
+			// In
+			wchar_t lfFaceName[LF_FACESIZE];
+			int     lfHeight;
+			UINT    lfCharSet;
+			// Out
+			int     CellHeight;
+		};
+		MArray<FontHeightInfo> m_FontHeights;
 
 	private:
 		/* 'Default' command line (if nor Registry, nor /cmd specified) */

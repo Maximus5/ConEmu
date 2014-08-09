@@ -1203,6 +1203,74 @@ LONG CSettings::EvalSize(LONG nSize, bool bVert, bool bCanUseUnits, bool bUseZoo
 	return iResult;
 }
 
+// Do NOT take into account current zoom value here!
+// This must not be used for BDF or raster fonts, the result may be wrong.
+LONG CSettings::EvalFontHeight(LPCWSTR lfFaceName, LONG lfHeight, BYTE nFontCharSet)
+{
+	if (!lfHeight || !*lfFaceName)
+	{
+		_ASSERTE(lfHeight != 0);
+		return 0;
+	}
+
+	LONG CellHeight = 0;
+	for (INT_PTR i = 0; i < m_FontHeights.size(); i++)
+	{
+		const FontHeightInfo& f = m_FontHeights[i];
+		if ((f.lfHeight != lfHeight) || (f.lfCharSet != nFontCharSet))
+			continue;
+		if (lstrcmp(lfFaceName, f.lfFaceName) != 0)
+			continue;
+		CellHeight = f.CellHeight;
+		break;
+	}
+
+	if (!CellHeight)
+	{
+		FontHeightInfo fi = {};
+		TEXTMETRIC tm = {};
+		SIZE sz = {};
+		LOGFONT lf = LogFont;
+		lstrcpyn(lf.lfFaceName, lfFaceName, countof(lf.lfFaceName));
+		lstrcpyn(fi.lfFaceName, lfFaceName, countof(fi.lfFaceName));
+		fi.lfHeight = lf.lfHeight = lfHeight;
+		lf.lfWidth = 0;
+		fi.lfCharSet = lf.lfCharSet = nFontCharSet;
+		lf.lfPitchAndFamily = DEFAULT_PITCH | FF_MODERN;
+
+		HDC hdc = CreateCompatibleDC(NULL);
+		if (hdc)
+		{
+			HFONT hOld, f = CreateFontIndirect(&lf);
+			if (f)
+			{
+				hOld = (HFONT)SelectObject(hdc, f);
+				if (GetTextMetrics(hdc, &tm) && (tm.tmHeight > 0))
+				{
+					CellHeight = tm.tmHeight + tm.tmExternalLeading;
+				}
+				else if (GetTextExtentPoint(hdc, L"Yy", 2, &sz) && (sz.cy > 0))
+				{
+					CellHeight = sz.cy;
+				}
+				SelectObject(hdc, hOld);
+				DeleteObject(f);
+			}
+		}
+
+		if (!CellHeight)
+		{
+			// Still unknown?
+			_ASSERTE(CellHeight != 0);
+			CellHeight = abs(lfHeight);
+		}
+
+		fi.CellHeight = CellHeight;
+		m_FontHeights.push_back(fi);
+	}
+
+	return CellHeight;
+}
 
 LONG CSettings::EvalCellWidth()
 {
