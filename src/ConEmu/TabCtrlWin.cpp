@@ -521,9 +521,7 @@ HWND CTabPanelWin::CreateTabbar()
 	AddTabInt(gpConEmu->GetDefaultTabLabel(), 0, gpConEmu->mb_IsUacAdmin, -1);
 	// нас интересует смещение клиентской области. Т.е. начало - из 0. Остальное не важно
 	rcClient = MakeRect(600, 400);
-	//rcClient = gpConEmu->GetGuiClientRect();
-	TabCtrl_AdjustRect(mh_Tabbar, FALSE, &rcClient);
-	mn_TabHeight = rcClient.top - mn_ThemeHeightDiff;
+	QueryTabbarHeight();
 	return mh_Tabbar;
 }
 
@@ -1236,13 +1234,15 @@ int CTabPanelWin::QueryTabbarHeight()
 		RECT rcClient = MakeRect(600, 400);
 		//rcClient = gpConEmu->GetGuiClientRect();
 		TabCtrl_AdjustRect(mh_Tabbar, FALSE, &rcClient);
-		mn_TabHeight = rcClient.top - mn_ThemeHeightDiff;
+		mn_TabHeight = rcClient.top - mn_ThemeHeightDiff - (gpSet->FontUseUnits ? 1 : 0);
 	}
 	else
 	{
 		// Не будем создавать TabBar. Все равно вне окно ConEmu оценка получается неточной
 		//_ASSERTE((hTabs!=NULL) && "Creating of a dummy tab control failed");
-		mn_TabHeight = gpSet->nTabFontHeight + 9;
+		int lfHeight = gpSetCls->EvalSize(gpSet->nTabFontHeight, true, true, false);
+		mn_TabHeight = gpSetCls->EvalFontHeight(gpSet->sTabFontFace, lfHeight, gpSet->nTabFontCharSet)
+			+ gpSetCls->EvalSize((lfHeight < 0) ? 8 : 9, true, false, false);
 	}
 
 	//if (bDummyCreate && hTabs)
