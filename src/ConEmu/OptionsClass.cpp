@@ -11828,7 +11828,88 @@ void CSettings::SaveFontSizes(bool bAuto, bool bSendChanges)
 	gpConEmu->OnPanelViewSettingsChanged(bSendChanges);
 }
 
+bool CSettings::MacroFontSetSizeInt(LOGFONT& LF, int nRelative/*0/1*/, int nValue/*+-1,+-2,...*/)
+{
+	bool bChanged = false;
+	int nCurHeight = EvalSize(gpSet->FontSizeY, esf_Vertical|esf_CanUseZoom);
+	int nNeedHeight = nCurHeight;
+
+	// The current defaults
+	LF = LogFont;
+
+	// The LogFont member does not contains "Units" (negative values)
+	// So we need to reevaluate "current" font descriptor (the height actually)
+	LOGFONT lfCur = {};
+	EvalLogfontSizes(lfCur, gpSet->FontSizeY, gpSet->FontSizeX);
+
+	switch (nRelative)
+	{
+	case 0:
+		// Absolute
+		if (nValue < 5)
+		{
+			_ASSERTE(nValue >= 5);
+			gpConEmu->LogString(L"-- Skipped! Absolute value less than 5");
+			return false;
+		}
+		// Set the new value
+		nNeedHeight = nValue;
+		break;
+
+	case 1:
+		// Relative
+		if (nValue == 0)
+		{
+			_ASSERTE(nValue != 0);
+			gpConEmu->LogString(L"-- Skipped! Relative value is zero");
+			return false;
+		}
+		// Decrease/increate font height
+		nNeedHeight += nValue;
+		break;
+	}
+
+	if ((gpSet->FontSizeY <= 0) || (nNeedHeight <= 0))
+	{
+		_ASSERTE((gpSet->FontSizeY > 0) && (nNeedHeight >= 0));
+		gpConEmu->LogString(L"-- Skipped! FontSizeY and nNeedHeight must be positive");
+		return false;
+	}
+
+	// Eval new zoom value
+	int nNewZoomValue = MulDiv(nNeedHeight, FontZoom100, gpSet->FontSizeY);
+	// If relative, let easy return to 100%
+	if (nRelative == 1)
+	{
+		if (((mn_FontZoomValue > FontZoom100) && (nNewZoomValue < FontZoom100)) || ((mn_FontZoomValue < FontZoom100) && (nNewZoomValue > FontZoom100)))
+		{
+			nNewZoomValue = FontZoom100;
+			bChanged = true;
+		}
+	}
+	// And set the Zoom value
+	mn_FontZoomValue = nNewZoomValue;
+
+	// Now we can set the font
+	EvalLogfontSizes(LF, gpSet->FontSizeY, gpSet->FontSizeX);
+
+	// Check the height
+	if (!bChanged && (LF.lfHeight != lfCur.lfHeight))
+		bChanged = true;
+	#if _DEBUG
+	if (!bChanged)
+	{
+		_ASSERTE(bChanged && "lfHeight must be changed");
+		gpConEmu->LogString(L"-- Skipped! lfHeight was not changed");
+	}
+	#endif
+	// Ready
+	return bChanged;
+}
+
 // Вызов из GUI-макросов - увеличить/уменьшить шрифт, без изменения размера (в пикселях) окна
+// Функция НЕ меняет высоту шрифта настройки и изменения не будут сохранены в xml/reg
+// Здесь меняется только значение "зума"
 bool CSettings::MacroFontSetSize(int nRelative/*0/1*/, int nValue/*+-1,+-2,...*/)
 {
 	wchar_t szLog[128];
@@ -11838,67 +11919,60 @@ bool CSettings::MacroFontSetSize(int nRelative/*0/1*/, int nValue/*+-1,+-2,...*/
 		gpConEmu->LogString(szLog);
 	}
 
-	// Пытаемся создать новый шрифт
-	LOGFONT LF = LogFont;
-
+	// Validation
 	if (nRelative == 0)
 	{
-		// По абсолютному значению (высота шрифта)
+		// Absolute height
 		if (nValue < 5)
 		{
 			gpConEmu->LogString(L"-- Skipped! Absolute value less than 5");
 			return false;
 		}
-
-		LF.lfHeight = nValue;
 	}
-	//else if (nRelative == -1)
-	//{
-	//	// уменьшить шрифт
-	//	LF.lfHeight -= nValue;
-	//}
 	else if (nRelative == 1)
 	{
+		// Relative
 		if (nValue == 0)
 		{
 			gpConEmu->LogString(L"-- Skipped! Relative value is zero");
 			return false;
 		}
-
-		// уменьшить/увеличить шрифт
-		LF.lfHeight += nValue;
 	}
-
-	// Не должен стать менее 5 пунктов
-	if (LF.lfHeight < 5)
-	{
-		gpConEmu->LogString(L"-- Warning! New absolute value can't be less than 5");
-		LF.lfHeight = 5;
-	}
-
-	_ASSERTE(FALSE && "Must use Zoom instead of direct LF manupulation!");
-
-	// Если задана ширина - подкорректировать
-	if (gpSet->FontSizeX && gpSet->FontSizeY)
-		LF.lfWidth = LogFont.lfWidth * gpSet->FontSizeY / gpSet->FontSizeX;
 	else
-		LF.lfWidth = 0;
-
-	if ((LF.lfHeight == LogFont.lfHeight) && ((LF.lfWidth == LogFont.lfWidth) || (LF.lfWidth == 0)))
 	{
-		_wsprintf(szLog, SKIPLEN(countof(szLog)) L"-- Skipped! Old font {%i,%i}, New font {%i,%i}", LogFont.lfHeight, LogFont.lfWidth, LF.lfHeight, LF.lfWidth);
-		gpConEmu->LogString(szLog);
+		_ASSERTE(nRelative == 0 || nRelative == 1);
+		gpConEmu->LogString(L"-- Skipped! Unsupported nRelative value");
 		return false;
 	}
 
-	int nNewHeight = LF.lfHeight; // Issue 1130
+	int nNewHeight = LogFont.lfHeight; // Issue 1130
+	bool bWasNotZoom100 = (mn_FontZoomValue != FontZoom100);
+	LOGFONT LF = {};
 
 	for (int nRetry = 0; nRetry < 10; nRetry++)
 	{
+		if (!MacroFontSetSizeInt(LF, nRelative/*0/1*/, nValue/*+-1,+-2,...*/))
+		{
+			break;
+		}
+
+		// Не должен стать менее 5 пунктов
+		if (abs(LF.lfHeight) < 5)
+		{
+			gpConEmu->LogString(L"-- Failed! Created font height less than 5");
+			return false;
+		}
+
 		CEFONT hf = CreateFontIndirectMy(&LF);
 
-		// Успешно, только если шрифт изменился, или хотели поставить абсолютный размер
-		if (hf.IsSet() && ((nRelative == 0) || (LF.lfHeight != LogFont.lfHeight)))
+		// Успешно, только если:
+		// шрифт изменился
+		// или хотели поставить абсолютный размер
+		// или был масштаб НЕ 100%, а стал 100% (гарантированный возврат к оригиналу)
+		if (hf.IsSet()
+			&& ((nRelative == 0)
+				|| (LF.lfHeight != LogFont.lfHeight)
+				|| (!bWasNotZoom100 && (mn_FontZoomValue == FontZoom100))))
 		{
 			// SaveFontSizes выполним после обновления LogFont, т.к. там зовется gpConEmu->OnPanelViewSettingsChanged
 			CEFONT hOldF = mh_Font[0];
@@ -11941,35 +12015,20 @@ bool CSettings::MacroFontSetSize(int nRelative/*0/1*/, int nValue/*+-1,+-2,...*/
 
 		if (nRelative == 0)
 		{
+			_ASSERTE(FALSE && "Font creation failed?");
 			gpConEmu->LogString(L"-- Failed? (nRelative==0)?");
 			return false;
 		}
 
 		// Если пытаются изменить относительный размер, а шрифт не создался - попробовать следующий размер
-		//if (nRelative == -1)
-		//	LF.lfHeight -= nValue; // уменьшить шрифт
-		//else
 		if (nRelative == 1)
 		{
-			nNewHeight += nValue; // уменьшить/увеличить шрифт
-			LF.lfHeight = nNewHeight;
+			nValue += (nValue > 0) ? 1 : -1;
 		}
 		else
 		{
-			gpConEmu->LogString(L"-- Failed! (nRelative!=1)?");
-			return false;
+			_ASSERTE(nRelative == 1);
 		}
-
-		// Не должен стать менее 5 пунктов
-		if (LF.lfHeight < 5)
-		{
-			gpConEmu->LogString(L"-- Failed! Created font height less than 5");
-			return false;
-		}
-
-		// Если задана ширина - подкорректировать
-		if (LogFont.lfWidth && LogFont.lfHeight)
-			LF.lfWidth = LogFont.lfWidth * LF.lfHeight / LogFont.lfHeight;
 	}
 
 	_wsprintf(szLog, SKIPLEN(countof(szLog)) L"-- Failed! New font {'%s',%i,%i} was not created", LF.lfFaceName, LF.lfHeight, LF.lfWidth, LF.lfHeight, LF.lfWidth);

@@ -317,6 +317,7 @@ class CSettings
 		void UnregisterShell(LPCWSTR asName);
 		void UnregisterShellInvalids();
 		bool DeleteRegKeyRecursive(HKEY hRoot, LPCWSTR asParent, LPCWSTR asName);
+		bool MacroFontSetSizeInt(LOGFONT& LF, int nRelative/*0/1*/, int nValue/*+-1,+-2,...*/);
 	public:
 		void UnregisterFonts();
 		BOOL GetFontNameFromFile(LPCTSTR lpszFilePath, wchar_t (&rsFontName)[LF_FACESIZE], wchar_t (&rsFullFontName)[LF_FACESIZE]);

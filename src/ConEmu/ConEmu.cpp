@@ -8266,6 +8266,7 @@ void CConEmuMain::PostMacro(LPCWSTR asMacro)
 
 void CConEmuMain::PostFontSetSize(int nRelative/*0/1*/, int nValue/*для nRelative==0 - высота, для ==1 - +-1, +-2,...*/)
 {
+	// It will call `gpSetCls->MacroFontSetSize((int)wParam, (int)lParam)` in the main thread
 	PostMessage(ghWnd, mn_MsgFontSetSize, (WPARAM)nRelative, (LPARAM)nValue);
 }
 
