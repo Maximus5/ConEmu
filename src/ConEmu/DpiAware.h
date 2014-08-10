@@ -96,6 +96,8 @@ class CDpiForDialog
 protected:
 	HWND mh_Dlg;
 
+	LONG mn_InSet;
+
 	DpiValue m_InitDpi;
 	int mn_InitFontHeight;
 	LOGFONT mlf_InitFont;

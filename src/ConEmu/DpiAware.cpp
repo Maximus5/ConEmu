@@ -301,10 +301,12 @@ CDpiForDialog::CDpiForDialog()
 	ZeroStruct(mlf_CurFont);
 	mh_OldFont = mh_CurFont = NULL;
 	ZeroStruct(m_Items);
+	mn_InSet = 0;
 }
 
 CDpiForDialog::~CDpiForDialog()
 {
+	_ASSERTE(mn_InSet == 0);
 	Detach();
 }
 
@@ -372,6 +374,9 @@ bool CDpiForDialog::Attach(HWND hWnd, HWND hCenterParent, DpiValue* pCurDpi /*= 
 
 bool CDpiForDialog::SetDialogDPI(const DpiValue& newDpi, LPRECT lprcSuggested /*= NULL*/)
 {
+	if (mn_InSet > 0)
+		return false;
+
 	if (newDpi.Ydpi <= 0 || newDpi.Xdpi <= 0)
 		return false;
 	if (m_CurDpi.Ydpi <= 0 || m_CurDpi.Xdpi <= 0)
@@ -379,21 +384,35 @@ bool CDpiForDialog::SetDialogDPI(const DpiValue& newDpi, LPRECT lprcSuggested /*
 	if (m_CurDpi.Equals(newDpi))
 		return false;
 
-	mn_CurFontHeight = (mn_InitFontHeight * newDpi.Ydpi / 92);
+	bool bRc = false;
+	MArray<DlgItem>* p = NULL;
+	DpiValue curDpi(m_CurDpi);
+	HFONT hf = NULL;
+
+	#ifdef _DEBUG
+	wchar_t szClass[100];
+	#endif
+
+	// To avoid several nested passes
+	InterlockedIncrement(&mn_InSet);
+	m_CurDpi.SetDpi(newDpi);
+
+	// Eval
+	mn_CurFontHeight = (mn_InitFontHeight * newDpi.Ydpi / 96);
 	mlf_CurFont = mlf_InitFont;
 	mlf_CurFont.lfHeight = mn_CurFontHeight;
 	mlf_CurFont.lfWidth = 0; // Font mapper fault
 
 	if (mn_CurFontHeight == 0 || mn_InitFontHeight == 0)
-		return false;
+		goto wrap;
 
-	MArray<DlgItem>* p = NULL;
+
 	if (!m_Items.Get(newDpi.Ydpi, &p))
 	{
 		MArray<DlgItem>* pOrig = NULL;
 		int iOrigDpi = 0;
 		if (!m_Items.GetNext(NULL, &iOrigDpi, &pOrig) || !pOrig || (iOrigDpi <= 0))
-			return false;
+			goto wrap;
 		int iNewDpi = newDpi.Ydpi;
 
 		p = new MArray<DlgItem>();
@@ -405,12 +424,12 @@ bool CDpiForDialog::SetDialogDPI(const DpiValue& newDpi, LPRECT lprcSuggested /*
 		if (!GetClientRect(mh_Dlg, &rcClient) || !GetWindowRect(mh_Dlg, &rcCurWnd))
 		{
 			delete p;
-			return false;
+			goto wrap;
 		}
 
 		_ASSERTE(rcClient.left==0 && rcClient.top==0);
-		int calcDlgWidth = rcClient.right * newDpi.Xdpi / m_CurDpi.Xdpi;
-		int calcDlgHeight = rcClient.bottom * newDpi.Ydpi / m_CurDpi.Ydpi;
+		int calcDlgWidth = rcClient.right * newDpi.Xdpi / curDpi.Xdpi;
+		int calcDlgHeight = rcClient.bottom * newDpi.Ydpi / curDpi.Ydpi;
 
 		DlgItem i = {mh_Dlg};
 
@@ -438,11 +457,9 @@ bool CDpiForDialog::SetDialogDPI(const DpiValue& newDpi, LPRECT lprcSuggested /*
 		m_Items.Set(iNewDpi, p);
 	}
 
-	HFONT hf = CreateFontIndirect(&mlf_CurFont);
+	hf = CreateFontIndirect(&mlf_CurFont);
 	if (hf == NULL)
-		return false;
-
-	DEBUGTEST(wchar_t szClass[100]);
+		goto wrap;
 
 	for (INT_PTR k = p->size() - 1; k >= 0; k--)
 	{
@@ -475,9 +492,10 @@ bool CDpiForDialog::SetDialogDPI(const DpiValue& newDpi, LPRECT lprcSuggested /*
 		DeleteObject(mh_CurFont);
 	mh_CurFont = hf;
 
-	m_CurDpi.SetDpi(newDpi);
-
-	return true;
+	bRc = true;
+wrap:
+	InterlockedDecrement(&mn_InSet);
+	return bRc;
 }
 
 void CDpiForDialog::Detach()
