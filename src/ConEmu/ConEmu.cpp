@@ -7453,7 +7453,7 @@ bool CConEmuMain::CreateWnd(RConStartArgs *args)
 	size_t cchMaxLen = _tcslen(ms_ConEmuExe)
 		+ _tcslen(args->pszSpecialCmd)
 		+ (pszConfig ? (_tcslen(pszConfig) + 32) : 0)
-		+ 140; // на всякие флажки и -new_console
+		+ 160; // на всякие флажки и -new_console
 	if ((pszCmdLine = (wchar_t*)malloc(cchMaxLen*sizeof(*pszCmdLine))) == NULL)
 	{
 		_ASSERTE(pszCmdLine);
@@ -7470,6 +7470,8 @@ bool CConEmuMain::CreateWnd(RConStartArgs *args)
 			_wcscat_c(pszCmdLine, cchMaxLen, L"\" ");
 		}
 		_wcscat_c(pszCmdLine, cchMaxLen, L"/nosingle ");
+		if (gpSet->isQuakeStyle)
+			_wcscat_c(pszCmdLine, cchMaxLen, L"/noquake ");
 		_wcscat_c(pszCmdLine, cchMaxLen, L"/cmd ");
 		_wcscat_c(pszCmdLine, cchMaxLen, args->pszSpecialCmd);
 		if ((args->RunAsAdministrator == crb_On) || (args->RunAsRestricted == crb_On) || args->pszUserName)
