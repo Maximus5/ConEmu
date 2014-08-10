@@ -13,6 +13,22 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
 
+2014.08.10
+[!] With courtesy of Certum, ConEmu's binaries now are signed as ‘Open Source Developer, ConEmu-Maximus5’.
+[!] Per-monitor dpi awareness implemented (Windows 8.1).
+    The checkbox ‘Admit monitor dpi with font size’ is turned on by default.
+    It will affect the height of Tabs, Status and Main console fonts.
+[!] Ability to ‘Treat font height as device units’ implemented.
+    The checkbox is turned OFF by default for existing configs,
+    but it is turned ON by default for new configs and after config reset.
+[*] Releases builded via VisualStudio projects was not dpi-aware.
+[*] Issue 1653: In some rare cases ConEmu.exe was locking shell working directory.
+[*] New ConEmu.exe switches: -quake, -quakeauto (autohide on focus lose) and -noquake.
+[*] Checkbox ‘New window’ was ignored if dialog was started from tasks menu with Shift+Click.
+[*] Ensure that console started in the ‘New window’ will not be Quake-moded.
+[*] Ctrl+Wheel changes the zoom value but not a font height from the ‘Main’ settings page.
+
+
 2014.07.23
 [%] Issue 1608: DefTerm. /config parameter registered for startup was cleared after OS restart.
 [*] DefTerm. Started debugging session of Win32 app from VS was ignored DefTerm options.
