@@ -391,6 +391,9 @@ bool CDpiForDialog::SetDialogDPI(const DpiValue& newDpi, LPRECT lprcSuggested /*
 
 	#ifdef _DEBUG
 	wchar_t szClass[100];
+	LOGFONT lftest1 = {}, lftest2 = {};
+	HFONT hftest;
+	int itest1, itest2;
 	#endif
 
 	// To avoid several nested passes
@@ -472,6 +475,11 @@ bool CDpiForDialog::SetDialogDPI(const DpiValue& newDpi, LPRECT lprcSuggested /*
 		SendMessage(di.h, WM_SETFONT, (WPARAM)hf, FALSE/*immediately*/);
 		EditIconHint_ResChanged(di.h);
 		InvalidateRect(di.h, NULL, TRUE);
+		#ifdef _DEBUG
+		itest1 = GetObject(hf, sizeof(lftest1), &lftest1);
+		hftest = (HFONT)SendMessage(di.h, WM_GETFONT, 0, 0);
+		itest2 = GetObject(hftest, sizeof(lftest2), &lftest2);
+		#endif
 	}
 
 	if (p->size() > 0)
