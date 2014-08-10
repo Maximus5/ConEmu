@@ -756,7 +756,7 @@ CConEmuMain::CConEmuMain()
 	mn_MsgPostAltF9 = RegisterMessage("PostAltF9");
 	mn_MsgInitInactiveDC = RegisterMessage("InitInactiveDC");
 	mn_MsgUpdateProcDisplay = RegisterMessage("UpdateProcDisplay");
-	mn_MsgAutoSizeFont = RegisterMessage("AutoSizeFont");
+	mn_MsgFontSetSize = RegisterMessage("FontSetSize");
 	mn_MsgDisplayRConError = RegisterMessage("DisplayRConError");
 	mn_MsgMacroFontSetName = RegisterMessage("MacroFontSetName");
 	mn_MsgCreateViewWindow = RegisterMessage("CreateViewWindow");
@@ -8249,9 +8249,9 @@ void CConEmuMain::PostMacro(LPCWSTR asMacro)
 	//}
 }
 
-void CConEmuMain::PostAutoSizeFont(int nRelative/*0/1*/, int nValue/*для nRelative==0 - высота, для ==1 - +-1, +-2,...*/)
+void CConEmuMain::PostFontSetSize(int nRelative/*0/1*/, int nValue/*для nRelative==0 - высота, для ==1 - +-1, +-2,...*/)
 {
-	PostMessage(ghWnd, mn_MsgAutoSizeFont, (WPARAM)nRelative, (LPARAM)nValue);
+	PostMessage(ghWnd, mn_MsgFontSetSize, (WPARAM)nRelative, (LPARAM)nValue);
 }
 
 void CConEmuMain::PostMacroFontSetName(wchar_t* pszFontName, WORD anHeight /*= 0*/, WORD anWidth /*= 0*/, BOOL abPosted)
@@ -19206,7 +19206,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 				this->UpdateProcessDisplay(wParam!=0);
 				return 0;
 			}
-			else if (messg == this->mn_MsgAutoSizeFont)
+			else if (messg == this->mn_MsgFontSetSize)
 			{
 				gpSetCls->MacroFontSetSize((int)wParam, (int)lParam);
 				return 0;

@@ -313,7 +313,7 @@ class CSettings
 		BOOL GetFontNameFromFile_BDF(LPCTSTR lpszFilePath, wchar_t (&rsFontName)[LF_FACESIZE], wchar_t (&rsFullFontName)[LF_FACESIZE]);
 		void UpdateConsoleMode(DWORD nMode);
 		bool AutoRecreateFont(int nFontW, int nFontH);
-		bool MacroFontSetSize(int nRelative/*0/1*/, int nValue/*1,2,...*/);
+		bool MacroFontSetSize(int nRelative/*0/1*/, int nValue/*+-1,+-2,...*/);
 		void MacroFontSetName(LPCWSTR pszFontName, WORD anHeight /*= 0*/, WORD anWidth /*= 0*/);
 		bool CheckTheming();
 		void OnPanelViewAppeared(BOOL abAppear);

@@ -11809,7 +11809,7 @@ void CSettings::SaveFontSizes(bool bAuto, bool bSendChanges)
 }
 
 // Вызов из GUI-макросов - увеличить/уменьшить шрифт, без изменения размера (в пикселях) окна
-bool CSettings::MacroFontSetSize(int nRelative/*+1/-2*/, int nValue/*1,2,...*/)
+bool CSettings::MacroFontSetSize(int nRelative/*0/1*/, int nValue/*+-1,+-2,...*/)
 {
 	wchar_t szLog[128];
 	if (isAdvLogging)
@@ -12220,7 +12220,7 @@ void CSettings::RecreateBorderFont(const LOGFONT *inFont)
 // -- смена шрифта из фара (через Gui Macro "FontSetName")
 // void CSettings::MacroFontSetName(LPCWSTR pszFontName, WORD anHeight /*= 0*/, WORD anWidth /*= 0*/)
 // -- смена _размера_ шрифта из фара (через Gui Macro "FontSetSize")
-// bool CSettings::MacroFontSetSize(int nRelative/*+1/-2*/, int nValue/*1,2,...*/)
+// bool CSettings::MacroFontSetSize(int nRelative/*0/1*/, int nValue/*+-1,+-2,...*/)
 // -- пересоздание шрифта по изменению контрола окна настроек
 // void CSettings::RecreateFont(WORD wFromID)
 // -- подгонка шрифта под размер окна GUI (если включен флажок "Auto")

@@ -1557,7 +1557,7 @@ LPWSTR ConEmuMacro::Flash(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 }
 
 // Изменить размер шрифта.
-// int nRelative, int N ("+1" - увеличить на N пунктов, "-1" - уменьшить, "0" - N- указан размер), int N
+// FontSetSize(nRelative, N)
 // для nRelative==0: N - высота
 // для nRelative==1: N - +-1, +-2
 // Возвращает - OK или InvalidArg
@@ -1571,7 +1571,7 @@ LPWSTR ConEmuMacro::FontSetSize(GuiMacro* p, CRealConsole* apRCon, bool abFromPl
 	{
 		//lbSetFont = gpSet->AutoSizeFont(nRelative, nValue);
 		//if (lbSetFont)
-		gpConEmu->PostAutoSizeFont(nRelative, nValue);
+		gpConEmu->PostFontSetSize(nRelative, nValue);
 		return lstrdup(L"OK");
 	}
 

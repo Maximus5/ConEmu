@@ -504,7 +504,7 @@ void CGestures::ProcessZoom(HWND hWnd, const double dZoomFactor, const LONG lZx,
 			else if (nDelta > 8)
 				nDelta = 8;
 
-			gpConEmu->PostAutoSizeFont(TRUE, nDelta);
+			gpConEmu->PostFontSetSize(1, nDelta);
 		}
 		else if (dZoomFactor < 0.99)
 		{
@@ -514,7 +514,7 @@ void CGestures::ProcessZoom(HWND hWnd, const double dZoomFactor, const LONG lZx,
 			else if (nDelta > 8)
 				nDelta = 8;
 
-			gpConEmu->PostAutoSizeFont(TRUE, -nDelta);
+			gpConEmu->PostFontSetSize(1, -nDelta);
 		}
 	}
 	return;

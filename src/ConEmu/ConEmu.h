@@ -561,7 +561,7 @@ class CConEmuMain :
 		//UINT mn_MsgActivateCon; // = RegisterWindowMessage(CONEMUMSG_ACTIVATECON);
 		UINT mn_MsgUpdateProcDisplay;
 		//UINT wmInputLangChange;
-		UINT mn_MsgAutoSizeFont;
+		UINT mn_MsgFontSetSize;
 		UINT mn_MsgDisplayRConError;
 		UINT mn_MsgMacroFontSetName;
 		UINT mn_MsgCreateViewWindow;
@@ -707,11 +707,11 @@ class CConEmuMain :
 		void LoadIcons();
 		void MoveActiveTab(CVirtualConsole* apVCon, bool bLeftward);
 		void InvalidateGaps();
-		void PostAutoSizeFont(int nRelative/*0/1*/, int nValue/*для nRelative==0 - высота, для ==1 - +-1, +-2,...*/);
 		void PostDragCopy(BOOL abMove, BOOL abReceived=FALSE);
 		void PostCreate(BOOL abReceived=FALSE);
 		void PostCreateCon(RConStartArgs *pArgs);
 		HWND PostCreateView(CConEmuChild* pChild);
+		void PostFontSetSize(int nRelative/*0/1*/, int nValue/*для nRelative==0 - высота, для ==1 - +-1, +-2,...*/);
 		void PostMacro(LPCWSTR asMacro);
 		void PostMacroFontSetName(wchar_t* pszFontName, WORD anHeight /*= 0*/, WORD anWidth /*= 0*/, BOOL abPosted);
 		void PostDisplayRConError(CRealConsole* apRCon, wchar_t* pszErrMsg);
