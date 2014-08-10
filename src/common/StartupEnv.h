@@ -40,7 +40,9 @@ static BOOL CALLBACK LoadStartupEnv_FillMonitors(HMONITOR hMonitor, HDC hdcMonit
 	if (p->nMonitorsCount >= countof(p->Monitors))
 		return FALSE;
 
-	MONITORINFOEX mi = {}; mi.cbSize = sizeof(mi);
+	MONITORINFOEX mi;
+	ZeroStruct(mi);
+	mi.cbSize = sizeof(mi);
 	if (GetMonitorInfo(hMonitor, &mi))
 	{
 		size_t i = p->nMonitorsCount++;
