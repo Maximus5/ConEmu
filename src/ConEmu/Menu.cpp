@@ -521,7 +521,7 @@ void CConEmuMenu::OnNewConPopupMenu(POINT* ptWhere /*= NULL*/, DWORD nFlags /*= 
 			}
 
 			//Собственно, запуск
-			if (gpSetCls->IsMulti())
+			if (gpSetCls->IsMulti() && (con.aRecreate != cra_CreateWindow))
 				gpConEmu->CreateCon(&con, true);
 			else
 				gpConEmu->CreateWnd(&con);
