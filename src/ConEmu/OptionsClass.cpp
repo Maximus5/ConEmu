@@ -2207,6 +2207,9 @@ LRESULT CSettings::OnInitDialog_Main(HWND hWnd2)
 
 	checkDlgButton(hWnd2, cbFixFarBorders, BST(gpSet->isFixFarBorders));
 
+	checkDlgButton(hWnd2, cbFontMonitorDpi, gpSet->FontUseDpi ? BST_CHECKED : BST_UNCHECKED);
+	checkDlgButton(hWnd2, cbFontAsDeviceUnits, gpSet->FontUseUnits ? BST_CHECKED : BST_UNCHECKED);
+
 	mn_LastChangingFontCtrlId = 0;
 	return 0;
 }
@@ -5273,6 +5276,8 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			break;
 		case cbBold:
 		case cbItalic:
+		case cbFontAsDeviceUnits:
+		case cbFontMonitorDpi:
 			PostMessage(hWnd2, gpSetCls->mn_MsgRecreateFont, wParam, 0);
 			break;
 		case cbBgImage:
@@ -11676,6 +11681,8 @@ void CSettings::RecreateFont(WORD wFromID)
 	        || wFromID == tFontCharset
 	        || wFromID == cbBold
 	        || wFromID == cbItalic
+	        || wFromID == cbFontMonitorDpi
+	        || wFromID == cbFontAsDeviceUnits
 	        || wFromID == rNoneAA
 	        || wFromID == rStandardAA
 	        || wFromID == rCTAA
@@ -11700,6 +11707,8 @@ void CSettings::RecreateFont(WORD wFromID)
 		GetDlgItemText(hMainPg, tFontFace, LF.lfFaceName, countof(LF.lfFaceName));
 		gpSet->FontSizeY = GetNumber(hMainPg, tFontSizeY);
 		gpSet->FontSizeX = GetNumber(hMainPg, tFontSizeX);
+		gpSet->FontUseDpi = IsChecked(hMainPg, cbFontMonitorDpi);
+		gpSet->FontUseUnits = IsChecked(hMainPg, cbFontAsDeviceUnits);
 		EvalLogfontSizes(LF, gpSet->FontSizeY, gpSet->FontSizeX);
 		LF.lfWeight = IsChecked(hMainPg, cbBold) ? FW_BOLD : FW_NORMAL;
 		LF.lfItalic = IsChecked(hMainPg, cbItalic);
@@ -11757,6 +11766,9 @@ void CSettings::RecreateFont(WORD wFromID)
 
 		if (wFromID != (WORD)-1)
 		{
+			if (wFromID == cbFontAsDeviceUnits || wFromID == cbFontMonitorDpi)
+				gpConEmu->RecreateControls(true, true, false);
+
 			gpConEmu->Update(true);
 
 			if (gpConEmu->WindowMode == wmNormal)
