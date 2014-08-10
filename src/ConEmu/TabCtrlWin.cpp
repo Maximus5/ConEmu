@@ -1240,9 +1240,9 @@ int CTabPanelWin::QueryTabbarHeight()
 	{
 		// Не будем создавать TabBar. Все равно вне окно ConEmu оценка получается неточной
 		//_ASSERTE((hTabs!=NULL) && "Creating of a dummy tab control failed");
-		int lfHeight = gpSetCls->EvalSize(gpSet->nTabFontHeight, true, true, false);
+		int lfHeight = gpSetCls->EvalSize(gpSet->nTabFontHeight, esf_Vertical|esf_CanUseDpi|esf_CanUseUnits);
 		mn_TabHeight = gpSetCls->EvalFontHeight(gpSet->sTabFontFace, lfHeight, gpSet->nTabFontCharSet)
-			+ gpSetCls->EvalSize((lfHeight < 0) ? 8 : 9, true, false, false);
+			+ gpSetCls->EvalSize((lfHeight < 0) ? 8 : 9, esf_Vertical);
 	}
 
 	//if (bDummyCreate && hTabs)

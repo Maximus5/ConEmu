@@ -50,6 +50,17 @@ enum SingleInstanceArgEnum
 	sgl_Disabled = 2,
 };
 
+typedef DWORD EvalSizeFlags;
+const EvalSizeFlags
+	// May be used in combination
+	esf_CanUseDpi    = 0x0010, // Take into account _dpiY
+	esf_CanUseZoom   = 0x0020, // Take into account mn_FontZoomValue
+	esf_CanUseUnits  = 0x0040, // Make the result negative IF gpSet->FontUseUnits is ON
+	// Must not be used togather
+	esf_Vertical     = 0x0001, // Used to get lfHeight
+	esf_Horizontal   = 0x0000  // Used to get lfWidth
+;
+
 class CSettings
 {
 	public:
@@ -117,7 +128,7 @@ class CSettings
 		HFONT CreateOtherFont(const wchar_t* asFontName);
 		void GetMainLogFont(LOGFONT& lf);
 		void EvalLogfontSizes(LOGFONT& LF, LONG lfHeight, LONG lfWidth);
-		LONG EvalSize(LONG nSize, bool bVert, bool bCanUseUnits, bool bUseZoom);
+		LONG EvalSize(LONG nSize, EvalSizeFlags Flags);
 		LONG EvalFontHeight(LPCWSTR lfFaceName, LONG lfHeight, BYTE nFontCharSet);
 	private:
 		LOGFONT LogFont, LogFont2;

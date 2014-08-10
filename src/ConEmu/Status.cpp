@@ -421,7 +421,8 @@ void CStatus::PaintStatus(HDC hPaint, LPRECT prcStatus /*= NULL*/)
 	lf.lfCharSet = gpSet->nStatusFontCharSet;
 	lf.lfPitchAndFamily = DEFAULT_PITCH | FF_SWISS;
 	wcscpy_c(lf.lfFaceName, gpSet->sStatusFontFace);
-	gpSetCls->EvalLogfontSizes(lf, gpSet->StatusBarFontHeight(), 0);
+	// Do not use gpSetCls->EvalLogfontSizes, because we does not need to take zoom into account here
+	lf.lfHeight = gpSetCls->EvalSize(gpSet->StatusBarFontHeight(), esf_Vertical|esf_CanUseUnits|esf_CanUseDpi);
 
 	HFONT hFont = CreateFontIndirect(&lf);
 	HFONT hOldF = (HFONT)SelectObject(hDrawDC, hFont);

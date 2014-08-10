@@ -1151,12 +1151,12 @@ void CSettings::EvalLogfontSizes(LOGFONT& LF, LONG lfHeight, LONG lfWidth)
 		lfHeight = gpSet->FontUseUnits ? 12 : 16;
 	}
 
-	LF.lfHeight = EvalSize(lfHeight, true, true, true);
-	LF.lfWidth  = lfWidth ? EvalSize(lfWidth, false, false, true) : 0;
+	LF.lfHeight = EvalSize(lfHeight, esf_Vertical|esf_CanUseUnits|esf_CanUseDpi|esf_CanUseZoom);
+	LF.lfWidth  = lfWidth ? EvalSize(lfWidth, esf_Horizontal|esf_CanUseDpi|esf_CanUseZoom) : 0;
 }
 
 // Помножить размер на масштаб * dpi * юниты(-1)
-LONG CSettings::EvalSize(LONG nSize, bool bVert, bool bCanUseUnits, bool bUseZoom)
+LONG CSettings::EvalSize(LONG nSize, EvalSizeFlags Flags)
 {
 	if (nSize <= 0)
 	{
@@ -1170,7 +1170,7 @@ LONG CSettings::EvalSize(LONG nSize, bool bVert, bool bCanUseUnits, bool bUseZoo
 	LONG iMul = 1, iDiv = 1, iResult;
 
 	// DPI текущего(!) монитора
-	if (gpSet->FontUseDpi)
+	if ((Flags & esf_CanUseDpi) && gpSet->FontUseDpi)
 	{
 		if (_dpiY > 0)
 		{
@@ -1185,7 +1185,7 @@ LONG CSettings::EvalSize(LONG nSize, bool bVert, bool bCanUseUnits, bool bUseZoo
 	}
 
 	// Zooming, current, is not stored in the settings
-	if (bUseZoom)
+	if (Flags & esf_CanUseZoom)
 	{
 		TODO("Zoom");
 	}
@@ -1194,7 +1194,8 @@ LONG CSettings::EvalSize(LONG nSize, bool bVert, bool bCanUseUnits, bool bUseZoo
 	_ASSERTE(iMul>0 && iDiv>0);
 
 	// Units (char height) or pixels (cell height)?
-	if (bCanUseUnits && gpSet->FontUseUnits && (nSize > 0))
+	if ((Flags & esf_CanUseUnits) && (Flags & esf_Vertical)
+		&& gpSet->FontUseUnits && (nSize > 0))
 	{
 		iMul = -iMul;
 	}

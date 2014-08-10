@@ -3736,7 +3736,7 @@ int Settings::StatusBarFontHeight()
 
 int Settings::StatusBarHeight()
 {
-	int lfHeight = gpSetCls->EvalSize(StatusBarFontHeight(), true, true, false);
+	int lfHeight = gpSetCls->EvalSize(StatusBarFontHeight(), esf_Vertical|esf_CanUseDpi|esf_CanUseUnits);
 	int iHeight = gpSetCls->EvalFontHeight(sStatusFontFace, lfHeight, nStatusFontCharSet);
 	_ASSERTE(iHeight > 0);
 
