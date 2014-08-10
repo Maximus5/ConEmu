@@ -83,6 +83,8 @@ const wchar_t szRasterAutoError[] = L"Font auto size is not allowed for a fixed 
 #define FontDefWidthMin 0
 #define FontDefWidthMax 99
 
+#define FontZoom100 10000
+
 #define TEST_FONT_WIDTH_STRING_EN L"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 #define TEST_FONT_WIDTH_STRING_RU L"АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ"
 
@@ -294,6 +296,7 @@ CSettings::CSettings()
 	// Шрифты
 	//memset(m_Fonts, 0, sizeof(m_Fonts));
 	//TODO: OLD - на переделку
+	mn_FontZoomValue = FontZoom100;
 	memset(&LogFont, 0, sizeof(LogFont));
 	memset(&LogFont2, 0, sizeof(LogFont2));
 	mn_FontWidth = mn_BorderFontWidth = 0; mn_FontHeight = 16; // сброшено будет в SettingsLoaded
@@ -1187,7 +1190,11 @@ LONG CSettings::EvalSize(LONG nSize, EvalSizeFlags Flags)
 	// Zooming, current, is not stored in the settings
 	if (Flags & esf_CanUseZoom)
 	{
-		TODO("Zoom");
+		if (mn_FontZoomValue && (mn_FontZoomValue != FontZoom100))
+		{
+			iMul *= mn_FontZoomValue;
+			iDiv *= FontZoom100;
+		}
 	}
 
 	// Сейчас множитель-делитель должны быть >0

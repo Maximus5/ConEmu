@@ -131,6 +131,7 @@ class CSettings
 		LONG EvalSize(LONG nSize, EvalSizeFlags Flags);
 		LONG EvalFontHeight(LPCWSTR lfFaceName, LONG lfHeight, BYTE nFontCharSet);
 	private:
+		LONG mn_FontZoomValue; // 100% == 10000 (FontZoom100)
 		LOGFONT LogFont, LogFont2;
 		LONG mn_AutoFontWidth, mn_AutoFontHeight; // размеры шрифтов, которые были запрошены при авторесайзе шрифта
 		LONG mn_FontWidth, mn_FontHeight, mn_BorderFontWidth; // реальные размеры шрифтов
