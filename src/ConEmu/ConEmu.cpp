@@ -60,6 +60,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmuApp.h"
 #include "ConEmuPipe.h"
 #include "DefaultTerm.h"
+#include "DpiAware.h"
 #include "DragDrop.h"
 #include "FindDlg.h"
 #include "GestureEngine.h"
@@ -5267,6 +5268,15 @@ bool CConEmuMain::JumpNextMonitor(HWND hJumpWnd, HMONITOR hJumpMon, bool Next, c
 	// прыжки и для других окон, например окна настроек
 	if (hJumpWnd == ghWnd)
 	{
+		if (gpSet->FontUseDpi && CDpiAware::IsPerMonitorDpi())
+		{
+			DpiValue dpi;
+			if (CDpiAware::QueryDpiForMonitor(hNext, &dpi))
+			{
+				OnDpiChanged(dpi.Xdpi, dpi.Ydpi, &rcNewMain, false);
+			}
+		}
+
 		// Коррекция (заранее)
 		OnMoving(&rcNewMain);
 
@@ -7081,7 +7091,7 @@ LRESULT CConEmuMain::OnSessionChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 	return 0; // Return value ignored
 }
 
-LRESULT CConEmuMain::OnDpiChanged(UINT dpiX, UINT dpiY, LPRECT prcSuggested)
+LRESULT CConEmuMain::OnDpiChanged(UINT dpiX, UINT dpiY, LPRECT prcSuggested, bool bResizeWindow)
 {
 	wchar_t szInfo[100];
 	RECT rc = {}; if (prcSuggested) rc = *prcSuggested;
@@ -7092,7 +7102,7 @@ LRESULT CConEmuMain::OnDpiChanged(UINT dpiX, UINT dpiY, LPRECT prcSuggested)
 
 	gpSetCls->OnDpiChanged(dpiX, dpiY, prcSuggested);
 
-	RecreateControls(true/*bRecreateTabbar*/, true/*bRecreateStatus*/, true);
+	RecreateControls(true/*bRecreateTabbar*/, true/*bRecreateStatus*/, bResizeWindow);
 
 	return 0;
 }
@@ -7105,20 +7115,23 @@ void CConEmuMain::RecreateControls(bool bRecreateTabbar, bool bRecreateStatus, b
 	if (bRecreateStatus && mp_Status)
 		mp_Status->UpdateStatusBar(true);
 
-	if (bResizeWindow && IsSizePosFree())
+	if (bResizeWindow)
 	{
-		RECT rcNew = GetDefaultRect();
-		// If Windows DWM sends new preferred RECT?
-		if (prcSuggested)
+		if (IsSizePosFree())
 		{
-			;
+			RECT rcNew = GetDefaultRect();
+			// If Windows DWM sends new preferred RECT?
+			if (prcSuggested)
+			{
+				;
+			}
+			MoveWindow(ghWnd, rcNew.left, rcNew.top, rcNew.right - rcNew.left, rcNew.bottom - rcNew.top, TRUE);
 		}
-		MoveWindow(ghWnd, rcNew.left, rcNew.top, rcNew.right - rcNew.left, rcNew.bottom - rcNew.top, TRUE);
-	}
-	else
-	{
-		gpConEmu->OnSize();
-		gpConEmu->InvalidateGaps();
+		else
+		{
+			gpConEmu->OnSize();
+			gpConEmu->InvalidateGaps();
+		}
 	}
 }
 
@@ -18715,7 +18728,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		} break;
 		case /*0x02E0*/ WM_DPICHANGED:
 		{
-			OnDpiChanged(LOWORD(wParam), HIWORD(wParam), (LPRECT)lParam);
+			OnDpiChanged(LOWORD(wParam), HIWORD(wParam), (LPRECT)lParam, true);
 			result = ::DefWindowProc(hWnd, messg, wParam, lParam);
 		} break;
 

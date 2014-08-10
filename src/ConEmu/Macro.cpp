@@ -2253,7 +2253,7 @@ LPWSTR ConEmuMacro::SetDpi(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 	if (!p->GetIntArg(0, nValue))
 		return lstrdup(L"InvalidArg");
 
-	gpConEmu->OnDpiChanged(nValue, nValue, NULL);
+	gpConEmu->OnDpiChanged(nValue, nValue, NULL, true);
 
 	return lstrdup(L"OK");
 }
