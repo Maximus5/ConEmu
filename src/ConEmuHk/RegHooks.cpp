@@ -62,10 +62,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <shlwapi.h>
 #include "../common/common.hpp"
 #include "../common/ConEmuCheck.h"
-#include "SetHook.h"
 #include "../common/execute.h"
-#include "ConEmuHooks.h"
 #include "../common/WinObjects.h"
+#include "ConEmuHooks.h"
+#include "SetHook.h"
 
 #define MAX_HOOKED_PATH 64
 //#define MAX_ADD_ENUMS 8 // пока хватает 3-х!
