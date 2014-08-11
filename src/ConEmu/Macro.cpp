@@ -2178,6 +2178,11 @@ LPWSTR ConEmuMacro::Rename(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 	return lstrdup(L"InvalidArg");
 }
 
+// Select(<Type>,<DX>,<DY>,<HE>)
+//  Type: 0 - Text, 1 - Block
+//    DX: select text horizontally: -1/+1
+//    DY: select text vertically: -1/+1
+//    HE: to-home(-1)/to-end(+1) with text selection
 LPWSTR ConEmuMacro::Select(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 {
 	if (!apRCon)
