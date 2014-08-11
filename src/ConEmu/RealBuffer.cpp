@@ -7029,6 +7029,12 @@ LRESULT CRealBuffer::OnScroll(int nDirection, short nTrackPos /*= -1*/, UINT nCo
 		case SB_PAGEUP:
 			nNewTop = max(0, (con.m_sbi.srWindow.Top - nVisible + 1));
 			break;
+		case SB_TOP:
+			nNewTop = 0;
+			break;
+		case SB_BOTTOM:
+			nNewTop = (con.m_sbi.dwSize.Y - nVisible);
+			break;
 		case SB_THUMBTRACK:
 		case SB_THUMBPOSITION:
 			{

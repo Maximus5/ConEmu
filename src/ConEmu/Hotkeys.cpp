@@ -1117,6 +1117,11 @@ int ConEmuHotKey::AllocateHotkeys(ConEmuHotKey** ppHotKeys)
 		{vkCtrlDown,       chk_User,  NULL,    L"Key.BufDn",             MakeHotKey(VK_DOWN,VK_CONTROL), CConEmuCtrl::key_BufferScrollDown}, // Buffer scroll
 		{vkCtrlPgUp,       chk_User,  NULL,    L"Key.BufPgUp",           MakeHotKey(VK_PRIOR,VK_CONTROL), CConEmuCtrl::key_BufferScrollPgUp}, // Buffer scroll
 		{vkCtrlPgDn,       chk_User,  NULL,    L"Key.BufPgDn",           MakeHotKey(VK_NEXT,VK_CONTROL), CConEmuCtrl::key_BufferScrollPgDn}, // Buffer scroll
+		{vkAppsPgUp,       chk_User,  NULL,    L"Key.BufHfPgUp",         MakeHotKey(VK_PRIOR,VK_APPS), CConEmuCtrl::key_GuiMacro, false, lstrdup(L"Scroll(2,-1)")}, // Buffer scroll
+		{vkAppsPgDn,       chk_User,  NULL,    L"Key.BufHfPgDn",         MakeHotKey(VK_NEXT,VK_APPS), CConEmuCtrl::key_GuiMacro, false, lstrdup(L"Scroll(2,+1)")}, // Buffer scroll
+		{vkAppsHome,       chk_User,  NULL,    L"Key.BufTop",            MakeHotKey(VK_HOME,VK_APPS), CConEmuCtrl::key_GuiMacro, false, lstrdup(L"Scroll(3,-1)")}, // Buffer scroll
+		{vkAppsEnd,        chk_User,  NULL,    L"Key.BufBottom",         MakeHotKey(VK_END,VK_APPS), CConEmuCtrl::key_GuiMacro, false, lstrdup(L"Scroll(3,+1)")}, // Buffer scroll
+		{vkAppsBS,         chk_User,  NULL,    L"Key.BufCursor",         MakeHotKey(VK_BACK,VK_APPS), CConEmuCtrl::key_GuiMacro, false, lstrdup(L"Scroll(4)")}, // Buffer scroll
 		//
 		{vkPicViewSlide,   chk_User,  NULL,    L"Key.PicViewSlide",      MakeHotKey(VK_PAUSE), CConEmuCtrl::key_PicViewSlideshow, true/*OnKeyUp*/}, // Slideshow in PicView2
 		{vkPicViewSlower,  chk_User,  NULL,    L"Key.PicViewSlower",     MakeHotKey(0xbd/* -_ */), CConEmuCtrl::key_PicViewSlideshow}, // Slideshow in PicView2

@@ -167,6 +167,8 @@ namespace ConEmuMacro
 	LPWSTR Progress(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Rename(<Type>,"<Title>")
 	LPWSTR Rename(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
+	// Scroll(<Type>,<Direction>,<Count=1>)
+	LPWSTR Scroll(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Select(<Type>,<DX>,<DY>)
 	LPWSTR Select(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// SetDpi(dpi)
@@ -232,6 +234,7 @@ namespace ConEmuMacro
 		{Print, {L"Print"}},
 		{Progress, {L"Progress"}},
 		{Rename, {L"Rename"}},
+		{Scroll, {L"Scroll"}},
 		{Select, {L"Select"}},
 		{SetDpi, {L"SetDpi"}},
 		{SetOption, {L"SetOption"}},
@@ -2176,6 +2179,51 @@ LPWSTR ConEmuMacro::Rename(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 	}
 
 	return lstrdup(L"InvalidArg");
+}
+
+// Scroll(<Type>,<Direction>,<Count=1>)
+//  Type: 0; Value: ‘-1’=Up, ‘+1’=Down
+//  Type: 1; Value: ‘-1’=PgUp, ‘+1’=PgDown
+//  Type: 2; Value: ‘-1’=HalfPgUp, ‘+1’=HalfPgDown
+//  Type: 3; Value: ‘-1’=Top, ‘+1’=Bottom
+//  Type: 4; No arguments; Go to cursor line
+LPWSTR ConEmuMacro::Scroll(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
+{
+	if (!apRCon)
+		return lstrdup(L"No console");
+
+	int nType = 0, nDir = 0, nCount = 1;
+
+	if (!p->GetIntArg(0, nType) || (nType < 0 || nType > 4))
+		return lstrdup(L"InvalidArg");
+	if (nType != 4)
+	{
+		if (!p->GetIntArg(1, nDir) || (nDir == 0))
+			return lstrdup(L"InvalidArg");
+		if (!p->GetIntArg(2, nCount) || (nCount < 1))
+			nCount = 1;
+	}
+
+	switch (nType)
+	{
+	case 0:
+		apRCon->OnScroll((nDir < 0) ? SB_LINEUP : SB_LINEDOWN, nCount);
+		break;
+	case 1:
+		apRCon->OnScroll((nDir < 0) ? SB_PAGEUP : SB_PAGEDOWN, nCount);
+		break;
+	case 2:
+		apRCon->OnScroll((nDir < 0) ? SB_HALFPAGEUP : SB_HALFPAGEDOWN, nCount);
+		break;
+	case 3:
+		apRCon->OnScroll((nDir < 0) ? SB_TOP : SB_BOTTOM);
+		break;
+	case 4:
+		apRCon->OnScroll(SB_GOTOCURSOR);
+		break;
+	}
+
+	return lstrdup(L"OK");
 }
 
 // Select(<Type>,<DX>,<DY>,<HE>)

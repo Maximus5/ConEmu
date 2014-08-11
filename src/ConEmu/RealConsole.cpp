@@ -5361,11 +5361,48 @@ LPCWSTR CRealConsole::GetTabTitle(CTab& tab)
 	return pszName;
 }
 
-LRESULT CRealConsole::OnScroll(int nDirection)
+// nDirection is one of the standard SB_xxx constants
+LRESULT CRealConsole::OnScroll(int nDirection, UINT nCount /*= 1*/)
 {
-	if (!this) return 0;
+	if (!this || !mp_ABuf)
+		return 0;
 
-	return mp_ABuf->OnScroll(nDirection);
+	LRESULT lRc = 0;
+	short nTrackPos = -1;
+	CONSOLE_SCREEN_BUFFER_INFO sbi = {};
+	int nVisible = 0;
+
+	switch (nDirection)
+	{
+	case SB_HALFPAGEUP:
+	case SB_HALFPAGEDOWN:
+		nCount = MulDiv(nCount, TextHeight(), 2);
+		nDirection -= SB_HALFPAGEUP;
+		_ASSERTE(nDirection==SB_LINEUP || nDirection==SB_LINEDOWN);
+		_ASSERTE(SB_LINEUP==(SB_HALFPAGEUP-SB_HALFPAGEUP) && SB_LINEDOWN==(SB_HALFPAGEDOWN-SB_HALFPAGEUP));
+		break;
+	case SB_GOTOCURSOR:
+		nVisible = mp_ABuf->GetTextHeight();
+		mp_ABuf->ConsoleScreenBufferInfo(&sbi);
+		nDirection = SB_THUMBPOSITION;
+		// Курсор выше видимой области?
+		if ((sbi.dwCursorPosition.Y < sbi.srWindow.Top)
+			// Курсор ниже видимой области?
+			|| (sbi.dwCursorPosition.Y > sbi.srWindow.Bottom))
+		{
+			// Let it set to one from the bottom
+			nTrackPos = max(0,sbi.dwCursorPosition.Y-nVisible+2);
+		}
+		else
+		{
+			goto wrap; // Он и так видим
+		}
+		break;
+	}
+
+	lRc = mp_ABuf->OnScroll(nDirection, nTrackPos, nCount);
+wrap:
+	return lRc;
 }
 
 LRESULT CRealConsole::OnSetScrollPos(WPARAM wParam)

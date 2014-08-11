@@ -39,6 +39,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEFINE_EXIT_DESC
 #include "../ConEmuCD/ExitCodes.h"
 
+#define SB_HALFPAGEUP   32
+#define SB_HALFPAGEDOWN 33
+#define SB_GOTOCURSOR   34
+
 #define CES_CMDACTIVE      0x01
 #define CES_TELNETACTIVE   0x02
 #define CES_FARACTIVE      0x04
@@ -458,7 +462,7 @@ class CRealConsole
 		bool isServerCreated(bool bFullRequired = false);
 		bool isServerAvailable();
 		bool isServerClosing();
-		LRESULT OnScroll(int nDirection);
+		LRESULT OnScroll(int nDirection, UINT nCount = 1);
 		LRESULT OnSetScrollPos(WPARAM wParam);
 		bool GetConsoleSelectionInfo(CONSOLE_SELECTION_INFO *sel);
 		bool isConSelectMode();
