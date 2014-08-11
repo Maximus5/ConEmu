@@ -371,9 +371,6 @@
     <ClInclude Include="..\common\WinObjects.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\common\execute.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="ConEmuCtrl.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -469,6 +466,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="DpiAware.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\execute.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
