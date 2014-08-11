@@ -67,6 +67,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmuHooks.h"
 #include "SetHook.h"
 
+// Is not used in release at least
+#ifdef HOOKS_USE_VIRT_REGISTRY
+
 #define MAX_HOOKED_PATH 64
 //#define MAX_ADD_ENUMS 8 // пока хватает 3-х!
 #ifdef _DEBUG
@@ -321,10 +324,12 @@ LONG WINAPI OnRegConnectRegistryW(LPCWSTR lpMachineName, HKEY hKey, PHKEY phkRes
 
 void PrepareHookedKeyList();
 
+#endif
+
 bool InitHooksReg()
 {
 	bool lbRc = false;
-#ifndef HOOKS_SKIP_REGISTRY
+#ifdef HOOKS_USE_VIRT_REGISTRY
 	CESERVER_CONSOLE_MAPPING_HDR* pInfo = GetConMap();
 	if (!pInfo || !(pInfo->isHookRegistry&1) || !*pInfo->sHiveFileName)
 		return false;
@@ -376,6 +381,7 @@ bool InitHooksReg()
 	return lbRc;
 }
 
+#ifdef HOOKS_USE_VIRT_REGISTRY
 void CloseRootKeys()
 {
 	PHKEY hk[] = {&ghNewKeyRoot,
@@ -393,9 +399,11 @@ void CloseRootKeys()
 		}
 	}
 }
+#endif
 
 void DoneHooksReg()
 {
+#ifdef HOOKS_USE_VIRT_REGISTRY
 #ifdef _DEBUG
 	//WARNING!!! OutputDebugString must NOT be used from ConEmuHk::DllMain(DLL_PROCESS_DETACH). See Issue 465
 	DEBUGSTR(L"ConEmuHk: Deinitializing registry virtualization!\n");
@@ -416,6 +424,7 @@ void DoneHooksReg()
 	//WARNING!!! OutputDebugString must NOT be used from ConEmuHk::DllMain(DLL_PROCESS_DETACH). See Issue 465
 	DEBUGSTR(L"ConEmuHk: Registry virtualization deinitialized!\n");
 #endif
+#endif
 }
 
 void InitHooksRegThread()
@@ -427,6 +436,7 @@ void DoneHooksRegThread()
 }
 
 
+#ifdef HOOKS_USE_VIRT_REGISTRY
 // !!! WARNING !!! В ЭТОЙ функции обращений к реестру (или advapi32) НЕ ДЕЛАТЬ !!!
 void PrepareHookedKeyList()
 {
@@ -697,6 +707,7 @@ RegKeyHook* HooksRegistryPtr()
 
 	return gpRegKeyHooks;
 }
+#endif
 
 
 /*
@@ -785,6 +796,7 @@ RegUnLoadKeyW
 */
 
 
+#ifdef HOOKS_USE_VIRT_REGISTRY
 bool CheckKeyHookedA(HKEY& hKey, LPCSTR& lpSubKey, LPSTR& lpTemp, RegKeyType& rkt, DWORD wowOptions=0 /*KEY_WOW64_64KEY/KEY_WOW64_32KEY*/)
 {
 	_ASSERTE(lpTemp == NULL);
@@ -1461,3 +1473,4 @@ LONG WINAPI OnRegConnectRegistryW(LPCWSTR lpMachineName, HKEY hKey, PHKEY phkRes
 	}
 	return lRc;
 }
+#endif
