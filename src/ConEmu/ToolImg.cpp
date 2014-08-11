@@ -111,20 +111,33 @@ bool CToolImg::Create(int nBtnWidth, int nBtnHeight, int nMaxCount, COLORREF clr
 
 bool CToolImg::CreateField(int nImgWidth, int nImgHeight, COLORREF clrBackground)
 {
+	bool bComp = (gnOsVer < 0x600);
+	HDC hScreen = bComp ? GetDC(NULL) : NULL;
+
 	// Create memory DC
-	mh_BmpDc = CreateCompatibleDC(NULL);
+	mh_BmpDc = CreateCompatibleDC(hScreen);
 	if (!mh_BmpDc)
 	{
-		return false;
+		_ASSERTE(mh_BmpDc!=NULL);
+	}
+	else
+	{
+		// Create memory bitmap (WinXP and lower toolbar has some problem with true-color buttons, so - 8bit/compatible)
+		if (bComp)
+			mh_Bmp = CreateCompatibleBitmap(hScreen, nImgWidth, nImgHeight);
+		else
+			mh_Bmp = CreateBitmap(nImgWidth, nImgHeight, 1, 32, NULL);
 	}
 
-	// Create memory bitmap (WinXP and lower toolbar has some problem with true-color buttons, so - 8bit)
-	mh_Bmp = CreateBitmap(nImgWidth, nImgHeight, 1, (gnOsVer >= 0x600) ? 32 : 8, NULL);
+	if (hScreen)
+			ReleaseDC(NULL, hScreen);
+
 	if (!mh_Bmp)
 	{
 		FreeDC();
 		return false;
 	}
+
 	mh_OldBmp = (HBITMAP)SelectObject(mh_BmpDc, mh_Bmp);
 
 	// Prefill with background
@@ -416,8 +429,17 @@ int CToolImg::AddBitmap(HBITMAP hbm, int iNumBtns)
 	// Where we must paint to
 	int x = mn_BtnCount * mn_BtnWidth;
 
+	#ifdef _DEBUG
+	//SaveImageEx(L"C:\\ConEmu\\Pre.png", mh_Bmp);
+	//SaveImageEx(L"C:\\ConEmu\\Paint.png", hbm);
+	#endif
+
 	// And go
 	bool blitRc = PaintBitmap(hbm, iSrcWidth, iSrcHeight, mh_BmpDc, x, 0, iAdded*mn_BtnWidth, mn_BtnHeight);
+
+	#ifdef _DEBUG
+	//SaveImageEx(L"C:\\ConEmu\\Post.png", mh_Bmp);
+	#endif
 
 	// Check result
 	if (blitRc)
