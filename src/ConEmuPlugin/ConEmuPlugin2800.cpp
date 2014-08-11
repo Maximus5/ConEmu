@@ -149,11 +149,11 @@ void ProcessDragFromW2800()
 		return;
 
 	WindowInfo WInfo = {sizeof(WindowInfo)};
-	WInfo.Pos = 0;
+	WInfo.Pos = -1;
 	_ASSERTE(GetCurrentThreadId() == gnMainThreadId);
-	InfoW2800->AdvControl(&guid_ConEmu, ACTL_GETWINDOWINFO, 0, &WInfo);
+	INT_PTR iFRc = InfoW2800->AdvControl(&guid_ConEmu, ACTL_GETWINDOWINFO, 0, &WInfo);
 
-	if (!(WInfo.Flags & WIF_CURRENT))
+	if (!(WInfo.Flags & WIF_CURRENT) || (WInfo.Type != WTYPE_PANELS))
 	{
 		int ItemsCount=0;
 		//WriteFile(hPipe, &ItemsCount, sizeof(int), &cout, NULL);
