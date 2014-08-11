@@ -708,7 +708,13 @@ bool SaveImageEx(LPCWSTR asImgPath, HBITMAP hBitmap)
 
 	Gdiplus::EncoderParameters encoderParameters;
 	Gdiplus::GpImage *pImg = NULL;
-	
+
+	#ifdef _DEBUG
+	DWORD nErrCode = 0;
+	BITMAP bmpInfo = {};
+	nErrCode = GetObject(hBitmap, sizeof(bmpInfo), &bmpInfo);
+	#endif
+
 	lRc = GdipCreateBitmapFromHBITMAP(hBitmap, NULL, &pImg);
 
 	if ((lRc == Gdiplus::Ok) && pImg)
@@ -726,6 +732,18 @@ bool SaveImageEx(LPCWSTR asImgPath, HBITMAP hBitmap)
 			lbRc = true;
 
 		GdipDisposeImage(pImg);
+	}
+	else if (lRc == Gdiplus::Win32Error)
+	{
+		// Возможно, это проблемы с палитрой в WinXP
+		#ifdef _DEBUG
+		nErrCode = GetLastError();
+		#endif
+		_ASSERTE(lRc == Gdiplus::Ok);
+	}
+	else
+	{
+		_ASSERTE((lRc == Gdiplus::Ok) && pImg);
 	}
 
 	return lbRc;

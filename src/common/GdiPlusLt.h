@@ -15,7 +15,7 @@
 
 namespace Gdiplus
 {
-enum Status { Ok = 0 };
+enum Status { Ok = 0, Win32Error = 7, };
 typedef DWORD ARGB;
 typedef DWORD PixelFormat;
 struct GdiplusStartupInput
