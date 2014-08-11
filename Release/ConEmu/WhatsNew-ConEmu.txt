@@ -13,6 +13,21 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
 
+2014.08.11
+[*] Issue 1667: Drag&Drop was broken from Far 4040.
+[*] Issue 1666: Windows XP: Black squares on the toolbar (3fb706a regression)
+[*] Issue 1334: New buffer scrolling hotkeys.
+    * by half-screen - Apps+PgUp/PgDn
+    * to the top/bottom - Apps+Home/End
+    * to the cursor row - Apps+Backspace
+[+] GuiMacro: Scroll(<Type>,<Direction>,<Count=1>)
+    Do buffer scrolling actions
+       Type: 0; Value: ‘-1’=Up, ‘+1’=Down
+       Type: 1; Value: ‘-1’=PgUp, ‘+1’=PgDown
+       Type: 2; Value: ‘-1’=HalfPgUp, ‘+1’=HalfPgDown
+       Type: 3; Value: ‘-1’=Top, ‘+1’=Bottom
+       Type: 4; No arguments; Go to cursor line
+
 2014.08.10
 [!] With courtesy of Certum, ConEmu's binaries now are signed as ‘Open Source Developer, ConEmu-Maximus5’.
 [!] Per-monitor dpi awareness implemented (Windows 8.1).
