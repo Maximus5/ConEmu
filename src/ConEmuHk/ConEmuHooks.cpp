@@ -205,6 +205,8 @@ wchar_t* gszClinkCmdLine = NULL;
 bool gbPowerShellMonitorProgress = false;
 WORD gnConsolePopupColors = 0x003E;
 int  gnPowerShellProgressValue = -1;
+void CheckPowershellProgressPresence();
+void CheckPowerShellProgress(HANDLE hConsoleOutput,const CHAR_INFO *lpBuffer,COORD dwBufferSize,COORD dwBufferCoord,PSMALL_RECT lpWriteRegion);
 /* ************ Globals for powershell ************ */
 
 /* ************ Globals for cygwin/msys ************ */
@@ -3500,12 +3502,7 @@ void OnReadConsoleStart(BOOL bUnicode, HANDLE hConsoleInput, LPVOID lpBuffer, DW
 
 	if (gbPowerShellMonitorProgress)
 	{
-		// При возврате в Prompt - сброс прогресса
-		if (gnPowerShellProgressValue != -1)
-		{
-			gnPowerShellProgressValue = -1;
-			GuiSetProgress(0,0);
-		}
+		CheckPowershellProgressPresence();
 	}
 }
 
@@ -4770,6 +4767,11 @@ BOOL WINAPI OnPeekConsoleInputW(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DW
 			return lbRc;
 	}
 
+	if (gbPowerShellMonitorProgress)
+	{
+		CheckPowershellProgressPresence();
+	}
+
 	//#ifdef USE_INPUT_SEMAPHORE
 	//DWORD nSemaphore = ghConInSemaphore ? WaitForSingleObject(ghConInSemaphore, INSEMTIMEOUT_READ) : 1;
 	//_ASSERTE(nSemaphore<=1);
@@ -4901,6 +4903,11 @@ BOOL WINAPI OnReadConsoleInputW(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DW
 		// Если функция возвращает FALSE - реальное чтение не будет вызвано
 		if (!ph->PreCallBack(&args))
 			return lbRc;
+	}
+
+	if (gbPowerShellMonitorProgress)
+	{
+		CheckPowershellProgressPresence();
 	}
 
 	//#ifdef USE_INPUT_SEMAPHORE
@@ -5278,6 +5285,17 @@ BOOL WINAPI OnWriteConsoleOutputA(HANDLE hConsoleOutput,const CHAR_INFO *lpBuffe
 	}
 
 	return lbRc;
+}
+
+// Drop the progress flag, because the prompt may appear
+void CheckPowershellProgressPresence()
+{
+	if (!gbPowerShellMonitorProgress || (gnPowerShellProgressValue == -1))
+		return;
+
+	// При возврате в Prompt - сброс прогресса
+	gnPowerShellProgressValue = -1;
+	GuiSetProgress(0,0);
 }
 
 // PowerShell AI для определения прогресса в консоли
