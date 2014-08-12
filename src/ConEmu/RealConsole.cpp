@@ -9620,7 +9620,7 @@ CEFarWindowType CRealConsole::GetActiveTabType()
 					&& (rInfo.Type & fwt_CurrentFarWnd))
 				{
 					nType = rInfo.Type;
-					_ASSERTE(tabs.nActiveFarWindow == i);
+					_ASSERTE(tabs.nActiveFarWindow == rInfo.nFarWindowID);
 				}
 			}
 		}
@@ -9919,9 +9919,11 @@ DWORD CRealConsole::CanActivateFarWindow(int anWndIndex)
 	// Если идет процесс (в заголовке консоли {n%}) - выходим
 	// Если висит диалог - выходим (диалог обработает сам плагин)
 
-	if (anWndIndex < 0 || anWndIndex >= tabs.mn_tabsCount)
+	// Far 4040 - new "Desktop" window type has "0" index,
+	// so we can't just check (anWndIndex >= tabs.mn_tabsCount)
+	if (anWndIndex < 0 /*|| anWndIndex >= tabs.mn_tabsCount*/)
 	{
-		AssertCantActivate((anWndIndex>=0 && anWndIndex<tabs.mn_tabsCount));
+		AssertCantActivate(anWndIndex>=0);
 		return 0;
 	}
 
@@ -10073,10 +10075,16 @@ bool CRealConsole::ActivateFarWindow(int anWndIndex)
 				if (cbBytesRead == (TabHdr.nTabCount*sizeof(ConEmuTab)))
 				{
 					SetTabs(tabs, TabHdr.nTabCount);
-					if ((anWndIndex >= 0) && ((DWORD)anWndIndex < TabHdr.nTabCount) && (TabHdr.nTabCount > 0))
+					if ((anWndIndex >= 0) && (TabHdr.nTabCount > 0))
 					{
-						if (tabs[anWndIndex].Current)
-							lbRc = true;
+						for (UINT i = 0; i < TabHdr.nTabCount; i++)
+						{
+							if ((tabs[i].Pos == anWndIndex) && tabs[i].Current)
+							{
+								lbRc = true;
+								break;
+							}
+						}
 					}
 				}
 

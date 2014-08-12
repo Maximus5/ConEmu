@@ -3994,7 +3994,7 @@ void InitHWND(/*HWND ahFarHwnd*/)
 		int tabCount = 0;
 		MSectionLock SC; SC.Lock(csTabs);
 		CreateTabs(1);
-		AddTab(tabCount, false, false, WTYPE_PANELS, NULL, NULL, 1, 0, 0, 0);
+		AddTab(tabCount, 0, false, false, WTYPE_PANELS, NULL, NULL, 1, 0, 0, 0);
 		// Сейчас отсылать не будем - выполним, когда вызовется SetStartupInfo -> CommonStartup
 		//SendTabs(tabCount=1, TRUE);
 		SC.Unlock();
@@ -4456,7 +4456,7 @@ BOOL CreateTabs(int windowCount)
 #define min(a,b)            (((a) < (b)) ? (a) : (b))
 #endif
 
-BOOL AddTab(int &tabCount, bool losingFocus, bool editorSave,
+BOOL AddTab(int &tabCount, int WindowPos, bool losingFocus, bool editorSave,
             int Type, LPCWSTR Name, LPCWSTR FileName,
 			int Current, int Modified, int Modal,
 			int EditViewId)
@@ -4471,7 +4471,7 @@ BOOL AddTab(int &tabCount, bool losingFocus, bool editorSave,
 		gpTabs->Tabs.tabs[0].Current = Current/*losingFocus*/ ? 1 : 0;
 		//lstrcpyn(gpTabs->Tabs.tabs[0].Name, FUNC_Y(GetMsgW)(0), CONEMUTABMAX-1);
 		gpTabs->Tabs.tabs[0].Name[0] = 0;
-		gpTabs->Tabs.tabs[0].Pos = 0;
+		gpTabs->Tabs.tabs[0].Pos = (WindowPos >= 0) ? WindowPos : 0;
 		gpTabs->Tabs.tabs[0].Type = WTYPE_PANELS;
 		gpTabs->Tabs.tabs[0].Modified = 0; // Иначе GUI может ошибочно считать, что есть несохраненные редакторы
 		gpTabs->Tabs.tabs[0].EditViewId = 0;
@@ -4546,7 +4546,7 @@ BOOL AddTab(int &tabCount, bool losingFocus, bool editorSave,
 		int nLen = min(lstrlen(Name),(CONEMUTABMAX-1));
 		lstrcpyn(gpTabs->Tabs.tabs[tabCount].Name, Name, nLen+1);
 		gpTabs->Tabs.tabs[tabCount].Name[nLen]=0;
-		gpTabs->Tabs.tabs[tabCount].Pos = tabCount;
+		gpTabs->Tabs.tabs[tabCount].Pos = (WindowPos >= 0) ? WindowPos : tabCount;
 		tabCount++;
 	}
 

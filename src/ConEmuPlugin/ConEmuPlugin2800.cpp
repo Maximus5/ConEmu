@@ -591,7 +591,7 @@ bool UpdateConEmuTabsW2800(int anEvent, bool losingFocus, bool editorSave, void*
 
 	if (lbDummy)
 	{
-		AddTab(tabCount, false, false, WTYPE_PANELS, NULL, NULL, 1, 0, 0, 0);
+		AddTab(tabCount, 0, false, false, WTYPE_PANELS, NULL, NULL, 1, 0, 0, 0);
 		return (lbCh != FALSE);
 	}
 
@@ -700,7 +700,7 @@ bool UpdateConEmuTabsW2800(int anEvent, bool losingFocus, bool editorSave, void*
 				}
 
 				TODO("Определение ИД редактора/вьювера");
-				lbCh |= AddTab(tabCount, losingFocus, editorSave,
+				lbCh |= AddTab(tabCount, i, losingFocus, editorSave,
 				               WInfo.Type, WInfo.Name, /*editorSave ? ei.FileName :*/ NULL,
 				               (WInfo.Flags & WIF_CURRENT), (WInfo.Flags & WIF_MODIFIED), (WInfo.Flags & WIF_MODAL),
 							   0/*WInfo.Id?*/);
@@ -716,6 +716,7 @@ bool UpdateConEmuTabsW2800(int anEvent, bool losingFocus, bool editorSave, void*
 	_ASSERTE(VE_GOTFOCUS==6);
 	if (!losingFocus && !editorSave && tabCount == 0 && anEvent == (200+VE_GOTFOCUS))
 	{
+		_ASSERTE(FALSE && tabCount > 0);
 		lbActiveFound = TRUE;
 		size_t cchMax = InfoW2800->ViewerControl(vi.ViewerID, VCTL_GETFILENAME, 0, NULL);
 		if (cchMax)
@@ -726,9 +727,13 @@ bool UpdateConEmuTabsW2800(int anEvent, bool losingFocus, bool editorSave, void*
 				cchMax = InfoW2800->ViewerControl(vi.ViewerID, VCTL_GETFILENAME, 0, pszFileName);
 				if (cchMax && *pszFileName)
 				{
-					lbCh |= AddTab(tabCount, losingFocus, editorSave,
+					WInfo.Pos = -1;
+					if (InfoW2800->AdvControl(&guid_ConEmu, ACTL_GETWINDOWINFO, 0, &WInfo))
+					{
+						lbCh |= AddTab(tabCount, WInfo.Pos, losingFocus, editorSave,
 							   WTYPE_VIEWER, pszFileName, NULL,
 							   1, 0, 0, vi.ViewerID);
+					}
 				}
 				free(pszFileName);
 			}
@@ -758,7 +763,7 @@ bool UpdateConEmuTabsW2800(int anEvent, bool losingFocus, bool editorSave, void*
 				{
 					tabCount = 0;
 					TODO("Определение ИД Редактора/вьювера");
-					lbCh |= AddTab(tabCount, losingFocus, editorSave,
+					lbCh |= AddTab(tabCount, WInfo.Pos, losingFocus, editorSave,
 					               WInfo.Type, WInfo.Name, /*editorSave ? ei.FileName :*/ NULL,
 					               (WInfo.Flags & WIF_CURRENT), (WInfo.Flags & WIF_MODIFIED), 1/*Modal*/,
 								   0);

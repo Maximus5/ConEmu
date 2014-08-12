@@ -143,7 +143,7 @@ struct TabInfo
 	void/*CVirtualConsole*/* pVCon;
 
 	int nPID; // ИД процесса, содержащего таб (актуально для редакторов/вьюверов)
-	int nFarWindowID; // ИД (а точнее просто 0-based index) окна в FAR. Panels==0, ViewerEditor>=1
+	int nFarWindowID; // ИД окна фара (0-based). Far 4040 - new "Desktop" window type has "0" index
 	int nViewEditID;  // а это нам нужно потому, что во вьюверах может быть открыто несколько копий одного файла
 };
 

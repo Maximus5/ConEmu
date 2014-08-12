@@ -566,7 +566,7 @@ bool UpdateConEmuTabsW1900(int anEvent, bool losingFocus, bool editorSave, void*
 
 	if (lbDummy)
 	{
-		AddTab(tabCount, false, false, WTYPE_PANELS, NULL, NULL, 1, 0, 0, 0);
+		AddTab(tabCount, 0, false, false, WTYPE_PANELS, NULL, NULL, 1, 0, 0, 0);
 		return (lbCh != FALSE);
 	}
 
@@ -675,7 +675,7 @@ bool UpdateConEmuTabsW1900(int anEvent, bool losingFocus, bool editorSave, void*
 				}
 
 				TODO("Определение ИД редактора/вьювера");
-				lbCh |= AddTab(tabCount, losingFocus, editorSave,
+				lbCh |= AddTab(tabCount, -1, losingFocus, editorSave,
 				               WInfo.Type, WInfo.Name, /*editorSave ? ei.FileName :*/ NULL,
 				               (WInfo.Flags & WIF_CURRENT), (WInfo.Flags & WIF_MODIFIED), (WInfo.Flags & WIF_MODAL),
 							   0/*WInfo.Id?*/);
@@ -692,7 +692,7 @@ bool UpdateConEmuTabsW1900(int anEvent, bool losingFocus, bool editorSave, void*
 	if (!losingFocus && !editorSave && tabCount == 0 && anEvent == (200+VE_GOTFOCUS))
 	{
 		lbActiveFound = TRUE;
-		lbCh |= AddTab(tabCount, losingFocus, editorSave,
+		lbCh |= AddTab(tabCount, -1, losingFocus, editorSave,
 		               WTYPE_VIEWER, vi.FileName, NULL,
 		               1, 0, 0, vi.ViewerID);
 	}
@@ -720,7 +720,7 @@ bool UpdateConEmuTabsW1900(int anEvent, bool losingFocus, bool editorSave, void*
 				{
 					tabCount = 0;
 					TODO("Определение ИД Редактора/вьювера");
-					lbCh |= AddTab(tabCount, losingFocus, editorSave,
+					lbCh |= AddTab(tabCount, -1, losingFocus, editorSave,
 					               WInfo.Type, WInfo.Name, /*editorSave ? ei.FileName :*/ NULL,
 					               (WInfo.Flags & WIF_CURRENT), (WInfo.Flags & WIF_MODIFIED), 1/*Modal*/,
 								   0);
