@@ -731,40 +731,6 @@ bool UpdateConEmuTabsW1900(int anEvent, bool losingFocus, bool editorSave, void*
 				gpTabs->Tabs.CurrentType = gnCurrentWindowType = WInfo.Type;
 			}
 		}
-
-		//wchar_t* pszEditorFileName = NULL;
-		//EditorInfo ei = {0};
-		//ViewerInfo vi = {sizeof(ViewerInfo)};
-		//BOOL bEditor = FALSE, bViewer = FALSE;
-		//bViewer = InfoW1900->ViewerControl(VCTL_GETINFO, &vi);
-		//if (InfoW1900->EditorControl(ECTL_GETINFO, &ei)) {
-		//	int nLen = InfoW1900->EditorControl(ECTL_GETFILENAME, NULL);
-		//	if (nLen > 0) {
-		//		wchar_t* pszEditorFileName = (wchar_t*)calloc(nLen+1,2);
-		//		if (pszEditorFileName) {
-		//			if (InfoW1900->EditorControl(ECTL_GETFILENAME, pszEditorFileName)) {
-		//				bEditor = true;
-		//			}
-		//		}
-		//	}
-		//}
-		//if (bEditor && bViewer) {
-		//	// Попробуем получить информацию об активном окне, но это может привести к блокировке некоторых диалогов ФАР2?
-		//	WInfo.Pos = -1;
-		//	InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETWINDOWINFO, (void*)&WInfo);
-		//}
-		//if (bEditor) {
-		//	tabCount = 0;
-		//	lbCh |= AddTab(tabCount, losingFocus, editorSave,
-		//		WTYPE_EDITOR, pszEditorFileName, NULL,
-		//		1, (ei.CurState & (ECSTATE_MODIFIED|ECSTATE_SAVED)) == ECSTATE_MODIFIED);
-		//} else if (bViewer) {
-		//	tabCount = 0;
-		//	lbCh |= AddTab(tabCount, losingFocus, editorSave,
-		//		WTYPE_VIEWER, vi.FileName, NULL,
-		//		1, 0);
-		//}
-		//if (pszEditorFileName) free(pszEditorFileName);
 	}
 
 	// 101224 - сразу запомнить количество!

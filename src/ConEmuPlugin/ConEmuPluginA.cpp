@@ -657,20 +657,6 @@ bool UpdateConEmuTabsA(int anEvent, bool losingFocus, bool editorSave, void *Par
 		}
 	}
 
-	//// Viewer в FAR 2 build 9xx не попадает в список окон при событии VE_GOTFOCUS
-	//if (!losingFocus && !editorSave && tabCount == 0 && anEvent == 206) {
-	//	lbActiveFound = TRUE;
-	//	lbCh |= AddTab(tabCount, losingFocus, editorSave,
-	//		WTYPE_VIEWER, pszFileName, NULL,
-	//		1, 0);
-	//}
-
-	//// 2009-08-17
-	//if (gbHandleOneRedraw && gbHandleOneRedrawCh && lbCh) {
-	//	gbHandleOneRedraw = false;
-	//	gbHandleOneRedrawCh = false;
-	//}
-
 	// Скорее всего это модальный редактор (или вьювер?)
 	if (!lbActiveFound && !losingFocus)
 	{
@@ -697,20 +683,6 @@ bool UpdateConEmuTabsA(int anEvent, bool losingFocus, bool editorSave, void *Par
 		{
 			gpTabs->Tabs.CurrentType = gnCurrentWindowType = WInfo.Type;
 		}
-
-		//if (!bEditorRetrieved) { // Если информацию о редакторе еще не получили
-		//	InfoA->EditorControl(ECTL_GETINFO, &ei);
-		//	bEditorRetrieved = TRUE;
-		//	pszFileName = gszDir2; pszFileName[0] = 0;
-		//	if (ei.FileName)
-		//		MultiByteToWideChar(CP_OEMCP, 0, ei.FileName, lstrlenA(ei.FileName)+1, pszFileName, CONEMUTABMAX);
-		//}
-		//if (ei.CurState) {
-		//	tabCount = 0;
-		//	lbCh |= AddTab(tabCount, losingFocus, editorSave,
-		//		WTYPE_EDITOR, pszFileName, NULL,
-		//		1, (ei.CurState & (ECSTATE_MODIFIED|ECSTATE_SAVED)) == ECSTATE_MODIFIED);
-		//}
 	}
 
 	// 101224 - сразу запомнить количество!
