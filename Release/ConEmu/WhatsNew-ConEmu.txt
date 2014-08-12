@@ -13,6 +13,11 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
 
+2014.08.12
+[%] Issue 1669: Internal tab switching was broken from Far 4040.
+[%] Issue 1670: Powershell + PSReadLine makes progress get stuck.
+
+
 2014.08.11
 [*] Issue 1667: Drag&Drop was broken from Far 4040.
 [*] Issue 1666: Windows XP: Black squares on the toolbar (3fb706a regression)
