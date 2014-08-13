@@ -3947,6 +3947,18 @@ void UpdateConsoleTitle()
 	LPCWSTR  pszSetTitle = NULL, pszCopy;
 	LPCWSTR  pszReq = gpszForcedTitle ? gpszForcedTitle : gpszRunCmd;
 
+	if (!pszReq || !*pszReq)
+	{
+		// Не должны сюда попадать - сброс заголовка не допустим
+		#ifdef _DEBUG
+		if (gbAttachMode == am_None)
+		{
+			_ASSERTE(pszReq && *pszReq);
+		}
+		#endif
+		return;
+	}
+
 	pszBuffer = ParseConEmuSubst(pszReq);
 	if (pszBuffer)
 		pszReq = pszBuffer;
