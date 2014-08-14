@@ -996,14 +996,24 @@ bool __stdcall InitHooks(HookItem* apHooks)
 				const char* ExportName = gpHooks[i].NameOrdinal ? ((const char*)gpHooks[i].NameOrdinal) : gpHooks[i].Name;
 				gpHooks[i].OldAddress = (void*)GetProcAddress(mod, ExportName);
 
+
+				// WinXP does not have many hooked functions, will not show dozens of asserts
+				#ifdef _DEBUG
 				if (gpHooks[i].OldAddress == NULL)
 				{
-					_ASSERTE(gpHooks[i].OldAddress != NULL);
+					static int isWin7 = 0;
+					if (isWin7 == 0)
+					{
+						OSVERSIONINFOEXW osvi = {sizeof(osvi), HIBYTE(_WIN32_WINNT_WIN7), LOBYTE(_WIN32_WINNT_WIN7)};
+						DWORDLONG const dwlConditionMask = VerSetConditionMask(VerSetConditionMask(0, VER_MAJORVERSION, VER_GREATER_EQUAL), VER_MINORVERSION, VER_GREATER_EQUAL);
+						BOOL isGrEq = VerifyVersionInfoW(&osvi, VER_MAJORVERSION | VER_MINORVERSION, dwlConditionMask);
+						isWin7 = isGrEq ? 1 : -1;
+					}
+
+					_ASSERTE((isWin7 == -1) || (gpHooks[i].OldAddress != NULL));
 				}
-				//else
-				//{
-				//	gpHooksRootPtr = NULL; // Сброс
-				//}
+				#endif
+
 				gpHooks[i].hDll = mod;
 			}
 		}
