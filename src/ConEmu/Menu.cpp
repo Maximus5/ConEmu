@@ -1660,12 +1660,16 @@ HMENU CConEmuMenu::CreateVConListPopupMenu(HMENU ahExist, BOOL abFirstTabOnly)
 			{
 				do
 				{
+					bool bActive = (pRCon->GetActiveTab() == R);
+					_ASSERTE(bActive == ((tab->Flags() & fwt_CurrentFarWnd) == fwt_CurrentFarWnd));
+
 					nAddFlags = 0/*((lbActiveVCon && (R==0)) ? MF_DEFAULT : 0)*/
-						| ((lbActiveVCon && (abFirstTabOnly || pRCon->GetActiveTab() == R)) ? MF_CHECKED : MF_UNCHECKED)
+						| ((lbActiveVCon && (abFirstTabOnly || bActive)) ? MF_CHECKED : MF_UNCHECKED)
 						#if 0
 						| ((tab->Flags() & etfDisabled) ? (MF_DISABLED|MF_GRAYED) : 0)
 						#endif
 						;
+
 					LPCWSTR pszName = pRCon->GetTabTitle(tab);
 					int nLen = lstrlen(pszName);
 					if (!R)
