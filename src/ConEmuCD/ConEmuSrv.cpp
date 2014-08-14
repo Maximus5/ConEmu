@@ -2680,14 +2680,21 @@ HWND Attach2Gui(DWORD nTimeout)
 
 	pIn->StartStop.bRunInBackgroundTab = gbRunInBackgroundTab;
 
-	if (gpszRunCmd && *gpszRunCmd)
+	bool bCmdSet = false;
+
+	if (!bCmdSet && (gpszRunCmd && *gpszRunCmd))
 	{
-		CmdArg lsExe;
-		IsNeedCmd(true, gpszRunCmd, lsExe);
-		lstrcpyn(pIn->StartStop.sModuleName, lsExe, countof(pIn->StartStop.sModuleName));
-		lstrcpy(pIn->StartStop.sCmdLine, gpszRunCmd);
+		_wcscpy_c(pIn->StartStop.sCmdLine, cchCmdMax, gpszRunCmd);
+		bCmdSet = true;
 	}
-	else if (gpSrv->dwRootProcess)
+
+	if (!bCmdSet && (gpszRootExe && *gpszRootExe))
+	{
+		_wcscpy_c(pIn->StartStop.sCmdLine, cchCmdMax, gpszRootExe);
+		bCmdSet = true;
+	}
+
+	if (!bCmdSet && gpSrv->dwRootProcess)
 	{
 		PROCESSENTRY32 pi;
 		if (GetProcessInfo(gpSrv->dwRootProcess, &pi))
@@ -2695,7 +2702,17 @@ HWND Attach2Gui(DWORD nTimeout)
 			msprintf(pIn->StartStop.sCmdLine, cchCmdMax, L"\"%s\"", pi.szExeFile);
 		}
 	}
-	_ASSERTE(pIn->StartStop.sCmdLine[0]!=0); // Должно быть указано, а то в ConEmu может неправильно AppDistinct инициализироваться
+
+	if (pIn->StartStop.sCmdLine[0])
+	{
+		CmdArg lsExe;
+		IsNeedCmd(true, pIn->StartStop.sCmdLine, lsExe);
+		lstrcpyn(pIn->StartStop.sModuleName, lsExe, countof(pIn->StartStop.sModuleName));
+	}
+	else
+	{
+		_ASSERTE(pIn->StartStop.sCmdLine[0]!=0); // Должно быть указано, а то в ConEmu может неправильно AppDistinct инициализироваться
+	}
 
 	// Если GUI запущен не от имени админа - то он обломается при попытке
 	// открыть дескриптор процесса сервера. Нужно будет ему помочь.

@@ -348,6 +348,10 @@ DWORD CDefTermHk::StartConsoleServer(DWORD nAttachPID, bool bNewConWnd, PHANDLE 
 
 	cchAddArgLen = GetSrvAddArgs(false, szAddArgs, szAddArgs2);
 
+	wchar_t szExeName[MAX_PATH] = L"";
+	if (GetModuleFileName(NULL, szExeName, countof(szExeName)) && szExeName[0])
+		cchAddArgLen += 20 + lstrlen(szExeName);
+
 	cchMax = MAX_PATH+100+cchAddArgLen;
 	pszCmdLine = (wchar_t*)malloc(cchMax*sizeof(*pszCmdLine));
 	if (pszCmdLine)
@@ -359,6 +363,13 @@ DWORD CDefTermHk::StartConsoleServer(DWORD nAttachPID, bool bNewConWnd, PHANDLE 
 			WIN3264TEST(L"ConEmuC.exe",L"ConEmuC64.exe"),
 			bNewConWnd ? L"/CREATECON " : L"",
 			nAttachPID);
+
+		if (szExeName[0])
+		{
+			_wcscat_c(pszCmdLine, cchMax, L" /ROOTEXE \"");
+			_wcscat_c(pszCmdLine, cchMax, szExeName);
+			_wcscat_c(pszCmdLine, cchMax, L"\"");
+		}
 
 		if (!szAddArgs.IsEmpty())
 			_wcscat_c(pszCmdLine, cchMax, szAddArgs);
