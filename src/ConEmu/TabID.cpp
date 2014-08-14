@@ -1212,7 +1212,7 @@ void CTabStack::MarkTabsInvalid(MatchTabEnum MatchTab, DWORD nFarPID)
 	}
 }
 
-bool CTabStack::RefreshFarStatus(DWORD nFarPID, CTab& rActiveTab, int& rnActiveCount, bool& rbHasModalTab)
+bool CTabStack::RefreshFarStatus(DWORD nFarPID, CTab& rActiveTab, int& rnActiveIndex, int& rnActiveCount, bool& rbHasModalTab)
 {
 	MSectionLockSimple SC; SC.Lock(&mc_Section); // Сразу Exclusive lock
 	bool bChanged = false;
@@ -1312,6 +1312,7 @@ bool CTabStack::RefreshFarStatus(DWORD nFarPID, CTab& rActiveTab, int& rnActiveC
 	rbHasModalTab = (iModal >= 0);
 	rnActiveCount = iCount;
 	rActiveTab.Init((iActive >= 0) ? mpp_Stack[iActive] : NULL);
+	rnActiveIndex = iActive;
 
 	return bChanged;
 }

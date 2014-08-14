@@ -1185,7 +1185,9 @@ void CConEmuCtrl::ChooseTabFromMenu(BOOL abFirstTabOnly, POINT pt, DWORD Align /
 			CRealConsole* pRCon = pVCon->RCon();
 			if (pRCon)
 			{
-				pRCon->ActivateFarWindow(nNewR);
+				CTab tab(__FILE__,__LINE__);
+				if (pRCon->GetTab(nNewR, tab))
+					pRCon->ActivateFarWindow(tab->Info.nFarWindowID);
 			}
 			if (!gpConEmu->isActive(pVCon))
 				gpConEmu->Activate(pVCon);
@@ -1467,8 +1469,10 @@ size_t CConEmuCtrl::GetOpenedTabs(CESERVER_REQ_GETALLTABS::TabInfo*& pTabs)
 
 		CTab tab(__FILE__,__LINE__);
 		wchar_t szMark[6];
-		for (int T = 0; pRCon->GetTab(T, tab); T++)
+		for (int t = 0; pRCon->GetTab(t, tab); t++)
 		{
+			int T = tab->Info.nFarWindowID;
+
 			if (cchCount >= cchMax)
 			{
 				pTabs = (CESERVER_REQ_GETALLTABS::TabInfo*)realloc(pTabs, (cchMax+32)*sizeof(*pTabs));
@@ -1499,19 +1503,10 @@ size_t CConEmuCtrl::GetOpenedTabs(CESERVER_REQ_GETALLTABS::TabInfo*& pTabs)
 					wcscpy_c(szMark, L"   ");
 			}
 				
-			if (V == nActiveCon)
-			{
-				if (T <= 9)
-					_wsprintf(pTabs[cchCount].Title, SKIPLEN(countof(pTabs[cchCount].Title)) L"[%i/&%i]%s", V+1, T, szMark);
-				//else if (T == 9)
-				//	_wsprintf(pTabs[cchCount].Title, SKIPLEN(countof(pTabs[cchCount].Title)) L"[%i/1&0]%s", V+1, szMark);
-				else
-					_wsprintf(pTabs[cchCount].Title, SKIPLEN(countof(pTabs[cchCount].Title)) L"[%i/%i]%s", V+1, T, szMark);
-			}
+			if ((V == nActiveCon) && (T <= 9))
+				_wsprintf(pTabs[cchCount].Title, SKIPLEN(countof(pTabs[cchCount].Title)) L"[%i/&%i]%s", V+1, T, szMark);
 			else
-			{
 				_wsprintf(pTabs[cchCount].Title, SKIPLEN(countof(pTabs[cchCount].Title)) L"[%i/%i]%s", V+1, T, szMark);
-			}
 
 			int nCurLen = lstrlen(pTabs[cchCount].Title);
 			lstrcpyn(pTabs[cchCount].Title+nCurLen, pRCon->GetTabTitle(tab), countof(pTabs[cchCount].Title)-nCurLen);

@@ -281,5 +281,5 @@ public:
 		MatchNonPanel,
 	};
 	void MarkTabsInvalid(MatchTabEnum MatchTab, DWORD nFarPID);
-	bool RefreshFarStatus(DWORD nFarPID, CTab& rActiveTab, int& rnActiveCount, bool& rbHasModalTab);
+	bool RefreshFarStatus(DWORD nFarPID, CTab& rActiveTab, int& rnActiveIndex, int& rnActiveCount, bool& rbHasModalTab);
 };

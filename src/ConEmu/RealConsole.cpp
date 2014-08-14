@@ -173,6 +173,7 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 	// Tabs
 	tabs.mn_tabsCount = 0;
 	tabs.mb_TabsWasChanged = false;
+	tabs.nActiveIndex = 0;
 	tabs.nActiveFarWindow = 0;
 	tabs.nActiveType = fwt_Panels|fwt_CurrentFarWnd;
 
@@ -5301,7 +5302,7 @@ LPCTSTR CRealConsole::GetTitle(bool abGetRenamed/*=false*/)
 	if (abGetRenamed && (tabs.nActiveType & fwt_Renamed))
 	{
 		CTab tab(__FILE__,__LINE__);
-		if (GetTab(tabs.nActiveFarWindow, tab) && (tab->Flags() & fwt_Renamed))
+		if (GetTab(tabs.nActiveIndex, tab) && (tab->Flags() & fwt_Renamed))
 		{
 			lstrcpyn(TempTitleRenamed, tab->Renamed.Ptr(), countof(TempTitleRenamed));
 			if (*TempTitleRenamed)
@@ -9006,24 +9007,27 @@ void CRealConsole::UpdateScrollInfo()
 void CRealConsole::_TabsInfo::RefreshFarPID(DWORD nNewPID)
 {
 	CTab ActiveTab("RealConsole.cpp:ActiveTab",__LINE__);
-	if (m_Tabs.RefreshFarStatus(nNewPID, ActiveTab, mn_tabsCount, mb_HasModalWindow))
+	int nActiveTab = -1;
+	if (m_Tabs.RefreshFarStatus(nNewPID, ActiveTab, nActiveTab, mn_tabsCount, mb_HasModalWindow))
 	{
-		StoreActiveTab(ActiveTab.Tab());
+		StoreActiveTab(nActiveTab, ActiveTab.Tab());
 		mb_TabsWasChanged = true;
 		gpConEmu->mp_TabBar->Update();
 	}
 }
 
-void CRealConsole::_TabsInfo::StoreActiveTab(const CTabID* apActiveTab)
+void CRealConsole::_TabsInfo::StoreActiveTab(int anActiveIndex, const CTabID* apActiveTab)
 {
-	if (apActiveTab)
+	if (apActiveTab && (anActiveIndex >= 0))
 	{
+		nActiveIndex = anActiveIndex;
 		nActiveFarWindow = apActiveTab->Info.nFarWindowID;
 		nActiveType = apActiveTab->Info.Type;
 	}
 	else
 	{
 		_ASSERTE(FALSE && "Active tab must be detected!");
+		nActiveIndex = 0;
 		nActiveFarWindow = 0;
 		nActiveType = fwt_Panels|fwt_CurrentFarWnd;
 	}
@@ -9160,6 +9164,7 @@ void CRealConsole::SetTabs(ConEmuTab* apTabs, int anTabsCount)
 	bool bTabsChanged = false;
 	bool bHasModal = false;
 	CTab ActiveTab("RealConsole.cpp:ActiveTab",__LINE__);
+	int  nActiveIndex = -1;
 
 	for (int i = 0; i < anTabsCount; i++)
 	{
@@ -9174,6 +9179,9 @@ void CRealConsole::SetTabs(ConEmuTab* apTabs, int anTabsCount)
 
 		if (tabs.m_Tabs.UpdateFarWindow(hUpdate, mp_VCon, apTabs[i].Name, TypeAndFlags, nPID, apTabs[i].Pos, apTabs[i].EditViewId, ActiveTab))
 			bTabsChanged = true;
+
+		if (TypeAndFlags & fwt_CurrentFarWnd)
+			nActiveIndex = i;
 	}
 
 	_ASSERTE(!bRenameByArgs || (anTabsCount==1));
@@ -9189,7 +9197,7 @@ void CRealConsole::SetTabs(ConEmuTab* apTabs, int anTabsCount)
 
 	tabs.mn_tabsCount = anTabsCount;
 	tabs.mb_HasModalWindow = bHasModal;
-	tabs.StoreActiveTab(ActiveTab.Tab());
+	tabs.StoreActiveTab(nActiveIndex, ActiveTab.Tab());
 
 	if (tabs.m_Tabs.UpdateEnd(hUpdate, GetFarPID(true)))
 		bTabsChanged = true;
@@ -9199,6 +9207,24 @@ void CRealConsole::SetTabs(ConEmuTab* apTabs, int anTabsCount)
 
 	#ifdef _DEBUG
 	GetActiveTabType();
+	#endif
+
+	#ifdef _DEBUG
+	// Check tabs, flag fwt_CurrentFarWnd must be set at least once
+	bool FlagWasSet = false;
+	for (int I = tabs.mn_tabsCount-1; I >= 0; I--)
+	{
+		CTab tab(__FILE__,__LINE__);
+		if (GetTab(I, tab))
+		{
+			if (tab->Flags() & fwt_CurrentFarWnd)
+			{
+				FlagWasSet = true;
+				break;
+			}
+		}
+	}
+	_ASSERTE(FlagWasSet);
 	#endif
 
 	// Передернуть gpConEmu->mp_TabBar->..
@@ -9243,7 +9269,7 @@ INT_PTR CRealConsole::renameProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lP
 
 			int nLen = 0;
 			CTab tab(__FILE__,__LINE__);
-			if (pRCon->GetTab(pRCon->tabs.nActiveFarWindow, tab))
+			if (pRCon->GetTab(pRCon->tabs.nActiveIndex, tab))
 			{
 				nLen = lstrlen(tab->GetName());
 				SetWindowText(hEdit, tab->GetName());
@@ -9474,7 +9500,7 @@ void CRealConsole::RenameTab(LPCWSTR asNewTabText /*= NULL*/)
 		return;
 
 	CTab tab(__FILE__,__LINE__);
-	if (GetTab(tabs.nActiveFarWindow, tab))
+	if (GetTab(tabs.nActiveIndex, tab))
 	{
 		if (asNewTabText && *asNewTabText)
 		{
@@ -9575,7 +9601,7 @@ int CRealConsole::GetActiveTab()
 	if (!this)
 		return 0;
 
-	return tabs.nActiveFarWindow;
+	return tabs.nActiveIndex;
 }
 
 // (Panels=1, Viewer=2, Editor=3) |(Elevated=0x100) |(NotElevated=0x200) |(Modal=0x400)
@@ -9604,7 +9630,7 @@ CEFarWindowType CRealConsole::GetActiveTabType()
 				&& (rInfo.Type & fwt_ModalFarWnd))
 			{
 				iModal = i;
-				_ASSERTE(tabs.nActiveFarWindow == i);
+				_ASSERTE(tabs.nActiveIndex == i);
 				_ASSERTE((rInfo.Type & fwt_CurrentFarWnd) == fwt_CurrentFarWnd);
 				nType = rInfo.Type;
 				break;
@@ -9620,7 +9646,7 @@ CEFarWindowType CRealConsole::GetActiveTabType()
 					&& (rInfo.Type & fwt_CurrentFarWnd))
 				{
 					nType = rInfo.Type;
-					_ASSERTE(tabs.nActiveFarWindow == rInfo.nFarWindowID);
+					_ASSERTE(tabs.nActiveIndex == i);
 				}
 			}
 		}

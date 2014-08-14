@@ -1394,10 +1394,11 @@ int CVConGroup::isFarExist(CEFarWindowType anWindowType/*=fwt_Any*/, LPWSTR asNa
 							pszNameOnly = pszSlash+1;
 					}
 
-					for (int j = 0; !iFound; j++)
+					for (int J = 0; !iFound; J++)
 					{
-						if (!pRCon->GetTab(j, tab))
+						if (!pRCon->GetTab(J, tab))
 							break;
+						int j = tab->Info.nFarWindowID;
 
 						CEFarWindowType tabFlags = tab->Info.Type;
 						if ((tabFlags & fwt_TypeMask) != (anWindowType & fwt_TypeMask))
@@ -3487,13 +3488,18 @@ bool CVConGroup::ConActivate(int nCon)
 			        && ((pRCon = gp_VActive->RCon()) != NULL)
 			        && ((nTabCount = pRCon->GetTabCount())>1))
 			{
-				int nActive = pRCon->GetActiveTab()+1;
+				int nNextActive = pRCon->GetActiveTab()+1;
 
-				if (nActive >= nTabCount)
-					nActive = 0;
+				if (nNextActive >= nTabCount)
+					nNextActive = 0;
 
-				if (pRCon->CanActivateFarWindow(nActive))
-					pRCon->ActivateFarWindow(nActive);
+				CTab tab(__FILE__,__LINE__);
+				if (pRCon->GetTab(nNextActive, tab))
+				{
+					int nFarWndId = tab->Info.nFarWindowID;
+					if (pRCon->CanActivateFarWindow(nFarWndId))
+						pRCon->ActivateFarWindow(nFarWndId);
+				}
 			}
 
 			return true; // уже
