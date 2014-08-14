@@ -3571,6 +3571,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	/* *** DEBUG PURPOSES */
 	gpStartEnv = LoadStartupEnv();
+	if (gnOsVer >= 0x600)
+	{
+		CDpiAware::UpdateStartupInfo(gpStartEnv);
+	}
 	/* *** DEBUG PURPOSES */
 
 	gbIsWine = IsWine(); // В общем случае, на флажок ориентироваться нельзя. Это для информации.

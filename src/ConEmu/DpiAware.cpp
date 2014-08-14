@@ -128,6 +128,28 @@ wrap:
 	return hr;
 }
 
+void CDpiAware::UpdateStartupInfo(CEStartupEnv* pStartEnv)
+{
+	if (!pStartEnv)
+		return;
+
+	pStartEnv->bIsPerMonitorDpi = IsPerMonitorDpi();
+	for (INT_PTR i = ((int)pStartEnv->nMonitorsCount)-1; i >= 0; i--)
+	{
+		HMONITOR hMon = MonitorFromRect(&pStartEnv->Monitors[i].rcMonitor, MONITOR_DEFAULTTONEAREST);
+		if (!hMon)
+			continue;
+
+		for (int j = MDT_Effective_DPI; j <= MDT_Raw_DPI; j++)
+		{
+			DpiValue dpi;
+			QueryDpiForMonitor(hMon, &dpi, (MonitorDpiType)j);
+			pStartEnv->Monitors[i].dpis[j+1].x = dpi.Xdpi;
+			pStartEnv->Monitors[i].dpis[j+1].y = dpi.Xdpi;
+		}
+	}
+}
+
 bool CDpiAware::IsPerMonitorDpi()
 {
 	#if defined(_DEBUG) && defined(DPI_144)
@@ -207,7 +229,7 @@ int CDpiAware::QueryDpiForWindow(HWND hWnd /*= NULL*/, DpiValue* pDpi /*= NULL*/
 	return dpi;
 }
 
-int CDpiAware::QueryDpiForMonitor(HMONITOR hmon, DpiValue* pDpi /*= NULL*/)
+int CDpiAware::QueryDpiForMonitor(HMONITOR hmon, DpiValue* pDpi /*= NULL*/, MonitorDpiType dpiType /*= MDT_Default*/)
 {
 	int dpi = 96;
 
@@ -230,7 +252,7 @@ int CDpiAware::QueryDpiForMonitor(HMONITOR hmon, DpiValue* pDpi /*= NULL*/)
 	HRESULT hr;
 	if (Shcore != (HMODULE)INVALID_HANDLE_VALUE)
 	{
-		hr = getDPIForMonitor(hmon, MDT_Effective_DPI, &x, &y);
+		hr = getDPIForMonitor(hmon, dpiType/*MDT_Effective_DPI*/, &x, &y);
 		if (SUCCEEDED(hr) && (x > 0) && (y > 0))
 		{
 			if (pDpi)
@@ -314,11 +336,14 @@ bool CDpiForDialog::Attach(HWND hWnd, HWND hCenterParent, DpiValue* pCurDpi /*= 
 {
 	mh_Dlg = hWnd;
 
+	wchar_t szLog[100];
+
 	mh_OldFont = (HFONT)SendMessage(hWnd, WM_GETFONT, 0, 0);
 	if ((mh_OldFont != NULL)
 		&& (GetObject(mh_OldFont, sizeof(mlf_InitFont), &mlf_InitFont) > 0))
 	{
 		mn_InitFontHeight = mlf_InitFont.lfHeight;
+		_wsprintf(szLog, SKIPLEN(countof(szLog)) L"CDpiForDialog(x%08X) Font='%s' lfHeight=%i", (DWORD)(DWORD_PTR)hWnd, mlf_InitFont.lfFaceName, mlf_InitFont.lfHeight);
 	}
 	else
 	{
@@ -328,7 +353,10 @@ bool CDpiForDialog::Attach(HWND hWnd, HWND hCenterParent, DpiValue* pCurDpi /*= 
 		lstrcpyn(mlf_InitFont.lfFaceName, L"MS Shell Dlg", countof(mlf_InitFont.lfFaceName));
 		mlf_InitFont.lfWeight = 400;
 		mlf_InitFont.lfCharSet = DEFAULT_CHARSET;
+		_wsprintf(szLog, SKIPLEN(countof(szLog)) L"CDpiForDialog(x%08X) DefaultFont='%s' lfHeight=%i", (DWORD)(DWORD_PTR)hWnd, mlf_InitFont.lfFaceName, mlf_InitFont.lfHeight);
 	}
+
+	LogString(szLog);
 
 	// Up to Windows 8 - OS will care of dialog scaling
 	// And what will happens in Windows 8.1?
@@ -389,8 +417,9 @@ bool CDpiForDialog::SetDialogDPI(const DpiValue& newDpi, LPRECT lprcSuggested /*
 	DpiValue curDpi(m_CurDpi);
 	HFONT hf = NULL;
 
-	#ifdef _DEBUG
 	wchar_t szClass[100];
+
+	#ifdef _DEBUG
 	LOGFONT lftest1 = {}, lftest2 = {};
 	HFONT hftest;
 	int itest1, itest2;
@@ -399,6 +428,9 @@ bool CDpiForDialog::SetDialogDPI(const DpiValue& newDpi, LPRECT lprcSuggested /*
 	// To avoid several nested passes
 	InterlockedIncrement(&mn_InSet);
 	m_CurDpi.SetDpi(newDpi);
+
+	_wsprintf(szClass, SKIPLEN(countof(szClass)) L"CDpiForDialog::SetDialogDPI(x%08X, {%i,%i})", (DWORD)(DWORD_PTR)mh_Dlg, newDpi.Xdpi, newDpi.Ydpi);
+	LogString(szClass);
 
 	// Eval
 	mn_CurFontHeight = (mn_InitFontHeight * newDpi.Ydpi / 96);

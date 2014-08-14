@@ -3011,8 +3011,8 @@ void MFileLog::LogStartEnv(CEStartupEnv* apStartEnv)
 	int nDpiX = GetDeviceCaps(hdcScreen, LOGPIXELSX);
 	int nDpiY = GetDeviceCaps(hdcScreen, LOGPIXELSY);
 	_wsprintf(szSI, SKIPLEN(countof(szSI))
-		L"Display: bpp=%i, planes=%i, align=%i, vrefr=%i, shade=x%08X, rast=x%08X, dpi=%ix%i",
-		nBits, nPlanes, nAlignment, nVRefr, nShadeCaps, nDevCaps, nDpiX, nDpiY);
+		L"Display: bpp=%i, planes=%i, align=%i, vrefr=%i, shade=x%08X, rast=x%08X, dpi=%ix%i, per-mon-dpi=%u",
+		nBits, nPlanes, nAlignment, nVRefr, nShadeCaps, nDevCaps, nDpiX, nDpiY, apStartEnv->bIsPerMonitorDpi);
 	ReleaseDC(NULL, hdcScreen);
 	LogString(szSI, false, NULL, true);
 
@@ -3020,12 +3020,24 @@ void MFileLog::LogStartEnv(CEStartupEnv* apStartEnv)
 	for (size_t i = 0; i < apStartEnv->nMonitorsCount; i++)
 	{
 		CEStartupEnv::MyMonitorInfo* p = (apStartEnv->Monitors + i);
+		szDesktop[0] = 0;
+		for (size_t j = 0; j < countof(p->dpis); j++)
+		{
+			if (p->dpis[j].x || p->dpis[j].y)
+			{
+				wchar_t szDpi[32];
+				_wsprintf(szDpi, SKIPLEN(countof(szDpi))
+					szDesktop[0] ? L";{%i,%i}" : L"{%i,%i}",
+					p->dpis[j].x, p->dpis[j].y);
+				wcscat_c(szDesktop, szDpi);
+			}
+		}
 		_wsprintf(szSI, SKIPLEN(countof(szSI))
-			L"  %08X: {%i,%i}-{%i,%i} (%ix%i), Working: {%i,%i}-{%i,%i} (%ix%i), dpi: {%i,%i} `%s`%s",
+			L"  %08X: {%i,%i}-{%i,%i} (%ix%i), Working: {%i,%i}-{%i,%i} (%ix%i), dpi: %s `%s`%s",
 			(DWORD)(DWORD_PTR)p->hMon,
 			p->rcMonitor.left, p->rcMonitor.top, p->rcMonitor.right, p->rcMonitor.bottom, p->rcMonitor.right-p->rcMonitor.left, p->rcMonitor.bottom-p->rcMonitor.top,
 			p->rcWork.left, p->rcWork.top, p->rcWork.right, p->rcWork.bottom, p->rcWork.right-p->rcWork.left, p->rcWork.bottom-p->rcWork.top,
-			p->dpiX, p->dpiY, p->szDevice,
+			szDesktop, p->szDevice,
 			(p->dwFlags & MONITORINFOF_PRIMARY) ? L" <<== Primary" : L"");
 		LogString(szSI, false, NULL, true);
 	}

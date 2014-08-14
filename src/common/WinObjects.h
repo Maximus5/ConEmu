@@ -130,13 +130,15 @@ struct CEStartupEnv
 	BOOL    bIsReactOS;
 	BOOL    bIsDbcs;
 	UINT    nAnsiCP, nOEMCP;
+	BOOL    bIsPerMonitorDpi;
 	UINT    nMonitorsCount;
 	struct MyMonitorInfo {
 		HMONITOR hMon;
 		RECT  rcMonitor;
 		RECT  rcWork;
 		DWORD dwFlags;
-		int   dpiX, dpiY;
+		// 0=GetDeviceCaps(hdc,*); 1=MDT_Effective_DPI; 2=MDT_Angular_DPI; 3=MDT_Raw_DPI;
+		struct { int x, y; } dpis[4];
 		TCHAR szDevice[CCHDEVICENAME];
 	} Monitors[16];
 	// HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Console\TrueTypeFont

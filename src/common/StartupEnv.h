@@ -55,13 +55,13 @@ static BOOL CALLBACK LoadStartupEnv_FillMonitors(HMONITOR hMonitor, HDC hdcMonit
 		HDC hdc = CreateDC(mi.szDevice, mi.szDevice, NULL, NULL);
 		if (hdc)
 		{
-			p->Monitors[i].dpiX = GetDeviceCaps(hdc, LOGPIXELSX);
-			p->Monitors[i].dpiY = GetDeviceCaps(hdc, LOGPIXELSY);
+			p->Monitors[i].dpis[0].x = GetDeviceCaps(hdc, LOGPIXELSX);
+			p->Monitors[i].dpis[0].y = GetDeviceCaps(hdc, LOGPIXELSY);
 			DeleteDC(hdc);
 		}
 		else
 		{
-			p->Monitors[i].dpiX = p->Monitors[i].dpiY = -1;
+			p->Monitors[i].dpis[0].x = p->Monitors[i].dpis[0].y = -1;
 		}
 
 		if (p->nMonitorsCount >= countof(p->Monitors))

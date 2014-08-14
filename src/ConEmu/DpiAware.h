@@ -73,10 +73,14 @@ public:
 	void OnDpiChanged(WPARAM wParam);
 };
 
+struct CEStartupEnv;
+
 class CDpiAware
 {
 public:
 	static HRESULT setProcessDPIAwareness();
+
+	static void UpdateStartupInfo(CEStartupEnv* pStartEnv);
 
 	static bool IsPerMonitorDpi();
 
@@ -85,7 +89,7 @@ public:
 	// if hWnd is NULL - returns DC's dpi
 	static int QueryDpiForWindow(HWND hWnd = NULL, DpiValue* pDpi = NULL);
 
-	static int QueryDpiForMonitor(HMONITOR hmon, DpiValue* pDpi = NULL);
+	static int QueryDpiForMonitor(HMONITOR hmon, DpiValue* pDpi = NULL, MonitorDpiType dpiType = MDT_Default);
 
 	// Dialog helper
 	static void GetCenteredRect(HWND hWnd, RECT& rcCentered);
