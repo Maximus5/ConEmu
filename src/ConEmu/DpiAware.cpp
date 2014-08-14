@@ -249,7 +249,8 @@ int CDpiAware::QueryDpiForMonitor(HMONITOR hmon, DpiValue* pDpi /*= NULL*/, Moni
 	}
 
 	UINT x = 0, y = 0;
-	HRESULT hr;
+	HRESULT hr = E_FAIL;
+	bool bSet = false;
 	if (Shcore != (HMODULE)INVALID_HANDLE_VALUE)
 	{
 		hr = getDPIForMonitor(hmon, dpiType/*MDT_Effective_DPI*/, &x, &y);
@@ -257,10 +258,16 @@ int CDpiAware::QueryDpiForMonitor(HMONITOR hmon, DpiValue* pDpi /*= NULL*/, Moni
 		{
 			if (pDpi)
 			{
-				pDpi->Xdpi = (int)x; pDpi->Ydpi = (int)y;
+				pDpi->SetDpi((int)x, (int)y);
+				bSet = true;
 			}
 			dpi = (int)y;
 		}
+	}
+
+	if (pDpi && !bSet)
+	{
+		pDpi->SetDpi(dpi, dpi);
 	}
 
 	return dpi;

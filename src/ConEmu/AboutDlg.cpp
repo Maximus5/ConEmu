@@ -702,7 +702,8 @@ void ConEmuAbout::DonateBtns_Add(HWND hDlg, int AlignLeftId, int AlignVCenterId)
 	GetWindowRect(hCtrl, &rcTop);
 	MapWindowPoints(NULL, hDlg, (LPPOINT)&rcTop, 2);
 
-	int nDisplayDpi = gpSetCls->QueryDpi();
+	DpiValue dpi;
+	CDpiAware::QueryDpiForWindow(hDlg, &dpi);
 
 	int X = rcLeft.left;
 
@@ -714,7 +715,7 @@ void ConEmuAbout::DonateBtns_Add(HWND hDlg, int AlignLeftId, int AlignVCenterId)
 		TODO("Вертикальное центрирование по объекту AlignVCenterId");
 
 		int nDispW = 0, nDispH = 0;
-		if (!m_Btns[i].pImg->GetSizePerDpi(nDisplayDpi, nDispW, nDispH))
+		if (!m_Btns[i].pImg->GetSizePerDpi(dpi.Ydpi, nDispW, nDispH))
 		{
 			_ASSERTE(FALSE && "Image not available for dpi?");
 			continue; // Image was failed?
@@ -732,7 +733,7 @@ void ConEmuAbout::DonateBtns_Add(HWND hDlg, int AlignLeftId, int AlignVCenterId)
 			DisplayLastError(L"Failed to create image button control");
 		#endif
 
-		X += nDispW + (10 * nDisplayDpi / 96);
+		X += nDispW + (10 * dpi.Ydpi / 96);
 	}
 
 	RegisterTip(hDlg);

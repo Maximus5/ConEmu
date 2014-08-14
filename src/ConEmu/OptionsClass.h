@@ -33,6 +33,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../Common/WinObjects.h"
 #include <commctrl.h>
 
+#include "DpiAware.h"
 #include "Options.h"
 #include "CustomFonts.h"
 
@@ -53,7 +54,7 @@ enum SingleInstanceArgEnum
 typedef DWORD EvalSizeFlags;
 const EvalSizeFlags
 	// May be used in combination
-	esf_CanUseDpi    = 0x0010, // Take into account _dpiY
+	esf_CanUseDpi    = 0x0010, // Take into account _dpi
 	esf_CanUseZoom   = 0x0020, // Take into account mn_FontZoomValue
 	esf_CanUseUnits  = 0x0040, // Make the result negative IF gpSet->FontUseUnits is ON
 	// Must not be used togather
@@ -352,8 +353,8 @@ class CSettings
 		static void ShowConFontErrorTip(LPCTSTR asInfo);
 		LPCWSTR CreateConFontError(LPCWSTR asReqFont=NULL, LPCWSTR asGotFont=NULL);
 		TOOLINFO tiConFontBalloon;
-		int _dpiY;
-		int UpdateDpi();
+		DpiValue _dpi;
+		int GetOverallDpi();
 	public:
 		int QueryDpi();
 		bool OnDpiChanged(int dpiX, int dpiY, LPRECT prcSuggested);

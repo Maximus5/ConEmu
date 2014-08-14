@@ -72,6 +72,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#define CONEMU_ROOT_KEY L"Software\\ConEmu"
 
 #define DEBUGSTRFONT(s) DEBUGSTR(s)
+#define DEBUGSTRDPI(s) DEBUGSTR(s)
 
 #define COUNTER_REFRESH 5000
 
@@ -278,7 +279,7 @@ CSettings::CSettings()
 	gpSetCls = this;
 	gpSet = &m_Settings;
 
-	UpdateDpi();
+	GetOverallDpi();
 
 	// Go
 	isResetBasicSettings = false;
@@ -438,39 +439,36 @@ CSettings::CSettings()
 	InitVars_Pages();
 }
 
-int CSettings::UpdateDpi()
+int CSettings::GetOverallDpi()
 {
-	_dpiY = 96;
 	HDC hdc = GetDC(NULL);
 	if (hdc)
 	{
-		_dpiY = GetDeviceCaps(hdc, LOGPIXELSY);
+		_dpi.SetDpi(GetDeviceCaps(hdc, LOGPIXELSX), GetDeviceCaps(hdc, LOGPIXELSY));
 		ReleaseDC(NULL, hdc);
-		if (_dpiY < 96)
-			_dpiY = 96;
+		if (_dpi.Ydpi < 96)
+			_dpi.Ydpi = 96;
+		if (_dpi.Xdpi < 96)
+			_dpi.Xdpi = 96;
 	}
-	return _dpiY;
+	return _dpi.Ydpi;
 }
 
+// This returns current dpi for main window
 int CSettings::QueryDpi()
 {
-	// Can Windows 8 change DPI on-the-fly? (Retina and multi-monitor issues)
-	if (IsWindows8)
-	{
-		UpdateDpi();
-	}
-	return _dpiY;
+	return _dpi.Ydpi;
 }
 
 bool CSettings::OnDpiChanged(int dpiX, int dpiY, LPRECT prcSuggested)
 {
-	if ((_dpiY == dpiY) || (dpiY < 72) || (dpiY > 960))
+	if ((_dpi.Xdpi == dpiX && _dpi.Ydpi == dpiY) || (dpiY < 72) || (dpiY > 960))
 	{
 		_ASSERTE(dpiY >= 72 && dpiY <= 960);
 		return false;
 	}
 
-	_dpiY = dpiY;
+	_dpi.SetDpi(dpiX, dpiY);
 	//Raster fonts???
 	EvalLogfontSizes(LogFont, gpSet->FontSizeY, gpSet->FontSizeX);
 	RecreateFont(-1);
@@ -952,6 +950,19 @@ bool CSettings::SetOption(LPCWSTR asName, int anValue)
 
 void CSettings::SettingsLoaded(SettingsLoadedFlags slfFlags, LPCWSTR pszCmdLine /*= NULL*/)
 {
+	// Recheck dpi settings?
+	if (ghWnd == NULL)
+	{
+		// No need to get strict coordinates, just find a target monitor
+		RECT rcDef = {gpSet->_wndX, gpSet->_wndY, gpSet->_wndX + 80*16, gpSet->_wndY + 25*8};
+		HMONITOR hMon = MonitorFromRect(&rcDef, MONITOR_DEFAULTTONEAREST);
+		CDpiAware::QueryDpiForMonitor(hMon, &_dpi);
+		wchar_t szInfo[100];
+		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"DPI initialized to {%i,%i}\r\n", _dpi.Xdpi, _dpi.Ydpi);
+		DEBUGSTRDPI(szInfo);
+		LogString(szInfo, true, false);
+	}
+
 	// Обработать 32/64 (найти tcc.exe и т.п.)
 	FindComspec(&gpSet->ComSpec);
 
@@ -1175,15 +1186,15 @@ LONG CSettings::EvalSize(LONG nSize, EvalSizeFlags Flags)
 	// DPI текущего(!) монитора
 	if ((Flags & esf_CanUseDpi) && gpSet->FontUseDpi)
 	{
-		if (_dpiY > 0)
+		int iDpi = (Flags & esf_Horizontal) ? _dpi.Xdpi : _dpi.Ydpi;
+		if (iDpi > 0)
 		{
-			TODO("bVert - horz/vert dpi")
-			iMul *= _dpiY;
+			iMul *= iDpi;
 			iDiv *= 96;
 		}
 		else
 		{
-			_ASSERTE(_dpiY > 0);
+			_ASSERTE(iDpi > 0);
 		}
 	}
 
@@ -11818,6 +11829,13 @@ void CSettings::SaveFontSizes(bool bAuto, bool bSendChanges)
 	mn_FontWidth = LogFont.lfWidth;
 	mn_FontHeight = LogFont.lfHeight;
 
+	wchar_t szLog[120];
+	_wsprintf(szLog, SKIPLEN(countof(szLog))
+		L"Main font was created Face='%s' lfHeight=%i lfWidth=%i use-dpi=%u dpi=%i zoom=%i",
+		LogFont.lfFaceName, LogFont.lfHeight, LogFont.lfWidth,
+		(UINT)gpSet->FontUseDpi, _dpi.Ydpi, mn_FontZoomValue);
+	LogString(szLog);
+
 	if (bAuto)
 	{
 		mn_AutoFontWidth = mn_FontWidth;
@@ -15849,5 +15867,5 @@ int CSettings::GetDialogDpi()
 {
 	if (mp_CurDpi)
 		return mp_CurDpi->Ydpi;
-	return _dpiY;
+	return _dpi.Ydpi;
 }
