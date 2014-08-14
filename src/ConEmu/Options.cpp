@@ -696,6 +696,7 @@ void Settings::InitSettings()
 	memset(isStatusColumnHidden, 0, sizeof(isStatusColumnHidden));
 	// выставим те колонки, которые не нужны "юзеру" по умолчанию
 	isStatusColumnHidden[csi_ConsoleTitle] = true;
+	isStatusColumnHidden[csi_KeyHooks] = true;
 	isStatusColumnHidden[csi_InputLocale] = true;
 	isStatusColumnHidden[csi_WindowPos] = true;
 	isStatusColumnHidden[csi_WindowSize] = true;
@@ -3833,7 +3834,7 @@ DWORD Settings::isUseClink(bool abCheckVersion /*= false*/)
 	return (DWORD)nVersionChecked;
 }
 
-bool Settings::isKeyboardHooks(bool abNoDisable /*= false*/)
+bool Settings::isKeyboardHooks(bool abNoDisable /*= false*/, bool abNoDbgCheck /*= false*/)
 {
 	if (!abNoDisable)
 	{
@@ -3841,7 +3842,11 @@ bool Settings::isKeyboardHooks(bool abNoDisable /*= false*/)
 		static int iAsked = 0;
 		if (!gpConEmu->DisableKeybHooks)
 		{
-			if (IsDebuggerPresent())
+			if (abNoDbgCheck)
+			{
+				// Nothing to do
+			}
+			else if (IsDebuggerPresent())
 			{
 				// May be it is remote debugger? Check if "devenv.exe" or "WDExpress.exe" processes exists
 				if (!iAsked)

@@ -941,7 +941,7 @@ struct Settings
 		//reg->Load(L"KeyboardHooks", m_isKeyboardHooks); if (m_isKeyboardHooks>2) m_isKeyboardHooks = 0;
 		BYTE m_isKeyboardHooks;
 	public:
-		bool isKeyboardHooks(bool abNoDisable = false);
+		bool isKeyboardHooks(bool abNoDisable = false, bool abNoDbgCheck = false);
 
 		//bool CheckUpdatesWanted();
 

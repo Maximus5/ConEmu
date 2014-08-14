@@ -102,6 +102,10 @@ static StatusColInfo gStatusCols[] =
 						L"Scroll Lock state",
 						L"Scroll Lock state, left click to change"},
 
+	{csi_KeyHooks,		L"StatusBar.Hide.KeyHooks",
+						L"Keyboard hooks",
+						L"Install keyboard hooks status"},
+
 	{csi_InputLocale,	L"StatusBar.Hide.Lang",
 						L"Current input HKL",
 						L"Active input locale identifier - GetKeyboardLayout"},
@@ -236,6 +240,7 @@ CStatus::CStatus()
 	ms_ForeInfo[0] = ms_FocusInfo[0] = 0;
 
 	mb_Caps = mb_Num = mb_Scroll = false;
+	mb_KeyHooks = false;
 	mhk_Locale = 0;
 
 	ms_Status[0] = 0;
@@ -586,7 +591,12 @@ void CStatus::PaintStatus(HDC hPaint, LPRECT prcStatus /*= NULL*/)
 					_wsprintf(m_Items[nDrawCount].sText, SKIPLEN(countof(m_Items[nDrawCount].sText)-1) L"%08X", (DWORD)mhk_Locale);
 					wcscpy_c(m_Items[nDrawCount].szFormat, L"FFFFFFFF");
 				}
-
+				break;
+			case csi_KeyHooks:
+				wcscpy_c(m_Items[nDrawCount].sText,
+					(gpConEmu->IsKeyboardHookRegistered() || gpSet->isKeyboardHooks(false, true))
+					? L"KH" : L"––");
+				wcscpy_c(m_Items[nDrawCount].szFormat, L"XX");
 				break;
 
 			case csi_WindowStyle:
@@ -774,6 +784,9 @@ void CStatus::PaintStatus(HDC hPaint, LPRECT prcStatus /*= NULL*/)
 			case csi_ScrollLock:
 				SetTextColor(hDrawDC, mb_Scroll ? crText : crDash);
 				break;
+			case csi_KeyHooks:
+				SetTextColor(hDrawDC, mb_KeyHooks ? crText : crDash);
+				break;
 			default:
 				;
 			}
@@ -829,6 +842,7 @@ void CStatus::PaintStatus(HDC hPaint, LPRECT prcStatus /*= NULL*/)
 			case csi_CapsLock:
 			case csi_NumLock:
 			case csi_ScrollLock:
+			case csi_KeyHooks:
 				SetTextColor(hDrawDC, crText);
 				break;
 			default:
@@ -1754,6 +1768,7 @@ bool CStatus::IsKeyboardChanged()
 	if (gpSet->isStatusColumnHidden[csi_CapsLock]
 		&& gpSet->isStatusColumnHidden[csi_NumLock]
 		&& gpSet->isStatusColumnHidden[csi_ScrollLock]
+		&& gpSet->isStatusColumnHidden[csi_KeyHooks]
 		&& gpSet->isStatusColumnHidden[csi_InputLocale])
 	{
 		// Если ни одна из клавиатурных "кнопок" не показана - то и делать нечего
@@ -1765,6 +1780,7 @@ bool CStatus::IsKeyboardChanged()
 	bool bCaps = (GetKeyState(VK_CAPITAL) & 1) == 1;
 	bool bNum = (GetKeyState(VK_NUMLOCK) & 1) == 1;
 	bool bScroll = (GetKeyState(VK_SCROLL) & 1) == 1;
+	bool bKeyHooks = gpConEmu->IsKeyboardHookRegistered();
 	DWORD_PTR hkl = gpConEmu->GetActiveKeyboardLayout();
 
 	if (bCaps != mb_Caps)
@@ -1780,6 +1796,11 @@ bool CStatus::IsKeyboardChanged()
 	if (bScroll != mb_Scroll)
 	{
 		mb_Scroll = bScroll; bChanged = true;
+	}
+
+	if (bKeyHooks != mb_KeyHooks)
+	{
+		mb_KeyHooks = bKeyHooks; bChanged = true;
 	}
 
 	if (hkl != mhk_Locale)

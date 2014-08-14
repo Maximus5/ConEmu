@@ -514,6 +514,7 @@ class CConEmuMain :
 	public:
 		void RightClickingPaint(HDC hdcIntVCon, CVirtualConsole* apVCon);
 		void RegisterMinRestore(bool abRegister);
+		bool IsKeyboardHookRegistered();
 		void RegisterHooks();
 		void UnRegisterHooks(BOOL abFinal=FALSE);
 		void OnWmHotkey(WPARAM wParam);

@@ -8597,6 +8597,11 @@ void CConEmuMain::UpdateWinHookSettings()
 	}
 }
 
+bool CConEmuMain::IsKeyboardHookRegistered()
+{
+	return (mh_LLKeyHook != NULL);
+}
+
 void CConEmuMain::RegisterHooks()
 {
 //	#ifndef _DEBUG
