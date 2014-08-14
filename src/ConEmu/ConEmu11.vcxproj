@@ -978,6 +978,7 @@
     <ClInclude Include="..\common\RConStartArgs.h" />
     <ClInclude Include="..\common\RgnDetect.h" />
     <ClInclude Include="..\common\SetEnvVar.h" />
+    <ClInclude Include="..\common\StartupEnv.h" />
     <ClInclude Include="..\common\UnicodeChars.h" />
     <ClInclude Include="..\common\WinConsole.h" />
     <ClInclude Include="..\common\WinObjects.h" />

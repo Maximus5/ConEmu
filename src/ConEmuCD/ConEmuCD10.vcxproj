@@ -828,6 +828,7 @@
     <ClInclude Include="..\common\PipeServer.h" />
     <ClInclude Include="..\common\RConStartArgs.h" />
     <ClInclude Include="..\common\SetEnvVar.h" />
+    <ClInclude Include="..\common\StartupEnv.h" />
     <ClInclude Include="..\common\WinConsole.h" />
     <ClInclude Include="..\common\WinObjects.h" />
     <ClInclude Include="..\ConEmuHk\Injects.h" />
