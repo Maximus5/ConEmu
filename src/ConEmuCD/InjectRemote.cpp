@@ -395,6 +395,7 @@ CINFILTRATE_EXIT_CODES InjectRemote(DWORD nRemotePID, bool abDefTermOnly /*= fal
 	{
 		hEvent = CreateEvent(LocalSecurity(), FALSE, FALSE, szName);
 		SetEvent(hEvent);
+
 		_wsprintf(szName, SKIPLEN(countof(szName)) CEDEFAULTTERMHOOKOK, nRemotePID);
 		hDefTermReady = CreateEvent(LocalSecurity(), FALSE, FALSE, szName);
 		ResetEvent(hDefTermReady);
@@ -506,6 +507,9 @@ wrap:
 	if (hProc != NULL)
 		CloseHandle(hProc);
 	// But check the result of the operation
+
+	//_ASSERTE(FALSE && "WaitForSingleObject(hDefTermReady)");
+
 	if ((iRc == 0) && hDefTermReady)
 	{
 		_ASSERTE(abDefTermOnly);

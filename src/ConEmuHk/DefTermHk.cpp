@@ -87,6 +87,8 @@ bool InitDefaultTerm()
 		return false;
 	}
 
+	//_ASSERTE(FALSE && "InitDefaultTerm");
+
 	// При обновлении ConEmu может обновиться и ConEmuHk.dll
 	// Но в процессы с "DefTerm" грузится копия dll-ки, поэтому
 	// после обновления в уже хукнутый процесс загружается
