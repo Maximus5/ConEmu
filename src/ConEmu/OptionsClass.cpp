@@ -532,7 +532,7 @@ const ConEmuHotKey* CSettings::GetHotKeyPtr(int idx)
 		}
 		else
 		{
-			const Settings::CommandTasks* pCmd = gpSet->CmdTaskGet(idx - mn_HotKeys);
+			const CommandTasks* pCmd = gpSet->CmdTaskGet(idx - mn_HotKeys);
 			if (pCmd)
 			{
 				_ASSERTE(pCmd->HotKey.HkType==chk_Task && pCmd->HotKey.GetTaskIndex()==(idx-mn_HotKeys));
@@ -2475,7 +2475,7 @@ INT_PTR CSettings::pageOpProc_Start(HWND hWnd2, UINT messg, WPARAM wParam, LPARA
 			SetDlgItemText(hWnd2, tStartTasksFile, gpSet->psStartTasksFile ? (*gpSet->psStartTasksFile == CmdFilePrefix ? (gpSet->psStartTasksFile+1) : gpSet->psStartTasksFile) : L"");
 
 			int nGroup = 0;
-			const Settings::CommandTasks* pGrp = NULL;
+			const CommandTasks* pGrp = NULL;
 			SendDlgItemMessage(hWnd2, lbStartNamedTask, CB_RESETCONTENT, 0,0);
 			SendDlgItemMessage(hWnd2, lbStartNamedTask, CB_ADDSTRING, 0, (LPARAM)csNoTask);
 			while ((pGrp = gpSet->CmdTaskGet(nGroup++)))
@@ -2637,7 +2637,7 @@ INT_PTR CSettings::pageOpProc_Start(HWND hWnd2, UINT messg, WPARAM wParam, LPARA
 					if (nIdx == -1)
 						nIdx = -2;
 				}
-				const Settings::CommandTasks* pTask = (nIdx >= -1) ? gpSet->CmdTaskGet(nIdx) : NULL;
+				const CommandTasks* pTask = (nIdx >= -1) ? gpSet->CmdTaskGet(nIdx) : NULL;
 				SetDlgItemText(hWnd2, tCmdGroupCommands, pTask ? pTask->pszCommands : L"");
 			}
 			else
@@ -3882,7 +3882,7 @@ LRESULT CSettings::OnInitDialog_Tasks(HWND hWnd2, bool abForceReload)
 
 	int nGroup = 0;
 	wchar_t szItem[1024];
-	const Settings::CommandTasks* pGrp = NULL;
+	const CommandTasks* pGrp = NULL;
 	while ((pGrp = gpSet->CmdTaskGet(nGroup)))
 	{
 		_wsprintf(szItem, SKIPLEN(countof(szItem)) L"%i\t", nGroup+1);
@@ -6866,7 +6866,7 @@ LRESULT CSettings::OnButtonClicked_Tasks(HWND hWnd2, WPARAM wParam, LPARAM lPara
 			if (iCur < 0)
 				break;
 
-			const Settings::CommandTasks* p = gpSet->CmdTaskGet(iCur);
+			const CommandTasks* p = gpSet->CmdTaskGet(iCur);
             if (!p)
             	break;
 
@@ -6937,7 +6937,7 @@ LRESULT CSettings::OnButtonClicked_Tasks(HWND hWnd2, WPARAM wParam, LPARAM lPara
 			int iCur = (int)SendDlgItemMessage(hWnd2, lbCmdTasks, LB_GETCURSEL, 0,0);
 			if (iCur < 0)
 				break;
-			const Settings::CommandTasks* pCmd = gpSet->CmdTaskGet(iCur);
+			const CommandTasks* pCmd = gpSet->CmdTaskGet(iCur);
 			if (!pCmd)
 				break;
 
@@ -8259,7 +8259,7 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			break;
 
 		mb_IgnoreCmdGroupEdit = true;
-		const Settings::CommandTasks* pCmd = NULL;
+		const CommandTasks* pCmd = NULL;
 		int iCur = (int)SendDlgItemMessage(hWnd2, lbCmdTasks, LB_GETCURSEL, 0,0);
 		if (iCur >= 0)
 			pCmd = gpSet->CmdTaskGet(iCur);

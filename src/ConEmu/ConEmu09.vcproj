@@ -410,6 +410,7 @@
       <File RelativePath=".\Attach.cpp" />
       <File RelativePath=".\Background.cpp" />
       <File RelativePath=".\BaseDragDrops.cpp" />
+      <File RelativePath=".\CmdTasks.cpp" />
       <File RelativePath=".\ConEmu.cpp" />
       <File RelativePath=".\ConEmuApp.cpp" />
       <File RelativePath=".\ConEmuCtrl.cpp" />
@@ -490,6 +491,7 @@
       <File RelativePath=".\Attach.h" />
       <File RelativePath=".\Background.h" />
       <File RelativePath=".\BaseDragDrops.h" />
+      <File RelativePath=".\CmdTasks.h" />
       <File RelativePath=".\ConEmu.h" />
       <File RelativePath=".\ConEmuApp.h" />
       <File RelativePath=".\ConEmuCtrl.h" />

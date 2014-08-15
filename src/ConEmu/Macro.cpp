@@ -2911,7 +2911,7 @@ LPWSTR ConEmuMacro::Task(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 	{
 		if (p->GetIntArg(0, nTaskIndex) && (nTaskIndex > 0))
 		{
-			const Settings::CommandTasks* pTask = gpSet->CmdTaskGet(nTaskIndex - 1);
+			const CommandTasks* pTask = gpSet->CmdTaskGet(nTaskIndex - 1);
 			if (pTask)
 				pszName = pTask->pszName;
 		}

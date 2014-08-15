@@ -513,7 +513,7 @@ void CreateDefaultTasks(bool bForceAdd /*= false*/)
 
 	if (!bForceAdd)
 	{
-		const Settings::CommandTasks* pExist = gpSet->CmdTaskGet(iCreatIdx);
+		const CommandTasks* pExist = gpSet->CmdTaskGet(iCreatIdx);
 		if (pExist != NULL)
 		{
 			// At least one task was already created

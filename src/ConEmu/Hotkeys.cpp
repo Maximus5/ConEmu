@@ -322,7 +322,7 @@ LPCWSTR ConEmuHotKey::GetDescription(wchar_t* pszDescr, int cchMaxLen, bool bAdd
 
 	if (IsTaskHotKey())
 	{
-		const Settings::CommandTasks* pCmd = gpSet->CmdTaskGet(GetTaskIndex());
+		const CommandTasks* pCmd = gpSet->CmdTaskGet(GetTaskIndex());
 		if (pCmd)
 			lstrcpyn(pszDescr, pCmd->pszName ? pCmd->pszName : L"", cchMaxLen);
 	}

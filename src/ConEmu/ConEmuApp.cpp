@@ -2974,7 +2974,7 @@ bool UpdateWin7TaskList(bool bForce, bool bNoSuccMsg /*= false*/)
 	if (gpSet->isStoreTaskbarkTasks)
 	{
 		int nGroup = 0;
-		const Settings::CommandTasks* pGrp = NULL;
+		const CommandTasks* pGrp = NULL;
 		while ((pGrp = gpSet->CmdTaskGet(nGroup++)) && (nTasksCount < countof(pszTasks)))
 		{
 			if (pGrp->pszName && *pGrp->pszName)

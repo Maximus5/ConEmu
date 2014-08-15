@@ -909,6 +909,7 @@
     <ClCompile Include="Attach.cpp" />
     <ClCompile Include="Background.cpp" />
     <ClCompile Include="BaseDragDrops.cpp" />
+    <ClCompile Include="CmdTasks.cpp" />
     <ClCompile Include="ConEmu.cpp" />
     <ClCompile Include="ConEmuApp.cpp" />
     <ClCompile Include="ConEmuCtrl.cpp" />
@@ -990,6 +991,7 @@
     <ClInclude Include="Attach.h" />
     <ClInclude Include="Background.h" />
     <ClInclude Include="BaseDragDrops.h" />
+    <ClInclude Include="CmdTasks.h" />
     <ClInclude Include="ConEmu.h" />
     <ClInclude Include="ConEmuApp.h" />
     <ClInclude Include="ConEmuCtrl.h" />

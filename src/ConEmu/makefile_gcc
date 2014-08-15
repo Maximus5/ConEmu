@@ -17,6 +17,7 @@ SRCS = \
 		Attach.cpp         \
 		Background.cpp     \
 		BaseDragDrops.cpp  \
+		CmdTasks.cpp       \
 		ConEmu.cpp         \
 		ConEmuApp.cpp      \
 		ConEmuCtrl.cpp     \

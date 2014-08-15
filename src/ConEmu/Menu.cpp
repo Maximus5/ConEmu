@@ -314,7 +314,7 @@ void CConEmuMenu::OnNewConPopupMenu(POINT* ptWhere /*= NULL*/, DWORD nFlags /*= 
 		//gpSet->LoadCmdTasks(NULL);
 
 		int nGroup = 0, nCurGroupCount = 0;
-		const Settings::CommandTasks* pGrp = NULL;
+		const CommandTasks* pGrp = NULL;
 		HMENU hCurPopup = hPopup;
 		//const wchar_t* sMenuHotkey = L"1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 		int nMenuHotkeyMax = _tcslen(sMenuHotkey);
@@ -475,13 +475,13 @@ void CConEmuMenu::OnNewConPopupMenu(POINT* ptWhere /*= NULL*/, DWORD nFlags /*= 
 			RConStartArgs con;
 			if ((itm.ItemType == CmdTaskPopupItem::eTaskAll) || (itm.ItemType == CmdTaskPopupItem::eTaskPopup))
 			{
-				const Settings::CommandTasks* pGrp = (const Settings::CommandTasks*)itm.pGrp;
+				const CommandTasks* pGrp = (const CommandTasks*)itm.pGrp;
 				con.pszSpecialCmd = lstrdup(pGrp->pszName);
 				_ASSERTE(con.pszSpecialCmd && *con.pszSpecialCmd==TaskBracketLeft && con.pszSpecialCmd[lstrlen(con.pszSpecialCmd)-1]==TaskBracketRight);
 			}
 			else if (itm.ItemType == CmdTaskPopupItem::eTaskCmd)
 			{
-				const Settings::CommandTasks* pGrp = (const Settings::CommandTasks*)itm.pGrp;
+				const CommandTasks* pGrp = (const CommandTasks*)itm.pGrp;
 				bool lbSetActive = false;
 				bool lbRunAdmin = false;
 
@@ -593,7 +593,7 @@ void CConEmuMenu::OnNewConPopupMenuRClick(HMENU hMenu, UINT nItemPos)
 	}
 	else
 	{
-		const Settings::CommandTasks* pGrp = (const Settings::CommandTasks*)itm->pGrp;
+		const CommandTasks* pGrp = (const CommandTasks*)itm->pGrp;
 		if (!pGrp || !pGrp->pszCommands || !*pGrp->pszCommands)
 			return;
 
@@ -1108,7 +1108,7 @@ POINT CConEmuMenu::CalcTabMenuPos(CVirtualConsole* apVCon)
 
 int CConEmuMenu::FillTaskPopup(HMENU hMenu, CmdTaskPopupItem* pParent)
 {
-	const Settings::CommandTasks* pGrp = (const Settings::CommandTasks*)pParent->pGrp;
+	const CommandTasks* pGrp = (const CommandTasks*)pParent->pGrp;
 
 	CmdTaskPopupItem itm = {CmdTaskPopupItem::eNone};
 
@@ -1286,7 +1286,7 @@ LRESULT CConEmuMenu::OnInitMenuPopup(HWND hWnd, HMENU hMenu, LPARAM lParam)
 		if (mb_CmdShowTaskItems && p && (p->ItemType == CmdTaskPopupItem::eTaskPopup) && !p->bPopupInitialized)
 		{
 			p->bPopupInitialized = TRUE;
-			const Settings::CommandTasks* pGrp = (const Settings::CommandTasks*)p->pGrp;
+			const CommandTasks* pGrp = (const CommandTasks*)p->pGrp;
 
 			//CmdTaskPopupItem itm = {CmdTaskPopupItem::eNone};
 

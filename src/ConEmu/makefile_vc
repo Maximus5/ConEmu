@@ -32,6 +32,7 @@ $(INTDIR)\Attach.obj \
 $(INTDIR)\Background.obj \
 $(INTDIR)\BaseDragDrops.obj \
 $(INTDIR)\CmdLine.obj \
+$(INTDIR)\CmdTasks.obj \
 $(INTDIR)\Common.obj \
 $(INTDIR)\ConEmu.obj \
 $(INTDIR)\ConEmuApp.obj \
@@ -259,6 +260,8 @@ $(INTDIR)\Background.obj: Background.cpp Background.h
 $(INTDIR)\BaseDragDrops.obj: BaseDragDrops.cpp BaseDragDrops.h DragDrop.h DragDropData.h
 
 $(INTDIR)\CmdLine.obj: ../common/CmdLine.cpp ../common/CmdLine.h
+
+$(INTDIR)\CmdTasks.obj: CmdTasks.cpp CmdTasks.h
 
 $(INTDIR)\Common.obj: ../common/Common.cpp ../common/Common.hpp
 

@@ -4937,7 +4937,7 @@ LPCWSTR Settings::SaveAllMacroDefault(FarMacroVersion fmv)
 
 #undef IsLuaMacroOk
 
-const Settings::CommandTasks* Settings::CmdTaskGet(int anIndex)
+const CommandTasks* Settings::CmdTaskGet(int anIndex)
 {
 	if (anIndex == -1)
 	{
@@ -5050,7 +5050,7 @@ bool Settings::CmdTaskXch(int anIndex1, int anIndex2)
 		return false;
 	}
 
-	Settings::CommandTasks* p = CmdTasks[anIndex1];
+	CommandTasks* p = CmdTasks[anIndex1];
 	CmdTasks[anIndex1] = CmdTasks[anIndex2];
 	CmdTasks[anIndex2] = p;
 

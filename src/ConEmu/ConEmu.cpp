@@ -11452,7 +11452,7 @@ wchar_t* CConEmuMain::LoadConsoleBatch_Task(LPCWSTR asSource, RConStartArgs* pAr
 		wchar_t* psz = wcschr(szName, TaskBracketRight);
 		if (psz) psz[1] = 0;
 
-		const Settings::CommandTasks* pGrp = NULL;
+		const CommandTasks* pGrp = NULL;
 		if (lstrcmp(asSource, AutoStartTaskName) == 0)
 		{
 			pGrp = gpSet->CmdTaskGet(-1);

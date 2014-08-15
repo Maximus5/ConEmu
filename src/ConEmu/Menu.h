@@ -111,7 +111,7 @@ private:
 	{
 		enum CmdTaskPopupItemType { eNone, eTaskPopup, eTaskAll, eTaskCmd, eMore, eCmd, eNewDlg, eSetupTasks, eClearHistory } ItemType;
 		int nCmd;
-		const void/*Settings::CommandTasks*/* pGrp;
+		const void/*CommandTasks*/* pGrp;
 		LPCWSTR pszCmd;
 		wchar_t szShort[64];
 		HMENU hPopup;

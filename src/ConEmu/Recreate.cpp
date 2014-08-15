@@ -449,7 +449,7 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 
 			// Tasks
 			int nGroup = 0;
-			const Settings::CommandTasks* pGrp = NULL;
+			const CommandTasks* pGrp = NULL;
 			while ((pGrp = gpSet->CmdTaskGet(nGroup++)))
 			{
 				pDlg->AddCommandList(pGrp->pszName);
