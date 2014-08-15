@@ -415,3 +415,6 @@ int startswith(LPCWSTR asStr, LPCWSTR asPattern, bool abIgnoreCase);
 #define _strcpy_c(Dst,cchDest,Src) StringCchCopyA(Dst, cchDest, Src)
 #define _strcat_c(Dst,cchDest,Src) StringCchCatA(Dst, cchDest, Src)
 #define _strcpyn_c(Dst,cchDest,Src,cchSrc) { _ASSERTE(((INT_PTR)cchDest)>=((INT_PTR)cchSrc)); StringCchCopyNA(Dst, cchDest, Src, cchSrc); }
+
+#define lstrempty(s) (!(s) || !*(s))
+#define lstrnempty(s) ((s) && *(s))
