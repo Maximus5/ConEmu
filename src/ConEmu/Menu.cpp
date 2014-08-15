@@ -2420,6 +2420,9 @@ LRESULT CConEmuMenu::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 				if (gpSet->isQuakeStyle)
 				{
 					gpConEmu->DoMinimizeRestore(sih_AutoHide);
+					// We still need to initiate 'Minimize' behavior
+					// to make OS move the focus to the previous window
+					// So, continue to the WM_SYSCOMMAND
 				}
 				else if (bMin2TSA)
 				{

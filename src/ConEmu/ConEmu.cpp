@@ -18836,6 +18836,14 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			result = DefWindowProc(hWnd, messg, wParam, lParam);
 			break;
 		case WM_ACTIVATEAPP:
+			if (wParam && mp_Menu->GetInScMinimize())
+			{
+				// Sometimes, during Quake window minimize (generally by clicking on the taskbar button)
+				// OS send WM_ACTIVATEAPP(TRUE) from internals of DefWindowProc(WM_SYSCOMMAND,SC_MINIMIZE).
+				// We need to treat that message as 'Lose focus'
+				LogString(L"Event 'Application activating' received during ScMinimize! Forcing to 'Application deactivating'");
+				wParam = FALSE; lParam = 0;
+			}
 			LogString(wParam ? L"Application activating" : L"Application deactivating");
 			// просто так фокус в дочернее окно ставить нельзя
 			// если переключать фокус в дочернее приложение по любому чиху
