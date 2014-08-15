@@ -13,6 +13,15 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
 
+2014.08.14
+[*] Issue 1672: Attach to a console window clears its window title.
+[*] DefTerm. Use switch "/ROOTEXE" internally to let ConEmuC know the name of root executable.
+[*] More tab switch fixed for Far Manager 4040 (‘Desktop’ is now has ‘0’ index).
+[*] New status column for debugging purposes - ‘Keyboard hooks’.
+[*] Advanced logging of monitor dpi.
+[*] Wrong values was written to log in ‘Loaded pos’.
+
+
 2014.08.12
 [%] Issue 1669: Internal tab switching was broken from Far 4040.
 [%] Issue 1670: Powershell + PSReadLine makes progress get stuck.
