@@ -13,6 +13,13 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
 
+2014.08.15
+[*] Issue 1660: Support "/NoSingle", "/Quake", "/NoQuake" switches in Task parameters.
+    They used while starting new Task from existing ConEmu instance.
+[*] Quake window can't be hidden by taskbar button click.
+[*] Some internal changes.
+
+
 2014.08.14
 [*] Issue 1672: Attach to a console window clears its window title.
 [*] DefTerm. Use switch "/ROOTEXE" internally to let ConEmuC know the name of root executable.
