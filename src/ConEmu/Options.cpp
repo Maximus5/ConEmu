@@ -2527,7 +2527,7 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla, const SettingsStorage* ap
 
 		if (gpSetCls->isAdvLogging)
 		{
-			char szInfo[120]; _wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "Loaded pos: {%i,%i}, size: {%s,%s}", _wndX, _wndY, wndWidth.AsString(), wndHeight.AsString());
+			wchar_t szInfo[120]; _wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"Loaded pos: {%i,%i}, size: {%s,%s}", _wndX, _wndY, wndWidth.AsString(), wndHeight.AsString());
 			gpConEmu->LogString(szInfo);
 		}
 
