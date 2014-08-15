@@ -9074,7 +9074,7 @@ BOOL CConEmuMain::RunSingleInstance(HWND hConEmuWnd /*= NULL*/, LPCWSTR apszCmd 
 				if (lpszCmd && (*lpszCmd == TaskBracketLeft))
 				{
 					RConStartArgs args;
-					wchar_t* pszDataW = LoadConsoleBatch(lpszCmd, &args.pszStartupDir, &args.pszIconFile);
+					wchar_t* pszDataW = LoadConsoleBatch(lpszCmd, &args);
 					SafeFree(pszDataW);
 					if (args.pszStartupDir && *args.pszStartupDir)
 					{
@@ -11232,7 +11232,7 @@ LRESULT CConEmuMain::OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate)
 	return 0;
 }
 
-wchar_t* CConEmuMain::LoadConsoleBatch(LPCWSTR asSource, wchar_t** ppszStartupDir /*= NULL*/, wchar_t** ppszIcon /*= NULL*/)
+wchar_t* CConEmuMain::LoadConsoleBatch(LPCWSTR asSource, RConStartArgs* pArgs /*= NULL*/)
 {
 	wchar_t* pszDataW = NULL;
 
@@ -11244,7 +11244,7 @@ wchar_t* CConEmuMain::LoadConsoleBatch(LPCWSTR asSource, wchar_t** ppszStartupDi
 	else if ((*asSource == TaskBracketLeft) || (lstrcmp(asSource, AutoStartTaskName) == 0))
 	{
 		// Имя задачи
-		pszDataW = LoadConsoleBatch_Task(asSource, ppszStartupDir, ppszIcon);
+		pszDataW = LoadConsoleBatch_Task(asSource, pArgs);
 	}
 	else if (*asSource == DropLnkPrefix)
 	{
@@ -11442,7 +11442,7 @@ wchar_t* CConEmuMain::LoadConsoleBatch_Drops(LPCWSTR asSource)
 	return pszDataW;
 }
 
-wchar_t* CConEmuMain::LoadConsoleBatch_Task(LPCWSTR asSource, wchar_t** ppszStartupDir /*= NULL*/, wchar_t** ppszIcon /*= NULL*/)
+wchar_t* CConEmuMain::LoadConsoleBatch_Task(LPCWSTR asSource, RConStartArgs* pArgs /*= NULL*/)
 {
 	wchar_t* pszDataW = NULL;
 
@@ -11470,23 +11470,20 @@ wchar_t* CConEmuMain::LoadConsoleBatch_Task(LPCWSTR asSource, wchar_t** ppszStar
 		if (pGrp)
 		{
 			pszDataW = lstrdup(pGrp->pszCommands);
-			if (ppszStartupDir && !*ppszStartupDir && pGrp->pszGuiArgs)
+			if (pGrp->pszGuiArgs)
 			{
-				wchar_t* pszIcon = NULL;
-				pGrp->ParseGuiArgs(ppszStartupDir, &pszIcon);
+				RConStartArgs parsedArgs;
+				pGrp->ParseGuiArgs(&parsedArgs);
 
-				if (pszIcon)
+				if (lstrempty(pArgs->pszStartupDir) && lstrnempty(parsedArgs.pszStartupDir))
+					ExchangePtr(pArgs->pszStartupDir, parsedArgs.pszStartupDir);
+				if (lstrempty(pArgs->pszIconFile) && lstrnempty(parsedArgs.pszIconFile))
+					ExchangePtr(pArgs->pszIconFile, parsedArgs.pszIconFile);
+
+				if (lstrnempty(pArgs->pszIconFile))
 				{
 					// Функция сама проверит - можно или нет менять иконку приложения
-					SetWindowIcon(pszIcon);
-					// Если просили - вернуть путь к иконке
-					if (ppszIcon && !*ppszIcon)
-					{
-						SafeFree(*ppszIcon);
-						*ppszIcon = pszIcon;
-						pszIcon = NULL;
-					}
-					SafeFree(pszIcon);
+					SetWindowIcon(pArgs->pszIconFile);
 				}
 			}
 		}
@@ -11730,7 +11727,7 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 			{
 				RConStartArgs args;
 				// В качестве "команды" указан "пакетный файл" или "группа команд" одновременного запуска нескольких консолей
-				wchar_t* pszDataW = LoadConsoleBatch(pszCmd, &args.pszStartupDir, &args.pszIconFile);
+				wchar_t* pszDataW = LoadConsoleBatch(pszCmd, &args);
 				if (!pszDataW)
 				{
 					Destroy();

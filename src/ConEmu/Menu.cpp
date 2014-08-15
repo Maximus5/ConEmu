@@ -490,7 +490,7 @@ void CConEmuMenu::OnNewConPopupMenu(POINT* ptWhere /*= NULL*/, DWORD nFlags /*= 
 				con.RunAsAdministrator = lbRunAdmin ? crb_On : crb_Off;
 
 				// May be directory was set in task properties?
-				pGrp->ParseGuiArgs(&con.pszStartupDir, NULL);
+				pGrp->ParseGuiArgs(&con);
 
 				con.ProcessNewConArg();
 
@@ -653,7 +653,7 @@ void CConEmuMenu::OnNewConPopupMenuRClick(HMENU hMenu, UINT nItemPos)
 				con.RunAsAdministrator = bRunAs ? crb_On : crb_Off; // May be set in style ">*powershell"
 
 				// May be directory was set in task properties?
-				pGrp->ParseGuiArgs(&con.pszStartupDir, NULL);
+				pGrp->ParseGuiArgs(&con);
 
 				con.ProcessNewConArg();
 			

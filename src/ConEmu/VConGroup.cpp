@@ -3680,7 +3680,7 @@ CVirtualConsole* CVConGroup::CreateCon(RConStartArgs *args, bool abAllowScripts 
 		}
 
 		// В качестве "команды" указан "пакетный файл" или "группа команд" одновременного запуска нескольких консолей
-		wchar_t* pszDataW = gpConEmu->LoadConsoleBatch(args->pszSpecialCmd, &args->pszStartupDir, &args->pszIconFile);
+		wchar_t* pszDataW = gpConEmu->LoadConsoleBatch(args->pszSpecialCmd, args);
 		if (!pszDataW)
 			return NULL;
 

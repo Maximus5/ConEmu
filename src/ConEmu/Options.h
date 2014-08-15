@@ -529,10 +529,14 @@ struct Settings
 				_wcscpy_c(pszCommands, cchCmdMax, asCommands);
 			};
 
-			void ParseGuiArgs(wchar_t** pszDir, wchar_t** pszIcon) const
+			void ParseGuiArgs(RConStartArgs* pArgs) const
 			{
-				if (!pszGuiArgs || !*pszGuiArgs)
+				if (!pArgs)
+				{
+					_ASSERTE(pArgs!=NULL);
 					return;
+				}
+
 				LPCWSTR pszArgs = pszGuiArgs, pszOk = pszGuiArgs;
 				CmdArg szArg;
 				while (0 == NextArg(&pszArgs, szArg))
@@ -544,7 +548,7 @@ struct Settings
 					{
 						if (0 != NextArg(&pszArgs, szArg))
 							break;
-						if (*szArg && pszDir)
+						if (*szArg)
 						{
 							wchar_t* pszExpand = NULL;
 
@@ -554,14 +558,15 @@ struct Settings
 								pszExpand = ExpandEnvStr(szArg);
 							}
 
-							*pszDir = pszExpand ? pszExpand : lstrdup(szArg);
+							SafeFree(pArgs->pszStartupDir);
+							pArgs->pszStartupDir = pszExpand ? pszExpand : lstrdup(szArg);
 						}
 					}
 					else if (lstrcmpi(szArg, L"/icon") == 0)
 					{
 						if (0 != NextArg(&pszArgs, szArg))
 							break;
-						if (*szArg && pszIcon)
+						if (*szArg)
 						{
 							wchar_t* pszExpand = NULL;
 
@@ -571,7 +576,8 @@ struct Settings
 								pszExpand = ExpandEnvStr(szArg);
 							}
 
-							*pszIcon = pszExpand ? pszExpand : lstrdup(szArg);
+							SafeFree(pArgs->pszIconFile);
+							pArgs->pszIconFile = pszExpand ? pszExpand : lstrdup(szArg);
 						}
 					}
 					else if (lstrcmpi(szArg, L"/single") == 0)
