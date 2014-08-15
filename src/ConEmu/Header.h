@@ -711,6 +711,14 @@ extern const wchar_t* gsReportCrash; // = L"http://code.google.com/p/conemu-maxi
 extern const wchar_t* gsWhatsNew;    // = L"http://code.google.com/p/conemu-maximus5/wiki/Whats_New";
 
 template <class T>
+void ExchangePtr(T& a, T& b)
+{
+	T c = a;
+	a = b;
+	b = c;
+}
+
+template <class T>
 T GetMinMax(T a, int v1, int v2)
 {
 	if (a < (T)v1)
