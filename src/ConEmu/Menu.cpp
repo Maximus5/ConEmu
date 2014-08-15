@@ -477,6 +477,7 @@ void CConEmuMenu::OnNewConPopupMenu(POINT* ptWhere /*= NULL*/, DWORD nFlags /*= 
 			{
 				const CommandTasks* pGrp = (const CommandTasks*)itm.pGrp;
 				con.pszSpecialCmd = lstrdup(pGrp->pszName);
+				pGrp->ParseGuiArgs(&con);
 				_ASSERTE(con.pszSpecialCmd && *con.pszSpecialCmd==TaskBracketLeft && con.pszSpecialCmd[lstrlen(con.pszSpecialCmd)-1]==TaskBracketRight);
 			}
 			else if (itm.ItemType == CmdTaskPopupItem::eTaskCmd)

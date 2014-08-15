@@ -34,6 +34,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Header.h"
 #include "Hotkeys.h"
 #include "CmdTasks.h"
+#include "Options.h"
 
 void CommandTasks::FreePtr()
 {
@@ -193,6 +194,23 @@ void CommandTasks::ParseGuiArgs(RConStartArgs* pArgs) const
 		else if (lstrcmpi(szArg, L"/single") == 0)
 		{
 			// Used in the other parts of code
+		}
+		else if (lstrcmpi(szArg, L"/nosingle") == 0)
+		{
+			// Force to run in new ConEmu window
+			pArgs->aRecreate = cra_CreateWindow;
+		}
+		else if (lstrcmpi(szArg, L"/quake") == 0)
+		{
+			// Turn on quake mode in starting console?
+			// Disallowed if current window is already in Quake mode.
+			if (!gpSet->isQuakeStyle)
+				lstrmerge(&pArgs->pszAddGuiArg, L"/quake ");
+		}
+		else if (lstrcmpi(szArg, L"/noquake") == 0)
+		{
+			// Disable quake in starting console
+			lstrmerge(&pArgs->pszAddGuiArg, L"/noquake ");
 		}
 		else
 		{

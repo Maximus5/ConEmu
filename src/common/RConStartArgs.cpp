@@ -269,6 +269,7 @@ RConStartArgs::RConStartArgs()
 	eSplit = eSplitNone; nSplitValue = DefaultSplitValue; nSplitPane = 0;
 	aRecreate = cra_CreateTab;
 	pszSpecialCmd = pszStartupDir = pszUserName = pszDomain = pszRenameTab = NULL;
+	pszAddGuiArg = NULL;
 	pszIconFile = pszPalette = pszWallpaper = NULL;
 	BufHeight = crb_Undefined; nBufHeight = 0; LongOutputDisable = crb_Undefined;
 	OverwriteMode = crb_Undefined;
@@ -405,6 +406,7 @@ RConStartArgs::~RConStartArgs()
 {
 	SafeFree(pszSpecialCmd); // именно SafeFree
 	SafeFree(pszStartupDir); // именно SafeFree
+	SafeFree(pszAddGuiArg);
 	SafeFree(pszRenameTab);
 	SafeFree(pszIconFile);
 	SafeFree(pszPalette);
