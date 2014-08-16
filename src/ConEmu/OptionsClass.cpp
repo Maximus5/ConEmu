@@ -11902,7 +11902,8 @@ bool CSettings::MacroFontSetSizeInt(LOGFONT& LF, int nRelative/*0/1/2*/, int nVa
 			gpConEmu->LogString(L"-- Skipped! Zoom value is too small");
 			return false;
 		}
-		bChanged = (mn_FontZoomValue != nNewZoomValue);
+		// Force font recreation, even if zoom value is the same
+		bChanged = true;
 		goto wrap;
 	}
 
@@ -12018,7 +12019,7 @@ bool CSettings::MacroFontSetSize(int nRelative/*0/1/2*/, int nValue/*+-1,+-2,...
 		// или хотели поставить абсолютный размер
 		// или был масштаб НЕ 100%, а стал 100% (гарантированный возврат к оригиналу)
 		if (hf.IsSet()
-			&& ((nRelative == 0)
+			&& ((nRelative != 1)
 				|| (LF.lfHeight != LogFont.lfHeight)
 				|| (!bWasNotZoom100 && (mn_FontZoomValue == FontZoom100))))
 		{
@@ -12052,6 +12053,9 @@ bool CSettings::MacroFontSetSize(int nRelative/*0/1/2*/, int nValue/*+-1,+-2,...
 					SelectStringExact(hMainPg, tFontSizeX, temp);
 				}
 			}
+
+			if (gpConEmu->mp_Status)
+				gpConEmu->mp_Status->UpdateStatusBar(true);
 
 			_wsprintf(szLog, SKIPLEN(countof(szLog)) L"-- Succeeded! New font {'%s',%i,%i} was created", LF.lfFaceName, LF.lfHeight, LF.lfWidth, LF.lfHeight, LF.lfWidth);
 			gpConEmu->LogString(szLog);
