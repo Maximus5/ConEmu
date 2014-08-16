@@ -49,7 +49,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 BOOL apiSetForegroundWindow(HWND ahWnd);
 BOOL apiShowWindow(HWND ahWnd, int anCmdShow);
 BOOL apiShowWindowAsync(HWND ahWnd, int anCmdShow);
-void getWindowInfo(HWND ahWnd, wchar_t (&rsInfo)[1024]);
+void getWindowInfo(HWND ahWnd, wchar_t (&rsInfo)[1024], bool bProcessName = false, LPDWORD pnPID = NULL);
 
 typedef BOOL (WINAPI* IsWindow_t)(HWND hWnd);
 extern IsWindow_t Is_Window;
