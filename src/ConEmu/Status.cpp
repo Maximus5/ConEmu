@@ -226,6 +226,18 @@ static CStatus::StatusMenuOptions gTranspOpt[] = {
 	{9, L"Opaque, 100%",          100, CStatus::Transparent_IsMenuChecked},
 };
 
+static CStatus::StatusMenuOptions gZoomOpt[] = {
+	{1, L"Zoom 300%", 300, CStatus::Zoom_IsMenuChecked},
+	{2, L"Zoom 250%", 250, CStatus::Zoom_IsMenuChecked},
+	{3, L"Zoom 200%", 200, CStatus::Zoom_IsMenuChecked},
+	{4, L"Zoom 175%", 175, CStatus::Zoom_IsMenuChecked},
+	{5, L"Zoom 150%", 150, CStatus::Zoom_IsMenuChecked},
+	{6, L"Zoom 125%", 125, CStatus::Zoom_IsMenuChecked},
+	{7, L"Zoom 100%", 100, CStatus::Zoom_IsMenuChecked},
+	{8, L"Zoom 75%",   75, CStatus::Zoom_IsMenuChecked},
+	{9, L"Zoom 50%",   50, CStatus::Zoom_IsMenuChecked},
+};
+
 
 CStatus::CStatus()
 {
@@ -1244,6 +1256,10 @@ bool CStatus::ProcessStatusMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 					if (uMsg == WM_LBUTTONDOWN)
 						ShowTransparencyMenu(MakePoint(rcClient.right, rcClient.top));
 					break;
+				case csi_Zoom:
+					if (uMsg == WM_LBUTTONDOWN)
+						ShowZoomMenu(MakePoint(rcClient.right, rcClient.top));
+					break;
 				case csi_SyncInside:
 					if (gpConEmu->mp_Inside)
 					{
@@ -1941,6 +1957,9 @@ void CStatus::ProcessMenuHighlight(HMENU hMenu, WORD nID, WORD nFlags)
 					gpConEmu->OnTransparent();
 			}
 			break;
+		case csi_Zoom:
+			ProcessZoomMenuId(nID);
+			break;
 		default:
 			;
 	}
@@ -2002,6 +2021,17 @@ bool CStatus::ProcessTransparentMenuId(WORD nCmd, bool abAlphaOnly)
 	return bSelected;
 }
 
+bool CStatus::ProcessZoomMenuId(WORD nCmd)
+{
+	StatusMenuOptions* p;
+	if ((p = GetStatusMenuItem(nCmd, gZoomOpt, countof(gZoomOpt))) != NULL)
+	{
+		gpSetCls->MacroFontSetSize(2, p->nValue);
+		return true;
+	}
+	return false;
+}
+
 bool CStatus::isSettingsOpened(UINT nOpenPageID)
 {
 	if (ghOpWnd && IsWindow(ghOpWnd))
@@ -2060,6 +2090,33 @@ void CStatus::ShowTransparencyMenu(POINT pt)
 
 	// Отразить изменения в статусе
 	OnTransparency();
+}
+
+void CStatus::ShowZoomMenu(POINT pt)
+{
+	mb_InPopupMenu = true;
+	HMENU hPopup = CreateStatusMenu(gZoomOpt, countof(gZoomOpt));
+
+	_ASSERTE(m_ClickedItemDesc == csi_Zoom);
+	int nPrevZoom = gpSetCls->GetZoom(true);
+	int nCmd = ShowStatusBarMenu(pt, hPopup, csi_Zoom);
+
+	bool bSelected = ProcessZoomMenuId(nCmd);
+
+	if (!bSelected)
+	{
+		if (nPrevZoom != gpSetCls->GetZoom(true))
+		{
+			gpSetCls->MacroFontSetSize(3, nPrevZoom);
+		}
+	}
+
+	// Done
+	DestroyMenu(hPopup);
+	mb_InPopupMenu = false;
+
+	// Отразить изменения в статусе
+	IsWindowChanged();
 }
 
 // Прямоугольник в клиентских координатах ghWnd!
@@ -2188,6 +2245,19 @@ int CStatus::Transparent_IsMenuChecked(int nValue, int* pnNextValue)
 	}
 
 	return false;
+}
+
+int CStatus::Zoom_IsMenuChecked(int nValue, int* pnNextValue)
+{
+	int nZoom = gpSetCls->GetZoom();
+	int iChecked = 0;
+	if (nValue == nZoom)
+		iChecked = true;
+	else if (pnNextValue)
+		iChecked = (nValue < nZoom && nZoom < *pnNextValue);
+	else
+		iChecked = (nValue > nZoom);
+	return iChecked;
 }
 
 int CStatus::ShowStatusBarMenu(POINT pt, HMENU hPopup, CEStatusItems csi)

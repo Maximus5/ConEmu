@@ -152,6 +152,7 @@ private:
 	void ShowStatusSetupMenu();
 	void ShowVConMenu(POINT pt);
 	void ShowTransparencyMenu(POINT pt);
+	void ShowZoomMenu(POINT pt);
 
 	bool  mb_DataChanged; // данные изменились, нужна отрисовка
 	//bool  mb_Invalidated;
@@ -177,6 +178,7 @@ private:
 	bool IsTimeChanged();
 
 	bool ProcessTransparentMenuId(WORD nCmd, bool abAlphaOnly);
+	bool ProcessZoomMenuId(WORD nCmd);
 
 	bool isSettingsOpened(UINT nOpenPageID = 0);
 
@@ -225,6 +227,7 @@ public:
 		StatusMenuOptionsChecked pfnChecked;
 	};
 	static int Transparent_IsMenuChecked(int nValue, int* pnNextValue);
+	static int Zoom_IsMenuChecked(int nValue, int* pnNextValue);
 protected:
 	HMENU CreateStatusMenu(StatusMenuOptions* pItems, size_t nCount);
 	StatusMenuOptions* GetStatusMenuItem(WORD nMenuID, StatusMenuOptions* pItems, size_t nCount);
