@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2013 Maximus5
+Copyright (c) 2009-2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -131,7 +131,7 @@ class CSettings
 		void EvalLogfontSizes(LOGFONT& LF, LONG lfHeight, LONG lfWidth);
 		LONG EvalSize(LONG nSize, EvalSizeFlags Flags);
 		LONG EvalFontHeight(LPCWSTR lfFaceName, LONG lfHeight, BYTE nFontCharSet);
-		LONG GetZoom(); // в процентах
+		LONG GetZoom(bool bRaw = false); // в процентах (false) или mn_FontZoomValue (true)
 	private:
 		LONG mn_FontZoomValue; // 100% == 10000 (FontZoom100)
 		LOGFONT LogFont, LogFont2;
@@ -319,7 +319,7 @@ class CSettings
 		void UnregisterShell(LPCWSTR asName);
 		void UnregisterShellInvalids();
 		bool DeleteRegKeyRecursive(HKEY hRoot, LPCWSTR asParent, LPCWSTR asName);
-		bool MacroFontSetSizeInt(LOGFONT& LF, int nRelative/*0/1/2*/, int nValue/*+-1,+-2,... | 100%*/);
+		bool MacroFontSetSizeInt(LOGFONT& LF, int nRelative/*0/1/2/3*/, int nValue/*+-1,+-2,... | 100%*/);
 	public:
 		void UnregisterFonts();
 		BOOL GetFontNameFromFile(LPCTSTR lpszFilePath, wchar_t (&rsFontName)[LF_FACESIZE], wchar_t (&rsFullFontName)[LF_FACESIZE]);
@@ -328,7 +328,7 @@ class CSettings
 		BOOL GetFontNameFromFile_BDF(LPCTSTR lpszFilePath, wchar_t (&rsFontName)[LF_FACESIZE], wchar_t (&rsFullFontName)[LF_FACESIZE]);
 		void UpdateConsoleMode(DWORD nMode);
 		bool AutoRecreateFont(int nFontW, int nFontH);
-		bool MacroFontSetSize(int nRelative/*0/1/2*/, int nValue/*+-1,+-2,... | 100%*/);
+		bool MacroFontSetSize(int nRelative/*0/1/2/3*/, int nValue/*+-1,+-2,... | 100%*/);
 		void MacroFontSetName(LPCWSTR pszFontName, WORD anHeight /*= 0*/, WORD anWidth /*= 0*/);
 		bool CheckTheming();
 		void OnPanelViewAppeared(BOOL abAppear);

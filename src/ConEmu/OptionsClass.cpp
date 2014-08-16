@@ -1296,10 +1296,10 @@ LONG CSettings::EvalCellWidth()
 	return (LONG)gpSet->FontSizeX3;
 }
 
-// в процентах
-LONG CSettings::GetZoom()
+// в процентах (false) или mn_FontZoomValue (true)
+LONG CSettings::GetZoom(bool bRaw /*= false*/)
 {
-	return MulDiv(mn_FontZoomValue, 100, FontZoom100);
+	return bRaw ? mn_FontZoomValue : MulDiv(mn_FontZoomValue, 100, FontZoom100);
 }
 
 
@@ -11852,7 +11852,7 @@ void CSettings::SaveFontSizes(bool bAuto, bool bSendChanges)
 	gpConEmu->OnPanelViewSettingsChanged(bSendChanges);
 }
 
-bool CSettings::MacroFontSetSizeInt(LOGFONT& LF, int nRelative/*0/1/2*/, int nValue/*+-1,+-2,... | 100%*/)
+bool CSettings::MacroFontSetSizeInt(LOGFONT& LF, int nRelative/*0/1/2/3*/, int nValue/*+-1,+-2,... | 100%*/)
 {
 	bool bChanged = false;
 	int nCurHeight = EvalSize(gpSet->FontSizeY, esf_Vertical|esf_CanUseZoom);
@@ -11894,8 +11894,9 @@ bool CSettings::MacroFontSetSizeInt(LOGFONT& LF, int nRelative/*0/1/2*/, int nVa
 		break;
 
 	case 2:
+	case 3:
 		// Zoom value
-		nNewZoomValue = MulDiv(nValue, FontZoom100, 100);
+		nNewZoomValue = (nRelative == 2) ? MulDiv(nValue, FontZoom100, 100) : nValue;
 		if (nNewZoomValue < 10)
 		{
 			_ASSERTE(nNewZoomValue >= 10);
@@ -11950,7 +11951,7 @@ wrap:
 // Вызов из GUI-макросов - увеличить/уменьшить шрифт, без изменения размера (в пикселях) окна
 // Функция НЕ меняет высоту шрифта настройки и изменения не будут сохранены в xml/reg
 // Здесь меняется только значение "зума"
-bool CSettings::MacroFontSetSize(int nRelative/*0/1/2*/, int nValue/*+-1,+-2,... | 100%*/)
+bool CSettings::MacroFontSetSize(int nRelative/*0/1/2/3*/, int nValue/*+-1,+-2,... | 100%*/)
 {
 	wchar_t szLog[128];
 	if (isAdvLogging)
@@ -11978,7 +11979,7 @@ bool CSettings::MacroFontSetSize(int nRelative/*0/1/2*/, int nValue/*+-1,+-2,...
 			return false;
 		}
 	}
-	else if (nRelative == 2)
+	else if ((nRelative == 2) || (nRelative == 3))
 	{
 		// Zoom value
 		if (nValue < 1)
@@ -11989,7 +11990,7 @@ bool CSettings::MacroFontSetSize(int nRelative/*0/1/2*/, int nValue/*+-1,+-2,...
 	}
 	else
 	{
-		_ASSERTE(nRelative == 0 || nRelative == 1);
+		_ASSERTE(FALSE && "Invalie nRelative value");
 		gpConEmu->LogString(L"-- Skipped! Unsupported nRelative value");
 		return false;
 	}
