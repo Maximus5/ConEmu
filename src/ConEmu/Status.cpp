@@ -212,21 +212,18 @@ static StatusColInfo gStatusCols[] =
 						L"Click and drag size grip to resize ConEmu window"},
 };
 
-static struct StatusTranspOptions {
-	WORD nMenuID;
-	LPCWSTR sText;
-	int nValue;
-} gTranspOpt[] = {
-	{1, L"Transparent, 40%", 40},
-	{2, L"Transparent, 50%", 50},
-	{3, L"Transparent, 60%", 60},
-	{4, L"Transparent, 70%", 70},
-	{5, L"Transparent, 80%", 80},
-	{6, L"Transparent, 90%", 90},
+
+static CStatus::StatusMenuOptions gTranspOpt[] = {
+	{1, L"Transparent, 40%",       40, CStatus::Transparent_IsMenuChecked},
+	{2, L"Transparent, 50%",       50, CStatus::Transparent_IsMenuChecked},
+	{3, L"Transparent, 60%",       60, CStatus::Transparent_IsMenuChecked},
+	{4, L"Transparent, 70%",       70, CStatus::Transparent_IsMenuChecked},
+	{5, L"Transparent, 80%",       80, CStatus::Transparent_IsMenuChecked},
+	{6, L"Transparent, 90%",       90, CStatus::Transparent_IsMenuChecked},
 	{0},
-	{7, L"UserScreen transparency", 1},
-	{8, L"ColorKey transparency",   2},
-	{9, L"Opaque, 100%",     100},
+	{7, L"UserScreen transparency", 1, CStatus::Transparent_IsMenuChecked},
+	{8, L"ColorKey transparency",   2, CStatus::Transparent_IsMenuChecked},
+	{9, L"Opaque, 100%",          100, CStatus::Transparent_IsMenuChecked},
 };
 
 
@@ -1965,39 +1962,33 @@ bool CStatus::ProcessTransparentMenuId(WORD nCmd, bool abAlphaOnly)
 {
 	bool bSelected = false;
 
-	if (nCmd >= 1)
+	StatusMenuOptions* p;
+	if ((p = GetStatusMenuItem(nCmd, gTranspOpt, countof(gTranspOpt))) != NULL)
 	{
-		for (size_t i = 0; i < countof(gTranspOpt); i++)
+		// Change TEMPORARILY, without saving settings
+		if (p->nValue >= 40)
 		{
-			if (gTranspOpt[i].nMenuID == nCmd)
+			if ((p->nValue < 100) || !abAlphaOnly)
 			{
-				// Change TEMPORARILY, without saving settings
-				if (gTranspOpt[i].nValue >= 40)
-				{
-					if ((gTranspOpt[i].nValue < 100) || !abAlphaOnly)
-					{
-						gpSet->nTransparent = min(255,((gTranspOpt[i].nValue*255/100)+1));
-						bSelected = true;
-					}
-				}
-				else if (!abAlphaOnly)
-				{
-					switch (gTranspOpt[i].nValue)
-					{
-						case 1:
-							gpSet->isUserScreenTransparent = !gpSet->isUserScreenTransparent;
-							gpConEmu->OnHideCaption(); // при прозрачности - обязательно скрытие заголовка + кнопки
-							gpConEmu->UpdateWindowRgn();
-							// Отразить изменения в статусе
-							OnTransparency();
-							break;
-						case 2:
-							gpSet->isColorKeyTransparent = !gpSet->isColorKeyTransparent;
-							bSelected = true;
-							break;
-					}
-				}
-				break;
+				gpSet->nTransparent = min(255,((p->nValue*255/100)+1));
+				bSelected = true;
+			}
+		}
+		else if (!abAlphaOnly)
+		{
+			switch (p->nValue)
+			{
+				case 1:
+					gpSet->isUserScreenTransparent = !gpSet->isUserScreenTransparent;
+					gpConEmu->OnHideCaption(); // при прозрачности - обязательно скрытие заголовка + кнопки
+					gpConEmu->UpdateWindowRgn();
+					// Отразить изменения в статусе
+					OnTransparency();
+					break;
+				case 2:
+					gpSet->isColorKeyTransparent = !gpSet->isColorKeyTransparent;
+					bSelected = true;
+					break;
 			}
 		}
 	}
@@ -2030,72 +2021,17 @@ void CStatus::ShowTransparencyMenu(POINT pt)
 		return;
 
 	mb_InPopupMenu = true;
-	HMENU hPopup = CreatePopupMenu();
+	HMENU hPopup = CreateStatusMenu(gTranspOpt, countof(gTranspOpt));
 
 	// меню было расчитано на min=40
 	_ASSERTE(MIN_ALPHA_VALUE==40);
-
-	int nCurrent = -1;
-
-	for (size_t i = 0; i < countof(gTranspOpt); i++)
-	{
-		bool bChecked = false;
-		if (!gTranspOpt[i].nMenuID)
-		{
-			AppendMenu(hPopup, MF_SEPARATOR, 0, L"");
-		}
-		else
-		{
-			if (gTranspOpt[i].nValue == 1)
-				bChecked = gpSet->isUserScreenTransparent;
-			else if (gTranspOpt[i].nValue == 2)
-				bChecked = gpSet->isColorKeyTransparent;
-			else
-			{
-				if (gTranspOpt[i].nValue == 100)
-				{
-					if (gpSet->nTransparent == 255)
-						nCurrent = i;
-				}
-				else
-				{
-					_ASSERTE((i+1) < countof(gTranspOpt));
-					UINT nVal = gTranspOpt[i].nValue * 255 / 100;
-					UINT nNextVal = ((gTranspOpt[i+1].nValue<10)?255:(gTranspOpt[i+1].nValue * 255 / 100));
-					if ((nVal <= gpSet->nTransparent) && (gpSet->nTransparent < nNextVal))
-					{
-						nCurrent = gTranspOpt[i].nMenuID;
-					}
-				}
-			}
-
-			AppendMenu(hPopup, MF_STRING|(bChecked ? MF_CHECKED : MF_UNCHECKED), gTranspOpt[i].nMenuID, gTranspOpt[i].sText);
-		}
-	}
-
-	if (nCurrent != -1)
-	{
-		MENUITEMINFO mi = {sizeof(mi), MIIM_STATE|MIIM_ID};
-		mi.wID = nCurrent;
-		GetMenuItemInfo(hPopup, nCurrent, FALSE, &mi);
-		mi.fState |= MF_DEFAULT;
-		SetMenuItemInfo(hPopup, nCurrent, FALSE, &mi);
-	}
 
 	u8 nPrevAlpha = gpSet->nTransparent;
 	//bool bPrevUserScreen = gpSet->isUserScreenTransparent; -- он идет через WindowRgn, а не Transparency
 	bool bPrevColorKey = gpSet->isColorKeyTransparent;
 
 	_ASSERTE(m_ClickedItemDesc == csi_Transparency);
-	m_ClickedItemDesc = csi_Transparency;
-
-	RECT rcExcl;
-	if (!GetStatusBarItemRect(csi_Transparency, &rcExcl))
-		rcExcl = MakeRect(pt.x-1, pt.y-1, pt.x+1, pt.y+1);
-	else
-		MapWindowPoints(ghWnd, NULL, (LPPOINT)&rcExcl, 2);
-
-	int nCmd = gpConEmu->mp_Menu->trackPopupMenu(tmp_StatusBarCols, hPopup, TPM_BOTTOMALIGN|TPM_RIGHTALIGN|TPM_RETURNCMD, pt.x, pt.y, ghWnd, &rcExcl);
+	int nCmd = ShowStatusBarMenu(pt, hPopup, csi_Transparency);
 
 	bool bSelected = ProcessTransparentMenuId(nCmd, false);
 
@@ -2164,4 +2100,106 @@ bool CStatus::GetStatusBarItemRect(CEStatusItems nID, RECT* rc)
 		GetStatusBarClientRect(rc);
 
 	return false;
+}
+
+HMENU CStatus::CreateStatusMenu(StatusMenuOptions* pItems, size_t nCount)
+{
+	HMENU hPopup = CreatePopupMenu();
+
+	// меню было расчитано на min=40
+	_ASSERTE(MIN_ALPHA_VALUE==40);
+
+	int nCurrent = -1;
+
+	for (size_t i = 0; i < nCount; i++)
+	{
+		int iChecked = 0;
+		if (!pItems[i].nMenuID)
+		{
+			AppendMenu(hPopup, MF_SEPARATOR, 0, L"");
+		}
+		else
+		{
+			if (pItems[i].pfnChecked)
+			{
+				iChecked = pItems[i].pfnChecked(pItems[i].nValue, ((i+1) < nCount) ? &pItems[i+1].nValue : NULL);
+				if (iChecked == 1)
+					nCurrent = pItems[i].nMenuID;
+			}
+
+			AppendMenu(hPopup, MF_STRING|(iChecked ? MF_CHECKED : MF_UNCHECKED), pItems[i].nMenuID, pItems[i].sText);
+		}
+	}
+
+	if (nCurrent != -1)
+	{
+		MENUITEMINFO mi = {sizeof(mi), MIIM_STATE|MIIM_ID};
+		mi.wID = nCurrent;
+		GetMenuItemInfo(hPopup, nCurrent, FALSE, &mi);
+		mi.fState |= MF_DEFAULT;
+		SetMenuItemInfo(hPopup, nCurrent, FALSE, &mi);
+	}
+
+	return hPopup;
+}
+
+CStatus::StatusMenuOptions* CStatus::GetStatusMenuItem(WORD nMenuID, StatusMenuOptions* pItems, size_t nCount)
+{
+	if (!nMenuID)
+		return NULL;
+
+	CStatus::StatusMenuOptions* p = NULL;
+
+	for (size_t i = 0; i < nCount; i++)
+	{
+		if (pItems[i].nMenuID == nMenuID)
+		{
+			p = (pItems+i);
+			break;
+		}
+	}
+
+	return p;
+}
+
+int CStatus::Transparent_IsMenuChecked(int nValue, int* pnNextValue)
+{
+	if (nValue == 1)
+	{
+		return gpSet->isUserScreenTransparent ? 2 : 0;
+	}
+	else if (nValue == 2)
+	{
+		return gpSet->isColorKeyTransparent ? 2 : 0;
+	}
+	else if (nValue == 100)
+	{
+		return (gpSet->nTransparent == 255);
+	}
+	else if (pnNextValue)
+	{
+		UINT nVal = nValue * 255 / 100;
+		UINT nNextVal = ((*pnNextValue < 10) ? 255 : (*pnNextValue * 255 / 100));
+		return ((nVal <= gpSet->nTransparent) && (gpSet->nTransparent < nNextVal));
+	}
+	else
+	{
+		_ASSERTE(pnNextValue!=NULL);
+	}
+
+	return false;
+}
+
+int CStatus::ShowStatusBarMenu(POINT pt, HMENU hPopup, CEStatusItems csi)
+{
+	m_ClickedItemDesc = csi;
+
+	RECT rcExcl;
+	if (!GetStatusBarItemRect(csi, &rcExcl))
+		rcExcl = MakeRect(pt.x-1, pt.y-1, pt.x+1, pt.y+1);
+	else
+		MapWindowPoints(ghWnd, NULL, (LPPOINT)&rcExcl, 2);
+
+	int nCmd = gpConEmu->mp_Menu->trackPopupMenu(tmp_StatusBarCols, hPopup, TPM_BOTTOMALIGN|TPM_RIGHTALIGN|TPM_RETURNCMD, pt.x, pt.y, ghWnd, &rcExcl);
+	return nCmd;
 }
