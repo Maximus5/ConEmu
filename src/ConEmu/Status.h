@@ -169,6 +169,7 @@ private:
 	DWORD mn_Style, mn_ExStyle;
 	LONG mn_Zoom, mn_Dpi;
 	HWND mh_Fore, mh_Focus;
+	DWORD mn_ForePID, mn_FocusPID;
 	wchar_t ms_ForeInfo[1024], ms_FocusInfo[1024];
 	bool IsWindowChanged();
 

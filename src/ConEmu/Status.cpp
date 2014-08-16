@@ -245,6 +245,7 @@ CStatus::CStatus()
 	mn_Style = mn_ExStyle = 0;
 	mn_Zoom = mn_Dpi = 0;
 	mh_Fore = mh_Focus = NULL;
+	mn_ForePID = mn_FocusPID = 0;
 	ms_ForeInfo[0] = ms_FocusInfo[0] = 0;
 
 	mb_Caps = mb_Num = mb_Scroll = false;
@@ -626,13 +627,13 @@ void CStatus::PaintStatus(HDC hPaint, LPRECT prcStatus /*= NULL*/)
 				break;
 
 			case csi_HwndFore:
-				_wsprintf(m_Items[nDrawCount].sText, SKIPLEN(countof(m_Items[nDrawCount].sText)-1) L"%08X", (DWORD)mh_Fore);
-				wcscpy_c(m_Items[nDrawCount].szFormat, L"FFFFFFFF");
+				_wsprintf(m_Items[nDrawCount].sText, SKIPLEN(countof(m_Items[nDrawCount].sText)-1) L"x%08X[%u]", (DWORD)mh_Fore, mn_ForePID);
+				wcscpy_c(m_Items[nDrawCount].szFormat, L"xFFFFFFFF[99999]");
 				m_Values[nID].sHelp = ms_ForeInfo;
 				break;
 			case csi_HwndFocus:
-				_wsprintf(m_Items[nDrawCount].sText, SKIPLEN(countof(m_Items[nDrawCount].sText)-1) L"%08X", (DWORD)mh_Focus);
-				wcscpy_c(m_Items[nDrawCount].szFormat, L"FFFFFFFF");
+				_wsprintf(m_Items[nDrawCount].sText, SKIPLEN(countof(m_Items[nDrawCount].sText)-1) L"x%08X[%u]", (DWORD)mh_Focus, mn_FocusPID);
+				wcscpy_c(m_Items[nDrawCount].szFormat, L"xFFFFFFFF[99999]");
 				m_Values[nID].sHelp = ms_FocusInfo;
 				break;
 
@@ -1888,7 +1889,7 @@ bool CStatus::IsWindowChanged()
 		if (h != mh_Fore)
 		{
 			mh_Fore = h; bChanged = true;
-			::getWindowInfo(h, ms_ForeInfo);
+			::getWindowInfo(h, ms_ForeInfo, true, &mn_ForePID);
 		}
 	}
 
@@ -1898,7 +1899,7 @@ bool CStatus::IsWindowChanged()
 		if (h != mh_Focus)
 		{
 			mh_Focus = h; bChanged = true;
-			::getWindowInfo(h, ms_FocusInfo);
+			::getWindowInfo(h, ms_FocusInfo, true, &mn_FocusPID);
 		}
 	}
 
