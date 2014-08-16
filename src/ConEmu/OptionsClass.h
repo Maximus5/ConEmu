@@ -131,6 +131,7 @@ class CSettings
 		void EvalLogfontSizes(LOGFONT& LF, LONG lfHeight, LONG lfWidth);
 		LONG EvalSize(LONG nSize, EvalSizeFlags Flags);
 		LONG EvalFontHeight(LPCWSTR lfFaceName, LONG lfHeight, BYTE nFontCharSet);
+		LONG GetZoom(); // в процентах
 	private:
 		LONG mn_FontZoomValue; // 100% == 10000 (FontZoom100)
 		LOGFONT LogFont, LogFont2;

@@ -144,6 +144,13 @@ static StatusColInfo gStatusCols[] =
 						L"Active console buffer",
 						L"PRI/ALT/SEL/FND/DMP: Active console buffer"},
 
+	{csi_Zoom,			L"StatusBar.Hide.Zoom",
+						L"Current zoom value",
+						L"Ctrl+WheelUp/WheelDown change main font zoom"},
+	{csi_DPI,			L"StatusBar.Hide.Dpi",
+						L"Current DPI value",
+						L"Show DPI for monitor with main window"},
+
 	{csi_ConsolePos,	L"StatusBar.Hide.CPos",
 						L"Console visible rectangle",
 						L"(Left, Top)-(Right,Bottom): Console visible rect, 0-based"},
@@ -236,6 +243,7 @@ CStatus::CStatus()
 	mb_InSetupMenu = false;
 
 	mn_Style = mn_ExStyle = 0;
+	mn_Zoom = mn_Dpi = 0;
 	mh_Fore = mh_Focus = NULL;
 	ms_ForeInfo[0] = ms_FocusInfo[0] = 0;
 
@@ -606,6 +614,15 @@ void CStatus::PaintStatus(HDC hPaint, LPRECT prcStatus /*= NULL*/)
 			case csi_WindowStyleEx:
 				_wsprintf(m_Items[nDrawCount].sText, SKIPLEN(countof(m_Items[nDrawCount].sText)-1) L"%08X", mn_ExStyle);
 				wcscpy_c(m_Items[nDrawCount].szFormat, L"FFFFFFFF");
+				break;
+
+			case csi_Zoom:
+				_wsprintf(m_Items[nDrawCount].sText, SKIPLEN(countof(m_Items[nDrawCount].sText)-1) L"%i%%", gpSetCls->GetZoom());
+				wcscpy_c(m_Items[nDrawCount].szFormat, L"200%");
+				break;
+			case csi_DPI:
+				_wsprintf(m_Items[nDrawCount].sText, SKIPLEN(countof(m_Items[nDrawCount].sText)-1) L"%i", gpSetCls->QueryDpi());
+				wcscpy_c(m_Items[nDrawCount].szFormat, L"999");
 				break;
 
 			case csi_HwndFore:
@@ -1815,6 +1832,8 @@ bool CStatus::IsWindowChanged()
 {
 	if (gpSet->isStatusColumnHidden[csi_WindowStyle]
 		&& gpSet->isStatusColumnHidden[csi_WindowStyleEx]
+		&& gpSet->isStatusColumnHidden[csi_Zoom]
+		&& gpSet->isStatusColumnHidden[csi_DPI]
 		&& gpSet->isStatusColumnHidden[csi_HwndFore]
 		&& gpSet->isStatusColumnHidden[csi_HwndFocus])
 	{
@@ -1825,6 +1844,7 @@ bool CStatus::IsWindowChanged()
 
 	bool bChanged = false;
 	DWORD n; HWND h;
+	LONG l;
 
 	if (!gpSet->isStatusColumnHidden[csi_WindowStyle])
 	{
@@ -1841,6 +1861,24 @@ bool CStatus::IsWindowChanged()
 		if (n != mn_ExStyle)
 		{
 			mn_ExStyle = n; bChanged = true;
+		}
+	}
+
+	if (!gpSet->isStatusColumnHidden[csi_Zoom])
+	{
+		l = gpSetCls->GetZoom();
+		if (l != mn_Zoom)
+		{
+			mn_Zoom = l; bChanged = true;
+		}
+	}
+
+	if (!gpSet->isStatusColumnHidden[csi_DPI])
+	{
+		l = gpSetCls->QueryDpi();
+		if (l != mn_Dpi)
+		{
+			mn_Dpi = l; bChanged = true;
 		}
 	}
 

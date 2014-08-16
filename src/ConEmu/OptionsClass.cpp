@@ -1296,6 +1296,12 @@ LONG CSettings::EvalCellWidth()
 	return (LONG)gpSet->FontSizeX3;
 }
 
+// в процентах
+LONG CSettings::GetZoom()
+{
+	return MulDiv(mn_FontZoomValue, 100, FontZoom100);
+}
+
 
 void CSettings::InitFont(LPCWSTR asFontName/*=NULL*/, int anFontHeight/*=-1*/, int anQuality/*=-1*/)
 {
