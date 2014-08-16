@@ -712,7 +712,7 @@ class CConEmuMain :
 		void PostCreate(BOOL abReceived=FALSE);
 		void PostCreateCon(RConStartArgs *pArgs);
 		HWND PostCreateView(CConEmuChild* pChild);
-		void PostFontSetSize(int nRelative/*0/1*/, int nValue/*для nRelative==0 - высота, для ==1 - +-1, +-2,...*/);
+		void PostFontSetSize(int nRelative/*0/1/2*/, int nValue/*для nRelative==0 - высота, для ==1 - +-1, +-2,... | 100%*/);
 		void PostMacro(LPCWSTR asMacro);
 		void PostMacroFontSetName(wchar_t* pszFontName, WORD anHeight /*= 0*/, WORD anWidth /*= 0*/, BOOL abPosted);
 		void PostDisplayRConError(CRealConsole* apRCon, wchar_t* pszErrMsg);

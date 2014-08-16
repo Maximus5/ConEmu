@@ -11852,11 +11852,12 @@ void CSettings::SaveFontSizes(bool bAuto, bool bSendChanges)
 	gpConEmu->OnPanelViewSettingsChanged(bSendChanges);
 }
 
-bool CSettings::MacroFontSetSizeInt(LOGFONT& LF, int nRelative/*0/1*/, int nValue/*+-1,+-2,...*/)
+bool CSettings::MacroFontSetSizeInt(LOGFONT& LF, int nRelative/*0/1/2*/, int nValue/*+-1,+-2,... | 100%*/)
 {
 	bool bChanged = false;
 	int nCurHeight = EvalSize(gpSet->FontSizeY, esf_Vertical|esf_CanUseZoom);
 	int nNeedHeight = nCurHeight;
+	int nNewZoomValue = mn_FontZoomValue;
 
 	// The current defaults
 	LF = LogFont;
@@ -11891,6 +11892,18 @@ bool CSettings::MacroFontSetSizeInt(LOGFONT& LF, int nRelative/*0/1*/, int nValu
 		// Decrease/increate font height
 		nNeedHeight += nValue;
 		break;
+
+	case 2:
+		// Zoom value
+		nNewZoomValue = MulDiv(nValue, FontZoom100, 100);
+		if (nNewZoomValue < 10)
+		{
+			_ASSERTE(nNewZoomValue >= 10);
+			gpConEmu->LogString(L"-- Skipped! Zoom value is too small");
+			return false;
+		}
+		bChanged = (mn_FontZoomValue != nNewZoomValue);
+		goto wrap;
 	}
 
 	if ((gpSet->FontSizeY <= 0) || (nNeedHeight <= 0))
@@ -11901,7 +11914,7 @@ bool CSettings::MacroFontSetSizeInt(LOGFONT& LF, int nRelative/*0/1*/, int nValu
 	}
 
 	// Eval new zoom value
-	int nNewZoomValue = MulDiv(nNeedHeight, FontZoom100, gpSet->FontSizeY);
+	nNewZoomValue = MulDiv(nNeedHeight, FontZoom100, gpSet->FontSizeY);
 	// If relative, let easy return to 100%
 	if (nRelative == 1)
 	{
@@ -11911,6 +11924,8 @@ bool CSettings::MacroFontSetSizeInt(LOGFONT& LF, int nRelative/*0/1*/, int nValu
 			bChanged = true;
 		}
 	}
+
+wrap:
 	// And set the Zoom value
 	mn_FontZoomValue = nNewZoomValue;
 
@@ -11934,7 +11949,7 @@ bool CSettings::MacroFontSetSizeInt(LOGFONT& LF, int nRelative/*0/1*/, int nValu
 // Вызов из GUI-макросов - увеличить/уменьшить шрифт, без изменения размера (в пикселях) окна
 // Функция НЕ меняет высоту шрифта настройки и изменения не будут сохранены в xml/reg
 // Здесь меняется только значение "зума"
-bool CSettings::MacroFontSetSize(int nRelative/*0/1*/, int nValue/*+-1,+-2,...*/)
+bool CSettings::MacroFontSetSize(int nRelative/*0/1/2*/, int nValue/*+-1,+-2,... | 100%*/)
 {
 	wchar_t szLog[128];
 	if (isAdvLogging)
@@ -11962,6 +11977,15 @@ bool CSettings::MacroFontSetSize(int nRelative/*0/1*/, int nValue/*+-1,+-2,...*/
 			return false;
 		}
 	}
+	else if (nRelative == 2)
+	{
+		// Zoom value
+		if (nValue < 1)
+		{
+			gpConEmu->LogString(L"-- Skipped! Zoom value is too small");
+			return false;
+		}
+	}
 	else
 	{
 		_ASSERTE(nRelative == 0 || nRelative == 1);
@@ -11975,7 +11999,7 @@ bool CSettings::MacroFontSetSize(int nRelative/*0/1*/, int nValue/*+-1,+-2,...*/
 
 	for (int nRetry = 0; nRetry < 10; nRetry++)
 	{
-		if (!MacroFontSetSizeInt(LF, nRelative/*0/1*/, nValue/*+-1,+-2,...*/))
+		if (!MacroFontSetSizeInt(LF, nRelative/*0/1/2*/, nValue/*+-1,+-2,... | 100%*/))
 		{
 			break;
 		}
@@ -12037,7 +12061,7 @@ bool CSettings::MacroFontSetSize(int nRelative/*0/1*/, int nValue/*+-1,+-2,...*/
 
 		hf.Delete();
 
-		if (nRelative == 0)
+		if (nRelative != 1)
 		{
 			_ASSERTE(FALSE && "Font creation failed?");
 			gpConEmu->LogString(L"-- Failed? (nRelative==0)?");
@@ -12045,14 +12069,7 @@ bool CSettings::MacroFontSetSize(int nRelative/*0/1*/, int nValue/*+-1,+-2,...*/
 		}
 
 		// Если пытаются изменить относительный размер, а шрифт не создался - попробовать следующий размер
-		if (nRelative == 1)
-		{
-			nValue += (nValue > 0) ? 1 : -1;
-		}
-		else
-		{
-			_ASSERTE(nRelative == 1);
-		}
+		nValue += (nValue > 0) ? 1 : -1;
 	}
 
 	_wsprintf(szLog, SKIPLEN(countof(szLog)) L"-- Failed! New font {'%s',%i,%i} was not created", LF.lfFaceName, LF.lfHeight, LF.lfWidth, LF.lfHeight, LF.lfWidth);
@@ -12323,7 +12340,7 @@ void CSettings::RecreateBorderFont(const LOGFONT *inFont)
 // -- смена шрифта из фара (через Gui Macro "FontSetName")
 // void CSettings::MacroFontSetName(LPCWSTR pszFontName, WORD anHeight /*= 0*/, WORD anWidth /*= 0*/)
 // -- смена _размера_ шрифта из фара (через Gui Macro "FontSetSize")
-// bool CSettings::MacroFontSetSize(int nRelative/*0/1*/, int nValue/*+-1,+-2,...*/)
+// bool CSettings::MacroFontSetSize(int nRelative/*0/1/2*/, int nValue/*+-1,+-2,... | 100%*/)
 // -- пересоздание шрифта по изменению контрола окна настроек
 // void CSettings::RecreateFont(WORD wFromID)
 // -- подгонка шрифта под размер окна GUI (если включен флажок "Auto")

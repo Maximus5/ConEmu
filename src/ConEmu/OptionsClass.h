@@ -319,7 +319,7 @@ class CSettings
 		void UnregisterShell(LPCWSTR asName);
 		void UnregisterShellInvalids();
 		bool DeleteRegKeyRecursive(HKEY hRoot, LPCWSTR asParent, LPCWSTR asName);
-		bool MacroFontSetSizeInt(LOGFONT& LF, int nRelative/*0/1*/, int nValue/*+-1,+-2,...*/);
+		bool MacroFontSetSizeInt(LOGFONT& LF, int nRelative/*0/1/2*/, int nValue/*+-1,+-2,... | 100%*/);
 	public:
 		void UnregisterFonts();
 		BOOL GetFontNameFromFile(LPCTSTR lpszFilePath, wchar_t (&rsFontName)[LF_FACESIZE], wchar_t (&rsFullFontName)[LF_FACESIZE]);
@@ -328,7 +328,7 @@ class CSettings
 		BOOL GetFontNameFromFile_BDF(LPCTSTR lpszFilePath, wchar_t (&rsFontName)[LF_FACESIZE], wchar_t (&rsFullFontName)[LF_FACESIZE]);
 		void UpdateConsoleMode(DWORD nMode);
 		bool AutoRecreateFont(int nFontW, int nFontH);
-		bool MacroFontSetSize(int nRelative/*0/1*/, int nValue/*+-1,+-2,...*/);
+		bool MacroFontSetSize(int nRelative/*0/1/2*/, int nValue/*+-1,+-2,... | 100%*/);
 		void MacroFontSetName(LPCWSTR pszFontName, WORD anHeight /*= 0*/, WORD anWidth /*= 0*/);
 		bool CheckTheming();
 		void OnPanelViewAppeared(BOOL abAppear);

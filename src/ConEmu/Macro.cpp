@@ -200,6 +200,8 @@ namespace ConEmuMacro
 	LPWSTR WindowMinimize(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Вернуть текущий статус: NOR/MAX/FS/MIN/TSA
 	LPWSTR WindowMode(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
+	// Установить Zoom для шрифта. 100% и т.п.
+	LPWSTR Zoom(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 
 
 	/* ******************************* */
@@ -250,6 +252,7 @@ namespace ConEmuMacro
 		{WindowMaximize, {L"WindowMaximize"}},
 		{WindowMinimize, {L"WindowMinimize"}},
 		{WindowMode, {L"WindowMode"}},
+		{Zoom, {L"Zoom"}},
 		// End
 		{NULL}
 	};
@@ -1559,28 +1562,37 @@ LPWSTR ConEmuMacro::Flash(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 	return lstrdup(L"OK");
 }
 
+// Изменить размер шрифта, в процентах 100%==оригинал
+LPWSTR ConEmuMacro::Zoom(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
+{
+	int nValue = 0;
+
+	if (p->GetIntArg(0, nValue))
+	{
+		gpConEmu->PostFontSetSize(2, nValue);
+		return lstrdup(L"OK");
+	}
+
+	return lstrdup(L"InvalidArg");
+}
+
 // Изменить размер шрифта.
 // FontSetSize(nRelative, N)
 // для nRelative==0: N - высота
 // для nRelative==1: N - +-1, +-2
+// для nRelative==2: N - Zoom в процентах
 // Возвращает - OK или InvalidArg
 LPWSTR ConEmuMacro::FontSetSize(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 {
-	//bool lbSetFont = false;
 	int nRelative = 0, nValue = 0;
 
 	if (p->GetIntArg(0, nRelative)
 		&& p->GetIntArg(1, nValue))
 	{
-		//lbSetFont = gpSet->AutoSizeFont(nRelative, nValue);
-		//if (lbSetFont)
 		gpConEmu->PostFontSetSize(nRelative, nValue);
 		return lstrdup(L"OK");
 	}
 
-	//int cchSize = 32;
-	//LPWSTR pszResult = (LPWSTR)malloc(2*cchSize);
-	//_wsprintf(pszResult, cchSize, L"%i", gpSetCls->FontHeight());
 	return lstrdup(L"InvalidArg");
 }
 

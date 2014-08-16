@@ -311,6 +311,7 @@ BEGIN
 	vkFarGotoEditorVk       "Highlighting: hyperlinks and compiler errors (FarGotoEditor modifier)"
 	vkFindTextDlg           "Find text in active console"
 	vkFontLarger            "Make main font larger"
+	vkFontOriginal          "Make main font original size"
 	vkFontSmaller           "Make main font smaller"
 	vkForceFullScreen       "Enter TEXT fullscreen mode, when available. If not - standard fullscreen and always on top"
 	vkGlobalRestore         "Restore (bring to front)"

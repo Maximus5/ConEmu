@@ -1128,6 +1128,7 @@ int ConEmuHotKey::AllocateHotkeys(ConEmuHotKey** ppHotKeys)
 		{vkPicViewFaster,  chk_User,  NULL,    L"Key.PicViewFaster",     MakeHotKey(0xbb/* =+ */), CConEmuCtrl::key_PicViewSlideshow}, // Slideshow in PicView2
 		{vkFontLarger,     chk_User,  NULL,    L"FontLargerKey",         MakeHotKey(VK_WHEEL_UP,VK_CONTROL), CConEmuCtrl::key_GuiMacro, false, lstrdup(L"FontSetSize(1,2)")},
 		{vkFontSmaller,    chk_User,  NULL,    L"FontSmallerKey",        MakeHotKey(VK_WHEEL_DOWN,VK_CONTROL), CConEmuCtrl::key_GuiMacro, false, lstrdup(L"FontSetSize(1,-2)")},
+		{vkFontOriginal,   chk_User,  NULL,    L"FontOriginalKey",       MakeHotKey(VK_MBUTTON,VK_CONTROL), CConEmuCtrl::key_GuiMacro, false, lstrdup(L"Zoom(100)")},
 		{vkPasteFilePath,  chk_User,  NULL,    L"PasteFileKey",          MakeHotKey('F',VK_CONTROL,VK_SHIFT), CConEmuCtrl::key_GuiMacro, false, lstrdup(L"Paste(4)")},
 		{vkPasteDirectory, chk_User,  NULL,    L"PastePathKey",          MakeHotKey('D',VK_CONTROL,VK_SHIFT), CConEmuCtrl::key_GuiMacro, false, lstrdup(L"Paste(5)")},
 		{vkPasteCygwin,    chk_User,  NULL,    L"PasteCygwinKey",        MakeHotKey(VK_INSERT,VK_APPS), CConEmuCtrl::key_GuiMacro, false, lstrdup(L"Paste(8)")},
