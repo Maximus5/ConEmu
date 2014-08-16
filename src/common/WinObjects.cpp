@@ -77,11 +77,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 
-void getWindowInfo(HWND ahWnd, wchar_t (&rsInfo)[1024])
+void getWindowInfo(HWND ahWnd, wchar_t (&rsInfo)[1024], bool bProcessName /*= false*/, LPDWORD pnPID /*= NULL*/)
 {
-//#ifdef CONEMU_MINIMAL
-//	rsInfo[0] = 0;
-//#else
+	DWORD nPID = 0;
+
 	if (!ahWnd)
 	{
 		wcscpy_c(rsInfo, L"<NULL>");
@@ -94,34 +93,11 @@ void getWindowInfo(HWND ahWnd, wchar_t (&rsInfo)[1024])
 	{
 		wchar_t szClass[256], szTitle[512];
 
-		// Избежать статической линковки для user32.dll
-		typedef int (WINAPI* GetClassName_t)(HWND hWnd,LPWSTR lpClassName,int nMaxCount);
-		static GetClassName_t GetClassName_f = NULL;
-		typedef int (WINAPI* GetWindowText_t)(HWND hWnd, LPWSTR lpString, int nMaxCount);
-		static GetWindowText_t GetWindowText_f = NULL;
-
-		if (!GetClassName_f)
-		{
-			HMODULE hUser32 = GetModuleHandle(L"user32.dll");
-			if (!hUser32)
-			{
-				// Скорее всего, user32 уже должен быть загружен, но если вдруг - сильно
-				// плохо, если LoadLibrary будет вызываться из DllMain
-				_ASSERTE(hUser32!=NULL);
-			}
-			else
-			{
-				GetClassName_f = (GetClassName_t)GetProcAddress(hUser32,"GetClassNameW");
-				GetWindowText_f = (GetWindowText_t)GetProcAddress(hUser32,"GetWindowTextW");
-			}
-		}
-
-		if (!GetClassName_f || !GetClassName_f(ahWnd, szClass, 256)) wcscpy_c(szClass, L"<GetClassName failed>");
-		if (!GetWindowText_f || !GetWindowText_f(ahWnd, szTitle, 512)) szTitle[0] = 0;
+		if (!GetClassName(ahWnd, szClass, 256)) wcscpy_c(szClass, L"<GetClassName failed>");
+		if (!GetWindowText(ahWnd, szTitle, 512)) szTitle[0] = 0;
 
 		msprintf(rsInfo, countof(rsInfo), L"0x%08X: %s - '%s'", (DWORD)ahWnd, szClass, szTitle);
 	}
-//#endif
 }
 
 #ifndef CONEMU_MINIMAL
