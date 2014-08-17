@@ -579,7 +579,7 @@ void CDpiForDialog::Detach()
 	}
 }
 
-bool CDpiForDialog::ProcessMessages(HWND hWnd, UINT nMsg, WPARAM wParam, LPARAM lParam, INT_PTR& lRc)
+bool CDpiForDialog::ProcessDpiMessages(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lParam)
 {
 	switch (nMsg)
 	{
@@ -588,7 +588,7 @@ bool CDpiForDialog::ProcessMessages(HWND hWnd, UINT nMsg, WPARAM wParam, LPARAM 
 			DpiValue dpi(wParam);
 			LPRECT lprcSuggested = (LPRECT)lParam;
 			SetDialogDPI(dpi, lprcSuggested);
-			lRc = 0;
+			SetWindowLongPtr(hDlg, DWLP_MSGRESULT, 0);
 		}
 		return true;
 	}

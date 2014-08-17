@@ -130,7 +130,7 @@ public:
 	void Detach();
 
 public:
-	bool ProcessMessages(HWND hWnd, UINT nMsg, WPARAM wParam, LPARAM lParam, INT_PTR& lRc);
+	bool ProcessDpiMessages(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lParam);
 
 protected:
 	static MArray<DlgItem>* LoadDialogItems(HWND hDlg);

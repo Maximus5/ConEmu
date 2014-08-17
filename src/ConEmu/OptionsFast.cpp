@@ -44,16 +44,6 @@ static CDpiForDialog* gp_DpiAware = NULL;
 
 static INT_PTR CALLBACK CheckOptionsFastProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam)
 {
-	if (gp_DpiAware)
-	{
-		INT_PTR lRc = 0;
-		if (gp_DpiAware->ProcessMessages(hDlg, messg, wParam, lParam, lRc))
-		{
-			SetWindowLongPtr(hDlg, DWLP_MSGRESULT, lRc);
-			return TRUE;
-		}
-	}
-
 	switch (messg)
 	{
 	case WM_SETHOTKEY:
@@ -361,6 +351,12 @@ static INT_PTR CALLBACK CheckOptionsFastProc(HWND hDlg, UINT messg, WPARAM wPara
 		}
 
 		break;
+
+	default:
+		if (gp_DpiAware && gp_DpiAware->ProcessDpiMessages(hDlg, messg, wParam, lParam))
+		{
+			return TRUE;
+		}
 	}
 
 	return 0;

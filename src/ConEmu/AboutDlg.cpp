@@ -107,12 +107,6 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 
 	PatchMsgBoxIcon(hDlg, messg, wParam, lParam);
 
-	if (mp_DpiAware && mp_DpiAware->ProcessMessages(hDlg, messg, wParam, lParam, lRc))
-	{
-		SetWindowLongPtr(hDlg, DWLP_MSGRESULT, lRc);
-		return TRUE;
-	}
-
 	switch (messg)
 	{
 		case WM_INITDIALOG:
@@ -323,7 +317,10 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 			break;
 
 		default:
-			return FALSE;
+			if (mp_DpiAware && mp_DpiAware->ProcessDpiMessages(hDlg, messg, wParam, lParam))
+			{
+				return TRUE;
+			}
 	}
 
 	return FALSE;

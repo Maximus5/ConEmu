@@ -243,16 +243,10 @@ INT_PTR CEFindDlg::findTextProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lP
 			break;
 
 		default:
-			if (gpConEmu->mp_Find->mp_DpiAware)
+			if (gpConEmu->mp_Find->mp_DpiAware && gpConEmu->mp_Find->mp_DpiAware->ProcessDpiMessages(hWnd2, messg, wParam, lParam))
 			{
-				INT_PTR lRc = 0;
-				if (gpConEmu->mp_Find->mp_DpiAware->ProcessMessages(hWnd2, messg, wParam, lParam, lRc))
-				{
-					SetWindowLongPtr(hWnd2, DWLP_MSGRESULT, lRc);
-					return TRUE;
-				}
+				return TRUE;
 			}
-			return 0;
 	}
 
 	return 0;

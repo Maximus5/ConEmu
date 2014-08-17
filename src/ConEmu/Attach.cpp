@@ -444,16 +444,6 @@ INT_PTR CAttachDlg::AttachDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM l
 
 	PatchMsgBoxIcon(hDlg, messg, wParam, lParam);
 
-	if (pDlg && pDlg->mp_DpiAware)
-	{
-		INT_PTR lRc = 0;
-		if (pDlg->mp_DpiAware->ProcessMessages(hDlg, messg, wParam, lParam, lRc))
-		{
-			SetWindowLongPtr(hDlg, DWLP_MSGRESULT, lRc);
-			return TRUE;
-		}
-	}
-
 	switch (messg)
 	{
 		case WM_INITDIALOG:
@@ -643,7 +633,10 @@ INT_PTR CAttachDlg::AttachDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM l
 
 			break;
 		default:
-			return 0;
+			if (pDlg && pDlg->mp_DpiAware && pDlg->mp_DpiAware->ProcessDpiMessages(hDlg, messg, wParam, lParam))
+			{
+				return TRUE;
+			}
 	}
 
 	return 0;

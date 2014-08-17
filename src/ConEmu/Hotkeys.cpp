@@ -111,16 +111,6 @@ INT_PTR CHotKeyDialog::hkDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lP
 		return FALSE;
 	}
 
-	if (pDlg->mp_DpiAware)
-	{
-		INT_PTR lRc = 0;
-		if (pDlg->mp_DpiAware->ProcessMessages(hDlg, messg, wParam, lParam, lRc))
-		{
-			SetWindowLongPtr(hDlg, DWLP_MSGRESULT, lRc);
-			return TRUE;
-		}
-	}
-
 	switch (messg)
 	{
 		case WM_INITDIALOG:
@@ -246,6 +236,12 @@ INT_PTR CHotKeyDialog::hkDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lP
 
 			break;
 		} // WM_COMMAND
+
+		default:
+		if (pDlg->mp_DpiAware && pDlg->mp_DpiAware->ProcessDpiMessages(hDlg, messg, wParam, lParam))
+		{
+			return TRUE;
+		}
 	}
 
 	return FALSE;

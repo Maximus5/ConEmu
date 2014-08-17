@@ -9027,28 +9027,6 @@ INT_PTR CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPara
 
 	PatchMsgBoxIcon(hWnd2, messg, wParam, lParam);
 
-	if (gpSetCls->mp_DpiAware && gpSetCls->mp_DpiAware->ProcessMessages(hWnd2, messg, wParam, lParam, lRc))
-	{
-		// Store active dpi
-		gpSetCls->mp_CurDpi->OnDpiChanged(wParam);
-
-		// Refresh the visible page and mark 'to be changed' others
-		for (ConEmuSetupPages* p = gpSetCls->m_Pages; p->PageID; p++)
-		{
-			if (p->hPage)
-			{
-				p->DpiChanged = true;
-				if (IsWindowVisible(p->hPage))
-				{
-					gpSetCls->ProcessDpiChange(p);
-				}
-			}
-		}
-
-		SetWindowLongPtr(hWnd2, DWLP_MSGRESULT, lRc);
-		return TRUE;
-	}
-
 	switch (messg)
 	{
 		case WM_INITDIALOG:
@@ -9282,7 +9260,26 @@ INT_PTR CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPara
 			return TRUE;
 
 		default:
-			return 0;
+			if (gpSetCls->mp_DpiAware && gpSetCls->mp_DpiAware->ProcessDpiMessages(hWnd2, messg, wParam, lParam))
+			{
+				// Store active dpi
+				gpSetCls->mp_CurDpi->OnDpiChanged(wParam);
+
+				// Refresh the visible page and mark 'to be changed' others
+				for (ConEmuSetupPages* p = gpSetCls->m_Pages; p->PageID; p++)
+				{
+					if (p->hPage)
+					{
+						p->DpiChanged = true;
+						if (IsWindowVisible(p->hPage))
+						{
+							gpSetCls->ProcessDpiChange(p);
+						}
+					}
+				}
+
+				return TRUE;
+			}
 	}
 
 	return 0;
@@ -9356,14 +9353,9 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 	ConEmuSetupPages* pPage = NULL;
 	TabHwndIndex pgId = gpSetCls->GetPageId(hWnd2, &pPage);
 
-	if (pPage && pPage->pDpiAware)
+	if (pPage && pPage->pDpiAware && pPage->pDpiAware->ProcessDpiMessages(hWnd2, messg, wParam, lParam))
 	{
-		INT_PTR lRc = 0;
-		if (pPage->pDpiAware->ProcessMessages(hWnd2, messg, wParam, lParam, lRc))
-		{
-			SetWindowLongPtr(hWnd2, DWLP_MSGRESULT, lRc);
-			return TRUE;
-		}
+		return TRUE;
 	}
 
 	if ((messg == WM_INITDIALOG) || (messg == gpSetCls->mn_ActivateTabMsg))
@@ -9738,16 +9730,6 @@ INT_PTR CSettings::pageOpProc_AppsChild(HWND hWnd2, UINT messg, WPARAM wParam, L
 {
 	static int nLastScrollPos = 0;
 
-	if (gpSetCls->mp_DpiDistinct2)
-	{
-		INT_PTR lRc = 0;
-		if (gpSetCls->mp_DpiDistinct2->ProcessMessages(hWnd2, messg, wParam, lParam, lRc))
-		{
-			SetWindowLongPtr(hWnd2, DWLP_MSGRESULT, lRc);
-			return TRUE;
-		}
-	}
-
 	switch (messg)
 	{
 	case WM_INITDIALOG:
@@ -9831,6 +9813,12 @@ INT_PTR CSettings::pageOpProc_AppsChild(HWND hWnd2, UINT messg, WPARAM wParam, L
 			}
 		}
 		return FALSE;
+
+	default:
+		if (gpSetCls->mp_DpiDistinct2 && gpSetCls->mp_DpiDistinct2->ProcessDpiMessages(hWnd2, messg, wParam, lParam))
+		{
+			return TRUE;
+		}
 	}
 
 	HWND hParent = GetParent(hWnd2);
