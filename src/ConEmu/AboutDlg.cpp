@@ -477,7 +477,7 @@ void ConEmuAbout::OnInfo_About(LPCWSTR asPageName /*= NULL*/)
 		if (!mp_DpiAware)
 			mp_DpiAware = new CDpiForDialog();
 		HWND hParent = (ghOpWnd && IsWindowVisible(ghOpWnd)) ? ghOpWnd : ghWnd;
-		// Modal dialog
+		// Modal dialog (CreateDialog)
 		INT_PTR iRc = DialogBoxParam(g_hInstance, MAKEINTRESOURCE(IDD_ABOUT), hParent, aboutProc, (LPARAM)asPageName);
 		bOk = (iRc != 0 && iRc != -1);
 

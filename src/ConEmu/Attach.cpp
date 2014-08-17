@@ -77,6 +77,7 @@ const wchar_t szTypeGui[] = L"GUI";
 CAttachDlg::CAttachDlg()
 	: mh_Dlg(NULL)
 	, mh_List(NULL)
+	, mp_DpiAware(NULL)
 	, mn_AttachType(0)
 	, mn_AttachPID(0)
 	, mh_AttachHWND(NULL)
@@ -116,26 +117,14 @@ void CAttachDlg::AttachDlg()
 		apiSetForegroundWindow(mh_Dlg);
 		return;
 	}
-	
+
+	if (!mp_DpiAware)
+			mp_DpiAware = new CDpiForDialog();
+
 	bool bPrev = gpConEmu->SetSkipOnFocus(true);
+	// (CreateDialog)
 	mh_Dlg = CreateDialogParam(g_hInstance, MAKEINTRESOURCE(IDD_ATTACHDLG), NULL, AttachDlgProc, (LPARAM)this);
 	gpConEmu->SetSkipOnFocus(bPrev);
-
-	//DWORD_PTR nAttachParm[3] = {};
-	//int nRc = DialogBoxParam(nAttachParm);
-	//switch (nRc)
-	//{
-	//case IDC_NEWCONSOLE:
-	//	Recreate(FALSE, gpSet->isMultiNewConfirm);
-	//	break;
-	//case IDOK:
-	//	// [0] Type: 1 - console, 2 - GUI
-	//	// [1] PID
-	//	// [2] HWND (для GUI)
-	//	_ASSERTE((nAttachParm[0] == 1 || nAttachParm[0] == 2) && (nAttachParm[1]) && (nAttachParm[2] || nAttachParm[0] == 1));
-	//	TODO("Ну и сам аттач, собственно");
-	//	break;
-	//}
 }
 
 void CAttachDlg::Close()
@@ -455,11 +444,26 @@ INT_PTR CAttachDlg::AttachDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM l
 
 	PatchMsgBoxIcon(hDlg, messg, wParam, lParam);
 
+	if (pDlg && pDlg->mp_DpiAware)
+	{
+		INT_PTR lRc = 0;
+		if (pDlg->mp_DpiAware->ProcessMessages(hDlg, messg, wParam, lParam, lRc))
+		{
+			SetWindowLongPtr(hDlg, DWLP_MSGRESULT, lRc);
+			return TRUE;
+		}
+	}
+
 	switch (messg)
 	{
 		case WM_INITDIALOG:
 		{
 			gpConEmu->OnOurDialogOpened();
+
+			if (pDlg->mp_DpiAware)
+			{
+				pDlg->mp_DpiAware->Attach(hDlg, ghWnd);
+			}
 
 			// Если ConEmu - AlwaysOnTop, то и диалогу нужно выставит этот флаг
 			if (GetWindowLongPtr(ghWnd, GWL_EXSTYLE) & WS_EX_TOPMOST)
@@ -481,19 +485,19 @@ INT_PTR CAttachDlg::AttachDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM l
 				ListView_SetExtendedListViewStyleEx(hList,LVS_EX_FULLROWSELECT,LVS_EX_FULLROWSELECT);
 				ListView_SetExtendedListViewStyleEx(hList,LVS_EX_LABELTIP|LVS_EX_INFOTIP,LVS_EX_LABELTIP|LVS_EX_INFOTIP);
 				
-				col.cx = pDlg->mb_IsWin64 ? 75 : 60;
+				col.cx = gpSetCls->EvalSize(pDlg->mb_IsWin64 ? 75 : 60, esf_Horizontal|esf_CanUseDpi);
 				wcscpy_c(szTitle, L"PID");			ListView_InsertColumn(hList, alc_PID, &col);
-				col.cx = 45; col.fmt = LVCFMT_CENTER;
+				col.cx = gpSetCls->EvalSize(45, esf_Horizontal|esf_CanUseDpi); col.fmt = LVCFMT_CENTER;
 				wcscpy_c(szTitle, L"Type");			ListView_InsertColumn(hList, alc_Type, &col);
-				col.cx = 200; col.fmt = LVCFMT_LEFT;
+				col.cx = gpSetCls->EvalSize(200, esf_Horizontal|esf_CanUseDpi); col.fmt = LVCFMT_LEFT;
 				wcscpy_c(szTitle, L"Title");		ListView_InsertColumn(hList, alc_Title, &col);
-				col.cx = 120;
+				col.cx = gpSetCls->EvalSize(120, esf_Horizontal|esf_CanUseDpi);
 				wcscpy_c(szTitle, L"Image name");	ListView_InsertColumn(hList, alc_File, &col);
-				col.cx = 200;
+				col.cx = gpSetCls->EvalSize(200, esf_Horizontal|esf_CanUseDpi);
 				wcscpy_c(szTitle, L"Image path");	ListView_InsertColumn(hList, alc_Path, &col);
-				col.cx = 90;
+				col.cx = gpSetCls->EvalSize(90, esf_Horizontal|esf_CanUseDpi);
 				wcscpy_c(szTitle, L"HWND");			ListView_InsertColumn(hList, alc_HWND, &col);
-				col.cx = 200;
+				col.cx = gpSetCls->EvalSize(200, esf_Horizontal|esf_CanUseDpi);
 				wcscpy_c(szTitle, L"Class");		ListView_InsertColumn(hList, alc_Class, &col);
 			}
 
@@ -601,6 +605,8 @@ INT_PTR CAttachDlg::AttachDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM l
 			pDlg->Close();
 			break;
 		case WM_DESTROY:
+			if (pDlg->mp_DpiAware)
+				pDlg->mp_DpiAware->Detach();
 			break;
 		
 		case WM_COMMAND:
