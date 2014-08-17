@@ -47,6 +47,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 //#define DEBUGSTRFONT(s) DEBUGSTR(s)
 
+CEFindDlg::CEFindDlg()
+{
+	mh_FindDlg = NULL;
+}
+
 void CEFindDlg::FindTextDialog()
 {
 	if (mh_FindDlg && IsWindow(mh_FindDlg))

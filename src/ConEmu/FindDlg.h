@@ -35,7 +35,7 @@ struct CEFindDlg
 {
 	HWND mh_FindDlg;
 
-	CEFindDlg() { mh_FindDlg = NULL; };
+	CEFindDlg();
 
 	void FindTextDialog();
 	void UpdateFindDlgAlpha(bool abForce = false);
