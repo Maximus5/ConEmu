@@ -31,6 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "SearchCtrl.h"
 #include "../common/Monitors.h"
 
+//#define DPI_144
 
 /*
 struct DpiValue
@@ -40,12 +41,20 @@ struct DpiValue
 
 DpiValue::DpiValue()
 {
-	Xdpi = Ydpi = 96;
+	#if defined(_DEBUG) && defined(DPI_144)
+	SetDpi(144,144);
+	#else
+	SetDpi(96,96);
+	#endif
 }
 
 DpiValue::DpiValue(WPARAM wParam)
 {
-	Xdpi = Ydpi = 96;
+	#if defined(_DEBUG) && defined(DPI_144)
+	SetDpi(144,144);
+	#else
+	SetDpi(96,96);
+	#endif
 	OnDpiChanged(wParam);
 }
 
@@ -209,6 +218,11 @@ int CDpiAware::QueryDpi(HWND hWnd /*= NULL*/, DpiValue* pDpi /*= NULL*/)
 // if hWnd is NULL - returns DC's dpi
 int CDpiAware::QueryDpiForWindow(HWND hWnd /*= NULL*/, DpiValue* pDpi /*= NULL*/)
 {
+	#if defined(_DEBUG) && defined(DPI_144)
+	if (pDpi) pDpi->SetDpi(144,144);
+	return 144;
+	#endif
+
 	int dpi = 96;
 	HDC desktopDc = GetDC(hWnd);
 	if (desktopDc != NULL)
@@ -231,6 +245,11 @@ int CDpiAware::QueryDpiForWindow(HWND hWnd /*= NULL*/, DpiValue* pDpi /*= NULL*/
 
 int CDpiAware::QueryDpiForMonitor(HMONITOR hmon, DpiValue* pDpi /*= NULL*/, MonitorDpiType dpiType /*= MDT_Default*/)
 {
+	#if defined(_DEBUG) && defined(DPI_144)
+	if (pDpi) pDpi->SetDpi(144,144);
+	return 144;
+	#endif
+
 	int dpi = 96;
 
 	static HMODULE Shcore = NULL;
