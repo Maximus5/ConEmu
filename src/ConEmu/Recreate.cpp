@@ -539,13 +539,13 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 				if (gpSetCls->ResetCmdHistory(hDlg))
 				{
 					wchar_t* pszCmd = GetDlgItemTextPtr(hDlg, IDC_RESTART_CMD);
-                	SendDlgItemMessage(hDlg, IDC_RESTART_CMD, CB_RESETCONTENT, 0,0);
-                	SendMessage(hDlg, UM_FILL_CMDLIST, FALSE, 0);
-                	if (pszCmd)
-                	{
-                		SetDlgItemText(hDlg, IDC_RESTART_CMD, pszCmd);
-                		free(pszCmd);
-                	}
+					SendDlgItemMessage(hDlg, IDC_RESTART_CMD, CB_RESETCONTENT, 0,0);
+					SendMessage(hDlg, UM_FILL_CMDLIST, FALSE, 0);
+					if (pszCmd)
+					{
+						SetDlgItemText(hDlg, IDC_RESTART_CMD, pszCmd);
+						free(pszCmd);
+					}
 				}
 				SetWindowLongPtr(hDlg, DWLP_MSGRESULT, 0);
 				return 1;
