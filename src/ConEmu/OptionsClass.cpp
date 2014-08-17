@@ -1575,7 +1575,7 @@ DWORD CSettings::EnumFontsThread(LPVOID apArg)
 void CSettings::SearchForControls()
 {
 	HWND hSearchEdit = GetDlgItem(ghOpWnd, tOptionSearch);
-	wchar_t* pszPart = GetDlgItemText(hSearchEdit, 0);
+	wchar_t* pszPart = GetDlgItemTextPtr(hSearchEdit, 0);
 	if (!pszPart || !*pszPart)
 	{
 		SafeFree(pszPart);
@@ -4080,9 +4080,9 @@ INT_PTR CSettings::pageOpProc_Integr(HWND hWnd2, UINT messg, WPARAM wParam, LPAR
 			//pageOpProc_Integr(hWnd2, UM_RELOAD_AUTORUN, UM_RELOAD_AUTORUN, 0);
 
 			// Возвращает NULL, если строка пустая
-			wchar_t* pszCurInside = GetDlgItemText(hWnd2, cbInsideName);
+			wchar_t* pszCurInside = GetDlgItemTextPtr(hWnd2, cbInsideName);
 			_ASSERTE((pszCurInside==NULL) || (*pszCurInside!=0));
-			wchar_t* pszCurHere   = GetDlgItemText(hWnd2, cbHereName);
+			wchar_t* pszCurHere   = GetDlgItemTextPtr(hWnd2, cbHereName);
 			_ASSERTE((pszCurHere==NULL) || (*pszCurHere!=0));
 
 			wchar_t szIcon[MAX_PATH+32];
@@ -4164,7 +4164,7 @@ INT_PTR CSettings::pageOpProc_Integr(HWND hWnd2, UINT messg, WPARAM wParam, LPAR
 					if (gpConEmu->mp_Inside)
 					{
 						SafeFree(gpConEmu->mp_Inside->ms_InsideSynchronizeCurDir);
-                        gpConEmu->mp_Inside->ms_InsideSynchronizeCurDir = GetDlgItemText(hWnd2, tInsideSyncDir);
+                        gpConEmu->mp_Inside->ms_InsideSynchronizeCurDir = GetDlgItemTextPtr(hWnd2, tInsideSyncDir);
 					}
 					break;
 				}
@@ -4291,9 +4291,9 @@ INT_PTR CSettings::pageOpProc_Integr(HWND hWnd2, UINT messg, WPARAM wParam, LPAR
 				break;
 
 			// Возвращает NULL, если строка пустая
-			wchar_t* pszCurInside = GetDlgItemText(hWnd2, cbInsideName);
+			wchar_t* pszCurInside = GetDlgItemTextPtr(hWnd2, cbInsideName);
 			_ASSERTE((pszCurInside==NULL) || (*pszCurInside!=0));
-			wchar_t* pszCurHere   = GetDlgItemText(hWnd2, cbHereName);
+			wchar_t* pszCurHere   = GetDlgItemTextPtr(hWnd2, cbHereName);
 			_ASSERTE((pszCurHere==NULL) || (*pszCurHere!=0));
 
 			bool lbOldSkip = bSkipCbSel; bSkipCbSel = true;
@@ -5048,11 +5048,11 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 					//GetDlgItemText(hWnd2, tWndHeight, temp, countof(temp)); newH = klatoi(temp);
 					BOOL lbOk;
 
-					psSize = GetDlgItemText(hWnd2, tWndWidth);
+					psSize = GetDlgItemTextPtr(hWnd2, tWndWidth);
 					if (!psSize || !newW.SetFromString(true, psSize))
 						newW.Raw = gpConEmu->WndWidth.Raw;
 					SafeFree(psSize);
-					psSize = GetDlgItemText(hWnd2, tWndHeight);
+					psSize = GetDlgItemTextPtr(hWnd2, tWndHeight);
 					if (!psSize || !newH.SetFromString(false, psSize))
 						newH.Raw = gpConEmu->WndHeight.Raw;
 					SafeFree(psSize);
@@ -6971,7 +6971,7 @@ LRESULT CSettings::OnButtonClicked_Tasks(HWND hWnd2, WPARAM wParam, LPARAM lPara
 				else
 				{
 					//SendDlgItemMessage(hWnd2, tCmdGroupCommands, EM_REPLACESEL, TRUE, (LPARAM)pszName);
-					wchar_t* pszFull = GetDlgItemText(hWnd2, tCmdGroupCommands);
+					wchar_t* pszFull = GetDlgItemTextPtr(hWnd2, tCmdGroupCommands);
 					if (!pszFull || !*pszFull)
 					{
 						SafeFree(pszFull);
@@ -7308,7 +7308,7 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 	case tWndY:
 		if (IsChecked(hWnd2, rNormal) == BST_CHECKED)
 		{
-			wchar_t *pVal = GetDlgItemText(hWnd2, TB);
+			wchar_t *pVal = GetDlgItemTextPtr(hWnd2, TB);
 			BOOL bValid = (pVal && isDigit(*pVal));
 			EnableWindow(GetDlgItem(hWnd2, cbApplyPos), bValid);
 			SafeFree(pVal);
@@ -7319,7 +7319,7 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		if (IsChecked(hWnd2, rNormal) == BST_CHECKED)
 		{
 			CESize sz = {0};
-			wchar_t *pVal = GetDlgItemText(hWnd2, TB);
+			wchar_t *pVal = GetDlgItemTextPtr(hWnd2, TB);
 			BOOL bValid = (pVal && sz.SetFromString(false, pVal));
 			EnableWindow(GetDlgItem(hWnd2, cbApplyPos), bValid);
 			SafeFree(pVal);
@@ -7447,7 +7447,7 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 
 	case tTabSkipWords:
 	{
-		gpSet->pszTabSkipWords = GetDlgItemText(hWnd2, TB);
+		gpSet->pszTabSkipWords = GetDlgItemTextPtr(hWnd2, TB);
 		gpConEmu->mp_TabBar->Update(TRUE);
 		break;
 	}
@@ -7592,7 +7592,7 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 
 	case tDefaultTerminal:
 		{
-			wchar_t* pszApps = GetDlgItemText(hWnd2, tDefaultTerminal);
+			wchar_t* pszApps = GetDlgItemTextPtr(hWnd2, tDefaultTerminal);
 			if (!pszApps || !*pszApps)
 			{
 				SafeFree(pszApps);
@@ -7607,7 +7607,7 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 	case tAnsiLogPath:
 		{
 			SafeFree(gpSet->pszAnsiLog);
-			gpSet->pszAnsiLog = GetDlgItemText(hWnd2, tAnsiLogPath);
+			gpSet->pszAnsiLog = GetDlgItemTextPtr(hWnd2, tAnsiLogPath);
 		}
 		break;
 
@@ -7686,7 +7686,7 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 	case tCTSIntelligentExceptions:
 		if (HIWORD(wParam) == EN_CHANGE)
 		{
-			wchar_t* pszApps = GetDlgItemText(hWnd2, tCTSIntelligentExceptions);
+			wchar_t* pszApps = GetDlgItemTextPtr(hWnd2, tCTSIntelligentExceptions);
 			gpSet->SetIntelligentExceptions(pszApps);
 			SafeFree(pszApps);
 		}

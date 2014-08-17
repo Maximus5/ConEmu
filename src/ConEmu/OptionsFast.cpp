@@ -238,7 +238,7 @@ static INT_PTR CALLBACK CheckOptionsFastProc(HWND hDlg, UINT messg, WPARAM wPara
 					if (lSelStorage > 0)
 					{
 						// Значит юзер выбрал "создать настройки" в другом месте
-						wchar_t* pszNewPlace = GetDlgItemText(hDlg, lbStorageLocation);
+						wchar_t* pszNewPlace = GetDlgItemTextPtr(hDlg, lbStorageLocation);
 						if (!gpConEmu->SetConfigFile(pszNewPlace, true))
 						{
 							// Ошибка уже показана

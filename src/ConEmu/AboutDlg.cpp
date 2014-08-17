@@ -155,7 +155,7 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 			EditIconHint_Set(hDlg, GetDlgItem(hDlg, tAboutSearch), true, L"Search", false, UM_SEARCH, IDOK);
 			EditIconHint_Subclass(hDlg);
 
-			wchar_t* pszLabel = GetDlgItemText(hDlg, stConEmuVersion);
+			wchar_t* pszLabel = GetDlgItemTextPtr(hDlg, stConEmuVersion);
 			if (pszLabel)
 			{
 				wchar_t* pszSet = NULL;
@@ -329,8 +329,8 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 void ConEmuAbout::searchProc(HWND hDlg, HWND hSearch, bool bReentr)
 {
 	HWND hEdit = GetDlgItem(hDlg, tAboutText);
-	wchar_t* pszPart = GetDlgItemText(hSearch, 0);
-	wchar_t* pszText = GetDlgItemText(hEdit, 0);
+	wchar_t* pszPart = GetDlgItemTextPtr(hSearch, 0);
+	wchar_t* pszText = GetDlgItemTextPtr(hEdit, 0);
 	bool bRetry = false;
 
 	if (pszPart && *pszPart && pszText && *pszText)

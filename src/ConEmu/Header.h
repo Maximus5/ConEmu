@@ -261,7 +261,7 @@ BOOL /*__forceinline*/ CoordInRect(const COORD& c, const RECT& r);
 
 BOOL IntersectSmallRect(RECT& rc1, SMALL_RECT& rc2);
 
-wchar_t* GetDlgItemText(HWND hDlg, WORD nID);
+wchar_t* GetDlgItemTextPtr(HWND hDlg, WORD nID);
 size_t MyGetDlgItemText(HWND hDlg, WORD nID, size_t& cchMax, wchar_t*& pszText/*, bool bEscapes = false*/);
 BOOL MySetDlgItemText(HWND hDlg, int nIDDlgItem, LPCTSTR lpString/*, bool bEscapes = false*/);
 bool GetColorRef(LPCWSTR pszText, COLORREF* pCR);

@@ -548,7 +548,7 @@ BOOL IntersectSmallRect(RECT& rc1, SMALL_RECT& rc2)
 	return lb;
 }
 
-wchar_t* GetDlgItemText(HWND hDlg, WORD nID)
+wchar_t* GetDlgItemTextPtr(HWND hDlg, WORD nID)
 {
 	wchar_t* pszText = NULL;
 	size_t cchMax = 0;

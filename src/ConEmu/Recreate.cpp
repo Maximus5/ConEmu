@@ -538,7 +538,7 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 				// Подтверждение спросит ResetCmdHistory
 				if (gpSetCls->ResetCmdHistory(hDlg))
 				{
-                	wchar_t* pszCmd = GetDlgItemText(hDlg, IDC_RESTART_CMD);
+					wchar_t* pszCmd = GetDlgItemTextPtr(hDlg, IDC_RESTART_CMD);
                 	SendDlgItemMessage(hDlg, IDC_RESTART_CMD, CB_RESETCONTENT, 0,0);
                 	SendMessage(hDlg, UM_FILL_CMDLIST, FALSE, 0);
                 	if (pszCmd)
@@ -579,7 +579,7 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 					}
 					case IDC_CHOOSE_DIR:
 					{
-						wchar_t* pszDefFolder = GetDlgItemText(hDlg, IDC_STARTUP_DIR);
+						wchar_t* pszDefFolder = GetDlgItemTextPtr(hDlg, IDC_STARTUP_DIR);
 						wchar_t* pszFolder = SelectFolder(L"Choose startup directory", pszDefFolder, hDlg, sff_Default);
 						if (pszFolder)
 						{
@@ -646,7 +646,7 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 						if (SendDlgItemMessage(hDlg, rbAnotherUser, BM_GETCHECK, 0, 0))
 						{
 							pArgs->RunAsRestricted = crb_Off;
-							pArgs->pszUserName = GetDlgItemText(hDlg, tRunAsUser);
+							pArgs->pszUserName = GetDlgItemTextPtr(hDlg, tRunAsUser);
 
 							if (pArgs->pszUserName)
 							{
@@ -670,7 +670,7 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 						pArgs->RunAsAdministrator = SendDlgItemMessage(hDlg, cbRunAsAdmin, BM_GETCHECK, 0, 0) ? crb_On : crb_Off;
 
 						// StartupDir (may be specified as argument)
-						wchar_t* pszDir = GetDlgItemText(hDlg, IDC_STARTUP_DIR);
+						wchar_t* pszDir = GetDlgItemTextPtr(hDlg, IDC_STARTUP_DIR);
 						wchar_t* pszExpand = (pszDir && wcschr(pszDir, L'%')) ? ExpandEnvStr(pszDir) : NULL;
 						LPCWSTR pszDirResult = pszExpand ? pszExpand : pszDir;
 						// Another user? We may fail with access denied. Check only for "current user" account
@@ -700,7 +700,7 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 						SafeFree(pArgs->pszSpecialCmd);
 
 						// GetDlgItemText выделяет память через calloc
-						pArgs->pszSpecialCmd = GetDlgItemText(hDlg, IDC_RESTART_CMD);
+						pArgs->pszSpecialCmd = GetDlgItemTextPtr(hDlg, IDC_RESTART_CMD);
 
 						if (pArgs->pszSpecialCmd)
 							gpSet->HistoryAdd(pArgs->pszSpecialCmd);

@@ -9318,7 +9318,7 @@ INT_PTR CRealConsole::renameProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lP
 				{
 					case IDOK:
 						{
-							wchar_t* pszNew = GetDlgItemText(hDlg, tNewTabName);
+							wchar_t* pszNew = GetDlgItemTextPtr(hDlg, tNewTabName);
 							pRCon->RenameTab(pszNew);
 							SafeFree(pszNew);
 							EndDialog(hDlg, IDOK);
