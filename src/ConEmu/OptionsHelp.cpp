@@ -31,9 +31,16 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define SHOWDEBUGSTR
 
 #include "Header.h"
+#include "DpiAware.h"
 #include "OptionsHelp.h"
 
 //#define DEBUGSTRFONT(s) DEBUGSTR(s)
+
+CEHelpPopup::CEHelpPopup()
+{
+	mh_Popup = NULL;
+	mp_DpiAware = NULL;
+}
 
 bool CEHelpPopup::GetItemHelp(int wID /* = 0*/, HWND hCtrl, wchar_t* rsHelp, DWORD cchHelpMax)
 {
@@ -111,6 +118,9 @@ void CEHelpPopup::ShowItemHelp(int wID /* = 0*/, HWND hCtrl, POINT MousePos)
 
 	if (!mh_Popup || !IsWindow(mh_Popup))
 	{
+		if (!mp_DpiAware)
+			mp_DpiAware = new CDpiForDialog();
+		// (CreateDialog)
 		mh_Popup = CreateDialogParam((HINSTANCE)GetModuleHandle(NULL), MAKEINTRESOURCE(IDD_HELP), ghOpWnd, helpProc, (LPARAM)this);
 		if (!mh_Popup)
 		{
@@ -142,6 +152,8 @@ INT_PTR CEHelpPopup::helpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 			pPopup = (CEHelpPopup*)lParam;
 			SetWindowLongPtr(hWnd2, DWLP_USER, (LONG_PTR)pPopup);
 			pPopup->mh_Popup = hWnd2;
+			if (pPopup->mp_DpiAware)
+				pPopup->mp_DpiAware->Attach(hWnd2, ghOpWnd);
 			helpProc(hWnd2, WM_SIZE, 0, 0);
 
 			break;
@@ -176,12 +188,20 @@ INT_PTR CEHelpPopup::helpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 		case WM_DESTROY:
 		{
 			pPopup = (CEHelpPopup*)GetWindowLongPtr(hWnd2, DWLP_USER);
-			pPopup->mh_Popup = NULL;
+			if (pPopup)
+			{
+				if (pPopup->mp_DpiAware)
+					pPopup->mp_DpiAware->Detach();
+				pPopup->mh_Popup = NULL;
+			}
 			break;
 		}
 		
 		default:
-			return 0;
+			if (pPopup && pPopup->mp_DpiAware && pPopup->mp_DpiAware->ProcessDpiMessages(hWnd2, messg, wParam, lParam))
+			{
+				return TRUE;
+			}
 	}
 
 	return 0;

@@ -29,11 +29,14 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+class CDpiForDialog;
+
 struct CEHelpPopup
 {
 	HWND mh_Popup;
+	CDpiForDialog* mp_DpiAware;
 
-	CEHelpPopup() { mh_Popup = NULL; };
+	CEHelpPopup();
 
 	void ShowItemHelp(HELPINFO* hi);
 	void ShowItemHelp(int wID /* = 0*/, HWND hCtrl, POINT MousePos);
