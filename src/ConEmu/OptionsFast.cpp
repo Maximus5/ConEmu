@@ -40,10 +40,20 @@ static bool bCheckHooks, bCheckUpdate, bCheckIme;
 // все равно будет SaveSettings(TRUE/*abSilent*/);
 // Поэтому выбранные настройки здесь можно не сохранять (кроме StopWarningConIme)
 static bool bVanilla;
-
+static CDpiForDialog* gp_DpiAware = NULL;
 
 static INT_PTR CALLBACK CheckOptionsFastProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam)
 {
+	if (gp_DpiAware)
+	{
+		INT_PTR lRc = 0;
+		if (gp_DpiAware->ProcessMessages(hDlg, messg, wParam, lParam, lRc))
+		{
+			SetWindowLongPtr(hDlg, DWLP_MSGRESULT, lRc);
+			return TRUE;
+		}
+	}
+
 	switch (messg)
 	{
 	case WM_SETHOTKEY:
@@ -54,6 +64,18 @@ static INT_PTR CALLBACK CheckOptionsFastProc(HWND hDlg, UINT messg, WPARAM wPara
 		{
 			SendMessage(hDlg, WM_SETICON, ICON_BIG, (LPARAM)hClassIcon);
 			SendMessage(hDlg, WM_SETICON, ICON_SMALL, (LPARAM)hClassIconSm);
+
+			if (gp_DpiAware)
+			{
+				gp_DpiAware->Attach(hDlg, NULL);
+			}
+
+			RECT rect = {};
+			if (GetWindowRect(hDlg, &rect))
+			{
+				CDpiAware::GetCenteredRect(NULL, rect);
+				MoveWindow(hDlg, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, false);
+			}
 
 			LRESULT lbRc = FALSE;
 			if (lParam)
@@ -417,7 +439,12 @@ void CheckOptionsFast(LPCWSTR asTitle, SettingsLoadedFlags slfFlags)
 		// First ShowWindow forced to use nCmdShow. This may be weird...
 		SkipOneShowWindow();
 
+		gp_DpiAware = new CDpiForDialog();
+
+		// Modal dialog (CreateDialog)
 		DialogBoxParam(g_hInstance, MAKEINTRESOURCE(IDD_FAST_CONFIG), NULL, CheckOptionsFastProc, (LPARAM)asTitle);
+
+		SafeDelete(gp_DpiAware);
 	}
 
 checkDefaults:
