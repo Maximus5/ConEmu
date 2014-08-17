@@ -2374,6 +2374,11 @@ RECT CenterInParent(RECT rcDlg, HWND hParent)
 	return rcCenter;
 }
 
+BOOL MoveWindowRect(HWND hWnd, const RECT& rcWnd, BOOL bRepaint)
+{
+	return MoveWindow(hWnd, rcWnd.left, rcWnd.top, rcWnd.right - rcWnd.left, rcWnd.bottom - rcWnd.top, bRepaint);
+}
+
 static LONG gnMyClipboardOpened = 0;
 
 bool MyOpenClipboard(LPCWSTR asAction)

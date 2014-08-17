@@ -162,7 +162,7 @@ INT_PTR CEHelpPopup::helpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 		case WM_SIZE:
 		{
 			RECT rcClient; GetClientRect(hWnd2, &rcClient);
-			MoveWindow(GetDlgItem(hWnd2, IDC_HELP_DESCR), rcClient.left, rcClient.top, rcClient.right-rcClient.left, rcClient.bottom-rcClient.top, TRUE);
+			MoveWindowRect(GetDlgItem(hWnd2, IDC_HELP_DESCR), rcClient, TRUE);
 			break;
 		}
 

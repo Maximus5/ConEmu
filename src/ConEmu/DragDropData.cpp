@@ -2948,7 +2948,7 @@ LRESULT CDragDropData::DragProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 			IDropSource *pDropSource = (IDropSource*)lParam;
 			RECT rcWnd; GetWindowRect(ghWnd, &rcWnd);
 			// Чтобы движения мышки "могли" обработаться
-			MoveWindow(hWnd, rcWnd.left, rcWnd.top, rcWnd.right-rcWnd.left, rcWnd.bottom-rcWnd.top, 0);
+			MoveWindowRect(hWnd, rcWnd);
 			pds->bInDrag = TRUE;
 			pds->pDrag->mb_DragStarting = TRUE;
 			wchar_t szStep[255]; _wsprintf(szStep, SKIPLEN(countof(szStep)) L"DoDragDrop.Thread(Eff=0x%X, DataObject=0x%08X, DropSource=0x%08X)", dwAllowedEffects, (DWORD)pds->pDrag->mp_DataObject, (DWORD)pDropSource); //-V205

@@ -125,7 +125,7 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 			if (GetWindowRect(hDlg, &rect))
 			{
 				CDpiAware::GetCenteredRect(ghWnd, rect);
-				MoveWindow(hDlg, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, false);
+				MoveWindowRect(hDlg, rect);
 			}
 
 			if ((ghOpWnd && IsWindow(ghOpWnd)) || (WS_EX_TOPMOST & GetWindowLongPtr(ghWnd, GWL_EXSTYLE)))

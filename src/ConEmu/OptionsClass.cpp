@@ -2022,14 +2022,11 @@ LRESULT CSettings::OnInitDialog()
 		TreeView_SelectItem(GetDlgItem(ghOpWnd, tvSetupCategories), gpSetCls->m_Pages[0].hTI);
 
 		HWND hPlace = GetDlgItem(ghOpWnd, tSetupPagePlace);
-		//RECT rcClient; GetWindowRect(hPlace, &rcClient);
-		//MapWindowPoints(NULL, ghOpWnd, (LPPOINT)&rcClient, 2);
 		ShowWindow(hPlace, SW_HIDE);
 
 		mb_IgnoreSelPage = false;
 
 		CreatePage(&(m_Pages[0]));
-		//MoveWindow(m_Pages[0].hPage, rcClient.left, rcClient.top, rcClient.right-rcClient.left, rcClient.bottom-rcClient.top, 0);
 
 		apiShowWindow(m_Pages[0].hPage, SW_SHOW);
 	}
@@ -2039,7 +2036,7 @@ LRESULT CSettings::OnInitDialog()
 		if (GetWindowRect(ghOpWnd, &rect))
 		{
 			CDpiAware::GetCenteredRect(ghWnd, rect);
-			MoveWindow(ghOpWnd, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, false);
+			MoveWindowRect(ghOpWnd, rect);
 		}
 	}
 	return 0;
@@ -8726,11 +8723,7 @@ LRESULT CSettings::OnPage(LPNMHDR phdr)
 					if (m_Pages[i].hPage == NULL)
 					{
 						SetCursor(LoadCursor(NULL,IDC_WAIT));
-						//HWND hPlace = GetDlgItem(ghOpWnd, tSetupPagePlace);
-						//RECT rcClient; GetWindowRect(hPlace, &rcClient);
-						//MapWindowPoints(NULL, ghOpWnd, (LPPOINT)&rcClient, 2);
 						CreatePage(&(m_Pages[i]));
-						//MoveWindow(m_Pages[i].hPage, rcClient.left, rcClient.top, rcClient.right-rcClient.left, rcClient.bottom-rcClient.top, 0);
 					}
 					else
 					{
@@ -9377,7 +9370,7 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 			MapWindowPoints(NULL, ghOpWnd, (LPPOINT)&rcClient, 2);
 			if (p->pDpiAware)
 				p->pDpiAware->Attach(hWnd2, ghOpWnd);
-			MoveWindow(hWnd2, rcClient.left, rcClient.top, rcClient.right-rcClient.left, rcClient.bottom-rcClient.top, 0);
+			MoveWindowRect(hWnd2, rcClient);
 		}
 		else
 		{
@@ -9889,7 +9882,7 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 			si.nPage = rcChild.bottom - rcChild.top;
 			SetScrollInfo(hChild, SB_VERT, &si, FALSE);
 
-			MoveWindow(hChild, rcPos.left, rcPos.top, rcPos.right-rcPos.left, rcPos.bottom-rcPos.top, FALSE);
+			MoveWindowRect(hChild, rcPos);
 
 			ShowWindow(hHolder, SW_HIDE);
 			ShowWindow(hChild, SW_SHOW);

@@ -64,7 +64,7 @@ static INT_PTR CALLBACK CheckOptionsFastProc(HWND hDlg, UINT messg, WPARAM wPara
 			if (GetWindowRect(hDlg, &rect))
 			{
 				CDpiAware::GetCenteredRect(NULL, rect);
-				MoveWindow(hDlg, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, false);
+				MoveWindowRect(hDlg, rect);
 			}
 
 			LRESULT lbRc = FALSE;

@@ -6237,7 +6237,7 @@ LRESULT CConEmuMain::OnSize(bool bResizeRCon/*=true*/, WPARAM wParam/*=0*/, WORD
 	RECT mainClient = CalcRect(CER_MAINCLIENT);
 	RECT work = CalcRect(CER_WORKSPACE, mainClient, CER_MAINCLIENT);
 	_ASSERTE(ghWndWork && GetParent(ghWndWork)==ghWnd); // пока расчитано на дочерний режим
-	MoveWindow(ghWndWork, work.left, work.top, work.right-work.left, work.bottom-work.top, TRUE);
+	MoveWindowRect(ghWndWork, work, TRUE);
 
 	// Запомнить "идеальный" размер окна, выбранный пользователем
 	if (isSizing() && isWindowNormal())
@@ -7125,7 +7125,7 @@ void CConEmuMain::RecreateControls(bool bRecreateTabbar, bool bRecreateStatus, b
 			{
 				;
 			}
-			MoveWindow(ghWnd, rcNew.left, rcNew.top, rcNew.right - rcNew.left, rcNew.bottom - rcNew.top, TRUE);
+			MoveWindowRect(ghWnd, rcNew, TRUE);
 		}
 		else
 		{
@@ -15517,7 +15517,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			OnMoving(&rcNew, true);
 
 			TODO("Desktop mode?");
-			MoveWindow(ghWnd, rcNew.left, rcNew.top, rcNew.right-rcNew.left, rcNew.bottom-rcNew.top, TRUE);
+			MoveWindowRect(ghWnd, rcNew, TRUE);
 			//SetWindowPos(ghWnd, NULL, rcNew.left, rcNew.top, 0,0, SWP_NOSIZE|SWP_NOZORDER);
 		}
 		return 0;

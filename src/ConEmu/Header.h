@@ -229,6 +229,7 @@ void LogString(LPCWSTR asInfo, bool abWriteTime = true, bool abWriteLine = true)
 extern BOOL gbInDisplayLastError;
 int DisplayLastError(LPCTSTR asLabel, DWORD dwError = 0, DWORD dwMsgFlags = 0, LPCWSTR asTitle = NULL, HWND hParent = NULL);
 RECT CenterInParent(RECT rcDlg, HWND hParent);
+BOOL MoveWindowRect(HWND hWnd, const RECT& rcWnd, BOOL bRepaint = FALSE);
 
 void ShutdownGuiStep(LPCWSTR asInfo, int nParm1 = 0, int nParm2 = 0, int nParm3 = 0, int nParm4 = 0);
 void LogFocusInfo(LPCWSTR asInfo, int Level=1);

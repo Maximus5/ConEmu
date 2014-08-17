@@ -949,7 +949,7 @@ bool CConEmuCtrl::key_WinSize(BYTE vk)
 			
 			if (rcWindow.right > rcWindow.left && rcWindow.bottom > rcWindow.top)
 			{
-				MoveWindow(ghWnd, rcWindow.left, rcWindow.top, (rcWindow.right - rcWindow.left), (rcWindow.bottom - rcWindow.top), 1);
+				MoveWindowRect(ghWnd, rcWindow, TRUE);
 			}
 		}
 		//

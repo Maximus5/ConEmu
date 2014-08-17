@@ -9292,7 +9292,7 @@ INT_PTR CRealConsole::renameProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lP
 					OffsetRect(&rcDlg, rcCon.left - rcDlg.left, rcCon.top - rcDlg.top);
 				}
 			}
-			MoveWindow(hDlg, rcDlg.left, rcDlg.top, rcDlg.right - rcDlg.left, rcDlg.bottom - rcDlg.top, false);
+			MoveWindowRect(hDlg, rcDlg);
 
 			HWND hEdit = GetDlgItem(hDlg, tNewTabName);
 
