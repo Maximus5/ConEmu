@@ -56,10 +56,13 @@ CHotKeyDialog::CHotKeyDialog(HWND hParent, DWORD aVkMod)
 	ZeroStruct(m_HK);
 	m_HK.HkType = chk_User;
 	m_HK.VkMod = aVkMod;
+
+	mp_DpiAware = new CDpiForDialog();
 }
 
 CHotKeyDialog::~CHotKeyDialog()
 {
+	SafeDelete(mp_DpiAware);
 }
 
 DWORD CHotKeyDialog::GetVkMod()
@@ -108,12 +111,27 @@ INT_PTR CHotKeyDialog::hkDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lP
 		return FALSE;
 	}
 
+	if (pDlg->mp_DpiAware)
+	{
+		INT_PTR lRc = 0;
+		if (pDlg->mp_DpiAware->ProcessMessages(hDlg, messg, wParam, lParam, lRc))
+		{
+			SetWindowLongPtr(hDlg, DWLP_MSGRESULT, lRc);
+			return TRUE;
+		}
+	}
+
 	switch (messg)
 	{
 		case WM_INITDIALOG:
 		{
 			SendMessage(hDlg, WM_SETICON, ICON_BIG, (LPARAM)hClassIcon);
 			SendMessage(hDlg, WM_SETICON, ICON_SMALL, (LPARAM)hClassIconSm);
+
+			if (pDlg->mp_DpiAware)
+			{
+				pDlg->mp_DpiAware->Attach(hDlg, ghWnd);
+			}
 
 			// Ensure, it will be "on screen"
 			RECT rect; GetWindowRect(hDlg, &rect);

@@ -129,6 +129,8 @@ struct ConEmuHotKey
 	static int AllocateHotkeys(ConEmuHotKey** ppHotKeys);
 };
 
+class CDpiForDialog;
+
 // IDD_HOTKEY { hkHotKeySelect, lbHotKeyList, lbHotKeyMod1, lbHotKeyMod2, lbHotKeyMod3 }
 class CHotKeyDialog
 {
@@ -136,6 +138,7 @@ private:
 	HWND mh_Dlg;
 	HWND mh_Parent;
 	ConEmuHotKey m_HK;
+	CDpiForDialog* mp_DpiAware;
 public:
 	static bool EditHotKey(HWND hParent, DWORD& VkMod);
 	DWORD GetVkMod();
