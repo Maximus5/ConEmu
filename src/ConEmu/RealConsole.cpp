@@ -262,6 +262,7 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 	mn_LastSetForegroundPID = 0;
 	mb_InPostCloseMacro = false;
 	mb_WasMouseSelection = false;
+	mp_RenameDpiAware = NULL;
 
 	mn_TextColorIdx = 7; mn_BackColorIdx = 0;
 	mn_PopTextColorIdx = 5; mn_PopBackColorIdx = 15;
@@ -428,6 +429,8 @@ CRealConsole::~CRealConsole()
 	//CloseMapping();
 	CloseMapHeader(); // CloseMapData() & CloseFarMapData() зовет сам CloseMapHeader
 	CloseColorMapping(); // Colorer data
+
+	SafeDelete(mp_RenameDpiAware);
 
 	//SafeFree(mpsz_CmdBuffer);
 
@@ -9254,6 +9257,9 @@ INT_PTR CRealConsole::renameProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lP
 	else
 		pRCon = (CRealConsole*)GetWindowLongPtr(hDlg, DWLP_USER);
 
+	if (!pRCon)
+		return FALSE;
+
 	switch (messg)
 	{
 		case WM_INITDIALOG:
@@ -9264,6 +9270,29 @@ INT_PTR CRealConsole::renameProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lP
 			gpConEmu->OnOurDialogOpened();
 			_ASSERTE(pRCon!=NULL);
 			SetWindowLongPtr(hDlg, DWLP_USER, (LONG_PTR)pRCon);
+
+			if (pRCon->mp_RenameDpiAware)
+				pRCon->mp_RenameDpiAware->Attach(hDlg, ghWnd);
+
+			// Positioning
+			RECT rcDlg = {}; GetWindowRect(hDlg, &rcDlg);
+			if (gpConEmu->mp_TabBar->IsTabsShown())
+			{
+				RECT rcTab = {};
+				if (gpConEmu->mp_TabBar->GetActiveTabRect(&rcTab))
+				{
+					OffsetRect(&rcDlg, rcTab.left - rcDlg.left, rcTab.bottom - rcDlg.top);
+				}
+			}
+			else
+			{
+				RECT rcCon = {};
+				if (GetWindowRect(pRCon->GetView(), &rcCon))
+				{
+					OffsetRect(&rcDlg, rcCon.left - rcDlg.left, rcCon.top - rcDlg.top);
+				}
+			}
+			MoveWindow(hDlg, rcDlg.left, rcDlg.top, rcDlg.right - rcDlg.left, rcDlg.bottom - rcDlg.top, false);
 
 			HWND hEdit = GetDlgItem(hDlg, tNewTabName);
 
@@ -9309,10 +9338,15 @@ INT_PTR CRealConsole::renameProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lP
 			break;
 
 		case WM_DESTROY:
+			if (pRCon->mp_RenameDpiAware)
+				pRCon->mp_RenameDpiAware->Detach();
 			break;
 
 		default:
-			return FALSE;
+			if (pRCon->mp_RenameDpiAware && pRCon->mp_RenameDpiAware->ProcessDpiMessages(hDlg, messg, wParam, lParam))
+			{
+				return TRUE;
+			}
 	}
 
 	return FALSE;
@@ -9324,6 +9358,7 @@ void CRealConsole::DoRenameTab()
 		return;
 
 	DontEnable de;
+	mp_RenameDpiAware = new CDpiForDialog();
 	// Modal dialog (CreateDialog)
 	INT_PTR iRc = DialogBoxParam(g_hInstance, MAKEINTRESOURCE(IDD_RENAMETAB), ghWnd, renameProc, (LPARAM)this);
 	if (iRc == IDOK)
@@ -9331,6 +9366,7 @@ void CRealConsole::DoRenameTab()
 		//gpConEmu->mp_TabBar->Update(); -- уже, в RenameTab(...)
 		UNREFERENCED_PARAMETER(iRc);
 	}
+	SafeDelete(mp_RenameDpiAware);
 }
 
 // Запустить Elevated копию фара с теми же папками на панелях

@@ -222,6 +222,7 @@ struct DebugLogShellActivity
 class CVirtualConsole;
 class CRgnDetect;
 class CRealBuffer;
+class CDpiForDialog;
 
 enum RealBufferType
 {
@@ -505,6 +506,7 @@ class CRealConsole
 		//	etr_FileAndLine = 2,
 		//};
 		//ExpandTextRangeType ExpandTextRange(COORD& crFrom/*[In/Out]*/, COORD& crTo/*[Out]*/, ExpandTextRangeType etr, wchar_t* pszText = NULL, size_t cchTextMax = 0);
+		CDpiForDialog* mp_RenameDpiAware;
 		static INT_PTR CALLBACK renameProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam);
 	public:
 		BOOL IsConsoleDataChanged();
