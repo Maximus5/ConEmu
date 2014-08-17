@@ -9205,10 +9205,8 @@ INT_PTR CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPara
 
 			if (gpSetCls->mh_CtlColorBrush) { DeleteObject(gpSetCls->mh_CtlColorBrush); gpSetCls->mh_CtlColorBrush = NULL; }
 
-			//EndDialog(hWnd2, TRUE);
 			ghOpWnd = NULL;
-			//gpSetCls->hMain = gpSetCls->hExt = gpSetCls->hFar = gpSetCls->hKeys = gpSetCls->hTabs = gpSetCls->hColors = NULL;
-			//gpSetCls->hCmdTasks = gpSetCls->hViews = gpSetCls->hInfo = gpSetCls->hDebug = gpSetCls->hUpdate = gpSetCls->hSelection = NULL;
+			// mp_DpiAware and others are cleared in gpSetCls->ClearPages()
 			gpSetCls->ClearPages();
 			gpSetCls->mp_ActiveHotKey = NULL;
 			gbLastColorsOk = FALSE;
