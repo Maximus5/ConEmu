@@ -9324,6 +9324,7 @@ void CRealConsole::DoRenameTab()
 		return;
 
 	DontEnable de;
+	// Modal dialog (CreateDialog)
 	INT_PTR iRc = DialogBoxParam(g_hInstance, MAKEINTRESOURCE(IDD_RENAMETAB), ghWnd, renameProc, (LPARAM)this);
 	if (iRc == IDOK)
 	{

@@ -38,7 +38,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 bool CHotKeyDialog::EditHotKey(HWND hParent, DWORD& VkMod)
 {
 	CHotKeyDialog Dlg(hParent, VkMod);
-	// Модальный
+	// Modal dialog (CreateDialog)
 	INT_PTR iRc = DialogBoxParam(g_hInstance, MAKEINTRESOURCE(IDD_HOTKEY), hParent, hkDlgProc, (LPARAM)&Dlg);
 	bool bOk = (iRc == IDOK);
 	if (bOk)

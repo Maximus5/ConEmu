@@ -108,6 +108,7 @@ int CRecreateDlg::RecreateDlg(RConStartArgs* apArgs)
 	InitVars();
 
 	bool bPrev = gpConEmu->SetSkipOnFocus(true);
+	// Modal dialog (CreateDialog)
 	int nRc = DialogBoxParam(g_hInstance, MAKEINTRESOURCE(IDD_RESTART), mh_Parent, RecreateDlgProc, (LPARAM)this);
 	UNREFERENCED_PARAMETER(nRc);
 	gpConEmu->SetSkipOnFocus(bPrev);
