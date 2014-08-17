@@ -2352,8 +2352,8 @@ RECT CenterInParent(RECT rcDlg, HWND hParent)
 	GetNearestMonitorInfo(&mi, NULL, &rcParent);
 
 	RECT rcCenter = {
-		max(mi.rcWork.left,(rcParent.left+rcParent.right-rcDlg.right+rcDlg.left)/2),
-		max(mi.rcWork.top,(rcParent.top+rcParent.bottom-rcDlg.bottom+rcDlg.top)/2)
+		max(mi.rcWork.left, rcParent.left + (rcParent.right - rcParent.left - nWidth) / 2),
+		max(mi.rcWork.top, rcParent.top + (rcParent.bottom - rcParent.top - nHeight) / 2)
 	};
 
 	if (((rcCenter.left + nWidth) > mi.rcWork.right)
@@ -2362,7 +2362,7 @@ RECT CenterInParent(RECT rcDlg, HWND hParent)
 		rcCenter.left = max(mi.rcWork.left, (mi.rcWork.right - nWidth));
 	}
 
-	if (((rcCenter.top + nWidth) > mi.rcWork.bottom)
+	if (((rcCenter.top + nHeight) > mi.rcWork.bottom)
 		&& (rcCenter.top > mi.rcWork.top))
 	{
 		rcCenter.top = max(mi.rcWork.top, (mi.rcWork.bottom - nHeight));
