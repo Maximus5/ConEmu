@@ -42,6 +42,9 @@ protected:
 	wchar_t* mpsz_CurCmd;
 	wchar_t* mpsz_SysCmd;
 	wchar_t* mpsz_DefDir;
+	// Work dirs
+	CmdArg ms_RConStartDir;
+	CmdArg ms_RConCurDir;
 	// dpi support
 	CDpiForDialog* mp_DpiAware;
 	// Buffer
@@ -50,6 +53,7 @@ protected:
 	void InitVars();
 	void FreeVars();
 	void AddCommandList(LPCWSTR asCommand, INT_PTR iAfter = -1);
+	void AddDirectoryList(LPCWSTR asDirectory, INT_PTR iAfter = -1);
 protected:
 	INT_PTR OnInitDialog(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam);
 	INT_PTR OnCtlColorStatic(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam);

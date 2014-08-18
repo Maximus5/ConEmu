@@ -175,7 +175,18 @@ INT_PTR CRecreateDlg::OnInitDialog(HWND hDlg, UINT messg, WPARAM wParam, LPARAM 
 
 	// Set text in command and folder fields
 	SetDlgItemText(hDlg, IDC_RESTART_CMD, mpsz_DefCmd ? mpsz_DefCmd : pArgs->pszSpecialCmd ? pArgs->pszSpecialCmd : L"");
-	SetDlgItemText(hDlg, IDC_STARTUP_DIR, mpsz_DefDir ? mpsz_DefDir : pArgs->pszStartupDir ? pArgs->pszStartupDir : gpConEmu->WorkDir());
+
+	// Current directory, startup directory, ConEmu startup directory, and may be startup directory history in the future
+	AddDirectoryList(mpsz_DefDir ? mpsz_DefDir : pArgs->pszStartupDir);
+	AddDirectoryList(ms_RConCurDir);
+	AddDirectoryList(ms_RConStartDir);
+	AddDirectoryList(gpConEmu->WorkDir());
+	LPCWSTR pszShowDir;
+	if ((pArgs->aRecreate == cra_RecreateTab) && !ms_RConCurDir.IsEmpty())
+		pszShowDir = ms_RConCurDir;
+	else
+		pszShowDir = mpsz_DefDir ? mpsz_DefDir : pArgs->pszStartupDir ? pArgs->pszStartupDir : gpConEmu->WorkDir();
+	SetDlgItemText(hDlg, IDC_STARTUP_DIR, pszShowDir);
 
 	// Split controls
 	if (pArgs->aRecreate == cra_RecreateTab)
@@ -815,10 +826,20 @@ int CRecreateDlg::BrowseCallbackProc(HWND hwnd, UINT uMsg, LPARAM lParam, LPARAM
 
 void CRecreateDlg::InitVars()
 {
-	if (mpsz_DefCmd || mpsz_CurCmd || mpsz_SysCmd || mpsz_DefDir)
+	if (mpsz_DefCmd || mpsz_CurCmd || mpsz_SysCmd || mpsz_DefDir || !ms_RConStartDir.IsEmpty() || !ms_RConCurDir.IsEmpty())
 	{
-		_ASSERTE(!(mpsz_DefCmd || mpsz_CurCmd || mpsz_SysCmd || mpsz_DefDir));
+		_ASSERTE(!(mpsz_DefCmd || mpsz_CurCmd || mpsz_SysCmd || mpsz_DefDir || !ms_RConStartDir.IsEmpty() || !ms_RConCurDir.IsEmpty()));
 		FreeVars();
+	}
+
+	CVConGuard VCon;
+	CVirtualConsole* pVCon = (gpConEmu->GetActiveVCon(&VCon) >= 0) ? VCon.VCon() : NULL;
+	CRealConsole* pRCon = pVCon ? pVCon->RCon() : NULL;
+
+	if (pRCon)
+	{
+		ms_RConStartDir.Set(pRCon->GetStartupDir());
+		pRCon->GetConsoleCurDir(ms_RConCurDir);
 	}
 
 	// Если уже передана команда через параметры - из текущей консоли не извлекать
@@ -836,9 +857,6 @@ void CRecreateDlg::InitVars()
 	// * Ни одной консоли нет (предложить то что запускается при старте - Task, команда)
 	// * Консоли есть (пусть наверное будет то что запускается при старте - Task, команда)
 
-	CVConGuard VCon;
-	CVirtualConsole* pVCon = (gpConEmu->GetActiveVCon(&VCon) >= 0) ? VCon.VCon() : NULL;
-	CRealConsole* pRCon = pVCon ? pVCon->RCon() : NULL;
 	wchar_t* pszBuf = NULL;
 
 	_ASSERTE(pRCon || (mp_Args->aRecreate == cra_CreateTab || mp_Args->aRecreate == cra_EditTab));
@@ -902,7 +920,7 @@ void CRecreateDlg::InitVars()
 	if (bDirFromRCon)
 	{
 		TODO("May be try to retrieve current directory of the shell?");
-		mpsz_DefDir = lstrdup(pRCon ? pRCon->GetStartupDir() : L"");
+		mpsz_DefDir = lstrdup(ms_RConCurDir);
 	}
 
 	SafeFree(pszBuf);
@@ -914,6 +932,8 @@ void CRecreateDlg::FreeVars()
 	SafeFree(mpsz_CurCmd);
 	SafeFree(mpsz_SysCmd);
 	SafeFree(mpsz_DefDir);
+	ms_RConStartDir.Empty();
+	ms_RConCurDir.Empty();
 }
 
 void CRecreateDlg::AddCommandList(LPCWSTR asCommand, INT_PTR iAfter /*= -1*/)
@@ -929,5 +949,19 @@ void CRecreateDlg::AddCommandList(LPCWSTR asCommand, INT_PTR iAfter /*= -1*/)
 	if (nId < 0)
 	{
 		SendDlgItemMessage(mh_Dlg, IDC_RESTART_CMD, CB_INSERTSTRING, iAfter, (LPARAM)asCommand);
+	}
+}
+
+void CRecreateDlg::AddDirectoryList(LPCWSTR asDirectory, INT_PTR iAfter /*= -1*/)
+{
+	if (!asDirectory || !*asDirectory)
+		return;
+
+	//Already exist?
+	INT_PTR nId = SendDlgItemMessage(mh_Dlg, IDC_STARTUP_DIR, CB_FINDSTRINGEXACT, -1, (LPARAM)asDirectory);
+
+	if (nId < 0)
+	{
+		SendDlgItemMessage(mh_Dlg, IDC_STARTUP_DIR, CB_INSERTSTRING, iAfter, (LPARAM)asDirectory);
 	}
 }
