@@ -2814,14 +2814,21 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom, bool bUpdateScre
 								// May be too long?
 								lstrcpyn(cmd.szFile, pszWinPath, countof(cmd.szFile));
 							}
-							else
-							{
-								_ASSERTE(pszWinPath!=NULL); // must not be here!
-								pszWinPath = cmd.szFile;
-							}
 
 							CVConGuard VCon;
-							if (bUseExtEditor || !CVConGroup::isFarExist(fwt_NonModal|fwt_PluginRequired, NULL, &VCon))
+							if (!pszWinPath || !*pszWinPath)
+							{
+								//_ASSERTE(pszWinPath!=NULL); // must not be here!
+								//pszWinPath = cmd.szFile; -- file not found, do not open absent files!
+								CmdArg szDir;
+								wchar_t* pszErrMsg = lstrmerge(L"File '", cmd.szFile, L"' not found!\nDirectory: ", mp_RCon->GetConsoleCurDir(szDir));
+								if (pszErrMsg)
+								{
+									MsgBox(pszErrMsg, MB_ICONSTOP);
+									free(pszErrMsg);
+								}
+							}
+							else if (bUseExtEditor || !CVConGroup::isFarExist(fwt_NonModal|fwt_PluginRequired, NULL, &VCon))
 							{
 								if (gpSet->sFarGotoEditor && *gpSet->sFarGotoEditor)
 								{

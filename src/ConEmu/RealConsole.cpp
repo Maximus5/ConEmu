@@ -12793,7 +12793,8 @@ LPCWSTR CRealConsole::GetFileFromConsole(LPCWSTR asSrc, CmdArg& szFull)
 		if (!FilesExists(pszDir, pszWinPath, true, 1))
 		{
 			TODO("Попытаться просканировать один уровень подпапок");
-			return szFull.Attach(szWinPath.Detach());
+			//return szFull.Attach(szWinPath.Detach());
+			return NULL;
 		}
 
 		bool bDirSlash  = (pszDir && *pszDir) ? (pszDir[lstrlen(pszDir)-1] == L'\\') : false;
