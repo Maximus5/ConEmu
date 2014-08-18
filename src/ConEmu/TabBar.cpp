@@ -1479,6 +1479,7 @@ int CTabBarClass::PrepareTab(CTab& pTab, CVirtualConsole *apVCon)
 	}
 
 	TCHAR szTmp[64];
+	CmdArg szArg;
 	bool  bAppendAdmin = gpSet->isAdminSuffix() && (pTab->Flags() & fwt_Elevated);
 
 	while (*pszFmt && pszDst < pszEnd)
@@ -1522,6 +1523,13 @@ int CTabBarClass::PrepareTab(CTab& pTab, CVirtualConsole *apVCon)
 						pszText = bRenamedTab ? fileName : pRCon ? pRCon->GetActiveProcessName() : NULL;
 						wcscpy_c(szTmp, (pszText && *pszText) ? pszText : L"?");
 						pszText = szTmp;
+					}
+					break;
+				case _T('d'): case _T('D'):
+					{
+						pszText = pRCon ? pRCon->GetConsoleCurDir(szArg) : NULL;
+						if (!pszText || !*pszText)
+							pszText = L"?";
 					}
 					break;
 				case _T('a'): case _T('A'):

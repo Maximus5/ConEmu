@@ -917,7 +917,7 @@ BEGIN
     COMBOBOX        tTabFontCharset,264,83,54,67,CBS_DROPDOWNLIST | CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
     GROUPBOX        "Tab templates",IDC_STATIC,4,107,319,85
     EDITTEXT        tTabConsole,46,137,141,12,ES_AUTOHSCROLL
-    LTEXT           "%s - Title, %c - Console #, %n - Active process name, %p - PID, %a - ‘Admin’, %% - %",IDC_STATIC,10,118,309,8
+    LTEXT           "%s - Title, %c - Console #, %n - Active process name, %p - PID, %a - ‘Admin’,\n%d - current shell directory, %% - %",IDC_STATIC,10,118,309,16
     RTEXT           "Maximum tab width (in chars):",IDC_STATIC,7,176,107,8
     EDITTEXT        tTabLenMax,119,174,40,12,ES_AUTOHSCROLL
     EDITTEXT        tAdminSuffix,261,174,57,12,ES_AUTOHSCROLL
