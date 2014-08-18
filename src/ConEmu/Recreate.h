@@ -50,6 +50,14 @@ protected:
 	void InitVars();
 	void FreeVars();
 	void AddCommandList(LPCWSTR asCommand, INT_PTR iAfter = -1);
+protected:
+	INT_PTR OnInitDialog(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam);
+	INT_PTR OnCtlColorStatic(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam);
+	INT_PTR OnFillCmdList(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam);
+	INT_PTR OnUserControls(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam);
+	INT_PTR OnSysCommand(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam);
+	INT_PTR OnButtonClicked(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam);
+	INT_PTR OnEditSetFocus(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam);
 public:
 	CRecreateDlg();
 	~CRecreateDlg();
