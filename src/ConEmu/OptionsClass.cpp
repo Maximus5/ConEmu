@@ -3496,16 +3496,18 @@ LRESULT CSettings::OnInitDialog_Keys(HWND hWnd2, bool abInitial)
 
 	// Создать колонки
 	{
-		LVCOLUMN col ={LVCF_WIDTH|LVCF_TEXT|LVCF_FMT, LVCFMT_LEFT, 60};
+		LVCOLUMN col = {
+			LVCF_WIDTH|LVCF_TEXT|LVCF_FMT, LVCFMT_LEFT,
+			gpSetCls->EvalSize(60, esf_Horizontal|esf_CanUseDpi)};
 		wchar_t szTitle[64]; col.pszText = szTitle;
 
 		ListView_SetExtendedListViewStyleEx(hList,LVS_EX_FULLROWSELECT,LVS_EX_FULLROWSELECT);
 		ListView_SetExtendedListViewStyleEx(hList,LVS_EX_LABELTIP|LVS_EX_INFOTIP,LVS_EX_LABELTIP|LVS_EX_INFOTIP);
 
 		wcscpy_c(szTitle, L"Type");			ListView_InsertColumn(hList, klc_Type, &col);
-		col.cx = 120;
+		col.cx = gpSetCls->EvalSize(120, esf_Horizontal|esf_CanUseDpi);
 		wcscpy_c(szTitle, L"Hotkey");		ListView_InsertColumn(hList, klc_Hotkey, &col);
-		col.cx = 300;
+		col.cx = gpSetCls->EvalSize(300, esf_Horizontal|esf_CanUseDpi);
 		wcscpy_c(szTitle, L"Description");	ListView_InsertColumn(hList, klc_Desc, &col);
 	}
 
@@ -4903,7 +4905,9 @@ LRESULT CSettings::OnInitDialog_Debug(HWND hWnd2)
 	ListView_SetExtendedListViewStyleEx(hList,LVS_EX_FULLROWSELECT,LVS_EX_FULLROWSELECT);
 	ListView_SetExtendedListViewStyleEx(hList,LVS_EX_LABELTIP|LVS_EX_INFOTIP,LVS_EX_LABELTIP|LVS_EX_INFOTIP);
 
-	LVCOLUMN col ={LVCF_WIDTH|LVCF_TEXT|LVCF_FMT, LVCFMT_LEFT, 60};
+	LVCOLUMN col = {
+		LVCF_WIDTH|LVCF_TEXT|LVCF_FMT, LVCFMT_LEFT,
+		gpSetCls->EvalSize(60, esf_Horizontal|esf_CanUseDpi)};
 	wchar_t szTitle[4]; col.pszText = szTitle;
 	wcscpy_c(szTitle, L" ");		ListView_InsertColumn(hList, 0, &col);
 
@@ -6084,29 +6088,31 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 
 				if (gpSetCls->m_ActivityLoggingType == glt_Processes)
 				{
-					LVCOLUMN col ={LVCF_WIDTH|LVCF_TEXT|LVCF_FMT, LVCFMT_LEFT, 60};
+					LVCOLUMN col = {
+						LVCF_WIDTH|LVCF_TEXT|LVCF_FMT, LVCFMT_LEFT,
+						gpSetCls->EvalSize(60, esf_Horizontal|esf_CanUseDpi)};
 					wchar_t szTitle[64]; col.pszText = szTitle;
 
 					ListView_SetExtendedListViewStyleEx(hList,LVS_EX_FULLROWSELECT,LVS_EX_FULLROWSELECT);
 					ListView_SetExtendedListViewStyleEx(hList,LVS_EX_LABELTIP|LVS_EX_INFOTIP,LVS_EX_LABELTIP|LVS_EX_INFOTIP);
 
 					wcscpy_c(szTitle, L"Time");		ListView_InsertColumn(hList, lpc_Time, &col);
-					col.cx = 55; col.fmt = LVCFMT_RIGHT;
+					col.cx = gpSetCls->EvalSize(55, esf_Horizontal|esf_CanUseDpi); col.fmt = LVCFMT_RIGHT;
 					wcscpy_c(szTitle, L"PPID");		ListView_InsertColumn(hList, lpc_PPID, &col);
-					col.cx = 60; col.fmt = LVCFMT_LEFT;
+					col.cx = gpSetCls->EvalSize(60, esf_Horizontal|esf_CanUseDpi); col.fmt = LVCFMT_LEFT;
 					wcscpy_c(szTitle, L"Func");		ListView_InsertColumn(hList, lpc_Func, &col);
-					col.cx = 50;
+					col.cx = gpSetCls->EvalSize(50, esf_Horizontal|esf_CanUseDpi);
 					wcscpy_c(szTitle, L"Oper");		ListView_InsertColumn(hList, lpc_Oper, &col);
-					col.cx = 40;
+					col.cx = gpSetCls->EvalSize(40, esf_Horizontal|esf_CanUseDpi);
 					wcscpy_c(szTitle, L"Bits");		ListView_InsertColumn(hList, lpc_Bits, &col);
 					wcscpy_c(szTitle, L"Syst");		ListView_InsertColumn(hList, lpc_System, &col);
-					col.cx = 120;
+					col.cx = gpSetCls->EvalSize(120, esf_Horizontal|esf_CanUseDpi);
 					wcscpy_c(szTitle, L"App");		ListView_InsertColumn(hList, lpc_App, &col);
 					wcscpy_c(szTitle, L"Params");	ListView_InsertColumn(hList, lpc_Params, &col);
 					//wcscpy_c(szTitle, L"CurDir");	ListView_InsertColumn(hList, 7, &col);
-					col.cx = 120;
+					col.cx = gpSetCls->EvalSize(120, esf_Horizontal|esf_CanUseDpi);
 					wcscpy_c(szTitle, L"Flags");	ListView_InsertColumn(hList, lpc_Flags, &col);
-					col.cx = 80;
+					col.cx = gpSetCls->EvalSize(80, esf_Horizontal|esf_CanUseDpi);
 					wcscpy_c(szTitle, L"StdIn");	ListView_InsertColumn(hList, lpc_StdIn, &col);
 					wcscpy_c(szTitle, L"StdOut");	ListView_InsertColumn(hList, lpc_StdOut, &col);
 					wcscpy_c(szTitle, L"StdErr");	ListView_InsertColumn(hList, lpc_StdErr, &col);
@@ -6114,18 +6120,20 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 				}
 				else if (gpSetCls->m_ActivityLoggingType == glt_Input)
 				{
-					LVCOLUMN col ={LVCF_WIDTH|LVCF_TEXT|LVCF_FMT, LVCFMT_LEFT, 60};
+					LVCOLUMN col = {
+						LVCF_WIDTH|LVCF_TEXT|LVCF_FMT, LVCFMT_LEFT,
+						gpSetCls->EvalSize(60, esf_Horizontal|esf_CanUseDpi)};
 					wchar_t szTitle[64]; col.pszText = szTitle;
 
 					ListView_SetExtendedListViewStyleEx(hList,LVS_EX_FULLROWSELECT,LVS_EX_FULLROWSELECT);
 					ListView_SetExtendedListViewStyleEx(hList,LVS_EX_LABELTIP|LVS_EX_INFOTIP,LVS_EX_LABELTIP|LVS_EX_INFOTIP);
 
 					wcscpy_c(szTitle, L"Time");		ListView_InsertColumn(hList, lic_Time, &col);
-					col.cx = 50;
+					col.cx = gpSetCls->EvalSize(50, esf_Horizontal|esf_CanUseDpi);
 					wcscpy_c(szTitle, L"Type");		ListView_InsertColumn(hList, lic_Type, &col);
-					col.cx = 50;
+					col.cx = gpSetCls->EvalSize(50, esf_Horizontal|esf_CanUseDpi);
 					wcscpy_c(szTitle, L"##");		ListView_InsertColumn(hList, lic_Dup, &col);
-					col.cx = 300;
+					col.cx = gpSetCls->EvalSize(300, esf_Horizontal|esf_CanUseDpi);
 					wcscpy_c(szTitle, L"Event");	ListView_InsertColumn(hList, lic_Event, &col);
 
 				}
@@ -6133,42 +6141,48 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 				{
 					mn_ActivityCmdStartTick = timeGetTime();
 
-					LVCOLUMN col ={LVCF_WIDTH|LVCF_TEXT|LVCF_FMT, LVCFMT_LEFT, 60};
+					LVCOLUMN col = {
+						LVCF_WIDTH|LVCF_TEXT|LVCF_FMT, LVCFMT_LEFT,
+						gpSetCls->EvalSize(60, esf_Horizontal|esf_CanUseDpi)};
 					wchar_t szTitle[64]; col.pszText = szTitle;
 
 					ListView_SetExtendedListViewStyleEx(hList,LVS_EX_FULLROWSELECT,LVS_EX_FULLROWSELECT);
 					ListView_SetExtendedListViewStyleEx(hList,LVS_EX_LABELTIP|LVS_EX_INFOTIP,LVS_EX_LABELTIP|LVS_EX_INFOTIP);
 
-					col.cx = 50;
+					col.cx = gpSetCls->EvalSize(50, esf_Horizontal|esf_CanUseDpi);
 					wcscpy_c(szTitle, L"In/Out");	ListView_InsertColumn(hList, lcc_InOut, &col);
-					col.cx = 70;
+					col.cx = gpSetCls->EvalSize(70, esf_Horizontal|esf_CanUseDpi);
 					wcscpy_c(szTitle, L"Time");		ListView_InsertColumn(hList, lcc_Time, &col);
-					col.cx = 60;
+					col.cx = gpSetCls->EvalSize(60, esf_Horizontal|esf_CanUseDpi);
 					wcscpy_c(szTitle, L"Duration");	ListView_InsertColumn(hList, lcc_Duration, &col);
-					col.cx = 50;
+					col.cx = gpSetCls->EvalSize(50, esf_Horizontal|esf_CanUseDpi);
 					wcscpy_c(szTitle, L"Cmd");		ListView_InsertColumn(hList, lcc_Command, &col);
 					wcscpy_c(szTitle, L"Size");		ListView_InsertColumn(hList, lcc_Size, &col);
 					wcscpy_c(szTitle, L"PID");		ListView_InsertColumn(hList, lcc_PID, &col);
-					col.cx = 300;
+					col.cx = gpSetCls->EvalSize(300, esf_Horizontal|esf_CanUseDpi);
 					wcscpy_c(szTitle, L"Pipe");		ListView_InsertColumn(hList, lcc_Pipe, &col);
 					wcscpy_c(szTitle, L"Extra");	ListView_InsertColumn(hList, lcc_Extra, &col);
 
 				}
 				else if (gpSetCls->m_ActivityLoggingType == glt_Ansi)
 				{
-					LVCOLUMN col ={LVCF_WIDTH|LVCF_TEXT|LVCF_FMT, LVCFMT_LEFT, 60};
+					LVCOLUMN col = {
+						LVCF_WIDTH|LVCF_TEXT|LVCF_FMT, LVCFMT_LEFT,
+						gpSetCls->EvalSize(60, esf_Horizontal|esf_CanUseDpi)};
 					wchar_t szTitle[64]; col.pszText = szTitle;
 
 					ListView_SetExtendedListViewStyleEx(hList,LVS_EX_FULLROWSELECT,LVS_EX_FULLROWSELECT);
 					ListView_SetExtendedListViewStyleEx(hList,LVS_EX_LABELTIP|LVS_EX_INFOTIP,LVS_EX_LABELTIP|LVS_EX_INFOTIP);
 
 					wcscpy_c(szTitle, L"Time");		ListView_InsertColumn(hList, lac_Time, &col);
-					col.cx = 500;
+					col.cx = gpSetCls->EvalSize(500, esf_Horizontal|esf_CanUseDpi);
 					wcscpy_c(szTitle, L"Event");	ListView_InsertColumn(hList, lac_Sequence, &col);
 				}
 				else
 				{
-					LVCOLUMN col ={LVCF_WIDTH|LVCF_TEXT|LVCF_FMT, LVCFMT_LEFT, 60};
+					LVCOLUMN col = {
+						LVCF_WIDTH|LVCF_TEXT|LVCF_FMT, LVCFMT_LEFT,
+						gpSetCls->EvalSize(60, esf_Horizontal|esf_CanUseDpi)};
 					wchar_t szTitle[4]; col.pszText = szTitle;
 					wcscpy_c(szTitle, L" ");		ListView_InsertColumn(hList, 0, &col);
 					//ListView_InsertColumn(hDetails, 0, &col);
