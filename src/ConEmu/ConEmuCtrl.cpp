@@ -102,7 +102,7 @@ const ConEmuHotKey* CConEmuCtrl::ProcessHotKey(DWORD VkState, bool bKeyDown, con
 				pHotKey = NULL;
 			}
 		}
-		
+
 		bool bEnabled = true;
 		if (pHotKey && pHotKey->Enabled)
 		{
@@ -270,7 +270,7 @@ bool CConEmuCtrl::ProcessHotKeyMsg(UINT messg, WPARAM wParam, LPARAM lParam, con
 				if ((ModCount == 1) && (vk != VK_APPS) && (vk != VK_LWIN))
 				{
 					mb_LastSingleModifier = FALSE;
-					mn_LastSingleModifier = 
+					mn_LastSingleModifier =
 						(vk == VK_LMENU || vk == VK_RMENU || vk == VK_MENU) ? VK_MENU :
 						(vk == VK_LCONTROL || vk == VK_RCONTROL || vk == VK_CONTROL) ? VK_CONTROL :
 						(vk == VK_LSHIFT || vk == VK_RSHIFT || vk == VK_SHIFT) ? VK_SHIFT : 0;
@@ -311,7 +311,7 @@ bool CConEmuCtrl::ProcessHotKeyMsg(UINT messg, WPARAM wParam, LPARAM lParam, con
 	}
 
 	DWORD VkMod = VkModFromVk(vk);
-	
+
 	if (bKeyDown)
 		m_SkippedMsg = 0;
 
@@ -682,7 +682,7 @@ bool CConEmuCtrl::key_SystemMenu(DWORD VkMod, bool TestOnly, const ConEmuHotKey*
 			GetCursorPos(&ptCur);
 		}
 	}
-	
+
 	//Win-Alt-Space
 	gpConEmu->mp_Menu->ShowSysmenu(ptCur.x, ptCur.y);
 
@@ -938,7 +938,7 @@ bool CConEmuCtrl::key_WinSize(BYTE vk)
 					rcWindow.right = rcWindow.right + nX;
 			}
 			else if (vk == VK_UP)
-			{	
+			{
 				rcWindow.bottom = rcWindow.bottom - nY;
 			}
 			else if (vk == VK_DOWN)
@@ -946,7 +946,7 @@ bool CConEmuCtrl::key_WinSize(BYTE vk)
 				if ((rcWindow.bottom + nY) < rcMon.bottom)
 					rcWindow.bottom = rcWindow.bottom + nY;
 			}
-			
+
 			if (rcWindow.right > rcWindow.left && rcWindow.bottom > rcWindow.top)
 			{
 				MoveWindowRect(ghWnd, rcWindow, TRUE);
@@ -956,10 +956,10 @@ bool CConEmuCtrl::key_WinSize(BYTE vk)
 		//CRealConsole* pRCon = pVCon ? pVCon->RCon() : NULL;
 		//if (pRCon)
 		//{
-		//	
+		//
 		//	//if (!pRCon->GuiWnd())
 		//	//{
-		//	//	
+		//	//
 		//	//}
 		//	//else
 		//	//{
@@ -1178,7 +1178,7 @@ void CConEmuCtrl::ChooseTabFromMenu(BOOL abFirstTabOnly, POINT pt, DWORD Align /
 	{
 		int nNewV = ((int)HIWORD(nTab))-1;
 		int nNewR = ((int)LOWORD(nTab))-1;
-		
+
 		CVirtualConsole* pVCon = gpConEmu->GetVCon(nNewV);
 		if (pVCon)
 		{
@@ -1502,7 +1502,7 @@ size_t CConEmuCtrl::GetOpenedTabs(CESERVER_REQ_GETALLTABS::TabInfo*& pTabs)
 				default:
 					wcscpy_c(szMark, L"   ");
 			}
-				
+
 			if ((V == nActiveCon) && (T <= 9))
 				_wsprintf(pTabs[cchCount].Title, SKIPLEN(countof(pTabs[cchCount].Title)) L"[%i/&%i]%s", V+1, T, szMark);
 			else

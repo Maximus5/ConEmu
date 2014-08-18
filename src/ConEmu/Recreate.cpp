@@ -83,7 +83,7 @@ int CRecreateDlg::RecreateDlg(RConStartArgs* apArgs)
 		DisplayLastError(L"Close previous 'Create dialog' first, please!", -1);
 		return IDCANCEL;
 	}
-	
+
 	DontEnable de;
 
 	gpConEmu->SkipOneAppsRelease(true);
@@ -176,7 +176,6 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 			// Set password style (avoid "bars" on some OS)
 			SendDlgItemMessage(hDlg, tRunAsPassword, WM_SETFONT, (LPARAM)(HFONT)GetStockObject(DEFAULT_GUI_FONT), 0);
 
-
 			// Add menu items
 			HMENU hSysMenu = GetSystemMenu(hDlg, FALSE);
 			InsertMenu(hSysMenu, 0, MF_BYPOSITION, MF_SEPARATOR, 0);
@@ -185,8 +184,8 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 			InsertMenu(hSysMenu, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED
 					   | (gpSet->isSaveCmdHistory ? MF_CHECKED : 0),
 					   ID_STORECMDHISTORY, L"Store history");
-			
-			
+
+
 
 
 
@@ -730,7 +729,7 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 							if (bOk && (nPercent >= 1) && (nPercent <= 99))
 							{
 								pArgs->nSplitValue = (100-nPercent) * 10;
-							}						
+							}
 							//pArgs->nSplitPane = 0; Сбрасывать не будем?
 						}
 						pDlg->mn_DlgRc = IDC_START;

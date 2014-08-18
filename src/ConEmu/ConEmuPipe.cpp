@@ -168,7 +168,7 @@ BOOL CConEmuPipe::Execute(int nCmd, LPCVOID apData, UINT anDataSize)
 	{
 		memmove(pIn->Data, apData, anDataSize);
 	}
-	
+
 	DWORD dwTickStart = timeGetTime();
 
 	BYTE cbReadBuf[512];
@@ -176,15 +176,15 @@ BOOL CConEmuPipe::Execute(int nCmd, LPCVOID apData, UINT anDataSize)
 	DWORD cbRead, dwErr;
 	// Send a message to the pipe server and read the response.
 	fSuccess = TransactNamedPipe(
-	               mh_Pipe,                // pipe handle
-	               pIn,                    // message to server
-	               pIn->hdr.cbSize,             // message length
-	               cbReadBuf,              // buffer to receive reply
-	               sizeof(cbReadBuf),      // size of read buffer
-	               &cbRead,                // bytes read
-	               NULL);                  // not overlapped
+					mh_Pipe,                // pipe handle
+					pIn,                    // message to server
+					pIn->hdr.cbSize,        // message length
+					cbReadBuf,              // buffer to receive reply
+					sizeof(cbReadBuf),      // size of read buffer
+					&cbRead,                // bytes read
+					NULL);                  // not overlapped
 	dwErr = GetLastError();
-	
+
 	gpSetCls->debugLogCommand(pIn, FALSE, dwTickStart, timeGetTime()-dwTickStart, ms_PipeName);
 
 	if (!fSuccess && dwErr == ERROR_BROKEN_PIPE)
@@ -211,7 +211,7 @@ BOOL CConEmuPipe::Execute(int nCmd, LPCVOID apData, UINT anDataSize)
 	}
 
 	pOut = (CESERVER_REQ*)cbReadBuf;
-	
+
 	// Проверка размера
 	if (pOut->hdr.cbSize <= sizeof(pOut->hdr))
 	{
@@ -257,11 +257,11 @@ BOOL CConEmuPipe::Execute(int nCmd, LPCVOID apData, UINT anDataSize)
 
 		// Read from the pipe if there is more data in the message.
 		fSuccess = ReadFile(
-		               mh_Pipe,    // pipe handle
-		               ptrData,    // buffer to receive reply
-		               nAllSize,   // size of buffer
-		               &cbRead,    // number of bytes read
-		               NULL);      // not overlapped
+						mh_Pipe,    // pipe handle
+						ptrData,    // buffer to receive reply
+						nAllSize,   // size of buffer
+						&cbRead,    // number of bytes read
+						NULL);      // not overlapped
 
 		// Exit if an error other than ERROR_MORE_DATA occurs.
 		if (!fSuccess && (GetLastError() != ERROR_MORE_DATA))

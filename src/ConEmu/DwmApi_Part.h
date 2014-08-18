@@ -6,7 +6,7 @@
 #ifndef WM_DWMSENDICONICTHUMBNAIL
 	#define WM_DWMSENDICONICTHUMBNAIL           0x0323
 	#define WM_DWMSENDICONICLIVEPREVIEWBITMAP   0x0326
-	
+
 	#define MSGFLT_ADD 1
 	#define MSGFLT_REMOVE 2
 #endif
@@ -104,4 +104,4 @@ typedef struct _DTTOPTS
     int               iGlowSize;           // Glow radious around text
     DTT_CALLBACK_PROC pfnDrawTextCallback; // Callback for DrawText
     LPARAM            lParam;              // Parameter for callback
-} DTTOPTS, *PDTTOPTS; 
+} DTTOPTS, *PDTTOPTS;

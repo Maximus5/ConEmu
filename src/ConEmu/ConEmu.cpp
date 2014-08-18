@@ -717,7 +717,7 @@ CConEmuMain::CConEmuMain()
 	//{
 	//	mh_Psapi = LoadLibrary(_T("psapi.dll"));
 	//	if (mh_Psapi)
-	//	    GetModuleFileNameEx = (FGetModuleFileNameEx)GetProcAddress(mh_Psapi, "GetModuleFileNameExW");
+	//		GetModuleFileNameEx = (FGetModuleFileNameEx)GetProcAddress(mh_Psapi, "GetModuleFileNameExW");
 	//}
 
 	#ifndef _WIN64
@@ -1371,9 +1371,9 @@ BOOL CConEmuMain::Init()
 	//    NULL, (WINEVENTPROC)CConEmuMain::WinEventProc, 0,0, WINEVENT_OUTOFCONTEXT);
 	/*mh_Psapi = LoadLibrary(_T("psapi.dll"));
 	if (mh_Psapi) {
-	    GetModuleFileNameEx = (FGetModuleFileNameEx)GetProcAddress(mh_Psapi, "GetModuleFileNameExW");
-	    if (GetModuleFileNameEx)
-	        return TRUE;
+		GetModuleFileNameEx = (FGetModuleFileNameEx)GetProcAddress(mh_Psapi, "GetModuleFileNameExW");
+		if (GetModuleFileNameEx)
+			return TRUE;
 	}*/
 	/*DWORD dwErr = GetLastError();
 	TCHAR szErr[255];
@@ -5698,7 +5698,7 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 			//120820 - Тут нужно проверять реальный IsZoomed
 			if (isIconic() || !::IsZoomed(ghWnd))
 			{
-	 				mb_IgnoreSizeChange = true;
+					mb_IgnoreSizeChange = true;
 				//120820 для четкости, в FullScreen тоже ставим Maximized, а не Normal
 				ShowWindow((abFirstShow && WindowStartMinimized) ? SW_SHOWMINNOACTIVE : SW_SHOWMAXIMIZED);
 
@@ -5735,7 +5735,7 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 			RECT rcFrame = CalcMargins(CEM_FRAMEONLY);
 			// ptFullScreenSize содержит "скорректированный" размер (он больше монитора)
 			UpdateWindowRgn(rcFrame.left, rcFrame.top,
-				            mi.rcMonitor.right-mi.rcMonitor.left, mi.rcMonitor.bottom-mi.rcMonitor.top);
+			                mi.rcMonitor.right-mi.rcMonitor.left, mi.rcMonitor.bottom-mi.rcMonitor.top);
 			setWindowPos(NULL,
 			                -rcShift.left+mi.rcMonitor.left,-rcShift.top+mi.rcMonitor.top,
 			                ptFullScreenSize.x,ptFullScreenSize.y,
@@ -6081,7 +6081,7 @@ void CConEmuMain::ReSize(BOOL abCorrect2Ideal /*= FALSE*/)
 //
 //
 //	#if defined(EXT_GNUC_LOG)
-//	char szDbg[255]; wsprintfA(szDbg, "  --  CConEmuBack::Resize() - X=%i, Y=%i, W=%i, H=%i", rc.left, rc.top, 	rc.right - rc.left,	rc.bottom - rc.top);
+//	char szDbg[255]; wsprintfA(szDbg, "  --  CConEmuBack::Resize() - X=%i, Y=%i, W=%i, H=%i", rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top);
 //
 //	if (gpSetCls->isAdvLogging>1)
 //		pVCon->RCon()->LogString(szDbg);
@@ -6509,7 +6509,7 @@ void CConEmuMain::CheckTopMostState()
 
 		if (IDYES == MsgBox(L"Some external program bring ConEmu OnTop\nRevert?", MB_SYSTEMMODAL|MB_ICONQUESTION|MB_YESNO))
 		{
-	        //SetWindowStyleEx(dwStyleEx & ~WS_EX_TOPMOST);
+			//SetWindowStyleEx(dwStyleEx & ~WS_EX_TOPMOST);
 			OnAlwaysOnTop();
 		}
 		else
@@ -7368,20 +7368,6 @@ void CConEmuMain::MoveActiveTab(CVirtualConsole* apVCon, bool bLeftward)
 	CVConGroup::MoveActiveTab(apVCon, bLeftward);
 }
 
-//CVirtualConsole* CConEmuMain::ActiveCon()
-//{
-//	WARNING("На удаление");
-//	CVConGuard VCon;
-//	if (CVConGroup::GetActiveVCon(&VCon) < 0)
-//		return NULL;
-//	return VCon.VCon();
-//	/*if (mn_ActiveCon >= countof(mp_VCon))
-//	    mn_ActiveCon = -1;
-//	if (mn_ActiveCon < 0)
-//	    return NULL;
-//	return mp_VCon[mn_ActiveCon];*/
-//}
-
 // 0 - based
 int CConEmuMain::ActiveConNum()
 {
@@ -8146,11 +8132,11 @@ void CConEmuMain::LoadIcons()
 			                              GetSystemMetrics(SM_CXICON), GetSystemMetrics(SM_CYICON), LR_DEFAULTCOLOR|LR_LOADFROMFILE);
 			hClassIconSm = (HICON)LoadImage(0, szIconPath, IMAGE_ICON,
 			                                GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), LR_DEFAULTCOLOR|LR_LOADFROMFILE);
-        }
-        else
-        {
-        	ExtractIconEx(szIconPath, 0, &hClassIcon, &hClassIconSm, 1);
-        }
+		}
+		else
+		{
+			ExtractIconEx(szIconPath, 0, &hClassIcon, &hClassIconSm, 1);
+		}
 	}
 
 	if (!hClassIcon)
@@ -12592,19 +12578,19 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 
 #ifdef MSGLOGGER
 	/*if (messg == WM_ACTIVATE && wParam == WA_INACTIVE) {
-	    WCHAR szMsg[128]; _wsprintf(szMsg, countof(szMsg), L"--Deactivating to 0x%08X\n", lParam);
-	    DEBUGSTR(szMsg);
+		WCHAR szMsg[128]; _wsprintf(szMsg, countof(szMsg), L"--Deactivating to 0x%08X\n", lParam);
+		DEBUGSTR(szMsg);
 	}
 	switch (messg) {
-	    case WM_SETFOCUS:
-	        {
-	            DEBUGSTR(L"--Get focus\n");
-	            //return 0;
-	        } break;
-	    case WM_KILLFOCUS:
-	        {
-	            DEBUGSTR(L"--Loose focus\n");
-	        } break;
+		case WM_SETFOCUS:
+		{
+			DEBUGSTR(L"--Get focus\n");
+			//return 0;
+		} break;
+		case WM_KILLFOCUS:
+		{
+			DEBUGSTR(L"--Loose focus\n");
+		} break;
 	}*/
 #endif
 
@@ -14926,7 +14912,7 @@ LRESULT CConEmuMain::OnLangChangeConsole(CVirtualConsole *apVCon, const DWORD ad
 	_wsprintf(szMsg, SKIPLEN(countof(szMsg))
 		L"ConEmu: GetKeyboardLayout(0) in OnLangChangeConsole after GetKeyboardLayout(0) = "
 		WIN3264TEST(L"0x%08X",L"0x%08X%08X") L"\n",
-	    WIN3264WSPRINT((DWORD_PTR)hkl));
+		WIN3264WSPRINT((DWORD_PTR)hkl));
 	DEBUGSTRLANG(szMsg);
 	//Sleep(2000);
 	#endif
@@ -15126,16 +15112,16 @@ LRESULT CConEmuMain::OnLangChangeConsole(CVirtualConsole *apVCon, const DWORD ad
 		HKL hkl = GetKeyboardLayout(0);
 		_wsprintf(szInfo, SKIPLEN(countof(szInfo))
 			L"  Current keyboard layout:\r\n       " WIN3264TEST(L"0x%08X",L"0x%08X%08X") L"\n",
-		    WIN3264WSPRINT((DWORD_PTR)hkl));
-	    LogString(szInfo, false, false);
+			WIN3264WSPRINT((DWORD_PTR)hkl));
+		LogString(szInfo, false, false);
 
 		LogString(L"  Installed keyboard layouts:\r\n", false, false);
-    	for (i = 0; i < nCount; i++)
+		for (i = 0; i < nCount; i++)
 		{
 			_wsprintf(szInfo, SKIPLEN(countof(szInfo))
 				L"    %u: " WIN3264TEST(L"0x%08X",L"0x%08X%08X") L"\n",
-			    i+1, WIN3264WSPRINT(hKeyb[i]));
-		    LogString(szInfo, false, false);
+				i+1, WIN3264WSPRINT(hKeyb[i]));
+			LogString(szInfo, false, false);
 		}
 	}
 
@@ -16356,8 +16342,8 @@ LRESULT CConEmuMain::OnMouse_RBtnDown(CVirtualConsole* pVCon, HWND hWnd, UINT me
 			if (gpSetCls->isAdvLogging)
 				LogString(
 					gpSet->isDisableMouse ? "RightClick ignored of gpSet->isDisableMouse" :
-				    !gpSet->isRClickSendKey ? "RightClick ignored of !gpSet->isRClickSendKey" :
-				    "RightClick ignored of wParam&(MK_CONTROL|MK_LBUTTON|MK_MBUTTON|MK_SHIFT|MK_XBUTTON1|MK_XBUTTON2)"
+					!gpSet->isRClickSendKey ? "RightClick ignored of !gpSet->isRClickSendKey" :
+					"RightClick ignored of wParam&(MK_CONTROL|MK_LBUTTON|MK_MBUTTON|MK_SHIFT|MK_XBUTTON1|MK_XBUTTON2)"
 				);
 		}
 	}
@@ -16365,11 +16351,11 @@ LRESULT CConEmuMain::OnMouse_RBtnDown(CVirtualConsole* pVCon, HWND hWnd, UINT me
 	{
 		if (gpSetCls->isAdvLogging)
 			LogString(
-			    bSelect ? "RightClick ignored of isConSelectMode" :
-			    !bPanel ? "RightClick ignored of NOT isFilePanel" :
-			    !bActive ? "RightClick ignored of NOT isFilePanel" :
-			    !bCoord ? "RightClick ignored of NOT isFilePanel" :
-			    "RightClick ignored, unknown cause"
+				bSelect ? "RightClick ignored of isConSelectMode" :
+				!bPanel ? "RightClick ignored of NOT isFilePanel" :
+				!bActive ? "RightClick ignored of NOT isFilePanel" :
+				!bCoord ? "RightClick ignored of NOT isFilePanel" :
+				"RightClick ignored, unknown cause"
 			);
 	}
 
@@ -16422,8 +16408,8 @@ LRESULT CConEmuMain::OnMouse_RBtnUp(CVirtualConsole* pVCon, HWND hWnd, UINT mess
 				{
 					AllowSetForegroundWindow(dwFarPID);
 					COORD crMouse = pVCon->RCon()->ScreenToBuffer(
-					                    pVCon->ClientToConsole(mouse.RClkDC.X, mouse.RClkDC.Y)
-					                );
+										pVCon->ClientToConsole(mouse.RClkDC.X, mouse.RClkDC.Y)
+									);
 					CConEmuPipe pipe(GetFarPID(), CONEMUREADYTIMEOUT);
 
 					if (pipe.Init(_T("CConEmuMain::EMenu"), TRUE))
@@ -18047,7 +18033,7 @@ bool CConEmuMain::SetTransparent(HWND ahWnd, UINT anAlpha/*0..255*/, bool abColo
 	}
 	#endif
 
- 	BOOL bNeedRedrawOp = FALSE;
+	BOOL bNeedRedrawOp = FALSE;
 	// Тут бы ветвиться по Active/Inactive, но это будет избыточно.
 	// Проверка уже сделана в OnTransparent
 	UINT nTransparent = max(MIN_INACTIVE_ALPHA_VALUE,min(anAlpha,255));
@@ -18880,7 +18866,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			this->mouse.nSkipEvents[1] = 0;
 
 			if (this->mouse.bForceSkipActivation  // принудительная активация окна, лежащего на Desktop
-			        || (gpSet->isMouseSkipActivation && LOWORD(lParam) == HTCLIENT
+					|| (gpSet->isMouseSkipActivation && LOWORD(lParam) == HTCLIENT
 					&& !isMeForeground(false,false)))
 			{
 				this->mouse.bForceSkipActivation = FALSE; // Однократно

@@ -117,7 +117,7 @@ CDragDrop::~CDragDrop()
 			{
 				INT_PTR j = m_OpThread.size()-1;
 				const ThInfo* iter = &(m_OpThread[j]);
-				
+
 				HANDLE hThread = iter->hThread;
 				TerminateThread(hThread, 100);
 				CloseHandle(hThread);
@@ -614,7 +614,7 @@ HRESULT CDragDrop::DropFromStream(IDataObject * pDataObject, BOOL abActive)
 						else
 						{
 							//_ASSERTE(FALSE && "Folder was not processed from DragObject?");
-							
+
 							// Поместить новый путь в SubFolder
 
 							if ((nFolderLen + 1) >= cchSubFolder)
@@ -697,7 +697,7 @@ HRESULT CDragDrop::DropFromStream(IDataObject * pDataObject, BOOL abActive)
 							INT_PTR nLen = _tcslen(pszNewFolder) + 128;
 							wchar_t* pszErr = (wchar_t*)malloc(nLen*sizeof(*pszErr));
 							_wsprintf(pszErr, SKIPLEN(nLen) L"Can't create directory for drag item #%i!\n%s\nError code=0x%08X", mn_CurFile+1, pszNewFolder, nErr);
-							
+
 							AssertMsg(pszErr);
 
 							SafeFree(pszErr);

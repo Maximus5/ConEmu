@@ -269,7 +269,7 @@ class CConEmuMain :
 		bool  DisableCloseConfirm;  // ключик "/nocloseconfirm"
 
 		BOOL  mb_ExternalHidden;
-		
+
 		BOOL  mb_StartDetached;
 
 		enum StartupStage {
@@ -682,16 +682,16 @@ class CConEmuMain :
 		bool isFirstInstance(bool bFolderIgnore = false);
 		bool isFullScreen();
 		bool isIconic(bool abRaw = false);
-		bool isInImeComposition();		
+		bool isInImeComposition();
 		bool isLBDown();
 		bool isMainThread();
 		bool isMeForeground(bool abRealAlso=false, bool abDialogsAlso=true, HWND* phFore=NULL);
-		bool isMouseOverFrame(bool abReal=false);		
-		bool isNtvdm(BOOL abCheckAllConsoles=FALSE);		
-		bool isOurConsoleWindow(HWND hCon);		
-		bool isPictureView();		
-		bool isProcessCreated();		
-		bool isRightClickingPaint();		
+		bool isMouseOverFrame(bool abReal=false);
+		bool isNtvdm(BOOL abCheckAllConsoles=FALSE);
+		bool isOurConsoleWindow(HWND hCon);
+		bool isPictureView();
+		bool isProcessCreated();
+		bool isRightClickingPaint();
 		bool isSizing(UINT nMouseMsg=0);
 		void BeginSizing(bool bFromStatusBar);
 		void SetSizingFlags(DWORD nSetFlags = MOUSE_SIZING_BEGIN);
@@ -930,7 +930,7 @@ namespace ConEmuMsgLogger
 	extern Event g_pos[BUFFER_POS_SIZE];
 	extern LONG g_posidx;
 	extern void LogPos(const MSG& msg, Source from);
- 
+
 	inline void Log(const MSG& msg, Source from)
 	{
 		// Get next message index

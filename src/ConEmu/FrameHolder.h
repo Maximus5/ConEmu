@@ -41,9 +41,9 @@ private:
 public:
 	BOOL mb_NcActive;
 public:
-	//TODO: Во время анимации Maximize/Restore/Minimize заголовок отрисовывается 
-	//TODO: системой, в итоге мелькает текст и срезаются табы                    
-	//TODO: Сделаем, пока, чтобы текст хотя бы не мелькал...                     
+	//TODO: Во время анимации Maximize/Restore/Minimize заголовок отрисовывается
+	//TODO: системой, в итоге мелькает текст и срезаются табы
+	//TODO: Сделаем, пока, чтобы текст хотя бы не мелькал...
 	BOOL mb_NcAnimate;
 public:
 	CFrameHolder();

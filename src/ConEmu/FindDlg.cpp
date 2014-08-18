@@ -72,7 +72,7 @@ void CEFindDlg::FindTextDialog()
 	}
 
 	gpConEmu->SkipOneAppsRelease(true);
-	
+
 	if (!mp_DpiAware)
 			mp_DpiAware = new CDpiForDialog();
 
@@ -118,7 +118,7 @@ INT_PTR CEFindDlg::findTextProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lP
 
 			SendMessage(hWnd2, WM_SETICON, ICON_BIG, (LPARAM)hClassIcon);
 			SendMessage(hWnd2, WM_SETICON, ICON_SMALL, (LPARAM)hClassIconSm);
-			
+
 			if (gpConEmu->mp_Find->mp_DpiAware)
 			{
 				gpConEmu->mp_Find->mp_DpiAware->Attach(hWnd2, ghWnd);

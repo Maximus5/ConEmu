@@ -162,7 +162,7 @@ private:
 			SelectObject(hDC, hBitmap);
 		bpBPixels = (BYTE*)pvBits;
 		dwStride = (m_Width * 256) / 8;
-  
+
 		bpMPixels = new bool[m_Width*256 * m_Height*256](); // TODO?
 	}
 
@@ -659,7 +659,7 @@ bool CEDC::CreateDC(UINT Width, UINT Height)
 	}
 
 	ReleaseDC(0, hScreenDC);
-	
+
 	return (hBitmap!=NULL);
 }
 

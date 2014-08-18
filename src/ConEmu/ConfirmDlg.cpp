@@ -159,7 +159,7 @@ int ConfirmCloseConsoles(const ConfirmCloseParam& Parm)
 		else
 		{
 			_wsprintf(szCloseAll, SKIPLEN(countof(szCloseAll))
-				(Parm.bGroup && (Parm.nConsoles>1)) 
+				(Parm.bGroup && (Parm.nConsoles>1))
 					? ((Parm.bGroup == ConfirmCloseParam::eGroup)
 						? L"Close group (%u console%s)"
 						: L"Close (%u console%s)")
@@ -201,11 +201,11 @@ int ConfirmCloseConsoles(const ConfirmCloseParam& Parm)
 
 		int nButtonPressed                  = 0;
 		TASKDIALOGCONFIG config             = {sizeof(config)};
-		TASKDIALOG_BUTTON buttons[]   = { 
-		                                        { IDYES,    szCloseAll },
-		                                        { IDNO,     szCloseOne },			                                        
-		                                        { IDCANCEL, szCancel },			                                        
-		                                      };
+		TASKDIALOG_BUTTON buttons[]   = {
+			{ IDYES,    szCloseAll },
+			{ IDNO,     szCloseOne },
+			{ IDCANCEL, szCancel },
+		};
 		config.cButtons                     = countof(buttons);
 		if (Parm.nConsoles <= 1)
 		{
@@ -225,7 +225,7 @@ int ConfirmCloseConsoles(const ConfirmCloseParam& Parm)
 		config.pButtons                     = buttons;
 		config.nDefaultButton               = IDYES;
 		config.pszFooter                    = szWWW;
-		
+
 		//{
 		//	config.dwFlags |= TDF_VERIFICATION_FLAG_CHECKED;
 		//	config.pszVerificationText = L"Text on checkbox";

@@ -55,7 +55,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	#define GF_BEGIN                        0x00000001
 	#define GF_INERTIA                      0x00000002
 	#define GF_END                          0x00000004
-	
+
 	/*
 	 * Gesture IDs
 	 */
@@ -111,7 +111,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #ifndef GID_PRESSANDTAP
-    #define GID_PRESSANDTAP GID_ROLLOVER
+	#define GID_PRESSANDTAP GID_ROLLOVER
 #endif
 
 
@@ -238,12 +238,12 @@ bool CGestures::ProcessGestureMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 
 	if (uMsg == WM_GESTURENOTIFY)
 	{
-        // This is the right place to define the list of gestures that this
-        // application will support. By populating GESTURECONFIG structure 
-        // and calling SetGestureConfig function. We can choose gestures 
-        // that we want to handle in our application. In this app we
-        // decide to handle all gestures.
-        GESTURECONFIG gc[] = {
+		// This is the right place to define the list of gestures that this
+		// application will support. By populating GESTURECONFIG structure
+		// and calling SetGestureConfig function. We can choose gestures
+		// that we want to handle in our application. In this app we
+		// decide to handle all gestures.
+		GESTURECONFIG gc[] = {
 			{GID_ZOOM, GC_ZOOM},
 			{GID_ROTATE, GC_ROTATE},
 			{GID_PAN,
@@ -252,9 +252,9 @@ bool CGestures::ProcessGestureMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 			},
 			{GID_PRESSANDTAP, GC_PRESSANDTAP},
 			{GID_TWOFINGERTAP, GC_TWOFINGERTAP},
-        };
+		};
 
-        BOOL bResult = _SetGestureConfig(hWnd, 0, countof(gc), gc, sizeof(GESTURECONFIG));                        
+		BOOL bResult = _SetGestureConfig(hWnd, 0, countof(gc), gc, sizeof(GESTURECONFIG));
 		DWORD dwErr = GetLastError();
 
 		if (gpSetCls->isAdvLogging)
@@ -263,11 +263,11 @@ bool CGestures::ProcessGestureMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 			_wsprintf(szNotify, SKIPLEN(countof(szNotify)) L"SetGestureConfig -> %u,%u", bResult, dwErr);
 			gpConEmu->LogString(szNotify);
 		}
-        
-        if (!bResult)
-        {
-            DisplayLastError(L"Error in execution of SetGestureConfig", dwErr);
-        }
+
+		if (!bResult)
+		{
+			DisplayLastError(L"Error in execution of SetGestureConfig", dwErr);
+		}
 
 		lResult = ::DefWindowProc(hWnd, WM_GESTURENOTIFY, wParam, lParam);
 
@@ -277,9 +277,9 @@ bool CGestures::ProcessGestureMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 	// Остался только WM_GESTURE
 	Assert(uMsg==WM_GESTURE);
 
-    // helper variables
-    POINT ptZoomCenter;
-    double k;
+	// helper variables
+	POINT ptZoomCenter;
+	double k;
 
 	GESTUREINFO gi = {sizeof(gi)};
 	// Checking for compiler alignment errors
@@ -290,19 +290,19 @@ bool CGestures::ProcessGestureMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 		_isGestures = false;
 		return false;
 	}
-    BOOL bResult = _GetGestureInfo((HGESTUREINFO)lParam, &gi);
+	BOOL bResult = _GetGestureInfo((HGESTUREINFO)lParam, &gi);
 
-    if (!bResult)
-    {
-        //_ASSERT(L"_GetGestureInfo failed!" && 0);
+	if (!bResult)
+	{
+		//_ASSERT(L"_GetGestureInfo failed!" && 0);
 		DWORD dwErr = GetLastError();
-        DisplayLastError(L"Error in execution of _GetGestureInfo", dwErr);
-        return FALSE;
-    }
+		DisplayLastError(L"Error in execution of _GetGestureInfo", dwErr);
+		return FALSE;
+	}
 
 	#ifdef USE_DUMPGEST
-    bool bLog = (gpSetCls->isAdvLogging >= 2);
-    UNREFERENCED_PARAMETER(bLog);
+	bool bLog = (gpSetCls->isAdvLogging >= 2);
+	UNREFERENCED_PARAMETER(bLog);
 	bLog = true;
 	#endif
 
@@ -332,74 +332,74 @@ bool CGestures::ProcessGestureMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 	//#define DUMPGEST(s)
 	//#endif
 
-    switch (gi.dwID)
-    {
-    case GID_BEGIN:
+	switch (gi.dwID)
+	{
+	case GID_BEGIN:
 		DUMPGEST(L"GID_BEGIN");
-        break;
+		break;
 
-    case GID_END:
+	case GID_END:
 		DUMPGEST(L"GID_END");
-        break;
-    
-    case GID_ZOOM:
+		break;
+
+	case GID_ZOOM:
 		DUMPGEST(L"GID_ZOOM");
-        if (gi.dwFlags & GF_BEGIN)
-        {
-            _dwArguments = LODWORD(gi.ullArguments);
-            _ptFirst.x = gi.ptsLocation.x;
-            _ptFirst.y = gi.ptsLocation.y;
-            ScreenToClient(hWnd,&_ptFirst);
+		if (gi.dwFlags & GF_BEGIN)
+		{
+			_dwArguments = LODWORD(gi.ullArguments);
+			_ptFirst.x = gi.ptsLocation.x;
+			_ptFirst.y = gi.ptsLocation.y;
+			ScreenToClient(hWnd,&_ptFirst);
 		}
 		else
 		{
-            // We read here the second point of the gesture. This is middle point between 
-            // fingers in this new position.
-            _ptSecond.x = gi.ptsLocation.x;
-            _ptSecond.y = gi.ptsLocation.y;
-            ScreenToClient(hWnd,&_ptSecond);
+			// We read here the second point of the gesture. This is middle point between
+			// fingers in this new position.
+			_ptSecond.x = gi.ptsLocation.x;
+			_ptSecond.y = gi.ptsLocation.y;
+			ScreenToClient(hWnd,&_ptSecond);
 
-            // We have to calculate zoom center point 
-            ptZoomCenter.x = (_ptFirst.x + _ptSecond.x)/2;
-            ptZoomCenter.y = (_ptFirst.y + _ptSecond.y)/2;           
-            
-            // The zoom factor is the ratio between the new and the old distance. 
-            // The new distance between two fingers is stored in gi.ullArguments 
-            // (lower DWORD) and the old distance is stored in _dwArguments.
-            k = (double)(LODWORD(gi.ullArguments))/(double)(_dwArguments);
+			// We have to calculate zoom center point
+			ptZoomCenter.x = (_ptFirst.x + _ptSecond.x)/2;
+			ptZoomCenter.y = (_ptFirst.y + _ptSecond.y)/2;
 
-            // Now we process zooming in/out of the object
-            ProcessZoom(hWnd, k, ptZoomCenter.x, ptZoomCenter.y);
+			// The zoom factor is the ratio between the new and the old distance.
+			// The new distance between two fingers is stored in gi.ullArguments
+			// (lower DWORD) and the old distance is stored in _dwArguments.
+			k = (double)(LODWORD(gi.ullArguments))/(double)(_dwArguments);
 
-            // Now we have to store new information as a starting information 
-            // for the next step in this gesture.
-            _ptFirst = _ptSecond;
-            _dwArguments = LODWORD(gi.ullArguments);
-        }
-        break;
-    
-    case GID_PAN:
+			// Now we process zooming in/out of the object
+			ProcessZoom(hWnd, k, ptZoomCenter.x, ptZoomCenter.y);
+
+			// Now we have to store new information as a starting information
+			// for the next step in this gesture.
+			_ptFirst = _ptSecond;
+			_dwArguments = LODWORD(gi.ullArguments);
+		}
+		break;
+
+	case GID_PAN:
 		DUMPGEST(L"GID_PAN");
-        if (gi.dwFlags & GF_BEGIN)
-        {
-            _ptFirst.x = gi.ptsLocation.x;
-            _ptFirst.y = gi.ptsLocation.y;
+		if (gi.dwFlags & GF_BEGIN)
+		{
+			_ptFirst.x = gi.ptsLocation.x;
+			_ptFirst.y = gi.ptsLocation.y;
 			_ptBegin.x = gi.ptsLocation.x;
 			_ptBegin.y = gi.ptsLocation.y;
-            ScreenToClient(hWnd, &_ptFirst);
+			ScreenToClient(hWnd, &_ptFirst);
 		}
 		else
 		{
-            // We read the second point of this gesture. It is a middle point
-            // between fingers in this new position
-            _ptSecond.x = gi.ptsLocation.x;
-            _ptSecond.y = gi.ptsLocation.y;
-            ScreenToClient(hWnd, &_ptSecond);
+			// We read the second point of this gesture. It is a middle point
+			// between fingers in this new position
+			_ptSecond.x = gi.ptsLocation.x;
+			_ptSecond.y = gi.ptsLocation.y;
+			ScreenToClient(hWnd, &_ptSecond);
 
 			if (!(gi.dwFlags & (GF_END/*|GF_INERTIA*/)))
 			{
-	            // We apply move operation of the object
-		        if (ProcessMove(hWnd, _ptSecond.x-_ptFirst.x, _ptSecond.y-_ptFirst.y))
+				// We apply move operation of the object
+				if (ProcessMove(hWnd, _ptSecond.x-_ptFirst.x, _ptSecond.y-_ptFirst.y))
 				{
 					// We have to copy second point into first one to prepare
 					// for the next step of this gesture.
@@ -407,59 +407,59 @@ bool CGestures::ProcessGestureMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 				}
 			}
 
-        }
-        break;
+		}
+		break;
 
-    case GID_ROTATE:
+	case GID_ROTATE:
 		DUMPGEST(L"GID_ROTATE");
-        if (gi.dwFlags & GF_BEGIN)
-        {
+		if (gi.dwFlags & GF_BEGIN)
+		{
 			_inRotate = false;
-            _dwArguments = LODWORD(gi.ullArguments); // Запомним начальный угол
+			_dwArguments = LODWORD(gi.ullArguments); // Запомним начальный угол
 		}
 		else
 		{
-            _ptFirst.x = gi.ptsLocation.x;
-            _ptFirst.y = gi.ptsLocation.y;
-            ScreenToClient(hWnd, &_ptFirst);
+			_ptFirst.x = gi.ptsLocation.x;
+			_ptFirst.y = gi.ptsLocation.y;
+			ScreenToClient(hWnd, &_ptFirst);
 			// Пока угол не станет достаточным для смены таба - игнорируем
-            if (ProcessRotate(hWnd, 
+			if (ProcessRotate(hWnd,
 					LODWORD(gi.ullArguments) - _dwArguments,
 					_ptFirst.x,_ptFirst.y, ((gi.dwFlags & GF_END) == GF_END)))
 			{
 				_dwArguments = LODWORD(gi.ullArguments);
 			}
-        }
-        break;
+		}
+		break;
 
-    case GID_TWOFINGERTAP:
+	case GID_TWOFINGERTAP:
 		DUMPGEST(L"GID_TWOFINGERTAP");
-        _ptFirst.x = gi.ptsLocation.x;
-        _ptFirst.y = gi.ptsLocation.y;
-        ScreenToClient(hWnd,&_ptFirst);
-        ProcessTwoFingerTap(hWnd, _ptFirst.x, _ptFirst.y, LODWORD(gi.ullArguments));
-        break;
+		_ptFirst.x = gi.ptsLocation.x;
+		_ptFirst.y = gi.ptsLocation.y;
+		ScreenToClient(hWnd,&_ptFirst);
+		ProcessTwoFingerTap(hWnd, _ptFirst.x, _ptFirst.y, LODWORD(gi.ullArguments));
+		break;
 
-    case GID_PRESSANDTAP:
+	case GID_PRESSANDTAP:
 		DUMPGEST(L"GID_PRESSANDTAP");
-        if (gi.dwFlags & GF_BEGIN)
-        {
+		if (gi.dwFlags & GF_BEGIN)
+		{
 			_ptFirst.x = gi.ptsLocation.x;
 			_ptFirst.y = gi.ptsLocation.y;
 			ScreenToClient(hWnd,&_ptFirst);
 			DWORD nDelta = LODWORD(gi.ullArguments);
 			short nDeltaX = (short)LOWORD(nDelta);
 			short nDeltaY = (short)HIWORD(nDelta);
-            ProcessPressAndTap(hWnd, _ptFirst.x, _ptFirst.y, nDeltaX, nDeltaY);
-        }
-        break;
+			ProcessPressAndTap(hWnd, _ptFirst.x, _ptFirst.y, nDeltaX, nDeltaY);
+		}
+		break;
 	default:
 		DUMPGEST(L"GID_<UNKNOWN>");
-    }
+	}
 
-    _CloseGestureInfoHandle((HGESTUREINFO)lParam);
+	_CloseGestureInfoHandle((HGESTUREINFO)lParam);
 
-    return TRUE;
+	return TRUE;
 }
 
 void CGestures::SendRClick(HWND hWnd, const LONG ldx, const LONG ldy)
@@ -546,7 +546,7 @@ bool CGestures::ProcessMove(HWND hWnd, const LONG ldx, const LONG ldy)
 				POINT pt = _ptBegin;
 				if (hWnd != VCon->GetView())
 					MapWindowPoints(hWnd, VCon->GetView(), &pt, 1);
-				
+
 				pRCon->OnMouse(WM_MOUSEWHEEL, MAKELPARAM(0,Delta), pt.x, pt.y, true, true);
 
 				lbSent = true; // Запомнить обработанную координату

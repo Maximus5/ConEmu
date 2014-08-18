@@ -2494,7 +2494,7 @@ bool CVConGroup::DoCloseAllVCon(bool bMsgConfirmed)
 							gp_VCon[i]->RCon()->StopSignal();
 					}
 				}
-        		lbAllowed = true;
+				lbAllowed = true;
 			}
 		}
 		else
@@ -4425,7 +4425,7 @@ void CVConGroup::SyncWindowToConsole()
 //		if (p != NULL)
 //		{
 //			SIZE sz; p->GetAllTextSize(sz);
-//        	nWidth = sz.cx; // p->AllTextWidth();
+//			nWidth = sz.cx; // p->AllTextWidth();
 //		}
 //		else
 //		{
@@ -4461,7 +4461,7 @@ void CVConGroup::SyncWindowToConsole()
 //		if (p != NULL)
 //		{
 //			SIZE sz; p->GetAllTextSize(sz);
-//        	nHeight = sz.cy; // p->AllTextHeight();
+//			nHeight = sz.cy; // p->AllTextHeight();
 //		}
 //		else
 //		{

@@ -135,7 +135,7 @@ void CAttachDlg::Close()
 			DestroyWindow(mh_Dlg);
 		mh_Dlg = NULL;
 	}
-	
+
 	if (mp_ProcessData)
 	{
 		_ASSERTE(mp_ProcessData==NULL);
@@ -376,7 +376,7 @@ BOOL CAttachDlg::AttachDlgEnumWin(HWND hFind, LPARAM lParam)
 					}
 					CloseHandle(h);
 				}
-				
+
 				#ifdef _WIN64
 				if (!lbExeFound)
 				{
@@ -408,7 +408,7 @@ BOOL CAttachDlg::AttachDlgEnumWin(HWND hFind, LPARAM lParam)
 
 			ListView_SetItemText(hList, nItem, alc_Title, szTitle);
 			ListView_SetItemText(hList, nItem, alc_Class, szClass);
-			
+
 			_wsprintf(szHwnd, SKIPLEN(countof(szHwnd)) L"0x%08X", (DWORD)(((DWORD_PTR)hFind) & (DWORD)-1));
 			ListView_SetItemText(hList, nItem, alc_HWND, szHwnd);
 
@@ -434,7 +434,7 @@ INT_PTR CAttachDlg::AttachDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM l
 	{
 		pDlg = (CAttachDlg*)GetWindowLongPtr(hDlg, DWLP_USER);
 	}
-	
+
 	if (!pDlg)
 	{
 		//_ASSERTE(pDlg!=NULL);
@@ -462,7 +462,7 @@ INT_PTR CAttachDlg::AttachDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM l
 			SendMessage(hDlg, WM_SETICON, ICON_BIG, (LPARAM)hClassIcon);
 			SendMessage(hDlg, WM_SETICON, ICON_SMALL, (LPARAM)hClassIconSm);
 			SetClassLongPtr(hDlg, GCLP_HICON, (LONG_PTR)hClassIcon);
-			
+
 			// В Windows 2000 отсуствует процедура AttachConsole необходимая для этого режима
 			EnableWindow(GetDlgItem(hDlg, IDC_ATTACH_ALT), (gnOsVer >= 0x501));
 
@@ -474,7 +474,7 @@ INT_PTR CAttachDlg::AttachDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM l
 
 				ListView_SetExtendedListViewStyleEx(hList,LVS_EX_FULLROWSELECT,LVS_EX_FULLROWSELECT);
 				ListView_SetExtendedListViewStyleEx(hList,LVS_EX_LABELTIP|LVS_EX_INFOTIP,LVS_EX_LABELTIP|LVS_EX_INFOTIP);
-				
+
 				col.cx = gpSetCls->EvalSize(pDlg->mb_IsWin64 ? 75 : 60, esf_Horizontal|esf_CanUseDpi);
 				wcscpy_c(szTitle, L"PID");			ListView_InsertColumn(hList, alc_PID, &col);
 				col.cx = gpSetCls->EvalSize(45, esf_Horizontal|esf_CanUseDpi); col.fmt = LVCFMT_CENTER;
@@ -514,7 +514,7 @@ INT_PTR CAttachDlg::AttachDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM l
 			RECT rcCenter = CenterInParent(rect, ghWnd);
 			MoveWindow(hDlg, rcCenter.left, rcCenter.top,
 			           rect.right - rect.left, rect.bottom - rect.top, false);
-			
+
 			ShowWindow(hDlg, SW_SHOWNORMAL);
 
 			SetFocus(hList);
@@ -598,7 +598,7 @@ INT_PTR CAttachDlg::AttachDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM l
 			if (pDlg->mp_DpiAware)
 				pDlg->mp_DpiAware->Detach();
 			break;
-		
+
 		case WM_COMMAND:
 			if (HIWORD(wParam) == BN_CLICKED)
 			{
@@ -825,7 +825,7 @@ DWORD CAttachDlg::StartAttachThread(AttachParm* lpParam)
 	}
 
 	bool lbRc = true;
-	
+
 	for (AttachParm* p = lpParam; p->hAttachWnd; p++)
 	{
 		if (!StartAttach(p->hAttachWnd, p->nPID, p->nBits, p->nType, p->bAlternativeMode))

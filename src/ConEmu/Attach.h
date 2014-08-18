@@ -71,7 +71,7 @@ public:
 	void AttachDlg();
 	HWND GetHWND();
 	void Close();
-	
+
 	static BOOL CALLBACK AttachDlgEnumWin(HWND hFind, LPARAM lParam);
 	static INT_PTR CALLBACK AttachDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam);
 };

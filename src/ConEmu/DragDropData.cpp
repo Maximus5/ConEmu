@@ -222,7 +222,7 @@ bool CDragDropData::UseTargetHelper(bool abSelfDrag)
 
 	bool lbCanUseHelper = false;
 	HRESULT hr = 0;
-	
+
 	#ifdef USE_DROP_HELPER
 	if (!IsDragImageOsSupported())
 	{
@@ -276,7 +276,7 @@ bool CDragDropData::UseSourceHelper()
 
 	bool lbCanUseHelper = false;
 	HRESULT hr = 0;
-	
+
 	#ifdef USE_DROP_HELPER
 	if (!IsDragImageOsSupported())
 	{
@@ -467,7 +467,7 @@ BOOL CDragDropData::AddFmt_SHELLIDLIST(wchar_t* pszDraggedPath, UINT nFilesCount
 	file_PIDLs->aoffset[0] = nCurSize;
 	memmove((((LPBYTE)file_PIDLs)+nCurSize), &m_DesktopID, nParentSize);
 	nCurSize += nParentSize;
-	
+
 	SAFETRY //__try
 	{
 		// Сначала нужно получить Interface для Desktop
@@ -2467,7 +2467,7 @@ BOOL CDragDropData::CreateDragImageWindow()
 	}
 
 	//int nCount = mp_Bits->nWidth * mp_Bits->nHeight;
-	
+
 	_ASSERTE(mh_Overlapped==NULL);
 	int nWidth = MAX_OVERLAY_WIDTH, nHeight = MAX_OVERLAY_HEIGHT;
 	UNREFERENCED_PARAMETER(nWidth); UNREFERENCED_PARAMETER(nHeight);
@@ -2479,7 +2479,7 @@ BOOL CDragDropData::CreateDragImageWindow()
 	//#undef DRAGBITSTITLE
 	//#define DRAGBITSTITLE gpConEmu->ms_ConEmuExe
 	//#endif
-	
+
 	// |WS_BORDER|WS_SYSMENU - создает проводник. попробуем?
 	//2009-08-20 [+] WS_EX_NOACTIVATE
 #if defined(USE_CHILD_OVL)
@@ -2777,7 +2777,7 @@ void CDragDropData::DragFeedBack(DWORD dwEffect)
 			{
 				;
 			}
-			
+
 			if (dwEffect == DROPEFFECT_NONE)
 			{
 				desc.type = DROPIMAGE_NONE;

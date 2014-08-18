@@ -151,7 +151,7 @@ bool CFrameHolder::ProcessNcMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 				(wParam==SIZE_MAXSHOW) ? L"SIZE_MAXSHOW" :
 				(wParam==SIZE_MINIMIZED) ? L"SIZE_MINIMIZED" :
 				(wParam==SIZE_RESTORED) ? L"SIZE_RESTORED" : L"???",
-				(int)(short)LOWORD(lParam), (int)(short)HIWORD(lParam)); 
+				(int)(short)LOWORD(lParam), (int)(short)HIWORD(lParam));
 			break;
 		default:
 			wsprintf(szMsg, L"%u=x%X", uMsg, uMsg);
@@ -294,7 +294,7 @@ bool CFrameHolder::ProcessNcMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 	//		}
 	//	}
 	//	return false;
-		
+
 	case WM_MOUSEMOVE:
 		DBGFUNCTION(L"WM_MOUSEMOVE \n");
 		// Табов чисто в заголовке - нет
@@ -311,13 +311,13 @@ bool CFrameHolder::ProcessNcMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 		RedrawUnlock();
 		#endif
 		return false;
-		
+
 	case WM_NCLBUTTONDBLCLK:
 		if (wParam == HTCAPTION)
 		{
 			mb_NcAnimate = TRUE;
 		}
-		
+
 		if (wParam == HT_CONEMUTAB)
 		{
 			_ASSERTE(gpSet->isTabsInCaption && "There is not tabs in 'Caption'");
@@ -333,27 +333,27 @@ bool CFrameHolder::ProcessNcMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 		{
 			lResult = DefWindowProc(hWnd, uMsg, wParam, lParam);
 		}
-			
+
 		if (wParam == HTCAPTION)
 		{
 			mb_NcAnimate = FALSE;
 		}
 		return true;
-		
+
 	case WM_KEYDOWN:
 	case WM_KEYUP:
-	    if (gpSet->isTabSelf && (wParam == VK_TAB || gpConEmu->mp_TabBar->IsInSwitch()))
-	    {
-	        if (isPressed(VK_CONTROL) && !isPressed(VK_MENU) && !isPressed(VK_LWIN) && !isPressed(VK_RWIN))
-	        {
-	            if (gpConEmu->mp_TabBar->ProcessTabKeyboardEvent(hWnd, uMsg, wParam, lParam, lResult))
-	            {
-	                return true;
-                }
-	        }
-	    }
-	    return false;
-		
+		if (gpSet->isTabSelf && (wParam == VK_TAB || gpConEmu->mp_TabBar->IsInSwitch()))
+		{
+			if (isPressed(VK_CONTROL) && !isPressed(VK_MENU) && !isPressed(VK_LWIN) && !isPressed(VK_RWIN))
+			{
+				if (gpConEmu->mp_TabBar->ProcessTabKeyboardEvent(hWnd, uMsg, wParam, lParam, lResult))
+				{
+					return true;
+				}
+			}
+		}
+		return false;
+
 	//case WM_NCCREATE: gpConEmu->CheckGlassAttribute(); return false;
 
 	case 0xAE: /*WM_NCUAHDRAWCAPTION*/
@@ -365,7 +365,7 @@ bool CFrameHolder::ProcessNcMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 
 	case WM_WINDOWPOSCHANGED:
 		lResult = OnWindowPosChanged(hWnd, uMsg, wParam, lParam); return true;
-		
+
 	case WM_SYSCOMMAND:
 		if (wParam == SC_MAXIMIZE || wParam == SC_MINIMIZE || wParam == SC_RESTORE)
 		{
@@ -380,11 +380,11 @@ bool CFrameHolder::ProcessNcMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 			//SetWindowText(hWnd, ms_LastCaption);
 		}
 		return true;
-		
+
 	case WM_GETTEXT:
-		//TODO: Во время анимации Maximize/Restore/Minimize заголовок отрисовывается 
-		//TODO: системой, в итоге мелькает текст и срезаются табы                    
-		//TODO: Сделаем, пока, чтобы текст хотя бы не мелькал...                     
+		//TODO: Во время анимации Maximize/Restore/Minimize заголовок отрисовывается
+		//TODO: системой, в итоге мелькает текст и срезаются табы
+		//TODO: Сделаем, пока, чтобы текст хотя бы не мелькал...
 		if (mb_NcAnimate && gpSet->isTabsInCaption)
 		{
 			_ASSERTE(!IsWindows7); // Проверить на XP и ниже
@@ -425,7 +425,7 @@ LRESULT CFrameHolder::OnDwmMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 		}
 	}
 #endif
-	
+
 	// Unknown!
 	_ASSERTE(uMsg == 0x31E || uMsg == 0xAE || uMsg == 0xAF);
 	return DefWindowProc(hWnd, uMsg, wParam, lParam);
@@ -434,11 +434,11 @@ LRESULT CFrameHolder::OnDwmMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 void CFrameHolder::NC_Redraw()
 {
 	mb_RedrawRequested = false;
-	
+
 	//TODO: При потере фокуса (клик мышкой по другому окну) лезут глюки отрисовки этого нового окна
 	SetWindowPos(ghWnd, 0, 0, 0, 0, 0,
 		SWP_NOMOVE|SWP_NOSIZE|SWP_NOZORDER|SWP_NOACTIVATE|SWP_DRAWFRAME);
-	
+
 	//SetWindowPos(ghWnd, NULL, 0, 0, 0, 0,
 	//		SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED);
 	//RedrawWindow(ghWnd, NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW);
@@ -496,10 +496,10 @@ LRESULT CFrameHolder::NC_Wrapper(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 	//Turn OFF WS_VISIBLE, so that WM_NCACTIVATE does not
 	//paint our window caption...
 	gpConEmu->SetWindowStyle(hWnd, dwStyle & ~WS_VISIBLE);
-	
+
 	//Do the default thing..
 	ret = DefWindowProc(hWnd, uMsg, wParam, lParam);
-	
+
 	//Restore the original style
 	gpConEmu->SetWindowStyle(hWnd, dwStyle);
 
@@ -509,7 +509,7 @@ LRESULT CFrameHolder::NC_Wrapper(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 	//{
 	//	RECT tr; GetWindowRect(hWnd, &tr);
 	//	OffsetRect(&tr, -tr.left, -tr.top);
-	//	
+	//
 	//	tr.right -= 120; //TODO:
 	//	tr.left += 26; //TODO:
 	//	if (IsZoomed(hWnd))
@@ -518,7 +518,7 @@ LRESULT CFrameHolder::NC_Wrapper(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 	//		tr.top += 3;
 	//	tr.bottom = tr.top+GetSystemMetrics(SM_CYFRAME)+GetSystemMetrics(SM_CYCAPTION);
 	//
-	//	HDC hdc = GetWindowDC(hWnd);	
+	//	HDC hdc = GetWindowDC(hWnd);
 	//	mp_Tabs->PaintHeader(hdc, tr);
 	//	ReleaseDC(hWnd, hdc);
 	//}
@@ -531,11 +531,11 @@ void CFrameHolder::PaintFrame2k(HWND hWnd, HDC hdc, RECT &cr)
 	//RECT cr;
 	//GetWindowRect(hWnd, &cr);
 	//OffsetRect(&cr, -cr.left, -cr.top);
-	
+
 	//TODO: Обработка XP
 	HPEN hOldPen = (HPEN)SelectObject(hdc, (HPEN)GetStockObject(BLACK_PEN));
 	HBRUSH hOldBr = (HBRUSH)SelectObject(hdc, (HBRUSH)GetStockObject(BLACK_BRUSH));
-	
+
 	HPEN hPenHilight = CreatePen(PS_SOLID, 1, GetSysColor(COLOR_3DHILIGHT));
 	HPEN hPenLight = CreatePen(PS_SOLID, 1, GetSysColor(COLOR_3DLIGHT));
 	HPEN hPenShadow = CreatePen(PS_SOLID, 1, GetSysColor(COLOR_3DSHADOW));
@@ -547,7 +547,7 @@ void CFrameHolder::PaintFrame2k(HWND hWnd, HDC hdc, RECT &cr)
 	HBRUSH hBrCaption = GetSysColorBrush(mb_NcActive ? COLOR_ACTIVECAPTION : COLOR_INACTIVECAPTION);
 	//
 	int nCaptionY = GetSystemMetrics(SM_CYCAPTION);
-	
+
 	SelectObject(hdc, hPenLight);
 	MoveToEx(hdc, cr.left, cr.bottom-1, NULL); LineTo(hdc, cr.left, 0); LineTo(hdc, cr.right-1, 0);
 	SelectObject(hdc, hPenHilight);
@@ -559,7 +559,7 @@ void CFrameHolder::PaintFrame2k(HWND hWnd, HDC hdc, RECT &cr)
 	// рамка. обычно это 1 пиксел цвета кнопки
 	SelectObject(hdc, hPenBorder); //TODO: но может быть и более одного пиксела
 	Rectangle(hdc, cr.left+2, cr.top+2, cr.right-2, cr.bottom-2);
-	
+
 	//TODO: Заливка заголовка через GradientFill
 	SelectObject(hdc, hPenFace); SelectObject(hdc, hBrCaption);
 	Rectangle(hdc, cr.left+3, cr.top+3, cr.right-3, cr.top+nCaptionY+4);
@@ -570,14 +570,14 @@ void CFrameHolder::PaintFrame2k(HWND hWnd, HDC hdc, RECT &cr)
 	LineTo(hdc, cr.left+3, cr.bottom-3);
 	LineTo(hdc, cr.right-3, cr.bottom-3);
 	LineTo(hdc, cr.right-3, cr.top+3+nCaptionY);
-	
-	
+
+
 	SelectObject(hdc, hOldPen);
 	SelectObject(hdc, hOldBr);
-	
+
 	DeleteObject(hPenHilight); DeleteObject(hPenLight); DeleteObject(hPenShadow); DeleteObject(hPenDkShadow);
 	DeleteObject(hPenFace); DeleteObject(hPenBorder);
-	
+
 	cr.left += 4; cr.right -= 4; cr.bottom -= 4; cr.top += 4+nCaptionY;
 }
 #endif
@@ -611,7 +611,7 @@ LRESULT CFrameHolder::OnPaint(HWND hWnd, HDC hdc)
 	// Go
 
 	RECT wr, cr;
-	
+
 	RecalculateFrameSizes();
 
 	wr = gpConEmu->GetGuiClientRect();
@@ -895,7 +895,7 @@ LRESULT CFrameHolder::OnNcPaint(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 		//TODO: Может быть на "стекле" сразу рисовать, а не в WM_PAINT?
 		return lRc;
 	}
-		
+
 	if (!gpSet->isTabs)
 	{
 		return DefWindowProc(hWnd, uMsg, wParam, lParam);
@@ -911,7 +911,7 @@ LRESULT CFrameHolder::OnNcPaint(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 	CalculateCaptionPosition(wr, &cr);
 	CalculateTabPosition(wr, cr, &tr);
 
-	// --- Регион формируем всегда сами, иначе в некоторых случаях (XP+ Theming) 
+	// --- Регион формируем всегда сами, иначе в некоторых случаях (XP+ Theming)
 	// --- при выезжании окна из-за пределов экрана (обратно в видимую область)
 	// --- сильно мелькает текст в заголовке
 	//Create a region which covers the whole window. This
@@ -937,7 +937,7 @@ LRESULT CFrameHolder::OnNcPaint(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 	//	#endif
 	//}
 
-	
+
 
 	xorRect = tr;
 	xorRect.top = cr.top;
@@ -955,7 +955,7 @@ LRESULT CFrameHolder::OnNcPaint(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 		//xorRect.right = cr.right;
 	}
 	OffsetRect(&xorRect, wr.left, wr.top);
-		
+
 
 	if (IntersectRect(&dirty, &dirty_box, &xorRect))
 	{
@@ -973,11 +973,11 @@ LRESULT CFrameHolder::OnNcPaint(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 	//	OutputDebugStringW(L"CFrameHolder::OnNcPaint --- IntersectRect failed\n");
 	//}
 	//#endif
-	
+
 	//if (!mb_NcAnimate)
 	DefWindowProc(hWnd, uMsg, (WPARAM)hrgn, lParam);
 
-	
+
 //#ifdef _DEBUG
 //	Sleep(150);
 //#endif
@@ -1028,12 +1028,12 @@ LRESULT CFrameHolder::OnNcPaint(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 	//	DeleteObject(hbmp);
 	//	DeleteDC(hdcPaint);
 	//}
-	
+
 	ReleaseDC(hWnd, hdc);
 
 	if(fRegionOwner)
 		DeleteObject(hrgn);
-	
+
 	return 0;
 }
 
@@ -1047,19 +1047,19 @@ LRESULT CFrameHolder::OnNcActivate(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"CFrameHolder::OnNcActivate(%u,x%X)", (DWORD)wParam, (DWORD)(DWORD_PTR)lParam);
 		gpConEmu->LogString(szInfo);
 	}
-	
+
 	if (gpConEmu->IsGlass() || !gpSet->isTabsInCaption)
 		return DefWindowProc(hWnd, uMsg, wParam, lParam);
-		
+
 	//return DefWindowProc(hWnd, uMsg, wParam, lParam);
-		
-    // We can get WM_NCACTIVATE before we're actually visible. If we're not
-    // visible, no need to paint.
-    if (!IsWindowVisible(hWnd))
-    {
-    	return 0;
+
+		// We can get WM_NCACTIVATE before we're actually visible. If we're not
+		// visible, no need to paint.
+		if (!IsWindowVisible(hWnd))
+		{
+		return 0;
 	}
-		
+
 	// Force paint our non-client area otherwise Windows will paint its own.
 	//RedrawWindow(hWnd, NULL, NULL, RDW_UPDATENOW);
 	//OnPaint(TRUE);
@@ -1124,7 +1124,7 @@ LRESULT CFrameHolder::OnNcCalcSize(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 	if (wParam)
 	{
 		// lParam points to an NCCALCSIZE_PARAMS structure that contains information
-		// an application can use to calculate the new size and position of the client rectangle. 
+		// an application can use to calculate the new size and position of the client rectangle.
 		// The application should indicate which part of the client area contains valid information!
 		NCCALCSIZE_PARAMS* pParm = wParam ? ((NCCALCSIZE_PARAMS*)lParam) : NULL;
 		// r[0] contains the new coordinates of a window that has been moved or resized,
@@ -1251,7 +1251,7 @@ LRESULT CFrameHolder::OnNcCalcSize(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 	//			r[1] = pParm->rgrc[1];
 	//			r[2] = pParm->rgrc[2];
 	//		}
-	//			
+	//
 	//		if (fdt == fdt_Aero)
 	//		{
 	//			// В Aero (Glass) важно, чтобы клиенская область начиналась с верхнего края окна,
@@ -1300,7 +1300,7 @@ LRESULT CFrameHolder::OnNcHitTest(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 
 
 	l_result = DefWindowProc(hWnd, WM_NCHITTEST, wParam, lParam);
-	
+
 	POINT point; // Coordinates, relative to UpperLeft corner of window
 	RECT wr; GetWindowRect(hWnd, &wr);
 	point.x = (int)(short)LOWORD(lParam) - wr.left;
@@ -1393,14 +1393,14 @@ LRESULT CFrameHolder::OnNcHitTest(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 	//		}
 	//	}
 	//}
-	
+
 	return l_result;
 }
 
 //LRESULT CFrameHolder::OnNcLButtonDown(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 //{
 //	LRESULT l_result = 0;
-//	
+//
 //	if (wParam == HTBORDER /*HTCAPTION*/)
 //	{
 //		POINT point;
@@ -1415,9 +1415,9 @@ LRESULT CFrameHolder::OnNcHitTest(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 //			gpConEmu->SelectTab(nTab);
 //		}
 //	}
-//	
+//
 //	l_result = DefWindowProc(hWnd, uMsg, wParam, lParam);
-//	
+//
 //	return l_result;
 //}
 
@@ -1439,7 +1439,7 @@ void CFrameHolder::RecalculateFrameSizes()
 	if (gpConEmu->DrawType() >= fdt_Themed)
 	{
 	//	//SIZE sz = {}; RECT tmpRc = MakeRect(600,400);
-	//	//HANDLE hTheme = gpConEmu->OpenThemeData(NULL, L"WINDOW"); 
+	//	//HANDLE hTheme = gpConEmu->OpenThemeData(NULL, L"WINDOW");
 	//	//HRESULT hr = gpConEmu->GetThemePartSize(hTheme, NULL/*dc*/, 18/*WP_CLOSEBUTTON*/, 1/*CBS_NORMAL*/, &tmpRc, 2/*TS_DRAW*/, &sz);
 	//	//if (SUCCEEDED(hr))
 	//	//	nCaptionDragHeight = max(sz.cy - mn_FrameHeight,10);
@@ -1457,7 +1457,7 @@ void CFrameHolder::RecalculateFrameSizes()
 	{
 		if ((GetCaptionDragHeight() == 0) && (mn_TabsHeight > mn_WinCaptionHeight))
 		{
-			// Если дополнительную высоту в заголовке не просили - 
+			// Если дополнительную высоту в заголовке не просили -
 			// нужно строго уместиться в стандартную высоту заголовка
 			mn_TabsHeight = mn_WinCaptionHeight;
 		}
@@ -1470,7 +1470,7 @@ void CFrameHolder::RecalculateFrameSizes()
 		mn_OurCaptionHeight = mn_WinCaptionHeight;
 	}
 
-	
+
 	//if (gpConEmu->DrawType() == fdt_Aero)
 	//{
 	//	rcCaption->left = 2; //GetSystemMetrics(SM_CXFRAME);

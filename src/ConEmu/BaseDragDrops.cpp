@@ -480,7 +480,7 @@ HRESULT __stdcall CDataObject::GetData(FORMATETC *pFormatEtc, STGMEDIUM *pMedium
 		|| lstrcmp(pszName, L"DragSourceHelperFlags")==0
 		|| lstrcmp(pszName, L"DragWindow")==0
 		|| lstrcmp(pszName, L"DisableDragText")==0
-		)		
+		)
 	{
 		LPDWORD pdw = (LPDWORD)GlobalLock(m_Data[idx].StgMedium.hGlobal);
 		if (pdw)
@@ -646,7 +646,7 @@ HRESULT __stdcall CDataObject::SetData(FORMATETC *pFormatEtc, STGMEDIUM *pMedium
 		|| lstrcmp(pszName, L"DragSourceHelperFlags")==0
 		|| lstrcmp(pszName, L"DragWindow")==0
 		|| lstrcmp(pszName, L"DisableDragText")==0
-		)		
+		)
 	{
 		LPDWORD pdw = (LPDWORD)GlobalLock(pMedium->hGlobal);
 		if (pdw)

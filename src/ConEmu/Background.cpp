@@ -79,7 +79,7 @@ CBackground::~CBackground()
 
 	SafeFree(mp_BkEmfData);
 	mn_BkImgDataMax = 0;
-	
+
 	if (mcs_BkImgData)
 	{
 		SC.Unlock();
@@ -326,7 +326,7 @@ UINT CBackground::IsBackgroundValid(const CESERVER_REQ_SETBACKGROUND* apImgData,
 {
 	if (rpIsEmf)
 		*rpIsEmf = false;
-		
+
 	if (!apImgData)
 		return 0;
 
@@ -344,7 +344,7 @@ UINT CBackground::IsBackgroundValid(const CESERVER_REQ_SETBACKGROUND* apImgData,
 			return 0;
 		}
 		#endif
-		
+
 		LPBYTE pBuf = (LPBYTE)&apImgData->bmp;
 
 		if (*(u32*)(pBuf + 0x0A) >= 0x36 && *(u32*)(pBuf + 0x0A) <= 0x436 && *(u32*)(pBuf + 0x0E) == 0x28 && !pBuf[0x1D] && !*(u32*)(pBuf + 0x1E))
@@ -365,15 +365,15 @@ UINT CBackground::IsBackgroundValid(const CESERVER_REQ_SETBACKGROUND* apImgData,
 			return 0;
 		}
 		#endif
-		
+
 		// Это EMF, но передан как BITMAPINFOHEADER
 		if (rpIsEmf)
 			*rpIsEmf = true;
-		
+
 		#ifdef _DEBUG
 		LPBYTE pBuf = (LPBYTE)&apImgData->bmp;
 		#endif
-		
+
 		UINT nSize = apImgData->bmp.bfSize
 		             + (((LPBYTE)(void*)&(apImgData->bmp)) - ((LPBYTE)apImgData));
 		return nSize;
@@ -512,7 +512,7 @@ SetBackgroundResult CBackground::SetPluginBackgroundImageData(CESERVER_REQ_SETBA
 			mp_BkImgData = (CESERVER_REQ_SETBACKGROUND*)malloc(nSize);
 		}
 	}
-	
+
 	SetBackgroundResult rc;
 
 	if (!(bIsEmf ? mp_BkEmfData : mp_BkImgData))
@@ -542,10 +542,10 @@ SetBackgroundResult CBackground::SetPluginBackgroundImageData(CESERVER_REQ_SETBA
 			//Update(true/*bForce*/);
 			bUpdate = true;
 		}
-		
+
 		rc = esbr_OK;
 	}
-	
+
 	return rc;
 }
 
@@ -578,7 +578,7 @@ bool CBackground::PutPluginBackgroundImage(/*CBackground* pBack,*/ LONG X, LONG 
 	}*/
 	if (!mb_BkImgExist)
 		return false;
-		
+
 	MSectionLock SC;
 	SC.Lock(mcs_BkImgData, FALSE);
 
@@ -586,13 +586,13 @@ bool CBackground::PutPluginBackgroundImage(/*CBackground* pBack,*/ LONG X, LONG 
 	{
 		// Сразу сброс
 		mb_BkEmfChanged = FALSE;
-		
+
 		if (!mp_BkEmfData)
 		{
 			_ASSERTE(mp_BkEmfData!=NULL);
 			return false;
 		}
-		
+
 		// Нужно перекинуть EMF в mp_BkImgData
 		BITMAPINFOHEADER bi = mp_BkEmfData->bi;
 		size_t nBitSize = bi.biWidth*bi.biHeight*sizeof(COLORREF);
@@ -608,11 +608,11 @@ bool CBackground::PutPluginBackgroundImage(/*CBackground* pBack,*/ LONG X, LONG 
 				return false;
 			}
 		}
-		
+
 		*mp_BkImgData = *mp_BkEmfData;
 		mp_BkImgData->bmp.bfType = 0x4D42/*BM*/;
 		mp_BkImgData->bmp.bfSize = nBitSize+sizeof(BITMAPFILEHEADER)+sizeof(BITMAPINFOHEADER); //-V119
-		
+
 		// Теперь нужно сформировать DIB и нарисовать в нем EMF
 		HDC hScreen = GetDC(NULL);
 		//RECT rcMeta = {0,0, mn_BkImgWidth, mn_BkImgHeight}; // (in pixels)
@@ -639,9 +639,9 @@ bool CBackground::PutPluginBackgroundImage(/*CBackground* pBack,*/ LONG X, LONG 
 			_ASSERTE(hDib && pBits);
 			return false;
 		}
-		
+
 		HBITMAP hOld = (HBITMAP)SelectObject(hdcDib, hDib);
-	
+
 		size_t nBitsSize = bi.biWidth*bi.biHeight*sizeof(COLORREF);
 		// Залить черным - по умолчанию
 		#ifdef _DEBUG
@@ -649,7 +649,7 @@ bool CBackground::PutPluginBackgroundImage(/*CBackground* pBack,*/ LONG X, LONG 
 		#else
 			memset(pBits, 0, nBitsSize);
 		#endif
-		
+
 		DWORD nEmfBits = mp_BkEmfData->bmp.bfSize - sizeof(BITMAPFILEHEADER) - sizeof(BITMAPINFOHEADER);
 		LPBYTE pEmfBits = (LPBYTE)(mp_BkEmfData+1);
 		HENHMETAFILE hdcEmf = SetEnhMetaFileBits(nEmfBits, pEmfBits);
@@ -696,7 +696,7 @@ bool CBackground::PutPluginBackgroundImage(/*CBackground* pBack,*/ LONG X, LONG 
 			memmove(mp_BkImgData+1, pBits, nBitSize);
 		}
 		UNREFERENCED_PARAMETER(nPlayErr);
-		
+
 		SelectObject(hdcDib, hOld);
 		DeleteObject(hDib);
 		DeleteDC(hdcDib);
@@ -913,7 +913,7 @@ bool CBackground::PrepareBackground(CVirtualConsole* pVCon, HDC&/*OUT*/ phBgDc, 
 					}
 
 					//LONG lImgX = 0, lImgY = 0, lImgW = lMaxBgWidth, lImgH = lMaxBgHeight;
-					
+
 					//if ((gpSet->bgOperation == eFit || gpSet->bgOperation == eFill)
 					//	&& (rcWork.bottom - rcWork.top) > 0 && (rcWork.right - rcWork.left) > 0)
 					//{
@@ -1215,7 +1215,7 @@ bool CBackgroundInfo::LoadBackgroundFile(bool abShowErrors)
 			pBkImgData = CreateSolidImage(clr, 128, 128);
 		}
 	}
-	
+
 	if (!pBkImgData)
 	{
 		wchar_t* exPath = ExpandEnvStr(ms_BgImage);
@@ -1248,7 +1248,7 @@ bool CBackgroundInfo::LoadBackgroundFile(bool abShowErrors)
 		mp_BgImgData = pBkImgData;
 		lRes = true;
 	}
-	
+
 	return lRes;
 }
 #endif

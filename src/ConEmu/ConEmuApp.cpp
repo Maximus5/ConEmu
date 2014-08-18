@@ -1666,16 +1666,16 @@ wrap:
 	OleInitialize(NULL);
 
 	b = FALSE;
-    IShellDispatch2 *pshl;
+	IShellDispatch2 *pshl;
 	CLSCTX ctx = CLSCTX_INPROC_HANDLER; // CLSCTX_SERVER;
-    HRESULT hr = CoCreateInstance(CLSID_Shell, NULL, ctx, IID_IShellDispatch2, (void**)&pshl);
-    if (SUCCEEDED(hr))
-    {
-    	BSTR bsFile = SysAllocString(szExe);
-    	VARIANT vtArgs; vtArgs.vt = VT_BSTR; vtArgs.bstrVal = SysAllocString(pszDefCmd);
-    	VARIANT vtDir; vtDir.vt = VT_BSTR; vtDir.bstrVal = SysAllocString(gpConEmu->ms_ConEmuExeDir);
-    	VARIANT vtOper; vtOper.vt = VT_BSTR; vtOper.bstrVal = SysAllocString(L"open");
-    	VARIANT vtShow; vtShow.vt = VT_I4; vtShow.lVal = SW_SHOWNORMAL;
+	HRESULT hr = CoCreateInstance(CLSID_Shell, NULL, ctx, IID_IShellDispatch2, (void**)&pshl);
+	if (SUCCEEDED(hr))
+	{
+		BSTR bsFile = SysAllocString(szExe);
+		VARIANT vtArgs; vtArgs.vt = VT_BSTR; vtArgs.bstrVal = SysAllocString(pszDefCmd);
+		VARIANT vtDir; vtDir.vt = VT_BSTR; vtDir.bstrVal = SysAllocString(gpConEmu->ms_ConEmuExeDir);
+		VARIANT vtOper; vtOper.vt = VT_BSTR; vtOper.bstrVal = SysAllocString(L"open");
+		VARIANT vtShow; vtShow.vt = VT_I4; vtShow.lVal = SW_SHOWNORMAL;
 
 		hr = pshl->ShellExecute(bsFile, vtArgs, vtDir, vtOper, vtShow);
 		b = SUCCEEDED(hr);
@@ -1685,7 +1685,7 @@ wrap:
 		VariantClear(&vtOper);
 		SysFreeString(bsFile);
 
-    	pshl->Release();
+		pshl->Release();
 	}
 #endif
 
@@ -1794,9 +1794,9 @@ wrap:
 
 	HANDLE hTokenDesktop = NULL;
 	if (OpenProcessToken(hProcess,
-	                    TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY | TOKEN_DUPLICATE | TOKEN_IMPERSONATE |
+						TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY | TOKEN_DUPLICATE | TOKEN_IMPERSONATE |
 						TOKEN_ASSIGN_PRIMARY | TOKEN_EXECUTE | TOKEN_ADJUST_SESSIONID | TOKEN_READ | TOKEN_WRITE,
-	                    &hTokenDesktop))
+						&hTokenDesktop))
 	{
 		//CAdjustProcessToken Adjust;
 		//Adjust.Enable(2, SE_ASSIGNPRIMARYTOKEN_NAME, SE_INCREASE_QUOTA_NAME);
@@ -2780,15 +2780,15 @@ HRESULT _CreateShellLink(PCWSTR pszArguments, PCWSTR pszPrefix, PCWSTR pszTitle,
 		pszArguments = pszBuf;
 	}
 
-    IShellLink *psl;
-    HRESULT hr = CoCreateInstance(CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER, IID_IShellLink, (void**)&psl);
-    if (SUCCEEDED(hr))
-    {
-        // Determine our executable's file path so the task will execute this application
-        WCHAR szAppPath[MAX_PATH];
-        if (GetModuleFileName(NULL, szAppPath, ARRAYSIZE(szAppPath)))
-        {
-            hr = psl->SetPath(szAppPath);
+	IShellLink *psl;
+	HRESULT hr = CoCreateInstance(CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER, IID_IShellLink, (void**)&psl);
+	if (SUCCEEDED(hr))
+	{
+		// Determine our executable's file path so the task will execute this application
+		WCHAR szAppPath[MAX_PATH];
+		if (GetModuleFileName(NULL, szAppPath, ARRAYSIZE(szAppPath)))
+		{
+			hr = psl->SetPath(szAppPath);
 
 			// Иконка
 			CmdArg szTmp;
@@ -2846,46 +2846,46 @@ HRESULT _CreateShellLink(PCWSTR pszArguments, PCWSTR pszPrefix, PCWSTR pszTitle,
 			if (n && (n < countof(szAppPath)))
 				psl->SetWorkingDirectory(szAppPath);
 
-            if (SUCCEEDED(hr))
-            {
-                hr = psl->SetArguments(pszArguments);
-                if (SUCCEEDED(hr))
-                {
-                    // The title property is required on Jump List items provided as an IShellLink
-                    // instance.  This value is used as the display name in the Jump List.
-                    IPropertyStore *pps;
-                    hr = psl->QueryInterface(IID_PPV_ARGS(&pps));
-                    if (SUCCEEDED(hr))
-                    {
+			if (SUCCEEDED(hr))
+			{
+				hr = psl->SetArguments(pszArguments);
+				if (SUCCEEDED(hr))
+				{
+					// The title property is required on Jump List items provided as an IShellLink
+					// instance.  This value is used as the display name in the Jump List.
+					IPropertyStore *pps;
+					hr = psl->QueryInterface(IID_PPV_ARGS(&pps));
+					if (SUCCEEDED(hr))
+					{
 						PROPVARIANT propvar = {VT_BSTR};
 						//hr = InitPropVariantFromString(pszTitle, &propvar);
 						propvar.bstrVal = ::SysAllocString(pszTitle);
-                        hr = pps->SetValue(PKEY_Title, propvar);
-                        if (SUCCEEDED(hr))
-                        {
-                            hr = pps->Commit();
-                            if (SUCCEEDED(hr))
-                            {
-                                hr = psl->QueryInterface(IID_PPV_ARGS(ppsl));
-                            }
-                        }
+						hr = pps->SetValue(PKEY_Title, propvar);
+						if (SUCCEEDED(hr))
+						{
+							hr = pps->Commit();
+							if (SUCCEEDED(hr))
+							{
+								hr = psl->QueryInterface(IID_PPV_ARGS(ppsl));
+							}
+						}
 						//PropVariantClear(&propvar);
 						::SysFreeString(propvar.bstrVal);
-                        pps->Release();
-                    }
-                }
-            }
-        }
-        else
-        {
-            hr = HRESULT_FROM_WIN32(GetLastError());
-        }
-        psl->Release();
-    }
+						pps->Release();
+					}
+				}
+			}
+		}
+		else
+		{
+			hr = HRESULT_FROM_WIN32(GetLastError());
+		}
+		psl->Release();
+	}
 
-    if (pszBuf)
-    	free(pszBuf);
-    return hr;
+	if (pszBuf)
+		free(pszBuf);
+	return hr;
 }
 
 // The Tasks category of Jump Lists supports separator items.  These are simply IShellLink instances
@@ -2893,26 +2893,26 @@ HRESULT _CreateShellLink(PCWSTR pszArguments, PCWSTR pszPrefix, PCWSTR pszTitle,
 // ignored when this property is set.
 HRESULT _CreateSeparatorLink(IShellLink **ppsl)
 {
-    IPropertyStore *pps;
-    HRESULT hr = CoCreateInstance(CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER, IID_IPropertyStore, (void**)&pps);
-    if (SUCCEEDED(hr))
-    {
+	IPropertyStore *pps;
+	HRESULT hr = CoCreateInstance(CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER, IID_IPropertyStore, (void**)&pps);
+	if (SUCCEEDED(hr))
+	{
 		PROPVARIANT propvar = {VT_BOOL};
-        //hr = InitPropVariantFromBoolean(TRUE, &propvar);
+		//hr = InitPropVariantFromBoolean(TRUE, &propvar);
 		propvar.boolVal = VARIANT_TRUE;
-        hr = pps->SetValue(PKEY_AppUserModel_IsDestListSeparator, propvar);
-        if (SUCCEEDED(hr))
-        {
-            hr = pps->Commit();
-            if (SUCCEEDED(hr))
-            {
-                hr = pps->QueryInterface(IID_PPV_ARGS(ppsl));
-            }
-        }
-        //PropVariantClear(&propvar);
-        pps->Release();
-    }
-    return hr;
+		hr = pps->SetValue(PKEY_AppUserModel_IsDestListSeparator, propvar);
+		if (SUCCEEDED(hr))
+		{
+			hr = pps->Commit();
+			if (SUCCEEDED(hr))
+			{
+				hr = pps->QueryInterface(IID_PPV_ARGS(ppsl));
+			}
+		}
+		//PropVariantClear(&propvar);
+		pps->Release();
+	}
+	return hr;
 }
 #endif
 
@@ -2993,16 +2993,16 @@ bool UpdateWin7TaskList(bool bForce, bool bNoSuccMsg /*= false*/)
 
 	//bool lbRc = false;
 
-    // The visible categories are controlled via the ICustomDestinationList interface.  If not customized,
-    // applications will get the Recent category by default.
-    ICustomDestinationList *pcdl = NULL;
-    HRESULT hr = CoCreateInstance(CLSID_DestinationList, NULL, CLSCTX_INPROC_SERVER, IID_ICustomDestinationList, (void**)&pcdl);
-    if (FAILED(hr) || !pcdl)
-    {
-    	DisplayLastError(L"ICustomDestinationList create failed", (DWORD)hr);
-    }
-    else
-    {
+	// The visible categories are controlled via the ICustomDestinationList interface.  If not customized,
+	// applications will get the Recent category by default.
+	ICustomDestinationList *pcdl = NULL;
+	HRESULT hr = CoCreateInstance(CLSID_DestinationList, NULL, CLSCTX_INPROC_SERVER, IID_ICustomDestinationList, (void**)&pcdl);
+	if (FAILED(hr) || !pcdl)
+	{
+		DisplayLastError(L"ICustomDestinationList create failed", (DWORD)hr);
+	}
+	else
+	{
 		UINT cMinSlots = 0;
 		IObjectArray *poaRemoved = NULL;
 		hr = pcdl->BeginList(&cMinSlots, IID_PPV_ARGS(&poaRemoved));
@@ -3027,12 +3027,12 @@ bool UpdateWin7TaskList(bool bForce, bool bNoSuccMsg /*= false*/)
 				}
 
 				if ((nTasksCount + (pszCurCmdTitle ? 1 : 0)) >= cMinSlots)
-                	nHistoryCount = 0;
-                else
-                	nHistoryCount = cMinSlots - (nTasksCount + (pszCurCmdTitle ? 1 : 0));
+					nHistoryCount = 0;
+				else
+					nHistoryCount = cMinSlots - (nTasksCount + (pszCurCmdTitle ? 1 : 0));
 
-                if (nHistoryCount < countof(pszHistory))
-                	pszHistory[nHistoryCount] = NULL;
+				if (nHistoryCount < countof(pszHistory))
+					pszHistory[nHistoryCount] = NULL;
 			}
 
 			IObjectCollection *poc = NULL;
@@ -3174,15 +3174,15 @@ bool UpdateWin7TaskList(bool bForce, bool bNoSuccMsg /*= false*/)
 				poaRemoved->Release();
 		}
 
-        pcdl->Release();
-    }
+		pcdl->Release();
+	}
 
 
 
-    // В Win7 можно также показывать в JumpList "документы" (ярлыки, пути, и т.п.)
-    // Но это не то... Похоже, чтобы добавить такой "путь" в Recent/Frequent list
-    // нужно создавать физический файл (например, с расширением ".conemu"),
-    // и (!) регистрировать для него обработчиком conemu.exe
+	// В Win7 можно также показывать в JumpList "документы" (ярлыки, пути, и т.п.)
+	// Но это не то... Похоже, чтобы добавить такой "путь" в Recent/Frequent list
+	// нужно создавать физический файл (например, с расширением ".conemu"),
+	// и (!) регистрировать для него обработчиком conemu.exe
 	#if 0
 	//SHAddToRecentDocs(SHARD_PATHW, pszTemp);
 
@@ -3407,7 +3407,7 @@ void DebugVersionTest()
 	bool bWin6 = VerifyVersionInfoW(&osvi6, VER_MAJORVERSION | VER_MINORVERSION, dwlConditionMask);
 
 	OSVERSIONINFOW osv = {sizeof(OSVERSIONINFOW)};
-    GetVersionExW(&osv);
+	GetVersionExW(&osv);
 	bool bVerWin7 = ((osv.dwMajorVersion > 6) || ((osv.dwMajorVersion == 6) && (osv.dwMinorVersion >= 1)));
 	bool bVerWin6 = (osv.dwMajorVersion >= 6);
 
@@ -3747,11 +3747,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	//gpConEmu->setParent = false; // PictureView теперь идет через Wrapper
 	//if ((gOSVer.dwMajorVersion>6) || (gOSVer.dwMajorVersion==6 && gOSVer.dwMinorVersion>=1))
 	//{
-	//    setParentDisabled = true;
+	//	setParentDisabled = true;
 	//}
 	//if (gOSVer.dwMajorVersion>=6)
 	//{
-	//    CheckConIme();
+	//	CheckConIme();
 	//}
 	//gpSet->InitSettings();
 //------------------------------------------------------------------------
@@ -3777,7 +3777,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		TODO("Если первый (после запускаемого файла) аргумент начинается НЕ с '/' - завершить разбор параметров и не заменять '""' на пробелы");
 		//uint params; SplitCommandLine(curCommand, &params);
 		//if (params < 1) {
-		//    curCommand = NULL;
+		//	curCommand = NULL;
 		//}
 		// Parse parameters.
 		// Duplicated parameters are permitted, the first value is used.
@@ -4421,7 +4421,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	}
 
 	//if (setParentDisabled && (gpConEmu->setParent || gpConEmu->setParent2)) {
-	//    gpConEmu->setParent=false; gpConEmu->setParent2=false;
+	//	gpConEmu->setParent=false; gpConEmu->setParent2=false;
 	//}
 
 	if (psUnknown)
@@ -4630,11 +4630,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	//#pragma message("Win2k: CLEARTYPE_NATURAL_QUALITY")
 	//if (ClearTypePrm)
-	//    gpSet->LogFont.lfQuality = CLEARTYPE_NATURAL_QUALITY;
+	//	gpSet->LogFont.lfQuality = CLEARTYPE_NATURAL_QUALITY;
 	//if (FontPrm)
-	//    _tcscpy(gpSet->LogFont.lfFaceName, FontVal);
+	//	_tcscpy(gpSet->LogFont.lfFaceName, FontVal);
 	//if (SizePrm)
-	//    gpSet->LogFont.lfHeight = SizeVal;
+	//	gpSet->LogFont.lfHeight = SizeVal;
 	if (BufferHeightPrm)
 	{
 		gpSetCls->SetArgBufferHeight(BufferHeightVal);
@@ -4798,9 +4798,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	gpSetCls->RegisterFonts();
 	gpSetCls->InitFont(
-	    FontPrm ? FontVal : NULL,
-	    SizePrm ? SizeVal : -1,
-	    ClearTypePrm ? ClearTypeVal : -1
+		FontPrm ? FontVal : NULL,
+		SizePrm ? SizeVal : -1,
+		ClearTypePrm ? ClearTypeVal : -1
 	);
 
 	// Quake/NoQuake?
