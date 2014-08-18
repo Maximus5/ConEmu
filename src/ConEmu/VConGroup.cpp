@@ -2483,9 +2483,9 @@ bool CVConGroup::DoCloseAllVCon(bool bMsgConfirmed)
 	{
 		if (nDetachedCount > 0)
 		{
-			if (MessageBox(ghWnd, L"ConEmu is waiting for console attach.\nIt was started in 'Detached' mode.\nDo You want to cancel waiting?",
-			              gpConEmu->GetDefaultTitle(), MB_YESNO|MB_ICONQUESTION) == IDYES)
-        	{
+			if (MsgBox(L"ConEmu is waiting for console attach.\nIt was started in 'Detached' mode.\nDo You want to cancel waiting?",
+			              MB_YESNO|MB_ICONQUESTION, gpConEmu->GetDefaultTitle(), ghWnd) == IDYES)
+			{
 				for (int i = (int)(countof(gp_VCon)-1); i >= 0; i--)
 				{
 					if (gp_VCon[i] && gp_VCon[i]->RCon())
