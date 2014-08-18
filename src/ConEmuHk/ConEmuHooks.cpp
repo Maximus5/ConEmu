@@ -3462,7 +3462,7 @@ BOOL WINAPI OnSetConsoleOutputCP(UINT wCodePageID)
 }
 
 
-void OnReadConsoleStart(BOOL bUnicode, HANDLE hConsoleInput, LPVOID lpBuffer, DWORD nNumberOfCharsToRead, LPDWORD lpNumberOfCharsRead, LPVOID pInputControl)
+void OnReadConsoleStart(bool bUnicode, HANDLE hConsoleInput, LPVOID lpBuffer, DWORD nNumberOfCharsToRead, LPDWORD lpNumberOfCharsRead, LPVOID pInputControl)
 {
 	if (gReadConsoleInfo.InReadConsoleTID)
 		gReadConsoleInfo.LastReadConsoleTID = gReadConsoleInfo.InReadConsoleTID;
@@ -3507,7 +3507,7 @@ void OnReadConsoleStart(BOOL bUnicode, HANDLE hConsoleInput, LPVOID lpBuffer, DW
 	PreReadConsoleInput(bUnicode, false);
 }
 
-void OnReadConsoleEnd(BOOL bSucceeded, BOOL bUnicode, HANDLE hConsoleInput, LPVOID lpBuffer, DWORD nNumberOfCharsToRead, LPDWORD lpNumberOfCharsRead, LPVOID pInputControl)
+void OnReadConsoleEnd(BOOL bSucceeded, bool bUnicode, HANDLE hConsoleInput, LPVOID lpBuffer, DWORD nNumberOfCharsToRead, LPDWORD lpNumberOfCharsRead, LPVOID pInputControl)
 {
 	if (bSucceeded && !gbWasSucceededInRead && lpNumberOfCharsRead && *lpNumberOfCharsRead)
 		gbWasSucceededInRead = TRUE;
@@ -4059,7 +4059,7 @@ BOOL WINAPI OnReadFile(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead
 	}
 
 	if (bConIn)
-		OnReadConsoleStart(FALSE, hFile, lpBuffer, nNumberOfBytesToRead, lpNumberOfBytesRead, NULL);
+		OnReadConsoleStart(false, hFile, lpBuffer, nNumberOfBytesToRead, lpNumberOfBytesRead, NULL);
 
 	SetLastError(nPrevErr);
 	lbRc = F(ReadFile)(hFile, lpBuffer, nNumberOfBytesToRead, lpNumberOfBytesRead, lpOverlapped);
@@ -4067,7 +4067,7 @@ BOOL WINAPI OnReadFile(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead
 
 	if (bConIn)
 	{
-		OnReadConsoleEnd(lbRc, FALSE, hFile, lpBuffer, nNumberOfBytesToRead, lpNumberOfBytesRead, NULL);
+		OnReadConsoleEnd(lbRc, false, hFile, lpBuffer, nNumberOfBytesToRead, lpNumberOfBytesRead, NULL);
 
 		#ifdef _DEBUG
 		// Only for input_bug search purposes in Debug builds
@@ -4100,12 +4100,12 @@ BOOL WINAPI OnReadConsoleA(HANDLE hConsoleInput, LPVOID lpBuffer, DWORD nNumberO
 	ORIGINAL(ReadConsoleA);
 	BOOL lbRc = FALSE;
 
-	OnReadConsoleStart(FALSE, hConsoleInput, lpBuffer, nNumberOfCharsToRead, lpNumberOfCharsRead, pInputControl);
+	OnReadConsoleStart(false, hConsoleInput, lpBuffer, nNumberOfCharsToRead, lpNumberOfCharsRead, pInputControl);
 
 	lbRc = F(ReadConsoleA)(hConsoleInput, lpBuffer, nNumberOfCharsToRead, lpNumberOfCharsRead, pInputControl);
 	DWORD nErr = GetLastError();
 
-	OnReadConsoleEnd(lbRc, FALSE, hConsoleInput, lpBuffer, nNumberOfCharsToRead, lpNumberOfCharsRead, pInputControl);
+	OnReadConsoleEnd(lbRc, false, hConsoleInput, lpBuffer, nNumberOfCharsToRead, lpNumberOfCharsRead, pInputControl);
 	SetLastError(nErr);
 
 	UNREFERENCED_PARAMETER(bMainThread);
@@ -4345,14 +4345,14 @@ BOOL WINAPI OnReadConsoleW(HANDLE hConsoleInput, LPVOID lpBuffer, DWORD nNumberO
 	DWORD nErr = GetLastError();
 	DWORD nStartTick = GetTickCount(), nEndTick = 0;
 
-	OnReadConsoleStart(TRUE, hConsoleInput, lpBuffer, nNumberOfCharsToRead, lpNumberOfCharsRead, pInputControl);
+	OnReadConsoleStart(true, hConsoleInput, lpBuffer, nNumberOfCharsToRead, lpNumberOfCharsRead, pInputControl);
 
 	lbRc = F(ReadConsoleW)(hConsoleInput, lpBuffer, nNumberOfCharsToRead, lpNumberOfCharsRead, pInputControl);
 	nErr = GetLastError();
 	// Debug purposes
 	nEndTick = GetTickCount();
 
-	OnReadConsoleEnd(lbRc, TRUE, hConsoleInput, lpBuffer, nNumberOfCharsToRead, lpNumberOfCharsRead, pInputControl);
+	OnReadConsoleEnd(lbRc, true, hConsoleInput, lpBuffer, nNumberOfCharsToRead, lpNumberOfCharsRead, pInputControl);
 
 	// cd \\server\share\dir\...
 	if (gbAllowUncPaths && lpBuffer && lpNumberOfCharsRead && *lpNumberOfCharsRead
