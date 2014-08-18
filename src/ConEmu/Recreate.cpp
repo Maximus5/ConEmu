@@ -48,6 +48,7 @@ CRecreateDlg::CRecreateDlg()
 	, mpsz_CurCmd(NULL)
 	, mpsz_SysCmd(NULL)
 	, mpsz_DefDir(NULL)
+	, mp_DpiAware(NULL)
 {
 	ms_CurUser[0] = 0;
 }
@@ -108,6 +109,8 @@ int CRecreateDlg::RecreateDlg(RConStartArgs* apArgs)
 	InitVars();
 
 	bool bPrev = gpConEmu->SetSkipOnFocus(true);
+	if (!mp_DpiAware)
+		mp_DpiAware = new CDpiForDialog();
 	// Modal dialog (CreateDialog)
 	int nRc = DialogBoxParam(g_hInstance, MAKEINTRESOURCE(IDD_RESTART), mh_Parent, RecreateDlgProc, (LPARAM)this);
 	UNREFERENCED_PARAMETER(nRc);
@@ -137,6 +140,7 @@ void CRecreateDlg::Close()
 		}
 		mh_Dlg = NULL;
 	}
+	SafeDelete(mp_DpiAware);
 }
 
 INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam)
@@ -370,6 +374,12 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 					pt.x-(rcBox2.right-rcBox2.left), pt.y, 0,0, SWP_NOSIZE);
 			}
 
+			// Dpi aware processing at the end of sequence
+			// because we done some manual control reposition
+			if (pDlg->mp_DpiAware)
+			{
+				pDlg->mp_DpiAware->Attach(hDlg, ghWnd);
+			}
 
 			// Ensure, it will be "on screen"
 			RECT rect; GetWindowRect(hDlg, &rect);
@@ -749,8 +759,17 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 			}
 
 			break;
+
+		case WM_DESTROY:
+			if (pDlg->mp_DpiAware)
+				pDlg->mp_DpiAware->Detach();
+			break;
+
 		default:
-			return 0;
+			if (pDlg->mp_DpiAware && pDlg->mp_DpiAware->ProcessDpiMessages(hDlg, messg, wParam, lParam))
+			{
+				return TRUE;
+			}
 	}
 
 	return 0;

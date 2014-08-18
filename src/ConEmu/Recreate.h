@@ -28,6 +28,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+class CDpiForDialog;
+
 class CRecreateDlg
 {
 protected:
@@ -40,6 +42,8 @@ protected:
 	wchar_t* mpsz_CurCmd;
 	wchar_t* mpsz_SysCmd;
 	wchar_t* mpsz_DefDir;
+	// dpi support
+	CDpiForDialog* mp_DpiAware;
 	// Buffer
 	wchar_t ms_CurUser[MAX_PATH*2+1];
 protected:
