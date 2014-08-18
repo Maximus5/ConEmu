@@ -264,6 +264,8 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 	mb_WasMouseSelection = false;
 	mp_RenameDpiAware = NULL;
 
+	InitializeCriticalSection(&mcs_CurWorkDir);
+
 	mn_TextColorIdx = 7; mn_BackColorIdx = 0;
 	mn_PopTextColorIdx = 5; mn_PopBackColorIdx = 15;
 
@@ -431,6 +433,8 @@ CRealConsole::~CRealConsole()
 	CloseColorMapping(); // Colorer data
 
 	SafeDelete(mp_RenameDpiAware);
+
+	DeleteCriticalSection(&mcs_CurWorkDir);
 
 	//SafeFree(mpsz_CmdBuffer);
 
@@ -3804,6 +3808,8 @@ BOOL CRealConsole::StartProcessInt(LPCWSTR& lpszCmd, wchar_t*& psCurCmd, LPCWSTR
 		ConHostSearchPrepare();
 
 	nCreateBegin = GetTickCount();
+
+	ms_CurWorkDir.Set(lpszWorkDir);
 
 	// Create process or RunAs
 	lbRc = CreateOrRunAs(this, m_Args, psCurCmd, lpszWorkDir, si, pi, mp_sei, dwLastError);
@@ -12812,10 +12818,40 @@ LPCWSTR CRealConsole::GetConsoleCurDir(CmdArg& szDir)
 		return NULL;
 	}
 
-	WARNING("!!! Нужно переделеать! Пытаться получать реальную папку из консоли !!!");
-	LPCWSTR pszWordDir = gpConEmu->WorkDir(m_Args.pszStartupDir);
-	szDir.Set(pszWordDir);
+	MSectionLockSimple CS; CS.Lock(&mcs_CurWorkDir);
+	if (!ms_CurWorkDir.IsEmpty())
+	{
+		szDir.Set(ms_CurWorkDir);
+		goto wrap;
+	}
+	CS.Unlock();
+
+	szDir.Set(gpConEmu->WorkDir(m_Args.pszStartupDir));
+wrap:
 	return szDir.IsEmpty() ? NULL : (LPCWSTR)szDir;
+}
+
+void CRealConsole::StoreCurWorkDir(LPCWSTR asNewCurDir)
+{
+	if (!asNewCurDir || !*asNewCurDir)
+		return;
+	if (IsBadStringPtr(asNewCurDir, MAX_PATH))
+		return;
+
+	wchar_t* pszWinPath = MakeWinPath(asNewCurDir);
+	if (!pszWinPath)
+		return;
+
+	MSectionLockSimple CS; CS.Lock(&mcs_CurWorkDir);
+	ms_CurWorkDir.Set(pszWinPath);
+	CS.Unlock();
+	SafeFree(pszWinPath);
+
+	LPCWSTR pszTabTempl = isFar() ? gpSet->szTabPanels : gpSet->szTabConsole;
+	if (wcsstr(pszTabTempl, L"%d") || wcsstr(pszTabTempl, L"%D"))
+	{
+		gpConEmu->mp_TabBar->Update();
+	}
 }
 
 //void CRealConsole::GetConsoleCursorPos(COORD *pcr)

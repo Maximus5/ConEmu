@@ -188,6 +188,7 @@ InQueue gInQueue = {};
 HANDLE  ghConsoleCursorChanged = NULL;
 /* ************ Globals for Far Hooks ************ */
 
+void PreReadConsoleInput(bool abUnicode, bool abPeek);
 
 /* ************ Globals for cmd.exe/clink ************ */
 bool     gbIsCmdProcess = false;
@@ -199,6 +200,7 @@ int      gnCmdInitialized = 0; // 0 - Not already, 1 - OK, -1 - Fail
 bool     gbAllowClinkUsage = false;
 bool     gbAllowUncPaths = false;
 wchar_t* gszClinkCmdLine = NULL;
+bool     gbCurDirChanged = false;
 /* ************ Globals for cmd.exe/clink ************ */
 
 /* ************ Globals for powershell ************ */
@@ -328,8 +330,8 @@ BOOL WINAPI OnScreenToClient(HWND hWnd, LPPOINT lpPoint);
 BOOL WINAPI OnCreateProcessA(LPCSTR lpApplicationName,  LPSTR lpCommandLine,  LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment, LPCSTR lpCurrentDirectory,  LPSTARTUPINFOA lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation);
 BOOL WINAPI OnCreateProcessW(LPCWSTR lpApplicationName, LPWSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment, LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation);
 UINT WINAPI OnWinExec(LPCSTR lpCmdLine, UINT uCmdShow);
-//BOOL WINAPI OnSetCurrentDirectoryA(LPCSTR lpPathName);
-//BOOL WINAPI OnSetCurrentDirectoryW(LPCWSTR lpPathName);
+BOOL WINAPI OnSetCurrentDirectoryA(LPCSTR lpPathName);
+BOOL WINAPI OnSetCurrentDirectoryW(LPCWSTR lpPathName);
 BOOL WINAPI OnTerminateProcess(HANDLE hProcess, UINT uExitCode);
 BOOL WINAPI OnTerminateThread(HANDLE hThread, DWORD dwExitCode);
 
@@ -518,8 +520,8 @@ bool InitHooksCommon()
 		{(void*)OnUnmapViewOfFile,		"UnmapViewOfFile",		kernel32},
 		{(void*)OnCloseHandle,			"CloseHandle",			kernel32},
 		{(void*)OnSetThreadContext,		"SetThreadContext",		kernel32},
-		//{(void*)OnSetCurrentDirectoryA, "SetCurrentDirectoryA", kernel32},
-		//{(void*)OnSetCurrentDirectoryW, "SetCurrentDirectoryW", kernel32},
+		{(void*)OnSetCurrentDirectoryA, "SetCurrentDirectoryA", kernel32},
+		{(void*)OnSetCurrentDirectoryW, "SetCurrentDirectoryW", kernel32},
 		/* ************************ */
 		#ifndef HOOKS_COMMON_PROCESS_ONLY
 		{(void*)OnGetConsoleAliasesW,	"GetConsoleAliasesW",	kernel32},
@@ -1498,7 +1500,6 @@ BOOL WINAPI OnCloseHandle(HANDLE hObject)
 	return lbRc;
 }
 
-#if 0
 BOOL WINAPI OnSetCurrentDirectoryA(LPCSTR lpPathName)
 {
 	typedef BOOL (WINAPI* OnSetCurrentDirectoryA_t)(LPCSTR lpPathName);
@@ -1507,6 +1508,8 @@ BOOL WINAPI OnSetCurrentDirectoryA(LPCSTR lpPathName)
 	BOOL lbRc = FALSE;
 
 	lbRc = F(SetCurrentDirectoryA)(lpPathName);
+
+	gbCurDirChanged |= (lbRc != FALSE);
 
 	return lbRc;
 }
@@ -1520,9 +1523,10 @@ BOOL WINAPI OnSetCurrentDirectoryW(LPCWSTR lpPathName)
 
 	lbRc = F(SetCurrentDirectoryW)(lpPathName);
 
+	gbCurDirChanged |= (lbRc != FALSE);
+
 	return lbRc;
 }
-#endif
 
 BOOL WINAPI OnSetThreadContext(HANDLE hThread, CONST CONTEXT *lpContext)
 {
@@ -3500,10 +3504,7 @@ void OnReadConsoleStart(BOOL bUnicode, HANDLE hConsoleInput, LPVOID lpBuffer, DW
 		gReadConsoleInfo.InReadConsoleTID = 0;
 	}
 
-	if (gbPowerShellMonitorProgress)
-	{
-		CheckPowershellProgressPresence();
-	}
+	PreReadConsoleInput(bUnicode, false);
 }
 
 void OnReadConsoleEnd(BOOL bSucceeded, BOOL bUnicode, HANDLE hConsoleInput, LPVOID lpBuffer, DWORD nNumberOfCharsToRead, LPDWORD lpNumberOfCharsRead, LPVOID pInputControl)
@@ -4677,6 +4678,28 @@ void OnPeekReadConsoleInput(char acPeekRead/*'P'/'R'*/, char acUnicode/*'A'/'W'*
 
 }
 
+void PreReadConsoleInput(bool abUnicode, bool abPeek)
+{
+	if (gbPowerShellMonitorProgress)
+	{
+		CheckPowershellProgressPresence();
+	}
+
+	if (gbCurDirChanged)
+	{
+		gbCurDirChanged = false;
+
+		if (ghConEmuWndDC)
+		{
+			CmdArg szDir;
+			if (GetDirectory(szDir) > 0)
+			{
+				SendCurrentDirectory(ghConWnd, szDir);
+			}
+		}
+	}
+}
+
 #ifdef _DEBUG
 void PreWriteConsoleInput(BOOL abUnicode, const INPUT_RECORD *lpBuffer, DWORD nLength)
 {
@@ -4720,6 +4743,8 @@ BOOL WINAPI OnPeekConsoleInputA(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DW
 		if (!ph->PreCallBack(&args))
 			return lbRc;
 	}
+
+	PreReadConsoleInput(false, true);
 
 	//#ifdef USE_INPUT_SEMAPHORE
 	//DWORD nSemaphore = ghConInSemaphore ? WaitForSingleObject(ghConInSemaphore, INSEMTIMEOUT_READ) : 1;
@@ -4767,10 +4792,7 @@ BOOL WINAPI OnPeekConsoleInputW(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DW
 			return lbRc;
 	}
 
-	if (gbPowerShellMonitorProgress)
-	{
-		CheckPowershellProgressPresence();
-	}
+	PreReadConsoleInput(true, true);
 
 	//#ifdef USE_INPUT_SEMAPHORE
 	//DWORD nSemaphore = ghConInSemaphore ? WaitForSingleObject(ghConInSemaphore, INSEMTIMEOUT_READ) : 1;
@@ -4859,6 +4881,8 @@ BOOL WINAPI OnReadConsoleInputA(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DW
 			return lbRc;
 	}
 
+	PreReadConsoleInput(false, false);
+
 	//#ifdef USE_INPUT_SEMAPHORE
 	//DWORD nSemaphore = ghConInSemaphore ? WaitForSingleObject(ghConInSemaphore, INSEMTIMEOUT_READ) : 1;
 	//_ASSERTE(nSemaphore<=1);
@@ -4905,10 +4929,7 @@ BOOL WINAPI OnReadConsoleInputW(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DW
 			return lbRc;
 	}
 
-	if (gbPowerShellMonitorProgress)
-	{
-		CheckPowershellProgressPresence();
-	}
+	PreReadConsoleInput(true, false);
 
 	//#ifdef USE_INPUT_SEMAPHORE
 	//DWORD nSemaphore = ghConInSemaphore ? WaitForSingleObject(ghConInSemaphore, INSEMTIMEOUT_READ) : 1;

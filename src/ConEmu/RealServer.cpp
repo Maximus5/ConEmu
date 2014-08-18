@@ -1552,6 +1552,10 @@ BOOL CRealServer::ServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &
 	case CECMD_PORTABLESTART:
 		pOut = pRSrv->cmdPortableStarted(pInst, pIn, nDataSize);
 		break;
+	case CECMD_STORECURDIR:
+		pRSrv->mp_RCon->StoreCurWorkDir((wchar_t*)pIn->wData);
+		pOut = (CESERVER_REQ*)INVALID_HANDLE_VALUE;
+		break;
 	//else if (pIn->hdr.nCmd == CECMD_ASSERT)
 	//	pOut = cmdAssert(pInst, pIn, nDataSize);
 	default:

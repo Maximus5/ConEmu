@@ -417,6 +417,7 @@ const CECMD
 	CECMD_UPDCONMAPHDR   = 76, // AltServer не может менять CESERVER_CONSOLE_MAPPING_HDR во избежание конфликтов. Это делает только RM_MAINSERVER (req.ConInfo)
 	CECMD_SETCONSCRBUF   = 77, // CESERVER_REQ_SETCONSCRBUF - temporarily block active server reading thread to change console buffer size
 	CECMD_PORTABLESTART  = 78, // CESERVER_REQ_PORTABLESTARTED - used when XxxPortable.exe starts Xxx.exe (paf - kitty, tcc, etc.)
+	CECMD_STORECURDIR    = 79, // wData[] == GetCurrentDirectory()
 /** Команды FAR плагина **/
 	CMD_FIRST_FAR_CMD    = 200,
 	CMD_DRAGFROM         = 200,

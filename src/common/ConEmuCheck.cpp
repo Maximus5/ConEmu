@@ -983,6 +983,20 @@ void ExecuteFreeResult(CESERVER_REQ* &pOut)
 	free(p);
 }
 
+void SendCurrentDirectory(HWND hConWnd, LPCWSTR asDirectory)
+{
+	int iLen = lstrlen(asDirectory);
+	size_t cbMax = sizeof(CESERVER_REQ_HDR) + (iLen + 1) * sizeof(*asDirectory);
+	CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_STORECURDIR, cbMax);
+	if (pIn)
+	{
+		lstrcpyn((wchar_t*)pIn->wData, asDirectory, iLen+1);
+		CESERVER_REQ* pOut = ExecuteGuiCmd(hConWnd, pIn, hConWnd, TRUE);
+		ExecuteFreeResult(pOut);
+	}
+	ExecuteFreeResult(pIn);
+}
+
 HWND myGetConsoleWindow()
 {
 	HWND hConWnd = NULL;

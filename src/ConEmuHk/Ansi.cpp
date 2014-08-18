@@ -1627,6 +1627,23 @@ void CEAnsi::DoPrintEnv(LPCWSTR asCmd, INT_PTR cchLen)
 	}
 }
 
+// ESC ] 9 ; 9 ; "cwd" ST        Inform ConEmu about shell current working directory
+void CEAnsi::DoSendCWD(LPCWSTR asCmd, INT_PTR cchLen)
+{
+	// We need zero-terminated string
+	wchar_t* pszCWD = (wchar_t*)malloc((cchLen + 1)*sizeof(*asCmd));
+
+	if (pszCWD)
+	{
+		EscCopyCtrlString(pszCWD, asCmd, cchLen);
+
+		SendCurrentDirectory(ghConWnd, pszCWD);
+
+		free(pszCWD);
+	}
+}
+
+
 BOOL CEAnsi::ReportString(LPCWSTR asRet)
 {
 	if (!asRet || !*asRet)
@@ -2555,6 +2572,7 @@ void CEAnsi::WriteAnsiCode_OSC(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsole
 		// ESC ] 9 ; 6 ; "txt" ST        Execute GuiMacro. Set EnvVar "ConEmuMacroResult" on exit.
 		// ESC ] 9 ; 7 ; "cmd" ST        Run some process with arguments
 		// ESC ] 9 ; 8 ; "env" ST        Output value of environment variable
+		// ESC ] 9 ; 9 ; "cwd" ST        Inform ConEmu about shell current working directory
 		// -- You may specify timeout _s_ in seconds. - �� ��������
 		if (Code.ArgSZ[1] == L';')
 		{
@@ -2669,6 +2687,10 @@ void CEAnsi::WriteAnsiCode_OSC(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsole
 			else if (Code.ArgSZ[2] == L'8' && Code.ArgSZ[3] == L';')
 			{
 				DoPrintEnv(Code.ArgSZ+4, Code.cchArgSZ - 4);
+			}
+			else if (Code.ArgSZ[2] == L'9' && Code.ArgSZ[3] == L';')
+			{
+				DoSendCWD(Code.ArgSZ+4, Code.cchArgSZ - 4);
 			}
 		}
 		break;

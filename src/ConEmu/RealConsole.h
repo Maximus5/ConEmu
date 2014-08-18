@@ -709,6 +709,9 @@ class CRealConsole
 		BOOL mb_FullRetrieveNeeded; //, mb_Detached;
 		RConStartArgs m_Args;
 		CmdArg ms_DefTitle;
+		CmdArg ms_CurWorkDir;
+		CRITICAL_SECTION mcs_CurWorkDir;
+		void StoreCurWorkDir(LPCWSTR asNewCurDir);
 		//wchar_t ms_ProfilePathTemp[MAX_PATH+1]; -- commented code
 		bool mb_WasStartDetached;
 		wchar_t ms_RootProcessName[MAX_PATH];

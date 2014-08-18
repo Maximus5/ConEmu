@@ -2696,6 +2696,7 @@ enum ConEmuExecAction
 	ea_ErrorLevel, // return specified errorlevel
 	ea_OutEcho,    // echo "string" with ANSI processing
 	ea_OutType,    // print file contents with ANSI processing
+	ea_StoreCWD,   // store current console work dir
 };
 
 int DoInjectHooks(LPWSTR asCmdArg)
@@ -3756,6 +3757,23 @@ wrap:
 	return iRc;
 }
 
+int DoStoreCWD(LPCWSTR asCmdArg)
+{
+	int iRc = 1;
+	CmdArg szDir;
+
+	if ((NextArg(&asCmdArg, szDir) != 0) || szDir.IsEmpty())
+	{
+		if (GetDirectory(szDir) <= 0)
+			goto wrap;
+	}
+
+	SendCurrentDirectory(ghConWnd, szDir);
+	iRc = 0;
+wrap:
+	return iRc;
+}
+
 int DoExecAction(ConEmuExecAction eExecAction, LPCWSTR asCmdArg /* rest of cmdline */, HWND hMacroInstance = NULL)
 {
 	int iRc = CERR_CARGUMENT;
@@ -3816,6 +3834,11 @@ int DoExecAction(ConEmuExecAction eExecAction, LPCWSTR asCmdArg /* rest of cmdli
 	case ea_OutType:
 		{
 			iRc = DoOutput(eExecAction, asCmdArg);
+			break;
+		}
+	case ea_StoreCWD:
+		{
+			iRc = DoStoreCWD(asCmdArg);
 			break;
 		}
 	default:
@@ -4234,6 +4257,11 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 			// Все что в lsCmdLine - выполнить в Gui
 			ArgGuiMacro(szArg, hMacroInstance);
 			eExecAction = ea_GuiMacro;
+			break;
+		}
+		else if (lstrcmpi(szArg, L"/STORECWD") == 0)
+		{
+			eExecAction = ea_StoreCWD;
 			break;
 		}
 		else if (lstrcmpni(szArg, L"/EXPORT", 7)==0)
