@@ -313,7 +313,7 @@ void CTabBarClass::DeleteItem(int I)
 
 /*char CTabBarClass::FarTabShortcut(int tabIndex)
 {
-    return tabIndex < 10 ? '0' + tabIndex : 'A' + tabIndex - 10;
+	return tabIndex < 10 ? '0' + tabIndex : 'A' + tabIndex - 10;
 }*/
 
 bool CTabBarClass::NeedPostUpdate()
@@ -734,7 +734,7 @@ void CTabBarClass::Update(BOOL abPosted/*=FALSE*/)
 	}
 
 
-    // Validation?
+	// Validation?
 	#ifdef _DEBUG
 	if (this != gpConEmu->mp_TabBar)
 	{

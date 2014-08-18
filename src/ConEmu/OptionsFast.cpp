@@ -445,7 +445,7 @@ void CheckOptionsFast(LPCWSTR asTitle, SettingsLoadedFlags slfFlags)
 
 checkDefaults:
 	// Always check, if task list is empty - fill with defaults
-	CreateDefaultTasks(); 
+	CreateDefaultTasks();
 	// Some other settings, which must be filled with predefined values
 	if (slfFlags & slf_DefaultSettings)
 	{
@@ -569,7 +569,7 @@ void CreateDefaultTasks(bool bForceAdd /*= false*/)
 		LPWSTR  pszFound;
 	} FindTasks[] = {
 		// Far Manager
-		// -- {L"Far Manager",         L"%ConEmuDir%\\far.exe"}, 
+		// -- {L"Far Manager",         L"%ConEmuDir%\\far.exe"},
 		{L"Far Manager",         L"far.exe"},
 
 		// TakeCommand

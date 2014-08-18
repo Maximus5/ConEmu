@@ -54,7 +54,7 @@ public:
 		m_Locks.Set(GetCurrentThreadId(), 1);
 		#endif
 	};
-	
+
 	void AddRef()
 	{
 		if (!this)
@@ -62,7 +62,7 @@ public:
 			_ASSERTE(this!=NULL);
 			return;
 		}
-	
+
 		_ASSERTE(mn_RefCount != REF_FINALIZE);
 		InterlockedIncrement(&mn_RefCount);
 
@@ -87,7 +87,7 @@ public:
 			return 0;
 		}
 		InterlockedDecrement(&mn_RefCount);
-	
+
 		#ifdef _DEBUG
 		DWORD nTID = GetCurrentThreadId(); LONG nLocks = 0;
 		if (m_Locks.Get(nTID, &nLocks))

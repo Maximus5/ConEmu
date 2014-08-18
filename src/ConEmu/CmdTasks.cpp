@@ -44,8 +44,8 @@ void CommandTasks::FreePtr()
 	cchGuiArgMax = 0;
 	SafeFree(pszCommands);
 	cchCmdMax = 0;
-    CommandTasks* p = this;
-    SafeFree(p);
+	CommandTasks* p = this;
+	SafeFree(p);
 }
 
 void CommandTasks::SetName(LPCWSTR asName, int anCmdIndex)

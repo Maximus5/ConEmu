@@ -57,7 +57,7 @@ public:
 	int RecreateDlg(RConStartArgs* apArgs);
 	HWND GetHWND();
 	void Close();
-	
+
 	static INT_PTR CALLBACK RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam);
 	static int CALLBACK BrowseCallbackProc(HWND hwnd, UINT uMsg, LPARAM lParam, LPARAM lpData);
 };

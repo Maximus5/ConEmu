@@ -305,8 +305,8 @@ class CRealConsole
 		{
 			cso_Default             = 0x0000,
 			cso_ResetOnConsoleReady = 0x0001,
-            cso_DontUpdate          = 0x0002, // Не нужно обновлять статусную строку сразу
-            cso_Critical            = 0x0004,
+			cso_DontUpdate          = 0x0002, // Не нужно обновлять статусную строку сразу
+			cso_Critical            = 0x0004,
 		};
 		LPCWSTR GetConStatus();
 		void SetConStatus(LPCWSTR asStatus, DWORD/*enum ConStatusOption*/ Options = cso_Default);

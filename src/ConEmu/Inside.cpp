@@ -79,7 +79,7 @@ bool CConEmuInside::InitInside(bool bRunAsAdmin, bool bSyncDir, LPCWSTR pszSyncD
 	pInside->mh_InsideParentWND = hParentWnd;
 
 	pInside->m_InsideIntegration = (hParentWnd == NULL) ? ii_Auto : ii_Simple;
-	
+
 	pInside->mb_InsideIntegrationShift = bRunAsAdmin /*isPressed(VK_SHIFT)*/;
 
 	if (bSyncDir)
@@ -349,19 +349,19 @@ HWND CConEmuInside::InsideFindParent()
 	}
 
 
-    HWND hExistConEmu;
-    if ((hExistConEmu = InsideFindConEmu(mh_InsideParentRoot)) != NULL)
-    {
-    	_ASSERTE(FALSE && "Continue to create tab in existing instance");
-    	// Если в проводнике уже есть ConEmu - открыть в нем новую вкладку
-    	gpSetCls->SingleInstanceShowHide = sih_None;
-    	LPCWSTR pszCmdLine = GetCommandLine();
-    	LPCWSTR pszCmd = StrStrI(pszCmdLine, L" /cmd ");
-    	gpConEmu->RunSingleInstance(hExistConEmu, pszCmd ? (pszCmd + 6) : NULL);
+	HWND hExistConEmu;
+	if ((hExistConEmu = InsideFindConEmu(mh_InsideParentRoot)) != NULL)
+	{
+		_ASSERTE(FALSE && "Continue to create tab in existing instance");
+		// Если в проводнике уже есть ConEmu - открыть в нем новую вкладку
+		gpSetCls->SingleInstanceShowHide = sih_None;
+		LPCWSTR pszCmdLine = GetCommandLine();
+		LPCWSTR pszCmd = StrStrI(pszCmdLine, L" /cmd ");
+		gpConEmu->RunSingleInstance(hExistConEmu, pszCmd ? (pszCmd + 6) : NULL);
 
 		mh_InsideParentWND = INSIDE_PARENT_NOT_FOUND;
 		return mh_InsideParentWND; // Закрыться!
-    }
+	}
 
 	// Теперь нужно найти дочерние окна
 	// 1. в которое будем внедряться
@@ -681,7 +681,7 @@ void CConEmuInside::InsideParentMonitor()
 void CConEmuInside::InsideUpdateDir()
 {
 	CVConGuard VCon;
-	
+
 	if (mh_InsideParentPath && IsWindow(mh_InsideParentPath) && (gpConEmu->GetActiveVCon(&VCon) >= 0) && VCon->RCon())
 	{
 		wchar_t szCurText[512] = {};
@@ -700,35 +700,35 @@ void CConEmuInside::InsideUpdateDir()
 
 			LPCWSTR pszPath = NULL;
 			// Если тут уже путь - то префикс не отрезать
-            if ((szCurText[0] == L'\\' && szCurText[1] == L'\\' && szCurText[2]) // сетевой путь
-            	|| (szCurText[0] && szCurText[1] == L':' && szCurText[2] == L'\\' /*&& szCurText[3]*/)) // Путь через букву диска
-        	{
-        		pszPath = szCurText;
-        	}
-        	else
-        	{
-        		// Иначе - отрезать префикс. На английской винде это "Address: D:\dir1\dir2"
+			if ((szCurText[0] == L'\\' && szCurText[1] == L'\\' && szCurText[2]) // сетевой путь
+				|| (szCurText[0] && szCurText[1] == L':' && szCurText[2] == L'\\' /*&& szCurText[3]*/)) // Путь через букву диска
+			{
+				pszPath = szCurText;
+			}
+			else
+			{
+				// Иначе - отрезать префикс. На английской винде это "Address: D:\dir1\dir2"
 				pszPath = wcschr(szCurText, L':');
-        		if (pszPath)
-        			pszPath = SkipNonPrintable(pszPath+1);
-        	}
+				if (pszPath)
+					pszPath = SkipNonPrintable(pszPath+1);
+			}
 
-        	// Если успешно - сравниваем с ms_InsideParentPath
-        	if (pszPath && *pszPath && (lstrcmpi(ms_InsideParentPath, pszPath) != 0))
-        	{
-        		int nLen = lstrlen(pszPath);
-        		if (nLen >= (int)countof(ms_InsideParentPath))
-        		{
-        			_ASSERTE((nLen<countof(ms_InsideParentPath)) && "Too long path?");
-        		}
-        		else //if (VCon->RCon())
-        		{
-        			// Запомнить для сравнения
-        			lstrcpyn(ms_InsideParentPath, pszPath, countof(ms_InsideParentPath));
-        			// Подготовить команду для выполнения в Shell
-        			VCon->RCon()->PostPromptCmd(true, pszPath);
-        		}
-        	}
+			// Если успешно - сравниваем с ms_InsideParentPath
+			if (pszPath && *pszPath && (lstrcmpi(ms_InsideParentPath, pszPath) != 0))
+			{
+				int nLen = lstrlen(pszPath);
+				if (nLen >= (int)countof(ms_InsideParentPath))
+				{
+					_ASSERTE((nLen<countof(ms_InsideParentPath)) && "Too long path?");
+				}
+				else //if (VCon->RCon())
+				{
+					// Запомнить для сравнения
+					lstrcpyn(ms_InsideParentPath, pszPath, countof(ms_InsideParentPath));
+					// Подготовить команду для выполнения в Shell
+					VCon->RCon()->PostPromptCmd(true, pszPath);
+				}
+			}
 		}
 	}
 }

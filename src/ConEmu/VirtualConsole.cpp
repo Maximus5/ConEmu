@@ -1669,12 +1669,12 @@ bool CVirtualConsole::Update(bool abForce, HDC *ahDc)
 
 	/* -- 2009-06-20 переделал. графика теперь крутится ТОЛЬКО в MainThread
 	if (!mp_RCon->IsConsoleThread()) {
-	    if (!ahDc) {
-	        mp_RCon->SetForceRead();
-	        mp_RCon->WaitEndUpdate(1000);
-	        //gpConEmu->InvalidateAll(); -- зачем на All??? Update и так Invalidate зовет
-	        return false;
-	    }
+		if (!ahDc) {
+			mp_RCon->SetForceRead();
+			mp_RCon->WaitEndUpdate(1000);
+			//gpConEmu->InvalidateAll(); -- зачем на All??? Update и так Invalidate зовет
+			return false;
+		}
 	}
 	*/
 
@@ -1853,7 +1853,7 @@ bool CVirtualConsole::Update(bool abForce, HDC *ahDc)
 
 	/*
 	for (UINT br=0; br<m_PartBrushes.size(); br++) {
-	    DeleteObject(m_PartBrushes[br].hBrush);
+		DeleteObject(m_PartBrushes[br].hBrush);
 	}
 	m_PartBrushes.clear();
 	*/
@@ -1867,7 +1867,7 @@ void CVirtualConsole::PatInvertRect(HDC hPaintDC, const RECT& rect, HDC hFromDC,
 	if (bFill)
 	{
 		BitBlt(hPaintDC, rect.left, rect.top, rect.right-rect.left, rect.bottom-rect.top, hFromDC, 0,0,
-			    PATINVERT);
+				PATINVERT);
 	}
 	else
 	{
@@ -2459,7 +2459,7 @@ bool CVirtualConsole::LoadConsoleData()
 		if (pRgn && (mn_DialogAllFlags & (FR_UCHARMAP|FR_UCHARMAPGLYPH)) == (FR_UCHARMAP|FR_UCHARMAPGLYPH))
 		{
 			if (pRgn->GetDetectedDialogs(1, &rcFull, NULL, FR_UCHARMAP, FR_UCHARMAP)
-			        && pRgn->GetDetectedDialogs(1, &rcGlyph, NULL, FR_UCHARMAPGLYPH, FR_UCHARMAPGLYPH))
+					&& pRgn->GetDetectedDialogs(1, &rcGlyph, NULL, FR_UCHARMAPGLYPH, FR_UCHARMAPGLYPH))
 			{
 				wchar_t szFontName[32], *pszStart, *pszEnd;
 				pszStart = mpsz_ConChar + TextWidth*(rcFull.Top+1) + rcFull.Left + 1;
@@ -2583,8 +2583,8 @@ bool CVirtualConsole::UpdatePrepare(HDC *ahDc, MSectionLock *pSDC, MSectionLock 
 	//csbi.dwCursorPosition.X -= csbi.srWindow.Left; -- горизонтальная прокрутка игнорируется!
 	csbi.dwCursorPosition.Y -= csbi.srWindow.Top;
 	isCursorValid =
-	    csbi.dwCursorPosition.X >= 0 && csbi.dwCursorPosition.Y >= 0 &&
-	    csbi.dwCursorPosition.X < winSize.X && csbi.dwCursorPosition.Y < winSize.Y;
+		csbi.dwCursorPosition.X >= 0 && csbi.dwCursorPosition.Y >= 0 &&
+		csbi.dwCursorPosition.X < winSize.X && csbi.dwCursorPosition.Y < winSize.Y;
 
 	if (mb_RequiredForceUpdate || mb_IsForceUpdate)
 	{
@@ -2846,10 +2846,10 @@ void CVirtualConsole::Update_CheckAndFill()
 	// rows
 	//BUGBUG: хорошо бы отрисовывать последнюю строку, даже если она чуть не влазит
 	for(; pos <= nMaxPos;
-	        ConCharLine += TextWidth, ConAttrLine += TextWidth,
-	        ConCharLine2 += TextWidth, ConAttrLine2 += TextWidth,
-	        pbLineChanged++, pbBackIsPic++, pnBackRGB++,
-	        pos += nFontHeight, row++)
+			ConCharLine += TextWidth, ConAttrLine += TextWidth,
+			ConCharLine2 += TextWidth, ConAttrLine2 += TextWidth,
+			pbLineChanged++, pbBackIsPic++, pnBackRGB++,
+			pos += nFontHeight, row++)
 	{
 		if (row >= (int)TextHeight)
 		{
@@ -2858,8 +2858,8 @@ void CVirtualConsole::Update_CheckAndFill()
 		}
 
 		bRowChanged = isForce
-		              || (wmemcmp(ConCharLine, ConCharLine2, TextWidth) != 0)
-		              || (memcmp(ConAttrLine, ConAttrLine2, TextWidth*sizeof(*ConAttrLine)) != 0);
+						|| (wmemcmp(ConCharLine, ConCharLine2, TextWidth) != 0)
+						|| (memcmp(ConAttrLine, ConAttrLine2, TextWidth*sizeof(*ConAttrLine)) != 0);
 		//// skip not changed symbols except the old cursor or selection
 		//int j = 0, end = TextWidth;
 		//// В режиме пропорциональных шрифтов или isForce==true - отрисовываем линию ЦЕЛИКОМ
@@ -3138,8 +3138,8 @@ void CVirtualConsole::UpdateText()
 
 	//BUGBUG: хорошо бы отрисовывать последнюю строку, даже если она чуть не влазит
 	for (; pos <= nMaxPos;
-	       ConCharLine += TextWidth, ConAttrLine += TextWidth, ConCharXLine += TextWidth,
-	       pos += nFontHeight, row++)
+			ConCharLine += TextWidth, ConAttrLine += TextWidth, ConCharXLine += TextWidth,
+			pos += nFontHeight, row++)
 	{
 		if (row >= (int)TextHeight)
 		{
@@ -3172,7 +3172,7 @@ void CVirtualConsole::UpdateText()
 		} // if (skipNotChanged)
 
 		if (Cursor.isVisiblePrev && row == Cursor.y
-		        && (j <= Cursor.x && Cursor.x <= end))
+				&& (j <= Cursor.x && Cursor.x <= end))
 			Cursor.isVisiblePrev = false;
 
 		// *) Now draw as much as possible in a row even if some symbols are not changed.
@@ -3306,9 +3306,9 @@ void CVirtualConsole::UpdateText()
 			// а вот для пробелов - когда их более одного
 			/*else if (c==L' ' && j<end && ConCharLine[j+1]==L' ')
 			{
-			    lbS1 = true; nS11 = nS12 = j;
-			    while ((nS12 < end) && (ConCharLine[nS12+1] == c))
-			        nS12 ++;
+				lbS1 = true; nS11 = nS12 = j;
+				while ((nS12 < end) && (ConCharLine[nS12+1] == c))
+					nS12 ++;
 			}*/
 			//(HDC)m_DC.SetTextColor(pColors[attrFore]);
 			m_DC.SetTextColor(attr.crForeColor);
@@ -3402,10 +3402,10 @@ void CVirtualConsole::UpdateText()
 							//m_DC.SetBkColor(pColors[attrBack]);
 							m_DC.SetBkColor(attr.crBackColor);
 							wchar_t *pchBorder = (c == ucBoxDblDownLeft || c == ucBoxDblUpLeft
-							                      || c == ucBoxSinglDownDblHorz || c == ucBoxSinglUpDblHorz
-							                      || c == ucBoxDblDownDblHorz || c == ucBoxDblUpDblHorz
+												  || c == ucBoxSinglDownDblHorz || c == ucBoxSinglUpDblHorz
+												  || c == ucBoxDblDownDblHorz || c == ucBoxDblUpDblHorz
 												  || c == ucBoxDblVertLeft
-							                      || c == ucBoxDblVertHorz) ? ms_HorzDbl : ms_HorzSingl;
+												  || c == ucBoxDblVertHorz) ? ms_HorzDbl : ms_HorzSingl;
 							int nCnt = ((rect.right - rect.left) / CharWidth(pchBorder[0]))+1;
 
 							if (nCnt > MAX_SPACES)
@@ -4871,7 +4871,7 @@ void CVirtualConsole::PaintVConDebug(HDC hPaintDc, RECT rcClient)
 
 		if (gbDebugShowRects
 				#ifdef DEBUGDRAW_DIALOGS
-		        || (GetKeyState(DEBUGDRAW_DIALOGS) & 1)
+				|| (GetKeyState(DEBUGDRAW_DIALOGS) & 1)
 				#endif
 		  )
 		{

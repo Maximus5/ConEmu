@@ -229,8 +229,8 @@ bool CDragDropData::UseTargetHelper(bool abSelfDrag)
 		return false;
 	}
 
-    //if (mp_TargetHelper && !abSelfDrag)
-    //	lbCanUseHelper = true;
+	//if (mp_TargetHelper && !abSelfDrag)
+	//	lbCanUseHelper = true;
 
 	//HRESULT hr = S_FALSE;
 
@@ -256,10 +256,10 @@ bool CDragDropData::UseTargetHelper(bool abSelfDrag)
 		else
 			lbCanUseHelper = true;
 	}
-    #endif
+	#endif
 
-    UNREFERENCED_PARAMETER(hr);
-    return lbCanUseHelper;
+	UNREFERENCED_PARAMETER(hr);
+	return lbCanUseHelper;
 }
 
 // Это ТОЛЬКО при "своем" драге
@@ -299,10 +299,10 @@ bool CDragDropData::UseSourceHelper()
 		mb_SourceHelperFailed = true;
 	else
 		lbCanUseHelper = true;
-    #endif
+	#endif
 
-    UNREFERENCED_PARAMETER(hr);
-    return lbCanUseHelper;
+	UNREFERENCED_PARAMETER(hr);
+	return lbCanUseHelper;
 #endif
 }
 
@@ -839,7 +839,7 @@ wrap:
 }
 
 template <class T> LPITEMIDLIST PidlGetNextItem(
-    T pidl
+	T pidl
 )
 {
 	if (pidl)
@@ -850,7 +850,7 @@ template <class T> LPITEMIDLIST PidlGetNextItem(
 		return NULL;
 };
 template <class T> void PidlDump(
-    T pidl, HANDLE hDumpFile = NULL
+	T pidl, HANDLE hDumpFile = NULL
 )
 {
 	LPITEMIDLIST p = (LPITEMIDLIST)(pidl);
@@ -2363,8 +2363,8 @@ BOOL CDragDropData::LoadDragImageBits(IDataObject * pDataObject)
 
 				#if defined(PERSIST_OVL) && !defined(USE_ALPHA_OVL)
 				MyRgbQuad *pRGB = (MyRgbQuad*)pDst;
-                int nMaxY = (bih.biHeight > 0) ? bih.biHeight : -bih.biHeight;
-                int nMaxX = bih.biWidth;
+				int nMaxY = (bih.biHeight > 0) ? bih.biHeight : -bih.biHeight;
+				int nMaxX = bih.biWidth;
 				for (int y = 0; y < nMaxY; y++)
 				{
 					for (int x = 0; x < nMaxX; x++)

@@ -126,8 +126,8 @@ CTaskBarGhost* CTaskBarGhost::Create(CVirtualConsole* apVCon)
 	pGhost->mh_Ghost = ::CreateWindowEx(dwStyleEx,
 			VirtualConsoleClassGhost, pGhost->CheckTitle(),
 			dwStyle,
-            -32000, -32000, 10, 10,
-            ghWnd, NULL, g_hInstance, (LPVOID)pGhost);
+			-32000, -32000, 10, 10,
+			ghWnd, NULL, g_hInstance, (LPVOID)pGhost);
 
 	if (!pGhost->mh_Ghost)
 	{
@@ -246,19 +246,19 @@ BOOL CTaskBarGhost::CreateTabSnapshoot()
 	m_TabSize.BitmapSize = PtSize;
 	m_TabSize.UsedRect = MakeRect(PtViewOffset.x, PtViewOffset.y, min(PtSize.x,(PtViewOffset.x+PtViewSize.x)), min(PtSize.y,(PtViewOffset.y+PtViewSize.y)));
 
-    HDC hdcMem = CreateCompatibleDC(NULL);
-    if (hdcMem != NULL)
-    {
-    	if (mh_Snap == NULL)
-    	{
-	        ZeroMemory(&mbmi_Snap.bmiHeader, sizeof(BITMAPINFOHEADER));
-	        mbmi_Snap.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-	        mbmi_Snap.bmiHeader.biWidth = PtSize.x;
-	        mbmi_Snap.bmiHeader.biHeight = -PtSize.y;  // Use a top-down DIB
-	        mbmi_Snap.bmiHeader.biPlanes = 1;
-	        mbmi_Snap.bmiHeader.biBitCount = 32;
+	HDC hdcMem = CreateCompatibleDC(NULL);
+	if (hdcMem != NULL)
+	{
+		if (mh_Snap == NULL)
+		{
+			ZeroMemory(&mbmi_Snap.bmiHeader, sizeof(BITMAPINFOHEADER));
+			mbmi_Snap.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+			mbmi_Snap.bmiHeader.biWidth = PtSize.x;
+			mbmi_Snap.bmiHeader.biHeight = -PtSize.y;  // Use a top-down DIB
+			mbmi_Snap.bmiHeader.biPlanes = 1;
+			mbmi_Snap.bmiHeader.biBitCount = 32;
 
-	        mh_Snap = CreateDIBSection(hdcMem, &mbmi_Snap, DIB_RGB_COLORS, (VOID**)&mpb_DS, NULL, 0);
+			mh_Snap = CreateDIBSection(hdcMem, &mbmi_Snap, DIB_RGB_COLORS, (VOID**)&mpb_DS, NULL, 0);
 
 			// Чтобы в созданном mh_Snap гарантировано не было "мусора"
 			if (mh_Snap && mpb_DS)
@@ -266,10 +266,10 @@ BOOL CTaskBarGhost::CreateTabSnapshoot()
 				_ASSERTE(sizeof(COLORREF)==4);
 				memset(mpb_DS, 0, PtSize.x*PtSize.y*sizeof(COLORREF));
 			}
-        }
+		}
 
-        if (mh_Snap != NULL)
-        {
+		if (mh_Snap != NULL)
+		{
 			HBITMAP hOld = (HBITMAP)SelectObject(hdcMem, mh_Snap);
 
 			// Если в "консоли" есть графические окна (GUI Application, PicView, MMView, PanelViews, и т.п.)
@@ -322,12 +322,12 @@ BOOL CTaskBarGhost::CreateTabSnapshoot()
 			}
 
 			SelectObject(hdcMem, hOld);
-        }
+		}
 
-        if (hdcMem) DeleteDC(hdcMem);
-    }
+		if (hdcMem) DeleteDC(hdcMem);
+	}
 
-    mn_LastUpdate = GetTickCount();
+	mn_LastUpdate = GetTickCount();
 	return (mh_Snap != NULL);
 }
 
@@ -378,10 +378,10 @@ bool CTaskBarGhost::NeedSnapshootCache()
 
 HBITMAP CTaskBarGhost::CreateThumbnail(int nWidth, int nHeight)
 {
-    HBITMAP hbm = NULL;
-    HDC hdcMem = CreateCompatibleDC(NULL);
-    if (hdcMem != NULL)
-    {
+	HBITMAP hbm = NULL;
+	HDC hdcMem = CreateCompatibleDC(NULL);
+	if (hdcMem != NULL)
+	{
 		int nShowWidth = nWidth, nShowHeight = nHeight;
 		int nX = 0, nY = 0;
 
@@ -396,18 +396,18 @@ HBITMAP CTaskBarGhost::CreateThumbnail(int nWidth, int nHeight)
 			#endif
 		}
 
-        BITMAPINFO bmi;
-        ZeroMemory(&bmi.bmiHeader, sizeof(BITMAPINFOHEADER));
-        bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-        bmi.bmiHeader.biWidth = nWidth;
-        bmi.bmiHeader.biHeight = -nHeight;  // Use a top-down DIB
-        bmi.bmiHeader.biPlanes = 1;
-        bmi.bmiHeader.biBitCount = 32;
+		BITMAPINFO bmi;
+		ZeroMemory(&bmi.bmiHeader, sizeof(BITMAPINFOHEADER));
+		bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+		bmi.bmiHeader.biWidth = nWidth;
+		bmi.bmiHeader.biHeight = -nHeight;  // Use a top-down DIB
+		bmi.bmiHeader.biPlanes = 1;
+		bmi.bmiHeader.biBitCount = 32;
 
-        PBYTE pbDS = NULL;
-        hbm = CreateDIBSection(hdcMem, &bmi, DIB_RGB_COLORS, (VOID**)&pbDS, NULL, 0);
-        if (hbm != NULL)
-        {
+		PBYTE pbDS = NULL;
+		hbm = CreateDIBSection(hdcMem, &bmi, DIB_RGB_COLORS, (VOID**)&pbDS, NULL, 0);
+		if (hbm != NULL)
+		{
 			HBITMAP hOldMem = (HBITMAP)SelectObject(hdcMem, hbm);
 
 			if (nWidth && nHeight && m_TabSize.VConSize.x && m_TabSize.VConSize.y)
@@ -487,10 +487,10 @@ HBITMAP CTaskBarGhost::CreateThumbnail(int nWidth, int nHeight)
 			}
 
 			SelectObject(hdcMem, hOldMem);
-        }
+		}
 
-        DeleteDC(hdcMem);
-    }
+		DeleteDC(hdcMem);
+	}
 
 	return hbm;
 }
@@ -541,31 +541,31 @@ void CTaskBarGhost::ActivateTaskbar()
 }
 LRESULT CALLBACK CTaskBarGhost::GhostStatic(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    LRESULT lResult = 0;
+	LRESULT lResult = 0;
 
 	// Logger
 	MSG msgStr = {hWnd, message, wParam, lParam};
 	ConEmuMsgLogger::Log(msgStr, ConEmuMsgLogger::msgGhost);
 
-    CTaskBarGhost *pWnd = (CTaskBarGhost*)::GetWindowLongPtr(hWnd, GWLP_USERDATA);
-    if (pWnd == NULL && message == WM_NCCREATE)
-    {
-        LPCREATESTRUCTW lpcs = (LPCREATESTRUCTW)lParam;
-        pWnd = (CTaskBarGhost*)lpcs->lpCreateParams;
-        pWnd->mh_Ghost = hWnd;
-        ::SetWindowLongPtrW(hWnd, GWLP_USERDATA, (LONG_PTR)pWnd);
-        lResult = ::DefWindowProcW(hWnd, message, wParam, lParam);
-    }
-    else if (pWnd != NULL)
-    {
-        lResult = pWnd->GhostProc(message, wParam, lParam);
-    }
-    else
-    {
-        lResult = ::DefWindowProcW(hWnd, message, wParam, lParam);
-    }
+	CTaskBarGhost *pWnd = (CTaskBarGhost*)::GetWindowLongPtr(hWnd, GWLP_USERDATA);
+	if (pWnd == NULL && message == WM_NCCREATE)
+	{
+		LPCREATESTRUCTW lpcs = (LPCREATESTRUCTW)lParam;
+		pWnd = (CTaskBarGhost*)lpcs->lpCreateParams;
+		pWnd->mh_Ghost = hWnd;
+		::SetWindowLongPtrW(hWnd, GWLP_USERDATA, (LONG_PTR)pWnd);
+		lResult = ::DefWindowProcW(hWnd, message, wParam, lParam);
+	}
+	else if (pWnd != NULL)
+	{
+		lResult = pWnd->GhostProc(message, wParam, lParam);
+	}
+	else
+	{
+		lResult = ::DefWindowProcW(hWnd, message, wParam, lParam);
+	}
 
-    return lResult;
+	return lResult;
 }
 
 LRESULT CTaskBarGhost::OnCreate()
@@ -897,7 +897,7 @@ LRESULT CTaskBarGhost::OnDestroy()
 
 LRESULT CTaskBarGhost::GhostProc(UINT message, WPARAM wParam, LPARAM lParam)
 {
-    LRESULT lResult = 0;
+	LRESULT lResult = 0;
 
 #ifdef _DEBUG
 	// Для уменьшения мусора в DebugLog
@@ -917,39 +917,39 @@ LRESULT CTaskBarGhost::GhostProc(UINT message, WPARAM wParam, LPARAM lParam)
 	}
 #endif
 
-    switch (message)
-    {
-        case WM_CREATE:
+	switch (message)
+	{
+		case WM_CREATE:
 			lResult = OnCreate();
-            break;
+			break;
 
 		case WM_TIMER:
 			lResult = OnTimer(wParam);
 			break;
 
-        case WM_ACTIVATE:
+		case WM_ACTIVATE:
 			lResult = OnActivate(wParam, lParam);
-            break;
+			break;
 
-        case WM_SYSCOMMAND:
+		case WM_SYSCOMMAND:
 			lResult = OnSysCommand(wParam, lParam);
-            break;
+			break;
 
 		case WM_GETICON:
 			lResult = (LRESULT)OnGetIcon(wParam);
 			break;
 
-        case WM_CLOSE:
+		case WM_CLOSE:
 			lResult = OnClose();
-            break;
+			break;
 
-        case WM_DWMSENDICONICTHUMBNAIL:
+		case WM_DWMSENDICONICTHUMBNAIL:
 			lResult = OnDwmSendIconicThumbnail((short)HIWORD(lParam), (short)LOWORD(lParam));
-            break;
+			break;
 
-        case WM_DWMSENDICONICLIVEPREVIEWBITMAP:
+		case WM_DWMSENDICONICLIVEPREVIEWBITMAP:
 			lResult = OnDwmSendIconicLivePreviewBitmap();
-            break;
+			break;
 
 		case WM_DESTROY:
 			lResult = OnDestroy();
@@ -970,7 +970,7 @@ LRESULT CTaskBarGhost::GhostProc(UINT message, WPARAM wParam, LPARAM lParam)
 			lResult = ::DefWindowProcW(mh_Ghost, message, wParam, lParam);
 			break;
 
-        default:
+		default:
 			if (message == mn_MsgUpdateThumbnail)
 			{
 				lResult = UpdateTabSnapshoot(wParam!=0, lParam!=0);
@@ -979,8 +979,8 @@ LRESULT CTaskBarGhost::GhostProc(UINT message, WPARAM wParam, LPARAM lParam)
 			{
 				lResult = ::DefWindowProcW(mh_Ghost, message, wParam, lParam);
 			}
-            break;
-    }
+			break;
+	}
 
-    return lResult;
+	return lResult;
 }

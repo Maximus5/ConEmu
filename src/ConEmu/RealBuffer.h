@@ -52,7 +52,7 @@ class CRealBuffer
 public:
 	CRealBuffer(CRealConsole* apRCon, RealBufferType aType=rbt_Primary);
 	~CRealBuffer();
-	
+
 	RealBufferType m_Type;
 public:
 	void DumpConsole(HANDLE ahFile);
@@ -62,23 +62,23 @@ public:
 
 	void ReleaseMem();
 	void PreFillBuffers();
-	
+
 	BOOL SetConsoleSize(USHORT sizeX, USHORT sizeY, USHORT sizeBuffer, DWORD anCmdID=CECMD_SETSIZESYNC);
 	void SyncConsole2Window(USHORT wndSizeX, USHORT wndSizeY);
-	
+
 	BOOL isScroll(RealBufferScroll aiScroll=rbs_Any);
 	BOOL isConsoleDataChanged();
-	
+
 	void InitSBI(CONSOLE_SCREEN_BUFFER_INFO* ap_sbi);
 	void InitMaxSize(const COORD& crMaxSize);
 	COORD GetMaxSize();
-	
+
 	bool isInitialized();
 	bool isFarMenuOrMacro();
-	
+
 	BOOL PreInit();
 	void ResetBuffer();
-	
+
 	int BufferHeight(uint nNewBufferHeight=0);
 	SHORT GetBufferWidth();
 	SHORT GetBufferHeight();
@@ -90,11 +90,11 @@ public:
 	int TextHeight();
 	int GetWindowWidth();
 	int GetWindowHeight();
-	
+
 	void SetBufferHeightMode(BOOL abBufferHeight, BOOL abIgnoreLock=FALSE);
 	void ChangeBufferHeightMode(BOOL abBufferHeight);
 	void SetChange2Size(int anChange2TextWidth, int anChange2TextHeight);
-	
+
 	BOOL isBuferModeChangeLocked();
 	BOOL BuferModeChangeLock();
 	void BuferModeChangeUnlock();
@@ -103,21 +103,21 @@ public:
 
 	LRESULT OnScroll(int nDirection, short nTrackPos = -1, UINT nCount = 1);
 	LRESULT OnSetScrollPos(WPARAM wParam);
-	
+
 	BOOL ApplyConsoleInfo();
-	
+
 	BOOL GetConWindowSize(const CONSOLE_SCREEN_BUFFER_INFO& sbi, int* pnNewWidth, int* pnNewHeight, DWORD* pnScroll);
-	
+
 	COORD ScreenToBuffer(COORD crMouse);
 	COORD BufferToScreen(COORD crMouse, bool bFixup = true, bool bVertOnly = false);
 	bool ProcessFarHyperlink(UINT messg, COORD crFrom, bool bUpdateScreen);
 	bool ProcessFarHyperlink(bool bUpdateScreen);
 	ExpandTextRangeType GetLastTextRangeType();
-	
+
 	void ShowKeyBarHint(WORD nID);
 
 	bool OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse, bool abFromTouch = false);
-	
+
 	BOOL GetRBtnDrag(COORD* pcrMouse);
 	void SetRBtnDrag(BOOL abRBtnDrag, const COORD* pcrMouse = NULL);
 
@@ -145,33 +145,33 @@ public:
 
 	bool OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, const wchar_t *pszChars);
 	const ConEmuHotKey* ProcessSelectionHotKey(DWORD VkState, bool bKeyDown, const wchar_t *pszChars);
-	
+
 	COORD GetDefaultNtvdmHeight();
-	
+
 	const CONSOLE_SCREEN_BUFFER_INFO* GetSBI();
-	
+
 	//BOOL IsConsoleDataChanged();
-	
+
 	BOOL GetConsoleLine(int nLine, wchar_t** pChar, /*CharAttr** pAttr,*/ int* pLen, MSectionLock* pcsData = NULL);
 	void GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, ConEmuTextRange& etr);
-	
+
 	DWORD_PTR GetKeybLayout();
 	void  SetKeybLayout(DWORD_PTR anNewKeyboardLayout);
 	DWORD GetConMode();
-	
+
 	int GetStatusLineCount(int nLeftPanelEdge);
-	
+
 	bool isSelectionAllowed();
 	bool isSelectionPresent();
 	bool isMouseSelectionPresent();
 	bool GetConsoleSelectionInfo(CONSOLE_SELECTION_INFO *sel);
 	int  GetSelectionCellsCount();
-	
+
 	void ConsoleScreenBufferInfo(CONSOLE_SCREEN_BUFFER_INFO* sbi);
 	void ConsoleCursorInfo(CONSOLE_CURSOR_INFO *ci);
 	void ConsoleCursorPos(COORD* pcr);
 	void GetCursorInfo(COORD* pcr, CONSOLE_CURSOR_INFO* pci);
-	
+
 	bool ConsoleRect2ScreenRect(const RECT &rcCon, RECT *prcScr);
 
 	DWORD GetConsoleCP();
@@ -186,7 +186,7 @@ public:
 	bool LookupFilePath(LPCWSTR asFileOrPath, wchar_t* pszPath, size_t cchPathMax);
 
 	const CRgnDetect* GetDetector();
-	
+
 private:
 	BOOL SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffer, DWORD anCmdID=CECMD_SETSIZESYNC);
 	BOOL InitBuffers(DWORD anCellCount = 0, int anWidth = 0, int anHeight = 0);
@@ -197,9 +197,9 @@ private:
 
 	// координаты панелей в символах
 	RECT mr_LeftPanel, mr_RightPanel, mr_LeftPanelFull, mr_RightPanelFull; BOOL mb_LeftPanel, mb_RightPanel;
-	
+
 	void PrepareTransparent(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight);
-	
+
 
 	ExpandTextRangeType ExpandTextRange(COORD& crFrom/*[In/Out]*/, COORD& crTo/*[Out]*/, ExpandTextRangeType etr, wchar_t* pszText = NULL, size_t cchTextMax = 0);
 	bool FindRangeStart(COORD& crFrom/*[In/Out]*/, COORD& crTo/*[In/Out]*/, bool& bUrlMode, LPCWSTR pszBreak, LPCWSTR pszUrlDelim, LPCWSTR pszSpacing, LPCWSTR pszUrl, LPCWSTR pszProtocol, LPCWSTR pChar, int nLen);
@@ -214,7 +214,7 @@ private:
 
 protected:
 	CRealConsole* mp_RCon;
-	
+
 	/* ****************************************** */
 	/* Поиск диалогов и пометка "прозрачных" мест */
 	/* ****************************************** */
@@ -231,7 +231,7 @@ protected:
 		int nCmpMax;
 	} m_TrueMode;
 
-	
+
 	MSection csCON;
 	// Эти переменные инициализируются в RetrieveConsoleInfo()
 	struct RConInfo
@@ -270,7 +270,7 @@ protected:
 		// Последний etr... (подсветка URL's и строк-ошибок-компиляторов)
 		ConEmuTextRange etr; // etrLast, mcr_FileLineStart, mcr_FileLineEnd
 	} con;
-	
+
 protected:
 	struct ConDumpInfo
 	{
@@ -287,7 +287,7 @@ protected:
 		// ** Block 2 **
 		// ** Block 3 **
 		// TODO: Block 2, 3
-		
+
 		// *************
 		void Close()
 		{

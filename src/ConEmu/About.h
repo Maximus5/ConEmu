@@ -390,8 +390,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"WindowMode([\"<Mode>\"])\r\n" \
 	L"  - Returns or set current window mode\r\n" \
 	L"     \"NOR\", \"MAX\", \"FS\" (fullscreen), \"MIN\", \"TSA\",\r\n" \
-    L"     \"TLEFT\", \"TRIGHT\" (tile to left/right), \"THEIGHT\",\r\n" \
-    L"     \"MPREV\", \"MNEXT\" (move ConEmu to prev/next monitor)\r\n" \
+	L"     \"TLEFT\", \"TRIGHT\" (tile to left/right), \"THEIGHT\",\r\n" \
+	L"     \"MPREV\", \"MNEXT\" (move ConEmu to prev/next monitor)\r\n" \
 	L"Zoom(N)\r\n" \
 	L"  - Set zoom value, 100 - original font size\r\n" \
 	L""

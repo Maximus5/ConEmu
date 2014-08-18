@@ -52,7 +52,7 @@ CHotKeyDialog::CHotKeyDialog(HWND hParent, DWORD aVkMod)
 {
 	mh_Dlg = NULL;
 	mh_Parent = hParent;
-	
+
 	ZeroStruct(m_HK);
 	m_HK.HkType = chk_User;
 	m_HK.VkMod = aVkMod;
@@ -189,7 +189,7 @@ INT_PTR CHotKeyDialog::hkDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lP
 							CSettings::GetListBoxHotKey(GetDlgItem(hDlg, lbHotKeyList), CSettings::eHkKeysHot, vk);
 
 							CSettings::SetHotkeyField(GetDlgItem(hDlg, hkHotKeySelect), vk);
-							
+
 							DWORD nMod = (CEHOTKEY_MODMASK & pDlg->m_HK.VkMod);
 							if (nMod == 0)
 							{
@@ -597,11 +597,11 @@ DWORD ConEmuHotKey::SetModifier(DWORD VkMod, BYTE Mod, bool Xor/*=true*/)
 	//	AllMod = (GetModifier(VkMod, 1)<<8) | (GetModifier(VkMod, 2)<<16);
 	//	Processed = true;
 	//}
-	
+
 	if (!Processed)
 	{
 		DWORD AddMod = 0;
-		
+
 		if (!GetModifier(VkMod, 1))
 			AddMod = (((DWORD)Mod) << 8);
 		else if (!GetModifier(VkMod, 2))
@@ -697,7 +697,7 @@ LPCWSTR ConEmuHotKey::GetHotkeyName(wchar_t (&szFull)[128], bool bShowNone /*= t
 	szFull[0] = 0;
 
 	DWORD lVkMod = 0;
-	
+
 	switch (HkType)
 	{
 	case chk_Global:
@@ -748,12 +748,12 @@ LPCWSTR ConEmuHotKey::GetHotkeyName(wchar_t (&szFull)[128], bool bShowNone /*= t
 			}
 		}
 	}
-	
+
 	if (HkType != chk_Modifier2)
 	{
 		szName[0] = 0;
 		GetVkKeyName(GetHotkey(lVkMod), szName);
-		
+
 		if (szName[0])
 		{
 			if (szFull[0])
@@ -994,7 +994,7 @@ bool ConEmuHotKey::UseCTSShiftArrow()
 	CVConGuard VCon;
 	if (gpConEmu->GetActiveVCon(&VCon) < 0)
 		return false;
-	
+
 	CRealConsole* pRCon = VCon->RCon();
 	if (!pRCon || pRCon->isFar() || pRCon->isSelectionPresent())
 		return false;

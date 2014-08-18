@@ -82,7 +82,7 @@ bool CIconList::Initialize()
 			HBITMAP hShieldUser = LoadBitmap(g_hInstance, MAKEINTRESOURCE(IDB_SHIELD16));
 			int nFirstAdd = ImageList_AddMasked(mh_TabIcons, hShieldUser, RGB(128,0,0));
 			DeleteObject(hShieldUser);
-			
+
 			#ifdef _DEBUG
 			int iCount = ImageList_GetImageCount(mh_TabIcons);
 			_ASSERTE(iCount==4);
@@ -185,15 +185,15 @@ int CIconList::CreateTabIconInt(LPCWSTR asIconDescr, bool bAdmin, LPCWSTR asWork
 	if (lstrcmpi(lpszExt, L".ico") == 0)
 	{
 		hFileIcon = (HICON)LoadImage(0, pszLoadFile, IMAGE_ICON,
-			                            GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), LR_DEFAULTCOLOR|LR_LOADFROMFILE);
-    }
-    else if ((lstrcmpi(lpszExt, L".exe") == 0) || (lstrcmpi(lpszExt, L".dll") == 0))
-    {
+		                             GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), LR_DEFAULTCOLOR|LR_LOADFROMFILE);
+	}
+	else if ((lstrcmpi(lpszExt, L".exe") == 0) || (lstrcmpi(lpszExt, L".dll") == 0))
+	{
 		//TODO: May be specified index of an icon in the file
 		HICON hIconLarge = NULL;
-        ExtractIconEx(pszLoadFile, 0, &hIconLarge, &hFileIcon, 1);
+		ExtractIconEx(pszLoadFile, 0, &hIconLarge, &hFileIcon, 1);
 		if (hIconLarge) DestroyIcon(hIconLarge);
-    }
+	}
 	else
 	{
 		//TODO: Shell icons for registered files (cmd, bat, sh, pl, py, ...)

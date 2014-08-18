@@ -455,18 +455,18 @@ BITMAPFILEHEADER* LoadImageGdip(LPCWSTR asImgPath)
 	BITMAPFILEHEADER* pBkImgData = NULL;
 
 	Gdiplus::Status lRc;
-	
+
 	Gdiplus::GpBitmap *bmp = NULL;
 	UINT lWidth = 0, lHeight = 0;
 	Gdiplus::PixelFormat format;
-	
-	
+
+
 	HDC hdcSrc = NULL, hdcDst = NULL;
 	HBITMAP hLoadBmp = NULL, hDestBmp = NULL, hOldSrc = NULL, hOldDst = NULL;
 
 	if (!InitializeGdiPlus())
-		goto wrap;	
-	
+		goto wrap;
+
 	lRc = GdipCreateBitmapFromFile(asImgPath, &bmp);
 	if (lRc != Gdiplus::Ok)
 		goto wrap;
@@ -477,29 +477,29 @@ BITMAPFILEHEADER* LoadImageGdip(LPCWSTR asImgPath)
 	lRc = GdipGetImageHeight(bmp, &lHeight);
 	if (lRc != Gdiplus::Ok || !lHeight)
 		goto wrap;
-	
+
 	lRc = GdipGetImagePixelFormat(bmp, &format);
 	if (lRc != Gdiplus::Ok)
 		goto wrap;
-		
+
 	lRc = GdipCreateHBITMAPFromBitmap(bmp, &hLoadBmp, 0);
 	if (lRc != Gdiplus::Ok || !hLoadBmp)
 		goto wrap;
-		
+
 	hdcSrc = CreateCompatibleDC(0);
 	if (!hdcSrc)
 		goto wrap;
 	hOldSrc = (HBITMAP)SelectObject(hdcSrc, hLoadBmp);
-	
+
 	hdcDst = CreateCompatibleDC(0);
 	if (!hdcDst)
 		goto wrap;
-	
+
 	{
 		UINT lWidth0 = lWidth; //((lWidth + 7) >> 3) << 3;
 		UINT lStride = lWidth0*3;
 		size_t nAllSize = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFO) + lHeight*lStride; //(bmd.Stride>0?bmd.Stride:-bmd.Stride);
-	
+
 		pBkImgData = (BITMAPFILEHEADER*)malloc(nAllSize);
 		if (pBkImgData)
 		{
@@ -521,7 +521,7 @@ BITMAPFILEHEADER* LoadImageGdip(LPCWSTR asImgPath)
 			pBmp->biClrUsed = 0;
 			pBmp->biClrImportant = 0;
 			LPBYTE pDst = ((LPBYTE)(pBkImgData)) + pBkImgData->bfOffBits;
-			
+
 			LPBYTE pDstBits = NULL;
 			hDestBmp = CreateDIBSection(hdcDst, (BITMAPINFO*)pBmp, DIB_RGB_COLORS, (void**)&pDstBits, NULL, 0);
 			if (!hDestBmp || !pDstBits)
@@ -531,15 +531,15 @@ BITMAPFILEHEADER* LoadImageGdip(LPCWSTR asImgPath)
 				goto wrap;
 			}
 			hOldDst = (HBITMAP)SelectObject(hdcDst, hDestBmp);
-			
+
 			BitBlt(hdcDst, 0,0,lWidth,lHeight, hdcSrc, 0,0, SRCCOPY);
 			GdiFlush();
-			
+
 			memmove(pDst, pDstBits, pBmp->biWidth*lHeight*3);
 			pBmp->biWidth = lWidth;
 		}
 	}
-	
+
 wrap:
 	if (hdcSrc)
 	{
@@ -573,7 +573,7 @@ BITMAPFILEHEADER* CreateSolidImage(COLORREF clr, UINT lWidth, UINT lHeight)
 		UINT lWidth0 = lWidth; //((lWidth + 7) >> 3) << 3;
 		UINT lStride = lWidth0*3;
 		size_t nAllSize = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFO) + lHeight*lStride; //(bmd.Stride>0?bmd.Stride:-bmd.Stride);
-	
+
 		pBkImgData = (BITMAPFILEHEADER*)malloc(nAllSize);
 		if (pBkImgData)
 		{
@@ -648,13 +648,13 @@ BITMAPFILEHEADER* LoadImageEx(LPCWSTR asImgPath, BY_HANDLE_FILE_INFORMATION& inf
 		        && inf.nFileSizeLow >= (sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFO))) //-V119
 		{
 			lbFileIsValid = TRUE;
-			
+
 			BYTE bm[2];
 			DWORD nRead;
 			if (ReadFile(hFile, bm, sizeof(bm), &nRead, NULL) && nRead == 2 && (bm[0] == 'B' && bm[1] == 'M'))
 			{
 				lbIsBmpFile = TRUE;
-				
+
 				pBkImgData = (BITMAPFILEHEADER*)malloc(inf.nFileSizeLow);
 				if (!pBkImgData)
 				{
@@ -689,7 +689,7 @@ BITMAPFILEHEADER* LoadImageEx(LPCWSTR asImgPath, BY_HANDLE_FILE_INFORMATION& inf
 			pBkImgData = LoadImageGdip(asImgPath);
 		}
 	}
-	
+
 	return pBkImgData;
 }
 
@@ -769,7 +769,7 @@ bool SaveImageEx(LPCWSTR asImgPath, LPBYTE pBmpData, DWORD cbBmpDataSize)
 
 		Gdiplus::EncoderParameters encoderParameters;
 		Gdiplus::GpImage *pImg = NULL;
-		
+
 		lRc = GdipLoadImageFromStream((IStream*)pStream, &pImg);
 
 		if ((lRc == Gdiplus::Ok) && pImg)
@@ -800,7 +800,7 @@ int GetCodecClsid(const WCHAR* format, CLSID* pClsid)
 	UINT  num = 0;          // number of image encoders
 	UINT  size = 0;         // size of the image encoder array in bytes
 	Gdiplus::ImageCodecInfo* pImageCodecInfo = NULL;
-	
+
 	GdipGetImageEncodersSize(&num, &size);
 
 	if (size == 0)
@@ -812,7 +812,7 @@ int GetCodecClsid(const WCHAR* format, CLSID* pClsid)
 		return -1;  // Failure
 
 	int iRc = -1;
-	
+
 	GdipGetImageEncoders(num, size, pImageCodecInfo);
 	for (int j = 0; j < (int)num; ++j)
 	{

@@ -388,7 +388,7 @@ wchar_t* GuiMacro::AsString()
 	_ASSERTE(cchUsed <= cchTotal);
 	#endif
 
-	
+
 	if (pszArgs)
 	{
 		free(pszArgs);
@@ -676,7 +676,7 @@ GuiMacro* ConEmuMacro::GetNextMacro(LPWSTR& asString, bool abConvert, wchar_t** 
 				a.Type = gmt_VStr;
 			}
 
-			
+
 
 			if (!GetNextString(asString, a.Str, (chTerm == L':')))
 			{
@@ -1271,8 +1271,8 @@ LPWSTR ConEmuMacro::FindFarWindow(GuiMacro* p, CRealConsole* apRCon, bool abFrom
 	return FindFarWindowHelper(nWindowType, pszName, apRCon, abFromPlugin);
 }
 LPWSTR ConEmuMacro::FindFarWindowHelper(
-    CEFarWindowType anWindowType/*Panels=1, Viewer=2, Editor=3, |(Elevated=0x100), |(NotElevated=0x200), |(Modal=0x400)*/,
-    LPWSTR asName, CRealConsole* apRCon, bool abFromPlugin /*= false*/)
+	CEFarWindowType anWindowType/*Panels=1, Viewer=2, Editor=3, |(Elevated=0x100), |(NotElevated=0x200), |(Modal=0x400)*/,
+	LPWSTR asName, CRealConsole* apRCon, bool abFromPlugin /*= false*/)
 {
 	CVConGuard VCon;
 
@@ -1317,7 +1317,7 @@ LPWSTR ConEmuMacro::WindowMaximize(GuiMacro* p, CRealConsole* apRCon, bool abFro
 {
 	LPWSTR pszRc = WindowMode(NULL, NULL, false);
 
-	int nStyle = 0; // 
+	int nStyle = 0; //
 	p->GetIntArg(0, nStyle);
 
 	switch (nStyle)
@@ -1956,100 +1956,100 @@ LPWSTR ConEmuMacro::Keys(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 
 	// KeyNames? (From AHK "List of Keys, Mouse Buttons, and Joystick Controls")
 	/*
-	WheelDown Turn the wheel downward (toward you). 
-	WheelUp Turn the wheel upward (away from you). 
+	WheelDown Turn the wheel downward (toward you).
+	WheelUp Turn the wheel upward (away from you).
 
 	WheelLeft
 	WheelRight [v1.0.48+]: Scroll to the left or right.
 
-	 
-	CapsLock Caps lock 
-	Space Space bar 
-	Tab Tab key 
-	Enter (or Return) Enter key 
-	Escape (or Esc) Esc key 
-	Backspace (or BS) Backspace 
 
-	 
-	ScrollLock Scroll lock 
-	Delete (or Del) Delete key 
-	Insert (or Ins) Insert key 
-	Home Home key 
-	End End key 
-	PgUp Page Up key 
-	PgDn Page Down key 
-	Up Up arrow key 
-	Down Down arrow key 
-	Left Left arrow key 
-	Right Right arrow key 
+	CapsLock Caps lock
+	Space Space bar
+	Tab Tab key
+	Enter (or Return) Enter key
+	Escape (or Esc) Esc key
+	Backspace (or BS) Backspace
 
 
-	NumLock 
-	Numpad0 NumpadIns 0 / Insert key 
-	Numpad1 NumpadEnd 1 / End key 
-	Numpad2 NumpadDown 2 / Down arrow key 
-	Numpad3 NumpadPgDn 3 / Page Down key 
-	Numpad4 NumpadLeft 4 / Left arrow key 
-	Numpad5 NumpadClear 5 / typically does nothing 
-	Numpad6 NumpadRight 6 / Right arrow key 
-	Numpad7 NumpadHome 7 / Home key 
-	Numpad8 NumpadUp 8 / Up arrow key 
-	Numpad9 NumpadPgUp 9 / Page Up key 
-	NumpadDot NumpadDel Decimal separation / Delete key 
-	NumpadDiv NumpadDiv Divide 
-	NumpadMult NumpadMult Multiply 
-	NumpadAdd NumpadAdd Add 
-	NumpadSub NumpadSub Subtract 
-	NumpadEnter NumpadEnter Enter key 
+	ScrollLock Scroll lock
+	Delete (or Del) Delete key
+	Insert (or Ins) Insert key
+	Home Home key
+	End End key
+	PgUp Page Up key
+	PgDn Page Down key
+	Up Up arrow key
+	Down Down arrow key
+	Left Left arrow key
+	Right Right arrow key
 
 
-	F1 - F24 The 12 or more function keys at the top of most keyboards. 
+	NumLock
+	Numpad0 NumpadIns 0 / Insert key
+	Numpad1 NumpadEnd 1 / End key
+	Numpad2 NumpadDown 2 / Down arrow key
+	Numpad3 NumpadPgDn 3 / Page Down key
+	Numpad4 NumpadLeft 4 / Left arrow key
+	Numpad5 NumpadClear 5 / typically does nothing
+	Numpad6 NumpadRight 6 / Right arrow key
+	Numpad7 NumpadHome 7 / Home key
+	Numpad8 NumpadUp 8 / Up arrow key
+	Numpad9 NumpadPgUp 9 / Page Up key
+	NumpadDot NumpadDel Decimal separation / Delete key
+	NumpadDiv NumpadDiv Divide
+	NumpadMult NumpadMult Multiply
+	NumpadAdd NumpadAdd Add
+	NumpadSub NumpadSub Subtract
+	NumpadEnter NumpadEnter Enter key
 
-	 
-	LWin Left Windows logo key. Corresponds to the <# hotkey prefix. 
+
+	F1 - F24 The 12 or more function keys at the top of most keyboards.
+
+
+	LWin Left Windows logo key. Corresponds to the <# hotkey prefix.
 	RWin Right Windows logo key. Corresponds to the ># hotkey prefix.
-	Control (or Ctrl) Control key. As a hotkey (Control::) it fires upon release unless it has the tilde prefix. Corresponds to the ^ hotkey prefix. 
-	Alt Alt key. As a hotkey (Alt::) it fires upon release unless it has the tilde prefix. Corresponds to the ! hotkey prefix. 
-	Shift Shift key. As a hotkey (Shift::) it fires upon release unless it has the tilde prefix. Corresponds to the + hotkey prefix. 
-	LControl (or LCtrl) Left Control key. Corresponds to the <^ hotkey prefix. 
-	RControl (or RCtrl) Right Control key. Corresponds to the >^ hotkey prefix. 
-	LShift Left Shift key. Corresponds to the <+ hotkey prefix. 
-	RShift Right Shift key. Corresponds to the >+ hotkey prefix. 
-	LAlt Left Alt key. Corresponds to the <! hotkey prefix. 
+	Control (or Ctrl) Control key. As a hotkey (Control::) it fires upon release unless it has the tilde prefix. Corresponds to the ^ hotkey prefix.
+	Alt Alt key. As a hotkey (Alt::) it fires upon release unless it has the tilde prefix. Corresponds to the ! hotkey prefix.
+	Shift Shift key. As a hotkey (Shift::) it fires upon release unless it has the tilde prefix. Corresponds to the + hotkey prefix.
+	LControl (or LCtrl) Left Control key. Corresponds to the <^ hotkey prefix.
+	RControl (or RCtrl) Right Control key. Corresponds to the >^ hotkey prefix.
+	LShift Left Shift key. Corresponds to the <+ hotkey prefix.
+	RShift Right Shift key. Corresponds to the >+ hotkey prefix.
+	LAlt Left Alt key. Corresponds to the <! hotkey prefix.
 	RAlt Right Alt key. Corresponds to the >! hotkey prefix.
-		Note: If your keyboard layout has AltGr instead of RAlt, you can probably use it as a hotkey prefix via <^>! as described here. In addition, LControl & RAlt:: would make AltGr itself into a hotkey. 
-	 
-	Browser_Back Back 
-	Browser_Forward Forward 
-	Browser_Refresh Refresh 
-	Browser_Stop Stop 
-	Browser_Search Search 
-	Browser_Favorites Favorites 
-	Browser_Home Homepage 
-	Volume_Mute Mute the volume 
-	Volume_Down Lower the volume 
-	Volume_Up Increase the volume 
-	Media_Next Next Track 
-	Media_Prev Previous Track 
-	Media_Stop Stop 
-	Media_Play_Pause Play/Pause 
-	Launch_Mail Launch default e-mail program 
-	Launch_Media Launch default media player 
-	Launch_App1 Launch My Computer 
-	Launch_App2 Launch Calculator 
-		Note: The function assigned to each of the keys listed above can be overridden by modifying the Windows registry. This table shows the default function of each key on most versions of Windows. 
+		Note: If your keyboard layout has AltGr instead of RAlt, you can probably use it as a hotkey prefix via <^>! as described here. In addition, LControl & RAlt:: would make AltGr itself into a hotkey.
+
+	Browser_Back Back
+	Browser_Forward Forward
+	Browser_Refresh Refresh
+	Browser_Stop Stop
+	Browser_Search Search
+	Browser_Favorites Favorites
+	Browser_Home Homepage
+	Volume_Mute Mute the volume
+	Volume_Down Lower the volume
+	Volume_Up Increase the volume
+	Media_Next Next Track
+	Media_Prev Previous Track
+	Media_Stop Stop
+	Media_Play_Pause Play/Pause
+	Launch_Mail Launch default e-mail program
+	Launch_Media Launch default media player
+	Launch_App1 Launch My Computer
+	Launch_App2 Launch Calculator
+		Note: The function assigned to each of the keys listed above can be overridden by modifying the Windows registry. This table shows the default function of each key on most versions of Windows.
 
 
-	AppsKey Menu key. This is the key that invokes the right-click context menu. 
-	PrintScreen Print screen 
-	CtrlBreak 
-	 
-	Pause Pause key 
-	Break Break key. Since this is synonymous with Pause, use ^CtrlBreak in hotkeys instead of ^Pause or ^Break. 
-	Help Help key. This probably doesn't exist on most keyboards. It's usually not the same as F1. 
-	Sleep Sleep key. Note that the sleep key on some keyboards might not work with this. 
-	SCnnn Specify for nnn the scan code of a key. Recognizes unusual keys not mentioned above. See Special Keys for details. 
-	VKnn Specify for nn the hexadecimal virtual key code of a key. 
+	AppsKey Menu key. This is the key that invokes the right-click context menu.
+	PrintScreen Print screen
+	CtrlBreak
+
+	Pause Pause key
+	Break Break key. Since this is synonymous with Pause, use ^CtrlBreak in hotkeys instead of ^Pause or ^Break.
+	Help Help key. This probably doesn't exist on most keyboards. It's usually not the same as F1.
+	Sleep Sleep key. Note that the sleep key on some keyboards might not work with this.
+	SCnnn Specify for nnn the scan code of a key. Recognizes unusual keys not mentioned above. See Special Keys for details.
+	VKnn Specify for nn the hexadecimal virtual key code of a key.
 	*/
 }
 
@@ -2440,7 +2440,7 @@ LPWSTR ConEmuMacro::Shell(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 	LPWSTR pszBuf = NULL;
 	bool bDontQuote = false;
 	int nShowCmd = SW_SHOWNORMAL;
-	
+
 	if (p->GetStrArg(0, pszOper))
 	{
 		CVConGuard VCon(apRCon ? apRCon->VCon() : NULL);
@@ -2515,7 +2515,7 @@ LPWSTR ConEmuMacro::Shell(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 					SafeFree(pszDataW);
 				}
 			}
-			
+
 			// 120830 - пусть shell("","cmd") запускает новую вкладку в ConEmu
 			bool bNewOper = bNewTaskGroup || !pszOper || !*pszOper || (wmemcmp(pszOper, L"new_console", 11) == 0);
 
@@ -2532,7 +2532,7 @@ LPWSTR ConEmuMacro::Shell(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 				else
 				{
 					nAllLen = _tcslen(pszFile) + (pszParm ? _tcslen(pszParm) : 0) + 16;
-					
+
 					if (bNewOper)
 					{
 						size_t nOperLen = _tcslen(pszOper);
@@ -2541,10 +2541,10 @@ LPWSTR ConEmuMacro::Shell(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 						else
 							bNewOper = false;
 					}
-					
+
 					pArgs->pszSpecialCmd = (wchar_t*)malloc(nAllLen*sizeof(wchar_t));
 					pArgs->pszSpecialCmd[0] = 0;
-					
+
 					if (*pszFile)
 					{
 						if (!bDontQuote && (*pszFile != L'"') && (wcschr(pszFile, L' ') != NULL))
@@ -2562,12 +2562,12 @@ LPWSTR ConEmuMacro::Shell(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 							}
 						}
 					}
-					
+
 					if (pszParm && *pszParm)
 					{
 						_wcscat_c(pArgs->pszSpecialCmd, nAllLen, pszParm);
 					}
-					
+
 					// Параметры запуска консоли могли передать в первом аргуементе (например "new_console:b")
 					if (bNewOper)
 					{
@@ -2576,19 +2576,19 @@ LPWSTR ConEmuMacro::Shell(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 						_wcscat_c(pArgs->pszSpecialCmd, nAllLen, L"\"");
 					}
 				}
-				
+
 				if (pszDir)
 					pArgs->pszStartupDir = lstrdup(pszDir);
-			
+
 				gpConEmu->PostCreateCon(pArgs);
-				
+
 				pszRc = lstrdup(L"OK");
 				goto wrap;
 			}
 			else
 			{
 				int nRc = (int)ShellExecuteW(ghWnd, pszOper, pszFile, pszParm, pszDir, nShowCmd);
-				
+
 				if (nRc <= 32)
 				{
 					switch (nRc)
@@ -2617,7 +2617,7 @@ LPWSTR ConEmuMacro::Shell(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 				{
 					pszRc = lstrdup(L"OK");
 				}
-				
+
 				goto wrap;
 			}
 		}
@@ -2692,7 +2692,7 @@ LPWSTR ConEmuMacro::Split(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 
 		if (nCmd == 0)
 		{
-			// Аналог 
+			// Аналог
 			// Duplicate active «shell» split to right: Shell("new_console:sHn")
 			// или
 			// Duplicate active «shell» split to bottom: Shell("new_console:sVn")
@@ -2857,7 +2857,7 @@ LPWSTR ConEmuMacro::Tab(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 				pszResult = lstrdup(L"OK");
 			}
 			break;
-		case ctc_ShowTabsList: // 
+		case ctc_ShowTabsList: //
 			CConEmuCtrl::key_ShowTabsList(0, false, NULL, NULL/*чтобы не зависимо от фара показала меню*/);
 			break;
 		case ctc_CloseTab:

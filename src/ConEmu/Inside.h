@@ -59,7 +59,7 @@ public:
 	DWORD mn_InsideParentPID;  // PID "родительского" процесса режима интеграции
 	HWND  mh_InsideParentWND; // Это окно используется как родительское в режиме интеграции
 	HWND  mh_InsideParentRoot; // Корневое окно режима интеграции (для проверки isMeForeground)
-	
+
 	HWND  InsideFindParent();
 	void  InsideParentMonitor();
 	bool  GetInsideRect(RECT* prWnd);

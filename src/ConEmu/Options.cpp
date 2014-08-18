@@ -1490,16 +1490,16 @@ void Settings::CreatePredefinedPalettes(int iAddUserCount)
 	Palettes = (ColorPalette**)calloc((iAddUserCount + countof(DefColors)), sizeof(ColorPalette*));
 	for (size_t n = 0; n < countof(DefColors); n++)
 	{
-    	Palettes[n] = (ColorPalette*)calloc(1, sizeof(ColorPalette));
-    	_ASSERTE(DefColors[n].pszTitle && DefColors[n].pszTitle[0]==L'<' && DefColors[n].pszTitle[lstrlen(DefColors[n].pszTitle)-1]==L'>');
-    	Palettes[n]->pszName = lstrdup(DefColors[n].pszTitle);
-    	Palettes[n]->bPredefined = true;
+		Palettes[n] = (ColorPalette*)calloc(1, sizeof(ColorPalette));
+		_ASSERTE(DefColors[n].pszTitle && DefColors[n].pszTitle[0]==L'<' && DefColors[n].pszTitle[lstrlen(DefColors[n].pszTitle)-1]==L'>');
+		Palettes[n]->pszName = lstrdup(DefColors[n].pszTitle);
+		Palettes[n]->bPredefined = true;
 		Palettes[n]->isExtendColors = false;
 		Palettes[n]->nExtendColorIdx = 14;
 		Palettes[n]->nTextColorIdx = Palettes[n]->nBackColorIdx = 16; // Auto
 		Palettes[n]->nPopTextColorIdx = Palettes[n]->nPopBackColorIdx = 16; // Auto
-    	_ASSERTE(countof(Palettes[n]->Colors)==0x20 && countof(DefColors[n].dwDefColors)==0x10);
-    	memmove(Palettes[n]->Colors, DefColors[n].dwDefColors, 0x10*sizeof(Palettes[n]->Colors[0]));
+		_ASSERTE(countof(Palettes[n]->Colors)==0x20 && countof(DefColors[n].dwDefColors)==0x10);
+		memmove(Palettes[n]->Colors, DefColors[n].dwDefColors, 0x10*sizeof(Palettes[n]->Colors[0]));
 		if (DefColors[n].isIndexes())
 		{
 			Palettes[n]->nTextColorIdx = DefColors[n].nIndexes[0];
@@ -1512,8 +1512,8 @@ void Settings::CreatePredefinedPalettes(int iAddUserCount)
 			Palettes[n]->nTextColorIdx = Palettes[n]->nBackColorIdx = 16; // Auto
 			Palettes[n]->nPopTextColorIdx = Palettes[n]->nPopBackColorIdx = 16; // Auto
 		}
-    	// Расширения - инициализируем теми же цветами
-    	memmove(Palettes[n]->Colors+0x10, DefColors[n].dwDefColors, 0x10*sizeof(Palettes[n]->Colors[0]));
+		// Расширения - инициализируем теми же цветами
+		memmove(Palettes[n]->Colors+0x10, DefColors[n].dwDefColors, 0x10*sizeof(Palettes[n]->Colors[0]));
 	}
 
 	// Инициализировали "Палитрами по умолчанию"
@@ -3360,9 +3360,9 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 
 		/*if (!isFullScreen && !gpConEmu->isZoomed() && !gpConEmu->isIconic())
 		{
-		    RECT rcPos; GetWindowRect(ghWnd, &rcPos);
-		    wndX = rcPos.left;
-		    wndY = rcPos.top;
+			RECT rcPos; GetWindowRect(ghWnd, &rcPos);
+			wndX = rcPos.left;
+			wndY = rcPos.top;
 		}*/
 		reg->Save(L"ConVisible", isConVisible);
 		reg->Save(L"ConInMode", nConInMode);

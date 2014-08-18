@@ -650,14 +650,14 @@ const ConEmuHotKey* CSettings::GetHotKeyInfo(DWORD VkMod, bool bKeyDown, CRealCo
 	}
 
 	// Некоторые комбинации нужно обрабатывать "на отпускание" во избежание глюков с интерфейсом
-    if (p)
-    {
-    	// Поэтому проверяем, совпадает ли требование "нажатости"
-    	if (p->OnKeyUp == bKeyDown)
-    		p = ConEmuSkipHotKey;
-    }
+	if (p)
+	{
+		// Поэтому проверяем, совпадает ли требование "нажатости"
+		if (p->OnKeyUp == bKeyDown)
+			p = ConEmuSkipHotKey;
+	}
 
-    return p;
+	return p;
 }
 
 bool CSettings::HasSingleWinHotkey()
@@ -673,8 +673,8 @@ bool CSettings::HasSingleWinHotkey()
 		if (ConEmuHotKey::GetModifier(VkMod, 1) == VK_LWIN)
 		{
 			// Win+<другой модификатор> вроде винда в приложение таки присылает?
-        	if (ConEmuHotKey::GetModifier(VkMod, 2) == 0)
-        		return true; // А вот если больше модификаторов нет...
+			if (ConEmuHotKey::GetModifier(VkMod, 2) == 0)
+				return true; // А вот если больше модификаторов нет...
 		}
 	}
 	return false;
@@ -1524,7 +1524,7 @@ DWORD CSettings::EnumFontsThread(LPVOID apArg)
 			if (szRasterSizes[j].cy < szRasterSizes[k].cy)
 				k = j;
 			else if (szRasterSizes[j].cy == szRasterSizes[k].cy
-			        && szRasterSizes[j].cx < szRasterSizes[k].cx)
+					&& szRasterSizes[j].cx < szRasterSizes[k].cx)
 				k = j;
 		}
 
@@ -2911,9 +2911,9 @@ LRESULT CSettings::OnInitDialog_Far(HWND hWnd2, bool abInitial)
 	checkDlgButton(hWnd2, cbExtendUCharMap, gpSet->isExtendUCharMap);
 
 	checkDlgButton(hWnd2, cbDragL, (gpSet->isDragEnabled & DRAG_L_ALLOWED) ? BST_CHECKED : BST_UNCHECKED);
-    checkDlgButton(hWnd2, cbDragR, (gpSet->isDragEnabled & DRAG_R_ALLOWED) ? BST_CHECKED : BST_UNCHECKED);
+	checkDlgButton(hWnd2, cbDragR, (gpSet->isDragEnabled & DRAG_R_ALLOWED) ? BST_CHECKED : BST_UNCHECKED);
 
-    _ASSERTE(gpSet->isDropEnabled==0 || gpSet->isDropEnabled==1 || gpSet->isDropEnabled==2);
+	_ASSERTE(gpSet->isDropEnabled==0 || gpSet->isDropEnabled==1 || gpSet->isDropEnabled==2);
 	checkDlgButton(hWnd2, cbDropEnabled, gpSet->isDropEnabled);
 
 	checkDlgButton(hWnd2, cbDnDCopy, gpSet->isDefCopy);
@@ -4164,7 +4164,7 @@ INT_PTR CSettings::pageOpProc_Integr(HWND hWnd2, UINT messg, WPARAM wParam, LPAR
 					if (gpConEmu->mp_Inside)
 					{
 						SafeFree(gpConEmu->mp_Inside->ms_InsideSynchronizeCurDir);
-                        gpConEmu->mp_Inside->ms_InsideSynchronizeCurDir = GetDlgItemTextPtr(hWnd2, tInsideSyncDir);
+						gpConEmu->mp_Inside->ms_InsideSynchronizeCurDir = GetDlgItemTextPtr(hWnd2, tInsideSyncDir);
 					}
 					break;
 				}
@@ -5390,8 +5390,8 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			break;
 		case cbHideCaption:
 			gpSet->isHideCaption = IsChecked(hWnd2, cbHideCaption);
-            if (!gpSet->isQuakeStyle && gpConEmu->isZoomed())
-            {
+			if (!gpSet->isQuakeStyle && gpConEmu->isZoomed())
+			{
 				gpConEmu->OnHideCaption();
 				apiSetForegroundWindow(ghOpWnd);
 			}
@@ -5830,7 +5830,7 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			if (bSuffix && !*gpSet->szAdminTitleSuffix)
 			{
 				wcscpy_c(gpSet->szAdminTitleSuffix, DefaultAdminTitleSuffix);
-                SetDlgItemText(hWnd2, tAdminSuffix, gpSet->szAdminTitleSuffix);
+				SetDlgItemText(hWnd2, tAdminSuffix, gpSet->szAdminTitleSuffix);
 			}
 			gpConEmu->mp_TabBar->Update(TRUE);
 			break;
@@ -6856,10 +6856,10 @@ LRESULT CSettings::OnButtonClicked_Tasks(HWND hWnd2, WPARAM wParam, LPARAM lPara
 			if (!gpSet->CmdTaskGet(iCount))
 				gpSet->CmdTaskSet(iCount, L"", L"", L"");
 
-        	OnInitDialog_Tasks(hWnd2, false);
+			OnInitDialog_Tasks(hWnd2, false);
 
-        	SendDlgItemMessage(hWnd2, lbCmdTasks, LB_SETCURSEL, iCount, 0);
-        	OnComboBox(hWnd2, MAKELONG(lbCmdTasks,LBN_SELCHANGE), 0);
+			SendDlgItemMessage(hWnd2, lbCmdTasks, LB_SETCURSEL, iCount, 0);
+			OnComboBox(hWnd2, MAKELONG(lbCmdTasks,LBN_SELCHANGE), 0);
 		} // cbCmdTasksAdd
 		break;
 
@@ -6870,8 +6870,8 @@ LRESULT CSettings::OnButtonClicked_Tasks(HWND hWnd2, WPARAM wParam, LPARAM lPara
 				break;
 
 			const CommandTasks* p = gpSet->CmdTaskGet(iCur);
-            if (!p)
-            	break;
+			if (!p)
+				break;
 
 			bool bIsStartup = false;
 			if (gpSet->psStartTasksName && p->pszName && (lstrcmpi(gpSet->psStartTasksName, p->pszName) == 0))
@@ -6889,19 +6889,19 @@ LRESULT CSettings::OnButtonClicked_Tasks(HWND hWnd2, WPARAM wParam, LPARAM lPara
 			int nBtn = MsgBox(pszMsg, MB_YESNO|(bIsStartup ? MB_ICONEXCLAMATION : MB_ICONQUESTION), NULL, ghOpWnd);
 			SafeFree(pszMsg);
 
-            if (nBtn != IDYES)
-            	break;
+			if (nBtn != IDYES)
+				break;
 
-        	gpSet->CmdTaskSet(iCur, NULL, NULL, NULL);
+			gpSet->CmdTaskSet(iCur, NULL, NULL, NULL);
 
 			if (bIsStartup && gpSet->psStartTasksName)
 				*gpSet->psStartTasksName = 0;
 
-        	OnInitDialog_Tasks(hWnd2, false);
+			OnInitDialog_Tasks(hWnd2, false);
 
-        	int iCount = (int)SendDlgItemMessage(hWnd2, lbCmdTasks, LB_GETCOUNT, 0,0);
-        	SendDlgItemMessage(hWnd2, lbCmdTasks, LB_SETCURSEL, min(iCur,(iCount-1)), 0);
-        	OnComboBox(hWnd2, MAKELONG(lbCmdTasks,LBN_SELCHANGE), 0);
+			int iCount = (int)SendDlgItemMessage(hWnd2, lbCmdTasks, LB_GETCOUNT, 0,0);
+			SendDlgItemMessage(hWnd2, lbCmdTasks, LB_SETCURSEL, min(iCur,(iCount-1)), 0);
+			OnComboBox(hWnd2, MAKELONG(lbCmdTasks,LBN_SELCHANGE), 0);
 
 		} // cbCmdTasksDel
 		break;
@@ -6917,21 +6917,21 @@ LRESULT CSettings::OnButtonClicked_Tasks(HWND hWnd2, WPARAM wParam, LPARAM lPara
 			{
 				if (!iCur)
 					break;
-            	iChg = iCur - 1;
-        	}
-        	else
-        	{
-        		iChg = iCur + 1;
-        		if (iChg >= (int)SendDlgItemMessage(hWnd2, lbCmdTasks, LB_GETCOUNT, 0,0))
-        			break;
-        	}
+				iChg = iCur - 1;
+			}
+			else
+			{
+				iChg = iCur + 1;
+				if (iChg >= (int)SendDlgItemMessage(hWnd2, lbCmdTasks, LB_GETCOUNT, 0,0))
+					break;
+			}
 
-        	if (!gpSet->CmdTaskXch(iCur, iChg))
-        		break;
+			if (!gpSet->CmdTaskXch(iCur, iChg))
+				break;
 
-        	OnInitDialog_Tasks(hWnd2, false);
+			OnInitDialog_Tasks(hWnd2, false);
 
-        	SendDlgItemMessage(hWnd2, lbCmdTasks, LB_SETCURSEL, iChg, 0);
+			SendDlgItemMessage(hWnd2, lbCmdTasks, LB_SETCURSEL, iChg, 0);
 		} // cbCmdTasksUp, cbCmdTasksDown
 		break;
 
@@ -7579,9 +7579,9 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 				gpSet->CmdTaskSet(iCur, pszName, pszGuiArgs, pszCmds);
 
 				mb_IgnoreCmdGroupList = true;
-        		OnInitDialog_Tasks(hWnd2, false);
-        		SendDlgItemMessage(hWnd2, lbCmdTasks, LB_SETCURSEL, iCur, 0);
-        		mb_IgnoreCmdGroupList = false;
+				OnInitDialog_Tasks(hWnd2, false);
+				SendDlgItemMessage(hWnd2, lbCmdTasks, LB_SETCURSEL, iCur, 0);
+				mb_IgnoreCmdGroupList = false;
 			}
 
 			SafeFree(pszName);
@@ -10120,13 +10120,13 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 
 						bool lbOld = bSkipSelChange; bSkipSelChange = true;
 
-        				OnInitDialog_Apps(hWnd2, false);
+						OnInitDialog_Apps(hWnd2, false);
 
-        				SendDlgItemMessage(hWnd2, lbAppDistinct, LB_SETCURSEL, iCount, 0);
+						SendDlgItemMessage(hWnd2, lbAppDistinct, LB_SETCURSEL, iCount, 0);
 
 						bSkipSelChange = lbOld;
 
-        				pageOpProc_Apps(hWnd2, hChild, WM_COMMAND, MAKELONG(lbAppDistinct,LBN_SELCHANGE), 0);
+						pageOpProc_Apps(hWnd2, hChild, WM_COMMAND, MAKELONG(lbAppDistinct,LBN_SELCHANGE), 0);
 					} // cbAppDistinctAdd
 					break;
 
@@ -10138,21 +10138,21 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 
 						const Settings::AppSettings* p = gpSet->GetAppSettingsPtr(iCur);
 						if (!p)
-            				break;
+							break;
 
 						if (MsgBox(L"Delete application?", MB_YESNO|MB_ICONQUESTION, p->AppNames, ghOpWnd) != IDYES)
-            				break;
+							break;
 
-        				gpSet->AppSettingsDelete(iCur);
+						gpSet->AppSettingsDelete(iCur);
 
 						bool lbOld = bSkipSelChange; bSkipSelChange = true;
 
-        				OnInitDialog_Apps(hWnd2, false);
+						OnInitDialog_Apps(hWnd2, false);
 
-        				int iCount = (int)SendDlgItemMessage(hWnd2, lbAppDistinct, LB_GETCOUNT, 0,0);
+						int iCount = (int)SendDlgItemMessage(hWnd2, lbAppDistinct, LB_GETCOUNT, 0,0);
 						bSkipSelChange = lbOld;
-        				SendDlgItemMessage(hWnd2, lbAppDistinct, LB_SETCURSEL, min(iCur,(iCount-1)), 0);
-        				pageOpProc_Apps(hWnd2, hChild, WM_COMMAND, MAKELONG(lbAppDistinct,LBN_SELCHANGE), 0);
+						SendDlgItemMessage(hWnd2, lbAppDistinct, LB_SETCURSEL, min(iCur,(iCount-1)), 0);
+						pageOpProc_Apps(hWnd2, hChild, WM_COMMAND, MAKELONG(lbAppDistinct,LBN_SELCHANGE), 0);
 
 					} // cbAppDistinctDel
 					break;
@@ -10168,25 +10168,25 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 						{
 							if (!iCur)
 								break;
-            				iChg = iCur - 1;
-        				}
-        				else
-        				{
-        					iChg = iCur + 1;
-        					if (iChg >= (int)SendDlgItemMessage(hWnd2, lbAppDistinct, LB_GETCOUNT, 0,0))
-        						break;
-        				}
+							iChg = iCur - 1;
+						}
+						else
+						{
+							iChg = iCur + 1;
+							if (iChg >= (int)SendDlgItemMessage(hWnd2, lbAppDistinct, LB_GETCOUNT, 0,0))
+								break;
+						}
 
-        				if (!gpSet->AppSettingsXch(iCur, iChg))
-        					break;
+						if (!gpSet->AppSettingsXch(iCur, iChg))
+							break;
 
 						bool lbOld = bSkipSelChange; bSkipSelChange = true;
 
-        				OnInitDialog_Apps(hWnd2, false);
+						OnInitDialog_Apps(hWnd2, false);
 
 						bSkipSelChange = lbOld;
 
-        				SendDlgItemMessage(hWnd2, lbAppDistinct, LB_SETCURSEL, iChg, 0);
+						SendDlgItemMessage(hWnd2, lbAppDistinct, LB_SETCURSEL, iChg, 0);
 					} // cbAppDistinctUp, cbAppDistinctDown
 					break;
 
@@ -10483,7 +10483,7 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 								}
 							}
 						} // tBgImage
-                    	break;
+						break;
 					}
 				}
 			} // if (HIWORD(wParam) == EN_CHANGE)
@@ -15210,11 +15210,11 @@ bool CSettings::CheckConsoleFont(HWND ahDlg)
 				DWORD cchName = countof(szName), cbData = sizeof(szValue)-2, dwType;
 				while (!RegEnumValue(hk, dwIndex++, szName, &cchName, NULL, &dwType, (LPBYTE)szValue, &cbData))
 				{
-            		if ((dwType == REG_DWORD) && *szName && *szValue)
-            		{
-            			SendDlgItemMessage(ahDlg, tConsoleFontFace, CB_ADDSTRING, 0, (LPARAM)szValue);
-            			bLoaded = true;
-            		}
+					if ((dwType == REG_DWORD) && *szName && *szValue)
+					{
+						SendDlgItemMessage(ahDlg, tConsoleFontFace, CB_ADDSTRING, 0, (LPARAM)szValue);
+						bLoaded = true;
+					}
 
 					// Next
 					cchName = countof(szName); cbData = sizeof(szValue);
@@ -15687,7 +15687,7 @@ int CSettings::EnumConFamCallBack(LPLOGFONT lplf, LPNEWTEXTMETRIC lpntm, DWORD F
 
 		if (!iter->bAlreadyInSystem &&
 		        lstrcmpi(iter->szFontName, lplf->lfFaceName) == 0)
-        {
+		{
 			return TRUE;
 		}
 	}

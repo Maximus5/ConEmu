@@ -345,7 +345,7 @@ public:
 			{
 				memmove(pch, szHdr, nHdrLen);
 				pch += nHdrLen;
-				
+
 				for (int i = 0; i < m_Items.size(); i++)
 				{
 					txt t = m_Items[i];

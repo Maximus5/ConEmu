@@ -210,9 +210,9 @@ BOOL DumpImage(HDC hScreen, HBITMAP hBitmap, int anX, int anY, int anWidth, int 
 	if (!*szFile)
 	{
 		//static wchar_t szLastDumpFile[MAX_PATH];
-        SYSTEMTIME st; GetLocalTime(&st);
-        _wsprintf(szFile, SKIPLEN(countof(szFile)) L"%02u%02u%02u%02u%02u%02u",
-        	st.wYear%100, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond);
+		SYSTEMTIME st; GetLocalTime(&st);
+		_wsprintf(szFile, SKIPLEN(countof(szFile)) L"%02u%02u%02u%02u%02u%02u",
+			st.wYear%100, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond);
 
 		OPENFILENAME ofn; memset(&ofn,0,sizeof(ofn));
 		ofn.lStructSize=sizeof(ofn);
@@ -237,8 +237,8 @@ BOOL DumpImage(HDC hScreen, HBITMAP hBitmap, int anX, int anY, int anWidth, int 
 		if (!GetSaveFileName(&ofn) || ((pszDot = (wchar_t*)PointToExt(szFile)) == NULL))
 		{
 			lbRc = TRUE; // чтобы не ругалось...
-		    goto wrap;
-	    }
+			goto wrap;
+		}
 		//wcscpy_c(szFile, szLastDumpFile);
 	}
 
@@ -246,7 +246,7 @@ BOOL DumpImage(HDC hScreen, HBITMAP hBitmap, int anX, int anY, int anWidth, int 
 	if (SaveImageEx(szFile, pScreen, cbOut))
 	{
 		lbRc = TRUE;
-        goto wrap;
+		goto wrap;
 	}
 	#endif
 

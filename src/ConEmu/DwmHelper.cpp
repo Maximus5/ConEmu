@@ -135,8 +135,8 @@ void CDwmHelper::InitDwm()
 	mh_UxTheme = NULL;
 	_IsAppThemed = NULL;
 	_IsThemeActive = NULL;
-    _OpenThemeData = NULL;
-    _CloseThemeData = NULL;
+	_OpenThemeData = NULL;
+	_CloseThemeData = NULL;
 	_BufferedPaintInit = NULL;
 	_BufferedPaintUnInit = NULL;
 	_BeginBufferedPaint = NULL;
@@ -316,7 +316,7 @@ void CDwmHelper::EnableBlurBehind(bool abBlurBehindClient)
 		if (bb.hRgnBlur)
 			DeleteObject(bb.hRgnBlur);
 	}
-    UNREFERENCED_PARAMETER(hr);
+	UNREFERENCED_PARAMETER(hr);
 }
 
 void CDwmHelper::CheckGlassAttribute()

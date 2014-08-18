@@ -94,7 +94,7 @@ bool SettingsRegistry::Load(const wchar_t *regName, LPBYTE value, DWORD nSize)
 	LONG lRc = RegQueryValueEx(regMy, regName, NULL, NULL, (LPBYTE)value, &nNewSize);
 	if (lRc == ERROR_SUCCESS)
 		return true;
-	
+
 	// Access denied может быть, если пытаемся _читать_ из ключа, открытого на _запись_
 	_ASSERTE(lRc != ERROR_ACCESS_DENIED);
 
@@ -409,7 +409,7 @@ IXMLDOMDocument* SettingsXML::CreateDomDocument(wchar_t* pszErr /*= NULL*/, size
 				hFact = hMsXml3 ? 0 : (HRESULT)GetLastError();
 				if (hMsXml3)
 					break;
-			//if (!hMsXml3 
+			//if (!hMsXml3
 			//	&& (((DWORD)hFact) == ERROR_MOD_NOT_FOUND
 			//		|| ((DWORD)hFact) == ERROR_BAD_EXE_FORMAT
 			//		|| ((DWORD)hFact) == ERROR_FILE_NOT_FOUND))
@@ -418,7 +418,7 @@ IXMLDOMDocument* SettingsXML::CreateDomDocument(wchar_t* pszErr /*= NULL*/, size
 			//_wsprintf(szDll, SKIPLEN(countof(szDll)) L"%s\\msxml3.dll", gpConEmu->ms_ConEmuExeDir);
 			//hMsXml3 = LoadLibrary(szDll);
 			//hFact = hMsXml3 ? 0 : (HRESULT)GetLastError();
-			//if (!hMsXml3 
+			//if (!hMsXml3
 			//	&& (((DWORD)hFact) == ERROR_MOD_NOT_FOUND
 			//		|| ((DWORD)hFact) == ERROR_BAD_EXE_FORMAT
 			//		|| ((DWORD)hFact) == ERROR_FILE_NOT_FOUND))
@@ -475,7 +475,7 @@ IXMLDOMDocument* SettingsXML::CreateDomDocument(wchar_t* pszErr /*= NULL*/, size
 			pszErr = szErr; cchErrMax = countof(szErr);
 		}
 		_wsprintf(pszErr, SKIPLEN(cchErrMax)
-		          L"XML setting file can not be used!\n"
+				  L"XML setting file can not be used!\n"
 				  L"Dynamic libraries 'msxml3.dll'/'msxml3r.dll' was not found!\n\n"
 				  L"Can't create IID_IXMLDOMDocument!\n"
 				  L"ErrCode=0x%08X %s", (DWORD)hr, szDllErr);
@@ -1047,7 +1047,7 @@ IXMLDOMNode* SettingsXML::FindItem(IXMLDOMNode* apFrom, const wchar_t* asType, c
 		pList->Release();
 		//pList = NULL; -- для отладки
 	}
-	
+
 	if (lbEmpty && abAllowCreate && (asType[0] == L'k'))
 	{
 		bsText = ::SysAllocString(L"value");
@@ -1388,7 +1388,7 @@ bool SettingsXML::Load(const wchar_t *regName, LPBYTE value, DWORD nSize)
 			wchar_t cHex;
 			DWORD lVal = 0;
 			lbRc = true;
-			
+
 			while (*pszCur && nSize)
 			{
 				lVal = 0;

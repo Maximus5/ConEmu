@@ -1996,10 +1996,10 @@ BOOL CRealBuffer::LoadDataFromSrv(DWORD CharCount, CHAR_INFO* pData)
 				}
 			}
 
-            if (idx == -1)
-            {
-            	lstrcatA(sInfo, ", failed to find change idx");
-            }
+			if (idx == -1)
+			{
+				lstrcatA(sInfo, ", failed to find change idx");
+			}
 
 			LOGCONSOLECHANGE(sInfo);
 		}
@@ -2070,8 +2070,8 @@ BOOL CRealBuffer::IsTrueColorerBufferChanged()
 		{
 			SafeFree(m_TrueMode.mp_Cmp);
 			m_TrueMode.nCmpMax = nCurMax;
-            m_TrueMode.mp_Cmp = (AnnotationInfo*)malloc(cbCurSize);
-            nCmp = 2;
+			m_TrueMode.mp_Cmp = (AnnotationInfo*)malloc(cbCurSize);
+			nCmp = 2;
 		}
 		else
 		{
@@ -4633,9 +4633,9 @@ bool CRealBuffer::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	// Обработка Left/Right/Up/Down при выделении
 
 	if (con.m_sel.dwFlags && messg == WM_KEYDOWN
-	        && ((wParam == VK_ESCAPE) || (wParam == VK_RETURN)
+			&& ((wParam == VK_ESCAPE) || (wParam == VK_RETURN)
 				/*|| ((wParam == 'C' || wParam == VK_INSERT) && isPressed(VK_CONTROL)) -- moved to ProcessSelectionHotKey */
-	            || (wParam == VK_LEFT) || (wParam == VK_RIGHT) || (wParam == VK_UP) || (wParam == VK_DOWN)
+				|| (wParam == VK_LEFT) || (wParam == VK_RIGHT) || (wParam == VK_UP) || (wParam == VK_DOWN)
 				|| (wParam == VK_HOME) || (wParam == VK_END))
 	  )
 	{
@@ -5674,16 +5674,16 @@ void CRealBuffer::FindPanels()
 		if (con.pConChar[nIdx+con.nTextWidth] == ucBoxDblVert) // двойная рамка продолжается вниз
 		{
 			if ((bFirstCharOk || con.pConChar[nIdx] != ucBoxDblDownRight)
-		             && (con.pConChar[nIdx+1]>=L'0' && con.pConChar[nIdx+1]<=L'9')) // открыто несколько редакторов/вьюверов
+						&& (con.pConChar[nIdx+1]>=L'0' && con.pConChar[nIdx+1]<=L'9')) // открыто несколько редакторов/вьюверов
 				bContinue = true;
 			else if (((bFirstCharOk || con.pConChar[nIdx] == ucBoxDblDownRight)
-		             && (((con.pConChar[nIdx+1] == ucBoxDblHorz || con.pConChar[nIdx+1] == L' ') && (bFarShowColNames || !bFarShowSortLetter))
-		                 || con.pConChar[nIdx+1] == ucBoxSinglDownDblHorz // доп.окон нет, только рамка
-						 || con.pConChar[nIdx+1] == ucBoxDblDownDblHorz
-		                 || (con.pConChar[nIdx+1] == L'[' && con.pConChar[nIdx+2] == ucLeftScroll) // ScreenGadgets, default
-						 || (!bFarShowColNames && !(con.pConChar[nIdx+1] == ucBoxDblHorz || con.pConChar[nIdx+1] == L' ')
+						&& (((con.pConChar[nIdx+1] == ucBoxDblHorz || con.pConChar[nIdx+1] == L' ') && (bFarShowColNames || !bFarShowSortLetter))
+							|| con.pConChar[nIdx+1] == ucBoxSinglDownDblHorz // доп.окон нет, только рамка
+							|| con.pConChar[nIdx+1] == ucBoxDblDownDblHorz
+							|| (con.pConChar[nIdx+1] == L'[' && con.pConChar[nIdx+2] == ucLeftScroll) // ScreenGadgets, default
+							|| (!bFarShowColNames && !(con.pConChar[nIdx+1] == ucBoxDblHorz || con.pConChar[nIdx+1] == L' ')
 							&& con.pConChar[nIdx+1] != ucBoxSinglDownDblHorz && con.pConChar[nIdx+1] != ucBoxDblDownDblHorz)
-		                )))
+					)))
 				bContinue = true;
 		}
 
@@ -5693,13 +5693,13 @@ void CRealBuffer::FindPanels()
 			{
 				// Найти правый край левой панели
 				if (con.pConChar[nIdx+i] == ucBoxDblDownLeft
-				        && ((con.pConChar[nIdx+i-1] == ucBoxDblHorz || con.pConChar[nIdx+i-1] == L' ')
-				            || con.pConChar[nIdx+i-1] == ucBoxSinglDownDblHorz // правый угол панели
+						&& ((con.pConChar[nIdx+i-1] == ucBoxDblHorz || con.pConChar[nIdx+i-1] == L' ')
+							|| con.pConChar[nIdx+i-1] == ucBoxSinglDownDblHorz // правый угол панели
 							|| con.pConChar[nIdx+i-1] == ucBoxDblDownDblHorz
-				            || (con.pConChar[nIdx+i-1] == L']' && con.pConChar[nIdx+i-2] == L'\\') // ScreenGadgets, default
-							)
-				        // МОЖЕТ быть закрыто AltHistory
-				        /*&& con.pConChar[nIdx+i+con.nTextWidth] == ucBoxDblVert*/)
+							|| (con.pConChar[nIdx+i-1] == L']' && con.pConChar[nIdx+i-2] == L'\\') // ScreenGadgets, default
+						)
+						// МОЖЕТ быть закрыто AltHistory
+						/*&& con.pConChar[nIdx+i+con.nTextWidth] == ucBoxDblVert*/)
 				{
 					uint nBottom = con.nTextHeight - 1;
 
@@ -5770,8 +5770,8 @@ void CRealBuffer::FindPanels()
 			{
 				// нужно определить положение панели
 				if (((con.pConChar[nIdx+con.nTextWidth-1]>=L'0' && con.pConChar[nIdx+con.nTextWidth-1]<=L'9')  // справа часы
-				        || con.pConChar[nIdx+con.nTextWidth-1] == ucBoxDblDownLeft) // или рамка
-				        && (con.pConChar[nIdx+con.nTextWidth*2-1] == ucBoxDblVert // ну и правая граница панели
+						|| con.pConChar[nIdx+con.nTextWidth-1] == ucBoxDblDownLeft) // или рамка
+						&& (con.pConChar[nIdx+con.nTextWidth*2-1] == ucBoxDblVert // ну и правая граница панели
 							|| con.pConChar[nIdx+con.nTextWidth*2-1] == ucUpScroll) // или стрелка скроллбара
 						)
 				{
@@ -5780,15 +5780,15 @@ void CRealBuffer::FindPanels()
 					{
 						// ищем левую границу правой панели
 						if (con.pConChar[nIdx+i] == ucBoxDblDownRight
-						        && (((con.pConChar[nIdx+i+1] == ucBoxDblHorz || con.pConChar[nIdx+i+1] == L' ') && bFarShowColNames)
-						            || con.pConChar[nIdx+i+1] == ucBoxSinglDownDblHorz // правый угол панели
+								&& (((con.pConChar[nIdx+i+1] == ucBoxDblHorz || con.pConChar[nIdx+i+1] == L' ') && bFarShowColNames)
+									|| con.pConChar[nIdx+i+1] == ucBoxSinglDownDblHorz // правый угол панели
 									|| con.pConChar[nIdx+i+1] == ucBoxDblDownDblHorz
-						            || (con.pConChar[nIdx+i-1] == L']' && con.pConChar[nIdx+i-2] == L'\\') // ScreenGadgets, default
+									|| (con.pConChar[nIdx+i-1] == L']' && con.pConChar[nIdx+i-2] == L'\\') // ScreenGadgets, default
 									|| (!bFarShowColNames && !(con.pConChar[nIdx+i+1] == ucBoxDblHorz || con.pConChar[nIdx+i+1] == L' ')
 										&& con.pConChar[nIdx+i+1] != ucBoxSinglDownDblHorz && con.pConChar[nIdx+i+1] != ucBoxDblDownDblHorz)
 									)
-						        // МОЖЕТ быть закрыто AltHistory
-						        /*&& con.pConChar[nIdx+i+con.nTextWidth] == ucBoxDblVert*/)
+								// МОЖЕТ быть закрыто AltHistory
+								/*&& con.pConChar[nIdx+i+con.nTextWidth] == ucBoxDblVert*/)
 						{
 							uint nBottom = con.nTextHeight - 1;
 

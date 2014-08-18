@@ -10196,8 +10196,8 @@ void CConEmuMain::RightClickingPaint(HDC hdcIntVCon, CVirtualConsole* apVCon)
 							MapWindowPoints(hView, ghWnd, &pt, 1);
 							mh_RightClickingWnd = CreateWindow(szRightClickingClass, L"",
 								WS_VISIBLE|WS_CHILD|WS_DISABLED|WS_CLIPSIBLINGS|WS_CLIPCHILDREN,
-                                pt.x, pt.y, m_RightClickingSize.y, m_RightClickingSize.y,
-                                ghWnd, (HMENU)9999, g_hInstance, NULL);
+								pt.x, pt.y, m_RightClickingSize.y, m_RightClickingSize.y,
+								ghWnd, (HMENU)9999, g_hInstance, NULL);
 							SetWindowPos(mh_RightClickingWnd, HWND_TOP, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
 						}
 						else
@@ -12666,8 +12666,8 @@ HMONITOR CConEmuMain::GetPrimaryMonitor(MONITORINFO* pmi /*= NULL*/)
 		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"  GetPrimaryMonitor=%u -> hMon=x%08X Work=({%i,%i}-{%i,%i}) Area=({%i,%i}-{%i,%i})",
 			(hMon!=NULL), (DWORD)hMon,
 			mi.rcWork.left, mi.rcWork.top, mi.rcWork.right, mi.rcWork.bottom,
-            mi.rcMonitor.left, mi.rcMonitor.top, mi.rcMonitor.right, mi.rcMonitor.bottom);
-        LogString(szInfo);
+			mi.rcMonitor.left, mi.rcMonitor.top, mi.rcMonitor.right, mi.rcMonitor.bottom);
+		LogString(szInfo);
 	}
 
 	if (pmi)

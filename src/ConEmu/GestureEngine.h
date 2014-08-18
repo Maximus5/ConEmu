@@ -61,31 +61,31 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 class CGestures
 {
 public:
-    CGestures();
-    virtual ~CGestures();
+	CGestures();
+	virtual ~CGestures();
 
-    void StartGestureLog();
+	void StartGestureLog();
 
 public:
 	bool IsGesturesEnabled();
 
-    // Process WM_GESTURE messages
-    virtual bool ProcessGestureMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT& lResult);
+	// Process WM_GESTURE messages
+	virtual bool ProcessGestureMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT& lResult);
 
-    // This function is called when press and tap gesture is recognized
-    virtual void ProcessPressAndTap(HWND hWnd, const LONG ldx, const LONG ldy, const short nDeltaX, const short nDeltaY);
+	// This function is called when press and tap gesture is recognized
+	virtual void ProcessPressAndTap(HWND hWnd, const LONG ldx, const LONG ldy, const short nDeltaX, const short nDeltaY);
 
-    // This function is invoked when two finger tap gesture is recognized
-    virtual void ProcessTwoFingerTap(HWND hWnd, const LONG ldx, const LONG ldy, const ULONG dist);
+	// This function is invoked when two finger tap gesture is recognized
+	virtual void ProcessTwoFingerTap(HWND hWnd, const LONG ldx, const LONG ldy, const ULONG dist);
 
-    // This function is called constantly through duration of zoom in/out gesture
-    virtual void ProcessZoom(HWND hWnd, const double dZoomFactor, const LONG lZx, const LONG lZy);
+	// This function is called constantly through duration of zoom in/out gesture
+	virtual void ProcessZoom(HWND hWnd, const double dZoomFactor, const LONG lZx, const LONG lZy);
 
-    // This function is called throughout the duration of the panning/inertia gesture
-    virtual bool ProcessMove(HWND hWnd, const LONG ldx, const LONG ldy);
+	// This function is called throughout the duration of the panning/inertia gesture
+	virtual bool ProcessMove(HWND hWnd, const LONG ldx, const LONG ldy);
 
-    // This function is called throughout the duration of the rotation gesture
-    virtual bool ProcessRotate(HWND hWnd, const LONG lAngle, const LONG lOx, const LONG lOy, bool bEnd);
+	// This function is called throughout the duration of the rotation gesture
+	virtual bool ProcessRotate(HWND hWnd, const LONG lAngle, const LONG lOx, const LONG lOy, bool bEnd);
 
 private:
 	void SendRClick(HWND hWnd, const LONG ldx, const LONG ldy);
@@ -95,11 +95,11 @@ private:
 	// в процессе перетаскивания и содержит ЭКРАННЫЕ координаты
 	POINT _ptBegin;
 	// first significant point of the gesture
-    POINT _ptFirst;
+	POINT _ptFirst;
 	// second significant point of the gesture
-    POINT _ptSecond;
+	POINT _ptSecond;
 	// 4 bytes long argument
-    DWORD _dwArguments;
+	DWORD _dwArguments;
 	// Rotation was started?
 	bool  _inRotate;
 private:

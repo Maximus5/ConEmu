@@ -196,7 +196,7 @@ INT_PTR CEHelpPopup::helpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 			}
 			break;
 		}
-		
+
 		default:
 			if (pPopup && pPopup->mp_DpiAware && pPopup->mp_DpiAware->ProcessDpiMessages(hWnd2, messg, wParam, lParam))
 			{

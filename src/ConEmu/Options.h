@@ -171,9 +171,9 @@ struct Settings
 		~Settings();
 	protected:
 		friend class CSettings;
-	
-	    void ResetSettings();
-		void ReleasePointers();		
+
+		void ResetSettings();
+		void ReleasePointers();
 	public:
 
 		wchar_t Type[16]; // Информационно: L"[reg]" или L"[xml]"
@@ -182,9 +182,9 @@ struct Settings
 
 		//reg->Load(L"DefaultBufferHeight", DefaultBufferHeight);
 		int DefaultBufferHeight;
-		
+
 		//bool AutoScroll;
-		
+
 		//reg->Load(L"AutoBufferHeight", AutoBufferHeight);
 		bool AutoBufferHeight; // Long console output
 		//reg->Load(L"CmdOutputCP", nCmdOutputCP);
@@ -240,8 +240,8 @@ struct Settings
 			void FreePtr()
 			{
 				SafeFree(pszName);
-                ColorPalette* p = this;
-                SafeFree(p);
+				ColorPalette* p = this;
+				SafeFree(p);
 			};
 		};
 
@@ -251,7 +251,7 @@ struct Settings
 			wchar_t* AppNames; // "far.exe|far64.exe" и т.п.
 			wchar_t* AppNamesLwr; // For internal use
 			BYTE Elevated; // 00 - unimportant, 01 - elevated, 02 - nonelevated
-			
+
 			//const COLORREF* Palette/*[0x20]*/; // текущая палитра (Fade/не Fade)
 
 			bool OverridePalette; // Palette+Extend
@@ -430,7 +430,7 @@ struct Settings
 		int PaletteSetActive(LPCWSTR asName);
 
 
-		// 
+		//
 		struct ConEmuProgressStore
 		{
 			// This two are stored in settings
@@ -481,7 +481,7 @@ struct Settings
 
 		void SaveStatusSettings(SettingsBase* reg);
 
-	private:	
+	private:
 		// reg->Load(L"ColorTableNN", Colors[i]);
 		COLORREF Colors[0x20];
 		COLORREF ColorsFade[0x20];
@@ -510,37 +510,37 @@ struct Settings
 		bool isFontAutoSize;
 		//reg->Load(L"AutoRegisterFonts", isAutoRegisterFonts);
 		bool isAutoRegisterFonts;
-		
+
 		//reg->Load(L"ConsoleFontName", ConsoleFont.lfFaceName, countof(ConsoleFont.lfFaceName));
 		//reg->Load(L"ConsoleFontWidth", ConsoleFont.lfWidth);
 		//reg->Load(L"ConsoleFontHeight", ConsoleFont.lfHeight);
 		LOGFONT ConsoleFont;
-		
+
 		bool NeedDialogDetect();
-		
-		
+
+
 		//reg->Load(L"TrueColorerSupport", isTrueColorer);
 		bool isTrueColorer;
-		
+
 
 		/* *** Background image *** */
 		//reg->Load(L"BackGround Image show", isShowBgImage);
 		char isShowBgImage;
-		//reg->Load(L"BackGround Image", sBgImage, countof(sBgImage));		
+		//reg->Load(L"BackGround Image", sBgImage, countof(sBgImage));
 		WCHAR sBgImage[MAX_PATH];
 		//reg->Load(L"bgImageDarker", bgImageDarker);
-		u8 bgImageDarker;		
+		u8 bgImageDarker;
 		//reg->Load(L"bgImageColors", nBgImageColors);
 		DWORD nBgImageColors;
 		//reg->Load(L"bgOperation", bgOperation);
 		BYTE bgOperation; // BackgroundOp {eUpLeft = 0, eStretch = 1, eTile = 2, ...}
 		//reg->Load(L"bgPluginAllowed", isBgPluginAllowed);
 		char isBgPluginAllowed;
-		
-		
+
+
 		//bool isBackgroundImageValid;
-		
-		
+
+
 
 		/* *** Transparency *** */
 		bool isTransparentAllowed();
@@ -584,7 +584,7 @@ struct Settings
 		//reg->Load(L"StoreTaskbarCommands", isStoreTaskbarCommands);
 		bool isStoreTaskbarCommands;
 
-		
+
 	//	/* Command Line ("/cmd" arg) */
 	//private:
 	//	LPTSTR psCurCmd;
@@ -622,8 +622,8 @@ struct Settings
 		bool FontUseDpi;
 		//reg->Load(L"FontUseUnits", FontUseUnits);
 		bool FontUseUnits;
-		
-		
+
+
 		//reg->Load(L"HideCaption", isHideCaption);
 		bool isHideCaption; // Hide caption when maximized
 		//reg->Load(L"HideChildCaption", isHideChildCaption);
@@ -743,7 +743,7 @@ struct Settings
 		bool isHighlightMouseRow;
 		//reg->Load(L"HighlightMouseCol", isHighlightMouseCol);
 		bool isHighlightMouseCol;
-		
+
 		bool IsModifierPressed(int nDescrID, bool bAllowEmpty);
 		void IsModifierPressed(int nDescrID, bool* pbNoEmpty, bool* pbAllowEmpty);
 		//typedef struct tag_CharRanges
@@ -753,12 +753,12 @@ struct Settings
 		//} CharRanges;
 		//wchar_t mszCharRanges[120];
 		//CharRanges icFixFarBorderRanges[10];
-		
+
 		// !!! Зовется из настроек Init/Load... !!!
 		int ParseCharRanges(LPCWSTR asRanges, BYTE (&Chars)[0x10000], BYTE abValue = TRUE); // например, L"2013-25C3,25C4"
 		wchar_t* CreateCharRanges(BYTE (&Chars)[0x10000]); // caller must free(result)
 		BYTE mpc_FixFarBorderValues[0x10000];
-		
+
 		//reg->Load(L"KeyboardHooks", m_isKeyboardHooks); if (m_isKeyboardHooks>2) m_isKeyboardHooks = 0;
 		BYTE m_isKeyboardHooks;
 	public:
@@ -767,7 +767,7 @@ struct Settings
 		//bool CheckUpdatesWanted();
 
 		bool isCharBorder(wchar_t inChar);
-		
+
 		//reg->Load(L"PartBrush75", isPartBrush75); if (isPartBrush75<5) isPartBrush75=5; else if (isPartBrush75>250) isPartBrush75=250;
 		BYTE isPartBrush75;
 		//reg->Load(L"PartBrush50", isPartBrush50); if (isPartBrush50<5) isPartBrush50=5; else if (isPartBrush50>250) isPartBrush50=250;
@@ -776,7 +776,7 @@ struct Settings
 		BYTE isPartBrush25;
 		//reg->Load(L"PartBrushBlack", isPartBrushBlack);
 		BYTE isPartBrushBlack;
-		
+
 		//reg->Load(L"RightClick opens context menu", isRClickSendKey);
 		// 0 - не звать EMenu, 1 - звать всегда, 2 - звать по длинному клику
 		char isRClickSendKey;
@@ -791,7 +791,7 @@ struct Settings
 		wchar_t *sRClickMacro;
 		LPCWSTR RClickMacro(FarMacroVersion fmv);
 		LPCWSTR RClickMacroDefault(FarMacroVersion fmv);
-		
+
 		//reg->Load(L"SafeFarClose", isSafeFarClose);
 		bool isSafeFarClose;
 		//reg->Load(L"SafeFarCloseMacro", &sSafeFarCloseMacro);
@@ -815,7 +815,7 @@ struct Settings
 		bool isSendCtrlEsc;
 		////reg->Load(L"SendAltF9", isSendAltF9);
 		//bool isSendAltF9;
-		
+
 		//reg->Load(L"Min2Tray", mb_MinToTray);
 		public:
 		bool mb_MinToTray;
@@ -830,7 +830,7 @@ struct Settings
 		//bool isUpdConHandle;
 		//reg->Load(L"RSelectionFix", isRSelFix);
 		bool isRSelFix;
-		
+
 		/* *** Drag *** */
 		//reg->Load(L"Dnd", isDragEnabled);
 		BYTE isDragEnabled;
@@ -855,25 +855,25 @@ struct Settings
 
 		//reg->Load(L"KeyBarRClick", isKeyBarRClick);
 		bool isKeyBarRClick; // Правый клик по кейбару - показать PopupMenu
-		
+
 		//reg->Load(L"DebugSteps", isDebugSteps);
 		bool isDebugSteps;
-		
+
 		//reg->Load(L"EnhanceGraphics", isEnhanceGraphics);
 		bool isEnhanceGraphics; // Progressbars and scrollbars (pseudographics)
 		//reg->Load(L"EnhanceButtons", isEnhanceButtons);
 		bool isEnhanceButtons; // Buttons, CheckBoxes and RadioButtons (pseudographics)
-		
+
 		//reg->Load(L"FadeInactive", isFadeInactive);
 		bool isFadeInactive;
 		protected:
 		//reg->Load(L"FadeInactiveLow", mn_FadeLow);
 		BYTE mn_FadeLow;
-		//reg->Load(L"FadeInactiveHigh", mn_FadeHigh);		
+		//reg->Load(L"FadeInactiveHigh", mn_FadeHigh);
 		BYTE mn_FadeHigh;
 		//mn_LastFadeSrc = mn_LastFadeDst = -1;
 		COLORREF mn_LastFadeSrc;
-		//mn_LastFadeSrc = mn_LastFadeDst = -1;		
+		//mn_LastFadeSrc = mn_LastFadeDst = -1;
 		COLORREF mn_LastFadeDst;
 		public:
 
@@ -899,7 +899,7 @@ struct Settings
 		bool isStatusColumnHidden[64]; // _ASSERTE(countof(isStatusColumnHidden)>csi_Last);
 		//для информации, чтобы сохранить изменения при выходе
 		bool mb_StatusSettingsWasChanged;
-		
+
 		//reg->Load(L"Tabs", isTabs);
 		char isTabs;
 		//reg->Load(L"TabsLocation", nTabsLocation);
@@ -921,7 +921,7 @@ struct Settings
 		//reg->Load(L"TabDblClick", nTabDblClickAction);
 		DWORD nTabBarDblClickAction; // 0-None, 1-Auto, 2-Maximize/Restore, 3-NewTab (SettingsNS::tabBarDefaultClickActions)
 		DWORD nTabBtnDblClickAction; // 0-None, 1-Maximize/Restore, 2-Close, 3-Restart, 4-Duplicate (SettingsNS::tabBtnDefaultClickActions)
-		
+
 		//TODO:
 		bool isTabsInCaption;
 
@@ -937,24 +937,24 @@ struct Settings
 		//void SetTabsOnTaskBar(BYTE nTabsOnTaskBar);
 		bool isTaskbarShield;
 		bool isTaskbarProgress;
-		
+
 		//reg->Load(L"TabFontFace", sTabFontFace, countof(sTabFontFace));
 		wchar_t sTabFontFace[LF_FACESIZE];
 		//reg->Load(L"TabFontCharSet", nTabFontCharSet);
 		DWORD nTabFontCharSet;
 		//reg->Load(L"TabFontHeight", nTabFontHeight);
 		int nTabFontHeight;
-		
+
 		//if (!reg->Load(L"TabCloseMacro", &sTabCloseMacro) || (sTabCloseMacro && !*sTabCloseMacro)) { if (sTabCloseMacro) { free(sTabCloseMacro); sTabCloseMacro = NULL; } }
 		wchar_t *sTabCloseMacro;
 		LPCWSTR TabCloseMacro(FarMacroVersion fmv);
 		LPCWSTR TabCloseMacroDefault(FarMacroVersion fmv);
-		
+
 		//if (!reg->Load(L"SaveAllEditors", &sSaveAllMacro)) { sSaveAllMacro = lstrdup(L"...
 		wchar_t *sSaveAllMacro;
 		LPCWSTR SaveAllMacro(FarMacroVersion fmv);
 		LPCWSTR SaveAllMacroDefault(FarMacroVersion fmv);
-		
+
 		//reg->Load(L"ToolbarAddSpace", nToolbarAddSpace);
 		int nToolbarAddSpace;
 		//reg->Load(L"ConWnd Width", wndWidth);
@@ -997,7 +997,7 @@ struct Settings
 		DWORD nScrollBarAppearDelay;
 		//reg->Load(L"ScrollBarDisappearDelay", nScrollBarDisappearDelay);
 		DWORD nScrollBarDisappearDelay;
-		
+
 		////reg->Load(L"TabMargins", rcTabMargins);
 		//RECT rcTabMargins;
 		////reg->Load(L"TabFrame", isTabFrame);
@@ -1085,7 +1085,7 @@ struct Settings
 
 		// FindText: bMatchCase, bMatchWholeWords, bFreezeConsole, bHighlightAll;
 		FindTextOptions FindOptions;
-		
+
 
 	public:
 		/* ************************ */
@@ -1152,27 +1152,27 @@ struct Settings
 
 		TODO("загрузка/сохранение bHideDisabledTabs");
 		bool bHideDisabledTabs;
-		
+
 		//reg->Load(L"ShowFarWindows", bShowFarWindows);
 		bool bShowFarWindows;
 
 		bool NeedCreateAppWindow();
-		
+
 		//reg->Load(L"MainTimerElapse", nMainTimerElapse); if (nMainTimerElapse>1000) nMainTimerElapse = 1000;
 		DWORD nMainTimerElapse; // периодичность, с которой из консоли считывается текст
 		//reg->Load(L"MainTimerInactiveElapse", nMainTimerInactiveElapse); if (nMainTimerInactiveElapse>10000) nMainTimerInactiveElapse = 10000;
 		DWORD nMainTimerInactiveElapse; // периодичность при неактивности
-		
+
 		//bool isAdvLangChange; // в Висте без ConIme в самой консоли не меняется язык, пока не послать WM_SETFOCUS. Но при этом исчезает диалог быстрого поиска
-		
+
 		//reg->Load(L"SkipFocusEvents", isSkipFocusEvents);
 		bool isSkipFocusEvents;
-		
+
 		//bool isLangChangeWsPlugin;
-		
+
 		//reg->Load(L"MonitorConsoleLang", isMonitorConsoleLang);
 		BYTE isMonitorConsoleLang; // bitmask. 1 - follow up console HKL (e.g. after XLat in Far Manager), 2 - use one HKL for all tabs
-		
+
 		//reg->Load(L"SleepInBackground", isSleepInBackground);
 		bool isSleepInBackground;
 		//reg->Load(L"RetardInactivePanes", isRetardInactivePanes);
@@ -1202,7 +1202,7 @@ struct Settings
 		//reg->Load(L"SuppressBells", isSuppressBells);
 		bool isSuppressBells;
 		//reg->Load(L"ConsoleExceptionHandler", isConsoleExceptionHandler);
-		bool isConsoleExceptionHandler; // 
+		bool isConsoleExceptionHandler; //
 
 		/* *** Debugging *** */
 		//reg->Load(L"ConVisible", isConVisible);
@@ -1213,7 +1213,7 @@ struct Settings
 		//reg->Load(L"PanView.PFrame", ThSet.nPreviewFrame); if (ThSet.nPreviewFrame!=0 && ThSet.nPreviewFrame!=1) ThSet.nPreviewFrame = 1;
 		//и т.п...
 		PanelViewSetMapping ThSet;
-		
+
 		/* *** AutoUpdate *** */
 		ConEmuUpdateSettings UpdSet;
 		//wchar_t *szUpdateVerLocation; // ConEmu latest version location info
@@ -1244,7 +1244,7 @@ struct Settings
 		//	wchar_t* szGuiMacro;
 		//};
 		//HotGuiMacro Macros[24];
-		
+
 	public:
 		void LoadSettings(bool *rbNeedCreateVanilla, const SettingsStorage* apStorage = NULL);
 		void InitSettings();
@@ -1270,9 +1270,9 @@ struct Settings
 		//BOOL CheckConIme();
 		void CheckConsoleSettings();
 		void ResetSavedOnExit();
-		
+
 		SettingsBase* CreateSettings(const SettingsStorage* apStorage);
-		
+
 		void GetSettingsType(SettingsStorage& Storage, bool& ReadOnly);
 };
 

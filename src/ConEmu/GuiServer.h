@@ -39,7 +39,7 @@ public:
 	~CGuiServer();
 	bool Start();
 	void Stop(bool abDeinitialize=false);
-protected:	
+protected:
 	PipeServer<CESERVER_REQ>* mp_GuiServer;
 	//static DWORD CALLBACK GuiServerThread(LPVOID lpvParam);
 	//void GuiServerThreadCommand(HANDLE hPipe);

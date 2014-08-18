@@ -97,7 +97,7 @@ private:
 	bool  mb_PassSysCommand;
 	bool  mb_InScMinimize;
 	bool  mb_InRestoreFromMinimized;
-	
+
 	TrackMenuPlace mn_TrackMenuPlace;
 
 	//struct CmdHistory

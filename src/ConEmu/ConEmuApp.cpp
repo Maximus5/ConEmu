@@ -1263,9 +1263,9 @@ void StripLines(wchar_t* pszText, LPCWSTR pszCommentMark)
 		else
 		{
 			// Skip to next line
-            iLeft -= iLine;
-            pszSrc += iLine;
-            pszDst += iLine;
+			iLeft -= iLine;
+			pszSrc += iLine;
+			pszDst += iLine;
 		}
 	}
 

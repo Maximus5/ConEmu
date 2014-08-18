@@ -45,8 +45,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifdef USEPIPELOG
 namespace PipeServerLogger
 {
-    Event g_events[BUFFER_SIZE];
-    LONG g_pos = -1;
+	Event g_events[BUFFER_SIZE];
+	LONG g_pos = -1;
 }
 #endif
 
@@ -74,7 +74,7 @@ bool CGuiServer::Start()
 	// Запустить серверную нить
 	// 120122 - теперь через PipeServer
 	_wsprintf(ms_ServerPipe, SKIPLEN(countof(ms_ServerPipe)) CEGUIPIPENAME, L".", (DWORD)ghWnd); //-V205
-	
+
 	mp_GuiServer->SetOverlapped(true);
 	mp_GuiServer->SetLoopCommands(false);
 	mp_GuiServer->SetDummyAnswerSize(sizeof(CESERVER_REQ_HDR));
@@ -83,7 +83,7 @@ bool CGuiServer::Start()
 #ifdef _DEBUG
 	lpfnOnConnected = CGuiServer::OnGuiServerConnected;
 #endif
-	
+
 	if (!mp_GuiServer->StartPipeServer(ms_ServerPipe, (LPARAM)this, LocalSecurity(), GuiServerCommand, GuiServerFree, lpfnOnConnected, NULL))
 	{
 		// Ошибка уже показана
@@ -127,7 +127,7 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 		_ASSERTE(((CGuiServer*)lParam)!=NULL);
 		pGSrv = &gpConEmu->m_GuiServer;
 	}
-	
+
 	if (pIn->hdr.bAsync)
 		pGSrv->mp_GuiServer->BreakConnection(pInst);
 
@@ -506,7 +506,7 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 			//CESERVER_REQ Out;
 			//ExecutePrepareCmd(&Out.hdr, CECMD_ATTACHGUIAPP, sizeof(CESERVER_REQ_HDR)+sizeof(Out.AttachGuiApp));
 			//Out.AttachGuiApp = pIn->AttachGuiApp;
-			
+
 			#ifdef SHOW_GUIATTACH_START
 			if (pIn->AttachGuiApp.hWindow == NULL)
 			{
@@ -532,7 +532,7 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 				//ppReply->AttachGuiApp.rcWindow.left = ppReply->AttachGuiApp.rcWindow.top = 0;
 				////MapWindowPoints(NULL, hBack, (LPPOINT)&ppReply->AttachGuiApp.rcWindow, 2);
 				//pRCon->CorrectGuiChildRect(ppReply->AttachGuiApp.nStyle, ppReply->AttachGuiApp.nStyleEx, ppReply->AttachGuiApp.rcWindow);
-				
+
 				// Уведомить RCon и ConEmuC, что гуй подцепился
 				// Вызывается два раза. Первый (при запуске exe) ahGuiWnd==NULL, второй - после фактического создания окна
 				pRCon->SetGuiMode(pIn->AttachGuiApp.nFlags, pIn->AttachGuiApp.hAppWindow, pIn->AttachGuiApp.Styles.nStyle, pIn->AttachGuiApp.Styles.nStyleEx, pIn->AttachGuiApp.sAppFilePathName, pIn->AttachGuiApp.nPID, rcPrev);

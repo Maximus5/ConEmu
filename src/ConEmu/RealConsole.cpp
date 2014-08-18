@@ -1773,34 +1773,6 @@ bool CRealConsole::PostConsoleEvent(INPUT_RECORD* piRec, bool bFromIME /*= false
 	return lbRc;
 }
 
-//DWORD CRealConsole::InputThread(LPVOID lpParameter)
-//{
-//    CRealConsole* pRCon = (CRealConsole*)lpParameter;
-//
-//    MSG msg;
-//    while (GetMessage(&msg,0,0,0)) {
-//		ConEmuMsgLogger::Log(msg);
-//    	if (msg.message == WM_QUIT) break;
-//    	if (WaitForSingleObject(pRCon->mh_TermEvent, 0) == WAIT_OBJECT_0) break;
-//
-//    	if (msg.message == INPUT_THREAD_ALIVE_MSG) {
-//    		pRCon->mn_FlushOut = msg.wParam;
-//    		continue;
-//
-//    	} else {
-//
-//    		INPUT_RECORD r = {0};
-//
-//    		if (UnpackInputRecord(&msg, &r)) {
-//    			pRCon->SendConsoleEvent(&r);
-//    		}
-//
-//    	}
-//    }
-//
-//    return 0;
-//}
-
 void CRealConsole::OnTimerCheck()
 {
 	if (!this)
@@ -3948,8 +3920,8 @@ BOOL CRealConsole::CreateOrRunAs(CRealConsole* pRCon, RConStartArgs& Args,
 			}
 
 			lbRc = CreateProcessWithLogonW(Args.pszUserName, Args.pszDomain, Args.szUserPassword,
-				                        LOGON_WITH_PROFILE, NULL, pszChangedCmd ? pszChangedCmd : psCurCmd,
-				                        NORMAL_PRIORITY_CLASS|CREATE_DEFAULT_ERROR_MODE
+										LOGON_WITH_PROFILE, NULL, pszChangedCmd ? pszChangedCmd : psCurCmd,
+										NORMAL_PRIORITY_CLASS|CREATE_DEFAULT_ERROR_MODE
 										|(bConsoleProcess ? CREATE_NEW_CONSOLE : 0)
 										, NULL, lpszWorkDir, &si, &pi);
 				//if (CreateProcessAsUser(Args.hLogonToken, NULL, psCurCmd, NULL, NULL, FALSE,
@@ -3964,19 +3936,19 @@ BOOL CRealConsole::CreateOrRunAs(CRealConsole* pRCon, RConStartArgs& Args,
 		else if (Args.RunAsRestricted == crb_On)
 		{
 			lbRc = CreateProcessRestricted(NULL, psCurCmd, NULL, NULL, FALSE,
-				                    NORMAL_PRIORITY_CLASS|CREATE_DEFAULT_ERROR_MODE
-									|(bConsoleProcess ? CREATE_NEW_CONSOLE : 0)
-				                    , NULL, lpszWorkDir, &si, &pi, &dwLastError);
+										NORMAL_PRIORITY_CLASS|CREATE_DEFAULT_ERROR_MODE
+										|(bConsoleProcess ? CREATE_NEW_CONSOLE : 0)
+										, NULL, lpszWorkDir, &si, &pi, &dwLastError);
 
 			dwLastError = GetLastError();
 		}
 		else
 		{
 			lbRc = CreateProcess(NULL, psCurCmd, NULL, NULL, FALSE,
-				                    NORMAL_PRIORITY_CLASS|CREATE_DEFAULT_ERROR_MODE
-									|(bConsoleProcess ? CREATE_NEW_CONSOLE : 0)
-				                    //|CREATE_NEW_PROCESS_GROUP - низя! перестает срабатывать Ctrl-C
-				                    , NULL, lpszWorkDir, &si, &pi);
+										NORMAL_PRIORITY_CLASS|CREATE_DEFAULT_ERROR_MODE
+										|(bConsoleProcess ? CREATE_NEW_CONSOLE : 0)
+										//|CREATE_NEW_PROCESS_GROUP - низя! перестает срабатывать Ctrl-C
+										, NULL, lpszWorkDir, &si, &pi);
 
 			dwLastError = GetLastError();
 		}
@@ -4405,11 +4377,11 @@ void CRealConsole::PostMouseEvent(UINT messg, WPARAM wParam, COORD crMouse, bool
 		// Последний посланный m_LastMouse запоминается в PostConsoleEvent
 		if (m_LastMouse.dwEventFlags == MOUSE_MOVED // только если последним - был послан НЕ клик
 				&& m_LastMouse.dwButtonState     == r.Event.MouseEvent.dwButtonState
-		        && m_LastMouse.dwControlKeyState == r.Event.MouseEvent.dwControlKeyState
-		        //&& (nDeltaX <= 1 && nDeltaY <= 1) // был 1 пиксел
-		        && !nDeltaX && !nDeltaY // стал 1 символ
-		        && !abForceSend // и если не просили точно послать
-		        )
+				&& m_LastMouse.dwControlKeyState == r.Event.MouseEvent.dwControlKeyState
+				//&& (nDeltaX <= 1 && nDeltaY <= 1) // был 1 пиксел
+				&& !nDeltaX && !nDeltaY // стал 1 символ
+				&& !abForceSend // и если не просили точно послать
+				)
 			return; // не посылать в консоль MouseMove на том же месте
 
 		if (mb_BtnClicked)
@@ -4966,7 +4938,7 @@ bool CRealConsole::PostConsoleMessage(HWND hWnd, UINT nMsg, WPARAM wParam, LPARA
 		WIN3264TEST(L", x%08X",L", x%08X%08X")
 		WIN3264TEST(L", x%08X",L", x%08X%08X")
 		L")\n",
-	    (DWORD)hWnd, nMsg, WIN3264WSPRINT(wParam), WIN3264WSPRINT(lParam));
+		(DWORD)hWnd, nMsg, WIN3264WSPRINT(wParam), WIN3264WSPRINT(lParam));
 	DEBUGSTRSENDMSG(szDbg);
 	#endif
 
@@ -5089,7 +5061,7 @@ void CRealConsole::StopThread(BOOL abRecreating)
 {
 #ifdef _DEBUG
 	/*
-	    HeapValidate(mh_Heap, 0, NULL);
+		HeapValidate(mh_Heap, 0, NULL);
 	*/
 #endif
 	_ASSERTE(abRecreating==mb_ProcessRestarted);
@@ -5205,7 +5177,7 @@ void CRealConsole::StopThread(BOOL abRecreating)
 
 #ifdef _DEBUG
 	/*
-	    HeapValidate(mh_Heap, 0, NULL);
+		HeapValidate(mh_Heap, 0, NULL);
 	*/
 #endif
 	DEBUGSTRPROC(L"Leaving StopThread\n");
@@ -7473,7 +7445,7 @@ void CRealConsole::ShowGuiClientExt(int nMode, BOOL bDetach /*= FALSE*/) // -1 T
 			wchar_t sInfo[200];
 			_wsprintf(sInfo, SKIPLEN(countof(sInfo)) L"ShowGuiClientExtern: PID=%u, hGuiWnd=x%08X, bExtern=%i, bDetach=%u",
 				m_ChildGui.nGuiWndPID, (DWORD)m_ChildGui.hGuiWnd, nMode, bDetach);
-	        gpConEmu->LogString(sInfo);
+			gpConEmu->LogString(sInfo);
 		}
 
 		SetOtherWindowPos(m_ChildGui.hGuiWnd, HWND_TOP, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
@@ -7947,7 +7919,7 @@ void CRealConsole::LogInput(UINT uMsg, WPARAM wParam, LPARAM lParam, LPCWSTR psz
 			lstrcpynA(chUtf8, "\"\" ", 5);
 		}
 		/* */ _wsprintfA(pszAdd, SKIPLEN(countof(szInfo)-(pszAdd-szInfo))
-		                 "%s %s wParam=x%08X, lParam=x%08X\r\n",
+						 "%s %s wParam=x%08X, lParam=x%08X\r\n",
 						 (uMsg == WM_KEYDOWN) ? "WM_KEYDOWN" :
 						 (uMsg == WM_KEYUP)   ? "WM_KEYUP  " :
 						 (uMsg == WM_CHAR) ? "WM_CHAR" :
@@ -7962,7 +7934,7 @@ void CRealConsole::LogInput(UINT uMsg, WPARAM wParam, LPARAM lParam, LPCWSTR psz
 	else if (uMsg >= WM_MOUSEFIRST && uMsg <= WM_MOUSELAST)
 	{
 		/* */ _wsprintfA(pszAdd, SKIPLEN(countof(szInfo)-(pszAdd-szInfo))
-		                 "x%04X (%u) wParam=x%08X, lParam=x%08X\r\n",
+						 "x%04X (%u) wParam=x%08X, lParam=x%08X\r\n",
 						 uMsg, uMsg,
 						 (DWORD)wParam, (DWORD)lParam);
 	}
@@ -7993,7 +7965,7 @@ void CRealConsole::LogInput(INPUT_RECORD* pRec)
 	switch (pRec->EventType)
 	{
 			/*case FOCUS_EVENT: _wsprintfA(pszAdd, countof(szInfo)-(pszAdd-szInfo), "FOCUS_EVENT(%i)\r\n", pRec->Event.FocusEvent.bSetFocus);
-			    break;*/
+				break;*/
 		case MOUSE_EVENT: //_wsprintfA(pszAdd, SKIPLEN(countof(szInfo)-(pszAdd-szInfo)) "MOUSE_EVENT\r\n");
 			{
 				if ((m_UseLogs < 2) && (pRec->Event.MouseEvent.dwEventFlags == MOUSE_MOVED))
@@ -8480,7 +8452,7 @@ BOOL CRealConsole::SetOtherWindowPos(HWND hWnd, HWND hWndInsertAfter, int X, int
 		wchar_t sInfo[200];
 		_wsprintf(sInfo, SKIPLEN(countof(sInfo)) L"SetOtherWindowPos: hWnd=x%08X, hInsertAfter=x%08X, X=%i, Y=%i, CX=%i, CY=%i, Flags=x%04X",
 			(DWORD)hWnd, (DWORD)hWndInsertAfter, X,Y,cx,cy, uFlags);
-        gpConEmu->LogString(sInfo);
+		gpConEmu->LogString(sInfo);
 	}
 
 
@@ -11793,16 +11765,16 @@ bool CRealConsole::SetProgress(short nState, short nValue, LPCWSTR pszName /*= N
 		break;
 	case 1:
 		setAppProgress(1, min(max(nValue,0),100));
-        lbOk = true;
-        break;
-    case 2:
+		lbOk = true;
+		break;
+	case 2:
 		setAppProgress(2, (nValue > 0) ? min(max(nValue,0),100) : m_Progress.AppProgress);
-    	lbOk = true;
-    	break;
-    case 3:
+		lbOk = true;
+		break;
+	case 3:
 		setAppProgress(3, m_Progress.AppProgress);
-    	lbOk = true;
-    	break;
+		lbOk = true;
+		break;
 	case 4:
 	case 5:
 		_ASSERTE(FALSE && "TODO: Estimation of process duration");
@@ -11970,8 +11942,8 @@ void CRealConsole::UpdateTextColorSettings(BOOL ChangeTextAttr /*= TRUE*/, BOOL 
 	PrepareDefaultColors(nTextColorIdx, nBackColorIdx, nPopTextColorIdx, nPopBackColorIdx);
 
 	CESERVER_REQ *pIn = ExecuteNewCmd(CECMD_SETCONCOLORS, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_SETCONSOLORS));
-    if (!pIn)
-    	return;
+	if (!pIn)
+		return;
 
 	pIn->SetConColor.ChangeTextAttr = ChangeTextAttr;
 	pIn->SetConColor.NewTextAttributes = (GetDefaultBackColorIdx() << 4) | GetDefaultTextColorIdx();
@@ -12301,7 +12273,7 @@ void CRealConsole::GuiWndFocusRestore(bool bForce /*= false*/)
 			(DWORD)hSetFocus, (DWORD)m_ChildGui.hGuiWnd,
 			bAttachCalled ? (bAttached ? L"Called" : L"Failed") : L"Skipped", nErr);
 		DEBUGSTRFOCUS(sInfo);
-        gpConEmu->LogString(sInfo);
+		gpConEmu->LogString(sInfo);
 	}
 	else
 	{
@@ -12396,51 +12368,51 @@ void CRealConsole::SetGuiMode(DWORD anFlags, HWND ahGuiWnd, DWORD anStyle, DWORD
 	{
 		wchar_t szInfo[MAX_PATH*4];
 		HWND hBack = guard->GetBack();
-        _wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"SetGuiMode: BackWnd=x%08X, Flags=x%04X, PID=%u",
-        	(DWORD)(DWORD_PTR)hBack, anFlags, anAppPID);
+		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"SetGuiMode: BackWnd=x%08X, Flags=x%04X, PID=%u",
+			(DWORD)(DWORD_PTR)hBack, anFlags, anAppPID);
 
-        for (int s = 0; s <= 3; s++)
-        {
-        	LPCWSTR pszLabel = NULL;
-        	wchar_t szTemp[MAX_PATH-1] = {0};
-        	RECT rc;
+		for (int s = 0; s <= 3; s++)
+		{
+			LPCWSTR pszLabel = NULL;
+			wchar_t szTemp[MAX_PATH-1] = {0};
+			RECT rc;
 
-        	switch (s)
-        	{
-        	case 0:
-        		if (!ahGuiWnd) continue;
-        		GetWindowRect(hBack, &rc);
-        		_wsprintf(szTemp, SKIPLEN(countof(szTemp)) L"hGuiWnd=x%08X, Style=x%08X, StyleEx=x%08X, Prev={%i,%i}-{%i,%i}, Back={%i,%i}-{%i,%i}",
-        			(DWORD)(DWORD_PTR)ahGuiWnd, (DWORD)(DWORD_PTR)hBack, anStyle, anStyleEx,
-        			arcPrev.left, arcPrev.top, arcPrev.right, arcPrev.bottom,
-        			rc.left, rc.top, rc.right, rc.bottom);
-        		break;
-    		case 1:
-    			pszLabel = L"File";
-    			lstrcpyn(szTemp, asAppFileName, countof(szTemp));
-    			break;
-    		case 2:
-    			if (!ahGuiWnd) continue;
-    			pszLabel = L"Class";
-    			GetClassName(ahGuiWnd, szTemp, countof(szTemp)-1);
-    			break;
-    		case 3:
-    			if (!ahGuiWnd) continue;
-    			pszLabel = L"Title";
-    			GetWindowText(ahGuiWnd, szTemp, countof(szTemp)-1);
-    			break;
-        	}
+			switch (s)
+			{
+			case 0:
+				if (!ahGuiWnd) continue;
+				GetWindowRect(hBack, &rc);
+				_wsprintf(szTemp, SKIPLEN(countof(szTemp)) L"hGuiWnd=x%08X, Style=x%08X, StyleEx=x%08X, Prev={%i,%i}-{%i,%i}, Back={%i,%i}-{%i,%i}",
+					(DWORD)(DWORD_PTR)ahGuiWnd, (DWORD)(DWORD_PTR)hBack, anStyle, anStyleEx,
+					arcPrev.left, arcPrev.top, arcPrev.right, arcPrev.bottom,
+					rc.left, rc.top, rc.right, rc.bottom);
+				break;
+			case 1:
+				pszLabel = L"File";
+				lstrcpyn(szTemp, asAppFileName, countof(szTemp));
+				break;
+			case 2:
+				if (!ahGuiWnd) continue;
+				pszLabel = L"Class";
+				GetClassName(ahGuiWnd, szTemp, countof(szTemp)-1);
+				break;
+			case 3:
+				if (!ahGuiWnd) continue;
+				pszLabel = L"Title";
+				GetWindowText(ahGuiWnd, szTemp, countof(szTemp)-1);
+				break;
+			}
 
-        	wcscat_c(szInfo, L", ");
-        	if (pszLabel)
-        	{
-	        	wcscat_c(szInfo, pszLabel);
-	        	wcscat_c(szInfo, L"=");
-        	}
-        	wcscat_c(szInfo, szTemp);
-        }
+			wcscat_c(szInfo, L", ");
+			if (pszLabel)
+			{
+				wcscat_c(szInfo, pszLabel);
+				wcscat_c(szInfo, L"=");
+			}
+			wcscat_c(szInfo, szTemp);
+		}
 
-        gpConEmu->LogString(szInfo);
+		gpConEmu->LogString(szInfo);
 	}
 
 
@@ -13403,11 +13375,11 @@ bool CRealConsole::isCharBorderLeftVertical(WCHAR inChar)
 		return false; // чтобы лишних сравнений не делать
 
 	if (inChar == ucBoxDblVert || inChar == ucBoxSinglVert
-	        || inChar == ucBoxDblDownRight || inChar == ucBoxSinglDownRight
-	        || inChar == ucBoxDblVertRight || inChar == ucBoxDblVertSinglRight
-	        || inChar == ucBoxSinglVertRight
-	        || (inChar >= ucBox25 && inChar <= ucBox75) || inChar == ucBox100
-	        || inChar == ucUpScroll || inChar == ucDnScroll)
+			|| inChar == ucBoxDblDownRight || inChar == ucBoxSinglDownRight
+			|| inChar == ucBoxDblVertRight || inChar == ucBoxDblVertSinglRight
+			|| inChar == ucBoxSinglVertRight
+			|| (inChar >= ucBox25 && inChar <= ucBox75) || inChar == ucBox100
+			|| inChar == ucUpScroll || inChar == ucDnScroll)
 		return true;
 	else
 		return false;
@@ -13418,8 +13390,8 @@ bool CRealConsole::isCharBorderHorizontal(WCHAR inChar)
 {
 	if (inChar == ucBoxSinglDownDblHorz || inChar == ucBoxSinglUpDblHorz
 			|| inChar == ucBoxDblDownDblHorz || inChar == ucBoxDblUpDblHorz
-	        || inChar == ucBoxSinglDownHorz || inChar == ucBoxSinglUpHorz || inChar == ucBoxDblUpSinglHorz
-	        || inChar == ucBoxDblHorz)
+			|| inChar == ucBoxSinglDownHorz || inChar == ucBoxSinglUpHorz || inChar == ucBoxDblUpSinglHorz
+			|| inChar == ucBoxDblHorz)
 		return true;
 	else
 		return false;

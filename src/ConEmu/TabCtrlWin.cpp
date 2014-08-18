@@ -319,9 +319,9 @@ void CTabPanelWin::CreateRebar()
 	if (NULL == (mh_Rebar = CreateWindowEx(WS_EX_TOOLWINDOW, REBARCLASSNAME, NULL,
 								(ghWnd ? (WS_VISIBLE | WS_CHILD) : 0)
 								|WS_CLIPSIBLINGS|WS_CLIPCHILDREN
-	                            |/*CCS_NORESIZE|*/CCS_NOPARENTALIGN
-	                            |RBS_FIXEDORDER|RBS_AUTOSIZE|/*RBS_VARHEIGHT|*/CCS_NODIVIDER,
-	                            0,0,rcWnd.right,16, ghWnd, NULL, g_hInstance, NULL)))
+								|/*CCS_NORESIZE|*/CCS_NOPARENTALIGN
+								|RBS_FIXEDORDER|RBS_AUTOSIZE|/*RBS_VARHEIGHT|*/CCS_NODIVIDER,
+								0,0,rcWnd.right,16, ghWnd, NULL, g_hInstance, NULL)))
 		return;
 
 #if !defined(__GNUC__)
@@ -1103,7 +1103,7 @@ void CTabPanelWin::OnCaptionHiddenChanged(bool bCaptionHidden)
 
 	//if (abUpdatePos)
 	{
-		//-- было 			//UpdateToolbarPos();
+		//-- было		//UpdateToolbarPos();
 		RepositionInt();
 	}
 }

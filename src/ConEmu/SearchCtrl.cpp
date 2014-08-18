@@ -122,12 +122,12 @@ static int EditIconHintCreateHandles(HWND hEditCtrl, HICON* phIcon = NULL, HFONT
 		// Need to be created
 		TODO("Load appropriate icon resolution");
 		dh.hIcon = (HICON)LoadImage(GetModuleHandle(0), MAKEINTRESOURCE(IDI_SEARCH), IMAGE_ICON,
-                    GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), LR_DEFAULTCOLOR);
-        _ASSERTE(dh.hIcon!=NULL);
+						GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), LR_DEFAULTCOLOR);
+		_ASSERTE(dh.hIcon!=NULL);
 
-        dh.hFont = CreateFontIndirect(&lf);
-        if (!dh.hFont)
-        {
+		dh.hFont = CreateFontIndirect(&lf);
+		if (!dh.hFont)
+		{
 			_ASSERTE(dh.hFont!=NULL);
 			return 0;
 		}
