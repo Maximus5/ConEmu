@@ -2495,6 +2495,7 @@ bool CVConGroup::DoCloseAllVCon(bool bMsgConfirmed)
 					}
 				}
 				lbAllowed = true;
+				nDetachedCount = 0;
 			}
 		}
 		else

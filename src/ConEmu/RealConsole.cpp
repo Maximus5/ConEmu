@@ -1930,7 +1930,10 @@ wrap:
 
 	ShutdownGuiStep(L"StopSignal");
 
-	pRCon->StopSignal();
+	if (pRCon->mn_InRecreate != (DWORD)-1)
+	{
+		pRCon->StopSignal();
+	}
 
 	ShutdownGuiStep(L"Leaving MonitorThread\n");
 	return 0;
@@ -3879,6 +3882,11 @@ BOOL CRealConsole::StartProcessInt(LPCWSTR& lpszCmd, wchar_t*& psCurCmd, LPCWSTR
 		DEBUGSTRPROC(_T("AttachPID OK\n"));*/
 		//break; // OK, запустили
 	}
+	else if (mn_InRecreate)
+	{
+		m_Args.Detached = crb_On;
+		mn_InRecreate = (DWORD)-1;
+	}
 
 	/* End of process start-up */
 	return lbRc;
@@ -5014,10 +5022,16 @@ void CRealConsole::StopSignal()
 	mn_TermEventTick = GetTickCount();
 	SetEvent(mh_TermEvent);
 
+	if (mn_InRecreate == (DWORD)-1)
+	{
+		mn_InRecreate = 0;
+		mb_ProcessRestarted = FALSE;
+		m_Args.Detached = crb_Off;
+	}
+
 	if (!mn_InRecreate)
 	{
 		setGuiWnd(NULL);
-		//mn_GuiApplicationPID = 0;
 
 		// Чтобы при закрытии не было попытки активировать
 		// другую вкладку ЭТОЙ консоли
@@ -5275,7 +5289,7 @@ bool CRealConsole::isDetached()
 		return FALSE;
 	}
 
-	if (!mb_WasStartDetached && !mn_InRecreate)
+	if ((m_Args.Detached != crb_On) && !mn_InRecreate)
 	{
 		return FALSE;
 	}
@@ -6076,7 +6090,7 @@ bool CRealConsole::isProcessExist(DWORD anPID)
 
 int CRealConsole::GetProcesses(ConProcess** ppPrc, bool ClientOnly /*= false*/)
 {
-	if (mn_InRecreate)
+	if (mn_InRecreate && (mn_InRecreate != (DWORD)-1))
 	{
 		DWORD dwCurTick = GetTickCount();
 		DWORD dwDelta = dwCurTick - mn_InRecreate;
@@ -8278,6 +8292,7 @@ BOOL CRealConsole::RecreateProcessStart()
 
 		// Взведем флажочек, т.к. консоль как бы отключилась от нашего VCon
 		mb_WasStartDetached = TRUE;
+		m_Args.Detached = crb_On;
 
 		// Push request to "startup queue"
 		RequestStartup();
