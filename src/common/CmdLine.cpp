@@ -493,6 +493,30 @@ LPCWSTR GetDrive(LPCWSTR pszPath, wchar_t* szDrive, int/*countof(szDrive)*/ cchD
 	return szDrive;
 }
 
+int GetDirectory(CmdArg& szDir)
+{
+	int iRc = 0;
+	DWORD nLen, nMax;
+
+	nMax = GetCurrentDirectory(MAX_PATH, szDir.GetBuffer(MAX_PATH));
+	if (!nMax)
+	{
+		goto wrap;
+	}
+	else if (nMax > MAX_PATH)
+	{
+		nLen = GetCurrentDirectory(nMax, szDir.GetBuffer(nMax));
+		if (!nLen || (nLen > nMax))
+		{
+			goto wrap;
+		}
+	}
+
+	iRc = lstrlen(szDir);
+wrap:
+	return iRc;
+}
+
 // Команды, которые не нужно пытаться развернуть в exe?
 // кроме того, если команда содержит "?" или "*" - тоже не пытаться.
 const wchar_t* gsInternalCommands = L"ACTIVATE\0ALIAS\0ASSOC\0ATTRIB\0BEEP\0BREAK\0CALL\0CDD\0CHCP\0COLOR\0COPY\0DATE\0DEFAULT\0DEL\0DELAY\0DESCRIBE\0DETACH\0DIR\0DIRHISTORY\0DIRS\0DRAWBOX\0DRAWHLINE\0DRAWVLINE\0ECHO\0ECHOERR\0ECHOS\0ECHOSERR\0ENDLOCAL\0ERASE\0ERRORLEVEL\0ESET\0EXCEPT\0EXIST\0EXIT\0FFIND\0FOR\0FREE\0FTYPE\0GLOBAL\0GOTO\0HELP\0HISTORY\0IF\0IFF\0INKEY\0INPUT\0KEYBD\0KEYS\0LABEL\0LIST\0LOG\0MD\0MEMORY\0MKDIR\0MOVE\0MSGBOX\0NOT\0ON\0OPTION\0PATH\0PAUSE\0POPD\0PROMPT\0PUSHD\0RD\0REBOOT\0REN\0RENAME\0RMDIR\0SCREEN\0SCRPUT\0SELECT\0SET\0SETDOS\0SETLOCAL\0SHIFT\0SHRALIAS\0START\0TEE\0TIME\0TIMER\0TITLE\0TOUCH\0TREE\0TRUENAME\0TYPE\0UNALIAS\0UNSET\0VER\0VERIFY\0VOL\0VSCRPUT\0WINDOW\0Y\0\0";

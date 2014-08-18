@@ -79,6 +79,7 @@ int AddEndSlash(wchar_t* rsPath, int cchMax);
 const wchar_t* SkipNonPrintable(const wchar_t* asParams);
 bool CompareFileMask(const wchar_t* asFileName, const wchar_t* asMask);
 LPCWSTR GetDrive(LPCWSTR pszPath, wchar_t* szDrive, int/*countof(szDrive)*/ cchDriveMax);
+int GetDirectory(CmdArg& szDir);
 
 bool IsExecutable(LPCWSTR aszFilePathName, wchar_t** rsExpandedVars = NULL);
 bool IsFarExe(LPCWSTR asModuleName);
