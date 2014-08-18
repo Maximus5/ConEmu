@@ -2438,6 +2438,7 @@ LPWSTR ConEmuMacro::Shell(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 	wchar_t* pszRc = NULL;
 	LPWSTR pszOper = NULL, pszFile = NULL, pszParm = NULL, pszDir = NULL;
 	LPWSTR pszBuf = NULL;
+	CmdArg szRConCD;
 	bool bDontQuote = false;
 	int nShowCmd = SW_SHOWNORMAL;
 
@@ -2577,6 +2578,15 @@ LPWSTR ConEmuMacro::Shell(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 					}
 				}
 
+				// Support CD from ACTIVE console
+				if (pszDir && (lstrcmpi(pszDir, L"%CD%") == 0))
+				{
+					if (apRCon)
+						apRCon->GetConsoleCurDir(szRConCD);
+					else
+						szRConCD.Set(gpConEmu->WorkDir());
+					pszDir = szRConCD.ms_Arg;
+				}
 				if (pszDir)
 					pArgs->pszStartupDir = lstrdup(pszDir);
 
