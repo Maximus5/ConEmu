@@ -316,9 +316,9 @@ bool CToolImg::CreateButtonField(LPCWSTR szImgRes, COLORREF clrBackground, Butto
 	return true;
 }
 
-bool CToolImg::GetSizePerDpi(int nDisplayDpi, int& nDispW, int& nDispH)
+bool CToolImg::GetSizeForHeight(int nPreferHeight, int& nDispW, int& nDispH)
 {
-	if (nDisplayDpi <= 0)
+	if (nPreferHeight <= 0)
 		return false;
 	if (this == NULL || mn_BtnCount <= 0 || mprc_Btns == NULL)
 		return false;
@@ -341,9 +341,9 @@ bool CToolImg::GetSizePerDpi(int nDisplayDpi, int& nDispW, int& nDispH)
 	if (nMaxW <= 0 || nMaxH <= 0)
 		return false;
 
-	bool byWidth = (nMaxW > nMaxH);
+	bool byWidth = false; // (nMaxW > nMaxH);
 
-	int nNeed = (byWidth ? nMaxW : nMaxH) * nDisplayDpi * 100 / (96 * 200);
+	int nNeed = nPreferHeight; // (byWidth ? nMaxW : nMaxH) * nDisplayDpi * 100 / (96 * 200);
 	nDispW = 0; nDispH = 0;
 
 	for (int i = 0; i < mn_BtnCount; i++)

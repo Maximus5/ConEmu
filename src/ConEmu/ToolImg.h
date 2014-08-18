@@ -71,7 +71,7 @@ public:
 	HBITMAP GetBitmap();
 
 	bool PaintButton(int iBtn, HDC hdcDst, int nDstX, int nDstY, int nDstWidth, int nDstHeight);
-	bool GetSizePerDpi(int nDisplayDpi, int& nDispW, int& nDispH);
+	bool GetSizeForHeight(int nPreferHeight, int& nDispW, int& nDispH);
 
 	/*
 	HBITMAP LoadImageForWindow(HWND hwnd, HINSTANCE hinst, INT_PTR resId, int iStdWidth, int iStdHeight, COLORREF clrBackground, int iNumMaps, COLORREF from, COLORREF to, ...);
