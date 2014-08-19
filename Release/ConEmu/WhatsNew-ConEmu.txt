@@ -13,6 +13,26 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
 
+2014.08.18
+[*] New status bar columns are available: Zoom and DPI. Zoom is clickable.
+[*] Let statusbar columns Focus/Foreground show process information.
+[*] Ctrl+WheelClick reset font size to 100, same as GuiMacro Zoom(100).
+[*] Make all ConEmu's dialogs per-monitor dpi aware.
+[*] Fix console recreation and termination.
+    If user cancel the UAC dialog during console [re]creation
+    ConEmu fails to close the window by cross-click.
+[*] Implement ‘%CD%’ maintaining in the RCon.
+    * Automatic detection of ‘%CD%’ in "cmd.exe" or "tcc.exe";
+    * Ability to inform ConEmu GUI about shell ‘CD’ using
+      ANSI (\e]9;9;"CD"\e\\) or "ConEmuC -StoreCWD [dir]";
+    * Display *CD* in the tab title using ‘%d’ tab template;
+    * Reuse *CD* in the Restart and Create new console dialogs;
+    * At last you may use "*%CD%*" variable with Shell macro function
+      in the `Dir` parameter. Example, start new 'cmd' session:
+      Shell("", "cmd", "", "%CD%")
+[*] Issue 1680: Use ‘%CD%’ within hyperlink detector, warn if file not found.
+
+
 2014.08.15
 [*] Issue 1660: Support "/NoSingle", "/Quake", "/NoQuake" switches in Task parameters.
     They used while starting new Task from existing ConEmu instance.
