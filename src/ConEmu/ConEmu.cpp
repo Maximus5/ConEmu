@@ -11459,7 +11459,7 @@ wchar_t* CConEmuMain::LoadConsoleBatch_Task(LPCWSTR asSource, RConStartArgs* pAr
 		if (pGrp)
 		{
 			pszDataW = lstrdup(pGrp->pszCommands);
-			if (pGrp->pszGuiArgs)
+			if (pArgs && pGrp->pszGuiArgs)
 			{
 				RConStartArgs parsedArgs;
 				pGrp->ParseGuiArgs(&parsedArgs);
