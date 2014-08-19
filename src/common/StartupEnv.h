@@ -200,6 +200,9 @@ CEStartupEnv* LoadStartupEnv()
 		pEnv->si = si;
 		pEnv->os = os;
 
+		// Информационно. К физической консоли потом могут и через RDP подключиться...
+		pEnv->bIsRemote = GetSystemMetrics(0x1000/*SM_REMOTESESSION*/);
+
 		pEnv->bIsDbcs = IsDbcs();
 
 		#ifdef FULL_STARTUP_ENV
