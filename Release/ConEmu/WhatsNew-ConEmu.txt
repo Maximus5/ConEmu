@@ -13,6 +13,12 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
 
+2014.08.19
+[*] Issue 1666: Fix black squares in RDP sessions (non true-color display modes actually).
+[*] Issue 1688: Crash while updating Task bar jump list (6307574 regression).
+[*] Add ‘Remote session’ and ‘ScreenDC BITSPIXEL’ detection to Log.
+
+
 2014.08.18
 [*] New status bar columns are available: Zoom and DPI. Zoom is clickable.
 [*] Let statusbar columns Focus/Foreground show process information.
