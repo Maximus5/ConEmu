@@ -206,7 +206,7 @@ bool CToolImg::CreateButtonField(COLORREF clrBackground, ButtonFieldInfo* pBtns,
 	if (!CreateField(nFieldWidth, nFieldHeight, clrBackground))
 		return false;
 
-	COLORMAP colorMap = {0xC0C0C0, clrBackground/*GetSysColor(COLOR_BTNFACE)*/};
+	//COLORMAP colorMap = {0xC0C0C0, clrBackground/*GetSysColor(COLOR_BTNFACE)*/};
 
 	bool bRc = true;
 
@@ -272,7 +272,7 @@ bool CToolImg::CreateButtonField(LPCWSTR szImgRes, COLORREF clrBackground, Butto
 	if (!CreateField(nFieldWidth, nFieldHeight, clrBackground))
 		return false;
 
-	COLORMAP colorMap = {0xC0C0C0, clrBackground/*GetSysColor(COLOR_BTNFACE)*/};
+	//COLORMAP colorMap = {0xC0C0C0, clrBackground/*GetSysColor(COLOR_BTNFACE)*/};
 
 	bool bRc = true;
 
