@@ -202,6 +202,11 @@ CEStartupEnv* LoadStartupEnv()
 
 		// Информационно. К физической консоли потом могут и через RDP подключиться...
 		pEnv->bIsRemote = GetSystemMetrics(0x1000/*SM_REMOTESESSION*/);
+		#ifdef FULL_STARTUP_ENV
+		HDC hDC = CreateCompatibleDC(NULL);
+		pEnv->nPixels = GetDeviceCaps(hDC, BITSPIXEL);
+		DeleteDC(hDC);
+		#endif
 
 		pEnv->bIsDbcs = IsDbcs();
 

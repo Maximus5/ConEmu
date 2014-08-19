@@ -126,6 +126,7 @@ struct CEStartupEnv
 	LPCWSTR pszPathEnv;
 	size_t  cchPathLen;
 	BOOL    bIsRemote; // SM_REMOTESESSION - Informational
+	UINT    nPixels;   // BITSPIXEL - Informational
 	UINT    bIsWine;   // Informational
 	UINT    bIsWinPE;  // Informational
 	BOOL    bIsReactOS;

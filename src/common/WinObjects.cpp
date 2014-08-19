@@ -2911,7 +2911,7 @@ void MFileLog::LogStartEnv(CEStartupEnv* apStartEnv)
 		L"\tOsVer: %u.%u.%u.x%u, Product: %u, SP: %u.%u, Suite: 0x%X, SM_SERVERR2: %u\r\n"
 		L"\tCSDVersion: %s, ReactOS: %u (%s), Rsrv: %u\r\n"
 		L"\tDBCS: %u, WINE: %u, PE: %u, Remote: %u, ACP: %u, OEMCP: %u\r\n"
-		L"\tDesktop: %s\r\n\tTitle: %s\r\n\tSize: {%u,%u},{%u,%u}\r\n"
+		L"\tDesktop: %s; BPP: %u\r\n\tTitle: %s\r\n\tSize: {%u,%u},{%u,%u}\r\n"
 		L"\tFlags: 0x%08X, ShowWindow: %u, ConHWnd: 0x%08X\r\n"
 		L"\tHandles: 0x%08X, 0x%08X, 0x%08X"
 		,
@@ -2920,7 +2920,7 @@ void MFileLog::LogStartEnv(CEStartupEnv* apStartEnv)
 		osv.szCSDVersion, apStartEnv->bIsReactOS, pszReactOS, osv.wReserved,
 		apStartEnv->bIsDbcs, apStartEnv->bIsWine, apStartEnv->bIsWinPE, apStartEnv->bIsRemote,
 		apStartEnv->nAnsiCP, apStartEnv->nOEMCP,
-		szDesktop, szTitle,
+		szDesktop, apStartEnv->nPixels, szTitle,
 		apStartEnv->si.dwX, apStartEnv->si.dwY, apStartEnv->si.dwXSize, apStartEnv->si.dwYSize,
 		apStartEnv->si.dwFlags, (DWORD)apStartEnv->si.wShowWindow, (DWORD)hConWnd,
 		(DWORD)apStartEnv->si.hStdInput, (DWORD)apStartEnv->si.hStdOutput, (DWORD)apStartEnv->si.hStdError
