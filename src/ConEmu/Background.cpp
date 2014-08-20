@@ -275,7 +275,7 @@ bool CBackground::FillBackground(
 				{
 					for (int DY = Y; DY < (Y+Height); DY += pHdr->biHeight)
 					{
-						for(int DX = X; DX < (X+Width); DX += pHdr->biWidth)
+						for (int DX = X; DX < (X+Width); DX += pHdr->biWidth)
 						{
 							int W = klMin((Width-DX),pHdr->biWidth);
 							int H = klMin((Height-DY),pHdr->biHeight);
