@@ -259,12 +259,12 @@ bool CBackground::FillBackground(
 					int srcX = 0, srcY = 0, srcW = pHdr->biWidth, srcH = pHdr->biHeight;
 					if (Width && Width > Height)
 					{
-						srcH = srcW * Height / Width;
+						srcH = klMin((srcW * Height / Width), _abs(pHdr->biHeight));
 						srcY = (pHdr->biHeight - srcH) / 2;
 					}
 					else if (Height)
 					{
-						srcW = srcH * Width / Height;
+						srcW = klMin((srcH * Width / Height), pHdr->biWidth);
 						srcX = (pHdr->biWidth - srcW) / 2;
 					}
 
@@ -285,6 +285,8 @@ bool CBackground::FillBackground(
 						}
 					}
 				}
+
+				_ASSERTE(lbRc && "GdiAlphaBlend failed in background creation?");
 
 				TODO("Осветление картинки в Fade, когда gpSet->mn_FadeLow>0");
 				//if (abFade)
