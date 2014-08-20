@@ -7946,6 +7946,7 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		GetListBoxByte(hWnd2,lbBgPlacement,SettingsNS::BgOper,bg);
 		gpSet->bgOperation = bg;
 		gpSetCls->LoadBackgroundFile(gpSet->sBgImage, true);
+		NeedBackgroundUpdate();
 		gpConEmu->Update(true);
 		break;
 	}
