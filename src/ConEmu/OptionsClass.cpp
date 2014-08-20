@@ -785,6 +785,7 @@ void CSettings::InitVars_Pages()
 		{IDD_SPG_MAIN,        0, L"Main",           thi_Main       /* OnInitDialog_Main */},
 		{IDD_SPG_WNDSIZEPOS,  1, L"Size & Pos",     thi_SizePos    /* OnInitDialog_WndPosSize */},
 		{IDD_SPG_SHOW,        1, L"Appearance",     thi_Show       /* OnInitDialog_Show */},
+		{IDD_SPG_BACK,        1, L"Background",     thi_Backgr     /* OnInitDialog_Background */},
 		{IDD_SPG_TABS,        1, L"Tabs",           thi_Tabs       /* OnInitDialog_Tabs */},
 		{IDD_SPG_CONFIRM,     1, L"Confirm",        thi_Confirm    /* OnInitDialog_Confirm */},
 		{IDD_SPG_TASKBAR,     1, L"Task bar",       thi_Taskbar    /* OnInitDialog_Taskbar */},
@@ -2042,7 +2043,7 @@ LRESULT CSettings::OnInitDialog()
 	return 0;
 }
 
-void CSettings::FillBgImageColors()
+void CSettings::FillBgImageColors(HWND hWnd2)
 {
 	TCHAR tmp[255];
 	DWORD nTest = gpSet->nBgImageColors;
@@ -2070,7 +2071,7 @@ void CSettings::FillBgImageColors()
 	}
 
 	*pszTemp = 0;
-	SetDlgItemText(GetPage(thi_Main), tBgImageColors, tmp);
+	SetDlgItemText(hWnd2, tBgImageColors, tmp);
 }
 
 LRESULT CSettings::OnInitDialog_Main(HWND hWnd2)
@@ -2148,47 +2149,37 @@ LRESULT CSettings::OnInitDialog_Main(HWND hWnd2)
 
 	FillListBoxCharSet(hWnd2, tFontCharset, LogFont.lfCharSet);
 
-	//{
-	//	_ASSERTE(countof(SettingsNS::nCharSets) == countof(SettingsNS::szCharSets));
-	//	u8 num = 4; //-V112
-	//	for (size_t i = 0; i < countof(SettingsNS::nCharSets); i++)
-	//	{
-	//		SendDlgItemMessageA(hWnd2, tFontCharset, CB_ADDSTRING, 0, (LPARAM) ChSets[i]);
-	//		if (chSetsNums[i] == LogFont.lfCharSet) num = i;
-	//	}
-	//	SendDlgItemMessage(hWnd2, tFontCharset, CB_SETCURSEL, num, 0);
-	//}
-
 	MCHKHEAP
+
+	checkRadioButton(hWnd2, rNoneAA, rCTAA,
+		(LogFont.lfQuality == CLEARTYPE_NATURAL_QUALITY) ? rCTAA :
+		(LogFont.lfQuality == ANTIALIASED_QUALITY) ? rStandardAA : rNoneAA);
+
+	// 3d state - force center symbols in cells
+	checkDlgButton(hWnd2, cbMonospace, BST(gpSet->isMonospace));
+
+	checkDlgButton(hWnd2, cbBold, (LogFont.lfWeight == FW_BOLD) ? BST_CHECKED : BST_UNCHECKED);
+
+	checkDlgButton(hWnd2, cbItalic, LogFont.lfItalic ? BST_CHECKED : BST_UNCHECKED);
+
+	checkDlgButton(hWnd2, cbFixFarBorders, BST(gpSet->isFixFarBorders));
+
+	checkDlgButton(hWnd2, cbFontMonitorDpi, gpSet->FontUseDpi ? BST_CHECKED : BST_UNCHECKED);
+	checkDlgButton(hWnd2, cbFontAsDeviceUnits, gpSet->FontUseUnits ? BST_CHECKED : BST_UNCHECKED);
+
+	mn_LastChangingFontCtrlId = 0;
+	return 0;
+}
+
+LRESULT CSettings::OnInitDialog_Background(HWND hWnd2, bool abInitial)
+{
+	TCHAR tmp[255];
+
 	SetDlgItemText(hWnd2, tBgImage, gpSet->sBgImage);
 	//checkDlgButton(hWnd2, rBgSimple, BST_CHECKED);
 
 	checkDlgButton(hWnd2, rbBgReplaceIndexes, BST_CHECKED);
-	FillBgImageColors();
-
-	TCHAR tmp[255];
-	//DWORD nTest = gpSet->nBgImageColors;
-	//wchar_t *pszTemp = tmp; tmp[0] = 0;
-
-	//for(int idx = 0; nTest && idx < 16; idx++)
-	//{
-	//	if (nTest & 1)
-	//	{
-	//		if (pszTemp != tmp)
-	//		{
-	//			*pszTemp++ = L' ';
-	//			*pszTemp = 0;
-	//		}
-
-	//		_wsprintf(pszTemp, SKIPLEN(countof(tmp)-(pszTemp-tmp)) L"#%i", idx);
-	//		pszTemp += _tcslen(pszTemp);
-	//	}
-
-	//	nTest = nTest >> 1;
-	//}
-
-	//*pszTemp = 0;
-	//SetDlgItemText(hWnd2, tBgImageColors, tmp);
+	FillBgImageColors(hWnd2);
 
 	checkDlgButton(hWnd2, cbBgImage, BST(gpSet->isShowBgImage));
 
@@ -2207,24 +2198,6 @@ LRESULT CSettings::OnInitDialog_Main(HWND hWnd2)
 	WORD nImgCtrls[] = {tBgImage, bBgImage};
 	EnableDlgItems(hWnd2, nImgCtrls, countof(nImgCtrls), gpSet->isShowBgImage);
 
-	checkRadioButton(hWnd2, rNoneAA, rCTAA,
-		(LogFont.lfQuality == CLEARTYPE_NATURAL_QUALITY) ? rCTAA :
-		(LogFont.lfQuality == ANTIALIASED_QUALITY) ? rStandardAA : rNoneAA);
-
-
-	// 3d state - force center symbols in cells
-	checkDlgButton(hWnd2, cbMonospace, BST(gpSet->isMonospace));
-
-	checkDlgButton(hWnd2, cbBold, (LogFont.lfWeight == FW_BOLD) ? BST_CHECKED : BST_UNCHECKED);
-
-	checkDlgButton(hWnd2, cbItalic, LogFont.lfItalic ? BST_CHECKED : BST_UNCHECKED);
-
-	checkDlgButton(hWnd2, cbFixFarBorders, BST(gpSet->isFixFarBorders));
-
-	checkDlgButton(hWnd2, cbFontMonitorDpi, gpSet->FontUseDpi ? BST_CHECKED : BST_UNCHECKED);
-	checkDlgButton(hWnd2, cbFontAsDeviceUnits, gpSet->FontUseUnits ? BST_CHECKED : BST_UNCHECKED);
-
-	mn_LastChangingFontCtrlId = 0;
 	return 0;
 }
 
@@ -5344,15 +5317,10 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 
 			} // cbBgImage
 			break;
-#if 0
-		case rBgUpLeft:
-		case rBgStretch:
-		case rBgTile:
-			gpSet->bgOperation = (char)(CB - rBgUpLeft);
-			gpSetCls->LoadBackgroundFile(gpSet->sBgImage, true);
-			gpConEmu->Update(true);
+		case rbBgReplaceIndexes:
+		case rbBgReplaceTransparent:
+			//TODO: ...
 			break;
-#endif
 		case cbBgAllowPlugin:
 			gpSet->isBgPluginAllowed = IsChecked(hWnd2, cbBgAllowPlugin);
 			NeedBackgroundUpdate();
@@ -9405,6 +9373,9 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 			bSkipSelChange = lbOld;
 			}
 			break;
+		case IDD_SPG_BACK:
+			gpSetCls->OnInitDialog_Background(hWnd2, bInitial);
+			break;
 		case IDD_SPG_SHOW:
 			gpSetCls->OnInitDialog_Show(hWnd2, bInitial);
 			break;
@@ -9602,7 +9573,7 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 			} // WM_CTLCOLORSTATIC
 		case WM_HSCROLL:
 			{
-				if ((pgId == thi_Main) && (HWND)lParam == GetDlgItem(hWnd2, slDarker))
+				if ((pgId == thi_Backgr) && (HWND)lParam == GetDlgItem(hWnd2, slDarker))
 				{
 					int newV = SendDlgItemMessage(hWnd2, slDarker, TBM_GETPOS, 0, 0);
 
@@ -14813,14 +14784,14 @@ void CSettings::SetBgImageDarker(u8 newValue, bool bUpdate)
 	{
 		gpSet->bgImageDarker = newValue;
 
-		HWND hMainPg = GetPage(thi_Main);
-		if (hMainPg)
+		HWND hBgPg = GetPage(thi_Backgr);
+		if (hBgPg)
 		{
-			SendDlgItemMessage(hMainPg, slDarker, TBM_SETPOS, (WPARAM) true, (LPARAM) gpSet->bgImageDarker);
+			SendDlgItemMessage(hBgPg, slDarker, TBM_SETPOS, (WPARAM) true, (LPARAM) gpSet->bgImageDarker);
 
 			TCHAR tmp[10];
 			_wsprintf(tmp, SKIPLEN(countof(tmp)) L"%u", (UINT)gpSet->bgImageDarker);
-			SetDlgItemText(hMainPg, tDarker, tmp);
+			SetDlgItemText(hBgPg, tDarker, tmp);
 		}
 
 		if (bUpdate)

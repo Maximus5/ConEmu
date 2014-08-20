@@ -148,25 +148,6 @@ BEGIN
     COMBOBOX        lbExtendFontBoldIdx,210,111,32,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
     COMBOBOX        lbExtendFontItalicIdx,248,111,32,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
     COMBOBOX        lbExtendFontNormalIdx,286,111,32,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
-    GROUPBOX        "",gbBgImage,4,132,319,98
-    CONTROL         "Back&ground image (bmp, jpg, png, tif):",cbBgImage,
-                    "Button",BS_AUTO3STATE | WS_TABSTOP,10,132,139,8
-    LTEXT           "Path:",stBgImage,10,146,18,8
-    EDITTEXT        tBgImage,34,144,261,12,ES_AUTOHSCROLL
-    PUSHBUTTON      "...",bBgImage,299,144,16,12
-    CONTROL         "Transparent",rbBgReplaceTransparent,"Button",BS_AUTORADIOBUTTON | WS_DISABLED | WS_GROUP,10,163,59,8
-    CONTROL         "Replace color indexes",rbBgReplaceIndexes,"Button",BS_AUTORADIOBUTTON,70,163,86,8
-    EDITTEXT        tBgImageColors,160,161,43,12,ES_AUTOHSCROLL
-    RTEXT           "Placement:",stBgPlacement,205,163,45,8
-    COMBOBOX        lbBgPlacement,254,161,61,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Darkening:",stDarker,10,181,36,8
-    CONTROL         "",slDarker,"msctls_trackbar32",TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,52,180,228,12
-    EDITTEXT        tDarker,285,180,30,12,ES_AUTOHSCROLL | ES_NUMBER
-    CONTROL         "Allow background plugins (Far Manager)",cbBgAllowPlugin,
-                    "Button",BS_AUTO3STATE | WS_TABSTOP,10,198,144,10
-    LTEXT           "Darkening:",stDarkerPlugin,10,212,36,8,WS_DISABLED
-    CONTROL         "",slDarkerPlugin,"msctls_trackbar32",TBS_BOTH | TBS_NOTICKS | WS_DISABLED | WS_TABSTOP,52,211,228,12
-    EDITTEXT        tDarkerPlugin,285,211,30,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
 END
 
 IDD_SPG_WNDSIZEPOS DIALOGEX 0, 0, 328, 235

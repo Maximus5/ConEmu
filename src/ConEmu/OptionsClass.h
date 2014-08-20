@@ -232,6 +232,7 @@ class CSettings
 			thi_Main = 0,     // "Main"
 			thi_SizePos,      //   "Size & Pos"
 			thi_Show,         //   "Appearance"
+			thi_Backgr,       //   "Background"
 			thi_Confirm,      //   "Confirmations"
 			thi_Taskbar,      //   "Task bar"
 			thi_Update,       //   "Update"
@@ -371,6 +372,7 @@ class CSettings
 		LRESULT OnInitDialog();
 		// OnInitDialogPage_t: IDD_SPG_MAIN, и т.д.
 		LRESULT OnInitDialog_Main(HWND hWnd2);
+		LRESULT OnInitDialog_Background(HWND hWnd2, bool abInitial);
 		LRESULT OnInitDialog_WndPosSize(HWND hWnd2, bool abInitial);
 		LRESULT OnInitDialog_Show(HWND hWnd2, bool abInitial);
 		LRESULT OnInitDialog_Confirm(HWND hWnd2, bool abInitial);
@@ -441,7 +443,7 @@ class CSettings
 		bool SetColorById(WORD nID, COLORREF color);
 		void ColorSetEdit(HWND hWnd2, WORD c);
 		bool ColorEditDialog(HWND hWnd2, WORD c);
-		void FillBgImageColors();
+		void FillBgImageColors(HWND hWnd2);
 		HBRUSH mh_CtlColorBrush;
 		INT_PTR ColorCtlStatic(HWND hWnd2, WORD c, HWND hItem);
 		COLORREF acrCustClr[16]; // array of custom colors, используется в ChooseColor(...)
