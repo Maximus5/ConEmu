@@ -66,6 +66,18 @@ struct CEVkMatch
 	void Set(BYTE aVk, bool aDistinct, ConEmuModifiers aMod, ConEmuModifiers aUnmask = cvk_NULL);
 };
 
+struct ConEmuChord
+{
+	// Main key (first chord)
+	BYTE Vk;
+	// Modifiers (Win, Alt, etc.)
+	ConEmuModifiers Mod;
+
+	// That is what is stored in the settings
+	DWORD GetVkMod();
+	void  SetVkMod(DWORD VkMod);
+};
+
 struct ConEmuHotKey
 {
 	// >0 StringTable resource ID

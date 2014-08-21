@@ -317,6 +317,73 @@ bool ConEmuHotKey::GetMatchByVk(BYTE Vk, CEVkMatch& Match)
 //}
 
 
+DWORD ConEmuChord::GetVkMod()
+{
+	// That is what is stored in the settings
+	DWORD VkMod = Vk;
+	// Let iterate
+	int iPos = 8; // <<
+
+	for (size_t i = 0; i < countof(gvkMatchList); i++)
+	{
+		if (Mod & gvkMatchList[i].Mod)
+		{
+			VkMod |= (gvkMatchList[i].Vk << iPos);
+			iPos += 8;
+			if (iPos > 24)
+				break;
+
+			if (gvkMatchList[i].Distinct)
+			{
+				_ASSERTE(gvkMatchList[i].Unmask != cvk_NULL);
+				i += 2;
+			}
+		}
+	}
+
+	return VkMod;
+}
+void ConEmuChord::SetVkMod(DWORD VkMod)
+{
+	// Init
+	Vk = LOBYTE(VkMod);
+	Mod = cvk_NULL;
+
+	// Check modifiers
+	DWORD vkLeft = (VkMod && CEHOTKEY_MODMASK);
+	if ((vkLeft == CEHOTKEY_NUMHOSTKEY) || (vkLeft == CEHOTKEY_ARRHOSTKEY))
+	{
+		// Низя
+		_ASSERTE((vkLeft != CEHOTKEY_NUMHOSTKEY) && (VkMod != CEHOTKEY_ARRHOSTKEY));
+		return;
+	}
+
+	if (vkLeft == CEHOTKEY_NOMOD)
+		vkLeft = 0;
+
+	if (vkLeft)
+	{
+		CEVkMatch Match;
+		ConEmuModifiers Distinct = cvk_NULL;
+
+		while (vkLeft)
+		{
+			vkLeft = (vkLeft >> 8);
+			if (ConEmuHotKey::GetMatchByVk(LOBYTE(vkLeft), Match))
+			{
+				Mod |= Match.Mod;
+				Distinct |= Match.Unmask;
+			}
+		}
+
+		if (Distinct)
+		{
+			Mod &= ~Distinct;
+		}
+	}
+}
+
+
 bool ConEmuHotKey::CanChangeVK() const
 {
 	//chk_System - пока не настраивается
