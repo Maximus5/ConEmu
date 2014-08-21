@@ -453,8 +453,8 @@ const CECMD
 #define MOD_LCONTROL     0x0040
 #define MOD_RCONTROL     0x0080
 
-enum ConEmuModifiers
-{
+typedef DWORD ConEmuModifiers;
+const ConEmuModifiers
 	// Для удобства, в младшем байте VkMod хранится VK кнопки
 	cvk_VK_MASK  = 0x000000FF,
 
@@ -480,7 +480,8 @@ enum ConEmuModifiers
 	cvk_ShiftAny = cvk_Shift|cvk_LShift|cvk_RShift,
 	// Маска вообще всех допустимых флагов, за исключением самого VK
 	cvk_ALLMASK  = 0xFFFFFF00,
-};
+	// Empty value
+	cvk_NULL     = 0;
 
 // ConEmu internal virtual key codes
 #define VK_WHEEL_UP    0xD0
