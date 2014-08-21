@@ -549,11 +549,13 @@ const ConEmuHotKey* CSettings::GetHotKeyInfo(DWORD VkMod, bool bKeyDown, CRealCo
 {
 	DWORD vk = ConEmuHotKey::GetHotkey(VkMod);
 	// На сами модификаторы - действий не вешается
-	if (vk == VK_LWIN || vk == VK_RWIN /*|| vk == VK_APPS*/
-		|| vk == VK_SHIFT || vk == VK_LSHIFT || vk == VK_RSHIFT
-		|| vk == VK_CONTROL || vk == VK_LCONTROL || vk == VK_RCONTROL
-		|| vk == VK_MENU || vk == VK_LMENU || vk == VK_RMENU)
+	switch (vk)
 	{
+	case VK_LWIN: case VK_RWIN:
+	case VK_APPS: // "Apps" too, it is not supposed to be a "key" (in our hotkey list)
+	case VK_SHIFT: case VK_LSHIFT: case VK_RSHIFT:
+	case VK_CONTROL: case VK_LCONTROL: case VK_RCONTROL:
+	case VK_MENU: case VK_LMENU: case VK_RMENU:
 		return NULL;
 	}
 
