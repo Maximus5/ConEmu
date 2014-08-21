@@ -56,6 +56,16 @@ enum ConEmuHotKeyType
 };
 
 
+struct CEVkMatch
+{
+	BYTE Vk;
+	bool Distinct;
+	ConEmuModifiers Mod;
+	ConEmuModifiers Unmask;
+
+	void Set(BYTE aVk, bool aDistinct, ConEmuModifiers aMod, ConEmuModifiers aUnmask = cvk_NULL);
+};
+
 struct ConEmuHotKey
 {
 	// >0 StringTable resource ID
@@ -117,6 +127,9 @@ struct ConEmuHotKey
 	static DWORD SetModifier(DWORD VkMod, BYTE Mod/*VK*/, bool Xor=true);
 	// Вернуть назначенные модификаторы (idx = 1..3). Возвращает 0 (нету) или VK
 	static DWORD GetModifier(DWORD VkMod, int idx/*1..3*/);
+	// Internal conversions between VK_xxx and cvk_xxx
+	static bool GetMatchByVk(BYTE Vk, CEVkMatch& Match);
+	//static bool GetMatchByMod(ConEmuModifiers Mod, CEVkMatch& Match);
 
 	static bool UseWinNumber();
 	static bool UseWinArrows();

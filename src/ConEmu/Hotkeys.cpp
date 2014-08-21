@@ -260,6 +260,62 @@ INT_PTR CHotKeyDialog::hkDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lP
 // Некоторые комбинации нужно обрабатывать "на отпускание" во избежание глюков с интерфейсом
 const struct ConEmuHotKey* ConEmuSkipHotKey = ((ConEmuHotKey*)INVALID_HANDLE_VALUE);
 
+static CEVkMatch gvkMatchList[] = {
+	{VK_CONTROL,  false, cvk_Ctrl,  (cvk_LCtrl|cvk_RCtrl)},
+	{VK_LCONTROL, true,  cvk_LCtrl},
+	{VK_RCONTROL, true,  cvk_RCtrl},
+	{VK_MENU,     false, cvk_Alt,   (cvk_LAlt|cvk_RAlt)},
+	{VK_LMENU,    true,  cvk_LAlt},
+	{VK_RMENU,    true,  cvk_RAlt},
+	{VK_SHIFT,    false, cvk_Shift, (cvk_LShift|cvk_RShift)},
+	{VK_LSHIFT,   true,  cvk_LShift},
+	{VK_RSHIFT,   true,  cvk_RShift},
+	{VK_LWIN,     true,  cvk_Win},
+	{VK_APPS,     true,  cvk_Apps},
+};
+
+void CEVkMatch::Set(BYTE aVk, bool aDistinct, ConEmuModifiers aMod, ConEmuModifiers aUnmask /*= cvk_NULL*/)
+{
+	Vk = aVk; Distinct = aDistinct; Mod = aMod; Unmask = aUnmask;
+}
+
+// Internal conversions between VK_xxx and cvk_xxx
+bool ConEmuHotKey::GetMatchByVk(BYTE Vk, CEVkMatch& Match)
+{
+	switch (Vk)
+	{
+	case VK_LCONTROL: Match.Set(Vk, true,  cvk_LCtrl);  break;
+	case VK_RCONTROL: Match.Set(Vk, true,  cvk_RCtrl);  break;
+	case VK_LMENU:    Match.Set(Vk, true,  cvk_LAlt);   break;
+	case VK_RMENU:    Match.Set(Vk, true,  cvk_RAlt);   break;
+	case VK_LSHIFT:   Match.Set(Vk, true,  cvk_LShift); break;
+	case VK_RSHIFT:   Match.Set(Vk, true,  cvk_RShift); break;
+	case VK_LWIN:     Match.Set(Vk, true,  cvk_Win);    break;
+	case VK_APPS:     Match.Set(Vk, true,  cvk_Apps);   break;
+	case VK_CONTROL:  Match.Set(Vk, false, cvk_Ctrl,  (cvk_LCtrl|cvk_RCtrl));   break;
+	case VK_MENU:     Match.Set(Vk, false, cvk_Alt,   (cvk_LAlt|cvk_RAlt));     break;
+	case VK_SHIFT:    Match.Set(Vk, false, cvk_Shift, (cvk_LShift|cvk_RShift)); break;
+	default:
+		return false;
+	}
+	return true;
+#if 0
+	for (size_t i = 0; i < countof(gvkMatchList); i++)
+	{
+		if (Vk == gvkMatchList[i].Vk)
+		{
+			Match = gvkMatchList[i];
+			return true;
+		}
+	}
+	return false;
+#endif
+}
+//// Internal conversions between VK_xxx and cvk_xxx
+//bool ConEmuHotKey::GetMatchByMod(ConEmuModifiers Mod, CEVkMatch& Match)
+//{
+//}
+
 
 bool ConEmuHotKey::CanChangeVK() const
 {
