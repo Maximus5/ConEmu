@@ -506,7 +506,7 @@ void CSettings::SetHotkeyVkMod(ConEmuHotKey *pHK, DWORD VkMod)
 	}
 
 	// Usually, this is equal to "mp_ActiveHotKey->VkMod = VkMod"
-	pHK->VkMod = VkMod;
+	pHK->SetVkMod(VkMod);
 
 	// Global? Need to re-register?
 	if (pHK->HkType == chk_Local)
@@ -568,7 +568,7 @@ const ConEmuHotKey* CSettings::GetHotKeyInfo(DWORD VkMod, bool bKeyDown, CRealCo
 		if (pi->HkType == chk_Modifier)
 			continue;
 
-		DWORD TestVkMod = pi->VkMod;
+		DWORD TestVkMod = pi->GetVkMod();
 		if (ConEmuHotKey::GetHotkey(TestVkMod) != vk)
 			continue; // Не совпадает сама кнопка
 
@@ -666,7 +666,7 @@ bool CSettings::HasSingleWinHotkey()
 			break;
 		if (pHK->HkType == chk_Modifier)
 			continue;
-		DWORD VkMod = pHK->VkMod;
+		DWORD VkMod = pHK->GetVkMod();
 		if (ConEmuHotKey::GetModifier(VkMod, 1) == VK_LWIN)
 		{
 			// Win+<другой модификатор> вроде винда в приложение таки присылает?
@@ -723,7 +723,7 @@ void CSettings::UpdateWinHookSettings(HMODULE hLLKeyHookDll)
 			if ((pHK->HkType == chk_Modifier) || (pHK->HkType == chk_Global) || (pHK->HkType == chk_Local))
 				continue;
 
-			DWORD VkMod = pHK->VkMod;
+			DWORD VkMod = pHK->GetVkMod();
 
 			if (!ConEmuHotKey::HasModifier(VkMod, VK_LWIN))
 				continue;
@@ -3048,7 +3048,7 @@ void CSettings::FillHotKeysList(HWND hWnd2, BOOL abInitial)
 
 				if (bHideEmpties)
 				{
-					if ((ppHK->VkMod == 0) || (ppHK->VkMod == CEHOTKEY_NOMOD))
+					if (ppHK->Key.IsEmpty())
 						continue;
 				}
 
@@ -3181,34 +3181,34 @@ LRESULT CSettings::OnHotkeysNotify(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 				case chk_Local:
 				case chk_Task:
 					pszLabel = L"Choose hotkey:";
-					VkMod = pk->VkMod;
+					VkMod = pk->GetVkMod();
 					bHotKeyEnabled = bKeyListEnabled = bModifiersEnabled = TRUE;
 					break;
 				case chk_Macro:
 					pszLabel = L"Choose hotkey:";
-					VkMod = pk->VkMod;
+					VkMod = pk->GetVkMod();
 					bHotKeyEnabled = bKeyListEnabled = bModifiersEnabled = bMacroEnabled = TRUE;
 					break;
 				case chk_Modifier:
 					pszLabel = L"Choose modifier:";
-					VkMod = pk->VkMod;
+					VkMod = pk->GetVkMod();
 					bKeyListEnabled = TRUE;
 					break;
 				case chk_Modifier2:
 					pszLabel = L"Choose modifier:";
-					VkMod = pk->VkMod;
+					VkMod = pk->GetVkMod();
 					bModifiersEnabled = TRUE;
 					break;
 				case chk_NumHost:
 				case chk_ArrHost:
 					pszLabel = L"Choose modifiers:";
-					_ASSERTE(pk->VkMod);
-					VkMod = pk->VkMod;
+					VkMod = pk->GetVkMod();
+					_ASSERTE(VkMod);
 					bModifiersEnabled = TRUE;
 					break;
 				case chk_System:
 					pszLabel = L"Predefined:";
-					VkMod = pk->VkMod;
+					VkMod = pk->GetVkMod();
 					bHotKeyEnabled = bKeyListEnabled = bModifiersEnabled = 2;
 					break;
 				default:
@@ -6923,12 +6923,12 @@ LRESULT CSettings::OnButtonClicked_Tasks(HWND hWnd2, WPARAM wParam, LPARAM lPara
 			if (!pCmd)
 				break;
 
-			DWORD VkMod = pCmd->HotKey.VkMod;
+			DWORD VkMod = pCmd->HotKey.GetVkMod();
 			if (CHotKeyDialog::EditHotKey(ghOpWnd, VkMod))
 			{
 				gpSet->CmdTaskSetVkMod(iCur, VkMod);
 				wchar_t szKey[128] = L"";
-				SetDlgItemText(hWnd2, tCmdGroupKey, ConEmuHotKey::GetHotkeyName(pCmd->HotKey.VkMod, szKey));
+				SetDlgItemText(hWnd2, tCmdGroupKey, ConEmuHotKey::GetHotkeyName(pCmd->HotKey.GetVkMod(), szKey));
 			}
 		} // cbCmdGroupKey
 		break;
@@ -7413,7 +7413,7 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 
 		if (mp_ActiveHotKey && mp_ActiveHotKey->CanChangeVK())
 		{
-			DWORD nCurMods = (CEHOTKEY_MODMASK & mp_ActiveHotKey->VkMod);
+			DWORD nCurMods = (CEHOTKEY_MODMASK & mp_ActiveHotKey->GetVkMod());
 			if (!nCurMods)
 				nCurMods = CEHOTKEY_NOMOD;
 
@@ -8018,7 +8018,7 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 				SetHotkeyField(GetDlgItem(hWnd2, hkHotKeySelect), vk);
 				//SendDlgItemMessage(hWnd2, hkHotKeySelect, HKM_SETHOTKEY, vk|(vk==VK_DELETE ? (HOTKEYF_EXT<<8) : 0), 0);
 
-				DWORD nMod = (CEHOTKEY_MODMASK & mp_ActiveHotKey->VkMod);
+				DWORD nMod = (CEHOTKEY_MODMASK & mp_ActiveHotKey->GetVkMod());
 				if (nMod == 0)
 				{
 					// Если модификатора вообще не было - ставим Win
@@ -8111,7 +8111,7 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			{
 				if (!nModifers)
 					nModifers = CEHOTKEY_NOMOD;
-				SetHotkeyVkMod(mp_ActiveHotKey, (cvk_VK_MASK & mp_ActiveHotKey->VkMod) | nModifers);
+				SetHotkeyVkMod(mp_ActiveHotKey, (cvk_VK_MASK & mp_ActiveHotKey->GetVkMod()) | nModifers);
 			}
 		}
 
@@ -8257,7 +8257,7 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			SafeFree(pszNoBrk);
 
 			wchar_t szKey[128] = L"";
-			SetDlgItemText(hWnd2, tCmdGroupKey, ConEmuHotKey::GetHotkeyName(pCmd->HotKey.VkMod, szKey));
+			SetDlgItemText(hWnd2, tCmdGroupKey, ConEmuHotKey::GetHotkeyName(pCmd->HotKey.GetVkMod(), szKey));
 
 			SetDlgItemText(hWnd2, tCmdGroupGuiArg, pCmd->pszGuiArgs ? pCmd->pszGuiArgs : L"");
 			SetDlgItemText(hWnd2, tCmdGroupCommands, pCmd->pszCommands ? pCmd->pszCommands : L"");

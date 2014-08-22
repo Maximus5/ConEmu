@@ -1245,8 +1245,11 @@ bool Settings::LoadCmdTask(SettingsBase* reg, CommandTasks* &pTask, int iIndex)
 	pTask->SetName(pszNameSet, iIndex);
 
 	pTask->HotKey.HkType = chk_Task;
-	if ((iIndex < 0) || !reg->Load(L"Hotkey", pTask->HotKey.VkMod))
-		pTask->HotKey.VkMod = 0;
+	DWORD VkMod = 0;
+	if ((iIndex >= 0) && reg->Load(L"Hotkey", VkMod))
+		pTask->HotKey.SetVkMod(VkMod);
+	else
+		pTask->HotKey.Key.Clear();
 
 
 	if (!reg->Load(L"GuiArgs", &pTask->pszGuiArgs) || !*pTask->pszGuiArgs)
@@ -1383,7 +1386,7 @@ bool Settings::SaveCmdTask(SettingsBase* reg, CommandTasks* pTask)
 	if (pTask != StartupTask)
 	{
 		reg->Save(L"Name", pTask->pszName);
-		reg->Save(L"Hotkey", pTask->HotKey.VkMod);
+		reg->Save(L"Hotkey", pTask->HotKey.GetVkMod());
 	}
 
 	reg->Save(L"GuiArgs", pTask->pszGuiArgs);
@@ -2936,19 +2939,19 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla, const SettingsStorage* ap
 		{
 			ConEmuHotKey* pHK;
 			// Если раньше был включен флажок "Send Alt+Space to console"
-			if (bSendAltSpace && GetHotkeyById(vkSystemMenu, (const ConEmuHotKey**)&pHK) && pHK->NotChanged && (pHK->VkMod == ConEmuHotKey::MakeHotKey(VK_SPACE,VK_MENU)))
+			if (bSendAltSpace && GetHotkeyById(vkSystemMenu, (const ConEmuHotKey**)&pHK) && pHK->NotChanged && (pHK->Equal(VK_SPACE,VK_MENU)))
 			{
-				pHK->VkMod = 0; // Сбросить VkMod для vkSystemMenu (раньше назывался vkAltSpace)
+				pHK->Key.Clear(); // Сбросить VkMod для vkSystemMenu (раньше назывался vkAltSpace)
 			}
 			// Если раньше был включен флажок "Send Alt+Enter to console"
-			if (bSendAltEnter && GetHotkeyById(vkAltEnter, (const ConEmuHotKey**)&pHK) && pHK->NotChanged && (pHK->VkMod == ConEmuHotKey::MakeHotKey(VK_RETURN,VK_MENU)))
+			if (bSendAltEnter && GetHotkeyById(vkAltEnter, (const ConEmuHotKey**)&pHK) && pHK->NotChanged && (pHK->Equal(VK_RETURN,VK_MENU)))
 			{
-				pHK->VkMod = 0; // Сбросить VkMod для vkAltEnter
+				pHK->Key.Clear(); // Сбросить VkMod для vkAltEnter
 			}
 			// Если раньше был включен флажок "Send Alt+F9 to console"
-			if (bSendAltF9 && GetHotkeyById(vkMaximize, (const ConEmuHotKey**)&pHK) && pHK->NotChanged && (pHK->VkMod == ConEmuHotKey::MakeHotKey(VK_F9,VK_MENU)))
+			if (bSendAltF9 && GetHotkeyById(vkMaximize, (const ConEmuHotKey**)&pHK) && pHK->NotChanged && (pHK->Equal(VK_F9,VK_MENU)))
 			{
-				pHK->VkMod = 0; // Сбросить VkMod для vkMaximize
+				pHK->Key.Clear(); // Сбросить VkMod для vkMaximize
 			}
 		}
 
@@ -4969,7 +4972,7 @@ void Settings::CmdTaskSetVkMod(int anIndex, DWORD VkMod)
 		return;
 	if (!CmdTasks[anIndex])
 		return;
-	CmdTasks[anIndex]->HotKey.VkMod = VkMod;
+	CmdTasks[anIndex]->HotKey.SetVkMod(VkMod);
 }
 
 // anIndex - 0-based, index of CmdTasks
@@ -5223,7 +5226,7 @@ DWORD Settings::GetHotkeyById(int nDescrID, const ConEmuHotKey** ppHK)
 			if (j >= 0)
 				iLastFound = j;
 
-			DWORD VkMod = pHK->VkMod;
+			DWORD VkMod = pHK->GetVkMod();
 			if (pHK->HkType == chk_Modifier)
 			{
 				_ASSERTE(VkMod == ConEmuHotKey::GetHotkey(VkMod));
@@ -5254,17 +5257,17 @@ void Settings::SetHotkeyById(int nDescrID, DWORD VkMod)
 {
 	if (nDescrID > 0)
 	{
-		if (!gpSetCls || !gpSetCls->mp_HotKeys)
+		if (!gpSetCls)
 		{
-			_ASSERTE(gpSetCls && gpSetCls->mp_HotKeys);
+			_ASSERTE(gpSetCls);
 			return;
 		}
 
-		for (int i = 0; i < gpSetCls->mn_HotKeys; i++)
+		for (INT_PTR i = gpSetCls->m_HotKeys.size() - 1; i >= 0; i--)
 		{
-			if (gpSetCls->mp_HotKeys[i].DescrLangID == nDescrID)
+			if (gpSetCls->m_HotKeys[i].DescrLangID == nDescrID)
 			{
-				gpSetCls->mp_HotKeys[i].VkMod = VkMod;
+				gpSetCls->m_HotKeys[i].SetVkMod(VkMod);
 				break;
 			}
 		}
@@ -5285,22 +5288,23 @@ bool Settings::isModifierExist(BYTE Mod/*VK*/, bool abStrictSingle /*= false*/)
 		if (!ppHK)
 			break;
 
-		if (ppHK->VkMod == 0)
+		if (ppHK->Key.IsEmpty())
 			continue;
 
 		if (ppHK->HkType == chk_Modifier)
 		{
-			if (ConEmuHotKey::GetHotkey(ppHK->VkMod) == Mod)
+			if (ppHK->Key.Vk == Mod)
 				return true;
 		}
 		else if (!abStrictSingle)
 		{
-			if (ConEmuHotKey::HasModifier(ppHK->VkMod, Mod))
+			if (ConEmuHotKey::HasModifier(ppHK->GetVkMod(), Mod))
 				return true;
 		}
 		else
 		{
-			if ((ConEmuHotKey::GetModifier(ppHK->VkMod, 1) == Mod) && !ConEmuHotKey::GetModifier(ppHK->VkMod, 2))
+			DWORD VkMod = ppHK->GetVkMod();
+			if ((ConEmuHotKey::GetModifier(VkMod, 1) == Mod) && !ConEmuHotKey::GetModifier(VkMod, 2))
 				return true;
 		}
 	}
@@ -5317,13 +5321,13 @@ bool Settings::isKeyOrModifierExist(BYTE Mod/*VK*/)
 		if (!ppHK)
 			break;
 
-		if (ppHK->VkMod == 0)
+		if (ppHK->Key.IsEmpty())
 			continue;
 
 		if (ppHK->HkType == chk_Modifier)
 			continue; // эти не рассматриваем
 
-		if ((ConEmuHotKey::GetHotkey(ppHK->VkMod) == Mod) || ConEmuHotKey::HasModifier(ppHK->VkMod, Mod))
+		if ((ppHK->Key.Vk == Mod) || ConEmuHotKey::HasModifier(ppHK->GetVkMod(), Mod))
 			return true;
 	}
 
@@ -5342,15 +5346,16 @@ void Settings::LoadHotkeys(SettingsBase* reg)
 	BYTE MacroVersion = 0;
 	reg->Load(L"KeyMacroVersion", MacroVersion);
 
-	if (!gpSetCls || !gpSetCls->mp_HotKeys)
+	if (!gpSetCls)
 	{
-		_ASSERTE(gpSetCls && gpSetCls->mp_HotKeys);
+		_ASSERTE(gpSetCls);
 		return;
 	}
 
-	for (int i = 0; i < gpSetCls->mn_HotKeys; i++)
+	INT_PTR iMax = gpSetCls->m_HotKeys.size();
+	for (int i = 0; i < iMax; i++)
 	{
-		ConEmuHotKey *ppHK = gpSetCls->mp_HotKeys+i;
+		ConEmuHotKey *ppHK = &(gpSetCls->m_HotKeys[i]);
 		ppHK->NotChanged = true;
 
 		if (!*ppHK->Name)
@@ -5362,12 +5367,17 @@ void Settings::LoadHotkeys(SettingsBase* reg)
 		switch (ppHK->DescrLangID)
 		{
 		case vkMultiNewShift:
-			_ASSERTE((*(ppHK-1)).DescrLangID == vkMultiNew);
-			ppHK->VkMod = ConEmuHotKey::SetModifier((*(ppHK-1)).VkMod,VK_SHIFT, true/*Xor*/);
-			break;
 		case vkMultiNextShift:
-			_ASSERTE((*(ppHK-1)).DescrLangID == vkMultiNext);
-			ppHK->VkMod = ConEmuHotKey::SetModifier((*(ppHK-1)).VkMod,VK_SHIFT, true/*Xor*/);
+			if (i > 0)
+			{
+				ConEmuHotKey *ppHK1 = &(gpSetCls->m_HotKeys[i-1]);
+				_ASSERTE(ppHK1->DescrLangID == ((ppHK->DescrLangID == vkMultiNewShift) ? vkMultiNew : vkMultiNext));
+				ppHK->Key = ppHK1->Key;
+				if (ppHK->Key.Mod & (cvk_Shift|cvk_LShift|cvk_RShift))
+					ppHK->Key.Mod &= ~(cvk_Shift|cvk_LShift|cvk_RShift);
+				else
+					ppHK->Key.Mod |= cvk_Shift;
+			}
 			break;
 		}
 
@@ -5375,23 +5385,26 @@ void Settings::LoadHotkeys(SettingsBase* reg)
 		_ASSERTE(ppHK->HkType != chk_ArrHost);
 		_ASSERTE(ppHK->HkType != chk_System);
 
-		if (reg->Load(ppHK->Name, ppHK->VkMod))
+		DWORD VkMod = ppHK->GetVkMod();
+		if (reg->Load(ppHK->Name, VkMod))
 		{
 			// Чтобы знать, что комбинация уже сохранялась в настройке ранее
 			ppHK->NotChanged = false;
-		}
 
-		if (ppHK->HkType != chk_Modifier)
-		{
-			// Если это НЕ 0 (0 - значит HotKey не задан)
-			// И это не DWORD (для HotKey без модификатора - пишется CEHOTKEY_NOMOD)
-			// Т.к. раньше был Byte - нужно добавить nHostkeyModifier
-			if (ppHK->VkMod && ((ppHK->VkMod & CEHOTKEY_MODMASK) == 0))
+			if (ppHK->HkType != chk_Modifier)
 			{
-				// Добавляем тот модификатор, который был раньше общий
-				_ASSERTE(nHostkeyNumberModifier!=0);
-				ppHK->VkMod |= (nHostkeyNumberModifier << 8);
+				// Если это НЕ 0 (0 - значит HotKey не задан)
+				// И это не DWORD (для HotKey без модификатора - пишется CEHOTKEY_NOMOD)
+				// Т.к. раньше был Byte - нужно добавить nHostkeyModifier
+				if (VkMod && ((VkMod & CEHOTKEY_MODMASK) == 0))
+				{
+					// Добавляем тот модификатор, который был раньше общий
+					_ASSERTE(nHostkeyNumberModifier!=0);
+					VkMod |= (nHostkeyNumberModifier << 8);
+				}
 			}
+
+			ppHK->SetVkMod(VkMod);
 		}
 
 		if (ppHK->HkType == chk_Macro)
@@ -5438,7 +5451,7 @@ void Settings::CheckHotkeyUnique()
 			break;
 
 
-		if ((ppHK1->HkType == chk_Modifier) || (ConEmuHotKey::GetHotkey(ppHK1->VkMod) == 0))
+		if ((ppHK1->HkType == chk_Modifier) || (ppHK1->Key.Vk == 0))
 			continue;
 
 		// Отключен пользователем?
@@ -5464,7 +5477,7 @@ void Settings::CheckHotkeyUnique()
 			if (!ppHK2)
 				break;
 
-			if ((ppHK2->HkType == chk_Modifier) || (ConEmuHotKey::GetHotkey(ppHK2->VkMod) == 0))
+			if ((ppHK2->HkType == chk_Modifier) || (ppHK2->Key.Vk == 0))
 				continue;
 
 			// Отключен пользователем?
@@ -5484,7 +5497,7 @@ void Settings::CheckHotkeyUnique()
 				continue;
 
 			// Хоткеи различаются?
-			if (ppHK1->VkMod != ppHK2->VkMod)
+			if (!ppHK1->Key.IsEqual(ppHK2->Key))
 				continue;
 
 			// Если совпадают - может быть это макрос, переехавший в системную область?
@@ -5495,9 +5508,9 @@ void Settings::CheckHotkeyUnique()
 				{
 					// Нам - можно
 					if (ppHK1->HkType == chk_Macro)
-						((ConEmuHotKey*)ppHK1)->VkMod = 0;
+						((ConEmuHotKey*)ppHK1)->Key.Clear();
 					else
-						((ConEmuHotKey*)ppHK2)->VkMod = 0;
+						((ConEmuHotKey*)ppHK2)->Key.Clear();
 					continue;
 				}
 			}
@@ -5534,33 +5547,38 @@ void Settings::SaveHotkeys(SettingsBase* reg)
 	BYTE MacroVersion = GUI_MACRO_VERSION;
 	reg->Save(L"KeyMacroVersion", MacroVersion);
 
-	if (!gpSetCls || !gpSetCls->mp_HotKeys)
+	if (!gpSetCls)
 	{
-		_ASSERTE(gpSetCls && gpSetCls->mp_HotKeys);
+		_ASSERTE(gpSetCls);
 		return;
 	}
 
 	wchar_t szMacroName[80];
 
 	// Таски сохраняются отдельно
-	for (int i = 0; i < gpSetCls->mn_HotKeys; i++)
+
+	// Здесь - хоткеи и макро
+	INT_PTR iMax = gpSetCls->m_HotKeys.size();
+	for (INT_PTR i = 0; i < iMax; i++)
 	{
-		ConEmuHotKey *ppHK = gpSetCls->mp_HotKeys+i;
+		ConEmuHotKey *ppHK = &(gpSetCls->m_HotKeys[i]);
 
 		if (!*ppHK->Name)
 			continue;
+
+		DWORD VkMod = ppHK->GetVkMod();
 
 		if ((ppHK->HkType == chk_Modifier)
 			|| (ppHK->HkType == chk_NumHost)
 			|| (ppHK->HkType == chk_ArrHost))
 		{
-			_ASSERTE(ppHK->VkMod == (ppHK->VkMod & 0xFF));
-			BYTE Mod = (BYTE)(ppHK->VkMod & 0xFF);
+			_ASSERTE(VkMod == (VkMod & 0xFF));
+			BYTE Mod = (BYTE)(VkMod & 0xFF);
 			reg->Save(ppHK->Name, Mod);
 		}
 		else
 		{
-			reg->Save(ppHK->Name, ppHK->VkMod);
+			reg->Save(ppHK->Name, VkMod);
 
 			if (ppHK->HkType == chk_Macro)
 			{

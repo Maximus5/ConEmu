@@ -676,7 +676,7 @@ bool CConEmuCtrl::key_SystemMenu(DWORD VkMod, bool TestOnly, const ConEmuHotKey*
 	POINT ptCur = {-32000,-32000}; // Default pos of Alt+Space
 	if (gpCurrentHotKey)
 	{
-		DWORD vk = ConEmuHotKey::GetHotkey(gpCurrentHotKey->VkMod);
+		DWORD vk = gpCurrentHotKey->Key.Vk;
 		if (vk == VK_LBUTTON || vk == VK_RBUTTON || vk == VK_MBUTTON)
 		{
 			GetCursorPos(&ptCur);
@@ -700,7 +700,7 @@ bool CConEmuCtrl::key_TabMenu(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk
 	POINT ptCur = {-32000,-32000};
 	if (gpCurrentHotKey)
 	{
-		DWORD vk = ConEmuHotKey::GetHotkey(gpCurrentHotKey->VkMod);
+		DWORD vk = gpCurrentHotKey->Key.Vk;
 		if (vk == VK_LBUTTON || vk == VK_RBUTTON || vk == VK_MBUTTON)
 		{
 			GetCursorPos(&ptCur);

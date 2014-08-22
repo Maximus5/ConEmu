@@ -55,7 +55,7 @@ CHotKeyDialog::CHotKeyDialog(HWND hParent, DWORD aVkMod)
 
 	ZeroStruct(m_HK);
 	m_HK.HkType = chk_User;
-	m_HK.VkMod = aVkMod;
+	m_HK.SetVkMod(aVkMod);
 
 	mp_DpiAware = new CDpiForDialog();
 }
@@ -67,7 +67,7 @@ CHotKeyDialog::~CHotKeyDialog()
 
 DWORD CHotKeyDialog::GetVkMod()
 {
-	return m_HK.VkMod;
+	return m_HK.GetVkMod();
 }
 
 DWORD CHotKeyDialog::dlgGetHotkey(HWND hDlg, UINT iEditCtrl /*= hkHotKeySelect*/, UINT iListCtrl /*= lbHotKeyList*/)
@@ -132,16 +132,17 @@ INT_PTR CHotKeyDialog::hkDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lP
 			HWND hHk = GetDlgItem(hDlg, hkHotKeySelect);
 			SendMessage(hHk, HKM_SETRULES, HKCOMB_A|HKCOMB_C|HKCOMB_CA|HKCOMB_S|HKCOMB_SA|HKCOMB_SC|HKCOMB_SCA, 0);
 
-			BYTE vk = ConEmuHotKey::GetHotkey(pDlg->m_HK.VkMod);
+			BYTE vk = pDlg->m_HK.Key.Vk;
 			CSettings::SetHotkeyField(hHk, vk);
 
 			// Warning! Если nVK не указан в SettingsNS::nKeysHot - nVK будет обнулен
 			CSettings::FillListBoxHotKeys(GetDlgItem(hDlg, lbHotKeyList), CSettings::eHkKeysHot, vk);
 
+			BYTE Mods[3];
+			pDlg->m_HK.Key.GetModifiers(Mods);
 			for (int n = 0; n < 3; n++)
 			{
-				BYTE b = pDlg->m_HK.VkMod ? ConEmuHotKey::GetModifier(pDlg->m_HK.VkMod,n+1) : 0;
-				CSettings::FillListBoxHotKeys(GetDlgItem(hDlg, lbHotKeyMod1+n), CSettings::eHkModifiers, b);
+				CSettings::FillListBoxHotKeys(GetDlgItem(hDlg, lbHotKeyMod1+n), CSettings::eHkModifiers, Mods[n]);
 			}
 
 			SetFocus(GetDlgItem(hDlg,hkHotKeySelect));
@@ -169,13 +170,7 @@ INT_PTR CHotKeyDialog::hkDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lP
 				case EN_CHANGE:
 				{
 					UINT nHotKey = dlgGetHotkey(hDlg, hkHotKeySelect, lbHotKeyList);
-
-					DWORD nCurMods = (CEHOTKEY_MODMASK & pDlg->m_HK.VkMod);
-					if (!nCurMods)
-						nCurMods = CEHOTKEY_NOMOD;
-
-					pDlg->m_HK.VkMod = nHotKey | nCurMods;
-
+					pDlg->m_HK.Key.Vk = LOBYTE(nHotKey);
 					break;
 				} // EN_CHANGE
 
@@ -190,15 +185,15 @@ INT_PTR CHotKeyDialog::hkDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lP
 
 							CSettings::SetHotkeyField(GetDlgItem(hDlg, hkHotKeySelect), vk);
 
-							DWORD nMod = (CEHOTKEY_MODMASK & pDlg->m_HK.VkMod);
-							if (nMod == 0)
+							if (pDlg->m_HK.Key.Mod == cvk_NULL)
 							{
 								// Если модификатора вообще не было - ставим Win
 								BYTE b = VK_LWIN;
 								CSettings::FillListBoxHotKeys(GetDlgItem(hDlg, lbHotKeyMod1), CSettings::eHkModifiers, b);
-								nMod = (VK_LWIN << 8);
+								pDlg->m_HK.Key.Mod = cvk_Win;
 							}
-							pDlg->m_HK.VkMod = ((DWORD)vk) | nMod;
+
+							pDlg->m_HK.Key.Vk = LOBYTE(vk);
 
 							break;
 						} // lbHotKeyList
@@ -222,7 +217,7 @@ INT_PTR CHotKeyDialog::hkDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lP
 							if (!nModifers)
 								nModifers = CEHOTKEY_NOMOD;
 
-							pDlg->m_HK.VkMod = (cvk_VK_MASK & pDlg->m_HK.VkMod) | nModifers;
+							pDlg->m_HK.SetVkMod((cvk_VK_MASK & pDlg->m_HK.Key.Vk) | nModifers);
 
 							break;
 						} // lbHotKeyMod1, lbHotKeyMod2, lbHotKeyMod3
