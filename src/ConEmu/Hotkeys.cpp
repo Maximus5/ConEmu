@@ -881,8 +881,6 @@ LPCWSTR ConEmuHotKey::GetHotkeyName(wchar_t (&szFull)[128], bool bShowNone /*= t
 	wchar_t szName[32];
 	szFull[0] = 0;
 
-	DWORD lVkMod = 0;
-
 	switch (HkType)
 	{
 	case chk_Global:
@@ -892,46 +890,10 @@ LPCWSTR ConEmuHotKey::GetHotkeyName(wchar_t (&szFull)[128], bool bShowNone /*= t
 	case chk_Task:
 	case chk_Modifier2:
 	case chk_System:
-		lVkMod = GetVkMod();
-		break;
 	case chk_Modifier:
-		lVkMod = Key.Vk;
-		break;
-	case chk_NumHost:
-		_ASSERTE(Key.Mod == cvk_NumHost);
-		lVkMod = (((DWORD)Key.Vk) | (gpSet->HostkeyNumberModifier() << 8));
-		break;
-	case chk_ArrHost:
-		_ASSERTE(Key.Mod == cvk_ArrHost);
-		lVkMod = (((DWORD)Key.Vk) | (gpSet->HostkeyArrowModifier() << 8));
-		break;
-	default:
-		// Неизвестный тип!
-		_ASSERTE(FALSE && "Unknown HkType");
-	}
-
-	if (lVkMod == 0)
-	{
-		szFull[0] = 0; // Поле "Кнопка" оставляем пустым
-	}
-	else if (HkType != chk_Modifier)
-	{
-		for (int k = 1; k <= 3; k++)
-		{
-			DWORD vk = (HkType == chk_Modifier) ? lVkMod : GetModifier(lVkMod, k);
-			if (vk)
-			{
-				GetVkKeyName(vk, szName);
-				if (szFull[0])
-					wcscat_c(szFull, L"+");
-				wcscat_c(szFull, szName);
-			}
-		}
-		/*
-		ConEmuChord K = {...};
 		for (size_t i = 0; i < countof(gvkMatchList); i++)
 		{
-			if (K.Mod & gvkMatchList[i].Mod)
+			if (Key.Mod & gvkMatchList[i].Mod)
 			{
 				GetVkKeyName(gvkMatchList[i].Vk, szName);
 				if (szFull[0])
@@ -939,9 +901,42 @@ LPCWSTR ConEmuHotKey::GetHotkeyName(wchar_t (&szFull)[128], bool bShowNone /*= t
 				wcscat_c(szFull, szName);
 			}
 		}
-		*/
+		break;
+	case chk_NumHost:
+	case chk_ArrHost:
+	{
+		DWORD lVkMod = 0;
+		switch (HkType)
+		{
+		case chk_NumHost:
+			_ASSERTE(Key.Mod == cvk_NumHost);
+			lVkMod = (gpSet->HostkeyNumberModifier() & 0xFFFFFF); // Max 3 bytes
+			break;
+		case chk_ArrHost:
+			_ASSERTE(Key.Mod == cvk_ArrHost);
+			lVkMod = (gpSet->HostkeyArrowModifier() & 0xFFFFFF); // Max 3 bytes
+			break;
+		}
+		// And parse bytes
+		while (lVkMod)
+		{
+			BYTE vk = LOBYTE(lVkMod);
+			GetVkKeyName(vk, szName);
+			if (szFull[0])
+				wcscat_c(szFull, L"+");
+			wcscat_c(szFull, szName);
+			lVkMod = lVkMod >> 8;
+		}
+		break;
+	}
+	default:
+		// Неизвестный тип!
+		_ASSERTE(FALSE && "Unknown HkType");
 	}
 
+	// chk_Modifier2 is used (yet) only for "Drag window by client area"
+	// This key by default is "Ctrl+Alt+LBtn"
+	// And we show in the hotkeys list only "Ctrl+Alt"
 	if (HkType != chk_Modifier2)
 	{
 		szName[0] = 0;
