@@ -425,7 +425,6 @@ CSettings::CSettings()
 
 	mp_HelpPopup = new CEHelpPopup;
 
-	mn_HotKeys = 0;
 	mp_ActiveHotKey = NULL;
 
 	// Горячие клавиши
@@ -482,8 +481,6 @@ void CSettings::ReleaseHotkeys()
 		SafeFree(m_HotKeys[i].GuiMacro);
 	}
 	m_HotKeys.clear();
-
-	mn_HotKeys = 0;
 }
 
 void CSettings::InitVars_Hotkeys()
@@ -491,7 +488,7 @@ void CSettings::InitVars_Hotkeys()
 	ReleaseHotkeys();
 
 	// Горячие клавиши (умолчания)
-	mn_HotKeys = m_HotKeys.AllocateHotkeys();
+	m_HotKeys.AllocateHotkeys();
 
 	mp_ActiveHotKey = NULL;
 }
@@ -527,10 +524,11 @@ const ConEmuHotKey* CSettings::GetHotKeyPtr(int idx)
 		}
 		else
 		{
-			const CommandTasks* pCmd = gpSet->CmdTaskGet(idx - mn_HotKeys);
+			int iHotkeys = m_HotKeys.size();
+			const CommandTasks* pCmd = gpSet->CmdTaskGet(idx - iHotkeys);
 			if (pCmd)
 			{
-				_ASSERTE(pCmd->HotKey.HkType==chk_Task && pCmd->HotKey.GetTaskIndex()==(idx-mn_HotKeys));
+				_ASSERTE(pCmd->HotKey.HkType==chk_Task && pCmd->HotKey.GetTaskIndex()==(idx-iHotkeys));
 				pHK = &pCmd->HotKey;
 			}
 		}
@@ -3449,9 +3447,10 @@ LRESULT CSettings::OnInitDialog_Keys(HWND hWnd2, bool abInitial)
 
 	checkRadioButton(hWnd2, rbHotkeysAll, rbHotkeysMacros, rbHotkeysAll);
 
-	for (int i = 0; i < mn_HotKeys; i++)
+	for (INT_PTR i = m_HotKeys.size() - 1; i >= 0; i--)
 	{
-		m_HotKeys[i].cchGuiMacroMax = m_HotKeys[i].GuiMacro ? (wcslen(m_HotKeys[i].GuiMacro)+1) : 0;
+		ConEmuHotKey* p = &(m_HotKeys[i]);
+		p->cchGuiMacroMax = p->GuiMacro ? (wcslen(p->GuiMacro)+1) : 0;
 	}
 
 	HWND hList = GetDlgItem(hWnd2, lbConEmuHotKeys);
