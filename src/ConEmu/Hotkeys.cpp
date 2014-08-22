@@ -317,71 +317,42 @@ bool ConEmuHotKey::GetMatchByVk(BYTE Vk, CEVkMatch& Match)
 //}
 
 
-DWORD ConEmuChord::GetVkMod()
+void ConEmuChord::Clear()
 {
-	// That is what is stored in the settings
-	DWORD VkMod = Vk;
-	// Let iterate
-	int iPos = 8; // <<
+	Vk = 0;
+	Mod = cvk_NULL;
+}
 
+UINT ConEmuChord::GetModifiers(BYTE (&Mods)[3]) const
+{
+	UINT m = 0;
 	for (size_t i = 0; i < countof(gvkMatchList); i++)
 	{
 		if (Mod & gvkMatchList[i].Mod)
 		{
-			VkMod |= (gvkMatchList[i].Vk << iPos);
-			iPos += 8;
-			if (iPos > 24)
+			Mods[m] = gvkMatchList[i].Vk;
+			m++;
+			if (m >= countof(Mods))
 				break;
-
-			if (gvkMatchList[i].Distinct)
-			{
-				_ASSERTE(gvkMatchList[i].Unmask != cvk_NULL);
-				i += 2;
-			}
 		}
 	}
-
-	return VkMod;
+	for (size_t k = m; k < countof(Mods); k++)
+	{
+		Mods[k] = 0;
+	}
+	return m;
 }
-void ConEmuChord::SetVkMod(DWORD VkMod)
+
+bool ConEmuChord::IsEmpty() const
 {
-	// Init
-	Vk = LOBYTE(VkMod);
-	Mod = cvk_NULL;
-
-	// Check modifiers
-	DWORD vkLeft = (VkMod && CEHOTKEY_MODMASK);
-	if ((vkLeft == CEHOTKEY_NUMHOSTKEY) || (vkLeft == CEHOTKEY_ARRHOSTKEY))
-	{
-		// Низя
-		_ASSERTE((vkLeft != CEHOTKEY_NUMHOSTKEY) && (VkMod != CEHOTKEY_ARRHOSTKEY));
-		return;
-	}
-
-	if (vkLeft == CEHOTKEY_NOMOD)
-		vkLeft = 0;
-
-	if (vkLeft)
-	{
-		CEVkMatch Match;
-		ConEmuModifiers Distinct = cvk_NULL;
-
-		while (vkLeft)
-		{
-			vkLeft = (vkLeft >> 8);
-			if (ConEmuHotKey::GetMatchByVk(LOBYTE(vkLeft), Match))
-			{
-				Mod |= Match.Mod;
-				Distinct |= Match.Unmask;
-			}
-		}
-
-		if (Distinct)
-		{
-			Mod &= ~Distinct;
-		}
-	}
+	return (Vk == 0);
 }
+
+bool ConEmuChord::IsEqual(const ConEmuChord& Key) const
+{
+	return ((Vk == Key.Vk) && (Mod == Key.Mod));
+}
+
 
 
 bool ConEmuHotKey::CanChangeVK() const

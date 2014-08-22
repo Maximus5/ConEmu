@@ -473,13 +473,19 @@ const ConEmuModifiers
 	cvk_Win      = 0x00080000,
 	cvk_Apps     = 0x00100000,
 
+	// Без модификатора
+	cvk_Naked    = 0x10000000,
+	// Спец.модификатор
+	cvk_NumHost  = 0x20000000,
+	cvk_ArrHost  = 0x40000000,
+
 	// Маска всех с учетом правый/левый
 	cvk_DISTINCT = cvk_LCtrl|cvk_RCtrl|cvk_LAlt|cvk_RAlt|cvk_LShift|cvk_RShift|cvk_Win|cvk_Apps,
 	cvk_CtrlAny  = cvk_Ctrl|cvk_LCtrl|cvk_RCtrl,
 	cvk_AltAny   = cvk_Alt|cvk_LAlt|cvk_RAlt,
 	cvk_ShiftAny = cvk_Shift|cvk_LShift|cvk_RShift,
 	// Маска вообще всех допустимых флагов, за исключением самого VK
-	cvk_ALLMASK  = 0xFFFFFF00,
+	cvk_ALLMASK  = (((DWORD)-1) & ~(cvk_Naked|cvk_NumHost|cvk_ArrHost|cvk_VK_MASK)), // 0x8FFFFF00
 	// Empty value
 	cvk_NULL     = 0;
 

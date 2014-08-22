@@ -73,9 +73,10 @@ struct ConEmuChord
 	// Modifiers (Win, Alt, etc.)
 	ConEmuModifiers Mod;
 
-	// That is what is stored in the settings
-	DWORD GetVkMod();
-	void  SetVkMod(DWORD VkMod);
+	void  Clear();
+	UINT  GetModifiers(BYTE (&Mods)[3]) const;
+	bool  IsEmpty() const;
+	bool  IsEqual(const ConEmuChord& Key) const;
 };
 
 struct ConEmuHotKey
