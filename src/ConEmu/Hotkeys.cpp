@@ -1199,6 +1199,16 @@ bool ConEmuHotKey::UseCtrlTab()
 	return gpSet->isTabSelf;
 }
 
+bool ConEmuHotKey::UseDndLKey()
+{
+	return ((gpSet->isDragEnabled & DRAG_L_ALLOWED) == DRAG_L_ALLOWED);
+}
+
+bool ConEmuHotKey::UseDndRKey()
+{
+	return ((gpSet->isDragEnabled & DRAG_R_ALLOWED) == DRAG_R_ALLOWED);
+}
+
 /*
 bool ConEmuHotKey::DontHookJumps(const ConEmuHotKey* pHK)
 {
@@ -1509,9 +1519,9 @@ int ConEmuHotKeyList::AllocateHotkeys()
 		;
 	Add(vkFarGotoEditorVk,chk_Modifier, NULL, L"FarGotoEditorVk") // модификатор для isFarGotoEditor
 		->SetHotKey(VK_LCONTROL);
-	Add(vkLDragKey,       chk_Modifier, NULL, L"DndLKey")         // модификатор драга левой кнопкой
+	Add(vkLDragKey,       chk_Modifier, ConEmuHotKey::UseDndLKey, L"DndLKey")         // модификатор драга левой кнопкой
 		;
-	Add(vkRDragKey,       chk_Modifier, NULL, L"DndRKey")        // модификатор драга правой кнопкой
+	Add(vkRDragKey,       chk_Modifier, ConEmuHotKey::UseDndRKey, L"DndRKey")        // модификатор драга правой кнопкой
 		->SetHotKey(VK_LCONTROL);
 	Add(vkWndDragKey,     chk_Modifier2,NULL, L"WndDragKey", CConEmuCtrl::key_WinDragStart) // модификатор таскания окна мышкой за любое место
 		->SetHotKey(VK_LBUTTON,VK_CONTROL,VK_MENU);
