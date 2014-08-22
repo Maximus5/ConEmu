@@ -354,6 +354,89 @@ bool ConEmuChord::IsEqual(const ConEmuChord& Key) const
 }
 
 
+// That is what is stored in the settings
+DWORD ConEmuHotKey::GetVkMod() const
+{
+	DWORD VkMod = 0;
+	DWORD Vk = (DWORD)(BYTE)Key.Vk;
+
+	if (Vk)
+	{
+		// Let iterate
+		int iPos = 8; // <<
+		ConEmuModifiers Mod = Key.Mod;
+
+		for (size_t i = 0; i < countof(gvkMatchList); i++)
+		{
+			if (Mod & gvkMatchList[i].Mod)
+			{
+				VkMod |= (gvkMatchList[i].Vk << iPos);
+				iPos += 8;
+				if (iPos > 24)
+					break;
+
+				if (!gvkMatchList[i].Distinct)
+				{
+					_ASSERTE(gvkMatchList[i].Unmask != cvk_NULL);
+					i += 2;
+				}
+			}
+		}
+
+		if (!VkMod && (HkType != chk_Modifier))
+			VkMod = CEHOTKEY_NOMOD;
+
+		VkMod |= Vk;
+	}
+
+	return VkMod;
+}
+
+void ConEmuHotKey::SetVkMod(DWORD VkMod)
+{
+	// Init
+	Key.Vk = LOBYTE(VkMod);
+
+	// Check modifiers
+	DWORD vkLeft = (VkMod & CEHOTKEY_MODMASK);
+
+	if ((HkType == chk_NumHost) || (vkLeft == CEHOTKEY_NUMHOSTKEY))
+	{
+		_ASSERTE((HkType == chk_NumHost) && (vkLeft == CEHOTKEY_NUMHOSTKEY))
+		Key.Mod = cvk_NumHost;
+	}
+	else if ((HkType == chk_ArrHost) || (vkLeft == CEHOTKEY_ARRHOSTKEY))
+	{
+		_ASSERTE((HkType == chk_ArrHost) && (vkLeft == CEHOTKEY_ARRHOSTKEY))
+		Key.Mod = cvk_ArrHost;
+	}
+	else if (vkLeft == CEHOTKEY_NOMOD)
+	{
+		Key.Mod = cvk_Naked;
+	}
+	else if (vkLeft)
+	{
+		CEVkMatch Match;
+		ConEmuModifiers Distinct = cvk_NULL;
+		ConEmuModifiers NewMod = cvk_NULL;
+
+		while (vkLeft)
+		{
+			vkLeft = (vkLeft >> 8);
+			if (ConEmuHotKey::GetMatchByVk(LOBYTE(vkLeft), Match))
+			{
+				NewMod |= Match.Mod;
+				Distinct |= Match.Unmask;
+			}
+		}
+
+		Key.Mod = NewMod & ~Distinct;
+	}
+	else
+	{
+		Key.Mod = cvk_NULL;
+	}
+}
 
 bool ConEmuHotKey::CanChangeVK() const
 {
@@ -587,6 +670,19 @@ DWORD ConEmuHotKey::GetHotKeyMod(DWORD VkMod)
 	return nMOD;
 }
 
+void ConEmuHotKey::SetHotKey(BYTE Vk, BYTE vkMod1/*=0*/, BYTE vkMod2/*=0*/, BYTE vkMod3/*=0*/)
+{
+	SetVkMod(MakeHotKey(Vk, vkMod1, vkMod2, vkMod3));
+}
+
+bool ConEmuHotKey::Equal(BYTE Vk, BYTE vkMod1/*=0*/, BYTE vkMod2/*=0*/, BYTE vkMod3/*=0*/)
+{
+	//TODO
+	DWORD VkMod = GetVkMod();
+	DWORD VkModCmp = MakeHotKey(Vk, vkMod1, vkMod2, vkMod3);
+	return (VkMod == VkModCmp);
+}
+
 // Сервисная функция для инициализации. Формирует готовый VkMod
 DWORD ConEmuHotKey::MakeHotKey(BYTE Vk, BYTE vkMod1/*=0*/, BYTE vkMod2/*=0*/, BYTE vkMod3/*=0*/)
 {
@@ -797,34 +893,29 @@ LPCWSTR ConEmuHotKey::GetHotkeyName(wchar_t (&szFull)[128], bool bShowNone /*= t
 	case chk_Global:
 	case chk_Local:
 	case chk_User:
+	case chk_Macro:
 	case chk_Task:
 	case chk_Modifier2:
-		lVkMod = VkMod;
-		break;
-	case chk_Macro:
-		lVkMod = VkMod;
+	case chk_System:
+		lVkMod = GetVkMod();
 		break;
 	case chk_Modifier:
-		lVkMod = VkMod;
+		lVkMod = Key.Vk;
 		break;
 	case chk_NumHost:
-		_ASSERTE((VkMod & CEHOTKEY_MODMASK) == CEHOTKEY_NUMHOSTKEY);
-		lVkMod = (VkMod & 0xFF) | (gpSet->HostkeyNumberModifier() << 8);
+		_ASSERTE(Key.Mod == cvk_NumHost);
+		lVkMod = (((DWORD)Key.Vk) | (gpSet->HostkeyNumberModifier() << 8));
 		break;
 	case chk_ArrHost:
-		_ASSERTE((VkMod & CEHOTKEY_MODMASK) == CEHOTKEY_ARRHOSTKEY);
-		lVkMod = (VkMod & 0xFF) | (gpSet->HostkeyArrowModifier() << 8);
-		break;
-	case chk_System:
-		lVkMod = VkMod;
+		_ASSERTE(Key.Mod == cvk_ArrHost);
+		lVkMod = (((DWORD)Key.Vk) | (gpSet->HostkeyArrowModifier() << 8));
 		break;
 	default:
 		// Неизвестный тип!
 		_ASSERTE(FALSE && "Unknown HkType");
-		lVkMod = 0;
 	}
 
-	if (GetHotkey(lVkMod) == 0)
+	if (lVkMod == 0)
 	{
 		szFull[0] = 0; // Поле "Кнопка" оставляем пустым
 	}
@@ -841,12 +932,25 @@ LPCWSTR ConEmuHotKey::GetHotkeyName(wchar_t (&szFull)[128], bool bShowNone /*= t
 				wcscat_c(szFull, szName);
 			}
 		}
+		/*
+		ConEmuChord K = {...};
+		for (size_t i = 0; i < countof(gvkMatchList); i++)
+		{
+			if (K.Mod & gvkMatchList[i].Mod)
+			{
+				GetVkKeyName(gvkMatchList[i].Vk, szName);
+				if (szFull[0])
+					wcscat_c(szFull, L"+");
+				wcscat_c(szFull, szName);
+			}
+		}
+		*/
 	}
 
 	if (HkType != chk_Modifier2)
 	{
 		szName[0] = 0;
-		GetVkKeyName(GetHotkey(lVkMod), szName);
+		GetVkKeyName(Key.Vk, szName);
 
 		if (szName[0])
 		{
@@ -1105,6 +1209,7 @@ bool ConEmuHotKey::UseCtrlTab()
 	return gpSet->isTabSelf;
 }
 
+/*
 bool ConEmuHotKey::DontHookJumps(const ConEmuHotKey* pHK)
 {
 	bool bDontHook = false;
@@ -1121,12 +1226,45 @@ bool ConEmuHotKey::DontHookJumps(const ConEmuHotKey* pHK)
 #endif
 	return bDontHook;
 }
+*/
 
 
 
 
 
 /* ************************************* */
+ConEmuHotKey* ConEmuHotKeyList::Add(int DescrLangID, ConEmuHotKeyType HkType, HotkeyEnabled_t Enabled, LPCWSTR Name, HotkeyFKey_t fkey, bool OnKeyUp, LPCWSTR GuiMacro)
+{
+	static ConEmuHotKey dummy = {};
+	ConEmuHotKey* p = &dummy;
+
+	#ifdef _DEBUG
+	for (INT_PTR i = 0; i < size(); i++)
+	{
+		if ((*this)[i].DescrLangID == DescrLangID)
+		{
+			_ASSERTE(FALSE && "This item was already added!");
+		}
+	}
+	#endif
+
+	INT_PTR iNew = this->push_back(dummy);
+	if (iNew >= 0)
+	{
+		p = &((*this)[iNew]);
+		memset(p, 0, sizeof(*p));
+		p->DescrLangID = DescrLangID;
+		p->HkType = HkType;
+		p->Enabled = Enabled;
+		lstrcpyn(p->Name, Name, countof(p->Name));
+		p->fkey = fkey;
+		p->OnKeyUp = OnKeyUp;
+		p->GuiMacro = GuiMacro ? lstrdup(GuiMacro) : NULL;
+	}
+
+	return p;
+}
+
 int ConEmuHotKey::AllocateHotkeys(ConEmuHotKey** ppHotKeys)
 {
 	// Горячие клавиши

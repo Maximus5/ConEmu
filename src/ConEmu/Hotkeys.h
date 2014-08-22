@@ -79,6 +79,11 @@ struct ConEmuChord
 	bool  IsEqual(const ConEmuChord& Key) const;
 };
 
+// Check if enabled in current context
+typedef bool (*HotkeyEnabled_t)();
+// true-обработали, false-пропустить в консоль
+typedef bool (WINAPI *HotkeyFKey_t)(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon); // true-обработали, false-пропустить в консоль
+
 struct ConEmuHotKey
 {
 	// >0 StringTable resource ID
@@ -89,13 +94,15 @@ struct ConEmuHotKey
 	ConEmuHotKeyType HkType;
 
 	// May be NULL
-	bool   (*Enabled)();
+	HotkeyEnabled_t Enabled;
 
 	wchar_t Name[64];
 
-	DWORD VkMod;
+	ConEmuChord Key;
+	DWORD GetVkMod() const;
+	void  SetVkMod(DWORD VkMod);
 
-	bool (WINAPI *fkey)(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon); // true-обработали, false-пропустить в консоль
+	HotkeyFKey_t fkey; // true-обработали, false-пропустить в консоль
 	bool OnKeyUp; // Некоторые комбинации нужно обрабатывать "на отпускание" (показ диалогов, меню, ...)
 
 	wchar_t* GuiMacro;
@@ -111,6 +118,8 @@ struct ConEmuHotKey
 	bool IsTaskHotKey() const;
 	int GetTaskIndex() const; // 0-based
 	void SetTaskIndex(int iTaskIdx); // 0-based
+	void SetHotKey(BYTE Vk, BYTE vkMod1=0, BYTE vkMod2=0, BYTE vkMod3=0);
+	bool Equal(BYTE Vk, BYTE vkMod1=0, BYTE vkMod2=0, BYTE vkMod3=0);
 
 	LPCWSTR GetDescription(wchar_t* pszDescr, int cchMaxLen, bool bAddMacroIndex = false) const;
 
@@ -149,10 +158,15 @@ struct ConEmuHotKey
 	static bool UseCTSShiftArrow(); // { return gpSet->isUseWinArrows; }; // { return (OverrideClipboard || !AppNames) ? isCTSShiftArrowStart : gpSet->AppStd.isCTSShiftArrowStart; };
 	static bool UseCtrlTab();
 	static bool InSelection();
-	static bool DontHookJumps(const ConEmuHotKey* pHK);
+	//static bool DontHookJumps(const ConEmuHotKey* pHK);
+};
 
-	// *** Default and all possible ConEmu hotkeys ***
-	static int AllocateHotkeys(ConEmuHotKey** ppHotKeys);
+#include "../common/MArray.h"
+class ConEmuHotKeyList : public MArray<ConEmuHotKey>
+{
+public:
+	ConEmuHotKey* Add(int DescrLangID, ConEmuHotKeyType HkType, HotkeyEnabled_t Enabled, LPCWSTR Name,
+		HotkeyFKey_t fkey = NULL, bool OnKeyUp = false, LPCWSTR GuiMacro = NULL);
 };
 
 class CDpiForDialog;
