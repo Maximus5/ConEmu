@@ -549,7 +549,7 @@ class CSettings
 		DWORD MakeHotKey(BYTE Vk, BYTE vkMod1=0, BYTE vkMod2=0, BYTE vkMod3=0) { return ConEmuHotKey::MakeHotKey(Vk, vkMod1, vkMod2, vkMod3); };
 		//#define MAKEMODIFIER2(vk1,vk2) ((DWORD)vk1&0xFF)|(((DWORD)vk2&0xFF)<<8)
 		//#define MAKEMODIFIER3(vk1,vk2,vk3) ((DWORD)vk1&0xFF)|(((DWORD)vk2&0xFF)<<8)|(((DWORD)vk3&0xFF)<<16)
-		ConEmuHotKey *mp_HotKeys;
+		ConEmuHotKeyList m_HotKeys;
 		int mn_HotKeys; // Число "явных" хоткеев, после которых виртуально идут хоткеи тасков
 		ConEmuHotKey *mp_ActiveHotKey;
 		void SetHotkeyVkMod(ConEmuHotKey *pHK, DWORD VkMod);

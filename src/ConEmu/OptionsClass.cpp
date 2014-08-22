@@ -425,7 +425,6 @@ CSettings::CSettings()
 
 	mp_HelpPopup = new CEHelpPopup;
 
-	mp_HotKeys = NULL;
 	mn_HotKeys = 0;
 	mp_ActiveHotKey = NULL;
 
@@ -478,16 +477,12 @@ bool CSettings::OnDpiChanged(int dpiX, int dpiY, LPRECT prcSuggested)
 
 void CSettings::ReleaseHotkeys()
 {
-	if (mp_HotKeys)
+	for (int i = m_HotKeys.size() - 1; i >= 0; i--)
 	{
-		for (int i = 0; i < mn_HotKeys; i++)
-		{
-			SafeFree(mp_HotKeys[i].GuiMacro);
-		}
-		free(mp_HotKeys);
+		SafeFree(m_HotKeys[i].GuiMacro);
 	}
+	m_HotKeys.clear();
 
-	mp_HotKeys = NULL;
 	mn_HotKeys = 0;
 }
 
@@ -496,7 +491,7 @@ void CSettings::InitVars_Hotkeys()
 	ReleaseHotkeys();
 
 	// Горячие клавиши (умолчания)
-	mn_HotKeys = ConEmuHotKey::AllocateHotkeys(&mp_HotKeys);
+	mn_HotKeys = m_HotKeys.AllocateHotkeys();
 
 	mp_ActiveHotKey = NULL;
 }
@@ -524,11 +519,11 @@ const ConEmuHotKey* CSettings::GetHotKeyPtr(int idx)
 {
 	const ConEmuHotKey* pHK = NULL;
 
-	if (idx >= 0 && this && mp_HotKeys)
+	if (idx >= 0 && this)
 	{
-		if (idx < mn_HotKeys)
+		if (idx < m_HotKeys.size())
 		{
-			pHK = (mp_HotKeys+idx);
+			pHK = &(m_HotKeys[idx]);
 		}
 		else
 		{
@@ -3456,7 +3451,7 @@ LRESULT CSettings::OnInitDialog_Keys(HWND hWnd2, bool abInitial)
 
 	for (int i = 0; i < mn_HotKeys; i++)
 	{
-		mp_HotKeys[i].cchGuiMacroMax = mp_HotKeys[i].GuiMacro ? (wcslen(mp_HotKeys[i].GuiMacro)+1) : 0;
+		m_HotKeys[i].cchGuiMacroMax = m_HotKeys[i].GuiMacro ? (wcslen(m_HotKeys[i].GuiMacro)+1) : 0;
 	}
 
 	HWND hList = GetDlgItem(hWnd2, lbConEmuHotKeys);
