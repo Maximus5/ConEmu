@@ -2695,9 +2695,9 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom, bool bUpdateScre
 
 
 	COORD crEnd = crStart;
-	wchar_t szText[MAX_PATH+10];
+	CmdArg szText;
 	ExpandTextRangeType rc = CanProcessHyperlink(crStart)
-		? ExpandTextRange(crStart, crEnd, etr_AnyClickable, szText, countof(szText))
+		? ExpandTextRange(crStart, crEnd, etr_AnyClickable, &szText)
 		: etr_None;
 	if (memcmp(&crStart, &con.etr.mcr_FileLineStart, sizeof(crStart)) != 0
 		|| memcmp(&crEnd, &con.etr.mcr_FileLineEnd, sizeof(crStart)) != 0)
@@ -2713,9 +2713,9 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom, bool bUpdateScre
 
 	if ((rc & etr_File) || (rc & etr_Url))
 	{
-		if ((messg == WM_LBUTTONUP || messg == WM_LBUTTONDBLCLK) && *szText)
+		if ((messg == WM_LBUTTONUP || messg == WM_LBUTTONDBLCLK) && !szText.IsEmpty())
 		{
-			if (rc == etr_Url)
+			if (rc & etr_Url)
 			{
 				int iRc = (int)ShellExecute(ghWnd, L"open", szText, NULL, NULL, SW_SHOWNORMAL);
 				if (iRc <= 32)
@@ -2723,19 +2723,20 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom, bool bUpdateScre
 					DisplayLastError(szText, iRc, MB_ICONSTOP, L"URL open failed");
 				}
 			}
-			else if (rc == etr_File)
+			else if (rc & etr_File)
 			{
 				// Найти номер строки
 				CESERVER_REQ_FAREDITOR cmd = {sizeof(cmd)};
-				int nLen = lstrlen(szText)-1;
-				if (szText[nLen] == L')')
+				wchar_t* pszText = szText.ms_Arg;
+				int nLen = lstrlen(pszText)-1;
+				if (pszText[nLen] == L')')
 				{
-					szText[nLen] = 0;
+					pszText[nLen] = 0;
 					nLen--;
 				}
 				while ((nLen > 0)
-					&& (((szText[nLen-1] >= L'0') && (szText[nLen-1] <= L'9'))
-						|| ((szText[nLen-1] == L',') && ((szText[nLen] >= L'0') && (szText[nLen] <= L'9')))))
+					&& (((pszText[nLen-1] >= L'0') && (pszText[nLen-1] <= L'9'))
+						|| ((pszText[nLen-1] == L',') && ((pszText[nLen] >= L'0') && (pszText[nLen] <= L'9')))))
 				{
 					nLen--;
 				}
@@ -2746,17 +2747,17 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom, bool bUpdateScre
 				else
 				{ // 1.c:3:
 					wchar_t* pszEnd;
-					cmd.nLine = wcstol(szText+nLen, &pszEnd, 10);
+					cmd.nLine = wcstol(pszText+nLen, &pszEnd, 10);
 					if (pszEnd && (*pszEnd == L',') && isDigit(*(pszEnd+1)))
 						cmd.nColon = wcstol(pszEnd+1, &pszEnd, 10);
 					if (cmd.nColon < 1)
 						cmd.nColon = 1;
-					szText[nLen-1] = 0;
-					while ((pszEnd = wcschr(szText, L'/')) != NULL)
+					pszText[nLen-1] = 0;
+					while ((pszEnd = wcschr(pszText, L'/')) != NULL)
 						*pszEnd = L'\\'; // заменить прямые слеши на обратные
 
-					//lstrcpyn(cmd.szFile, szText, countof(cmd.szFile));
-					LookupFilePath(szText/*name from console*/, cmd.szFile/*full path*/, countof(cmd.szFile));
+					//lstrcpyn(cmd.szFile, pszText, countof(cmd.szFile));
+					LookupFilePath(pszText/*name from console*/, cmd.szFile/*full path*/, countof(cmd.szFile));
 
 					TODO("Для удобства, если лог открыт в редакторе, или пропустить мышь, или позвать макрос");
 					// Только нужно учесть, что текущий таб может быть редактором, но открыт UserScreen (CtrlO)
@@ -6179,7 +6180,7 @@ DWORD CRealBuffer::GetConsoleMode()
 	return con.m_dwConsoleMode;
 }
 
-ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In/Out]*/, COORD& crTo/*[Out]*/, ExpandTextRangeType etr, wchar_t* pszText /*= NULL*/, size_t cchTextMax /*= 0*/)
+ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In/Out]*/, COORD& crTo/*[Out]*/, ExpandTextRangeType etr, CmdArg* psText /*= NULL*/)
 {
 	ExpandTextRangeType result = etr_None;
 
@@ -6208,6 +6209,8 @@ ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In/Out]*/, COOR
 		{
 			lcrFrom.X = mp_Match->mn_MatchLeft;
 			lcrTo.X = mp_Match->mn_MatchRight;
+			if (psText)
+				psText->Set(mp_Match->ms_Match.ms_Arg);
 			result = mp_Match->m_Type;
 		}
 	}

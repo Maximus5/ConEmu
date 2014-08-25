@@ -587,7 +587,7 @@ bool CMatch::MatchAny()
 		int iMailTo = (bMaybeMail && !bUrlMode) ? lstrlen(L"mailto:") : 0;
 		INT_PTR cchTextMax = (mn_MatchRight - mn_MatchLeft + 1 + iMailTo);
 		wchar_t* pszText = ms_Match.GetBuffer(cchTextMax);
-		if (pszText)
+		if (!pszText)
 			goto wrap; // Недостаточно места под текст
 		if (iMailTo)
 		{
