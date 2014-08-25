@@ -972,6 +972,7 @@
     <ClCompile Include="Inside.cpp" />
     <ClCompile Include="LoadImg.cpp" />
     <ClCompile Include="Macro.cpp" />
+    <ClCompile Include="Match.cpp" />
     <ClCompile Include="Menu.cpp" />
     <ClCompile Include="Options.cpp" />
     <ClCompile Include="OptionsClass.cpp" />
@@ -1052,6 +1053,7 @@
     <ClInclude Include="kl_parts.h" />
     <ClInclude Include="LoadImg.h" />
     <ClInclude Include="Macro.h" />
+    <ClInclude Include="Match.h" />
     <ClInclude Include="Menu.h" />
     <ClInclude Include="MenuIds.h" />
     <ClInclude Include="Options.h" />

@@ -431,6 +431,7 @@
       <File RelativePath=".\Inside.cpp" />
       <File RelativePath=".\LoadImg.cpp" />
       <File RelativePath=".\Macro.cpp" />
+      <File RelativePath=".\Match.cpp" />
       <File RelativePath=".\Menu.cpp" />
       <File RelativePath=".\Options.cpp" />
       <File RelativePath=".\OptionsClass.cpp" />
@@ -515,6 +516,7 @@
       <File RelativePath=".\kl_parts.h" />
       <File RelativePath=".\LoadImg.h" />
       <File RelativePath=".\Macro.h" />
+      <File RelativePath=".\Match.h" />
       <File RelativePath=".\Menu.h" />
       <File RelativePath=".\MenuIds.h" />
       <File RelativePath=".\Options.h" />

@@ -57,6 +57,7 @@ $(INTDIR)\Inside.obj \
 $(INTDIR)\LoadImg.obj \
 $(INTDIR)\Macro.obj \
 $(INTDIR)\MAssert.obj \
+$(INTDIR)\Match.obj \
 $(INTDIR)\Memory.obj \
 $(INTDIR)\Menu.obj \
 $(INTDIR)\Monitors.obj \
@@ -310,6 +311,8 @@ $(INTDIR)\LoadImg.obj: LoadImg.cpp LoadImg.h
 $(INTDIR)\Macro.obj: Macro.cpp Macro.h
 
 $(INTDIR)\MAssert.obj: ../common/MAssert.cpp
+
+$(INTDIR)\Match.obj: Match.cpp Match.h
 
 $(INTDIR)\Memory.obj: ../common/Memory.cpp
 

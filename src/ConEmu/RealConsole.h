@@ -249,7 +249,6 @@ enum StartDebugType
 	sdt_DebugProcessTree,
 };
 
-enum ExpandTextRangeType;
 struct ConEmuHotKey;
 
 #include "RealServer.h"
@@ -499,13 +498,7 @@ class CRealConsole
 		bool PreCreate(RConStartArgs *args);
 
 		BOOL GetConsoleLine(int nLine, wchar_t** pChar, /*CharAttr** pAttr,*/ int* pLen, MSectionLock* pcsData);
-		//enum ExpandTextRangeType
-		//{
-		//	etr_None = 0,
-		//	etr_Word = 1,
-		//	etr_FileAndLine = 2,
-		//};
-		//ExpandTextRangeType ExpandTextRange(COORD& crFrom/*[In/Out]*/, COORD& crTo/*[Out]*/, ExpandTextRangeType etr, wchar_t* pszText = NULL, size_t cchTextMax = 0);
+
 		CDpiForDialog* mp_RenameDpiAware;
 		static INT_PTR CALLBACK renameProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam);
 	public:

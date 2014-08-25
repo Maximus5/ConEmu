@@ -38,6 +38,7 @@ SRCS = \
 		Inside.cpp         \
 		LoadImg.cpp        \
 		Macro.cpp          \
+		Match.cpp          \
 		Menu.cpp           \
 		Options.cpp        \
 		OptionsClass.cpp   \
