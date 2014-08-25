@@ -361,7 +361,19 @@ DWORD ConEmuHotKey::GetVkMod() const
 		int iPos = 8; // <<
 		ConEmuModifiers Mod = Key.Mod;
 
-		for (size_t i = 0; i < countof(gvkMatchList); i++)
+		if (Mod & cvk_Naked)
+		{
+			// Nothing to add?
+		}
+		else if (Mod & cvk_NumHost)
+		{
+			VkMod = (gpSet->HostkeyNumberModifier() << 8);
+		}
+		else if (Mod & cvk_ArrHost)
+		{
+			VkMod = (gpSet->HostkeyArrowModifier() << 8);
+		}
+		else for (size_t i = 0; i < countof(gvkMatchList); i++)
 		{
 			if (Mod & gvkMatchList[i].Mod)
 			{
