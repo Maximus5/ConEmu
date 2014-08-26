@@ -322,7 +322,12 @@ bool CMatch::MatchAny()
 	bool bUrlMode = false, bMaybeMail = false;
 	SHORT MailX = -1;
 	bool bDigits = false, bLineNumberFound = false, bWasSeparator = false;
-	int iExtFound = 0, iBracket = 0;
+	enum {
+		ef_NotFound = 0,
+		ef_DotFound = 1,
+		ef_ExtFound = 2,
+	} iExtFound = ef_NotFound;
+	int iBracket = 0;
 
 	mn_MatchLeft = mn_MatchRight = mn_SrcFrom;
 
@@ -414,19 +419,19 @@ bool CMatch::MatchAny()
 		}
 		else
 		{
-			if (iExtFound != 2)
+			if (iExtFound != ef_ExtFound)
 			{
-				if (!iExtFound)
+				if (iExtFound == ef_NotFound)
 				{
 					if (m_SrcLine.ms_Arg[mn_MatchRight] == L'.')
-						iExtFound = 1;
+						iExtFound = ef_ExtFound;
 				}
 				else
 				{
 					// Не особо заморачиваясь с точками и прочим. Просто небольшая страховка от ложных срабатываний...
 					if ((m_SrcLine.ms_Arg[mn_MatchRight] >= L'a' && m_SrcLine.ms_Arg[mn_MatchRight] <= L'z') || (m_SrcLine.ms_Arg[mn_MatchRight] >= L'A' && m_SrcLine.ms_Arg[mn_MatchRight] <= L'Z'))
 					{
-						iExtFound = 2;
+						iExtFound = ef_ExtFound;
 						iBracket = 0;
 					}
 				}
@@ -436,20 +441,20 @@ bool CMatch::MatchAny()
 			{
 				if (m_SrcLine.ms_Arg[mn_MatchRight] == L'.')
 				{
-					iExtFound = 1;
+					iExtFound = ef_DotFound;
 					iBracket = 0;
 				}
 				else if (wcschr(pszSlashes, m_SrcLine.ms_Arg[mn_MatchRight]) != NULL)
 				{
 					// Был слеш, значит расширения - еще нет
-					iExtFound = 0;
+					iExtFound = ef_NotFound;
 					iBracket = 0;
 					bWasSeparator = false;
 				}
 				else if (wcschr(pszSpacing, m_SrcLine.ms_Arg[mn_MatchRight]) && wcschr(pszSpacing, m_SrcLine.ms_Arg[mn_MatchRight+1]))
 				{
 					// Слишком много пробелов
-					iExtFound = 0;
+					iExtFound = ef_NotFound;
 					iBracket = 0;
 					bWasSeparator = false;
 				}
