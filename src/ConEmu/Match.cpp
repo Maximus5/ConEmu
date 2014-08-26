@@ -199,7 +199,9 @@ bool CMatch::FindRangeStart(int& crFrom/*[In/Out]*/, int& crTo/*[In/Out]*/, bool
 				break; // Комментарий в строке?
 			}
 		}
+
 		crFrom--;
+
 		if (pChar[crFrom] == L':')
 		{
 			if (pChar[crFrom+1] == L' ')
@@ -215,8 +217,10 @@ bool CMatch::FindRangeStart(int& crFrom/*[In/Out]*/, int& crTo/*[In/Out]*/, bool
 			}
 		}
 	}
+
 	while (((crFrom+1) < nLen) && wcschr(pszSpacing, pChar[crFrom]))
 		crFrom++;
+
 	if (crFrom > crTo)
 	{
 		goto wrap; // Fail?
@@ -459,7 +463,9 @@ bool CMatch::MatchAny()
 					bWasSeparator = false;
 				}
 				else
+				{
 					bWasSeparator = (wcschr(pszSeparat, m_SrcLine.ms_Arg[mn_MatchRight]) != NULL);
+				}
 			}
 
 			// Расчитано на закрывающие : или ) или ] или ,
@@ -551,6 +557,7 @@ bool CMatch::MatchAny()
 		}
 		if (bMaybeMail || (!bMaybeMail && m_SrcLine.ms_Arg[mn_MatchRight] != L')'))
 			mn_MatchRight--;
+
 		// Откатить ненужные пробелы
 		while ((mn_MatchLeft < mn_MatchRight) && wcschr(pszSpacing, m_SrcLine.ms_Arg[mn_MatchLeft]))
 			mn_MatchLeft++;
