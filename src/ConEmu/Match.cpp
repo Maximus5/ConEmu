@@ -311,7 +311,7 @@ bool CMatch::MatchAny()
 						ucBoxDblUpSinglHorz, ucBoxDblVertRight, ucBoxDblVertLeft,
 						ucBoxSinglVertRight, ucBoxSinglVertLeft, ucBoxDblVertHorz,
 						0};
-	const wchar_t* pszSpacing = L" \t\xB7\x2192"; //B7 - режим "Show white spaces", 2192 - символ табуляции там же
+	const wchar_t* pszSpacing = L" \t\xB6\xB7\x2192\x25A1\x25D9\x266A"; // Пробел, таб, остальные для режима "Show white spaces" в редакторе фара
 	const wchar_t* pszSeparat = L" \t:(";
 	const wchar_t* pszTermint = L":)],";
 	const wchar_t* pszDigits  = L"0123456789";
@@ -320,8 +320,8 @@ bool CMatch::MatchAny()
 	const wchar_t* pszUrlTrimRight = L".,;";
 	const wchar_t* pszProtocol = L"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_.";
 	const wchar_t* pszEMail = L"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-.";
-	const wchar_t* pszUrlDelim = L"\\\"<>{}[]^`' \t\r\n";
-	const wchar_t* pszUrlFileDelim = L"\"<>^ \t\r\n";
+	const wchar_t* pszUrlDelim = L"\\\"<>{}[]^`' \t\r\n\xB6\xB7\x2192\x25A1\x25D9\x266A";
+	const wchar_t* pszUrlFileDelim = L"\"<>^ \t\r\n\xB6\xB7\x2192\x25A1\x25D9\x266A";
 	int nColons = 0;
 	bool bUrlMode = false, bMaybeMail = false;
 	SHORT MailX = -1;
