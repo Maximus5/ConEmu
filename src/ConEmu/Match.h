@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2011-2014 Maximus5
+Copyright (c) 2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -75,4 +75,12 @@ protected:
 protected:
 	CmdArg ms_FileCheck;
 	bool IsValidFile(LPCWSTR asFrom, int anLen, LPCWSTR pszInvalidChars, LPCWSTR pszSpacing);
+
+public:
+	#ifdef _DEBUG
+	static void UnitTests();
+	void UnitTestMatch(ExpandTextRangeType etr, LPCWSTR asLine, int anLineLen, int anMatchStart, int anMatchEnd, LPCWSTR asMatchText);
+	void UnitTestNoMatch(ExpandTextRangeType etr, LPCWSTR asLine, int anLineLen, int anStart, int anEnd);
+	static void UnitTestAlert(LPCWSTR pszText);
+	#endif
 };

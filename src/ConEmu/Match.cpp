@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2011-2014 Maximus5
+Copyright (c) 2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -33,6 +33,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Match.h"
 #include "VirtualConsole.h"
 
+#ifdef _DEBUG
+#include "ConEmu.h"
+#endif
+
 CMatch::CMatch()
 	:m_Type(etr_None)
 	,mn_Row(-1), mn_Col(-1)
@@ -47,6 +51,177 @@ CMatch::CMatch()
 CMatch::~CMatch()
 {
 }
+
+#ifdef _DEBUG
+void CMatch::UnitTestAlert(LPCWSTR pszText)
+{
+	OutputDebugString(pszText);
+}
+
+void CMatch::UnitTests()
+{
+	CmdArg szDir;
+	GetDirectory(szDir);
+
+	CMatch match;
+	struct TestMatch {
+		LPCWSTR src; ExpandTextRangeType etr;
+		bool bMatch; LPCWSTR matches[5];
+		LPCWSTR pszTestCurDir;
+	} Tests[] = {
+		// Just a text files
+		{L"\t" L"License.txt	Portable.txt    WhatsNew-ConEmu.txt" L"\t",
+			etr_AnyClickable, true, {L"License.txt", L"Portable.txt", L"WhatsNew-ConEmu.txt"}, gpConEmu->ms_ConEmuBaseDir},
+		{L"\t" L" \" abc.cpp \" \"def.h\" " L"\t",
+			etr_AnyClickable, true, {L"abc.cpp", L"def.h"}},
+
+		// -- VC
+		{L"\t" L"1>c:\\sources\\conemu\\realconsole.cpp(8104) : error C2065: 'qqq' : undeclared identifier" L"\t",
+			etr_AnyClickable, true, {L"c:\\sources\\conemu\\realconsole.cpp(8104)"}},
+		{L"\t" L"DefResolve.cpp(18) : error C2065: 'sdgagasdhsahd' : undeclared identifier" L"\t",
+			etr_AnyClickable, true, {L"DefResolve.cpp(18)"}},
+		{L"\t" L"DefResolve.cpp(18): warning: note xxx" L"\t",
+			etr_AnyClickable, true, {L"DefResolve.cpp(18)"}},
+		// -- GCC
+		{L"\t" L"ConEmuC.cpp:49: error: 'qqq' does not name a type" L"\t",
+			etr_AnyClickable, true, {L"ConEmuC.cpp:49"}},
+		{L"\t" L"1.c:3: some message" L"\t",
+			etr_AnyClickable, true, {L"1.c:3"}},
+		{L"\t" L"file.cpp:29:29: error" L"\t",
+			etr_AnyClickable, true, {L"file.cpp:29"}},
+		// CPP Check
+		{L"\t" L"[common\\PipeServer.h:1145]: (style) C-style pointer casting" L"\t",
+			etr_AnyClickable, true, {L"common\\PipeServer.h:1145"}},
+		// Delphi
+		{L"\t" L"c:\\sources\\FarLib\\FarCtrl.pas(1002) Error: Undeclared identifier: 'PCTL_GETPLUGININFO'" L"\t",
+			etr_AnyClickable, true, {L"c:\\sources\\FarLib\\FarCtrl.pas(1002)"}},
+		// FPC
+		{L"\t" L"FarCtrl.pas(1002,49) Error: Identifier not found 'PCTL_GETPLUGININFO'" L"\t",
+			etr_AnyClickable, true, {L"FarCtrl.pas(1002,49)"}},
+		// PowerShell
+		{L"\t" L"Script.ps1:35 знак:23" L"\t",
+			etr_AnyClickable, true, {L"Script.ps1:35"}},
+		// -- Possible?
+		{L"\t" L"abc.py (3): some message" L"\t",
+			etr_AnyClickable, true, {L"abc.py (3)"}},
+		// ASM - подсвечивать нужно "test.asasm(1,1)"
+		{L"\t" L"object.Exception@assembler.d(1239): test.asasm(1,1):" L"\t",
+			etr_AnyClickable, true, {L"object.Exception@assembler.d(1239)", L"test.asasm(1,1)"}},
+		// Issue 1594
+		{L"\t" L"/src/class.c:123:m_func(...)" L"\t",
+			etr_AnyClickable, true, {L"/src/class.c:123"}},
+		{L"\t" L"/src/class.c:123: m_func(...)" L"\t",
+			etr_AnyClickable, true, {L"/src/class.c:123"}},
+
+		// -- URL's
+		{L"\t" L"text··http://www.abc.com/q?q··text" L"\t",
+			etr_AnyClickable, true, {L"http://www.abc.com/q?q"}},
+		{L"\t" L"file://c:\\temp\\qqq.html" L"\t",
+			etr_AnyClickable, true, {L"file://c:\\temp\\qqq.html"}},
+		{L"\t" L"file:///c:\\temp\\qqq.html" L"\t",
+			etr_AnyClickable, true, {L"file:///c:\\temp\\qqq.html"}},
+		{L"\t" L"http://www.farmanager.com" L"\t",
+			etr_AnyClickable, true, {L"http://www.farmanager.com"}},
+		{L"\t" L"$ http://www.KKK.ru - левее слеша - не срабатывает" L"\t",
+			etr_AnyClickable, true, {L"http://www.KKK.ru"}},
+		{L"\t" L"C:\\ConEmu>http://www.KKK.ru - ..." L"\t",
+			etr_AnyClickable, true, {L"http://www.KKK.ru"}},
+		// -- False detects
+		{L"\t" L"29.11.2011 18:31:47" L"\t",
+			etr_AnyClickable, false, {}},
+		{L"\t" L"C:\\VC\\unicode_far\\macro.cpp  1251 Ln 5951/8291 Col 51 Ch 39 0043h 13:54" L"\t",
+			etr_AnyClickable, true, {L"C:\\VC\\unicode_far\\macro.cpp"}},
+		{L"\t" L"InfoW1900->SettingsControl(sc.Handle, SCTL_FREE, 0, 0);" L"\t",
+			etr_AnyClickable, false, {}},
+		{NULL}
+	};
+
+	for (INT_PTR i = 0; Tests[i].src; i++)
+	{
+		INT_PTR nStartIdx;
+		int iSrcLen = lstrlen(Tests[i].src) - 1;
+		_ASSERTE(Tests[i].src && Tests[i].src[iSrcLen] == L'\t');
+
+		// Loop through matches
+		int iMatchNo = 0, iPrevStart = 0;
+		while (true)
+		{
+			if (Tests[i].bMatch)
+			{
+				int iMatchLen = lstrlen(Tests[i].matches[iMatchNo]);
+				LPCWSTR pszFirst = wcsstr(Tests[i].src, Tests[i].matches[iMatchNo]);
+				_ASSERTE(pszFirst);
+				nStartIdx = (pszFirst - Tests[i].src);
+
+				match.UnitTestNoMatch(Tests[i].etr, Tests[i].src, iSrcLen, iPrevStart, nStartIdx-1);
+				iPrevStart = nStartIdx+iMatchLen;
+				match.UnitTestMatch(Tests[i].etr, Tests[i].src, iSrcLen, nStartIdx, iPrevStart-1, Tests[i].matches[iMatchNo]);
+			}
+			else
+			{
+				nStartIdx = 0;
+				match.UnitTestNoMatch(Tests[i].etr, Tests[i].src, iSrcLen, 0, iSrcLen);
+				break;
+			}
+
+			// More matches waiting?
+			if (Tests[i].matches[++iMatchNo] == NULL)
+			{
+				match.UnitTestNoMatch(Tests[i].etr, Tests[i].src, iSrcLen, iPrevStart, iSrcLen);
+				break;
+			}
+		}
+		//_ASSERTE(iRc == lstrlen(p->txtMatch));
+		//_ASSERTE(match.m_Type == p->etrMatch);
+	}
+
+	::SetCurrentDirectoryW(szDir);
+}
+
+void CMatch::UnitTestMatch(ExpandTextRangeType etr, LPCWSTR asLine, int anLineLen, int anMatchStart, int anMatchEnd, LPCWSTR asMatchText)
+{
+	int iRc, iCmp;
+
+	for (int i = anMatchStart; i <= anMatchEnd; i++)
+	{
+		iRc = Match(etr, asLine, anLineLen, i);
+
+		if (iRc <= 0)
+		{
+			UnitTestAlert(L"Match: must be found\n");
+			break;
+		}
+		else if (mn_MatchLeft != anMatchStart || mn_MatchRight != anMatchEnd)
+		{
+			UnitTestAlert(L"Match: do not match required range\n");
+			break;
+		}
+
+		iCmp = lstrcmp(ms_Match, asMatchText);
+		if (iCmp != 0)
+		{
+			UnitTestAlert(L"Match: iCmp != 0\n");
+			break;
+		}
+	}
+}
+
+void CMatch::UnitTestNoMatch(ExpandTextRangeType etr, LPCWSTR asLine, int anLineLen, int anStart, int anEnd)
+{
+	int iRc;
+
+	for (int i = anStart; i <= anEnd; i++)
+	{
+		iRc = Match(etr, asLine, anLineLen, i);
+
+		if (iRc > 0)
+		{
+			UnitTestAlert(L"Match: must NOT be found\n");
+			break;
+		}
+	}
+}
+#endif
 
 // Returns the length of matched string
 int CMatch::Match(ExpandTextRangeType etr, LPCWSTR asLine/*This may be NOT 0-terminated*/, int anLineLen/*Length of buffer*/, int anFrom/*Cursor pos*/)

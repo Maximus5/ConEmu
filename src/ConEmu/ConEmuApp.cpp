@@ -54,6 +54,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "DpiAware.h"
 #ifdef _DEBUG
 #include "Macro.h"
+#include "Match.h"
 #endif
 #include "Inside.h"
 #include "TaskBar.h"
@@ -3485,6 +3486,7 @@ void DebugUnitTests()
 	DebugFileExistTests();
 	ConEmuMacro::UnitTests();
 	DebugStrUnitTest();
+	CMatch::UnitTests();
 }
 #endif
 
