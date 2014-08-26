@@ -608,7 +608,7 @@ bool CMatch::MatchAny()
 	if (bUrlMode)
 		m_Type = etr_Url;
 	else
-		m_Type = etr_File | (bLineNumberFound ? etr_Row : etr_None);
+		m_Type = (bLineNumberFound ? etr_FileRow : etr_File);
 
 	// Ok
 	if (mn_MatchRight >= mn_MatchLeft)
