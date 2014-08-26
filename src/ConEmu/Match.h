@@ -72,4 +72,7 @@ protected:
 	bool MatchAny();
 	bool MatchWord(LPCWSTR asLine/*This may be NOT 0-terminated*/, int anLineLen/*Length of buffer*/, int anFrom/*Cursor pos*/, int& rnStart, int& rnEnd);
 	void StoreMatchText(LPCWSTR asPrefix, LPCWSTR pszTrimRight);
+protected:
+	CmdArg ms_FileCheck;
+	bool IsValidFile(LPCWSTR asFrom, int anLen, LPCWSTR pszInvalidChars, LPCWSTR pszSpacing);
 };

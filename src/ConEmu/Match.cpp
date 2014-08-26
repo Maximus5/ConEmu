@@ -159,6 +159,34 @@ void CMatch::StoreMatchText(LPCWSTR asPrefix, LPCWSTR pszTrimRight)
 	pszText[mn_MatchRight - mn_MatchLeft + 1] = 0;
 }
 
+bool CMatch::IsValidFile(LPCWSTR asFrom, int anLen, LPCWSTR pszInvalidChars, LPCWSTR pszSpacing)
+{
+	while ((anLen > 0) && wcschr(pszSpacing, asFrom[anLen-1]))
+		anLen--;
+
+	LPCWSTR pszFile, pszBadChar;
+
+	if ((anLen <= 0) || !(pszFile = ms_FileCheck.Set(asFrom, anLen)) || ms_FileCheck.IsEmpty())
+		return false;
+
+	pszBadChar = wcspbrk(pszFile, pszInvalidChars);
+	if (pszBadChar != NULL)
+		return false;
+
+	pszBadChar = wcspbrk(pszFile, pszSpacing);
+	if (pszBadChar != NULL)
+		return false;
+
+	TODO("GetCurrentDirectory from console and check existence!");
+
+	// Till then, just request the extension
+	pszBadChar = wcschr(pszFile, L'.');
+	if (pszBadChar == NULL)
+		return false;
+
+	return true;
+}
+
 bool CMatch::FindRangeStart(int& crFrom/*[In/Out]*/, int& crTo/*[In/Out]*/, bool& bUrlMode, LPCWSTR pszBreak, LPCWSTR pszUrlDelim, LPCWSTR pszSpacing, LPCWSTR pszUrl, LPCWSTR pszProtocol, LPCWSTR pChar, int nLen)
 {
 	bool lbRc = false;
