@@ -484,8 +484,8 @@ enum ConEmuWindowMode
 
 LPCWSTR GetWindowModeName(ConEmuWindowMode wm);
 
-typedef DWORD ExpandTextRangeType;
-const ExpandTextRangeType
+enum ExpandTextRangeType
+{
 	// Used for DblClick word selection, for example
 	etr_Word  = 0x0001,
 	// Internet/intranet URL's
@@ -503,7 +503,8 @@ const ExpandTextRangeType
 	// Find somth suitable for clicking
 	etr_AnyClickable = (etr_Url|etr_File),
 	// Nothing was found
-	etr_None = 0;
+	etr_None = 0
+};
 
 // Подсветка URL's и строк-ошибок-компиляторов
 struct ConEmuTextRange
