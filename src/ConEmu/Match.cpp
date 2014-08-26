@@ -191,13 +191,28 @@ bool CMatch::FindRangeStart(int& crFrom/*[In/Out]*/, int& crTo/*[In/Out]*/, bool
 {
 	bool lbRc = false;
 
-	WARNING("Тут пока работаем в экранных координатах");
+	// Курсор над скобкой "(3): ..." из текста "abc.py (3): ..."
+	//if ((crFrom > 2) && wcschr(L"([", pChar[crFrom]) && wcschr(pszSpacing, pChar[crFrom-1]) && !wcschr(pszSpacing, pChar[crFrom-2]))
+	//	crFrom--;
+
+	int iAlphas = 0;
 
 	// Курсор над комментарием?
 	// Попробуем найти начало имени файла
 	// 131026 Allows '?', otherwise links like http://go.com/fwlink/?LinkID=1 may fails
-	while ((crFrom) > 0 && (pChar[crFrom-1]==L'?' || !wcschr(bUrlMode ? pszUrlDelim : pszBreak, pChar[crFrom-1])))
+	while ((crFrom > 0)
+		&& ((pChar[crFrom-1]==L'?') || !wcschr(bUrlMode ? pszUrlDelim : pszBreak, pChar[crFrom-1])))
 	{
+		if (iAlphas > 0)
+		{
+			TODO("Если вводить поддержку powershell 'Script.ps1:35 знак:23' нужно будет не прерываться перед национальными словами 'знак'");
+			// Disallow leading spaces
+			if (wcschr(pszSpacing, pChar[crFrom-1]))
+				break;
+		}
+		if (isAlpha(pChar[crFrom]))
+			iAlphas++;
+
 		if (!bUrlMode && pChar[crFrom] == L'/')
 		{
 			if ((crFrom >= 2) && ((crFrom + 1) < nLen)
@@ -354,12 +369,14 @@ bool CMatch::MatchAny()
 	bool bUrlMode = false, bMaybeMail = false;
 	SHORT MailX = -1;
 	bool bDigits = false, bLineNumberFound = false, bWasSeparator = false;
+	bool bNakedFile = false;
 	enum {
 		ef_NotFound = 0,
 		ef_DotFound = 1,
 		ef_ExtFound = 2,
 	} iExtFound = ef_NotFound;
 	int iBracket = 0;
+	int iSpaces = 0;
 
 	mn_MatchLeft = mn_MatchRight = mn_SrcFrom;
 
@@ -483,7 +500,7 @@ bool CMatch::MatchAny()
 					iBracket = 0;
 					bWasSeparator = false;
 				}
-				else if (wcschr(pszSpacing, m_SrcLine.ms_Arg[mn_MatchRight]) && wcschr(pszSpacing, m_SrcLine.ms_Arg[mn_MatchRight+1]))
+				else if (wcschr(pszSpacing, m_SrcLine.ms_Arg[mn_MatchRight]) && wcschr(pszSpacing, m_SrcLine.ms_Arg[mn_MatchRight-1]))
 				{
 					// Слишком много пробелов
 					iExtFound = ef_NotFound;
@@ -556,7 +573,28 @@ bool CMatch::MatchAny()
 		{
 			if (bMaybeMail)
 				break;
-			goto wrap; // Не оно
+			if ((iExtFound != ef_ExtFound) || !IsValidFile(m_SrcLine.ms_Arg+mn_MatchLeft, mn_MatchRight - mn_MatchLeft + 1, pszBreak, pszSpacing))
+				goto wrap; // Не оно
+			// File without digits, just for opening in the editor
+			_ASSERTE(!bLineNumberFound);
+			bNakedFile = true;
+			break;
+		}
+		else if (wcschr(pszSpacing, m_SrcLine.ms_Arg[mn_MatchRight]))
+		{
+			if ((++iSpaces) > 1)
+			{
+				if ((iExtFound != ef_ExtFound) || !IsValidFile(m_SrcLine.ms_Arg+mn_MatchLeft, mn_MatchRight - mn_MatchLeft + 1, pszBreak, pszSpacing))
+					goto wrap; // Не оно?
+				// File without digits, just for opening in the editor
+				_ASSERTE(!bLineNumberFound);
+				bNakedFile = true;
+				break;
+			}
+		}
+		else
+		{
+			iSpaces = 0;
 		}
 	} // end of 'while ((mn_MatchRight+1) < mn_SrcLength)'
 
@@ -567,23 +605,32 @@ bool CMatch::MatchAny()
 	}
 	else
 	{
+		if (!bNakedFile && !bMaybeMail && ((mn_MatchRight+1) == mn_SrcLength) && !bLineNumberFound && !bDigits && (iExtFound == ef_ExtFound))
+		{
+			bNakedFile = IsValidFile(m_SrcLine.ms_Arg+mn_MatchLeft, mn_MatchRight - mn_MatchLeft + 1, pszBreak, pszSpacing);
+		}
+
 		if (!bLineNumberFound && bDigits)
 			bLineNumberFound = true;
 
 		if (bLineNumberFound)
 			bMaybeMail = false;
 
-		if ((m_SrcLine.ms_Arg[mn_MatchRight] != L':'
+		if (bMaybeMail || bNakedFile)
+		{
+			// no need to check for colon
+		}
+		else if ((m_SrcLine.ms_Arg[mn_MatchRight] != L':'
 				&& m_SrcLine.ms_Arg[mn_MatchRight] != L' '
 				&& !((m_SrcLine.ms_Arg[mn_MatchRight] == L')') && iBracket == 1)
 				&& !((m_SrcLine.ms_Arg[mn_MatchRight] == L']') && (m_SrcLine.ms_Arg[mn_MatchRight+1] == L':'))
 			)
 			|| !bLineNumberFound || (nColons > 2))
 		{
-			if (!bMaybeMail)
-				goto wrap;
+			goto wrap;
 		}
-		if (bMaybeMail || (!bMaybeMail && m_SrcLine.ms_Arg[mn_MatchRight] != L')'))
+
+		if (bMaybeMail || (!bMaybeMail && !bNakedFile && m_SrcLine.ms_Arg[mn_MatchRight] != L')'))
 			mn_MatchRight--;
 
 		// Откатить ненужные пробелы
@@ -591,13 +638,31 @@ bool CMatch::MatchAny()
 			mn_MatchLeft++;
 		while ((mn_MatchRight > mn_MatchLeft) && wcschr(pszSpacing, m_SrcLine.ms_Arg[mn_MatchRight]))
 			mn_MatchRight--;
-		if ((mn_MatchLeft + 4) > mn_MatchRight) // 1.c:1: //-V112
+
+		if (bMaybeMail)
 		{
-			// Слишком коротко, считаем что не оно
-			goto wrap;
+			// Для мейлов - проверяем допустимые символы (чтобы пробелов не было и прочего мусора)
+			int x = MailX - 1; _ASSERTE(x>=0);
+			while ((x > 0) && wcschr(pszEMail, m_SrcLine.ms_Arg[x-1]))
+				x--;
+			mn_MatchLeft = x;
+			x = MailX + 1; _ASSERTE(x<mn_SrcLength);
+			while (((x+1) < mn_SrcLength) && wcschr(pszEMail, m_SrcLine.ms_Arg[x+1]))
+				x++;
+			mn_MatchRight = x;
 		}
-		if (!bMaybeMail)
+		else if (bNakedFile)
 		{
+			// ???
+		}
+		else
+		{
+			if ((mn_MatchLeft + 4) > mn_MatchRight) // 1.c:1: //-V112
+			{
+				// Слишком коротко, считаем что не оно
+				goto wrap;
+			}
+
 			// Проверить, чтобы был в наличии номер строки
 			if (!(m_SrcLine.ms_Arg[mn_MatchRight] >= L'0' && m_SrcLine.ms_Arg[mn_MatchRight] <= L'9') // ConEmuC.cpp:49:
 				&& !(m_SrcLine.ms_Arg[mn_MatchRight] == L')' && (m_SrcLine.ms_Arg[mn_MatchRight-1] >= L'0' && m_SrcLine.ms_Arg[mn_MatchRight-1] <= L'9'))) // ConEmuC.cpp(49) :
@@ -624,18 +689,6 @@ bool CMatch::MatchAny()
 			// -- уже включены // Для красивости в VC включить скобки
 			//if ((m_SrcLine.ms_Arg[mn_MatchRight] == L')') && (m_SrcLine.ms_Arg[mn_MatchRight+1] == L':'))
 			//	mn_MatchRight++;
-		}
-		else // bMaybeMail
-		{
-			// Для мейлов - проверяем допустимые символы (чтобы пробелов не было и прочего мусора)
-			int x = MailX - 1; _ASSERTE(x>=0);
-			while ((x > 0) && wcschr(pszEMail, m_SrcLine.ms_Arg[x-1]))
-				x--;
-			mn_MatchLeft = x;
-			x = MailX + 1; _ASSERTE(x<mn_SrcLength);
-			while (((x+1) < mn_SrcLength) && wcschr(pszEMail, m_SrcLine.ms_Arg[x+1]))
-				x++;
-			mn_MatchRight = x;
 		}
 	} // end "else / if (bUrlMode)"
 

@@ -2729,17 +2729,22 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom, bool bUpdateScre
 				CESERVER_REQ_FAREDITOR cmd = {sizeof(cmd)};
 				wchar_t* pszText = szText.ms_Arg;
 				int nLen = lstrlen(pszText)-1;
-				if (pszText[nLen] == L')')
+
+				if (rc & etr_Row)
 				{
-					pszText[nLen] = 0;
-					nLen--;
+					if (pszText[nLen] == L')')
+					{
+						pszText[nLen] = 0;
+						nLen--;
+					}
+					while ((nLen > 0)
+						&& (((pszText[nLen-1] >= L'0') && (pszText[nLen-1] <= L'9'))
+							|| ((pszText[nLen-1] == L',') && ((pszText[nLen] >= L'0') && (pszText[nLen] <= L'9')))))
+					{
+						nLen--;
+					}
 				}
-				while ((nLen > 0)
-					&& (((pszText[nLen-1] >= L'0') && (pszText[nLen-1] <= L'9'))
-						|| ((pszText[nLen-1] == L',') && ((pszText[nLen] >= L'0') && (pszText[nLen] <= L'9')))))
-				{
-					nLen--;
-				}
+
 				if (nLen < 3)
 				{
 					_ASSERTE(nLen >= 3);
@@ -2752,7 +2757,8 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom, bool bUpdateScre
 						cmd.nColon = wcstol(pszEnd+1, &pszEnd, 10);
 					if (cmd.nColon < 1)
 						cmd.nColon = 1;
-					pszText[nLen-1] = 0;
+					if (rc & etr_Row)
+						pszText[nLen-1] = 0;
 					while ((pszEnd = wcschr(pszText, L'/')) != NULL)
 						*pszEnd = L'\\'; // заменить прямые слеши на обратные
 
