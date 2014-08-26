@@ -277,10 +277,10 @@ bool CMatch::MatchWord(LPCWSTR asLine/*This may be NOT 0-terminated*/, int anLin
 		rnStart--;
 	}
 
-	while (((rnStart+1) < anLineLen)
-		&& !(CVirtualConsole::isCharSpace(asLine[rnStart]) || CVirtualConsole::isCharNonSpacing(asLine[rnStart])))
+	while (((rnEnd+1) < anLineLen)
+		&& !(CVirtualConsole::isCharSpace(asLine[rnEnd]) || CVirtualConsole::isCharNonSpacing(asLine[rnEnd])))
 	{
-		rnStart++;
+		rnEnd++;
 	}
 
 	StoreMatchText(NULL, NULL);
