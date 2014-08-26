@@ -129,6 +129,36 @@ bool CMatch::IsFileLineTerminator(LPCWSTR pChar, LPCWSTR pszTermint)
 	return false;
 }
 
+void CMatch::StoreMatchText(LPCWSTR asPrefix, LPCWSTR pszTrimRight)
+{
+	int iMailTo = asPrefix ? lstrlen(asPrefix/*L"mailto:"*/) : 0;
+	INT_PTR cchTextMax = (mn_MatchRight - mn_MatchLeft + 1 + iMailTo);
+
+	wchar_t* pszText = ms_Match.GetBuffer(cchTextMax);
+	if (!pszText)
+	{
+		return; // Недостаточно памяти под текст?
+	}
+
+	if (iMailTo)
+	{
+		// Добавить префикс протокола
+		lstrcpyn(pszText, asPrefix/*L"mailto:"*/, iMailTo+1);
+		pszText += iMailTo;
+		cchTextMax -= iMailTo;
+	}
+
+	if (pszTrimRight)
+	{
+		while ((mn_MatchRight > mn_MatchLeft) && wcschr(pszTrimRight, m_SrcLine.ms_Arg[mn_MatchRight]))
+			mn_MatchRight--;
+	}
+
+	// Return hyperlink target
+	memmove(pszText, m_SrcLine.ms_Arg+mn_MatchLeft, (mn_MatchRight - mn_MatchLeft + 1)*sizeof(*pszText));
+	pszText[mn_MatchRight - mn_MatchLeft + 1] = 0;
+}
+
 bool CMatch::FindRangeStart(int& crFrom/*[In/Out]*/, int& crTo/*[In/Out]*/, bool& bUrlMode, LPCWSTR pszBreak, LPCWSTR pszUrlDelim, LPCWSTR pszSpacing, LPCWSTR pszUrl, LPCWSTR pszProtocol, LPCWSTR pChar, int nLen)
 {
 	bool lbRc = false;
@@ -252,6 +282,8 @@ bool CMatch::MatchWord(LPCWSTR asLine/*This may be NOT 0-terminated*/, int anLin
 	{
 		rnStart++;
 	}
+
+	StoreMatchText(NULL, NULL);
 
 	return true;
 }
@@ -584,30 +616,14 @@ bool CMatch::MatchAny()
 		bFound = true;
 
 		_ASSERTE(!bMaybeMail || !bUrlMode); // Одновременно - флаги не могут быть выставлены!
-		int iMailTo = (bMaybeMail && !bUrlMode) ? lstrlen(L"mailto:") : 0;
-		INT_PTR cchTextMax = (mn_MatchRight - mn_MatchLeft + 1 + iMailTo);
-		wchar_t* pszText = ms_Match.GetBuffer(cchTextMax);
-		if (!pszText)
-			goto wrap; // Недостаточно места под текст
-		if (iMailTo)
-		{
-			// Добавить префикс протокола
-			lstrcpyn(pszText, L"mailto:", iMailTo+1);
-			pszText += iMailTo;
-			cchTextMax -= iMailTo;
+		LPCWSTR pszPrefix = (bMaybeMail && !bUrlMode) ? L"mailto:" : NULL;
+		if (bMaybeMail && !bUrlMode)
 			bUrlMode = true;
-		}
-		if (bUrlMode)
-		{
-			while ((mn_MatchRight > mn_MatchLeft) && wcschr(pszUrlTrimRight, m_SrcLine.ms_Arg[mn_MatchRight]))
-				mn_MatchRight--;
-		}
-		// Return hyperlink target
-		memmove(pszText, m_SrcLine.ms_Arg+mn_MatchLeft, (mn_MatchRight - mn_MatchLeft + 1)*sizeof(*pszText));
-		pszText[mn_MatchRight - mn_MatchLeft + 1] = 0;
+
+		StoreMatchText(pszPrefix, bUrlMode ? pszUrlTrimRight : NULL);
 
 		#ifdef _DEBUG
-		if (!bUrlMode && wcsstr(pszText, L"//")!=NULL)
+		if (!bUrlMode && wcsstr(ms_Match.ms_Arg, L"//")!=NULL)
 		{
 			_ASSERTE(FALSE);
 		}
