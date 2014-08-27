@@ -2372,7 +2372,7 @@ LRESULT CConEmuMenu::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 					break;
 				}
 
-				if (gpConEmu->SetWindowMode(gpConEmu->isIconic() ? gpConEmu->WindowMode : wmNormal))
+				if (gpConEmu->SetWindowMode(gpConEmu->isIconic() ? gpConEmu->GetWindowMode() : wmNormal))
 				{
 					// abForceChild=TRUE, если в табе запущено GUI приложение - можно передать в него фокус
 					gpConEmu->OnFocus(ghWnd, WM_ACTIVATEAPP, TRUE, 0, L"After SC_RESTORE", TRUE);

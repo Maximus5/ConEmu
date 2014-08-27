@@ -1401,7 +1401,7 @@ void CConEmuChild::OnAlwaysShowScrollbar(bool abSync /*= true*/)
 
 		if (abSync && pVCon->isVisible())
 		{
-			if (gpConEmu->WindowMode != wmNormal)
+			if (gpConEmu->GetWindowMode() != wmNormal)
 				pVCon->RCon()->SyncConsole2Window();
 			else
 				CVConGroup::SyncWindowToConsole(); // -- функция пустая, игнорируется

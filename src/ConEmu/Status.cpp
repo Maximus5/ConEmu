@@ -1071,7 +1071,7 @@ bool CStatus::IsResizeAllowed()
 		return false;
 	}
 
-	if (gpConEmu->WindowMode != wmNormal)
+	if (gpConEmu->GetWindowMode() != wmNormal)
 	{
 		return false;
 	}

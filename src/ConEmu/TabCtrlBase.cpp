@@ -283,7 +283,7 @@ LRESULT CTabPanelBase::OnMouseRebar(UINT uMsg, int x, int y)
 		POINT ptScr; GetCursorPos(&ptScr);
 		gpConEmu->mp_Menu->ShowSysmenu(ptScr.x, ptScr.y/*-32000*/);
 	}
-	else if ((gpConEmu->WindowMode == wmNormal) && gpSet->isCaptionHidden())
+	else if ((gpConEmu->GetWindowMode() == wmNormal) && gpSet->isCaptionHidden())
 	{
 		// WM_NC* messages needs screen coords in lParam
 		POINT ptScr; GetCursorPos(&ptScr);

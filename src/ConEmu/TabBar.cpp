@@ -458,7 +458,7 @@ void CTabBarClass::Activate(BOOL abPreSyncConsole/*=FALSE*/)
 	CheckRebarCreated();
 
 	_active = true;
-	if (abPreSyncConsole && (gpConEmu->WindowMode == wmNormal))
+	if (abPreSyncConsole && (gpConEmu->GetWindowMode() == wmNormal))
 	{
 		RECT rcIdeal = gpConEmu->GetIdealRect();
 		CVConGroup::SyncConsoleToWindow(&rcIdeal, TRUE);

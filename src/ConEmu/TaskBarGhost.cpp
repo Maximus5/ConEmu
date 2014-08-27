@@ -785,8 +785,9 @@ void CTaskBarGhost::GetPreviewPosSize(POINT* pPtOffset, POINT* pPtViewOffset, PO
 	POINT ptViewOffset = MakePoint(max(0,(szSize.x - ptViewSize.x)), max(0,(szSize.y - ptViewSize.y)));
 
 	ptOffset = MakePoint(rcWork.left, rcWork.top);
-	if ((gpConEmu->WindowMode == rFullScreen)
-		|| ((gpConEmu->WindowMode == rMaximized) && (gpSet->isHideCaptionAlways() || gpSet->isHideCaption)))
+	ConEmuWindowMode wm = gpConEmu->GetWindowMode();
+	if ((wm == rFullScreen)
+		|| ((wm == rMaximized) && (gpSet->isHideCaptionAlways() || gpSet->isHideCaption)))
 	{
 		// Финт ушами, т.к. в этих режимах идет принудительный сдвиг
 		ptOffset.x += GetSystemMetrics(SM_CXFRAME);
