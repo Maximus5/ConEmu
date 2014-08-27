@@ -4949,10 +4949,10 @@ void CVConGroup::OnConsoleResize(bool abSizingToDo)
 
 		if (!gpConEmu->isSizing() &&
 		        (abSizingToDo /*после реального ресайза мышкой*/ ||
-		         gpConEmu->gbPostUpdateWindowSize /*после появления/скрытия табов*/ ||
+		         //gpConEmu->isPostUpdateWindowSize() /*после появления/скрытия табов*/ ||
 		         lbSizeChanged /*или размер в виртуальной консоли не совпадает с расчетным*/))
 		{
-			gpConEmu->gbPostUpdateWindowSize = false;
+			//gpConEmu->SetPostUpdateWindowSize(false);
 
 			if (isNtvdm())
 			{
