@@ -226,7 +226,7 @@ void CDefaultTerminal::ReloadSettings()
 
 void CDefaultTerminal::AutoClearThreads()
 {
-	if (!gpConEmu->isMainThread())
+	if (!isMainThread())
 		return;
 
 	// Clear finished threads

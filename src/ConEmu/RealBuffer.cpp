@@ -1192,7 +1192,7 @@ void CRealBuffer::SyncConsole2Window(USHORT wndSizeX, USHORT wndSizeY)
 		SetConsoleSize(wndSizeX, wndSizeY, 0/*Auto*/);
 		con.bLockChange2Text = FALSE;
 
-		if (mp_RCon->isActive() && gpConEmu->isMainThread())
+		if (mp_RCon->isActive() && isMainThread())
 		{
 			// Сразу обновить DC чтобы скорректировать Width & Height
 			mp_RCon->mp_VCon->OnConsoleSizeChanged();
@@ -1362,7 +1362,7 @@ BOOL CRealBuffer::InitBuffers(DWORD anCellCount, int anWidth, int anHeight)
 	#ifdef _DEBUG
 	DWORD dwCurThId = GetCurrentThreadId();
 	_ASSERTE((mp_RCon->mn_MonitorThreadID==0 || dwCurThId==mp_RCon->mn_MonitorThreadID || mp_RCon->mb_WaitingRootStartup || mp_RCon->hConWnd==NULL)
-		|| ((m_Type==rbt_DumpScreen || m_Type==rbt_Alternative || m_Type==rbt_Selection || m_Type==rbt_Find) && gpConEmu->isMainThread()));
+		|| ((m_Type==rbt_DumpScreen || m_Type==rbt_Alternative || m_Type==rbt_Selection || m_Type==rbt_Find) && isMainThread()));
 	#endif
 
 	HEAPVAL;
@@ -5918,7 +5918,7 @@ bool CRealBuffer::isSelectionAllowed()
 
 	#ifdef _DEBUG
 	// Зачем звать эту функц из фоновых потоков?
-	if (!gpConEmu->isMainThread())
+	if (!isMainThread())
 	{
 		int nDbg = -1;
 	}

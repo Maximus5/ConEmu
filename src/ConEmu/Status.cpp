@@ -377,7 +377,7 @@ void CStatus::PaintStatus(HDC hPaint, LPRECT prcStatus /*= NULL*/)
 	LPCWSTR pszDumpImgDstName = L"C:\\ConEmu\\StatusDst.png";
 	#endif
 
-	_ASSERTE(gpConEmu->isMainThread());
+	_ASSERTE(isMainThread());
 
 	RECT rcStatus = {0,0};
 	if (prcStatus)
@@ -1854,7 +1854,7 @@ bool CStatus::IsWindowChanged()
 		// Если ни одна позиция не показана - то и делать нечего
 		return false;
 	}
-	_ASSERTE(gpConEmu->isMainThread());
+	_ASSERTE(isMainThread());
 
 	bool bChanged = false;
 	DWORD n; HWND h;

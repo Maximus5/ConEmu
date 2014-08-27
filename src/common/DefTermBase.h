@@ -809,7 +809,7 @@ protected:
 protected:
 	virtual void AutoClearThreads()
 	{
-		//if (!gpConEmu->isMainThread())
+		//if (!isMainThread())
 		//	return;
 
 		// Clear finished threads
@@ -824,7 +824,7 @@ protected:
 protected:
 	void ClearProcessed(bool bForceAll)
 	{
-		//_ASSERTE(gpConEmu->isMainThread());
+		//_ASSERTE(isMainThread());
 
 		for (INT_PTR i = m_Processed.size(); i--;)
 		{

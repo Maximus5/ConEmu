@@ -86,7 +86,7 @@ void CRunQueue::RequestRConStartup(CRealConsole* pRCon)
 	CVirtualConsole* pVCon = pRCon->VCon();
 
 	// Должен вызываться в главной нити, чтобы соблюсти порядок создания при запуске группы
-	_ASSERTE(gpConEmu->isMainThread() == true);
+	_ASSERTE(isMainThread() == true);
 
 	MSectionLockSimple cs;
 	cs.Lock(&mcs_QueueLock);

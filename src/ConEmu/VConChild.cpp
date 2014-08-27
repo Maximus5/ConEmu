@@ -204,7 +204,7 @@ HWND CConEmuChild::CreateView()
 		return mh_WndDC;
 	}
 
-	if (!gpConEmu->isMainThread())
+	if (!isMainThread())
 	{
 		// Окно должно создаваться в главной нити!
 		HWND hCreate = gpConEmu->PostCreateView(this); UNREFERENCED_PARAMETER(hCreate);
@@ -963,7 +963,7 @@ void CConEmuChild::CreateDbgDlg()
 
 	if (!hDlgTest)
 	{
-		if (!gpConEmu->isMainThread())
+		if (!isMainThread())
 		{
 			PostMessage(mh_WndDC, mn_MsgCreateDbgDlg, 0, (LPARAM)this);
 		}
@@ -1210,7 +1210,7 @@ void CConEmuChild::CheckPostRedraw()
 	if (mb_IsPendingRedraw && mn_LastPostRedrawTick && ((GetTickCount() - mn_LastPostRedrawTick) >= CON_REDRAW_TIMOUT))
 	{
 		mb_IsPendingRedraw = FALSE;
-		_ASSERTE(gpConEmu->isMainThread());
+		_ASSERTE(isMainThread());
 		Redraw();
 	}
 }
@@ -1228,7 +1228,7 @@ void CConEmuChild::Redraw(bool abRepaintNow /*= false*/)
 		return;
 	}
 
-	if (!gpConEmu->isMainThread())
+	if (!isMainThread())
 	{
 		if (mb_RedrawPosted ||
 		        (mn_LastPostRedrawTick && ((GetTickCount() - mn_LastPostRedrawTick) < CON_REDRAW_TIMOUT)))

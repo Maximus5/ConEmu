@@ -82,7 +82,7 @@ CTaskBarGhost::~CTaskBarGhost()
 
 CTaskBarGhost* CTaskBarGhost::Create(CVirtualConsole* apVCon)
 {
-	_ASSERTE(gpConEmu->isMainThread());
+	_ASSERTE(isMainThread());
 
 	if (mh_Class == 0)
 	{
@@ -172,7 +172,7 @@ void CTaskBarGhost::UpdateGhostSize()
 
 BOOL CTaskBarGhost::UpdateTabSnapshoot(BOOL abSimpleBlack, BOOL abNoSnapshoot)
 {
-	if (!gpConEmu->isMainThread())
+	if (!isMainThread())
 	{
 		PostMessage(mh_Ghost, mn_MsgUpdateThumbnail, abSimpleBlack, abNoSnapshoot);
 		return FALSE;

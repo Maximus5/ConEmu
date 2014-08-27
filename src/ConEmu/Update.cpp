@@ -56,7 +56,7 @@ CConEmuUpdate* gpUpd = NULL;
 
 CConEmuUpdate::CConEmuUpdate()
 {
-	_ASSERTE(gpConEmu->isMainThread());
+	_ASSERTE(isMainThread());
 
 	mb_InCheckProcedure = FALSE;
 	mn_CheckThreadId = 0;
@@ -445,7 +445,7 @@ bool CConEmuUpdate::StartLocalUpdate(LPCWSTR asDownloadedPackage)
 	LPCWSTR pszSetupPref = L"conemusetup.";
 	size_t lnSetupPref = _tcslen(pszSetupPref);
 
-	_ASSERTE(gpConEmu && gpConEmu->isMainThread());
+	_ASSERTE(gpConEmu && isMainThread());
 
 	if (InUpdate() != us_NotStarted)
 	{
@@ -1592,7 +1592,7 @@ bool CConEmuUpdate::QueryConfirmation(CConEmuUpdate::UpdateStep step)
 			}
 			else if (mp_Set->isUpdateConfirmDownload || mb_ManualCallMode)
 			{
-				if (!gpConEmu->isMainThread())
+				if (!isMainThread())
 				{
 					lbRc = gpConEmu->ReportUpdateConfirmation();
 					break;
@@ -1617,7 +1617,7 @@ bool CConEmuUpdate::QueryConfirmation(CConEmuUpdate::UpdateStep step)
 
 	case us_ConfirmUpdate:
 		m_UpdateStep = step;
-		if (!gpConEmu->isMainThread())
+		if (!isMainThread())
 		{
 			lbRc = gpConEmu->ReportUpdateConfirmation();
 			break;
@@ -1634,7 +1634,7 @@ bool CConEmuUpdate::QueryConfirmation(CConEmuUpdate::UpdateStep step)
 			_ASSERTE(step<=us_Check);
 			break;
 		}
-		if (!gpConEmu->isMainThread())
+		if (!isMainThread())
 		{
 			lbRc = gpConEmu->ReportUpdateConfirmation();
 			break;

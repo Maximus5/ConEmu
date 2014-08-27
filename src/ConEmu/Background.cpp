@@ -390,7 +390,7 @@ SetBackgroundResult CBackground::SetPluginBackgroundImageData(CESERVER_REQ_SETBA
 {
 	if (!this) return esbr_Unexpected;
 
-	//if (!gpConEmu->isMainThread())
+	//if (!isMainThread())
 	//{
 
 	//// При вызове из серверной нити (только что пришло из плагина)
@@ -475,7 +475,7 @@ SetBackgroundResult CBackground::SetPluginBackgroundImageData(CESERVER_REQ_SETBA
 	//}
 
 	//MSectionLock SBK; SBK.Lock(&csBkImgData);
-	//_ASSERTE(gpConEmu->isMainThread());
+	//_ASSERTE(isMainThread());
 
 	if (!mcs_BkImgData)
 		mcs_BkImgData = new MSection();
@@ -567,7 +567,7 @@ bool CBackground::PutPluginBackgroundImage(/*CBackground* pBack,*/ LONG X, LONG 
 {
 	if (!this) return NULL;
 
-	_ASSERTE(gpConEmu->isMainThread());
+	_ASSERTE(isMainThread());
 
 	// Сразу
 	mb_BkImgChanged = FALSE;
@@ -739,7 +739,7 @@ bool CBackground::PrepareBackground(CVirtualConsole* pVCon, HDC&/*OUT*/ phBgDc, 
 		return false;
 	}
 
-	_ASSERTE(gpConEmu->isMainThread() && "Must be executed in main thread");
+	_ASSERTE(isMainThread() && "Must be executed in main thread");
 
 	bool bSucceeded = true;
 	bool lbForceUpdate = false;
@@ -859,7 +859,7 @@ bool CBackground::PrepareBackground(CVirtualConsole* pVCon, HDC&/*OUT*/ phBgDc, 
 		{
 			mb_NeedBgUpdate = false;
 			lbForceUpdate = true;
-			_ASSERTE(gpConEmu->isMainThread());
+			_ASSERTE(isMainThread());
 			//MSectionLock SBG; SBG.Lock(&mcs_BgImgData);
 			//BITMAPFILEHEADER* pImgData = mp_BgImgData;
 			BackgroundOp op = (BackgroundOp)gpSet->bgOperation;
@@ -1201,9 +1201,9 @@ bool CBackgroundInfo::LoadBackgroundFile(bool abShowErrors)
 		return true;
 	}
 
-	//_ASSERTE(gpConEmu->isMainThread());
+	//_ASSERTE(isMainThread());
 
-	_ASSERTE(gpConEmu->isMainThread());
+	_ASSERTE(isMainThread());
 	bool lRes = false;
 	BY_HANDLE_FILE_INFORMATION inf = {0};
 	BITMAPFILEHEADER* pBkImgData = NULL;

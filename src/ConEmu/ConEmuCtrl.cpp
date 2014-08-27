@@ -1409,7 +1409,7 @@ void CConEmuCtrl::TabCommand(ConEmuTabCommand nTabCmd)
 		return;
 	}
 
-	if (!gpConEmu->isMainThread())
+	if (!isMainThread())
 	{
 		PostMessage(ghWnd, gpConEmu->mn_MsgTabCommand, nTabCmd, 0);
 		return;

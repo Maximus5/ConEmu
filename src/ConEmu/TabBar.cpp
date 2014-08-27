@@ -135,7 +135,7 @@ CTabBarClass::~CTabBarClass()
 	m_Tabs.ReleaseTabs(false);
 
 	//m_TabStack.ReleaseTabs(false);
-	_ASSERTE(gpConEmu->isMainThread());
+	_ASSERTE(isMainThread());
 	for (INT_PTR i = 0; i < m_TabStack.size(); i++)
 	{
 		if (m_TabStack[i])
@@ -678,7 +678,7 @@ void CTabBarClass::Update(BOOL abPosted/*=FALSE*/)
 		return;
 	}
 
-	if (!gpConEmu->isMainThread())
+	if (!isMainThread())
 	{
 		RequestPostUpdate();
 		return;
@@ -1830,7 +1830,7 @@ void CTabBarClass::SwitchRollback()
 bool CTabBarClass::CheckStack()
 {
 	bool bStackChanged = false;
-	_ASSERTE(gpConEmu->isMainThread());
+	_ASSERTE(isMainThread());
 	INT_PTR i, j;
 
 	bool lbExist = false;
@@ -1890,7 +1890,7 @@ bool CTabBarClass::AddStack(CTab& tab)
 		return false;
 
 	bool bStackChanged = false;
-	_ASSERTE(gpConEmu->isMainThread());
+	_ASSERTE(isMainThread());
 	bool lbExist = false;
 
 	if (!m_TabStack.empty())

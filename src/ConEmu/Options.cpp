@@ -4529,7 +4529,7 @@ Settings::AppSettings* Settings::GetAppSettingsPtr(int anAppId, BOOL abCreateNew
 {
 	if ((anAppId == AppCount) && abCreateNew)
 	{
-		_ASSERTE(gpConEmu->isMainThread());
+		_ASSERTE(isMainThread());
 		int NewAppCount = AppCount+1;
 		AppSettings** NewApps = (AppSettings**)calloc(NewAppCount, sizeof(*NewApps));
 		//CEAppColors** NewAppColors = (CEAppColors**)calloc(NewAppCount, sizeof(*NewAppColors));
@@ -4577,7 +4577,7 @@ Settings::AppSettings* Settings::GetAppSettingsPtr(int anAppId, BOOL abCreateNew
 
 void Settings::AppSettingsDelete(int anAppId)
 {
-	_ASSERTE(gpConEmu->isMainThread())
+	_ASSERTE(isMainThread())
 	if (!Apps /*|| !AppColors*/ || (anAppId < 0) || (anAppId >= AppCount))
 	{
 		_ASSERTE(Apps /*&& AppColors*/ && (anAppId >= 0) && (anAppId < AppCount));

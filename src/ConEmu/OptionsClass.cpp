@@ -3656,7 +3656,7 @@ void CSettings::ChangeCurrentPalette(const Settings::ColorPalette* pPal, bool bC
 		return;
 	}
 
-	if (!gpConEmu->isMainThread())
+	if (!isMainThread())
 	{
 		gpConEmu->PostChangeCurPalette(pPal->pszName, bChangeDropDown, false);
 		return;
@@ -10934,7 +10934,7 @@ void CSettings::debugLogCommand(CESERVER_REQ* pInfo, BOOL abInput, DWORD anTick,
 		return;
 
 	pData->bInput = abInput;
-	pData->bMainThread = (abInput == FALSE) && gpConEmu->isMainThread();
+	pData->bMainThread = (abInput == FALSE) && isMainThread();
 	pData->nTick = anTick - mn_ActivityCmdStartTick;
 	pData->nDur = anDur;
 	pData->nCmd = pInfo->hdr.nCmd;
@@ -11372,7 +11372,7 @@ void CSettings::Performance(UINT nID, BOOL bEnd)
 {
 	if (nID == gbPerformance)  //groupbox ctrl id
 	{
-		if (!gpConEmu->isMainThread())
+		if (!isMainThread())
 			return;
 
 		if (ghOpWnd)
@@ -14821,7 +14821,7 @@ bool CSettings::LoadBackgroundFile(TCHAR *inPath, bool abShowErrors)
 	mp_BgInfo = pNew;
 	lRes = (mp_BgInfo != NULL);
 #else
-	//_ASSERTE(gpConEmu->isMainThread());
+	//_ASSERTE(isMainThread());
 	if (!inPath || _tcslen(inPath)>=MAX_PATH)
 	{
 		if (abShowErrors)
@@ -14830,7 +14830,7 @@ bool CSettings::LoadBackgroundFile(TCHAR *inPath, bool abShowErrors)
 		return false;
 	}
 
-	_ASSERTE(gpConEmu->isMainThread());
+	_ASSERTE(isMainThread());
 	BY_HANDLE_FILE_INFORMATION inf = {0};
 	BITMAPFILEHEADER* pBkImgData = NULL;
 

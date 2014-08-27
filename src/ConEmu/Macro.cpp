@@ -840,7 +840,7 @@ LPWSTR ConEmuMacro::ExecuteMacro(LPWSTR asMacro, CRealConsole* apRCon, bool abFr
 
 	LPWSTR pszAllResult = NULL;
 
-	bool bIsMainThread = gpConEmu->isMainThread();
+	bool bIsMainThread = isMainThread();
 
 	while (p)
 	{
@@ -2651,7 +2651,7 @@ LPWSTR ConEmuMacro::Sleep(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 		if (apRCon) apRCon->SetConStatus(szStatus, CRealConsole::cso_Critical);
 		DWORD dwStartTick = GetTickCount(), dwDelta, dwNow;
 		MSG Msg;
-		if (!gpConEmu->isMainThread())
+		if (!isMainThread())
 		{
 			::Sleep(ms);
 		}
