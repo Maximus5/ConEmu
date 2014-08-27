@@ -213,7 +213,7 @@ wchar_t CVirtualConsole::ms_HorzSingl[MAX_SPACES];
 //		_ASSERTE(args->aRecreate!=cra_RecreateTab);
 //		args->aRecreate = cra_CreateTab;
 //
-//		int nRc = gpConEmu->RecreateDlg(args);
+//		int nRc = mp_ConEmu->RecreateDlg(args);
 //		if (nRc != IDC_START)
 //			return NULL;
 //	}
@@ -229,8 +229,9 @@ wchar_t CVirtualConsole::ms_HorzSingl[MAX_SPACES];
 //	return pCon;
 //}
 
-CVirtualConsole::CVirtualConsole()
+CVirtualConsole::CVirtualConsole(CConEmuMain* pOwner)
 	: mp_RCon(NULL)
+	, mp_ConEmu(pOwner)
 	, mp_Ghost(NULL)
 	, mp_Group(NULL)
 	, m_DC(NULL)
@@ -254,7 +255,7 @@ bool CVirtualConsole::Constructor(RConStartArgs *args)
 	GdiAlphaBlend = (AlphaBlend_t)(hGdi32 ? GetProcAddress(hGdi32, "GdiAlphaBlend") : NULL);
 	#endif
 
-	gpConEmu->OnVConCreated(this, args);
+	mp_ConEmu->OnVConCreated(this, args);
 
 	WARNING("скорректировать размер кучи");
 	SIZE_T nMinHeapSize = (1000 + (200 * 90 * 2) * 6 + MAX_PATH*2)*2 + 210*sizeof(*TextParts);
@@ -340,12 +341,10 @@ bool CVirtualConsole::Constructor(RConStartArgs *args)
 	hOldFont = NULL;
 
 	RECT rcConAll;
-	if (gpConEmu->WndWidth.Value && gpConEmu->WndHeight.Value)
+	if (mp_ConEmu->WndWidth.Value && mp_ConEmu->WndHeight.Value)
 	{
-		//if (gpConEmu->wndWidth)  TextWidth = gpConEmu->wndWidth;
-		//if (gpConEmu->wndHeight) TextHeight = gpConEmu->wndHeight;
 
-		rcConAll = gpConEmu->CalcRect(CER_CONSOLE_ALL);
+		rcConAll = mp_ConEmu->CalcRect(CER_CONSOLE_ALL);
 		if (rcConAll.right && rcConAll.bottom)
 		{
 			TextWidth = rcConAll.right;
@@ -354,7 +353,7 @@ bool CVirtualConsole::Constructor(RConStartArgs *args)
 	}
 	else
 	{
-		Assert(gpConEmu->WndWidth.Value && gpConEmu->WndHeight.Value);
+		Assert(mp_ConEmu->WndWidth.Value && mp_ConEmu->WndHeight.Value);
 	}
 
 	DEBUGTEST(mb_DebugDumpDC = false);
@@ -371,7 +370,7 @@ bool CVirtualConsole::Constructor(RConStartArgs *args)
 		mn_LogScreenIdx = 0;
 		//DWORD dwErr = 0;
 		wchar_t szFile[MAX_PATH+64], *pszDot;
-		wcscpy_c(szFile, gpConEmu->ms_ConEmuExe);
+		wcscpy_c(szFile, mp_ConEmu->ms_ConEmuExe);
 
 		if ((pszDot = wcsrchr(szFile, L'\\')) == NULL)
 		{
@@ -386,7 +385,7 @@ bool CVirtualConsole::Constructor(RConStartArgs *args)
 	}
 
 	CreateView();
-	mp_RCon = new CRealConsole();
+	mp_RCon = new CRealConsole(this, mp_ConEmu);
 	_ASSERTE(mp_RCon);
 	return mp_RCon->Construct(this, args);
 
@@ -400,9 +399,9 @@ bool CVirtualConsole::Constructor(RConStartArgs *args)
 
 CVirtualConsole::~CVirtualConsole()
 {
-	if (!gpConEmu->isMainThread())
+	if (!isMainThread())
 	{
-		//_ASSERTE(gpConEmu->isMainThread());
+		//_ASSERTE(isMainThread());
 		MBoxA(L"~CVirtualConsole() called from background thread");
 	}
 
@@ -495,7 +494,7 @@ void CVirtualConsole::InitGhost()
 		{
 			_ASSERTE(mp_Ghost==NULL);
 		}
-		else if (gpConEmu->isMainThread())
+		else if (isMainThread())
 		{
 			mp_Ghost = CTaskBarGhost::Create(this);
 		}
@@ -503,7 +502,7 @@ void CVirtualConsole::InitGhost()
 		{
 			// Ghost-окна нужно создавать в главной нити
 			// сюда мы попадаем при внешнем аттаче (например, при "-new_console")
-			gpConEmu->CreateGhostVCon(this);
+			mp_ConEmu->CreateGhostVCon(this);
 		}
 	}
 }
@@ -549,7 +548,7 @@ void CVirtualConsole::setFocus()
 	}
 	else
 	{
-		gpConEmu->setFocus();
+		mp_ConEmu->setFocus();
 	}
 }
 
@@ -562,7 +561,7 @@ HWND CVirtualConsole::GhostWnd()
 
 bool CVirtualConsole::isVisible()
 {
-	return gpConEmu->isVisible(this);
+	return mp_ConEmu->isVisible(this);
 }
 
 void CVirtualConsole::PointersInit()
@@ -674,7 +673,7 @@ bool CVirtualConsole::InitDC(bool abNoDc, bool abNoWndResize, MSectionLock *pSDC
 		_ASSERTE(mp_RCon != NULL);
 		return false;
 	}
-	_ASSERTE(gpConEmu->isMainThread());
+	_ASSERTE(isMainThread());
 
 	MSectionLock _SCON;
 	if (!(pSCON ? pSCON : &_SCON)->isLocked())
@@ -785,7 +784,7 @@ bool CVirtualConsole::InitDC(bool abNoDc, bool abNoWndResize, MSectionLock *pSDC
 		#endif
 
 		if (ghOpWnd)
-			gpConEmu->UpdateSizes();
+			mp_ConEmu->UpdateSizes();
 
 		if (m_DC.CreateDC(Width+Pad, Height+Pad))
 		{
@@ -847,7 +846,7 @@ bool CVirtualConsole::Dump(LPCWSTR asFile)
 	}
 
 	DWORD dw;
-	LPCTSTR pszTitle = gpConEmu->GetLastTitle();
+	LPCTSTR pszTitle = mp_ConEmu->GetLastTitle();
 	WriteFile(hFile, pszTitle, _tcslen(pszTitle)*sizeof(*pszTitle), &dw, NULL);
 	wchar_t temp[100];
 	swprintf(temp, _T("\r\nSize: %ix%i   Cursor: %ix%i\r\n"), TextWidth, TextHeight, Cursor.x, Cursor.y);
@@ -1631,7 +1630,7 @@ void CVirtualConsole::UpdateThumbnail(bool abNoSnapshoot /*= FALSE*/)
 	if (!this)
 		return;
 
-	if (!mp_Ghost || !gpConEmu->Taskbar_GhostSnapshootRequired())
+	if (!mp_Ghost || !mp_ConEmu->Taskbar_GhostSnapshootRequired())
 		return;
 
 	// Скорее всего мы не в главной нити, но оно само разберется
@@ -1648,14 +1647,14 @@ bool CVirtualConsole::Update(bool abForce, HDC *ahDc)
 
 	isForce = abForce;
 
-	if (!gpConEmu->isMainThread())
+	if (!isMainThread())
 	{
 		if (isForce)
 			mb_RequiredForceUpdate = true;
 
 		//if (mb_RequiredForceUpdate || updateText || updateCursor)
 		{
-			if (gpConEmu->isVisible(this))
+			if (mp_ConEmu->isVisible(this))
 			{
 				if (gpSetCls->isAdvLogging>=3) mp_RCon->LogString("Invalidating from CVirtualConsole::Update.1");
 
@@ -1672,7 +1671,7 @@ bool CVirtualConsole::Update(bool abForce, HDC *ahDc)
 		if (!ahDc) {
 			mp_RCon->SetForceRead();
 			mp_RCon->WaitEndUpdate(1000);
-			//gpConEmu->InvalidateAll(); -- зачем на All??? Update и так Invalidate зовет
+			//mp_ConEmu->InvalidateAll(); -- зачем на All??? Update и так Invalidate зовет
 			return false;
 		}
 	}
@@ -1700,7 +1699,7 @@ bool CVirtualConsole::Update(bool abForce, HDC *ahDc)
 	bool lRes = false;
 	MSectionLock SCON; SCON.Lock(&csCON);
 	//MSectionLock SDC; //&csDC, &ncsTDC);
-	_ASSERTE(gpConEmu->isMainThread());
+	_ASSERTE(isMainThread());
 
 	//if (mb_PaintRequested) -- не должно быть. Эта функция работает ТОЛЬКО в консольной нити
 	//if (mb_PaintLocked)  // Значит идет асинхронный PaintVCon (BitBlt) - это может быть во время ресайза, или над окошком что-то протащили
@@ -1710,8 +1709,8 @@ bool CVirtualConsole::Update(bool abForce, HDC *ahDc)
 	// start timer before "Read Console Output*" calls, they do take time
 	//gpSetCls->Performance(tPerfRead, FALSE);
 	//if (gbNoDblBuffer) isForce = TRUE; // Debug, dblbuffer
-	isForeground = (gpConEmu->InQuakeAnimation() || gpConEmu->isMeForeground(true))
-		&& gpConEmu->isActive(this, false);
+	isForeground = (mp_ConEmu->InQuakeAnimation() || mp_ConEmu->isMeForeground(true))
+		&& mp_ConEmu->isActive(this, false);
 
 	if (isFade == isForeground && gpSet->isFadeInactive)
 		isForce = true;
@@ -1721,7 +1720,7 @@ bool CVirtualConsole::Update(bool abForce, HDC *ahDc)
 	//------------------------------------------------------------------------
 	if (!UpdatePrepare(ahDc, NULL/*&SDC*/, &SCON))
 	{
-		gpConEmu->DebugStep(_T("DC initialization failed!"));
+		mp_ConEmu->DebugStep(_T("DC initialization failed!"));
 		return false;
 	}
 
@@ -1799,7 +1798,7 @@ bool CVirtualConsole::Update(bool abForce, HDC *ahDc)
 	//SDC.Leave();
 	SCON.Unlock();
 
-	bool bVisible = gpConEmu->isVisible(this);
+	bool bVisible = mp_ConEmu->isVisible(this);
 
 	// Highlight row/col under mouse cursor
 	if (bVisible && isHighlightAny())
@@ -1823,7 +1822,7 @@ bool CVirtualConsole::Update(bool abForce, HDC *ahDc)
 		if (!mb_InPaintCall)
 		{
 			// должен вызываться в основной нити
-			_ASSERTE(gpConEmu->isMainThread());
+			_ASSERTE(isMainThread());
 			//mb_PaintRequested = TRUE;
 			Invalidate();
 
@@ -1832,7 +1831,7 @@ bool CVirtualConsole::Update(bool abForce, HDC *ahDc)
 			//09.06.13 а если так? быстрее изменения на экране не появятся?
 			//UpdateWindow('ghWnd DC'); // оно посылает сообщение в окно, и ждет окончания отрисовки
 			#ifdef _DEBUG
-			//_ASSERTE(!gpConEmu->m_Child->mb_Invalidated);
+			//_ASSERTE(!mp_ConEmu->m_Child->mb_Invalidated);
 			#endif
 			//mb_PaintRequested = FALSE;
 		}
@@ -1993,8 +1992,8 @@ bool CVirtualConsole::WasHighlightRowColChanged()
 bool CVirtualConsole::CalcHighlightRowCol(COORD* pcrPos)
 {
 	if (!(isHighlightMouseRow() || isHighlightMouseCol())
-		//|| !gpConEmu->isMeForeground() // show highlights even if ConEmu loose focus
-		|| !gpConEmu->isVisible(this))
+		//|| !mp_ConEmu->isMeForeground() // show highlights even if ConEmu loose focus
+		|| !mp_ConEmu->isVisible(this))
 	{
 		m_HighlightInfo.mb_Exists = false;
 		m_HighlightInfo.m_Cur.X = m_HighlightInfo.m_Cur.Y = -1;
@@ -2009,7 +2008,7 @@ bool CVirtualConsole::CalcHighlightRowCol(COORD* pcrPos)
 	RECT  rcDC = {};
 
 	// But follow the cursor only when ConEmu is in foreground
-	if (!gpConEmu->isMenuActive() && gpConEmu->isMeForeground(false, false))
+	if (!mp_ConEmu->isMenuActive() && mp_ConEmu->isMeForeground(false, false))
 	{
 		GetCursorPos(&ptCursor);
 		GetWindowRect(mh_WndDC, &rcDC);
@@ -2044,7 +2043,7 @@ void CVirtualConsole::UpdateHighlights()
 	m_HighlightInfo.m_Last.X = m_HighlightInfo.m_Last.Y = -1;
 
 	// During any popup menus (system, tab, etc.) don't highlight row/col
-	if (gpConEmu->isMenuActive())
+	if (mp_ConEmu->isMenuActive())
 		return;
 
 	if (isHighlightMouseRow() || isHighlightMouseCol())
@@ -2057,7 +2056,7 @@ void CVirtualConsole::UpdateHighlights()
 void CVirtualConsole::UpdateHighlightsRowCol()
 {
 	_ASSERTE(this && (isHighlightMouseRow() || isHighlightMouseCol()));
-	_ASSERTE(gpConEmu->isVisible(this));
+	_ASSERTE(mp_ConEmu->isVisible(this));
 
 	// Get COORDs (relative to upper-left visible pos)
 	COORD pos = {-1,-1};
@@ -2214,7 +2213,7 @@ bool CVirtualConsole::CheckTransparent()
 	{
 		mb_ChildWindowWasFound = lbHasChildWindows;
 		// нужно передернуть общую альфа-прозрачность окна
-		gpConEmu->OnTransparent();
+		mp_ConEmu->OnTransparent();
 	}
 
 	InterlockedDecrement(&llInCheckTransparent);
@@ -2400,7 +2399,7 @@ bool CVirtualConsole::CheckTransparentRgn(bool abHasChildWindows)
 
 	if (lbRgnChanged && isVisible())
 	{
-		gpConEmu->UpdateWindowRgn();
+		mp_ConEmu->UpdateWindowRgn();
 	}
 
 	return lbTransparentChanged;
@@ -2423,20 +2422,20 @@ bool CVirtualConsole::LoadConsoleData()
 		// то все кроме активной - не инициализированы (InitDC не вызывался),
 		// что нужно делать в главной нити,
 		// PostMessage(ghWnd, mn_MsgInitInactiveDC, 0, apVCon) об этом позаботится
-		gpConEmu->InitInactiveDC(this);
+		mp_ConEmu->InitInactiveDC(this);
 		return false;
 	}
 
 	gpSetCls->Performance(tPerfData, FALSE);
 	{
 		#ifdef SHOWDEBUGSTEPS
-		gpConEmu->DebugStep(L"mp_RCon->GetConsoleData");
+		mp_ConEmu->DebugStep(L"mp_RCon->GetConsoleData");
 		#endif
 
 		mp_RCon->GetConsoleData(mpsz_ConChar, mpn_ConAttrEx, TextWidth, TextHeight, m_etr); //TextLen*2);
 
 		#ifdef SHOWDEBUGSTEPS
-		gpConEmu->DebugStep(NULL);
+		mp_ConEmu->DebugStep(NULL);
 		#endif
 	}
 	SMALL_RECT rcFull, rcGlyph = {0,0,-1,-1};
@@ -2602,14 +2601,14 @@ bool CVirtualConsole::UpdatePrepare(HDC *ahDc, MSectionLock *pSDC, MSectionLock 
 	COORD dbgTxtSize = {TextWidth,TextHeight};
 	#endif
 
-	_ASSERTE(gpConEmu->isMainThread());
+	_ASSERTE(isMainThread());
 
 	// 120108 - пересоздавать DC на каждый чих не нужно (isForce выставляется, например, при смене Fade)
 	if (/*isForce ||*/ !mb_PointersAllocated || lbSizeChanged)
 	{
 		// 100627 перенес после InitDC, т.к. циклилось
 		//if (lbSizeChanged)
-		//	gpConEmu->OnConsole Resize(TRUE);
+		//	mp_ConEmu->OnConsole Resize(TRUE);
 		//if (pSDC && !pSDC->isLocked())  // Если секция еще не заблокирована (отпускает - вызывающая функция)
 		//	pSDC->Lock(&csDC, TRUE, 200); // но по таймауту, чтобы не повисли ненароком
 
@@ -2621,7 +2620,7 @@ bool CVirtualConsole::UpdatePrepare(HDC *ahDc, MSectionLock *pSDC, MSectionLock 
 		if (lbSizeChanged)
 		{
 			MSetter lInConsoleResize(&mb_InConsoleResize);
-			gpConEmu->OnConsoleResize(TRUE);
+			mp_ConEmu->OnConsoleResize(TRUE);
 		}
 
 
@@ -2636,7 +2635,7 @@ bool CVirtualConsole::UpdatePrepare(HDC *ahDc, MSectionLock *pSDC, MSectionLock 
 		#endif
 
 		//if (lbSizeChanged) -- попробуем вверх перенести
-		//	gpConEmu->OnConsole Resize();
+		//	mp_ConEmu->OnConsole Resize();
 	}
 
 	// Требуется полная перерисовка!
@@ -3964,9 +3963,9 @@ void CVirtualConsole::UpdateText()
 
 void CVirtualConsole::ClearPartBrushes()
 {
-	_ASSERTE(gpConEmu->isMainThread());
+	_ASSERTE(isMainThread());
 
-	for(UINT br=0; br<MAX_COUNT_PART_BRUSHES; br++)
+	for (UINT br=0; br<MAX_COUNT_PART_BRUSHES; br++)
 	{
 		DeleteObject(m_PartBrushes[br].hBrush);
 	}
@@ -3976,7 +3975,7 @@ void CVirtualConsole::ClearPartBrushes()
 
 HBRUSH CVirtualConsole::PartBrush(wchar_t ch, COLORREF nBackCol, COLORREF nForeCol)
 {
-	_ASSERTE(gpConEmu->isMainThread());
+	_ASSERTE(isMainThread());
 	//std::vector<PARTBRUSHES>::iterator iter = m_PartBrushes.begin();
 	//while (iter != m_PartBrushes.end()) {
 	PARTBRUSHES *pbr = m_PartBrushes;
@@ -4116,7 +4115,7 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
 
 	RECT rect;
 	TODO("DoubleView: обработка группировки ввода");
-	bool bActive = gpConEmu->isMeForeground()
+	bool bActive = mp_ConEmu->isMeForeground()
 		&& CVConGroup::isActive(this, false);
 
 	// указатель на настройки разделяемые по приложениям
@@ -4287,13 +4286,13 @@ void CVirtualConsole::UpdateCursor(bool& lRes)
 	//------------------------------------------------------------------------
 	Cursor.isVisiblePrevFromInfo = cinf.bVisible;
 	BOOL lbUpdateTick = FALSE;
-	bool bForeground = gpConEmu->isMeForeground();
+	bool bForeground = mp_ConEmu->isMeForeground();
 	TODO("DoubleView: группировка ввода");
 	bool bConActive = CVConGroup::isActive(this, false); // а тут именно Active, т.к. курсор должен мигать в активной консоли
-	bool bConVisible = bConActive || gpConEmu->isVisible(this);
+	bool bConVisible = bConActive || mp_ConEmu->isVisible(this);
 	bool bIsAlive = mp_RCon ? (mp_RCon->isAlive() || !mp_RCon->isFar(TRUE)) : false; // не мигать, если фар "думает"
 	//if (bConActive) {
-	//	bForeground = gpConEmu->isMeForeground();
+	//	bForeground = mp_ConEmu->isMeForeground();
 	//}
 
 	// Если курсор (в консоли) видим, и находится в видимой области (при прокрутке)
@@ -4324,7 +4323,7 @@ void CVirtualConsole::UpdateCursor(bool& lRes)
 				// Настало время мигания
 				if ((GetTickCount() - Cursor.nLastBlink) > Cursor.nBlinkTime)
 				{
-					if (gpConEmu->isRightClickingPaint())
+					if (mp_ConEmu->isRightClickingPaint())
 					{
 						// Зажата правая кнопка мышки, начата отрисовка кружочка
 						Cursor.isVisible = false;
@@ -4353,7 +4352,7 @@ void CVirtualConsole::UpdateCursor(bool& lRes)
 	}
 
 	// Смена видимости палки в ConEmu
-	if (Cursor.isVisible != Cursor.isVisiblePrev && !gpConEmu->isRightClickingPaint())
+	if (Cursor.isVisible != Cursor.isVisiblePrev && !mp_ConEmu->isRightClickingPaint())
 	{
 		lRes = true;
 		lbUpdateTick = TRUE;
@@ -4400,9 +4399,9 @@ bool CVirtualConsole::StretchPaint(HDC hPaintDC, int anX, int anY, int anShowWid
 	if (!this)
 		return false;
 
-	if (!gpConEmu->isMainThread())
+	if (!isMainThread())
 	{
-		_ASSERTE(gpConEmu->isMainThread());
+		_ASSERTE(isMainThread());
 		return false;
 	}
 
@@ -4466,9 +4465,9 @@ bool CVirtualConsole::PrintClient(HDC hPrintDc, bool bAllowRepaint, const LPRECT
 	if (!pVCon)
 		return false;
 
-	if (!gpConEmu->isMainThread())
+	if (!isMainThread())
 	{
-		_ASSERTE(gpConEmu->isMainThread());
+		_ASSERTE(isMainThread());
 		return false;
 	}
 
@@ -4511,8 +4510,8 @@ bool CVirtualConsole::PrintClient(HDC hPrintDc, bool bAllowRepaint, const LPRECT
 void CVirtualConsole::PaintVCon(HDC hPaintDc)
 {
 	// Если "завис" PostUpdate
-	if (gpConEmu->mp_TabBar->NeedPostUpdate())
-		gpConEmu->mp_TabBar->Update();
+	if (mp_ConEmu->mp_TabBar->NeedPostUpdate())
+		mp_ConEmu->mp_TabBar->Update();
 
 	if (!mh_WndDC)
 	{
@@ -4522,9 +4521,9 @@ void CVirtualConsole::PaintVCon(HDC hPaintDc)
 
 	CVConGuard guard(this);
 
-	if (!gpConEmu->isMainThread())
+	if (!isMainThread())
 	{
-		_ASSERTE(gpConEmu->isMainThread());
+		_ASSERTE(isMainThread());
 		return;
 	}
 
@@ -4551,7 +4550,7 @@ void CVirtualConsole::PaintVCon(HDC hPaintDc)
 #ifdef _DEBUG
 	else
 	{
-		int nConNo = gpConEmu->isVConValid(this);
+		int nConNo = mp_ConEmu->isVConValid(this);
 		nConNo = nConNo;
 	}
 #endif
@@ -4609,7 +4608,7 @@ void CVirtualConsole::PaintVConSimple(HDC hPaintDc, RECT rcClient, BOOL bGuiVisi
 		// 120721 - если показана статусная строка - не будем писать в саму консоль?
 		if (gpSet->isStatusBarShow)
 			pszStarting = NULL;
-		else if (gpConEmu->isProcessCreated())
+		else if (mp_ConEmu->isProcessCreated())
 			pszStarting = L"No consoles";
 		else if (this && mp_RCon)
 			pszStarting = mp_RCon->GetConStatus();
@@ -4634,7 +4633,7 @@ void CVirtualConsole::PaintVConSimple(HDC hPaintDc, RECT rcClient, BOOL bGuiVisi
 
 void CVirtualConsole::PaintVConNormal(HDC hPaintDc, RECT rcClient)
 {
-	if (gpConEmu->isActive(this))
+	if (mp_ConEmu->isActive(this))
 		gpSetCls->Performance(tPerfFPS, TRUE); // считается по своему
 
 	// Проверить, не сменилась ли битность с последнего раза
@@ -4663,7 +4662,7 @@ void CVirtualConsole::PaintVConNormal(HDC hPaintDc, RECT rcClient)
 
 	//120807 - уберем излишние вызовы ресайзов
 #if 0
-	if (!gpConEmu->isNtvdm())
+	if (!mp_ConEmu->isNtvdm())
 	{
 		// rcClient не учитывает возможную полосу прокрутки
 		RECT rcFull; GetWindowRect(mh_WndDC, &rcFull);
@@ -4671,7 +4670,7 @@ void CVirtualConsole::PaintVConNormal(HDC hPaintDc, RECT rcClient)
 		if ((rcFull.right - rcFull.left) < (LONG)Width || (rcFull.bottom - client.top) < (LONG)Height)
 		{
 			WARNING("Зацикливается. Вызывает PaintVCon, который вызывает OnSize. В итоге - 100% загрузки проц.");
-			gpConEmu->OnSize(false); // Только ресайз дочерних окон
+			mp_ConEmu->OnSize(false); // Только ресайз дочерних окон
 		}
 	}
 #endif
@@ -4971,10 +4970,10 @@ void CVirtualConsole::PaintVConDebug(HDC hPaintDc, RECT rcClient)
 	#ifdef _DEBUG
 	if ((GetKeyState(VK_SCROLL) & 1) && (GetKeyState(VK_CAPITAL) & 1))
 	{
-		gpConEmu->DebugStep(L"ConEmu: Sleeping in CVirtualConsole::PaintVCon for 1s");
+		mp_ConEmu->DebugStep(L"ConEmu: Sleeping in CVirtualConsole::PaintVCon for 1s");
 		Sleep(1000);
 		gpSetCls->PostUpdateCounters(true); // Force update "Info" counters
-		gpConEmu->DebugStep(NULL);
+		mp_ConEmu->DebugStep(NULL);
 	}
 	#endif
 }
@@ -4984,7 +4983,7 @@ void CVirtualConsole::UpdateInfo()
 	if (!ghOpWnd || !this)
 		return;
 
-	if (!gpConEmu->isMainThread())
+	if (!isMainThread())
 	{
 		return;
 	}
@@ -5029,7 +5028,7 @@ void CVirtualConsole::UpdateInfo()
 //#ifdef _DEBUG
 //	_ASSERT(FALSE);
 //#endif
-//	MessageBox(NULL, szText, gpConEmu->GetDefaultTitle(), MB_ICONSTOP|MB_SYSTEMMODAL);
+//	MessageBox(NULL, szText, mp_ConEmu->GetDefaultTitle(), MB_ICONSTOP|MB_SYSTEMMODAL);
 //}
 
 RECT CVirtualConsole::GetRect()
@@ -5040,8 +5039,8 @@ RECT CVirtualConsole::GetRect()
 	{
 		//rc = MakeRect(winSize.X, winSize.Y);
 		//RECT rcWnd; Get ClientRect(ghWnd, &rcWnd);
-		RECT rcCon = gpConEmu->CalcRect(CER_CONSOLE_CUR, this);
-		RECT rcDC = gpConEmu->CalcRect(CER_DC, rcCon, CER_CONSOLE_CUR, this);
+		RECT rcCon = mp_ConEmu->CalcRect(CER_CONSOLE_CUR, this);
+		RECT rcDC = mp_ConEmu->CalcRect(CER_DC, rcCon, CER_CONSOLE_CUR, this);
 		rc = MakeRect(rcDC.right, rcDC.bottom);
 	}
 	else
@@ -5472,7 +5471,7 @@ void CVirtualConsole::OnPanelViewSettingsChanged()
 			lWindows.hLeftView = m_LeftPanelView.hWnd;
 			lWindows.hRightView = m_RightPanelView.hWnd;
 			pipe.Execute(CMD_GUICHANGED, &lWindows, sizeof(lWindows));
-			gpConEmu->DebugStep(NULL);
+			mp_ConEmu->DebugStep(NULL);
 		}
 	}
 
@@ -5511,7 +5510,7 @@ bool CVirtualConsole::RegisterPanelView(PanelViewInit* ppvi)
 	BOOL lbPrevRegistered = pp->bRegister;
 	*pp = *ppvi;
 	// Вернуть текущую палитру GUI
-	gpConEmu->OnPanelViewSettingsChanged(FALSE/*abSendChanges*/);
+	mp_ConEmu->OnPanelViewSettingsChanged(FALSE/*abSendChanges*/);
 	//COLORREF *pcrNormal = gpSet->GetColors(FALSE);
 	//COLORREF *pcrFade = gpSet->GetColors(TRUE);
 	//for (int i=0; i<16; i++) {
@@ -6031,7 +6030,7 @@ SetBackgroundResult CVirtualConsole::SetBackgroundImageData(CESERVER_REQ_SETBACK
 {
 	if (!this) return esbr_Unexpected;
 
-	//if (!gpConEmu->isMainThread())
+	//if (!isMainThread())
 	//{
 
 	// При вызове из серверной нити (только что пришло из плагина)
@@ -6108,7 +6107,7 @@ void CVirtualConsole::OnTitleChanged()
 
 void CVirtualConsole::SavePaneSnapshoot()
 {
-	if (!gpConEmu->isMainThread())
+	if (!isMainThread())
 	{
 		PostMessage(GetView(), mn_MsgSavePaneSnapshoot, 0, 0);
 		return;

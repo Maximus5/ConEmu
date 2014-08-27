@@ -261,6 +261,7 @@ class CRealConsole
 #endif
 	protected:
 		CVirtualConsole* mp_VCon; // соответствующая виртуальная консоль
+		CConEmuMain*     mp_ConEmu;
 
 	public:
 
@@ -336,7 +337,7 @@ class CRealConsole
 		static void CorrectGuiChildRect(DWORD anStyle, DWORD anStyleEx, RECT& rcGui, LPCWSTR pszExeName);
 		static bool CanCutChildFrame(LPCWSTR pszExeName);
 
-		CRealConsole();
+		CRealConsole(CVirtualConsole* pVCon, CConEmuMain* pOwner);
 		bool Construct(CVirtualConsole* apVCon, RConStartArgs *args);
 		~CRealConsole();
 
@@ -768,7 +769,7 @@ class CRealConsole
 			int  nActiveIndex;
 			int  nActiveFarWindow;
 			void StoreActiveTab(int anActiveIndex, const CTabID* apActiveTab);
-			void RefreshFarPID(DWORD nNewPID);
+			bool RefreshFarPID(DWORD nNewPID);
 		} tabs;
 		void CheckPanelTitle();
 		//

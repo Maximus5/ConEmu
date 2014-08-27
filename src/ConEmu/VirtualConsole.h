@@ -52,13 +52,14 @@ class CVirtualConsole :
 	private:
 		// RealConsole
 		CRealConsole  *mp_RCon;
+		CConEmuMain   *mp_ConEmu;
 		CTaskBarGhost *mp_Ghost;
 
 	protected:
 		friend class CVConGroup;
 		void* mp_Group; // For internal use of CVConGroup
 	protected:
-		CVirtualConsole();
+		CVirtualConsole(CConEmuMain* pOwner);
 		bool Constructor(RConStartArgs *args);
 	public:
 		//static CVirtualConsole* CreateVCon(RConStartArgs *args); --> VConGroup

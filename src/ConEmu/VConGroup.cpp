@@ -154,7 +154,7 @@ void CVConGroup::Deinitialize()
 // Вызывается при создании нового таба, без разбивки
 CVConGroup* CVConGroup::CreateVConGroup()
 {
-	_ASSERTE(gpConEmu->isMainThread()); // во избежание сбоев в индексах?
+	_ASSERTE(isMainThread()); // во избежание сбоев в индексах?
 	CVConGroup* pGroup = new CVConGroup(NULL);
 	return pGroup;
 }
@@ -217,7 +217,7 @@ CVirtualConsole* CVConGroup::CreateVCon(RConStartArgs *args, CVirtualConsole*& p
 		return NULL;
 	}
 
-	_ASSERTE(gpConEmu->isMainThread()); // во избежание сбоев в индексах?
+	_ASSERTE(isMainThread()); // во избежание сбоев в индексах?
 
 	if (args->pszSpecialCmd)
 	{
@@ -263,7 +263,7 @@ CVirtualConsole* CVConGroup::CreateVCon(RConStartArgs *args, CVirtualConsole*& p
 			return NULL;
 	}
 
-	CVirtualConsole* pVCon = new CVirtualConsole();
+	CVirtualConsole* pVCon = new CVirtualConsole(gpConEmu);
 	ppVConI = pVCon;
 	pGroup->mp_Item = pVCon;
 	pGroup->mp_ActiveGroupVConPtr = pActiveGroupVConPtr ? pActiveGroupVConPtr : pVCon;
@@ -339,7 +339,7 @@ CVConGroup::CVConGroup(CVConGroup *apParent)
 void CVConGroup::FinalRelease()
 {
 	MCHKHEAP;
-	_ASSERTE(gpConEmu->isMainThread());
+	_ASSERTE(isMainThread());
 	CVConGroup* pGroup = (CVConGroup*)this;
 	delete pGroup;
 	MCHKHEAP;
@@ -350,7 +350,7 @@ void CVConGroup::RemoveGroup()
 	if (InterlockedExchange(&mb_Released, TRUE))
 		return;
 
-	_ASSERTE(gpConEmu->isMainThread()); // во избежание сбоев в индексах?
+	_ASSERTE(isMainThread()); // во избежание сбоев в индексах?
 
 	// Не должно быть дочерних панелей
 	_ASSERTE(mp_Grp1==NULL && mp_Grp2==NULL);
@@ -391,7 +391,7 @@ void CVConGroup::RemoveGroup()
 
 CVConGroup::~CVConGroup()
 {
-	_ASSERTE(gpConEmu->isMainThread()); // во избежание сбоев в индексах?
+	_ASSERTE(isMainThread()); // во избежание сбоев в индексах?
 
 	if (!mb_Released)
 		RemoveGroup();
@@ -3094,7 +3094,7 @@ int CVConGroup::GetConCount(bool bNoDetached /*= false*/)
 
 		if (bNoDetached)
 		{
-			_ASSERTE(gpConEmu->isMainThread()); // чтобы не морочится с блокировками
+			_ASSERTE(isMainThread()); // чтобы не морочится с блокировками
 			if (gp_VCon[i]->RCon()->isDetached())
 				continue;
 		}
@@ -3594,10 +3594,10 @@ void CVConGroup::OnCreateGroupEnd()
 CVirtualConsole* CVConGroup::CreateCon(RConStartArgs *args, bool abAllowScripts /*= false*/, bool abForceCurConsole /*= false*/)
 {
 	_ASSERTE(args!=NULL);
-	if (!gpConEmu->isMainThread())
+	if (!isMainThread())
 	{
 		// Создание VCon в фоновых потоках не допускается, т.к. здесь создаются HWND
-		MBoxAssert(gpConEmu->isMainThread());
+		MBoxAssert(isMainThread());
 		return NULL;
 	}
 	MCHKHEAP;
@@ -4917,7 +4917,7 @@ void CVConGroup::OnConsoleResize(bool abSizingToDo)
 
 	//MSetter lInConsoleResize(&mb_InConsoleResize);
 	// Выполняться должно в нити окна, иначе можем повиснуть
-	_ASSERTE(gpConEmu->isMainThread() && !gpConEmu->isIconic());
+	_ASSERTE(isMainThread() && !gpConEmu->isIconic());
 
 	//COORD c = ConsoleSizeFromWindow();
 	RECT client = gpConEmu->GetGuiClientRect();
