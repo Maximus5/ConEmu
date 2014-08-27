@@ -415,6 +415,7 @@
       <File RelativePath=".\ConEmuApp.cpp" />
       <File RelativePath=".\ConEmuCtrl.cpp" />
       <File RelativePath=".\ConEmuPipe.cpp" />
+      <File RelativePath=".\ConEmuSize.cpp" />
       <File RelativePath=".\ConfirmDlg.cpp" />
       <File RelativePath=".\CustomFonts.cpp" />
       <File RelativePath=".\DefaultTerm.cpp" />
@@ -497,6 +498,7 @@
       <File RelativePath=".\ConEmuApp.h" />
       <File RelativePath=".\ConEmuCtrl.h" />
       <File RelativePath=".\ConEmuPipe.h" />
+      <File RelativePath=".\ConEmuSize.h" />
       <File RelativePath=".\ConfirmDlg.h" />
       <File RelativePath=".\CustomFonts.h" />
       <File RelativePath=".\DefaultTerm.h" />

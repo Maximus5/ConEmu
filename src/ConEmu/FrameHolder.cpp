@@ -363,9 +363,6 @@ bool CFrameHolder::ProcessNcMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 	case 0x31E: /*WM_DWMCOMPOSITIONCHANGED*/
 		lResult = OnDwmMessage(hWnd, uMsg, wParam, lParam); return true;
 
-	case WM_WINDOWPOSCHANGED:
-		lResult = OnWindowPosChanged(hWnd, uMsg, wParam, lParam); return true;
-
 	case WM_SYSCOMMAND:
 		if (wParam == SC_MAXIMIZE || wParam == SC_MINIMIZE || wParam == SC_RESTORE)
 		{
@@ -1187,7 +1184,7 @@ LRESULT CFrameHolder::OnNcCalcSize(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 		}
 		// При смене режимов (особенно при смене HideCaption/NotHideCaption)
 		// требовать полную перерисовку клиентской области
-		else if (mb_DontPreserveClient || (gpConEmu->changeFromWindowMode != wmNotChanging))
+		else if (mb_DontPreserveClient || (gpConEmu->GetChangeFromWindowMode() != wmNotChanging))
 		{
 			lRc = WVR_REDRAW;
 		}

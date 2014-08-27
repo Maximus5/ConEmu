@@ -63,7 +63,6 @@ public:
 	virtual void CalculateCaptionPosition(const RECT &rcWindow, RECT* rcCaption);
 protected:
 	// internal messages processing
-	virtual LRESULT OnWindowPosChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) = 0;
 	LRESULT OnDwmMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnNcHitTest(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 	//LRESULT OnNcLButtonDown(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);

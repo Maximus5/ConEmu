@@ -94,6 +94,7 @@ struct MsgSrvStartedArg
 #include "GuiServer.h"
 #include "GestureEngine.h"
 #include "ConEmuCtrl.h"
+#include "ConEmuSize.h"
 #include "../common/MArray.h"
 #include "../common/MMap.h"
 
@@ -123,12 +124,13 @@ const ConEmuInstallMode
 	;
 
 
-class CConEmuMain :
-	public CDwmHelper,
-	public CTaskBar,
-	public CFrameHolder,
-	public CGestures,
-	public CConEmuCtrl
+class CConEmuMain
+	: public CDwmHelper
+	, public CTaskBar
+	, public CFrameHolder
+	, public CGestures
+	, public CConEmuCtrl
+	, public CConEmuSize
 {
 	public:
 		wchar_t ms_ConEmuDefTitle[32];          // Название с версией, например "ConEmu 110117 (32)"
@@ -201,16 +203,12 @@ class CConEmuMain :
 		void UpdateGuiInfoMapping();
 		static bool UpdateGuiInfoMappingFill(CVirtualConsole* pVCon, LPARAM lParam);
 		void UpdateGuiInfoMappingActive(bool bActive, bool bUpdatePtr = true);
-		int mn_QuakePercent; // 0 - отключен, иначе (>0 && <=100) - идет анимация Quake
 		bool mb_InCreateWindow;
-		HMONITOR mh_MinFromMonitor;
-		bool mb_InShowMinimized; // true на время выполнения ShowWindow(SW_SHOWMIN...)
 		bool mb_LastTransparentFocused; // нужно для проверки gpSet->isTransparentSeparate
 	public:
 		bool InCreateWindow();
 		bool InQuakeAnimation();
 		UINT IsQuakeVisible();
-		bool InMinimizing();
 	protected:
 		struct WindowsOverQuake
 		{
@@ -238,24 +236,8 @@ class CConEmuMain :
 		void LogString(LPCSTR asInfo, bool abWriteTime = true, bool abWriteLine = true);
 		void LogMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 		void LogWindowPos(LPCWSTR asPrefix);
-		//POINT cwShift; // difference between window size and client area size for main ConEmu window
-		POINT ptFullScreenSize; // size for GetMinMaxInfo in Fullscreen mode
 
-	private:
-		bool mb_InSetQuakeMode;
 	public:
-		ConEmuWindowMode WindowMode;           // wmNormal/wmMaximized/wmFullScreen
-		ConEmuWindowMode changeFromWindowMode; // wmNotChanging/rmNormal/rmMaximized/rmFullScreen
-		bool isRestoreFromMinimized;
-		bool isWndNotFSMaximized; // ставится в true, если при переходе в FullScreen - был Maximized
-		bool isQuakeMinimized;    // изврат, для случая когда "Quake" всегда показывается на таскбаре
-		HMONITOR GetNearestMonitor(MONITORINFO* pmi = NULL, LPCRECT prcWnd = NULL);
-		HMONITOR GetPrimaryMonitor(MONITORINFO* pmi = NULL);
-		void StorePreMinimizeMonitor();
-
-		CESize WndWidth, WndHeight;  // в символах/пикселях/процентах
-		int    wndX, wndY;           // в пикселях
-
 		bool  WindowStartMinimized; // ключик "/min" или "Свернуть" в свойствах ярлыка
 		bool  WindowStartTsa;       // ключики "/StartTSA" или "/MinTSA"
 		bool  WindowStartNoClose;   // ключик "/MinTSA"
@@ -372,13 +354,11 @@ class CConEmuMain :
 			typedef HRESULT (WINAPI* SetProcessDPIAwareness_t)(/*_In_*/Process_DPI_Awareness value);
 		} dpi;
 		bool isPiewUpdate;
-		bool gbPostUpdateWindowSize;
 		HWND hPictureView; bool bPicViewSlideShow; DWORD dwLastSlideShowTick; RECT mrc_WndPosOnPicView;
 		HWND mh_ShellWindow; // Окно Progman для Desktop режима
 		DWORD mn_ShellWindowPID;
 		BOOL mb_FocusOnDesktop;
 		POINT cursor, Rcursor;
-		bool mb_IgnoreSizeChange;
 		bool mb_InCaptionChange;
 		DWORD m_FixPosAfterStyle;
 		RECT mrc_FixPosAfterStyle;
@@ -392,7 +372,6 @@ class CConEmuMain :
 		bool mb_SkipOnFocus;
 		bool mb_LastConEmuFocusState;
 		DWORD mn_ForceTimerCheckLoseFocus; // GetTickCount()
-		bool mb_IgnoreQuakeActivation;
 		bool mb_AllowAutoChildFocus;
 	public:
 		void OnOurDialogOpened();
@@ -427,26 +406,7 @@ class CConEmuMain :
 		CRecreateDlg *mp_RecreateDlg;
 		bool mb_SkipSyncSize;
 		BOOL mb_WaitCursor;
-		BOOL mb_LastRgnWasNull;
-		BOOL mb_LockWindowRgn;
-		BOOL mb_LockShowWindow;
-		enum {
-			fsf_Hide = 0,     // Рамка и заголовок спрятаны
-			fsf_WaitShow = 1, // Запущен таймер показа рамки
-			fsf_Show = 2,     // Рамка показана
-		} m_ForceShowFrame;
-		void StartForceShowFrame();
-		void StopForceShowFrame();
 		typedef BOOL (WINAPI* FRegisterShellHookWindow)(HWND);
-		struct IdealRectInfo
-		{
-			// Current Ideal rect
-			RECT  rcIdeal;
-			// TODO: Reserved fields
-			RECT  rcClientMargins; // (TabBar + StatusBar) at storing moment
-			COORD crConsole;       // Console size in cells at storing moment
-			SIZE  csFont;          // VCon Font size (Width, Height) at storing moment
-		} mr_Ideal;
 		struct
 		{
 			BOOL  bChecked;
@@ -454,13 +414,8 @@ class CConEmuMain :
 			DWORD nReadyToSel;
 		} m_Pressed;
 	public:
-		void StoreIdealRect();
-		RECT GetIdealRect();
 		void OnTabbarActivated(bool bTabbarVisible);
 	protected:
-		BOOL mn_InResize;
-		RECT mrc_StoredNormalRect;
-		void StoreNormalRect(RECT* prcWnd);
 		BOOL mb_MouseCaptured;
 		void CheckActiveLayoutName();
 		void AppendHKL(wchar_t* szInfo, size_t cchInfoMax, HKL* hKeyb, int nCount);
@@ -504,7 +459,6 @@ class CConEmuMain :
 		static LRESULT CALLBACK RightClickingProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 		HWND mh_RightClickingWnd;
 		bool PatchMouseEvent(UINT messg, POINT& ptCurClient, POINT& ptCurScreen, WPARAM wParam, bool& isPrivate);
-		void CheckTopMostState();
 	public:
 		wchar_t* LoadConsoleBatch(LPCWSTR asSource, RConStartArgs* pArgs = NULL);
 	private:
@@ -527,6 +481,7 @@ class CConEmuMain :
 	protected:
 		friend class CConEmuCtrl;
 		friend class CRunQueue;
+		friend class CConEmuSize;
 		DWORD mn_MainThreadId;
 		// Registered messages
 		UINT mn__FirstAppMsg;
@@ -612,17 +567,10 @@ class CConEmuMain :
 		BOOL Activate(CVirtualConsole* apVCon);
 		int ActiveConNum(); // 0-based
 		int GetConCount(); // количество открытых консолей
-		static void AddMargins(RECT& rc, const RECT& rcAddShift, BOOL abExpand=FALSE);
 		void AskChangeBufferHeight();
 		void AskChangeAlternative();
 		void AttachToDialog();
 		CRealConsole* AttachRequestedGui(DWORD anServerPID, LPCWSTR asAppFileName, DWORD anAppPID);
-		void AutoSizeFont(RECT arFrom, enum ConEmuRect tFrom);
-		RECT CalcMargins(DWORD/*enum ConEmuMargins*/ mg, ConEmuWindowMode wmNewMode = wmCurrent);
-		RECT CalcRect(enum ConEmuRect tWhat, CVirtualConsole* pVCon=NULL);
-		RECT CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmuRect tFrom, CVirtualConsole* pVCon=NULL, enum ConEmuMargins tTabAction=CEM_TAB);
-		bool FixWindowRect(RECT& rcWnd, DWORD nBorders /* enum of ConEmuBorders */, bool bPopupDlg = false);
-		void CascadedPosFix();
 		void CheckFocus(LPCWSTR asFrom);
 		bool CheckRequiredFiles();
 		void CheckUpdates(BOOL abShowMessages);
@@ -638,16 +586,10 @@ class CConEmuMain :
 		void CreateGhostVCon(CVirtualConsole* apVCon);
 		BOOL CreateMainWindow();
 		BOOL CreateWorkWindow();
-		HRGN CreateWindowRgn(bool abTestOnly=false);
-		HRGN CreateWindowRgn(bool abTestOnly,bool abRoundTitle,int anX, int anY, int anWndWidth, int anWndHeight);
 		void DebugStep(LPCWSTR asMsg, BOOL abErrorSeverity=FALSE);
 		void ForceShowTabs(BOOL abShow);
 		DWORD_PTR GetActiveKeyboardLayout();
-		SIZE GetDefaultSize(bool bCells, const CESize* pSizeW=NULL, const CESize* pSizeH=NULL, HMONITOR hMon=NULL);
-		RECT GetDefaultRect();
-		RECT GetGuiClientRect();
 		bool isTabsShown();
-		bool SizeWindow(const CESize sizeW, const CESize sizeH);
 
 	public:
 		void Destroy();
@@ -657,7 +599,6 @@ class CConEmuMain :
 		#endif
 
 	public:
-		RECT GetVirtualScreenRect(BOOL abFullScreen);
 		DWORD GetWindowStyle();
 		DWORD FixWindowStyle(DWORD dwExStyle, ConEmuWindowMode wmNewMode = wmCurrent);
 		void SetWindowStyle(DWORD anStyle);
@@ -672,7 +613,6 @@ class CConEmuMain :
 		void Invalidate(LPRECT lpRect, BOOL bErase = TRUE);
 		void InvalidateAll();
 		void UpdateWindowChild(CVirtualConsole* apVCon);
-		void UpdateInsideRect(RECT rcNewPos);
 		bool isActive(CVirtualConsole* apVCon, bool abAllowGroup = true);
 		bool isCloseConfirmed();
 		bool isDestroyOnClose(bool ScCloseOnEmpty = false);
@@ -680,11 +620,8 @@ class CConEmuMain :
 		bool isConsolePID(DWORD nPID);
 		bool isDragging();
 		bool isFirstInstance(bool bFolderIgnore = false);
-		bool isFullScreen();
-		bool isIconic(bool abRaw = false);
 		bool isInImeComposition();
 		bool isLBDown();
-		bool isMainThread();
 		bool isMeForeground(bool abRealAlso=false, bool abDialogsAlso=true, HWND* phFore=NULL);
 		bool isMouseOverFrame(bool abReal=false);
 		bool isNtvdm(BOOL abCheckAllConsoles=FALSE);
@@ -692,19 +629,12 @@ class CConEmuMain :
 		bool isPictureView();
 		bool isProcessCreated();
 		bool isRightClickingPaint();
-		bool isSizing(UINT nMouseMsg=0);
-		void BeginSizing(bool bFromStatusBar);
-		void SetSizingFlags(DWORD nSetFlags = MOUSE_SIZING_BEGIN);
-		void ResetSizingFlags(DWORD nDropFlags = MOUSE_SIZING_BEGIN|MOUSE_SIZING_TODO);
-		void EndSizing(UINT nMouseMsg=0);
 		bool isValid(CRealConsole* apRCon);
 		bool isValid(CVirtualConsole* apVCon);
 		bool isVConExists(int nIdx);
 		bool isVConHWND(HWND hChild, CVConGuard* pVCon = NULL);
 		bool isViewer();
 		bool isVisible(CVirtualConsole* apVCon);
-		bool isWindowNormal();
-		bool isZoomed();
 		void LoadIcons();
 		void MoveActiveTab(CVirtualConsole* apVCon, bool bLeftward);
 		void InvalidateGaps();
@@ -720,51 +650,17 @@ class CConEmuMain :
 		LRESULT SyncExecMacro(WPARAM wParam, LPARAM lParam);
 		bool PtDiffTest(POINT C, int aX, int aY, UINT D); //(((abs(C.x-LOWORD(lParam)))<D) && ((abs(C.y-HIWORD(lParam)))<D))
 		void RecreateAction(RecreateActionParm aRecreate, BOOL abConfirm, RConBoolArg bRunAs = crb_Undefined);
-		void RecreateControls(bool bRecreateTabbar, bool bRecreateStatus, bool bResizeWindow, LPRECT prcSuggested = NULL);
 		int RecreateDlg(RConStartArgs* apArg);
 		bool ReportUpdateConfirmation();
 		void ReportUpdateError();
 		void RequestExitUpdate();
 		void RequestPostUpdateTabs();
-		void ReSize(BOOL abCorrect2Ideal = FALSE);
 		BOOL RunSingleInstance(HWND hConEmuWnd = NULL, LPCWSTR apszCmd = NULL);
 		bool ScreenToVCon(LPPOINT pt, CVirtualConsole** ppVCon);
 		void SetDragCursor(HCURSOR hCur);
 		bool SetSkipOnFocus(bool abSkipOnFocus);
 		void SetWaitCursor(BOOL abWait);
-		ConEmuWindowMode GetWindowMode();
-		bool SetWindowMode(ConEmuWindowMode inMode, BOOL abForce = FALSE, BOOL abFirstShow = FALSE);
-		bool SetQuakeMode(BYTE NewQuakeMode, ConEmuWindowMode nNewWindowMode = wmNotChanging, bool bFromDlg = false);
-		static LPCWSTR FormatTileMode(ConEmuWindowCommand Tile, wchar_t* pchBuf, size_t cchBufMax);
-		bool SetTileMode(ConEmuWindowCommand Tile);
-		ConEmuWindowCommand GetTileMode(bool Estimate, MONITORINFO* pmi=NULL);
-		bool IsSizeFree(ConEmuWindowMode CheckMode = wmFullScreen);
-		bool IsSizePosFree(ConEmuWindowMode CheckMode = wmFullScreen);
-		bool IsCantExceedMonitor();
-		bool IsPosLocked();
-		bool JumpNextMonitor(bool Next);
-		bool JumpNextMonitor(HWND hJumpWnd, HMONITOR hJumpMon, bool Next, const RECT rcJumpWnd);
-	private:
-		struct QuakePrevSize {
-			bool bWasSaved;
-			bool bWaitReposition; // Требуется смена позиции при OnHideCaption
-			CESize wndWidth, wndHeight; // Консоль
-			int wndX, wndY; // GUI
-			DWORD nFrame; // it's BYTE, DWORD here for alignment
-			ConEmuWindowMode WindowMode;
-			IdealRectInfo rcIdealInfo;
-			// helper methods
-			void Save(const CESize& awndWidth, const CESize& awndHeight, const int& awndX, const int& awndY, const BYTE& anFrame, const ConEmuWindowMode& aWindowMode, const IdealRectInfo& arcIdealInfo);
-			ConEmuWindowMode Restore(CESize& rwndWidth, CESize& rwndHeight, int& rwndX, int& rwndY, BYTE& rnFrame, IdealRectInfo& rrcIdealInfo);
-		} m_QuakePrevSize;
-		ConEmuWindowCommand m_TileMode;
-		struct {
-			RECT rcNewPos;
-			bool bInJump;
-			bool bFullScreen, bMaximized;
-		} m_JumpMonitor;
 	public:
-		BOOL ShowWindow(int anCmdShow, DWORD nAnimationMS = (DWORD)-1);
 		void ReportOldCmdVersion(DWORD nCmd, DWORD nVersion, int bFromServer, DWORD nFromProcess, u64 hFromModule, DWORD nBits);
 		bool SetParent(HWND hNewParent);
 		void setFocus();
@@ -779,19 +675,16 @@ class CConEmuMain :
 		void UpdateActiveGhost(CVirtualConsole* apVCon);
 		void UpdateFarSettings();
 	protected:
-		void UpdateIdealRect(RECT rcNewIdeal);
 		void UpdateImeComposition();
 	public:
 		void UpdateTextColorSettings(BOOL ChangeTextAttr = TRUE, BOOL ChangePopupAttr = TRUE);
 		void CheckNeedUpdateTitle(LPCWSTR asRConTitle);
 		void UpdateTitle();
 		void UpdateProgress(/*BOOL abUpdateTitle*/);
-		void UpdateWindowRgn(int anX=-1, int anY=-1, int anWndWidth=-1, int anWndHeight=-1);
 		static LRESULT CALLBACK MainWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 		static LRESULT CALLBACK WorkWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 		BOOL isDialogMessage(MSG &Msg);
 		bool isSkipNcMessage(const MSG& Msg);
-		BOOL setWindowPos(HWND hWndInsertAfter, int X, int Y, int cx, int cy, UINT uFlags);
 		void PreWndProc(UINT messg);
 		LRESULT WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 	public:
@@ -805,14 +698,12 @@ class CConEmuMain :
 		void OnAlwaysShowScrollbar(bool abSync = true);
 		void OnBufferHeight();
 		void OnConsoleKey(WORD vk, LPARAM Mods);
-		void OnConsoleResize(BOOL abPosted=FALSE);
 		LRESULT OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate);
 		void OnDesktopMode();
 		LRESULT OnDestroy(HWND hWnd);
 		LRESULT OnFlashWindow(WPARAM wParam, LPARAM lParam);
 		void DoFlashWindow(CESERVER_REQ_FLASHWINFO* pFlash, bool bFromMacro);
 		LRESULT OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, LPCWSTR asMsgFrom = NULL, BOOL abForceChild = FALSE);
-		LRESULT OnGetMinMaxInfo(LPMINMAXINFO pInfo);
 		void OnHideCaption();
 		LRESULT OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 		LRESULT OnKeyboardHook(DWORD VkMod);
@@ -829,16 +720,8 @@ class CConEmuMain :
 		LRESULT OnMouse_RBtnDblClk(CVirtualConsole* pVCon, HWND hWnd, UINT& messg, WPARAM wParam, LPARAM lParam, POINT ptCur, COORD cr);
 		BOOL OnMouse_NCBtnDblClk(HWND hWnd, UINT& messg, WPARAM wParam, LPARAM lParam);
 		LRESULT OnSetCursor(WPARAM wParam=-1, LPARAM lParam=-1);
-		LRESULT OnSize(bool bResizeRCon=true, WPARAM wParam=0, WORD newClientWidth=(WORD)-1, WORD newClientHeight=(WORD)-1);
-		LRESULT OnSizing(WPARAM wParam, LPARAM lParam);
-		LRESULT OnMoving(LPRECT prcWnd = NULL, bool bWmMove = false);
-		virtual LRESULT OnWindowPosChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) override;
-		LRESULT OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 		LRESULT OnQueryEndSession(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 		LRESULT OnSessionChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-		LRESULT OnDpiChanged(UINT dpiX, UINT dpiY, LPRECT prcSuggested, bool bResizeWindow);
-		LRESULT OnDisplayChanged(UINT bpp, UINT screenWidth, UINT screenHeight);
-		void OnSizePanels(COORD cr);
 		LRESULT OnShellHook(WPARAM wParam, LPARAM lParam);
 		UINT_PTR SetKillTimer(bool bEnable, UINT nTimerID, UINT nTimerElapse);
 		LRESULT OnTimer(WPARAM wParam, LPARAM lParam);

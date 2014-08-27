@@ -22,6 +22,7 @@ SRCS = \
 		ConEmuApp.cpp      \
 		ConEmuCtrl.cpp     \
 		ConEmuPipe.cpp     \
+		ConEmuSize.cpp     \
 		ConfirmDlg.cpp     \
 		CustomFonts.cpp    \
 		DefaultTerm.cpp    \
