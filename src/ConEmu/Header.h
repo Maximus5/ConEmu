@@ -791,6 +791,9 @@ void StripLines(wchar_t* pszText, LPCWSTR pszCommentMark);
 // One message cycle step
 bool ProcessMessage(MSG& Msg);
 
+// All window/gdi related code must be run in main thread
+bool isMainThread();
+
 // Predefined user messages
 #define UM_RELOAD_HERE_LIST (WM_APP+31)
 #define UM_RELOAD_AUTORUN   (WM_APP+32)

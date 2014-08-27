@@ -123,7 +123,7 @@ LONG DontEnable::gnDontEnableCount = 0;
 //bool bLocked; // Proceed only main thread
 DontEnable::DontEnable(bool abLock /*= true*/)
 {
-	bLocked = abLock && gpConEmu->isMainThread();
+	bLocked = abLock && isMainThread();
 	if (bLocked)
 	{
 		_ASSERTE(gnDontEnable>=0);
@@ -1970,7 +1970,7 @@ HWND ghLastForegroundWindow = NULL;
 HWND getForegroundWindow()
 {
 	HWND h = NULL;
-	if (!ghWnd || gpConEmu->isMainThread())
+	if (!ghWnd || isMainThread())
 	{
 		ghLastForegroundWindow = h = ::GetForegroundWindow();
 	}
@@ -2508,6 +2508,13 @@ bool ProcessMessage(MSG& Msg)
 
 wrap:
 	return bRc;
+}
+
+static DWORD gn_MainThreadId;
+bool isMainThread()
+{
+	DWORD dwTID = GetCurrentThreadId();
+	return (dwTID == gn_MainThreadId);
 }
 
 /* С командной строкой (GetCommandLineW) у нас засада */
@@ -3568,6 +3575,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	HeapInitialize();
 	RemoveOldComSpecC();
 	AssertMsgBox = MsgBox;
+	gn_MainThreadId = GetCurrentThreadId();
 
 	// On Vista and higher ensure our process will be
 	// marked as fully dpi-aware, regardless of mainfest
