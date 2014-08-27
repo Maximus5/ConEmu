@@ -343,3 +343,9 @@ void CTaskBar::Taskbar_UpdateOverlay()
 
 	Taskbar_SetShield(bAdmin);
 }
+
+HRESULT CTaskBar::Taskbar_MarkFullscreenWindow(HWND hwnd, BOOL fFullscreen)
+{
+	HRESULT hr = mp_TaskBar2 ? mp_TaskBar2->MarkFullscreenWindow(ghWnd, FALSE) : E_FAIL;
+	return hr;
+}

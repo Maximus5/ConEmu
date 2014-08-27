@@ -82,6 +82,7 @@ public:
 	HRESULT Taskbar_DeleteTabXP(HWND hBtn);
 	HRESULT Taskbar_SetProgressValue(int nProgress);
 	HRESULT Taskbar_SetProgressState(UINT/*TBPFLAG*/ nState);
+	HRESULT Taskbar_MarkFullscreenWindow(HWND hwnd, BOOL fFullscreen);
 
 	bool Taskbar_GhostSnapshootRequired();
 
