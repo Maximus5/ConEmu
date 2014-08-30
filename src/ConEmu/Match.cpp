@@ -69,6 +69,15 @@ void CMatch::UnitTests()
 		bool bMatch; LPCWSTR matches[5];
 		LPCWSTR pszTestCurDir;
 	} Tests[] = {
+		// Hyperlink
+		// RA layer request failed: PROPFIND request failed on '/svn': PROPFIND of '/svn': could
+		// not connect to server (http://farmanager.googlecode.com) at /usr/lib/perl5/site_perl/Git/SVN.pm line 148
+		// 1. Must not match last bracket, dot, comma, semicolon, etc.
+		// 2. If url exceeds the line, must request from owner additional data
+		//    if it is Far editor - the line must match the screen (no "tab" chars)
+		{L"\t" L"(http://abc.com) http://qwe.com; http://rty.com, http://def.com." L"\t",
+			etr_AnyClickable, true, {L"http://abc.com", L"http://qwe.com", L"http://rty.com", L"http://def.com"}},
+
 		// Just a text files
 		{L"\t" L"License.txt	Portable.txt    WhatsNew-ConEmu.txt" L"\t",
 			etr_AnyClickable, true, {L"License.txt", L"Portable.txt", L"WhatsNew-ConEmu.txt"}, gpConEmu->ms_ConEmuBaseDir},
@@ -126,6 +135,7 @@ void CMatch::UnitTests()
 			etr_AnyClickable, true, {L"http://www.KKK.ru"}},
 		{L"\t" L"C:\\ConEmu>http://www.KKK.ru - ..." L"\t",
 			etr_AnyClickable, true, {L"http://www.KKK.ru"}},
+
 		// -- False detects
 		{L"\t" L"29.11.2011 18:31:47" L"\t",
 			etr_AnyClickable, false, {}},
