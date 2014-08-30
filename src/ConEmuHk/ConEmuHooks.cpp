@@ -211,6 +211,10 @@ void CheckPowershellProgressPresence();
 void CheckPowerShellProgress(HANDLE hConsoleOutput,const CHAR_INFO *lpBuffer,COORD dwBufferSize,COORD dwBufferCoord,PSMALL_RECT lpWriteRegion);
 /* ************ Globals for powershell ************ */
 
+/* ************ Globals for Node.JS ************ */
+bool     gbIsNodeJSProcess = false;
+/* ************ Globals for Node.JS ************ */
+
 /* ************ Globals for cygwin/msys ************ */
 bool gbIsBashProcess = false;
 bool gbIsSshProcess = false;
@@ -5715,7 +5719,7 @@ LPVOID WINAPI OnVirtualAlloc(LPVOID lpAddress, SIZE_T dwSize, DWORD flAllocation
 	#if defined(REPORT_VIRTUAL_ALLOC)
 		// clink use bunch of VirtualAlloc to try to find suitable memory location
 		// Some processes raises that error too often (in debug)
-		bool bReport = (!gbIsCmdProcess || (dwSize != 0x1000)) && !gbSkipVirtualAllocErr;
+		bool bReport = (!gbIsCmdProcess || (dwSize != 0x1000)) && !gbSkipVirtualAllocErr && !gbIsNodeJSProcess;
 		if (bReport)
 		{
 			// Do not report for .Net application

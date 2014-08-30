@@ -138,6 +138,10 @@ extern WORD gnConsolePopupColors;
 extern int  gnPowerShellProgressValue;
 /* ************ Globals for powershell ************ */
 
+/* ************ Globals for Node.JS ************ */
+extern bool gbIsNodeJSProcess;
+/* ************ Globals for Node.JS ************ */
+
 /* ************ Globals for cygwin/msys ************ */
 extern bool gbIsBashProcess;
 extern bool gbIsSshProcess;

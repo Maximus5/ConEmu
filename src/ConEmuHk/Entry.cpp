@@ -821,6 +821,10 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 		CreateThread(NULL, 0, DummyLibLoaderCmdThread, NULL, 0, &gnDummyLibLoaderCmdThreadTID);
 		#endif
 	}
+	else if (lstrcmpi(gsExeName, L"node.exe") == 0)
+	{
+		gbIsNodeJSProcess = true;
+	}
 	else if ((lstrcmpi(gsExeName, L"sh.exe") == 0)
 		|| (lstrcmpi(gsExeName, L"bash.exe") == 0)
 		|| (lstrcmpi(gsExeName, L"isatty.exe") == 0)
