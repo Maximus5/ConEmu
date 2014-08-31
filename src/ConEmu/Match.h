@@ -82,5 +82,6 @@ public:
 	void UnitTestMatch(ExpandTextRangeType etr, LPCWSTR asLine, int anLineLen, int anMatchStart, int anMatchEnd, LPCWSTR asMatchText);
 	void UnitTestNoMatch(ExpandTextRangeType etr, LPCWSTR asLine, int anLineLen, int anStart, int anEnd);
 	static void UnitTestAlert(LPCWSTR pszText);
+	void UnitMatchTestAlert();
 	#endif
 };
