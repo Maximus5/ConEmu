@@ -2627,6 +2627,8 @@ bool CRealBuffer::LookupFilePath(LPCWSTR asFileOrPath, wchar_t* pszPath, size_t 
 
 bool CRealBuffer::ProcessFarHyperlink(bool bUpdateScreen)
 {
+	bool bChanged = false;
+
 	// Console may scrolls after last check time
 	if (bUpdateScreen)
 	{
@@ -2635,7 +2637,7 @@ bool CRealBuffer::ProcessFarHyperlink(bool bUpdateScreen)
 		if (!PtInRect(&rcClient, ptCur))
 		{
 			if (mcr_LastMousePos.X != -1)
-				ResetLastMousePos();
+				bChanged |= ResetLastMousePos();
 		}
 		else
 		{
@@ -2645,12 +2647,20 @@ bool CRealBuffer::ProcessFarHyperlink(bool bUpdateScreen)
 		}
 	}
 
-	if ((mcr_LastMousePos.X == -1) && (con.etr.etrLast != etr_None))
+	if ((mcr_LastMousePos.X != -1) && ((mcr_LastMousePos.Y < con.m_sbi.srWindow.Top) || (mcr_LastMousePos.Y >= GetBufferHeight())))
 	{
-		ResetLastMousePos();
+		bChanged |= ResetLastMousePos();
+	}
+	else if ((mcr_LastMousePos.X == -1) && (con.etr.etrLast != etr_None))
+	{
+		bChanged |= ResetLastMousePos();
+	}
+	else
+	{
+		bChanged |= ProcessFarHyperlink(WM_MOUSEMOVE, mcr_LastMousePos, bUpdateScreen);
 	}
 
-	return ProcessFarHyperlink(WM_MOUSEMOVE, mcr_LastMousePos, bUpdateScreen);
+	return bChanged;
 }
 
 bool CRealBuffer::CanProcessHyperlink(const COORD& crMouse)
