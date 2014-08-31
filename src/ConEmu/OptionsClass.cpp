@@ -570,6 +570,12 @@ const ConEmuHotKey* CSettings::GetHotKeyInfo(DWORD VkMod, bool bKeyDown, CRealCo
 		if (ConEmuHotKey::GetHotkey(TestVkMod) != vk)
 			continue; // Не совпадает сама кнопка
 
+		if (pi->Enabled)
+		{
+			if (!pi->Enabled())
+				continue; // Запрещено настройками или текущим контекстом
+		}
+
 		DWORD TestMask = cvk_DISTINCT;
 		DWORD TestValue = 0;
 
