@@ -37,6 +37,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmu.h"
 #endif
 
+#define MatchTestAlert()
+
 CMatch::CMatch()
 	:m_Type(etr_None)
 	,mn_Row(-1), mn_Col(-1)
@@ -344,9 +346,9 @@ void CMatch::StoreMatchText(LPCWSTR asPrefix, LPCWSTR pszTrimRight)
 	pszText[mn_MatchRight - mn_MatchLeft + 1] = 0;
 }
 
-bool CMatch::IsValidFile(LPCWSTR asFrom, int anLen, LPCWSTR pszInvalidChars, LPCWSTR pszSpacing)
+bool CMatch::IsValidFile(LPCWSTR asFrom, int anLen, LPCWSTR pszInvalidChars, LPCWSTR pszSpacing, int& rnLen)
 {
-	while ((anLen > 0) && wcschr(pszSpacing, asFrom[anLen-1]))
+	while ((anLen > 0) && (wcschr(pszSpacing, asFrom[anLen-1]) || wcschr(pszInvalidChars, asFrom[anLen-1])))
 		anLen--;
 
 	LPCWSTR pszFile, pszBadChar;
@@ -369,6 +371,7 @@ bool CMatch::IsValidFile(LPCWSTR asFrom, int anLen, LPCWSTR pszInvalidChars, LPC
 	if (pszBadChar == NULL)
 		return false;
 
+	rnLen = anLen;
 	return true;
 }
 
@@ -539,7 +542,9 @@ bool CMatch::MatchAny()
 						ucBoxDblUpSinglHorz, ucBoxDblVertRight, ucBoxDblVertLeft,
 						ucBoxSinglVertRight, ucBoxSinglVertLeft, ucBoxDblVertHorz,
 						0};
-	const wchar_t* pszSpacing = L" \t\xB6\xB7\x2192\x25A1\x25D9\x266A"; // Пробел, таб, остальные для режима "Show white spaces" в редакторе фара
+	#undef MATCH_SPACINGS	
+	#define MATCH_SPACINGS L" \t\xB6\xB7\x2192\x25A1\x25D9\x266A"
+	const wchar_t* pszSpacing = MATCH_SPACINGS; // Пробел, таб, остальные для режима "Show white spaces" в редакторе фара
 	const wchar_t* pszSeparat = L" \t:(";
 	const wchar_t* pszTermint = L":)],";
 	const wchar_t* pszDigits  = L"0123456789";
@@ -548,13 +553,15 @@ bool CMatch::MatchAny()
 	const wchar_t* pszUrlTrimRight = L".,;";
 	const wchar_t* pszProtocol = L"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_.";
 	const wchar_t* pszEMail = L"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-.";
-	const wchar_t* pszUrlDelim = L"\\\"<>{}[]^`' \t\r\n\xB6\xB7\x2192\x25A1\x25D9\x266A";
-	const wchar_t* pszUrlFileDelim = L"\"<>^ \t\r\n\xB6\xB7\x2192\x25A1\x25D9\x266A";
+	const wchar_t* pszUrlDelim = L"\\\"<>{}[]^`'\r\n" MATCH_SPACINGS;
+	const wchar_t* pszUrlFileDelim = L"\"<>^\r\n" MATCH_SPACINGS;
+	const wchar_t* pszEndBrackets = L">])}";
 	int nColons = 0;
 	bool bUrlMode = false, bMaybeMail = false;
 	SHORT MailX = -1;
 	bool bDigits = false, bLineNumberFound = false, bWasSeparator = false;
 	bool bNakedFile = false;
+	int nNakedFileLen = 0;
 	enum {
 		ef_NotFound = 0,
 		ef_DotFound = 1,
@@ -565,15 +572,43 @@ bool CMatch::MatchAny()
 
 	mn_MatchLeft = mn_MatchRight = mn_SrcFrom;
 
-	// Курсор над комментарием?
-	// Попробуем найти начало имени файла
-	if (!FindRangeStart(mn_MatchLeft, mn_MatchRight, bUrlMode, pszBreak, pszUrlDelim, pszSpacing, pszUrl, pszProtocol, m_SrcLine.ms_Arg, mn_SrcLength))
+	// Курсор над знаком препинания и за ним пробел? Допускать только ':' - это для строк/колонок с ошибками
+	if ((wcschr(L";,.", m_SrcLine.ms_Arg[mn_SrcFrom])) && (((mn_SrcFrom+1) >= mn_SrcLength) || wcschr(pszSpacing, m_SrcLine.ms_Arg[mn_SrcFrom+1])))
+	{
+		MatchTestAlert();
 		goto wrap;
+	}
 
-	// URL? (Курсор мог стоять над протоколом)
+	// Курсор над протоколом? (http, etc)
 	if (!CheckValidUrl(mn_MatchLeft, mn_MatchRight, bUrlMode, pszUrlDelim, pszUrl, pszProtocol, m_SrcLine.ms_Arg, mn_SrcLength))
+	{
+		MatchTestAlert();
 		goto wrap;
+	}
 
+	if (!bUrlMode)
+	{
+		// Not URL mode, restart searching
+		mn_MatchLeft = mn_MatchRight = mn_SrcFrom;
+
+		// Курсор над комментарием?
+		// Попробуем найти начало имени файла
+		if (!FindRangeStart(mn_MatchLeft, mn_MatchRight, bUrlMode, pszBreak, pszUrlDelim, pszSpacing, pszUrl, pszProtocol, m_SrcLine.ms_Arg, mn_SrcLength))
+		{
+			MatchTestAlert();
+			goto wrap;
+		}
+
+		// Try again with URL?
+		if (mn_MatchLeft < mn_SrcFrom)
+		{
+			if (!CheckValidUrl(mn_MatchLeft, mn_MatchRight, bUrlMode, pszUrlDelim, pszUrl, pszProtocol, m_SrcLine.ms_Arg, mn_SrcLength))
+			{
+				MatchTestAlert();
+				goto wrap;
+			}
+		}
+	}
 
 	// Чтобы корректно флаги обработались (типа наличие расширения и т.п.)
 	mn_MatchRight = mn_MatchLeft;
@@ -632,6 +667,7 @@ bool CMatch::MatchAny()
 		if ((m_SrcLine.ms_Arg[mn_MatchRight] == L'/') && ((mn_MatchRight+1) < mn_SrcLength) && (m_SrcLine.ms_Arg[mn_MatchRight+1] == L'/')
 			&& !((mn_MatchRight > 1) && (m_SrcLine.ms_Arg[mn_MatchRight] == L':'))) // и НЕ URL адрес
 		{
+			MatchTestAlert();
 			goto wrap; // Не оно (комментарий в строке)
 		}
 
@@ -758,8 +794,11 @@ bool CMatch::MatchAny()
 		{
 			if (bMaybeMail)
 				break;
-			if ((iExtFound != ef_ExtFound) || !IsValidFile(m_SrcLine.ms_Arg+mn_MatchLeft, mn_MatchRight - mn_MatchLeft + 1, pszBreak, pszSpacing))
+			if ((iExtFound != ef_ExtFound) || !IsValidFile(m_SrcLine.ms_Arg+mn_MatchLeft, mn_MatchRight - mn_MatchLeft + 1, pszBreak, pszSpacing, nNakedFileLen))
+			{
+				MatchTestAlert();
 				goto wrap; // Не оно
+			}
 			// File without digits, just for opening in the editor
 			_ASSERTE(!bLineNumberFound);
 			bNakedFile = true;
@@ -769,8 +808,11 @@ bool CMatch::MatchAny()
 		{
 			if ((++iSpaces) > 1)
 			{
-				if ((iExtFound != ef_ExtFound) || !IsValidFile(m_SrcLine.ms_Arg+mn_MatchLeft, mn_MatchRight - mn_MatchLeft + 1, pszBreak, pszSpacing))
+				if ((iExtFound != ef_ExtFound) || !IsValidFile(m_SrcLine.ms_Arg+mn_MatchLeft, mn_MatchRight - mn_MatchLeft + 1, pszBreak, pszSpacing, nNakedFileLen))
+				{
+					MatchTestAlert();
 					goto wrap; // Не оно?
+				}
 				// File without digits, just for opening in the editor
 				_ASSERTE(!bLineNumberFound);
 				bNakedFile = true;
@@ -787,12 +829,15 @@ bool CMatch::MatchAny()
 	{
 		// Считаем, что OK
 		bMaybeMail = false;
+		// Cut off ending bracket if it is
+		if (wcschr(pszEndBrackets, m_SrcLine.ms_Arg[mn_MatchRight]))
+			mn_MatchRight--;
 	}
 	else
 	{
 		if (!bNakedFile && !bMaybeMail && ((mn_MatchRight+1) == mn_SrcLength) && !bLineNumberFound && !bDigits && (iExtFound == ef_ExtFound))
 		{
-			bNakedFile = IsValidFile(m_SrcLine.ms_Arg+mn_MatchLeft, mn_MatchRight - mn_MatchLeft + 1, pszBreak, pszSpacing);
+			bNakedFile = IsValidFile(m_SrcLine.ms_Arg+mn_MatchLeft, mn_MatchRight - mn_MatchLeft + 1, pszBreak, pszSpacing, nNakedFileLen);
 		}
 
 		if (!bLineNumberFound && bDigits)
@@ -801,7 +846,14 @@ bool CMatch::MatchAny()
 		if (bLineNumberFound)
 			bMaybeMail = false;
 
-		if (bMaybeMail || bNakedFile)
+		if (bNakedFile)
+		{
+			// correct the end pos
+			mn_MatchRight = mn_MatchLeft + nNakedFileLen - 1;
+			_ASSERTE(mn_MatchRight > mn_MatchLeft);
+			// and no need to check for colon
+		}
+		else if (bMaybeMail)
 		{
 			// no need to check for colon
 		}
@@ -812,6 +864,7 @@ bool CMatch::MatchAny()
 			)
 			|| !bLineNumberFound || (nColons > 2))
 		{
+			MatchTestAlert();
 			goto wrap;
 		}
 
@@ -845,6 +898,7 @@ bool CMatch::MatchAny()
 			if ((mn_MatchLeft + 4) > mn_MatchRight) // 1.c:1: //-V112
 			{
 				// Слишком коротко, считаем что не оно
+				MatchTestAlert();
 				goto wrap;
 			}
 
@@ -852,6 +906,7 @@ bool CMatch::MatchAny()
 			if (!(m_SrcLine.ms_Arg[mn_MatchRight] >= L'0' && m_SrcLine.ms_Arg[mn_MatchRight] <= L'9') // ConEmuC.cpp:49:
 				&& !(m_SrcLine.ms_Arg[mn_MatchRight] == L')' && (m_SrcLine.ms_Arg[mn_MatchRight-1] >= L'0' && m_SrcLine.ms_Arg[mn_MatchRight-1] <= L'9'))) // ConEmuC.cpp(49) :
 			{
+				MatchTestAlert();
 				goto wrap; // Номера строки нет
 			}
 			// [file.cpp:1234]: (cppcheck) ?
@@ -869,7 +924,10 @@ bool CMatch::MatchAny()
 					}
 				}
 				if (!bNoDigits)
+				{
+					MatchTestAlert();
 					goto wrap;
+				}
 			}
 			// -- уже включены // Для красивости в VC включить скобки
 			//if ((m_SrcLine.ms_Arg[mn_MatchRight] == L')') && (m_SrcLine.ms_Arg[mn_MatchRight+1] == L':'))
@@ -880,6 +938,7 @@ bool CMatch::MatchAny()
 	// Check mouse pos, it must be inside region
 	if ((mn_SrcFrom < mn_MatchLeft) || (mn_MatchRight < mn_SrcFrom))
 	{
+		MatchTestAlert();
 		goto wrap;
 	}
 

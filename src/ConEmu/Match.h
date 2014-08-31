@@ -74,7 +74,7 @@ protected:
 	void StoreMatchText(LPCWSTR asPrefix, LPCWSTR pszTrimRight);
 protected:
 	CmdArg ms_FileCheck;
-	bool IsValidFile(LPCWSTR asFrom, int anLen, LPCWSTR pszInvalidChars, LPCWSTR pszSpacing);
+	bool IsValidFile(LPCWSTR asFrom, int anLen, LPCWSTR pszInvalidChars, LPCWSTR pszSpacing, int& rnLen);
 
 public:
 	#ifdef _DEBUG
