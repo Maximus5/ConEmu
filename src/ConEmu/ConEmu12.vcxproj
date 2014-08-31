@@ -1162,6 +1162,9 @@
     <Image Include="Search.ico" />
     <Image Include="Shield16.bmp" />
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="!Test.txt" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
