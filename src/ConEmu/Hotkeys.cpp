@@ -305,7 +305,8 @@ DWORD ConEmuHotKey::GetVkMod() const
 void ConEmuHotKey::SetVkMod(DWORD VkMod)
 {
 	// Init
-	Key.Vk = LOBYTE(VkMod);
+	BYTE Vk = LOBYTE(VkMod);
+	ConEmuModifiers Mod = cvk_NULL;
 
 	// Check modifiers
 	DWORD vkLeft = (VkMod & CEHOTKEY_MODMASK);
@@ -313,39 +314,39 @@ void ConEmuHotKey::SetVkMod(DWORD VkMod)
 	if ((HkType == chk_NumHost) || (vkLeft == CEHOTKEY_NUMHOSTKEY))
 	{
 		_ASSERTE((HkType == chk_NumHost) && (vkLeft == CEHOTKEY_NUMHOSTKEY))
-		Key.Mod = cvk_NumHost;
+		Mod = cvk_NumHost;
 	}
 	else if ((HkType == chk_ArrHost) || (vkLeft == CEHOTKEY_ARRHOSTKEY))
 	{
 		_ASSERTE((HkType == chk_ArrHost) && (vkLeft == CEHOTKEY_ARRHOSTKEY))
-		Key.Mod = cvk_ArrHost;
+		Mod = cvk_ArrHost;
 	}
 	else if (vkLeft == CEHOTKEY_NOMOD)
 	{
-		Key.Mod = cvk_Naked;
+		Mod = cvk_Naked;
 	}
 	else if (vkLeft)
 	{
 		CEVkMatch Match;
-		ConEmuModifiers Distinct = cvk_NULL;
 		ConEmuModifiers NewMod = cvk_NULL;
 
 		while (vkLeft)
 		{
 			vkLeft = (vkLeft >> 8);
-			if (ConEmuHotKey::GetMatchByVk(LOBYTE(vkLeft), Match))
+			if (CEVkMatch::GetMatchByVk(LOBYTE(vkLeft), Match))
 			{
 				NewMod |= Match.Mod;
-				Distinct |= Match.Unmask;
 			}
 		}
 
-		Key.Mod = NewMod & ~Distinct;
+		Mod = NewMod;
 	}
 	else
 	{
-		Key.Mod = cvk_NULL;
+		Mod = cvk_NULL;
 	}
+
+	Key.Set(Vk, Mod);
 }
 
 bool ConEmuHotKey::CanChangeVK() const
