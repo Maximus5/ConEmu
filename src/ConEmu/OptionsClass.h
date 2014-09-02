@@ -555,7 +555,7 @@ class CSettings
 		friend struct Settings;
 	public:
 		const ConEmuHotKey* GetHotKeyPtr(int idx);
-		const ConEmuHotKey* GetHotKeyInfo(DWORD VkMod, bool bKeyDown, CRealConsole* pRCon);
+		const ConEmuHotKey* GetHotKeyInfo(const ConEmuChord& VkState, bool bKeyDown, CRealConsole* pRCon);
 		bool HasSingleWinHotkey();
 		void UpdateWinHookSettings(HMODULE hLLKeyHookDll);
 	public:

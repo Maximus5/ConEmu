@@ -2868,7 +2868,7 @@ LPWSTR ConEmuMacro::Tab(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 			}
 			break;
 		case ctc_ShowTabsList: //
-			CConEmuCtrl::key_ShowTabsList(0, false, NULL, NULL/*чтобы не зависимо от фара показала меню*/);
+			CConEmuCtrl::key_ShowTabsList(NullChord, false, NULL, NULL/*чтобы не зависимо от фара показала меню*/);
 			break;
 		case ctc_CloseTab:
 			if (apRCon)

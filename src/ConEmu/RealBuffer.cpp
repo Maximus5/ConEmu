@@ -4636,18 +4636,17 @@ bool CRealBuffer::DoSelectionFinalize(bool abCopy, WPARAM wParam)
 }
 
 // pszChars may be NULL
-const ConEmuHotKey* CRealBuffer::ProcessSelectionHotKey(DWORD VkState, bool bKeyDown, const wchar_t *pszChars)
+const ConEmuHotKey* CRealBuffer::ProcessSelectionHotKey(const ConEmuChord& VkState, bool bKeyDown, const wchar_t *pszChars)
 {
 	if (!this || !con.m_sel.dwFlags)
 		return NULL;
 
 	// If these was not processed by user HotKeys, lets do it...
-	if (VkState == ConEmuHotKey::MakeHotKey('C', VK_CONTROL)
-		|| VkState == ConEmuHotKey::MakeHotKey(VK_INSERT, VK_CONTROL))
+	if (VkState.IsEqual('V', cvk_Ctrl) || VkState.IsEqual(VK_INSERT, cvk_Ctrl))
 	{
 		if (bKeyDown)
 		{
-			DoSelectionFinalize(true, ConEmuHotKey::GetHotkey(VkState));
+			DoSelectionFinalize(true, VkState.Vk);
 		}
 		return ConEmuSkipHotKey;
 	}

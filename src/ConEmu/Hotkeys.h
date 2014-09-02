@@ -82,7 +82,7 @@ struct ConEmuChord
 // Check if enabled in current context
 typedef bool (*HotkeyEnabled_t)();
 // true-обработали, false-пропустить в консоль
-typedef bool (WINAPI *HotkeyFKey_t)(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon); // true-обработали, false-пропустить в консоль
+typedef bool (WINAPI *HotkeyFKey_t)(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon); // true-обработали, false-пропустить в консоль
 
 struct ConEmuHotKey
 {

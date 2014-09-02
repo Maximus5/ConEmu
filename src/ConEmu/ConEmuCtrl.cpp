@@ -34,6 +34,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "AboutDlg.h"
 #include "ConEmu.h"
 #include "ConEmuCtrl.h"
+#include "Hotkeys.h"
 #include "FindDlg.h"
 #include "Macro.h"
 #include "Menu.h"
@@ -70,7 +71,7 @@ CConEmuCtrl::~CConEmuCtrl()
 }
 
 // pRCon may be NULL, pszChars may be NULL
-const ConEmuHotKey* CConEmuCtrl::ProcessHotKey(DWORD VkState, bool bKeyDown, const wchar_t *pszChars, CRealConsole* pRCon)
+const ConEmuHotKey* CConEmuCtrl::ProcessHotKey(const ConEmuChord& VkState, bool bKeyDown, const wchar_t *pszChars, CRealConsole* pRCon)
 {
 	// For testing and checking purposes
 	// User may disable "GuiMacro" processing with "ConEmu /NoHotkey"
@@ -79,7 +80,7 @@ const ConEmuHotKey* CConEmuCtrl::ProcessHotKey(DWORD VkState, bool bKeyDown, con
 		return NULL;
 	}
 
-	UINT vk = ConEmuHotKey::GetHotkey(VkState);
+	UINT vk = VkState.Vk;
 	if (!(vk >= '0' && vk <= '9'))
 		ResetDoubleKeyConsoleNum();
 
@@ -116,7 +117,7 @@ const ConEmuHotKey* CConEmuCtrl::ProcessHotKey(DWORD VkState, bool bKeyDown, con
 		if (pHotKey)
 		{
 			// Чтобы у консоли не сносило крышу (FAR может выполнить макрос на Alt)
-			if (((VkState & cvk_ALLMASK) == cvk_LAlt) || ((VkState & cvk_ALLMASK) == cvk_RAlt))
+			if (((VkState.Mod & cvk_ALLMASK) == cvk_LAlt) || ((VkState.Mod & cvk_ALLMASK) == cvk_RAlt))
 			{
 				if (pRCon && gpSet->isFixAltOnAltTab)
 					pRCon->PostKeyPress(VK_CONTROL, LEFT_ALT_PRESSED, 0);
@@ -125,7 +126,7 @@ const ConEmuHotKey* CConEmuCtrl::ProcessHotKey(DWORD VkState, bool bKeyDown, con
 			// Теперь собственно действие
 			if (pHotKey->fkey)
 			{
-				bool bApps = (VkState & cvk_Apps) == cvk_Apps;
+				bool bApps = (VkState.Mod & cvk_Apps) == cvk_Apps;
 				if (bApps)
 					gpConEmu->SkipOneAppsRelease(true);
 
@@ -310,12 +311,12 @@ bool CConEmuCtrl::ProcessHotKeyMsg(UINT messg, WPARAM wParam, LPARAM lParam, con
 		return false;
 	}
 
-	DWORD VkMod = VkModFromVk(vk);
+	ConEmuChord VkState = ChordFromVk(vk);
 
 	if (bKeyDown)
 		m_SkippedMsg = 0;
 
-	const ConEmuHotKey* pHotKey = ProcessHotKey(VkMod, bKeyDown, pszChars, pRCon);
+	const ConEmuHotKey* pHotKey = ProcessHotKey(VkState, bKeyDown, pszChars, pRCon);
 
 	// Для "одиночных"
 	if (pHotKey && mn_LastSingleModifier)
@@ -325,7 +326,7 @@ bool CConEmuCtrl::ProcessHotKeyMsg(UINT messg, WPARAM wParam, LPARAM lParam, con
 			mb_LastSingleModifier = TRUE;
 		}
 	}
-	else if (!pHotKey && !(VkMod & (cvk_Ctrl|cvk_Alt|cvk_Shift)))
+	else if (!pHotKey && !(VkState.Mod & (cvk_Ctrl|cvk_Alt|cvk_Shift)))
 	{
 		if (bKeyDown)
 		{
@@ -346,7 +347,7 @@ bool CConEmuCtrl::ProcessHotKeyMsg(UINT messg, WPARAM wParam, LPARAM lParam, con
 		}
 	}
 
-	if (((VkMod & cvk_ALLMASK) == cvk_Win)
+	if (((VkState.Mod & cvk_ALLMASK) == cvk_Win)
 		&& (vk == VK_DOWN || vk == VK_LEFT || vk == VK_RIGHT))
 	{
 		//120821 - в режиме HideCaption почему-то не выходит из Maximized по Win+Down
@@ -366,36 +367,34 @@ bool CConEmuCtrl::ProcessHotKeyMsg(UINT messg, WPARAM wParam, LPARAM lParam, con
 }
 
 // Warning! UpdateControlKeyState() must be called already!
-DWORD CConEmuCtrl::VkModFromVk(DWORD Vk)
+ConEmuChord CConEmuCtrl::ChordFromVk(BYTE Vk)
 {
 	_ASSERTE((Vk & 0xFF) == Vk);
 
-	DWORD nState = 0;
+	ConEmuChord chord = {Vk};
 
 	if (bWin)
-		nState |= cvk_Win;
+		chord.Mod |= cvk_Win;
 
 	if ((Vk != VK_APPS) && bApps)
-		nState |= cvk_Apps;
+		chord.Mod |= cvk_Apps;
 
 	if (bLCtrl)
-		nState |= cvk_LCtrl|cvk_Ctrl;
+		chord.Mod |= cvk_LCtrl|cvk_Ctrl;
 	if (bRCtrl)
-		nState |= cvk_RCtrl|cvk_Ctrl;
+		chord.Mod |= cvk_RCtrl|cvk_Ctrl;
 
 	if (bLAlt)
-		nState |= cvk_LAlt|cvk_Alt;
+		chord.Mod |= cvk_LAlt|cvk_Alt;
 	if (bRAlt)
-		nState |= cvk_RAlt|cvk_Alt;
+		chord.Mod |= cvk_RAlt|cvk_Alt;
 
 	if (bLShift)
-		nState |= cvk_LShift|cvk_Shift;
+		chord.Mod |= cvk_LShift|cvk_Shift;
 	if (bRShift)
-		nState |= cvk_RShift|cvk_Shift;
+		chord.Mod |= cvk_RShift|cvk_Shift;
 
-	DWORD VkMod = nState | (Vk & 0xFF);
-
-	return VkMod;
+	return chord;
 }
 
 void CConEmuCtrl::FixSingleModifier(DWORD Vk, CRealConsole* pRCon)
@@ -412,7 +411,7 @@ void CConEmuCtrl::FixSingleModifier(DWORD Vk, CRealConsole* pRCon)
 
 // User (Keys)
 // pRCon may be NULL
-bool CConEmuCtrl::key_MinimizeRestore(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+bool CConEmuCtrl::key_MinimizeRestore(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
 	if (TestOnly)
 		return true;
@@ -423,7 +422,7 @@ bool CConEmuCtrl::key_MinimizeRestore(DWORD VkMod, bool TestOnly, const ConEmuHo
 }
 
 // When depressing Esc in ConEmu without consoles (Don't close ConEmu on last console close)
-bool CConEmuCtrl::key_MinimizeByEsc(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+bool CConEmuCtrl::key_MinimizeByEsc(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
 	if (gpSet->isMultiMinByEsc == 0)
 		return false;
@@ -442,7 +441,7 @@ bool CConEmuCtrl::key_MinimizeByEsc(DWORD VkMod, bool TestOnly, const ConEmuHotK
 }
 
 // pRCon may be NULL
-bool CConEmuCtrl::key_GlobalRestore(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+bool CConEmuCtrl::key_GlobalRestore(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
 	if (TestOnly)
 		return true;
@@ -453,7 +452,7 @@ bool CConEmuCtrl::key_GlobalRestore(DWORD VkMod, bool TestOnly, const ConEmuHotK
 }
 
 // pRCon may be NULL
-bool CConEmuCtrl::key_MultiNew(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+bool CConEmuCtrl::key_MultiNew(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
 	if (TestOnly)
 		return true;
@@ -463,7 +462,7 @@ bool CConEmuCtrl::key_MultiNew(DWORD VkMod, bool TestOnly, const ConEmuHotKey* h
 }
 
 // pRCon may be NULL
-bool CConEmuCtrl::key_MultiNewShift(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+bool CConEmuCtrl::key_MultiNewShift(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
 	if (TestOnly)
 		return true;
@@ -473,7 +472,7 @@ bool CConEmuCtrl::key_MultiNewShift(DWORD VkMod, bool TestOnly, const ConEmuHotK
 }
 
 // pRCon may be NULL
-bool CConEmuCtrl::key_MultiNewPopupMenu(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+bool CConEmuCtrl::key_MultiNewPopupMenu(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
 	if (TestOnly)
 		return true;
@@ -481,7 +480,7 @@ bool CConEmuCtrl::key_MultiNewPopupMenu(DWORD VkMod, bool TestOnly, const ConEmu
 	gpConEmu->mp_Menu->OnNewConPopupMenu(NULL, 0, false);
 	return true;
 }
-bool CConEmuCtrl::key_MultiNewPopupMenu2(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+bool CConEmuCtrl::key_MultiNewPopupMenu2(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
 	if (TestOnly)
 		return true;
@@ -491,7 +490,7 @@ bool CConEmuCtrl::key_MultiNewPopupMenu2(DWORD VkMod, bool TestOnly, const ConEm
 }
 
 // pRCon may be NULL
-bool CConEmuCtrl::key_MultiNewWindow(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+bool CConEmuCtrl::key_MultiNewWindow(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
 	if (TestOnly)
 		return true;
@@ -501,7 +500,7 @@ bool CConEmuCtrl::key_MultiNewWindow(DWORD VkMod, bool TestOnly, const ConEmuHot
 }
 
 // pRCon may be NULL
-bool CConEmuCtrl::key_MultiNewAttach(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+bool CConEmuCtrl::key_MultiNewAttach(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
 	if (TestOnly)
 		return true;
@@ -511,7 +510,7 @@ bool CConEmuCtrl::key_MultiNewAttach(DWORD VkMod, bool TestOnly, const ConEmuHot
 }
 
 // pRCon may be NULL
-bool CConEmuCtrl::key_MultiNext(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+bool CConEmuCtrl::key_MultiNext(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
 	if (TestOnly)
 		return true;
@@ -520,7 +519,7 @@ bool CConEmuCtrl::key_MultiNext(DWORD VkMod, bool TestOnly, const ConEmuHotKey* 
 }
 
 // pRCon may be NULL
-bool CConEmuCtrl::key_MultiNextShift(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+bool CConEmuCtrl::key_MultiNextShift(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
 	if (TestOnly)
 		return true;
@@ -529,7 +528,7 @@ bool CConEmuCtrl::key_MultiNextShift(DWORD VkMod, bool TestOnly, const ConEmuHot
 }
 
 // pRCon may be NULL
-bool CConEmuCtrl::key_MultiRecreate(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+bool CConEmuCtrl::key_MultiRecreate(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
 	if (TestOnly)
 		return true;
@@ -539,7 +538,7 @@ bool CConEmuCtrl::key_MultiRecreate(DWORD VkMod, bool TestOnly, const ConEmuHotK
 }
 
 // pRCon may be NULL
-bool CConEmuCtrl::key_AlternativeBuffer(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+bool CConEmuCtrl::key_AlternativeBuffer(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
 	if (TestOnly)
 		return true;
@@ -548,7 +547,7 @@ bool CConEmuCtrl::key_AlternativeBuffer(DWORD VkMod, bool TestOnly, const ConEmu
 }
 
 // pRCon may be NULL
-bool CConEmuCtrl::key_MultiBuffer(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+bool CConEmuCtrl::key_MultiBuffer(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
 	if (TestOnly)
 		return true;
@@ -557,7 +556,7 @@ bool CConEmuCtrl::key_MultiBuffer(DWORD VkMod, bool TestOnly, const ConEmuHotKey
 }
 
 // pRCon may be NULL
-bool CConEmuCtrl::key_MultiClose(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+bool CConEmuCtrl::key_MultiClose(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
 	if (!pRCon)
 		return false;
@@ -569,7 +568,7 @@ bool CConEmuCtrl::key_MultiClose(DWORD VkMod, bool TestOnly, const ConEmuHotKey*
 }
 
 //// pRCon may be NULL
-//bool CConEmuCtrl::key_CloseTab(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+//bool CConEmuCtrl::key_CloseTab(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 //{
 //	if (!pRCon)
 //		return false;
@@ -581,7 +580,7 @@ bool CConEmuCtrl::key_MultiClose(DWORD VkMod, bool TestOnly, const ConEmuHotKey*
 //}
 
 // pRCon may be NULL
-bool CConEmuCtrl::key_TerminateProcess(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+bool CConEmuCtrl::key_TerminateProcess(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
 	if (!pRCon)
 		return false;
@@ -593,7 +592,7 @@ bool CConEmuCtrl::key_TerminateProcess(DWORD VkMod, bool TestOnly, const ConEmuH
 }
 
 // pRCon may be NULL
-bool CConEmuCtrl::key_DuplicateRoot(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+bool CConEmuCtrl::key_DuplicateRoot(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
 	if (!pRCon)
 		return false;
@@ -606,7 +605,7 @@ bool CConEmuCtrl::key_DuplicateRoot(DWORD VkMod, bool TestOnly, const ConEmuHotK
 }
 
 // pRCon may be NULL
-bool CConEmuCtrl::key_DuplicateRootAs(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+bool CConEmuCtrl::key_DuplicateRootAs(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
 	if (!pRCon)
 		return false;
@@ -618,7 +617,7 @@ bool CConEmuCtrl::key_DuplicateRootAs(DWORD VkMod, bool TestOnly, const ConEmuHo
 }
 
 //// pRCon may be NULL
-//bool CConEmuCtrl::key_CloseConEmu(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+//bool CConEmuCtrl::key_CloseConEmu(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 //{
 //	if (!pRCon)
 //		return false;
@@ -630,7 +629,7 @@ bool CConEmuCtrl::key_DuplicateRootAs(DWORD VkMod, bool TestOnly, const ConEmuHo
 //}
 
 // pRCon may be NULL
-bool CConEmuCtrl::key_MultiCmd(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+bool CConEmuCtrl::key_MultiCmd(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
 	if (TestOnly)
 		return true;
@@ -642,7 +641,7 @@ bool CConEmuCtrl::key_MultiCmd(DWORD VkMod, bool TestOnly, const ConEmuHotKey* h
 }
 
 // pRCon may be NULL
-bool CConEmuCtrl::key_CTSVkBlockStart(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+bool CConEmuCtrl::key_CTSVkBlockStart(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
 	if (!pRCon)
 		return false;
@@ -655,7 +654,7 @@ bool CConEmuCtrl::key_CTSVkBlockStart(DWORD VkMod, bool TestOnly, const ConEmuHo
 }
 
 // pRCon may be NULL
-bool CConEmuCtrl::key_CTSVkTextStart(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+bool CConEmuCtrl::key_CTSVkTextStart(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
 	if (!pRCon)
 		return FALSE;
@@ -668,7 +667,7 @@ bool CConEmuCtrl::key_CTSVkTextStart(DWORD VkMod, bool TestOnly, const ConEmuHot
 }
 
 // pRCon may be NULL
-bool CConEmuCtrl::key_SystemMenu(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+bool CConEmuCtrl::key_SystemMenu(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
 	if (TestOnly)
 		return true;
@@ -690,7 +689,7 @@ bool CConEmuCtrl::key_SystemMenu(DWORD VkMod, bool TestOnly, const ConEmuHotKey*
 }
 
 // pRCon may be NULL
-bool CConEmuCtrl::key_TabMenu(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+bool CConEmuCtrl::key_TabMenu(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
 	if (!pRCon)
 		return false;
@@ -715,7 +714,7 @@ bool CConEmuCtrl::key_TabMenu(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk
 }
 
 // pRCon may be NULL
-bool CConEmuCtrl::key_ShowRealConsole(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+bool CConEmuCtrl::key_ShowRealConsole(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
 	if (!pRCon)
 		return false;
@@ -727,7 +726,7 @@ bool CConEmuCtrl::key_ShowRealConsole(DWORD VkMod, bool TestOnly, const ConEmuHo
 }
 
 // pRCon may be NULL
-bool CConEmuCtrl::key_ForcedFullScreen(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+bool CConEmuCtrl::key_ForcedFullScreen(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
 	if (TestOnly)
 		return true;
@@ -737,7 +736,7 @@ bool CConEmuCtrl::key_ForcedFullScreen(DWORD VkMod, bool TestOnly, const ConEmuH
 	return true;
 }
 
-bool CConEmuCtrl::key_SwitchGuiFocus(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+bool CConEmuCtrl::key_SwitchGuiFocus(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
 	if (TestOnly)
 		return true;
@@ -761,7 +760,7 @@ bool CConEmuCtrl::key_SwitchGuiFocus(DWORD VkMod, bool TestOnly, const ConEmuHot
 	return true;
 }
 
-bool CConEmuCtrl::key_ChildSystemMenu(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+bool CConEmuCtrl::key_ChildSystemMenu(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
 	if (TestOnly)
 		return true;
@@ -809,7 +808,7 @@ bool CConEmuCtrl::key_BufferScroll(bool TestOnly, BYTE vk, CRealConsole* pRCon)
 }
 
 // pRCon may be NULL
-bool CConEmuCtrl::key_BufferScrollUp(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+bool CConEmuCtrl::key_BufferScrollUp(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
 	if (!pRCon)
 		return false;
@@ -817,7 +816,7 @@ bool CConEmuCtrl::key_BufferScrollUp(DWORD VkMod, bool TestOnly, const ConEmuHot
 }
 
 // pRCon may be NULL
-bool CConEmuCtrl::key_BufferScrollDown(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+bool CConEmuCtrl::key_BufferScrollDown(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
 	if (!pRCon)
 		return false;
@@ -825,7 +824,7 @@ bool CConEmuCtrl::key_BufferScrollDown(DWORD VkMod, bool TestOnly, const ConEmuH
 }
 
 // pRCon may be NULL
-bool CConEmuCtrl::key_BufferScrollPgUp(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+bool CConEmuCtrl::key_BufferScrollPgUp(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
 	if (!pRCon)
 		return false;
@@ -833,7 +832,7 @@ bool CConEmuCtrl::key_BufferScrollPgUp(DWORD VkMod, bool TestOnly, const ConEmuH
 }
 
 // pRCon may be NULL
-bool CConEmuCtrl::key_BufferScrollPgDn(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+bool CConEmuCtrl::key_BufferScrollPgDn(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
 	if (!pRCon)
 		return false;
@@ -841,7 +840,7 @@ bool CConEmuCtrl::key_BufferScrollPgDn(DWORD VkMod, bool TestOnly, const ConEmuH
 }
 
 // pRCon may be NULL
-bool CConEmuCtrl::key_CtrlTab(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+bool CConEmuCtrl::key_CtrlTab(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
 	if (!gpSet->isTabSelf)
 		return false;
@@ -859,7 +858,7 @@ bool CConEmuCtrl::key_CtrlTab(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk
 }
 
 // pRCon may be NULL
-bool CConEmuCtrl::key_CtrlShiftTab(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+bool CConEmuCtrl::key_CtrlShiftTab(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
 	if (!gpSet->isTabSelf)
 		return false;
@@ -877,7 +876,7 @@ bool CConEmuCtrl::key_CtrlShiftTab(DWORD VkMod, bool TestOnly, const ConEmuHotKe
 }
 
 // pRCon may be NULL
-bool CConEmuCtrl::key_CtrlTab_Prev(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+bool CConEmuCtrl::key_CtrlTab_Prev(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
 	if (!gpSet->isTabSelf || !gpConEmu->mp_TabBar->IsInSwitch())
 		return false;
@@ -888,13 +887,13 @@ bool CConEmuCtrl::key_CtrlTab_Prev(DWORD VkMod, bool TestOnly, const ConEmuHotKe
 	//WARNING! Must be System Unchanged HOTKEY
 	//WARNING! Функция зовет isPressed(VK_SHIFT)
 	WARNING("CConEmuCtrl:: Переделать на явный вызов Switch, учесть, что он может быть альтернативным!");
-	if (!gpConEmu->mp_TabBar->OnKeyboard(WM_KEYDOWN, (VkMod & 0xFF), 0))
+	if (!gpConEmu->mp_TabBar->OnKeyboard(WM_KEYDOWN, VkState.Vk, 0))
 		return false;
 	return true;
 }
 
 // pRCon may be NULL
-bool CConEmuCtrl::key_CtrlTab_Next(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+bool CConEmuCtrl::key_CtrlTab_Next(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
 	if (!gpSet->isTabSelf || !gpConEmu->mp_TabBar->IsInSwitch())
 		return false;
@@ -905,7 +904,7 @@ bool CConEmuCtrl::key_CtrlTab_Next(DWORD VkMod, bool TestOnly, const ConEmuHotKe
 	//WARNING! Must be System Unchanged HOTKEY
 	//WARNING! Функция зовет isPressed(VK_SHIFT)
 	WARNING("CConEmuCtrl:: Переделать на явный вызов Switch, учесть, что он может быть альтернативным!");
-	if (!gpConEmu->mp_TabBar->OnKeyboard(WM_KEYDOWN, (VkMod & 0xFF), 0))
+	if (!gpConEmu->mp_TabBar->OnKeyboard(WM_KEYDOWN, VkState.Vk, 0))
 		return false;
 	return true;
 }
@@ -972,7 +971,7 @@ bool CConEmuCtrl::key_WinSize(BYTE vk)
 
 // Все что ниже - было привязано к "HostKey"
 // pRCon may be NULL
-bool CConEmuCtrl::key_WinWidthDec(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+bool CConEmuCtrl::key_WinWidthDec(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
 	if (TestOnly)
 		return true;
@@ -980,7 +979,7 @@ bool CConEmuCtrl::key_WinWidthDec(DWORD VkMod, bool TestOnly, const ConEmuHotKey
 }
 
 // pRCon may be NULL
-bool CConEmuCtrl::key_WinWidthInc(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+bool CConEmuCtrl::key_WinWidthInc(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
 	if (TestOnly)
 		return true;
@@ -988,7 +987,7 @@ bool CConEmuCtrl::key_WinWidthInc(DWORD VkMod, bool TestOnly, const ConEmuHotKey
 }
 
 // pRCon may be NULL
-bool CConEmuCtrl::key_WinHeightDec(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+bool CConEmuCtrl::key_WinHeightDec(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
 	if (TestOnly)
 		return true;
@@ -996,7 +995,7 @@ bool CConEmuCtrl::key_WinHeightDec(DWORD VkMod, bool TestOnly, const ConEmuHotKe
 }
 
 // pRCon may be NULL
-bool CConEmuCtrl::key_WinHeightInc(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+bool CConEmuCtrl::key_WinHeightInc(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
 	if (TestOnly)
 		return true;
@@ -1004,7 +1003,7 @@ bool CConEmuCtrl::key_WinHeightInc(DWORD VkMod, bool TestOnly, const ConEmuHotKe
 }
 
 // pRCon ignored
-bool CConEmuCtrl::key_WinDragStart(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+bool CConEmuCtrl::key_WinDragStart(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
 	// Dummy
 	return true;
@@ -1019,7 +1018,7 @@ void CConEmuCtrl::ResetDoubleKeyConsoleNum(CRealConsole* pRCon)
 
 // Console activate by number
 // pRCon may be NULL
-bool CConEmuCtrl::key_ConsoleNum(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+bool CConEmuCtrl::key_ConsoleNum(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
 	if (TestOnly)
 		return true;
@@ -1031,34 +1030,34 @@ bool CConEmuCtrl::key_ConsoleNum(DWORD VkMod, bool TestOnly, const ConEmuHotKey*
 		// цифровая двухкнопочная активация, если уже больше 9-и консолей открыто
 		if (gpConEmu->mn_DoubleKeyConsoleNum)
 		{
-			if ((VkMod & 0xFF)>='0' && (VkMod & 0xFF)<='9')
+			if ((VkState.Vk >= '0') && (VkState.Vk <= '9'))
 			{
-				nNewIdx = (((VkMod & 0xFF) - '0') + ((gpConEmu->mn_DoubleKeyConsoleNum - '0')*10)) - 1; // 0-based
+				nNewIdx = ((VkState.Vk - '0') + ((gpConEmu->mn_DoubleKeyConsoleNum - '0')*10)) - 1; // 0-based
 			}
 
 			gpConEmu->ResetDoubleKeyConsoleNum(pRCon);
 		}
 		else
 		{
-			// Запомнить первую цифру
-			if ((VkMod & 0xFF)>='0' && (VkMod & 0xFF)<='9')
+			// Store first digit for 2-digit 0-based console number
+			if ((VkState.Vk >= '0') && (VkState.Vk <='9' ))
 			{
-				gpConEmu->mn_DoubleKeyConsoleNum = (VkMod & 0xFF);
+				gpConEmu->mn_DoubleKeyConsoleNum = VkState.Vk;
 			}
 			else
 			{
-				_ASSERTE((VkMod & 0xFF)>='0' && (VkMod & 0xFF)<='9');
+				_ASSERTE((VkState.Vk >= '0') && (VkState.Vk <='9' ));
 			}
 		}
 	}
 	else
 	{
-		if ((VkMod & 0xFF)>='1' && (VkMod & 0xFF)<='9')
-			nNewIdx = (VkMod & 0xFF) - '1';
-		else if ((VkMod & 0xFF)=='0')
+		// Let get 0-based index
+
+		if ((VkState.Vk >= '1') && (VkState.Vk <= '9'))
+			nNewIdx = VkState.Vk - '1';
+		else if (VkState.Vk == '0')
 			nNewIdx = 9;
-		//else if ((VkMod & 0xFF)==VK_F11 || (VkMod & 0xFF)==VK_F12)
-		//	gpConEmu->ConActivate(10+((VkMod & 0xFF)-VK_F11));
 
 		gpConEmu->ResetDoubleKeyConsoleNum(pRCon);
 	}
@@ -1069,14 +1068,14 @@ bool CConEmuCtrl::key_ConsoleNum(DWORD VkMod, bool TestOnly, const ConEmuHotKey*
 	return true;
 }
 
-bool CConEmuCtrl::key_PicViewSlideshow(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+bool CConEmuCtrl::key_PicViewSlideshow(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
 	if (!pRCon)
 		return false;
 	//if (TestOnly) -- ниже, доп.проверки
 	//	return true;
 
-	if ((VkMod & cvk_VK_MASK) == VK_PAUSE)
+	if (VkState.Vk == VK_PAUSE)
 	{
 		// SlideShow в PicView2 подзадержался
 		if (gpConEmu->isPictureView() /*&& !IsWindowUnicode(hPictureView)*/)
@@ -1112,12 +1111,12 @@ bool CConEmuCtrl::key_PicViewSlideshow(DWORD VkMod, bool TestOnly, const ConEmuH
 	else if (gpConEmu->bPicViewSlideShow)
 	{
 		//KillTimer(hWnd, 3);
-		if ((VkMod & cvk_VK_MASK) == 0xbd/* -_ */ || (VkMod & cvk_VK_MASK) == 0xbb/* =+ */)
+		if ((VkState.Vk == 0xbd/* -_ */) || (VkState.Vk == 0xbb/* =+ */))
 		{
 			if (TestOnly)
 				return true;
 
-			if ((VkMod & cvk_VK_MASK) == 0xbb)
+			if (VkState.Vk == 0xbb)
 			{
 				gpSet->nSlideShowElapse = 1.2 * gpSet->nSlideShowElapse;
 			}
@@ -1140,7 +1139,7 @@ bool CConEmuCtrl::key_PicViewSlideshow(DWORD VkMod, bool TestOnly, const ConEmuH
 	return false;
 }
 
-bool CConEmuCtrl::key_GuiMacro(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+bool CConEmuCtrl::key_GuiMacro(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
 	if (TestOnly)
 		return true;
@@ -1198,7 +1197,7 @@ void CConEmuCtrl::ChooseTabFromMenu(BOOL abFirstTabOnly, POINT pt, DWORD Align /
 }
 
 // Все параметры могут быть NULL - вызов из GuiMacro
-bool CConEmuCtrl::key_ShowTabsList(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+bool CConEmuCtrl::key_ShowTabsList(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
 	// 120820 - не будем требовать наличия плагина для F12 в Far
 	if (pRCon && pRCon->GetFarPID(false))
@@ -1231,7 +1230,7 @@ bool CConEmuCtrl::key_ShowTabsList(DWORD VkMod, bool TestOnly, const ConEmuHotKe
 	return true;
 }
 
-bool CConEmuCtrl::key_RenameTab(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+bool CConEmuCtrl::key_RenameTab(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
 	if (TestOnly)
 		return true;
@@ -1244,7 +1243,7 @@ bool CConEmuCtrl::key_RenameTab(DWORD VkMod, bool TestOnly, const ConEmuHotKey* 
 	return true;
 }
 
-bool CConEmuCtrl::key_MoveTabLeft(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+bool CConEmuCtrl::key_MoveTabLeft(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
 	if (TestOnly)
 		return true;
@@ -1254,7 +1253,7 @@ bool CConEmuCtrl::key_MoveTabLeft(DWORD VkMod, bool TestOnly, const ConEmuHotKey
 	return true;
 }
 
-bool CConEmuCtrl::key_MoveTabRight(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+bool CConEmuCtrl::key_MoveTabRight(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
 	if (TestOnly)
 		return true;
@@ -1264,7 +1263,7 @@ bool CConEmuCtrl::key_MoveTabRight(DWORD VkMod, bool TestOnly, const ConEmuHotKe
 	return true;
 }
 
-bool CConEmuCtrl::key_ShowStatusBar(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+bool CConEmuCtrl::key_ShowStatusBar(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
 	if (TestOnly)
 		return true;
@@ -1274,7 +1273,7 @@ bool CConEmuCtrl::key_ShowStatusBar(DWORD VkMod, bool TestOnly, const ConEmuHotK
 	return true;
 }
 
-bool CConEmuCtrl::key_ShowTabBar(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+bool CConEmuCtrl::key_ShowTabBar(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
 	if (TestOnly)
 		return true;
@@ -1284,7 +1283,7 @@ bool CConEmuCtrl::key_ShowTabBar(DWORD VkMod, bool TestOnly, const ConEmuHotKey*
 	return true;
 }
 
-bool CConEmuCtrl::key_ShowCaption(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+bool CConEmuCtrl::key_ShowCaption(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
 	if (TestOnly)
 		return true;
@@ -1302,7 +1301,7 @@ bool CConEmuCtrl::key_ShowCaption(DWORD VkMod, bool TestOnly, const ConEmuHotKey
 	return true;
 }
 
-bool CConEmuCtrl::key_AlwaysOnTop(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+bool CConEmuCtrl::key_AlwaysOnTop(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
 	if (TestOnly)
 		return true;
@@ -1313,15 +1312,15 @@ bool CConEmuCtrl::key_AlwaysOnTop(DWORD VkMod, bool TestOnly, const ConEmuHotKey
 	return true;
 }
 
-bool CConEmuCtrl::key_PasteText(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+bool CConEmuCtrl::key_PasteText(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
 	if (!pRCon || pRCon->isFar())
 		return false;
 
-	return key_PasteTextAllApp(VkMod, TestOnly, hk, pRCon);
+	return key_PasteTextAllApp(VkState, TestOnly, hk, pRCon);
 }
 
-bool CConEmuCtrl::key_PasteTextAllApp(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+bool CConEmuCtrl::key_PasteTextAllApp(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
 	// Если это GUI App in Tab - пусть само
 	if (!pRCon || pRCon->GuiWnd())
@@ -1338,15 +1337,15 @@ bool CConEmuCtrl::key_PasteTextAllApp(DWORD VkMod, bool TestOnly, const ConEmuHo
 	return true;
 }
 
-bool CConEmuCtrl::key_PasteFirstLine(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+bool CConEmuCtrl::key_PasteFirstLine(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
 	if (!pRCon || pRCon->isFar())
 		return false;
 
-	return key_PasteFirstLineAllApp(VkMod, TestOnly, hk, pRCon);
+	return key_PasteFirstLineAllApp(VkState, TestOnly, hk, pRCon);
 }
 
-bool CConEmuCtrl::key_PasteFirstLineAllApp(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+bool CConEmuCtrl::key_PasteFirstLineAllApp(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
 	// Если это GUI App in Tab - пусть само
 	if (!pRCon || pRCon->GuiWnd())
@@ -1517,7 +1516,7 @@ size_t CConEmuCtrl::GetOpenedTabs(CESERVER_REQ_GETALLTABS::TabInfo*& pTabs)
 	return cchCount;
 }
 
-bool CConEmuCtrl::key_DeleteWordToLeft(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+bool CConEmuCtrl::key_DeleteWordToLeft(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
 	if (!pRCon || pRCon->GuiWnd())
 		return false;
@@ -1530,7 +1529,7 @@ bool CConEmuCtrl::key_DeleteWordToLeft(DWORD VkMod, bool TestOnly, const ConEmuH
 	return true;
 }
 
-bool CConEmuCtrl::key_RunTask(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+bool CConEmuCtrl::key_RunTask(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
 	if (TestOnly)
 		return true;
@@ -1546,7 +1545,7 @@ bool CConEmuCtrl::key_RunTask(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk
 	return true;
 }
 
-bool CConEmuCtrl::key_FindTextDlg(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+bool CConEmuCtrl::key_FindTextDlg(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
 	// Если это GUI App in Tab - само
 	if (!pRCon || (pRCon->GuiWnd() && !pRCon->isBufferHeight()))
@@ -1645,7 +1644,7 @@ LRESULT CConEmuCtrl::SkipOneAppsReleaseHook(int code, WPARAM wParam, LPARAM lPar
 	return CallNextHookEx(mh_SkipOneAppsRelease, code, wParam, lParam);
 }
 
-bool CConEmuCtrl::key_Screenshot(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+bool CConEmuCtrl::key_Screenshot(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
 	if (TestOnly)
 		return true;
@@ -1654,7 +1653,7 @@ bool CConEmuCtrl::key_Screenshot(DWORD VkMod, bool TestOnly, const ConEmuHotKey*
 	return true;
 }
 
-bool CConEmuCtrl::key_ScreenshotFull(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+bool CConEmuCtrl::key_ScreenshotFull(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
 	if (TestOnly)
 		return true;

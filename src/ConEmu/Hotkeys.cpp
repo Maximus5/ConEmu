@@ -170,7 +170,7 @@ INT_PTR CHotKeyDialog::hkDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lP
 				case EN_CHANGE:
 				{
 					UINT nHotKey = dlgGetHotkey(hDlg, hkHotKeySelect, lbHotKeyList);
-					pDlg->m_HK.Key.Vk = LOBYTE(nHotKey);
+					pDlg->m_HK.Key.Set(LOBYTE(nHotKey), pDlg->m_HK.Key.Mod);
 					break;
 				} // EN_CHANGE
 
@@ -193,7 +193,7 @@ INT_PTR CHotKeyDialog::hkDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lP
 								pDlg->m_HK.Key.Mod = cvk_Win;
 							}
 
-							pDlg->m_HK.Key.Vk = LOBYTE(vk);
+							pDlg->m_HK.Key.Set(LOBYTE(vk), pDlg->m_HK.Key.Mod);
 
 							break;
 						} // lbHotKeyList
@@ -217,7 +217,7 @@ INT_PTR CHotKeyDialog::hkDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lP
 							if (!nModifers)
 								nModifers = CEHOTKEY_NOMOD;
 
-							pDlg->m_HK.SetVkMod((cvk_VK_MASK & pDlg->m_HK.Key.Vk) | nModifers);
+							pDlg->m_HK.SetVkMod(((DWORD)pDlg->m_HK.Key.Vk) | nModifers);
 
 							break;
 						} // lbHotKeyMod1, lbHotKeyMod2, lbHotKeyMod3

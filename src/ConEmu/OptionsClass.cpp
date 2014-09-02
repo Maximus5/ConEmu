@@ -538,9 +538,9 @@ const ConEmuHotKey* CSettings::GetHotKeyPtr(int idx)
 }
 
 // pRCon may be NULL
-const ConEmuHotKey* CSettings::GetHotKeyInfo(DWORD VkMod, bool bKeyDown, CRealConsole* pRCon)
+const ConEmuHotKey* CSettings::GetHotKeyInfo(const ConEmuChord& VkState, bool bKeyDown, CRealConsole* pRCon)
 {
-	DWORD vk = ConEmuHotKey::GetHotkey(VkMod);
+	BYTE vk = VkState.Vk;
 	// На сами модификаторы - действий не вешается
 	switch (vk)
 	{
@@ -637,7 +637,7 @@ const ConEmuHotKey* CSettings::GetHotKeyInfo(DWORD VkMod, bool bKeyDown, CRealCo
 		if (pi->fkey)
 		{
 			// Допускается ли этот хоткей в текущем контексте?
-			if (pi->fkey(VkMod, true, pi, pRCon))
+			if (pi->fkey(VkState, true, pi, pRCon))
 			{
 				p = pi;
 				break; // Нашли

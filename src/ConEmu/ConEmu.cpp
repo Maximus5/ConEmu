@@ -9415,12 +9415,15 @@ LRESULT CConEmuMain::OnKeyboardHook(DWORD VkMod)
 	CVConGuard VCon;
 	CRealConsole* pRCon = (GetActiveVCon(&VCon) >= 0) ? VCon->RCon() : NULL;
 
-	const ConEmuHotKey* pHotKey = ProcessHotKey(VkMod, true/*bKeyDown*/, NULL, pRCon);
+	TODO("Second key of Chord?");
+	ConEmuChord HK = {LOBYTE(VkMod), static_cast<ConEmuModifiers>(VkMod & cvk_ALLMASK)};
+
+	const ConEmuHotKey* pHotKey = ProcessHotKey(HK, true/*bKeyDown*/, NULL, pRCon);
 
 	if (pHotKey == ConEmuSkipHotKey)
 	{
 		// Если функция срабатывает на отпускание
-		pHotKey = ProcessHotKey(VkMod, false/*bKeyDown*/, NULL, pRCon);
+		pHotKey = ProcessHotKey(HK, false/*bKeyDown*/, NULL, pRCon);
 	}
 
 	return 0;
@@ -10676,7 +10679,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		bool bDn = (messg == WM_LBUTTONDOWN || messg == WM_RBUTTONDOWN || messg == WM_MBUTTONDOWN);
 		bool bUp = (messg == WM_LBUTTONUP || messg == WM_RBUTTONUP || messg == WM_MBUTTONUP);
 
-		const ConEmuHotKey* pHotKey = gpSetCls->GetHotKeyInfo(VkModFromVk(vk), bDn, pRCon);
+		const ConEmuHotKey* pHotKey = gpSetCls->GetHotKeyInfo(ChordFromVk(vk), bDn, pRCon);
 
 		if (pHotKey)
 		{

@@ -145,7 +145,7 @@ public:
 	bool isStreamSelection();
 
 	bool OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, const wchar_t *pszChars);
-	const ConEmuHotKey* ProcessSelectionHotKey(DWORD VkState, bool bKeyDown, const wchar_t *pszChars);
+	const ConEmuHotKey* ProcessSelectionHotKey(const ConEmuChord& VkState, bool bKeyDown, const wchar_t *pszChars);
 
 	COORD GetDefaultNtvdmHeight();
 

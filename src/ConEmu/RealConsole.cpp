@@ -5410,7 +5410,7 @@ LRESULT CRealConsole::OnSetScrollPos(WPARAM wParam)
 	return mp_ABuf->OnSetScrollPos(wParam);
 }
 
-const ConEmuHotKey* CRealConsole::ProcessSelectionHotKey(DWORD VkState, bool bKeyDown, const wchar_t *pszChars)
+const ConEmuHotKey* CRealConsole::ProcessSelectionHotKey(const ConEmuChord& VkState, bool bKeyDown, const wchar_t *pszChars)
 {
 	if (!isSelectionPresent())
 		return NULL;

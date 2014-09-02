@@ -412,7 +412,7 @@ class CRealConsole
 	public:
 		//BOOL FlushInputQueue(DWORD nTimeout = 500);
 		void OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, const wchar_t *pszChars, const MSG* pDeadCharMsg);
-		const ConEmuHotKey* ProcessSelectionHotKey(DWORD VkState, bool bKeyDown, const wchar_t *pszChars);
+		const ConEmuHotKey* ProcessSelectionHotKey(const ConEmuChord& VkState, bool bKeyDown, const wchar_t *pszChars);
 		void ProcessKeyboard(UINT messg, WPARAM wParam, LPARAM lParam, const wchar_t *pszChars);
 		void OnKeyboardIme(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 		void OnMouse(UINT messg, WPARAM wParam, int x, int y, bool abForceSend = false, bool abFromTouch = false);
