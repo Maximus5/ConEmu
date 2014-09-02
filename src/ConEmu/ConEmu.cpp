@@ -4119,6 +4119,9 @@ void CConEmuMain::RegisterHooks()
 	//}
 //	#endif
 
+	// Будем ставить хуки (локальные, для нашего приложения) всегда
+	// чтобы иметь возможность (в будущем) обрабатывать ChildGui
+	#if 0
 	// Если Host-клавиша НЕ Win, или юзер не хочет переключаться Win+Number - хук не нужен
 	//if (!gpSet->isUseWinNumber || !gpSet->IsHostkeySingle(VK_LWIN))
 	if (!gpSetCls->HasSingleWinHotkey())
@@ -4132,6 +4135,7 @@ void CConEmuMain::RegisterHooks()
 
 		return;
 	}
+	#endif
 
 	DWORD dwErr = 0;
 

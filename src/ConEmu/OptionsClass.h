@@ -556,7 +556,7 @@ class CSettings
 	public:
 		const ConEmuHotKey* GetHotKeyPtr(int idx);
 		const ConEmuHotKey* GetHotKeyInfo(const ConEmuChord& VkState, bool bKeyDown, CRealConsole* pRCon);
-		bool HasSingleWinHotkey();
+		//bool HasSingleWinHotkey();
 		void UpdateWinHookSettings(HMODULE hLLKeyHookDll);
 	public:
 		bool isDialogMessage(MSG &Msg);
