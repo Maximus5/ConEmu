@@ -480,12 +480,11 @@ const ConEmuModifiers
 	cvk_ArrHost  = 0x40000000,
 
 	// Маска всех с учетом правый/левый
-	cvk_DISTINCT = cvk_LCtrl|cvk_RCtrl|cvk_LAlt|cvk_RAlt|cvk_LShift|cvk_RShift|cvk_Win|cvk_Apps,
 	cvk_CtrlAny  = cvk_Ctrl|cvk_LCtrl|cvk_RCtrl,
 	cvk_AltAny   = cvk_Alt|cvk_LAlt|cvk_RAlt,
 	cvk_ShiftAny = cvk_Shift|cvk_LShift|cvk_RShift,
-	// Маска вообще всех допустимых флагов, за исключением самого VK
-	cvk_ALLMASK  = (((DWORD)-1) & ~(cvk_Naked|cvk_NumHost|cvk_ArrHost|cvk_VK_MASK)), // 0x8FFFFF00
+	// Маска вообще всех допустимых кнопок
+	cvk_ALLMASK  = cvk_CtrlAny|cvk_AltAny|cvk_ShiftAny|cvk_Win|cvk_Apps,
 	// Empty value
 	cvk_NULL     = 0;
 
