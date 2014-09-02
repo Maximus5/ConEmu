@@ -12275,13 +12275,18 @@ void CRealConsole::GuiWndFocusRestore(bool bForce /*= false*/)
 		BOOL bAttachCalled = FALSE;
 		GuiWndFocusThread(hSetFocus, bAttached, bAttachCalled, nErr);
 
-		SetFocus(hSetFocus);
+		bool bSkipInvisible = false;
+		if (IsWindowVisible(hSetFocus))
+			SetFocus(hSetFocus);
+		else
+			bSkipInvisible = true;
 
 
 		wchar_t sInfo[200];
-		_wsprintf(sInfo, SKIPLEN(countof(sInfo)) L"GuiWndFocusRestore to x%08X, hGuiWnd=x%08X, Attach=%s, Err=%u",
+		_wsprintf(sInfo, SKIPLEN(countof(sInfo)) L"GuiWndFocusRestore to x%08X, hGuiWnd=x%08X, Attach=%s, Err=%u%s",
 			(DWORD)hSetFocus, (DWORD)m_ChildGui.hGuiWnd,
-			bAttachCalled ? (bAttached ? L"Called" : L"Failed") : L"Skipped", nErr);
+			bAttachCalled ? (bAttached ? L"Called" : L"Failed") : L"Skipped", nErr,
+			bSkipInvisible ? L", SkipInvisible" : L"");
 		DEBUGSTRFOCUS(sInfo);
 		mp_ConEmu->LogString(sInfo);
 	}
