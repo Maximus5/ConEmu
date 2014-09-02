@@ -987,6 +987,7 @@
     <ClCompile Include="FrameHolder.cpp" />
     <ClCompile Include="GestureEngine.cpp" />
     <ClCompile Include="GuiServer.cpp" />
+    <ClCompile Include="HotkeyChord.cpp" />
     <ClCompile Include="Hotkeys.cpp" />
     <ClCompile Include="IconList.cpp" />
     <ClCompile Include="Inside.cpp" />
@@ -1073,6 +1074,7 @@
     <ClInclude Include="globals.h" />
     <ClInclude Include="GuiServer.h" />
     <ClInclude Include="Header.h" />
+    <ClInclude Include="HotkeyChord.h" />
     <ClInclude Include="Hotkeys.h" />
     <ClInclude Include="HtmlCopy.h" />
     <ClInclude Include="IconList.h" />

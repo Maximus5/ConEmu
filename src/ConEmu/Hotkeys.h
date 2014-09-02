@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2013 Maximus5
+Copyright (c) 2013-2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -29,6 +29,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include "HotkeyChord.h"
+
 // Forward
 struct ConEmuHotKey;
 class CHotKeyDialog;
@@ -53,30 +55,6 @@ enum ConEmuHotKeyType
 	chk_Local,     // locally registered hotkey
 	chk_Macro,     // GUI Macro
 	chk_Task,      // Task hotkey
-};
-
-
-struct CEVkMatch
-{
-	BYTE Vk;
-	bool Distinct;
-	ConEmuModifiers Mod;
-	ConEmuModifiers Unmask;
-
-	void Set(BYTE aVk, bool aDistinct, ConEmuModifiers aMod, ConEmuModifiers aUnmask = cvk_NULL);
-};
-
-struct ConEmuChord
-{
-	// Main key (first chord)
-	BYTE Vk;
-	// Modifiers (Win, Alt, etc.)
-	ConEmuModifiers Mod;
-
-	void  Clear();
-	UINT  GetModifiers(BYTE (&Mods)[3]) const;
-	bool  IsEmpty() const;
-	bool  IsEqual(const ConEmuChord& Key) const;
 };
 
 // Check if enabled in current context
@@ -149,9 +127,6 @@ struct ConEmuHotKey
 	static DWORD SetModifier(DWORD VkMod, BYTE Mod/*VK*/, bool Xor=true);
 	// Вернуть назначенные модификаторы (idx = 1..3). Возвращает 0 (нету) или VK
 	static DWORD GetModifier(DWORD VkMod, int idx/*1..3*/);
-	// Internal conversions between VK_xxx and cvk_xxx
-	static bool GetMatchByVk(BYTE Vk, CEVkMatch& Match);
-	//static bool GetMatchByMod(ConEmuModifiers Mod, CEVkMatch& Match);
 
 	static bool UseWinNumber();
 	static bool UseWinArrows();

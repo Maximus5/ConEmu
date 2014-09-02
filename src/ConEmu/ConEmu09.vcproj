@@ -427,6 +427,7 @@
       <File RelativePath=".\FrameHolder.cpp" />
       <File RelativePath=".\GestureEngine.cpp" />
       <File RelativePath=".\GuiServer.cpp" />
+      <File RelativePath=".\HotkeyChord.cpp" />
       <File RelativePath=".\Hotkeys.cpp" />
       <File RelativePath=".\IconList.cpp" />
       <File RelativePath=".\Inside.cpp" />
@@ -512,6 +513,7 @@
       <File RelativePath=".\globals.h" />
       <File RelativePath=".\GuiServer.h" />
       <File RelativePath=".\Header.h" />
+      <File RelativePath=".\HotkeyChord.h" />
       <File RelativePath=".\Hotkeys.h" />
       <File RelativePath=".\IconList.h" />
       <File RelativePath=".\Inside.h" />

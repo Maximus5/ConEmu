@@ -1249,7 +1249,7 @@ bool Settings::LoadCmdTask(SettingsBase* reg, CommandTasks* &pTask, int iIndex)
 	if ((iIndex >= 0) && reg->Load(L"Hotkey", VkMod))
 		pTask->HotKey.SetVkMod(VkMod);
 	else
-		pTask->HotKey.Key.Clear();
+		pTask->HotKey.Key.Set();
 
 
 	if (!reg->Load(L"GuiArgs", &pTask->pszGuiArgs) || !*pTask->pszGuiArgs)
@@ -2941,17 +2941,17 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla, const SettingsStorage* ap
 			// Если раньше был включен флажок "Send Alt+Space to console"
 			if (bSendAltSpace && GetHotkeyById(vkSystemMenu, (const ConEmuHotKey**)&pHK) && pHK->NotChanged && (pHK->Equal(VK_SPACE,VK_MENU)))
 			{
-				pHK->Key.Clear(); // Сбросить VkMod для vkSystemMenu (раньше назывался vkAltSpace)
+				pHK->Key.Set(); // Сбросить VkMod для vkSystemMenu (раньше назывался vkAltSpace)
 			}
 			// Если раньше был включен флажок "Send Alt+Enter to console"
 			if (bSendAltEnter && GetHotkeyById(vkAltEnter, (const ConEmuHotKey**)&pHK) && pHK->NotChanged && (pHK->Equal(VK_RETURN,VK_MENU)))
 			{
-				pHK->Key.Clear(); // Сбросить VkMod для vkAltEnter
+				pHK->Key.Set(); // Сбросить VkMod для vkAltEnter
 			}
 			// Если раньше был включен флажок "Send Alt+F9 to console"
 			if (bSendAltF9 && GetHotkeyById(vkMaximize, (const ConEmuHotKey**)&pHK) && pHK->NotChanged && (pHK->Equal(VK_F9,VK_MENU)))
 			{
-				pHK->Key.Clear(); // Сбросить VkMod для vkMaximize
+				pHK->Key.Set(); // Сбросить VkMod для vkMaximize
 			}
 		}
 
@@ -5508,9 +5508,9 @@ void Settings::CheckHotkeyUnique()
 				{
 					// Нам - можно
 					if (ppHK1->HkType == chk_Macro)
-						((ConEmuHotKey*)ppHK1)->Key.Clear();
+						((ConEmuHotKey*)ppHK1)->Key.Set();
 					else
-						((ConEmuHotKey*)ppHK2)->Key.Clear();
+						((ConEmuHotKey*)ppHK2)->Key.Set();
 					continue;
 				}
 			}

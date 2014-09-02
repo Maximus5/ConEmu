@@ -554,7 +554,7 @@ const ConEmuHotKey* CSettings::GetHotKeyInfo(const ConEmuChord& VkState, bool bK
 
 	const ConEmuHotKey* p = NULL;
 
-	DWORD nState = (VkMod & cvk_ALLMASK);
+	DWORD nState = VkState.Mod;
 
 	// Теперь бежим по mp_HotKeys и сравниваем требуемые модификаторы
 	for (int i = 0;; i++)
@@ -567,7 +567,7 @@ const ConEmuHotKey* CSettings::GetHotKeyInfo(const ConEmuChord& VkState, bool bK
 			continue;
 
 		DWORD TestVkMod = pi->GetVkMod();
-		if (ConEmuHotKey::GetHotkey(TestVkMod) != vk)
+		if (pi->Key.Vk != vk)
 			continue; // Не совпадает сама кнопка
 
 		if (pi->Enabled)

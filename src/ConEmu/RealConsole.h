@@ -251,6 +251,7 @@ enum StartDebugType
 
 struct ConEmuHotKey;
 
+#include "HotkeyChord.h"
 #include "RealServer.h"
 #include "TabID.h"
 

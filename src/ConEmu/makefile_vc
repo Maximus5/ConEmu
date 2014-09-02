@@ -52,6 +52,7 @@ $(INTDIR)\FindDlg.obj \
 $(INTDIR)\FrameHolder.obj \
 $(INTDIR)\GestureEngine.obj \
 $(INTDIR)\GuiServer.obj \
+$(INTDIR)\HotkeyChord.obj \
 $(INTDIR)\Hotkeys.obj \
 $(INTDIR)\IconList.obj \
 $(INTDIR)\Inside.obj \
@@ -302,6 +303,8 @@ $(INTDIR)\FrameHolder.obj: FrameHolder.cpp FrameHolder.h
 $(INTDIR)\GestureEngine.obj: GestureEngine.cpp GestureEngine.h
 
 $(INTDIR)\GuiServer.obj: GuiServer.cpp GuiServer.h ConEmu.h RealConsole.h VirtualConsole.h
+
+$(INTDIR)\HotkeyChord.obj: HotkeyChord.cpp HotkeyChord.h
 
 $(INTDIR)\Hotkeys.obj: Hotkeys.cpp Hotkeys.h
 
