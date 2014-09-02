@@ -2409,130 +2409,130 @@ LRESULT CConEmuSize::OnSizing(WPARAM wParam, LPARAM lParam)
 	DEBUGSTRSIZE(L"CConEmuSize::OnSizing");
 
 	LRESULT result = true;
-#if defined(EXT_GNUC_LOG)
-	char szDbg[255];
-	wsprintfA(szDbg, "CConEmuSize::OnSizing(wParam=%i, L.Lo=%i, L.Hi=%i)\n",
+
+	#if defined(EXT_GNUC_LOG)
+	wchar_t szDbg[255];
+	wsprintf(szDbg, L"CConEmuSize::OnSizing(wParam=%i, L.Lo=%i, L.Hi=%i)\n",
 	          wParam, (int)(short)LOWORD(lParam), (int)(short)HIWORD(lParam));
-
 	if (gpSetCls->isAdvLogging)
-		LogString(szDbg);
+		mp_ConEmu->LogString(szDbg);
+	#endif
 
-#endif
-#ifndef _DEBUG
-
-	if (isPictureView())
+	#if 0
+	if (mp_ConEmu->isPictureView())
 	{
 		RECT *pRect = (RECT*)lParam; // с рамкой
-		*pRect = mrc_WndPosOnPicView;
+		*pRect = mp_ConEmu->mrc_WndPosOnPicView;
 		//pRect->right = pRect->left + (mrc_WndPosOnPicView.right-mrc_WndPosOnPicView.left);
 		//pRect->bottom = pRect->top + (mrc_WndPosOnPicView.bottom-mrc_WndPosOnPicView.top);
 	}
 	else
-#endif
-		if (mb_IgnoreSizeChange)
+	#endif
+
+	if (mb_IgnoreSizeChange)
+	{
+		// на время обработки WM_SYSCOMMAND
+	}
+	else if (mp_ConEmu->isNtvdm())
+	{
+		// не менять для 16бит приложений
+	}
+	else if (isWindowNormal())
+	{
+		RECT srctWindow;
+		RECT wndSizeRect, restrictRect, calcRect;
+		RECT *pRect = (RECT*)lParam; // с рамкой
+		RECT rcCurrent; GetWindowRect(ghWnd, &rcCurrent);
+
+		if ((mp_ConEmu->mouse.state & (MOUSE_SIZING_BEGIN|MOUSE_SIZING_TODO))==MOUSE_SIZING_BEGIN
+		        && isPressed(VK_LBUTTON))
 		{
-			// на время обработки WM_SYSCOMMAND
+			SetSizingFlags(MOUSE_SIZING_TODO);
 		}
-		else if (mp_ConEmu->isNtvdm())
+
+		wndSizeRect = *pRect;
+		// Для красивости рамки под мышкой
+		LONG nWidth = gpSetCls->FontWidth(), nHeight = gpSetCls->FontHeight();
+
+		if (nWidth && nHeight)
 		{
-			// не менять для 16бит приложений
+			wndSizeRect.right += (nWidth-1)/2;
+			wndSizeRect.bottom += (nHeight-1)/2;
 		}
-		else if (isWindowNormal())
+
+		bool bNeedFixSize = gpSet->isIntegralSize();
+
+		// Рассчитать желаемый размер консоли
+		//srctWindow = ConsoleSizeFromWindow(&wndSizeRect, true /* frameIncluded */);
+		AutoSizeFont(wndSizeRect, CER_MAIN);
+		srctWindow = CalcRect(CER_CONSOLE_ALL, wndSizeRect, CER_MAIN);
+
+		// Минимально допустимые размеры консоли
+		if (srctWindow.right < MIN_CON_WIDTH)
 		{
-			RECT srctWindow;
-			RECT wndSizeRect, restrictRect, calcRect;
-			RECT *pRect = (RECT*)lParam; // с рамкой
-			RECT rcCurrent; GetWindowRect(ghWnd, &rcCurrent);
+			srctWindow.right = MIN_CON_WIDTH;
+			bNeedFixSize = true;
+		}
 
-			if ((mp_ConEmu->mouse.state & (MOUSE_SIZING_BEGIN|MOUSE_SIZING_TODO))==MOUSE_SIZING_BEGIN
-			        && isPressed(VK_LBUTTON))
+		if (srctWindow.bottom < MIN_CON_HEIGHT)
+		{
+			srctWindow.bottom = MIN_CON_HEIGHT;
+			bNeedFixSize = true;
+		}
+
+
+		if (bNeedFixSize)
+		{
+			calcRect = CalcRect(CER_MAIN, srctWindow, CER_CONSOLE_ALL);
+			#ifdef _DEBUG
+			RECT rcRev = CalcRect(CER_CONSOLE_ALL, calcRect, CER_MAIN);
+			_ASSERTE(rcRev.right==srctWindow.right && rcRev.bottom==srctWindow.bottom);
+			#endif
+			restrictRect.right = pRect->left + calcRect.right;
+			restrictRect.bottom = pRect->top + calcRect.bottom;
+			restrictRect.left = pRect->right - calcRect.right;
+			restrictRect.top = pRect->bottom - calcRect.bottom;
+
+			switch(wParam)
 			{
-				SetSizingFlags(MOUSE_SIZING_TODO);
-			}
-
-			wndSizeRect = *pRect;
-			// Для красивости рамки под мышкой
-			LONG nWidth = gpSetCls->FontWidth(), nHeight = gpSetCls->FontHeight();
-
-			if (nWidth && nHeight)
-			{
-				wndSizeRect.right += (nWidth-1)/2;
-				wndSizeRect.bottom += (nHeight-1)/2;
-			}
-
-			bool bNeedFixSize = gpSet->isIntegralSize();
-
-			// Рассчитать желаемый размер консоли
-			//srctWindow = ConsoleSizeFromWindow(&wndSizeRect, true /* frameIncluded */);
-			AutoSizeFont(wndSizeRect, CER_MAIN);
-			srctWindow = CalcRect(CER_CONSOLE_ALL, wndSizeRect, CER_MAIN);
-
-			// Минимально допустимые размеры консоли
-			if (srctWindow.right < MIN_CON_WIDTH)
-			{
-				srctWindow.right = MIN_CON_WIDTH;
-				bNeedFixSize = true;
-			}
-
-			if (srctWindow.bottom < MIN_CON_HEIGHT)
-			{
-				srctWindow.bottom = MIN_CON_HEIGHT;
-				bNeedFixSize = true;
-			}
-
-
-			if (bNeedFixSize)
-			{
-				calcRect = CalcRect(CER_MAIN, srctWindow, CER_CONSOLE_ALL);
-				#ifdef _DEBUG
-				RECT rcRev = CalcRect(CER_CONSOLE_ALL, calcRect, CER_MAIN);
-				_ASSERTE(rcRev.right==srctWindow.right && rcRev.bottom==srctWindow.bottom);
-				#endif
-				restrictRect.right = pRect->left + calcRect.right;
-				restrictRect.bottom = pRect->top + calcRect.bottom;
-				restrictRect.left = pRect->right - calcRect.right;
-				restrictRect.top = pRect->bottom - calcRect.bottom;
-
-				switch(wParam)
-				{
-					case WMSZ_RIGHT:
-					case WMSZ_BOTTOM:
-					case WMSZ_BOTTOMRIGHT:
-						pRect->right = restrictRect.right;
-						pRect->bottom = restrictRect.bottom;
-						break;
-					case WMSZ_LEFT:
-					case WMSZ_TOP:
-					case WMSZ_TOPLEFT:
-						pRect->left = restrictRect.left;
-						pRect->top = restrictRect.top;
-						break;
-					case WMSZ_TOPRIGHT:
-						pRect->right = restrictRect.right;
-						pRect->top = restrictRect.top;
-						break;
-					case WMSZ_BOTTOMLEFT:
-						pRect->left = restrictRect.left;
-						pRect->bottom = restrictRect.bottom;
-						break;
-				}
-			}
-
-			// При смене размера (пока ничего не делаем)
-			if ((pRect->right - pRect->left) != (rcCurrent.right - rcCurrent.left)
-			        || (pRect->bottom - pRect->top) != (rcCurrent.bottom - rcCurrent.top))
-			{
-				// Сразу подресайзить консоль, чтобы при WM_PAINT можно было отрисовать уже готовые данные
-				TODO("DoubleView");
-				//ActiveCon()->RCon()->SyncConsole2Window(FALSE, pRect);
-				#ifdef _DEBUG
-				wchar_t szSize[255]; _wsprintf(szSize, SKIPLEN(countof(szSize)) L"New window size (X=%i, Y=%i, W=%i, H=%i); Current size (X=%i, Y=%i, W=%i, H=%i)\n",
-				                               pRect->left, pRect->top, (pRect->right-pRect->left), (pRect->bottom-pRect->top),
-				                               rcCurrent.left, rcCurrent.top, (rcCurrent.right-rcCurrent.left), (rcCurrent.bottom-rcCurrent.top));
-				DEBUGSTRSIZE(szSize);
-				#endif
+				case WMSZ_RIGHT:
+				case WMSZ_BOTTOM:
+				case WMSZ_BOTTOMRIGHT:
+					pRect->right = restrictRect.right;
+					pRect->bottom = restrictRect.bottom;
+					break;
+				case WMSZ_LEFT:
+				case WMSZ_TOP:
+				case WMSZ_TOPLEFT:
+					pRect->left = restrictRect.left;
+					pRect->top = restrictRect.top;
+					break;
+				case WMSZ_TOPRIGHT:
+					pRect->right = restrictRect.right;
+					pRect->top = restrictRect.top;
+					break;
+				case WMSZ_BOTTOMLEFT:
+					pRect->left = restrictRect.left;
+					pRect->bottom = restrictRect.bottom;
+					break;
 			}
 		}
+
+		// При смене размера (пока ничего не делаем)
+		if ((pRect->right - pRect->left) != (rcCurrent.right - rcCurrent.left)
+		        || (pRect->bottom - pRect->top) != (rcCurrent.bottom - rcCurrent.top))
+		{
+			// Сразу подресайзить консоль, чтобы при WM_PAINT можно было отрисовать уже готовые данные
+			TODO("DoubleView");
+			//ActiveCon()->RCon()->SyncConsole2Window(FALSE, pRect);
+			#ifdef _DEBUG
+			wchar_t szSize[255]; _wsprintf(szSize, SKIPLEN(countof(szSize)) L"New window size (X=%i, Y=%i, W=%i, H=%i); Current size (X=%i, Y=%i, W=%i, H=%i)\n",
+			                               pRect->left, pRect->top, (pRect->right-pRect->left), (pRect->bottom-pRect->top),
+			                               rcCurrent.left, rcCurrent.top, (rcCurrent.right-rcCurrent.left), (rcCurrent.bottom-rcCurrent.top));
+			DEBUGSTRSIZE(szSize);
+			#endif
+		}
+	}
 
 	if (gpSetCls->isAdvLogging)
 		mp_ConEmu->LogWindowPos(L"OnSizing.end");
