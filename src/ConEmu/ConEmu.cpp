@@ -264,9 +264,11 @@ const wchar_t gsFocusCheckTimer[] = L"TIMER_MAIN_ID";
 const wchar_t gsFocusQuakeCheckTimer[] = L"TIMER_QUAKE_AUTOHIDE_ID";
 #define QUAKE_FOCUS_CHECK_TIMER_DELAY 500
 
+#pragma warning(disable: 4355)
 CConEmuMain::CConEmuMain()
 	: CConEmuSize(this)
 {
+	#pragma warning(default: 4355)
 	gpConEmu = this; // сразу!
 	mb_FindBugMode = false;
 	mn_LastTransparentValue = 255;
