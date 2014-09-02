@@ -108,6 +108,10 @@ struct ConEmuHotKey
 	LPCWSTR GetHotkeyName(wchar_t (&szFull)[128], bool bShowNone = true) const;
 	static LPCWSTR GetHotkeyName(DWORD aVkMod, wchar_t (&szFull)[128], bool bShowNone = true);
 
+	#ifdef _DEBUG
+	static void HotkeyNameUnitTests();
+	#endif
+
 	// nHostMod в младших 3-х байтах может содержать VK (модификаторы).
 	// Функция проверяет, чтобы они не дублировались
 	static void TestHostkeyModifiers(DWORD& nHostMod);

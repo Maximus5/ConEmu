@@ -3494,6 +3494,8 @@ void DebugUnitTests()
 	ConEmuMacro::UnitTests();
 	DebugStrUnitTest();
 	CMatch::UnitTests();
+	ConEmuChord::ChordUnitTests();
+	ConEmuHotKey::HotkeyNameUnitTests();
 }
 #endif
 
