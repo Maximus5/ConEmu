@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2012 Maximus5
+Copyright (c) 2009-2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -62,6 +62,18 @@ protected:
 protected:
 	bool OnStartAttach();
 	static bool StartAttach(HWND ahAttachWnd, DWORD anPID, DWORD anBits, AttachProcessType anType, BOOL abAltMode);
+protected:
+	struct AttachWndInfo {
+		DWORD nPID;
+		int nImageBits;
+		wchar_t szPid[32];
+		wchar_t szType[16];
+		wchar_t szClass[MAX_PATH];
+		wchar_t szTitle[MAX_PATH];
+		wchar_t szExeName[MAX_PATH];
+		wchar_t szExePathName[MAX_PATH*4];
+	};
+	static bool CanAttachWindow(HWND hFind, DWORD nSkipPID, CProcessData* apProcessData, AttachWndInfo& Info);
 public:
 	static DWORD WINAPI StartAttachThread(AttachParm* lpParam);
 public:
