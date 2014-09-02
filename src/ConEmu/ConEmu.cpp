@@ -7649,6 +7649,7 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			// сброс, однократная проверка для "Hide on focus lose"
 			mn_ForceTimerCheckLoseFocus = 0;
 		}
+		#if 0
 		else if (!lbSetFocus || mb_LastConEmuFocusState)
 		{
 			// Logging
@@ -7668,6 +7669,7 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		// Сюда мы доходим, если произошла какая-то ошибка, и ConEmu не получил
 		// информации о том, что его окно было активировано. Нужно уведомить сервер.
 		_ASSERTE(lbSetFocus || lnForceTimerCheckLoseFocus);
+		#endif
 	}
 
 
