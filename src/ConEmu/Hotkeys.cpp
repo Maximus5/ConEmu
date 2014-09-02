@@ -1183,6 +1183,30 @@ ConEmuHotKey* ConEmuHotKeyList::Add(int DescrLangID, ConEmuHotKeyType HkType, Ho
 	return p;
 }
 
+void ConEmuHotKeyList::UpdateNumberModifier()
+{
+	ConEmuModifiers Mods = cvk_NumHost|CEVkMatch::GetFlagsFromMod(gpSet->HostkeyNumberModifier());
+
+	for (INT_PTR i = this->size(); i >= 0; i--)
+	{
+		ConEmuHotKey& hk = (*this)[i];
+		if (hk.HkType == chk_NumHost)
+			hk.Key.Mod = Mods;
+	}
+}
+
+void ConEmuHotKeyList::UpdateArrowModifier()
+{
+	ConEmuModifiers Mods = cvk_ArrHost|CEVkMatch::GetFlagsFromMod(gpSet->HostkeyArrowModifier());
+
+	for (INT_PTR i = this->size(); i >= 0; i--)
+	{
+		ConEmuHotKey& hk = (*this)[i];
+		if (hk.HkType == chk_ArrHost)
+			hk.Key.Mod = Mods;
+	}
+}
+
 int ConEmuHotKeyList::AllocateHotkeys()
 {
 	// Горячие клавиши
@@ -1513,6 +1537,9 @@ int ConEmuHotKeyList::AllocateHotkeys()
 		->SetVkMod('9'|CEHOTKEY_NUMHOSTKEY);
 	Add(vkConsole_10, chk_NumHost, ConEmuHotKey::UseWinNumber, L"", CConEmuCtrl::key_ConsoleNum)
 		->SetVkMod('0'|CEHOTKEY_NUMHOSTKEY);
+
+	UpdateNumberModifier();
+	UpdateArrowModifier();
 
 	// Чтобы не возникло проблем с инициализацией хуков (для обработки Win+<key>)
 	int nHotKeyCount = this->size();

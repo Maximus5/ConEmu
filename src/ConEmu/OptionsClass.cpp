@@ -973,6 +973,10 @@ void CSettings::SettingsLoaded(SettingsLoadedFlags slfFlags, LPCWSTR pszCmdLine 
 	gpSet->GetColors(-1, TRUE);
 
 
+	// Назначить корректные флаги для кнопок Win+Number и Win+Arrow
+	m_HotKeys.UpdateNumberModifier();
+	m_HotKeys.UpdateArrowModifier();
+
 
 	// Проверить необходимость установки хуков
 	//-- isKeyboardHooks();
@@ -8049,6 +8053,7 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 				// Для этой группы - модификаторы назначаются "чохом"
 				_ASSERTE((nModifers & 0xFF) == 0); // тут данные в старших трех байтах
 				gpSet->nHostkeyNumberModifier = (nModifers >> 8); // а тут в младших трех
+				m_HotKeys.UpdateNumberModifier();
 			}
 			else if (mp_ActiveHotKey->HkType == chk_ArrHost)
 			{
@@ -8057,6 +8062,7 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 				// Для этой группы - модификаторы назначаются "чохом"
 				_ASSERTE((nModifers & 0xFF) == 0); // тут данные в старших трех байтах
 				gpSet->nHostkeyArrowModifier = (nModifers >> 8); // а тут в младших трех
+				m_HotKeys.UpdateArrowModifier();
 			}
 			else //if (mp_ActiveHotKey->VkMod)
 			{

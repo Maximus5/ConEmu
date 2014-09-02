@@ -149,6 +149,9 @@ public:
 	ConEmuHotKey* Add(int DescrLangID, ConEmuHotKeyType HkType, HotkeyEnabled_t Enabled, LPCWSTR Name,
 		HotkeyFKey_t fkey = NULL, bool OnKeyUp = false, LPCWSTR GuiMacro = NULL);
 	int AllocateHotkeys();
+public:
+	void UpdateNumberModifier();
+	void UpdateArrowModifier();
 };
 
 class CDpiForDialog;
