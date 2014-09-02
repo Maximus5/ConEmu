@@ -136,6 +136,8 @@ void CMatch::UnitTests()
 		// PowerShell
 		{L"\t" L"Script.ps1:35 знак:23" L"\t",
 			etr_AnyClickable, true, {L"Script.ps1:35"}},
+		{L"\t" L"At С:\\Tools\\release.ps1:12 char:8" L"\t",
+			etr_AnyClickable, true, {L"С:\\Tools\\release.ps1:12"}},
 		// -- Possible?
 		{L"\t" L"abc.py (3): some message" L"\t",
 			etr_AnyClickable, true, {L"abc.py (3)"}},
