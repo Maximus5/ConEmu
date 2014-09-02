@@ -1021,8 +1021,9 @@ struct Settings
 		//reg->Load(L"Multi.ArrowsModifier", nHostkeyArrowModifier); TestHostkeyModifiers();
 		DWORD nHostkeyArrowModifier; // Используется для WinSize
 		public:
-		DWORD HostkeyNumberModifier() { return nHostkeyNumberModifier; };
-		DWORD HostkeyArrowModifier() { return nHostkeyArrowModifier; };
+		// Max - 3 keys, so lower 3 bytes only
+		DWORD HostkeyNumberModifier() { return (nHostkeyNumberModifier & 0xFFFFFF); };
+		DWORD HostkeyArrowModifier()  { return (nHostkeyArrowModifier  & 0xFFFFFF); };
 		//
 		public:
 		//reg->Load(L"Multi.NewConsole", vmMultiNew);

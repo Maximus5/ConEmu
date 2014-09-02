@@ -540,9 +540,8 @@ const ConEmuHotKey* CSettings::GetHotKeyPtr(int idx)
 // pRCon may be NULL
 const ConEmuHotKey* CSettings::GetHotKeyInfo(const ConEmuChord& VkState, bool bKeyDown, CRealConsole* pRCon)
 {
-	BYTE vk = VkState.Vk;
 	// На сами модификаторы - действий не вешается
-	switch (vk)
+	switch (VkState.Vk)
 	{
 	case VK_LWIN: case VK_RWIN:
 	case VK_APPS: // "Apps" too, it is not supposed to be a "key" (in our hotkey list)
@@ -550,11 +549,12 @@ const ConEmuHotKey* CSettings::GetHotKeyInfo(const ConEmuChord& VkState, bool bK
 	case VK_CONTROL: case VK_LCONTROL: case VK_RCONTROL:
 	case VK_MENU: case VK_LMENU: case VK_RMENU:
 		return NULL;
+	case 0:
+		_ASSERTE(VkState.Vk!=0);
+		return NULL;
 	}
 
 	const ConEmuHotKey* p = NULL;
-
-	DWORD nState = VkState.Mod;
 
 	// Теперь бежим по mp_HotKeys и сравниваем требуемые модификаторы
 	for (int i = 0;; i++)
@@ -566,74 +566,22 @@ const ConEmuHotKey* CSettings::GetHotKeyInfo(const ConEmuChord& VkState, bool bK
 		if (pi->HkType == chk_Modifier)
 			continue;
 
-		DWORD TestVkMod = pi->GetVkMod();
-		if (pi->Key.Vk != vk)
-			continue; // Не совпадает сама кнопка
+		// Hotkey was not set in settings?
+		if (!pi->Key.Vk)
+			continue;
 
+		// May be disabled by settings or context?
 		if (pi->Enabled)
 		{
 			if (!pi->Enabled())
-				continue; // Запрещено настройками или текущим контекстом
+				continue;
 		}
 
-		DWORD TestMask = cvk_DISTINCT;
-		DWORD TestValue = 0;
-
-		for (int k = 1; k <= 3; k++)
-		{
-			switch (ConEmuHotKey::GetModifier(TestVkMod, k))
-			{
-			case 0:
-				break; // нету
-			case VK_LWIN: case VK_RWIN: // RWin быть не должно по идее
-				TestValue |= cvk_Win; break;
-			case VK_APPS:
-				TestValue |= cvk_Apps; break;
-
-			case VK_LCONTROL:
-				TestValue |= cvk_LCtrl; break;
-			case VK_RCONTROL:
-				TestValue |= cvk_RCtrl; break;
-			case VK_CONTROL:
-				TestValue |= cvk_Ctrl;
-				TestValue &= ~(cvk_LCtrl|cvk_RCtrl);
-				TestMask |= cvk_Ctrl;
-				TestMask &= ~(cvk_LCtrl|cvk_RCtrl);
-				break;
-
-			case VK_LMENU:
-				TestValue |= cvk_LAlt; break;
-			case VK_RMENU:
-				TestValue |= cvk_RAlt; break;
-			case VK_MENU:
-				TestValue |= cvk_Alt;
-				TestValue &= ~(cvk_LAlt|cvk_RAlt);
-				TestMask |= cvk_Alt;
-				TestMask &= ~(cvk_LAlt|cvk_RAlt);
-				break;
-
-			case VK_LSHIFT:
-				TestValue |= cvk_LShift; break;
-			case VK_RSHIFT:
-				TestValue |= cvk_RShift; break;
-			case VK_SHIFT:
-				TestValue |= cvk_Shift;
-				TestValue &= ~(cvk_LShift|cvk_RShift);
-				TestMask |= cvk_Shift;
-				TestMask &= ~(cvk_LShift|cvk_RShift);
-				break;
-
-			#ifdef _DEBUG
-			default:
-				// Неизвестный!
-				_ASSERTE(ConEmuHotKey::GetModifier(TestVkMod, k)==0);
-			#endif
-			}
-		}
-
-		if ((nState & TestMask) != TestValue)
+		// Do compare (chord keys are planned)
+		if (!pi->Key.IsEqual(VkState))
 			continue;
 
+		// The function
 		if (pi->fkey)
 		{
 			// Допускается ли этот хоткей в текущем контексте?

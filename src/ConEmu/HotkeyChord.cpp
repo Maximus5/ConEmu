@@ -164,6 +164,24 @@ void CEVkMatch::Set(BYTE aVk, bool aDistinct, ConEmuModifiers aMod, ConEmuModifi
 	Vk = aVk; Distinct = aDistinct; Mod = aMod; Left = aLeft; Right = aRight;
 }
 
+ConEmuModifiers CEVkMatch::GetFlagsFromMod(DWORD vkMods)
+{
+	CEVkMatch Match;
+	ConEmuModifiers NewMod = cvk_NULL;
+	DWORD vkLeft = vkMods;
+
+	for (int i = 4; i--;)
+	{
+		if (CEVkMatch::GetMatchByVk(LOBYTE(vkLeft), Match))
+		{
+			NewMod |= Match.Mod;
+		}
+		vkLeft = (vkLeft >> 8);
+	}
+
+	return NewMod;
+}
+
 #ifdef _DEBUG
 void ConEmuChord::ValidateChordMod(ConEmuModifiers aMod)
 {
@@ -252,53 +270,7 @@ bool ConEmuChord::IsEqual(BYTE aVk, ConEmuModifiers aMod) const
 
 bool ConEmuChord::Compare(const ConEmuModifiers aMod1, const ConEmuModifiers aMod2)
 {
-	// The mask - need to check this bits, for example, LCtrl
-	//ConEmuModifiers PressTest   = cvk_NULL;    // cvk_LCtrl
-	// That mask must give result = 0          //
-	//ConEmuModifiers DePressMask = cvk_ALLMASK; // cvk_AltAny|cvk_ShiftAny|cvk_Win|cvk_Apps
-
-	// For checks
 	ConEmuModifiers nTest;
-
-	#if 0
-	// This code is here for logic demo
-	nTest = (aMod & (cvk_LCtrl|cvk_RCtrl));
-	if (nTest == (cvk_LCtrl|cvk_RCtrl))
-	{	// Both? Strange hotkey define but allowed
-		PressTest |= nTest;
-		DePressMask &= ~(cvk_Ctrl|nTest); // Clear all Ctrl's bits
-	}
-	else if (nTest == (cvk_LCtrl))
-	{	// Definitely LCtrl
-		PressTest |= nTest;
-		DePressMask &= ~(cvk_Ctrl|cvk_LCtrl); // Left cvk_RCtrl, it must not be set
-	}
-	else if (nTest == (cvk_RCtrl))
-	{	// Definitely RCtrl
-		PressTest |= nTest;
-		DePressMask &= ~(cvk_Ctrl|cvk_RCtrl); // Left cvk_LCtrl, it must not be set
-	}
-	else if (aMod & cvk_Ctrl)
-	{	// Insensitive (left or right)
-		PressTest |= cvk_Ctrl;
-		DePressMask &= ~(cvk_Ctrl|(cvk_LCtrl|cvk_RCtrl)); // Clear all Ctrl's bits
-	}
-	#endif
-
-	/*
-	BYTE Vk; bool Distinct; ConEmuModifiers Mod; ConEmuModifiers Left; ConEmuModifiers Right;
-	{VK_CONTROL,  false, cvk_Ctrl,  cvk_LCtrl, cvk_RCtrl},
-	{VK_LCONTROL, true,  cvk_LCtrl},
-	{VK_RCONTROL, true,  cvk_RCtrl},
-	{VK_MENU,     false, cvk_Alt,   cvk_LAlt, cvk_RAlt},
-	{VK_LMENU,    true,  cvk_LAlt},
-	{VK_RMENU,    true,  cvk_RAlt},
-	{VK_SHIFT,    false, cvk_Shift, cvk_LShift, cvk_RShift},
-	{VK_LSHIFT,   true,  cvk_LShift},
-	{VK_RSHIFT,   true,  cvk_RShift},
-	{VK_LWIN,     true,  cvk_Win},
-	{VK_APPS,     true,  cvk_Apps},
-	*/
 
 	for (size_t i = 0; i < gvkMatchList[i].Vk; i++)
 	{
@@ -349,75 +321,5 @@ bool ConEmuChord::Compare(const ConEmuModifiers aMod1, const ConEmuModifiers aMo
 			i += 2; // skip next two keys (LCtr, RCtrl), they are already checked
 	}
 
-	//nTest = (aMod2 & PressTest);
-	//if (nTest != PressTest)
-	//	return false;
-	//nTest = (aMod2 & DePressMask);
-	//if (nTest)
-	//	return false;
-
 	return true;
-
-	#if 0
-	// That was old code with VkMod checking
-	ConEmuModifiers TestMask = cvk_DISTINCT;
-	ConEmuModifiers TestValue = cvk_NULL;
-
-	for (int k = 1; k <= 3; k++)
-	{
-		switch (ConEmuHotKey::GetModifier(TestVkMod, k))
-		{
-		case 0:
-			break; // нету
-		case VK_LWIN: case VK_RWIN: // RWin быть не должно по идее
-			TestValue |= cvk_Win; break;
-		case VK_APPS:
-			TestValue |= cvk_Apps; break;
-
-		case VK_LCONTROL:
-			TestValue |= cvk_LCtrl; break;
-		case VK_RCONTROL:
-			TestValue |= cvk_RCtrl; break;
-		case VK_CONTROL:
-			TestValue |= cvk_Ctrl;
-			TestValue &= ~(cvk_LCtrl|cvk_RCtrl);
-			TestMask |= cvk_Ctrl;
-			TestMask &= ~(cvk_LCtrl|cvk_RCtrl);
-			break;
-
-		case VK_LMENU:
-			TestValue |= cvk_LAlt; break;
-		case VK_RMENU:
-			TestValue |= cvk_RAlt; break;
-		case VK_MENU:
-			TestValue |= cvk_Alt;
-			TestValue &= ~(cvk_LAlt|cvk_RAlt);
-			TestMask |= cvk_Alt;
-			TestMask &= ~(cvk_LAlt|cvk_RAlt);
-			break;
-
-		case VK_LSHIFT:
-			TestValue |= cvk_LShift; break;
-		case VK_RSHIFT:
-			TestValue |= cvk_RShift; break;
-		case VK_SHIFT:
-			TestValue |= cvk_Shift;
-			TestValue &= ~(cvk_LShift|cvk_RShift);
-			TestMask |= cvk_Shift;
-			TestMask &= ~(cvk_LShift|cvk_RShift);
-			break;
-
-		#ifdef _DEBUG
-		default:
-			// Неизвестный!
-			_ASSERTE(ConEmuHotKey::GetModifier(TestVkMod, k)==0);
-		#endif
-		}
-	}
-
-	if ((nState & TestMask) != TestValue)
-		return false;
-
-	return true;
-	#endif
 }

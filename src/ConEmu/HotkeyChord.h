@@ -41,6 +41,7 @@ struct CEVkMatch
 
 	void Set(BYTE aVk, bool aDistinct, ConEmuModifiers aMod, ConEmuModifiers aLeft = cvk_NULL, ConEmuModifiers aRight = cvk_NULL);
 	static bool GetMatchByVk(BYTE Vk, CEVkMatch& Match);
+	static ConEmuModifiers GetFlagsFromMod(DWORD vkMods);
 };
 
 struct ConEmuChord

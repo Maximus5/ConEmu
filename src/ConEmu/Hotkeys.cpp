@@ -327,19 +327,7 @@ void ConEmuHotKey::SetVkMod(DWORD VkMod)
 	}
 	else if (vkLeft)
 	{
-		CEVkMatch Match;
-		ConEmuModifiers NewMod = cvk_NULL;
-
-		while (vkLeft)
-		{
-			vkLeft = (vkLeft >> 8);
-			if (CEVkMatch::GetMatchByVk(LOBYTE(vkLeft), Match))
-			{
-				NewMod |= Match.Mod;
-			}
-		}
-
-		Mod = NewMod;
+		Mod = CEVkMatch::GetFlagsFromMod(vkLeft);
 	}
 	else
 	{
@@ -844,6 +832,8 @@ LPCWSTR ConEmuHotKey::GetHotkeyName(wchar_t (&szFull)[128], bool bShowNone /*= t
 	case chk_Modifier2:
 	case chk_System:
 	case chk_Modifier:
+	case chk_NumHost:
+	case chk_ArrHost:
 		for (size_t i = 0; i < gvkMatchList[i].Vk; i++)
 		{
 			const CEVkMatch& k = gvkMatchList[i];
@@ -857,33 +847,6 @@ LPCWSTR ConEmuHotKey::GetHotkeyName(wchar_t (&szFull)[128], bool bShowNone /*= t
 			}
 		}
 		break;
-	case chk_NumHost:
-	case chk_ArrHost:
-	{
-		DWORD lVkMod = 0;
-		switch (HkType)
-		{
-		case chk_NumHost:
-			_ASSERTE(Key.Mod == cvk_NumHost);
-			lVkMod = (gpSet->HostkeyNumberModifier() & 0xFFFFFF); // Max 3 bytes
-			break;
-		case chk_ArrHost:
-			_ASSERTE(Key.Mod == cvk_ArrHost);
-			lVkMod = (gpSet->HostkeyArrowModifier() & 0xFFFFFF); // Max 3 bytes
-			break;
-		}
-		// And parse bytes
-		while (lVkMod)
-		{
-			BYTE vk = LOBYTE(lVkMod);
-			GetVkKeyName(vk, szName);
-			if (szFull[0])
-				wcscat_c(szFull, L"+");
-			wcscat_c(szFull, szName);
-			lVkMod = lVkMod >> 8;
-		}
-		break;
-	}
 	default:
 		// Неизвестный тип!
 		_ASSERTE(FALSE && "Unknown HkType");
