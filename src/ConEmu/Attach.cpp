@@ -247,6 +247,68 @@ wrap:
 	return lbRc;
 }
 
+CAttachDlg::AttachMacroRet CAttachDlg::AttachFromMacro(DWORD anPID, bool abAlternative)
+{
+	MArray<AttachParm> Parms;
+
+	HWND hFind = NULL;
+	CProcessData ProcessData;
+
+	while ((hFind = FindWindowEx(NULL, hFind, NULL, NULL)) != NULL)
+	{
+		if (!IsWindowVisible(hFind))
+			continue;
+
+		AttachWndInfo Info = {};
+		if (!GetWindowThreadProcessId(hFind, &Info.nPID) || (Info.nPID != anPID))
+			continue;
+
+		if (!CanAttachWindow(hFind, 0, &ProcessData, Info))
+			continue;
+
+		AttachParm p = {};
+		p.hAttachWnd = hFind;
+		p.nPID = Info.nPID;
+		p.nBits = Info.nImageBits;
+		if (lstrcmp(Info.szType, szTypeCon) == 0)
+			p.nType = apt_Console;
+		else if (lstrcmp(Info.szType, szTypeGui) == 0)
+			p.nType = apt_Gui;
+		else
+			continue;
+		p.bAlternativeMode = abAlternative;
+		Parms.push_back(p);
+	}
+
+	if (Parms.empty())
+		return amr_WindowNotFound;
+	if (Parms.size() > 1)
+		return amr_Ambiguous;
+
+	AttachParm Null = {};
+	Parms.push_back(Null);
+
+	// Работу делаем в фоновом потоке, чтобы не блокировать главный
+	// (к окну ConEmu должна подцепиться новая вкладка)
+	AttachParm* pParm = Parms.detach();
+	if (!pParm)
+		return amr_Unexpected;
+
+	DWORD nTID = 0;
+	HANDLE hThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)StartAttachThread, pParm, 0, &nTID);
+	if (!hThread)
+	{
+		//DWORD dwErr = GetLastError();
+		//_wsprintf(szItem, SKIPLEN(countof(szItem)) L"ConEmu Attach, PID=%u, TID=%u", GetCurrentProcessId(), GetCurrentThreadId());
+		//DisplayLastError(L"Can't start attach thread", dwErr, 0, szItem);
+		return amr_Unexpected;
+	}
+	// We don't need this handle
+	CloseHandle(hThread);
+
+	return amr_Success;
+}
+
 BOOL CAttachDlg::AttachDlgEnumWin(HWND hFind, LPARAM lParam)
 {
 	if (IsWindowVisible(hFind))

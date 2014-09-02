@@ -43,6 +43,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "VConGroup.h"
 #include "Menu.h"
 #include "AboutDlg.h"
+#include "Attach.h"
 
 
 /* ********************************* */
@@ -124,6 +125,8 @@ namespace ConEmuMacro
 
 	// Диалог About(["Tab"])
 	LPWSTR About(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
+	// Attach - console or ChildGui by PID
+	LPWSTR Attach(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Break (0=CtrlC; 1=CtrlBreak)
 	LPWSTR Break(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Закрыть/прибить текущую консоль
@@ -214,6 +217,7 @@ namespace ConEmuMacro
 	} Functions[] = {
 		// List all functions
 		{About, {L"About"}},
+		{Attach, {L"Attach"}},
 		{Break, {L"Break"}},
 		{Close, {L"Close"}},
 		{Copy, {L"Copy"}},
@@ -1106,6 +1110,31 @@ LPWSTR ConEmuMacro::About(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 	ConEmuAbout::OnInfo_About(pszPageName);
 
 	return lstrdup(L"OK");
+}
+
+LPWSTR ConEmuMacro::Attach(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
+{
+	int nPID = 0, nAlt = 0;
+	if (!p->GetIntArg(0, nPID))
+	{
+		PostMessage(ghWnd, WM_SYSCOMMAND, IDM_ATTACHTO, 0);
+		return lstrdup(L"DialogShowed");
+	}
+
+	p->GetIntArg(1, nAlt);
+
+	CAttachDlg::AttachMacroRet nRc = CAttachDlg::AttachFromMacro(nPID, (nAlt!=0));
+	switch (nRc)
+	{
+	case CAttachDlg::amr_Success:
+		return lstrdup(L"OK");
+	case CAttachDlg::amr_Ambiguous:
+		return lstrdup(L"Ambiguous");
+	case CAttachDlg::amr_WindowNotFound:
+		return lstrdup(L"WindowNotFound");
+	default:
+		return lstrdup(L"Unexpected");
+	}
 }
 
 // Проверка, есть ли ConEmu GUI. Функцию мог бы плагин и сам обработать,

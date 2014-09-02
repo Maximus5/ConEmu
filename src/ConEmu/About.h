@@ -200,6 +200,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	VCGCCTEST(L"––––––––––––––––––––––\r\n",L"----------------------\r\n") \
 	L"About([\"<Page>\"])\r\n" \
 	L"  - Show ‘About’ dialog with page activated, e.g. ‘About(\"-new_console\")’\r\n" \
+	L"Attach([<PID>[,<Alternative>]])\r\n" \
+	L"  - Attach console or ChildGui by PID\r\n" \
 	L"Break([<Event>[,<ProcessGroupId>]])\r\n" \
 	L"  - Event==0: Generates a CTRL+C signal\r\n" \
 	L"    Event==1: Generates a CTRL+BREAK signal\r\n" \

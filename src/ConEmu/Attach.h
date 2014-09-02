@@ -76,6 +76,14 @@ protected:
 	static bool CanAttachWindow(HWND hFind, DWORD nSkipPID, CProcessData* apProcessData, AttachWndInfo& Info);
 public:
 	static DWORD WINAPI StartAttachThread(AttachParm* lpParam);
+	enum AttachMacroRet
+	{
+		amr_Success = 0,
+		amr_Ambiguous = 1,
+		amr_WindowNotFound = 2,
+		amr_Unexpected = 3,
+	};
+	static AttachMacroRet AttachFromMacro(DWORD anPID, bool abAlternative = false);
 public:
 	CAttachDlg();
 	~CAttachDlg();
