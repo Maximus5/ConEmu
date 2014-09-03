@@ -53,6 +53,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmuCtrl.h"
 #include "DefaultTerm.h"
 #include "DpiAware.h"
+#include "HotkeyDlg.h"
 #include "Inside.h"
 #include "LoadImg.h"
 #include "Options.h"

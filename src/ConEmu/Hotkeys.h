@@ -141,37 +141,3 @@ struct ConEmuHotKey
 	static bool UseDndRKey();
 	//static bool DontHookJumps(const ConEmuHotKey* pHK);
 };
-
-#include "../common/MArray.h"
-class ConEmuHotKeyList : public MArray<ConEmuHotKey>
-{
-public:
-	ConEmuHotKey* Add(int DescrLangID, ConEmuHotKeyType HkType, HotkeyEnabled_t Enabled, LPCWSTR Name,
-		HotkeyFKey_t fkey = NULL, bool OnKeyUp = false, LPCWSTR GuiMacro = NULL);
-	int AllocateHotkeys();
-public:
-	void UpdateNumberModifier();
-	void UpdateArrowModifier();
-};
-
-class CDpiForDialog;
-
-// IDD_HOTKEY { hkHotKeySelect, lbHotKeyList, lbHotKeyMod1, lbHotKeyMod2, lbHotKeyMod3 }
-class CHotKeyDialog
-{
-private:
-	HWND mh_Dlg;
-	HWND mh_Parent;
-	ConEmuHotKey m_HK;
-	CDpiForDialog* mp_DpiAware;
-public:
-	static bool EditHotKey(HWND hParent, DWORD& VkMod);
-	DWORD GetVkMod();
-public:
-	static DWORD dlgGetHotkey(HWND hDlg, UINT iEditCtrl = hkHotKeySelect, UINT iListCtrl = lbHotKeyList);
-public:
-	CHotKeyDialog(HWND hParent, DWORD aVkMod);
-	~CHotKeyDialog();
-
-	static INT_PTR CALLBACK hkDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam);
-};

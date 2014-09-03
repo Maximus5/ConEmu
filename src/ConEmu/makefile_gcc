@@ -35,6 +35,8 @@ SRCS = \
 		GestureEngine.cpp  \
 		GuiServer.cpp      \
 		HotkeyChord.cpp    \
+		HotkeyDlg.cpp      \
+		HotkeyList.cpp     \
 		Hotkeys.cpp        \
 		IconList.cpp       \
 		Inside.cpp         \

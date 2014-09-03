@@ -36,6 +36,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "DpiAware.h"
 #include "Options.h"
 #include "CustomFonts.h"
+#include "HotkeyList.h"
 
 class CBackground;
 class CBackgroundInfo;
