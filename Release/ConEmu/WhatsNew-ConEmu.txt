@@ -13,6 +13,21 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
 
+2014.09.03
+[*] Move Background image settings to separate page.
+[*] In some rare cases background was not drawn.
+[*] Background was not updated after some changes of ‘Placement’ field.
+[*] Add dummy (yet) chord hotkey controls to settings.
+[*] Explain LDrag/RDrag modifiers in hotkey list, show [Disabled] if it LDrag/RDrag is unchecked.
+[*] Issue 1657: Treat Far space-visualizations as space symbols.
+[*] Issue 1691: Make simple filenames Ctrl+LClick'able (open file in the editor).
+[*] Reveal ConEmuC switches in release (/ErrorLevel and /Result).
+[*] Issue 1696: GuiMacro. Attach([PID[,Alternative]]) allows attaching external console/ChildGui by PID.
+[*] Keyboard hooks were not disabled when ChildGui has focus and user switching to another app.
+[*] [Re]store tab working directories using option ‘Auto save/restore opened tabs’. Read more about ShellWorkDir.
+[*] Issue 1643: gh#10: Try do not change ‘modified’ timestamp in xml if nothing was changed (Auto save window size and position on exit).
+
+
 2014.08.19
 [*] Issue 1666: Fix black squares in RDP sessions (non true-color display modes actually).
 [*] Issue 1688: Crash while updating Task bar jump list (6307574 regression).
