@@ -109,6 +109,10 @@ void CMatch::UnitTests()
 			etr_AnyClickable, true, {L"License.txt", L"Portable.txt", L"WhatsNew-ConEmu.txt"}, gpConEmu->ms_ConEmuBaseDir},
 		{L"\t" L" \" abc.cpp \" \"def.h\" " L"\t",
 			etr_AnyClickable, true, {L"abc.cpp", L"def.h"}},
+		{L"\t" L"class.func('C:\\abc.xls')" L"\t",
+			etr_AnyClickable, true, {L"C:\\abc.xls"}},
+		{L"\t" L"class::func('C:\\abc.xls')" L"\t",
+			etr_AnyClickable, true, {L"C:\\abc.xls"}},
 
 		// -- VC
 		{L"\t" L"1>c:\\sources\\conemu\\realconsole.cpp(8104) : error C2065: 'qqq' : undeclared identifier" L"\t",
@@ -156,6 +160,8 @@ void CMatch::UnitTests()
 		{L"\t" L"C:\\VC\\unicode_far\\macro.cpp  1251 Ln 5951/8291 Col 51 Ch 39 0043h 13:54" L"\t",
 			etr_AnyClickable, true, {L"C:\\VC\\unicode_far\\macro.cpp"}},
 		{L"\t" L"InfoW1900->SettingsControl(sc.Handle, SCTL_FREE, 0, 0);" L"\t",
+			etr_AnyClickable, false, {}},
+		{L"\t" L"m_abc.func(1,2,3)" L"\t",
 			etr_AnyClickable, false, {}},
 		{NULL}
 	};
