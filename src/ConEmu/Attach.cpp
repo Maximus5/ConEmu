@@ -459,17 +459,17 @@ bool CAttachDlg::CanAttachWindow(HWND hFind, DWORD nSkipPID, CProcessData* apPro
 		#ifdef _WIN64
 		if (!lbExeFound)
 		{
-			h = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE|TH32CS_SNAPMODULE32, nPID);
+			h = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE|TH32CS_SNAPMODULE32, Info.nPID);
 			if (h && h != INVALID_HANDLE_VALUE)
 			{
 				MODULEENTRY32 mi = {sizeof(mi)};
 				if (Module32First(h, &mi))
 				{
 					//ListView_SetItemText(hList, nItem, alc_File, *mi.szModule ? mi.szModule : (wchar_t*)PointToName(mi.szExePath));
-					lstrcpyn(szExeName, *mi.szModule ? mi.szModule : (wchar_t*)PointToName(mi.szExePath), countof(szExeName));
+					lstrcpyn(Info.szExeName, *mi.szModule ? mi.szModule : (wchar_t*)PointToName(mi.szExePath), countof(Info.szExeName));
 					//ListView_SetItemText(hList, nItem, alc_Path, mi.szExePath);
-					lstrcpyn(szExePathName, mi.szExePath, countof(szExePathName));
-					wcscat_c(szPid, L" *32");
+					lstrcpyn(Info.szExePathName, mi.szExePath, countof(Info.szExePathName));
+					wcscat_c(Info.szPid, L" *32");
 				}
 				CloseHandle(h);
 			}
