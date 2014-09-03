@@ -11586,7 +11586,15 @@ wchar_t* CRealConsole::CreateCommandLine(bool abForTasks /*= false*/)
 {
 	if (!this) return NULL;
 
+	// m_Args.pszStartupDir is used in GetStartupDir()
+	// thats why we save the value before showing the current one
+	wchar_t* pszDirSave = m_Args.pszStartupDir;
+	CmdArg szCurDir;
+	m_Args.pszStartupDir = GetConsoleCurDir(szCurDir) ? szCurDir.ms_Arg : NULL;
+
 	wchar_t* pszCmd = m_Args.CreateCommandLine(abForTasks);
+
+	m_Args.pszStartupDir = pszDirSave;
 
 	return pszCmd;
 }
