@@ -28,6 +28,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define HIDE_USE_EXCEPTION_INFO
 #include <windows.h>
+#include <tchar.h>
 #include "defines.h"
 #include "MAssert.h"
 #include "MStrSafe.h"
@@ -35,6 +36,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmuCheck.h"
 #ifdef ASSERT_PIPE_ALLOWED
 #include "ConEmuCheck.h"
+#endif
+#ifdef _DEBUG
+#include <ShlObj.h>
+#include "../ConEmu/version.h"
 #endif
 
 AppMsgBox_t AssertMsgBox = NULL;
@@ -92,6 +97,63 @@ void MyAssertTrap()
 {
 	_CrtDbgBreak();
 }
+void MyAssertDumpToFile(const wchar_t* pszFile, int nLine, const wchar_t* pszTest)
+{
+	wchar_t dmpfile[MAX_PATH+64] = L"", szVer4[8] = L"", szLine[64];
+
+	HRESULT hrc = SHGetFolderPath(NULL, CSIDL_DESKTOPDIRECTORY, NULL, 0/*SHGFP_TYPE_CURRENT*/, dmpfile);
+	if (FAILED(hrc))
+	{
+		memset(dmpfile, 0, sizeof(dmpfile));
+		if (!GetTempPath(MAX_PATH, dmpfile) || !*dmpfile)
+		{
+			//pszError = L"CreateDumpForReport called, get desktop or temp folder failed";
+			return;
+		}
+	}
+
+	wcscat_c(dmpfile, (*dmpfile && dmpfile[lstrlen(dmpfile)-1] != L'\\') ? L"\\ConEmuTrap" : L"ConEmuTrap");
+	CreateDirectory(dmpfile, NULL);
+
+	int nLen = lstrlen(dmpfile);
+	lstrcpyn(szVer4, _T(MVV_4a), countof(szVer4));
+	static LONG snAutoIndex = 0;
+	LONG nAutoIndex = InterlockedIncrement(&snAutoIndex);
+	msprintf(dmpfile+nLen, countof(dmpfile)-nLen, L"\\Assert-%02u%02u%02u%s-%u-%u.txt", MVV_1, MVV_2, MVV_3, szVer4, GetCurrentProcessId(), nAutoIndex);
+
+	HANDLE hFile = CreateFile(dmpfile, GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS, 0, NULL);
+	if (hFile == INVALID_HANDLE_VALUE)
+	{
+		//pszError = L"Failed to create dump file";
+		return;
+	}
+
+	DWORD nWrite;
+
+	msprintf(szLine, countof(szLine), L"CEAssert PID=%u TID=%u\r\nAssertion in ", GetCurrentProcessId(), GetCurrentThreadId());
+	WriteFile(hFile, szLine, (nWrite = lstrlen(szLine)*2), &nWrite, NULL);
+	if (!GetModuleFileNameW(NULL, dmpfile, countof(dmpfile)-2))
+		lstrcpyn(dmpfile, L"<unknown>\r\n", countof(dmpfile));
+	else
+		wcscat_c(dmpfile, L"\r\n");
+	WriteFile(hFile, dmpfile, (nWrite = lstrlen(dmpfile)*2), &nWrite, NULL);
+
+	// File.cpp: 123\r\n
+	if (pszFile)
+	{
+		WriteFile(hFile, pszFile, (nWrite = lstrlen(pszFile)*2), &nWrite, NULL);
+		msprintf(szLine, countof(szLine), L": %i\r\n\r\n", nLine);
+		WriteFile(hFile, szLine, (nWrite = lstrlen(szLine)*2), &nWrite, NULL);
+	}
+
+	if (pszTest)
+	{
+		WriteFile(hFile, pszTest, (nWrite = lstrlen(pszTest)*2), &nWrite, NULL);
+		WriteFile(hFile, L"\r\n", 4, &nWrite, NULL);
+	}
+
+	CloseHandle(hFile);
+}
 int MyAssertProc(const wchar_t* pszFile, int nLine, const wchar_t* pszTest, bool abNoPipe)
 {
 #ifdef _DEBUG
@@ -99,6 +161,8 @@ int MyAssertProc(const wchar_t* pszFile, int nLine, const wchar_t* pszTest, bool
 	if (lbSkip)
 		return 1;
 #endif
+
+	MyAssertDumpToFile(pszFile, nLine, pszTest);
 
 	HANDLE hHeap = GetProcessHeap();
 	MyAssertInfo* pa = (MyAssertInfo*)HeapAlloc(hHeap, HEAP_ZERO_MEMORY, sizeof(MyAssertInfo));

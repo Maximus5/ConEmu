@@ -53,6 +53,7 @@ extern AppMsgBox_t AssertMsgBox;
 	extern CEAssertMode gAllowAssertThread;
 
 	int MyAssertProc(const wchar_t* pszFile, int nLine, const wchar_t* pszTest, bool abNoPipe);
+	void MyAssertDumpToFile(const wchar_t* pszFile, int nLine, const wchar_t* pszTest);
 	void MyAssertTrap();
 	void MyAssertShutdown();
 	extern LONG gnInMyAssertTrap;

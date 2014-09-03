@@ -2213,9 +2213,9 @@ int MsgBox(LPCTSTR lpText, UINT uType, LPCTSTR lpCaption /*= NULL*/, HWND ahPare
 
 void AssertBox(LPCTSTR szText, LPCTSTR szFile, UINT nLine, LPEXCEPTION_POINTERS ExceptionInfo /*= NULL*/)
 {
-#ifdef _DEBUG
-//	_ASSERTE(FALSE);
-#endif
+	#ifdef _DEBUG
+	//_ASSERTE(FALSE);
+	#endif
 
 	static bool bInAssert = false;
 
@@ -2228,6 +2228,10 @@ void AssertBox(LPCTSTR szText, LPCTSTR szFile, UINT nLine, LPEXCEPTION_POINTERS 
 	size_t   cchMax = (szText ? _tcslen(szText) : 0) + (szFile ? _tcslen(szFile) : 0) + 300;
 	wchar_t* pszFull = (cchMax <= countof(szAssertInfo)) ? szAssertInfo : (wchar_t*)malloc(cchMax*sizeof(*pszFull));
 	wchar_t* pszDumpMessage = NULL;
+
+	#ifdef _DEBUG
+	MyAssertDumpToFile(szFile, nLine, szText);
+	#endif
 
 	LPCWSTR  pszTitle = gpConEmu ? gpConEmu->GetDefaultTitle() : NULL;
 	if (!pszTitle || !*pszTitle) pszTitle = L"?ConEmu?";
