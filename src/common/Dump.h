@@ -85,10 +85,10 @@ DWORD CreateDumpForReport(LPEXCEPTION_POINTERS ExceptionInfo, wchar_t (&szFullIn
 			goto wrap;
 		}
 	}
-	if (*dmpfile && dmpfile[lstrlen(dmpfile)-1] != L'\\')
-		wcscat_c(dmpfile, L"\\");
-	wcscat_c(dmpfile, L"ConEmuTrap");
+
+	wcscat_c(dmpfile, (*dmpfile && dmpfile[lstrlen(dmpfile)-1] != L'\\') ? L"\\ConEmuTrap" : L"ConEmuTrap");
 	CreateDirectory(dmpfile, NULL);
+
 	nLen = lstrlen(dmpfile);
 	lstrcpyn(szVer4, _T(MVV_4a), countof(szVer4));
 	_wsprintf(dmpfile+nLen, SKIPLEN(countof(dmpfile)-nLen) L"\\Trap-%02u%02u%02u%s-%u.dmp", MVV_1, MVV_2, MVV_3, szVer4, GetCurrentProcessId());
