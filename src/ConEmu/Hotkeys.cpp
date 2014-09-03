@@ -65,7 +65,7 @@ DWORD ConEmuHotKey::GetVkMod() const
 		{
 			const CEVkMatch& k = gvkMatchList[i];
 
-			if (Mod & k.Mod)
+			if ((Mod & k.Mod) && !(Mod & (k.Left|k.Right)))
 			{
 				VkMod |= (k.Vk << iPos);
 				iPos += 8;
