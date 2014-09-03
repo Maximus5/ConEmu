@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2012 Maximus5
+Copyright (c) 2009-2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -361,6 +361,7 @@ SettingsXML::SettingsXML(const SettingsStorage& Storage)
 	mp_File = NULL; mp_Key = NULL;
 	lstrcpy(m_Storage.szType, CONEMU_CONFIGTYPE_XML);
 	mb_Modified = false;
+	mb_DataChanged = false;
 	mi_Level = 0;
 	mb_Empty = false;
 	mb_KeyEmpty = false;
@@ -737,6 +738,7 @@ bool SettingsXML::OpenKey(const wchar_t *regPath, uint access, BOOL abSilent /*=
 		// Нашли, запомнили
 		mp_Key = pKey; pKey = NULL;
 
+		#if 0
 		if (mp_Key)
 		{
 			SYSTEMTIME st; wchar_t szTime[32];
@@ -746,6 +748,7 @@ bool SettingsXML::OpenKey(const wchar_t *regPath, uint access, BOOL abSilent /*=
 			SetAttr(mp_Key, L"modified", szTime);
 			SetAttr(mp_Key, L"build", gpConEmu->ms_ConEmuBuild);
 		}
+		#endif
 
 		lbRc = true;
 
@@ -764,6 +767,16 @@ wrap:
 	}
 
 	return lbRc;
+}
+
+void SettingsXML::TouchKey(IXMLDOMNode* apKey)
+{
+	SYSTEMTIME st; wchar_t szTime[32];
+	GetLocalTime(&st);
+	_wsprintf(szTime, SKIPLEN(countof(szTime)) L"%04i-%02i-%02i %02i:%02i:%02i",
+		st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond);
+	SetAttr(apKey, L"modified", szTime);
+	SetAttr(apKey, L"build", gpConEmu->ms_ConEmuBuild);
 }
 
 void SettingsXML::CloseStorage()
@@ -812,12 +825,15 @@ void SettingsXML::CloseStorage()
 	SafeRelease(mp_File);
 
 	mb_Modified = false;
+	mb_DataChanged = false;
 	mb_Empty = false;
 	mn_access = 0;
 }
 
 void SettingsXML::CloseKey()
 {
+	if (mp_Key && mb_DataChanged)
+		TouchKey(mp_Key);
 	SafeRelease(mp_Key);
 	mb_KeyEmpty = false;
 	mi_Level = 0;
@@ -907,13 +923,28 @@ bool SettingsXML::SetAttr(IXMLDOMNode* apNode, IXMLDOMNamedNodeMap* apAttrs, con
 			hr = apAttrs->setNamedItem(pIXMLDOMAttribute, &pValue); //-V519
 			_ASSERTE(hr == S_OK);
 			lbRc = SUCCEEDED(hr);
+			mb_DataChanged = true;
 		}
 	}
 	else if (SUCCEEDED(hr) && pValue)
 	{
-		hr = pValue->put_text(bsValue);
-		_ASSERTE(hr == S_OK);
-		lbRc = SUCCEEDED(hr);
+		// Для проверки mb_DataChanged
+		BSTR bsCurValue = NULL;
+		hr = pValue->get_text(&bsCurValue);
+		if (SUCCEEDED(hr) && bsCurValue && bsValue
+			&& (wcscmp(bsValue, bsCurValue) == 0))
+		{
+			// Not changed
+			lbRc = true;
+		}
+		else
+		{
+			// Change the value
+			hr = pValue->put_text(bsValue);
+			_ASSERTE(hr == S_OK);
+			lbRc = SUCCEEDED(hr);
+			mb_DataChanged = true;
+		}
 	}
 
 	::SysFreeString(bsText); bsText = NULL;
@@ -1082,6 +1113,7 @@ IXMLDOMNode* SettingsXML::FindItem(IXMLDOMNode* apFrom, const wchar_t* asType, c
 				{
 					AppendNewLine(pChild);
 					mb_KeyEmpty = true;
+					TouchKey(pChild);
 				}
 
 				if (asType[0] == L'k')
@@ -1505,7 +1537,7 @@ void SettingsXML::Save(const wchar_t *regName, LPCBYTE value, DWORD nType, DWORD
 
 	bsType = GetAttr(pChild, pAttrs, L"type");
 
-	switch(nType)
+	switch (nType)
 	{
 		case REG_DWORD:
 		{
@@ -1633,19 +1665,23 @@ void SettingsXML::Save(const wchar_t *regName, LPCBYTE value, DWORD nType, DWORD
 		// Если ранее был параметр "data" - удалить его из списка атрибутов
 		hr = pAttrs->getNamedItem(L"data", &pNode);
 
+		WARNING("Переделать. Это вызовет перезапись элементов, хотя их можно просто обновить");
+
 		if (SUCCEEDED(hr) && pNode)
 		{
 			hr = pChild->removeChild(pNode, &pNodeRmv);
 			pNode->Release(); pNode = NULL;
+			mb_DataChanged = true;
 
 			if (pNodeRmv) { pNodeRmv->Release(); pNodeRmv = NULL; }
 		}
 
 		//TODO: может оставить перевод строки?
 		// Сначала почистим
-#ifdef _DEBUG
+		#ifdef _DEBUG
 		hr = pChild->get_nodeType(&nodeType);
-#endif
+		#endif
+
 		hr = pChild->hasChildNodes(&bHasChild);
 
 		if (bHasChild)
@@ -1653,14 +1689,15 @@ void SettingsXML::Save(const wchar_t *regName, LPCBYTE value, DWORD nType, DWORD
 			while ((hr = pChild->get_firstChild(&pNode)) == S_OK && pNode)
 			{
 				hr = pNode->get_nodeType(&nodeType);
-#ifdef _DEBUG
+
+				#ifdef _DEBUG
 				BSTR bsDebug = NULL;
 				pNode->get_text(&bsDebug);
-
 				if (bsDebug) ::SysFreeString(bsDebug); bsDebug = NULL;
+				#endif
 
-#endif
 				hr = pChild->removeChild(pNode, &pNodeRmv);
+				mb_DataChanged = true;
 
 				if (pNodeRmv) { pNodeRmv->Release(); pNodeRmv = NULL; }
 

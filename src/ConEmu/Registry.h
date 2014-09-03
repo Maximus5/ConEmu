@@ -153,7 +153,8 @@ struct SettingsXML : public SettingsBase
 	protected:
 		IXMLDOMDocument* mp_File;
 		IXMLDOMNode* mp_Key;
-		bool mb_Modified;
+		bool mb_Modified; // Save was called at least once (data may be was not changed)
+		bool mb_DataChanged; // Data was changed
 		int mi_Level;
 		bool mb_Empty;
 		bool mb_KeyEmpty;
@@ -163,6 +164,7 @@ struct SettingsXML : public SettingsBase
 		static IXMLDOMDocument* CreateDomDocument(wchar_t* pszErr = NULL, size_t cchErrMax = 0);
 		bool OpenStorage(uint access, wchar_t (&szErr)[512]);
 		void CloseStorage();
+		void TouchKey(IXMLDOMNode* apKey);
 	public:
 		static bool IsXmlAllowed();
 		virtual bool OpenKey(const wchar_t *regPath, uint access, BOOL abSilent = FALSE) override;
