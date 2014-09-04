@@ -437,7 +437,8 @@ HBITMAP CTaskBarGhost::CreateThumbnail(int nWidth, int nHeight)
 					{
 						if (!gpConEmu->isActive(mp_VCon))
 							mp_VCon->Update(true);
-						mp_VCon->StretchPaint(hdcMem, nX, nY, nShowWidth, nShowHeight);
+						if (mp_VCon->RCon()->isConsoleReady())
+							mp_VCon->StretchPaint(hdcMem, nX, nY, nShowWidth, nShowHeight);
 					}
 				}
 
