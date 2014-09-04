@@ -1020,7 +1020,10 @@ IXMLDOMNode* SettingsXML::FindItem(IXMLDOMNode* apFrom, const wchar_t* asType, c
 	IXMLDOMNode *pIXMLDOMNode = NULL;
 	IXMLDOMNode *pName = NULL;
 	BSTR bsText = NULL;
+	BSTR bsCheck = NULL;
+	DOMNodeType nodeTypeCheck = NODE_INVALID;
 	BOOL lbEmpty = TRUE;
+	int iLastIndent = 1;
 
 	// Получить все дочерние элементы нужного типа
 	if (apFrom == NULL)
@@ -1105,6 +1108,31 @@ IXMLDOMNode* SettingsXML::FindItem(IXMLDOMNode* apFrom, const wchar_t* asType, c
 
 	if (!pChild && abAllowCreate)
 	{
+		if (asType[0] == L'k')
+		{
+			hr = apFrom->get_lastChild(&pChild);
+			if (SUCCEEDED(hr))
+			{
+				hr = pChild->get_nodeType(&nodeTypeCheck);
+				if (SUCCEEDED(hr) && (nodeTypeCheck == NODE_TEXT))
+				{
+					hr = pChild->get_text(&bsCheck);
+					if (SUCCEEDED(hr) && bsCheck)
+					{
+						iLastIndent = 0;
+						LPCWSTR pszTabs = bsCheck;
+						while (*pszTabs)
+						{
+							if (*(pszTabs++) == L'\t')
+								iLastIndent++;
+						}
+						::SysFreeString(bsCheck); bsCheck = NULL;
+					}
+				}
+			}
+			SafeRelease(pChild);
+		}
+
 		VARIANT vtType; vtType.vt = VT_I4;
 		vtType.lVal = NODE_ELEMENT;
 		bsText = ::SysAllocString(asType);
@@ -1126,7 +1154,7 @@ IXMLDOMNode* SettingsXML::FindItem(IXMLDOMNode* apFrom, const wchar_t* asType, c
 				{
 					//if (mb_KeyEmpty)
 					//AppendIndent(apFrom, lbEmpty ? (mi_Level-1) : mi_Level);
-					AppendIndent(apFrom, (mi_Level-1));
+					AppendIndent(apFrom, (mi_Level-iLastIndent));
 				}
 				else if (mb_KeyEmpty)
 				{
