@@ -155,6 +155,7 @@ struct SettingsXML : public SettingsBase
 		IXMLDOMNode* mp_Key;
 		bool mb_Modified; // Save was called at least once (data may be was not changed)
 		bool mb_DataChanged; // Data was changed
+		void SetDataChanged();
 		int mi_Level;
 		bool mb_Empty;
 		bool mb_KeyEmpty;

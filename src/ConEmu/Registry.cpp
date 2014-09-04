@@ -769,6 +769,11 @@ wrap:
 	return lbRc;
 }
 
+void SettingsXML::SetDataChanged()
+{
+	mb_DataChanged = true;
+}
+
 void SettingsXML::TouchKey(IXMLDOMNode* apKey)
 {
 	SYSTEMTIME st; wchar_t szTime[32];
@@ -923,7 +928,7 @@ bool SettingsXML::SetAttr(IXMLDOMNode* apNode, IXMLDOMNamedNodeMap* apAttrs, con
 			hr = apAttrs->setNamedItem(pIXMLDOMAttribute, &pValue); //-V519
 			_ASSERTE(hr == S_OK);
 			lbRc = SUCCEEDED(hr);
-			mb_DataChanged = true;
+			SetDataChanged();
 		}
 	}
 	else if (SUCCEEDED(hr) && pValue)
@@ -1671,7 +1676,7 @@ void SettingsXML::Save(const wchar_t *regName, LPCBYTE value, DWORD nType, DWORD
 		{
 			hr = pChild->removeChild(pNode, &pNodeRmv);
 			pNode->Release(); pNode = NULL;
-			mb_DataChanged = true;
+			SetDataChanged();
 
 			if (pNodeRmv) { pNodeRmv->Release(); pNodeRmv = NULL; }
 		}
