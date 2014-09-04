@@ -764,8 +764,8 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 						lbNewCmdCheck = FALSE;
 
 						ms_ExeTmp.Set(szComspec);
-						DWORD nCheckSybsystem1 = 0, nCheckBits1 = 0, nFileAttrs1 = 0;
-						if (FindImageSubsystem(ms_ExeTmp, nCheckSybsystem1, nCheckBits1, nFileAttrs1))
+						DWORD nCheckSybsystem1 = 0, nCheckBits1 = 0;
+						if (FindImageSubsystem(ms_ExeTmp, nCheckSybsystem1, nCheckBits1))
 						{
 							ImageSubsystem = nCheckSybsystem1;
 							ImageBits = nCheckBits1;
@@ -833,7 +833,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 		{
 			BOOL lbRootIsCmdExe = FALSE, lbAlwaysConfirmExit = FALSE, lbAutoDisableConfirmExit = FALSE;
 			BOOL lbNeedCutStartEndQuot = FALSE;
-			DWORD nFileAttrs = (DWORD)-1;
+			//DWORD nFileAttrs = (DWORD)-1;
 			ms_ExeTmp.Empty();
 			IsNeedCmd(false, SkipNonPrintable(asParam), ms_ExeTmp, NULL, &lbNeedCutStartEndQuot, &lbRootIsCmdExe, &lbAlwaysConfirmExit, &lbAutoDisableConfirmExit);
 			// это может быть команда ком.процессора!
@@ -869,7 +869,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 				if (!bSkip)
 				{
 					DWORD nCheckSybsystem = 0, nCheckBits = 0;
-					if (FindImageSubsystem(ms_ExeTmp, nCheckSybsystem, nCheckBits, nFileAttrs))
+					if (FindImageSubsystem(ms_ExeTmp, nCheckSybsystem, nCheckBits))
 					{
 						ImageSubsystem = nCheckSybsystem;
 						ImageBits = nCheckBits;
@@ -906,7 +906,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 				if (pszExt && (lstrcmpi(pszExt, L".exe") == 0 || lstrcmpi(pszExt, L".com") == 0))
 				{
 					DWORD nCheckSybsystem = 0, nCheckBits = 0, nFileAttrs;
-					if (FindImageSubsystem(ms_ExeTmp, nCheckSybsystem, nCheckBits, nFileAttrs))
+					if (FindImageSubsystem(ms_ExeTmp, nCheckSybsystem, nCheckBits))
 					{
 						if (nCheckSybsystem == IMAGE_SUBSYSTEM_DOS_EXECUTABLE && nCheckBits == 16)
 						{
@@ -1719,7 +1719,7 @@ int CShellProc::PrepareExecuteParms(
 
 	//wchar_t *szTest = (wchar_t*)malloc(MAX_PATH*2*sizeof(wchar_t)); //[MAX_PATH*2]
 	//wchar_t *szExe = (wchar_t*)malloc((MAX_PATH+1)*sizeof(wchar_t)); //[MAX_PATH+1];
-	DWORD /*mn_ImageSubsystem = 0, mn_ImageBits = 0,*/ nFileAttrs = (DWORD)-1;
+	//DWORD /*mn_ImageSubsystem = 0, mn_ImageBits = 0,*/ nFileAttrs = (DWORD)-1;
 	bool lbGuiApp = false;
 	//int nActionLen = (asAction ? lstrlen(asAction) : 0)+1;
 	//int nFileLen = (asFile ? lstrlen(asFile) : 0)+1;
@@ -1769,7 +1769,7 @@ int CShellProc::PrepareExecuteParms(
 			mn_ImageBits = 0;
 			mn_ImageSubsystem = IMAGE_SUBSYSTEM_UNKNOWN;
 		}
-		else if (FindImageSubsystem(ms_ExeTmp, mn_ImageSubsystem, mn_ImageBits, nFileAttrs))
+		else if (FindImageSubsystem(ms_ExeTmp, mn_ImageSubsystem, mn_ImageBits))
 		{
 			lbGuiApp = (mn_ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_GUI);
 			lbSubsystemOk = TRUE;

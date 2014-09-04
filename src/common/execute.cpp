@@ -751,7 +751,7 @@ LPVOID GetPtrFromRVA(DWORD rva, IMAGE_MAPPING* pImg)
 //	return iRc;
 //}
 
-bool FindImageSubsystem(const wchar_t *Module, /*wchar_t* pstrDest,*/ DWORD& ImageSubsystem, DWORD& ImageBits, DWORD& FileAttrs)
+bool FindImageSubsystem(const wchar_t *Module, /*wchar_t* pstrDest,*/ DWORD& ImageSubsystem, DWORD& ImageBits, LPDWORD pFileAttrs /*= NULL*/)
 {
 	if (!Module || !*Module)
 		return false;
@@ -787,6 +787,7 @@ bool FindImageSubsystem(const wchar_t *Module, /*wchar_t* pstrDest,*/ DWORD& Ima
 	DWORD nPathExtLen = 0;
 	LPCWSTR pszPathExtEnd = NULL;
 	LPWSTR Ext = NULL;
+	DWORD FileAttrs = 0;
 
 	typedef LONG (WINAPI *RegOpenKeyExW_t)(HKEY hKey, LPCTSTR lpSubKey, DWORD ulOptions, REGSAM samDesired, PHKEY phkResult);
 	RegOpenKeyExW_t _RegOpenKeyEx = NULL;
@@ -1017,5 +1018,7 @@ wrap:
 		free(strTmpName);
 	if (hAdvApi)
 		FreeLibrary(hAdvApi);
+	if (pFileAttrs)
+		*pFileAttrs = FileAttrs;
 	return Result;
 }

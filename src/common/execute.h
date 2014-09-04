@@ -21,7 +21,7 @@ struct IMAGE_HEADERS
 bool GetImageSubsystem(const wchar_t *FileName,DWORD& ImageSubsystem,DWORD& ImageBits/*16/32/64*/,DWORD& FileAttrs);
 bool GetImageSubsystem(DWORD& ImageSubsystem,DWORD& ImageBits/*16/32/64*/);
 bool GetImageSubsystem(PROCESS_INFORMATION pi,DWORD& ImageSubsystem,DWORD& ImageBits/*16/32/64*/);
-bool FindImageSubsystem(const wchar_t *Module, /*wchar_t* pstrDest,*/ DWORD& ImageSubsystem, DWORD& ImageBits, DWORD& FileAttrs);
+bool FindImageSubsystem(const wchar_t *Module, /*wchar_t* pstrDest,*/ DWORD& ImageSubsystem, DWORD& ImageBits, LPDWORD pFileAttrs = NULL);
 
 //// Определить адрес процедуры LoadLibraryW для запущенного процесса
 //int FindKernelAddress(HANDLE ahProcess, DWORD anPID, DWORD* pLoadLibrary);
