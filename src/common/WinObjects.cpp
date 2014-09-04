@@ -3470,6 +3470,7 @@ void FindComspec(ConEmuComspec* pOpt, bool bCmdAlso /*= true*/)
 	if (!*pOpt->Comspec64)
 		GetComspecFromEnvVar(pOpt->Comspec64, countof(pOpt->Comspec64), csb_x64);
 }
+#endif
 
 wchar_t* GetEnvVar(LPCWSTR VarName)
 {
@@ -3508,6 +3509,7 @@ wchar_t* GetEnvVar(LPCWSTR VarName)
 	return pszVal;
 }
 
+#ifndef CONEMU_MINIMAL
 void UpdateComspec(ConEmuComspec* pOpt, bool DontModifyPath /*= false*/)
 {
 	if (!pOpt)

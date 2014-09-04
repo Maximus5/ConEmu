@@ -154,8 +154,8 @@ HANDLE DuplicateProcessHandle(DWORD anTargetPID);
 void FindComspec(ConEmuComspec* pOpt, bool bCmdAlso = true); // используется в GUI при загрузке настроек
 void UpdateComspec(ConEmuComspec* pOpt, bool DontModifyPath = false);
 void SetEnvVarExpanded(LPCWSTR asName, LPCWSTR asValue);
-wchar_t* GetEnvVar(LPCWSTR VarName);
 #endif
+wchar_t* GetEnvVar(LPCWSTR VarName);
 LPCWSTR GetComspecFromEnvVar(wchar_t* pszComspec, DWORD cchMax, ComSpecBits Bits = csb_SameOS);
 wchar_t* GetComspec(const ConEmuComspec* pOpt);
 
