@@ -1466,6 +1466,9 @@ BOOL CRealServer::ServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &
 		return FALSE;
 	}
 
+	if (pIn->hdr.bAsync)
+		pRSrv->mp_RConServer->BreakConnection(pInst);
+
 	DWORD dwTimeStart = timeGetTime();
 
 	int nDataSize = pIn->hdr.cbSize - sizeof(CESERVER_REQ_HDR);

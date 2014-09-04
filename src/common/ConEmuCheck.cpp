@@ -710,7 +710,7 @@ CESERVER_REQ* ExecuteGuiCmd(HWND hConWnd, CESERVER_REQ* pIn, HWND hOwner, BOOL b
 	DWORD nStartTick = GetTickCount();
 	#endif
 
-	CESERVER_REQ* lpRet = ExecuteCmd(szGuiPipeName, pIn, 1000, hOwner);
+	CESERVER_REQ* lpRet = ExecuteCmd(szGuiPipeName, pIn, 1000, hOwner, bAsyncNoResult);
 
 	#ifdef _DEBUG
 	DWORD nEndTick = GetTickCount();
