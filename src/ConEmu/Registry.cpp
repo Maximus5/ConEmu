@@ -901,6 +901,7 @@ bool SettingsXML::SetAttr(IXMLDOMNode* apNode, IXMLDOMNamedNodeMap* apAttrs, con
 	IXMLDOMNode *pValue = NULL;
 	IXMLDOMAttribute *pIXMLDOMAttribute = NULL;
 	BSTR bsText = NULL;
+	BSTR bsCurValue = NULL;
 	bsText = ::SysAllocString(asName);
 	hr = apAttrs->getNamedItem(bsText, &pValue);
 
@@ -934,7 +935,6 @@ bool SettingsXML::SetAttr(IXMLDOMNode* apNode, IXMLDOMNamedNodeMap* apAttrs, con
 	else if (SUCCEEDED(hr) && pValue)
 	{
 		// Для проверки mb_DataChanged
-		BSTR bsCurValue = NULL;
 		hr = pValue->get_text(&bsCurValue);
 		if (SUCCEEDED(hr) && bsCurValue && bsValue
 			&& (wcscmp(bsValue, bsCurValue) == 0))
@@ -948,12 +948,13 @@ bool SettingsXML::SetAttr(IXMLDOMNode* apNode, IXMLDOMNamedNodeMap* apAttrs, con
 			hr = pValue->put_text(bsValue);
 			_ASSERTE(hr == S_OK);
 			lbRc = SUCCEEDED(hr);
-			mb_DataChanged = true;
+			SetDataChanged();
 		}
 	}
 
 	::SysFreeString(bsText); bsText = NULL;
 	::SysFreeString(bsValue); bsValue = NULL;
+	if (bsCurValue) { ::SysFreeString(bsCurValue); bsCurValue = NULL; }
 
 	if (pValue) { pValue->Release(); pValue = NULL; }
 
