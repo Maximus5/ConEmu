@@ -8840,7 +8840,11 @@ void CSettings::OnResetOrReload(bool abResetOnly, SettingsStorage* pXmlStorage /
 
 void CSettings::ExportSettings()
 {
-	wchar_t *pszFile = SelectFile(L"Export settings", L"*.xml", NULL, ghOpWnd, L"XML files (*.xml)\0*.xml\0", sff_SaveNewFile);
+	wchar_t *pszDefPath = lstrdup(gpConEmu->ConEmuXml());
+	wchar_t *pszSlash = pszDefPath ? wcsrchr(pszDefPath, L'\\') : NULL;
+	if (pszSlash) *(pszSlash+1) = 0;
+
+	wchar_t *pszFile = SelectFile(L"Export settings", L"*.xml", pszDefPath, ghOpWnd, L"XML files (*.xml)\0*.xml\0", sff_SaveNewFile);
 	if (pszFile)
 	{
 		SetCursor(LoadCursor(NULL,IDC_WAIT));
@@ -8871,6 +8875,8 @@ void CSettings::ExportSettings()
 		SetCursor(LoadCursor(NULL,IDC_ARROW));
 		gpConEmu->Taskbar_SetProgressState(TBPF_NOPROGRESS);
 	}
+
+	SafeFree(pszDefPath);
 }
 
 void CSettings::ImportSettings()
