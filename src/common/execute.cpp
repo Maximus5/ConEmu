@@ -1,6 +1,7 @@
 ﻿/*
 Copyright (c) 1996 Eugene Roshal
 Copyright (c) 2000 Far Group
+Copyright (c) 2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -62,6 +63,25 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //	};
 //};
 
+bool IsFileBatch(LPCWSTR pszExt)
+{
+	if (!pszExt || !*pszExt)
+		return false;
+	LPCWSTR Known[] = {
+		// Batches
+		L".cmd", L".bat", L".btm"/*take command*/,
+		// Other scripts ?
+		// L".ps1", L".sh", L".py",
+		// End of predefined
+		NULL};
+	for (INT_PTR i = 0; Known[i]; i++)
+	{
+		if (lstrcmpi(Known[i], pszExt) == 0)
+			return true;
+	}
+	return false;
+}
+
 bool GetImageSubsystem(const wchar_t *FileName,DWORD& ImageSubsystem,DWORD& ImageBits/*16/32/64*/,DWORD& FileAttrs)
 {
 	bool Result = false;
@@ -112,11 +132,7 @@ bool GetImageSubsystem(const wchar_t *FileName,DWORD& ImageSubsystem,DWORD& Imag
 
 		// Это это батник - сразу вернуть IMAGE_SUBSYSTEM_BATCH_FILE
 		LPCWSTR pszExt = PointToExt(FileName);
-		if (pszExt 
-			&& (!lstrcmpi(pszExt, L".cmd")
-				|| !lstrcmpiW(pszExt, L".bat")
-				|| !lstrcmpiW(pszExt, L".btm") // take command
-			))
+		if (pszExt && IsFileBatch(pszExt))
 		{
 			CloseHandle(hModuleFile);
 			ImageSubsystem = IMAGE_SUBSYSTEM_BATCH_FILE;
@@ -295,10 +311,10 @@ bool GetImageSubsystem(PROCESS_INFORMATION pi,DWORD& ImageSubsystem,DWORD& Image
 {
 	DWORD nErrCode = 0;
 	DWORD nFlags = TH32CS_SNAPMODULE;
-	
+
 	ImageBits = 32; //-V112
 	ImageSubsystem = IMAGE_SUBSYSTEM_WINDOWS_CUI;
-	
+
 	#ifdef _WIN64
 		HMODULE hKernel = GetModuleHandle(L"kernel32.dll");
 		if (hKernel)
@@ -321,7 +337,7 @@ bool GetImageSubsystem(PROCESS_INFORMATION pi,DWORD& ImageSubsystem,DWORD& Image
 			}
 		}
 	#endif
-	
+
 	HANDLE hSnap = CreateToolhelp32Snapshot(nFlags, pi.dwProcessId);
 	if (hSnap == INVALID_HANDLE_VALUE)
 	{
@@ -336,7 +352,7 @@ bool GetImageSubsystem(PROCESS_INFORMATION pi,DWORD& ImageSubsystem,DWORD& Image
 	CloseHandle(hSnap);
 	if (!lbModule)
 		return false;
-	
+
 	// Теперь можно считать данные процесса
 	if (!ReadProcessMemory(pi.hProcess, mi.modBaseAddr, &dos, sizeof(dos), &hdrReadSize))
 		nErrCode = -3;
@@ -352,7 +368,7 @@ bool GetImageSubsystem(PROCESS_INFORMATION pi,DWORD& ImageSubsystem,DWORD& Image
 	else
 	{
 		nErrCode = 0;
-		
+
 		switch (hdr.OptionalHeader32.Magic)
 		{
 			case IMAGE_NT_OPTIONAL_HDR32_MAGIC:
@@ -377,7 +393,7 @@ bool GetImageSubsystem(PROCESS_INFORMATION pi,DWORD& ImageSubsystem,DWORD& Image
 			}
 		}
 	}
-	
+
 	return (nErrCode == 0);
 }
 
@@ -779,14 +795,15 @@ bool FindImageSubsystem(const wchar_t *Module, /*wchar_t* pstrDest,*/ DWORD& Ima
 
 	//string strFullName=Module;
 	LPCWSTR ModuleExt = PointToExt(Module);
-	wchar_t *strPathExt/*[32767]*/ = NULL; //(L".COM;.EXE;.BAT;.CMD;.VBS;.JS;.WSH");
+	//wchar_t *strPathExt/*[32767]*/ = NULL; //(L".COM;.EXE;.BAT;.CMD;.VBS;.JS;.WSH");
 	wchar_t *strPathEnv/*[32767]*/ = NULL;
-	wchar_t *strExpand/*[32767]*/ = NULL;
-	wchar_t *strTmpName/*[32767]*/ = NULL;
+	wchar_t *strExpand/*[32767]*/ = NULL;  int cchstrExpand = 32767;
+	wchar_t *strTmpName/*[32767]*/ = NULL; int cchstrTmpName = 32767;
 	wchar_t *pszFilePart = NULL;
-	DWORD nPathExtLen = 0;
+	//DWORD nPathExtLen = 0;
 	LPCWSTR pszPathExtEnd = NULL;
 	LPWSTR Ext = NULL;
+	LPWSTR pszExtCur;
 	DWORD FileAttrs = 0;
 
 	typedef LONG (WINAPI *RegOpenKeyExW_t)(HKEY hKey, LPCTSTR lpSubKey, DWORD ulOptions, REGSAM samDesired, PHKEY phkResult);
@@ -796,27 +813,28 @@ bool FindImageSubsystem(const wchar_t *Module, /*wchar_t* pstrDest,*/ DWORD& Ima
 	typedef LONG (WINAPI *RegCloseKey_t)(HKEY hKey);
 	RegCloseKey_t _RegCloseKey = NULL;
 	HMODULE hAdvApi = NULL;
-	
-	
 
-	int cchstrPathExt = 32767;
-	strPathExt = (wchar_t*)malloc(cchstrPathExt*sizeof(wchar_t)); *strPathExt = 0;
-	int cchstrPathEnv = 32767;
-	strPathEnv = (wchar_t*)malloc(cchstrPathEnv*sizeof(wchar_t)); *strPathEnv = 0;
-	int cchstrExpand = 32767;
-	strExpand = (wchar_t*)malloc(cchstrExpand*sizeof(wchar_t)); *strExpand = 0;
-	int cchstrTmpName = 32767;
-	strTmpName = (wchar_t*)malloc(cchstrTmpName*sizeof(wchar_t)); *strTmpName = 0;
-		
-	nPathExtLen = GetEnvironmentVariable(L"PATHEXT", strPathExt, cchstrPathExt-2);
-	if (!nPathExtLen)
-	{
-		_wcscpy_c(strPathExt, cchstrPathExt, L".COM;.EXE;.BAT;.CMD;.VBS;.JS;.WSH");
-		nPathExtLen = lstrlen(strPathExt);
-	}
-	pszPathExtEnd = strPathExt+nPathExtLen;
+	// Actually, we need only to check, if the Module is executable (PE) or not
+	// Plus, if it is IMAGE_SUBSYSTEM_BATCH_FILE
+	// All other options are not interesting to us
+	wchar_t strPathExt[] = L".COM;.EXE;.BAT;.CMD;.BTM;"; // Must becode Zero-zero-terminated
+	//strPathExt = GetEnvVar(L"PATHEXT");
+	//if (!strPathExt || !*strPathExt)
+	//{
+	//	SafeFree(strPathExt);
+	//	strPathExt = lstrdup(L".COM;.EXE;.BAT;.CMD;.VBS;.JS;.WSH;"); // Must becode Zero-zero-terminated
+	//	if (!strPathExt)
+	//		goto wrap;
+	//}
+	//#ifdef _DEBUG
+	//else
+	//{
+	//	int iLen = lstrlen(strPathExt);
+	//	_ASSERTE(strPathExt[iLen] == 0 && strPathExt[iLen+1] == 0); // Must be Zero-zero-terminated
+	//}
+	//#endif
+	pszPathExtEnd = strPathExt+lstrlen(strPathExt);
 	// Разбить на токены
-	strPathExt[nPathExtLen] = strPathExt[nPathExtLen+1] = 0;
 	Ext = wcschr(strPathExt, L';');
 	while (Ext)
 	{
@@ -827,8 +845,51 @@ bool FindImageSubsystem(const wchar_t *Module, /*wchar_t* pstrDest,*/ DWORD& Ima
 	TODO("Проверить на превышение длин строк");
 
 	// первый проход - в текущем каталоге
-	LPWSTR pszExtCur = strPathExt;
-	while (pszExtCur < pszPathExtEnd)
+	pszExtCur = strPathExt;
+	// Указано расширение?
+	if (ModuleExt)
+	{
+		// А оно вообще указано в списке допустимых?
+		bool bBatchExt = IsFileBatch(ModuleExt);
+		bool bExecutable = bBatchExt;
+		if (!bExecutable)
+		{
+			while (pszExtCur < pszPathExtEnd)
+			{
+				if (lstrcmpi(pszExtCur, ModuleExt) == 0)
+				{
+					bExecutable = true;
+					break;
+				}
+				pszExtCur = pszExtCur + lstrlen(pszExtCur)+1;
+			}
+		}
+
+		if (bBatchExt && !pFileAttrs)
+		{
+			ImageSubsystem = IMAGE_SUBSYSTEM_BATCH_FILE;
+			ImageBits = IsWindows64() ? 64 : 32; //-V112
+			Result = true;
+			goto wrap;
+		}
+
+		if (!bExecutable)
+		{
+			// Если расширение не указано в списке "исполняемых", то и проверять нечего
+			goto wrap;
+		}
+
+		// Check for executable?
+		if (GetImageSubsystem(Module, ImageSubsystem, ImageBits/*16/32/64*/, FileAttrs))
+		{
+			Result = true;
+			goto wrap;
+		}
+	}
+
+	strTmpName = (wchar_t*)malloc(cchstrTmpName*sizeof(wchar_t)); *strTmpName = 0;
+
+	while (!ModuleExt && (pszExtCur < pszPathExtEnd))
 	{
 		Ext = pszExtCur;
 		pszExtCur = pszExtCur + lstrlen(pszExtCur)+1;
@@ -848,16 +909,13 @@ bool FindImageSubsystem(const wchar_t *Module, /*wchar_t* pstrDest,*/ DWORD& Ima
 			goto wrap;
 		}
 
-		if (ModuleExt)
-		{
-			break;
-		}
+		_ASSERTE(!ModuleExt)
 	}
 
 	// второй проход - по правилам SearchPath
 
 	// поиск по переменной PATH
-	if (GetEnvironmentVariable(L"PATH", strPathEnv, cchstrPathEnv))
+	if (strPathEnv = GetEnvVar(L"PATH"))
 	{
 		LPWSTR pszPathEnvEnd = strPathEnv + lstrlen(strPathEnv);
 
@@ -934,6 +992,8 @@ bool FindImageSubsystem(const wchar_t *Module, /*wchar_t* pstrDest,*/ DWORD& Ima
 		// Сначала смотрим в HKCU, затем - в HKLM
 		HKEY RootFindKey[] = {HKEY_CURRENT_USER,HKEY_LOCAL_MACHINE,HKEY_LOCAL_MACHINE};
 
+		strExpand = (wchar_t*)malloc(cchstrExpand*sizeof(wchar_t)); *strExpand = 0;
+
 		BOOL lbAddExt = FALSE;
 		pszExtCur = strPathExt;
 		while (pszExtCur < pszPathExtEnd)
@@ -1008,14 +1068,9 @@ bool FindImageSubsystem(const wchar_t *Module, /*wchar_t* pstrDest,*/ DWORD& Ima
 	}
 
 wrap:
-	if (strPathExt)
-		free(strPathExt);
-	if (strPathEnv)
-		free(strPathEnv);
-	if (strExpand)
-		free(strExpand);
-	if (strTmpName)
-		free(strTmpName);
+	SafeFree(strPathEnv);
+	SafeFree(strExpand);
+	SafeFree(strTmpName);
 	if (hAdvApi)
 		FreeLibrary(hAdvApi);
 	if (pFileAttrs)
