@@ -184,6 +184,10 @@ struct SettingsXML : public SettingsBase
 		IXMLDOMNode* FindItem(IXMLDOMNode* apFrom, const wchar_t* asType, const wchar_t* asName, bool abAllowCreate);
 		bool SetAttr(IXMLDOMNode* apNode, const wchar_t* asName, const wchar_t* asValue);
 		bool SetAttr(IXMLDOMNode* apNode, IXMLDOMNamedNodeMap* apAttrs, const wchar_t* asName, const wchar_t* asValue);
+
+		bool SetMultiLine(IXMLDOMNode* apNode, const wchar_t* asValue, long nAllLen);
+		void ClearChildrenTail(IXMLDOMNode* apNode, IXMLDOMNode* apFirstClear);
+
 		BSTR GetAttr(IXMLDOMNode* apNode, const wchar_t* asName);
 		BSTR GetAttr(IXMLDOMNode* apNode, IXMLDOMNamedNodeMap* apAttrs, const wchar_t* asName);
 
