@@ -593,15 +593,18 @@ void OnMainThreadActivated()
 		gbNeedPostEditCheck = FALSE;
 	}
 
+	// To avoid spare API calls
+	int iMacroActive = 0;
+
 	if (!gbRequestUpdateTabs && gbNeedPostTabSend)
 	{
-		if (!IsMacroActive())
+		if (!isMacroActive(iMacroActive))
 		{
 			gbRequestUpdateTabs = TRUE; gbNeedPostTabSend = FALSE;
 		}
 	}
 
-	if (gbRequestUpdateTabs && !IsMacroActive())
+	if (gbRequestUpdateTabs && !isMacroActive(iMacroActive))
 	{
 		gbRequestUpdateTabs = gbNeedPostTabSend = FALSE;
 		UpdateConEmuTabs(true);
@@ -6261,6 +6264,15 @@ BOOL StartDebugger()
 	return lbRc;
 }
 
+
+bool isMacroActive(int& iMacroActive)
+{
+	if (!iMacroActive)
+	{
+		iMacroActive = IsMacroActive() ? 1 : 2;
+	}
+	return (iMacroActive == 1);
+}
 
 BOOL IsMacroActive()
 {

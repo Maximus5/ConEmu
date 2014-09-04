@@ -247,6 +247,7 @@ void ShowConsoleInfo();
 //BOOL FUNC_Y1(CallSynchro)(SynchroArg *Param, DWORD nTimeout /*= 10000*/);
 //BOOL FUNC_Y2(CallSynchro)(SynchroArg *Param, DWORD nTimeout /*= 10000*/);
 
+bool isMacroActive(int& iMacroActive);
 BOOL IsMacroActive();
 BOOL IsMacroActiveA();
 BOOL FUNC_X(IsMacroActiveW)();
