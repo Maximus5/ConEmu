@@ -4693,7 +4693,14 @@ void PreReadConsoleInput(bool abUnicode, bool abPeek)
 	{
 		gbCurDirChanged = false;
 
-		if (ghConEmuWndDC)
+		if (gFarMode.cbSize)
+		{
+			if (gFarMode.OnCurDirChanged)
+			{
+				gFarMode.OnCurDirChanged();
+			}
+		}
+		else if (ghConEmuWndDC)
 		{
 			CmdArg szDir;
 			if (GetDirectory(szDir) > 0)

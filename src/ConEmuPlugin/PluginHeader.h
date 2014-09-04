@@ -35,7 +35,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 #include "ConEmu_Lang.h"
 #include "FarDefaultMacros.h"
-#include "../Common/WinObjects.h"
+#include "../common/WinObjects.h"
+#include "../common/CmdLine.h"
 #include "PluginSrv.h"
 
 //#define SafeCloseHandle(h) { if ((h)!=NULL) { HANDLE hh = (h); (h) = NULL; if (hh!=INVALID_HANDLE_VALUE) CloseHandle(hh); } }
@@ -95,6 +96,12 @@ typedef struct tag_PanelViewRegInfo
 	PanelViewOutputCallback pfnWriteCall;
 } PanelViewRegInfo;
 extern PanelViewRegInfo gPanelRegLeft, gPanelRegRight;
+
+struct CurPanelDirs
+{
+	CmdArg *ActiveDir, *PassiveDir;
+};
+extern CurPanelDirs gPanelDirs;
 
 //typedef struct tag_SynchroArg {
 //	enum {
@@ -178,6 +185,12 @@ void CloseTabs();
 
 HWND AtoH(WCHAR *Str, int Len);
 bool UpdateConEmuTabs(bool abSendChanges);
+
+void UpdatePanelDirs();
+bool UpdatePanelDirsA();
+bool FUNC_X(UpdatePanelDirsW)();
+bool FUNC_Y1(UpdatePanelDirsW)();
+bool FUNC_Y2(UpdatePanelDirsW)();
 
 BOOL LoadFarVersion();
 

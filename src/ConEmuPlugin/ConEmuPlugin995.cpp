@@ -490,6 +490,39 @@ int ProcessEditorInputW995(LPCVOID aRec)
 	return 0;
 }
 
+bool UpdatePanelDirsW995()
+{
+	if (!InfoW995 || !InfoW995->Control)
+		return false;
+
+	bool bChanged = false;
+
+	struct tag_Panels {
+		HANDLE hPanel;
+		CmdArg* pStr;
+	} Pnls[] = {
+		{PANEL_ACTIVE, gPanelDirs.ActiveDir},
+		{PANEL_PASSIVE, gPanelDirs.PassiveDir},
+	};
+
+	for (int i = 0; i <= 1; i++)
+	{
+		PanelInfo PInfo = {};
+		InfoW995->Control(PANEL_ACTIVE, FCTL_GETPANELINFO, 0, (LONG_PTR)&PInfo);
+		if ((PInfo.PanelType != PTYPE_FILEPANEL) || PInfo.Plugin)
+			continue;
+
+		wchar_t* pszDir = GetPanelDir(Pnls[i].hPanel);
+		if (pszDir && (lstrcmp(pszDir, Pnls[i].pStr->ms_Arg ? Pnls[i].pStr->ms_Arg : L"") != 0))
+		{
+			Pnls[i].pStr->Set(pszDir);
+			bChanged = true;
+		}
+		SafeFree(pszDir);
+	}
+
+	return bChanged;
+}
 
 bool UpdateConEmuTabsW995(int anEvent, bool losingFocus, bool editorSave, void* Param/*=NULL*/)
 {

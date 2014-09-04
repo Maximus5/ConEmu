@@ -77,6 +77,7 @@ extern BOOL WINAPI OnWriteConsoleOutput(HookCallbackArg* pArgs);
 extern VOID WINAPI OnGetNumberOfConsoleInputEventsPost(HookCallbackArg* pArgs);
 extern VOID WINAPI OnShellExecuteExW_Except(HookCallbackArg* pArgs);
 extern VOID WINAPI OnLibraryLoaded(HMODULE ahModule);
+extern VOID WINAPI OnCurDirChanged();
 
 
 HMODULE ghHooksModule = NULL;
@@ -171,6 +172,7 @@ BOOL StartupHooks(HMODULE ahOurDll)
 		SetHookCallbacksExt("WriteConsoleOutputW", kernel32, ghPluginModule, OnWriteConsoleOutput, NULL, NULL);
 	SetHookCallbacks("GetNumberOfConsoleInputEvents", kernel32, ghPluginModule, NULL, OnGetNumberOfConsoleInputEventsPost, NULL);
 	SetHookCallbacks("ShellExecuteExW", shell32, ghPluginModule, NULL, NULL, OnShellExecuteExW_Except);
+	gFarMode.OnCurDirChanged = OnCurDirChanged;
 	SetFarHookMode(&gFarMode);
 	return true;
 }

@@ -983,7 +983,7 @@ void ExecuteFreeResult(CESERVER_REQ* &pOut)
 	free(p);
 }
 
-void SendCurrentDirectory(HWND hConWnd, LPCWSTR asDirectory)
+void SendCurrentDirectory(HWND hConWnd, LPCWSTR asDirectory, LPCWSTR asPassiveDirectory /*= NULL*/)
 {
 	int iLen = lstrlen(asDirectory);
 	size_t cbMax = sizeof(CESERVER_REQ_HDR) + (iLen + 1) * sizeof(*asDirectory);

@@ -573,6 +573,40 @@ int WINAPI _export ProcessViewerEvent(int Event, void *Param)
 	return 0;
 }
 
+bool UpdatePanelDirsA()
+{
+	if (!InfoA)
+		return false;
+
+	bool bChanged = false;
+
+	struct tag_Panels {
+		int iCmd;
+		CmdArg* pStr;
+	} Pnls[] = {
+		{FCTL_GETPANELSHORTINFO, gPanelDirs.ActiveDir},
+		{FCTL_GETANOTHERPANELSHORTINFO, gPanelDirs.PassiveDir},
+	};
+
+	for (int i = 0; i <= 1; i++)
+	{
+		PanelInfo pi = {};
+		wchar_t szWide[NM] = L"";
+		if (InfoA->Control(INVALID_HANDLE_VALUE, Pnls[i].iCmd, &pi)
+			&& !pi.Plugin)
+		{
+			MultiByteToWideChar(CP_OEMCP, 0, pi.CurDir, -1, szWide, countof(szWide));
+			if (lstrcmp(szWide, Pnls[i].pStr->ms_Arg ? Pnls[i].pStr->ms_Arg : L"") != 0)
+			{
+				Pnls[i].pStr->Set(szWide);
+				bChanged = true;
+			}
+		}
+	}
+
+	return bChanged;
+}
+
 extern MSection *csTabs;
 
 bool UpdateConEmuTabsA(int anEvent, bool losingFocus, bool editorSave, void *Param)

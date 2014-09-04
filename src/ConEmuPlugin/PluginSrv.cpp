@@ -237,6 +237,7 @@ extern struct HookModeFar gFarMode;
 
 BOOL WINAPI PlugServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &ppReply, DWORD &pcbReplySize, DWORD &pcbMaxReplySize, LPARAM lParam);
 void WINAPI PlugServerFree(CESERVER_REQ* pReply, LPARAM lParam);
+VOID WINAPI OnCurDirChanged();
 
 void PlugServerInit()
 {
@@ -431,6 +432,7 @@ void cmd_FarSetChanged(FAR_REQ_FARSETCHANGED *pFarSet)
 	gFarMode.bShellNoZoneCheck = pFarSet->bShellNoZoneCheck;
 	gFarMode.bMonitorConsoleInput = pFarSet->bMonitorConsoleInput;
 	gFarMode.bLongConsoleOutput = pFarSet->bLongConsoleOutput;
+	gFarMode.OnCurDirChanged = OnCurDirChanged;
 
 	UpdateComspec(&pFarSet->ComSpec); // ComSpec, isAddConEmu2Path, ...
 

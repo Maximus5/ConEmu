@@ -177,6 +177,7 @@ struct HookModeFar
 	BOOL  bMonitorConsoleInput; // при (Read/Peek)ConsoleInput(A/W) послать инфу в GUI/Settings/Debug
 	BOOL  bPopupMenuPos;     // при вызове EMenu показать меню в позиции мышиного курсора
 	BOOL  bLongConsoleOutput; // при выполнении консольных программ из Far - увеличивать высоту буфера
+	void  (WINAPI* OnCurDirChanged)();
 };
 
 #if defined(EXTERNAL_HOOK_LIBRARY) && !defined(DEFINE_HOOK_MACROS)
