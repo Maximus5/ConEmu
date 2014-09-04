@@ -3488,10 +3488,10 @@ wchar_t* GetEnvVar(LPCWSTR VarName)
 		nErr = GetLastError();
 		if (nErr == ERROR_ENVVAR_NOT_FOUND)
 			return NULL;
-		return lstrdup(L"");
+		return (wchar_t*)calloc(3,sizeof(wchar_t));
 	}
 
-	cchMax = nRc+1;
+	cchMax = nRc+2;
 	wchar_t* pszVal = (wchar_t*)calloc(cchMax,sizeof(*pszVal));
 	if (!pszVal)
 	{
