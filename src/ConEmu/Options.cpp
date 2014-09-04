@@ -1627,9 +1627,25 @@ void Settings::SavePalettes(SettingsBase* reg)
 	wchar_t szColorKey[MAX_PATH+64];
 	wcscpy_c(szColorKey, gpSetCls->GetConfigPath());
 	wcscat_c(szColorKey, L"\\Colors");
+
+	// Write "Count" before first "Palette"
+	int UserCount = 0;
+	lbOpened = reg->OpenKey(szColorKey, KEY_WRITE);
+	if (lbOpened)
+	{
+		for (int i = 0; i < PaletteCount; i++)
+		{
+			if (!Palettes[i] || Palettes[i]->bPredefined)
+				continue; // Системные - не сохраняем
+			UserCount++;
+		}
+		reg->Save(L"Count", UserCount);
+		reg->CloseKey();
+	}
+
 	wchar_t* pszColorKey = szColorKey + lstrlen(szColorKey);
 
-	int UserCount = 0;
+	UserCount = 0;
 
 	for (int i = 0; i < PaletteCount; i++)
 	{
@@ -1662,14 +1678,6 @@ void Settings::SavePalettes(SettingsBase* reg)
 
 			reg->CloseKey();
 		}
-	}
-
-	*pszColorKey = 0;
-	lbOpened = reg->OpenKey(szColorKey, KEY_WRITE);
-	if (lbOpened)
-	{
-		reg->Save(L"Count", UserCount);
-		reg->CloseKey();
 	}
 
 	for (int k = 0; k < AppCount; k++)
@@ -2346,6 +2354,25 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla, const SettingsStorage* ap
 
 	if (lbOpened)
 	{
+		bool bCmdLine = reg->Load(L"CmdLine", &psStartSingleApp);
+		reg->Load(L"StartTasksFile", &psStartTasksFile);
+		reg->Load(L"StartTasksName", &psStartTasksName);
+		reg->Load(L"StartFarFolders", isStartFarFolders);
+		reg->Load(L"StartFarEditors", isStartFarEditors);
+		if (!reg->Load(L"StartType", nStartType) && bCmdLine)
+		{
+			if (*psStartSingleApp == CmdFilePrefix)
+				nStartType = 1;
+			else if (*psStartSingleApp == TaskBracketLeft)
+				nStartType = 2;
+		}
+		// Check
+		if (nStartType > (rbStartLastTabs - rbStartSingleApp))
+		{
+			_ASSERTE(nStartType <= (rbStartLastTabs - rbStartSingleApp));
+			nStartType = 0;
+		}
+
 		LoadAppSettings(reg, &AppStd/*, Colors*/);
 
 		reg->Load(L"TrueColorerSupport", isTrueColorer);
@@ -2419,26 +2446,6 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla, const SettingsStorage* ap
 
 		//isMonospaceSelected = isMonospace ? isMonospace : 1; // запомнить, чтобы выбирать то что нужно при смене шрифта
 
-
-
-		bool bCmdLine = reg->Load(L"CmdLine", &psStartSingleApp);
-		reg->Load(L"StartTasksFile", &psStartTasksFile);
-		reg->Load(L"StartTasksName", &psStartTasksName);
-		reg->Load(L"StartFarFolders", isStartFarFolders);
-		reg->Load(L"StartFarEditors", isStartFarEditors);
-		if (!reg->Load(L"StartType", nStartType) && bCmdLine)
-		{
-			if (*psStartSingleApp == CmdFilePrefix)
-				nStartType = 1;
-			else if (*psStartSingleApp == TaskBracketLeft)
-				nStartType = 2;
-		}
-		// Check
-		if (nStartType > (rbStartLastTabs - rbStartSingleApp))
-		{
-			_ASSERTE(nStartType <= (rbStartLastTabs - rbStartSingleApp));
-			nStartType = 0;
-		}
 		reg->Load(L"StoreTaskbarkTasks", isStoreTaskbarkTasks);
 		reg->Load(L"StoreTaskbarCommands", isStoreTaskbarCommands);
 
@@ -3354,6 +3361,13 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 			wcscpy_c(Type, reg->m_Storage.szType);
 		}
 
+		reg->Save(L"StartType", nStartType);
+		reg->Save(L"CmdLine", psStartSingleApp);
+		reg->Save(L"StartTasksFile", psStartTasksFile);
+		reg->Save(L"StartTasksName", psStartTasksName);
+		reg->Save(L"StartFarFolders", isStartFarFolders);
+		reg->Save(L"StartFarEditors", isStartFarEditors);
+
 		SaveAppSettings(reg, &AppStd/*, Colors*/);
 
 		reg->Save(L"TrueColorerSupport", isTrueColorer);
@@ -3402,13 +3416,6 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		#endif
 
 		//reg->Save(L"LockRealConsolePos", isLockRealConsolePos);
-
-		reg->Save(L"StartType", nStartType);
-		reg->Save(L"CmdLine", psStartSingleApp);
-		reg->Save(L"StartTasksFile", psStartTasksFile);
-		reg->Save(L"StartTasksName", psStartTasksName);
-		reg->Save(L"StartFarFolders", isStartFarFolders);
-		reg->Save(L"StartFarEditors", isStartFarEditors);
 
 		reg->Save(L"StoreTaskbarkTasks", isStoreTaskbarkTasks);
 		reg->Save(L"StoreTaskbarCommands", isStoreTaskbarCommands);
