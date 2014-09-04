@@ -30,7 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _COMMON_HEADER_HPP_
 
 // Interface version
-#define CESERVER_REQ_VER    139
+#define CESERVER_REQ_VER    140
 
 // Max tabs/panes count
 #define MAX_CONSOLE_COUNT 30
@@ -417,7 +417,7 @@ const CECMD
 	CECMD_UPDCONMAPHDR   = 76, // AltServer не может менять CESERVER_CONSOLE_MAPPING_HDR во избежание конфликтов. Это делает только RM_MAINSERVER (req.ConInfo)
 	CECMD_SETCONSCRBUF   = 77, // CESERVER_REQ_SETCONSCRBUF - temporarily block active server reading thread to change console buffer size
 	CECMD_PORTABLESTART  = 78, // CESERVER_REQ_PORTABLESTARTED - used when XxxPortable.exe starts Xxx.exe (paf - kitty, tcc, etc.)
-	CECMD_STORECURDIR    = 79, // wData[] == GetCurrentDirectory()
+	CECMD_STORECURDIR    = 79, // CESERVER_REQ_STORECURDIR <== GetCurrentDirectory()
 /** Команды FAR плагина **/
 	CMD_FIRST_FAR_CMD    = 200,
 	CMD_DRAGFROM         = 200,
@@ -1963,6 +1963,14 @@ struct CESERVER_REQ_SETCONSCRBUF
 	COORD   dwSize;     // Informational, new size of the buffer
 };
 
+// CECMD_STORECURDIR
+struct CESERVER_REQ_STORECURDIR
+{
+	int iActiveCch;     // Including terminating zero
+	int iPassiveCch;    // Passive panel, Far only. Including terminating zero
+	wchar_t szDir[1];   // Variable length;
+};
+
 struct CESERVER_REQ
 {
 	CESERVER_REQ_HDR hdr;
@@ -2016,6 +2024,7 @@ struct CESERVER_REQ
 		CESERVER_REQ_DUPLICATE Duplicate;
 		CESERVER_REQ_ALTBUFFER AltBuf;
 		CESERVER_REQ_SETCONSCRBUF SetConScrBuf;
+		CESERVER_REQ_STORECURDIR CurDir;
 	};
 
 	DWORD DataSize() { return this ? (hdr.cbSize - sizeof(hdr)) : 0; };

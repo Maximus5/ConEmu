@@ -985,12 +985,27 @@ void ExecuteFreeResult(CESERVER_REQ* &pOut)
 
 void SendCurrentDirectory(HWND hConWnd, LPCWSTR asDirectory, LPCWSTR asPassiveDirectory /*= NULL*/)
 {
-	int iLen = lstrlen(asDirectory);
-	size_t cbMax = sizeof(CESERVER_REQ_HDR) + (iLen + 1) * sizeof(*asDirectory);
+	int iALen = asDirectory ? (lstrlen(asDirectory)+1) : 0;
+	int iPLen = asPassiveDirectory ? (lstrlen(asPassiveDirectory)+1) : 0;
+	if ((iALen < 0) || (iPLen < 0) || (!iALen && !iPLen))
+		return;
+
+	size_t cbMax = sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_STORECURDIR) + (iALen + iPLen) * sizeof(*asDirectory);
 	CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_STORECURDIR, cbMax);
 	if (pIn)
 	{
-		lstrcpyn((wchar_t*)pIn->wData, asDirectory, iLen+1);
+		pIn->CurDir.iActiveCch = iALen;
+		pIn->CurDir.iPassiveCch = iPLen;
+		wchar_t* psz = pIn->CurDir.szDir;
+		if (iALen)
+		{
+			lstrcpyn(psz, asDirectory, iALen);
+			psz += iALen;
+		}
+		if (iPLen)
+		{
+			lstrcpyn(psz, asPassiveDirectory, iPLen);
+		}
 		CESERVER_REQ* pOut = ExecuteGuiCmd(hConWnd, pIn, hConWnd, TRUE);
 		ExecuteFreeResult(pOut);
 	}

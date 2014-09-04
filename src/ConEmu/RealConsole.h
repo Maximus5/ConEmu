@@ -705,8 +705,9 @@ class CRealConsole
 		RConStartArgs m_Args;
 		CmdArg ms_DefTitle;
 		CmdArg ms_CurWorkDir;
+		CmdArg ms_CurPassiveDir;
 		CRITICAL_SECTION mcs_CurWorkDir;
-		void StoreCurWorkDir(LPCWSTR asNewCurDir);
+		void StoreCurWorkDir(CESERVER_REQ_STORECURDIR* pNewCurDir);
 		//wchar_t ms_ProfilePathTemp[MAX_PATH+1]; -- commented code
 		bool mb_WasStartDetached;
 		wchar_t ms_RootProcessName[MAX_PATH];

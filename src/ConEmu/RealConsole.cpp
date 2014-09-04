@@ -3813,6 +3813,7 @@ BOOL CRealConsole::StartProcessInt(LPCWSTR& lpszCmd, wchar_t*& psCurCmd, LPCWSTR
 	nCreateBegin = GetTickCount();
 
 	ms_CurWorkDir.Set(lpszWorkDir);
+	ms_CurPassiveDir.Set(NULL);
 
 	// Create process or RunAs
 	lbRc = CreateOrRunAs(this, m_Args, psCurCmd, lpszWorkDir, si, pi, mp_sei, dwLastError);
@@ -12849,21 +12850,37 @@ wrap:
 	return szDir.IsEmpty() ? NULL : (LPCWSTR)szDir;
 }
 
-void CRealConsole::StoreCurWorkDir(LPCWSTR asNewCurDir)
+void CRealConsole::StoreCurWorkDir(CESERVER_REQ_STORECURDIR* pNewCurDir)
 {
-	if (!asNewCurDir || !*asNewCurDir)
+	if (!pNewCurDir || ((pNewCurDir->iActiveCch <= 0) && (pNewCurDir->iPassiveCch <= 0)))
 		return;
-	if (IsBadStringPtr(asNewCurDir, MAX_PATH))
-		return;
-
-	wchar_t* pszWinPath = MakeWinPath(asNewCurDir);
-	if (!pszWinPath)
+	if (IsBadStringPtr(pNewCurDir->szDir, MAX_PATH))
 		return;
 
 	MSectionLockSimple CS; CS.Lock(&mcs_CurWorkDir);
-	ms_CurWorkDir.Set(pszWinPath);
+	LPCWSTR pszArg = pNewCurDir->szDir;
+	for (int i = 0; i <= 1; i++)
+	{
+		int iCch = i ? pNewCurDir->iPassiveCch : pNewCurDir->iActiveCch;
+
+		wchar_t* pszWinPath = NULL;
+		if (iCch)
+		{
+			pszWinPath = *pszArg ? MakeWinPath(pszArg) : NULL;
+			pszArg += iCch;
+		}
+
+		if (pszWinPath)
+		{
+			if (i)
+				ms_CurPassiveDir.Set(pszWinPath);
+			else
+				ms_CurWorkDir.Set(pszWinPath);
+		}
+
+		SafeFree(pszWinPath);
+	}
 	CS.Unlock();
-	SafeFree(pszWinPath);
 
 	LPCWSTR pszTabTempl = isFar() ? gpSet->szTabPanels : gpSet->szTabConsole;
 	if (wcsstr(pszTabTempl, L"%d") || wcsstr(pszTabTempl, L"%D"))
