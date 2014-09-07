@@ -142,6 +142,8 @@ typedef struct _CONSOLE_INFO
 
 #pragma pack(pop)*/
 
+//#include "../common/ProcList.h"
+
 struct ConProcess
 {
 	DWORD ProcessID, ParentPID; //, InputTID;
