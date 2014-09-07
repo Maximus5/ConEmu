@@ -43,6 +43,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif // __GNUC__
 
 #include "../common/Monitors.h"
+#include "../common/StartupEnvDef.h"
 #include "../ConEmuCD/ExitCodes.h"
 #include "../ConEmuCD/GuiHooks.h"
 #include "../ConEmuPlugin/FarDefaultMacros.h"

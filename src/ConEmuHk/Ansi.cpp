@@ -39,6 +39,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmuHooks.h"
 #include "../common/ConsoleAnnotation.h"
 #include "ExtConsole.h"
+#include "../common/MSectionSimple.h"
 #include "../common/WinConsole.h"
 #include "../ConEmu/version.h"
 

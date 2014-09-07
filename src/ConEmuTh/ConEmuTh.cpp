@@ -52,6 +52,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/RgnDetect.h"
 #include "../common/TerminalMode.h"
 #include "../common/FarVersion.h"
+#include "../common/MFileMapping.h"
+#include "../common/MSection.h"
 #include "ConEmuTh.h"
 #include "ImgCache.h"
 

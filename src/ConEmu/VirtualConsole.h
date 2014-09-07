@@ -29,7 +29,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 //#include "kl_parts.h"
 //#include "../Common/common.hpp"
-#include "../Common/ConEmuCheck.h"
+#include "../common/ConEmuCheck.h"
+#include "../common/MSection.h"
 #include "VConRelease.h"
 
 #include "Options.h"

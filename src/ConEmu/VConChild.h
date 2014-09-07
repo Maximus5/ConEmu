@@ -33,6 +33,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 class CVirtualConsole;
 class CRealConsole;
 
+#include "../common/MTimer.h"
+
 class CConEmuChild
 {
 	public:

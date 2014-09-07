@@ -32,6 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "header.h"
 
 #include "../common/MArray.h"
+#include "../common/MSectionSimple.h"
 #include "ConEmu.h"
 #include "RunQueue.h"
 #include "VConGroup.h"

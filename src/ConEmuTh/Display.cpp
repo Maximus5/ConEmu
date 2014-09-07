@@ -47,6 +47,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <windows.h>
 #include "ConEmuTh.h"
 #include "../common/RgnDetect.h"
+#include "../common/MSection.h"
 #include "resource.h"
 #include "ImgCache.h"
 

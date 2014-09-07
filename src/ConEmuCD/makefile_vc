@@ -26,36 +26,40 @@ BASEADDRESS=/DYNAMICBASE:NO /BASE:0x54610000 /FIXED:NO
 
 
 LINK_OBJS = \
-$(OBJDIR)\ConsoleMain.obj \
-$(OBJDIR)\GuiHooks.obj \
-$(OBJDIR)\RegPrepare.obj \
-$(OBJDIR)\ConEmuCmd.obj \
-$(OBJDIR)\ConEmuSrv.obj \
-$(OBJDIR)\ConProcess.obj \
-$(OBJDIR)\Debugger.obj \
-$(OBJDIR)\Downloader.obj \
-$(OBJDIR)\Injects.obj \
-$(OBJDIR)\Infiltrate.obj \
-$(OBJDIR)\InjectRemote.obj \
-$(OBJDIR)\InQueue.obj \
-$(OBJDIR)\Queue.obj \
-$(OBJDIR)\SrvPipes.obj \
-$(OBJDIR)\ExecPty.obj \
-$(OBJDIR)\execute.obj \
-$(OBJDIR)\ConEmuCheck.obj \
-$(OBJDIR)\ConsoleMixAttr.obj \
-$(OBJDIR)\ConsoleRead.obj \
-$(OBJDIR)\CmdLine.obj \
-$(OBJDIR)\Common.obj \
-$(OBJDIR)\MAssert.obj \
-$(OBJDIR)\Memory.obj \
-$(OBJDIR)\Monitors.obj \
-$(OBJDIR)\MSecurity.obj \
-$(OBJDIR)\MStrSafe.obj \
-$(OBJDIR)\RConStartArgs.obj \
-$(OBJDIR)\SetEnvVar.obj \
-$(OBJDIR)\WinConsole.obj \
-$(OBJDIR)\WinObjects.obj
+$(INTDIR)\CmdLine.obj \
+$(INTDIR)\Common.obj \
+$(INTDIR)\ConEmuCheck.obj \
+$(INTDIR)\ConEmuCmd.obj \
+$(INTDIR)\ConEmuSrv.obj \
+$(INTDIR)\ConProcess.obj \
+$(INTDIR)\ConsoleMain.obj \
+$(INTDIR)\ConsoleMixAttr.obj \
+$(INTDIR)\ConsoleRead.obj \
+$(INTDIR)\Debugger.obj \
+$(INTDIR)\Downloader.obj \
+$(INTDIR)\ExecPty.obj \
+$(INTDIR)\execute.obj \
+$(INTDIR)\GuiHooks.obj \
+$(INTDIR)\Infiltrate.obj \
+$(INTDIR)\InjectRemote.obj \
+$(INTDIR)\Injects.obj \
+$(INTDIR)\InQueue.obj \
+$(INTDIR)\MAssert.obj \
+$(INTDIR)\MConHandle.obj \
+$(INTDIR)\Memory.obj \
+$(INTDIR)\MFileLog.obj \
+$(INTDIR)\Monitors.obj \
+$(INTDIR)\MSection.obj \
+$(INTDIR)\MSectionSimple.obj \
+$(INTDIR)\MSecurity.obj \
+$(INTDIR)\MStrSafe.obj \
+$(INTDIR)\Queue.obj \
+$(INTDIR)\RConStartArgs.obj \
+$(INTDIR)\RegPrepare.obj \
+$(INTDIR)\SetEnvVar.obj \
+$(INTDIR)\SrvPipes.obj \
+$(INTDIR)\WinConsole.obj \
+$(INTDIR)\WinObjects.obj
 
 USERLIBS = 
 
@@ -81,7 +85,7 @@ DLLNAME = $(OUTNAME).$(EXT)
 DLLFULLNAME = $(OUTDIR)$(ADDOUTDIR)\$(DLLNAME)
 DEF = $(DEF_NAME).def
 MAP = $(OUTDIR)$(ADDOUTDIR)\$(OUTNAME).map
-RES = $(OBJDIR)\$(NAME).res
+RES = $(INTDIR)\$(NAME).res
 
 !ifdef VC8
 COMPAT64=/Wp64
@@ -127,7 +131,7 @@ CPP_PROJ_NO=/nologo /c /W3 /wd4995 /Gy /GF $(CPP_ALIGN) /J /Gr /GS- /GR- /EHs-c-
 ULOUT=-Tpd -Re
 LINK_MACHINE = /MACHINE:X86
 !endif
-CPP_PROJ=$(CPP_PROJ_NO) /Fo"$(OBJDIR)\\"
+CPP_PROJ=$(CPP_PROJ_NO) /Fo"$(INTDIR)\\"
 
 #!ifdef EXCLUDECRT
 #!undef COMMONLIB
@@ -217,26 +221,26 @@ $(DLLFULLNAME) : $(LINK_OBJS) $(RES) $(LINK_DEP)
 !endif
 
 !ifndef __MAKE__
-.cpp{$(OBJDIR)}.obj::
+.cpp{$(INTDIR)}.obj::
 	@$(CC) @<<
 	$(CFLAGS) $<
 <<
-{../common/}.cpp{$(OBJDIR)}.obj::
+{../common/}.cpp{$(INTDIR)}.obj::
 	$(CC) @<<
 	$(CFLAGS) $<
 <<
-{../ConEmuHk/}.cpp{$(OBJDIR)}.obj::
+{../ConEmuHk/}.cpp{$(INTDIR)}.obj::
 	$(CC) @<<
 	$(CFLAGS) $<
 <<
 !else
-.cpp{$(OBJDIR)}.obj:
+.cpp{$(INTDIR)}.obj:
 	@$(CC) $(CFLAGS) { $< } 
 
-{../common/}.cpp{$(OBJDIR)}.obj:
+{../common/}.cpp{$(INTDIR)}.obj:
 	@$(CC) $(CFLAGS) { $< } 
 
-{../ConEmuHk/}.cpp{$(OBJDIR)}.obj:
+{../ConEmuHk/}.cpp{$(INTDIR)}.obj:
 	@$(CC) $(CFLAGS) { $< } 
 !endif
 
@@ -249,7 +253,7 @@ dirs:
 !ifdef INSTALL
 	if not exist "$(WORKDIR)\$(NULL)" mkdir "$(WORKDIR)"
 !endif
-	if not exist "$(OBJDIR)\$(NULL)" mkdir "$(OBJDIR)"
+	if not exist "$(INTDIR)\$(NULL)" mkdir "$(INTDIR)"
 	if not exist "$(OUTDIR)\$(NULL)" mkdir "$(OUTDIR)"
 	if not exist "$(OUTDIR)$(ADDOUTDIR)\$(NULL)" mkdir "$(OUTDIR)$(ADDOUTDIR)"
 
@@ -269,63 +273,76 @@ clean:
 	@move $(MAP) $(RELEASEDIR)\$(OUTNAME).map
 
 
-
-$(OBJDIR)\ConsoleMain.obj: ConsoleMain.cpp ../common/PipeServer.h
-
-$(OBJDIR)\GuiHooks.obj: GuiHooks.cpp GuiHooks.h
-
-$(OBJDIR)\RegPrepare.obj: RegPrepare.cpp
+################
+#LINK_OBJS begin
 
 $(INTDIR)\CmdLine.obj: ../common/CmdLine.cpp ../common/CmdLine.h
 
-$(OBJDIR)\Common.obj: ../common/Common.cpp
+$(INTDIR)\Common.obj: ../common/Common.cpp
 
-$(OBJDIR)\ConEmuCmd.obj: ConEmuCmd.cpp ../common/PipeServer.h
+$(INTDIR)\ConEmuCheck.obj: ../common/ConEmuCheck.cpp ../common/ConEmuCheck.h
 
-$(OBJDIR)\ConEmuSrv.obj: ConEmuSrv.cpp ../common/PipeServer.h
+$(INTDIR)\ConEmuCmd.obj: ConEmuCmd.cpp ../common/PipeServer.h
 
-$(OBJDIR)\ConProcess.obj: ConProcess.cpp
+$(INTDIR)\ConEmuSrv.obj: ConEmuSrv.cpp ../common/PipeServer.h
 
-$(OBJDIR)\Debugger.obj: Debugger.cpp Debugger.h
+$(INTDIR)\ConProcess.obj: ConProcess.cpp
 
-$(OBJDIR)\Downloader.obj: Downloader.cpp Downloader.h
+$(INTDIR)\ConsoleMain.obj: ConsoleMain.cpp ../common/PipeServer.h
 
-$(OBJDIR)\Injects.obj: ..\ConEmuHk\Injects.cpp
+$(INTDIR)\ConsoleMixAttr.obj: ../common/ConsoleMixAttr.cpp ../common/ConsoleMixAttr.h
 
-$(OBJDIR)\Infiltrate.obj: Infiltrate.cpp
+$(INTDIR)\ConsoleRead.obj: ../common/ConsoleRead.cpp ../common/ConsoleRead.h
 
-$(OBJDIR)\InjectRemote.obj: InjectRemote.cpp
+$(INTDIR)\Debugger.obj: Debugger.cpp Debugger.h
 
-$(OBJDIR)\InQueue.obj: ../common/InQueue.cpp ../common/InQueue.h
+$(INTDIR)\Downloader.obj: Downloader.cpp Downloader.h
 
-$(OBJDIR)\Queue.obj: Queue.cpp ../common/PipeServer.h ../common/InQueue.h
+$(INTDIR)\ExecPty.obj: ../common/ExecPty.cpp ../common/ExecPty.h
 
-$(OBJDIR)\SrvPipes.obj: SrvPipes.cpp ../common/PipeServer.h
+$(INTDIR)\execute.obj: ../common/execute.cpp ../common/execute.h
 
-$(OBJDIR)\ExecPty.obj: ../common/ExecPty.cpp ../common/ExecPty.h
+$(INTDIR)\GuiHooks.obj: GuiHooks.cpp GuiHooks.h
 
-$(OBJDIR)\execute.obj: ../common/execute.cpp ../common/execute.h
+$(INTDIR)\Infiltrate.obj: Infiltrate.cpp
 
-$(OBJDIR)\ConEmuCheck.obj: ../common/ConEmuCheck.cpp ../common/ConEmuCheck.h
+$(INTDIR)\InjectRemote.obj: InjectRemote.cpp
 
-$(OBJDIR)\ConsoleMixAttr.obj: ../common/ConsoleMixAttr.cpp ../common/ConsoleMixAttr.h
+$(INTDIR)\Injects.obj: ..\ConEmuHk\Injects.cpp
 
-$(OBJDIR)\ConsoleRead.obj: ../common/ConsoleRead.cpp ../common/ConsoleRead.h
+$(INTDIR)\InQueue.obj: ../common/InQueue.cpp ../common/InQueue.h
 
-$(OBJDIR)\MAssert.obj: ../common/MAssert.cpp
+$(INTDIR)\MAssert.obj: ../common/MAssert.cpp
 
-$(OBJDIR)\Memory.obj: ../common/Memory.cpp
+$(INTDIR)\MConHandle.obj: ..\common\MConHandle.cpp ../common/MSection.h ../common/MSectionSimple.h ../common/StartupEnv.h ../common/StartupEnvDef.h ../common/MFileLog.h ../common/MConHandle.h
 
-$(OBJDIR)\Monitors.obj: ../common/Monitors.cpp
+$(INTDIR)\Memory.obj: ../common/Memory.cpp
 
-$(OBJDIR)\MSecurity.obj: ../common/MSecurity.cpp
+$(INTDIR)\MFileLog.obj: ..\common\MFileLog.cpp ../common/MSection.h ../common/MSectionSimple.h ../common/StartupEnv.h ../common/StartupEnvDef.h ../common/MFileLog.h ../common/MConHandle.h
 
-$(OBJDIR)\MStrSafe.obj: ../common/MStrSafe.cpp
+$(INTDIR)\Monitors.obj: ../common/Monitors.cpp
 
-$(OBJDIR)\RConStartArgs.obj: ../common/RConStartArgs.cpp ../common/RConStartArgs.h
+$(INTDIR)\MSection.obj: ..\common\MSection.cpp ../common/MSection.h ../common/MSectionSimple.h ../common/StartupEnv.h ../common/StartupEnvDef.h ../common/MFileLog.h ../common/MConHandle.h
 
-$(OBJDIR)\SetEnvVar.obj: ../common/SetEnvVar.cpp
+$(INTDIR)\MSectionSimple.obj: ..\common\MSectionSimple.cpp ../common/MSection.h ../common/MSectionSimple.h ../common/StartupEnv.h ../common/StartupEnvDef.h ../common/MFileLog.h ../common/MConHandle.h
 
-$(OBJDIR)\WinConsole.obj: ../common/WinConsole.cpp ../common/WinConsole.h
+$(INTDIR)\MSecurity.obj: ../common/MSecurity.cpp
 
-$(OBJDIR)\WinObjects.obj: ../common/WinObjects.cpp ../common/WinObjects.h
+$(INTDIR)\MStrSafe.obj: ../common/MStrSafe.cpp
+
+$(INTDIR)\Queue.obj: Queue.cpp ../common/PipeServer.h ../common/InQueue.h
+
+$(INTDIR)\RConStartArgs.obj: ../common/RConStartArgs.cpp ../common/RConStartArgs.h
+
+$(INTDIR)\RegPrepare.obj: RegPrepare.cpp
+
+$(INTDIR)\SetEnvVar.obj: ../common/SetEnvVar.cpp
+
+$(INTDIR)\SrvPipes.obj: SrvPipes.cpp ../common/PipeServer.h
+
+$(INTDIR)\WinConsole.obj: ../common/WinConsole.cpp ../common/WinConsole.h
+
+$(INTDIR)\WinObjects.obj: ../common/WinObjects.cpp ../common/WinObjects.h
+
+#LINK_OBJS end
+##############

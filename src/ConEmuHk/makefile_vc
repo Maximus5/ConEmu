@@ -47,29 +47,31 @@ BASEADDRESS=/DYNAMICBASE:NO /FIXED:NO /BASE:0x7E110000
 RC_NAME = ConEmuHk
 
 LINK_OBJS = \
-$(OBJDIR)\Entry.obj \
-$(OBJDIR)\Injects.obj \
-$(OBJDIR)\Ansi.obj \
-$(OBJDIR)\ConEmuHooks.obj \
-$(OBJDIR)\DefTermHk.obj \
-$(OBJDIR)\RegHooks.obj \
-$(OBJDIR)\Execute.obj \
-$(OBJDIR)\ExtConsole.obj \
-$(OBJDIR)\SetHook.obj \
-$(OBJDIR)\ShellProcessor.obj \
-$(OBJDIR)\WinConsole.obj \
-$(OBJDIR)\WinObjects.obj \
-$(OBJDIR)\ConEmuCheck.obj \
-$(OBJDIR)\ConsoleMixAttr.obj \
-$(OBJDIR)\CmdLine.obj \
-$(OBJDIR)\Common.obj \
-$(OBJDIR)\InQueue.obj \
-$(OBJDIR)\MAssert.obj \
-$(OBJDIR)\Memory.obj \
-$(OBJDIR)\MSecurity.obj \
-$(OBJDIR)\MStrSafe.obj \
-$(OBJDIR)\GuiAttach.obj \
-$(OBJDIR)\RConStartArgs.obj
+$(INTDIR)\Ansi.obj \
+$(INTDIR)\CmdLine.obj \
+$(INTDIR)\Common.obj \
+$(INTDIR)\ConEmuCheck.obj \
+$(INTDIR)\ConEmuHooks.obj \
+$(INTDIR)\ConsoleMixAttr.obj \
+$(INTDIR)\DefTermHk.obj \
+$(INTDIR)\Entry.obj \
+$(INTDIR)\Execute.obj \
+$(INTDIR)\ExtConsole.obj \
+$(INTDIR)\GuiAttach.obj \
+$(INTDIR)\Injects.obj \
+$(INTDIR)\InQueue.obj \
+$(INTDIR)\MAssert.obj \
+$(INTDIR)\Memory.obj \
+$(INTDIR)\MSectionSimple.obj \
+$(INTDIR)\MSection.obj \
+$(INTDIR)\MSecurity.obj \
+$(INTDIR)\MStrSafe.obj \
+$(INTDIR)\RConStartArgs.obj \
+$(INTDIR)\RegHooks.obj \
+$(INTDIR)\SetHook.obj \
+$(INTDIR)\ShellProcessor.obj \
+$(INTDIR)\WinConsole.obj \
+$(INTDIR)\WinObjects.obj
 
 USERLIBS = 
 
@@ -89,7 +91,7 @@ DLLNAME = $(OUTNAME).$(EXT)
 DLLFULLNAME = $(OUTDIR)$(ADDOUTDIR)\$(DLLNAME)
 DEF = $(DEF_NAME).def
 MAP = $(OUTDIR)$(ADDOUTDIR)\$(OUTNAME).map
-RES = $(OBJDIR)\$(RC_NAME).res
+RES = $(INTDIR)\$(RC_NAME).res
 
 !ifdef VC8
 COMPAT64=/Wp64
@@ -130,7 +132,7 @@ CPP_PROJ_NO=/nologo /c /W3 /wd4995 /Gy /GF $(DEF_SEH) $(CPP_ALIGN) /J /Gr /GS- /
 ULOUT=-Tpd -Re
 LINK_MACHINE = /MACHINE:X86
 !endif
-CPP_PROJ=$(CPP_PROJ_NO) /Fo"$(OBJDIR)\\"
+CPP_PROJ=$(CPP_PROJ_NO) /Fo"$(INTDIR)\\"
 
 #!ifdef EXCLUDECRT
 #!undef COMMONLIB
@@ -226,19 +228,19 @@ $(DLLFULLNAME) : $(LINK_OBJS) $(RES) $(LINK_DEP)
 !endif
 
 !ifndef __MAKE__
-.cpp{$(OBJDIR)}.obj::
+.cpp{$(INTDIR)}.obj::
 	@$(CC) @<<
 	$(CFLAGS) $<
 <<
-{../common/}.cpp{$(OBJDIR)}.obj::
+{../common/}.cpp{$(INTDIR)}.obj::
 	$(CC) @<<
 	$(CFLAGS) $<
 <<
 !else
-.cpp{$(OBJDIR)}.obj:
+.cpp{$(INTDIR)}.obj:
 	@$(CC) $(CFLAGS) { $< } 
 
-{../common/}.cpp{$(OBJDIR)}.obj:
+{../common/}.cpp{$(INTDIR)}.obj:
 	@$(CC) $(CFLAGS) { $< } 
 !endif
 
@@ -250,7 +252,7 @@ dirs:
 !ifdef INSTALL
 	@if not exist "$(WORKDIR)\$(NULL)" mkdir "$(WORKDIR)"
 !endif
-	@if not exist "$(OBJDIR)\$(NULL)" mkdir "$(OBJDIR)"
+	@if not exist "$(INTDIR)\$(NULL)" mkdir "$(INTDIR)"
 	@if not exist "$(OUTDIR)\$(NULL)" mkdir "$(OUTDIR)"
 	@if not exist "$(OUTDIR)$(ADDOUTDIR)\$(NULL)" mkdir "$(OUTDIR)$(ADDOUTDIR)"
 
@@ -271,54 +273,64 @@ clean:
 
 
 
-$(OBJDIR)\Entry.obj: Entry.cpp ../common/PipeServer.h
+################
+#LINK_OBJS begin
 
-$(OBJDIR)\Injects.obj: Injects.cpp Console2.h
+$(INTDIR)\Ansi.obj: Ansi.cpp
 
 $(INTDIR)\CmdLine.obj: ../common/CmdLine.cpp ../common/CmdLine.h
 
-$(OBJDIR)\Common.obj: ../common/Common.cpp
+$(INTDIR)\Common.obj: ../common/Common.cpp
 
-$(OBJDIR)\InQueue.obj: ../common/InQueue.cpp
+$(INTDIR)\ConEmuCheck.obj: ../common/ConEmuCheck.cpp ../common/ConEmuCheck.h
 
-$(OBJDIR)\ConEmuHk.obj: ConEmuHk.cpp
+$(INTDIR)\ConEmuCmd.obj: ConEmuCmd.cpp
 
-$(OBJDIR)\ConEmuCmd.obj: ConEmuCmd.cpp
+$(INTDIR)\ConEmuHk.obj: ConEmuHk.cpp
 
-$(OBJDIR)\Ansi.obj: Ansi.cpp
+$(INTDIR)\ConEmuHooks.obj: ConEmuHooks.cpp
 
-$(OBJDIR)\ConEmuHooks.obj: ConEmuHooks.cpp
+$(INTDIR)\ConsoleMixAttr.obj: ../common/ConsoleMixAttr.cpp ../common/ConsoleMixAttr.h
 
-$(OBJDIR)\DefTermHk.obj: DefTermHk.cpp
+$(INTDIR)\DefTermHk.obj: DefTermHk.cpp
 
-$(OBJDIR)\RegHooks.obj: RegHooks.cpp
+$(INTDIR)\Entry.obj: Entry.cpp ../common/PipeServer.h
 
-$(OBJDIR)\Execute.obj: ../common/Execute.cpp ../common/Execute.h
+$(INTDIR)\Execute.obj: ../common/Execute.cpp ../common/Execute.h
 
-$(OBJDIR)\ExtConsole.obj: ExtConsole.cpp ExtConsole.h
+$(INTDIR)\ExtConsole.obj: ExtConsole.cpp ExtConsole.h
 
-$(OBJDIR)\SetHook.obj: SetHook.cpp SetHook.h
+$(INTDIR)\GuiAttach.obj: GuiAttach.cpp GuiAttach.h
 
-$(OBJDIR)\ShellProcessor.obj: ShellProcessor.cpp ShellProcessor.h
+$(INTDIR)\Injects.obj: Injects.cpp Console2.h
 
-$(OBJDIR)\WinConsole.obj: ../common/WinConsole.cpp ../common/WinConsole.h
+$(INTDIR)\InQueue.obj: ../common/InQueue.cpp
 
-$(OBJDIR)\WinObjects.obj: ../common/WinObjects.cpp ../common/WinObjects.h
+$(INTDIR)\MAssert.obj: ../common/MAssert.cpp
 
-$(OBJDIR)\ConEmuCheck.obj: ../common/ConEmuCheck.cpp ../common/ConEmuCheck.h
+$(INTDIR)\Memory.obj: ../common/Memory.cpp
 
-$(OBJDIR)\ConsoleMixAttr.obj: ../common/ConsoleMixAttr.cpp ../common/ConsoleMixAttr.h
+$(INTDIR)\MSectionSimple.obj: ../common/MSectionSimple.cpp ../common/MSectionSimple.h ../common/MSection.h
 
-$(OBJDIR)\MAssert.obj: ../common/MAssert.cpp
+$(INTDIR)\MSection.obj: ../common/MSection.cpp ../common/MSectionSimple.h ../common/MSection.h
 
-$(OBJDIR)\Memory.obj: ../common/Memory.cpp
+$(INTDIR)\MSecurity.obj: ../common/MSecurity.cpp
 
-$(OBJDIR)\MSecurity.obj: ../common/MSecurity.cpp
+$(INTDIR)\MStrSafe.obj: ../common/MStrSafe.cpp
 
-$(OBJDIR)\MStrSafe.obj: ../common/MStrSafe.cpp
+$(INTDIR)\RConStartArgs.obj: ../common/RConStartArgs.cpp ../common/RConStartArgs.h
 
-$(OBJDIR)\GuiAttach.obj: GuiAttach.cpp GuiAttach.h
+$(INTDIR)\RegHooks.obj: RegHooks.cpp
 
-$(OBJDIR)\RConStartArgs.obj: ../common/RConStartArgs.cpp ../common/RConStartArgs.h
+$(INTDIR)\SetHook.obj: SetHook.cpp SetHook.h
 
-$(OBJDIR)\UserImp.obj: UserImp.cpp UserImp.h
+$(INTDIR)\ShellProcessor.obj: ShellProcessor.cpp ShellProcessor.h
+
+$(INTDIR)\UserImp.obj: UserImp.cpp UserImp.h
+
+$(INTDIR)\WinConsole.obj: ../common/WinConsole.cpp ../common/WinConsole.h
+
+$(INTDIR)\WinObjects.obj: ../common/WinObjects.cpp ../common/WinObjects.h
+
+#LINK_OBJS end
+##############

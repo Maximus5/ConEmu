@@ -52,7 +52,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/ConsoleAnnotation.h"
 #include "../common/WinObjects.h"
 #include "../common/TerminalMode.h"
-#include "..\ConEmu\version.h"
+#include "../common/MSection.h"
+#include "../ConEmu/version.h"
 #include "PluginHeader.h"
 #include "PluginBackground.h"
 #include <Tlhelp32.h>

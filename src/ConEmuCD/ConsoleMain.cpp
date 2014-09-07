@@ -74,6 +74,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../ConEmuHk/Injects.h"
 #include "../common/MArray.h"
 #include "../common/MMap.h"
+#include "../common/MWow64Disable.h"
+#include "../common/MSectionSimple.h"
 #include "../common/RConStartArgs.h"
 #include "../common/ConsoleAnnotation.h"
 #include "../common/ConsoleMixAttr.h"

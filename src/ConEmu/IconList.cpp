@@ -39,6 +39,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmu.h"
 #include "IconList.h"
 #include "Options.h"
+#include "../common/MSectionSimple.h"
 
 CIconList::CIconList()
 {

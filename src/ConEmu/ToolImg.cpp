@@ -31,6 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define SHOWDEBUGSTR
 
 #include <windows.h>
+#include <CommCtrl.h>
 #include "header.h"
 #include "ToolImg.h"
 

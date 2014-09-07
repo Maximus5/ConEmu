@@ -28,7 +28,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include "../Common/ConsoleAnnotation.h"
+#include "../common/ConsoleAnnotation.h"
+#include "../common/MSection.h"
 #include "RealConsole.h"
 
 // >> common.hpp

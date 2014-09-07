@@ -1,8 +1,15 @@
 NAME = ConEmuTh
-SRCS = ConEmuTh.cpp \
-       ConEmuTh995.cpp \
-       ConEmuThA.cpp \
-       Display.cpp
+SRCS = \
+		../common/Common.cpp \
+		../common/MSection.cpp      \
+		../common/WinObjects.cpp \
+		ConEmuTh.cpp \
+		ConEmuTh1900.cpp \
+		ConEmuTh2800.cpp \
+		ConEmuTh995.cpp \
+		ConEmuThA.cpp \
+		ConEmuThA.cpp \
+		Display.cpp
 
 USERLIBS = -lversion -lgdi32
 ENCFLAGS = -finput-charset=utf-8

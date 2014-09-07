@@ -85,6 +85,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../ConEmu/version.h"
 #include "../common/CmdLine.h"
 #include "../common/ConsoleAnnotation.h"
+#include "../common/MFileMapping.h"
 #include "../common/RConStartArgs.h"
 #include "../common/WinConsole.h"
 #include "../common/WinObjects.h"

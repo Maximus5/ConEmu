@@ -28,6 +28,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include "StartupEnvDef.h"
+
 // Some parts of code skips execution when FULL_STARTUP_ENV not defined
 
 typedef BOOL (WINAPI* GetConsoleHistoryInfo_t)(CE_CONSOLE_HISTORY_INFO* lpConsoleHistoryInfo);

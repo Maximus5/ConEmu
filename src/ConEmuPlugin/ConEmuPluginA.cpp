@@ -39,6 +39,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "PluginHeader.h"
 #include "PluginBackground.h"
 #include "../common/farcolor1.hpp"
+#include "../common/MSection.h"
 
 //#define SHOW_DEBUG_EVENTS
 

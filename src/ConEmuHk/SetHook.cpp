@@ -58,6 +58,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 #include "../common/common.hpp"
 #include "../common/ConEmuCheck.h"
+#include "../common/MSection.h"
 #include "../common/WinObjects.h"
 //#include "../common/MArray.h"
 #include "ShellProcessor.h"
@@ -750,7 +751,6 @@ CInFuncCall::~CInFuncCall()
 }
 
 
-//extern HANDLE ghHookMutex;
 MSection* gpHookCS = NULL;
 
 bool SetExports(HMODULE Module);

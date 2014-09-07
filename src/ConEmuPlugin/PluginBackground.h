@@ -1,6 +1,8 @@
 ﻿
 #pragma once
 
+class MSection;
+
 class CPluginBackground
 {
 	protected:

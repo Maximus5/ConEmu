@@ -34,7 +34,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "Header.h"
 #include "TabID.h"
-#include "../common/WinObjects.h"
+#include "../common/MSection.h"
+#include "../common/MSectionSimple.h"
 #include "ConEmu.h"
 #include "VConGroup.h"
 

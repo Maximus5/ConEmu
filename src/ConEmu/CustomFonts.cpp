@@ -30,7 +30,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define HIDE_USE_EXCEPTION_INFO
 #include "CustomFonts.h"
 #include "../common/MArray.h"
-#include "../common/WinObjects.h"
 
 #ifdef _DEBUG
 	#define DEBUG_BDF_DRAW

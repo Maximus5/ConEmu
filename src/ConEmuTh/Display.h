@@ -28,6 +28,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+class MSection;
+
 struct CeFullPanelInfo
 {
 	DWORD cbSize;

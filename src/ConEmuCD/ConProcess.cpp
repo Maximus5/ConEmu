@@ -31,6 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ConEmuC.h"
 #include "ConProcess.h"
+#include "../common/MSection.h"
 
 BOOL   gbUseDosBox = FALSE;
 HANDLE ghDosBoxProcess = NULL;

@@ -56,25 +56,25 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 //typedef HRESULT(WINAPI* FDwmIsCompositionEnabled)(BOOL *pfEnabled);
 
-class CConEmuChild;
-class CConEmuBack;
-class CTabBarClass;
-class CConEmuMacro;
 class CAttachDlg;
-class CRecreateDlg;
-class CToolTip;
-class CGestures;
-class CVConGuard;
-class CVConGroup;
-class CStatus;
-enum ConEmuWindowMode;
-class CDefaultTerminal;
-class CConEmuMenu;
+class CConEmuBack;
+class CConEmuChild;
 class CConEmuInside;
+class CConEmuMacro;
+class CConEmuMenu;
+class CDefaultTerminal;
+class CGestures;
+class CRecreateDlg;
 class CRunQueue;
+class CStatus;
+class CTabBarClass;
+class CToolTip;
+class CVConGroup;
+class CVConGuard;
+class MFileLog;
+enum ConEmuWindowMode;
 struct CEFindDlg;
 union CESize;
-
 
 struct MsgSrvStartedArg
 {
@@ -97,6 +97,7 @@ struct MsgSrvStartedArg
 #include "ConEmuSize.h"
 #include "../common/MArray.h"
 #include "../common/MMap.h"
+#include "../common/MFileMapping.h"
 
 // IME support (WinXP or later)
 typedef BOOL (WINAPI* ImmSetCompositionFontW_t)(HIMC hIMC, LPLOGFONT lplf);

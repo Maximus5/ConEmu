@@ -324,20 +324,6 @@ struct SettingsStorage
 
 #include "Registry.h"
 
-//------------------------------------------------------------------------
-///| Global variables |///////////////////////////////////////////////////
-//------------------------------------------------------------------------
-
-//#include "VirtualConsole.h"
-//#include "options.h"
-//#include "DragDrop.h"
-//#include "TrayIcon.h"
-//#include "VConChild.h"
-//#include "ConEmu.h"
-//#include "ConEmuApp.h"
-//#include "tabbar.h"
-//#include "TrayIcon.h"
-//#include "ConEmuPipe.h"
 #include "../common/UnicodeChars.h"
 #include "../common/defines.h"
 #include "../common/WinObjects.h"

@@ -75,6 +75,7 @@ FEFF    ZERO WIDTH NO-BREAK SPACE
 #include "TabBar.h"
 #include "TaskBarGhost.h"
 #include "VConGroup.h"
+#include "../common/MSetter.h"
 
 
 #ifdef _DEBUG

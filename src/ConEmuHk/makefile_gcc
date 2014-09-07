@@ -1,27 +1,30 @@
 NAME = ConEmuHk
-SRCS = Entry.cpp \
-       Ansi.cpp \
-       ConEmuHooks.cpp \
-       DefTermHk.cpp \
-       ExtConsole.cpp \
-       Injects.cpp \
-       RegHooks.cpp \
-       SetHook.cpp \
-       ShellProcessor.cpp \
-       GuiAttach.cpp \
-       ../common/CmdLine.cpp \
-       ../common/Common.cpp \
-       ../common/ConEmuCheck.cpp \
-       ../common/ConsoleMixAttr.cpp \
-       ../common/execute.cpp \
-       ../common/InQueue.cpp \
-       ../common/MAssert.cpp \
-       ../common/MSecurity.cpp \
-       ../common/MStrSafe.cpp \
-       ../common/Memory.cpp \
-       ../common/RConStartArgs.cpp \
-       ../common/WinConsole.cpp \
-       ../common/WinObjects.cpp
+SRCS = \
+		../common/CmdLine.cpp \
+		../common/Common.cpp \
+		../common/ConEmuCheck.cpp \
+		../common/ConsoleMixAttr.cpp \
+		../common/execute.cpp \
+		../common/InQueue.cpp \
+		../common/MAssert.cpp \
+		../common/Memory.cpp \
+		../common/MSectionSimple.cpp\
+		../common/MSection.cpp      \
+		../common/MSecurity.cpp \
+		../common/MStrSafe.cpp \
+		../common/RConStartArgs.cpp \
+		../common/WinConsole.cpp \
+		../common/WinObjects.cpp \
+		Ansi.cpp \
+		ConEmuHooks.cpp \
+		DefTermHk.cpp \
+		Entry.cpp \
+		ExtConsole.cpp \
+		GuiAttach.cpp \
+		Injects.cpp \
+		RegHooks.cpp \
+		SetHook.cpp \
+		ShellProcessor.cpp
 
 
 USERLIBS = 

@@ -32,7 +32,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/common.hpp"
 #include "../common/MMap.h"
 #include "../common/SetEnvVar.h"
-#include "../common/WinObjects.h"
 #include "ConEmu.h"
 #include "VConChild.h"
 #include "Options.h"

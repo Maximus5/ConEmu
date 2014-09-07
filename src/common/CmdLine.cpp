@@ -27,10 +27,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #define HIDE_USE_EXCEPTION_INFO
-#include <windows.h>
-#include "CmdLine.h"
-#include "MStrSafe.h"
+#include "defines.h"
 #include "WinObjects.h"
+#include "MWow64Disable.h"
+#include "CmdLine.h"
+
 
 
 CmdArg::CmdArg()

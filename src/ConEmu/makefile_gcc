@@ -5,9 +5,16 @@ SRCS = \
 		../common/ConEmuCheck.cpp   \
 		../common/execute.cpp       \
 		../common/Memory.cpp        \
+		../common/MEvent.cpp        \
+		../common/MFileLog.cpp      \
 		../common/Monitors.cpp      \
+		../common/MSectionSimple.cpp\
+		../common/MSection.cpp      \
 		../common/MSecurity.cpp     \
+		../common/MSetter.cpp       \
 		../common/MStrSafe.cpp      \
+		../common/MTimer.cpp        \
+		../common/MToolTip.cpp      \
 		../common/RConStartArgs.cpp \
 		../common/RgnDetect.cpp     \
 		../common/SetEnvVar.cpp     \

@@ -30,6 +30,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define BACKGROUND_FILE_POLL 5000
 
+class MSection;
+
 class CBackground
 {
 public:

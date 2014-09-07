@@ -32,6 +32,8 @@ extern BOOL   gbUseDosBox;
 extern HANDLE ghDosBoxProcess;
 extern DWORD  gnDosBoxPID;
 
+class MSectionLock;
+
 BOOL CheckProcessCount(BOOL abForce = FALSE);
 BOOL ProcessAdd(DWORD nPID, MSectionLock *pCS);
 BOOL ProcessRemove(DWORD nPID, UINT nPrevCount, MSectionLock *pCS);

@@ -47,6 +47,7 @@ struct TabName;
 class CVirtualConsole;
 class MSection;
 class MSectionLock;
+class MSectionLockSimple;
 class CTabStack;
 
 

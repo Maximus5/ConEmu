@@ -49,6 +49,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#include <string.h>
 //#include <tchar.h>
 #include "../common/common.hpp"
+#include "../common/MWow64Disable.h"
 #include "../ConEmuHk/SetHook.h"
 #ifdef _DEBUG
 #pragma warning( disable : 4995 )
@@ -63,6 +64,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/WinObjects.h"
 #include "../common/WinConsole.h"
 #include "../common/TerminalMode.h"
+#include "../common/MFileMapping.h"
+#include "../common/MSection.h"
 #include "../common/FarVersion.h"
 #include "../ConEmu/version.h"
 #include "PluginHeader.h"

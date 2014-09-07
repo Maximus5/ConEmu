@@ -53,6 +53,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "VConChild.h"
 #include "VConGroup.h"
 #include "VirtualConsole.h"
+#include "../common/MToolTip.h"
 
 
 #define DEBUGSTRSIZE(s) //DEBUGSTR(s)

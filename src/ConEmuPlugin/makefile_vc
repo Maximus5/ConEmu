@@ -20,27 +20,28 @@ OUTNAME = ConEmu
 
 
 LINK_OBJS = \
-$(OBJDIR)\ConEmuInjects.obj \
-$(OBJDIR)\ConEmuPlugin.obj \
-$(OBJDIR)\ConEmuPlugin995.obj \
-$(OBJDIR)\ConEmuPlugin1900.obj \
-$(OBJDIR)\ConEmuPlugin2800.obj \
-$(OBJDIR)\ConEmuPluginA.obj \
-$(OBJDIR)\PluginBackground.obj \
-$(OBJDIR)\PluginSrv.obj \
-$(OBJDIR)\CmdLine.obj \
-$(OBJDIR)\Common.obj \
-$(OBJDIR)\Execute.obj \
-$(OBJDIR)\ConEmuCheck.obj \
-$(OBJDIR)\ConEmuCheckEx.obj \
-$(OBJDIR)\MAssert.obj \
-$(OBJDIR)\Memory.obj \
-$(OBJDIR)\Monitors.obj \
-$(OBJDIR)\MSecurity.obj \
-$(OBJDIR)\MStrSafe.obj \
-$(OBJDIR)\SetEnvVar.obj \
-$(OBJDIR)\WinConsole.obj \
-$(OBJDIR)\WinObjects.obj
+$(INTDIR)\CmdLine.obj \
+$(INTDIR)\Common.obj \
+$(INTDIR)\ConEmuCheck.obj \
+$(INTDIR)\ConEmuCheckEx.obj \
+$(INTDIR)\ConEmuInjects.obj \
+$(INTDIR)\ConEmuPlugin.obj \
+$(INTDIR)\ConEmuPlugin1900.obj \
+$(INTDIR)\ConEmuPlugin2800.obj \
+$(INTDIR)\ConEmuPlugin995.obj \
+$(INTDIR)\ConEmuPluginA.obj \
+$(INTDIR)\Execute.obj \
+$(INTDIR)\MAssert.obj \
+$(INTDIR)\Memory.obj \
+$(INTDIR)\Monitors.obj \
+$(INTDIR)\MSection.obj \
+$(INTDIR)\MSecurity.obj \
+$(INTDIR)\MStrSafe.obj \
+$(INTDIR)\PluginBackground.obj \
+$(INTDIR)\PluginSrv.obj \
+$(INTDIR)\SetEnvVar.obj \
+$(INTDIR)\WinConsole.obj \
+$(INTDIR)\WinObjects.obj
 
 
 USERLIBS = version.lib wininet.lib
@@ -55,7 +56,7 @@ DLLFULLNAME = $(OUTDIR)$(ADDOUTDIR)\$(DLLNAME)
 DEF = $(DEF_NAME).def
 MAP = $(OUTDIR)$(ADDOUTDIR)\$(OUTNAME).map
 PDB = $(OUTDIR)$(ADDOUTDIR)\$(OUTNAME).Plugin.pdb
-RES = $(OBJDIR)\$(NAME).res
+RES = $(INTDIR)\$(NAME).res
 
 !ifdef VC8
 COMPAT64=/Wp64
@@ -103,7 +104,7 @@ CPP_PROJ_NO=/nologo /c /W3 /wd4995 /Gy /GF $(CPP_ALIGN) /J /Gr /GS- /GR- /EHs-c-
 ULOUT=-Tpd -Re
 LINK_MACHINE = /MACHINE:X86
 !endif
-CPP_PROJ=$(CPP_PROJ_NO) /Fo"$(OBJDIR)\\"
+CPP_PROJ=$(CPP_PROJ_NO) /Fo"$(INTDIR)\\"
 
 #!ifdef EXCLUDECRT
 #!undef COMMONLIB
@@ -177,26 +178,26 @@ $(DLLFULLNAME) : $(LINK_OBJS) $(RES) $(LINK_DEP)
 !endif
 
 !ifndef __MAKE__
-.cpp{$(OBJDIR)}.obj::
+.cpp{$(INTDIR)}.obj::
 	@$(CC) @<<
 	$(CFLAGS) $<
 <<
-{../common/}.cpp{$(OBJDIR)}.obj::
+{../common/}.cpp{$(INTDIR)}.obj::
 	$(CC) @<<
 	$(CFLAGS) $<
 <<
-{../ConEmuC/}.cpp{$(OBJDIR)}.obj::
+{../ConEmuC/}.cpp{$(INTDIR)}.obj::
 	$(CC) @<<
 	$(CFLAGS) $<
 <<
 !else
-.cpp{$(OBJDIR)}.obj:
+.cpp{$(INTDIR)}.obj:
 	@$(CC) $(CFLAGS) { $< } 
 
-{../common/}.cpp{$(OBJDIR)}.obj:
+{../common/}.cpp{$(INTDIR)}.obj:
 	@$(CC) $(CFLAGS) { $< } 
 
-{../ConEmuC/}.cpp{$(OBJDIR)}.obj:
+{../ConEmuC/}.cpp{$(INTDIR)}.obj:
 	@$(CC) $(CFLAGS) { $< } 
 
 !endif
@@ -209,7 +210,7 @@ dirs:
 !ifdef INSTALL
 	@if not exist "$(WORKDIR)\$(NULL)" mkdir "$(WORKDIR)"
 !endif
-	@if not exist "$(OBJDIR)\$(NULL)" mkdir "$(OBJDIR)"
+	@if not exist "$(INTDIR)\$(NULL)" mkdir "$(INTDIR)"
 	@if not exist "$(OUTDIR)\$(NULL)" mkdir "$(OUTDIR)"
 	@if not exist "$(OUTDIR)$(ADDOUTDIR)\$(NULL)" mkdir "$(OUTDIR)$(ADDOUTDIR)"
 
@@ -231,42 +232,50 @@ clean:
 
 
 
-$(OBJDIR)\ConEmuInjects.obj: ConEmuInjects.cpp
+################
+#LINK_OBJS begin
 
-$(OBJDIR)\ConEmuPlugin.obj: ConEmuPlugin.cpp
+$(INTDIR)\CmdLine.obj: ../common/CmdLine.cpp
 
-$(OBJDIR)\ConEmuPlugin995.obj: ConEmuPlugin995.cpp
+$(INTDIR)\Common.obj: ../common/Common.cpp
 
-$(OBJDIR)\ConEmuPlugin1900.obj: ConEmuPlugin1900.cpp
+$(INTDIR)\ConEmuCheck.obj: ../common/ConEmuCheck.cpp
 
-$(OBJDIR)\ConEmuPlugin2800.obj: ConEmuPlugin2800.cpp
+$(INTDIR)\ConEmuCheckEx.obj: ../common/ConEmuCheckEx.cpp
 
-$(OBJDIR)\ConEmuPluginA.obj: ConEmuPluginA.cpp
+$(INTDIR)\ConEmuInjects.obj: ConEmuInjects.cpp
 
-$(OBJDIR)\PluginBackground.obj: PluginBackground.cpp
+$(INTDIR)\ConEmuPlugin.obj: ConEmuPlugin.cpp
 
-$(OBJDIR)\PluginSrv.obj: PluginSrv.cpp ../common/PipeServer.h
+$(INTDIR)\ConEmuPlugin1900.obj: ConEmuPlugin1900.cpp
 
-$(OBJDIR)\CmdLine.obj: ..\common\CmdLine.cpp
+$(INTDIR)\ConEmuPlugin2800.obj: ConEmuPlugin2800.cpp
 
-$(OBJDIR)\Common.obj: ..\common\Common.cpp
+$(INTDIR)\ConEmuPlugin995.obj: ConEmuPlugin995.cpp
 
-$(OBJDIR)\ConEmuCheck.obj: ..\common\ConEmuCheck.cpp
+$(INTDIR)\ConEmuPluginA.obj: ConEmuPluginA.cpp
 
-$(OBJDIR)\ConEmuCheckEx.obj: ..\common\ConEmuCheckEx.cpp
+$(INTDIR)\Execute.obj: ../common/execute.cpp
 
-$(OBJDIR)\Execute.obj: ..\common\execute.cpp
+$(INTDIR)\MAssert.obj: ../common/MAssert.cpp
 
-$(OBJDIR)\SetEnvVar.obj: ..\common\SetEnvVar.cpp
+$(INTDIR)\Memory.obj: ../common/Memory.cpp
 
-$(OBJDIR)\WinConsole.obj: ..\common\WinConsole.cpp
+$(INTDIR)\Monitors.obj: ../common/Monitors.cpp
 
-$(OBJDIR)\WinObjects.obj: ..\common\WinObjects.cpp
+$(INTDIR)\MSection.obj: ..\common\MSection.cpp ../common/MSection.h
 
-$(OBJDIR)\MAssert.obj: ..\common\MAssert.cpp
+$(INTDIR)\MStrSafe.obj: ../common/MStrSafe.cpp
 
-$(OBJDIR)\Monitors.obj: ..\common\Monitors.cpp
+$(INTDIR)\PluginBackground.obj: PluginBackground.cpp
 
-$(OBJDIR)\Memory.obj: ..\common\Memory.cpp
+$(INTDIR)\PluginSrv.obj: PluginSrv.cpp ../common/PipeServer.h
 
-$(OBJDIR)\MStrSafe.obj: ../common/MStrSafe.cpp
+$(INTDIR)\SetEnvVar.obj: ../common/SetEnvVar.cpp
+
+$(INTDIR)\WinConsole.obj: ../common/WinConsole.cpp
+
+$(INTDIR)\WinObjects.obj: ../common/WinObjects.cpp
+
+#LINK_OBJS end
+##############

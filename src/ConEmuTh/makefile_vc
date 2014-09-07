@@ -23,20 +23,21 @@ BUILD_SUFFUX=x86
 
 
 LINK_OBJS = \
-$(OBJDIR)\ConEmuTh.obj \
-$(OBJDIR)\ConEmuTh995.obj \
-$(OBJDIR)\ConEmuTh1900.obj \
-$(OBJDIR)\ConEmuTh2800.obj \
-$(OBJDIR)\ConEmuThA.obj \
-$(OBJDIR)\Display.obj \
-$(OBJDIR)\ImgCache.obj \
-$(OBJDIR)\RgnDetect.obj \
-$(OBJDIR)\Common.obj \
-$(OBJDIR)\MAssert.obj \
-$(OBJDIR)\Memory.obj \
-$(OBJDIR)\MSecurity.obj \
-$(OBJDIR)\MStrSafe.obj \
-$(OBJDIR)\WinObjects.obj
+$(INTDIR)\Common.obj \
+$(INTDIR)\ConEmuTh.obj \
+$(INTDIR)\ConEmuTh1900.obj \
+$(INTDIR)\ConEmuTh2800.obj \
+$(INTDIR)\ConEmuTh995.obj \
+$(INTDIR)\ConEmuThA.obj \
+$(INTDIR)\Display.obj \
+$(INTDIR)\ImgCache.obj \
+$(INTDIR)\MAssert.obj \
+$(INTDIR)\Memory.obj \
+$(INTDIR)\MSection.obj \
+$(INTDIR)\MSecurity.obj \
+$(INTDIR)\MStrSafe.obj \
+$(INTDIR)\RgnDetect.obj \
+$(INTDIR)\WinObjects.obj
 
 
 RC_NAME=$(NAME)
@@ -51,7 +52,7 @@ DLLFULLNAME = $(OUTDIR)$(ADDOUTDIR)\$(DLLNAME)
 DEF = $(DEF_NAME).def
 MAP = $(OUTDIR)$(ADDOUTDIR)\$(OUTNAME).map
 PDB = $(OUTDIR)$(ADDOUTDIR)\$(OUTNAME).pdb
-RES = $(OBJDIR)\$(NAME).res
+RES = $(INTDIR)\$(NAME).res
 
 !ifdef VC8
 COMPAT64=/Wp64
@@ -84,7 +85,7 @@ CPP_PROJ_NO=/nologo /c /MT /W3 /wd4995 /Gy /GF $(CPP_ALIGN) /J /Gr /GS- /GR- /EH
 ULOUT=-Tpd -Re
 LINK_MACHINE = /MACHINE:X86
 !endif
-CPP_PROJ=$(CPP_PROJ_NO) /Fo"$(OBJDIR)\\"
+CPP_PROJ=$(CPP_PROJ_NO) /Fo"$(INTDIR)\\"
 
 #!ifdef EXCLUDECRT
 #!undef COMMONLIB
@@ -161,19 +162,19 @@ $(DLLFULLNAME) : $(LINK_OBJS) $(RES) $(LINK_DEP)
 !endif
 
 !ifndef __MAKE__
-.cpp{$(OBJDIR)}.obj::
+.cpp{$(INTDIR)}.obj::
 	@$(CC) @<<
 	$(CFLAGS) $<
 <<
-{../common/}.cpp{$(OBJDIR)}.obj::
+{../common/}.cpp{$(INTDIR)}.obj::
 	$(CC) @<<
 	$(CFLAGS) $<
 <<
 !else
-.cpp{$(OBJDIR)}.obj:
+.cpp{$(INTDIR)}.obj:
 	@$(CC) $(CFLAGS) { $< } 
 
-{../common/}.cpp{$(OBJDIR)}.obj:
+{../common/}.cpp{$(INTDIR)}.obj:
 	@$(CC) $(CFLAGS) { $< } 
 
 !endif
@@ -186,7 +187,7 @@ dirs:
 !ifdef INSTALL
 	@if not exist "$(WORKDIR)\$(NULL)" mkdir "$(WORKDIR)"
 !endif
-	@if not exist "$(OBJDIR)\$(NULL)" mkdir "$(OBJDIR)"
+	@if not exist "$(INTDIR)\$(NULL)" mkdir "$(INTDIR)"
 	@if not exist "$(OUTDIR)\$(NULL)" mkdir "$(OUTDIR)"
 	@if not exist "$(OUTDIR)$(ADDOUTDIR)\$(NULL)" mkdir "$(OUTDIR)$(ADDOUTDIR)"
 
@@ -205,34 +206,41 @@ clean:
 	move $(MAP) $(RELEASEDIR)
 
 
-$(OBJDIR)\ConEmuTh.obj: ConEmuTh.cpp
+################
+#LINK_OBJS begin
 
-$(OBJDIR)\ConEmuTh995.obj: ConEmuTh995.cpp
+$(INTDIR)\common.obj: ../common/common.cpp
 
-$(OBJDIR)\ConEmuTh1900.obj: ConEmuTh1900.cpp
+$(INTDIR)\ConEmuTh.obj: ConEmuTh.cpp
 
-$(OBJDIR)\ConEmuTh2800.obj: ConEmuTh2800.cpp
+$(INTDIR)\ConEmuTh1900.obj: ConEmuTh1900.cpp
 
-$(OBJDIR)\ConEmuThA.obj: ConEmuThA.cpp
+$(INTDIR)\ConEmuTh2800.obj: ConEmuTh2800.cpp
 
-$(OBJDIR)\Display.obj: Display.cpp
+$(INTDIR)\ConEmuTh995.obj: ConEmuTh995.cpp
 
-$(OBJDIR)\ImgCache.obj: ImgCache.cpp
+$(INTDIR)\ConEmuThA.obj: ConEmuThA.cpp
 
-$(OBJDIR)\RgnDetect.obj: ../common/RgnDetect.cpp
+$(INTDIR)\Display.obj: Display.cpp
 
-$(OBJDIR)\common.obj: ../common/common.cpp
+$(INTDIR)\ImgCache.obj: ImgCache.cpp
 
-$(OBJDIR)\MAssert.obj: ../common/MAssert.cpp
+$(INTDIR)\MAssert.obj: ../common/MAssert.cpp
 
-$(OBJDIR)\Memory.obj: ../common/Memory.cpp
+$(INTDIR)\Memory.obj: ../common/Memory.cpp
 
-$(OBJDIR)\MSecurity.obj: ../common/MSecurity.cpp
+$(INTDIR)\MSection.obj: ..\common\MSection.cpp ../common/MSection.h
 
-$(OBJDIR)\MStrSafe.obj: ../common/MStrSafe.cpp
+$(INTDIR)\MSecurity.obj: ../common/MSecurity.cpp
 
-$(OBJDIR)\WinObjects.obj: ../common/WinObjects.cpp
+$(INTDIR)\MStrSafe.obj: ../common/MStrSafe.cpp
 
+$(INTDIR)\RgnDetect.obj: ../common/RgnDetect.cpp
+
+$(INTDIR)\WinObjects.obj: ../common/WinObjects.cpp
+
+#LINK_OBJS end
+##############
 
 
 FICTIVE=_fictive_

@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "../common/common.hpp"
 #include "../common/ConEmuCheck.h"
-#include "../common/WinObjects.h"
+#include "../common/MSectionSimple.h"
 #include "ConEmu.h"
 #include "ConfirmDlg.h"
 #include "Inside.h"

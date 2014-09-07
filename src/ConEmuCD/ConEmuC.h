@@ -167,6 +167,10 @@ extern HANDLE ghFarInExecuteEvent;
 
 #include "../common/common.hpp"
 #include "../common/ConEmuCheck.h"
+#include "../common/MConHandle.h"
+#include "../common/MFileMapping.h"
+#include "../common/MFileLog.h"
+#include "../common/MSection.h"
 #include "../common/WinObjects.h"
 #include "../common/ConsoleAnnotation.h"
 #include "../common/InQueue.h"

@@ -27,14 +27,14 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #pragma once
-//#include "kl_parts.h"
-//#include "../Common/common.hpp"
-#include "../Common/ConsoleAnnotation.h"
-#include "../Common/RgnDetect.h"
-//#include "../Common/WinObjects.h"
-#include "../Common/MArray.h"
-#include "../Common/MMap.h"
-#include "../Common/MPipe.h"
+#include "../common/ConsoleAnnotation.h"
+#include "../common/RgnDetect.h"
+#include "../common/MArray.h"
+#include "../common/MEvent.h"
+#include "../common/MMap.h"
+#include "../common/MPipe.h"
+#include "../common/MSection.h"
+#include "../common/MFileMapping.h"
 
 #define DEFINE_EXIT_DESC
 #include "../ConEmuCD/ExitCodes.h"
@@ -223,6 +223,7 @@ class CVirtualConsole;
 class CRgnDetect;
 class CRealBuffer;
 class CDpiForDialog;
+class MFileLog;
 
 enum RealBufferType
 {

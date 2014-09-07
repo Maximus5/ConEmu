@@ -29,8 +29,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include "../Common/MArray.h"
-#include "../Common/WinObjects.h"
+#include "../common/MArray.h"
+#include "../common/MFileMapping.h"
 #include <commctrl.h>
 
 #include "DpiAware.h"

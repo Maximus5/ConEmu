@@ -52,7 +52,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "../common/execute.h"
 #include "../common/MArray.h"
+#include "../common/MFileLog.h"
 #include "../common/Monitors.h"
+#include "../common/MToolTip.h"
+#include "../common/StartupEnvDef.h"
+#include "../common/MWow64Disable.h"
 #include "../ConEmuCD/GuiHooks.h"
 #include "../ConEmuCD/RegPrepare.h"
 #include "Attach.h"

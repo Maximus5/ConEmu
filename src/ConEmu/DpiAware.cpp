@@ -30,6 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "DpiAware.h"
 #include "SearchCtrl.h"
 #include "../common/Monitors.h"
+#include "../common/StartupEnvDef.h"
 
 //#define DPI_144
 

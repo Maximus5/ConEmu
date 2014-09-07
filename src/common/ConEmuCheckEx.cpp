@@ -34,6 +34,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Memory.h"
 #include "WinObjects.h"
 #include "ConEmuCheckEx.h"
+#include "MFileMapping.h"
 
 BOOL LoadGuiMapping(HWND hConEmuWnd, ConEmuGuiMapping& GuiMapping)
 {

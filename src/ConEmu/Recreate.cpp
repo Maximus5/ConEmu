@@ -37,7 +37,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "VirtualConsole.h"
 #include "VConGroup.h"
 #include "RealConsole.h"
-#include "../common/WinObjects.h"
 
 CRecreateDlg::CRecreateDlg()
 	: mh_Dlg(NULL)

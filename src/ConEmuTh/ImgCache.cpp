@@ -24,6 +24,7 @@
 HICON ghUpIcon = NULL;
 //ITEMIDLIST DesktopID = {{0}};
 //IShellFolder *gpDesktopFolder = NULL;
+class MFileLog;
 extern MFileLog* gpLogLoad;
 extern MFileLog* gpLogPaint;
 

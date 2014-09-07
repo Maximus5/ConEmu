@@ -33,7 +33,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "OptionsFast.h"
 #include "ConEmu.h"
 #include "ConEmuApp.h"
-#include "../common/WinObjects.h"
 
 static bool bCheckHooks, bCheckUpdate, bCheckIme;
 // Если файл конфигурации пуст, то после вызова CheckOptionsFast

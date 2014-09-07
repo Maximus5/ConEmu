@@ -1,23 +1,25 @@
 NAME = ConEmu
-SRCS = ConEmuPlugin.cpp \
-       ConEmuPlugin995.cpp \
-       ConEmuPlugin1900.cpp \
-       ConEmuPlugin2800.cpp \
-       ConEmuPluginA.cpp \
-       ConEmuInjects.cpp \
-       PluginBackground.cpp \
-       PluginSrv.cpp \
-       ../common/CmdLine.cpp \
-       ../common/Common.cpp \
-       ../common/ConEmuCheck.cpp \
-       ../common/ConEmuCheckEx.cpp \
-       ../common/Memory.cpp \
-       ../common/Monitors.cpp \
-       ../common/MSecurity.cpp \
-       ../common/MStrSafe.cpp \
-       ../common/SetEnvVar.cpp \
-       ../common/WinConsole.cpp \
-       ../common/WinObjects.cpp
+SRCS = \
+		../common/CmdLine.cpp \
+		../common/Common.cpp \
+		../common/ConEmuCheck.cpp \
+		../common/ConEmuCheckEx.cpp \
+		../common/Memory.cpp \
+		../common/Monitors.cpp \
+		../common/MSection.cpp      \
+		../common/MSecurity.cpp \
+		../common/MStrSafe.cpp \
+		../common/SetEnvVar.cpp \
+		../common/WinConsole.cpp \
+		../common/WinObjects.cpp \
+		ConEmuInjects.cpp \
+		ConEmuPlugin.cpp \
+		ConEmuPlugin1900.cpp \
+		ConEmuPlugin2800.cpp \
+		ConEmuPlugin995.cpp \
+		ConEmuPluginA.cpp \
+		PluginBackground.cpp \
+		PluginSrv.cpp
 
 USERLIBS = -lversion -lwininet
 ENCFLAGS = -finput-charset=utf-8

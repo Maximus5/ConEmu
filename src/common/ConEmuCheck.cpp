@@ -35,6 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmuCheck.h"
 #include "WinObjects.h"
 #include "ConEmuPipeMode.h"
+#include "MFileMapping.h"
 
 #ifdef _DEBUG
 #define DEBUGSTRCMD(s) //OutputDebugString(s)
