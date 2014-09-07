@@ -13,6 +13,14 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
 
+2014.09.05
+[*] Issue 1684: Long startup of documents from network drives.
+[*] Issue 1703. Prepare FarPlugin to send both panel CD's to GUI.
+[*] When exporting settings suggest default for ConEmu.xml folder.
+[*] Fix indents when creating new xml file.
+[*] Do not update modified (timestamp) if xml was not really changed during config save.
+
+
 2014.09.03
 [*] Move Background image settings to separate page.
 [*] In some rare cases background was not drawn.

@@ -4693,19 +4693,21 @@ void PreReadConsoleInput(bool abUnicode, bool abPeek)
 	{
 		gbCurDirChanged = false;
 
-		if (gFarMode.cbSize)
+		if (ghConEmuWndDC)
 		{
-			if (gFarMode.OnCurDirChanged)
+			if (gFarMode.cbSize
+				&& gFarMode.OnCurDirChanged
+				&& !IsBadCodePtr((FARPROC)gFarMode.OnCurDirChanged))
 			{
 				gFarMode.OnCurDirChanged();
 			}
-		}
-		else if (ghConEmuWndDC)
-		{
-			CmdArg szDir;
-			if (GetDirectory(szDir) > 0)
+			else
 			{
-				SendCurrentDirectory(ghConWnd, szDir);
+				CmdArg szDir;
+				if (GetDirectory(szDir) > 0)
+				{
+					SendCurrentDirectory(ghConWnd, szDir);
+				}
 			}
 		}
 	}
