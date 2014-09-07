@@ -258,7 +258,7 @@ MSG=echo generating $@
 
 $(INTDIR)\AboutDlg.obj: AboutDlg.cpp AboutDlg.h About.h ../ConEmuCD/ConsoleHelp.h
 
-$(INTDIR)\Attach.obj: Attach.cpp Attach.h ../common/ProcList.h
+$(INTDIR)\Attach.obj: Attach.cpp Attach.h ../common/ProcessData.h
 
 $(INTDIR)\Background.obj: Background.cpp Background.h
 

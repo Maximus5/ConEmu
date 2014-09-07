@@ -36,7 +36,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "VConGroup.h"
 #include "../common/Monitors.h"
 #include "../common/WinObjects.h"
-#include "../common/ProcList.h"
+#include "../common/ProcessData.h"
 #include "../ConEmuCD/ExitCodes.h"
 #include "../common/ConEmuCheck.h"
 
