@@ -5081,7 +5081,7 @@ bool AttachServerConsole()
 		AttachConsole_t _AttachConsole = GetAttachConsoleProc();
 		if (_AttachConsole)
 		{
-			lbAttachRc = _AttachConsole(gnServerPID);
+			lbAttachRc = (_AttachConsole(gnServerPID) != 0);
 			if (!lbAttachRc)
 			{
 				nErrCode = GetLastError();
@@ -6164,11 +6164,11 @@ bool GetTime(bool bSystem, LPSYSTEMTIME lpSystemTime)
 	{
 		SYSTEMTIME st = {0}; FILETIME ft; wchar_t* p = szEnvVar;
 
-		if (!(st.wYear = wcstol(p, &p, 10)) || !p || (*p != L'-' && *p != L'.'))
+		if (!(st.wYear = LOWORD(wcstol(p, &p, 10))) || !p || (*p != L'-' && *p != L'.'))
 			goto wrap;
-		if (!(st.wMonth = wcstol(p+1, &p, 10)) || !p || (*p != L'-' && *p != L'.'))
+		if (!(st.wMonth = LOWORD(wcstol(p+1, &p, 10))) || !p || (*p != L'-' && *p != L'.'))
 			goto wrap;
-		if (!(st.wDay = wcstol(p+1, &p, 10)) || !p || (*p != L'T' && *p != L' ' && *p != 0))
+		if (!(st.wDay = LOWORD(wcstol(p+1, &p, 10))) || !p || (*p != L'T' && *p != L' ' && *p != 0))
 			goto wrap;
 		// Possible format 'dd.mm.yyyy'? This is returned by "cmd /k echo %DATE%"
 		if (st.wDay >= 1900 && st.wYear <= 31)
@@ -6187,16 +6187,16 @@ bool GetTime(bool bSystem, LPSYSTEMTIME lpSystemTime)
 		}
 		else
 		{
-			if (((st.wHour = wcstol(p+1, &p, 10))>=24) || !p || (*p != L':' && *p != L'.'))
+			if (((st.wHour = LOWORD(wcstol(p+1, &p, 10)))>=24) || !p || (*p != L':' && *p != L'.'))
 				goto wrap;
-			if (((st.wMinute = wcstol(p+1, &p, 10))>=60))
+			if (((st.wMinute = LOWORD(wcstol(p+1, &p, 10)))>=60))
 				goto wrap;
 
 			// Seconds and MS are optional
-			if ((p && (*p == L':' || *p == L'.')) && ((st.wSecond = wcstol(p+1, &p, 10)) >= 60))
+			if ((p && (*p == L':' || *p == L'.')) && ((st.wSecond = LOWORD(wcstol(p+1, &p, 10))) >= 60))
 				goto wrap;
 			// cmd`s %TIME% shows Milliseconds as two digits
-			if ((p && (*p == L':' || *p == L'.')) && ((st.wMilliseconds = (10*wcstol(p+1, &p, 10))) >= 1000))
+			if ((p && (*p == L':' || *p == L'.')) && ((st.wMilliseconds = (10*LOWORD(wcstol(p+1, &p, 10)))) >= 1000))
 				goto wrap;
 		}
 
