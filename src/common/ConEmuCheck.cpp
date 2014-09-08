@@ -984,32 +984,41 @@ void ExecuteFreeResult(CESERVER_REQ* &pOut)
 	free(p);
 }
 
-void SendCurrentDirectory(HWND hConWnd, LPCWSTR asDirectory, LPCWSTR asPassiveDirectory /*= NULL*/)
+bool AllocateSendCurrentDirectory(CESERVER_REQ* &ppCmd, DWORD &pcbCurMaxSize, LPCWSTR asDirectory, LPCWSTR asPassiveDirectory /*= NULL*/)
 {
 	int iALen = asDirectory ? (lstrlen(asDirectory)+1) : 0;
 	int iPLen = asPassiveDirectory ? (lstrlen(asPassiveDirectory)+1) : 0;
 	if ((iALen < 0) || (iPLen < 0) || (!iALen && !iPLen))
-		return;
+		return false;
 
 	size_t cbMax = sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_STORECURDIR) + (iALen + iPLen) * sizeof(*asDirectory);
-	CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_STORECURDIR, cbMax);
-	if (pIn)
+	if (!ExecuteNewCmd(ppCmd, pcbCurMaxSize, CECMD_STORECURDIR, cbMax))
+		return false;
+
+	ppCmd->CurDir.iActiveCch = iALen;
+	ppCmd->CurDir.iPassiveCch = iPLen;
+	wchar_t* psz = ppCmd->CurDir.szDir;
+	if (iALen)
 	{
-		pIn->CurDir.iActiveCch = iALen;
-		pIn->CurDir.iPassiveCch = iPLen;
-		wchar_t* psz = pIn->CurDir.szDir;
-		if (iALen)
-		{
-			lstrcpyn(psz, asDirectory, iALen);
-			psz += iALen;
-		}
-		if (iPLen)
-		{
-			lstrcpyn(psz, asPassiveDirectory, iPLen);
-		}
-		CESERVER_REQ* pOut = ExecuteGuiCmd(hConWnd, pIn, hConWnd, TRUE);
-		ExecuteFreeResult(pOut);
+		lstrcpyn(psz, asDirectory, iALen);
+		psz += iALen;
 	}
+	if (iPLen)
+	{
+		lstrcpyn(psz, asPassiveDirectory, iPLen);
+	}
+
+	return true;
+}
+
+void SendCurrentDirectory(HWND hConWnd, LPCWSTR asDirectory, LPCWSTR asPassiveDirectory /*= NULL*/)
+{
+	CESERVER_REQ* pIn = NULL; DWORD cbSize = 0;
+	if (!AllocateSendCurrentDirectory(pIn, cbSize, asDirectory, asPassiveDirectory))
+		return;
+
+	CESERVER_REQ* pOut = ExecuteGuiCmd(hConWnd, pIn, hConWnd, TRUE);
+	ExecuteFreeResult(pOut);
 	ExecuteFreeResult(pIn);
 }
 
