@@ -207,7 +207,7 @@ function Prj-VcMake([String]$project, [Array]$cpp, [Array]$hpp)
         foreach ($n in $cpp) {
           if ($n -eq "") { continue }
           $obj = ("`$(INTDIR)\" + [System.IO.Path]::GetFileNameWithoutExtension($n) + ".obj: ")
-          $add = $n
+          $add = $n.Replace("\", "/")
           foreach ($h in $hpp) {
             $add += (" " + $h.Replace("\", "/"))
           }
