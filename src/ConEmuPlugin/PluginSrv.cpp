@@ -745,6 +745,14 @@ BOOL WINAPI PlugServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &pp
 			ppReply->dwData[0] = nDataSize;
 		}
 	}
+	else if (pIn->hdr.nCmd == CECMD_STORECURDIR)
+	{
+		if (AllocateSendCurrentDirectory(ppReply, pcbMaxReplySize, gPanelDirs.ActiveDir->ms_Arg, gPanelDirs.PassiveDir->ms_Arg))
+		{
+			lbRc = TRUE;
+			pcbReplySize = ppReply->hdr.cbSize;
+		}
+	}
 	else
 	{
 		CESERVER_REQ* pCmdRet = NULL;
