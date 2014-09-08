@@ -81,3 +81,5 @@ struct CEStartupEnv
 	// HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Console\TrueTypeFont
 	LPCWSTR pszRegConFonts; // "Index/CP ~t Name ~t Index/CP ..."
 };
+
+extern CEStartupEnv* gpStartEnv;

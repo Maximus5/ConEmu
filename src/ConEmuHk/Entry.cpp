@@ -90,7 +90,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/WinConsole.h"
 #include "../common/WinObjects.h"
 
-#undef FULL_STARTUP_ENV
 #include "../common/StartupEnv.h"
 
 // _CrtCheckMemory can't be used in DLL_PROCESS_ATTACH
@@ -1539,7 +1538,7 @@ BOOL WINAPI DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 
 			DLOG1("DllMain.LoadStartupEnv",ul_reason_for_call);
 			/* *** DEBUG PURPOSES */
-			gpStartEnv = LoadStartupEnv();
+			gpStartEnv = LoadStartupEnv::Create();
 			DLOGEND1();
 			//if (gpStartEnv && gpStartEnv->hIn.hStd && !(gpStartEnv->hIn.nMode & 0x80000000))
 			//{

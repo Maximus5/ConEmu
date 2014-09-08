@@ -499,6 +499,8 @@
       <File RelativePath="..\common\RgnDetect.h" />
       <File RelativePath="..\common\SetEnvVar.h" />
       <File RelativePath="..\common\StartupEnv.h" />
+      <File RelativePath="..\common\StartupEnvDef.h" />
+      <File RelativePath="..\common\StartupEnvEx.h" />
       <File RelativePath="..\common\UnicodeChars.h" />
       <File RelativePath="..\common\WinConsole.h" />
       <File RelativePath="..\common\WinObjects.h" />

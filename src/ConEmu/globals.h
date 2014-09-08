@@ -51,8 +51,6 @@ class CDragDrop;
 //extern CVirtualConsole *pVCon;
 extern HINSTANCE g_hInstance;
 extern CConEmuMain *gpConEmu;
-struct CEStartupEnv;
-extern CEStartupEnv* gpStartEnv;
 //extern TCHAR Title[0x400];
 //extern bool isLBDown, /*isInDrag,*/ isDragProcessed;
 extern HWND ghWnd, ghWndWork, ghWndApp, ghWndDrag;

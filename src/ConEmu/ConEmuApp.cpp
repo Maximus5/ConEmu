@@ -65,8 +65,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "DefaultTerm.h"
 #include "version.h"
 
-#define FULL_STARTUP_ENV
-#include "../common/StartupEnv.h"
+#include "../common/StartupEnvEx.h"
 
 #include "../common/Monitors.h"
 
@@ -3591,7 +3590,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	}
 
 	/* *** DEBUG PURPOSES */
-	gpStartEnv = LoadStartupEnv();
+	gpStartEnv = LoadStartupEnvEx::Create();
 	if (gnOsVer >= 0x600)
 	{
 		CDpiAware::UpdateStartupInfo(gpStartEnv);

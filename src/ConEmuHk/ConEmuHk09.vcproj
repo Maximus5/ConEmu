@@ -409,6 +409,7 @@
       <File RelativePath="..\common\PipeServer.h" />
       <File RelativePath="..\common\RConStartArgs.h" />
       <File RelativePath="..\common\StartupEnv.h" />
+      <File RelativePath="..\common\StartupEnvDef.h" />
       <File RelativePath="..\common\WinConsole.h" />
       <File RelativePath="..\common\WinObjects.h" />
       <File RelativePath="..\ConEmuCD\ExitCodes.h" />

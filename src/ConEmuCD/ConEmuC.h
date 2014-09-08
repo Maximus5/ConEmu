@@ -601,7 +601,6 @@ struct SrvInfo
 };
 
 extern SrvInfo *gpSrv;
-extern CEStartupEnv* gpStartEnv;
 extern OSVERSIONINFO gOSVer;
 extern WORD gnOsVer;
 extern bool gbIsWine;

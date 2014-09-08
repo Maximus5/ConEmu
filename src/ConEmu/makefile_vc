@@ -337,25 +337,25 @@ $(INTDIR)\Memory.obj: ../common/Memory.cpp
 
 $(INTDIR)\Menu.obj: Menu.cpp Menu.h MenuIds.h FindDlg.h
 
-$(INTDIR)\MEvent.obj: ..\common\MEvent.cpp ../common/MEvent.h
+$(INTDIR)\MEvent.obj: ../common/MEvent.cpp ../common/MEvent.h
 
-$(INTDIR)\MFileLog.obj: ..\common\MFileLog.cpp ../common/MFileLog.h
+$(INTDIR)\MFileLog.obj: ../common/MFileLog.cpp ../common/MFileLog.h
 
 $(INTDIR)\Monitors.obj: ../common/Monitors.cpp
 
-$(INTDIR)\MSectionSimple.obj: ..\common\MSectionSimple.cpp ../common/MSectionSimple.h ../common/MSection.h
+$(INTDIR)\MSectionSimple.obj: ../common/MSectionSimple.cpp ../common/MSectionSimple.h ../common/MSection.h
 
-$(INTDIR)\MSection.obj: ..\common\MSection.cpp ../common/MSectionSimple.h ../common/MSection.h
+$(INTDIR)\MSection.obj: ../common/MSection.cpp ../common/MSectionSimple.h ../common/MSection.h
 
 $(INTDIR)\MSecurity.obj: ../common/MSecurity.cpp
 
-$(INTDIR)\MSetter.obj: ..\common\MSetter.cpp ../common/MSetter.h
+$(INTDIR)\MSetter.obj: ../common/MSetter.cpp ../common/MSetter.h
 
 $(INTDIR)\MStrSafe.obj: ../common/MStrSafe.cpp
 
-$(INTDIR)\MTimer.obj: ..\common\MTimer.cpp ../common/MTimer.h
+$(INTDIR)\MTimer.obj: ../common/MTimer.cpp ../common/MTimer.h
 
-$(INTDIR)\MToolTip.obj: ..\common\MToolTip.cpp ../common/MToolTip.h
+$(INTDIR)\MToolTip.obj: ../common/MToolTip.cpp ../common/MToolTip.h
 
 $(INTDIR)\Options.obj: Options.cpp Options.h UpdateSet.h Version.h
 

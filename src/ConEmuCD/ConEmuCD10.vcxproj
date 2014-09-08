@@ -834,6 +834,7 @@
     <ClInclude Include="..\common\SetEnvVar.h" />
     <ClInclude Include="..\common\StartupEnv.h" />
     <ClInclude Include="..\common\StartupEnvDef.h" />
+    <ClInclude Include="..\common\StartupEnvEx.h" />
     <ClInclude Include="..\common\WinConsole.h" />
     <ClInclude Include="..\common\WinObjects.h" />
     <ClInclude Include="..\ConEmuHk\Injects.h" />

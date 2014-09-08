@@ -263,7 +263,7 @@ $(INTDIR)\Memory.obj: ../common/Memory.cpp
 
 $(INTDIR)\Monitors.obj: ../common/Monitors.cpp
 
-$(INTDIR)\MSection.obj: ..\common\MSection.cpp ../common/MSection.h
+$(INTDIR)\MSection.obj: ../common/MSection.cpp ../common/MSection.h
 
 $(INTDIR)\MStrSafe.obj: ../common/MStrSafe.cpp
 

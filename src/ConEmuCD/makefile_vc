@@ -314,17 +314,17 @@ $(INTDIR)\InQueue.obj: ../common/InQueue.cpp ../common/InQueue.h
 
 $(INTDIR)\MAssert.obj: ../common/MAssert.cpp
 
-$(INTDIR)\MConHandle.obj: ..\common\MConHandle.cpp ../common/MSection.h ../common/MSectionSimple.h ../common/StartupEnv.h ../common/StartupEnvDef.h ../common/MFileLog.h ../common/MConHandle.h
+$(INTDIR)\MConHandle.obj: ../common/MConHandle.cpp ../common/MSection.h ../common/MSectionSimple.h ../common/StartupEnv.h ../common/StartupEnvDef.h ../common/MFileLog.h ../common/MConHandle.h
 
 $(INTDIR)\Memory.obj: ../common/Memory.cpp
 
-$(INTDIR)\MFileLog.obj: ..\common\MFileLog.cpp ../common/MSection.h ../common/MSectionSimple.h ../common/StartupEnv.h ../common/StartupEnvDef.h ../common/MFileLog.h ../common/MConHandle.h
+$(INTDIR)\MFileLog.obj: ../common/MFileLog.cpp ../common/MSection.h ../common/MSectionSimple.h ../common/StartupEnv.h ../common/StartupEnvDef.h ../common/MFileLog.h ../common/MConHandle.h
 
 $(INTDIR)\Monitors.obj: ../common/Monitors.cpp
 
-$(INTDIR)\MSection.obj: ..\common\MSection.cpp ../common/MSection.h ../common/MSectionSimple.h ../common/StartupEnv.h ../common/StartupEnvDef.h ../common/MFileLog.h ../common/MConHandle.h
+$(INTDIR)\MSection.obj: ../common/MSection.cpp ../common/MSection.h ../common/MSectionSimple.h ../common/StartupEnv.h ../common/StartupEnvDef.h ../common/MFileLog.h ../common/MConHandle.h
 
-$(INTDIR)\MSectionSimple.obj: ..\common\MSectionSimple.cpp ../common/MSection.h ../common/MSectionSimple.h ../common/StartupEnv.h ../common/StartupEnvDef.h ../common/MFileLog.h ../common/MConHandle.h
+$(INTDIR)\MSectionSimple.obj: ../common/MSectionSimple.cpp ../common/MSection.h ../common/MSectionSimple.h ../common/StartupEnv.h ../common/StartupEnvDef.h ../common/MFileLog.h ../common/MConHandle.h
 
 $(INTDIR)\MSecurity.obj: ../common/MSecurity.cpp
 

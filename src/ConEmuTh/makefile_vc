@@ -229,7 +229,7 @@ $(INTDIR)\MAssert.obj: ../common/MAssert.cpp
 
 $(INTDIR)\Memory.obj: ../common/Memory.cpp
 
-$(INTDIR)\MSection.obj: ..\common\MSection.cpp ../common/MSection.h
+$(INTDIR)\MSection.obj: ../common/MSection.cpp ../common/MSection.h
 
 $(INTDIR)\MSecurity.obj: ../common/MSecurity.cpp
 
