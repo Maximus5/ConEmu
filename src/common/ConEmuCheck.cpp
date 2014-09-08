@@ -479,7 +479,7 @@ CESERVER_REQ* ExecuteNewCmd(DWORD nCmd, size_t nSize)
 	return pIn;
 }
 
-BOOL ExecuteNewCmd(CESERVER_REQ* &ppCmd, DWORD &pcbCurMaxSize, DWORD nCmd, size_t nSize)
+bool ExecuteNewCmd(CESERVER_REQ* &ppCmd, DWORD &pcbCurMaxSize, DWORD nCmd, size_t nSize)
 {
 	if (!ppCmd || (pcbCurMaxSize < nSize))
 	{

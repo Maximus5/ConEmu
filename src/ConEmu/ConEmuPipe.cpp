@@ -247,7 +247,7 @@ BOOL CConEmuPipe::Execute(int nCmd, LPCVOID apData, UINT anDataSize)
 	LPBYTE ptrData = ((LPBYTE)pOut)+cbRead;
 	nAllSize -= cbRead;
 
-	while(nAllSize>0)
+	while (nAllSize>0)
 	{
 		//_tprintf(TEXT("%s\n"), chReadBuf);
 
