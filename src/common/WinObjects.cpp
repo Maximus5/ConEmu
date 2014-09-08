@@ -437,6 +437,7 @@ bool IsFilePath(LPCWSTR asFilePath, bool abFullRequired /*= false*/)
 	        wcschr(asFilePath, L'>') ||
 	        wcschr(asFilePath, L'<') ||
 	        wcschr(asFilePath, L'|')
+			// '/' не проверяем для совместимости с cygwin?
 	  )
 		return false;
 

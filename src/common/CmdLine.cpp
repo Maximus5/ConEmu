@@ -1135,6 +1135,65 @@ bool ProcessSetEnvCmd(LPCWSTR& asCmdLine, bool bDoSet, CmdArg* rpsTitle /*= NULL
 	return bEnvChanged;
 }
 
+bool FileSearchInDir(LPCWSTR asFilePath, CmdArg& rsFound)
+{
+	// Possibilities
+	// a) asFilePath does not contain path, only: "far"
+	// b) asFilePath contains path, but without extension: "C:\\Program Files\\Far\\Far"
+
+	LPCWSTR pszSearchFile = asFilePath;
+	LPCWSTR pszSlash = wcsrchr(asFilePath, L'\\');
+	if (pszSlash)
+	{
+		if ((pszSlash - asFilePath) >= MAX_PATH)
+		{
+			// No need to continue, this is invalid path to executable
+			return false;
+		}
+
+		// C:\Far\Far.exe /w /pC:\Far\Plugins\ConEmu;C:\Far\Plugins.My
+		if (!IsFilePath(asFilePath, false))
+		{
+			return false;
+		}
+
+		// Do not allow '/' here
+		LPCWSTR pszFwd = wcschr(asFilePath, L'/');
+		if (pszFwd != NULL)
+		{
+			return false;
+		}
+	}
+
+	wchar_t* pszSearchPath = NULL;
+	if (pszSlash)
+	{
+		if ((pszSearchPath = lstrdup(asFilePath)) != NULL)
+		{
+			pszSearchFile = pszSlash + 1;
+			pszSearchPath[pszSearchFile - asFilePath] = 0;
+		}
+	}
+
+	// Попытаемся найти "по путям" (%PATH%)
+	wchar_t *pszFilePart;
+	wchar_t szFind[MAX_PATH+1];
+	LPCWSTR pszExt = PointToExt(asFilePath);
+
+	DWORD nLen = SearchPath(pszSearchPath, pszSearchFile, pszExt ? NULL : L".exe", countof(szFind), szFind, &pszFilePart);
+
+	SafeFree(pszSearchPath);
+
+	if (nLen && (nLen < countof(szFind)) && FileExists(szFind))
+	{
+		// asFilePath will be invalid after .Set
+		rsFound.Set(szFind);
+		return true;
+	}
+
+	return false;
+}
+
 bool FileExistsSearch(LPCWSTR asFilePath, CmdArg& rsFound, bool abSetPath/*= true*/, bool abRegSearch /*= true*/)
 {
 	if (!asFilePath || !*asFilePath)
@@ -1168,39 +1227,8 @@ bool FileExistsSearch(LPCWSTR asFilePath, CmdArg& rsFound, bool abSetPath/*= tru
 	}
 
 	// Search "Path"
-	LPCWSTR pszSearchFile = asFilePath;
-	LPCWSTR pszSlash = wcsrchr(asFilePath, L'\\');
-	if (pszSlash && ((pszSlash - asFilePath) >= MAX_PATH))
+	if (FileSearchInDir(asFilePath, rsFound))
 	{
-		// Too long path?
-		_ASSERTE((pszSlash - asFilePath) < MAX_PATH);
-		// No need to continue, this is invalid path to executable
-		return false;
-	}
-
-	wchar_t* pszSearchPath = NULL;
-	if (pszSlash)
-	{
-		if ((pszSearchPath = lstrdup(asFilePath)) != NULL)
-		{
-			pszSearchFile = pszSlash + 1;
-			pszSearchPath[pszSearchFile - asFilePath] = 0;
-		}
-	}
-
-	// Попытаемся найти "по путям" (%PATH%)
-	wchar_t *pszFilePart;
-	wchar_t szFind[MAX_PATH+1];
-	LPCWSTR pszExt = PointToExt(asFilePath);
-
-	DWORD nLen = SearchPath(pszSearchPath, pszSearchFile, pszExt ? NULL : L".exe", countof(szFind), szFind, &pszFilePart);
-
-	SafeFree(pszSearchPath);
-
-	if (nLen && (nLen < countof(szFind)) && FileExists(szFind))
-	{
-		// asFilePath will be invalid after .Set
-		rsFound.Set(szFind);
 		return true;
 	}
 
