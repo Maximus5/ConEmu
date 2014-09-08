@@ -13,6 +13,12 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
 
+2014.09.08
+[*] Issue 1690: Give more weight to "/dir" ConEmu.exe switch than the same from Task parameter.
+[*] Issue 1703: Force CD refresh before starting hyperlink (editor).
+[*] Spare "cmd.exe" was appeared in the process root in some cases.
+
+
 2014.09.05
 [*] Issue 1684: Long startup of documents from network drives.
 [*] Issue 1703: Prepare FarPlugin to send both panel CD's to GUI.
