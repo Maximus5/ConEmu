@@ -139,7 +139,8 @@ class CConEmuMain
 		wchar_t ms_ConEmuExe[MAX_PATH+1];       // полный путь к ConEmu.exe (GUI)
 		wchar_t ms_ConEmuExeDir[MAX_PATH+1];    // БЕЗ завершающего слеша. Папка содержит ConEmu.exe
 		wchar_t ms_ConEmuBaseDir[MAX_PATH+1];   // БЕЗ завершающего слеша. Папка содержит ConEmuC.exe, ConEmuHk.dll, ConEmu.xml
-		wchar_t ms_ConEmuWorkDir[MAX_PATH+1];    // БЕЗ завершающего слеша. Папка запуска ConEmu.exe (GetCurrentDirectory)
+		wchar_t ms_ConEmuWorkDir[MAX_PATH+1];   // БЕЗ завершающего слеша. Папка запуска ConEmu.exe (GetCurrentDirectory)
+		bool mb_ConEmuWorkDirArg;               // Was started as "ConEmu /Dir C:\abc ..." this must override "/dir" switch in task parameter
 		void StoreWorkDir(LPCWSTR asNewCurDir = NULL);
 		LPCWSTR WorkDir(LPCWSTR asOverrideCurDir = NULL);
 		bool ChangeWorkDir(LPCWSTR asTempCurDir);

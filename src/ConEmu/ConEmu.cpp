@@ -483,6 +483,7 @@ CConEmuMain::CConEmuMain()
 	*pszSlash = 0;
 
 	// Запомнить текущую папку (на момент запуска)
+	mb_ConEmuWorkDirArg = false; // May be overrided with app "/dir" switch
 	StoreWorkDir();
 
 	bool lbBaseFound = false;
@@ -804,6 +805,9 @@ void CConEmuMain::StoreWorkDir(LPCWSTR asNewCurDir /*= NULL*/)
 	{
 		if (*asNewCurDir)
 		{
+			// Here we are if "/dir" was specified in the app switches
+			mb_ConEmuWorkDirArg = true;
+			// Save it
 			wcscpy_c(ms_ConEmuWorkDir, asNewCurDir);
 			// The root of the drive must have trailing '\'
 			FixDirEndSlash(ms_ConEmuWorkDir);
@@ -4585,7 +4589,7 @@ BOOL CConEmuMain::RunSingleInstance(HWND hConEmuWnd /*= NULL*/, LPCWSTR apszCmd 
 				lstrcpyW(pIn->NewCmd.szCommand, lpszCmd ? lpszCmd : L"");
 
 				// Task? That may have "/dir" switch in task parameters
-				if (lpszCmd && (*lpszCmd == TaskBracketLeft))
+				if (lpszCmd && (*lpszCmd == TaskBracketLeft) && !mb_ConEmuWorkDirArg)
 				{
 					RConStartArgs args;
 					wchar_t* pszDataW = LoadConsoleBatch(lpszCmd, &args);
@@ -7026,6 +7030,9 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 			else if ((*pszCmd == CmdFilePrefix || *pszCmd == TaskBracketLeft || lstrcmpi(pszCmd,AutoStartTaskName) == 0) && !gpConEmu->mb_StartDetached)
 			{
 				RConStartArgs args;
+				// Was "/dir" specified in the app switches?
+				if (mb_ConEmuWorkDirArg)
+					args.pszStartupDir = lstrdup(ms_ConEmuWorkDir);
 				// В качестве "команды" указан "пакетный файл" или "группа команд" одновременного запуска нескольких консолей
 				wchar_t* pszDataW = LoadConsoleBatch(pszCmd, &args);
 				if (!pszDataW)
