@@ -1175,7 +1175,7 @@ bool FileExistsSearch(LPCWSTR asFilePath, CmdArg& rsFound, bool abSetPath/*= tru
 		// Too long path?
 		_ASSERTE((pszSlash - asFilePath) < MAX_PATH);
 		// No need to continue, this is invalid path to executable
-		return FALSE;
+		return false;
 	}
 
 	wchar_t* pszSearchPath = NULL;
@@ -1197,7 +1197,7 @@ bool FileExistsSearch(LPCWSTR asFilePath, CmdArg& rsFound, bool abSetPath/*= tru
 
 	SafeFree(pszSearchPath);
 
-	if (nLen && (nLen < countof(szFind)))
+	if (nLen && (nLen < countof(szFind)) && FileExists(szFind))
 	{
 		// asFilePath will be invalid after .Set
 		rsFound.Set(szFind);
