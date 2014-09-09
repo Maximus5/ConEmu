@@ -210,12 +210,13 @@ CVirtualConsole* CTabPanelBase::FarSendChangeTab(int tabIndex)
 
 	DWORD nCallStart = TimeGetTime(), nCallEnd = 0;
 
-	bChangeOk = pVCon->RCon()->ActivateFarWindow(wndIndex);
+	CRealConsole *pRCon = pVCon->RCon();
+	bChangeOk = pRCon->ActivateFarWindow(wndIndex);
 
 	if (!bChangeOk)
 	{
 		// Всплыть тултип с руганью - не смогли активировать
-		ShowTabErrorInt(L"This tab can't be activated now!", tabIndex);
+		ShowTabErrorInt(pRCon->GetActivateFarWindowError(ms_TabErrText, countof(ms_TabErrText)), tabIndex);
 	}
 	else
 	{

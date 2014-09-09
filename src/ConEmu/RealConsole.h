@@ -531,6 +531,7 @@ class CRealConsole
 		bool ActivateFarWindow(int anWndIndex);
 		DWORD CanActivateFarWindow(int anWndIndex);
 		bool IsSwitchFarWindowAllowed();
+		LPCWSTR GetActivateFarWindowError(wchar_t* pszBuffer, size_t cchBufferMax);
 		void OnConsoleKeyboardLayout(DWORD dwNewLayout);
 		void SwitchKeyboardLayout(WPARAM wParam,DWORD_PTR dwNewKeybLayout);
 		void CloseConsole(bool abForceTerminate, bool abConfirm, bool abAllowMacro = true);
@@ -773,6 +774,7 @@ class CRealConsole
 			CEFarWindowType nActiveType;
 			int  nActiveIndex;
 			int  nActiveFarWindow;
+			wchar_t sTabActivationErr[128];
 			void StoreActiveTab(int anActiveIndex, const CTabID* apActiveTab);
 			bool RefreshFarPID(DWORD nNewPID);
 		} tabs;

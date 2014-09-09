@@ -182,6 +182,7 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 	tabs.nActiveIndex = 0;
 	tabs.nActiveFarWindow = 0;
 	tabs.nActiveType = fwt_Panels|fwt_CurrentFarWnd;
+	tabs.sTabActivationErr[0] = 0;
 
 	#ifdef TAB_REF_PLACE
 	tabs.m_Tabs.SetPlace("RealConsole.cpp:tabs.m_Tabs",0);
@@ -9976,6 +9977,7 @@ DWORD CRealConsole::CanActivateFarWindow(int anWndIndex)
 
 	if (!dwPID)
 	{
+		wcscpy_c(tabs.sTabActivationErr, L"Far was not found in console");
 		return -1; // консоль активируется без разбора по вкладкам (фара нет)
 	}
 
@@ -9987,16 +9989,21 @@ DWORD CRealConsole::CanActivateFarWindow(int anWndIndex)
 	// so we can't just check (anWndIndex >= tabs.mn_tabsCount)
 	if (anWndIndex < 0 /*|| anWndIndex >= tabs.mn_tabsCount*/)
 	{
+		_wsprintf(tabs.sTabActivationErr, SKIPLEN(countof(tabs.sTabActivationErr)) L"Bad anWndIndex=%i was requested", anWndIndex);
 		AssertCantActivate(anWndIndex>=0);
 		return 0;
 	}
 
 	// Добавил такую проверочку. По идее, у нас всегда должен быть актуальный номер текущего окна.
 	if (tabs.nActiveFarWindow == anWndIndex)
+	{
+		_wsprintf(tabs.sTabActivationErr, SKIPLEN(countof(tabs.sTabActivationErr)) L"Far window %i is already active", anWndIndex);
 		return (DWORD)-1; // Нужное окно уже выделено, лучше не дергаться...
+	}
 
 	if (isPictureView(TRUE))
 	{
+		_wsprintf(tabs.sTabActivationErr, SKIPLEN(countof(tabs.sTabActivationErr)) L"PicView was found\r\nPID=%u, anWndIndex=%i", dwPID, anWndIndex);
 		AssertCantActivate("isPictureView"==NULL);
 		return 0; // При наличии PictureView переключиться на другой таб этой консоли не получится
 	}
@@ -10007,6 +10014,7 @@ DWORD CRealConsole::CanActivateFarWindow(int anWndIndex)
 	// Прогресс уже определился в другом месте
 	if (GetProgress(NULL)>=0)
 	{
+		_wsprintf(tabs.sTabActivationErr, SKIPLEN(countof(tabs.sTabActivationErr)) L"Progress was detected\r\nPID=%u, anWndIndex=%i", dwPID, anWndIndex);
 		AssertCantActivate("GetProgress>0"==NULL);
 		return 0; // Идет копирование или какая-то другая операция
 	}
@@ -10026,12 +10034,14 @@ DWORD CRealConsole::CanActivateFarWindow(int anWndIndex)
 
 	if (!mp_RBuf->isInitialized())
 	{
+		_wsprintf(tabs.sTabActivationErr, SKIPLEN(countof(tabs.sTabActivationErr)) L"Buffer not initialized\r\nPID=%u, anWndIndex=%i", dwPID, anWndIndex);
 		AssertCantActivate("Buf.isInitiazed"==NULL);
 		return 0; // консоль не инициализирована, ловить нечего
 	}
 
 	if (mp_RBuf != mp_ABuf)
 	{
+		_wsprintf(tabs.sTabActivationErr, SKIPLEN(countof(tabs.sTabActivationErr)) L"Alternative buffer is active\r\nPID=%u, anWndIndex=%i", dwPID, anWndIndex);
 		AssertCantActivate("mp_RBuf != mp_ABuf"==NULL);
 		return 0; // если активирован доп.буфер - менять окна нельзя
 	}
@@ -10053,6 +10063,7 @@ DWORD CRealConsole::CanActivateFarWindow(int anWndIndex)
 
 	if (lbMenuOrMacro)
 	{
+		_wsprintf(tabs.sTabActivationErr, SKIPLEN(countof(tabs.sTabActivationErr)) L"Menu or macro was detected\r\nPID=%u, anWndIndex=%i", dwPID, anWndIndex);
 		AssertCantActivate(lbMenuOrMacro==FALSE);
 		return 0;
 	}
@@ -10060,6 +10071,7 @@ DWORD CRealConsole::CanActivateFarWindow(int anWndIndex)
 	// Если висит диалог - не даем переключаться по табам
 	if (mp_ABuf && (mp_ABuf->GetDetector()->GetFlags() & FR_FREEDLG_MASK))
 	{
+		_wsprintf(tabs.sTabActivationErr, SKIPLEN(countof(tabs.sTabActivationErr)) L"Dialog was detected\r\nPID=%u, anWndIndex=%i", dwPID, anWndIndex);
 		AssertCantActivate("FR_FREEDLG_MASK"==NULL);
 		return 0;
 	}
@@ -10072,9 +10084,37 @@ bool CRealConsole::IsSwitchFarWindowAllowed()
 {
 	if (!this)
 		return false;
+
 	if (mb_InCloseConsole || mn_TermEventTick)
+	{
+		wcscpy_c(tabs.sTabActivationErr,
+			mb_InCloseConsole
+				? L"Console is in closing state"
+				: L"Termination event was set");
 		return false;
+	}
+
 	return true;
+}
+
+LPCWSTR CRealConsole::GetActivateFarWindowError(wchar_t* pszBuffer, size_t cchBufferMax)
+{
+	if (!this)
+		return L"this==NULL";
+
+	if (!pszBuffer || !cchBufferMax)
+	{
+		return *tabs.sTabActivationErr ? tabs.sTabActivationErr : L"Unknown error";
+	}
+
+	_wcscpy_c(pszBuffer, cchBufferMax, L"This tab can't be activated now!");
+	if (*tabs.sTabActivationErr)
+	{
+		_wcscat_c(pszBuffer, cchBufferMax, L"\r\n");
+		_wcscat_c(pszBuffer, cchBufferMax, tabs.sTabActivationErr);
+	}
+
+	return pszBuffer;
 }
 
 bool CRealConsole::ActivateFarWindow(int anWndIndex)
@@ -10082,20 +10122,29 @@ bool CRealConsole::ActivateFarWindow(int anWndIndex)
 	if (!this)
 		return false;
 
+	tabs.sTabActivationErr[0] = 0;
+
 	if ((anWndIndex == tabs.nActiveFarWindow) || (!anWndIndex && (tabs.mn_tabsCount <= 1)))
+	{
 		return true;
+	}
 
 	if (!IsSwitchFarWindowAllowed())
+	{
+		if (!*tabs.sTabActivationErr) wcscpy_c(tabs.sTabActivationErr, L"!IsSwitchFarWindowAllowed()");
 		return false;
+	}
 
 	DWORD dwPID = CanActivateFarWindow(anWndIndex);
 
 	if (!dwPID)
 	{
+		if (!*tabs.sTabActivationErr) wcscpy_c(tabs.sTabActivationErr, L"Far PID not found (0)");
 		return false;
 	}
 	else if (dwPID == (DWORD)-1)
 	{
+		_ASSERTE(tabs.sTabActivationErr[0] == 0);
 		return true; // Нужное окно уже выделено, лучше не дергаться...
 	}
 
@@ -10103,7 +10152,11 @@ bool CRealConsole::ActivateFarWindow(int anWndIndex)
 	//DWORD nWait = -1;
 	CConEmuPipe pipe(dwPID, 100);
 
-	if (pipe.Init(_T("CRealConsole::ActivateFarWindow")))
+	if (!pipe.Init(_T("CRealConsole::ActivateFarWindow")))
+	{
+		_wsprintf(tabs.sTabActivationErr, SKIPLEN(countof(tabs.sTabActivationErr)) L"Pipe initialization failed\r\nPID=%u", dwPID);
+	}
+	else
 	{
 		DWORD nData[2] = {(DWORD)anWndIndex,0};
 
@@ -10115,7 +10168,11 @@ bool CRealConsole::ActivateFarWindow(int anWndIndex)
 		}
 
 		DEBUGSTRCMD(L"GUI send CMD_SETWINDOW\n");
-		if (pipe.Execute(CMD_SETWINDOW, nData, 8))
+		if (!pipe.Execute(CMD_SETWINDOW, nData, 8))
+		{
+			_wsprintf(tabs.sTabActivationErr, SKIPLEN(countof(tabs.sTabActivationErr)) L"CMD_SETWINDOW failed\r\nPID=%u, Err=%u", dwPID, GetLastError());
+		}
+		else
 		{
 			DEBUGSTRCMD(L"CMD_SETWINDOW executed\n");
 
@@ -10131,24 +10188,46 @@ bool CRealConsole::ActivateFarWindow(int anWndIndex)
 			//	pipe.Read(&nInMacro, sizeof(DWORD), &nTemp) &&
 			//	pipe.Read(&nFromMainThread, sizeof(DWORD), &nTemp)
 			//	)
-			if (pipe.Read(&TabHdr, nHdrSize, &cbBytesRead))
+			if (!pipe.Read(&TabHdr, nHdrSize, &cbBytesRead))
+			{
+				_wsprintf(tabs.sTabActivationErr, SKIPLEN(countof(tabs.sTabActivationErr)) L"CMD_SETWINDOW result read failed\r\nPID=%u, Err=%u", dwPID, GetLastError());
+			}
+			else
 			{
 				tabs = (ConEmuTab*)pipe.GetPtr(&cbBytesRead);
 				_ASSERTE(cbBytesRead==(TabHdr.nTabCount*sizeof(ConEmuTab)));
 
-				if (cbBytesRead == (TabHdr.nTabCount*sizeof(ConEmuTab)))
+				if (cbBytesRead != (TabHdr.nTabCount*sizeof(ConEmuTab)))
+				{
+					_wsprintf(tabs.sTabActivationErr, SKIPLEN(countof(tabs.sTabActivationErr))
+						L"CMD_SETWINDOW bad result header\r\nPID=%u, (%u != %u*%u)", dwPID, cbBytesRead, TabHdr.nTabCount, (DWORD)sizeof(ConEmuTab));
+				}
+				else
 				{
 					SetTabs(tabs, TabHdr.nTabCount);
+					int iActive = -1;
 					if ((anWndIndex >= 0) && (TabHdr.nTabCount > 0))
 					{
 						for (UINT i = 0; i < TabHdr.nTabCount; i++)
 						{
-							if ((tabs[i].Pos == anWndIndex) && tabs[i].Current)
+							if (tabs[i].Current)
 							{
-								lbRc = true;
-								break;
+								// Store its index
+								iActive = tabs[i].Pos;
+								// Same as requested?
+								if (tabs[i].Pos == anWndIndex)
+								{
+									lbRc = true;
+									break;
+								}
 							}
 						}
+					}
+					// Error reporting
+					if (!lbRc)
+					{
+						_wsprintf(tabs.sTabActivationErr, SKIPLEN(countof(tabs.sTabActivationErr))
+							L"Tabs received but wrong tab is active\r\nPID=%u, Req=%i, Cur=%i", dwPID, anWndIndex, iActive);
 					}
 				}
 
