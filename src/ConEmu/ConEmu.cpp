@@ -7784,6 +7784,11 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			FixSingleModifier(0, pVCon->RCon());
 		mp_TabBar->SwitchRollback();
 		UnRegisterHotKeys();
+		// Если работает ChildGui - значит был хак с активностью рамки ConEmu
+		if (pVCon && pVCon->GuiWnd())
+		{
+			SetFrameActiveState(false);
+		}
 	}
 	else if (!mb_HotKeyRegistered)
 	{
