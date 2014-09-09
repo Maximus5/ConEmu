@@ -80,6 +80,7 @@ protected:
 	void RedrawUnlock();
 public:
 	void RedrawFrame();
+	void SetFrameActiveState(bool bActive);
 private:
 	//OSVERSIONINFO m_OSVer;
 #if 0

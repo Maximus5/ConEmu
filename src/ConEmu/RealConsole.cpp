@@ -8826,7 +8826,8 @@ void CRealConsole::OnGuiFocused(BOOL abFocus, BOOL abForceChild /*= FALSE*/)
 
 				GuiWndFocusRestore();
 			}
-			SendMessage(ghWnd, WM_NCACTIVATE, TRUE, 0);
+
+			gpConEmu->SetFrameActiveState(true);
 		}
 		else
 		{

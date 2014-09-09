@@ -1591,3 +1591,8 @@ void CFrameHolder::GetIconShift(POINT& IconShift)
 		}
 	}
 }
+
+void CFrameHolder::SetFrameActiveState(bool bActive)
+{
+	SendMessage(ghWnd, WM_NCACTIVATE, bActive, 0);
+}
