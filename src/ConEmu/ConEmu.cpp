@@ -7660,8 +7660,7 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			// сброс, однократная проверка для "Hide on focus lose"
 			mn_ForceTimerCheckLoseFocus = 0;
 		}
-		#if 0
-		else if (!lbSetFocus || mb_LastConEmuFocusState)
+		else if (lbSetFocus == mb_LastConEmuFocusState)
 		{
 			// Logging
 			bool bNeedLog = RELEASEDEBUGTEST((gpSetCls->isAdvLogging>=2),true);
@@ -7677,10 +7676,8 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			return 0;
 		}
 
-		// Сюда мы доходим, если произошла какая-то ошибка, и ConEmu не получил
-		// информации о том, что его окно было активировано. Нужно уведомить сервер.
-		_ASSERTE(lbSetFocus || lnForceTimerCheckLoseFocus);
-		#endif
+		// Сюда мы доходим, если по каким-то причинам (ChildGui?) ConEmu не получил
+		// информации о том, что его окно было [де]активировано. Нужно уведомить сервер.
 	}
 
 
