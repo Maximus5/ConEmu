@@ -8794,6 +8794,9 @@ void CRealConsole::OnGuiFocused(BOOL abFocus, BOOL abForceChild /*= FALSE*/)
 	if (!this)
 		return;
 
+	if (!abFocus)
+		mp_VCon->RestoreChildFocusPending(false);
+
 	if (m_ChildGui.bInSetFocus)
 	{
 		#ifdef _DEBUG
@@ -8825,7 +8828,8 @@ void CRealConsole::OnGuiFocused(BOOL abFocus, BOOL abForceChild /*= FALSE*/)
 
 				GuiNotifyChildWindow();
 
-				GuiWndFocusRestore();
+				// Зовем Post-ом, т.к. сейчас таб может быть еще не активирован, а в процессе...
+				mp_VCon->PostRestoreChildFocus();
 			}
 
 			gpConEmu->SetFrameActiveState(true);
@@ -12307,6 +12311,8 @@ void CRealConsole::GuiWndFocusStore()
 	if (!this || !m_ChildGui.hGuiWnd)
 		return;
 
+	mp_VCon->RestoreChildFocusPending(false);
+
 	GUITHREADINFO gti = {sizeof(gti)};
 
 	DWORD nPID = 0, nGetPID = 0, nErr = 0;
@@ -12354,6 +12360,7 @@ void CRealConsole::GuiWndFocusRestore(bool bForce /*= false*/)
 		return;
 	}
 
+	bool bSkipInvisible = false;
 	BOOL bAttached = FALSE;
 	DWORD nErr = 0;
 
@@ -12366,12 +12373,10 @@ void CRealConsole::GuiWndFocusRestore(bool bForce /*= false*/)
 		BOOL bAttachCalled = FALSE;
 		GuiWndFocusThread(hSetFocus, bAttached, bAttachCalled, nErr);
 
-		bool bSkipInvisible = false;
 		if (IsWindowVisible(hSetFocus))
 			SetFocus(hSetFocus);
 		else
 			bSkipInvisible = true;
-
 
 		wchar_t sInfo[200];
 		_wsprintf(sInfo, SKIPLEN(countof(sInfo)) L"GuiWndFocusRestore to x%08X, hGuiWnd=x%08X, Attach=%s, Err=%u%s",
@@ -12385,6 +12390,8 @@ void CRealConsole::GuiWndFocusRestore(bool bForce /*= false*/)
 	{
 		DEBUGSTRFOCUS(L"GuiWndFocusRestore skipped");
 	}
+
+	mp_VCon->RestoreChildFocusPending(bSkipInvisible);
 }
 
 void CRealConsole::GuiWndFocusThread(HWND hSetFocus, BOOL& bAttached, BOOL& bAttachCalled, DWORD& nErr)

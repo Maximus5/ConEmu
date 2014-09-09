@@ -89,6 +89,8 @@ CConEmuChild::CConEmuChild(CVirtualConsole* pOwner)
 	hDlgTest = NULL;
 	#endif
 
+	mb_RestoreChildFocusPending = false;
+
 	mb_PostFullPaint = FALSE;
 	mn_LastPostRedrawTick = 0;
 	mb_IsPendingRedraw = FALSE;
@@ -320,6 +322,15 @@ BOOL CConEmuChild::ShowView(int nShowCmd)
 		{
 			SetWindowPos(mh_WndDC, HWND_TOP, 0, 0, 0,0, SWP_NOSIZE|SWP_NOMOVE);
 			SetWindowPos(mh_WndBack, mh_WndDC, 0, 0, 0,0, SWP_NOSIZE|SWP_NOMOVE);
+		}
+	}
+
+	if (nShowCmd && bGuiVisible)
+	{
+		// Если активируется таб с ChildGui
+		if (gpConEmu->isActive(pVCon, false))
+		{
+			PostRestoreChildFocus();
 		}
 	}
 
@@ -723,6 +734,11 @@ void CConEmuChild::PostRestoreChildFocus()
 	}
 
 	PostMessage(mh_WndBack, mn_MsgRestoreChildFocus, 0, 0);
+}
+
+void CConEmuChild::RestoreChildFocusPending(bool abSetPending)
+{
+	mb_RestoreChildFocusPending = abSetPending && gpConEmu->isActive(mp_VCon, false);
 }
 
 LRESULT CConEmuChild::BackWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)

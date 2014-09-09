@@ -83,6 +83,8 @@ class CConEmuChild
 		void PostDetach(bool bSendCloseConsole /*= false*/);
 
 		void PostRestoreChildFocus();
+		void RestoreChildFocusPending(bool abSetPending);
+		bool mb_RestoreChildFocusPending;
 
 #ifdef _DEBUG
 	public:

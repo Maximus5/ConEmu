@@ -12922,6 +12922,10 @@ void CConEmuMain::OnTimer_Main(CVirtualConsole* pVCon)
 		{
 			pVCon->RCon()->GuiWndFocusStore();
 		}
+		else if (pVCon->mb_RestoreChildFocusPending && bForeground)
+		{
+			pVCon->RCon()->GuiWndFocusRestore();
+		}
 	}
 
 	if (mh_ConEmuAliveEvent && !mb_ConEmuAliveOwned)
