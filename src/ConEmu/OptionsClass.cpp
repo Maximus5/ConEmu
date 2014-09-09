@@ -8778,6 +8778,12 @@ void CSettings::OnSettingsClosed()
 	mp_ActiveHotKey = NULL;
 	gbLastColorsOk = FALSE;
 
+	if (m_ActivityLoggingType != glt_None)
+	{
+		m_ActivityLoggingType = glt_None;
+		gpConEmu->OnGlobalSettingsChanged();
+	}
+
 	gpConEmu->OnOurDialogClosed();
 
 	ghOpWnd = NULL;
