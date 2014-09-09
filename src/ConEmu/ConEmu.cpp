@@ -755,6 +755,7 @@ CConEmuMain::CConEmuMain()
 	mn_MsgReqChangeCurPalette = RegisterMessage("ChangeCurrentPalette");
 	mn_MsgMacroExecSync = RegisterMessage("MacroExecSync");
 	mn_MsgActivateVCon = RegisterMessage("ActivateVCon");
+	mn_MsgPostScClose = RegisterMessage("ScClose");
 }
 
 bool CConEmuMain::isMingwMode()
@@ -6367,6 +6368,13 @@ void CConEmuMain::OnBufferHeight() //BOOL abBufferHeight)
 //
 //	return lbProceed;
 //}
+
+void CConEmuMain::PostScClose()
+{
+	// Post mn_MsgPostScClose instead of WM_SYSCOMMAND(SC_CLOSE) to ensure that it is our message
+	// and it will not be skipped by CConEmuMain::isSkipNcMessage
+	PostMessage(ghWnd, mn_MsgPostScClose, 0, 0);
+}
 
 // returns true if gpConEmu->Destroy() was called
 bool CConEmuMain::OnScClose()
@@ -14462,6 +14470,11 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 						lActivateRc = (LRESULT)pVCon;
 				}
 				return lActivateRc;
+			}
+			else if (messg == this->mn_MsgPostScClose)
+			{
+				this->OnScClose();
+				return 0;
 			}
 
 			//else if (messg == this->mn_MsgCmdStarted || messg == this->mn_MsgCmdStopped) {

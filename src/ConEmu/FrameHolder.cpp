@@ -83,11 +83,6 @@ void CFrameHolder::InitFrameHolder()
 	RecalculateFrameSizes();
 }
 
-void CFrameHolder::PostScClose()
-{
-	PostMessage(ghWnd, WM_SYSCOMMAND, SC_CLOSE, 0);
-}
-
 // returns false if message not handled
 bool CFrameHolder::ProcessNcMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT& lResult)
 {

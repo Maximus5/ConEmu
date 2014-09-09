@@ -382,6 +382,7 @@ class CConEmuMain
 		bool isMenuActive();
 		bool CanSetChildFocus();
 		void SetScClosePending(bool bFlag);
+		void PostScClose();
 		bool OnScClose();
 		bool isScClosing();
 	protected:
@@ -534,6 +535,7 @@ class CConEmuMain
 		UINT mn_MsgReqChangeCurPalette;
 		UINT mn_MsgMacroExecSync;
 		UINT mn_MsgActivateVCon;
+		UINT mn_MsgPostScClose;
 
 		//
 		virtual void OnUseGlass(bool abEnableGlass) override;
