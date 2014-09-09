@@ -44,6 +44,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/Execute.h"
 #include "../common/MFileLog.h"
 #include "../common/MSectionSimple.h"
+#include "../common/MSetter.h"
 #include "../common/MWow64Disable.h"
 #include "../common/RgnDetect.h"
 #include "../common/SetEnvVar.h"
@@ -8805,7 +8806,7 @@ void CRealConsole::OnGuiFocused(BOOL abFocus, BOOL abForceChild /*= FALSE*/)
 		return;
 	}
 
-	m_ChildGui.bInSetFocus = true;
+	MSetter lSet(&m_ChildGui.bInSetFocus);
 
 	if (abFocus)
 	{
@@ -8881,8 +8882,6 @@ void CRealConsole::OnGuiFocused(BOOL abFocus, BOOL abForceChild /*= FALSE*/)
 #ifdef _DEBUG
 	DEBUGSTRALTSRV(L"--> Updating active was skipped\n");
 #endif
-
-	m_ChildGui.bInSetFocus = false;
 }
 
 // Обновить в сервере флаги Active & ThawRefreshThread,
