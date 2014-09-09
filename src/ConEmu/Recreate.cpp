@@ -146,6 +146,8 @@ INT_PTR CRecreateDlg::OnInitDialog(HWND hDlg, UINT messg, WPARAM wParam, LPARAM 
 {
 	LRESULT lbRc = FALSE;
 
+	gpConEmu->OnOurDialogOpened();
+
 	// Visual
 	SendMessage(hDlg, WM_SETICON, ICON_BIG, (LPARAM)hClassIcon);
 	SendMessage(hDlg, WM_SETICON, ICON_SMALL, (LPARAM)hClassIconSm);
@@ -793,6 +795,10 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 			{
 				return pDlg->OnEditSetFocus(hDlg, messg, wParam, lParam);
 			}
+			break;
+
+		case WM_CLOSE:
+			gpConEmu->OnOurDialogClosed();
 			break;
 
 		case WM_DESTROY:
