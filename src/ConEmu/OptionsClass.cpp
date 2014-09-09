@@ -281,6 +281,7 @@ CSettings::CSettings()
 	gpSetCls = this;
 	gpSet = &m_Settings;
 
+	ZeroStruct(_dpi);
 	GetOverallDpi();
 
 	// Go
@@ -441,16 +442,9 @@ CSettings::CSettings()
 
 int CSettings::GetOverallDpi()
 {
-	HDC hdc = GetDC(NULL);
-	if (hdc)
-	{
-		_dpi.SetDpi(GetDeviceCaps(hdc, LOGPIXELSX), GetDeviceCaps(hdc, LOGPIXELSY));
-		ReleaseDC(NULL, hdc);
-		if (_dpi.Ydpi < 96)
-			_dpi.Ydpi = 96;
-		if (_dpi.Xdpi < 96)
-			_dpi.Xdpi = 96;
-	}
+	// Must be called during initialization only
+	CDpiAware::QueryDpiForMonitor(NULL, &_dpi);
+	_ASSERTE(_dpi.Xdpi >= 96 && _dpi.Ydpi >= 96);
 	return _dpi.Ydpi;
 }
 

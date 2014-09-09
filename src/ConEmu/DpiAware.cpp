@@ -251,7 +251,7 @@ int CDpiAware::QueryDpiForMonitor(HMONITOR hmon, DpiValue* pDpi /*= NULL*/, Moni
 	return 144;
 	#endif
 
-	int dpi = 96;
+	int dpiX = 96, dpiY = 96;
 
 	static HMODULE Shcore = NULL;
 	typedef HRESULT (WINAPI* GetDPIForMonitor_t)(HMONITOR hmonitor, MonitorDpiType dpiType, UINT *dpiX, UINT *dpiY);
@@ -271,7 +271,7 @@ int CDpiAware::QueryDpiForMonitor(HMONITOR hmon, DpiValue* pDpi /*= NULL*/, Moni
 	UINT x = 0, y = 0;
 	HRESULT hr = E_FAIL;
 	bool bSet = false;
-	if (Shcore != (HMODULE)INVALID_HANDLE_VALUE)
+	if (hmon && (Shcore != (HMODULE)INVALID_HANDLE_VALUE))
 	{
 		hr = getDPIForMonitor(hmon, dpiType/*MDT_Effective_DPI*/, &x, &y);
 		if (SUCCEEDED(hr) && (x > 0) && (y > 0))
@@ -281,16 +281,35 @@ int CDpiAware::QueryDpiForMonitor(HMONITOR hmon, DpiValue* pDpi /*= NULL*/, Moni
 				pDpi->SetDpi((int)x, (int)y);
 				bSet = true;
 			}
-			dpi = (int)y;
+			dpiX = (int)x;
+			dpiY = (int)y;
+		}
+	}
+	else
+	{
+		static int overallX = 0, overallY = 0;
+		if (overallX <= 0 || overallY <= 0)
+		{
+			HDC hdc = GetDC(NULL);
+			if (hdc)
+			{
+				overallX = GetDeviceCaps(hdc, LOGPIXELSX);
+				overallY = GetDeviceCaps(hdc, LOGPIXELSY);
+				ReleaseDC(NULL, hdc);
+			}
+		}
+		if (overallX > 0 && overallY > 0)
+		{
+			dpiX = overallX; dpiY = overallY;
 		}
 	}
 
 	if (pDpi && !bSet)
 	{
-		pDpi->SetDpi(dpi, dpi);
+		pDpi->SetDpi(dpiX, dpiY);
 	}
 
-	return dpi;
+	return dpiY;
 }
 
 void CDpiAware::GetCenteredRect(HWND hWnd, RECT& rcCentered)
