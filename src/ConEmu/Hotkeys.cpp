@@ -632,7 +632,8 @@ LPCWSTR ConEmuHotKey::GetHotkeyName(wchar_t (&szFull)[128], bool bShowNone /*= t
 // Return user-friendly key name
 LPCWSTR ConEmuHotKey::GetHotkeyName(DWORD aVkMod, wchar_t (&szFull)[128], bool bShowNone /*= true*/)
 {
-	ConEmuHotKey hk = {0, chk_User, NULL, L"", aVkMod};
+	ConEmuHotKey hk = {0, chk_User};
+	hk.SetVkMod(aVkMod);
 	return hk.GetHotkeyName(szFull, bShowNone);
 }
 
