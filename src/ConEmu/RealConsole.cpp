@@ -9654,11 +9654,11 @@ CEFarWindowType CRealConsole::GetActiveTabType()
 	if (tabs.mn_tabsCount < 1)
 	{
 		_ASSERTE(tabs.mn_tabsCount>=1);
-		nType = fwt_Panels;
+		nType = fwt_Panels|fwt_CurrentFarWnd;
 	}
 	else
 	{
-		nType = fwt_Panels;
+		nType = fwt_Panels|fwt_CurrentFarWnd;
 		MSectionLockSimple SC;
 		tabs.m_Tabs.LockTabs(&SC);
 		iTabCount = tabs.m_Tabs.GetCount();
