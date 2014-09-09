@@ -230,13 +230,17 @@ wchar_t CVirtualConsole::ms_HorzSingl[MAX_SPACES];
 //	return pCon;
 //}
 
+#pragma warning(disable: 4355)
 CVirtualConsole::CVirtualConsole(CConEmuMain* pOwner)
-	: mp_RCon(NULL)
+	: CVConRelease(this)
+	, CConEmuChild(this)
+	, mp_RCon(NULL)
 	, mp_ConEmu(pOwner)
 	, mp_Ghost(NULL)
 	, mp_Group(NULL)
 	, m_DC(NULL)
 {
+	#pragma warning(default: 4355)
 	VConCreateLogger::Log(this, VConCreateLogger::eCreate);
 	mh_WndDC = NULL;
 }

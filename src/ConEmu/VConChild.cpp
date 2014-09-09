@@ -70,8 +70,10 @@ static HWND ghBkInDestroing = NULL;
 
 static UINT gn_MsgVConTerminated = 0; // gpConEmu->GetRegisteredMessage("VConTerminated");
 
-CConEmuChild::CConEmuChild()
+CConEmuChild::CConEmuChild(CVirtualConsole* pOwner)
 {
+	mp_VCon = pOwner;
+
 	mn_AlreadyDestroyed = 0;
 
 	mn_MsgVConTerminated = 0; // Set when destroing pended
@@ -151,7 +153,7 @@ void CConEmuChild::DoDestroyDcWindow()
 void CConEmuChild::PostOnVConClosed()
 {
 	// Must be called FOR VALID objects ONLY (guared from outside)!
-	CVirtualConsole* pVCon = (CVirtualConsole*)this;
+	CVirtualConsole* pVCon = mp_VCon;
 	if (CVConGroup::isValid(pVCon)
 		&& !InterlockedExchange(&this->mn_MsgVConTerminated, gn_MsgVConTerminated))
 	{
@@ -211,7 +213,7 @@ HWND CConEmuChild::CreateView()
 		return mh_WndDC;
 	}
 
-	CVirtualConsole* pVCon = (CVirtualConsole*)this;
+	CVirtualConsole* pVCon = mp_VCon;
 	_ASSERTE(pVCon!=NULL);
 	//-- тут консоль только создается, guard не нужен
 	//CVConGuard guard(pVCon);
@@ -285,7 +287,7 @@ BOOL CConEmuChild::ShowView(int nShowCmd)
 	#endif
 
 	// Если это "GUI" режим - могут возникать блокировки из-за дочернего окна
-	CVirtualConsole* pVCon = (CVirtualConsole*)this;
+	CVirtualConsole* pVCon = mp_VCon;
 	_ASSERTE(pVCon!=NULL);
 	CVConGuard guard(pVCon);
 
@@ -986,7 +988,7 @@ INT_PTR CConEmuChild::DbgChildDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LP
 
 LRESULT CConEmuChild::OnPaintGaps()
 {
-	CVConGuard VCon((CVirtualConsole*)this);
+	CVConGuard VCon(mp_VCon);
 	if (!VCon.VCon())
 	{
 		_ASSERTE(VCon.VCon()!=NULL);
@@ -1042,7 +1044,7 @@ LRESULT CConEmuChild::OnPaint()
 	if (mb_DisableRedraw)
 		return 0;
 
-	CVConGuard VCon((CVirtualConsole*)this);
+	CVConGuard VCon(mp_VCon);
 
 	mb_PostFullPaint = FALSE;
 
@@ -1272,7 +1274,7 @@ void CConEmuChild::Redraw(bool abRepaintNow /*= false*/)
 // Вызывается из VConGroup::RepositionVCon
 void CConEmuChild::SetVConSizePos(RECT arcBack, bool abReSize /*= true*/)
 {
-	CVirtualConsole* pVCon = (CVirtualConsole*)this;
+	CVirtualConsole* pVCon = mp_VCon;
 	RECT rcBack = arcBack;
 	TODO("Оптимизировать");
 	//RECT rcCon = gpConEmu->CalcRect(CER_CONSOLE_CUR, arcBack, CER_BACK, pVCon);
@@ -1321,7 +1323,7 @@ void CConEmuChild::Invalidate()
 	if (mb_DisableRedraw)
 		return; // Иначе, при автотабах начинаются глюки
 
-	CVirtualConsole* pVCon = (CVirtualConsole*)this;
+	CVirtualConsole* pVCon = mp_VCon;
 
 	//if (gpConEmu->isActive(pVCon))
 	//	gpConEmu->mp_Status->UpdateStatusBar();
@@ -1388,7 +1390,7 @@ void CConEmuChild::OnAlwaysShowScrollbar(bool abSync /*= true*/)
 {
 	if (m_LastAlwaysShowScrollbar != gpSet->isAlwaysShowScrollbar)
 	{
-		CVirtualConsole* pVCon = (CVirtualConsole*)this;
+		CVirtualConsole* pVCon = mp_VCon;
 		CVConGuard guard(pVCon);
 
 		if (gpSet->isAlwaysShowScrollbar == 1)
@@ -1416,7 +1418,7 @@ BOOL CConEmuChild::TrackMouse()
 	_ASSERTE(this);
 	BOOL lbCapture = FALSE; // По умолчанию - мышь не перехватывать
 
-	CVirtualConsole* pVCon = (CVirtualConsole*)this;
+	CVirtualConsole* pVCon = mp_VCon;
 	CVConGuard guard(pVCon);
 
 	if (pVCon->WasHighlightRowColChanged())
@@ -1486,7 +1488,7 @@ bool CConEmuChild::CheckMouseOverScroll(bool abCheckVisible /*= false*/)
 
 	bool lbOverVScroll = false;
 
-	CVirtualConsole* pVCon = (CVirtualConsole*)this;
+	CVirtualConsole* pVCon = mp_VCon;
 	CVConGuard guard(pVCon);
 
 	// Вроде бы в активной? Или в this?
@@ -1809,7 +1811,7 @@ void CConEmuChild::HideScroll(BOOL abImmediate)
 	bool bTHide = false;
 	mb_ScrollAutoPopup = FALSE;
 
-	CVirtualConsole* pVCon = (CVirtualConsole*)this;
+	CVirtualConsole* pVCon = mp_VCon;
 
 	if ((gpSet->isAlwaysShowScrollbar == 1) && !pVCon->GuiWnd())
 	{
@@ -1909,7 +1911,7 @@ void CConEmuChild::LockDcRect(bool bLock, RECT* Rect)
 			return;
 		}
 
-		CVirtualConsole* pVCon = (CVirtualConsole*)this;
+		CVirtualConsole* pVCon = mp_VCon;
 		CVConGuard guard(pVCon);
 
 		TODO("Хорошо бы здесь запомнить в CompatibleBitmap то, что нарисовали. Это нужно делать в MainThread!!");

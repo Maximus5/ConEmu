@@ -37,8 +37,10 @@ class CRealConsole;
 
 class CConEmuChild
 {
+	private:
+		CVirtualConsole* mp_VCon;
 	public:
-		CConEmuChild();
+		CConEmuChild(CVirtualConsole* pOwner);
 	protected:
 		virtual ~CConEmuChild();
 		LRESULT OnSize(WPARAM wParam, LPARAM lParam);

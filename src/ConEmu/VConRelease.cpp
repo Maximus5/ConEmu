@@ -35,11 +35,16 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 //#define REF_FINALIZE 0x7FFFFFFF
 
+CVConRelease::CVConRelease(CVirtualConsole* pOwner)
+{
+	mp_VCon = pOwner;
+}
+
 void CVConRelease::FinalRelease()
 {
 	if (!isMainThread() && ghWnd)
 	{
-		CVirtualConsole* pVCon = (CVirtualConsole*)this;
+		CVirtualConsole* pVCon = mp_VCon;
 		gpConEmu->DeleteVConMainThread(pVCon);
 		return;
 	}
@@ -48,7 +53,7 @@ void CVConRelease::FinalRelease()
 
 void CVConRelease::DeleteFromMainThread()
 {
-	CVirtualConsole* pVCon = (CVirtualConsole*)this;
+	CVirtualConsole* pVCon = mp_VCon;
 	delete pVCon;
 }
 

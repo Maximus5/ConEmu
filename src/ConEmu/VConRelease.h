@@ -34,6 +34,10 @@ class CVirtualConsole;
 
 class CVConRelease : public CRefRelease
 {
+private:
+	CVirtualConsole* mp_VCon;
+public:
+	CVConRelease(CVirtualConsole* pOwner);
 protected:
 	virtual void FinalRelease() override;
 public:
