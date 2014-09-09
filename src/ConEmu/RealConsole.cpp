@@ -10180,7 +10180,7 @@ bool CRealConsole::ActivateFarWindow(int anWndIndex)
 			// То есть если переключение окна выполняется дольше 2х сек - возвратится предыдущее состояние
 			DWORD cbBytesRead=0;
 			//DWORD tabCount = 0, nInMacro = 0, nTemp = 0, nFromMainThread = 0;
-			ConEmuTab* tabs = NULL;
+			ConEmuTab* pGetTabs = NULL;
 			CESERVER_REQ_CONEMUTAB TabHdr;
 			DWORD nHdrSize = sizeof(CESERVER_REQ_CONEMUTAB) - sizeof(TabHdr.tabs);
 
@@ -10194,7 +10194,7 @@ bool CRealConsole::ActivateFarWindow(int anWndIndex)
 			}
 			else
 			{
-				tabs = (ConEmuTab*)pipe.GetPtr(&cbBytesRead);
+				pGetTabs = (ConEmuTab*)pipe.GetPtr(&cbBytesRead);
 				_ASSERTE(cbBytesRead==(TabHdr.nTabCount*sizeof(ConEmuTab)));
 
 				if (cbBytesRead != (TabHdr.nTabCount*sizeof(ConEmuTab)))
@@ -10204,18 +10204,18 @@ bool CRealConsole::ActivateFarWindow(int anWndIndex)
 				}
 				else
 				{
-					SetTabs(tabs, TabHdr.nTabCount);
+					SetTabs(pGetTabs, TabHdr.nTabCount);
 					int iActive = -1;
 					if ((anWndIndex >= 0) && (TabHdr.nTabCount > 0))
 					{
 						for (UINT i = 0; i < TabHdr.nTabCount; i++)
 						{
-							if (tabs[i].Current)
+							if (pGetTabs[i].Current)
 							{
 								// Store its index
-								iActive = tabs[i].Pos;
+								iActive = pGetTabs[i].Pos;
 								// Same as requested?
-								if (tabs[i].Pos == anWndIndex)
+								if (pGetTabs[i].Pos == anWndIndex)
 								{
 									lbRc = true;
 									break;
