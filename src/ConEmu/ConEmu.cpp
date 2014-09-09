@@ -7462,6 +7462,7 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	LPCWSTR pszMsgName = L"Unknown";
 	HWND hNewFocus = NULL;
 	HWND hForeground = NULL;
+	bool bSkipQuakeActivation = false;
 
 	if (messg == WM_SETFOCUS)
 	{
@@ -7615,6 +7616,22 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		else if (gpSet->isQuakeStyle)
 		{
 			if (mn_IgnoreQuakeActivation <= 0)
+			{
+				bSkipQuakeActivation = true;
+			}
+			else if (IsWindowVisible(ghWnd))
+			{
+				// Если в активном табе сидит ChildGui (popup, а-ля notepad) то
+				// при попытке активации любого нашего диалога (Settings, NewCon, подтверждения закрытия)
+				// начинается зоопарк с активацией/выезжанием окна
+				CVConGuard VCon;
+				if ((GetActiveVCon(&VCon) >= 0) && (VCon->GuiWnd()))
+				{
+					bSkipQuakeActivation = true;
+				}
+			}
+
+			if (!bSkipQuakeActivation)
 			{
 				DoMinimizeRestore(sih_Show);
 			}
