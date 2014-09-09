@@ -8739,21 +8739,13 @@ wrap:
 	return;
 }
 
-void CSettings::OnClose()
+void CSettings::OnSettingsClosed()
 {
-	//ApplyStartupOptions();
-
-	//if (gpSet->isTabs==1)
-	//	gpConEmu->ForceShowTabs(TRUE);
-	//else if (gpSet->isTabs==0)
-	//	gpConEmu->ForceShowTabs(FALSE);
-	////else
-	//
-	//gpConEmu->mp_TabBar->Update();
-	//gpConEmu->UpdateWindowRgn();
+	if (!ghOpWnd)
+		return;
 
 	gpConEmu->OnPanelViewSettingsChanged();
-	//gpConEmu->UpdateGuiInfoMapping();
+
 	gpConEmu->RegisterMinRestore(gpSet->IsHotkey(vkMinimizeRestore) || gpSet->IsHotkey(vkMinimizeRestor2));
 
 	if (gpSet->m_isKeyboardHooks == 1)
@@ -8761,7 +8753,34 @@ void CSettings::OnClose()
 	else if (gpSet->m_isKeyboardHooks == 2)
 		gpConEmu->UnRegisterHooks();
 
+	UnregisterTabs();
+
+	if (hwndTip)
+	{
+		DestroyWindow(hwndTip);
+		hwndTip = NULL;
+	}
+
+	if (hwndBalloon)
+	{
+		DestroyWindow(hwndBalloon);
+		hwndBalloon = NULL;
+	}
+
+	if (mh_CtlColorBrush)
+	{
+		DeleteObject(mh_CtlColorBrush);
+		mh_CtlColorBrush = NULL;
+	}
+
+	// mp_DpiAware and others are cleared in ClearPages()
+	ClearPages();
+	mp_ActiveHotKey = NULL;
+	gbLastColorsOk = FALSE;
+
 	gpConEmu->OnOurDialogClosed();
+
+	ghOpWnd = NULL;
 }
 
 void CSettings::OnResetOrReload(bool abResetOnly, SettingsStorage* pXmlStorage /*= NULL*/)
@@ -9131,24 +9150,13 @@ INT_PTR CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPara
 		} break;
 		case WM_CLOSE:
 		{
-			gpSetCls->OnClose();
+			gpSetCls->OnSettingsClosed();
 			DestroyWindow(hWnd2);
 		} break;
 		case WM_DESTROY:
-			gpSetCls->UnregisterTabs();
-
-			if (gpSetCls->hwndTip) {DestroyWindow(gpSetCls->hwndTip); gpSetCls->hwndTip = NULL;}
-
-			if (gpSetCls->hwndBalloon) {DestroyWindow(gpSetCls->hwndBalloon); gpSetCls->hwndBalloon = NULL;}
-
-			if (gpSetCls->mh_CtlColorBrush) { DeleteObject(gpSetCls->mh_CtlColorBrush); gpSetCls->mh_CtlColorBrush = NULL; }
-
-			ghOpWnd = NULL;
-			// mp_DpiAware and others are cleared in gpSetCls->ClearPages()
-			gpSetCls->ClearPages();
-			gpSetCls->mp_ActiveHotKey = NULL;
-			gbLastColorsOk = FALSE;
-			break;
+		{
+			gpSetCls->OnSettingsClosed();
+		} break;
 		case WM_HOTKEY:
 
 			if (wParam == 0x101)

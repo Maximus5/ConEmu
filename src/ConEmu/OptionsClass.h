@@ -271,7 +271,7 @@ class CSettings
 
 	public:
 		//static void CenterDialog(HWND hWnd2);
-		void OnClose();
+		void OnSettingsClosed();
 		DWORD BalloonStyle();
 		// IDD_SETTINGS
 		static INT_PTR CALLBACK wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
