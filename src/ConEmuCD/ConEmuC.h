@@ -500,6 +500,8 @@ struct SrvInfo
 	MFileMapping<CESERVER_CONSOLE_MAPPING_HDR> *pConsoleMap;
 	DWORD guiSettingsChangeNum;
 	DWORD nLastConsoleActiveTick;
+	HWND hGuiInfoMapWnd;
+	MFileMapping<ConEmuGuiMapping>* pGuiInfoMap;
 	ConEmuGuiMapping guiSettings;
 	CESERVER_REQ_CONINFO_FULL *pConsole;
 	CHAR_INFO *pConsoleDataCopy; // Local (Alloc)
