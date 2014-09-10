@@ -4486,7 +4486,8 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 			if (gpLogSize)
 			{
 				char szInfo[128];
-				_wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "ConEmuC: RefreshThread: Sleep changed, speed(%s)", bNewFellInSleep ? "high" : "low");
+				_wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "ConEmuC: RefreshThread: Sleep changed, speed(%s)",
+					(!bNewActive || bNewFellInSleep) ? "low" : "high");
 				LogString(szInfo);
 			}
 		}
