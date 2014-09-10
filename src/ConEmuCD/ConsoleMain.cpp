@@ -6281,23 +6281,48 @@ void LogSize(COORD* pcrSize, LPCSTR pszLabel)
 {
 	if (!gpLogSize) return;
 
-	CONSOLE_SCREEN_BUFFER_INFO lsbi = {{0,0}};
+	static DWORD nLastWriteTick = 0;
+	const DWORD TickDelta = 1000;
+	static LONG nSkipped = 0;
+	const LONG SkipDelta = 50;
+	static CONSOLE_SCREEN_BUFFER_INFO lsbiLast = {};
+	bool bWriteLog = false;
+	CONSOLE_SCREEN_BUFFER_INFO lsbi = {};
 	// В дебажный лог помещаем реальные значения
 	GetConsoleScreenBufferInfo(ghConOut ? ghConOut : GetStdHandle(STD_OUTPUT_HANDLE), &lsbi);
 	char szInfo[192]; szInfo[0] = 0;
 
 	if (pcrSize)
 	{
-		_wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "CurSize={%ix%i} ChangeTo={%ix%i} %s",
-		           lsbi.dwSize.X, lsbi.dwSize.Y, pcrSize->X, pcrSize->Y, (pszLabel ? pszLabel : ""));
+		bWriteLog = true;
+
+		_wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "CurSize={%ix%i} ChangeTo={%ix%i} %s (skipped=%i)",
+		           lsbi.dwSize.X, lsbi.dwSize.Y, pcrSize->X, pcrSize->Y, (pszLabel ? pszLabel : ""), nSkipped);
 	}
 	else
 	{
-		_wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "CurSize={%ix%i} %s",
-		           lsbi.dwSize.X, lsbi.dwSize.Y, (pszLabel ? pszLabel : ""));
+		// Avoid numerous writing of equal lines to log
+		if ((lsbi.dwSize.X != lsbiLast.dwSize.X) || (lsbi.dwSize.Y != lsbiLast.dwSize.Y))
+			bWriteLog = true;
+		else if (((GetTickCount() - nLastWriteTick) >= TickDelta) || (nSkipped >= SkipDelta))
+			bWriteLog = true;
+
+		_wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "CurSize={%ix%i} %s (skipped=%i)",
+		           lsbi.dwSize.X, lsbi.dwSize.Y, (pszLabel ? pszLabel : ""), nSkipped);
 	}
 
-	LogFunction(szInfo);
+	lsbiLast = lsbi;
+
+	if (!bWriteLog)
+	{
+		InterlockedIncrement(&nSkipped);
+	}
+	else
+	{
+		nSkipped = 0;
+		LogFunction(szInfo);
+		nLastWriteTick = GetTickCount();
+	}
 }
 
 int CLogFunction::m_FnLevel = 0; // Simple, without per-thread devision
