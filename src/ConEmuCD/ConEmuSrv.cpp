@@ -157,11 +157,11 @@ void ServerInitFont()
 	}
 }
 
-BOOL LoadGuiSettings(ConEmuGuiMapping& GuiMapping)
+bool LoadGuiSettings(ConEmuGuiMapping& GuiMapping)
 {
 	LogFunction(L"LoadGuiSettings");
 
-	BOOL lbRc = FALSE;
+	bool lbRc = false;
 	HWND hGuiWnd = ghConEmuWnd ? ghConEmuWnd : gpSrv->hGuiWnd;
 
 	if (hGuiWnd && IsWindow(hGuiWnd))
@@ -185,35 +185,37 @@ BOOL LoadGuiSettings(ConEmuGuiMapping& GuiMapping)
 			{
 				memmove(&GuiMapping, pInfo, pInfo->cbSize);
 				_ASSERTE(GuiMapping.ComSpec.ConEmuExeDir[0]!=0 && GuiMapping.ComSpec.ConEmuBaseDir[0]!=0);
-				lbRc = TRUE;
+				lbRc = true;
 			}
 		}
 	}
+
 	return lbRc;
 }
 
-BOOL ReloadGuiSettings(ConEmuGuiMapping* apFromCmd)
+void ReloadGuiSettings(ConEmuGuiMapping* apFromCmd)
 {
 	LogFunction(L"ReloadGuiSettings");
 
-	BOOL lbRc = FALSE;
+	bool lbChanged = false;
+
 	if (apFromCmd)
 	{
 		DWORD cbSize = min(sizeof(gpSrv->guiSettings), apFromCmd->cbSize);
 		memmove(&gpSrv->guiSettings, apFromCmd, cbSize);
 		_ASSERTE(cbSize == apFromCmd->cbSize);
 		gpSrv->guiSettings.cbSize = cbSize;
-		lbRc = TRUE;
+		lbChanged = true;
 	}
 	else
 	{
 		gpSrv->guiSettings.cbSize = sizeof(ConEmuGuiMapping);
-		lbRc = LoadGuiSettings(gpSrv->guiSettings)
+		lbChanged = LoadGuiSettings(gpSrv->guiSettings)
 			&& ((gpSrv->guiSettingsChangeNum != gpSrv->guiSettings.nChangeNum)
 				|| (gpSrv->pConsole && gpSrv->pConsole->hdr.ComSpec.ConEmuExeDir[0] == 0));
 	}
 
-	if (lbRc)
+	if (lbChanged)
 	{
 		gpSrv->guiSettingsChangeNum = gpSrv->guiSettings.nChangeNum;
 
@@ -239,12 +241,7 @@ BOOL ReloadGuiSettings(ConEmuGuiMapping* apFromCmd)
 
 			UpdateConsoleMapHeader();
 		}
-		else
-		{
-			lbRc = FALSE;
-		}
 	}
-	return lbRc;
 }
 
 // AutoAttach делать нельзя, когда ConEmu запускает процесс обновления

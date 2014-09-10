@@ -346,7 +346,7 @@ void CopySrvMapFromGuiMap();
 void UpdateConsoleMapHeader();
 void InitAnsiLog(const ConEmuAnsiLog& AnsiLog);
 int Compare(const CESERVER_CONSOLE_MAPPING_HDR* p1, const CESERVER_CONSOLE_MAPPING_HDR* p2);
-BOOL ReloadGuiSettings(ConEmuGuiMapping* apFromCmd);
+void ReloadGuiSettings(ConEmuGuiMapping* apFromCmd);
 void FixConsoleMappingHdr(CESERVER_CONSOLE_MAPPING_HDR *pMap);
 
 int CreateColorerHeader(bool bForceRecreate = false);
