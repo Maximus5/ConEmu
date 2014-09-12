@@ -242,7 +242,7 @@ struct DrawInfo
 	int      nDarkCount;
 	COLORREF crLight[32];      // Цвет градусника
 	int      nLightCount;
-	
+
 	enum DrawInfoFlags
 	{
 		dif_PicFilled        = 0x0000001,
@@ -379,7 +379,7 @@ bool CheckXmlFile(bool abUpdateName /*= false*/)
 	// в первый раз - выставляем строго
 	if (!lbNeedCheck && !XmlFile.FileData)
 		lbNeedCheck = true;
-	
+
 	if (gpszXmlFile && *gpszXmlFile && lbNeedCheck)
 	{
 		HANDLE hFile = CreateFile(gpszXmlFile, GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, 0, NULL);
@@ -387,7 +387,7 @@ bool CheckXmlFile(bool abUpdateName /*= false*/)
 		{
 			BY_HANDLE_FILE_INFORMATION inf = {};
 			GetFileInformationByHandle(hFile, &inf);
-			
+
 			if (!inf.nFileSizeLow)
 			{
 				_wsprintf(szErr, SKIPLEN(countof(szErr)) L"%s file in the plugin folder is empty", szDefaultXmlName);
@@ -405,7 +405,7 @@ bool CheckXmlFile(bool abUpdateName /*= false*/)
 					lbChanged = true;
 				}
 			}
-			
+
 			if (lbChanged)
 			{
 				DWORD dwRead = 0;
@@ -428,11 +428,11 @@ bool CheckXmlFile(bool abUpdateName /*= false*/)
 					ptrData = NULL;
 					XmlFile.FileSize = dwRead;
 				}
-				
+
 				if (ptrData) // Если ошибка, освободить память
 					free(ptrData);
 			}
-			
+
 			// Done
 			CloseHandle(hFile);
 		}
@@ -446,7 +446,7 @@ bool CheckXmlFile(bool abUpdateName /*= false*/)
 			}
 		}
 	}
-	
+
 	// Если файла нет, или его не удалось прочитать - подсунем пустышку
 	if (!XmlFile.FileData)
 	{
@@ -482,23 +482,23 @@ struct CachedImage
 	HDC     hDc;
 	HBITMAP hBmp, hOldBmp;
 	int     nWidth, nHeight;
-	
+
 	// Next pointer
 	CachedImage *pNextImage;
 
 	bool Init(LPCWSTR apszName, HDC ahDc, UINT anWidth, UINT anHeight, const HDC hScreenDC)
 	{
 		_ASSERTE(hDc==NULL && hBmp==NULL && hOldBmp==NULL);
-		
+
 		nMagic = eGdiStr_Image;
 		bUsed = TRUE;
 
 		wcscpy_c(sImgName, apszName);
-		
+
 		//hDc = ahDc; ahDc = NULL;
 		//hBmp = ahBmp; ahBmp = NULL;
 		//hOldBmp = ahOldBmp; ahOldBmp = NULL;
-		
+
 		nWidth = anWidth;
 		nHeight = anHeight;
 
@@ -520,10 +520,10 @@ struct CachedImage
 			return false;
 		}
 		hOldBmp = (HBITMAP)SelectObject(hDc, hBmp);
-		
+
 		//BitBlt, MaskBlt, AlphaBlend, TransparentBlt
 		BitBlt(hDc, 0, 0, nWidth, nHeight, ahDc, 0, 0, SRCCOPY); // PATINVERT/PATPAINT?
-		
+
 		return true;
 	};
 
@@ -546,12 +546,12 @@ struct CachedImage
 			DeleteObject(hBmp);
 			hBmp = NULL;
 		}
-		
+
 		if (pNextImage)
 		{
 			pNextImage->Close();
 		}
-		
+
 		free(this);
 	};
 };
@@ -700,7 +700,7 @@ struct GDIPlusDecoder
 			pImages->Close();
 			pImages = NULL;
 		}
-		
+
 		if (bTokenInitialized)
 		{
 			GdiplusShutdown(gdiplusToken);
@@ -740,7 +740,7 @@ struct GDIPlusDecoder
 
 		free(this);
 	};
-	
+
 	CachedImage* GetImage(LPCWSTR asRelativeName)
 	{
 		if (!asRelativeName || !*asRelativeName)
@@ -761,13 +761,13 @@ struct GDIPlusDecoder
 		HDC hDc = NULL, hCompDc = NULL;
 		HBITMAP hBmp = NULL, hOldBmp = NULL;
 		const HDC hScreenDC = GetDC(0);
-		
+
 		if (!szFullName || !szName || !szError)
 		{
 			ReportFail(L"Can't allocate memory for szFullName");
 			goto wrap;
 		}
-		
+
 		if (*asRelativeName == L'\\' || *asRelativeName == L'/')
 			asRelativeName++;
 		// Заменить "/" на "\"
@@ -780,7 +780,7 @@ struct GDIPlusDecoder
 		}
 		// Lowercase, для сравнения
 		CharLowerBuff(szName, lstrlen(szName));
-		
+
 		// Может уже есть?
 		pI = pImages;
 		while (pI != NULL)
@@ -792,16 +792,16 @@ struct GDIPlusDecoder
 			}
 			pI = pI->pNextImage;
 		}
-		
+
 
 		// Загрузить из файла
 		_ASSERTE(pI == NULL);
 		pI = NULL;
-		
+
 		_wcscpy_c(szFullName, cchFullName, sModulePath);
 		_wcscat_c(szFullName, cchFullName, szName);
-		
-		
+
+
 		lRc = GdipCreateBitmapFromFile(szFullName, &bmp);
 		if (lRc != Gdiplus::Ok)
 		{
@@ -821,7 +821,7 @@ struct GDIPlusDecoder
 			pal[0].Entries[1] = (DWORD)-1;
 			GdipBitmapConvertFormat(bmp, PixelFormat1bppIndexed, Gdiplus::DitherTypeSolid, Gdiplus::PaletteTypeFixedBW, pal, 0);
 		}
-		
+
 		if (((lRc = GdipGetImageWidth(bmp, &nW)) != Gdiplus::Ok) || (GdipGetImageHeight(bmp, &nH) != Gdiplus::Ok)
 			|| (nW < 1) || (nH < 1))
 		{
@@ -838,7 +838,7 @@ struct GDIPlusDecoder
 			goto wrap;
 		}
 		hOldBmp = (HBITMAP)SelectObject(hCompDc, hBmp);
-		
+
 		lRc = GdipCreateFromHDC(hCompDc, &gr);
 		if (lRc != Gdiplus::Ok)
 		{
@@ -846,7 +846,7 @@ struct GDIPlusDecoder
 			ReportFail(szError);
 			goto wrap;
 		}
-		
+
 		lRc = GdipDrawImageI(gr, bmp, 0, 0);
 		if (lRc != Gdiplus::Ok)
 		{
@@ -862,7 +862,7 @@ struct GDIPlusDecoder
 		//	ReportFail(szError);
 		//	goto wrap;
 		//}
-		
+
 		lRc = GdipGetDC(gr, &hDc);
 		if (lRc != Gdiplus::Ok || !hDc)
 		{
@@ -880,7 +880,7 @@ struct GDIPlusDecoder
 		//BitBlt(hScreenDC, 0, 0, nW, nH, hDc, 0, 0, SRCCOPY); // PATINVERT/PATPAINT?
 		}*/
 		#endif
-		
+
 		// OK, теперь можно запомнить в кеше
 		if (!pLast)
 		{
@@ -909,7 +909,7 @@ struct GDIPlusDecoder
 			pI = NULL;
 			goto wrap;
 		}
-		
+
 	wrap:
 		if (szFullName)
 			free(szFullName);
@@ -946,7 +946,7 @@ bool GdipInit()
 	
 	// Загрузить его содержимое
 	CheckXmlFile(true);
-		
+
 	// Инициализация XMLLite
 	ghXmlLite = LoadLibrary(L"xmllite.dll");
 	if (!ghXmlLite)
@@ -963,14 +963,14 @@ bool GdipInit()
 			ghXmlLite = NULL;
 		}
 	}
-	
+
 	gpDecoder = (GDIPlusDecoder*)calloc(1,sizeof(*gpDecoder));
 	if (!gpDecoder->Init())
 	{
 		gpDecoder->Close();
 		gpDecoder = NULL;
 	}
-	
+
 	gbGdiPlusInitialized = true;
 	return true;
 }
@@ -1000,7 +1000,7 @@ void GdipDone()
 		free(gpszXmlFolder);
 		gpszXmlFolder = NULL;
 	}
-	
+
 	if (XmlFile.FileData)
 	{
 		free(XmlFile.FileData);
@@ -1020,13 +1020,13 @@ void GdipDone()
 		LeaveCriticalSection(&XmlFile.cr);
 		DeleteCriticalSection(&XmlFile.cr);
 	}
-	
+
 	if (gpDecoder)
 	{
 		gpDecoder->Close();
 		gpDecoder = NULL;
 	}
-	
+
 	gbGdiPlusInitialized = false;
 }
 
@@ -1088,7 +1088,7 @@ void ParseColors(LPCWSTR asColors, BOOL abSwap/*RGB->COLORREF*/, COLORREF (&crVa
 {
 	int i = 0;
 	wchar_t* pszEnd = NULL;
-	
+
 	while (asColors && *asColors)
 	{
 		if (abSwap)
@@ -1113,15 +1113,15 @@ void ParseColors(LPCWSTR asColors, BOOL abSwap/*RGB->COLORREF*/, COLORREF (&crVa
 				rgb.clr = wcstoul(asColors, &pszEnd, 10) & 0xFFFFFF;
 			crValues[i++] = rgb.clr;
 		}
-		
+
 		if (pszEnd && *pszEnd == L'|')
 			asColors = pszEnd + 1;
 		else
 			break;
 	}
-	
+
 	nCount = i;
-	
+
 	//while (i < countof(crValues))
 	//{
 	//	crValues[i++] = (COLORREF)-1;
@@ -1223,7 +1223,7 @@ int FillPanelParams(PaintBackgroundArg* pBk, PaintBackgroundArg::BkPanelInfo *pP
 		}
 	}
 
-	
+
 	pDraw->Flags = 0;
 
 
@@ -1263,8 +1263,6 @@ int FillPanelParams(PaintBackgroundArg* pBk, PaintBackgroundArg::BkPanelInfo *pP
 		_ASSERTE(pBk->Place == pbp_Panels || pBk->Place == pbp_Editor || pBk->Place == pbp_Viewer);
 		goto wrap;
 	}
-
-	
 
 
 	
@@ -1348,7 +1346,7 @@ int FillPanelParams(PaintBackgroundArg* pBk, PaintBackgroundArg::BkPanelInfo *pP
 										if (Test.WindowType != Panel.WindowType)
 											Test.CondFailed = TRUE;
 									}
-								}								
+								}
 							}
 						} while (!Test.CondFailed && (hr = pXmlReader->MoveToNextAttribute()) == S_OK);
 					}
@@ -1432,7 +1430,7 @@ int FillPanelParams(PaintBackgroundArg* pBk, PaintBackgroundArg::BkPanelInfo *pP
 											if (!CompareNames(pszAttrValue, pszFormat))
 												Test.CondFailed = TRUE;
 										}
-									}								
+									}
 								}
 							} while (!Test.CondFailed && (hr = pXmlReader->MoveToNextAttribute()) == S_OK);
 						}
@@ -1637,7 +1635,7 @@ int FillPanelParams(PaintBackgroundArg* pBk, PaintBackgroundArg::BkPanelInfo *pP
 		} // end - while (!iFound && (S_OK == (hr = pXmlReader->Read(&nodeType))))
 		pXmlReader->Release();
     }
-    
+
 wrap:
 	if (pszPath)
 		free(pszPath);
@@ -1670,7 +1668,7 @@ void COLORREF2HSB(COLORREF rgbclr, HSBColor& hsb)
 {
 	double minRGB, maxRGB, Delta;
     double H, s, b;
-    
+
     RGBColor rgb; rgb.clr = rgbclr;
 
 	H = 0.0;
@@ -1678,7 +1676,7 @@ void COLORREF2HSB(COLORREF rgbclr, HSBColor& hsb)
 	maxRGB = max(max(rgb.Red, rgb.Green), rgb.Blue);
 	Delta = (maxRGB - minRGB);
 	b = maxRGB;
-	
+
 	if (maxRGB != 0.0)
 	{
 		s = 255.0 * Delta / maxRGB;
@@ -1687,7 +1685,7 @@ void COLORREF2HSB(COLORREF rgbclr, HSBColor& hsb)
 	{
 		s = 0.0;
 	}
-	
+
 	if (s != 0.0)
 	{
 		if (rgb.Red == maxRGB)
@@ -1707,13 +1705,13 @@ void COLORREF2HSB(COLORREF rgbclr, HSBColor& hsb)
 	{
 		H = -1.0;
 	}
-	
+
 	H = H * 60 ;
 	if (H < 0.0)
 	{
 		H = H + 360.0;
 	}
-	
+
 	hsb.Hue = H;
 	hsb.Saturnation = s * 100 / 255;
 	hsb.Brightness = b * 100 / 255;
@@ -1733,13 +1731,13 @@ void HSB2COLORREF(const HSBColor& hsb, COLORREF& rgbclr)
 {
 	RGBColor rgb = {};
 	double C, H1, m, X;
-	
+
 	//C = (1 - Abs(2*(hsb.Brightness/100.0) - 1)) * (hsb.Saturnation/100.0);
 	C = (hsb.Brightness/100.0) * (hsb.Saturnation/100.0);
 	H1 = (hsb.Hue / 60);
 	X = C*(1 - Abs((H1 - 2*(int)(H1 / 2)) - 1));
 	m = 0;// (hsb.Brightness/100.0) - (C / 2); -- пока без доп.яркости
-	
+
 	if ((hsb.Brightness == 0) || (hsb.Hue < 0 || hsb.Hue >= 360))
 	{
 		rgb.clr = 0;
@@ -1750,61 +1748,61 @@ void HSB2COLORREF(const HSBColor& hsb, COLORREF& rgbclr)
 	}
 	else
 	{
-  //       double r=0,g=0,b=0; 
-  //       double temp1,temp2; 
-	
-  //             temp2 = (((hsb.Brightness/100)<=0.5) 
-		//			? (hsb.Brightness/100)*(1.0+(hsb.Saturnation/100)) 
-		//			: (hsb.Brightness/100)+(hsb.Saturnation/100)-((hsb.Brightness/100)*(hsb.Saturnation/100))); 
+  //       double r=0,g=0,b=0;
+  //       double temp1,temp2;
 
-  //             temp1 = 2.0*(hsb.Brightness/100)-temp2; 
+  //             temp2 = (((hsb.Brightness/100)<=0.5)
+		//			? (hsb.Brightness/100)*(1.0+(hsb.Saturnation/100))
+		//			: (hsb.Brightness/100)+(hsb.Saturnation/100)-((hsb.Brightness/100)*(hsb.Saturnation/100)));
 
-  //           
-
-  //             double t3[]={hsb.Hue/360+1.0/3.0,hsb.Hue/360,(hsb.Hue/360)-1.0/3.0}; 
-
-  //             double clr[]={0,0,0}; 
-
-  //             for(int i=0;i<3;i++) 
-
-  //             { 
-
-  //                if(t3[i]<0) 
-
-  //                   t3[i]+=1.0; 
-
-  //                if(t3[i]>1) 
-
-  //                   t3[i]-=1.0; 
+  //             temp1 = 2.0*(hsb.Brightness/100)-temp2;
 
   //
 
-  //                if(6.0*t3[i] < 1.0) 
+  //             double t3[]={hsb.Hue/360+1.0/3.0,hsb.Hue/360,(hsb.Hue/360)-1.0/3.0};
 
-  //                   clr[i]=temp1+(temp2-temp1)*t3[i]*6.0; 
+  //             double clr[]={0,0,0};
 
-  //                else if(2.0*t3[i] < 1.0) 
+  //             for(int i=0;i<3;i++)
 
-  //                   clr[i]=temp2; 
+  //             {
 
-  //                else if(3.0*t3[i] < 2.0) 
+  //                if(t3[i]<0)
 
-  //                   clr[i]=(temp1+(temp2-temp1)*((2.0/3.0)-t3[i])*6.0); 
+  //                   t3[i]+=1.0;
 
-  //                else 
+  //                if(t3[i]>1)
 
-  //                   clr[i]=temp1; 
+  //                   t3[i]-=1.0;
 
-  //             } 
+  //
 
-  //             r=clr[0]; 
+  //                if(6.0*t3[i] < 1.0)
 
-  //             g=clr[1]; 
+  //                   clr[i]=temp1+(temp2-temp1)*t3[i]*6.0;
 
-  //             b=clr[2]; 
-	
+  //                else if(2.0*t3[i] < 1.0)
+
+  //                   clr[i]=temp2;
+
+  //                else if(3.0*t3[i] < 2.0)
+
+  //                   clr[i]=(temp1+(temp2-temp1)*((2.0/3.0)-t3[i])*6.0);
+
+  //                else
+
+  //                   clr[i]=temp1;
+
+  //             }
+
+  //             r=clr[0];
+
+  //             g=clr[1];
+
+  //             b=clr[2];
+
 		//rgb.Red = ClrPart(255*r); rgb.Green = ClrPart(255*g); rgb.Blue = ClrPart(255*b);
-               
+
 		if (0 <= H1 && H1 < 1)
 		{
 			rgb.Red = ClrPart(C+m); rgb.Green = ClrPart(X+m); rgb.Blue = ClrPart(0+m);
@@ -1830,7 +1828,7 @@ void HSB2COLORREF(const HSBColor& hsb, COLORREF& rgbclr)
 			rgb.Red = ClrPart(C+m); rgb.Green = ClrPart(0+m); rgb.Blue = ClrPart(X+m);
 		}
 	}
-	
+
 	rgbclr = rgb.clr;
 }
 #endif
@@ -1871,7 +1869,7 @@ void RGB2HSV(const RGBColor& rgb, HSVColor& HSV)
 	x = min(x, B);
 	v = max(R, G);
 	v = max(v, B);
-	
+
 	if (v == x)
 	{
 		HSV.H = UNDEFINED;
@@ -1889,7 +1887,7 @@ void RGB2HSV(const RGBColor& rgb, HSVColor& HSV)
 	{
 		f = (R == x) ? G - B : ((G == x) ? B - R : R - G); // -255 .. 255
 		i = (R == x) ? 3 : ((G == x) ? 5 : 1);
-		
+
 		HSV.H = (((360*i) - ((360*f)/(v - x)))/6);
 		HSV.S = (100*(v - x))/v;
 		HSV.V = 100*v/255;
@@ -1904,7 +1902,7 @@ inline BYTE ClrPart(int v)
 void HSV2RGB(const HSVColor& HSV, RGBColor& rgb)
 {
 	rgb.clr = 0;
-	
+
 	// H is given on [0, 1] or UNDEFINED. S and V are given on [0, 1].
 	// rgb are each returned on [0, 1].
 	int h = HSV.H * 6, s = HSV.S, v = HSV.V, m, n, f;
@@ -1936,7 +1934,7 @@ void HSV2RGB(const HSVColor& HSV, RGBColor& rgb)
 		if(!(i & 1)) f = 360 - f; // if i is even
 		m = v * (100 - s) / 100;
 		n = v * (100 - s * f / 360) / 100;
-		
+
 		#define RETURN_RGB(r,g,b) rgb.R = ClrPart(r); rgb.G = ClrPart(g); rgb.B = ClrPart(b);
 		switch (i)
 		{
@@ -1970,10 +1968,10 @@ int GetStatusLineCount(struct PaintBackgroundArg* pBk, BOOL bLeft)
 	}
 
 	RECT rcPanel = bLeft ? pBk->LeftPanel.rcPanelRect : pBk->RightPanel.rcPanelRect;
-		
+
 	if ((rcPanel.bottom-rcPanel.top) <= ((pBk->FarPanelSettings.ShowColumnTitles) ? 5 : 4))
 		return 1; // минимальная высота панели
-		
+
 	COORD bufSize = {(SHORT)(rcPanel.right-rcPanel.left+1),min(10,(SHORT)(rcPanel.bottom-rcPanel.top))};
 	COORD bufCoord = {0,0};
 
@@ -1995,16 +1993,16 @@ int GetStatusLineCount(struct PaintBackgroundArg* pBk, BOOL bLeft)
 		(SHORT)rcPanel.right+nShiftX,
 		(SHORT)rcPanel.bottom+nShiftY
 	};
-	
+
 	PCHAR_INFO pChars = (PCHAR_INFO)malloc(bufSize.X*bufSize.Y*sizeof(*pChars));
 	if (!pChars)
 	{
 		_ASSERTE(pChars);
 		return 1;
 	}
-	
+
 	int nLines = 0;
-	
+
 	BOOL lbReadRc = ReadConsoleOutputW(hStd, pChars, bufSize, bufCoord, &readRect);
 	if (!lbReadRc)
 	{
@@ -2022,7 +2020,7 @@ int GetStatusLineCount(struct PaintBackgroundArg* pBk, BOOL bLeft)
 			}
 		}
 	}
-	
+
 	// Что-то при запуске (1.7x?) иногда картинки прыгают, как будто статус сразу не нашли
 #ifdef _DEBUG
 	int nArea = -1;
@@ -2043,7 +2041,7 @@ int GetStatusLineCount(struct PaintBackgroundArg* pBk, BOOL bLeft)
 #endif
 
 	free(pChars);
-	
+
 	return nLines;
 }
 
@@ -2107,7 +2105,7 @@ int PaintPanel(struct PaintBackgroundArg* pBk, BOOL bLeft, COLORREF& crOtherColo
 	ULARGE_INTEGER llTotalSize = {}, llFreeSize = {};
 	UINT nDriveType = DRIVE_UNKNOWN;
 	BOOL bProgressAllowed = FALSE; // Градусник свободного места
-	
+
 	int nMaxVolumeLen = lstrlen(bkInfo->szCurDir ? bkInfo->szCurDir : L"");
 	wchar_t* szVolumeRoot = (wchar_t*)calloc(nMaxVolumeLen+2,sizeof(*szVolumeRoot));
 	wchar_t* szVolumeSize = (wchar_t*)calloc(MAX_PATH,sizeof(*szVolumeSize));
@@ -2128,7 +2126,7 @@ int PaintPanel(struct PaintBackgroundArg* pBk, BOOL bLeft, COLORREF& crOtherColo
 			int nLen = lstrlen(szVolumeRoot);
 			while (!(lbSizeOk && lbTypeOk) && (nLen > 0))
 			{
-				// To determine whether a drive is a USB-type drive, 
+				// To determine whether a drive is a USB-type drive,
 				// call SetupDiGetDeviceRegistryProperty and specify the SPDRP_REMOVAL_POLICY property.
 				ULARGE_INTEGER llTotal = {}, llFree = {};
 				UINT nType = DRIVE_UNKNOWN;
@@ -2162,11 +2160,11 @@ int PaintPanel(struct PaintBackgroundArg* pBk, BOOL bLeft, COLORREF& crOtherColo
 					szVolumeRoot[nLen] = 0;
 				}
 			}
-			
+
 			FormatSize(llTotalSize, szVolumeSize);
 			FormatSize(llFreeSize, szVolumeFree);
 		}
-		
+
 		// Извлечь "Букву" диска
 		LPCWSTR psz = bkInfo->szCurDir;
 		if (psz[0] == L'\\' && psz[1] == L'\\' && (psz[2] == L'.' || psz[2] == L'?') && psz[3] == L'\\')
@@ -2198,7 +2196,7 @@ int PaintPanel(struct PaintBackgroundArg* pBk, BOOL bLeft, COLORREF& crOtherColo
 	{
 		bProgressAllowed = FALSE;
 	}
-	
+
 	// Если есть xml - получить из него настройки для текущего случая
 	if (gfCreateXmlReader && XmlFile.FileData && XmlFile.FileSize)
 	{
@@ -2248,9 +2246,9 @@ int PaintPanel(struct PaintBackgroundArg* pBk, BOOL bLeft, COLORREF& crOtherColo
 			}
 			pDraw->nBackCount = 1;
 		}
-		
+
 		int nLetter = 0;
-		
+
 		if ((pDraw->Flags & DrawInfo::dif_ShiftBackColor) && pDraw->crBack && (szVolume[1] == L':'))
 		{
 			nLetter = (szVolume[0] >= L'a' && szVolume[0] <= L'b') ? (szVolume[0] - L'a' + 24) :
@@ -2291,11 +2289,11 @@ int PaintPanel(struct PaintBackgroundArg* pBk, BOOL bLeft, COLORREF& crOtherColo
 					hsv.H += 15;
 					HSV2RGB(hsv, rgb);
 				}
-				
+
 				pDraw->crBack[0] = rgb.clr;
 			}
 		}
-		
+
 		// Цвет спрайтов, текста, фона градусника
 		if (!(pDraw->Flags & DrawInfo::dif_DarkFilled))
 		{
@@ -2335,8 +2333,8 @@ int PaintPanel(struct PaintBackgroundArg* pBk, BOOL bLeft, COLORREF& crOtherColo
 				pDraw->crLight[0] = pDraw->crLight[nLetter % pDraw->nLightCount];
 			}
 		}
-		
-		
+
+
 		if (!(pDraw->Flags & DrawInfo::dif_PicFilled))
 		{
 			if (bkInfo->bPlugin)
@@ -2365,7 +2363,7 @@ int PaintPanel(struct PaintBackgroundArg* pBk, BOOL bLeft, COLORREF& crOtherColo
 			TODO("Размер диска");
 			wcscpy_c(pDraw->szText, szVolume);
 		}
-		
+
 
 		// Поехали рисовать
 		if (pBk->dwLevel == 0)
@@ -2402,7 +2400,7 @@ int PaintPanel(struct PaintBackgroundArg* pBk, BOOL bLeft, COLORREF& crOtherColo
 
 		LONG width = rcText.right - rcText.left;
 		LONG actualWidth = rcTemp.right - rcTemp.left;
-		
+
 		if (actualWidth > width)
 		{
 			// Delete current font:
@@ -2428,23 +2426,23 @@ int PaintPanel(struct PaintBackgroundArg* pBk, BOOL bLeft, COLORREF& crOtherColo
 					// - картинки чисто черного цвета
 				#if 0
 					const HDC hScreenDC = GetDC(0);
-					
+
 					HDC hReadyDC = CreateCompatibleDC(hScreenDC);
 					HBITMAP hReadyBmp = CreateCompatibleBitmap(hScreenDC, nW, nH);
 					HBITMAP hOldReadyBmp = (HBITMAP)SelectObject(hReadyDC, hReadyBmp);
-					
+
 					StretchBlt(hReadyDC, 0, 0, nW, nH, pI->hDc, 0,0, pI->nWidth, pI->nHeight, SRCCOPY);
-					
+
 					BitBlt(pBk->hdc, rcWork.right - nW - IMG_SHIFT_X, rcText.top - nH - IMG_SHIFT_Y, nW, nH,
 						hReadyDC, 0,0, SRCAND);
-					
+
 					SelectObject(hReadyDC, hOldReadyBmp);
 					DeleteObject(hReadyBmp);
 					DeleteDC(hReadyDC);
-					
+
 					ReleaseDC(0, hScreenDC);
 				#endif
-				
+
 					// OK
 				#if 1
 					const HDC hScreenDC = GetDC(0);
@@ -2483,7 +2481,7 @@ int PaintPanel(struct PaintBackgroundArg* pBk, BOOL bLeft, COLORREF& crOtherColo
 
 					BitBlt(hReadyDC, 0, 0, nW, nH,
 						hInvDC, 0,0, SRCPAINT);
-					
+
 					DeleteObject(hDarkBr);
 					DeleteObject(hBackBr);
 
@@ -2511,31 +2509,31 @@ int PaintPanel(struct PaintBackgroundArg* pBk, BOOL bLeft, COLORREF& crOtherColo
 					HDC hInvDC = CreateCompatibleDC(hScreenDC);
 					HBITMAP hInvBmp = CreateCompatibleBitmap(hScreenDC, pI->nWidth, pI->nHeight);
 					HBITMAP hOldInvBmp = (HBITMAP)SelectObject(hInvDC, hInvBmp);
-					
+
 					RECT rcFill = {0,0,pI->nWidth, pI->nHeight};
 					HBRUSH hDarkBr = CreateSolidBrush(/*RGB(128,128,128)*/ *pDraw->crDark);
 					FillRect(hInvDC, &rcFill, hDarkBr);
 					DeleteObject(hDarkBr);
-					
+
 					BitBlt(hInvDC, 0, 0, pI->nWidth, pI->nHeight,
 						pI->hDc, 0,0, SRCAND);
-					
+
 					HDC hReadyDC = CreateCompatibleDC(hScreenDC);
 					HBITMAP hReadyBmp = CreateCompatibleBitmap(hScreenDC, nW, nH);
 					HBITMAP hOldReadyBmp = (HBITMAP)SelectObject(hReadyDC, hReadyBmp);
-					
+
 					//SetStretchBltMode(hReadyDC, HALFTONE);
 					rcFill.right = nW; rcFill.bottom = nH;
 					FillRect(hReadyDC, &rcFill, (HBRUSH)GetStockObject(BLACK_BRUSH));
 					StretchBlt(hReadyDC, 0, 0, nW, nH, hInvDC, 0,0, pI->nWidth, pI->nHeight, SRCINVERT);
-					
+
 					BitBlt(pBk->hdc, rcWork.right - nW - IMG_SHIFT_X, rcText.top - nH - IMG_SHIFT_Y, nW, nH,
 						hReadyDC, 0,0, SRCCOPY);
-					
+
 					SelectObject(hReadyDC, hOldReadyBmp);
 					DeleteObject(hReadyBmp);
 					DeleteDC(hReadyDC);
-					
+
 					ReleaseDC(0, hScreenDC);
 				#endif
 
@@ -2548,40 +2546,40 @@ int PaintPanel(struct PaintBackgroundArg* pBk, BOOL bLeft, COLORREF& crOtherColo
 					HBITMAP hOldInvBmp = (HBITMAP)SelectObject(hInvDC, hInvBmp);
 
 					BitBlt(hInvDC, 0, 0, pI->nWidth, pI->nHeight, pI->hDc, 0,0, SRCCOPY); //NOTSRCCOPY
-					
+
 					HDC hCompDC = CreateCompatibleDC(hScreenDC);
 					HBITMAP hCompBmp = CreateCompatibleBitmap(hScreenDC, pI->nWidth, pI->nHeight);
 					HBITMAP hOldCompBmp = (HBITMAP)SelectObject(hCompDC, hCompBmp);
 					HDC hBackDC = CreateCompatibleDC(hScreenDC);
 					HBITMAP hBackBmp = CreateCompatibleBitmap(hScreenDC, pI->nWidth, pI->nHeight);
 					HBITMAP hOldBackBmp = (HBITMAP)SelectObject(hBackDC, hBackBmp);
-					
+
 					HBRUSH hPaintBr = CreateSolidBrush(*pDraw->crDark);
 					HBRUSH hBackBr = CreateSolidBrush(*pDraw->crBack);
-					
+
 					RECT rcFill = {0,0,pI->nWidth, pI->nHeight};
-					
+
 					HBRUSH hOldCompBr = (HBRUSH)SelectObject(hCompDC, hBackBr);
-					
-					
+
+
 					BitBlt(hCompDC, 0, 0, pI->nWidth, pI->nHeight, hInvDC, 0,0, MERGECOPY);
-					
+
 					BitBlt(hInvDC, 0, 0, pI->nWidth, pI->nHeight, pI->hDc, 0,0, NOTSRCCOPY);
 					HBRUSH hOldBackBr = (HBRUSH)SelectObject(hBackDC, hPaintBr);
 					BitBlt(hBackDC, 0, 0, pI->nWidth, pI->nHeight, hInvDC, 0,0, MERGECOPY);
-					
+
 					BitBlt(hCompDC, 0, 0, pI->nWidth, pI->nHeight, hBackDC, 0,0, SRCPAINT);
-					
-					
+
+
 					HDC hReadyDC = CreateCompatibleDC(hScreenDC);
 					HBITMAP hReadyBmp = CreateCompatibleBitmap(hScreenDC, nW, nH);
 					HBITMAP hOldReadyBmp = (HBITMAP)SelectObject(hReadyDC, hReadyBmp);
 
 					StretchBlt(hReadyDC, 0, 0, nW, nH, hCompDC, 0,0, pI->nWidth, pI->nHeight, SRCCOPY); //NOTSRCCOPY
-					
+
 					BOOL lbBitRc = BitBlt(pBk->hdc, rcWork.right - nW - IMG_SHIFT_X, rcText.top - nH - IMG_SHIFT_Y, nW, nH,
 						hReadyDC, 0,0, SRCCOPY);
-					
+
 					SelectObject(hReadyDC, hOldReadyBmp);
 					DeleteObject(hReadyBmp);
 					DeleteDC(hReadyDC);
@@ -2589,15 +2587,15 @@ int PaintPanel(struct PaintBackgroundArg* pBk, BOOL bLeft, COLORREF& crOtherColo
 					DeleteObject(hPaintBr);
 					SelectObject(hCompDC, hOldCompBr);
 					DeleteObject(hBackBr);
-					
+
 					SelectObject(hInvDC, hOldInvBmp);
 					DeleteObject(hInvBmp);
 					DeleteDC(hInvDC);
-					
+
 					SelectObject(hCompDC, hOldCompBmp);
 					DeleteObject(hCompBmp);
 					DeleteDC(hCompDC);
-					
+
 					SelectObject(hBackDC, hOldBackBmp);
 					DeleteObject(hBackBmp);
 					DeleteDC(hBackDC);
@@ -2610,11 +2608,11 @@ int PaintPanel(struct PaintBackgroundArg* pBk, BOOL bLeft, COLORREF& crOtherColo
 
 		SetBkMode(pBk->hdc, TRANSPARENT);
 		SetTextColor(pBk->hdc, *pDraw->crDark);
-		
+
 		DrawText(pBk->hdc, pDraw->szText, -1, &rcText, DT_HIDEPREFIX|DT_RIGHT|DT_SINGLELINE|DT_TOP);
 		/*
 		OffsetRect(&rcText, 0, LINE_SHIFT_Y);
-		
+
 		_wsprintf(szText, SKIPLEN(countof(szText)) L"Volume: «%s» %s, Format: «%s»", szVolume, szVolumeSize, bkInfo->szFormat ? bkInfo->szFormat : L"");
 		DrawText(pBk->hdc, szText, -1, &rcText, DT_HIDEPREFIX|DT_RIGHT|DT_SINGLELINE|DT_TOP);
 		OffsetRect(&rcText, 0, LINE_SHIFT_Y);
@@ -2623,13 +2621,13 @@ int PaintPanel(struct PaintBackgroundArg* pBk, BOOL bLeft, COLORREF& crOtherColo
 			DrawText(pBk->hdc, bkInfo->szCurDir, -1, &rcText, DT_HIDEPREFIX|DT_RIGHT|DT_SINGLELINE|DT_TOP|DT_PATH_ELLIPSIS);
 		OffsetRect(&rcText, 0, LINE_SHIFT_Y);
 		*/
-		
+
 		TODO("В Far3 можно и в плагинах свободное место получить");
 		if (bProgressAllowed && pDraw->nSpaceBar == DrawInfo::dib_Off)
 			bProgressAllowed = FALSE;
 		if (bProgressAllowed && (nStatusLines > 0) && !bkInfo->bPlugin && llTotalSize.QuadPart)
 		{
-			//llTotalSize = {}, 	
+			//llTotalSize = {},
 			HBRUSH hUsedBr = CreateSolidBrush(*pDraw->crLight);
 			HBRUSH hFreeBr = CreateSolidBrush(*pDraw->crDark);
 			RECT rcUsed = (pDraw->nSpaceBar == DrawInfo::dib_Small) ? rcWork : rcPanel;
@@ -2659,7 +2657,7 @@ int PaintPanel(struct PaintBackgroundArg* pBk, BOOL bLeft, COLORREF& crOtherColo
 		DeleteObject(hText);
 	}
 
-	// Free pointers	
+	// Free pointers
 	free(pDraw);
 	free(szVolume);
 	free(szVolumeSize);
@@ -2670,13 +2668,13 @@ int PaintPanel(struct PaintBackgroundArg* pBk, BOOL bLeft, COLORREF& crOtherColo
 int WINAPI PaintConEmuBackground(struct PaintBackgroundArg* pBk)
 {
 	int iLeftRc = 0, iRightRc = 0;
-	
+
 	if (pBk->Place == pbp_Finalize)
 	{
 		GdipDone();
 		return TRUE;
 	}
-	
+
 	if (!gbGdiPlusInitialized)
 	{
 		if (!GdipInit())
@@ -2693,7 +2691,7 @@ int WINAPI PaintConEmuBackground(struct PaintBackgroundArg* pBk)
 	wchar_t szDbg[128];
 	COLORREF crOtherColor = (COLORREF)-1;
 	int cOtherDrive = -1;
-	
+
 	if (pBk->LeftPanel.bVisible)
 	{
 		iLeftRc = PaintPanel(pBk, TRUE/*bLeft*/, crOtherColor, cOtherDrive);
@@ -2717,11 +2715,11 @@ int WINAPI PaintConEmuBackground(struct PaintBackgroundArg* pBk)
 			rcConPanel.left, rcConPanel.top, rcConPanel.right, rcConPanel.bottom);
 		DBGSTR(szDbg);
 	}
-	
+
 	UNREFERENCED_PARAMETER(iLeftRc); UNREFERENCED_PARAMETER(iRightRc);
-	
+
 	return TRUE;
-	
+
 	//DWORD nPanelBackIdx = (pBk->nFarColors[col_PanelText] & 0xF0) >> 4;
 	//
 	//if (bDragBackground)
@@ -2769,7 +2767,7 @@ int WINAPI PaintConEmuBackground(struct PaintBackgroundArg* pBk)
 	//	int nX2 = (pBk->RightPanel.bVisible) ? pBk->rcDcRight.right : pBk->rcDcLeft.right;
 	//
 	//	bool bDrawStipe = true;
-	//	
+	//
 	//	for(int Y = nY1; Y < nY2; Y += nCellHeight)
 	//	{
 	//		if (giHilightType == 0)
