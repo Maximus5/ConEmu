@@ -231,7 +231,6 @@ bool CShellProc::GetLinkProperties(LPCWSTR asLnkFile, CmdArg& rsExe, CmdArg& rsA
 	IShellLinkW*  pShellLink = NULL;
 	HRESULT hr;
 	DWORD nLnkSize;
-	wchar_t szPath[MAX_PATH+1];
 	static bool bCoInitialized = false;
 
 	if (!FileExists(asLnkFile, &nLnkSize))
@@ -260,7 +259,7 @@ bool CShellProc::GetLinkProperties(LPCWSTR asLnkFile, CmdArg& rsExe, CmdArg& rsA
 		goto wrap;
 
 	hr = pShellLink->GetPath(rsExe.GetBuffer(MAX_PATH), MAX_PATH, NULL, 0);
-	if (FAILED(hr) || !*szPath)
+	if (FAILED(hr) || rsExe.IsEmpty())
 		goto wrap;
 
 	hr = pShellLink->GetWorkingDirectory(rsWorkDir.GetBuffer(MAX_PATH+1), MAX_PATH+1);
