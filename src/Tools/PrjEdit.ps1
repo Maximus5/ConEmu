@@ -132,7 +132,7 @@ function Prj-GccMake([String]$project, [Array]$cpp, [Array]$hpp)
         for ($i = 0; $i -lt $make_add.length; $i++) {
           $n = $make_add[$i]
           if ($n -eq "") { continue }
-          if ($n.StartsWith(".")) { $pad = 30 } else { $pad = 21 }
+          if ($n.StartsWith(".")) { $pad = 31 } else { $pad = 21 }
           $add = ("`t`t" + $n.Replace("\","/"))
           if ($s.StartsWith($add)) {
             # already exists
