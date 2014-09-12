@@ -2357,6 +2357,7 @@ LPWSTR ConEmuMacro::SetOption(GuiMacro* p, CRealConsole* apRCon, bool abFromPlug
 {
 	LPWSTR pszResult = NULL;
 	LPWSTR pszName = NULL;
+	LPWSTR pszValue = NULL;
 	int nValue = 0;
 	int nRel = 0;
 
@@ -2439,6 +2440,11 @@ LPWSTR ConEmuMacro::SetOption(GuiMacro* p, CRealConsole* apRCon, bool abFromPlug
 	{
 		if (p->GetIntArg(1, nValue))
 			pszResult = gpSetCls->SetOption(pszName, nValue) ? lstrdup(L"OK") : NULL;
+	}
+	else if (!lstrcmpi(pszName, L"FarGotoEditorPath"))
+	{
+		if (p->GetStrArg(1, pszValue))
+			pszResult = gpSetCls->SetOption(pszName, pszValue) ? lstrdup(L"OK") : NULL;
 	}
 	else
 	{

@@ -284,6 +284,7 @@ class CSettings
 		void debugLogCommand(CESERVER_REQ* pInfo, BOOL abInput, DWORD anTick, DWORD anDur, LPCWSTR asPipe, CESERVER_REQ* pResult = NULL);
 		//
 		bool SetOption(LPCWSTR asName, int anValue);
+		bool SetOption(LPCWSTR asName, LPCWSTR asValue);
 		void SettingsLoaded(SettingsLoadedFlags slfFlags, LPCWSTR pszCmdLine = NULL);
 		void SettingsPreSave();
 		//void InitSettings();

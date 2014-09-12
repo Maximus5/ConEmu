@@ -892,6 +892,31 @@ bool CSettings::SetOption(LPCWSTR asName, int anValue)
 	return lbRc;
 }
 
+bool CSettings::SetOption(LPCWSTR asName, LPCWSTR asValue)
+{
+	bool lbRc = false;
+
+	if (!lstrcmpi(asName, L"FarGotoEditorPath"))
+	{
+		wchar_t* pszNewVal = lstrdup(asValue);
+		if (pszNewVal && pszNewVal)
+		{
+			wchar_t* pszOld = (wchar_t*)InterlockedExchangePointer((PVOID*)&gpSet->sFarGotoEditor, pszNewVal);
+			SafeFree(pszOld);
+			HWND hHilightPg = GetPage(thi_Hilight);
+			if (hHilightPg)
+				SetDlgItemText(hHilightPg, lbGotoEditorCmd, gpSet->sFarGotoEditor);
+			lbRc = true;
+		}
+	}
+	else
+	{
+		_ASSERTE(FALSE && "Unsupported parameter name");
+	}
+
+	return lbRc;
+}
+
 void CSettings::SettingsLoaded(SettingsLoadedFlags slfFlags, LPCWSTR pszCmdLine /*= NULL*/)
 {
 	// Recheck dpi settings?
