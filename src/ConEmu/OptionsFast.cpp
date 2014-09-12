@@ -696,7 +696,7 @@ void CreateDefaultTasks(bool bForceAdd /*= false*/)
 				DWORD cbSize = sizeof(szVerPath)-sizeof(szVerPath[0]);
 				if (0 == RegQueryValueEx(hkVer, L"InstallationFolder", NULL, NULL, (LPBYTE)szVerPath, &cbSize))
 				{
-					wchar_t* pszCmd = lstrmerge(szVerPath, L"Bin\\SetEnv.Cmd");
+					wchar_t* pszCmd = JoinPath(szVerPath, L"Bin\\SetEnv.Cmd");
 					if (pszCmd && FileExists(pszCmd))
 					{
 						pszFull = lstrmerge(L"cmd /V /K \"", pszCmd, L"\"");

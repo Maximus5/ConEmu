@@ -1490,10 +1490,12 @@ wchar_t* GetFullPathNameEx(LPCWSTR asPath)
 	return pszResult;
 }
 
-
-
-
-
+wchar_t* JoinPath(LPCWSTR asPath, LPCWSTR asPart1, LPCWSTR asPart2 /*= NULL*/)
+{
+	//TODO: Добавить слеши если их нет на гранях
+	//TODO: удалить лишние, если они указаны в обеих частях
+	return lstrmerge(asPath, asPart1, asPart2);
+}
 
 
 
