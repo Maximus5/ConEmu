@@ -904,7 +904,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 				LPCWSTR pszExt = PointToExt(ms_ExeTmp);
 				if (pszExt && (lstrcmpi(pszExt, L".exe") == 0 || lstrcmpi(pszExt, L".com") == 0))
 				{
-					DWORD nCheckSybsystem = 0, nCheckBits = 0, nFileAttrs;
+					DWORD nCheckSybsystem = 0, nCheckBits = 0;
 					if (FindImageSubsystem(ms_ExeTmp, nCheckSybsystem, nCheckBits))
 					{
 						if (nCheckSybsystem == IMAGE_SUBSYSTEM_DOS_EXECUTABLE && nCheckBits == 16)
