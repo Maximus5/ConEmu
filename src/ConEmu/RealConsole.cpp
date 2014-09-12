@@ -13784,7 +13784,10 @@ void CRealConsole::PostMacro(LPCWSTR asMacro, BOOL abAsync /*= FALSE*/)
 	DWORD nPID = GetFarPID(TRUE/*abPluginRequired*/);
 
 	if (!nPID)
+	{
+		_ASSERTE(FALSE && "Far with plugin was not found, Macro was skipped");
 		return;
+	}
 
 	const CEFAR_INFO_MAPPING* pInfo = GetFarInfo();
 	if (!pInfo)
@@ -13803,6 +13806,10 @@ void CRealConsole::PostMacro(LPCWSTR asMacro, BOOL abAsync /*= FALSE*/)
 			asMacro = gpSet->TabCloseMacroDefault(fmv_Lua);
 		else if (lstrcmpi(asMacro, gpSet->SaveAllMacroDefault(fmv_Standard)) == 0)
 			asMacro = gpSet->SaveAllMacroDefault(fmv_Lua);
+		else
+		{
+			_ASSERTE(*asMacro && *asMacro != L'$' && "Macro must be adopted to Lua");
+		}
 	}
 
 	if (abAsync)

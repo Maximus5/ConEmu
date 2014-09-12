@@ -2805,6 +2805,8 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom, bool bUpdateScre
 								wchar_t szMacro[96];
 								if (mp_RCon->m_FarInfo.FarVer.dwVerMajor == 1)
 									_wsprintf(szMacro, SKIPLEN(countof(szMacro)) L"@$if(Editor) AltF8 \"%i:%i\" Enter $end", cmd.nLine, cmd.nColon);
+								else if (mp_RCon->m_FarInfo.FarVer.IsFarLua())
+									_wsprintf(szMacro, SKIPLEN(countof(szMacro)) L"@if Area.Editor then Keys(\"AltF8\") print(\"%i:%i\") Keys(\"Enter\") end", cmd.nLine, cmd.nColon);
 								else
 									_wsprintf(szMacro, SKIPLEN(countof(szMacro)) L"@$if(Editor) AltF8 print(\"%i:%i\") Enter $end", cmd.nLine, cmd.nColon);
 								_ASSERTE(pVCon!=NULL);
