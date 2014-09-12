@@ -52,6 +52,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/MStream.h"
 #include "../common/UnicodeChars.h"
 #include "../common/FarVersion.h"
+#include "../common/MSectionSimple.h"
 #include "ConEmuBg.h"
 
 #define MAKEFARVERSION(major,minor,build) ( ((major)<<8) | (minor) | ((build)<<16))
@@ -263,8 +264,7 @@ HMODULE ghXmlLite = NULL;
 
 struct XmlConfigFile
 {
-	BOOL crInit;
-	CRITICAL_SECTION cr;
+	MSectionSimple* cr;
 	FILETIME FileTime;
 	LPBYTE FileData;
 	DWORD FileSize;
@@ -287,8 +287,8 @@ bool CheckXmlFile(bool abUpdateName /*= false*/)
 	DWORD nNotify = 0;
 	wchar_t szErr[128];
 
-	_ASSERTE(XmlFile.crInit==TRUE);
-	EnterCriticalSection(&XmlFile.cr);
+	_ASSERTE(XmlFile.cr && XmlFile.cr->IsInitialized());
+	MSectionLockSimple CS; CS.Lock(XmlFile.cr);
 
 	if (abUpdateName)
 	{
@@ -459,7 +459,6 @@ wrap:
 	{
 		FindNextChangeNotification(ghXmlNotification);
 	}
-	LeaveCriticalSection(&XmlFile.cr);
 	return lbChanged;
 }
 
@@ -941,9 +940,9 @@ bool GdipInit()
 {
 	if (gbGdiPlusInitialized)
 		return true; // уже
-		
-	_ASSERTE(XmlFile.crInit==TRUE);
-	
+
+	_ASSERTE(XmlFile.cr && XmlFile.cr->IsInitialized());
+
 	// Загрузить его содержимое
 	CheckXmlFile(true);
 
@@ -979,9 +978,13 @@ void GdipDone()
 {
 	if (!gbGdiPlusInitialized)
 		return; // Не выполнялось
-		
-	if (XmlFile.crInit)
-		EnterCriticalSection(&XmlFile.cr);
+
+	MSectionLockSimple CS;
+
+	if (XmlFile.cr)
+	{
+		CS.Lock(XmlFile.cr);
+	}
 
 	if (ghXmlLite)
 	{
@@ -1014,11 +1017,10 @@ void GdipDone()
 		ghXmlNotification = NULL;
 	}
 
-	if (XmlFile.crInit)
+	if (XmlFile.cr)
 	{
-		XmlFile.crInit = FALSE;
-		LeaveCriticalSection(&XmlFile.cr);
-		DeleteCriticalSection(&XmlFile.cr);
+		CS.Unlock();
+		SafeDelete(XmlFile.cr);
 	}
 
 	if (gpDecoder)
@@ -1191,6 +1193,7 @@ int FillPanelParams(PaintBackgroundArg* pBk, PaintBackgroundArg::BkPanelInfo *pP
 	bool bFound = false;
 	ChunkInfo Test = {ChunkInfo::ci_WindowPanels, ChunkInfo::ci_PanelNone};
 	ChunkInfo Panel = {ChunkInfo::ci_WindowPanels, ChunkInfo::ci_PanelNone};
+	MSectionLockSimple CS;
 
 	LPWSTR pszFormat = lstrdup(pPanel->szFormat ? pPanel->szFormat : L"");
 	size_t nMaxLen = lstrlen(pPanel->szCurDir ? pPanel->szCurDir : L"");
@@ -1265,16 +1268,15 @@ int FillPanelParams(PaintBackgroundArg* pBk, PaintBackgroundArg::BkPanelInfo *pP
 	}
 
 
-	
-	EnterCriticalSection(&XmlFile.cr);
+	CS.Lock(XmlFile.cr);
 	if (!XmlFile.FileData || !XmlFile.FileSize)
 	{
-		LeaveCriticalSection(&XmlFile.cr);
+		CS.Unlock();
 		goto wrap;
 	}
 	strm.SetData(XmlFile.FileData, XmlFile.FileSize);
-	LeaveCriticalSection(&XmlFile.cr);
-	
+	CS.Unlock();
+
     hr = gfCreateXmlReader(IID_IXmlReader, (void**)&pXmlReader, NULL);
     if (SUCCEEDED(hr))
     {
@@ -2920,10 +2922,9 @@ void StartPlugin(BOOL bConfigure)
 
 	gbInStartPlugin = true;
 
-	if (!XmlFile.crInit)
+	if (!XmlFile.cr)
 	{
-		XmlFile.crInit = TRUE;
-		InitializeCriticalSection(&XmlFile.cr);
+		XmlFile.cr = new MSectionSimple(true);
 	}
 
 	if (!bConfigure)

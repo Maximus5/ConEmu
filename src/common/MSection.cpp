@@ -53,8 +53,8 @@ MSection::MSection()
 	mn_UnlockedExclusiveTID = 0;
 #endif
 	ZeroStruct(mn_LockedTID); ZeroStruct(mn_LockedCount);
-	InitializeCriticalSection(&m_cs);
-	InitializeCriticalSection(&m_lock_cs);
+	m_cs.Init();
+	m_lock_cs.Init();
 	mh_ReleaseEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 	_ASSERTEX(mh_ReleaseEvent!=NULL);
 
@@ -64,8 +64,8 @@ MSection::MSection()
 
 MSection::~MSection()
 {
-	DeleteCriticalSection(&m_cs);
-	DeleteCriticalSection(&m_lock_cs);
+	m_cs.Close();
+	m_lock_cs.Close();
 
 	SafeCloseHandle(mh_ReleaseEvent);
 	SafeCloseHandle(mh_ExclusiveThread);
@@ -74,14 +74,14 @@ MSection::~MSection()
 void MSection::Process_Lock()
 {
 	//#ifdef USE_LOCK_SECTION
-	EnterCriticalSection(&m_lock_cs);
+	m_lock_cs.Enter();
 	//#endif
 }
 
 void MSection::Process_Unlock()
 {
 	//#ifdef USE_LOCK_SECTION
-	LeaveCriticalSection(&m_lock_cs);
+	m_lock_cs.Leave();
 	//#endif
 }
 
@@ -274,11 +274,11 @@ bool MSection::MyEnterCriticalSection(DWORD anTimeout)
 	// НАДА. Т.к. может быть задан nTimeout (для DC)
 	DWORD dwTryLockSectionStart = GetTickCount(), dwCurrentTick;
 
-	if (!TryEnterCriticalSection(&m_cs))
+	if (!m_cs.TryEnter())
 	{
 		Sleep(10);
 
-		while (!TryEnterCriticalSection(&m_cs))
+		while (!m_cs.TryEnter())
 		{
 			if ((mn_TID != nCurTID) && mh_ExclusiveThread)
 			{
@@ -302,12 +302,8 @@ bool MSection::MyEnterCriticalSection(DWORD anTimeout)
 							_ASSERTEX(FALSE && "Exclusively locked thread was abnormally terminated?");
 
 							SafeCloseHandle(mh_ExclusiveThread);
-							CRITICAL_SECTION csNew, csOld;
-							InitializeCriticalSection(&csNew);
-							csOld = m_cs;
-							DeleteCriticalSection(&csOld);
-							lbLocked = TryEnterCriticalSection(&csNew);
-							m_cs = csNew;
+
+							lbLocked = m_cs.RecreateAndLock();
 
 							_ASSERTEX(mn_LockedTID[0] = mn_TID);
 							mn_LockedTID[0] = 0;
@@ -418,7 +414,7 @@ BOOL MSection::Lock(BOOL abExclusive, DWORD anTimeout/*=-1*/)
 
 			// Но поскольку нам нужен только nonexclusive lock
 			if (lbEntered)
-				LeaveCriticalSection(&m_cs);
+				m_cs.Leave();
 		}
 	}
 	else // abExclusive
@@ -506,7 +502,7 @@ void MSection::Unlock(BOOL abExclusive)
 		{
 			_ASSERTEX(mn_LockedCount[0]>0);
 		}
-		LeaveCriticalSection(&m_cs);
+		m_cs.Leave();
 
 		//Process_Unlock();
 	}

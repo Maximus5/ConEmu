@@ -30,14 +30,15 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <windows.h>
+#include "MSectionSimple.h"
 
 class MSectionLock;
 
 class MSection
 {
 	protected:
-		CRITICAL_SECTION m_cs;
-		CRITICAL_SECTION m_lock_cs;
+		MSectionSimple m_cs;
+		MSectionSimple m_lock_cs;
 		DWORD mn_TID; // устанавливается только после EnterCriticalSection
 		HANDLE mh_ExclusiveThread;
 #ifdef _DEBUG

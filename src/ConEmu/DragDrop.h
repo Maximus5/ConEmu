@@ -33,6 +33,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#include "virtualconsole.h"
 #include "../common/MArray.h"
 
+struct MSectionSimple;
+
 
 class CDragDrop :
 	public CBaseDropTarget,
@@ -77,7 +79,7 @@ class CDragDrop :
 			DWORD  dwThreadId;
 		} ThInfo;
 		MArray<ThInfo> m_OpThread;
-		CRITICAL_SECTION m_CrThreads;
+		MSectionSimple* mp_CrThreads;
 		typedef struct _ShlOpInfo
 		{
 			CDragDrop* pDnD;

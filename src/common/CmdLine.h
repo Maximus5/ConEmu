@@ -63,7 +63,7 @@ public:
 	LPCWSTR  Attach(wchar_t* asPtr);
 	void Empty();
 	bool IsEmpty();
-	LPCWSTR Set(LPCWSTR asNewValue, int anChars = -1);
+	LPCWSTR Set(LPCWSTR asNewValue, INT_PTR anChars = -1);
 	void SavePathVar(LPCWSTR asCurPath);
 	void SetAt(INT_PTR nIdx, wchar_t wc);
 

@@ -272,7 +272,7 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 	mb_WasMouseSelection = false;
 	mp_RenameDpiAware = NULL;
 
-	InitializeCriticalSection(&mcs_CurWorkDir);
+	mpcs_CurWorkDir = new MSectionSimple(true);
 
 	mn_TextColorIdx = 7; mn_BackColorIdx = 0;
 	mn_PopTextColorIdx = 5; mn_PopBackColorIdx = 15;
@@ -442,7 +442,7 @@ CRealConsole::~CRealConsole()
 
 	SafeDelete(mp_RenameDpiAware);
 
-	DeleteCriticalSection(&mcs_CurWorkDir);
+	SafeDelete(mpcs_CurWorkDir);
 
 	//SafeFree(mpsz_CmdBuffer);
 
@@ -12953,7 +12953,7 @@ LPCWSTR CRealConsole::GetConsoleCurDir(CmdArg& szDir)
 
 	// If it is not a Far with plugin - try to take the ms_CurWorkDir
 	{
-		MSectionLockSimple CS; CS.Lock(&mcs_CurWorkDir);
+		MSectionLockSimple CS; CS.Lock(mpcs_CurWorkDir);
 		if (!ms_CurWorkDir.IsEmpty())
 		{
 			szDir.Set(ms_CurWorkDir);
@@ -12974,7 +12974,7 @@ void CRealConsole::StoreCurWorkDir(CESERVER_REQ_STORECURDIR* pNewCurDir)
 	if (IsBadStringPtr(pNewCurDir->szDir, MAX_PATH))
 		return;
 
-	MSectionLockSimple CS; CS.Lock(&mcs_CurWorkDir);
+	MSectionLockSimple CS; CS.Lock(mpcs_CurWorkDir);
 	LPCWSTR pszArg = pNewCurDir->szDir;
 	for (int i = 0; i <= 1; i++)
 	{

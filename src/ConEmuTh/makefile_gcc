@@ -1,8 +1,9 @@
 NAME = ConEmuTh
 SRCS = \
-		../common/Common.cpp \
-		../common/MSection.cpp      \
-		../common/WinObjects.cpp \
+		../common/Common.cpp         \
+		../common/MSection.cpp       \
+		../common/MSectionSimple.cpp \
+		../common/WinObjects.cpp     \
 		ConEmuTh.cpp \
 		ConEmuTh1900.cpp \
 		ConEmuTh2800.cpp \

@@ -1,10 +1,11 @@
 NAME = ConEmuLn
-SRCS = ConEmuLn.cpp \
-       ConEmuLn995.cpp \
-       ConEmuLn1900.cpp \
-       ConEmuLn2800.cpp \
-       ConEmuLnA.cpp \
-       ../common/Memory.cpp
+SRCS = \
+		../common/Memory.cpp \
+		ConEmuLn.cpp \
+		ConEmuLn1900.cpp \
+		ConEmuLn2800.cpp \
+		ConEmuLn995.cpp \
+		ConEmuLnA.cpp
 
 USERLIBS = -lversion -lgdi32
 ENCFLAGS = -finput-charset=utf-8

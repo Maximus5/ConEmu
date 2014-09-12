@@ -1,26 +1,26 @@
 NAME = ConEmuCD
 SRCS = \
-		../common/CmdLine.cpp \
-		../common/Common.cpp \
-		../common/ConEmuCheck.cpp \
+		../common/CmdLine.cpp        \
+		../common/Common.cpp         \
+		../common/ConEmuCheck.cpp    \
 		../common/ConsoleMixAttr.cpp \
-		../common/ConsoleRead.cpp \
-		../common/execute.cpp \
-		../common/InQueue.cpp \
-		../common/MAssert.cpp \
-		../common/MConHandle.cpp    \
-		../common/Memory.cpp \
-		../common/MFileLog.cpp      \
-		../common/Monitors.cpp \
-		../common/MSection.cpp      \
-		../common/MSectionSimple.cpp\
-		../common/MSecurity.cpp \
-		../common/MStrSafe.cpp \
-		../common/RConStartArgs.cpp \
-		../common/SetEnvVar.cpp \
-		../common/WinConsole.cpp \
-		../common/WinObjects.cpp \
-		../ConEmuHk/Injects.cpp \
+		../common/ConsoleRead.cpp    \
+		../common/execute.cpp        \
+		../common/InQueue.cpp        \
+		../common/MAssert.cpp        \
+		../common/MConHandle.cpp     \
+		../common/Memory.cpp         \
+		../common/MFileLog.cpp       \
+		../common/Monitors.cpp       \
+		../common/MSection.cpp       \
+		../common/MSectionSimple.cpp \
+		../common/MSecurity.cpp      \
+		../common/MStrSafe.cpp       \
+		../common/RConStartArgs.cpp  \
+		../common/SetEnvVar.cpp      \
+		../common/WinConsole.cpp     \
+		../common/WinObjects.cpp     \
+		../ConEmuHk/Injects.cpp      \
 		ConEmuCmd.cpp \
 		ConEmuSrv.cpp \
 		ConProcess.cpp \

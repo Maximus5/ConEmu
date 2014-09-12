@@ -297,7 +297,7 @@ struct HkModuleInfo
 WARNING("Хорошо бы выделять память под gpHookedModules через VirtualProtect, чтобы защитить ее от изменений дурными программами");
 HkModuleInfo *gpHookedModules = NULL, *gpHookedModulesLast = NULL;
 size_t gnHookedModules = 0;
-CRITICAL_SECTION *gpHookedModulesSection = NULL;
+MSectionSimple *gpHookedModulesSection = NULL;
 void InitializeHookedModules()
 {
 	_ASSERTE(gpHookedModules==NULL && gpHookedModulesSection==NULL);
@@ -305,8 +305,7 @@ void InitializeHookedModules()
 	{
 		//MessageBox(NULL, L"InitializeHookedModules", L"Hooks", MB_SYSTEMMODAL);
 
-		gpHookedModulesSection = (CRITICAL_SECTION*)calloc(1,sizeof(*gpHookedModulesSection));
-		InitializeCriticalSection(gpHookedModulesSection);
+		gpHookedModulesSection = new MSectionSimple(true);
 
 		//WARNING: "new" вызывать из DllStart нельзя! DllStart вызывается НЕ из главной нити,
 		//WARNING: причем, когда главная нить еще не была запущена. В итоге, если это 
@@ -332,8 +331,9 @@ void FinalizeHookedModules()
 	HLOG1("FinalizeHookedModules",0);
 	if (gpHookedModules)
 	{
+		MSectionLockSimple CS;
 		if (gpHookedModulesSection)
-			EnterCriticalSection(gpHookedModulesSection);
+			CS.Lock(gpHookedModulesSection);
 
 		HkModuleInfo *p = gpHookedModules;
 		gpHookedModules = NULL;
@@ -343,16 +343,8 @@ void FinalizeHookedModules()
 			free(p);
 			p = pNext;
 		}
-
-		if (gpHookedModulesSection)
-			LeaveCriticalSection(gpHookedModulesSection);
 	}
-	if (gpHookedModulesSection)
-	{
-		DeleteCriticalSection(gpHookedModulesSection);
-		free(gpHookedModulesSection);
-		gpHookedModulesSection = NULL;
-	}
+	SafeDelete(gpHookedModulesSection);
 	HLOGEND1();
 }
 HkModuleInfo* IsHookedModule(HMODULE hModule, LPWSTR pszName = NULL, size_t cchNameMax = 0)
@@ -370,7 +362,7 @@ HkModuleInfo* IsHookedModule(HMODULE hModule, LPWSTR pszName = NULL, size_t cchN
 
 	//_ASSERTE(gpHookedModules && gpHookedModulesSection);
 	//if (bSection)
-	//	EnterCriticalSection(gpHookedModulesSection);
+	//	Enter Critical Section(gpHookedModulesSection);
 
 	HkModuleInfo* p = gpHookedModules;
 	while (p)
@@ -389,7 +381,7 @@ HkModuleInfo* IsHookedModule(HMODULE hModule, LPWSTR pszName = NULL, size_t cchN
 	}
 
 	//if (bSection)
-	//	LeaveCriticalSection(gpHookedModulesSection);
+	//	Leave Critical Section(gpHookedModulesSection);
 
 	return p;
 }
@@ -409,7 +401,8 @@ HkModuleInfo* AddHookedModule(HMODULE hModule, LPCWSTR sModuleName)
 
 	if (!p)
 	{
-		EnterCriticalSection(gpHookedModulesSection);
+		MSectionLockSimple CS;
+		CS.Lock(gpHookedModulesSection);
 
 		p = gpHookedModules;
 		while (p)
@@ -424,7 +417,7 @@ HkModuleInfo* AddHookedModule(HMODULE hModule, LPCWSTR sModuleName)
 				lstrcpyn(p->sModuleName, sModuleName?sModuleName:L"", countof(p->sModuleName));
 				// hModule - последним, чтобы не было проблем с другими потоками
 				p->hModule = hModule;
-				goto done;
+				goto wrap;
 			}
 			p = p->pNext;
 		}
@@ -447,11 +440,9 @@ HkModuleInfo* AddHookedModule(HMODULE hModule, LPCWSTR sModuleName)
 			gpHookedModulesLast->pNext = p;
 			gpHookedModulesLast = p;
 		}
-
-	done:
-		LeaveCriticalSection(gpHookedModulesSection);
 	}
 
+wrap:
 	return p;
 }
 void RemoveHookedModule(HMODULE hModule)
@@ -540,7 +531,7 @@ HookItemNode *gpHooksRoot = NULL; // Pointer to the "root" item in gpHooksTree
 //};
 //HookItemNodePtr *gpHooksTreePtr = NULL; // [MAX_HOOKED_PROCS]
 //HookItemNodePtr *gpHooksRootPtr = NULL; // Pointer to the "root" item in gpHooksTreePtr
-//CRITICAL_SECTION* gpcsHooksRootPtr = NULL;
+//MSectionSimple* gpcsHooksRootPtr = NULL;
 //HookItemNodePtr *gpHooksTreeNew = NULL; // [MAX_HOOKED_PROCS]
 //HookItemNodePtr *gpHooksRootNew = NULL; // Pointer to the "root" item in gpHooksTreePtr
 
@@ -885,7 +876,7 @@ bool __stdcall InitHooks(HookItem* apHooks)
 	//if (!gpcsHooksRootPtr)
 	//{
 	//	gpcsHooksRootPtr = (LPCRITICAL_SECTION)calloc(1,sizeof(*gpcsHooksRootPtr));
-	//	InitializeCriticalSection(gpcsHooksRootPtr);
+	//	Initialize Critical Section(gpcsHooksRootPtr);
 	//}
 
 
@@ -1309,13 +1300,13 @@ HookItem* FindFunction(const char* pszFuncName)
 //	HLOG0("InitHooksSortAddress",gnHookedFuncs);
 //
 //	// *** !!! ***
-//	EnterCriticalSection(gpcsHooksRootPtr);
+//	Enter Critical Section(gpcsHooksRootPtr);
 //
 //	// Sorted by address vector
 //	HookItem** pSort = (HookItem**)malloc(gnHookedFuncs*sizeof(*pSort));
 //	if (!pSort)
 //	{
-//		LeaveCriticalSection(gpcsHooksRootPtr);
+//		Leave Critical Section(gpcsHooksRootPtr);
 //		_ASSERTEX(pSort!=NULL && "Memory allocation failed");
 //		return;
 //	}
@@ -1352,7 +1343,7 @@ HookItem* FindFunction(const char* pszFuncName)
 //		gpHooksTreePtr = (HookItemNodePtr*)calloc(gnHookedFuncs,sizeof(HookItemNodePtr));
 //		if (!gpHooksTreePtr)
 //		{
-//			LeaveCriticalSection(gpcsHooksRootPtr);
+//			Leave Critical Section(gpcsHooksRootPtr);
 //			return;
 //		}
 //	}
@@ -1377,7 +1368,7 @@ HookItem* FindFunction(const char* pszFuncName)
 //
 //	HLOGEND();
 //
-//	LeaveCriticalSection(gpcsHooksRootPtr);
+//	Leave Critical Section(gpcsHooksRootPtr);
 //}
 //
 //void InitHooksSortNewAddress()
@@ -1592,7 +1583,7 @@ void ShutdownHooks()
 
 	//if (gpcsHooksRootPtr)
 	//{
-	//	DeleteCriticalSection(gpcsHooksRootPtr);
+	//	Delete Critical Section(gpcsHooksRootPtr);
 	//	SafeFree(gpcsHooksRootPtr);
 	//}
 

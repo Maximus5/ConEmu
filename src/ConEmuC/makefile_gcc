@@ -1,5 +1,6 @@
 NAME = ConEmuC
-SRCS = ConEmuC.cpp
+SRCS = \
+		ConEmuC.cpp
 
 USERLIBS = -lkernel32 -luser32
 #-lversion

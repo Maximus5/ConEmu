@@ -905,6 +905,7 @@
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\common\MSectionSimple.cpp" />
     <ClCompile Include="ConEmuBg.cpp" />
     <ClCompile Include="ConEmuBg1900.cpp" />
     <ClCompile Include="ConEmuBg2800.cpp" />
@@ -976,6 +977,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\common\common.hpp" />
+    <ClInclude Include="..\common\MSectionSimple.h" />
     <ClInclude Include="ConEmuBg.h" />
     <ClInclude Include="ConEmuBg_Lang.h" />
     <ClInclude Include="Configure.h" />

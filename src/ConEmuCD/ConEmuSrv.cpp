@@ -1554,9 +1554,9 @@ void ServerDone(int aiRc, bool abReportShutdown /*= false*/)
 	//if (gpSrv->psChars) { free(gpSrv->psChars); gpSrv->psChars = NULL; }
 	//if (gpSrv->pnAttrs) { free(gpSrv->pnAttrs); gpSrv->pnAttrs = NULL; }
 	//if (gpSrv->ptrLineCmp) { free(gpSrv->ptrLineCmp); gpSrv->ptrLineCmp = NULL; }
-	//DeleteCriticalSection(&gpSrv->csConBuf);
-	//DeleteCriticalSection(&gpSrv->csChar);
-	//DeleteCriticalSection(&gpSrv->csChangeSize);
+	//Delete Critical Section(&gpSrv->csConBuf);
+	//Delete Critical Section(&gpSrv->csChar);
+	//Delete Critical Section(&gpSrv->csChangeSize);
 	SafeCloseHandle(gpSrv->hAllowInputEvent);
 	SafeCloseHandle(gpSrv->hRootProcess);
 	SafeCloseHandle(gpSrv->hRootThread);
@@ -3229,7 +3229,8 @@ int CreateColorerHeader(bool bForceRecreate /*= false*/)
 	const AnnotationHeader* pHdr = NULL;
 	int nHdrSize;
 
-	EnterCriticalSection(&gpSrv->csColorerMappingCreate);
+	MSectionLockSimple CS;
+	CS.Lock(&gpSrv->csColorerMappingCreate);
 
 	// По идее, не должно быть пересоздания TrueColor мэппинга, разве что при Detach/Attach
 	_ASSERTE((gpSrv->pColorerMapping == NULL) || (gbAttachMode == am_Simple));
@@ -3339,7 +3340,7 @@ int CreateColorerHeader(bool bForceRecreate /*= false*/)
 	//}
 
 wrap:
-	LeaveCriticalSection(&gpSrv->csColorerMappingCreate);
+	CS.Unlock();
 	return iRc;
 }
 

@@ -162,7 +162,6 @@ extern HMODULE ghHooksModule;
 extern BOOL gbHooksModuleLoaded; // TRUE, если был вызов LoadLibrary("ConEmuHk.dll"), тогда его нужно FreeLibrary при выходе
 
 
-//CRITICAL_SECTION csData;
 MSection *csData = NULL;
 // результат выполнения команды (пишется функциями OutDataAlloc/OutDataWrite)
 CESERVER_REQ* gpCmdRet = NULL;
@@ -2601,7 +2600,6 @@ BOOL ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData, CESERV
 	//	ExecuteQuitFar();
 	//	return TRUE;
 	//}
-	//EnterCriticalSection(&csData);
 	MSectionLock CSD; CSD.Lock(csData, TRUE);
 	//if (gpCmdRet) { Free(gpCmdRet); gpCmdRet = NULL; } // !!! Освобождается ТОЛЬКО вызывающей функцией!
 	gpCmdRet = NULL; gpData = NULL; gpCursor = NULL;
@@ -2835,7 +2833,6 @@ BOOL ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData, CESERV
 
 			PostMacro((wchar_t*)pszMacro, &r);
 			//// Чтобы GUI не дожидался окончания всплытия EMenu
-			//LeaveCriticalSection(&cs Data);
 			//SetEvent(ghReqCommandEvent);
 			////
 			//HMODULE hEMenu = GetModuleHandle(L"emenu.dll");
@@ -2986,7 +2983,6 @@ BOOL ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData, CESERV
 		Free(pCmdRet);
 	}
 
-	//LeaveCriticalSection(&csData);
 	CSD.Unlock();
 #ifdef _DEBUG
 	_ASSERTE(_CrtCheckMemory());
@@ -3884,8 +3880,6 @@ void InitHWND(/*HWND ahFarHwnd*/)
 {
 	gsFarLang[0] = 0;
 
-	//InitializeCriticalSection(csTabs);
-	//InitializeCriticalSection(&csData);
 	bool lbExportsChanged = false;
 	if (!gFarVersion.dwVerMajor)
 	{
@@ -4491,7 +4485,6 @@ BOOL CreateTabs(int windowCount)
 	}
 
 	lastWindowCount = windowCount;
-	//if (!gpTabs) LeaveCriticalSection(csTabs);
 	return gpTabs!=NULL;
 }
 
@@ -4878,9 +4871,6 @@ void StopThread(void)
 		CloseHandle(ghFarAliveEvent);
 		ghFarAliveEvent = NULL;
 	}
-
-	//DeleteCriticalSection(csTabs); memset(csTabs,0,sizeof(csTabs));
-	//DeleteCriticalSection(&csData); memset(&csData,0,sizeof(csData));
 
 	if (ghRegMonitorKey) { RegCloseKey(ghRegMonitorKey); ghRegMonitorKey = NULL; }
 

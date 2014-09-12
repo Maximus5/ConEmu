@@ -258,12 +258,11 @@ void CDefTermHk::PostCreateThreadFinished()
 
 void CDefTermHk::ReloadSettings()
 {
-	EnterCriticalSection(&mcs);
+	MSectionLockSimple CS;
+	CS.Lock(mcs);
 
 	m_Opt.Serialize();
 	mn_LastCheck = GetTickCount();
-
-	LeaveCriticalSection(&mcs);
 }
 
 int CDefTermHk::DisplayLastError(LPCWSTR asLabel, DWORD dwError/*=0*/, DWORD dwMsgFlags/*=0*/, LPCWSTR asTitle/*=NULL*/, HWND hParent/*=NULL*/)

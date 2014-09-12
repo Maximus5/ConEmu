@@ -31,6 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Wininet.h>
 #include "../common/defines.h"
 #include "../common/MAssert.h"
+#include "../common/MSectionSimple.h"
 #include "Downloader.h"
 
 #ifdef __GNUC__
@@ -140,7 +141,7 @@ protected:
 	bool mb_FtpMode;
 	HANDLE mh_Internet, mh_Connect, mh_SrcFile; // Used
 	INTERNET_STATUS_CALLBACK mp_SetCallbackRc;
-	CRITICAL_SECTION mcs_Handle;
+	MSectionSimple mcs_Handle;
 
 	DWORD mn_InternetContentLen, mn_InternetContentReady; // Used
 
@@ -189,8 +190,8 @@ protected:
 	HANDLE mh_ReadyEvent;
 	LONG   mn_ReadyRef;
 	INTERNET_ASYNC_RESULT m_Result;
-	bool ExecRequest(BOOL bResult, DWORD& nErrCode);
-	HINTERNET ExecRequest(HINTERNET hResult, DWORD& nErrCode);
+	bool ExecRequest(BOOL bResult, DWORD& nErrCode, MSectionLockSimple& CS);
+	HINTERNET ExecRequest(HINTERNET hResult, DWORD& nErrCode, MSectionLockSimple& CS);
 
 public:
 	CDownloader();
@@ -353,7 +354,7 @@ CDownloader::CDownloader()
 	mn_ReadyRef = 0;
 	ZeroStruct(m_Result);
 
-	InitializeCriticalSection(&mcs_Handle);
+	mcs_Handle.Init();
 }
 
 CDownloader::~CDownloader()
@@ -363,7 +364,7 @@ CDownloader::~CDownloader()
 	SetLogin(NULL, NULL);
 	SafeCloseHandle(mh_CloseEvent);
 	SafeCloseHandle(mh_ReadyEvent);
-	DeleteCriticalSection(&mcs_Handle);
+	mcs_Handle.Close();
 }
 
 // asProxy = "" - autoconfigure
@@ -545,7 +546,8 @@ bool CDownloader::InetCloseHandle(HINTERNET& h, bool bForceSync /*= false*/)
 	_ASSERTE(lCur == 1);
 	ResetEvent(mh_CloseEvent);
 
-	EnterCriticalSection(&mcs_Handle);
+	MSectionLockSimple CS;
+	CS.Lock(&mcs_Handle);
 
 	bClose = wi->_InternetCloseHandle(h);
 	nErrCode = GetLastError();
@@ -559,7 +561,7 @@ bool CDownloader::InetCloseHandle(HINTERNET& h, bool bForceSync /*= false*/)
 		ReportMessage(dc_LogCallback, L"Async close handle x%08X wait result=%u", at_Uint, (DWORD_PTR)h, at_Uint, nWaitResult, at_None);
 	}
 
-	LeaveCriticalSection(&mcs_Handle);
+	CS.Unlock();
 
 	// Done
 	h = NULL;
@@ -567,12 +569,12 @@ bool CDownloader::InetCloseHandle(HINTERNET& h, bool bForceSync /*= false*/)
 	return (bClose != FALSE);
 }
 
-bool CDownloader::ExecRequest(BOOL bResult, DWORD& nErrCode)
+bool CDownloader::ExecRequest(BOOL bResult, DWORD& nErrCode, MSectionLockSimple& CS)
 {
 	DWORD nWaitResult;
 	nErrCode = bResult ? 0 : GetLastError();
 
-	LeaveCriticalSection(&mcs_Handle);
+	CS.Unlock();
 
 	if (mb_AsyncMode && (nErrCode == ERROR_IO_PENDING))
 	{
@@ -588,12 +590,12 @@ bool CDownloader::ExecRequest(BOOL bResult, DWORD& nErrCode)
 	return (bResult != FALSE);
 }
 
-HINTERNET CDownloader::ExecRequest(HINTERNET hResult, DWORD& nErrCode)
+HINTERNET CDownloader::ExecRequest(HINTERNET hResult, DWORD& nErrCode, MSectionLockSimple& CS)
 {
 	DWORD nWaitResult;
 	nErrCode = hResult ? 0 : GetLastError();
 
-	LeaveCriticalSection(&mcs_Handle);
+	CS.Unlock();
 
 	if (mb_AsyncMode && (nErrCode == ERROR_IO_PENDING))
 	{
@@ -868,6 +870,7 @@ BOOL CDownloader::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDstFi
 	DWORD nFlags, nService;
 	BOOL bFRc;
 	DWORD dwErr;
+	MSectionLockSimple CS;
 
 	if (!wi)
 	{
@@ -1055,8 +1058,8 @@ BOOL CDownloader::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDstFi
 		nFlags = 0; // No special flags
 		nService = bFtp?INTERNET_SERVICE_FTP:INTERNET_SERVICE_HTTP;
 		ReportMessage(dc_LogCallback, L"Connecting to server %s:%u (%u)", at_Str, szServer, at_Uint, nServerPort, at_Uint, nService, at_None);
-		EnterCriticalSection(&mcs_Handle); // Leaved in ExecRequest
-		mh_Connect = ExecRequest(wi->_InternetConnectW(mh_Internet, szServer, nServerPort, m_Server.szUser, m_Server.szPassword, nService, nFlags, (DWORD_PTR)this), dwErr);
+		CS.Lock(&mcs_Handle); // Leaved in ExecRequest
+		mh_Connect = ExecRequest(wi->_InternetConnectW(mh_Internet, szServer, nServerPort, m_Server.szUser, m_Server.szPassword, nService, nFlags, (DWORD_PTR)this), dwErr, CS);
 		if (!mh_Connect)
 		{
 			if (abShowAllErrors)
@@ -1107,8 +1110,8 @@ BOOL CDownloader::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDstFi
 			LPCWSTR pszSetDir = pszSlash ? pszSrvPath : L"/";
 			LPCWSTR pszFile = pszSlash ? (pszSlash+1) : (*pszSrvPath == L'/') ? (pszSrvPath+1) : pszSrvPath;
 
-			EnterCriticalSection(&mcs_Handle); // Leaved in ExecRequest
-			if (!ExecRequest(wi->_FtpSetCurrentDirectoryW(mh_Connect, pszSetDir), dwErr))
+			CS.Lock(&mcs_Handle); // Leaved in ExecRequest
+			if (!ExecRequest(wi->_FtpSetCurrentDirectoryW(mh_Connect, pszSetDir), dwErr, CS))
 			{
 				ReportMessage(dc_ErrCallback, L"Ftp set directory failed '%s', code=%u", at_Str, pszSetDir, at_Uint, GetLastError(), at_None);
 				if (pszSlash) *pszSlash = L'/'; // return it back
@@ -1119,8 +1122,8 @@ BOOL CDownloader::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDstFi
 			if (pszSlash) *pszSlash = L'/'; // return it back
 			nFlags = FTP_TRANSFER_TYPE_BINARY;
 
-			EnterCriticalSection(&mcs_Handle); // Leaved in ExecRequest
-			mh_SrcFile = ExecRequest(wi->_FtpOpenFileW(mh_Connect, pszFile, GENERIC_READ, nFlags, (DWORD_PTR)this), dwErr);
+			CS.Lock(&mcs_Handle); // Leaved in ExecRequest
+			mh_SrcFile = ExecRequest(wi->_FtpOpenFileW(mh_Connect, pszFile, GENERIC_READ, nFlags, (DWORD_PTR)this), dwErr, CS);
 			ReportMessage(dc_LogCallback, L"Ftp file opened x%08X", at_Uint, (DWORD_PTR)mh_SrcFile, at_None);
 			//WaitAsyncResult();
 
@@ -1174,8 +1177,8 @@ BOOL CDownloader::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDstFi
 
 			ReportMessage(dc_LogCallback, L"Sending request");
 			ResetEvent(mh_ReadyEvent);
-			EnterCriticalSection(&mcs_Handle); // Leaved in ExecRequest
-			bFRc = ExecRequest(wi->_HttpSendRequestW(mh_SrcFile,NULL,0,NULL,0), dwErr);
+			CS.Lock(&mcs_Handle); // Leaved in ExecRequest
+			bFRc = ExecRequest(wi->_HttpSendRequestW(mh_SrcFile,NULL,0,NULL,0), dwErr, CS);
 
 			if (!bFRc)
 			{
@@ -1196,8 +1199,8 @@ BOOL CDownloader::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDstFi
 				DWORD dwIndex = 0;
 				nFlags = HTTP_QUERY_CONTENT_LENGTH|HTTP_QUERY_FLAG_NUMBER;
 				ReportMessage(dc_LogCallback, L"Quering file info with flags x%08X", at_Uint, nFlags, at_None);
-				EnterCriticalSection(&mcs_Handle); // Leaved in ExecRequest
-				if (!ExecRequest(wi->_HttpQueryInfoW(mh_SrcFile, nFlags, &mn_InternetContentLen, &sz, &dwIndex), dwErr))
+				CS.Lock(&mcs_Handle); // Leaved in ExecRequest
+				if (!ExecRequest(wi->_HttpQueryInfoW(mh_SrcFile, nFlags, &mn_InternetContentLen, &sz, &dwIndex), dwErr, CS))
 				{
 					mn_InternetContentLen = 0;
 					UNREFERENCED_PARAMETER(dwErr);
@@ -1393,8 +1396,9 @@ BOOL CDownloader::ReadSource(LPCWSTR asSource, BOOL bInet, HANDLE hSource, BYTE*
 	{
 		ReportMessage(dc_LogCallback, L"Reading source");
 		*pcbRead = 0;
-		EnterCriticalSection(&mcs_Handle); // Leaved in ExecRequest
-		lbRc = ExecRequest(wi->_InternetReadFile(hSource, pData, cbData, pcbRead), dwErr);
+		MSectionLockSimple CS;
+		CS.Lock(&mcs_Handle); // Leaved in ExecRequest
+		lbRc = ExecRequest(wi->_InternetReadFile(hSource, pData, cbData, pcbRead), dwErr, CS);
 
 		if (mb_AsyncMode && lbRc && !*pcbRead && dwErr)
 		{

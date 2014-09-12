@@ -289,7 +289,7 @@ CConEmuMain::CConEmuMain()
 	//GetVersionEx(&gOSVer);
 
 	mp_Log = NULL;
-	InitializeCriticalSection(&mcs_Log);
+	mpcs_Log = new MSectionSimple(true);
 
 	//HeapInitialize(); - уже
 	//#define D(N) (1##N-100)
@@ -320,7 +320,10 @@ CConEmuMain::CConEmuMain()
 
 	bool bNeedConHostSearch = (gnOsVer == 0x0601);
 	if (bNeedConHostSearch)
-		InitializeCriticalSection(&m_LockConhostStart.cs);
+	{
+		m_LockConhostStart.pcsLock = new MSectionLockSimple();
+		m_LockConhostStart.pcs = new MSectionSimple(true);
+	}
 	m_LockConhostStart.wait = false;
 
 	mn_StartupFinished = ss_Starting;
@@ -1572,7 +1575,8 @@ bool CConEmuMain::CreateLog()
 	}
 
 	bool bRc = false;
-	EnterCriticalSection(&mcs_Log);
+	MSectionLockSimple CS;
+	CS.Lock(mpcs_Log);
 
 	mp_Log = new MFileLog(L"ConEmu-gui", ms_ConEmuExeDir, GetCurrentProcessId());
 
@@ -1591,8 +1595,6 @@ bool CConEmuMain::CreateLog()
 		mp_Log->LogStartEnv(gpStartEnv);
 		bRc = true;
 	}
-
-	LeaveCriticalSection(&mcs_Log);
 
 	return bRc;
 }
@@ -2480,7 +2482,10 @@ CConEmuMain::~CConEmuMain()
 
 	bool bNeedConHostSearch = (gnOsVer == 0x0601);
 	if (bNeedConHostSearch)
-		DeleteCriticalSection(&m_LockConhostStart.cs);
+	{
+		SafeDelete(m_LockConhostStart.pcs);
+		SafeDelete(m_LockConhostStart.pcsLock);
+	}
 
 	SafeDelete(mp_AttachDlg);
 	SafeDelete(mp_RecreateDlg);
@@ -2549,7 +2554,7 @@ CConEmuMain::~CConEmuMain()
 
 	CVConGroup::Deinitialize();
 
-	//DeleteCriticalSection(&mcs_ShellExecuteEx);
+	//Delete Critical Section(&mcs_ShellExecuteEx);
 
 	// По идее, уже должен был быть вызван в OnDestroy
 	FinalizePortableReg();
@@ -2557,7 +2562,7 @@ CConEmuMain::~CConEmuMain()
 	LoadImageFinalize();
 
 	SafeDelete(mp_Log);
-	DeleteCriticalSection(&mcs_Log);
+	SafeDelete(mpcs_Log);
 
 	_ASSERTE(mh_LLKeyHookDll==NULL);
 	CommonShutdown();
@@ -3461,9 +3466,9 @@ void CConEmuMain::SetTitleTemplate(LPCWSTR asTemplate)
 //		pArg->lpShellExecute = lpShellExecute;
 //		pArg->hReadyEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
 //
-//		EnterCriticalSection(&mcs_ShellExecuteEx);
+//		Enter Critical Section(&mcs_ShellExecuteEx);
 //		m_ShellExecuteQueue.push_back(pArg);
-//		LeaveCriticalSection(&mcs_ShellExecuteEx);
+//		Leave Critical Section(&mcs_ShellExecuteEx);
 //
 //		PostMessage(ghWnd, mn_ShellExecuteEx, 0, 0);
 //
@@ -3500,7 +3505,7 @@ void CConEmuMain::SetTitleTemplate(LPCWSTR asTemplate)
 //	{
 //		GuiShellExecuteExArg* pArg = NULL;
 //
-//		EnterCriticalSection(&mcs_ShellExecuteEx);
+//		Enter Critical Section(&mcs_ShellExecuteEx);
 //		for (INT_PTR i = 0; i < m_ShellExecuteQueue.size(); i++)
 //		{
 //			if (m_ShellExecuteQueue[i]->bInProcess)
@@ -3515,7 +3520,7 @@ void CConEmuMain::SetTitleTemplate(LPCWSTR asTemplate)
 //				break;
 //			}
 //		}
-//		LeaveCriticalSection(&mcs_ShellExecuteEx);
+//		Leave Critical Section(&mcs_ShellExecuteEx);
 //
 //		if (!pArg)
 //		{
@@ -4754,7 +4759,7 @@ bool CConEmuMain::LockConhostStart()
 	bool bNeedConHostSearch = (gnOsVer == 0x0601);
 	if (!bNeedConHostSearch)
 		return false;
-	EnterCriticalSection(&m_LockConhostStart.cs);
+	m_LockConhostStart.pcsLock->Lock(m_LockConhostStart.pcs);
 	if (m_LockConhostStart.wait)
 	{
 		// Если консоли создавать слишком быстро - может возникнуть проблема идентификации принадлежности процессов
@@ -4768,7 +4773,7 @@ void CConEmuMain::UnlockConhostStart()
 	bool bNeedConHostSearch = (gnOsVer == 0x0601);
 	if (!bNeedConHostSearch)
 		return;
-	LeaveCriticalSection(&m_LockConhostStart.cs);
+	m_LockConhostStart.pcsLock->Unlock();
 }
 
 void CConEmuMain::ReleaseConhostDelay()

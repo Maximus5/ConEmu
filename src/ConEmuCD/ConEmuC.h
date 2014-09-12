@@ -505,7 +505,7 @@ struct SrvInfo
 	ConEmuGuiMapping guiSettings;
 	CESERVER_REQ_CONINFO_FULL *pConsole;
 	CHAR_INFO *pConsoleDataCopy; // Local (Alloc)
-	CRITICAL_SECTION csReadConsoleInfo;
+	MSectionSimple csReadConsoleInfo;
 	FGetConsoleDisplayMode pfnWasFullscreenMode;
 	// Input
 	HANDLE hInputThread;
@@ -520,7 +520,7 @@ struct SrvInfo
 	InQueue InputQueue;
 	// TrueColorer buffer
 	//HANDLE hColorerMapping;
-	CRITICAL_SECTION csColorerMappingCreate;
+	MSectionSimple csColorerMappingCreate;
 	MFileMapping<const AnnotationHeader>* pColorerMapping; // поддержка Colorer TrueMod
 	AnnotationHeader ColorerHdr; // для сравнения индексов
 	//
@@ -591,14 +591,14 @@ struct SrvInfo
 
 	void InitFields()
 	{
-		InitializeCriticalSection(&csColorerMappingCreate);
-		InitializeCriticalSection(&csReadConsoleInfo);
+		csColorerMappingCreate.Init();
+		csReadConsoleInfo.Init();
 		AltServers.Init();
 	};
 	void FinalizeFields()
 	{
-		DeleteCriticalSection(&csColorerMappingCreate);
-		DeleteCriticalSection(&csReadConsoleInfo);
+		csColorerMappingCreate.Close();
+		csReadConsoleInfo.Close();
 	};
 };
 

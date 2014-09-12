@@ -45,7 +45,7 @@ CIconList::CIconList()
 {
 	mh_TabIcons = NULL;
 	mn_AdminIcon = 0;
-	InitializeCriticalSection(&mcs);
+	mpcs = new MSectionSimple(true);
 }
 
 CIconList::~CIconList()
@@ -62,7 +62,7 @@ CIconList::~CIconList()
 	}
 	m_Icons.clear();
 
-	DeleteCriticalSection(&mcs);
+	SafeDelete(mpcs);
 }
 
 bool CIconList::IsInitialized()
@@ -126,7 +126,7 @@ int CIconList::CreateTabIcon(LPCWSTR asIconDescr, bool bAdmin, LPCWSTR asWorkDir
 
 	int iCreatedIcon = -1;
 
-	MSectionLockSimple CS; CS.Lock(&mcs, 30000);
+	MSectionLockSimple CS; CS.Lock(mpcs, 30000);
 
 	for (INT_PTR i = 0; i < m_Icons.size(); i++)
 	{

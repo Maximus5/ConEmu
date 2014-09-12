@@ -46,7 +46,7 @@ CRunQueue::CRunQueue()
 {
 	mn_LastExecutionTick = 0;
 	mb_InExecution = false;
-	InitializeCriticalSection(&mcs_QueueLock);
+	mpcs_QueueLock = new MSectionSimple(true);
 
 	mn_ThreadId = 0;
 	mb_Terminate = false;
@@ -63,7 +63,7 @@ CRunQueue::~CRunQueue()
 		SafeCloseHandle(mh_Thread);
 	}
 
-	DeleteCriticalSection(&mcs_QueueLock);
+	SafeDelete(mpcs_QueueLock);
 }
 
 void CRunQueue::Terminate()
@@ -90,7 +90,7 @@ void CRunQueue::RequestRConStartup(CRealConsole* pRCon)
 	_ASSERTE(isMainThread() == true);
 
 	MSectionLockSimple cs;
-	cs.Lock(&mcs_QueueLock);
+	cs.Lock(mpcs_QueueLock);
 
 	// May be exist already in queue?
 	for (INT_PTR i = m_RunQueue.size(); (--i) >= 0;)
@@ -168,7 +168,7 @@ void CRunQueue::ProcessRunQueue()
 	// Block adding new requests from other threads
 	MArray<RunQueueItem> Stack;
 	MSectionLockSimple cs;
-	cs.Lock(&mcs_QueueLock);
+	cs.Lock(mpcs_QueueLock);
 	RunQueueItem item = {};
 	while (m_RunQueue.pop_back(item))
 	{

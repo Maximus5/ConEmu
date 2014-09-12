@@ -76,7 +76,7 @@ CDragDrop::CDragDrop()
 	mb_DragWithinNow = FALSE;
 	mn_ExtractIconsTID = 0;
 	mh_ExtractIcons = NULL;
-	InitializeCriticalSection(&m_CrThreads);
+	mp_CrThreads = new MSectionSimple(true);
 }
 
 void CDragDrop::DebugLog(LPCWSTR asInfo, BOOL abErrorSeverity/*=FALSE*/)
@@ -99,9 +99,10 @@ CDragDrop::~CDragDrop()
 		RevokeDragDrop(ghWnd);
 	}
 
-	EnterCriticalSection(&m_CrThreads);
+	MSectionLockSimple CS;
+	CS.Lock(mp_CrThreads);
 	BOOL lbEmpty = m_OpThread.empty() && !InDragDrop();
-	LeaveCriticalSection(&m_CrThreads);
+	CS.Unlock();
 
 	if (!lbEmpty)
 	{
@@ -109,7 +110,7 @@ CDragDrop::~CDragDrop()
 		              gpConEmu->GetDefaultTitle(), MB_YESNO|MB_ICONEXCLAMATION) == IDYES)
 		{
 			// Terminate all shell (copying) threads
-			EnterCriticalSection(&m_CrThreads);
+			CS.Lock(mp_CrThreads);
 			//std::vector<ThInfo>::iterator iter = m_OpThread.begin();
 
 			//while (iter != m_OpThread.end())
@@ -126,7 +127,7 @@ CDragDrop::~CDragDrop()
 				m_OpThread.erase(j);
 			}
 
-			LeaveCriticalSection(&m_CrThreads);
+			CS.Unlock();
 		}
 		else
 		{
@@ -136,16 +137,16 @@ CDragDrop::~CDragDrop()
 			while (lbActive)
 			{
 				Sleep(100);
-				EnterCriticalSection(&m_CrThreads);
+				CS.Lock(mp_CrThreads);
 				lbActive = (!m_OpThread.empty()) || InDragDrop();
-				LeaveCriticalSection(&m_CrThreads);
+				CS.Unlock();
 			}
 		}
 	}
 	else
 	{
 		// незаконченных нитей нет
-		// -- LeaveCriticalSection(&m_CrThreads); -- 101229 секция уже закрыта
+		// -- Leave Critical Section(&m_CrThreads); -- 101229 секция уже закрыта
 	}
 
 	// Завершение всех нитей драга
@@ -155,7 +156,7 @@ CDragDrop::~CDragDrop()
 	//if (m_pfpi) free(m_pfpi); m_pfpi=NULL;
 
 	//if (mp_DesktopID) { CoTaskMemFree(mp_DesktopID); mp_DesktopID = NULL; }
-	DeleteCriticalSection(&m_CrThreads);
+	SafeDelete(mp_CrThreads);
 }
 
 void CDragDrop::Drag(BOOL abClickNeed, COORD crMouseDC)
@@ -1421,9 +1422,10 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop(IDataObject * pDataObject,DWORD grfKey
 		}
 		else
 		{
-			EnterCriticalSection(&m_CrThreads);
+			MSectionLockSimple CS;
+			CS.Lock(mp_CrThreads);
 			m_OpThread.push_back(th);
-			LeaveCriticalSection(&m_CrThreads);
+			CS.Unlock();
 		}
 
 		DebugLog(NULL);
@@ -1477,7 +1479,8 @@ DWORD CDragDrop::ShellOpThreadProc(LPVOID lpParameter)
 
 	delete sfop;
 	HANDLE hTh = NULL;
-	EnterCriticalSection(&pDragDrop->m_CrThreads);
+	MSectionLockSimple CS;
+	CS.Lock(pDragDrop->mp_CrThreads);
 	//std::vector<ThInfo>::iterator iter = pDragDrop->m_OpThread.begin();
 
 	//while (iter != pDragDrop->m_OpThread.end())
@@ -1496,7 +1499,7 @@ DWORD CDragDrop::ShellOpThreadProc(LPVOID lpParameter)
 		//++iter;
 	}
 
-	LeaveCriticalSection(&pDragDrop->m_CrThreads);
+	CS.Unlock();
 
 	if (hTh)
 		CloseHandle(hTh);

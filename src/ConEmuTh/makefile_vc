@@ -34,6 +34,7 @@ $(INTDIR)\ImgCache.obj \
 $(INTDIR)\MAssert.obj \
 $(INTDIR)\Memory.obj \
 $(INTDIR)\MSection.obj \
+$(INTDIR)\MSectionSimple.obj \
 $(INTDIR)\MSecurity.obj \
 $(INTDIR)\MStrSafe.obj \
 $(INTDIR)\RgnDetect.obj \
@@ -230,6 +231,8 @@ $(INTDIR)\MAssert.obj: ../common/MAssert.cpp
 $(INTDIR)\Memory.obj: ../common/Memory.cpp
 
 $(INTDIR)\MSection.obj: ../common/MSection.cpp ../common/MSection.h
+
+$(INTDIR)\MSectionSimple.obj: ../common/MSectionSimple.cpp ../common/MSectionSimple.h
 
 $(INTDIR)\MSecurity.obj: ../common/MSecurity.cpp
 

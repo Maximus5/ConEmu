@@ -36,6 +36,85 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "MAssert.h"
 #include "MSectionSimple.h"
 
+MSectionSimple::MSectionSimple(bool bInit /*= false*/)
+{
+	mb_Initialized = false;
+	mn_LastError = 0;
+
+	if (bInit)
+		Init();
+	else
+		ZeroStruct(m_S);
+}
+
+MSectionSimple::~MSectionSimple()
+{
+	Close();
+}
+
+bool MSectionSimple::IsInitialized()
+{
+	return (this && mb_Initialized);
+}
+
+void MSectionSimple::Init()
+{
+	if (!mb_Initialized)
+	{
+		InitializeCriticalSection(&m_S);
+		mb_Initialized = true;
+	}
+}
+
+void MSectionSimple::Close()
+{
+	if (mb_Initialized)
+	{
+		DeleteCriticalSection(&m_S);
+		mb_Initialized = false;
+	}
+}
+
+void MSectionSimple::Enter()
+{
+	_ASSERTEX(mb_Initialized);
+	EnterCriticalSection(&m_S);
+}
+
+void MSectionSimple::Leave()
+{
+	_ASSERTEX(mb_Initialized);
+	LeaveCriticalSection(&m_S);
+}
+
+bool MSectionSimple::TryEnter()
+{
+	_ASSERTEX(mb_Initialized);
+	BOOL brc = TryEnterCriticalSection(&m_S);
+	if (!brc)
+	{
+		mn_LastError = GetLastError();
+		return false;
+	}
+	return true;
+}
+
+bool MSectionSimple::RecreateAndLock()
+{
+	BOOL lbLocked;
+	CRITICAL_SECTION csNew;
+	InitializeCriticalSection(&csNew);
+
+	CRITICAL_SECTION csOld = m_S;
+	DeleteCriticalSection(&csOld);
+
+	lbLocked = TryEnterCriticalSection(&csNew);
+	m_S = csNew;
+
+	return (lbLocked != FALSE);
+}
+
+
 MSectionLockSimple::MSectionLockSimple()
 {
 	mp_S = NULL;
@@ -53,7 +132,7 @@ MSectionLockSimple::~MSectionLockSimple()
 	}
 }
 
-BOOL MSectionLockSimple::Lock(CRITICAL_SECTION* apS, DWORD anTimeout/*=-1*/)
+BOOL MSectionLockSimple::Lock(MSectionSimple* apS, DWORD anTimeout/*=-1*/)
 {
 	if (mb_Locked && (mp_S != apS))
 		Unlock();
@@ -67,12 +146,13 @@ BOOL MSectionLockSimple::Lock(CRITICAL_SECTION* apS, DWORD anTimeout/*=-1*/)
 	}
 
 	_ASSERTEX(!mb_Locked);
+	_ASSERTEX(apS->IsInitialized());
 
 	bool bLocked = false;
 	DWORD nStartTick = GetTickCount();
 	DWORD nDelta;
 #if 0
-	EnterCriticalSection(apS);
+	EnterCriticalS	ection(&apS->m_S);
 
 	bLocked = mb_Locked = true;
 
@@ -84,7 +164,7 @@ BOOL MSectionLockSimple::Lock(CRITICAL_SECTION* apS, DWORD anTimeout/*=-1*/)
 #else
 	while (true)
 	{
-		if (TryEnterCriticalSection(apS))
+		if (apS->TryEnter())
 		{
 			bLocked = mb_Locked = true;
 			#ifdef _DEBUG
@@ -116,7 +196,7 @@ void MSectionLockSimple::Unlock()
 	if (mb_Locked)
 	{
 		if (mp_S)
-			LeaveCriticalSection(mp_S);
+			mp_S->Leave();
 		mb_Locked = false;
 	}
 }

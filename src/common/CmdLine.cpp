@@ -111,11 +111,11 @@ bool CmdArg::IsEmpty()
 {
 	return (!ms_Arg || !*ms_Arg);
 }
-LPCWSTR CmdArg::Set(LPCWSTR asNewValue, int anChars /*= -1*/)
+LPCWSTR CmdArg::Set(LPCWSTR asNewValue, INT_PTR anChars /*= -1*/)
 {
 	if (asNewValue)
 	{
-		int nNewLen = (anChars == -1) ? lstrlen(asNewValue) : anChars;
+		INT_PTR nNewLen = (anChars == -1) ? lstrlen(asNewValue) : anChars;
 		if (nNewLen <= 0)
 		{
 			//_ASSERTE(FALSE && "Check, if caller really need to set empty string???");

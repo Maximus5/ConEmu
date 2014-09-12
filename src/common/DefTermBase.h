@@ -32,6 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Windows.h>
 #include "common.hpp"
 #include "MArray.h"
+#include "MSectionSimple.h"
 #include "WinObjects.h"
 #include "../ConEmuCD/ExitCodes.h"
 #include <TlHelp32.h>
@@ -295,7 +296,7 @@ private:
 protected:
 	HANDLE mh_PostThread;
 	DWORD  mn_PostThreadId;
-	CRITICAL_SECTION mcs;
+	MSectionSimple* mcs;
 protected:
 	// Shell may not like injecting immediately after start-up
 	// If so, set (mb_ExplorerHookAllowed = false) in constructor
@@ -322,7 +323,7 @@ protected:
 
 		ClearProcessed(true);
 
-		DeleteCriticalSection(&mcs);
+		SafeDelete(mcs);
 	}
 
 public:
@@ -335,7 +336,7 @@ public:
 		mb_PostCreatedThread = false;
 		mb_Initialized = false;
 		mb_ExplorerHookAllowed = true;
-		InitializeCriticalSection(&mcs);
+		mcs = new MSectionSimple(true);
 	};
 
 	virtual ~CDefTermBase()
@@ -377,7 +378,7 @@ public:
 
 		bool lbRc = false;
 		int  iHookerRc = -1;
-		bool lbLocked = false;
+		MSectionLockSimple CS;
 		bool lbConHostLocked = false;
 		DWORD nResult = 0;
 		wchar_t szClass[MAX_PATH]; szClass[0] = 0;
@@ -439,8 +440,7 @@ public:
 			goto wrap;
 		}
 
-		EnterCriticalSection(&mcs);
-		lbLocked = true;
+		CS.Lock(mcs);
 
 		// Clear dead processes and windows
 		ClearProcessed(false);
@@ -550,10 +550,7 @@ public:
 		mh_LastIgnoredWnd = hFore;
 		_ASSERTE(lbRc == false);
 	wrap:
-		if (lbLocked)
-		{
-			LeaveCriticalSection(&mcs);
-		}
+		CS.Unlock();
 		if (bNotified)
 		{
 			NotifyHookingStatus(0, NULL);
@@ -569,9 +566,10 @@ public:
 		if (!isDefaultTerminalAllowed(true))
 			return;
 
-		EnterCriticalSection(&mcs);
+		MSectionLockSimple CS;
+		CS.Lock(mcs);
 		ClearProcessed(true);
-		LeaveCriticalSection(&mcs);
+		CS.Unlock();
 
 		// Если проводника в списке НЕ было, а сейчас появился...
 		// Проверить процесс шелла
@@ -584,7 +582,8 @@ public:
 		int iRc;
 		HANDLE hProcess = NULL;
 		DWORD nResult = 0, nErrCode = 0;
-		EnterCriticalSection(&mcs);
+		MSectionLockSimple CS;
+		CS.Lock(mcs);
 
 		if (hDefProcess)
 		{
@@ -605,7 +604,7 @@ public:
 			m_Processed.push_back(inf);
 		}
 
-		LeaveCriticalSection(&mcs);
+		CS.Unlock();
 		return iRc;
 	}
 

@@ -1,6 +1,8 @@
 NAME = ConEmuDw
-SRCS = ConEmuDw.cpp \
-       ../common/ConsoleRead.cpp
+SRCS = \
+		../common/ConsoleRead.cpp \
+		ConEmuDw.cpp
+
 
 
 USERLIBS = -lComdlg32 -lgdi32

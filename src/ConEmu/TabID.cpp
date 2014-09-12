@@ -397,7 +397,7 @@ CTabStack::CTabStack()
 	// Thought, most of users will get only one tab per console
 	mn_MaxCount = 1;
 	mpp_Stack = (CTabID**)calloc(mn_MaxCount,sizeof(CTabID**));
-	InitializeCriticalSection(&mc_Section);
+	mpc_Section = new MSectionSimple(true);
 	mn_UpdatePos = -1;
 	mb_FarUpdateMode = false;
 	#ifdef TAB_REF_PLACE
@@ -413,7 +413,7 @@ CTabStack::~CTabStack()
 		free(mpp_Stack);
 		mpp_Stack = NULL;
 	}
-	DeleteCriticalSection(&mc_Section);
+	SafeDelete(mpc_Section);
 }
 
 void CTabStack::RequestSize(int anCount, MSectionLockSimple* pSC)
@@ -482,7 +482,7 @@ int CTabStack::GetCount()
 	return mn_Used;
 }
 
-// mc_Section must be locked before call!
+// mpc_Section must be locked before call!
 int CTabStack::GetVisualToRealIndex(int anVisual)
 {
 	int nPos = 0;
@@ -503,7 +503,7 @@ int CTabStack::GetVisualToRealIndex(int anVisual)
 bool CTabStack::GetTabInfoByIndex(int anIndex, /*OUT*/ TabInfo& rInfo)
 {
 	bool lbFound = false;
-	MSectionLockSimple SC; SC.Lock(&mc_Section);
+	MSectionLockSimple SC; SC.Lock(mpc_Section);
 
 	int iReal = GetVisualToRealIndex(anIndex);
 	if (iReal >= 0 && iReal < mn_Used)
@@ -521,7 +521,7 @@ bool CTabStack::GetTabInfoByIndex(int anIndex, /*OUT*/ TabInfo& rInfo)
 
 bool CTabStack::GetTabByIndex(int anIndex, /*OUT*/ CTab& rTab)
 {
-	MSectionLockSimple SC; SC.Lock(&mc_Section);
+	MSectionLockSimple SC; SC.Lock(mpc_Section);
 
 	int iReal = GetVisualToRealIndex(anIndex);
 	if (iReal >= 0 && iReal < mn_Used)
@@ -539,7 +539,7 @@ bool CTabStack::GetTabByIndex(int anIndex, /*OUT*/ CTab& rTab)
 
 int CTabStack::GetIndexByTab(const CTabID* pTab)
 {
-	MSectionLockSimple SC; SC.Lock(&mc_Section);
+	MSectionLockSimple SC; SC.Lock(mpc_Section);
 
 	int nIndex = -1;
 	for (int i = 0; i < mn_Used; i++)
@@ -562,7 +562,7 @@ int CTabStack::GetIndexByTab(const CTabID* pTab)
 
 bool CTabStack::GetNextTab(const CTabID* pTab, BOOL abForward, /*OUT*/ CTab& rTab)
 {
-	MSectionLockSimple SC; SC.Lock(&mc_Section);
+	MSectionLockSimple SC; SC.Lock(mpc_Section);
 	CTabID* pNextTab = NULL;
 
 	for (int i = 0; i < mn_Used; i++)
@@ -591,7 +591,7 @@ bool CTabStack::GetNextTab(const CTabID* pTab, BOOL abForward, /*OUT*/ CTab& rTa
 bool CTabStack::GetTabDrawRect(int anIndex, RECT* rcTab)
 {
 	bool lbExist = false;
-	MSectionLockSimple SC; SC.Lock(&mc_Section);
+	MSectionLockSimple SC; SC.Lock(mpc_Section);
 
 	int iReal = GetVisualToRealIndex(anIndex);
 	if (iReal >= 0 && iReal < mn_Used)
@@ -620,7 +620,7 @@ bool CTabStack::GetTabDrawRect(int anIndex, RECT* rcTab)
 bool CTabStack::SetTabDrawRect(int anIndex, const RECT& rcTab)
 {
 	bool lbExist = false;
-	MSectionLockSimple SC; SC.Lock(&mc_Section);
+	MSectionLockSimple SC; SC.Lock(mpc_Section);
 
 	int iReal = GetVisualToRealIndex(anIndex);
 	if (iReal >= 0 && iReal < mn_Used)
@@ -651,7 +651,7 @@ bool CTabStack::SetTabDrawRect(int anIndex, const RECT& rcTab)
 
 void CTabStack::LockTabs(MSectionLockSimple* pLock)
 {
-	pLock->Lock(&mc_Section);
+	pLock->Lock(mpc_Section);
 }
 
 // Должен вызываться перед UpdateOrCreate и UpdateEnd
@@ -1136,7 +1136,7 @@ void CTabStack::ReleaseTabs(BOOL abInvalidOnly /*= TRUE*/)
 	if (!this || !mpp_Stack || !mn_Used || !mn_MaxCount)
 		return;
 
-	MSectionLockSimple SC; SC.Lock(&mc_Section); // Сразу Exclusive lock
+	MSectionLockSimple SC; SC.Lock(mpc_Section); // Сразу Exclusive lock
 
 	// Идем сзади, т.к. нужно будет сдвигать элементы
 	for (int i = (mn_Used - 1); i >= 0; i--)
@@ -1172,7 +1172,7 @@ void CTabStack::ReleaseTabs(BOOL abInvalidOnly /*= TRUE*/)
 // в) смене активного Far (запуск "far /e ..." например) - пометить пассивными все кроме панелей (некрасиво немного)
 void CTabStack::MarkTabsInvalid(MatchTabEnum MatchTab, DWORD nFarPID)
 {
-	MSectionLockSimple SC; SC.Lock(&mc_Section); // Сразу Exclusive lock
+	MSectionLockSimple SC; SC.Lock(mpc_Section); // Сразу Exclusive lock
 	int iSkipped = 0;
 
 	for (int i = 0; i < mn_Used; i++)
@@ -1215,7 +1215,7 @@ void CTabStack::MarkTabsInvalid(MatchTabEnum MatchTab, DWORD nFarPID)
 
 bool CTabStack::RefreshFarStatus(DWORD nFarPID, CTab& rActiveTab, int& rnActiveIndex, int& rnActiveCount, bool& rbHasModalTab)
 {
-	MSectionLockSimple SC; SC.Lock(&mc_Section); // Сразу Exclusive lock
+	MSectionLockSimple SC; SC.Lock(mpc_Section); // Сразу Exclusive lock
 	bool bChanged = false;
 	int iCount = 0;
 	int iActive = -1;

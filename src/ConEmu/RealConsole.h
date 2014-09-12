@@ -710,7 +710,7 @@ class CRealConsole
 		CmdArg ms_DefTitle;
 		CmdArg ms_CurWorkDir;
 		CmdArg ms_CurPassiveDir;
-		CRITICAL_SECTION mcs_CurWorkDir;
+		MSectionSimple* mpcs_CurWorkDir;
 		void StoreCurWorkDir(CESERVER_REQ_STORECURDIR* pNewCurDir);
 		//wchar_t ms_ProfilePathTemp[MAX_PATH+1]; -- commented code
 		bool mb_WasStartDetached;

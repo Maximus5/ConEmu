@@ -31,19 +31,48 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <windows.h>
 
-class MSectionLockSimple
+struct MSectionLockSimple;
+//class  MSectionLock;
+class  MSection;
+
+struct MSectionSimple
 {
-	protected:
-		CRITICAL_SECTION* mp_S;
-		#ifdef _DEBUG
-		DWORD mn_LockTID, mn_LockTick;
-		#endif
-		bool mb_Locked;
-	public:
-		BOOL Lock(CRITICAL_SECTION* apS, DWORD anTimeout=-1);
-		void Unlock();
-		BOOL isLocked();
-	public:
-		MSectionLockSimple();
-		~MSectionLockSimple();
+private:
+	CRITICAL_SECTION m_S;
+	DWORD mn_LastError;
+	bool mb_Initialized;
+
+public:
+	MSectionSimple(bool bInit = false);
+	~MSectionSimple();
+
+public:
+	bool IsInitialized();
+	void Init();
+	void Close();
+
+public:
+	void Enter();
+	void Leave();
+	bool TryEnter();
+
+public:
+	bool RecreateAndLock();
+};
+
+struct MSectionLockSimple
+{
+protected:
+	MSectionSimple* mp_S;
+	#ifdef _DEBUG
+	DWORD mn_LockTID, mn_LockTick;
+	#endif
+	bool mb_Locked;
+public:
+	BOOL Lock(MSectionSimple* apS, DWORD anTimeout=-1);
+	void Unlock();
+	BOOL isLocked();
+public:
+	MSectionLockSimple();
+	~MSectionLockSimple();
 };

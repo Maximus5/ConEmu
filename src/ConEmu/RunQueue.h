@@ -66,7 +66,7 @@ private:
 	};
 	MArray<RunQueueItem> m_RunQueue;
 	// We need simple lock here, without overhead
-	CRITICAL_SECTION mcs_QueueLock;
+	MSectionSimple* mpcs_QueueLock;
 	// Execution now?
 	bool mb_InExecution;
 	// as is

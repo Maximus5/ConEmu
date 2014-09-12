@@ -1,25 +1,25 @@
 NAME = ConEmu
 SRCS = \
-		../common/CmdLine.cpp       \
-		../common/Common.cpp        \
-		../common/ConEmuCheck.cpp   \
-		../common/execute.cpp       \
-		../common/Memory.cpp        \
-		../common/MEvent.cpp        \
-		../common/MFileLog.cpp      \
-		../common/Monitors.cpp      \
-		../common/MSectionSimple.cpp\
-		../common/MSection.cpp      \
-		../common/MSecurity.cpp     \
-		../common/MSetter.cpp       \
-		../common/MStrSafe.cpp      \
-		../common/MTimer.cpp        \
-		../common/MToolTip.cpp      \
-		../common/RConStartArgs.cpp \
-		../common/RgnDetect.cpp     \
-		../common/SetEnvVar.cpp     \
-		../common/WinConsole.cpp    \
-		../common/WinObjects.cpp    \
+		../common/CmdLine.cpp        \
+		../common/Common.cpp         \
+		../common/ConEmuCheck.cpp    \
+		../common/execute.cpp        \
+		../common/Memory.cpp         \
+		../common/MEvent.cpp         \
+		../common/MFileLog.cpp       \
+		../common/Monitors.cpp       \
+		../common/MSectionSimple.cpp \
+		../common/MSection.cpp       \
+		../common/MSecurity.cpp      \
+		../common/MSetter.cpp        \
+		../common/MStrSafe.cpp       \
+		../common/MTimer.cpp         \
+		../common/MToolTip.cpp       \
+		../common/RConStartArgs.cpp  \
+		../common/RgnDetect.cpp      \
+		../common/SetEnvVar.cpp      \
+		../common/WinConsole.cpp     \
+		../common/WinObjects.cpp     \
 		AboutDlg.cpp       \
 		Attach.cpp         \
 		Background.cpp     \

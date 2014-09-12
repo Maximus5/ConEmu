@@ -19,16 +19,17 @@ OUTNAME = ConEmuBg
 
 
 LINK_OBJS = \
-$(OBJDIR)\ConEmuBg.obj \
-$(OBJDIR)\ConEmuBg995.obj \
-$(OBJDIR)\ConEmuBg1900.obj \
-$(OBJDIR)\ConEmuBg2800.obj \
-$(OBJDIR)\ConEmuBgA.obj \
-$(OBJDIR)\MAssert.obj \
-$(OBJDIR)\Memory.obj \
-$(OBJDIR)\MStrSafe.obj
+$(INTDIR)\ConEmuBg.obj \
+$(INTDIR)\ConEmuBg995.obj \
+$(INTDIR)\ConEmuBg1900.obj \
+$(INTDIR)\ConEmuBg2800.obj \
+$(INTDIR)\ConEmuBgA.obj \
+$(INTDIR)\MAssert.obj \
+$(INTDIR)\Memory.obj \
+$(INTDIR)\MSectionSimple.obj \
+$(INTDIR)\MStrSafe.obj
 
-#$(OBJDIR)\LogBrowser.obj
+#$(INTDIR)\LogBrowser.obj
 
 USERLIBS = version.lib gdi32.lib
 
@@ -44,7 +45,7 @@ DLLFULLNAME = $(OUTDIR)$(ADDOUTDIR)\$(DLLNAME)
 DEF = $(DEF_NAME).def
 MAP = $(OUTDIR)$(ADDOUTDIR)\$(OUTNAME).map
 PDB = $(OUTDIR)$(ADDOUTDIR)\$(OUTNAME).pdb
-RES = $(OBJDIR)\$(NAME).res
+RES = $(INTDIR)\$(NAME).res
 
 !ifdef VC8
 COMPAT64=/Wp64
@@ -83,7 +84,7 @@ CPP_PROJ_NO=/nologo /c /W3 /wd4995 /Gy /GF $(CPP_ALIGN) /J /Gr /GS- /GR- /EHs-c-
 ULOUT=-Tpd -Re
 LINK_MACHINE = /MACHINE:X86
 !endif
-CPP_PROJ=$(CPP_PROJ_NO) /Fo"$(OBJDIR)\\"
+CPP_PROJ=$(CPP_PROJ_NO) /Fo"$(INTDIR)\\"
 
 #!ifdef EXCLUDECRT
 #!undef COMMONLIB
@@ -160,19 +161,19 @@ $(DLLFULLNAME) : $(LINK_OBJS) $(RES) $(LINK_DEP)
 !endif
 
 !ifndef __MAKE__
-.cpp{$(OBJDIR)}.obj::
+.cpp{$(INTDIR)}.obj::
 	@$(CC) @<<
 	$(CFLAGS) $<
 <<
-{../common/}.cpp{$(OBJDIR)}.obj::
+{../common/}.cpp{$(INTDIR)}.obj::
 	$(CC) @<<
 	$(CFLAGS) $<
 <<
 !else
-.cpp{$(OBJDIR)}.obj:
+.cpp{$(INTDIR)}.obj:
 	@$(CC) $(CFLAGS) { $< } 
 
-{../common/}.cpp{$(OBJDIR)}.obj:
+{../common/}.cpp{$(INTDIR)}.obj:
 	@$(CC) $(CFLAGS) { $< } 
 
 !endif
@@ -185,7 +186,7 @@ dirs:
 !ifdef INSTALL
 	@if not exist "$(WORKDIR)\$(NULL)" mkdir "$(WORKDIR)"
 !endif
-	@if not exist "$(OBJDIR)\$(NULL)" mkdir "$(OBJDIR)"
+	@if not exist "$(INTDIR)\$(NULL)" mkdir "$(INTDIR)"
 	@if not exist "$(OUTDIR)\$(NULL)" mkdir "$(OUTDIR)"
 	@if not exist "$(OUTDIR)$(ADDOUTDIR)\$(NULL)" mkdir "$(OUTDIR)$(ADDOUTDIR)"
 
@@ -205,18 +206,26 @@ clean:
 	@echo copying release files finished
 
 
-$(OBJDIR)\ConEmuBg.obj: ConEmuBg.cpp ../common/common.hpp ConEmuBg.h ConEmuBg_Lang.h
+################
+#LINK_OBJS begin
 
-$(OBJDIR)\ConEmuBg995.obj: ConEmuBg995.cpp ../common/common.hpp ConEmuBg.h ConEmuBg_Lang.h
+$(INTDIR)\ConEmuBg.obj: ConEmuBg.cpp ../common/common.hpp ConEmuBg.h ConEmuBg_Lang.h
 
-$(OBJDIR)\ConEmuBg1900.obj: ConEmuBg1900.cpp ../common/common.hpp ConEmuBg.h ConEmuBg_Lang.h
+$(INTDIR)\ConEmuBg1900.obj: ConEmuBg1900.cpp ../common/common.hpp ConEmuBg.h ConEmuBg_Lang.h
 
-$(OBJDIR)\ConEmuBg2800.obj: ConEmuBg2800.cpp ../common/common.hpp ConEmuBg.h ConEmuBg_Lang.h
+$(INTDIR)\ConEmuBg2800.obj: ConEmuBg2800.cpp ../common/common.hpp ConEmuBg.h ConEmuBg_Lang.h
 
-$(OBJDIR)\ConEmuBgA.obj: ConEmuBgA.cpp ../common/common.hpp ConEmuBg.h ConEmuBg_Lang.h
+$(INTDIR)\ConEmuBg995.obj: ConEmuBg995.cpp ../common/common.hpp ConEmuBg.h ConEmuBg_Lang.h
 
-$(OBJDIR)\MAssert.obj: ../common/MAssert.cpp
+$(INTDIR)\ConEmuBgA.obj: ConEmuBgA.cpp ../common/common.hpp ConEmuBg.h ConEmuBg_Lang.h
 
-$(OBJDIR)\Memory.obj: ../common/Memory.cpp
+$(INTDIR)\MAssert.obj: ../common/MAssert.cpp
 
-$(OBJDIR)\MStrSafe.obj: ../common/MStrSafe.cpp
+$(INTDIR)\Memory.obj: ../common/Memory.cpp
+
+$(INTDIR)\MSectionSimple.obj: ../common/MSectionSimple.cpp ../common/MSectionSimple.h
+
+$(INTDIR)\MStrSafe.obj: ../common/MStrSafe.cpp
+
+#LINK_OBJS end
+##############

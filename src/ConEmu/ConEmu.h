@@ -72,6 +72,8 @@ class CToolTip;
 class CVConGroup;
 class CVConGuard;
 class MFileLog;
+struct MSectionSimple;
+struct MSectionLockSimple;
 enum ConEmuWindowMode;
 struct CEFindDlg;
 union CESize;
@@ -228,7 +230,7 @@ class CConEmuMain
 		CConEmuInside *mp_Inside;
 		CStatus *mp_Status;
 		CToolTip *mp_Tip;
-		MFileLog *mp_Log; CRITICAL_SECTION mcs_Log; // mcs_Log - для создания
+		MFileLog *mp_Log; MSectionSimple* mpcs_Log; // mcs_Log - для создания
 		CDefaultTerminal *mp_DefTrm;
 		CEFindDlg *mp_Find;
 		CRunQueue *mp_RunQueue;
@@ -776,8 +778,9 @@ class CConEmuMain
 		void UnlockConhostStart();
 		void ReleaseConhostDelay();
 	protected:
-		struct {
-			CRITICAL_SECTION cs;
+		struct LockConhostStart {
+			MSectionSimple* pcs;
+			MSectionLockSimple* pcsLock;
 			bool wait;
 		} m_LockConhostStart;
 };

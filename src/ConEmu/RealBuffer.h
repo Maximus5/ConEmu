@@ -225,7 +225,7 @@ protected:
 	COORD mcr_LastMousePos;
 
 	struct {
-		CRITICAL_SECTION csLock;
+		MSectionSimple* pcsLock;
 		AnnotationInfo* mp_Cmp;
 		int nCmpMax;
 	} m_TrueMode;

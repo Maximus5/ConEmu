@@ -82,19 +82,6 @@ protected:
 
 	CVConGroup* FindNextPane(const RECT& rcPrev, int nHorz /*= 0*/, int nVert /*= 0*/);
 
-protected:
-	//static CVirtualConsole* mp_VCon[MAX_CONSOLE_COUNT];
-
-	//static CVirtualConsole* mp_VActive;
-	//static bool mb_CreatingActive, mb_SkipSyncSize;
-
-	//static CRITICAL_SECTION mcs_VGroups;
-	//static CVConGroup* mp_VGroups[MAX_CONSOLE_COUNT*2]; // на каждое разбиение добавляется +Parent
-
-	//static CVirtualConsole* mp_GrpVCon[MAX_CONSOLE_COUNT];
-
-	//static COORD m_LastConSize; // console size after last resize (in columns and lines)
-
 private:
 	static CVirtualConsole* CreateVCon(RConStartArgs *args, CVirtualConsole*& ppVConI);
 

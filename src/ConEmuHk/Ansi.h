@@ -43,6 +43,8 @@ typedef BOOL (WINAPI* OnWriteConsoleW_t)(HANDLE hConsoleOutput, const VOID *lpBu
 #define CEAnsi_MaxPrevPart 160
 #define CEAnsi_MaxPrevAnsiPart 80
 
+struct MSectionSimple;
+
 struct CEAnsi
 {
 //private:
@@ -132,7 +134,7 @@ public:
 	static HANDLE ghLastAnsiCapable /*= NULL*/;
 	static HANDLE ghLastAnsiNotCapable /*= NULL*/;
 	static HANDLE ghAnsiLogFile /*= NULL*/;
-	static CRITICAL_SECTION gcsAnsiLogFile;
+	static MSectionSimple* gcsAnsiLogFile;
 
 	static bool gbWasXTermOutput;
 

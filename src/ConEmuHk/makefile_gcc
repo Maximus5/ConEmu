@@ -1,20 +1,20 @@
 NAME = ConEmuHk
 SRCS = \
-		../common/CmdLine.cpp \
-		../common/Common.cpp \
-		../common/ConEmuCheck.cpp \
+		../common/CmdLine.cpp        \
+		../common/Common.cpp         \
+		../common/ConEmuCheck.cpp    \
 		../common/ConsoleMixAttr.cpp \
-		../common/execute.cpp \
-		../common/InQueue.cpp \
-		../common/MAssert.cpp \
-		../common/Memory.cpp \
-		../common/MSectionSimple.cpp\
-		../common/MSection.cpp      \
-		../common/MSecurity.cpp \
-		../common/MStrSafe.cpp \
-		../common/RConStartArgs.cpp \
-		../common/WinConsole.cpp \
-		../common/WinObjects.cpp \
+		../common/execute.cpp        \
+		../common/InQueue.cpp        \
+		../common/MAssert.cpp        \
+		../common/Memory.cpp         \
+		../common/MSectionSimple.cpp \
+		../common/MSection.cpp       \
+		../common/MSecurity.cpp      \
+		../common/MStrSafe.cpp       \
+		../common/RConStartArgs.cpp  \
+		../common/WinConsole.cpp     \
+		../common/WinObjects.cpp     \
 		Ansi.cpp \
 		ConEmuHooks.cpp \
 		DefTermHk.cpp \

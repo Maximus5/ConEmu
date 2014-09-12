@@ -94,7 +94,7 @@ static bool gbVimTermWasChangedBuffer = false;
 HANDLE CEAnsi::ghLastAnsiCapable = NULL;
 HANDLE CEAnsi::ghLastAnsiNotCapable = NULL;
 HANDLE CEAnsi::ghAnsiLogFile = NULL;
-CRITICAL_SECTION CEAnsi::gcsAnsiLogFile;
+MSectionSimple* CEAnsi::gcsAnsiLogFile = NULL;
 
 // VIM, etc. Some programs waiting control keys as xterm sequences. Need to inform ConEmu GUI.
 bool CEAnsi::gbWasXTermOutput = false;
@@ -117,7 +117,7 @@ void CEAnsi::InitAnsiLog(LPCWSTR asFilePath)
 	if (ghAnsiLogFile)
 		return;
 
-	InitializeCriticalSection(&gcsAnsiLogFile);
+	gcsAnsiLogFile = new MSectionSimple(true);
 	HANDLE hLog = CreateFile(asFilePath, GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 	if (hLog && (hLog != INVALID_HANDLE_VALUE))
 	{
@@ -126,7 +126,7 @@ void CEAnsi::InitAnsiLog(LPCWSTR asFilePath)
 	}
 	else
 	{
-		DeleteCriticalSection(&gcsAnsiLogFile);
+		SafeDelete(gcsAnsiLogFile);
 	}
 }
 
@@ -138,7 +138,7 @@ void CEAnsi::DoneAnsiLog()
 		h = ghAnsiLogFile;
 		ghAnsiLogFile = NULL;
 		CloseHandle(h);
-		DeleteCriticalSection(&gcsAnsiLogFile);
+		SafeDelete(gcsAnsiLogFile);
 	}
 }
 
@@ -161,7 +161,7 @@ void CEAnsi::WriteAnsiLog(LPCWSTR lpBuffer, DWORD nChars)
 	{
 		// Handle multi-thread writers
 		// But multi-process writers can't be handled correctly
-		MSectionLockSimple lock; lock.Lock(&gcsAnsiLogFile, 500);
+		MSectionLockSimple lock; lock.Lock(gcsAnsiLogFile, 500);
 		SetFilePointer(ghAnsiLogFile, 0, NULL, FILE_END);
 		bWrite = WriteFile(ghAnsiLogFile, pszBuf, nLen, &nWritten, NULL);
 	}

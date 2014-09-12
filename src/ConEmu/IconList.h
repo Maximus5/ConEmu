@@ -30,6 +30,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "../common/MArray.h"
 
+struct MSectionSimple;
+
 class CIconList
 {
 protected:
@@ -38,7 +40,7 @@ protected:
 		BOOL bAdmin;
 		int nIconIdx;
 	};
-	CRITICAL_SECTION mcs;
+	MSectionSimple* mpcs;
 	MArray<TabIconCache> m_Icons;
 	int CreateTabIconInt(LPCWSTR asIconDescr, bool bAdmin, LPCWSTR asWorkDir);
 public:

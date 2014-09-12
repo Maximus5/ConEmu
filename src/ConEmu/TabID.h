@@ -47,7 +47,8 @@ struct TabName;
 class CVirtualConsole;
 class MSection;
 class MSectionLock;
-class MSectionLockSimple;
+struct MSectionSimple;
+struct MSectionLockSimple;
 class CTabStack;
 
 
@@ -237,7 +238,7 @@ protected:
 	CTabID** mpp_Stack;
 	int mn_MaxCount, mn_Used;
 protected:
-	CRITICAL_SECTION mc_Section;
+	MSectionSimple* mpc_Section;
 	int  mn_UpdatePos;
 	bool mb_FarUpdateMode;
 	int  AppendInt(CTabID* pTab, BOOL abMoveFirst, MSectionLockSimple* pSC);

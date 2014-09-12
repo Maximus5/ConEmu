@@ -56,6 +56,8 @@ enum ProcessingStatus
 	eItemProcessing, // NOW!
 };
 
+#include "../common/MSectionSimple.h"
+
 template<class T>
 class CQueueProcessor
 {
@@ -80,7 +82,7 @@ class CQueueProcessor
 			LONG_PTR lParam;  // для внутренних нужд потомков
 		};
 		// Очередь обработки
-		CRITICAL_SECTION mcs_Queue;
+		MSectionSimple* mpcs_Queue;
 		int mn_Count, mn_MaxCount;
 		int mn_WaitingCount;
 		HANDLE mh_Waiting; // Event для передергивания нити обработчика
@@ -185,7 +187,8 @@ class CQueueProcessor
 
 			int i;
 			ProcessingItem* p = NULL;
-			EnterCriticalSection(&mcs_Queue);
+			MSectionLockSimple CS;
+			CS.Lock(mpcs_Queue);
 
 			if (!mpp_Queue || !mn_MaxCount)
 			{
@@ -212,7 +215,7 @@ class CQueueProcessor
 							//SetEvent(mh_Waiting);
 							CheckWaitingCount();
 							_ASSERTE(mpp_Queue[i]->Status != eItemEmpty);
-							LeaveCriticalSection(&mcs_Queue);
+							CS.Unlock();
 							//if (mpp_Queue[i]->Status == eItemRequest) -- Теоретически может быть уже выполнен, но здесь - не волнует
 							return mpp_Queue[i];
 						}
@@ -261,13 +264,13 @@ class CQueueProcessor
 			}
 
 			CheckWaitingCount();
-			LeaveCriticalSection(&mcs_Queue);
+			CS.Unlock();
 			return p;
 		};
 	public:
 		CQueueProcessor()
 		{
-			InitializeCriticalSection(&mcs_Queue);
+			mpcs_Queue = new MSectionSimple(true);
 			mn_Count = mn_MaxCount = mn_WaitingCount = 0;
 			mh_Waiting = NULL;
 			mpp_Queue = NULL;
@@ -290,7 +293,7 @@ class CQueueProcessor
 				mh_Alive = NULL;
 			}
 
-			DeleteCriticalSection(&mcs_Queue);
+			SafeDelete(mpcs_Queue);
 			ClearQueue();
 
 			if (mh_Waiting)
@@ -482,7 +485,8 @@ class CQueueProcessor
 			{
 				_ASSERTE(eItemEmpty == 0);
 				// Для получения элемента - нужно заблокировать секцию
-				EnterCriticalSection(&mcs_Queue);
+				MSectionLockSimple CS;
+				CS.Lock(mpcs_Queue);
 
 				for(int i = 0; i < mn_MaxCount; i++)
 				{
@@ -500,7 +504,7 @@ class CQueueProcessor
 
 				CheckWaitingCount();
 				// Больше не требуется
-				LeaveCriticalSection(&mcs_Queue);
+				CS.Unlock();
 			}
 		};
 
@@ -516,9 +520,10 @@ class CQueueProcessor
 			{
 				_ASSERTE(eItemEmpty == 0);
 				// Для получения следующего элемента - нужно заблокировать секцию
-				EnterCriticalSection(&mcs_Queue);
+				MSectionLockSimple CS;
+				CS.Lock(mpcs_Queue);
 
-				for(int i = 0; i < mn_MaxCount; i++)
+				for (int i = 0; i < mn_MaxCount; i++)
 				{
 					if (mpp_Queue[i])
 					{
@@ -537,7 +542,7 @@ class CQueueProcessor
 
 				CheckWaitingCount();
 				// Больше не требуется
-				LeaveCriticalSection(&mcs_Queue);
+				CS.Unlock();
 			}
 
 			//mn_Count = 0; -- !!! нельзя !!!
@@ -636,6 +641,20 @@ class CQueueProcessor
 
 	protected:
 		/* *** Эти функции не переопредяются *** */
+		HRESULT ProcessItem(ProcessingItem* p)
+		{
+			HRESULT hr = E_FAIL;
+			TRY
+			{
+				// Собственно, обработка. Выполняется в потомке
+				hr = ProcessItem(p->Item, p->lParam);
+			}
+			CATCH
+			{
+				hr = E_UNEXPECTED;
+			}
+			return hr;
+		}
 		bool ProcessingStep()
 		{
 			// мы живы
@@ -652,15 +671,16 @@ class CQueueProcessor
 			}
 
 			// Для получения следующего элемента - нужно заблокировать секцию
-			EnterCriticalSection(&mcs_Queue);
+			MSectionLockSimple CS;
+			CS.Lock(mpcs_Queue);
 
 			// Следующий?
 			if (mp_SynchRequest == NULL)
 			{
 				// Найти требующуюся ячейку
-				for(int piority = ePriorityHighest; piority <= ePriorityLowest; piority++)
+				for (int piority = ePriorityHighest; piority <= ePriorityLowest; piority++)
 				{
-					for(int i = 0; i < mn_Count; i++)
+					for (int i = 0; i < mn_Count; i++)
 					{
 						if (piority <= ePriorityAboveNormal && mpp_Queue[i]->Priority <= piority)
 						{
@@ -706,7 +726,7 @@ class CQueueProcessor
 
 			CheckWaitingCount();
 			// Секция больше не нужна
-			LeaveCriticalSection(&mcs_Queue);
+			CS.Unlock();
 
 			// Может уже был запрос на Terminate?
 			if (IsTerminationRequested())
@@ -721,15 +741,7 @@ class CQueueProcessor
 				// Выставить флаги, что этот элемент "начат" и когда
 				p->Start = GetTickCount();
 				p->Status = eItemProcessing;
-				TRY
-				{
-					// Собственно, обработка. Выполняется в потомке
-					hr = ProcessItem(p->Item, p->lParam);
-				}
-				CATCH
-				{
-					hr = E_UNEXPECTED;
-				}
+				hr = ProcessItem(p);
 				_ASSERTE(hr!=E_NOINTERFACE);
 				p->Result = hr;
 				p->Status = (hr == S_OK) ? eItemReady : eItemFailed;

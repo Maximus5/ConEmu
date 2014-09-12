@@ -918,6 +918,7 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\common\MSectionSimple.cpp" />
     <ClCompile Include="ConEmuBg.cpp" />
     <ClCompile Include="ConEmuBg1900.cpp" />
     <ClCompile Include="ConEmuBg2800.cpp" />
@@ -1083,6 +1084,7 @@
     <ClInclude Include="..\common\ConEmuCheck.h" />
     <ClInclude Include="..\common\ConEmuCheckEx.h" />
     <ClInclude Include="..\common\ConEmuColors.h" />
+    <ClInclude Include="..\common\MSectionSimple.h" />
     <ClInclude Include="..\common\UnicodeChars.h" />
     <ClInclude Include="..\common\UnicodeChars_vc.h" />
     <ClInclude Include="ConEmuBg.h" />

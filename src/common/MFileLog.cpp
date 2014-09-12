@@ -58,7 +58,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 MFileLog::MFileLog(LPCWSTR asName, LPCWSTR asDir /*= NULL*/, DWORD anPID /*= 0*/)
 {
-	InitializeCriticalSection(&mcs_Lock);
+	mpcs_Lock = new MSectionSimple(true);
 	mh_LogFile = NULL;
 	ms_FilePathName = NULL;
 	ms_DefPath = (asDir && *asDir) ? lstrdup(asDir) : NULL;
@@ -112,7 +112,7 @@ MFileLog::~MFileLog()
 {
 	CloseLogFile();
 	SafeFree(ms_DefPath);
-	DeleteCriticalSection(&mcs_Lock);
+	SafeDelete(mpcs_Lock);
 }
 
 void MFileLog::CloseLogFile()
@@ -362,7 +362,7 @@ void MFileLog::LogString(LPCWSTR asText, bool abWriteTime /*= true*/, LPCWSTR as
 
 	if (mh_LogFile)
 	{
-		MSectionLockSimple lock; lock.Lock(&mcs_Lock);
+		MSectionLockSimple lock; lock.Lock(mpcs_Lock);
 		DWORD dwLen = (DWORD)cchCur;
 		WriteFile(mh_LogFile, pszBuffer, dwLen, &dwLen, 0);
 		FlushFileBuffers(mh_LogFile);

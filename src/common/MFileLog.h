@@ -32,6 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <windows.h>
 
 struct CEStartupEnv;
+struct MSectionSimple;
 
 class MFileLog
 {
@@ -42,7 +43,7 @@ class MFileLog
 		HANDLE   mh_LogFile;
 		HRESULT  InitFileName(LPCWSTR asName = NULL, DWORD anPID = 0);
 	protected:
-		CRITICAL_SECTION mcs_Lock;
+		MSectionSimple* mpcs_Lock;
 	public:
 		MFileLog(LPCWSTR asName, LPCWSTR asDir = NULL, DWORD anPID = 0);
 		~MFileLog();
