@@ -915,9 +915,10 @@ HRESULT CDragDrop::DropNames(HDROP hDrop, int iQuantity, BOOL abActive)
 	// -- HRESULT hr = S_OK;
 	DWORD dwStartTick = GetTickCount();
 #define OPER_TIMEOUT 5000
-	BOOL lbAddGoto = (iQuantity == 1) && isPressed(VK_MENU);
-	BOOL lbAddEdit = (iQuantity == 1) && isPressed(VK_CONTROL);
-	BOOL lbAddView = (iQuantity == 1) && isPressed(VK_SHIFT);
+	bool lbAddGoto = (iQuantity == 1) && isPressed(VK_MENU);
+	bool lbAddEdit = (iQuantity == 1) && isPressed(VK_CONTROL);
+	bool lbAddView = (iQuantity == 1) && isPressed(VK_SHIFT);
+	bool lbAddEnter = false;
 
 	CVConGuard VCon;
 	if (CVConGroup::GetActiveVCon(&VCon) < 0)
@@ -931,6 +932,7 @@ HRESULT CDragDrop::DropNames(HDROP hDrop, int iQuantity, BOOL abActive)
 
 	BOOL bNoFarConsole = m_pfpi->NoFarConsole;
 	BOOL bDontAddSpace = FALSE;
+	bool bIsFarLua = false;
 
 	if (!bNoFarConsole && gpSet->isDropUseMenu && pRCon->isFar(true))
 	{
@@ -941,11 +943,19 @@ HRESULT CDragDrop::DropNames(HDROP hDrop, int iQuantity, BOOL abActive)
 			idGoto,
 			idEdit,
 			idView,
+			idNamesEnter,
+			idGotoEnter,
+			idEditEnter,
+			idViewEnter,
 		};
 		AppendMenu(hPopup, MF_STRING | MF_ENABLED, idNamesOnly, L"Paste &no prefix");
 		AppendMenu(hPopup, MF_STRING | ((iQuantity == 1) ? MF_ENABLED : MF_GRAYED), idGoto,      L"&Goto prefix");
 		AppendMenu(hPopup, MF_STRING | ((iQuantity == 1) ? MF_ENABLED : MF_GRAYED), idEdit,      L"&Edit prefix");
 		AppendMenu(hPopup, MF_STRING | ((iQuantity == 1) ? MF_ENABLED : MF_GRAYED), idView,      L"&View prefix");
+		AppendMenu(hPopup, MF_MENUBREAK | MF_STRING | MF_ENABLED, idNamesEnter, L"Pa&ste + Enter");
+		AppendMenu(hPopup, MF_STRING | ((iQuantity == 1) ? MF_ENABLED : MF_GRAYED), idGotoEnter,      L"Go&to + Enter");
+		AppendMenu(hPopup, MF_STRING | ((iQuantity == 1) ? MF_ENABLED : MF_GRAYED), idEditEnter,      L"E&dit + Enter");
+		AppendMenu(hPopup, MF_STRING | ((iQuantity == 1) ? MF_ENABLED : MF_GRAYED), idViewEnter,      L"V&iew + Enter");
 
 		POINT ptCur = {}; ::GetCursorPos(&ptCur);
 
@@ -955,20 +965,28 @@ HRESULT CDragDrop::DropNames(HDROP hDrop, int iQuantity, BOOL abActive)
 	                         ptCur.x,ptCur.y, ghWnd);
 		DestroyMenu(hPopup);
 
-		lbAddGoto = lbAddEdit = lbAddView = FALSE;
+		lbAddGoto = lbAddEdit = lbAddView = false;
 
 		switch (nId)
 		{
 		case idNamesOnly:
+		case idNamesEnter:
+			lbAddEnter = (nId == idNamesEnter);
 			break;
 		case idGoto:
-			lbAddGoto = TRUE;
+		case idGotoEnter:
+			lbAddGoto = true;
+			lbAddEnter = (nId == idGotoEnter);
 			break;
 		case idEdit:
-			lbAddEdit = TRUE;
+		case idEditEnter:
+			lbAddEdit = true;
+			lbAddEnter = (nId == idEditEnter);
 			break;
 		case idView:
-			lbAddView = TRUE;
+		case idViewEnter:
+			lbAddView = true;
+			lbAddEnter = (nId == idViewEnter);
 			break;
 		default:
 			return S_FALSE;
@@ -983,7 +1001,12 @@ HRESULT CDragDrop::DropNames(HDROP hDrop, int iQuantity, BOOL abActive)
 		bDontAddSpace = TRUE;
 	}
 
-	size_t cchMacro = MAX_DROP_PATH*2+50;
+	if (!bNoFarConsole)
+	{
+		bIsFarLua = pRCon->IsFarLua();
+	}
+
+	size_t cchMacro = MAX_DROP_PATH*2+80;
 	wchar_t *szMacro = (wchar_t*)malloc(cchMacro*sizeof(*szMacro));
 	size_t cchData = MAX_DROP_PATH*2+10;
 	wchar_t *szData = (wchar_t*)malloc(cchData*sizeof(*szData));
@@ -996,9 +1019,14 @@ HRESULT CDragDrop::DropNames(HDROP hDrop, int iQuantity, BOOL abActive)
 		return E_UNEXPECTED;
 	}
 
+	// В случае фара, "Print" вызывается на каждый файл, "Enter" жмакается в конце
+
 	for (int i = 0 ; i < iQuantity; i++)
 	{
-		_wcscpy_c(szMacro, cchMacro, L"$Text ");
+		if (!bNoFarConsole)
+		{
+			_wcscpy_c(szMacro, cchMacro, bIsFarLua ? L"print(\"" : L"$Text \"");
+		}
 		_wcscpy_c(szData, cchData,  L"         ");
 		pszText = szData + _tcslen(szData);
 		UINT lQueryRc = DragQueryFile(hDrop, i, pszText, MAX_DROP_PATH);
@@ -1054,53 +1082,34 @@ HRESULT CDragDrop::DropNames(HDROP hDrop, int iQuantity, BOOL abActive)
 		}
 
 		if (!bNoFarConsole)
-			_wcscat_c(szMacro, cchMacro, L"\"");
-
-		if (!bNoFarConsole && (lbAddGoto || lbAddEdit || lbAddView))
 		{
-			if (lbAddGoto)
-				_wcscat_c(szMacro, cchMacro, L"goto:");
+			if (lbAddGoto || lbAddEdit || lbAddView)
+			{
+				if (lbAddGoto)
+					_wcscat_c(szMacro, cchMacro, L"goto:");
 
-			if (lbAddEdit)
-				_wcscat_c(szMacro, cchMacro, L"edit:");
+				if (lbAddEdit)
+					_wcscat_c(szMacro, cchMacro, L"edit:");
 
-			if (lbAddView)
-				_wcscat_c(szMacro, cchMacro, L"view:");
+				if (lbAddView)
+					_wcscat_c(szMacro, cchMacro, L"view:");
 
-			lbAddGoto = FALSE; lbAddEdit = FALSE; lbAddView = FALSE;
-		}
+				lbAddGoto = lbAddEdit = lbAddView = false;
+			}
 
-		if (!bNoFarConsole)
-		{
 			_wcscat_c(szMacro, cchMacro, pszText);
 			_wcscat_c(szMacro, cchMacro, bDontAddSpace ? L"\"" : L" \"");
+			if (bIsFarLua)
+				_wcscat_c(szMacro, cchMacro, L")");
+
 			gpConEmu->PostMacro(szMacro);
 		}
 		else
 		{
 			pRCon->Paste(pm_Standard, pszText, true, false);
-			//psz = pszText;
-			////INPUT_RECORD r = {KEY_EVENT};
-			//while (*psz)
-			//{
-			//	pRCon->PostKeyPress(0, 0, *(psz++));
-			//	//r.Event.KeyEvent.bKeyDown = TRUE;
-			//	//r.Event.KeyEvent.wRepeatCount = 1;
-			//	//r.Event.KeyEvent.uChar.UnicodeChar = *(psz++);
-			//	//pRCon->PostConsoleEvent(&r);
-			//	//r.Event.KeyEvent.bKeyDown = FALSE;
-			//	//pRCon->PostConsoleEvent(&r);
-			//}
 
 			if (!bDontAddSpace)
 				pRCon->Paste(pm_Standard, L" ", true, false);
-				//pRCon->PostKeyPress(0, 0, L' ');
-			//r.Event.KeyEvent.bKeyDown = TRUE;
-			//r.Event.KeyEvent.wRepeatCount = 1;
-			//r.Event.KeyEvent.uChar.UnicodeChar = L' ';
-			//pRCon->PostConsoleEvent(&r);
-			//r.Event.KeyEvent.bKeyDown = FALSE;
-			//pRCon->PostConsoleEvent(&r);
 		}
 
 		if (((i + 1) < iQuantity)
@@ -1113,6 +1122,11 @@ HRESULT CDragDrop::DropNames(HDROP hDrop, int iQuantity, BOOL abActive)
 
 			dwStartTick = GetTickCount();
 		}
+	}
+
+	if (!bNoFarConsole && lbAddEnter)
+	{
+		gpConEmu->PostMacro(bIsFarLua ? L"Keys(\"Enter\")" : L"Enter");
 	}
 
 	SafeFree(szMacro);
