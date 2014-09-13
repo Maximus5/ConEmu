@@ -3655,6 +3655,23 @@ CVirtualConsole* CVConGroup::CreateCon(RConStartArgs *args, bool abAllowScripts 
 
 	if (args->pszSpecialCmd)
 	{
+		// Issue 1711: May be that is smth like?
+		// ""C:\Windows\...\powershell.exe" -noprofile -new_console:t:"PoSh":d:"C:\Users""
+		// Start/End quotes need to be removed
+		CmdArg szExe; BOOL bNeedCutQuot = FALSE;
+		bool bNeedCmd = IsNeedCmd(FALSE, args->pszSpecialCmd, szExe, NULL, &bNeedCutQuot);
+		if (!bNeedCmd && bNeedCutQuot)
+		{
+			int nLen = lstrlen(args->pszSpecialCmd);
+			_ASSERTE(nLen > 4);
+			// Cut first quote
+			_ASSERTE(args->pszSpecialCmd[0] == L'"' && args->pszSpecialCmd[1] == L'"');
+			wmemmove(args->pszSpecialCmd, args->pszSpecialCmd+1, nLen);
+			// And trim one end quote
+			_ASSERTE(args->pszSpecialCmd[nLen-2] == L'"' && args->pszSpecialCmd[nLen-1] == 0);
+			args->pszSpecialCmd[nLen-2] = 0;
+		}
+		// Process "-new_console" switches
 		args->ProcessNewConArg(abForceCurConsole);
 	}
 
