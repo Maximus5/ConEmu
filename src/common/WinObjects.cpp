@@ -1295,7 +1295,12 @@ const wchar_t* PointToName(const wchar_t* asFileOrPath)
 		_ASSERTE(asFileOrPath!=NULL);
 		return NULL;
 	}
-	const wchar_t* pszFile = wcsrchr(asFileOrPath, L'\\');
+
+	// Utilize both type of slashes
+	const wchar_t* pszBSlash = wcsrchr(asFileOrPath, L'\\');
+	const wchar_t* pszFSlash = wcsrchr(pszBSlash ? pszBSlash : asFileOrPath, L'/');
+
+	const wchar_t* pszFile = pszFSlash ? pszFSlash : pszBSlash;
 	if (!pszFile) pszFile = asFileOrPath; else pszFile++;
 
 	return pszFile;
@@ -1309,7 +1314,11 @@ const char* PointToName(const char* asFileOrPath)
 		return NULL;
 	}
 
-	const char* pszSlash = strrchr(asFileOrPath, '\\');
+	// Utilize both type of slashes
+	const char* pszBSlash = strrchr(asFileOrPath, '\\');
+	const char* pszFSlash = strrchr(pszBSlash ? pszBSlash : asFileOrPath, '/');
+
+	const char* pszSlash = pszFSlash ? pszFSlash : pszBSlash;;
 
 	if (pszSlash)
 		return pszSlash+1;

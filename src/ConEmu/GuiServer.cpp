@@ -552,6 +552,7 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 			else
 			{
 				ppReply->AttachGuiApp.nFlags = agaf_Fail;
+				_ASSERTE(FALSE && "No one tab is waiting for ChildGui process");
 			}
 
 			lbRc = TRUE;

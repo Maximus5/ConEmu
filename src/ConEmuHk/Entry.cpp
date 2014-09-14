@@ -1129,7 +1129,11 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 
 				free(pIn);
 
-				if (pOut)
+				if (!pOut)
+				{
+					_ASSERTE(FALSE && "Attaching of ChildGui into the ConEmu tab failed");
+				}
+				else
 				{
 					if (pOut->hdr.cbSize > sizeof(CESERVER_REQ_HDR))
 					{
