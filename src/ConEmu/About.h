@@ -332,6 +332,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"      Value: 2 - toggle, 1 - enable, 0 - disable\r\n" \
 	L"    \"bgImageDarker\": darkening of background image\r\n" \
 	L"      Value: 0 .. 255\r\n" \
+	L"    \"FarGotoEditorPath\": path to the highlight/error editor \r\n" \
+	L"      Value: path to the executable with arguments\r\n" \
 	L"    \"QuakeAutoHide\": auto hide on focus lose, Quake mode\r\n" \
 	L"      Value: 2 - switch auto-hide, 1 - enable, 0 - disable\r\n" \
 	L"Settings([<PageResourceId>])\r\n" \

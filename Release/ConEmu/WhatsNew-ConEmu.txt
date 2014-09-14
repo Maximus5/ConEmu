@@ -12,6 +12,20 @@ Votes and awards (vote for ConEmu, if you please)
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+2014.09.14
+[*] Wrong macro was sended to Far 3 (Lua) on hyperlink click if file was already opened.
+[*] Fix drop files to Far command line. Add menu items to press ‘Enter’ after goto/edit/view.
+[*] Fix wrong ‘sleep/speed’ written to the log.
+[*] Avoid numerous writing of equal lines to log (console size).
+[*] Internal changes.
+[*] Issue 1704: GuiMacro. User may change option "FarGotoEditorPath" on the fly.
+    Multiple Highlight editors are available now. Just call GuiMacro SetOption
+    function with preferred editor command line. Few examples with ConEmuC
+      conemuc -guimacro setoption FarGotoEditorPath @"far.exe /e%1:%2 ""%3"""
+      conemuc -guimacro setoption FarGotoEditorPath @"#notepad ""%3"""
+[*] Issue 1711: Cut start/end quotes from double-quoted commands.
+
+
 2014.09.09
 [*] Verbose tab activation error information.
 [*] Wrong hotkey was *displayed* on Tasks page.
