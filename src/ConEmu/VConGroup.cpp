@@ -800,7 +800,8 @@ bool CVConGroup::ReSizeSplitter(int iCells)
 	int nMinCells = (m_SplitType == RConStartArgs::eSplitVert) ? MIN_CON_HEIGHT : MIN_CON_WIDTH;
 
 	// Нашли? Корректируем mn_SplitPercent10
-	if (mp_Grp1 && mp_Grp1->mp_Item && mp_Grp2 && mp_Grp2->mp_Item && (nCellSize > 0))
+	// mp_Item может быть NULL если этот mp_Grp в свою очередь разбит
+	if (mp_Grp1 && mp_Grp2 && (nCellSize > 0))
 	{
 		RECT rcCon1 = {0}, rcCon2 = {0}, rcSplitter = {0};
 		CalcSplitRect(mrc_Full, rcCon1, rcCon2, rcSplitter);
