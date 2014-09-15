@@ -46,6 +46,7 @@
 #define IDD_SPG_HIGHLIGHT               178
 #define IDD_SPG_PASTE                   179
 #define IDD_SPG_CONFIRM                 180
+#define IDD_SPG_HISTORY                 181
 #define IDD_MORE_CONFONT                209
 #define IDD_MORE_DOSBOX                 210
 #define IDD_ATTACHDLG                   212
@@ -1031,6 +1032,14 @@
 #define hkHotKeySelect2                 2701
 #define lbHotKeyList2                   2702
 #define lbHotKeyMod4                    2703
+#define gbHistorySettings               2704
+#define cbSaveCmdHistory                2705
+#define tCmdHistoryLocation             2706
+#define cbCmdHistoryLocation            2707
+#define lbHistoryItems                  2709
+#define cbHistoryClearAll               2710
+#define cbHistoryDelItem                2711
+#define stHistoryItems                  2712
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
@@ -1039,7 +1048,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        226
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2704
+#define _APS_NEXT_CONTROL_VALUE         2713
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif

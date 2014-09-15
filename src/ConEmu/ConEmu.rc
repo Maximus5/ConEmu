@@ -264,6 +264,22 @@ BEGIN
     CONTROL         "Show ‘was hidden’ warning",cbShowWasHiddenMsg,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,96,307,8
 END
 
+IDD_SPG_HISTORY DIALOGEX 0, 0, 328, 235
+STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
+EXSTYLE WS_EX_CONTROLPARENT
+FONT 8, "MS Shell Dlg", 0, 0, 0x1
+BEGIN
+    GROUPBOX        "Create new console history settings",gbHistorySettings,4,1,319,229
+    CONTROL         "Save command history (leave edit box empty to use main settings storage)",cbSaveCmdHistory,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,14,308,8
+    EDITTEXT        tCmdHistoryLocation,21,27,281,12,ES_AUTOHSCROLL
+    PUSHBUTTON      "...",cbCmdHistoryLocation,305,26,13,12
+    LTEXT           "History items:",stHistoryItems,10,51,66,8
+    LISTBOX         lbHistoryItems,9,63,308,162,LBS_NOINTEGRALHEIGHT | LBS_EXTENDEDSEL | WS_VSCROLL | WS_HSCROLL | WS_TABSTOP
+    PUSHBUTTON      "Clear history",cbHistoryClearAll,247,46,70,14
+    PUSHBUTTON      "Delete item",cbHistoryDelItem,167,46,73,14
+END
+
 IDD_SPG_TASKBAR DIALOGEX 0, 0, 328, 235
 STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
@@ -1487,6 +1503,10 @@ BEGIN
     BEGIN
     END
 
+    IDD_SPG_HISTORY, DIALOG
+    BEGIN
+    END
+
     IDD_SPG_TASKBAR, DIALOG
     BEGIN
     END
@@ -1595,6 +1615,10 @@ BEGIN
     END
 
     IDD_SPG_CMDTASKS, DIALOG
+    BEGIN
+    END
+
+    IDD_SPG_APPDISTINCT, DIALOG
     BEGIN
     END
 
