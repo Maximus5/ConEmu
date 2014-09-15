@@ -482,6 +482,7 @@
       <File RelativePath="..\common\defines.h" />
       <File RelativePath="..\common\Dump.h" />
       <File RelativePath="..\common\execute.h" />
+      <File RelativePath="..\common\MArray.h" />
       <File RelativePath="..\common\Memory.h" />
       <File RelativePath="..\common\MEvent.h" />
       <File RelativePath="..\common\MFileLog.h" />

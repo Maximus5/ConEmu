@@ -981,6 +981,7 @@
     <ClInclude Include="..\common\DefTermBase.h" />
     <ClInclude Include="..\common\Dump.h" />
     <ClInclude Include="..\common\execute.h" />
+    <ClInclude Include="..\common\MArray.h" />
     <ClInclude Include="..\common\MAssert.h" />
     <ClInclude Include="..\common\Memory.h" />
     <ClInclude Include="..\common\MEvent.h" />
