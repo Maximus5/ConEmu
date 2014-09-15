@@ -34,3 +34,6 @@ Test/
 *.bak
 
 *.7z
+
+/.idea
+/CMakeLists.txt
