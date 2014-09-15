@@ -620,7 +620,9 @@ void OnMainThreadActivated()
 	}
 
 	// Retrieve current panel CD's
-	if ((gnCurrentWindowType == WTYPE_PANELS) && !isMacroActive(iMacroActive))
+	// Remove (gnCurrentWindowType == WTYPE_PANELS) restriction,
+	// panel paths may be changed even from editor
+	if (!isMacroActive(iMacroActive))
 	{
 		UpdatePanelDirs();
 	}
