@@ -49,6 +49,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../ConEmuPlugin/FarDefaultMacros.h"
 #include "AboutDlg.h"
 #include "Background.h"
+#include "CmdHistory.h"
 #include "ConEmu.h"
 #include "ConEmuApp.h"
 #include "ConEmuCtrl.h"
@@ -1027,9 +1028,9 @@ void CSettings::SettingsLoaded(SettingsLoadedFlags slfFlags, LPCWSTR pszCmdLine 
 	//	rcTabMargins.top = nTabHeight; rcTabMargins.bottom = 0;
 	//}
 
-	if (!gpSet->psCmdHistory)
+	if (!gpSet->pHistory)
 	{
-		gpSet->psCmdHistory = (wchar_t*)calloc(2,2);
+		gpSet->pHistory = new CommandHistory(MAX_CMD_HISTORY);
 	}
 
 	MCHKHEAP

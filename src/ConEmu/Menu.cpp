@@ -278,7 +278,7 @@ void CConEmuMenu::OnNewConPopupMenu(POINT* ptWhere /*= NULL*/, DWORD nFlags /*= 
 	if ((gpConEmu->GetActiveVCon(&VCon) >= 0) && VCon->RCon())
 		pszCurCmd = VCon->RCon()->GetCmd();
 
-	LPCWSTR pszHistory = gpSet->psCmdHistory;
+	LPCWSTR pszHistory = gpSet->HistoryGet(0);
 	int nInsertPos = lbReverse ? 0 : -1;
 	mn_CmdLastID = 0;
 	//int nFirstID = 0, nLastID = 0, nFirstGroupID = 0, nLastGroupID = 0;
@@ -382,7 +382,7 @@ void CConEmuMenu::OnNewConPopupMenu(POINT* ptWhere /*= NULL*/, DWORD nFlags /*= 
 
 		//bool bSeparator = false;
 		int nCount = 0;
-		while (*pszHistory && ((nCount++) < MAX_CMD_HISTORY_SHOW))
+		while ((pszHistory = gpSet->HistoryGet(nCount)) && (nCount < MAX_CMD_HISTORY_SHOW))
 		{
 			// Текущий - будет первым
 			if (!pszCurCmd || lstrcmp(pszCurCmd, pszHistory))
@@ -395,6 +395,7 @@ void CConEmuMenu::OnNewConPopupMenu(POINT* ptWhere /*= NULL*/, DWORD nFlags /*= 
 			}
 
 			pszHistory += _tcslen(pszHistory)+1;
+			nCount++;
 		}
 
 		itm.Reset(CmdTaskPopupItem::eClearHistory, ++mn_CmdLastID, L"Clear history...");

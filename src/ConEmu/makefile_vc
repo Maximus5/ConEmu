@@ -31,6 +31,7 @@ $(INTDIR)\AboutDlg.obj \
 $(INTDIR)\Attach.obj \
 $(INTDIR)\Background.obj \
 $(INTDIR)\BaseDragDrops.obj \
+$(INTDIR)\CmdHistory.obj \
 $(INTDIR)\CmdLine.obj \
 $(INTDIR)\CmdTasks.obj \
 $(INTDIR)\Common.obj \
@@ -270,6 +271,8 @@ $(INTDIR)\Attach.obj: Attach.cpp Attach.h ../common/ProcessData.h
 $(INTDIR)\Background.obj: Background.cpp Background.h
 
 $(INTDIR)\BaseDragDrops.obj: BaseDragDrops.cpp BaseDragDrops.h DragDrop.h DragDropData.h
+
+$(INTDIR)\CmdHistory.obj: CmdHistory.cpp CmdHistory.h
 
 $(INTDIR)\CmdLine.obj: ../common/CmdLine.cpp ../common/CmdLine.h
 

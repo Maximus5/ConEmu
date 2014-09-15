@@ -43,6 +43,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../ConEmuCD/GuiHooks.h"
 #include "../ConEmuPlugin/FarDefaultMacros.h"
 #include "Background.h"
+#include "CmdHistory.h"
 #include "ConEmu.h"
 #include "Inside.h"
 #include "LoadImg.h"
@@ -327,7 +328,8 @@ void Settings::ReleasePointers()
 	SafeFree(psStartTasksFile);
 	SafeFree(psStartTasksName);
 	//SafeFree(psCurCmd);
-	SafeFree(psCmdHistory); isSaveCmdHistory = true;
+	SafeDelete(pHistory); isSaveCmdHistory = true;
+	SafeFree(psHistoryLocation);
 	SafeFree(psDefaultTerminalApps);
 
 	SafeFree(pszAnsiLog);
@@ -2452,7 +2454,7 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla, const SettingsStorage* ap
 		reg->Load(L"StoreTaskbarCommands", isStoreTaskbarCommands);
 
 		reg->Load(L"SaveCmdHistory", isSaveCmdHistory);
-		reg->Load(L"CmdLineHistory", &psCmdHistory); nCmdHistorySize = 0; HistoryCheck();
+		HistoryLoad(reg); // L"CmdLineHistory"
 		reg->Load(L"SingleInstance", isSingleInstance);
 		reg->Load(L"ShowHelpTooltips", isShowHelpTooltips);
 		reg->Load(L"Multi", mb_isMulti);
@@ -3423,12 +3425,8 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		reg->Save(L"StoreTaskbarCommands", isStoreTaskbarCommands);
 
 		reg->Save(L"SaveCmdHistory", isSaveCmdHistory);
-		if (psCmdHistory)
-		{
-			// Пишем всегда, даже если (!isSaveCmdHistory), т.к. история могла быть "преднастроена"
-			reg->SaveMSZ(L"CmdLineHistory", psCmdHistory, nCmdHistorySize);
-		}
-
+		// Пишем всегда, даже если (!isSaveCmdHistory), т.к. история могла быть "преднастроена"
+		HistorySave(reg); // L"CmdLineHistory"
 		reg->Save(L"SingleInstance", isSingleInstance);
 		reg->Save(L"ShowHelpTooltips", isShowHelpTooltips);
 		reg->Save(L"Multi", mb_isMulti);
@@ -3914,69 +3912,81 @@ bool Settings::isKeyboardHooks(bool abNoDisable /*= false*/, bool abNoDbgCheck /
 	return (m_isKeyboardHooks == 0) || (m_isKeyboardHooks == 1);
 }
 
-//LPCTSTR Settings::GetCurCmd()
-//{
-//	return psCurCmd;
-//}
-//
-//void Settings::SetCmdPtr(wchar_t*& psNewCmd)
-//{
-//	_ASSERTE(psNewCmd!=NULL);
-//
-//	if (psCurCmd && (psCurCmd != psNewCmd))
-//	{
-//		SafeFree(psCurCmd);
-//	}
-//
-//	psCurCmd = psNewCmd;
-//
-//	// Release it
-//	psNewCmd = NULL;
-//}
-
-void Settings::HistoryCheck()
+void Settings::HistoryReset()
 {
-	if (!psCmdHistory || !*psCmdHistory)
+	if (pHistory)
+		pHistory->FreeItems();
+
+	// И сразу сохранить в настройках
+	HistorySave(NULL); // L"CmdLineHistory"
+}
+
+void Settings::HistoryLoad(SettingsBase* reg)
+{
+	bool bSelf = (reg == NULL);
+	if (bSelf)
 	{
-		nCmdHistorySize = 0;
+		reg = CreateSettings(NULL);
+		if (!reg)
+		{
+			_ASSERTE(reg!=NULL);
+			return;
+		}
+
+		if (!reg->OpenKey(gpSetCls->GetConfigPath(), KEY_READ))
+		{
+			SafeDelete(reg);
+			return;
+		}
 	}
-	else
+
+	HEAPVAL;
+	wchar_t* psCmdHistory = NULL; // MSZZ
+	reg->Load(L"CmdLineHistory", &psCmdHistory);
+	if (!pHistory)
+		pHistory = new CommandHistory(MAX_CMD_HISTORY);
+	pHistory->ParseMSZ(psCmdHistory);
+	SafeFree(psCmdHistory);
+	HEAPVAL;
+
+	if (bSelf)
 	{
-		const wchar_t* psz = psCmdHistory;
-
-		while(*psz)
-			psz += _tcslen(psz)+1;
-
-		if (psz == psCmdHistory)
-			nCmdHistorySize = 0;
-		else
-			nCmdHistorySize = (psz - psCmdHistory + 1)*sizeof(wchar_t);
+		reg->CloseKey();
+		delete reg;
 	}
 }
 
-void Settings::HistoryReset()
+void Settings::HistorySave(SettingsBase* reg)
 {
+	bool bSelf = (reg == NULL);
+	if (bSelf)
+	{
+		reg = CreateSettings(NULL);
+		if (!reg)
+		{
+			_ASSERTE(reg!=NULL);
+			return;
+		}
+
+		if (!reg->OpenKey(gpSetCls->GetConfigPath(), KEY_WRITE))
+		{
+			SafeDelete(reg);
+			return;
+		}
+	}
+
+	HEAPVAL;
+	wchar_t* psCmdHistory = NULL;
+	DWORD nCmdHistorySize = pHistory ? pHistory->CreateMSZ(psCmdHistory) : 0;
+	reg->SaveMSZ(L"CmdLineHistory", psCmdHistory, nCmdHistorySize);
 	SafeFree(psCmdHistory);
-	psCmdHistory = (wchar_t*)calloc(2,2);
-	nCmdHistorySize = 0;
+	HEAPVAL;
 
-	// И сразу сохранить в настройках
-	SettingsBase* reg = CreateSettings(NULL);
-	if (!reg)
+	if (bSelf)
 	{
-		_ASSERTE(reg!=NULL);
-		return;
-	}
-
-	if (reg->OpenKey(gpSetCls->GetConfigPath(), KEY_WRITE))
-	{
-		HEAPVAL;
-		reg->SaveMSZ(L"CmdLineHistory", psCmdHistory, nCmdHistorySize);
-		HEAPVAL;
 		reg->CloseKey();
+		delete reg;
 	}
-
-	delete reg;
 }
 
 void Settings::HistoryAdd(LPCWSTR asCmd)
@@ -3997,76 +4007,25 @@ void Settings::HistoryAdd(LPCWSTR asCmd)
 	LPCWSTR psCurCmd = gpSetCls->GetCurCmd();
 	if (psCurCmd && lstrcmp(psCurCmd, asCmd)==0)
 		return;
-	if (psCmdHistory && lstrcmp(psCmdHistory, asCmd)==0)
+	if (pHistory && pHistory->Compare(0, asCmd)==0)
 		return;
 
-	HEAPVAL
-	wchar_t *pszNewHistory, *psz;
-	int nCount = 0;
-	DWORD nCchNewSize = (nCmdHistorySize>>1) + _tcslen(asCmd) + 2;
-	DWORD nNewSize = nCchNewSize*2;
-	pszNewHistory = (wchar_t*)malloc(nNewSize);
-
-	//wchar_t* pszEnd = pszNewHistory + nNewSize/sizeof(wchar_t);
-	if (!pszNewHistory) return;
-
-	_wcscpy_c(pszNewHistory, nCchNewSize, asCmd);
-	psz = pszNewHistory + _tcslen(pszNewHistory) + 1;
-	nCount++;
-
-	if (psCmdHistory)
-	{
-		wchar_t* pszOld = psCmdHistory;
-		int nLen;
-		HEAPVAL;
-
-		while (nCount < MAX_CMD_HISTORY && *pszOld /*&& psz < pszEnd*/)
-		{
-			const wchar_t *pszCur = pszOld;
-			pszOld += _tcslen(pszOld) + 1;
-
-			if (lstrcmp(pszCur, asCmd) == 0)
-				continue;
-
-			_wcscpy_c(psz, nCchNewSize-(psz-pszNewHistory), pszCur);
-			psz += (nLen = (_tcslen(psz)+1));
-			nCount ++;
-		}
-	}
-
-	*psz = 0;
-	HEAPVAL;
-	SafeFree(psCmdHistory);
-	psCmdHistory = pszNewHistory;
-	nCmdHistorySize = (psz - pszNewHistory + 1)*sizeof(wchar_t);
+	if (!pHistory)
+		pHistory = new CommandHistory(MAX_CMD_HISTORY);
+	pHistory->Add(asCmd);
 	HEAPVAL;
 
 	if (!gpConEmu->IsResetBasicSettings())
 	{
 		// И сразу сохранить в настройках
-		SettingsBase* reg = CreateSettings(NULL);
-		if (!reg)
-		{
-			_ASSERTE(reg!=NULL);
-			return;
-		}
-
-		if (reg->OpenKey(gpSetCls->GetConfigPath(), KEY_WRITE))
-		{
-			HEAPVAL;
-			reg->SaveMSZ(L"CmdLineHistory", psCmdHistory, nCmdHistorySize);
-			HEAPVAL;
-			reg->CloseKey();
-		}
-
-		delete reg;
+		HistorySave(NULL); // L"CmdLineHistory"
 	}
 }
 
-LPCWSTR Settings::HistoryGet()
+LPCWSTR Settings::HistoryGet(int index)
 {
-	if (psCmdHistory && *psCmdHistory)
-		return psCmdHistory;
+	if (pHistory)
+		return pHistory->Get(index);
 
 	return NULL;
 }

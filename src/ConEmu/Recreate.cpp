@@ -415,16 +415,11 @@ INT_PTR CRecreateDlg::OnFillCmdList(HWND hDlg, UINT messg, WPARAM wParam, LPARAM
 	// Может быть позван после очистки истории из меню, тогда нет смысла и дергаться
 	if (wParam)
 	{
-		LPCWSTR pszHistory = gpSet->HistoryGet();
-
-		if (pszHistory)
+		int index = 0;
+		LPCWSTR pszHistory;
+		while ((pszHistory = gpSet->HistoryGet(index++)) != NULL)
 		{
-			while (*pszHistory)
-			{
-				AddCommandList(pszHistory);
-
-				pszHistory += _tcslen(pszHistory)+1;
-			}
+			AddCommandList(pszHistory);
 		}
 	}
 

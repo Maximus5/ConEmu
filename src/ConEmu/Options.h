@@ -75,7 +75,7 @@ enum FarMacroVersion
 #include "UpdateSet.h"
 
 class CSettings;
-class CVirtualConsole;
+struct CommandHistory;
 
 
 #define SCROLLBAR_DELAY_MIN 100
@@ -561,9 +561,15 @@ struct Settings
 		//reg->Load(L"SaveCmdHistory", isSaveCmdHistory);
 		bool isSaveCmdHistory;
 		//reg->Load(L"CmdLineHistory", &psCmdHistory);
-		LPWSTR psCmdHistory;
-		//nCmdHistorySize = 0; HistoryCheck();
-		DWORD nCmdHistorySize;
+		CommandHistory* pHistory;
+		//reg->Load(L"CmdHistoryLocation", &psHistoryLocation);
+		wchar_t* psHistoryLocation;
+		// Helpers
+		void HistoryAdd(LPCWSTR asCmd);
+		void HistoryReset();
+		void HistoryLoad(SettingsBase* reg);
+		void HistorySave(SettingsBase* reg);
+		LPCWSTR HistoryGet(int index);
 
 		/* *** Startup options *** */
 		//reg->Load(L"StartType", nStartType);
@@ -1263,12 +1269,6 @@ struct Settings
 		void SaveSettingsOnExit();
 		//void UpdateMargins(RECT arcMargins);
 	public:
-		void HistoryCheck();
-		void HistoryAdd(LPCWSTR asCmd);
-		void HistoryReset();
-		LPCWSTR HistoryGet();
-		//void UpdateConsoleMode(DWORD nMode);
-		//BOOL CheckConIme();
 		void CheckConsoleSettings();
 		void ResetSavedOnExit();
 
