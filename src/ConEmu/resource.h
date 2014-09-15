@@ -1026,7 +1026,7 @@
 #define vkAppsHome                      2695
 #define vkAppsEnd                       2696
 #define vkAppsBS                        2697
-#define vkFontOriginal                  2798
+#define vkFontOriginal                  2698
 #define cbHotKeyChord                   2699
 #define hkHotKeySelect2                 2701
 #define lbHotKeyList2                   2702
