@@ -1017,6 +1017,10 @@
     <ClCompile Include="RunQueue.cpp" />
     <ClCompile Include="ScreenDump.cpp" />
     <ClCompile Include="SearchCtrl.cpp" />
+    <ClCompile Include="SetDlgButtons.cpp" />
+    <ClCompile Include="SetDlgColors.cpp" />
+    <ClCompile Include="SetDlgFonts.cpp" />
+    <ClCompile Include="SetDlgLists.cpp" />
     <ClCompile Include="Status.cpp" />
     <ClCompile Include="TabBar.cpp" />
     <ClCompile Include="TabCtrlBase.cpp" />
@@ -1122,6 +1126,10 @@
     <ClInclude Include="RunQueue.h" />
     <ClInclude Include="ScreenDump.h" />
     <ClInclude Include="SearchCtrl.h" />
+    <ClInclude Include="SetDlgButtons.h" />
+    <ClInclude Include="SetDlgColors.h" />
+    <ClInclude Include="SetDlgFonts.h" />
+    <ClInclude Include="SetDlgLists.h" />
     <ClInclude Include="Status.h" />
     <ClInclude Include="TabBar.h" />
     <ClInclude Include="TabCtrlBase.h" />

@@ -89,6 +89,10 @@ $(INTDIR)\RgnDetect.obj \
 $(INTDIR)\RunQueue.obj \
 $(INTDIR)\ScreenDump.obj \
 $(INTDIR)\SearchCtrl.obj \
+$(INTDIR)\SetDlgButtons.obj \
+$(INTDIR)\SetDlgColors.obj \
+$(INTDIR)\SetDlgFonts.obj \
+$(INTDIR)\SetDlgLists.obj \
 $(INTDIR)\SetEnvVar.obj \
 $(INTDIR)\Status.obj \
 $(INTDIR)\TabBar.obj \
@@ -387,6 +391,14 @@ $(INTDIR)\RunQueue.obj: RunQueue.cpp RunQueue.h
 $(INTDIR)\ScreenDump.obj: ScreenDump.cpp
 
 $(INTDIR)\SearchCtrl.obj: SearchCtrl.cpp
+
+$(INTDIR)\SetDlgButtons.obj: SetDlgButtons.cpp SetDlgButtons.h
+
+$(INTDIR)\SetDlgColors.obj: SetDlgColors.cpp SetDlgColors.h
+
+$(INTDIR)\SetDlgFonts.obj: SetDlgFonts.cpp SetDlgFonts.h
+
+$(INTDIR)\SetDlgLists.obj: SetDlgLists.cpp SetDlgLists.h
 
 $(INTDIR)\SetEnvVar.obj: ../common/SetEnvVar.cpp
 

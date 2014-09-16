@@ -30,6 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Header.h"
 #include "AboutDlg.h"
 #include "Options.h"
+#include "OptionsClass.h"
 #include "OptionsFast.h"
 #include "ConEmu.h"
 #include "ConEmuApp.h"

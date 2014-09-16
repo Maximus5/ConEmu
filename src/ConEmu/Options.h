@@ -75,6 +75,7 @@ enum FarMacroVersion
 #include "UpdateSet.h"
 
 class CSettings;
+class CSetDlgButtons;
 struct CommandHistory;
 
 
@@ -171,6 +172,8 @@ struct Settings
 		~Settings();
 	protected:
 		friend class CSettings;
+		friend class CSetDlgButtons;
+		friend class CSetDlgColors;
 
 		void ResetSettings();
 		void ReleasePointers();
@@ -1276,5 +1279,3 @@ struct Settings
 
 		void GetSettingsType(SettingsStorage& Storage, bool& ReadOnly);
 };
-
-#include "OptionsClass.h"

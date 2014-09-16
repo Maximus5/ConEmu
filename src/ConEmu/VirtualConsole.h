@@ -36,6 +36,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Options.h"
 #include "RealConsole.h"
 #include "VConChild.h"
+#include "CustomFonts.h"
 
 #define MAX_COUNT_PART_BRUSHES 16*16*4
 #define MAX_SPACES 0x400

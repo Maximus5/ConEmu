@@ -64,6 +64,10 @@ SRCS = \
 		RunQueue.cpp       \
 		ScreenDump.cpp     \
 		SearchCtrl.cpp     \
+		SetDlgButtons.cpp  \
+		SetDlgColors.cpp   \
+		SetDlgFonts.cpp    \
+		SetDlgLists.cpp    \
 		Status.cpp         \
 		TabBar.cpp         \
 		TabCtrlBase.cpp    \

@@ -201,5 +201,6 @@ protected:
 	void UpdateIdealRect(RECT rcNewIdeal);
 
 	friend class CSettings;
+	friend class CSetDlgButtons;
 	friend struct Settings;
 };

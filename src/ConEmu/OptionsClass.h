@@ -33,16 +33,19 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/MFileMapping.h"
 #include <commctrl.h>
 
-#include "DpiAware.h"
-#include "Options.h"
 #include "CustomFonts.h"
+#include "DpiAware.h"
 #include "HotkeyList.h"
+#include "Options.h"
+#include "SetDlgButtons.h"
+#include "SetDlgColors.h"
+#include "SetDlgFonts.h"
 
 class CBackground;
 class CBackgroundInfo;
-struct DebugLogShellActivity;
-struct CEHelpPopup;
 class CDpiForDialog;
+struct CEHelpPopup;
+struct DebugLogShellActivity;
 struct DpiValue;
 
 enum SingleInstanceArgEnum
@@ -64,16 +67,23 @@ const EvalSizeFlags
 ;
 
 class CSettings
+	: public CSetDlgButtons
+	, public CSetDlgColors
+	, public CSetDlgFonts
 {
 	public:
 		CSettings();
-		~CSettings();
+		virtual ~CSettings();
 	private:
 		Settings m_Settings;
 		void ReleaseHandles();
 		void ReleaseHotkeys();
 		void InitVars_Hotkeys();
 		void InitVars_Pages();
+	private:
+		friend class CSetDlgButtons;
+		friend class CSetDlgColors;
+		friend class CSetDlgFonts;
 	public:
 
 		private:
@@ -93,6 +103,7 @@ class CSettings
 		bool ibDisableSaveSettingsOnExit;
 
 		wchar_t szFontError[512];
+	public:
 
 		bool IsMulti();
 		RecreateActionParm GetDefaultCreateAction();
@@ -291,9 +302,6 @@ class CSettings
 		//BOOL SaveSettings(BOOL abSilent = FALSE);
 		//void SaveSizePosOnExit();
 		//void SaveConsoleFont();
-		bool ShowColorDialog(HWND HWndOwner, COLORREF *inColor);
-		static int CALLBACK EnumFamCallBack(LPLOGFONT lplf, LPNEWTEXTMETRIC lpntm, DWORD FontType, LPVOID aFontCount);
-		static int CALLBACK EnumFontCallBackEx(ENUMLOGFONTEX *lpelfe, NEWTEXTMETRICEX *lpntme, DWORD FontType, LPARAM lParam);
 		//void UpdateMargins(RECT arcMargins);
 		static void Dialog(int IdShowPage = 0);
 		void UpdateWindowMode(WORD WndMode);
@@ -406,9 +414,6 @@ class CSettings
 		LRESULT OnInitDialog_Update(HWND hWnd2);
 		LRESULT OnInitDialog_Info(HWND hWnd2);
 		//
-		LRESULT OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam);
-		LRESULT OnButtonClicked_Cursor(HWND hWnd2, WPARAM wParam, LPARAM lParam, Settings::AppSettings* pApp);
-		LRESULT OnButtonClicked_Tasks(HWND hWnd2, WPARAM wParam, LPARAM lParam);
 		void InitCursorCtrls(HWND hWnd2, const Settings::AppSettings* pApp);
 		bool mb_IgnoreCmdGroupEdit, mb_IgnoreCmdGroupList;
 		//LRESULT OnButtonClicked_Apps(HWND hWnd2, WPARAM wParam, LPARAM lParam);
@@ -441,14 +446,6 @@ class CSettings
 	public:
 		void ChangeCurrentPalette(const Settings::ColorPalette* pPal, bool bChangeDropDown);
 	private:
-		bool GetColorById(WORD nID, COLORREF* color);
-		bool SetColorById(WORD nID, COLORREF color);
-		void ColorSetEdit(HWND hWnd2, WORD c);
-		bool ColorEditDialog(HWND hWnd2, WORD c);
-		void FillBgImageColors(HWND hWnd2);
-		HBRUSH mh_CtlColorBrush;
-		INT_PTR ColorCtlStatic(HWND hWnd2, WORD c, HWND hItem);
-		COLORREF acrCustClr[16]; // array of custom colors, используется в ChooseColor(...)
 		BOOL mb_IgnoreEditChanged;
 		BOOL mb_IgnoreTtfChange;
 		//BOOL mb_CharSetWasSet;
@@ -479,22 +476,13 @@ class CSettings
 		UINT mn_MsgRecreateFont;
 		UINT mn_MsgLoadFontFromMain;
 	public:
-		static int checkDlgButton(HWND hParent, WORD nCtrlId, UINT uCheck);
-		static int checkRadioButton(HWND hParent, int nIDFirstButton, int nIDLastButton, int nIDCheckButton);
-		static int IsChecked(HWND hParent, WORD nCtrlId);
 		static int GetNumber(HWND hParent, WORD nCtrlId, int nMin = 0, int nMax = 0);
 		static INT_PTR GetString(HWND hParent, WORD nCtrlId, wchar_t** ppszStr, LPCWSTR asNoDefault = NULL, bool abListBox = false);
-		static INT_PTR GetSelectedString(HWND hParent, WORD nListCtrlId, wchar_t** ppszStr);
-		static int SelectString(HWND hParent, WORD nCtrlId, LPCWSTR asText);
-		static int SelectStringExact(HWND hParent, WORD nCtrlId, LPCWSTR asText);
 		static void EnableDlgItem(HWND hParent, WORD nCtrlId, BOOL bEnabled);
-		static void EnableDlgItems(HWND hParent, const WORD* pnCtrlIds, size_t nCount, BOOL bEnabled);
 	private:
 		BOOL mb_TabHotKeyRegistered;
 		void RegisterTabs();
 		void UnregisterTabs();
-		static DWORD CALLBACK EnumFontsThread(LPVOID apArg);
-		HANDLE mh_EnumThread;
 		WORD mn_LastChangingFontCtrlId;
 		// Временно регистрируемые шрифты
 		typedef struct tag_RegFont
@@ -509,48 +497,15 @@ class CSettings
 		} RegFont;
 		MArray<RegFont> m_RegFonts;
 		BOOL mb_StopRegisterFonts;
-		////
-		//COLORREF Colors[0x20];
-		//bool mb_FadeInitialized;
-		//BYTE mn_FadeLow, mn_FadeHigh;
-		//DWORD mn_FadeMul;
-		//COLORREF mn_LastFadeSrc, mn_LastFadeDst;
-		//COLORREF ColorsFade[0x20];
-		bool GetColorRef(HWND hDlg, WORD TB, COLORREF* pCR);
-		//bool GetColorRef(LPCWSTR pszText, COLORREF* pCR);
-		//inline BYTE GetFadeColorItem(BYTE c);
-		//
+
 		bool mb_ThemingEnabled;
-		//
-		//bool TestHostkeyModifiers();
-		//static BYTE CheckHostkeyModifier(BYTE vk);
-		//static void ReplaceHostkey(BYTE vk, BYTE vkNew);
-		//static void AddHostkey(BYTE vk);
-		//static void TrimHostkeys();
-		//void SetupHotkeyChecks(HWND hWnd2);
-		//static bool MakeHostkeyModifier();
-		//static BYTE HostkeyCtrlId2Vk(WORD nID);
-		//DWORD nMultiHotkeyModifier;
-		//BYTE mn_HostModOk[15], mn_HostModSkip[15];
-		//bool isHostkeySingleLR(WORD vk, WORD vkC, WORD vkL, WORD vkR);
+
 	public:
-		struct ListBoxItem { DWORD nValue; LPCWSTR sValue; };
-		enum eFillListBoxHotKeys { eHkModifiers, eHkKeysHot, eHkKeys, eHkKeysAct };
-		static void FillListBoxHotKeys(HWND hList, eFillListBoxHotKeys eWhat, BYTE& vk);
-		static void GetListBoxHotKey(HWND hList, eFillListBoxHotKeys eWhat, BYTE& vk);
 		static void SetHotkeyField(HWND hHk, BYTE vk);
-		static uint GetHotKeyListItems(eFillListBoxHotKeys eWhat, ListBoxItem** ppItems);
 	private:
-		static void FillListBoxItems(HWND hList, uint nItems, ListBoxItem* Items /*const WCHAR** pszItems, const DWORD* pnValues*/, DWORD& nValue, BOOL abExact = FALSE);
-		static void FillListBoxItems(HWND hList, uint nItems, const DWORD* pnValues, DWORD& nValue, BOOL abExact = FALSE);
-		static void GetListBoxItem(HWND hList, uint nItems, ListBoxItem* Items /*const WCHAR** pszItems, const DWORD* pnValues*/, DWORD& nValue);
-		static void GetListBoxItem(HWND hList, uint nItems, const DWORD* pnValues, DWORD& nValue);
 		static void CenterMoreDlg(HWND hWnd2);
-		static bool IsAlmostMonospace(LPCWSTR asFaceName, int tmMaxCharWidth, int tmAveCharWidth, int tmHeight);
 	private:
 		DWORD MakeHotKey(BYTE Vk, BYTE vkMod1=0, BYTE vkMod2=0, BYTE vkMod3=0) { return ConEmuHotKey::MakeHotKey(Vk, vkMod1, vkMod2, vkMod3); };
-		//#define MAKEMODIFIER2(vk1,vk2) ((DWORD)vk1&0xFF)|(((DWORD)vk2&0xFF)<<8)
-		//#define MAKEMODIFIER3(vk1,vk2,vk3) ((DWORD)vk1&0xFF)|(((DWORD)vk2&0xFF)<<8)|(((DWORD)vk3&0xFF)<<16)
 		ConEmuHotKeyList m_HotKeys; // : public MArray<ConEmuHotKey>
 		ConEmuHotKey *mp_ActiveHotKey;
 		void SetHotkeyVkMod(ConEmuHotKey *pHK, DWORD VkMod);
@@ -558,7 +513,6 @@ class CSettings
 	public:
 		const ConEmuHotKey* GetHotKeyPtr(int idx);
 		const ConEmuHotKey* GetHotKeyInfo(const ConEmuChord& VkState, bool bKeyDown, CRealConsole* pRCon);
-		//bool HasSingleWinHotkey();
 		void UpdateWinHookSettings(HMODULE hLLKeyHookDll);
 	public:
 		bool isDialogMessage(MSG &Msg);
