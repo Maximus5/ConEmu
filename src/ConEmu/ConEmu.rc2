@@ -31,6 +31,7 @@ BEGIN
 	cbCloseConsoleConfirm   "Show confirmation before closing tabs or ConEmu window"
 	cbComspecTest           "Show ‘calculated’ ComSpec path"
 	cbComspecUpdateEnv      "ConEmu may update %ComSpec% variable to selected command processor"
+	cbConsoleExceptionHandler "By default ConEmu doesn't do SetUnhandledExceptionFilter in alternative servers (Far, Telnet, etc.)\r\nBut it may be enabled for debugging purposes"
 	cbCTSAutoCopy           "Copy immediately on left mouse button up (when selecting with mouse)"
 	cbCTSBashMargin         "Bash leave one space-character on the right edge of console when wrapping lines, skip these spaces when copying to clipboard"
 	cbCTSBlockSelection     "Enable rectangular selection (like standard Windows console)"

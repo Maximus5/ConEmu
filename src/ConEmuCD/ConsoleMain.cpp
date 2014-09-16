@@ -665,6 +665,7 @@ bool CopyToClipboard(LPCWSTR asText)
 }
 
 LPTOP_LEVEL_EXCEPTION_FILTER gpfnPrevExFilter = NULL;
+bool gbCreateDumpOnExceptionInstalled = false;
 LONG WINAPI CreateDumpOnException(LPEXCEPTION_POINTERS ExceptionInfo)
 {
 	bool bKernelTrap = (gnInReadConsoleOutput > 0);
@@ -739,7 +740,9 @@ LONG WINAPI CreateDumpOnException(LPEXCEPTION_POINTERS ExceptionInfo)
 
 void SetupCreateDumpOnException()
 {
-	_ASSERTE(gnRunMode == RM_ALTSERVER);
+	// По умолчанию - фильтр в AltServer не включается, но в настройках ConEmu есть опция
+	// gpSet->isConsoleExceptionHandler --> CECF_ConExcHandler
+	_ASSERTE((gnRunMode == RM_ALTSERVER) && (gpSrv->pConsole && (gpSrv->pConsole->hdr.Flags & CECF_ConExcHandler)));
 
 	// Far 3.x, telnet, Vim, etc.
 	// В этих программах ConEmuCD.dll может загружаться для работы с альтернативными буферами и TrueColor
@@ -747,6 +750,7 @@ void SetupCreateDumpOnException()
 	{
 		// Сохраним, если фильтр уже был установлен - будем звать его из нашей функции
 		gpfnPrevExFilter = SetUnhandledExceptionFilter(CreateDumpOnException);
+		gbCreateDumpOnExceptionInstalled = true;
 	}
 }
 
@@ -799,6 +803,7 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 		{
 			// Наш exe-шник, gpfnPrevExFilter не нужен
 			SetUnhandledExceptionFilter(CreateDumpOnException);
+			gbCreateDumpOnExceptionInstalled = true;
 		}
 
 		HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -819,6 +824,7 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 		{
 			// Сохраним, если фильтр уже был установлен - будем звать его из нашей функции
 			gpfnPrevExFilter = SetUnhandledExceptionFilter(CreateDumpOnException);
+			gbCreateDumpOnExceptionInstalled = true;
 		}
 	}
 	#endif
@@ -1007,6 +1013,7 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 		_ASSERTE(anWorkMode==1); // может еще и 2 появится - для StandAloneGui
 		_ASSERTE(gnRunMode == RM_UNDEFINED);
 		gnRunMode = RM_ALTSERVER;
+		_ASSERTE(!gbCreateDumpOnExceptionInstalled);
 		gbAttachMode = am_Simple;
 		gnConfirmExitParm = 2;
 		gbAlwaysConfirmExit = FALSE; gbAutoDisableConfirmExit = FALSE;
