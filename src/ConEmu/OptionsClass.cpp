@@ -83,7 +83,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 SIZE szRasterSizes[100] = {{0,0}}; // {{16,8},{6,9},{8,9},{5,12},{7,12},{8,12},{16,12},{12,16},{10,18}};
 const wchar_t szRasterAutoError[] = L"Font auto size is not allowed for a fixed raster font size. Select 'Terminal' instead of '[Raster Fonts ...]'";
 
-#undef UPDATE_FONTSIZE_RECREATE
 #define FontDefWidthMin 0
 #define FontDefWidthMax 99
 
@@ -1106,7 +1105,8 @@ void CSettings::SettingsPreSave()
 {
 	lstrcpyn(gpSet->inFont, LogFont.lfFaceName, countof(gpSet->inFont));
 	lstrcpyn(gpSet->inFont2, LogFont2.lfFaceName, countof(gpSet->inFont2));
-	#ifdef UPDATE_FONTSIZE_RECREATE
+	#if 0
+	// was #ifdef UPDATE_FONTSIZE_RECREATE
 	gpSet->FontSizeY = LogFont.lfHeight;
 	#endif
 	gpSet->mn_LoadFontCharSet = LogFont.lfCharSet;
