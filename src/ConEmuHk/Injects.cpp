@@ -146,21 +146,23 @@ CINJECTHK_EXIT_CODES InjectHooks(PROCESS_INFORMATION pi, BOOL abLogProcess)
 	//DWORD fLoadLibrary = 0;
 	DWORD nErrCode = 0, nWait = 0;
 	int SelfImageBits = WIN3264TEST(32,64);
-	OSVERSIONINFO osv = {sizeof(osv)};
-	GetVersionEx(&osv);
-	DWORD nOsVer = (osv.dwMajorVersion << 8) | (osv.dwMinorVersion & 0xFF);
+
+	DWORDLONG const dwlConditionMask = VerSetConditionMask(VerSetConditionMask(0, VER_MAJORVERSION, VER_GREATER_EQUAL), VER_MINORVERSION, VER_GREATER_EQUAL);
+	_ASSERTE(_WIN32_WINNT_WIN7==0x601);
+	OSVERSIONINFOEXW osvi7 = {sizeof(osvi7), HIBYTE(_WIN32_WINNT_WIN7), LOBYTE(_WIN32_WINNT_WIN7)};
+	BOOL bOsWin7 = VerifyVersionInfoW(&osvi7, VER_MAJORVERSION | VER_MINORVERSION, dwlConditionMask);
 
 	if (!hKernel)
 	{
 		iRc = CIH_KernelNotLoaded/*-510*/;
 		goto wrap;
 	}
-	if (!nOsVer)
-	{
-		iRc = CIH_OsVerFailed/*-511*/;
-		goto wrap;
-	}
-	if (nOsVer >= 0x0601)
+	//if (!nOsVer)
+	//{
+	//	iRc = CIH_OsVerFailed/*-511*/;
+	//	goto wrap;
+	//}
+	if (bOsWin7)
 	{
 		hNtDll = GetModuleHandle(L"ntdll.dll");
 		// Windows7 +
@@ -350,7 +352,7 @@ CINJECTHK_EXIT_CODES InjectHooks(PROCESS_INFORMATION pi, BOOL abLogProcess)
 			iRc = CIH_GetLoadLibraryAddress/*-503*/;
 			goto wrap;
 		}
-		else if ((nOsVer >= 0x0601) && !GetLdrGetDllHandleByNameAddress())
+		else if (bOsWin7 && !GetLdrGetDllHandleByNameAddress())
 		{
 			_ASSERTE(gfnLdrGetDllHandleByName!=NULL);
 			iRc = CIH_GetLdrHandleAddress/*-514*/;
