@@ -1636,9 +1636,9 @@ void SettingsXML::ClearChildrenTail(IXMLDOMNode* apNode, IXMLDOMNode* apFirstCle
 	HRESULT hr;
 	IXMLDOMNode* pNext = NULL;
 	IXMLDOMNode *pNodeRmv = NULL;
+	DOMNodeType  nodeType = NODE_INVALID;
 
 	#ifdef _DEBUG
-	DOMNodeType  nodeType = NODE_INVALID;
 	BSTR bsDebug = NULL;
 	if (pNext)
 	{
@@ -1650,25 +1650,24 @@ void SettingsXML::ClearChildrenTail(IXMLDOMNode* apNode, IXMLDOMNode* apFirstCle
 
 	while (((hr = apFirstClear->get_nextSibling(&pNext)) == S_OK) && pNext)
 	{
+		pNext->get_nodeType(&nodeType);
+
 		#ifdef _DEBUG
-		if (pNext)
-		{
-			pNext->get_nodeType(&nodeType);
-			pNext->get_xml(&bsDebug);
-		}
+		pNext->get_xml(&bsDebug);
 		if (bsDebug) ::SysFreeString(bsDebug); bsDebug = NULL;
 		#endif
 
 		hr = apNode->removeChild(pNext, &pNodeRmv);
-		if (SUCCEEDED(hr))
+		if (SUCCEEDED(hr) && (nodeType != NODE_TEXT))
 			SetDataChanged();
 
 		SafeRelease(pNodeRmv);
 		SafeRelease(pNext);
 	}
 
+	apFirstClear->get_nodeType(&nodeType);
 	hr = apNode->removeChild(apFirstClear, &pNodeRmv);
-	if (SUCCEEDED(hr))
+	if (SUCCEEDED(hr) && (nodeType != NODE_TEXT))
 		SetDataChanged();
 
 	SafeRelease(pNodeRmv);
