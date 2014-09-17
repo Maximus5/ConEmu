@@ -942,9 +942,16 @@ struct FarVersion
 	};
 	DWORD dwBuild;
 
+	// Macro language changed to Lua
 	bool IsFarLua() const
 	{
 		return ((dwVerMajor > 3) || ((dwVerMajor == 3) && (dwBuild >= 2851)));
+	};
+
+	// Userscreen is now 'Desktop' window with index '0'
+	bool IsDesktop() const
+	{
+		return ((dwVerMajor > 3) || ((dwVerMajor == 3) && (dwBuild >= 4039)));
 	};
 };
 
