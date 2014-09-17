@@ -1614,10 +1614,16 @@ bool SettingsXML::SetMultiLine(IXMLDOMNode* apNode, const wchar_t* asValue, long
 
 	// Очистить хвост (если элементов стало меньше)
 	if (pNode)
+	{
 		ClearChildrenTail(apNode, pNode);
+		AppendNewLine(apNode);
+		bNewNodeCreate = true;
+	}
 
 	if (bNewNodeCreate)
+	{
 		AppendIndent(apNode, mi_Level);
+	}
 
 	bRc = true;
 wrap:
