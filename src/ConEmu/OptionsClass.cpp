@@ -6474,7 +6474,7 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 				case cbDefaultTerminalStartup:
 				case cbDefaultTerminalTSA:
 				case cbDefTermAgressive:
-					if (IsChecked(hWnd2, cbDefaultTerminalStartup) || IsChecked(hWnd2, cbDefTermAgressive))
+					if ((CB == cbDefaultTerminalStartup || CB == cbDefTermAgressive) && IsChecked(hWnd2, CB))
 					{
 						if (!gpSet->isSetDefaultTerminal)
 						{
@@ -6487,14 +6487,10 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 							checkDlgButton(hWnd2, cbDefaultTerminal, BST_CHECKED);
 							bSetupDefaultTerminal = true;
 						}
-						gpSet->isRegisterOnOsStartup = true;
 					}
-					else
-					{
-						gpSet->isRegisterOnOsStartup = false;
-					}
-					gpSet->isRegisterOnOsStartupTSA = IsChecked(hWnd2, cbDefaultTerminalTSA);
-					gpSet->isRegisterAgressive = IsChecked(hWnd2, cbDefTermAgressive);
+					gpSet->isRegisterOnOsStartup = (IsChecked(hWnd2, cbDefaultTerminalStartup) != BST_UNCHECKED);
+					gpSet->isRegisterOnOsStartupTSA = (IsChecked(hWnd2, cbDefaultTerminalTSA) != BST_UNCHECKED);
+					gpSet->isRegisterAgressive = (IsChecked(hWnd2, cbDefTermAgressive) != BST_UNCHECKED);
 					EnableWindow(GetDlgItem(hWnd2, cbDefaultTerminalTSA), gpSet->isRegisterOnOsStartup);
 					// And update registry
 					gpConEmu->mp_DefTrm->CheckRegisterOsStartup();
