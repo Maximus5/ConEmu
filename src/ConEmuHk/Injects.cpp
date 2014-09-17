@@ -306,7 +306,7 @@ CINJECTHK_EXIT_CODES InjectHooks(PROCESS_INFORMATION pi, BOOL abLogProcess)
 			nErrCode = GetLastError();
 			// Ошибки показывает вызывающая функция/процесс
 			iRc = CIH_CreateProcess/*-502*/;
-			
+
 			CloseHandle(hProcess); CloseHandle(hThread);
 			goto wrap;
 		}
@@ -333,12 +333,12 @@ CINJECTHK_EXIT_CODES InjectHooks(PROCESS_INFORMATION pi, BOOL abLogProcess)
 
 			// Ошибки показывает вызывающая функция/процесс
 		}
-		
+
 		// Уже все ветки должны были быть обработаны!
 		_ASSERTE(FALSE);
 		iRc = CIH_WrapperGeneral/*-504*/;
 		goto wrap;
-		
+
 	}
 	else
 	{
@@ -415,10 +415,10 @@ CINJECTHK_EXIT_CODES InjectHooks(PROCESS_INFORMATION pi, BOOL abLogProcess)
 					msprintf(szInfo, countof(szInfo), L"Alloc: 0x" WIN3264TEST(L"%08X",L"%X%08X") L", Size: %u", WIN3264WSPRINT(ptrAllocated), nAllocated);
 				}
 				#endif
-				
+
 				CESERVER_REQ* pIn = ExecuteNewCmdOnCreate(
 					NULL, ghConWnd, eSrvLoaded,
-					L"", szInfo, L"", NULL, NULL, NULL, NULL, 
+					L"", szInfo, L"", NULL, NULL, NULL, NULL,
 					SelfImageBits, ImageSystem, NULL, NULL, NULL);
 				if (pIn)
 				{
@@ -427,7 +427,7 @@ CINJECTHK_EXIT_CODES InjectHooks(PROCESS_INFORMATION pi, BOOL abLogProcess)
 					if (pOut) ExecuteFreeResult(pOut);
 				}
 			}
-		}	
+		}
 	}
 
 //#endif
@@ -500,7 +500,7 @@ wrap:
 	{
 		wchar_t szEvtName[64];
 		SafeCloseHandle(ghInjectsInMainThread);
-		
+
 		// ResumeThread was not called yet, set event
 		msprintf(szEvtName, countof(szEvtName), CECONEMUROOTTHREAD, pi.dwProcessId);
 		ghInjectsInMainThread = CreateEvent(LocalSecurity(), TRUE, TRUE, szEvtName);
