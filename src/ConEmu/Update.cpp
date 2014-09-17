@@ -35,6 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Update.h"
 #include "UpdateSet.h"
 #include "Options.h"
+#include "OptionsClass.h"
 #include "ConEmu.h"
 #include "TrayIcon.h"
 #include "version.h"

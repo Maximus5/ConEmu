@@ -33,10 +33,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ShlObj.h>
 #pragma warning(default: 4091)
 #include "ConEmu.h"
-#include "Recreate.h"
-#include "VirtualConsole.h"
-#include "VConGroup.h"
+#include "DpiAware.h"
+#include "OptionsClass.h"
 #include "RealConsole.h"
+#include "Recreate.h"
+#include "VConGroup.h"
+#include "VirtualConsole.h"
 
 CRecreateDlg::CRecreateDlg()
 	: mh_Dlg(NULL)

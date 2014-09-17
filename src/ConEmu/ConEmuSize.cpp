@@ -38,6 +38,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmuSize.h"
 #include "Inside.h"
 #include "Menu.h"
+#include "OptionsClass.h"
 #include "Status.h"
 #include "TabBar.h"
 #include "TaskBar.h"

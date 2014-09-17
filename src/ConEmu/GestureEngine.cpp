@@ -40,6 +40,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "GestureEngine.h"
 #include "ConEmu.h"
+#include "OptionsClass.h"
 #include "VirtualConsole.h"
 #include "VConGroup.h"
 #include "RealConsole.h"

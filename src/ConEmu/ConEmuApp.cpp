@@ -50,12 +50,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#include "../common/TokenHelper.h"
 #include "AboutDlg.h"
 #include "Options.h"
+#include "OptionsClass.h"
 #include "ConEmu.h"
 #include "DpiAware.h"
-#ifdef _DEBUG
-#include "Macro.h"
-#include "Match.h"
-#endif
 #include "Inside.h"
 #include "TaskBar.h"
 #include "DwmHelper.h"
@@ -64,6 +61,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Recreate.h"
 #include "DefaultTerm.h"
 #include "version.h"
+
+#ifdef _DEBUG
+#include "Macro.h"
+#include "Match.h"
+#endif
 
 #include "../common/StartupEnvEx.h"
 

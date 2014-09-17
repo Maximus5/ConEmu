@@ -55,6 +55,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Inside.h"
 #include "Macro.h"
 #include "Menu.h"
+#include "OptionsClass.h"
 #include "RealBuffer.h"
 #include "RealConsole.h"
 #include "RunQueue.h"

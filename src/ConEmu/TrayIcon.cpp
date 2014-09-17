@@ -35,6 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "TrayIcon.h"
 #include "ConEmu.h"
 #include "Options.h"
+#include "OptionsClass.h"
 #include "Menu.h"
 
 #ifndef NIN_BALLOONUSERCLICK

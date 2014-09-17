@@ -51,6 +51,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Macro.h"
 #include "Match.h"
 #include "Menu.h"
+#include "OptionsClass.h"
 #include "RealBuffer.h"
 #include "RealConsole.h"
 #include "Status.h"

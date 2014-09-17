@@ -45,6 +45,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Menu.h"
 #include "Menu.h"
 #include "Options.h"
+#include "OptionsClass.h"
 #include "RealConsole.h"
 #include "Status.h"
 #include "TabBar.h"

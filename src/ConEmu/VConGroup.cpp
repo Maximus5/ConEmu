@@ -36,6 +36,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConfirmDlg.h"
 #include "Inside.h"
 #include "Options.h"
+#include "OptionsClass.h"
 #include "RealConsole.h"
 #include "RunQueue.h"
 #include "Status.h"

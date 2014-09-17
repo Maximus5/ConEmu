@@ -38,6 +38,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "DefaultTerm.h"
 #include "GuiServer.h"
 #include "Macro.h"
+#include "OptionsClass.h"
 #include "RealConsole.h"
 #include "VConGroup.h"
 #include "VirtualConsole.h"

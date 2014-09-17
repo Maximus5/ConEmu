@@ -69,6 +69,7 @@ FEFF    ZERO WIDTH NO-BREAK SPACE
 #include "RealConsole.h"
 #include "ConEmu.h"
 #include "Options.h"
+#include "OptionsClass.h"
 #include "Background.h"
 #include "ConEmuPipe.h"
 #include "TabID.h"

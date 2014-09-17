@@ -30,6 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Hotkeys.h"
 #include "ConEmu.h"
 #include "Options.h"
+#include "OptionsClass.h"
 #include "VirtualConsole.h"
 
 // Некоторые комбинации нужно обрабатывать "на отпускание" во избежание глюков с интерфейсом

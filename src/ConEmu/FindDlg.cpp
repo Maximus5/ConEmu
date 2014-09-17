@@ -39,6 +39,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmu.h"
 #include "FindDlg.h"
 #include "Options.h"
+#include "OptionsClass.h"
 #include "RealConsole.h"
 #include "VConChild.h"
 #include "VConGroup.h"

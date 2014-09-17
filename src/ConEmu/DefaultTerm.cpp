@@ -31,6 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "DefaultTerm.h"
 #include "ConEmu.h"
 #include "Options.h"
+#include "OptionsClass.h"
 #include "Status.h"
 #include "TrayIcon.h"
 #include "../ConEmuCD/ExitCodes.h"

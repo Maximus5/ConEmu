@@ -49,6 +49,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "LoadImg.h"
 #include "Macro.h"
 #include "Options.h"
+#include "OptionsClass.h"
 #include "OptionsFast.h"
 #include "RealConsole.h"
 #include "Status.h"

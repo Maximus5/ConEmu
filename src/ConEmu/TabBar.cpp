@@ -49,6 +49,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "TabCtrlBase.h"
 #include "TabCtrlWin.h"
 #include "Options.h"
+#include "OptionsClass.h"
 #include "ConEmu.h"
 #include "VirtualConsole.h"
 #include "TrayIcon.h"

@@ -35,6 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmu.h"
 #include "VConChild.h"
 #include "Options.h"
+#include "OptionsClass.h"
 #include "TabBar.h"
 #include "VirtualConsole.h"
 #include "RealConsole.h"
