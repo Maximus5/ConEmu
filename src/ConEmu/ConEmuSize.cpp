@@ -383,6 +383,8 @@ RECT CConEmuSize::CalcRect(enum ConEmuRect tWhat, CVirtualConsole* pVCon /*= NUL
 				nGetStyle = 5;
 			}
 
+			_ASSERTE(gpConEmu->isIconic() == (rcMain.left <= -32000 && rcMain.top <= -32000));
+
 			if (rcMain.left <= -32000 && rcMain.top <= -32000)
 			{
 				// -- when we call "DefWindowProc(hWnd, WM_SYSCOMMAND, wParam, lParam)"
