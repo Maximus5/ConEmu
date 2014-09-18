@@ -750,10 +750,7 @@ void CSettings::SettingsLoaded(SettingsLoadedFlags slfFlags, LPCWSTR pszCmdLine 
 	// Recheck dpi settings?
 	if (ghWnd == NULL)
 	{
-		// No need to get strict coordinates, just find a target monitor
-		RECT rcDef = {gpSet->_wndX, gpSet->_wndY, gpSet->_wndX + 80*16, gpSet->_wndY + 25*8};
-		HMONITOR hMon = MonitorFromRect(&rcDef, MONITOR_DEFAULTTONEAREST);
-		CDpiAware::QueryDpiForMonitor(hMon, &_dpi);
+		gpConEmu->GetInitialDpi(&_dpi);
 		wchar_t szInfo[100];
 		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"DPI initialized to {%i,%i}\r\n", _dpi.Xdpi, _dpi.Ydpi);
 		DEBUGSTRDPI(szInfo);

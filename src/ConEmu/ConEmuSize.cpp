@@ -36,6 +36,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ConEmu.h"
 #include "ConEmuSize.h"
+#include "DpiAware.h"
 #include "Inside.h"
 #include "Menu.h"
 #include "OptionsClass.h"
@@ -1074,6 +1075,20 @@ HMONITOR CConEmuSize::FindInitialMonitor(MONITORINFO* pmi /*= NULL*/)
 		*pmi = mi;
 
 	return hMon;
+}
+
+int CConEmuSize::GetInitialDpi(DpiValue* pDpi)
+{
+	DpiValue dpi;
+
+	HMONITOR hMon = FindInitialMonitor();
+
+	int dpiY = CDpiAware::QueryDpiForMonitor(hMon, &dpi);
+
+	if (pDpi)
+		pDpi->SetDpi(dpi);
+
+	return dpiY;
 }
 
 // Вызывается при старте программы, для вычисления mrc_Ideal - размера окна по умолчанию

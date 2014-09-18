@@ -29,6 +29,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 class CConEmuMain;
+struct DpiValue;
 
 class CConEmuSize
 {
@@ -132,6 +133,7 @@ public:
 	void CascadedPosFix();
 	SIZE GetDefaultSize(bool bCells, const CESize* pSizeW = NULL, const CESize* pSizeH = NULL, HMONITOR hMon = NULL);
 	RECT GetDefaultRect();
+	int  GetInitialDpi(DpiValue* pDpi);
 	RECT GetGuiClientRect();
 	RECT GetIdealRect();
 	void StoreIdealRect();
