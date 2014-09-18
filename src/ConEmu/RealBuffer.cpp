@@ -1307,21 +1307,8 @@ BOOL CRealBuffer::PreInit()
 	HEAPVAL;
 	RECT rcCon;
 
-	// "!(gpConEmu->isZoomed() || gpConEmu->isFullScreen())" дает не то...
-
-	// Если настроенно-развернутое окно запускается минимизированным
-	// то брать нужно "максимизированные" размеры, а не wndWidth/wndHeight
-	if (gpConEmu->isWindowNormal() && gpConEmu->isIconic())
-	{
-		// Сюда попадаем только при wmNormal&Minimized
-		//rcCon = MakeRect(gpConEmu->wndWidth, gpConEmu->wndHeight);
-		SIZE sz = gpConEmu->GetDefaultSize(true);
-		rcCon = MakeRect(sz.cx, sz.cy);
-	}
-	else
-	{
-		rcCon = gpConEmu->CalcRect(CER_CONSOLE_CUR, mp_RCon->mp_VCon);
-	}
+	// Even if our window was minimized, CalcRect will use proper sizes (mrc_StoredNormalRect for example)
+	rcCon = gpConEmu->CalcRect(CER_CONSOLE_CUR, mp_RCon->mp_VCon);
 
 	_ASSERTE(rcCon.right!=0 && rcCon.bottom!=0);
 
