@@ -1596,7 +1596,7 @@ bool CRealConsole::PostConsoleEvent(INPUT_RECORD* piRec, bool bFromIME /*= false
 
 			if (wParam || lParam)
 			{
-				PostConsoleMessage(m_ChildGui.hGuiWnd, msg, wParam, lParam);
+				lbRc = PostConsoleMessage(m_ChildGui.hGuiWnd, msg, wParam, lParam);
 			}
 		}
 
