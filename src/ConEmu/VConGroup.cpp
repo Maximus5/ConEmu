@@ -4045,16 +4045,12 @@ RECT CVConGroup::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFr
 				int nH = (rc.bottom - rc.top) / gpSetCls->FontHeight();
 				rc.left = 0; rc.top = 0; rc.right = nW; rc.bottom = nH;
 
-				//2010-01-19
+				//2010-01-19 - Sort of Windows95 'Auto' option in the font size list box
 				if (gpSet->isFontAutoSize)
 				{
-					//if (gpConEmu->wndWidth && rc.right > (LONG)gpConEmu->wndWidth)
-					//	rc.right = gpConEmu->wndWidth;
-
-					//if (gpConEmu->wndHeight && rc.bottom > (LONG)gpConEmu->wndHeight)
-					//	rc.bottom = gpConEmu->wndHeight;
-
-					TODO("Проверить, нужно ли это?");
+					// При масштабировании шрифта под размер окна (в пикселях)
+					// требуется зафиксировать размер консоли (в символах)
+					// Эта ветка гарантирует, что размер не превысит заданный в настройках
 
 					SIZE curSize = gpConEmu->GetDefaultSize(true);
 
