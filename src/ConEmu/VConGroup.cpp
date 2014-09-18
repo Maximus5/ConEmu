@@ -4574,11 +4574,9 @@ bool CVConGroup::PreReSize(uint WindowMode, RECT rcWnd, enum ConEmuRect tFrom /*
 	if (!rcCon.right || !rcCon.bottom)
 	{
 		Assert(rcCon.right && rcCon.bottom);
-		//rcCon.right = gpConEmu->wndWidth;
-		//rcCon.bottom = gpConEmu->wndHeight;
-		SIZE szCon = gpConEmu->GetDefaultSize(true);
-		rcCon.right = szCon.cx;
-		rcCon.bottom = szCon.cy;
+		// Исключительная ситуация, сюда попадать мы не должны
+		rcCon.right = DEF_CON_WIDTH;
+		rcCon.bottom = DEF_CON_HEIGHT;
 	}
 
 	COORD size = {rcCon.right, rcCon.bottom};
