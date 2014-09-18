@@ -1677,6 +1677,18 @@ bool CRealConsole::PostConsoleEvent(INPUT_RECORD* piRec, bool bFromIME /*= false
 	}
 	else if (piRec->EventType == KEY_EVENT)
 	{
+		// github#19: don't post Enter/Space KeyUp events to the console input buffer
+		if (!piRec->Event.KeyEvent.bKeyDown && (piRec->Event.KeyEvent.uChar.UnicodeChar <= L' ')
+			&& !isFar())
+		{
+			switch (piRec->Event.KeyEvent.wVirtualKeyCode)
+			{
+			case VK_RETURN:
+			case VK_SPACE:
+				return false;
+			}
+		}
+
 		#if 0
 		if (piRec->Event.KeyEvent.uChar.UnicodeChar == 3/*'^C'*/
 			&& (piRec->Event.KeyEvent.dwControlKeyState & CTRL_MODIFIERS)
