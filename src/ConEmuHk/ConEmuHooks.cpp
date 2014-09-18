@@ -40,6 +40,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	#define DefTermMsg(s) //MessageBox(NULL, s, L"ConEmuHk", MB_SYSTEMMODAL)
 #endif
 
+#ifdef _DEBUG
+	//#define PRE_PEEK_CONSOLE_INPUT
+	#undef PRE_PEEK_CONSOLE_INPUT
+#else
+	#undef PRE_PEEK_CONSOLE_INPUT
+#endif
+
 #define DROP_SETCP_ON_WIN2K3R2
 //#define SHOWDEBUGSTR -- специально отключено, CONEMU_MINIMAL, OutputDebugString могут нарушать работу процессов
 //#define SKIPHOOKLOG
@@ -188,7 +195,7 @@ InQueue gInQueue = {};
 HANDLE  ghConsoleCursorChanged = NULL;
 /* ************ Globals for Far Hooks ************ */
 
-void PreReadConsoleInput(bool abUnicode, bool abPeek);
+void PreReadConsoleInput(HANDLE hConIn, bool abUnicode, bool abPeek);
 
 /* ************ Globals for cmd.exe/clink ************ */
 bool     gbIsCmdProcess = false;
@@ -3508,7 +3515,7 @@ void OnReadConsoleStart(bool bUnicode, HANDLE hConsoleInput, LPVOID lpBuffer, DW
 		gReadConsoleInfo.InReadConsoleTID = 0;
 	}
 
-	PreReadConsoleInput(bUnicode, false);
+	PreReadConsoleInput(hConsoleInput, bUnicode, false);
 }
 
 void OnReadConsoleEnd(BOOL bSucceeded, bool bUnicode, HANDLE hConsoleInput, LPVOID lpBuffer, DWORD nNumberOfCharsToRead, LPDWORD lpNumberOfCharsRead, LPVOID pInputControl)
@@ -4682,8 +4689,14 @@ void OnPeekReadConsoleInput(char acPeekRead/*'P'/'R'*/, char acUnicode/*'A'/'W'*
 
 }
 
-void PreReadConsoleInput(bool abUnicode, bool abPeek)
+void PreReadConsoleInput(HANDLE hConIn, bool abUnicode, bool abPeek)
 {
+	#if defined(_DEBUG) && defined(PRE_PEEK_CONSOLE_INPUT)
+	INPUT_RECORD ir = {}; DWORD nRead = 0, nBuffer = 0;
+	BOOL bNumGot = GetNumberOfConsoleInputEvents(hConIn, &nBuffer);
+	BOOL bConInPeek = nBuffer ? PeekConsoleInputW(hConIn, &ir, 1, &nRead) : FALSE;
+	#endif
+
 	if (gbPowerShellMonitorProgress)
 	{
 		CheckPowershellProgressPresence();
@@ -4757,7 +4770,7 @@ BOOL WINAPI OnPeekConsoleInputA(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DW
 			return lbRc;
 	}
 
-	PreReadConsoleInput(false, true);
+	PreReadConsoleInput(hConsoleInput, false, true);
 
 	//#ifdef USE_INPUT_SEMAPHORE
 	//DWORD nSemaphore = ghConInSemaphore ? WaitForSingleObject(ghConInSemaphore, INSEMTIMEOUT_READ) : 1;
@@ -4805,7 +4818,7 @@ BOOL WINAPI OnPeekConsoleInputW(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DW
 			return lbRc;
 	}
 
-	PreReadConsoleInput(true, true);
+	PreReadConsoleInput(hConsoleInput, true, true);
 
 	//#ifdef USE_INPUT_SEMAPHORE
 	//DWORD nSemaphore = ghConInSemaphore ? WaitForSingleObject(ghConInSemaphore, INSEMTIMEOUT_READ) : 1;
@@ -4894,7 +4907,7 @@ BOOL WINAPI OnReadConsoleInputA(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DW
 			return lbRc;
 	}
 
-	PreReadConsoleInput(false, false);
+	PreReadConsoleInput(hConsoleInput, false, false);
 
 	//#ifdef USE_INPUT_SEMAPHORE
 	//DWORD nSemaphore = ghConInSemaphore ? WaitForSingleObject(ghConInSemaphore, INSEMTIMEOUT_READ) : 1;
@@ -4942,7 +4955,7 @@ BOOL WINAPI OnReadConsoleInputW(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DW
 			return lbRc;
 	}
 
-	PreReadConsoleInput(true, false);
+	PreReadConsoleInput(hConsoleInput, true, false);
 
 	//#ifdef USE_INPUT_SEMAPHORE
 	//DWORD nSemaphore = ghConInSemaphore ? WaitForSingleObject(ghConInSemaphore, INSEMTIMEOUT_READ) : 1;
