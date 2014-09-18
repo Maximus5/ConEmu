@@ -946,8 +946,7 @@ SIZE CConEmuSize::GetDefaultSize(bool bCells, const CESize* pSizeW /*= NULL*/, c
 		// по ghWnd - монитор не ищем (окно может быть свернуто), только по координатам
 		else
 		{
-			RECT rc = {this->wndX, this->wndY, this->wndX, this->wndY};
-			GetNearestMonitorInfo(&mi, NULL, &rc);
+			hMon = FindInitialMonitor(&mi);
 		}
 	}
 
@@ -1036,6 +1035,45 @@ SIZE CConEmuSize::GetDefaultSize(bool bCells, const CESize* pSizeW /*= NULL*/, c
 	}
 
 	return sz;
+}
+
+HMONITOR CConEmuSize::FindInitialMonitor(MONITORINFO* pmi /*= NULL*/)
+{
+	// Too large or too small values may cause wrong monitor detection if on the edge of screen
+	int iWidth = 100, iHeight = 100;
+
+	TODO("CConEmuSize::GetInitialDpi -> ss_Percents");
+
+	switch (WndWidth.Style)
+	{
+	case ss_Standard:
+		iWidth = WndWidth.Value * gpSet->FontSizeY;
+		break;
+	case ss_Percents:
+		iWidth = WndWidth.Value;
+		break;
+	}
+
+	switch (WndHeight.Style)
+	{
+	case ss_Standard:
+		iHeight = WndHeight.Value * (gpSet->FontSizeX ? gpSet->FontSizeX : (gpSet->FontSizeY / 2));
+		break;
+	case ss_Percents:
+		iWidth = WndHeight.Value;
+		break;
+	}
+
+	// No need to get strict coordinates, just find the default monitor
+	RECT rcDef = {wndX, wndY, wndX + iWidth, wndY + iHeight};
+
+	MONITORINFO mi = {sizeof(mi)};
+	HMONITOR hMon = GetNearestMonitorInfo(&mi, NULL, &rcDef);
+
+	if (pmi)
+		*pmi = mi;
+
+	return hMon;
 }
 
 // Вызывается при старте программы, для вычисления mrc_Ideal - размера окна по умолчанию

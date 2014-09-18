@@ -121,6 +121,9 @@ public:
 protected:
 	static void AddMargins(RECT& rc, const RECT& rcAddShift, bool abExpand = false);
 
+private:
+	HMONITOR FindInitialMonitor(MONITORINFO* pmi = NULL);
+
 public:
 	void AutoSizeFont(RECT arFrom, enum ConEmuRect tFrom);
 	RECT CalcMargins(DWORD/*enum ConEmuMargins*/ mg, ConEmuWindowMode wmNewMode = wmCurrent);
