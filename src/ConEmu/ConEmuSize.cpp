@@ -900,6 +900,14 @@ SIZE CConEmuSize::GetDefaultSize(bool bCells, const CESize* pSizeW /*= NULL*/, c
 	if (pSizeH && pSizeH->Value)
 		sizeH.Set(false, pSizeH->Style, pSizeH->Value);
 
+	if (bCells && (sizeW.Style == ss_Standard) && (sizeH.Style == ss_Standard))
+	{
+		// If settings was set to exact size in cells - no need to evaluate the size in pixels
+		sz.cx = sizeW.Value; sz.cy = sizeH.Value;
+		return sz;
+	}
+
+
 	// Шрифт
 	int nFontWidth = gpSetCls->FontWidth();
 	int nFontHeight = gpSetCls->FontHeight();
