@@ -45,6 +45,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Menu.h"
 #include "AboutDlg.h"
 #include "Attach.h"
+#include "SetDlgButtons.h"
 
 
 /* ********************************* */
@@ -2361,10 +2362,24 @@ LPWSTR ConEmuMacro::SetOption(GuiMacro* p, CRealConsole* apRCon, bool abFromPlug
 	LPWSTR pszValue = NULL;
 	int nValue = 0;
 	int nRel = 0;
+	int CB = 0, uCheck = 0;
 
 	if (!p->GetStrArg(0, pszName))
 		return lstrdup(L"InvalidArg");
 
+	// Check option by CheckBox/RadioButton ID
+	if (!lstrcmpi(pszName, L"Check"))
+	{
+		if (!p->GetIntArg(1, CB) || (CB <= 0))
+			pszResult = lstrdup(L"InvalidID");
+		else if (!p->GetIntArg(2, uCheck) || (uCheck < (int)BST_UNCHECKED || uCheck >= (int)BST_INDETERMINATE))
+			pszResult = lstrdup(L"InvalidValue");
+		else
+			pszResult = CSetDlgButtons::CheckButtonMacro(CB, uCheck);
+		return pszResult;
+	}
+
+	// Other named options specially implemented
 	if (!lstrcmpi(pszName, L"QuakeAutoHide"))
 	{
 		// SetOption("QuakeAutoHide",0) - Hide on demand only

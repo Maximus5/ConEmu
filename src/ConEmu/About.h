@@ -319,6 +319,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"     HE: to-home(-1)/to-end(+1) with text selection\r\n" \
 	L"SetDpi(<DPI>)\r\n" \
 	L"  - Change effective dpi for ConEmu window: 96, 120, 144, 192\r\n" \
+	L"SetOption('\"Check\",<ID>,<Value>)\r\n" \
+	L"  - Set one of checkbox/radio ConEmu's options\r\n" \
+	L"    ID: numeric identifier of checkbox (ConEmu.rc, resource.h)\r\n" \
+	L"    Value: 0 - off, 1 - on, 2 - third state\r\n" \
 	L"SetOption(\"<Name>\",<Value>[,<IsRelative>])\r\n" \
 	L"  - Name=one of allowed for changing ConEmu options\r\n" \
 	L"    IsRelative=1 to use relative instead of absolute for some options\r\n" \
