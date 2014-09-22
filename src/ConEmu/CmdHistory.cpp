@@ -131,6 +131,12 @@ void CommandHistory::ParseMSZ(LPCWSTR pszzMSZ)
 
 	FreeItems();
 
+	// Nothing to add?
+	if (!pszzMSZ || !*pszzMSZ)
+	{
+		return;
+	}
+
 	int iCount = 0;
 
 	while ((*pszzMSZ) && (iCount < MaxItemCount))
