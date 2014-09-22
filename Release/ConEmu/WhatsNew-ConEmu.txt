@@ -12,6 +12,29 @@ Votes and awards (vote for ConEmu, if you please)
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+2014.09.21
+[!] Internal: CSettings decomposition.
+[+] GuiMacro may be used for changing Checkbox/Radio ConEmu's options.
+    SetOption("Check",<ID>,<Value>)
+      ID: numeric identifier of checkbox (ConEmu.rc, resource.h)
+      Value: 0 - off, 1 - on, 2 - third state
+    Example, turn scrollbar on: ConEmuC -GuiMacro SetOption Check 2488 1
+[*] Issue 1703: 'file.ext:line:' in hyperlink detector error.
+[*] File[:line:] hyperlink was not opened in Far editor sometimes (one more 'Desktop' drawback).
+[*] It was impossible to resize splitters in some configurations.
+    For example, area 3 was not available for resize:
+    +-----+-----+-----+
+    ¦  1  ¦     ¦  4  ¦
+    +-----+  3  +-----+
+    ¦  2  ¦     ¦  5  ¦
+    +-----+-----+-----+
+[*] Minor xml formatting fix (new line after last MSZ value).
+[*] Fix false xml modified timestamps updates for Tasks and Palettes.
+[*] Option ‘KeyBar RClick’ was not working with "Far /w".
+[*] Wrong DPI was used if creating small window attached to the monitor edge.
+[*] github#19: Don't post Enter/Space KeyUp events to the console input buffer.
+
+
 2014.09.14
 [*] Wrong macro was sended to Far 3 (Lua) on hyperlink click if file was already opened.
 [*] Fix drop files to Far command line. Add menu items to press ‘Enter’ after goto/edit/view.
