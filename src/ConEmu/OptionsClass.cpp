@@ -12575,6 +12575,26 @@ void CSettings::ProcessDpiChange(ConEmuSetupPages* p)
 	}
 }
 
+HWND CSettings::GetActivePage()
+{
+	HWND hPage = NULL;
+
+	if (ghOpWnd && m_Pages)
+	{
+		for (const ConEmuSetupPages* p = m_Pages; p->PageID; p++)
+		{
+			if (p->PageID == mn_LastActivedTab)
+			{
+				if (IsWindowVisible(p->hPage))
+					hPage = p->hPage;
+				break;
+			}
+		}
+	}
+
+	return hPage;
+}
+
 HWND CSettings::GetPage(CSettings::TabHwndIndex nPage)
 {
 	HWND hPage = NULL;

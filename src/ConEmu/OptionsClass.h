@@ -273,6 +273,7 @@ class CSettings
 			//
 			thi_Last
 		};
+		HWND GetActivePage();
 		HWND GetPage(TabHwndIndex nPage);
 		TabHwndIndex GetPageId(HWND hPage);
 

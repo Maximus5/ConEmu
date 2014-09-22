@@ -2642,7 +2642,7 @@ DWORD CRealConsole::MonitorThreadWorker(bool bDetached, bool& rbChildProcessCrea
 					//mp_VCon->Redraw();
 					//#endif
 
-					if (mp_VCon->mh_WndDC)
+					if (mp_VCon->GetView())
 						mp_VCon->Invalidate();
 					mn_LastInvalidateTick = GetTickCount();
 				}
