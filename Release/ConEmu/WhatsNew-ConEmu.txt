@@ -12,7 +12,7 @@ Votes and awards (vote for ConEmu, if you please)
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
-2014.09.21
+2014.09.22
 [!] Internal: CSettings decomposition.
 [+] GuiMacro may be used for changing Checkbox/Radio ConEmu's options.
     SetOption("Check",<ID>,<Value>)
