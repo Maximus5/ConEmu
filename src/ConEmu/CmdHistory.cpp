@@ -219,7 +219,7 @@ LPCWSTR CommandHistory::Get(int index)
 		return NULL;
 	}
 
-	if (index <= Items.size())
+	if (index < 0 || index >= Items.size())
 		return NULL;
 
 	LPCWSTR pszItem = Items[index];
