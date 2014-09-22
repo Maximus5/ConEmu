@@ -442,6 +442,3 @@ INT_PTR WINAPI FUNC_Y2(ProcessSynchroEventW)(void* p);
 
 HANDLE WINAPI FUNC_Y1(OpenW)(const void* apInfo);
 HANDLE WINAPI FUNC_Y2(OpenW)(const void* apInfo);
-
-int WINAPI FUNC_Y1(ProcessConsoleInputW)(void *Info);
-INT_PTR WINAPI FUNC_Y2(ProcessConsoleInputW)(void *Info);

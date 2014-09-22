@@ -413,6 +413,7 @@
       <File RelativePath=".\ConEmuPlugin2800.cpp" />
       <File RelativePath=".\ConEmuPlugin995.cpp" />
       <File RelativePath=".\ConEmuPluginA.cpp" />
+      <File RelativePath=".\ConEmuPluginBase.cpp" />
       <File RelativePath=".\export.release.def" />
       <File RelativePath=".\PluginBackground.cpp" />
       <File RelativePath=".\PluginSrv.cpp" />
@@ -451,6 +452,11 @@
       <File RelativePath="..\ConEmu\DragDrop.h" />
       <File RelativePath="..\ConEmuHk\SetHook.h" />
       <File RelativePath=".\ConEmu_Lang.h" />
+      <File RelativePath=".\ConEmuPlugin1900.h" />
+      <File RelativePath=".\ConEmuPlugin2800.h" />
+      <File RelativePath=".\ConEmuPlugin995.h" />
+      <File RelativePath=".\ConEmuPluginA.h" />
+      <File RelativePath=".\ConEmuPluginBase.h" />
       <File RelativePath=".\Dialogs.h" />
       <File RelativePath=".\PluginBackground.h" />
       <File RelativePath=".\PluginHeader.h" />

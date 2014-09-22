@@ -851,6 +851,7 @@
     <ClCompile Include="ConEmuPlugin2800.cpp" />
     <ClCompile Include="ConEmuPlugin995.cpp" />
     <ClCompile Include="ConEmuPluginA.cpp" />
+    <ClCompile Include="ConEmuPluginBase.cpp" />
     <ClCompile Include="PluginBackground.cpp" />
     <ClCompile Include="PluginSrv.cpp" />
     <ClCompile Include="KeyEvents.cpp">
@@ -967,6 +968,11 @@
     <ClInclude Include="..\ConEmu\version.h" />
     <ClInclude Include="..\ConEmuHk\SetHook.h" />
     <ClInclude Include="ConEmu_Lang.h" />
+    <ClInclude Include="ConEmuPlugin1900.h" />
+    <ClInclude Include="ConEmuPlugin2800.h" />
+    <ClInclude Include="ConEmuPlugin995.h" />
+    <ClInclude Include="ConEmuPluginA.h" />
+    <ClInclude Include="ConEmuPluginBase.h" />
     <ClInclude Include="Dialogs.h" />
     <ClInclude Include="PluginBackground.h" />
     <ClInclude Include="PluginHeader.h" />

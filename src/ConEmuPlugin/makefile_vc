@@ -30,6 +30,7 @@ $(INTDIR)\ConEmuPlugin1900.obj \
 $(INTDIR)\ConEmuPlugin2800.obj \
 $(INTDIR)\ConEmuPlugin995.obj \
 $(INTDIR)\ConEmuPluginA.obj \
+$(INTDIR)\ConEmuPluginBase.obj \
 $(INTDIR)\Execute.obj \
 $(INTDIR)\MAssert.obj \
 $(INTDIR)\Memory.obj \
@@ -255,6 +256,8 @@ $(INTDIR)\ConEmuPlugin2800.obj: ConEmuPlugin2800.cpp
 $(INTDIR)\ConEmuPlugin995.obj: ConEmuPlugin995.cpp
 
 $(INTDIR)\ConEmuPluginA.obj: ConEmuPluginA.cpp
+
+$(INTDIR)\ConEmuPluginBase.obj: ConEmuPluginBase.cpp ConEmuPluginBase.h
 
 $(INTDIR)\Execute.obj: ../common/execute.cpp
 

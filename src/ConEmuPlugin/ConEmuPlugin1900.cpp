@@ -55,9 +55,35 @@ extern GUID guid_ConEmuWaitEndSynchro;
 struct PluginStartupInfo *InfoW1900=NULL;
 struct FarStandardFunctions *FSFW1900=NULL;
 
-void WaitEndSynchroW1900();
+/* EXPORTS BEGIN */
+int WINAPI ProcessEditorEventW1900(void* p)
+{
+	const ProcessEditorEventInfo* Info = (const ProcessEditorEventInfo*)p;
+	return Plugin()->ProcessEditorEvent(Info->Event, Info->Param);
+}
 
-static wchar_t* GetPanelDir(HANDLE hPanel)
+int WINAPI ProcessViewerEventW1900(void* p)
+{
+	const ProcessViewerEventInfo* Info = (const ProcessViewerEventInfo*)p;
+	return Plugin()->ProcessViewerEvent(Info->Event, Info->Param);
+}
+
+int WINAPI ProcessDialogEventW1900(void* p)
+{
+	const ProcessDialogEventInfo* Info = (const ProcessDialogEventInfo*)p;
+	return Plugin()->ProcessDialogEvent(Info->Event, Info->Param);
+}
+
+int WINAPI ProcessSynchroEventW1900(void* p)
+{
+	const ProcessSynchroEventInfo* Info = (const ProcessSynchroEventInfo*)p;
+	return Plugin()->ProcessSynchroEvent(Info->Event, Info->Param);
+}
+/* EXPORTS END */
+
+//void WaitEndSynchroW1900();
+
+wchar_t* CPluginW1900::GetPanelDir(HANDLE hPanel)
 {
 	wchar_t* pszDir = NULL;
 	size_t nSize;
@@ -84,7 +110,7 @@ static wchar_t* GetPanelDir(HANDLE hPanel)
 	return pszDir;
 }
 
-void GetPluginInfoW1900(void *piv)
+void CPluginW1900::GetPluginInfo(void *piv)
 {
 	PluginInfo *pi = (PluginInfo*)piv;
 	//memset(pi, 0, sizeof(PluginInfo));
@@ -118,7 +144,7 @@ void GetPluginInfoW1900(void *piv)
 }
 
 
-void ProcessDragFromW1900()
+void CPluginW1900::ProcessDragFrom()
 {
 	if (!InfoW1900 || !InfoW1900->AdvControl)
 		return;
@@ -308,7 +334,7 @@ void ProcessDragFromW1900()
 	//free(szCurDir);
 }
 
-void ProcessDragToW1900()
+void CPluginW1900::ProcessDragTo()
 {
 	if (!InfoW1900 || !InfoW1900->AdvControl)
 		return;
@@ -439,7 +465,7 @@ void ProcessDragToW1900()
 	SafeFree(szPDir);
 }
 
-void SetStartupInfoW1900(void *aInfo)
+void CPluginW1900::SetStartupInfo(void *aInfo)
 {
 	INIT_FAR_PSI(::InfoW1900, ::FSFW1900, (PluginStartupInfo*)aInfo);
 
@@ -449,7 +475,7 @@ void SetStartupInfoW1900(void *aInfo)
 		if (FarVer.Major == 3)
 		{
 			gFarVersion.dwBuild = FarVer.Build;
-			_ASSERTE(FarVer.Major<=0xFFFF && FarVer.Minor<=0xFFFF)
+			_ASSERTE(FarVer.Major<=0xFFFF && FarVer.Minor<=0xFFFF);
 			gFarVersion.dwVerMajor = (WORD)FarVer.Major;
 			gFarVersion.dwVerMinor = (WORD)FarVer.Minor;
 			gFarVersion.Bis = (FarVer.Stage==VS_BIS);
@@ -466,7 +492,7 @@ void SetStartupInfoW1900(void *aInfo)
 	_ASSERTE(MACROAREA_TREEPANEL==12 && OPEN_FILEPANEL==7 && MACROAREA_EDITOR==3 && MACROAREA_VIEWER==2);
 }
 
-DWORD GetEditorModifiedStateW1900()
+DWORD CPluginW1900::GetEditorModifiedState()
 {
 	EditorInfo ei;
 	InfoW1900->EditorControl(-1/*Active editor*/, ECTL_GETINFO, 0, &ei);
@@ -480,49 +506,9 @@ DWORD GetEditorModifiedStateW1900()
 	return currentModifiedState;
 }
 
-//extern int lastModifiedStateW;
-
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-
-int WINAPI ProcessEditorEventW(int Event, void *Param);
-int WINAPI ProcessViewerEventW(int Event, void *Param);
-int WINAPI ProcessDialogEventW(int Event, void *Param);
-int WINAPI ProcessSynchroEventW(int Event,void *Param);
-
-#ifdef __cplusplus
-};
-#endif
-
-
-int WINAPI ProcessEditorEventW1900(void* p)
-{
-	const ProcessEditorEventInfo* Info = (const ProcessEditorEventInfo*)p;
-	return ProcessEditorEventW(Info->Event, Info->Param);
-}
-
-int WINAPI ProcessViewerEventW1900(void* p)
-{
-	const ProcessViewerEventInfo* Info = (const ProcessViewerEventInfo*)p;
-	return ProcessViewerEventW(Info->Event, Info->Param);
-}
-
-int WINAPI ProcessDialogEventW1900(void* p)
-{
-	const ProcessDialogEventInfo* Info = (const ProcessDialogEventInfo*)p;
-	return ProcessDialogEventW(Info->Event, Info->Param);
-}
-
-int WINAPI ProcessSynchroEventW1900(void* p)
-{
-	const ProcessSynchroEventInfo* Info = (const ProcessSynchroEventInfo*)p;
-	return ProcessSynchroEventW(Info->Event, Info->Param);
-}
 
 // watch non-modified -> modified editor status change
-int ProcessEditorInputW1900(LPCVOID aRec)
+int CPluginW1900::ProcessEditorInput(LPCVOID aRec)
 {
 	if (!InfoW1900)
 		return 0;
@@ -541,7 +527,7 @@ int ProcessEditorInputW1900(LPCVOID aRec)
 	return 0;
 }
 
-bool UpdatePanelDirsW1900()
+bool CPluginW1900::UpdatePanelDirs()
 {
 	if (!InfoW1900 || !InfoW1900->PanelControl)
 		return false;
@@ -575,7 +561,7 @@ bool UpdatePanelDirsW1900()
 	return bChanged;
 }
 
-bool UpdateConEmuTabsW1900(int anEvent, bool losingFocus, bool editorSave, void* Param/*=NULL*/)
+bool CPluginW1900::UpdateConEmuTabs(int anEvent, bool losingFocus, bool editorSave, void* Param/*=NULL*/)
 {
 	if (!InfoW1900 || !InfoW1900->AdvControl || gbIgnoreUpdateTabs)
 		return false;
@@ -781,7 +767,7 @@ bool UpdateConEmuTabsW1900(int anEvent, bool losingFocus, bool editorSave, void*
 	return (lbCh != FALSE);
 }
 
-void ExitFARW1900(void)
+void CPluginW1900::ExitFAR(void)
 {
 	ShutdownPluginStep(L"ExitFARW1900");
 
@@ -802,7 +788,7 @@ void ExitFARW1900(void)
 	ShutdownPluginStep(L"ExitFARW1900 - done");
 }
 
-int ShowMessageW1900(LPCWSTR asMsg, int aiButtons, bool bWarning)
+int CPluginW1900::ShowMessage(LPCWSTR asMsg, int aiButtons, bool bWarning)
 {
 	if (!InfoW1900 || !InfoW1900->Message)
 		return -1;
@@ -818,7 +804,7 @@ int ShowMessageW1900(LPCWSTR asMsg, int aiButtons, bool bWarning)
 	                         (const wchar_t * const *)asMsg, 0, aiButtons);
 }
 
-int ShowMessageW1900(int aiMsg, int aiButtons)
+int CPluginW1900::ShowMessage(int aiMsg, int aiButtons)
 {
 	if (!InfoW1900 || !InfoW1900->Message || !InfoW1900->GetMsg)
 		return -1;
@@ -826,7 +812,7 @@ int ShowMessageW1900(int aiMsg, int aiButtons)
 	return ShowMessageW1900(InfoW1900->GetMsg(&guid_ConEmu,aiMsg), aiButtons, true);
 }
 
-LPCWSTR GetMsgW1900(int aiMsg)
+LPCWSTR CPluginW1900::GetMsg(int aiMsg)
 {
 	if (!InfoW1900 || !InfoW1900->GetMsg)
 		return L"";
@@ -844,7 +830,7 @@ LPCWSTR GetMsgW1900(int aiMsg)
 //	InfoW1900->AdvControl(&guid_ConEmu,ACTL_KEYMACRO,&command);
 //}
 
-void SetWindowW1900(int nTab)
+void CPluginW1900::SetWindow(int nTab)
 {
 	if (!InfoW1900 || !InfoW1900->AdvControl)
 		return;
@@ -865,7 +851,7 @@ extern DWORD WINAPI BackgroundMacroError(LPVOID lpParameter);
 //}
 
 // Warning, напрямую НЕ вызывать. Пользоваться "общей" PostMacro
-void PostMacroW1900(const wchar_t* asMacro, INPUT_RECORD* apRec)
+void CPluginW1900::PostMacroApi(const wchar_t* asMacro, INPUT_RECORD* apRec)
 {
 	if (!InfoW1900 || !InfoW1900->AdvControl)
 		return;
@@ -1077,7 +1063,7 @@ void PostMacroW1900(const wchar_t* asMacro, INPUT_RECORD* apRec)
 	SafeFree(pszMacroCopy);
 }
 
-int ShowPluginMenuW1900(ConEmuPluginMenuItem* apItems, int Count)
+int CPluginW1900::ShowPluginMenu(ConEmuPluginMenuItem* apItems, int Count)
 {
 	if (!InfoW1900)
 		return -1;
@@ -1131,7 +1117,7 @@ int ShowPluginMenuW1900(ConEmuPluginMenuItem* apItems, int Count)
 	return nRc;
 }
 
-BOOL EditOutputW1900(LPCWSTR asFileName, BOOL abView)
+BOOL CPluginW1900::EditOutput(LPCWSTR asFileName, BOOL abView)
 {
 	if (!InfoW1900)
 		return FALSE;
@@ -1160,7 +1146,7 @@ BOOL EditOutputW1900(LPCWSTR asFileName, BOOL abView)
 	return lbRc;
 }
 
-BOOL ExecuteSynchroW1900()
+BOOL CPluginW1900::ExecuteSynchro()
 {
 	if (!InfoW1900)
 		return FALSE;
@@ -1185,7 +1171,7 @@ BOOL ExecuteSynchroW1900()
 
 static HANDLE ghSyncDlg = NULL;
 
-void WaitEndSynchroW1900()
+void CPluginW1900::WaitEndSynchro()
 {
 	// Считаем, что в Far 3 починили
 #if 0
@@ -1225,7 +1211,7 @@ void WaitEndSynchroW1900()
 #endif
 }
 
-void StopWaitEndSynchroW1900()
+void CPluginW1900::StopWaitEndSynchro()
 {
 	if (ghSyncDlg)
 	{
@@ -1269,7 +1255,7 @@ void StopWaitEndSynchroW1900()
 //	return FALSE;
 //}
 
-BOOL IsMacroActiveW1900()
+BOOL CPluginW1900::IsMacroActive()
 {
 	if (!InfoW1900) return FALSE;
 
@@ -1281,21 +1267,21 @@ BOOL IsMacroActiveW1900()
 	return TRUE;
 }
 
-int GetMacroAreaW1900()
+int CPluginW1900::GetMacroArea()
 {
 	int nArea = (int)InfoW1900->MacroControl(&guid_ConEmu, MCTL_GETAREA, 0, 0);
 	return nArea;
 }
 
 
-void RedrawAllW1900()
+void CPluginW1900::RedrawAll()
 {
 	if (!InfoW1900) return;
 
 	InfoW1900->AdvControl(&guid_ConEmu, ACTL_REDRAWALL, 0, NULL);
 }
 
-bool LoadPluginW1900(wchar_t* pszPluginPath)
+bool CPluginW1900::LoadPlugin(wchar_t* pszPluginPath)
 {
 	if (!InfoW1900) return false;
 
@@ -1303,7 +1289,7 @@ bool LoadPluginW1900(wchar_t* pszPluginPath)
 	return true;
 }
 
-bool RunExternalProgramW1900(wchar_t* pszCommand)
+bool CPluginW1900::RunExternalProgram(wchar_t* pszCommand)
 {
 	wchar_t strTemp[MAX_PATH+1];
 	wchar_t *pszExpand = NULL;
@@ -1370,7 +1356,7 @@ bool RunExternalProgramW1900(wchar_t* pszCommand)
 }
 
 
-bool ProcessCommandLineW1900(wchar_t* pszCommand)
+bool CPluginW1900::ProcessCommandLine(wchar_t* pszCommand)
 {
 	if (!InfoW1900 || !FSFW1900) return false;
 
@@ -1400,7 +1386,7 @@ bool ProcessCommandLineW1900(wchar_t* pszCommand)
 //	pCE->Flags = pFar->Flags;
 //}
 
-void LoadFarColorsW1900(BYTE (&nFarColors)[col_LastIndex])
+static void LoadFarColorsW1900(BYTE (&nFarColors)[col_LastIndex])
 {
 	INT_PTR nColorSize = InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETARRAYCOLOR, 0, NULL);
 	FarColor* pColors = (FarColor*)calloc(nColorSize, sizeof(*pColors));
@@ -1476,7 +1462,7 @@ static void LoadFarSettingsW1900(CEFarInterfaceSettings* pInterface, CEFarPanelS
 	}
 }
 
-BOOL ReloadFarInfoW1900(/*BOOL abFull*/)
+BOOL CPluginW1900::ReloadFarInfo(/*BOOL abFull*/)
 {
 	if (!InfoW1900 || !FSFW1900) return FALSE;
 
@@ -1587,7 +1573,7 @@ BOOL ReloadFarInfoW1900(/*BOOL abFull*/)
 	return TRUE;
 }
 
-void ExecuteQuitFarW1900()
+void CPluginW1900::ExecuteQuitFar()
 {
 	if (!InfoW1900 || !InfoW1900->AdvControl)
 	{
@@ -1598,7 +1584,7 @@ void ExecuteQuitFarW1900()
 	InfoW1900->AdvControl(&guid_ConEmu, ACTL_QUIT, 0, NULL);
 }
 
-BOOL CheckBufferEnabledW1900()
+BOOL CPluginW1900::CheckBufferEnabled()
 {
 	if (!InfoW1900 || !InfoW1900->AdvControl)
 		return FALSE;
@@ -1659,7 +1645,7 @@ static void CopyPanelInfoW(PanelInfo* pInfo, PaintBackgroundArg::BkPanelInfo* pB
 	pBk->rcPanelRect = pInfo->PanelRect;
 }
 
-void FillUpdateBackgroundW1900(struct PaintBackgroundArg* pFar)
+void CPluginW1900::FillUpdateBackground(struct PaintBackgroundArg* pFar)
 {
 	if (!InfoW1900 || !InfoW1900->AdvControl)
 		return;
@@ -1712,7 +1698,7 @@ void FillUpdateBackgroundW1900(struct PaintBackgroundArg* pFar)
 	}
 }
 
-int GetActiveWindowTypeW1900()
+int CPluginW1900::GetActiveWindowType()
 {
 	if (!InfoW1900 || !InfoW1900->AdvControl)
 		return -1;
@@ -1773,7 +1759,7 @@ int GetActiveWindowTypeW1900()
 
 #define FAR_UNICODE 1867
 #include "Dialogs.h"
-void GuiMacroDlgW1900()
+void CPluginW1900::GuiMacroDlg()
 {
 	CallGuiMacroProc();
 }
@@ -1807,7 +1793,7 @@ void WINAPI GetGlobalInfoW(struct GlobalInfo *Info)
 #endif
 
 extern BOOL gbInfoW_OK;
-HANDLE WINAPI OpenW1900(const void* apInfo)
+HANDLE CPluginW1900::Open(const void* apInfo)
 {
 	const struct OpenInfo *Info = (const struct OpenInfo*)apInfo;
 
@@ -1860,11 +1846,12 @@ HANDLE WINAPI OpenW1900(const void* apInfo)
 	return h;
 }
 
+#if 0
 int WINAPI ProcessConsoleInputW1900(void* apInfo)
 {
 	struct ProcessConsoleInputInfo *Info = (struct ProcessConsoleInputInfo*)apInfo;
 
-#if 0
+if 0
 	// Чтобы можно было "нормально" работать в Far3 и без хуков
 	BOOL bMainThread = TRUE; // раз вызов через API - значит MainThread
 	BOOL lbRc = FALSE;
@@ -1877,7 +1864,8 @@ int WINAPI ProcessConsoleInputW1900(void* apInfo)
 		return 1;
 
 	OnConsoleReadInputPost(&args);
-#endif
+endif
 
 	return 0;
 }
+#endif

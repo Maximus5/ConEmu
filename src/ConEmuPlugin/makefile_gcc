@@ -19,6 +19,7 @@ SRCS = \
 		ConEmuPlugin2800.cpp \
 		ConEmuPlugin995.cpp \
 		ConEmuPluginA.cpp \
+		ConEmuPluginBase.cpp\
 		PluginBackground.cpp \
 		PluginSrv.cpp
 

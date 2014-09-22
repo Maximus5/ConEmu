@@ -82,7 +82,7 @@ struct FarStandardFunctions *FSFW2800=NULL;
 
 void WaitEndSynchroW2800();
 
-static wchar_t* GetPanelDir(HANDLE hPanel)
+wchar_t* CPluginW2800::GetPanelDir(HANDLE hPanel)
 {
 	wchar_t* pszDir = NULL;
 	size_t nSize;
@@ -109,7 +109,7 @@ static wchar_t* GetPanelDir(HANDLE hPanel)
 	return pszDir;
 }
 
-void GetPluginInfoW2800(void *piv)
+void CPluginW2800::GetPluginInfo(void *piv)
 {
 	PluginInfo *pi = (PluginInfo*)piv;
 	//memset(pi, 0, sizeof(PluginInfo));
@@ -143,7 +143,7 @@ void GetPluginInfoW2800(void *piv)
 }
 
 
-void ProcessDragFromW2800()
+void CPluginW2800::ProcessDragFrom()
 {
 	if (!InfoW2800 || !InfoW2800->AdvControl)
 		return;
@@ -333,7 +333,7 @@ void ProcessDragFromW2800()
 	//free(szCurDir);
 }
 
-void ProcessDragToW2800()
+void CPluginW2800::ProcessDragTo()
 {
 	if (!InfoW2800 || !InfoW2800->AdvControl)
 		return;
@@ -464,7 +464,7 @@ void ProcessDragToW2800()
 	SafeFree(szPDir);
 }
 
-void SetStartupInfoW2800(void *aInfo)
+void CPluginW2800::SetStartupInfo(void *aInfo)
 {
 	INIT_FAR_PSI(::InfoW2800, ::FSFW2800, (PluginStartupInfo*)aInfo);
 
@@ -474,7 +474,7 @@ void SetStartupInfoW2800(void *aInfo)
 		if (FarVer.Major == 3)
 		{
 			gFarVersion.dwBuild = FarVer.Build;
-			_ASSERTE(FarVer.Major<=0xFFFF && FarVer.Minor<=0xFFFF)
+			_ASSERTE(FarVer.Major<=0xFFFF && FarVer.Minor<=0xFFFF);
 			gFarVersion.dwVerMajor = (WORD)FarVer.Major;
 			gFarVersion.dwVerMinor = (WORD)FarVer.Minor;
 			gFarVersion.Bis = (FarVer.Stage==VS_BIS);
@@ -491,7 +491,7 @@ void SetStartupInfoW2800(void *aInfo)
 	_ASSERTE(MACROAREA_TREEPANEL==12 && OPEN_FILEPANEL==7 && MACROAREA_EDITOR==3 && MACROAREA_VIEWER==2);
 }
 
-DWORD GetEditorModifiedStateW2800()
+DWORD CPluginW2800::GetEditorModifiedState()
 {
 	EditorInfo ei;
 	InfoW2800->EditorControl(-1/*Active editor*/, ECTL_GETINFO, 0, &ei);
@@ -1918,11 +1918,12 @@ HANDLE WINAPI OpenW2800(const void* apInfo)
 	return h;
 }
 
+#if 0
 INT_PTR WINAPI ProcessConsoleInputW2800(void* apInfo)
 {
 	struct ProcessConsoleInputInfo *Info = (struct ProcessConsoleInputInfo*)apInfo;
 
-#if 0
+if 0
 	// Чтобы можно было "нормально" работать в Far3 и без хуков
 	BOOL bMainThread = TRUE; // раз вызов через API - значит MainThread
 	BOOL lbRc = FALSE;
@@ -1935,7 +1936,8 @@ INT_PTR WINAPI ProcessConsoleInputW2800(void* apInfo)
 		return 1;
 
 	OnConsoleReadInputPost(&args);
-#endif
+endif
 
 	return 0;
 }
+#endif

@@ -324,32 +324,7 @@ bool pcc_Disabled(PluginMenuCommands nMenuID)
 
 void WINAPI GetPluginInfoWcmn(void *piv)
 {
-	if (gFarVersion.dwBuild>=FAR_Y2_VER)
-		FUNC_Y2(GetPluginInfoW)(piv);
-	else if (gFarVersion.dwBuild>=FAR_Y1_VER)
-		FUNC_Y1(GetPluginInfoW)(piv);
-	else
-		FUNC_X(GetPluginInfoW)(piv);
-
-	//static WCHAR *szMenu[1], szMenu1[255];
-	//szMenu[0]=szMenu1; //lstrcpyW(szMenu[0], L"[&\x2560] ConEmu"); -> 0x2584
-	////szMenu[0][1] = L'&';
-	////szMenu[0][2] = 0x2560;
-	//// Проверить, не изменилась ли горячая клавиша плагина, и если да - пересоздать макросы
-	////IsKeyChanged(TRUE); -- в FAR2 устарело, используем Synchro
-	////if (gcPlugKey) szMenu1[0]=0; else lstrcpyW(szMenu1, L"[&\x2584] ");
-	////lstrcpynW(szMenu1+lstrlenW(szMenu1), GetMsgW(2), 240);
-	//lstrcpynW(szMenu1, GetMsgW(CEPluginName), 240);
-	//_ASSERTE(pi->StructSize = sizeof(struct PluginInfo));
-	//pi->Flags = PF_EDITOR | PF_VIEWER | PF_DIALOG | PF_PRELOAD;
-	//pi->DiskMenuStrings = NULL;
-	////pi->DiskMenuNumbers = 0;
-	//pi->PluginMenuStrings = szMenu;
-	//pi->PluginMenuStringsNumber = 1;
-	//pi->PluginConfigStrings = NULL;
-	//pi->PluginConfigStringsNumber = 0;
-	//pi->CommandPrefix = L"ConEmu";
-	//pi->Reserved = ConEmu_SysID; // 'CEMU'
+	Plugin()->GetPluginInfo(piv);
 }
 
 void CheckConEmuDetached()
@@ -386,12 +361,7 @@ HANDLE OpenPluginWcmn(int OpenFrom,INT_PTR Item,bool FromMacro)
 
 	if (OpenFrom == OPEN_COMMANDLINE && Item)
 	{
-		if (gFarVersion.dwBuild>=FAR_Y2_VER)
-			FUNC_Y2(ProcessCommandLineW)((wchar_t*)Item);
-		else if (gFarVersion.dwBuild>=FAR_Y1_VER)
-			FUNC_Y1(ProcessCommandLineW)((wchar_t*)Item);
-		else
-			FUNC_X(ProcessCommandLineW)((wchar_t*)Item);
+		Plugin()->ProcessCommandLine((wchar_t*)Item);
 
 		return hResult;
 	}
@@ -1506,12 +1476,7 @@ int WINAPI ProcessSynchroEventW(int Event,void *Param)
 
 		if (gbSynchroProhibited && (gnSynchroCount == 0))
 		{
-			if (gFarVersion.dwBuild>=FAR_Y2_VER)
-				FUNC_Y2(StopWaitEndSynchroW)();
-			else if (gFarVersion.dwBuild>=FAR_Y1_VER)
-				FUNC_Y1(StopWaitEndSynchroW)();
-			else
-				FUNC_X(StopWaitEndSynchroW)();
+			Plugin()->StopWaitEndSynchro();
 		}
 
 		gnMainThreadId = nPrevID;
@@ -2152,12 +2117,7 @@ void ExecuteSynchro()
 		}
 
 		//psi.AdvControl(psi.ModuleNumber,ACTL_SYNCHRO,NULL);
-		if (gFarVersion.dwBuild>=FAR_Y2_VER)
-			FUNC_Y2(ExecuteSynchroW)();
-		else if (gFarVersion.dwBuild>=FAR_Y1_VER)
-			FUNC_Y1(ExecuteSynchroW)();
-		else
-			FUNC_X(ExecuteSynchroW)();
+		Plugin()->ExecuteSynchro();
 	}
 }
 
@@ -2639,39 +2599,14 @@ BOOL ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData, CESERV
 			//BOOL  *pbClickNeed = (BOOL*)pCommandData;
 			//COORD *crMouse = (COORD *)(pbClickNeed+1);
 			//ProcessCommand(CMD_LEFTCLKSYNC, TRUE/*bReqMainThread*/, pCommandData);
-			if (gFarVersion.dwVerMajor==1)
-			{
-				ProcessDragFromA();
-				ProcessDragToA();
-			}
-			else if (gFarVersion.dwBuild>=FAR_Y2_VER)
-			{
-				FUNC_Y2(ProcessDragFromW)();
-				FUNC_Y2(ProcessDragToW)();
-			}
-			else if (gFarVersion.dwBuild>=FAR_Y1_VER)
-			{
-				FUNC_Y1(ProcessDragFromW)();
-				FUNC_Y1(ProcessDragToW)();
-			}
-			else
-			{
-				FUNC_X(ProcessDragFromW)();
-				FUNC_X(ProcessDragToW)();
-			}
+			Plugin()->ProcessDragFrom();
+			Plugin()->ProcessDragTo();
 
 			break;
 		}
 		case(CMD_DRAGTO):
 		{
-			if (gFarVersion.dwVerMajor==1)
-				ProcessDragToA();
-			else if (gFarVersion.dwBuild>=FAR_Y2_VER)
-				FUNC_Y2(ProcessDragToW)();
-			else if (gFarVersion.dwBuild>=FAR_Y1_VER)
-				FUNC_Y1(ProcessDragToW)();
-			else
-				FUNC_X(ProcessDragToW)();
+			Plugin()->ProcessDragTo();
 
 			break;
 		}
@@ -2695,19 +2630,7 @@ BOOL ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData, CESERV
 
 				gbIgnoreUpdateTabs = TRUE;
 
-				if (gFarVersion.dwVerMajor==1)
-				{
-					SetWindowA(nTab);
-				}
-				else
-				{
-					if (gFarVersion.dwBuild>=FAR_Y2_VER)
-						FUNC_Y2(SetWindowW)(nTab);
-					else if (gFarVersion.dwBuild>=FAR_Y1_VER)
-						FUNC_Y1(SetWindowW)(nTab);
-					else
-						FUNC_X(SetWindowW)(nTab);
-				}
+				Plugin()->SetWindow(nTab);
 
 				DEBUGSTRCMD(L"Plugin: ACTL_COMMIT finished\n");
 
@@ -3749,12 +3672,7 @@ void WINAPI SetStartupInfoW(void *aInfo)
 	FreeLibrary(h);
 #endif
 
-	if (gFarVersion.dwBuild>=FAR_Y2_VER)
-		FUNC_Y2(SetStartupInfoW)(aInfo);
-	else if (gFarVersion.dwBuild>=FAR_Y1_VER)
-		FUNC_Y1(SetStartupInfoW)(aInfo);
-	else
-		FUNC_X(SetStartupInfoW)(aInfo);
+	Plugin()->SetStartupInfo(aInfo);
 
 	gbInfoW_OK = TRUE;
 	CommonPluginStartup();
@@ -4280,12 +4198,7 @@ BOOL ReloadFarInfo(BOOL abForce)
 		else
 		{
 			// Нужно проверить
-			if (gFarVersion.dwBuild>=FAR_Y2_VER)
-				gpFarInfo->bBufferSupport = FUNC_Y2(CheckBufferEnabledW)();
-			else if (gFarVersion.dwBuild>=FAR_Y1_VER)
-				gpFarInfo->bBufferSupport = FUNC_Y1(CheckBufferEnabledW)();
-			else
-				gpFarInfo->bBufferSupport = FUNC_X(CheckBufferEnabledW)();
+			gpFarInfo->bBufferSupport = Plugin()->CheckBufferEnabled();
 		}
 
 		// Загрузить из реестра настройки PanelTabs
@@ -4316,14 +4229,7 @@ BOOL ReloadFarInfo(BOOL abForce)
 
 	BOOL lbChanged = FALSE, lbSucceded = FALSE;
 
-	if (gFarVersion.dwVerMajor==1)
-		lbSucceded = ReloadFarInfoA(/*abFull*/);
-	else if (gFarVersion.dwBuild>=FAR_Y2_VER)
-		lbSucceded = FUNC_Y2(ReloadFarInfoW)();
-	else if (gFarVersion.dwBuild>=FAR_Y1_VER)
-		lbSucceded = FUNC_Y1(ReloadFarInfoW)();
-	else
-		lbSucceded = FUNC_X(ReloadFarInfoW)();
+	lbSucceded = Plugin()->ReloadFarInfo();
 
 	if (lbSucceded)
 	{
@@ -4350,17 +4256,9 @@ bool UpdateConEmuTabsW(int anEvent, bool losingFocus, bool editorSave, void* Par
 		CheckResources(FALSE);
 
 	MSectionLock SC; SC.Lock(csTabs);
-	extern bool FUNC_X(UpdateConEmuTabsW)(int anEvent, bool losingFocus, bool editorSave, void* Param/*=NULL*/);
-	extern bool FUNC_Y1(UpdateConEmuTabsW)(int anEvent, bool losingFocus, bool editorSave, void* Param/*=NULL*/);
-	extern bool FUNC_Y2(UpdateConEmuTabsW)(int anEvent, bool losingFocus, bool editorSave, void* Param/*=NULL*/);
 	bool lbCh;
 
-	if (gFarVersion.dwBuild>=FAR_Y2_VER)
-		lbCh = FUNC_Y2(UpdateConEmuTabsW)(anEvent, losingFocus, editorSave, Param);
-	else if (gFarVersion.dwBuild>=FAR_Y1_VER)
-		lbCh = FUNC_Y1(UpdateConEmuTabsW)(anEvent, losingFocus, editorSave, Param);
-	else
-		lbCh = FUNC_X(UpdateConEmuTabsW)(anEvent, losingFocus, editorSave, Param);
+	lbCh = Plugin()->UpdateConEmuTabs(anEvent, losingFocus, editorSave, Param);
 
 	SC.Unlock();
 	return lbCh;
@@ -4383,14 +4281,7 @@ void UpdatePanelDirs()
 {
 	bool bChanged = false;
 
-	if (gFarVersion.dwVerMajor==1)
-		bChanged = UpdatePanelDirsA();
-	else if (gFarVersion.dwBuild>=FAR_Y2_VER)
-		bChanged = FUNC_Y2(UpdatePanelDirsW)();
-	else if (gFarVersion.dwBuild>=FAR_Y1_VER)
-		bChanged = FUNC_Y1(UpdatePanelDirsW)();
-	else
-		bChanged = FUNC_X(UpdatePanelDirsW)();
+	bChanged = Plugin()->UpdatePanelDirs();
 
 	if (bChanged)
 	{
@@ -4668,12 +4559,7 @@ int WINAPI ProcessEditorInputW(void* Rec)
 {
 	// Даже если мы не под эмулятором - просто запомним текущее состояние
 	//if (!ghConEmuWndDC) return 0; // Если мы не под эмулятором - ничего
-	if (gFarVersion.dwBuild>=FAR_Y2_VER)
-		return FUNC_Y2(ProcessEditorInputW)((LPCVOID)Rec);
-	else if (gFarVersion.dwBuild>=FAR_Y1_VER)
-		return FUNC_Y1(ProcessEditorInputW)((LPCVOID)Rec);
-	else
-		return FUNC_X(ProcessEditorInputW)((LPCVOID)Rec);
+	return Plugin()->ProcessEditorInput((LPCVOID)Rec);
 }
 
 int WINAPI ProcessEditorEventW(int Event, void *Param)
@@ -5089,6 +4975,7 @@ HANDLE WINAPI OpenW(const void* Info)
 	return hResult;
 }
 
+#if 0
 INT_PTR WINAPI ProcessConsoleInputW(void *Info)
 {
 	if (gFarVersion.dwBuild>=FAR_Y2_VER)
@@ -5096,6 +4983,7 @@ INT_PTR WINAPI ProcessConsoleInputW(void *Info)
 	else //if (gFarVersion.dwBuild>=FAR_Y1_VER)
 		return FUNC_Y1(ProcessConsoleInputW)(Info);
 }
+#endif
 
 INT_PTR WINAPI ProcessEditorEventW3(void* p)
 {
@@ -5440,33 +5328,6 @@ int ShowMessage(LPCWSTR asMsg, int aiButtons, bool bWarning)
 	else
 		return FUNC_X(ShowMessageW)(asMsg, aiButtons, bWarning);
 }
-int ShowMessageGui(int aiMsg, int aiButtons)
-{
-	wchar_t wszBuf[MAX_PATH];
-	LPCWSTR pwszMsg = NULL; //GetMsgW(aiMsg);
-
-	if (gFarVersion.dwVerMajor==1)
-	{
-		GetMsgA(aiMsg, wszBuf);
-		pwszMsg = wszBuf;
-	}
-	else
-	{
-		pwszMsg = GetMsgW(aiMsg);
-	}
-
-	wchar_t szTitle[128];
-	_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmu plugin (PID=%u)", GetCurrentProcessId());
-
-	if (!pwszMsg || !*pwszMsg)
-	{
-		_wsprintf(wszBuf, SKIPLEN(countof(wszBuf)) L"<MsgID=%i>", aiMsg);
-		pwszMsg = wszBuf;
-	}
-
-	int nRc = MessageBoxW(NULL, pwszMsg, szTitle, aiButtons);
-	return nRc;
-}
 
 LPCWSTR GetMsgW(int aiMsg)
 {
@@ -5479,112 +5340,6 @@ LPCWSTR GetMsgW(int aiMsg)
 	else
 		return FUNC_X(GetMsgW)(aiMsg);
 }
-
-void PostMacro(const wchar_t* asMacro, INPUT_RECORD* apRec)
-{
-	if (!asMacro || !*asMacro)
-		return;
-
-	_ASSERTE(GetCurrentThreadId()==gnMainThreadId);
-
-	MOUSE_EVENT_RECORD mre;
-
-	if (apRec && apRec->EventType == MOUSE_EVENT)
-	{
-		gLastMouseReadEvent = mre = apRec->Event.MouseEvent;
-	}
-	else
-	{
-		mre = gLastMouseReadEvent;
-	}
-
-	if (gFarVersion.dwVerMajor == 1)
-	{
-		int nLen = lstrlenW(asMacro);
-		char* pszMacro = (char*)Alloc(nLen+1,1);
-
-		if (pszMacro)
-		{
-			WideCharToMultiByte(CP_OEMCP,0,asMacro,nLen+1,pszMacro,nLen+1,0,0);
-			PostMacroA(pszMacro, apRec); // хотя, все равно в 1.7x не используется
-			Free(pszMacro);
-		}
-	}
-	else if (gFarVersion.dwBuild>=FAR_Y2_VER)
-	{
-		FUNC_Y2(PostMacroW)(asMacro, apRec);
-	}
-	else if (gFarVersion.dwBuild>=FAR_Y1_VER)
-	{
-		FUNC_Y1(PostMacroW)(asMacro, apRec);
-	}
-	else
-	{
-		FUNC_X(PostMacroW)(asMacro, apRec);
-	}
-
-	//FAR BUGBUG: Макрос не запускается на исполнение, пока мышкой не дернем :(
-	//  Это чаще всего проявляется при вызове меню по RClick
-	//  Если курсор на другой панели, то RClick сразу по пассивной
-	//  не вызывает отрисовку :(
-
-#if 1
-	//111002 - попробуем просто gbUngetDummyMouseEvent
-	//InterlockedIncrement(&gnDummyMouseEventFromMacro);
-	gnDummyMouseEventFromMacro = TRUE;
-	gbUngetDummyMouseEvent = TRUE;
-#else
-	//if (!mcr.Param.PlainText.Flags) {
-	INPUT_RECORD ir[2] = {{MOUSE_EVENT},{MOUSE_EVENT}};
-
-	if (isPressed(VK_CAPITAL))
-		ir[0].Event.MouseEvent.dwControlKeyState |= CAPSLOCK_ON;
-
-	if (isPressed(VK_NUMLOCK))
-		ir[0].Event.MouseEvent.dwControlKeyState |= NUMLOCK_ON;
-
-	if (isPressed(VK_SCROLL))
-		ir[0].Event.MouseEvent.dwControlKeyState |= SCROLLLOCK_ON;
-
-	ir[0].Event.MouseEvent.dwEventFlags = MOUSE_MOVED;
-	ir[0].Event.MouseEvent.dwMousePosition = mre.dwMousePosition;
-
-	// Вроде одного хватало, правда когда {0,0} посылался
-	ir[1].Event.MouseEvent.dwControlKeyState = ir[0].Event.MouseEvent.dwControlKeyState;
-	ir[1].Event.MouseEvent.dwEventFlags = MOUSE_MOVED;
-	//ir[1].Event.MouseEvent.dwMousePosition.X = 1;
-	//ir[1].Event.MouseEvent.dwMousePosition.Y = 1;
-	ir[0].Event.MouseEvent.dwMousePosition = mre.dwMousePosition;
-	ir[0].Event.MouseEvent.dwMousePosition.X++;
-
-	//2010-01-29 попробуем STD_OUTPUT
-	//if (!ghConIn) {
-	//	ghConIn  = CreateFile(L"CONIN$", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_READ,
-	//		0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
-	//	if (ghConIn == INVALID_HANDLE_VALUE) {
-	//		#ifdef _DEBUG
-	//		DWORD dwErr = GetLastError();
-	//		_ASSERTE(ghConIn!=INVALID_HANDLE_VALUE);
-	//		#endif
-	//		ghConIn = NULL;
-	//		return;
-	//	}
-	//}
-	TODO("Необязательно выполнять реальную запись в консольный буфер. Можно обойтись подстановкой в наших функциях перехвата чтения буфера.");
-	HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE);
-	DWORD cbWritten = 0;
-
-	// Вроде одного хватало, правда когда {0,0} посылался
-	#ifdef _DEBUG
-	BOOL fSuccess =
-	#endif
-	WriteConsoleInput(hIn/*ghConIn*/, ir, 1, &cbWritten);
-	_ASSERTE(fSuccess && cbWritten==1);
-	//}
-	//InfoW995->AdvControl(InfoW995->ModuleNumber,ACTL_REDRAWALL,NULL);
-#endif
-}
-
 
 void ShowPluginMenu(PluginCallCommands nCallID /*= pcc_None*/)
 {
@@ -6301,16 +6056,6 @@ BOOL StartDebugger()
 	}
 
 	return lbRc;
-}
-
-
-bool isMacroActive(int& iMacroActive)
-{
-	if (!iMacroActive)
-	{
-		iMacroActive = IsMacroActive() ? 1 : 2;
-	}
-	return (iMacroActive == 1);
 }
 
 BOOL IsMacroActive()

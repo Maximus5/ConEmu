@@ -50,10 +50,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 struct PluginStartupInfo *InfoW995=NULL;
 struct FarStandardFunctions *FSFW995=NULL;
 
-void WaitEndSynchroW995();
+//void WaitEndSynchroW995();
 
 
-static wchar_t* GetPanelDir(HANDLE hPanel)
+wchar_t* CPluginW995::GetPanelDir(HANDLE hPanel)
 {
 	wchar_t* pszDir = NULL;
 	size_t nSize = InfoW995->Control(hPanel, FCTL_GETPANELDIR, 0, 0);
@@ -70,20 +70,13 @@ static wchar_t* GetPanelDir(HANDLE hPanel)
 
 
 // minimal(?) FAR version 2.0 alpha build FAR_X_VER
-int WINAPI _export GetMinFarVersionW(void)
+int CPluginW995::GetMinFarVersion(void)
 {
-	//#ifdef FORCE_FAR_1721
-	//	// FarColorer TrueMod?
-	//	return MAKEFARVERSION(2,0,1721);
-	//#else
-
 	// svs 19.12.2010 22:52:53 +0300 - build 1765: Новая команда в FARMACROCOMMAND - MCMD_GETAREA
 	return MAKEFARVERSION(2,0,1765);
-
-	//#endif
 }
 
-void GetPluginInfoW995(void *piv)
+void CPluginW995::GetPluginInfo(void *piv)
 {
 	PluginInfo *pi = (PluginInfo*)piv;
 	//memset(pi, 0, sizeof(PluginInfo));
@@ -113,7 +106,7 @@ void GetPluginInfoW995(void *piv)
 }
 
 
-void ProcessDragFromW995()
+void CPluginW995::ProcessDragFrom()
 {
 	if (!InfoW995 || !InfoW995->AdvControl)
 		return;
@@ -302,7 +295,7 @@ void ProcessDragFromW995()
 	//free(szCurDir);
 }
 
-void ProcessDragToW995()
+void CPluginW995::ProcessDragTo()
 {
 	if (!InfoW995 || !InfoW995->AdvControl)
 		return;
@@ -428,7 +421,7 @@ void ProcessDragToW995()
 	SafeFree(szPDir);
 }
 
-void SetStartupInfoW995(void *aInfo)
+void CPluginW995::SetStartupInfo(void *aInfo)
 {
 	INIT_FAR_PSI(::InfoW995, ::FSFW995, (PluginStartupInfo*)aInfo);
 
@@ -454,15 +447,17 @@ void SetStartupInfoW995(void *aInfo)
 	*pszSlash = 0;
 }
 
-DWORD GetEditorModifiedStateW995()
+DWORD CPluginW995::GetEditorModifiedState()
 {
 	EditorInfo ei;
 	InfoW995->EditorControl(ECTL_GETINFO, &ei);
-#ifdef SHOW_DEBUG_EVENTS
+
+	#ifdef SHOW_DEBUG_EVENTS
 	char szDbg[255];
 	wsprintfA(szDbg, "Editor:State=%i\n", ei.CurState);
 	OutputDebugStringA(szDbg);
-#endif
+	#endif
+
 	// Если он сохранен, то уже НЕ модифицирован
 	DWORD currentModifiedState = ((ei.CurState & (ECSTATE_MODIFIED|ECSTATE_SAVED)) == ECSTATE_MODIFIED) ? 1 : 0;
 	return currentModifiedState;
@@ -471,7 +466,7 @@ DWORD GetEditorModifiedStateW995()
 //extern int lastModifiedStateW;
 
 // watch non-modified -> modified editor status change
-int ProcessEditorInputW995(LPCVOID aRec)
+int CPluginW995::ProcessEditorInput(LPCVOID aRec)
 {
 	if (!InfoW995)
 		return 0;
@@ -490,7 +485,7 @@ int ProcessEditorInputW995(LPCVOID aRec)
 	return 0;
 }
 
-bool UpdatePanelDirsW995()
+bool CPluginW995::UpdatePanelDirs()
 {
 	if (!InfoW995 || !InfoW995->Control)
 		return false;
@@ -524,7 +519,7 @@ bool UpdatePanelDirsW995()
 	return bChanged;
 }
 
-bool UpdateConEmuTabsW995(int anEvent, bool losingFocus, bool editorSave, void* Param/*=NULL*/)
+bool CPluginW995::UpdateConEmuTabs(int anEvent, bool losingFocus, bool editorSave, void* Param/*=NULL*/)
 {
 	if (!InfoW995 || !InfoW995->AdvControl || gbIgnoreUpdateTabs)
 		return false;
@@ -654,7 +649,7 @@ bool UpdateConEmuTabsW995(int anEvent, bool losingFocus, bool editorSave, void* 
 	return (lbCh != FALSE);
 }
 
-void ExitFARW995(void)
+void CPluginW995::ExitFAR(void)
 {
 	ShutdownPluginStep(L"ExitFARW995");
 
@@ -675,7 +670,7 @@ void ExitFARW995(void)
 	ShutdownPluginStep(L"ExitFARW995 - done");
 }
 
-int ShowMessageW995(LPCWSTR asMsg, int aiButtons, bool bWarning)
+int CPluginW995::ShowMessage(LPCWSTR asMsg, int aiButtons, bool bWarning)
 {
 	if (!InfoW995 || !InfoW995->Message || !InfoW995->GetMsg)
 		return -1;
@@ -685,7 +680,7 @@ int ShowMessageW995(LPCWSTR asMsg, int aiButtons, bool bWarning)
 	                        (const wchar_t * const *)asMsg, 0, aiButtons);
 }
 
-int ShowMessageW995(int aiMsg, int aiButtons)
+int CPluginW995::ShowMessage(int aiMsg, int aiButtons)
 {
 	if (!InfoW995 || !InfoW995->Message || !InfoW995->GetMsg)
 		return -1;
@@ -693,7 +688,7 @@ int ShowMessageW995(int aiMsg, int aiButtons)
 	return ShowMessageW995(InfoW995->GetMsg(InfoW995->ModuleNumber,aiMsg), aiButtons, true);
 }
 
-LPCWSTR GetMsgW995(int aiMsg)
+LPCWSTR CPluginW995::GetMsg(int aiMsg)
 {
 	if (!InfoW995 || !InfoW995->GetMsg)
 		return L"";
@@ -711,7 +706,7 @@ LPCWSTR GetMsgW995(int aiMsg)
 //	InfoW995->AdvControl(InfoW995->ModuleNumber,ACTL_KEYMACRO,&command);
 //}
 
-void SetWindowW995(int nTab)
+void CPluginW995::SetWindow(int nTab)
 {
 	if (!InfoW995 || !InfoW995->AdvControl)
 		return;
@@ -721,7 +716,7 @@ void SetWindowW995(int nTab)
 }
 
 // Warning, напрямую НЕ вызывать. Пользоваться "общей" PostMacro
-void PostMacroW995(const wchar_t* asMacro, INPUT_RECORD* apRec)
+void CPluginW995::PostMacro(const wchar_t* asMacro, INPUT_RECORD* apRec)
 {
 	if (!InfoW995 || !InfoW995->AdvControl)
 		return;
@@ -791,7 +786,7 @@ void PostMacroW995(const wchar_t* asMacro, INPUT_RECORD* apRec)
 	////InfoW995->AdvControl(InfoW995->ModuleNumber,ACTL_REDRAWALL,NULL);
 }
 
-int ShowPluginMenuW995(ConEmuPluginMenuItem* apItems, int Count)
+int CPluginW995::ShowPluginMenu(ConEmuPluginMenuItem* apItems, int Count)
 {
 	if (!InfoW995)
 		return -1;
@@ -840,7 +835,7 @@ int ShowPluginMenuW995(ConEmuPluginMenuItem* apItems, int Count)
 	return nRc;
 }
 
-BOOL EditOutputW995(LPCWSTR asFileName, BOOL abView)
+BOOL CPluginW995::EditOutput(LPCWSTR asFileName, BOOL abView)
 {
 	if (!InfoW995)
 		return FALSE;
@@ -869,7 +864,7 @@ BOOL EditOutputW995(LPCWSTR asFileName, BOOL abView)
 	return lbRc;
 }
 
-BOOL ExecuteSynchroW995()
+BOOL CPluginW995::ExecuteSynchro()
 {
 	if (!InfoW995)
 		return FALSE;
@@ -894,7 +889,7 @@ BOOL ExecuteSynchroW995()
 
 static HANDLE ghSyncDlg = NULL;
 
-void WaitEndSynchroW995()
+void CPluginW995::WaitEndSynchro()
 {
 	if (gFarVersion.dwVerMajor == 2 && gFarVersion.dwVerMinor >= 1)
 		return;
@@ -926,7 +921,7 @@ void WaitEndSynchroW995()
 	ghSyncDlg = NULL;
 }
 
-void StopWaitEndSynchroW995()
+void CPluginW995::StopWaitEndSynchro()
 {
 	if (ghSyncDlg)
 	{
@@ -970,7 +965,7 @@ void StopWaitEndSynchroW995()
 //	return FALSE;
 //}
 
-BOOL IsMacroActiveW995()
+BOOL CPluginW995::IsMacroActive()
 {
 	if (!InfoW995) return FALSE;
 
@@ -983,7 +978,7 @@ BOOL IsMacroActiveW995()
 	return TRUE;
 }
 
-int GetMacroAreaW995()
+int CPluginW995::GetMacroArea()
 {
 	#define MCMD_GETAREA 6
 	ActlKeyMacro area = {MCMD_GETAREA};
@@ -992,14 +987,14 @@ int GetMacroAreaW995()
 }
 
 
-void RedrawAllW995()
+void CPluginW995::RedrawAll()
 {
 	if (!InfoW995) return;
 
 	InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_REDRAWALL, NULL);
 }
 
-bool LoadPluginW995(wchar_t* pszPluginPath)
+bool CPluginW995::LoadPlugin(wchar_t* pszPluginPath)
 {
 	if (!InfoW995) return false;
 
@@ -1007,9 +1002,9 @@ bool LoadPluginW995(wchar_t* pszPluginPath)
 	return true;
 }
 
-bool RunExternalProgramW(wchar_t* pszCommand, wchar_t* pszCurDir);
+//bool RunExternalProgramW(wchar_t* pszCommand, wchar_t* pszCurDir);
 
-bool RunExternalProgramW995(wchar_t* pszCommand)
+bool CPluginW995::RunExternalProgram(wchar_t* pszCommand)
 {
 	wchar_t strTemp[MAX_PATH+1];
 	wchar_t *pszExpand = NULL;
@@ -1083,7 +1078,7 @@ bool RunExternalProgramW995(wchar_t* pszCommand)
 }
 
 
-bool ProcessCommandLineW995(wchar_t* pszCommand)
+bool CPluginW995::ProcessCommandLine(wchar_t* pszCommand)
 {
 	if (!InfoW995 || !FSFW995) return false;
 
@@ -1113,7 +1108,7 @@ bool ProcessCommandLineW995(wchar_t* pszCommand)
 //	pCE->Flags = pFar->Flags;
 //}
 
-void LoadFarColorsW995(BYTE (&nFarColors)[col_LastIndex])
+static void LoadFarColorsW995(BYTE (&nFarColors)[col_LastIndex])
 {
 	BYTE FarConsoleColors[0x100];
 	INT_PTR nColorSize = InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETARRAYCOLOR, FarConsoleColors);
@@ -1158,7 +1153,7 @@ static void LoadFarSettingsW995(CEFarInterfaceSettings* pInterface, CEFarPanelSe
 	}
 }
 
-BOOL ReloadFarInfoW995(/*BOOL abFull*/)
+BOOL CPluginW995::ReloadFarInfo()
 {
 	if (!InfoW995 || !FSFW995) return FALSE;
 
@@ -1265,7 +1260,7 @@ BOOL ReloadFarInfoW995(/*BOOL abFull*/)
 	return TRUE;
 }
 
-void ExecuteQuitFar995()
+void CPluginW995::ExecuteQuitFar()
 {
 	if (!InfoW995 || !InfoW995->AdvControl)
 	{
@@ -1276,7 +1271,7 @@ void ExecuteQuitFar995()
 	InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_QUIT, NULL);
 }
 
-BOOL CheckBufferEnabledW995()
+BOOL CPluginW995::CheckBufferEnabled()
 {
 	if (!InfoW995 || !InfoW995->AdvControl)
 		return FALSE;
@@ -1329,7 +1324,7 @@ static void CopyPanelInfoW(PanelInfo* pInfo, PaintBackgroundArg::BkPanelInfo* pB
 	pBk->rcPanelRect = pInfo->PanelRect;
 }
 
-void FillUpdateBackgroundW995(struct PaintBackgroundArg* pFar)
+void CPluginW995::FillUpdateBackground(struct PaintBackgroundArg* pFar)
 {
 	if (!InfoW995 || !InfoW995->AdvControl)
 		return;
@@ -1383,7 +1378,7 @@ void FillUpdateBackgroundW995(struct PaintBackgroundArg* pFar)
 	}
 }
 
-int GetActiveWindowTypeW995()
+int CPluginW995::GetActiveWindowType()
 {
 	if (!InfoW995 || !InfoW995->AdvControl)
 		return -1;
@@ -1433,9 +1428,7 @@ int GetActiveWindowTypeW995()
 
 #define FAR_UNICODE 995
 #include "Dialogs.h"
-void GuiMacroDlgW995()
+void CPluginW995::GuiMacroDlg()
 {
 	CallGuiMacroProc();
 }
-
-

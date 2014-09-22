@@ -1,0 +1,78 @@
+﻿
+/*
+Copyright (c) 2009-2014 Maximus5
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+1. Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in the
+   documentation and/or other materials provided with the distribution.
+3. The name of the authors may not be used to endorse or promote products
+   derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE AUTHOR ''AS IS'' AND ANY EXPRESS OR
+IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
+#pragma once
+
+#include <windows.h>
+#include "../common/common.hpp"
+
+class CPluginW995 : public CPluginBase
+{
+protected:
+	
+public:
+	CPluginW995() {};
+	virtual ~CPluginW995() {};
+
+public:
+	virtual BOOL    CheckBufferEnabled() override;
+	virtual BOOL    EditOutput(LPCWSTR asFileName, BOOL abView) override;
+	virtual BOOL    ExecuteSynchro() override;
+	virtual void    ExecuteQuitFar() override;
+	virtual void    ExitFAR(void) override;
+	virtual void    FillUpdateBackground(struct PaintBackgroundArg* pFar) override;
+	virtual int     GetActiveWindowType() override;
+	virtual DWORD   GetEditorModifiedState() override;
+	virtual int     GetMacroArea() override;
+	virtual LPCWSTR GetMsg(int aiMsg, wchar_t* psMsg = NULL, size_t cchMsgMax = 0) override;
+	virtual LPWSTR  GetPanelDir(HANDLE hPanel) override;
+	virtual void    GetPluginInfo(void* piv) override; // PluginInfo* versioned
+	virtual void    GuiMacroDlg() override;
+	virtual BOOL    IsMacroActive() override;
+	virtual void    LoadPanelDirs() override;
+	virtual bool    LoadPlugin(wchar_t* pszPluginPath) override;
+	virtual HANDLE  Open(const void* apInfo) override;
+	virtual void    PostMacroApi(const wchar_t* asMacro, INPUT_RECORD* apRec) override;
+	virtual bool    ProcessCommandLine(wchar_t* pszCommand) override;
+	virtual int     ProcessDialogEvent(void* p) override;
+	virtual void    ProcessDragFrom() override;
+	virtual void    ProcessDragTo() override;
+	virtual int     ProcessEditorEvent(int Event, void *Param) override;
+	virtual int     ProcessEditorInput(LPCVOID Rec) override;
+	virtual int     ProcessSynchroEvent(void* p) override;
+	virtual int     ProcessViewerEvent(int Event, void *Param) override;
+	virtual void    RedrawAll() override;
+	virtual BOOL    ReloadFarInfo() override;
+	virtual void    SetStartupInfo(void *aInfo) override;
+	virtual void    SetWindow(int nTab) override;
+	virtual int     ShowMessage(int aiMsg, int aiButtons) override;
+	virtual int     ShowMessage(LPCWSTR asMsg, int aiButtons, bool bWarning) override;
+	virtual int     ShowPluginMenu(ConEmuPluginMenuItem* apItems, int Count) override;
+	virtual void    StopWaitEndSynchro() override;
+	virtual void    WaitEndSynchro() override;
+};
