@@ -122,17 +122,11 @@ HANDLE WINAPI _export OpenPlugin(int OpenFrom,INT_PTR Item)
 	}
 	else
 	{
-		//if (!gbCmdCallObsolete) {
 		SHOWDBGINFO(L"*** Calling ShowPluginMenu\n");
 		ShowPluginMenu();
-		//} else {
-		//	SHOWDBGINFO(L"!!! Plugin call is obsolete\n");
-		//	gbCmdCallObsolete = FALSE;
-		//}
 	}
 
-#ifdef _DEBUG
-
+	#ifdef _DEBUG
 	if (gnReqCommand != (DWORD)-1)
 	{
 		wchar_t szInfo[128]; _wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"*** OpenPlugin[Ansi] post gnReqCmd=%i%s\n",
@@ -145,8 +139,8 @@ HANDLE WINAPI _export OpenPlugin(int OpenFrom,INT_PTR Item)
 		                               L"");
 		OutputDebugStringW(szInfo);
 	}
+	#endif
 
-#endif
 	return INVALID_HANDLE_VALUE;
 }
 
