@@ -1310,7 +1310,7 @@ bool CPluginW2800::IsMacroActive()
 	return true;
 }
 
-int GetMacroAreaW2800()
+int CPluginW2800::GetMacroArea()
 {
 	int nArea = (int)InfoW2800->MacroControl(&guid_ConEmu, MCTL_GETAREA, 0, 0);
 	return nArea;

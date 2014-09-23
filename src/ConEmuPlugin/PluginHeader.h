@@ -254,11 +254,6 @@ void ShowConsoleInfo();
 //BOOL FUNC_Y1(CallSynchro)(SynchroArg *Param, DWORD nTimeout /*= 10000*/);
 //BOOL FUNC_Y2(CallSynchro)(SynchroArg *Param, DWORD nTimeout /*= 10000*/);
 
-int GetMacroArea();
-int FUNC_X(GetMacroAreaW)();
-int FUNC_Y1(GetMacroAreaW)();
-int FUNC_Y2(GetMacroAreaW)();
-
 //BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount);
 
 void RedrawAll();

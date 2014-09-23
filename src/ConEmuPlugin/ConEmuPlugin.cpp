@@ -2212,7 +2212,7 @@ static BOOL ActivatePlugin(
 	else if (IS_SYNCHRO_ALLOWED)
 	{
 		#ifdef _DEBUG
-		int iArea = (gFarVersion.dwVerMajor>=2) ? GetMacroArea() : -1;
+		int iArea = Plugin()->GetMacroArea();
 		#endif
 
 		InterlockedIncrement(&gnAllowDummyMouseEvent);
@@ -5525,7 +5525,7 @@ void ShowPluginMenu(PluginCallCommands nCallID /*= pcc_None*/)
 						if (pOut->GetAllTabs.Tabs[nMenuRc].ActiveConsole && !pOut->GetAllTabs.Tabs[nMenuRc].ActiveTab)
 						{
 							DWORD nTab = pOut->GetAllTabs.Tabs[nMenuRc].TabIdx;
-							switch (GetMacroArea())
+							switch (Plugin()->GetMacroArea())
 							{
 							case MACROAREA_SHELL:
 							case MACROAREA_SEARCH:
@@ -6044,25 +6044,6 @@ BOOL StartDebugger()
 	}
 
 	return lbRc;
-}
-
-int GetMacroArea()
-{
-	int nMacroArea = 0/*MACROAREA_OTHER*/;
-
-	if (gFarVersion.dwVerMajor==1)
-	{
-		_ASSERTE(gFarVersion.dwVerMajor>1);
-		nMacroArea = 1; // в Far 1.7x не поддерживается
-	}
-	else if (gFarVersion.dwBuild>=FAR_Y2_VER)
-		nMacroArea = FUNC_Y2(GetMacroAreaW)();
-	else if (gFarVersion.dwBuild>=FAR_Y1_VER)
-		nMacroArea = FUNC_Y1(GetMacroAreaW)();
-	else
-		nMacroArea = FUNC_X(GetMacroAreaW)();
-
-	return nMacroArea;
 }
 
 

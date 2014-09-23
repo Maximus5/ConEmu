@@ -940,6 +940,11 @@ bool CPluginAnsi::IsMacroActive()
 	return true;
 }
 
+int CPluginAnsi::GetMacroArea()
+{
+	return 1; // в Far 1.7x не поддерживается
+}
+
 void RedrawAllA()
 {
 	if (!InfoA) return;
