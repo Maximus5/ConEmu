@@ -57,7 +57,6 @@ public:
 
 public:
 	virtual BOOL    CheckBufferEnabled() = 0;
-	virtual BOOL    EditOutput(LPCWSTR asFileName, BOOL abView) = 0;
 	virtual void    ExecuteQuitFar() = 0;
 	virtual BOOL    ExecuteSynchro() = 0;
 	virtual void    ExitFAR(void) = 0;
@@ -76,6 +75,7 @@ public:
 	virtual bool    LoadPlugin(wchar_t* pszPluginPath) = 0;
 	#endif
 	virtual HANDLE  Open(const void* apInfo) = 0;
+	virtual bool    OpenEditor(LPCWSTR asFileName, bool abView, bool abDeleteTempFile, bool abDetectCP = false, int anStartLine = 0, int anStartChar = 1) = 0;
 	virtual void    PostMacroApi(const wchar_t* asMacro, INPUT_RECORD* apRec) = 0;
 	virtual int     ProcessDialogEvent(void* p) = 0;
 	virtual void    ProcessDragFrom() = 0;

@@ -1165,30 +1165,34 @@ int CPluginW2800::ShowPluginMenu(ConEmuPluginMenuItem* apItems, int Count)
 	return nRc;
 }
 
-BOOL EditOutputW2800(LPCWSTR asFileName, BOOL abView)
+bool CPluginW2800::OpenEditor(LPCWSTR asFileName, bool abView, bool abDeleteTempFile, bool abDetectCP /*= false*/, int anStartLine /*= 0*/, int anStartChar /*= 1*/)
 {
 	if (!InfoW2800)
-		return FALSE;
+		return false;
 
-	BOOL lbRc = FALSE;
+	bool lbRc;
+	INT_PTR iRc;
+
+	LPCWSTR pszTitle = abDeleteTempFile ? InfoW2800->GetMsg(&guid_ConEmu,CEConsoleOutput) : NULL;
 
 	if (!abView)
 	{
-		int iRc =
-		    InfoW2800->Editor(asFileName, InfoW2800->GetMsg(&guid_ConEmu,CEConsoleOutput), 0,0,-1,-1,
-		                     EF_NONMODAL|EF_IMMEDIATERETURN|EF_DELETEONLYFILEONCLOSE|EF_ENABLE_F6|EF_DISABLEHISTORY,
-		                     0, 1, 1200);
+		iRc = InfoW2800->Editor(asFileName, pszTitle, 0,0,-1,-1,
+		                     EF_NONMODAL|EF_IMMEDIATERETURN
+		                     |(abDeleteTempFile ? (EF_DELETEONLYFILEONCLOSE|EF_DISABLEHISTORY) : 0)
+		                     |EF_ENABLE_F6,
+		                     anStartLine, anStartChar,
+		                     abDetectCP ? CP_DEFAULT : 1200);
 		lbRc = (iRc != EEC_OPEN_ERROR);
 	}
 	else
 	{
-#ifdef _DEBUG
-		int iRc =
-#endif
-		    InfoW2800->Viewer(asFileName, InfoW2800->GetMsg(&guid_ConEmu,CEConsoleOutput), 0,0,-1,-1,
-		                     VF_NONMODAL|VF_IMMEDIATERETURN|VF_DELETEONLYFILEONCLOSE|VF_ENABLE_F6|VF_DISABLEHISTORY,
-		                     1200);
-		lbRc = TRUE;
+		iRc = InfoW2800->Viewer(asFileName, pszTitle, 0,0,-1,-1,
+		                     VF_NONMODAL|VF_IMMEDIATERETURN
+		                     |(abDeleteTempFile ? (VF_DELETEONLYFILEONCLOSE|VF_DISABLEHISTORY) : 0)
+		                     |VF_ENABLE_F6,
+		                     abDetectCP ? CP_DEFAULT : 1200);
+		lbRc = (iRc != 0);
 	}
 
 	return lbRc;

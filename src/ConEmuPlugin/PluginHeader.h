@@ -240,11 +240,6 @@ extern "C" {
 #endif
 
 
-BOOL EditOutputA(LPCWSTR asFileName, BOOL abView);
-BOOL FUNC_X(EditOutputW)(LPCWSTR asFileName, BOOL abView);
-BOOL FUNC_Y1(EditOutputW)(LPCWSTR asFileName, BOOL abView);
-BOOL FUNC_Y2(EditOutputW)(LPCWSTR asFileName, BOOL abView);
-
 BOOL Attach2Gui();
 BOOL StartDebugger();
 void ShowConsoleInfo();

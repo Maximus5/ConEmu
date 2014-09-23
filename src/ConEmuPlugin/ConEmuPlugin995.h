@@ -42,7 +42,6 @@ public:
 
 public:
 	virtual BOOL    CheckBufferEnabled() override;
-	virtual BOOL    EditOutput(LPCWSTR asFileName, BOOL abView) override;
 	virtual BOOL    ExecuteSynchro() override;
 	virtual void    ExecuteQuitFar() override;
 	virtual void    ExitFAR(void) override;
@@ -61,6 +60,7 @@ public:
 	virtual bool    LoadPlugin(wchar_t* pszPluginPath) override;
 	#endif
 	virtual HANDLE  Open(const void* apInfo) override;
+	virtual bool    OpenEditor(LPCWSTR asFileName, bool abView, bool abDeleteTempFile, bool abDetectCP = false, int anStartLine = 0, int anStartChar = 1) override;
 	virtual void    PostMacroApi(const wchar_t* asMacro, INPUT_RECORD* apRec) override;
 	virtual int     ProcessDialogEvent(void* p) override;
 	virtual void    ProcessDragFrom() override;

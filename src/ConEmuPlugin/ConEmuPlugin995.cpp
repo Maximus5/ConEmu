@@ -809,30 +809,34 @@ int CPluginW995::ShowPluginMenu(ConEmuPluginMenuItem* apItems, int Count)
 	return nRc;
 }
 
-BOOL CPluginW995::EditOutput(LPCWSTR asFileName, BOOL abView)
+bool CPluginW995::OpenEditor(LPCWSTR asFileName, bool abView, bool abDeleteTempFile, bool abDetectCP /*= false*/, int anStartLine /*= 0*/, int anStartChar /*= 1*/)
 {
 	if (!InfoW995)
-		return FALSE;
+		return false;
 
-	BOOL lbRc = FALSE;
+	bool lbRc;
+	int iRc;
+
+	LPCWSTR pszTitle = abDeleteTempFile ? InfoW995->GetMsg(InfoW995->ModuleNumber,CEConsoleOutput) : NULL;
 
 	if (!abView)
 	{
-		int iRc =
-		    InfoW995->Editor(asFileName, InfoW995->GetMsg(InfoW995->ModuleNumber,CEConsoleOutput), 0,0,-1,-1,
-		                     EF_NONMODAL|EF_IMMEDIATERETURN|EF_DELETEONLYFILEONCLOSE|EF_ENABLE_F6|EF_DISABLEHISTORY,
-		                     0, 1, 1200);
+		iRc = InfoW995->Editor(asFileName, pszTitle, 0,0,-1,-1,
+		                     EF_NONMODAL|EF_IMMEDIATERETURN
+		                     |(abDeleteTempFile ? (EF_DELETEONLYFILEONCLOSE|EF_DISABLEHISTORY) : 0)
+		                     |EF_ENABLE_F6,
+		                     anStartLine, anStartChar,
+		                     abDetectCP ? CP_AUTODETECT : 1200);
 		lbRc = (iRc != EEC_OPEN_ERROR);
 	}
 	else
 	{
-#ifdef _DEBUG
-		int iRc =
-#endif
-		    InfoW995->Viewer(asFileName, InfoW995->GetMsg(InfoW995->ModuleNumber,CEConsoleOutput), 0,0,-1,-1,
-		                     VF_NONMODAL|VF_IMMEDIATERETURN|VF_DELETEONLYFILEONCLOSE|VF_ENABLE_F6|VF_DISABLEHISTORY,
-		                     1200);
-		lbRc = TRUE;
+		iRc = InfoW995->Viewer(asFileName, pszTitle, 0,0,-1,-1,
+		                     VF_NONMODAL|VF_IMMEDIATERETURN
+		                     |(abDeleteTempFile ? (VF_DELETEONLYFILEONCLOSE|VF_DISABLEHISTORY) : 0)
+		                     |VF_ENABLE_F6,
+		                     abDetectCP ? CP_AUTODETECT : 1200);
+		lbRc = (iRc != 0);
 	}
 
 	return lbRc;

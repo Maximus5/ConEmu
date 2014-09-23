@@ -392,16 +392,7 @@ void CPluginBase::ShowPluginMenu(PluginCallCommands nCallID /*= pcc_None*/)
 			{
 				if (pOut->OutputFile.szFilePathName[0])
 				{
-					BOOL lbRc = FALSE;
-
-					if (gFarVersion.dwVerMajor==1)
-						lbRc = EditOutputA(pOut->OutputFile.szFilePathName, (nItem==1));
-					else if (gFarVersion.dwBuild>=FAR_Y2_VER)
-						lbRc = FUNC_Y2(EditOutputW)(pOut->OutputFile.szFilePathName, (nItem==1));
-					else if (gFarVersion.dwBuild>=FAR_Y1_VER)
-						lbRc = FUNC_Y1(EditOutputW)(pOut->OutputFile.szFilePathName, (nItem==1));
-					else
-						lbRc = FUNC_X(EditOutputW)(pOut->OutputFile.szFilePathName, (nItem==1));
+					bool lbRc = OpenEditor(pOut->OutputFile.szFilePathName, (nItem==1)/*abView*/, true);
 
 					if (!lbRc)
 					{

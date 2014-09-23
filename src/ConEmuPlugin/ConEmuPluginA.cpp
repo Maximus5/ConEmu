@@ -877,38 +877,39 @@ int CPluginAnsi::ShowPluginMenu(ConEmuPluginMenuItem* apItems, int Count)
 	return nRc;
 }
 
-BOOL EditOutputA(LPCWSTR asFileName, BOOL abView)
+bool CPluginAnsi::OpenEditor(LPCWSTR asFileName, bool abView, bool abDeleteTempFile, bool abDetectCP /*= false*/, int anStartLine /*= 0*/, int anStartChar /*= 1*/)
 {
 	if (!InfoA)
-		return FALSE;
+		return false;
 
-	char szAnsi[MAX_PATH+1];
+	bool lbRc;
+	int iRc;
 
-	if (!WideCharToMultiByte(CP_ACP, 0, asFileName, -1, szAnsi, MAX_PATH+1, 0,0))
-		return FALSE;
-
-	BOOL lbRc = FALSE;
+	char szFileName[MAX_PATH] = "";
+	ToOem(asFileName, szFileName, countof(szFileName));
+	LPCSTR pszTitle = abDeleteTempFile ? InfoA->GetMsg(InfoA->ModuleNumber,CEConsoleOutput) : NULL;
 
 	if (!abView)
 	{
-		int iRc =
-		    InfoA->Editor(szAnsi, InfoA->GetMsg(InfoA->ModuleNumber,CEConsoleOutput), 0,0,-1,-1,
-		                  EF_NONMODAL|EF_IMMEDIATERETURN|EF_DELETEONLYFILEONCLOSE|EF_ENABLE_F6|EF_DISABLEHISTORY,
-		                  0, 1);
+		iRc = InfoA->Editor(szFileName, pszTitle, 0,0,-1,-1,
+		                     EF_NONMODAL|EF_IMMEDIATERETURN
+		                     |(abDeleteTempFile ? (EF_DELETEONLYFILEONCLOSE|EF_DISABLEHISTORY) : 0)
+		                     |EF_ENABLE_F6,
+		                     anStartLine, anStartChar);
 		lbRc = (iRc != EEC_OPEN_ERROR);
 	}
 	else
 	{
-#ifdef _DEBUG
-		int iRc =
-#endif
-		    InfoA->Viewer(szAnsi, InfoA->GetMsg(InfoA->ModuleNumber,CEConsoleOutput), 0,0,-1,-1,
-		                  VF_NONMODAL|VF_IMMEDIATERETURN|VF_DELETEONLYFILEONCLOSE|VF_ENABLE_F6|VF_DISABLEHISTORY);
-		lbRc = TRUE;
+		iRc = InfoA->Viewer(szFileName, pszTitle, 0,0,-1,-1,
+		                     VF_NONMODAL|VF_IMMEDIATERETURN
+		                     |(abDeleteTempFile ? (VF_DELETEONLYFILEONCLOSE|VF_DISABLEHISTORY) : 0)
+		                     |VF_ENABLE_F6);
+		lbRc = (iRc != 0);
 	}
 
 	return lbRc;
 }
+
 
 void GetMsgA(int aiMsg, wchar_t (&rsMsg)[MAX_PATH])
 {
