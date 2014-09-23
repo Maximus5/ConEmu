@@ -51,6 +51,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/MSection.h"
 #include "../ConEmu/version.h"
 #include "PluginHeader.h"
+#include "ConEmuPluginBase.h"
 #include "PluginBackground.h"
 #include <Tlhelp32.h>
 
@@ -398,7 +399,7 @@ BOOL WINAPI PlugServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &pp
 		//ExecutePrepareCmd(&Out, CMD_ACTIVEWNDTYPE, sizeof(CESERVER_REQ_HDR)+sizeof(DWORD));
 
 		if (gFarVersion.dwVerMajor>=2)
-			nWindowType = GetActiveWindowType();
+			nWindowType = Plugin()->GetActiveWindowType();
 
 		//fSuccess = WriteFile(hPipe, &Out, Out.hdr.cbSize, &cbWritten, NULL);
 

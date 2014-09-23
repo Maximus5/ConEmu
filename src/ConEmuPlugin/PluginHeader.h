@@ -260,12 +260,6 @@ bool FUNC_X(LoadPluginW)(wchar_t* pszPluginPath);
 bool FUNC_Y1(LoadPluginW)(wchar_t* pszPluginPath);
 bool FUNC_Y2(LoadPluginW)(wchar_t* pszPluginPath);
 
-int GetActiveWindowType();
-int GetActiveWindowTypeA();
-int FUNC_X(GetActiveWindowTypeW)();
-int FUNC_Y1(GetActiveWindowTypeW)();
-int FUNC_Y2(GetActiveWindowTypeW)();
-
 BOOL FarSetConsoleSize(SHORT nNewWidth, SHORT nNewHeight);
 
 BOOL StartupHooks(HMODULE ahOurDll);

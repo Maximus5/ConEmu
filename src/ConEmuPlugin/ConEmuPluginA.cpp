@@ -1225,7 +1225,7 @@ void FillUpdateBackgroundA(struct PaintBackgroundArg* pFar)
 	}
 }
 
-int GetActiveWindowTypeA()
+int CPluginAnsi::GetActiveWindowType()
 {
 	if (!InfoA || !InfoA->AdvControl)
 		return -1;

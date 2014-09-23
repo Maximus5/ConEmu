@@ -1429,7 +1429,7 @@ int WINAPI ProcessSynchroEventW(int Event,void *Param)
 #ifdef _DEBUG
 		{
 			static int nLastType = -1;
-			int nCurType = GetActiveWindowType();
+			int nCurType = Plugin()->GetActiveWindowType();
 
 			if (nCurType != nLastType)
 			{
@@ -2108,7 +2108,7 @@ void ExecuteSynchro()
 		if ((gnAllowDummyMouseEvent > 0) && (gLastMouseReadEvent.dwButtonState & (RIGHTMOST_BUTTON_PRESSED|FROM_LEFT_1ST_BUTTON_PRESSED)))
 		{
 			//_ASSERTE(!(gLastMouseReadEvent.dwButtonState & (RIGHTMOST_BUTTON_PRESSED|FROM_LEFT_1ST_BUTTON_PRESSED)));
-			int nWindowType = GetActiveWindowType();
+			int nWindowType = Plugin()->GetActiveWindowType();
 			// "Зависания" возможны (вроде) только при прокрутке зажатой кнопкой мышки
 			// редактора или вьювера. Так что в других областях - не дергаться.
 			if (nWindowType == WTYPE_EDITOR || nWindowType == WTYPE_VIEWER)
@@ -2492,7 +2492,7 @@ BOOL ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData, CESERV
 
 	if (gnPluginOpenFrom == 0)
 	{
-		switch (GetActiveWindowType())
+		switch (Plugin()->GetActiveWindowType())
 		{
 		case WTYPE_PANELS:
 			gnPluginOpenFrom = OPEN_FILEPANEL; break;
@@ -6046,29 +6046,6 @@ BOOL StartDebugger()
 
 	return lbRc;
 }
-
-int GetActiveWindowType()
-{
-	if (gFarVersion.dwVerMajor==1)
-		return GetActiveWindowTypeA();
-	else if (gFarVersion.dwBuild>=FAR_Y2_VER)
-		return FUNC_Y2(GetActiveWindowTypeW)();
-	else if (gFarVersion.dwBuild>=FAR_Y1_VER)
-		return FUNC_Y1(GetActiveWindowTypeW)();
-	else
-		return FUNC_X(GetActiveWindowTypeW)();
-}
-
-//void ExecuteQuitFar()
-//{
-//	if (gFarVersion.dwVerMajor==1 || gFarVersion.dwBuild < 1348)
-//		ExecuteQuitFarA();
-//	else if (gFarVersion.dwBuild>=FAR_Y_VER)
-//		FUNC_Y(ExecuteQuitFar)();
-//	else
-//		FUNC_X(ExecuteQuitFar)();
-//}
-
 
 bool RunExternalProgramW(wchar_t* pszCommand, wchar_t* pszCurDir, bool bSilent/*=false*/)
 {

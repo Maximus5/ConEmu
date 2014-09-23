@@ -1742,7 +1742,7 @@ void FillUpdateBackgroundW2800(struct PaintBackgroundArg* pFar)
 	}
 }
 
-int GetActiveWindowTypeW2800()
+int CPluginW2800::GetActiveWindowType()
 {
 	if (!InfoW2800 || !InfoW2800->AdvControl)
 		return -1;
