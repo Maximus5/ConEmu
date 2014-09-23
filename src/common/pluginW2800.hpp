@@ -713,8 +713,8 @@ struct FarGetPluginPanelItemInfo
 {
 	size_t StructSize;
 	struct FarColor Color; // Current element color
-    intptr_t PosX; // 1-based, relative to Far workspace, 0 means 'not visible now'
-    intptr_t PosY; // 1-based, relative to Far workspace, 0 means 'not visible now'
+    int    PosX; // 1-based, relative to Far workspace, 0 means 'not visible now'
+    int    PosY; // 1-based, relative to Far workspace, 0 means 'not visible now'
 };
 
 typedef unsigned __int64 PANELINFOFLAGS;
@@ -1175,6 +1175,7 @@ struct FarSetColors
 
 enum WINDOWINFO_TYPE
 {
+	WTYPE_DESKTOP                   = 0,
 	WTYPE_PANELS                    = 1,
 	WTYPE_VIEWER                    = 2,
 	WTYPE_EDITOR                    = 3,
