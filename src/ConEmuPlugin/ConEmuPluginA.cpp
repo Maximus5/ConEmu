@@ -65,6 +65,11 @@ LPWSTR CPluginAnsi::ToUnicode(LPCSTR asOemStr)
 	return pszUnicode;
 }
 
+void CPluginAnsi::ToOem(LPCWSTR asUnicode, char* rsOem, INT_PTR cchOemMax)
+{
+	WideCharToMultiByte(CP_OEMCP, 0, asUnicode?asUnicode:L"", -1, rsOem, (int)cchOemMax, NULL, NULL);
+}
+
 wchar_t* CPluginAnsi::GetPanelDir(GetPanelDirFlags Flags)
 {
 	if (!InfoA)
@@ -951,6 +956,24 @@ void CPluginAnsi::RedrawAll()
 		return;
 
 	InfoA->AdvControl(InfoA->ModuleNumber, ACTL_REDRAWALL, NULL);
+}
+
+bool CPluginAnsi::InputBox(LPCWSTR Title, LPCWSTR SubTitle, LPCWSTR HistoryName, LPCWSTR SrcText, wchar_t*& DestText)
+{
+	_ASSERTE(DestText==NULL);
+	if (!InfoA)
+		return false;
+
+	char strTemp[MAX_PATH+1] = "", aTitle[64] = "", aSubTitle[128] = "", aHistoryName[64] = "", aSrcText[128];
+	ToOem(Title, aTitle, countof(aTitle));
+	ToOem(SubTitle, aSubTitle, countof(aSubTitle));
+	ToOem(HistoryName, aHistoryName, countof(aHistoryName));
+	ToOem(SrcText, aSrcText, countof(aSrcText));
+
+	if (!InfoA->InputBox(aTitle, aSubTitle, aHistoryName, aSrcText, strTemp, countof(strTemp), NULL, FIB_BUTTONS))
+		return false;
+	DestText = ToUnicode(strTemp);
+	return true;
 }
 
 bool RunExternalProgramW(wchar_t* pszCommand, wchar_t* pszCurDir);

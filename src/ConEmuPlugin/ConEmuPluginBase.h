@@ -51,6 +51,7 @@ public:
 	void PostMacro(const wchar_t* asMacro, INPUT_RECORD* apRec);
 	bool isMacroActive(int& iMacroActive);
 	void UpdatePanelDirs();
+	bool RunExternalProgram(wchar_t* pszCommand);
 
 public:
 	virtual BOOL    CheckBufferEnabled() = 0;
@@ -66,6 +67,7 @@ public:
 	virtual LPWSTR  GetPanelDir(GetPanelDirFlags Flags) = 0;
 	virtual void    GetPluginInfo(void* piv) = 0; // PluginInfo* versioned
 	virtual void    GuiMacroDlg() = 0;
+	virtual bool    InputBox(LPCWSTR Title, LPCWSTR SubTitle, LPCWSTR HistoryName, LPCWSTR SrcText, wchar_t*& DestText) = 0;
 	virtual bool    IsMacroActive() = 0;
 	virtual void    LoadPanelDirs() = 0;
 	#if 0

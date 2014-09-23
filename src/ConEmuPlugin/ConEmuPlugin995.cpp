@@ -982,6 +982,19 @@ bool CPluginW995::LoadPlugin(wchar_t* pszPluginPath)
 
 //bool RunExternalProgramW(wchar_t* pszCommand, wchar_t* pszCurDir);
 
+bool CPluginW995::InputBox(LPCWSTR Title, LPCWSTR SubTitle, LPCWSTR HistoryName, LPCWSTR SrcText, wchar_t*& DestText)
+{
+	_ASSERTE(DestText==NULL);
+	if (!InfoW995)
+		return false;
+
+	wchar_t strTemp[MAX_PATH+1];
+	if (!InfoW995->InputBox(Title, SubTitle, HistoryName, SrcText, strTemp, countof(strTemp), NULL, FIB_BUTTONS))
+		return false;
+	DestText = lstrdup(strTemp);
+	return true;
+}
+
 bool CPluginW995::RunExternalProgram(wchar_t* pszCommand)
 {
 	wchar_t strTemp[MAX_PATH+1];
@@ -1034,10 +1047,9 @@ bool CPluginW995::RunExternalProgram(wchar_t* pszCommand)
 
 	if (!pszCurDir)
 	{
-		pszCurDir = (wchar_t*)malloc(10);
+		pszCurDir = lstrdup(L"C:\\");
 		if (!pszCurDir)
 			return TRUE;
-		lstrcpy(pszCurDir, L"C:\\");
 	}
 
 	bool bSilent = (wcsstr(pszCommand, L"-new_console") != NULL);

@@ -53,6 +53,8 @@ extern GUID guid_ConEmuPluginItems;
 extern GUID guid_ConEmuPluginMenu;
 extern GUID guid_ConEmuGuiMacroDlg;
 extern GUID guid_ConEmuWaitEndSynchro;
+extern GUID guid_ConEmuMsg;
+extern GUID guid_ConEmuInput;
 
 struct PluginStartupInfo *InfoW1900=NULL;
 struct FarStandardFunctions *FSFW1900=NULL;
@@ -770,13 +772,7 @@ int CPluginW1900::ShowMessage(LPCWSTR asMsg, int aiButtons, bool bWarning)
 	if (!InfoW1900 || !InfoW1900->Message)
 		return -1;
 
-	GUID lguid_Msg = { /* aba0df6c-163f-4950-9029-a3f595c1c351 */
-	    0xaba0df6c,
-	    0x163f,
-	    0x4950,
-	    {0x90, 0x29, 0xa3, 0xf5, 0x95, 0xc1, 0xc3, 0x51}
-	};
-	return InfoW1900->Message(&guid_ConEmu, &lguid_Msg,
+	return InfoW1900->Message(&guid_ConEmu, &guid_ConEmuMsg,
                               FMSG_ALLINONE1900|(aiButtons?0:FMSG_MB_OK)|(bWarning ? FMSG_WARNING : 0), NULL,
 	                         (const wchar_t * const *)asMsg, 0, aiButtons);
 }
@@ -1270,6 +1266,19 @@ bool CPluginW1900::LoadPlugin(wchar_t* pszPluginPath)
 }
 #endif
 
+bool CPluginW1900::InputBox(LPCWSTR Title, LPCWSTR SubTitle, LPCWSTR HistoryName, LPCWSTR SrcText, wchar_t*& DestText)
+{
+	_ASSERTE(DestText==NULL);
+	if (!InfoW1900)
+		return false;
+
+	wchar_t strTemp[MAX_PATH+1];
+	if (!InfoW1900->InputBox(&guid_ConEmu, &guid_ConEmuInput, Title, SubTitle, HistoryName, SrcText, strTemp, countof(strTemp), NULL, FIB_BUTTONS))
+		return false;
+	DestText = lstrdup(strTemp);
+	return true;
+}
+
 bool CPluginW1900::RunExternalProgram(wchar_t* pszCommand)
 {
 	wchar_t strTemp[MAX_PATH+1];
@@ -1278,13 +1287,7 @@ bool CPluginW1900::RunExternalProgram(wchar_t* pszCommand)
 	if (!pszCommand || !*pszCommand)
 	{
 		lstrcpy(strTemp, L"cmd");
-		GUID lguid_Input = { /* 78ba0189-7dd7-4cb9-aff8-c70bca9f9cb6 */
-		    0x78ba0189,
-		    0x7dd7,
-		    0x4cb9,
-		    {0xaf, 0xf8, 0xc7, 0x0b, 0xca, 0x9f, 0x9c, 0xb6}
-		};
-		if (!InfoW1900->InputBox(&guid_ConEmu, &lguid_Input, L"ConEmu", L"Start console program", L"ConEmu.CreateProcess",
+		if (!InfoW1900->InputBox(&guid_ConEmu, &guid_ConEmuInput, L"ConEmu", L"Start console program", L"ConEmu.CreateProcess",
 		                       strTemp, strTemp, MAX_PATH, NULL, FIB_BUTTONS))
 			return false;
 

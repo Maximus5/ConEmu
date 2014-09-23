@@ -252,3 +252,61 @@ void CPluginBase::UpdatePanelDirs()
 		SendCurrentDirectory(FarHwnd, gPanelDirs.ActiveDir->ms_Arg, gPanelDirs.PassiveDir->ms_Arg);
 	}
 }
+
+bool CPluginBase::RunExternalProgram(wchar_t* pszCommand)
+{
+	wchar_t *pszExpand = NULL;
+	CmdArg szTemp;
+
+	if (!pszCommand || !*pszCommand)
+	{
+		if (!InputBox(L"ConEmu", L"Start console program", L"ConEmu.CreateProcess", L"cmd", szTemp.ms_Arg))
+			return false;
+
+		pszCommand = szTemp.ms_Arg;
+	}
+	else if (wcschr(pszCommand, L'%'))
+	{
+		DWORD cchMax = countof(strTemp);
+		pszExpand = strTemp;
+		DWORD nExpLen = ExpandEnvironmentStrings(pszCommand, pszExpand, cchMax);
+		if (nExpLen)
+		{
+			if (nExpLen > cchMax)
+			{
+				cchMax = nExpLen + 32;
+				pszExpand = (wchar_t*)calloc(cchMax,sizeof(*pszExpand));
+				nExpLen = ExpandEnvironmentStrings(pszCommand, pszExpand, cchMax);
+			}
+
+			if (nExpLen && (nExpLen <= cchMax))
+			{
+				pszCommand = pszExpand;
+			}
+		}
+	}
+
+	wchar_t *pszCurDir = GetPanelDir(INVALID_HANDLE_VALUE);
+
+	if (!pszCurDir)
+	{
+		pszCurDir = (wchar_t*)malloc(10);
+		if (!pszCurDir)
+			return TRUE;
+		lstrcpy(pszCurDir, L"C:\\");
+	}
+
+	bool bSilent = (wcsstr(pszCommand, L"-new_console") != NULL);
+
+	if (!bSilent)
+		InfoW2800->PanelControl(INVALID_HANDLE_VALUE,FCTL_GETUSERSCREEN,0,0);
+
+	RunExternalProgramW(pszCommand, pszCurDir, bSilent);
+
+	if (!bSilent)
+		InfoW2800->PanelControl(INVALID_HANDLE_VALUE,FCTL_SETUSERSCREEN,0,0);
+	InfoW2800->AdvControl(&guid_ConEmu,ACTL_REDRAWALL,0, 0);
+	free(pszCurDir); //pszCurDir = NULL;
+	if (pszExpand && (pszExpand != strTemp)) free(pszExpand);
+	return TRUE;
+}

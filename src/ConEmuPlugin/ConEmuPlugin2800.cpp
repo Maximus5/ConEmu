@@ -78,6 +78,18 @@ GUID guid_ConEmuWaitEndSynchro = { /* e93fba92-d7de-4651-9be1-c9b064254f65 */
 	0x4651,
 	{0x9b, 0xe1, 0xc9, 0xb0, 0x64, 0x25, 0x4f, 0x65}
 };
+GUID guid_ConEmuMsg = { /* aba0df6c-163f-4950-9029-a3f595c1c351 */
+	0xaba0df6c,
+	0x163f,
+	0x4950,
+	{0x90, 0x29, 0xa3, 0xf5, 0x95, 0xc1, 0xc3, 0x51}
+};
+GUID guid_ConEmuInput = { /* 78ba0189-7dd7-4cb9-aff8-c70bca9f9cb6 */
+	0x78ba0189,
+	0x7dd7,
+	0x4cb9,
+	{0xaf, 0xf8, 0xc7, 0x0b, 0xca, 0x9f, 0x9c, 0xb6}
+};
 
 struct PluginStartupInfo *InfoW2800=NULL;
 struct FarStandardFunctions *FSFW2800=NULL;
@@ -827,13 +839,7 @@ int ShowMessageW2800(LPCWSTR asMsg, int aiButtons, bool bWarning)
 	if (!InfoW2800 || !InfoW2800->Message)
 		return -1;
 
-	GUID lguid_Msg = { /* aba0df6c-163f-4950-9029-a3f595c1c351 */
-	    0xaba0df6c,
-	    0x163f,
-	    0x4950,
-	    {0x90, 0x29, 0xa3, 0xf5, 0x95, 0xc1, 0xc3, 0x51}
-	};
-	return InfoW2800->Message(&guid_ConEmu, &lguid_Msg,
+	return InfoW2800->Message(&guid_ConEmu, &guid_ConEmuMsg,
                               FMSG_ALLINONE1900|(aiButtons?0:FMSG_MB_OK)|(bWarning ? FMSG_WARNING : 0), NULL,
 	                         (const wchar_t * const *)asMsg, 0, aiButtons);
 }
@@ -1335,6 +1341,19 @@ bool LoadPluginW2800(wchar_t* pszPluginPath)
 }
 #endif
 
+bool CPluginW2800::InputBox(LPCWSTR Title, LPCWSTR SubTitle, LPCWSTR HistoryName, LPCWSTR SrcText, wchar_t*& DestText)
+{
+	_ASSERTE(DestText==NULL);
+	if (!InfoW2800)
+		return false;
+
+	wchar_t strTemp[MAX_PATH+1];
+	if (!InfoW2800->InputBox(&guid_ConEmu, &guid_ConEmuInput, Title, SubTitle, HistoryName, SrcText, strTemp, countof(strTemp), NULL, FIB_BUTTONS))
+		return false;
+	DestText = lstrdup(strTemp);
+	return true;
+}
+
 bool RunExternalProgramW2800(wchar_t* pszCommand)
 {
 	wchar_t strTemp[MAX_PATH+1];
@@ -1343,13 +1362,7 @@ bool RunExternalProgramW2800(wchar_t* pszCommand)
 	if (!pszCommand || !*pszCommand)
 	{
 		lstrcpy(strTemp, L"cmd");
-		GUID lguid_Input = { /* 78ba0189-7dd7-4cb9-aff8-c70bca9f9cb6 */
-		    0x78ba0189,
-		    0x7dd7,
-		    0x4cb9,
-		    {0xaf, 0xf8, 0xc7, 0x0b, 0xca, 0x9f, 0x9c, 0xb6}
-		};
-		if (!InfoW2800->InputBox(&guid_ConEmu, &lguid_Input, L"ConEmu", L"Start console program", L"ConEmu.CreateProcess",
+		if (!InfoW2800->InputBox(&guid_ConEmu, &guid_ConEmuInput, L"ConEmu", L"Start console program", L"ConEmu.CreateProcess",
 		                       strTemp, strTemp, MAX_PATH, NULL, FIB_BUTTONS))
 			return false;
 

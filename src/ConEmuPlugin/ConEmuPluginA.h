@@ -42,6 +42,7 @@ public:
 
 public:
 	static LPWSTR   ToUnicode(LPCSTR asOemStr);
+	static void     ToOem(LPCWSTR asUnicode, char* rsOem, INT_PTR cchOemMax);
 
 public:
 	virtual BOOL    CheckBufferEnabled() override;
@@ -57,6 +58,7 @@ public:
 	virtual LPWSTR  GetPanelDir(GetPanelDirFlags Flags) override;
 	virtual void    GetPluginInfo(void* piv) override; // PluginInfo* versioned
 	virtual void    GuiMacroDlg() override;
+	virtual bool    InputBox(LPCWSTR Title, LPCWSTR SubTitle, LPCWSTR HistoryName, LPCWSTR SrcText, wchar_t*& DestText);
 	virtual bool    IsMacroActive() override;
 	virtual void    LoadPanelDirs() override;
 	#if 0
