@@ -555,7 +555,7 @@ void OnMainThreadActivated()
 	// если таки будет переделана "thread-safe" активация.
 	if (gbNeedPostEditCheck)
 	{
-		DWORD currentModifiedState = GetEditorModifiedState();
+		DWORD currentModifiedState = Plugin()->GetEditorModifiedState();
 
 		if (lastModifiedStateW != (int)currentModifiedState)
 		{
@@ -6045,18 +6045,6 @@ BOOL StartDebugger()
 	}
 
 	return lbRc;
-}
-
-DWORD GetEditorModifiedState()
-{
-	if (gFarVersion.dwVerMajor==1)
-		return GetEditorModifiedStateA();
-	else if (gFarVersion.dwBuild>=FAR_Y2_VER)
-		return FUNC_Y2(GetEditorModifiedStateW)();
-	else if (gFarVersion.dwBuild>=FAR_Y1_VER)
-		return FUNC_Y1(GetEditorModifiedStateW)();
-	else
-		return FUNC_X(GetEditorModifiedStateW)();
 }
 
 int GetActiveWindowType()

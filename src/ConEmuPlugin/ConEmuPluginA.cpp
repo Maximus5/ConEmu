@@ -509,7 +509,7 @@ void WINAPI _export GetPluginInfo(struct PluginInfo *pi)
 	pi->Reserved = 0;
 }
 
-DWORD GetEditorModifiedStateA()
+DWORD CPluginAnsi::GetEditorModifiedState()
 {
 	EditorInfo ei;
 	InfoA->EditorControl(ECTL_GETINFO, &ei);

@@ -260,12 +260,6 @@ bool FUNC_X(LoadPluginW)(wchar_t* pszPluginPath);
 bool FUNC_Y1(LoadPluginW)(wchar_t* pszPluginPath);
 bool FUNC_Y2(LoadPluginW)(wchar_t* pszPluginPath);
 
-DWORD GetEditorModifiedStateA();
-DWORD FUNC_X(GetEditorModifiedStateW)();
-DWORD FUNC_Y1(GetEditorModifiedStateW)();
-DWORD FUNC_Y2(GetEditorModifiedStateW)();
-DWORD GetEditorModifiedState();
-
 int GetActiveWindowType();
 int GetActiveWindowTypeA();
 int FUNC_X(GetActiveWindowTypeW)();
