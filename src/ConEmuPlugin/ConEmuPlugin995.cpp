@@ -964,7 +964,8 @@ int CPluginW995::GetMacroArea()
 
 void CPluginW995::RedrawAll()
 {
-	if (!InfoW995) return;
+	if (!InfoW995 || !FarHwnd)
+		return;
 
 	InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_REDRAWALL, NULL);
 }

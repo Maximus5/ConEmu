@@ -1317,9 +1317,10 @@ int CPluginW2800::GetMacroArea()
 }
 
 
-void RedrawAllW2800()
+void CPluginW2800::RedrawAll()
 {
-	if (!InfoW2800) return;
+	if (!InfoW2800 || !FarHwnd)
+		return;
 
 	InfoW2800->AdvControl(&guid_ConEmu, ACTL_REDRAWALL, 0, NULL);
 }

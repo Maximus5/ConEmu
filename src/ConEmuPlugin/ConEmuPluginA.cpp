@@ -945,9 +945,10 @@ int CPluginAnsi::GetMacroArea()
 	return 1; // в Far 1.7x не поддерживается
 }
 
-void RedrawAllA()
+void CPluginAnsi::RedrawAll()
 {
-	if (!InfoA) return;
+	if (!InfoA || !FarHwnd)
+		return;
 
 	InfoA->AdvControl(InfoA->ModuleNumber, ACTL_REDRAWALL, NULL);
 }

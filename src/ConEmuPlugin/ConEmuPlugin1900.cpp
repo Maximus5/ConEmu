@@ -1254,7 +1254,8 @@ int CPluginW1900::GetMacroArea()
 
 void CPluginW1900::RedrawAll()
 {
-	if (!InfoW1900) return;
+	if (!InfoW1900 || !FarHwnd)
+		return;
 
 	InfoW1900->AdvControl(&guid_ConEmu, ACTL_REDRAWALL, 0, NULL);
 }

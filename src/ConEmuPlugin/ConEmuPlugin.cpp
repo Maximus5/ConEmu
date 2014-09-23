@@ -2733,7 +2733,7 @@ BOOL ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData, CESERV
 			// Иначе в некторых случаях (Win7 & FAR2x64) не отрисовывается сменившийся курсор
 			// В FAR 1.7x это приводит к зачернению экрана??? Решается посылкой
 			// "пустого" события движения мышки в консоль сразу после ACTL_KEYMACRO
-			RedrawAll();
+			Plugin()->RedrawAll();
 			//PostMacro((wchar_t*)L"@F11 %N=Menu.Select(\"EMenu\",0); $if (%N==0) %N=Menu.Select(\"EMenu\",2); $end $if (%N>0) Enter $while (Menu) Enter $end $else $MMode 1 MsgBox(\"ConEmu\",\"EMenu not found in F11\",0x00010001) $end");
 
 			const wchar_t* pszMacro = NULL;
@@ -2799,8 +2799,9 @@ BOOL ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData, CESERV
 			break;
 		}
 		case(CMD_REDRAWFAR):
-
-			if (gFarVersion.dwVerMajor>=2) RedrawAll();
+			// В Far 1.7x были глюки с отрисовкой?
+			if (gFarVersion.dwVerMajor>=2)
+				Plugin()->RedrawAll();
 
 			break;
 		case(CMD_CHKRESOURCES):
@@ -2947,7 +2948,7 @@ BOOL FarSetConsoleSize(SHORT nNewWidth, SHORT nNewHeight)
 			ExecuteFreeResult(pOut);
 		}
 
-		RedrawAll();
+		Plugin()->RedrawAll();
 	}
 
 //#ifdef _DEBUG
@@ -3387,7 +3388,7 @@ DWORD WINAPI MonitorThreadProcW(LPVOID lpParameter)
 				SetConEmuEnvVarChild(gpConMapInfo->hConEmuWndDc, gpConMapInfo->hConEmuWndBack);
 
 				// Передернуть отрисовку, чтобы обновить TrueColor
-				RedrawAll();
+				Plugin()->RedrawAll();
 
 				// Inform GUI about our Far/Plugin
 				InitResources();
@@ -6044,21 +6045,6 @@ BOOL StartDebugger()
 	}
 
 	return lbRc;
-}
-
-
-void RedrawAll()
-{
-	if (!FarHwnd) return;
-
-	if (gFarVersion.dwVerMajor==1)
-		RedrawAllA();
-	else if (gFarVersion.dwBuild>=FAR_Y2_VER)
-		FUNC_Y2(RedrawAllW)();
-	else if (gFarVersion.dwBuild>=FAR_Y1_VER)
-		FUNC_Y1(RedrawAllW)();
-	else
-		FUNC_X(RedrawAllW)();
 }
 
 DWORD GetEditorModifiedState()

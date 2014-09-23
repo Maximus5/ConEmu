@@ -256,12 +256,6 @@ void ShowConsoleInfo();
 
 //BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount);
 
-void RedrawAll();
-void RedrawAllA();
-void FUNC_X(RedrawAllW)();
-void FUNC_Y1(RedrawAllW)();
-void FUNC_Y2(RedrawAllW)();
-
 bool FUNC_X(LoadPluginW)(wchar_t* pszPluginPath);
 bool FUNC_Y1(LoadPluginW)(wchar_t* pszPluginPath);
 bool FUNC_Y2(LoadPluginW)(wchar_t* pszPluginPath);
