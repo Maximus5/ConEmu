@@ -747,6 +747,14 @@ bool CSettings::SetOption(LPCWSTR asName, LPCWSTR asValue)
 
 void CSettings::SettingsLoaded(SettingsLoadedFlags slfFlags, LPCWSTR pszCmdLine /*= NULL*/)
 {
+	if ((ghWnd == NULL) || slfFlags & slf_OnResetReload)
+	{
+		gpConEmu->wndX = gpSet->_wndX;
+		gpConEmu->wndY = gpSet->_wndY;
+		gpConEmu->WndWidth.Raw = gpSet->wndWidth.Raw;
+		gpConEmu->WndHeight.Raw = gpSet->wndHeight.Raw;
+	}
+
 	// Recheck dpi settings?
 	if (ghWnd == NULL)
 	{
@@ -900,14 +908,6 @@ void CSettings::SettingsLoaded(SettingsLoadedFlags slfFlags, LPCWSTR pszCmdLine 
 	// Стили окна
 	// Т.к. вызывается из Settings::LoadSettings() то проверка на валидность уже не нужно, оставим только ассерт
 	_ASSERTE(gpSet->_WindowMode == rNormal || gpSet->_WindowMode == rMaximized || gpSet->_WindowMode == rFullScreen);
-
-	if ((ghWnd == NULL) || slfFlags & slf_OnResetReload)
-	{
-		gpConEmu->wndX = gpSet->_wndX;
-		gpConEmu->wndY = gpSet->_wndY;
-		gpConEmu->WndWidth.Raw = gpSet->wndWidth.Raw;
-		gpConEmu->WndHeight.Raw = gpSet->wndHeight.Raw;
-	}
 
 	if (ghWnd == NULL)
 	{

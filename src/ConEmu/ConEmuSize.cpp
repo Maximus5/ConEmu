@@ -1048,7 +1048,7 @@ HMONITOR CConEmuSize::FindInitialMonitor(MONITORINFO* pmi /*= NULL*/)
 	switch (WndWidth.Style)
 	{
 	case ss_Standard:
-		iWidth = WndWidth.Value * gpSet->FontSizeY;
+		iWidth = WndWidth.Value * (gpSet->FontSizeX ? gpSet->FontSizeX : (gpSet->FontSizeY / 2));
 		break;
 	case ss_Percents:
 		iWidth = WndWidth.Value;
@@ -1058,7 +1058,7 @@ HMONITOR CConEmuSize::FindInitialMonitor(MONITORINFO* pmi /*= NULL*/)
 	switch (WndHeight.Style)
 	{
 	case ss_Standard:
-		iHeight = WndHeight.Value * (gpSet->FontSizeX ? gpSet->FontSizeX : (gpSet->FontSizeY / 2));
+		iHeight = WndHeight.Value * gpSet->FontSizeY;
 		break;
 	case ss_Percents:
 		iWidth = WndHeight.Value;
