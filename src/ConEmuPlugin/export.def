@@ -7,7 +7,6 @@ EXPORTS
 	ProcessEditorEventW
 	ProcessViewerEventW
 	ProcessSynchroEventW
-	ProcessDialogEventW
 ; Far2 (only)
 	GetMinFarVersionW
 	OpenPluginW
@@ -23,7 +22,6 @@ EXPORTS
 	ProcessViewerEvent
 	GetMinFarVersion
 	OpenPlugin
-	ProcessDialogEvent
 ;  ConEmu API (Far independent)
 	GetFarVersion
 	GetFarHWND

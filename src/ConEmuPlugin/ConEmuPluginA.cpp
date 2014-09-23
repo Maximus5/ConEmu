@@ -712,11 +712,6 @@ bool UpdateConEmuTabsA(int anEvent, bool losingFocus, bool editorSave, void *Par
 	return (lbCh != FALSE);
 }
 
-int WINAPI _export ProcessDialogEvent(int Event, void *Param)
-{
-	return FALSE; // разрешение обработки фаром/другими плагинами
-}
-
 void   WINAPI _export ExitFAR(void)
 {
 	ShutdownPluginStep(L"ExitFAR");

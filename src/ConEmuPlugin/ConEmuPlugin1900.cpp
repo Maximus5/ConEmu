@@ -73,12 +73,6 @@ int WINAPI ProcessViewerEventW1900(void* p)
 	return Plugin()->ProcessViewerEvent(Info->Event, Info->Param);
 }
 
-int WINAPI ProcessDialogEventW1900(void* p)
-{
-	const ProcessDialogEventInfo* Info = (const ProcessDialogEventInfo*)p;
-	return Plugin()->ProcessDialogEvent(Info->Event, Info->Param);
-}
-
 int CPluginW1900::ProcessSynchroEvent(void* p)
 {
 	const ProcessSynchroEventInfo* Info = (const ProcessSynchroEventInfo*)p;

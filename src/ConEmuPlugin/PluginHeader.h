@@ -363,8 +363,6 @@ int WINAPI FUNC_Y1(ProcessEditorEventW)(void* p);
 INT_PTR WINAPI FUNC_Y2(ProcessEditorEventW)(void* p);
 int WINAPI FUNC_Y1(ProcessViewerEventW)(void* p);
 INT_PTR WINAPI FUNC_Y2(ProcessViewerEventW)(void* p);
-int WINAPI FUNC_Y1(ProcessDialogEventW)(void* p);
-INT_PTR WINAPI FUNC_Y2(ProcessDialogEventW)(void* p);
 
 HANDLE WINAPI FUNC_Y1(OpenW)(const void* apInfo);
 HANDLE WINAPI FUNC_Y2(OpenW)(const void* apInfo);

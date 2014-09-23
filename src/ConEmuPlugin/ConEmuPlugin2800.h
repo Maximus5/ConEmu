@@ -62,7 +62,6 @@ public:
 	virtual HANDLE  Open(const void* apInfo) override;
 	virtual bool    OpenEditor(LPCWSTR asFileName, bool abView, bool abDeleteTempFile, bool abDetectCP = false, int anStartLine = 0, int anStartChar = 1) override;
 	virtual void    PostMacroApi(const wchar_t* asMacro, INPUT_RECORD* apRec) override;
-	virtual int     ProcessDialogEvent(void* p) override;
 	virtual void    ProcessDragFrom() override;
 	virtual void    ProcessDragTo() override;
 	virtual int     ProcessEditorEvent(int Event, void *Param) override;

@@ -543,7 +543,6 @@ extern "C"
 
 int WINAPI ProcessEditorEventW(int Event, void *Param);
 int WINAPI ProcessViewerEventW(int Event, void *Param);
-int WINAPI ProcessDialogEventW(int Event, void *Param);
 
 #ifdef __cplusplus
 };
@@ -560,12 +559,6 @@ INT_PTR WINAPI ProcessViewerEventW2800(void* p)
 {
 	const ProcessViewerEventInfo* Info = (const ProcessViewerEventInfo*)p;
 	return ProcessViewerEventW(Info->Event, Info->Param);
-}
-
-INT_PTR WINAPI ProcessDialogEventW2800(void* p)
-{
-	const ProcessDialogEventInfo* Info = (const ProcessDialogEventInfo*)p;
-	return ProcessDialogEventW(Info->Event, Info->Param);
 }
 
 int CPluginW2800::ProcessSynchroEvent(void* p)

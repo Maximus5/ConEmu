@@ -1271,8 +1271,6 @@ int WINAPI ProcessEditorEventW(int Event, void *Param);
 INT_PTR WINAPI ProcessEditorEventW3(void*);
 int WINAPI ProcessViewerEventW(int Event, void *Param);
 INT_PTR WINAPI ProcessViewerEventW3(void*);
-int WINAPI ProcessDialogEventW(int Event, void *Param);
-INT_PTR WINAPI ProcessDialogEventW3(void*);
 
 #include "../common/SetExport.h"
 ExportFunc Far3Func[] =
@@ -1280,7 +1278,6 @@ ExportFunc Far3Func[] =
 	{"ExitFARW", (void*)ExitFARW, (void*)ExitFARW3},
 	{"ProcessEditorEventW", (void*)ProcessEditorEventW, (void*)ProcessEditorEventW3},
 	{"ProcessViewerEventW", (void*)ProcessViewerEventW, (void*)ProcessViewerEventW3},
-	{"ProcessDialogEventW", (void*)ProcessDialogEventW, (void*)ProcessDialogEventW3},
 	{"ProcessSynchroEventW", (void*)ProcessSynchroEventW, (void*)ProcessSynchroEventW3},
 	{NULL}
 };
@@ -3820,169 +3817,6 @@ void StopThread(void)
 	ShutdownPluginStep(L"StopThread - done");
 }
 
-
-int WINAPI ProcessDialogEventW(int Event, void *Param)
-{
-#ifdef _DEBUG
-	static struct
-		{ int Evt; LPCWSTR pszName; } sDlgEvents[]
-	=
-	{
-		//{ DM_FIRST,		L"DM_FIRST"},
-		{ DM_CLOSE,		L"DM_CLOSE"},
-		{ DM_ENABLE,		L"DM_ENABLE"},
-		{ DM_ENABLEREDRAW,		L"DM_ENABLEREDRAW"},
-		{ DM_GETDLGDATA,		L"DM_GETDLGDATA"},
-		{ DM_GETDLGITEM,		L"DM_GETDLGITEM"},
-		{ DM_GETDLGRECT,		L"DM_GETDLGRECT"},
-		{ DM_GETTEXT,		L"DM_GETTEXT"},
-		{ DM_GETTEXTLENGTH,		L"DM_GETTEXTLENGTH"},
-		{ DM_KEY,		L"DM_KEY"},
-		{ DM_MOVEDIALOG,		L"DM_MOVEDIALOG"},
-		{ DM_SETDLGDATA,		L"DM_SETDLGDATA"},
-		{ DM_SETDLGITEM,		L"DM_SETDLGITEM"},
-		{ DM_SETFOCUS,		L"DM_SETFOCUS"},
-		{ DM_REDRAW,		L"DM_REDRAW"},
-		{ DM_SETREDRAW,		L"DM_SETREDRAW"},
-		{ DM_SETTEXT,		L"DM_SETTEXT"},
-		{ DM_SETMAXTEXTLENGTH,		L"DM_SETMAXTEXTLENGTH"},
-		{ DM_SETTEXTLENGTH,		L"DM_SETTEXTLENGTH"},
-		{ DM_SHOWDIALOG,		L"DM_SHOWDIALOG"},
-		{ DM_GETFOCUS,		L"DM_GETFOCUS"},
-		{ DM_GETCURSORPOS,		L"DM_GETCURSORPOS"},
-		{ DM_SETCURSORPOS,		L"DM_SETCURSORPOS"},
-		{ DM_GETTEXTPTR,		L"DM_GETTEXTPTR"},
-		{ DM_SETTEXTPTR,		L"DM_SETTEXTPTR"},
-		{ DM_SHOWITEM,		L"DM_SHOWITEM"},
-		{ DM_ADDHISTORY,		L"DM_ADDHISTORY"},
-		{ DM_GETCHECK,		L"DM_GETCHECK"},
-		{ DM_SETCHECK,		L"DM_SETCHECK"},
-		{ DM_SET3STATE,		L"DM_SET3STATE"},
-		{ DM_LISTSORT,		L"DM_LISTSORT"},
-		{ DM_LISTGETITEM,		L"DM_LISTGETITEM"},
-		{ DM_LISTGETCURPOS,		L"DM_LISTGETCURPOS"},
-		{ DM_LISTSETCURPOS,		L"DM_LISTSETCURPOS"},
-		{ DM_LISTDELETE,		L"DM_LISTDELETE"},
-		{ DM_LISTADD,		L"DM_LISTADD"},
-		{ DM_LISTADDSTR,		L"DM_LISTADDSTR"},
-		{ DM_LISTUPDATE,		L"DM_LISTUPDATE"},
-		{ DM_LISTINSERT,		L"DM_LISTINSERT"},
-		{ DM_LISTFINDSTRING,		L"DM_LISTFINDSTRING"},
-		{ DM_LISTINFO,		L"DM_LISTINFO"},
-		{ DM_LISTGETDATA,		L"DM_LISTGETDATA"},
-		{ DM_LISTSETDATA,		L"DM_LISTSETDATA"},
-		{ DM_LISTSETTITLES,		L"DM_LISTSETTITLES"},
-		{ DM_LISTGETTITLES,		L"DM_LISTGETTITLES"},
-		{ DM_RESIZEDIALOG,		L"DM_RESIZEDIALOG"},
-		{ DM_SETITEMPOSITION,		L"DM_SETITEMPOSITION"},
-		{ DM_GETDROPDOWNOPENED,		L"DM_GETDROPDOWNOPENED"},
-		{ DM_SETDROPDOWNOPENED,		L"DM_SETDROPDOWNOPENED"},
-		{ DM_SETHISTORY,		L"DM_SETHISTORY"},
-		{ DM_GETITEMPOSITION,		L"DM_GETITEMPOSITION"},
-		{ DM_SETMOUSEEVENTNOTIFY,		L"DM_SETMOUSEEVENTNOTIFY"},
-		{ DM_EDITUNCHANGEDFLAG,		L"DM_EDITUNCHANGEDFLAG"},
-		{ DM_GETITEMDATA,		L"DM_GETITEMDATA"},
-		{ DM_SETITEMDATA,		L"DM_SETITEMDATA"},
-		{ DM_LISTSET,		L"DM_LISTSET"},
-		{ DM_LISTSETMOUSEREACTION,		L"DM_LISTSETMOUSEREACTION"},
-		{ DM_GETCURSORSIZE,		L"DM_GETCURSORSIZE"},
-		{ DM_SETCURSORSIZE,		L"DM_SETCURSORSIZE"},
-		{ DM_LISTGETDATASIZE,		L"DM_LISTGETDATASIZE"},
-		{ DM_GETSELECTION,		L"DM_GETSELECTION"},
-		{ DM_SETSELECTION,		L"DM_SETSELECTION"},
-		{ DM_GETEDITPOSITION,		L"DM_GETEDITPOSITION"},
-		{ DM_SETEDITPOSITION,		L"DM_SETEDITPOSITION"},
-		{ DM_SETCOMBOBOXEVENT,		L"DM_SETCOMBOBOXEVENT"},
-		{ DM_GETCOMBOBOXEVENT,		L"DM_GETCOMBOBOXEVENT"},
-		{ DM_GETCONSTTEXTPTR,		L"DM_GETCONSTTEXTPTR"},
-		{ DM_GETDLGITEMSHORT,		L"DM_GETDLGITEMSHORT"},
-		{ DM_SETDLGITEMSHORT,		L"DM_SETDLGITEMSHORT"},
-		//{ DM_GETDIALOGINFO,		L"DM_GETDIALOGINFO"},
-		//{ DN_FIRST,		L"DN_FIRST"},
-		{ DN_BTNCLICK,		L"DN_BTNCLICK"},
-		{ DN_CTLCOLORDIALOG,		L"DN_CTLCOLORDIALOG"},
-		{ DN_CTLCOLORDLGITEM,		L"DN_CTLCOLORDLGITEM"},
-		{ DN_CTLCOLORDLGLIST,		L"DN_CTLCOLORDLGLIST"},
-		{ DN_DRAWDIALOG,		L"DN_DRAWDIALOG"},
-		{ DN_DRAWDLGITEM,		L"DN_DRAWDLGITEM"},
-		{ DN_EDITCHANGE,		L"DN_EDITCHANGE"},
-		{ DN_ENTERIDLE,		L"DN_ENTERIDLE"},
-		{ DN_GOTFOCUS,		L"DN_GOTFOCUS"},
-		{ DN_HELP,		L"DN_HELP"},
-		{ DN_HOTKEY,		L"DN_HOTKEY"},
-		{ DN_INITDIALOG,		L"DN_INITDIALOG"},
-		{ DN_KILLFOCUS,		L"DN_KILLFOCUS"},
-		{ DN_LISTCHANGE,		L"DN_LISTCHANGE"},
-		{ DN_MOUSECLICK,		L"DN_MOUSECLICK"},
-		{ DN_DRAGGED,		L"DN_DRAGGED"},
-		{ DN_RESIZECONSOLE,		L"DN_RESIZECONSOLE"},
-		{ DN_MOUSEEVENT,		L"DN_MOUSEEVENT"},
-		{ DN_DRAWDIALOGDONE,		L"DN_DRAWDIALOGDONE"},
-		{ DN_LISTHOTKEY,		L"DN_LISTHOTKEY"},
-		//{ DN_GETDIALOGINFO,		L"DN_GETDIALOGINFO"},
-		{ DN_CLOSE,		L"DN_CLOSE"},
-		{ DN_KEY,		L"DN_KEY"},
-		{ DM_USER,		L"DM_USER"},
-	};
-
-	if (Event == DE_DLGPROCINIT || Event == DE_DEFDLGPROCINIT || Event == DE_DLGPROCEND)
-	{
-		FarDialogEvent* p = (FarDialogEvent*)Param;
-
-		if (p->Msg != DN_ENTERIDLE)
-		{
-			wchar_t szDbg[512]; szDbg[0] = 0;
-			LPCWSTR pszName = NULL; wchar_t szEvtTemp[32];
-
-			for(int i = 0; i < countof(sDlgEvents); i++)
-			{
-				if (sDlgEvents[i].Evt == p->Msg)
-				{
-					pszName = sDlgEvents[i].pszName;
-					break;
-				}
-			}
-
-			if (!pszName)
-			{
-				if (p->Msg >= DM_USER)
-					_wsprintf(szEvtTemp, SKIPLEN(countof(szEvtTemp)) L"DM_USER+%u", (p->Msg - DM_USER));
-				else
-					_wsprintf(szEvtTemp, SKIPLEN(countof(szEvtTemp)) L"(Msg=%u)", p->Msg);
-
-				pszName = szEvtTemp;
-			}
-
-			switch(Event)
-			{
-				case DE_DLGPROCINIT:
-				{
-					_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"FarDlgEvent->Prc: %s; hDlg=x%08X; P1=%i; P1=0x%08X\n",
-					          pszName, (DWORD)p->hDlg, p->Param1, (DWORD)p->Param2);
-				} break;
-				case DE_DEFDLGPROCINIT:
-				{
-					_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"FarDlgEvent->Def: %s; hDlg=x%08X; P1=%i; P1=0x%08X\n",
-					          pszName, (DWORD)p->hDlg, p->Param1, (DWORD)p->Param2);
-				} break;
-				case DE_DLGPROCEND:
-				{
-					_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"FarDlgEvent->Res: %s; hDlg=x%08X; P1=%i; P1=0x%08X; Result=%i\n",
-					          pszName, (DWORD)p->hDlg, p->Param1, (DWORD)p->Param2, (int)p->Result);
-				} break;
-			};
-
-			if (szDbg[0])
-			{
-				DEBUGSTRDLGEVT(szDbg);
-			}
-		}
-	}
-
-#endif
-	return FALSE; // разрешение обработки фаром/другими плагинами
-}
-
 HANDLE WINAPI OpenW(const void* Info)
 {
 	HANDLE hResult = NULL;
@@ -4023,14 +3857,6 @@ INT_PTR WINAPI ProcessViewerEventW3(void* p)
 		return FUNC_Y2(ProcessViewerEventW)(p);
 	else //if (gFarVersion.dwBuild>=FAR_Y1_VER)
 		return FUNC_Y1(ProcessViewerEventW)(p);
-}
-
-INT_PTR WINAPI ProcessDialogEventW3(void* p)
-{
-	if (gFarVersion.dwBuild>=FAR_Y2_VER)
-		return FUNC_Y2(ProcessDialogEventW)(p);
-	else //if (gFarVersion.dwBuild>=FAR_Y1_VER)
-		return FUNC_Y1(ProcessDialogEventW)(p);
 }
 
 void ExitFarCmn()
