@@ -224,3 +224,31 @@ bool CPluginBase::isMacroActive(int& iMacroActive)
 
 	return (iMacroActive == 1);
 }
+
+void CPluginBase::UpdatePanelDirs()
+{
+	bool bChanged = false;
+
+	_ASSERTE(gPanelDirs.ActiveDir && gPanelDirs.PassiveDir);
+	CmdArg* Pnls[] = {gPanelDirs.ActiveDir, gPanelDirs.PassiveDir};
+
+	for (int i = 0; i <= 1; i++)
+	{
+		GetPanelDirFlags Flags = ((i == 0) ? gpdf_Active : gpdf_Passive) | gpdf_NoPlugin;
+
+		wchar_t* pszDir = GetPanelDir(Flags);
+
+		if (pszDir && (lstrcmp(pszDir, Pnls[i]->ms_Arg ? Pnls[i]->ms_Arg : L"") != 0))
+		{
+			Pnls[i]->Set(pszDir);
+			bChanged = true;
+		}
+		SafeFree(pszDir);
+	}
+
+	if (bChanged)
+	{
+		// Send to GUI
+		SendCurrentDirectory(FarHwnd, gPanelDirs.ActiveDir->ms_Arg, gPanelDirs.PassiveDir->ms_Arg);
+	}
+}

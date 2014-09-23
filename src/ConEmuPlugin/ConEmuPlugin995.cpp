@@ -55,10 +55,24 @@ struct FarStandardFunctions *FSFW995=NULL;
 //void WaitEndSynchroW995();
 
 
-wchar_t* CPluginW995::GetPanelDir(HANDLE hPanel)
+wchar_t* CPluginW995::GetPanelDir(GetPanelDirFlags Flags)
 {
+	if (!InfoW995)
+		return NULL;
+
 	wchar_t* pszDir = NULL;
-	size_t nSize = InfoW995->Control(hPanel, FCTL_GETPANELDIR, 0, 0);
+	HANDLE hPanel = (Flags & gpdf_Active) ? PANEL_ACTIVE : PANEL_PASSIVE;
+	size_t nSize;
+
+	PanelInfo pi = {};
+	InfoW995->Control(hPanel, FCTL_GETPANELINFO, 0, (LONG_PTR)&pi);
+
+	if ((Flags & gpdf_NoHidden) && !pi.Visible)
+		return NULL;
+	if ((Flags & gpdf_NoPlugin) && pi.Plugin)
+		return NULL;
+
+	nSize = InfoW995->Control(hPanel, FCTL_GETPANELDIR, 0, 0);
 
 	if (nSize)
 	{
@@ -125,7 +139,7 @@ void CPluginW995::ProcessDragFrom()
 
 	if ((PInfo.PanelType == PTYPE_FILEPANEL || PInfo.PanelType == PTYPE_TREEPANEL) && PInfo.Visible)
 	{
-		szCurDir = GetPanelDir(PANEL_ACTIVE);
+		szCurDir = GetPanelDir(gpdf_Active);
 		if (!szCurDir)
 		{
 			_ASSERTE(szCurDir!=NULL);
@@ -344,13 +358,13 @@ void CPluginW995::ProcessDragTo()
 	WCHAR *szADir = NULL;
 	//if (!(lbAOK=InfoW995->Control(PANEL_ACTIVE, FCTL_GETPANELSHORTINFO, &PAInfo)))
 	lbAOK=InfoW995->Control(PANEL_ACTIVE, FCTL_GETPANELINFO, 0, (LONG_PTR)&PAInfo) &&
-	      (szADir = GetPanelDir(PANEL_ACTIVE));
+	      (szADir = GetPanelDir(gpdf_Active));
 
 	if (lbAOK && szADir)
 		nStructSize += (lstrlen(szADir))*sizeof(WCHAR); //-V103
 
 	lbPOK=InfoW995->Control(PANEL_PASSIVE, FCTL_GETPANELINFO, 0, (LONG_PTR)&PPInfo) &&
-	      (szPDir = GetPanelDir(PANEL_PASSIVE));
+	      (szPDir = GetPanelDir(gpdf_Passive));
 
 	if (lbPOK && szPDir)
 		nStructSize += (lstrlen(szPDir))*sizeof(WCHAR); // Именно WCHAR! не TCHAR //-V103
@@ -477,40 +491,6 @@ int CPluginW995::ProcessEditorInput(LPCVOID aRec)
 	}
 
 	return 0;
-}
-
-bool CPluginW995::UpdatePanelDirs()
-{
-	if (!InfoW995 || !InfoW995->Control)
-		return false;
-
-	bool bChanged = false;
-
-	struct tag_Panels {
-		HANDLE hPanel;
-		CmdArg* pStr;
-	} Pnls[] = {
-		{PANEL_ACTIVE, gPanelDirs.ActiveDir},
-		{PANEL_PASSIVE, gPanelDirs.PassiveDir},
-	};
-
-	for (int i = 0; i <= 1; i++)
-	{
-		PanelInfo PInfo = {};
-		InfoW995->Control(PANEL_ACTIVE, FCTL_GETPANELINFO, 0, (LONG_PTR)&PInfo);
-		if ((PInfo.PanelType != PTYPE_FILEPANEL) || PInfo.Plugin)
-			continue;
-
-		wchar_t* pszDir = GetPanelDir(Pnls[i].hPanel);
-		if (pszDir && (lstrcmp(pszDir, Pnls[i].pStr->ms_Arg ? Pnls[i].pStr->ms_Arg : L"") != 0))
-		{
-			Pnls[i].pStr->Set(pszDir);
-			bChanged = true;
-		}
-		SafeFree(pszDir);
-	}
-
-	return bChanged;
 }
 
 bool CPluginW995::UpdateConEmuTabs(int anEvent, bool losingFocus, bool editorSave, void* Param/*=NULL*/)

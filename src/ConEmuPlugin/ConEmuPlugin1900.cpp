@@ -85,13 +85,22 @@ int WINAPI ProcessSynchroEventW1900(void* p)
 
 //void WaitEndSynchroW1900();
 
-wchar_t* CPluginW1900::GetPanelDir(HANDLE hPanel)
+wchar_t* CPluginW1900::GetPanelDir(GetPanelDirFlags Flags)
 {
+	if (!InfoW1900)
+		return NULL;
+
 	wchar_t* pszDir = NULL;
+	HANDLE hPanel = (Flags & gpdf_Active) ? PANEL_ACTIVE : PANEL_PASSIVE;
 	size_t nSize;
 
 	PanelInfo pi = {sizeof(pi)};
 	nSize = InfoW1900->PanelControl(hPanel, FCTL_GETPANELINFO, 0, &pi);
+
+	if ((Flags & gpdf_NoHidden) && !(pi.Flags & PFLAGS_VISIBLE))
+		return NULL;
+	if ((Flags & gpdf_NoPlugin) && (pi.Flags & PFLAGS_PLUGIN))
+		return NULL;
 
 	nSize = InfoW1900->PanelControl(hPanel, FCTL_GETPANELDIRECTORY, 0, 0);
 
@@ -172,7 +181,7 @@ void CPluginW1900::ProcessDragFrom()
 	if ((PInfo.PanelType == PTYPE_FILEPANEL || PInfo.PanelType == PTYPE_TREEPANEL)
 		&& (PInfo.Flags & PFLAGS_VISIBLE))
 	{
-		szCurDir = GetPanelDir(PANEL_ACTIVE);
+		szCurDir = GetPanelDir(gpdf_Active);
 		if (!szCurDir)
 		{
 			_ASSERTE(szCurDir!=NULL);
@@ -392,13 +401,13 @@ void CPluginW1900::ProcessDragTo()
 	WCHAR *szADir = NULL;
 	//if (!(lbAOK=InfoW1900->PanelControl(PANEL_ACTIVE, FCTL_GETPANELSHORTINFO, &PAInfo)))
 	lbAOK=InfoW1900->PanelControl(PANEL_ACTIVE, FCTL_GETPANELINFO, 0, &PAInfo) &&
-	      (szADir = GetPanelDir(PANEL_ACTIVE));
+	      (szADir = GetPanelDir(gpdf_Active));
 
 	if (lbAOK && szADir)
 		nStructSize += (lstrlen(szADir))*sizeof(WCHAR);
 
 	lbPOK=InfoW1900->PanelControl(PANEL_PASSIVE, FCTL_GETPANELINFO, 0, &PPInfo) &&
-	      (szPDir = GetPanelDir(PANEL_PASSIVE));
+	      (szPDir = GetPanelDir(gpdf_Passive));
 
 	if (lbPOK && szPDir)
 		nStructSize += (lstrlen(szPDir))*sizeof(WCHAR); // Именно WCHAR! не TCHAR
@@ -527,40 +536,6 @@ int CPluginW1900::ProcessEditorInput(LPCVOID aRec)
 	}
 
 	return 0;
-}
-
-bool CPluginW1900::UpdatePanelDirs()
-{
-	if (!InfoW1900 || !InfoW1900->PanelControl)
-		return false;
-
-	bool bChanged = false;
-
-	struct tag_Panels {
-		HANDLE hPanel;
-		CmdArg* pStr;
-	} Pnls[] = {
-		{PANEL_ACTIVE, gPanelDirs.ActiveDir},
-		{PANEL_PASSIVE, gPanelDirs.PassiveDir},
-	};
-
-	for (int i = 0; i <= 1; i++)
-	{
-		PanelInfo PInfo = {sizeof(PInfo)};
-		InfoW1900->PanelControl(PANEL_ACTIVE, FCTL_GETPANELINFO, NULL, &PInfo);
-		if ((PInfo.PanelType != PTYPE_FILEPANEL) || (PInfo.Flags & PFLAGS_PLUGIN))
-			continue;
-
-		wchar_t* pszDir = GetPanelDir(Pnls[i].hPanel);
-		if (pszDir && (lstrcmp(pszDir, Pnls[i].pStr->ms_Arg ? Pnls[i].pStr->ms_Arg : L"") != 0))
-		{
-			Pnls[i].pStr->Set(pszDir);
-			bChanged = true;
-		}
-		SafeFree(pszDir);
-	}
-
-	return bChanged;
 }
 
 bool CPluginW1900::UpdateConEmuTabs(int anEvent, bool losingFocus, bool editorSave, void* Param/*=NULL*/)
@@ -1332,7 +1307,7 @@ bool CPluginW1900::RunExternalProgram(wchar_t* pszCommand)
 		}
 	}
 
-	wchar_t *pszCurDir = GetPanelDir(INVALID_HANDLE_VALUE);
+	wchar_t *pszCurDir = GetPanelDir(gpdf_Active);
 
 	if (!pszCurDir)
 	{
@@ -1622,7 +1597,7 @@ static void CopyPanelInfoW(PanelInfo* pInfo, PaintBackgroundArg::BkPanelInfo* pB
 	pBk->bPlugin = ((pInfo->Flags & PFLAGS_PLUGIN) == PFLAGS_PLUGIN);
 	pBk->nPanelType = (int)pInfo->PanelType;
 	HANDLE hPanel = (pBk->bFocused) ? PANEL_ACTIVE : PANEL_PASSIVE;
-	wchar_t* pszDir = GetPanelDir(hPanel);
+	wchar_t* pszDir = Plugin()->GetPanelDir(pBk->bFocused ? gpdf_Active : gpdf_Passive);
 	//InfoW1900->PanelControl(hPanel, FCTL_GETPANELDIR /* == FCTL_GETPANELDIR == 25*/, BkPanelInfo_CurDirMax, pBk->szCurDir);
 	lstrcpyn(pBk->szCurDir, pszDir ? pszDir : L"", BkPanelInfo_CurDirMax);
 	SafeFree(pszDir);

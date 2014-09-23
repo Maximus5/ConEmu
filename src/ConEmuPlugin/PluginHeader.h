@@ -186,12 +186,6 @@ void CloseTabs();
 HWND AtoH(WCHAR *Str, int Len);
 bool UpdateConEmuTabs(bool abSendChanges);
 
-void UpdatePanelDirs();
-bool UpdatePanelDirsA();
-bool FUNC_X(UpdatePanelDirsW)();
-bool FUNC_Y1(UpdatePanelDirsW)();
-bool FUNC_Y2(UpdatePanelDirsW)();
-
 BOOL LoadFarVersion();
 
 BOOL OutDataAlloc(DWORD anSize); // необязательно

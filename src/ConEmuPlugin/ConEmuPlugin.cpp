@@ -595,7 +595,7 @@ void OnMainThreadActivated()
 	// panel paths may be changed even from editor
 	if (!isMacroActive(iMacroActive))
 	{
-		UpdatePanelDirs();
+		Plugin()->UpdatePanelDirs();
 	}
 
 	// !!! Это только чисто в OnConsolePeekReadInput, т.к. FAR Api тут не используется
@@ -4275,19 +4275,6 @@ VOID WINAPI OnCurDirChanged()
 			gbInputSynchroPending = true;
 			ExecuteSynchro();
 		}
-	}
-}
-
-void UpdatePanelDirs()
-{
-	bool bChanged = false;
-
-	bChanged = Plugin()->UpdatePanelDirs();
-
-	if (bChanged)
-	{
-		// Send to GUI
-		SendCurrentDirectory(FarHwnd, gPanelDirs.ActiveDir->ms_Arg, gPanelDirs.PassiveDir->ms_Arg);
 	}
 }
 

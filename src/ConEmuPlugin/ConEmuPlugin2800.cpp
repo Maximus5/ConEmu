@@ -84,13 +84,22 @@ struct FarStandardFunctions *FSFW2800=NULL;
 
 void WaitEndSynchroW2800();
 
-wchar_t* CPluginW2800::GetPanelDir(HANDLE hPanel)
+wchar_t* CPluginW2800::GetPanelDir(GetPanelDirFlags Flags)
 {
+	if (!InfoW2800)
+		return NULL;
+
 	wchar_t* pszDir = NULL;
+	HANDLE hPanel = (Flags & gpdf_Active) ? PANEL_ACTIVE : PANEL_PASSIVE;
 	size_t nSize;
 
 	PanelInfo pi = {sizeof(pi)};
 	nSize = InfoW2800->PanelControl(hPanel, FCTL_GETPANELINFO, 0, &pi);
+
+	if ((Flags & gpdf_NoHidden) && !(pi.Flags & PFLAGS_VISIBLE))
+		return NULL;
+	if ((Flags & gpdf_NoPlugin) && (pi.Flags & PFLAGS_PLUGIN))
+		return NULL;
 
 	nSize = InfoW2800->PanelControl(hPanel, FCTL_GETPANELDIRECTORY, 0, 0);
 
@@ -171,7 +180,7 @@ void CPluginW2800::ProcessDragFrom()
 	if ((PInfo.PanelType == PTYPE_FILEPANEL || PInfo.PanelType == PTYPE_TREEPANEL)
 		&& (PInfo.Flags & PFLAGS_VISIBLE))
 	{
-		szCurDir = GetPanelDir(PANEL_ACTIVE);
+		szCurDir = GetPanelDir(gpdf_Active);
 		if (!szCurDir)
 		{
 			_ASSERTE(szCurDir!=NULL);
@@ -391,13 +400,13 @@ void CPluginW2800::ProcessDragTo()
 	WCHAR *szADir = NULL;
 	//if (!(lbAOK=InfoW2800->PanelControl(PANEL_ACTIVE, FCTL_GETPANELSHORTINFO, &PAInfo)))
 	lbAOK=InfoW2800->PanelControl(PANEL_ACTIVE, FCTL_GETPANELINFO, 0, &PAInfo) &&
-	      (szADir = GetPanelDir(PANEL_ACTIVE));
+	      (szADir = GetPanelDir(gpdf_Active));
 
 	if (lbAOK && szADir)
 		nStructSize += (lstrlen(szADir))*sizeof(WCHAR);
 
 	lbPOK=InfoW2800->PanelControl(PANEL_PASSIVE, FCTL_GETPANELINFO, 0, &PPInfo) &&
-	      (szPDir = GetPanelDir(PANEL_PASSIVE));
+	      (szPDir = GetPanelDir(gpdf_Passive));
 
 	if (lbPOK && szPDir)
 		nStructSize += (lstrlen(szPDir))*sizeof(WCHAR); // Именно WCHAR! не TCHAR
@@ -566,40 +575,6 @@ int ProcessEditorInputW2800(LPCVOID aRec)
 	}
 
 	return 0;
-}
-
-bool UpdatePanelDirsW2800()
-{
-	if (!InfoW2800 || !InfoW2800->PanelControl)
-		return false;
-
-	bool bChanged = false;
-
-	struct tag_Panels {
-		HANDLE hPanel;
-		CmdArg* pStr;
-	} Pnls[] = {
-		{PANEL_ACTIVE, gPanelDirs.ActiveDir},
-		{PANEL_PASSIVE, gPanelDirs.PassiveDir},
-	};
-
-	for (int i = 0; i <= 1; i++)
-	{
-		PanelInfo PInfo = {sizeof(PInfo)};
-		InfoW2800->PanelControl(PANEL_ACTIVE, FCTL_GETPANELINFO, NULL, &PInfo);
-		if ((PInfo.PanelType != PTYPE_FILEPANEL) || (PInfo.Flags & PFLAGS_PLUGIN))
-			continue;
-
-		wchar_t* pszDir = GetPanelDir(Pnls[i].hPanel);
-		if (pszDir && (lstrcmp(pszDir, Pnls[i].pStr->ms_Arg ? Pnls[i].pStr->ms_Arg : L"") != 0))
-		{
-			Pnls[i].pStr->Set(pszDir);
-			bChanged = true;
-		}
-		SafeFree(pszDir);
-	}
-
-	return bChanged;
 }
 
 bool UpdateConEmuTabsW2800(int anEvent, bool losingFocus, bool editorSave, void* Param/*=NULL*/)

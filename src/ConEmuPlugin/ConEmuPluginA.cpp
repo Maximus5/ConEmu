@@ -49,6 +49,41 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 struct PluginStartupInfo *InfoA=NULL;
 struct FarStandardFunctions *FSFA=NULL;
 
+LPWSTR CPluginAnsi::ToUnicode(LPCSTR asOemStr)
+{
+	if (!asOemStr)
+		return NULL;
+	if (!*asOemStr)
+		return lstrdup(L"");
+
+	int nLen = lstrlenA(asOemStr);
+	wchar_t* pszUnicode = (wchar_t*)calloc((nLen+1),sizeof(*pszUnicode));
+	if (!pszUnicode)
+		return NULL;
+
+	MultiByteToWideChar(CP_OEMCP, 0, asOemStr, nLen, pszUnicode, nLen);
+	return pszUnicode;
+}
+
+wchar_t* CPluginAnsi::GetPanelDir(GetPanelDirFlags Flags)
+{
+	if (!InfoA)
+		return NULL;
+
+	wchar_t* pszDir = NULL;
+	PanelInfo pi = {};
+	InfoA->Control(INVALID_HANDLE_VALUE, (Flags & gpdf_Active) ? FCTL_GETPANELSHORTINFO : FCTL_GETANOTHERPANELSHORTINFO, &pi);
+
+	if ((Flags & gpdf_NoHidden) && !pi.Visible)
+		return NULL;
+	if ((Flags & gpdf_NoPlugin) && pi.Plugin)
+		return NULL;
+
+	if (pi.CurDir[0])
+		pszDir = ToUnicode(pi.CurDir);
+
+	return pszDir;
+}
 
 
 HANDLE WINAPI _export OpenPlugin(int OpenFrom,INT_PTR Item)
@@ -556,40 +591,6 @@ int WINAPI _export ProcessViewerEvent(int Event, void *Param)
 	}
 
 	return 0;
-}
-
-bool UpdatePanelDirsA()
-{
-	if (!InfoA)
-		return false;
-
-	bool bChanged = false;
-
-	struct tag_Panels {
-		int iCmd;
-		CmdArg* pStr;
-	} Pnls[] = {
-		{FCTL_GETPANELSHORTINFO, gPanelDirs.ActiveDir},
-		{FCTL_GETANOTHERPANELSHORTINFO, gPanelDirs.PassiveDir},
-	};
-
-	for (int i = 0; i <= 1; i++)
-	{
-		PanelInfo pi = {};
-		wchar_t szWide[NM] = L"";
-		if (InfoA->Control(INVALID_HANDLE_VALUE, Pnls[i].iCmd, &pi)
-			&& !pi.Plugin)
-		{
-			MultiByteToWideChar(CP_OEMCP, 0, pi.CurDir, -1, szWide, countof(szWide));
-			if (lstrcmp(szWide, Pnls[i].pStr->ms_Arg ? Pnls[i].pStr->ms_Arg : L"") != 0)
-			{
-				Pnls[i].pStr->Set(szWide);
-				bChanged = true;
-			}
-		}
-	}
-
-	return bChanged;
 }
 
 extern MSection *csTabs;

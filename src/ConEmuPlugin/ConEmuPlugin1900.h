@@ -51,7 +51,7 @@ public:
 	virtual DWORD   GetEditorModifiedState() override;
 	virtual int     GetMacroArea() override;
 	virtual LPCWSTR GetMsg(int aiMsg, wchar_t* psMsg = NULL, size_t cchMsgMax = 0) override;
-	virtual LPWSTR  GetPanelDir(HANDLE hPanel) override;
+	virtual LPWSTR  GetPanelDir(GetPanelDirFlags Flags) override;
 	virtual void    GetPluginInfo(void* piv) override; // PluginInfo* versioned
 	virtual void    GuiMacroDlg() override;
 	virtual BOOL    IsMacroActive() override;

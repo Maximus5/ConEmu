@@ -31,6 +31,16 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <windows.h>
 #include "../common/common.hpp"
 
+struct ConEmuPluginMenuItem;
+
+typedef DWORD GetPanelDirFlags;
+const GetPanelDirFlags
+	gpdf_NoPlugin = 1,
+	gpdf_NoHidden = 2,
+	gpdf_Active   = 4,
+	gpdf_Passive  = 0
+;
+
 class CPluginBase
 {
 public:
@@ -40,6 +50,7 @@ public:
 	int ShowMessageGui(int aiMsg, int aiButtons);
 	void PostMacro(const wchar_t* asMacro, INPUT_RECORD* apRec);
 	bool isMacroActive(int& iMacroActive);
+	void UpdatePanelDirs();
 
 public:
 	virtual BOOL    CheckBufferEnabled() = 0;
@@ -52,7 +63,7 @@ public:
 	virtual DWORD   GetEditorModifiedState() = 0;
 	virtual int     GetMacroArea() = 0;
 	virtual LPCWSTR GetMsg(int aiMsg, wchar_t* psMsg = NULL, size_t cchMsgMax = 0) = 0;
-	virtual LPWSTR  GetPanelDir(HANDLE hPanel) = 0;
+	virtual LPWSTR  GetPanelDir(GetPanelDirFlags Flags) = 0;
 	virtual void    GetPluginInfo(void* piv) = 0; // PluginInfo* versioned
 	virtual void    GuiMacroDlg() = 0;
 	virtual BOOL    IsMacroActive() = 0;
