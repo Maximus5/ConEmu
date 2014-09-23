@@ -292,3 +292,17 @@ bool CPluginBase::RunExternalProgram(wchar_t* pszCommand)
 
 	return TRUE;
 }
+
+bool CPluginBase::ProcessCommandLine(wchar_t* pszCommand)
+{
+	if (!pszCommand)
+		return false;
+
+	if (lstrcmpni(pszCommand, L"run:", 4) == 0)
+	{
+		RunExternalProgram(pszCommand+4); //-V112
+		return true;
+	}
+
+	return false;
+}

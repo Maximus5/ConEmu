@@ -52,6 +52,7 @@ public:
 	bool isMacroActive(int& iMacroActive);
 	void UpdatePanelDirs();
 	bool RunExternalProgram(wchar_t* pszCommand);
+	bool ProcessCommandLine(wchar_t* pszCommand);
 
 public:
 	virtual BOOL    CheckBufferEnabled() = 0;
@@ -75,7 +76,6 @@ public:
 	#endif
 	virtual HANDLE  Open(const void* apInfo) = 0;
 	virtual void    PostMacroApi(const wchar_t* asMacro, INPUT_RECORD* apRec) = 0;
-	virtual bool    ProcessCommandLine(wchar_t* pszCommand) = 0;
 	virtual int     ProcessDialogEvent(void* p) = 0;
 	virtual void    ProcessDragFrom() = 0;
 	virtual void    ProcessDragTo() = 0;

@@ -1004,19 +1004,6 @@ void CPluginW995::ShowUserScreen(bool bUserScreen)
 		InfoW995->Control(INVALID_HANDLE_VALUE, FCTL_SETUSERSCREEN, 0, 0);
 }
 
-bool CPluginW995::ProcessCommandLine(wchar_t* pszCommand)
-{
-	if (!InfoW995 || !FSFW995) return false;
-
-	if (FSFW995->LStrnicmp(pszCommand, L"run:", 4)==0)
-	{
-		RunExternalProgramW995(pszCommand+4); //-V112
-		return true;
-	}
-
-	return false;
-}
-
 //static void FarPanel2CePanel(PanelInfo* pFar, CEFAR_SHORT_PANEL_INFO* pCE)
 //{
 //	pCE->PanelType = pFar->PanelType;

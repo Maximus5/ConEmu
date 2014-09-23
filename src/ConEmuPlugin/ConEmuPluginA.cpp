@@ -115,7 +115,9 @@ HANDLE WINAPI _export OpenPlugin(int OpenFrom,INT_PTR Item)
 
 	if (OpenFrom == OPEN_COMMANDLINE && Item)
 	{
-		ProcessCommandLineA((char*)Item);
+		wchar_t* pszUnicode = CPluginAnsi::ToUnicode((char*)Item);
+		Plugin()->ProcessCommandLine(pszUnicode);
+		SafeFree(pszUnicode);
 		return INVALID_HANDLE_VALUE;
 	}
 
@@ -985,19 +987,6 @@ void CPluginAnsi::ShowUserScreen(bool bUserScreen)
 		InfoA->Control(INVALID_HANDLE_VALUE, FCTL_GETUSERSCREEN, 0);
 	else
 		InfoA->Control(INVALID_HANDLE_VALUE, FCTL_SETUSERSCREEN, 0);
-}
-
-bool ProcessCommandLineA(char* pszCommand)
-{
-	if (!InfoA || !FSFA) return false;
-
-	if (FSFA->LStrnicmp(pszCommand, "run:", 4)==0) //-V112
-	{
-		RunExternalProgramA(pszCommand+4); //-V112
-		return true;
-	}
-
-	return false;
 }
 
 

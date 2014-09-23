@@ -1290,19 +1290,6 @@ void CPluginW1900::ShowUserScreen(bool bUserScreen)
 		InfoW1900->PanelControl(INVALID_HANDLE_VALUE, FCTL_SETUSERSCREEN, 0, 0);
 }
 
-bool CPluginW1900::ProcessCommandLine(wchar_t* pszCommand)
-{
-	if (!InfoW1900 || !FSFW1900) return false;
-
-	if (FSFW1900->LStrnicmp(pszCommand, L"run:", 4)==0)
-	{
-		RunExternalProgramW1900(pszCommand+4); //-V112
-		return true;
-	}
-
-	return false;
-}
-
 //static void FarPanel2CePanel(PanelInfo* pFar, CEFAR_SHORT_PANEL_INFO* pCE)
 //{
 //	pCE->PanelType = pFar->PanelType;

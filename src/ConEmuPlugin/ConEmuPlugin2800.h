@@ -62,7 +62,6 @@ public:
 	#endif
 	virtual HANDLE  Open(const void* apInfo) override;
 	virtual void    PostMacroApi(const wchar_t* asMacro, INPUT_RECORD* apRec) override;
-	virtual bool    ProcessCommandLine(wchar_t* pszCommand) override;
 	virtual int     ProcessDialogEvent(void* p) override;
 	virtual void    ProcessDragFrom() override;
 	virtual void    ProcessDragTo() override;
