@@ -43,11 +43,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRACTIVATE(s) DEBUGSTR(s)
 
 
-//#include <stdio.h>
 #include <windows.h>
-//#include <windowsx.h>
-//#include <string.h>
-//#include <tchar.h>
 #include "../common/common.hpp"
 #include "../common/MWow64Disable.h"
 #include "../ConEmuHk/SetHook.h"
@@ -100,7 +96,6 @@ enum CallPluginCmdId
 #define ATTACH_START_SERVER_TIMEOUT 10000
 
 #define CMD__EXTERNAL_CALLBACK 0x80001
-//typedef void (WINAPI* SyncExecuteCallback_t)(LONG_PTR lParam);
 struct SyncExecuteArg
 {
 	DWORD nCmd;
@@ -135,12 +130,8 @@ DWORD gdwPreDetachGuiPID = 0;
 DWORD gdwServerPID = 0;
 BOOL TerminalMode = FALSE;
 HWND FarHwnd = NULL;
-//WARNING("Убрать, заменить ghConIn на GetStdHandle()"); // Иначе в Win7 будет буфер разрушаться
-//HANDLE ghConIn = NULL;
 DWORD gnMainThreadId = 0, gnMainThreadIdInitial = 0;
-//HANDLE hEventCmd[MAXCMDCOUNT], hEventAlive=NULL, hEventReady=NULL;
 HANDLE ghMonitorThread = NULL; DWORD gnMonitorThreadId = 0;
-//HANDLE ghInputThread = NULL; DWORD gnInputThreadId = 0;
 HANDLE ghSetWndSendTabsEvent = NULL;
 FarVersion gFarVersion = {};
 WCHAR gszDir1[CONEMUTABMAX], gszDir2[CONEMUTABMAX];
@@ -179,54 +170,26 @@ static BOOL   gbReqCommandWaiting = FALSE;
 
 UINT gnMsgTabChanged = 0;
 MSection *csTabs = NULL;
-//WCHAR gcPlugKey=0;
 BOOL  gbPlugKeyChanged=FALSE;
 HKEY  ghRegMonitorKey=NULL; HANDLE ghRegMonitorEvt=NULL;
-//HMODULE ghFarHintsFix = NULL;
-//WCHAR gszPluginServerPipe[MAX_PATH];
-//#define MAX_SERVER_THREADS 3
-//HANDLE ghServerThreads[MAX_SERVER_THREADS] = {NULL,NULL,NULL};
-//HANDLE ghActiveServerThread = NULL;
-////HANDLE ghPlugServerThread = NULL;
-////DWORD  gnPlugServerThreadId = 0;
-//PipeServer<CESERVER_REQ> *gpPlugServer = NULL;
-//DWORD  gnServerThreadsId[MAX_SERVER_THREADS] = {0,0,0};
-//HANDLE ghServerTerminateEvent = NULL;
 HANDLE ghPluginSemaphore = NULL;
 wchar_t gsFarLang[64] = {0};
 BOOL FindServerCmd(DWORD nServerCmd, DWORD &dwServerPID, bool bFromAttach = false);
 BOOL gbNeedPostTabSend = FALSE;
 BOOL gbNeedPostEditCheck = FALSE; // проверить, может в активном редакторе изменился статус
-//BOOL gbNeedBgUpdate = FALSE; // требуется перерисовка Background
 int lastModifiedStateW = -1;
 BOOL gbNeedPostReloadFarInfo = FALSE;
 DWORD gnNeedPostTabSendTick = 0;
 #define NEEDPOSTTABSENDDELTA 100
-//wchar_t gsMonitorEnvVar[0x1000];
-//bool gbMonitorEnvVar = false;
 #define MONITORENVVARDELTA 1000
 void UpdateEnvVar(const wchar_t* pszList);
 BOOL StartupHooks();
-//BOOL gbFARuseASCIIsort = FALSE; // попытаться перехватить строковую сортировку в FAR
-//HANDLE ghFileMapping = NULL;
-//HANDLE ghColorMapping = NULL; // Создается при детаче консоли сразу после AllocConsole
-//BOOL gbHasColorMapping = FALSE; // Чтобы знать, что буфер True-Colorer создан
-//int gnColorMappingMaxCells = 0;
-//MFileMapping<AnnotationHeader>* gpColorMapping = NULL;
-//#ifdef TRUE_COLORER_OLD_SUPPORT
-//HANDLE ghColorMappingOld = NULL;
-//BOOL gbHasColorMappingOld = FALSE;
-//#endif
 MFileMapping<CESERVER_CONSOLE_MAPPING_HDR> *gpConMap;
 const CESERVER_CONSOLE_MAPPING_HDR *gpConMapInfo = NULL;
 //AnnotationInfo *gpColorerInfo = NULL;
 BOOL gbStartedUnderConsole2 = FALSE;
-//void CheckColorerHeader();
-//int CreateColorerHeader();
-//void CloseColorerHeader();
 BOOL ReloadFarInfo(BOOL abForce);
 DWORD gnSelfPID = 0; //GetCurrentProcessId();
-//BOOL  gbNeedReloadFarInfo = FALSE;
 HANDLE ghFarInfoMapping = NULL;
 CEFAR_INFO_MAPPING *gpFarInfo = NULL, *gpFarInfoMapping = NULL;
 HANDLE ghFarAliveEvent = NULL;
@@ -236,14 +199,10 @@ PanelViewRegInfo gPanelRegRight = {NULL};
 HANDLE ghConEmuCtrlPressed = NULL, ghConEmuShiftPressed = NULL;
 BOOL gbWaitConsoleInputEmpty = FALSE, gbWaitConsoleWrite = FALSE; //, gbWaitConsoleInputPeek = FALSE;
 HANDLE ghConsoleInputEmpty = NULL, ghConsoleWrite = NULL; //, ghConsoleInputWasPeek = NULL;
-// SEE_MASK_NOZONECHECKS
-//BOOL gbShellNoZoneCheck = FALSE;
 DWORD GetMainThreadId();
-//wchar_t gsLogCreateProcess[MAX_PATH+1] = {0};
 int gnSynchroCount = 0;
 bool gbSynchroProhibited = false;
 bool gbInputSynchroPending = false;
-//void SetConsoleFontSizeTo(HWND inConWnd, int inSizeY, int inSizeX, const wchar_t *asFontName);
 
 struct HookModeFar gFarMode = {sizeof(HookModeFar), TRUE/*bFarHookMode*/};
 extern SetFarHookMode_t SetFarHookMode;
@@ -800,47 +759,6 @@ void OnConsolePeekReadInput(BOOL abPeek)
 		_ASSERTE(gFarVersion.dwVerMajor == 1);
 		OnMainThreadActivated();
 	}
-
-	//// Проверяем, надо ли "активировать" плагин?
-	//if (!gbReqCommandWaiting || gnReqCommand == (DWORD)-1)
-	//	return; // активация в данный момент не требуется
-	//// Если есть ACTL_SYNCHRO - работаем только через него
-	//if (IS_SYNCHRO_ALLOWED)
-	//	return;
-	//
-	//gbReqCommandWaiting = FALSE; // чтобы ожидающая нить случайно не удалила параметры, когда мы работаем
-	//
-	//TODO("Определить текущую область... (panel/editor/viewer/menu/...");
-	//gnPluginOpenFrom = 0;
-	//
-	//// заглушка для Ansi
-	//if (gnReqCommand == CMD_SETWINDOW && (gFarVersion.dwVerMajor==1))
-	//{
-	//	gnPluginOpenFrom = OPEN_PLUGINSMENU;
-	//}
-	//
-	////
-	//if ((gnReqCommand == CMD_SETWINDOW) && (gFarVersion.dwVerMajor==2)) {
-	//	// Необходимо быть в panel/editor/viewer
-	//	wchar_t szMacro[255];
-	//	DWORD nTabShift = SETWND_CALLPLUGIN_BASE + *((DWORD*)gpReqCommandData);
-	//
-	//	// Если панели-редактор-вьювер - сменить окно. Иначе - отослать в GUI табы
-	//	_wsprintf(szMacro, SKIPLEN(countof(szMacro)) L"$if (Search) Esc $end $if (Shell||Viewer||Editor) callplugin(0x%08X,%i) $else callplugin(0x%08X,%i) $end",
-	//		ConEmu_SysID, nTabShift, ConEmu_SysID, CE_CALLPLUGIN_SENDTABS);
-	//
-	//	gnReqCommand = -1;
-	//	gpReqCommandData = NULL;
-	//	PostMacro(szMacro);
-	//	// Done
-	//} else {
-	//	ProcessCommand(gnReqCommand, FALSE/*bReqMainThread*/, gpReqCommandData);
-	//}
-	//
-	//// Мы закончили
-	//SetEvent(ghReqCommandEvent);
-	//
-	//return; // продолжить
 }
 
 #ifdef _DEBUG
@@ -902,73 +820,6 @@ void DebugInputPrint(INPUT_RECORD r)
 	_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"%02i:%02i:%02i.%03i ", st.wHour,st.wMinute,st.wSecond,st.wMilliseconds);
 	__INPUT_RECORD_Dump(&r, szDbg+13);
 	lstrcatW(szDbg, L"\n");
-	//switch (r.EventType)
-	//{
-	//case FOCUS_EVENT:
-	//	_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"--FOCUS_EVENT(%i)\n", (int)r.Event.FocusEvent.bSetFocus);
-	//	break;
-	//case MENU_EVENT:
-	//	_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"--MENU_EVENT\n");
-	//	break;
-	//case MOUSE_EVENT: //wprintf(L"--MOUSE_EVENT\n");
-	//	{
-	//		SYSTEMTIME st; GetLocalTime(&st);
-	//		_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"%i:%02i:%02i {%ix%i} BtnState:0x%08X, CtrlState:0x%08X, Flags:0x%08X\n",
-	//			st.wHour, st.wMinute, st.wSecond,
-	//			r.Event.MouseEvent.dwMousePosition.X, r.Event.MouseEvent.dwMousePosition.Y,
-	//			r.Event.MouseEvent.dwButtonState, r.Event.MouseEvent.dwControlKeyState,
-	//			r.Event.MouseEvent.dwEventFlags);
-	//	}
-	//	break;
-	//case WINDOW_BUFFER_SIZE_EVENT:
-	//	_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"--WINDOW_BUFFER_SIZE_EVENT\n");
-	//	break;
-	//case KEY_EVENT:
-	//	{
-	//		wchar_t szLocks[32]; szLocks[0] = 0;
-	//		if (r.Event.KeyEvent.wVirtualKeyCode == VK_UP || r.Event.KeyEvent.wVirtualKeyCode == VK_DOWN) {
-	//			if (1 & GetKeyState(VK_NUMLOCK))
-	//				lstrcat(szLocks, L" <Num>");
-	//			if (1 & GetKeyState(VK_CAPITAL))
-	//				lstrcat(szLocks, L" <Cap>");
-	//			if (1 & GetKeyState(VK_SCROLL))
-	//				lstrcat(szLocks, L" <Scr>");
-	//		}
-	//		SYSTEMTIME st; GetLocalTime(&st);
-	//		_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"%i:%02i:%02i '%c' %s count=%i, VK=%i, SC=%i, CH=\\x%X, State=0x%08x %s%s\n",
-	//			st.wHour, st.wMinute, st.wSecond,
-	//			(r.Event.KeyEvent.uChar.UnicodeChar > 0x100) ? L'?' :
-	//			(r.Event.KeyEvent.uChar.UnicodeChar
-	//			 ? r.Event.KeyEvent.uChar.UnicodeChar : L' '),
-	//			r.Event.KeyEvent.bKeyDown ? L"Down," : L"Up,  ",
-	//			r.Event.KeyEvent.wRepeatCount,
-	//			r.Event.KeyEvent.wVirtualKeyCode,
-	//			r.Event.KeyEvent.wVirtualScanCode,
-	//			r.Event.KeyEvent.uChar.UnicodeChar,
-	//			r.Event.KeyEvent.dwControlKeyState,
-	//			(r.Event.KeyEvent.dwControlKeyState & ENHANCED_KEY) ?
-	//			L"<Enhanced>" : L"",
-	//			szLocks);
-	//		if (r.Event.KeyEvent.uChar.UnicodeChar) {
-	//			BYTE KeyStates[256] = {0};
-	//			wchar_t szBuff[10];
-	//			HKL hkl = (HKL)DebugCheckKeyboardLayout();
-	//			BOOL lbkRc = DebugGetKeyboardState(KeyStates);
-	//			int nuRc = ToUnicodeEx(r.Event.KeyEvent.wVirtualKeyCode,
-	//				r.Event.KeyEvent.wVirtualScanCode,
-	//				KeyStates, szBuff, 10, 0, hkl);
-	//			if (nuRc>0) szBuff[nuRc] = 0; else szBuff[0] = 0;
-	//			wchar_t szTemp[256] = {0};
-	//			for (int i=0; i<nuRc; i++)
-	//				wsprintf(szTemp+lstrlen(szTemp), L"\\x%04X", (WORD)szBuff[i]);
-	//			wsprintf(szDbg+lstrlen(szDbg), L"         -- GKS=%i; TUE=%i; <%s>\n", lbkRc, nuRc, szTemp);
-	//		}
-	//	} break;
-	//default:
-	//	{
-	//		_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"Unknown event type (%i)\n", r.EventType);
-	//	}
-	//}
 	DEBUGSTR(szDbg);
 }
 #endif
@@ -1485,78 +1336,10 @@ int WINAPI ProcessSynchroEventW(int Event,void *Param)
 
 	return 0;
 }
-//    	if (!gbInfoW_OK) {
-//    		if (Param) free(Param);
-//    		return 0;
-//		}
-//
-//		SynchroArg *pArg = (SynchroArg*)Param;
-//		_ASSERTE(pArg!=NULL);
-//
-//		// Если предыдущая активация отвалилась по таймауту - не выполнять
-//		if (pArg->Obsolete) {
-//			free(pArg);
-//			return 0;
-//		}
-//
-//		if (pArg->SynchroType == SynchroArg::eCommand) {
-//    		if (gnReqCommand != (DWORD)-1) {
-//    			_ASSERTE(gnReqCommand==(DWORD)-1);
-//    		} else {
-//    			TODO("Определить текущую область... (panel/editor/viewer/menu/...");
-//    			gnPluginOpenFrom = 0;
-//    			gnReqCommand = (DWORD)pArg->Param1;
-//				gpReqCommandData = (LPVOID)pArg->Param2;
-//
-//				if (gnReqCommand == CMD_SETWINDOW) {
-//					// Необходимо быть в panel/editor/viewer
-//					wchar_t szMacro[255];
-//					DWORD nTabShift = SETWND_CALLPLUGIN_BASE + *((DWORD*)gpReqCommandData);
-//
-//					// Если панели-редактор-вьювер - сменить окно. Иначе - отослать в GUI табы
-//					_wsprintf(szMacro, SKIPLEN(countof(szMacro)) L"$if (Shell||Viewer||Editor) callplugin(0x%08X,%i) $else callplugin(0x%08X,%i) $end",
-//						ConEmu_SysID, nTabShift, ConEmu_SysID, CE_CALLPLUGIN_SENDTABS);
-//
-//					gnReqCommand = -1;
-//					gpReqCommandData = NULL;
-//					PostMacro(szMacro);
-//					// Done
-//				} else {
-//	    			ProcessCommand(gnReqCommand, FALSE/*bReqMainThread*/, gpReqCommandData);
-//    			}
-//    		}
-//		} else if (pArg->SynchroType == SynchroArg::eInput) {
-//			INPUT_RECORD *pRec = (INPUT_RECORD*)(pArg->Param1);
-//			UINT nCount = (UINT)pArg->Param2;
-//
-//			if (nCount>0) {
-//				DWORD cbWritten = 0;
-//				_ASSERTE(ghConIn);
-//				WARNING("Убрать, заменить ghConIn на GetStdHandle()"); // Иначе в Win7 будет буфер разрушаться
-//				BOOL fSuccess = WriteConsoleInput(ghConIn, pRec, nCount, &cbWritten);
-//				if (!fSuccess || cbWritten != nCount) {
-//					_ASSERTE(fSuccess && cbWritten==nCount);
-//				}
-//			}
-//		}
-//
-//		if (pArg->hEvent)
-//			SetEvent(pArg->hEvent);
-//		//pArg->Processed = TRUE;
-//		//pArg->Executed = TRUE;
-//		free(pArg);
-//	}
-//	return 0;
-//}
 
 /* COMMON - end */
 
 
-//#if defined(__GNUC__)
-//typedef HWND (APIENTRY *FGetConsoleWindow)();
-//FGetConsoleWindow GetConsoleWindow = NULL;
-//#endif
-//extern void SetConsoleFontSizeTo(HWND inConWnd, int inSizeX, int inSizeY);
 
 void WINAPI ExitFARW(void);
 void WINAPI ExitFARW3(void*);
@@ -1966,124 +1749,6 @@ int WINAPI ActivateConsole()
 	ExecuteFreeResult(pOut);
 	return lbSucceeded;
 }
-
-//BOOL IsKeyChanged(BOOL abAllowReload)
-//{
-//	BOOL lbKeyChanged = FALSE;
-//	if (ghRegMonitorEvt) {
-//		if (WaitForSingleObject(ghRegMonitorEvt, 0) == WAIT_OBJECT_0) {
-//			lbKeyChanged = CheckPlugKey();
-//			if (lbKeyChanged) gbPlugKeyChanged = TRUE;
-//		}
-//	}
-//
-//	if (abAllowReload && gbPlugKeyChanged) {
-//		// Вообще-то его бы вызывать в главной нити...
-//		CheckMacro(TRUE);
-//		gbPlugKeyChanged = FALSE;
-//	}
-//	return lbKeyChanged;
-//}
-
-
-//BOOL ActivatePluginA(DWORD nCmd, LPVOID pCommandData)
-//{
-//	BOOL lbRc = FALSE;
-//	gnReqCommand = nCmd; gnPluginOpenFrom = -1;
-//	gpReqCommandData = pCommandData;
-//	ResetEvent(ghReqCommandEvent);
-//
-//	// Проверить, не изменилась ли горячая клавиша плагина, и если да - пересоздать макросы
-//	IsKeyChanged(TRUE);
-//
-//	INPUT_RECORD evt[10];
-//	DWORD dwStartWait, dwCur, dwTimeout, dwInputs = 0, dwInputsFirst = 0, dwWritten = 0;
-//	//BOOL  lbInputs = FALSE;
-//	HANDLE hInput = GetStdHandle(STD_INPUT_HANDLE);
-//
-//
-//	// Нужен вызов плагина в основной нити
-//	//WARNING("Переделать на WriteConsoleInput");
-//	gbCmdCallObsolete = FALSE;
-//	//SendMessage(FarHwnd, WM_KEYDOWN, VK_F14, 0);
-//	//SendMessage(FarHwnd, WM_KEYUP, VK_F14, (LPARAM)(3<<30));
-//	evt[0].EventType = evt[1].EventType = KEY_EVENT;
-//	evt[0].Event.KeyEvent.bKeyDown = TRUE; evt[1].Event.KeyEvent.bKeyDown = FALSE;
-//	evt[0].Event.KeyEvent.uChar.UnicodeChar = evt[1].Event.KeyEvent.uChar.UnicodeChar = 0;
-//	evt[0].Event.KeyEvent.wVirtualKeyCode   = evt[1].Event.KeyEvent.wVirtualKeyCode = VK_F14;
-//	evt[0].Event.KeyEvent.wVirtualScanCode  = evt[1].Event.KeyEvent.wVirtualScanCode = 0;
-//	evt[0].Event.KeyEvent.dwControlKeyState = evt[1].Event.KeyEvent.dwControlKeyState = 0;
-//	evt[0].Event.KeyEvent.wRepeatCount = evt[1].Event.KeyEvent.wRepeatCount = 1;
-//	if (!WriteConsoleInput(hInput, evt, 2, &dwWritten)) {
-//		DWORD dwErr = GetLastError();
-//		_ASSERTE(FALSE);
-//		SendMessage(FarHwnd, WM_KEYDOWN, VK_F14, 0);
-//		SendMessage(FarHwnd, WM_KEYUP, VK_F14, (LPARAM)(3<<30));
-//	}
-//
-//	BOOL lbInput = PeekConsoleInput(hInput, evt, 10, &dwInputsFirst);
-//
-//
-//	DWORD dwWait;
-//	HANDLE hEvents[2];
-//	hEvents[0] = ghReqCommandEvent;
-//	hEvents[1] = ghServerTerminateEvent;
-//
-//	dwTimeout = CONEMUFARTIMEOUT;
-//	dwStartWait = GetTickCount();
-//	//DuplicateHandle(GetCurrentProcess(), ghReqCommandEvent, GetCurrentProcess(), hEvents, 0, 0, DUPLICATE_SAME_ACCESS);
-//	do {
-//		dwWait = WaitForMultipleObjects ( 2, hEvents, FALSE, 200 );
-//		if (dwWait == WAIT_TIMEOUT) {
-//			lbInput = PeekConsoleInput(hInput, evt, 10, &dwInputs);
-//			if (lbInput && dwInputs == 0) {
-//				//Раз из буфера ввода убралось "Отпускание F14" - значит ловить уже нечего, выходим
-//				gbCmdCallObsolete = TRUE; // иначе может всплыть меню, когда не надо
-//				break;
-//			}
-//
-//			dwCur = GetTickCount();
-//			if ((dwCur - dwStartWait) > dwTimeout)
-//				break;
-//		}
-//	} while (dwWait == WAIT_TIMEOUT);
-//	if (dwWait)
-//		ResetEvent(ghReqCommandEvent); // Сразу сбросим, вдруг не дождались?
-//	else
-//		lbRc = TRUE;
-//
-//	gpReqCommandData = NULL;
-//	gnReqCommand = -1; gnPluginOpenFrom = -1;
-//
-//	return lbRc;
-//}
-//
-//BOOL ActivatePluginW(DWORD nCmd, LPVOID pCommandData, DWORD nTimeout = CONEMUFARTIMEOUT)
-//{
-//	BOOL lbRc = FALSE;
-//	gnReqCommand = -1; gnPluginOpenFrom = -1; gpReqCommandData = NULL;
-//	ResetEvent(ghReqCommandEvent);
-//
-//	// Нужен вызов плагина в остновной нити
-//	gbCmdCallObsolete = FALSE;
-//
-//	SynchroArg *Param = (SynchroArg*)calloc(sizeof(SynchroArg),1);
-//	Param->SynchroType = SynchroArg::eCommand;
-//	Param->Param1 = nCmd;
-//	Param->Param2 = (LPARAM)pCommandData;
-//	Param->hEvent = ghReqCommandEvent;
-//	Param->Obsolete = FALSE;
-//
-//	lbRc = CallSynchro995(Param, nTimeout);
-//
-//	if (!lbRc)
-//		ResetEvent(ghReqCommandEvent); // Сразу сбросим, вдруг не дождались?
-//
-//	gpReqCommandData = NULL;
-//	gnReqCommand = -1; gnPluginOpenFrom = -1;
-//
-//	return lbRc;
-//}
 
 // Внимание! Теоретически, из этой функции Far2 может сразу вызвать ProcessSynchroEventW.
 // Но в текущей версии Far2 она работает асинхронно и сразу выходит, а сама
@@ -2554,15 +2219,6 @@ BOOL ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData, CESERV
 		return TRUE;
 	}
 
-	//if (nCmd == CMD_QUITFAR)
-	//{
-	//	// Ставим сразу, чтобы GUI не повис в ожидании.
-	//	if (ghReqCommandEvent)
-	//		SetEvent(ghReqCommandEvent);
-	//	// т.к. фар может запросить подтверждения...
-	//	ExecuteQuitFar();
-	//	return TRUE;
-	//}
 	MSectionLock CSD; CSD.Lock(csData, TRUE);
 	//if (gpCmdRet) { Free(gpCmdRet); gpCmdRet = NULL; } // !!! Освобождается ТОЛЬКО вызывающей функцией!
 	gpCmdRet = NULL; gpData = NULL; gpCursor = NULL;
@@ -2996,203 +2652,10 @@ BOOL FarSetConsoleSize(SHORT nNewWidth, SHORT nNewHeight)
 	return lbRc;
 }
 
-//void EmergencyShow()
-//{
-//	SetWindowPos(FarHwnd, HWND_TOP, 50,50,0,0, SWP_NOSIZE);
-//	apiShowWindowAsync(FarHwnd, SW_SHOWNORMAL);
-//	EnableWindow(FarHwnd, true);
-//}
-
 static BOOL gbTryOpenMapHeader = FALSE;
 static BOOL gbStartupHooksAfterMap = FALSE;
 int OpenMapHeader();
 void CloseMapHeader();
-//void ResetExeHooks();
-
-//void CheckColorerHeader()
-//{
-//	//wchar_t szMapName[64];
-//	HWND lhConWnd = NULL;
-//	//HANDLE h;
-//	// 111101 - было "GetConEmuHWND(2)", но GetConsoleWindow теперь перехватывается.
-//	lhConWnd = GetConEmuHWND(0);
-//	//_wsprintf(szMapName, SKIPLEN(countof(szMapName)) AnnotationShareName, sizeof(AnnotationInfo), (DWORD)lhConWnd);
-//	//h = OpenFileMapping(FILE_MAP_READ, FALSE, szMapName);
-//	//gbHasColorMapping = (h!=NULL);
-//	//if (h) CloseHandle(h);
-//
-//	if (gpColorMapping == NULL)
-//		gpColorMapping = new MFileMapping<AnnotationHeader>;
-//	gpColorMapping->InitName(AnnotationShareName, (DWORD)sizeof(AnnotationInfo), (DWORD)lhConWnd); //-V205
-//
-//	// Заголовок мэппинга содержит информацию о размере, нужно запомнить!
-//	AnnotationHeader* pHdr = gpColorMapping->Open();
-//	if (pHdr)
-//	{
-//		// Чтобы при детаче не создать меньший буфер, чем был создан сервером при созаднии консоли
-//		gnColorMappingMaxCells = pHdr->bufferSize;
-//		// Сам мэппинг нам не нужен
-//		gpColorMapping->CloseMap();
-//	}
-//	else
-//	{
-//		delete gpColorMapping;
-//		gpColorMapping = NULL;
-//	}
-//
-//	//_wsprintf(szMapName, SKIPLEN(countof(szMapName)) AnnotationShareName, sizeof(AnnotationInfo), (DWORD)lhConWnd);
-//
-//	// Создаем! т.к. должна вызываться только после Detach!
-//	//ghColorMapping = CreateFileMapping(INVALID_HANDLE_VALUE,
-//	//                                   gpLocalSecurity, PAGE_READWRITE, 0, nMapSize, szMapName);
-//
-//	//		if (!ghColorMapping)
-//	//		{
-//	//#ifdef _DEBUG
-//	//			dwErr = GetLastError();
-//	//#endif
-//	//			// Функции вызываются в основной нити, вполне можно дергать FAR-API
-//	//			TODO("Показать ошибку создания MAP для Colorer.AnnotationInfo");
-//	//		}
-//	//		else
-//	//		{
-//
-//
-//	//#ifdef TRUE_COLORER_OLD_SUPPORT
-//	//_wsprintf(szMapName, SKIPLEN(countof(szMapName)) L"Console2_annotationInfo_%d_%d", sizeof(AnnotationInfo), (DWORD)GetCurrentProcessId());
-//	//h = OpenFileMapping(FILE_MAP_READ, FALSE, szMapName);
-//	//gbHasColorMappingOld = (h!=NULL);
-//	//if (h) CloseHandle(h);
-//	//#endif
-//}
-
-//// Функции вызываются в основной нити, вполне можно дергать FAR-API
-//int CreateColorerHeader()
-//{
-//	int iRc = -1;
-//	//wchar_t szMapName[64];
-//#ifdef _DEBUG
-//	DWORD dwErr = 0;
-//#endif
-//	//int nConInfoSize = sizeof(CESERVER_CONSOLE_MAPPING_HDR);
-//	int nMapCells = 0;
-//	DWORD nMapSize = 0;
-//	HWND lhConWnd = NULL;
-//
-//	if (gpColorMapping)
-//	{
-//		gpColorMapping->CloseMap();
-//	}
-//
-//	//#ifdef TRUE_COLORER_OLD_SUPPORT
-//	//	if (ghColorMappingOld) {
-//	//		CloseHandle(ghColorMappingOld); ghColorMappingOld = NULL;
-//	//	}
-//	//#endif
-//	COORD crMaxSize = MyGetLargestConsoleWindowSize(GetStdHandle(STD_OUTPUT_HANDLE));
-//	nMapCells = max(crMaxSize.X,200) * max(crMaxSize.Y,200) * 2;
-//	if (gnColorMappingMaxCells > nMapCells)
-//		nMapCells = gnColorMappingMaxCells;
-//	nMapSize = nMapCells * sizeof(AnnotationInfo) + sizeof(AnnotationHeader);
-//	// 111101 - было "GetConEmuHWND(2)", но GetConsoleWindow теперь перехватывается.
-//	lhConWnd = GetConEmuHWND(0);
-//
-//	if (gpColorMapping)
-//	{
-//		gpColorMapping->InitName(AnnotationShareName, (DWORD)sizeof(AnnotationInfo), (DWORD)lhConWnd); //-V205
-//		//_wsprintf(szMapName, SKIPLEN(countof(szMapName)) AnnotationShareName, sizeof(AnnotationInfo), (DWORD)lhConWnd);
-//
-//		// Создаем! т.к. должна вызываться только после Detach!
-//		//ghColorMapping = CreateFileMapping(INVALID_HANDLE_VALUE,
-//		//                                   gpLocalSecurity, PAGE_READWRITE, 0, nMapSize, szMapName);
-//
-////		if (!ghColorMapping)
-////		{
-////#ifdef _DEBUG
-////			dwErr = GetLastError();
-////#endif
-////			// Функции вызываются в основной нити, вполне можно дергать FAR-API
-////			TODO("Показать ошибку создания MAP для Colorer.AnnotationInfo");
-////		}
-////		else
-////		{
-//		// Заголовок мэппинга содержит информацию о размере, нужно заполнить!
-//		AnnotationHeader* pHdr = gpColorMapping->Create(nMapSize);
-//
-//		if (!pHdr)
-//		{
-//			//#ifdef _DEBUG
-//			//			dwErr = GetLastError();
-//			//#endif
-//			//CloseHandle(ghColorMapping); ghColorMapping = NULL;
-//			//// Функции вызываются в основной нити, вполне можно дергать FAR-API
-//			//TODO("Показать ошибку создания MAP для Colorer.AnnotationInfo");
-//			wchar_t szFmt[MAX_PATH], szFullInfo[2048], szTitle[MAX_PATH];
-//			if (gFarVersion.dwVerMajor==1)
-//			{
-//				GetMsgA(CEPluginMsgTitle, szTitle);
-//				GetMsgA(CEColorMappingCreateError, szFmt);
-//			}
-//			else
-//			{
-//				_wcscpyn_c(szTitle, countof(szTitle), GetMsgW(CEPluginMsgTitle), countof(szTitle));
-//				_wcscpyn_c(szFmt, countof(szFmt), GetMsgW(CEColorMappingCreateError), countof(szFmt));
-//			}
-//			wcscpy_c(szFullInfo, szFmt);
-//			if (gpColorMapping->GetErrorText())
-//				wcscat_c(szFullInfo, gpColorMapping->GetErrorText());
-//
-//			delete gpColorMapping;
-//			gpColorMapping = NULL;
-//
-//			MessageBoxW(NULL, szFullInfo, szTitle, MB_ICONSTOP|MB_SYSTEMMODAL);
-//		}
-//		else
-//		{
-//			pHdr->struct_size = sizeof(AnnotationHeader);
-//			pHdr->bufferSize = nMapCells;
-//			pHdr->locked = 0; pHdr->flushCounter = 0;
-//			// В плагине - данные не нужны
-//			UnmapViewOfFile(pHdr);
-//		}
-//		//}
-//	}
-//
-//	//#ifdef TRUE_COLORER_OLD_SUPPORT
-//	//if (gbHasColorMappingOld)
-//	//{
-//	//	_wsprintf(szMapName, SKIPLEN(countof(szMapName)) L"Console2_annotationInfo_%d_%d", sizeof(AnnotationInfo), (DWORD)GetCurrentProcessId());
-//	//	nMapSize = nMapCells * sizeof(AnnotationInfo);
-//	//	ghColorMappingOld = CreateFileMapping(INVALID_HANDLE_VALUE,
-//	//		gpLocalSecurity, PAGE_READWRITE, 0, nMapSize, szMapName);
-//	//}
-//	//#endif
-//	return iRc;
-//}
-
-//void CloseColorerHeader()
-//{
-//	if (gpColorMapping)
-//	{
-//		delete gpColorMapping;
-//		gpColorMapping = NULL;
-//	}
-//	//if (ghColorMapping)
-//	//{
-//	//	CloseHandle(ghColorMapping);
-//	//	ghColorMapping = NULL;
-//	//}
-//
-//	//#ifdef TRUE_COLORER_OLD_SUPPORT
-//	//if (ghColorMappingOld)
-//	//{
-//	//	CloseHandle(ghColorMappingOld);
-//	//	ghColorMappingOld = NULL;
-//	//}
-//	//#endif
-//}
-
-
 
 BOOL gbWasDetached = FALSE;
 CONSOLE_SCREEN_BUFFER_INFO gsbiDetached;
@@ -3283,23 +2746,6 @@ VOID WINAPI OnConsoleWasAttached(HookCallbackArg* pArgs)
 	if (ghMonitorThread)
 		ResumeThread(ghMonitorThread);
 }
-
-// Отключил пока. пусть только при Peek... считывается
-//void ReloadOnWrite()
-//{
-//	if (gpConMapInfo)
-//		ReloadFarInfo();
-//}
-//VOID WINAPI OnWasWriteConsoleOutputA(HookCallbackArg* pArgs)
-//{
-//	if (!pArgs->bMainThread || gFarVersion.dwVerMajor!=1) return;
-//	ReloadOnWrite();
-//}
-//VOID WINAPI OnWasWriteConsoleOutputW(HookCallbackArg* pArgs)
-//{
-//	if (!pArgs->bMainThread || gFarVersion.dwVerMajor!=2) return;
-//	ReloadOnWrite();
-//}
 
 // Эту нить нужно оставить, чтобы была возможность отобразить консоль при падении ConEmu
 DWORD WINAPI MonitorThreadProcW(LPVOID lpParameter)
@@ -3470,141 +2916,6 @@ DWORD WINAPI MonitorThreadProcW(LPVOID lpParameter)
 
 	return 0;
 }
-
-//BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount)
-//{
-//	_ASSERTE(nCount>0);
-//	BOOL fSuccess = FALSE;
-//
-//	WARNING("Убрать, заменить ghConIn на GetStdHandle()"); // Иначе в Win7 будет буфер разрушаться
-//	if (!ghConIn) {
-//		ghConIn  = CreateFile(L"CONIN$", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_READ,
-//			0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
-//		if (ghConIn == INVALID_HANDLE_VALUE) {
-//			#ifdef _DEBUG
-//			DWORD dwErr = GetLastError();
-//			_ASSERTE(ghConIn!=INVALID_HANDLE_VALUE);
-//			#endif
-//			ghConIn = NULL;
-//			return FALSE;
-//		}
-//	}
-//	if (!ghInputSynchroExecuted)
-//		ghInputSynchroExecuted = CreateEvent(NULL, FALSE, FALSE, NULL);
-//
-//	if (gFarVersion.dwVerMajor>1 && (gFarVersion.dwVerMinor>0 || gFarVersion.dwBuild>=1006))
-//	{
-//		static SynchroArg arg = {SynchroArg::eInput};
-//		arg.hEvent = ghInputSynchroExecuted;
-//		arg.Param1 = (LPARAM)pr;
-//		arg.Param2 = nCount;
-//
-//		if (gFarVersion.dwBuild>=FAR_Y_VER)
-//			fSuccess = FUNC_Y(CallSynchro)(&arg,DEFAULT_SYNCHRO_TIMEOUT);
-//		else
-//			fSuccess = FUNC_X(CallSynchro)(&arg,DEFAULT_SYNCHRO_TIMEOUT);
-//	}
-//
-//	if (!fSuccess)
-//	{
-//		DWORD nCurInputCount = 0, cbWritten = 0;
-//		INPUT_RECORD irDummy[2] = {{0},{0}};
-//
-//		// 27.06.2009 Maks - If input queue is not empty - wait for a while, to avoid conflicts with FAR reading queue
-//		WARNING("Убрать, заменить ghConIn на GetStdHandle()"); // Иначе в Win7 будет буфер разрушаться
-//		if (PeekConsoleInput(ghConIn, irDummy, 1, &(nCurInputCount = 0)) && nCurInputCount > 0) {
-//			DWORD dwStartTick = GetTickCount();
-//			WARNING("Do NOT wait, but place event in Cyclic queue");
-//			do {
-//				Sleep(5);
-//				if (!PeekConsoleInput(ghConIn, irDummy, 1, &(nCurInputCount = 0)))
-//					nCurInputCount = 0;
-//			} while ((nCurInputCount > 0) && ((GetTickCount() - dwStartTick) < MAX_INPUT_QUEUE_EMPTY_WAIT));
-//		}
-//
-//		fSuccess = WriteConsoleInput(ghConIn, pr, nCount, &cbWritten);
-//		_ASSERTE(fSuccess && cbWritten==nCount);
-//	}
-//
-//	return fSuccess;
-//}
-
-//DWORD WINAPI InputThreadProcW(LPVOID lpParameter)
-//{
-//	MSG msg;
-//	static INPUT_RECORD recs[10] = {{0}}; // переменная должна быть глобальной? SynchoApi...
-//
-//	while (GetMessage(&msg,0,0,0)) {
-//		if (msg.message == WM_QUIT) return 0;
-//		if (ghServerTerminateEvent) {
-//			if (WaitForSingleObject(ghServerTerminateEvent, 0) == WAIT_OBJECT_0) return 0;
-//		}
-//		if (msg.message == 0) continue;
-//
-//		if (msg.message == INPUT_THREAD_ALIVE_MSG) {
-//			//pRCon->mn_FlushOut = msg.wParam;
-//			TODO("INPUT_THREAD_ALIVE_MSG");
-//			continue;
-//
-//		} else {
-//
-//			INPUT_RECORD *pRec = recs;
-//			int nCount = 0, nMaxCount = countof(recs);
-//			memset(recs, 0, sizeof(recs));
-//
-//			do {
-//				if (UnpackInputRecord(&msg, pRec)) {
-//					TODO("Сделать обработку пачки сообщений, вдруг они накопились в очереди?");
-//
-//					if (pRec->EventType == KEY_EVENT && pRec->Event.KeyEvent.bKeyDown &&
-//						(pRec->Event.KeyEvent.wVirtualKeyCode == 'C' || pRec->Event.KeyEvent.wVirtualKeyCode == VK_CANCEL)
-//						)
-//					{
-//						#define ALL_MODIFIERS (LEFT_ALT_PRESSED|RIGHT_ALT_PRESSED|LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED|SHIFT_PRESSED)
-//						#define CTRL_MODIFIERS (LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED)
-//
-//						BOOL lbRc = FALSE;
-//						DWORD dwEvent = (pRec->Event.KeyEvent.wVirtualKeyCode == 'C') ? CTRL_C_EVENT : CTRL_BREAK_EVENT;
-//						//&& (srv.dwConsoleMode & ENABLE_PROCESSED_INPUT)
-//
-//						//The SetConsoleMode function can disable the ENABLE_PROCESSED_INPUT mode for a console's input buffer,
-//						//so CTRL+C is reported as keyboard input rather than as a signal.
-//						// CTRL+BREAK is always treated as a signal
-//						if ( // Удерживается ТОЛЬКО Ctrl
-//							(pRec->Event.KeyEvent.dwControlKeyState & CTRL_MODIFIERS) &&
-//							((pRec->Event.KeyEvent.dwControlKeyState & ALL_MODIFIERS)
-//							== (pRec->Event.KeyEvent.dwControlKeyState & CTRL_MODIFIERS))
-//							)
-//						{
-//							// Вроде работает, Главное не запускать процесс с флагом CREATE_NEW_PROCESS_GROUP
-//							// иначе у микрософтовской консоли (WinXP SP3) сносит крышу, и она реагирует
-//							// на Ctrl-Break, но напрочь игнорирует Ctrl-C
-//							lbRc = GenerateConsoleCtrlEvent(dwEvent, 0);
-//
-//							// Это событие (Ctrl+C) в буфер помещается(!) иначе до фара не дойдет собственно клавиша C с нажатым Ctrl
-//						}
-//					}
-//					nCount++; pRec++;
-//				}
-//				// Если в буфере есть еще сообщения, а recs еще не полностью заполнен
-//				if (nCount < nMaxCount)
-//				{
-//					if (!PeekMessage(&msg, 0,0,0, PM_REMOVE))
-//						break;
-//					if (msg.message == 0) continue;
-//					if (msg.message == WM_QUIT) return 0;
-//					if (ghServerTerminateEvent) {
-//						if (WaitForSingleObject(ghServerTerminateEvent, 0) == WAIT_OBJECT_0) return 0;
-//					}
-//				}
-//			} while (nCount < nMaxCount);
-//			if (nCount > 0)
-//				SendConsoleEvent(recs, nCount);
-//		}
-//	}
-//
-//	return 0;
-//}
 
 void CommonPluginStartup()
 {
@@ -3933,204 +3244,6 @@ void InitHWND(/*HWND ahFarHwnd*/)
 		SC.Unlock();
 	}
 }
-
-//void NotifyChangeKey()
-//{
-//	if (ghRegMonitorKey) { RegCloseKey(ghRegMonitorKey); ghRegMonitorKey = NULL; }
-//	if (ghRegMonitorEvt) ResetEvent(ghRegMonitorEvt);
-//
-//	WCHAR szKeyName[MAX_PATH*2];
-//	lstrcpyW(szKeyName, gszRootKey);
-//	lstrcatW(szKeyName, L"\\PluginHotkeys");
-//	// Ключа может и не быть, если ни для одного плагина не было зарегистрировано горячей клавиши
-//	if (0 == RegOpenKeyEx(HKEY_CURRENT_USER, szKeyName, 0, KEY_NOTIFY, &ghRegMonitorKey)) {
-//		if (!ghRegMonitorEvt) ghRegMonitorEvt = CreateEvent(NULL,FALSE,FALSE,NULL);
-//		RegNotifyChangeKeyValue(ghRegMonitorKey, TRUE, REG_NOTIFY_CHANGE_LAST_SET, ghRegMonitorEvt, TRUE);
-//		return;
-//	}
-//	// Если их таки нет - пробуем подцепиться к корневому ключу
-//	if (0 == RegOpenKeyEx(HKEY_CURRENT_USER, gszRootKey, 0, KEY_NOTIFY, &ghRegMonitorKey)) {
-//		if (!ghRegMonitorEvt) ghRegMonitorEvt = CreateEvent(NULL,FALSE,FALSE,NULL);
-//		RegNotifyChangeKeyValue(ghRegMonitorKey, TRUE, REG_NOTIFY_CHANGE_LAST_SET, ghRegMonitorEvt, TRUE);
-//		return;
-//	}
-//}
-
-//abCompare=TRUE вызывается после загрузки плагина, если юзер изменил горячую клавишу...
-//BOOL CheckPlugKey()
-//{
-//	WCHAR cCurKey = gcPlugKey;
-//	gcPlugKey = 0;
-//	BOOL lbChanged = FALSE;
-//	HKEY hkey=NULL;
-//	WCHAR szMacroKey[2][MAX_PATH], szCheckKey[32];
-//
-//	//Прочитать назначенные плагинам клавиши, и если для ConEmu*.dll указана клавиша активации - запомнить ее
-//	wsprintfW(szMacroKey[0], L"%s\\PluginHotkeys", gszRootKey/*, szCheckKey*/);
-//	if (0==RegOpenKeyExW(HKEY_CURRENT_USER, szMacroKey[0], 0, KEY_READ, &hkey))
-//	{
-//		DWORD dwIndex = 0, dwSize; FILETIME ft;
-//		while (0==RegEnumKeyEx(hkey, dwIndex++, szMacroKey[1], &(dwSize=MAX_PATH), NULL, NULL, NULL, &ft)) {
-//			WCHAR* pszSlash = szMacroKey[1]+lstrlenW(szMacroKey[1])-1;
-//			while (pszSlash>szMacroKey[1] && *pszSlash!=L'/') pszSlash--;
-//			#if !defined(__GNUC__)
-//			#pragma warning(disable : 6400)
-//			#endif
-//			if (lstrcmpiW(pszSlash, L"/conemu.dll")==0 || lstrcmpiW(pszSlash, L"/conemu.x64.dll")==0) {
-//				WCHAR lsFullPath[MAX_PATH*2];
-//				lstrcpy(lsFullPath, szMacroKey[0]);
-//				lstrcat(lsFullPath, L"\\");
-//				lstrcat(lsFullPath, szMacroKey[1]);
-//
-//				RegCloseKey(hkey); hkey=NULL;
-//
-//				if (0==RegOpenKeyExW(HKEY_CURRENT_USER, lsFullPath, 0, KEY_READ, &hkey)) {
-//					dwSize = sizeof(szCheckKey);
-//					if (0==RegQueryValueExW(hkey, L"Hotkey", NULL, NULL, (LPBYTE)szCheckKey, &dwSize)) {
-//						gcPlugKey = szCheckKey[0];
-//					}
-//				}
-//				//
-//				//
-//				break;
-//			}
-//		}
-//
-//		// Закончили
-//		if (hkey) {RegCloseKey(hkey); hkey=NULL;}
-//	}
-//
-//	lbChanged = (gcPlugKey != cCurKey);
-//
-//	return lbChanged;
-//}
-
-//void CheckMacro(BOOL abAllowAPI)
-//{
-//	// и не под эмулятором нужно проверять макросы, иначе потом активация не сработает...
-//	//// Если мы не под эмулятором - больше ничего делать не нужно
-//	//if (!ghConEmuWndDC) return;
-//
-//
-//	// Проверка наличия макроса
-//	BOOL lbMacroAdded = FALSE, lbNeedMacro = FALSE;
-//	HKEY hkey=NULL;
-//	#define MODCOUNT 4
-//	int n;
-//	char szValue[1024];
-//	WCHAR szMacroKey[MODCOUNT][MAX_PATH], szCheckKey[32];
-//	DWORD dwSize = 0;
-//	//bool lbMacroDontCheck = false;
-//
-//	//Прочитать назначенные плагинам клавиши, и если для ConEmu*.dll указана клавиша активации - запомнить ее
-//	CheckPlugKey();
-//
-//
-//	for (n=0; n<MODCOUNT; n++) {
-//		switch(n){
-//			case 0: lstrcpyW(szCheckKey, L"F14"); break;
-//			case 1: lstrcpyW(szCheckKey, L"CtrlF14"); break;
-//			case 2: lstrcpyW(szCheckKey, L"AltF14"); break;
-//			case 3: lstrcpyW(szCheckKey, L"ShiftF14"); break;
-//		}
-//		wsprintfW(szMacroKey[n], L"%s\\KeyMacros\\Common\\%s", gszRootKey, szCheckKey);
-//	}
-//	if (gFarVersion.dwVerMajor==1) {
-//		lstrcpyW(szCheckKey, L"F11  "); //TODO: для ANSI может другой код по умолчанию?
-//		szCheckKey[4] = (wchar_t)(gcPlugKey ? gcPlugKey : ((gFarVersion.dwVerMajor==1) ? 0x42C/*0xDC - аналог для OEM*/ : 0x2584));
-//	} else {
-//		// Пока можно так. (пока GUID не появились)
-//		StringCchPrintf(szCheckKey, countof(szCheckKey), L"callplugin(0x%08X,0)", ConEmu_SysID);
-//	}
-//
-//	//if (!lbMacroDontCheck)
-//	for (n=0; n<MODCOUNT && !lbNeedMacro; n++)
-//	{
-//		if (0==RegOpenKeyExW(HKEY_CURRENT_USER, szMacroKey[n], 0, KEY_READ, &hkey))
-//		{
-//			/*if (gFarVersion.dwVerMajor==1) {
-//				if (0!=RegQueryValueExA(hkey, "Sequence", 0, 0, (LPBYTE)szValue, &(dwSize=1022))) {
-//					lbNeedMacro = TRUE; // Значение отсутсвует
-//				} else {
-//					lbNeedMacro = lstrcmpA(szValue, (char*)szCheckKey)!=0;
-//				}
-//			} else {*/
-//				if (0!=RegQueryValueExW(hkey, L"Sequence", 0, 0, (LPBYTE)szValue, &(dwSize=1022))) {
-//					lbNeedMacro = TRUE; // Значение отсутсвует
-//				} else {
-//					//TODO: проверить, как себя ведет VC & GCC на 2х байтовых символах?
-//					lbNeedMacro = lstrcmpW((WCHAR*)szValue, szCheckKey)!=0;
-//				}
-//			//}
-//			//	szValue[dwSize]=0;
-//			//	#pragma message("ERROR: нужна проверка. В Ansi и Unicode это разные строки!")
-//			//	//if (strcmpW(szValue, "F11 \xCC")==0)
-//			//		lbNeedMacro = TRUE; // Значение некорректное
-//			//}
-//			RegCloseKey(hkey); hkey=NULL;
-//		} else {
-//			lbNeedMacro = TRUE;
-//		}
-//	}
-//
-//	if (lbNeedMacro) {
-//		//int nBtn = ShowMessage(0, 3);
-//		//if (nBtn == 1) { // Don't disturb
-//		//	DWORD disp=0;
-//		//	lbMacroDontCheck = true;
-//		//	if (0==RegCreateKeyExA(HKEY_CURRENT_USER, "Software\\ConEmu", 0, 0,
-//		//		0, KEY_ALL_ACCESS, 0, &hkey, &disp))
-//		//	{
-//		//		RegSetValueExA(hkey, szCheckKey, 0, REG_BINARY, (LPBYTE)&lbMacroDontCheck, (dwSize=sizeof(lbMacroDontCheck)));
-//		//		RegCloseKey(hkey); hkey=NULL;
-//		//	}
-//		//} else if (nBtn == 0)
-//		for (n=0; n<MODCOUNT; n++)
-//		{
-//			DWORD disp=0;
-//			lbMacroAdded = TRUE;
-//			if (0==RegCreateKeyExW(HKEY_CURRENT_USER, szMacroKey[n], 0, 0,
-//				0, KEY_ALL_ACCESS, 0, &hkey, &disp))
-//			{
-//				lstrcpyA(szValue, "ConEmu support");
-//				RegSetValueExA(hkey, "", 0, REG_SZ, (LPBYTE)szValue, (dwSize=(DWORD)lstrlenA(szValue)+1));
-//
-//				//lstrcpyA(szValue,
-//				//	"$If (Shell || Info || QView || Tree || Viewer || Editor) F12 $Else waitkey(100) $End");
-//				//RegSetValueExA(hkey, "Sequence", 0, REG_SZ, (LPBYTE)szValue, (dwSize=lstrlenA(szValue)+1));
-//
-//				/*if (gFarVersion.dwVerMajor==1) {
-//					RegSetValueExA(hkey, "Sequence", 0, REG_SZ, (LPBYTE)szCheckKey, (dwSize=lstrlenA((char*)szCheckKey)+1));
-//				} else {*/
-//					RegSetValueExW(hkey, L"Sequence", 0, REG_SZ, (LPBYTE)szCheckKey, (dwSize=2*((DWORD)lstrlenW((WCHAR*)szCheckKey)+1)));
-//				//}
-//
-//				lstrcpyA(szValue, "For ConEmu - plugin activation from listening thread");
-//				RegSetValueExA(hkey, "Description", 0, REG_SZ, (LPBYTE)szValue, (dwSize=(DWORD)lstrlenA(szValue)+1));
-//
-//				RegSetValueExA(hkey, "DisableOutput", 0, REG_DWORD, (LPBYTE)&(disp=1), (dwSize=4));
-//
-//				RegCloseKey(hkey); hkey=NULL;
-//			}
-//		}
-//	}
-//
-//
-//	// Перечитать макросы в FAR?
-//	if (lbMacroAdded && abAllowAPI) {
-//		if (gFarVersion.dwVerMajor==1)
-//			ReloadMacroA();
-//		else if (gFarVersion.dwBuild>=FAR_Y_VER)
-//			FUNC_Y(ReloadMacro)();
-//		else
-//			FUNC_X(ReloadMacro)();
-//	}
-//
-//	// First call
-//	if (abAllowAPI) {
-//		NotifyChangeKey();
-//	}
-//}
 
 BOOL ReloadFarInfo(BOOL abForce)
 {
@@ -5901,36 +5014,6 @@ void ShowConsoleInfo()
 }
 
 
-//// <Name>\0<Value>\0<Name2>\0<Value2>\0\0
-//void UpdateEnvVar(const wchar_t* pszList)
-//{
-//	const wchar_t *pszName  = (wchar_t*)pszList;
-//	const wchar_t *pszValue = pszName + lstrlenW(pszName) + 1;
-//
-//	while(*pszName && *pszValue)
-//	{
-//		const wchar_t* pszChanged = pszValue;
-//
-//		// Для ConEmuOutput == AUTO выбирается по версии ФАРа
-//		if (!lstrcmpi(pszName, L"ConEmuOutput") && !lstrcmp(pszChanged, L"AUTO"))
-//		{
-//			if (gFarVersion.dwVerMajor==1)
-//				pszChanged = L"ANSI";
-//			else
-//				pszChanged = L"UNICODE";
-//		}
-//
-//		// Если в pszValue пустая строка - удаление переменной
-//		SetEnvironmentVariableW(pszName, (*pszChanged != 0) ? pszChanged : NULL);
-//		//
-//		pszName = pszValue + lstrlenW(pszValue) + 1;
-//
-//		if (*pszName == 0) break;
-//
-//		pszValue = pszName + lstrlenW(pszName) + 1;
-//	}
-//}
-
 // Плагин может быть вызван в первый раз из фоновой нити.
 // Поэтому простой "gnMainThreadId = GetCurrentThreadId();" не прокатит. Нужно искать первую нить процесса!
 DWORD GetMainThreadId()
@@ -6028,156 +5111,6 @@ void WINAPI OnLibraryLoaded(HMODULE ahModule)
 		}
 	}
 }
-
-//void LogCreateProcessCheck(LPCWSTR asLogFileName)
-//{
-//	if (asLogFileName == (LPCWSTR)-1)
-//	{
-//		//TODO: Загрузить из текущих параметров консоли <CESERVER_CONSOLE_MAPPING_HDR>.sLogCreateProcess
-//		asLogFileName = NULL; // пока - только через CMD_LOG_SHELL
-//	}
-//
-//	if (!ghConEmuWndDC)
-//	{
-//		gsLogCreateProcess[0] = 0;
-//	}
-//	else
-//	{
-//		//DWORD dwGuiThreadId, dwGuiProcessId;
-//		//MFileMapping<ConEmuGuiMapping> GuiInfoMapping;
-//		//dwGuiThreadId = GetWindowThreadProcessId(ghConEmuWndDC, &dwGuiProcessId);
-//		//if (!dwGuiThreadId)
-//		//{
-//		//	_ASSERTE(dwGuiProcessId);
-//		//	gsLogCreateProcess[0] = 0;
-//		//}
-//		//else
-//		//{
-//		//	GuiInfoMapping.InitName(CEGUIINFOMAPNAME, dwGuiProcessId);
-//		//	const ConEmuGuiMapping* pInfo = GuiInfoMapping.Open();
-//		//	if (pInfo && pInfo->cbSize == sizeof(ConEmuGuiMapping))
-//		//	{
-//		//		_ASSERTE(countof(gsLogCreateProcess)==(MAX_PATH+1));
-//		//		gsLogCreateProcess[MAX_PATH] = 0;
-//		//		lstrcpynW(gsLogCreateProcess, pInfo->sLogCreateProcess, MAX_PATH);
-//		//	}
-//		//}
-//		if (!asLogFileName || !*asLogFileName)
-//		{
-//			gsLogCreateProcess[0] = 0;
-//		}
-//		else
-//		{
-//			_ASSERTE(countof(gsLogCreateProcess)==(MAX_PATH+1));
-//			gsLogCreateProcess[MAX_PATH] = 0;
-//			lstrcpynW(gsLogCreateProcess, asLogFileName, MAX_PATH);
-//			TODO("Осталось включить калбэки для шелловских функций");
-//		}
-//	}
-//}
-
-
-//LPTOP_LEVEL_EXCEPTION_FILTER gpPrevExFilter = NULL;
-////
-//LONG WINAPI MyExFilter(struct _EXCEPTION_POINTERS *ExceptionInfo)
-//{
-//	typedef BOOL (WINAPI* MiniDumpWriteDump_t)(HANDLE hProcess, DWORD ProcessId, HANDLE hFile, MINIDUMP_TYPE DumpType,
-//		PMINIDUMP_EXCEPTION_INFORMATION ExceptionParam, PMINIDUMP_USER_STREAM_INFORMATION UserStreamParam,
-//		PMINIDUMP_CALLBACK_INFORMATION CallbackParam);
-//
-//	HMODULE hDbghelp = NULL;
-//	HANDLE hDmpFile = NULL;
-//	MiniDumpWriteDump_t MiniDumpWriteDump_f = NULL;
-//	wchar_t szDumpFile[MAX_PATH*2]; szDumpFile[0] = 0;
-//	wchar_t* pszDumpName = szDumpFile;
-//	if (GetTempPathW(MAX_PATH, szDumpFile))
-//	{
-//		int nLen = lstrlenW(szDumpFile);
-//		if (nLen > 0 && szDumpFile[nLen-1] != L'\\')
-//		{
-//			szDumpFile[nLen++] = L'\\';
-//			szDumpFile[nLen] = 0;
-//			pszDumpName = szDumpFile+nLen;
-//		}
-//	}
-//	StringCchPrintf(pszDumpName, countof(pszDumpName), L"Far-%u.mdmp", GetCurrentProcessId());
-//
-//	wchar_t szErrInfo[MAX_PATH*3], szTitle[128];
-//	_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"Far %i.%i build %i Unhandled Exception", gFarVersion.dwVerMajor, gFarVersion.dwVerMinor, gFarVersion.dwBuild);
-//
-//
-//	hDmpFile = CreateFileW(szDumpFile, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL|FILE_FLAG_WRITE_THROUGH, NULL);
-//	if (hDmpFile == INVALID_HANDLE_VALUE)
-//	{
-//		DWORD nErr = GetLastError();
-//		StringCchPrintf(szErrInfo, countof(szErrInfo), L"Can't create debug dump file\n%s\nErrCode=0x%08X", szDumpFile, nErr);
-//		MessageBoxW(NULL, szErrInfo, szTitle, MB_SYSTEMMODAL|MB_ICONSTOP);
-//	}
-//	else if ((hDbghelp = LoadLibraryW(L"Dbghelp.dll")) == NULL)
-//	{
-//		DWORD nErr = GetLastError();
-//		StringCchPrintf(szErrInfo, countof(szErrInfo), L"Can't load debug library 'Dbghelp.dll'\nErrCode=0x%08X\n\nTry again?", nErr);
-//		MessageBoxW(NULL, szErrInfo, szTitle, MB_SYSTEMMODAL|MB_ICONSTOP);
-//	}
-//	else
-//	{
-//		MiniDumpWriteDump_f = (MiniDumpWriteDump_t)GetProcAddress(hDbghelp, "MiniDumpWriteDump");
-//		if (!MiniDumpWriteDump_f)
-//		{
-//			DWORD nErr = GetLastError();
-//			StringCchPrintf(szErrInfo, countof(szErrInfo), L"Can't locate 'MiniDumpWriteDump' in library 'Dbghelp.dll'", nErr);
-//			MessageBoxW(NULL, szErrInfo, szTitle, MB_SYSTEMMODAL|MB_ICONSTOP);
-//		}
-//		else
-//		{
-//			MINIDUMP_EXCEPTION_INFORMATION mei = {GetCurrentThreadId()};
-//			mei.ExceptionPointers = ExceptionInfo;
-//			mei.ClientPointers = TRUE;
-//			PMINIDUMP_EXCEPTION_INFORMATION pmei = NULL; // пока
-//			BOOL lbDumpRc = MiniDumpWriteDump_f(
-//				GetCurrentProcess(), GetCurrentProcessId(),
-//				hDmpFile,
-//				MiniDumpNormal /*MiniDumpWithDataSegs*/,
-//				pmei,
-//				NULL, NULL);
-//			if (!lbDumpRc)
-//			{
-//				DWORD nErr = GetLastError();
-//				StringCchPrintf(szErrInfo, countof(szErrInfo), L"MiniDumpWriteDump failed.\nErrorCode=0x%08X", nErr);
-//				MessageBoxW(NULL, szErrInfo, szTitle, MB_SYSTEMMODAL|MB_ICONSTOP);
-//			}
-//			else
-//			{
-//				lstrcpyW(szErrInfo, L"MiniDump was saved\n");
-//				lstrcatW(szErrInfo, szDumpFile);
-//				MessageBoxW(NULL, szErrInfo, szTitle, MB_SYSTEMMODAL|MB_ICONSTOP);
-//			}
-//			CloseHandle(hDmpFile);
-//		}
-//	}
-//
-//	if (gpPrevExFilter)
-//		return gpPrevExFilter(ExceptionInfo);
-//	else
-//		return EXCEPTION_EXECUTE_HANDLER;
-//}
-//
-//
-//void InstallTrapHandler()
-//{
-//	static bool bProcessed = false;
-//	if (bProcessed)
-//		return;
-//	// выполняем только один раз
-//	bProcessed = true;
-//	//if (IsDebuggerPresent())
-//	//	return; // под дебаггером - не нужно
-//
-//	if (gpConMapInfo->nLogLevel > 0)
-//	{
-//		gpPrevExFilter = SetUnhandledExceptionFilter(MyExFilter);
-//	}
-//}
 
 
 /* Используются как extern в ConEmuCheck.cpp */

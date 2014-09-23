@@ -1191,42 +1191,6 @@ void CPluginW1900::StopWaitEndSynchro()
 	}
 }
 
-
-// Param должен быть выделен в куче. Память освобождается в ProcessSynchroEventW.
-//BOOL CallSynchroW1900(SynchroArg *Param, DWORD nTimeout /*= 10000*/)
-//{
-//	if (!InfoW1900 || !Param)
-//		return FALSE;
-//
-//	if (gFarVersion.dwVerMajor>1 && (gFarVersion.dwVerMinor>0 || gFarVersion.dwBuild>=1006)) {
-//		// Функция всегда возвращает 0
-//		if (Param->hEvent)
-//			ResetEvent(Param->hEvent);
-//
-//		//Param->Processed = FALSE;
-//
-//		InfoW1900->AdvControl ( &guid_ConEmu, ACTL_SYNCHRO, Param);
-//
-//		HANDLE hEvents[2] = {ghServerTerminateEvent, Param->hEvent};
-//		int nCount = Param->hEvent ? 2 : 1;
-//		_ASSERTE(Param->hEvent != NULL);
-//
-//		DWORD nWait = 100;
-//		nWait = WaitForMultipleObjects(nCount, hEvents, FALSE, nTimeout);
-//		if (nWait != WAIT_OBJECT_0 && nWait != (WAIT_OBJECT_0+1)) {
-//			_ASSERTE(nWait==WAIT_OBJECT_0);
-//			if (nWait == (WAIT_OBJECT_0+1)) {
-//				// Таймаут, эту команду плагин должен пропустить, когда фар таки соберется ее выполнить
-//				Param->Obsolete = TRUE;
-//			}
-//		}
-//
-//		return (nWait == 0);
-//	}
-//
-//	return FALSE;
-//}
-
 bool CPluginW1900::IsMacroActive()
 {
 	if (!InfoW1900 || !FarHwnd)

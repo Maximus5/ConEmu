@@ -907,42 +907,6 @@ void CPluginW995::StopWaitEndSynchro()
 	}
 }
 
-
-// Param должен быть выделен в куче. Память освобождается в ProcessSynchroEventW.
-//BOOL CallSynchro995(SynchroArg *Param, DWORD nTimeout /*= 10000*/)
-//{
-//	if (!InfoW995 || !Param)
-//		return FALSE;
-//
-//	if (gFarVersion.dwVerMajor>1 && (gFarVersion.dwVerMinor>0 || gFarVersion.dwBuild>=1006)) {
-//		// Функция всегда возвращает 0
-//		if (Param->hEvent)
-//			ResetEvent(Param->hEvent);
-//
-//		//Param->Processed = FALSE;
-//
-//		InfoW995->AdvControl ( InfoW995->ModuleNumber, ACTL_SYNCHRO, Param);
-//
-//		HANDLE hEvents[2] = {ghServerTerminateEvent, Param->hEvent};
-//		int nCount = Param->hEvent ? 2 : 1;
-//		_ASSERTE(Param->hEvent != NULL);
-//
-//		DWORD nWait = 100;
-//		nWait = WaitForMultipleObjects(nCount, hEvents, FALSE, nTimeout);
-//		if (nWait != WAIT_OBJECT_0 && nWait != (WAIT_OBJECT_0+1)) {
-//			_ASSERTE(nWait==WAIT_OBJECT_0);
-//			if (nWait == (WAIT_OBJECT_0+1)) {
-//				// Таймаут, эту команду плагин должен пропустить, когда фар таки соберется ее выполнить
-//				Param->Obsolete = TRUE;
-//			}
-//		}
-//
-//		return (nWait == 0);
-//	}
-//
-//	return FALSE;
-//}
-
 bool CPluginW995::IsMacroActive()
 {
 	if (!InfoW995 || !FarHwnd)

@@ -244,25 +244,12 @@ BOOL Attach2Gui();
 BOOL StartDebugger();
 void ShowConsoleInfo();
 
-//#define DEFAULT_SYNCHRO_TIMEOUT 10000
-//BOOL FUNC_X(CallSynchro)(SynchroArg *Param, DWORD nTimeout /*= 10000*/);
-//BOOL FUNC_Y1(CallSynchro)(SynchroArg *Param, DWORD nTimeout /*= 10000*/);
-//BOOL FUNC_Y2(CallSynchro)(SynchroArg *Param, DWORD nTimeout /*= 10000*/);
-
-//BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount);
-
 BOOL FarSetConsoleSize(SHORT nNewWidth, SHORT nNewHeight);
 
 BOOL StartupHooks(HMODULE ahOurDll);
 void ShutdownHooks();
 
 bool RunExternalProgramW(wchar_t* pszCommand, wchar_t* pszCurDir, bool bSilent=false);
-
-//void ExecuteQuitFar();
-//void ExecuteQuitFarA();
-//void FUNC_X(ExecuteQuitFar)();
-//void FUNC_Y1(ExecuteQuitFar)();
-//void FUNC_Y2(ExecuteQuitFar)();
 
 //void LogCreateProcessCheck(LPCWSTR asLogFileName);
 
