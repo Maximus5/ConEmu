@@ -770,7 +770,7 @@ int ShowMessageA(int aiMsg, int aiButtons)
 //	InfoA->AdvControl(InfoA->ModuleNumber,ACTL_KEYMACRO,&command);
 //}
 
-void SetWindowA(int nTab)
+void CPluginAnsi::SetWindow(int nTab)
 {
 	if (!InfoA || !InfoA->AdvControl)
 		return;

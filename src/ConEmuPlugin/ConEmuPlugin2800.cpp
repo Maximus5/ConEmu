@@ -876,7 +876,7 @@ LPCWSTR GetMsgW2800(int aiMsg)
 //	InfoW2800->AdvControl(&guid_ConEmu,ACTL_KEYMACRO,&command);
 //}
 
-void SetWindowW2800(int nTab)
+void CPluginW2800::SetWindow(int nTab)
 {
 	if (!InfoW2800 || !InfoW2800->AdvControl)
 		return;

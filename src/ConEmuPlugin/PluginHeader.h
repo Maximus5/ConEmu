@@ -174,10 +174,6 @@ void FUNC_X(ProcessDragToW)();
 void FUNC_Y1(ProcessDragToW)();
 void FUNC_Y2(ProcessDragToW)();
 void ProcessDragToA();
-void SetWindowA(int nTab);
-void FUNC_X(SetWindowW)(int nTab);
-void FUNC_Y1(SetWindowW)(int nTab);
-void FUNC_Y2(SetWindowW)(int nTab);
 
 void CheckResources(BOOL abFromStartup);
 void InitResources();
