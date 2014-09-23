@@ -178,10 +178,12 @@ class CConEmuMain
 		BOOL CheckDosBoxExists();
 		void CheckPortableReg();
 		void FinalizePortableReg();
+		bool mb_ForceUseRegistry;
 		wchar_t ms_ConEmuXml[MAX_PATH+1];       // полный путь к портабельным настройкам
 		wchar_t ms_ConEmuIni[MAX_PATH+1];       // полный путь к портабельным настройкам
 	public:
 		bool SetConfigFile(LPCWSTR asFilePath, bool abWriteReq = false);
+		void SetForceUseRegistry();
 		LPWSTR ConEmuXml();
 		LPWSTR ConEmuIni();
 		wchar_t ms_ConEmuChm[MAX_PATH+1];       // полный путь к chm-файлу (help)

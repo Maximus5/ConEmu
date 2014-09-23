@@ -3732,6 +3732,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	bool PalettePrm = false; TCHAR* PaletteVal = NULL;
 	//bool FontFilePrm = false; TCHAR* FontFile = NULL; //ADD fontname; by Mors
 	bool WindowPrm = false; int WindowModeVal = 0;
+	bool ForceUseRegistryPrm = false;
 	bool LoadCfgFilePrm = false; TCHAR* LoadCfgFile = NULL;
 	bool SaveCfgFilePrm = false; TCHAR* SaveCfgFile = NULL;
 	bool UpdateSrcSetPrm = false; TCHAR* UpdateSrcSet = NULL;
@@ -4347,6 +4348,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 						return 100;
 					}
 				}
+				else if (!klstricmp(curCommand, _T("/LoadRegistry")))
+				{
+					ForceUseRegistryPrm = true;
+				}
 				else if (!klstricmp(curCommand, _T("/LoadCfgFile")) && i + 1 < params)
 				{
 					// используем последний из параметров, если их несколько
@@ -4466,8 +4471,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	DEBUGSTRSTARTUP(L"Checking for first instance");
 	gpConEmu->isFirstInstance();
 
+	// xml-using disabled? Forced to registry?
+	if (ForceUseRegistryPrm)
+	{
+		gpConEmu->SetForceUseRegistry();
+	}
 	// special config file
-	if (LoadCfgFilePrm)
+	else if (LoadCfgFilePrm)
 	{
 		DEBUGSTRSTARTUP(L"Exact cfg file was specified");
 		// При ошибке - не выходим, просто покажем ее пользователю
