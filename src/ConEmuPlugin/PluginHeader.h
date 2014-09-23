@@ -353,10 +353,5 @@ bool pcc_Disabled(PluginMenuCommands nMenuID);
 
 void ShutdownPluginStep(LPCWSTR asInfo, int nParm1 = 0, int nParm2 = 0, int nParm3 = 0, int nParm4 = 0);
 
-int WINAPI FUNC_Y1(ProcessEditorEventW)(void* p);
-INT_PTR WINAPI FUNC_Y2(ProcessEditorEventW)(void* p);
-int WINAPI FUNC_Y1(ProcessViewerEventW)(void* p);
-INT_PTR WINAPI FUNC_Y2(ProcessViewerEventW)(void* p);
-
 HANDLE WINAPI FUNC_Y1(OpenW)(const void* apInfo);
 HANDLE WINAPI FUNC_Y2(OpenW)(const void* apInfo);

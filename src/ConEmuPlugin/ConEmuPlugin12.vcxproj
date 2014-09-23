@@ -1004,6 +1004,7 @@
     <ClInclude Include="..\common\pluginA.hpp" />
     <ClInclude Include="..\common\pluginW1761.hpp" />
     <ClInclude Include="..\common\pluginW1900.hpp" />
+    <ClInclude Include="..\common\pluginW2800.hpp" />
     <ClInclude Include="..\common\SetEnvVar.h" />
     <ClInclude Include="..\common\WinConsole.h" />
     <ClInclude Include="..\common\WinObjects.h" />
