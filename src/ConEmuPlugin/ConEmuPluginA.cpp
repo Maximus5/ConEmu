@@ -1194,6 +1194,22 @@ int CPluginAnsi::GetActiveWindowType()
 	return WInfo.Type;
 }
 
+LPCWSTR CPluginAnsi::GetWindowTypeName(int WindowType)
+{
+	LPCWSTR pszCurType;
+	switch (WindowType)
+	{
+		case WTYPE_PANELS: pszCurType = L"WTYPE_PANELS"; break;
+		case WTYPE_VIEWER: pszCurType = L"WTYPE_VIEWER"; break;
+		case WTYPE_EDITOR: pszCurType = L"WTYPE_EDITOR"; break;
+		case WTYPE_DIALOG: pszCurType = L"WTYPE_DIALOG"; break;
+		case WTYPE_VMENU:  pszCurType = L"WTYPE_VMENU"; break;
+		case WTYPE_HELP:   pszCurType = L"WTYPE_HELP"; break;
+		default:           pszCurType = L"Unknown";
+	}
+	return pszCurType;
+}
+
 #undef FAR_UNICODE
 #include "Dialogs.h"
 void GuiMacroDlgA()

@@ -54,6 +54,7 @@ public:
 	bool RunExternalProgram(wchar_t* pszCommand);
 	bool ProcessCommandLine(wchar_t* pszCommand);
 	void ShowPluginMenu(PluginCallCommands nCallID = pcc_None);
+	int ProcessSynchroEvent(int Event, void *Param);
 
 public:
 	virtual BOOL    CheckBufferEnabled() = 0;
@@ -66,6 +67,7 @@ public:
 	virtual LPCWSTR GetMsg(int aiMsg, wchar_t* psMsg = NULL, size_t cchMsgMax = 0) = 0;
 	virtual LPWSTR  GetPanelDir(GetPanelDirFlags Flags) = 0;
 	virtual void    GetPluginInfo(void* piv) = 0; // PluginInfo* versioned
+	virtual LPCWSTR GetWindowTypeName(int WindowType) = 0;
 	virtual void    GuiMacroDlg() = 0;
 	virtual bool    InputBox(LPCWSTR Title, LPCWSTR SubTitle, LPCWSTR HistoryName, LPCWSTR SrcText, wchar_t*& DestText) = 0;
 	virtual bool    IsMacroActive() = 0;
@@ -96,3 +98,16 @@ public:
 };
 
 CPluginBase* Plugin();
+
+// Exports
+#if defined(__GNUC__)
+extern "C" {
+#endif
+int WINAPI GetMinFarVersion();
+int WINAPI GetMinFarVersionW();
+int WINAPI ProcessSynchroEventW(int Event,void *Param);
+INT_PTR WINAPI ProcessSynchroEventW3(void* p);
+#if defined(__GNUC__)
+}
+#endif
+// Exports

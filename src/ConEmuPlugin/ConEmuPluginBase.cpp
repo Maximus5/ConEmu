@@ -77,9 +77,19 @@ int WINAPI GetMinFarVersion()
 	return MAKEFARVERSION(1,71,2470);
 }
 
-int GetMinFarVersionW()
+int WINAPI GetMinFarVersionW()
 {
 	return MAKEFARVERSION(2,0,MIN_FAR2_BUILD);
+}
+
+int WINAPI ProcessSynchroEventW(int Event, void *Param)
+{
+	return Plugin()->ProcessSynchroEvent(Event, void *Param);
+}
+
+INT_PTR WINAPI ProcessSynchroEventW3(void* p)
+{
+	return Plugin()->ProcessSynchroEvent(void* p);
 }
 
 /* EXPORTS END */
@@ -549,4 +559,56 @@ void CPluginBase::ShowPluginMenu(PluginCallCommands nCallID /*= pcc_None*/)
 			ShowConsoleInfo();
 		} break;
 	}
+}
+
+int CPluginBase::ProcessSynchroEvent(int Event, void *Param)
+{
+	if (Event != 0/*SE_COMMONSYNCHRO*/)
+		return;
+
+	if (gbInputSynchroPending)
+		gbInputSynchroPending = false;
+
+	// Некоторые плагины (NetBox) блокируют главный поток, и открывают
+	// в своем потоке диалог. Это ThreadSafe. Некорректные открытия
+	// отследить не удастся. Поэтому, считаем, если Far дернул наш
+	// ProcessSynchroEventW, то это (временно) стала главная нить
+	DWORD nPrevID = gnMainThreadId;
+	gnMainThreadId = GetCurrentThreadId();
+
+	#ifdef _DEBUG
+	{
+		static int nLastType = -1;
+		int nCurType = GetActiveWindowType();
+
+		if (nCurType != nLastType)
+		{
+			LPCWSTR pszCurType = GetWindowTypeName(nCurType);
+
+			LPCWSTR pszLastType = GetWindowTypeName(nLastType);
+
+			wchar_t szDbg[255];
+			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"FarWindow: %s activated (was %s)\n", pszCurType, pszLastType);
+			DEBUGSTR(szDbg);
+			nLastType = nCurType;
+		}
+	}
+	#endif
+
+	if (!gbSynchroProhibited)
+	{
+		OnMainThreadActivated();
+	}
+
+	if (gnSynchroCount > 0)
+		gnSynchroCount--;
+
+	if (gbSynchroProhibited && (gnSynchroCount == 0))
+	{
+		Plugin()->StopWaitEndSynchro();
+	}
+
+	gnMainThreadId = nPrevID;
+
+	return 0;
 }

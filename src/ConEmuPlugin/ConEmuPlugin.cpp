@@ -112,7 +112,6 @@ extern "C" {
 	void WINAPI GetFarVersion(FarVersion* pfv);
 	int  WINAPI ProcessEditorInputW(void* Rec);
 	void WINAPI SetStartupInfoW(void *aInfo);
-	//int  WINAPI ProcessSynchroEventW(int Event,void *Param);
 	BOOL WINAPI IsTerminalMode();
 	BOOL WINAPI IsConsoleActive();
 	int  WINAPI RegisterPanelView(PanelViewInit *ppvi);
@@ -1262,81 +1261,6 @@ BOOL WINAPI OnWriteConsoleOutput(HookCallbackArg* pArgs)
 	return TRUE;
 }
 
-
-int WINAPI ProcessSynchroEventW(int Event,void *Param)
-{
-	if (Event == SE_COMMONSYNCHRO)
-	{
-		if (gbInputSynchroPending)
-			gbInputSynchroPending = false;
-
-		// Некоторые плагины (NetBox) блокируют главный поток, и открывают
-		// в своем потоке диалог. Это ThreadSafe. Некорректные открытия
-		// отследить не удастся. Поэтому, считаем, если Far дернул наш
-		// ProcessSynchroEventW, то это (временно) стала главная нить
-		DWORD nPrevID = gnMainThreadId;
-		gnMainThreadId = GetCurrentThreadId();
-
-#ifdef _DEBUG
-		{
-			static int nLastType = -1;
-			int nCurType = Plugin()->GetActiveWindowType();
-
-			if (nCurType != nLastType)
-			{
-				LPCWSTR pszCurType = NULL;
-
-				switch(nCurType)
-				{
-					case WTYPE_PANELS: pszCurType = L"WTYPE_PANELS"; break;
-					case WTYPE_VIEWER: pszCurType = L"WTYPE_VIEWER"; break;
-					case WTYPE_EDITOR: pszCurType = L"WTYPE_EDITOR"; break;
-					case WTYPE_DIALOG: pszCurType = L"WTYPE_DIALOG"; break;
-					case WTYPE_VMENU:  pszCurType = L"WTYPE_VMENU"; break;
-					case WTYPE_HELP:   pszCurType = L"WTYPE_HELP"; break;
-					default:           pszCurType = L"Unknown";
-				}
-
-				LPCWSTR pszLastType = NULL;
-
-				switch(nLastType)
-				{
-					case WTYPE_PANELS: pszLastType = L"WTYPE_PANELS"; break;
-					case WTYPE_VIEWER: pszLastType = L"WTYPE_VIEWER"; break;
-					case WTYPE_EDITOR: pszLastType = L"WTYPE_EDITOR"; break;
-					case WTYPE_DIALOG: pszLastType = L"WTYPE_DIALOG"; break;
-					case WTYPE_VMENU:  pszLastType = L"WTYPE_VMENU"; break;
-					case WTYPE_HELP:   pszLastType = L"WTYPE_HELP"; break;
-					default:           pszLastType = L"Undefined";
-				}
-
-				wchar_t szDbg[255];
-				_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"FarWindow: %s activated (was %s)\n", pszCurType, pszLastType);
-				DEBUGSTR(szDbg);
-				nLastType = nCurType;
-			}
-		}
-#endif
-
-		if (!gbSynchroProhibited)
-		{
-			OnMainThreadActivated();
-		}
-
-		if (gnSynchroCount > 0)
-			gnSynchroCount--;
-
-		if (gbSynchroProhibited && (gnSynchroCount == 0))
-		{
-			Plugin()->StopWaitEndSynchro();
-		}
-
-		gnMainThreadId = nPrevID;
-	}
-
-	return 0;
-}
-
 /* COMMON - end */
 
 
@@ -1349,8 +1273,6 @@ int WINAPI ProcessViewerEventW(int Event, void *Param);
 INT_PTR WINAPI ProcessViewerEventW3(void*);
 int WINAPI ProcessDialogEventW(int Event, void *Param);
 INT_PTR WINAPI ProcessDialogEventW3(void*);
-int WINAPI ProcessSynchroEventW(int Event,void *Param);
-INT_PTR WINAPI ProcessSynchroEventW3(void*);
 
 #include "../common/SetExport.h"
 ExportFunc Far3Func[] =
@@ -4109,14 +4031,6 @@ INT_PTR WINAPI ProcessDialogEventW3(void* p)
 		return FUNC_Y2(ProcessDialogEventW)(p);
 	else //if (gFarVersion.dwBuild>=FAR_Y1_VER)
 		return FUNC_Y1(ProcessDialogEventW)(p);
-}
-
-INT_PTR WINAPI ProcessSynchroEventW3(void* p)
-{
-	if (gFarVersion.dwBuild>=FAR_Y2_VER)
-		return FUNC_Y2(ProcessSynchroEventW)(p);
-	else //if (gFarVersion.dwBuild>=FAR_Y1_VER)
-		return FUNC_Y1(ProcessSynchroEventW)(p);
 }
 
 void ExitFarCmn()

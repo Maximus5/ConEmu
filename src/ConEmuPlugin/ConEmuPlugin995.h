@@ -51,6 +51,7 @@ public:
 	virtual LPCWSTR GetMsg(int aiMsg, wchar_t* psMsg = NULL, size_t cchMsgMax = 0) override;
 	virtual LPWSTR  GetPanelDir(GetPanelDirFlags Flags) override;
 	virtual void    GetPluginInfo(void* piv) override; // PluginInfo* versioned
+	virtual LPCWSTR GetWindowTypeName(int WindowType) override;
 	virtual void    GuiMacroDlg() override;
 	virtual bool    InputBox(LPCWSTR Title, LPCWSTR SubTitle, LPCWSTR HistoryName, LPCWSTR SrcText, wchar_t*& DestText);
 	virtual bool    IsMacroActive() override;
@@ -66,7 +67,7 @@ public:
 	virtual void    ProcessDragTo() override;
 	virtual int     ProcessEditorEvent(int Event, void *Param) override;
 	virtual int     ProcessEditorInput(LPCVOID Rec) override;
-	virtual int     ProcessSynchroEvent(void* p) override;
+	virtual int     ProcessSynchroEvent(void* p) { return 0; }; // Was not used in Far 2.x
 	virtual int     ProcessViewerEvent(int Event, void *Param) override;
 	virtual void    RedrawAll() override;
 	virtual BOOL    ReloadFarInfo() override;

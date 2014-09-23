@@ -544,7 +544,6 @@ extern "C"
 int WINAPI ProcessEditorEventW(int Event, void *Param);
 int WINAPI ProcessViewerEventW(int Event, void *Param);
 int WINAPI ProcessDialogEventW(int Event, void *Param);
-int WINAPI ProcessSynchroEventW(int Event,void *Param);
 
 #ifdef __cplusplus
 };
@@ -569,7 +568,7 @@ INT_PTR WINAPI ProcessDialogEventW2800(void* p)
 	return ProcessDialogEventW(Info->Event, Info->Param);
 }
 
-INT_PTR WINAPI ProcessSynchroEventW2800(void* p)
+int CPluginW2800::ProcessSynchroEvent(void* p)
 {
 	const ProcessSynchroEventInfo* Info = (const ProcessSynchroEventInfo*)p;
 	return ProcessSynchroEventW(Info->Event, Info->Param);
@@ -1691,6 +1690,22 @@ int CPluginW2800::GetActiveWindowType()
 	// Сюда мы попасть не должны, все макрообласти должны быть учтены в switch
 	_ASSERTE(nArea==MACROAREA_SHELL);
 	return -1;
+}
+
+LPCWSTR CPluginW2800::GetWindowTypeName(int WindowType)
+{
+	LPCWSTR pszCurType;
+	switch (WindowType)
+	{
+		case WTYPE_PANELS: pszCurType = L"WTYPE_PANELS"; break;
+		case WTYPE_VIEWER: pszCurType = L"WTYPE_VIEWER"; break;
+		case WTYPE_EDITOR: pszCurType = L"WTYPE_EDITOR"; break;
+		case WTYPE_DIALOG: pszCurType = L"WTYPE_DIALOG"; break;
+		case WTYPE_VMENU:  pszCurType = L"WTYPE_VMENU"; break;
+		case WTYPE_HELP:   pszCurType = L"WTYPE_HELP"; break;
+		default:           pszCurType = L"Unknown";
+	}
+	return pszCurType;
 }
 
 //static LONG_PTR WINAPI CallGuiMacroDlg(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2);
