@@ -1132,8 +1132,11 @@ LPWSTR CConEmuMain::ConEmuXml()
 	// Ищем файл портабельных настроек (возвращаем первый найденный, приоритет...)
 	LPWSTR pszSearchXml[] = {
 		ExpandEnvStr(L"%ConEmuDir%\\ConEmu.xml"),
+		ExpandEnvStr(L"%ConEmuDir%\\.ConEmu.xml"),
 		ExpandEnvStr(L"%ConEmuBaseDir%\\ConEmu.xml"),
+		ExpandEnvStr(L"%ConEmuBaseDir%\\.ConEmu.xml"),
 		ExpandEnvStr(L"%APPDATA%\\ConEmu.xml"),
+		ExpandEnvStr(L"%APPDATA%\\.ConEmu.xml"),
 		NULL
 	};
 
