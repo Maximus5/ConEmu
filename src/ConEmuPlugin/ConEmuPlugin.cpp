@@ -69,6 +69,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/FarVersion.h"
 #include "../ConEmu/version.h"
 #include "PluginHeader.h"
+#include "ConEmuPluginBase.h"
 #include "PluginBackground.h"
 #include <Tlhelp32.h>
 

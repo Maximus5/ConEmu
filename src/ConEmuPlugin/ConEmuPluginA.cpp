@@ -41,30 +41,14 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/farcolor1.hpp"
 #include "../common/MSection.h"
 
+#include "ConEmuPluginA.h"
+
 //#define SHOW_DEBUG_EVENTS
-
-// minimal(?) FAR version 1.71 alpha 4 build 2470
-int WINAPI _export GetMinFarVersion(void)
-{
-	// Однако, FAR2 до сборки 748 не понимал две версии плагина в одном файле
-	BOOL bFar2=FALSE;
-
-	if (!LoadFarVersion())
-		bFar2 = TRUE;
-	else
-		bFar2 = gFarVersion.dwVerMajor>=2;
-
-	if (bFar2)
-	{
-		return MAKEFARVERSION(2,0,748);
-	}
-
-	return MAKEFARVERSION(1,71,2470);
-}
 
 
 struct PluginStartupInfo *InfoA=NULL;
 struct FarStandardFunctions *FSFA=NULL;
+
 
 
 HANDLE WINAPI _export OpenPlugin(int OpenFrom,INT_PTR Item)

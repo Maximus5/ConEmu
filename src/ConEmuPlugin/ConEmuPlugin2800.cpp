@@ -42,6 +42,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/ConEmuColors3.h"
 #include "../ConEmuHk/SetHook.h"
 
+#include "ConEmuPlugin2800.h"
+
 #ifdef _DEBUG
 //#define SHOW_DEBUG_EVENTS
 #endif

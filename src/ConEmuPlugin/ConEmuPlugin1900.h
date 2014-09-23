@@ -30,6 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <windows.h>
 #include "../common/common.hpp"
+#include "ConEmuPluginBase.h"
 
 class CPluginW1900 : public CPluginBase
 {

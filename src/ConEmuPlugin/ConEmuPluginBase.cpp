@@ -42,8 +42,47 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #include "ConEmuPluginBase.h"
+#include "PluginHeader.h"
+#include "ConEmuPluginA.h"
+#include "ConEmuPlugin995.h"
+#include "ConEmuPlugin1900.h"
+#include "ConEmuPlugin2800.h"
+
+extern MOUSE_EVENT_RECORD gLastMouseReadEvent;
+extern LONG gnDummyMouseEventFromMacro;
+extern BOOL gbUngetDummyMouseEvent;
 
 CPluginBase* gpPlugin = NULL;
+
+/* EXPORTS BEGIN */
+
+#define MIN_FAR2_BUILD 1765 // svs 19.12.2010 22:52:53 +0300 - build 1765: Новая команда в FARMACROCOMMAND - MCMD_GETAREA
+#define MAKEFARVERSION(major,minor,build) ( ((major)<<8) | (minor) | ((build)<<16))
+
+int WINAPI GetMinFarVersion()
+{
+	// Однако, FAR2 до сборки 748 не понимал две версии плагина в одном файле
+	bool bFar2 = false;
+
+	if (!LoadFarVersion())
+		bFar2 = true;
+	else
+		bFar2 = gFarVersion.dwVerMajor>=2;
+
+	if (bFar2)
+	{
+		return MAKEFARVERSION(2,0,MIN_FAR2_BUILD);
+	}
+
+	return MAKEFARVERSION(1,71,2470);
+}
+
+int GetMinFarVersionW()
+{
+	return MAKEFARVERSION(2,0,MIN_FAR2_BUILD);
+}
+
+/* EXPORTS END */
 
 CPluginBase* Plugin()
 {

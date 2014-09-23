@@ -39,6 +39,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "PluginHeader.h"
 #include "../common/farcolor2.hpp"
 
+#include "ConEmuPlugin995.h"
+
 #ifdef _DEBUG
 //#define SHOW_DEBUG_EVENTS
 #endif
@@ -66,14 +68,6 @@ wchar_t* CPluginW995::GetPanelDir(HANDLE hPanel)
 	}
 	_ASSERTE(nSize>0);
 	return pszDir;
-}
-
-
-// minimal(?) FAR version 2.0 alpha build FAR_X_VER
-int CPluginW995::GetMinFarVersion(void)
-{
-	// svs 19.12.2010 22:52:53 +0300 - build 1765: Новая команда в FARMACROCOMMAND - MCMD_GETAREA
-	return MAKEFARVERSION(2,0,1765);
 }
 
 void CPluginW995::GetPluginInfo(void *piv)
