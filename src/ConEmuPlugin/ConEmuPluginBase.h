@@ -66,7 +66,7 @@ public:
 	virtual LPWSTR  GetPanelDir(GetPanelDirFlags Flags) = 0;
 	virtual void    GetPluginInfo(void* piv) = 0; // PluginInfo* versioned
 	virtual void    GuiMacroDlg() = 0;
-	virtual BOOL    IsMacroActive() = 0;
+	virtual bool    IsMacroActive() = 0;
 	virtual void    LoadPanelDirs() = 0;
 	virtual bool    LoadPlugin(wchar_t* pszPluginPath) = 0;
 	virtual HANDLE  Open(const void* apInfo) = 0;

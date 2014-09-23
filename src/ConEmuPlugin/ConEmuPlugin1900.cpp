@@ -1232,16 +1232,17 @@ void CPluginW1900::StopWaitEndSynchro()
 //	return FALSE;
 //}
 
-BOOL CPluginW1900::IsMacroActive()
+bool CPluginW1900::IsMacroActive()
 {
-	if (!InfoW1900) return FALSE;
+	if (!InfoW1900 || !FarHwnd)
+		return false;
 
 	INT_PTR liRc = InfoW1900->MacroControl(&guid_ConEmu, MCTL_GETSTATE, 0, 0);
 
 	if (liRc == MACROSTATE_NOMACRO)
-		return FALSE;
+		return false;
 
-	return TRUE;
+	return true;
 }
 
 int CPluginW1900::GetMacroArea()
@@ -1485,7 +1486,7 @@ BOOL CPluginW1900::ReloadFarInfo(/*BOOL abFull*/)
 
 	LoadFarSettingsW1900(&gpFarInfo->FarInterfaceSettings, &gpFarInfo->FarPanelSettings);
 
-	gpFarInfo->bMacroActive = IsMacroActiveW1900();
+	gpFarInfo->bMacroActive = IsMacroActive();
 	INT_PTR nArea = InfoW1900->MacroControl(&guid_ConEmu, MCTL_GETAREA, 0, 0);
 	switch(nArea)
 	{

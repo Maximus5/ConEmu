@@ -1297,16 +1297,17 @@ void StopWaitEndSynchroW2800()
 //	return FALSE;
 //}
 
-BOOL IsMacroActiveW2800()
+bool CPluginW2800::IsMacroActive()
 {
-	if (!InfoW2800) return FALSE;
+	if (!InfoW2800 || !FarHwnd)
+		return false;
 
 	INT_PTR liRc = InfoW2800->MacroControl(&guid_ConEmu, MCTL_GETSTATE, 0, 0);
 
 	if (liRc == MACROSTATE_NOMACRO)
-		return FALSE;
+		return false;
 
-	return TRUE;
+	return true;
 }
 
 int GetMacroAreaW2800()
@@ -1550,7 +1551,7 @@ BOOL ReloadFarInfoW2800(/*BOOL abFull*/)
 
 	LoadFarSettingsW2800(&gpFarInfo->FarInterfaceSettings, &gpFarInfo->FarPanelSettings);
 
-	gpFarInfo->bMacroActive = IsMacroActiveW2800();
+	gpFarInfo->bMacroActive = IsMacroActive();
 	INT_PTR nArea = InfoW2800->MacroControl(&guid_ConEmu, MCTL_GETAREA, 0, 0);
 	switch(nArea)
 	{

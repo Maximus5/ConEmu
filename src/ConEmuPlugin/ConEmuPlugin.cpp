@@ -490,7 +490,7 @@ void TouchReadPeekConsoleInputs(int Peek /*= -1*/)
 	}
 
 	// Во время макросов - считаем, что Фар "думает"
-	if (!IsMacroActive())
+	if (!Plugin()->IsMacroActive())
 	{
 		SetEvent(ghFarAliveEvent);
 	}
@@ -572,13 +572,13 @@ void OnMainThreadActivated()
 
 	if (!gbRequestUpdateTabs && gbNeedPostTabSend)
 	{
-		if (!isMacroActive(iMacroActive))
+		if (!Plugin()->isMacroActive(iMacroActive))
 		{
 			gbRequestUpdateTabs = TRUE; gbNeedPostTabSend = FALSE;
 		}
 	}
 
-	if (gbRequestUpdateTabs && !isMacroActive(iMacroActive))
+	if (gbRequestUpdateTabs && !Plugin()->isMacroActive(iMacroActive))
 	{
 		gbRequestUpdateTabs = gbNeedPostTabSend = FALSE;
 		UpdateConEmuTabs(true);
@@ -593,7 +593,7 @@ void OnMainThreadActivated()
 	// Retrieve current panel CD's
 	// Remove (gnCurrentWindowType == WTYPE_PANELS) restriction,
 	// panel paths may be changed even from editor
-	if (!isMacroActive(iMacroActive))
+	if (!Plugin()->isMacroActive(iMacroActive))
 	{
 		Plugin()->UpdatePanelDirs();
 	}
@@ -3413,7 +3413,7 @@ DWORD WINAPI MonitorThreadProcW(LPVOID lpParameter)
 
 			if (nDelta > NEEDPOSTTABSENDDELTA)
 			{
-				if (IsMacroActive())
+				if (Plugin()->IsMacroActive())
 				{
 					gnNeedPostTabSendTick = GetTickCount();
 				}
@@ -4497,7 +4497,7 @@ void SendTabs(int tabCount, BOOL abForceSend/*=FALSE*/)
 	// Это нужно делать только если инициировано ФАРОМ. Если запрос прислал ConEmu - не посылать...
 	if (tabCount && ghConEmuWndDC && IsWindow(ghConEmuWndDC) && abForceSend)
 	{
-		gpTabs->Tabs.bMacroActive = IsMacroActive();
+		gpTabs->Tabs.bMacroActive = Plugin()->IsMacroActive();
 		gpTabs->Tabs.bMainThread = (GetCurrentThreadId() == gnMainThreadId);
 
 		// Если выполняется макрос и отложенная отсылка (по окончанию) уже запрошена
@@ -6044,24 +6044,6 @@ BOOL StartDebugger()
 	}
 
 	return lbRc;
-}
-
-BOOL IsMacroActive()
-{
-	if (!FarHwnd) return FALSE;
-
-	BOOL lbActive = FALSE;
-
-	if (gFarVersion.dwVerMajor==1)
-		lbActive = IsMacroActiveA();
-	else if (gFarVersion.dwBuild>=FAR_Y2_VER)
-		lbActive = FUNC_Y2(IsMacroActiveW)();
-	else if (gFarVersion.dwBuild>=FAR_Y1_VER)
-		lbActive = FUNC_Y1(IsMacroActiveW)();
-	else
-		lbActive = FUNC_X(IsMacroActiveW)();
-
-	return lbActive;
 }
 
 int GetMacroArea()

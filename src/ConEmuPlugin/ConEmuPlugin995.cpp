@@ -939,17 +939,18 @@ void CPluginW995::StopWaitEndSynchro()
 //	return FALSE;
 //}
 
-BOOL CPluginW995::IsMacroActive()
+bool CPluginW995::IsMacroActive()
 {
-	if (!InfoW995) return FALSE;
+	if (!InfoW995 || !FarHwnd)
+		return false;
 
 	ActlKeyMacro akm = {MCMD_GETSTATE};
 	INT_PTR liRc = InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_KEYMACRO, &akm);
 
 	if (liRc == MACROSTATE_NOMACRO)
-		return FALSE;
+		return false;
 
-	return TRUE;
+	return true;
 }
 
 int CPluginW995::GetMacroArea()
@@ -1169,7 +1170,7 @@ BOOL CPluginW995::ReloadFarInfo()
 	//gpFarInfo->nFarConfirmationSettings =
 	//    (DWORD)InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETCONFIRMATIONS, 0);
 
-	gpFarInfo->bMacroActive = IsMacroActiveW995();
+	gpFarInfo->bMacroActive = IsMacroActive();
 	ActlKeyMacro area = {MCMD_GETAREA};
 	INT_PTR nArea = InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_KEYMACRO, &area);
 	switch(nArea)

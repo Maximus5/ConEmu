@@ -54,7 +54,7 @@ public:
 	virtual LPWSTR  GetPanelDir(GetPanelDirFlags Flags) override;
 	virtual void    GetPluginInfo(void* piv) override; // PluginInfo* versioned
 	virtual void    GuiMacroDlg() override;
-	virtual BOOL    IsMacroActive() override;
+	virtual bool    IsMacroActive() override;
 	virtual void    LoadPanelDirs() override;
 	virtual bool    LoadPlugin(wchar_t* pszPluginPath) override;
 	virtual HANDLE  Open(const void* apInfo) override;

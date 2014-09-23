@@ -926,17 +926,18 @@ void GetMsgA(int aiMsg, wchar_t (&rsMsg)[MAX_PATH])
 	}
 }
 
-BOOL IsMacroActiveA()
+bool CPluginAnsi::IsMacroActive()
 {
-	if (!InfoA) return FALSE;
+	if (!InfoA || !FarHwnd)
+		return false;
 
 	ActlKeyMacro akm = {MCMD_GETSTATE};
 	INT_PTR liRc = InfoA->AdvControl(InfoA->ModuleNumber, ACTL_KEYMACRO, &akm);
 
 	if (liRc == MACROSTATE_NOMACRO)
-		return FALSE;
+		return false;
 
-	return TRUE;
+	return true;
 }
 
 void RedrawAllA()
@@ -1125,7 +1126,7 @@ BOOL ReloadFarInfoA(/*BOOL abFull*/)
 	//gpFarInfo->nFarConfirmationSettings =
 	//    (DWORD)InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETCONFIRMATIONS, 0);
 
-	gpFarInfo->bMacroActive = IsMacroActiveW995();
+	gpFarInfo->bMacroActive = IsMacroActive();
 	gpFarInfo->nMacroArea = fma_Unknown; // в Far 1.7x не поддерживается
 
 	gpFarInfo->bFarPanelAllowed = InfoA->Control(INVALID_HANDLE_VALUE, FCTL_CHECKPANELSEXIST, 0);
