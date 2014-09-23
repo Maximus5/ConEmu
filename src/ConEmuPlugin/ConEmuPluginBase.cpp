@@ -306,3 +306,256 @@ bool CPluginBase::ProcessCommandLine(wchar_t* pszCommand)
 
 	return false;
 }
+
+void CPluginBase::ShowPluginMenu(PluginCallCommands nCallID /*= pcc_None*/)
+{
+	int nItem = -1;
+
+	if (!FarHwnd)
+	{
+		ShowMessage(CEInvalidConHwnd,0); // "ConEmu plugin\nGetConsoleWindow()==FarHwnd is NULL"
+		return;
+	}
+
+	if (IsTerminalMode())
+	{
+		ShowMessage(CEUnavailableInTerminal,0); // "ConEmu plugin\nConEmu is not available in terminal mode\nCheck TERM environment variable"
+		return;
+	}
+
+	CheckConEmuDetached();
+
+	if (nCallID != pcc_None)
+	{
+		// Команды CallPlugin
+		for (size_t i = 0; i < countof(gpPluginMenu); i++)
+		{
+			if (gpPluginMenu[i].CallID == nCallID)
+			{
+				nItem = gpPluginMenu[i].MenuID;
+				break;
+			}
+		}
+		_ASSERTE(nItem!=-1);
+
+		SHOWDBGINFO(L"*** ShowPluginMenu used default item\n");
+	}
+	else
+	{
+		ConEmuPluginMenuItem items[menu_Last] = {};
+		int nCount = menu_Last; //sizeof(items)/sizeof(items[0]);
+		_ASSERTE(nCount == countof(gpPluginMenu));
+		for (int i = 0; i < nCount; i++)
+		{
+			if (!gpPluginMenu[i].LangID)
+			{
+				items[i].Separator = true;
+				continue;
+			}
+			_ASSERTE(i == gpPluginMenu[i].MenuID);
+			items[i].Selected = pcc_Selected((PluginMenuCommands)i);
+			items[i].Disabled = pcc_Disabled((PluginMenuCommands)i);
+			items[i].MsgID = gpPluginMenu[i].LangID;
+		}
+
+		SHOWDBGINFO(L"*** calling ShowPluginMenu\n");
+		nItem = ShowPluginMenu(items, nCount);
+	}
+
+	if (nItem < 0)
+	{
+		SHOWDBGINFO(L"*** ShowPluginMenu cancelled, nItem < 0\n");
+		return;
+	}
+
+	#ifdef _DEBUG
+	wchar_t szInfo[128]; _wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"*** ShowPluginMenu done, nItem == %i\n", nItem);
+	SHOWDBGINFO(szInfo);
+	#endif
+
+	switch (nItem)
+	{
+		case menu_EditConsoleOutput:
+		case menu_ViewConsoleOutput:
+		{
+			// Открыть в редакторе вывод последней консольной программы
+			CESERVER_REQ* pIn = (CESERVER_REQ*)calloc(sizeof(CESERVER_REQ_HDR)+sizeof(DWORD),1);
+
+			if (!pIn) return;
+
+			CESERVER_REQ* pOut = NULL;
+			ExecutePrepareCmd(&pIn->hdr, CECMD_GETOUTPUTFILE, sizeof(CESERVER_REQ_HDR)+sizeof(DWORD));
+			pIn->OutputFile.bUnicode = (gFarVersion.dwVerMajor>=2);
+			pOut = ExecuteGuiCmd(FarHwnd, pIn, FarHwnd);
+
+			if (pOut)
+			{
+				if (pOut->OutputFile.szFilePathName[0])
+				{
+					BOOL lbRc = FALSE;
+
+					if (gFarVersion.dwVerMajor==1)
+						lbRc = EditOutputA(pOut->OutputFile.szFilePathName, (nItem==1));
+					else if (gFarVersion.dwBuild>=FAR_Y2_VER)
+						lbRc = FUNC_Y2(EditOutputW)(pOut->OutputFile.szFilePathName, (nItem==1));
+					else if (gFarVersion.dwBuild>=FAR_Y1_VER)
+						lbRc = FUNC_Y1(EditOutputW)(pOut->OutputFile.szFilePathName, (nItem==1));
+					else
+						lbRc = FUNC_X(EditOutputW)(pOut->OutputFile.szFilePathName, (nItem==1));
+
+					if (!lbRc)
+					{
+						DeleteFile(pOut->OutputFile.szFilePathName);
+					}
+				}
+
+				ExecuteFreeResult(pOut);
+			}
+
+			free(pIn);
+		} break;
+
+		case menu_SwitchTabVisible: // Показать/спрятать табы
+		case menu_SwitchTabNext:
+		case menu_SwitchTabPrev:
+		case menu_SwitchTabCommit:
+		{
+			CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_TABSCMD, sizeof(CESERVER_REQ_HDR)+sizeof(pIn->Data));
+			// Data[0] <== enum ConEmuTabCommand
+			switch (nItem)
+			{
+			case menu_SwitchTabVisible: // Показать/спрятать табы
+				pIn->Data[0] = ctc_ShowHide; break;
+			case menu_SwitchTabNext:
+				pIn->Data[0] = ctc_SwitchNext; break;
+			case menu_SwitchTabPrev:
+				pIn->Data[0] = ctc_SwitchPrev; break;
+			case menu_SwitchTabCommit:
+				pIn->Data[0] = ctc_SwitchCommit; break;
+			default:
+				_ASSERTE(nItem==menu_SwitchTabVisible); // неизвестная команда!
+				pIn->Data[0] = ctc_ShowHide;
+			}
+
+			CESERVER_REQ* pOut = ExecuteGuiCmd(FarHwnd, pIn, FarHwnd);
+			if (pOut) ExecuteFreeResult(pOut);
+		} break;
+
+		case menu_ShowTabsList:
+		{
+			CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_GETALLTABS, sizeof(CESERVER_REQ_HDR));
+			CESERVER_REQ* pOut = ExecuteGuiCmd(FarHwnd, pIn, FarHwnd);
+			if (pOut && (pOut->GetAllTabs.Count > 0))
+			{
+				INT_PTR nMenuRc = -1;
+
+				int Count = pOut->GetAllTabs.Count;
+				int AllCount = Count + pOut->GetAllTabs.Tabs[Count-1].ConsoleIdx;
+				ConEmuPluginMenuItem* pItems = (ConEmuPluginMenuItem*)calloc(AllCount,sizeof(*pItems));
+				if (pItems)
+				{
+					int nLastConsole = 0;
+					for (int i = 0, k = 0; i < Count; i++, k++)
+					{
+						if (nLastConsole != pOut->GetAllTabs.Tabs[i].ConsoleIdx)
+						{
+							pItems[k++].Separator = true;
+							nLastConsole = pOut->GetAllTabs.Tabs[i].ConsoleIdx;
+						}
+						_ASSERTE(k < AllCount);
+						pItems[k].Selected = (pOut->GetAllTabs.Tabs[i].ActiveConsole && pOut->GetAllTabs.Tabs[i].ActiveTab);
+						pItems[k].Checked = pOut->GetAllTabs.Tabs[i].ActiveTab;
+						pItems[k].Disabled = pOut->GetAllTabs.Tabs[i].Disabled;
+						pItems[k].MsgText = pOut->GetAllTabs.Tabs[i].Title;
+						pItems[k].UserData = i;
+					}
+
+					nMenuRc = ShowPluginMenu(pItems, AllCount);
+
+					if ((nMenuRc >= 0) && (nMenuRc < AllCount))
+					{
+						nMenuRc = pItems[nMenuRc].UserData;
+
+						if (pOut->GetAllTabs.Tabs[nMenuRc].ActiveConsole && !pOut->GetAllTabs.Tabs[nMenuRc].ActiveTab)
+						{
+							DWORD nTab = pOut->GetAllTabs.Tabs[nMenuRc].TabIdx;
+							switch (Plugin()->GetMacroArea())
+							{
+							case MACROAREA_SHELL:
+							case MACROAREA_SEARCH:
+							case MACROAREA_INFOPANEL:
+							case MACROAREA_QVIEWPANEL:
+							case MACROAREA_TREEPANEL:
+								gnPluginOpenFrom = OPEN_FILEPANEL;
+								break;
+							case MACROAREA_EDITOR:
+								gnPluginOpenFrom = OPEN_EDITOR;
+								break;
+							case MACROAREA_VIEWER:
+								gnPluginOpenFrom = OPEN_VIEWER;
+								break;
+							default:
+								gnPluginOpenFrom = -1;
+							}
+							ProcessCommand(CMD_SETWINDOW, FALSE, &nTab, NULL, true/*bForceSendTabs*/);
+						}
+						else if (!pOut->GetAllTabs.Tabs[nMenuRc].ActiveConsole || !pOut->GetAllTabs.Tabs[nMenuRc].ActiveTab)
+						{
+							CESERVER_REQ* pActIn = ExecuteNewCmd(CECMD_ACTIVATETAB, sizeof(CESERVER_REQ_HDR)+2*sizeof(DWORD));
+							pActIn->dwData[0] = pOut->GetAllTabs.Tabs[nMenuRc].ConsoleIdx;
+							pActIn->dwData[1] = pOut->GetAllTabs.Tabs[nMenuRc].TabIdx;
+							CESERVER_REQ* pActOut = ExecuteGuiCmd(FarHwnd, pActIn, FarHwnd);
+							ExecuteFreeResult(pActOut);
+							ExecuteFreeResult(pActIn);
+						}
+					}
+
+					SafeFree(pItems);
+				}
+				ExecuteFreeResult(pOut);
+			}
+			else
+			{
+				ShowMessage(CEGetAllTabsFailed, 0);
+			}
+			ExecuteFreeResult(pIn);
+		} break;
+
+		case menu_ConEmuMacro: // Execute GUI macro (gialog)
+		{
+			if (gFarVersion.dwVerMajor==1)
+				GuiMacroDlgA();
+			else if (gFarVersion.dwBuild>=FAR_Y2_VER)
+				FUNC_Y2(GuiMacroDlgW)();
+			else if (gFarVersion.dwBuild>=FAR_Y1_VER)
+				FUNC_Y1(GuiMacroDlgW)();
+			else
+				FUNC_X(GuiMacroDlgW)();
+		} break;
+
+		case menu_AttachToConEmu: // Attach to GUI (если FAR был CtrlAltTab)
+		{
+			if (TerminalMode) break;  // низзя
+
+			if (ghConEmuWndDC && IsWindow(ghConEmuWndDC)) break;  // Мы и так подключены?
+
+			Attach2Gui();
+		} break;
+
+		//#ifdef _DEBUG
+		//case 11: // Start "ConEmuC.exe /DEBUGPID="
+		//#else
+		case menu_StartDebug: // Start "ConEmuC.exe /DEBUGPID="
+			//#endif
+		{
+			if (TerminalMode) break;  // низзя
+
+			StartDebugger();
+		} break;
+
+		case menu_ConsoleInfo:
+		{
+			ShowConsoleInfo();
+		} break;
+	}
+}

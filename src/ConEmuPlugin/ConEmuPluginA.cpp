@@ -130,7 +130,7 @@ HANDLE WINAPI _export OpenPlugin(int OpenFrom,INT_PTR Item)
 	else
 	{
 		SHOWDBGINFO(L"*** Calling ShowPluginMenu\n");
-		ShowPluginMenu();
+		Plugin()->ShowPluginMenu();
 	}
 
 	#ifdef _DEBUG
@@ -806,7 +806,7 @@ void PostMacroA(char* asMacro, INPUT_RECORD* apRec)
 	InfoA->AdvControl(InfoA->ModuleNumber, ACTL_KEYMACRO, (void*)&mcr);
 }
 
-int ShowPluginMenuA(ConEmuPluginMenuItem* apItems, int Count)
+int CPluginAnsi::ShowPluginMenu(ConEmuPluginMenuItem* apItems, int Count)
 {
 	if (!InfoA)
 		return -1;

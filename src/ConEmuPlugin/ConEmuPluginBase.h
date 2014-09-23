@@ -53,6 +53,7 @@ public:
 	void UpdatePanelDirs();
 	bool RunExternalProgram(wchar_t* pszCommand);
 	bool ProcessCommandLine(wchar_t* pszCommand);
+	void ShowPluginMenu(PluginCallCommands nCallID = pcc_None);
 
 public:
 	virtual BOOL    CheckBufferEnabled() = 0;

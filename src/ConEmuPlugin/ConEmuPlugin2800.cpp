@@ -90,6 +90,12 @@ GUID guid_ConEmuInput = { /* 78ba0189-7dd7-4cb9-aff8-c70bca9f9cb6 */
 	0x4cb9,
 	{0xaf, 0xf8, 0xc7, 0x0b, 0xca, 0x9f, 0x9c, 0xb6}
 };
+GUID guid_ConEmuMenu = { /* 2dc6b821-fd8e-4165-adcf-a4eda7b44e8e */
+    0x2dc6b821,
+    0xfd8e,
+    0x4165,
+    {0xad, 0xcf, 0xa4, 0xed, 0xa7, 0xb4, 0x4e, 0x8e}
+};
 
 struct PluginStartupInfo *InfoW2800=NULL;
 struct FarStandardFunctions *FSFW2800=NULL;
@@ -1111,7 +1117,7 @@ void PostMacroW2800(const wchar_t* asMacro, INPUT_RECORD* apRec)
 	SafeFree(pszMacroCopy);
 }
 
-int ShowPluginMenuW2800(ConEmuPluginMenuItem* apItems, int Count)
+int CPluginW2800::ShowPluginMenu(ConEmuPluginMenuItem* apItems, int Count)
 {
 	if (!InfoW2800)
 		return -1;
@@ -1151,13 +1157,7 @@ int ShowPluginMenuW2800(ConEmuPluginMenuItem* apItems, int Count)
 		items[i].Text = apItems[i].MsgText ? apItems[i].MsgText : InfoW2800->GetMsg(&guid_ConEmu, apItems[i].MsgID);
 	}
 
-	GUID lguid_Menu = { /* 2dc6b821-fd8e-4165-adcf-a4eda7b44e8e */
-	    0x2dc6b821,
-	    0xfd8e,
-	    0x4165,
-	    {0xad, 0xcf, 0xa4, 0xed, 0xa7, 0xb4, 0x4e, 0x8e}
-	};
-	int nRc = InfoW2800->Menu(&guid_ConEmu, &lguid_Menu, -1,-1, 0,
+	int nRc = InfoW2800->Menu(&guid_ConEmu, &guid_ConEmuMenu, -1,-1, 0,
 	                         FMENU_AUTOHIGHLIGHT|FMENU_CHANGECONSOLETITLE|FMENU_WRAPMODE,
 	                         InfoW2800->GetMsg(&guid_ConEmu,CEPluginName),
 	                         NULL, NULL, NULL, NULL, (FarMenuItem*)items, Count);

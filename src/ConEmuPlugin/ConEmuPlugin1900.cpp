@@ -55,6 +55,7 @@ extern GUID guid_ConEmuGuiMacroDlg;
 extern GUID guid_ConEmuWaitEndSynchro;
 extern GUID guid_ConEmuMsg;
 extern GUID guid_ConEmuInput;
+extern GUID guid_ConEmuMenu;
 
 struct PluginStartupInfo *InfoW1900=NULL;
 struct FarStandardFunctions *FSFW1900=NULL;
@@ -1076,13 +1077,7 @@ int CPluginW1900::ShowPluginMenu(ConEmuPluginMenuItem* apItems, int Count)
 		items[i].Text = apItems[i].MsgText ? apItems[i].MsgText : InfoW1900->GetMsg(&guid_ConEmu, apItems[i].MsgID);
 	}
 
-	GUID lguid_Menu = { /* 2dc6b821-fd8e-4165-adcf-a4eda7b44e8e */
-	    0x2dc6b821,
-	    0xfd8e,
-	    0x4165,
-	    {0xad, 0xcf, 0xa4, 0xed, 0xa7, 0xb4, 0x4e, 0x8e}
-	};
-	int nRc = InfoW1900->Menu(&guid_ConEmu, &lguid_Menu, -1,-1, 0,
+	int nRc = InfoW1900->Menu(&guid_ConEmu, &guid_ConEmuMenu, -1,-1, 0,
 	                         FMENU_AUTOHIGHLIGHT|FMENU_CHANGECONSOLETITLE|FMENU_WRAPMODE,
 	                         InfoW1900->GetMsg(&guid_ConEmu,CEPluginName),
 	                         NULL, NULL, NULL, NULL, (FarMenuItem*)items, Count);

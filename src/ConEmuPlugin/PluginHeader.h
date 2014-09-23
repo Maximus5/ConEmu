@@ -379,12 +379,6 @@ extern PluginAndMenuCommands gpPluginMenu[menu_Last];
 bool pcc_Selected(PluginMenuCommands nMenuID);
 bool pcc_Disabled(PluginMenuCommands nMenuID);
 
-void ShowPluginMenu(PluginCallCommands nCallID = pcc_None);
-int ShowPluginMenuA(ConEmuPluginMenuItem* apItems, int Count);
-int FUNC_X(ShowPluginMenuW)(ConEmuPluginMenuItem* apItems, int Count);
-int FUNC_Y1(ShowPluginMenuW)(ConEmuPluginMenuItem* apItems, int Count);
-int FUNC_Y2(ShowPluginMenuW)(ConEmuPluginMenuItem* apItems, int Count);
-
 void ShutdownPluginStep(LPCWSTR asInfo, int nParm1 = 0, int nParm2 = 0, int nParm3 = 0, int nParm4 = 0);
 
 int WINAPI FUNC_Y1(ProcessEditorEventW)(void* p);
