@@ -1267,10 +1267,6 @@ BOOL WINAPI OnWriteConsoleOutput(HookCallbackArg* pArgs)
 
 void WINAPI ExitFARW(void);
 void WINAPI ExitFARW3(void*);
-int WINAPI ProcessEditorEventW(int Event, void *Param);
-INT_PTR WINAPI ProcessEditorEventW3(void*);
-int WINAPI ProcessViewerEventW(int Event, void *Param);
-INT_PTR WINAPI ProcessViewerEventW3(void*);
 
 #include "../common/SetExport.h"
 ExportFunc Far3Func[] =
@@ -3583,52 +3579,6 @@ int WINAPI ProcessEditorInputW(void* Rec)
 	return Plugin()->ProcessEditorInput((LPCVOID)Rec);
 }
 
-int WINAPI ProcessEditorEventW(int Event, void *Param)
-{
-	if (!gbRequestUpdateTabs)
-	{
-		if (Event == EE_READ || Event == EE_CLOSE || Event == EE_GOTFOCUS || Event == EE_KILLFOCUS || Event == EE_SAVE)
-		{
-			gbRequestUpdateTabs = TRUE;
-			//} else if (Event == EE_REDRAW && gbHandleOneRedraw) {
-			//	gbHandleOneRedraw = false; gbRequestUpdateTabs = TRUE;
-		}
-	}
-
-	if (gpTabs && Event == EE_CLOSE && gpTabs->Tabs.nTabCount
-	        && gpTabs->Tabs.tabs[0].Type != WTYPE_PANELS)
-		gbClosingModalViewerEditor = TRUE;
-
-	if (gpBgPlugin && (Event != EE_REDRAW))
-	{
-		gpBgPlugin->OnMainThreadActivated(Event, -1);
-	}
-
-	return 0;
-}
-
-int WINAPI ProcessViewerEventW(int Event, void *Param)
-{
-	if (!gbRequestUpdateTabs &&
-	        (Event == VE_CLOSE || Event == VE_GOTFOCUS || Event == VE_KILLFOCUS || Event == VE_READ))
-	{
-		gbRequestUpdateTabs = TRUE;
-	}
-
-	if (gpTabs && Event == VE_CLOSE && gpTabs->Tabs.nTabCount
-	        && gpTabs->Tabs.tabs[0].Type != WTYPE_PANELS)
-	{
-		gbClosingModalViewerEditor = TRUE;
-	}
-
-	if (gpBgPlugin)
-	{
-		gpBgPlugin->OnMainThreadActivated(-1, Event);
-	}
-
-	return 0;
-}
-
 void FillLoadedParm(struct ConEmuLoadedArg* pArg, HMODULE hSubPlugin, BOOL abLoaded)
 {
 	memset(pArg, 0, sizeof(struct ConEmuLoadedArg));
@@ -3842,22 +3792,6 @@ INT_PTR WINAPI ProcessConsoleInputW(void *Info)
 		return FUNC_Y1(ProcessConsoleInputW)(Info);
 }
 #endif
-
-INT_PTR WINAPI ProcessEditorEventW3(void* p)
-{
-	if (gFarVersion.dwBuild>=FAR_Y2_VER)
-		return FUNC_Y2(ProcessEditorEventW)(p);
-	else //if (gFarVersion.dwBuild>=FAR_Y1_VER)
-		return FUNC_Y1(ProcessEditorEventW)(p);
-}
-
-INT_PTR WINAPI ProcessViewerEventW3(void* p)
-{
-	if (gFarVersion.dwBuild>=FAR_Y2_VER)
-		return FUNC_Y2(ProcessViewerEventW)(p);
-	else //if (gFarVersion.dwBuild>=FAR_Y1_VER)
-		return FUNC_Y1(ProcessViewerEventW)(p);
-}
 
 void ExitFarCmn()
 {

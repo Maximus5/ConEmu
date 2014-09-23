@@ -55,6 +55,8 @@ public:
 	bool ProcessCommandLine(wchar_t* pszCommand);
 	void ShowPluginMenu(PluginCallCommands nCallID = pcc_None);
 	int ProcessSynchroEvent(int Event, void *Param);
+	int ProcessEditorViewerEvent(int EditorEvent, int ViewerEvent);
+	bool isModalEditorViewer();
 
 public:
 	virtual BOOL    CheckBufferEnabled() = 0;
@@ -80,10 +82,10 @@ public:
 	virtual void    PostMacroApi(const wchar_t* asMacro, INPUT_RECORD* apRec) = 0;
 	virtual void    ProcessDragFrom() = 0;
 	virtual void    ProcessDragTo() = 0;
-	virtual int     ProcessEditorEvent(int Event, void *Param) = 0;
+	virtual int     ProcessEditorEvent(void* p) = 0;
 	virtual int     ProcessEditorInput(LPCVOID Rec) = 0;
 	virtual int     ProcessSynchroEvent(void* p) = 0;
-	virtual int     ProcessViewerEvent(int Event, void *Param) = 0;
+	virtual int     ProcessViewerEvent(void* p) = 0;
 	virtual void    RedrawAll() = 0;
 	virtual BOOL    ReloadFarInfo() = 0;
 	virtual void    SetStartupInfo(void *aInfo) = 0;
@@ -104,6 +106,10 @@ extern "C" {
 #endif
 int WINAPI GetMinFarVersion();
 int WINAPI GetMinFarVersionW();
+int WINAPI ProcessEditorEventW(int Event, void *Param);
+INT_PTR WINAPI ProcessEditorEventW3(void*);
+int WINAPI ProcessViewerEventW(int Event, void *Param);
+INT_PTR WINAPI ProcessViewerEventW3(void*);
 int WINAPI ProcessSynchroEventW(int Event,void *Param);
 INT_PTR WINAPI ProcessSynchroEventW3(void* p);
 #if defined(__GNUC__)

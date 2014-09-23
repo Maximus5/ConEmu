@@ -60,25 +60,25 @@ extern GUID guid_ConEmuMenu;
 struct PluginStartupInfo *InfoW1900=NULL;
 struct FarStandardFunctions *FSFW1900=NULL;
 
-/* EXPORTS BEGIN */
-int WINAPI ProcessEditorEventW1900(void* p)
+int CPluginW1900::ProcessEditorEvent(void* p)
 {
 	const ProcessEditorEventInfo* Info = (const ProcessEditorEventInfo*)p;
-	return Plugin()->ProcessEditorEvent(Info->Event, Info->Param);
+	if (Info->Event == EE_REDRAW)
+		return 0;
+	return ProcessEditorViewerEvent(Info->Event, -1);
 }
 
-int WINAPI ProcessViewerEventW1900(void* p)
+int CPluginW1900::ProcessViewerEvent(void* p)
 {
 	const ProcessViewerEventInfo* Info = (const ProcessViewerEventInfo*)p;
-	return Plugin()->ProcessViewerEvent(Info->Event, Info->Param);
+	return ProcessEditorViewerEvent(-1, Info->Event);
 }
 
 int CPluginW1900::ProcessSynchroEvent(void* p)
 {
 	const ProcessSynchroEventInfo* Info = (const ProcessSynchroEventInfo*)p;
-	return Plugin()->ProcessSynchroEvent(Info->Event, Info->Param);
+	return ProcessSynchroEvent(Info->Event, Info->Param);
 }
-/* EXPORTS END */
 
 //void WaitEndSynchroW1900();
 

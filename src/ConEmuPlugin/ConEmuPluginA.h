@@ -68,10 +68,10 @@ public:
 	virtual void    PostMacroApi(const wchar_t* asMacro, INPUT_RECORD* apRec) override;
 	virtual void    ProcessDragFrom() override;
 	virtual void    ProcessDragTo() override;
-	virtual int     ProcessEditorEvent(int Event, void *Param) override;
+	virtual int     ProcessEditorEvent(void* p) { return 0; }; // Not implemented in ANSI
 	virtual int     ProcessEditorInput(LPCVOID Rec) override;
 	virtual int     ProcessSynchroEvent(void* p) { return 0; }; // Not implemented in ANSI
-	virtual int     ProcessViewerEvent(int Event, void *Param) override;
+	virtual int     ProcessViewerEvent(void* p) { return 0; }; // Not implemented in ANSI
 	virtual void    RedrawAll() override;
 	virtual BOOL    ReloadFarInfo() override;
 	virtual void    SetStartupInfo(void *aInfo) override;

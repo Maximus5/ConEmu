@@ -534,31 +534,18 @@ DWORD CPluginW2800::GetEditorModifiedState()
 	return currentModifiedState;
 }
 
-//extern int lastModifiedStateW;
-
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-
-int WINAPI ProcessEditorEventW(int Event, void *Param);
-int WINAPI ProcessViewerEventW(int Event, void *Param);
-
-#ifdef __cplusplus
-};
-#endif
-
-
-INT_PTR WINAPI ProcessEditorEventW2800(void* p)
+int CPluginW2800::ProcessEditorEvent(void* p)
 {
 	const ProcessEditorEventInfo* Info = (const ProcessEditorEventInfo*)p;
-	return ProcessEditorEventW(Info->Event, Info->Param);
+	if (Info->Event == EE_REDRAW)
+		return 0;
+	return ProcessEditorViewerEvent(Info->Event, -1);
 }
 
-INT_PTR WINAPI ProcessViewerEventW2800(void* p)
+int CPluginW2800::ProcessViewerEvent(void* p)
 {
 	const ProcessViewerEventInfo* Info = (const ProcessViewerEventInfo*)p;
-	return ProcessViewerEventW(Info->Event, Info->Param);
+	return ProcessEditorViewerEvent(-1, Info->Event);
 }
 
 int CPluginW2800::ProcessSynchroEvent(void* p)

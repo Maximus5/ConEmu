@@ -92,6 +92,28 @@ INT_PTR WINAPI ProcessSynchroEventW3(void* p)
 	return Plugin()->ProcessSynchroEvent(void* p);
 }
 
+int WINAPI ProcessEditorEventW(int Event, void *Param)
+{
+	if (Event == 2/*EE_REDRAW*/)
+		return 0;
+	return Plugin()->ProcessEditorViewerEvent(Event, -1);
+}
+
+INT_PTR WINAPI ProcessEditorEventW3(void* p)
+{
+	return Plugin()->ProcessEditorEvent(p);
+}
+
+int WINAPI ProcessViewerEventW(int Event, void *Param)
+{
+	return Plugin()->ProcessEditorViewerEvent(-1, Event);
+}
+
+INT_PTR WINAPI ProcessViewerEventW3(void* p)
+{
+	return Plugin()->ProcessViewerEvent(p);
+}
+
 /* EXPORTS END */
 
 CPluginBase* Plugin()
@@ -611,4 +633,52 @@ int CPluginBase::ProcessSynchroEvent(int Event, void *Param)
 	gnMainThreadId = nPrevID;
 
 	return 0;
+}
+
+int CPluginBase::ProcessEditorViewerEvent(int EditorEvent, int ViewerEvent)
+{
+	if (!gbRequestUpdateTabs)
+	{
+		if (EditorEvent != -1 && EditorEvent != 2/*EE_REDRAW*/)
+		{
+			gbRequestUpdateTabs = TRUE;
+			//} else if (Event == EE_REDRAW && gbHandleOneRedraw) {
+			//	gbHandleOneRedraw = false; gbRequestUpdateTabs = TRUE;
+		}
+		else if (ViewerEvent != -1)
+		{
+			gbRequestUpdateTabs = TRUE;
+		}
+	}
+
+	if (isModalEditorViewer())
+	{
+		if ((EditorEvent == 3/*EE_CLOSE*/) || (ViewerEvent == 1/*VE_CLOSE*/))
+		{
+			gbClosingModalViewerEditor = TRUE;
+		}
+	}
+
+	if (gpBgPlugin && (EditorEvent != 2/*EE_REDRAW*/))
+	{
+		gpBgPlugin->OnMainThreadActivated(Event, -1);
+	}
+
+	return 0;
+}
+
+bool CPluginBase::isModalEditorViewer()
+{
+	if (!gpTabs || !gpTabs->Tabs.nTabCount)
+		return false;
+
+	// Если последнее открытое окно - модальное
+	if (gpTabs->Tabs.tabs[gpTabs->Tabs.nTabCount-1].Modal)
+		return true;
+
+	// Было раньше такое условие, по идее это не правильно
+	// if (gpTabs->Tabs.tabs[0].Type != WTYPE_PANELS)
+	// return true;
+
+	return false;
 }

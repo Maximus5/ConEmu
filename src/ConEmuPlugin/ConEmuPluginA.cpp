@@ -554,44 +554,14 @@ int WINAPI _export ProcessEditorInput(const INPUT_RECORD *Rec)
 
 int WINAPI _export ProcessEditorEvent(int Event, void *Param)
 {
-	if (!gbRequestUpdateTabs)
-	{
-		if (Event == EE_READ || Event == EE_CLOSE || Event == EE_GOTFOCUS || Event == EE_KILLFOCUS || Event == EE_SAVE)
-		{
-			gbRequestUpdateTabs = TRUE;
-			//} else if (Event == EE_REDRAW && gbHandleOneRedraw) {
-			//	gbHandleOneRedraw = false; gbRequestUpdateTabs = TRUE;
-		}
-	}
-
-	if (gpTabs && Event == EE_CLOSE && gpTabs->Tabs.nTabCount
-	        && gpTabs->Tabs.tabs[0].Type != WTYPE_PANELS)
-		gbClosingModalViewerEditor = TRUE;
-
-	if (gpBgPlugin && (Event != EE_REDRAW))
-	{
-		gpBgPlugin->OnMainThreadActivated(Event, -1);
-	}
-
-	return 0;
+	if (Event == EE_REDRAW)
+		return 0;
+	return Plugin()->ProcessEditorViewerEvent(Event, -1);
 }
 
 int WINAPI _export ProcessViewerEvent(int Event, void *Param)
 {
-	if (!gbRequestUpdateTabs &&
-	        (Event == VE_CLOSE || Event == VE_GOTFOCUS || Event == VE_KILLFOCUS))
-		gbRequestUpdateTabs = TRUE;
-
-	if (gpTabs && Event == VE_CLOSE && gpTabs->Tabs.nTabCount
-	        && gpTabs->Tabs.tabs[0].Type != WTYPE_PANELS)
-		gbClosingModalViewerEditor = TRUE;
-
-	if (gpBgPlugin)
-	{
-		gpBgPlugin->OnMainThreadActivated(-1, Event);
-	}
-
-	return 0;
+	return Plugin()->ProcessEditorViewerEvent(-1, Event);
 }
 
 extern MSection *csTabs;
