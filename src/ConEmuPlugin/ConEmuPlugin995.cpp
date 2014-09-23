@@ -980,8 +980,6 @@ bool CPluginW995::LoadPlugin(wchar_t* pszPluginPath)
 }
 #endif
 
-//bool RunExternalProgramW(wchar_t* pszCommand, wchar_t* pszCurDir);
-
 bool CPluginW995::InputBox(LPCWSTR Title, LPCWSTR SubTitle, LPCWSTR HistoryName, LPCWSTR SrcText, wchar_t*& DestText)
 {
 	_ASSERTE(DestText==NULL);
@@ -995,78 +993,16 @@ bool CPluginW995::InputBox(LPCWSTR Title, LPCWSTR SubTitle, LPCWSTR HistoryName,
 	return true;
 }
 
-bool CPluginW995::RunExternalProgram(wchar_t* pszCommand)
+void CPluginW995::ShowUserScreen(bool bUserScreen)
 {
-	wchar_t strTemp[MAX_PATH+1];
-	wchar_t *pszExpand = NULL;
+	if (!InfoW995)
+		return;
 
-	if (!pszCommand || !*pszCommand)
-	{
-		lstrcpy(strTemp, L"cmd");
-
-		if (!InfoW995->InputBox(L"ConEmu", L"Start console program", L"ConEmu.CreateProcess",
-		                       strTemp, strTemp, MAX_PATH, NULL, FIB_BUTTONS))
-			return false;
-
-		pszCommand = strTemp;
-	}
-	else if (wcschr(pszCommand, L'%'))
-	{
-		DWORD cchMax = countof(strTemp);
-		pszExpand = strTemp;
-		DWORD nExpLen = ExpandEnvironmentStrings(pszCommand, pszExpand, cchMax);
-		if (nExpLen)
-		{
-			if (nExpLen > cchMax)
-			{
-				cchMax = nExpLen + 32;
-				pszExpand = (wchar_t*)calloc(cchMax,sizeof(*pszExpand));
-				nExpLen = ExpandEnvironmentStrings(pszCommand, pszExpand, cchMax);
-			}
-
-			if (nExpLen && (nExpLen <= cchMax))
-			{
-				pszCommand = pszExpand;
-			}
-		}
-	}
-
-	wchar_t *pszCurDir = NULL;
-	size_t len;
-
-	if ((len = InfoW995->Control(INVALID_HANDLE_VALUE, FCTL_GETPANELDIR, 0, 0)) != 0)
-	{
-		if ((pszCurDir = (wchar_t*)malloc(len*2)) != NULL)
-		{
-			if (!InfoW995->Control(INVALID_HANDLE_VALUE, FCTL_GETPANELDIR, (int)len, (LONG_PTR)pszCurDir))
-			{
-				free(pszCurDir); pszCurDir = NULL;
-			}
-		}
-	}
-
-	if (!pszCurDir)
-	{
-		pszCurDir = lstrdup(L"C:\\");
-		if (!pszCurDir)
-			return TRUE;
-	}
-
-	bool bSilent = (wcsstr(pszCommand, L"-new_console") != NULL);
-
-	if (!bSilent)
-		InfoW995->Control(INVALID_HANDLE_VALUE,FCTL_GETUSERSCREEN,0,0);
-
-	RunExternalProgramW(pszCommand, pszCurDir, bSilent);
-
-	if (!bSilent)
-		InfoW995->Control(INVALID_HANDLE_VALUE,FCTL_SETUSERSCREEN,0,0);
-	InfoW995->AdvControl(InfoW995->ModuleNumber,ACTL_REDRAWALL,0);
-	free(pszCurDir); //pszCurDir = NULL;
-	if (pszExpand && (pszExpand != strTemp)) free(pszExpand);
-	return TRUE;
+	if (bUserScreen)
+		InfoW995->Control(INVALID_HANDLE_VALUE, FCTL_GETUSERSCREEN, 0, 0);
+	else
+		InfoW995->Control(INVALID_HANDLE_VALUE, FCTL_SETUSERSCREEN, 0, 0);
 }
-
 
 bool CPluginW995::ProcessCommandLine(wchar_t* pszCommand)
 {

@@ -976,65 +976,15 @@ bool CPluginAnsi::InputBox(LPCWSTR Title, LPCWSTR SubTitle, LPCWSTR HistoryName,
 	return true;
 }
 
-bool RunExternalProgramW(wchar_t* pszCommand, wchar_t* pszCurDir);
-
-bool RunExternalProgramA(char* pszCommand)
+void CPluginAnsi::ShowUserScreen(bool bUserScreen)
 {
-	char strTemp[MAX_PATH+1];
+	if (!InfoA)
+		return;
 
-	if (!pszCommand || !*pszCommand)
-	{
-		lstrcpyA(strTemp, "cmd");
-
-		if (!InfoA->InputBox("ConEmu", "Start console program", "ConEmu.CreateProcess",
-		                    strTemp, strTemp, MAX_PATH, NULL, FIB_BUTTONS))
-			return false;
-
-		pszCommand = strTemp;
-	}
-
-	wchar_t strCurDir[MAX_PATH+1]; GetCurrentDirectory(MAX_PATH, strCurDir);
-	int nLen = lstrlenA(pszCommand)+1;
-	wchar_t* pwszCommand = (wchar_t*)calloc(nLen,2);
-	if (!pwszCommand)
-		return TRUE;
-	MultiByteToWideChar(CP_OEMCP, 0, pszCommand, nLen, pwszCommand, nLen);
-
-	if (wcschr(pwszCommand, L'%'))
-	{
-		DWORD cchMax = nLen + MAX_PATH;
-		wchar_t* pszExpand = (wchar_t*)calloc(cchMax,sizeof(*pszExpand));
-		DWORD nExpLen = ExpandEnvironmentStrings(pwszCommand, pszExpand, cchMax);
-		if (nExpLen)
-		{
-			if (nExpLen > cchMax)
-			{
-				cchMax = nExpLen + 32;
-				pszExpand = (wchar_t*)realloc(pszExpand, cchMax*sizeof(*pszExpand));
-				nExpLen = ExpandEnvironmentStrings(pwszCommand, pszExpand, cchMax);
-			}
-
-			if (nExpLen && (nExpLen <= cchMax))
-			{
-				free(pwszCommand);
-				pwszCommand = pszExpand;
-			}
-		}
-	}
-
-
-	bool bSilent = (wcsstr(pwszCommand, L"-new_console") != NULL);
-
-	if (!bSilent)
-		InfoA->Control(INVALID_HANDLE_VALUE,FCTL_GETUSERSCREEN,0);
-
-	RunExternalProgramW(pwszCommand, strCurDir, bSilent);
-
-	if (!bSilent)
-		InfoA->Control(INVALID_HANDLE_VALUE,FCTL_SETUSERSCREEN,0);
-	InfoA->AdvControl(InfoA->ModuleNumber,ACTL_REDRAWALL,0);
-	free(pwszCommand);
-	return true;
+	if (bUserScreen)
+		InfoA->Control(INVALID_HANDLE_VALUE, FCTL_GETUSERSCREEN, 0);
+	else
+		InfoA->Control(INVALID_HANDLE_VALUE, FCTL_SETUSERSCREEN, 0);
 }
 
 bool ProcessCommandLineA(char* pszCommand)

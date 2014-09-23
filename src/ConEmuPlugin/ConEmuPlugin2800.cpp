@@ -1354,66 +1354,16 @@ bool CPluginW2800::InputBox(LPCWSTR Title, LPCWSTR SubTitle, LPCWSTR HistoryName
 	return true;
 }
 
-bool RunExternalProgramW2800(wchar_t* pszCommand)
+void CPluginW2800::ShowUserScreen(bool bUserScreen)
 {
-	wchar_t strTemp[MAX_PATH+1];
-	wchar_t *pszExpand = NULL;
+	if (!InfoW2800)
+		return;
 
-	if (!pszCommand || !*pszCommand)
-	{
-		lstrcpy(strTemp, L"cmd");
-		if (!InfoW2800->InputBox(&guid_ConEmu, &guid_ConEmuInput, L"ConEmu", L"Start console program", L"ConEmu.CreateProcess",
-		                       strTemp, strTemp, MAX_PATH, NULL, FIB_BUTTONS))
-			return false;
-
-		pszCommand = strTemp;
-	}
-	else if (wcschr(pszCommand, L'%'))
-	{
-		DWORD cchMax = countof(strTemp);
-		pszExpand = strTemp;
-		DWORD nExpLen = ExpandEnvironmentStrings(pszCommand, pszExpand, cchMax);
-		if (nExpLen)
-		{
-			if (nExpLen > cchMax)
-			{
-				cchMax = nExpLen + 32;
-				pszExpand = (wchar_t*)calloc(cchMax,sizeof(*pszExpand));
-				nExpLen = ExpandEnvironmentStrings(pszCommand, pszExpand, cchMax);
-			}
-
-			if (nExpLen && (nExpLen <= cchMax))
-			{
-				pszCommand = pszExpand;
-			}
-		}
-	}
-
-	wchar_t *pszCurDir = GetPanelDir(INVALID_HANDLE_VALUE);
-
-	if (!pszCurDir)
-	{
-		pszCurDir = (wchar_t*)malloc(10);
-		if (!pszCurDir)
-			return TRUE;
-		lstrcpy(pszCurDir, L"C:\\");
-	}
-
-	bool bSilent = (wcsstr(pszCommand, L"-new_console") != NULL);
-
-	if (!bSilent)
-		InfoW2800->PanelControl(INVALID_HANDLE_VALUE,FCTL_GETUSERSCREEN,0,0);
-
-	RunExternalProgramW(pszCommand, pszCurDir, bSilent);
-
-	if (!bSilent)
-		InfoW2800->PanelControl(INVALID_HANDLE_VALUE,FCTL_SETUSERSCREEN,0,0);
-	InfoW2800->AdvControl(&guid_ConEmu,ACTL_REDRAWALL,0, 0);
-	free(pszCurDir); //pszCurDir = NULL;
-	if (pszExpand && (pszExpand != strTemp)) free(pszExpand);
-	return TRUE;
+	if (bUserScreen)
+		InfoW2800->PanelControl(INVALID_HANDLE_VALUE, FCTL_GETUSERSCREEN, 0, 0);
+	else
+		InfoW2800->PanelControl(INVALID_HANDLE_VALUE, FCTL_SETUSERSCREEN, 0, 0);
 }
-
 
 bool ProcessCommandLineW2800(wchar_t* pszCommand)
 {

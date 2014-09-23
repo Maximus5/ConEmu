@@ -262,6 +262,7 @@ BOOL StartupHooks(HMODULE ahOurDll);
 void ShutdownHooks();
 
 bool RunExternalProgramW(wchar_t* pszCommand, wchar_t* pszCurDir, bool bSilent=false);
+
 bool FUNC_X(ProcessCommandLineW)(wchar_t* pszCommand);
 bool FUNC_Y1(ProcessCommandLineW)(wchar_t* pszCommand);
 bool FUNC_Y2(ProcessCommandLineW)(wchar_t* pszCommand);

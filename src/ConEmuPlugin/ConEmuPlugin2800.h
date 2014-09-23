@@ -77,6 +77,7 @@ public:
 	virtual int     ShowMessage(int aiMsg, int aiButtons) override;
 	virtual int     ShowMessage(LPCWSTR asMsg, int aiButtons, bool bWarning) override;
 	virtual int     ShowPluginMenu(ConEmuPluginMenuItem* apItems, int Count) override;
+	virtual void    ShowUserScreen(bool bUserScreen) override;
 	virtual void    StopWaitEndSynchro() override;
 	virtual void    WaitEndSynchro() override;
 };

@@ -90,6 +90,7 @@ public:
 	virtual int     ShowMessage(int aiMsg, int aiButtons) = 0;
 	virtual int     ShowMessage(LPCWSTR asMsg, int aiButtons, bool bWarning) = 0;
 	virtual int     ShowPluginMenu(ConEmuPluginMenuItem* apItems, int Count) = 0;
+	virtual void    ShowUserScreen(bool bUserScreen) = 0;
 	virtual void    StopWaitEndSynchro() = 0;
 	virtual void    WaitEndSynchro() = 0;
 };

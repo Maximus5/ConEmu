@@ -256,7 +256,7 @@ void CPluginBase::UpdatePanelDirs()
 bool CPluginBase::RunExternalProgram(wchar_t* pszCommand)
 {
 	wchar_t *pszExpand = NULL;
-	CmdArg szTemp;
+	CmdArg szTemp, szExpand, szCurDir;
 
 	if (!pszCommand || !*pszCommand)
 	{
@@ -265,48 +265,30 @@ bool CPluginBase::RunExternalProgram(wchar_t* pszCommand)
 
 		pszCommand = szTemp.ms_Arg;
 	}
-	else if (wcschr(pszCommand, L'%'))
-	{
-		DWORD cchMax = countof(strTemp);
-		pszExpand = strTemp;
-		DWORD nExpLen = ExpandEnvironmentStrings(pszCommand, pszExpand, cchMax);
-		if (nExpLen)
-		{
-			if (nExpLen > cchMax)
-			{
-				cchMax = nExpLen + 32;
-				pszExpand = (wchar_t*)calloc(cchMax,sizeof(*pszExpand));
-				nExpLen = ExpandEnvironmentStrings(pszCommand, pszExpand, cchMax);
-			}
 
-			if (nExpLen && (nExpLen <= cchMax))
-			{
-				pszCommand = pszExpand;
-			}
-		}
+	if (wcschr(pszCommand, L'%'))
+	{
+		szExpand.ms_Arg = ExpandEnvStr(pszCommand);
+		if (szExpand.ms_Arg)
+			pszCommand = szExpand.ms_Arg;
 	}
 
-	wchar_t *pszCurDir = GetPanelDir(INVALID_HANDLE_VALUE);
-
-	if (!pszCurDir)
+	szCurDir.ms_Arg = GetPanelDir(gpdf_Active|gpdf_NoPlugin);
+	if (!szCurDir.ms_Arg || !*szCurDir.ms_Arg)
 	{
-		pszCurDir = (wchar_t*)malloc(10);
-		if (!pszCurDir)
-			return TRUE;
-		lstrcpy(pszCurDir, L"C:\\");
+		szCurDir.Set(L"C:\\");
 	}
 
 	bool bSilent = (wcsstr(pszCommand, L"-new_console") != NULL);
 
 	if (!bSilent)
-		InfoW2800->PanelControl(INVALID_HANDLE_VALUE,FCTL_GETUSERSCREEN,0,0);
+		ShowUserScreen(true);
 
-	RunExternalProgramW(pszCommand, pszCurDir, bSilent);
+	RunExternalProgramW(pszCommand, szCurDir.ms_Arg, bSilent);
 
 	if (!bSilent)
-		InfoW2800->PanelControl(INVALID_HANDLE_VALUE,FCTL_SETUSERSCREEN,0,0);
-	InfoW2800->AdvControl(&guid_ConEmu,ACTL_REDRAWALL,0, 0);
-	free(pszCurDir); //pszCurDir = NULL;
-	if (pszExpand && (pszExpand != strTemp)) free(pszExpand);
+		ShowUserScreen(false);
+	RedrawAll();
+
 	return TRUE;
 }
