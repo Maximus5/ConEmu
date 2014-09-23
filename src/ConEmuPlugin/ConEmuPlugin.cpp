@@ -2225,9 +2225,9 @@ BOOL ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData, CESERV
 	// Раз дошли сюда - считаем что OK
 	lbSucceeded = TRUE;
 
-	switch(nCmd)
+	switch (nCmd)
 	{
-		case(CMD__EXTERNAL_CALLBACK):
+		case CMD__EXTERNAL_CALLBACK:
 		{
 			lbSucceeded = FALSE;
 
@@ -2251,7 +2251,7 @@ BOOL ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData, CESERV
 
 			break;
 		}
-		case(CMD_DRAGFROM):
+		case CMD_DRAGFROM:
 		{
 			//BOOL  *pbClickNeed = (BOOL*)pCommandData;
 			//COORD *crMouse = (COORD *)(pbClickNeed+1);
@@ -2261,13 +2261,13 @@ BOOL ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData, CESERV
 
 			break;
 		}
-		case(CMD_DRAGTO):
+		case CMD_DRAGTO:
 		{
 			Plugin()->ProcessDragTo();
 
 			break;
 		}
-		case(CMD_SETWINDOW):
+		case CMD_SETWINDOW:
 		{
 			int nTab = 0;
 
@@ -2301,7 +2301,7 @@ BOOL ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData, CESERV
 			pCmdRet = gpTabs;
 			break;
 		}
-		case(CMD_POSTMACRO):
+		case CMD_POSTMACRO:
 		{
 			_ASSERTE(pCommandData!=NULL);
 
@@ -2310,7 +2310,7 @@ BOOL ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData, CESERV
 
 			break;
 		}
-		case(CMD_CLOSEQSEARCH):
+		case CMD_CLOSEQSEARCH:
 		{
 			if (!gFarVersion.IsFarLua())
 				PostMacro(L"$if (Search) Esc $end", NULL);
@@ -2318,7 +2318,7 @@ BOOL ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData, CESERV
 				PostMacro(L"if Area.Search Keys(\"Esc\") end", NULL);
 			break;
 		}
-		case(CMD_LEFTCLKSYNC):
+		case CMD_LEFTCLKSYNC:
 		{
 			BOOL  *pbClickNeed = (BOOL*)pCommandData;
 			COORD *crMouse = (COORD *)(pbClickNeed+1);
@@ -2361,7 +2361,7 @@ BOOL ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData, CESERV
 			}
 			break;
 		}
-		case(CMD_EMENU):  //RMENU
+		case CMD_EMENU:  //RMENU
 		{
 			COORD *crMouse = (COORD *)pCommandData;
 			const wchar_t *pszUserMacro = (wchar_t*)(crMouse+1);
@@ -2454,34 +2454,34 @@ BOOL ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData, CESERV
 			//return NULL;
 			break;
 		}
-		case(CMD_REDRAWFAR):
+		case CMD_REDRAWFAR:
 			// В Far 1.7x были глюки с отрисовкой?
 			if (gFarVersion.dwVerMajor>=2)
 				Plugin()->RedrawAll();
 
 			break;
-		case(CMD_CHKRESOURCES):
+		case CMD_CHKRESOURCES:
 			CheckResources(TRUE);
 			break;
-			//case (CMD_SETSIZE):
-			//{
-			//	_ASSERTE(pCommandData!=NULL);
-			//	//BOOL lbNeedChange = TRUE;
-			//	DWORD nHILO = *((DWORD*)pCommandData);
-			//	SHORT nWidth = LOWORD(nHILO);
-			//	SHORT nHeight = HIWORD(nHILO);
-			//	BOOL lbRc = SetConsoleSize(nWidth, nHeight);
-			//	MConHandle hConOut ( L"CONOUT$" );
-			//	CONSOLE_SCREEN_BUFFER_INFO csbi = {{0,0}};
-			//	lbRc = GetConsoleScreenBufferInfo(hConOut, &csbi);
-			//	hConOut.Close();
-			//	if (lbRc) {
-			//		OutDataAlloc(sizeof(nHILO));
-			//		nHILO = ((WORD)csbi.dwSize.X) | (((DWORD)(WORD)csbi.dwSize.Y) << 16);
-			//		OutDataWrite(&nHILO, sizeof(nHILO));
-			//	}
-			//	//REDRAWALL
-			//}
+		//case CMD_SETSIZE:
+		//{
+		//	_ASSERTE(pCommandData!=NULL);
+		//	//BOOL lbNeedChange = TRUE;
+		//	DWORD nHILO = *((DWORD*)pCommandData);
+		//	SHORT nWidth = LOWORD(nHILO);
+		//	SHORT nHeight = HIWORD(nHILO);
+		//	BOOL lbRc = SetConsoleSize(nWidth, nHeight);
+		//	MConHandle hConOut ( L"CONOUT$" );
+		//	CONSOLE_SCREEN_BUFFER_INFO csbi = {{0,0}};
+		//	lbRc = GetConsoleScreenBufferInfo(hConOut, &csbi);
+		//	hConOut.Close();
+		//	if (lbRc) {
+		//		OutDataAlloc(sizeof(nHILO));
+		//		nHILO = ((WORD)csbi.dwSize.X) | (((DWORD)(WORD)csbi.dwSize.Y) << 16);
+		//		OutDataWrite(&nHILO, sizeof(nHILO));
+		//	}
+		//	//REDRAWALL
+		//}
 		case CMD_FARPOST:
 		{
 			// просто сигнализация о том, что фар получил управление.
