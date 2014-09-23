@@ -68,7 +68,9 @@ public:
 	virtual void    GuiMacroDlg() = 0;
 	virtual bool    IsMacroActive() = 0;
 	virtual void    LoadPanelDirs() = 0;
+	#if 0
 	virtual bool    LoadPlugin(wchar_t* pszPluginPath) = 0;
+	#endif
 	virtual HANDLE  Open(const void* apInfo) = 0;
 	virtual void    PostMacroApi(const wchar_t* asMacro, INPUT_RECORD* apRec) = 0;
 	virtual bool    ProcessCommandLine(wchar_t* pszCommand) = 0;

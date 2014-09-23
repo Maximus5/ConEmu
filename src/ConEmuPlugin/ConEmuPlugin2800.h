@@ -56,7 +56,9 @@ public:
 	virtual void    GuiMacroDlg() override;
 	virtual bool    IsMacroActive() override;
 	virtual void    LoadPanelDirs() override;
+	#if 0
 	virtual bool    LoadPlugin(wchar_t* pszPluginPath) override;
+	#endif
 	virtual HANDLE  Open(const void* apInfo) override;
 	virtual void    PostMacroApi(const wchar_t* asMacro, INPUT_RECORD* apRec) override;
 	virtual bool    ProcessCommandLine(wchar_t* pszCommand) override;

@@ -1260,6 +1260,7 @@ void CPluginW1900::RedrawAll()
 	InfoW1900->AdvControl(&guid_ConEmu, ACTL_REDRAWALL, 0, NULL);
 }
 
+#if 0
 bool CPluginW1900::LoadPlugin(wchar_t* pszPluginPath)
 {
 	if (!InfoW1900) return false;
@@ -1267,6 +1268,7 @@ bool CPluginW1900::LoadPlugin(wchar_t* pszPluginPath)
 	InfoW1900->PluginsControl(INVALID_HANDLE_VALUE,PCTL_LOADPLUGIN,PLT_PATH,pszPluginPath);
 	return true;
 }
+#endif
 
 bool CPluginW1900::RunExternalProgram(wchar_t* pszCommand)
 {

@@ -970,6 +970,7 @@ void CPluginW995::RedrawAll()
 	InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_REDRAWALL, NULL);
 }
 
+#if 0
 bool CPluginW995::LoadPlugin(wchar_t* pszPluginPath)
 {
 	if (!InfoW995) return false;
@@ -977,6 +978,7 @@ bool CPluginW995::LoadPlugin(wchar_t* pszPluginPath)
 	InfoW995->PluginsControl(INVALID_HANDLE_VALUE,PCTL_LOADPLUGIN,PLT_PATH,(LONG_PTR)pszPluginPath);
 	return true;
 }
+#endif
 
 //bool RunExternalProgramW(wchar_t* pszCommand, wchar_t* pszCurDir);
 

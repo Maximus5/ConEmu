@@ -1325,6 +1325,7 @@ void CPluginW2800::RedrawAll()
 	InfoW2800->AdvControl(&guid_ConEmu, ACTL_REDRAWALL, 0, NULL);
 }
 
+#if 0
 bool LoadPluginW2800(wchar_t* pszPluginPath)
 {
 	if (!InfoW2800) return false;
@@ -1332,6 +1333,7 @@ bool LoadPluginW2800(wchar_t* pszPluginPath)
 	InfoW2800->PluginsControl(INVALID_HANDLE_VALUE,PCTL_LOADPLUGIN,PLT_PATH,pszPluginPath);
 	return true;
 }
+#endif
 
 bool RunExternalProgramW2800(wchar_t* pszCommand)
 {

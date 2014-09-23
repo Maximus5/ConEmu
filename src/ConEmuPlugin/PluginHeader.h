@@ -256,10 +256,6 @@ void ShowConsoleInfo();
 
 //BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount);
 
-bool FUNC_X(LoadPluginW)(wchar_t* pszPluginPath);
-bool FUNC_Y1(LoadPluginW)(wchar_t* pszPluginPath);
-bool FUNC_Y2(LoadPluginW)(wchar_t* pszPluginPath);
-
 BOOL FarSetConsoleSize(SHORT nNewWidth, SHORT nNewHeight);
 
 BOOL StartupHooks(HMODULE ahOurDll);
