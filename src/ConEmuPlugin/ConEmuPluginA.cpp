@@ -49,6 +49,46 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 struct PluginStartupInfo *InfoA=NULL;
 struct FarStandardFunctions *FSFA=NULL;
 
+CPluginAnsi::CPluginAnsi()
+{
+	ee_Read = EE_READ;
+	ee_Save = EE_SAVE;
+	ee_Redraw = EE_REDRAW;
+	ee_Close = EE_CLOSE;
+	ee_GotFocus = EE_GOTFOCUS;
+	ee_KillFocus = EE_KILLFOCUS;
+	ee_Change = -1;
+	ve_Read = VE_READ;
+	ve_Close = VE_CLOSE;
+	ve_GotFocus = VE_GOTFOCUS;
+	ve_KillFocus = VE_KILLFOCUS;
+	se_CommonSynchro = -1;
+	wt_Desktop = -1;
+	wt_Panels = WTYPE_PANELS;
+	wt_Viewer = WTYPE_VIEWER;
+	wt_Editor = WTYPE_EDITOR;
+	wt_Dialog = WTYPE_DIALOG;
+	wt_VMenu = WTYPE_VMENU;
+	wt_Help = WTYPE_HELP;
+	ma_Other = -1;
+	ma_Shell = 1;
+	ma_Viewer = ma_Editor = ma_Dialog = ma_Search = ma_Disks = ma_MainMenu = ma_Menu = ma_Help = -1;
+	ma_InfoPanel = ma_QViewPanel = ma_TreePanel = ma_FindFolder = ma_UserMenu = -1;
+	ma_ShellAutoCompletion = ma_DialogAutoCompletion = -1;
+	of_LeftDiskMenu = OPEN_DISKMENU;
+	of_PluginsMenu = OPEN_PLUGINSMENU;
+	of_FindList = OPEN_FINDLIST;
+	of_Shortcut = OPEN_SHORTCUT;
+	of_CommandLine = OPEN_COMMANDLINE;
+	of_Editor = OPEN_EDITOR;
+	of_Viewer = OPEN_VIEWER;
+	of_FilePanel = OPEN_PLUGINSMENU;
+	of_Dialog = OPEN_DIALOG;
+	of_Analyse = -1;
+	of_RightDiskMenu = OPEN_DISKMENU;
+	of_FromMacro = -1;
+}
+
 LPWSTR CPluginAnsi::ToUnicode(LPCSTR asOemStr)
 {
 	if (!asOemStr)

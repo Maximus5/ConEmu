@@ -43,6 +43,16 @@ const GetPanelDirFlags
 
 class CPluginBase
 {
+protected:
+	int ee_Read, ee_Save, ee_Redraw, ee_Close, ee_GotFocus, ee_KillFocus, ee_Change;
+	int ve_Read, ve_Close, ve_GotFocus, ve_KillFocus;
+	int se_CommonSynchro;
+	int wt_Desktop, wt_Panels, wt_Viewer, wt_Editor, wt_Dialog, wt_VMenu, wt_Help;
+	int ma_Other, ma_Shell, ma_Viewer, ma_Editor, ma_Dialog, ma_Search, ma_Disks, ma_MainMenu, ma_Menu, ma_Help;
+	int ma_InfoPanel, ma_QViewPanel, ma_TreePanel, ma_FindFolder, ma_UserMenu;
+	int ma_ShellAutoCompletion, ma_DialogAutoCompletion;
+	int of_LeftDiskMenu, of_PluginsMenu, of_FindList, of_Shortcut, of_CommandLine, of_Editor, of_Viewer, of_FilePanel, of_Dialog, of_Analyse, of_RightDiskMenu, of_FromMacro;
+
 public:
 	CPluginBase();
 	virtual ~CPluginBase();

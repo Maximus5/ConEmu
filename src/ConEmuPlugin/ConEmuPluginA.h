@@ -37,7 +37,7 @@ class CPluginAnsi : public CPluginBase
 protected:
 	
 public:
-	CPluginAnsi() {};
+	CPluginAnsi();
 	virtual ~CPluginAnsi() {};
 
 public:

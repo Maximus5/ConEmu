@@ -47,6 +47,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmuPlugin995.h"
 #include "ConEmuPlugin1900.h"
 #include "ConEmuPlugin2800.h"
+#include "PluginBackground.h"
 
 extern MOUSE_EVENT_RECORD gLastMouseReadEvent;
 extern LONG gnDummyMouseEventFromMacro;
@@ -84,12 +85,12 @@ int WINAPI GetMinFarVersionW()
 
 int WINAPI ProcessSynchroEventW(int Event, void *Param)
 {
-	return Plugin()->ProcessSynchroEvent(Event, void *Param);
+	return Plugin()->ProcessSynchroEvent(Event, Param);
 }
 
 INT_PTR WINAPI ProcessSynchroEventW3(void* p)
 {
-	return Plugin()->ProcessSynchroEvent(void* p);
+	return Plugin()->ProcessSynchroEvent(p);
 }
 
 int WINAPI ProcessEditorEventW(int Event, void *Param)
@@ -135,6 +136,14 @@ CPluginBase* Plugin()
 
 CPluginBase::CPluginBase()
 {
+	ee_Read = ee_Save = ee_Redraw = ee_Close = ee_GotFocus = ee_KillFocus = ee_Change = -1;
+	ve_Read = ve_Close = ve_GotFocus = ve_KillFocus = -1;
+	se_CommonSynchro = -1;
+	wt_Desktop = wt_Panels = wt_Viewer = wt_Editor = wt_Dialog = wt_VMenu = wt_Help = -1;
+	ma_Other = ma_Shell = ma_Viewer = ma_Editor = ma_Dialog = ma_Search = ma_Disks = ma_MainMenu = ma_Menu = ma_Help = -1;
+	ma_InfoPanel = ma_QViewPanel = ma_TreePanel = ma_FindFolder = ma_UserMenu = -1;
+	ma_ShellAutoCompletion = ma_DialogAutoCompletion = -1;
+	of_LeftDiskMenu = of_PluginsMenu = of_FindList = of_Shortcut = of_CommandLine = of_Editor = of_Viewer = of_FilePanel = of_Dialog = of_Analyse = of_RightDiskMenu = of_FromMacro = -1;
 }
 
 CPluginBase::~CPluginBase()
@@ -502,24 +511,18 @@ void CPluginBase::ShowPluginMenu(PluginCallCommands nCallID /*= pcc_None*/)
 						if (pOut->GetAllTabs.Tabs[nMenuRc].ActiveConsole && !pOut->GetAllTabs.Tabs[nMenuRc].ActiveTab)
 						{
 							DWORD nTab = pOut->GetAllTabs.Tabs[nMenuRc].TabIdx;
-							switch (Plugin()->GetMacroArea())
+							int nOpenFrom = -1;
+							int nArea = Plugin()->GetMacroArea();
+							if (nArea != -1)
 							{
-							case MACROAREA_SHELL:
-							case MACROAREA_SEARCH:
-							case MACROAREA_INFOPANEL:
-							case MACROAREA_QVIEWPANEL:
-							case MACROAREA_TREEPANEL:
-								gnPluginOpenFrom = OPEN_FILEPANEL;
-								break;
-							case MACROAREA_EDITOR:
-								gnPluginOpenFrom = OPEN_EDITOR;
-								break;
-							case MACROAREA_VIEWER:
-								gnPluginOpenFrom = OPEN_VIEWER;
-								break;
-							default:
-								gnPluginOpenFrom = -1;
+								if (nArea == ma_Shell || nArea == ma_Search || nArea == ma_InfoPanel || nArea == ma_QViewPanel || nArea == ma_TreePanel)
+									gnPluginOpenFrom = of_FilePanel;
+								else if (nArea == ma_Editor)
+									gnPluginOpenFrom = of_Editor;
+								else if (nArea == ma_Viewer)
+									gnPluginOpenFrom = of_Viewer;
 							}
+							gnPluginOpenFrom = nOpenFrom;
 							ProcessCommand(CMD_SETWINDOW, FALSE, &nTab, NULL, true/*bForceSendTabs*/);
 						}
 						else if (!pOut->GetAllTabs.Tabs[nMenuRc].ActiveConsole || !pOut->GetAllTabs.Tabs[nMenuRc].ActiveTab)
@@ -585,7 +588,7 @@ void CPluginBase::ShowPluginMenu(PluginCallCommands nCallID /*= pcc_None*/)
 
 int CPluginBase::ProcessSynchroEvent(int Event, void *Param)
 {
-	if (Event != 0/*SE_COMMONSYNCHRO*/)
+	if (Event != se_CommonSynchro)
 		return;
 
 	if (gbInputSynchroPending)
@@ -639,13 +642,15 @@ int CPluginBase::ProcessEditorViewerEvent(int EditorEvent, int ViewerEvent)
 {
 	if (!gbRequestUpdateTabs)
 	{
-		if (EditorEvent != -1 && EditorEvent != 2/*EE_REDRAW*/)
+		if ((EditorEvent != -1)
+			&& (EditorEvent == ee_Read || EditorEvent == ee_Close || EditorEvent == ee_GotFocus || EditorEvent == ee_KillFocus || EditorEvent == ee_Save))
 		{
 			gbRequestUpdateTabs = TRUE;
 			//} else if (Event == EE_REDRAW && gbHandleOneRedraw) {
 			//	gbHandleOneRedraw = false; gbRequestUpdateTabs = TRUE;
 		}
-		else if (ViewerEvent != -1)
+		else if ((ViewerEvent != -1)
+			&& (ViewerEvent == ve_Close || ViewerEvent == ve_GotFocus || ViewerEvent == ve_KillFocus || ViewerEvent == ve_Read))
 		{
 			gbRequestUpdateTabs = TRUE;
 		}
@@ -653,15 +658,15 @@ int CPluginBase::ProcessEditorViewerEvent(int EditorEvent, int ViewerEvent)
 
 	if (isModalEditorViewer())
 	{
-		if ((EditorEvent == 3/*EE_CLOSE*/) || (ViewerEvent == 1/*VE_CLOSE*/))
+		if ((EditorEvent == ee_Close) || (ViewerEvent == ve_Close))
 		{
 			gbClosingModalViewerEditor = TRUE;
 		}
 	}
 
-	if (gpBgPlugin && (EditorEvent != 2/*EE_REDRAW*/))
+	if (gpBgPlugin && (EditorEvent != ee_Redraw))
 	{
-		gpBgPlugin->OnMainThreadActivated(Event, -1);
+		gpBgPlugin->OnMainThreadActivated(EditorEvent, ViewerEvent);
 	}
 
 	return 0;

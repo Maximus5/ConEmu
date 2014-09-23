@@ -255,6 +255,8 @@ BOOL FUNC_Y2(CheckBufferEnabledW)();
 
 extern int gnSynchroCount;
 extern bool gbSynchroProhibited;
+extern bool gbInputSynchroPending;
+extern BOOL TerminalMode;
 void ExecuteSynchro(); // если доступен - позовет ACTL_SYNCHRO (FAR2 only)
 BOOL FUNC_X(ExecuteSynchroW)();
 BOOL FUNC_Y1(ExecuteSynchroW)();

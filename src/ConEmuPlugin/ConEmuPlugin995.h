@@ -37,7 +37,7 @@ class CPluginW995 : public CPluginBase
 protected:
 	
 public:
-	CPluginW995() {};
+	CPluginW995();
 	virtual ~CPluginW995() {};
 
 public:

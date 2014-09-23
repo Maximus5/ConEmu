@@ -37,7 +37,7 @@ class CPluginW1900 : public CPluginBase
 protected:
 	
 public:
-	CPluginW1900() {};
+	CPluginW1900();
 	virtual ~CPluginW1900() {};
 
 public:

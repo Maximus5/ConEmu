@@ -37,7 +37,7 @@ class CPluginW2800 : public CPluginBase
 protected:
 	
 public:
-	CPluginW2800() {};
+	CPluginW2800();
 	virtual ~CPluginW2800() {};
 
 public:

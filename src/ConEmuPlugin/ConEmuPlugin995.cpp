@@ -54,6 +54,57 @@ struct FarStandardFunctions *FSFW995=NULL;
 
 //void WaitEndSynchroW995();
 
+CPluginW995::CPluginW995()
+{
+	ee_Read = EE_READ;
+	ee_Save = EE_SAVE;
+	ee_Redraw = EE_REDRAW;
+	ee_Close = EE_CLOSE;
+	ee_GotFocus = EE_GOTFOCUS;
+	ee_KillFocus = EE_KILLFOCUS;
+	ee_Change = -1;
+	ve_Read = VE_READ;
+	ve_Close = VE_CLOSE;
+	ve_GotFocus = VE_GOTFOCUS;
+	ve_KillFocus = VE_KILLFOCUS;
+	se_CommonSynchro = SE_COMMONSYNCHRO;
+	wt_Desktop = -1;
+	wt_Panels = WTYPE_PANELS;
+	wt_Viewer = WTYPE_VIEWER;
+	wt_Editor = WTYPE_EDITOR;
+	wt_Dialog = WTYPE_DIALOG;
+	wt_VMenu = WTYPE_VMENU;
+	wt_Help = WTYPE_HELP;
+	ma_Other = MACROAREA_OTHER;
+	ma_Shell = MACROAREA_SHELL;
+	ma_Viewer = MACROAREA_VIEWER;
+	ma_Editor = MACROAREA_EDITOR;
+	ma_Dialog = MACROAREA_DIALOG;
+	ma_Search = MACROAREA_SEARCH;
+	ma_Disks = MACROAREA_DISKS;
+	ma_MainMenu = MACROAREA_MAINMENU;
+	ma_Menu = MACROAREA_MENU;
+	ma_Help = MACROAREA_HELP;
+	ma_InfoPanel = MACROAREA_INFOPANEL;
+	ma_QViewPanel = MACROAREA_QVIEWPANEL;
+	ma_TreePanel = MACROAREA_TREEPANEL;
+	ma_FindFolder = MACROAREA_FINDFOLDER;
+	ma_UserMenu = MACROAREA_USERMENU;
+	ma_ShellAutoCompletion = -1;
+	ma_DialogAutoCompletion = -1;
+	of_LeftDiskMenu = -1;
+	of_PluginsMenu = OPEN_PLUGINSMENU;
+	of_FindList = OPEN_FINDLIST;
+	of_Shortcut = OPEN_SHORTCUT;
+	of_CommandLine = OPEN_COMMANDLINE;
+	of_Editor = OPEN_EDITOR;
+	of_Viewer = OPEN_VIEWER;
+	of_FilePanel = OPEN_FILEPANEL;
+	of_Dialog = OPEN_DIALOG;
+	of_Analyse = OPEN_ANALYSE;
+	of_RightDiskMenu = -1;
+	of_FromMacro = OPEN_FROMMACRO;
+}
 
 wchar_t* CPluginW995::GetPanelDir(GetPanelDirFlags Flags)
 {
