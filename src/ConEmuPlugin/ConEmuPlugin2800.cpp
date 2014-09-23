@@ -1537,17 +1537,6 @@ BOOL ReloadFarInfoW2800(/*BOOL abFull*/)
 	return TRUE;
 }
 
-void ExecuteQuitFarW2800()
-{
-	if (!InfoW2800 || !InfoW2800->AdvControl)
-	{
-		PostMessage(FarHwnd, WM_CLOSE, 0, 0);
-		return;
-	}
-
-	InfoW2800->AdvControl(&guid_ConEmu, ACTL_QUIT, 0, NULL);
-}
-
 BOOL CheckBufferEnabledW2800()
 {
 	if (!InfoW2800 || !InfoW2800->AdvControl)

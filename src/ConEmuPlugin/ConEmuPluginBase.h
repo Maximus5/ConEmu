@@ -57,7 +57,6 @@ public:
 
 public:
 	virtual BOOL    CheckBufferEnabled() = 0;
-	virtual void    ExecuteQuitFar() = 0;
 	virtual BOOL    ExecuteSynchro() = 0;
 	virtual void    ExitFAR(void) = 0;
 	virtual void    FillUpdateBackground(struct PaintBackgroundArg* pFar) = 0;

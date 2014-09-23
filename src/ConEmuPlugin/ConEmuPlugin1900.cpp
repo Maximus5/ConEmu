@@ -1457,17 +1457,6 @@ BOOL CPluginW1900::ReloadFarInfo(/*BOOL abFull*/)
 	return TRUE;
 }
 
-void CPluginW1900::ExecuteQuitFar()
-{
-	if (!InfoW1900 || !InfoW1900->AdvControl)
-	{
-		PostMessage(FarHwnd, WM_CLOSE, 0, 0);
-		return;
-	}
-
-	InfoW1900->AdvControl(&guid_ConEmu, ACTL_QUIT, 0, NULL);
-}
-
 BOOL CPluginW1900::CheckBufferEnabled()
 {
 	if (!InfoW1900 || !InfoW1900->AdvControl)

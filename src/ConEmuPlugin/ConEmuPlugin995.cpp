@@ -1141,17 +1141,6 @@ BOOL CPluginW995::ReloadFarInfo()
 	return TRUE;
 }
 
-void CPluginW995::ExecuteQuitFar()
-{
-	if (!InfoW995 || !InfoW995->AdvControl)
-	{
-		PostMessage(FarHwnd, WM_CLOSE, 0, 0);
-		return;
-	}
-
-	InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_QUIT, NULL);
-}
-
 BOOL CPluginW995::CheckBufferEnabled()
 {
 	if (!InfoW995 || !InfoW995->AdvControl)

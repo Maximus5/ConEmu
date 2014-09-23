@@ -1132,11 +1132,6 @@ BOOL ReloadFarInfoA(/*BOOL abFull*/)
 	return TRUE;
 }
 
-void ExecuteQuitFarA()
-{
-	PostMessage(FarHwnd, WM_CLOSE, 0, 0);
-}
-
 static void CopyPanelInfo(PanelInfo* pInfo, PaintBackgroundArg::BkPanelInfo* pBk)
 {
 	pBk->bVisible = pInfo->Visible;

@@ -43,7 +43,6 @@ public:
 public:
 	virtual BOOL    CheckBufferEnabled() override;
 	virtual BOOL    ExecuteSynchro() override;
-	virtual void    ExecuteQuitFar() override;
 	virtual void    ExitFAR(void) override;
 	virtual void    FillUpdateBackground(struct PaintBackgroundArg* pFar) override;
 	virtual int     GetActiveWindowType() override;

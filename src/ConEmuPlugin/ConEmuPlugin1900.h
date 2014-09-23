@@ -42,7 +42,6 @@ public:
 
 public:
 	virtual BOOL    CheckBufferEnabled() override;
-	virtual void    ExecuteQuitFar() override;
 	virtual BOOL    ExecuteSynchro() override;
 	virtual void    ExitFAR(void) override;
 	virtual void    FillUpdateBackground(struct PaintBackgroundArg* pFar) override;
