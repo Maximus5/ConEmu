@@ -75,6 +75,9 @@ public:
 
 	static DWORD GetMainThreadId();
 	static bool RunExternalProgramW(wchar_t* pszCommand, wchar_t* pszCurDir, bool bSilent=false);
+	static bool OutDataAlloc(DWORD anSize);
+	static bool OutDataRealloc(DWORD anNewSize);
+	static bool OutDataWrite(LPVOID apData, DWORD anSize);
 
 public:
 	virtual BOOL    CheckBufferEnabled() = 0;

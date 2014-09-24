@@ -1300,3 +1300,77 @@ int CPluginBase::ShowMessage(int aiMsg, int aiButtons)
 
 	return ShowMessage(szMsg, aiButtons, true);
 }
+
+// Если не вызывать - буфер увеличивается автоматически. Размер в БАЙТАХ
+// Возвращает FALSE при ошибках выделения памяти
+bool CPluginBase::OutDataAlloc(DWORD anSize)
+{
+	_ASSERTE(gpCmdRet==NULL);
+	// + размер заголовка gpCmdRet
+	gpCmdRet = (CESERVER_REQ*)Alloc(sizeof(CESERVER_REQ_HDR)+anSize,1);
+
+	if (!gpCmdRet)
+		return false;
+
+	// Код команды пока не известен - установит вызывающая функция
+	ExecutePrepareCmd(&gpCmdRet->hdr, 0, anSize+sizeof(CESERVER_REQ_HDR));
+	gpData = gpCmdRet->Data;
+	gnDataSize = anSize;
+	gpCursor = gpData;
+	return true;
+}
+
+// Размер в БАЙТАХ. вызывается автоматически из OutDataWrite
+// Возвращает FALSE при ошибках выделения памяти
+bool CPluginBase::OutDataRealloc(DWORD anNewSize)
+{
+	if (!gpCmdRet)
+		return OutDataAlloc(anNewSize);
+
+	if (anNewSize < gnDataSize)
+		return false; // нельзя выделять меньше памяти, чем уже есть
+
+	// realloc иногда не работает, так что даже и не пытаемся
+	CESERVER_REQ* lpNewCmdRet = (CESERVER_REQ*)Alloc(sizeof(CESERVER_REQ_HDR)+anNewSize,1);
+
+	if (!lpNewCmdRet)
+		return false;
+
+	ExecutePrepareCmd(&lpNewCmdRet->hdr, gpCmdRet->hdr.nCmd, anNewSize+sizeof(CESERVER_REQ_HDR));
+	LPBYTE lpNewData = lpNewCmdRet->Data;
+
+	if (!lpNewData)
+		return false;
+
+	// скопировать существующие данные
+	memcpy(lpNewData, gpData, gnDataSize);
+	// запомнить новую позицию курсора
+	gpCursor = lpNewData + (gpCursor - gpData);
+	// И новый буфер с размером
+	Free(gpCmdRet);
+	gpCmdRet = lpNewCmdRet;
+	gpData = lpNewData;
+	gnDataSize = anNewSize;
+	return true;
+}
+
+// Размер в БАЙТАХ
+// Возвращает FALSE при ошибках выделения памяти
+bool CPluginBase::OutDataWrite(LPVOID apData, DWORD anSize)
+{
+	if (!gpData)
+	{
+		if (!OutDataAlloc(max(1024, (anSize+128))))
+			return false;
+	}
+	else if (((gpCursor-gpData)+anSize)>gnDataSize)
+	{
+		if (!OutDataRealloc(gnDataSize+max(1024, (anSize+128))))
+			return false;
+	}
+
+	// Скопировать данные
+	memcpy(gpCursor, apData, anSize);
+	gpCursor += anSize;
+	return true;
+}
