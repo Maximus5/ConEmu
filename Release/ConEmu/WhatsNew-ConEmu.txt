@@ -12,6 +12,12 @@ Votes and awards (vote for ConEmu, if you please)
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+2014.09.23
+[*] Debug purpose switch: ConEmu.exe -LoadRegistry.
+[*] Support automatic find/loading of ".ConEmu.xml" (dot prefixed) config file.
+[*] Wrong dpi was used if starting on second monitor (9df4391 regression).
+
+
 2014.09.22
 [!] Internal: CSettings decomposition.
 [+] GuiMacro may be used for changing Checkbox/Radio ConEmu's options.
