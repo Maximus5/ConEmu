@@ -687,3 +687,11 @@ bool CPluginBase::isModalEditorViewer()
 
 	return false;
 }
+
+int CPluginBase::ShowMessage(int aiMsg, int aiButtons)
+{
+	wchar_t szMsgText[512] = L"";
+	GetMsg(aiMsg, szMsgText, countof(szMsgText));
+
+	return ShowMessage(szMsg, aiButtons, true);
+}

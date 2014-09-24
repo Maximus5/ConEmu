@@ -820,24 +820,18 @@ int CPluginW1900::ShowMessage(LPCWSTR asMsg, int aiButtons, bool bWarning)
 		return -1;
 
 	return InfoW1900->Message(&guid_ConEmu, &guid_ConEmuMsg,
-                              FMSG_ALLINONE1900|(aiButtons?0:FMSG_MB_OK)|(bWarning ? FMSG_WARNING : 0), NULL,
-	                         (const wchar_t * const *)asMsg, 0, aiButtons);
+					FMSG_ALLINONE1900|(aiButtons?0:FMSG_MB_OK)|(bWarning ? FMSG_WARNING : 0), NULL,
+					(const wchar_t * const *)asMsg, 0, aiButtons);
 }
 
-int CPluginW1900::ShowMessage(int aiMsg, int aiButtons)
+LPCWSTR CPluginW1900::GetMsg(int aiMsg, wchar_t* psMsg = NULL, size_t cchMsgMax = 0)
 {
-	if (!InfoW1900 || !InfoW1900->Message || !InfoW1900->GetMsg)
-		return -1;
-
-	return ShowMessageW1900(InfoW1900->GetMsg(&guid_ConEmu,aiMsg), aiButtons, true);
-}
-
-LPCWSTR CPluginW1900::GetMsg(int aiMsg)
-{
-	if (!InfoW1900 || !InfoW1900->GetMsg)
-		return L"";
-
-	return InfoW1900->GetMsg(&guid_ConEmu,aiMsg);
+	LPCWSTR pszRc = (InfoW1900 && InfoW1900->GetMsg) ? InfoW1900->GetMsg(&guid_ConEmu, aiMsg) : L"";
+	if (!pszRc)
+		pszRc = L"";
+	if (psMsg)
+		lstrcpyn(pszRc, pszRc, cchMsgMax);
+	return pszRc;
 }
 
 //void ReloadMacroW1900()

@@ -877,24 +877,18 @@ int ShowMessageW2800(LPCWSTR asMsg, int aiButtons, bool bWarning)
 		return -1;
 
 	return InfoW2800->Message(&guid_ConEmu, &guid_ConEmuMsg,
-                              FMSG_ALLINONE1900|(aiButtons?0:FMSG_MB_OK)|(bWarning ? FMSG_WARNING : 0), NULL,
-	                         (const wchar_t * const *)asMsg, 0, aiButtons);
+					FMSG_ALLINONE1900|(aiButtons?0:FMSG_MB_OK)|(bWarning ? FMSG_WARNING : 0), NULL,
+					(const wchar_t * const *)asMsg, 0, aiButtons);
 }
 
-int ShowMessageW2800(int aiMsg, int aiButtons)
+LPCWSTR CPluginW2800::GetMsg(int aiMsg, wchar_t* psMsg = NULL, size_t cchMsgMax = 0)
 {
-	if (!InfoW2800 || !InfoW2800->Message || !InfoW2800->GetMsg)
-		return -1;
-
-	return ShowMessageW2800(InfoW2800->GetMsg(&guid_ConEmu,aiMsg), aiButtons, true);
-}
-
-LPCWSTR GetMsgW2800(int aiMsg)
-{
-	if (!InfoW2800 || !InfoW2800->GetMsg)
-		return L"";
-
-	return InfoW2800->GetMsg(&guid_ConEmu,aiMsg);
+	LPCWSTR pszRc = (InfoW2800 && InfoW2800->GetMsg) ? InfoW2800->GetMsg(&guid_ConEmu, aiMsg) : L"";
+	if (!pszRc)
+		pszRc = L"";
+	if (psMsg)
+		lstrcpyn(pszRc, pszRc, cchMsgMax);
+	return pszRc;
 }
 
 //void ReloadMacroW2800()

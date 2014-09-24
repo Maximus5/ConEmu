@@ -67,6 +67,7 @@ public:
 	int ProcessSynchroEvent(int Event, void *Param);
 	int ProcessEditorViewerEvent(int EditorEvent, int ViewerEvent);
 	bool isModalEditorViewer();
+	int ShowMessage(int aiMsg, int aiButtons);
 
 public:
 	virtual BOOL    CheckBufferEnabled() = 0;
@@ -100,7 +101,6 @@ public:
 	virtual BOOL    ReloadFarInfo() = 0;
 	virtual void    SetStartupInfo(void *aInfo) = 0;
 	virtual void    SetWindow(int nTab) = 0;
-	virtual int     ShowMessage(int aiMsg, int aiButtons) = 0;
 	virtual int     ShowMessage(LPCWSTR asMsg, int aiButtons, bool bWarning) = 0;
 	virtual int     ShowPluginMenu(ConEmuPluginMenuItem* apItems, int Count) = 0;
 	virtual void    ShowUserScreen(bool bUserScreen) = 0;

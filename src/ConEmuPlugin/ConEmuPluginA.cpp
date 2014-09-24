@@ -747,24 +747,6 @@ void   WINAPI _export ExitFAR(void)
 	ShutdownPluginStep(L"ExitFAR - done");
 }
 
-int ShowMessageA(LPCSTR asMsg, int aiButtons, bool bWarning)
-{
-	if (!InfoA || !InfoA->Message)
-		return -1;
-
-	return InfoA->Message(InfoA->ModuleNumber,
-                          FMSG_ALLINONE|(aiButtons?0:FMSG_MB_OK)|(bWarning ? FMSG_WARNING : 0), NULL,
-	                     (const char * const *)asMsg, 0, aiButtons);
-}
-
-int ShowMessageA(int aiMsg, int aiButtons)
-{
-	if (!InfoA || !InfoA->Message)
-		return -1;
-
-	return ShowMessageA(InfoA->GetMsg(InfoA->ModuleNumber,aiMsg), aiButtons, true);
-}
-
 //void ReloadMacroA()
 //{
 //	if (!InfoA || !InfoA->AdvControl)
@@ -915,29 +897,43 @@ bool CPluginAnsi::OpenEditor(LPCWSTR asFileName, bool abView, bool abDeleteTempF
 	return lbRc;
 }
 
-
-void GetMsgA(int aiMsg, wchar_t (&rsMsg)[MAX_PATH])
+int CPluginAnsi::ShowMessage(LPCWSTR asMsg, int aiButtons, bool bWarning)
 {
-	if (!rsMsg || !InfoA)
-		return;
+	if (!InfoA || !InfoA->Message)
+		return -1;
 
-	LPCSTR pszMsg = InfoA->GetMsg(InfoA->ModuleNumber,aiMsg);
+	if (!asMsg)
+		asMsg = L"";
+	int nLen = lstrlen(asMsg);
+	char* szOem = (char*)calloc(nLen+1,sizeof(*szOem));
+	ToOem(asMsg, szOem, nLen+1);
 
-	if (pszMsg && *pszMsg)
-	{
-		int nLen = (int)lstrlenA(pszMsg);
+	int iMsgRc = InfoA->Message(InfoA->ModuleNumber,
+					FMSG_ALLINONE|(aiButtons?0:FMSG_MB_OK)|(bWarning ? FMSG_WARNING : 0), NULL,
+					(const char * const *)szOem, 0, aiButtons);
+	free(szOem);
 
-		if (nLen>=MAX_PATH) nLen = MAX_PATH - 1;
-
-		nLen = MultiByteToWideChar(CP_OEMCP, 0, pszMsg, nLen, rsMsg, MAX_PATH-1);
-
-		if (nLen>=0) rsMsg[nLen] = 0;
-	}
-	else
-	{
-		rsMsg[0] = 0;
-	}
+	return iMsgRc;
 }
+
+LPCWSTR CPluginAnsi::GetMsg(int aiMsg, wchar_t* psMsg = NULL, size_t cchMsgMax = 0)
+{
+	if (!psMsg || !cchMsgMax)
+	{
+		psMsg = ms_TempMsgBuf;
+		cchMsgMax = countof(ms_TempMsgBuf);
+	}
+
+	LPCSTR pszRcA = (InfoA && InfoA->GetMsg) ? InfoA->GetMsg(InfoA->ModuleNumber, aiMsg) : "";
+	if (!pszRcA)
+		pszRcA = "";
+
+	nLen = MultiByteToWideChar(CP_OEMCP, 0, pszRcA, -1, psMsg, cchMsgMax-1);
+	if (nLen>=0) psMsg[nLen] = 0;
+
+	return psMsg;
+}
+
 
 bool CPluginAnsi::IsMacroActive()
 {

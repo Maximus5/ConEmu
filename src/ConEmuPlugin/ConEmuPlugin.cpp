@@ -4072,51 +4072,6 @@ BOOL OutDataWrite(LPVOID apData, DWORD anSize)
 	return TRUE;
 }
 
-int ShowMessage(int aiMsg, int aiButtons)
-{
-	if (gFarVersion.dwVerMajor==1)
-		return ShowMessageA(aiMsg, aiButtons);
-	else if (gFarVersion.dwBuild>=FAR_Y2_VER)
-		return FUNC_Y2(ShowMessageW)(aiMsg, aiButtons);
-	else if (gFarVersion.dwBuild>=FAR_Y1_VER)
-		return FUNC_Y1(ShowMessageW)(aiMsg, aiButtons);
-	else
-		return FUNC_X(ShowMessageW)(aiMsg, aiButtons);
-}
-int ShowMessage(LPCWSTR asMsg, int aiButtons, bool bWarning)
-{
-	if (!asMsg)
-		return -1;
-
-	if (gFarVersion.dwVerMajor==1)
-	{
-		int nLen = lstrlen(asMsg)+1;
-		char* psz = (char*)malloc(nLen);
-		WideCharToMultiByte(CP_OEMCP, 0, asMsg, nLen, psz, nLen, 0,0);
-		int nBtn = ShowMessageA(psz, aiButtons, bWarning);
-		free(psz);
-		return nBtn;
-	}
-	else if (gFarVersion.dwBuild>=FAR_Y2_VER)
-		return FUNC_Y2(ShowMessageW)(asMsg, aiButtons, bWarning);
-	else if (gFarVersion.dwBuild>=FAR_Y1_VER)
-		return FUNC_Y1(ShowMessageW)(asMsg, aiButtons, bWarning);
-	else
-		return FUNC_X(ShowMessageW)(asMsg, aiButtons, bWarning);
-}
-
-LPCWSTR GetMsgW(int aiMsg)
-{
-	if (gFarVersion.dwVerMajor==1)
-		return L"";
-	else if (gFarVersion.dwBuild>=FAR_Y2_VER)
-		return FUNC_Y2(GetMsgW)(aiMsg);
-	else if (gFarVersion.dwBuild>=FAR_Y1_VER)
-		return FUNC_Y1(GetMsgW)(aiMsg);
-	else
-		return FUNC_X(GetMsgW)(aiMsg);
-}
-
 BOOL FindServerCmd(DWORD nServerCmd, DWORD &dwServerPID, bool bFromAttach /*= false*/)
 {
 	if (!FarHwnd)

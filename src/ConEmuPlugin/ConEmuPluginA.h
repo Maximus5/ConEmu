@@ -35,7 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 class CPluginAnsi : public CPluginBase
 {
 protected:
-	
+	wchar_t ms_TempMsgBuf[512];
 public:
 	CPluginAnsi();
 	virtual ~CPluginAnsi() {};
