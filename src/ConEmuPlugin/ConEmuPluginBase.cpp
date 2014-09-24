@@ -1602,7 +1602,30 @@ bool CPluginBase::UpdateConEmuTabs(bool abSendChanges)
 		if (ghConEmuWndDC && FarHwnd)
 			CheckResources(FALSE);
 
-		lbCh = UpdateConEmuTabsApi();
+		bool lbDummy = false;
+		int windowCount = GetWindowCount();
+
+		if ((windowCount == 0) && !gpFarInfo->bFarPanelAllowed)
+		{
+			windowCount = 1; lbDummy = true;
+		}
+
+		// lastWindowCount обновляется в CreateTabs
+		lbCh = (lastWindowCount != windowCount);
+
+		if (CreateTabs(windowCount))
+		{
+			if (lbDummy)
+			{
+				int tabCount = 0;
+				lbCh |= AddTab(tabCount, 0, false, false, WTYPE_PANELS, NULL, NULL, 1, 0, 0, 0);
+				gpTabs->Tabs.nTabCount = tabCount;
+			}
+			else
+			{
+				lbCh |= UpdateConEmuTabsApi(windowCount);
+			}
+		}
 	}
 
 	if (gpTabs)

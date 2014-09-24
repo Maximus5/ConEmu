@@ -553,33 +553,15 @@ int CPluginW995::GetWindowCount()
 	return (int)windowCount;
 }
 
-bool CPluginW995::UpdateConEmuTabsApi()
+bool CPluginW995::UpdateConEmuTabsApi(int windowCount)
 {
 	if (!InfoW995 || !InfoW995->AdvControl || gbIgnoreUpdateTabs)
 		return false;
 
-	bool lbCh = false, lbDummy = false;
+	bool lbCh = false;
 	WindowInfo WInfo = {0};
 	wchar_t szWNameBuffer[CONEMUTABMAX];
-
-	int windowCount = (int)InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETWINDOWCOUNT, NULL);
-	if ((windowCount == 0) && !gpFarInfo->bFarPanelAllowed)
-	{
-		windowCount = 1; lbDummy = TRUE;
-	}
-	lbCh = (lastWindowCount != windowCount);
-
-	if (!CreateTabs(windowCount))
-		return false;
-
 	int tabCount = 0;
-
-	if (lbDummy)
-	{
-		lbCh = AddTab(tabCount, 0, false, false, WTYPE_PANELS, NULL, NULL, 1, 0, 0, 0);
-		return lbCh;
-	}
-
 	bool lbActiveFound = false;
 
 	for (int i = 0; i < windowCount; i++)

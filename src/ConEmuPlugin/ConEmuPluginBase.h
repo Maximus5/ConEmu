@@ -124,7 +124,7 @@ public:
 	virtual int     ShowPluginMenu(ConEmuPluginMenuItem* apItems, int Count) = 0;
 	virtual void    ShowUserScreen(bool bUserScreen) = 0;
 	virtual void    StopWaitEndSynchro() = 0;
-	virtual bool    UpdateConEmuTabsApi() = 0;
+	virtual bool    UpdateConEmuTabsApi(int windowCount) = 0;
 	virtual void    WaitEndSynchro() = 0;
 };
 

@@ -596,7 +596,7 @@ int CPluginW1900::GetWindowCount()
 	return (int)windowCount;
 }
 
-bool CPluginW1900::UpdateConEmuTabsApi()
+bool CPluginW1900::UpdateConEmuTabsApi(int windowCount)
 {
 	if (!InfoW1900 || !InfoW1900->AdvControl || gbIgnoreUpdateTabs)
 		return false;
@@ -604,25 +604,7 @@ bool CPluginW1900::UpdateConEmuTabsApi()
 	bool lbCh = false, lbDummy = false;
 	WindowInfo WInfo = {sizeof(WindowInfo)};
 	wchar_t szWNameBuffer[CONEMUTABMAX];
-
-	int windowCount = (int)InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETWINDOWCOUNT, 0, NULL);
-	if ((windowCount == 0) && !gpFarInfo->bFarPanelAllowed)
-	{
-		windowCount = 1; lbDummy = true;
-	}
-	lbCh = (lastWindowCount != windowCount);
-
-	if (!CreateTabs(windowCount))
-		return false;
-
 	int tabCount = 0;
-
-	if (lbDummy)
-	{
-		lbCh = AddTab(tabCount, 0, false, false, WTYPE_PANELS, NULL, NULL, 1, 0, 0, 0);
-		return lbCh;
-	}
-
 	bool lbActiveFound = false;
 
 	_ASSERTE(GetCurrentThreadId() == gnMainThreadId);

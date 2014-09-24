@@ -615,7 +615,7 @@ int CPluginAnsi::GetWindowCount()
 	return (int)windowCount;
 }
 
-bool CPluginAnsi::UpdateConEmuTabsApi()
+bool CPluginAnsi::UpdateConEmuTabsApi(int windowCount)
 {
 	if (!InfoA || gbIgnoreUpdateTabs)
 		return false;
@@ -623,24 +623,7 @@ bool CPluginAnsi::UpdateConEmuTabsApi()
 	bool lbCh = false, lbDummy = false;
 	WindowInfo WInfo;
 	WCHAR* pszName = gszDir1; pszName[0] = 0; //(WCHAR*)calloc(CONEMUTABMAX, sizeof(WCHAR));
-	int windowCount = (int)InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETWINDOWCOUNT, NULL);
-	if ((windowCount == 0) && !gpFarInfo->bFarPanelAllowed)
-	{
-		windowCount = 1; lbDummy = true;
-	}
-	lbCh = (lastWindowCount != windowCount);
-
-	if (!CreateTabs(windowCount))
-		return false;
-
 	int tabCount = 0;
-
-	if (lbDummy)
-	{
-		lbCh = AddTab(tabCount, 0, false, false, WTYPE_PANELS, NULL, NULL, 1, 0, 0, 0);
-		return lbCh;
-	}
-
 	bool lbActiveFound = false;
 
 	for (int i = 0; i < windowCount; i++)
