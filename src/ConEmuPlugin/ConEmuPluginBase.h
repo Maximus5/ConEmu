@@ -72,6 +72,7 @@ public:
 	bool Attach2Gui();
 	bool FindServerCmd(DWORD nServerCmd, DWORD &dwServerPID, bool bFromAttach = false);
 	int ShowMessage(int aiMsg, int aiButtons);
+	bool UpdateConEmuTabs(bool abSendChanges);
 
 	static DWORD GetMainThreadId();
 	static bool RunExternalProgramW(wchar_t* pszCommand, wchar_t* pszCurDir, bool bSilent=false);
@@ -122,6 +123,7 @@ public:
 	virtual int     ShowPluginMenu(ConEmuPluginMenuItem* apItems, int Count) = 0;
 	virtual void    ShowUserScreen(bool bUserScreen) = 0;
 	virtual void    StopWaitEndSynchro() = 0;
+	virtual bool    UpdateConEmuTabsApi() = 0;
 	virtual void    WaitEndSynchro() = 0;
 };
 

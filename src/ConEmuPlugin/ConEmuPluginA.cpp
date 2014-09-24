@@ -606,22 +606,18 @@ int WINAPI _export ProcessViewerEvent(int Event, void *Param)
 
 extern MSection *csTabs;
 
-bool UpdateConEmuTabsA(int anEvent, bool losingFocus, bool editorSave, void *Param)
+bool CPluginAnsi::UpdateConEmuTabsApi()
 {
 	if (!InfoA || gbIgnoreUpdateTabs)
 		return false;
 
-	if (ghConEmuWndDC && FarHwnd)
-		CheckResources(FALSE);
-
-	MSectionLock SC; SC.Lock(csTabs);
-	BOOL lbCh = FALSE, lbDummy = FALSE;
+	bool lbCh = false, lbDummy = false;
 	WindowInfo WInfo;
 	WCHAR* pszName = gszDir1; pszName[0] = 0; //(WCHAR*)calloc(CONEMUTABMAX, sizeof(WCHAR));
 	int windowCount = (int)InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETWINDOWCOUNT, NULL);
 	if ((windowCount == 0) && !gpFarInfo->bFarPanelAllowed)
 	{
-		windowCount = 1; lbDummy = TRUE;
+		windowCount = 1; lbDummy = true;
 	}
 	lbCh = (lastWindowCount != windowCount);
 
@@ -632,33 +628,13 @@ bool UpdateConEmuTabsA(int anEvent, bool losingFocus, bool editorSave, void *Par
 
 	if (lbDummy)
 	{
-		AddTab(tabCount, 0, false, false, WTYPE_PANELS, NULL, NULL, 1, 0, 0, 0);
-		return (lbCh != FALSE);
+		lbCh = AddTab(tabCount, 0, false, false, WTYPE_PANELS, NULL, NULL, 1, 0, 0, 0);
+		return lbCh;
 	}
 
-	//EditorInfo ei = {0}; BOOL bEditorRetrieved = FALSE;
-	//WCHAR* pszFileName = NULL;
-	//if (editorSave)
-	//{
-	//	InfoA->EditorControl(ECTL_GETINFO, &ei);
-	//	bEditorRetrieved = TRUE;
-	//	//pszFileName = (WCHAR*)calloc(CONEMUTABMAX, sizeof(WCHAR));
-	//	pszFileName = gszDir2; pszFileName[0] = 0;
-	//	if (ei.FileName)
-	//		MultiByteToWideChar(CP_OEMCP, 0, ei.FileName, lstrlenA(ei.FileName)+1, pszFileName, CONEMUTABMAX);
-	//}
-	//ViewerInfo vi = {sizeof(ViewerInfo)};
-	//if (anEvent == 206) {
-	//	if (Param)
-	//		vi.ViewerID = *(int*)Param;
-	//	InfoA->ViewerControl(VCTL_GETINFO, &vi);
-	//	pszFileName = gszDir2; pszFileName[0] = 0;
-	//	if (vi.FileName)
-	//		MultiByteToWideChar(CP_OEMCP, 0, vi.FileName, lstrlenA(vi.FileName)+1, pszFileName, CONEMUTABMAX);
-	//}
-	BOOL lbActiveFound = FALSE;
+	bool lbActiveFound = false;
 
-	for(int i = 0; i < windowCount; i++)
+	for (int i = 0; i < windowCount; i++)
 	{
 		WInfo.Pos = i;
 		_ASSERTE(GetCurrentThreadId() == gnMainThreadId);
@@ -670,16 +646,17 @@ bool UpdateConEmuTabsA(int anEvent, bool losingFocus, bool editorSave, void *Par
 
 			if (WInfo.Type == WTYPE_EDITOR || WInfo.Type == WTYPE_VIEWER || WInfo.Type == WTYPE_PANELS)
 			{
-#ifdef SHOW_DEBUG_EVENTS
+				#ifdef SHOW_DEBUG_EVENTS
 				char szDbg[255]; wsprintfA(szDbg, "Window %i (Type=%i, Modified=%i)\n", i, WInfo.Type, WInfo.Modified);
 				OutputDebugStringA(szDbg);
-#endif
+				#endif
 
-				if (WInfo.Current) lbActiveFound = TRUE;
+				if (WInfo.Current)
+					lbActiveFound = true;
 
 				MultiByteToWideChar(CP_OEMCP, 0, WInfo.Name, lstrlenA(WInfo.Name)+1, pszName, CONEMUTABMAX);
 				TODO("Определение ИД редактора/вьювера");
-				lbCh |= AddTab(tabCount, -1, losingFocus, editorSave,
+				lbCh |= AddTab(tabCount, -1, false/*losingFocus*/, false/*editorSave*/,
 				               WInfo.Type, pszName, /*editorSave ? pszFileName :*/ NULL,
 				               WInfo.Current, WInfo.Modified, 0, 0);
 				//if (WInfo.Type == WTYPE_EDITOR && WInfo.Current) //2009-08-17
@@ -689,7 +666,7 @@ bool UpdateConEmuTabsA(int anEvent, bool losingFocus, bool editorSave, void *Par
 	}
 
 	// Скорее всего это модальный редактор (или вьювер?)
-	if (!lbActiveFound && !losingFocus)
+	if (!lbActiveFound)
 	{
 		WInfo.Pos = -1;
 		_ASSERTE(GetCurrentThreadId() == gnMainThreadId);
@@ -705,7 +682,7 @@ bool UpdateConEmuTabsA(int anEvent, bool losingFocus, bool editorSave, void *Par
 				tabCount = 0;
 				MultiByteToWideChar(CP_OEMCP, 0, WInfo.Name, lstrlenA(WInfo.Name)+1, pszName, CONEMUTABMAX);
 				TODO("Определение ИД редактора/вьювера");
-				lbCh |= AddTab(tabCount, -1, losingFocus, editorSave,
+				lbCh |= AddTab(tabCount, -1, false/*losingFocus*/, false/*editorSave*/,
 				               WInfo.Type, pszName, /*editorSave ? pszFileName :*/ NULL,
 				               WInfo.Current, WInfo.Modified, 0, 0);
 			}
@@ -718,8 +695,8 @@ bool UpdateConEmuTabsA(int anEvent, bool losingFocus, bool editorSave, void *Par
 
 	// 101224 - сразу запомнить количество!
 	gpTabs->Tabs.nTabCount = tabCount;
-	//SendTabs(tabCount, lbCh && (gnReqCommand==(DWORD)-1));
-	return (lbCh != FALSE);
+
+	return lbCh;
 }
 
 void   WINAPI _export ExitFAR(void)

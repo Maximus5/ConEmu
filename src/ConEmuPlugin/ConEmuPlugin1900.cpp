@@ -587,20 +587,19 @@ int CPluginW1900::ProcessEditorInput(LPCVOID aRec)
 	return 0;
 }
 
-bool CPluginW1900::UpdateConEmuTabs(int anEvent, bool losingFocus, bool editorSave, void* Param/*=NULL*/)
+bool CPluginW1900::UpdateConEmuTabsApi()
 {
 	if (!InfoW1900 || !InfoW1900->AdvControl || gbIgnoreUpdateTabs)
 		return false;
 
-	BOOL lbCh = FALSE, lbDummy = FALSE;
+	bool lbCh = false, lbDummy = false;
 	WindowInfo WInfo = {sizeof(WindowInfo)};
 	wchar_t szWNameBuffer[CONEMUTABMAX];
-	//WInfo.Name = szWNameBuffer;
-	//WInfo.NameSize = CONEMUTABMAX;
+
 	int windowCount = (int)InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETWINDOWCOUNT, 0, NULL);
 	if ((windowCount == 0) && !gpFarInfo->bFarPanelAllowed)
 	{
-		windowCount = 1; lbDummy = TRUE;
+		windowCount = 1; lbDummy = true;
 	}
 	lbCh = (lastWindowCount != windowCount);
 
@@ -611,26 +610,11 @@ bool CPluginW1900::UpdateConEmuTabs(int anEvent, bool losingFocus, bool editorSa
 
 	if (lbDummy)
 	{
-		AddTab(tabCount, 0, false, false, WTYPE_PANELS, NULL, NULL, 1, 0, 0, 0);
-		return (lbCh != FALSE);
+		lbCh = AddTab(tabCount, 0, false, false, WTYPE_PANELS, NULL, NULL, 1, 0, 0, 0);
+		return lbCh;
 	}
 
-	//EditorInfo ei = {0};
-	//if (editorSave)
-	//{
-	//	InfoW1900->EditorControl(-1/*Active editor*/, ECTL_GETINFO, &ei);
-	//}
-	ViewerInfo vi = {sizeof(ViewerInfo)};
-
-	if (anEvent == 206)
-	{
-		if (Param)
-			vi.ViewerID = *(int*)Param;
-
-		InfoW1900->ViewerControl(-1/*Active viewer*/, VCTL_GETINFO, 0, &vi);
-	}
-
-	BOOL lbActiveFound = FALSE;
+	bool lbActiveFound = false;
 
 	_ASSERTE(GetCurrentThreadId() == gnMainThreadId);
 
@@ -712,38 +696,26 @@ bool CPluginW1900::UpdateConEmuTabs(int anEvent, bool losingFocus, bool editorSa
 			if (WInfo.Type == WTYPE_EDITOR || WInfo.Type == WTYPE_VIEWER || WInfo.Type == WTYPE_PANELS)
 			{
 				if ((WInfo.Flags & WIF_CURRENT))
-					lbActiveFound = TRUE;
+				{
+					lbActiveFound = true;
+				}
 				else if (bActiveInfo && (WInfo.Type == WActive.Type) && (WInfo.Id == WActive.Id))
 				{
 					WInfo.Flags |= WIF_CURRENT;
-					lbActiveFound = TRUE;
+					lbActiveFound = true;
 				}
 
 				TODO("Определение ИД редактора/вьювера");
-				lbCh |= AddTab(tabCount, -1, losingFocus, editorSave,
+				lbCh |= AddTab(tabCount, -1, false/*losingFocus*/, false/*editorSave*/,
 				               WInfo.Type, WInfo.Name, /*editorSave ? ei.FileName :*/ NULL,
 				               (WInfo.Flags & WIF_CURRENT), (WInfo.Flags & WIF_MODIFIED), (WInfo.Flags & WIF_MODAL),
 							   0/*WInfo.Id?*/);
-				//if (WInfo.Type == WTYPE_EDITOR && WInfo.Current) //2009-08-17
-				//	lastModifiedStateW = WInfo.Modified;
 			}
-
-			//InfoW1900->AdvControl(&guid_ConEmu, ACTL_FREEWINDOWINFO, (void*)&WInfo);
 		}
 	}
 
-	// Viewer в FAR 2 build 9xx не попадает в список окон при событии VE_GOTFOCUS
-	_ASSERTE(VE_GOTFOCUS==6);
-	if (!losingFocus && !editorSave && tabCount == 0 && anEvent == (200+VE_GOTFOCUS))
-	{
-		lbActiveFound = TRUE;
-		lbCh |= AddTab(tabCount, -1, losingFocus, editorSave,
-		               WTYPE_VIEWER, vi.FileName, NULL,
-		               1, 0, 0, vi.ViewerID);
-	}
-
 	// Скорее всего это модальный редактор (или вьювер?)
-	if (!lbActiveFound && !losingFocus)
+	if (!lbActiveFound)
 	{
 		_ASSERTE("Active window must be detected already!" && 0);
 		WInfo.Pos = -1;
@@ -765,7 +737,7 @@ bool CPluginW1900::UpdateConEmuTabs(int anEvent, bool losingFocus, bool editorSa
 				{
 					tabCount = 0;
 					TODO("Определение ИД Редактора/вьювера");
-					lbCh |= AddTab(tabCount, -1, losingFocus, editorSave,
+					lbCh |= AddTab(tabCount, -1, false/*losingFocus*/, false/*editorSave*/,
 					               WInfo.Type, WInfo.Name, /*editorSave ? ei.FileName :*/ NULL,
 					               (WInfo.Flags & WIF_CURRENT), (WInfo.Flags & WIF_MODIFIED), 1/*Modal*/,
 								   0);
@@ -780,17 +752,8 @@ bool CPluginW1900::UpdateConEmuTabs(int anEvent, bool losingFocus, bool editorSa
 
 	// 101224 - сразу запомнить количество!
 	gpTabs->Tabs.nTabCount = tabCount;
-	//// 2009-08-17
-	//if (gbHandleOneRedraw && gbHandleOneRedrawCh && lbCh) {
-	//	gbHandleOneRedraw = false;
-	//	gbHandleOneRedrawCh = false;
-	//}
-#ifdef _DEBUG
-	//WCHAR szDbg[128]; StringCchPrintf(szDbg, countof(szDbg), L"Event: %i, count %i\n", anEvent, tabCount);
-	//OutputDebugStringW(szDbg);
-#endif
-	//SendTabs(tabCount, lbCh && (gnReqCommand==(DWORD)-1));
-	return (lbCh != FALSE);
+
+	return lbCh;
 }
 
 void CPluginW1900::ExitFAR(void)

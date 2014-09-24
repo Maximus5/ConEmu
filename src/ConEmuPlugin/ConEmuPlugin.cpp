@@ -399,7 +399,7 @@ HANDLE OpenPluginWcmn(int OpenFrom,INT_PTR Item,bool FromMacro)
 				//MSectionLock SC; SC.Lock(csTabs, TRUE);
 				//SendTabs(gnCurTabCount, TRUE);
 				//SC.Unlock();
-				UpdateConEmuTabs(true);
+				Plugin()->UpdateConEmuTabs(true);
 				SetEvent(ghSetWndSendTabsEvent);
 				return hResult;
 			}
@@ -539,7 +539,7 @@ void OnMainThreadActivated()
 	if (gbRequestUpdateTabs && !Plugin()->isMacroActive(iMacroActive))
 	{
 		gbRequestUpdateTabs = gbNeedPostTabSend = FALSE;
-		UpdateConEmuTabs(true);
+		Plugin()->UpdateConEmuTabs(true);
 
 		if (gbClosingModalViewerEditor)
 		{
@@ -2207,7 +2207,7 @@ BOOL ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData, CESERV
 				DEBUGSTRCMD(L"Plugin: ACTL_COMMIT finished\n");
 
 				gbIgnoreUpdateTabs = FALSE;
-				UpdateConEmuTabs(bForceSendTabs);
+				Plugin()->UpdateConEmuTabs(bForceSendTabs);
 
 				DEBUGSTRCMD(L"Plugin: Tabs updated\n");
 			}
@@ -2842,7 +2842,7 @@ void CommonPluginStartup()
 	CheckResources(TRUE);
 
 	// Надо табы загрузить
-	UpdateConEmuTabs(true);
+	Plugin()->UpdateConEmuTabs(true);
 
 
 	// Пробежаться по всем загруженным в данный момент плагинам и дернуть в них "OnConEmuLoaded"
@@ -3274,26 +3274,6 @@ BOOL ReloadFarInfo(BOOL abForce)
 	return lbChanged;
 }
 
-bool UpdateConEmuTabsW(int anEvent, bool losingFocus, bool editorSave, void* Param/*=NULL*/)
-{
-	if (!gbInfoW_OK || gbIgnoreUpdateTabs)
-		return false;
-
-	if (gbRequestUpdateTabs)
-		gbRequestUpdateTabs = FALSE;
-
-	if (ghConEmuWndDC && FarHwnd)
-		CheckResources(FALSE);
-
-	MSectionLock SC; SC.Lock(csTabs);
-	bool lbCh;
-
-	lbCh = Plugin()->UpdateConEmuTabs(anEvent, losingFocus, editorSave, Param);
-
-	SC.Unlock();
-	return lbCh;
-}
-
 VOID WINAPI OnCurDirChanged()
 {
 	if ((gnCurrentWindowType == WTYPE_PANELS) && (IS_SYNCHRO_ALLOWED))
@@ -3306,73 +3286,6 @@ VOID WINAPI OnCurDirChanged()
 		}
 	}
 }
-
-bool UpdateConEmuTabs(bool abSendChanges)
-{
-	extern bool UpdateConEmuTabsA(int anEvent, bool losingFocus, bool editorSave, void *Param);
-	bool lbCh;
-	// Блокируем сразу, т.к. ниже по коду gpTabs тоже используется
-	MSectionLock SC; SC.Lock(csTabs);
-	// На случай, если текущее окно заблокировано диалогом - не получится точно узнать
-	// какое окно фара активно. Поэтому вернем последнее известное.
-	int nLastCurrentTab = -1, nLastCurrentType = -1;
-
-	if (gpTabs && gpTabs->Tabs.nTabCount > 0)
-	{
-		nLastCurrentTab = gpTabs->Tabs.CurrentIndex;
-		nLastCurrentType = gpTabs->Tabs.CurrentType;
-	}
-
-	if (gpTabs)
-		gpTabs->Tabs.CurrentIndex = -1; // для строгости
-
-	if (gFarVersion.dwVerMajor==1)
-		lbCh = UpdateConEmuTabsA(0, false, false, NULL);
-	else
-		lbCh = UpdateConEmuTabsW(0, false, false, NULL);
-
-	if (gpTabs)
-	{
-		if (gpTabs->Tabs.CurrentIndex == -1 && nLastCurrentTab != -1 && gpTabs->Tabs.nTabCount > 0)
-		{
-			// Активное окно определить не удалось
-			if ((UINT)nLastCurrentTab >= gpTabs->Tabs.nTabCount)
-				nLastCurrentTab = (gpTabs->Tabs.nTabCount - 1);
-
-			gpTabs->Tabs.CurrentIndex = nLastCurrentTab;
-			gpTabs->Tabs.tabs[nLastCurrentTab].Current = TRUE;
-			gpTabs->Tabs.CurrentType = gpTabs->Tabs.tabs[nLastCurrentTab].Type;
-		}
-
-		if (gpTabs->Tabs.CurrentType == 0)
-		{
-			if (gpTabs->Tabs.CurrentIndex >= 0 && gpTabs->Tabs.CurrentIndex < (int)gpTabs->Tabs.nTabCount)
-				gpTabs->Tabs.CurrentType = gpTabs->Tabs.tabs[nLastCurrentTab].Type;
-			else
-				gpTabs->Tabs.CurrentType = WTYPE_PANELS;
-		}
-
-		gnCurrentWindowType = gpTabs->Tabs.CurrentType;
-
-		if (abSendChanges || gbForceSendTabs)
-		{
-			_ASSERTE((gbForceSendTabs==FALSE || IsDebuggerPresent()) && "Async SetWindow was timeouted?");
-			gbForceSendTabs = FALSE;
-			SendTabs(gpTabs->Tabs.nTabCount, lbCh && (gnReqCommand==(DWORD)-1));
-		}
-	}
-
-	if (lbCh && gpBgPlugin)
-	{
-		gpBgPlugin->SetForceUpdate();
-		gpBgPlugin->OnMainThreadActivated();
-		gbNeedBgActivate = FALSE;
-	}
-
-	return lbCh;
-}
-
-
 
 //#ifndef max
 //#define max(a,b)            (((a) > (b)) ? (a) : (b))

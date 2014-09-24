@@ -544,16 +544,15 @@ int CPluginW995::ProcessEditorInput(LPCVOID aRec)
 	return 0;
 }
 
-bool CPluginW995::UpdateConEmuTabs(int anEvent, bool losingFocus, bool editorSave, void* Param/*=NULL*/)
+bool CPluginW995::UpdateConEmuTabsApi()
 {
 	if (!InfoW995 || !InfoW995->AdvControl || gbIgnoreUpdateTabs)
 		return false;
 
-	BOOL lbCh = FALSE, lbDummy = FALSE;
+	bool lbCh = false, lbDummy = false;
 	WindowInfo WInfo = {0};
 	wchar_t szWNameBuffer[CONEMUTABMAX];
-	//WInfo.Name = szWNameBuffer;
-	//WInfo.NameSize = CONEMUTABMAX;
+
 	int windowCount = (int)InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETWINDOWCOUNT, NULL);
 	if ((windowCount == 0) && !gpFarInfo->bFarPanelAllowed)
 	{
@@ -568,28 +567,13 @@ bool CPluginW995::UpdateConEmuTabs(int anEvent, bool losingFocus, bool editorSav
 
 	if (lbDummy)
 	{
-		AddTab(tabCount, 0, false, false, WTYPE_PANELS, NULL, NULL, 1, 0, 0, 0);
-		return (lbCh != FALSE);
+		lbCh = AddTab(tabCount, 0, false, false, WTYPE_PANELS, NULL, NULL, 1, 0, 0, 0);
+		return lbCh;
 	}
 
-	//EditorInfo ei = {0};
-	//if (editorSave)
-	//{
-	//	InfoW995->EditorControl(ECTL_GETINFO, &ei);
-	//}
-	ViewerInfo vi = {sizeof(ViewerInfo)};
+	bool lbActiveFound = false;
 
-	if (anEvent == 206)
-	{
-		if (Param)
-			vi.ViewerID = *(int*)Param;
-
-		InfoW995->ViewerControl(VCTL_GETINFO, &vi);
-	}
-
-	BOOL lbActiveFound = FALSE;
-
-	for(int i = 0; i < windowCount; i++)
+	for (int i = 0; i < windowCount; i++)
 	{
 		WInfo.Pos = i;
 		_ASSERTE(GetCurrentThreadId() == gnMainThreadId);
@@ -605,31 +589,19 @@ bool CPluginW995::UpdateConEmuTabs(int anEvent, bool losingFocus, bool editorSav
 
 			if (WInfo.Type == WTYPE_EDITOR || WInfo.Type == WTYPE_VIEWER || WInfo.Type == WTYPE_PANELS)
 			{
-				if (WInfo.Current) lbActiveFound = TRUE;
+				if (WInfo.Current)
+					lbActiveFound = true;
 
 				TODO("Определение ИД редактора/вьювера");
-				lbCh |= AddTab(tabCount, i, losingFocus, editorSave,
+				lbCh |= AddTab(tabCount, i, false/*losingFocus*/, false/*editorSave*/,
 				               WInfo.Type, WInfo.Name, /*editorSave ? ei.FileName :*/ NULL,
 				               WInfo.Current, WInfo.Modified, 0, 0);
-				//if (WInfo.Type == WTYPE_EDITOR && WInfo.Current) //2009-08-17
-				//	lastModifiedStateW = WInfo.Modified;
 			}
-
-			//InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_FREEWINDOWINFO, (void*)&WInfo);
 		}
 	}
 
-	// Viewer в FAR 2 build 9xx не попадает в список окон при событии VE_GOTFOCUS
-	if (!losingFocus && !editorSave && tabCount == 0 && anEvent == 206)
-	{
-		lbActiveFound = TRUE;
-		lbCh |= AddTab(tabCount, -1, losingFocus, editorSave,
-		               WTYPE_VIEWER, vi.FileName, NULL,
-		               1, 0, 0, vi.ViewerID);
-	}
-
 	// Скорее всего это модальный редактор (или вьювер?)
-	if (!lbActiveFound && !losingFocus)
+	if (!lbActiveFound)
 	{
 		WInfo.Pos = -1;
 
@@ -647,7 +619,7 @@ bool CPluginW995::UpdateConEmuTabs(int anEvent, bool losingFocus, bool editorSav
 				{
 					tabCount = 0;
 					TODO("Определение ИД Редактора/вьювера");
-					lbCh |= AddTab(tabCount, -1, losingFocus, editorSave,
+					lbCh |= AddTab(tabCount, -1, false/*losingFocus*/, false/*editorSave*/,
 					               WInfo.Type, WInfo.Name, /*editorSave ? ei.FileName :*/ NULL,
 					               WInfo.Current, WInfo.Modified, 1/*Modal*/, 0);
 				}
@@ -661,17 +633,8 @@ bool CPluginW995::UpdateConEmuTabs(int anEvent, bool losingFocus, bool editorSav
 
 	// 101224 - сразу запомнить количество!
 	gpTabs->Tabs.nTabCount = tabCount;
-	//// 2009-08-17
-	//if (gbHandleOneRedraw && gbHandleOneRedrawCh && lbCh) {
-	//	gbHandleOneRedraw = false;
-	//	gbHandleOneRedrawCh = false;
-	//}
-#ifdef _DEBUG
-	//WCHAR szDbg[128]; StringCchPrintf(szDbg, countof(szDbg), L"Event: %i, count %i\n", anEvent, tabCount);
-	//OutputDebugStringW(szDbg);
-#endif
-	//SendTabs(tabCount, lbCh && (gnReqCommand==(DWORD)-1));
-	return (lbCh != FALSE);
+
+	return lbCh;
 }
 
 void CPluginW995::ExitFAR(void)

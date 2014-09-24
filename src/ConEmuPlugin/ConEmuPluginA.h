@@ -81,5 +81,6 @@ public:
 	virtual int     ShowPluginMenu(ConEmuPluginMenuItem* apItems, int Count) override;
 	virtual void    ShowUserScreen(bool bUserScreen) override;
 	virtual void    StopWaitEndSynchro() override;
+	virtual bool    UpdateConEmuTabsApi() override;
 	virtual void    WaitEndSynchro() override;
 };
