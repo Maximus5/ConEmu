@@ -169,12 +169,7 @@ void FUNC_Y1(ProcessDragToW)();
 void FUNC_Y2(ProcessDragToW)();
 void ProcessDragToA();
 
-void CheckResources(BOOL abFromStartup);
-void InitResources();
-void CloseTabs();
-
 HWND AtoH(WCHAR *Str, int Len);
-bool UpdateConEmuTabs(bool abSendChanges);
 
 BOOL LoadFarVersion();
 
@@ -205,11 +200,6 @@ void PostMacroA(char* asMacro, INPUT_RECORD* apRec);
 void FUNC_X(PostMacroW)(const wchar_t* asMacro, INPUT_RECORD* apRec);
 void FUNC_Y1(PostMacroW)(const wchar_t* asMacro, INPUT_RECORD* apRec);
 void FUNC_Y2(PostMacroW)(const wchar_t* asMacro, INPUT_RECORD* apRec);
-LPCWSTR GetMsgW(int aiMsg);
-void GetMsgA(int aiMsg, wchar_t (&rsMsg)[MAX_PATH]);
-LPCWSTR FUNC_X(GetMsgW)(int aiMsg);
-LPCWSTR FUNC_Y1(GetMsgW)(int aiMsg);
-LPCWSTR FUNC_Y2(GetMsgW)(int aiMsg);
 
 extern DWORD gnReqCommand;
 extern int gnPluginOpenFrom;
@@ -229,17 +219,10 @@ extern "C" {
 }
 #endif
 
-
-BOOL Attach2Gui();
-BOOL StartDebugger();
-void ShowConsoleInfo();
-
 BOOL FarSetConsoleSize(SHORT nNewWidth, SHORT nNewHeight);
 
 BOOL StartupHooks(HMODULE ahOurDll);
 void ShutdownHooks();
-
-bool RunExternalProgramW(wchar_t* pszCommand, wchar_t* pszCurDir, bool bSilent=false);
 
 //void LogCreateProcessCheck(LPCWSTR asLogFileName);
 

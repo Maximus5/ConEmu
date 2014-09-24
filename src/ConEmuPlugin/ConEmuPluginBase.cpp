@@ -1668,3 +1668,126 @@ bool CPluginBase::UpdateConEmuTabs(bool abSendChanges)
 
 	return lbCh;
 }
+
+// Вызывается при инициализации из SetStartupInfo[W] и при обновлении табов UpdateConEmuTabs[???]
+// То есть по идее, это происходит только когда фар явно вызывает плагин (legal api calls)
+void CPluginBase::CheckResources(bool abFromStartup)
+{
+	if (GetCurrentThreadId() != gnMainThreadId)
+	{
+		_ASSERTE(GetCurrentThreadId() == gnMainThreadId);
+		return;
+	}
+
+	if (gsFarLang[0] && !abFromStartup)
+	{
+		static DWORD dwLastTickCount = GetTickCount();
+		DWORD dwCurTick = GetTickCount();
+
+		if ((dwCurTick - dwLastTickCount) < CHECK_RESOURCES_INTERVAL)
+			return;
+
+		dwLastTickCount = dwCurTick;
+	}
+
+	//if (abFromStartup) {
+	//	_ASSERTE(gpConMapInfo!=NULL);
+	//	if (!gpFarInfo)
+	//		gpFarInfo = (CEFAR_INFO_MAPPING*)Alloc(sizeof(CEFAR_INFO_MAPPING),1);
+	//}
+	//if (gpConMapInfo)
+	// Теперь он отвязан от gpConMapInfo
+	ReloadFarInfo(TRUE);
+
+	wchar_t szLang[64];
+	if (gpConMapInfo)  //2010-12-13 Имеет смысл только при запуске из-под ConEmu
+	{
+		GetEnvironmentVariable(L"FARLANG", szLang, 63);
+
+		if (abFromStartup || lstrcmpW(szLang, gsFarLang) || !gdwServerPID)
+		{
+			wchar_t szTitle[1024] = {0};
+			GetConsoleTitleW(szTitle, 1024);
+			SetConsoleTitleW(L"ConEmuC: CheckResources started");
+			InitResources();
+			DWORD dwServerPID = 0;
+			FindServerCmd(CECMD_FARLOADED, dwServerPID);
+			_ASSERTE(dwServerPID!=0);
+			gdwServerPID = dwServerPID;
+			SetConsoleTitleW(szTitle);
+		}
+		_ASSERTE(gdwServerPID!=0);
+	}
+}
+
+// Передать в ConEmu строки с ресурсами
+void CPluginBase::InitResources()
+{
+	// В ConEmu нужно передать следущие ресурсы
+	struct {
+		int MsgId; wchar_t* pszRc; size_t cchMax; LPCWSTR pszDef;
+	} OurStr[] = {
+		{CELngEdit, gpFarInfo->sLngEdit, countof(gpFarInfo->sLngEdit), L"edit"},
+		{CELngView, gpFarInfo->sLngView, countof(gpFarInfo->sLngView), L"view"},
+		{CELngTemp, gpFarInfo->sLngTemp, countof(gpFarInfo->sLngTemp), L"{Temporary panel"},
+	};
+
+	if (GetCurrentThreadId() == gnMainThreadId)
+	{
+		for (size_t i = 0; i < countof(OurStr); i++)
+		{
+			GetMsgA(OurStr[i].MsgId, OurStr[i].pszRc, OurStr[i].cchMax);
+		}
+	}
+
+	if (!ghConEmuWndDC || !FarHwnd)
+		return;
+
+	int iAllLen = 0;
+	for (size_t i = 0; i < countof(OurStr); i++)
+	{
+		if (!*OurStr[i].pszRc)
+			lstrcpyn(OurStr[i].pszRc, OurStr[i].pszDef, OurStr[i].cchMax);
+		iAllLen += lstrlen(OurStr[i].pszRc)+1;
+	}
+
+	int nSize = sizeof(CESERVER_REQ) + sizeof(DWORD) + iAllLen*sizeof(OurStr[0].pszRc[0]) + 2;
+	CESERVER_REQ *pIn = (CESERVER_REQ*)Alloc(nSize,1);
+
+	if (pIn)
+	{
+		ExecutePrepareCmd(&pIn->hdr, CECMD_RESOURCES, nSize);
+		pIn->dwData[0] = GetCurrentProcessId();
+		wchar_t* pszRes = (wchar_t*)&(pIn->dwData[1]);
+
+		for (size_t i = 0; i < countof(OurStr); i++)
+		{
+			lstrcpyW(pszRes, OurStr[i].pszRc); pszRes += lstrlenW(pszRes)+1;
+		}
+
+		// Поправить nSize (он должен быть меньше)
+		_ASSERTE(pIn->hdr.cbSize >= (DWORD)(((LPBYTE)pszRes) - ((LPBYTE)pIn)));
+		pIn->hdr.cbSize = (DWORD)(((LPBYTE)pszRes) - ((LPBYTE)pIn));
+		CESERVER_REQ* pOut = ExecuteGuiCmd(FarHwnd, pIn, FarHwnd);
+
+		if (pOut)
+		{
+			if (pOut->DataSize() >= sizeof(FAR_REQ_FARSETCHANGED))
+			{
+				cmd_FarSetChanged(&pOut->FarSetChanged);
+			}
+			else
+			{
+				_ASSERTE(FALSE && "CECMD_RESOURCES failed (DataSize)");
+			}
+			ExecuteFreeResult(pOut);
+		}
+		else
+		{
+			_ASSERTE(pOut!=NULL && "CECMD_RESOURCES failed");
+		}
+
+		Free(pIn);
+		GetEnvironmentVariable(L"FARLANG", gsFarLang, 63);
+	}
+}

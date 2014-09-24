@@ -518,15 +518,6 @@ void WINAPI _export SetStartupInfo(const struct PluginStartupInfo *aInfo)
 	*pszSlash = 0;
 
 	CommonPluginStartup();
-	//// Устарело. активация через [Read/Peek]ConsoleInput
-	////CheckMacro(TRUE);
-	//
-	//gbBgPluginsAllowed = TRUE;
-	//if (gpConMapInfo) //2010-03-04 Имеет смысл только при запуске из-под ConEmu
-	//{
-	//	CheckResources(TRUE);
-	//	LogCreateProcessCheck((LPCWSTR)-1);
-	//}
 }
 
 //extern WCHAR gcPlugKey; // Для ANSI far он инициализируется как (char)

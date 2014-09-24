@@ -2376,7 +2376,7 @@ BOOL ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData, CESERV
 
 			break;
 		case CMD_CHKRESOURCES:
-			CheckResources(TRUE);
+			CheckResources(true);
 			break;
 		//case CMD_SETSIZE:
 		//{
@@ -2805,7 +2805,7 @@ DWORD WINAPI MonitorThreadProcW(LPVOID lpParameter)
 			if (gpConMapInfo)
 			{
 				// 04.03.2010 Maks - Если мэппинг открыли - принудительно передернуть ресурсы и информацию
-				//CheckResources(TRUE); -- должен выполняться в основной нити, поэтому - через Activate
+				//CheckResources(true); -- должен выполняться в основной нити, поэтому - через Activate
 				// 22.09.2010 Maks - вызывать ActivatePlugin - некорректно!
 				//ActivatePlugin(CMD_CHKRESOURCES, NULL);
 				ProcessCommand(CMD_CHKRESOURCES, TRUE/*bReqMainThread*/, NULL);
@@ -2839,7 +2839,7 @@ void CommonPluginStartup()
 	//111209 - CheckResources зовем перед UpdateConEmuTabs, т.к. иначе CheckResources вызывается дважды
 	//2010-12-13 информацию (начальную) о фаре грузим всегда, а отсылаем в GUI только если в ConEmu
 	// здесь же и ReloadFarInfo() позовется
-	CheckResources(TRUE);
+	CheckResources(true);
 
 	// Надо табы загрузить
 	Plugin()->UpdateConEmuTabs(true);
@@ -2870,7 +2870,7 @@ void CommonPluginStartup()
 
 	//if (gpConMapInfo)  //2010-03-04 Имеет смысл только при запуске из-под ConEmu
 	//{
-	//	//CheckResources(TRUE);
+	//	//CheckResources(true);
 	//	LogCreateProcessCheck((LPCWSTR)-1);
 	//}
 
@@ -2910,7 +2910,7 @@ void WINAPI SetStartupInfoW(void *aInfo)
 	//// здесь же и ReloadFarInfo() позовется
 	//if (gpConMapInfo) //2010-03-04 Имеет смысл только при запуске из-под ConEmu
 	//{
-	//	CheckResources(TRUE);
+	//	CheckResources(true);
 	//	LogCreateProcessCheck((LPCWSTR)-1);
 	//}
 }
@@ -3569,150 +3569,6 @@ void WINAPI ExitFARW3(void*)
 	}
 
 	gbExitFarCalled = TRUE;
-}
-
-// Вызывается при инициализации из SetStartupInfo[W] и при обновлении табов UpdateConEmuTabs[???]
-// То есть по идее, это происходит только когда фар явно вызывает плагин (legal api calls)
-void CheckResources(BOOL abFromStartup)
-{
-	if (GetCurrentThreadId() != gnMainThreadId)
-	{
-		_ASSERTE(GetCurrentThreadId() == gnMainThreadId);
-		return;
-	}
-
-	if (gsFarLang[0] && !abFromStartup)
-	{
-		static DWORD dwLastTickCount = GetTickCount();
-		DWORD dwCurTick = GetTickCount();
-
-		if ((dwCurTick - dwLastTickCount) < CHECK_RESOURCES_INTERVAL)
-			return;
-
-		dwLastTickCount = dwCurTick;
-	}
-
-	//if (abFromStartup) {
-	//	_ASSERTE(gpConMapInfo!=NULL);
-	//	if (!gpFarInfo)
-	//		gpFarInfo = (CEFAR_INFO_MAPPING*)Alloc(sizeof(CEFAR_INFO_MAPPING),1);
-	//}
-	//if (gpConMapInfo)
-	// Теперь он отвязан от gpConMapInfo
-	ReloadFarInfo(TRUE);
-
-	wchar_t szLang[64];
-	if (gpConMapInfo)  //2010-12-13 Имеет смысл только при запуске из-под ConEmu
-	{
-		GetEnvironmentVariable(L"FARLANG", szLang, 63);
-
-		if (abFromStartup || lstrcmpW(szLang, gsFarLang) || !gdwServerPID)
-		{
-			wchar_t szTitle[1024] = {0};
-			GetConsoleTitleW(szTitle, 1024);
-			SetConsoleTitleW(L"ConEmuC: CheckResources started");
-			InitResources();
-			DWORD dwServerPID = 0;
-			FindServerCmd(CECMD_FARLOADED, dwServerPID);
-			_ASSERTE(dwServerPID!=0);
-			gdwServerPID = dwServerPID;
-			SetConsoleTitleW(szTitle);
-		}
-		_ASSERTE(gdwServerPID!=0);
-	}
-}
-
-// Передать в ConEmu строки с ресурсами
-void InitResources()
-{
-	if (GetCurrentThreadId() == gnMainThreadId)
-	{
-		if (gFarVersion.dwVerMajor==1)
-		{
-			wchar_t szTmp[MAX_PATH];
-			GetMsgA(CELngEdit, szTmp); _wcscpyn_c(gpFarInfo->sLngEdit, countof(gpFarInfo->sLngEdit), szTmp, countof(gpFarInfo->sLngEdit));
-			GetMsgA(CELngView, szTmp); _wcscpyn_c(gpFarInfo->sLngView, countof(gpFarInfo->sLngView), szTmp, countof(gpFarInfo->sLngView));
-			GetMsgA(CELngTemp, szTmp); _wcscpyn_c(gpFarInfo->sLngTemp, countof(gpFarInfo->sLngTemp), szTmp, countof(gpFarInfo->sLngTemp));
-			//GetMsgA(CELngName, gpFarInfo->sLngName); gpFarInfo->sLngName[nTempSize-1] = 0;
-		}
-		else
-		{
-			_wcscpyn_c(gpFarInfo->sLngEdit, countof(gpFarInfo->sLngEdit), GetMsgW(CELngEdit), countof(gpFarInfo->sLngEdit));
-			_wcscpyn_c(gpFarInfo->sLngView, countof(gpFarInfo->sLngView), GetMsgW(CELngView), countof(gpFarInfo->sLngView));
-			_wcscpyn_c(gpFarInfo->sLngTemp, countof(gpFarInfo->sLngTemp), GetMsgW(CELngTemp), countof(gpFarInfo->sLngTemp));
-			//lstrcpynW(gpFarInfo->sLngName, GetMsgW(CELngName), nTempSize);
-		}
-	}
-
-	if (!ghConEmuWndDC || !FarHwnd)
-		return;
-	if (!*gpFarInfo->sLngEdit)
-	{
-		_ASSERTE(*gpFarInfo->sLngEdit);
-		wcscpy_c(gpFarInfo->sLngEdit, L"edit");
-		wcscpy_c(gpFarInfo->sLngView, L"view");
-		wcscpy_c(gpFarInfo->sLngTemp, L"{Temporary panel");
-	}
-
-	// В ConEmu нужно передать следущие ресурсы
-	//
-	int nSize = sizeof(CESERVER_REQ) + sizeof(DWORD)
-	            + 4*(MAX_PATH+1)*2; // + 4 строковых ресурса
-	CESERVER_REQ *pIn = (CESERVER_REQ*)Alloc(nSize,1);;
-
-	if (pIn)
-	{
-		ExecutePrepareCmd(&pIn->hdr, CECMD_RESOURCES, nSize);
-		pIn->dwData[0] = GetCurrentProcessId();
-		//pIn->dwData[1] = gnInputThreadId;
-		wchar_t* pszRes = (wchar_t*)&(pIn->dwData[1]);
-		//int nTempSize = sizeof(gpFarInfo->sLngEdit)/sizeof(gpFarInfo->sLngEdit[0]);
-
-		//if (gFarVersion.dwVerMajor==1)
-		//{
-		//	wchar_t szTmp[MAX_PATH];
-		//	GetMsgA(CELngEdit, szTmp); _wcscpyn_c(gpFarInfo->sLngEdit, countof(gpFarInfo->sLngEdit), szTmp, countof(gpFarInfo->sLngEdit));
-		//	GetMsgA(CELngView, szTmp); _wcscpyn_c(gpFarInfo->sLngView, countof(gpFarInfo->sLngView), szTmp, countof(gpFarInfo->sLngView));
-		//	GetMsgA(CELngTemp, szTmp); _wcscpyn_c(gpFarInfo->sLngTemp, countof(gpFarInfo->sLngTemp), szTmp, countof(gpFarInfo->sLngTemp));
-		//	//GetMsgA(CELngName, gpFarInfo->sLngName); gpFarInfo->sLngName[nTempSize-1] = 0;
-		//}
-		//else
-		//{
-		//	lstrcpynW(gpFarInfo->sLngEdit, GetMsgW(CELngEdit), nTempSize);
-		//	lstrcpynW(gpFarInfo->sLngView, GetMsgW(CELngView), nTempSize);
-		//	lstrcpynW(gpFarInfo->sLngTemp, GetMsgW(CELngTemp), nTempSize);
-		//	//lstrcpynW(gpFarInfo->sLngName, GetMsgW(CELngName), nTempSize);
-		//}
-
-		lstrcpyW(pszRes, gpFarInfo->sLngEdit); pszRes += lstrlenW(pszRes)+1;
-		lstrcpyW(pszRes, gpFarInfo->sLngView); pszRes += lstrlenW(pszRes)+1;
-		lstrcpyW(pszRes, gpFarInfo->sLngTemp); pszRes += lstrlenW(pszRes)+1;
-		//lstrcpyW(pszRes, gpFarInfo->sLngName); pszRes += lstrlenW(pszRes)+1;
-		// Поправить nSize (он должен быть меньше)
-		_ASSERTE(pIn->hdr.cbSize >= (DWORD)(((LPBYTE)pszRes) - ((LPBYTE)pIn)));
-		pIn->hdr.cbSize = (DWORD)(((LPBYTE)pszRes) - ((LPBYTE)pIn));
-		CESERVER_REQ* pOut = ExecuteGuiCmd(FarHwnd, pIn, FarHwnd);
-
-		if (pOut)
-		{
-			if (pOut->DataSize() >= sizeof(FAR_REQ_FARSETCHANGED))
-			{
-				cmd_FarSetChanged(&pOut->FarSetChanged);
-			}
-			else
-			{
-				_ASSERTE(FALSE && "CECMD_RESOURCES failed (DataSize)");
-			}
-			ExecuteFreeResult(pOut);
-		}
-		else
-		{
-			_ASSERTE(pOut!=NULL && "CECMD_RESOURCES failed");
-		}
-
-		Free(pIn);
-		GetEnvironmentVariable(L"FARLANG", gsFarLang, 63);
-	}
 }
 
 // Определены в SetHook.h

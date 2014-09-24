@@ -73,6 +73,8 @@ public:
 	bool FindServerCmd(DWORD nServerCmd, DWORD &dwServerPID, bool bFromAttach = false);
 	int ShowMessage(int aiMsg, int aiButtons);
 	bool UpdateConEmuTabs(bool abSendChanges);
+	void CheckResources(bool abFromStartup);
+	void InitResources();
 
 	static DWORD GetMainThreadId();
 	static bool RunExternalProgramW(wchar_t* pszCommand, wchar_t* pszCurDir, bool bSilent=false);
