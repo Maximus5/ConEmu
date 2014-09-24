@@ -3372,200 +3372,16 @@ bool UpdateConEmuTabs(bool abSendChanges)
 	return lbCh;
 }
 
-BOOL CreateTabs(int windowCount)
-{
-	if (gpTabs && maxTabCount > (windowCount + 1))
-	{
-		// пересоздавать не нужно, секцию не трогаем. только запомним последнее кол-во окон
-		lastWindowCount = windowCount;
-		return TRUE;
-	}
-
-	//Enter CriticalSection(csTabs);
-
-	if ((gpTabs==NULL) || (maxTabCount <= (windowCount + 1)))
-	{
-		MSectionLock SC; SC.Lock(csTabs, TRUE);
-		maxTabCount = windowCount + 20; // с запасом
-
-		if (gpTabs)
-		{
-			Free(gpTabs); gpTabs = NULL;
-		}
-
-		gpTabs = (CESERVER_REQ*) Alloc(sizeof(CESERVER_REQ_HDR) + maxTabCount*sizeof(ConEmuTab), 1);
-	}
-
-	lastWindowCount = windowCount;
-	return gpTabs!=NULL;
-}
 
 
-#ifndef max
-#define max(a,b)            (((a) > (b)) ? (a) : (b))
-#endif
+//#ifndef max
+//#define max(a,b)            (((a) > (b)) ? (a) : (b))
+//#endif
+//
+//#ifndef min
+//#define min(a,b)            (((a) < (b)) ? (a) : (b))
+//#endif
 
-#ifndef min
-#define min(a,b)            (((a) < (b)) ? (a) : (b))
-#endif
-
-BOOL AddTab(int &tabCount, int WindowPos, bool losingFocus, bool editorSave,
-            int Type, LPCWSTR Name, LPCWSTR FileName,
-			int Current, int Modified, int Modal,
-			int EditViewId)
-{
-	BOOL lbCh = FALSE;
-	DEBUGSTR(L"--AddTab\n");
-
-	if (Type == WTYPE_PANELS)
-	{
-		lbCh = (gpTabs->Tabs.tabs[0].Current != (Current/*losingFocus*/ ? 1 : 0)) ||
-		       (gpTabs->Tabs.tabs[0].Type != WTYPE_PANELS);
-		gpTabs->Tabs.tabs[0].Current = Current/*losingFocus*/ ? 1 : 0;
-		//lstrcpyn(gpTabs->Tabs.tabs[0].Name, FUNC_Y(GetMsgW)(0), CONEMUTABMAX-1);
-		gpTabs->Tabs.tabs[0].Name[0] = 0;
-		gpTabs->Tabs.tabs[0].Pos = (WindowPos >= 0) ? WindowPos : 0;
-		gpTabs->Tabs.tabs[0].Type = WTYPE_PANELS;
-		gpTabs->Tabs.tabs[0].Modified = 0; // Иначе GUI может ошибочно считать, что есть несохраненные редакторы
-		gpTabs->Tabs.tabs[0].EditViewId = 0;
-		gpTabs->Tabs.tabs[0].Modal = 0;
-
-		if (!tabCount)
-			tabCount++;
-
-		if (Current)
-		{
-			gpTabs->Tabs.CurrentType = gnCurrentWindowType = Type;
-			gpTabs->Tabs.CurrentIndex = 0;
-		}
-	}
-	else if (Type == WTYPE_EDITOR || Type == WTYPE_VIEWER)
-	{
-		// Первое окно - должно быть панели. Если нет - значит фар открыт в режиме редактора
-		if (tabCount == 1)
-		{
-			// 04.06.2009 Maks - Не, чего-то не то... при открытии редактора из панелей - он заменяет панели
-			//gpTabs->Tabs.tabs[0].Type = Type;
-		}
-
-		// when receiving saving event receiver is still reported as modified
-		if (editorSave && lstrcmpi(FileName, Name) == 0)
-			Modified = 0;
-
-
-		// Облагородить заголовок таба с Ctrl-O
-		wchar_t szConOut[MAX_PATH];
-		LPCWSTR pszName = PointToName(Name);
-		if (pszName && (wmemcmp(pszName, L"CEM", 3) == 0))
-		{
-			LPCWSTR pszExt = PointToExt(pszName);
-			if (lstrcmpi(pszExt, L".tmp") == 0)
-			{
-				if (gFarVersion.dwVerMajor==1)
-				{
-					GetMsgA(CEConsoleOutput, szConOut);
-				}
-				else
-					lstrcpyn(szConOut, GetMsgW(CEConsoleOutput), countof(szConOut));
-
-				Name = szConOut;
-			}
-		}
-
-
-		lbCh = (gpTabs->Tabs.tabs[tabCount].Current != (Current/*losingFocus*/ ? 1 : 0)/*(losingFocus ? 0 : Current)*/)
-		    || (gpTabs->Tabs.tabs[tabCount].Type != Type)
-		    || (gpTabs->Tabs.tabs[tabCount].Modified != Modified)
-			|| (gpTabs->Tabs.tabs[tabCount].Modal != Modal)
-		    || (lstrcmp(gpTabs->Tabs.tabs[tabCount].Name, Name) != 0);
-		// when receiving losing focus event receiver is still reported as current
-		gpTabs->Tabs.tabs[tabCount].Type = Type;
-		gpTabs->Tabs.tabs[tabCount].Current = (Current/*losingFocus*/ ? 1 : 0)/*losingFocus ? 0 : Current*/;
-		gpTabs->Tabs.tabs[tabCount].Modified = Modified;
-		gpTabs->Tabs.tabs[tabCount].Modal = Modal;
-		gpTabs->Tabs.tabs[tabCount].EditViewId = EditViewId;
-
-		if (gpTabs->Tabs.tabs[tabCount].Current != 0)
-		{
-			lastModifiedStateW = Modified != 0 ? 1 : 0;
-			gpTabs->Tabs.CurrentType = gnCurrentWindowType = Type;
-			gpTabs->Tabs.CurrentIndex = tabCount;
-		}
-
-		//else
-		//{
-		//	lastModifiedStateW = -1; //2009-08-17 при наличии более одного редактора - сносит крышу
-		//}
-		int nLen = min(lstrlen(Name),(CONEMUTABMAX-1));
-		lstrcpyn(gpTabs->Tabs.tabs[tabCount].Name, Name, nLen+1);
-		gpTabs->Tabs.tabs[tabCount].Name[nLen]=0;
-		gpTabs->Tabs.tabs[tabCount].Pos = (WindowPos >= 0) ? WindowPos : tabCount;
-		tabCount++;
-	}
-
-	return lbCh;
-}
-
-void SendTabs(int tabCount, BOOL abForceSend/*=FALSE*/)
-{
-	MSectionLock SC; SC.Lock(csTabs);
-
-	if (!gpTabs)
-	{
-		_ASSERTE(gpTabs!=NULL);
-		return;
-	}
-
-	gnCurTabCount = tabCount; // сразу запомним!, А то при ретриве табов количество еще старым будет...
-	gpTabs->Tabs.nTabCount = tabCount;
-	gpTabs->hdr.cbSize = sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_CONEMUTAB)
-	                     + sizeof(ConEmuTab) * ((tabCount > 1) ? (tabCount - 1) : 0);
-	// Обновляем структуру сразу, чтобы она была готова к отправке в любой момент
-	ExecutePrepareCmd(&gpTabs->hdr, CECMD_TABSCHANGED, gpTabs->hdr.cbSize);
-
-	// Это нужно делать только если инициировано ФАРОМ. Если запрос прислал ConEmu - не посылать...
-	if (tabCount && ghConEmuWndDC && IsWindow(ghConEmuWndDC) && abForceSend)
-	{
-		gpTabs->Tabs.bMacroActive = Plugin()->IsMacroActive();
-		gpTabs->Tabs.bMainThread = (GetCurrentThreadId() == gnMainThreadId);
-
-		// Если выполняется макрос и отложенная отсылка (по окончанию) уже запрошена
-		if (gpTabs->Tabs.bMacroActive && gbNeedPostTabSend)
-		{
-			gnNeedPostTabSendTick = GetTickCount(); // Обновить тик
-			return;
-		}
-
-		gbNeedPostTabSend = FALSE;
-		CESERVER_REQ* pOut =
-		    ExecuteGuiCmd(FarHwnd, gpTabs, FarHwnd);
-
-		if (pOut)
-		{
-			if (pOut->hdr.cbSize >= (sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_CONEMUTAB_RET)))
-			{
-				if (gpTabs->Tabs.bMacroActive && pOut->TabsRet.bNeedPostTabSend)
-				{
-					// Отослать после того, как макрос завершится
-					gbNeedPostTabSend = TRUE;
-					gnNeedPostTabSendTick = GetTickCount();
-				}
-				else if (pOut->TabsRet.bNeedResize)
-				{
-					// Если это отложенная отсылка табов после выполнения макросов
-					if (GetCurrentThreadId() == gnMainThreadId)
-					{
-						FarSetConsoleSize(pOut->TabsRet.crNewSize.X, pOut->TabsRet.crNewSize.Y);
-					}
-				}
-			}
-
-			ExecuteFreeResult(pOut);
-		}
-	}
-
-	SC.Unlock();
-}
 
 // watch non-modified -> modified editor status change
 
@@ -3983,18 +3799,6 @@ void InitResources()
 
 		Free(pIn);
 		GetEnvironmentVariable(L"FARLANG", gsFarLang, 63);
-	}
-}
-
-void CloseTabs()
-{
-	if (ghConEmuWndDC && IsWindow(ghConEmuWndDC) && FarHwnd)
-	{
-		CESERVER_REQ in; // Пустая команда - значит FAR закрывается
-		ExecutePrepareCmd(&in, CECMD_TABSCHANGED, sizeof(CESERVER_REQ_HDR));
-		CESERVER_REQ* pOut = ExecuteGuiCmd(FarHwnd, &in, FarHwnd);
-
-		if (pOut) ExecuteFreeResult(pOut);
 	}
 }
 

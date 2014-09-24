@@ -78,6 +78,13 @@ public:
 	static bool OutDataAlloc(DWORD anSize);
 	static bool OutDataRealloc(DWORD anNewSize);
 	static bool OutDataWrite(LPVOID apData, DWORD anSize);
+	static bool CreateTabs(int windowCount);
+	static bool AddTab(int &tabCount, int WindowPos, bool losingFocus, bool editorSave,
+			int Type, LPCWSTR Name, LPCWSTR FileName,
+			int Current, int Modified, int Modal,
+			int EditViewId);
+	static void SendTabs(int tabCount, bool abForceSend=false)
+	static void CloseTabs();
 
 public:
 	virtual BOOL    CheckBufferEnabled() = 0;
