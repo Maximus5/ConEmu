@@ -4901,6 +4901,10 @@ void CConEmuMain::UpdateProcessDisplay(BOOL abForce)
 		if (nFarStatus&CES_WASPROGRESS) wcscat_c(szFlags, L"%%Progress ");
 		//CheckDlgButton(hInfo, cbsProgress, ((nFarStatus&CES_WASPROGRESS) /*|| VCon->RCon()->GetProgress(NULL)>=0*/) ? BST_CHECKED : BST_UNCHECKED);
 		if (nFarStatus&CES_OPER_ERROR) wcscat_c(szFlags, L"%%Error ");
+		//CodePage
+		_wsprintf(szNo, SKIPLEN(countof(szNo)) L"CP:%u:%u ", VCon->RCon()->GetConsoleCP(), VCon->RCon()->GetConsoleOutputCP());
+		wcscat_c(szFlags, szNo);
+
 		//CheckDlgButton(hInfo, cbsProgressError, (nFarStatus&CES_OPER_ERROR) ? BST_CHECKED : BST_UNCHECKED);
 		_wsprintf(szNo, SKIPLEN(countof(szNo)) L"%i/%i", VCon->RCon()->GetFarPID(), VCon->RCon()->GetFarPID(TRUE));
 	}
