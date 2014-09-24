@@ -98,6 +98,7 @@ public:
 	virtual LPCWSTR GetMsg(int aiMsg, wchar_t* psMsg = NULL, size_t cchMsgMax = 0) = 0;
 	virtual LPWSTR  GetPanelDir(GetPanelDirFlags Flags) = 0;
 	virtual void    GetPluginInfo(void* piv) = 0; // PluginInfo* versioned
+	virtual int     GetWindowCount() = 0;
 	virtual LPCWSTR GetWindowTypeName(int WindowType) = 0;
 	virtual void    GuiMacroDlg() = 0;
 	virtual bool    InputBox(LPCWSTR Title, LPCWSTR SubTitle, LPCWSTR HistoryName, LPCWSTR SrcText, wchar_t*& DestText) = 0;

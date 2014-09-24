@@ -626,6 +626,15 @@ int ProcessEditorInputW2800(LPCVOID aRec)
 	return 0;
 }
 
+int CPluginW2800::GetWindowCount()
+{
+	if (!InfoW2800 || !InfoW2800->AdvControl)
+		return 0;
+
+	INT_PTR windowCount = InfoW2800->AdvControl(&guid_ConEmu, ACTL_GETWINDOWCOUNT, 0, NULL);
+	return (int)windowCount;
+}
+
 bool CPluginW2800::UpdateConEmuTabsApi()
 {
 	if (!InfoW2800 || !InfoW2800->AdvControl || gbIgnoreUpdateTabs)

@@ -606,6 +606,15 @@ int WINAPI _export ProcessViewerEvent(int Event, void *Param)
 
 extern MSection *csTabs;
 
+int CPluginAnsi::GetWindowCount()
+{
+	if (!InfoA || !InfoA->AdvControl)
+		return 0;
+
+	INT_PTR windowCount = InfoA->AdvControl(InfoW995->ModuleNumber, ACTL_GETWINDOWCOUNT, NULL);
+	return (int)windowCount;
+}
+
 bool CPluginAnsi::UpdateConEmuTabsApi()
 {
 	if (!InfoA || gbIgnoreUpdateTabs)

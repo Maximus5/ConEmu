@@ -587,6 +587,15 @@ int CPluginW1900::ProcessEditorInput(LPCVOID aRec)
 	return 0;
 }
 
+int CPluginW1900::GetWindowCount()
+{
+	if (!InfoW1900 || !InfoW1900->AdvControl)
+		return 0;
+
+	INT_PTR windowCount = InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETWINDOWCOUNT, 0, NULL);
+	return (int)windowCount;
+}
+
 bool CPluginW1900::UpdateConEmuTabsApi()
 {
 	if (!InfoW1900 || !InfoW1900->AdvControl || gbIgnoreUpdateTabs)

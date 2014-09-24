@@ -544,6 +544,15 @@ int CPluginW995::ProcessEditorInput(LPCVOID aRec)
 	return 0;
 }
 
+int CPluginW995::GetWindowCount()
+{
+	if (!InfoW995 || !InfoW995->AdvControl)
+		return 0;
+
+	INT_PTR windowCount = InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETWINDOWCOUNT, NULL);
+	return (int)windowCount;
+}
+
 bool CPluginW995::UpdateConEmuTabsApi()
 {
 	if (!InfoW995 || !InfoW995->AdvControl || gbIgnoreUpdateTabs)
