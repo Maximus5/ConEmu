@@ -67,7 +67,14 @@ public:
 	int ProcessSynchroEvent(int Event, void *Param);
 	int ProcessEditorViewerEvent(int EditorEvent, int ViewerEvent);
 	bool isModalEditorViewer();
+	void ShowConsoleInfo();
+	bool StartDebugger();
+	bool Attach2Gui();
+	bool FindServerCmd(DWORD nServerCmd, DWORD &dwServerPID, bool bFromAttach = false);
 	int ShowMessage(int aiMsg, int aiButtons);
+
+	static DWORD GetMainThreadId();
+	static bool RunExternalProgramW(wchar_t* pszCommand, wchar_t* pszCurDir, bool bSilent=false);
 
 public:
 	virtual BOOL    CheckBufferEnabled() = 0;
