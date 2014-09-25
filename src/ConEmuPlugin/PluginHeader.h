@@ -253,8 +253,6 @@ void FUNC_X(FillUpdateBackgroundW)(struct PaintBackgroundArg* pFar);
 void FUNC_Y1(FillUpdateBackgroundW)(struct PaintBackgroundArg* pFar);
 void FUNC_Y2(FillUpdateBackgroundW)(struct PaintBackgroundArg* pFar);
 
-void CommonPluginStartup();
-
 struct HookCallbackArg;
 BOOL OnConsoleReadInputWork(HookCallbackArg* pArgs);
 VOID WINAPI OnConsoleReadInputPost(HookCallbackArg* pArgs);

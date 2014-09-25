@@ -2372,65 +2372,6 @@ VOID WINAPI OnConsoleWasAttached(HookCallbackArg* pArgs)
 		ResumeThread(ghMonitorThread);
 }
 
-void CommonPluginStartup()
-{
-	gbBgPluginsAllowed = TRUE;
-
-	//111209 - CheckResources зовем перед UpdateConEmuTabs, т.к. иначе CheckResources вызывается дважды
-	//2010-12-13 информацию (начальную) о фаре грузим всегда, а отсылаем в GUI только если в ConEmu
-	// здесь же и ReloadFarInfo() позовется
-	CheckResources(true);
-
-	// Надо табы загрузить
-	Plugin()->UpdateConEmuTabs(true);
-
-
-	// Пробежаться по всем загруженным в данный момент плагинам и дернуть в них "OnConEmuLoaded"
-	// А все из за того, что при запуске "Far.exe /co" - порядок загрузки плагинов МЕНЯЕТСЯ
-	HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, 0);
-	if (snapshot != INVALID_HANDLE_VALUE)
-	{
-		MODULEENTRY32 module = {sizeof(MODULEENTRY32)};
-
-		for (BOOL res = Module32First(snapshot, &module); res; res = Module32Next(snapshot, &module))
-		{
-			OnConEmuLoaded_t fnOnConEmuLoaded;
-
-			if (((fnOnConEmuLoaded = (OnConEmuLoaded_t)GetProcAddress(module.hModule, "OnConEmuLoaded")) != NULL)
-				&& /* Наверное, только для плагинов фара */
-				((GetProcAddress(module.hModule, "SetStartupInfoW") || GetProcAddress(module.hModule, "SetStartupInfo"))))
-			{
-				OnLibraryLoaded(module.hModule);
-			}
-		}
-
-		CloseHandle(snapshot);
-	}
-
-
-	//if (gpConMapInfo)  //2010-03-04 Имеет смысл только при запуске из-под ConEmu
-	//{
-	//	//CheckResources(true);
-	//	LogCreateProcessCheck((LPCWSTR)-1);
-	//}
-
-	TODO("перенести инициализацию фаровских callback'ов в SetStartupInfo, т.к. будет грузиться как Inject!");
-
-	if (!StartupHooks(ghPluginModule))
-	{
-		if (ghConEmuWndDC)
-		{
-			_ASSERTE(FALSE);
-			DEBUGSTR(L"!!! Can't install injects!!!\n");
-		}
-		else
-		{
-			DEBUGSTR(L"No GUI, injects was not installed!\n");
-		}
-	}
-}
-
-
 void WINAPI SetStartupInfoW(void *aInfo)
 {
 	#ifdef _DEBUG
@@ -2440,7 +2381,7 @@ void WINAPI SetStartupInfoW(void *aInfo)
 
 	Plugin()->SetStartupInfo(aInfo);
 
-	CommonPluginStartup();
+	Plugin()->CommonPluginStartup();
 }
 
 //#define CREATEEVENT(fmt,h)

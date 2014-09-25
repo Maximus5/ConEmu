@@ -446,7 +446,7 @@ void WINAPI _export SetStartupInfo(const struct PluginStartupInfo *aInfo)
 
 	Plugin()->SetStartupInfo(aInfo);
 
-	CommonPluginStartup();
+	Plugin()->CommonPluginStartup();
 }
 
 void CPluginAnsi::SetStartupInfo(void *aInfo)

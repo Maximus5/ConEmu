@@ -89,6 +89,7 @@ public:
 	void ExitFarCommon();
 	void OnMainThreadActivated();
 	void ProcessSetWindowCommand();
+	void CommonPluginStartup();
 
 	static DWORD WINAPI MonitorThreadProcW(LPVOID lpParameter);
 	static void CheckConEmuDetached();
