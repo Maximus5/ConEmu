@@ -1937,3 +1937,147 @@ void CPluginBase::LoadPanelTabsFromRegistry()
 
 	free(pszTabsKey);
 }
+
+void CPluginBase::InitHWND()
+{
+	gsFarLang[0] = 0;
+
+	bool lbExportsChanged = false;
+	if (!gFarVersion.dwVerMajor)
+	{
+		LoadFarVersion();  // пригодится уже здесь!
+
+		if (gFarVersion.dwVerMajor == 3)
+		{
+			lbExportsChanged = ChangeExports( Far3Func, ghPluginModule );
+			if (!lbExportsChanged)
+			{
+				_ASSERTE(lbExportsChanged);
+			}
+		}
+	}
+
+
+	// Returns HWND of ...
+	//  aiType==0: Gui console DC window
+	//        ==1: Gui Main window
+	//        ==2: Console window
+	FarHwnd = GetConEmuHWND(2/*Console window*/);
+	ghConEmuWndDC = GetConEmuHWND(0/*Gui console DC window*/);
+
+
+	{
+		// TrueColor buffer check
+		wchar_t szMapName[64];
+		_wsprintf(szMapName, SKIPLEN(countof(szMapName)) L"Console2_consoleBuffer_%d", (DWORD)GetCurrentProcessId());
+		HANDLE hConsole2 = OpenFileMapping(FILE_MAP_READ, FALSE, szMapName);
+		gbStartedUnderConsole2 = (hConsole2 != NULL);
+
+		if (hConsole2)
+			CloseHandle(hConsole2);
+	}
+
+	// CtrlShiftF3 - для MMView & PicView
+	if (!ghConEmuCtrlPressed)
+	{
+		wchar_t szName[64];
+		_wsprintf(szName, SKIPLEN(countof(szName)) CEKEYEVENT_CTRL, gnSelfPID);
+		ghConEmuCtrlPressed = CreateEvent(NULL, TRUE, FALSE, szName);
+		if (ghConEmuCtrlPressed) ResetEvent(ghConEmuCtrlPressed); else { _ASSERTE(ghConEmuCtrlPressed); }
+
+		_wsprintf(szName, SKIPLEN(countof(szName)) CEKEYEVENT_SHIFT, gnSelfPID);
+		ghConEmuShiftPressed = CreateEvent(NULL, TRUE, FALSE, szName);
+		if (ghConEmuShiftPressed) ResetEvent(ghConEmuShiftPressed); else { _ASSERTE(ghConEmuShiftPressed); }
+	}
+
+	OpenMapHeader();
+	// Проверить, созданы ли буферы для True-Colorer
+	// Это для того, чтобы пересоздать их при детаче
+	//CheckColorerHeader();
+	//memset(hEventCmd, 0, sizeof(HANDLE)*MAXCMDCOUNT);
+	//int nChk = 0;
+	//ghConEmuWndDC = GetConEmuHWND(FALSE/*abRoot*/  /*, &nChk*/);
+	gnMsgTabChanged = RegisterWindowMessage(CONEMUTABCHANGED);
+
+	if (!ghSetWndSendTabsEvent) ghSetWndSendTabsEvent = CreateEvent(0,0,0,0);
+
+	// Даже если мы не в ConEmu - все равно запустить нить, т.к. в ConEmu теперь есть возможность /Attach!
+	//WCHAR szEventName[128];
+	DWORD dwCurProcId = GetCurrentProcessId();
+
+	if (!ghReqCommandEvent)
+	{
+		ghReqCommandEvent = CreateEvent(NULL,FALSE,FALSE,NULL);
+		_ASSERTE(ghReqCommandEvent!=NULL);
+	}
+
+	if (!ghPluginSemaphore)
+	{
+		ghPluginSemaphore = CreateSemaphore(NULL, 1, 1, NULL);
+		_ASSERTE(ghPluginSemaphore!=NULL);
+	}
+
+	// Запустить сервер команд
+	if (!PlugServerStart())
+	{
+		TODO("Показать ошибку");
+	}
+
+	ghConsoleWrite = CreateEvent(NULL,FALSE,FALSE,NULL);
+	_ASSERTE(ghConsoleWrite!=NULL);
+	ghConsoleInputEmpty = CreateEvent(NULL,FALSE,FALSE,NULL);
+	_ASSERTE(ghConsoleInputEmpty!=NULL);
+	ghMonitorThread = CreateThread(NULL, 0, MonitorThreadProcW, 0, 0, &gnMonitorThreadId);
+
+	//ghInputThread = CreateThread(NULL, 0, InputThreadProcW, 0, 0, &gnInputThreadId);
+
+	// Если мы не под эмулятором - больше ничего делать не нужно
+	if (ghConEmuWndDC)
+	{
+		//
+		DWORD dwPID, dwThread;
+		dwThread = GetWindowThreadProcessId(ghConEmuWndDC, &dwPID);
+		typedef BOOL (WINAPI* AllowSetForegroundWindowT)(DWORD);
+		HMODULE hUser32 = GetModuleHandle(L"user32.dll");
+
+		if (hUser32)
+		{
+			AllowSetForegroundWindowT AllowSetForegroundWindowF = (AllowSetForegroundWindowT)GetProcAddress(hUser32, "AllowSetForegroundWindow");
+
+			if (AllowSetForegroundWindowF) AllowSetForegroundWindowF(dwPID);
+		}
+
+		// дернуть табы, если они нужны
+		int tabCount = 0;
+		MSectionLock SC; SC.Lock(csTabs);
+		CreateTabs(1);
+		AddTab(tabCount, 0, false, false, WTYPE_PANELS, NULL, NULL, 1, 0, 0, 0);
+		// Сейчас отсылать не будем - выполним, когда вызовется SetStartupInfo -> CommonStartup
+		//SendTabs(tabCount=1, TRUE);
+		SC.Unlock();
+	}
+}
+
+void CPluginBase::CheckConEmuDetached()
+{
+	if (ghConEmuWndDC)
+	{
+		// ConEmu могло подцепиться
+		MFileMapping<CESERVER_CONSOLE_MAPPING_HDR> ConMap;
+		ConMap.InitName(CECONMAPNAME, (DWORD)FarHwnd); //-V205
+
+		if (ConMap.Open())
+		{
+			if (ConMap.Ptr()->hConEmuWndDc == NULL)
+			{
+				ghConEmuWndDC = NULL;
+			}
+
+			ConMap.CloseMap();
+		}
+		else
+		{
+			ghConEmuWndDC = NULL;
+		}
+	}
+}

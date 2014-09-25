@@ -123,9 +123,6 @@ BOOL AddTab(int &tabCount, int WindowPos, bool losingFocus, bool editorSave,
 
 void SendTabs(int tabCount, BOOL abForceSend=FALSE);
 
-void InitHWND(/*HWND ahFarHwnd*/);
-void InitRootKey();
-
 void cmd_FarSetChanged(FAR_REQ_FARSETCHANGED *pFarSet);
 
 void WINAPI OnLibraryLoaded(HMODULE ahModule);
