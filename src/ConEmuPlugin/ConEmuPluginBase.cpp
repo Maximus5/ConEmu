@@ -2084,6 +2084,177 @@ void CPluginBase::CheckConEmuDetached()
 	}
 }
 
+// Эту нить нужно оставить, чтобы была возможность отобразить консоль при падении ConEmu
+// static, WINAPI
+DWORD CPluginBase::MonitorThreadProcW(LPVOID lpParameter)
+{
+	//DWORD dwProcId = GetCurrentProcessId();
+	DWORD dwStartTick = GetTickCount();
+	//DWORD dwMonitorTick = dwStartTick;
+	BOOL lbStartedNoConEmu = (ghConEmuWndDC == NULL) && !gbStartedUnderConsole2;
+	//BOOL lbTryOpenMapHeader = FALSE;
+	//_ASSERTE(ghConEmuWndDC!=NULL); -- ConEmu может подцепиться позднее!
+
+	WARNING("В MonitorThread нужно также отслеживать и 'живость' сервера. Иначе приложение останется невидимым (");
+
+	while(true)
+	{
+		DWORD dwWait = 0;
+		DWORD dwTimeout = 500;
+		/*#ifdef _DEBUG
+		dwTimeout = INFINITE;
+		#endif*/
+		//dwWait = WaitForMultipleObjects(MAXCMDCOUNT, hEventCmd, FALSE, dwTimeout);
+		dwWait = WaitForSingleObject(ghServerTerminateEvent, dwTimeout);
+
+		if (dwWait == WAIT_OBJECT_0)
+			break; // завершение плагина
+
+		// Если FAR запущен в "невидимом" режиме и по истечении таймаута
+		// так и не подцепились к ConEmu - всплыть окошко консоли
+		if (lbStartedNoConEmu && ghConEmuWndDC == NULL && FarHwnd != NULL)
+		{
+			DWORD dwCurTick = GetTickCount();
+			DWORD dwDelta = dwCurTick - dwStartTick;
+
+			if (dwDelta > GUI_ATTACH_TIMEOUT)
+			{
+				lbStartedNoConEmu = FALSE;
+
+				if (!TerminalMode && !IsWindowVisible(FarHwnd))
+				{
+					EmergencyShow(FarHwnd);
+				}
+			}
+		}
+
+		// Теоретически, нить обработки может запуститься и без ghConEmuWndDC (под телнетом)
+		if (ghConEmuWndDC && FarHwnd && (dwWait == WAIT_TIMEOUT))
+		{
+			// Может быть ConEmu свалилось
+			if (!IsWindow(ghConEmuWndDC) && ghConEmuWndDC)
+			{
+				HWND hConWnd = GetConEmuHWND(2);
+
+				if ((hConWnd && !IsWindow(hConWnd))
+					|| (!gbWasDetached && FarHwnd && !IsWindow(FarHwnd)))
+				{
+					// hConWnd не валидно
+					wchar_t szWarning[255];
+					_wsprintf(szWarning, SKIPLEN(countof(szWarning)) L"Console was abnormally termintated!\r\nExiting from FAR (PID=%u)", GetCurrentProcessId());
+					MessageBox(0, szWarning, L"ConEmu plugin", MB_OK|MB_ICONSTOP|MB_SETFOREGROUND);
+					TerminateProcess(GetCurrentProcess(), 100);
+					return 0;
+				}
+
+				if (!TerminalMode && !IsWindowVisible(FarHwnd))
+				{
+					EmergencyShow(FarHwnd);
+				}
+				else if (!gbWasDetached)
+				{
+					gbWasDetached = TRUE;
+					ghConEmuWndDC = NULL;
+				}
+			}
+		}
+
+		if (gbWasDetached && !ghConEmuWndDC)
+		{
+			// ConEmu могло подцепиться
+			if (gpConMapInfo && gpConMapInfo->hConEmuWndDc && IsWindow(gpConMapInfo->hConEmuWndDc))
+			{
+				gbWasDetached = FALSE;
+				ghConEmuWndDC = (HWND)gpConMapInfo->hConEmuWndDc;
+
+				// Update our in-process env vars
+				SetConEmuEnvVar(gpConMapInfo->hConEmuRoot);
+				SetConEmuEnvVarChild(gpConMapInfo->hConEmuWndDc, gpConMapInfo->hConEmuWndBack);
+
+				// Передернуть отрисовку, чтобы обновить TrueColor
+				Plugin()->RedrawAll();
+
+				// Inform GUI about our Far/Plugin
+				InitResources();
+
+				// Обновить ТАБЫ после реаттача
+				if (gnCurTabCount && gpTabs)
+				{
+					SendTabs(gnCurTabCount, TRUE);
+				}
+			}
+		}
+
+		//if (ghConEmuWndDC && gbMonitorEnvVar && gsMonitorEnvVar[0]
+		//        && (GetTickCount() - dwMonitorTick) > MONITORENVVARDELTA)
+		//{
+		//	UpdateEnvVar(gsMonitorEnvVar);
+		//	dwMonitorTick = GetTickCount();
+		//}
+
+		if (gbNeedPostTabSend)
+		{
+			DWORD nDelta = GetTickCount() - gnNeedPostTabSendTick;
+
+			if (nDelta > NEEDPOSTTABSENDDELTA)
+			{
+				if (Plugin()->IsMacroActive())
+				{
+					gnNeedPostTabSendTick = GetTickCount();
+				}
+				else
+				{
+					// Force Send tabs to ConEmu
+					MSectionLock SC; SC.Lock(csTabs, TRUE); // блокируем exclusively, чтобы во время пересылки данные не поменялись из другого потока
+					SendTabs(gnCurTabCount, TRUE);
+					SC.Unlock();
+				}
+			}
+		}
+
+		if (/*ghConEmuWndDC &&*/ gbTryOpenMapHeader)
+		{
+			if (gpConMapInfo)
+			{
+				_ASSERTE(gpConMapInfo == NULL);
+				gbTryOpenMapHeader = FALSE;
+			}
+			else if (OpenMapHeader() == 0)
+			{
+				// OK, переподцепились
+				gbTryOpenMapHeader = FALSE;
+			}
+
+			if (gpConMapInfo)
+			{
+				// 04.03.2010 Maks - Если мэппинг открыли - принудительно передернуть ресурсы и информацию
+				//CheckResources(true); -- должен выполняться в основной нити, поэтому - через Activate
+				// 22.09.2010 Maks - вызывать ActivatePlugin - некорректно!
+				//ActivatePlugin(CMD_CHKRESOURCES, NULL);
+				ProcessCommand(CMD_CHKRESOURCES, TRUE/*bReqMainThread*/, NULL);
+			}
+		}
+
+		if (gbStartupHooksAfterMap && gpConMapInfo && ghConEmuWndDC && IsWindow(ghConEmuWndDC))
+		{
+			gbStartupHooksAfterMap = FALSE;
+			StartupHooks(ghPluginModule);
+		}
+
+		if (gpBgPlugin)
+		{
+			gpBgPlugin->MonitorBackground();
+		}
+
+		//if (gpConMapInfo) {
+		//	if (gpConMapInfo->nFarPID == 0)
+		//		gbNeedReloadFarInfo = TRUE;
+		//}
+	}
+
+	return 0;
+}
+
 HANDLE CPluginBase::OpenPluginCommon(int OpenFrom, INT_PTR Item, bool FromMacro)
 {
 	if (!mb_StartupInfoOk)

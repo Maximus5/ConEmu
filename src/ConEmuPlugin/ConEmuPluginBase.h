@@ -90,6 +90,7 @@ public:
 	void OnMainThreadActivated();
 	void ProcessSetWindowCommand();
 
+	static DWORD WINAPI MonitorThreadProcW(LPVOID lpParameter);
 	static void CheckConEmuDetached();
 	static void CloseMapHeader();
 	static int OpenMapHeader();
