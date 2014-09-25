@@ -1139,8 +1139,7 @@ ExportFunc Far3Func[] =
 	{NULL}
 };
 
-BOOL gbExitFarCalled = FALSE;
-void ExitFarCmn();
+bool gbExitFarCalled = false;
 
 void ShutdownPluginStep(LPCWSTR asInfo, int nParm1 /*= 0*/, int nParm2 /*= 0*/, int nParm3 /*= 0*/, int nParm4 /*= 0*/)
 {
@@ -1240,7 +1239,7 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 			if (!gbExitFarCalled)
 			{
 				_ASSERTE(FALSE && "ExitFar was not called. Unsupported Far<->Plugin builds?");
-				ExitFarCmn();
+				Plugin()->ExitFarCommon();
 			}
 
 			if (gnSynchroCount > 0)
@@ -3112,53 +3111,24 @@ INT_PTR WINAPI ProcessConsoleInputW(void *Info)
 }
 #endif
 
-void ExitFarCmn()
-{
-	ShutdownPluginStep(L"ExitFarCmn");
-	// Плагин выгружается, Вызывать Syncho больше нельзя
-	gbSynchroProhibited = true;
-	ShutdownHooks();
-	StopThread();
-
-	ShutdownPluginStep(L"ExitFarCmn - done");
-}
-
-void   WINAPI ExitFARW(void)
+void WINAPI ExitFARW(void)
 {
 	ShutdownPluginStep(L"ExitFARW");
 
-	ExitFarCmn();
-
-	if (gbInfoW_OK)
-	{
-		if (gFarVersion.dwBuild>=FAR_Y2_VER)
-			FUNC_Y2(ExitFARW)();
-		else if (gFarVersion.dwBuild>=FAR_Y1_VER)
-			FUNC_Y1(ExitFARW)();
-		else
-			FUNC_X(ExitFARW)();
-	}
-
-	gbExitFarCalled = TRUE;
+	Plugin()->ExitFarCommon();
+	Plugin()->ExitFAR();
 
 	ShutdownPluginStep(L"ExitFARW - done");
 }
 
 void WINAPI ExitFARW3(void*)
 {
-	ExitFarCmn();
+	ShutdownPluginStep(L"ExitFARW3");
 
-	if (gbInfoW_OK)
-	{
-		if (gFarVersion.dwBuild>=FAR_Y2_VER)
-			FUNC_Y2(ExitFARW)();
-		else if (gFarVersion.dwBuild>=FAR_Y1_VER)
-			FUNC_Y1(ExitFARW)();
-		else
-			FUNC_X(ExitFARW)();
-	}
+	Plugin()->ExitFarCommon();
+	Plugin()->ExitFAR();
 
-	gbExitFarCalled = TRUE;
+	ShutdownPluginStep(L"ExitFARW3 - done");
 }
 
 // Определены в SetHook.h

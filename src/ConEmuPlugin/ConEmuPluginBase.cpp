@@ -2081,3 +2081,17 @@ void CPluginBase::CheckConEmuDetached()
 		}
 	}
 }
+
+void CPluginBase::ExitFarCommon()
+{
+	ShutdownPluginStep(L"ExitFarCmn");
+
+	gbExitFarCalled = true;
+
+	// Плагин выгружается, Вызывать Syncho больше нельзя
+	gbSynchroProhibited = true;
+	ShutdownHooks();
+	StopThread();
+
+	ShutdownPluginStep(L"ExitFarCmn - done");
+}

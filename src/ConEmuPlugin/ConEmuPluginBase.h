@@ -84,6 +84,7 @@ public:
 	bool UpdateConEmuTabs(bool abSendChanges);
 	void CheckResources(bool abFromStartup);
 	void InitResources();
+	void ExitFarCommon();
 
 	static void CheckConEmuDetached();
 	static void CloseMapHeader();

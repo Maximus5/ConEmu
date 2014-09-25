@@ -743,8 +743,11 @@ bool CPluginW1900::UpdateConEmuTabsApi(int windowCount)
 	return lbCh;
 }
 
-void CPluginW1900::ExitFAR(void)
+void CPluginW1900::ExitFAR()
 {
+	if (!mb_StartupInfoOk)
+		return;
+
 	ShutdownPluginStep(L"ExitFARW1900");
 
 	WaitEndSynchroW1900();

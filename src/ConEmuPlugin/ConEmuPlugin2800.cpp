@@ -782,8 +782,11 @@ bool CPluginW2800::UpdateConEmuTabsApi(int windowCount)
 	return lbCh;
 }
 
-void ExitFARW2800(void)
+void CPluginW2800::ExitFAR()
 {
+	if (!mb_StartupInfoOk)
+		return;
+
 	ShutdownPluginStep(L"ExitFARW2800");
 
 	WaitEndSynchroW2800();

@@ -627,8 +627,11 @@ bool CPluginW995::UpdateConEmuTabsApi(int windowCount)
 	return lbCh;
 }
 
-void CPluginW995::ExitFAR(void)
+void CPluginW995::ExitFAR()
 {
+	if (!mb_StartupInfoOk)
+		return;
+
 	ShutdownPluginStep(L"ExitFARW995");
 
 	WaitEndSynchroW995();

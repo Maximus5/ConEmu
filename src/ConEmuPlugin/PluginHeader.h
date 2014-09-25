@@ -143,8 +143,7 @@ void FUNC_X(GetPluginInfoW)(void *piv);
 void FUNC_Y1(GetPluginInfoW)(void *piv);
 void FUNC_Y2(GetPluginInfoW)(void *piv);
 
-void ExitFarCmn();
-extern BOOL gbExitFarCalled;
+extern bool gbExitFarCalled;
 
 int FUNC_X(ProcessEditorInputW)(LPCVOID Rec);
 int FUNC_Y1(ProcessEditorInputW)(LPCVOID Rec);

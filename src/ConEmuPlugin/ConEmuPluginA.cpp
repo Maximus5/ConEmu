@@ -705,9 +705,16 @@ void   WINAPI _export ExitFAR(void)
 {
 	ShutdownPluginStep(L"ExitFAR");
 
-	ExitFarCmn();
-	//ShutdownHooks();
-	//StopThread();
+	Plugin()->ExitFarCommon();
+	Plugin()->ExitFAR();
+
+	ShutdownPluginStep(L"ExitFAR - done");
+}
+
+void CPluginAnsi::ExitFAR()
+{
+	if (!mb_StartupInfoOk)
+		return;
 
 	if (InfoA)
 	{
@@ -720,10 +727,6 @@ void   WINAPI _export ExitFAR(void)
 		free(FSFA);
 		FSFA=NULL;
 	}
-
-	gbExitFarCalled = TRUE;
-
-	ShutdownPluginStep(L"ExitFAR - done");
 }
 
 //void ReloadMacroA()
