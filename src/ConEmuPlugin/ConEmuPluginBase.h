@@ -114,6 +114,8 @@ public:
 	static void DebugInputPrint(INPUT_RECORD r)
 	#endif
 
+	static void FillLoadedParm(struct ConEmuLoadedArg* pArg, HMODULE hSubPlugin, BOOL abLoaded);
+	static void NotifyConEmuUnloaded();
 	static bool LoadFarVersion();
 	static bool UngetDummyMouseEvent(bool abRead, HookCallbackArg* pArgs);
 	static void OnConsolePeekReadInput(bool abPeek);
