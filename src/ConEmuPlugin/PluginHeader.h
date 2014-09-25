@@ -183,7 +183,6 @@ void FUNC_Y2(PostMacroW)(const wchar_t* asMacro, INPUT_RECORD* apRec);
 extern DWORD gnReqCommand;
 extern int gnPluginOpenFrom;
 extern LPVOID gpReqCommandData;
-BOOL ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData, CESERVER_REQ** ppResult = NULL, bool bForceSendTabs = false);
 BOOL CheckPlugKey();
 void NotifyChangeKey();
 

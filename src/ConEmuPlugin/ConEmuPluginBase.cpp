@@ -2801,3 +2801,716 @@ void CPluginBase::ExecuteSynchro()
 		Plugin()->ExecuteSynchroApi();
 	}
 }
+
+DWORD CPluginBase::WaitPluginActivation(DWORD nCount, HANDLE *lpHandles, BOOL bWaitAll, DWORD dwMilliseconds)
+{
+	DWORD nWait = WAIT_TIMEOUT;
+	if (IS_SYNCHRO_ALLOWED)
+	{
+		DWORD nStepWait = 1000;
+		DWORD nPrevCount = gnPeekReadCount;
+
+		#ifdef _DEBUG
+		if (IsDebuggerPresent())
+		{
+			nStepWait = 30000;
+			if (dwMilliseconds && (dwMilliseconds < 60000))
+				dwMilliseconds = 60000;
+		}
+		#endif
+
+		DWORD nStartTick = GetTickCount(), nCurrentTick = 0;
+		DWORD nTimeout = nStartTick + dwMilliseconds;
+		do {
+			nWait = WaitForMultipleObjects(nCount, lpHandles, bWaitAll, min(dwMilliseconds,nStepWait));
+			if (((nWait >= WAIT_OBJECT_0) && (nWait < (WAIT_OBJECT_0+nCount))) || (nWait != WAIT_TIMEOUT))
+			{
+				_ASSERTE((nWait >= WAIT_OBJECT_0) && (nWait < (WAIT_OBJECT_0+nCount)));
+				break; // Succeded
+			}
+
+			nCurrentTick = GetTickCount();
+
+			if ((nWait == WAIT_TIMEOUT) && (nPrevCount == gnPeekReadCount) && (dwMilliseconds > 1000)
+				#ifdef _DEBUG
+				&& (!IsDebuggerPresent() || (nCurrentTick > (nStartTick + nStepWait)))
+				#endif
+				)
+			{
+				// Ждать дальше смысла видимо нет, фар не дергает (Peek/Read)Input
+				break;
+			}
+			// Если вдруг произошел облом с Syncho (почему?), дернем еще раз
+			ExecuteSynchro();
+		} while (dwMilliseconds && ((dwMilliseconds == INFINITE) || (nCurrentTick <= nTimeout)));
+
+		#ifdef _DEBUG
+		if (nWait == WAIT_TIMEOUT)
+		{
+			DEBUGSTRACTIVATE(L"ConEmu plugin activation failed");
+		}
+		#endif
+	}
+	else
+	{
+		nWait = WaitForMultipleObjects(nCount, lpHandles, bWaitAll, dwMilliseconds);
+	}
+	return nWait;
+}
+
+// Должна вызываться ТОЛЬКО из нитей уже заблокированных семафором ghPluginSemaphore
+bool CPluginBase::ActivatePlugin(DWORD nCmd, LPVOID pCommandData, DWORD nTimeout /*= CONEMUFARTIMEOUT*/) // Release=10сек, Debug=2мин.
+{
+	bool lbRc = false;
+	ResetEvent(ghReqCommandEvent);
+	//gbCmdCallObsolete = FALSE;
+	gnReqCommand = nCmd; gpReqCommandData = pCommandData;
+	gnPluginOpenFrom = -1;
+	// Нужен вызов плагина в остновной нити
+	gbReqCommandWaiting = TRUE;
+	DWORD nWait = 100; // если тут останется (!=0) - функция вернут ошибку
+	HANDLE hEvents[] = {ghServerTerminateEvent, ghReqCommandEvent};
+	int nCount = countof(hEvents);
+	DEBUGSTRMENU(L"*** Waiting for plugin activation\n");
+
+	if (nCmd == CMD_REDRAWFAR || nCmd == CMD_FARPOST)
+	{
+		WARNING("Оптимизировать!");
+		nTimeout = min(1000,nTimeout); // чтобы не зависало при попытке ресайза, если фар не отзывается.
+	}
+
+	if (gbSynchroProhibited)
+	{
+		nWait = WAIT_TIMEOUT;
+	}
+	// Если есть ACTL_SYNCHRO - позвать его, иначе - "активация" в главной нити
+	// выполняется тогда, когда фар зовет ReadConsoleInput(1).
+	//if (gFarVersion.dwVerMajor = 2 && gFarVersion.dwBuild >= 1006)
+	else if (IS_SYNCHRO_ALLOWED)
+	{
+		#ifdef _DEBUG
+		int iArea = Plugin()->GetMacroArea();
+		#endif
+
+		InterlockedIncrement(&gnAllowDummyMouseEvent);
+		ExecuteSynchro();
+
+		if (!gbUngetDummyMouseEvent && gLastMouseReadEvent.dwButtonState & (RIGHTMOST_BUTTON_PRESSED|FROM_LEFT_1ST_BUTTON_PRESSED))
+		{
+			// Страховка от зависаний
+			nWait = WaitForMultipleObjects(nCount, hEvents, FALSE, min(1000,max(250,nTimeout)));
+			if (nWait == WAIT_TIMEOUT)
+			{
+				if (!gbUngetDummyMouseEvent && gLastMouseReadEvent.dwButtonState & (RIGHTMOST_BUTTON_PRESSED|FROM_LEFT_1ST_BUTTON_PRESSED))
+				{
+					gbUngetDummyMouseEvent = TRUE;
+					// попытаться еще раз
+					nWait = WaitPluginActivation(nCount, hEvents, FALSE, nTimeout);
+				}
+			}
+		}
+		else
+		{
+			// Подождать активации. Сколько ждать - может указать вызывающая функция
+			nWait = WaitPluginActivation(nCount, hEvents, FALSE, nTimeout);
+		}
+
+		if (gnAllowDummyMouseEvent > 0)
+		{
+			InterlockedDecrement(&gnAllowDummyMouseEvent);
+		}
+		else
+		{
+			_ASSERTE(gnAllowDummyMouseEvent >= 0);
+			if (gnAllowDummyMouseEvent < 0)
+				gnAllowDummyMouseEvent = 0;
+		}
+
+	}
+	else
+	{
+		// Подождать активации. Сколько ждать - может указать вызывающая функция
+		nWait = WaitPluginActivation(nCount, hEvents, FALSE, nTimeout);
+	}
+
+
+	if (nWait != WAIT_OBJECT_0 && nWait != (WAIT_OBJECT_0+1))
+	{
+		//110712 - если CMD_REDRAWFAR, то показывать Assert смысла мало, фар может быть занят
+		//  например чтением панелей?
+		//На CMD_SETWINDOW тоже ругаться не будем - окошко может быть заблокировано, или фар занят.
+		_ASSERTE(nWait==WAIT_OBJECT_0 || (nCmd==CMD_REDRAWFAR) || (nCmd==CMD_SETWINDOW));
+
+		if (nWait == (WAIT_OBJECT_0+1))
+		{
+			if (!gbReqCommandWaiting)
+			{
+				// Значит плагин в основной нити все-таки активировался, подождем еще?
+				DEBUGSTR(L"!!! Plugin execute timeout !!!\n");
+				nWait = WaitForMultipleObjects(nCount, hEvents, FALSE, nTimeout);
+			}
+
+			//// Таймаут, эту команду плагин должен пропустить, когда фар таки соберется ее выполнить
+			//Param->Obsolete = TRUE;
+		}
+	}
+	else
+	{
+		DEBUGSTRMENU(L"*** DONE\n");
+	}
+
+	lbRc = (nWait == (WAIT_OBJECT_0+1));
+
+	if (!lbRc)
+	{
+		// Сразу сбросим, вдруг не дождались?
+		gbReqCommandWaiting = FALSE;
+		ResetEvent(ghReqCommandEvent);
+	}
+
+	gpReqCommandData = NULL;
+	gnReqCommand = -1; gnPluginOpenFrom = -1;
+	return lbRc;
+}
+
+bool CPluginBase::cmd_OpenEditorLine(CESERVER_REQ_FAREDITOR *pCmd)
+{
+	WARNING("на API переделать");
+
+	bool lbRc = false;
+	LPCWSTR pSrc = pCmd->szFile;
+	INT_PTR cchMax = MAX_PATH*4 + lstrlenW(pSrc); //-V112
+	wchar_t* pszMacro = (wchar_t*)malloc(cchMax*sizeof(*pszMacro));
+	if (!pszMacro)
+	{
+		_ASSERTE(pszMacro!=NULL)
+	}
+	else
+	{
+		// Добавим префикс "^", чтобы не вообще посылать "нажатия кнопок" в плагины
+		// Иначе, если например активна панель с RegEditor'ом, то результат будет неожиданным )
+		if (gFarVersion.dwVerMajor==1)
+			_wcscpy_c(pszMacro, cchMax, L"@^$if(Viewer || Editor) F12 0 $end $if(Shell) ShiftF4 \"");
+		else if (!gFarVersion.IsFarLua())
+			_wcscpy_c(pszMacro, cchMax, L"@^$if(Viewer || Editor) F12 0 $end $if(Shell) ShiftF4 print(\"");
+		else if (gFarVersion.IsDesktop()) // '0' is 'Desktop' now
+			_wcscpy_c(pszMacro, cchMax, L"@^if Area.Viewer or Area.Editor then Keys(\"F12 1\") end if Area.Shell then Keys(\"ShiftF4\") print(\"");
+		else
+			_wcscpy_c(pszMacro, cchMax, L"@^if Area.Viewer or Area.Editor then Keys(\"F12 0\") end if Area.Shell then Keys(\"ShiftF4\") print(\"");
+		wchar_t* pDst = pszMacro + lstrlen(pszMacro);
+		while (*pSrc)
+		{
+			*(pDst++) = *pSrc;
+			if (*pSrc == L'\\')
+				*(pDst++) = L'\\';
+			pSrc++;
+		}
+		*pDst = 0;
+		if (gFarVersion.dwVerMajor==1)
+			_wcscat_c(pszMacro, cchMax, L"\" Enter ");
+		else if (!gFarVersion.IsFarLua())
+			_wcscat_c(pszMacro, cchMax, L"\") Enter ");
+		else
+			_wcscat_c(pszMacro, cchMax, L"\") Keys(\"Enter\") ");
+
+		if (pCmd->nLine > 0)
+		{
+			int nCurLen = lstrlen(pszMacro);
+			if (gFarVersion.dwVerMajor==1)
+				_wsprintf(pszMacro+nCurLen, SKIPLEN(cchMax-nCurLen) L" $if(Editor) AltF8 \"%i:%i\" Enter $end", pCmd->nLine, pCmd->nColon);
+			else if (!gFarVersion.IsFarLua())
+				_wsprintf(pszMacro+nCurLen, SKIPLEN(cchMax-nCurLen) L" $if(Editor) AltF8 print(\"%i:%i\") Enter $end", pCmd->nLine, pCmd->nColon);
+			else
+				_wsprintf(pszMacro+nCurLen, SKIPLEN(cchMax-nCurLen) L" if Area.Editor then Keys(\"AltF8\") print(\"%i:%i\") Keys(\"Enter\") end", pCmd->nLine, pCmd->nColon);
+		}
+
+		_wcscat_c(pszMacro, cchMax, (!gFarVersion.IsFarLua()) ? L" $end" : L" end");
+		PostMacro(pszMacro, NULL);
+		free(pszMacro);
+
+		lbRc = true;
+	}
+
+	return lbRc;
+}
+
+bool CPluginBase::cmd_RedrawFarCall()
+{
+	HANDLE hEvents[2] = {ghServerTerminateEvent, ghPluginSemaphore};
+	DWORD dwWait = WaitForMultipleObjects(2, hEvents, FALSE, INFINITE);
+
+	if (dwWait == WAIT_OBJECT_0)
+	{
+		// Плагин завершается
+		return false;
+	}
+
+	// Передернуть Background плагины
+	if (gpBgPlugin) gpBgPlugin->SetForceUpdate();
+
+	WARNING("После перехода на Synchro для FAR2 есть опасение, что следующий вызов может произойти до окончания предыдущего цикла обработки Synchro в Far");
+	lbSucceeded = ActivatePlugin(CMD_FARPOST, NULL);
+
+	if (lbSucceeded && /*pOldCmdRet !=*/ gpCmdRet)
+	{
+		pCmdRet = gpCmdRet; // запомнить результат!
+
+		if (ppResult != &gpCmdRet)
+			gpCmdRet = NULL;
+	}
+
+	ReleaseSemaphore(ghPluginSemaphore, 1, NULL);
+
+	return true;
+}
+
+bool CPluginBase::cmd_SetWindow(LPVOID pCommandData)
+{
+	bool lbRc = false;
+	int nTab = 0;
+
+	// Для Far1 мы сюда попадаем обычным образом, при обработке команды пайпом
+	// Для Far2 и выше - через макрос (проверяющий допустимость смены) и callplugin
+	DEBUGSTRCMD(L"Plugin: ACTL_SETCURRENTWINDOW\n");
+
+	// Окно мы можем сменить только если:
+	if (gnPluginOpenFrom == OPEN_VIEWER || gnPluginOpenFrom == OPEN_EDITOR
+	        || gnPluginOpenFrom == OPEN_PLUGINSMENU
+			|| gnPluginOpenFrom == OPEN_FILEPANEL)
+	{
+		_ASSERTE(pCommandData!=NULL);
+
+		if (pCommandData!=NULL)
+			nTab = *((DWORD*)pCommandData);
+
+		gbIgnoreUpdateTabs = TRUE;
+
+		Plugin()->SetWindow(nTab);
+
+		DEBUGSTRCMD(L"Plugin: ACTL_COMMIT finished\n");
+
+		gbIgnoreUpdateTabs = FALSE;
+		Plugin()->UpdateConEmuTabs(bForceSendTabs);
+
+		DEBUGSTRCMD(L"Plugin: Tabs updated\n");
+
+		lbRc = true;
+	}
+
+	return lbRc;
+}
+
+void CPluginBase::cmd_LeftClickSync(LPVOID pCommandData)
+{
+	BOOL  *pbClickNeed = (BOOL*)pCommandData;
+	COORD *crMouse = (COORD *)(pbClickNeed+1);
+
+	// Для Far3 - координаты вроде можно сразу в макрос кинуть
+	if (gFarVersion.dwVer >= 3)
+	{
+		INPUT_RECORD r = {MOUSE_EVENT};
+		r.Event.MouseEvent.dwButtonState = FROM_LEFT_1ST_BUTTON_PRESSED;
+		r.Event.MouseEvent.dwMousePosition = *crMouse;
+		#ifdef _DEBUG
+		//r.Event.MouseEvent.dwMousePosition.X = 5;
+		#endif
+
+		PostMacro((gFarVersion.dwBuild <= 2850) ? L"MsLClick" : L"Keys('MsLClick')", &r);
+	}
+	else
+	{
+		INPUT_RECORD clk[2] = {{MOUSE_EVENT},{MOUSE_EVENT}};
+		int i = 0;
+
+		if (*pbClickNeed)
+		{
+			clk[i].Event.MouseEvent.dwButtonState = FROM_LEFT_1ST_BUTTON_PRESSED;
+			clk[i].Event.MouseEvent.dwMousePosition = *crMouse;
+			i++;
+		}
+
+		clk[i].Event.MouseEvent.dwMousePosition = *crMouse;
+		i++;
+		DWORD cbWritten = 0;
+		HANDLE h = GetStdHandle(STD_INPUT_HANDLE);
+		_ASSERTE(h!=INVALID_HANDLE_VALUE && h!=NULL);
+		BOOL fSuccess = WriteConsoleInput(h, clk, 2, &cbWritten);
+
+		if (!fSuccess || cbWritten != 2)
+		{
+			_ASSERTE(fSuccess && cbWritten==2);
+		}
+	}
+}
+
+void CPluginBase::cmd_CloseQSearch()
+{
+	if (!gFarVersion.IsFarLua())
+		PostMacro(L"$if (Search) Esc $end", NULL);
+	else
+		PostMacro(L"if Area.Search Keys(\"Esc\") end", NULL);
+}
+
+void CPluginBase::cmd_EMenu(LPVOID pCommandData)
+{
+	COORD *crMouse = (COORD *)pCommandData;
+	const wchar_t *pszUserMacro = (wchar_t*)(crMouse+1);
+
+	// Т.к. вызов идет через макрос и "rclk_gui:", то настройки emenu трогать нельзя!
+
+	// Иначе в некторых случаях (Win7 & FAR2x64) не отрисовывается сменившийся курсор
+	// В FAR 1.7x это приводит к зачернению экрана??? Решается посылкой
+	// "пустого" события движения мышки в консоль сразу после ACTL_KEYMACRO
+	Plugin()->RedrawAll();
+
+	const wchar_t* pszMacro = NULL;
+
+	if (pszUserMacro && *pszUserMacro)
+		pszMacro = pszUserMacro;
+	else
+		pszMacro = gFarVersion.IsFarLua() ? FarRClickMacroDefault3 : FarRClickMacroDefault2; //L"@$If (!CmdLine.Empty) %Flg_Cmd=1; %CmdCurPos=CmdLine.ItemCount-CmdLine.CurPos+1; %CmdVal=CmdLine.Value; Esc $Else %Flg_Cmd=0; $End $Text \"rclk_gui:\" Enter $If (%Flg_Cmd==1) $Text %CmdVal %Flg_Cmd=0; %Num=%CmdCurPos; $While (%Num!=0) %Num=%Num-1; CtrlS $End $End";
+
+	INPUT_RECORD r = {MOUSE_EVENT};
+	r.Event.MouseEvent.dwButtonState = FROM_LEFT_1ST_BUTTON_PRESSED;
+	r.Event.MouseEvent.dwMousePosition = *crMouse;
+	#ifdef _DEBUG
+	//r.Event.MouseEvent.dwMousePosition.X = 5;
+	#endif
+
+	if (SetFarHookMode)
+	{
+		// Сказать библиотеке хуков (ConEmuHk.dll), что меню нужно показать в позиции курсора мыши
+		gFarMode.bPopupMenuPos = TRUE;
+		SetFarHookMode(&gFarMode);
+	}
+
+	PostMacro((wchar_t*)pszMacro, &r);
+}
+
+void CPluginBase::cmd_ExternalCallback(LPVOID pCommandData)
+{
+	bool lbRc = false;
+
+	if (pCommandData
+	        && ((SyncExecuteArg*)pCommandData)->nCmd == CMD__EXTERNAL_CALLBACK
+	        && ((SyncExecuteArg*)pCommandData)->CallBack != NULL)
+	{
+		SyncExecuteArg* pExec = (SyncExecuteArg*)pCommandData;
+		BOOL lbCallbackValid = CheckCallbackPtr(pExec->hModule, 1, (FARPROC*)&pExec->CallBack, FALSE, FALSE, FALSE);
+
+		if (lbCallbackValid)
+		{
+			pExec->CallBack(pExec->lParam);
+			lbRc = true;
+		}
+	}
+
+	return lbRc;
+}
+
+void CPluginBase::cmd_ConSetFont(LPVOID pCommandData)
+{
+	CESERVER_REQ_SETFONT* pFont = (CESERVER_REQ_SETFONT*)pCommandData;
+
+	if (pFont && pFont->cbSize == sizeof(CESERVER_REQ_SETFONT))
+	{
+		SetConsoleFontSizeTo(GetConEmuHWND(2), pFont->inSizeY, pFont->inSizeX, pFont->sFontName);
+	}
+}
+
+void CPluginBase::cmd_GuiChanged(LPVOID pCommandData)
+{
+	CESERVER_REQ_GUICHANGED *pWindows = (CESERVER_REQ_GUICHANGED*)pCommandData;
+
+	if (gpBgPlugin)
+		gpBgPlugin->SetForceThLoad();
+
+	if (pWindows && pWindows->cbSize == sizeof(CESERVER_REQ_GUICHANGED))
+	{
+		UINT nConEmuSettingsMsg = RegisterWindowMessage(CONEMUMSG_PNLVIEWSETTINGS);
+
+		if (pWindows->hLeftView && IsWindow(pWindows->hLeftView))
+		{
+			PostMessage(pWindows->hLeftView, nConEmuSettingsMsg, pWindows->nGuiPID, 0);
+		}
+
+		if (pWindows->hRightView && IsWindow(pWindows->hRightView))
+		{
+			PostMessage(pWindows->hRightView, nConEmuSettingsMsg, pWindows->nGuiPID, 0);
+		}
+	}
+}
+
+WARNING("Обязательно сделать возможность отваливаться по таймауту, если плагин не удалось активировать");
+// Проверку можно сделать чтением буфера ввода - если там еще есть событие отпускания F11 - значит
+// меню плагинов еще загружается. Иначе можно еще чуть-чуть подождать, и отваливаться - активироваться не получится
+bool CPluginBase::ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData, CESERVER_REQ** ppResult /*= NULL*/, bool bForceSendTabs /*= false*/)
+{
+	bool lbSucceeded = false;
+	CESERVER_REQ* pCmdRet = NULL;
+
+	if (ppResult)  // сначала - сбросить
+		*ppResult = NULL;
+
+	// Некоторые команды можно выполнять в любой нити
+	if (nCmd == CMD_SET_CON_FONT || nCmd == CMD_GUICHANGED)
+	{
+		bReqMainThread = FALSE;
+	}
+
+	//Это нужно делать только тогда, когда семафор уже заблокирован!
+	//if (gpCmdRet) { Free(gpCmdRet); gpCmdRet = NULL; }
+	//gpData = NULL; gpCursor = NULL;
+	WARNING("Тут нужно сделать проверку содержимого консоли");
+	// Если отображено меню - плагин не запустится
+	// Не перепутать меню с пустым экраном (Ctrl-O)
+
+	if (bReqMainThread && (gnMainThreadId != GetCurrentThreadId()))
+	{
+		_ASSERTE(ghPluginSemaphore!=NULL);
+		_ASSERTE(ghServerTerminateEvent!=NULL);
+
+		// Issue 198: Redraw вызывает отрисовку фаром (1.7x) UserScreen-a (причем без кейбара)
+		if (gFarVersion.dwVerMajor < 2 && nCmd == CMD_REDRAWFAR)
+		{
+			return FALSE; // лучше его просто пропустить
+		}
+
+		if (nCmd == CMD_FARPOST)
+		{
+			return FALSE; // Это просто проверка, что фар отработал цикл
+		}
+
+		// Запомним, чтобы знать, были ли созданы данные?
+		#ifdef _DEBUG
+		CESERVER_REQ* pOldCmdRet = gpCmdRet;
+		#endif
+
+		if (/*nCmd == CMD_LEFTCLKSYNC ||*/ nCmd == CMD_CLOSEQSEARCH)
+		{
+			ResetEvent(ghConsoleWrite);
+			gbWaitConsoleWrite = TRUE;
+		}
+
+		// Засемафорить, чтобы несколько команд одновременно не пошли...
+		{
+			HANDLE hEvents[2] = {ghServerTerminateEvent, ghPluginSemaphore};
+			DWORD dwWait = WaitForMultipleObjects(2, hEvents, FALSE, INFINITE);
+
+			if (dwWait == WAIT_OBJECT_0)
+			{
+				// Плагин завершается
+				return FALSE;
+			}
+
+			if (nCmd == CMD_REDRAWFAR)
+				gbNeedBgActivate = TRUE;
+
+			lbSucceeded = ActivatePlugin(nCmd, pCommandData);
+
+			if (lbSucceeded && /*pOldCmdRet !=*/ gpCmdRet)
+			{
+				pCmdRet = gpCmdRet; // запомнить результат!
+
+				if (ppResult != &gpCmdRet)
+					gpCmdRet = NULL;
+			}
+
+			ReleaseSemaphore(ghPluginSemaphore, 1, NULL);
+		}
+		// конец семафора
+
+		if (nCmd == CMD_LEFTCLKSYNC || nCmd == CMD_CLOSEQSEARCH)
+		{
+			ResetEvent(ghConsoleInputEmpty);
+			gbWaitConsoleInputEmpty = TRUE;
+			DWORD nWait = WaitForSingleObject(ghConsoleInputEmpty, 2000);
+
+			if (nWait == WAIT_OBJECT_0)
+			{
+				if (nCmd == CMD_CLOSEQSEARCH)
+				{
+					// И подождать, пока Фар обработает это событие (то есть до следующего чтения [Peek])
+					nWait = WaitForSingleObject(ghConsoleWrite, 1000);
+					lbSucceeded = (nWait == WAIT_OBJECT_0);
+				}
+			}
+			else
+			{
+				#ifdef _DEBUG
+				DEBUGSTRMENU((nWait != 0) ? L"*** QUEUE IS NOT EMPTY\n" : L"*** QUEUE IS EMPTY\n");
+				#endif
+				gbWaitConsoleInputEmpty = FALSE;
+				lbSucceeded = (nWait == WAIT_OBJECT_0);
+			}
+		}
+
+		// Собственно Redraw фар выполнит не тогда, когда его функцию позвали,
+		// а когда к нему управление вернется
+		if (nCmd == CMD_REDRAWFAR)
+		{
+			if (!cmd_RedrawFar())
+			{
+				// Плагин завершается
+				return false;
+			}
+		}
+
+		if (ppResult)
+		{
+			if (ppResult != &gpCmdRet)
+			{
+				*ppResult = pCmdRet;
+			}
+		}
+		else
+		{
+			if (pCmdRet && pCmdRet != gpTabs && pCmdRet != gpCmdRet)
+			{
+				Free(pCmdRet);
+			}
+		}
+
+		//gpReqCommandData = NULL;
+		//gnReqCommand = -1; gnPluginOpenFrom = -1;
+		return lbSucceeded; // Результат выполнения команды
+	}
+
+	if (gnPluginOpenFrom == 0)
+	{
+		switch (Plugin()->GetActiveWindowType())
+		{
+		case WTYPE_PANELS:
+			gnPluginOpenFrom = OPEN_FILEPANEL; break;
+		case WTYPE_EDITOR:
+			gnPluginOpenFrom = OPEN_EDITOR; break;
+		case WTYPE_VIEWER:
+			gnPluginOpenFrom = OPEN_VIEWER; break;
+		}
+	}
+
+	// Некоторые команды "асинхронные", блокировки не нужны
+	if (nCmd == CMD_SET_CON_FONT
+		|| nCmd == CMD_GUICHANGED
+		)
+	{
+		switch (nCmd)
+		{
+		case CMD_SET_CON_FONT:
+			cmd_ConSetFont(pCommandData);
+			break;
+
+		case CMD_GUICHANGED:
+			cmd_GuiChanged(LPVOID pCommandData)
+			break;
+		}
+
+		// Ставим и выходим
+		if (ghReqCommandEvent)
+			SetEvent(ghReqCommandEvent);
+
+		return TRUE;
+	}
+
+	MSectionLock CSD; CSD.Lock(csData, TRUE);
+
+	//if (gpCmdRet) { Free(gpCmdRet); gpCmdRet = NULL; } // !!! Освобождается ТОЛЬКО вызывающей функцией!
+	gpCmdRet = NULL; gpData = NULL; gpCursor = NULL;
+
+	// Раз дошли сюда - считаем что OK
+	lbSucceeded = true;
+
+	switch (nCmd)
+	{
+	case CMD__EXTERNAL_CALLBACK:
+		lbSucceeded = cmd_ExternalCallback(pCommandData);
+		break;
+
+	case CMD_DRAGFROM:
+		//BOOL  *pbClickNeed = (BOOL*)pCommandData;
+		//COORD *crMouse = (COORD *)(pbClickNeed+1);
+		//ProcessCommand(CMD_LEFTCLKSYNC, TRUE/*bReqMainThread*/, pCommandData);
+		Plugin()->ProcessDragFrom();
+		Plugin()->ProcessDragTo();
+		break;
+
+	case CMD_DRAGTO:
+		Plugin()->ProcessDragTo();
+		break;
+
+	case CMD_SETWINDOW:
+		cmd_SetWindow(pCommandData);
+		pCmdRet = gpTabs;
+		break;
+
+	case CMD_POSTMACRO:
+		_ASSERTE(pCommandData!=NULL);
+		if (pCommandData!=NULL)
+			PostMacro((wchar_t*)pCommandData, NULL);
+		break;
+
+	case CMD_CLOSEQSEARCH:
+		cmd_CloseQSearch();
+		break;
+
+	case CMD_LEFTCLKSYNC:
+		cmd_LeftClickSync(pCommandData);
+		break;
+	case CMD_EMENU:  //RMENU
+		cmd_EMenu(pCommandData);
+		break;
+
+	case CMD_REDRAWFAR:
+		// В Far 1.7x были глюки с отрисовкой?
+		if (gFarVersion.dwVerMajor>=2)
+			Plugin()->RedrawAll();
+		break;
+
+	case CMD_CHKRESOURCES:
+		CheckResources(true);
+		break;
+
+	case CMD_FARPOST:
+		// просто сигнализация о том, что фар получил управление.
+		lbSucceeded = true;
+		break;
+
+	case CMD_OPENEDITORLINE:
+		lbSucceeded = true;
+		cmd_OpenEditorLine((CESERVER_REQ_FAREDITOR*)pCommandData);
+		break;
+
+	default:
+		// Неизвестная команда!
+		_ASSERTE(FALSE && "Command was not handled!");
+		lbSucceeded = false;
+	}
+
+	// Функция выполняется в том время, пока заблокирован ghPluginSemaphore,
+	// поэтому gpCmdRet можно пользовать
+	if (lbSucceeded && !pCmdRet)  // pCmdRet может уже содержать gpTabs
+	{
+		pCmdRet = gpCmdRet;
+		gpCmdRet = NULL;
+	}
+
+	if (ppResult)
+	{
+		*ppResult = pCmdRet;
+	}
+	else if (pCmdRet && pCmdRet != gpTabs)
+	{
+		Free(pCmdRet);
+	}
+
+	CSD.Unlock();
+
+	_ASSERTE(_CrtCheckMemory());
+
+	if (ghReqCommandEvent)
+	{
+		SetEvent(ghReqCommandEvent);
+	}
+
+	return lbSucceeded;
+}

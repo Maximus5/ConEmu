@@ -92,7 +92,20 @@ public:
 	void CommonPluginStartup();
 	void StopThread();
 	void ExecuteSynchro();
+	bool ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData, CESERVER_REQ** ppResult = NULL, bool bForceSendTabs = false);
 
+	bool cmd_OpenEditorLine(CESERVER_REQ_FAREDITOR *pCmd);
+	bool cmd_RedrawFarCall();
+	bool cmd_SetWindow(LPVOID pCommandData);
+	void cmd_LeftClickSync(LPVOID pCommandData);
+	void cmd_CloseQSearch();
+	void cmd_EMenu(LPVOID pCommandData);
+	void cmd_ExternalCallback(LPVOID pCommandData);
+	void cmd_ConSetFont(LPVOID pCommandData);
+	void cmd_GuiChanged(LPVOID pCommandData);
+
+	static bool ActivatePlugin(DWORD nCmd, LPVOID pCommandData, DWORD nTimeout = CONEMUFARTIMEOUT); // Release=10сек, Debug=2мин.
+	static DWORD WaitPluginActivation(DWORD nCount, HANDLE *lpHandles, BOOL bWaitAll, DWORD dwMilliseconds);
 	static void ShutdownPluginStep(LPCWSTR asInfo, int nParm1 = 0, int nParm2 = 0, int nParm3 = 0, int nParm4 = 0);
 	static DWORD WINAPI MonitorThreadProcW(LPVOID lpParameter);
 	static void CheckConEmuDetached();
