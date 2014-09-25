@@ -4084,3 +4084,82 @@ void CPluginBase::DebugInputPrint(INPUT_RECORD r)
 	DEBUGSTR(szDbg);
 }
 #endif
+
+bool CPluginBase::UngetDummyMouseEvent(bool abRead, HookCallbackArg* pArgs)
+{
+	if (!(pArgs->lArguments[1] && pArgs->lArguments[2] && pArgs->lArguments[3]))
+	{
+		_ASSERTE(pArgs->lArguments[1] && pArgs->lArguments[2] && pArgs->lArguments[3]);
+	}
+	else if ((gLastMouseReadEvent.dwButtonState & (RIGHTMOST_BUTTON_PRESSED|FROM_LEFT_1ST_BUTTON_PRESSED))
+			|| (gnDummyMouseEventFromMacro > 0))
+	{
+		// Такой финт нужен только в случае:
+		// в редакторе идет скролл мышкой (скролл - зажатой кнопкой на заголовке/кейбаре)
+		// нужно заставить фар остановить скролл, иначе активация Synchro невозможна
+
+		// Или второй случай
+		//FAR BUGBUG: Макрос не запускается на исполнение, пока мышкой не дернем :(
+		//  Это чаще всего проявляется при вызове меню по RClick
+		//  Если курсор на другой панели, то RClick сразу по пассивной
+		//  не вызывает отрисовку :(
+
+		if ((gnAllowDummyMouseEvent < 1) && (gnDummyMouseEventFromMacro < 1))
+		{
+			_ASSERTE(gnAllowDummyMouseEvent >= 1);
+			if (gnAllowDummyMouseEvent < 0)
+				gnAllowDummyMouseEvent = 0;
+			gbUngetDummyMouseEvent = FALSE;
+			return false;
+		}
+
+		// Сообщить в GUI что мы "пустое" сообщение фару кидаем
+		if (gFarMode.bFarHookMode && gFarMode.bMonitorConsoleInput)
+		{
+			CESERVER_REQ *pIn = ExecuteNewCmd(CECMD_PEEKREADINFO, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_PEEKREADINFO));
+			if (pIn)
+			{
+				pIn->PeekReadInfo.nCount = (WORD)1;
+				pIn->PeekReadInfo.cPeekRead = '*';
+				pIn->PeekReadInfo.cUnicode = 'U';
+				pIn->PeekReadInfo.h = (HANDLE)pArgs->lArguments[1];
+				pIn->PeekReadInfo.nTID = GetCurrentThreadId();
+				pIn->PeekReadInfo.nPID = GetCurrentProcessId();
+				pIn->PeekReadInfo.bMainThread = (pIn->PeekReadInfo.nTID == gnMainThreadId);
+
+				pIn->PeekReadInfo.Buffer->EventType = MOUSE_EVENT;
+				pIn->PeekReadInfo.Buffer->Event.MouseEvent = gLastMouseReadEvent;
+				pIn->PeekReadInfo.Buffer->Event.MouseEvent.dwButtonState = 0;
+				pIn->PeekReadInfo.Buffer->Event.MouseEvent.dwEventFlags = MOUSE_MOVED;
+
+				CESERVER_REQ* pOut = ExecuteGuiCmd(FarHwnd, pIn, FarHwnd);
+				if (pOut) ExecuteFreeResult(pOut);
+				ExecuteFreeResult(pIn);
+			}
+		}
+
+		PINPUT_RECORD p = (PINPUT_RECORD)(pArgs->lArguments[1]);
+		LPDWORD pCount = (LPDWORD)(pArgs->lArguments[3]);
+		*pCount = 1;
+		p->EventType = MOUSE_EVENT;
+		p->Event.MouseEvent = gLastMouseReadEvent;
+		p->Event.MouseEvent.dwButtonState = 0;
+		p->Event.MouseEvent.dwEventFlags = MOUSE_MOVED;
+		*((LPBOOL)pArgs->lpResult) = TRUE;
+
+		if ((gnDummyMouseEventFromMacro > 0) && abRead)
+		{
+			TODO("А если в очередь фара закинуто несколько макросов? По одному мышиному события выполнится только один, или все?");
+			//InterlockedDecrement(&gnDummyMouseEventFromMacro);
+			gnDummyMouseEventFromMacro = 0;
+		}
+
+		return true;
+	}
+	else
+	{
+		gbUngetDummyMouseEvent = FALSE; // Не требуется, фар сам кнопку "отпустил"
+	}
+
+	return false;
+}

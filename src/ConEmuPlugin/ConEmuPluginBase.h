@@ -110,12 +110,13 @@ public:
 
 	#ifdef _DEBUG
 	static bool DebugGetKeyboardState(LPBYTE pKeyStates);
-    static DWORD DebugCheckKeyboardLayout();
-    static void DebugInputPrint(INPUT_RECORD r)
-    #endif
+	static DWORD DebugCheckKeyboardLayout();
+	static void DebugInputPrint(INPUT_RECORD r)
+	#endif
 
-    static void OnConsolePeekReadInput(bool abPeek);
-    static void TouchReadPeekConsoleInputs(int Peek /*= -1*/);
+	static bool UngetDummyMouseEvent(bool abRead, HookCallbackArg* pArgs);
+	static void OnConsolePeekReadInput(bool abPeek);
+	static void TouchReadPeekConsoleInputs(int Peek /*= -1*/);
 	static bool pcc_Selected(PluginMenuCommands nMenuID);
 	static bool pcc_Disabled(PluginMenuCommands nMenuID);
 	static bool ActivatePlugin(DWORD nCmd, LPVOID pCommandData, DWORD nTimeout = CONEMUFARTIMEOUT); // Release=10сек, Debug=2мин.
