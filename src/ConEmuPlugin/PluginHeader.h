@@ -288,9 +288,5 @@ struct ConEmuPluginMenuItem
 	INT_PTR UserData;
 };
 
-extern PluginAndMenuCommands gpPluginMenu[menu_Last];
-bool pcc_Selected(PluginMenuCommands nMenuID);
-bool pcc_Disabled(PluginMenuCommands nMenuID);
-
 HANDLE WINAPI FUNC_Y1(OpenW)(const void* apInfo);
 HANDLE WINAPI FUNC_Y2(OpenW)(const void* apInfo);

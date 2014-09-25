@@ -117,6 +117,45 @@ INT_PTR WINAPI ProcessViewerEventW3(void* p)
 
 /* EXPORTS END */
 
+PluginAndMenuCommands gpPluginMenu[menu_Last] =
+{
+	{CEMenuEditOutput, menu_EditConsoleOutput, pcc_EditConsoleOutput},
+	{CEMenuViewOutput, menu_ViewConsoleOutput, pcc_ViewConsoleOutput},
+	{0, menu_Separator1}, // Separator
+	{CEMenuShowHideTabs, menu_SwitchTabVisible, pcc_SwitchTabVisible},
+	{CEMenuNextTab, menu_SwitchTabNext, pcc_SwitchTabNext},
+	{CEMenuPrevTab, menu_SwitchTabPrev, pcc_SwitchTabPrev},
+	{CEMenuCommitTab, menu_SwitchTabCommit, pcc_SwitchTabCommit},
+	{CEMenuShowTabsList, menu_ShowTabsList},
+	{0, menu_Separator2},
+	{CEMenuGuiMacro, menu_ConEmuMacro}, // должен вызываться "по настоящему", а не через callplugin
+	{0, menu_Separator3},
+	{CEMenuAttach, menu_AttachToConEmu, pcc_AttachToConEmu},
+	{0, menu_Separator4},
+	{CEMenuDebug, menu_StartDebug, pcc_StartDebug},
+	{CEMenuConInfo, menu_ConsoleInfo, pcc_StartDebug},
+};
+
+#define CMD__EXTERNAL_CALLBACK 0x80001
+struct SyncExecuteArg
+{
+	DWORD nCmd;
+	HMODULE hModule;
+	SyncExecuteCallback_t CallBack;
+	LONG_PTR lParam;
+};
+
+//#define ConEmu_SysID 0x43454D55 // 'CEMU'
+enum CallPluginCmdId
+{
+	// Add new items - before first numbered item!
+	CE_CALLPLUGIN_UPDATEBG = 99,
+	CE_CALLPLUGIN_SENDTABS = 100,
+	SETWND_CALLPLUGIN_BASE /*= (CE_CALLPLUGIN_SENDTABS+1)*/
+	// Following number are reserved for "SetWnd(idx)" switching
+};
+
+
 CPluginBase* Plugin()
 {
 	if (!gpPlugin)
@@ -3742,4 +3781,63 @@ bool CPluginBase::ReloadFarInfo(bool abForce)
 	}
 
 	return lbChanged;
+}
+
+bool CPluginBase::pcc_Selected(PluginMenuCommands nMenuID)
+{
+	bool bSelected = false;
+
+	switch (nMenuID)
+	{
+	case menu_EditConsoleOutput:
+		if (ghConEmuWndDC && IsWindow(ghConEmuWndDC))
+			bSelected = true;
+		break;
+	case menu_AttachToConEmu:
+		if (!((ghConEmuWndDC && IsWindow(ghConEmuWndDC)) || IsTerminalMode()))
+			bSelected = true;
+		break;
+	case menu_ViewConsoleOutput:
+	case menu_SwitchTabVisible:
+	case menu_SwitchTabNext:
+	case menu_SwitchTabPrev:
+	case menu_SwitchTabCommit:
+	case menu_ConEmuMacro:
+	case menu_StartDebug:
+	case menu_ConsoleInfo:
+		break;
+	}
+
+	return bSelected;
+}
+
+bool CPluginBase::pcc_Disabled(PluginMenuCommands nMenuID)
+{
+	bool bDisabled = false;
+
+	switch (nMenuID)
+	{
+	case menu_AttachToConEmu:
+		if ((ghConEmuWndDC && IsWindow(ghConEmuWndDC)) || IsTerminalMode())
+			bDisabled = true;
+		break;
+	case menu_StartDebug:
+		if (IsDebuggerPresent() || IsTerminalMode())
+			bDisabled = true;
+		break;
+	case menu_EditConsoleOutput:
+	case menu_ViewConsoleOutput:
+	case menu_SwitchTabVisible:
+	case menu_SwitchTabNext:
+	case menu_SwitchTabPrev:
+	case menu_SwitchTabCommit:
+	case menu_ConEmuMacro:
+		if (!ghConEmuWndDC || !IsWindow(ghConEmuWndDC))
+			bDisabled = true;
+		break;
+	case menu_ConsoleInfo:
+		break;
+	}
+
+	return bDisabled;
 }

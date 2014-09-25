@@ -108,6 +108,8 @@ public:
 	void cmd_ConSetFont(LPVOID pCommandData);
 	void cmd_GuiChanged(LPVOID pCommandData);
 
+	static bool pcc_Selected(PluginMenuCommands nMenuID);
+	static bool pcc_Disabled(PluginMenuCommands nMenuID);
 	static bool ActivatePlugin(DWORD nCmd, LPVOID pCommandData, DWORD nTimeout = CONEMUFARTIMEOUT); // Release=10сек, Debug=2мин.
 	static DWORD WaitPluginActivation(DWORD nCount, HANDLE *lpHandles, BOOL bWaitAll, DWORD dwMilliseconds);
 	static void ShutdownPluginStep(LPCWSTR asInfo, int nParm1 = 0, int nParm2 = 0, int nParm3 = 0, int nParm4 = 0);
