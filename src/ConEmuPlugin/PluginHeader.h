@@ -326,7 +326,5 @@ extern PluginAndMenuCommands gpPluginMenu[menu_Last];
 bool pcc_Selected(PluginMenuCommands nMenuID);
 bool pcc_Disabled(PluginMenuCommands nMenuID);
 
-void ShutdownPluginStep(LPCWSTR asInfo, int nParm1 = 0, int nParm2 = 0, int nParm3 = 0, int nParm4 = 0);
-
 HANDLE WINAPI FUNC_Y1(OpenW)(const void* apInfo);
 HANDLE WINAPI FUNC_Y2(OpenW)(const void* apInfo);

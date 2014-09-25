@@ -648,12 +648,12 @@ bool CPluginAnsi::UpdateConEmuTabsApi(int windowCount)
 
 void   WINAPI _export ExitFAR(void)
 {
-	ShutdownPluginStep(L"ExitFAR");
+	CPluginBase::ShutdownPluginStep(L"ExitFAR");
 
 	Plugin()->ExitFarCommon();
 	Plugin()->ExitFAR();
 
-	ShutdownPluginStep(L"ExitFAR - done");
+	CPluginBase::ShutdownPluginStep(L"ExitFAR - done");
 }
 
 void CPluginAnsi::ExitFAR()

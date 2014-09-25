@@ -748,7 +748,7 @@ void CPluginW1900::ExitFAR()
 	if (!mb_StartupInfoOk)
 		return;
 
-	ShutdownPluginStep(L"ExitFARW1900");
+	CPluginBase::ShutdownPluginStep(L"ExitFARW1900");
 
 	WaitEndSynchroW1900();
 
@@ -764,7 +764,7 @@ void CPluginW1900::ExitFAR()
 		FSFW1900=NULL;
 	}
 
-	ShutdownPluginStep(L"ExitFARW1900 - done");
+	CPluginBase::ShutdownPluginStep(L"ExitFARW1900 - done");
 }
 
 int CPluginW1900::ShowMessage(LPCWSTR asMsg, int aiButtons, bool bWarning)

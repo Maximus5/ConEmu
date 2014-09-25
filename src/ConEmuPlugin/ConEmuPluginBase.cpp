@@ -2624,3 +2624,144 @@ void CPluginBase::CommonPluginStartup()
 		}
 	}
 }
+
+void CPluginBase::StopThread()
+{
+	ShutdownPluginStep(L"StopThread");
+	#ifdef _DEBUG
+	LPCVOID lpPtrConInfo = gpConMapInfo;
+	#endif
+	gpConMapInfo = NULL;
+	//LPVOID lpPtrColorInfo = gpColorerInfo; gpColorerInfo = NULL;
+	gbBgPluginsAllowed = FALSE;
+	NotifyConEmuUnloaded();
+
+	ShutdownPluginStep(L"...ClosingTabs");
+	CloseTabs();
+
+	//if (hEventCmd[CMD_EXIT])
+	//	SetEvent(hEventCmd[CMD_EXIT]); // Завершить нить
+
+	if (ghServerTerminateEvent)
+	{
+		SetEvent(ghServerTerminateEvent);
+	}
+
+	//if (gnInputThreadId) {
+	//	PostThreadMessage(gnInputThreadId, WM_QUIT, 0, 0);
+	//}
+
+	ShutdownPluginStep(L"...Stopping server");
+	PlugServerStop();
+
+	ShutdownPluginStep(L"...Finalizing");
+
+	SafeCloseHandle(ghPluginSemaphore);
+
+	if (ghMonitorThread)  // подождем чуть-чуть, или принудительно прибъем нить ожидания
+	{
+		if (WaitForSingleObject(ghMonitorThread,1000))
+		{
+#if !defined(__GNUC__)
+#pragma warning (disable : 6258)
+#endif
+			TerminateThread(ghMonitorThread, 100);
+		}
+
+		SafeCloseHandle(ghMonitorThread);
+	}
+
+	//if (ghInputThread) { // подождем чуть-чуть, или принудительно прибъем нить ожидания
+	//	if (WaitForSingleObject(ghInputThread,1000)) {
+	//		#if !defined(__GNUC__)
+	//		#pragma warning (disable : 6258)
+	//		#endif
+	//		TerminateThread(ghInputThread, 100);
+	//	}
+	//	SafeCloseHandle(ghInputThread);
+	//}
+
+	if (gpTabs)
+	{
+		Free(gpTabs);
+		gpTabs = NULL;
+	}
+
+	if (ghReqCommandEvent)
+	{
+		CloseHandle(ghReqCommandEvent); ghReqCommandEvent = NULL;
+	}
+
+	if (gpFarInfo)
+	{
+		LPVOID ptr = gpFarInfo; gpFarInfo = NULL;
+		Free(ptr);
+	}
+
+	if (gpFarInfoMapping)
+	{
+		UnmapViewOfFile(gpFarInfoMapping);
+		CloseHandle(ghFarInfoMapping);
+		ghFarInfoMapping = NULL;
+	}
+
+	if (ghFarAliveEvent)
+	{
+		CloseHandle(ghFarAliveEvent);
+		ghFarAliveEvent = NULL;
+	}
+
+	if (ghRegMonitorKey) { RegCloseKey(ghRegMonitorKey); ghRegMonitorKey = NULL; }
+
+	SafeCloseHandle(ghRegMonitorEvt);
+	SafeCloseHandle(ghServerTerminateEvent);
+	//WARNING("Убрать, заменить ghConIn на GetStdHandle()"); // Иначе в Win7 будет буфер разрушаться
+	//SafeCloseHandle(ghConIn);
+	//SafeCloseHandle(ghInputSynchroExecuted);
+	SafeCloseHandle(ghSetWndSendTabsEvent);
+	SafeCloseHandle(ghConsoleInputEmpty);
+	SafeCloseHandle(ghConsoleWrite);
+
+	if (gpConMap)
+	{
+		gpConMap->CloseMap();
+		delete gpConMap;
+		gpConMap = NULL;
+	}
+
+	//if (lpPtrConInfo)
+	//{
+	//	UnmapViewOfFile(lpPtrConInfo);
+	//}
+	//if (ghFileMapping)
+	//{
+	//	CloseHandle(ghFileMapping);
+	//	ghFileMapping = NULL;
+	//}
+	// -- теперь мэппинги создает GUI
+	//CloseColorerHeader();
+
+	CommonShutdown();
+	ShutdownPluginStep(L"StopThread - done");
+}
+
+void CPluginBase::ShutdownPluginStep(LPCWSTR asInfo, int nParm1 /*= 0*/, int nParm2 /*= 0*/, int nParm3 /*= 0*/, int nParm4 /*= 0*/)
+{
+#ifdef _DEBUG
+	static int nDbg = 0;
+	if (!nDbg)
+		nDbg = IsDebuggerPresent() ? 1 : 2;
+	if (nDbg != 1)
+		return;
+	wchar_t szFull[512];
+	msprintf(szFull, countof(szFull), L"%u:ConEmuP:PID=%u:TID=%u: ",
+		GetTickCount(), GetCurrentProcessId(), GetCurrentThreadId());
+	if (asInfo)
+	{
+		int nLen = lstrlen(szFull);
+		msprintf(szFull+nLen, countof(szFull)-nLen, asInfo, nParm1, nParm2, nParm3, nParm4);
+	}
+	lstrcat(szFull, L"\n");
+	OutputDebugString(szFull);
+#endif
+}

@@ -787,7 +787,7 @@ void CPluginW2800::ExitFAR()
 	if (!mb_StartupInfoOk)
 		return;
 
-	ShutdownPluginStep(L"ExitFARW2800");
+	CPluginBase::ShutdownPluginStep(L"ExitFARW2800");
 
 	WaitEndSynchroW2800();
 
@@ -803,7 +803,7 @@ void CPluginW2800::ExitFAR()
 		FSFW2800=NULL;
 	}
 
-	ShutdownPluginStep(L"ExitFARW2800 - done");
+	CPluginBase::ShutdownPluginStep(L"ExitFARW2800 - done");
 }
 
 int ShowMessageW2800(LPCWSTR asMsg, int aiButtons, bool bWarning)

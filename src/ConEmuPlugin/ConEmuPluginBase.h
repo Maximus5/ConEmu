@@ -90,7 +90,9 @@ public:
 	void OnMainThreadActivated();
 	void ProcessSetWindowCommand();
 	void CommonPluginStartup();
+	void StopThread();
 
+	static void ShutdownPluginStep(LPCWSTR asInfo, int nParm1 = 0, int nParm2 = 0, int nParm3 = 0, int nParm4 = 0);
 	static DWORD WINAPI MonitorThreadProcW(LPVOID lpParameter);
 	static void CheckConEmuDetached();
 	static void CloseMapHeader();
