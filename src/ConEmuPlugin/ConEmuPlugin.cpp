@@ -62,7 +62,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/TerminalMode.h"
 #include "../common/MFileMapping.h"
 #include "../common/MSection.h"
-#include "../common/FarVersion.h"
 #include "../ConEmu/version.h"
 #include "PluginHeader.h"
 #include "ConEmuPluginBase.h"
@@ -788,26 +787,6 @@ void WINAPI GetFarVersion(FarVersion* pfv)
 		return;
 
 	*pfv = gFarVersion;
-}
-
-BOOL LoadFarVersion()
-{
-	wchar_t ErrText[512]; ErrText[0] = 0;
-	BOOL lbRc = LoadFarVersion(gFarVersion, ErrText);
-
-	if (ErrText[0])
-	{
-		MessageBox(0, ErrText, L"ConEmu plugin", MB_OK|MB_ICONSTOP|MB_SETFOREGROUND);
-	}
-
-	if (!lbRc)
-	{
-		gFarVersion.dwVerMajor = 2;
-		gFarVersion.dwVerMinor = 0;
-		gFarVersion.dwBuild = FAR_X_VER;
-	}
-
-	return lbRc;
 }
 
 int WINAPI RegisterPanelView(PanelViewInit *ppvi)

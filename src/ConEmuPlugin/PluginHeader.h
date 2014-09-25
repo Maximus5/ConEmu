@@ -150,8 +150,6 @@ void ProcessDragToA();
 
 HWND AtoH(WCHAR *Str, int Len);
 
-BOOL LoadFarVersion();
-
 BOOL OutDataAlloc(DWORD anSize); // необязательно
 BOOL OutDataWrite(LPVOID apData, DWORD anSize);
 

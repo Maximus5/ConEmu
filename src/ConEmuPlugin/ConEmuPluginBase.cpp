@@ -48,6 +48,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmuPlugin1900.h"
 #include "ConEmuPlugin2800.h"
 #include "PluginBackground.h"
+#include "../common/FarVersion.h"
 
 extern MOUSE_EVENT_RECORD gLastMouseReadEvent;
 extern LONG gnDummyMouseEventFromMacro;
@@ -196,6 +197,26 @@ CPluginBase::CPluginBase()
 
 CPluginBase::~CPluginBase()
 {
+}
+
+bool CPluginBase::LoadFarVersion()
+{
+	wchar_t ErrText[512]; ErrText[0] = 0;
+	bool lbRc = LoadFarVersion(gFarVersion, ErrText);
+
+	if (ErrText[0])
+	{
+		MessageBox(0, ErrText, L"ConEmu plugin", MB_OK|MB_ICONSTOP|MB_SETFOREGROUND);
+	}
+
+	if (!lbRc)
+	{
+		gFarVersion.dwVerMajor = 2;
+		gFarVersion.dwVerMinor = 0;
+		gFarVersion.dwBuild = FAR_X_VER;
+	}
+
+	return lbRc;
 }
 
 int CPluginBase::ShowMessageGui(int aiMsg, int aiButtons)

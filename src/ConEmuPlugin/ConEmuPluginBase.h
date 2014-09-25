@@ -114,6 +114,7 @@ public:
 	static void DebugInputPrint(INPUT_RECORD r)
 	#endif
 
+	static bool LoadFarVersion();
 	static bool UngetDummyMouseEvent(bool abRead, HookCallbackArg* pArgs);
 	static void OnConsolePeekReadInput(bool abPeek);
 	static void TouchReadPeekConsoleInputs(int Peek /*= -1*/);
