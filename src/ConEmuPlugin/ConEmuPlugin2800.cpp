@@ -1722,12 +1722,11 @@ void WINAPI GetGlobalInfoW(struct GlobalInfo *Info)
 	Info->Author = L"ConEmu.Maximus5@gmail.com";
 }
 
-extern BOOL gbInfoW_OK;
-HANDLE WINAPI OpenW2800(const void* apInfo)
+HANDLE CPluginW2800::Open(const void* apInfo)
 {
 	const struct OpenInfo *Info = (const struct OpenInfo*)apInfo;
 
-	if (!gbInfoW_OK)
+	if (!mb_StartupInfoOk)
 		return NULL;
 
 	INT_PTR Item = Info->Data;
@@ -1766,7 +1765,7 @@ HANDLE WINAPI OpenW2800(const void* apInfo)
 		Item = (INT_PTR)p->CommandLine;
 	}
 
-	HANDLE h = OpenPluginWcmn(Info->OpenFrom, Item, (Info->OpenFrom == OPEN_FROMMACRO));
+	HANDLE h = OpenPluginCommon(Info->OpenFrom, Item, (Info->OpenFrom == OPEN_FROMMACRO));
 	if ((Info->OpenFrom & OPEN_FROM_MASK) == OPEN_FROMMACRO)
 	{
 		h = (HANDLE)(h != NULL);

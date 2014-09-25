@@ -85,6 +85,7 @@ public:
 	bool UpdateConEmuTabs(bool abSendChanges);
 	void CheckResources(bool abFromStartup);
 	void InitResources();
+	HANDLE OpenPluginCommon(int OpenFrom, INT_PTR Item, bool FromMacro);
 	void ExitFarCommon();
 
 	static void CheckConEmuDetached();

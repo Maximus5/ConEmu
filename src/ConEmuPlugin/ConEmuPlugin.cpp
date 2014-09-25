@@ -286,13 +286,8 @@ void WINAPI GetPluginInfoWcmn(void *piv)
 
 HANDLE WINAPI OpenPluginW(int OpenFrom, INT_PTR Item)
 {
-	HANDLE hPlugin = INVALID_HANDLE_VALUE;
-
-	if (gbInfoW_OK)
-	{
-		hPlugin = OpenPluginWcmn(OpenFrom, Item, ((OpenFrom & OPEN_FROMMACRO) == OPEN_FROMMACRO));
-	}
-
+	CPluginBase* p = Plugin();
+	HANDLE hPlugin = p->OpenPluginCommon(OpenFrom, Item, ((OpenFrom & p->of_FromMacro) == p->of_FromMacro));
 	return hPlugin;
 }
 
@@ -2760,8 +2755,6 @@ void WINAPI SetStartupInfoW(void *aInfo)
 
 	Plugin()->SetStartupInfo(aInfo);
 
-	gbInfoW_OK = TRUE;
-
 	CommonPluginStartup();
 }
 
@@ -3087,18 +3080,7 @@ void StopThread(void)
 
 HANDLE WINAPI OpenW(const void* Info)
 {
-	HANDLE hResult = NULL;
-
-	if (gFarVersion.dwBuild>=FAR_Y2_VER)
-		hResult = FUNC_Y2(OpenW)(Info);
-	else if (gFarVersion.dwBuild>=FAR_Y1_VER)
-		hResult = FUNC_Y1(OpenW)(Info);
-	else
-	{
-		_ASSERTE(FALSE && "Must not called in Far2");
-	}
-
-	return hResult;
+	return Plugin()->Open(Info);
 }
 
 #if 0

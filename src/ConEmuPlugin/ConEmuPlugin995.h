@@ -61,7 +61,7 @@ public:
 	#if 0
 	virtual bool    LoadPlugin(wchar_t* pszPluginPath) override;
 	#endif
-	virtual HANDLE  Open(const void* apInfo) override;
+	virtual HANDLE  Open(const void* apInfo) override { return InvalidPanelHandle; }; // Was not used in Far 2.x
 	virtual bool    OpenEditor(LPCWSTR asFileName, bool abView, bool abDeleteTempFile, bool abDetectCP = false, int anStartLine = 0, int anStartChar = 1) override;
 	virtual void    PostMacroApi(const wchar_t* asMacro, INPUT_RECORD* apRec) override;
 	virtual void    ProcessDragFrom() override;

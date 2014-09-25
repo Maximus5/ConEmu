@@ -1674,12 +1674,11 @@ void WINAPI GetGlobalInfoW(struct GlobalInfo *Info)
 }
 #endif
 
-extern BOOL gbInfoW_OK;
 HANDLE CPluginW1900::Open(const void* apInfo)
 {
 	const struct OpenInfo *Info = (const struct OpenInfo*)apInfo;
 
-	if (!gbInfoW_OK)
+	if (!mb_StartupInfoOk)
 		return NULL;
 
 	INT_PTR Item = Info->Data;

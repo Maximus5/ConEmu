@@ -2084,6 +2084,152 @@ void CPluginBase::CheckConEmuDetached()
 	}
 }
 
+HANDLE CPluginBase::OpenPluginCommon(int OpenFrom, INT_PTR Item, bool FromMacro)
+{
+	if (!mb_StartupInfoOk)
+		return InvalidPanelHandle;
+
+	HANDLE hResult = InvalidPanelHandle;
+	INT_PTR nID = pcc_None; // выбор из меню
+
+	#ifdef _DEBUG
+	if (gFarVersion.dwVerMajor==1)
+	{
+		wchar_t szInfo[128]; _wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"OpenPlugin[Ansi] (%i%s, Item=0x%X, gnReqCmd=%i%s)\n",
+		                               OpenFrom, (OpenFrom==OPEN_COMMANDLINE) ? L"[OPEN_COMMANDLINE]" :
+		                               (OpenFrom==OPEN_PLUGINSMENU) ? L"[OPEN_PLUGINSMENU]" : L"",
+		                               (DWORD)Item,
+		                               (int)gnReqCommand,
+		                               (gnReqCommand == (DWORD)-1) ? L"" :
+		                               (gnReqCommand == CMD_REDRAWFAR) ? L"[CMD_REDRAWFAR]" :
+		                               (gnReqCommand == CMD_EMENU) ? L"[CMD_EMENU]" :
+		                               (gnReqCommand == CMD_SETWINDOW) ? L"[CMD_SETWINDOW]" :
+		                               (gnReqCommand == CMD_POSTMACRO) ? L"[CMD_POSTMACRO]" :
+		                               L"");
+		OutputDebugStringW(szInfo);
+	}
+	#endif
+
+	if (OpenFrom == OPEN_COMMANDLINE && Item)
+	{
+		if (gFarVersion.dwVerMajor==1)
+		{
+			wchar_t* pszUnicode = ToUnicode((char*)Item);
+			ProcessCommandLine(pszUnicode);
+			SafeFree(pszUnicode);
+		}
+		else
+		{
+			ProcessCommandLine((wchar_t*)Item);
+		}
+		goto wrap;
+	}
+
+	if (gnReqCommand != (DWORD)-1)
+	{
+		gnPluginOpenFrom = (OpenFrom & 0xFFFF);
+		ProcessCommand(gnReqCommand, FALSE/*bReqMainThread*/, gpReqCommandData);
+		goto wrap;
+	}
+
+	if (FromMacro)
+	{
+		if (Item >= 0x4000)
+		{
+			// Хорошо бы, конечно точнее определять, строка это, или нет...
+			LPCWSTR pszCallCmd = (LPCWSTR)Item;
+
+			if (!IsBadStringPtrW(pszCallCmd, 255) && *pszCallCmd)
+			{
+				if (!ghConEmuWndDC)
+				{
+					SetEnvironmentVariable(CEGUIMACRORETENVVAR, NULL);
+				}
+				else
+				{
+					int nLen = lstrlenW(pszCallCmd);
+					CESERVER_REQ *pIn = NULL, *pOut = NULL;
+					pIn = ExecuteNewCmd(CECMD_GUIMACRO, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_GUIMACRO)+nLen*sizeof(wchar_t));
+					lstrcpyW(pIn->GuiMacro.sMacro, pszCallCmd);
+					pOut = ExecuteGuiCmd(FarHwnd, pIn, FarHwnd);
+
+					if (pOut)
+					{
+						SetEnvironmentVariable(CEGUIMACRORETENVVAR,
+						                       pOut->GuiMacro.nSucceeded ? pOut->GuiMacro.sMacro : NULL);
+						ExecuteFreeResult(pOut);
+						// 130708 -- Otherwise Far Macro "Plugin.Call" returns "0" always...
+						hResult = (HANDLE)TRUE;
+					}
+					else
+					{
+						SetEnvironmentVariable(CEGUIMACRORETENVVAR, NULL);
+					}
+
+					ExecuteFreeResult(pIn);
+				}
+			}
+
+			goto wrap;
+		}
+
+		if (Item >= pcc_First && Item <= pcc_Last)
+		{
+			nID = Item; // Будет сразу выполнена команда
+		}
+		else if (Item >= SETWND_CALLPLUGIN_BASE)
+		{
+			// Переключение табов выполняется макросом, чтобы "убрать" QSearch и выполнить проверки
+			// (посылается из OnMainThreadActivated: gnReqCommand == CMD_SETWINDOW)
+			DEBUGSTRCMD(L"Plugin: SETWND_CALLPLUGIN_BASE\n");
+			gnPluginOpenFrom = OPEN_PLUGINSMENU;
+			DWORD nTab = (DWORD)(Item - SETWND_CALLPLUGIN_BASE);
+			ProcessCommand(CMD_SETWINDOW, FALSE, &nTab);
+			SetEvent(ghSetWndSendTabsEvent);
+			goto wrap;
+		}
+		else if (Item == CE_CALLPLUGIN_SENDTABS)
+		{
+			DEBUGSTRCMD(L"Plugin: CE_CALLPLUGIN_SENDTABS\n");
+			// Force Send tabs to ConEmu
+			//MSectionLock SC; SC.Lock(csTabs, TRUE);
+			//SendTabs(gnCurTabCount, TRUE);
+			//SC.Unlock();
+			UpdateConEmuTabs(true);
+			SetEvent(ghSetWndSendTabsEvent);
+			goto wrap;
+		}
+		else if (Item == CE_CALLPLUGIN_UPDATEBG)
+		{
+			if (gpBgPlugin)
+			{
+				gpBgPlugin->SetForceUpdate(true);
+				gpBgPlugin->OnMainThreadActivated();
+			}
+			goto wrap;
+		}
+	}
+
+	ShowPluginMenu((PluginCallCommands)nID);
+
+wrap:
+	#ifdef _DEBUG
+	if ((gFarVersion.dwVerMajor==1) && (gnReqCommand != (DWORD)-1))
+	{
+		wchar_t szInfo[128]; _wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"*** OpenPlugin[Ansi] post gnReqCmd=%i%s\n",
+		                               (int)gnReqCommand,
+		                               (gnReqCommand == (DWORD)-1) ? L"" :
+		                               (gnReqCommand == CMD_REDRAWFAR) ? L"CMD_REDRAWFAR" :
+		                               (gnReqCommand == CMD_EMENU) ? L"CMD_EMENU" :
+		                               (gnReqCommand == CMD_SETWINDOW) ? L"CMD_SETWINDOW" :
+		                               (gnReqCommand == CMD_POSTMACRO) ? L"CMD_POSTMACRO" :
+		                               L"");
+		OutputDebugStringW(szInfo);
+	}
+	#endif
+	return hResult;
+}
+
 void CPluginBase::ExitFarCommon()
 {
 	ShutdownPluginStep(L"ExitFarCmn");
