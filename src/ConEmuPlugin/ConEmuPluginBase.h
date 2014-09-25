@@ -44,6 +44,8 @@ const GetPanelDirFlags
 class CPluginBase
 {
 protected:
+	bool mb_StartupInfoOk;
+protected:
 	int ee_Read, ee_Save, ee_Redraw, ee_Close, ee_GotFocus, ee_KillFocus, ee_Change;
 	int ve_Read, ve_Close, ve_GotFocus, ve_KillFocus;
 	int se_CommonSynchro;
@@ -52,6 +54,13 @@ protected:
 	int ma_InfoPanel, ma_QViewPanel, ma_TreePanel, ma_FindFolder, ma_UserMenu;
 	int ma_ShellAutoCompletion, ma_DialogAutoCompletion;
 	int of_LeftDiskMenu, of_PluginsMenu, of_FindList, of_Shortcut, of_CommandLine, of_Editor, of_Viewer, of_FilePanel, of_Dialog, of_Analyse, of_RightDiskMenu, of_FromMacro;
+
+protected:
+	// Используется только в Far 1.7x и Far 2.x
+	// и ТОЛЬКО для ЧТЕНИЯ настроек PanelTabs (SeparateTabs/ButtonColors)
+	wchar_t* ms_RootRegKey; // НЕ ВКЛЮЧАЯ "\\Plugins"
+	void InitRootRegKey();
+	void SetRootRegKey(wchar_t* asKeyPtr);
 
 public:
 	CPluginBase();
@@ -91,6 +100,9 @@ public:
 	static void SendTabs(int tabCount, bool abForceSend=false)
 	static void CloseTabs();
 
+protected:
+	void LoadPanelTabsFromRegistry();
+
 public:
 	virtual BOOL    CheckBufferEnabled() = 0;
 	virtual BOOL    ExecuteSynchro() = 0;
@@ -108,6 +120,7 @@ public:
 	virtual bool    InputBox(LPCWSTR Title, LPCWSTR SubTitle, LPCWSTR HistoryName, LPCWSTR SrcText, wchar_t*& DestText) = 0;
 	virtual bool    IsMacroActive() = 0;
 	virtual void    LoadPanelDirs() = 0;
+	virtual void    LoadPanelTabsSettings() = 0;
 	#if 0
 	virtual bool    LoadPlugin(wchar_t* pszPluginPath) = 0;
 	#endif

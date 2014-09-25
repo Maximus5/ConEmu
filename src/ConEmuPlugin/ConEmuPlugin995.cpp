@@ -104,6 +104,8 @@ CPluginW995::CPluginW995()
 	of_Analyse = OPEN_ANALYSE;
 	of_RightDiskMenu = -1;
 	of_FromMacro = OPEN_FROMMACRO;
+
+	InitRootRegKey();
 }
 
 wchar_t* CPluginW995::GetPanelDir(GetPanelDirFlags Flags)
@@ -483,6 +485,7 @@ void CPluginW995::ProcessDragTo()
 void CPluginW995::SetStartupInfo(void *aInfo)
 {
 	INIT_FAR_PSI(::InfoW995, ::FSFW995, (PluginStartupInfo*)aInfo);
+	mb_StartupInfoOk = true;
 
 	DWORD nFarVer = 0;
 	if (InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETFARVERSION, &nFarVer))
@@ -499,11 +502,7 @@ void CPluginW995::SetStartupInfo(void *aInfo)
 		}
 	}
 
-	lstrcpynW(gszRootKey, InfoW995->RootKey, countof(gszRootKey));
-	WCHAR* pszSlash = gszRootKey+lstrlenW(gszRootKey)-1;
-	if (*pszSlash == L'\\') *(pszSlash--) = 0;
-	while(pszSlash>gszRootKey && *pszSlash!=L'\\') pszSlash--;
-	*pszSlash = 0;
+	SetRootRegKey(lstrdup(InfoW995->RootKey));
 }
 
 DWORD CPluginW995::GetEditorModifiedState()

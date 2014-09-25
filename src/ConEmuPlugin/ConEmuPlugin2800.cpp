@@ -548,6 +548,7 @@ void CPluginW2800::ProcessDragTo()
 void CPluginW2800::SetStartupInfo(void *aInfo)
 {
 	INIT_FAR_PSI(::InfoW2800, ::FSFW2800, (PluginStartupInfo*)aInfo);
+	mb_StartupInfoOk = true;
 
 	VersionInfo FarVer = {0};
 	if (InfoW2800->AdvControl(&guid_ConEmu, ACTL_GETFARMANAGERVERSION, 0, &FarVer))
@@ -559,17 +560,12 @@ void CPluginW2800::SetStartupInfo(void *aInfo)
 			gFarVersion.dwVerMajor = (WORD)FarVer.Major;
 			gFarVersion.dwVerMinor = (WORD)FarVer.Minor;
 			gFarVersion.Bis = (FarVer.Stage==VS_BIS);
-			InitRootKey();
 		}
 		else
 		{
 			_ASSERTE(FarVer.Major == 3);
 		}
 	}
-
-	// Коды должны совпадать с Far2, а то menu_ShowTabsList надо будет переписывать
-	_ASSERTE(MACROAREA_SHELL==1 && MACROAREA_SEARCH==5 && MACROAREA_INFOPANEL==10 && MACROAREA_QVIEWPANEL==11);
-	_ASSERTE(MACROAREA_TREEPANEL==12 && OPEN_FILEPANEL==7 && MACROAREA_EDITOR==3 && MACROAREA_VIEWER==2);
 }
 
 DWORD CPluginW2800::GetEditorModifiedState()

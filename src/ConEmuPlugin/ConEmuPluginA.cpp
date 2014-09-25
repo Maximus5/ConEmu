@@ -87,6 +87,8 @@ CPluginAnsi::CPluginAnsi()
 	of_Analyse = -1;
 	of_RightDiskMenu = OPEN_DISKMENU;
 	of_FromMacro = -1;
+
+	InitRootRegKey();
 }
 
 LPWSTR CPluginAnsi::ToUnicode(LPCSTR asOemStr)
@@ -491,9 +493,21 @@ extern "C" {
 
 void WINAPI _export SetStartupInfo(const struct PluginStartupInfo *aInfo)
 {
-	//LoadFarVersion - уже вызван в GetStartupInfo
+	if (gFarVersion.dwVerMajor != 1)
+	{
+		gFarVersion.dwVerMajor = 1;
+		gFarVersion.dwVerMinor = 75;
+	}
 
+	Plugin()->SetStartupInfo(aInfo);
+
+	CommonPluginStartup();
+}
+
+void CPluginAnsi::SetStartupInfo(void *aInfo)
+{
 	INIT_FAR_PSI(::InfoA, ::FSFA, aInfo);
+	mb_StartupInfoOk = true;
 
 	DWORD nFarVer = 0;
 	if (InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETFARVERSION, &nFarVer))
@@ -510,20 +524,25 @@ void WINAPI _export SetStartupInfo(const struct PluginStartupInfo *aInfo)
 		}
 	}
 
-	MultiByteToWideChar(CP_OEMCP,0,InfoA->RootKey,lstrlenA(InfoA->RootKey)+1,gszRootKey,countof(gszRootKey)-1);
-	gszRootKey[countof(gszRootKey)-1] = 0;
-	WCHAR* pszSlash = gszRootKey+lstrlenW(gszRootKey)-1;
-	if (*pszSlash == L'\\') *(pszSlash--) = 0;
-	while(pszSlash>gszRootKey && *pszSlash!=L'\\') pszSlash--;
-	*pszSlash = 0;
-
-	CommonPluginStartup();
+	SetRootRegKey(ToUnicode(InfoA->RootKey));
 }
 
 //extern WCHAR gcPlugKey; // Для ANSI far он инициализируется как (char)
 
 void WINAPI _export GetPluginInfo(struct PluginInfo *pi)
 {
+	if (gFarVersion.dwVerMajor != 1)
+	{
+		gFarVersion.dwVerMajor = 1;
+		gFarVersion.dwVerMinor = 75;
+	}
+
+	Plugin()->GetPluginInfo(pi);
+}
+
+void CPluginAnsi::GetPluginInfo(void *piv)
+{
+	PluginInfo *pi = (PluginInfo*)piv;
 	_ASSERTE(pi->StructSize==0);
 	pi->StructSize = sizeof(struct PluginInfo);
 	//_ASSERTE(pi->StructSize>0 && (pi->StructSize >= sizeof(*pi)));

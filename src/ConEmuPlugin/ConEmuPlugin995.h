@@ -57,6 +57,7 @@ public:
 	virtual bool    InputBox(LPCWSTR Title, LPCWSTR SubTitle, LPCWSTR HistoryName, LPCWSTR SrcText, wchar_t*& DestText);
 	virtual bool    IsMacroActive() override;
 	virtual void    LoadPanelDirs() override;
+	virtual void    LoadPanelTabsSettings() override;
 	#if 0
 	virtual bool    LoadPlugin(wchar_t* pszPluginPath) override;
 	#endif

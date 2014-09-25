@@ -121,6 +121,9 @@ CPluginBase* Plugin()
 {
 	if (!gpPlugin)
 	{
+		if (!gFarVersion.dwVerMajor)
+			LoadFarVersion();
+
 		if (gFarVersion.dwVerMajor==1)
 			gpPlugin = new CPluginAnsi();
 		else if (gFarVersion.dwBuild>=FAR_Y2_VER)
@@ -136,6 +139,8 @@ CPluginBase* Plugin()
 
 CPluginBase::CPluginBase()
 {
+	mb_StartupInfoOk = false;
+
 	ee_Read = ee_Save = ee_Redraw = ee_Close = ee_GotFocus = ee_KillFocus = ee_Change = -1;
 	ve_Read = ve_Close = ve_GotFocus = ve_KillFocus = -1;
 	se_CommonSynchro = -1;
@@ -144,6 +149,8 @@ CPluginBase::CPluginBase()
 	ma_InfoPanel = ma_QViewPanel = ma_TreePanel = ma_FindFolder = ma_UserMenu = -1;
 	ma_ShellAutoCompletion = ma_DialogAutoCompletion = -1;
 	of_LeftDiskMenu = of_PluginsMenu = of_FindList = of_Shortcut = of_CommandLine = of_Editor = of_Viewer = of_FilePanel = of_Dialog = of_Analyse = of_RightDiskMenu = of_FromMacro = -1;
+
+	ms_RootRegKey = NULL;
 }
 
 CPluginBase::~CPluginBase()
@@ -1863,4 +1870,70 @@ int CPluginBase::OpenMapHeader()
 	}
 
 	return iRc;
+}
+
+void CPluginBase::InitRootRegKey()
+{
+	_ASSERTE(gFarVersion.dwVerMajor==1 || gFarVersion.dwVerMajor==2);
+	// начальная инициализация. в SetStartupInfo поправим
+	LPCWSTR pszFarName = (gFarVersion.dwVerMajor==3) ? L"Far Manager" :
+		(gFarVersion.dwVerMajor==2) ? L"FAR2"
+		: L"FAR";
+
+	// Нужно учесть, что FAR мог запуститься с ключом /u (выбор конфигурации)
+	wchar_t szFarUser[MAX_PATH];
+	if (GetEnvironmentVariable(L"FARUSER", szFarUser, countof(szFarUser)) == 0)
+		szFarUser[0] = 0;
+
+	SafeFree(ms_RootRegKey);
+	if (szFarUser[0])
+		ms_RootRegKey = lstrmerge(L"Software\\", pszFarName, L"\\Users\\", szFarUser);
+	else
+		ms_RootRegKey = lstrmerge(L"Software\\", pszFarName);
+}
+
+void CPluginBase::SetRootRegKey(wchar_t* asKeyPtr)
+{
+	SafeFree(ms_RootRegKey);
+	ms_RootRegKey = asKeyPtr;
+
+	int nLen = ms_RootRegKey ? lstrlen(ms_RootRegKey) : 0;
+	// Тут к нам приходит путь к настройкам НАШЕГО плагина
+	// А на нужно получить "общий" ключ (для последующего считывания LoadPanelTabsFromRegistry
+	if (nLen > 0)
+	{
+		if (ms_RootRegKey[nLen-1] == L'\\')
+			ms_RootRegKey[nLen-1] = 0;
+		wchar_t* pszName = wcsrchr(ms_RootRegKey, L'\\');
+		if (pszName)
+			*pszName = 0;
+		else
+			SafeFree(ms_RootRegKey);
+	}
+}
+
+void CPluginBase::LoadPanelTabsFromRegistry()
+{
+	if (!ms_RootRegKey || !*ms_RootRegKey)
+		return;
+
+	wchar_t* pszTabsKey = lstrmerge(ms_RootRegKey, L"\\Plugins\\PanelTabs");
+	if (!pszTabsKey)
+		return;
+
+	HKEY hk;
+	if (0 == RegOpenKeyExW(HKEY_CURRENT_USER, szTabsKey, 0, KEY_READ, &hk))
+	{
+		DWORD dwVal, dwSize;
+
+		if (!RegQueryValueExW(hk, L"SeparateTabs", NULL, NULL, (LPBYTE)&dwVal, &(dwSize = sizeof(dwVal))))
+			gpFarInfo->PanelTabs.SeparateTabs = dwVal ? 1 : 0;
+
+		if (!RegQueryValueExW(hk, L"ButtonColor", NULL, NULL, (LPBYTE)&dwVal, &(dwSize = sizeof(dwVal))))
+			gpFarInfo->PanelTabs.ButtonColor = dwVal & 0xFF;
+
+		RegCloseKey(hk);
+	}
+
+	free(pszTabsKey);
 }

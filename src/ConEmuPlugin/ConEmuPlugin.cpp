@@ -134,8 +134,6 @@ HANDLE ghMonitorThread = NULL; DWORD gnMonitorThreadId = 0;
 HANDLE ghSetWndSendTabsEvent = NULL;
 FarVersion gFarVersion = {};
 WCHAR gszDir1[CONEMUTABMAX], gszDir2[CONEMUTABMAX];
-// gszRootKey используется ТОЛЬКО для ЧТЕНИЯ настроек PanelTabs (SeparateTabs/ButtonColors)
-WCHAR gszRootKey[MAX_PATH*2]; // НЕ ВКЛЮЧАЯ "\\Plugins"
 int maxTabCount = 0, lastWindowCount = 0, gnCurTabCount = 0;
 CESERVER_REQ* gpTabs = NULL; //(ConEmuTab*) Alloc(maxTabCount, sizeof(ConEmuTab));
 BOOL gbForceSendTabs = FALSE;
@@ -2286,7 +2284,7 @@ BOOL ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData, CESERV
 			//HKEY hRClkKey = NULL;
 			//DWORD disp = 0;
 			//WCHAR szEMenuKey[MAX_PATH*2+64];
-			//lstrcpyW(szEMenuKey, gszRootKey);
+			//lstrcpyW(szEMenuKey, ms_RootRegKey);
 			//lstrcatW(szEMenuKey, L"\\Plugins\\RightClick");
 
 			//// Ключа может и не быть, если настройки ни разу не сохранялись
@@ -2893,26 +2891,16 @@ void CommonPluginStartup()
 
 void WINAPI SetStartupInfoW(void *aInfo)
 {
-	if (!gFarVersion.dwVerMajor) LoadFarVersion();
-
-#ifdef _DEBUG
+	#ifdef _DEBUG
 	HMODULE h = LoadLibrary (L"Kernel32.dll");
 	FreeLibrary(h);
-#endif
+	#endif
 
 	Plugin()->SetStartupInfo(aInfo);
 
 	gbInfoW_OK = TRUE;
+
 	CommonPluginStartup();
-	//gbBgPluginsAllowed = TRUE;
-	// в FAR2 устарело - Synchro
-	//CheckMacro(TRUE);
-	//// здесь же и ReloadFarInfo() позовется
-	//if (gpConMapInfo) //2010-03-04 Имеет смысл только при запуске из-под ConEmu
-	//{
-	//	CheckResources(true);
-	//	LogCreateProcessCheck((LPCWSTR)-1);
-	//}
 }
 
 //#define CREATEEVENT(fmt,h)
@@ -2922,21 +2910,6 @@ void WINAPI SetStartupInfoW(void *aInfo)
 
 
 
-void InitRootKey()
-{
-	// начальная инициализация. в SetStartupInfo поправим
-	_wsprintf(gszRootKey, SKIPLEN(countof(gszRootKey)) L"Software\\%s",
-		(gFarVersion.dwVerMajor==3) ? L"Far Manager" :
-		(gFarVersion.dwVerMajor==2) ? L"FAR2"
-		: L"FAR");
-	// Нужно учесть, что FAR мог запуститься с ключом /u (выбор конфигурации)
-	wchar_t* pszUserSlash = gszRootKey+lstrlenW(gszRootKey);
-	lstrcpyW(pszUserSlash, L"\\Users\\");
-	wchar_t* pszUserAdd = pszUserSlash+lstrlenW(pszUserSlash);
-
-	if (GetEnvironmentVariable(L"FARUSER", pszUserAdd, MAX_PATH) == 0)
-		*pszUserSlash = 0;
-}
 
 void InitHWND(/*HWND ahFarHwnd*/)
 {
@@ -2956,20 +2929,6 @@ void InitHWND(/*HWND ahFarHwnd*/)
 			}
 		}
 	}
-
-	// начальная инициализация. в SetStartupInfo поправим
-	InitRootKey();
-	//_wsprintf(gszRootKey, SKIPLEN(countof(gszRootKey)) L"Software\\%s",
-	//	(gFarVersion.dwVerMajor==3) ? L"Far Manager"
-	//	(gFarVersion.dwVerMajor==2) ? L"FAR2"
-	//	: L"FAR");
-	//// Нужно учесть, что FAR мог запуститься с ключом /u (выбор конфигурации)
-	//wchar_t* pszUserSlash = gszRootKey+lstrlenW(gszRootKey);
-	//lstrcpyW(pszUserSlash, L"\\Users\\");
-	//wchar_t* pszUserAdd = pszUserSlash+lstrlenW(pszUserSlash);
-
-	//if (GetEnvironmentVariable(L"FARUSER", pszUserAdd, MAX_PATH) == 0)
-	//	*pszUserSlash = 0;
 
 
 	// Returns HWND of ...
@@ -3145,28 +3104,7 @@ BOOL ReloadFarInfo(BOOL abForce)
 
 		// Загрузить из реестра настройки PanelTabs
 		gpFarInfo->PanelTabs.SeparateTabs = gpFarInfo->PanelTabs.ButtonColor = -1;
-
-		if (*gszRootKey)
-		{
-			WCHAR szTabsKey[MAX_PATH*2+32];
-			lstrcpyW(szTabsKey, gszRootKey);
-			int nLen = lstrlenW(szTabsKey);
-			lstrcpyW(szTabsKey+nLen, (szTabsKey[nLen-1] == L'\\') ? L"Plugins\\PanelTabs" : L"\\Plugins\\PanelTabs");
-			HKEY hk;
-
-			if (0 == RegOpenKeyExW(HKEY_CURRENT_USER, szTabsKey, 0, KEY_READ, &hk))
-			{
-				DWORD dwVal, dwSize;
-
-				if (!RegQueryValueExW(hk, L"SeparateTabs", NULL, NULL, (LPBYTE)&dwVal, &(dwSize = sizeof(dwVal))))
-					gpFarInfo->PanelTabs.SeparateTabs = dwVal ? 1 : 0;
-
-				if (!RegQueryValueExW(hk, L"ButtonColor", NULL, NULL, (LPBYTE)&dwVal, &(dwSize = sizeof(dwVal))))
-					gpFarInfo->PanelTabs.ButtonColor = dwVal & 0xFF;
-
-				RegCloseKey(hk);
-			}
-		}
+		LoadPanelTabsFromRegistry();
 	}
 
 	BOOL lbChanged = FALSE, lbSucceded = FALSE;
