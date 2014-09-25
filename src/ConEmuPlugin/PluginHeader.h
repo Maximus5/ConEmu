@@ -195,8 +195,6 @@ extern "C" {
 }
 #endif
 
-BOOL FarSetConsoleSize(SHORT nNewWidth, SHORT nNewHeight);
-
 BOOL StartupHooks(HMODULE ahOurDll);
 void ShutdownHooks();
 

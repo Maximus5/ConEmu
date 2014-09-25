@@ -3514,3 +3514,35 @@ bool CPluginBase::ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pComman
 
 	return lbSucceeded;
 }
+
+// Изменить размер консоли. Собственно сам ресайз - выполняется сервером!
+bool CPluginBase::FarSetConsoleSize(SHORT nNewWidth, SHORT nNewHeight)
+{
+	bool lbRc = false;
+
+	if (!gdwServerPID)
+	{
+		_ASSERTE(gdwServerPID!=0);
+	}
+	else
+	{
+		CESERVER_REQ In;
+		ExecutePrepareCmd(&In, CECMD_SETSIZENOSYNC, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_SETSIZE));
+		memset(&In.SetSize, 0, sizeof(In.SetSize));
+		// Для 'far /w' нужно оставить высоту буфера!
+		In.SetSize.nBufferHeight = gpFarInfo->bBufferSupport ? -1 : 0;
+		In.SetSize.size.X = nNewWidth; In.SetSize.size.Y = nNewHeight;
+		DWORD nSrvPID = (gpConMapInfo && gpConMapInfo->nAltServerPID) ? gpConMapInfo->nAltServerPID : gdwServerPID;
+		CESERVER_REQ* pOut = ExecuteSrvCmd(nSrvPID, &In, GetConEmuHWND(2));
+
+		if (pOut)
+		{
+			ExecuteFreeResult(pOut);
+			lbRc = true;
+		}
+
+		Plugin()->RedrawAll();
+	}
+
+	return lbRc;
+}

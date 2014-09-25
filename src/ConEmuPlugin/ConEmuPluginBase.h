@@ -93,6 +93,7 @@ public:
 	void StopThread();
 	void ExecuteSynchro();
 	bool ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData, CESERVER_REQ** ppResult = NULL, bool bForceSendTabs = false);
+	bool FarSetConsoleSize(SHORT nNewWidth, SHORT nNewHeight);
 
 	bool cmd_OpenEditorLine(CESERVER_REQ_FAREDITOR *pCmd);
 	bool cmd_RedrawFarCall();
