@@ -87,6 +87,8 @@ public:
 	void InitResources();
 	HANDLE OpenPluginCommon(int OpenFrom, INT_PTR Item, bool FromMacro);
 	void ExitFarCommon();
+	void OnMainThreadActivated();
+	void ProcessSetWindowCommand();
 
 	static void CheckConEmuDetached();
 	static void CloseMapHeader();
