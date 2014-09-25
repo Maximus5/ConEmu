@@ -1791,3 +1791,76 @@ void CPluginBase::InitResources()
 		GetEnvironmentVariable(L"FARLANG", gsFarLang, 63);
 	}
 }
+
+void CPluginBase::CloseMapHeader()
+{
+	if (gpConMap)
+		gpConMap->CloseMap();
+
+	// delete для gpConMap здесь не делаем, может использоваться в других нитях!
+	gpConMapInfo = NULL;
+}
+
+int CPluginBase::OpenMapHeader()
+{
+	int iRc = -1;
+
+	CloseMapHeader();
+
+	if (FarHwnd)
+	{
+		if (!gpConMap)
+			gpConMap = new MFileMapping<CESERVER_CONSOLE_MAPPING_HDR>;
+
+		gpConMap->InitName(CECONMAPNAME, (DWORD)FarHwnd); //-V205
+
+		if (gpConMap->Open())
+		{
+			gpConMapInfo = gpConMap->Ptr();
+
+			if (gpConMapInfo)
+			{
+				if (gpConMapInfo->hConEmuWndDc)
+				{
+					SetConEmuEnvVar(gpConMapInfo->hConEmuRoot);
+					SetConEmuEnvVarChild(gpConMapInfo->hConEmuWndDc, gpConMapInfo->hConEmuWndBack);
+				}
+				//if (gpConMapInfo->nLogLevel)
+				//	InstallTrapHandler();
+				iRc = 0;
+			}
+		}
+		else
+		{
+			gpConMapInfo = NULL;
+		}
+
+		//_wsprintf(szMapName, SKIPLEN(countof(szMapName)) CECONMAPNAME, (DWORD)FarHwnd);
+		//ghFileMapping = OpenFileMapping(FILE_MAP_READ, FALSE, szMapName);
+		//if (ghFileMapping)
+		//{
+		//	gpConMapInfo = (const CESERVER_CONSOLE_MAPPING_HDR*)MapViewOfFile(ghFileMapping, FILE_MAP_READ,0,0,0);
+		//	if (gpConMapInfo)
+		//	{
+		//		//ReloadFarInfo(); -- смысла нет. SetStartupInfo еще не вызывался
+		//		iRc = 0;
+		//	}
+		//	else
+		//	{
+		//		#ifdef _DEBUG
+		//		dwErr = GetLastError();
+		//		#endif
+		//		CloseHandle(ghFileMapping);
+		//		ghFileMapping = NULL;
+		//	}
+		//}
+		//else
+		//{
+		//	#ifdef _DEBUG
+		//	dwErr = GetLastError();
+		//	#endif
+		//}
+	}
+
+	return iRc;
+}

@@ -75,6 +75,8 @@ public:
 	bool UpdateConEmuTabs(bool abSendChanges);
 	void CheckResources(bool abFromStartup);
 	void InitResources();
+	void CloseMapHeader();
+	int OpenMapHeader();
 
 	static DWORD GetMainThreadId();
 	static bool RunExternalProgramW(wchar_t* pszCommand, wchar_t* pszCurDir, bool bSilent=false);
