@@ -645,6 +645,21 @@ int CPluginBase::ProcessSynchroEvent(int Event, void *Param)
 	return 0;
 }
 
+void CPluginBase::ProcessEditorInput(const INPUT_RECORD& Rec)
+{
+	// only key events with virtual codes > 0 are likely to cause status change (?)
+	if (((Rec.EventType & 0xFF) == KEY_EVENT) && Rec.Event.KeyEvent.bKeyDown
+		&& (Rec.Event.KeyEvent.wVirtualKeyCode || Rec.Event.KeyEvent.wVirtualScanCode || Rec.Event.KeyEvent.uChar.UnicodeChar))
+    {
+		#ifdef SHOW_DEBUG_EVENTS
+		char szDbg[255]; wsprintfA(szDbg, "ProcessEditorInput(E=%i, VK=%i, SC=%i, CH=%i, Down=%i)\n", Rec.EventType, Rec.Event.KeyEvent.wVirtualKeyCode, Rec.Event.KeyEvent.wVirtualScanCode, Rec.Event.KeyEvent.uChar.AsciiChar, Rec.Event.KeyEvent.bKeyDown);
+		OutputDebugStringA(szDbg);
+		#endif
+
+		gbNeedPostEditCheck = TRUE;
+	}
+}
+
 int CPluginBase::ProcessEditorViewerEvent(int EditorEvent, int ViewerEvent)
 {
 	if (EditorEvent == ee_Redraw)

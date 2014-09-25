@@ -97,6 +97,7 @@ public:
 	bool ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData, CESERVER_REQ** ppResult = NULL, bool bForceSendTabs = false);
 	bool FarSetConsoleSize(SHORT nNewWidth, SHORT nNewHeight);
 	bool ReloadFarInfo(bool abForce);
+	void ProcessEditorInput(const INPUT_RECORD& Rec);
 
 	bool cmd_OpenEditorLine(CESERVER_REQ_FAREDITOR *pCmd);
 	bool cmd_RedrawFarCall();

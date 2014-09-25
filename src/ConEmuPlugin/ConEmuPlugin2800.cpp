@@ -599,21 +599,13 @@ int CPluginW2800::ProcessSynchroEvent(void* p)
 }
 
 // watch non-modified -> modified editor status change
-int ProcessEditorInputW2800(LPCVOID aRec)
+int CPluginW2800::ProcessEditorInput(LPCVOID aRec)
 {
 	if (!InfoW2800)
 		return 0;
 
 	const ProcessEditorInputInfo *apInfo = (const ProcessEditorInputInfo*)aRec;
-
-	// only key events with virtual codes > 0 are likely to cause status change (?)
-	if (!gbRequestUpdateTabs && (apInfo->Rec.EventType & 0xFF) == KEY_EVENT
-	        && (apInfo->Rec.Event.KeyEvent.wVirtualKeyCode || apInfo->Rec.Event.KeyEvent.wVirtualScanCode || apInfo->Rec.Event.KeyEvent.uChar.UnicodeChar)
-	        && apInfo->Rec.Event.KeyEvent.bKeyDown)
-	{
-		//if (!gbRequestUpdateTabs)
-		gbNeedPostEditCheck = TRUE;
-	}
+	ProcessEditorInput(apInfo->Rec);
 
 	return 0;
 }

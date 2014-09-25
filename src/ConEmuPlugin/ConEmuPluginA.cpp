@@ -528,21 +528,11 @@ DWORD CPluginAnsi::GetEditorModifiedState()
 // watch non-modified -> modified editor status change
 int WINAPI _export ProcessEditorInput(const INPUT_RECORD *Rec)
 {
-	if (/*!ghConEmuWndDC ||*/ !InfoA)  // иногда событие от QuickView приходит ДО инициализации плагина
+	if (!InfoA)  // иногда событие от QuickView приходит ДО инициализации плагина
 		return 0; // Даже если мы не под эмулятором - просто запомним текущее состояние
 
 	// only key events with virtual codes > 0 are likely to cause status change (?)
-
-	if (!gbRequestUpdateTabs && (Rec->EventType & 0xFF) == KEY_EVENT
-	        && (Rec->Event.KeyEvent.wVirtualKeyCode || Rec->Event.KeyEvent.wVirtualScanCode || Rec->Event.KeyEvent.uChar.AsciiChar)
-	        && Rec->Event.KeyEvent.bKeyDown)
-	{
-#ifdef SHOW_DEBUG_EVENTS
-		char szDbg[255]; wsprintfA(szDbg, "ProcessEditorInput(E=%i, VK=%i, SC=%i, CH=%i, Down=%i)\n", Rec->EventType, Rec->Event.KeyEvent.wVirtualKeyCode, Rec->Event.KeyEvent.wVirtualScanCode, Rec->Event.KeyEvent.uChar.AsciiChar, Rec->Event.KeyEvent.bKeyDown);
-		OutputDebugStringA(szDbg);
-#endif
-		gbNeedPostEditCheck = TRUE;
-	}
+	ProcessEditorInput(*Rec);
 
 	return 0;
 }

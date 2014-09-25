@@ -528,15 +528,7 @@ int CPluginW995::ProcessEditorInput(LPCVOID aRec)
 		return 0;
 
 	const INPUT_RECORD *Rec = (const INPUT_RECORD*)aRec;
-
-	// only key events with virtual codes > 0 are likely to cause status change (?)
-	if (!gbRequestUpdateTabs && (Rec->EventType & 0xFF) == KEY_EVENT
-	        && (Rec->Event.KeyEvent.wVirtualKeyCode || Rec->Event.KeyEvent.wVirtualScanCode || Rec->Event.KeyEvent.uChar.UnicodeChar)
-	        && Rec->Event.KeyEvent.bKeyDown)
-	{
-		//if (!gbRequestUpdateTabs)
-		gbNeedPostEditCheck = TRUE;
-	}
+	ProcessEditorInput(*Rec);
 
 	return 0;
 }
