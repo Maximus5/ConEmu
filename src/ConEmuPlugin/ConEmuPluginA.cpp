@@ -549,8 +549,6 @@ int WINAPI _export ProcessEditorInput(const INPUT_RECORD *Rec)
 
 int WINAPI _export ProcessEditorEvent(int Event, void *Param)
 {
-	if (Event == EE_REDRAW)
-		return 0;
 	return Plugin()->ProcessEditorViewerEvent(Event, -1);
 }
 

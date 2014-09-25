@@ -204,361 +204,6 @@ DWORD gnPeekReadCount = 0;
 
 
 
-BOOL OnPanelViewCallbacks(HookCallbackArg* pArgs, PanelViewInputCallback pfnLeft, PanelViewInputCallback pfnRight)
-{
-	if (!pArgs->bMainThread || !(pfnLeft || pfnRight))
-	{
-		_ASSERTE(pArgs->bMainThread && (pfnLeft || pfnRight));
-		return TRUE; // перехват делаем только в основной нити
-	}
-
-	BOOL lbNewResult = FALSE, lbContinue = TRUE;
-	HANDLE hInput = (HANDLE)(pArgs->lArguments[0]);
-	PINPUT_RECORD p = (PINPUT_RECORD)(pArgs->lArguments[1]);
-	DWORD nBufSize = (DWORD)(pArgs->lArguments[2]);
-	LPDWORD pCount = (LPDWORD)(pArgs->lArguments[3]);
-
-	if (lbContinue && pfnLeft)
-	{
-		_ASSERTE(gPanelRegLeft.bRegister);
-		lbContinue = pfnLeft(hInput,p,nBufSize,pCount,&lbNewResult);
-
-		if (!lbContinue)
-			*((BOOL*)pArgs->lpResult) = lbNewResult;
-	}
-
-	// Если есть только правая панель, или на правой панели задана другая функция
-	if (lbContinue && pfnRight && pfnRight != pfnLeft)
-	{
-		_ASSERTE(gPanelRegRight.bRegister);
-		lbContinue = pfnRight(hInput,p,nBufSize,pCount,&lbNewResult);
-
-		if (!lbContinue)
-			*((BOOL*)pArgs->lpResult) = lbNewResult;
-	}
-
-	return lbContinue;
-}
-
-
-VOID WINAPI OnShellExecuteExW_Except(HookCallbackArg* pArgs)
-{
-	if (pArgs->bMainThread)
-	{
-		ShowMessage(CEShellExecuteException,0);
-	}
-
-	*((LPBOOL*)pArgs->lpResult) = FALSE;
-	SetLastError(E_UNEXPECTED);
-}
-
-
-// Для определения "живости" фара
-VOID WINAPI OnGetNumberOfConsoleInputEventsPost(HookCallbackArg* pArgs)
-{
-	if (pArgs->bMainThread && gpConMapInfo && gpFarInfo && gpFarInfoMapping)
-	{
-		TouchReadPeekConsoleInputs(-1);
-	}
-}
-
-// Если функция возвращает FALSE - реальный ReadConsoleInput вызван не будет,
-// и в вызывающую функцию (ФАРа?) вернется то, что проставлено в pArgs->lpResult & pArgs->lArguments[...]
-BOOL WINAPI OnConsolePeekInput(HookCallbackArg* pArgs)
-{
-	if (!pArgs->bMainThread)
-		return TRUE;  // обработку делаем только в основной нити
-
-	if (gbUngetDummyMouseEvent)
-	{
-		if (CPluginBase::UngetDummyMouseEvent(FALSE, pArgs))
-			return FALSE; // реальный ReadConsoleInput вызван не будет
-	}
-
-	//// Выставить флажок "Жив" можно и при вызове из плагина
-	//if (gpConMapInfo && gpFarInfo && gpFarInfoMapping)
-	//	TouchReadPeekConsoleInputs(1);
-
-	//if (pArgs->IsExecutable != HEO_Executable)
-	//	return TRUE;  // и только при вызове из far.exe
-
-	if (pArgs->lArguments[2] == 1)
-	{
-		OnConsolePeekReadInput(TRUE/*abPeek*/);
-	}
-
-	// Если зарегистрирован callback для графической панели
-	if (gPanelRegLeft.pfnPeekPreCall || gPanelRegRight.pfnPeekPreCall)
-	{
-		// Если функция возвращает FALSE - реальное чтение не будет вызвано
-		if (!OnPanelViewCallbacks(pArgs, gPanelRegLeft.pfnPeekPreCall, gPanelRegRight.pfnPeekPreCall))
-			return FALSE;
-	}
-
-	return TRUE; // продолжить
-}
-
-VOID WINAPI OnConsolePeekInputPost(HookCallbackArg* pArgs)
-{
-	if (!pArgs->bMainThread) return;  // обработку делаем только в основной нити
-
-#ifdef _DEBUG
-
-	if (*(LPDWORD)(pArgs->lArguments[3]))
-	{
-		wchar_t szDbg[255];
-		PINPUT_RECORD p = (PINPUT_RECORD)(pArgs->lArguments[1]);
-		LPDWORD pCount = (LPDWORD)(pArgs->lArguments[3]);
-		DWORD nLeft = 0; GetNumberOfConsoleInputEvents(GetStdHandle(STD_INPUT_HANDLE), &nLeft);
-		_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"*** OnConsolePeekInputPost(Events=%i, KeyCount=%i, LeftInConBuffer=%i)\n",
-		          *pCount, (p->EventType==KEY_EVENT) ? p->Event.KeyEvent.wRepeatCount : 0, nLeft);
-		DEBUGSTRINPUT(szDbg);
-
-		// Если под дебагом включен ScrollLock - вывести информацию о считанных событиях
-		if (GetKeyState(VK_SCROLL) & 1)
-		{
-			PINPUT_RECORD p = (PINPUT_RECORD)(pArgs->lArguments[1]);
-			LPDWORD pCount = (LPDWORD)(pArgs->lArguments[3]);
-			_ASSERTE(*pCount <= pArgs->lArguments[2]);
-			UINT nCount = *pCount;
-
-			for(UINT i = 0; i < nCount; i++)
-				DebugInputPrint(p[i]);
-		}
-	}
-
-#endif
-
-	// Если зарегистрирован callback для графической панели
-	if (gPanelRegLeft.pfnPeekPostCall || gPanelRegRight.pfnPeekPostCall)
-	{
-		// Если функция возвращает FALSE - реальное чтение не будет вызвано
-		if (!OnPanelViewCallbacks(pArgs, gPanelRegLeft.pfnPeekPostCall, gPanelRegRight.pfnPeekPostCall))
-			return;
-	}
-}
-
-// Если функция возвращает FALSE - реальный ReadConsoleInput вызван не будет,
-// и в вызывающую функцию (ФАРа?) вернется то, что проставлено в pArgs->lpResult & pArgs->lArguments[...]
-BOOL OnConsoleReadInputWork(HookCallbackArg* pArgs)
-{
-	if (!pArgs->bMainThread)
-		return TRUE;  // обработку делаем только в основной нити
-
-	if (gbUngetDummyMouseEvent)
-	{
-		if (CPluginBase::UngetDummyMouseEvent(TRUE, pArgs))
-		{
-			gbUngetDummyMouseEvent = FALSE;
-			gLastMouseReadEvent.dwButtonState = 0; // будем считать, что "мышиную блокировку" успешно сняли
-			return FALSE; // реальный ReadConsoleInput вызван не будет
-		}
-		_ASSERTE(gbUngetDummyMouseEvent == FALSE);
-	}
-
-	//// Выставить флажок "Жив" можно и при вызове из плагина
-	//if (gpConMapInfo && gpFarInfo && gpFarInfoMapping)
-	//	TouchReadPeekConsoleInputs(0);
-	//
-	//if (pArgs->IsExecutable != HEO_Executable)
-	//	return TRUE;  // и только при вызове из far.exe
-
-	if (pArgs->lArguments[2] == 1)
-	{
-		OnConsolePeekReadInput(FALSE/*abPeek*/);
-	}
-
-	// Если зарегистрирован callback для графической панели
-	if (gPanelRegLeft.pfnReadPreCall || gPanelRegRight.pfnReadPreCall)
-	{
-		// Если функция возвращает FALSE - реальное чтение не будет вызвано
-		if (!OnPanelViewCallbacks(pArgs, gPanelRegLeft.pfnReadPreCall, gPanelRegRight.pfnReadPreCall))
-		{
-			// это вызвается перед реальным чтением - информация может быть разве что от "PanelViews"
-			// Если под дебагом включен ScrollLock - вывести информацию о считанных событиях
-			#ifdef _DEBUG
-			if (GetKeyState(VK_SCROLL) & 1)
-			{
-				PINPUT_RECORD p = (PINPUT_RECORD)(pArgs->lArguments[1]);
-				LPDWORD pCount = (LPDWORD)(pArgs->lArguments[3]);
-				_ASSERTE(*pCount <= pArgs->lArguments[2]);
-				UINT nCount = *pCount;
-
-				for (UINT i = 0; i < nCount; i++)
-					DebugInputPrint(p[i]);
-			}
-			#endif
-
-			return FALSE;
-		}
-	}
-
-	return TRUE; // продолжить
-}
-
-BOOL WINAPI OnConsoleReadInput(HookCallbackArg* pArgs)
-{
-	return OnConsoleReadInputWork(pArgs);
-}
-
-VOID WINAPI OnConsoleReadInputPost(HookCallbackArg* pArgs)
-{
-	if (!pArgs->bMainThread) return;  // обработку делаем только в основной нити
-
-#ifdef _DEBUG
-	{
-		wchar_t szDbg[255];
-		PINPUT_RECORD p = (PINPUT_RECORD)(pArgs->lArguments[1]);
-		LPDWORD pCount = (LPDWORD)(pArgs->lArguments[3]);
-		DWORD nLeft = 0; GetNumberOfConsoleInputEvents(GetStdHandle(STD_INPUT_HANDLE), &nLeft);
-		_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"*** OnConsoleReadInputPost(Events=%i, KeyCount=%i, LeftInConBuffer=%i)\n",
-		          *pCount, (p->EventType==KEY_EVENT) ? p->Event.KeyEvent.wRepeatCount : 0, nLeft);
-		//if (*pCount) {
-		//	wsprintfW(szDbg+lstrlen(szDbg), L", type=%i", p->EventType);
-		//	if (p->EventType == MOUSE_EVENT) {
-		//		wsprintfW(L", {%ix%i} BtnState:0x%08X, CtrlState:0x%08X, Flags:0x%08X",
-		//			p->Event.MouseEvent.dwMousePosition.X, p->Event.MouseEvent.dwMousePosition.Y,
-		//			p->Event.MouseEvent.dwButtonState, p->Event.MouseEvent.dwControlKeyState,
-		//			p->Event.MouseEvent.dwEventFlags);
-		//	} else if (p->EventType == KEY_EVENT) {
-		//		wsprintfW(L", '%c' %s count=%i, VK=%i, SC=%i, CH=\\x%X, State=0x%08x %s",
-		//			(p->Event.KeyEvent.uChar.UnicodeChar > 0x100) ? L'?' :
-		//			(p->Event.KeyEvent.uChar.UnicodeChar
-		//			? p->Event.KeyEvent.uChar.UnicodeChar : L' '),
-		//			p->Event.KeyEvent.bKeyDown ? L"Down," : L"Up,  ",
-		//			p->Event.KeyEvent.wRepeatCount,
-		//			p->Event.KeyEvent.wVirtualKeyCode,
-		//			p->Event.KeyEvent.wVirtualScanCode,
-		//			p->Event.KeyEvent.uChar.UnicodeChar,
-		//			p->Event.KeyEvent.dwControlKeyState,
-		//			(p->Event.KeyEvent.dwControlKeyState & ENHANCED_KEY) ?
-		//			L"<Enhanced>" : L"");
-		//	}
-		//}
-		//lstrcatW(szDbg, L")\n");
-		DEBUGSTRINPUT(szDbg);
-
-		// Если под дебагом включен ScrollLock - вывести информацию о считанных событиях
-		if (GetKeyState(VK_SCROLL) & 1)
-		{
-			PINPUT_RECORD p = (PINPUT_RECORD)(pArgs->lArguments[1]);
-			LPDWORD pCount = (LPDWORD)(pArgs->lArguments[3]);
-			_ASSERTE(*pCount <= pArgs->lArguments[2]);
-			UINT nCount = *pCount;
-
-			for(UINT i = 0; i < nCount; i++)
-				DebugInputPrint(p[i]);
-		}
-	}
-#endif
-
-	HANDLE h = (HANDLE)(pArgs->lArguments[0]);
-	PINPUT_RECORD p = (PINPUT_RECORD)(pArgs->lArguments[1]);
-	LPDWORD pCount = (LPDWORD)(pArgs->lArguments[3]);
-
-	//Чтобы не было зависаний при попытке активации плагина во время прокрутки
-	//редактора, в плагине мониторить нажатие мыши. Если последнее МЫШИНОЕ событие
-	//было с нажатой кнопкой - сначала пульнуть в консоль команду "отпускания" кнопки,
-	//и только после этого - пытаться активироваться.
-	if (pCount && *pCount)
-	{
-		for (int i = (*pCount) - 1; i >= 0; i--)
-		{
-			if (p[i].EventType == MOUSE_EVENT)
-			{
-				gLastMouseReadEvent = p[i].Event.MouseEvent;
-				break;
-			}
-		}
-	}
-
-	// Если зарегистрирован callback для графической панели
-	if (gPanelRegLeft.pfnReadPostCall || gPanelRegRight.pfnReadPostCall)
-	{
-		if (!OnPanelViewCallbacks(pArgs, gPanelRegLeft.pfnReadPostCall, gPanelRegRight.pfnReadPostCall))
-			return;
-	}
-
-	// Чтобы ФАР сразу прекратил ходить по каталогам при отпускании Enter
-	if (h != NULL)
-	{
-		if (*pCount == 1 && p->EventType == KEY_EVENT && p->Event.KeyEvent.bKeyDown
-		        && (p->Event.KeyEvent.wVirtualKeyCode == VK_RETURN
-		            || p->Event.KeyEvent.wVirtualKeyCode == VK_NEXT
-		            || p->Event.KeyEvent.wVirtualKeyCode == VK_PRIOR)
-		  )
-		{
-			INPUT_RECORD ir[10]; DWORD nRead = 0, nInc = 0;
-
-			if (PeekConsoleInputW(h, ir, countof(ir), &nRead) && nRead)
-			{
-				for(DWORD n = 0; n < nRead; n++)
-				{
-					if (ir[n].EventType == KEY_EVENT && ir[n].Event.KeyEvent.bKeyDown
-					        && ir[n].Event.KeyEvent.wVirtualKeyCode == p->Event.KeyEvent.wVirtualKeyCode
-					        && ir[n].Event.KeyEvent.dwControlKeyState == p->Event.KeyEvent.dwControlKeyState)
-					{
-						nInc++;
-					}
-					else
-					{
-						break; // дубли в буфере кончились
-					}
-				}
-
-				if (nInc > 0)
-				{
-					if (ReadConsoleInputW(h, ir, nInc, &nRead) && nRead)
-					{
-						p->Event.KeyEvent.wRepeatCount += (WORD)nRead;
-					}
-				}
-			}
-		}
-	}
-}
-
-BOOL WINAPI OnWriteConsoleOutput(HookCallbackArg* pArgs)
-{
-	if (!pArgs->bMainThread)
-		return TRUE;  // обработку делаем только в основной нити
-	//if (pArgs->IsExecutable != HEO_Executable)
-	//	return TRUE;  // и только при вызове из far.exe
-
-	// Если зарегистрирован callback для графической панели
-	if (gPanelRegLeft.pfnWriteCall || gPanelRegRight.pfnWriteCall)
-	{
-		HANDLE hOutput = (HANDLE)(pArgs->lArguments[0]);
-		const CHAR_INFO *lpBuffer = (const CHAR_INFO *)(pArgs->lArguments[1]);
-		COORD dwBufferSize = *(COORD*)(pArgs->lArguments[2]);
-		COORD dwBufferCoord = *(COORD*)(pArgs->lArguments[3]);
-		PSMALL_RECT lpWriteRegion = (PSMALL_RECT)(pArgs->lArguments[4]);
-
-		if (gPanelRegLeft.pfnWriteCall)
-		{
-			_ASSERTE(gPanelRegLeft.bRegister);
-			gPanelRegLeft.pfnWriteCall(hOutput,lpBuffer,dwBufferSize,dwBufferCoord,lpWriteRegion);
-		}
-
-		// Если есть только правая панель, или на правой панели задана другая функция
-		if (gPanelRegRight.pfnWriteCall && gPanelRegRight.pfnWriteCall != gPanelRegLeft.pfnWriteCall)
-		{
-			_ASSERTE(gPanelRegRight.bRegister);
-			gPanelRegRight.pfnWriteCall(hOutput,lpBuffer,dwBufferSize,dwBufferCoord,lpWriteRegion);
-		}
-	}
-
-	//if (gpBgPlugin)
-	//	gpBgPlugin->SetForceCheck();
-
-	if (gbWaitConsoleWrite)
-	{
-		gbWaitConsoleWrite = FALSE;
-		SetEvent(ghConsoleWrite);
-	}
-
-	return TRUE;
-}
 
 /* COMMON - end */
 
@@ -931,92 +576,13 @@ void CloseMapHeader();
 BOOL gbWasDetached = FALSE;
 CONSOLE_SCREEN_BUFFER_INFO gsbiDetached;
 
-BOOL WINAPI OnConsoleDetaching(HookCallbackArg* pArgs)
-{
-	if (ghMonitorThread)
-	{
-		SuspendThread(ghMonitorThread);
-		// ResumeThread выполняется в конце OnConsoleWasAttached
-	}
-
-	// Выполним сразу после SuspendThread, чтобы нить не посчитала, что мы подцепились обратно
-	gbWasDetached = (ghConEmuWndDC!=NULL && IsWindow(ghConEmuWndDC));
-
-	if (ghConEmuWndDC)
-	{
-		// Запомним, для удобства аттача
-		if (!GetWindowThreadProcessId(ghConEmuWndDC, &gdwPreDetachGuiPID))
-			gdwPreDetachGuiPID = 0;
-	}
-
-	if (gbWasDetached)
-	{
-		HANDLE hOutput = GetStdHandle(STD_OUTPUT_HANDLE);
-		GetConsoleScreenBufferInfo(hOutput, &gsbiDetached);
-
-		// Нужно уведомить ТЕКУЩИЙ сервер, что закрываться по окончании команды не нужно
-		if (gdwServerPID == 0)
-		{
-			_ASSERTE(gdwServerPID != NULL);
-		}
-		else
-		{
-			CESERVER_REQ In, *pOut = NULL;
-			ExecutePrepareCmd(&In, CECMD_FARDETACHED, sizeof(CESERVER_REQ_HDR));
-			pOut = ExecuteSrvCmd(gdwServerPID, &In, FarHwnd);
-
-			if (pOut) ExecuteFreeResult(pOut);
-		}
-	}
-
-	// -- теперь мэппинги создает GUI
-	//CloseColorerHeader(); // Если было
-
-	CloseMapHeader();
-	ghConEmuWndDC = NULL;
-	SetConEmuEnvVar(NULL);
-	SetConEmuEnvVarChild(NULL,NULL);
-	// Потом еще и FarHwnd сбросить нужно будет... Ну этим MonitorThreadProcW займется
-	return TRUE; // продолжить выполнение функции
-}
-// Функции вызываются в основной нити, вполне можно дергать FAR-API
-VOID WINAPI OnConsoleWasAttached(HookCallbackArg* pArgs)
-{
-	FarHwnd = GetConEmuHWND(2);
-
-	if (gbWasDetached)
-	{
-		// Сразу спрятать окошко
-		//apiShowWindow(FarHwnd, SW_HIDE);
-	}
-
-	// -- теперь мэппинги создает GUI
-	//// Если ранее были созданы мэппинги для цвета - пересоздать
-	//CreateColorerHeader();
-
-	if (gbWasDetached)
-	{
-		/*
-		HANDLE hOutput = GetStdHandle(STD_OUTPUT_HANDLE);
-		SetConsoleScreenBufferSize(hOutput,sbi.dwSize);
-		SetConsoleWindowInfo(hOutput,TRUE,&sbi.srWindow);
-		SetConsoleScreenBufferSize(hOutput,sbi.dwSize);
-		*/
-
-		// сразу переподцепимся к GUI
-		if (!Attach2Gui())
-		{
-			EmergencyShow(FarHwnd);
-		}
-
-		// Сбрасываем после Attach2Gui, чтобы MonitorThreadProcW случайно
-		// не среагировал раньше времени
-		gbWasDetached = FALSE;
-	}
-
-	if (ghMonitorThread)
-		ResumeThread(ghMonitorThread);
-}
+//#ifndef max
+//#define max(a,b)            (((a) > (b)) ? (a) : (b))
+//#endif
+//
+//#ifndef min
+//#define min(a,b)            (((a) < (b)) ? (a) : (b))
+//#endif
 
 void WINAPI SetStartupInfoW(void *aInfo)
 {
@@ -1030,31 +596,61 @@ void WINAPI SetStartupInfoW(void *aInfo)
 	Plugin()->CommonPluginStartup();
 }
 
-//#define CREATEEVENT(fmt,h)
-//		_wsprintf(szEventName, SKIPLEN(countof(szEventName)) fmt, dwCurProcId );
-//		h = CreateEvent(NULL, FALSE, FALSE, szEventName);
-//		if (h==INVALID_HANDLE_VALUE) h=NULL;
+#define MIN_FAR2_BUILD 1765 // svs 19.12.2010 22:52:53 +0300 - build 1765: Новая команда в FARMACROCOMMAND - MCMD_GETAREA
+#define MAKEFARVERSION(major,minor,build) ( ((major)<<8) | (minor) | ((build)<<16))
 
-VOID WINAPI OnCurDirChanged()
+int WINAPI GetMinFarVersion()
 {
-	if ((gnCurrentWindowType == WTYPE_PANELS) && (IS_SYNCHRO_ALLOWED))
+	// Однако, FAR2 до сборки 748 не понимал две версии плагина в одном файле
+	bool bFar2 = false;
+
+	if (!LoadFarVersion())
+		bFar2 = true;
+	else
+		bFar2 = gFarVersion.dwVerMajor>=2;
+
+	if (bFar2)
 	{
-		// Требуется дернуть Synchro, чтобы корректно активироваться
-		if (!gbInputSynchroPending)
-		{
-			gbInputSynchroPending = true;
-			ExecuteSynchro();
-		}
+		return MAKEFARVERSION(2,0,MIN_FAR2_BUILD);
 	}
+
+	return MAKEFARVERSION(1,71,2470);
 }
 
-//#ifndef max
-//#define max(a,b)            (((a) > (b)) ? (a) : (b))
-//#endif
-//
-//#ifndef min
-//#define min(a,b)            (((a) < (b)) ? (a) : (b))
-//#endif
+int WINAPI GetMinFarVersionW()
+{
+	return MAKEFARVERSION(2,0,MIN_FAR2_BUILD);
+}
+
+int WINAPI ProcessSynchroEventW(int Event, void *Param)
+{
+	return Plugin()->ProcessSynchroEvent(Event, Param);
+}
+
+INT_PTR WINAPI ProcessSynchroEventW3(void* p)
+{
+	return Plugin()->ProcessSynchroEvent(p);
+}
+
+int WINAPI ProcessEditorEventW(int Event, void *Param)
+{
+	return Plugin()->ProcessEditorViewerEvent(Event, -1);
+}
+
+INT_PTR WINAPI ProcessEditorEventW3(void* p)
+{
+	return Plugin()->ProcessEditorEvent(p);
+}
+
+int WINAPI ProcessViewerEventW(int Event, void *Param)
+{
+	return Plugin()->ProcessEditorViewerEvent(-1, Event);
+}
+
+INT_PTR WINAPI ProcessViewerEventW3(void* p)
+{
+	return Plugin()->ProcessViewerEvent(p);
+}
 
 
 // watch non-modified -> modified editor status change
@@ -1104,64 +700,6 @@ void WINAPI ExitFARW3(void*)
 	CPluginBase::ShutdownPluginStep(L"ExitFARW3 - done");
 }
 
-// Определены в SetHook.h
-//typedef void (WINAPI* OnLibraryLoaded_t)(HMODULE ahModule);
-//extern OnLibraryLoaded_t gfOnLibraryLoaded;
-
-// Вызывается при загрузке dll
-void WINAPI OnLibraryLoaded(HMODULE ahModule)
-{
-	WARNING("Проверить, чтобы после новых хуков это два раза на один модуль не вызывалось");
-
-	//#ifdef _DEBUG
-	//wchar_t szModulePath[MAX_PATH]; szModulePath[0] = 0;
-	//GetModuleFileName(ahModule, szModulePath, MAX_PATH);
-	//#endif
-
-	//// Если GUI неактивно (запущен standalone FAR) - сразу выйти
-	//if (ghConEmuWndDC == NULL)
-	//{
-	//	return;
-	//}
-	WARNING("Нужно специально вызвать OnLibraryLoaded при аттаче к GUI");
-	// Если определен калбэк инициализации ConEmu
-	OnConEmuLoaded_t fnOnConEmuLoaded = NULL;
-	BOOL lbSucceeded = FALSE;
-
-	if ((fnOnConEmuLoaded = (OnConEmuLoaded_t)GetProcAddress(ahModule, "OnConEmuLoaded")) != NULL)
-	{
-		// Наверное, только для плагинов фара
-		if (GetProcAddress(ahModule, "SetStartupInfoW") || GetProcAddress(ahModule, "SetStartupInfo"))
-		{
-			struct ConEmuLoadedArg arg; // = {sizeof(struct ConEmuLoadedArg)};
-			FillLoadedParm(&arg, ahModule, TRUE);
-			//arg.hPlugin = ahModule;
-			//arg.hConEmu = ghPluginModule;
-			//arg.hPlugin = ahModule;
-			//arg.bLoaded = TRUE;
-			//arg.bGuiActive = (ghConEmuWndDC != NULL);
-			//// Сервисные функции
-			//arg.GetFarHWND = GetFarHWND;
-			//arg.GetFarHWND2 = GetFarHWND2;
-			//arg.GetFarVersion = GetFarVersion;
-			//arg.IsTerminalMode = IsTerminalMode;
-			//arg.IsConsoleActive = IsConsoleActive;
-			//arg.RegisterPanelView = RegisterPanelView;
-			//arg.RegisterBackground = RegisterBackground;
-			//arg.ActivateConsole = ActivateConsole;
-			//arg.SyncExecute = SyncExecute;
-			SAFETRY
-			{
-				fnOnConEmuLoaded(&arg);
-				lbSucceeded = TRUE;
-			} SAFECATCH
-			{
-				// Failed
-				_ASSERTE(lbSucceeded == TRUE);
-			}
-		}
-	}
-}
 
 
 /* Используются как extern в ConEmuCheck.cpp */

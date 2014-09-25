@@ -115,8 +115,6 @@ CPluginW1900::CPluginW1900()
 int CPluginW1900::ProcessEditorEvent(void* p)
 {
 	const ProcessEditorEventInfo* Info = (const ProcessEditorEventInfo*)p;
-	if (Info->Event == EE_REDRAW)
-		return 0;
 	return ProcessEditorViewerEvent(Info->Event, -1);
 }
 
