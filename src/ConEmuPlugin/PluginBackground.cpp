@@ -245,7 +245,7 @@ int CPluginBackground::RegisterSubplugin(RegisterBackgroundArg *pbk)
 	// В фар2 сразу дернем Synchro
 	if (IS_SYNCHRO_ALLOWED)
 	{
-		ExecuteSynchro();
+		Plugin()->ExecuteSynchro();
 	}
 
 	return esbr_OK;

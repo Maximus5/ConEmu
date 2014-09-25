@@ -52,8 +52,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 struct PluginStartupInfo *InfoW995=NULL;
 struct FarStandardFunctions *FSFW995=NULL;
 
-//void WaitEndSynchroW995();
-
 CPluginW995::CPluginW995()
 {
 	ee_Read = EE_READ;
@@ -634,7 +632,7 @@ void CPluginW995::ExitFAR()
 
 	ShutdownPluginStep(L"ExitFARW995");
 
-	WaitEndSynchroW995();
+	WaitEndSynchro();
 
 	if (InfoW995)
 	{
@@ -843,27 +841,16 @@ bool CPluginW995::OpenEditor(LPCWSTR asFileName, bool abView, bool abDeleteTempF
 	return lbRc;
 }
 
-BOOL CPluginW995::ExecuteSynchro()
+bool CPluginW995::ExecuteSynchroApi()
 {
 	if (!InfoW995)
-		return FALSE;
+		return false;
 
-	if (IS_SYNCHRO_ALLOWED)
-	{
-		if (gbSynchroProhibited)
-		{
-			_ASSERT(gbSynchroProhibited==false);
-			return FALSE;
-		}
-
-		// получается более 2-х, если фар в данный момент чем-то занят (сканирует каталог?)
-		//_ASSERTE(gnSynchroCount<=3);
-		gnSynchroCount++;
-		InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_SYNCHRO, NULL);
-		return TRUE;
-	}
-
-	return FALSE;
+	// получается более 2-х, если фар в данный момент чем-то занят (сканирует каталог?)
+	//_ASSERTE(gnSynchroCount<=3);
+	gnSynchroCount++;
+	InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_SYNCHRO, NULL);
+	return true;
 }
 
 static HANDLE ghSyncDlg = NULL;

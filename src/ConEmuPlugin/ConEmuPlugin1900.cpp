@@ -132,8 +132,6 @@ int CPluginW1900::ProcessSynchroEvent(void* p)
 	return ProcessSynchroEvent(Info->Event, Info->Param);
 }
 
-//void WaitEndSynchroW1900();
-
 wchar_t* CPluginW1900::GetPanelDir(GetPanelDirFlags Flags)
 {
 	if (!InfoW1900)
@@ -750,7 +748,7 @@ void CPluginW1900::ExitFAR()
 
 	CPluginBase::ShutdownPluginStep(L"ExitFARW1900");
 
-	WaitEndSynchroW1900();
+	WaitEndSynchro();
 
 	if (InfoW1900)
 	{
@@ -1111,27 +1109,16 @@ bool CPluginW1900::OpenEditor(LPCWSTR asFileName, bool abView, bool abDeleteTemp
 	return lbRc;
 }
 
-BOOL CPluginW1900::ExecuteSynchro()
+bool CPluginW1900::ExecuteSynchroApi()
 {
 	if (!InfoW1900)
-		return FALSE;
+		return false;
 
-	if (IS_SYNCHRO_ALLOWED)
-	{
-		if (gbSynchroProhibited)
-		{
-			_ASSERT(gbSynchroProhibited==false);
-			return FALSE;
-		}
-
-		// получается более 2-х, если фар в данный момент чем-то занят (сканирует каталог?)
-		//_ASSERTE(gnSynchroCount<=3);
-		gnSynchroCount++;
-		InfoW1900->AdvControl(&guid_ConEmu, ACTL_SYNCHRO, 0, NULL);
-		return TRUE;
-	}
-
-	return FALSE;
+	// получается более 2-х, если фар в данный момент чем-то занят (сканирует каталог?)
+	//_ASSERTE(gnSynchroCount<=3);
+	gnSynchroCount++;
+	InfoW1900->AdvControl(&guid_ConEmu, ACTL_SYNCHRO, 0, NULL);
+	return true;
 }
 
 static HANDLE ghSyncDlg = NULL;
@@ -1178,10 +1165,13 @@ void CPluginW1900::WaitEndSynchro()
 
 void CPluginW1900::StopWaitEndSynchro()
 {
+	// Считаем, что в Far 3 починили
+#if 0
 	if (ghSyncDlg)
 	{
 		InfoW1900->SendDlgMessage(ghSyncDlg, DM_CLOSE, -1, 0);
 	}
+#endif
 }
 
 bool CPluginW1900::IsMacroActive()

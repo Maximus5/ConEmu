@@ -91,6 +91,7 @@ public:
 	void ProcessSetWindowCommand();
 	void CommonPluginStartup();
 	void StopThread();
+	void ExecuteSynchro();
 
 	static void ShutdownPluginStep(LPCWSTR asInfo, int nParm1 = 0, int nParm2 = 0, int nParm3 = 0, int nParm4 = 0);
 	static DWORD WINAPI MonitorThreadProcW(LPVOID lpParameter);
@@ -116,7 +117,7 @@ protected:
 
 public:
 	virtual BOOL    CheckBufferEnabled() = 0;
-	virtual BOOL    ExecuteSynchro() = 0;
+	virtual bool    ExecuteSynchroApi() = 0;
 	virtual void    ExitFAR(void) = 0;
 	virtual void    FillUpdateBackground(struct PaintBackgroundArg* pFar) = 0;
 	virtual int     GetActiveWindowType() = 0;

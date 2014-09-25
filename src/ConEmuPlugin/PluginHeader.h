@@ -102,18 +102,6 @@ struct CurPanelDirs
 };
 extern CurPanelDirs gPanelDirs;
 
-//typedef struct tag_SynchroArg {
-//	enum {
-//		eCommand,
-//		eInput
-//	} SynchroType;
-//	HANDLE hEvent;
-//	LPARAM Result;
-//	LPARAM Param1, Param2;
-//	BOOL Obsolete;
-//	//BOOL Processed;
-//} SynchroArg;
-
 BOOL CreateTabs(int windowCount);
 
 BOOL AddTab(int &tabCount, int WindowPos, bool losingFocus, bool editorSave,
@@ -133,7 +121,6 @@ extern GUID guid_ConEmu;
 extern GUID guid_ConEmuPluginItems;
 extern GUID guid_ConEmuPluginMenu;
 extern GUID guid_ConEmuGuiMacroDlg;
-extern GUID guid_ConEmuWaitEndSynchro;
 
 HANDLE OpenPluginWcmn(int OpenFrom,INT_PTR Item,bool FromMacro);
 HANDLE WINAPI OpenPluginW1(int OpenFrom,INT_PTR Item);
@@ -195,8 +182,6 @@ void FUNC_Y2(PostMacroW)(const wchar_t* asMacro, INPUT_RECORD* apRec);
 
 extern DWORD gnReqCommand;
 extern int gnPluginOpenFrom;
-//extern HANDLE ghInputSynchroExecuted;
-//extern BOOL gbCmdCallObsolete;
 extern LPVOID gpReqCommandData;
 BOOL ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData, CESERVER_REQ** ppResult = NULL, bool bForceSendTabs = false);
 BOOL CheckPlugKey();
@@ -232,16 +217,6 @@ extern int gnSynchroCount;
 extern bool gbSynchroProhibited;
 extern bool gbInputSynchroPending;
 extern BOOL TerminalMode;
-void ExecuteSynchro(); // если доступен - позовет ACTL_SYNCHRO (FAR2 only)
-BOOL FUNC_X(ExecuteSynchroW)();
-BOOL FUNC_Y1(ExecuteSynchroW)();
-BOOL FUNC_Y2(ExecuteSynchroW)();
-void FUNC_X(WaitEndSynchroW)();
-void FUNC_Y1(WaitEndSynchroW)();
-void FUNC_Y2(WaitEndSynchroW)();
-void FUNC_X(StopWaitEndSynchroW)();
-void FUNC_Y1(StopWaitEndSynchroW)();
-void FUNC_Y2(StopWaitEndSynchroW)();
 
 void GuiMacroDlgA();
 void FUNC_X(GuiMacroDlgW)();

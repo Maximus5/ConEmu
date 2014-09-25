@@ -46,7 +46,7 @@ public:
 
 public:
 	virtual BOOL    CheckBufferEnabled() override;
-	virtual BOOL    ExecuteSynchro() override;
+	virtual bool    ExecuteSynchroApi() override { return false; };
 	virtual void    ExitFAR() override;
 	virtual void    FillUpdateBackground(struct PaintBackgroundArg* pFar) override;
 	virtual int     GetActiveWindowType() override;
@@ -82,7 +82,7 @@ public:
 	virtual int     ShowMessage(LPCWSTR asMsg, int aiButtons, bool bWarning) override;
 	virtual int     ShowPluginMenu(ConEmuPluginMenuItem* apItems, int Count) override;
 	virtual void    ShowUserScreen(bool bUserScreen) override;
-	virtual void    StopWaitEndSynchro() override;
+	virtual void    StopWaitEndSynchro() override { return; };
 	virtual bool    UpdateConEmuTabsApi(int windowCount) override;
-	virtual void    WaitEndSynchro() override;
+	virtual void    WaitEndSynchro() override { return; };
 };

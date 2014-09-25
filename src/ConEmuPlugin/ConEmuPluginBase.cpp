@@ -2765,3 +2765,39 @@ void CPluginBase::ShutdownPluginStep(LPCWSTR asInfo, int nParm1 /*= 0*/, int nPa
 	OutputDebugString(szFull);
 #endif
 }
+
+// Теоретически, из этой функции Far2+ может сразу вызвать ProcessSynchroEventW.
+// Но в текущей версии Far 2/3 она работает асинхронно и сразу выходит, а сама
+// ProcessSynchroEventW зовется потом в главной нити (где-то при чтении буфера консоли)
+void CPluginBase::ExecuteSynchro()
+{
+	WARNING("Нет способа определить, будет ли фар вызывать наш ProcessSynchroEventW и в какой момент");
+	// Например, если в фаре выставлен ProcessException - то никакие плагины больше не зовутся
+
+	if (IS_SYNCHRO_ALLOWED)
+	{
+		if (gbSynchroProhibited)
+		{
+			_ASSERTE(gbSynchroProhibited==false);
+			return;
+		}
+
+		//Чтобы не было зависаний при попытке активации плагина во время прокрутки
+		//редактора, в плагине мониторить нажатие мыши. Если последнее МЫШИНОЕ событие
+		//было с нажатой кнопкой - сначала пульнуть в консоль команду "отпускания" кнопки,
+		//и только после этого - пытаться активироваться.
+		if ((gnAllowDummyMouseEvent > 0) && (gLastMouseReadEvent.dwButtonState & (RIGHTMOST_BUTTON_PRESSED|FROM_LEFT_1ST_BUTTON_PRESSED)))
+		{
+			//_ASSERTE(!(gLastMouseReadEvent.dwButtonState & (RIGHTMOST_BUTTON_PRESSED|FROM_LEFT_1ST_BUTTON_PRESSED)));
+			int nWindowType = Plugin()->GetActiveWindowType();
+			// "Зависания" возможны (вроде) только при прокрутке зажатой кнопкой мышки
+			// редактора или вьювера. Так что в других областях - не дергаться.
+			if (nWindowType == WTYPE_EDITOR || nWindowType == WTYPE_VIEWER)
+			{
+				gbUngetDummyMouseEvent = TRUE;
+			}
+		}
+
+		Plugin()->ExecuteSynchroApi();
+	}
+}

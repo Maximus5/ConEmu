@@ -100,8 +100,6 @@ GUID guid_ConEmuMenu = { /* 2dc6b821-fd8e-4165-adcf-a4eda7b44e8e */
 struct PluginStartupInfo *InfoW2800=NULL;
 struct FarStandardFunctions *FSFW2800=NULL;
 
-void WaitEndSynchroW2800();
-
 CPluginW2800::CPluginW2800()
 {
 	ee_Read = EE_READ;
@@ -789,7 +787,7 @@ void CPluginW2800::ExitFAR()
 
 	CPluginBase::ShutdownPluginStep(L"ExitFARW2800");
 
-	WaitEndSynchroW2800();
+	WaitEndSynchro();
 
 	if (InfoW2800)
 	{
@@ -1158,32 +1156,21 @@ bool CPluginW2800::OpenEditor(LPCWSTR asFileName, bool abView, bool abDeleteTemp
 	return lbRc;
 }
 
-BOOL ExecuteSynchroW2800()
+bool CPluginW2800::ExecuteSynchroApi()
 {
 	if (!InfoW2800)
-		return FALSE;
+		return false;
 
-	if (IS_SYNCHRO_ALLOWED)
-	{
-		if (gbSynchroProhibited)
-		{
-			_ASSERT(gbSynchroProhibited==false);
-			return FALSE;
-		}
-
-		// получается более 2-х, если фар в данный момент чем-то занят (сканирует каталог?)
-		//_ASSERTE(gnSynchroCount<=3);
-		gnSynchroCount++;
-		InfoW2800->AdvControl(&guid_ConEmu, ACTL_SYNCHRO, 0, NULL);
-		return TRUE;
-	}
-
-	return FALSE;
+	// получается более 2-х, если фар в данный момент чем-то занят (сканирует каталог?)
+	//_ASSERTE(gnSynchroCount<=3);
+	gnSynchroCount++;
+	InfoW2800->AdvControl(&guid_ConEmu, ACTL_SYNCHRO, 0, NULL);
+	return true;
 }
 
 static HANDLE ghSyncDlg = NULL;
 
-void WaitEndSynchroW2800()
+void CPluginW2800::WaitEndSynchro()
 {
 	// Считаем, что в Far 3 починили
 #if 0
@@ -1223,12 +1210,15 @@ void WaitEndSynchroW2800()
 #endif
 }
 
-void StopWaitEndSynchroW2800()
+void CPluginW2800::StopWaitEndSynchro()
 {
+	// Считаем, что в Far 3 починили
+#if 0
 	if (ghSyncDlg)
 	{
 		InfoW2800->SendDlgMessage(ghSyncDlg, DM_CLOSE, -1, 0);
 	}
+#endif
 }
 
 bool CPluginW2800::IsMacroActive()
