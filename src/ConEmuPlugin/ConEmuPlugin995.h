@@ -66,10 +66,10 @@ public:
 	virtual void    PostMacroApi(const wchar_t* asMacro, INPUT_RECORD* apRec) override;
 	virtual void    ProcessDragFrom() override;
 	virtual void    ProcessDragTo() override;
-	virtual int     ProcessEditorEvent(void* p) { return 0; }; // Was not used in Far 2.x
+	virtual int     ProcessEditorEvent(void* p) override { return 0; }; // Was not used in Far 2.x
 	virtual int     ProcessEditorInput(LPCVOID Rec) override;
-	virtual int     ProcessSynchroEvent(void* p) { return 0; }; // Was not used in Far 2.x
-	virtual int     ProcessViewerEvent(void* p) { return 0; }; // Was not used in Far 2.x
+	virtual int     ProcessSynchroEvent(void* p) override { return 0; }; // Was not used in Far 2.x
+	virtual int     ProcessViewerEvent(void* p) override { return 0; }; // Was not used in Far 2.x
 	virtual void    RedrawAll() override;
 	virtual BOOL    ReloadFarInfo() override;
 	virtual void    SetStartupInfo(void *aInfo) override;

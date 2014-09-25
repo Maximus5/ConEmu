@@ -151,6 +151,8 @@ CPluginBase::CPluginBase()
 	of_LeftDiskMenu = of_PluginsMenu = of_FindList = of_Shortcut = of_CommandLine = of_Editor = of_Viewer = of_FilePanel = of_Dialog = of_Analyse = of_RightDiskMenu = of_FromMacro = -1;
 
 	ms_RootRegKey = NULL;
+
+	InvalidPanelHandle = (gFarVersion.dwVerMajor >= 3) ? NULL : INVALID_HANDLE_VALUE;
 }
 
 CPluginBase::~CPluginBase()

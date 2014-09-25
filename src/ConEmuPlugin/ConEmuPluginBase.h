@@ -54,6 +54,7 @@ protected:
 	int ma_InfoPanel, ma_QViewPanel, ma_TreePanel, ma_FindFolder, ma_UserMenu;
 	int ma_ShellAutoCompletion, ma_DialogAutoCompletion;
 	int of_LeftDiskMenu, of_PluginsMenu, of_FindList, of_Shortcut, of_CommandLine, of_Editor, of_Viewer, of_FilePanel, of_Dialog, of_Analyse, of_RightDiskMenu, of_FromMacro;
+	HANDLE InvalidPanelHandle;
 
 protected:
 	// Используется только в Far 1.7x и Far 2.x
