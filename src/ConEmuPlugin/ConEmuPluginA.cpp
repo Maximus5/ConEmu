@@ -936,7 +936,7 @@ void CPluginAnsi::ShowUserScreen(bool bUserScreen)
 //	pCE->Flags = pFar->Flags;
 //}
 
-void LoadFarColorsA(BYTE (&nFarColors)[col_LastIndex])
+void CPluginAnsi::LoadFarColors(BYTE (&nFarColors)[col_LastIndex])
 {
 	BYTE FarConsoleColors[0x100];
 	INT_PTR nColorSize = InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETARRAYCOLOR, FarConsoleColors);
@@ -959,7 +959,7 @@ void LoadFarColorsA(BYTE (&nFarColors)[col_LastIndex])
 	nFarColors[col_KeyBarNum] = FarConsoleColors[COL_KEYBARNUM];
 }
 
-static void LoadFarSettingsA(CEFarInterfaceSettings* pInterface, CEFarPanelSettings* pPanel)
+void CPluginAnsi::LoadFarSettings(CEFarInterfaceSettings* pInterface, CEFarPanelSettings* pPanel)
 {
 	DWORD nSet;
 
@@ -981,83 +981,13 @@ static void LoadFarSettingsA(CEFarInterfaceSettings* pInterface, CEFarPanelSetti
 	}
 }
 
-BOOL ReloadFarInfoA(/*BOOL abFull*/)
+bool CPluginAnsi::CheckPanelExist()
 {
-	if (!InfoA || !FSFA) return FALSE;
+	if (!InfoA || !InfoA->Control)
+		return false;
 
-	if (!gpFarInfo)
-	{
-		_ASSERTE(gpFarInfo!=NULL);
-		return FALSE;
-	}
-
-	// Заполнить gpFarInfo->
-	//BYTE nFarColors[col_LastIndex]; // Массив цветов фара
-	//DWORD nFarInterfaceSettings;
-	//DWORD nFarPanelSettings;
-	//DWORD nFarConfirmationSettings;
-	//BOOL  bFarPanelAllowed, bFarLeftPanel, bFarRightPanel;   // FCTL_CHECKPANELSEXIST, FCTL_GETPANELSHORTINFO,...
-	//CEFAR_SHORT_PANEL_INFO FarLeftPanel, FarRightPanel;
-	DWORD ldwConsoleMode = 0;	GetConsoleMode(/*ghConIn*/GetStdHandle(STD_INPUT_HANDLE), &ldwConsoleMode);
-#ifdef _DEBUG
-	static DWORD ldwDbgMode = 0;
-
-	if (IsDebuggerPresent())
-	{
-		if (ldwDbgMode != ldwConsoleMode)
-		{
-			wchar_t szDbg[128]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"Far.ConEmuA: ConsoleMode(STD_INPUT_HANDLE)=0x%08X\n", ldwConsoleMode);
-			OutputDebugStringW(szDbg);
-			ldwDbgMode = ldwConsoleMode;
-		}
-	}
-
-#endif
-	gpFarInfo->nFarConsoleMode = ldwConsoleMode;
-
-	LoadFarColorsA(gpFarInfo->nFarColors);
-
-	//_ASSERTE(FPS_SHOWCOLUMNTITLES==0x20 && FPS_SHOWSTATUSLINE==0x40); //-V112
-	LoadFarSettingsA(&gpFarInfo->FarInterfaceSettings, &gpFarInfo->FarPanelSettings);
-
-	//gpFarInfo->nFarConfirmationSettings =
-	//    (DWORD)InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETCONFIRMATIONS, 0);
-
-	gpFarInfo->bMacroActive = IsMacroActive();
-	gpFarInfo->nMacroArea = fma_Unknown; // в Far 1.7x не поддерживается
-
-	gpFarInfo->bFarPanelAllowed = InfoA->Control(INVALID_HANDLE_VALUE, FCTL_CHECKPANELSEXIST, 0);
-	gpFarInfo->bFarPanelInfoFilled = FALSE;
-	gpFarInfo->bFarLeftPanel = FALSE;
-	gpFarInfo->bFarRightPanel = FALSE;
-	// -- пока, во избежание глюков в FAR при неожиданных запросах информации о панелях
-	//if (FALSE == (gpFarInfo->bFarPanelAllowed)) {
-	//	gpConMapInfo->bFarLeftPanel = FALSE;
-	//	gpConMapInfo->bFarRightPanel = FALSE;
-	//} else {
-	//	PanelInfo piA = {}, piP = {};
-	//	BOOL lbActive  = InfoA->Control(INVALID_HANDLE_VALUE, FCTL_GETPANELSHORTINFO, &piA);
-	//	BOOL lbPassive = InfoA->Control(INVALID_HANDLE_VALUE, FCTL_GETANOTHERPANELSHORTINFO, &piP);
-	//	if (!lbActive && !lbPassive)
-	//	{
-	//		gpConMapInfo->bFarLeftPanel = FALSE;
-	//		gpConMapInfo->bFarRightPanel = FALSE;
-	//	} else {
-	//		PanelInfo *ppiL = NULL;
-	//		PanelInfo *ppiR = NULL;
-	//		if (lbActive) {
-	//			if (piA.Flags & PFLAGS_PANELLEFT) ppiL = &piA; else ppiR = &piA;
-	//		}
-	//		if (lbPassive) {
-	//			if (piP.Flags & PFLAGS_PANELLEFT) ppiL = &piP; else ppiR = &piP;
-	//		}
-	//		gpConMapInfo->bFarLeftPanel = ppiL!=NULL;
-	//		gpConMapInfo->bFarRightPanel = ppiR!=NULL;
-	//		if (ppiL) FarPanel2CePanel(ppiL, &(gpConMapInfo->FarLeftPanel));
-	//		if (ppiR) FarPanel2CePanel(ppiR, &(gpConMapInfo->FarRightPanel));
-	//	}
-	//}
-	return TRUE;
+	INT_PTR iRc = InfoA->Control(INVALID_HANDLE_VALUE, FCTL_CHECKPANELSEXIST, 0);
+	return (iRc!=0);
 }
 
 static void CopyPanelInfo(PanelInfo* pInfo, PaintBackgroundArg::BkPanelInfo* pBk)
@@ -1081,7 +1011,7 @@ void FillUpdateBackgroundA(struct PaintBackgroundArg* pFar)
 
 	LoadFarSettingsA(&pFar->FarInterfaceSettings, &pFar->FarPanelSettings);
 
-	pFar->bPanelsAllowed = (0 != InfoA->Control(INVALID_HANDLE_VALUE, FCTL_CHECKPANELSEXIST, 0));
+	pFar->bPanelsAllowed = CheckPanelExist();
 
 	if (pFar->bPanelsAllowed)
 	{

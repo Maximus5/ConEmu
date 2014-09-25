@@ -63,6 +63,8 @@ protected:
 	void InitRootRegKey();
 	void SetRootRegKey(wchar_t* asKeyPtr);
 
+	bool ReloadFarInfoApi();
+
 public:
 	CPluginBase();
 	virtual ~CPluginBase();
@@ -94,6 +96,7 @@ public:
 	void ExecuteSynchro();
 	bool ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData, CESERVER_REQ** ppResult = NULL, bool bForceSendTabs = false);
 	bool FarSetConsoleSize(SHORT nNewWidth, SHORT nNewHeight);
+	bool ReloadFarInfo(bool abForce);
 
 	bool cmd_OpenEditorLine(CESERVER_REQ_FAREDITOR *pCmd);
 	bool cmd_RedrawFarCall();
@@ -131,6 +134,7 @@ protected:
 
 public:
 	virtual BOOL    CheckBufferEnabled() = 0;
+	virtual bool    CheckPanelExist() = 0;
 	virtual bool    ExecuteSynchroApi() = 0;
 	virtual void    ExitFAR(void) = 0;
 	virtual void    FillUpdateBackground(struct PaintBackgroundArg* pFar) = 0;
@@ -145,6 +149,8 @@ public:
 	virtual void    GuiMacroDlg() = 0;
 	virtual bool    InputBox(LPCWSTR Title, LPCWSTR SubTitle, LPCWSTR HistoryName, LPCWSTR SrcText, wchar_t*& DestText) = 0;
 	virtual bool    IsMacroActive() = 0;
+	virtual void    LoadFarColors(BYTE (&nFarColors)[col_LastIndex]) = 0;
+	virtual void    LoadFarSettings(CEFarInterfaceSettings* pInterface, CEFarPanelSettings* pPanel) = 0;
 	virtual void    LoadPanelDirs() = 0;
 	virtual void    LoadPanelTabsSettings() = 0;
 	#if 0
@@ -160,7 +166,6 @@ public:
 	virtual int     ProcessSynchroEvent(void* p) = 0;
 	virtual int     ProcessViewerEvent(void* p) = 0;
 	virtual void    RedrawAll() = 0;
-	virtual BOOL    ReloadFarInfo() = 0;
 	virtual void    SetStartupInfo(void *aInfo) = 0;
 	virtual void    SetWindow(int nTab) = 0;
 	virtual int     ShowMessage(LPCWSTR asMsg, int aiButtons, bool bWarning) = 0;

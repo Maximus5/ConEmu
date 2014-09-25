@@ -185,7 +185,6 @@ MFileMapping<CESERVER_CONSOLE_MAPPING_HDR> *gpConMap;
 const CESERVER_CONSOLE_MAPPING_HDR *gpConMapInfo = NULL;
 //AnnotationInfo *gpColorerInfo = NULL;
 BOOL gbStartedUnderConsole2 = FALSE;
-BOOL ReloadFarInfo(BOOL abForce);
 DWORD gnSelfPID = 0; //GetCurrentProcessId();
 HANDLE ghFarInfoMapping = NULL;
 CEFAR_INFO_MAPPING *gpFarInfo = NULL, *gpFarInfoMapping = NULL;
@@ -1466,99 +1465,6 @@ void WINAPI SetStartupInfoW(void *aInfo)
 //		_wsprintf(szEventName, SKIPLEN(countof(szEventName)) fmt, dwCurProcId );
 //		h = CreateEvent(NULL, FALSE, FALSE, szEventName);
 //		if (h==INVALID_HANDLE_VALUE) h=NULL;
-
-BOOL ReloadFarInfo(BOOL abForce)
-{
-	if (!gpFarInfoMapping)
-	{
-		DWORD dwErr = 0;
-		// Создать мэппинг для gpFarInfoMapping
-		wchar_t szMapName[MAX_PATH];
-		_wsprintf(szMapName, SKIPLEN(countof(szMapName)) CEFARMAPNAME, gnSelfPID);
-		DWORD nMapSize = sizeof(CEFAR_INFO_MAPPING);
-		TODO("Заменить на MFileMapping");
-		ghFarInfoMapping = CreateFileMapping(INVALID_HANDLE_VALUE,
-		                                     gpLocalSecurity, PAGE_READWRITE, 0, nMapSize, szMapName);
-
-		if (!ghFarInfoMapping)
-		{
-			dwErr = GetLastError();
-			//TODO("Показать ошибку создания MAP для ghFarInfoMapping");
-			_ASSERTE(ghFarInfoMapping!=NULL);
-		}
-		else
-		{
-			gpFarInfoMapping = (CEFAR_INFO_MAPPING*)MapViewOfFile(ghFarInfoMapping, FILE_MAP_ALL_ACCESS,0,0,0);
-
-			if (!gpFarInfoMapping)
-			{
-				dwErr = GetLastError();
-				CloseHandle(ghFarInfoMapping); ghFarInfoMapping = NULL;
-				//TODO("Показать ошибку создания MAP для ghFarInfoMapping");
-				_ASSERTE(gpFarInfoMapping!=NULL);
-			}
-			else
-			{
-				gpFarInfoMapping->cbSize = 0;
-			}
-		}
-	}
-
-	if (!ghFarAliveEvent)
-	{
-		wchar_t szEventName[64];
-		_wsprintf(szEventName, SKIPLEN(countof(szEventName)) CEFARALIVEEVENT, gnSelfPID);
-		ghFarAliveEvent = CreateEvent(gpLocalSecurity, FALSE, FALSE, szEventName);
-	}
-
-	if (!gpFarInfo)
-	{
-		gpFarInfo = (CEFAR_INFO_MAPPING*)Alloc(sizeof(CEFAR_INFO_MAPPING),1);
-
-		if (!gpFarInfo)
-		{
-			_ASSERTE(gpFarInfo!=NULL);
-			return FALSE;
-		}
-
-		gpFarInfo->cbSize = sizeof(CEFAR_INFO_MAPPING);
-		gpFarInfo->nFarInfoIdx = 0;
-		gpFarInfo->FarVer = gFarVersion;
-		gpFarInfo->nFarPID = gnSelfPID;
-		gpFarInfo->nFarTID = gnMainThreadId;
-		gpFarInfo->nProtocolVersion = CESERVER_REQ_VER;
-
-		if (gFarVersion.dwVerMajor < 2 || (gFarVersion.dwVerMajor == 2 && gFarVersion.dwBuild < 1564))
-		{
-			gpFarInfo->bBufferSupport = FALSE;
-		}
-		else
-		{
-			// Нужно проверить
-			gpFarInfo->bBufferSupport = Plugin()->CheckBufferEnabled();
-		}
-
-		// Загрузить из реестра настройки PanelTabs
-		gpFarInfo->PanelTabs.SeparateTabs = gpFarInfo->PanelTabs.ButtonColor = -1;
-		LoadPanelTabsFromRegistry();
-	}
-
-	BOOL lbChanged = FALSE, lbSucceded = FALSE;
-
-	lbSucceded = Plugin()->ReloadFarInfo();
-
-	if (lbSucceded)
-	{
-		if (abForce || memcmp(gpFarInfoMapping, gpFarInfo, sizeof(CEFAR_INFO_MAPPING))!=0)
-		{
-			lbChanged = TRUE;
-			gpFarInfo->nFarInfoIdx++;
-			*gpFarInfoMapping = *gpFarInfo;
-		}
-	}
-
-	return lbChanged;
-}
 
 VOID WINAPI OnCurDirChanged()
 {

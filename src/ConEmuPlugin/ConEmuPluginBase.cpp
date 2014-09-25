@@ -1706,7 +1706,7 @@ void CPluginBase::CheckResources(bool abFromStartup)
 	//}
 	//if (gpConMapInfo)
 	// Теперь он отвязан от gpConMapInfo
-	ReloadFarInfo(TRUE);
+	ReloadFarInfo(true);
 
 	wchar_t szLang[64];
 	if (gpConMapInfo)  //2010-12-13 Имеет смысл только при запуске из-под ConEmu
@@ -2473,7 +2473,7 @@ void CPluginBase::OnMainThreadActivated()
 	if (gbNeedPostReloadFarInfo)
 	{
 		gbNeedPostReloadFarInfo = FALSE;
-		ReloadFarInfo(FALSE);
+		ReloadFarInfo(false);
 	}
 
 	// !!! Это только чисто в OnConsolePeekReadInput, т.к. FAR Api тут не используется
@@ -3545,4 +3545,201 @@ bool CPluginBase::FarSetConsoleSize(SHORT nNewWidth, SHORT nNewHeight)
 	}
 
 	return lbRc;
+}
+
+bool CPluginBase::ReloadFarInfoApi()
+{
+	if (!mb_StartupInfoOk) return false;
+
+	if (!gpFarInfo)
+	{
+		_ASSERTE(gpFarInfo!=NULL);
+		return false;
+	}
+
+	// Заполнить gpFarInfo->
+	//BYTE nFarColors[0x100]; // Массив цветов фара
+	//DWORD nFarInterfaceSettings;
+	//DWORD nFarPanelSettings;
+	//DWORD nFarConfirmationSettings;
+	//BOOL  bFarPanelAllowed, bFarLeftPanel, bFarRightPanel;   // FCTL_CHECKPANELSEXIST, FCTL_GETPANELSHORTINFO,...
+	//CEFAR_SHORT_PANEL_INFO FarLeftPanel, FarRightPanel;
+
+	DWORD ldwConsoleMode = 0;
+	GetConsoleMode(/*ghConIn*/GetStdHandle(STD_INPUT_HANDLE), &ldwConsoleMode);
+
+	#ifdef _DEBUG
+	static DWORD ldwDbgMode = 0;
+	if (IsDebuggerPresent())
+	{
+		if (ldwDbgMode != ldwConsoleMode)
+		{
+			wchar_t szDbg[128]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"Far.ConEmuW: ConsoleMode(STD_INPUT_HANDLE)=0x%08X\n", ldwConsoleMode);
+			OutputDebugStringW(szDbg);
+			ldwDbgMode = ldwConsoleMode;
+		}
+	}
+	#endif
+
+	gpFarInfo->nFarConsoleMode = ldwConsoleMode;
+
+	LoadFarColors(gpFarInfo->nFarColors);
+
+	//_ASSERTE(FPS_SHOWCOLUMNTITLES==0x20 && FPS_SHOWSTATUSLINE==0x40); //-V112
+	//gpFarInfo->FarInterfaceSettings =
+	//    (DWORD)InfoW2800->AdvControl(&guid_ConEmu, ACTL_GETINTERFACESETTINGS, 0, 0);
+	//gpFarInfo->nFarPanelSettings =
+	//    (DWORD)InfoW2800->AdvControl(&guid_ConEmu, ACTL_GETPANELSETTINGS, 0, 0);
+	//gpFarInfo->nFarConfirmationSettings =
+	//    (DWORD)InfoW2800->AdvControl(&guid_ConEmu, ACTL_GETCONFIRMATIONS, 0, 0);
+
+	LoadFarSettings(&gpFarInfo->FarInterfaceSettings, &gpFarInfo->FarPanelSettings);
+
+	gpFarInfo->bMacroActive = IsMacroActive();
+	int nArea = GetMacroArea();
+	if (nArea >= 0)
+	{
+		if (nArea == ma_Shell || nArea == ma_InfoPanel || nArea == ma_QViewPanel || nArea == ma_TreePanel || ma_Search)
+			gpFarInfo->nMacroArea = fma_Panels;
+		else if (nArea == ma_Viewer)
+			gpFarInfo->nMacroArea = fma_Viewer;
+		else if (nArea == ma_Editor)
+			gpFarInfo->nMacroArea = fma_Editor;
+		else if (nArea == ma_Dialog || nArea == ma_Disks || nArea == ma_FindFolder || nArea == ma_ShellAutoCompletion
+				|| nArea == ma_DialogAutoCompletion || nArea == ma_MainMenu || nArea == ma_Menu || nArea == ma_UserMenu)
+			gpFarInfo->nMacroArea = fma_Dialog;
+		else
+			gpFarInfo->nMacroArea = fma_Unknown;
+	}
+	else
+	{
+		gpFarInfo->nMacroArea = fma_Unknown;
+	}
+
+	gpFarInfo->bFarPanelAllowed = CheckPanelExist();
+	gpFarInfo->bFarPanelInfoFilled = FALSE;
+	gpFarInfo->bFarLeftPanel = FALSE;
+	gpFarInfo->bFarRightPanel = FALSE;
+
+	// -- пока, во избежание глюков в FAR при неожиданных запросах информации о панелях
+	//if (FALSE == (gpFarInfo->bFarPanelAllowed)) {
+	//	gpConMapInfo->bFarLeftPanel = FALSE;
+	//	gpConMapInfo->bFarRightPanel = FALSE;
+	//} else {
+	//	PanelInfo piA = {}, piP = {};
+	//	BOOL lbActive  = InfoW2800->PanelControl(PANEL_ACTIVE, FCTL_GETPANELINFO, 0, &piA);
+	//	BOOL lbPassive = InfoW2800->PanelControl(PANEL_PASSIVE, FCTL_GETPANELINFO, 0, &piP);
+	//	if (!lbActive && !lbPassive)
+	//	{
+	//		gpConMapInfo->bFarLeftPanel = FALSE;
+	//		gpConMapInfo->bFarRightPanel = FALSE;
+	//	} else {
+	//		PanelInfo *ppiL = NULL;
+	//		PanelInfo *ppiR = NULL;
+	//		if (lbActive) {
+	//			if (piA.Flags & PFLAGS_PANELLEFT) ppiL = &piA; else ppiR = &piA;
+	//		}
+	//		if (lbPassive) {
+	//			if (piP.Flags & PFLAGS_PANELLEFT) ppiL = &piP; else ppiR = &piP;
+	//		}
+	//		gpConMapInfo->bFarLeftPanel = ppiL!=NULL;
+	//		gpConMapInfo->bFarRightPanel = ppiR!=NULL;
+	//		if (ppiL) FarPanel2CePanel(ppiL, &(gpConMapInfo->FarLeftPanel));
+	//		if (ppiR) FarPanel2CePanel(ppiR, &(gpConMapInfo->FarRightPanel));
+	//	}
+	//}
+	return true;
+}
+
+bool CPluginBase::ReloadFarInfo(bool abForce)
+{
+	if (!gpFarInfoMapping)
+	{
+		DWORD dwErr = 0;
+		// Создать мэппинг для gpFarInfoMapping
+		wchar_t szMapName[MAX_PATH];
+		_wsprintf(szMapName, SKIPLEN(countof(szMapName)) CEFARMAPNAME, gnSelfPID);
+		DWORD nMapSize = sizeof(CEFAR_INFO_MAPPING);
+		TODO("Заменить на MFileMapping");
+		ghFarInfoMapping = CreateFileMapping(INVALID_HANDLE_VALUE,
+		                                     gpLocalSecurity, PAGE_READWRITE, 0, nMapSize, szMapName);
+
+		if (!ghFarInfoMapping)
+		{
+			dwErr = GetLastError();
+			//TODO("Показать ошибку создания MAP для ghFarInfoMapping");
+			_ASSERTE(ghFarInfoMapping!=NULL);
+		}
+		else
+		{
+			gpFarInfoMapping = (CEFAR_INFO_MAPPING*)MapViewOfFile(ghFarInfoMapping, FILE_MAP_ALL_ACCESS,0,0,0);
+
+			if (!gpFarInfoMapping)
+			{
+				dwErr = GetLastError();
+				CloseHandle(ghFarInfoMapping); ghFarInfoMapping = NULL;
+				//TODO("Показать ошибку создания MAP для ghFarInfoMapping");
+				_ASSERTE(gpFarInfoMapping!=NULL);
+			}
+			else
+			{
+				gpFarInfoMapping->cbSize = 0;
+			}
+		}
+	}
+
+	if (!ghFarAliveEvent)
+	{
+		wchar_t szEventName[64];
+		_wsprintf(szEventName, SKIPLEN(countof(szEventName)) CEFARALIVEEVENT, gnSelfPID);
+		ghFarAliveEvent = CreateEvent(gpLocalSecurity, FALSE, FALSE, szEventName);
+	}
+
+	if (!gpFarInfo)
+	{
+		gpFarInfo = (CEFAR_INFO_MAPPING*)Alloc(sizeof(CEFAR_INFO_MAPPING),1);
+
+		if (!gpFarInfo)
+		{
+			_ASSERTE(gpFarInfo!=NULL);
+			return FALSE;
+		}
+
+		gpFarInfo->cbSize = sizeof(CEFAR_INFO_MAPPING);
+		gpFarInfo->nFarInfoIdx = 0;
+		gpFarInfo->FarVer = gFarVersion;
+		gpFarInfo->nFarPID = gnSelfPID;
+		gpFarInfo->nFarTID = gnMainThreadId;
+		gpFarInfo->nProtocolVersion = CESERVER_REQ_VER;
+
+		if (gFarVersion.dwVerMajor < 2 || (gFarVersion.dwVerMajor == 2 && gFarVersion.dwBuild < 1564))
+		{
+			gpFarInfo->bBufferSupport = FALSE;
+		}
+		else
+		{
+			// Нужно проверить
+			gpFarInfo->bBufferSupport = Plugin()->CheckBufferEnabled();
+		}
+
+		// Загрузить из реестра настройки PanelTabs
+		gpFarInfo->PanelTabs.SeparateTabs = gpFarInfo->PanelTabs.ButtonColor = -1;
+		LoadPanelTabsFromRegistry();
+	}
+
+	bool lbChanged = false, lbSucceded = false;
+
+	lbSucceded = ReloadFarInfoApi();
+
+	if (lbSucceded)
+	{
+		if (abForce || memcmp(gpFarInfoMapping, gpFarInfo, sizeof(CEFAR_INFO_MAPPING))!=0)
+		{
+			lbChanged = true;
+			gpFarInfo->nFarInfoIdx++;
+			*gpFarInfoMapping = *gpFarInfo;
+		}
+	}
+
+	return lbChanged;
 }

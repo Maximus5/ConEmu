@@ -1253,7 +1253,7 @@ void CPluginW1900::ShowUserScreen(bool bUserScreen)
 //	pCE->Flags = pFar->Flags;
 //}
 
-static void LoadFarColorsW1900(BYTE (&nFarColors)[col_LastIndex])
+void CPluginW1900::LoadFarColors(BYTE (&nFarColors)[col_LastIndex])
 {
 	INT_PTR nColorSize = InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETARRAYCOLOR, 0, NULL);
 	FarColor* pColors = (FarColor*)calloc(nColorSize, sizeof(*pColors));
@@ -1303,7 +1303,7 @@ static int GetFarSetting(HANDLE h, size_t Root, LPCWSTR Name)
 	return nValue;
 }
 
-static void LoadFarSettingsW1900(CEFarInterfaceSettings* pInterface, CEFarPanelSettings* pPanel)
+void CPluginW1900::LoadFarSettings(CEFarInterfaceSettings* pInterface, CEFarPanelSettings* pPanel)
 {
 	_ASSERTE(GetCurrentThreadId() == gnMainThreadId);
 	GUID FarGuid = {};
@@ -1327,117 +1327,6 @@ static void LoadFarSettingsW1900(CEFarInterfaceSettings* pInterface, CEFarPanelS
 
 		InfoW1900->SettingsControl(sc.Handle, SCTL_FREE, 0, 0);
 	}
-}
-
-BOOL CPluginW1900::ReloadFarInfo(/*BOOL abFull*/)
-{
-	if (!InfoW1900 || !FSFW1900) return FALSE;
-
-	if (!gpFarInfo)
-	{
-		_ASSERTE(gpFarInfo!=NULL);
-		return FALSE;
-	}
-
-	// Заполнить gpFarInfo->
-	//BYTE nFarColors[0x100]; // Массив цветов фара
-	//DWORD nFarInterfaceSettings;
-	//DWORD nFarPanelSettings;
-	//DWORD nFarConfirmationSettings;
-	//BOOL  bFarPanelAllowed, bFarLeftPanel, bFarRightPanel;   // FCTL_CHECKPANELSEXIST, FCTL_GETPANELSHORTINFO,...
-	//CEFAR_SHORT_PANEL_INFO FarLeftPanel, FarRightPanel;
-	DWORD ldwConsoleMode = 0;	GetConsoleMode(/*ghConIn*/GetStdHandle(STD_INPUT_HANDLE), &ldwConsoleMode);
-#ifdef _DEBUG
-	static DWORD ldwDbgMode = 0;
-
-	if (IsDebuggerPresent())
-	{
-		if (ldwDbgMode != ldwConsoleMode)
-		{
-			wchar_t szDbg[128]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"Far.ConEmuW: ConsoleMode(STD_INPUT_HANDLE)=0x%08X\n", ldwConsoleMode);
-			OutputDebugStringW(szDbg);
-			ldwDbgMode = ldwConsoleMode;
-		}
-	}
-
-#endif
-	gpFarInfo->nFarConsoleMode = ldwConsoleMode;
-
-	LoadFarColorsW1900(gpFarInfo->nFarColors);
-
-	//_ASSERTE(FPS_SHOWCOLUMNTITLES==0x20 && FPS_SHOWSTATUSLINE==0x40); //-V112
-	//gpFarInfo->FarInterfaceSettings =
-	//    (DWORD)InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETINTERFACESETTINGS, 0, 0);
-	//gpFarInfo->nFarPanelSettings =
-	//    (DWORD)InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETPANELSETTINGS, 0, 0);
-	//gpFarInfo->nFarConfirmationSettings =
-	//    (DWORD)InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETCONFIRMATIONS, 0, 0);
-
-	LoadFarSettingsW1900(&gpFarInfo->FarInterfaceSettings, &gpFarInfo->FarPanelSettings);
-
-	gpFarInfo->bMacroActive = IsMacroActive();
-	INT_PTR nArea = InfoW1900->MacroControl(&guid_ConEmu, MCTL_GETAREA, 0, 0);
-	switch(nArea)
-	{
-		case MACROAREA_SHELL:
-		case MACROAREA_INFOPANEL:
-		case MACROAREA_QVIEWPANEL:
-		case MACROAREA_TREEPANEL:
-		case MACROAREA_SEARCH:
-			gpFarInfo->nMacroArea = fma_Panels;
-			break;
-		case MACROAREA_VIEWER:
-			gpFarInfo->nMacroArea = fma_Viewer;
-			break;
-		case MACROAREA_EDITOR:
-			gpFarInfo->nMacroArea = fma_Editor;
-			break;
-		case MACROAREA_DIALOG:
-		case MACROAREA_DISKS:
-		case MACROAREA_FINDFOLDER:
-		case MACROAREA_SHELLAUTOCOMPLETION:
-		case MACROAREA_DIALOGAUTOCOMPLETION:
-		case MACROAREA_MAINMENU:
-		case MACROAREA_MENU:
-		case MACROAREA_USERMENU:
-			gpFarInfo->nMacroArea = fma_Dialog;
-			break;
-		default:
-			gpFarInfo->nMacroArea = fma_Unknown;
-	}
-
-	gpFarInfo->bFarPanelAllowed = InfoW1900->PanelControl(PANEL_NONE, FCTL_CHECKPANELSEXIST, 0, 0)!=0;
-	gpFarInfo->bFarPanelInfoFilled = FALSE;
-	gpFarInfo->bFarLeftPanel = FALSE;
-	gpFarInfo->bFarRightPanel = FALSE;
-	// -- пока, во избежание глюков в FAR при неожиданных запросах информации о панелях
-	//if (FALSE == (gpFarInfo->bFarPanelAllowed)) {
-	//	gpConMapInfo->bFarLeftPanel = FALSE;
-	//	gpConMapInfo->bFarRightPanel = FALSE;
-	//} else {
-	//	PanelInfo piA = {}, piP = {};
-	//	BOOL lbActive  = InfoW1900->PanelControl(PANEL_ACTIVE, FCTL_GETPANELINFO, 0, &piA);
-	//	BOOL lbPassive = InfoW1900->PanelControl(PANEL_PASSIVE, FCTL_GETPANELINFO, 0, &piP);
-	//	if (!lbActive && !lbPassive)
-	//	{
-	//		gpConMapInfo->bFarLeftPanel = FALSE;
-	//		gpConMapInfo->bFarRightPanel = FALSE;
-	//	} else {
-	//		PanelInfo *ppiL = NULL;
-	//		PanelInfo *ppiR = NULL;
-	//		if (lbActive) {
-	//			if (piA.Flags & PFLAGS_PANELLEFT) ppiL = &piA; else ppiR = &piA;
-	//		}
-	//		if (lbPassive) {
-	//			if (piP.Flags & PFLAGS_PANELLEFT) ppiL = &piP; else ppiR = &piP;
-	//		}
-	//		gpConMapInfo->bFarLeftPanel = ppiL!=NULL;
-	//		gpConMapInfo->bFarRightPanel = ppiR!=NULL;
-	//		if (ppiL) FarPanel2CePanel(ppiL, &(gpConMapInfo->FarLeftPanel));
-	//		if (ppiR) FarPanel2CePanel(ppiR, &(gpConMapInfo->FarRightPanel));
-	//	}
-	//}
-	return TRUE;
 }
 
 BOOL CPluginW1900::CheckBufferEnabled()
@@ -1467,6 +1356,15 @@ BOOL CPluginW1900::CheckBufferEnabled()
 
 	siEnabled = -1;
 	return FALSE;
+}
+
+bool CPluginW1900::CheckPanelExist()
+{
+	if (!InfoW1900 || !InfoW1900->PanelControl)
+		return false;
+
+	INT_PTR iRc = InfoW1900->PanelControl(INVALID_HANDLE_VALUE, FCTL_CHECKPANELSEXIST, 0, 0);
+	return (iRc!=0);
 }
 
 static void CopyPanelInfoW(PanelInfo* pInfo, PaintBackgroundArg::BkPanelInfo* pBk)
@@ -1510,7 +1408,7 @@ void CPluginW1900::FillUpdateBackground(struct PaintBackgroundArg* pFar)
 
 	LoadFarSettingsW1900(&pFar->FarInterfaceSettings, &pFar->FarPanelSettings);
 
-	pFar->bPanelsAllowed = (0 != InfoW1900->PanelControl(INVALID_HANDLE_VALUE, FCTL_CHECKPANELSEXIST, 0, 0));
+	pFar->bPanelsAllowed = CheckPanelExist();
 
 	if (pFar->bPanelsAllowed)
 	{

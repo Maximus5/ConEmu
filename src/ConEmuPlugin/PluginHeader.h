@@ -170,10 +170,6 @@ int FUNC_Y1(ShowMessageW)(LPCWSTR asMsg, int aiButtons, bool bWarning);
 int FUNC_Y2(ShowMessageW)(LPCWSTR asMsg, int aiButtons, bool bWarning);
 extern CEFAR_INFO_MAPPING *gpFarInfo;
 extern HANDLE ghFarAliveEvent;
-BOOL ReloadFarInfoA(/*BOOL abFull = FALSE*/);
-BOOL FUNC_X(ReloadFarInfoW)(/*BOOL abFull = FALSE*/);
-BOOL FUNC_Y1(ReloadFarInfoW)(/*BOOL abFull = FALSE*/);
-BOOL FUNC_Y2(ReloadFarInfoW)(/*BOOL abFull = FALSE*/);
 void PostMacro(const wchar_t* asMacro, INPUT_RECORD* apRec);
 void PostMacroA(char* asMacro, INPUT_RECORD* apRec);
 void FUNC_X(PostMacroW)(const wchar_t* asMacro, INPUT_RECORD* apRec);
@@ -183,8 +179,6 @@ void FUNC_Y2(PostMacroW)(const wchar_t* asMacro, INPUT_RECORD* apRec);
 extern DWORD gnReqCommand;
 extern int gnPluginOpenFrom;
 extern LPVOID gpReqCommandData;
-BOOL CheckPlugKey();
-void NotifyChangeKey();
 
 
 #if defined(__GNUC__)

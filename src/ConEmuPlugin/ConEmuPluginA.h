@@ -46,6 +46,7 @@ public:
 
 public:
 	virtual BOOL    CheckBufferEnabled() override;
+	virtual bool    CheckPanelExist() override;
 	virtual bool    ExecuteSynchroApi() override { return false; };
 	virtual void    ExitFAR() override;
 	virtual void    FillUpdateBackground(struct PaintBackgroundArg* pFar) override;
@@ -60,6 +61,8 @@ public:
 	virtual void    GuiMacroDlg() override;
 	virtual bool    InputBox(LPCWSTR Title, LPCWSTR SubTitle, LPCWSTR HistoryName, LPCWSTR SrcText, wchar_t*& DestText);
 	virtual bool    IsMacroActive() override;
+	virtual void    LoadFarColors(BYTE (&nFarColors)[col_LastIndex]) override;
+	virtual void    LoadFarSettings(CEFarInterfaceSettings* pInterface, CEFarPanelSettings* pPanel) override;
 	virtual void    LoadPanelDirs() override;
 	virtual void    LoadPanelTabsSettings() override;
 	#if 0
@@ -75,7 +78,6 @@ public:
 	virtual int     ProcessSynchroEvent(void* p) { return 0; }; // Not implemented in ANSI
 	virtual int     ProcessViewerEvent(void* p) { return 0; }; // Not implemented in ANSI
 	virtual void    RedrawAll() override;
-	virtual BOOL    ReloadFarInfo() override;
 	virtual void    SetStartupInfo(void *aInfo) override;
 	virtual void    SetWindow(int nTab) override;
 	virtual int     ShowMessage(int aiMsg, int aiButtons) override;
