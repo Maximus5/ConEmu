@@ -129,7 +129,7 @@ bool CPluginAnsi::GetPanelInfo(GetPanelDirFlags Flags, BkPanelInfo* pBk)
 	}
 	else
 	{
-		InfoA->Control(INVALID_HANDLE_VALUE, (Flags & gpdf_Active) ? FCTL_GETPANELSHORTINFO : FCTL_GETANOTHERPANELSHORTINFO, 0, (LONG_PTR)&actv);
+		InfoA->Control(INVALID_HANDLE_VALUE, (Flags & gpdf_Active) ? FCTL_GETPANELSHORTINFO : FCTL_GETANOTHERPANELSHORTINFO, &actv);
 		pInfo = &actv;
 	}
 
@@ -151,7 +151,7 @@ INT_PTR CPluginAnsi::PanelControlApi(HANDLE hPanel, int Command, INT_PTR Param1,
 {
 	if (!InfoA || !InfoA->Control)
 		return -1;
-	INT_PTR iRc = InfoA->Control(hPanel, (FILE_CONTROL_COMMANDS)Command, Param1, (LONG_PTR)Param2);
+	INT_PTR iRc = InfoA->Control(hPanel, (FILE_CONTROL_COMMANDS)Command, Param2);
 	return iRc;
 }
 
@@ -436,7 +436,7 @@ void CPluginAnsi::ProcessDragTo()
 
 void CPluginAnsi::SetStartupInfo(void *aInfo)
 {
-	INIT_FAR_PSI(::InfoA, ::FSFA, aInfo);
+	INIT_FAR_PSI(::InfoA, ::FSFA, (PluginStartupInfo*)aInfo);
 	mb_StartupInfoOk = true;
 
 	DWORD nFarVer = 0;
@@ -504,7 +504,7 @@ int CPluginAnsi::GetWindowCount()
 	if (!InfoA || !InfoA->AdvControl)
 		return 0;
 
-	INT_PTR windowCount = InfoA->AdvControl(InfoW995->ModuleNumber, ACTL_GETWINDOWCOUNT, NULL);
+	INT_PTR windowCount = InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETWINDOWCOUNT, NULL);
 	return (int)windowCount;
 }
 
@@ -792,8 +792,9 @@ LPCWSTR CPluginAnsi::GetMsg(int aiMsg, wchar_t* psMsg = NULL, size_t cchMsgMax =
 	if (!pszRcA)
 		pszRcA = "";
 
-	nLen = MultiByteToWideChar(CP_OEMCP, 0, pszRcA, -1, psMsg, cchMsgMax-1);
-	if (nLen>=0) psMsg[nLen] = 0;
+	int nLen = MultiByteToWideChar(CP_OEMCP, 0, pszRcA, -1, psMsg, cchMsgMax-1);
+	if (nLen>=0)
+		psMsg[nLen] = 0;
 
 	return psMsg;
 }

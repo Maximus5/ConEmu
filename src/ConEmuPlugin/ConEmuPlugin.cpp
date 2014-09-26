@@ -45,7 +45,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <windows.h>
 #include "../common/common.hpp"
-#include "../common/MWow64Disable.h"
 #include "../ConEmuHk/SetHook.h"
 #ifdef _DEBUG
 #pragma warning( disable : 4995 )
@@ -54,7 +53,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifdef _DEBUG
 #pragma warning( default : 4995 )
 #endif
-#include "../common/ConEmuCheckEx.h"
 #include "../common/ConsoleAnnotation.h"
 #include "../common/SetEnvVar.h"
 #include "../common/WinObjects.h"
@@ -80,29 +78,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define Alloc calloc
 
 #define MAKEFARVERSION(major,minor,build) ( ((major)<<8) | (minor) | ((build)<<16))
-
-#define CHECK_RESOURCES_INTERVAL 5000
-#define CHECK_FARINFO_INTERVAL 2000
-#define ATTACH_START_SERVER_TIMEOUT 10000
-
-#if defined(__GNUC__)
-extern "C" {
-	BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved);
-	HWND WINAPI GetFarHWND();
-	HWND WINAPI GetFarHWND2(int anConEmuOnly);
-	void WINAPI GetFarVersion(FarVersion* pfv);
-	int  WINAPI ProcessEditorInputW(void* Rec);
-	void WINAPI SetStartupInfoW(void *aInfo);
-	BOOL WINAPI IsTerminalMode();
-	BOOL WINAPI IsConsoleActive();
-	int  WINAPI RegisterPanelView(PanelViewInit *ppvi);
-	int  WINAPI RegisterBackground(RegisterBackgroundArg *pbk);
-	int  WINAPI ActivateConsole();
-	int  WINAPI SyncExecute(HMODULE ahModule, SyncExecuteCallback_t CallBack, LONG_PTR lParam);
-	void WINAPI GetPluginInfoWcmn(void *piv);
-};
-#endif
-
 
 HMODULE ghPluginModule = NULL; // ConEmu.dll - сам плагин
 HWND ghConEmuWndDC = NULL; // Содержит хэндл окна отрисовки. Это ДОЧЕРНЕЕ окно.
@@ -142,8 +117,8 @@ DWORD  gnDataSize=0;
 int gnPluginOpenFrom = -1;
 DWORD gnReqCommand = -1;
 LPVOID gpReqCommandData = NULL;
-static HANDLE ghReqCommandEvent = NULL;
-static BOOL   gbReqCommandWaiting = FALSE;
+HANDLE ghReqCommandEvent = NULL;
+BOOL   gbReqCommandWaiting = FALSE;
 
 
 UINT gnMsgTabChanged = 0;
@@ -197,7 +172,7 @@ void WINAPI GetPluginInfo(void *piv)
 	Plugin()->GetPluginInfo(piv);
 }
 
-void WINAPI GetPluginInfoWcmn(void *piv)
+void WINAPI GetPluginInfoW(void *piv)
 {
 	Plugin()->GetPluginInfo(piv);
 }
@@ -214,21 +189,11 @@ DWORD gnPeekReadCount = 0;
 
 
 
-void WINAPI ExitFARW(void);
-void WINAPI ExitFARW3(void*);
-
-#include "../common/SetExport.h"
-ExportFunc Far3Func[] =
-{
-	{"ExitFARW", (void*)ExitFARW, (void*)ExitFARW3},
-	{"ProcessEditorEventW", (void*)ProcessEditorEventW, (void*)ProcessEditorEventW3},
-	{"ProcessViewerEventW", (void*)ProcessViewerEventW, (void*)ProcessViewerEventW3},
-	{"ProcessSynchroEventW", (void*)ProcessSynchroEventW, (void*)ProcessSynchroEventW3},
-	{NULL}
-};
-
 bool gbExitFarCalled = false;
 
+#if defined(__GNUC__)
+extern "C"
+#endif
 BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved)
 {
 	switch(ul_reason_for_call)
@@ -549,7 +514,7 @@ int WINAPI SyncExecute(HMODULE ahModule, SyncExecuteCallback_t CallBack, LONG_PT
 {
 	BOOL bResult = FALSE;
 	SyncExecuteArg args = {CMD__EXTERNAL_CALLBACK, ahModule, CallBack, lParam};
-	bResult = ProcessCommand(CMD__EXTERNAL_CALLBACK, TRUE/*bReqMainThread*/, &args);
+	bResult = Plugin()->ProcessCommand(CMD__EXTERNAL_CALLBACK, TRUE/*bReqMainThread*/, &args);
 	return bResult;
 }
 
@@ -622,7 +587,7 @@ int WINAPI GetMinFarVersion()
 	// Однако, FAR2 до сборки 748 не понимал две версии плагина в одном файле
 	bool bFar2 = false;
 
-	if (!LoadFarVersion())
+	if (!CPluginBase::LoadFarVersion())
 		bFar2 = true;
 	else
 		bFar2 = gFarVersion.dwVerMajor>=2;
@@ -691,7 +656,8 @@ int WINAPI ProcessEditorInput(const INPUT_RECORD *Rec)
 {
 	// Даже если мы не под эмулятором - просто запомним текущее состояние
 	//if (!ghConEmuWndDC) return 0; // Если мы не под эмулятором - ничего
-	return Plugin()->ProcessEditorInput(*Rec);
+	Plugin()->ProcessEditorInputInternal(*Rec);
+	return 0;
 }
 
 int WINAPI ProcessEditorInputW(void* Rec)
@@ -708,7 +674,8 @@ HANDLE WINAPI OpenPlugin(int OpenFrom,INT_PTR Item)
 
 HANDLE WINAPI OpenPluginW(int OpenFrom, INT_PTR Item)
 {
-	return Plugin()->OpenPluginCommon(OpenFrom, Item, ((OpenFrom & p->of_FromMacro) == p->of_FromMacro));
+	CPluginBase* p = Plugin();
+	return p->OpenPluginCommon(OpenFrom, Item, ((OpenFrom & p->of_FromMacro) == p->of_FromMacro));
 }
 
 HANDLE WINAPI OpenW(const void* Info)
@@ -746,6 +713,27 @@ void WINAPI ExitFARW3(void*)
 	CPluginBase::ShutdownPluginStep(L"ExitFARW3 - done");
 }
 
+
+
+
+#include "../common/SetExport.h"
+ExportFunc Far3Func[] =
+{
+	{"ExitFARW", (void*)ExitFARW, (void*)ExitFARW3},
+	{"ProcessEditorEventW", (void*)ProcessEditorEventW, (void*)ProcessEditorEventW3},
+	{"ProcessViewerEventW", (void*)ProcessViewerEventW, (void*)ProcessViewerEventW3},
+	{"ProcessSynchroEventW", (void*)ProcessSynchroEventW, (void*)ProcessSynchroEventW3},
+	{NULL}
+};
+
+void SetupExportsFar3()
+{
+	bool lbExportsChanged = ChangeExports( Far3Func, ghPluginModule );
+	if (!lbExportsChanged)
+	{
+		_ASSERTE(lbExportsChanged);
+	}
+}
 
 
 /* Используются как extern в ConEmuCheck.cpp */

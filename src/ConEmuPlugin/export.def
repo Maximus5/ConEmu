@@ -1,6 +1,6 @@
 EXPORTS
 ;  Unicode (common)
-	GetPluginInfoW=GetPluginInfoWcmn
+	GetPluginInfoW
 	SetStartupInfoW
 	ExitFARW
 	ProcessEditorInputW

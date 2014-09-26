@@ -77,7 +77,6 @@ public:
 	virtual void    RedrawAll() override;
 	virtual void    SetStartupInfo(void *aInfo) override;
 	virtual void    SetWindow(int nTab) override;
-	virtual int     ShowMessage(int aiMsg, int aiButtons) override;
 	virtual int     ShowMessage(LPCWSTR asMsg, int aiButtons, bool bWarning) override;
 	virtual int     ShowPluginMenu(ConEmuPluginMenuItem* apItems, int Count) override;
 	virtual void    ShowUserScreen(bool bUserScreen) override;

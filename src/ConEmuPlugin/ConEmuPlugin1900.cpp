@@ -131,7 +131,7 @@ int CPluginW1900::ProcessViewerEvent(void* p)
 int CPluginW1900::ProcessSynchroEvent(void* p)
 {
 	const ProcessSynchroEventInfo* Info = (const ProcessSynchroEventInfo*)p;
-	return ProcessSynchroEvent(Info->Event, Info->Param);
+	return Plugin()->ProcessSynchroEvent(Info->Event, Info->Param);
 }
 
 wchar_t* CPluginW1900::GetPanelDir(GetPanelDirFlags Flags)
@@ -186,7 +186,7 @@ bool CPluginW1900::GetPanelInfo(GetPanelDirFlags Flags, BkPanelInfo* pBk)
 		PanelInfo* pLeft = (actv.Flags & PFLAGS_PANELLEFT) ? &actv : &pasv;
 		PanelInfo* pRight = (actv.Flags & PFLAGS_PANELLEFT) ? &pasv : &actv;
 		pInfo = (Flags & gpdf_Left) ? pLeft : pRight;
-		hPanel = (pInfo->Focus) ? PANEL_ACTIVE : PANEL_PASSIVE;
+		hPanel = ((pInfo->Flags & PFLAGS_FOCUS) == PFLAGS_FOCUS) ? PANEL_ACTIVE : PANEL_PASSIVE;
 	}
 	else
 	{
@@ -238,7 +238,7 @@ void CPluginW1900::GetPluginInfo(void *piv)
 
 	static wchar_t *szMenu[1], szMenu1[255];
 	szMenu[0]=szMenu1; //lstrcpyW(szMenu[0], L"[&\x2560] ConEmu"); -> 0x2584
-	lstrcpynW(szMenu1, GetMsgW(CEPluginName), 240);
+	GetMsg(CEPluginName, szMenu1, 240);
 
 	//static WCHAR *szMenu[1], szMenu1[255];
 	//szMenu[0]=szMenu1; //lstrcpyW(szMenu[0], L"[&\x2560] ConEmu"); -> 0x2584
@@ -629,7 +629,7 @@ int CPluginW1900::ProcessEditorInput(LPCVOID aRec)
 		return 0;
 
 	const ProcessEditorInputInfo *apInfo = (const ProcessEditorInputInfo*)aRec;
-	ProcessEditorInput(apInfo->Rec);
+	ProcessEditorInputInternal(apInfo->Rec);
 
 	return 0;
 }
@@ -834,7 +834,7 @@ LPCWSTR CPluginW1900::GetMsg(int aiMsg, wchar_t* psMsg = NULL, size_t cchMsgMax 
 	if (!pszRc)
 		pszRc = L"";
 	if (psMsg)
-		lstrcpyn(pszRc, pszRc, cchMsgMax);
+		lstrcpyn(psMsg, pszRc, cchMsgMax);
 	return pszRc;
 }
 

@@ -56,11 +56,27 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define FUNC_Y1(fn) fn##1900
 #define FUNC_Y2(fn) fn##2800
 
+#define CMD__EXTERNAL_CALLBACK 0x80001
+
+#define CHECK_RESOURCES_INTERVAL 5000
+#define CHECK_FARINFO_INTERVAL 2000
+#define ATTACH_START_SERVER_TIMEOUT 10000
+
+struct SyncExecuteArg
+{
+	DWORD nCmd;
+	HMODULE hModule;
+	SyncExecuteCallback_t CallBack;
+	LONG_PTR lParam;
+};
+
+class MSection;
 
 extern DWORD gnMainThreadId;
 extern int lastModifiedStateW;
 extern WCHAR gszDir1[CONEMUTABMAX], gszDir2[CONEMUTABMAX];
-extern int maxTabCount, lastWindowCount;
+extern int maxTabCount, lastWindowCount, gnCurTabCount;
+extern MSection *csTabs;
 extern CESERVER_REQ* tabs; //(ConEmuTab*) calloc(maxTabCount, sizeof(ConEmuTab));
 extern CESERVER_REQ* gpCmdRet;
 extern HWND ghConEmuWndDC;
@@ -69,6 +85,7 @@ extern FarVersion gFarVersion;
 extern int lastModifiedStateW;
 extern HANDLE hThread;
 extern BOOL gbNeedPostTabSend, gbNeedPostEditCheck;
+extern DWORD gnNeedPostTabSendTick;
 extern HANDLE ghServerTerminateEvent;
 extern const CESERVER_CONSOLE_MAPPING_HDR *gpConMapInfo;
 extern DWORD gnSelfPID;
@@ -108,7 +125,16 @@ extern HANDLE ghFarAliveEvent;
 extern DWORD gnReqCommand;
 extern int gnPluginOpenFrom;
 extern LPVOID gpReqCommandData;
+extern HANDLE ghReqCommandEvent;
+extern BOOL   gbReqCommandWaiting;
+extern LPBYTE gpData, gpCursor;
+extern DWORD gnDataSize;
+extern MSection *csData;
 
+extern DWORD gnPeekReadCount;
+extern DWORD gdwServerPID;
+extern HMODULE ghPluginModule;
+extern HMODULE ghHooksModule;
 
 #if defined(__GNUC__)
 extern "C" {
@@ -125,7 +151,7 @@ int WINAPI SyncExecute(HMODULE ahModule, SyncExecuteCallback_t CallBack, LONG_PT
 int WINAPI ActivateConsole();
 // Plugin API exports
 void WINAPI GetPluginInfo(void *piv);
-void WINAPI GetPluginInfoWcmn(void *piv);
+void WINAPI GetPluginInfoW(void *piv);
 void WINAPI SetStartupInfo(void *aInfo);
 void WINAPI SetStartupInfoW(void *aInfo);
 int WINAPI GetMinFarVersion();
@@ -149,6 +175,8 @@ void WINAPI ExitFARW3(void*);
 #if defined(__GNUC__)
 }
 #endif
+
+void SetupExportsFar3();
 
 BOOL StartupHooks(HMODULE ahOurDll);
 void ShutdownHooks();

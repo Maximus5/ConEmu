@@ -79,8 +79,6 @@ namespace PipeServerLogger
 #define CHECK_RESOURCES_INTERVAL 5000
 #define CHECK_FARINFO_INTERVAL 2000
 
-#define CMD__EXTERNAL_CALLBACK 0x80001
-
 //
 extern HANDLE ghSetWndSendTabsEvent;
 extern MSection *csTabs;

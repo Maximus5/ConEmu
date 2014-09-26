@@ -3,7 +3,7 @@
 EXPORTS
 ;  Unicode
 	SetStartupInfoW=SetStartupInfoW@4
-	GetPluginInfoW=GetPluginInfoWcmn@4
+	GetPluginInfoW=GetPluginInfoW@4
 	ProcessEditorInputW=ProcessEditorInputW@4
 	ProcessEditorEventW=ProcessEditorEventW@8
 	ProcessViewerEventW=ProcessViewerEventW@8

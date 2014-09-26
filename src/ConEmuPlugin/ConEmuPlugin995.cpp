@@ -102,7 +102,7 @@ CPluginW995::CPluginW995()
 	of_Analyse = OPEN_ANALYSE;
 	of_RightDiskMenu = -1;
 	of_FromMacro = OPEN_FROMMACRO;
-	fctl_GetPanelDirectory = FCTL_GETPANELDIRECTORY;
+	fctl_GetPanelDirectory = FCTL_GETPANELDIR;
 	fctl_GetPanelFormat = FCTL_GETPANELFORMAT;
 	fctl_GetPanelPrefix = -1;
 	fctl_GetPanelHostFile = FCTL_GETPANELHOSTFILE;
@@ -212,7 +212,7 @@ void CPluginW995::GetPluginInfo(void *piv)
 	//IsKeyChanged(TRUE); -- в FAR2 устарело, используем Synchro
 	//if (gcPlugKey) szMenu1[0]=0; else lstrcpyW(szMenu1, L"[&\x2584] ");
 	//lstrcpynW(szMenu1+lstrlenW(szMenu1), GetMsgW(2), 240);
-	lstrcpynW(szMenu1, GetMsgW(CEPluginName), 240);
+	GetMsg(CEPluginName, szMenu1, 240);
 	_ASSERTE(pi->StructSize == sizeof(struct PluginInfo));
 	pi->Flags = PF_EDITOR | PF_VIEWER | PF_DIALOG | PF_PRELOAD;
 	pi->DiskMenuStrings = NULL;
@@ -589,7 +589,7 @@ int CPluginW995::ProcessEditorInput(LPCVOID aRec)
 		return 0;
 
 	const INPUT_RECORD *Rec = (const INPUT_RECORD*)aRec;
-	ProcessEditorInput(*Rec);
+	ProcessEditorInputInternal(*Rec);
 
 	return 0;
 }
@@ -718,7 +718,7 @@ LPCWSTR CPluginW995::GetMsg(int aiMsg, wchar_t* psMsg = NULL, size_t cchMsgMax =
 	if (!pszRc)
 		pszRc = L"";
 	if (psMsg)
-		lstrcpyn(pszRc, pszRc, cchMsgMax);
+		lstrcpyn(psMsg, pszRc, cchMsgMax);
 	return pszRc;
 }
 
@@ -742,7 +742,7 @@ void CPluginW995::SetWindow(int nTab)
 }
 
 // Warning, напрямую НЕ вызывать. Пользоваться "общей" PostMacro
-void CPluginW995::PostMacro(const wchar_t* asMacro, INPUT_RECORD* apRec)
+void CPluginW995::PostMacroApi(const wchar_t* asMacro, INPUT_RECORD* apRec)
 {
 	if (!InfoW995 || !InfoW995->AdvControl)
 		return;
@@ -879,9 +879,9 @@ void CPluginW995::WaitEndSynchro()
 
 	FarDialogItem items[] =
 	{
-		{DI_DOUBLEBOX,  3,  1,  51, 3, false, {0}, 0, false, GetMsgW995(CEPluginName)},
+		{DI_DOUBLEBOX,  3,  1,  51, 3, false, {0}, 0, false, GetMsg(CEPluginName)},
 
-		{DI_BUTTON,     0,  2,  0,  0, true,  {0}, DIF_CENTERGROUP, true, GetMsgW995(CEStopSynchroWaiting)},
+		{DI_BUTTON,     0,  2,  0,  0, true,  {0}, DIF_CENTERGROUP, true, GetMsg(CEStopSynchroWaiting)},
 	};
 	ghSyncDlg = InfoW995->DialogInit(InfoW995->ModuleNumber, -1,-1, 55, 5, NULL, items, countof(items), 0, 0, NULL, 0);
 
@@ -990,7 +990,7 @@ void CPluginW995::ShowUserScreen(bool bUserScreen)
 //	pCE->Flags = pFar->Flags;
 //}
 
-void CPluginW995::LoadFarColorsW995(BYTE (&nFarColors)[col_LastIndex])
+void CPluginW995::LoadFarColors(BYTE (&nFarColors)[col_LastIndex])
 {
 	BYTE FarConsoleColors[0x100];
 	INT_PTR nColorSize = InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETARRAYCOLOR, FarConsoleColors);
@@ -1055,7 +1055,7 @@ bool CPluginW995::GetFarRect(SMALL_RECT& rcFar)
 
 bool CPluginW995::CheckPanelExist()
 {
-	if (!InfoW995 || !InfoW995->PanelControl)
+	if (!InfoW995 || !InfoW995->Control)
 		return false;
 
 	INT_PTR iRc = InfoW995->Control(INVALID_HANDLE_VALUE, FCTL_CHECKPANELSEXIST, 0, 0);

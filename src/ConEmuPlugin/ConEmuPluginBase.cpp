@@ -41,18 +41,27 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRACTIVATE(s) //DEBUGSTR(s)
 
 
-#include "ConEmuPluginBase.h"
 #include "PluginHeader.h"
+#include "ConEmuPluginBase.h"
 #include "ConEmuPluginA.h"
 #include "ConEmuPlugin995.h"
 #include "ConEmuPlugin1900.h"
 #include "ConEmuPlugin2800.h"
 #include "PluginBackground.h"
+#include "../common/ConEmuCheckEx.h"
 #include "../common/FarVersion.h"
+#include "../common/MFileMapping.h"
+#include "../common/MSection.h"
+#include "../common/MWow64Disable.h"
+#include "../common/WinConsole.h"
+#include "../ConEmuHk/SetHook.h"
+
+#include <TlHelp32.h>
 
 extern MOUSE_EVENT_RECORD gLastMouseReadEvent;
 extern LONG gnDummyMouseEventFromMacro;
 extern BOOL gbUngetDummyMouseEvent;
+extern SetFarHookMode_t SetFarHookMode;
 
 CPluginBase* gpPlugin = NULL;
 
@@ -75,15 +84,6 @@ PluginAndMenuCommands gpPluginMenu[menu_Last] =
 	{CEMenuConInfo, menu_ConsoleInfo, pcc_StartDebug},
 };
 
-#define CMD__EXTERNAL_CALLBACK 0x80001
-struct SyncExecuteArg
-{
-	DWORD nCmd;
-	HMODULE hModule;
-	SyncExecuteCallback_t CallBack;
-	LONG_PTR lParam;
-};
-
 //#define ConEmu_SysID 0x43454D55 // 'CEMU'
 enum CallPluginCmdId
 {
@@ -100,7 +100,7 @@ CPluginBase* Plugin()
 	if (!gpPlugin)
 	{
 		if (!gFarVersion.dwVerMajor)
-			LoadFarVersion();
+			CPluginBase::LoadFarVersion();
 
 		if (gFarVersion.dwVerMajor==1)
 			gpPlugin = new CPluginAnsi();
@@ -141,7 +141,7 @@ CPluginBase::~CPluginBase()
 bool CPluginBase::LoadFarVersion()
 {
 	wchar_t ErrText[512]; ErrText[0] = 0;
-	bool lbRc = LoadFarVersion(gFarVersion, ErrText);
+	bool lbRc = ::LoadFarVersion(gFarVersion, ErrText);
 
 	if (ErrText[0])
 	{
@@ -666,14 +666,7 @@ void CPluginBase::ShowPluginMenu(PluginCallCommands nCallID /*= pcc_None*/)
 
 		case menu_ConEmuMacro: // Execute GUI macro (gialog)
 		{
-			if (gFarVersion.dwVerMajor==1)
-				GuiMacroDlgA();
-			else if (gFarVersion.dwBuild>=FAR_Y2_VER)
-				FUNC_Y2(GuiMacroDlgW)();
-			else if (gFarVersion.dwBuild>=FAR_Y1_VER)
-				FUNC_Y1(GuiMacroDlgW)();
-			else
-				FUNC_X(GuiMacroDlgW)();
+			GuiMacroDlg();
 		} break;
 
 		case menu_AttachToConEmu: // Attach to GUI (если FAR был CtrlAltTab)
@@ -706,7 +699,7 @@ void CPluginBase::ShowPluginMenu(PluginCallCommands nCallID /*= pcc_None*/)
 int CPluginBase::ProcessSynchroEvent(int Event, void *Param)
 {
 	if (Event != se_CommonSynchro)
-		return;
+		return 0;
 
 	if (gbInputSynchroPending)
 		gbInputSynchroPending = false;
@@ -755,7 +748,7 @@ int CPluginBase::ProcessSynchroEvent(int Event, void *Param)
 	return 0;
 }
 
-void CPluginBase::ProcessEditorInput(const INPUT_RECORD& Rec)
+void CPluginBase::ProcessEditorInputInternal(const INPUT_RECORD& Rec)
 {
 	// only key events with virtual codes > 0 are likely to cause status change (?)
 	if (((Rec.EventType & 0xFF) == KEY_EVENT) && Rec.Event.KeyEvent.bKeyDown
@@ -1433,7 +1426,7 @@ int CPluginBase::ShowMessage(int aiMsg, int aiButtons)
 	wchar_t szMsgText[512] = L"";
 	GetMsg(aiMsg, szMsgText, countof(szMsgText));
 
-	return ShowMessage(szMsg, aiButtons, true);
+	return ShowMessage(szMsgText, aiButtons, true);
 }
 
 // Если не вызывать - буфер увеличивается автоматически. Размер в БАЙТАХ
@@ -1442,7 +1435,7 @@ bool CPluginBase::OutDataAlloc(DWORD anSize)
 {
 	_ASSERTE(gpCmdRet==NULL);
 	// + размер заголовка gpCmdRet
-	gpCmdRet = (CESERVER_REQ*)Alloc(sizeof(CESERVER_REQ_HDR)+anSize,1);
+	gpCmdRet = (CESERVER_REQ*)calloc(sizeof(CESERVER_REQ_HDR)+anSize,1);
 
 	if (!gpCmdRet)
 		return false;
@@ -1466,7 +1459,7 @@ bool CPluginBase::OutDataRealloc(DWORD anNewSize)
 		return false; // нельзя выделять меньше памяти, чем уже есть
 
 	// realloc иногда не работает, так что даже и не пытаемся
-	CESERVER_REQ* lpNewCmdRet = (CESERVER_REQ*)Alloc(sizeof(CESERVER_REQ_HDR)+anNewSize,1);
+	CESERVER_REQ* lpNewCmdRet = (CESERVER_REQ*)calloc(sizeof(CESERVER_REQ_HDR)+anNewSize,1);
 
 	if (!lpNewCmdRet)
 		return false;
@@ -1482,7 +1475,7 @@ bool CPluginBase::OutDataRealloc(DWORD anNewSize)
 	// запомнить новую позицию курсора
 	gpCursor = lpNewData + (gpCursor - gpData);
 	// И новый буфер с размером
-	Free(gpCmdRet);
+	free(gpCmdRet);
 	gpCmdRet = lpNewCmdRet;
 	gpData = lpNewData;
 	gnDataSize = anNewSize;
@@ -1528,10 +1521,10 @@ bool CPluginBase::CreateTabs(int windowCount)
 
 		if (gpTabs)
 		{
-			Free(gpTabs); gpTabs = NULL;
+			free(gpTabs); gpTabs = NULL;
 		}
 
-		gpTabs = (CESERVER_REQ*) Alloc(sizeof(CESERVER_REQ_HDR) + maxTabCount*sizeof(ConEmuTab), 1);
+		gpTabs = (CESERVER_REQ*) calloc(sizeof(CESERVER_REQ_HDR) + maxTabCount*sizeof(ConEmuTab), 1);
 	}
 
 	lastWindowCount = windowCount;
@@ -1828,7 +1821,7 @@ void CPluginBase::CheckResources(bool abFromStartup)
 	//if (abFromStartup) {
 	//	_ASSERTE(gpConMapInfo!=NULL);
 	//	if (!gpFarInfo)
-	//		gpFarInfo = (CEFAR_INFO_MAPPING*)Alloc(sizeof(CEFAR_INFO_MAPPING),1);
+	//		gpFarInfo = (CEFAR_INFO_MAPPING*)calloc(sizeof(CEFAR_INFO_MAPPING),1);
 	//}
 	//if (gpConMapInfo)
 	// Теперь он отвязан от gpConMapInfo
@@ -1887,7 +1880,7 @@ void CPluginBase::InitResources()
 	}
 
 	int nSize = sizeof(CESERVER_REQ) + sizeof(DWORD) + iAllLen*sizeof(OurStr[0].pszRc[0]) + 2;
-	CESERVER_REQ *pIn = (CESERVER_REQ*)Alloc(nSize,1);
+	CESERVER_REQ *pIn = (CESERVER_REQ*)calloc(nSize,1);
 
 	if (pIn)
 	{
@@ -1922,7 +1915,7 @@ void CPluginBase::InitResources()
 			_ASSERTE(pOut!=NULL && "CECMD_RESOURCES failed");
 		}
 
-		Free(pIn);
+		free(pIn);
 		GetEnvironmentVariable(L"FARLANG", gsFarLang, 63);
 	}
 }
@@ -2070,18 +2063,13 @@ void CPluginBase::InitHWND()
 {
 	gsFarLang[0] = 0;
 
-	bool lbExportsChanged = false;
 	if (!gFarVersion.dwVerMajor)
 	{
 		LoadFarVersion();  // пригодится уже здесь!
 
 		if (gFarVersion.dwVerMajor == 3)
 		{
-			lbExportsChanged = ChangeExports( Far3Func, ghPluginModule );
-			if (!lbExportsChanged)
-			{
-				_ASSERTE(lbExportsChanged);
-			}
+			SetupExportsFar3();
 		}
 	}
 
@@ -2175,6 +2163,7 @@ void CPluginBase::InitHWND()
 			if (AllowSetForegroundWindowF) AllowSetForegroundWindowF(dwPID);
 		}
 
+		#if 0
 		// дернуть табы, если они нужны
 		int tabCount = 0;
 		MSectionLock SC; SC.Lock(csTabs);
@@ -2183,6 +2172,7 @@ void CPluginBase::InitHWND()
 		// Сейчас отсылать не будем - выполним, когда вызовется SetStartupInfo -> CommonStartup
 		//SendTabs(tabCount=1, TRUE);
 		SC.Unlock();
+		#endif
 	}
 }
 
@@ -2297,16 +2287,18 @@ DWORD CPluginBase::MonitorThreadProcW(LPVOID lpParameter)
 				SetConEmuEnvVar(gpConMapInfo->hConEmuRoot);
 				SetConEmuEnvVarChild(gpConMapInfo->hConEmuWndDc, gpConMapInfo->hConEmuWndBack);
 
+				CPluginBase* p = Plugin();
+
 				// Передернуть отрисовку, чтобы обновить TrueColor
-				Plugin()->RedrawAll();
+				p->RedrawAll();
 
 				// Inform GUI about our Far/Plugin
-				InitResources();
+				p->InitResources();
 
 				// Обновить ТАБЫ после реаттача
 				if (gnCurTabCount && gpTabs)
 				{
-					SendTabs(gnCurTabCount, TRUE);
+					p->SendTabs(gnCurTabCount, TRUE);
 				}
 			}
 		}
@@ -2357,7 +2349,7 @@ DWORD CPluginBase::MonitorThreadProcW(LPVOID lpParameter)
 				//CheckResources(true); -- должен выполняться в основной нити, поэтому - через Activate
 				// 22.09.2010 Maks - вызывать ActivatePlugin - некорректно!
 				//ActivatePlugin(CMD_CHKRESOURCES, NULL);
-				ProcessCommand(CMD_CHKRESOURCES, TRUE/*bReqMainThread*/, NULL);
+				Plugin()->ProcessCommand(CMD_CHKRESOURCES, TRUE/*bReqMainThread*/, NULL);
 			}
 		}
 
@@ -2809,7 +2801,7 @@ void CPluginBase::StopThread()
 
 	if (gpTabs)
 	{
-		Free(gpTabs);
+		free(gpTabs);
 		gpTabs = NULL;
 	}
 
@@ -2821,7 +2813,7 @@ void CPluginBase::StopThread()
 	if (gpFarInfo)
 	{
 		LPVOID ptr = gpFarInfo; gpFarInfo = NULL;
-		Free(ptr);
+		free(ptr);
 	}
 
 	if (gpFarInfoMapping)
@@ -2967,7 +2959,7 @@ DWORD CPluginBase::WaitPluginActivation(DWORD nCount, HANDLE *lpHandles, BOOL bW
 				break;
 			}
 			// Если вдруг произошел облом с Syncho (почему?), дернем еще раз
-			ExecuteSynchro();
+			Plugin()->ExecuteSynchro();
 		} while (dwMilliseconds && ((dwMilliseconds == INFINITE) || (nCurrentTick <= nTimeout)));
 
 		#ifdef _DEBUG
@@ -3190,7 +3182,7 @@ bool CPluginBase::cmd_RedrawFarCall()
 	return true;
 }
 
-bool CPluginBase::cmd_SetWindow(LPVOID pCommandData)
+bool CPluginBase::cmd_SetWindow(LPVOID pCommandData, bool bForceSendTabs)
 {
 	bool lbRc = false;
 	int nTab = 0;
@@ -3200,9 +3192,9 @@ bool CPluginBase::cmd_SetWindow(LPVOID pCommandData)
 	DEBUGSTRCMD(L"Plugin: ACTL_SETCURRENTWINDOW\n");
 
 	// Окно мы можем сменить только если:
-	if (gnPluginOpenFrom == OPEN_VIEWER || gnPluginOpenFrom == OPEN_EDITOR
-	        || gnPluginOpenFrom == OPEN_PLUGINSMENU
-			|| gnPluginOpenFrom == OPEN_FILEPANEL)
+	if (gnPluginOpenFrom == of_Viewer || gnPluginOpenFrom == of_Editor
+	        || gnPluginOpenFrom == of_PluginsMenu
+			|| gnPluginOpenFrom == of_FilePanel)
 	{
 		_ASSERTE(pCommandData!=NULL);
 
@@ -3313,7 +3305,7 @@ void CPluginBase::cmd_EMenu(LPVOID pCommandData)
 	PostMacro((wchar_t*)pszMacro, &r);
 }
 
-void CPluginBase::cmd_ExternalCallback(LPVOID pCommandData)
+bool CPluginBase::cmd_ExternalCallback(LPVOID pCommandData)
 {
 	bool lbRc = false;
 
@@ -3385,7 +3377,7 @@ bool CPluginBase::ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pComman
 	}
 
 	//Это нужно делать только тогда, когда семафор уже заблокирован!
-	//if (gpCmdRet) { Free(gpCmdRet); gpCmdRet = NULL; }
+	//if (gpCmdRet) { free(gpCmdRet); gpCmdRet = NULL; }
 	//gpData = NULL; gpCursor = NULL;
 	WARNING("Тут нужно сделать проверку содержимого консоли");
 	// Если отображено меню - плагин не запустится
@@ -3493,7 +3485,7 @@ bool CPluginBase::ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pComman
 		{
 			if (pCmdRet && pCmdRet != gpTabs && pCmdRet != gpCmdRet)
 			{
-				Free(pCmdRet);
+				free(pCmdRet);
 			}
 		}
 
@@ -3527,7 +3519,7 @@ bool CPluginBase::ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pComman
 			break;
 
 		case CMD_GUICHANGED:
-			cmd_GuiChanged(LPVOID pCommandData)
+			cmd_GuiChanged(pCommandData);
 			break;
 		}
 
@@ -3540,7 +3532,7 @@ bool CPluginBase::ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pComman
 
 	MSectionLock CSD; CSD.Lock(csData, TRUE);
 
-	//if (gpCmdRet) { Free(gpCmdRet); gpCmdRet = NULL; } // !!! Освобождается ТОЛЬКО вызывающей функцией!
+	//if (gpCmdRet) { free(gpCmdRet); gpCmdRet = NULL; } // !!! Освобождается ТОЛЬКО вызывающей функцией!
 	gpCmdRet = NULL; gpData = NULL; gpCursor = NULL;
 
 	// Раз дошли сюда - считаем что OK
@@ -3626,7 +3618,7 @@ bool CPluginBase::ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pComman
 	}
 	else if (pCmdRet && pCmdRet != gpTabs)
 	{
-		Free(pCmdRet);
+		free(pCmdRet);
 	}
 
 	CSD.Unlock();
@@ -3823,7 +3815,7 @@ bool CPluginBase::ReloadFarInfo(bool abForce)
 
 	if (!gpFarInfo)
 	{
-		gpFarInfo = (CEFAR_INFO_MAPPING*)Alloc(sizeof(CEFAR_INFO_MAPPING),1);
+		gpFarInfo = (CEFAR_INFO_MAPPING*)calloc(sizeof(CEFAR_INFO_MAPPING),1);
 
 		if (!gpFarInfo)
 		{
@@ -4095,14 +4087,14 @@ void CPluginBase::OnConsolePeekReadInput(bool abPeek)
 		if (lbNeedSynchro && !gbInputSynchroPending)
 		{
 			gbInputSynchroPending = true;
-			ExecuteSynchro();
+			Plugin()->ExecuteSynchro();
 		}
 	}
 	else
 	{
 		// Для Far1 зовем сразу
 		_ASSERTE(gFarVersion.dwVerMajor == 1);
-		OnMainThreadActivated();
+		Plugin()->OnMainThreadActivated();
 	}
 }
 

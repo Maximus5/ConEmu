@@ -59,6 +59,8 @@ protected:
 	int fctl_GetPanelDirectory, fctl_GetPanelFormat, fctl_GetPanelPrefix, fctl_GetPanelHostFile;
 	HANDLE InvalidPanelHandle;
 
+	friend HANDLE WINAPI OpenPluginW(int OpenFrom, INT_PTR Item);
+
 protected:
 	// Используется только в Far 1.7x и Far 2.x
 	// и ТОЛЬКО для ЧТЕНИЯ настроек PanelTabs (SeparateTabs/ButtonColors)
@@ -98,27 +100,27 @@ public:
 	void StopThread();
 	void ExecuteSynchro();
 	bool ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData, CESERVER_REQ** ppResult = NULL, bool bForceSendTabs = false);
-	bool FarSetConsoleSize(SHORT nNewWidth, SHORT nNewHeight);
+	static bool FarSetConsoleSize(SHORT nNewWidth, SHORT nNewHeight);
 	bool ReloadFarInfo(bool abForce);
-	void ProcessEditorInput(const INPUT_RECORD& Rec);
+	void ProcessEditorInputInternal(const INPUT_RECORD& Rec);
 	bool CheckBufferEnabled();
 	void FillUpdateBackground(struct PaintBackgroundArg* pFar);
 	INT_PTR PanelControl(HANDLE hPanel, int Command, INT_PTR Param1, void* Param2);
 
 	bool cmd_OpenEditorLine(CESERVER_REQ_FAREDITOR *pCmd);
 	bool cmd_RedrawFarCall();
-	bool cmd_SetWindow(LPVOID pCommandData);
+	bool cmd_SetWindow(LPVOID pCommandData, bool bForceSendTabs);
 	void cmd_LeftClickSync(LPVOID pCommandData);
 	void cmd_CloseQSearch();
 	void cmd_EMenu(LPVOID pCommandData);
-	void cmd_ExternalCallback(LPVOID pCommandData);
+	bool cmd_ExternalCallback(LPVOID pCommandData);
 	void cmd_ConSetFont(LPVOID pCommandData);
 	void cmd_GuiChanged(LPVOID pCommandData);
 
 	#ifdef _DEBUG
 	static bool DebugGetKeyboardState(LPBYTE pKeyStates);
 	static DWORD DebugCheckKeyboardLayout();
-	static void DebugInputPrint(INPUT_RECORD r)
+	static void DebugInputPrint(INPUT_RECORD r);
 	#endif
 
 	static BOOL OnConsoleReadInputWork(HookCallbackArg* pArgs);
@@ -142,7 +144,7 @@ public:
 	static void TouchReadPeekConsoleInputs(int Peek /*= -1*/);
 	static bool pcc_Selected(PluginMenuCommands nMenuID);
 	static bool pcc_Disabled(PluginMenuCommands nMenuID);
-	static bool ActivatePlugin(DWORD nCmd, LPVOID pCommandData, DWORD nTimeout = CONEMUFARTIMEOUT); // Release=10сек, Debug=2мин.
+	bool ActivatePlugin(DWORD nCmd, LPVOID pCommandData, DWORD nTimeout = CONEMUFARTIMEOUT); // Release=10сек, Debug=2мин.
 	static DWORD WaitPluginActivation(DWORD nCount, HANDLE *lpHandles, BOOL bWaitAll, DWORD dwMilliseconds);
 	static void ShutdownPluginStep(LPCWSTR asInfo, int nParm1 = 0, int nParm2 = 0, int nParm3 = 0, int nParm4 = 0);
 	static DWORD WINAPI MonitorThreadProcW(LPVOID lpParameter);
@@ -156,11 +158,11 @@ public:
 	static bool OutDataRealloc(DWORD anNewSize);
 	static bool OutDataWrite(LPVOID apData, DWORD anSize);
 	static bool CreateTabs(int windowCount);
-	static bool AddTab(int &tabCount, int WindowPos, bool losingFocus, bool editorSave,
+	bool AddTab(int &tabCount, int WindowPos, bool losingFocus, bool editorSave,
 			int Type, LPCWSTR Name, LPCWSTR FileName,
 			int Current, int Modified, int Modal,
 			int EditViewId);
-	static void SendTabs(int tabCount, bool abForceSend=false)
+	static void SendTabs(int tabCount, bool abForceSend=false);
 	static void CloseTabs();
 	static LPWSTR ToUnicode(LPCSTR asOemStr);
 	static void ToOem(LPCWSTR asUnicode, char* rsOem, INT_PTR cchOemMax);
@@ -208,7 +210,7 @@ public:
 	virtual void    SetStartupInfo(void *aInfo) = 0;
 	virtual void    SetWindow(int nTab) = 0;
 	virtual int     ShowMessage(LPCWSTR asMsg, int aiButtons, bool bWarning) = 0;
-	virtual int     ShowPluginMenu(ConEmuPluginMenuItem* apItems, int Count) = 0;
+	virtual int     ShowPluginMenu(ConEmuPluginMenuItem* apItems, int Count);
 	virtual void    ShowUserScreen(bool bUserScreen) = 0;
 	virtual void    StopWaitEndSynchro() = 0;
 	virtual bool    UpdateConEmuTabsApi(int windowCount) = 0;
