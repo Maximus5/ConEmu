@@ -91,27 +91,6 @@ CPluginAnsi::CPluginAnsi()
 	InitRootRegKey();
 }
 
-LPWSTR CPluginAnsi::ToUnicode(LPCSTR asOemStr)
-{
-	if (!asOemStr)
-		return NULL;
-	if (!*asOemStr)
-		return lstrdup(L"");
-
-	int nLen = lstrlenA(asOemStr);
-	wchar_t* pszUnicode = (wchar_t*)calloc((nLen+1),sizeof(*pszUnicode));
-	if (!pszUnicode)
-		return NULL;
-
-	MultiByteToWideChar(CP_OEMCP, 0, asOemStr, nLen, pszUnicode, nLen);
-	return pszUnicode;
-}
-
-void CPluginAnsi::ToOem(LPCWSTR asUnicode, char* rsOem, INT_PTR cchOemMax)
-{
-	WideCharToMultiByte(CP_OEMCP, 0, asUnicode?asUnicode:L"", -1, rsOem, (int)cchOemMax, NULL, NULL);
-}
-
 wchar_t* CPluginAnsi::GetPanelDir(GetPanelDirFlags Flags)
 {
 	if (!InfoA)

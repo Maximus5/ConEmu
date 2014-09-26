@@ -162,6 +162,9 @@ public:
 			int EditViewId);
 	static void SendTabs(int tabCount, bool abForceSend=false)
 	static void CloseTabs();
+	static LPWSTR ToUnicode(LPCSTR asOemStr);
+	static void ToOem(LPCWSTR asUnicode, char* rsOem, INT_PTR cchOemMax);
+	static LPSTR ToOem(LPCWSTR asUnicode);
 
 protected:
 	void LoadPanelTabsFromRegistry();

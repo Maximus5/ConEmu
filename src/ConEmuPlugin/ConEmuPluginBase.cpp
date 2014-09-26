@@ -4828,3 +4828,36 @@ void /*WINAPI*/ CPluginBase::OnLibraryLoaded(HMODULE ahModule)
 		}
 	}
 }
+
+LPWSTR CPluginBase::ToUnicode(LPCSTR asOemStr)
+{
+	if (!asOemStr)
+		return NULL;
+	if (!*asOemStr)
+		return lstrdup(L"");
+
+	int nLen = lstrlenA(asOemStr);
+	wchar_t* pszUnicode = (wchar_t*)calloc((nLen+1),sizeof(*pszUnicode));
+	if (!pszUnicode)
+		return NULL;
+
+	MultiByteToWideChar(CP_OEMCP, 0, asOemStr, nLen, pszUnicode, nLen);
+	return pszUnicode;
+}
+
+void CPluginBase::ToOem(LPCWSTR asUnicode, char* rsOem, INT_PTR cchOemMax)
+{
+	WideCharToMultiByte(CP_OEMCP, 0, asUnicode?asUnicode:L"", -1, rsOem, (int)cchOemMax, NULL, NULL);
+}
+
+LPSTR CPluginBase::ToOem(LPCWSTR asUnicode)
+{
+	if (!asUnicode)
+		return NULL;
+	int nLen = lstrlen(asUnicode);
+	char* pszOem = (char*)calloc(nLen+1,sizeof(*pszOem));
+	if (!pszOem)
+		return NULL;
+	ToOem(asUnicode, pszOem, nLen+1);
+	return pszOem;
+}

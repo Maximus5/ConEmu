@@ -41,10 +41,6 @@ public:
 	virtual ~CPluginAnsi() {};
 
 public:
-	static LPWSTR   ToUnicode(LPCSTR asOemStr);
-	static void     ToOem(LPCWSTR asUnicode, char* rsOem, INT_PTR cchOemMax);
-
-public:
 	virtual bool    CheckPanelExist() override;
 	virtual bool    ExecuteSynchroApi() override { return false; };
 	virtual void    ExitFAR() override;
