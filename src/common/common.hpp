@@ -824,6 +824,18 @@ enum PaintBackgroundPlaces
 #define BkPanelInfo_FormatMax MAX_PATH
 #define BkPanelInfo_HostFileMax 32768
 
+struct BkPanelInfo
+{
+	BOOL bVisible;   // Наличие панели
+	BOOL bFocused;   // В фокусе
+	BOOL bPlugin;    // Плагиновая панель
+	int  nPanelType; // enum PANELINFOTYPE
+	wchar_t *szCurDir/*[32768]*/;    // Текущая папка на панели
+	wchar_t *szFormat/*[MAX_PATH]*/; // Доступно только в FAR2, в FAR3 это может быть префикс, если "формат" плагином не опереден
+	wchar_t *szHostFile/*[32768]*/;  // Доступно только в FAR2
+	RECT rcPanelRect; // Консольные кооринаты панели. В FAR 2 с ключом /w верх может быть != {0,0}
+};
+
 struct PaintBackgroundArg
 {
 	DWORD cbSize;
@@ -865,17 +877,6 @@ struct PaintBackgroundArg
 
 	// Инфорация о панелях
 	BOOL bPanelsAllowed;
-	typedef struct tag_BkPanelInfo
-	{
-		BOOL bVisible;   // Наличие панели
-		BOOL bFocused;   // В фокусе
-		BOOL bPlugin;    // Плагиновая панель
-		int  nPanelType; // enum PANELINFOTYPE
-		wchar_t *szCurDir/*[32768]*/;    // Текущая папка на панели
-		wchar_t *szFormat/*[MAX_PATH]*/; // Доступно только в FAR2, в FAR3 это может быть префикс, если "формат" плагином не опереден
-		wchar_t *szHostFile/*[32768]*/;  // Доступно только в FAR2
-		RECT rcPanelRect; // Консольные кооринаты панели. В FAR 2 с ключом /w верх может быть != {0,0}
-	} BkPanelInfo;
 	BkPanelInfo LeftPanel;
 	BkPanelInfo RightPanel;
 

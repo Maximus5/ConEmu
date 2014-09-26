@@ -425,7 +425,7 @@ void CPluginBackground::CheckPanelFolders(int anForceSetPlace /*= 0*/)
 	}
 }
 
-void CPluginBackground::SetDcPanelRect(RECT *rcDc, PaintBackgroundArg::BkPanelInfo *Panel, PaintBackgroundArg *Arg)
+void CPluginBackground::SetDcPanelRect(RECT *rcDc, BkPanelInfo *Panel, PaintBackgroundArg *Arg)
 {
 	if (!Panel->bVisible)
 	{

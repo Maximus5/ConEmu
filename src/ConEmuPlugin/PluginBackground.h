@@ -31,7 +31,7 @@ class CPluginBackground
 
 		void ReallocItems(int nAddCount);
 		BOOL LoadThSet(BOOL abFromMainThread);
-		void SetDcPanelRect(RECT *rcDc, PaintBackgroundArg::BkPanelInfo *Panel, PaintBackgroundArg *Arg);
+		void SetDcPanelRect(RECT *rcDc, BkPanelInfo *Panel, PaintBackgroundArg *Arg);
 
 		/* Вызывается только в thread-safe (Synchro) - begin */
 		void CheckPanelFolders(int anForceSetPlace = 0);

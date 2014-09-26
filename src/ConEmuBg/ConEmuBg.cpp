@@ -1130,7 +1130,7 @@ void ParseColors(LPCWSTR asColors, BOOL abSwap/*RGB->COLORREF*/, COLORREF (&crVa
 	//}
 }
 
-int FillPanelParams(PaintBackgroundArg* pBk, PaintBackgroundArg::BkPanelInfo *pPanel, DrawInfo *pDraw)
+int FillPanelParams(PaintBackgroundArg* pBk, BkPanelInfo *pPanel, DrawInfo *pDraw)
 {
 	int iFound = 0;
 	MStream strm;
@@ -2090,7 +2090,7 @@ int PaintPanel(struct PaintBackgroundArg* pBk, BOOL bLeft, COLORREF& crOtherColo
 	int nStatusLines = GetStatusLineCount(pBk, bLeft);
 	RECT rcPanel = bLeft ? pBk->rcDcLeft : pBk->rcDcRight;
 	RECT rcConPanel = bLeft ? pBk->LeftPanel.rcPanelRect : pBk->RightPanel.rcPanelRect;
-	PaintBackgroundArg::BkPanelInfo *bkInfo = bLeft ? &pBk->LeftPanel : &pBk->RightPanel;
+	BkPanelInfo *bkInfo = bLeft ? &pBk->LeftPanel : &pBk->RightPanel;
 	// Не должен содержать рамки
 	int nPanelWidth = max(1,rcConPanel.right - rcConPanel.left + 1);  // ширина в символах
 	int nPanelHeight = max(1,rcConPanel.bottom - rcConPanel.top + 1); // высота в символах
