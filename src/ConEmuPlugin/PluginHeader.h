@@ -39,14 +39,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/CmdLine.h"
 #include "PluginSrv.h"
 
-//#define SafeCloseHandle(h) { if ((h)!=NULL) { HANDLE hh = (h); (h) = NULL; if (hh!=INVALID_HANDLE_VALUE) CloseHandle(hh); } }
 #ifdef _DEBUG
 #define OUTPUTDEBUGSTRING(m) OutputDebugString(m)
 #else
 #define OUTPUTDEBUGSTRING(m)
 #endif
-
-//#define SafeFree(p) { if ((p)!=NULL) { LPVOID pp = (p); (p) = NULL; free(pp); } }
 
 #define ISALPHA(c) ((((c) >= (BYTE)'c') && ((c) <= (BYTE)'z')) || (((c) >= (BYTE)'C') && ((c) <= (BYTE)'Z')))
 #define isPressed(inp) ((GetKeyState(inp) & 0x8000) == 0x8000)
@@ -62,7 +59,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 extern DWORD gnMainThreadId;
 extern int lastModifiedStateW;
-//extern bool gbHandleOneRedraw; //, gbHandleOneRedrawCh;
 extern WCHAR gszDir1[CONEMUTABMAX], gszDir2[CONEMUTABMAX];
 extern int maxTabCount, lastWindowCount;
 extern CESERVER_REQ* tabs; //(ConEmuTab*) calloc(maxTabCount, sizeof(ConEmuTab));
@@ -70,13 +66,8 @@ extern CESERVER_REQ* gpCmdRet;
 extern HWND ghConEmuWndDC;
 extern HWND FarHwnd;
 extern FarVersion gFarVersion;
-//#define IsFarLua ((gFarVersion.dwVerMajor > 3) || ((gFarVersion.dwVerMajor == 3) && (gFarVersion.dwBuild >= 2851)))
 extern int lastModifiedStateW;
-//extern HANDLE hEventCmd[MAXCMDCOUNT];
 extern HANDLE hThread;
-//extern WCHAR gcPlugKey;
-//WARNING("Убрать, заменить ghConIn на GetStdHandle()"); // Иначе в Win7 будет буфер разрушаться
-//extern HANDLE ghConIn;
 extern BOOL gbNeedPostTabSend, gbNeedPostEditCheck;
 extern HANDLE ghServerTerminateEvent;
 extern const CESERVER_CONSOLE_MAPPING_HDR *gpConMapInfo;
@@ -102,19 +93,6 @@ struct CurPanelDirs
 };
 extern CurPanelDirs gPanelDirs;
 
-BOOL CreateTabs(int windowCount);
-
-BOOL AddTab(int &tabCount, int WindowPos, bool losingFocus, bool editorSave,
-            int Type, LPCWSTR Name, LPCWSTR FileName,
-			int Current, int Modified, int Modal,
-			int EditViewId);
-
-void SendTabs(int tabCount, BOOL abForceSend=FALSE);
-
-void cmd_FarSetChanged(FAR_REQ_FARSETCHANGED *pFarSet);
-
-void WINAPI OnLibraryLoaded(HMODULE ahModule);
-
 #define ConEmu_SysID 0x43454D55 // 'CEMU'
 #define ConEmu_GuidS L"4b675d80-1d4a-4ea9-8436-fdc23f2fc14b"
 extern GUID guid_ConEmu;
@@ -122,57 +100,10 @@ extern GUID guid_ConEmuPluginItems;
 extern GUID guid_ConEmuPluginMenu;
 extern GUID guid_ConEmuGuiMacroDlg;
 
-HANDLE OpenPluginWcmn(int OpenFrom,INT_PTR Item,bool FromMacro);
-HANDLE WINAPI OpenPluginW1(int OpenFrom,INT_PTR Item);
-HANDLE WINAPI OpenPluginW2(int OpenFrom,const GUID* Guid,INT_PTR Data);
-
-void FUNC_X(GetPluginInfoW)(void *piv);
-void FUNC_Y1(GetPluginInfoW)(void *piv);
-void FUNC_Y2(GetPluginInfoW)(void *piv);
-
 extern bool gbExitFarCalled;
 
-int FUNC_X(ProcessEditorInputW)(LPCVOID Rec);
-int FUNC_Y1(ProcessEditorInputW)(LPCVOID Rec);
-int FUNC_Y2(ProcessEditorInputW)(LPCVOID Rec);
-void StopThread(void);
-void FUNC_X(ExitFARW)(void);
-void FUNC_Y1(ExitFARW)(void);
-void FUNC_Y2(ExitFARW)(void);
-void FUNC_X(ProcessDragFromW)();
-void FUNC_Y1(ProcessDragFromW)();
-void FUNC_Y2(ProcessDragFromW)();
-void ProcessDragFromA();
-void FUNC_X(ProcessDragToW)();
-void FUNC_Y1(ProcessDragToW)();
-void FUNC_Y2(ProcessDragToW)();
-void ProcessDragToA();
-
-HWND AtoH(WCHAR *Str, int Len);
-
-BOOL OutDataAlloc(DWORD anSize); // необязательно
-BOOL OutDataWrite(LPVOID apData, DWORD anSize);
-
-//void CheckMacro(BOOL abAllowAPI);
-//BOOL IsKeyChanged(BOOL abAllowReload);
-int ShowMessageGui(int aiMsg, int aiButtons);
-int ShowMessage(int aiMsg, int aiButtons);
-int ShowMessageA(int aiMsg, int aiButtons);
-int FUNC_X(ShowMessageW)(int aiMsg, int aiButtons);
-int FUNC_Y1(ShowMessageW)(int aiMsg, int aiButtons);
-int FUNC_Y2(ShowMessageW)(int aiMsg, int aiButtons);
-int ShowMessage(LPCWSTR asMsg, int aiButtons, bool bWarning);
-int ShowMessageA(LPCSTR asMsg, int aiButtons, bool bWarning);
-int FUNC_X(ShowMessageW)(LPCWSTR asMsg, int aiButtons, bool bWarning);
-int FUNC_Y1(ShowMessageW)(LPCWSTR asMsg, int aiButtons, bool bWarning);
-int FUNC_Y2(ShowMessageW)(LPCWSTR asMsg, int aiButtons, bool bWarning);
 extern CEFAR_INFO_MAPPING *gpFarInfo;
 extern HANDLE ghFarAliveEvent;
-void PostMacro(const wchar_t* asMacro, INPUT_RECORD* apRec);
-void PostMacroA(char* asMacro, INPUT_RECORD* apRec);
-void FUNC_X(PostMacroW)(const wchar_t* asMacro, INPUT_RECORD* apRec);
-void FUNC_Y1(PostMacroW)(const wchar_t* asMacro, INPUT_RECORD* apRec);
-void FUNC_Y2(PostMacroW)(const wchar_t* asMacro, INPUT_RECORD* apRec);
 
 extern DWORD gnReqCommand;
 extern int gnPluginOpenFrom;
@@ -182,7 +113,39 @@ extern LPVOID gpReqCommandData;
 #if defined(__GNUC__)
 extern "C" {
 #endif
-	BOOL WINAPI IsTerminalMode();
+// Some our exports
+BOOL WINAPI IsConsoleActive();
+BOOL WINAPI IsTerminalMode();
+HWND WINAPI GetFarHWND2(int anConEmuOnly);
+HWND WINAPI GetFarHWND();
+void WINAPI GetFarVersion(FarVersion* pfv);
+int WINAPI RegisterPanelView(PanelViewInit *ppvi);
+int WINAPI RegisterBackground(RegisterBackgroundArg *pbk);
+int WINAPI SyncExecute(HMODULE ahModule, SyncExecuteCallback_t CallBack, LONG_PTR lParam);
+int WINAPI ActivateConsole();
+// Plugin API exports
+void WINAPI GetPluginInfo(void *piv);
+void WINAPI GetPluginInfoWcmn(void *piv);
+void WINAPI SetStartupInfo(void *aInfo);
+void WINAPI SetStartupInfoW(void *aInfo);
+int WINAPI GetMinFarVersion();
+int WINAPI GetMinFarVersionW();
+int WINAPI ProcessSynchroEventW(int Event, void *Param);
+INT_PTR WINAPI ProcessSynchroEventW3(void* p);
+int WINAPI ProcessEditorEvent(int Event, void *Param);
+int WINAPI ProcessEditorEventW(int Event, void *Param);
+INT_PTR WINAPI ProcessEditorEventW3(void* p);
+int WINAPI ProcessViewerEvent(int Event, void *Param);
+int WINAPI ProcessViewerEventW(int Event, void *Param);
+INT_PTR WINAPI ProcessViewerEventW3(void* p);
+int WINAPI ProcessEditorInput(const INPUT_RECORD *Rec);
+int WINAPI ProcessEditorInputW(void* Rec);
+HANDLE WINAPI OpenPlugin(int OpenFrom,INT_PTR Item);
+HANDLE WINAPI OpenPluginW(int OpenFrom, INT_PTR Item);
+HANDLE WINAPI OpenW(const void* Info);
+void WINAPI ExitFAR(void);
+void WINAPI ExitFARW(void);
+void WINAPI ExitFARW3(void*);
 #if defined(__GNUC__)
 }
 #endif
@@ -190,11 +153,6 @@ extern "C" {
 BOOL StartupHooks(HMODULE ahOurDll);
 void ShutdownHooks();
 
-//void LogCreateProcessCheck(LPCWSTR asLogFileName);
-
-BOOL FUNC_X(CheckBufferEnabledW)();
-BOOL FUNC_Y1(CheckBufferEnabledW)();
-BOOL FUNC_Y2(CheckBufferEnabledW)();
 
 #define IS_SYNCHRO_ALLOWED \
 	( \
@@ -207,19 +165,9 @@ extern bool gbSynchroProhibited;
 extern bool gbInputSynchroPending;
 extern BOOL TerminalMode;
 
-void GuiMacroDlgA();
-void FUNC_X(GuiMacroDlgW)();
-void FUNC_Y1(GuiMacroDlgW)();
-void FUNC_Y2(GuiMacroDlgW)();
 
-void FillUpdateBackgroundA(struct PaintBackgroundArg* pFar);
-void FUNC_X(FillUpdateBackgroundW)(struct PaintBackgroundArg* pFar);
-void FUNC_Y1(FillUpdateBackgroundW)(struct PaintBackgroundArg* pFar);
-void FUNC_Y2(FillUpdateBackgroundW)(struct PaintBackgroundArg* pFar);
 
 struct HookCallbackArg;
-BOOL OnConsoleReadInputWork(HookCallbackArg* pArgs);
-VOID WINAPI OnConsoleReadInputPost(HookCallbackArg* pArgs);
 
 #ifdef _DEBUG
 #define SHOWDBGINFO(x) OutputDebugStringW(x)
@@ -285,6 +233,3 @@ struct ConEmuPluginMenuItem
 
 	INT_PTR UserData;
 };
-
-HANDLE WINAPI FUNC_Y1(OpenW)(const void* apInfo);
-HANDLE WINAPI FUNC_Y2(OpenW)(const void* apInfo);

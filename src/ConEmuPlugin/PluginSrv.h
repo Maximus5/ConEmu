@@ -32,3 +32,5 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 void PlugServerInit();
 bool PlugServerStart();
 void PlugServerStop(bool abDelete = false);
+
+void cmd_FarSetChanged(FAR_REQ_FARSETCHANGED *pFarSet);

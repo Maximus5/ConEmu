@@ -1474,7 +1474,7 @@ HANDLE CPluginW1900::Open(const void* apInfo)
 		}
 	}
 
-	HANDLE h = OpenPluginWcmn(Info->OpenFrom, Item, (Info->OpenFrom == OPEN_FROMMACRO));
+	HANDLE h = OpenPluginCommon(Info->OpenFrom, Item, (Info->OpenFrom == OPEN_FROMMACRO));
 	if ((Info->OpenFrom & OPEN_FROM_MASK) == OPEN_FROMMACRO)
 	{
 		h = (HANDLE)(h != NULL);
