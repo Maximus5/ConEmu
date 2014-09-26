@@ -665,7 +665,7 @@ INT_PTR WINAPI ProcessEditorEventW3(void* p)
 	return Plugin()->ProcessEditorEvent(p);
 }
 
-int WINAPI _export ProcessViewerEvent(int Event, void *Param)
+int WINAPI ProcessViewerEvent(int Event, void *Param)
 {
 	return Plugin()->ProcessEditorViewerEvent(-1, Event);
 }
