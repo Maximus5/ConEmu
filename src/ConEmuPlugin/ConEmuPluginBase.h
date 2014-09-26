@@ -54,6 +54,7 @@ protected:
 	int ma_InfoPanel, ma_QViewPanel, ma_TreePanel, ma_FindFolder, ma_UserMenu;
 	int ma_ShellAutoCompletion, ma_DialogAutoCompletion;
 	int of_LeftDiskMenu, of_PluginsMenu, of_FindList, of_Shortcut, of_CommandLine, of_Editor, of_Viewer, of_FilePanel, of_Dialog, of_Analyse, of_RightDiskMenu, of_FromMacro;
+	int fctl_GetPanelDirectory, fctl_GetPanelFormat, fctl_GetPanelPrefix, fctl_GetPanelHostFile;
 	HANDLE InvalidPanelHandle;
 
 protected:
@@ -98,6 +99,7 @@ public:
 	bool FarSetConsoleSize(SHORT nNewWidth, SHORT nNewHeight);
 	bool ReloadFarInfo(bool abForce);
 	void ProcessEditorInput(const INPUT_RECORD& Rec);
+	INT_PTR PanelControl(HANDLE hPanel, int Command, INT_PTR Param1, void* Param2);
 
 	bool cmd_OpenEditorLine(CESERVER_REQ_FAREDITOR *pCmd);
 	bool cmd_RedrawFarCall();
@@ -186,6 +188,7 @@ public:
 	#endif
 	virtual HANDLE  Open(const void* apInfo) = 0;
 	virtual bool    OpenEditor(LPCWSTR asFileName, bool abView, bool abDeleteTempFile, bool abDetectCP = false, int anStartLine = 0, int anStartChar = 1) = 0;
+	virtual INT_PTR PanelControlApi(HANDLE hPanel, int Command, INT_PTR Param1, void* Param2) = 0;
 	virtual void    PostMacroApi(const wchar_t* asMacro, INPUT_RECORD* apRec) = 0;
 	virtual void    ProcessDragFrom() = 0;
 	virtual void    ProcessDragTo() = 0;

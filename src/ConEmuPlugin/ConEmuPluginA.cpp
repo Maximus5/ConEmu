@@ -132,6 +132,14 @@ wchar_t* CPluginAnsi::GetPanelDir(GetPanelDirFlags Flags)
 	return pszDir;
 }
 
+INT_PTR CPluginAnsi::PanelControlApi(HANDLE hPanel, int Command, INT_PTR Param1, void* Param2)
+{
+	if (!InfoA || !InfoA->Control)
+		return -1;
+	INT_PTR iRc = InfoA->Control(hPanel, (FILE_CONTROL_COMMANDS)Command, Param1, (LONG_PTR)Param2);
+	return iRc;
+}
+
 
 extern
 VOID CALLBACK ConEmuCheckTimerProc(

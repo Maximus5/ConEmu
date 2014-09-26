@@ -127,6 +127,7 @@ CPluginBase::CPluginBase()
 	ma_InfoPanel = ma_QViewPanel = ma_TreePanel = ma_FindFolder = ma_UserMenu = -1;
 	ma_ShellAutoCompletion = ma_DialogAutoCompletion = -1;
 	of_LeftDiskMenu = of_PluginsMenu = of_FindList = of_Shortcut = of_CommandLine = of_Editor = of_Viewer = of_FilePanel = of_Dialog = of_Analyse = of_RightDiskMenu = of_FromMacro = -1;
+	fctl_GetPanelDirectory = fctl_GetPanelFormat = fctl_GetPanelPrefix = fctl_GetPanelHostFile = -1;
 
 	ms_RootRegKey = NULL;
 
@@ -271,6 +272,27 @@ bool CPluginBase::isMacroActive(int& iMacroActive)
 	}
 
 	return (iMacroActive == 1);
+}
+
+INT_PTR CPluginBase::PanelControl(HANDLE hPanel, int Command, INT_PTR Param1, void* Param2)
+{
+	INT_PTR iRc = -1;
+
+	if (mb_StartupInfoOk && (Command != -1))
+	{
+		iRc = PanelControlApi(hPanel, Command, Param1, Param2);
+	}
+
+	if (Command == fctl_GetPanelDirectory || Command == fctl_GetPanelFormat || Command == fctl_GetPanelPrefix || Command == fctl_GetPanelHostFile)
+	{
+		if (Param2 && (Param1 > 0) && (iRc <= 0 || iRc > Param1))
+		{
+			wchar_t* psz = (wchar_t*)Param2;
+			*psz = 0;
+		}
+	}
+
+	return iRc;
 }
 
 void CPluginBase::UpdatePanelDirs()

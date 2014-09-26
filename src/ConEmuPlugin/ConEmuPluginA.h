@@ -70,6 +70,7 @@ public:
 	#endif
 	virtual HANDLE  Open(const void* apInfo) override { return InvalidPanelHandle; }; // Was not used in ANSI
 	virtual bool    OpenEditor(LPCWSTR asFileName, bool abView, bool abDeleteTempFile, bool abDetectCP = false, int anStartLine = 0, int anStartChar = 1) override;
+	virtual INT_PTR PanelControlApi(HANDLE hPanel, int Command, INT_PTR Param1, void* Param2) override;
 	virtual void    PostMacroApi(const wchar_t* asMacro, INPUT_RECORD* apRec) override;
 	virtual void    ProcessDragFrom() override;
 	virtual void    ProcessDragTo() override;

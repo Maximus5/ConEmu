@@ -150,6 +150,10 @@ CPluginW2800::CPluginW2800()
 	of_Analyse = OPEN_ANALYSE;
 	of_RightDiskMenu = OPEN_RIGHTDISKMENU;
 	of_FromMacro = OPEN_FROMMACRO;
+	fctl_GetPanelDirectory = FCTL_GETPANELDIRECTORY;
+	fctl_GetPanelFormat = FCTL_GETPANELFORMAT;
+	fctl_GetPanelPrefix = FCTL_GETPANELPREFIX;
+	fctl_GetPanelHostFile = FCTL_GETPANELHOSTFILE;
 }
 
 wchar_t* CPluginW2800::GetPanelDir(GetPanelDirFlags Flags)
@@ -186,6 +190,14 @@ wchar_t* CPluginW2800::GetPanelDir(GetPanelDirFlags Flags)
 	//_ASSERTE(nSize>0 || (pi.Flags & PFLAGS_PLUGIN));
 
 	return pszDir;
+}
+
+INT_PTR CPluginW2800::PanelControlApi(HANDLE hPanel, int Command, INT_PTR Param1, void* Param2)
+{
+	if (!InfoW2800 || !InfoW2800->PanelControl)
+		return -1;
+	INT_PTR iRc = InfoW2800->PanelControl(hPanel, (FILE_CONTROL_COMMANDS)Command, Param1, Param2);
+	return iRc;
 }
 
 void CPluginW2800::GetPluginInfo(void *piv)

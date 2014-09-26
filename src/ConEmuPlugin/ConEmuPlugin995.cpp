@@ -102,6 +102,10 @@ CPluginW995::CPluginW995()
 	of_Analyse = OPEN_ANALYSE;
 	of_RightDiskMenu = -1;
 	of_FromMacro = OPEN_FROMMACRO;
+	fctl_GetPanelDirectory = FCTL_GETPANELDIRECTORY;
+	fctl_GetPanelFormat = FCTL_GETPANELFORMAT;
+	fctl_GetPanelPrefix = -1;
+	fctl_GetPanelHostFile = FCTL_GETPANELHOSTFILE;
 
 	InitRootRegKey();
 }
@@ -133,6 +137,14 @@ wchar_t* CPluginW995::GetPanelDir(GetPanelDirFlags Flags)
 	}
 	_ASSERTE(nSize>0);
 	return pszDir;
+}
+
+INT_PTR CPluginW995::PanelControlApi(HANDLE hPanel, int Command, INT_PTR Param1, void* Param2)
+{
+	if (!InfoW995 || !InfoW995->Control)
+		return -1;
+	INT_PTR iRc = InfoW995->Control(hPanel, (FILE_CONTROL_COMMANDS)Command, Param1, (LONG_PTR)Param2);
+	return iRc;
 }
 
 void CPluginW995::GetPluginInfo(void *piv)
