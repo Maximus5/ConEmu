@@ -132,6 +132,42 @@ wchar_t* CPluginAnsi::GetPanelDir(GetPanelDirFlags Flags)
 	return pszDir;
 }
 
+bool CPluginAnsi::GetPanelInfo(GetPanelDirFlags Flags, BkPanelInfo* pBk)
+{
+	if (!InfoA || !InfoA->Control)
+		return false;
+
+	PanelInfo pasv = {}, actv = {};
+	PanelInfo* pInfo;
+
+	if (Flags & (gpdf_Left|gpdf_Right))
+	{
+		InfoA->Control(INVALID_HANDLE_VALUE, FCTL_GETPANELSHORTINFO, &actv);
+		InfoA->Control(INVALID_HANDLE_VALUE, FCTL_GETANOTHERPANELSHORTINFO, &pasv);
+		PanelInfo* pLeft = (actv.Flags & PFLAGS_PANELLEFT) ? &actv : &pasv;
+		PanelInfo* pRight = (actv.Flags & PFLAGS_PANELLEFT) ? &pasv : &actv;
+		pInfo = (Flags & gpdf_Left) ? pLeft : pRight;
+	}
+	else
+	{
+		InfoA->Control(INVALID_HANDLE_VALUE, (Flags & gpdf_Active) ? FCTL_GETPANELSHORTINFO : FCTL_GETANOTHERPANELSHORTINFO, 0, (LONG_PTR)&actv);
+		pInfo = &actv;
+	}
+
+	pBk->bVisible = pInfo->Visible;
+	pBk->bFocused = pInfo->Focus;
+	pBk->bPlugin = pInfo->Plugin;
+	pBk->nPanelType = pInfo->PanelType;
+	pBk->rcPanelRect = pInfo->PanelRect;
+
+	MultiByteToWideChar(CP_OEMCP, 0, pInfo->CurDir, -1, pBk->szCurDir, BkPanelInfo_CurDirMax);
+
+	lstrcpyW(pBk->szFormat, pInfo->Plugin ? L"Plugin" : L"");
+	pBk->szHostFile[0] = 0;
+
+	return true;
+}
+
 INT_PTR CPluginAnsi::PanelControlApi(HANDLE hPanel, int Command, INT_PTR Param1, void* Param2)
 {
 	if (!InfoA || !InfoA->Control)
@@ -909,57 +945,6 @@ bool CPluginAnsi::CheckPanelExist()
 
 	INT_PTR iRc = InfoA->Control(INVALID_HANDLE_VALUE, FCTL_CHECKPANELSEXIST, 0);
 	return (iRc!=0);
-}
-
-static void CopyPanelInfo(PanelInfo* pInfo, PaintBackgroundArg::BkPanelInfo* pBk)
-{
-	pBk->bVisible = pInfo->Visible;
-	pBk->bFocused = pInfo->Focus;
-	pBk->bPlugin = pInfo->Plugin;
-	pBk->nPanelType = pInfo->PanelType;
-	MultiByteToWideChar(CP_OEMCP, 0, pInfo->CurDir, -1, pBk->szCurDir, BkPanelInfo_CurDirMax);
-	lstrcpyW(pBk->szFormat, pInfo->Plugin ? L"Plugin" : L"");
-	pBk->szHostFile[0] = 0;
-	pBk->rcPanelRect = pInfo->PanelRect;
-}
-
-void FillUpdateBackgroundA(struct PaintBackgroundArg* pFar)
-{
-	if (!InfoA || !InfoA->AdvControl)
-		return;
-
-	Plugin->()LoadFarColors(pFar->nFarColors);
-
-	Plugin->()LoadFarSettings(&pFar->FarInterfaceSettings, &pFar->FarPanelSettings);
-
-	pFar->bPanelsAllowed = CheckPanelExist();
-
-	if (pFar->bPanelsAllowed)
-	{
-		PanelInfo pasv = {}, actv = {};
-		InfoA->Control(INVALID_HANDLE_VALUE, FCTL_GETPANELSHORTINFO, &actv);
-		InfoA->Control(INVALID_HANDLE_VALUE, FCTL_GETANOTHERPANELSHORTINFO, &pasv);
-		PanelInfo* pLeft = (actv.Flags & PFLAGS_PANELLEFT) ? &actv : &pasv;
-		PanelInfo* pRight = (actv.Flags & PFLAGS_PANELLEFT) ? &pasv : &actv;
-		CopyPanelInfo(pLeft, &pFar->LeftPanel);
-		CopyPanelInfo(pRight, &pFar->RightPanel);
-	}
-
-	HANDLE hCon = GetStdHandle(STD_OUTPUT_HANDLE);
-	CONSOLE_SCREEN_BUFFER_INFO scbi = {};
-	GetConsoleScreenBufferInfo(hCon, &scbi);
-	pFar->rcConWorkspace.left = pFar->rcConWorkspace.top = 0;
-	pFar->rcConWorkspace.right = scbi.dwSize.X - 1;
-	pFar->rcConWorkspace.bottom = scbi.dwSize.Y - 1;
-	//pFar->conSize = scbi.dwSize;
-	pFar->conCursor = scbi.dwCursorPosition;
-	CONSOLE_CURSOR_INFO crsr = {0};
-	GetConsoleCursorInfo(hCon, &crsr);
-
-	if (!crsr.bVisible || crsr.dwSize == 0)
-	{
-		pFar->conCursor.X = pFar->conCursor.Y = -1;
-	}
 }
 
 int CPluginAnsi::GetActiveWindowType()

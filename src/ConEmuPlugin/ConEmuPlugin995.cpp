@@ -139,6 +139,55 @@ wchar_t* CPluginW995::GetPanelDir(GetPanelDirFlags Flags)
 	return pszDir;
 }
 
+bool CPluginW995::GetPanelInfo(GetPanelDirFlags Flags, BkPanelInfo* pBk)
+{
+	if (!InfoW995 || !InfoW995->Control)
+		return false;
+
+	_ASSERTE(gFarVersion.dwBuild >= 1657);
+
+	HANDLE hPanel = (Flags & gpdf_Active) ? PANEL_ACTIVE : PANEL_PASSIVE;
+	PanelInfo pasv = {}, actv = {};
+	PanelInfo* pInfo;
+
+	if (Flags & (gpdf_Left|gpdf_Right))
+	{
+		InfoW995->Control(PANEL_ACTIVE, FCTL_GETPANELINFO, 0, (LONG_PTR)&actv);
+		InfoW995->Control(PANEL_PASSIVE, FCTL_GETPANELINFO, 0, (LONG_PTR)&pasv);
+		PanelInfo* pLeft = (actv.Flags & PFLAGS_PANELLEFT) ? &actv : &pasv;
+		PanelInfo* pRight = (actv.Flags & PFLAGS_PANELLEFT) ? &pasv : &actv;
+		pInfo = (Flags & gpdf_Left) ? pLeft : pRight;
+		hPanel = (pInfo->Focus) ? PANEL_ACTIVE : PANEL_PASSIVE;
+	}
+	else
+	{
+		hPanel = (Flags & gpdf_Active) ? PANEL_ACTIVE : PANEL_PASSIVE;
+		InfoW995->Control(hPanel, FCTL_GETPANELINFO, 0, (LONG_PTR)&actv);
+		pInfo = &actv;
+	}
+
+	pBk->bVisible = pInfo->Visible;
+	pBk->bFocused = pInfo->Focus;
+	pBk->bPlugin = pInfo->Plugin;
+	pBk->nPanelType = pInfo->PanelType;
+	pBk->rcPanelRect = pInfo->PanelRect;
+
+	PanelControl(hPanel, FCTL_GETPANELDIR, BkPanelInfo_CurDirMax, pBk->szCurDir);
+
+	if (pBk->bPlugin)
+	{
+		PanelControl(hPanel, FCTL_GETPANELFORMAT, BkPanelInfo_FormatMax, pBk->szFormat);
+		PanelControl(hPanel, FCTL_GETPANELHOSTFILE, BkPanelInfo_HostFileMax, pBk->szHostFile);
+	}
+	else
+	{
+		pBk->szFormat[0] = 0;
+		pBk->szHostFile[0] = 0;
+	}
+
+	return true;
+}
+
 INT_PTR CPluginW995::PanelControlApi(HANDLE hPanel, int Command, INT_PTR Param1, void* Param2)
 {
 	if (!InfoW995 || !InfoW995->Control)
@@ -1051,83 +1100,6 @@ bool CPluginW995::CheckPanelExist()
 
 	INT_PTR iRc = InfoW995->Control(INVALID_HANDLE_VALUE, FCTL_CHECKPANELSEXIST, 0, 0);
 	return (iRc!=0);
-}
-
-static void CopyPanelInfoW(PanelInfo* pInfo, PaintBackgroundArg::BkPanelInfo* pBk)
-{
-	pBk->bVisible = pInfo->Visible;
-	pBk->bFocused = pInfo->Focus;
-	pBk->bPlugin = pInfo->Plugin;
-	pBk->nPanelType = pInfo->PanelType;
-	HANDLE hPanel = (pInfo->Focus) ? PANEL_ACTIVE : PANEL_PASSIVE;
-	InfoW995->Control(hPanel, FCTL_GETPANELDIR /* == FCTL_GETPANELDIR == 25*/, BkPanelInfo_CurDirMax, (LONG_PTR)pBk->szCurDir);
-
-	if (gFarVersion.dwBuild >= 1657)
-	{
-		InfoW995->Control(hPanel, FCTL_GETPANELFORMAT, BkPanelInfo_FormatMax, (LONG_PTR)pBk->szFormat);
-		InfoW995->Control(hPanel, FCTL_GETPANELHOSTFILE, BkPanelInfo_HostFileMax, (LONG_PTR)pBk->szHostFile);
-	}
-	else
-	{
-		lstrcpyW(pBk->szFormat, pInfo->Plugin ? L"Plugin" : L"");
-		pBk->szHostFile[0] = 0;
-	}
-
-	pBk->rcPanelRect = pInfo->PanelRect;
-}
-
-void CPluginW995::FillUpdateBackground(struct PaintBackgroundArg* pFar)
-{
-	if (!InfoW995 || !InfoW995->AdvControl)
-		return;
-
-	LoadFarColorsW995(pFar->nFarColors);
-
-	LoadFarSettingsW995(&pFar->FarInterfaceSettings, &pFar->FarPanelSettings);
-
-	pFar->bPanelsAllowed = CheckPanelExist();
-
-	if (pFar->bPanelsAllowed)
-	{
-		PanelInfo pasv = {}, actv = {};
-		InfoW995->Control(PANEL_ACTIVE, FCTL_GETPANELINFO, 0, (LONG_PTR)&actv);
-		InfoW995->Control(PANEL_PASSIVE, FCTL_GETPANELINFO, 0, (LONG_PTR)&pasv);
-		PanelInfo* pLeft = (actv.Flags & PFLAGS_PANELLEFT) ? &actv : &pasv;
-		PanelInfo* pRight = (actv.Flags & PFLAGS_PANELLEFT) ? &pasv : &actv;
-		CopyPanelInfoW(pLeft, &pFar->LeftPanel);
-		CopyPanelInfoW(pRight, &pFar->RightPanel);
-	}
-
-	HANDLE hCon = GetStdHandle(STD_OUTPUT_HANDLE);
-	CONSOLE_SCREEN_BUFFER_INFO scbi = {};
-	GetConsoleScreenBufferInfo(hCon, &scbi);
-
-	if (CheckBufferEnabledW995())
-	{
-		SMALL_RECT rc = {0};
-		_ASSERTE(ACTL_GETFARRECT==32); //-V112
-		InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETFARRECT, &rc);
-		pFar->rcConWorkspace.left = rc.Left;
-		pFar->rcConWorkspace.top = rc.Top;
-		pFar->rcConWorkspace.right = rc.Right;
-		pFar->rcConWorkspace.bottom = rc.Bottom;
-	}
-	else
-	{
-		pFar->rcConWorkspace.left = pFar->rcConWorkspace.top = 0;
-		pFar->rcConWorkspace.right = scbi.dwSize.X - 1;
-		pFar->rcConWorkspace.bottom = scbi.dwSize.Y - 1;
-		//pFar->conSize = scbi.dwSize;
-	}
-
-	pFar->conCursor = scbi.dwCursorPosition;
-	CONSOLE_CURSOR_INFO crsr = {0};
-	GetConsoleCursorInfo(hCon, &crsr);
-
-	if (!crsr.bVisible || crsr.dwSize == 0)
-	{
-		pFar->conCursor.X = pFar->conCursor.Y = -1;
-	}
 }
 
 int CPluginW995::GetActiveWindowType()

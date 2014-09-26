@@ -324,6 +324,53 @@ INT_PTR CPluginBase::PanelControl(HANDLE hPanel, int Command, INT_PTR Param1, vo
 	return iRc;
 }
 
+void CPluginBase::FillUpdateBackground(struct PaintBackgroundArg* pFar)
+{
+	if (!mb_StartupInfoOk)
+		return;
+
+	LoadFarColors(pFar->nFarColors);
+
+	LoadFarSettings(&pFar->FarInterfaceSettings, &pFar->FarPanelSettings);
+
+	pFar->bPanelsAllowed = CheckPanelExist();
+
+	if (pFar->bPanelsAllowed)
+	{
+		GetPanelInfo(gpdf_Left, &pFar->LeftPanel);
+		GetPanelInfo(gpdf_Right, &pFar->RightPanel);
+	}
+
+	HANDLE hCon = GetStdHandle(STD_OUTPUT_HANDLE);
+	CONSOLE_SCREEN_BUFFER_INFO scbi = {};
+	GetConsoleScreenBufferInfo(hCon, &scbi);
+
+	SMALL_RECT rc = {0};
+	if (CheckBufferEnabled() && GetFarRect(rc))
+	{
+		pFar->rcConWorkspace.left = rc.Left;
+		pFar->rcConWorkspace.top = rc.Top;
+		pFar->rcConWorkspace.right = rc.Right;
+		pFar->rcConWorkspace.bottom = rc.Bottom;
+	}
+	else
+	{
+		pFar->rcConWorkspace.left = pFar->rcConWorkspace.top = 0;
+		pFar->rcConWorkspace.right = scbi.dwSize.X - 1;
+		pFar->rcConWorkspace.bottom = scbi.dwSize.Y - 1;
+		//pFar->conSize = scbi.dwSize;
+	}
+
+	pFar->conCursor = scbi.dwCursorPosition;
+	CONSOLE_CURSOR_INFO crsr = {0};
+	GetConsoleCursorInfo(hCon, &crsr);
+
+	if (!crsr.bVisible || crsr.dwSize == 0)
+	{
+		pFar->conCursor.X = pFar->conCursor.Y = -1;
+	}
+}
+
 void CPluginBase::UpdatePanelDirs()
 {
 	bool bChanged = false;

@@ -170,6 +170,57 @@ wchar_t* CPluginW1900::GetPanelDir(GetPanelDirFlags Flags)
 	return pszDir;
 }
 
+bool CPluginW1900::GetPanelInfo(GetPanelDirFlags Flags, BkPanelInfo* pBk)
+{
+	if (!InfoW1900 || !InfoW1900->PanelControl)
+		return false;
+
+	HANDLE hPanel = (Flags & gpdf_Active) ? PANEL_ACTIVE : PANEL_PASSIVE;
+	PanelInfo pasv = {sizeof(pasv)}, actv = {sizeof(actv)};
+	PanelInfo* pInfo;
+
+	if (Flags & (gpdf_Left|gpdf_Right))
+	{
+		InfoW1900->PanelControl(PANEL_ACTIVE, FCTL_GETPANELINFO, 0, &actv);
+		InfoW1900->PanelControl(PANEL_PASSIVE, FCTL_GETPANELINFO, 0, &pasv);
+		PanelInfo* pLeft = (actv.Flags & PFLAGS_PANELLEFT) ? &actv : &pasv;
+		PanelInfo* pRight = (actv.Flags & PFLAGS_PANELLEFT) ? &pasv : &actv;
+		pInfo = (Flags & gpdf_Left) ? pLeft : pRight;
+		hPanel = (pInfo->Focus) ? PANEL_ACTIVE : PANEL_PASSIVE;
+	}
+	else
+	{
+		hPanel = (Flags & gpdf_Active) ? PANEL_ACTIVE : PANEL_PASSIVE;
+		InfoW1900->PanelControl(hPanel, FCTL_GETPANELINFO, 0, &actv);
+		pInfo = &actv;
+	}
+
+	pBk->bVisible = ((pInfo->Flags & PFLAGS_VISIBLE) == PFLAGS_VISIBLE);
+	pBk->bFocused = ((pInfo->Flags & PFLAGS_FOCUS) == PFLAGS_FOCUS);
+	pBk->bPlugin = ((pInfo->Flags & PFLAGS_PLUGIN) == PFLAGS_PLUGIN);
+	pBk->nPanelType = (int)pInfo->PanelType;
+	pBk->rcPanelRect = pInfo->PanelRect;
+
+	PanelControl(hPanel, FCTL_GETPANELDIRECTORY, BkPanelInfo_CurDirMax, pBk->szCurDir);
+
+	if (pBk->bPlugin)
+	{
+		PanelControl(hPanel, FCTL_GETPANELFORMAT, BkPanelInfo_FormatMax, pBk->szFormat);
+		// Если "Формат" панели получить не удалось - попробуем взять "префикс" плагина
+		if (!*pBk->szFormat)
+			PanelControl(hPanel, FCTL_GETPANELPREFIX, BkPanelInfo_FormatMax, pBk->szFormat);
+
+		PanelControl(hPanel, FCTL_GETPANELHOSTFILE, BkPanelInfo_HostFileMax, pBk->szHostFile);
+	}
+	else
+	{
+		pBk->szFormat[0] = 0;
+		pBk->szHostFile[0] = 0;
+	}
+
+	return true;
+}
+
 INT_PTR CPluginW1900::PanelControlApi(HANDLE hPanel, int Command, INT_PTR Param1, void* Param2)
 {
 	if (!InfoW1900 || !InfoW1900->PanelControl)
@@ -1355,91 +1406,6 @@ bool CPluginW1900::CheckPanelExist()
 
 	INT_PTR iRc = InfoW1900->PanelControl(INVALID_HANDLE_VALUE, FCTL_CHECKPANELSEXIST, 0, 0);
 	return (iRc!=0);
-}
-
-static void CopyPanelInfoW(PanelInfo* pInfo, PaintBackgroundArg::BkPanelInfo* pBk)
-{
-	pBk->bVisible = ((pInfo->Flags & PFLAGS_VISIBLE) == PFLAGS_VISIBLE);
-	pBk->bFocused = ((pInfo->Flags & PFLAGS_FOCUS) == PFLAGS_FOCUS);
-	pBk->bPlugin = ((pInfo->Flags & PFLAGS_PLUGIN) == PFLAGS_PLUGIN);
-	pBk->nPanelType = (int)pInfo->PanelType;
-	HANDLE hPanel = (pBk->bFocused) ? PANEL_ACTIVE : PANEL_PASSIVE;
-	wchar_t* pszDir = Plugin()->GetPanelDir(pBk->bFocused ? gpdf_Active : gpdf_Passive);
-	//InfoW1900->PanelControl(hPanel, FCTL_GETPANELDIR /* == FCTL_GETPANELDIR == 25*/, BkPanelInfo_CurDirMax, pBk->szCurDir);
-	lstrcpyn(pBk->szCurDir, pszDir ? pszDir : L"", BkPanelInfo_CurDirMax);
-	SafeFree(pszDir);
-
-	if (pBk->bPlugin)
-	{
-		pBk->szFormat[0] = 0;
-		INT_PTR iFRc = InfoW1900->PanelControl(hPanel, FCTL_GETPANELFORMAT, BkPanelInfo_FormatMax, pBk->szFormat);
-		if (iFRc < 0 || iFRc > BkPanelInfo_FormatMax || !*pBk->szFormat)
-		{
-			InfoW1900->PanelControl(hPanel, FCTL_GETPANELPREFIX, BkPanelInfo_FormatMax, pBk->szFormat);
-		}
-
-		InfoW1900->PanelControl(hPanel, FCTL_GETPANELHOSTFILE, BkPanelInfo_HostFileMax, pBk->szHostFile);
-	}
-	else
-	{
-		pBk->szFormat[0] = 0;
-		pBk->szHostFile[0] = 0;
-	}
-
-	pBk->rcPanelRect = pInfo->PanelRect;
-}
-
-void CPluginW1900::FillUpdateBackground(struct PaintBackgroundArg* pFar)
-{
-	if (!InfoW1900 || !InfoW1900->AdvControl)
-		return;
-
-	LoadFarColorsW1900(pFar->nFarColors);
-
-	LoadFarSettingsW1900(&pFar->FarInterfaceSettings, &pFar->FarPanelSettings);
-
-	pFar->bPanelsAllowed = CheckPanelExist();
-
-	if (pFar->bPanelsAllowed)
-	{
-		PanelInfo pasv = {sizeof(pasv)}, actv = {sizeof(actv)};
-		InfoW1900->PanelControl(PANEL_ACTIVE, FCTL_GETPANELINFO, 0, &actv);
-		InfoW1900->PanelControl(PANEL_PASSIVE, FCTL_GETPANELINFO, 0, &pasv);
-		PanelInfo* pLeft = (actv.Flags & PFLAGS_PANELLEFT) ? &actv : &pasv;
-		PanelInfo* pRight = (actv.Flags & PFLAGS_PANELLEFT) ? &pasv : &actv;
-		CopyPanelInfoW(pLeft, &pFar->LeftPanel);
-		CopyPanelInfoW(pRight, &pFar->RightPanel);
-	}
-
-	HANDLE hCon = GetStdHandle(STD_OUTPUT_HANDLE);
-	CONSOLE_SCREEN_BUFFER_INFO scbi = {};
-	GetConsoleScreenBufferInfo(hCon, &scbi);
-
-	if (CheckBufferEnabledW1900())
-	{
-		SMALL_RECT rc = {0};
-		InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETFARRECT, 0, &rc);
-		pFar->rcConWorkspace.left = rc.Left;
-		pFar->rcConWorkspace.top = rc.Top;
-		pFar->rcConWorkspace.right = rc.Right;
-		pFar->rcConWorkspace.bottom = rc.Bottom;
-	}
-	else
-	{
-		pFar->rcConWorkspace.left = pFar->rcConWorkspace.top = 0;
-		pFar->rcConWorkspace.right = scbi.dwSize.X - 1;
-		pFar->rcConWorkspace.bottom = scbi.dwSize.Y - 1;
-		//pFar->conSize = scbi.dwSize;
-	}
-
-	pFar->conCursor = scbi.dwCursorPosition;
-	CONSOLE_CURSOR_INFO crsr = {0};
-	GetConsoleCursorInfo(hCon, &crsr);
-
-	if (!crsr.bVisible || crsr.dwSize == 0)
-	{
-		pFar->conCursor.X = pFar->conCursor.Y = -1;
-	}
 }
 
 int CPluginW1900::GetActiveWindowType()

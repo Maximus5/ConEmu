@@ -48,13 +48,13 @@ public:
 	virtual bool    CheckPanelExist() override;
 	virtual bool    ExecuteSynchroApi() override { return false; };
 	virtual void    ExitFAR() override;
-	virtual void    FillUpdateBackground(struct PaintBackgroundArg* pFar) override;
 	virtual int     GetActiveWindowType() override;
 	virtual DWORD   GetEditorModifiedState() override;
 	virtual bool    GetFarRect(SMALL_RECT& rcFar) override { return false; };
 	virtual int     GetMacroArea() override;
 	virtual LPCWSTR GetMsg(int aiMsg, wchar_t* psMsg = NULL, size_t cchMsgMax = 0) override;
 	virtual LPWSTR  GetPanelDir(GetPanelDirFlags Flags) override;
+	virtual bool    GetPanelInfo(GetPanelDirFlags Flags, BkPanelInfo* pBk) override;
 	virtual void    GetPluginInfo(void* piv) override; // PluginInfo* versioned
 	virtual int     GetWindowCount() override;
 	virtual LPCWSTR GetWindowTypeName(int WindowType) override;

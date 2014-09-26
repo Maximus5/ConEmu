@@ -38,6 +38,8 @@ const GetPanelDirFlags
 	gpdf_NoPlugin = 1,
 	gpdf_NoHidden = 2,
 	gpdf_Active   = 4,
+	gpdf_Left     = 8,
+	gpdf_Right    = 16,
 	gpdf_Passive  = 0
 ;
 
@@ -100,6 +102,7 @@ public:
 	bool ReloadFarInfo(bool abForce);
 	void ProcessEditorInput(const INPUT_RECORD& Rec);
 	bool CheckBufferEnabled();
+	void FillUpdateBackground(struct PaintBackgroundArg* pFar);
 	INT_PTR PanelControl(HANDLE hPanel, int Command, INT_PTR Param1, void* Param2);
 
 	bool cmd_OpenEditorLine(CESERVER_REQ_FAREDITOR *pCmd);
@@ -167,13 +170,13 @@ public:
 	virtual bool    CheckPanelExist() = 0;
 	virtual bool    ExecuteSynchroApi() = 0;
 	virtual void    ExitFAR(void) = 0;
-	virtual void    FillUpdateBackground(struct PaintBackgroundArg* pFar) = 0;
 	virtual int     GetActiveWindowType() = 0;
 	virtual DWORD   GetEditorModifiedState() = 0;
 	virtual bool    GetFarRect(SMALL_RECT& rcFar) = 0;
 	virtual int     GetMacroArea() = 0;
 	virtual LPCWSTR GetMsg(int aiMsg, wchar_t* psMsg = NULL, size_t cchMsgMax = 0) = 0;
 	virtual LPWSTR  GetPanelDir(GetPanelDirFlags Flags) = 0;
+	virtual bool    GetPanelInfo(GetPanelDirFlags Flags, BkPanelInfo* pBk) = 0;
 	virtual void    GetPluginInfo(void* piv) = 0; // PluginInfo* versioned
 	virtual int     GetWindowCount() = 0;
 	virtual LPCWSTR GetWindowTypeName(int WindowType) = 0;
