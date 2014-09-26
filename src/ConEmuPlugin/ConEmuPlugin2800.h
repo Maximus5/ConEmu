@@ -43,7 +43,7 @@ public:
 public:
 	virtual bool    CheckPanelExist() override;
 	virtual bool    ExecuteSynchroApi() override;
-	virtual void    ExitFAR() override;
+	virtual void    ExitFar() override;
 	virtual int     GetActiveWindowType() override;
 	virtual DWORD   GetEditorModifiedState() override;
 	virtual bool    GetFarRect(SMALL_RECT& rcFar) override;
@@ -51,7 +51,7 @@ public:
 	virtual LPCWSTR GetMsg(int aiMsg, wchar_t* psMsg = NULL, size_t cchMsgMax = 0) override;
 	virtual LPWSTR  GetPanelDir(GetPanelDirFlags Flags) override;
 	virtual bool    GetPanelInfo(GetPanelDirFlags Flags, BkPanelInfo* pBk) override;
-	virtual void    GetPluginInfo(void* piv) override; // PluginInfo* versioned
+	virtual void    GetPluginInfoPtr(void* piv) override; // PluginInfo* versioned
 	virtual int     GetWindowCount() override;
 	virtual LPCWSTR GetWindowTypeName(int WindowType) override;
 	virtual void    GuiMacroDlg() override;
@@ -59,8 +59,8 @@ public:
 	virtual bool    IsMacroActive() override;
 	virtual void    LoadFarColors(BYTE (&nFarColors)[col_LastIndex]) override;
 	virtual void    LoadFarSettings(CEFarInterfaceSettings* pInterface, CEFarPanelSettings* pPanel) override;
-	virtual void    LoadPanelDirs() override;
-	virtual void    LoadPanelTabsSettings() override;
+	//virtual void    LoadPanelDirs() override;
+	//virtual void    LoadPanelTabsSettings() override;
 	#if 0
 	virtual bool    LoadPlugin(wchar_t* pszPluginPath) override;
 	#endif
@@ -70,12 +70,12 @@ public:
 	virtual void    PostMacroApi(const wchar_t* asMacro, INPUT_RECORD* apRec) override;
 	virtual void    ProcessDragFrom() override;
 	virtual void    ProcessDragTo() override;
-	virtual int     ProcessEditorEvent(void* p) override;
-	virtual int     ProcessEditorInput(LPCVOID Rec) override;
-	virtual int     ProcessSynchroEvent(void* p) override;
-	virtual int     ProcessViewerEvent(void* p) override;
+	virtual int     ProcessEditorEventPtr(void* p) override;
+	virtual int     ProcessEditorInputPtr(LPCVOID Rec) override;
+	virtual int     ProcessSynchroEventPtr(void* p) override;
+	virtual int     ProcessViewerEventPtr(void* p) override;
 	virtual void    RedrawAll() override;
-	virtual void    SetStartupInfo(void *aInfo) override;
+	virtual void    SetStartupInfoPtr(void *aInfo) override;
 	virtual void    SetWindow(int nTab) override;
 	virtual int     ShowMessage(LPCWSTR asMsg, int aiButtons, bool bWarning) override;
 	virtual int     ShowPluginMenu(ConEmuPluginMenuItem* apItems, int Count) override;

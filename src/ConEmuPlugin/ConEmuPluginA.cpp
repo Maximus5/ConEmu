@@ -434,7 +434,7 @@ void CPluginAnsi::ProcessDragTo()
 	free(pfpi); pfpi=NULL;
 }
 
-void CPluginAnsi::SetStartupInfo(void *aInfo)
+void CPluginAnsi::SetStartupInfoPtr(void *aInfo)
 {
 	INIT_FAR_PSI(::InfoA, ::FSFA, (PluginStartupInfo*)aInfo);
 	mb_StartupInfoOk = true;
@@ -457,7 +457,7 @@ void CPluginAnsi::SetStartupInfo(void *aInfo)
 	SetRootRegKey(ToUnicode(InfoA->RootKey));
 }
 
-void CPluginAnsi::GetPluginInfo(void *piv)
+void CPluginAnsi::GetPluginInfoPtr(void *piv)
 {
 	PluginInfo *pi = (PluginInfo*)piv;
 	_ASSERTE(pi->StructSize==0);
@@ -584,7 +584,7 @@ bool CPluginAnsi::UpdateConEmuTabsApi(int windowCount)
 	return lbCh;
 }
 
-void CPluginAnsi::ExitFAR()
+void CPluginAnsi::ExitFar()
 {
 	if (!mb_StartupInfoOk)
 		return;
@@ -780,7 +780,7 @@ int CPluginAnsi::ShowMessage(LPCWSTR asMsg, int aiButtons, bool bWarning)
 	return iMsgRc;
 }
 
-LPCWSTR CPluginAnsi::GetMsg(int aiMsg, wchar_t* psMsg = NULL, size_t cchMsgMax = 0)
+LPCWSTR CPluginAnsi::GetMsg(int aiMsg, wchar_t* psMsg /*= NULL*/, size_t cchMsgMax /*= 0*/)
 {
 	if (!psMsg || !cchMsgMax)
 	{

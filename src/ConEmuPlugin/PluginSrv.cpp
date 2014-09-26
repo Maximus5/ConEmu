@@ -92,7 +92,6 @@ extern struct HookModeFar gFarMode;
 
 BOOL WINAPI PlugServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &ppReply, DWORD &pcbReplySize, DWORD &pcbMaxReplySize, LPARAM lParam);
 void WINAPI PlugServerFree(CESERVER_REQ* pReply, LPARAM lParam);
-VOID WINAPI OnCurDirChanged();
 
 void PlugServerInit()
 {
@@ -152,7 +151,7 @@ void cmd_FarSetChanged(FAR_REQ_FARSETCHANGED *pFarSet)
 	gFarMode.bShellNoZoneCheck = pFarSet->bShellNoZoneCheck;
 	gFarMode.bMonitorConsoleInput = pFarSet->bMonitorConsoleInput;
 	gFarMode.bLongConsoleOutput = pFarSet->bLongConsoleOutput;
-	gFarMode.OnCurDirChanged = OnCurDirChanged;
+	gFarMode.OnCurDirChanged = CPluginBase::OnCurDirChanged;
 
 	UpdateComspec(&pFarSet->ComSpec); // ComSpec, isAddConEmu2Path, ...
 
@@ -241,11 +240,11 @@ BOOL WINAPI PlugServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &pp
 			if (gFarVersion.dwVerMajor == 1 && pIn->dwData[1])
 			{
 				// А вот для FAR1 - нужно шаманить
-				ProcessCommand(CMD_CLOSEQSEARCH, TRUE/*bReqMainThread*/, pIn->dwData/*хоть и не нужно?*/);
+				Plugin()->ProcessCommand(CMD_CLOSEQSEARCH, TRUE/*bReqMainThread*/, pIn->dwData/*хоть и не нужно?*/);
 			}
 
 			// Пересылается 2 DWORD
-			BOOL bCmdRc = ProcessCommand(pIn->hdr.nCmd, TRUE/*bReqMainThread*/, pIn->dwData);
+			BOOL bCmdRc = Plugin()->ProcessCommand(pIn->hdr.nCmd, TRUE/*bReqMainThread*/, pIn->dwData);
 
 			DEBUGSTRCMD(L"Plugin: PlugServerThreadCommand: CMD_SETWINDOW waiting...\n");
 
@@ -342,9 +341,9 @@ BOOL WINAPI PlugServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &pp
 		COORD *crMouse = (COORD *)(pbClickNeed+1);
 		#endif
 
-		ProcessCommand(CMD_LEFTCLKSYNC, TRUE/*bReqMainThread*/, pIn->Data);
+		Plugin()->ProcessCommand(CMD_LEFTCLKSYNC, TRUE/*bReqMainThread*/, pIn->Data);
 		CESERVER_REQ* pCmdRet = NULL;
-		ProcessCommand(pIn->hdr.nCmd, TRUE/*bReqMainThread*/, pIn->Data, &pCmdRet);
+		Plugin()->ProcessCommand(pIn->hdr.nCmd, TRUE/*bReqMainThread*/, pIn->Data, &pCmdRet);
 
 		if (pCmdRet)
 		{
@@ -371,12 +370,12 @@ BOOL WINAPI PlugServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &pp
 
 		// Выделить файл под курсором
 		DEBUGSTRMENU(L"\n*** ServerThreadCommand->ProcessCommand(CMD_LEFTCLKSYNC) begin\n");
-		BOOL lb1 = ProcessCommand(CMD_LEFTCLKSYNC, TRUE/*bReqMainThread*/, ClickArg/*pIn->Data*/);
+		BOOL lb1 = Plugin()->ProcessCommand(CMD_LEFTCLKSYNC, TRUE/*bReqMainThread*/, ClickArg/*pIn->Data*/);
 		DEBUGSTRMENU(L"\n*** ServerThreadCommand->ProcessCommand(CMD_LEFTCLKSYNC) done\n");
 
 		// А теперь, собственно вызовем меню
 		DEBUGSTRMENU(L"\n*** ServerThreadCommand->ProcessCommand(CMD_EMENU) begin\n");
-		BOOL lb2 = ProcessCommand(pIn->hdr.nCmd, TRUE/*bReqMainThread*/, pIn->Data);
+		BOOL lb2 = Plugin()->ProcessCommand(pIn->hdr.nCmd, TRUE/*bReqMainThread*/, pIn->Data);
 		DEBUGSTRMENU(L"\n*** ServerThreadCommand->ProcessCommand(CMD_EMENU) done\n");
 
 		pcbReplySize = sizeof(CESERVER_REQ_HDR) + sizeof(DWORD)*2;
@@ -424,7 +423,7 @@ BOOL WINAPI PlugServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &pp
 	default:
 	{
 		CESERVER_REQ* pCmdRet = NULL;
-		BOOL lbCmd = ProcessCommand(pIn->hdr.nCmd, TRUE/*bReqMainThread*/, pIn->Data, &pCmdRet);
+		BOOL lbCmd = Plugin()->ProcessCommand(pIn->hdr.nCmd, TRUE/*bReqMainThread*/, pIn->Data, &pCmdRet);
 
 		if (pCmdRet)
 		{

@@ -104,10 +104,10 @@ struct FarStandardFunctions *FSFW2800=NULL;
 void WINAPI GetGlobalInfoW(struct GlobalInfo *Info)
 {
 	_ASSERTE(Info->StructSize >= sizeof(GlobalInfo));
-	if (gFarVersion.dwBuild >= FAR_Y2_VER)
+	if (gFarVersion.dwBuild >= 2800)
 		Info->MinFarVersion = FARMANAGERVERSION;
 	else
-		Info->MinFarVersion = MAKEFARVERSION(FARMANAGERVERSION_MAJOR,FARMANAGERVERSION_MINOR, FARMANAGERVERSION_REVISION, 2578, FARMANAGERVERSION_STAGE);
+		Info->MinFarVersion = MAKEFARVERSION(FARMANAGERVERSION_MAJOR,FARMANAGERVERSION_MINOR, FARMANAGERVERSION_REVISION, MIN_FAR3_BUILD, FARMANAGERVERSION_STAGE);
 
 	// Build: YYMMDDX (YY - две цифры года, MM - месяц, DD - день, X - 0 и выше-номер подсборки)
 	Info->Version = MAKEFARVERSION(MVV_1,MVV_2,MVV_3,((MVV_1 % 100)*100000) + (MVV_2*1000) + (MVV_3*10) + (MVV_4 % 10),VS_RELEASE);
@@ -270,7 +270,7 @@ INT_PTR CPluginW2800::PanelControlApi(HANDLE hPanel, int Command, INT_PTR Param1
 	return iRc;
 }
 
-void CPluginW2800::GetPluginInfo(void *piv)
+void CPluginW2800::GetPluginInfoPtr(void *piv)
 {
 	PluginInfo *pi = (PluginInfo*)piv;
 	//memset(pi, 0, sizeof(PluginInfo));
@@ -625,7 +625,7 @@ void CPluginW2800::ProcessDragTo()
 	SafeFree(szPDir);
 }
 
-void CPluginW2800::SetStartupInfo(void *aInfo)
+void CPluginW2800::SetStartupInfoPtr(void *aInfo)
 {
 	INIT_FAR_PSI(::InfoW2800, ::FSFW2800, (PluginStartupInfo*)aInfo);
 	mb_StartupInfoOk = true;
@@ -662,26 +662,26 @@ DWORD CPluginW2800::GetEditorModifiedState()
 	return currentModifiedState;
 }
 
-int CPluginW2800::ProcessEditorEvent(void* p)
+int CPluginW2800::ProcessEditorEventPtr(void* p)
 {
 	const ProcessEditorEventInfo* Info = (const ProcessEditorEventInfo*)p;
 	return ProcessEditorViewerEvent(Info->Event, -1);
 }
 
-int CPluginW2800::ProcessViewerEvent(void* p)
+int CPluginW2800::ProcessViewerEventPtr(void* p)
 {
 	const ProcessViewerEventInfo* Info = (const ProcessViewerEventInfo*)p;
 	return ProcessEditorViewerEvent(-1, Info->Event);
 }
 
-int CPluginW2800::ProcessSynchroEvent(void* p)
+int CPluginW2800::ProcessSynchroEventPtr(void* p)
 {
 	const ProcessSynchroEventInfo* Info = (const ProcessSynchroEventInfo*)p;
 	return Plugin()->ProcessSynchroEvent(Info->Event, Info->Param);
 }
 
 // watch non-modified -> modified editor status change
-int CPluginW2800::ProcessEditorInput(LPCVOID aRec)
+int CPluginW2800::ProcessEditorInputPtr(LPCVOID aRec)
 {
 	if (!InfoW2800)
 		return 0;
@@ -852,7 +852,7 @@ bool CPluginW2800::UpdateConEmuTabsApi(int windowCount)
 	return lbCh;
 }
 
-void CPluginW2800::ExitFAR()
+void CPluginW2800::ExitFar()
 {
 	if (!mb_StartupInfoOk)
 		return;
@@ -886,7 +886,7 @@ int CPluginW2800::ShowMessage(LPCWSTR asMsg, int aiButtons, bool bWarning)
 					(const wchar_t * const *)asMsg, 0, aiButtons);
 }
 
-LPCWSTR CPluginW2800::GetMsg(int aiMsg, wchar_t* psMsg = NULL, size_t cchMsgMax = 0)
+LPCWSTR CPluginW2800::GetMsg(int aiMsg, wchar_t* psMsg /*= NULL*/, size_t cchMsgMax /*= 0*/)
 {
 	LPCWSTR pszRc = (InfoW2800 && InfoW2800->GetMsg) ? InfoW2800->GetMsg(&guid_ConEmu, aiMsg) : L"";
 	if (!pszRc)

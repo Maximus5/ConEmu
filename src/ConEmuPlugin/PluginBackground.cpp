@@ -60,6 +60,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/WinObjects.h"
 #include "PluginHeader.h"
 #include "PluginBackground.h"
+#include "ConEmuPluginBase.h"
 
 #include "../common/ConEmuCheck.h"
 
@@ -388,14 +389,7 @@ bool CPluginBackground::IsParmChanged(struct PaintBackgroundArg* p1, struct Pain
 
 void CPluginBackground::CheckPanelFolders(int anForceSetPlace /*= 0*/)
 {
-	if (gFarVersion.dwVerMajor==1 || gFarVersion.dwBuild < 1348)
-		FillUpdateBackgroundA(&m_Default);
-	else if (gFarVersion.dwBuild>=FAR_Y2_VER)
-		FUNC_Y2(FillUpdateBackgroundW)(&m_Default);
-	else if (gFarVersion.dwBuild>=FAR_Y1_VER)
-		FUNC_Y1(FillUpdateBackgroundW)(&m_Default);
-	else
-		FUNC_X(FillUpdateBackgroundW)(&m_Default);
+	Plugin()->FillUpdateBackground(&m_Default);
 
 	// Заполнить текущее "место"
 	if (anForceSetPlace != 0)
@@ -824,14 +818,14 @@ void CPluginBackground::UpdateBackground()
 					&& !mb_BgErrorShown)
 				{
 					mb_BgErrorShown = TRUE;
-					ShowMessage(CEBkError_ExecFailed+pOut->BackgroundRet.nResult, 0);
+					Plugin()->ShowMessage(CEBkError_ExecFailed+pOut->BackgroundRet.nResult, 0);
 				}
 				ExecuteFreeResult(pOut);
 			}
 			else if (!mb_BgErrorShown)
 			{
 				mb_BgErrorShown = TRUE;
-				ShowMessage(CEBkError_ExecFailed, 0);
+				Plugin()->ShowMessage(CEBkError_ExecFailed, 0);
 			}
 
 			ExecuteFreeResult(pIn);

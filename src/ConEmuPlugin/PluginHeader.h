@@ -48,13 +48,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define ISALPHA(c) ((((c) >= (BYTE)'c') && ((c) <= (BYTE)'z')) || (((c) >= (BYTE)'C') && ((c) <= (BYTE)'Z')))
 #define isPressed(inp) ((GetKeyState(inp) & 0x8000) == 0x8000)
 
-// X - меньшая, Y - большая
-#define FAR_X_VER 995
-#define FAR_Y1_VER 1900
-#define FAR_Y2_VER 2800
-#define FUNC_X(fn) fn##995
-#define FUNC_Y1(fn) fn##1900
-#define FUNC_Y2(fn) fn##2800
+#define ConEmu_SysID 0x43454D55 // 'CEMU'
+#define ConEmu_GuidS L"4b675d80-1d4a-4ea9-8436-fdc23f2fc14b"
+
+#define MIN_FAR2_BUILD 1765 // svs 19.12.2010 22:52:53 +0300 - build 1765: Новая команда в FARMACROCOMMAND - MCMD_GETAREA
+#define MIN_FAR3_BUILD 2578
 
 #define CMD__EXTERNAL_CALLBACK 0x80001
 
@@ -69,139 +67,6 @@ struct SyncExecuteArg
 	SyncExecuteCallback_t CallBack;
 	LONG_PTR lParam;
 };
-
-class MSection;
-
-extern DWORD gnMainThreadId;
-extern int lastModifiedStateW;
-extern WCHAR gszDir1[CONEMUTABMAX], gszDir2[CONEMUTABMAX];
-extern int maxTabCount, lastWindowCount, gnCurTabCount;
-extern MSection *csTabs;
-extern CESERVER_REQ* tabs; //(ConEmuTab*) calloc(maxTabCount, sizeof(ConEmuTab));
-extern CESERVER_REQ* gpCmdRet;
-extern HWND ghConEmuWndDC;
-extern HWND FarHwnd;
-extern FarVersion gFarVersion;
-extern int lastModifiedStateW;
-extern HANDLE hThread;
-extern BOOL gbNeedPostTabSend, gbNeedPostEditCheck;
-extern DWORD gnNeedPostTabSendTick;
-extern HANDLE ghServerTerminateEvent;
-extern const CESERVER_CONSOLE_MAPPING_HDR *gpConMapInfo;
-extern DWORD gnSelfPID;
-extern BOOL gbIgnoreUpdateTabs;
-extern BOOL gbRequestUpdateTabs;
-extern BOOL gbClosingModalViewerEditor;
-extern CESERVER_REQ* gpTabs;
-extern BOOL gbForceSendTabs;
-extern int gnCurrentWindowType; // WTYPE_PANELS / WTYPE_VIEWER / WTYPE_EDITOR
-
-typedef struct tag_PanelViewRegInfo
-{
-	BOOL bRegister;
-	PanelViewInputCallback pfnPeekPreCall, pfnPeekPostCall, pfnReadPreCall, pfnReadPostCall;
-	PanelViewOutputCallback pfnWriteCall;
-} PanelViewRegInfo;
-extern PanelViewRegInfo gPanelRegLeft, gPanelRegRight;
-
-struct CurPanelDirs
-{
-	CmdArg *ActiveDir, *PassiveDir;
-};
-extern CurPanelDirs gPanelDirs;
-
-#define ConEmu_SysID 0x43454D55 // 'CEMU'
-#define ConEmu_GuidS L"4b675d80-1d4a-4ea9-8436-fdc23f2fc14b"
-extern GUID guid_ConEmu;
-extern GUID guid_ConEmuPluginItems;
-extern GUID guid_ConEmuPluginMenu;
-extern GUID guid_ConEmuGuiMacroDlg;
-
-extern bool gbExitFarCalled;
-
-extern CEFAR_INFO_MAPPING *gpFarInfo;
-extern HANDLE ghFarAliveEvent;
-
-extern DWORD gnReqCommand;
-extern int gnPluginOpenFrom;
-extern LPVOID gpReqCommandData;
-extern HANDLE ghReqCommandEvent;
-extern BOOL   gbReqCommandWaiting;
-extern LPBYTE gpData, gpCursor;
-extern DWORD gnDataSize;
-extern MSection *csData;
-
-extern DWORD gnPeekReadCount;
-extern DWORD gdwServerPID;
-extern HMODULE ghPluginModule;
-extern HMODULE ghHooksModule;
-
-#if defined(__GNUC__)
-extern "C" {
-#endif
-// Some our exports
-BOOL WINAPI IsConsoleActive();
-BOOL WINAPI IsTerminalMode();
-HWND WINAPI GetFarHWND2(int anConEmuOnly);
-HWND WINAPI GetFarHWND();
-void WINAPI GetFarVersion(FarVersion* pfv);
-int WINAPI RegisterPanelView(PanelViewInit *ppvi);
-int WINAPI RegisterBackground(RegisterBackgroundArg *pbk);
-int WINAPI SyncExecute(HMODULE ahModule, SyncExecuteCallback_t CallBack, LONG_PTR lParam);
-int WINAPI ActivateConsole();
-// Plugin API exports
-void WINAPI GetPluginInfo(void *piv);
-void WINAPI GetPluginInfoW(void *piv);
-void WINAPI SetStartupInfo(void *aInfo);
-void WINAPI SetStartupInfoW(void *aInfo);
-int WINAPI GetMinFarVersion();
-int WINAPI GetMinFarVersionW();
-int WINAPI ProcessSynchroEventW(int Event, void *Param);
-INT_PTR WINAPI ProcessSynchroEventW3(void* p);
-int WINAPI ProcessEditorEvent(int Event, void *Param);
-int WINAPI ProcessEditorEventW(int Event, void *Param);
-INT_PTR WINAPI ProcessEditorEventW3(void* p);
-int WINAPI ProcessViewerEvent(int Event, void *Param);
-int WINAPI ProcessViewerEventW(int Event, void *Param);
-INT_PTR WINAPI ProcessViewerEventW3(void* p);
-int WINAPI ProcessEditorInput(const INPUT_RECORD *Rec);
-int WINAPI ProcessEditorInputW(void* Rec);
-HANDLE WINAPI OpenPlugin(int OpenFrom,INT_PTR Item);
-HANDLE WINAPI OpenPluginW(int OpenFrom, INT_PTR Item);
-HANDLE WINAPI OpenW(const void* Info);
-void WINAPI ExitFAR(void);
-void WINAPI ExitFARW(void);
-void WINAPI ExitFARW3(void*);
-#if defined(__GNUC__)
-}
-#endif
-
-void SetupExportsFar3();
-
-BOOL StartupHooks(HMODULE ahOurDll);
-void ShutdownHooks();
-
-
-#define IS_SYNCHRO_ALLOWED \
-	( \
-	  gFarVersion.dwVerMajor > 2 || \
-	  (gFarVersion.dwVerMajor == 2 && (gFarVersion.dwVerMinor>0 || gFarVersion.dwBuild>=1006)) \
-	)
-
-extern int gnSynchroCount;
-extern bool gbSynchroProhibited;
-extern bool gbInputSynchroPending;
-extern BOOL TerminalMode;
-
-
-
-struct HookCallbackArg;
-
-#ifdef _DEBUG
-#define SHOWDBGINFO(x) OutputDebugStringW(x)
-#else
-#define SHOWDBGINFO(x)
-#endif
 
 enum PluginCallCommands
 {
@@ -261,3 +126,97 @@ struct ConEmuPluginMenuItem
 
 	INT_PTR UserData;
 };
+
+struct PanelViewRegInfo
+{
+	BOOL bRegister;
+	PanelViewInputCallback pfnPeekPreCall, pfnPeekPostCall, pfnReadPreCall, pfnReadPostCall;
+	PanelViewOutputCallback pfnWriteCall;
+};
+
+struct CurPanelDirs
+{
+	CmdArg *ActiveDir, *PassiveDir;
+};
+
+
+class MSection;
+
+extern HMODULE ghPluginModule;
+extern DWORD gnMainThreadId;
+extern WCHAR gszDir1[CONEMUTABMAX], gszDir2[CONEMUTABMAX];
+extern int maxTabCount, lastWindowCount, gnCurTabCount;
+extern CESERVER_REQ* gpCmdRet;
+extern HWND ghConEmuWndDC;
+extern HWND FarHwnd;
+extern FarVersion gFarVersion;
+extern const CESERVER_CONSOLE_MAPPING_HDR *gpConMapInfo;
+extern BOOL gbIgnoreUpdateTabs;
+extern CESERVER_REQ* gpTabs;
+extern BOOL gbForceSendTabs;
+extern int gnCurrentWindowType; // WTYPE_PANELS / WTYPE_VIEWER / WTYPE_EDITOR
+extern PanelViewRegInfo gPanelRegLeft, gPanelRegRight;
+extern CurPanelDirs gPanelDirs;
+
+#if defined(__GNUC__)
+extern "C" {
+#endif
+// Some our exports
+BOOL WINAPI IsConsoleActive();
+BOOL WINAPI IsTerminalMode();
+HWND WINAPI GetFarHWND2(int anConEmuOnly);
+HWND WINAPI GetFarHWND();
+void WINAPI GetFarVersion(FarVersion* pfv);
+int WINAPI RegisterPanelView(PanelViewInit *ppvi);
+int WINAPI RegisterBackground(RegisterBackgroundArg *pbk);
+int WINAPI SyncExecute(HMODULE ahModule, SyncExecuteCallback_t CallBack, LONG_PTR lParam);
+int WINAPI ActivateConsole();
+// Plugin API exports
+void WINAPI GetPluginInfo(void *piv);
+void WINAPI GetPluginInfoW(void *piv);
+void WINAPI SetStartupInfo(void *aInfo);
+void WINAPI SetStartupInfoW(void *aInfo);
+int WINAPI GetMinFarVersion();
+int WINAPI GetMinFarVersionW();
+int WINAPI ProcessSynchroEventW(int Event, void *Param);
+INT_PTR WINAPI ProcessSynchroEventW3(void* p);
+int WINAPI ProcessEditorEvent(int Event, void *Param);
+int WINAPI ProcessEditorEventW(int Event, void *Param);
+INT_PTR WINAPI ProcessEditorEventW3(void* p);
+int WINAPI ProcessViewerEvent(int Event, void *Param);
+int WINAPI ProcessViewerEventW(int Event, void *Param);
+INT_PTR WINAPI ProcessViewerEventW3(void* p);
+int WINAPI ProcessEditorInput(const INPUT_RECORD *Rec);
+int WINAPI ProcessEditorInputW(void* Rec);
+HANDLE WINAPI OpenPlugin(int OpenFrom,INT_PTR Item);
+HANDLE WINAPI OpenPluginW(int OpenFrom, INT_PTR Item);
+HANDLE WINAPI OpenW(const void* Info);
+void WINAPI ExitFAR(void);
+void WINAPI ExitFARW(void);
+void WINAPI ExitFARW3(void*);
+#if defined(__GNUC__)
+}
+#endif
+
+void SetupExportsFar3();
+
+bool StartupHooks(HMODULE ahOurDll);
+void ShutdownHooks();
+
+
+#define IS_SYNCHRO_ALLOWED \
+	( \
+	  gFarVersion.dwVerMajor > 2 || \
+	  (gFarVersion.dwVerMajor == 2 && (gFarVersion.dwVerMinor>0 || gFarVersion.dwBuild>=1006)) \
+	)
+
+extern int gnSynchroCount;
+extern BOOL TerminalMode;
+
+struct HookCallbackArg;
+
+#ifdef _DEBUG
+#define SHOWDBGINFO(x) OutputDebugStringW(x)
+#else
+#define SHOWDBGINFO(x)
+#endif

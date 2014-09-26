@@ -44,7 +44,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 		#define GetTextPtr(i) ((const wchar_t *)InfoT->SendDlgMessage(hDlg,DM_GETCONSTTEXTPTR,i,0))
 		#define SETTEXT(itm,txt) itm.Data = txt
 		#define wsprintfT wsprintfW
-		#define GetMsgT GetMsgW
+		#define GetMsgT(aiMsg) InfoT->GetMsg(&guid_ConEmu,aiMsg)
 		#define FAR_T(s) L ## s
 		#define FAR_CHAR wchar_t
 		#define strcpyT lstrcpyW
@@ -58,7 +58,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 		#define GetTextPtr(i) ((const wchar_t *)InfoW995->SendDlgMessage(hDlg,DM_GETCONSTTEXTPTR,i,0))
 		#define SETTEXT(itm,txt) itm.PtrData = txt
 		#define wsprintfT wsprintfW
-		#define GetMsgT GetMsgW
+		#define GetMsgT(aiMsg) InfoT->GetMsg(InfoT->ModuleNumber,aiMsg)
 		#define FAR_T(s) L ## s
 		#define FAR_CHAR wchar_t
 		#define strcpyT lstrcpyW
@@ -73,7 +73,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	//#define GetTextPtr(i) ((const char *)InfoA->SendDlgMessage(hDlg,DM_GETTEXTPTR,i,0))
 	#define SETTEXT(itm,txt) lstrcpyA(itm.Data, txt)
 	#define wsprintfT wsprintfA
-	#define GetMsgT(n) InfoT->GetMsg(InfoT->ModuleNumber,n)
+	#define GetMsgT(aiMsg) InfoT->GetMsg(InfoT->ModuleNumber,aiMsg)
 	#define FAR_T(s) s
 	#define FAR_CHAR char
 	#define strcpyT lstrcpyA

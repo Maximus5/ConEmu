@@ -70,6 +70,11 @@ protected:
 
 	bool ReloadFarInfoApi();
 
+protected:
+	friend BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved);
+	static void DllMain_ProcessAttach(HMODULE hModule);
+	static void DllMain_ProcessDetach();
+
 public:
 	CPluginBase();
 	virtual ~CPluginBase();
@@ -108,7 +113,7 @@ public:
 	INT_PTR PanelControl(HANDLE hPanel, int Command, INT_PTR Param1, void* Param2);
 
 	bool cmd_OpenEditorLine(CESERVER_REQ_FAREDITOR *pCmd);
-	bool cmd_RedrawFarCall();
+	bool cmd_RedrawFarCall(CESERVER_REQ*& pCmdRet, CESERVER_REQ** ppResult);
 	bool cmd_SetWindow(LPVOID pCommandData, bool bForceSendTabs);
 	void cmd_LeftClickSync(LPVOID pCommandData);
 	void cmd_CloseQSearch();
@@ -175,7 +180,7 @@ protected:
 public:
 	virtual bool    CheckPanelExist() = 0;
 	virtual bool    ExecuteSynchroApi() = 0;
-	virtual void    ExitFAR(void) = 0;
+	virtual void    ExitFar() = 0;
 	virtual int     GetActiveWindowType() = 0;
 	virtual DWORD   GetEditorModifiedState() = 0;
 	virtual bool    GetFarRect(SMALL_RECT& rcFar) = 0;
@@ -183,7 +188,7 @@ public:
 	virtual LPCWSTR GetMsg(int aiMsg, wchar_t* psMsg = NULL, size_t cchMsgMax = 0) = 0;
 	virtual LPWSTR  GetPanelDir(GetPanelDirFlags Flags) = 0;
 	virtual bool    GetPanelInfo(GetPanelDirFlags Flags, BkPanelInfo* pBk) = 0;
-	virtual void    GetPluginInfo(void* piv) = 0; // PluginInfo* versioned
+	virtual void    GetPluginInfoPtr(void* piv) = 0; // PluginInfo* versioned
 	virtual int     GetWindowCount() = 0;
 	virtual LPCWSTR GetWindowTypeName(int WindowType) = 0;
 	virtual void    GuiMacroDlg() = 0;
@@ -191,8 +196,8 @@ public:
 	virtual bool    IsMacroActive() = 0;
 	virtual void    LoadFarColors(BYTE (&nFarColors)[col_LastIndex]) = 0;
 	virtual void    LoadFarSettings(CEFarInterfaceSettings* pInterface, CEFarPanelSettings* pPanel) = 0;
-	virtual void    LoadPanelDirs() = 0;
-	virtual void    LoadPanelTabsSettings() = 0;
+	//virtual void    LoadPanelDirs() = 0;
+	//virtual void    LoadPanelTabsSettings() = 0;
 	#if 0
 	virtual bool    LoadPlugin(wchar_t* pszPluginPath) = 0;
 	#endif
@@ -202,15 +207,15 @@ public:
 	virtual void    PostMacroApi(const wchar_t* asMacro, INPUT_RECORD* apRec) = 0;
 	virtual void    ProcessDragFrom() = 0;
 	virtual void    ProcessDragTo() = 0;
-	virtual int     ProcessEditorEvent(void* p) = 0;
-	virtual int     ProcessEditorInput(LPCVOID Rec) = 0;
-	virtual int     ProcessSynchroEvent(void* p) = 0;
-	virtual int     ProcessViewerEvent(void* p) = 0;
+	virtual int     ProcessEditorEventPtr(void* p) = 0;
+	virtual int     ProcessEditorInputPtr(LPCVOID Rec) = 0;
+	virtual int     ProcessSynchroEventPtr(void* p) = 0;
+	virtual int     ProcessViewerEventPtr(void* p) = 0;
 	virtual void    RedrawAll() = 0;
-	virtual void    SetStartupInfo(void *aInfo) = 0;
+	virtual void    SetStartupInfoPtr(void *aInfo) = 0;
 	virtual void    SetWindow(int nTab) = 0;
 	virtual int     ShowMessage(LPCWSTR asMsg, int aiButtons, bool bWarning) = 0;
-	virtual int     ShowPluginMenu(ConEmuPluginMenuItem* apItems, int Count);
+	virtual int     ShowPluginMenu(ConEmuPluginMenuItem* apItems, int Count) = 0;
 	virtual void    ShowUserScreen(bool bUserScreen) = 0;
 	virtual void    StopWaitEndSynchro() = 0;
 	virtual bool    UpdateConEmuTabsApi(int windowCount) = 0;

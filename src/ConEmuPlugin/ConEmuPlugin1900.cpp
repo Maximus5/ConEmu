@@ -116,19 +116,19 @@ CPluginW1900::CPluginW1900()
 	fctl_GetPanelHostFile = FCTL_GETPANELHOSTFILE;
 }
 
-int CPluginW1900::ProcessEditorEvent(void* p)
+int CPluginW1900::ProcessEditorEventPtr(void* p)
 {
 	const ProcessEditorEventInfo* Info = (const ProcessEditorEventInfo*)p;
 	return ProcessEditorViewerEvent(Info->Event, -1);
 }
 
-int CPluginW1900::ProcessViewerEvent(void* p)
+int CPluginW1900::ProcessViewerEventPtr(void* p)
 {
 	const ProcessViewerEventInfo* Info = (const ProcessViewerEventInfo*)p;
 	return ProcessEditorViewerEvent(-1, Info->Event);
 }
 
-int CPluginW1900::ProcessSynchroEvent(void* p)
+int CPluginW1900::ProcessSynchroEventPtr(void* p)
 {
 	const ProcessSynchroEventInfo* Info = (const ProcessSynchroEventInfo*)p;
 	return Plugin()->ProcessSynchroEvent(Info->Event, Info->Param);
@@ -229,7 +229,7 @@ INT_PTR CPluginW1900::PanelControlApi(HANDLE hPanel, int Command, INT_PTR Param1
 	return iRc;
 }
 
-void CPluginW1900::GetPluginInfo(void *piv)
+void CPluginW1900::GetPluginInfoPtr(void *piv)
 {
 	PluginInfo *pi = (PluginInfo*)piv;
 	//memset(pi, 0, sizeof(PluginInfo));
@@ -584,7 +584,7 @@ void CPluginW1900::ProcessDragTo()
 	SafeFree(szPDir);
 }
 
-void CPluginW1900::SetStartupInfo(void *aInfo)
+void CPluginW1900::SetStartupInfoPtr(void *aInfo)
 {
 	INIT_FAR_PSI(::InfoW1900, ::FSFW1900, (PluginStartupInfo*)aInfo);
 	mb_StartupInfoOk = true;
@@ -623,7 +623,7 @@ DWORD CPluginW1900::GetEditorModifiedState()
 
 
 // watch non-modified -> modified editor status change
-int CPluginW1900::ProcessEditorInput(LPCVOID aRec)
+int CPluginW1900::ProcessEditorInputPtr(LPCVOID aRec)
 {
 	if (!InfoW1900)
 		return 0;
@@ -794,7 +794,7 @@ bool CPluginW1900::UpdateConEmuTabsApi(int windowCount)
 	return lbCh;
 }
 
-void CPluginW1900::ExitFAR()
+void CPluginW1900::ExitFar()
 {
 	if (!mb_StartupInfoOk)
 		return;
@@ -828,7 +828,7 @@ int CPluginW1900::ShowMessage(LPCWSTR asMsg, int aiButtons, bool bWarning)
 					(const wchar_t * const *)asMsg, 0, aiButtons);
 }
 
-LPCWSTR CPluginW1900::GetMsg(int aiMsg, wchar_t* psMsg = NULL, size_t cchMsgMax = 0)
+LPCWSTR CPluginW1900::GetMsg(int aiMsg, wchar_t* psMsg /*= NULL*/, size_t cchMsgMax /*= 0*/)
 {
 	LPCWSTR pszRc = (InfoW1900 && InfoW1900->GetMsg) ? InfoW1900->GetMsg(&guid_ConEmu, aiMsg) : L"";
 	if (!pszRc)

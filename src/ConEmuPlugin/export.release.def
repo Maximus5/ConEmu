@@ -13,7 +13,6 @@ EXPORTS
 ;  Far3 (only)
    GetGlobalInfoW
    OpenW
-   ProcessConsoleInputW
 ;  Ansi
 	GetPluginInfo
 	SetStartupInfo

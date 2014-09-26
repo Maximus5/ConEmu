@@ -42,6 +42,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #include "PluginHeader.h"
+#include "PluginSrv.h"
 #include "ConEmuPluginBase.h"
 #include "ConEmuPluginA.h"
 #include "ConEmuPlugin995.h"
@@ -54,7 +55,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/MSection.h"
 #include "../common/MWow64Disable.h"
 #include "../common/WinConsole.h"
+#include "../common/SetEnvVar.h"
 #include "../ConEmuHk/SetHook.h"
+#include "../ConEmu/version.h"
 
 #include <TlHelp32.h>
 
@@ -64,6 +67,97 @@ extern BOOL gbUngetDummyMouseEvent;
 extern SetFarHookMode_t SetFarHookMode;
 
 CPluginBase* gpPlugin = NULL;
+
+static BOOL gbTryOpenMapHeader = FALSE;
+static BOOL gbStartupHooksAfterMap = FALSE;
+
+BOOL gbWasDetached = FALSE;
+CONSOLE_SCREEN_BUFFER_INFO gsbiDetached;
+
+DWORD gnPeekReadCount = 0;
+
+bool gbExitFarCalled = false;
+
+HMODULE ghPluginModule = NULL; // ConEmu.dll - сам плагин
+HWND ghConEmuWndDC = NULL; // Содержит хэндл окна отрисовки. Это ДОЧЕРНЕЕ окно.
+DWORD gdwPreDetachGuiPID = 0;
+DWORD gdwServerPID = 0;
+BOOL TerminalMode = FALSE;
+HWND FarHwnd = NULL;
+DWORD gnMainThreadId = 0, gnMainThreadIdInitial = 0;
+HANDLE ghMonitorThread = NULL; DWORD gnMonitorThreadId = 0;
+HANDLE ghSetWndSendTabsEvent = NULL;
+FarVersion gFarVersion = {};
+WCHAR gszDir1[CONEMUTABMAX], gszDir2[CONEMUTABMAX];
+int maxTabCount = 0, lastWindowCount = 0, gnCurTabCount = 0;
+CESERVER_REQ* gpTabs = NULL; //(ConEmuTab*) Alloc(maxTabCount, sizeof(ConEmuTab));
+BOOL gbForceSendTabs = FALSE;
+int  gnCurrentWindowType = 0; // WTYPE_PANELS / WTYPE_VIEWER / WTYPE_EDITOR
+BOOL gbIgnoreUpdateTabs = FALSE; // выставляется на время CMD_SETWINDOW
+BOOL gbRequestUpdateTabs = FALSE; // выставляется при получении события FOCUS/KILLFOCUS
+CurPanelDirs gPanelDirs = {};
+BOOL gbClosingModalViewerEditor = FALSE; // выставляется при закрытии модального редактора/вьювера
+MOUSE_EVENT_RECORD gLastMouseReadEvent = {{0,0}};
+BOOL gbUngetDummyMouseEvent = FALSE;
+LONG gnAllowDummyMouseEvent = 0;
+LONG gnDummyMouseEventFromMacro = 0;
+
+extern HMODULE ghHooksModule;
+extern BOOL gbHooksModuleLoaded; // TRUE, если был вызов LoadLibrary("ConEmuHk.dll"), тогда его нужно FreeLibrary при выходе
+
+
+MSection *csData = NULL;
+// результат выполнения команды (пишется функциями OutDataAlloc/OutDataWrite)
+CESERVER_REQ* gpCmdRet = NULL;
+// инициализируется как "gpData = gpCmdRet->Data;"
+LPBYTE gpData = NULL, gpCursor = NULL;
+DWORD  gnDataSize=0;
+
+int gnPluginOpenFrom = -1;
+DWORD gnReqCommand = -1;
+LPVOID gpReqCommandData = NULL;
+HANDLE ghReqCommandEvent = NULL;
+BOOL   gbReqCommandWaiting = FALSE;
+
+
+UINT gnMsgTabChanged = 0;
+MSection *csTabs = NULL;
+BOOL  gbPlugKeyChanged=FALSE;
+HKEY  ghRegMonitorKey=NULL; HANDLE ghRegMonitorEvt=NULL;
+HANDLE ghPluginSemaphore = NULL;
+wchar_t gsFarLang[64] = {0};
+BOOL FindServerCmd(DWORD nServerCmd, DWORD &dwServerPID, bool bFromAttach = false);
+BOOL gbNeedPostTabSend = FALSE;
+BOOL gbNeedPostEditCheck = FALSE; // проверить, может в активном редакторе изменился статус
+int lastModifiedStateW = -1;
+BOOL gbNeedPostReloadFarInfo = FALSE;
+DWORD gnNeedPostTabSendTick = 0;
+#define NEEDPOSTTABSENDDELTA 100
+#define MONITORENVVARDELTA 1000
+void UpdateEnvVar(const wchar_t* pszList);
+BOOL StartupHooks();
+MFileMapping<CESERVER_CONSOLE_MAPPING_HDR> *gpConMap;
+const CESERVER_CONSOLE_MAPPING_HDR *gpConMapInfo = NULL;
+//AnnotationInfo *gpColorerInfo = NULL;
+BOOL gbStartedUnderConsole2 = FALSE;
+DWORD gnSelfPID = 0; //GetCurrentProcessId();
+HANDLE ghFarInfoMapping = NULL;
+CEFAR_INFO_MAPPING *gpFarInfo = NULL, *gpFarInfoMapping = NULL;
+HANDLE ghFarAliveEvent = NULL;
+PanelViewRegInfo gPanelRegLeft = {NULL};
+PanelViewRegInfo gPanelRegRight = {NULL};
+// Для плагинов PicView & MMView нужно знать, нажат ли CtrlShift при F3
+HANDLE ghConEmuCtrlPressed = NULL, ghConEmuShiftPressed = NULL;
+BOOL gbWaitConsoleInputEmpty = FALSE, gbWaitConsoleWrite = FALSE; //, gbWaitConsoleInputPeek = FALSE;
+HANDLE ghConsoleInputEmpty = NULL, ghConsoleWrite = NULL; //, ghConsoleInputWasPeek = NULL;
+DWORD GetMainThreadId();
+int gnSynchroCount = 0;
+bool gbSynchroProhibited = false;
+bool gbInputSynchroPending = false;
+
+struct HookModeFar gFarMode = {sizeof(HookModeFar), TRUE/*bFarHookMode*/};
+extern SetFarHookMode_t SetFarHookMode;
+
 
 PluginAndMenuCommands gpPluginMenu[menu_Last] =
 {
@@ -104,9 +198,9 @@ CPluginBase* Plugin()
 
 		if (gFarVersion.dwVerMajor==1)
 			gpPlugin = new CPluginAnsi();
-		else if (gFarVersion.dwBuild>=FAR_Y2_VER)
+		else if (gFarVersion.dwBuild>=2800)
 			gpPlugin = new CPluginW2800();
-		else if (gFarVersion.dwBuild>=FAR_Y1_VER)
+		else if (gFarVersion.dwBuild>=1900)
 			gpPlugin = new CPluginW1900();
 		else
 			gpPlugin = new CPluginW995();
@@ -138,6 +232,101 @@ CPluginBase::~CPluginBase()
 {
 }
 
+void CPluginBase::DllMain_ProcessAttach(HMODULE hModule)
+{
+	ghPluginModule = (HMODULE)hModule;
+	ghWorkingModule = (u64)hModule;
+	gnSelfPID = GetCurrentProcessId();
+	HeapInitialize();
+
+	#ifdef SHOW_STARTED_MSGBOX
+	if (!IsDebuggerPresent())
+		MessageBoxA(NULL, "ConEmu*.dll loaded", "ConEmu plugin", 0);
+	#endif
+
+	gpLocalSecurity = LocalSecurity();
+
+	csTabs = new MSection();
+	csData = new MSection();
+
+	gPanelDirs.ActiveDir = new CmdArg();
+	gPanelDirs.PassiveDir = new CmdArg();
+
+	PlugServerInit();
+
+	// Текущая нить не обязана быть главной! Поэтому ищем первую нить процесса!
+	gnMainThreadId = gnMainThreadIdInitial = GetMainThreadId();
+
+	InitHWND(/*hConWnd*/);
+
+	// Check Terminal mode
+	TerminalMode = isTerminalMode();
+
+	if (!TerminalMode)
+	{
+		if (!StartupHooks(ghPluginModule))
+		{
+			if (ghConEmuWndDC)
+			{
+				_ASSERTE(FALSE);
+				DEBUGSTR(L"!!! Can't install injects!!!\n");
+			}
+			else
+			{
+				DEBUGSTR(L"No GUI, injects was not installed!\n");
+			}
+		}
+	}
+}
+
+void CPluginBase::DllMain_ProcessDetach()
+{
+	ShutdownPluginStep(L"DLL_PROCESS_DETACH");
+
+	if (!gbExitFarCalled)
+	{
+		_ASSERTE(FALSE && "ExitFar was not called. Unsupported Far<->Plugin builds?");
+		Plugin()->ExitFarCommon();
+	}
+
+	if (gnSynchroCount > 0)
+	{
+		//if (gFarVersion.dwVerMajor == 2 && gFarVersion.dwBuild < 1735) -- в фаре пока не чинили, поэтому всегда ругаемся, если что...
+		BOOL lbSynchroSafe = FALSE;
+		if ((gFarVersion.dwVerMajor == 2 && gFarVersion.dwVerMinor >= 1) || (gFarVersion.dwVerMajor >= 3))
+			lbSynchroSafe = TRUE;
+		if (!lbSynchroSafe)
+		{
+			MessageBox(NULL, L"Syncho events are pending!\nFar may crash after unloading plugin", L"ConEmu plugin", MB_OK|MB_ICONEXCLAMATION|MB_SETFOREGROUND|MB_SYSTEMMODAL);
+		}
+	}
+
+	if (csTabs)
+	{
+		delete csTabs;
+		csTabs = NULL;
+	}
+
+	if (csData)
+	{
+		delete csData;
+		csData = NULL;
+	}
+
+	PlugServerStop(true);
+
+	if (gpBgPlugin)
+	{
+		delete gpBgPlugin;
+		gpBgPlugin = NULL;
+	}
+
+	HeapDeinitialize();
+
+	ShutdownPluginStep(L"DLL_PROCESS_DETACH - done");
+}
+
+
 bool CPluginBase::LoadFarVersion()
 {
 	wchar_t ErrText[512]; ErrText[0] = 0;
@@ -152,7 +341,7 @@ bool CPluginBase::LoadFarVersion()
 	{
 		gFarVersion.dwVerMajor = 2;
 		gFarVersion.dwVerMinor = 0;
-		gFarVersion.dwBuild = FAR_X_VER;
+		gFarVersion.dwBuild = MIN_FAR2_BUILD;
 	}
 
 	return lbRc;
@@ -1584,12 +1773,7 @@ bool CPluginBase::AddTab(int &tabCount, int WindowPos, bool losingFocus, bool ed
 			LPCWSTR pszExt = PointToExt(pszName);
 			if (lstrcmpi(pszExt, L".tmp") == 0)
 			{
-				if (gFarVersion.dwVerMajor==1)
-				{
-					GetMsgA(CEConsoleOutput, szConOut);
-				}
-				else
-					lstrcpyn(szConOut, GetMsgW(CEConsoleOutput), countof(szConOut));
+				GetMsg(CEConsoleOutput, szConOut, countof(szConOut));
 
 				Name = szConOut;
 			}
@@ -1746,7 +1930,7 @@ bool CPluginBase::UpdateConEmuTabs(bool abSendChanges)
 			if (lbDummy)
 			{
 				int tabCount = 0;
-				lbCh |= AddTab(tabCount, 0, false, false, WTYPE_PANELS, NULL, NULL, 1, 0, 0, 0);
+				lbCh |= AddTab(tabCount, 0, false, false, wt_Panels, NULL, NULL, 1, 0, 0, 0);
 				gpTabs->Tabs.nTabCount = tabCount;
 			}
 			else
@@ -1774,7 +1958,7 @@ bool CPluginBase::UpdateConEmuTabs(bool abSendChanges)
 			if (gpTabs->Tabs.CurrentIndex >= 0 && gpTabs->Tabs.CurrentIndex < (int)gpTabs->Tabs.nTabCount)
 				gpTabs->Tabs.CurrentType = gpTabs->Tabs.tabs[nLastCurrentTab].Type;
 			else
-				gpTabs->Tabs.CurrentType = WTYPE_PANELS;
+				gpTabs->Tabs.CurrentType = wt_Panels;
 		}
 
 		gnCurrentWindowType = gpTabs->Tabs.CurrentType;
@@ -1864,7 +2048,7 @@ void CPluginBase::InitResources()
 	{
 		for (size_t i = 0; i < countof(OurStr); i++)
 		{
-			GetMsgA(OurStr[i].MsgId, OurStr[i].pszRc, OurStr[i].cchMax);
+			GetMsg(OurStr[i].MsgId, OurStr[i].pszRc, OurStr[i].cchMax);
 		}
 	}
 
@@ -2043,7 +2227,7 @@ void CPluginBase::LoadPanelTabsFromRegistry()
 		return;
 
 	HKEY hk;
-	if (0 == RegOpenKeyExW(HKEY_CURRENT_USER, szTabsKey, 0, KEY_READ, &hk))
+	if (0 == RegOpenKeyExW(HKEY_CURRENT_USER, pszTabsKey, 0, KEY_READ, &hk))
 	{
 		DWORD dwVal, dwSize;
 
@@ -2385,8 +2569,8 @@ HANDLE CPluginBase::OpenPluginCommon(int OpenFrom, INT_PTR Item, bool FromMacro)
 	if (gFarVersion.dwVerMajor==1)
 	{
 		wchar_t szInfo[128]; _wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"OpenPlugin[Ansi] (%i%s, Item=0x%X, gnReqCmd=%i%s)\n",
-		                               OpenFrom, (OpenFrom==OPEN_COMMANDLINE) ? L"[OPEN_COMMANDLINE]" :
-		                               (OpenFrom==OPEN_PLUGINSMENU) ? L"[OPEN_PLUGINSMENU]" : L"",
+		                               OpenFrom, (OpenFrom==of_CommandLine) ? L"[OPEN_COMMANDLINE]" :
+		                               (OpenFrom==of_PluginsMenu) ? L"[OPEN_PLUGINSMENU]" : L"",
 		                               (DWORD)Item,
 		                               (int)gnReqCommand,
 		                               (gnReqCommand == (DWORD)-1) ? L"" :
@@ -2399,7 +2583,7 @@ HANDLE CPluginBase::OpenPluginCommon(int OpenFrom, INT_PTR Item, bool FromMacro)
 	}
 	#endif
 
-	if (OpenFrom == OPEN_COMMANDLINE && Item)
+	if ((OpenFrom == of_CommandLine) && Item)
 	{
 		if (gFarVersion.dwVerMajor==1)
 		{
@@ -2471,7 +2655,7 @@ HANDLE CPluginBase::OpenPluginCommon(int OpenFrom, INT_PTR Item, bool FromMacro)
 			// Переключение табов выполняется макросом, чтобы "убрать" QSearch и выполнить проверки
 			// (посылается из OnMainThreadActivated: gnReqCommand == CMD_SETWINDOW)
 			DEBUGSTRCMD(L"Plugin: SETWND_CALLPLUGIN_BASE\n");
-			gnPluginOpenFrom = OPEN_PLUGINSMENU;
+			gnPluginOpenFrom = of_PluginsMenu;
 			DWORD nTab = (DWORD)(Item - SETWND_CALLPLUGIN_BASE);
 			ProcessCommand(CMD_SETWINDOW, FALSE, &nTab);
 			SetEvent(ghSetWndSendTabsEvent);
@@ -2653,7 +2837,7 @@ void CPluginBase::ProcessSetWindowCommand()
 
 	if (gFarVersion.dwVerMajor==1)
 	{
-		gnPluginOpenFrom = OPEN_PLUGINSMENU;
+		gnPluginOpenFrom = of_PluginsMenu;
 		// Результата ожидает вызывающая нить, поэтому передаем параметр
 		ProcessCommand(gnReqCommand, FALSE/*bReqMainThread*/, gpReqCommandData, &gpCmdRet);
 	}
@@ -2910,7 +3094,7 @@ void CPluginBase::ExecuteSynchro()
 			int nWindowType = Plugin()->GetActiveWindowType();
 			// "Зависания" возможны (вроде) только при прокрутке зажатой кнопкой мышки
 			// редактора или вьювера. Так что в других областях - не дергаться.
-			if (nWindowType == WTYPE_EDITOR || nWindowType == WTYPE_VIEWER)
+			if (nWindowType == wt_Editor || nWindowType == wt_Viewer)
 			{
 				gbUngetDummyMouseEvent = TRUE;
 			}
@@ -3152,7 +3336,7 @@ bool CPluginBase::cmd_OpenEditorLine(CESERVER_REQ_FAREDITOR *pCmd)
 	return lbRc;
 }
 
-bool CPluginBase::cmd_RedrawFarCall()
+bool CPluginBase::cmd_RedrawFarCall(CESERVER_REQ*& pCmdRet, CESERVER_REQ** ppResult)
 {
 	HANDLE hEvents[2] = {ghServerTerminateEvent, ghPluginSemaphore};
 	DWORD dwWait = WaitForMultipleObjects(2, hEvents, FALSE, INFINITE);
@@ -3167,7 +3351,7 @@ bool CPluginBase::cmd_RedrawFarCall()
 	if (gpBgPlugin) gpBgPlugin->SetForceUpdate();
 
 	WARNING("После перехода на Synchro для FAR2 есть опасение, что следующий вызов может произойти до окончания предыдущего цикла обработки Synchro в Far");
-	lbSucceeded = ActivatePlugin(CMD_FARPOST, NULL);
+	bool lbSucceeded = ActivatePlugin(CMD_FARPOST, NULL);
 
 	if (lbSucceeded && /*pOldCmdRet !=*/ gpCmdRet)
 	{
@@ -3467,7 +3651,7 @@ bool CPluginBase::ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pComman
 		// а когда к нему управление вернется
 		if (nCmd == CMD_REDRAWFAR)
 		{
-			if (!cmd_RedrawFar())
+			if (!cmd_RedrawFarCall(pCmdRet, ppResult))
 			{
 				// Плагин завершается
 				return false;
@@ -3496,15 +3680,13 @@ bool CPluginBase::ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pComman
 
 	if (gnPluginOpenFrom == 0)
 	{
-		switch (Plugin()->GetActiveWindowType())
-		{
-		case WTYPE_PANELS:
-			gnPluginOpenFrom = OPEN_FILEPANEL; break;
-		case WTYPE_EDITOR:
-			gnPluginOpenFrom = OPEN_EDITOR; break;
-		case WTYPE_VIEWER:
-			gnPluginOpenFrom = OPEN_VIEWER; break;
-		}
+		int iWndType = GetActiveWindowType();
+		if (iWndType == wt_Panels)
+			gnPluginOpenFrom = of_FilePanel;
+		else if (iWndType == wt_Editor)
+			gnPluginOpenFrom = of_Editor;
+		else if (iWndType == wt_Viewer)
+			gnPluginOpenFrom = of_Viewer;
 	}
 
 	// Некоторые команды "асинхронные", блокировки не нужны
@@ -3548,16 +3730,16 @@ bool CPluginBase::ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pComman
 		//BOOL  *pbClickNeed = (BOOL*)pCommandData;
 		//COORD *crMouse = (COORD *)(pbClickNeed+1);
 		//ProcessCommand(CMD_LEFTCLKSYNC, TRUE/*bReqMainThread*/, pCommandData);
-		Plugin()->ProcessDragFrom();
-		Plugin()->ProcessDragTo();
+		ProcessDragFrom();
+		ProcessDragTo();
 		break;
 
 	case CMD_DRAGTO:
-		Plugin()->ProcessDragTo();
+		ProcessDragTo();
 		break;
 
 	case CMD_SETWINDOW:
-		cmd_SetWindow(pCommandData);
+		cmd_SetWindow(pCommandData, bForceSendTabs);
 		pCmdRet = gpTabs;
 		break;
 
@@ -3581,7 +3763,7 @@ bool CPluginBase::ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pComman
 	case CMD_REDRAWFAR:
 		// В Far 1.7x были глюки с отрисовкой?
 		if (gFarVersion.dwVerMajor>=2)
-			Plugin()->RedrawAll();
+			RedrawAll();
 		break;
 
 	case CMD_CHKRESOURCES:
@@ -4352,7 +4534,7 @@ VOID /*WINAPI*/ CPluginBase::OnShellExecuteExW_Except(HookCallbackArg* pArgs)
 {
 	if (pArgs->bMainThread)
 	{
-		ShowMessage(CEShellExecuteException,0);
+		Plugin()->ShowMessage(CEShellExecuteException,0);
 	}
 
 	*((LPBOOL*)pArgs->lpResult) = FALSE;
@@ -4741,7 +4923,7 @@ VOID /*WINAPI*/ CPluginBase::OnConsoleWasAttached(HookCallbackArg* pArgs)
 		*/
 
 		// сразу переподцепимся к GUI
-		if (!Attach2Gui())
+		if (!Plugin()->Attach2Gui())
 		{
 			EmergencyShow(FarHwnd);
 		}
@@ -4763,13 +4945,14 @@ VOID /*WINAPI*/ CPluginBase::OnConsoleWasAttached(HookCallbackArg* pArgs)
 
 VOID /*WINAPI*/ CPluginBase::OnCurDirChanged()
 {
-	if ((gnCurrentWindowType == wt_Panels) && (IS_SYNCHRO_ALLOWED))
+	CPluginBase* p = Plugin();
+	if (p && (gnCurrentWindowType == p->wt_Panels) && (IS_SYNCHRO_ALLOWED))
 	{
 		// Требуется дернуть Synchro, чтобы корректно активироваться
 		if (!gbInputSynchroPending)
 		{
 			gbInputSynchroPending = true;
-			ExecuteSynchro();
+			p->ExecuteSynchro();
 		}
 	}
 }

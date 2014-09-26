@@ -196,7 +196,7 @@ INT_PTR CPluginW995::PanelControlApi(HANDLE hPanel, int Command, INT_PTR Param1,
 	return iRc;
 }
 
-void CPluginW995::GetPluginInfo(void *piv)
+void CPluginW995::GetPluginInfoPtr(void *piv)
 {
 	PluginInfo *pi = (PluginInfo*)piv;
 	//memset(pi, 0, sizeof(PluginInfo));
@@ -541,7 +541,7 @@ void CPluginW995::ProcessDragTo()
 	SafeFree(szPDir);
 }
 
-void CPluginW995::SetStartupInfo(void *aInfo)
+void CPluginW995::SetStartupInfoPtr(void *aInfo)
 {
 	INIT_FAR_PSI(::InfoW995, ::FSFW995, (PluginStartupInfo*)aInfo);
 	mb_StartupInfoOk = true;
@@ -583,7 +583,7 @@ DWORD CPluginW995::GetEditorModifiedState()
 //extern int lastModifiedStateW;
 
 // watch non-modified -> modified editor status change
-int CPluginW995::ProcessEditorInput(LPCVOID aRec)
+int CPluginW995::ProcessEditorInputPtr(LPCVOID aRec)
 {
 	if (!InfoW995)
 		return 0;
@@ -678,7 +678,7 @@ bool CPluginW995::UpdateConEmuTabsApi(int windowCount)
 	return lbCh;
 }
 
-void CPluginW995::ExitFAR()
+void CPluginW995::ExitFar()
 {
 	if (!mb_StartupInfoOk)
 		return;
@@ -712,7 +712,7 @@ int CPluginW995::ShowMessage(LPCWSTR asMsg, int aiButtons, bool bWarning)
 					(const wchar_t * const *)asMsg, 0, aiButtons);
 }
 
-LPCWSTR CPluginW995::GetMsg(int aiMsg, wchar_t* psMsg = NULL, size_t cchMsgMax = 0)
+LPCWSTR CPluginW995::GetMsg(int aiMsg, wchar_t* psMsg /*= NULL*/, size_t cchMsgMax /*= 0*/)
 {
 	LPCWSTR pszRc = (InfoW995 && InfoW995->GetMsg) ? InfoW995->GetMsg(InfoW995->ModuleNumber, aiMsg) : L"";
 	if (!pszRc)
