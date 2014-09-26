@@ -133,12 +133,6 @@ wchar_t* CPluginAnsi::GetPanelDir(GetPanelDirFlags Flags)
 }
 
 
-HANDLE WINAPI _export OpenPlugin(int OpenFrom,INT_PTR Item)
-{
-	return Plugin()->OpenPluginCommon(OpenFrom, Item, false);
-}
-
-
 extern
 VOID CALLBACK ConEmuCheckTimerProc(
     HWND hwnd,         // handle to window
@@ -425,30 +419,6 @@ void ProcessDragToA()
 	free(pfpi); pfpi=NULL;
 }
 
-
-#if defined(__GNUC__)
-#ifdef __cplusplus
-extern "C" {
-#endif
-	void WINAPI SetStartupInfo(const struct PluginStartupInfo *aInfo);
-#ifdef __cplusplus
-};
-#endif
-#endif
-
-void WINAPI _export SetStartupInfo(const struct PluginStartupInfo *aInfo)
-{
-	if (gFarVersion.dwVerMajor != 1)
-	{
-		gFarVersion.dwVerMajor = 1;
-		gFarVersion.dwVerMinor = 75;
-	}
-
-	Plugin()->SetStartupInfo(aInfo);
-
-	Plugin()->CommonPluginStartup();
-}
-
 void CPluginAnsi::SetStartupInfo(void *aInfo)
 {
 	INIT_FAR_PSI(::InfoA, ::FSFA, aInfo);
@@ -470,19 +440,6 @@ void CPluginAnsi::SetStartupInfo(void *aInfo)
 	}
 
 	SetRootRegKey(ToUnicode(InfoA->RootKey));
-}
-
-//extern WCHAR gcPlugKey; // Для ANSI far он инициализируется как (char)
-
-void WINAPI _export GetPluginInfo(struct PluginInfo *pi)
-{
-	if (gFarVersion.dwVerMajor != 1)
-	{
-		gFarVersion.dwVerMajor = 1;
-		gFarVersion.dwVerMinor = 75;
-	}
-
-	Plugin()->GetPluginInfo(pi);
 }
 
 void CPluginAnsi::GetPluginInfo(void *piv)
@@ -523,28 +480,6 @@ DWORD CPluginAnsi::GetEditorModifiedState()
 	// Если он сохранен, то уже НЕ модифицирован
 	DWORD currentModifiedState = ((ei.CurState & (ECSTATE_MODIFIED|ECSTATE_SAVED)) == ECSTATE_MODIFIED) ? 1 : 0;
 	return currentModifiedState;
-}
-
-// watch non-modified -> modified editor status change
-int WINAPI _export ProcessEditorInput(const INPUT_RECORD *Rec)
-{
-	if (!InfoA)  // иногда событие от QuickView приходит ДО инициализации плагина
-		return 0; // Даже если мы не под эмулятором - просто запомним текущее состояние
-
-	// only key events with virtual codes > 0 are likely to cause status change (?)
-	ProcessEditorInput(*Rec);
-
-	return 0;
-}
-
-int WINAPI _export ProcessEditorEvent(int Event, void *Param)
-{
-	return Plugin()->ProcessEditorViewerEvent(Event, -1);
-}
-
-int WINAPI _export ProcessViewerEvent(int Event, void *Param)
-{
-	return Plugin()->ProcessEditorViewerEvent(-1, Event);
 }
 
 extern MSection *csTabs;
@@ -632,16 +567,6 @@ bool CPluginAnsi::UpdateConEmuTabsApi(int windowCount)
 	gpTabs->Tabs.nTabCount = tabCount;
 
 	return lbCh;
-}
-
-void   WINAPI _export ExitFAR(void)
-{
-	CPluginBase::ShutdownPluginStep(L"ExitFAR");
-
-	Plugin()->ExitFarCommon();
-	Plugin()->ExitFAR();
-
-	CPluginBase::ShutdownPluginStep(L"ExitFAR - done");
 }
 
 void CPluginAnsi::ExitFAR()
@@ -995,9 +920,9 @@ void FillUpdateBackgroundA(struct PaintBackgroundArg* pFar)
 	if (!InfoA || !InfoA->AdvControl)
 		return;
 
-	LoadFarColorsA(pFar->nFarColors);
+	Plugin->()LoadFarColors(pFar->nFarColors);
 
-	LoadFarSettingsA(&pFar->FarInterfaceSettings, &pFar->FarPanelSettings);
+	Plugin->()LoadFarSettings(&pFar->FarInterfaceSettings, &pFar->FarPanelSettings);
 
 	pFar->bPanelsAllowed = CheckPanelExist();
 
@@ -1058,7 +983,7 @@ LPCWSTR CPluginAnsi::GetWindowTypeName(int WindowType)
 
 #undef FAR_UNICODE
 #include "Dialogs.h"
-void GuiMacroDlgA()
+void CPluginAnsi::GuiMacroDlg()
 {
 	CallGuiMacroProc();
 }

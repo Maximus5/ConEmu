@@ -185,16 +185,21 @@ struct HookModeFar gFarMode = {sizeof(HookModeFar), TRUE/*bFarHookMode*/};
 extern SetFarHookMode_t SetFarHookMode;
 
 // export
-void WINAPI GetPluginInfoWcmn(void *piv)
+
+void WINAPI GetPluginInfo(void *piv)
 {
+	if (gFarVersion.dwVerMajor != 1)
+	{
+		gFarVersion.dwVerMajor = 1;
+		gFarVersion.dwVerMinor = 75;
+	}
+
 	Plugin()->GetPluginInfo(piv);
 }
 
-HANDLE WINAPI OpenPluginW(int OpenFrom, INT_PTR Item)
+void WINAPI GetPluginInfoWcmn(void *piv)
 {
-	CPluginBase* p = Plugin();
-	HANDLE hPlugin = p->OpenPluginCommon(OpenFrom, Item, ((OpenFrom & p->of_FromMacro) == p->of_FromMacro));
-	return hPlugin;
+	Plugin()->GetPluginInfo(piv);
 }
 
 DWORD gnPeekReadCount = 0;
@@ -584,6 +589,19 @@ CONSOLE_SCREEN_BUFFER_INFO gsbiDetached;
 //#define min(a,b)            (((a) < (b)) ? (a) : (b))
 //#endif
 
+void WINAPI SetStartupInfo(void *aInfo)
+{
+	if (gFarVersion.dwVerMajor != 1)
+	{
+		gFarVersion.dwVerMajor = 1;
+		gFarVersion.dwVerMinor = 75;
+	}
+
+	Plugin()->SetStartupInfo(aInfo);
+
+	Plugin()->CommonPluginStartup();
+}
+
 void WINAPI SetStartupInfoW(void *aInfo)
 {
 	#ifdef _DEBUG
@@ -632,6 +650,11 @@ INT_PTR WINAPI ProcessSynchroEventW3(void* p)
 	return Plugin()->ProcessSynchroEvent(p);
 }
 
+int WINAPI ProcessEditorEvent(int Event, void *Param)
+{
+	return Plugin()->ProcessEditorViewerEvent(Event, -1);
+}
+
 int WINAPI ProcessEditorEventW(int Event, void *Param)
 {
 	return Plugin()->ProcessEditorViewerEvent(Event, -1);
@@ -640,6 +663,11 @@ int WINAPI ProcessEditorEventW(int Event, void *Param)
 INT_PTR WINAPI ProcessEditorEventW3(void* p)
 {
 	return Plugin()->ProcessEditorEvent(p);
+}
+
+int WINAPI _export ProcessViewerEvent(int Event, void *Param)
+{
+	return Plugin()->ProcessEditorViewerEvent(-1, Event);
 }
 
 int WINAPI ProcessViewerEventW(int Event, void *Param)
@@ -658,6 +686,14 @@ INT_PTR WINAPI ProcessViewerEventW3(void* p)
 //int lastModifiedStateW = -1;
 //bool gbHandleOneRedraw = false; //, gbHandleOneRedrawCh = false;
 
+// watch non-modified -> modified editor status change
+int WINAPI ProcessEditorInput(const INPUT_RECORD *Rec)
+{
+	// Даже если мы не под эмулятором - просто запомним текущее состояние
+	//if (!ghConEmuWndDC) return 0; // Если мы не под эмулятором - ничего
+	return Plugin()->ProcessEditorInput(*Rec);
+}
+
 int WINAPI ProcessEditorInputW(void* Rec)
 {
 	// Даже если мы не под эмулятором - просто запомним текущее состояние
@@ -665,20 +701,30 @@ int WINAPI ProcessEditorInputW(void* Rec)
 	return Plugin()->ProcessEditorInput((LPCVOID)Rec);
 }
 
+HANDLE WINAPI OpenPlugin(int OpenFrom,INT_PTR Item)
+{
+	return Plugin()->OpenPluginCommon(OpenFrom, Item, false);
+}
+
+HANDLE WINAPI OpenPluginW(int OpenFrom, INT_PTR Item)
+{
+	return Plugin()->OpenPluginCommon(OpenFrom, Item, ((OpenFrom & p->of_FromMacro) == p->of_FromMacro));
+}
+
 HANDLE WINAPI OpenW(const void* Info)
 {
 	return Plugin()->Open(Info);
 }
 
-#if 0
-INT_PTR WINAPI ProcessConsoleInputW(void *Info)
+void WINAPI ExitFAR(void)
 {
-	if (gFarVersion.dwBuild>=FAR_Y2_VER)
-		return FUNC_Y2(ProcessConsoleInputW)(Info);
-	else //if (gFarVersion.dwBuild>=FAR_Y1_VER)
-		return FUNC_Y1(ProcessConsoleInputW)(Info);
+	CPluginBase::ShutdownPluginStep(L"ExitFAR");
+
+	Plugin()->ExitFarCommon();
+	Plugin()->ExitFAR();
+
+	CPluginBase::ShutdownPluginStep(L"ExitFAR - done");
 }
-#endif
 
 void WINAPI ExitFARW(void)
 {
