@@ -155,16 +155,7 @@ INT_PTR CPluginAnsi::PanelControlApi(HANDLE hPanel, int Command, INT_PTR Param1,
 	return iRc;
 }
 
-
-extern
-VOID CALLBACK ConEmuCheckTimerProc(
-    HWND hwnd,         // handle to window
-    UINT uMsg,         // WM_TIMER message
-    UINT_PTR idEvent,  // timer identifier
-    DWORD dwTime       // current system time
-);
-
-void ProcessDragFromA()
+void CPluginAnsi::ProcessDragFrom()
 {
 	if (InfoA == NULL)
 		return;
@@ -314,7 +305,8 @@ void ProcessDragFromA()
 		OutDataWrite(&ItemsCount,sizeof(ItemsCount));
 	}
 }
-void ProcessDragToA()
+
+void CPluginAnsi::ProcessDragTo()
 {
 	if (InfoA == NULL)
 		return;
@@ -630,17 +622,23 @@ void CPluginAnsi::SetWindow(int nTab)
 }
 
 // Warning, напрямую НЕ вызывать. Пользоваться "общей" PostMacro
-void PostMacroA(char* asMacro, INPUT_RECORD* apRec)
+void CPluginAnsi::PostMacroApi(const wchar_t* asMacro, INPUT_RECORD* apRec)
 {
 	if (!InfoA || !InfoA->AdvControl) return;
+
+	char* pszMacroA = ToOem(asMacro);
+	if (!pszMacroA)
+		return;
+
+	char* asMacroA = pszMacroA;
 
 	ActlKeyMacro mcr;
 	mcr.Command = MCMD_POSTMACROSTRING;
 	mcr.Param.PlainText.Flags = 0; // По умолчанию - вывод на экран разрешен
 
-	while ((asMacro[0] == '@' || asMacro[0] == '^') && asMacro[1] && asMacro[1] != ' ')
+	while ((asMacroA[0] == '@' || asMacroA[0] == '^') && asMacroA[1] && asMacroA[1] != ' ')
 	{
-		switch (*asMacro)
+		switch (*asMacroA)
 		{
 		case '@':
 			mcr.Param.PlainText.Flags |= KSFLAGS_DISABLEOUTPUT;
@@ -649,11 +647,14 @@ void PostMacroA(char* asMacro, INPUT_RECORD* apRec)
 			mcr.Param.PlainText.Flags |= KSFLAGS_NOSENDKEYSTOPLUGINS;
 			break;
 		}
-		asMacro++;
+		asMacroA++;
 	}
 
-	mcr.Param.PlainText.SequenceText = asMacro;
+	mcr.Param.PlainText.SequenceText = asMacroA;
+
 	InfoA->AdvControl(InfoA->ModuleNumber, ACTL_KEYMACRO, (void*)&mcr);
+
+	free(pszMacroA);
 }
 
 int CPluginAnsi::ShowPluginMenu(ConEmuPluginMenuItem* apItems, int Count)

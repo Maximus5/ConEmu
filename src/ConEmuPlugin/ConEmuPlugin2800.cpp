@@ -100,6 +100,25 @@ GUID guid_ConEmuMenu = { /* 2dc6b821-fd8e-4165-adcf-a4eda7b44e8e */
 struct PluginStartupInfo *InfoW2800=NULL;
 struct FarStandardFunctions *FSFW2800=NULL;
 
+/* EXPORTS BEGIN */
+void WINAPI GetGlobalInfoW(struct GlobalInfo *Info)
+{
+	_ASSERTE(Info->StructSize >= sizeof(GlobalInfo));
+	if (gFarVersion.dwBuild >= FAR_Y2_VER)
+		Info->MinFarVersion = FARMANAGERVERSION;
+	else
+		Info->MinFarVersion = MAKEFARVERSION(FARMANAGERVERSION_MAJOR,FARMANAGERVERSION_MINOR, FARMANAGERVERSION_REVISION, 2578, FARMANAGERVERSION_STAGE);
+
+	// Build: YYMMDDX (YY - две цифры года, MM - месяц, DD - день, X - 0 и выше-номер подсборки)
+	Info->Version = MAKEFARVERSION(MVV_1,MVV_2,MVV_3,((MVV_1 % 100)*100000) + (MVV_2*1000) + (MVV_3*10) + (MVV_4 % 10),VS_RELEASE);
+
+	Info->Guid = guid_ConEmu;
+	Info->Title = L"ConEmu";
+	Info->Description = L"ConEmu support for Far Manager";
+	Info->Author = L"ConEmu.Maximus5@gmail.com";
+}
+/* EXPORTS END */
+
 CPluginW2800::CPluginW2800()
 {
 	ee_Read = EE_READ;
@@ -857,7 +876,7 @@ void CPluginW2800::ExitFAR()
 	CPluginBase::ShutdownPluginStep(L"ExitFARW2800 - done");
 }
 
-int ShowMessageW2800(LPCWSTR asMsg, int aiButtons, bool bWarning)
+int CPluginW2800::ShowMessage(LPCWSTR asMsg, int aiButtons, bool bWarning)
 {
 	if (!InfoW2800 || !InfoW2800->Message)
 		return -1;
@@ -896,19 +915,8 @@ void CPluginW2800::SetWindow(int nTab)
 		InfoW2800->AdvControl(&guid_ConEmu, ACTL_COMMIT, 0, 0);
 }
 
-DWORD WINAPI BackgroundMacroError(LPVOID lpParameter)
-{
-	wchar_t* pszMacroError = (wchar_t*)lpParameter;
-
-	MessageBox(NULL, pszMacroError, L"ConEmu plugin", MB_ICONSTOP|MB_SYSTEMMODAL);
-
-	SafeFree(pszMacroError);
-
-	return 0;
-}
-
 // Warning, напрямую НЕ вызывать. Пользоваться "общей" PostMacro
-void PostMacroW2800(const wchar_t* asMacro, INPUT_RECORD* apRec)
+void CPluginW2800::PostMacroApi(const wchar_t* asMacro, INPUT_RECORD* apRec)
 {
 	if (!InfoW2800 || !InfoW2800->AdvControl)
 		return;
@@ -934,94 +942,8 @@ void PostMacroW2800(const wchar_t* asMacro, INPUT_RECORD* apRec)
 	// This macro was not adopted to Lua?
 	_ASSERTE(*asMacro && *asMacro != L'$');
 
-	wchar_t* pszMacroCopy = NULL;
-
-	//Far3 build 2576: удален $Text
-	//т.к. макросы у нас фаро-независимые - нужны танцы с бубном
-	pszMacroCopy = lstrdup(asMacro);
-	CharUpperBuff(pszMacroCopy, lstrlen(pszMacroCopy));
 	// Вообще говоря, если тут попадается макрос в старом формате - то мы уже ничего не сделаем...
 	// Начиная с Far 3 build 2851 - все макросы переведены на Lua
-	#if 0
-	if (wcsstr(pszMacroCopy, L"$TEXT") && !InfoW2800->MacroControl(&guid_ConEmu, MCTL_SENDSTRING, MSSC_CHECK, &mcr))
-	{
-		SafeFree(pszMacroCopy);
-		pszMacroCopy = (wchar_t*)calloc(lstrlen(asMacro)+1,sizeof(wchar_t)*2);
-		wchar_t* psz = pszMacroCopy;
-		while (*asMacro)
-		{
-			if (asMacro[0] == L'$'
-				&& (asMacro[1] == L'T' || asMacro[1] == L't')
-				&& (asMacro[2] == L'E' || asMacro[2] == L'e')
-				&& (asMacro[3] == L'X' || asMacro[3] == L'x')
-				&& (asMacro[4] == L'T' || asMacro[4] == L't'))
-			{
-				lstrcpy(psz, L"print("); psz += 6;
-
-				// Пропустить spasing-symbols
-				asMacro += 5;
-				while (*asMacro == L' ' || *asMacro == L'\t' || *asMacro == L'\r' || *asMacro == L'\n')
-					asMacro++;
-				// Копировать строку или переменную
-				if (*asMacro == L'@' && *(asMacro+1) == L'"')
-				{
-					*(psz++) = *(asMacro++); *(psz++) = *(asMacro++);
-					while (*asMacro)
-					{
-						*(psz++) = *(asMacro++);
-						if (*(asMacro-1) == L'"')
-						{
-							if (*asMacro != L'"')
-								break;
-							*(psz++) = *(asMacro++);
-						}
-					}
-				}
-				else if (*asMacro == L'"')
-				{
-					*(psz++) = *(asMacro++);
-					while (*asMacro)
-					{
-						*(psz++) = *(asMacro++);
-						if (*(asMacro-1) == L'\\' && *asMacro == L'"')
-						{
-							*(psz++) = *(asMacro++);
-						}
-						else if (*(asMacro-1) == L'"')
-						{
-							break;
-						}
-					}
-				}
-				else if (*asMacro == L'%')
-				{
-					*(psz++) = *(asMacro++);
-					while (*asMacro)
-					{
-						if (wcschr(L" \t\r\n", *asMacro))
-							break;
-						*(psz++) = *(asMacro++);
-					}
-				}
-				else
-				{
-					SafeFree(pszMacroCopy);
-					break; // ошибка
-				}
-				// закрыть скобку
-				*(psz++) = L')';
-			}
-			else
-			{
-				*(psz++) = *(asMacro++);
-			}
-		}
-
-		// Если успешно пропатчили макрос
-		if (pszMacroCopy)
-			asMacro = pszMacroCopy;
-	}
-	#endif
 
 	mcr.SequenceText = asMacro;
 	if (apRec)
@@ -1081,51 +1003,7 @@ void PostMacroW2800(const wchar_t* asMacro, INPUT_RECORD* apRec)
 	{
 		//gFarVersion.dwBuild
 		InfoW2800->MacroControl(&guid_ConEmu, MCTL_SENDSTRING, 0, &mcr);
-
-		//FAR BUGBUG: Макрос не запускается на исполнение, пока мышкой не дернем :(
-		//  Это чаще всего проявляется при вызове меню по RClick
-		//  Если курсор на другой панели, то RClick сразу по пассивной
-		//  не вызывает отрисовку :(
-		// Перенесено в "общую" PostMacro
-		////if (!mcr.Param.PlainText.Flags) {
-		//INPUT_RECORD ir[2] = {{MOUSE_EVENT},{MOUSE_EVENT}};
-		//if (isPressed(VK_CAPITAL))
-		//	ir[0].Event.MouseEvent.dwControlKeyState |= CAPSLOCK_ON;
-		//if (isPressed(VK_NUMLOCK))
-		//	ir[0].Event.MouseEvent.dwControlKeyState |= NUMLOCK_ON;
-		//if (isPressed(VK_SCROLL))
-		//	ir[0].Event.MouseEvent.dwControlKeyState |= SCROLLLOCK_ON;
-		//ir[0].Event.MouseEvent.dwEventFlags = MOUSE_MOVED;
-		//ir[1].Event.MouseEvent.dwControlKeyState = ir[0].Event.MouseEvent.dwControlKeyState;
-		//ir[1].Event.MouseEvent.dwEventFlags = MOUSE_MOVED;
-		//ir[1].Event.MouseEvent.dwMousePosition.X = 1;
-		//ir[1].Event.MouseEvent.dwMousePosition.Y = 1;
-		//
-		////2010-01-29 попробуем STD_OUTPUT
-		////if (!ghConIn) {
-		////	ghConIn  = CreateFile(L"CONIN$", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_READ,
-		////		0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
-		////	if (ghConIn == INVALID_HANDLE_VALUE) {
-		////		#ifdef _DEBUG
-		////		DWORD dwErr = GetLastError();
-		////		_ASSERTE(ghConIn!=INVALID_HANDLE_VALUE);
-		////		#endif
-		////		ghConIn = NULL;
-		////		return;
-		////	}
-		////}
-		//HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE);
-		//DWORD cbWritten = 0;
-		//#ifdef _DEBUG
-		//BOOL fSuccess =
-		//#endif
-		//WriteConsoleInput(hIn/*ghConIn*/, ir, 1, &cbWritten);
-		//_ASSERTE(fSuccess && cbWritten==1);
-		////}
-		////InfoW2800->AdvControl(&guid_ConEmu,ACTL_REDRAWALL,NULL);
 	}
-
-	SafeFree(pszMacroCopy);
 }
 
 int CPluginW2800::ShowPluginMenu(ConEmuPluginMenuItem* apItems, int Count)
@@ -1532,38 +1410,9 @@ LPCWSTR CPluginW2800::GetWindowTypeName(int WindowType)
 
 #define FAR_UNICODE 1867
 #include "Dialogs.h"
-void GuiMacroDlgW2800()
+void CPLuginW2800::GuiMacroDlg()
 {
 	CallGuiMacroProc();
-}
-
-//GUID ConEmuGuid = { /* 374471b3-db1e-4276-bf9e-c486fcce4553 */
-//						    0x374471b3,
-//						    0xdb1e,
-//						    0x4276,
-//						    {0xbf, 0x9e, 0xc4, 0x86, 0xfc, 0xce, 0x45, 0x53}
-//				  };
-
-void WINAPI GetGlobalInfoW(struct GlobalInfo *Info)
-{
-	//static wchar_t szTitle[16]; _wcscpy_c(szTitle, L"ConEmu");
-	//static wchar_t szDescr[64]; _wcscpy_c(szTitle, L"ConEmu support for Far Manager");
-	//static wchar_t szAuthr[64]; _wcscpy_c(szTitle, L"ConEmu.Maximus5@gmail.com");
-
-	//Info->StructSize = sizeof(GlobalInfo);
-	_ASSERTE(Info->StructSize >= sizeof(GlobalInfo));
-	if (gFarVersion.dwBuild >= FAR_Y2_VER)
-		Info->MinFarVersion = FARMANAGERVERSION;
-	else
-		Info->MinFarVersion = MAKEFARVERSION(FARMANAGERVERSION_MAJOR,FARMANAGERVERSION_MINOR, FARMANAGERVERSION_REVISION, 2578, FARMANAGERVERSION_STAGE);
-
-	// Build: YYMMDDX (YY - две цифры года, MM - месяц, DD - день, X - 0 и выше-номер подсборки)
-	Info->Version = MAKEFARVERSION(MVV_1,MVV_2,MVV_3,((MVV_1 % 100)*100000) + (MVV_2*1000) + (MVV_3*10) + (MVV_4 % 10),VS_RELEASE);
-
-	Info->Guid = guid_ConEmu;
-	Info->Title = L"ConEmu";
-	Info->Description = L"ConEmu support for Far Manager";
-	Info->Author = L"ConEmu.Maximus5@gmail.com";
 }
 
 HANDLE CPluginW2800::Open(const void* apInfo)

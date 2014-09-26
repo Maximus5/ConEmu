@@ -165,6 +165,7 @@ public:
 	static LPWSTR ToUnicode(LPCSTR asOemStr);
 	static void ToOem(LPCWSTR asUnicode, char* rsOem, INT_PTR cchOemMax);
 	static LPSTR ToOem(LPCWSTR asUnicode);
+	static DWORD WINAPI BackgroundMacroError(LPVOID lpParameter);
 
 protected:
 	void LoadPanelTabsFromRegistry();

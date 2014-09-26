@@ -176,6 +176,18 @@ int CPluginBase::ShowMessageGui(int aiMsg, int aiButtons)
 	return nRc;
 }
 
+/* static, WINAPI, Thread */
+DWORD CPluginBase::BackgroundMacroError(LPVOID lpParameter)
+{
+	wchar_t* pszMacroError = (wchar_t*)lpParameter;
+
+	MessageBox(NULL, pszMacroError, L"ConEmu plugin", MB_ICONSTOP|MB_SYSTEMMODAL);
+
+	SafeFree(pszMacroError);
+
+	return 0;
+}
+
 void CPluginBase::PostMacro(const wchar_t* asMacro, INPUT_RECORD* apRec)
 {
 	if (!asMacro || !*asMacro)
