@@ -274,6 +274,35 @@ bool CPluginBase::isMacroActive(int& iMacroActive)
 	return (iMacroActive == 1);
 }
 
+bool CPluginBase::CheckBufferEnabled()
+{
+	if (!mb_StartupInfoOk)
+		return false;
+
+	static int siEnabled = 0;
+
+	// Чтобы проверку выполнять только один раз.
+	// Т.к. буфер может быть реально сброшен, а фар его все-еще умеет.
+	if (siEnabled)
+	{
+		return (siEnabled == 1);
+	}
+
+	SMALL_RECT rcFar = {0};
+
+	if (GetFarRect(rcFar))
+	{
+		if (rcFar.Top > 0 && rcFar.Bottom > rcFar.Top)
+		{
+			siEnabled = 1;
+			return true;
+		}
+	}
+
+	siEnabled = -1;
+	return false;
+}
+
 INT_PTR CPluginBase::PanelControl(HANDLE hPanel, int Command, INT_PTR Param1, void* Param2)
 {
 	INT_PTR iRc = -1;

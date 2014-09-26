@@ -1378,33 +1378,21 @@ void CPluginW2800::LoadFarSettings(CEFarInterfaceSettings* pInterface, CEFarPane
 	}
 }
 
-BOOL CheckBufferEnabledW2800()
+bool CPluginW2800::GetFarRect(SMALL_RECT& rcFar)
 {
 	if (!InfoW2800 || !InfoW2800->AdvControl)
-		return FALSE;
+		return false;
 
-	static int siEnabled = 0;
-
-	// Чтобы проверку выполнять только один раз.
-	// Т.к. буфер может быть реально сброшен, а фар его все-еще умеет.
-	if (siEnabled)
-	{
-		return (siEnabled == 1);
-	}
-
-	SMALL_RECT rcFar = {0};
-
+	ZeroStruct(rcFar);
 	if (InfoW2800->AdvControl(&guid_ConEmu, ACTL_GETFARRECT, 0, &rcFar))
 	{
-		if (rcFar.Top > 0 && rcFar.Bottom > rcFar.Top)
+		if (rcFar.Bottom > rcFar.Top)
 		{
-			siEnabled = 1;
-			return TRUE;
+			return true;
 		}
 	}
 
-	siEnabled = -1;
-	return FALSE;
+	return false;
 }
 
 bool CPluginW2800::CheckPanelExist()

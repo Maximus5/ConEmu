@@ -1026,34 +1026,22 @@ void CPluginW995::LoadFarSettings(CEFarInterfaceSettings* pInterface, CEFarPanel
 	}
 }
 
-BOOL CPluginW995::CheckBufferEnabled()
+bool CPluginW995::GetFarRect(SMALL_RECT& rcFar)
 {
 	if (!InfoW995 || !InfoW995->AdvControl)
-		return FALSE;
-
-	static int siEnabled = 0;
-
-	// Чтобы проверку выполнять только один раз.
-	// Т.к. буфер может быть реально сброшен, а фар его все-еще умеет.
-	if (siEnabled)
-	{
-		return (siEnabled == 1);
-	}
-
-	SMALL_RECT rcFar = {0};
+		return false;
 
 	_ASSERTE(ACTL_GETFARRECT==32); //-V112
+	ZeroStruct(rcFar);
 	if (InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETFARRECT, &rcFar))
 	{
-		if (rcFar.Top > 0 && rcFar.Bottom > rcFar.Top)
+		if (rcFar.Bottom > rcFar.Top)
 		{
-			siEnabled = 1;
-			return TRUE;
+			return true;
 		}
 	}
 
-	siEnabled = -1;
-	return FALSE;
+	return false;
 }
 
 bool CPluginW995::CheckPanelExist()

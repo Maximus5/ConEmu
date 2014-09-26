@@ -99,6 +99,7 @@ public:
 	bool FarSetConsoleSize(SHORT nNewWidth, SHORT nNewHeight);
 	bool ReloadFarInfo(bool abForce);
 	void ProcessEditorInput(const INPUT_RECORD& Rec);
+	bool CheckBufferEnabled();
 	INT_PTR PanelControl(HANDLE hPanel, int Command, INT_PTR Param1, void* Param2);
 
 	bool cmd_OpenEditorLine(CESERVER_REQ_FAREDITOR *pCmd);
@@ -163,13 +164,13 @@ protected:
 	void LoadPanelTabsFromRegistry();
 
 public:
-	virtual BOOL    CheckBufferEnabled() = 0;
 	virtual bool    CheckPanelExist() = 0;
 	virtual bool    ExecuteSynchroApi() = 0;
 	virtual void    ExitFAR(void) = 0;
 	virtual void    FillUpdateBackground(struct PaintBackgroundArg* pFar) = 0;
 	virtual int     GetActiveWindowType() = 0;
 	virtual DWORD   GetEditorModifiedState() = 0;
+	virtual bool    GetFarRect(SMALL_RECT& rcFar) = 0;
 	virtual int     GetMacroArea() = 0;
 	virtual LPCWSTR GetMsg(int aiMsg, wchar_t* psMsg = NULL, size_t cchMsgMax = 0) = 0;
 	virtual LPWSTR  GetPanelDir(GetPanelDirFlags Flags) = 0;

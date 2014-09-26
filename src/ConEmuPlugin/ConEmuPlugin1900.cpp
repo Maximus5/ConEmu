@@ -1331,33 +1331,21 @@ void CPluginW1900::LoadFarSettings(CEFarInterfaceSettings* pInterface, CEFarPane
 	}
 }
 
-BOOL CPluginW1900::CheckBufferEnabled()
+bool CPluginW1900::GetFarRect(SMALL_RECT& rcFar)
 {
 	if (!InfoW1900 || !InfoW1900->AdvControl)
-		return FALSE;
+		return false;
 
-	static int siEnabled = 0;
-
-	// Чтобы проверку выполнять только один раз.
-	// Т.к. буфер может быть реально сброшен, а фар его все-еще умеет.
-	if (siEnabled)
-	{
-		return (siEnabled == 1);
-	}
-
-	SMALL_RECT rcFar = {0};
-
+	ZeroStruct(rcFar);
 	if (InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETFARRECT, 0, &rcFar))
 	{
-		if (rcFar.Top > 0 && rcFar.Bottom > rcFar.Top)
+		if (rcFar.Bottom > rcFar.Top)
 		{
-			siEnabled = 1;
-			return TRUE;
+			return true;
 		}
 	}
 
-	siEnabled = -1;
-	return FALSE;
+	return false;
 }
 
 bool CPluginW1900::CheckPanelExist()

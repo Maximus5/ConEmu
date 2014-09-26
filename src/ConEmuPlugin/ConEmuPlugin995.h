@@ -41,13 +41,13 @@ public:
 	virtual ~CPluginW995() {};
 
 public:
-	virtual BOOL    CheckBufferEnabled() override;
 	virtual bool    CheckPanelExist() override;
 	virtual bool    ExecuteSynchroApi() override;
 	virtual void    ExitFAR() override;
 	virtual void    FillUpdateBackground(struct PaintBackgroundArg* pFar) override;
 	virtual int     GetActiveWindowType() override;
 	virtual DWORD   GetEditorModifiedState() override;
+	virtual bool    GetFarRect(SMALL_RECT& rcFar) override;
 	virtual int     GetMacroArea() override;
 	virtual LPCWSTR GetMsg(int aiMsg, wchar_t* psMsg = NULL, size_t cchMsgMax = 0) override;
 	virtual LPWSTR  GetPanelDir(GetPanelDirFlags Flags) override;

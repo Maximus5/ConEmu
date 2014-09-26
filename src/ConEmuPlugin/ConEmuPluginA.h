@@ -45,13 +45,13 @@ public:
 	static void     ToOem(LPCWSTR asUnicode, char* rsOem, INT_PTR cchOemMax);
 
 public:
-	virtual BOOL    CheckBufferEnabled() override;
 	virtual bool    CheckPanelExist() override;
 	virtual bool    ExecuteSynchroApi() override { return false; };
 	virtual void    ExitFAR() override;
 	virtual void    FillUpdateBackground(struct PaintBackgroundArg* pFar) override;
 	virtual int     GetActiveWindowType() override;
 	virtual DWORD   GetEditorModifiedState() override;
+	virtual bool    GetFarRect(SMALL_RECT& rcFar) override { return false; };
 	virtual int     GetMacroArea() override;
 	virtual LPCWSTR GetMsg(int aiMsg, wchar_t* psMsg = NULL, size_t cchMsgMax = 0) override;
 	virtual LPWSTR  GetPanelDir(GetPanelDirFlags Flags) override;
