@@ -3146,6 +3146,7 @@ DWORD CPluginBase::WaitPluginActivation(DWORD nCount, HANDLE *lpHandles, BOOL bW
 
 		DWORD nStartTick = GetTickCount(), nCurrentTick = 0;
 		DWORD nTimeout = nStartTick + dwMilliseconds;
+		bool lbLongOperationWasStarted = false;
 		do {
 			nWait = WaitForMultipleObjects(nCount, lpHandles, bWaitAll, min(dwMilliseconds,nStepWait));
 			if (((nWait >= WAIT_OBJECT_0) && (nWait < (WAIT_OBJECT_0+nCount))) || (nWait != WAIT_TIMEOUT))
@@ -3156,7 +3157,17 @@ DWORD CPluginBase::WaitPluginActivation(DWORD nCount, HANDLE *lpHandles, BOOL bW
 
 			nCurrentTick = GetTickCount();
 
-			if ((nWait == WAIT_TIMEOUT) && (nPrevCount == gnPeekReadCount) && (dwMilliseconds > 1000)
+			_ASSERTE(nWait == WAIT_TIMEOUT);
+
+			if (gnInLongOperation > 0)
+			{
+				// if long operation was pended (like opening new editor window)
+				nStartTick = nCurrentTick;
+				lbLongOperationWasStarted = true;
+				continue; // No need to call ExecuteSynchro repeatedly
+			}
+			else if ((nPrevCount == gnPeekReadCount) && (dwMilliseconds > 1000)
+				&& !lbLongOperationWasStarted
 				#ifdef _DEBUG
 				&& (!IsDebuggerPresent() || (nCurrentTick > (nStartTick + nStepWait)))
 				#endif
@@ -3165,6 +3176,7 @@ DWORD CPluginBase::WaitPluginActivation(DWORD nCount, HANDLE *lpHandles, BOOL bW
 				// Ждать дальше смысла видимо нет, фар не дергает (Peek/Read)Input
 				break;
 			}
+
 			// Если вдруг произошел облом с Syncho (почему?), дернем еще раз
 			Plugin()->ExecuteSynchro();
 		} while (dwMilliseconds && ((dwMilliseconds == INFINITE) || (nCurrentTick <= nTimeout)));
