@@ -1464,7 +1464,7 @@ BOOL CConEmuChild::TrackMouse()
 	}
 	else if (lbOverVScroll)
 	{
-		if (!mb_Scroll2Visible)
+		if (!mb_Scroll2Visible && gpConEmu->isMeForeground(false, true))
 		{
 			mb_Scroll2Visible = TRUE;
 			ShowScroll(FALSE/*abImmediate*/); // Если gpSet->isAlwaysShowScrollbar==1 - сама разберется
