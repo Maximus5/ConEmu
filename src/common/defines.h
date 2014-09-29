@@ -130,6 +130,9 @@ WARNING("WIN64 was not defined");
 #define isAlpha(c) (IsCharAlpha(c))
 #define isSpace(c) (wcschr(L" \xA0\t\r\n",c)!=NULL)
 
+#define LODWORD(ull) ((DWORD)((ULONGLONG)(ull) & 0x00000000ffffffff))
+#define HIDWORD(ull) ((DWORD)(ull>>32))
+
 #define _abs(n) (((n)>=0) ? (n) : -(n))
 
 #define LDR_IS_DATAFILE(hm)      ((((ULONG_PTR)(hm)) & (ULONG_PTR)1) == (ULONG_PTR)1)

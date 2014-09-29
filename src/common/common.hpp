@@ -833,7 +833,7 @@ struct BkPanelInfo
 	wchar_t *szCurDir/*[32768]*/;    // Текущая папка на панели
 	wchar_t *szFormat/*[MAX_PATH]*/; // Доступно только в FAR2, в FAR3 это может быть префикс, если "формат" плагином не опереден
 	wchar_t *szHostFile/*[32768]*/;  // Доступно только в FAR2
-	RECT rcPanelRect; // Консольные кооринаты панели. В FAR 2 с ключом /w верх может быть != {0,0}
+	RECT rcPanelRect; // Консольные кооринаты панели. В FAR 2+ с ключом /w верх может быть != {0,0}
 };
 
 struct PaintBackgroundArg
