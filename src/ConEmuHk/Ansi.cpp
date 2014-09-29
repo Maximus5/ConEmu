@@ -2412,6 +2412,18 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 					gDisplayParm.Back256 = FALSE;
 					gDisplayParm.WasSet = TRUE;
 					break;
+				case 90: case 91: case 92: case 93: case 94: case 95: case 96: case 97:
+					gDisplayParm.TextColor = (Code.ArgV[i] - 90);
+					gDisplayParm.Text256 = FALSE;
+					gDisplayParm.BrightOrBold = TRUE;
+					gDisplayParm.WasSet = TRUE;
+					break;
+				case 100: case 101: case 102: case 103: case 104: case 105: case 106: case 107:
+					gDisplayParm.BackColor = (Code.ArgV[i] - 100);
+					gDisplayParm.Back256 = FALSE;
+					gDisplayParm.BackOrUnderline = TRUE;
+					gDisplayParm.WasSet = TRUE;
+					break;
 				default:
 					DumpUnknownEscape(Code.pszEscStart,Code.nTotalLen);
 				}
