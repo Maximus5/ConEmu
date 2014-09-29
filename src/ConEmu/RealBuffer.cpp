@@ -2982,8 +2982,10 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom, bool bUpdateScre
 
 								// Prepared, можно звать плагин
 								VCon->RCon()->PostCommand(CMD_OPENEDITORLINE, sizeof(cmd), &cmd);
-								if (gpConEmu->isActive(VCon.VCon(), false))
+								if (!gpConEmu->isActive(VCon.VCon(), false))
+								{
 									gpConEmu->Activate(VCon.VCon());
+								}
 							}
 						}
 					}
