@@ -337,7 +337,8 @@ bool CRealBuffer::LoadDumpConsole(LPCWSTR asDumpFile)
 	ZeroStruct(con.m_sel);
 	con.m_ci.dwSize = 15; con.m_ci.bVisible = TRUE;
 	ZeroStruct(con.m_sbi);
-	con.m_dwConsoleCP = con.m_dwConsoleOutputCP = 866; con.m_dwConsoleMode = 0;
+	con.m_dwConsoleCP = con.m_dwConsoleOutputCP = 866;
+	con.m_dwConsoleInMode = 0; con.m_dwConsoleOutMode = 0;
 	con.m_sbi.dwSize = dump.crSize;
 	con.m_sbi.dwCursorPosition = dump.crCursor;
 	con.m_sbi.wAttributes = 7;
@@ -450,7 +451,8 @@ bool CRealBuffer::LoadDataFromDump(const CONSOLE_SCREEN_BUFFER_INFO& storedSbi, 
 	ZeroStruct(con.m_sel);
 	con.m_ci.dwSize = 15; con.m_ci.bVisible = TRUE;
 	ZeroStruct(con.m_sbi);
-	con.m_dwConsoleCP = con.m_dwConsoleOutputCP = 866; con.m_dwConsoleMode = 0;
+	con.m_dwConsoleCP = con.m_dwConsoleOutputCP = 866;
+	con.m_dwConsoleInMode = 0; con.m_dwConsoleOutMode = 0;
 	con.m_sbi.dwSize = dump.crSize;
 	con.m_sbi.dwCursorPosition = dump.crCursor;
 	con.m_sbi.wAttributes = 7;
@@ -2213,17 +2215,27 @@ BOOL CRealBuffer::ApplyConsoleInfo()
 			con.m_ci = pInfo->ci;
 		}
 
+		// Show changes on the Settings/Info page
+		bool bConCP = (con.m_dwConsoleCP != pInfo->dwConsoleCP);
+		bool bConOutCP = (con.m_dwConsoleOutputCP != pInfo->dwConsoleOutputCP);
+		bool bConMode = (con.m_dwConsoleInMode != pInfo->dwConsoleInMode) || (con.m_dwConsoleOutMode != pInfo->dwConsoleOutMode);
+
 		// 5, 6, 7
 		con.m_dwConsoleCP = pInfo->dwConsoleCP;
 		con.m_dwConsoleOutputCP = pInfo->dwConsoleOutputCP;
+		con.m_dwConsoleInMode = pInfo->dwConsoleInMode;
+		con.m_dwConsoleOutMode = pInfo->dwConsoleOutMode;
 
-		if (con.m_dwConsoleMode != pInfo->dwConsoleMode)
+		if (ghOpWnd
+			&& (bConMode || bConCP || bConOutCP)
+			&& mp_RCon->isActive())
 		{
-			if (ghOpWnd && mp_RCon->isActive())
-				gpSetCls->UpdateConsoleMode(pInfo->dwConsoleMode);
+			if (bConMode)
+				gpSetCls->UpdateConsoleMode(pInfo->dwConsoleInMode, pInfo->dwConsoleOutMode);
+			if (bConCP || bConOutCP)
+				gpConEmu->UpdateProcessDisplay(false);
 		}
 
-		con.m_dwConsoleMode = pInfo->dwConsoleMode;
 		// 8
 		DWORD dwSbiSize = pInfo->dwSbiSize;
 		int nNewWidth = 0, nNewHeight = 0;
@@ -5459,11 +5471,6 @@ void CRealBuffer::SetKeybLayout(DWORD_PTR anNewKeyboardLayout)
 	con.dwKeybLayout = anNewKeyboardLayout;
 }
 
-DWORD CRealBuffer::GetConMode()
-{
-	return con.m_dwConsoleMode;
-}
-
 int CRealBuffer::GetStatusLineCount(int nLeftPanelEdge)
 {
 	if (!this)
@@ -6183,9 +6190,14 @@ DWORD CRealBuffer::GetConsoleOutputCP()
 	return con.m_dwConsoleOutputCP;
 }
 
-DWORD CRealBuffer::GetConsoleMode()
+WORD CRealBuffer::GetConInMode()
 {
-	return con.m_dwConsoleMode;
+	return con.m_dwConsoleInMode;
+}
+
+WORD CRealBuffer::GetConOutMode()
+{
+	return con.m_dwConsoleOutMode;
 }
 
 ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In/Out]*/, COORD& crTo/*[Out]*/, ExpandTextRangeType etr, CmdArg* psText /*= NULL*/)

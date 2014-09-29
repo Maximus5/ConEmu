@@ -527,7 +527,8 @@ struct SrvInfo
 	HANDLE hConEmuGuiAttached;
 	HWINEVENTHOOK /*hWinHook,*/ hWinHookStartEnd; //BOOL bWinHookAllow; int nWinHookMode;
 	DWORD dwCiRc; CONSOLE_CURSOR_INFO ci; // GetConsoleCursorInfo
-	DWORD dwConsoleCP, dwConsoleOutputCP, dwConsoleMode;
+	DWORD dwConsoleCP, dwConsoleOutputCP;
+	WORD dwConsoleInMode, dwConsoleOutMode;
 	DWORD dwSbiRc; CONSOLE_SCREEN_BUFFER_INFO sbi; // MyGetConsoleScreenBufferInfo
 	DWORD dwDisplayMode;
 	BOOL  bAltBufferEnabled;

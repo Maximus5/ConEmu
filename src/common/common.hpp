@@ -1432,7 +1432,8 @@ struct CESERVER_REQ_CONINFO_INFO
 	CONSOLE_CURSOR_INFO ci;
 	DWORD dwConsoleCP;
 	DWORD dwConsoleOutputCP;
-	DWORD dwConsoleMode;
+	WORD  dwConsoleInMode;
+	WORD  dwConsoleOutMode;
 	DWORD dwSbiSize;
 	CONSOLE_SCREEN_BUFFER_INFO sbi;
 	COORD crWindow; // Для удобства - размер ОКНА (не буфера) при последнем ReadConsoleData

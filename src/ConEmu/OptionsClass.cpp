@@ -4470,7 +4470,11 @@ LRESULT CSettings::OnInitDialog_Info(HWND hWnd2)
 	}
 	UpdateFontInfo();
 	if (pVCon)
-		UpdateConsoleMode(pVCon->RCon()->GetConsoleStates());
+	{
+		WORD nConInMode, nConOutMode;
+		pVCon->RCon()->GetConsoleModes(nConInMode, nConOutMode);
+		UpdateConsoleMode(nConInMode, nConOutMode);
+	}
 
 	return 0;
 }
@@ -11322,13 +11326,13 @@ BOOL CSettings::GetFontNameFromFile_BDF(LPCTSTR lpszFilePath, wchar_t (&rsFontNa
 }
 
 // Показать в "Инфо" текущий режим консоли
-void CSettings::UpdateConsoleMode(DWORD nMode)
+void CSettings::UpdateConsoleMode(WORD nInMode, WORD nOutMode)
 {
 	HWND hInfoPg = GetPage(thi_Info);
 	if (hInfoPg && IsWindow(hInfoPg))
 	{
 		wchar_t szInfo[255];
-		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"Console states (0x%X)", nMode);
+		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"Console states (In=x%02X, Out=x%02X)", nInMode, nOutMode);
 		SetDlgItemText(hInfoPg, IDC_CONSOLE_STATES, szInfo);
 	}
 }

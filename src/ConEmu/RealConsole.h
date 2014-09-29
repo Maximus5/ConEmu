@@ -439,7 +439,7 @@ class CRealConsole
 		void GetConsoleCursorInfo(CONSOLE_CURSOR_INFO *ci, COORD *cr = NULL);
 		DWORD GetConsoleCP();
 		DWORD GetConsoleOutputCP();
-		DWORD GetConsoleMode();
+		void GetConsoleModes(WORD& nConInMode, WORD& nConOutMode);
 		void SyncConsole2Window(BOOL abNtvdmOff=FALSE, LPRECT prcNewWnd=NULL);
 		void SyncGui2Window(const RECT rcVConBack);
 		//void OnWinEvent(DWORD anEvent, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime);
@@ -572,7 +572,6 @@ class CRealConsole
 		bool isAdministrator();
 		BOOL isMouseButtonDown();
 		void OnConsoleLangChange(DWORD_PTR dwNewKeybLayout);
-		DWORD GetConsoleStates();
 		void ChangeBufferHeightMode(BOOL abBufferHeight); // Вызывается из TabBar->ConEmu
 		//void RemoveFromCursor(); // -- заменено на перехват функции ScreenToClient
 		bool isAlive();

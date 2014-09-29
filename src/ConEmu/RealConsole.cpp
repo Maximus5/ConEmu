@@ -8755,7 +8755,7 @@ void CRealConsole::OnActivate(int nNewNum, int nOldNum)
 	//mb_PicViewWasHidden = FALSE;
 
 	if (ghOpWnd && isActive())
-		gpSetCls->UpdateConsoleMode(mp_RBuf->GetConMode());
+		gpSetCls->UpdateConsoleMode(mp_RBuf->GetConInMode(), mp_RBuf->GetConOutMode());
 
 	if (isActive())
 	{
@@ -12798,7 +12798,7 @@ bool CRealConsole::isSendMouseAllowed()
 	if (!this || (mp_ABuf->m_Type != rbt_Primary))
 		return false;
 
-	if (mp_ABuf->GetConsoleMode() & ENABLE_QUICK_EDIT_MODE)
+	if (mp_ABuf->GetConInMode() & ENABLE_QUICK_EDIT_MODE)
 		return false;
 
 	return true;
@@ -13106,16 +13106,6 @@ void CRealConsole::OnConsoleLangChange(DWORD_PTR dwNewKeybLayout)
 		}
 	}
 }
-
-DWORD CRealConsole::GetConsoleStates()
-{
-	if (!this) return 0;
-
-	// Что именно хотим узать? Real или Active?
-	_ASSERTE(mp_ABuf==mp_RBuf);
-	return mp_RBuf->GetConMode();
-}
-
 
 void CRealConsole::CloseColorMapping()
 {
@@ -14213,20 +14203,25 @@ void CRealConsole::ShowPropertiesDialog()
 
 DWORD CRealConsole::GetConsoleCP()
 {
-	/*return con.m_dwConsoleCP;*/
 	return mp_RBuf->GetConsoleCP();
 }
 
 DWORD CRealConsole::GetConsoleOutputCP()
 {
-	/*return con.m_dwConsoleOutputCP;*/
 	return mp_RBuf->GetConsoleOutputCP();
 }
 
-DWORD CRealConsole::GetConsoleMode()
+void CRealConsole::GetConsoleModes(WORD& nConInMode, WORD& nConOutMode)
 {
-	/*return con.m_dwConsoleMode;*/
-	return mp_RBuf->GetConMode();
+	if (this && mp_RBuf)
+	{
+		nConInMode = mp_RBuf->GetConInMode();
+		nConOutMode = mp_RBuf->GetConOutMode();
+	}
+	else
+	{
+		nConInMode = nConOutMode = 0;
+	}
 }
 
 ExpandTextRangeType CRealConsole::GetLastTextRangeType()

@@ -159,7 +159,6 @@ public:
 
 	DWORD_PTR GetKeybLayout();
 	void  SetKeybLayout(DWORD_PTR anNewKeyboardLayout);
-	DWORD GetConMode();
 
 	int GetStatusLineCount(int nLeftPanelEdge);
 
@@ -178,7 +177,8 @@ public:
 
 	DWORD GetConsoleCP();
 	DWORD GetConsoleOutputCP();
-	DWORD GetConsoleMode();
+	WORD  GetConInMode();
+	WORD  GetConOutMode();
 
 	void FindPanels();
 	BOOL GetPanelRect(BOOL abRight, RECT* prc, BOOL abFull = FALSE, BOOL abIncludeEdges = FALSE);
@@ -239,7 +239,8 @@ protected:
 		DWORD m_SelClickTick, m_SelDblClickTick, m_SelLastScrollCheck;
 		BOOL mb_IntelliStored; POINT mpt_IntelliLClick; // Сохранить позицию клика для Intelligent selection
 		CONSOLE_CURSOR_INFO m_ci;
-		DWORD m_dwConsoleCP, m_dwConsoleOutputCP, m_dwConsoleMode;
+		DWORD m_dwConsoleCP, m_dwConsoleOutputCP;
+		WORD m_dwConsoleInMode, m_dwConsoleOutMode;
 		CONSOLE_SCREEN_BUFFER_INFO m_sbi;
 		COORD crMaxSize; // Максимальный размер консоли на текущем шрифте
 		USHORT nTopVisibleLine; // может отличаться от m_sbi.srWindow.Top, если прокрутка заблокирована

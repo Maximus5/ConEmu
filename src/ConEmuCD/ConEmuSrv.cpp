@@ -3556,7 +3556,7 @@ static int ReadConsoleInfo()
 	BOOL lbChanged = gpSrv->pConsole->bDataChanged; // Если что-то еще не отослали - сразу TRUE
 	//CONSOLE_SELECTION_INFO lsel = {0}; // GetConsoleSelectionInfo
 	CONSOLE_CURSOR_INFO lci = {0}; // GetConsoleCursorInfo
-	DWORD ldwConsoleCP=0, ldwConsoleOutputCP=0, ldwConsoleMode=0;
+	DWORD ldwConsoleCP=0, ldwConsoleOutputCP=0, ldwConsoleMode;
 	CONSOLE_SCREEN_BUFFER_INFO lsbi = {{0,0}}; // MyGetConsoleScreenBufferInfo
 	HANDLE hOut = (HANDLE)ghConOut;
 	HANDLE hStdOut = NULL;
@@ -3605,13 +3605,24 @@ static int ReadConsoleInfo()
 		gpSrv->dwConsoleOutputCP = ldwConsoleOutputCP; lbChanged = TRUE;
 	}
 
+	// ConsoleInMode
 	ldwConsoleMode = 0;
 	DEBUGTEST(BOOL lbConModRc =)
-    GetConsoleMode(hStdIn, &ldwConsoleMode);
-
-	if (gpSrv->dwConsoleMode!=ldwConsoleMode)
+	GetConsoleMode(hStdIn, &ldwConsoleMode);
+	if (gpSrv->dwConsoleInMode != LOWORD(ldwConsoleMode))
 	{
-		gpSrv->dwConsoleMode = ldwConsoleMode; lbChanged = TRUE;
+		_ASSERTE(LOWORD(ldwConsoleMode) == ldwConsoleMode);
+		gpSrv->dwConsoleInMode = LOWORD(ldwConsoleMode); lbChanged = TRUE;
+	}
+
+	// ConsoleOutMode
+	ldwConsoleMode = 0;
+	DEBUGTEST(lbConModRc =)
+	GetConsoleMode(hOut, &ldwConsoleMode);
+	if (gpSrv->dwConsoleOutMode != LOWORD(ldwConsoleMode))
+	{
+		_ASSERTE(LOWORD(ldwConsoleMode) == ldwConsoleMode);
+		gpSrv->dwConsoleOutMode = ldwConsoleMode; lbChanged = TRUE;
 	}
 
 	MCHKHEAP;
@@ -3765,7 +3776,8 @@ static int ReadConsoleInfo()
 	gpSrv->pConsole->info.ci = gpSrv->ci;
 	gpSrv->pConsole->info.dwConsoleCP = gpSrv->dwConsoleCP;
 	gpSrv->pConsole->info.dwConsoleOutputCP = gpSrv->dwConsoleOutputCP;
-	gpSrv->pConsole->info.dwConsoleMode = gpSrv->dwConsoleMode;
+	gpSrv->pConsole->info.dwConsoleInMode = gpSrv->dwConsoleInMode;
+	gpSrv->pConsole->info.dwConsoleOutMode = gpSrv->dwConsoleOutMode;
 	gpSrv->pConsole->info.dwSbiSize = sizeof(gpSrv->sbi);
 	gpSrv->pConsole->info.sbi = gpSrv->sbi;
 	// Если есть возможность (WinXP+) - получим реальный список процессов из консоли
