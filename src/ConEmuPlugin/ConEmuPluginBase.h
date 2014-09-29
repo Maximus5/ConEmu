@@ -132,6 +132,7 @@ public:
 	INT_PTR PanelControl(HANDLE hPanel, int Command, INT_PTR Param1, void* Param2);
 	void ProcessDragFrom();
 	void ProcessDragTo();
+	bool IsCurrentTabModal();
 
 	bool cmd_OpenEditorLine(CESERVER_REQ_FAREDITOR *pCmd);
 	bool cmd_RedrawFarCall(CESERVER_REQ*& pCmdRet, CESERVER_REQ** ppResult);

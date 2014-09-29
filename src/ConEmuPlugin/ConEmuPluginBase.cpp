@@ -5360,3 +5360,24 @@ void CPluginBase::ProcessDragTo()
 	SafeFree(piActive.szCurDir);
 	SafeFree(piPassive.szCurDir);
 }
+
+bool CPluginBase::IsCurrentTabModal()
+{
+	if (!gpTabs)
+		return false;
+
+	MSectionLock SC; SC.Lock(csTabs);
+
+	if ((gnCurTabCount > 0) && (gnCurTabCount == gpTabs->Tabs.nTabCount))
+	{
+		for (int i = gnCurTabCount-1; i >= 0; i--)
+		{
+			if (gpTabs->Tabs.tabs[i].Current)
+			{
+				return (gpTabs->Tabs.tabs[i].Modal != 0);
+			}
+		}
+	}
+
+	return false;
+}
