@@ -11692,6 +11692,17 @@ wchar_t* CRealConsole::CreateCommandLine(bool abForTasks /*= false*/)
 	CmdArg szCurDir;
 	m_Args.pszStartupDir = GetConsoleCurDir(szCurDir) ? szCurDir.ms_Arg : NULL;
 
+	SafeFree(m_Args.pszRenameTab);
+	CTab tab(__FILE__,__LINE__);
+	if (GetTab(0, tab) && (tab->Flags() & fwt_Renamed))
+	{
+		LPCWSTR pszRenamed = tab->Renamed.Ptr();
+		if (pszRenamed && *pszRenamed)
+		{
+			m_Args.pszRenameTab = lstrdup(pszRenamed);
+		}
+	}
+
 	wchar_t* pszCmd = m_Args.CreateCommandLine(abForTasks);
 
 	m_Args.pszStartupDir = pszDirSave;
