@@ -36,7 +36,7 @@ class MSetter
 	protected:
 		enum tag_MSETTERTYPE
 		{
-			st_BOOL,
+			st_LONG,
 			st_bool,
 			st_DWORD,
 		} type;
@@ -45,8 +45,8 @@ class MSetter
 		{
 			struct
 			{
-				// st_BOOL
-				BOOL *mp_BOOLVal;
+				// st_LONG
+				LONG *mp_longVal;
 			};
 			struct
 			{
@@ -61,7 +61,7 @@ class MSetter
 			DWORD DataPtr[4];
 		};
 	public:
-		MSetter(BOOL* st);
+		MSetter(LONG* st);
 		MSetter(bool* st);
 		MSetter(DWORD* st, DWORD setValue);
 		~MSetter();

@@ -36,13 +36,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "MAssert.h"
 #include "MSetter.h"
 
-MSetter::MSetter(BOOL* st)
+MSetter::MSetter(LONG* st)
 {
 	DEBUGTEST(ZeroStruct(DataPtr));
-	type = st_BOOL;
-	mp_BOOLVal = st;
+	type = st_LONG;
+	mp_longVal = st;
 
-	if (mp_BOOLVal) *mp_BOOLVal = TRUE;
+	if (mp_longVal) InterlockedIncrement(mp_longVal);
 }
 MSetter::MSetter(bool* st)
 {
@@ -64,9 +64,9 @@ MSetter::~MSetter()
 }
 void MSetter::Unlock()
 {
-	if (type==st_BOOL)
+	if (type==st_LONG)
 	{
-		if (mp_BOOLVal) *mp_BOOLVal = FALSE;
+		if (mp_longVal) InterlockedDecrement(mp_longVal);
 	}
 	else if (type==st_bool)
 	{
