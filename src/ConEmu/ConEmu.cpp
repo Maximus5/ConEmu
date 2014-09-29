@@ -13971,11 +13971,13 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		case WM_DEADCHAR:
 		case WM_SYSDEADCHAR:
 		{
-			wchar_t szDbg[128]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"%s(%i='%c', Scan=%i, lParam=0x%08X)\n",
+			wchar_t szDbg[160]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"%s(%i='%c', Scan=%i, lParam=0x%08X) must be processed internally in CConEmuMain::OnKeyboard",
 				(messg == WM_CHAR) ? L"WM_CHAR" : (messg == WM_SYSCHAR) ? L"WM_SYSCHAR" : (messg == WM_SYSDEADCHAR) ? L"WM_DEADCHAR" : L"WM_DEADCHAR",
-			                              (DWORD)wParam, (wchar_t)wParam, ((DWORD)lParam & 0xFF0000) >> 16, (DWORD)lParam);
+				(DWORD)wParam, wParam?(wchar_t)wParam:L' ', ((DWORD)lParam & 0xFF0000) >> 16, (DWORD)lParam);
 			//_ASSERTE(FALSE && "WM_CHAR, WM_SYSCHAR, WM_DEADCHAR, WM_SYSDEADCHAR must be processed internally in CConEmuMain::OnKeyboard");
-			this->DebugStep(L"WM_CHAR, WM_SYSCHAR, WM_DEADCHAR, WM_SYSDEADCHAR must be processed internally in CConEmuMain::OnKeyboard", TRUE);
+			//this->DebugStep(L"WM_CHAR, WM_SYSCHAR, WM_DEADCHAR, WM_SYSDEADCHAR must be processed internally in CConEmuMain::OnKeyboard", TRUE);
+			this->DebugStep(szDbg, TRUE);
+			wcscat_c(szDbg, L"\n");
 			DEBUGSTRCHAR(szDbg);
 		}
 		break;
