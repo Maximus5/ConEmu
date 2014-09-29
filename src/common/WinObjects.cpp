@@ -454,6 +454,9 @@ bool IsFilePath(LPCWSTR asFilePath, bool abFullRequired /*= false*/)
 		if (pszColon != (asFilePath+1))
 			return false;
 
+		if (!isDriveLetter(asFilePath[0]))
+			return false;
+
 		if (wcschr(pszColon+1, L':'))
 			return false;
 	}
