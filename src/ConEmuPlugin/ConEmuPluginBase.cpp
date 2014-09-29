@@ -222,6 +222,7 @@ CPluginBase::CPluginBase()
 	ma_ShellAutoCompletion = ma_DialogAutoCompletion = -1;
 	of_LeftDiskMenu = of_PluginsMenu = of_FindList = of_Shortcut = of_CommandLine = of_Editor = of_Viewer = of_FilePanel = of_Dialog = of_Analyse = of_RightDiskMenu = of_FromMacro = -1;
 	fctl_GetPanelDirectory = fctl_GetPanelFormat = fctl_GetPanelPrefix = fctl_GetPanelHostFile = -1;
+	pt_FilePanel = pt_TreePanel = -1;
 
 	ms_RootRegKey = NULL;
 
@@ -523,6 +524,26 @@ INT_PTR CPluginBase::PanelControl(HANDLE hPanel, int Command, INT_PTR Param1, vo
 	}
 
 	return iRc;
+}
+
+bool CPluginBase::GetPanelInfo(GetPanelDirFlags Flags, BkPanelInfo* pBk)
+{
+	CEPanelInfo info = {};
+	info.szCurDir = pBk->szCurDir;
+	info.szFormat = pBk->szFormat;
+	info.szHostFile = pBk->szHostFile;
+
+	bool bRc = GetPanelInfo(Flags, &info);
+	if (bRc)
+	{
+		pBk->bFocused = info.bFocused;
+		pBk->bPlugin = info.bPlugin;
+		pBk->bVisible = info.bVisible;
+		pBk->nPanelType = info.nPanelType;
+		pBk->rcPanelRect = info.rcPanelRect;
+	}
+
+	return bRc;
 }
 
 void CPluginBase::FillUpdateBackground(struct PaintBackgroundArg* pFar)
@@ -5047,4 +5068,295 @@ LPSTR CPluginBase::ToOem(LPCWSTR asUnicode)
 		return NULL;
 	ToOem(asUnicode, pszOem, nLen+1);
 	return pszOem;
+}
+
+void CPluginBase::ProcessDragFrom()
+{
+	if (!mb_StartupInfoOk)
+		return;
+
+	//WindowInfo WInfo = {sizeof(WindowInfo)};
+	//WInfo.Pos = -1;
+	_ASSERTE(GetCurrentThreadId() == gnMainThreadId);
+	int ActiveWT = GetActiveWindowType();
+	if (ActiveWT != wt_Panels)
+	{
+		int ItemsCount=0;
+		OutDataAlloc(sizeof(ItemsCount));
+		OutDataWrite(&ItemsCount,sizeof(ItemsCount));
+		return;
+	}
+
+	CEPanelInfo PInfo = {sizeof(PInfo)};
+	PInfo.szCurDir = (wchar_t*)calloc(BkPanelInfo_CurDirMax, sizeof(*PInfo.szCurDir));
+
+	// Plugins (for example Temp panel) are allowed here
+	if (GetPanelInfo(gpdf_Active|gpdf_NoHidden|ppdf_GetItems, &PInfo)
+		&& (PInfo.nPanelType == pt_FilePanel || PInfo.nPanelType == pt_TreePanel))
+	{
+		if (!PInfo.szCurDir)
+		{
+			_ASSERTE(PInfo.szCurDir != NULL);
+			int ItemsCount=0;
+			OutDataWrite(&ItemsCount, sizeof(int));
+			OutDataWrite(&ItemsCount, sizeof(int)); // смена формата
+			return;
+		}
+
+		int nDirLen = 0, nDirNoSlash = 0;
+
+		if (PInfo.szCurDir[0])
+		{
+			nDirLen = lstrlen(PInfo.szCurDir);
+
+			if (nDirLen > 0)
+			{
+				if (PInfo.szCurDir[nDirLen-1] != L'\\')
+				{
+					nDirNoSlash = 1;
+				}
+			}
+		}
+
+		// Это только предполагаемый размер, при необходимости он будет увеличен
+		OutDataAlloc(sizeof(int)+PInfo.SelectedItemsNumber*((MAX_PATH+2)+sizeof(int)));
+		//Maximus5 - новый формат передачи
+		int nNull=0; // ItemsCount
+		//WriteFile(hPipe, &nNull, sizeof(int), &cout, NULL);
+		OutDataWrite(&nNull/*ItemsCount*/, sizeof(int));
+
+
+		if (PInfo.SelectedItemsNumber<=0)
+		{
+			// Проверка того, что мы стоим на ".."
+			if (PInfo.CurrentItem == 0 && PInfo.ItemsNumber > 0)
+			{
+				if (!nDirNoSlash)
+					PInfo.szCurDir[nDirLen-1] = 0;
+				else
+					nDirLen++;
+
+				int nWholeLen = nDirLen + 1;
+				OutDataWrite(&nWholeLen, sizeof(int));
+				OutDataWrite(&nDirLen, sizeof(int));
+				OutDataWrite(PInfo.szCurDir, sizeof(WCHAR)*nDirLen);
+			}
+
+			// Fin
+			OutDataWrite(&nNull/*ItemsCount*/, sizeof(int));
+		}
+		else
+		{
+			WIN32_FIND_DATAW FileInfo = {};
+			wchar_t** piNames = new wchar_t*[PInfo.SelectedItemsNumber];
+			bool* bIsFull = new bool[PInfo.SelectedItemsNumber];
+			INT_PTR i, ItemsCount = PInfo.SelectedItemsNumber;
+			int nMaxLen = MAX_PATH+1, nWholeLen = 1;
+
+			// сначала посчитать максимальную длину буфера
+			for (i = 0; i < ItemsCount; i++)
+			{
+				if (!GetPanelItemInfo(PInfo, true, i, FileInfo, piNames+i))
+					continue;
+
+				if (!piNames[i] || !piNames[i][0])
+				{
+					_ASSERTE(!piNames[i] || !piNames[i][0]);
+					SafeFree(piNames[i]);
+					continue;
+				}
+
+				if (i == 0
+				        && ((FileInfo.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == FILE_ATTRIBUTE_DIRECTORY)
+				        && !lstrcmpW(piNames[i], L".."))
+				{
+					SafeFree(piNames[i]);
+					continue;
+				}
+
+				int nLen = nDirLen + nDirNoSlash;
+
+				// May be this is already full path (temp panel for example)?
+		        if (IsFilePath(piNames[i], true))
+				{
+					nLen = 0;
+					bIsFull[i] = true;
+				}
+
+				nLen += lstrlenW(piNames[i]);
+
+				if (nLen>nMaxLen)
+					nMaxLen = nLen;
+
+				nWholeLen += (nLen+1);
+			}
+
+			nMaxLen += nDirLen;
+
+			OutDataWrite(&nWholeLen, sizeof(int));
+			WCHAR* Path = new WCHAR[nMaxLen+1];
+
+			for (i = 0; i < ItemsCount; i++)
+			{
+				//WCHAR Path[MAX_PATH+1];
+				//ZeroMemory(Path, MAX_PATH+1);
+				//Maximus5 - засада с корнем диска и возможностью overflow
+				//StringCchPrintf(Path, countof(Path), L"%s\\%s", PInfo.szCurDir, PInfo.SelectedItems[i]->FileName);
+				Path[0] = 0;
+
+				if (!piNames[i])
+					continue; //этот элемент получить не удалось
+
+				int nLen = 0;
+
+				if ((nDirLen > 0) && !bIsFull[i])
+				{
+					lstrcpy(Path, PInfo.szCurDir);
+
+					if (nDirNoSlash)
+					{
+						Path[nDirLen]=L'\\';
+						Path[nDirLen+1]=0;
+					}
+
+					nLen = nDirLen + nDirNoSlash;
+				}
+
+				lstrcpy(Path+nLen, piNames[i]);
+				nLen += lstrlen(piNames[i]);
+				nLen++;
+
+				OutDataWrite(&nLen, sizeof(int));
+				OutDataWrite(Path, sizeof(WCHAR)*nLen);
+
+				SafeFree(piNames[i]);
+			}
+
+			delete [] piNames;
+			delete [] bIsFull;
+			delete [] Path;
+
+			// Конец списка
+			OutDataWrite(&nNull, sizeof(int));
+		}
+	}
+	else
+	{
+		int ItemsCount=0;
+		OutDataWrite(&ItemsCount, sizeof(int));
+		OutDataWrite(&ItemsCount, sizeof(int)); // смена формата
+	}
+
+	SafeFree(PInfo.szCurDir);
+}
+
+void CPluginBase::ProcessDragTo()
+{
+	if (!mb_StartupInfoOk)
+		return;
+
+	_ASSERTE(GetCurrentThreadId() == gnMainThreadId);
+
+	// попробуем работать в диалогах и редакторе
+	int ActiveWT = GetActiveWindowType();
+	if (ActiveWT == -1)
+	{
+		//InfoW2800->AdvControl(&guid_ConEmu, ACTL_FREEWINDOWINFO, 0, &WInfo);
+		int ItemsCount=0;
+		if (gpCmdRet==NULL)
+			OutDataAlloc(sizeof(ItemsCount));
+		OutDataWrite(&ItemsCount,sizeof(ItemsCount));
+		return;
+	}
+
+	int nStructSize;
+
+	if ((ActiveWT == wt_Dialog) || (ActiveWT == wt_Editor))
+	{
+		// разрешить дроп в виде текста
+		ForwardedPanelInfo DlgInfo = {};
+		DlgInfo.NoFarConsole = TRUE;
+		nStructSize = sizeof(DlgInfo);
+		if (gpCmdRet==NULL)
+			OutDataAlloc(nStructSize+sizeof(nStructSize));
+		OutDataWrite(&nStructSize, sizeof(nStructSize));
+		OutDataWrite(&DlgInfo, nStructSize);
+		return;
+	}
+	else if (ActiveWT != wt_Panels)
+	{
+		// Иначе - дроп не разрешен
+		int ItemsCount=0;
+		if (gpCmdRet==NULL)
+			OutDataAlloc(sizeof(ItemsCount));
+		OutDataWrite(&ItemsCount,sizeof(ItemsCount));
+		return;
+	}
+
+	nStructSize = sizeof(ForwardedPanelInfo)+2*sizeof(wchar_t); // потом увеличим на длину строк
+
+	CEPanelInfo piActive = {}, piPassive = {};
+	piActive.szCurDir = (wchar_t*)malloc(BkPanelInfo_CurDirMax*sizeof(wchar_t));
+	piPassive.szCurDir = (wchar_t*)malloc(BkPanelInfo_CurDirMax*sizeof(wchar_t));
+	bool lbAOK = GetPanelInfo(gpdf_Active, &piActive);
+	bool lbPOK = GetPanelInfo(gpdf_Active, &piActive);
+
+	if (lbAOK && piActive.szCurDir)
+		nStructSize += (lstrlen(piActive.szCurDir))*sizeof(WCHAR);
+
+	if (lbPOK && piPassive.szCurDir)
+		nStructSize += (lstrlen(piPassive.szCurDir))*sizeof(WCHAR); // Именно WCHAR! не TCHAR
+
+	ForwardedPanelInfo* pfpi = (ForwardedPanelInfo*)calloc(nStructSize,1);
+
+	if (!pfpi)
+	{
+		int ItemsCount=0;
+		if (gpCmdRet==NULL)
+			OutDataAlloc(sizeof(ItemsCount));
+		OutDataWrite(&ItemsCount,sizeof(ItemsCount));
+	}
+	else
+	{
+		pfpi->ActivePathShift = sizeof(ForwardedPanelInfo);
+		pfpi->pszActivePath = (WCHAR*)(((char*)pfpi)+pfpi->ActivePathShift);
+		pfpi->PassivePathShift = pfpi->ActivePathShift+2; // если ActivePath заполнится - увеличим
+
+		if (lbAOK)
+		{
+			pfpi->ActiveRect = piActive.rcPanelRect;
+
+			if (piActive.bPlugin && piActive.bVisible
+				&& (piActive.nPanelType == pt_FilePanel || piActive.nPanelType == pt_TreePanel)
+				&& (piActive.szCurDir && *piActive.szCurDir))
+			{
+				lstrcpyW(pfpi->pszActivePath, piActive.szCurDir);
+				pfpi->PassivePathShift += lstrlenW(pfpi->pszActivePath)*2;
+			}
+		}
+
+		pfpi->pszPassivePath = (WCHAR*)(((char*)pfpi)+pfpi->PassivePathShift);
+
+		if (lbPOK)
+		{
+			pfpi->PassiveRect = piPassive.rcPanelRect;
+
+			if (piPassive.bPlugin && piPassive.bVisible
+				&& (piPassive.nPanelType == pt_FilePanel || piPassive.nPanelType == pt_TreePanel)
+				&& (piPassive.szCurDir && *piPassive.szCurDir))
+			{
+				lstrcpyW(pfpi->pszPassivePath, piPassive.szCurDir);
+			}
+		}
+
+		if (gpCmdRet==NULL)
+			OutDataAlloc(nStructSize+sizeof(nStructSize));
+
+		OutDataWrite(&nStructSize, sizeof(nStructSize));
+		OutDataWrite(pfpi, nStructSize);
+		SafeFree(pfpi);
+	}
+
+	SafeFree(piActive.szCurDir);
+	SafeFree(piPassive.szCurDir);
 }

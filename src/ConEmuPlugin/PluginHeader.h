@@ -45,7 +45,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define OUTPUTDEBUGSTRING(m)
 #endif
 
-#define ISALPHA(c) ((((c) >= (BYTE)'c') && ((c) <= (BYTE)'z')) || (((c) >= (BYTE)'C') && ((c) <= (BYTE)'Z')))
 #define isPressed(inp) ((GetKeyState(inp) & 0x8000) == 0x8000)
 
 #define ConEmu_SysID 0x43454D55 // 'CEMU'

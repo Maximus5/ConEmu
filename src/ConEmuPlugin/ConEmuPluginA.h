@@ -50,7 +50,8 @@ public:
 	virtual int     GetMacroArea() override;
 	virtual LPCWSTR GetMsg(int aiMsg, wchar_t* psMsg = NULL, size_t cchMsgMax = 0) override;
 	virtual LPWSTR  GetPanelDir(GetPanelDirFlags Flags) override;
-	virtual bool    GetPanelInfo(GetPanelDirFlags Flags, BkPanelInfo* pBk) override;
+	virtual bool    GetPanelInfo(GetPanelDirFlags Flags, CEPanelInfo* pInfo) override;
+	virtual bool    GetPanelItemInfo(const CEPanelInfo& PnlInfo, bool bSelected, INT_PTR iIndex, WIN32_FIND_DATAW& Info, wchar_t** ppszFullPathName) override;
 	virtual void    GetPluginInfoPtr(void* piv) override; // PluginInfo* versioned
 	virtual int     GetWindowCount() override;
 	virtual LPCWSTR GetWindowTypeName(int WindowType) override;
@@ -68,8 +69,6 @@ public:
 	virtual bool    OpenEditor(LPCWSTR asFileName, bool abView, bool abDeleteTempFile, bool abDetectCP = false, int anStartLine = 0, int anStartChar = 1) override;
 	virtual INT_PTR PanelControlApi(HANDLE hPanel, int Command, INT_PTR Param1, void* Param2) override;
 	virtual void    PostMacroApi(const wchar_t* asMacro, INPUT_RECORD* apRec) override;
-	virtual void    ProcessDragFrom() override;
-	virtual void    ProcessDragTo() override;
 	virtual int     ProcessEditorEventPtr(void* p) { return 0; }; // Not implemented in ANSI
 	virtual int     ProcessEditorInputPtr(LPCVOID Rec) override { return 0; }; // No need in ANSI
 	virtual int     ProcessSynchroEventPtr(void* p) { return 0; }; // Not implemented in ANSI

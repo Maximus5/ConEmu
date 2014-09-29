@@ -40,8 +40,25 @@ const GetPanelDirFlags
 	gpdf_Active   = 4,
 	gpdf_Left     = 8,
 	gpdf_Right    = 16,
+	ppdf_GetItems = 32,
 	gpdf_Passive  = 0
 ;
+
+struct CEPanelInfo
+{
+	BOOL bVisible;   // Наличие панели
+	BOOL bFocused;   // В фокусе
+	BOOL bPlugin;    // Плагиновая панель
+	int  nPanelType; // enum PANELINFOTYPE
+	wchar_t *szCurDir/*[BkPanelInfo_CurDirMax]*/;    // Текущая папка на панели
+	wchar_t *szFormat/*[BkPanelInfo_FormatMax]*/; // Доступно только в FAR2, в FAR3 это может быть префикс, если "формат" плагином не опереден
+	wchar_t *szHostFile/*[BkPanelInfo_HostFileMax]*/;  // Доступно только в FAR2
+	RECT rcPanelRect; // Консольные кооринаты панели. В FAR 2+ с ключом /w верх может быть != {0,0}
+	INT_PTR ItemsNumber;
+	INT_PTR SelectedItemsNumber;
+	INT_PTR CurrentItem;
+	const void* panelInfo;
+};
 
 class CPluginBase
 {
@@ -57,6 +74,7 @@ protected:
 	int ma_ShellAutoCompletion, ma_DialogAutoCompletion;
 	int of_LeftDiskMenu, of_PluginsMenu, of_FindList, of_Shortcut, of_CommandLine, of_Editor, of_Viewer, of_FilePanel, of_Dialog, of_Analyse, of_RightDiskMenu, of_FromMacro;
 	int fctl_GetPanelDirectory, fctl_GetPanelFormat, fctl_GetPanelPrefix, fctl_GetPanelHostFile;
+	int pt_FilePanel, pt_TreePanel;
 	HANDLE InvalidPanelHandle;
 
 	friend HANDLE WINAPI OpenPluginW(int OpenFrom, INT_PTR Item);
@@ -110,7 +128,10 @@ public:
 	void ProcessEditorInputInternal(const INPUT_RECORD& Rec);
 	bool CheckBufferEnabled();
 	void FillUpdateBackground(struct PaintBackgroundArg* pFar);
+	bool GetPanelInfo(GetPanelDirFlags Flags, BkPanelInfo* pBk);
 	INT_PTR PanelControl(HANDLE hPanel, int Command, INT_PTR Param1, void* Param2);
+	void ProcessDragFrom();
+	void ProcessDragTo();
 
 	bool cmd_OpenEditorLine(CESERVER_REQ_FAREDITOR *pCmd);
 	bool cmd_RedrawFarCall(CESERVER_REQ*& pCmdRet, CESERVER_REQ** ppResult);
@@ -187,7 +208,8 @@ public:
 	virtual int     GetMacroArea() = 0;
 	virtual LPCWSTR GetMsg(int aiMsg, wchar_t* psMsg = NULL, size_t cchMsgMax = 0) = 0;
 	virtual LPWSTR  GetPanelDir(GetPanelDirFlags Flags) = 0;
-	virtual bool    GetPanelInfo(GetPanelDirFlags Flags, BkPanelInfo* pBk) = 0;
+	virtual bool    GetPanelInfo(GetPanelDirFlags Flags, CEPanelInfo* pInfo) = 0;
+	virtual bool    GetPanelItemInfo(const CEPanelInfo& PnlInfo, bool bSelected, INT_PTR iIndex, WIN32_FIND_DATAW& Info, wchar_t** ppszFullPathName) = 0;
 	virtual void    GetPluginInfoPtr(void* piv) = 0; // PluginInfo* versioned
 	virtual int     GetWindowCount() = 0;
 	virtual LPCWSTR GetWindowTypeName(int WindowType) = 0;
@@ -205,8 +227,6 @@ public:
 	virtual bool    OpenEditor(LPCWSTR asFileName, bool abView, bool abDeleteTempFile, bool abDetectCP = false, int anStartLine = 0, int anStartChar = 1) = 0;
 	virtual INT_PTR PanelControlApi(HANDLE hPanel, int Command, INT_PTR Param1, void* Param2) = 0;
 	virtual void    PostMacroApi(const wchar_t* asMacro, INPUT_RECORD* apRec) = 0;
-	virtual void    ProcessDragFrom() = 0;
-	virtual void    ProcessDragTo() = 0;
 	virtual int     ProcessEditorEventPtr(void* p) = 0;
 	virtual int     ProcessEditorInputPtr(LPCVOID Rec) = 0;
 	virtual int     ProcessSynchroEventPtr(void* p) = 0;

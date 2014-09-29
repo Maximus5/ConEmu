@@ -87,6 +87,8 @@ CPluginAnsi::CPluginAnsi()
 	of_Analyse = -1;
 	of_RightDiskMenu = OPEN_DISKMENU;
 	of_FromMacro = -1;
+	pt_FilePanel = PTYPE_FILEPANEL;
+	pt_TreePanel = PTYPE_TREEPANEL;
 
 	InitRootRegKey();
 }
@@ -111,38 +113,102 @@ wchar_t* CPluginAnsi::GetPanelDir(GetPanelDirFlags Flags)
 	return pszDir;
 }
 
-bool CPluginAnsi::GetPanelInfo(GetPanelDirFlags Flags, BkPanelInfo* pBk)
+bool CPluginAnsi::GetPanelInfo(GetPanelDirFlags Flags, CEPanelInfo* pInfo)
 {
 	if (!InfoA || !InfoA->Control)
 		return false;
 
 	PanelInfo pasv = {}, actv = {};
-	PanelInfo* pInfo;
+	PanelInfo* p;
+
+	static PanelInfo store = {};
+
+	int getPanelInfo = (Flags & ppdf_GetItems) ? FCTL_GETPANELINFO : FCTL_GETPANELSHORTINFO;
+	int getAnotherPanelInfo = (Flags & ppdf_GetItems) ? FCTL_GETANOTHERPANELINFO : FCTL_GETANOTHERPANELSHORTINFO;
 
 	if (Flags & (gpdf_Left|gpdf_Right))
 	{
-		InfoA->Control(INVALID_HANDLE_VALUE, FCTL_GETPANELSHORTINFO, &actv);
-		InfoA->Control(INVALID_HANDLE_VALUE, FCTL_GETANOTHERPANELSHORTINFO, &pasv);
+		InfoA->Control(INVALID_HANDLE_VALUE, getPanelInfo, &actv);
+		InfoA->Control(INVALID_HANDLE_VALUE, getAnotherPanelInfo, &pasv);
 		PanelInfo* pLeft = (actv.Flags & PFLAGS_PANELLEFT) ? &actv : &pasv;
 		PanelInfo* pRight = (actv.Flags & PFLAGS_PANELLEFT) ? &pasv : &actv;
-		pInfo = (Flags & gpdf_Left) ? pLeft : pRight;
+		p = (Flags & gpdf_Left) ? pLeft : pRight;
 	}
 	else
 	{
-		InfoA->Control(INVALID_HANDLE_VALUE, (Flags & gpdf_Active) ? FCTL_GETPANELSHORTINFO : FCTL_GETANOTHERPANELSHORTINFO, &actv);
-		pInfo = &actv;
+		InfoA->Control(INVALID_HANDLE_VALUE, (Flags & gpdf_Active) ? getPanelInfo : getAnotherPanelInfo, &actv);
+		p = &actv;
 	}
 
-	pBk->bVisible = pInfo->Visible;
-	pBk->bFocused = pInfo->Focus;
-	pBk->bPlugin = pInfo->Plugin;
-	pBk->nPanelType = pInfo->PanelType;
-	pBk->rcPanelRect = pInfo->PanelRect;
+	if (Flags & ppdf_GetItems)
+	{
+		store = *p;
+		pInfo->panelInfo = &store;
+	}
+	else
+	{
+		pInfo->panelInfo = NULL;
+	}
 
-	MultiByteToWideChar(CP_OEMCP, 0, pInfo->CurDir, -1, pBk->szCurDir, BkPanelInfo_CurDirMax);
+	pInfo->bVisible = p->Visible;
+	pInfo->bFocused = p->Focus;
+	pInfo->bPlugin = p->Plugin;
+	pInfo->nPanelType = p->PanelType;
+	pInfo->rcPanelRect = p->PanelRect;
 
-	lstrcpyW(pBk->szFormat, pInfo->Plugin ? L"Plugin" : L"");
-	pBk->szHostFile[0] = 0;
+	if ((Flags & gpdf_NoHidden) && !pInfo->bVisible)
+		return false;
+
+	if (pInfo->szCurDir)
+		MultiByteToWideChar(CP_OEMCP, 0, p->CurDir, -1, pInfo->szCurDir, BkPanelInfo_CurDirMax);
+
+	if (pInfo->szFormat)
+		lstrcpyW(pInfo->szFormat, p->Plugin ? L"Plugin" : L"");
+	if (pInfo->szHostFile)
+		pInfo->szHostFile[0] = 0;
+
+	return true;
+}
+
+bool CPluginAnsi::GetPanelItemInfo(const CEPanelInfo& PnlInfo, bool bSelected, INT_PTR iIndex, WIN32_FIND_DATAW& Info, wchar_t** ppszFullPathName)
+{
+	if (!InfoA)
+		return false;
+
+	if (!PnlInfo.panelInfo)
+	{
+		_ASSERTE(PnlInfo.panelInfo!=NULL);
+		return false;
+	}
+
+	PluginPanelItem *pPanelItems = bSelected ? ((PanelInfo*)PnlInfo.panelInfo)->SelectedItems : ((PanelInfo*)PnlInfo.panelInfo)->PanelItems;
+	INT_PTR iItemsNumber = bSelected ? ((PanelInfo*)PnlInfo.panelInfo)->SelectedItemsNumber : ((PanelInfo*)PnlInfo.panelInfo)->ItemsNumber;
+
+	if (!pPanelItems)
+	{
+		_ASSERTE(pPanelItems != NULL);
+		return false;
+	}
+
+	if ((iIndex < 0) || (iIndex >= iItemsNumber))
+	{
+		_ASSERTE(FALSE && "iItem out of bounds");
+		return false;
+	}
+
+	PluginPanelItem* pItem = pPanelItems+iIndex;
+
+	ZeroStruct(Info);
+
+	Info.dwFileAttributes = pItem->FindData.dwFileAttributes;
+	Info.ftCreationTime = pItem->FindData.ftCreationTime;
+	Info.ftLastAccessTime = pItem->FindData.ftLastAccessTime;
+	Info.ftLastWriteTime = pItem->FindData.ftLastWriteTime;
+	Info.nFileSizeHigh = pItem->FindData.nFileSizeHigh;
+	Info.nFileSizeLow = pItem->FindData.nFileSizeLow;
+
+	MultiByteToWideChar(CP_OEMCP, 0, pItem->FindData.cFileName, -1, Info.cFileName, countof(Info.cFileName));
+	MultiByteToWideChar(CP_OEMCP, 0, pItem->FindData.cAlternateFileName, -1, Info.cAlternateFileName, countof(Info.cFileName));
 
 	return true;
 }
@@ -153,285 +219,6 @@ INT_PTR CPluginAnsi::PanelControlApi(HANDLE hPanel, int Command, INT_PTR Param1,
 		return -1;
 	INT_PTR iRc = InfoA->Control(hPanel, (FILE_CONTROL_COMMANDS)Command, Param2);
 	return iRc;
-}
-
-void CPluginAnsi::ProcessDragFrom()
-{
-	if (InfoA == NULL)
-		return;
-
-	WindowInfo WInfo;
-	WInfo.Pos = 0;
-	_ASSERTE(GetCurrentThreadId() == gnMainThreadId);
-	InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETSHORTWINDOWINFO, (void*)&WInfo);
-
-	if (!WInfo.Current)
-	{
-		int ItemsCount=0;
-		OutDataAlloc(sizeof(ItemsCount));
-		OutDataWrite(&ItemsCount,sizeof(ItemsCount));
-		return;
-	}
-
-	PanelInfo PInfo = {};
-	InfoA->Control(INVALID_HANDLE_VALUE, FCTL_GETPANELINFO, &PInfo);
-
-	if ((PInfo.PanelType == PTYPE_FILEPANEL || PInfo.PanelType == PTYPE_TREEPANEL) && PInfo.Visible)
-	{
-		int nDirLen=0, nDirNoSlash=0;
-
-		if (PInfo.CurDir && *PInfo.CurDir)
-		{
-			nDirLen=lstrlenA(PInfo.CurDir);
-
-			if (nDirLen>0)
-				if (PInfo.CurDir[nDirLen-1]!='\\')
-					nDirNoSlash=1;
-		}
-
-		// Это только предполагаемый размер, при необходимости он будет увеличен
-		OutDataAlloc(sizeof(int)+PInfo.SelectedItemsNumber*((MAX_PATH+2)+sizeof(int))); //-V119 //-V107
-		//Maximus5 - новый формат передачи
-		int nNull=0;
-		//WriteFile(hPipe, &nNull/*ItemsCount*/, sizeof(int), &cout, NULL);
-		OutDataWrite(&nNull/*ItemsCount*/, sizeof(int));
-
-		if (PInfo.SelectedItemsNumber<=0)
-		{
-			// Проверка того, что мы стоим на ".."
-			if (PInfo.CurrentItem == 0 && PInfo.ItemsNumber > 0)
-			{
-				if (!nDirNoSlash)
-					PInfo.CurDir[nDirLen-1] = 0;
-				else
-					nDirLen++;
-
-				WCHAR *szCurDir = new WCHAR[nDirLen];
-				MultiByteToWideChar(CP_OEMCP, 0, PInfo.CurDir, nDirLen, szCurDir, nDirLen);
-				int nWholeLen = nDirLen + 1;
-				OutDataWrite(&nWholeLen, (DWORD)sizeof(int));
-				OutDataWrite(&nDirLen, (DWORD)sizeof(int));
-				OutDataWrite(szCurDir, (DWORD)sizeof(WCHAR)*nDirLen);
-				delete [] szCurDir; szCurDir=NULL;
-			}
-
-			// Fin
-			OutDataWrite(&nNull/*ItemsCount*/, sizeof(int));
-		}
-		else
-		{
-			int ItemsCount=PInfo.SelectedItemsNumber, i;
-			bool *bIsFull = (bool*)calloc(PInfo.SelectedItemsNumber, sizeof(bool));
-			int nMaxLen=MAX_PATH+1, nWholeLen=1;
-
-			// сначала посчитать максимальную длину буфера
-			for (i=0; i<ItemsCount; i++)
-			{
-				int nLen=nDirLen+nDirNoSlash;
-
-				if ((PInfo.SelectedItems[i].FindData.cFileName[0] == '\\' && PInfo.SelectedItems[i].FindData.cFileName[1] == '\\') || //-V108
-				        (ISALPHA(PInfo.SelectedItems[i].FindData.cFileName[0]) && PInfo.SelectedItems[i].FindData.cFileName[1] == ':' && PInfo.SelectedItems[i].FindData.cFileName[2] == '\\')) //-V108
-					{ nLen = 0; bIsFull[i] = TRUE; } // это уже полный путь! //-V108
-
-				nLen += lstrlenA(PInfo.SelectedItems[i].FindData.cFileName); //-V108
-
-				if (nLen>nMaxLen)
-					nMaxLen = nLen;
-
-				nWholeLen += (nLen+1);
-			}
-
-			nMaxLen += nDirLen;
-
-			//WriteFile(hPipe, &nWholeLen, sizeof(int), &cout, NULL);
-			OutDataWrite(&nWholeLen, sizeof(int));
-			WCHAR* Path = new WCHAR[nMaxLen+1];
-
-			for (i=0; i<ItemsCount; i++)
-			{
-				if (i == 0
-				        && ((PInfo.SelectedItems[i].FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == FILE_ATTRIBUTE_DIRECTORY)
-				        && !lstrcmpA(PInfo.SelectedItems[i].FindData.cFileName, ".."))
-				{
-					continue;
-				}
-
-				//WCHAR Path[MAX_PATH+1];
-				//ZeroMemory(Path, MAX_PATH+1);
-				//Maximus5 - засада с корнем диска и возможностью overflow
-				//StringCchPrintf(Path, countof(Path), L"%s\\%s", PInfo.CurDir, PInfo.SelectedItems[i]->FindData.cFileName);
-				Path[0]=0;
-				//begin
-				int nLen=0;
-
-				if (nDirLen>0 && !bIsFull[i])
-				{
-					MultiByteToWideChar(CP_OEMCP/*???*/,0,
-					                    PInfo.CurDir, nDirLen+1, Path, nDirLen+1);
-
-					if (nDirNoSlash)
-					{
-						Path[nDirLen]=L'\\';
-						Path[nDirLen+1]=0;
-					}
-
-					nLen = nDirLen+nDirNoSlash;
-				}
-
-				int nFLen = lstrlenA(PInfo.SelectedItems[i].FindData.cFileName);
-				MultiByteToWideChar(CP_OEMCP/*???*/, 0,
-				                    PInfo.SelectedItems[i].FindData.cFileName,nFLen+1,Path+nLen,nFLen+1);
-				nLen += nFLen;
-				//end
-				nLen++;
-				//WriteFile(hPipe, &nLen, sizeof(int), &cout, NULL);
-				OutDataWrite(&nLen, (DWORD)sizeof(int));
-				//WriteFile(hPipe, Path, sizeof(WCHAR)*nLen, &cout, NULL);
-				OutDataWrite(Path, (DWORD)sizeof(WCHAR)*nLen);
-			}
-
-			free(bIsFull);
-			delete [] Path; Path=NULL;
-			// Конец списка
-			//WriteFile(hPipe, &nNull/*ItemsCount*/, sizeof(int), &cout, NULL);
-			OutDataWrite(&nNull/*ItemsCount*/, sizeof(int));
-		}
-	}
-	else
-	{
-		int ItemsCount=0;
-		OutDataAlloc(sizeof(ItemsCount));
-		OutDataWrite(&ItemsCount,sizeof(ItemsCount));
-		OutDataWrite(&ItemsCount,sizeof(ItemsCount));
-	}
-}
-
-void CPluginAnsi::ProcessDragTo()
-{
-	if (InfoA == NULL)
-		return;
-
-	WindowInfo WInfo = {};
-	//WInfo.Pos = 0;
-	WInfo.Pos = -1; // попробуем работать в диалогах и редакторе
-	_ASSERTE(GetCurrentThreadId() == gnMainThreadId);
-	InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETSHORTWINDOWINFO, (void*)&WInfo);
-
-	if (!WInfo.Current)
-	{
-		int ItemsCount=0;
-		if (gpCmdRet==NULL)
-			OutDataAlloc(sizeof(ItemsCount));
-		OutDataWrite(&ItemsCount,sizeof(ItemsCount));
-		return;
-	}
-
-	int nStructSize;
-
-	if ((WInfo.Type == WTYPE_DIALOG) || (WInfo.Type == WTYPE_EDITOR))
-	{
-		// разрешить дроп в виде текста
-		ForwardedPanelInfo DlgInfo = {};
-		DlgInfo.NoFarConsole = TRUE;
-		nStructSize = sizeof(DlgInfo);
-		if (gpCmdRet==NULL)
-			OutDataAlloc(nStructSize+sizeof(nStructSize));
-		OutDataWrite(&nStructSize, sizeof(nStructSize));
-		OutDataWrite(&DlgInfo, nStructSize);
-		return;
-	}
-	else if (WInfo.Type != WTYPE_PANELS)
-	{
-		// Иначе - дроп не разрешен
-		int ItemsCount=0;
-		if (gpCmdRet==NULL)
-			OutDataAlloc(sizeof(ItemsCount));
-		OutDataWrite(&ItemsCount,sizeof(ItemsCount));
-		return;
-	}
-
-	PanelInfo PAInfo = {}, PPInfo = {};
-	ForwardedPanelInfo *pfpi = NULL;
-	nStructSize = sizeof(ForwardedPanelInfo)+4; // потом увеличим на длину строк
-	//ZeroMemory(&fpi, sizeof(fpi));
-	BOOL lbAOK = FALSE, lbPOK = FALSE;
-
-	//Maximus5 - к сожалению, В FAR2 FCTL_GETPANELSHORTINFO не возвращает CurDir :-(
-
-	if (!(lbAOK=InfoA->Control(INVALID_HANDLE_VALUE, FCTL_GETPANELSHORTINFO, &PAInfo)))
-		lbAOK=InfoA->Control(INVALID_HANDLE_VALUE, FCTL_GETPANELINFO, &PAInfo);
-
-	if (lbAOK && PAInfo.CurDir)
-		nStructSize += (lstrlenA(PAInfo.CurDir))*sizeof(WCHAR);
-
-	if (!(lbPOK=InfoA->Control(INVALID_HANDLE_VALUE, FCTL_GETANOTHERPANELSHORTINFO, &PPInfo)))
-		lbPOK=InfoA->Control(INVALID_HANDLE_VALUE, FCTL_GETANOTHERPANELINFO, &PPInfo);
-
-	if (lbPOK && PPInfo.CurDir)
-		nStructSize += (lstrlenA(PPInfo.CurDir))*sizeof(WCHAR); // Именно WCHAR! не TCHAR
-
-	pfpi = (ForwardedPanelInfo*)calloc(nStructSize,1);
-
-	if (!pfpi)
-	{
-		int ItemsCount=0;
-
-		//WriteFile(hPipe, &ItemsCount, sizeof(int), &cout, NULL);
-		if (gpCmdRet==NULL)
-			OutDataAlloc(sizeof(ItemsCount));
-
-		OutDataWrite(&ItemsCount,sizeof(ItemsCount));
-		return;
-	}
-
-	pfpi->ActivePathShift = sizeof(ForwardedPanelInfo);
-	pfpi->pszActivePath = (WCHAR*)(((char*)pfpi)+pfpi->ActivePathShift);
-	pfpi->PassivePathShift = pfpi->ActivePathShift+2; // если ActivePath заполнится - увеличим
-
-	if (lbAOK)
-	{
-		pfpi->ActiveRect=PAInfo.PanelRect;
-
-		if (!PAInfo.Plugin && (PAInfo.PanelType == PTYPE_FILEPANEL || PAInfo.PanelType == PTYPE_TREEPANEL) && PAInfo.Visible)
-		{
-			if (PAInfo.CurDir != NULL)
-			{
-				int nLen = lstrlenA(PAInfo.CurDir)+1;
-				MultiByteToWideChar(CP_OEMCP/*??? проверить*/,0,
-				                    PAInfo.CurDir, nLen, pfpi->pszActivePath, nLen);
-				//lstrcpyW(pfpi->pszActivePath, PAInfo.CurDir);
-				pfpi->PassivePathShift += (nLen-1)*2;
-			}
-		}
-	}
-
-	pfpi->pszPassivePath = (WCHAR*)(((char*)pfpi)+pfpi->PassivePathShift);
-
-	if (lbPOK)
-	{
-		pfpi->PassiveRect=PPInfo.PanelRect;
-
-		if (!PPInfo.Plugin && (PPInfo.PanelType == PTYPE_FILEPANEL || PPInfo.PanelType == PTYPE_TREEPANEL) && PPInfo.Visible)
-		{
-			if (PPInfo.CurDir != NULL)
-			{
-				int nLen = lstrlenA(PPInfo.CurDir)+1;
-				MultiByteToWideChar(CP_OEMCP/*??? проверить*/,0,
-				                    PPInfo.CurDir, nLen, pfpi->pszPassivePath, nLen);
-				//lstrcpyW(pfpi->pszPassivePath, PPInfo.CurDir);
-			}
-		}
-	}
-
-	// Собственно, пересылка информации
-	//WriteFile(hPipe, &nStructSize, sizeof(nStructSize), &cout, NULL);
-	//WriteFile(hPipe, pfpi, nStructSize, &cout, NULL);
-	if (gpCmdRet==NULL)
-		OutDataAlloc(nStructSize+4);
-
-	OutDataWrite(&nStructSize, sizeof(nStructSize));
-	OutDataWrite(pfpi, nStructSize);
-	free(pfpi); pfpi=NULL;
 }
 
 void CPluginAnsi::SetStartupInfoPtr(void *aInfo)

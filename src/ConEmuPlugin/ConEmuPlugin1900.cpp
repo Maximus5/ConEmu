@@ -114,6 +114,8 @@ CPluginW1900::CPluginW1900()
 	fctl_GetPanelFormat = FCTL_GETPANELFORMAT;
 	fctl_GetPanelPrefix = FCTL_GETPANELPREFIX;
 	fctl_GetPanelHostFile = FCTL_GETPANELHOSTFILE;
+	pt_FilePanel = PTYPE_FILEPANEL;
+	pt_TreePanel = PTYPE_TREEPANEL;
 }
 
 int CPluginW1900::ProcessEditorEventPtr(void* p)
@@ -170,14 +172,14 @@ wchar_t* CPluginW1900::GetPanelDir(GetPanelDirFlags Flags)
 	return pszDir;
 }
 
-bool CPluginW1900::GetPanelInfo(GetPanelDirFlags Flags, BkPanelInfo* pBk)
+bool CPluginW1900::GetPanelInfo(GetPanelDirFlags Flags, CEPanelInfo* pInfo)
 {
 	if (!InfoW1900 || !InfoW1900->PanelControl)
 		return false;
 
 	HANDLE hPanel = (Flags & gpdf_Active) ? PANEL_ACTIVE : PANEL_PASSIVE;
 	PanelInfo pasv = {sizeof(pasv)}, actv = {sizeof(actv)};
-	PanelInfo* pInfo;
+	PanelInfo* p;
 
 	if (Flags & (gpdf_Left|gpdf_Right))
 	{
@@ -185,38 +187,118 @@ bool CPluginW1900::GetPanelInfo(GetPanelDirFlags Flags, BkPanelInfo* pBk)
 		InfoW1900->PanelControl(PANEL_PASSIVE, FCTL_GETPANELINFO, 0, &pasv);
 		PanelInfo* pLeft = (actv.Flags & PFLAGS_PANELLEFT) ? &actv : &pasv;
 		PanelInfo* pRight = (actv.Flags & PFLAGS_PANELLEFT) ? &pasv : &actv;
-		pInfo = (Flags & gpdf_Left) ? pLeft : pRight;
-		hPanel = ((pInfo->Flags & PFLAGS_FOCUS) == PFLAGS_FOCUS) ? PANEL_ACTIVE : PANEL_PASSIVE;
+		p = (Flags & gpdf_Left) ? pLeft : pRight;
+		hPanel = ((p->Flags & PFLAGS_FOCUS) == PFLAGS_FOCUS) ? PANEL_ACTIVE : PANEL_PASSIVE;
 	}
 	else
 	{
 		hPanel = (Flags & gpdf_Active) ? PANEL_ACTIVE : PANEL_PASSIVE;
 		InfoW1900->PanelControl(hPanel, FCTL_GETPANELINFO, 0, &actv);
-		pInfo = &actv;
+		p = &actv;
 	}
 
-	pBk->bVisible = ((pInfo->Flags & PFLAGS_VISIBLE) == PFLAGS_VISIBLE);
-	pBk->bFocused = ((pInfo->Flags & PFLAGS_FOCUS) == PFLAGS_FOCUS);
-	pBk->bPlugin = ((pInfo->Flags & PFLAGS_PLUGIN) == PFLAGS_PLUGIN);
-	pBk->nPanelType = (int)pInfo->PanelType;
-	pBk->rcPanelRect = pInfo->PanelRect;
+	pInfo->bVisible = ((p->Flags & PFLAGS_VISIBLE) == PFLAGS_VISIBLE);
+	pInfo->bFocused = ((p->Flags & PFLAGS_FOCUS) == PFLAGS_FOCUS);
+	pInfo->bPlugin = ((p->Flags & PFLAGS_PLUGIN) == PFLAGS_PLUGIN);
+	pInfo->nPanelType = (int)p->PanelType;
+	pInfo->rcPanelRect = p->PanelRect;
 
-	PanelControl(hPanel, FCTL_GETPANELDIRECTORY, BkPanelInfo_CurDirMax, pBk->szCurDir);
+	if ((Flags & gpdf_NoHidden) && !pInfo->bVisible)
+		return false;
 
-	if (pBk->bPlugin)
+	if (pInfo->szCurDir)
 	{
-		PanelControl(hPanel, FCTL_GETPANELFORMAT, BkPanelInfo_FormatMax, pBk->szFormat);
-		// Если "Формат" панели получить не удалось - попробуем взять "префикс" плагина
-		if (!*pBk->szFormat)
-			PanelControl(hPanel, FCTL_GETPANELPREFIX, BkPanelInfo_FormatMax, pBk->szFormat);
+		PanelControl(hPanel, FCTL_GETPANELDIRECTORY, BkPanelInfo_CurDirMax, pInfo->szCurDir);
+	}
 
-		PanelControl(hPanel, FCTL_GETPANELHOSTFILE, BkPanelInfo_HostFileMax, pBk->szHostFile);
+	if (pInfo->bPlugin)
+	{
+		if (pInfo->szFormat)
+		{
+			PanelControl(hPanel, FCTL_GETPANELFORMAT, BkPanelInfo_FormatMax, pInfo->szFormat);
+			// Если "Формат" панели получить не удалось - попробуем взять "префикс" плагина
+			if (!*pInfo->szFormat)
+				PanelControl(hPanel, FCTL_GETPANELPREFIX, BkPanelInfo_FormatMax, pInfo->szFormat);
+		}
+
+		if (pInfo->szHostFile)
+		{
+			PanelControl(hPanel, FCTL_GETPANELHOSTFILE, BkPanelInfo_HostFileMax, pInfo->szHostFile);
+		}
 	}
 	else
 	{
-		pBk->szFormat[0] = 0;
-		pBk->szHostFile[0] = 0;
+		if (pInfo->szFormat)
+			pInfo->szFormat[0] = 0;
+		if (pInfo->szHostFile)
+			pInfo->szHostFile[0] = 0;
 	}
+
+	return true;
+}
+
+bool CPluginW1900::GetPanelItemInfo(const CEPanelInfo& PnlInfo, bool bSelected, INT_PTR iIndex, WIN32_FIND_DATAW& Info, wchar_t** ppszFullPathName)
+{
+	if (!InfoW1900 || !InfoW1900->PanelControl)
+		return false;
+
+	FILE_CONTROL_COMMANDS iCmd = bSelected ? FCTL_GETSELECTEDPANELITEM : FCTL_GETPANELITEM;
+	INT_PTR iItemsNumber = bSelected ? ((PanelInfo*)PnlInfo.panelInfo)->SelectedItemsNumber : ((PanelInfo*)PnlInfo.panelInfo)->ItemsNumber;
+
+	if ((iIndex < 0) || (iIndex >= iItemsNumber))
+	{
+		_ASSERTE(FALSE && "iItem out of bounds");
+		return false;
+	}
+
+	INT_PTR sz = PanelControlApi(PANEL_ACTIVE, iCmd, iIndex, NULL);
+
+	if (sz <= 0)
+		return false;
+
+	PluginPanelItem* pItem = (PluginPanelItem*)calloc(sz, 1); // размер возвращается в байтах
+	if (!pItem)
+		return false;
+
+	FarGetPluginPanelItem gppi = {sizeof(gppi), pItem};
+	if (PanelControlApi(PANEL_ACTIVE, iCmd, iIndex, &gppi) <= 0)
+	{
+		free(pItem);
+		return false;
+	}
+
+	ZeroStruct(Info);
+
+	Info.dwFileAttributes = LODWORD(pItem->FileAttributes);
+	Info.ftCreationTime = pItem->CreationTime;
+	Info.ftLastAccessTime = pItem->LastAccessTime;
+	Info.ftLastWriteTime = pItem->LastWriteTime;
+	Info.nFileSizeLow = LODWORD(pItem->FileSize);
+	Info.nFileSizeHigh = HIDWORD(pItem->FileSize);
+
+	if (pItem->FileName)
+	{
+		LPCWSTR pszName = pItem->FileName;
+		int iLen = lstrlen(pszName);
+		// If full paths exceeds MAX_PATH chars - return in Info.cFileName the file name only
+		if (iLen >= countof(Info.cFileName))
+			pszName = PointToName(pItem->FileName);
+		lstrcpyn(Info.cFileName, pszName, countof(Info.cFileName));
+		if (ppszFullPathName)
+			*ppszFullPathName = lstrdup(pItem->FileName);
+	}
+	else if (ppszFullPathName)
+	{
+		_ASSERTE(*ppszFullPathName == NULL);
+		*ppszFullPathName = NULL;
+	}
+
+	if (pItem->AlternateFileName)
+	{
+		lstrcpyn(Info.cAlternateFileName, pItem->AlternateFileName, countof(Info.cAlternateFileName));
+	}
+
+	free(pItem);
 
 	return true;
 }
@@ -260,328 +342,6 @@ void CPluginW1900::GetPluginInfoPtr(void *piv)
 	//pi->PluginConfigStringsNumber = 0;
 	pi->CommandPrefix = L"ConEmu";
 	//pi->Reserved = ConEmu_SysID; // 'CEMU'
-}
-
-
-void CPluginW1900::ProcessDragFrom()
-{
-	if (!InfoW1900 || !InfoW1900->AdvControl)
-		return;
-
-	WindowInfo WInfo = {sizeof(WindowInfo)};
-	WInfo.Pos = 0;
-	_ASSERTE(GetCurrentThreadId() == gnMainThreadId);
-	InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETWINDOWINFO, 0, &WInfo);
-
-	if (!(WInfo.Flags & WIF_CURRENT))
-	{
-		int ItemsCount=0;
-		//WriteFile(hPipe, &ItemsCount, sizeof(int), &cout, NULL);
-		OutDataAlloc(sizeof(ItemsCount));
-		OutDataWrite(&ItemsCount,sizeof(ItemsCount));
-		return;
-	}
-
-	PanelInfo PInfo = {sizeof(PInfo)};
-	WCHAR *szCurDir = NULL;
-	InfoW1900->PanelControl(PANEL_ACTIVE, FCTL_GETPANELINFO, NULL, &PInfo);
-
-	if ((PInfo.PanelType == PTYPE_FILEPANEL || PInfo.PanelType == PTYPE_TREEPANEL)
-		&& (PInfo.Flags & PFLAGS_VISIBLE))
-	{
-		szCurDir = GetPanelDir(gpdf_Active);
-		if (!szCurDir)
-		{
-			_ASSERTE(szCurDir!=NULL);
-			int ItemsCount=0;
-			OutDataWrite(&ItemsCount, sizeof(int));
-			OutDataWrite(&ItemsCount, sizeof(int)); // смена формата
-			return;
-		}
-		int nDirLen=0, nDirNoSlash=0;
-
-		if (szCurDir[0])
-		{
-			nDirLen = lstrlen(szCurDir);
-
-			if (nDirLen>0)
-				if (szCurDir[nDirLen-1]!=L'\\')
-					nDirNoSlash=1;
-		}
-
-		// Это только предполагаемый размер, при необходимости он будет увеличен
-		OutDataAlloc(sizeof(int)+PInfo.SelectedItemsNumber*((MAX_PATH+2)+sizeof(int)));
-		//Maximus5 - новый формат передачи
-		int nNull=0; // ItemsCount
-		//WriteFile(hPipe, &nNull, sizeof(int), &cout, NULL);
-		OutDataWrite(&nNull/*ItemsCount*/, sizeof(int));
-
-		if (PInfo.SelectedItemsNumber<=0)
-		{
-			// Проверка того, что мы стоим на ".."
-			if (PInfo.CurrentItem == 0 && PInfo.ItemsNumber > 0)
-			{
-				if (!nDirNoSlash)
-					szCurDir[nDirLen-1] = 0;
-				else
-					nDirLen++;
-
-				int nWholeLen = nDirLen + 1;
-				OutDataWrite(&nWholeLen, sizeof(int));
-				OutDataWrite(&nDirLen, sizeof(int));
-				OutDataWrite(szCurDir, sizeof(WCHAR)*nDirLen);
-			}
-
-			// Fin
-			OutDataWrite(&nNull/*ItemsCount*/, sizeof(int));
-		}
-		else
-		{
-			PluginPanelItem **pi = (PluginPanelItem**)calloc(PInfo.SelectedItemsNumber, sizeof(PluginPanelItem*));
-			bool *bIsFull = (bool*)calloc(PInfo.SelectedItemsNumber, sizeof(bool));
-			INT_PTR ItemsCount=PInfo.SelectedItemsNumber, i;
-			int nMaxLen=MAX_PATH+1, nWholeLen=1;
-
-			// сначала посчитать максимальную длину буфера
-			for(i=0; i<ItemsCount; i++)
-			{
-				size_t sz = InfoW1900->PanelControl(PANEL_ACTIVE, FCTL_GETSELECTEDPANELITEM, i, NULL);
-
-				if (!sz)
-					continue;
-
-				pi[i] = (PluginPanelItem*)calloc(sz, 1); // размер возвращается в байтах
-
-				FarGetPluginPanelItem gppi = {sz, pi[i]};
-				if (!InfoW1900->PanelControl(PANEL_ACTIVE, FCTL_GETSELECTEDPANELITEM, i, &gppi))
-				{
-					free(pi[i]); pi[i] = NULL;
-					continue;
-				}
-
-				if (!pi[i]->FileName)
-				{
-					_ASSERTE(pi[i]->FileName!=NULL);
-					free(pi[i]); pi[i] = NULL;
-					continue;
-				}
-
-				if (i == 0
-				        && ((pi[i]->FileAttributes & FILE_ATTRIBUTE_DIRECTORY) == FILE_ATTRIBUTE_DIRECTORY)
-				        && !lstrcmpW(pi[i]->FileName, L".."))
-				{
-					free(pi[i]); pi[i] = NULL;
-					continue;
-				}
-
-				int nLen=nDirLen+nDirNoSlash;
-
-				if ((pi[i]->FileName[0] == L'\\' && pi[i]->FileName[1] == L'\\') ||
-				        (ISALPHA(pi[i]->FileName[0]) && pi[i]->FileName[1] == L':' && pi[i]->FileName[2] == L'\\'))
-					{ nLen = 0; bIsFull[i] = TRUE; } // это уже полный путь!
-
-				nLen += lstrlenW(pi[i]->FileName);
-
-				if (nLen>nMaxLen)
-					nMaxLen = nLen;
-
-				nWholeLen += (nLen+1);
-			}
-
-			nMaxLen += nDirLen;
-
-			//WriteFile(hPipe, &nWholeLen, sizeof(int), &cout, NULL);
-			OutDataWrite(&nWholeLen, sizeof(int));
-			WCHAR* Path = new WCHAR[nMaxLen+1];
-
-			for (i=0; i<ItemsCount; i++)
-			{
-				//WCHAR Path[MAX_PATH+1];
-				//ZeroMemory(Path, MAX_PATH+1);
-				//Maximus5 - засада с корнем диска и возможностью overflow
-				//StringCchPrintf(Path, countof(Path), L"%s\\%s", szCurDir, PInfo.SelectedItems[i]->FileName);
-				Path[0]=0;
-
-				if (!pi[i] || !pi[i]->FileName) continue;  //этот элемент получить не удалось
-
-				int nLen=0;
-
-				if (nDirLen>0 && !bIsFull[i])
-				{
-					lstrcpy(Path, szCurDir);
-
-					if (nDirNoSlash)
-					{
-						Path[nDirLen]=L'\\';
-						Path[nDirLen+1]=0;
-					}
-
-					nLen = nDirLen+nDirNoSlash;
-				}
-
-				lstrcpy(Path+nLen, pi[i]->FileName);
-				nLen += lstrlen(pi[i]->FileName);
-				nLen++;
-				//WriteFile(hPipe, &nLen, sizeof(int), &cout, NULL);
-				OutDataWrite(&nLen, sizeof(int));
-				//WriteFile(hPipe, Path, sizeof(WCHAR)*nLen, &cout, NULL);
-				OutDataWrite(Path, sizeof(WCHAR)*nLen);
-			}
-
-			for(i=0; i<ItemsCount; i++)
-			{
-				if (pi[i]) free(pi[i]);
-			}
-
-			free(pi); pi = NULL;
-			free(bIsFull);
-			delete [] Path; Path=NULL;
-			// Конец списка
-			//WriteFile(hPipe, &nNull, sizeof(int), &cout, NULL);
-			OutDataWrite(&nNull, sizeof(int));
-		}
-
-		SafeFree(szCurDir);
-	}
-	else
-	{
-		int ItemsCount=0;
-		OutDataWrite(&ItemsCount, sizeof(int));
-		OutDataWrite(&ItemsCount, sizeof(int)); // смена формата
-	}
-
-	//free(szCurDir);
-}
-
-void CPluginW1900::ProcessDragTo()
-{
-	if (!InfoW1900 || !InfoW1900->AdvControl)
-		return;
-
-	WindowInfo WInfo = {sizeof(WindowInfo)};
-	//WInfo.Pos = 0;
-	WInfo.Pos = -1; // попробуем работать в диалогах и редакторе
-	_ASSERTE(GetCurrentThreadId() == gnMainThreadId);
-	InfoW1900->AdvControl(&guid_ConEmu, ACTL_GETWINDOWINFO, 0, &WInfo);
-
-	if (!(WInfo.Flags & WIF_CURRENT))
-	{
-		//InfoW1900->AdvControl(&guid_ConEmu, ACTL_FREEWINDOWINFO, 0, &WInfo);
-		int ItemsCount=0;
-		if (gpCmdRet==NULL)
-			OutDataAlloc(sizeof(ItemsCount));
-		OutDataWrite(&ItemsCount,sizeof(ItemsCount));
-		return;
-	}
-
-	int nStructSize;
-
-	if ((WInfo.Type == WTYPE_DIALOG) || (WInfo.Type == WTYPE_EDITOR))
-	{
-		// разрешить дроп в виде текста
-		ForwardedPanelInfo DlgInfo = {};
-		DlgInfo.NoFarConsole = TRUE;
-		nStructSize = sizeof(DlgInfo);
-		if (gpCmdRet==NULL)
-			OutDataAlloc(nStructSize+sizeof(nStructSize));
-		OutDataWrite(&nStructSize, sizeof(nStructSize));
-		OutDataWrite(&DlgInfo, nStructSize);
-		return;
-	}
-	else if (WInfo.Type != WTYPE_PANELS)
-	{
-		// Иначе - дроп не разрешен
-		int ItemsCount=0;
-		if (gpCmdRet==NULL)
-			OutDataAlloc(sizeof(ItemsCount));
-		OutDataWrite(&ItemsCount,sizeof(ItemsCount));
-		return;
-	}
-
-	nStructSize = sizeof(ForwardedPanelInfo)+4; // потом увеличим на длину строк
-
-	//InfoW1900->AdvControl(&guid_ConEmu, ACTL_FREEWINDOWINFO, 0, &WInfo);
-	PanelInfo PAInfo = {sizeof(PAInfo)}, PPInfo = {sizeof(PPInfo)};
-	ForwardedPanelInfo *pfpi=NULL;
-	//ZeroMemory(&fpi, sizeof(fpi));
-	BOOL lbAOK=FALSE, lbPOK=FALSE;
-	WCHAR *szPDir = NULL;
-	WCHAR *szADir = NULL;
-	//if (!(lbAOK=InfoW1900->PanelControl(PANEL_ACTIVE, FCTL_GETPANELSHORTINFO, &PAInfo)))
-	lbAOK=InfoW1900->PanelControl(PANEL_ACTIVE, FCTL_GETPANELINFO, 0, &PAInfo) &&
-	      (szADir = GetPanelDir(gpdf_Active));
-
-	if (lbAOK && szADir)
-		nStructSize += (lstrlen(szADir))*sizeof(WCHAR);
-
-	lbPOK=InfoW1900->PanelControl(PANEL_PASSIVE, FCTL_GETPANELINFO, 0, &PPInfo) &&
-	      (szPDir = GetPanelDir(gpdf_Passive));
-
-	if (lbPOK && szPDir)
-		nStructSize += (lstrlen(szPDir))*sizeof(WCHAR); // Именно WCHAR! не TCHAR
-
-	pfpi = (ForwardedPanelInfo*)calloc(nStructSize,1);
-
-	if (!pfpi)
-	{
-		int ItemsCount=0;
-
-		//WriteFile(hPipe, &ItemsCount, sizeof(int), &cout, NULL);
-		if (gpCmdRet==NULL)
-			OutDataAlloc(sizeof(ItemsCount));
-
-		OutDataWrite(&ItemsCount,sizeof(ItemsCount));
-		SafeFree(szADir);
-		SafeFree(szPDir);
-		return;
-	}
-
-	pfpi->ActivePathShift = sizeof(ForwardedPanelInfo);
-	pfpi->pszActivePath = (WCHAR*)(((char*)pfpi)+pfpi->ActivePathShift);
-	pfpi->PassivePathShift = pfpi->ActivePathShift+2; // если ActivePath заполнится - увеличим
-
-	if (lbAOK)
-	{
-		pfpi->ActiveRect=PAInfo.PanelRect;
-
-		if (!(PAInfo.Flags & PFLAGS_PLUGIN)
-			&& (PAInfo.PanelType == PTYPE_FILEPANEL || PAInfo.PanelType == PTYPE_TREEPANEL)
-			&& (PAInfo.Flags & PFLAGS_VISIBLE))
-		{
-			if (szADir[0])
-			{
-				lstrcpyW(pfpi->pszActivePath, szADir);
-				pfpi->PassivePathShift += lstrlenW(pfpi->pszActivePath)*2;
-			}
-		}
-	}
-
-	pfpi->pszPassivePath = (WCHAR*)(((char*)pfpi)+pfpi->PassivePathShift);
-
-	if (lbPOK)
-	{
-		pfpi->PassiveRect=PPInfo.PanelRect;
-
-		if (!(PPInfo.Flags & PFLAGS_PLUGIN)
-			&& (PPInfo.PanelType == PTYPE_FILEPANEL || PPInfo.PanelType == PTYPE_TREEPANEL)
-			&& (PPInfo.Flags & PFLAGS_VISIBLE))
-		{
-			if (szPDir[0])
-				lstrcpyW(pfpi->pszPassivePath, szPDir);
-		}
-	}
-
-	// Собственно, пересылка информации
-	//WriteFile(hPipe, &nStructSize, sizeof(nStructSize), &cout, NULL);
-	//WriteFile(hPipe, pfpi, nStructSize, &cout, NULL);
-	if (gpCmdRet==NULL)
-		OutDataAlloc(nStructSize+sizeof(nStructSize));
-
-	OutDataWrite(&nStructSize, sizeof(nStructSize));
-	OutDataWrite(pfpi, nStructSize);
-	free(pfpi); pfpi=NULL;
-	SafeFree(szADir);
-	SafeFree(szPDir);
 }
 
 void CPluginW1900::SetStartupInfoPtr(void *aInfo)
@@ -1364,7 +1124,7 @@ int CPluginW1900::GetActiveWindowType()
 
 	INT_PTR nArea = InfoW1900->MacroControl(&guid_ConEmu, MCTL_GETAREA, 0, 0);
 
-	switch(nArea)
+	switch (nArea)
 	{
 		case MACROAREA_SHELL:
 		case MACROAREA_INFOPANEL:
