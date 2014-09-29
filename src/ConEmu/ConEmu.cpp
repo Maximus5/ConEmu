@@ -3042,7 +3042,7 @@ bool CConEmuMain::CreateWnd(RConStartArgs *args)
 	size_t cchMaxLen = _tcslen(ms_ConEmuExe)
 		+ _tcslen(args->pszSpecialCmd)
 		+ (pszConfig ? (_tcslen(pszConfig) + 32) : 0)
-		+ (args->pszAddGuiArg ? _tcslen(args->pszAddGuiArg) : 0);
+		+ (args->pszAddGuiArg ? _tcslen(args->pszAddGuiArg) : 0)
 		+ 160; // на всякие флажки и -new_console
 	if ((pszCmdLine = (wchar_t*)malloc(cchMaxLen*sizeof(*pszCmdLine))) == NULL)
 	{
