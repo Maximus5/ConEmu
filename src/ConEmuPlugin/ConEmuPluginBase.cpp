@@ -53,6 +53,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/FarVersion.h"
 #include "../common/MFileMapping.h"
 #include "../common/MSection.h"
+#include "../common/MSetter.h"
 #include "../common/MWow64Disable.h"
 #include "../common/WinConsole.h"
 #include "../common/SetEnvVar.h"
@@ -75,6 +76,7 @@ BOOL gbWasDetached = FALSE;
 CONSOLE_SCREEN_BUFFER_INFO gsbiDetached;
 
 DWORD gnPeekReadCount = 0;
+LONG  gnInLongOperation = 0;
 
 bool gbExitFarCalled = false;
 
@@ -3298,9 +3300,20 @@ bool CPluginBase::ActivatePlugin(DWORD nCmd, LPVOID pCommandData, DWORD nTimeout
 
 bool CPluginBase::cmd_OpenEditorLine(CESERVER_REQ_FAREDITOR *pCmd)
 {
-	WARNING("на API переделать");
-
 	bool lbRc = false;
+
+	if (!IsCurrentTabModal() && CheckPanelExist())
+	{
+		int nWindowType = GetActiveWindowType();
+		if ((nWindowType == wt_Panels) || (nWindowType == wt_Editor) || (nWindowType == wt_Viewer)
+			|| (wt_Desktop != -1 && nWindowType == wt_Desktop))
+		{
+			MSetter lSet(&gnInLongOperation);
+			lbRc = OpenEditor(pCmd->szFile, false/*abView*/, false/*abDeleteTempFile*/, true/*abDetectCP*/, pCmd->nLine, pCmd->nColon);
+		}
+	}
+
+	#if 0
 	LPCWSTR pSrc = pCmd->szFile;
 	INT_PTR cchMax = MAX_PATH*4 + lstrlenW(pSrc); //-V112
 	wchar_t* pszMacro = (wchar_t*)malloc(cchMax*sizeof(*pszMacro));
@@ -3353,6 +3366,7 @@ bool CPluginBase::cmd_OpenEditorLine(CESERVER_REQ_FAREDITOR *pCmd)
 
 		lbRc = true;
 	}
+	#endif
 
 	return lbRc;
 }
