@@ -4465,7 +4465,9 @@ LRESULT CSettings::OnInitDialog_Info(HWND hWnd2)
 	gpConEmu->UpdateProcessDisplay(TRUE);
 	gpConEmu->UpdateSizes();
 	if (pVCon)
+	{
 		pVCon->RCon()->UpdateCursorInfo();
+	}
 	UpdateFontInfo();
 	if (pVCon)
 		UpdateConsoleMode(pVCon->RCon()->GetConsoleStates());
