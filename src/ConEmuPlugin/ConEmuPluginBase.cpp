@@ -5101,6 +5101,11 @@ void CPluginBase::ProcessDragFrom()
 	if (!mb_StartupInfoOk)
 		return;
 
+	//только для отладки, в релизе не нужен!
+	//#ifdef _DEBUG
+	//MSetter lSet(&gnInLongOperation);
+	//#endif
+
 	//WindowInfo WInfo = {sizeof(WindowInfo)};
 	//WInfo.Pos = -1;
 	_ASSERTE(GetCurrentThreadId() == gnMainThreadId);
@@ -5182,6 +5187,8 @@ void CPluginBase::ProcessDragFrom()
 			// сначала посчитать максимальную длину буфера
 			for (i = 0; i < ItemsCount; i++)
 			{
+				piNames[i] = NULL; bIsFull[i] = false; // 'new' does not initilize memory
+
 				if (!GetPanelItemInfo(PInfo, true, i, FileInfo, piNames+i))
 					continue;
 
@@ -5281,6 +5288,11 @@ void CPluginBase::ProcessDragTo()
 	if (!mb_StartupInfoOk)
 		return;
 
+	//только для отладки, в релизе не нужен!
+	//#ifdef _DEBUG
+	//MSetter lSet(&gnInLongOperation);
+	//#endif
+
 	_ASSERTE(GetCurrentThreadId() == gnMainThreadId);
 
 	// попробуем работать в диалогах и редакторе
@@ -5325,7 +5337,7 @@ void CPluginBase::ProcessDragTo()
 	piActive.szCurDir = (wchar_t*)malloc(BkPanelInfo_CurDirMax*sizeof(wchar_t));
 	piPassive.szCurDir = (wchar_t*)malloc(BkPanelInfo_CurDirMax*sizeof(wchar_t));
 	bool lbAOK = GetPanelInfo(gpdf_Active, &piActive);
-	bool lbPOK = GetPanelInfo(gpdf_Active, &piActive);
+	bool lbPOK = GetPanelInfo(gpdf_Passive, &piPassive);
 
 	if (lbAOK && piActive.szCurDir)
 		nStructSize += (lstrlen(piActive.szCurDir))*sizeof(WCHAR);
@@ -5352,7 +5364,7 @@ void CPluginBase::ProcessDragTo()
 		{
 			pfpi->ActiveRect = piActive.rcPanelRect;
 
-			if (piActive.bPlugin && piActive.bVisible
+			if (!piActive.bPlugin && piActive.bVisible
 				&& (piActive.nPanelType == pt_FilePanel || piActive.nPanelType == pt_TreePanel)
 				&& (piActive.szCurDir && *piActive.szCurDir))
 			{
@@ -5367,7 +5379,7 @@ void CPluginBase::ProcessDragTo()
 		{
 			pfpi->PassiveRect = piPassive.rcPanelRect;
 
-			if (piPassive.bPlugin && piPassive.bVisible
+			if (!piPassive.bPlugin && piPassive.bVisible
 				&& (piPassive.nPanelType == pt_FilePanel || piPassive.nPanelType == pt_TreePanel)
 				&& (piPassive.szCurDir && *piPassive.szCurDir))
 			{
