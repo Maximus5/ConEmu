@@ -93,23 +93,37 @@ CPluginAnsi::CPluginAnsi()
 	InitRootRegKey();
 }
 
-wchar_t* CPluginAnsi::GetPanelDir(GetPanelDirFlags Flags)
+wchar_t* CPluginAnsi::GetPanelDir(GetPanelDirFlags Flags, wchar_t* pszBuffer /*= NULL*/, int cchBufferMax /*= 0*/)
 {
-	if (!InfoA)
-		return NULL;
-
 	wchar_t* pszDir = NULL;
 	PanelInfo pi = {};
+
+	if (!InfoA)
+		goto wrap;
+
 	InfoA->Control(INVALID_HANDLE_VALUE, (Flags & gpdf_Active) ? FCTL_GETPANELSHORTINFO : FCTL_GETANOTHERPANELSHORTINFO, &pi);
 
 	if ((Flags & gpdf_NoHidden) && !pi.Visible)
-		return NULL;
+		goto wrap;
 	if ((Flags & gpdf_NoPlugin) && pi.Plugin)
-		return NULL;
+		goto wrap;
 
 	if (pi.CurDir[0])
-		pszDir = ToUnicode(pi.CurDir);
+	{
+		if (pszBuffer)
+		{
+			MultiByteToWideChar(CP_OEMCP, 0, pi.CurDir, -1, pszBuffer, cchBufferMax);
+			pszDir = pszBuffer;
+		}
+		else
+		{
+			pszDir = ToUnicode(pi.CurDir);
+		}
+	}
 
+wrap:
+	if (!pszDir && pszBuffer)
+		*pszBuffer = 0;
 	return pszDir;
 }
 

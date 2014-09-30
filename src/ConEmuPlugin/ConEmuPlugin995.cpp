@@ -112,22 +112,22 @@ CPluginW995::CPluginW995()
 	InitRootRegKey();
 }
 
-wchar_t* CPluginW995::GetPanelDir(GetPanelDirFlags Flags)
+wchar_t* CPluginW995::GetPanelDir(GetPanelDirFlags Flags, wchar_t* pszBuffer /*= NULL*/, int cchBufferMax /*= 0*/)
 {
-	if (!InfoW995)
-		return NULL;
-
 	wchar_t* pszDir = NULL;
 	HANDLE hPanel = (Flags & gpdf_Active) ? PANEL_ACTIVE : PANEL_PASSIVE;
 	size_t nSize;
-
 	PanelInfo pi = {};
+
+	if (!InfoW995)
+		goto wrap;
+
 	InfoW995->Control(hPanel, FCTL_GETPANELINFO, 0, (LONG_PTR)&pi);
 
 	if ((Flags & gpdf_NoHidden) && !pi.Visible)
-		return NULL;
+		goto wrap;
 	if ((Flags & gpdf_NoPlugin) && pi.Plugin)
-		return NULL;
+		goto wrap;
 
 	nSize = InfoW995->Control(hPanel, FCTL_GETPANELDIR, 0, 0);
 
@@ -135,9 +135,21 @@ wchar_t* CPluginW995::GetPanelDir(GetPanelDirFlags Flags)
 	{
 		pszDir = (wchar_t*)calloc(nSize, sizeof(*pszDir));
 		if (pszDir)
+		{
 			nSize = InfoW995->Control(hPanel, FCTL_GETPANELDIR, (DWORD)nSize, (LONG_PTR)pszDir);
+			if (pszBuffer)
+			{
+				lstrcpyn(pszBuffer, pszDir, cchBufferMax);
+				SafeFree(pszDir);
+				pszDir = pszBuffer;
+			}
+		}
 	}
 	_ASSERTE(nSize>0);
+
+wrap:
+	if (!pszDir && pszBuffer)
+		*pszBuffer = 0;
 	return pszDir;
 }
 

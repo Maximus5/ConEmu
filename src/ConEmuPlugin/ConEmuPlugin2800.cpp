@@ -177,22 +177,22 @@ CPluginW2800::CPluginW2800()
 	pt_TreePanel = PTYPE_TREEPANEL;
 }
 
-wchar_t* CPluginW2800::GetPanelDir(GetPanelDirFlags Flags)
+wchar_t* CPluginW2800::GetPanelDir(GetPanelDirFlags Flags, wchar_t* pszBuffer /*= NULL*/, int cchBufferMax /*= 0*/)
 {
-	if (!InfoW2800)
-		return NULL;
-
 	wchar_t* pszDir = NULL;
 	HANDLE hPanel = (Flags & gpdf_Active) ? PANEL_ACTIVE : PANEL_PASSIVE;
 	size_t nSize;
-
 	PanelInfo pi = {sizeof(pi)};
+
+	if (!InfoW2800)
+		goto wrap;
+
 	nSize = InfoW2800->PanelControl(hPanel, FCTL_GETPANELINFO, 0, &pi);
 
 	if ((Flags & gpdf_NoHidden) && !(pi.Flags & PFLAGS_VISIBLE))
-		return NULL;
+		goto wrap;
 	if ((Flags & gpdf_NoPlugin) && (pi.Flags & PFLAGS_PLUGIN))
-		return NULL;
+		goto wrap;
 
 	nSize = InfoW2800->PanelControl(hPanel, FCTL_GETPANELDIRECTORY, 0, 0);
 
@@ -203,13 +203,24 @@ wchar_t* CPluginW2800::GetPanelDir(GetPanelDirFlags Flags)
 		{
 			pDir->StructSize = sizeof(*pDir);
 			nSize = InfoW2800->PanelControl(hPanel, FCTL_GETPANELDIRECTORY, nSize, pDir);
-			pszDir = lstrdup(pDir->Name);
+			if (pszBuffer && cchBufferMax > 0)
+			{
+				lstrcpyn(pszBuffer, pDir->Name, cchBufferMax);
+				pszDir = pszBuffer;
+			}
+			else
+			{
+				pszDir = lstrdup(pDir->Name);
+			}
 			free(pDir);
 		}
 	}
 	// допустимо во время закрытия фара, если это был редактор
 	//_ASSERTE(nSize>0 || (pi.Flags & PFLAGS_PLUGIN));
 
+wrap:
+	if (!pszDir && pszBuffer)
+		*pszBuffer = 0;
 	return pszDir;
 }
 

@@ -51,7 +51,7 @@ public:
 	virtual LPCWSTR GetMsg(int aiMsg, wchar_t* psMsg = NULL, size_t cchMsgMax = 0) override;
 	virtual bool    GetPanelInfo(GetPanelDirFlags Flags, CEPanelInfo* pInfo) override;
 	virtual bool    GetPanelItemInfo(const CEPanelInfo& PnlInfo, bool bSelected, INT_PTR iIndex, WIN32_FIND_DATAW& Info, wchar_t** ppszFullPathName) override;
-	virtual LPWSTR  GetPanelDir(GetPanelDirFlags Flags) override;
+	virtual LPWSTR  GetPanelDir(GetPanelDirFlags Flags, wchar_t* pszBuffer = NULL, int cchBufferMax = 0) override;
 	virtual void    GetPluginInfoPtr(void* piv) override; // PluginInfo* versioned
 	virtual int     GetWindowCount() override;
 	virtual LPCWSTR GetWindowTypeName(int WindowType) override;
