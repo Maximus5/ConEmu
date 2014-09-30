@@ -249,18 +249,32 @@ bool CPluginW2800::GetPanelInfo(GetPanelDirFlags Flags, CEPanelInfo* pInfo)
 		p = &actv;
 	}
 
+	if (Flags & ppdf_GetItems)
+	{
+		static PanelInfo store;
+		store = *p;
+		pInfo->panelInfo = &store;
+	}
+	else
+	{
+		pInfo->panelInfo = NULL;
+	}
+
 	pInfo->bVisible = ((p->Flags & PFLAGS_VISIBLE) == PFLAGS_VISIBLE);
 	pInfo->bFocused = ((p->Flags & PFLAGS_FOCUS) == PFLAGS_FOCUS);
 	pInfo->bPlugin = ((p->Flags & PFLAGS_PLUGIN) == PFLAGS_PLUGIN);
 	pInfo->nPanelType = (int)p->PanelType;
 	pInfo->rcPanelRect = p->PanelRect;
+	pInfo->ItemsNumber = p->ItemsNumber;
+	pInfo->SelectedItemsNumber = p->SelectedItemsNumber;
+	pInfo->CurrentItem = p->CurrentItem;
 
 	if ((Flags & gpdf_NoHidden) && !pInfo->bVisible)
 		return false;
 
 	if (pInfo->szCurDir)
 	{
-		PanelControl(hPanel, FCTL_GETPANELDIRECTORY, BkPanelInfo_CurDirMax, pInfo->szCurDir);
+		GetPanelDir(pInfo->bFocused ? gpdf_Active : gpdf_Passive, pInfo->szCurDir, BkPanelInfo_CurDirMax);
 	}
 
 	if (pInfo->bPlugin)

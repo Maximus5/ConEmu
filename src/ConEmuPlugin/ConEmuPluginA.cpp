@@ -135,8 +135,6 @@ bool CPluginAnsi::GetPanelInfo(GetPanelDirFlags Flags, CEPanelInfo* pInfo)
 	PanelInfo pasv = {}, actv = {};
 	PanelInfo* p;
 
-	static PanelInfo store = {};
-
 	int getPanelInfo = (Flags & ppdf_GetItems) ? FCTL_GETPANELINFO : FCTL_GETPANELSHORTINFO;
 	int getAnotherPanelInfo = (Flags & ppdf_GetItems) ? FCTL_GETANOTHERPANELINFO : FCTL_GETANOTHERPANELSHORTINFO;
 
@@ -156,6 +154,7 @@ bool CPluginAnsi::GetPanelInfo(GetPanelDirFlags Flags, CEPanelInfo* pInfo)
 
 	if (Flags & ppdf_GetItems)
 	{
+		static PanelInfo store;
 		store = *p;
 		pInfo->panelInfo = &store;
 	}
@@ -169,6 +168,9 @@ bool CPluginAnsi::GetPanelInfo(GetPanelDirFlags Flags, CEPanelInfo* pInfo)
 	pInfo->bPlugin = p->Plugin;
 	pInfo->nPanelType = p->PanelType;
 	pInfo->rcPanelRect = p->PanelRect;
+	pInfo->ItemsNumber = p->ItemsNumber;
+	pInfo->SelectedItemsNumber = p->SelectedItemsNumber;
+	pInfo->CurrentItem = p->CurrentItem;
 
 	if ((Flags & gpdf_NoHidden) && !pInfo->bVisible)
 		return false;

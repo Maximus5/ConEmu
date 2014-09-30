@@ -180,18 +180,32 @@ bool CPluginW995::GetPanelInfo(GetPanelDirFlags Flags, CEPanelInfo* pInfo)
 		p = &actv;
 	}
 
+	if (Flags & ppdf_GetItems)
+	{
+		static PanelInfo store;
+		store = *p;
+		pInfo->panelInfo = &store;
+	}
+	else
+	{
+		pInfo->panelInfo = NULL;
+	}
+
 	pInfo->bVisible = p->Visible;
 	pInfo->bFocused = p->Focus;
 	pInfo->bPlugin = p->Plugin;
 	pInfo->nPanelType = p->PanelType;
 	pInfo->rcPanelRect = p->PanelRect;
+	pInfo->ItemsNumber = p->ItemsNumber;
+	pInfo->SelectedItemsNumber = p->SelectedItemsNumber;
+	pInfo->CurrentItem = p->CurrentItem;
 
 	if ((Flags & gpdf_NoHidden) && !pInfo->bVisible)
 		return false;
 
 	if (pInfo->szCurDir)
 	{
-		PanelControl(hPanel, FCTL_GETPANELDIR, BkPanelInfo_CurDirMax, pInfo->szCurDir);
+		GetPanelDir(pInfo->bFocused ? gpdf_Active : gpdf_Passive, pInfo->szCurDir, BkPanelInfo_CurDirMax);
 	}
 
 	if (pInfo->bPlugin)
