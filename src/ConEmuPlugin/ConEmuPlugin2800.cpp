@@ -791,7 +791,7 @@ void CPluginW2800::PostMacroApi(const wchar_t* asMacro, INPUT_RECORD* apRec)
 	}
 }
 
-int CPluginW2800::ShowPluginMenu(ConEmuPluginMenuItem* apItems, int Count)
+int CPluginW2800::ShowPluginMenu(ConEmuPluginMenuItem* apItems, int Count, int TitleMsgId /*= CEPluginName*/)
 {
 	if (!InfoW2800)
 		return -1;
@@ -833,7 +833,7 @@ int CPluginW2800::ShowPluginMenu(ConEmuPluginMenuItem* apItems, int Count)
 
 	int nRc = InfoW2800->Menu(&guid_ConEmu, &guid_ConEmuMenu, -1,-1, 0,
 	                         FMENU_AUTOHIGHLIGHT|FMENU_CHANGECONSOLETITLE|FMENU_WRAPMODE,
-	                         InfoW2800->GetMsg(&guid_ConEmu,CEPluginName),
+	                         InfoW2800->GetMsg(&guid_ConEmu,TitleMsgId),
 	                         NULL, NULL, NULL, NULL, (FarMenuItem*)items, Count);
 	SafeFree(items);
 	return nRc;

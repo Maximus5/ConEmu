@@ -813,7 +813,7 @@ void CPluginW1900::PostMacroApi(const wchar_t* asMacro, INPUT_RECORD* apRec)
 	SafeFree(pszMacroCopy);
 }
 
-int CPluginW1900::ShowPluginMenu(ConEmuPluginMenuItem* apItems, int Count)
+int CPluginW1900::ShowPluginMenu(ConEmuPluginMenuItem* apItems, int Count, int TitleMsgId /*= CEPluginName*/)
 {
 	if (!InfoW1900)
 		return -1;
@@ -855,7 +855,7 @@ int CPluginW1900::ShowPluginMenu(ConEmuPluginMenuItem* apItems, int Count)
 
 	int nRc = InfoW1900->Menu(&guid_ConEmu, &guid_ConEmuMenu, -1,-1, 0,
 	                         FMENU_AUTOHIGHLIGHT|FMENU_CHANGECONSOLETITLE|FMENU_WRAPMODE,
-	                         InfoW1900->GetMsg(&guid_ConEmu,CEPluginName),
+	                         InfoW1900->GetMsg(&guid_ConEmu,TitleMsgId),
 	                         NULL, NULL, NULL, NULL, (FarMenuItem*)items, Count);
 	SafeFree(items);
 	return nRc;

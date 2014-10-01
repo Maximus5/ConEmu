@@ -460,7 +460,7 @@ void CPluginAnsi::PostMacroApi(const wchar_t* asMacro, INPUT_RECORD* apRec)
 	free(pszMacroA);
 }
 
-int CPluginAnsi::ShowPluginMenu(ConEmuPluginMenuItem* apItems, int Count)
+int CPluginAnsi::ShowPluginMenu(ConEmuPluginMenuItem* apItems, int Count, int TitleMsgId /*= CEPluginName*/)
 {
 	if (!InfoA)
 		return -1;
@@ -525,7 +525,7 @@ int CPluginAnsi::ShowPluginMenu(ConEmuPluginMenuItem* apItems, int Count)
 
 	int nRc = InfoA->Menu(InfoA->ModuleNumber, -1,-1, 0,
 	                      FMENU_USEEXT|FMENU_AUTOHIGHLIGHT|FMENU_CHANGECONSOLETITLE|FMENU_WRAPMODE,
-	                      InfoA->GetMsg(InfoA->ModuleNumber,CEPluginName),
+	                      InfoA->GetMsg(InfoA->ModuleNumber,TitleMsgId),
 	                      NULL, NULL, NULL, NULL, (FarMenuItem*)items, Count);
 	SafeFree(items);
 	return nRc;

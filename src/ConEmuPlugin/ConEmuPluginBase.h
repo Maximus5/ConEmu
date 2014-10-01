@@ -239,7 +239,7 @@ public:
 	virtual void    SetStartupInfoPtr(void *aInfo) = 0;
 	virtual void    SetWindow(int nTab) = 0;
 	virtual int     ShowMessage(LPCWSTR asMsg, int aiButtons, bool bWarning) = 0;
-	virtual int     ShowPluginMenu(ConEmuPluginMenuItem* apItems, int Count) = 0;
+	virtual int     ShowPluginMenu(ConEmuPluginMenuItem* apItems, int Count, int TitleMsgId = CEPluginName) = 0;
 	virtual void    ShowUserScreen(bool bUserScreen) = 0;
 	virtual void    StopWaitEndSynchro() = 0;
 	virtual bool    UpdateConEmuTabsApi(int windowCount) = 0;

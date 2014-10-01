@@ -826,7 +826,7 @@ void CPluginBase::ShowTabsList()
 				pItems[k].UserData = i;
 			}
 
-			nMenuRc = ShowPluginMenu(pItems, AllCount);
+			nMenuRc = ShowPluginMenu(pItems, AllCount, CEMenuTitleTabs);
 
 			if ((nMenuRc >= 0) && (nMenuRc < AllCount))
 			{

@@ -77,7 +77,7 @@ public:
 	virtual void    SetStartupInfoPtr(void *aInfo) override;
 	virtual void    SetWindow(int nTab) override;
 	virtual int     ShowMessage(LPCWSTR asMsg, int aiButtons, bool bWarning) override;
-	virtual int     ShowPluginMenu(ConEmuPluginMenuItem* apItems, int Count) override;
+	virtual int     ShowPluginMenu(ConEmuPluginMenuItem* apItems, int Count, int TitleMsgId = CEPluginName) override;
 	virtual void    ShowUserScreen(bool bUserScreen) override;
 	virtual void    StopWaitEndSynchro() override;
 	virtual bool    UpdateConEmuTabsApi(int windowCount) override;

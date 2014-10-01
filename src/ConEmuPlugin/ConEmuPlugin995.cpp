@@ -559,7 +559,7 @@ void CPluginW995::PostMacroApi(const wchar_t* asMacro, INPUT_RECORD* apRec)
 	InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_KEYMACRO, (void*)&mcr);
 }
 
-int CPluginW995::ShowPluginMenu(ConEmuPluginMenuItem* apItems, int Count)
+int CPluginW995::ShowPluginMenu(ConEmuPluginMenuItem* apItems, int Count, int TitleMsgId /*= CEPluginName*/)
 {
 	if (!InfoW995)
 		return -1;
@@ -602,7 +602,7 @@ int CPluginW995::ShowPluginMenu(ConEmuPluginMenuItem* apItems, int Count)
 
 	int nRc = InfoW995->Menu(InfoW995->ModuleNumber, -1,-1, 0,
 	                         FMENU_USEEXT|FMENU_AUTOHIGHLIGHT|FMENU_CHANGECONSOLETITLE|FMENU_WRAPMODE,
-	                         InfoW995->GetMsg(InfoW995->ModuleNumber,CEPluginName),
+	                         InfoW995->GetMsg(InfoW995->ModuleNumber,TitleMsgId),
 	                         NULL, NULL, NULL, NULL, (FarMenuItem*)items, Count);
 	SafeFree(items);
 	return nRc;
