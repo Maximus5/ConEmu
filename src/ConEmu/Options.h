@@ -587,6 +587,8 @@ struct Settings
 		bool isStartFarFolders;
 		//reg->Load(L"StartFarEditors", isStartFarEditors);
 		bool isStartFarEditors;
+		//reg->Load(L"StartCreateDelay", nStartCreateDelay);
+		DWORD nStartCreateDelay; // RUNQUEUE_CREATE_LAG
 
 		//reg->Load(L"StoreTaskbarkTasks", isStoreTaskbarkTasks);
 		bool isStoreTaskbarkTasks;

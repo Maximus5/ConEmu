@@ -105,6 +105,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEF_TABFONTY_U    13
 #define DEF_STATUSFONTY_U 12
 
+#define RUNQUEUE_CREATE_LAG 100
 
 struct CONEMUDEFCOLORS
 {
@@ -370,9 +371,7 @@ void Settings::InitSettings()
 	// Сброс переменных
 	ResetSettings();
 
-//------------------------------------------------------------------------
-///| Moved from CVirtualConsole |/////////////////////////////////////////
-//------------------------------------------------------------------------
+	nStartCreateDelay = RUNQUEUE_CREATE_LAG;
 	isAutoRegisterFonts = true;
 	nHostkeyNumberModifier = VK_LWIN; //TestHostkeyModifiers(nHostkeyNumberModifier);
 	nHostkeyArrowModifier = VK_LWIN; //TestHostkeyModifiers(nHostkeyArrowModifier);
@@ -2359,6 +2358,10 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla, const SettingsStorage* ap
 		reg->Load(L"StartTasksName", &psStartTasksName);
 		reg->Load(L"StartFarFolders", isStartFarFolders);
 		reg->Load(L"StartFarEditors", isStartFarEditors);
+		if (!reg->Load(L"StartCreateDelay", nStartCreateDelay))
+			nStartCreateDelay = RUNQUEUE_CREATE_LAG;
+		else
+			MinMax(nStartCreateDelay, 10, 10*1000);
 		if (!reg->Load(L"StartType", nStartType) && bCmdLine)
 		{
 			if (*psStartSingleApp == CmdFilePrefix)
