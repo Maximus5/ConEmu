@@ -133,6 +133,9 @@ public:
 	void ProcessDragFrom();
 	void ProcessDragTo();
 	bool IsCurrentTabModal();
+	void ShowTabsList();
+	void EditViewConsoleOutput(bool abView);
+	void SwitchTabCommand(PluginMenuCommands cmd);
 
 	bool cmd_OpenEditorLine(CESERVER_REQ_FAREDITOR *pCmd);
 	bool cmd_RedrawFarCall(CESERVER_REQ*& pCmdRet, CESERVER_REQ** ppResult);

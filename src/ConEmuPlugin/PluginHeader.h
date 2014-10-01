@@ -80,9 +80,12 @@ enum PluginCallCommands
 	pcc_AttachToConEmu = 7,
 	pcc_StartDebug = 8,
 	pcc_ConsoleInfo = 9,
+	pcc_ShowTabsList = 10,
+	//
+	pcc_LastAuto,
 	//
 	pcc_First = 1,
-	pcc_Last = pcc_ConsoleInfo,
+	pcc_Last = pcc_LastAuto-1,
 };
 
 enum PluginMenuCommands

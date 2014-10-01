@@ -170,7 +170,7 @@ PluginAndMenuCommands gpPluginMenu[menu_Last] =
 	{CEMenuNextTab, menu_SwitchTabNext, pcc_SwitchTabNext},
 	{CEMenuPrevTab, menu_SwitchTabPrev, pcc_SwitchTabPrev},
 	{CEMenuCommitTab, menu_SwitchTabCommit, pcc_SwitchTabCommit},
-	{CEMenuShowTabsList, menu_ShowTabsList},
+	{CEMenuShowTabsList, menu_ShowTabsList, pcc_ShowTabsList},
 	{0, menu_Separator2},
 	{CEMenuGuiMacro, menu_ConEmuMacro}, // должен вызываться "по настоящему", а не через callplugin
 	{0, menu_Separator3},
@@ -749,31 +749,7 @@ void CPluginBase::ShowPluginMenu(PluginCallCommands nCallID /*= pcc_None*/)
 		case menu_ViewConsoleOutput:
 		{
 			// Открыть в редакторе вывод последней консольной программы
-			CESERVER_REQ* pIn = (CESERVER_REQ*)calloc(sizeof(CESERVER_REQ_HDR)+sizeof(DWORD),1);
-
-			if (!pIn) return;
-
-			CESERVER_REQ* pOut = NULL;
-			ExecutePrepareCmd(&pIn->hdr, CECMD_GETOUTPUTFILE, sizeof(CESERVER_REQ_HDR)+sizeof(DWORD));
-			pIn->OutputFile.bUnicode = (gFarVersion.dwVerMajor>=2);
-			pOut = ExecuteGuiCmd(FarHwnd, pIn, FarHwnd);
-
-			if (pOut)
-			{
-				if (pOut->OutputFile.szFilePathName[0])
-				{
-					bool lbRc = OpenEditor(pOut->OutputFile.szFilePathName, (nItem==1)/*abView*/, true);
-
-					if (!lbRc)
-					{
-						DeleteFile(pOut->OutputFile.szFilePathName);
-					}
-				}
-
-				ExecuteFreeResult(pOut);
-			}
-
-			free(pIn);
+			EditViewConsoleOutput((nItem==1)/*abView*/);
 		} break;
 
 		case menu_SwitchTabVisible: // Показать/спрятать табы
@@ -781,99 +757,12 @@ void CPluginBase::ShowPluginMenu(PluginCallCommands nCallID /*= pcc_None*/)
 		case menu_SwitchTabPrev:
 		case menu_SwitchTabCommit:
 		{
-			CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_TABSCMD, sizeof(CESERVER_REQ_HDR)+sizeof(pIn->Data));
-			// Data[0] <== enum ConEmuTabCommand
-			switch (nItem)
-			{
-			case menu_SwitchTabVisible: // Показать/спрятать табы
-				pIn->Data[0] = ctc_ShowHide; break;
-			case menu_SwitchTabNext:
-				pIn->Data[0] = ctc_SwitchNext; break;
-			case menu_SwitchTabPrev:
-				pIn->Data[0] = ctc_SwitchPrev; break;
-			case menu_SwitchTabCommit:
-				pIn->Data[0] = ctc_SwitchCommit; break;
-			default:
-				_ASSERTE(nItem==menu_SwitchTabVisible); // неизвестная команда!
-				pIn->Data[0] = ctc_ShowHide;
-			}
-
-			CESERVER_REQ* pOut = ExecuteGuiCmd(FarHwnd, pIn, FarHwnd);
-			if (pOut) ExecuteFreeResult(pOut);
+			SwitchTabCommand((PluginMenuCommands)nItem);
 		} break;
 
 		case menu_ShowTabsList:
 		{
-			CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_GETALLTABS, sizeof(CESERVER_REQ_HDR));
-			CESERVER_REQ* pOut = ExecuteGuiCmd(FarHwnd, pIn, FarHwnd);
-			if (pOut && (pOut->GetAllTabs.Count > 0))
-			{
-				INT_PTR nMenuRc = -1;
-
-				int Count = pOut->GetAllTabs.Count;
-				int AllCount = Count + pOut->GetAllTabs.Tabs[Count-1].ConsoleIdx;
-				ConEmuPluginMenuItem* pItems = (ConEmuPluginMenuItem*)calloc(AllCount,sizeof(*pItems));
-				if (pItems)
-				{
-					int nLastConsole = 0;
-					for (int i = 0, k = 0; i < Count; i++, k++)
-					{
-						if (nLastConsole != pOut->GetAllTabs.Tabs[i].ConsoleIdx)
-						{
-							pItems[k++].Separator = true;
-							nLastConsole = pOut->GetAllTabs.Tabs[i].ConsoleIdx;
-						}
-						_ASSERTE(k < AllCount);
-						pItems[k].Selected = (pOut->GetAllTabs.Tabs[i].ActiveConsole && pOut->GetAllTabs.Tabs[i].ActiveTab);
-						pItems[k].Checked = pOut->GetAllTabs.Tabs[i].ActiveTab;
-						pItems[k].Disabled = pOut->GetAllTabs.Tabs[i].Disabled;
-						pItems[k].MsgText = pOut->GetAllTabs.Tabs[i].Title;
-						pItems[k].UserData = i;
-					}
-
-					nMenuRc = ShowPluginMenu(pItems, AllCount);
-
-					if ((nMenuRc >= 0) && (nMenuRc < AllCount))
-					{
-						nMenuRc = pItems[nMenuRc].UserData;
-
-						if (pOut->GetAllTabs.Tabs[nMenuRc].ActiveConsole && !pOut->GetAllTabs.Tabs[nMenuRc].ActiveTab)
-						{
-							DWORD nTab = pOut->GetAllTabs.Tabs[nMenuRc].TabIdx;
-							int nOpenFrom = -1;
-							int nArea = Plugin()->GetMacroArea();
-							if (nArea != -1)
-							{
-								if (nArea == ma_Shell || nArea == ma_Search || nArea == ma_InfoPanel || nArea == ma_QViewPanel || nArea == ma_TreePanel)
-									gnPluginOpenFrom = of_FilePanel;
-								else if (nArea == ma_Editor)
-									gnPluginOpenFrom = of_Editor;
-								else if (nArea == ma_Viewer)
-									gnPluginOpenFrom = of_Viewer;
-							}
-							gnPluginOpenFrom = nOpenFrom;
-							ProcessCommand(CMD_SETWINDOW, FALSE, &nTab, NULL, true/*bForceSendTabs*/);
-						}
-						else if (!pOut->GetAllTabs.Tabs[nMenuRc].ActiveConsole || !pOut->GetAllTabs.Tabs[nMenuRc].ActiveTab)
-						{
-							CESERVER_REQ* pActIn = ExecuteNewCmd(CECMD_ACTIVATETAB, sizeof(CESERVER_REQ_HDR)+2*sizeof(DWORD));
-							pActIn->dwData[0] = pOut->GetAllTabs.Tabs[nMenuRc].ConsoleIdx;
-							pActIn->dwData[1] = pOut->GetAllTabs.Tabs[nMenuRc].TabIdx;
-							CESERVER_REQ* pActOut = ExecuteGuiCmd(FarHwnd, pActIn, FarHwnd);
-							ExecuteFreeResult(pActOut);
-							ExecuteFreeResult(pActIn);
-						}
-					}
-
-					SafeFree(pItems);
-				}
-				ExecuteFreeResult(pOut);
-			}
-			else
-			{
-				ShowMessage(CEGetAllTabsFailed, 0);
-			}
-			ExecuteFreeResult(pIn);
+			ShowTabsList();
 		} break;
 
 		case menu_ConEmuMacro: // Execute GUI macro (gialog)
@@ -906,6 +795,135 @@ void CPluginBase::ShowPluginMenu(PluginCallCommands nCallID /*= pcc_None*/)
 			ShowConsoleInfo();
 		} break;
 	}
+}
+
+void CPluginBase::ShowTabsList()
+{
+	CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_GETALLTABS, sizeof(CESERVER_REQ_HDR));
+	CESERVER_REQ* pOut = ExecuteGuiCmd(FarHwnd, pIn, FarHwnd);
+	if (pOut && (pOut->GetAllTabs.Count > 0))
+	{
+		INT_PTR nMenuRc = -1;
+
+		int Count = pOut->GetAllTabs.Count;
+		int AllCount = Count + pOut->GetAllTabs.Tabs[Count-1].ConsoleIdx;
+		ConEmuPluginMenuItem* pItems = (ConEmuPluginMenuItem*)calloc(AllCount,sizeof(*pItems));
+		if (pItems)
+		{
+			int nLastConsole = 0;
+			for (int i = 0, k = 0; i < Count; i++, k++)
+			{
+				if (nLastConsole != pOut->GetAllTabs.Tabs[i].ConsoleIdx)
+				{
+					pItems[k++].Separator = true;
+					nLastConsole = pOut->GetAllTabs.Tabs[i].ConsoleIdx;
+				}
+				_ASSERTE(k < AllCount);
+				pItems[k].Selected = (pOut->GetAllTabs.Tabs[i].ActiveConsole && pOut->GetAllTabs.Tabs[i].ActiveTab);
+				pItems[k].Checked = pOut->GetAllTabs.Tabs[i].ActiveTab;
+				pItems[k].Disabled = pOut->GetAllTabs.Tabs[i].Disabled;
+				pItems[k].MsgText = pOut->GetAllTabs.Tabs[i].Title;
+				pItems[k].UserData = i;
+			}
+
+			nMenuRc = ShowPluginMenu(pItems, AllCount);
+
+			if ((nMenuRc >= 0) && (nMenuRc < AllCount))
+			{
+				nMenuRc = pItems[nMenuRc].UserData;
+
+				if (pOut->GetAllTabs.Tabs[nMenuRc].ActiveConsole && !pOut->GetAllTabs.Tabs[nMenuRc].ActiveTab)
+				{
+					DWORD nTab = pOut->GetAllTabs.Tabs[nMenuRc].TabIdx;
+					int nOpenFrom = -1;
+					int nArea = Plugin()->GetMacroArea();
+					if (nArea != -1)
+					{
+						if (nArea == ma_Shell || nArea == ma_Search || nArea == ma_InfoPanel || nArea == ma_QViewPanel || nArea == ma_TreePanel)
+							gnPluginOpenFrom = of_FilePanel;
+						else if (nArea == ma_Editor)
+							gnPluginOpenFrom = of_Editor;
+						else if (nArea == ma_Viewer)
+							gnPluginOpenFrom = of_Viewer;
+					}
+					gnPluginOpenFrom = nOpenFrom;
+					ProcessCommand(CMD_SETWINDOW, FALSE, &nTab, NULL, true/*bForceSendTabs*/);
+				}
+				else if (!pOut->GetAllTabs.Tabs[nMenuRc].ActiveConsole || !pOut->GetAllTabs.Tabs[nMenuRc].ActiveTab)
+				{
+					CESERVER_REQ* pActIn = ExecuteNewCmd(CECMD_ACTIVATETAB, sizeof(CESERVER_REQ_HDR)+2*sizeof(DWORD));
+					pActIn->dwData[0] = pOut->GetAllTabs.Tabs[nMenuRc].ConsoleIdx;
+					pActIn->dwData[1] = pOut->GetAllTabs.Tabs[nMenuRc].TabIdx;
+					CESERVER_REQ* pActOut = ExecuteGuiCmd(FarHwnd, pActIn, FarHwnd);
+					ExecuteFreeResult(pActOut);
+					ExecuteFreeResult(pActIn);
+				}
+			}
+
+			SafeFree(pItems);
+		}
+	}
+	else
+	{
+		ShowMessage(CEGetAllTabsFailed, 0);
+	}
+
+	ExecuteFreeResult(pOut);
+	ExecuteFreeResult(pIn);
+}
+
+void CPluginBase::EditViewConsoleOutput(bool abView)
+{
+	// Открыть в редакторе вывод последней консольной программы
+	CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_GETOUTPUTFILE, sizeof(CESERVER_REQ_HDR)+sizeof(pIn->OutputFile.bUnicode));
+	if (!pIn) return;
+
+	pIn->OutputFile.bUnicode = (gFarVersion.dwVerMajor>=2);
+
+	CESERVER_REQ* pOut = ExecuteGuiCmd(FarHwnd, pIn, FarHwnd);
+
+	if (pOut)
+	{
+		if (pOut->OutputFile.szFilePathName[0])
+		{
+			bool lbRc = OpenEditor(pOut->OutputFile.szFilePathName, abView, true);
+
+			if (!lbRc)
+			{
+				DeleteFile(pOut->OutputFile.szFilePathName);
+			}
+		}
+
+		ExecuteFreeResult(pOut);
+	}
+
+	ExecuteFreeResult(pIn);
+}
+
+void CPluginBase::SwitchTabCommand(PluginMenuCommands cmd)
+{
+	CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_TABSCMD, sizeof(CESERVER_REQ_HDR)+sizeof(pIn->Data));
+	if (!pIn) return;
+
+	// Data[0] <== enum ConEmuTabCommand
+	switch (cmd)
+	{
+	case menu_SwitchTabVisible: // Показать/спрятать табы
+		pIn->Data[0] = ctc_ShowHide; break;
+	case menu_SwitchTabNext:
+		pIn->Data[0] = ctc_SwitchNext; break;
+	case menu_SwitchTabPrev:
+		pIn->Data[0] = ctc_SwitchPrev; break;
+	case menu_SwitchTabCommit:
+		pIn->Data[0] = ctc_SwitchCommit; break;
+	default:
+		_ASSERTE(FALSE && "Unsupported command");
+		pIn->Data[0] = ctc_ShowHide;
+	}
+
+	CESERVER_REQ* pOut = ExecuteGuiCmd(FarHwnd, pIn, FarHwnd);
+	if (pOut) ExecuteFreeResult(pOut);
+	ExecuteFreeResult(pIn);
 }
 
 int CPluginBase::ProcessSynchroEvent(int Event, void *Param)
