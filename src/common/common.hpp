@@ -2038,7 +2038,7 @@ struct CESERVER_REQ
 		CESERVER_REQ_STORECURDIR CurDir;
 	};
 
-	DWORD DataSize() { return this ? (hdr.cbSize - sizeof(hdr)) : 0; };
+	DWORD DataSize() { return (this && (hdr.cbSize >= sizeof(hdr))) ? (hdr.cbSize - sizeof(hdr)) : 0; };
 };
 
 
