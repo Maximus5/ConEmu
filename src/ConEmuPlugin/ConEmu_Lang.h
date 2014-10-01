@@ -1,4 +1,4 @@
-﻿
+
 #pragma once
 
 enum {
@@ -16,10 +16,13 @@ enum {
 	CEMenuPrevTab,
 	CEMenuCommitTab,
 	CEMenuShowTabsList,
+	CEMenuShowPanelsList,
 	CEMenuGuiMacro,
 	CEMenuAttach,
 	CEMenuDebug,
 	CEMenuConInfo,
+	CEMenuTitleTabs,
+	CEMenuTitlePanels,
 	CEGuiMacroTitle,
 	CEGuiMacroCommand,
 	CEGuiMacroResult,
@@ -36,6 +39,7 @@ enum {
 	CEInvalidConHwnd,
 	CEShellExecuteException,
 	CEGetAllTabsFailed,
+	CEGetAllPanelsFailed,
 	CEBkError_ExecFailed,
 	CEBkError_InvalidArg,
 	CEBkError_PluginForbidden,
