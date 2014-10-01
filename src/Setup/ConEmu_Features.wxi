@@ -102,6 +102,7 @@
         <ComponentRef Id="FontSize.lua3"/>
         <ComponentRef Id="ShiftEnter.lua3"/>
         <ComponentRef Id="TabList.lua3"/>
+        <ComponentRef Id="PanelList.lua3"/>
         <ComponentRef Id="Thumbnails.lua3"/>
         <ComponentRef Id="Thumbnails_KeyBar.xml.lua3"/>
         <ComponentRef Id="Editor.MsRClick.lua3"/>

@@ -76,6 +76,7 @@
 	<?define Guid.CtrlShiftT.lua3 = "4CA1CAF6-E314-4400-A916-30C1F9E5E464" ?>
 	<?define Guid.ShiftEnter.lua3 = "19995D8F-0DFD-4962-9AC0-41B9359CF047" ?>
 	<?define Guid.TabList.lua3 = "59681813-B723-42FE-AFAC-5EC191B61367" ?>
+	<?define Guid.PanelList.lua3 = "573560AB-9F1A-4380-A2A5-B6D6553E9DFB" ?>
 	<?define Guid.Editor.lua3 = "041B8FE0-AC07-495A-9983-A57EFA8DDD23" ?>
 	<?define Guid.FontSize.lua3 = "6828D3FE-C496-4210-A9E6-7997B9BD0B72" ?>
 	<?define Guid.Thumbnails.lua3 = "6198ECE1-5A9F-4A73-BDBD-D4D43234D520" ?>

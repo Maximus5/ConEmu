@@ -206,6 +206,9 @@
       <Component Id="TabList.lua3" Guid="$(var.Guid.TabList.lua3)" Win64="$(var.Win64)">
         <File Id="TabList.lua3" Source="..\..\Release\ConEmu\Far3_lua\ConEmu.TabList.lua"  KeyPath="yes" />
       </Component>
+      <Component Id="PanelList.lua3" Guid="$(var.Guid.PanelList.lua3)" Win64="$(var.Win64)">
+        <File Id="PanelList.lua3" Source="..\..\Release\ConEmu\Far3_lua\ConEmu.PanelsList.lua"  KeyPath="yes" />
+      </Component>
       <Component Id="Thumbnails.lua3" Guid="$(var.Guid.Thumbnails.lua3)" Win64="$(var.Win64)">
         <File Id="Thumbnails.lua3" Source="..\..\Release\ConEmu\Far3_lua\ConEmu.Thumbnails.lua"  KeyPath="yes" />
       </Component>
