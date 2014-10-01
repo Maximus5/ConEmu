@@ -136,6 +136,7 @@ public:
 	void ShowTabsList();
 	void EditViewConsoleOutput(bool abView);
 	void SwitchTabCommand(PluginMenuCommands cmd);
+	bool PrintText(LPCWSTR pszText);
 
 	bool cmd_OpenEditorLine(CESERVER_REQ_FAREDITOR *pCmd);
 	bool cmd_RedrawFarCall(CESERVER_REQ*& pCmdRet, CESERVER_REQ** ppResult);

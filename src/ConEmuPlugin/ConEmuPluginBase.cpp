@@ -5437,3 +5437,51 @@ bool CPluginBase::IsCurrentTabModal()
 
 	return false;
 }
+
+bool CPluginBase::PrintText(LPCWSTR pszText)
+{
+	bool lbRc = false;
+	LPCWSTR pSrc = pszText;
+	// Резервирование места под экранированные символы + макрос
+	INT_PTR cchMax = 20 + 2*lstrlen(pszText); //-V112
+	wchar_t* pszMacro = (wchar_t*)malloc(cchMax*sizeof(*pszMacro));
+	if (!pszMacro)
+	{
+		_ASSERTE(pszMacro!=NULL)
+	}
+	else
+	{
+		// Добавим префикс "^", чтобы не вообще посылать "нажатия кнопок" в плагины
+		if (gFarVersion.dwVerMajor==1)
+			_wcscpy_c(pszMacro, cchMax, L"@^$TEXT \"");
+		else
+			_wcscpy_c(pszMacro, cchMax, L"@^print(\"");
+
+		wchar_t* pDst = pszMacro + lstrlen(pszMacro);
+		while (*pSrc)
+		{
+			// Экранирование слешей и кавычек
+			switch (*pSrc)
+			{
+			case L'\\':
+			case L'"':
+				*(pDst++) = L'\\';
+				break;
+			}
+			*(pDst++) = *(pSrc++);
+		}
+		*pDst = 0;
+
+		if (gFarVersion.dwVerMajor==1)
+			_wcscat_c(pszMacro, cchMax, L"\"");
+		else
+			_wcscat_c(pszMacro, cchMax, L"\")");
+
+		PostMacro(pszMacro, NULL);
+		free(pszMacro);
+
+		lbRc = true;
+	}
+
+	return lbRc;
+}
