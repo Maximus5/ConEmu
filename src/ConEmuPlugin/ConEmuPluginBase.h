@@ -134,6 +134,7 @@ public:
 	void ProcessDragTo();
 	bool IsCurrentTabModal();
 	void ShowTabsList();
+	void ShowPanelsList();
 	void EditViewConsoleOutput(bool abView);
 	void SwitchTabCommand(PluginMenuCommands cmd);
 	bool PrintText(LPCWSTR pszText);

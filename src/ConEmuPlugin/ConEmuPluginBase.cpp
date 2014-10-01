@@ -171,6 +171,7 @@ PluginAndMenuCommands gpPluginMenu[menu_Last] =
 	{CEMenuPrevTab, menu_SwitchTabPrev, pcc_SwitchTabPrev},
 	{CEMenuCommitTab, menu_SwitchTabCommit, pcc_SwitchTabCommit},
 	{CEMenuShowTabsList, menu_ShowTabsList, pcc_ShowTabsList},
+	{CEMenuShowPanelsList, menu_ShowPanelsList, pcc_ShowPanelsList},
 	{0, menu_Separator2},
 	{CEMenuGuiMacro, menu_ConEmuMacro}, // должен вызываться "по настоящему", а не через callplugin
 	{0, menu_Separator3},
@@ -765,6 +766,11 @@ void CPluginBase::ShowPluginMenu(PluginCallCommands nCallID /*= pcc_None*/)
 			ShowTabsList();
 		} break;
 
+		case menu_ShowPanelsList:
+		{
+			ShowPanelsList();
+		} break;
+
 		case menu_ConEmuMacro: // Execute GUI macro (gialog)
 		{
 			GuiMacroDlg();
@@ -866,6 +872,54 @@ void CPluginBase::ShowTabsList()
 	else
 	{
 		ShowMessage(CEGetAllTabsFailed, 0);
+	}
+
+	ExecuteFreeResult(pOut);
+	ExecuteFreeResult(pIn);
+}
+
+void CPluginBase::ShowPanelsList()
+{
+	CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_GETALLPANELS, sizeof(CESERVER_REQ_HDR));
+	CESERVER_REQ* pOut = ExecuteGuiCmd(FarHwnd, pIn, FarHwnd);
+
+	if ((pOut->DataSize() > 0) && (pOut->Panels.iCount > 0))
+	{
+		INT_PTR nMenuRc = -1;
+
+		int AllCount = pOut->Panels.iCount;
+		ConEmuPluginMenuItem* pItems = (ConEmuPluginMenuItem*)calloc(AllCount,sizeof(*pItems));
+		if (pItems)
+		{
+			LPCWSTR pszDir = pOut->Panels.szDirs;
+
+			for (int i = 0; i < AllCount; i++)
+			{
+				pItems[i].Selected = (pOut->Panels.iCurrent == i);
+				//pItems[i].Checked = false;
+				//pItems[i].Disabled = false;
+				pItems[i].MsgText = pszDir;
+				pItems[i].UserData = (INT_PTR)pszDir;
+				pszDir += lstrlen(pszDir)+1;
+			}
+
+			nMenuRc = ShowPluginMenu(pItems, AllCount, CEMenuTitlePanels);
+
+			if ((nMenuRc >= 0) && (nMenuRc < AllCount))
+			{
+				pszDir = (LPCWSTR)pItems[nMenuRc].UserData;
+				if (pszDir)
+				{
+					PrintText(pszDir);
+				}
+			}
+
+			SafeFree(pItems);
+		}
+	}
+	else
+	{
+		ShowMessage(CEGetAllPanelsFailed, 0);
 	}
 
 	ExecuteFreeResult(pOut);

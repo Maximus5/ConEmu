@@ -1313,6 +1313,37 @@ CESERVER_REQ* CRealServer::cmdGetAllTabs(LPVOID pInst, CESERVER_REQ* pIn, UINT n
 	return pOut;
 }
 
+CESERVER_REQ* CRealServer::cmdGetAllPanels(LPVOID pInst, CESERVER_REQ* pIn, UINT nDataSize)
+{
+	CESERVER_REQ* pOut = NULL;
+
+	DEBUGSTRCMD(L"GUI recieved CECMD_GETALLPANELS\n");
+
+	wchar_t* pszDirs = NULL;
+	int iCount = 0, iCurrent = 0;
+	size_t cchSize = CConEmuCtrl::GetOpenedPanels(pszDirs, iCount, iCurrent);
+
+	if (cchSize && pszDirs)
+	{
+		size_t RetSize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_GETALLPANELS)+(cchSize*sizeof(*pszDirs));
+		pOut = ExecuteNewCmd(pIn->hdr.nCmd, RetSize);
+		if (pOut)
+		{
+			pOut->Panels.iCount = iCount;
+			pOut->Panels.iCurrent = iCurrent;
+			memmove(pOut->Panels.szDirs, pszDirs, cchSize*sizeof(*pszDirs));
+		}
+	}
+	else
+	{
+		pOut = ExecuteNewCmd(pIn->hdr.nCmd, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_GETALLPANELS));
+	}
+
+	SafeFree(pszDirs);
+
+	return pOut;
+}
+
 CESERVER_REQ* CRealServer::cmdActivateTab(LPVOID pInst, CESERVER_REQ* pIn, UINT nDataSize)
 {
 	CESERVER_REQ* pOut = NULL;
@@ -1536,6 +1567,9 @@ BOOL CRealServer::ServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &
 		break;
 	case CECMD_GETALLTABS:
 		pOut = pRSrv->cmdGetAllTabs(pInst, pIn, nDataSize);
+		break;
+	case CECMD_GETALLPANELS:
+		pOut = pRSrv->cmdGetAllPanels(pInst, pIn, nDataSize);
 		break;
 	case CECMD_ACTIVATETAB:
 		pOut = pRSrv->cmdActivateTab(pInst, pIn, nDataSize);

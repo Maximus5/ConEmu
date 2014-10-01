@@ -81,6 +81,7 @@ enum PluginCallCommands
 	pcc_StartDebug = 8,
 	pcc_ConsoleInfo = 9,
 	pcc_ShowTabsList = 10,
+	pcc_ShowPanelsList = 11,
 	//
 	pcc_LastAuto,
 	//
@@ -98,6 +99,7 @@ enum PluginMenuCommands
 	menu_SwitchTabPrev,
 	menu_SwitchTabCommit,
 	menu_ShowTabsList,
+	menu_ShowPanelsList,
 	menu_Separator2,
 	menu_ConEmuMacro, // должен вызываться "по настоящему", а не через callplugin
 	menu_Separator3,

@@ -12991,6 +12991,12 @@ wrap:
 	return szDir.IsEmpty() ? NULL : (LPCWSTR)szDir;
 }
 
+void CRealConsole::GetPanelDirs(CmdArg& szActiveDir, CmdArg& szPassive)
+{
+	szActiveDir.Set(ms_CurWorkDir);
+	szPassive.Set(isFar() ? ms_CurPassiveDir : L"");
+}
+
 void CRealConsole::StoreCurWorkDir(CESERVER_REQ_STORECURDIR* pNewCurDir)
 {
 	if (!pNewCurDir || ((pNewCurDir->iActiveCch <= 0) && (pNewCurDir->iPassiveCch <= 0)))

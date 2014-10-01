@@ -56,6 +56,7 @@ public:
 
 	static void TabCommand(ConEmuTabCommand nTabCmd); // ctc_ShowHide, ctc_SwitchNext, и т.п.
 	static size_t GetOpenedTabs(CESERVER_REQ_GETALLTABS::TabInfo*& pTabs);
+	static size_t GetOpenedPanels(wchar_t*& pszDirs, int& iCount, int& iCurrent);
 
 	static void ChooseTabFromMenu(BOOL abFirstTabOnly, POINT pt, DWORD Align /*= TPM_CENTERALIGN|TPM_VCENTERALIGN*/);
 

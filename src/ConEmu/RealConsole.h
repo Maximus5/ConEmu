@@ -585,6 +585,7 @@ class CRealConsole
 		int GetStatusLineCount(int nLeftPanelEdge);
 		LPCWSTR GetFileFromConsole(LPCWSTR asSrc, CmdArg& szFull);
 		LPCWSTR GetConsoleCurDir(CmdArg& szDir);
+		void GetPanelDirs(CmdArg& szActiveDir, CmdArg& szPassive);
 
 	public:
 		BOOL IsConsoleThread();

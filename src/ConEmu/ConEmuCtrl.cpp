@@ -1516,6 +1516,49 @@ size_t CConEmuCtrl::GetOpenedTabs(CESERVER_REQ_GETALLTABS::TabInfo*& pTabs)
 	return cchCount;
 }
 
+size_t CConEmuCtrl::GetOpenedPanels(wchar_t*& pszDirs, int& iCount, int& iCurrent)
+{
+	CmdArg szActiveDir, szPassive;
+	CVConGuard VCon;
+	MArray<wchar_t*> Dirs;
+	size_t cchAllLen = 1;
+	iCount = iCurrent = 0;
+
+	for (int V = 0; CVConGroup::GetVCon(V, &VCon); V++)
+	{
+		VCon->RCon()->GetPanelDirs(szActiveDir, szPassive);
+		if (CVConGroup::isActive(VCon.VCon(), false))
+			iCurrent = iCount;
+		LPCWSTR psz[] = {szActiveDir.ms_Arg, szPassive.ms_Arg};
+		for (int i = 0; i <= 1; i++)
+		{
+			if (psz[i] && psz[i][0])
+			{
+				int iLen = lstrlen(psz[i]);
+				cchAllLen += (iLen+1);
+				Dirs.push_back(lstrdup(psz[i]));
+				iCount++;
+			}
+		}
+	}
+
+	_ASSERTE(pszDirs == NULL);
+	pszDirs = (wchar_t*)malloc(cchAllLen*sizeof(*pszDirs));
+	if (!pszDirs)
+		return 0;
+
+	wchar_t* psz = pszDirs;
+	for (int i = 0; i < Dirs.size(); i++)
+	{
+		wchar_t* p = Dirs[i];
+		_wcscpy_c(psz, cchAllLen, p);
+		psz += lstrlen(psz)+1;
+		free(p);
+	}
+
+	return cchAllLen;
+}
+
 bool CConEmuCtrl::key_DeleteWordToLeft(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
 	if (!pRCon || pRCon->GuiWnd())
