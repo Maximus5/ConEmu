@@ -425,14 +425,19 @@ void LoadPanelItemInfoW2800(CeFullPanelInfo* pi, INT_PTR nItem)
 	                   ppi->NumberOfLinks);
 	// ppi не освобождаем - это ссылка на pi->pFarTmpBuf
 
+	nSize = 0;
+	FarGetPluginPanelItemInfo gppi = {sizeof(gppi)};
+	// FCTL_GETPANELITEMINFO
 	if (gFarVersion.Bis)
+		nSize = InfoW2800->PanelControl(hPanel, (FILE_CONTROL_COMMANDS)1001, (int)nItem, &gppi);
+	#ifdef _DEBUG
+	else if (gFarVersion.dwBuild >= 4127) // Mantis#1886
+		nSize = InfoW2800->PanelControl(hPanel, (FILE_CONTROL_COMMANDS)36, (int)nItem, &gppi);
+	#endif
+	// Succeeded or not?
+	if (nSize == sizeof(FarGetPluginPanelItemInfo))
 	{
-		FarGetPluginPanelItemInfo gppi = {sizeof(gppi)};
-		nSize = InfoW2800->PanelControl(hPanel, FCTL_GETPANELITEMINFO, (int)nItem, &gppi);
-		if (nSize)
-		{
-			pi->BisItem2CeItem(nItem, TRUE, gppi.Color.Flags, gppi.Color.ForegroundColor, gppi.Color.BackgroundColor, gppi.PosX, gppi.PosY);
-		}
+		pi->BisItem2CeItem(nItem, TRUE, gppi.Color.Flags, gppi.Color.ForegroundColor, gppi.Color.BackgroundColor, gppi.PosX, gppi.PosY);
 	}
 }
 
