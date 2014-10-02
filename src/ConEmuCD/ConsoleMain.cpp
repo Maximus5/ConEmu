@@ -5811,7 +5811,7 @@ void SendStarted()
 			pIn->StartStop.hServerProcessHandle = (u64)(DWORD_PTR)DuplicateProcessHandle(nGuiPID);
 
 			// послать CECMD_CMDSTARTSTOP/sst_ServerStart в GUI
-			pOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd);
+			pOut = ExecuteGuiCmd(ghConEmuWnd, pIn, ghConWnd);
 		}
 		else if (gnRunMode == RM_ALTSERVER)
 		{
