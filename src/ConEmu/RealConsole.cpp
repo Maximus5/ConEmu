@@ -4700,7 +4700,7 @@ BOOL CRealConsole::OpenConsoleEventPipe()
 				return FALSE;
 			}
 
-			if (!isConsoleClosing())
+			if (isConsoleClosing())
 				break;
 
 			continue;
