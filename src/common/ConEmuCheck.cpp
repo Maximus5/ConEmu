@@ -228,7 +228,9 @@ HANDLE ExecuteOpenPipe(const wchar_t* szPipeName, wchar_t (&szErr)[MAX_PATH*2], 
 	DWORD dwStartTick = GetTickCount();
 	DWORD nSleepError = 10;
 	// допустимое количество обломов, отличных от ERROR_PIPE_BUSY. после каждого - Sleep(nSleepError);
-	int nTries = 10;
+	// Увеличим допустимое количество попыток, иначе облом наступает раньше секунды ожидания
+	const int nDefaultTries = 100;
+	int nTries = nDefaultTries;
 	// nTimeout должен ограничивать ВЕРХНЮЮ границу времени ожидания
 	_ASSERTE(EXECUTE_CMD_OPENPIPE_TIMEOUT >= nTimeout);
 	DWORD nOpenPipeTimeout = nTimeout ? min(nTimeout,EXECUTE_CMD_OPENPIPE_TIMEOUT) : EXECUTE_CMD_OPENPIPE_TIMEOUT;
@@ -327,7 +329,7 @@ HANDLE ExecuteOpenPipe(const wchar_t* szPipeName, wchar_t (&szErr)[MAX_PATH*2], 
 			int iBtn = MessageBox(NULL, szErr, L"Pipe open failed with timeout!", MB_ICONSTOP|MB_SYSTEMMODAL|MB_RETRYCANCEL);
 			if (iBtn == IDRETRY)
 			{
-				nTries = 1;
+				nTries = nDefaultTries;
 				continue;
 			}
 			#endif
