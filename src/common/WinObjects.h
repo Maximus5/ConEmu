@@ -70,6 +70,7 @@ bool IsUserAdmin();
 bool GetLogonSID (HANDLE hToken, wchar_t **ppszSID);
 bool IsWine();
 bool IsWinPE();
+bool IsWin10();
 bool IsDbcs();
 bool IsWindows64();
 bool IsHwFullScreenAvailable();

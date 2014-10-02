@@ -849,6 +849,19 @@ bool IsWinPE()
 	return (ibIsWinPE == 1);
 }
 
+bool IsWin10()
+{
+	static int ibIsWin10 = 0;
+	if (!ibIsWin10)
+	{
+		#define _WIN32_WINNT_WIN10 0x604
+		OSVERSIONINFOEXW osvi = {sizeof(osvi), HIBYTE(_WIN32_WINNT_WIN10), LOBYTE(_WIN32_WINNT_WIN10)};
+		DWORDLONG const dwlConditionMask = VerSetConditionMask(VerSetConditionMask(0, VER_MAJORVERSION, VER_GREATER_EQUAL), VER_MINORVERSION, VER_GREATER_EQUAL);
+		ibIsWin10 = VerifyVersionInfoW(&osvi, VER_MAJORVERSION | VER_MINORVERSION, dwlConditionMask) ? 1 : -1;
+	}
+	return (ibIsWin10 == 1);
+}
+
 bool IsDbcs()
 {
 	bool bIsDBCS = (GetSystemMetrics(SM_DBCSENABLED) != 0);
