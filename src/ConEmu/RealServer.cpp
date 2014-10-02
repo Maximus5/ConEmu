@@ -1503,7 +1503,7 @@ BOOL CRealServer::ServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &
 
 	DWORD dwTimeStart = timeGetTime();
 
-	int nDataSize = pIn->hdr.cbSize - sizeof(CESERVER_REQ_HDR);
+	int nDataSize = pIn->DataSize();
 
 	// Все данные из пайпа получены, обрабатываем команду и возвращаем (если нужно) результат
 
