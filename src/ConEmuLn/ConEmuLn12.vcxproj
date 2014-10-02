@@ -625,6 +625,7 @@ if exist C:\Utils\FAR170\Plugins\ConEmu\Lines\ConEmuLn.dll copy "$(TargetDir)Con
       <MapExports>true</MapExports>
       <SubSystem>Windows</SubSystem>
       <TargetMachine>MachineX86</TargetMachine>
+      <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
     <PostBuildEvent>
       <Command>copy "$(ProjectDir)..\..\Release\plugins\ConEmu\Lines\ConEmuLn_*.lng" "$(TargetDir)"</Command>

@@ -93,6 +93,9 @@
     <ClCompile Include="ConEmuPluginBase.cpp">
       <Filter>0 - Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\common\MSetter.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="export.release.def">
@@ -207,6 +210,9 @@
     </ClInclude>
     <ClInclude Include="..\common\pluginW2800.hpp">
       <Filter>Far-Api</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\MSetter.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

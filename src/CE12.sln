@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2013
-VisualStudioVersion = 12.0.21005.1
+# Visual Studio Express 2013 for Windows Desktop
+VisualStudioVersion = 12.0.30723.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ConEmu", "ConEmu\ConEmu12.vcxproj", "{EEE25AC6-D94D-472D-8D4A-3C6C382CFD3D}"
 EndProject
@@ -361,7 +361,7 @@ Global
 		{A66F6175-6D1A-4092-A669-64E9C8C0B7D7}.Debug_R|Mixed Platforms.ActiveCfg = Debug_R|Win32
 		{A66F6175-6D1A-4092-A669-64E9C8C0B7D7}.Debug_R|Mixed Platforms.Build.0 = Debug_R|Win32
 		{A66F6175-6D1A-4092-A669-64E9C8C0B7D7}.Debug_R|Win32.ActiveCfg = Debug_R|Win32
-		{A66F6175-6D1A-4092-A669-64E9C8C0B7D7}.Debug_R|x64.ActiveCfg = Debug_R|x64
+		{A66F6175-6D1A-4092-A669-64E9C8C0B7D7}.Debug_R|x64.ActiveCfg = Debug_R|Win32
 		{A66F6175-6D1A-4092-A669-64E9C8C0B7D7}.Instrument|Mixed Platforms.ActiveCfg = Instrument|Win32
 		{A66F6175-6D1A-4092-A669-64E9C8C0B7D7}.Instrument|Mixed Platforms.Build.0 = Instrument|Win32
 		{A66F6175-6D1A-4092-A669-64E9C8C0B7D7}.Instrument|Win32.ActiveCfg = Instrument|Win32
@@ -406,7 +406,7 @@ Global
 		{64DB4963-B19E-43E2-B6A5-C659F632E655}.Debug_R|Mixed Platforms.ActiveCfg = Debug_R|Win32
 		{64DB4963-B19E-43E2-B6A5-C659F632E655}.Debug_R|Mixed Platforms.Build.0 = Debug_R|Win32
 		{64DB4963-B19E-43E2-B6A5-C659F632E655}.Debug_R|Win32.ActiveCfg = Debug_R|Win32
-		{64DB4963-B19E-43E2-B6A5-C659F632E655}.Debug_R|x64.ActiveCfg = Debug_R|x64
+		{64DB4963-B19E-43E2-B6A5-C659F632E655}.Debug_R|x64.ActiveCfg = Debug_R|Win32
 		{64DB4963-B19E-43E2-B6A5-C659F632E655}.Instrument|Mixed Platforms.ActiveCfg = Instrument|Win32
 		{64DB4963-B19E-43E2-B6A5-C659F632E655}.Instrument|Mixed Platforms.Build.0 = Instrument|Win32
 		{64DB4963-B19E-43E2-B6A5-C659F632E655}.Instrument|Win32.ActiveCfg = Instrument|Win32
@@ -556,7 +556,7 @@ Global
 		{0F3AA494-98BA-425A-941D-AC18C29EFC15}.Debug_R|Mixed Platforms.ActiveCfg = Debug_R|Win32
 		{0F3AA494-98BA-425A-941D-AC18C29EFC15}.Debug_R|Mixed Platforms.Build.0 = Debug_R|Win32
 		{0F3AA494-98BA-425A-941D-AC18C29EFC15}.Debug_R|Win32.ActiveCfg = Debug_R|Win32
-		{0F3AA494-98BA-425A-941D-AC18C29EFC15}.Debug_R|x64.ActiveCfg = Debug_R|x64
+		{0F3AA494-98BA-425A-941D-AC18C29EFC15}.Debug_R|x64.ActiveCfg = Debug_R|Win32
 		{0F3AA494-98BA-425A-941D-AC18C29EFC15}.Instrument|Mixed Platforms.ActiveCfg = Instrument|Win32
 		{0F3AA494-98BA-425A-941D-AC18C29EFC15}.Instrument|Mixed Platforms.Build.0 = Instrument|Win32
 		{0F3AA494-98BA-425A-941D-AC18C29EFC15}.Instrument|Win32.ActiveCfg = Instrument|Win32
@@ -602,7 +602,7 @@ Global
 		{5BF285B7-DAB5-4B1E-89FE-85CDCB2A8EC7}.Debug_R|Mixed Platforms.ActiveCfg = Debug_R|Win32
 		{5BF285B7-DAB5-4B1E-89FE-85CDCB2A8EC7}.Debug_R|Mixed Platforms.Build.0 = Debug_R|Win32
 		{5BF285B7-DAB5-4B1E-89FE-85CDCB2A8EC7}.Debug_R|Win32.ActiveCfg = Debug_R|Win32
-		{5BF285B7-DAB5-4B1E-89FE-85CDCB2A8EC7}.Debug_R|x64.ActiveCfg = Debug_R|x64
+		{5BF285B7-DAB5-4B1E-89FE-85CDCB2A8EC7}.Debug_R|x64.ActiveCfg = Debug_R|Win32
 		{5BF285B7-DAB5-4B1E-89FE-85CDCB2A8EC7}.Instrument|Mixed Platforms.ActiveCfg = Instrument|Win32
 		{5BF285B7-DAB5-4B1E-89FE-85CDCB2A8EC7}.Instrument|Mixed Platforms.Build.0 = Instrument|Win32
 		{5BF285B7-DAB5-4B1E-89FE-85CDCB2A8EC7}.Instrument|Win32.ActiveCfg = Instrument|Win32
