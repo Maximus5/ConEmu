@@ -4646,6 +4646,8 @@ BOOL CRealConsole::OpenConsoleEventPipe()
 	BOOL fSuccess;
 	DWORD dwErr = 0, dwWait = 0;
 
+	DEBUGTEST(DWORD dwTick0 = GetTickCount());
+
 	while ((nSteps--) > 0)
 	{
 		mh_ConInputPipe = CreateFile(
@@ -4729,14 +4731,14 @@ BOOL CRealConsole::OpenConsoleEventPipe()
 	{
 		// Не дождались появления пайпа. Возможно, ConEmuC еще не запустился
 		//DEBUGSTRINPUT(L" - mh_ConInputPipe not found!\n");
-#ifdef _DEBUG
+		#ifdef _DEBUG
 		DWORD dwTick1 = GetTickCount();
 		struct ServerClosing sc1 = m_ServerClosing;
-#endif
+		#endif
 
 		if (!isConsoleClosing())
 		{
-#ifdef _DEBUG
+			#ifdef _DEBUG
 			DWORD dwTick2 = GetTickCount();
 			struct ServerClosing sc2 = m_ServerClosing;
 
@@ -4748,7 +4750,8 @@ BOOL CRealConsole::OpenConsoleEventPipe()
 
 			DWORD dwTick3 = GetTickCount();
 			struct ServerClosing sc3 = m_ServerClosing;
-#endif
+			#endif
+
 			int nLen = _tcslen(ms_ConEmuCInput_Pipe) + 128;
 			wchar_t* pszErrMsg = (wchar_t*)malloc(nLen*sizeof(wchar_t));
 			_wsprintf(pszErrMsg, SKIPLEN(nLen) L"ConEmuCInput not found, ErrCode=0x%08X\n%s", dwErr, ms_ConEmuCInput_Pipe);
