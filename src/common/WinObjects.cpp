@@ -1541,6 +1541,12 @@ COORD MyGetLargestConsoleWindowSize(HANDLE hConsoleOutput)
 		crMax.X = 255;
 		crMax.Y = 255;
 	}
+	else if (IsWin10())
+	{
+		// Windows 10 Preview has a new bug in GetLargestConsoleWindowSize
+		crMax.X = max(crMax.X,555);
+		crMax.Y = max(crMax.Y,555);
+	}
 	return crMax;
 }
 
