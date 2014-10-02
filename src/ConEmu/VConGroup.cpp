@@ -3245,6 +3245,28 @@ CRealConsole* CVConGroup::AttachRequestedGui(DWORD anServerPID, LPCWSTR asAppFil
 	return NULL;
 }
 
+bool CVConGroup::GetVConBySrvPID(DWORD anServerPID, CVConGuard* pVCon)
+{
+	bool bFound = false;
+	CRealConsole* pRCon;
+
+	for (size_t i = 0; i < countof(gp_VCon); i++)
+	{
+		CVConGuard VCon(gp_VCon[i]);
+		if (VCon.VCon() && (pRCon = VCon->RCon()) != NULL)
+		{
+			if (pRCon->GetServerPID() == anServerPID)
+			{
+				if (pVCon)
+					pVCon->Attach(VCon.VCon());
+				bFound = true;
+			}
+		}
+	}
+
+	return bFound;
+}
+
 // Вернуть общее количество процессов по всем консолям
 DWORD CVConGroup::CheckProcesses()
 {

@@ -188,6 +188,7 @@ public:
 	static BOOL AttachRequested(HWND ahConWnd, const CESERVER_REQ_STARTSTOP* pStartStop, CESERVER_REQ_SRVSTARTSTOPRET* pRet);
 	static int GetConCount(bool bNoDetached = false);
 	static int ActiveConNum();
+	static bool GetVConBySrvPID(DWORD anServerPID, CVConGuard* pVCon = NULL);
 
 	static void LogString(LPCSTR asText, BOOL abShowTime = FALSE);
 	static void LogString(LPCWSTR asText, BOOL abShowTime = FALSE);
