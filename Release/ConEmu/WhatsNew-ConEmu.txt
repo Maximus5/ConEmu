@@ -12,6 +12,10 @@ Votes and awards (vote for ConEmu, if you please)
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+2014.10.02
+[*] Preparing for Windows 10.
+
+
 2014.10.01
 [*] ConEmuPlugin was rewritten using classes (Far versioning).
 [*] Don't activate Far Panels while Ctrl+LClick in Far Editor window.
