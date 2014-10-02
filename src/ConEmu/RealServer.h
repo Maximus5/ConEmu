@@ -45,6 +45,8 @@ public:
 protected:
 	CRealConsole* mp_RCon;
 
+	friend class CGuiServer;
+
 	//static DWORD WINAPI RConServerThread(LPVOID lpvParam);
 	//HANDLE mh_RConServerThreads[MAX_SERVER_THREADS], mh_ActiveRConServerThread;
 	//DWORD  mn_RConServerThreadsId[MAX_SERVER_THREADS];

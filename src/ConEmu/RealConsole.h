@@ -795,6 +795,7 @@ class CRealConsole
 		//void UpdateSelection(); // обновить на экране
 
 		friend class CRealServer;
+		friend class CGuiServer;
 		CRealServer m_RConServer;
 
 		//void ApplyConsoleInfo(CESERVER_REQ* pInfo);
