@@ -12,6 +12,21 @@ Votes and awards (vote for ConEmu, if you please)
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+2014.10.01
+[*] ConEmuPlugin was rewritten using classes (Far versioning).
+[*] Don't activate Far Panels while Ctrl+LClick in Far Editor window.
+[*] Issue 1717: Auto save/restore opened tabs renamed labels.
+[*] AnsiEscapeCodes: 'ESC [ 90..97 m' high intensity foreground color, 'ESC [ 100..107' high intensity background color.
+[*] Issue 1715: 'New window'+'Run as administrator' was created non-elevated window.
+[*] Don't autoshow scrollbar on mouse hover while ConEmu is not in foreground.
+[*] Far plugin. F11 -> 'ConEmu' -> 'Show all panels list'. Press enter to 'print' selected path into current Far window.
+    Use macro (ConEmu.PanelsList.lua) to simplify menu call.
+    Plugin.Call("4b675d80-1d4a-4ea9-8436-fdc23f2fc14b",11)
+[*] Issue 1590: (workaround) Parameter 'StartCreateDelay' may be changed via settings (xml/reg). DWORD 10..10000, default 100.
+[*] Debug. Some improvement in showing CP and console modes.
+[*] Debug. Verbose WM_DEADCHAR warning.
+
+
 2014.09.23
 [*] Debug purpose switch: ConEmu.exe -LoadRegistry.
 [*] Support automatic find/loading of ".ConEmu.xml" (dot prefixed) config file.

@@ -213,7 +213,7 @@ public:
 	virtual bool    GetFarRect(SMALL_RECT& rcFar) = 0;
 	virtual int     GetMacroArea() = 0;
 	virtual LPCWSTR GetMsg(int aiMsg, wchar_t* psMsg = NULL, size_t cchMsgMax = 0) = 0;
-	virtual LPWSTR  GetPanelDir(GetPanelDirFlags Flags, wchar_t* pszBuffer = NULL, INT_PTR cchBufferMax = 0) = 0;
+	virtual LPWSTR  GetPanelDir(GetPanelDirFlags Flags, wchar_t* pszBuffer = NULL, int cchBufferMax = 0) = 0;
 	virtual bool    GetPanelInfo(GetPanelDirFlags Flags, CEPanelInfo* pInfo) = 0;
 	virtual bool    GetPanelItemInfo(const CEPanelInfo& PnlInfo, bool bSelected, INT_PTR iIndex, WIN32_FIND_DATAW& Info, wchar_t** ppszFullPathName) = 0;
 	virtual void    GetPluginInfoPtr(void* piv) = 0; // PluginInfo* versioned
