@@ -2088,6 +2088,26 @@ bool CTabBarClass::GetActiveTabRect(RECT* rcTab)
 	return bSet;
 }
 
+int CTabBarClass::GetTabFromPoint(LPPOINT pptCur, bool bScreen /*= true*/, bool bOverTabHitTest /*= true*/)
+{
+	if (!IsTabsShown())
+		return -1;
+
+	POINT ptCur = {};
+	if (pptCur)
+	{
+		ptCur = *pptCur;
+	}
+	else
+	{
+		GetCursorPos(&ptCur);
+		bScreen = true;
+	}
+
+	int iTab = mp_Rebar->GetTabFromPoint(ptCur, bScreen, bOverTabHitTest);
+	return iTab;
+}
+
 bool CTabBarClass::Toolbar_GetBtnRect(int nCmd, RECT* rcBtnRect)
 {
 	if (!IsTabsShown())

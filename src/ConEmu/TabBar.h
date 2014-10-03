@@ -103,7 +103,6 @@ class CTabBarClass
 		bool mb_InKeySwitching;
 		int GetNextTab(bool abForward, bool abAltStyle=false);
 		int GetNextTabHelper(int idxFrom, bool abForward, bool abRecent);
-		int GetCurSel();
 		int GetItemCount();
 		void DeleteItem(int I);
 		enum UpdateAddTabFlags {
@@ -147,8 +146,6 @@ class CTabBarClass
 
 		BOOL mb_DisableRedraw;
 
-
-		bool GetVConFromTab(int nTabIdx, CVConGuard* rpVCon, DWORD* rpWndIndex);
 		int  GetFirstLastVConTab(CVirtualConsole* pVCon, bool bFirst, int nFromTab = -1);
 
 	public:
@@ -161,9 +158,12 @@ class CTabBarClass
 		int  CreateTabIcon(LPCWSTR asIconDescr, bool bAdmin, LPCWSTR asWorkDir);
 		void Deactivate(BOOL abPreSyncConsole=FALSE);
 		bool GetActiveTabRect(RECT* rcTab);
+		int  GetCurSel();
 		RECT GetMargins();
 		bool GetRebarClientRect(RECT* rc);
 		int  GetTabbarHeight();
+		int  GetTabFromPoint(LPPOINT pptCur, bool bScreen = true, bool bOverTabHitTest = true);
+		bool GetVConFromTab(int nTabIdx, CVConGuard* rpVCon, DWORD* rpWndIndex);
 		void Invalidate();
 		bool IsTabsActive();
 		bool IsTabsShown();
