@@ -277,12 +277,20 @@ CVirtualConsole* CVConGroup::CreateVCon(RConStartArgs *args, CVirtualConsole*& p
 	{
 		ppVConI = NULL;
 		bool bWasValid = isValid(pVCon);
+
+		if (!bWasValid)
+		{
+			CVConGroup* pClosedGroup = ((CVConGroup*)pVCon->mp_Group);
+			pClosedGroup->RemoveGroup();
+		}
+
 		CVConGroup::OnVConClosed(pVCon);
+
 		if (!bWasValid)
 		{
 			// If the VCon was not valid before OnVConClosed, it will not be released
 			// But we need to release it here to avoid mem leaks
-			_ASSERTE(pVCon->RefCount() == 1);
+			// _ASSERTE(pVCon->RefCount() == 1); -- that may not be true. It can be temporarily locked in other threads (from isVisible calls for ex).
 			pVCon->Release();
 		}
 		else
@@ -2642,10 +2650,12 @@ void CVConGroup::OnVConClosed(CVirtualConsole* apVCon)
 	bool bDbg1 = false, bDbg2 = false, bDbg3 = false, bDbg4 = false;
 	int iDbg1 = -100, iDbg2 = -100, iDbg3 = -100;
 	CVConGroup* pClosedGroup = NULL;
+	bool bInvalidVCon = false;
 
 	if (!isValid(apVCon) || apVCon->isAlreadyDestroyed())
 	{
 		ShutdownGuiStep(L"OnVConClosed - was already closed");
+		bInvalidVCon = true;
 		goto wrap;
 	}
 
