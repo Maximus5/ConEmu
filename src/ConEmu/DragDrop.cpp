@@ -1708,7 +1708,6 @@ HRESULT STDMETHODCALLTYPE CDragDrop::DragEnter(IDataObject * pDataObject,DWORD g
 
 	CheckIsUpdatePackage(pDataObject);
 
-	//bool bNeedLoadImg = false;
 
 	// При "DragEnter" считывать информацию из фара нужно всегда
 	if (gpSet->isDropEnabled /*&& !mb_selfdrag*/ /*&& NeedRefreshToInfo(pt)*/)
