@@ -51,18 +51,18 @@ CBaseDropTarget::~CBaseDropTarget()
 {
 }
 
-HRESULT STDMETHODCALLTYPE CBaseDropTarget::DragEnter(IDataObject * pDataObject,DWORD grfKeyState,POINTL pt,DWORD * pdwEffect)
+HRESULT STDMETHODCALLTYPE CBaseDropTarget::DragEnter(IDataObject * pDataObject, DWORD grfKeyState, POINTL pt, DWORD * pdwEffect)
 {
 	return 0;
 }
 
-HRESULT STDMETHODCALLTYPE CBaseDropTarget::DragOver(DWORD grfKeyState,POINTL pt,DWORD * pdwEffect)
+HRESULT STDMETHODCALLTYPE CBaseDropTarget::DragOver(DWORD grfKeyState, POINTL pt, DWORD * pdwEffect)
 {
 	return 0;
 }
 
 
-HRESULT STDMETHODCALLTYPE CBaseDropTarget::Drop(IDataObject * pDataObject,DWORD grfKeyState,POINTL pt,DWORD * pdwEffect)
+HRESULT STDMETHODCALLTYPE CBaseDropTarget::Drop(IDataObject * pDataObject, DWORD grfKeyState, POINTL pt, DWORD * pdwEffect)
 {
 	//gpConEmu->SetDragCursor(NULL);
 	return 0;
@@ -307,7 +307,7 @@ CDataObject::CDataObject(FORMATETC *fmtetc, STGMEDIUM *stgmed, int count)
 {
 	m_lRefCount  = 1;
 
-	m_Data.alloc(32+max(count,32));
+	m_Data.alloc(32+max(count, 32));
 
 	for (int i = 0; i < count; i++)
 	{
@@ -719,7 +719,7 @@ HRESULT __stdcall CDataObject::EnumFormatEtc(DWORD dwDirection, IEnumFORMATETC *
 		// to support all Windows platforms we need to implement IEnumFormatEtc ourselves.
 
 		UINT nNumFormats = m_Data.size();
-		FORMATETC *pFormats = nNumFormats ? (FORMATETC*)calloc(nNumFormats,sizeof(*pFormats)) : NULL;
+		FORMATETC *pFormats = nNumFormats ? (FORMATETC*)calloc(nNumFormats, sizeof(*pFormats)) : NULL;
 		if (!pFormats)
 		{
 			return E_OUTOFMEMORY;
@@ -839,7 +839,7 @@ CEnumFormatEtc::CEnumFormatEtc(FORMATETC *pFormatEtc, int nNumFormats)
 	m_lRefCount   = 1;
 	m_nIndex      = 0;
 	m_nNumFormats = nNumFormats;
-	m_pFormatEtc  = nNumFormats ? (FORMATETC*)calloc(nNumFormats,sizeof(FORMATETC)) : NULL;
+	m_pFormatEtc  = nNumFormats ? (FORMATETC*)calloc(nNumFormats, sizeof(FORMATETC)) : NULL;
 
 	// copy the FORMATETC structures
 	for (int i = 0; i < nNumFormats; i++)

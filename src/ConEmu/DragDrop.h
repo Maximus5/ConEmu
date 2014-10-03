@@ -44,9 +44,9 @@ class CDragDrop :
 		CDragDrop();
 		//BOOL Init(); --> CDragDropData::Register
 		virtual ~CDragDrop();
-		virtual HRESULT __stdcall Drop(IDataObject * pDataObject,DWORD grfKeyState,POINTL pt,DWORD * pdwEffect) override;
-		virtual HRESULT __stdcall DragOver(DWORD grfKeyState,POINTL pt,DWORD * pdwEffect) override;
-		virtual HRESULT __stdcall DragEnter(IDataObject * pDataObject,DWORD grfKeyState,POINTL pt,DWORD * pdwEffect) override;
+		virtual HRESULT __stdcall Drop(IDataObject * pDataObject, DWORD grfKeyState, POINTL pt, DWORD * pdwEffect) override;
+		virtual HRESULT __stdcall DragOver(DWORD grfKeyState, POINTL pt, DWORD * pdwEffect) override;
+		virtual HRESULT __stdcall DragEnter(IDataObject * pDataObject, DWORD grfKeyState, POINTL pt, DWORD * pdwEffect) override;
 		virtual HRESULT __stdcall DragLeave(void) override;
 		void Drag(BOOL abClickNeed, COORD crMouseDC);
 		void DebugLog(LPCWSTR asInfo, BOOL abErrorSeverity=FALSE);
@@ -59,7 +59,7 @@ class CDragDrop :
 		//BOOL IsDragStarting() {return FALSE;};
 		//BOOL ForwardMessage(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam) { return FALSE;};
 	protected:
-		HRESULT DragOverInt(DWORD grfKeyState,POINTL pt,DWORD * pdwEffect);
+		HRESULT DragOverInt(DWORD grfKeyState, POINTL pt, DWORD * pdwEffect);
 		//BOOL mb_DragDropRegistered;
 		//void RetrieveDragToInfo();
 		//ITEMIDLIST m_DesktopID;

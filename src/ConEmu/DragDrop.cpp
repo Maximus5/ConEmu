@@ -379,7 +379,7 @@ wchar_t* CDragDrop::FileCreateName(BOOL abActive, BOOL abFolder, LPCWSTR asSubFo
 		{
 			if (!(fnd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
 			{
-				pszMsg = (wchar_t*)calloc(nSize + 100,2);
+				pszMsg = (wchar_t*)calloc(nSize + 100, 2);
 				wcscpy(pszMsg, L"Can't create directory! Same name file exists!\n");
 				wcscat(pszMsg, pszFullName);
 				MessageBox(ghWnd, pszMsg, gpConEmu->GetDefaultTitle(), MB_ICONSTOP);
@@ -390,7 +390,7 @@ wchar_t* CDragDrop::FileCreateName(BOOL abActive, BOOL abFolder, LPCWSTR asSubFo
 		}
 		else if (fnd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
 		{
-			pszMsg = (wchar_t*)calloc(nSize + 100,2);
+			pszMsg = (wchar_t*)calloc(nSize + 100, 2);
 			wcscpy(pszMsg, L"Can't create file! Same name folder exists!\n");
 			wcscat(pszMsg, pszFullName);
 			MessageBox(ghWnd, pszMsg, gpConEmu->GetDefaultTitle(), MB_ICONSTOP);
@@ -401,7 +401,7 @@ wchar_t* CDragDrop::FileCreateName(BOOL abActive, BOOL abFolder, LPCWSTR asSubFo
 		else
 		{
 			int nCchSize = nSize + 255;
-			pszMsg = (wchar_t*)calloc(nCchSize,2);
+			pszMsg = (wchar_t*)calloc(nCchSize, 2);
 			LARGE_INTEGER liSize;
 			liSize.LowPart = fnd.nFileSizeLow; liSize.HighPart = fnd.nFileSizeHigh;
 			FILETIME ftl;
@@ -455,7 +455,7 @@ HANDLE CDragDrop::FileStart(LPCWSTR pszFullName)
 	{
 		DWORD dwErr = GetLastError();
 		INT_PTR nSize = _tcslen(pszFullName);
-		wchar_t* pszMsg = (wchar_t*)calloc(nSize + 100,2);
+		wchar_t* pszMsg = (wchar_t*)calloc(nSize + 100, 2);
 		wcscpy(pszMsg, L"Can't create file!\n");
 		wcscat(pszMsg, pszFullName);
 		DisplayLastError(pszMsg, dwErr);
@@ -502,7 +502,7 @@ HRESULT CDragDrop::FileWrite(HANDLE ahFile, DWORD anSize, LPVOID apData)
 	return S_OK;
 }
 
-HRESULT CDragDrop::DropFromStream(IDataObject * pDataObject, BOOL abActive)
+HRESULT CDragDrop::DropFromStream(IDataObject* pDataObject, BOOL abActive)
 {
 	STGMEDIUM stgDescr = { 0 };
 	FORMATETC fmtetc = { CF_HDROP, 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
@@ -514,7 +514,7 @@ HRESULT CDragDrop::DropFromStream(IDataObject * pDataObject, BOOL abActive)
 	HRESULT hr = S_OK;
 	HRESULT hrStg = S_OK;
 	INT_PTR cchSubFolder = 32768;
-	wchar_t* pszSubFolder = (wchar_t*)calloc(cchSubFolder,sizeof(*pszSubFolder));
+	wchar_t* pszSubFolder = (wchar_t*)calloc(cchSubFolder, sizeof(*pszSubFolder));
 
 	if (!cBuffer || !pszSubFolder)
 	{
@@ -818,7 +818,7 @@ HRESULT CDragDrop::DropFromStream(IDataObject * pDataObject, BOOL abActive)
 
 								while(nFileSize > 0)
 								{
-									dwRead = min(nFileSize,65536); //-V103
+									dwRead = min(nFileSize, 65536); //-V103
 									TODO("Сюда прогресс с градусником прицепить можно");
 
 									if (FileWrite(hFile, dwRead, ptrCur) != S_OK)
@@ -884,7 +884,7 @@ wrap:
 	return S_OK;
 }
 
-HRESULT CDragDrop::DropFromText(IDataObject * pDataObject)
+HRESULT CDragDrop::DropFromText(IDataObject* pDataObject)
 {
 	CVConGuard VCon;
 	if ((CVConGroup::GetActiveVCon(&VCon) < 0) || !VCon->RCon())
@@ -964,7 +964,7 @@ HRESULT CDragDrop::DropNames(HDROP hDrop, int iQuantity, BOOL abActive)
 		SetForegroundWindow(ghWnd);
 
 		int nId = gpConEmu->mp_Menu->trackPopupMenu(tmp_PasteCmdLine, hPopup, TPM_LEFTALIGN|TPM_BOTTOMALIGN|TPM_RETURNCMD/*|TPM_NONOTIFY*/,
-	                         ptCur.x,ptCur.y, ghWnd);
+	                         ptCur.x, ptCur.y, ghWnd);
 		DestroyMenu(hPopup);
 
 		lbAddGoto = lbAddEdit = lbAddView = false;
@@ -1145,7 +1145,7 @@ HRESULT CDragDrop::DropLinks(HDROP hDrop, int iQuantity, BOOL abActive)
 
 	for(int i = 0 ; i < iQuantity; i++)
 	{
-		int nLen = DragQueryFile(hDrop,i,curr,MAX_DROP_PATH);
+		int nLen = DragQueryFile(hDrop, i, curr, MAX_DROP_PATH);
 
 		if (nLen <= 0 || nLen >= MAX_DROP_PATH) continue;
 
@@ -1181,7 +1181,7 @@ HRESULT CDragDrop::DropLinks(HDROP hDrop, int iQuantity, BOOL abActive)
 	return S_OK;
 }
 
-HRESULT STDMETHODCALLTYPE CDragDrop::Drop(IDataObject * pDataObject,DWORD grfKeyState,POINTL pt,DWORD * pdwEffect)
+HRESULT STDMETHODCALLTYPE CDragDrop::Drop(IDataObject* pDataObject, DWORD grfKeyState, POINTL pt, DWORD* pdwEffect)
 {
 	HRESULT hrHelper = S_FALSE; UNREFERENCED_PARAMETER(hrHelper);
 
@@ -1201,7 +1201,7 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop(IDataObject * pDataObject,DWORD grfKey
 	#endif
 	*pdwEffect = DROPEFFECT_COPY|DROPEFFECT_MOVE;
 
-	POINT ppt = {pt.x,pt.y};
+	POINT ppt = {pt.x, pt.y};
 
 	#ifdef USE_DROP_HELPER
 	if (UseTargetHelper(mb_selfdrag))
@@ -1256,19 +1256,6 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop(IDataObject * pDataObject,DWORD grfKey
 	if (!lbDropFileNamesOnly && !lbActive && mb_selfdrag
 	        && (*pdwEffect == DROPEFFECT_COPY || *pdwEffect == DROPEFFECT_MOVE))
 	{
-		//wchar_t *mcr = (wchar_t*)calloc(128, sizeof(wchar_t));
-		////2010-02-18 Не было префикса '@'
-		////2010-03-26 префикс '@' ставить нельзя, ибо тогда процесса копирования видно не будет при отсутствии подтверждения
-		//// Если тянули ".." то перед копированием на другую панель сначала необходимо выйти на верхний уровень
-		//lstrcpyW(mcr, L"$If (APanel.SelCount==0 && APanel.Current==\"..\") CtrlPgUp $End ");
-		//// Теперь собственно клавиша запуска
-		//lstrcatW(mcr, (*pdwEffect == DROPEFFECT_MOVE) ? L"F6" : L"F5");
-
-		//// И если просили копировать сразу без подтверждения
-		//if (gpSet->isDropEnabled==2)
-		//	lstrcatW(mcr, L" Enter "); //$MMode 1");
-
-		//gpConEmu->PostCopy(mcr);
 
 		gpConEmu->PostDragCopy((*pdwEffect == DROPEFFECT_MOVE));
 
@@ -1285,6 +1272,7 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop(IDataObject * pDataObject,DWORD grfKey
 	{
 		if (mb_selfdrag || lbDropFileNamesOnly)
 		{
+			// Позвать "VCon->RCon()->Paste(pm_Standard, pszText)"
 			if ((hr = DropFromText(pDataObject)) == S_OK)
 			{
 				return S_OK;
@@ -1303,7 +1291,7 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop(IDataObject * pDataObject,DWORD grfKey
 	STGMEDIUM stgMediumMap = { 0 };
 	FORMATETC fmtetcMap = { (CLIPFORMAT)RegisterClipboardFormat(CFSTR_FILENAMEMAPW), 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
 	hDrop = (HDROP)stgMedium.hGlobal;
-	int iQuantity = DragQueryFile(hDrop,(UINT)-1,NULL,0);
+	int iQuantity = DragQueryFile(hDrop, (UINT)-1, NULL, 0);
 
 	if (iQuantity < 1)
 	{
@@ -1508,7 +1496,7 @@ DWORD CDragDrop::ShellOpThreadProc(LPVOID lpParameter)
 	return 0;
 }
 
-HRESULT STDMETHODCALLTYPE CDragDrop::DragOver(DWORD grfKeyState,POINTL pt,DWORD * pdwEffect)
+HRESULT STDMETHODCALLTYPE CDragDrop::DragOver(DWORD grfKeyState, POINTL pt, DWORD* pdwEffect)
 {
 	// Drag over tab? Activate hovered
 	gpConEmu->mp_TabBar->ActivateTabByPoint((LPPOINT)&pt);
@@ -1530,7 +1518,7 @@ HRESULT STDMETHODCALLTYPE CDragDrop::DragOver(DWORD grfKeyState,POINTL pt,DWORD 
 	#ifdef USE_DROP_HELPER
 	if (UseTargetHelper(mb_selfdrag))
 	{
-		POINT ppt = {pt.x,pt.y};
+		POINT ppt = {pt.x, pt.y};
 		hrHelper = mp_TargetHelper->DragOver(&ppt, *pdwEffect);
 		UNREFERENCED_PARAMETER(hrHelper);
 	}
@@ -1539,7 +1527,7 @@ HRESULT STDMETHODCALLTYPE CDragDrop::DragOver(DWORD grfKeyState,POINTL pt,DWORD 
 	return hr;
 }
 
-HRESULT CDragDrop::DragOverInt(DWORD grfKeyState,POINTL pt,DWORD * pdwEffect)
+HRESULT CDragDrop::DragOverInt(DWORD grfKeyState, POINTL pt, DWORD* pdwEffect)
 {
 	HRESULT hr = S_OK;
 	DWORD dwAllowed = *pdwEffect;
@@ -1692,7 +1680,7 @@ HRESULT CDragDrop::DragOverInt(DWORD grfKeyState,POINTL pt,DWORD * pdwEffect)
 	return hr;
 }
 
-HRESULT STDMETHODCALLTYPE CDragDrop::DragEnter(IDataObject * pDataObject,DWORD grfKeyState,POINTL pt,DWORD * pdwEffect)
+HRESULT STDMETHODCALLTYPE CDragDrop::DragEnter(IDataObject* pDataObject, DWORD grfKeyState, POINTL pt, DWORD* pdwEffect)
 {
 	HRESULT hrHelper = S_FALSE; UNREFERENCED_PARAMETER(hrHelper);
 	DEBUGSTROVER(L"CDragDrop::DragEnter() called\n");
@@ -1752,7 +1740,7 @@ HRESULT STDMETHODCALLTYPE CDragDrop::DragEnter(IDataObject * pDataObject,DWORD g
 		PRAGMA_ERROR("UNLOCKED_DRAG - проверить HWND");
 		#endif
 
-		POINT ppt = {pt.x,pt.y};
+		POINT ppt = {pt.x, pt.y};
 		hrHelper = mp_TargetHelper->DragEnter(ghWnd, pDataObject, &ppt, *pdwEffect);
 	}
 	#endif
@@ -1840,7 +1828,7 @@ HRESULT CDragDrop::CreateLink(LPCTSTR lpszPathObj, LPCTSTR lpszPathLink, LPCTSTR
 	return hres;
 }
 
-void CDragDrop::ReportUnknownData(IDataObject * pDataObject, LPCWSTR sUnknownError)
+void CDragDrop::ReportUnknownData(IDataObject* pDataObject, LPCWSTR sUnknownError)
 {
 	HANDLE hFile = NULL;
 	size_t nLen = _tcslen(sUnknownError);
@@ -1859,9 +1847,9 @@ void CDragDrop::ReportUnknownData(IDataObject * pDataObject, LPCWSTR sUnknownErr
 		return;
 
 	// Дать пользователю выбрать файл
-	OPENFILENAME ofn; memset(&ofn,0,sizeof(ofn));
+	OPENFILENAME ofn = {};
 	WCHAR temp[MAX_PATH+5];
-	ofn.lStructSize=sizeof(ofn);
+	ofn.lStructSize = sizeof(ofn);
 	ofn.hwndOwner = ghWnd;
 	ofn.lpstrFilter = _T("Reports (*.txt)\0*.txt\0\0");
 	ofn.nFilterIndex = 1;

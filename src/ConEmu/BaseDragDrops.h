@@ -20,10 +20,10 @@ class CBaseDropTarget : public IDropTarget
 		ULONG	__stdcall Release(void);
 
 		// IDropTarget implementation
-		virtual HRESULT __stdcall DragEnter(IDataObject * pDataObject,DWORD grfKeyState,POINTL pt,DWORD * pdwEffect) override;
-		virtual HRESULT __stdcall DragOver(DWORD grfKeyState,POINTL pt,DWORD * pdwEffect) override;
+		virtual HRESULT __stdcall DragEnter(IDataObject * pDataObject, DWORD grfKeyState, POINTL pt, DWORD * pdwEffect) override;
+		virtual HRESULT __stdcall DragOver(DWORD grfKeyState, POINTL pt, DWORD * pdwEffect) override;
 		virtual HRESULT __stdcall DragLeave(void) override;
-		virtual HRESULT __stdcall Drop(IDataObject * pDataObject,DWORD grfKeyState,POINTL pt,DWORD * pdwEffect) override;
+		virtual HRESULT __stdcall Drop(IDataObject * pDataObject, DWORD grfKeyState, POINTL pt, DWORD * pdwEffect) override;
 
 		LONG	m_lRefCount;
 		//HWND	m_hWnd;
