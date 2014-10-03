@@ -154,6 +154,7 @@ class CTabBarClass
 
 		void Activate(BOOL abPreSyncConsole=FALSE);
 		int  ActiveTabByName(int anType, LPCWSTR asName, CVirtualConsole** ppVCon);
+		int  ActivateTabByPoint(LPPOINT pptCur, bool bScreen = true, bool bOverTabHitTest = true);
 		void CheckRebarCreated();
 		int  CreateTabIcon(LPCWSTR asIconDescr, bool bAdmin, LPCWSTR asWorkDir);
 		void Deactivate(BOOL abPreSyncConsole=FALSE);

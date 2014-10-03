@@ -2065,6 +2065,29 @@ int CTabBarClass::ActiveTabByName(int anType, LPCWSTR asName, CVirtualConsole** 
 	return nTab;
 }
 
+// -2 - out of control, -1 - out of tab-labels, 0+ - tab index 0-based
+int CTabBarClass::ActivateTabByPoint(LPPOINT pptCur, bool bScreen /*= true*/, bool bOverTabHitTest /*= true*/)
+{
+	int iHoverTab = GetTabFromPoint(NULL);
+	if (iHoverTab < 0)
+		return iHoverTab;
+	if (iHoverTab == GetCurSel())
+		return iHoverTab;
+
+	if (!CanActivateTab(iHoverTab))
+	{
+		iHoverTab = -2;
+	}
+	else
+	{
+		CVirtualConsole* pVCon = mp_Rebar->FarSendChangeTab(iHoverTab);
+		if (!pVCon)
+			iHoverTab = -2;
+	}
+
+	return iHoverTab;
+}
+
 // Прямоугольник в клиентских координатах ghWnd!
 bool CTabBarClass::GetRebarClientRect(RECT* rc)
 {

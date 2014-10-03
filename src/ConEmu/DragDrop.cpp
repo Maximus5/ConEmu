@@ -41,6 +41,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "VirtualConsole.h"
 #include "VConGroup.h"
 #include "RealConsole.h"
+#include "TabBar.h"
 #include "Menu.h"
 #include "Update.h"
 
@@ -1509,6 +1510,9 @@ DWORD CDragDrop::ShellOpThreadProc(LPVOID lpParameter)
 
 HRESULT STDMETHODCALLTYPE CDragDrop::DragOver(DWORD grfKeyState,POINTL pt,DWORD * pdwEffect)
 {
+	// Drag over tab? Activate hovered
+	gpConEmu->mp_TabBar->ActivateTabByPoint((LPPOINT)&pt);
+
 	// Drag over inactive pane?
 	if (NeedRefreshToInfo(pt))
 	{
@@ -1708,6 +1712,8 @@ HRESULT STDMETHODCALLTYPE CDragDrop::DragEnter(IDataObject * pDataObject,DWORD g
 
 	CheckIsUpdatePackage(pDataObject);
 
+	// Drag over tab? Activate hovered
+	gpConEmu->mp_TabBar->ActivateTabByPoint((LPPOINT)&pt);
 
 	// При "DragEnter" считывать информацию из фара нужно всегда
 	if (gpSet->isDropEnabled /*&& !mb_selfdrag*/ /*&& NeedRefreshToInfo(pt)*/)
