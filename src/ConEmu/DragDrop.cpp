@@ -1288,8 +1288,6 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop(IDataObject* pDataObject, DWORD grfKey
 		return hr;
 	}
 
-	STGMEDIUM stgMediumMap = { 0 };
-	FORMATETC fmtetcMap = { (CLIPFORMAT)RegisterClipboardFormat(CFSTR_FILENAMEMAPW), 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
 	hDrop = (HDROP)stgMedium.hGlobal;
 	int iQuantity = DragQueryFile(hDrop, (UINT)-1, NULL, 0);
 
@@ -1317,87 +1315,133 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop(IDataObject* pDataObject, DWORD grfKey
 		return hr;
 	}
 
+	return DropShellOp(pDataObject, pdwEffect, stgMedium, lbActive, iQuantity);
+}
+
+HRESULT CDragDrop::DropShellOp(IDataObject* pDataObject, DWORD* pdwEffect, STGMEDIUM& stgMedium, BOOL abActive, int iQuantity)
+{
+	HRESULT hr = S_OK;
+
+	HDROP hDrop = (HDROP)stgMedium.hGlobal;
+
+	STGMEDIUM stgMediumMap = { 0 };
+	FORMATETC fmtetcMap = { (CLIPFORMAT)RegisterClipboardFormat(CFSTR_FILENAMEMAPW), 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
+
+	ShlOpInfo *sfop = new ShlOpInfo;
+	memset(sfop, 0, sizeof(ShlOpInfo));
+	sfop->fop.hwnd = ghWnd;
+	sfop->pDnD = this;
+
+	hr = pDataObject->GetData(&fmtetcMap, &stgMediumMap);
+
+	BOOL lbMultiDest = (hr == S_OK && stgMediumMap.hGlobal);
+	TODO("Освободить stgMediumMap");
+	LPCWSTR pszFileMap = (LPCWSTR)GlobalLock(stgMediumMap.hGlobal);
+
+	if (!pszFileMap) lbMultiDest = FALSE;
+
+	LPCWSTR pszDropPath = abActive ? m_pfpi->pszActivePath : m_pfpi->pszPassivePath;
+	INT_PTR nCount = (MAX_DROP_PATH * iQuantity) + iQuantity + 1;
+	INT_PTR nDstCount = 0;
+	INT_PTR nDstFolderLen = 0;
+
+	if (!lbMultiDest)
 	{
-		//SHFILEOPSTRUCT *fop  = new SHFILEOPSTRUCT;
-		ShlOpInfo *sfop = new ShlOpInfo;
-		memset(sfop, 0, sizeof(ShlOpInfo));
-		sfop->fop.hwnd = ghWnd;
-		sfop->pDnD = this;
-		hr = pDataObject->GetData(&fmtetcMap, &stgMediumMap);
-		BOOL lbMultiDest = (hr == S_OK && stgMediumMap.hGlobal);
-		TODO("Освободить stgMediumMap");
-		LPCWSTR pszFileMap = (LPCWSTR)GlobalLock(stgMediumMap.hGlobal);
+		int nCchLen = lstrlenW(pszDropPath)+3;
+		sfop->fop.pTo = new WCHAR[nCchLen];
+		_wsprintf((LPWSTR)sfop->fop.pTo, SKIPLEN(nCchLen) _T("%s\\\0\0"), pszDropPath);
+	}
+	else
+	{
+		nDstFolderLen = lstrlenW(pszDropPath);
+		nDstCount = iQuantity*(nDstFolderLen+3+MAX_PATH) + iQuantity + 1;
+		sfop->fop.pTo = new WCHAR[nDstCount];
+		ZeroMemory((void*)sfop->fop.pTo, sizeof(WCHAR)*nDstCount);
+	}
 
-		if (!pszFileMap) lbMultiDest = FALSE;
+	sfop->fop.pFrom = new WCHAR[nCount];
+	ZeroMemory((void*)sfop->fop.pFrom, sizeof(WCHAR)*nCount);
+	WCHAR *curr = (WCHAR*)sfop->fop.pFrom;
+	WCHAR *dst = lbMultiDest ? (WCHAR*)sfop->fop.pTo : NULL;
 
-		LPCWSTR pszDropPath = lbActive ? m_pfpi->pszActivePath : m_pfpi->pszPassivePath;
-		INT_PTR nCount = MAX_DROP_PATH*iQuantity+iQuantity+1;
-		INT_PTR nDstCount = 0;
-		INT_PTR nDstFolderLen = 0;
+	int iValidCount = 0;
+
+	for (int i = 0; i < iQuantity; i++)
+	{
+		DragQueryFile(hDrop, i, curr, MAX_DROP_PATH);
+		INT_PTR iCurFileLen = _tcslen(curr);
 
 		if (!lbMultiDest)
 		{
-			int nCchLen = lstrlenW(pszDropPath)+3;
-			sfop->fop.pTo = new WCHAR[nCchLen];
-			_wsprintf((LPWSTR)sfop->fop.pTo, SKIPLEN(nCchLen) _T("%s\\\0\0"), pszDropPath);
-		}
-		else
-		{
-			nDstFolderLen = lstrlenW(pszDropPath);
-			nDstCount = iQuantity*(nDstFolderLen+3+MAX_PATH)+iQuantity+1;
-			sfop->fop.pTo=new WCHAR[nDstCount];
-			ZeroMemory((void*)sfop->fop.pTo,sizeof(WCHAR)*nDstCount);
-		}
-
-		sfop->fop.pFrom=new WCHAR[nCount];
-		ZeroMemory((void*)sfop->fop.pFrom,sizeof(WCHAR)*nCount);
-		WCHAR *curr = (WCHAR*)sfop->fop.pFrom;
-		WCHAR *dst = lbMultiDest ? (WCHAR*)sfop->fop.pTo : NULL;
-
-		for(int i = 0 ; i < iQuantity; i++)
-		{
-			DragQueryFile(hDrop,i,curr,MAX_DROP_PATH);
-			curr+=_tcslen(curr)+1;
-
-			if (lbMultiDest)
+			// Copying from folder "C:\\1\\" to folder "C:\\1\\" (noting to do)?
+			INT_PTR iToDirLen = _tcslen(pszDropPath);
+			if (iToDirLen > 0)
 			{
-				lstrcpy(dst, pszDropPath);
-				dst += nDstFolderLen;
-
-				if (*(dst-1) != L'\\')
+				if ((iCurFileLen > (iToDirLen+1))
+					&& (curr[iToDirLen] == L'\\')
+					&& !wcschr(curr+iToDirLen+1, L'\\'))
 				{
-					*dst++ = L'\\'; *dst = 0;
-				}
-
-				if (pszFileMap && *pszFileMap)
-				{
-					INT_PTR nNameLen = _tcslen(pszFileMap);
-					lstrcpyn(dst, pszFileMap, MAX_PATH);
-					pszFileMap += nNameLen+1;
-					dst += _tcslen(dst)+1;
-					MCHKHEAP;
+					curr[iToDirLen] = 0;
+					int iCmp = lstrcmpi(curr, pszDropPath);
+					curr[iToDirLen] = L'\\';
+					if (iCmp == 0)
+					{
+						// Src & Dst folders are equal, noting to do
+						curr[0] = curr[1] = 0;
+						continue;
+					}
 				}
 			}
 		}
-
-		MCHKHEAP;
-		//GlobalFree(stgMedium.hGlobal);
-		ReleaseStgMedium(&stgMedium);
-		hDrop = NULL;
-
-		if (stgMediumMap.hGlobal)
+		else
 		{
-			if (pszFileMap) GlobalUnlock(stgMediumMap.hGlobal);
+			lstrcpy(dst, pszDropPath);
+			dst += nDstFolderLen;
 
-			//GlobalFree(stgMediumMap.hGlobal);
-			ReleaseStgMedium(&stgMediumMap);
-			stgMediumMap.hGlobal = NULL;
+			if (*(dst-1) != L'\\')
+			{
+				*dst++ = L'\\'; *dst = 0;
+			}
+
+			if (pszFileMap && *pszFileMap)
+			{
+				INT_PTR nNameLen = _tcslen(pszFileMap);
+				lstrcpyn(dst, pszFileMap, MAX_PATH);
+				pszFileMap += nNameLen+1;
+				dst += _tcslen(dst)+1;
+				MCHKHEAP;
+			}
 		}
 
+		iValidCount++;
+		curr += iCurFileLen+1;
+	}
+
+	MCHKHEAP;
+
+	ReleaseStgMedium(&stgMedium);
+	hDrop = NULL;
+
+	if (stgMediumMap.hGlobal)
+	{
+		if (pszFileMap) GlobalUnlock(stgMediumMap.hGlobal);
+
+		//GlobalFree(stgMediumMap.hGlobal);
+		ReleaseStgMedium(&stgMediumMap);
+		stgMediumMap.hGlobal = NULL;
+	}
+
+	if (iValidCount == 0)
+	{
+		hr = S_FALSE;
+		DebugLog(_T("DnD: There is nothing to copy"));
+	}
+	else
+	{
 		if (*pdwEffect == DROPEFFECT_MOVE)
-			sfop->fop.wFunc=FO_MOVE;
+			sfop->fop.wFunc = FO_MOVE;
 		else
-			sfop->fop.wFunc=FO_COPY;
+			sfop->fop.wFunc = FO_COPY;
 
 		sfop->fop.fFlags = lbMultiDest ? FOF_MULTIDESTFILES : 0;
 		//sfop->fop.fFlags=FOF_SIMPLEPROGRESS; -- пусть полностью показывает
@@ -1420,7 +1464,7 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop(IDataObject* pDataObject, DWORD grfKey
 		DebugLog(NULL);
 	}
 
-	return S_OK; //1;
+	return hr;
 }
 
 DWORD CDragDrop::ShellOpThreadProc(LPVOID lpParameter)
