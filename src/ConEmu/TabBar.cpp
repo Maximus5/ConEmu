@@ -2111,6 +2111,7 @@ bool CTabBarClass::GetActiveTabRect(RECT* rcTab)
 	return bSet;
 }
 
+// -2 - out of control, -1 - out of tab-labels, 0+ - tab index 0-based
 int CTabBarClass::GetTabFromPoint(LPPOINT pptCur, bool bScreen /*= true*/, bool bOverTabHitTest /*= true*/)
 {
 	if (!IsTabsShown())
