@@ -20,6 +20,7 @@ SRCS = \
 		../common/SetEnvVar.cpp      \
 		../common/WinConsole.cpp     \
 		../common/WinObjects.cpp     \
+		../common/WinRegistry.cpp    \
 		AboutDlg.cpp       \
 		Attach.cpp         \
 		Background.cpp     \

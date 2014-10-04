@@ -912,6 +912,7 @@
     <ClCompile Include="..\common\SetEnvVar.cpp" />
     <ClCompile Include="..\common\WinConsole.cpp" />
     <ClCompile Include="..\common\WinObjects.cpp" />
+    <ClCompile Include="..\common\WinRegistry.cpp" />
     <ClCompile Include="AboutDlg.cpp" />
     <ClCompile Include="Attach.cpp" />
     <ClCompile Include="Background.cpp" />
@@ -1010,6 +1011,7 @@
     <ClInclude Include="..\common\UnicodeChars.h" />
     <ClInclude Include="..\common\WinConsole.h" />
     <ClInclude Include="..\common\WinObjects.h" />
+    <ClInclude Include="..\common\WinRegistry.h" />
     <ClInclude Include="..\ConEmuCD\ConsoleHelp.h" />
     <ClInclude Include="..\ConEmuCD\ExitCodes.h" />
     <ClInclude Include="..\ConEmuCD\GuiHooks.h" />

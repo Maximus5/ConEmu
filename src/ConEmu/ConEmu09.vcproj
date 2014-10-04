@@ -413,6 +413,7 @@
       <File RelativePath="..\common\SetEnvVar.cpp" />
       <File RelativePath="..\common\WinConsole.cpp" />
       <File RelativePath="..\common\WinObjects.cpp" />
+      <File RelativePath="..\common\WinRegistry.cpp" />
       <File RelativePath=".\AboutDlg.cpp" />
       <File RelativePath=".\Attach.cpp" />
       <File RelativePath=".\Background.cpp" />
@@ -510,6 +511,7 @@
       <File RelativePath="..\common\UnicodeChars.h" />
       <File RelativePath="..\common\WinConsole.h" />
       <File RelativePath="..\common\WinObjects.h" />
+      <File RelativePath="..\common\WinRegistry.h" />
       <File RelativePath="..\ConEmuCD\ConsoleHelp.h" />
       <File RelativePath="..\ConEmuCD\ExitCodes.h" />
       <File RelativePath="..\ConEmuCD\GuiHooks.h" />

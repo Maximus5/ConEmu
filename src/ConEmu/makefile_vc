@@ -110,7 +110,8 @@ $(INTDIR)\VConGroup.obj \
 $(INTDIR)\VConRelease.obj \
 $(INTDIR)\VirtualConsole.obj \
 $(INTDIR)\WinConsole.obj \
-$(INTDIR)\WinObjects.obj
+$(INTDIR)\WinObjects.obj \
+$(INTDIR)\WinRegistry.obj
 
 
 LINK_LIBS=kernel32.lib user32.lib winspool.lib advapi32.lib shell32.lib mpr.lib ole32.lib secur32.lib gdi32.lib version.lib shlwapi.lib comctl32.lib Comdlg32.lib Winmm.lib Oleaut32.lib Netapi32.lib
@@ -435,6 +436,8 @@ $(INTDIR)\VirtualConsole.obj: VirtualConsole.cpp VConRelease.h VirtualConsole.h 
 $(INTDIR)\WinConsole.obj: ../common/WinConsole.cpp
 
 $(INTDIR)\WinObjects.obj: ../common/WinObjects.cpp
+
+$(INTDIR)\WinRegistry.obj: ../common/WinRegistry.cpp
 
 #LINK_OBJS end
 ##############
