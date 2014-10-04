@@ -558,6 +558,34 @@ static bool WINAPI CreateWinSdkTasks(HKEY hkVer, LPCWSTR pszVer, LPARAM lParam)
 	return true; // continue reg enum
 }
 
+// Visual Studio C++
+static bool WINAPI CreateVCTasks(HKEY hkVer, LPCWSTR pszVer, LPARAM lParam)
+{
+	int* piCreatIdx = (int*)lParam;
+	//[HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\VisualStudio\11.0\Setup\VC]
+	//"ProductDir"="C:\\Program Files (x86)\\Microsoft Visual Studio 11.0\\VC\\"
+	//[HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\VisualStudio\12.0\Setup\VC]
+	//"ProductDir"="C:\\Program Files (x86)\\Microsoft Visual Studio 12.0\\VC\\"
+	// %comspec% /k ""C:\Program Files (x86)\Microsoft Visual Studio 11.0\VC\vcvarsall.bat"" x86
+
+	CEStr pszDir;
+	if (wcschr(pszVer, L'.'))
+	{
+		if (RegGetStringValue(hkVer, L"Setup\\VC", L"ProductDir", pszDir) > 0)
+		{
+			CEStr pszVcVarsBat = JoinPath(pszDir, L"vcvarsall.bat");
+			if (FileExists(pszVcVarsBat))
+			{
+				CEStr pszName = lstrmerge(L"VS ", pszVer, L" x86 tools prompt");
+				CEStr pszFull = lstrmerge(L"cmd /k \"\"", pszVcVarsBat, L"\"\" x86 -new_console:t:\"VS ", pszVer, L"\"");
+				gpSet->CmdTaskSet((*piCreatIdx)++, pszName, L"", pszFull);
+			}
+		}
+	}
+
+	return true; // continue reg enum
+}
+
 void CreateDefaultTasks(bool bForceAdd /*= false*/)
 {
 	int iCreatIdx = 0;
@@ -710,6 +738,9 @@ void CreateDefaultTasks(bool bForceAdd /*= false*/)
 
 	// Windows SDK: HKLM\SOFTWARE\Microsoft\Microsoft SDKs\Windows
 	RegEnumKeys(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\Microsoft SDKs\\Windows", CreateWinSdkTasks, (LPARAM)&iCreatIdx);
+
+	// Visual Studio prompt: HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\VisualStudio
+	RegEnumKeys(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\VisualStudio", CreateVCTasks, (LPARAM)&iCreatIdx);
 
 	// Done, free pointers
 	for (int i = 0; FindTasks[i].asName; i++)
