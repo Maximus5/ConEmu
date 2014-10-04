@@ -31,11 +31,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define CmdEscapeNeededChars  L"<>()&|^\""
 #define QuotationNeededChars  (L" " CmdEscapeNeededChars)
 
-struct CmdArg
+typedef struct CmdArg
 {
 public:
-	INT_PTR mn_MaxLen;
 	wchar_t *ms_Arg;
+	INT_PTR mn_MaxLen;
 
 	// Point to the end dblquot
 	LPCWSTR mpsz_Dequoted;
@@ -70,8 +70,9 @@ public:
 	void GetPosFrom(const CmdArg& arg);
 
 	CmdArg();
+	CmdArg(wchar_t* asPtr);
 	~CmdArg();
-};
+} CEStr;
 
 int NextArg(const wchar_t** asCmdLine, CmdArg &rsArg, const wchar_t** rsArgStart=NULL);
 

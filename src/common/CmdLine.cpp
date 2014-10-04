@@ -40,6 +40,13 @@ CmdArg::CmdArg()
 	mb_RestorePath = false;
 	Empty();
 }
+CmdArg::CmdArg(wchar_t* asPtr)
+{
+	mn_MaxLen = 0; ms_Arg = NULL;
+	mb_RestorePath = false;
+	Empty();
+	Attach(asPtr);
+}
 CmdArg::~CmdArg()
 {
 	if (mb_RestorePath && !IsEmpty())
