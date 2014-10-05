@@ -1725,6 +1725,20 @@ BOOL CConEmuMain::CreateMainWindow()
 		//	+ (this->isTabsShown() ? (gpSet->rcTabMargins.top+gpSet->rcTabMargins.bottom) : 0);
 		//mrc_Ideal = MakeRect(gpSet->wndX, gpSet->wndY, gpSet->wndX+nWidth, gpSet->wndY+nHeight);
 		RECT rcWnd = GetDefaultRect();
+		if (gpSet->IsConfigNew)
+		{
+			// Сюда мы попадаем при запуске на "чистой настройке"
+			// Скорректируем положение окна, чтобы оно не вылезло за монитор
+			if (FixWindowRect(rcWnd, CEB_ALL))
+			{
+				this->wndX = rcWnd.left;
+				this->wndY = rcWnd.top;
+				RECT rcCon = CalcRect(CER_CONSOLE_ALL, rcWnd, CER_MAIN);
+				_ASSERTE(this->WndWidth.Style == ss_Standard && this->WndHeight.Style == ss_Standard);
+				this->WndWidth.Set(true, ss_Standard, rcCon.right);
+				this->WndHeight.Set(false, ss_Standard, rcCon.bottom);
+			}
+		}
 		UpdateIdealRect(rcWnd);
 		nWidth = rcWnd.right - rcWnd.left;
 		nHeight = rcWnd.bottom - rcWnd.top;

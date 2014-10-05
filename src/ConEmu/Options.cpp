@@ -571,8 +571,11 @@ void Settings::InitSettings()
 	isExtendUCharMap = true;
 	isDownShowHiddenMessage = false;
 	ParseCharRanges(L"2013-25C4", mpc_FixFarBorderValues);
-	wndWidth.Set(true, ss_Standard, DEF_CON_WIDTH);
-	wndHeight.Set(false, ss_Standard, DEF_CON_HEIGHT);
+
+	// [Debug] Максимальный видимый размер подкорректируется в CConEmuMain::CreateMainWindow()
+	wndWidth.Set(true, ss_Standard, DEF_CON_WIDTH);    // RELEASEDEBUGTEST(80,110)
+	wndHeight.Set(false, ss_Standard, DEF_CON_HEIGHT); // RELEASEDEBUGTEST(25,35)
+
 	ntvdmHeight = 0; // Подбирать автоматически
 	mb_IntegralSize = false;
 	_WindowMode = rNormal;

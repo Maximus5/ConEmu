@@ -765,6 +765,31 @@ void CSettings::SettingsLoaded(SettingsLoadedFlags slfFlags, LPCWSTR pszCmdLine 
 		LogString(szInfo, true, false);
 	}
 
+	#if 0
+	// Не требуется, размер будет скорректирован в CreateMainWindow()
+	if (slfFlags & (slf_NeedCreateVanilla|slf_DefaultSettings) && (gpSet->FontSizeY > 1))
+	{
+		// Under debug the default console width is set to 110x35,
+		// that may be too large on small displays
+		MONITORINFO mi = {};
+		if (gpConEmu->FindInitialMonitor(&mi))
+		{
+			// Примерно, лишь бы сильно за рабочую область не вылезало...
+			RECT rcCon = gpConEmu->CalcRect(CER_CONSOLE_ALL, mi.rcWork, CER_MONITOR);
+			//RECT rcDC = gpConEmu->CalcRect(CER_BACK, mi.rcWork, CER_MONITOR);
+			//RECT rcCon = MakeRect((rcDC.right - rcDC.left) / (gpSet->FontSizeX ? gpSet->FontSizeX : (gpSet->FontSizeY / 2)), (rcDC.bottom - rcDC.top) / gpSet->FontSizeY);
+			if ((rcCon.right > 0) && (rcCon.bottom > 0)
+				&& ((rcCon.right < gpSet->wndWidth.Value) || (rcCon.bottom < gpSet->wndHeight.Value)))
+			{
+				gpSet->wndWidth.Set(true, ss_Standard, min(gpSet->wndWidth.Value, rcCon.right));
+				gpSet->wndHeight.Set(false, ss_Standard, min(gpSet->wndHeight.Value, rcCon.bottom));
+				gpConEmu->WndWidth.Raw = gpSet->wndWidth.Raw;
+				gpConEmu->WndHeight.Raw = gpSet->wndHeight.Raw;
+			}
+		}
+	}
+	#endif
+
 	// Обработать 32/64 (найти tcc.exe и т.п.)
 	FindComspec(&gpSet->ComSpec);
 
