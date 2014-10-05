@@ -1494,9 +1494,13 @@ bool CConEmuSize::FixWindowRect(RECT& rcWnd, DWORD nBorders /* enum of ConEmuBor
 	RECT rcFrame = CalcMargins(CEM_FRAMEONLY);
 
 
-	// We prefer monitor, nearest to upper-left part of window
-	//--RECT rcFind = {rcStore.left, rcStore.right, rcStore.left+(rcStore.right-rcStore.left)/3, rcStore.top+(rcStore.bottom-rcStore.top)/3};
-	RECT rcFind = {rcStore.left+(rcFrame.left+1)*2, rcStore.top+(rcFrame.top+1)*2, rcStore.left+(rcFrame.left+1)*3, rcStore.top+(rcFrame.top+1)*3};
+	// We prefer nearest monitor
+	RECT rcFind = {
+		rcStore.left+(rcFrame.left+1)*2,
+		rcStore.top+(rcFrame.top+1)*2,
+		rcStore.right-(rcFrame.left+1)*2 /*rcStore.left+(rcFrame.left+1)*3*/,
+		rcStore.bottom-(rcFrame.top+1)*2 /*rcStore.top+(rcFrame.top+1)*3*/
+	};
 	MONITORINFO mi; GetNearestMonitor(&mi, &rcFind);
 	// Get work area (may be FullScreen)
 	rcWork = (wndMode == wmFullScreen) ? mi.rcMonitor : mi.rcWork;
