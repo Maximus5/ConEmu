@@ -97,7 +97,7 @@ typedef struct _CONSOLE_SELECTION_INFO
 #define CECOPYRIGHTSTRING_W L"© 2009-2014 ConEmu.Maximus5@gmail.com"
 
 
-#define CEHOMEPAGE_A    "http://conemu-maximus5.googlecode.com"
+#define CEHOMEPAGE_A    "http://code.google.com/p/conemu-maximus5"
 #define CEHOMEPAGE     _CRT_WIDE(CEHOMEPAGE_A)
 #define CEDOWNLPAGE    L"http://www.fosshub.com/ConEmu.html"
 #define CEREPORTBUG    L"http://code.google.com/p/conemu-maximus5/issues/entry"

@@ -1236,7 +1236,7 @@ BEGIN
     LTEXT           """LoadConIme""=dword:00000000",stDisableConImeFast3,20,252,292,8
     DEFPUSHBUTTON   "OK",IDOK,215,270,50,14
     PUSHBUTTON      "Cancel",IDCANCEL,270,270,50,14
-    LTEXT           "http://conemu-maximus5.googlecode.com",stHomePage,10,272,150,8,SS_NOTIFY
+    LTEXT           "http://code.google.com/p/conemu-maximus5",stHomePage,10,272,150,8,SS_NOTIFY
     GROUPBOX        "Choose ConEmu settings storage location (You may turn on portable mode here)",IDC_STATIC,3,3,317,30
     COMBOBOX        lbStorageLocation,8,14,308,75,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 END
@@ -1373,7 +1373,7 @@ BEGIN
     EDITTEXT        tAboutText,7,50,411,131,ES_MULTILINE | ES_AUTOVSCROLL | ES_NOHIDESEL | ES_READONLY | WS_VSCROLL
     EDITTEXT        tAboutSearch,365,33,53,13,ES_AUTOHSCROLL | ES_WANTRETURN
     CTEXT           "Console Emulation program (local terminal)",stConEmuAbout,32,7,312,8
-    CTEXT           "http://conemu-maximus5.googlecode.com",stConEmuUrl,167,189,185,8,SS_NOTIFY
+    CTEXT           "http://code.google.com/p/conemu-maximus5",stConEmuUrl,167,189,185,8,SS_NOTIFY
     CTEXT           "Version status:",stConEmuVersion,32,17,312,8
 END
 
@@ -1384,7 +1384,7 @@ FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
     ICON            IDI_ICON1,IDC_STATIC,7,7,21,20,WS_DISABLED
     LTEXT           "Description",stActionTitle,50,7,268,19
-    LTEXT           "http://conemu-maximus5.googlecode.com",stConEmuUrl,7,145,268,8,SS_NOTIFY
+    LTEXT           "http://code.google.com/p/conemu-maximus5",stConEmuUrl,7,145,268,8,SS_NOTIFY
     PUSHBUTTON      "",cbActionBtn1,49,37,269,26,BS_LEFT | BS_MULTILINE
     PUSHBUTTON      "",cbActionBtn2,49,99,269,26,BS_LEFT | BS_MULTILINE
     PUSHBUTTON      "",cbActionBtn3,49,68,269,26,BS_LEFT | BS_MULTILINE
