@@ -953,16 +953,20 @@ void CSettings::SettingsLoaded(SettingsLoadedFlags slfFlags, LPCWSTR pszCmdLine 
 
 void CSettings::SettingsPreSave()
 {
-	lstrcpyn(gpSet->inFont, LogFont.lfFaceName, countof(gpSet->inFont));
-	lstrcpyn(gpSet->inFont2, LogFont2.lfFaceName, countof(gpSet->inFont2));
-	#if 0
-	// was #ifdef UPDATE_FONTSIZE_RECREATE
-	gpSet->FontSizeY = LogFont.lfHeight;
-	#endif
-	gpSet->mn_LoadFontCharSet = LogFont.lfCharSet;
-	gpSet->mn_AntiAlias = LogFont.lfQuality;
-	gpSet->isBold = (LogFont.lfWeight >= FW_BOLD);
-	gpSet->isItalic = (LogFont.lfItalic != 0);
+	// Do not get data from LogFont if it was not created yet
+	if (gpConEmu->mn_StartupFinished >= CConEmuMain::ss_Started)
+	{
+		lstrcpyn(gpSet->inFont, LogFont.lfFaceName, countof(gpSet->inFont));
+		lstrcpyn(gpSet->inFont2, LogFont2.lfFaceName, countof(gpSet->inFont2));
+		#if 0
+		// was #ifdef UPDATE_FONTSIZE_RECREATE
+		gpSet->FontSizeY = LogFont.lfHeight;
+		#endif
+		gpSet->mn_LoadFontCharSet = LogFont.lfCharSet;
+		gpSet->mn_AntiAlias = LogFont.lfQuality;
+		gpSet->isBold = (LogFont.lfWeight >= FW_BOLD);
+		gpSet->isItalic = (LogFont.lfItalic != 0);
+	}
 
 	// Макросы, совпадающие с "умолчательными" - не пишем
 	if (gpSet->sRClickMacro && (lstrcmp(gpSet->sRClickMacro, gpSet->RClickMacroDefault(fmv_Default)) == 0 || lstrcmp(gpSet->sRClickMacro, gpSet->RClickMacroDefault(fmv_Lua)) == 0))
