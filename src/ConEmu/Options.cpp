@@ -2281,6 +2281,7 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla, const SettingsStorage* ap
 
 			if (hParent == INSIDE_PARENT_NOT_FOUND)
 			{
+				_ASSERTE(FALSE && "Settings initialization skipped because InsideFindParent was failed");
 				return;
 			}
 			else if (hParent)

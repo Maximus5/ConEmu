@@ -747,7 +747,7 @@ bool CSettings::SetOption(LPCWSTR asName, LPCWSTR asValue)
 
 void CSettings::SettingsLoaded(SettingsLoadedFlags slfFlags, LPCWSTR pszCmdLine /*= NULL*/)
 {
-	if ((ghWnd == NULL) || slfFlags & slf_OnResetReload)
+	if ((ghWnd == NULL) || (slfFlags & slf_OnResetReload))
 	{
 		gpConEmu->wndX = gpSet->_wndX;
 		gpConEmu->wndY = gpSet->_wndY;
