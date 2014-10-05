@@ -2337,22 +2337,35 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 	{
 		lbOpened = reg->OpenKey(CONEMU_ROOT_KEY, KEY_READ);
 		// rbNeedCreateVanilla means we need to convert old xml format (re-save all settings after loading)
-		rbNeedCreateVanilla = lbOpened;
+		if (lbOpened)
+		{
+			// We need to check if there is a real config stored in the HKCU\Software\ConEmu
+			// but not an installer values (like a ConEmuStartShortcutInstalled).
+			CEStr cmd;  BYTE KeybHook = 0xFF;
+			if (reg->Load(L"KeyboardHooks", KeybHook)
+				|| reg->Load(L"CmdLine", &cmd.ms_Arg))
+			{
+				rbNeedCreateVanilla = true;
+			}
+		}
 	}
 
 	if (rbNeedCreateVanilla)
 	{
 		// That may be only there was old (not ".Vanilla") settings in the CONEMU_ROOT_KEY
 		_ASSERTE(lbOpened);
-		IsConfigNew = true;
-		// Здесь можно включить настройки, которые должны включаться только для новых конфигураций!
-		InitVanilla();
+		// The config was saved in the old format, but it is not a 'new config'.
+		IsConfigNew = false;
 	}
 	else
 	{
-		IsConfigNew = false;
+		IsConfigNew = !lbOpened;
+		// Здесь можно включить настройки, которые должны включаться только для новых конфигураций!
+		if (IsConfigNew)
+		{
+			InitVanilla();
+		}
 	}
-
 
 	// Для совместимости настроек
 	bool bSendAltEnter = false, bSendAltSpace = false, bSendAltF9 = false;
