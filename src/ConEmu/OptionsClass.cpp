@@ -10394,7 +10394,11 @@ LONG CSettings::FontWidth()
 {
 	if (LogFont.lfWidth <= 0)
 	{
-		_ASSERTE(LogFont.lfWidth>0);
+		// Сюда мы должны попадать только для примерных расчетов во время старта!
+		_ASSERTE(LogFont.lfWidth>0 || gpConEmu->mn_StartupFinished<=CConEmuMain::ss_Starting);
+		int iEvalWidth = FontHeight() * 10 / 18;
+		if (iEvalWidth)
+			return _abs(iEvalWidth);
 		return 8;
 	}
 
@@ -10413,7 +10417,17 @@ LONG CSettings::FontHeight()
 {
 	if (LogFont.lfHeight <= 0)
 	{
-		_ASSERTE(LogFont.lfHeight>0);
+		// Сюда мы должны попадать только для примерных расчетов во время старта!
+		_ASSERTE(LogFont.lfHeight>0 || gpConEmu->mn_StartupFinished<=CConEmuMain::ss_Starting);
+		int iEvalHeight = 0;
+		if (gpSet->FontSizeY)
+		{
+			iEvalHeight = EvalSize(gpSet->FontSizeY, esf_Vertical|esf_CanUseUnits|esf_CanUseDpi|esf_CanUseZoom);
+			if (iEvalHeight < 0)
+				iEvalHeight = -iEvalHeight * 17 / 14;
+		}
+		if (iEvalHeight)
+			return _abs(iEvalHeight);
 		return 12;
 	}
 
@@ -10427,7 +10441,7 @@ LONG CSettings::FontHeightHtml()
 	if (LogFont.lfHeight <= 0)
 	{
 		_ASSERTE(LogFont.lfHeight>0);
-		return 12;
+		return FontHeight();
 	}
 
 	int iHeight, iLineGap = 0;
