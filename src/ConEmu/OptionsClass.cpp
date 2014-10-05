@@ -6205,7 +6205,7 @@ void CSettings::OnResetOrReload(bool abResetOnly, SettingsStorage* pXmlStorage /
 	{
 		// Если надо - загрузить из реестра/xml
 		bool bNeedCreateVanilla = false;
-		gpSet->LoadSettings(&bNeedCreateVanilla, pXmlStorage);
+		gpSet->LoadSettings(bNeedCreateVanilla, pXmlStorage);
 	}
 	else
 	{

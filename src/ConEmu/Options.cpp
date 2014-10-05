@@ -2246,7 +2246,7 @@ void Settings::FreeProgresses()
 /* ************************************************************************ */
 /* ************************************************************************ */
 
-void Settings::LoadSettings(bool *rbNeedCreateVanilla, const SettingsStorage* apStorage /*= NULL*/)
+void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* apStorage /*= NULL*/)
 {
 	if (!gpConEmu)
 	{
@@ -2325,19 +2325,22 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla, const SettingsStorage* ap
 
 	wcscpy_c(Type, reg->m_Storage.szType);
 
-	BOOL lbOpened = FALSE;
-	*rbNeedCreateVanilla = false;
+	bool lbOpened = false;
+	rbNeedCreateVanilla = false;
 
 	lbOpened = reg->OpenKey(gpSetCls->GetConfigPath(), KEY_READ);
 	// Поддержка старого стиля хранения (настройки БЕЗ имени конфига - лежали в корне ключа Software\ConEmu)
 	if (!lbOpened && (*gpSetCls->GetConfigName() == 0))
 	{
 		lbOpened = reg->OpenKey(CONEMU_ROOT_KEY, KEY_READ);
-		*rbNeedCreateVanilla = (lbOpened != FALSE);
+		// rbNeedCreateVanilla means we need to convert old xml format (re-save all settings after loading)
+		rbNeedCreateVanilla = lbOpened;
 	}
 
-	if (*rbNeedCreateVanilla)
+	if (rbNeedCreateVanilla)
 	{
+		// That may be only there was old (not ".Vanilla") settings in the CONEMU_ROOT_KEY
+		_ASSERTE(lbOpened);
 		IsConfigNew = true;
 		// Здесь можно включить настройки, которые должны включаться только для новых конфигураций!
 		InitVanilla();

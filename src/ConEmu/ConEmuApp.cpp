@@ -4499,7 +4499,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	{
 		// load settings from registry
 		DEBUGSTRSTARTUP(L"Loading config from settings storage");
-		gpSet->LoadSettings(&bNeedCreateVanilla);
+		gpSet->LoadSettings(bNeedCreateVanilla);
 	}
 	SettingsLoadedFlags slfFlags = slf_OnStartupLoad | slf_AllowFastConfig
 		| (bNeedCreateVanilla ? slf_NeedCreateVanilla : slf_None)
