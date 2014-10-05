@@ -123,7 +123,7 @@ BYTE CSetDlgButtons::IsChecked(HWND hParent, WORD nCtrlId)
 	{
 		_ASSERTE(hParent!=NULL);
 	}
-	else if (!GetDlgItem(hParent, nCtrlId))
+	else if ((nCtrlId != IDCANCEL) && !GetDlgItem(hParent, nCtrlId))
 	{
 		//_ASSERTE(hCheckBox!=NULL && "Checkbox not found in hParent dlg");
 		wchar_t szErr[128]; _wsprintf(szErr, SKIPLEN(countof(szErr)) L"IsChecked failed\nControlID %u not found in hParent dlg", nCtrlId);
@@ -157,7 +157,7 @@ bool CSetDlgButtons::ProcessButtonClick(HWND hDlg, WORD CB, BYTE uCheck)
 		case IDOK:
 		case IDCANCEL:
 		case IDCLOSE:
-			_ASSERTE(FALSE && "IDOR/IDCANCEL/IDCLOSE must be processed in wndOpProc");
+			_ASSERTE(FALSE && "IDOK/IDCANCEL/IDCLOSE must be processed in wndOpProc");
 			break;
 		case rNoneAA:
 		case rStandardAA:
