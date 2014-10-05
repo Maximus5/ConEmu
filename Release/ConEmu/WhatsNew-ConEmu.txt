@@ -12,6 +12,14 @@ Votes and awards (vote for ConEmu, if you please)
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+2014.10.04
+[*] Auto switch hovered tabs while dragging files from/to Far panel.
+[*] Don't try to copy files from "C:\1\" to "C:\1\" (same src and dst folders).
+[*] Issue 1740: D&D was not started from Far 1.75.
+[*] When creating default tasks, show WinSDK version in the tab label.
+[*] Autocreate VS (vcvarsall.bat) tasks for new configs.
+
+
 2014.10.02
 [*] Preparing for Windows 10.
 
