@@ -586,8 +586,25 @@ RECT CConEmuSize::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 		case CER_MONITOR: // switch (tFrom)
 			// Например, таким способом можно получить размер развернутого окна на текущем мониторе
 			// RECT rcMax = CalcRect(CER_MAXIMIZED, MakeRect(0,0), CER_MAXIMIZED);
-			_ASSERTE((tFrom!=CER_FULLSCREEN && tFrom!=CER_MAXIMIZED && tFrom!=CER_RESTORE) || (tFrom==tWhat));
+		{
+			switch (tFrom)
+			{
+			case CER_FULLSCREEN: // switch (tFrom)
+			case CER_MAXIMIZED: // switch (tFrom)
+				rcShift = CalcMargins(CEM_CAPTION);
+				break;
+			case CER_RESTORE: // switch (tFrom)
+			case CER_MONITOR: // switch (tFrom)
+				rcShift = CalcMargins(CEM_FRAMECAPTION);
+				break;
+			default:
+				_ASSERTE((tFrom==tWhat) && "Unhandled tFrom/tWhat");
+				ZeroStruct(rcShift);
+			}
+			AddMargins(rc, rcShift, false/*abExpand*/);
+			tFromNow = CER_MAINCLIENT;
 			break;
+		}
 		case CER_BACK: // switch (tFrom)
 			break;
 		default:
