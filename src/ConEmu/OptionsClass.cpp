@@ -7454,7 +7454,7 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 							break;
 
 						// Перезагрузить App distinct
-						gpSet->LoadAppSettings(NULL, true);
+						gpSet->LoadAppsSettings(NULL, true);
 
 						// Обновить список на экране
 						OnInitDialog_Apps(hWnd2, true);
