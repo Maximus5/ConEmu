@@ -4501,6 +4501,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		DEBUGSTRSTARTUP(L"Loading config from settings storage");
 		gpSet->LoadSettings(bNeedCreateVanilla);
 	}
+
+	// Settings are loaded, fixup
 	SettingsLoadedFlags slfFlags = slf_OnStartupLoad | slf_AllowFastConfig
 		| (bNeedCreateVanilla ? slf_NeedCreateVanilla : slf_None)
 		| (ResetSettings ? slf_DefaultSettings : slf_None);
