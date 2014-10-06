@@ -1396,6 +1396,8 @@ bool CPluginBase::Attach2Gui()
 		goto wrap;
 	}
 
+	gbWasDetached = TRUE;
+
 	if (!FindConEmuBaseDir(szConEmuBase, szConEmuGui, ghPluginModule))
 	{
 		ShowMessageGui(CECantStartServer2, MB_ICONSTOP|MB_SYSTEMMODAL);
@@ -2365,6 +2367,7 @@ void CPluginBase::InitHWND()
 	//        ==2: Console window
 	FarHwnd = GetConEmuHWND(2/*Console window*/);
 	ghConEmuWndDC = GetConEmuHWND(0/*Gui console DC window*/);
+	gbWasDetached = (ghConEmuWndDC == NULL);
 
 
 	{
