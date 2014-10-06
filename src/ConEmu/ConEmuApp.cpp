@@ -3734,6 +3734,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	bool WindowPrm = false; int WindowModeVal = 0;
 	bool ForceUseRegistryPrm = false;
 	bool LoadCfgFilePrm = false; TCHAR* LoadCfgFile = NULL;
+	bool ImpCfgFilePrm = false; MArray<TCHAR*> ImportCfgFiles;
 	bool SaveCfgFilePrm = false; TCHAR* SaveCfgFile = NULL;
 	bool UpdateSrcSetPrm = false; TCHAR* UpdateSrcSet = NULL;
 	bool AnsiLogPathPrm = false; TCHAR* AnsiLogPath = NULL;
@@ -4360,6 +4361,16 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 						return 100;
 					}
 				}
+				else if (!klstricmp(curCommand, _T("/ImportCfgFile")) && i + 1 < params)
+				{
+					// может быть несколько
+					TCHAR* pszImpFile = NULL;
+					if (!GetCfgParm(i, curCommand, ImpCfgFilePrm, pszImpFile, MAX_PATH, true))
+					{
+						return 100;
+					}
+					ImportCfgFiles.push_back(pszImpFile);
+				}
 				else if (!klstricmp(curCommand, _T("/SaveCfgFile")) && i + 1 < params)
 				{
 					// используем последний из параметров, если их несколько
@@ -4500,6 +4511,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		// load settings from registry
 		DEBUGSTRSTARTUP(L"Loading config from settings storage");
 		gpSet->LoadSettings(bNeedCreateVanilla);
+	}
+
+	// Import from xml-snippets?
+	if (ImpCfgFilePrm && !ImportCfgFiles.empty())
+	{
 	}
 
 	// Settings are loaded, fixup
