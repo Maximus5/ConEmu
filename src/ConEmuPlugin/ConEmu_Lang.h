@@ -36,6 +36,7 @@ enum {
 	CECantStartServer,
 	CECantStartServer2,
 	CECantStartServer3,
+	CECantStartServer4,
 	CEInvalidConHwnd,
 	CEShellExecuteException,
 	CEGetAllTabsFailed,

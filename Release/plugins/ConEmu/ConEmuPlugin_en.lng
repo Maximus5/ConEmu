@@ -35,6 +35,7 @@
 "Can't start console server process (ConEmuC.exe)"
 "Can't find console server file (ConEmuC.exe)"
 "Can't start console server process (ConEmuC.exe)\nConEmuC.exe not found"
+"The console already belongs to ConEmu"
 "ConEmu plugin\nGetConsoleWindow()==FarHwnd is NULL"
 "ConEmu plugin\nShellExecuteEx raised exception.\nFAR restart is recommended."
 "ConEmu plugin\nCan't retrieve opened tabs information!"

@@ -1390,6 +1390,12 @@ bool CPluginBase::Attach2Gui()
 	wchar_t* pszSlash = NULL;
 	DWORD nStartWait = 255;
 
+	if (GetConEmuHWND(0/*Gui console DC window*/))
+	{
+		ShowMessageGui(CECantStartServer4, MB_ICONSTOP|MB_SYSTEMMODAL);
+		goto wrap;
+	}
+
 	if (!FindConEmuBaseDir(szConEmuBase, szConEmuGui, ghPluginModule))
 	{
 		ShowMessageGui(CECantStartServer2, MB_ICONSTOP|MB_SYSTEMMODAL);
