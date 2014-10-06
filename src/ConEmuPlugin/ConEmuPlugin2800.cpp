@@ -595,10 +595,14 @@ bool CPluginW2800::UpdateConEmuTabsApi(int windowCount)
 		}
 	}
 
+	bool bHasPanels = this->CheckPanelExist();
+
 	// Скорее всего это модальный редактор (или вьювер?)
 	if (!lbActiveFound)
 	{
-		_ASSERTE("Active window must be detected already!" && 0);
+		// Порядок инициализации поменялся, редактора сначала вообще "нет".
+		_ASSERTE((!bHasPanels && windowCount==1 && WInfo.Type == WTYPE_DESKTOP) && "Active window must be detected already!");
+
 		WInfo.Pos = -1;
 
 		_ASSERTE(GetCurrentThreadId() == gnMainThreadId);
@@ -628,6 +632,14 @@ bool CPluginW2800::UpdateConEmuTabsApi(int windowCount)
 			{
 				gpTabs->Tabs.CurrentType = gnCurrentWindowType = WInfo.Type;
 			}
+		}
+
+		if ((tabCount == 0) && !bHasPanels)
+		{
+			// Добавить в табы хоть что-то
+			lbCh |= AddTab(tabCount, WInfo.Pos, false/*losingFocus*/, false/*editorSave*/,
+					               WTYPE_PANELS, L"far", /*editorSave ? ei.FileName :*/ NULL,
+					               1/*Current*/, 0/*Modified*/, 1/*Modal*/, 0);
 		}
 	}
 
