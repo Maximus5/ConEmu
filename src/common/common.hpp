@@ -100,8 +100,8 @@ typedef struct _CONSOLE_SELECTION_INFO
 #define CEHOMEPAGE_A    "http://code.google.com/p/conemu-maximus5"
 #define CEHOMEPAGE     _CRT_WIDE(CEHOMEPAGE_A)
 #define CEDOWNLPAGE    L"http://www.fosshub.com/ConEmu.html"
-#define CEREPORTBUG    L"http://code.google.com/p/conemu-maximus5/issues/entry"
-#define CEREPORTCRASH  L"http://code.google.com/p/conemu-maximus5/issues/entry"
+#define CEREPORTBUG    L"http://code.google.com/p/conemu-maximus5/wiki/Issues?tm=3"
+#define CEREPORTCRASH  L"http://code.google.com/p/conemu-maximus5/wiki/Issues?tm=3"
 #define CEWHATSNEW     L"http://code.google.com/p/conemu-maximus5/wiki/Whats_New"
 #define CEMSBUGWIKI    L"http://code.google.com/p/conemu-maximus5/wiki/MicrosoftBugs"
 #define CEHOOKSWIKI    L"http://code.google.com/p/conemu-maximus5/wiki/ConEmuHk"
