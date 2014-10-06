@@ -894,7 +894,7 @@ void Settings::FreeApps(int NewAppCount, AppSettings** NewApps/*, Settings::CEAp
 	//SafeFree(OldAppColors);
 }
 
-void Settings::LoadAppSettings(SettingsBase* reg, bool abFromOpDlg /*= false*/)
+void Settings::LoadAppsSettings(SettingsBase* reg, bool abFromOpDlg /*= false*/)
 {
 	bool lbDelete = false;
 	if (!reg)
@@ -2991,7 +2991,7 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 
 	LoadPalettes(reg);
 
-	LoadAppSettings(reg);
+	LoadAppsSettings(reg);
 
 	LoadCmdTasks(reg);
 
@@ -3241,7 +3241,7 @@ void Settings::SaveFindOptions(SettingsBase* reg/* = NULL*/)
 	}
 }
 
-void Settings::SaveAppSettings(SettingsBase* reg)
+void Settings::SaveAppsSettings(SettingsBase* reg)
 {
 	BOOL lbOpened = FALSE;
 	wchar_t szAppKey[MAX_PATH+64];
@@ -3746,7 +3746,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 
 		/* Subsections */
 		SaveCmdTasks(reg);
-		SaveAppSettings(reg);
+		SaveAppsSettings(reg);
 		SavePalettes(reg);
 
 		/* Done */

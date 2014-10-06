@@ -499,7 +499,7 @@ struct Settings
 
 		void LoadCursorSettings(SettingsBase* reg, CECursorType* pActive, CECursorType* pInactive);
 
-		void LoadAppSettings(SettingsBase* reg, bool abFromOpDlg = false);
+		void LoadAppsSettings(SettingsBase* reg, bool abFromOpDlg = false);
 		void LoadAppSettings(SettingsBase* reg, AppSettings* pApp/*, COLORREF* pColors*/);
 		void SaveAppSettings(SettingsBase* reg, AppSettings* pApp/*, COLORREF* pColors*/);
 
@@ -1266,7 +1266,7 @@ struct Settings
 		void CreatePredefinedPalettes(int iAddUserCount);
 		void LoadProgresses(SettingsBase* reg);
 		BOOL SaveSettings(BOOL abSilent = FALSE, const SettingsStorage* apStorage = NULL);
-		void SaveAppSettings(SettingsBase* reg);
+		void SaveAppsSettings(SettingsBase* reg);
 		bool SaveCmdTasks(SettingsBase* reg);
 		bool SaveProgresses(SettingsBase* reg);
 		void SaveConsoleFont();
