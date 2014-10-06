@@ -260,7 +260,7 @@ BEGIN
 	vkAppsBS                "Scroll buffer to the cursor position"
 	vkAppsEnd               "Scroll buffer to the bottom"
 	vkAppsHome              "Scroll buffer to the top"
-	vkAppsPgDn              "Scroll buffer one half-page up"
+	vkAppsPgDn              "Scroll buffer one half-page down"
 	vkAppsPgUp              "Scroll buffer one half-page up"
 	vkChildSystemMenu       "Child GUI window system menu (PuTTY, Notepad, etc.)"
 	vkCloseConEmu           "Close all tabs (same as ‘Cross’ click)"
