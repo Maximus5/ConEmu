@@ -955,6 +955,8 @@ void EmergencyShow(HWND hConWnd, int newFontY /*= 0*/, int newFontX /*= 0*/)
 	if (!IsWindow(hConWnd))
 		return; // Invalid HWND
 
+	_ASSERTE(FALSE && "EmergencyShow was called, Continue?");
+
 	SetUserFriendlyFont(hConWnd, newFontY, newFontX);
 
 	CorrectConsolePos(hConWnd);
