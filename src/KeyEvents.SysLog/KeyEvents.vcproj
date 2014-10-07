@@ -19,7 +19,7 @@
 		<Configuration
 			Name="Debug|Win32"
 			OutputDirectory="c:\temp\VCProject\$(ConfigurationName)"
-			IntermediateDirectory="c:\temp\VCProject\$(ConfigurationName)"
+			IntermediateDirectory="$(SolutionDir)\_VCBUILD\$(ConfigurationName).$(ProjectName).$(PlatformName)"
 			ConfigurationType="1"
 			CharacterSet="1"
 			>
@@ -92,7 +92,7 @@
 		<Configuration
 			Name="Release|Win32"
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
-			IntermediateDirectory="$(ConfigurationName)"
+			IntermediateDirectory="$(SolutionDir)\_VCBUILD\$(ConfigurationName).$(ProjectName).$(PlatformName)"
 			ConfigurationType="1"
 			CharacterSet="1"
 			WholeProgramOptimization="1"
@@ -169,7 +169,7 @@
 		<Configuration
 			Name="Debug_R|Win32"
 			OutputDirectory="c:\temp\VCProject\$(ConfigurationName)"
-			IntermediateDirectory="c:\temp\VCProject\$(ConfigurationName)"
+			IntermediateDirectory="$(SolutionDir)\_VCBUILD\$(ConfigurationName).$(ProjectName).$(PlatformName)"
 			ConfigurationType="1"
 			CharacterSet="1"
 			>
