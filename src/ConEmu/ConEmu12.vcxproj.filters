@@ -222,6 +222,54 @@
     <ClCompile Include="Match.cpp">
       <Filter>0 - Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\common\MEvent.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\MFileLog.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\MSection.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\MSectionSimple.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\MSetter.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\MTimer.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\MToolTip.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\WinRegistry.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="CmdHistory.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="HotkeyChord.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="HotkeyDlg.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="HotkeyList.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SetDlgButtons.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SetDlgColors.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SetDlgFonts.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SetDlgLists.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Attach.h">
@@ -490,6 +538,63 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Match.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\MArray.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\MEvent.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\MFileLog.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\MSection.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\MSectionSimple.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\MSetter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\MTimer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\MToolTip.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\StartupEnvDef.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\StartupEnvEx.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\WinRegistry.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CmdHistory.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="HotkeyChord.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="HotkeyDlg.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="HotkeyList.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SetDlgButtons.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SetDlgColors.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SetDlgFonts.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SetDlgLists.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

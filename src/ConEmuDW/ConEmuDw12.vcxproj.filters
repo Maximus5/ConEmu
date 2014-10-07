@@ -57,6 +57,9 @@
     <ClInclude Include="..\common\FarVersion.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\ConEmuCD\ExitCodes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="ConEmuDw.rc">
