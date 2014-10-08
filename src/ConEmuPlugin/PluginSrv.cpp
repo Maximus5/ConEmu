@@ -420,6 +420,18 @@ BOOL WINAPI PlugServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &pp
 		break;
 	} // CECMD_STORECURDIR
 
+	case CECMD_ATTACH2GUI:
+	{
+		BOOL bAttached = Plugin()->Attach2Gui();
+		pcbReplySize = sizeof(CESERVER_REQ_HDR) + sizeof(DWORD);
+		if (ExecuteNewCmd(ppReply, pcbMaxReplySize, pIn->hdr.nCmd, pcbReplySize))
+		{
+			lbRc = TRUE;
+			ppReply->dwData[0] = bAttached;
+		}
+		break;
+	} // CECMD_ATTACH2GUI
+
 	default:
 	{
 		CESERVER_REQ* pCmdRet = NULL;

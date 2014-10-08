@@ -710,7 +710,9 @@ bool CAttachDlg::StartAttach(HWND ahAttachWnd, DWORD anPID, DWORD anBits, Attach
 	STARTUPINFO si = {sizeof(si)};
 	SHELLEXECUTEINFO sei = {sizeof(sei)};
 	CESERVER_REQ *pIn = NULL, *pOut = NULL;
-	HANDLE hPipeTest = NULL, hProcTest = NULL;
+	HANDLE hPipeTest = NULL;
+	HANDLE hPluginTest = NULL;
+	HANDLE hProcTest = NULL;
 	DWORD nErrCode = 0;
 	bool lbCreate;
 	CESERVER_CONSOLE_MAPPING_HDR srv;
@@ -745,6 +747,15 @@ bool CAttachDlg::StartAttach(HWND ahAttachWnd, DWORD anPID, DWORD anBits, Attach
 		ExecuteFreeResult(pOut);
 	}
 
+
+	// Может быть это Far Manager с загруженным плагином ConEmu.dll?
+	_wsprintf(szPipe, SKIPLEN(countof(szPipe)) CEPLUGINPIPENAME, L".", anPID);
+	hPluginTest = CreateFile(szPipe, GENERIC_READ|GENERIC_WRITE, 0, LocalSecurity(), OPEN_EXISTING, 0, NULL);
+	if (hPluginTest && hPluginTest != INVALID_HANDLE_VALUE)
+	{
+		CloseHandle(hPluginTest);
+		goto DoPluginCall;
+	}
 
 	// Может быть в процессе уже есть ConEmuHk.dll? Или этот процесс вообще уже во вкладке другого ConEmu?
 	_wsprintf(szPipe, SKIPLEN(countof(szPipe)) CEHOOKSPIPENAME, L".", anPID);
@@ -848,6 +859,14 @@ DoExecute:
 		_ASSERTE(ahAttachWnd && IsWindow(ahAttachWnd));
 		pIn->NewServer.hAppWnd = ahAttachWnd;
 	}
+	goto DoPipeCall;
+
+DoPluginCall:
+	// Просто попросим плагин подцепиться к GUI
+	pIn = ExecuteNewCmd(CECMD_ATTACH2GUI, sizeof(CESERVER_REQ_HDR));
+	goto DoPipeCall;
+
+DoPipeCall:
 	pOut = ExecuteCmd(szPipe, pIn, 500, ghWnd);
 	if (!pOut || (pOut->hdr.cbSize < pIn->hdr.cbSize) || (pOut->dwData[0] == 0))
 	{
@@ -855,6 +874,8 @@ DoExecute:
 
 		wchar_t szMsg[255], szTitle[128];
 		wcscpy_c(szMsg, L"Failed to start console server in the remote process");
+		if (hPluginTest && hPluginTest != INVALID_HANDLE_VALUE)
+			wcscat_c(szMsg, L"\nFar ConEmu plugin was loaded");
 		if (hPipeTest && hPipeTest != INVALID_HANDLE_VALUE)
 			wcscat_c(szMsg, L"\nHooks already was set");
 		_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmu Attach, PID=%u, TID=%u", GetCurrentProcessId(), GetCurrentThreadId());
