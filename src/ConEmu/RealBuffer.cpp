@@ -2805,19 +2805,21 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom, bool bUpdateScre
 							if (cmd.nLine > 0)
 							{
 								wchar_t szMacro[96];
-								if (mp_RCon->m_FarInfo.FarVer.dwVerMajor == 1)
+								_ASSERTE(pVCon!=NULL);
+								CRealConsole* pRCon = pVCon->RCon();
+
+								if (pRCon->m_FarInfo.FarVer.dwVerMajor == 1)
 									_wsprintf(szMacro, SKIPLEN(countof(szMacro)) L"@$if(Editor) AltF8 \"%i:%i\" Enter $end", cmd.nLine, cmd.nColon);
-								else if (mp_RCon->m_FarInfo.FarVer.IsFarLua())
+								else if (pRCon->m_FarInfo.FarVer.IsFarLua())
 									_wsprintf(szMacro, SKIPLEN(countof(szMacro)) L"@if Area.Editor then Keys(\"AltF8\") print(\"%i:%i\") Keys(\"Enter\") end", cmd.nLine, cmd.nColon);
 								else
 									_wsprintf(szMacro, SKIPLEN(countof(szMacro)) L"@$if(Editor) AltF8 print(\"%i:%i\") Enter $end", cmd.nLine, cmd.nColon);
-								_ASSERTE(pVCon!=NULL);
 
 								// -- Послать что-нибудь в консоль, чтобы фар ушел из UserScreen открытого через редактор?
 								//PostMouseEvent(WM_LBUTTONUP, 0, crFrom);
 
 								// Ок, переход на строку (макрос)
-								pVCon->RCon()->PostMacro(szMacro, TRUE);
+								pRCon->PostMacro(szMacro, TRUE);
 							}
 						}
 						else
