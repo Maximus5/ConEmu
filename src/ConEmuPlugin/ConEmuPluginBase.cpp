@@ -5046,6 +5046,7 @@ BOOL /*WINAPI*/ CPluginBase::OnConsoleDetaching(HookCallbackArg* pArgs)
 VOID /*WINAPI*/ CPluginBase::OnConsoleWasAttached(HookCallbackArg* pArgs)
 {
 	FarHwnd = GetConEmuHWND(2);
+	gbFarWndVisible = IsWindowVisible(FarHwnd);
 
 	if (gbWasDetached)
 	{
