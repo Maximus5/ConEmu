@@ -2226,7 +2226,7 @@ wrap:
 // returns FALSE if need to block execution
 BOOL CShellProc::OnShellExecuteA(LPCSTR* asAction, LPCSTR* asFile, LPCSTR* asParam, LPCSTR* asDir, DWORD* anFlags, DWORD* anShowCmd)
 {
-	if ((!ghConEmuWndDC || !isWindow(ghConEmuWndDC)) && !isDefaultTerminalEnabled())
+	if ((!ghConEmuWndDC || !IsWindow(ghConEmuWndDC)) && !isDefaultTerminalEnabled())
 		return TRUE; // Перехватывать только под ConEmu
 
 	mb_InShellExecuteEx = TRUE;
@@ -2279,7 +2279,7 @@ BOOL CShellProc::OnShellExecuteA(LPCSTR* asAction, LPCSTR* asFile, LPCSTR* asPar
 // returns FALSE if need to block execution
 BOOL CShellProc::OnShellExecuteW(LPCWSTR* asAction, LPCWSTR* asFile, LPCWSTR* asParam, LPCWSTR* asDir, DWORD* anFlags, DWORD* anShowCmd)
 {
-	if ((!ghConEmuWndDC || !isWindow(ghConEmuWndDC)) && !isDefaultTerminalEnabled())
+	if ((!ghConEmuWndDC || !IsWindow(ghConEmuWndDC)) && !isDefaultTerminalEnabled())
 		return TRUE; // Перехватывать только под ConEmu
 
 	mb_InShellExecuteEx = TRUE;
@@ -2354,7 +2354,7 @@ BOOL CShellProc::OnShellExecuteExA(LPSHELLEXECUTEINFOA* lpExecInfo)
 	if (!lpExecInfo)
 		return TRUE;
 
-	if ((!ghConEmuWndDC || !isWindow(ghConEmuWndDC)) && !isDefaultTerminalEnabled())
+	if ((!ghConEmuWndDC || !IsWindow(ghConEmuWndDC)) && !isDefaultTerminalEnabled())
 		return TRUE; // Перехватывать только под ConEmu
 
 	mlp_SaveExecInfoA = *lpExecInfo;
@@ -2382,7 +2382,7 @@ BOOL CShellProc::OnShellExecuteExW(LPSHELLEXECUTEINFOW* lpExecInfo)
 	if (!lpExecInfo)
 		return TRUE;
 
-	if ((!ghConEmuWndDC || !isWindow(ghConEmuWndDC)) && !isDefaultTerminalEnabled())
+	if ((!ghConEmuWndDC || !IsWindow(ghConEmuWndDC)) && !isDefaultTerminalEnabled())
 		return TRUE; // Перехватывать только под ConEmu или в DefTerm
 
 	mlp_SaveExecInfoW = *lpExecInfo;
@@ -2407,7 +2407,7 @@ BOOL CShellProc::OnShellExecuteExW(LPSHELLEXECUTEINFOW* lpExecInfo)
 // returns FALSE if need to block execution
 BOOL CShellProc::OnCreateProcessA(LPCSTR* asFile, LPCSTR* asCmdLine, LPCSTR* asDir, DWORD* anCreationFlags, LPSTARTUPINFOA lpSI)
 {
-	if (!ghConEmuWndDC || !isWindow(ghConEmuWndDC))
+	if (!ghConEmuWndDC || !IsWindow(ghConEmuWndDC))
 		return TRUE; // Перехватывать только под ConEmu
 
 	mpwsz_TempFile = str2wcs(asFile ? *asFile : NULL, mn_CP);
@@ -2469,7 +2469,7 @@ BOOL CShellProc::OnCreateProcessA(LPCSTR* asFile, LPCSTR* asCmdLine, LPCSTR* asD
 // returns FALSE if need to block execution
 BOOL CShellProc::OnCreateProcessW(LPCWSTR* asFile, LPCWSTR* asCmdLine, LPCWSTR* asDir, DWORD* anCreationFlags, LPSTARTUPINFOW lpSI)
 {
-	if (!ghConEmuWndDC || !isWindow(ghConEmuWndDC))
+	if (!ghConEmuWndDC || !IsWindow(ghConEmuWndDC))
 	{
 		if (isDefaultTerminalEnabled())
 		{

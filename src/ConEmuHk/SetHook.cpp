@@ -183,9 +183,6 @@ size_t GetPreloadModules(PreloadModules** ppModules)
 {
 	static PreloadModules Checks[] =
 	{
-		{user32,	user32_noext,	&ghUser32,
-			{{"IsWindow", (void**)&Is_Window}}
-		},
 		{gdi32,		gdi32_noext,	&ghGdi32},
 		{shell32,	shell32_noext,	&ghShell32},
 		{advapi32,	advapi32_noext,	&ghAdvapi32,

@@ -1173,7 +1173,7 @@ HWND GetConEmuHWND(int aiType)
 			p = (CESERVER_CONSOLE_MAPPING_HDR*)MapViewOfFile(hMapping, nFlags,0,0,0);
 		}
 
-		if (p && p->hConEmuRoot && isWindow(p->hConEmuRoot))
+		if (p && p->hConEmuRoot && IsWindow(p->hConEmuRoot))
 		{
 			// Успешно
 			ConEmuRoot = p->hConEmuRoot;

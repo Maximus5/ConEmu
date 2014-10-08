@@ -78,7 +78,7 @@ void getWindowInfo(HWND ahWnd, wchar_t (&rsInfo)[1024], bool bProcessName /*= fa
 	{
 		wcscpy_c(rsInfo, L"<NULL>");
 	}
-	else if (!isWindow(ahWnd))
+	else if (!IsWindow(ahWnd))
 	{
 		msprintf(rsInfo, countof(rsInfo), L"0x%08X: Invalid window handle", (DWORD)ahWnd);
 	}
@@ -148,22 +148,6 @@ BOOL apiShowWindowAsync(HWND ahWnd, int anCmdShow)
 }
 #endif
 
-
-IsWindow_t Is_Window = NULL;
-BOOL isWindow(HWND hWnd)
-{
-	if (!hWnd)
-		return FALSE;
-	if (!Is_Window)
-	{
-		HMODULE hUser = GetModuleHandle(L"User32.dll");
-		if (hUser)
-			Is_Window = (IsWindow_t)GetProcAddress(hUser, "IsWindow");
-	}
-	if (Is_Window)
-		return Is_Window(hWnd);
-	return TRUE;
-}
 
 bool FileCompare(LPCWSTR asFilePath1, LPCWSTR asFilePath2)
 {
