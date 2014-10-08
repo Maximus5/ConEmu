@@ -1336,7 +1336,7 @@ HRESULT CDragDrop::DropShellOp(IDataObject* pDataObject, DWORD* pdwEffect, STGME
 
 	BOOL lbMultiDest = (hr == S_OK && stgMediumMap.hGlobal);
 	TODO("Освободить stgMediumMap");
-	LPCWSTR pszFileMap = (LPCWSTR)GlobalLock(stgMediumMap.hGlobal);
+	LPCWSTR pszFileMap = stgMediumMap.hGlobal ? (LPCWSTR)GlobalLock(stgMediumMap.hGlobal) : NULL;
 
 	if (!pszFileMap) lbMultiDest = FALSE;
 
@@ -1451,7 +1451,9 @@ HRESULT CDragDrop::DropShellOp(IDataObject* pDataObject, DWORD* pdwEffect, STGME
 
 		if (th.hThread == NULL)
 		{
-			DisplayLastError(_T("Can't create shell operation thread!"));
+			DWORD nErrCode = GetLastError();
+			DisplayLastError(_T("Can't create shell operation thread!"), nErrCode);
+			hr = HRESULT_FROM_WIN32(nErrCode);
 		}
 		else
 		{
@@ -1459,6 +1461,7 @@ HRESULT CDragDrop::DropShellOp(IDataObject* pDataObject, DWORD* pdwEffect, STGME
 			CS.Lock(mp_CrThreads);
 			m_OpThread.push_back(th);
 			CS.Unlock();
+			hr = S_OK;
 		}
 
 		DebugLog(NULL);
