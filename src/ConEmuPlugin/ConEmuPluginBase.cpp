@@ -73,6 +73,7 @@ static BOOL gbTryOpenMapHeader = FALSE;
 static BOOL gbStartupHooksAfterMap = FALSE;
 
 BOOL gbWasDetached = FALSE;
+BOOL gbFarWndVisible = FALSE;
 CONSOLE_SCREEN_BUFFER_INFO gsbiDetached;
 
 DWORD gnPeekReadCount = 0;
@@ -2368,6 +2369,7 @@ void CPluginBase::InitHWND()
 	FarHwnd = GetConEmuHWND(2/*Console window*/);
 	ghConEmuWndDC = GetConEmuHWND(0/*Gui console DC window*/);
 	gbWasDetached = (ghConEmuWndDC == NULL);
+	gbFarWndVisible = IsWindowVisible(FarHwnd);
 
 
 	{
@@ -2575,6 +2577,12 @@ DWORD CPluginBase::MonitorThreadProcW(LPVOID lpParameter)
 				SetConEmuEnvVar(gpConMapInfo->hConEmuRoot);
 				SetConEmuEnvVarChild(gpConMapInfo->hConEmuWndDc, gpConMapInfo->hConEmuWndBack);
 
+				if (gbStartupHooksAfterMap)
+				{
+					gbStartupHooksAfterMap = FALSE;
+					StartupHooks(ghPluginModule);
+				}
+
 				CPluginBase* p = Plugin();
 
 				// Передернуть отрисовку, чтобы обновить TrueColor
@@ -2587,6 +2595,14 @@ DWORD CPluginBase::MonitorThreadProcW(LPVOID lpParameter)
 				if (gnCurTabCount && gpTabs)
 				{
 					p->SendTabs(gnCurTabCount, TRUE);
+				}
+			}
+			else if (FarHwnd && gbFarWndVisible && !gbTryOpenMapHeader)
+			{
+				if (!IsWindowVisible(FarHwnd))
+				{
+					gbFarWndVisible = FALSE;
+					gbTryOpenMapHeader = TRUE;
 				}
 			}
 		}
