@@ -309,7 +309,7 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 	hConWnd = NULL;
 
 	ZeroStruct(m_ChildGui);
-	setGuiWndPID(NULL, 0, NULL); // force set mn_GuiWndPID to 0
+	setGuiWndPID(NULL, 0, 0, NULL); // force set mn_GuiWndPID to 0
 
 	mn_InPostDeadChar = 0;
 
@@ -3301,7 +3301,7 @@ void CRealConsole::ResetVarsOnStart()
 	mn_FarNoPanelsCheck = 0;
 
 	// setXXX для удобства
-	setGuiWndPID(NULL, 0, NULL); // set m_ChildGui.nGuiWndPID to 0
+	setGuiWndPID(NULL, 0, 0, NULL); // set m_ChildGui.nGuiWndPID to 0
 	// ZeroStruct для четкости
 	ZeroStruct(m_ChildGui);
 
@@ -12203,7 +12203,7 @@ HWND CRealConsole::isPictureView(BOOL abIgnoreNonModal/*=FALSE*/)
 		{
 			DWORD nStyle = ::GetWindowLong(hChild, GWL_STYLE), nStyleEx = ::GetWindowLong(hChild, GWL_EXSTYLE);
 			RECT rcChild; GetWindowRect(hChild, &rcChild);
-			SetGuiMode(m_ChildGui.nGuiAttachFlags|agaf_Self, hChild, nStyle, nStyleEx, m_ChildGui.szGuiWndProcess, m_ChildGui.nGuiWndPID, rcChild);
+			SetGuiMode(m_ChildGui.nGuiAttachFlags|agaf_Self, hChild, nStyle, nStyleEx, m_ChildGui.szGuiWndProcess, m_ChildGui.nGuiWndPID, m_ChildGui.nBits, rcChild);
 		}
 	}
 
@@ -12502,7 +12502,7 @@ void CRealConsole::StoreGuiChildRect(LPRECT prcNewPos)
 	m_ChildGui.rcLastGuiWnd = rcChild;
 }
 
-void CRealConsole::SetGuiMode(DWORD anFlags, HWND ahGuiWnd, DWORD anStyle, DWORD anStyleEx, LPCWSTR asAppFileName, DWORD anAppPID, RECT arcPrev)
+void CRealConsole::SetGuiMode(DWORD anFlags, HWND ahGuiWnd, DWORD anStyle, DWORD anStyleEx, LPCWSTR asAppFileName, DWORD anAppPID, int anBits, RECT arcPrev)
 {
 	if (!this)
 	{
@@ -12587,7 +12587,7 @@ void CRealConsole::SetGuiMode(DWORD anFlags, HWND ahGuiWnd, DWORD anStyle, DWORD
 	// ahGuiWnd может быть на первом этапе, когда ConEmuHk уведомляет - запустился GUI процесс
 	_ASSERTE((m_ChildGui.hGuiWnd==NULL && ahGuiWnd==NULL) || (ahGuiWnd && IsWindow(ahGuiWnd))); // Проверить, чтобы мусор не пришел...
 	m_ChildGui.nGuiAttachFlags = anFlags;
-	setGuiWndPID(ahGuiWnd, anAppPID, PointToName(asAppFileName)); // устанавливает mn_GuiWndPID
+	setGuiWndPID(ahGuiWnd, anAppPID, anBits, PointToName(asAppFileName)); // устанавливает mn_GuiWndPID
 	m_ChildGui.nGuiWndStyle = anStyle; m_ChildGui.nGuiWndStylEx = anStyleEx;
 	m_ChildGui.bGuiExternMode = false;
 	GuiWndFocusStore();
@@ -13957,7 +13957,7 @@ void CRealConsole::Detach(bool bPosted /*= false*/, bool bSendCloseConsole /*= f
 		//SetOtherWindowPos(lhGuiWnd, HWND_NOTOPMOST, rcGui.left, rcGui.top, rcGui.right-rcGui.left, rcGui.bottom-rcGui.top, SWP_SHOWWINDOW);
 
 		// Сбросить переменные, чтобы гуй закрыть не пыталось
-		setGuiWndPID(NULL, 0, NULL);
+		setGuiWndPID(NULL, 0, 0, NULL);
 		//mb_IsGuiApplication = FALSE;
 
 		//// Закрыть консоль
@@ -14294,9 +14294,10 @@ void CRealConsole::setGuiWnd(HWND ahGuiWnd)
 	}
 }
 
-void CRealConsole::setGuiWndPID(HWND ahGuiWnd, DWORD anPID, LPCWSTR asProcessName)
+void CRealConsole::setGuiWndPID(HWND ahGuiWnd, DWORD anPID, int anBits, LPCWSTR asProcessName)
 {
 	m_ChildGui.nGuiWndPID = anPID;
+	m_ChildGui.nBits = anBits;
 
 	if (asProcessName != m_ChildGui.szGuiWndProcess)
 	{

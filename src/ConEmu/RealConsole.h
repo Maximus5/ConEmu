@@ -296,12 +296,13 @@ class CRealConsole
 			bool    bInSetFocus;
 			DWORD   nGuiWndStyle, nGuiWndStylEx; // Исходные стили окна ДО подцепления в ConEmu
 			DWORD   nGuiWndPID;
+			int     nBits;
 			wchar_t szGuiWndProcess[MAX_PATH];
 			CESERVER_REQ_PORTABLESTARTED paf;
 			// some helpers
 			bool    isGuiWnd() { return (hGuiWnd && (hGuiWnd != (HWND)INVALID_HANDLE_VALUE)); };
 		} m_ChildGui;
-		void setGuiWndPID(HWND ahGuiWnd, DWORD anPID, LPCWSTR asProcessName);
+		void setGuiWndPID(HWND ahGuiWnd, DWORD anPID, int anBits, LPCWSTR asProcessName);
 		void setGuiWnd(HWND ahGuiWnd);
 		static  BOOL CALLBACK FindChildGuiWindowProc(HWND hwnd, LPARAM lParam);
 
@@ -338,7 +339,7 @@ class CRealConsole
 		BOOL    isGuiVisible();
 		BOOL    isGuiOverCon();
 		void    StoreGuiChildRect(LPRECT prcNewPos);
-		void    SetGuiMode(DWORD anFlags, HWND ahGuiWnd, DWORD anStyle, DWORD anStyleEx, LPCWSTR asAppFileName, DWORD anAppPID, RECT arcPrev);
+		void    SetGuiMode(DWORD anFlags, HWND ahGuiWnd, DWORD anStyle, DWORD anStyleEx, LPCWSTR asAppFileName, DWORD anAppPID, int anBits, RECT arcPrev);
 		static void CorrectGuiChildRect(DWORD anStyle, DWORD anStyleEx, RECT& rcGui, LPCWSTR pszExeName);
 		static bool CanCutChildFrame(LPCWSTR pszExeName);
 
