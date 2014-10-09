@@ -456,7 +456,7 @@ class CRealConsole
 		void SetFarStatus(DWORD nNewFarStatus);
 		DWORD GetActivePID();
 		LPCWSTR GetActiveProcessName();
-		int GetActiveAppSettingsId(LPCWSTR* ppProcessName=NULL);
+		int GetActiveAppSettingsId(LPCWSTR* ppProcessName = NULL, bool* pbIsAdmin = NULL, int* pnBits = NULL, DWORD* pnPID = NULL);
 	private:
 		int GetDefaultAppSettingsId();
 	public:
@@ -764,6 +764,7 @@ class CRealConsole
 		void SetActivePID(DWORD anNewPID);
 		DWORD mn_LastSetForegroundPID; // PID процесса, которому в последний раз было разрешено AllowSetForegroundWindow
 		DWORD mn_LastProcessNamePID;
+		int   mn_LastProcessBits;
 		wchar_t ms_LastProcessName[MAX_PATH];
 		int mn_LastAppSettingsId;
 		//

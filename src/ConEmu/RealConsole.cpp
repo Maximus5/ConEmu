@@ -263,7 +263,10 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 	mn_ProcessCount = mn_ProcessClientCount = 0;
 	mn_FarPID = mn_ActivePID = 0; //mn_FarInputTID = 0;
 	mn_FarNoPanelsCheck = 0;
-	mn_LastProcessNamePID = 0; ms_LastProcessName[0] = 0; mn_LastAppSettingsId = -1;
+	mn_LastProcessNamePID = 0;
+	mn_LastProcessBits = 0;
+	ms_LastProcessName[0] = 0;
+	mn_LastAppSettingsId = -1;
 	memset(m_FarPlugPIDs, 0, sizeof(m_FarPlugPIDs)); mn_FarPlugPIDsCount = 0;
 	memset(m_TerminatedPIDs, 0, sizeof(m_TerminatedPIDs)); mn_TerminatedIdx = 0;
 	mb_SkipFarPidChange = FALSE;
@@ -6587,6 +6590,8 @@ LPCWSTR CRealConsole::GetActiveProcessName()
 void CRealConsole::ResetActiveAppSettingsId()
 {
 	mn_LastProcessNamePID = 0;
+	mn_LastProcessBits = 0;
+	ms_LastProcessName[0] = 0;
 }
 
 // Вызывается перед запуском процесса
@@ -6692,64 +6697,77 @@ wrap:
 // ppProcessName используется в функции GetActiveProcessName()
 // возвращать должен реальное имя процесса, вне зависимости от того
 // была подмена на корневой ИД или нет.
-int CRealConsole::GetActiveAppSettingsId(LPCWSTR* ppProcessName/*=NULL*/)
+int CRealConsole::GetActiveAppSettingsId(LPCWSTR* ppProcessName /*= NULL*/, bool* pbIsAdmin /*= NULL*/, int* pnBits /*= NULL*/, DWORD* pnPID /*= NULL*/)
 {
 	if (!this)
 		return -1;
 
+	int   iAppId = -1;
 	DWORD nPID = GetActivePID();
+	bool  isAdmin = isAdministrator();
+
 	if (!nPID)
 	{
-		return GetDefaultAppSettingsId();
+		iAppId = GetDefaultAppSettingsId();
+		goto wrap;
 	}
 
 	if (nPID == mn_LastProcessNamePID)
 	{
-		if (ppProcessName)
-			*ppProcessName = ms_LastProcessName;
-		return mn_LastAppSettingsId;
-	}
-
-	LPCWSTR pszName = NULL;
-	if (nPID == m_ChildGui.nGuiWndPID)
-	{
-		pszName = m_ChildGui.szGuiWndProcess;
+		iAppId = mn_LastAppSettingsId;
 	}
 	else
 	{
-		MSectionLock SC; SC.Lock(&csPRC);
+		int nBits = 0;
 
-		//std::vector<ConProcess>::iterator i;
-		//for (i = m_Processes.begin(); i != m_Processes.end(); ++i)
-		for (INT_PTR ii = 0; ii < m_Processes.size(); ii++)
+		if (nPID == m_ChildGui.nGuiWndPID)
 		{
-			ConProcess* i = &(m_Processes[ii]);
-			if (i->ProcessID == nPID)
+			lstrcpyn(ms_LastProcessName, m_ChildGui.szGuiWndProcess, countof(ms_LastProcessName));
+			nBits = m_ChildGui.nBits;
+		}
+		else
+		{
+			MSectionLock SC; SC.Lock(&csPRC);
+
+			//std::vector<ConProcess>::iterator i;
+			//for (i = m_Processes.begin(); i != m_Processes.end(); ++i)
+			for (INT_PTR ii = 0; ii < m_Processes.size(); ii++)
 			{
-				pszName = i->Name;
-				break;
+				ConProcess* i = &(m_Processes[ii]);
+				if (i->ProcessID == nPID)
+				{
+					lstrcpyn(ms_LastProcessName, i->Name, countof(ms_LastProcessName));
+					nBits = i->Bits;
+					break;
+				}
 			}
 		}
+
+		mn_LastProcessNamePID = nPID;
+		mn_LastProcessBits = nBits;
+
+		int nSetggingsId = gpSet->GetAppSettingsId(ms_LastProcessName, isAdmin);
+
+		_ASSERTE((nSetggingsId != -1) || (*ms_RootProcessName));
+		// When explicit AppDistinct not found - take settings for the root process
+		// ms_RootProcessName must be processed in prev. GetDefaultAppSettingsId/PrepareDefaultColors
+		if ((nSetggingsId == -1) && (*ms_RootProcessName))
+			mn_LastAppSettingsId = gpSet->GetAppSettingsId(ms_RootProcessName, isAdmin);
+		else
+			mn_LastAppSettingsId = nSetggingsId;
+
+		iAppId = mn_LastAppSettingsId;
 	}
 
-	lstrcpyn(ms_LastProcessName, pszName ? pszName : L"", countof(ms_LastProcessName));
-	mn_LastProcessNamePID = nPID;
-
-	bool isAdmin = isAdministrator();
-
-	int nSetggingsId = gpSet->GetAppSettingsId(pszName, isAdmin);
-
-	_ASSERTE((nSetggingsId != -1) || (*ms_RootProcessName));
-	// When explicit AppDistinct not found - take settings for the root process
-	// ms_RootProcessName must be processed in prev. GetDefaultAppSettingsId/PrepareDefaultColors
-	if ((nSetggingsId == -1) && (*ms_RootProcessName))
-		mn_LastAppSettingsId = gpSet->GetAppSettingsId(ms_RootProcessName, isAdmin);
-	else
-		mn_LastAppSettingsId = nSetggingsId;
-
+wrap:
 	if (ppProcessName)
 		*ppProcessName = ms_LastProcessName;
-
+	if (pbIsAdmin)
+		*pbIsAdmin = isAdmin;
+	if (pnBits)
+		*pnBits = mn_LastProcessBits;
+	if (pnPID)
+		*pnPID = mn_LastProcessNamePID;
 	return mn_LastAppSettingsId;
 }
 
