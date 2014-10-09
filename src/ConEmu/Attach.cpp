@@ -391,27 +391,12 @@ bool CAttachDlg::CanAttachWindow(HWND hFind, DWORD nSkipPID, CProcessData* apPro
 		return false;
 
 	_wsprintf(Info.szPid, SKIPLEN(countof(Info.szPid)) L"%u", Info.nPID);
+	const wchar_t sz32bit[] = L" [32]";
+	const wchar_t sz64bit[] = L" [64]";
 
 	HANDLE h;
+	DEBUGTEST(DWORD nErr);
 	bool lbExeFound = false;
-	int nImageBits = 32;
-
-	#if 0
-	// Так можно получить только имя файла процесса, а интересен еще и путь
-	PROCESSENTRY32 pi = {sizeof(pi)};
-	h = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-	if (h && h != INVALID_HANDLE_VALUE)
-	{
-		if (Process32First(h, &pi))
-		{
-			while (pi.th32ProcessID != nPID)
-			{
-				if (!Process32Next(h, &pi))
-					pi.th32ProcessID = 0;
-			}
-		}
-	}
-	#endif
 
 	if (apProcessData)
 	{
@@ -420,42 +405,50 @@ bool CAttachDlg::CanAttachWindow(HWND hFind, DWORD nSkipPID, CProcessData* apPro
 		{
 			//ListView_SetItemText(hList, nItem, alc_File, szExeName);
 			//ListView_SetItemText(hList, nItem, alc_Path, szExePathName);
-			if (bIsWin64)
+			if (bIsWin64 && Info.nImageBits)
 			{
-				wcscat_c(Info.szPid, (nImageBits == 64) ? L" *64" : L" *32");
+				wcscat_c(Info.szPid, (Info.nImageBits == 64) ? sz64bit : sz32bit);
 			}
 		}
 	}
 
 	if (!lbExeFound)
 	{
+		Info.nImageBits = GetProcessBits(Info.nPID);
+		if (bIsWin64 && Info.nImageBits)
+		{
+			wcscat_c(Info.szPid, (Info.nImageBits == 64) ? sz64bit : sz32bit);
+		}
+
 		h = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, Info.nPID);
 		if (h && h != INVALID_HANDLE_VALUE)
 		{
 			MODULEENTRY32 mi = {sizeof(mi)};
 			if (Module32First(h, &mi))
 			{
-				//ListView_SetItemText(hList, nItem, alc_File, *mi.szModule ? mi.szModule : (wchar_t*)PointToName(mi.szExePath));
 				lstrcpyn(Info.szExeName, *mi.szModule ? mi.szModule : (wchar_t*)PointToName(mi.szExePath), countof(Info.szExeName));
-				//ListView_SetItemText(hList, nItem, alc_Path, mi.szExePath);
 				lstrcpyn(Info.szExePathName, mi.szExePath, countof(Info.szExePathName));
-				if (bIsWin64)
-				{
-					wcscat_c(Info.szPid, WIN3264TEST(L" *32",L" *64"));
-				}
 				lbExeFound = true;
 			}
 			else
 			{
 				if (bIsWin64)
 				{
-					wcscat_c(Info.szPid, L" *64");
+					wcscat_c(Info.szPid, sz64bit);
 				}
 			}
 			CloseHandle(h);
 		}
+		else
+		{
+			#ifdef _DEBUG
+			nErr = GetLastError();
+			_ASSERTE(nErr == 5 || (nErr == 299 && Info.nImageBits == 64));
+			#endif
+			wcscpy_c(Info.szExeName, L"???");
+		}
 
-		#ifdef _WIN64
+		#if 0 //#ifdef _WIN64 -- no need to call TH32CS_SNAPMODULE32, simple TH32CS_SNAPMODULE will handle both if it can
 		if (!lbExeFound)
 		{
 			h = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE|TH32CS_SNAPMODULE32, Info.nPID);
@@ -468,12 +461,32 @@ bool CAttachDlg::CanAttachWindow(HWND hFind, DWORD nSkipPID, CProcessData* apPro
 					lstrcpyn(Info.szExeName, *mi.szModule ? mi.szModule : (wchar_t*)PointToName(mi.szExePath), countof(Info.szExeName));
 					//ListView_SetItemText(hList, nItem, alc_Path, mi.szExePath);
 					lstrcpyn(Info.szExePathName, mi.szExePath, countof(Info.szExePathName));
-					wcscat_c(Info.szPid, L" *32");
 				}
 				CloseHandle(h);
 			}
 		}
 		#endif
+	}
+
+	if (!lbExeFound)
+	{
+		// Так можно получить только имя файла процесса
+		PROCESSENTRY32 pi = {sizeof(pi)};
+		h = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+		if (h && h != INVALID_HANDLE_VALUE)
+		{
+			if (Process32First(h, &pi))
+			{
+				do
+				{
+					if (pi.th32ProcessID == Info.nPID)
+					{
+						lstrcpyn(Info.szExeName, pi.szExeFile, countof(Info.szExeName));
+						break;
+					}
+				} while (Process32Next(h, &pi));
+			}
+		}
 	}
 
 	wcscpy_c(Info.szType, isConsoleClass(Info.szClass) ? szTypeCon : szTypeGui);
