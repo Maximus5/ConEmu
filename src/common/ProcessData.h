@@ -496,7 +496,7 @@ public:
 			if (pProcessPath)
 				*pProcessPath = 0;
 			if (pnProcessBits)
-				*pnProcessBits = 32;
+				*pnProcessBits = mb_Is64BitOs ? 0 : 32;
 			
 			DWORD cchMax = max(MAX_PATH*2,cbProcessPath);
 			wchar_t* pszPath = (wchar_t*)malloc(cchMax*sizeof(wchar_t));

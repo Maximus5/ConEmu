@@ -942,10 +942,15 @@ int GetProcessBits(DWORD nPID, HANDLE hProcess /*= NULL*/)
 
 	if (IsWow64Process_f)
 	{
+		BOOL bWow64 = FALSE;
 		HANDLE h = hProcess ? hProcess : hProcess = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, nPID);
 
-		BOOL bWow64 = FALSE;
-		if (IsWow64Process_f(h, &bWow64) && !bWow64)
+		if (h == NULL)
+		{
+			// If it is blocked due to access rights - try to find alternative ways (by path or PERF COUNTER)
+			ImageBits = 0;
+		}
+		else if (IsWow64Process_f(h, &bWow64) && !bWow64)
 		{
 			ImageBits = 64;
 		}
