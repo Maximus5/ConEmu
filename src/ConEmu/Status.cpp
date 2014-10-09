@@ -354,16 +354,29 @@ bool CStatus::LoadActiveProcess(CRealConsole* pRCon, wchar_t* pszText, int cchMa
 	}
 	else
 	{
-		LPCWSTR pszName = pRCon->GetActiveProcessName();
+		LPCWSTR pszName = NULL;
+		bool isAdmin = false;
+		int nBits = 0;
+		pRCon->GetActiveAppSettingsId(&pszName, &isAdmin, &nBits, &nPID);
+
 		TODO("Показать все дерево запущенных процессов");
-		wchar_t* psz = pszText;
-		int nCchLeft = cchMax;
-		lstrcpyn(psz, (pszName && *pszName) ? pszName : L"???", 64);
-		int nCurLen = lstrlen(psz);
-		_wsprintf(psz+nCurLen, SKIPLEN(nCchLeft-nCurLen) _T(":%u"), nPID);
-		//_wsprintf(psz+nCurLen, SKIPLEN(nCchLeft-nCurLen) _T(":%u « %s%s"),
-		//	nPID, gpConEmu->ms_ConEmuBuild, WIN3264TEST(L"x86",L"x64"));
-		UNREFERENCED_PARAMETER(nCchLeft);
+
+		wchar_t szNameTrim[64];
+		lstrcpyn(szNameTrim, (pszName && *pszName) ? pszName : L"???", countof(szNameTrim));
+
+		// Issue 1708: show active process bitness and UAC state
+
+		if (IsWindows64())
+		{
+			wchar_t szBits[8] = L"";
+			if (nBits > 0) _wsprintf(szBits, SKIPLEN(countof(szBits)) L"%i", nBits);
+			_wsprintf(pszText, SKIPLEN(cchMax) _T("%s[%s%s]:%u"), szNameTrim, isAdmin ? L"*" : L"", szBits, nPID);
+		}
+		else
+		{
+			_wsprintf(pszText, SKIPLEN(cchMax) _T("%s%s:%u"), szNameTrim, isAdmin ? L"[*]" : L"", nPID);
+		}
+
 		lbRc = true;
 	}
 
