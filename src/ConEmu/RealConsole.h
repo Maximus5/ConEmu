@@ -155,6 +155,7 @@ struct ConProcess
 	bool  IsCmd;     // значит фар выполняет команду
 	bool  NameChecked, RetryName;
 	bool  Alive, inConsole;
+	int   Bits;
 	wchar_t Name[64]; // чтобы полная инфа об ошибке влезала
 };
 

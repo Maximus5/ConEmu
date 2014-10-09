@@ -46,6 +46,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/MSectionSimple.h"
 #include "../common/MSetter.h"
 #include "../common/MWow64Disable.h"
+#include "../common/ProcessData.h"
 #include "../common/RgnDetect.h"
 #include "../common/SetEnvVar.h"
 #include "ConEmu.h"
@@ -6989,6 +6990,7 @@ BOOL CRealConsole::ProcessUpdate(const DWORD *apPID, UINT anCount)
 	//std::vector<ConProcess>::iterator iter, end;
 	//BOOL bAlive = FALSE;
 	BOOL bProcessChanged = FALSE, bProcessNew = FALSE, bProcessDel = FALSE;
+	CProcessData* pProcData = NULL;
 
 	// Проверить, может какие-то процессы уже помечены как закрывающиеся - их не добавлять
 	for (UINT j = 0; j < anCount; j++)
@@ -7150,6 +7152,8 @@ BOOL CRealConsole::ProcessUpdate(const DWORD *apPID, UINT anCount)
 								bool bIsWowProcess = false;
 								if (bIsWin64)
 								{
+									#if 0
+									// Это работает только если ТЕКУЩИЙ процесс - 64-битный
 									MODULEENTRY32 mi = {sizeof(mi)};
 									HANDLE hMod = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, cp.ProcessID);
 									DWORD nErrCode = (hMod == INVALID_HANDLE_VALUE) ? GetLastError() : 0;
@@ -7167,6 +7171,20 @@ BOOL CRealConsole::ProcessUpdate(const DWORD *apPID, UINT anCount)
 										SafeCloseHandle(hMod);
 									}
 									UNREFERENCED_PARAMETER(nErrCode);
+									#endif
+									cp.Bits = GetProcessBits(cp.ProcessID);
+									// Will fail with elevated consoles/processes
+									if (cp.Bits == 0)
+									{
+										if (!pProcData)
+											pProcData = new CProcessData();
+										if (pProcData)
+											pProcData->GetProcessName(cp.ProcessID, NULL, 0, NULL, 0, &cp.Bits);
+									}
+								}
+								else
+								{
+									cp.Bits = 32;
 								}
 								UNREFERENCED_PARAMETER(bIsWowProcess);
 
@@ -7256,6 +7274,8 @@ BOOL CRealConsole::ProcessUpdate(const DWORD *apPID, UINT anCount)
 		SPRC.Unlock();
 		SPRC.Lock(&csPRC);
 	}
+
+	SafeDelete(pProcData);
 
 	// Обновить статус запущенных программ, получить PID FAR'а, посчитать количество процессов в консоли
 	if (ProcessUpdateFlags(bProcessChanged))
