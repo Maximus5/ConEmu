@@ -502,6 +502,7 @@
       <File RelativePath="..\common\MTimer.h" />
       <File RelativePath="..\common\MToolTip.h" />
       <File RelativePath="..\common\PipeServer.h" />
+      <File RelativePath="..\common\ProcessData.h" />
       <File RelativePath="..\common\RConStartArgs.h" />
       <File RelativePath="..\common\RgnDetect.h" />
       <File RelativePath="..\common\SetEnvVar.h" />

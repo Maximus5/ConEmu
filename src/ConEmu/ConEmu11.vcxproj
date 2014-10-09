@@ -1002,6 +1002,7 @@
     <ClInclude Include="..\common\MTimer.h" />
     <ClInclude Include="..\common\MToolTip.h" />
     <ClInclude Include="..\common\PipeServer.h" />
+    <ClInclude Include="..\common\ProcessData.h" />
     <ClInclude Include="..\common\RConStartArgs.h" />
     <ClInclude Include="..\common\RgnDetect.h" />
     <ClInclude Include="..\common\SetEnvVar.h" />
