@@ -287,6 +287,7 @@ CINFILTRATE_EXIT_CODES InjectRemote(DWORD nRemotePID, bool abDefTermOnly /*= fal
 	CINFILTRATE_EXIT_CODES iRc = CIR_GeneralError/*-1*/;
 	bool lbWin64 = WIN3264TEST((IsWindows64()!=0),true);
 	bool is32bit;
+	int  nBits;
 	DWORD nWrapperWait = (DWORD)-1, nWrapperResult = (DWORD)-1;
 	HANDLE hProc = NULL;
 	wchar_t szSelf[MAX_PATH+16], szHooks[MAX_PATH+16];
@@ -416,37 +417,15 @@ CINFILTRATE_EXIT_CODES InjectRemote(DWORD nRemotePID, bool abDefTermOnly /*= fal
 
 	// Определить битность процесса, Если он 32битный, а текущий - ConEmuC64.exe
 	// Перезапустить 32битную версию ConEmuC.exe
-	if (!lbWin64)
+	nBits = GetProcessBits(nRemotePID, hProc);
+	if (nBits == 0)
 	{
-		is32bit = true; // x86 OS!
+		// Do not even expected, ConEmu GUI must run ConEmuC elevated if required.
+		iRc = CIR_GetProcessBits/*-204*/;
+		goto wrap;
 	}
-	else
-	{
-		is32bit = false; // x64 OS!
 
-		// Проверяем, кто такой nRemotePID
-		HMODULE hKernel = GetModuleHandleW(L"kernel32.dll");
-
-		if (hKernel)
-		{
-			typedef BOOL (WINAPI* IsWow64Process_t)(HANDLE hProcess, PBOOL Wow64Process);
-			IsWow64Process_t IsWow64Process_f = (IsWow64Process_t)GetProcAddress(hKernel, "IsWow64Process");
-
-			if (IsWow64Process_f)
-			{
-				BOOL bWow64 = FALSE;
-
-				if (IsWow64Process_f(hProc, &bWow64) && bWow64)
-				{
-					// По идее, такого быть не должно. ConEmu должен был запустить 32битный conemuC.exe
-					#ifdef _WIN64
-					_ASSERTE(bWow64==FALSE);
-					#endif
-					is32bit = true;
-				}
-			}
-		}
-	}
+	is32bit = (nBits == 32);
 
 	if (is32bit != WIN3264TEST(true,false))
 	{
