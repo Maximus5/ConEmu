@@ -201,6 +201,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #if defined(_DEBUG) && !defined(STRSAFE_DISABLE)
 // Только под дебагом, т.к. StringCchVPrintf вызывает vsprintf, который не линкуется в релизе статиком.
 #define SKIPLEN(l) (l),
+#define SKIPCOUNT(l) (countof(l)),
 int swprintf_c(wchar_t* Buffer, INT_PTR size, const wchar_t *Format, ...);
 int sprintf_c(char* Buffer, INT_PTR size, const char *Format, ...);
 
@@ -208,6 +209,7 @@ int sprintf_c(char* Buffer, INT_PTR size, const char *Format, ...);
 #define _wsprintfA sprintf_c
 #else
 #define SKIPLEN(l)
+#define SKIPCOUNT(l)
 #define _wsprintf  wsprintfW
 #define _wsprintfA wsprintfA
 #endif
