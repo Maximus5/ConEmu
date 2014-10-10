@@ -31,3 +31,4 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 void SetConEmuEnvVar(HWND hConEmuWnd);
 void SetConEmuEnvVarChild(HWND hDcWnd, HWND hBackWnd);
+void SetConEmuWorkEnvVar(HMODULE hConEmuCD);

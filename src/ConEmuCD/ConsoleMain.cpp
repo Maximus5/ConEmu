@@ -79,6 +79,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/MSectionSimple.h"
 #include "../common/MWow64Disable.h"
 #include "../common/RConStartArgs.h"
+#include "../common/SetEnvVar.h"
 #include "../common/StartupEnvEx.h"
 #include "../common/WinConsole.h"
 #include "../ConEmu/version.h"
@@ -3859,20 +3860,7 @@ int DoExecAction(ConEmuExecAction eExecAction, LPCWSTR asCmdArg /* rest of cmdli
 void SetWorkEnvVar()
 {
 	_ASSERTE(gnRunMode == RM_SERVER && !gbNoCreateProcess);
-	wchar_t szPath[MAX_PATH*2] = L"";
-	GetCurrentDirectory(countof(szPath), szPath);
-	SetEnvironmentVariable(ENV_CONEMUWORKDIR_VAR_W, szPath);
-
-	wchar_t szDrive[MAX_PATH];
-	SetEnvironmentVariable(ENV_CONEMUWORKDRIVE_VAR_W, GetDrive(szPath, szDrive, countof(szDrive)));
-	GetModuleFileName(ghOurModule, szPath, countof(szPath));
-	SetEnvironmentVariable(ENV_CONEMUDRIVE_VAR_W, GetDrive(szPath, szDrive, countof(szDrive)));
-
-	// Same as gpConEmu->ms_ConEmuBuild
-	wchar_t szVer4[8] = L""; lstrcpyn(szVer4, _T(MVV_4a), countof(szVer4));
-	msprintf(szDrive, countof(szDrive), L"%02u%02u%02u%s%s",
-		(MVV_1%100), MVV_2, MVV_3, szVer4[0]&&szVer4[1]?L"-":L"", szVer4);
-	SetEnvironmentVariable(ENV_CONEMU_BUILD_W, szDrive);
+	SetConEmuWorkEnvVar(ghOurModule);
 }
 
 // 1. Заменить подстановки вида: !ConEmuHWND!, !ConEmuDrawHWND!, !ConEmuBackHWND!, !ConEmuWorkDir!
