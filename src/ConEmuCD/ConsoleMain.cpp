@@ -69,26 +69,26 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#define SHOW_INJECT_MSGBOX
 
 #include "ConEmuC.h"
-#include "../ConEmu/version.h"
-#include "../common/execute.h"
-#include "../ConEmuHk/Injects.h"
-#include "../common/MArray.h"
-#include "../common/MMap.h"
-#include "../common/MWow64Disable.h"
-#include "../common/MSectionSimple.h"
-#include "../common/RConStartArgs.h"
+#include "../common/CmdLine.h"
 #include "../common/ConsoleAnnotation.h"
 #include "../common/ConsoleMixAttr.h"
 #include "../common/ConsoleRead.h"
+#include "../common/execute.h"
+#include "../common/MArray.h"
+#include "../common/MMap.h"
+#include "../common/MSectionSimple.h"
+#include "../common/MWow64Disable.h"
+#include "../common/RConStartArgs.h"
+#include "../common/StartupEnvEx.h"
 #include "../common/WinConsole.h"
-#include "../common/CmdLine.h"
+#include "../ConEmu/version.h"
+#include "../ConEmuHk/Injects.h"
 #include "ConProcess.h"
 #include "ConsoleHelp.h"
 #include "Debugger.h"
 #include "Downloader.h"
 #include "UnicodeTest.h"
 
-#include "../common/StartupEnvEx.h"
 
 #ifndef __GNUC__
 #pragma comment(lib, "shlwapi.lib")
