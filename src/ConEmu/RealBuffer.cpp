@@ -686,6 +686,8 @@ BOOL CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 		sizeBuffer = BufferHeight(sizeBuffer); // Если нужно - скорректировать
 		_ASSERTE(sizeBuffer > 0);
 		sbi.dwSize.Y = sizeBuffer;
+
+		// rect по идее вообще не нужен, за блокировку при прокрутке отвечает nSendTopLine
 		rect.Top = sbi.srWindow.Top;
 		rect.Left = sbi.srWindow.Left;
 		rect.Right = rect.Left + sizeX - 1;
@@ -714,17 +716,22 @@ BOOL CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 	}
 
 	_ASSERTE(sizeY>0 && sizeY<200);
+
 	// Устанавливаем параметры для передачи в ConEmuC
 	pIn->SetSize.nBufferHeight = sizeBuffer; //con.bBufferHeight ? gpSet->Default BufferHeight : 0;
 	pIn->SetSize.size.X = sizeX;
 	pIn->SetSize.size.Y = sizeY;
+
 	TODO("nTopVisibleLine должен передаваться при скролле, а не при ресайзе!");
 	#ifdef SHOW_AUTOSCROLL
 	pIn->SetSize.nSendTopLine = (gpSetCls->AutoScroll || !con.bBufferHeight) ? -1 : con.nTopVisibleLine;
 	#else
 	pIn->SetSize.nSendTopLine = mp_RCon->InScroll() ? con.nTopVisibleLine : -1;
 	#endif
+
+	// rect по идее вообще не нужен, за блокировку при прокрутке отвечает nSendTopLine
 	pIn->SetSize.rcWindow = rect;
+
 	pIn->SetSize.dwFarPID = (con.bBufferHeight && !mp_RCon->isFarBufferSupported()) ? 0 : mp_RCon->GetFarPID(TRUE);
 
 	// Если размер менять не нужно - то и CallNamedPipe не делать
