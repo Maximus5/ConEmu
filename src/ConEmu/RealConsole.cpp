@@ -13539,10 +13539,10 @@ void CRealConsole::SetConStatus(LPCWSTR asStatus, DWORD/*enum ConStatusOption*/ 
 		return;
 	}
 
-	if (!(Options & cso_DontUpdate) && isActive(false))
+	if (!(Options & cso_DontUpdate) && isActive((Options & cso_Critical)==cso_Critical))
 	{
 		// Обновить статусную строку, если она показана
-		if (gpSet->isStatusBarShow)
+		if (gpSet->isStatusBarShow && isActive(false))
 		{
 			// Перерисовать сразу
 			mp_ConEmu->mp_Status->UpdateStatusBar(true, true);

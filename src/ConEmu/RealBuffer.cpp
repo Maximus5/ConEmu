@@ -1133,6 +1133,13 @@ BOOL CRealBuffer::SetConsoleSize(USHORT sizeX, USHORT sizeY, USHORT sizeBuffer, 
 	else*/
 	HEAPVAL;
 
+	wchar_t szStatus[64];
+	int iBufWidth = GetBufferWidth();
+	if (iBufWidth < (int)sizeX) iBufWidth = sizeX;
+	int iBufHeight = (sizeBuffer > 0) ? sizeBuffer : GetBufferHeight();
+	_wsprintf(szStatus, SKIPCOUNT(szStatus) L"{%u,%u} size, {%i,%i} buffer", sizeX, sizeY, iBufWidth, iBufHeight);
+	mp_RCon->SetConStatus(szStatus, CRealConsole::cso_Critical);
+
 	// Попробовать для консолей (cmd, и т.п.) делать ресайз после отпускания мышки
 	if ((gpConEmu->mouse.state & MOUSE_SIZING_BEGIN)
 		&& (!mp_RCon->GuiWnd() && !mp_RCon->GetFarPID()))
@@ -1154,6 +1161,8 @@ BOOL CRealBuffer::SetConsoleSize(USHORT sizeX, USHORT sizeY, USHORT sizeBuffer, 
 	lbRc = SetConsoleSizeSrv(sizeX, sizeY, sizeBuffer, anCmdID);
 	con.bInSetSize = FALSE; SetEvent(con.hInSetSize);
 	HEAPVAL;
+
+	mp_RCon->SetConStatus(NULL);
 
 #if 0
 	if (lbRc && mp_RCon->isActive())
@@ -5449,7 +5458,9 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 	}
 
 	// Если требуется показать "статус" - принудительно перебиваем первую видимую строку возвращаемого буфера
-	if (!gpSet->isStatusBarShow && mp_RCon->m_ConStatus.szText[0] && (mp_RCon->m_ConStatus.Options & CRealConsole::cso_Critical))
+	if (mp_RCon->m_ConStatus.szText[0] && (mp_RCon->m_ConStatus.Options & CRealConsole::cso_Critical)
+		&& (!gpSet->isStatusBarShow
+			|| (mp_RCon->isActive(true) && !mp_RCon->isActive(false))))
 	{
 		int nLen = _tcslen(mp_RCon->m_ConStatus.szText);
 		wmemcpy(pChar, mp_RCon->m_ConStatus.szText, nLen);
