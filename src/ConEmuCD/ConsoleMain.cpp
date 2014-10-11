@@ -9013,6 +9013,140 @@ static bool ApplyConsoleSizeSimple(const COORD& crNewSize, const CONSOLE_SCREEN_
 	return lbRc;
 }
 
+static SHORT FindFirstDirtyLine(SHORT anFrom, SHORT anTo, SHORT anWidth, WORD wDefAttrs)
+{
+	SHORT iFound = anFrom;
+	SHORT iStep = (anTo < anFrom) ? -1 : 1;
+	HANDLE hCon = ghConOut;
+	BOOL bReadRc;
+	CHAR_INFO* pch = (CHAR_INFO*)calloc(anWidth, sizeof(*pch));
+	COORD crBufSize = {anWidth, 1}, crNil = {};
+	SMALL_RECT rcRead = {0, anFrom, anWidth-1, anFrom};
+	BYTE bDefAttr = LOBYTE(wDefAttrs); // Trim to colors only, do not compare extended attributes!
+
+	for (rcRead.Top = anFrom; rcRead.Top != anTo; rcRead.Top += iStep)
+	{
+		rcRead.Bottom = rcRead.Top;
+
+		InterlockedIncrement(&gnInReadConsoleOutput);
+		bReadRc = ReadConsoleOutput(hCon, pch, crBufSize, crNil, &rcRead);
+		InterlockedDecrement(&gnInReadConsoleOutput);
+		if (!bReadRc)
+			break;
+
+		// Is line dirty?
+		for (SHORT i = 0; i < anWidth; i++)
+		{
+			// Non-space char or non-default color/background
+			if ((pch[i].Char.UnicodeChar != L' ') || (LOBYTE(pch[i].Attributes) != bDefAttr))
+			{
+				iFound = rcRead.Top;
+				goto wrap;
+			}
+		}
+	}
+
+	iFound = min(anTo, anFrom);
+wrap:
+	SafeFree(pch);
+	return iFound;
+}
+
+// По идее, rNewRect должен на входе содержать текущую видимую область
+static void EvalVisibleResizeRect(SMALL_RECT& rNewRect,
+	SHORT anOldBottom,
+	const COORD& crNewSize,
+	SHORT nCursorAtBottom, SHORT nScreenAtBottom,
+	const CONSOLE_SCREEN_BUFFER_INFO& csbi)
+{
+	// Абсолютная (буферна) координата
+	const SHORT nMaxX = csbi.dwSize.X-1, nMaxY = csbi.dwSize.Y-1;
+
+	// сначала - не трогая rNewRect.Left, вдруг там горизонтальная прокрутка?
+	// anWidth - желаемая ширина видимой области
+	rNewRect.Right = rNewRect.Left + crNewSize.X - 1;
+	// не может выходить за пределы ширины буфера
+	if (rNewRect.Right > nMaxX)
+	{
+		rNewRect.Left = max(0, csbi.dwSize.X-crNewSize.X);
+		rNewRect.Right = min(nMaxX, rNewRect.Left+crNewSize.X-1);
+	}
+
+	// Теперь - танцы с вертикалью. Логика такая
+	// * Если ДО ресайза все видимые строки были заполнены (кейбар фара внизу экрана) - оставить anOldBottom
+	// * Иначе, если курсор был видим
+	//   * приоритетно - двигать верхнюю границу видимой области (показывать максимум строк из back-scroll-buffer)
+	//   * не допускать, чтобы расстояние между курсором и низом видимой области УМЕНЬШИЛОСЬ до менее чем 2-х строк
+	// * Иначе если курсор был НЕ видим
+	//   * просто показывать максимум стро из back-scroll-buffer (фиксирую нижнюю границу)
+
+	// BTW, сейчас при ресайзе меняется только ширина csbi.dwSize.X (ну, кроме случаев изменения высоты буфера)
+
+	if (nScreenAtBottom <= 0)
+	{
+		// Все просто, фиксируем нижнюю границу по размеру буфера
+		rNewRect.Bottom = csbi.dwSize.Y-1;
+		rNewRect.Top = max(0, rNewRect.Bottom-crNewSize.Y+1);
+	}
+	else
+	{
+		// Значит консоль еще не дошла до низа
+		SHORT nRectHeight = (rNewRect.Bottom - rNewRect.Top + 1);
+
+		if (nCursorAtBottom > 0)
+		{
+			// Оставить строку с курсором "приклеенной" к нижней границе окна (с макс. отступом nCursorAtBottom строк)
+			rNewRect.Bottom = min(nMaxY, csbi.dwCursorPosition.Y+nCursorAtBottom-1);
+		}
+		// Уменьшение видимой области
+		else if (crNewSize.Y < nRectHeight)
+		{
+			if ((nScreenAtBottom > 0) && (nScreenAtBottom <= 3))
+			{
+				// Оставить nScreenAtBottom строк (включая) между anOldBottom и низом консоли
+				rNewRect.Bottom = min(nMaxY, anOldBottom+nScreenAtBottom-1);
+			}
+			else if (anOldBottom > (rNewRect.Top + crNewSize.Y - 1))
+			{
+				// Если нижняя граница приблизилась или перекрыла
+				// нашу старую строку (которая была anOldBottom)
+				rNewRect.Bottom = min(anOldBottom, csbi.dwSize.Y-1);
+			}
+			else
+			{
+				// Иначе - не трогать вернюю границу
+				rNewRect.Bottom = min(nMaxY, rNewRect.Top+crNewSize.Y-1);
+			}
+			//rNewRect.Top = rNewRect.Bottom-crNewSize.Y+1; // на 0 скорректируем в конце
+		}
+		// Увеличение видимой области
+		else if (crNewSize.Y > nRectHeight)
+		{
+			if (nScreenAtBottom > 0)
+			{
+				// Оставить nScreenAtBottom строк (включая) между anOldBottom и низом консоли
+				rNewRect.Bottom = min(nMaxY, anOldBottom+nScreenAtBottom-1);
+			}
+			//rNewRect.Top = rNewRect.Bottom-crNewSize.Y+1; // на 0 скорректируем в конце
+		}
+		rNewRect.Top = rNewRect.Bottom-crNewSize.Y+1; // на 0 скорректируем в конце
+
+		// Проверка на выход за пределы буфера
+		if (rNewRect.Bottom > nMaxY)
+		{
+			rNewRect.Bottom = nMaxY;
+			rNewRect.Top = max(0, rNewRect.Bottom-crNewSize.Y+1);
+		}
+		else if (rNewRect.Top < 0)
+		{
+			rNewRect.Top = 0;
+			rNewRect.Bottom = min(nMaxY, rNewRect.Top+crNewSize.Y-1);
+		}
+	}
+
+	_ASSERTE((rNewRect.Bottom-rNewRect.Top+1) == crNewSize.Y);
+}
+
 // There is the buffer (scrolling) in the console
 // Ресайз для BufferHeight
 static bool ApplyConsoleSizeBuffer(const USHORT BufferHeight, const COORD& crNewSize, const CONSOLE_SCREEN_BUFFER_INFO& csbi, DWORD& dwErr)
@@ -9023,17 +9157,42 @@ static bool ApplyConsoleSizeBuffer(const USHORT BufferHeight, const COORD& crNew
 	RECT rcConPos = {};
 	GetWindowRect(ghConWnd, &rcConPos);
 
+	TODO("Horizontal scrolling?");
 	COORD crHeight = {crNewSize.X, BufferHeight};
 	SMALL_RECT rcTemp = {};
 
-	#if 0
+	// По идее (в планах), lbCursorInScreen всегда должен быть true,
+	// если только само консольное приложение не выполняет прокрутку.
+	// Сам ConEmu должен "крутить" консоль только виртуально, не трогая физический скролл.
 	bool lbCursorInScreen = CoordInSmallRect(csbi.dwCursorPosition, csbi.srWindow);
-	bool lbScreenAtBottom = (csbi.srWindow.Bottom == (csbi.dwSize.Y - 1));
-	SHORT nCursorBottomLines = csbi.srWindow.Bottom - csbi.dwCursorPosition.Y;
-	#endif
+	bool lbScreenAtBottom = (csbi.srWindow.Bottom >= (csbi.dwSize.Y - 1));
+	bool lbCursorAtBottom = (lbCursorInScreen && (csbi.dwCursorPosition.Y >= (csbi.srWindow.Bottom - 2)));
+	SHORT nCursorAtBottom = lbCursorAtBottom ? (csbi.srWindow.Bottom - csbi.dwCursorPosition.Y + 1) : 0;
+	SHORT nBottomLine = csbi.srWindow.Bottom;
+	SHORT nScreenAtBottom = 0;
+
+	// Прикинуть, где должна будет быть нижняя граница видимой области
+	if (!lbScreenAtBottom)
+	{
+		// Ищем снизу вверх (найти самую нижнюю грязную строку)
+		SHORT nTo = lbCursorInScreen ? csbi.dwCursorPosition.Y : csbi.srWindow.Top;
+		SHORT nWidth = (csbi.srWindow.Right - csbi.srWindow.Left + 1);
+		SHORT nDirtyLine = FindFirstDirtyLine(nBottomLine, nTo, nWidth, csbi.wAttributes);
+		// Если удачно
+		if (nDirtyLine >= csbi.srWindow.Top && nDirtyLine < csbi.dwSize.Y)
+		{
+			if (lbCursorInScreen)
+				nBottomLine = max(nDirtyLine, min(csbi.dwCursorPosition.X+1,csbi.srWindow.Bottom));
+			else
+				nBottomLine = nDirtyLine;
+		}
+		nScreenAtBottom = (csbi.srWindow.Bottom - nBottomLine + 1);
+	}
 
 	SMALL_RECT rNewRect = csbi.srWindow;
+	EvalVisibleResizeRect(rNewRect, nBottomLine, crNewSize, nCursorAtBottom, nScreenAtBottom, csbi);
 
+#if 0
 	// Подправим будущую видимую область
 	if (csbi.dwSize.Y == (csbi.srWindow.Bottom - csbi.srWindow.Top + 1))
 	{
@@ -9052,18 +9211,22 @@ static bool ApplyConsoleSizeBuffer(const USHORT BufferHeight, const COORD& crNew
 	{
 		// Считаем, что верх рабочей области фиксирован, коррекция не требуется
 	}
+#endif
 
 	// Если этого не сделать - размер консоли нельзя УМЕНЬШИТЬ
 	if (crNewSize.X <= (csbi.srWindow.Right-csbi.srWindow.Left)
 	        || crNewSize.Y <= (csbi.srWindow.Bottom-csbi.srWindow.Top))
 	{
+		#if 0
 		rcTemp.Left = 0;
 		WARNING("А при уменьшении высоты, тащим нижнюю границе окна вверх, Top глючить не будет?");
 		rcTemp.Top = max(0,(csbi.srWindow.Bottom-crNewSize.Y+1));
 		rcTemp.Right = min((crNewSize.X - 1),(csbi.srWindow.Right-csbi.srWindow.Left));
 		rcTemp.Bottom = min((BufferHeight - 1),(rcTemp.Top+crNewSize.Y-1));//(csbi.srWindow.Bottom-csbi.srWindow.Top)); //-V592
+		_ASSERTE(((rcTemp.Bottom-rcTemp.Top+1)==crNewSize.Y) && ((rcTemp.Bottom-rcTemp.Top)==(rNewRect.Bottom-rNewRect.Top)));
+		#endif
 
-		if (!SetConsoleWindowInfo(ghConOut, TRUE, &rcTemp))
+		if (!SetConsoleWindowInfo(ghConOut, TRUE, &rNewRect))
 		{
 			// Last chance to shrink visible area of the console if ConApi was failed
 			MoveWindow(ghConWnd, rcConPos.left, rcConPos.top, 1, 1, 1);
@@ -9077,6 +9240,16 @@ static bool ApplyConsoleSizeBuffer(const USHORT BufferHeight, const COORD& crNew
 		dwErr = GetLastError();
 	}
 
+	// Особенно в Win10 после "заворота строк",
+	// нужно получить новое реальное состояние консоли после изменения буфера
+	CONSOLE_SCREEN_BUFFER_INFO csbiNew = {};
+	if (GetConsoleScreenBufferInfo(ghConOut, &csbiNew))
+	{
+		rNewRect = csbiNew.srWindow;
+		EvalVisibleResizeRect(rNewRect, nBottomLine, crNewSize, nCursorAtBottom, nScreenAtBottom, csbiNew);
+	}
+
+	#if 0
 	// Последняя коррекция видимой области.
 	// Левую граница - всегда 0 (горизонтальную прокрутку пока не поддерживаем)
 	// Вертикальное положение - пляшем от rNewRect.Top
@@ -9084,26 +9257,19 @@ static bool ApplyConsoleSizeBuffer(const USHORT BufferHeight, const COORD& crNew
 	rNewRect.Left = 0;
 	rNewRect.Right = crHeight.X-1;
 
-	#if 0
 	if (lbScreenAtBottom)
 	{
 	}
 	else if (lbCursorInScreen)
 	{
-		// Особенно в Win10 после "заворота строк", нужно получить новое реальное состояние консоли
-		CONSOLE_SCREEN_BUFFER_INFO csbiNew = {};
-		if (GetConsoleScreenBufferInfo(ghConOut, &csbiNew))
-		{
-			//nCursorBottomLines
-		}
 	}
 	else
 	{
 		TODO("Маркеры для блокировки положения в окне после заворота строк в Win10?");
 	}
-	#endif
 
 	rNewRect.Bottom = min((crHeight.Y-1), (rNewRect.Top+gcrVisibleSize.Y-1)); //-V592
+	#endif
 
 	_ASSERTE((rNewRect.Bottom-rNewRect.Top)<200);
 
