@@ -2360,7 +2360,7 @@ BOOL CRealBuffer::ApplyConsoleInfo()
 			// Это может случиться во время пересоздания консоли (когда фар падал)
 			// или при изменении параметров экрана (Aero->Standard)
 			// или при закрытии фара (он "восстанавливает" размер консоли)
-			_ASSERTE(nNewWidth == pInfo->crWindow.X && nNewHeight == pInfo->crWindow.Y);
+			_ASSERTE((nNewWidth == pInfo->crWindow.X && nNewHeight == pInfo->crWindow.Y) || con.bInSetSize);
 			// 10
 			//DWORD MaxBufferSize = pInfo->nCurDataMaxSize;
 			//if (MaxBufferSize != 0) {
