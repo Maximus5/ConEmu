@@ -1842,9 +1842,17 @@ LRESULT CConEmuSize::OnGetMinMaxInfo(LPMINMAXINFO pInfo)
 
 	// *** Минимально допустимые размеры консоли
 	RECT rcMin = MakeRect(MIN_CON_WIDTH,MIN_CON_HEIGHT);
+	SIZE Splits = {};
 	if (mp_ConEmu->isVConExists(0))
-		rcMin = CVConGroup::AllTextRect(true);
+		rcMin = CVConGroup::AllTextRect(&Splits, true);
 	RECT rcFrame = CalcRect(CER_MAIN, rcMin, CER_CONSOLE_ALL);
+	if (Splits.cx > 0)
+		rcFrame.right += Splits.cx * gpSet->nSplitWidth;
+	if (Splits.cy > 0)
+		rcFrame.bottom += Splits.cy * gpSet->nSplitHeight;
+	#ifdef _DEBUG
+	RECT rcWork = CalcRect(CER_WORKSPACE, rcFrame, CER_MAIN);
+	#endif
 	pInfo->ptMinTrackSize.x = rcFrame.right;
 	pInfo->ptMinTrackSize.y = rcFrame.bottom;
 
@@ -2553,16 +2561,21 @@ LRESULT CConEmuSize::OnSizing(WPARAM wParam, LPARAM lParam)
 		AutoSizeFont(wndSizeRect, CER_MAIN);
 		srctWindow = CalcRect(CER_CONSOLE_ALL, wndSizeRect, CER_MAIN);
 
+		RECT rcMin = MakeRect(MIN_CON_WIDTH,MIN_CON_HEIGHT);
+		SIZE Splits = {};
+		if (mp_ConEmu->isVConExists(0))
+			rcMin = CVConGroup::AllTextRect(&Splits, true);
+
 		// Минимально допустимые размеры консоли
-		if (srctWindow.right < MIN_CON_WIDTH)
+		if (srctWindow.right < rcMin.right)
 		{
-			srctWindow.right = MIN_CON_WIDTH;
+			srctWindow.right = rcMin.right;
 			bNeedFixSize = true;
 		}
 
-		if (srctWindow.bottom < MIN_CON_HEIGHT)
+		if (srctWindow.bottom < rcMin.bottom)
 		{
-			srctWindow.bottom = MIN_CON_HEIGHT;
+			srctWindow.bottom = rcMin.bottom;
 			bNeedFixSize = true;
 		}
 
@@ -2570,6 +2583,10 @@ LRESULT CConEmuSize::OnSizing(WPARAM wParam, LPARAM lParam)
 		if (bNeedFixSize)
 		{
 			calcRect = CalcRect(CER_MAIN, srctWindow, CER_CONSOLE_ALL);
+			if (Splits.cx > 0)
+				calcRect.right += Splits.cx * gpSet->nSplitWidth;
+			if (Splits.cy > 0)
+				calcRect.bottom += Splits.cy * gpSet->nSplitHeight;
 			#ifdef _DEBUG
 			RECT rcRev = CalcRect(CER_CONSOLE_ALL, calcRect, CER_MAIN);
 			_ASSERTE(rcRev.right==srctWindow.right && rcRev.bottom==srctWindow.bottom);

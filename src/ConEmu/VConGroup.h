@@ -74,7 +74,7 @@ protected:
 	void ShowAllVCon(int nShowCmd);
 	static void ShowActiveGroup(CVirtualConsole* pOldActive);
 
-	void GetAllTextSize(SIZE& sz, bool abMinimal = false);
+	void GetAllTextSize(SIZE& sz, SIZE& Splits, bool abMinimal = false);
 	void SetConsoleSizes(const COORD& size, const RECT& rcNewCon, bool abSync);
 
 	void StoreActiveVCon(CVirtualConsole* pVCon);
@@ -222,7 +222,7 @@ public:
 	//static uint TextWidth();
 	//static uint TextHeight();
 
-	static RECT AllTextRect(bool abMinimal = false);
+	static RECT AllTextRect(SIZE* rpSplits = NULL, bool abMinimal = false);
 
 	static wchar_t* GetTasks(CVConGroup* apRoot = NULL);
 

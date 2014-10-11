@@ -530,7 +530,7 @@ void CVConGroup::MoveToParent(CVConGroup* apParent)
 	mp_Parent = NULL;
 }
 
-void CVConGroup::GetAllTextSize(SIZE& sz, bool abMinimal /*= false*/)
+void CVConGroup::GetAllTextSize(SIZE& sz, SIZE& Splits, bool abMinimal /*= false*/)
 {
 	if (!this)
 	{
@@ -566,7 +566,7 @@ void CVConGroup::GetAllTextSize(SIZE& sz, bool abMinimal /*= false*/)
 
 		if (mp_Grp1)
 		{
-			mp_Grp1->GetAllTextSize(sz1, abMinimal);
+			mp_Grp1->GetAllTextSize(sz1, Splits, abMinimal);
 		}
 		else
 		{
@@ -577,7 +577,7 @@ void CVConGroup::GetAllTextSize(SIZE& sz, bool abMinimal /*= false*/)
 
 		if (mp_Grp2 /*&& (m_SplitType == RConStartArgs::eSplitHorz)*/)
 		{
-			mp_Grp2->GetAllTextSize(sz2, abMinimal);
+			mp_Grp2->GetAllTextSize(sz2, Splits, abMinimal);
 		}
 		else
 		{
@@ -586,9 +586,15 @@ void CVConGroup::GetAllTextSize(SIZE& sz, bool abMinimal /*= false*/)
 
 		// Add second pane
 		if (m_SplitType == RConStartArgs::eSplitHorz)
+		{
 			sz.cx += sz2.cx;
+			Splits.cx++;
+		}
 		else if (m_SplitType == RConStartArgs::eSplitVert)
+		{
 			sz.cy += sz2.cy;
+			Splits.cy++;
+		}
 		else
 		{
 			_ASSERTE((m_SplitType == RConStartArgs::eSplitHorz) || (m_SplitType == RConStartArgs::eSplitVert));
@@ -4528,9 +4534,10 @@ void CVConGroup::SyncWindowToConsole()
 //	return nHeight;
 //}
 
-RECT CVConGroup::AllTextRect(bool abMinimal /*= false*/)
+RECT CVConGroup::AllTextRect(SIZE* rpSplits /*= NULL*/, bool abMinimal /*= false*/)
 {
 	RECT rcText = MakeRect(MIN_CON_WIDTH,MIN_CON_HEIGHT);
+	SIZE Splits = {};
 
 	if (!gp_VActive)
 	{
@@ -4548,7 +4555,7 @@ RECT CVConGroup::AllTextRect(bool abMinimal /*= false*/)
 		if (p != NULL)
 		{
 			SIZE sz = {MIN_CON_WIDTH,MIN_CON_HEIGHT};
-			p->GetAllTextSize(sz, abMinimal);
+			p->GetAllTextSize(sz, Splits, abMinimal);
 			rcText.right = sz.cx;
 			rcText.bottom = sz.cy;
 		}
@@ -4556,7 +4563,7 @@ RECT CVConGroup::AllTextRect(bool abMinimal /*= false*/)
 		{
 			_ASSERTE(p && "CVConGroup MUST BE DEFINED!");
 
-			if (gp_VActive->RCon())
+			if (!abMinimal && gp_VActive->RCon())
 			{
 				// При ресайзе через окно настройки - gp_VActive еще не перерисовался
 				// так что и TextWidth/TextHeight не обновился
@@ -4575,6 +4582,9 @@ RECT CVConGroup::AllTextRect(bool abMinimal /*= false*/)
 			}
 		}
 	}
+
+	if (rpSplits)
+		*rpSplits = Splits;
 
 	return rcText;
 }
