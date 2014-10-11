@@ -9056,7 +9056,8 @@ wrap:
 static void EvalVisibleResizeRect(SMALL_RECT& rNewRect,
 	SHORT anOldBottom,
 	const COORD& crNewSize,
-	SHORT nCursorAtBottom, SHORT nScreenAtBottom,
+	bool bCursorInScreen, SHORT nCursorAtBottom,
+	SHORT nScreenAtBottom,
 	const CONSOLE_SCREEN_BUFFER_INFO& csbi)
 {
 	// Абсолютная (буферна) координата
@@ -9095,6 +9096,7 @@ static void EvalVisibleResizeRect(SMALL_RECT& rNewRect,
 
 		if (nCursorAtBottom > 0)
 		{
+			_ASSERTE(nCursorAtBottom<=3);
 			// Оставить строку с курсором "приклеенной" к нижней границе окна (с макс. отступом nCursorAtBottom строк)
 			rNewRect.Bottom = min(nMaxY, csbi.dwCursorPosition.Y+nCursorAtBottom-1);
 		}
@@ -9129,7 +9131,15 @@ static void EvalVisibleResizeRect(SMALL_RECT& rNewRect,
 			}
 			//rNewRect.Top = rNewRect.Bottom-crNewSize.Y+1; // на 0 скорректируем в конце
 		}
-		rNewRect.Top = rNewRect.Bottom-crNewSize.Y+1; // на 0 скорректируем в конце
+
+		// Но курсор не должен уходить за пределы экрана
+		if (bCursorInScreen && (csbi.dwCursorPosition.Y < (rNewRect.Bottom-crNewSize.Y+1)))
+		{
+			rNewRect.Bottom = max(0, csbi.dwCursorPosition.Y+crNewSize.Y-1);
+		}
+
+		// And top, will be corrected to (>0) below
+		rNewRect.Top = rNewRect.Bottom-crNewSize.Y+1;
 
 		// Проверка на выход за пределы буфера
 		if (rNewRect.Bottom > nMaxY)
@@ -9178,19 +9188,37 @@ static bool ApplyConsoleSizeBuffer(const USHORT BufferHeight, const COORD& crNew
 		SHORT nTo = lbCursorInScreen ? csbi.dwCursorPosition.Y : csbi.srWindow.Top;
 		SHORT nWidth = (csbi.srWindow.Right - csbi.srWindow.Left + 1);
 		SHORT nDirtyLine = FindFirstDirtyLine(nBottomLine, nTo, nWidth, csbi.wAttributes);
+
 		// Если удачно
 		if (nDirtyLine >= csbi.srWindow.Top && nDirtyLine < csbi.dwSize.Y)
 		{
 			if (lbCursorInScreen)
-				nBottomLine = max(nDirtyLine, min(csbi.dwCursorPosition.X+1,csbi.srWindow.Bottom));
+			{
+				nBottomLine = max(nDirtyLine, min(csbi.dwCursorPosition.Y+1/*-*/,csbi.srWindow.Bottom));
+			}
 			else
+			{
 				nBottomLine = nDirtyLine;
+			}
 		}
 		nScreenAtBottom = (csbi.srWindow.Bottom - nBottomLine + 1);
+
+		// Чтобы информации НАД курсором не стало меньше чем пустых строк ПОД курсором
+		if (lbCursorInScreen)
+		{
+			if (nScreenAtBottom <= 4)
+			{
+				SHORT nAboveLines = (crNewSize.Y - nScreenAtBottom);
+				if (nAboveLines <= (nScreenAtBottom + 1))
+				{
+					nCursorAtBottom = max(1, crNewSize.Y - nScreenAtBottom - 1);
+				}
+			}
+		}
 	}
 
 	SMALL_RECT rNewRect = csbi.srWindow;
-	EvalVisibleResizeRect(rNewRect, nBottomLine, crNewSize, nCursorAtBottom, nScreenAtBottom, csbi);
+	EvalVisibleResizeRect(rNewRect, nBottomLine, crNewSize, lbCursorInScreen, nCursorAtBottom, nScreenAtBottom, csbi);
 
 #if 0
 	// Подправим будущую видимую область
@@ -9246,7 +9274,7 @@ static bool ApplyConsoleSizeBuffer(const USHORT BufferHeight, const COORD& crNew
 	if (GetConsoleScreenBufferInfo(ghConOut, &csbiNew))
 	{
 		rNewRect = csbiNew.srWindow;
-		EvalVisibleResizeRect(rNewRect, nBottomLine, crNewSize, nCursorAtBottom, nScreenAtBottom, csbiNew);
+		EvalVisibleResizeRect(rNewRect, nBottomLine, crNewSize, lbCursorAtBottom, nCursorAtBottom, nScreenAtBottom, csbiNew);
 	}
 
 	#if 0
