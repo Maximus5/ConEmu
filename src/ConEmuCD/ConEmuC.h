@@ -312,7 +312,6 @@ extern FDebugActiveProcessStop pfnDebugActiveProcessStop;
 typedef BOOL (WINAPI *FDebugSetProcessKillOnExit)(BOOL KillOnExit);
 extern FDebugSetProcessKillOnExit pfnDebugSetProcessKillOnExit;
 void ProcessDebugEvent();
-//BOOL IsUserAdmin();
 void _wprintf(LPCWSTR asBuffer);
 bool IsOutputRedirected();
 #ifdef CRTPRINTF

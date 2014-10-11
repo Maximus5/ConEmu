@@ -392,6 +392,7 @@
   </References>
   <Files>
     <Filter Name="0 - Source Files" Filter="cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx" UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}">
+      <File RelativePath="..\common\CmdArg.cpp" />
       <File RelativePath="..\common\CmdLine.cpp" />
       <File RelativePath="..\common\Common.cpp" />
       <File RelativePath="..\common\ConEmuCheck.cpp" />
@@ -408,12 +409,15 @@
       <File RelativePath="..\common\MStrSafe.cpp" />
       <File RelativePath="..\common\MTimer.cpp" />
       <File RelativePath="..\common\MToolTip.cpp" />
+      <File RelativePath="..\common\ProcessSetEnv.cpp" />
       <File RelativePath="..\common\RConStartArgs.cpp" />
       <File RelativePath="..\common\RgnDetect.cpp" />
       <File RelativePath="..\common\SetEnvVar.cpp" />
       <File RelativePath="..\common\WinConsole.cpp" />
+      <File RelativePath="..\common\WinFiles.cpp" />
       <File RelativePath="..\common\WinObjects.cpp" />
       <File RelativePath="..\common\WinRegistry.cpp" />
+      <File RelativePath="..\common\WinUser.cpp" />
       <File RelativePath=".\AboutDlg.cpp" />
       <File RelativePath=".\Attach.cpp" />
       <File RelativePath=".\Background.cpp" />
@@ -479,6 +483,7 @@
       <File RelativePath=".\VirtualConsole.cpp" />
     </Filter>
     <Filter Name="Header Files" Filter="h;hpp;hxx;hm;inl;inc;xsd" UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}">
+      <File RelativePath="..\common\CmdArg.h" />
       <File RelativePath="..\common\CmdLine.h" />
       <File RelativePath="..\common\common.hpp" />
       <File RelativePath="..\common\ConEmuCheck.h" />
@@ -503,6 +508,7 @@
       <File RelativePath="..\common\MToolTip.h" />
       <File RelativePath="..\common\PipeServer.h" />
       <File RelativePath="..\common\ProcessData.h" />
+      <File RelativePath="..\common\ProcessSetEnv.h" />
       <File RelativePath="..\common\RConStartArgs.h" />
       <File RelativePath="..\common\RgnDetect.h" />
       <File RelativePath="..\common\SetEnvVar.h" />
@@ -511,8 +517,10 @@
       <File RelativePath="..\common\StartupEnvEx.h" />
       <File RelativePath="..\common\UnicodeChars.h" />
       <File RelativePath="..\common\WinConsole.h" />
+      <File RelativePath="..\common\WinFiles.h" />
       <File RelativePath="..\common\WinObjects.h" />
       <File RelativePath="..\common\WinRegistry.h" />
+      <File RelativePath="..\common\WinUser.h" />
       <File RelativePath="..\ConEmuCD\ConsoleHelp.h" />
       <File RelativePath="..\ConEmuCD\ExitCodes.h" />
       <File RelativePath="..\ConEmuCD\GuiHooks.h" />

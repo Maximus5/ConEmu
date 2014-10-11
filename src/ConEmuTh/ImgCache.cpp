@@ -1,8 +1,8 @@
 ﻿
 #define SHOWDEBUGSTR
 
-#include <stdio.h>
-#include <windows.h>
+#include "../common/common.hpp"
+#include "../common/CmdLine.h"
 #include "ConEmuTh.h"
 #include "resource.h"
 

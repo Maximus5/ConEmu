@@ -33,6 +33,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "VirtualConsole.h"
 #include "RealConsole.h"
 #include "../common/ConEmuCheck.h"
+#include "../common/WinUser.h"
 
 //#ifdef __GNUC__
 #include "DwmApi_Part.h"

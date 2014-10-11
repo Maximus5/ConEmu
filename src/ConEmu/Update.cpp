@@ -44,6 +44,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "AboutDlg.h"
 #include "ConfirmDlg.h"
 #include "../common/MSection.h"
+#include "../common/WinFiles.h"
+#include "../common/WinUser.h"
 
 CConEmuUpdate* gpUpd = NULL;
 

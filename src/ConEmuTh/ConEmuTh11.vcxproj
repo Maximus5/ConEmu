@@ -846,6 +846,8 @@ if exist C:\Utils\FAR170\Plugins\ConEmu\Thumbs\ConEmuTh.dll copy "$(TargetDir)Co
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\common\CmdArg.cpp" />
+    <ClCompile Include="..\common\CmdLine.cpp" />
     <ClCompile Include="..\common\Common.cpp" />
     <ClCompile Include="..\common\MAssert.cpp" />
     <ClCompile Include="..\common\Memory.cpp" />
@@ -854,7 +856,9 @@ if exist C:\Utils\FAR170\Plugins\ConEmu\Thumbs\ConEmuTh.dll copy "$(TargetDir)Co
     <ClCompile Include="..\common\MSecurity.cpp" />
     <ClCompile Include="..\common\MStrSafe.cpp" />
     <ClCompile Include="..\common\RgnDetect.cpp" />
+    <ClCompile Include="..\common\WinFiles.cpp" />
     <ClCompile Include="..\common\WinObjects.cpp" />
+    <ClCompile Include="..\common\WinUser.cpp" />
     <ClCompile Include="ConEmuTh.cpp" />
     <ClCompile Include="ConEmuTh1900.cpp" />
     <ClCompile Include="ConEmuTh2800.cpp" />
@@ -901,6 +905,8 @@ if exist C:\Utils\FAR170\Plugins\ConEmu\Thumbs\ConEmuTh.dll copy "$(TargetDir)Co
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\common\CmdArg.h" />
+    <ClInclude Include="..\common\CmdLine.h" />
     <ClInclude Include="..\common\common.hpp" />
     <ClInclude Include="..\common\ConEmuColors.h" />
     <ClInclude Include="..\common\ConEmuColors3.h" />
@@ -914,7 +920,9 @@ if exist C:\Utils\FAR170\Plugins\ConEmu\Thumbs\ConEmuTh.dll copy "$(TargetDir)Co
     <ClInclude Include="..\common\pluginW1761.hpp" />
     <ClInclude Include="..\common\pluginW1900.hpp" />
     <ClInclude Include="..\common\RgnDetect.h" />
+    <ClInclude Include="..\common\WinFiles.h" />
     <ClInclude Include="..\common\WinObjects.h" />
+    <ClInclude Include="..\common\WinUser.h" />
     <ClInclude Include="ConEmuTh.h" />
     <ClInclude Include="ConEmuTh_Lang.h" />
     <ClInclude Include="Display.h" />

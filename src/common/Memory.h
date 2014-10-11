@@ -132,6 +132,4 @@ wchar_t* lstrdupW(const char* asText, UINT cp = CP_ACP);
 wchar_t* lstrmerge(const wchar_t* asStr1, const wchar_t* asStr2, const wchar_t* asStr3 = NULL, const wchar_t* asStr4 = NULL, const wchar_t* asStr5 = NULL);
 bool lstrmerge(wchar_t** apsStr1, const wchar_t* asStr2, const wchar_t* asStr3 = NULL, const wchar_t* asStr4 = NULL, const wchar_t* asStr5 = NULL);
 
-//const char* PointToName(const char* asFileOrPath);
-
 #endif // #ifndef MEMORY_HEADER_DEFINED

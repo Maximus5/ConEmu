@@ -800,12 +800,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\common\CmdArg.h" />
     <ClInclude Include="..\common\CmdLine.h" />
     <ClInclude Include="..\common\common.hpp" />
     <ClInclude Include="..\common\ConEmuCheck.h" />
     <ClInclude Include="..\common\ConsoleMixAttr.h" />
     <ClInclude Include="..\common\ConsoleRead.h" />
     <ClInclude Include="..\common\defines.h" />
+    <ClInclude Include="..\common\EmergencyShow.h" />
     <ClInclude Include="..\common\ExecPty.h" />
     <ClInclude Include="..\common\Execute.h" />
     <ClInclude Include="..\common\InQueue.h" />
@@ -820,13 +822,16 @@
     <ClInclude Include="..\common\MSecurity.h" />
     <ClInclude Include="..\common\MStrSafe.h" />
     <ClInclude Include="..\common\PipeServer.h" />
+    <ClInclude Include="..\common\ProcessSetEnv.h" />
     <ClInclude Include="..\common\RConStartArgs.h" />
     <ClInclude Include="..\common\SetEnvVar.h" />
     <ClInclude Include="..\common\StartupEnv.h" />
     <ClInclude Include="..\common\StartupEnvDef.h" />
     <ClInclude Include="..\common\StartupEnvEx.h" />
     <ClInclude Include="..\common\WinConsole.h" />
+    <ClInclude Include="..\common\WinFiles.h" />
     <ClInclude Include="..\common\WinObjects.h" />
+    <ClInclude Include="..\common\WinUser.h" />
     <ClInclude Include="..\ConEmuHk\Injects.h" />
     <ClInclude Include="ConEmuC.h" />
     <ClInclude Include="ConProcess.h" />
@@ -1123,11 +1128,13 @@
     <ResourceCompile Include="ConEmuCD.rc" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\common\CmdArg.cpp" />
     <ClCompile Include="..\common\CmdLine.cpp" />
     <ClCompile Include="..\common\Common.cpp" />
     <ClCompile Include="..\common\ConEmuCheck.cpp" />
     <ClCompile Include="..\common\ConsoleMixAttr.cpp" />
     <ClCompile Include="..\common\ConsoleRead.cpp" />
+    <ClCompile Include="..\common\EmergencyShow.cpp" />
     <ClCompile Include="..\common\ExecPty.cpp" />
     <ClCompile Include="..\common\Execute.cpp" />
     <ClCompile Include="..\common\InQueue.cpp" />
@@ -1140,10 +1147,13 @@
     <ClCompile Include="..\common\MSectionSimple.cpp" />
     <ClCompile Include="..\common\MSecurity.cpp" />
     <ClCompile Include="..\common\MStrSafe.cpp" />
+    <ClCompile Include="..\common\ProcessSetEnv.cpp" />
     <ClCompile Include="..\common\RConStartArgs.cpp" />
     <ClCompile Include="..\common\SetEnvVar.cpp" />
     <ClCompile Include="..\common\WinConsole.cpp" />
+    <ClCompile Include="..\common\WinFiles.cpp" />
     <ClCompile Include="..\common\WinObjects.cpp" />
+    <ClCompile Include="..\common\WinUser.cpp" />
     <ClCompile Include="..\ConEmuHk\Injects.cpp" />
     <ClCompile Include="ConEmuCmd.cpp" />
     <ClCompile Include="ConEmuSrv.cpp" />

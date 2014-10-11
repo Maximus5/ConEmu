@@ -933,6 +933,7 @@
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\common\CmdArg.cpp" />
     <ClCompile Include="..\common\CmdLine.cpp" />
     <ClCompile Include="..\common\Common.cpp" />
     <ClCompile Include="..\common\ConEmuCheck.cpp" />
@@ -949,12 +950,15 @@
     <ClCompile Include="..\common\MStrSafe.cpp" />
     <ClCompile Include="..\common\MTimer.cpp" />
     <ClCompile Include="..\common\MToolTip.cpp" />
+    <ClCompile Include="..\common\ProcessSetEnv.cpp" />
     <ClCompile Include="..\common\RConStartArgs.cpp" />
     <ClCompile Include="..\common\RgnDetect.cpp" />
     <ClCompile Include="..\common\SetEnvVar.cpp" />
     <ClCompile Include="..\common\WinConsole.cpp" />
+    <ClCompile Include="..\common\WinFiles.cpp" />
     <ClCompile Include="..\common\WinObjects.cpp" />
     <ClCompile Include="..\common\WinRegistry.cpp" />
+    <ClCompile Include="..\common\WinUser.cpp" />
     <ClCompile Include="AboutDlg.cpp" />
     <ClCompile Include="Attach.cpp" />
     <ClCompile Include="Background.cpp" />
@@ -1020,6 +1024,7 @@
     <ClCompile Include="VirtualConsole.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\common\CmdArg.h" />
     <ClInclude Include="..\common\CmdLine.h" />
     <ClInclude Include="..\common\common.hpp" />
     <ClInclude Include="..\common\ConEmuCheck.h" />
@@ -1042,6 +1047,7 @@
     <ClInclude Include="..\common\MToolTip.h" />
     <ClInclude Include="..\common\PipeServer.h" />
     <ClInclude Include="..\common\ProcessData.h" />
+    <ClInclude Include="..\common\ProcessSetEnv.h" />
     <ClInclude Include="..\common\RConStartArgs.h" />
     <ClInclude Include="..\common\RgnDetect.h" />
     <ClInclude Include="..\common\SetEnvVar.h" />
@@ -1050,8 +1056,10 @@
     <ClInclude Include="..\common\StartupEnvEx.h" />
     <ClInclude Include="..\common\UnicodeChars.h" />
     <ClInclude Include="..\common\WinConsole.h" />
+    <ClInclude Include="..\common\WinFiles.h" />
     <ClInclude Include="..\common\WinObjects.h" />
     <ClInclude Include="..\common\WinRegistry.h" />
+    <ClInclude Include="..\common\WinUser.h" />
     <ClInclude Include="..\ConEmuCD\ExitCodes.h" />
     <ClInclude Include="..\ConEmuCD\GuiHooks.h" />
     <ClInclude Include="AboutDlg.h" />

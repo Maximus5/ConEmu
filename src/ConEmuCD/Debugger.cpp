@@ -38,6 +38,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../ConEmu/version.h"
 #include "../common/MMap.h"
 #include "../common/TokenHelper.h"
+#include "../common/WinFiles.h"
 #include "ConsoleHelp.h"
 #include "UnicodeTest.h"
 

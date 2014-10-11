@@ -478,7 +478,7 @@ static bool FindOnDrives(LPCWSTR asFirstDrive, LPCWSTR asSearchPath, wchar_t (&r
 		pszExpanded = ExpandEnvStr(asSearchPath);
 		if (pszExpanded && FileExists(pszExpanded))
 		{
-			bNeedQuot = IsPathNeedQuot(pszExpanded);
+			bNeedQuot = IsQuotationNeeded(pszExpanded);
 			lstrcpyn(rsFound, asSearchPath, countof(rsFound));
 			bFound = true;
 		}
@@ -491,7 +491,7 @@ static bool FindOnDrives(LPCWSTR asFirstDrive, LPCWSTR asSearchPath, wchar_t (&r
 		DWORD nFind = SearchPath(NULL, asSearchPath, NULL, countof(rsFound), rsFound, NULL);
 		if (nFind && nFind < countof(rsFound))
 		{
-			bNeedQuot = IsPathNeedQuot(asSearchPath);
+			bNeedQuot = IsQuotationNeeded(asSearchPath);
 			lstrcpyn(rsFound, asSearchPath, countof(rsFound));
 			bFound = true;
 		}
@@ -505,7 +505,7 @@ static bool FindOnDrives(LPCWSTR asFirstDrive, LPCWSTR asSearchPath, wchar_t (&r
 		lstrcpyn(rsFound+nDrvLen, asSearchPath, countof(rsFound)-nDrvLen);
 		if (FileExists(rsFound))
 		{
-			bNeedQuot = IsPathNeedQuot(rsFound);
+			bNeedQuot = IsQuotationNeeded(rsFound);
 			bFound = true;
 			goto wrap;
 		}
@@ -520,7 +520,7 @@ static bool FindOnDrives(LPCWSTR asFirstDrive, LPCWSTR asSearchPath, wchar_t (&r
 		lstrcpyn(rsFound+2, asSearchPath, countof(rsFound)-2);
 		if (FileExists(rsFound))
 		{
-			bNeedQuot = IsPathNeedQuot(rsFound);
+			bNeedQuot = IsQuotationNeeded(rsFound);
 			bFound = true;
 			goto wrap;
 		}

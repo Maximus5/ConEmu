@@ -30,10 +30,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <windows.h>
-#include <wchar.h>
+//#include <wchar.h>
 #include "common.hpp"
-#include "MSecurity.h"
-#include "ConEmuCheck.h"
+//#include "MSecurity.h"
+//#include "ConEmuCheck.h"
+#include "CmdArg.h"
 
 
 // GCC fixes
@@ -45,68 +46,42 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 // WinAPI wrappers
-BOOL apiSetForegroundWindow(HWND ahWnd);
-BOOL apiShowWindow(HWND ahWnd, int anCmdShow);
-BOOL apiShowWindowAsync(HWND ahWnd, int anCmdShow);
 void getWindowInfo(HWND ahWnd, wchar_t (&rsInfo)[1024], bool bProcessName = false, LPDWORD pnPID = NULL);
 
+// Win console defines
 typedef BOOL (WINAPI* AttachConsole_t)(DWORD dwProcessId);
 
-
 // Some WinAPI related functions
-wchar_t* GetShortFileNameEx(LPCWSTR asLong, BOOL abFavorLength=TRUE);
-bool FileCompare(LPCWSTR asFilePath1, LPCWSTR asFilePath2);
 bool FileExists(LPCWSTR asFilePath, DWORD* pnSize = NULL);
-bool FilesExists(LPCWSTR asDirectory, LPCWSTR asFileList, bool abAll = false, int anListCount = -1);
-bool DirectoryExists(LPCWSTR asPath);
-bool MyCreateDirectory(wchar_t* asPath);
-bool IsFilePath(LPCWSTR asFilePath, bool abFullRequired = false);
-bool IsPathNeedQuot(LPCWSTR asPath);
-bool IsUserAdmin();
-bool GetLogonSID (HANDLE hToken, wchar_t **ppszSID);
+bool FileSearchInDir(LPCWSTR asFilePath, CmdArg& rsFound);
+bool FileExistsSearch(LPCWSTR asFilePath, CmdArg& rsFound, bool abSetPath = true, bool abRegSearch = true);
+bool IsVsNetHostExe(LPCWSTR asFilePatName);
+
+bool GetShortFileName(LPCWSTR asFullPath, int cchShortNameMax, wchar_t* rsShortName/*[MAX_PATH+1]-name only*/, BOOL abFavorLength=FALSE);
+wchar_t* GetShortFileNameEx(LPCWSTR asLong, BOOL abFavorLength=TRUE);
+
+bool IsDbcs();
+bool IsHwFullScreenAvailable();
+bool IsWin10();
+bool IsWindows64();
 bool IsWine();
 bool IsWinPE();
-bool IsWin10();
-bool IsDbcs();
-bool IsWindows64();
-bool IsHwFullScreenAvailable();
-bool IsVsNetHostExe(LPCWSTR asFilePatName);
-int GetProcessBits(DWORD nPID, HANDLE hProcess = NULL);
-bool CheckCallbackPtr(HMODULE hModule, size_t ProcCount, FARPROC* CallBack, BOOL abCheckModuleInfo, BOOL abAllowNTDLL = FALSE, BOOL abTestVirtual = TRUE);
-bool IsModuleValid(HMODULE module, BOOL abTestVirtual = TRUE);
-typedef struct tagPROCESSENTRY32W PROCESSENTRY32W;
-bool GetProcessInfo(DWORD nPID, PROCESSENTRY32W* Info);
+// Lower-cased to distinct from plugin's export
 bool isTerminalMode();
 
-void RemoveOldComSpecC();
-const wchar_t* PointToName(const wchar_t* asFullPath);
-const char* PointToName(const char* asFileOrPath);
-const wchar_t* PointToExt(const wchar_t* asFullPath);
-const wchar_t* Unquote(wchar_t* asParm, bool abFirstQuote = false);
+typedef struct tagPROCESSENTRY32W PROCESSENTRY32W;
+int  GetProcessBits(DWORD nPID, HANDLE hProcess = NULL);
+bool GetProcessInfo(DWORD nPID, PROCESSENTRY32W* Info);
+
+bool CheckCallbackPtr(HMODULE hModule, size_t ProcCount, FARPROC* CallBack, BOOL abCheckModuleInfo, BOOL abAllowNTDLL = FALSE, BOOL abTestVirtual = TRUE);
+bool IsModuleValid(HMODULE module, BOOL abTestVirtual = TRUE);
+
 wchar_t* ExpandMacroValues(LPCWSTR pszFormat, LPCWSTR* pszValues, size_t nValCount);
 wchar_t* ExpandEnvStr(LPCWSTR pszCommand);
-wchar_t* GetFullPathNameEx(LPCWSTR asPath);
-wchar_t* JoinPath(LPCWSTR asPath, LPCWSTR asPart1, LPCWSTR asPart2 = NULL);
 
-//BOOL FindConEmuBaseDir(wchar_t (&rsConEmuBaseDir)[MAX_PATH+1], wchar_t (&rsConEmuExe)[MAX_PATH+1]);
-
-
-COORD MyGetLargestConsoleWindowSize(HANDLE hConsoleOutput);
-
-#ifndef CONEMU_MINIMAL
-HANDLE DuplicateProcessHandle(DWORD anTargetPID);
-void FindComspec(ConEmuComspec* pOpt, bool bCmdAlso = true); // используется в GUI при загрузке настроек
-void UpdateComspec(ConEmuComspec* pOpt, bool DontModifyPath = false);
-void SetEnvVarExpanded(LPCWSTR asName, LPCWSTR asValue);
-#endif
 wchar_t* GetEnvVar(LPCWSTR VarName);
-LPCWSTR GetComspecFromEnvVar(wchar_t* pszComspec, DWORD cchMax, ComSpecBits Bits = csb_SameOS);
 wchar_t* GetComspec(const ConEmuComspec* pOpt);
+LPCWSTR GetComspecFromEnvVar(wchar_t* pszComspec, DWORD cchMax, ComSpecBits Bits = csb_SameOS);
 
 bool IsExportEnvVarAllowed(LPCWSTR szName);
 void ApplyExportEnvVar(LPCWSTR asEnvNameVal);
-
-#ifndef CONEMU_MINIMAL
-int ReadTextFile(LPCWSTR asPath, DWORD cchMax, wchar_t*& rsBuffer, DWORD& rnChars, DWORD& rnErrCode, DWORD DefaultCP = 0);
-int WriteTextFile(LPCWSTR asPath, const wchar_t* asBuffer, int anSrcLen = -1, DWORD OutCP = CP_UTF8, bool WriteBOM = true, LPDWORD rnErrCode = NULL);
-#endif

@@ -37,6 +37,15 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "MStrSafe.h"
 #include "MToolTip.h"
 
+#ifndef TTS_BALLOON
+#define TTS_BALLOON             0x40
+#define TTF_TRACK               0x0020
+#define TTF_ABSOLUTE            0x0080
+#define TTM_SETMAXTIPWIDTH      (WM_USER + 24)
+#define TTM_TRACKPOSITION       (WM_USER + 18)  // lParam = dwPos
+#define TTM_TRACKACTIVATE       (WM_USER + 17)  // wParam = TRUE/FALSE start end  lparam = LPTOOLINFO
+#endif
+
 /* *********************************** */
 CToolTip::CToolTip()
 {

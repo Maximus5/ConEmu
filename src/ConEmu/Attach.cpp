@@ -34,10 +34,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Inside.h"
 #include "OptionsClass.h"
 #include "VConGroup.h"
+#include "../common/ConEmuCheck.h"
 #include "../common/Monitors.h"
 #include "../common/ProcessData.h"
+#include "../common/WinUser.h"
 #include "../ConEmuCD/ExitCodes.h"
-#include "../common/ConEmuCheck.h"
 
 //#undef ALLOW_GUI_ATTACH
 #define ALLOW_GUI_ATTACH

@@ -910,6 +910,7 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\common\CmdArg.h" />
     <ClInclude Include="..\common\CmdLine.h" />
     <ClInclude Include="..\common\common.hpp" />
     <ClInclude Include="..\common\ConEmuCheck.h" />
@@ -945,6 +946,7 @@
     <ResourceCompile Include="ConEmuHk.rc" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\common\CmdArg.cpp" />
     <ClCompile Include="..\common\CmdLine.cpp" />
     <ClCompile Include="..\common\Common.cpp" />
     <ClCompile Include="..\common\ConEmuCheck.cpp" />

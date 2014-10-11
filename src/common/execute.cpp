@@ -31,6 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <windows.h>
 #include <TlHelp32.h>
 #include "../common/common.hpp"
+#include "../common/CmdLine.h"
 #include "Execute.h"
 #include "WinObjects.h"
 

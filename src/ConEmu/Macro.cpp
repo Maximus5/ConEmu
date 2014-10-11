@@ -31,6 +31,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define SHOWDEBUGSTR
 
 #include "Header.h"
+#include "../common/WinFiles.h"
+
 #include "RealConsole.h"
 #include "VirtualConsole.h"
 #include "Options.h"

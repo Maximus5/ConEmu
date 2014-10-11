@@ -33,6 +33,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "Header.h"
 #include "../common/Monitors.h"
+#include "../common/WinUser.h"
 
 #include "ConEmu.h"
 #include "ConEmuSize.h"

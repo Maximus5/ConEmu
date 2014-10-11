@@ -27,140 +27,15 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #define HIDE_USE_EXCEPTION_INFO
-#include "defines.h"
-#include "WinObjects.h"
-#include "MWow64Disable.h"
+#include "common.hpp"
+#include "CmdArg.h"
 #include "CmdLine.h"
+#include "WinObjects.h"
 
-
-
-CmdArg::CmdArg()
-{
-	mn_MaxLen = 0; ms_Arg = NULL;
-	mb_RestorePath = false;
-	Empty();
-}
-CmdArg::CmdArg(wchar_t* asPtr)
-{
-	mn_MaxLen = 0; ms_Arg = NULL;
-	mb_RestorePath = false;
-	Empty();
-	Attach(asPtr);
-}
-CmdArg::~CmdArg()
-{
-	if (mb_RestorePath && !IsEmpty())
-	{
-		SetEnvironmentVariable(L"PATH", ms_Arg);
-	}
-	SafeFree(ms_Arg);
-}
-wchar_t* CmdArg::GetBuffer(INT_PTR cchMaxLen)
-{
-	if (cchMaxLen <= 0)
-	{
-		_ASSERTE(cchMaxLen>0);
-		return NULL;
-	}
-	if (!ms_Arg || (cchMaxLen >= mn_MaxLen))
-	{
-		INT_PTR nNewMaxLen = cchMaxLen+1;
-		if (ms_Arg)
-		{
-			ms_Arg = (wchar_t*)realloc(ms_Arg, nNewMaxLen*sizeof(*ms_Arg));
-		}
-		else
-		{
-			ms_Arg = (wchar_t*)malloc(nNewMaxLen*sizeof(*ms_Arg));
-		}
-		mn_MaxLen = nNewMaxLen;
-	}
-	if (ms_Arg)
-	{
-		_ASSERTE(cchMaxLen>0 && mn_MaxLen>1);
-		ms_Arg[min(cchMaxLen,mn_MaxLen-1)] = 0;
-	}
-	return ms_Arg;
-}
-wchar_t* CmdArg::Detach()
-{
-	wchar_t* psz = ms_Arg;
-	ms_Arg = NULL;
-	mn_MaxLen = 0;
-	return psz;
-}
-LPCWSTR CmdArg::Attach(wchar_t* asPtr)
-{
-	Empty();
-	SafeFree(ms_Arg);
-	if (asPtr)
-	{
-		ms_Arg = asPtr;
-		mn_MaxLen = lstrlen(asPtr+1);
-	}
-	return ms_Arg;
-}
-void CmdArg::Empty()
-{
-	if (ms_Arg)
-		*ms_Arg = 0;
-
-	mn_TokenNo = 0;
-	mn_CmdCall = cc_Undefined;
-	mpsz_Dequoted = NULL;
-	#ifdef _DEBUG
-	ms_LastTokenEnd = NULL;
-	ms_LastTokenSave[0] = 0;
-	#endif
-	mb_RestorePath = false;
-}
-bool CmdArg::IsEmpty()
-{
-	return (!ms_Arg || !*ms_Arg);
-}
-LPCWSTR CmdArg::Set(LPCWSTR asNewValue, INT_PTR anChars /*= -1*/)
-{
-	if (asNewValue)
-	{
-		INT_PTR nNewLen = (anChars == -1) ? lstrlen(asNewValue) : anChars;
-		if (nNewLen <= 0)
-		{
-			//_ASSERTE(FALSE && "Check, if caller really need to set empty string???");
-			if (GetBuffer(1))
-				ms_Arg[0] = 0;
-		}
-		else if (GetBuffer(nNewLen))
-		{
-			_ASSERTE(mn_MaxLen > nNewLen); // Must be set in GetBuffer
-			_wcscpyn_c(ms_Arg, mn_MaxLen, asNewValue, nNewLen);
-		}
-	}
-	else
-	{
-		Empty();
-	}
-	return ms_Arg;
-}
-void CmdArg::SavePathVar(LPCWSTR asCurPath)
-{
-	if (Set(asCurPath))
-		mb_RestorePath = true;
-}
-void CmdArg::SetAt(INT_PTR nIdx, wchar_t wc)
-{
-	if (ms_Arg && (nIdx < mn_MaxLen))
-		ms_Arg[nIdx] = wc;
-}
-void CmdArg::GetPosFrom(const CmdArg& arg)
-{
-	mpsz_Dequoted = arg.mpsz_Dequoted;
-	mn_TokenNo = arg.mn_TokenNo;
-	mn_CmdCall = arg.mn_CmdCall;
-	#ifdef _DEBUG
-	ms_LastTokenEnd = arg.ms_LastTokenEnd;
-	lstrcpyn(ms_LastTokenSave, arg.ms_LastTokenSave, countof(ms_LastTokenSave));
-	#endif
-}
+#ifndef CONEMU_MINIMAL
+// В ConEmuHk редиректор НЕ отключаем
+#include "MWow64Disable.h"
+#endif
 
 // Function checks, if we need drop first and last quotation marks
 // Example: ""7z.exe" /?"
@@ -400,7 +275,6 @@ int NextArg(const wchar_t** asCmdLine, CmdArg &rsArg, const wchar_t** rsArgStart
 	return 0;
 }
 
-
 int AddEndSlash(wchar_t* rsPath, int cchMax)
 {
 	if (!rsPath || !*rsPath)
@@ -415,7 +289,6 @@ int AddEndSlash(wchar_t* rsPath, int cchMax)
 	}
 	return nLen;
 }
-
 
 const wchar_t* SkipNonPrintable(const wchar_t* asParams)
 {
@@ -980,407 +853,6 @@ bool IsQuotationNeeded(LPCWSTR pszPath)
 	return bNeeded;
 }
 
-static DWORD WINAPI OurSetConsoleCPThread(LPVOID lpParameter)
-{
-	UINT nCP = (UINT)lpParameter;
-	SetConsoleCP(nCP);
-	SetConsoleOutputCP(nCP);
-	return 0;
-}
-
-// Return true if "SetEnvironmentVariable" was processed
-// if (bDoSet==false) - just skip all "set" commands
-// Supported commands:
-//  set abc=val
-//  "set PATH=C:\Program Files;%PATH%"
-//  chcp [utf8|ansi|oem|<cp_no>]
-//  title "Console init title"
-bool ProcessSetEnvCmd(LPCWSTR& asCmdLine, bool bDoSet, CmdArg* rpsTitle /*= NULL*/)
-{
-	LPCWSTR lsCmdLine = asCmdLine;
-	bool bEnvChanged = false;
-	CmdArg lsSet, lsAmp;
-
-	// Example: "set PATH=C:\Program Files;%PATH%" & set abc=def & cmd
-	while (NextArg(&lsCmdLine, lsSet) == 0)
-	{
-		bool bTokenOk = false;
-		wchar_t* lsNameVal = NULL;
-
-		// It may contains only "set" if was not quoted
-		if (lstrcmpi(lsSet, L"set") == 0)
-		{
-			// Now we shell get in lsSet "abc=def" token
-			if ((NextArg(&lsCmdLine, lsSet) == 0) && (wcschr(lsSet, L'=') > lsSet.ms_Arg))
-			{
-				lsNameVal = lsSet.ms_Arg;
-			}
-		}
-		// Or full "set PATH=C:\Program Files;%PATH%" command (without quotes ATM)
-		else if (lstrcmpni(lsSet, L"set ", 4) == 0)
-		{
-			LPCWSTR psz = SkipNonPrintable(lsSet.ms_Arg+4);
-			if (wcschr(psz, L'=') > psz)
-			{
-				lsNameVal = (wchar_t*)psz;
-			}
-		}
-		// Process "chcp <cp>" too
-		else if (lstrcmpi(lsSet, L"chcp") == 0)
-		{
-			if (NextArg(&lsCmdLine, lsSet) == 0)
-			{
-				UINT nCP = 0; wchar_t* pszEnd;
-				if (lstrcmpi(lsSet, L"utf-8") == 0 || lstrcmpi(lsSet, L"utf8") == 0)
-					nCP = CP_UTF8;
-				else if (lstrcmpi(lsSet, L"acp") == 0 || lstrcmpi(lsSet, L"ansi") == 0 || lstrcmpi(lsSet, L"ansicp") == 0)
-					nCP = CP_ACP;
-				else if (lstrcmpi(lsSet, L"oem") == 0 || lstrcmpi(lsSet, L"oemcp") == 0)
-					nCP = CP_OEMCP;
-				else
-					nCP = wcstol(lsSet, &pszEnd, 10);
-
-				if (nCP > 0 && nCP <= 0xFFFF)
-				{
-					bTokenOk = true;
-					_ASSERTE(lsNameVal == NULL);
-					// Ask to be changed?
-					if (bDoSet)
-					{
-						//BUGBUG: На некоторых системых (Win2k3, WinXP) SetConsoleCP (и иже с ними) просто зависают
-						DWORD nTID;
-						HANDLE hThread = CreateThread(NULL,0,OurSetConsoleCPThread,(LPVOID)nCP,0,&nTID);
-						if (hThread)
-						{
-							DWORD nWait = WaitForSingleObject(hThread, 1000);
-							if (nWait == WAIT_TIMEOUT)
-							{
-								TerminateThread(hThread,100);
-							}
-							CloseHandle(hThread);
-						}
-					}
-				}
-			}
-		}
-		// Change title without need of cmd.exe
-		else if (lstrcmpi(lsSet, L"title") == 0)
-		{
-			if (NextArg(&lsCmdLine, lsSet) == 0)
-			{
-				bTokenOk = true;
-				_ASSERTE(lsNameVal == NULL);
-				// Ask to be changed?
-				if (rpsTitle)
-					rpsTitle->Set(lsSet);
-			}
-		}
-
-		// Well, known command was detected. What is next?
-		if (lsNameVal || bTokenOk)
-		{
-			lsAmp.GetPosFrom(lsSet);
-			if (NextArg(&lsCmdLine, lsAmp) != 0)
-			{
-				// End of command? Use may call only "set" without following app? Run simple "cmd" in that case
-				_ASSERTE(lsCmdLine!=NULL && *lsCmdLine==0);
-				bTokenOk = true; // And process SetEnvironmentVariable
-			}
-			else
-			{
-				if (lstrcmp(lsAmp, L"&") == 0)
-				{
-					// Only simple conveyer is supported!
-					bTokenOk = true; // And process SetEnvironmentVariable
-				}
-				// Update last pointer (debug and asserts purposes)
-				lsSet.GetPosFrom(lsAmp);
-			}
-		}
-
-		if (!bTokenOk)
-		{
-			break; // Stop processing command line
-		}
-		else if (lsNameVal)
-		{
-			// And split name/value
-			_ASSERTE(lsNameVal!=NULL);
-
-			wchar_t* pszEq = wcschr(lsNameVal, L'=');
-			if (!pszEq)
-			{
-				_ASSERTE(pszEq!=NULL);
-				break;
-			}
-
-			if (bDoSet)
-			{
-				*(pszEq++) = 0;
-				// Expand value
-				wchar_t* pszExpanded = ExpandEnvStr(pszEq);
-				LPCWSTR pszSet = pszExpanded ? pszExpanded : pszEq;
-				SetEnvironmentVariable(lsNameVal, (pszSet && *pszSet) ? pszSet : NULL);
-				SafeFree(pszExpanded);
-			}
-
-			bEnvChanged = true;
-		}
-
-		// Remember processed position
-		asCmdLine = lsCmdLine;
-
-	} // end of "while (NextArg(&lsCmdLine, lsSet) == 0)"
-
-	// Fin
-	if (!asCmdLine || !*asCmdLine)
-	{
-		static wchar_t szSimple[] = L"cmd";
-		asCmdLine = szSimple;
-	}
-
-	return bEnvChanged;
-}
-
-bool FileSearchInDir(LPCWSTR asFilePath, CmdArg& rsFound)
-{
-	// Possibilities
-	// a) asFilePath does not contain path, only: "far"
-	// b) asFilePath contains path, but without extension: "C:\\Program Files\\Far\\Far"
-
-	LPCWSTR pszSearchFile = asFilePath;
-	LPCWSTR pszSlash = wcsrchr(asFilePath, L'\\');
-	if (pszSlash)
-	{
-		if ((pszSlash - asFilePath) >= MAX_PATH)
-		{
-			// No need to continue, this is invalid path to executable
-			return false;
-		}
-
-		// C:\Far\Far.exe /w /pC:\Far\Plugins\ConEmu;C:\Far\Plugins.My
-		if (!IsFilePath(asFilePath, false))
-		{
-			return false;
-		}
-
-		// Do not allow '/' here
-		LPCWSTR pszFwd = wcschr(asFilePath, L'/');
-		if (pszFwd != NULL)
-		{
-			return false;
-		}
-	}
-
-	wchar_t* pszSearchPath = NULL;
-	if (pszSlash)
-	{
-		if ((pszSearchPath = lstrdup(asFilePath)) != NULL)
-		{
-			pszSearchFile = pszSlash + 1;
-			pszSearchPath[pszSearchFile - asFilePath] = 0;
-		}
-	}
-
-	// Попытаемся найти "по путям" (%PATH%)
-	wchar_t *pszFilePart;
-	wchar_t szFind[MAX_PATH+1];
-	LPCWSTR pszExt = PointToExt(asFilePath);
-
-	DWORD nLen = SearchPath(pszSearchPath, pszSearchFile, pszExt ? NULL : L".exe", countof(szFind), szFind, &pszFilePart);
-
-	SafeFree(pszSearchPath);
-
-	if (nLen && (nLen < countof(szFind)) && FileExists(szFind))
-	{
-		// asFilePath will be invalid after .Set
-		rsFound.Set(szFind);
-		return true;
-	}
-
-	return false;
-}
-
-bool FileExistsSearch(LPCWSTR asFilePath, CmdArg& rsFound, bool abSetPath/*= true*/, bool abRegSearch /*= true*/)
-{
-	if (!asFilePath || !*asFilePath)
-	{
-		_ASSERTEX(asFilePath && *asFilePath);
-		return false;
-	}
-
-	if (FileExists(asFilePath))
-	{
-		return true;
-	}
-
-	// Развернуть переменные окружения
-	if (wcschr(asFilePath, L'%'))
-	{
-		bool bFound = false;
-		wchar_t* pszExpand = ExpandEnvStr(asFilePath);
-		if (pszExpand && FileExists(pszExpand))
-		{
-			// asFilePath will be invalid after .Set
-			rsFound.Set(pszExpand);
-			bFound = true;
-		}
-		SafeFree(pszExpand);
-
-		if (bFound)
-		{
-			return true;
-		}
-	}
-
-	// Search "Path"
-	if (FileSearchInDir(asFilePath, rsFound))
-	{
-		return true;
-	}
-
-	// Только если приложение не нашли "по путям" - пытаемся определить его расположение через [App Paths]
-	// В противном случае, в частности, может быть запущен "far" не из папки с ConEmu, а зарегистрированный
-	// в реестре, если на машине их несколько установлено.
-	#ifndef CONEMU_MINIMAL
-	// В ConEmuHk этот блок не активен, потому что может быть "только" перехват CreateProcess,
-	// а о его параметрах должно заботиться вызывающее (текущее) приложение
-	if (abRegSearch && !wcschr(asFilePath, L'\\'))
-	{
-		// Если в asFilePath НЕ указан путь - искать приложение в реестре,
-		// и там могут быть указаны доп. параметры (пока только добавка в %PATH%)
-		if (SearchAppPaths(asFilePath, rsFound, abSetPath))
-		{
-			// Нашли по реестру, возможно обновили %PATH%
-			return true;
-		}
-	}
-	#endif
-
-	return false;
-}
-
-#ifndef CONEMU_MINIMAL
-// Returns true, if application was found in registry:
-// [HKCU|HKLM]\Software\Microsoft\Windows\CurrentVersion\App Paths
-// Also, function may change local process %PATH% variable
-bool SearchAppPaths(LPCWSTR asFilePath, CmdArg& rsFound, bool abSetPath, CmdArg* rpsPathRestore /*= NULL*/)
-{
-	if (rpsPathRestore)
-		rpsPathRestore->Empty();
-
-	if (!asFilePath || !*asFilePath)
-		return false;
-
-	LPCWSTR pszSearchFile = PointToName(asFilePath);
-	LPCWSTR pszExt = PointToExt(pszSearchFile);
-
-	// Lets try find it in "App Paths"
-	// "HKCU\Software\Microsoft\Windows\CurrentVersion\App Paths\"
-	// "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\"
-	LPCWSTR pszRoot = L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\App Paths\\";
-	HKEY hk; LONG lRc;
-	CmdArg lsName; lsName.Attach(lstrmerge(pszRoot, pszSearchFile, pszExt ? NULL : L".exe"));
-	// Seems like 32-bit and 64-bit registry branches are the same now, but just in case - will check both
-	DWORD nWOW[2] = {WIN3264TEST(KEY_WOW64_32KEY,KEY_WOW64_64KEY), WIN3264TEST(KEY_WOW64_64KEY,KEY_WOW64_32KEY)};
-	for (int i = 0; i < 3; i++)
-	{
-		bool bFound = false;
-		DWORD nFlags = ((i && IsWindows64()) ? nWOW[i-1] : 0);
-		if ((i == 2) && !nFlags)
-			break; // This is 32-bit OS
-		lRc = RegOpenKeyEx(i ? HKEY_LOCAL_MACHINE : HKEY_CURRENT_USER, lsName, 0, KEY_READ|nFlags, &hk);
-		if (lRc != 0) continue;
-		wchar_t szVal[MAX_PATH+1] = L"";
-		DWORD nType, nSize = sizeof(szVal)-sizeof(szVal[0]);
-		lRc = RegQueryValueEx(hk, NULL, NULL, &nType, (LPBYTE)szVal, &nSize);
-		if (lRc == 0)
-		{
-			wchar_t *pszCheck = NULL;
-			if (nType == REG_SZ)
-			{
-				pszCheck = szVal;
-			}
-			else if (nType == REG_EXPAND_SZ)
-			{
-				pszCheck = ExpandEnvStr(szVal);
-			}
-			// May be quoted
-			if (pszCheck)
-			{
-				LPCWSTR pszPath = Unquote(pszCheck, true);
-				if (FileExists(pszPath))
-				{
-					// asFilePath will be invalid after .Set
-					rsFound.Set(pszPath);
-					bFound = true;
-
-					if (pszCheck != szVal)
-						free(pszCheck);
-
-					// The program may require additional "%PATH%". So, if allowed...
-					if (abSetPath)
-					{
-						nSize = 0;
-						lRc = RegQueryValueEx(hk, L"PATH", NULL, &nType, NULL, &nSize);
-						if (lRc == 0 && nSize)
-						{
-							wchar_t* pszCurPath = GetEnvVar(L"PATH");
-							wchar_t* pszAddPath = (wchar_t*)calloc(nSize+4,1);
-							wchar_t* pszNewPath = NULL;
-							if (pszAddPath)
-							{
-								lRc = RegQueryValueEx(hk, L"PATH", NULL, &nType, (LPBYTE)pszAddPath, &nSize);
-								if (lRc == 0 && *pszAddPath)
-								{
-									// Если в "%PATH%" этого нет (в начале) - принудительно добавить
-									int iCurLen = pszCurPath ? lstrlen(pszCurPath) : 0;
-									int iAddLen = lstrlen(pszAddPath);
-									bool bNeedAdd = true;
-									if ((iCurLen >= iAddLen) && (pszCurPath[iAddLen] == L';' || pszCurPath[iAddLen] == 0))
-									{
-										wchar_t ch = pszCurPath[iAddLen]; pszCurPath[iAddLen] = 0;
-										if (lstrcmpi(pszCurPath, pszAddPath) == 0)
-											bNeedAdd = false;
-										pszCurPath[iAddLen] = ch;
-									}
-									// Если пути еще нет
-									if (bNeedAdd)
-									{
-										if (rpsPathRestore)
-										{
-											rpsPathRestore->SavePathVar(pszCurPath);
-										}
-										pszNewPath = lstrmerge(pszAddPath, L";", pszCurPath);
-										if (pszNewPath)
-										{
-											SetEnvironmentVariable(L"PATH", pszNewPath);
-										}
-										else
-										{
-											_ASSERTE(pszNewPath!=NULL && "Allocation failed?");
-										}
-									}
-								}
-							}
-							SafeFree(pszAddPath);
-							SafeFree(pszCurPath);
-							SafeFree(pszNewPath);
-						}
-					}
-				}
-			}
-		}
-		RegCloseKey(hk);
-
-		if (bFound)
-			return true;
-	}
-
-	return false;
-}
-#endif
-
 wchar_t* MergeCmdLine(LPCWSTR asExe, LPCWSTR asParams)
 {
 	bool bNeedQuot = IsQuotationNeeded(asExe);
@@ -1394,4 +866,124 @@ wchar_t* MergeCmdLine(LPCWSTR asExe, LPCWSTR asParams)
 		pszRet = lstrmerge(asExe, asParams ? L" " : NULL, asParams);
 
 	return pszRet;
+}
+
+wchar_t* JoinPath(LPCWSTR asPath, LPCWSTR asPart1, LPCWSTR asPart2 /*= NULL*/)
+{
+	//TODO: Добавить слеши если их нет на гранях
+	//TODO: удалить лишние, если они указаны в обеих частях
+	return lstrmerge(asPath, asPart1, asPart2);
+}
+
+// Первичная проверка, может ли asFilePath быть путем
+bool IsFilePath(LPCWSTR asFilePath, bool abFullRequired /*= false*/)
+{
+	if (!asFilePath || !*asFilePath)
+		return false;
+
+	// Если в пути встречаются недопустимые символы
+	if (wcschr(asFilePath, L'"') ||
+	        wcschr(asFilePath, L'>') ||
+	        wcschr(asFilePath, L'<') ||
+	        wcschr(asFilePath, L'|')
+			// '/' не проверяем для совместимости с cygwin?
+	  )
+		return false;
+
+	// Пропуск UNC "\\?\"
+	if (asFilePath[0] == L'\\' && asFilePath[1] == L'\\' && asFilePath[2] == L'?' && asFilePath[3] == L'\\')
+		asFilePath += 4; //-V112
+
+	// Если asFilePath содержит два (и более) ":\"
+	LPCWSTR pszColon = wcschr(asFilePath, L':');
+
+	if (pszColon)
+	{
+		// Если есть ":", то это должен быть путь вида "X:\xxx", т.е. ":" - второй символ
+		if (pszColon != (asFilePath+1))
+			return false;
+
+		if (!isDriveLetter(asFilePath[0]))
+			return false;
+
+		if (wcschr(pszColon+1, L':'))
+			return false;
+	}
+
+	if (abFullRequired)
+	{
+		if ((asFilePath[0] == L'\\' && asFilePath[1] == L'\\' && asFilePath[2] && wcschr(asFilePath+3,L'\\'))
+				|| (isDriveLetter(asFilePath[0]) && asFilePath[1] == L':' && asFilePath[2]))
+			return true;
+		return false;
+	}
+
+	// May be file path
+	return true;
+}
+
+const wchar_t* PointToName(const wchar_t* asFileOrPath)
+{
+	if (!asFileOrPath)
+	{
+		_ASSERTE(asFileOrPath!=NULL);
+		return NULL;
+	}
+
+	// Utilize both type of slashes
+	const wchar_t* pszBSlash = wcsrchr(asFileOrPath, L'\\');
+	const wchar_t* pszFSlash = wcsrchr(pszBSlash ? pszBSlash : asFileOrPath, L'/');
+
+	const wchar_t* pszFile = pszFSlash ? pszFSlash : pszBSlash;
+	if (!pszFile) pszFile = asFileOrPath; else pszFile++;
+
+	return pszFile;
+}
+
+const char* PointToName(const char* asFileOrPath)
+{
+	if (!asFileOrPath)
+	{
+		_ASSERTE(asFileOrPath!=NULL);
+		return NULL;
+	}
+
+	// Utilize both type of slashes
+	const char* pszBSlash = strrchr(asFileOrPath, '\\');
+	const char* pszFSlash = strrchr(pszBSlash ? pszBSlash : asFileOrPath, '/');
+
+	const char* pszSlash = pszFSlash ? pszFSlash : pszBSlash;;
+
+	if (pszSlash)
+		return pszSlash+1;
+
+	return asFileOrPath;
+}
+
+// Возвращает ".ext" или NULL в случае ошибки
+const wchar_t* PointToExt(const wchar_t* asFullPath)
+{
+	const wchar_t* pszName = PointToName(asFullPath);
+	if (!pszName)
+		return NULL; // _ASSERTE уже был
+	const wchar_t* pszExt = wcsrchr(pszName, L'.');
+	return pszExt;
+}
+
+// !!! Меняет asParm !!!
+// Cut leading and trailing quotas
+const wchar_t* Unquote(wchar_t* asParm, bool abFirstQuote /*= false*/)
+{
+	if (!asParm)
+		return NULL;
+	if (*asParm != L'"')
+		return asParm;
+	wchar_t* pszEndQ = abFirstQuote ? wcschr(asParm+1, L'"') : wcsrchr(asParm+1, L'"');
+	if (!pszEndQ)
+	{
+		*asParm = 0;
+		return asParm;
+	}
+	*pszEndQ = 0;
+	return (asParm+1);
 }

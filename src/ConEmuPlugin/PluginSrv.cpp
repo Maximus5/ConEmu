@@ -46,6 +46,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma warning( default : 4995 )
 #endif
 #include "../common/ConsoleAnnotation.h"
+#include "../common/WinUser.h"
 #include "../common/WinObjects.h"
 #include "../common/TerminalMode.h"
 #include "../common/MSection.h"

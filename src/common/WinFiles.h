@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2013-2014 Maximus5
+Copyright (c) 2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -28,33 +28,17 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include "CmdArg.h"
+#include "CmdLine.h"
 
-#define CmdEscapeNeededChars  L"<>()&|^\""
-#define QuotationNeededChars  (L" " CmdEscapeNeededChars)
+bool FilesExists(LPCWSTR asDirectory, LPCWSTR asFileList, bool abAll = false, int anListCount = -1);
+bool DirectoryExists(LPCWSTR asPath);
+bool MyCreateDirectory(wchar_t* asPath);
 
-int NextArg(const wchar_t** asCmdLine, CmdArg &rsArg, const wchar_t** rsArgStart=NULL);
+bool SearchAppPaths(LPCWSTR asFilePath, CmdArg& rsFound, bool abSetPath, CmdArg* rpsPathRestore = NULL);
 
-bool CompareFileMask(const wchar_t* asFileName, const wchar_t* asMask);
-LPCWSTR GetDrive(LPCWSTR pszPath, wchar_t* szDrive, int/*countof(szDrive)*/ cchDriveMax);
-int GetDirectory(CmdArg& szDir);
+wchar_t* GetFullPathNameEx(LPCWSTR asPath);
 
-bool IsExecutable(LPCWSTR aszFilePathName, wchar_t** rsExpandedVars = NULL);
-bool IsFarExe(LPCWSTR asModuleName);
-bool IsNeedCmd(BOOL bRootCmd, LPCWSTR asCmdLine, CmdArg &szExe,
-			   LPCWSTR* rsArguments = NULL, BOOL* rpbNeedCutStartEndQuot = NULL,
-			   BOOL* rpbRootIsCmdExe = NULL, BOOL* rpbAlwaysConfirmExit = NULL, BOOL* rpbAutoDisableConfirmExit = NULL);
+int ReadTextFile(LPCWSTR asPath, DWORD cchMax, wchar_t*& rsBuffer, DWORD& rnChars, DWORD& rnErrCode, DWORD DefaultCP = 0);
+int WriteTextFile(LPCWSTR asPath, const wchar_t* asBuffer, int anSrcLen = -1, DWORD OutCP = CP_UTF8, bool WriteBOM = true, LPDWORD rnErrCode = NULL);
 
-bool IsQuotationNeeded(LPCWSTR pszPath);
-const wchar_t* SkipNonPrintable(const wchar_t* asParams);
-
-int AddEndSlash(wchar_t* rsPath, int cchMax);
-wchar_t* MergeCmdLine(LPCWSTR asExe, LPCWSTR asParams);
-wchar_t* JoinPath(LPCWSTR asPath, LPCWSTR asPart1, LPCWSTR asPart2 = NULL);
-
-bool IsFilePath(LPCWSTR asFilePath, bool abFullRequired = false);
-
-const wchar_t* PointToName(const wchar_t* asFullPath);
-const char* PointToName(const char* asFileOrPath);
-const wchar_t* PointToExt(const wchar_t* asFullPath);
-const wchar_t* Unquote(wchar_t* asParm, bool abFirstQuote = false);
+bool FileCompare(LPCWSTR asFilePath1, LPCWSTR asFilePath2);

@@ -26,6 +26,7 @@ BASEADDRESS=/DYNAMICBASE:NO /BASE:0x54610000 /FIXED:NO
 
 
 LINK_OBJS = \
+$(INTDIR)\CmdArg.obj \
 $(INTDIR)\CmdLine.obj \
 $(INTDIR)\Common.obj \
 $(INTDIR)\ConEmuCheck.obj \
@@ -37,6 +38,7 @@ $(INTDIR)\ConsoleMixAttr.obj \
 $(INTDIR)\ConsoleRead.obj \
 $(INTDIR)\Debugger.obj \
 $(INTDIR)\Downloader.obj \
+$(INTDIR)\EmergencyShow.obj \
 $(INTDIR)\ExecPty.obj \
 $(INTDIR)\execute.obj \
 $(INTDIR)\GuiHooks.obj \
@@ -53,12 +55,14 @@ $(INTDIR)\MSection.obj \
 $(INTDIR)\MSectionSimple.obj \
 $(INTDIR)\MSecurity.obj \
 $(INTDIR)\MStrSafe.obj \
+$(INTDIR)\ProcessSetEnv.obj \
 $(INTDIR)\Queue.obj \
 $(INTDIR)\RConStartArgs.obj \
 $(INTDIR)\RegPrepare.obj \
 $(INTDIR)\SetEnvVar.obj \
 $(INTDIR)\SrvPipes.obj \
 $(INTDIR)\WinConsole.obj \
+$(INTDIR)\WinFiles.obj \
 $(INTDIR)\WinObjects.obj
 
 USERLIBS = 
@@ -276,6 +280,8 @@ clean:
 ################
 #LINK_OBJS begin
 
+$(INTDIR)\CmdArg.obj: ../common/CmdArg.cpp ../common/CmdArg.h
+
 $(INTDIR)\CmdLine.obj: ../common/CmdLine.cpp ../common/CmdLine.h
 
 $(INTDIR)\Common.obj: ../common/Common.cpp
@@ -297,6 +303,8 @@ $(INTDIR)\ConsoleRead.obj: ../common/ConsoleRead.cpp ../common/ConsoleRead.h
 $(INTDIR)\Debugger.obj: Debugger.cpp Debugger.h
 
 $(INTDIR)\Downloader.obj: Downloader.cpp Downloader.h
+
+$(INTDIR)\EmergencyShow.obj: ../common/EmergencyShow.cpp ../common/EmergencyShow.h
 
 $(INTDIR)\ExecPty.obj: ../common/ExecPty.cpp ../common/ExecPty.h
 
@@ -330,6 +338,8 @@ $(INTDIR)\MSecurity.obj: ../common/MSecurity.cpp
 
 $(INTDIR)\MStrSafe.obj: ../common/MStrSafe.cpp
 
+$(INTDIR)\ProcessSetEnv.obj: ../common/ProcessSetEnv.cpp ../common/ProcessSetEnv.h
+
 $(INTDIR)\Queue.obj: Queue.cpp ../common/PipeServer.h ../common/InQueue.h
 
 $(INTDIR)\RConStartArgs.obj: ../common/RConStartArgs.cpp ../common/RConStartArgs.h
@@ -341,6 +351,8 @@ $(INTDIR)\SetEnvVar.obj: ../common/SetEnvVar.cpp
 $(INTDIR)\SrvPipes.obj: SrvPipes.cpp ../common/PipeServer.h
 
 $(INTDIR)\WinConsole.obj: ../common/WinConsole.cpp ../common/WinConsole.h
+
+$(INTDIR)\WinFiles.obj: ../common/WinFiles.cpp ../common/WinFiles.h
 
 $(INTDIR)\WinObjects.obj: ../common/WinObjects.cpp ../common/WinObjects.h
 

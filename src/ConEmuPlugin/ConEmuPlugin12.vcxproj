@@ -875,10 +875,12 @@
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\common\CmdArg.cpp" />
     <ClCompile Include="..\common\CmdLine.cpp" />
     <ClCompile Include="..\common\Common.cpp" />
     <ClCompile Include="..\common\ConEmuCheck.cpp" />
     <ClCompile Include="..\common\ConEmuCheckEx.cpp" />
+    <ClCompile Include="..\common\EmergencyShow.cpp" />
     <ClCompile Include="..\common\execute.cpp" />
     <ClCompile Include="..\common\MAssert.cpp" />
     <ClCompile Include="..\common\Memory.cpp" />
@@ -890,7 +892,9 @@
     <ClCompile Include="..\common\MStrSafe.cpp" />
     <ClCompile Include="..\common\SetEnvVar.cpp" />
     <ClCompile Include="..\common\WinConsole.cpp" />
+    <ClCompile Include="..\common\WinFiles.cpp" />
     <ClCompile Include="..\common\WinObjects.cpp" />
+    <ClCompile Include="..\common\WinUser.cpp" />
     <ClCompile Include="ConEmuInjects.cpp" />
     <ClCompile Include="ConEmuPlugin.cpp" />
     <ClCompile Include="ConEmuPlugin2800.cpp" />
@@ -987,6 +991,7 @@
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\common\CmdArg.h" />
     <ClInclude Include="..\common\CmdLine.h" />
     <ClInclude Include="..\common\common.hpp" />
     <ClInclude Include="..\common\ConEmuCheck.h" />
@@ -995,6 +1000,7 @@
     <ClInclude Include="..\common\ConEmuColors3.h" />
     <ClInclude Include="..\common\ConsoleAnnotation.h" />
     <ClInclude Include="..\common\defines.h" />
+    <ClInclude Include="..\common\EmergencyShow.h" />
     <ClInclude Include="..\common\farcolor1.hpp" />
     <ClInclude Include="..\common\Memory.h" />
     <ClInclude Include="..\common\Monitors.h" />
@@ -1010,7 +1016,9 @@
     <ClInclude Include="..\common\pluginW2800.hpp" />
     <ClInclude Include="..\common\SetEnvVar.h" />
     <ClInclude Include="..\common\WinConsole.h" />
+    <ClInclude Include="..\common\WinFiles.h" />
     <ClInclude Include="..\common\WinObjects.h" />
+    <ClInclude Include="..\common\WinUser.h" />
     <ClInclude Include="..\ConEmu\DragDrop.h" />
     <ClInclude Include="..\ConEmu\version.h" />
     <ClInclude Include="..\ConEmuHk\SetHook.h" />

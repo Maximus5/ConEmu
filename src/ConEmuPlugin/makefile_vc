@@ -20,6 +20,7 @@ OUTNAME = ConEmu
 
 
 LINK_OBJS = \
+$(INTDIR)\CmdArg.obj \
 $(INTDIR)\CmdLine.obj \
 $(INTDIR)\Common.obj \
 $(INTDIR)\ConEmuCheck.obj \
@@ -31,6 +32,7 @@ $(INTDIR)\ConEmuPlugin2800.obj \
 $(INTDIR)\ConEmuPlugin995.obj \
 $(INTDIR)\ConEmuPluginA.obj \
 $(INTDIR)\ConEmuPluginBase.obj \
+$(INTDIR)\EmergencyShow.obj \
 $(INTDIR)\Execute.obj \
 $(INTDIR)\MAssert.obj \
 $(INTDIR)\Memory.obj \
@@ -44,6 +46,7 @@ $(INTDIR)\PluginBackground.obj \
 $(INTDIR)\PluginSrv.obj \
 $(INTDIR)\SetEnvVar.obj \
 $(INTDIR)\WinConsole.obj \
+$(INTDIR)\WinFiles.obj \
 $(INTDIR)\WinObjects.obj
 
 
@@ -238,6 +241,8 @@ clean:
 ################
 #LINK_OBJS begin
 
+$(INTDIR)\CmdArg.obj: ../common/CmdArg.cpp ../common/CmdArg.h
+
 $(INTDIR)\CmdLine.obj: ../common/CmdLine.cpp
 
 $(INTDIR)\Common.obj: ../common/Common.cpp
@@ -259,6 +264,8 @@ $(INTDIR)\ConEmuPlugin995.obj: ConEmuPlugin995.cpp
 $(INTDIR)\ConEmuPluginA.obj: ConEmuPluginA.cpp
 
 $(INTDIR)\ConEmuPluginBase.obj: ConEmuPluginBase.cpp ConEmuPluginBase.h
+
+$(INTDIR)\EmergencyShow.obj: ../common/EmergencyShow.cpp ../common/EmergencyShow.h
 
 $(INTDIR)\Execute.obj: ../common/execute.cpp
 
@@ -283,6 +290,8 @@ $(INTDIR)\PluginSrv.obj: PluginSrv.cpp ../common/PipeServer.h
 $(INTDIR)\SetEnvVar.obj: ../common/SetEnvVar.cpp
 
 $(INTDIR)\WinConsole.obj: ../common/WinConsole.cpp
+
+$(INTDIR)\WinFiles.obj: ../common/WinFiles.cpp ../common/WinFiles.h
 
 $(INTDIR)\WinObjects.obj: ../common/WinObjects.cpp
 

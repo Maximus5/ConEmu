@@ -39,12 +39,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRCTRL(s) DEBUGSTR(s)
 
 
-//#include <stdio.h>
-#include <windows.h>
-#include <Tlhelp32.h>
-//#include <windowsx.h>
-//#include <string.h>
-//#include <tchar.h>
 #include "../common/common.hpp"
 #pragma warning( disable : 4995 )
 #include "../common/pluginW1761.hpp" // Отличается от 995 наличием SynchoApi
@@ -54,8 +48,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/FarVersion.h"
 #include "../common/MFileMapping.h"
 #include "../common/MSection.h"
+#include "../common/WinUser.h"
 #include "ConEmuTh.h"
 #include "ImgCache.h"
+
+#include <Tlhelp32.h>
 
 #define Free free
 #define Alloc calloc

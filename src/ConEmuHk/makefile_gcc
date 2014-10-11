@@ -1,5 +1,6 @@
 NAME = ConEmuHk
 SRCS = \
+		../common/CmdArg.cpp         \
 		../common/CmdLine.cpp        \
 		../common/Common.cpp         \
 		../common/ConEmuCheck.cpp    \

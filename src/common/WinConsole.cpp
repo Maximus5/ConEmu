@@ -29,6 +29,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define HIDE_USE_EXCEPTION_INFO
 #include "common.hpp"
 #include <TlHelp32.h>
+#include "CmdLine.h"
 #include "Monitors.h"
 #include "WinConsole.h"
 #include "WinObjects.h"
@@ -778,203 +779,24 @@ void SetConsoleBufferSize(HWND inConWnd, int anWidth, int anHeight, int anBuffer
 }
 */
 
-#ifndef CONEMU_MINIMAL
-// Evaluate default width for the font
-int EvaluateDefaultFontWidth(int inSizeY, const wchar_t *asFontName)
+COORD MyGetLargestConsoleWindowSize(HANDLE hConsoleOutput)
 {
-	if (inSizeY <= 0)
-		return 0;
-
-	int nDefaultX = inSizeY * 10 / 16; // rough
-	LOGFONT lf = {inSizeY};
-	lstrcpyn(lf.lfFaceName, asFontName ? asFontName : L"Lucida Console", countof(lf.lfFaceName));
-	HFONT hFont = CreateFontIndirect(&lf);
-	if (hFont)
+	// В Wine не работает
+	COORD crMax = GetLargestConsoleWindowSize(hConsoleOutput);
+	DWORD dwErr = (crMax.X && crMax.Y) ? 0 : GetLastError();
+	UNREFERENCED_PARAMETER(dwErr);
+	// Wine BUG
+	//if (!crMax.X || !crMax.Y)
+	if ((crMax.X == 80 && crMax.Y == 24) && IsWine())
 	{
-		HDC hDC = CreateCompatibleDC(NULL);
-		if (hDC)
-		{
-			HFONT hOldF = (HFONT)SelectObject(hDC, hFont);
-			TEXTMETRIC tm = {};
-			BOOL lbTM = GetTextMetrics(hDC, &tm);
-			if (lbTM && (tm.tmAveCharWidth > 0))
-			{
-				nDefaultX = tm.tmAveCharWidth;
-			}
-			SelectObject(hDC, hOldF);
-			DeleteDC(hDC);
-		}
-		DeleteObject(hFont);
+		crMax.X = 255;
+		crMax.Y = 255;
 	}
-
-	return nDefaultX;
+	else if (IsWin10())
+	{
+		// Windows 10 Preview has a new bug in GetLargestConsoleWindowSize
+		crMax.X = max(crMax.X,555);
+		crMax.Y = max(crMax.Y,555);
+	}
+	return crMax;
 }
-#endif
-
-
-#ifndef CONEMU_MINIMAL
-void SetUserFriendlyFont(HWND hConWnd, int newFontY = 0, int newFontX = 0)
-{
-	// Соответствующие функции появились только в API Vista
-	// Win2k & WinXP - доступны только хаки, что не подходит
-	_ASSERTE(_WIN32_WINNT_VISTA==0x600);
-	OSVERSIONINFOEXW osvi = {sizeof(osvi), HIBYTE(_WIN32_WINNT_VISTA), LOBYTE(_WIN32_WINNT_VISTA)};
-	DWORDLONG const dwlConditionMask = VerSetConditionMask(VerSetConditionMask(0, VER_MAJORVERSION, VER_GREATER_EQUAL), VER_MINORVERSION, VER_GREATER_EQUAL);
-	if (!VerifyVersionInfoW(&osvi, VER_MAJORVERSION | VER_MINORVERSION, dwlConditionMask))
-		return;
-
-	HANDLE hOutput = GetStdHandle(STD_OUTPUT_HANDLE);
-	COORD crVisibleSize = {};
-	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
-	if (GetConsoleScreenBufferInfo(hOutput, &csbi))
-	{
-		crVisibleSize.X = csbi.srWindow.Right - csbi.srWindow.Left + 1;
-		crVisibleSize.Y = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
-	}
-
-	if ((crVisibleSize.X <= 0) && (crVisibleSize.Y <= 0))
-	{
-		_ASSERTE((crVisibleSize.X > 0) && (crVisibleSize.Y > 0));
-		return;
-	}
-
-	int curSizeY = 0, curSizeX = 0;
-	wchar_t sFontName[LF_FACESIZE] = L"";
-
-	if (apiGetConsoleFontSize(hOutput, curSizeY, curSizeX, sFontName) && curSizeY && curSizeX)
-	{
-		if (newFontY <= 0 || newFontX <= 0)
-		{
-			DEBUGTEST(COORD crLargest = MyGetLargestConsoleWindowSize(hOutput));
-
-			HMONITOR hMon = MonitorFromWindow(hConWnd, MONITOR_DEFAULTTOPRIMARY);
-			MONITORINFO mi = {sizeof(mi)};
-			int nMaxX = 0, nMaxY = 0;
-			if (GetMonitorInfo(hMon, &mi))
-			{
-				nMaxX = mi.rcWork.right - mi.rcWork.left - 2*GetSystemMetrics(SM_CXSIZEFRAME) - GetSystemMetrics(SM_CYCAPTION);
-				nMaxY = mi.rcWork.bottom - mi.rcWork.top - 2*GetSystemMetrics(SM_CYSIZEFRAME);
-			}
-				
-			if ((nMaxX > 0) && (nMaxY > 0))
-			{
-				int nFontX = nMaxX  / crVisibleSize.X;
-				int nFontY = nMaxY / crVisibleSize.Y;
-				// Too large height?
-				if (nFontY > 28)
-				{
-					nFontX = 28 * nFontX / nFontY;
-					nFontY = 28;
-				}
-
-				// Evaluate default width for the font
-				int nEvalX = EvaluateDefaultFontWidth(nFontY, sFontName);
-				if (nEvalX > 0)
-				{
-					if ((nEvalX > nFontX) && (nFontX > 0))
-						nFontY = nFontX * nFontY / nEvalX;
-					else
-						nFontX = nEvalX;
-				}
-
-				// Look in the registry?
-				HKEY hk;
-				DWORD nRegSize = 0, nLen;
-				if (!RegOpenKeyEx(HKEY_CURRENT_USER, L"Console", 0, KEY_READ, &hk))
-				{
-					if (RegQueryValueEx(hk, L"FontSize", NULL, NULL, (LPBYTE)&nRegSize, &(nLen=sizeof(nRegSize))) || nLen!=sizeof(nRegSize))
-						nRegSize = 0;
-					RegCloseKey(hk);
-				}
-				if (!nRegSize && !RegOpenKeyEx(HKEY_CURRENT_USER, L"Console\\%SystemRoot%_system32_cmd.exe", 0, KEY_READ, &hk))
-				{
-					if (RegQueryValueEx(hk, L"FontSize", NULL, NULL, (LPBYTE)&nRegSize, &(nLen=sizeof(nRegSize))) || nLen!=sizeof(nRegSize))
-						nRegSize = 0;
-					RegCloseKey(hk);
-				}
-				if ((HIWORD(nRegSize) > curSizeY) && (HIWORD(nRegSize) < nFontY)
-					&& (LOWORD(nRegSize) > curSizeX) && (LOWORD(nRegSize) < nFontX))
-				{
-					nFontY = HIWORD(nRegSize);
-					nFontX = LOWORD(nRegSize);
-				}
-
-				if ((nFontX > curSizeX) || (nFontY > curSizeY))
-				{
-					newFontY = nFontY; newFontX = nFontX;
-				}
-			}
-		}
-	}
-
-	if ((newFontY > 0) && (newFontX > 0))
-	{
-		if (!*sFontName)
-			lstrcpyn(sFontName, L"Lucida Console", countof(sFontName));
-		apiSetConsoleFontSize(hOutput, newFontY, newFontX, sFontName);
-	}
-}
-
-void CorrectConsolePos(HWND hConWnd)
-{
-	RECT rcNew = {};
-	if (GetWindowRect(hConWnd, &rcNew))
-	{
-		HMONITOR hMon = MonitorFromWindow(hConWnd, MONITOR_DEFAULTTOPRIMARY);
-		MONITORINFO mi = {sizeof(mi)};
-		//int nMaxX = 0, nMaxY = 0;
-		if (GetMonitorInfo(hMon, &mi))
-		{
-			int newW = (rcNew.right-rcNew.left), newH = (rcNew.bottom-rcNew.top);
-			int newX = rcNew.left, newY = rcNew.top;
-
-			if (newX < mi.rcWork.left)
-				newX = mi.rcWork.left;
-			else if (rcNew.right > mi.rcWork.right)
-				newX = max(mi.rcWork.left,(mi.rcWork.right-newW));
-
-			if (newY < mi.rcWork.top)
-				newY = mi.rcWork.top;
-			else if (rcNew.bottom > mi.rcWork.bottom)
-				newY = max(mi.rcWork.top,(mi.rcWork.bottom-newH));
-
-			if ((newX != rcNew.left) || (newY != rcNew.top))
-				SetWindowPos(hConWnd, HWND_TOP, newX, newY,0,0, SWP_NOSIZE);
-		}
-	}
-}
-
-void EmergencyShow(HWND hConWnd, int newFontY /*= 0*/, int newFontX /*= 0*/)
-{
-	if (!hConWnd)
-		hConWnd = GetConsoleWindow();
-
-	if (IsWindowVisible(hConWnd))
-		return; // уже, делать ничего не будем
-
-	if (!IsWindow(hConWnd))
-		return; // Invalid HWND
-
-	_ASSERTE(FALSE && "EmergencyShow was called, Continue?");
-
-	SetUserFriendlyFont(hConWnd, newFontY, newFontX);
-
-	CorrectConsolePos(hConWnd);
-
-	if (!IsWindowVisible(hConWnd))
-	{
-		SetWindowPos(hConWnd, HWND_NOTOPMOST, 0,0,0,0, SWP_NOSIZE|SWP_NOMOVE);
-		//SetWindowPos(hConWnd, HWND_TOP, 50,50,0,0, SWP_NOSIZE);
-		apiShowWindowAsync(hConWnd, SW_SHOWNORMAL);
-	}
-	else
-	{
-		// Снять TOPMOST
-		SetWindowPos(hConWnd, HWND_NOTOPMOST, 0,0,0,0, SWP_NOSIZE|SWP_NOMOVE);
-	}
-
-	if (!IsWindowEnabled(hConWnd))
-		EnableWindow(hConWnd, true);
-}
-
-#endif // #ifndef CONEMU_MINIMAL

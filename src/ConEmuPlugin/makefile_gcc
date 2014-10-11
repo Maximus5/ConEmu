@@ -1,9 +1,11 @@
 NAME = ConEmu
 SRCS = \
+		../common/CmdArg.cpp         \
 		../common/CmdLine.cpp        \
 		../common/Common.cpp         \
 		../common/ConEmuCheck.cpp    \
 		../common/ConEmuCheckEx.cpp  \
+		../common/EmergencyShow.cpp  \
 		../common/Memory.cpp         \
 		../common/Monitors.cpp       \
 		../common/MSection.cpp       \
@@ -13,7 +15,9 @@ SRCS = \
 		../common/MStrSafe.cpp       \
 		../common/SetEnvVar.cpp      \
 		../common/WinConsole.cpp     \
+		../common/WinFiles.cpp       \
 		../common/WinObjects.cpp     \
+		../common/WinUser.cpp        \
 		ConEmuInjects.cpp \
 		ConEmuPlugin.cpp \
 		ConEmuPlugin1900.cpp \

@@ -44,10 +44,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #undef USE_DEBUG_LOGS
 //#define USE_DEBUG_LOGS
 
-#include <windows.h>
-#include "ConEmuTh.h"
-#include "../common/RgnDetect.h"
+#include "../common/common.hpp"
 #include "../common/MSection.h"
+#include "../common/RgnDetect.h"
+#include "../common/WinUser.h"
+#include "ConEmuTh.h"
 #include "resource.h"
 #include "ImgCache.h"
 

@@ -392,6 +392,7 @@
   </References>
   <Files>
     <Filter Name="Header Files" Filter="h;hpp;hxx;hm;inl;inc;xsd" UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}">
+      <File RelativePath="..\common\CmdArg.h" />
       <File RelativePath="..\common\CmdLine.h" />
       <File RelativePath="..\common\common.hpp" />
       <File RelativePath="..\common\ConEmuCheck.h" />
@@ -399,6 +400,7 @@
       <File RelativePath="..\common\ConsoleMixAttr.h" />
       <File RelativePath="..\common\ConsoleRead.h" />
       <File RelativePath="..\common\defines.h" />
+      <File RelativePath="..\common\EmergencyShow.h" />
       <File RelativePath="..\common\ExecPty.h" />
       <File RelativePath="..\common\Execute.h" />
       <File RelativePath="..\common\InQueue.h" />
@@ -412,13 +414,16 @@
       <File RelativePath="..\common\MSecurity.h" />
       <File RelativePath="..\common\MStrSafe.h" />
       <File RelativePath="..\common\PipeServer.h" />
+      <File RelativePath="..\common\ProcessSetEnv.h" />
       <File RelativePath="..\common\RConStartArgs.h" />
       <File RelativePath="..\common\SetEnvVar.h" />
       <File RelativePath="..\common\StartupEnv.h" />
       <File RelativePath="..\common\StartupEnvDef.h" />
       <File RelativePath="..\common\StartupEnvEx.h" />
       <File RelativePath="..\common\WinConsole.h" />
+      <File RelativePath="..\common\WinFiles.h" />
       <File RelativePath="..\common\WinObjects.h" />
+      <File RelativePath="..\common\WinUser.h" />
       <File RelativePath="..\ConEmuHk\Console2.h" />
       <File RelativePath="..\ConEmuHk\Injects.h" />
       <File RelativePath=".\ConProcess.h" />
@@ -436,11 +441,13 @@
       <File RelativePath=".\ConEmuCD.rc" />
     </Filter>
     <Filter Name="0 - Source Files" Filter="cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx" UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}">
+      <File RelativePath="..\common\CmdArg.cpp" />
       <File RelativePath="..\common\CmdLine.cpp" />
       <File RelativePath="..\common\Common.cpp" />
       <File RelativePath="..\common\ConEmuCheck.cpp" />
       <File RelativePath="..\common\ConsoleMixAttr.cpp" />
       <File RelativePath="..\common\ConsoleRead.cpp" />
+      <File RelativePath="..\common\EmergencyShow.cpp" />
       <File RelativePath="..\common\ExecPty.cpp" />
       <File RelativePath="..\common\Execute.cpp" />
       <File RelativePath="..\common\InQueue.cpp" />
@@ -453,10 +460,13 @@
       <File RelativePath="..\common\MSectionSimple.cpp" />
       <File RelativePath="..\common\MSecurity.cpp" />
       <File RelativePath="..\common\MStrSafe.cpp" />
+      <File RelativePath="..\common\ProcessSetEnv.cpp" />
       <File RelativePath="..\common\RConStartArgs.cpp" />
       <File RelativePath="..\common\SetEnvVar.cpp" />
       <File RelativePath="..\common\WinConsole.cpp" />
+      <File RelativePath="..\common\WinFiles.cpp" />
       <File RelativePath="..\common\WinObjects.cpp" />
+      <File RelativePath="..\common\WinUser.cpp" />
       <File RelativePath="..\ConEmuHk\Injects.cpp" />
       <File RelativePath=".\ConEmuCmd.cpp" />
       <File RelativePath=".\ConEmuSrv.cpp" />

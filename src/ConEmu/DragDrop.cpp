@@ -34,6 +34,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <shlobj.h>
 #pragma warning(default: 4091)
 #include "Header.h"
+#include "../common/WinFiles.h"
+
 #include "ScreenDump.h"
 #include "DragDrop.h"
 #include "Options.h"

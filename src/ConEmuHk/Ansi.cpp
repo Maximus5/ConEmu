@@ -35,6 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <TCHAR.h>
 #include "../common/common.hpp"
 #include "../common/ConEmuCheck.h"
+#include "../common/CmdLine.h"
 #include "SetHook.h"
 #include "ConEmuHooks.h"
 #include "../common/ConsoleAnnotation.h"

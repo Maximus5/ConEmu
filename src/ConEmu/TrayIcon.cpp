@@ -37,6 +37,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Options.h"
 #include "OptionsClass.h"
 #include "Menu.h"
+#include "../common/WinUser.h"
 
 #ifndef NIN_BALLOONUSERCLICK
 #define NIN_BALLOONSHOW         (WM_USER + 2)

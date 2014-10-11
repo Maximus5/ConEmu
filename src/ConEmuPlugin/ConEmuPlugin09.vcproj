@@ -392,10 +392,12 @@
   </References>
   <Files>
     <Filter Name="0 - Source Files" Filter="cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx" UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}">
+      <File RelativePath="..\common\CmdArg.cpp" />
       <File RelativePath="..\common\CmdLine.cpp" />
       <File RelativePath="..\common\Common.cpp" />
       <File RelativePath="..\common\ConEmuCheck.cpp" />
       <File RelativePath="..\common\ConEmuCheckEx.cpp" />
+      <File RelativePath="..\common\EmergencyShow.cpp" />
       <File RelativePath="..\common\execute.cpp" />
       <File RelativePath="..\common\MAssert.cpp" />
       <File RelativePath="..\common\Memory.cpp" />
@@ -407,7 +409,9 @@
       <File RelativePath="..\common\MStrSafe.cpp" />
       <File RelativePath="..\common\SetEnvVar.cpp" />
       <File RelativePath="..\common\WinConsole.cpp" />
+      <File RelativePath="..\common\WinFiles.cpp" />
       <File RelativePath="..\common\WinObjects.cpp" />
+      <File RelativePath="..\common\WinUser.cpp" />
       <File RelativePath=".\ConEmuInjects.cpp" />
       <File RelativePath=".\ConEmuPlugin.cpp" />
       <File RelativePath=".\ConEmuPlugin1900.cpp" />
@@ -434,12 +438,14 @@
       </File>
     </Filter>
     <Filter Name="Header Files" Filter="h;hpp;hxx;hm;inl;inc;xsd" UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}">
+      <File RelativePath="..\common\CmdArg.h" />
       <File RelativePath="..\common\CmdLine.h" />
       <File RelativePath="..\common\common.hpp" />
       <File RelativePath="..\common\ConEmuCheck.h" />
       <File RelativePath="..\common\ConEmuCheckEx.h" />
       <File RelativePath="..\common\ConsoleAnnotation.h" />
       <File RelativePath="..\common\defines.h" />
+      <File RelativePath="..\common\EmergencyShow.h" />
       <File RelativePath="..\common\farcolor1.hpp" />
       <File RelativePath="..\common\Memory.h" />
       <File RelativePath="..\common\Monitors.h" />
@@ -451,7 +457,9 @@
       <File RelativePath="..\common\pluginW2800.hpp" />
       <File RelativePath="..\common\SetEnvVar.h" />
       <File RelativePath="..\common\WinConsole.h" />
+      <File RelativePath="..\common\WinFiles.h" />
       <File RelativePath="..\common\WinObjects.h" />
+      <File RelativePath="..\common\WinUser.h" />
       <File RelativePath="..\ConEmu\DragDrop.h" />
       <File RelativePath="..\ConEmuHk\SetHook.h" />
       <File RelativePath=".\ConEmu_Lang.h" />

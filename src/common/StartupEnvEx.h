@@ -147,6 +147,8 @@ public:
 			DeleteDC(hDC);
 
 			// These functions call AdvApi32 functions
+			// But LoadStartupEnvEx is not used in ConEmuHk, so there will
+			// no AdvApi32 loading during ConEmuHk initialization
 			pEnv->bIsWine = IsWine() ? 1 : 0;
 			pEnv->bIsWinPE = IsWinPE() ? 1 : 0;
 

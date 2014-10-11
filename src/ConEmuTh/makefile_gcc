@@ -1,9 +1,13 @@
 NAME = ConEmuTh
 SRCS = \
+		../common/CmdArg.cpp         \
+		../common/CmdLine.cpp        \
 		../common/Common.cpp         \
 		../common/MSection.cpp       \
 		../common/MSectionSimple.cpp \
+		../common/WinFiles.cpp       \
 		../common/WinObjects.cpp     \
+		../common/WinUser.cpp        \
 		ConEmuTh.cpp \
 		ConEmuTh1900.cpp \
 		ConEmuTh2800.cpp \

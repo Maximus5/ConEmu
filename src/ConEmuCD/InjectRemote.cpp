@@ -28,6 +28,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ConEmuC.h"
 #include "../common/MAssert.h"
+#include "../common/WinFiles.h"
 #include "../common/WinObjects.h"
 #include "Infiltrate.h"
 #include "../ConEmuHk/Injects.h"

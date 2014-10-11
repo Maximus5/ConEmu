@@ -73,15 +73,19 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/ConsoleAnnotation.h"
 #include "../common/ConsoleMixAttr.h"
 #include "../common/ConsoleRead.h"
+#include "../common/EmergencyShow.h"
 #include "../common/execute.h"
 #include "../common/MArray.h"
 #include "../common/MMap.h"
 #include "../common/MSectionSimple.h"
 #include "../common/MWow64Disable.h"
+#include "../common/ProcessSetEnv.h"
 #include "../common/RConStartArgs.h"
 #include "../common/SetEnvVar.h"
 #include "../common/StartupEnvEx.h"
 #include "../common/WinConsole.h"
+#include "../common/WinFiles.h"
+#include "../common/WinUser.h"
 #include "../ConEmu/version.h"
 #include "../ConEmuHk/Injects.h"
 #include "ConProcess.h"
@@ -9622,36 +9626,6 @@ void DisableAutoConfirmExit(BOOL abFromFarPlugin)
 		//gpSrv->nProcessStartTick = GetTickCount() - 2*CHECK_ROOTSTART_TIMEOUT;
 	}
 }
-
-//BOOL IsUserAdmin()
-//{
-//	OSVERSIONINFO osv = {sizeof(OSVERSIONINFO)};
-//	GetVersionEx(&osv);
-//	// Проверять нужно только для висты, чтобы на XP лишний "Щит" не отображался
-//	if (osv.dwMajorVersion < 6)
-//		return FALSE;
-//
-//	BOOL b;
-//	SID_IDENTIFIER_AUTHORITY NtAuthority = SECURITY_NT_AUTHORITY;
-//	PSID AdministratorsGroup;
-//
-//	b = AllocateAndInitializeSid(
-//		&NtAuthority,
-//		2,
-//		SECURITY_BUILTIN_DOMAIN_RID,
-//		DOMAIN_ALIAS_RID_ADMINS,
-//		0, 0, 0, 0, 0, 0,
-//		&AdministratorsGroup);
-//	if (b)
-//	{
-//		if (!CheckTokenMembership(NULL, AdministratorsGroup, &b))
-//		{
-//			b = FALSE;
-//		}
-//		FreeSid(AdministratorsGroup);
-//	}
-//	return(b);
-//}
 
 bool IsKeyboardLayoutChanged(DWORD* pdwLayout)
 {

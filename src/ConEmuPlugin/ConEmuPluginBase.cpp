@@ -50,6 +50,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmuPlugin2800.h"
 #include "PluginBackground.h"
 #include "../common/ConEmuCheckEx.h"
+#include "../common/EmergencyShow.h"
 #include "../common/FarVersion.h"
 #include "../common/MFileMapping.h"
 #include "../common/MSection.h"

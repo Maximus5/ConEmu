@@ -1,5 +1,6 @@
 NAME = ConEmu
 SRCS = \
+		../common/CmdArg.cpp         \
 		../common/CmdLine.cpp        \
 		../common/Common.cpp         \
 		../common/ConEmuCheck.cpp    \
@@ -15,12 +16,15 @@ SRCS = \
 		../common/MStrSafe.cpp       \
 		../common/MTimer.cpp         \
 		../common/MToolTip.cpp       \
+		../common/ProcessSetEnv.cpp  \
 		../common/RConStartArgs.cpp  \
 		../common/RgnDetect.cpp      \
 		../common/SetEnvVar.cpp      \
 		../common/WinConsole.cpp     \
+		../common/WinFiles.cpp       \
 		../common/WinObjects.cpp     \
 		../common/WinRegistry.cpp    \
+		../common/WinUser.cpp        \
 		AboutDlg.cpp       \
 		Attach.cpp         \
 		Background.cpp     \

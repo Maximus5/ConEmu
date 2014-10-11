@@ -31,6 +31,7 @@ $(INTDIR)\AboutDlg.obj \
 $(INTDIR)\Attach.obj \
 $(INTDIR)\Background.obj \
 $(INTDIR)\BaseDragDrops.obj \
+$(INTDIR)\CmdArg.obj \
 $(INTDIR)\CmdHistory.obj \
 $(INTDIR)\CmdLine.obj \
 $(INTDIR)\CmdTasks.obj \
@@ -79,6 +80,7 @@ $(INTDIR)\Options.obj \
 $(INTDIR)\OptionsClass.obj \
 $(INTDIR)\OptionsFast.obj \
 $(INTDIR)\OptionsHelp.obj \
+$(INTDIR)\ProcessSetEnv.obj \
 $(INTDIR)\RConStartArgs.obj \
 $(INTDIR)\RealBuffer.obj \
 $(INTDIR)\RealConsole.obj \
@@ -110,6 +112,7 @@ $(INTDIR)\VConGroup.obj \
 $(INTDIR)\VConRelease.obj \
 $(INTDIR)\VirtualConsole.obj \
 $(INTDIR)\WinConsole.obj \
+$(INTDIR)\WinFiles.obj \
 $(INTDIR)\WinObjects.obj \
 $(INTDIR)\WinRegistry.obj
 
@@ -277,6 +280,8 @@ $(INTDIR)\Background.obj: Background.cpp Background.h
 
 $(INTDIR)\BaseDragDrops.obj: BaseDragDrops.cpp BaseDragDrops.h DragDrop.h DragDropData.h
 
+$(INTDIR)\CmdArg.obj: ../common/CmdArg.cpp ../common/CmdArg.h ../common/WinUser.h
+
 $(INTDIR)\CmdHistory.obj: CmdHistory.cpp CmdHistory.h
 
 $(INTDIR)\CmdLine.obj: ../common/CmdLine.cpp ../common/CmdLine.h
@@ -373,6 +378,8 @@ $(INTDIR)\OptionsFast.obj: OptionsFast.cpp OptionsFast.h Options.h
 
 $(INTDIR)\OptionsHelp.obj: OptionsHelp.cpp OptionsHelp.h
 
+$(INTDIR)\ProcessSetEnv.obj: ../common/ProcessSetEnv.cpp ../common/ProcessSetEnv.h
+
 $(INTDIR)\RConStartArgs.obj: ../common/RConStartArgs.cpp ../common/RConStartArgs.h
 
 $(INTDIR)\RealBuffer.obj: RealBuffer.cpp RealBuffer.h RealConsole.h  ../common/Common.hpp
@@ -434,6 +441,8 @@ $(INTDIR)\VConRelease.obj: VConRelease.cpp VConRelease.h VirtualConsole.h VConCh
 $(INTDIR)\VirtualConsole.obj: VirtualConsole.cpp VConRelease.h VirtualConsole.h VConChild.h VConGroup.h
 
 $(INTDIR)\WinConsole.obj: ../common/WinConsole.cpp
+
+$(INTDIR)\WinFiles.obj: ../common/WinFiles.cpp ../common/WinFiles.h
 
 $(INTDIR)\WinObjects.obj: ../common/WinObjects.cpp
 
