@@ -1,4 +1,4 @@
-
+﻿
 -- Place this file into your %FARPROFILE%\Macros\scripts
 
 
@@ -7,8 +7,13 @@
 
 local ConEmu   = "4b675d80-1d4a-4ea9-8436-fdc23f2fc14b"
 
-Macro {
-  area=""; key="CtrlO"; flags=""; description="ConEmu: Switch tabs visibility"; action = function()
-    Plugin.Call(ConEmu,3)
-  end;
+Macro
+{
+  area="";
+  key="CtrlO";
+  flags="";
+  description="ConEmu: Switch tabs visibility";
+action = function()
+  Plugin.Call(ConEmu,3)
+end;
 }

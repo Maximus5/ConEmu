@@ -1,4 +1,4 @@
-
+﻿
 -- Place this file into your %FARPROFILE%\Macros\scripts
 
 
