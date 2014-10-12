@@ -2491,6 +2491,25 @@ void CPluginBase::CheckConEmuDetached()
 	}
 }
 
+void CPluginBase::EmergencyShow()
+{
+	if (IsWindowVisible(FarHwnd))
+		return;
+
+	// If there is a ConEmuCD - just skip 'Plugin version'
+	HMODULE hSrv = GetModuleHandle(WIN3264TEST(L"ConEmuCD.dll",L"ConEmuCD64.dll"));
+	if (hSrv)
+		return;
+
+	// May be server exists? Wait a little for it
+	Sleep(2000);
+	if (IsWindowVisible(FarHwnd))
+		return;
+
+	// Last chance, lets try to do it here
+	::EmergencyShow(FarHwnd);
+}
+
 // Эту нить нужно оставить, чтобы была возможность отобразить консоль при падении ConEmu
 // static, WINAPI
 DWORD CPluginBase::MonitorThreadProcW(LPVOID lpParameter)
@@ -2530,7 +2549,7 @@ DWORD CPluginBase::MonitorThreadProcW(LPVOID lpParameter)
 
 				if (!TerminalMode && !IsWindowVisible(FarHwnd))
 				{
-					EmergencyShow(FarHwnd);
+					EmergencyShow();
 				}
 			}
 		}
@@ -2556,7 +2575,7 @@ DWORD CPluginBase::MonitorThreadProcW(LPVOID lpParameter)
 
 				if (!TerminalMode && !IsWindowVisible(FarHwnd))
 				{
-					EmergencyShow(FarHwnd);
+					EmergencyShow();
 				}
 				else if (!gbWasDetached)
 				{
@@ -5071,7 +5090,7 @@ VOID /*WINAPI*/ CPluginBase::OnConsoleWasAttached(HookCallbackArg* pArgs)
 		// сразу переподцепимся к GUI
 		if (!Plugin()->Attach2Gui())
 		{
-			EmergencyShow(FarHwnd);
+			EmergencyShow();
 		}
 
 		// Сбрасываем после Attach2Gui, чтобы MonitorThreadProcW случайно

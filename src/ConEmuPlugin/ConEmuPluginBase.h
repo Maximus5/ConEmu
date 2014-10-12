@@ -88,6 +88,8 @@ protected:
 
 	bool ReloadFarInfoApi();
 
+	static void EmergencyShow();
+
 protected:
 	friend BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved);
 	static void DllMain_ProcessAttach(HMODULE hModule);

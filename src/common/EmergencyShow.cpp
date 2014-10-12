@@ -204,24 +204,39 @@ void EmergencyShow(HWND hConWnd, int newFontY /*= 0*/, int newFontX /*= 0*/)
 	if (!IsWindow(hConWnd))
 		return; // Invalid HWND
 
-	_ASSERTE(FALSE && "EmergencyShow was called, Continue?");
+	wchar_t szMutex[80];
+	_wsprintf(szMutex, SKIPCOUNT(szMutex) L"ConEmuEmergencyShow:%08X", (DWORD)(DWORD_PTR)hConWnd);
+	HANDLE hMutex = CreateMutex(NULL, FALSE, szMutex);
 
-	SetUserFriendlyFont(hConWnd, newFontY, newFontX);
+	//_ASSERTE(FALSE && "EmergencyShow was called, Continue?");
 
-	CorrectConsolePos(hConWnd);
+	DWORD dwWaitResult = WaitForSingleObject(hMutex, 5000);
 
-	if (!IsWindowVisible(hConWnd))
+	if (dwWaitResult == WAIT_OBJECT_0)
 	{
-		SetWindowPos(hConWnd, HWND_NOTOPMOST, 0,0,0,0, SWP_NOSIZE|SWP_NOMOVE);
-		//SetWindowPos(hConWnd, HWND_TOP, 50,50,0,0, SWP_NOSIZE);
-		apiShowWindowAsync(hConWnd, SW_SHOWNORMAL);
+		if (!IsWindowVisible(hConWnd))
+		{
+			// Note, this funciton will fail if called from ConEmu plugin
+			// Only servers (ConEmuCD) will be succeeded here
+			SetUserFriendlyFont(hConWnd, newFontY, newFontX);
+
+			CorrectConsolePos(hConWnd);
+
+			SetWindowPos(hConWnd, HWND_NOTOPMOST, 0,0,0,0, SWP_NOSIZE|SWP_NOMOVE);
+
+			apiShowWindowAsync(hConWnd, SW_SHOWNORMAL);
+		}
+
+		ReleaseMutex(hMutex);
 	}
 	else
 	{
-		// Снять TOPMOST
-		SetWindowPos(hConWnd, HWND_NOTOPMOST, 0,0,0,0, SWP_NOSIZE|SWP_NOMOVE);
+		// Invalid mutex operation? Just show the console
+		apiShowWindowAsync(hConWnd, SW_SHOWNORMAL);
 	}
 
 	if (!IsWindowEnabled(hConWnd))
 		EnableWindow(hConWnd, true);
+
+	CloseHandle(hMutex);
 }
