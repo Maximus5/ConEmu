@@ -252,15 +252,17 @@ protected:
 		wchar_t *pConChar;
 		WORD  *pConAttr;
 		CHAR_INFO *pDataCmp;
+		// Sizes
 		int nTextWidth, nTextHeight, nBufferHeight;
+		// Resize (srv) in progress
 		BOOL bLockChange2Text;
 		int nChange2TextWidth, nChange2TextHeight;
+		//
 		BOOL bBufferHeight; // TRUE, если есть прокрутка
 		//DWORD nPacketIdx;
 		DWORD_PTR dwKeybLayout;
 		BOOL bRBtnDrag; // в консоль посылается драг правой кнопкой (выделение в FAR)
 		COORD crRBtnDrag;
-		BOOL bInSetSize; HANDLE hInSetSize;
 		int DefaultBufferHeight;
 		BOOL bConsoleDataChanged;
 		//RClick4KeyBar

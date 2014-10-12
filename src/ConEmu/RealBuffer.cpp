@@ -41,6 +41,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "../common/ConEmuCheck.h"
 #include "../common/Execute.h"
+#include "../common/MSetter.h"
 #include "../common/RgnDetect.h"
 #include "../common/WinConsole.h"
 #include "../common/WinFiles.h"
@@ -114,7 +115,6 @@ CRealBuffer::CRealBuffer(CRealConsole* apRCon, RealBufferType aType/*=rbt_Primar
 	mn_LastRgnFlags = -1;
 
 	ZeroStruct(con);
-	con.hInSetSize = CreateEvent(0,TRUE,TRUE,0);
 	mp_Match = NULL;
 
 	mb_BuferModeChangeLocked = FALSE;
@@ -146,9 +146,6 @@ CRealBuffer::~CRealBuffer()
 
 	if (con.pConAttr)
 		{ Free(con.pConAttr); con.pConAttr = NULL; }
-
-	if (con.hInSetSize)
-		{ CloseHandle(con.hInSetSize); con.hInSetSize = NULL; }
 
 	dump.Close();
 
@@ -799,7 +796,15 @@ BOOL CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 	// С таймаутом
 	nCallTimeout = RELEASEDEBUGTEST(500,30000);
 
-	/*fSuccess = CallNamedPipe(mp_RCon->ms_ConEmuC_Pipe, pIn, pIn->hdr.cbSize, pOut, pOut->hdr.cbSize, &dwRead, nCallTimeout);*/
+	_ASSERTE(con.bLockChange2Text);
+	ResetEvent(mp_RCon->mh_ApplyFinished);
+
+	_ASSERTE(mp_RCon->m_ConsoleMap.IsValid());
+	bool bNeedApplyConsole =
+		mp_RCon->m_ConsoleMap.IsValid()
+		&& (anCmdID == CECMD_SETSIZESYNC)
+		&& (mp_RCon->mn_MonitorThreadID != GetCurrentThreadId());
+
 	_ASSERTE(pOut==NULL);
 	pOut = ExecuteCmd(mp_RCon->ms_ConEmuC_Pipe, pIn, nCallTimeout, ghWnd);
 	fSuccess = (pOut != NULL);
@@ -857,11 +862,6 @@ BOOL CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 	}
 	else
 	{
-		_ASSERTE(mp_RCon->m_ConsoleMap.IsValid());
-		bool bNeedApplyConsole = //mp_ConsoleInfo &&
-		    mp_RCon->m_ConsoleMap.IsValid()
-		    && (anCmdID == CECMD_SETSIZESYNC)
-		    && (mp_RCon->mn_MonitorThreadID != GetCurrentThreadId());
 		DEBUGSTRSIZE(L"SetConsoleSize.fSuccess == TRUE\n");
 
 		if (pOut->hdr.nCmd != pIn->hdr.nCmd)
@@ -876,38 +876,29 @@ BOOL CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 		}
 		else
 		{
-			//con.nPacketIdx = lOut.SetSizeRet.nNextPacketId;
-			//mn_LastProcessedPkt = lOut.SetSizeRet.nNextPacketId;
-			CONSOLE_SCREEN_BUFFER_INFO sbi = {{0,0}};
+			CONSOLE_SCREEN_BUFFER_INFO sbi = pOut->SetSizeRet.SetSizeRet;
 			int nBufHeight;
 
-			//_ASSERTE(mp_ConsoleInfo);
-			if (bNeedApplyConsole /*&& mp_ConsoleInfo->nCurDataMapIdx && (HWND)mp_ConsoleInfo->mp_RCon->hConWnd*/)
+			if (bNeedApplyConsole)
 			{
 				// Если Apply еще не прошел - ждем
 				DWORD nWait = -1;
 
-				if (con.m_sbi.dwSize.X != sizeX || con.m_sbi.dwSize.Y != (sizeBuffer ? sizeBuffer : sizeY))
+				int nNewWidth = 0, nNewHeight = 0;
+				DWORD nScroll = 0;
+				GetConWindowSize(sbi, &nNewWidth, &nNewHeight, &nScroll);
+
+				// Сравниваем с GetTextWidth/GetTextHeight т.к. именно они отдают
+				// размеры консоли отображаемой в VCon (размеры буферов VCon)
+				// ((nNewWidth != (int)(UINT)sizeX) || (nNewHeight != (int)(UINT)sizeY))
+				if ((GetTextWidth() != nNewWidth) || (GetTextHeight() != nNewHeight))
 				{
-					//// Проходит некоторое (короткое) время, пока обновится FileMapping в нашем процессе
-					//_ASSERTE(mp_ConsoleInfo!=NULL);
-					//COORD crCurSize = mp_ConsoleInfo->sbi.dwSize;
-					//if (crCurSize.X != sizeX || crCurSize.Y != (sizeBuffer ? sizeBuffer : sizeY))
-					//{
-					//	DWORD dwStart = GetTickCount();
-					//	do {
-					//		Sleep(1);
-					//		crCurSize = mp_ConsoleInfo->sbi.dwSize;
-					//		if (crCurSize.X == sizeX && crCurSize.Y == (sizeBuffer ? sizeBuffer : sizeY))
-					//			break;
-					//	} while ((GetTickCount() - dwStart) < SETSYNCSIZEMAPPINGTIMEOUT);
-					//}
-					ResetEvent(mp_RCon->mh_ApplyFinished);
 					mp_RCon->mn_LastConsolePacketIdx--;
 					mp_RCon->SetMonitorThreadEvent();
 					DWORD nWaitTimeout = SETSYNCSIZEAPPLYTIMEOUT;
 
 					#ifdef _DEBUG
+					DWORD nWaitStart = GetTickCount();
 					nWaitTimeout = SETSYNCSIZEAPPLYTIMEOUT*4; //30000;
 					nWait = WaitForSingleObject(mp_RCon->mh_ApplyFinished, nWaitTimeout);
 					if (nWait == WAIT_TIMEOUT)
@@ -915,6 +906,7 @@ BOOL CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 						_ASSERTE(FALSE && "SETSYNCSIZEAPPLYTIMEOUT");
 						//nWait = WaitForSingleObject(mp_RCon->mh_ApplyFinished, nWaitTimeout);
 					}
+					DWORD nWaitDelay = GetTickCount() - nWaitStart;
 					#else
 					nWait = WaitForSingleObject(mp_RCon->mh_ApplyFinished, nWaitTimeout);
 					#endif
@@ -945,12 +937,13 @@ BOOL CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 					    "SetConsoleSizeSrv.WaitForSingleObject(mp_RCon->mh_ApplyFinished) succeded");
 				}
 
+				// If sync resize was abandoned (timeout)
+				// let use current values
 				sbi = con.m_sbi;
 				nBufHeight = con.nBufferHeight;
 			}
 			else
 			{
-				sbi = pOut->SetSizeRet.SetSizeRet;
 				nBufHeight = pIn->SetSize.nBufferHeight;
 
 				if (gpSetCls->isAdvLogging)
@@ -1021,30 +1014,33 @@ BOOL CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 				}
 			}
 
-			//if (sbi.dwSize.X == size.X && sbi.dwSize.Y == size.Y) {
-			//    con.m_sbi = sbi;
-			//    if (sbi.dwSize.X == con.m_sbi.dwSize.X && sbi.dwSize.Y == con.m_sbi.dwSize.Y) {
-			//        SetEvent(mh_ConChanged);
-			//    }
-			//    lbRc = true;
-			//}
-			if (lbRc)  // Попробуем сразу менять nTextWidth/nTextHeight. Иначе синхронизация размеров консоли глючит...
+			// If server was changed the size
+			if (lbRc)
 			{
 				DEBUGSTRSIZE(L"SetConsoleSizeSrv.lbRc == TRUE\n");
-				con.nChange2TextWidth = sbi.dwSize.X;
-				con.nChange2TextHeight = con.bBufferHeight ? (sbi.srWindow.Bottom-sbi.srWindow.Top+1) : sbi.dwSize.Y;
+				int nNewWidth = 0, nNewHeight = 0;
+				DWORD nScroll = 0;
+				if (GetConWindowSize(con.m_sbi, &nNewWidth, &nNewHeight, &nScroll))
+				{
+					// Let store new values to be sure our GUI is using them
+					if ((GetTextWidth() != nNewWidth) || (GetTextHeight() != nNewHeight))
+					{
+						SetChange2Size(nNewWidth, nNewHeight);
+					}
+				}
 
 				#ifdef _DEBUG
-				if (con.bBufferHeight)
-					_ASSERTE(con.nBufferHeight == sbi.dwSize.Y);
-				#endif
-
-				con.nBufferHeight = con.bBufferHeight ? sbi.dwSize.Y : 0;
-
 				if (con.nChange2TextHeight > 200)
 				{
 					_ASSERTE(con.nChange2TextHeight<=200);
 				}
+				if (con.bBufferHeight)
+				{
+					_ASSERTE(con.nBufferHeight == sbi.dwSize.Y);
+				}
+				#endif
+
+				con.nBufferHeight = con.bBufferHeight ? sbi.dwSize.Y : 0;
 			}
 		}
 	}
@@ -1057,7 +1053,7 @@ wrap:
 
 bool CRealBuffer::isInResize()
 {
-	return (this && con.bInSetSize);
+	return (this && con.bLockChange2Text);
 }
 
 BOOL CRealBuffer::SetConsoleSize(USHORT sizeX, USHORT sizeY, USHORT sizeBuffer, DWORD anCmdID/*=CECMD_SETSIZESYNC*/)
@@ -1112,8 +1108,8 @@ BOOL CRealBuffer::SetConsoleSize(USHORT sizeX, USHORT sizeY, USHORT sizeBuffer, 
 	if (sizeX</*4*/MIN_CON_WIDTH)
 		sizeX = /*4*/MIN_CON_WIDTH;
 
-	if (sizeY</*3*/MIN_CON_HEIGHT)
-		sizeY = /*3*/MIN_CON_HEIGHT;
+	if (sizeY</*2*/MIN_CON_HEIGHT)
+		sizeY = /*2*/MIN_CON_HEIGHT;
 
 	_ASSERTE(con.bBufferHeight || (!con.bBufferHeight && !sizeBuffer));
 
@@ -1162,11 +1158,17 @@ BOOL CRealBuffer::SetConsoleSize(USHORT sizeX, USHORT sizeY, USHORT sizeBuffer, 
 		}
 	}
 
-	// Чтобы ВО время ресайза пакеты НЕ обрабатывались
-	ResetEvent(con.hInSetSize); con.bInSetSize = TRUE;
+	// Сразу поставим, чтобы в основной нити при синхронизации размер не слетел
+	// Необходимо заблокировать RefreshThread, чтобы не вызывался ApplyConsoleInfo ДО ЗАВЕРШЕНИЯ SetConsoleSize
+	{
+	MSetter lSet((bool*)&con.bLockChange2Text);
+	SetChange2Size(sizeX, sizeY);
+	// Call the server
 	lbRc = SetConsoleSizeSrv(sizeX, sizeY, sizeBuffer, anCmdID);
-	con.bInSetSize = FALSE; SetEvent(con.hInSetSize);
+	// Done
+	lSet.Unlock();
 	HEAPVAL;
+	}
 
 	mp_RCon->SetConStatus(NULL);
 
@@ -1211,12 +1213,10 @@ void CRealBuffer::SyncConsole2Window(USHORT wndSizeX, USHORT wndSizeY)
 		}
 		#endif
 
-		// Сразу поставим, чтобы в основной нити при синхронизации размер не слетел
-		// Необходимо заблокировать RefreshThread, чтобы не вызывался ApplyConsoleInfo ДО ЗАВЕРШЕНИЯ SetConsoleSize
-		con.bLockChange2Text = TRUE;
-		con.nChange2TextWidth = wndSizeX; con.nChange2TextHeight = wndSizeY;
+
+		// Do resize
 		SetConsoleSize(wndSizeX, wndSizeY, 0/*Auto*/);
-		con.bLockChange2Text = FALSE;
+
 
 		if (mp_RCon->isActive() && isMainThread())
 		{
@@ -1574,11 +1574,13 @@ SHORT CRealBuffer::GetBufferPosY()
 
 int CRealBuffer::TextWidth()
 {
-	_ASSERTE(this!=NULL);
+	if (!this)
+	{
+		_ASSERTE(this!=NULL);
+		return MIN_CON_WIDTH;
+	}
 
-	if (!this) return MIN_CON_WIDTH;
-
-	if (con.nChange2TextWidth!=-1 && con.nChange2TextWidth!=0)
+	if (con.nChange2TextWidth > 0)
 		return con.nChange2TextWidth;
 
 	_ASSERTE(con.nTextWidth>=MIN_CON_WIDTH);
@@ -1587,9 +1589,11 @@ int CRealBuffer::TextWidth()
 
 int CRealBuffer::GetTextWidth()
 {
-	_ASSERTE(this!=NULL);
-
-	if (!this) return MIN_CON_WIDTH;
+	if (!this)
+	{
+		_ASSERTE(this!=NULL);
+		return MIN_CON_WIDTH;
+	}
 
 	_ASSERTE(con.nTextWidth>=MIN_CON_WIDTH && con.nTextWidth<=400);
 	return con.nTextWidth;
@@ -1597,16 +1601,15 @@ int CRealBuffer::GetTextWidth()
 
 int CRealBuffer::TextHeight()
 {
-	_ASSERTE(this!=NULL);
+	if (!this)
+	{
+		_ASSERTE(this!=NULL);
+		return MIN_CON_HEIGHT;
+	}
 
-	if (!this) return MIN_CON_HEIGHT;
+	int nRet = 0;
 
-	uint nRet = 0;
-	#ifdef _DEBUG
-	//struct RConInfo lcon = con;
-	#endif
-
-	if (con.nChange2TextHeight!=-1 && con.nChange2TextHeight!=0)
+	if (con.nChange2TextHeight > 0)
 		nRet = con.nChange2TextHeight;
 	else
 		nRet = con.nTextHeight;
@@ -1623,9 +1626,11 @@ int CRealBuffer::TextHeight()
 
 int CRealBuffer::GetTextHeight()
 {
-	_ASSERTE(this!=NULL);
-
-	if (!this) return MIN_CON_HEIGHT;
+	if (!this)
+	{
+		_ASSERTE(this!=NULL);
+		return MIN_CON_HEIGHT;
+	}
 
 	_ASSERTE(con.nTextHeight>=MIN_CON_HEIGHT && con.nTextHeight<=200);
 	return con.nTextHeight;
@@ -2141,7 +2146,10 @@ BOOL CRealBuffer::ApplyConsoleInfo()
 		return FALSE;
 	}
 
+	// mh_ApplyFinished must be set when the expected data (or size) will be ready
+	bool bSetApplyFinished = !con.bLockChange2Text;
 	ResetEvent(mp_RCon->mh_ApplyFinished);
+
 	const CESERVER_REQ_CONINFO_INFO* pInfo = NULL;
 	CESERVER_REQ_HDR cmd; ExecutePrepareCmd(&cmd, CECMD_CONSOLEDATA, sizeof(cmd));
 
@@ -2317,8 +2325,18 @@ BOOL CRealBuffer::ApplyConsoleInfo()
 			con.m_sbi = lsbi;
 
 			DWORD nScroll;
-			if (GetConWindowSize(con.m_sbi, &nNewWidth, &nNewHeight, &nScroll))
+			if (GetConWindowSize(lsbi, &nNewWidth, &nNewHeight, &nScroll))
 			{
+				// Far sync resize (avoid panel flickering)
+				// refresh VCon only when server return new size/data
+				if (con.bLockChange2Text)
+				{
+					if ((con.nChange2TextWidth == nNewWidth) && (con.nChange2TextHeight == nNewHeight))
+					{
+						bSetApplyFinished = true;
+					}
+				}
+
 				//if (con.bBufferHeight != (nNewHeight < con.m_sbi.dwSize.Y))
 				BOOL lbTurnedOn = BufferHeightTurnedOn(&con.m_sbi);
 				if (con.bBufferHeight != lbTurnedOn)
@@ -2365,7 +2383,7 @@ BOOL CRealBuffer::ApplyConsoleInfo()
 			// Это может случиться во время пересоздания консоли (когда фар падал)
 			// или при изменении параметров экрана (Aero->Standard)
 			// или при закрытии фара (он "восстанавливает" размер консоли)
-			_ASSERTE((nNewWidth == pInfo->crWindow.X && nNewHeight == pInfo->crWindow.Y) || con.bInSetSize);
+			_ASSERTE((nNewWidth == pInfo->crWindow.X && nNewHeight == pInfo->crWindow.Y) || con.bLockChange2Text);
 			// 10
 			//DWORD MaxBufferSize = pInfo->nCurDataMaxSize;
 			//if (MaxBufferSize != 0) {
@@ -2421,6 +2439,13 @@ BOOL CRealBuffer::ApplyConsoleInfo()
 				{
 					if (bNeedLoadData && nCalcCount && pData)
 					{
+						#ifdef _DEBUG
+						bool bCorner = (pData[0].Char.UnicodeChar == L'╔');
+						if (con.bLockChange2Text && !bCorner)
+						{
+							bSetApplyFinished = false;
+						}
+						#endif
 						if (LoadDataFromSrv(nCalcCount, pData))
 						{
 							LOGCONSOLECHANGE("ApplyConsoleInfo: InitBuffers&LoadDataFromSrv -> changed");
@@ -2441,10 +2466,10 @@ BOOL CRealBuffer::ApplyConsoleInfo()
 		//_ASSERTE(*con.pConChar!=ucBoxDblVert);
 
 		// пока выполяется SetConsoleSizeSrv в другой нити Нельзя сбрасывать эти переменные!
-		if (!con.bLockChange2Text)
+		if (!con.bLockChange2Text
+			&& ((con.nChange2TextWidth >= 0) || (con.nChange2TextHeight >= 0)))
 		{
-			con.nChange2TextWidth = -1;
-			con.nChange2TextHeight = -1;
+			SetChange2Size(-1, -1);
 		}
 
 #ifdef _DEBUG
@@ -2503,7 +2528,10 @@ BOOL CRealBuffer::ApplyConsoleInfo()
 		sc.Unlock();
 	}
 
-	SetEvent(mp_RCon->mh_ApplyFinished);
+	if (bSetApplyFinished)
+	{
+		SetEvent(mp_RCon->mh_ApplyFinished);
+	}
 
 	if (lbChanged)
 	{
