@@ -390,6 +390,7 @@ extern DWORD gnWin32Error;
 //HWND CreateView(CeFullPanelInfo* pi);
 void UpdateEnvVar(BOOL abForceRedraw);
 CeFullPanelInfo* IsThumbnailsActive(BOOL abFocusRequired);
+CeFullPanelInfo* GetFocusedThumbnails();
 BOOL CheckPanelSettings(BOOL abSilence);
 BOOL CheckPanelSettingsA(BOOL abSilence);
 BOOL FUNC_X(CheckPanelSettingsW)(BOOL abSilence);

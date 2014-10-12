@@ -255,8 +255,7 @@ void PostMacroW1900(wchar_t* asMacro)
 	InfoW1900->MacroControl(&guid_ConEmuTh, MCTL_SENDSTRING, 0, &mcr);
 }
 
-int 
-ShowPluginMenuW1900()
+int ShowPluginMenuW1900()
 {
 	if (!InfoW1900)
 		return -1;
@@ -265,10 +264,11 @@ ShowPluginMenuW1900()
 	{
 		{ghConEmuRoot ? 0 : MIF_DISABLE,  InfoW1900->GetMsg(&guid_ConEmuTh,CEMenuThumbnails)},
 		{ghConEmuRoot ? 0 : MIF_DISABLE,  InfoW1900->GetMsg(&guid_ConEmuTh,CEMenuTiles)},
+		{ghConEmuRoot ? 0 : MIF_DISABLE,  InfoW1900->GetMsg(&guid_ConEmuTh,CEMenuTurnOff)},
 		{(ghConEmuRoot && (gFarVersion.Bis)) ? 0 : MIF_DISABLE,  InfoW1900->GetMsg(&guid_ConEmuTh,CEMenuIcons)},
 	};
 	size_t nCount = countof(items);
-	CeFullPanelInfo* pi = IsThumbnailsActive(TRUE);
+	CeFullPanelInfo* pi = GetFocusedThumbnails();
 
 	if (!pi)
 	{

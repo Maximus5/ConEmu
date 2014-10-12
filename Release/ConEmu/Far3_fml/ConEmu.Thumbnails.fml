@@ -24,3 +24,11 @@ farmacro
 {{
   callplugin(#%ConEmuTh,2)
 }}
+
+farmacro
+  Descr="ConEmu: Turn off Tiles or Thumbnails on active panel"
+  Area="Shell"
+  //Key="CtrlAltF2"
+{{
+  callplugin(#%ConEmuTh,256)
+}}

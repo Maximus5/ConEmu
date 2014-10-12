@@ -175,8 +175,7 @@ void PostMacroW995(wchar_t* asMacro)
 	InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_KEYMACRO, (void*)&mcr);
 }
 
-int 
-ShowPluginMenuW995()
+int ShowPluginMenuW995()
 {
 	if (!InfoW995)
 		return -1;
@@ -185,10 +184,11 @@ ShowPluginMenuW995()
 	{
 		{ghConEmuRoot ? 0 : MIF_DISABLE,  InfoW995->GetMsg(InfoW995->ModuleNumber,CEMenuThumbnails)},
 		{ghConEmuRoot ? 0 : MIF_DISABLE,  InfoW995->GetMsg(InfoW995->ModuleNumber,CEMenuTiles)},
+		{ghConEmuRoot ? 0 : MIF_DISABLE,  InfoW995->GetMsg(InfoW995->ModuleNumber,CEMenuTurnOff)},
 		{/*ghConEmuRoot ? 0 :*/ MIF_DISABLE,  InfoW995->GetMsg(InfoW995->ModuleNumber,CEMenuIcons)},
 	};
 	int nCount = sizeof(items)/sizeof(items[0]);
-	CeFullPanelInfo* pi = IsThumbnailsActive(TRUE);
+	CeFullPanelInfo* pi = GetFocusedThumbnails();
 
 	if (!pi)
 	{

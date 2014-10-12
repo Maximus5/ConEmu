@@ -643,6 +643,7 @@ enum PanelViewMode
 	pvm_Tiles = 2,
 	pvm_Icons = 4,
 	// следующий режим (если он будет) делать 4! (это bitmask)
+	pvm_TurnOff = 256,
 };
 
 /* Основной шрифт в GUI */

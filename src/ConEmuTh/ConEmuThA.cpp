@@ -214,13 +214,15 @@ int ShowPluginMenuA()
 	{
 		{MIF_USETEXTPTR | (ghConEmuRoot ? 0 : MIF_DISABLE)},
 		{MIF_USETEXTPTR | (ghConEmuRoot ? 0 : MIF_DISABLE)},
+		{MIF_USETEXTPTR | (ghConEmuRoot ? 0 : MIF_DISABLE)},
 		{MIF_DISABLE /*MIF_USETEXTPTR | (ghConEmuRoot ? 0 : MIF_DISABLE)*/},
 	};
 	items[0].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,CEMenuThumbnails);
 	items[1].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,CEMenuTiles);
-	items[2].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,CEMenuIcons);
+	items[2].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,CEMenuTurnOff);
+	items[3].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,CEMenuIcons);
 	int nCount = sizeof(items)/sizeof(items[0]);
-	CeFullPanelInfo* pi = IsThumbnailsActive(TRUE);
+	CeFullPanelInfo* pi = GetFocusedThumbnails();
 
 	if (!pi)
 	{

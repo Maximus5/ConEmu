@@ -1,4 +1,4 @@
-﻿
+
 #pragma once
 
 enum {
@@ -6,6 +6,7 @@ enum {
 	CEMenuThumbnails,
 	CEMenuTiles,
 	CEMenuIcons,
+	CEMenuTurnOff,
 	CEColTitleThumbnails,
 	CEColTitleTiles,
 	CEDirFolder,
