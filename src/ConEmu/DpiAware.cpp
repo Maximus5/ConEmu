@@ -540,17 +540,40 @@ bool CDpiForDialog::SetDialogDPI(const DpiValue& newDpi, LPRECT lprcSuggested /*
 
 	hf = CreateFontIndirect(&mlf_CurFont);
 	if (hf == NULL)
+	{
 		goto wrap;
+	}
 
 	for (INT_PTR k = p->size() - 1; k >= 0; k--)
 	{
 		const DlgItem& di = (*p)[k];
-		DEBUGTEST(GetClassName(di.h, szClass, countof(szClass)));
+		GetClassName(di.h, szClass, countof(szClass));
+		DWORD nCtrlID = GetWindowLong(di.h, GWL_ID);
+		DWORD nStyles = GetWindowLong(di.h, GWL_STYLE);
+		bool bResizeCombo = (lstrcmpi(szClass, L"ComboBox") == 0);
+		int iComboFieldHeight = 0, iComboWasHeight = 0;
+		if (bResizeCombo && (nStyles & CBS_OWNERDRAWFIXED))
+		{
+			RECT rcCur = {}; GetWindowRect(di.h, &rcCur);
+			iComboWasHeight = (rcCur.bottom - rcCur.top);
+			LONG_PTR lFieldHeight = SendMessage(di.h, CB_GETITEMHEIGHT, -1, 0);
+			if (lFieldHeight < iComboWasHeight)
+			{
+				iComboFieldHeight = lFieldHeight;
+			}
+		}
 
 		int newW = di.r.right - di.r.left;
 		int newH = di.r.bottom - di.r.top;
+
 		MoveWindow(di.h, di.r.left, di.r.top, newW, newH, FALSE);
 		SendMessage(di.h, WM_SETFONT, (WPARAM)hf, FALSE/*immediately*/);
+		if (bResizeCombo)
+		{
+			if ((nStyles & CBS_OWNERDRAWFIXED) && (iComboWasHeight > 0) && (iComboFieldHeight > 0))
+				SendMessage(di.h, CB_SETITEMHEIGHT, -1, newH*iComboFieldHeight/iComboWasHeight);
+			SendMessage(di.h, CB_SETEDITSEL, 0, MAKELPARAM(-1,0));
+		}
 		EditIconHint_ResChanged(di.h);
 		InvalidateRect(di.h, NULL, TRUE);
 		#ifdef _DEBUG
