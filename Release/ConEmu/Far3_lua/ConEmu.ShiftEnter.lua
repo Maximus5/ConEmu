@@ -1,110 +1,135 @@
-
+﻿
 -- Place this file into your %FARPROFILE%\Macros\scripts
 
 
 -- Run 'File under cursor' or 'Command line' in new console of ConEmu.
 -- 'Press enter to close console' will be displayed after command completion.
 -- Note! If you want to disable this confirmation,
---       set 'DisableCloseConfirm = 1'
+--       set 'DisableCloseConfirm = true'
 
-local DisableCloseConfirm = 0
+local DisableCloseConfirm = false
 
 -- AltEnter   - run command and activate new ConEmu tab
 -- Note! You must enable "Alt+Enter" option in ConEmu Settings->Keys.
 
 -- ShiftEnter - run command in background ConEmu tab
 -- Note! If you want to activate new tab on ShiftEnter,
---       set 'UseBackgroundTab = 0'
+--       set 'UseBackgroundTab = false'
 
-local UseBackgroundTab = 1
-
-
--- While starting command in background tab, there is a flicker on panels.
--- If you want to disable flicker, set 'DisableFlicker = 1'.
--- Note! ConEmu plugin reqired for 'DisableFlicker = 1'.
-
-local DisableFlicker = 0
+local UseBackgroundTab = true
 
 
+-- While starting command in background tab, there may be a flicker on panels.
+-- If you want to disable flicker, set 'DisableFlicker = true'.
+-- Note! ConEmu plugin reqired for 'DisableFlicker = true'.
 
---  Descr="Run <File under cursor> or <Command line> in new console of ConEmu" 
+local DisableFlicker = false
+
+
+
+--  Descr="Run <File under cursor> or <Command line> in new console of ConEmu"
 --  Key="ShiftEnter AltEnter"
 --  Area="Shell Search ShellACompl"
 
-Macro {
-  area="Shell Search ShellAutoCompletion"; key="ShiftEnter AltEnter"; flags=""; description="ConEmu: Run <File under cursor> or <Command line> in new console of ConEmu"; action = function()
+Macro
+{
+  area="Shell Search ShellAutoCompletion";
+  key="ShiftEnter AltEnter";
+  flags="NoSendKeysToPlugins";
+  description="ConEmu: Run <File under cursor> or <Command line> in new console of ConEmu";
+action = function()
 
   -- history.enable(0xff)
 
-  if  akey(1,1)=="ShiftEnter"  and  UseBackgroundTab then 
+  if akey(1,1)=="ShiftEnter" and UseBackgroundTab then
     add = " -new_console:b";
-    if  DisableCloseConfirm then  add = add .. "n"; end
+    if DisableCloseConfirm then
+      add = add .. "n";
+    end
   else
     -- AltEnter creates foreground console(tab)
     add = " -new_console";
-    if  DisableCloseConfirm then  add = add .. ":n"; end
+    if DisableCloseConfirm then
+      add = add .. ":n";
+    end
   end
 
   oldcmd = "";
-  if  Area.ShellAutoCompletion then
+  if Area.ShellAutoCompletion then
     Keys("Esc") -- close autocompletion
   else
-    if  Area.Search then 
+    if Area.Search then
       -- Save and clear command line - about to execute panel(!) item
       oldcmd = CmdLine.Value; oldpos = CmdLine.CurPos;
       Keys("Esc Esc")  -- First - close search, second - clear command line
     end
   end
-  
-  if   not CmdLine.Empty then 
-    if  Area.Current=="Shell.AutoCompletion" then 
-      Keys("Esc") -- Close autocompletion
-    end
-    
-    if  CmdLine.Value=="."  or  CmdLine.Value==".."  or  CmdLine.Value=="..." then 
+
+  if not CmdLine.Empty then
+    -- already closed
+    --if Area.Current=="Shell.AutoCompletion" then
+    --  Keys("Esc") -- Close autocompletion
+    --end
+
+    if CmdLine.Value=="."  or  CmdLine.Value==".."  or  CmdLine.Value=="..." then
       Keys("ShiftEnter")
       exit()
     else
-      if  Area.Current=="Shell.AutoCompletion" then 
-        Keys("Del") -- Remove autocompletion selection
-      end
-      -- CtrlEnd - fails, couse of AutoCompletion
-      for RCounter=CmdLine.ItemCount,1,-1 do  Keys("CtrlD") end
+      --if Area.Current=="Shell.AutoCompletion" then
+      --  Keys("Del") -- Remove autocompletion selection
+      --end
+
+      -- CtrlEnd - fails, because of AutoCompletion
+      -- Just move the cursor to the end of command line
+      for RCounter=CmdLine.ItemCount,1,-1 do Keys("CtrlD") end
+
       -- Append "-new_console" if not exists
-      if  mf.index(CmdLine.Value,"-new_console")<0 then  print(add) end
+      if mf.index(CmdLine.Value,"-new_console")<0 then
+        print(add)
+      end
     end
-  else if  APanel.FilePanel  and   not APanel.Plugin  and   not APanel.Empty  and   not APanel.Folder  and  mf.len(APanel.Current)>4 then 
+  else if APanel.FilePanel and not APanel.Plugin and not APanel.Empty and not APanel.Folder and mf.len(APanel.Current)>4 then
+    -- The command line was empty
+    -- Get the list of "executable" extensions
     exec = mf.ucase(mf.env("PATHEXT"));
-    if  exec=="" then  exec = ".COM;.EXE;.BAT;.CMD"; end
+    if exec=="" then exec = ".COM;.EXE;.BAT;.CMD"; end
+    -- And compare them to current panel item
     ext = mf.ucase(mf.fsplit(APanel.Current,8));
-    if  ext~=""  and  mf.index(";"..exec..";",";"..ext..";")>=0 then 
+    if ext~="" and mf.index(";"..exec..";",";"..ext..";")>=0 then
       Keys("CtrlEnter")
-      Keys("Del") -- Remove possible autocompletion selection
+      --Keys("Del") -- Remove possible autocompletion selection
       -- Append "-new_console"
       print(add)
     else
-      if  akey(1,1)=="ShiftEnter" then  Keys("ShiftEnter") end
+      if akey(1,1)=="ShiftEnter" then
+        Keys("ShiftEnter")
+      end
       exit()
     end
   else
-    if  akey(1,1)=="ShiftEnter" then  Keys("ShiftEnter") end
+    if akey(1,1)=="ShiftEnter" then
+      Keys("ShiftEnter")
+    end
     exit()
   end end
 
-  Keys("Del") -- Remove possible autocompletion selection
-  
-  if  DisableFlicker then 
-    for RCounter=CmdLine.ItemCount,1,-1 do  Keys("CtrlS") end
+  --Keys("Del") -- Remove possible autocompletion selection
+
+  if DisableFlicker then
+    for RCounter=CmdLine.ItemCount,1,-1 do Keys("CtrlS") end
     print("ConEmu:run:")
   end
 
   Keys("Enter") -- Execute
-  
+
   -- Restore old command line state (running file from Panel in QSearch mode)
-  if  oldcmd ~= "" then 
+  if oldcmd ~= "" then
     print(oldcmd)
-    if  oldpos>=1  and  oldpos<=CmdLine.ItemCount then  Keys("CtrlHome") for RCounter=oldpos-1,1,-1 do  Keys("CtrlD") end end
+    if oldpos>=1 and oldpos<=CmdLine.ItemCount then
+      Keys("CtrlHome")
+      for RCounter=oldpos-1,1,-1 do Keys("CtrlD") end
+    end
   end
 
-  end
+end
 }
