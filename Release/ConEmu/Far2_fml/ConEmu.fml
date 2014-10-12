@@ -16,7 +16,7 @@ macro Descr="ConEmu: Show console output in editor" Area="Shell" Key="CtrlO"
 {{
 callplugin(#%ConEmu,1) CtrlEnd
 }}
-macro Descr="Hide/Show panels (standard FAR CtrlO)" Area="Shell" Key="CtrlShiftO"
+macro Descr="Hide/Show panels (standard FAR CtrlO)" Area="Shell" Key="CtrlAltO"
 {{
 CtrlO
 }}

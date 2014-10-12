@@ -43,7 +43,7 @@ farmacro
 farmacro
   Descr="Hide/Show panels (standard FAR CtrlO)"
   Area="Shell Editor Viewer"
-  Key="CtrlShiftO"
+  Key="CtrlAltO"
   DisableOutput=0
 {{
   CtrlO

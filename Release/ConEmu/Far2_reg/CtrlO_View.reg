@@ -10,7 +10,7 @@ REGEDIT4
 "Description"="Show console output in viewer (ConEmu)"
 "DisableOutput"=dword:00000001
 
-[HKEY_CURRENT_USER\Software\Far2\KeyMacros\Shell\CtrlShiftO]
+[HKEY_CURRENT_USER\Software\Far2\KeyMacros\Shell\CtrlAltO]
 "Sequence"="CtrlO"
 "Description"="Hide/Show panels (standard FAR CtrlO)"
 "DisableOutput"=dword:00000001
