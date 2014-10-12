@@ -66,6 +66,7 @@ public:
 	void ReleaseMem();
 	void PreFillBuffers();
 
+	bool isInResize();
 	BOOL SetConsoleSize(USHORT sizeX, USHORT sizeY, USHORT sizeBuffer, DWORD anCmdID=CECMD_SETSIZESYNC);
 	void SyncConsole2Window(USHORT wndSizeX, USHORT wndSizeY);
 

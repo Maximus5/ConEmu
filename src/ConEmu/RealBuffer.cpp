@@ -1055,6 +1055,11 @@ wrap:
 	return lbRc;
 }
 
+bool CRealBuffer::isInResize()
+{
+	return (this && con.bInSetSize);
+}
+
 BOOL CRealBuffer::SetConsoleSize(USHORT sizeX, USHORT sizeY, USHORT sizeBuffer, DWORD anCmdID/*=CECMD_SETSIZESYNC*/)
 {
 	if (!this) return FALSE;
