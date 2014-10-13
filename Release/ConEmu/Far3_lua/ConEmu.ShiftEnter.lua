@@ -41,17 +41,18 @@ action = function()
 
   -- history.enable(0xff)
 
+  add = " -new_console"
   if akey(1,1)=="ShiftEnter" and UseBackgroundTab then
-    add = " -new_console:b";
-    if DisableCloseConfirm then
-      add = add .. "n";
-    end
-  else
-    -- AltEnter creates foreground console(tab)
-    add = " -new_console";
+    add = add .. ":b";
     if DisableCloseConfirm then
       add = add .. ":n";
     end
+  else
+    -- AltEnter creates foreground console(tab)
+    if DisableCloseConfirm then
+      add = add .. ":n";
+    end
+    --add = add .. ":s40V"; -- split vertically for example
   end
 
   oldcmd = "";
@@ -115,7 +116,7 @@ action = function()
 
   --Keys("Del") -- Remove possible autocompletion selection
 
-  if DisableFlicker then
+  if DisableFlicker and Plugin.Call("4B675D80-1D4A-4EA9-8436-FDC23F2FC14B","IsConEmu") then
     for RCounter=CmdLine.ItemCount,1,-1 do Keys("CtrlS") end
     print("ConEmu:run:")
   end
