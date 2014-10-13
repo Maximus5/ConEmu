@@ -348,6 +348,7 @@ LRESULT TrayIcon::OnTryIcon(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 			GetCursorPos(&mPos);
 			gpConEmu->SetIgnoreQuakeActivation(true);
 			apiSetForegroundWindow(ghWnd);
+			LogString(L"ShowSysmenu called from (TSA)");
 			gpConEmu->mp_Menu->ShowSysmenu(mPos.x, mPos.y);
 			gpConEmu->SetIgnoreQuakeActivation(false);
 			PostMessage(hWnd, WM_NULL, 0, 0);

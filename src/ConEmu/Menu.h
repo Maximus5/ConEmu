@@ -63,7 +63,7 @@ public:
 	void ShowPopupMenu(CVirtualConsole* apVCon, POINT ptCur, DWORD Align = TPM_LEFTALIGN);
 	void ExecPopupMenuCmd(TrackMenuPlace place, CVirtualConsole* apVCon, int nCmd);
 
-	LRESULT OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam);
+	LRESULT OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam, UINT Msg = 0);
 
 	// Returns previous value
 	bool SetPassSysCommand(bool abPass = true);

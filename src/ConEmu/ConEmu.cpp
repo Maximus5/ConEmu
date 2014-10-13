@@ -14134,7 +14134,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			result = 0;
 			break;
 		case WM_SYSCOMMAND:
-			result = this->mp_Menu->OnSysCommand(hWnd, wParam, lParam);
+			result = this->mp_Menu->OnSysCommand(hWnd, wParam, lParam, WM_SYSCOMMAND);
 			break;
 		case WM_NCLBUTTONDOWN:
 			// Note: При ресайзе WM_NCLBUTTONUP к сожалению не приходит
@@ -14550,7 +14550,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			}
 			else if (messg == this->mn_MsgOurSysCommand)
 			{
-				this->mp_Menu->OnSysCommand(hWnd, wParam, lParam);
+				this->mp_Menu->OnSysCommand(hWnd, wParam, lParam, messg);
 				return 0;
 			}
 

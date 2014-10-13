@@ -1513,6 +1513,7 @@ LPWSTR ConEmuMacro::Menu(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 	{
 	case 0:
 		WARNING("учитывать gpCurrentHotKey, если оно по клику мышки - показывать в позиции курсора");
+		LogString(L"ShowSysmenu called from (GuiMacro)");
 		gpConEmu->mp_Menu->ShowSysmenu(ptCur.x, ptCur.y);
 		return lstrdup(L"OK");
 

@@ -1239,6 +1239,7 @@ void CTabBarClass::OnCommand(WPARAM wParam, LPARAM lParam)
 		RECT rcBtnRect = {0};
 		mp_Rebar->GetToolBtnRect(TID_SYSMENU, &rcBtnRect);
 		DWORD nAddFlags = ((gpSet->nTabsLocation == 1) ? TPM_BOTTOMALIGN : 0) | TPM_RIGHTALIGN;
+		LogString(L"ShowSysmenu called from (ToolBar)");
 		gpConEmu->mp_Menu->ShowSysmenu(rcBtnRect.right,rcBtnRect.bottom, nAddFlags);
 	}
 	else

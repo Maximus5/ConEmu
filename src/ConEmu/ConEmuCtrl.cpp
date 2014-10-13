@@ -684,6 +684,7 @@ bool CConEmuCtrl::key_SystemMenu(const ConEmuChord& VkState, bool TestOnly, cons
 	}
 
 	//Win-Alt-Space
+	LogString(L"ShowSysmenu called from (key_SystemMenu)");
 	gpConEmu->mp_Menu->ShowSysmenu(ptCur.x, ptCur.y);
 
 	return true;

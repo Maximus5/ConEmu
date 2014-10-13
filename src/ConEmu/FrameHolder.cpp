@@ -253,6 +253,7 @@ bool CFrameHolder::ProcessNcMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 			{
 				if (uMsg == WM_NCRBUTTONUP)
 				{
+					LogString(L"ShowSysmenu called from (WM_NCRBUTTONUP & isTabsInCaption)");
 					gpConEmu->mp_Menu->ShowSysmenu((short)LOWORD(lParam),(short)HIWORD(lParam));
 				}
 				lResult = 0;
@@ -365,7 +366,7 @@ bool CFrameHolder::ProcessNcMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 			//GetWindowText(hWnd, ms_LastCaption, countof(ms_LastCaption));
 			//SetWindowText(hWnd, L"");
 		}
-		lResult = gpConEmu->mp_Menu->OnSysCommand(hWnd, wParam, lParam);
+		lResult = gpConEmu->mp_Menu->OnSysCommand(hWnd, wParam, lParam, WM_SYSCOMMAND);
 		if (wParam == SC_MAXIMIZE || wParam == SC_MINIMIZE || wParam == SC_RESTORE)
 		{
 			mb_NcAnimate = FALSE;
