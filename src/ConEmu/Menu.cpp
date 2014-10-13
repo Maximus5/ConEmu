@@ -1557,10 +1557,10 @@ void CConEmuMenu::ShowSysmenu(int x, int y, DWORD nFlags /*= 0*/)
 
 	if (command == 0)
 	{
-		DEBUGTEST(bool bLbnPressed = isPressed(VK_LBUTTON));
+		bool bLbnPressed = isPressed(VK_LBUTTON);
 		mn_SysMenuCloseTick = GetTickCount();
 
-		if ((mn_SysMenuCloseTick - mn_SysMenuOpenTick) < GetDoubleClickTime())
+		if (bLbnPressed && ((mn_SysMenuCloseTick - mn_SysMenuOpenTick) < GetDoubleClickTime()))
 		{
 			POINT ptCur = {}; GetCursorPos(&ptCur);
 			if (gpConEmu->PtDiffTest(ptCur, ptCurBefore.x, ptCurBefore.y, 8))
