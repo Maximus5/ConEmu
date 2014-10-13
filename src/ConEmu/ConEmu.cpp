@@ -306,6 +306,10 @@ CConEmuMain::CConEmuMain()
 	_wsprintf(ms_ConEmuDefTitle, SKIPLEN(countof(ms_ConEmuDefTitle)) L"ConEmu %s [%i%s]",
 		ms_ConEmuBuild, WIN3264TEST(32,64), RELEASEDEBUGTEST(L"",L"D"));
 
+	// Dynamic messages
+	RegisterMessages();
+
+	// Classes
 	mp_Menu = new CConEmuMenu;
 	mp_Tip = NULL;
 	mp_Status = new CStatus;
@@ -721,7 +725,10 @@ CConEmuMain::CConEmuMain()
 	//memset(mp_VCon, 0, sizeof(mp_VCon));
 	mp_AttachDlg = NULL;
 	mp_RecreateDlg = NULL;
+}
 
+void CConEmuMain::RegisterMessages()
+{
 	// Dynamic messages
 	mn__FirstAppMsg = WM_APP+10;
 	m__AppMsgs.Init(128, true);

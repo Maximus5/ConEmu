@@ -485,6 +485,7 @@ class CConEmuMain
 		UINT GetRegisteredMessage(LPCSTR asLocal, LPCWSTR asGlobal = NULL);
 	private:
 		UINT RegisterMessage(LPCSTR asLocal, LPCWSTR asGlobal = NULL);
+		void RegisterMessages();
 	protected:
 		friend class CConEmuCtrl;
 		friend class CRunQueue;
