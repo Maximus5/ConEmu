@@ -20,7 +20,7 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 [*] Issue 1334: ConEmu plugin was not realized the attach is finished (call from plugin menu).
 [*] Tab initialization fix for "far.exe /e ...".
 [*] Ctrl+LClick was failed in some cases (Far editor, Lua macro).
-[*] Issue 1731: Fix attach external Far Manager console from plugin (not recommended though).
+[*] Issue 338: Fix attach external Far Manager console from plugin (not recommended though).
 [*] Update application manifests to Windows 10.
 [*] Attach list (Win+G) was failed sometimes with showing correct bitness of processes.
 [*] Show new console size in the status bar during resizing with mouse.
