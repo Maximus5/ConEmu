@@ -9083,7 +9083,7 @@ static void EvalVisibleResizeRect(SMALL_RECT& rNewRect,
 
 	// BTW, сейчас при ресайзе меняется только ширина csbi.dwSize.X (ну, кроме случаев изменения высоты буфера)
 
-	if (nScreenAtBottom <= 0)
+	if ((nScreenAtBottom <= 0) && (nCursorAtBottom <= 0))
 	{
 		// Все просто, фиксируем нижнюю границу по размеру буфера
 		rNewRect.Bottom = csbi.dwSize.Y-1;
