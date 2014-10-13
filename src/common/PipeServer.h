@@ -235,6 +235,7 @@ struct PipeServer
 	protected:
 		bool mb_Initialized;
 		bool mb_Terminate;
+		bool mb_UseForceTerminate;
 		bool mb_StopFromDllMain;
 		bool mb_Overlapped;
 		bool mb_LoopCommands;
@@ -1233,7 +1234,7 @@ struct PipeServer
 			//}
 			return nResult;
 		};
-		static void TerminatePipeThread(HANDLE hThread)
+		static void TerminatePipeThread(HANDLE hThread, const PipeInst& pipe)
 		{
 			#ifdef _DEBUG
 			while (gnInMyAssertTrap > 0)
@@ -1241,6 +1242,9 @@ struct PipeServer
 				MessageBeep(MB_ICONSTOP);
 				Sleep(10000);
 			}
+			// Due to possible deadlocks when finalizing from DllMain
+			// the TerminateThread may be a sole way to terminate properly
+			_ASSERTE((pipe.dwState == TERMINATED_STATE) && "TerminatePipeThread");
 			#endif
 
 			TerminateThread(hThread, 100);
@@ -1311,6 +1315,7 @@ struct PipeServer
 		};
 		
 		bool StartPipeServer(
+			    bool abForceTerminate,
 			    LPCWSTR asPipeName,
 			    LPARAM alParam,
 			    LPSECURITY_ATTRIBUTES alpSec /*= LocalSecurity()*/, // MUST! be alive for life cicle
@@ -1328,6 +1333,7 @@ struct PipeServer
 			}
 			
 			mb_Initialized = false;
+			mb_UseForceTerminate = abForceTerminate;
 			//mb_Overlapped = abOverlapped;
 			//mb_LoopCommands = abLoopCommands;
 			
@@ -1421,7 +1427,8 @@ struct PipeServer
 						{
 							// CreateThread was called, but thread routine was not entered yet.
 							PLOG3(i,"TerminateThread/STARTING_STATE",0);
-							TerminatePipeThread(m_Pipes[i].hThread);
+							_ASSERTE(mb_UseForceTerminate && "Do not use TerminateThread in GUI?");
+							TerminatePipeThread(m_Pipes[i].hThread, m_Pipes[i]);
 							m_Pipes[i].dwState = THREAD_FINISHED_STATE;
 							PLOG3(i,"TerminateThread/STARTING_STATE done",0);
 						}
@@ -1497,7 +1504,8 @@ struct PipeServer
 
 							// When "C:\Program Files (x86)\F-Secure\apps\ComputerSecurity\HIPS\fshook64.dll"
 							// is loaded, possible TerminateThread locks together
-							TerminatePipeThread(m_Pipes[i].hThread);
+							_ASSERTE(mb_UseForceTerminate && "Do not use TerminateThread in GUI?");
+							TerminatePipeThread(m_Pipes[i].hThread, m_Pipes[i]);
 							m_Pipes[i].dwState = THREAD_FINISHED_STATE;
 							PLOG3(i,"TerminateThread/Timeout done",m_Pipes[i].dwState);
 						}

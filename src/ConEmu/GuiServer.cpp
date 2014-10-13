@@ -86,7 +86,7 @@ bool CGuiServer::Start()
 	lpfnOnConnected = CGuiServer::OnGuiServerConnected;
 #endif
 
-	if (!mp_GuiServer->StartPipeServer(ms_ServerPipe, (LPARAM)this, LocalSecurity(), GuiServerCommand, GuiServerFree, lpfnOnConnected, NULL))
+	if (!mp_GuiServer->StartPipeServer(false, ms_ServerPipe, (LPARAM)this, LocalSecurity(), GuiServerCommand, GuiServerFree, lpfnOnConnected, NULL))
 	{
 		// Ошибка уже показана
 		return false;

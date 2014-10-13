@@ -122,7 +122,7 @@ bool PlugServerStart()
 		gpPlugServer->SetLoopCommands(false);
 		gpPlugServer->SetDummyAnswerSize(sizeof(CESERVER_REQ_HDR));
 
-		lbStarted = gpPlugServer->StartPipeServer(gszPluginServerPipe, NULL, LocalSecurity(), PlugServerCommand, PlugServerFree);
+		lbStarted = gpPlugServer->StartPipeServer(true, gszPluginServerPipe, NULL, LocalSecurity(), PlugServerCommand, PlugServerFree);
 	}
 	_ASSERTE(gpPlugServer!=NULL && lbStarted);
 

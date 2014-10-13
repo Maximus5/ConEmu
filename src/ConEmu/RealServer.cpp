@@ -104,7 +104,7 @@ bool CRealServer::Start()
 	mp_RConServer->SetDummyAnswerSize(sizeof(CESERVER_REQ_HDR));
 
 	// ConEmuC ожидает готовый пайп после возврата из CECMD_SRVSTARTSTOP
-	if (!mp_RConServer->StartPipeServer(mp_RCon->ms_VConServer_Pipe, (LPARAM)this, LocalSecurity(),
+	if (!mp_RConServer->StartPipeServer(false, mp_RCon->ms_VConServer_Pipe, (LPARAM)this, LocalSecurity(),
 			ServerCommand, ServerCommandFree, NULL, NULL, ServerThreadReady))
 	{
 		MBoxAssert("mp_RConServer->StartPipeServer"==0);
