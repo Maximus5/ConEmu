@@ -32,6 +32,8 @@ BASEADDRESS=/DYNAMICBASE
 RC_NAME = ConEmuDw
 
 LINK_OBJS = \
+	$(INTDIR)\CmdArg.obj \
+	$(INTDIR)\CmdLine.obj \
 	$(INTDIR)\ConEmuDw.obj \
 	$(INTDIR)\Common.obj \
 	$(INTDIR)\ConEmuCheck.obj \

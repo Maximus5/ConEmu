@@ -114,7 +114,8 @@ $(INTDIR)\VirtualConsole.obj \
 $(INTDIR)\WinConsole.obj \
 $(INTDIR)\WinFiles.obj \
 $(INTDIR)\WinObjects.obj \
-$(INTDIR)\WinRegistry.obj
+$(INTDIR)\WinRegistry.obj \
+$(INTDIR)\WinUser.obj
 
 
 LINK_LIBS=kernel32.lib user32.lib winspool.lib advapi32.lib shell32.lib mpr.lib ole32.lib secur32.lib gdi32.lib version.lib shlwapi.lib comctl32.lib Comdlg32.lib Winmm.lib Oleaut32.lib Netapi32.lib
@@ -447,6 +448,8 @@ $(INTDIR)\WinFiles.obj: ../common/WinFiles.cpp ../common/WinFiles.h
 $(INTDIR)\WinObjects.obj: ../common/WinObjects.cpp
 
 $(INTDIR)\WinRegistry.obj: ../common/WinRegistry.cpp
+
+$(INTDIR)\WinUser.obj: ../common/WinUser.cpp
 
 #LINK_OBJS end
 ##############

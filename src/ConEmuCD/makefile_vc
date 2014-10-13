@@ -63,7 +63,8 @@ $(INTDIR)\SetEnvVar.obj \
 $(INTDIR)\SrvPipes.obj \
 $(INTDIR)\WinConsole.obj \
 $(INTDIR)\WinFiles.obj \
-$(INTDIR)\WinObjects.obj
+$(INTDIR)\WinObjects.obj \
+$(INTDIR)\WinUser.obj
 
 USERLIBS = 
 
@@ -355,6 +356,8 @@ $(INTDIR)\WinConsole.obj: ../common/WinConsole.cpp ../common/WinConsole.h
 $(INTDIR)\WinFiles.obj: ../common/WinFiles.cpp ../common/WinFiles.h
 
 $(INTDIR)\WinObjects.obj: ../common/WinObjects.cpp ../common/WinObjects.h
+
+$(INTDIR)\WinUser.obj: ../common/WinUser.cpp ../common/WinUser.h
 
 #LINK_OBJS end
 ##############
