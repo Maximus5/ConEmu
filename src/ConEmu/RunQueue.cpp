@@ -76,6 +76,7 @@ void CRunQueue::Terminate()
 		DWORD nWait = WaitForSingleObject(mh_Thread, RUNQUEUE_WAIT_TERMINATION);
 		if (nWait == WAIT_TIMEOUT)
 		{
+			_ASSERTE(FALSE && "Terminating RunQueue(mh_Thread) thread");
 			TerminateThread(mh_Thread, 100);
 		}
 	}

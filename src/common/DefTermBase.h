@@ -885,6 +885,7 @@ protected:
 			{
 				if (bForceTerminate)
 				{
+					_ASSERTE(FALSE && "Terminating DefTermBase hooker thread");
 					TerminateThread(hThread, 100);
 				}
 				else

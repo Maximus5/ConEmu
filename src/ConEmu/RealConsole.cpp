@@ -5117,6 +5117,7 @@ void CRealConsole::StopThread(BOOL abRecreating)
 			mp_ConEmu->OnRConStartedSuccess(NULL);
 			LogString(L"### Main Thread wating timeout, terminating...\n");
 			DEBUGSTRPROC(L"### Main Thread wating timeout, terminating...\n");
+			_ASSERTE(FALSE && "Terminating mh_MonitorThread");
 			mb_WasForceTerminated = TRUE;
 			TerminateThread(mh_MonitorThread, 1);
 		}
@@ -5139,7 +5140,7 @@ void CRealConsole::StopThread(BOOL abRecreating)
 		else
 		{
 			// Должен быть NULL, если нет - значит завис предыдующий макрос
-			_ASSERTE(mh_PostMacroThread==NULL);
+			_ASSERTE(mh_PostMacroThread==NULL && "Terminating mh_PostMacroThread");
 			TerminateThread(mh_PostMacroThread, 100);
 			CloseHandle(mh_PostMacroThread);
 		}
@@ -13732,7 +13733,7 @@ void CRealConsole::PostCommand(DWORD anCmdID, DWORD anCmdSize, LPCVOID ptrData)
 		else
 		{
 			// Должен быть NULL, если нет - значит завис предыдующий макрос
-			_ASSERTE(mh_PostMacroThread==NULL);
+			_ASSERTE(mh_PostMacroThread==NULL && "Terminating mh_PostMacroThread");
 			TerminateThread(mh_PostMacroThread, 100);
 			CloseHandle(mh_PostMacroThread);
 		}
@@ -13892,7 +13893,7 @@ void CRealConsole::PostMacro(LPCWSTR asMacro, BOOL abAsync /*= FALSE*/)
 			else
 			{
 				// Должен быть NULL, если нет - значит завис предыдующий макрос
-				_ASSERTE(mh_PostMacroThread==NULL);
+				_ASSERTE(mh_PostMacroThread==NULL && "Terminating mh_PostMacroThread");
 				TerminateThread(mh_PostMacroThread, 100);
 				CloseHandle(mh_PostMacroThread);
 			}

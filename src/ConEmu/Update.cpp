@@ -103,6 +103,7 @@ CConEmuUpdate::~CConEmuUpdate()
 
 		if (nWait != WAIT_OBJECT_0)
 		{
+			_ASSERTE(FALSE && "Terminating Updater(mh_CheckThread) thread");
 			TerminateThread(mh_CheckThread, 100);
 		}
 
@@ -260,6 +261,7 @@ void CConEmuUpdate::StopChecking()
 
 		if (nWait != WAIT_OBJECT_0)
 		{
+			_ASSERTE(FALSE && "Terminating Updater(mh_CheckThread) thread");
 			TerminateThread(mh_CheckThread, 100);
 		}
 	}
