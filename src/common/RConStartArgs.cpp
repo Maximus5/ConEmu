@@ -905,7 +905,8 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 					//	bStop = true; // следующие "-new_console" - не трогать!
 					//	break;
 					case L'"':
-						_ASSERTE(pszEnd > pszArgEnd);
+						// Assert was happened, for example, with: "/C \"ConEmu:run:Far.exe  -new_console:\""
+						_ASSERTE((pszEnd > pszArgEnd) && "Wrong quotation usage in -new_console?");
 						lbReady = true;
 						break;
 					case L' ':
