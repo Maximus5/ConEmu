@@ -771,6 +771,7 @@ void CConEmuMain::RegisterMessages()
 	mn_MsgMacroExecSync = RegisterMessage("MacroExecSync");
 	mn_MsgActivateVCon = RegisterMessage("ActivateVCon");
 	mn_MsgPostScClose = RegisterMessage("ScClose");
+	mn_MsgOurSysCommand = RegisterMessage("UM_SYSCOMMAND");
 }
 
 bool CConEmuMain::isMingwMode()
@@ -14545,6 +14546,11 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			else if (messg == this->mn_MsgPostScClose)
 			{
 				this->OnScClose();
+				return 0;
+			}
+			else if (messg == this->mn_MsgOurSysCommand)
+			{
+				this->mp_Menu->OnSysCommand(hWnd, wParam, lParam);
 				return 0;
 			}
 

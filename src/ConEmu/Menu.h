@@ -97,6 +97,7 @@ private:
 	bool  mb_PassSysCommand;
 	bool  mb_InScMinimize;
 	bool  mb_InRestoreFromMinimized;
+	UINT  mn_MsgOurSysCommand;
 
 	TrackMenuPlace mn_TrackMenuPlace;
 

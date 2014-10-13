@@ -75,6 +75,8 @@ CConEmuMenu::CConEmuMenu()
 	mn_SysMenuOpenTick = mn_SysMenuCloseTick = 0;
 	mn_TrackMenuPlace = tmp_None;
 
+	mn_MsgOurSysCommand = gpConEmu->GetRegisteredMessage("UM_SYSCOMMAND");
+
 	HMENU* hMenu[] = {
 		&mh_SysDebugPopup, &mh_SysEditPopup, &mh_ActiveVConPopup, &mh_TerminateVConPopup, &mh_VConListPopup, &mh_HelpPopup, // Popup's для SystemMenu
 		&mh_InsideSysMenu,
@@ -1593,7 +1595,8 @@ void CConEmuMenu::ShowSysmenu(int x, int y, DWORD nFlags /*= 0*/)
 
 	if (command)
 	{
-		PostMessage(ghWnd, WM_SYSCOMMAND, (WPARAM)command, 0);
+		// gpConEmu will trigger our OnSysCommand method on post received
+		PostMessage(ghWnd, mn_MsgOurSysCommand/*WM_SYSCOMMAND*/, (WPARAM)command, 0);
 	}
 }
 

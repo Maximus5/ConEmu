@@ -541,6 +541,7 @@ class CConEmuMain
 		UINT mn_MsgMacroExecSync;
 		UINT mn_MsgActivateVCon;
 		UINT mn_MsgPostScClose;
+		UINT mn_MsgOurSysCommand;
 
 		//
 		virtual void OnUseGlass(bool abEnableGlass) override;
