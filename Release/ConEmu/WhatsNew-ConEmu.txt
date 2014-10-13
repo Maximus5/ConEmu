@@ -12,6 +12,29 @@ Votes and awards (vote for ConEmu, if you please)
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+2014.10.12
+[*] Ensure that just installed (new config) ConEmu's window will not be larger that monitor working area.
+[*] While converting old config do not get data from LogFont if it was not created yet.
+[*] Use wiki page ‘Issues’ instead of ‘/issues/entry’ to avoid bad authorization redirection.
+[*] Fix Apps+PgDn description misprint.
+[*] Issue 1334: ConEmu plugin was not realized the attach is finished (call from plugin menu).
+[*] Tab initialization fix for "far.exe /e ...".
+[*] Ctrl+LClick was failed in some cases (Far editor, Lua macro).
+[*] Issue 1731: Fix attach external Far Manager console from plugin (not recommended though).
+[*] Update application manifests to Windows 10.
+[*] Attach list (Win+G) was failed sometimes with showing correct bitness of processes.
+[*] Show new console size in the status bar during resizing with mouse.
+[*] Issue 1568: Try to hold cursor position (bottom visible line) in the bottom after resizing.
+[*] Restrict minimal GUI height to ({4,2} x {splits count}).
+[*] Macro: ConEmu.CtrlO.*: the Far default behavior (CtrlO) mapped to CtrlAltO because CtrlShiftO is used for splitting.
+[*] Issue 1752: ConEmuTh: add ‘Turn off’ to the plugin menu. Macro option: Plugin.Call(ConEmuTh,256).
+[*] ConEmu.Editor.lua: Fix auto switch to Editor Tab macro.
+[*] ConEmu.ShiftEnter.lua: Fix ShiftEnter (run command in new tab) macro.
+[*] Fix some EmergencyShow multi-process issues.
+[*] Issue 1745: DPI scaling issues with font's combo boxes.
+[*] Many internal changes.
+
+
 2014.10.04
 [*] Auto switch hovered tabs while dragging files from/to Far panel.
 [*] Don't try to copy files from "C:\1\" to "C:\1\" (same src and dst folders).
