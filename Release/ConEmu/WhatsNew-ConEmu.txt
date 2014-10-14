@@ -12,6 +12,15 @@ Votes and awards (vote for ConEmu, if you please)
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+2014.10.13
+[*] Issue 1753: Cursor goes out of screen while executing commands from "far" without "/w".
+[*] Issue 1754: Some changes with using WM_SYSCOMMAND.
+[*] More logging of SystemMenu processing.
+[*] If SystemMenu was opened by LClick on the title bar icon and closed by Esc promptly ConEmu window may be closed.
+[*] ConEmu.ShiftEnter.*: Check if plugin is ready to process "ConEmu:run:" prefix.
+[*] Do not request synchronous paint of the status bar from background threads.
+
+
 2014.10.12
 [*] Ensure that just installed (new config) ConEmu's window will not be larger that monitor working area.
 [*] While converting old config do not get data from LogFont if it was not created yet.
