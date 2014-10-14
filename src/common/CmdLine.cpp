@@ -870,9 +870,34 @@ wchar_t* MergeCmdLine(LPCWSTR asExe, LPCWSTR asParams)
 
 wchar_t* JoinPath(LPCWSTR asPath, LPCWSTR asPart1, LPCWSTR asPart2 /*= NULL*/)
 {
-	//TODO: Добавить слеши если их нет на гранях
-	//TODO: удалить лишние, если они указаны в обеих частях
-	return lstrmerge(asPath, asPart1, asPart2);
+	LPCWSTR psz1 = asPath, psz2 = NULL, psz3 = asPart1, psz4 = NULL, psz5 = asPart2;
+
+	// Добавить слеши если их нет на гранях
+	// удалить лишние, если они указаны в обеих частях
+
+	if (asPart1)
+	{
+		bool bDirSlash1  = (psz1 && *psz1) ? (psz1[lstrlen(psz1)-1] == L'\\') : false;
+		bool bFileSlash1 = (asPart1[0] == L'\\');
+
+		if (bDirSlash1 && bFileSlash1)
+			psz3++;
+		else if (!bDirSlash1 && !bFileSlash1)
+			psz2 = L"\\";
+
+		if (asPart2)
+		{
+			bool bDirSlash2  = (psz3 && *psz3) ? (psz3[lstrlen(psz3)-1] == L'\\') : false;
+			bool bFileSlash2 = (asPart2[0] == L'\\');
+
+			if (bDirSlash2 && bFileSlash2)
+				psz5++;
+			else if (!bDirSlash2 && !bFileSlash2)
+				psz4 = L"\\";
+		}
+	}
+
+	return lstrmerge(psz1, psz2, psz3, psz4, psz5);
 }
 
 // Первичная проверка, может ли asFilePath быть путем
