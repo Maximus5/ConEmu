@@ -12971,7 +12971,12 @@ LPCWSTR CRealConsole::GetFileFromConsole(LPCWSTR asSrc, CmdArg& szFull)
 		{
 			return NULL;
 		}
+	}
 
+	if (!szFull.IsEmpty())
+	{
+		// "src\conemu\realconsole.cpp" --> "src\ConEmu\RealConsole.cpp"
+		MakePathProperCase(szFull);
 	}
 
 	return szFull;
