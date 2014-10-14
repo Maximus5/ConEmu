@@ -568,6 +568,56 @@ bool IsDotsName(LPCWSTR asName)
 	return (asName && (asName[0] == L'.' && (asName[1] == 0 || (asName[1] == L'.' && asName[2] == 0))));
 }
 
+// Useful for searching sources from compilation error log
+bool FileExistSubDir(LPCWSTR asDirectory, LPCWSTR asFile, int iDepth, CEStr& rsFound)
+{
+	if (FilesExists(asDirectory, asFile, true, 1))
+	{
+		rsFound.Attach(JoinPath(asDirectory, asFile));
+		return true;
+	}
+	else if (iDepth <= 0)
+	{
+		return false;
+	}
+
+	CEStr lsFind = JoinPath(asDirectory, L"*");
+
+	WIN32_FIND_DATAW fnd = {0};
+	HANDLE hFind = FindFirstFile(lsFind, &fnd);
+	if (!hFind || (hFind == INVALID_HANDLE_VALUE))
+	{
+		return false;
+	}
+
+	bool lbFound = false;
+
+	do
+	{
+		if ((fnd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == FILE_ATTRIBUTE_DIRECTORY)
+		{
+			// Each find returns "." and ".." items
+			// We do not need them
+			if (!IsDotsName(fnd.cFileName))
+			{
+				lsFind.Attach(JoinPath(asDirectory, fnd.cFileName));
+				int iChildDepth = (iDepth-1);
+				if (lstrcmpi(fnd.cFileName, L".git") == 0 || lstrcmpi(fnd.cFileName, L".svn") == 0)
+					iChildDepth = 0; // do not scan children of ".git", ".svn"
+				// Recursion
+				lbFound = FileExistSubDir(lsFind, asFile,  iChildDepth, rsFound);
+				if (lbFound)
+					break;
+			}
+		}
+	}
+	while (FindNextFile(hFind, &fnd));
+
+	FindClose(hFind);
+
+	return lbFound;
+}
+
 bool DirectoryExists(LPCWSTR asPath)
 {
 	if (!asPath || !*asPath)
