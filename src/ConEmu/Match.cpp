@@ -776,7 +776,12 @@ bool CMatch::MatchAny()
 					break; // found?
 				}
 			}
-			bDigits = false;
+
+			// Issue 1758: Support file/line format for php: C:\..\test.php:28
+			if (bDigits && !wcschr(pszSpacing, m_SrcLine.ms_Arg[mn_MatchRight]))
+			{
+				bDigits = false;
+			}
 
 			switch (m_SrcLine.ms_Arg[mn_MatchRight])
 			{
