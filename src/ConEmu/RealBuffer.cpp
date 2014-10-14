@@ -2893,6 +2893,12 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom, bool bUpdateScre
 							{
 								// May be too long?
 								lstrcpyn(cmd.szFile, pszWinPath, countof(cmd.szFile));
+								// Must be available
+								if (!FileExists(cmd.szFile))
+								{
+									// Not found
+									pszWinPath = NULL;
+								}
 							}
 
 							CVConGuard VCon;
