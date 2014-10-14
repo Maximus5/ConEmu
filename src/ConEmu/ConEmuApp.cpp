@@ -3355,9 +3355,9 @@ void UnitFileNamesTest()
 	} Tests[] = {
 		{L"C:", L"Dir", L"File.txt", L"C:\\Dir\\File.txt"},
 		{L"C:\\", L"\\Dir\\", L"\\File.txt", L"C:\\Dir\\File.txt"},
-		{L"C:\\", L"\\File.txt", L"C:\\File.txt"},
-		{L"C:", L"\\File.txt", L"C:\\File.txt"},
-		{L"C:\\", L"File.txt", L"C:\\File.txt"},
+		{L"C:\\", L"\\File.txt", NULL, L"C:\\File.txt"},
+		{L"C:", L"\\File.txt", NULL, L"C:\\File.txt"},
+		{L"C:\\", L"File.txt", NULL, L"C:\\File.txt"},
 		{NULL}
 	};
 	bool bCheck;
