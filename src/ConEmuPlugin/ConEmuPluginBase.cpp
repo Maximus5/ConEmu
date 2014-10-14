@@ -56,6 +56,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/MSection.h"
 #include "../common/MSetter.h"
 #include "../common/MWow64Disable.h"
+#include "../common/WinFiles.h"
 #include "../common/WinConsole.h"
 #include "../common/SetEnvVar.h"
 #include "../ConEmuHk/SetHook.h"
@@ -5319,7 +5320,7 @@ void CPluginBase::ProcessDragFrom()
 
 				if (i == 0
 				        && ((FileInfo.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == FILE_ATTRIBUTE_DIRECTORY)
-				        && !lstrcmpW(piNames[i], L".."))
+				        && IsDotsName(piNames[i]))
 				{
 					SafeFree(piNames[i]);
 					continue;

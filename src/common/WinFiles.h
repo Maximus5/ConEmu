@@ -34,6 +34,8 @@ bool FilesExists(LPCWSTR asDirectory, LPCWSTR asFileList, bool abAll = false, in
 bool DirectoryExists(LPCWSTR asPath);
 bool MyCreateDirectory(wchar_t* asPath);
 
+bool IsDotsName(LPCWSTR asName);
+
 bool SearchAppPaths(LPCWSTR asFilePath, CmdArg& rsFound, bool abSetPath, CmdArg* rpsPathRestore = NULL);
 
 wchar_t* GetFullPathNameEx(LPCWSTR asPath);

@@ -435,6 +435,11 @@ bool FilesExists(LPCWSTR asDirectory, LPCWSTR asFileList, bool abAll /*= false*/
 	return bFound;
 }
 
+bool IsDotsName(LPCWSTR asName)
+{
+	return (asName && (asName[0] == L'.' && (asName[1] == 0 || (asName[1] == L'.' && asName[2] == 0))));
+}
+
 bool DirectoryExists(LPCWSTR asPath)
 {
 	if (!asPath || !*asPath)
@@ -468,7 +473,9 @@ bool DirectoryExists(LPCWSTR asPath)
 	{
 		if ((fnd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == FILE_ATTRIBUTE_DIRECTORY)
 		{
-			if (lstrcmp(fnd.cFileName, L".") && lstrcmp(fnd.cFileName, L".."))
+			// Each find returns "." and ".." items
+			// We do not need them
+			if (!IsDotsName(fnd.cFileName))
 			{
 				lbFound = TRUE;
 				break;
