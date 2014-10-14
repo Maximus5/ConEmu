@@ -3343,6 +3343,35 @@ void UnitDriveTests()
 	bCheck = true;
 }
 
+void UnitFileNamesTest()
+{
+	_ASSERTE(IsDotsName(L"."));
+	_ASSERTE(IsDotsName(L".."));
+	_ASSERTE(!IsDotsName(L"..."));
+	_ASSERTE(!IsDotsName(L""));
+
+	struct {
+		LPCWSTR asPath, asPart1, asPart2, asResult;
+	} Tests[] = {
+		{L"C:", L"Dir", L"File.txt", L"C:\\Dir\\File.txt"},
+		{L"C:\\", L"\\Dir\\", L"\\File.txt", L"C:\\Dir\\File.txt"},
+		{L"C:\\", L"\\File.txt", L"C:\\File.txt"},
+		{L"C:", L"\\File.txt", L"C:\\File.txt"},
+		{L"C:\\", L"File.txt", L"C:\\File.txt"},
+		{NULL}
+	};
+	bool bCheck;
+	wchar_t* pszJoin;
+	for (size_t i = 0; Tests[i].asPath; i++)
+	{
+		pszJoin = JoinPath(Tests[i].asPath, Tests[i].asPart1, Tests[i].asPart2);
+		bCheck = (pszJoin && (lstrcmp(pszJoin, Tests[i].asResult) == 0));
+		_ASSERTE(bCheck);
+		SafeFree(pszJoin);
+	}
+	bCheck = true;
+}
+
 void UnitExpandTest()
 {
 	CmdArg szExe;
@@ -3490,6 +3519,7 @@ void DebugUnitTests()
 	DebugNeedCmdUnitTests();
 	UnitMaskTests();
 	UnitDriveTests();
+	UnitFileNamesTest();
 	UnitExpandTest();
 	UnitModuleTest();
 	DebugUnitMprintfTest();
