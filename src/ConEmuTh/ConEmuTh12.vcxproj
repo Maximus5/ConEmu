@@ -389,6 +389,7 @@
       <TurnOffAssemblyGeneration>false</TurnOffAssemblyGeneration>
       <ImportLibrary />
       <TargetMachine>MachineX86</TargetMachine>
+      <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
     <PostBuildEvent>
       <Command>copy "$(ProjectDir)..\..\Release\plugins\ConEmu\Thumbs\ConEmuTh_*.lng" "$(TargetDir)"</Command>
@@ -507,6 +508,7 @@
       <MapExports>true</MapExports>
       <SubSystem>Windows</SubSystem>
       <TargetMachine>MachineX86</TargetMachine>
+      <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
     <PostBuildEvent>
       <Command>copy "$(ProjectDir)..\..\Release\plugins\ConEmu\Thumbs\ConEmuTh_*.lng" "$(TargetDir)"
@@ -680,6 +682,7 @@ if exist C:\Utils\FAR170\Plugins\ConEmu\Thumbs\ConEmuTh.dll copy "$(TargetDir)Co
       <MapExports>true</MapExports>
       <SubSystem>Windows</SubSystem>
       <TargetMachine>MachineX86</TargetMachine>
+      <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
     <PostBuildEvent>
       <Command>copy "$(ProjectDir)..\..\Release\plugins\ConEmu\Thumbs\ConEmuTh_*.lng" "$(TargetDir)"</Command>
@@ -796,6 +799,7 @@ if exist C:\Utils\FAR170\Plugins\ConEmu\Thumbs\ConEmuTh.dll copy "$(TargetDir)Co
       <MapExports>true</MapExports>
       <SubSystem>Windows</SubSystem>
       <TargetMachine>MachineX86</TargetMachine>
+      <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
     <PostBuildEvent>
       <Command>copy "$(ProjectDir)..\..\Release\plugins\ConEmu\Thumbs\ConEmuTh_*.lng" "$(TargetDir)"</Command>

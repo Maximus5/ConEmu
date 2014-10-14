@@ -389,6 +389,7 @@
       <TurnOffAssemblyGeneration>false</TurnOffAssemblyGeneration>
       <ImportLibrary />
       <TargetMachine>MachineX86</TargetMachine>
+      <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
     <PostBuildEvent>
       <Command>copy "$(ProjectDir)..\..\Release\plugins\ConEmu\Lines\ConEmuLn_*.lng" "$(TargetDir)"</Command>
@@ -507,6 +508,7 @@
       <MapExports>true</MapExports>
       <SubSystem>Windows</SubSystem>
       <TargetMachine>MachineX86</TargetMachine>
+      <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
     <PostBuildEvent>
       <Command>echo copy "$(ProjectDir)..\..\Release\plugins\ConEmu\Lines\ConEmuLn_*.lng" "$(TargetDir)"
@@ -682,6 +684,7 @@ if exist C:\Utils\FAR170\Plugins\ConEmu\Lines\ConEmuLn.dll copy "$(TargetDir)Con
       <MapExports>true</MapExports>
       <SubSystem>Windows</SubSystem>
       <TargetMachine>MachineX86</TargetMachine>
+      <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
     <PostBuildEvent>
       <Command>copy "$(ProjectDir)..\..\Release\plugins\ConEmu\Lines\ConEmuLn_*.lng" "$(TargetDir)"</Command>
@@ -798,6 +801,7 @@ if exist C:\Utils\FAR170\Plugins\ConEmu\Lines\ConEmuLn.dll copy "$(TargetDir)Con
       <MapExports>true</MapExports>
       <SubSystem>Windows</SubSystem>
       <TargetMachine>MachineX86</TargetMachine>
+      <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
     <PostBuildEvent>
       <Command>copy "$(ProjectDir)..\..\Release\plugins\ConEmu\Lines\ConEmuLn_*.lng" "$(TargetDir)"</Command>

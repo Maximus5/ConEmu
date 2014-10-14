@@ -132,6 +132,21 @@
     <ClInclude Include="..\common\StartupEnvEx.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\common\CmdArg.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\EmergencyShow.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\ProcessSetEnv.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\WinFiles.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\WinUser.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="ConEmuCD.rc">
@@ -272,6 +287,21 @@
       <Filter>0 - Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\common\MSectionSimple.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\CmdArg.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\EmergencyShow.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\ProcessSetEnv.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\WinFiles.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\WinUser.cpp">
       <Filter>0 - Source Files</Filter>
     </ClCompile>
   </ItemGroup>
