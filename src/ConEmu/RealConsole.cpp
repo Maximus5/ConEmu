@@ -12966,22 +12966,12 @@ LPCWSTR CRealConsole::GetFileFromConsole(LPCWSTR asSrc, CmdArg& szFull)
 		LPCWSTR pszDir = GetConsoleCurDir(szDir);
 		_ASSERTE(pszDir && wcschr(pszDir,L'/')==NULL);
 
-		if (!FilesExists(pszDir, pszWinPath, true, 1))
+		// Попытаться просканировать один-два уровеня подпапок
+		if (!FileExistSubDir(pszDir, pszWinPath, 2, szFull))
 		{
-			TODO("Попытаться просканировать один уровень подпапок");
-			//return szFull.Attach(szWinPath.Detach());
 			return NULL;
 		}
 
-		bool bDirSlash  = (pszDir && *pszDir) ? (pszDir[lstrlen(pszDir)-1] == L'\\') : false;
-		bool bFileSlash = (pszWinPath[0] == L'\\');
-
-		if (bDirSlash && bFileSlash)
-			szFull.Attach(lstrmerge(pszDir, pszWinPath+1));
-		else if (bDirSlash || bFileSlash)
-			szFull.Attach(lstrmerge(pszDir, pszWinPath));
-		else
-			szFull.Attach(lstrmerge(pszDir, L"\\", pszWinPath));
 	}
 
 	return szFull;
