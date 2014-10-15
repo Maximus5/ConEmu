@@ -1421,8 +1421,9 @@ struct TOPLEFTCOORD
 	int y;
 	int x;
 
-	bool isLocked() { return (y >= 0); };
+	bool isLocked() { return (y >= 0 || x >= 0); };
 	void Reset() { y = x = -1; };
+	bool Equal(const TOPLEFTCOORD& tl) const { return (tl.x==x && tl.y==y); };
 };
 
 struct CESERVER_REQ_CONINFO
@@ -1446,6 +1447,7 @@ struct CESERVER_REQ_CONINFO_INFO
 	WORD  dwConsoleOutMode;
 	DWORD dwSbiSize;
 	CONSOLE_SCREEN_BUFFER_INFO sbi; // srWindow - "видимое" в GUI окно
+	TOPLEFTCOORD TopLeft;
 	COORD crWindow;
 	SMALL_RECT srRealWindow; // Те реальные координаты, которые видимы в RealConsole (а не то, что видимо в GUI окне)
 	COORD crMaxSize; // Максимальный размер консоли в символах (для текущего выбранного шрифта)
