@@ -85,3 +85,5 @@ LPCWSTR GetComspecFromEnvVar(wchar_t* pszComspec, DWORD cchMax, ComSpecBits Bits
 
 bool IsExportEnvVarAllowed(LPCWSTR szName);
 void ApplyExportEnvVar(LPCWSTR asEnvNameVal);
+
+bool CoordInSmallRect(const COORD& cr, const SMALL_RECT& rc);

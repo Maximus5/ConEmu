@@ -1255,3 +1255,8 @@ void ApplyExportEnvVar(LPCWSTR asEnvNameVal)
 		asEnvNameVal = pszNext;
 	}
 }
+
+bool CoordInSmallRect(const COORD& cr, const SMALL_RECT& rc)
+{
+	return (cr.X >= rc.Left && cr.X <= rc.Right && cr.Y >= rc.Top && cr.Y <= rc.Bottom);
+}

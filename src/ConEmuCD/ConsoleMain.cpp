@@ -8846,13 +8846,6 @@ BOOL MyGetConsoleScreenBufferInfo(HANDLE ahConOut, PCONSOLE_SCREEN_BUFFER_INFO a
 }
 
 
-
-bool CoordInSmallRect(const COORD& cr, const SMALL_RECT& rc)
-{
-	return (cr.X >= rc.Left && cr.X <= rc.Right && cr.Y >= rc.Top && cr.Y <= rc.Bottom);
-}
-
-
 static bool AdaptConsoleFontSize(const COORD& crNewSize)
 {
 	bool lbRc = true;
