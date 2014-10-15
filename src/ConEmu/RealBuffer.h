@@ -195,6 +195,7 @@ public:
 	const CRgnDetect* GetDetector();
 
 private:
+	void ApplyConsoleInfo(const CESERVER_REQ_CONINFO_INFO* pInfo, bool& bSetApplyFinished, bool& lbChanged, bool& bBufRecreate);
 	BOOL SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffer, DWORD anCmdID=CECMD_SETSIZESYNC);
 	BOOL InitBuffers(DWORD anCellCount = 0, int anWidth = 0, int anHeight = 0);
 	BOOL CheckBufferSize();
@@ -246,9 +247,10 @@ protected:
 		CONSOLE_CURSOR_INFO m_ci;
 		DWORD m_dwConsoleCP, m_dwConsoleOutputCP;
 		WORD m_dwConsoleInMode, m_dwConsoleOutMode;
-		CONSOLE_SCREEN_BUFFER_INFO m_sbi;
+		CONSOLE_SCREEN_BUFFER_INFO m_sbi; // srWindow - "видимое" в GUI окно
+		SMALL_RECT srRealWindow; // Те реальные координаты, которые видимы в RealConsole (а не то, что видимо в GUI окне)
 		COORD crMaxSize; // Максимальный размер консоли на текущем шрифте
-		USHORT nTopVisibleLine; // может отличаться от m_sbi.srWindow.Top, если прокрутка заблокирована
+		TOPLEFTCOORD TopLeft; // может отличаться от m_sbi.srWindow.Top, если прокрутка заблокирована
 		DWORD LastStartInitBuffersTick, LastEndInitBuffersTick, LastStartReadBufferTick, LastEndReadBufferTick;
 		BOOL bInGetConsoleData;
 		int nCreatedBufWidth, nCreatedBufHeight; // Informational

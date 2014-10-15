@@ -421,6 +421,7 @@ const CECMD
 	CECMD_PORTABLESTART  = 78, // CESERVER_REQ_PORTABLESTARTED - used when XxxPortable.exe starts Xxx.exe (paf - kitty, tcc, etc.)
 	CECMD_STORECURDIR    = 79, // CESERVER_REQ_STORECURDIR <== GetCurrentDirectory()
 	CECMD_GETALLPANELS   = 80, // Result ==> CESERVER_REQ_GETALLPANELS
+	CECMD_SETTOPLEFT     = 81, // CESERVER_REQ_CONINFO
 /** Команды FAR плагина **/
 	CMD_FIRST_FAR_CMD    = 200,
 	CMD_DRAGFROM         = 200,
@@ -1415,19 +1416,25 @@ struct CESERVER_CONSOLE_MAPPING_HDR
 	ConEmuComspec ComSpec;
 };
 
+struct TOPLEFTCOORD
+{
+	int y;
+	int x;
+
+	bool isLocked() { return (y >= 0); };
+	void Reset() { y = x = -1; };
+};
+
+struct CESERVER_REQ_CONINFO
+{
+	TOPLEFTCOORD TopLeft;
+};
+
 struct CESERVER_REQ_CONINFO_INFO
 {
 	CESERVER_REQ_HDR cmd;
-	//DWORD cbSize;
 	HWND2 hConWnd;
-	//DWORD nGuiPID;
-	//DWORD nCurDataMapIdx; // суффикс для текущего MAP файла с данными
-	//DWORD nCurDataMaxSize; // Максимальный размер буфера nCurDataMapIdx
 	DWORD nPacketId;
-	//DWORD nFarReadTick; // GetTickCount(), когда фар в последний раз считывал события из консоли
-	//DWORD nFarUpdateTick0;// GetTickCount(), устанавливается в начале обновления консоли из фара (вдруг что свалится...)
-	//DWORD nFarUpdateTick; // GetTickCount(), когда консоль была обновлена в последний раз из фара
-	//DWORD nFarReadIdx;    // index, +1, когда фар в последний раз позвал (Read|Peek)ConsoleInput или GetConsoleInputCount
 	DWORD nSrvUpdateTick; // GetTickCount(), когда консоль была считана в последний раз в сервере
 	DWORD nReserved0; //DWORD nInputTID;
 	DWORD nProcesses[CONSOLE_PROCESSES_MAX/*20*/];
@@ -1438,14 +1445,12 @@ struct CESERVER_REQ_CONINFO_INFO
 	WORD  dwConsoleInMode;
 	WORD  dwConsoleOutMode;
 	DWORD dwSbiSize;
-	CONSOLE_SCREEN_BUFFER_INFO sbi;
-	COORD crWindow; // Для удобства - размер ОКНА (не буфера) при последнем ReadConsoleData
+	CONSOLE_SCREEN_BUFFER_INFO sbi; // srWindow - "видимое" в GUI окно
+	COORD crWindow;
+	SMALL_RECT srRealWindow; // Те реальные координаты, которые видимы в RealConsole (а не то, что видимо в GUI окне)
 	COORD crMaxSize; // Максимальный размер консоли в символах (для текущего выбранного шрифта)
 	DWORD nDataShift; // Для удобства - сдвиг начала данных (data) От начала info
 	DWORD nDataCount; // Для удобства - количество ячеек (data)
-	//// Информация о текущем FAR
-	//DWORD nFarInfoIdx; // выносим из структуры CEFAR_INFO_MAPPING, т.к. ее копия хранится в плагине
-	//CEFAR_INFO_MAPPING FarInfo;
 };
 
 //typedef struct tag_CESERVER_REQ_CONINFO_DATA {
@@ -1457,12 +1462,9 @@ struct CESERVER_REQ_CONINFO_INFO
 struct CESERVER_REQ_CONINFO_FULL
 {
 	DWORD cbMaxSize;    // размер всего буфера CESERVER_REQ_CONINFO_FULL (скорее всего будет меньше реальных данных)
-	//DWORD cbActiveSize; // размер реальных данных CESERVER_REQ_CONINFO_FULL, а не всего буфера data
-	//BOOL  bChanged;     // флаг того, что данные изменились с последней передачи в GUI
 	BOOL  bDataChanged; // Выставляется в TRUE, при изменениях содержимого консоли (а не только положение курсора...)
 	CESERVER_CONSOLE_MAPPING_HDR  hdr;
 	CESERVER_REQ_CONINFO_INFO info;
-	//CESERVER_REQ_CONINFO_DATA data;
 	CHAR_INFO  data[1];
 };
 
@@ -1479,8 +1481,9 @@ struct CESERVER_REQ_SETSIZE
 {
 	USHORT nBufferHeight; // 0 или высота буфера (режим с прокруткой)
 	COORD  size;
-	SHORT  nSendTopLine;  // -1 или 0based номер строки зафиксированной в GUI (только для режима с прокруткой)
-	SMALL_RECT rcWindow;  // координаты видимой области для режима с прокруткой
+	//TOPLEFTCOORD TopLeft;
+	//SHORT  nSendTopLine;  // -1 или 0based номер строки зафиксированной в GUI (только для режима с прокруткой)
+	//SMALL_RECT rcWindow;  // координаты видимой области для режима с прокруткой
 	DWORD  dwFarPID;      // Если передано - сервер должен сам достучаться до FAR'а и обновить его размер через плагин ПЕРЕД возвратом
 };
 
@@ -2002,6 +2005,7 @@ struct CESERVER_REQ
 		DWORD   dwData[1];
 		u64     qwData[1];
 		ConEmuGuiMapping GuiInfo;
+		CESERVER_REQ_CONINFO ReqConInfo;
 		CESERVER_CONSOLE_MAPPING_HDR ConInfo;
 		CESERVER_REQ_SETSIZE SetSize;
 		CESERVER_REQ_RETSIZE SetSizeRet;

@@ -536,7 +536,7 @@ struct SrvInfo
 	DWORD dwDisplayMode;
 	BOOL  bAltBufferEnabled;
 	//USHORT nUsedHeight; // Высота, используемая в GUI - вместо него используем gcrBufferSize.Y
-	SHORT nTopVisibleLine; // Прокрутка в GUI может быть заблокирована. Если -1 - без блокировки, используем текущее значение
+	TOPLEFTCOORD TopLeft; // Прокрутка в GUI может быть заблокирована. Если -1 - без блокировки, используем текущее значение
 	SHORT nVisibleHeight;  // По идее, должен быть равен (gcrBufferSize.Y). Это гарантированное количество строк psChars & pnAttrs
 	DWORD nMainTimerElapse;
 	HANDLE hRefreshEvent; // ServerMode, перечитать консоль, и если есть изменения - отослать в GUI
@@ -598,6 +598,7 @@ struct SrvInfo
 		csColorerMappingCreate.Init();
 		csReadConsoleInfo.Init();
 		AltServers.Init();
+		TopLeft.Reset();
 	};
 	void FinalizeFields()
 	{

@@ -1076,7 +1076,7 @@ int ServerInit(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/)
 	gpSrv->csAltSrv = new MSection();
 	gpSrv->csProc = new MSection();
 	gpSrv->nMainTimerElapse = 10;
-	gpSrv->nTopVisibleLine = -1; // блокировка прокрутки не включена
+	gpSrv->TopLeft.Reset(); // блокировка прокрутки не включена
 	// Инициализация имен пайпов
 	_wsprintf(gpSrv->szPipename, SKIPLEN(countof(gpSrv->szPipename)) CESERVERPIPENAME, L".", gnSelfPID);
 	_wsprintf(gpSrv->szInputname, SKIPLEN(countof(gpSrv->szInputname)) CESERVERINPUTNAME, L".", gnSelfPID);
@@ -2455,8 +2455,8 @@ bool TryConnect2Gui(HWND hGui, CESERVER_REQ* pIn)
 			{
 				pSizeIn->SetSize.nBufferHeight = pStartStopRet->Info.nBufferHeight;
 				pSizeIn->SetSize.size = crNewSize;
-				pSizeIn->SetSize.nSendTopLine = -1;
-				pSizeIn->SetSize.rcWindow = rcWnd;
+				//pSizeIn->SetSize.nSendTopLine = -1;
+				//pSizeIn->SetSize.rcWindow = rcWnd;
 
 				pSizeOut = ExecuteSrvCmd(gpSrv->dwAltServerPID, pSizeIn, ghConWnd);
 			}
@@ -3446,7 +3446,7 @@ void InitAnsiLog(const ConEmuAnsiLog& AnsiLog)
 	SetEnvironmentVariable(ENV_CONEMUANSILOG_VAR_W, szPath);
 }
 
-
+#if 0
 // Возвращает TRUE - если меняет РАЗМЕР видимой области (что нужно применить в консоль)
 BOOL CorrectVisibleRect(CONSOLE_SCREEN_BUFFER_INFO* pSbi)
 {
@@ -3534,7 +3534,7 @@ BOOL CorrectVisibleRect(CONSOLE_SCREEN_BUFFER_INFO* pSbi)
 
 	return lbChanged;
 }
-
+#endif
 
 
 bool CheckWasFullScreen()
@@ -3638,7 +3638,7 @@ static int ReadConsoleInfo()
 	if (gpSrv->dwConsoleOutMode != LOWORD(ldwConsoleMode))
 	{
 		_ASSERTE(LOWORD(ldwConsoleMode) == ldwConsoleMode);
-		gpSrv->dwConsoleOutMode = ldwConsoleMode; lbChanged = TRUE;
+		gpSrv->dwConsoleOutMode = LOWORD(ldwConsoleMode); lbChanged = TRUE;
 	}
 
 	MCHKHEAP;
@@ -3858,7 +3858,10 @@ static BOOL ReadConsoleData()
 	int TextWidth = 0, TextHeight = 0;
 	short nMaxWidth = -1, nMaxHeight = -1;
 	char sFailedInfo[128];
+
+	// sbi считывается в ReadConsoleInfo
 	BOOL bSuccess = ::GetConWindowSize(gpSrv->sbi, gcrVisibleSize.X, gcrVisibleSize.Y, nCurScroll, &TextWidth, &TextHeight, &nNewScroll);
+
 	UNREFERENCED_PARAMETER(bSuccess);
 	//TextWidth  = gpSrv->sbi.dwSize.X;
 	//TextHeight = (gpSrv->sbi.srWindow.Bottom - gpSrv->sbi.srWindow.Top + 1);
@@ -3934,6 +3937,9 @@ static BOOL ReadConsoleData()
 	}
 
 	gpSrv->pConsole->info.crWindow.X = TextWidth; gpSrv->pConsole->info.crWindow.Y = TextHeight;
+
+	gpSrv->pConsole->info.sbi.srWindow = rgn;
+
 	hOut = (HANDLE)ghConOut;
 
 	if (hOut == INVALID_HANDLE_VALUE)

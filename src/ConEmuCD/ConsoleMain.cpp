@@ -6454,7 +6454,7 @@ BOOL cmd_SetSizeXXX_CmdStartedFinished(CESERVER_REQ& in, CESERVER_REQ** out)
 		USHORT nBufferHeight = 0;
 		COORD  crNewSize = {0,0};
 		SMALL_RECT rNewRect = {0};
-		SHORT  nNewTopVisible = -1;
+		//SHORT  nNewTopVisible = -1;
 		//memmove(&nBufferHeight, in.Data, sizeof(USHORT));
 		nBufferHeight = in.SetSize.nBufferHeight;
 
@@ -6474,11 +6474,8 @@ BOOL cmd_SetSizeXXX_CmdStartedFinished(CESERVER_REQ& in, CESERVER_REQ** out)
 
 		crNewSize = in.SetSize.size;
 
-		// Блокировка при прокрутке, значение используется только "виртуально" в CorrectVisibleRect
-		nNewTopVisible = in.SetSize.nSendTopLine;
-
-		// rect по идее вообще не нужен, за блокировку при прокрутке отвечает nSendTopLine
-		rNewRect = in.SetSize.rcWindow;
+		//// rect по идее вообще не нужен, за блокировку при прокрутке отвечает nSendTopLine
+		//rNewRect = in.SetSize.rcWindow;
 
 		MCHKHEAP;
 		(*out)->hdr.nCmd = in.hdr.nCmd;
@@ -6522,7 +6519,11 @@ BOOL cmd_SetSizeXXX_CmdStartedFinished(CESERVER_REQ& in, CESERVER_REQ** out)
 			gpSrv->bInSyncResize = TRUE;
 		}
 
-		gpSrv->nTopVisibleLine = nNewTopVisible;
+		#if 0
+		// Блокировка при прокрутке, значение используется только "виртуально" в CorrectVisibleRect
+		gpSrv->TopLeft = in.SetSize.TopLeft;
+		#endif
+
 		nTick1 = GetTickCount();
 		csRead.Unlock();
 		WARNING("Если указан dwFarPID - это что-ли два раза подряд выполнится?");
@@ -8082,11 +8083,12 @@ BOOL cmd_AltBuffer(CESERVER_REQ& in, CESERVER_REQ** out)
 				pSizeIn->hdr.nCmd = CECMD_SETSIZESYNC;
 				pSizeIn->hdr.cbSize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_SETSIZE);
 
-				pSizeIn->SetSize.rcWindow.Left = pSizeIn->SetSize.rcWindow.Top = 0;
-				pSizeIn->SetSize.rcWindow.Right = lsbi.srWindow.Right - lsbi.srWindow.Left;
-				pSizeIn->SetSize.rcWindow.Bottom = lsbi.srWindow.Bottom - lsbi.srWindow.Top;
+				//pSizeIn->SetSize.rcWindow.Left = pSizeIn->SetSize.rcWindow.Top = 0;
+				//pSizeIn->SetSize.rcWindow.Right = lsbi.srWindow.Right - lsbi.srWindow.Left;
+				//pSizeIn->SetSize.rcWindow.Bottom = lsbi.srWindow.Bottom - lsbi.srWindow.Top;
 				pSizeIn->SetSize.size.X = lsbi.srWindow.Right - lsbi.srWindow.Left + 1;
 				pSizeIn->SetSize.size.Y = lsbi.srWindow.Bottom - lsbi.srWindow.Top + 1;
+
 
 				if (in.AltBuf.AbFlags & abf_BufferOff)
 				{
@@ -8577,6 +8579,13 @@ BOOL ProcessSrvCommand(CESERVER_REQ& in, CESERVER_REQ** out)
 		{
 			lbRc = cmd_CtrlBreakEvent(in, out);
 		} break;
+		case CECMD_SETTOPLEFT:
+		{
+			size_t cbReplySize = sizeof(CESERVER_REQ_HDR);
+			*out = ExecuteNewCmd(CECMD_SETTOPLEFT, cbReplySize);
+			gpSrv->TopLeft = in.ReqConInfo.TopLeft;
+			lbRc = true;
+		} break;
 		default:
 		{
 			// Отлов необработанных
@@ -8651,9 +8660,12 @@ BOOL MyGetConsoleScreenBufferInfo(HANDLE ahConOut, PCONSOLE_SCREEN_BUFFER_INFO a
 
 	CONSOLE_SCREEN_BUFFER_INFO csbi = {{0,0}};
 	lbRc = GetConsoleScreenBufferInfo(ahConOut, &csbi);
+
 	// Issue 373: wmic
 	if (lbRc)
 	{
+		if (gpSrv->pConsole)
+			gpSrv->pConsole->info.srRealWindow = csbi.srWindow;
 		TODO("Его надо и из ConEmu обновлять");
 		if (csbi.dwSize.X && (gnBufferWidth != csbi.dwSize.X))
 			gnBufferWidth = csbi.dwSize.X;
@@ -8686,12 +8698,10 @@ BOOL MyGetConsoleScreenBufferInfo(HANDLE ahConOut, PCONSOLE_SCREEN_BUFFER_INFO a
 		//     }
 		// Если прокрутки быть не должно - по возможности уберем ее, иначе при запуске FAR
 		// запустится только в ВИДИМОЙ области
-		BOOL lbNeedCorrect = FALSE; // lbNeedUpdateSrvMap = FALSE;
+		//BOOL lbNeedCorrect = FALSE; // lbNeedUpdateSrvMap = FALSE;
 
-		#ifdef _DEBUG
 		SHORT nWidth = (csbi.srWindow.Right - csbi.srWindow.Left + 1);
 		SHORT nHeight = (csbi.srWindow.Bottom - csbi.srWindow.Top + 1);
-		#endif
 
 		// Приложениям запрещено менять размер видимой области.
 		// Размер буфера - могут менять, но не менее чем текущая видимая область
@@ -8714,7 +8724,7 @@ BOOL MyGetConsoleScreenBufferInfo(HANDLE ahConOut, PCONSOLE_SCREEN_BUFFER_INFO a
 
 			WARNING("Пока всякую коррекцию убрал. Ибо конфликтует с gpSrv->nRequestChangeSize.");
 			//Видимо, нужно сравнивать не с gpSrv->crReqSizeNewSize, а с gcrVisibleSize
-#if 0
+			#if 0
 			if (nWidth != gpSrv->crReqSizeNewSize.X && gpSrv->crReqSizeNewSize.X <= )
 			{
 
@@ -8732,10 +8742,21 @@ BOOL MyGetConsoleScreenBufferInfo(HANDLE ahConOut, PCONSOLE_SCREEN_BUFFER_INFO a
 
 			if (lbNeedUpdateSrvMap)
 				UpdateConsoleMapHeader();
-#endif
+			#endif
 		}
 
-#if 0
+		if (gpSrv->TopLeft.x >= 0)
+		{
+			csbi.srWindow.Right = min(csbi.dwSize.X, gpSrv->TopLeft.x+nWidth) - 1;
+			csbi.srWindow.Left = max(0, csbi.srWindow.Right-nWidth+1);
+		}
+		if (gpSrv->TopLeft.y >= 0)
+		{
+			csbi.srWindow.Bottom = min(csbi.dwSize.Y, gpSrv->TopLeft.y+nHeight) - 1;
+			csbi.srWindow.Top = max(0, csbi.srWindow.Bottom-nHeight+1);
+		}
+
+		#if 0
 		// Левая граница
 		if (csbi.srWindow.Left > 0)
 		{
@@ -8796,18 +8817,20 @@ BOOL MyGetConsoleScreenBufferInfo(HANDLE ahConOut, PCONSOLE_SCREEN_BUFFER_INFO a
 				lbNeedCorrect = TRUE; csbi.srWindow.Bottom = (csbi.dwSize.Y - 1);
 			}
 		}
-#endif
+		#endif
 
+		#if 0
 		WARNING("CorrectVisibleRect пока закомментарен, ибо все равно нифига не делает");
-
 		//if (CorrectVisibleRect(&csbi))
 		//	lbNeedCorrect = TRUE;
+
 		if (lbNeedCorrect)
 		{
 			lbSetRc = SetConsoleWindowInfo(ghConOut, TRUE, &csbi.srWindow);
 			_ASSERTE(lbSetRc);
 			lbRc = GetConsoleScreenBufferInfo(ahConOut, &csbi);
 		}
+		#endif
 	}
 
 	// Возвращаем (возможно) скорректированные данные
@@ -8828,7 +8851,7 @@ BOOL MyGetConsoleScreenBufferInfo(HANDLE ahConOut, PCONSOLE_SCREEN_BUFFER_INFO a
 			if (AreCpInfoLeads(nCP, &MaxCharSize) && (MaxCharSize > 1))
 			{
 				_ASSERTE(MaxCharSize==2);
-				WORD Attrs[40];
+				WORD Attrs[200];
 				LONG cchMax = countof(Attrs);
 				WORD* pAttrs = (csbi.dwCursorPosition.X <= cchMax) ? Attrs : (WORD*)calloc(csbi.dwCursorPosition.X, sizeof(*pAttrs));
 				if (pAttrs)

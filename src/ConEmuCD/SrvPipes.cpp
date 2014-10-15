@@ -369,7 +369,15 @@ BOOL WINAPI DataServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &pp
 	{
 		_ASSERTE(pIn->hdr.nCmd == CECMD_CONSOLEDATA);
 		gpSrv->pConsole->bDataChanged = FALSE;
+
+		#if 0
 		DWORD ccCells = gpSrv->pConsole->info.crWindow.X * gpSrv->pConsole->info.crWindow.Y;
+		#else
+		SMALL_RECT rc = gpSrv->pConsole->info.sbi.srWindow;
+		int iWidth = rc.Right - rc.Left + 1;
+		int iHeight = rc.Bottom - rc.Top + 1;
+		DWORD ccCells = iWidth * iHeight;
+		#endif
 
 		// Такого быть не должно, ReadConsoleData корректирует возможный размер
 		if (ccCells > (size_t)(gpSrv->pConsole->info.crMaxSize.X * gpSrv->pConsole->info.crMaxSize.Y))
