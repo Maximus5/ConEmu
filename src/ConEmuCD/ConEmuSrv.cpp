@@ -3709,7 +3709,7 @@ static int ReadConsoleInfo()
 				}
 			}
 
-#ifdef ASSERT_UNWANTED_SIZE
+			#ifdef ASSERT_UNWANTED_SIZE
 			COORD crReq = gpSrv->crReqSizeNewSize;
 			COORD crSize = lsbi.dwSize;
 
@@ -3727,8 +3727,7 @@ static int ReadConsoleInfo()
 					MY_ASSERT_EXPR(FALSE, szInfo, false);
 				}
 			}
-
-#endif
+			#endif
 
 			if (gpLogSize) LogSize(NULL, ":ReadConsoleInfo");
 

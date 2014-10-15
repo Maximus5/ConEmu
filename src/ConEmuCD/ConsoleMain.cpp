@@ -106,8 +106,8 @@ WARNING("Обязательно получить код и имя родител
 #ifdef USEPIPELOG
 namespace PipeServerLogger
 {
-    Event g_events[BUFFER_SIZE];
-    LONG g_pos = -1;
+	Event g_events[BUFFER_SIZE];
+	LONG g_pos = -1;
 }
 #endif
 
@@ -737,7 +737,7 @@ LONG WINAPI CreateDumpOnException(LPEXCEPTION_POINTERS ExceptionInfo)
 	{
 		// если фильтр уже был установлен перед нашим - будем звать его
 		// все-равно уже свалились, на валидность адреса можно не проверяться
-        lExRc = gpfnPrevExFilter(ExceptionInfo);
+		lExRc = gpfnPrevExFilter(ExceptionInfo);
 	}
 
 	return lExRc;
@@ -2533,7 +2533,7 @@ int CheckUnicodeFont()
 				cpinfo.CodePageName);
 		}
 		WriteConsoleW(hOut, szInfo, lstrlen(szInfo), &nTmp, NULL);
-    }
+	}
 
 
 	// Simlify checking of ConEmu's "colorization"
@@ -2550,7 +2550,7 @@ int CheckUnicodeFont()
 	WriteConsoleW(hOut, L"\r\n", 2, &nTmp, NULL);
 
 
-    WriteConsoleW(hOut, L"\r\nCheck ", 8, &nTmp, NULL);
+	WriteConsoleW(hOut, L"\r\nCheck ", 8, &nTmp, NULL);
 
 
 	if ((bInfo = GetConsoleScreenBufferInfo(hOut, &csbi)) != FALSE)
@@ -2563,10 +2563,8 @@ int CheckUnicodeFont()
 			msprintf(sAttrWrite+i, 2, L"%X", aWrite[i]);
 		}
 
-		COORD /*crSize = {(SHORT)nLen,1},*/ cr0 = {0,0};
-		//SMALL_RECT rcWrite = {csbi.dwCursorPosition.X, csbi.dwCursorPosition.Y, csbi.dwCursorPosition.X+(SHORT)nLen-1, csbi.dwCursorPosition.Y};
+		COORD cr0 = {0,0};
 		if ((bWrite = WriteConsoleOutputCharacterW(hOut, szText, nLen, csbi.dwCursorPosition, &nWrite)) != FALSE)
-        //if ((bWrite = WriteConsoleOutputW(hOut, cWrite, crSize, cr0, &rcWrite)) != FALSE)
 		{
 			if (((bRead = ReadConsoleOutputCharacterW(hOut, szCheck, nLen*2, csbi.dwCursorPosition, &nRead)) != FALSE)
 				/*&& (nRead == nLen)*/)
@@ -4579,7 +4577,7 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 				_ASSERTE(ghConWnd!=NULL);
 				#endif
 			}
-            else if (gpSrv->dwRootProcess == 0)
+			else if (gpSrv->dwRootProcess == 0)
 			{
 				_printf("Attach to GUI was requested, but invalid PID specified:\n");
 				_wprintf(GetCommandLineW());
@@ -4700,27 +4698,27 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 		else if (wcsncmp(szArg, L"/TA=", 4)==0)
 		{
 			wchar_t* pszEnd = NULL;
-        	DWORD nColors = wcstoul(szArg+4, &pszEnd, 16);
-        	if (nColors)
-        	{
-        		DWORD nTextIdx = (nColors & 0xFF);
-        		DWORD nBackIdx = ((nColors >> 8) & 0xFF);
-        		DWORD nPopTextIdx = ((nColors >> 16) & 0xFF);
-        		DWORD nPopBackIdx = ((nColors >> 24) & 0xFF);
+			DWORD nColors = wcstoul(szArg+4, &pszEnd, 16);
+			if (nColors)
+			{
+				DWORD nTextIdx = (nColors & 0xFF);
+				DWORD nBackIdx = ((nColors >> 8) & 0xFF);
+				DWORD nPopTextIdx = ((nColors >> 16) & 0xFF);
+				DWORD nPopBackIdx = ((nColors >> 24) & 0xFF);
 
-        		if ((nTextIdx <= 15) && (nBackIdx <= 15) && (nTextIdx != nBackIdx))
-        			gnDefTextColors = (WORD)(nTextIdx | (nBackIdx << 4));
+				if ((nTextIdx <= 15) && (nBackIdx <= 15) && (nTextIdx != nBackIdx))
+					gnDefTextColors = (WORD)(nTextIdx | (nBackIdx << 4));
 
-        		if ((nPopTextIdx <= 15) && (nPopBackIdx <= 15) && (nPopTextIdx != nPopBackIdx))
-        			gnDefPopupColors = (WORD)(nPopTextIdx | (nPopBackIdx << 4));
+				if ((nPopTextIdx <= 15) && (nPopBackIdx <= 15) && (nPopTextIdx != nPopBackIdx))
+					gnDefPopupColors = (WORD)(nPopTextIdx | (nPopBackIdx << 4));
 
-        		if (gnDefTextColors || gnDefPopupColors)
-        		{
-        			HANDLE hConOut = ghConOut;
-        			BOOL bPassed = FALSE;
+				if (gnDefTextColors || gnDefPopupColors)
+				{
+					HANDLE hConOut = ghConOut;
+					BOOL bPassed = FALSE;
 
-        			if (gnDefPopupColors && (gnOsVer >= 0x600))
-        			{
+					if (gnDefPopupColors && (gnOsVer >= 0x600))
+					{
 						CONSOLE_SCREEN_BUFFER_INFO csbi0 = {};
 						GetConsoleScreenBufferInfo(hConOut, &csbi0);
 
@@ -4773,10 +4771,10 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 
 					if (!bPassed && gnDefTextColors)
 					{
-        				SetConsoleTextAttribute(hConOut, gnDefTextColors);
-    				}
-        		}
-        	}
+						SetConsoleTextAttribute(hConOut, gnDefTextColors);
+					}
+				}
+			}
 		}
 		else if (lstrcmpni(szArg, L"/DEBUGPID=", 10)==0)
 		{
@@ -5278,7 +5276,7 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 		if (GetEnvironmentVariable(L"ComSpecC", gszComSpec, MAX_PATH))
 		{
 			_ASSERTE(gszComSpec[0] == 0);
-        }
+		}
 		#endif
 
 		if (!GetEnvironmentVariable(L"ComSpec", gszComSpec, MAX_PATH) || gszComSpec[0] == 0)
@@ -5291,7 +5289,7 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 			//if (!SearchPathW(NULL, L"cmd.exe", NULL, MAX_PATH, gszComSpec, &psFilePart))
 
 			LPCWSTR pszFind = GetComspecFromEnvVar(gszComSpec, countof(gszComSpec));
-            if (!pszFind || !wcschr(pszFind, L'\\') || !FileExists(pszFind))
+			if (!pszFind || !wcschr(pszFind, L'\\') || !FileExists(pszFind))
 			{
 				_ASSERTE("cmd.exe not found!");
 				_printf("Can't find cmd.exe!\n");
@@ -6915,7 +6913,7 @@ void OnAltServerChanged(int nStep, StartStopType nStarted, DWORD nAltServerPID, 
 			{
 				// _ASSERTE могут приводить к ошибкам блокировки gpSrv->csProc в других потоках. Но ассертов быть не должно )
 				_ASSERTE(((nAltServerPID == gpSrv->dwAltServerPID) || !gpSrv->dwAltServerPID || ((nStarted != sst_AltServerStop) && (nAltServerPID != gpSrv->dwAltServerPID) && !AS.bPrevFound)) && "Expected active alt.server!");
-            }
+			}
 		}
 	}
 	else if (nStep == 2)
