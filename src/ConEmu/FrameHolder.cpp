@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2013 Maximus5
+Copyright (c) 2009-2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -240,21 +240,19 @@ bool CFrameHolder::ProcessNcMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 
 		if (!lbRc)
 		{
-			if ((wParam == HTSYSMENU && uMsg == WM_NCLBUTTONDOWN)
-				/*|| (wParam == HTCAPTION && uMsg == WM_NCRBUTTONDOWN)*/)
+			if ((wParam == HTSYSMENU) && (uMsg == WM_NCLBUTTONDOWN))
 			{
 				gpConEmu->mp_Menu->OnNcIconLClick();
 				lResult = 0;
 				lbRc = true;
 			}
-			else if (gpSet->isTabsInCaption
-				&& (wParam == HTSYSMENU || wParam == HTCAPTION)
+			else if ((wParam == HTSYSMENU || wParam == HTCAPTION)
 				&& (uMsg == WM_NCRBUTTONDOWN || uMsg == WM_NCRBUTTONUP))
 			{
 				if (uMsg == WM_NCRBUTTONUP)
 				{
-					LogString(L"ShowSysmenu called from (WM_NCRBUTTONUP & isTabsInCaption)");
-					gpConEmu->mp_Menu->ShowSysmenu((short)LOWORD(lParam),(short)HIWORD(lParam));
+					LogString(L"ShowSysmenu called from (WM_NCRBUTTONUP)");
+					gpConEmu->mp_Menu->ShowSysmenu((short)LOWORD(lParam), (short)HIWORD(lParam));
 				}
 				lResult = 0;
 				lbRc = true;
