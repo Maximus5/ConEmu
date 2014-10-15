@@ -68,6 +68,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRPKT(s) //DEBUGSTR(s)
 #define DEBUGSTRCURSORPOS(s) //DEBUGSTR(s)
 #define DEBUGSTRMOUSE(s) //DEBUGSTR(s)
+#define DEBUGSTRTOPLEFT(s) DEBUGSTR(s)
 
 // ANSI, without "\r\n"
 #define IFLOGCONSOLECHANGE gpSetCls->isAdvLogging>=2
@@ -115,6 +116,7 @@ CRealBuffer::CRealBuffer(CRealConsole* apRCon, RealBufferType aType/*=rbt_Primar
 	mn_LastRgnFlags = -1;
 
 	ZeroStruct(con);
+	con.TopLeft.Reset();
 	mp_Match = NULL;
 
 	mb_BuferModeChangeLocked = FALSE;
@@ -346,7 +348,7 @@ bool CRealBuffer::LoadDumpConsole(LPCWSTR asDumpFile)
 	con.m_sbi.srWindow.Bottom = nY - 1;
 	con.crMaxSize = mp_RCon->mp_RBuf->con.crMaxSize; //MakeCoord(max(dump.crSize.X,nX),max(dump.crSize.Y,nY));
 	con.m_sbi.dwMaximumWindowSize = con.crMaxSize; //dump.crSize;
-	con.TopLeft.Reset();
+	SetTopLeft();
 	con.nTextWidth = nX/*dump.crSize.X*/;
 	con.nTextHeight = nY/*dump.crSize.Y*/;
 	con.nBufferHeight = dump.crSize.Y;
@@ -459,7 +461,7 @@ bool CRealBuffer::LoadDataFromDump(const CONSOLE_SCREEN_BUFFER_INFO& storedSbi, 
 	con.m_sbi.srWindow.Left = 0;
 	con.m_sbi.srWindow.Bottom = min((storedSbi.srWindow.Top + (int)nY - 1),(storedSbi.dwSize.Y - 1));
 	con.m_sbi.srWindow.Top = max(0,con.m_sbi.srWindow.Bottom - nY + 1);
-	con.TopLeft.Reset();
+	SetTopLeft();
 
 	con.crMaxSize = mp_RCon->mp_RBuf->con.crMaxSize; //MakeCoord(max(dump.crSize.X,nX),max(dump.crSize.Y,nY));
 	con.m_sbi.dwMaximumWindowSize = con.crMaxSize; //dump.crSize;
@@ -721,20 +723,7 @@ BOOL CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 	pIn->SetSize.size.X = sizeX;
 	pIn->SetSize.size.Y = sizeY;
 
-	TODO("nTopVisibleLine должен передаваться при скролле, а не при ресайзе!");
-	#ifdef SHOW_AUTOSCROLL
-	pIn->SetSize.nSendTopLine = (gpSetCls->AutoScroll || !con.bBufferHeight) ? -1 : con.nTopVisibleLine;
-	#else
-	/*
-	pIn->SetSize.nSendTopLine = mp_RCon->InScroll() ? con.nTopVisibleLine : -1;
-	*/
-	//pIn->SetSize.TopLeft = con.TopLeft;
-	#endif
-
 	pIn->SetSize.dwFarPID = (con.bBufferHeight && !mp_RCon->isFarBufferSupported()) ? 0 : mp_RCon->GetFarPID(TRUE);
-
-	// Если размер менять не нужно - то и CallNamedPipe не делать
-	//if (mp_ConsoleInfo) {
 
 	// Если заблокирована верхняя видимая строка - выполнять строго
 	if (anCmdID != CECMD_CMDFINISHED && con.TopLeft.isLocked())
@@ -782,8 +771,8 @@ BOOL CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 		default:
 			_wsprintfA(szSizeCmd, SKIPLEN(countof(szSizeCmd)) "SizeCmd=%u", anCmdID);
 		}
-		_wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "%s(Cols=%i, Rows=%i, Buf=%i, Top=%i)",
-		           szSizeCmd, sizeX, sizeY, sizeBuffer, con.TopLeft.y);
+		_wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "%s(Cols=%i, Rows=%i, Buf=%i, TopLeft={%i,%i})",
+		           szSizeCmd, sizeX, sizeY, sizeBuffer, con.TopLeft.y, con.TopLeft.x);
 		mp_RCon->LogString(szInfo, TRUE);
 	}
 
@@ -1351,7 +1340,7 @@ BOOL CRealBuffer::PreInit()
 	con.nTextWidth = rcCon.right;
 	con.nTextHeight = rcCon.bottom;
 
-	con.TopLeft.Reset();
+	SetTopLeft();
 
 	con.m_sbi.wAttributes = 7;
 	con.m_sbi.srWindow.Left = con.m_sbi.srWindow.Top = 0;
@@ -1392,7 +1381,7 @@ BOOL CRealBuffer::InitBuffers(DWORD anCellCount, int anWidth, int anHeight)
 			return FALSE;
 	}
 
-	// Функция вызывается с (anCellCount!=0) ТОЛЬКО из CRealBuffer::ApplyConsoleInfo()
+	// Функция вызывается с (anCellCount!=0) ТОЛЬКО из ApplyConsoleInfo()
 	if (anCellCount)
 	{
 		nCellCount = anCellCount;
@@ -2153,6 +2142,8 @@ BOOL CRealBuffer::ApplyConsoleInfo()
 
 	const CESERVER_REQ_CONINFO_INFO* pInfo = NULL;
 	CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_CONSOLEDATA, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_CONINFO));
+
+	// Request exact TopLeft position if it is locked in GUI
 	pIn->ReqConInfo.TopLeft = con.TopLeft;
 
 	if (mp_RCon->mb_SwitchActiveServer)
@@ -2351,6 +2342,17 @@ void CRealBuffer::ApplyConsoleInfo(const CESERVER_REQ_CONINFO_INFO* pInfo, bool&
 
 			con.m_sbi = pInfo->sbi;
 			con.srRealWindow = pInfo->srRealWindow;
+
+			// Если мышкой тащат ползунок скроллера - не менять TopVisible
+			if (!mp_RCon->InScroll()
+				&& con.TopLeft.isLocked()
+				&& !pInfo->TopLeft.isLocked())
+			{
+				// Сброс позиции прокрутки, она поменялась
+				// в результате действий пользователя в консоли
+				SetTopLeft();
+			}
+
 
 			DWORD nScroll;
 			if (GetConWindowSize(pInfo->sbi, &nNewWidth, &nNewHeight, &nScroll))
@@ -3829,14 +3831,16 @@ void CRealBuffer::MarkFindText(int nDirection, LPCWSTR asText, bool abCaseSensit
 				if (pszFrom < pszFrom1)
 				{
 					// Прокрутить буфер вверх
-					con.TopLeft.y = con.m_sbi.srWindow.Top = max(0,((int)(nCharIdx / nWidth))-1);
+					con.m_sbi.srWindow.Top = max(0,((int)(nCharIdx / nWidth))-1);
 					con.m_sbi.srWindow.Bottom = min((con.m_sbi.srWindow.Top + nRows), con.m_sbi.dwSize.Y-1);
+					SetTopLeft(con.m_sbi.srWindow.Top, con.TopLeft.x);
 				}
 				else if (pszFrom >= pszEnd1)
 				{
 					// Прокрутить буфер вниз
 					con.m_sbi.srWindow.Bottom = min((nCharIdx / nWidth)+1, (UINT)con.m_sbi.dwSize.Y-1);
-					con.TopLeft.y = con.m_sbi.srWindow.Top = max(0, con.m_sbi.srWindow.Bottom-nRows);
+					con.m_sbi.srWindow.Top = max(0, con.m_sbi.srWindow.Bottom-nRows);
+					SetTopLeft(con.m_sbi.srWindow.Top, con.TopLeft.x);
 				}
 
 				if (nCharIdx >= (size_t)(con.m_sbi.srWindow.Top*nWidth))
@@ -6677,7 +6681,7 @@ LRESULT CRealBuffer::DoScrollBuffer(int nDirection, short nTrackPos /*= -1*/, UI
 
 		if (nNewTop != GetBufferPosY())
 		{
-			con.TopLeft.y = nNewTop;
+			SetTopLeft(nNewTop, con.TopLeft.x);
 			con.m_sbi.srWindow.Top = nNewTop;
 			con.m_sbi.srWindow.Bottom = nNewTop + nVisible - 1;
 
@@ -6710,6 +6714,21 @@ LRESULT CRealBuffer::DoSetScrollPos(WPARAM wParam)
 	// SB_LINEDOWN / SB_LINEUP / SB_PAGEDOWN / SB_PAGEUP
 	DoScrollBuffer(LOWORD(wParam),HIWORD(wParam));
 	return 0;
+}
+
+void CRealBuffer::SetTopLeft(int ay /*= -1*/, int ax /*= -1*/)
+{
+	#ifdef _DEBUG
+	if (con.TopLeft.y != ay || con.TopLeft.x != ax)
+	{
+		wchar_t szDbg[120]; DWORD nSrvPID = mp_RCon->GetServerPID();
+		_wsprintf(szDbg, SKIPCOUNT(szDbg) L"TopLeft changed to {%i,%i} from {%i,%i} SrvPID=%u\n", ay,ax, con.TopLeft.y, con.TopLeft.x, nSrvPID);
+		DEBUGSTRTOPLEFT(szDbg);
+	}
+	#endif
+
+	con.TopLeft.y = ay;
+	con.TopLeft.x = ax;
 }
 
 const CRgnDetect* CRealBuffer::GetDetector()

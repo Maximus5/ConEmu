@@ -279,6 +279,7 @@ protected:
 		// Последний etr... (подсветка URL's и строк-ошибок-компиляторов)
 		ConEmuTextRange etr; // etrLast, mcr_FileLineStart, mcr_FileLineEnd
 	} con;
+	void SetTopLeft(int ay = -1, int ax = -1);
 
 	CMatch* mp_Match;
 

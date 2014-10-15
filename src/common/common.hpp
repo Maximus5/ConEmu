@@ -1421,7 +1421,7 @@ struct TOPLEFTCOORD
 	int y;
 	int x;
 
-	bool isLocked() { return (y >= 0 || x >= 0); };
+	bool isLocked() const { return (y >= 0 || x >= 0); };
 	void Reset() { y = x = -1; };
 	bool Equal(const TOPLEFTCOORD& tl) const { return (tl.x==x && tl.y==y); };
 };
