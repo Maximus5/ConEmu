@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define SHOWDEBUGSTR
 
-#define DEBUGSTRTABS(l,i,s) { wchar_t szLbl[80]; _wsprintf(szLbl,SKIPLEN(countof(szLbl)) L"CTabPanelWin(%s,%i): ",l,i+1); wchar_t* pszDbg = lstrmerge(szLbl,s); DEBUGSTR(pszDbg); SafeFree(pszDbg); }
+#define DEBUGSTRTABS(l,i,s) // { wchar_t szLbl[80]; _wsprintf(szLbl,SKIPLEN(countof(szLbl)) L"CTabPanelWin(%s,%i): ",l,i+1); wchar_t* pszDbg = lstrmerge(szLbl,s); DEBUGSTR(pszDbg); SafeFree(pszDbg); }
 
 #include <windows.h>
 #include "header.h"
