@@ -30,6 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #ifdef _DEBUG
 #include "../common/MMap.h"
+#include "../common/MSectionSimple.h"
 #endif
 
 class CRefRelease
@@ -39,6 +40,7 @@ private:
 	static const LONG REF_FINALIZE = 0x7FFFFFFF;
 private:
 	#ifdef _DEBUG
+	static MSectionSimple mcs_Locks;
 	MMap<DWORD,LONG> m_Locks;
 	#endif
 
@@ -50,6 +52,8 @@ public:
 	{
 		mn_RefCount = 1;
 		#ifdef _DEBUG
+		if (!mcs_Locks.IsInitialized())
+			mcs_Locks.Init();
 		m_Locks.Init(32,true);
 		m_Locks.Set(GetCurrentThreadId(), 1);
 		#endif
@@ -68,11 +72,13 @@ public:
 
 		#ifdef _DEBUG
 		DWORD nTID = GetCurrentThreadId(); LONG nLocks = 0;
+		MSectionLockSimple CS; CS.Lock(&mcs_Locks);
 		if (!m_Locks.Get(nTID, &nLocks))
 			nLocks = 1;
 		else
 			nLocks++;
 		m_Locks.Set(nTID, nLocks);
+		CS.Unlock();
 		#endif
 	};
 
@@ -90,6 +96,7 @@ public:
 
 		#ifdef _DEBUG
 		DWORD nTID = GetCurrentThreadId(); LONG nLocks = 0;
+		MSectionLockSimple CS; CS.Lock(&mcs_Locks);
 		if (m_Locks.Get(nTID, &nLocks))
 		{
 			nLocks--;
@@ -98,6 +105,7 @@ public:
 			else
 				m_Locks.Del(nTID);
 		}
+		CS.Unlock();
 		#endif
 
 		_ASSERTE(mn_RefCount>=0);

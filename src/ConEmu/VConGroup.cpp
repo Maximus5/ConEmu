@@ -64,6 +64,10 @@ static bool gb_InCreateGroup = false;
 static MSectionSimple* gpcs_VGroups = NULL;
 static CVConGroup* gp_VGroups[MAX_CONSOLE_COUNT*2] = {}; // на каждое разбиение добавляется +Parent
 
+#ifdef _DEBUG
+MSectionSimple CRefRelease::mcs_Locks;
+#endif
+
 //CVirtualConsole* CVConGroup::mp_GrpVCon[MAX_CONSOLE_COUNT] = {};
 
 static COORD g_LastConSize = {0,0}; // console size after last resize (in columns and lines)
