@@ -3175,10 +3175,6 @@ void CRealBuffer::OnTimerCheckSelection()
 // Возвращает true, если мышку обработал "сам буфер"
 bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse, bool abFromTouch /*= false*/)
 {
-#ifndef WM_MOUSEHWHEEL
-#define WM_MOUSEHWHEEL                  0x020E
-#endif
-
 	#ifdef _DEBUG
 	wchar_t szDbgInfo[200]; _wsprintf(szDbgInfo, SKIPLEN(countof(szDbgInfo)) L"RBuf::OnMouse %s XY={%i,%i} CR={%i,%i}%s SelFlags=x%08X\n",
 		messg==WM_MOUSEMOVE?L"WM_MOUSEMOVE":

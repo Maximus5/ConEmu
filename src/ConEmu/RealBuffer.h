@@ -46,6 +46,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	#define CONSOLE_MOUSE_SELECTION         0x0004   // selecting with mouse
 #endif
 
+#ifndef WM_MOUSEHWHEEL
+	#define WM_MOUSEHWHEEL                  0x020E
+#endif
+
 #include "Options.h"
 
 class CMatch;
