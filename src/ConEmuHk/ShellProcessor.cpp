@@ -46,6 +46,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/WinObjects.h"
 #include "../common/CmdLine.h"
 #include "DefTermHk.h"
+#include "Ansi.h"
 
 #ifndef SEE_MASK_NOZONECHECKS
 #define SEE_MASK_NOZONECHECKS 0x800000
@@ -1494,6 +1495,21 @@ int CShellProc::PrepareExecuteParms(
 			// Detect creating "root" from mintty-like applications
 			else if ((gbAttachGuiClient || gbGuiClientAttached) && anCreateFlags && (*anCreateFlags & (CREATE_BREAKAWAY_FROM_JOB)))
 				bDetachedOrHidden = true;
+		}
+		// Started with redirected output? For example, from Far cmd line:
+		// edit:<git log
+		if (!bDetachedOrHidden && (gnInShellExecuteEx <= 0) && (lphStdOut || lphStdErr))
+		{
+			if (lphStdOut && *lphStdOut)
+			{
+				if (!CEAnsi::IsOutputHandle(*lphStdOut))
+					bDetachedOrHidden = true;
+			}
+			else if (lphStdErr && *lphStdErr)
+			{
+				if (!CEAnsi::IsOutputHandle(*lphStdErr))
+					bDetachedOrHidden = true;
+			}
 		}
 	}
 	BOOL bLongConsoleOutput = gFarMode.bFarHookMode && gFarMode.bLongConsoleOutput && !bDetachedOrHidden;
