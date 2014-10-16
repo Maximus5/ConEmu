@@ -9240,9 +9240,11 @@ void CRealConsole::SetTabs(ConEmuTab* apTabs, int anTabsCount)
 			| (apTabs[i].Current ? fwt_CurrentFarWnd : fwt_Any)
 			| (apTabs[i].Modal ? fwt_ModalFarWnd : fwt_Any);
 
-		int nPID = ((TypeAndFlags & (fwt_ModalFarWnd|fwt_Editor|fwt_Viewer)) != 0) ? GetFarPID() : 0;
+		bool bModal = ((TypeAndFlags & fwt_ModalFarWnd) == fwt_ModalFarWnd);
+		bool bEditorViewer = (((TypeAndFlags & fwt_TypeMask) == fwt_Editor) || ((TypeAndFlags & fwt_TypeMask) == fwt_Viewer));
+		int nPID = (bModal || bEditorViewer) ? GetFarPID() : 0;
 
-		bHasModal |= (TypeAndFlags & fwt_ModalFarWnd) == fwt_ModalFarWnd;
+		bHasModal |= bModal;
 
 		if (tabs.m_Tabs.UpdateFarWindow(hUpdate, mp_VCon, apTabs[i].Name, TypeAndFlags, nPID, apTabs[i].Pos, apTabs[i].EditViewId, ActiveTab))
 			bTabsChanged = true;
