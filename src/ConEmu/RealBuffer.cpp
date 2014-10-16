@@ -6132,25 +6132,21 @@ void CRealBuffer::GetCursorInfo(COORD* pcr, CONSOLE_CURSOR_INFO* pci)
 	}
 }
 
-void CRealBuffer::ConsoleScreenBufferInfo(CONSOLE_SCREEN_BUFFER_INFO* sbi)
+void CRealBuffer::ConsoleScreenBufferInfo(CONSOLE_SCREEN_BUFFER_INFO* sbi, SMALL_RECT* psrRealWindow /*= NULL*/)
 {
 	if (!this) return;
 
 	*sbi = con.m_sbi;
 
+	if (psrRealWindow)
+	{
+		*psrRealWindow = con.srRealWindow;
+	}
+
+	// В режиме выделения - положение курсора ставим сами
 	if (con.m_sel.dwFlags)
 	{
-		// В режиме выделения - положение курсора ставим сами
 		ConsoleCursorPos(&(sbi->dwCursorPosition));
-		//if (con.m_sel.dwSelectionAnchor.X == con.m_sel.srSelection.Left)
-		//	sbi->dwCursorPosition.X = con.m_sel.srSelection.Right;
-		//else
-		//	sbi->dwCursorPosition.X = con.m_sel.srSelection.Left;
-		//
-		//if (con.m_sel.dwSelectionAnchor.Y == con.m_sel.srSelection.Top)
-		//	sbi->dwCursorPosition.Y = con.m_sel.srSelection.Bottom;
-		//else
-		//	sbi->dwCursorPosition.Y = con.m_sel.srSelection.Top;
 	}
 }
 
