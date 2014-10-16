@@ -6574,6 +6574,14 @@ short CRealBuffer::CheckProgressInConsole(const wchar_t* pszCurLine)
 	return nProgress;
 }
 
+void CRealBuffer::ResetTopLeft()
+{
+	if (con.TopLeft.isLocked())
+	{
+		SetTopLeft(-1, -1, true);
+	}
+}
+
 LRESULT CRealBuffer::DoScrollBuffer(int nDirection, short nTrackPos /*= -1*/, UINT nCount /*= 1*/)
 {
 	if (!this) return 0;
@@ -6716,19 +6724,38 @@ LRESULT CRealBuffer::DoSetScrollPos(WPARAM wParam)
 	return 0;
 }
 
-void CRealBuffer::SetTopLeft(int ay /*= -1*/, int ax /*= -1*/)
+bool CRealBuffer::SetTopLeft(int ay /*= -1*/, int ax /*= -1*/, bool abServerCall /*= false*/)
 {
-	#ifdef _DEBUG
+	bool bChanged = false;
+
 	if (con.TopLeft.y != ay || con.TopLeft.x != ax)
 	{
+		bChanged = true;
+
+		#ifdef _DEBUG
 		wchar_t szDbg[120]; DWORD nSrvPID = mp_RCon->GetServerPID();
 		_wsprintf(szDbg, SKIPCOUNT(szDbg) L"TopLeft changed to {%i,%i} from {%i,%i} SrvPID=%u\n", ay,ax, con.TopLeft.y, con.TopLeft.x, nSrvPID);
 		DEBUGSTRTOPLEFT(szDbg);
+		#endif
 	}
-	#endif
 
 	con.TopLeft.y = ay;
 	con.TopLeft.x = ax;
+
+	if (abServerCall && (m_Type == rbt_Primary))
+	{
+		DWORD nSrvPID = mp_RCon->GetServerPID();
+		if (nSrvPID)
+		{
+			CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_SETTOPLEFT, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_CONINFO));
+			pIn->ReqConInfo.TopLeft = con.TopLeft;
+			CESERVER_REQ *pOut = ExecuteSrvCmd(nSrvPID, pIn, ghWnd);
+			ExecuteFreeResult(pOut);
+			ExecuteFreeResult(pIn);
+		}
+	}
+
+	return bChanged;
 }
 
 const CRgnDetect* CRealBuffer::GetDetector()

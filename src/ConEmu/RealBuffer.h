@@ -111,6 +111,7 @@ public:
 
 	LRESULT DoScrollBuffer(int nDirection, short nTrackPos = -1, UINT nCount = 1);
 	LRESULT DoSetScrollPos(WPARAM wParam);
+	void ResetTopLeft();
 
 	BOOL ApplyConsoleInfo();
 
@@ -279,7 +280,7 @@ protected:
 		// Последний etr... (подсветка URL's и строк-ошибок-компиляторов)
 		ConEmuTextRange etr; // etrLast, mcr_FileLineStart, mcr_FileLineEnd
 	} con;
-	void SetTopLeft(int ay = -1, int ax = -1);
+	bool SetTopLeft(int ay = -1, int ax = -1, bool abServerCall = false);
 
 	CMatch* mp_Match;
 
