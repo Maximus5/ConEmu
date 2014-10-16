@@ -32,7 +32,7 @@
       <Tool Name="VCXMLDataGeneratorTool" />
       <Tool Name="VCWebServiceProxyGeneratorTool" />
       <Tool Name="VCMIDLTool" TargetEnvironment="3" />
-      <Tool Name="VCCLCompilerTool" Optimization="0" PreprocessorDefinitions="WIN64;WIN32;_DEBUG;ASSERT_PIPE_ALLOWED;_WINDOWS;_USRDLL;CONEMUDW_EXPORTS;CONEMU_MINIMAL;_CRT_SECURE_NO_WARNINGS" MinimalRebuild="true" BasicRuntimeChecks="3" RuntimeLibrary="1" UsePrecompiledHeader="0" WarningLevel="3" DebugInformationFormat="3" />
+      <Tool Name="VCCLCompilerTool" Optimization="0" PreprocessorDefinitions="WIN64;WIN32;_DEBUG;ASSERT_PIPE_ALLOWED;_WINDOWS;_USRDLL;CONEMUDW_EXPORTS;_CRT_SECURE_NO_WARNINGS" MinimalRebuild="true" BasicRuntimeChecks="3" RuntimeLibrary="1" UsePrecompiledHeader="0" WarningLevel="3" DebugInformationFormat="3" />
       <Tool Name="VCManagedResourceCompilerTool" />
       <Tool Name="VCResourceCompilerTool" />
       <Tool Name="VCPreLinkEventTool" />
@@ -51,7 +51,7 @@
       <Tool Name="VCXMLDataGeneratorTool" />
       <Tool Name="VCWebServiceProxyGeneratorTool" />
       <Tool Name="VCMIDLTool" />
-      <Tool Name="VCCLCompilerTool" Optimization="2" EnableIntrinsicFunctions="true" PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;CONEMUDW_EXPORTS;CONEMU_MINIMAL;CRTSTARTUP" ExceptionHandling="0" RuntimeLibrary="0" BufferSecurityCheck="false" EnableFunctionLevelLinking="true" UsePrecompiledHeader="0" WarningLevel="3" DebugInformationFormat="3" />
+      <Tool Name="VCCLCompilerTool" Optimization="2" EnableIntrinsicFunctions="true" PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;CONEMUDW_EXPORTS;CRTSTARTUP" ExceptionHandling="0" RuntimeLibrary="0" BufferSecurityCheck="false" EnableFunctionLevelLinking="true" UsePrecompiledHeader="0" WarningLevel="3" DebugInformationFormat="3" />
       <Tool Name="VCManagedResourceCompilerTool" />
       <Tool Name="VCResourceCompilerTool" />
       <Tool Name="VCPreLinkEventTool" />
@@ -70,7 +70,7 @@
       <Tool Name="VCXMLDataGeneratorTool" />
       <Tool Name="VCWebServiceProxyGeneratorTool" />
       <Tool Name="VCMIDLTool" TargetEnvironment="3" />
-      <Tool Name="VCCLCompilerTool" Optimization="2" EnableIntrinsicFunctions="true" PreprocessorDefinitions="WIN64;WIN32;NDEBUG;_WINDOWS;_USRDLL;CONEMUDW_EXPORTS;CONEMU_MINIMAL;CRTSTARTUP" RuntimeLibrary="0" BufferSecurityCheck="false" EnableFunctionLevelLinking="true" UsePrecompiledHeader="0" WarningLevel="3" DebugInformationFormat="3" />
+      <Tool Name="VCCLCompilerTool" Optimization="2" EnableIntrinsicFunctions="true" PreprocessorDefinitions="WIN64;WIN32;NDEBUG;_WINDOWS;_USRDLL;CONEMUDW_EXPORTS;CRTSTARTUP" RuntimeLibrary="0" BufferSecurityCheck="false" EnableFunctionLevelLinking="true" UsePrecompiledHeader="0" WarningLevel="3" DebugInformationFormat="3" />
       <Tool Name="VCManagedResourceCompilerTool" />
       <Tool Name="VCResourceCompilerTool" />
       <Tool Name="VCPreLinkEventTool" />
@@ -165,7 +165,7 @@
       <Tool Name="VCXMLDataGeneratorTool" />
       <Tool Name="VCWebServiceProxyGeneratorTool" />
       <Tool Name="VCMIDLTool" />
-      <Tool Name="VCCLCompilerTool" Optimization="0" PreprocessorDefinitions="WIN32;_DEBUG;ASSERT_PIPE_ALLOWED;_WINDOWS;_USRDLL;CONEMUDW_EXPORTS;CONEMU_MINIMAL;FORCE_HEAP_CHECK" MinimalRebuild="true" BasicRuntimeChecks="3" RuntimeLibrary="1" UsePrecompiledHeader="0" WarningLevel="3" DebugInformationFormat="4" />
+      <Tool Name="VCCLCompilerTool" Optimization="0" PreprocessorDefinitions="WIN32;_DEBUG;ASSERT_PIPE_ALLOWED;_WINDOWS;_USRDLL;CONEMUDW_EXPORTS;FORCE_HEAP_CHECK" MinimalRebuild="true" BasicRuntimeChecks="3" RuntimeLibrary="1" UsePrecompiledHeader="0" WarningLevel="3" DebugInformationFormat="4" />
       <Tool Name="VCManagedResourceCompilerTool" />
       <Tool Name="VCResourceCompilerTool" />
       <Tool Name="VCPreLinkEventTool" />
@@ -279,7 +279,7 @@
       <Tool Name="VCXMLDataGeneratorTool" />
       <Tool Name="VCWebServiceProxyGeneratorTool" />
       <Tool Name="VCMIDLTool" />
-      <Tool Name="VCCLCompilerTool" Optimization="0" PreprocessorDefinitions="WIN32;_DEBUG;ASSERT_PIPE_ALLOWED;_WINDOWS;_USRDLL;CONEMUDW_EXPORTS;CONEMU_MINIMAL;FORCE_HEAP_CHECK" MinimalRebuild="true" BasicRuntimeChecks="3" RuntimeLibrary="1" UsePrecompiledHeader="0" WarningLevel="3" DebugInformationFormat="4" />
+      <Tool Name="VCCLCompilerTool" Optimization="0" PreprocessorDefinitions="WIN32;_DEBUG;ASSERT_PIPE_ALLOWED;_WINDOWS;_USRDLL;CONEMUDW_EXPORTS;FORCE_HEAP_CHECK" MinimalRebuild="true" BasicRuntimeChecks="3" RuntimeLibrary="1" UsePrecompiledHeader="0" WarningLevel="3" DebugInformationFormat="4" />
       <Tool Name="VCManagedResourceCompilerTool" />
       <Tool Name="VCResourceCompilerTool" />
       <Tool Name="VCPreLinkEventTool" />
@@ -317,7 +317,7 @@
       <Tool Name="VCXMLDataGeneratorTool" />
       <Tool Name="VCWebServiceProxyGeneratorTool" />
       <Tool Name="VCMIDLTool" />
-      <Tool Name="VCCLCompilerTool" Optimization="0" PreprocessorDefinitions="WIN32;_DEBUG;ASSERT_PIPE_ALLOWED;_WINDOWS;_USRDLL;CONEMUDW_EXPORTS;CONEMU_MINIMAL;FORCE_HEAP_CHECK" MinimalRebuild="true" ExceptionHandling="0" BasicRuntimeChecks="0" RuntimeLibrary="1" BufferSecurityCheck="false" RuntimeTypeInfo="false" UsePrecompiledHeader="0" WarningLevel="3" DebugInformationFormat="4" />
+      <Tool Name="VCCLCompilerTool" Optimization="0" PreprocessorDefinitions="WIN32;_DEBUG;ASSERT_PIPE_ALLOWED;_WINDOWS;_USRDLL;CONEMUDW_EXPORTS;FORCE_HEAP_CHECK" MinimalRebuild="true" ExceptionHandling="0" BasicRuntimeChecks="0" RuntimeLibrary="1" BufferSecurityCheck="false" RuntimeTypeInfo="false" UsePrecompiledHeader="0" WarningLevel="3" DebugInformationFormat="4" />
       <Tool Name="VCManagedResourceCompilerTool" />
       <Tool Name="VCResourceCompilerTool" />
       <Tool Name="VCPreLinkEventTool" />

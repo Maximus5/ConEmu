@@ -26,6 +26,8 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#define SHOWDEBUGSTR
+
 #include <windows.h>
 
 #ifdef _DEBUG
@@ -61,6 +63,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifdef _DEBUG
 #include "../common/WinObjects.h"
 #endif
+
+#define DEBUGSTRCALL(s) //DEBUGSTR(s)
 
 #define MSG_TITLE "ConEmu writer"
 #define MSG_INVALID_CONEMU_VER "Unsupported ConEmu version detected!\nRequired version: " CONEMUVERS "\nConsole writer'll works in 4bit mode"
@@ -138,6 +142,13 @@ BOOL LoadFarVersion()
 	}
 
 	return lbRc;
+}
+
+// Dummy external requirement for FileExistsSearch.
+// But it's better to splite FileExistsSearch code...
+bool SearchAppPaths(wchar_t const *,struct CmdArg &,bool,struct CmdArg *)
+{
+	return false;
 }
 
 
@@ -578,6 +589,11 @@ void CloseBuffers()
 //TODO: по printf/std::cout/WriteConsole, без явного указания цвета.
 BOOL WINAPI GetTextAttributes(FarColor* Attributes)
 {
+	#ifdef _DEBUG
+	wchar_t szCall[100]; _wsprintf(szCall, SKIPCOUNT(szCall) L"ExtCon::GetTextAttributes\n");
+	DEBUGSTRCALL(szCall);
+	#endif
+
 	BOOL lbTrueColor = CheckBuffers();
 	UNREFERENCED_PARAMETER(lbTrueColor);
 	
@@ -587,6 +603,7 @@ BOOL WINAPI GetTextAttributes(FarColor* Attributes)
 	if (!GetBufferInfo(h, csbi, srWork))
 	{
 		gCurrentAttr.WasSet = false;
+		_ASSERTE(FALSE && "GetBufferInfo failed");
 		return FALSE;
 	}
 
@@ -696,6 +713,11 @@ BOOL WINAPI GetTextAttributes(FarColor* Attributes)
 //TODO: по printf/std::cout/WriteConsole, без явного указания цвета.
 BOOL WINAPI SetTextAttributes(const FarColor* Attributes)
 {
+	#ifdef _DEBUG
+	wchar_t szCall[100]; _wsprintf(szCall, SKIPCOUNT(szCall) L"ExtCon::SetTextAttributes\n");
+	DEBUGSTRCALL(szCall);
+	#endif
+
 	if (!Attributes)
 	{
 		// ConEmu internals: сбросить запомненный "атрибут"
@@ -821,6 +843,11 @@ BOOL WINAPI SetTextAttributes(const FarColor* Attributes)
 
 BOOL WINAPI ClearExtraRegions(const FarColor* Color, int Mode)
 {
+	#ifdef _DEBUG
+	wchar_t szCall[100]; _wsprintf(szCall, SKIPCOUNT(szCall) L"ExtCon::ClearExtraRegions\n");
+	DEBUGSTRCALL(szCall);
+	#endif
+
 	//TODO: Пока работаем через старый Annotation buffer (переделать нужно)
 	//TODO: который по определению соответствует видимой области экрана
 	return SetTextAttributes(Color);
@@ -828,11 +855,21 @@ BOOL WINAPI ClearExtraRegions(const FarColor* Color, int Mode)
 
 BOOL WINAPI ClearExtraRegionsOld(const FarColor* Color)
 {
+	#ifdef _DEBUG
+	wchar_t szCall[100]; _wsprintf(szCall, SKIPCOUNT(szCall) L"ExtCon::ClearExtraRegionsOld\n");
+	DEBUGSTRCALL(szCall);
+	#endif
+
 	return ClearExtraRegions(Color, 0);
 }
 
 BOOL WINAPI ReadOutput(FAR_CHAR_INFO* Buffer, COORD BufferSize, COORD BufferCoord, SMALL_RECT* ReadRegion)
 {
+	#ifdef _DEBUG
+	wchar_t szCall[100]; _wsprintf(szCall, SKIPCOUNT(szCall) L"ExtCon::ReadOutput({%i,%i}-{%i,%i})\n", ReadRegion->Left, ReadRegion->Top, ReadRegion->Right, ReadRegion->Bottom);
+	DEBUGSTRCALL(szCall);
+	#endif
+
 	BOOL lbTrueColor = CheckBuffers();
 	UNREFERENCED_PARAMETER(lbTrueColor);
 	/*
@@ -983,6 +1020,11 @@ BOOL WINAPI ReadOutput(FAR_CHAR_INFO* Buffer, COORD BufferSize, COORD BufferCoor
 
 BOOL WINAPI WriteOutput(const FAR_CHAR_INFO* Buffer, COORD BufferSize, COORD BufferCoord, SMALL_RECT* WriteRegion)
 {
+	#ifdef _DEBUG
+	wchar_t szCall[100]; _wsprintf(szCall, SKIPCOUNT(szCall) L"ExtCon::WriteOutput({%i,%i}-{%i,%i})\n", WriteRegion->Left, WriteRegion->Top, WriteRegion->Right, WriteRegion->Bottom);
+	DEBUGSTRCALL(szCall);
+	#endif
+
 	BOOL lbTrueColor = CheckBuffers(true);
 	UNREFERENCED_PARAMETER(lbTrueColor);
 	/*
@@ -1181,6 +1223,11 @@ BOOL WINAPI WriteOutput(const FAR_CHAR_INFO* Buffer, COORD BufferSize, COORD Buf
 
 BOOL WINAPI WriteText(HANDLE hConsoleOutput, const AnnotationInfo* Attributes, const wchar_t* Buffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten)
 {
+	#ifdef _DEBUG
+	wchar_t szCall[100]; _wsprintf(szCall, SKIPCOUNT(szCall) L"ExtCon::WriteText(chars=%u)\n", nNumberOfCharsToWrite);
+	DEBUGSTRCALL(szCall);
+	#endif
+
 	// Ограничение Short - на функции WriteConsoleOutput
 	if (!Buffer || !nNumberOfCharsToWrite || (nNumberOfCharsToWrite >= 0x8000))
 		return FALSE;
@@ -1306,6 +1353,11 @@ BOOL WINAPI WriteText(HANDLE hConsoleOutput, const AnnotationInfo* Attributes, c
 
 BOOL WINAPI Commit()
 {
+	#ifdef _DEBUG
+	wchar_t szCall[100]; _wsprintf(szCall, SKIPCOUNT(szCall) L"ExtCon::Commit\n");
+	DEBUGSTRCALL(szCall);
+	#endif
+
 	// Если буфер не был создан - то и передергивать нечего
 	if (gpTrueColor != NULL)
 	{
@@ -1748,6 +1800,11 @@ void CopyShaded(FAR_CHAR_INFO* Src, FAR_CHAR_INFO* Dst)
 
 int  WINAPI GetColorDialog(FarColor* Color, BOOL Centered, BOOL AddTransparent)
 {
+	#ifdef _DEBUG
+	wchar_t szCall[100]; _wsprintf(szCall, SKIPCOUNT(szCall) L"ExtCon::GetColorDialog\n");
+	DEBUGSTRCALL(szCall);
+	#endif
+
 	//TODO: Показать диалог (свой) в котором должно быть поле с текстом,
 	//TODO: отрисованное активными цветами (фона/текста)
 	//TODO: + два (опциональных) флажка "Transparent" (и для фона и для текста)
