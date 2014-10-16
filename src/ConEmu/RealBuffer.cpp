@@ -3179,16 +3179,16 @@ void CRealBuffer::OnTimerCheckSelection()
 // x,y - экранные координаты
 // crMouse - ScreenToBuffer
 // Возвращает true, если мышку обработал "сам буфер"
-bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse, bool abFromTouch /*= false*/)
+bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse)
 {
 	#ifdef _DEBUG
-	wchar_t szDbgInfo[200]; _wsprintf(szDbgInfo, SKIPLEN(countof(szDbgInfo)) L"RBuf::OnMouse %s XY={%i,%i} CR={%i,%i}%s SelFlags=x%08X\n",
+	wchar_t szDbgInfo[200]; _wsprintf(szDbgInfo, SKIPLEN(countof(szDbgInfo)) L"RBuf::OnMouse %s XY={%i,%i} CR={%i,%i} SelFlags=x%08X\n",
 		messg==WM_MOUSEMOVE?L"WM_MOUSEMOVE":
 		messg==WM_LBUTTONDOWN?L"WM_LBUTTONDOWN":messg==WM_LBUTTONUP?L"WM_LBUTTONUP":messg==WM_LBUTTONDBLCLK?L"WM_LBUTTONDBLCLK":
 		messg==WM_RBUTTONDOWN?L"WM_RBUTTONDOWN":messg==WM_RBUTTONUP?L"WM_RBUTTONUP":messg==WM_RBUTTONDBLCLK?L"WM_RBUTTONDBLCLK":
 		messg==WM_MBUTTONDOWN?L"WM_MBUTTONDOWN":messg==WM_MBUTTONUP?L"WM_MBUTTONUP":messg==WM_MBUTTONDBLCLK?L"WM_MBUTTONDBLCLK":
 		messg==WM_MOUSEWHEEL?L"WM_MOUSEWHEEL":messg==WM_MOUSEHWHEEL?L"WM_MOUSEHWHEEL":
-		L"{OtherMsg}", x,y, crMouse.X,crMouse.Y,(abFromTouch?L" Touch":L""), con.m_sel.dwFlags);
+		L"{OtherMsg}", x,y, crMouse.X,crMouse.Y, con.m_sel.dwFlags);
 	DEBUGSTRMOUSE(szDbgInfo);
 	#endif
 
@@ -3316,29 +3316,10 @@ bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse
 			|| (((messg == WM_MOUSEWHEEL) || (messg == WM_MOUSEHWHEEL)) && isSelfSelectMode())
 			))
 	{
-		if (messg == WM_MOUSEWHEEL)
+		if ((messg == WM_MOUSEWHEEL) || (messg == WM_MOUSEHWHEEL))
 		{
-			SHORT nDir = (SHORT)HIWORD(wParam);
-			BOOL lbCtrl = isPressed(VK_CONTROL);
-
-			UINT nCount = abFromTouch ? 1 : gpConEmu->mouse.GetWheelScrollLines();
-
-			if (nDir > 0)
-			{
-				DoScrollBuffer(lbCtrl ? SB_PAGEUP : SB_LINEUP, -1, nCount);
-			}
-			else if (nDir < 0)
-			{
-				DoScrollBuffer(lbCtrl ? SB_PAGEDOWN : SB_LINEDOWN, -1, nCount);
-			}
-
-			return true; // уже обработано
-		}
-		else if (messg == WM_MOUSEHWHEEL)
-		{
-			TODO("WM_MOUSEHWHEEL - горизонтальная прокрутка");
-			_ASSERTE(FALSE && "Horz scrolling! WM_MOUSEHWHEEL");
-			//return true; -- когда будет готово - return true;
+			_ASSERTE(FALSE && "Must be processed in CRealConsole::OnScroll");
+			return true; // обработано
 		}
 
 		if (!isConSelectMode())
@@ -6685,38 +6666,18 @@ LRESULT CRealBuffer::DoScrollBuffer(int nDirection, short nTrackPos /*= -1*/, UI
 
 		if (nNewTop != GetBufferPosY())
 		{
-			SetTopLeft(nNewTop, con.TopLeft.x);
 			con.m_sbi.srWindow.Top = nNewTop;
 			con.m_sbi.srWindow.Bottom = nNewTop + nVisible - 1;
 
-			if (m_Type == rbt_Primary)
-			{
-				DWORD nSrvPID = mp_RCon->GetServerPID();
-				if (nSrvPID)
-				{
-					CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_SETTOPLEFT, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_CONINFO));
-					pIn->ReqConInfo.TopLeft = con.TopLeft;
-					CESERVER_REQ *pOut = ExecuteSrvCmd(nSrvPID, pIn, ghWnd);
-					ExecuteFreeResult(pOut);
-					ExecuteFreeResult(pIn);
-				}
-			}
-			else
+			SetTopLeft(nNewTop, con.TopLeft.x, true);
+
+			if (m_Type != rbt_Primary)
 			{
 				mp_RCon->mb_DataChanged = TRUE; // Переменная используется внутри класса
 				con.bConsoleDataChanged = TRUE; // А эта - при вызовах из CVirtualConsole
 			}
 		}
 	}
-	return 0;
-}
-
-LRESULT CRealBuffer::DoSetScrollPos(WPARAM wParam)
-{
-	if (!this) return 0;
-
-	// SB_LINEDOWN / SB_LINEUP / SB_PAGEDOWN / SB_PAGEUP
-	DoScrollBuffer(LOWORD(wParam),HIWORD(wParam));
 	return 0;
 }
 

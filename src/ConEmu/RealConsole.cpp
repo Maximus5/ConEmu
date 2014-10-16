@@ -93,6 +93,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRGUICHILDPOS(s) //DEBUGSTR(s)
 #define DEBUGSTRPROGRESS(s) //DEBUGSTR(s)
 #define DEBUGSTRFARPID(s) DEBUGSTR(s)
+#define DEBUGSTRMOUSE(s) //DEBUGSTR(s)
 
 // Иногда не отрисовывается диалог поиска полностью - только бежит текущая сканируемая директория.
 // Иногда диалог отрисовался, но часть до текста "..." отсутствует
@@ -4110,8 +4111,48 @@ COORD CRealConsole::BufferToScreen(COORD crMouse, bool bFixup /*= true*/, bool b
 }
 
 // x,y - экранные координаты
+void CRealConsole::OnScroll(UINT messg, WPARAM wParam, int x, int y, bool abFromTouch /*= false*/)
+{
+	#ifdef _DEBUG
+	wchar_t szDbgInfo[200]; _wsprintf(szDbgInfo, SKIPLEN(countof(szDbgInfo)) L"RBuf::OnMouse %s XY={%i,%i}%s\n",
+		messg==WM_MOUSEWHEEL?L"WM_MOUSEWHEEL":messg==WM_MOUSEHWHEEL?L"WM_MOUSEHWHEEL":
+		L"{OtherMsg}", x,y, (abFromTouch?L" Touch":L""));
+	DEBUGSTRMOUSE(szDbgInfo);
+	#endif
+
+	switch (messg)
+	{
+	case WM_MOUSEWHEEL:
+	{
+		SHORT nDir = (SHORT)HIWORD(wParam);
+		BOOL lbCtrl = isPressed(VK_CONTROL);
+
+		UINT nCount = abFromTouch ? 1 : gpConEmu->mouse.GetWheelScrollLines();
+
+		if (nDir > 0)
+		{
+			mp_ABuf->DoScrollBuffer(lbCtrl ? SB_PAGEUP : SB_LINEUP, -1, nCount);
+		}
+		else if (nDir < 0)
+		{
+			mp_ABuf->DoScrollBuffer(lbCtrl ? SB_PAGEDOWN : SB_LINEDOWN, -1, nCount);
+		}
+		break;
+	} // WM_MOUSEWHEEL
+
+	case WM_MOUSEHWHEEL:
+	{
+		TODO("WM_MOUSEHWHEEL - горизонтальная прокрутка");
+		_ASSERTE(FALSE && "Horz scrolling! WM_MOUSEHWHEEL");
+		//return true; -- когда будет готово - return true;
+		break;
+	} // WM_MOUSEHWHEEL
+	} // switch (messg)
+}
+
+// x,y - экранные координаты
 // Если abForceSend==true - не проверять на "повторность" события, и не проверять "isPressed(VK_?BUTTON)"
-void CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y, bool abForceSend /*= false*/, bool abFromTouch /*= false*/)
+void CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y, bool abForceSend /*= false*/)
 {
 #ifndef WM_MOUSEHWHEEL
 #define WM_MOUSEHWHEEL                  0x020E
@@ -4140,7 +4181,7 @@ void CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y, bool abForce
 	if (messg == WM_LBUTTONDOWN)
 		mb_WasMouseSelection = false;
 
-	if (mp_ABuf->OnMouse(messg, wParam, x, y, crMouse, abFromTouch))
+	if (mp_ABuf->OnMouse(messg, wParam, x, y, crMouse))
 		return; // В консоль не пересылать, событие обработал "сам буфер"
 
 
@@ -5414,6 +5455,25 @@ LRESULT CRealConsole::DoScroll(int nDirection, UINT nCount /*= 1*/)
 		_ASSERTE(nDirection==SB_LINEUP || nDirection==SB_LINEDOWN);
 		_ASSERTE(SB_LINEUP==(SB_HALFPAGEUP-SB_HALFPAGEUP) && SB_LINEDOWN==(SB_HALFPAGEDOWN-SB_HALFPAGEUP));
 		break;
+	case SB_THUMBTRACK:
+	case SB_THUMBPOSITION:
+		nTrackPos = nCount;
+		break;
+	case SB_LINEDOWN:
+	case SB_LINEUP:
+		break;
+	case SB_PAGEDOWN:
+	case SB_PAGEUP:
+		nCount = TextHeight();
+		nDirection -= SB_PAGEDOWN;
+		_ASSERTE(nDirection==SB_LINEUP || nDirection==SB_LINEDOWN);
+		break;
+	case SB_TOP:
+		nTrackPos = 0;
+		break;
+	case SB_BOTTOM:
+		nTrackPos = sbi.dwSize.Y - TextHeight() + 1;
+		break;
 	case SB_GOTOCURSOR:
 		nVisible = mp_ABuf->GetTextHeight();
 		nDirection = SB_THUMBPOSITION;
@@ -5445,13 +5505,6 @@ LRESULT CRealConsole::DoScroll(int nDirection, UINT nCount /*= 1*/)
 	lRc = mp_ABuf->DoScrollBuffer(nDirection, nTrackPos, nCount);
 wrap:
 	return lRc;
-}
-
-LRESULT CRealConsole::DoSetScrollPos(WPARAM wParam)
-{
-	if (!this) return 0;
-
-	return mp_ABuf->DoSetScrollPos(wParam);
 }
 
 const ConEmuHotKey* CRealConsole::ProcessSelectionHotKey(const ConEmuChord& VkState, bool bKeyDown, const wchar_t *pszChars)

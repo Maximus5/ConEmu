@@ -428,7 +428,8 @@ class CRealConsole
 		const ConEmuHotKey* ProcessSelectionHotKey(const ConEmuChord& VkState, bool bKeyDown, const wchar_t *pszChars);
 		void ProcessKeyboard(UINT messg, WPARAM wParam, LPARAM lParam, const wchar_t *pszChars);
 		void OnKeyboardIme(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
-		void OnMouse(UINT messg, WPARAM wParam, int x, int y, bool abForceSend = false, bool abFromTouch = false);
+		void OnMouse(UINT messg, WPARAM wParam, int x, int y, bool abForceSend = false);
+		void OnScroll(UINT messg, WPARAM wParam, int x, int y, bool abFromTouch = false);
 		void OnFocus(BOOL abFocused);
 
 		void StopSignal();
@@ -477,7 +478,6 @@ class CRealConsole
 		bool isServerAvailable();
 		bool isServerClosing();
 		LRESULT DoScroll(int nDirection, UINT nCount = 1);
-		LRESULT DoSetScrollPos(WPARAM wParam);
 		bool GetConsoleSelectionInfo(CONSOLE_SELECTION_INFO *sel);
 		bool isConSelectMode();
 		bool isFar(bool abPluginRequired=false);

@@ -110,7 +110,6 @@ public:
 	void OnBufferHeight();
 
 	LRESULT DoScrollBuffer(int nDirection, short nTrackPos = -1, UINT nCount = 1);
-	LRESULT DoSetScrollPos(WPARAM wParam);
 	void ResetTopLeft();
 
 	BOOL ApplyConsoleInfo();
@@ -125,7 +124,7 @@ public:
 
 	void ShowKeyBarHint(WORD nID);
 
-	bool OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse, bool abFromTouch = false);
+	bool OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse);
 
 	BOOL GetRBtnDrag(COORD* pcrMouse);
 	void SetRBtnDrag(BOOL abRBtnDrag, const COORD* pcrMouse = NULL);

@@ -10829,11 +10829,11 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 
 	//-- Вообще, если курсор над полосой прокрутки - любые события мышки в консоль не нужно слать...
 	//-- Но если мышка над скроллом - то обработкой Wheel занимается RealConsole и слать таки нужно...
-	//if (messg == WM_MOUSEMOVE)
-	if ((messg != WM_MOUSEWHEEL) && (messg != WM_MOUSEHWHEEL))
+	if (TrackMouse())
 	{
-		if (TrackMouse())
-			return 0;
+		if (pRCon && ((messg == WM_MOUSEWHEEL) || (messg == WM_MOUSEHWHEEL)))
+			pRCon->OnScroll(messg, wParam, ptCurClient.x, ptCurClient.y);
+		return 0;
 	}
 
 	if (pRCon && pRCon->isSelectionPresent()

@@ -545,10 +545,11 @@ bool CGestures::ProcessMove(HWND hWnd, const LONG ldx, const LONG ldy)
 				if (hWnd != VCon->GetView())
 					MapWindowPoints(hWnd, VCon->GetView(), &pt, 1);
 
-				pRCon->OnMouse(WM_MOUSEWHEEL, MAKELPARAM(0,Delta), pt.x, pt.y, true, true);
+				pRCon->OnScroll(WM_MOUSEWHEEL, MAKELPARAM(0,Delta), pt.x, pt.y, true);
 
 				lbSent = true; // Запомнить обработанную координату
 			}
+			TODO("Horizontal Scroll!");
 		}
 	}
 
