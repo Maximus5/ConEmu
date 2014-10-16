@@ -5390,7 +5390,7 @@ LPCWSTR CRealConsole::GetTabTitle(CTab& tab)
 }
 
 // nDirection is one of the standard SB_xxx constants
-LRESULT CRealConsole::OnScroll(int nDirection, UINT nCount /*= 1*/)
+LRESULT CRealConsole::DoScroll(int nDirection, UINT nCount /*= 1*/)
 {
 	if (!this || !mp_ABuf)
 		return 0;
@@ -5428,16 +5428,16 @@ LRESULT CRealConsole::OnScroll(int nDirection, UINT nCount /*= 1*/)
 		break;
 	}
 
-	lRc = mp_ABuf->OnScroll(nDirection, nTrackPos, nCount);
+	lRc = mp_ABuf->DoScrollBuffer(nDirection, nTrackPos, nCount);
 wrap:
 	return lRc;
 }
 
-LRESULT CRealConsole::OnSetScrollPos(WPARAM wParam)
+LRESULT CRealConsole::DoSetScrollPos(WPARAM wParam)
 {
 	if (!this) return 0;
 
-	return mp_ABuf->OnSetScrollPos(wParam);
+	return mp_ABuf->DoSetScrollPos(wParam);
 }
 
 const ConEmuHotKey* CRealConsole::ProcessSelectionHotKey(const ConEmuChord& VkState, bool bKeyDown, const wchar_t *pszChars)

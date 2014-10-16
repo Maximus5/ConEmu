@@ -483,7 +483,7 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 							pVCon->mb_VTracking = FALSE;
 							break;
 						}
-						pVCon->RCon()->OnSetScrollPos(wParam);
+						pVCon->RCon()->DoScroll(LOWORD(wParam), HIWORD(wParam));
 						break;
 
 					case WM_LBUTTONUP:
@@ -855,7 +855,7 @@ LRESULT CConEmuChild::BackWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM l
 							pVCon->mb_VTracking = FALSE;
 							break;
 						}
-						pVCon->RCon()->OnSetScrollPos(wParam);
+						pVCon->RCon()->DoScroll(LOWORD(wParam), HIWORD(wParam));
 						break;
 
 					case WM_LBUTTONUP:

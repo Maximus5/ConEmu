@@ -469,8 +469,8 @@ class CRealConsole
 		bool isServerCreated(bool bFullRequired = false);
 		bool isServerAvailable();
 		bool isServerClosing();
-		LRESULT OnScroll(int nDirection, UINT nCount = 1);
-		LRESULT OnSetScrollPos(WPARAM wParam);
+		LRESULT DoScroll(int nDirection, UINT nCount = 1);
+		LRESULT DoSetScrollPos(WPARAM wParam);
 		bool GetConsoleSelectionInfo(CONSOLE_SELECTION_INFO *sel);
 		bool isConSelectMode();
 		bool isFar(bool abPluginRequired=false);

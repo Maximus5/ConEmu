@@ -3123,14 +3123,14 @@ bool CRealBuffer::PatchMouseCoords(int& x, int& y, COORD& crMouse)
 	{
 		DEBUGSTRMOUSE(L"Autoscrolling buffer one line up\n");
 		crMouse.Y = max(0,con.m_sbi.srWindow.Top-1);
-		OnScroll(SB_LINEUP);
+		DoScrollBuffer(SB_LINEUP);
 		y = 0;
 	}
 	else if ((crMouse.Y > con.m_sbi.srWindow.Bottom) || (y > (nVConHeight-SELMOUSEAUTOSCROLLPIX)))
 	{
 		DEBUGSTRMOUSE(L"Autoscrolling buffer one line down\n");
 		crMouse.Y = min(con.m_sbi.srWindow.Bottom+1,con.m_sbi.dwSize.Y-1);
-		OnScroll(SB_LINEDOWN);
+		DoScrollBuffer(SB_LINEDOWN);
 		y = (nVConHeight - 1);
 	}
 
@@ -3319,11 +3319,11 @@ bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse
 
 			if (nDir > 0)
 			{
-				OnScroll(lbCtrl ? SB_PAGEUP : SB_LINEUP, -1, nCount);
+				DoScrollBuffer(lbCtrl ? SB_PAGEUP : SB_LINEUP, -1, nCount);
 			}
 			else if (nDir < 0)
 			{
-				OnScroll(lbCtrl ? SB_PAGEDOWN : SB_LINEDOWN, -1, nCount);
+				DoScrollBuffer(lbCtrl ? SB_PAGEDOWN : SB_LINEDOWN, -1, nCount);
 			}
 
 			return true; // уже обработано
@@ -4009,11 +4009,11 @@ void CRealBuffer::ExpandSelection(SHORT anX, SHORT anY, bool bWasSelection)
 	// 131017 Scroll content if selection cursor goes out of visible screen
 	if (anY < con.nTopVisibleLine)
 	{
-		OnScroll(SB_LINEUP);
+		DoScrollBuffer(SB_LINEUP);
 	}
 	else if (anY >= (con.nTopVisibleLine + con.nTextHeight))
 	{
-		OnScroll(SB_LINEDOWN);
+		DoScrollBuffer(SB_LINEDOWN);
 	}
 
 	COORD cr = {anX,anY};
@@ -6567,7 +6567,7 @@ short CRealBuffer::CheckProgressInConsole(const wchar_t* pszCurLine)
 	return nProgress;
 }
 
-LRESULT CRealBuffer::OnScroll(int nDirection, short nTrackPos /*= -1*/, UINT nCount /*= 1*/)
+LRESULT CRealBuffer::DoScrollBuffer(int nDirection, short nTrackPos /*= -1*/, UINT nCount /*= 1*/)
 {
 	if (!this) return 0;
 
@@ -6688,12 +6688,12 @@ LRESULT CRealBuffer::OnScroll(int nDirection, short nTrackPos /*= -1*/, UINT nCo
 	return 0;
 }
 
-LRESULT CRealBuffer::OnSetScrollPos(WPARAM wParam)
+LRESULT CRealBuffer::DoSetScrollPos(WPARAM wParam)
 {
 	if (!this) return 0;
 
 	// SB_LINEDOWN / SB_LINEUP / SB_PAGEDOWN / SB_PAGEUP
-	OnScroll(LOWORD(wParam),HIWORD(wParam));
+	DoScrollBuffer(LOWORD(wParam),HIWORD(wParam));
 	return 0;
 }
 

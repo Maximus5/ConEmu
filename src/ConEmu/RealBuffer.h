@@ -109,8 +109,8 @@ public:
 	BOOL BufferHeightTurnedOn(CONSOLE_SCREEN_BUFFER_INFO* psbi);
 	void OnBufferHeight();
 
-	LRESULT OnScroll(int nDirection, short nTrackPos = -1, UINT nCount = 1);
-	LRESULT OnSetScrollPos(WPARAM wParam);
+	LRESULT DoScrollBuffer(int nDirection, short nTrackPos = -1, UINT nCount = 1);
+	LRESULT DoSetScrollPos(WPARAM wParam);
 
 	BOOL ApplyConsoleInfo();
 

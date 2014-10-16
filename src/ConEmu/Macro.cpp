@@ -2253,19 +2253,19 @@ LPWSTR ConEmuMacro::Scroll(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 	switch (nType)
 	{
 	case 0:
-		apRCon->OnScroll((nDir < 0) ? SB_LINEUP : SB_LINEDOWN, nCount);
+		apRCon->DoScroll((nDir < 0) ? SB_LINEUP : SB_LINEDOWN, nCount);
 		break;
 	case 1:
-		apRCon->OnScroll((nDir < 0) ? SB_PAGEUP : SB_PAGEDOWN, nCount);
+		apRCon->DoScroll((nDir < 0) ? SB_PAGEUP : SB_PAGEDOWN, nCount);
 		break;
 	case 2:
-		apRCon->OnScroll((nDir < 0) ? SB_HALFPAGEUP : SB_HALFPAGEDOWN, nCount);
+		apRCon->DoScroll((nDir < 0) ? SB_HALFPAGEUP : SB_HALFPAGEDOWN, nCount);
 		break;
 	case 3:
-		apRCon->OnScroll((nDir < 0) ? SB_TOP : SB_BOTTOM);
+		apRCon->DoScroll((nDir < 0) ? SB_TOP : SB_BOTTOM);
 		break;
 	case 4:
-		apRCon->OnScroll(SB_GOTOCURSOR);
+		apRCon->DoScroll(SB_GOTOCURSOR);
 		break;
 	}
 
