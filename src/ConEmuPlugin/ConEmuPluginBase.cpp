@@ -849,11 +849,11 @@ void CPluginBase::ShowTabsList()
 					if (nArea != -1)
 					{
 						if (nArea == ma_Shell || nArea == ma_Search || nArea == ma_InfoPanel || nArea == ma_QViewPanel || nArea == ma_TreePanel)
-							gnPluginOpenFrom = of_FilePanel;
+							nOpenFrom = of_FilePanel;
 						else if (nArea == ma_Editor)
-							gnPluginOpenFrom = of_Editor;
+							nOpenFrom = of_Editor;
 						else if (nArea == ma_Viewer)
-							gnPluginOpenFrom = of_Viewer;
+							nOpenFrom = of_Viewer;
 					}
 					gnPluginOpenFrom = nOpenFrom;
 					ProcessCommand(CMD_SETWINDOW, FALSE, &nTab, NULL, true/*bForceSendTabs*/);
