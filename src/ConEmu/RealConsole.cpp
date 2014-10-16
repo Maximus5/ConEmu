@@ -9284,7 +9284,7 @@ void CRealConsole::SetTabs(ConEmuTab* apTabs, int anTabsCount)
 	for (int I = tabs.mn_tabsCount-1; I >= 0; I--)
 	{
 		CTab tab(__FILE__,__LINE__);
-		if (GetTab(I, tab))
+		if (tabs.m_Tabs.GetTabByIndex(I, tab))
 		{
 			if (tab->Flags() & fwt_CurrentFarWnd)
 			{
