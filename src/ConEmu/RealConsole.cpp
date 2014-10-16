@@ -364,7 +364,7 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 	/* *** TABS *** */
 	// -- т.к. автопоказ табов может вызвать ресайз - то табы в самом конце инициализации!
 	_ASSERTE(isMainThread()); // Иначе табы сразу не перетряхнутся
-	SetTabs(NULL,1); // Для начала - показывать вкладку Console, а там ФАР разберется
+	SetTabs(NULL, 1, 0); // Для начала - показывать вкладку Console, а там ФАР разберется
 	MCHKHEAP;
 
 	/* *** Set start pending *** */
@@ -3315,7 +3315,7 @@ void CRealConsole::ResetVarsOnStart()
 
 	// Обновить закладки
 	tabs.m_Tabs.MarkTabsInvalid(CTabStack::MatchNonPanel, 0);
-	SetTabs(NULL,1);
+	SetTabs(NULL, 1, 0);
 	mp_ConEmu->mp_TabBar->PrintRecentStack();
 }
 
@@ -9100,7 +9100,7 @@ void CRealConsole::_TabsInfo::StoreActiveTab(int anActiveIndex, const CTabID* ap
 	}
 }
 
-void CRealConsole::SetTabs(ConEmuTab* apTabs, int anTabsCount)
+void CRealConsole::SetTabs(ConEmuTab* apTabs, int anTabsCount, DWORD anFarPID)
 {
 #ifdef _DEBUG
 	wchar_t szDbg[128];
@@ -9242,7 +9242,14 @@ void CRealConsole::SetTabs(ConEmuTab* apTabs, int anTabsCount)
 
 		bool bModal = ((TypeAndFlags & fwt_ModalFarWnd) == fwt_ModalFarWnd);
 		bool bEditorViewer = (((TypeAndFlags & fwt_TypeMask) == fwt_Editor) || ((TypeAndFlags & fwt_TypeMask) == fwt_Viewer));
-		int nPID = (bModal || bEditorViewer) ? GetFarPID() : 0;
+
+		// Do not use GetFarPID() here, because Far states may not be updated yet?
+		int nPID = (bModal || bEditorViewer) ? anFarPID : 0;
+		#ifdef _DEBUG
+		_ASSERTE(nPID || ((TypeAndFlags & fwt_TypeMask) == fwt_Panels));
+		if (nPID && !GetFarPID())
+			int nDbg = 0; // That may happens with "edit:<git log", if processes were not updated yet (in MonitorThread)
+		#endif
 
 		bHasModal |= bModal;
 
@@ -10268,7 +10275,7 @@ bool CRealConsole::ActivateFarWindow(int anWndIndex)
 				}
 				else
 				{
-					SetTabs(pGetTabs, TabHdr.nTabCount);
+					SetTabs(pGetTabs, TabHdr.nTabCount, dwPID);
 					int iActive = -1;
 					if ((anWndIndex >= 0) && (TabHdr.nTabCount > 0))
 					{

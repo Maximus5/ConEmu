@@ -724,7 +724,7 @@ CESERVER_REQ* CRealServer::cmdTabsChanged(LPVOID pInst, CESERVER_REQ* pIn, UINT 
 		}
 
 		mp_RCon->tabs.m_Tabs.MarkTabsInvalid(CTabStack::MatchNonPanel, pIn->hdr.nSrcPID);
-		mp_RCon->SetTabs(NULL, 1);
+		mp_RCon->SetTabs(NULL, 1, 0);
 		gpConEmu->mp_TabBar->PrintRecentStack();
 	}
 	else
@@ -828,7 +828,7 @@ CESERVER_REQ* CRealServer::cmdTabsChanged(LPVOID pInst, CESERVER_REQ* pIn, UINT 
 			TODO("DoubleView: все видимые");
 			//gpConEmu->ActiveCon()->Invalidate();
 			CVConGroup::InvalidateAll();
-			mp_RCon->SetTabs(pIn->Tabs.tabs, pIn->Tabs.nTabCount);
+			mp_RCon->SetTabs(pIn->Tabs.tabs, pIn->Tabs.nTabCount, pIn->hdr.nSrcPID);
 			gpConEmu->mp_TabBar->SetRedraw(TRUE);
 			//gpConEmu->ActiveCon()->Redraw();
 			CVConGroup::Redraw();

@@ -519,7 +519,7 @@ class CRealConsole
 		//LRESULT OnConEmuCmd(BOOL abStarted, DWORD anConEmuC_PID);
 		BOOL BufferHeightTurnedOn(CONSOLE_SCREEN_BUFFER_INFO* psbi);
 		void UpdateScrollInfo();
-		void SetTabs(ConEmuTab* apTabs, int anTabsCount);
+		void SetTabs(ConEmuTab* apTabs, int anTabsCount, DWORD anFarPID);
 		void DoRenameTab();
 		bool DuplicateRoot(bool bSkipMsg = false, bool bRunAsAdmin = false, LPCWSTR asNewConsole = NULL, LPCWSTR asApp = NULL, LPCWSTR asParm = NULL);
 		void RenameTab(LPCWSTR asNewTabText = NULL);
