@@ -5540,25 +5540,19 @@ void CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 	bool bGrouped = false;
 	if (bGrouped)
 	{
-		CVConGroup *pGr;
-		CVConGuard VGrActive;
-		if (CVConGroup::isGroup(mp_VCon, &pGr, &VGrActive))
-		{
-			MArray<CVConGuard*> rPanes;
-			int iCount = pGr->GetGroupPanes(&rPanes);
-			if (iCount > 0)
-			{
-				for (int i = 0; i < iCount; i++)
-				{
-					rPanes[i]->VCon()->RCon()->OnKeyboardInt(hWnd, messg, wParam, lParam, pszChars, pDeadCharMsg);
-				}
-				CVConGroup::FreePanesArray(rPanes);
-				return; // Done
-			}
-		}
+		KeyboardIntArg args = {hWnd, messg, wParam, lParam, pszChars, pDeadCharMsg};
+		CVConGroup::EnumVCon(evf_Visible, OnKeyboardBackCall, (LPARAM)&args);
+		return; // Done
 	}
 
 	OnKeyboardInt(hWnd, messg, wParam, lParam, pszChars, pDeadCharMsg);
+}
+
+bool CRealConsole::OnKeyboardBackCall(CVirtualConsole* pVCon, LPARAM lParam)
+{
+	KeyboardIntArg* p = (KeyboardIntArg*)lParam;
+	pVCon->RCon()->OnKeyboardInt(p->hWnd, p->messg, p->wParam, p->lParam, p->pszChars, p->pDeadCharMsg);
+	return true;
 }
 
 void CRealConsole::OnKeyboardInt(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, const wchar_t *pszChars, const MSG* pDeadCharMsg)

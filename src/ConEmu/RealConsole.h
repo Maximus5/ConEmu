@@ -417,6 +417,11 @@ class CRealConsole
 		void PostCommand(DWORD anCmdID, DWORD anCmdSize, LPCVOID ptrData);
 		DWORD mn_InPostDeadChar;
 		void OnKeyboardInt(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, const wchar_t *pszChars, const MSG* pDeadCharMsg);
+		struct KeyboardIntArg
+		{
+			HWND hWnd; UINT messg; WPARAM wParam; LPARAM lParam; const wchar_t *pszChars; const MSG* pDeadCharMsg;
+		};
+		static bool OnKeyboardBackCall(CVirtualConsole* pVCon, LPARAM lParam);
 	public:
 		//BOOL FlushInputQueue(DWORD nTimeout = 500);
 		void OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, const wchar_t *pszChars, const MSG* pDeadCharMsg);
