@@ -97,7 +97,12 @@ int ComspecInit()
 	xf_dump_chk();
 #endif
 	// Это наверное и не нужно, просто для информации...
-	lbSbiRc = MyGetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &gpSrv->sbi);
+	lbSbiRc = GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &gpSrv->sbi);
+	#ifdef _DEBUG
+	DWORD nErrCode = lbSbiRc ? 0 : GetLastError();
+	// Процесс запущен с редиректом вывода?
+	_ASSERTE(lbSbiRc || (nErrCode == ERROR_INVALID_HANDLE));
+	#endif
 
 #if 0
 	// 111211 - "-new_console" теперь передается в GUI и исполняется в нем
