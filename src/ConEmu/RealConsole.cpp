@@ -5518,10 +5518,51 @@ void CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 		return;
 	}
 
+	if (((wParam & 0xFF) >= VK_WHEEL_FIRST) && ((wParam & 0xFF) <= VK_WHEEL_LAST))
+	{
+		// Такие коды с клавиатуры приходить не должны, а то для "мышки" ничего не останется
+		_ASSERTE(!(((wParam & 0xFF) >= VK_WHEEL_FIRST) && ((wParam & 0xFF) <= VK_WHEEL_LAST)));
+		return;
+	}
 
-	WARNING("Тут кое-что нехорошо. Некоторые кнопки нужно обрабатывать раньше.");
-	// Например, AltEnter может посылаться в консоль, а может и "менять FullScreen" (в последнем случае его наверное нужно обработать)
+	// Hotkey не группируются
+	// Иначе получается маразм, например, с Ctrl+Shift+O,
+	// который по идее должен разбивать АКТИВНУЮ консоль,
+	// но пытается разбить все видимые, в итоге срывает крышу
+	if (mp_ConEmu->ProcessHotKeyMsg(messg, wParam, lParam, pszChars, this))
+	{
+		// Yes, Skip
+		return;
+	}
 
+	TODO("Добавить хоткей/макрос влючения/отключения группировки");
+	// сохраняться флажок должен на уровне группы
+	bool bGrouped = false;
+	if (bGrouped)
+	{
+		CVConGroup *pGr;
+		CVConGuard VGrActive;
+		if (CVConGroup::isGroup(mp_VCon, &pGr, &VGrActive))
+		{
+			MArray<CVConGuard*> rPanes;
+			int iCount = pGr->GetGroupPanes(&rPanes);
+			if (iCount > 0)
+			{
+				for (int i = 0; i < iCount; i++)
+				{
+					rPanes[i]->VCon()->RCon()->OnKeyboardInt(hWnd, messg, wParam, lParam, pszChars, pDeadCharMsg);
+				}
+				CVConGroup::FreePanesArray(rPanes);
+				return; // Done
+			}
+		}
+	}
+
+	OnKeyboardInt(hWnd, messg, wParam, lParam, pszChars, pDeadCharMsg);
+}
+
+void CRealConsole::OnKeyboardInt(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, const wchar_t *pszChars, const MSG* pDeadCharMsg)
+{
 	// Основная обработка
 	{
 		if (wParam == VK_MENU && (messg == WM_KEYUP || messg == WM_SYSKEYUP) && gpSet->isFixAltOnAltTab)
@@ -5549,19 +5590,8 @@ void CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 		}
 		#endif
 
-		// Hotkey?
-		if (((wParam & 0xFF) >= VK_WHEEL_FIRST) && ((wParam & 0xFF) <= VK_WHEEL_LAST))
-		{
-			// Такие коды с клавиатуры приходить не должны, а то для "мышки" ничего не останется
-			_ASSERTE(!(((wParam & 0xFF) >= VK_WHEEL_FIRST) && ((wParam & 0xFF) <= VK_WHEEL_LAST)));
-		}
-		else if (mp_ConEmu->ProcessHotKeyMsg(messg, wParam, lParam, pszChars, this))
-		{
-			// Yes, Skip
-			return;
-		}
-		// *** Not send to console ***
-		else if (m_ChildGui.isGuiWnd())
+		// *** Do not send to console ***
+		if (m_ChildGui.isGuiWnd())
 		{
 			switch (messg)
 			{
