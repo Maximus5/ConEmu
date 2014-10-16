@@ -408,9 +408,24 @@ CESERVER_REQ* CRealServer::cmdStartStop(LPVOID pInst, CESERVER_REQ* pIn, UINT nD
 			}
 			else
 			{
+				int iDefaultBufferHeight = gpSet->DefaultBufferHeight;
 				BOOL bAllowBufferHeight = (gpSet->AutoBufferHeight || mp_RCon->isBufferHeight()) && (nParentFarPid != 0);
 				if (pIn->StartStop.bForceBufferHeight)
+				{
 					bAllowBufferHeight = (pIn->StartStop.nForceBufferHeight != 0);
+				}
+				else
+				{
+					int nNewWidth = 0, nNewHeight = 0; DWORD nScroll = 0;
+					if (mp_RCon->mp_RBuf->GetConWindowSize(pIn->StartStop.sbi, &nNewWidth, &nNewHeight, &nScroll))
+					{
+						if (nScroll & rbs_Vert)
+						{
+							bAllowBufferHeight = TRUE;
+							iDefaultBufferHeight = pIn->StartStop.sbi.dwSize.Y;
+						}
+					}
+				}
 
 				// но пока его нужно сбросить
 				mp_RCon->mb_IgnoreCmdStop = FALSE;
@@ -422,7 +437,7 @@ CESERVER_REQ* CRealServer::cmdStartStop(LPVOID pInst, CESERVER_REQ* pIn, UINT nD
 				else
 				{
 					// в ComSpec передаем именно то, что сейчас в gpSet
-					pOut->StartStopRet.nBufferHeight = bAllowBufferHeight ? gpSet->DefaultBufferHeight : 0;
+					pOut->StartStopRet.nBufferHeight = bAllowBufferHeight ? iDefaultBufferHeight : 0;
 				}
 				// 111125 было "con.m_sbi.dwSize.X" и "con.m_sbi.dwSize.X"
 				pOut->StartStopRet.nWidth = mp_RCon->mp_RBuf->GetBufferWidth()/*con.m_sbi.dwSize.X*/;
