@@ -5400,7 +5400,10 @@ LRESULT CRealConsole::DoScroll(int nDirection, UINT nCount /*= 1*/)
 	LRESULT lRc = 0;
 	short nTrackPos = -1;
 	CONSOLE_SCREEN_BUFFER_INFO sbi = {};
+	SMALL_RECT srRealWindow = {};
 	int nVisible = 0;
+
+	mp_ABuf->ConsoleScreenBufferInfo(&sbi, &srRealWindow);
 
 	switch (nDirection)
 	{
@@ -5413,19 +5416,28 @@ LRESULT CRealConsole::DoScroll(int nDirection, UINT nCount /*= 1*/)
 		break;
 	case SB_GOTOCURSOR:
 		nVisible = mp_ABuf->GetTextHeight();
-		mp_ABuf->ConsoleScreenBufferInfo(&sbi);
 		nDirection = SB_THUMBPOSITION;
 		// Курсор выше видимой области?
 		if ((sbi.dwCursorPosition.Y < sbi.srWindow.Top)
 			// Курсор ниже видимой области?
 			|| (sbi.dwCursorPosition.Y > sbi.srWindow.Bottom))
 		{
+			// Видимая область GUI отличается от области консоли?
+			if ((mp_ABuf->m_Type == rbt_Primary)
+				&& CoordInSmallRect(sbi.dwCursorPosition, srRealWindow))
+			{
+				// Просто сбросить
+				mp_ABuf->ResetTopLeft();
+				goto wrap;
+			}
 			// Let it set to one from the bottom
 			nTrackPos = max(0,sbi.dwCursorPosition.Y-nVisible+2);
 		}
 		else
 		{
-			goto wrap; // Он и так видим
+			// Он и так видим, но сбросим TopLeft
+			mp_ABuf->ResetTopLeft();
+			goto wrap;
 		}
 		break;
 	}
