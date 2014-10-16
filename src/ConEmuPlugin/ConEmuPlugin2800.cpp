@@ -1165,6 +1165,10 @@ int CPluginW2800::GetActiveWindowType()
 			return WTYPE_VMENU;
 		case MACROAREA_OTHER: // Grabber
 			return -1;
+		case 18: // MACROAREA_LAST
+			//_ASSERTE(FALSE && "MACROAREA_LAST must not be returned");
+			// Длительная операция, которую можно прервать по Esc
+			return WTYPE_DIALOG;
 	}
 
 	// Сюда мы попасть не должны, все макрообласти должны быть учтены в switch
