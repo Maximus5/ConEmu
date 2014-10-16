@@ -45,6 +45,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //	#define SHOW_INJECTREM_MSGBOX
 //	#define SHOW_ATTACH_MSGBOX
 //	#define SHOW_ROOT_STARTED
+//	#define SHOW_ASYNC_STARTED
 	#define WINE_PRINT_PROC_INFO
 //	#define USE_PIPE_DEBUG_BOXES
 //	#define SHOW_SETCONTITLE_MSGBOX
@@ -207,6 +208,7 @@ RunMode gnRunMode = RM_UNDEFINED;
 BOOL  gbDumpServerInitStatus = FALSE;
 BOOL  gbNoCreateProcess = FALSE;
 BOOL  gbDontInjectConEmuHk = FALSE;
+BOOL  gbAsyncRun = FALSE;
 int   gnCmdUnicodeMode = 0;
 UINT  gnPTYmode = 0; // 1 enable PTY, 2 - disable PTY (work as plain console), 0 - don't change
 BOOL  gbRootIsCmdExe = TRUE;
@@ -574,6 +576,14 @@ BOOL WINAPI DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 void OnProcessCreatedDbg(BOOL bRc, DWORD dwErr, LPPROCESS_INFORMATION pProcessInformation, LPSHELLEXECUTEINFO pSEI)
 {
 	int iDbg = 0;
+
+#ifdef SHOW_ASYNC_STARTED
+	if (gbAsyncRun)
+	{
+		_ASSERTE(FALSE && "Async startup requested");
+	}
+#endif
+
 #ifdef SHOW_ROOT_STARTED
 	if (bRc)
 	{
@@ -1698,8 +1708,8 @@ wait:
 		xf_validate(NULL);
 		#endif
 
-		DWORD dwWait;
-		dwWait = nWaitComspecExit = WaitForSingleObject(pi.hProcess, INFINITE);
+		DWORD nWaitMS = gbAsyncRun ? 0 : INFINITE;
+		nWaitComspecExit = WaitForSingleObject(pi.hProcess, nWaitMS);
 
 		#ifdef _DEBUG
 		xf_validate(NULL);
@@ -1768,7 +1778,7 @@ wrap:
 	else if (pi.hProcess)
 		GetExitCodeProcess(pi.hProcess, &gnExitCode);
 	// Ассерт может быть если был запрос на аттач, который не удался
-	_ASSERTE(gnExitCode!=STILL_ACTIVE || (iRc==CERR_ATTACHFAILED) || (iRc==CERR_RUNNEWCONSOLE));
+	_ASSERTE(gnExitCode!=STILL_ACTIVE || (iRc==CERR_ATTACHFAILED) || (iRc==CERR_RUNNEWCONSOLE) || gbAsyncRun);
 
 	if (gbPrintRetErrLevel)
 	{
@@ -2015,6 +2025,7 @@ AltServerDone:
 	ShutdownSrvStep(L"Finalizing done");
 	UNREFERENCED_PARAMETER(gpszCheck4NeedCmd);
 	UNREFERENCED_PARAMETER(nWaitDebugExit);
+	UNREFERENCED_PARAMETER(nWaitComspecExit);
 #if 0
 	if (gnRunMode == RM_SERVER)
 	{
@@ -4891,6 +4902,10 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 			// Reuse config if starting "ConEmu.exe" from console server!
 			SetEnvironmentVariable(ENV_CONEMU_CONFIG_W, szArg);
 		}
+		else if (lstrcmpi(szArg, L"/ASYNC") == 0 || lstrcmpi(szArg, L"/FORK") == 0)
+		{
+			gbAsyncRun = TRUE;
+		}
 		// После этих аргументов - идет то, что передается в CreateProcess!
 		else if (wcscmp(szArg, L"/ROOT")==0 || wcscmp(szArg, L"/root")==0)
 		{
@@ -4898,6 +4913,7 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 			ShowServerStartedMsgBox();
 			#endif
 			gnRunMode = RM_SERVER; gbNoCreateProcess = FALSE;
+			gbAsyncRun = FALSE;
 			SetWorkEnvVar();
 			break; // lsCmdLine уже указывает на запускаемую программу
 		}
