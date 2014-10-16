@@ -9842,7 +9842,11 @@ bool CRealConsole::GetTab(int tabIdx, /*OUT*/ CTab& rTab)
 	}
 	else if (tabIdx > 0)
 	{
-		return false;
+		// Return all tabs, even if Far is in background
+		#ifdef _DEBUG
+		//return false;
+		int iDbg = 0;
+		#endif
 	}
 
 	// Go
