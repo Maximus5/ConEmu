@@ -130,9 +130,6 @@ RECT CConEmuSize::CalcMargins(DWORD/*enum ConEmuMargins*/ mg, ConEmuWindowMode w
 	// Разница между размером всего окна и клиентской области окна (рамка + заголовок)
 	if ((mg & ((DWORD)CEM_FRAMECAPTION)) && (mp_ConEmu->mp_Inside == NULL))
 	{
-		// Только CEM_CAPTION считать нельзя
-		_ASSERTE((mg & ((DWORD)CEM_FRAMECAPTION)) != CEM_CAPTION);
-
 		// т.к. это первая обработка - можно ставить rc простым приравниванием
 		_ASSERTE(rc.left==0 && rc.top==0 && rc.right==0 && rc.bottom==0);
 		DWORD dwStyle = mp_ConEmu->GetWindowStyle();
@@ -152,8 +149,12 @@ RECT CConEmuSize::CalcMargins(DWORD/*enum ConEmuMargins*/ mg, ConEmuWindowMode w
 
 		bool bHideCaption = gpSet->isCaptionHidden(wmNewMode);
 
+		// Если заголовка нет - то и считать нечего
+		if (bHideCaption && ((mg & ((DWORD)CEM_FRAMECAPTION)) == CEM_CAPTION))
+		{
+		}
 		// AdjustWindowRectEx НЕ должно вызываться в FullScreen. Глючит. А рамки с заголовком нет, расширять нечего.
-		if (wm == wmFullScreen)
+		else if (wm == wmFullScreen)
 		{
 			// Для FullScreen полностью убираются рамки и заголовок
 			_ASSERTE(rc.left==0 && rc.top==0 && rc.right==0 && rc.bottom==0);
@@ -166,38 +167,48 @@ RECT CConEmuSize::CalcMargins(DWORD/*enum ConEmuMargins*/ mg, ConEmuWindowMode w
 		//#endif
 		else if (AdjustWindowRectEx(&rcTest, dwStyle, FALSE, dwStyleEx))
 		{
-			rc.left = -rcTest.left;
-			rc.right = rcTest.right - nTestWidth;
-			rc.bottom = rcTest.bottom - nTestHeight;
-			if ((mg & ((DWORD)CEM_CAPTION)) && !bHideCaption)
+			if ((mg & ((DWORD)CEM_FRAMECAPTION)) == CEM_CAPTION)
 			{
-				#if defined(CONEMU_TABBAR_EX)
-				if ((fdt >= fdt_Aero) && gpSet->isTabsInCaption)
-				{
-					//-- NO additional space!
-					//if (wm != wmMaximized)
-					//	rc.top = mp_ConEmu->GetCaptionDragHeight() + rc.bottom;
-					//else
-					rc.top = rc.bottom + mp_ConEmu->GetCaptionDragHeight();
-				}
-				else
-				#endif
-				{
-					rc.top = -rcTest.top;
-				}
+				rc.top  = (-rcTest.top) - (rcTest.bottom - nTestHeight);
 			}
 			else
 			{
-				rc.top = rc.bottom;
+				rc.left = -rcTest.left;
+				rc.right = rcTest.right - nTestWidth;
+				rc.bottom = rcTest.bottom - nTestHeight;
+				if ((mg & ((DWORD)CEM_CAPTION)) && !bHideCaption)
+				{
+					#if defined(CONEMU_TABBAR_EX)
+					if ((fdt >= fdt_Aero) && gpSet->isTabsInCaption)
+					{
+						//-- NO additional space!
+						//if (wm != wmMaximized)
+						//	rc.top = mp_ConEmu->GetCaptionDragHeight() + rc.bottom;
+						//else
+						rc.top = rc.bottom + mp_ConEmu->GetCaptionDragHeight();
+					}
+					else
+					#endif
+					{
+						rc.top = -rcTest.top;
+					}
+				}
+				else
+				{
+					rc.top = rc.bottom;
+				}
 			}
 			_ASSERTE(rc.top >= 0 && rc.left >= 0 && rc.right >= 0 && rc.bottom >= 0);
 		}
 		else
 		{
 			_ASSERTE(FALSE);
-			rc.left = rc.right = GetSystemMetrics(SM_CXSIZEFRAME);
-			rc.bottom = GetSystemMetrics(SM_CYSIZEFRAME);
-			rc.top = rc.bottom; // рамка
+			if ((mg & ((DWORD)CEM_FRAMECAPTION)) != CEM_CAPTION)
+			{
+				rc.left = rc.right = GetSystemMetrics(SM_CXSIZEFRAME);
+				rc.bottom = GetSystemMetrics(SM_CYSIZEFRAME);
+				rc.top = rc.bottom; // рамка
+			}
 
 			if ((mg & ((DWORD)CEM_CAPTION)) && !bHideCaption) // если есть заголовок - добавим и его
 			{
