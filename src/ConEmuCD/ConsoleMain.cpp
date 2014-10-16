@@ -4906,8 +4906,16 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 		{
 			gbAsyncRun = TRUE;
 		}
+		else if (lstrcmpi(szArg, L"/NOINJECT")==0)
+		{
+			gbDontInjectConEmuHk = TRUE;
+		}
+		else if (lstrcmpi(szArg, L"/DOSBOX")==0)
+		{
+			gbUseDosBox = TRUE;
+		}
 		// После этих аргументов - идет то, что передается в CreateProcess!
-		else if (wcscmp(szArg, L"/ROOT")==0 || wcscmp(szArg, L"/root")==0)
+		else if (lstrcmpi(szArg, L"/ROOT")==0)
 		{
 			#ifdef SHOW_SERVER_STARTED_MSGBOX
 			ShowServerStartedMsgBox();
@@ -4916,14 +4924,6 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 			gbAsyncRun = FALSE;
 			SetWorkEnvVar();
 			break; // lsCmdLine уже указывает на запускаемую программу
-		}
-		else if (lstrcmpi(szArg, L"/NOINJECT")==0)
-		{
-			gbDontInjectConEmuHk = TRUE;
-		}
-		else if (lstrcmpi(szArg, L"/DOSBOX")==0)
-		{
-			gbUseDosBox = TRUE;
 		}
 		// После этих аргументов - идет то, что передается в COMSPEC (CreateProcess)!
 		//if (wcscmp(szArg, L"/C")==0 || wcscmp(szArg, L"/c")==0 || wcscmp(szArg, L"/K")==0 || wcscmp(szArg, L"/k")==0) {
