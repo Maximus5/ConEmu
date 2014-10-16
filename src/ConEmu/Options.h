@@ -185,11 +185,12 @@ struct Settings
 
 		//reg->Load(L"DefaultBufferHeight", DefaultBufferHeight);
 		int DefaultBufferHeight;
-
-		//bool AutoScroll;
-
 		//reg->Load(L"AutoBufferHeight", AutoBufferHeight);
 		bool AutoBufferHeight; // Long console output
+
+		//reg->Load(L"UseScrollLock", UseScrollLock);
+		bool UseScrollLock;
+
 		//reg->Load(L"CmdOutputCP", nCmdOutputCP);
 		int nCmdOutputCP;
 
