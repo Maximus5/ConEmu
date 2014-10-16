@@ -10570,9 +10570,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		return lRc;
 	#endif
 
-	#ifdef _DEBUG
 	wchar_t szDbg[200];
-	#endif
 
 	//2010-05-20 все-таки будем ориентироваться на lParam, потому что
 	//  только так ConEmuTh может передать корректные координаты
@@ -10584,7 +10582,6 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	{
 		POINT ptRealScreen; GetCursorPos(&ptRealScreen);
 
-		#ifdef _DEBUG
 		wchar_t szKeys[100] = L"";
 		if (wParam & MK_CONTROL)  wcscat_c(szKeys, L" Ctrl");
 		if (wParam & MK_LBUTTON)  wcscat_c(szKeys, L" LBtn");
@@ -10598,34 +10595,15 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			(int)(short)HIWORD(wParam), szKeys,
 			(int)(short)LOWORD(lParam), (int)(short)HIWORD(lParam),
 			ptRealScreen.x, ptRealScreen.y);
-		DEBUGSTRMOUSEWHEEL(szDbg);
-		#endif
-
-
-		#if 0
-		// Still not clear why, but when Wheel event is redirected to (inactive) mintty,
-		// we get series of broken Wheel events (wrong coordinates)
-		/*
-		16:52:50.071(gui.10984.8268) Wheel Dir:-120 LParam:{500,237} Real:{500,213}
-		16:52:50.072(gui.10984.8268) Wheel Dir:-120 LParam:{500,261} Real:{500,213}
-		16:52:50.073(gui.10984.8268) Wheel Dir:-120 LParam:{500,285} Real:{500,213}
-		16:52:50.075(gui.10984.8268) Wheel Dir:-120 LParam:{500,309} Real:{500,213}
-		16:52:50.076(gui.10984.8268) Wheel Dir:-120 LParam:{500,333} Real:{500,213}
-		16:52:50.077(gui.10984.8268) Wheel Dir:-120 LParam:{500,357} Real:{500,213}
-		16:52:50.078(gui.10984.8268) Wheel Dir:-120 LParam:{500,381} Real:{500,213}
-		16:52:50.079(gui.10984.8268) Wheel Dir:-120 LParam:{500,405} Real:{500,213}
-		*/
-		static bool bWasSendToChildGui = false;
-		if (bWasSendToChildGui)
+		if (mp_Log)
 		{
-			bWasSendToChildGui = false;
-			if (((int)(short)HIWORD(lParam) - ptRealScreen.y) > 10)
-			{
-				LogString(L"Mouse event (wheel) skipped due to invalid coordinates (redirection to ChildGui detected)");
-				return 0;
-			}
+			LogString(szDbg, true, false);
 		}
-		#endif
+		else
+		{
+			DEBUGSTRMOUSEWHEEL(szDbg);
+		}
+
 
 		CVConGuard VCon;
 		if (CVConGroup::GetVConFromPoint(ptCurScreen, &VCon))
@@ -10924,13 +10902,13 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			DEBUGSTRMOUSE(L"Skipping Mouse up\n");
 		}
 
-#ifdef _DEBUG
+		#ifdef _DEBUG
 		else if (messg == WM_MOUSEMOVE)
 		{
 			DEBUGSTRMOUSE(L"Skipping Mouse move\n");
 		}
+		#endif
 
-#endif
 		DEBUGLOGFILE("ConEmu was not foreground window, mouse activation event skipped");
 		return 0;
 	}
