@@ -9451,13 +9451,18 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 	_ASSERTEL(messg != WM_CHAR && messg != WM_SYSCHAR);
 
 	// Теперь обработаем некоторые "общие" хоткеи
+
 	if (wParam == VK_ESCAPE)
 	{
+		// "Esc" должен отменять D&D
+		// Проблема в том, что если драг пришел снаружи,
+		// и Esc отменяет его, то нажатие Esc может провалиться
+		// в панели Far. Поэтому делаем такой финт.
+
 		if (mp_DragDrop->InDragDrop())
 			return 0;
 
 		static bool bEscPressed = false;
-
 		if (messg != WM_KEYUP)
 			bEscPressed = true;
 		else if (!bEscPressed)
