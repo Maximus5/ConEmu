@@ -12,6 +12,22 @@ Votes and awards (vote for ConEmu, if you please)
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+2014.10.16
+[*] Issue 1758: Support file/line format for php: "C:\..\test.php:28".
+[*] Hyperlinks: Check file existence before opening.
+[*] Hyperlinks: If clicked file was not found, try to find it in subfolders.
+[*] Hyperlinks: Try to make file path properly cased before opening (realconsole.cpp -> RealConsole.cpp).
+[*] Issue 1754: SystemMenu was opened by RClick on the title bar was not working on some XP machines.
+[*] Issue 166: Tab switch was not working from ‘ConEmu plugin -> T’.
+[*] Do not turn on ‘Long console output’ during "edit:<command" operations.
+[*] Tabs. SetTabs may fails for new Editor if it was opened from "edit:<command".
+[*] Mouse wheel logging.
+[*] Buffer was dropped (scrolling disabled) unexpectedly after "ConEmuC -c <command>" execution.
+[*] Just for fun, add "-fork"/"-async" switch (sort of trailing ‘&’ in bash).
+    For example, run from cmd.exe prompt and observe weird results :)
+    ConEmuC -async -c dir & ConEmuC -async -c dir
+
+
 2014.10.13
 [*] Issue 1753: Cursor goes out of screen while executing commands from "far" without "/w".
 [*] Issue 1754: Some changes with using WM_SYSCOMMAND.
