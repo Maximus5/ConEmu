@@ -80,7 +80,7 @@ CMatch::~CMatch()
 }
 
 #ifdef _DEBUG
-void CMatch::UnitTestAlert(LPCWSTR pszText)
+void CMatch::UnitTestAlert(LPCWSTR asLine, LPCWSTR asExpected, LPCWSTR pszText)
 {
 	OutputDebugString(pszText);
 }
@@ -133,6 +133,10 @@ void CMatch::UnitTests()
 			etr_AnyClickable, true, {L"C:\\abc.xls"}},
 		{L"\t" L"class::func('C:\\abc.xls')" L"\t",
 			etr_AnyClickable, true, {L"C:\\abc.xls"}},
+		{L"\t" L"file.ext 2" L"\t",
+			etr_AnyClickable, true, {L"file.ext"}},
+		{L"\t" L"makefile" L"\t",
+			etr_AnyClickable, true, {L"makefile"}},
 
 		// -- VC
 		{L"\t" L"1>c:\\sources\\conemu\\realconsole.cpp(8104) : error C2065: 'qqq' : undeclared identifier" L"\t",
@@ -238,19 +242,19 @@ void CMatch::UnitTestMatch(ExpandTextRangeType etr, LPCWSTR asLine, int anLineLe
 
 		if (iRc <= 0)
 		{
-			UnitTestAlert(L"Match: must be found\n");
+			UnitTestAlert(asLine, asMatchText, L"Match: must be found\n");
 			break;
 		}
 		else if (mn_MatchLeft != anMatchStart || mn_MatchRight != anMatchEnd)
 		{
-			UnitTestAlert(L"Match: do not match required range\n");
+			UnitTestAlert(asLine, asMatchText, L"Match: do not match required range\n");
 			break;
 		}
 
 		iCmp = lstrcmp(ms_Match, asMatchText);
 		if (iCmp != 0)
 		{
-			UnitTestAlert(L"Match: iCmp != 0\n");
+			UnitTestAlert(asLine, asMatchText, L"Match: iCmp != 0\n");
 			break;
 		}
 	}
@@ -266,7 +270,7 @@ void CMatch::UnitTestNoMatch(ExpandTextRangeType etr, LPCWSTR asLine, int anLine
 
 		if (iRc > 0)
 		{
-			UnitTestAlert(L"Match: must NOT be found\n");
+			UnitTestAlert(asLine, NULL, L"Match: must NOT be found\n");
 			break;
 		}
 	}
