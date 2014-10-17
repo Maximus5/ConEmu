@@ -1510,6 +1510,14 @@ int CShellProc::PrepareExecuteParms(
 				if (!CEAnsi::IsOutputHandle(*lphStdErr))
 					bDetachedOrHidden = true;
 			}
+			else
+			{
+				// Issue 1763: Multiarc очень странно делает вызовы архиваторов
+				// в первый раз указывая хэндлы, а во второй - меняя STD_OUTPUT_HANDLE?
+				HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
+				//if (!CEAnsi::IsOutputHandle(hStdOut))
+				//	bDetachedOrHidden = true;
+			}
 		}
 	}
 	BOOL bLongConsoleOutput = gFarMode.bFarHookMode && gFarMode.bLongConsoleOutput && !bDetachedOrHidden;

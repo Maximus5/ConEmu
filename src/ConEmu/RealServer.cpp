@@ -408,9 +408,16 @@ CESERVER_REQ* CRealServer::cmdStartStop(LPVOID pInst, CESERVER_REQ* pIn, UINT nD
 			}
 			else
 			{
+				bool bDontTouchBuffer = false;
 				int iDefaultBufferHeight = gpSet->DefaultBufferHeight;
 				BOOL bAllowBufferHeight = (gpSet->AutoBufferHeight || mp_RCon->isBufferHeight()) && (nParentFarPid != 0);
-				if (pIn->StartStop.bForceBufferHeight)
+
+				if (pIn->StartStop.sbi.dwSize.Y == 0)
+				{
+					// Issue 1763: Assertion while starting something with redirection
+					bDontTouchBuffer = true;
+				}
+				else if (pIn->StartStop.bForceBufferHeight)
 				{
 					bAllowBufferHeight = (pIn->StartStop.nForceBufferHeight != 0);
 				}
@@ -443,7 +450,9 @@ CESERVER_REQ* CRealServer::cmdStartStop(LPVOID pInst, CESERVER_REQ* pIn, UINT nD
 				pOut->StartStopRet.nWidth = mp_RCon->mp_RBuf->GetBufferWidth()/*con.m_sbi.dwSize.X*/;
 				pOut->StartStopRet.nHeight = mp_RCon->mp_RBuf->GetBufferHeight()/*con.m_sbi.dwSize.Y*/;
 
-				if ((pOut->StartStopRet.nBufferHeight == 0) != (mp_RCon->isBufferHeight() == FALSE))
+				bool bNewBuffer = (pOut->StartStopRet.nBufferHeight != 0);
+				bool bOldBuffer = (mp_RCon->isBufferHeight() != FALSE);
+				if (!bDontTouchBuffer && (bNewBuffer != bOldBuffer))
 				{
 					WARNING("Тут наверное нужно бы заблокировать прием команды смена размера из сервера ConEmuC");
 					//con.m_sbi.dwSize.Y = gpSet->DefaultBufferHeight; -- не будем менять сразу, а то SetConsoleSize просто skip
