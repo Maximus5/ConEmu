@@ -3439,6 +3439,8 @@ bool CPluginBase::cmd_OpenEditorLine(CESERVER_REQ_FAREDITOR *pCmd)
 			|| (wt_Desktop != -1 && nWindowType == wt_Desktop))
 		{
 			MSetter lSet(&gnInLongOperation);
+			if (pCmd->nLine == 0)
+				pCmd->nLine = pCmd->nColon = -1;
 			lbRc = OpenEditor(pCmd->szFile, false/*abView*/, false/*abDeleteTempFile*/, true/*abDetectCP*/, pCmd->nLine, pCmd->nColon);
 		}
 	}
