@@ -12,6 +12,13 @@ Votes and awards (vote for ConEmu, if you please)
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+2014.10.17
+[*] Far editor was opened at 1-st line instead of stored cursor position on Ctrl+LClick on filename without line number.
+[*] Issue 657: Eager+recent tab switching doesn't cycle all tabs.
+[*] Issue 1763: Assertion while starting something with redirection.
+[*] Issue 1764: Some files/hyperlinks detector issues.
+
+
 2014.10.16
 [*] Issue 1758: Support file/line format for php: "C:\..\test.php:28".
 [*] Hyperlinks: Check file existence before opening.
