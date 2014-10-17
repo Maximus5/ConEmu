@@ -31,6 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/CmdLine.h"
 
 class CMatch;
+class CRealConsole;
 
 typedef int (*CMatchGetNextPart)(LPARAM lParam, CMatch* pMatch);
 
@@ -56,8 +57,11 @@ public:
 	int mn_SrcLength/*Current length*/;
 	int mn_SrcFrom/*Cursor pos*/;
 
+protected:
+	CRealConsole* mp_RCon;
+
 public:
-	CMatch();
+	CMatch(CRealConsole* apRCon);
 	~CMatch();
 
 public:
@@ -70,6 +74,7 @@ protected:
 	static bool CheckValidUrl(int& crFrom/*[In/Out]*/, int& crTo/*[In/Out]*/, bool& bUrlMode, LPCWSTR pszUrlDelim, LPCWSTR pszUrl, LPCWSTR pszProtocol, LPCWSTR pChar, int nLen);
 protected:
 	bool MatchAny();
+	bool MatchFileNoExt();
 	bool MatchWord(LPCWSTR asLine/*This may be NOT 0-terminated*/, int anLineLen/*Length of buffer*/, int anFrom/*Cursor pos*/, int& rnStart, int& rnEnd);
 	void StoreMatchText(LPCWSTR asPrefix, LPCWSTR pszTrimRight);
 protected:

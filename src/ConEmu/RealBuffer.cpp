@@ -6285,7 +6285,7 @@ ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In/Out]*/, COOR
 		_ASSERTE(lcrTo.Y>=0 && lcrTo.Y<GetTextHeight());
 
 		if (!mp_Match)
-			mp_Match = new CMatch();
+			mp_Match = new CMatch(mp_RCon);
 
 		if (mp_Match && (mp_Match->Match(etr, pChar, nLen, lcrFrom.X) > 0))
 		{

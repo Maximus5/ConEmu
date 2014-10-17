@@ -44,13 +44,33 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define MatchTestAlert()
 #endif
 
-CMatch::CMatch()
+// В именах файлов недопустимы: "/\:|*?<>~t~r~n
+const wchar_t gszBreak[] = {
+					/*недопустимые в FS*/
+					L'\"', '|', '*', '?', '<', '>', '\t', '\r', '\n',
+					/*для простоты - учитываем и рамки*/
+					ucArrowUp, ucArrowDown, ucDnScroll, ucUpScroll,
+					ucBox100, ucBox75, ucBox50, ucBox25,
+					ucBoxDblVert, ucBoxSinglVert, ucBoxDblVertSinglRight, ucBoxDblVertSinglLeft,
+					ucBoxDblDownRight, ucBoxDblDownLeft, ucBoxDblUpRight,
+					ucBoxDblUpLeft, ucBoxSinglDownRight, ucBoxSinglDownLeft, ucBoxSinglUpRight,
+					ucBoxSinglUpLeft, ucBoxSinglDownDblHorz, ucBoxSinglUpDblHorz, ucBoxDblDownDblHorz,
+					ucBoxDblUpDblHorz, ucBoxSinglDownHorz, ucBoxSinglUpHorz, ucBoxDblDownSinglHorz,
+					ucBoxDblUpSinglHorz, ucBoxDblVertRight, ucBoxDblVertLeft,
+					ucBoxSinglVertRight, ucBoxSinglVertLeft, ucBoxDblVertHorz,
+					0};
+#undef MATCH_SPACINGS
+#define MATCH_SPACINGS L" \t\xB6\xB7\x2192\x25A1\x25D9\x266A"
+const wchar_t gszSpacing[] = MATCH_SPACINGS; // Пробел, таб, остальные для режима "Show white spaces" в редакторе фара
+
+CMatch::CMatch(CRealConsole* apRCon)
 	:m_Type(etr_None)
 	,mn_Row(-1), mn_Col(-1)
 	,mn_MatchLeft(-1), mn_MatchRight(-1)
 	,mn_Start(-1), mn_End(-1)
 	,mn_SrcLength(-1)
 	,mn_SrcFrom(-1)
+	,mp_RCon(apRCon)
 {
 	ms_Protocol[0] = 0;
 }
@@ -75,7 +95,7 @@ void CMatch::UnitTests()
 	CmdArg szDir;
 	GetDirectory(szDir);
 
-	CMatch match;
+	CMatch match(NULL);
 	struct TestMatch {
 		LPCWSTR src; ExpandTextRangeType etr;
 		bool bMatch; LPCWSTR matches[5];
@@ -290,6 +310,12 @@ int CMatch::Match(ExpandTextRangeType etr, LPCWSTR asLine/*This may be NOT 0-ter
 			_ASSERTE(m_Type != etr_None);
 			iRc = (mn_MatchRight - mn_MatchLeft + 1);
 		}
+		else if (MatchFileNoExt())
+		{
+			_ASSERTE(mn_MatchRight >= mn_MatchLeft);
+			_ASSERTE(m_Type == etr_File);
+			iRc = (mn_MatchRight - mn_MatchLeft + 1);
+		}
 	}
 	else
 	{
@@ -382,12 +408,26 @@ bool CMatch::IsValidFile(LPCWSTR asFrom, int anLen, LPCWSTR pszInvalidChars, LPC
 	if (pszBadChar != NULL)
 		return false;
 
-	TODO("GetCurrentDirectory from console and check existence!");
-
-	// Till then, just request the extension
-	pszBadChar = wcschr(pszFile, L'.');
-	if (pszBadChar == NULL)
+	// where are you, regexps...
+	if ((anLen <= 1) || !::IsFilePath(pszFile))
 		return false;
+	if (pszFile[0] == L'.' && (pszFile[1] == 0 || (pszFile[1] == L'.' && (pszFile[2] == 0 || (pszFile[2] == L'.' && (pszFile[3] == 0))))))
+		return false;
+	CharLowerBuff(ms_FileCheck.ms_Arg, anLen);
+	if ((wcschr(pszFile, L'.') == NULL)
+		//&& (wcsncmp(pszFile, L"make", 4) != 0)
+		&& (wcspbrk(pszFile, L"abcdefghijklmnopqrstuvwxyz") == NULL))
+		return false;
+
+	#if 0
+	// Очень уж это затратно для диска... Путь только по клику проверяет.
+	CEStr szFullPath;
+	if (mp_RCon)
+	{
+		if (!mp_RCon->GetFileFromConsole(pszFile, szFullPath))
+			return false;
+	}
+	#endif
 
 	rnLen = anLen;
 	return true;
@@ -515,6 +555,46 @@ wrap:
 	return lbRc;
 }
 
+bool CMatch::MatchFileNoExt()
+{
+	LPCWSTR pszLine = m_SrcLine.ms_Arg;
+	if (!pszLine || !*pszLine || (mn_SrcFrom < 0) || (mn_SrcLength <= mn_SrcFrom))
+		return false;
+
+	const wchar_t szLatin[] = L"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_";
+
+	mn_MatchLeft = mn_SrcFrom;
+	if (wcschr(szLatin, pszLine[mn_MatchLeft]))
+	{
+		while ((mn_MatchLeft > 0) && wcschr(szLatin, pszLine[mn_MatchLeft-1]))
+		{
+			mn_MatchLeft--;
+		}
+	}
+	else
+	{
+		while (((mn_MatchLeft+1) < mn_SrcLength) && wcschr(szLatin, pszLine[mn_MatchLeft+1]))
+		{
+			mn_MatchLeft++;
+		}
+	}
+
+	mn_MatchRight = mn_MatchLeft;
+	while (((mn_MatchRight+1) < mn_SrcLength) && wcschr(szLatin, pszLine[mn_MatchRight+1]))
+	{
+		mn_MatchRight++;
+	}
+
+	int nNakedFileLen = 0;
+	if (!IsValidFile(m_SrcLine.ms_Arg+mn_MatchLeft, mn_MatchRight - mn_MatchLeft + 1, gszBreak, gszSpacing, nNakedFileLen))
+		return false;
+
+	mn_MatchRight = mn_MatchLeft + nNakedFileLen - 1;
+	StoreMatchText(NULL, NULL);
+	m_Type = etr_File;
+	return true;
+}
+
 bool CMatch::MatchWord(LPCWSTR asLine/*This may be NOT 0-terminated*/, int anLineLen/*Length of buffer*/, int anFrom/*Cursor pos*/, int& rnStart, int& rnEnd)
 {
 	rnStart = rnEnd = anFrom;
@@ -545,24 +625,9 @@ bool CMatch::MatchAny()
 {
 	bool bFound = false;
 
-	// В именах файлов недопустимы: "/\:|*?<>~t~r~n
-	const wchar_t  pszBreak[] = {
-						/*недопустимые в FS*/
-						L'\"', '|', '*', '?', '<', '>', '\t', '\r', '\n',
-						/*для простоты - учитываем и рамки*/
-						ucArrowUp, ucArrowDown, ucDnScroll, ucUpScroll,
-						ucBox100, ucBox75, ucBox50, ucBox25,
-						ucBoxDblVert, ucBoxSinglVert, ucBoxDblVertSinglRight, ucBoxDblVertSinglLeft,
-						ucBoxDblDownRight, ucBoxDblDownLeft, ucBoxDblUpRight,
-						ucBoxDblUpLeft, ucBoxSinglDownRight, ucBoxSinglDownLeft, ucBoxSinglUpRight,
-						ucBoxSinglUpLeft, ucBoxSinglDownDblHorz, ucBoxSinglUpDblHorz, ucBoxDblDownDblHorz,
-						ucBoxDblUpDblHorz, ucBoxSinglDownHorz, ucBoxSinglUpHorz, ucBoxDblDownSinglHorz,
-						ucBoxDblUpSinglHorz, ucBoxDblVertRight, ucBoxDblVertLeft,
-						ucBoxSinglVertRight, ucBoxSinglVertLeft, ucBoxDblVertHorz,
-						0};
-	#undef MATCH_SPACINGS	
-	#define MATCH_SPACINGS L" \t\xB6\xB7\x2192\x25A1\x25D9\x266A"
-	const wchar_t* pszSpacing = MATCH_SPACINGS; // Пробел, таб, остальные для режима "Show white spaces" в редакторе фара
+	// В именах файлов недопустимы: "/\:|*?<>~t~r~n а для простоты - учитываем и рамки
+	const wchar_t* pszBreak = gszBreak;
+	const wchar_t* pszSpacing = gszSpacing; // Пробел, таб, остальные для режима "Show white spaces" в редакторе фара
 	const wchar_t* pszSeparat = L" \t:(";
 	const wchar_t* pszTermint = L":)],";
 	const wchar_t* pszDigits  = L"0123456789";
@@ -745,6 +810,13 @@ bool CMatch::MatchAny()
 					iExtFound = ef_NotFound;
 					iBracket = 0;
 					bWasSeparator = false;
+				}
+				else if (!bLineNumberFound && !bMaybeMail && !bUrlMode && wcschr(pszSpacing, m_SrcLine.ms_Arg[mn_MatchRight])
+					&& IsValidFile(m_SrcLine.ms_Arg+mn_MatchLeft, mn_MatchRight - mn_MatchLeft + 1, pszBreak, pszSpacing, nNakedFileLen))
+				{
+					// File without digits, just for opening in the editor
+					bNakedFile = true;
+					break;
 				}
 				else
 				{
