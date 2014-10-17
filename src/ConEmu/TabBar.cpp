@@ -1639,6 +1639,8 @@ int CTabBarClass::GetNextTab(bool abForward, bool abAltStyle/*=false*/)
 
 	#ifdef PRINT_RECENT_STACK
 	// Debug method
+	wchar_t szTab[80]; _wsprintf(szTab, SKIPCOUNT(szTab) L"GetNextTab: GetCurSel=%i\n", nCurSel);
+	DEBUGSTRRECENT(szTab);
 	PrintRecentStack();
 	#endif
 
@@ -1668,7 +1670,13 @@ int CTabBarClass::GetNextTab(bool abForward, bool abAltStyle/*=false*/)
 
 		// Succeeded?
 		if (nNewSel >= 0)
+		{
+			#ifdef PRINT_RECENT_STACK
+			_wsprintf(szTab, SKIPCOUNT(szTab) L"GetNextTab(true): nNewSel=%i\n", nNewSel);
+			DEBUGSTRRECENT(szTab);
+			#endif
 			return nNewSel;
+		}
 
 		_ASSERTE(nNewSel >= 0);
 	}
@@ -1678,7 +1686,13 @@ int CTabBarClass::GetNextTab(bool abForward, bool abAltStyle/*=false*/)
 
 	// Succeeded?
 	if (nNewSel >= 0)
+	{
+		#ifdef PRINT_RECENT_STACK
+		_wsprintf(szTab, SKIPCOUNT(szTab) L"GetNextTab(false): nNewSel=%i\n", nNewSel);
+		DEBUGSTRRECENT(szTab);
+		#endif
 		return nNewSel;
+	}
 
 	if (nNewSel == -1 && nCurCount > 0)
 	{
@@ -1798,8 +1812,11 @@ void CTabBarClass::Switch(BOOL abForward, BOOL abAltStyle/*=FALSE*/)
 		}
 		else
 		{
+			mb_InKeySwitching = gpSet->isTabRecent;
+			// Пока Ctrl не отпущен - подсвечиваем таб
+			if (gpSet->isTabRecent)
+				SelectTab(nNewSel);
 			mp_Rebar->FarSendChangeTab(nNewSel);
-			mb_InKeySwitching = false;
 		}
 	}
 }
@@ -1813,10 +1830,19 @@ void CTabBarClass::SwitchCommit()
 {
 	if (!mb_InKeySwitching) return;
 
-	int nCurSel = GetCurSel();
-	mb_InKeySwitching = false;
-	CVirtualConsole* pVCon = mp_Rebar->FarSendChangeTab(nCurSel);
-	UNREFERENCED_PARAMETER(pVCon);
+	if (gpSet->isTabLazy)
+	{
+		int nCurSel = GetCurSel();
+		mb_InKeySwitching = false;
+		CVirtualConsole* pVCon = mp_Rebar->FarSendChangeTab(nCurSel);
+		UNREFERENCED_PARAMETER(pVCon);
+	}
+	else
+	{
+		// Just refresh recent stack
+		mb_InKeySwitching = false;
+		Update();
+	}
 }
 
 void CTabBarClass::SwitchRollback()
@@ -1903,7 +1929,7 @@ bool CTabBarClass::AddStack(CTab& tab)
 		{
 			if (m_TabStack[iter] == tab.Tab())
 			{
-				if (iter > 0)
+				if ((iter > 0) && !IsInSwitch())
 				{
 					CTabID* pTab = m_TabStack[iter];
 					m_TabStack.erase(iter);

@@ -14319,7 +14319,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 				this->TabCommand((wParam & cvk_Shift) ? ctc_SwitchPrev : ctc_SwitchNext);
 				if (!gpSet->isTabLazy)
 				{
-					mb_InWinTabSwitch = FALSE;
+					mb_InWinTabSwitch = !gpSet->isTabRecent;
 					this->TabCommand(ctc_SwitchCommit);
 				}
 				else

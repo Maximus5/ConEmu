@@ -854,7 +854,7 @@ bool CConEmuCtrl::key_CtrlTab(const ConEmuChord& VkState, bool TestOnly, const C
 	//WARNING! Функция зовет isPressed(VK_SHIFT)
 	WARNING("CConEmuCtrl:: Переделать на явный вызов SwitchNext, учесть, что он может быть альтернативным!");
 	gpConEmu->mp_TabBar->OnKeyboard(WM_KEYDOWN, VK_TAB, 0);
-	if (gpSet->isTabLazy)
+	if (gpSet->isTabLazy || gpSet->isTabRecent)
 		gpConEmu->mb_InCtrlTabSwitch = TRUE;
 	return true;
 }
@@ -872,7 +872,7 @@ bool CConEmuCtrl::key_CtrlShiftTab(const ConEmuChord& VkState, bool TestOnly, co
 	//WARNING! Функция зовет isPressed(VK_SHIFT)
 	WARNING("CConEmuCtrl:: Переделать на явный вызов SwitchPrev, учесть, что он может быть альтернативным!");
 	gpConEmu->mp_TabBar->OnKeyboard(WM_KEYDOWN, VK_TAB, 0);
-	if (gpSet->isTabLazy)
+	if (gpSet->isTabLazy || gpSet->isTabRecent)
 		gpConEmu->mb_InCtrlTabSwitch = TRUE;
 	return true;
 }
