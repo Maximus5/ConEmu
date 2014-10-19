@@ -61,6 +61,7 @@ SRCS = \
 		OptionsClass.cpp   \
 		OptionsFast.cpp    \
 		OptionsHelp.cpp    \
+		RConFiles.cpp      \
 		RealBuffer.cpp     \
 		RealConsole.cpp    \
 		RealServer.cpp     \

@@ -81,6 +81,7 @@ $(INTDIR)\OptionsClass.obj \
 $(INTDIR)\OptionsFast.obj \
 $(INTDIR)\OptionsHelp.obj \
 $(INTDIR)\ProcessSetEnv.obj \
+$(INTDIR)\RConFiles.obj \
 $(INTDIR)\RConStartArgs.obj \
 $(INTDIR)\RealBuffer.obj \
 $(INTDIR)\RealConsole.obj \
@@ -380,6 +381,8 @@ $(INTDIR)\OptionsFast.obj: OptionsFast.cpp OptionsFast.h Options.h
 $(INTDIR)\OptionsHelp.obj: OptionsHelp.cpp OptionsHelp.h
 
 $(INTDIR)\ProcessSetEnv.obj: ../common/ProcessSetEnv.cpp ../common/ProcessSetEnv.h
+
+$(INTDIR)\RConFiles.obj: RConFiles.cpp RConFiles.h
 
 $(INTDIR)\RConStartArgs.obj: ../common/RConStartArgs.cpp ../common/RConStartArgs.h
 

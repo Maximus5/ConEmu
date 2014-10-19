@@ -978,6 +978,7 @@
     <ClCompile Include="OptionsClass.cpp" />
     <ClCompile Include="OptionsFast.cpp" />
     <ClCompile Include="OptionsHelp.cpp" />
+    <ClCompile Include="RConFiles.cpp" />
     <ClCompile Include="RealBuffer.cpp" />
     <ClCompile Include="RealConsole.cpp" />
     <ClCompile Include="RealServer.cpp" />
@@ -1091,6 +1092,7 @@
     <ClInclude Include="OptionsClass.h" />
     <ClInclude Include="OptionsFast.h" />
     <ClInclude Include="OptionsHelp.h" />
+    <ClInclude Include="RConFiles.h" />
     <ClInclude Include="RealBuffer.h" />
     <ClInclude Include="RealConsole.h" />
     <ClInclude Include="RealServer.h" />

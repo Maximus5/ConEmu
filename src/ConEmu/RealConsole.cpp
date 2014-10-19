@@ -60,6 +60,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Macro.h"
 #include "Menu.h"
 #include "OptionsClass.h"
+#include "RConFiles.h"
 #include "RealBuffer.h"
 #include "RealConsole.h"
 #include "RunQueue.h"
@@ -161,6 +162,7 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 	_ASSERTE(mp_VCon == apVCon);
 	mp_VCon = apVCon;
 	mp_Log = NULL;
+	mp_Files = NULL;
 
 	MCHKHEAP;
 	SetConStatus(L"Initializing ConEmu (2)", cso_ResetOnConsoleReady|cso_DontUpdate|cso_Critical);
@@ -12961,38 +12963,13 @@ LPCWSTR CRealConsole::GetFileFromConsole(LPCWSTR asSrc, CmdArg& szFull)
 		return NULL;
 	}
 
-	CmdArg szWinPath;
-	LPCWSTR pszWinPath = szWinPath.Attach(MakeWinPath(asSrc));
-	if (!pszWinPath || !*pszWinPath)
-	{
-		_ASSERTE(pszWinPath && *pszWinPath);
-		return NULL;
-	}
+	MSectionLockSimple CS; CS.Lock(mpcs_CurWorkDir);
 
-	if (IsFilePath(pszWinPath, true))
-	{
-		szFull.Attach(szWinPath.Detach());
-	}
-	else
-	{
-		CmdArg szDir;
-		LPCWSTR pszDir = GetConsoleCurDir(szDir);
-		_ASSERTE(pszDir && wcschr(pszDir,L'/')==NULL);
+	if (!mp_Files)
+		mp_Files = new CRConFiles(this);
 
-		// Попытаться просканировать один-два уровеня подпапок
-		if (!FileExistSubDir(pszDir, pszWinPath, 2, szFull))
-		{
-			return NULL;
-		}
-	}
-
-	if (!szFull.IsEmpty())
-	{
-		// "src\conemu\realconsole.cpp" --> "src\ConEmu\RealConsole.cpp"
-		MakePathProperCase(szFull);
-	}
-
-	return szFull;
+	// Caching
+	return mp_Files->GetFileFromConsole(asSrc, szFull);
 }
 
 LPCWSTR CRealConsole::GetConsoleCurDir(CmdArg& szDir)
@@ -13058,6 +13035,7 @@ void CRealConsole::StoreCurWorkDir(CESERVER_REQ_STORECURDIR* pNewCurDir)
 		return;
 
 	MSectionLockSimple CS; CS.Lock(mpcs_CurWorkDir);
+
 	LPCWSTR pszArg = pNewCurDir->szDir;
 	for (int i = 0; i <= 1; i++)
 	{
@@ -13080,6 +13058,10 @@ void CRealConsole::StoreCurWorkDir(CESERVER_REQ_STORECURDIR* pNewCurDir)
 
 		SafeFree(pszWinPath);
 	}
+
+	if (mp_Files)
+		mp_Files->ResetCache();
+
 	CS.Unlock();
 
 	LPCWSTR pszTabTempl = isFar() ? gpSet->szTabPanels : gpSet->szTabConsole;

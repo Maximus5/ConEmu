@@ -227,6 +227,7 @@ class CRgnDetect;
 class CRealBuffer;
 class CDpiForDialog;
 class MFileLog;
+class CRConFiles;
 
 enum RealBufferType
 {
@@ -942,6 +943,9 @@ class CRealConsole
 		//	} m_DetectedDialogs;
 		bool mb_InPostCloseMacro;
 		bool mb_WasMouseSelection; // Useful to know when processing LBtnUp
+
+		// Поиск файлов в консоли
+		CRConFiles* mp_Files;
 };
 
 //#define Assert(V) if ((V)==FALSE) { wchar_t szAMsg[MAX_PATH*2]; _wsprintf(szAMsg, SKIPLEN(countof(szAMsg)) L"Assertion (%s) at\n%s:%i\n\nPress <Retry> to report a bug (web page)", _T(#V), _T(__FILE__), __LINE__); CRealConsole::Box(szAMsg, MB_RETRYCANCEL); }

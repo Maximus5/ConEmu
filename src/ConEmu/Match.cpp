@@ -423,15 +423,12 @@ bool CMatch::IsValidFile(LPCWSTR asFrom, int anLen, LPCWSTR pszInvalidChars, LPC
 		&& (wcspbrk(pszFile, L"abcdefghijklmnopqrstuvwxyz") == NULL))
 		return false;
 
-	#if 0
-	// Очень уж это затратно для диска... Путь только по клику проверяет.
 	CEStr szFullPath;
 	if (mp_RCon)
 	{
 		if (!mp_RCon->GetFileFromConsole(pszFile, szFullPath))
 			return false;
 	}
-	#endif
 
 	rnLen = anLen;
 	return true;
@@ -893,7 +890,7 @@ bool CMatch::MatchAny()
 		{
 			if (bMaybeMail)
 				break;
-			if ((iExtFound != ef_ExtFound) || !IsValidFile(m_SrcLine.ms_Arg+mn_MatchLeft, mn_MatchRight - mn_MatchLeft + 1, pszBreak, pszSpacing, nNakedFileLen))
+			if ((bLineNumberFound) || !IsValidFile(m_SrcLine.ms_Arg+mn_MatchLeft, mn_MatchRight - mn_MatchLeft + 1, pszBreak, pszSpacing, nNakedFileLen))
 			{
 				MatchTestAlert();
 				goto wrap; // Не оно
@@ -907,7 +904,7 @@ bool CMatch::MatchAny()
 		{
 			if ((++iSpaces) > 1)
 			{
-				if ((iExtFound != ef_ExtFound) || !IsValidFile(m_SrcLine.ms_Arg+mn_MatchLeft, mn_MatchRight - mn_MatchLeft + 1, pszBreak, pszSpacing, nNakedFileLen))
+				if ((bLineNumberFound) || !IsValidFile(m_SrcLine.ms_Arg+mn_MatchLeft, mn_MatchRight - mn_MatchLeft + 1, pszBreak, pszSpacing, nNakedFileLen))
 				{
 					MatchTestAlert();
 					goto wrap; // Не оно?
