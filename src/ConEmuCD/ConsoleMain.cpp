@@ -3656,6 +3656,8 @@ int DoOutput(ConEmuExecAction eExecAction, LPCWSTR asCmdArg)
 								*pszDst = L'\n'; break;
 							case L't': case L'T':
 								*pszDst = L'\t'; break;
+							case L'a': case L'A':
+								*pszDst = 7; break;
 							case L'b': case L'B':
 								*pszDst = L'\b'; break;
 							case L'e': case L'E': case L'[':
