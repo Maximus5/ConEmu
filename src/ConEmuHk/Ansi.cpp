@@ -2557,6 +2557,8 @@ void CEAnsi::WriteAnsiCode_OSC(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsole
 
 	switch (*Code.ArgSZ)
 	{
+	case L'0':
+	case L'1':
 	case L'2':
 		if (Code.ArgSZ[1] == L';' && Code.ArgSZ[2])
 		{
