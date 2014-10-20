@@ -147,7 +147,6 @@ public:
 	bool DoSelectionCopy(CECopyMode CopyMode = cm_CopySel, BYTE nFormat = 0xFF /* use gpSet->isCTSHtmlFormat */, LPCWSTR pszDstFile = NULL);
 	void UpdateSelection();
 	bool isConSelectMode();
-	bool isSelfSelectMode();
 	bool isStreamSelection();
 
 	bool OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, const wchar_t *pszChars);

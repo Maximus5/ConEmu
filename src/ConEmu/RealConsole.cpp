@@ -5725,7 +5725,7 @@ void CRealConsole::OnKeyboardInt(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lP
 			}
 
 			// Завершение выделения по KeyPress?
-			if (mp_ABuf->isSelfSelectMode())
+			if (mp_ABuf->isSelectionPresent())
 			{
 				// буквы/цифры/символы/...
 				if ((gpSet->isCTSEndOnTyping && (pszChars && *pszChars))

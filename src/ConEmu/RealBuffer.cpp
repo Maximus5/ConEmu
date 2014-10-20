@@ -1217,7 +1217,7 @@ void CRealBuffer::SyncConsole2Window(USHORT wndSizeX, USHORT wndSizeY)
 
 BOOL CRealBuffer::isScroll(RealBufferScroll aiScroll/*=rbs_Any*/)
 {
-	TODO("горизонтальная прокрутка");
+	TODO("Horizontal scroll");
 	return con.bBufferHeight;
 }
 
@@ -3311,7 +3311,7 @@ bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse
 
 	if (con.bBufferHeight
 		&& ((m_Type != rbt_Primary) || !lbFarBufferSupported || !lbMouseSendAllowed || lbMouseOverScroll
-			|| (((messg == WM_MOUSEWHEEL) || (messg == WM_MOUSEHWHEEL)) && isSelfSelectMode())
+			|| (((messg == WM_MOUSEWHEEL) || (messg == WM_MOUSEHWHEEL)) && isSelectionPresent())
 			))
 	{
 		if ((messg == WM_MOUSEWHEEL) || (messg == WM_MOUSEHWHEEL))
@@ -4641,13 +4641,6 @@ bool CRealBuffer::isConSelectMode()
 	}
 
 	return false;
-}
-
-bool CRealBuffer::isSelfSelectMode()
-{
-	if (!this) return false;
-
-	return (con.m_sel.dwFlags != 0);
 }
 
 bool CRealBuffer::isStreamSelection()
