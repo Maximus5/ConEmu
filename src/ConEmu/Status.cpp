@@ -623,7 +623,7 @@ void CStatus::PaintStatus(HDC hPaint, LPRECT prcStatus /*= NULL*/)
 				break;
 			case csi_ViewLock:
 				wcscpy_c(m_Items[nDrawCount].sText, m_Values[csi_ViewLock].sText);
-				wcscpy_c(m_Items[nDrawCount].szFormat, m_Items[nDrawCount].sText);
+				wcscpy_c(m_Items[nDrawCount].szFormat, m_Values[csi_ViewLock].szFormat);
 				break;
 			case csi_InputLocale:
 				// чтобы не задавали вопросов, нафига дублируется.
@@ -1622,7 +1622,7 @@ void CStatus::OnConsoleChanged(const CONSOLE_SCREEN_BUFFER_INFO* psbi, const CON
 		{
 			wcscpy_c(m_Values[csi_ViewLock].sText, gsViewName);
 		}
-		wcscpy_c(m_Values[csi_ViewLock].szFormat, L" {-,999} ");
+		wcscpy_c(m_Values[csi_ViewLock].szFormat, L"{-,999}");
 		//_wsprintf(ms_ViewLockHint, SKIPLEN(countof(ms_ViewLockHint)-1) L"%s (%i,%i)",
 		//	gsViewLock, pTopLeft->x, pTopLeft->y);
 		//m_Values[csi_ViewLock].sHelp = ms_ViewLockHint;
