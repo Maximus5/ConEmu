@@ -5469,6 +5469,7 @@ LRESULT CRealConsole::DoScroll(int nDirection, UINT nCount /*= 1*/)
 		break;
 	case SB_LINEDOWN:
 	case SB_LINEUP:
+		nCount = 1;
 		break;
 	case SB_PAGEDOWN:
 	case SB_PAGEUP:
@@ -5511,6 +5512,8 @@ LRESULT CRealConsole::DoScroll(int nDirection, UINT nCount /*= 1*/)
 			goto wrap;
 		}
 		break;
+	case SB_ENDSCROLL:
+		goto wrap;
 	}
 
 	lRc = mp_ABuf->DoScrollBuffer(nDirection, nTrackPos, nCount);
