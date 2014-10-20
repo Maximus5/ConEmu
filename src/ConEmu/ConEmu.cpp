@@ -10841,6 +10841,15 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		return 0;
 	}
 
+	if (pRCon && ((messg == WM_MOUSEWHEEL) || (messg == WM_MOUSEHWHEEL)))
+	{
+		if (pRCon->isInternalScroll())
+		{
+			pRCon->OnScroll(messg, wParam, ptCurClient.x, ptCurClient.y);
+			return 0;
+		}
+	}
+
 	// Иначе в консоль проваливаются щелчки по незанятому полю таба...
 	// все, что кроме - считаем кликами и они должны попадать в dcRect
 	if (messg != WM_MOUSEMOVE && messg != WM_MOUSEWHEEL && messg != WM_MOUSEHWHEEL)

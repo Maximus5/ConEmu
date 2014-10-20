@@ -5465,6 +5465,7 @@ LRESULT CRealConsole::DoScroll(int nDirection, UINT nCount /*= 1*/)
 	case SB_THUMBTRACK:
 	case SB_THUMBPOSITION:
 		nTrackPos = nCount;
+		nCount = 1;
 		break;
 	case SB_LINEDOWN:
 	case SB_LINEUP:
@@ -5477,9 +5478,11 @@ LRESULT CRealConsole::DoScroll(int nDirection, UINT nCount /*= 1*/)
 		break;
 	case SB_TOP:
 		nTrackPos = 0;
+		nCount = 1;
 		break;
 	case SB_BOTTOM:
 		nTrackPos = sbi.dwSize.Y - TextHeight() + 1;
+		nCount = 1;
 		break;
 	case SB_GOTOCURSOR:
 		nVisible = mp_ABuf->GetTextHeight();
@@ -5499,6 +5502,7 @@ LRESULT CRealConsole::DoScroll(int nDirection, UINT nCount /*= 1*/)
 			}
 			// Let it set to one from the bottom
 			nTrackPos = max(0,sbi.dwCursorPosition.Y-nVisible+2);
+			nCount = 1;
 		}
 		else
 		{
@@ -12984,6 +12988,22 @@ bool CRealConsole::isSendMouseAllowed()
 		return false;
 
 	if (mp_ABuf->GetConInMode() & ENABLE_QUICK_EDIT_MODE)
+		return false;
+
+	return true;
+}
+
+bool CRealConsole::isInternalScroll()
+{
+	if (gpSet->isDisableMouse || !isSendMouseAllowed())
+		return true;
+
+	// Если прокрутки нет - крутить нечего?
+	if (!mp_ABuf->isScroll())
+		return false;
+
+	// События колеса мышки посылать в фар?
+	if (isFar())
 		return false;
 
 	return true;

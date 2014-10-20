@@ -488,6 +488,7 @@ class CRealConsole
 		bool isSendMouseAllowed();
 		bool isFarInStack();
 		bool isFarKeyBarShown();
+		bool isInternalScroll();
 		bool isSelectionAllowed();
 		bool isSelectionPresent();
 		bool isMouseSelectionPresent();
