@@ -1130,7 +1130,6 @@ BOOL CRealBuffer::SetConsoleSize(USHORT sizeX, USHORT sizeY, USHORT sizeBuffer, 
 	_wsprintf(szStatus, SKIPCOUNT(szStatus) L"{%u,%u} size, {%i,%i} buffer", sizeX, sizeY, iBufWidth, iBufHeight);
 	mp_RCon->SetConStatus(szStatus, CRealConsole::cso_Critical);
 
-#ifndef _DEBUG
 	// Попробовать для консолей (cmd, и т.п.) делать ресайз после отпускания мышки
 	if ((gpConEmu->mouse.state & MOUSE_SIZING_BEGIN)
 		&& (!mp_RCon->GuiWnd() && !mp_RCon->GetFarPID()))
@@ -1146,7 +1145,6 @@ BOOL CRealBuffer::SetConsoleSize(USHORT sizeX, USHORT sizeY, USHORT sizeBuffer, 
 			goto wrap;
 		}
 	}
-#endif
 
 	// Сразу поставим, чтобы в основной нити при синхронизации размер не слетел
 	// Необходимо заблокировать RefreshThread, чтобы не вызывался ApplyConsoleInfo ДО ЗАВЕРШЕНИЯ SetConsoleSize
