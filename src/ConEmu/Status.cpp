@@ -717,7 +717,11 @@ void CStatus::PaintStatus(HDC hPaint, LPRECT prcStatus /*= NULL*/)
 		m_Items[i].bShow = FALSE;
 	}
 
-
+	if (nDrawCount < 1)
+	{
+		_ASSERTE(nDrawCount>=1);
+		goto wrap;
+	}
 
 	if (nDrawCount == 1)
 	{
@@ -725,14 +729,26 @@ void CStatus::PaintStatus(HDC hPaint, LPRECT prcStatus /*= NULL*/)
 	}
 	else
 	{
-		// Подсчет допустимой ширины
-		nTotalWidth = nMinInfoWidth + 2*nGapWidth + nDashWidth;
+		int iFirstWidth = m_Items[0].TextSize.cx + szVerSize.cx;
 
-		for (size_t i = 1; i < nDrawCount; i++)
+		// Подсчет допустимой ширины
+		nTotalWidth = iFirstWidth + 2*nGapWidth + nDashWidth; // nMinInfoWidth + 2*nGapWidth + nDashWidth;
+
+		DEBUGTEST(int iShown = 0);
+
+		size_t iMax = nDrawCount;
+
+		// Favor SizeGrip to be visible
+		if (m_Items[iMax-1].bShow && (m_Items[iMax-1].nID == csi_SizeGrip))
+		{
+			nTotalWidth += (m_Items[--iMax].TextSize.cx + 2*nGapWidth + nDashWidth);
+		}
+
+		for (size_t i = 1; i < iMax; i++)
 		{
 			if (m_Items[i].bShow)
 			{
-				if ((nTotalWidth+m_Items[i].TextSize.cx+2*nGapWidth) > nStatusWidth)
+				if ((nTotalWidth+m_Items[i].TextSize.cx+2*nGapWidth) >= nStatusWidth)
 				{
 					m_Items[i].bShow = FALSE;
 					// Но продолжим, может следующая ячейки будет уже и "влезет"
@@ -741,24 +757,13 @@ void CStatus::PaintStatus(HDC hPaint, LPRECT prcStatus /*= NULL*/)
 				{
 					// Раз этот элемент показан
 					nTotalWidth += (m_Items[i].TextSize.cx + 2*nGapWidth + nDashWidth);
+					DEBUGTEST(iShown++);
 				}
 			}
-			// -- don't break, may be further columns!
-			//else
-			//{
-			//	break; // дальше смысла нет - ячейки кончились
-			//}
+			// -- don't break, may be further column will be visible and fit!
 		}
 
-
-		//if (nMinInfoWidth < (nStatusWidth - nTotalWidth))
-		//{
-		//	//int nMaxInfoWidth = nStatusWidth - nTotalWidth - nGapWidth - 1;
-		//	//m_Items[0].TextSize.cx = max(nMinInfoWidth,nMaxInfoWidth);
-		//	m_Items[0].TextSize.cx = nStatusWidth - nTotalWidth;
-		//}
-
-		m_Items[0].TextSize.cx = max(nMinInfoWidth,(nStatusWidth - nTotalWidth + nMinInfoWidth));
+		m_Items[0].TextSize.cx = max(nMinInfoWidth,(nStatusWidth - nTotalWidth + iFirstWidth));
 	}
 
 
