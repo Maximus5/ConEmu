@@ -2510,7 +2510,9 @@ HWND Attach2Gui(DWORD nTimeout)
 	if (gpSrv->bWasDetached)
 	{
 		gpSrv->bWasDetached = FALSE;
-		gbAttachMode = am_Simple;
+		_ASSERTE(gbAttachMode==am_None);
+		if (!(gbAttachMode & am_Modes))
+			gbAttachMode |= am_Simple;
 		if (gpSrv->pConsole)
 			gpSrv->pConsole->bDataChanged = TRUE;
 	}

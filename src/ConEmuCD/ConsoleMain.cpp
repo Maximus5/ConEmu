@@ -214,7 +214,6 @@ UINT  gnPTYmode = 0; // 1 enable PTY, 2 - disable PTY (work as plain console), 0
 BOOL  gbRootIsCmdExe = TRUE;
 BOOL  gbAttachFromFar = FALSE;
 BOOL  gbAlternativeAttach = FALSE; // Подцепиться к существующей консоли, без внедрения в процесс ConEmuHk.dll
-BOOL  gbAttachDefTerm = FALSE;
 BOOL  gbSkipWowChange = FALSE;
 BOOL  gbConsoleModeFlags = TRUE;
 DWORD gnConsoleModeFlags = 0; //(ENABLE_QUICK_EDIT_MODE|ENABLE_INSERT_MODE);
@@ -1029,7 +1028,9 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 		_ASSERTE(gnRunMode == RM_UNDEFINED);
 		gnRunMode = RM_ALTSERVER;
 		_ASSERTE(!gbCreateDumpOnExceptionInstalled);
-		gbAttachMode = am_Simple;
+		_ASSERTE(gbAttachMode==am_None);
+		if (!(gbAttachMode & am_Modes))
+			gbAttachMode |= am_Simple;
 		gnConfirmExitParm = 2;
 		gbAlwaysConfirmExit = FALSE; gbAutoDisableConfirmExit = FALSE;
 		gbNoCreateProcess = TRUE;
@@ -1201,7 +1202,7 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 	// CREATE_NEW_PROCESS_GROUP - низя, перестает работать Ctrl-C
 	// Перед CreateProcess нужно ставить 0, иначе из-за антивирусов может наступить
 	// timeout ожидания окончания процесса еще ДО выхода из CreateProcess
-	if (!gbAttachMode)
+	if (!(gbAttachMode & am_Modes))
 		gpSrv->nProcessStartTick = 0;
 
 	if (gbNoCreateProcess)
@@ -1494,7 +1495,7 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 		iRc = CERR_CREATEPROCESS; goto wrap;
 	}
 
-	if (gbAttachMode)
+	if ((gbAttachMode & am_Modes))
 	{
 		// мы цепляемся к уже существующему процессу:
 		// аттач из фар плагина или запуск dos-команды в новой консоли через -new_console
@@ -1790,7 +1791,7 @@ wrap:
 		_wprintf(szInfo);
 	}
 
-	if (iRc && (gbAttachMode == am_Auto))
+	if (iRc && (gbAttachMode & am_Auto))
 	{
 		// Issue 1003: Non zero exit codes leads to problems in some applications...
 		iRc = 0;
@@ -3986,7 +3987,7 @@ void UpdateConsoleTitle()
 	{
 		// Не должны сюда попадать - сброс заголовка не допустим
 		#ifdef _DEBUG
-		if (gbAttachMode == am_None)
+		if (!(gbAttachMode & am_Modes))
 		{
 			_ASSERTE(pszReq && *pszReq);
 		}
@@ -4333,7 +4334,7 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 			}
 			#endif
 
-			gbAttachMode = am_Admin;
+			gbAttachMode |= am_Admin;
 			gnRunMode = RM_SERVER;
 		}
 		else if (wcscmp(szArg, L"/ATTACH")==0)
@@ -4347,11 +4348,11 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 			}
 			#endif
 
-			if (!gbAttachMode)
-				gbAttachMode = am_Simple;
+			if (!(gbAttachMode & am_Modes))
+				gbAttachMode |= am_Simple;
 			gnRunMode = RM_SERVER;
 		}
-		else if ((wcscmp(szArg, L"/AUTOATTACH")==0) || (wcscmp(szArg, L"/ATTACHDEFTERM")==0))
+		else if ((lstrcmpi(szArg, L"/AUTOATTACH")==0) || (lstrcmpi(szArg, L"/ATTACHDEFTERM")==0))
 		{
 			#if defined(SHOW_ATTACH_MSGBOX)
 			if (!IsDebuggerPresent())
@@ -4363,10 +4364,13 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 			#endif
 
 			gnRunMode = RM_SERVER;
-			gbAttachMode = am_Auto;
+			gbAttachMode |= am_Auto;
 			gbAlienMode = TRUE;
 			gbNoCreateProcess = TRUE;
-			gbAttachDefTerm = (wcscmp(szArg, L"/ATTACHDEFTERM")==0);
+			if (lstrcmpi(szArg, L"/AUTOATTACH")==0)
+				gbAttachMode |= am_Async;
+			if (lstrcmpi(szArg, L"/ATTACHDEFTERM")==0)
+				gbAttachMode |= am_DefTerm;
 
 			// Еще может быть "/GHWND=NEW" но оно ниже. Там ставится "gpSrv->bRequestNewGuiWnd=TRUE"
 
@@ -4395,8 +4399,8 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 			}
 			#endif
 
-			if (!gbAttachMode)
-				gbAttachMode = am_Simple;
+			if (!(gbAttachMode & am_Modes))
+				gbAttachMode |= am_Simple;
 			lbAttachGuiApp = TRUE;
 			wchar_t* pszEnd;
 			HWND hAppWnd = (HWND)wcstoul(szArg+11, &pszEnd, 16);
@@ -4740,7 +4744,7 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 						{
 							// Microsoft bug? When console is started elevated - it does NOT show
 							// required attributes, BUT GetConsoleScreenBufferInfoEx returns them.
-							if ((gbAttachMode != am_Admin)
+							if (!(gbAttachMode & am_Admin)
 								&& (!gnDefTextColors || (csbi.wAttributes = gnDefTextColors))
 								&& (!gnDefPopupColors || (csbi.wPopupAttributes = gnDefPopupColors)))
 							{
@@ -4997,7 +5001,7 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 		return iFRc;
 	}
 
-	if (gbAttachDefTerm && !gbParmVisibleSize)
+	if ((gbAttachMode & am_DefTerm) && !gbParmVisibleSize)
 	{
 		// To avoid "small" and trimmed text after starting console
 		_ASSERTE(gcrVisibleSize.X==80 && gcrVisibleSize.Y==25);
@@ -5041,7 +5045,7 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 			}
 		}
 
-		if (!gbAlternativeAttach && !gbAttachDefTerm && !gpSrv->dwRootProcess)
+		if (!gbAlternativeAttach && !(gbAttachMode & am_DefTerm) && !gpSrv->dwRootProcess)
 		{
 			// В принципе, сюда мы можем попасть при запуске, например: "ConEmuC.exe /ADMIN /ROOT cmd"
 			// Но только не при запуске "из ConEmu" (т.к. будут установлены gpSrv->hGuiWnd, gnConEmuPID)
