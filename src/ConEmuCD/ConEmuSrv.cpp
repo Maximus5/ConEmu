@@ -424,6 +424,9 @@ int AttachRootProcess()
 		}
 
 		gpSrv->dwRootProcess = dwParentPID;
+
+		int nParentBitness = GetProcessBits(gpSrv->dwRootProcess, gpSrv->hRootProcess);
+
 		// Запустить вторую копию ConEmuC НЕМОДАЛЬНО!
 		wchar_t szSelf[MAX_PATH+1];
 		wchar_t szCommand[MAX_PATH+100];
@@ -434,6 +437,13 @@ int AttachRootProcess()
 			_printf("GetModuleFileName failed, ErrCode=0x%08X\n", dwErr);
 			SetLastError(dwErr);
 			return CERR_CREATEPROCESS;
+		}
+
+		if (nParentBitness && (nParentBitness != WIN3264TEST(32,64)))
+		{
+			wchar_t* pszName = (wchar_t*)PointToName(szSelf);
+			*pszName = 0;
+			wcscat_c(szSelf, (nParentBitness==32) ? L"ConEmuC.exe" : L"ConEmuC64.exe");
 		}
 
 		//if (wcschr(pszSelf, L' '))
