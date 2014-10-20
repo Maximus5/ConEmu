@@ -537,17 +537,20 @@ void CStatus::PaintStatus(HDC hPaint, LPRECT prcStatus /*= NULL*/)
 
 		m_Items[nDrawCount].nID = nID;
 
+		LPCWSTR pszCalcText = m_Items[nDrawCount].sText;
+
 		switch (nID)
 		{
 			case csi_Info:
 			{
+				pszCalcText = ms_Status[0] ? ms_Status :
+					pRCon ? pRCon->GetConStatus() : NULL;
 				pszTmp =
 					(m_ClickedItemDesc == csi_Info && !mb_InSetupMenu) ? L"Right click to show System Menu" :
 					((mb_InSetupMenu && m_ClickedItemDesc == csi_Info)
 						|| (m_ClickedItemDesc > csi_Info && m_ClickedItemDesc < csi_Last))
 					? m_Values[m_ClickedItemDesc].sHelp :
-					ms_Status[0] ? ms_Status :
-					pRCon ? pRCon->GetConStatus() : NULL;
+					pszCalcText;
 
 				if (pszTmp && *pszTmp)
 				{
@@ -672,7 +675,8 @@ void CStatus::PaintStatus(HDC hPaint, LPRECT prcStatus /*= NULL*/)
 			continue;
 		}
 
-		if (!GetTextExtentPoint32(hDrawDC, m_Items[nDrawCount].sText, m_Items[nDrawCount].nTextLen, &m_Items[nDrawCount].TextSize) || (m_Items[nDrawCount].TextSize.cx <= 0))
+		// Чтобы при наведении курсора на поля статус-бара не срывало крышу и колонки не начинали бешено скакать
+		if (!GetTextExtentPoint32(hDrawDC, pszCalcText, lstrlen(pszCalcText), &m_Items[nDrawCount].TextSize) || (m_Items[nDrawCount].TextSize.cx <= 0))
 		{
 			if (nID != csi_Info)
 				continue;
