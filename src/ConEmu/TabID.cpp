@@ -1310,6 +1310,12 @@ bool CTabStack::RefreshFarStatus(DWORD nFarPID, CTab& rActiveTab, int& rnActiveI
 
 	_ASSERTE(iCount>0 && "At least one tab must be available");
 
+	// Во время закрытия фара может возникать...
+	if ((iActive >= 0) && !(mpp_Stack[iActive]->Info.Type & fwt_CurrentFarWnd))
+	{
+		mpp_Stack[iActive]->Info.Type |= fwt_CurrentFarWnd;
+	}
+
 	rbHasModalTab = (iModal >= 0);
 	rnActiveCount = iCount;
 	rActiveTab.Init((iActive >= 0) ? mpp_Stack[iActive] : NULL);

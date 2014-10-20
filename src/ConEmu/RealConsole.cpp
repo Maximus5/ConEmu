@@ -9187,6 +9187,7 @@ void CRealConsole::_TabsInfo::StoreActiveTab(int anActiveIndex, const CTabID* ap
 	{
 		nActiveIndex = anActiveIndex;
 		nActiveFarWindow = apActiveTab->Info.nFarWindowID;
+		_ASSERTE(apActiveTab->Info.Type & fwt_CurrentFarWnd);
 		nActiveType = apActiveTab->Info.Type;
 	}
 	else
@@ -9720,6 +9721,7 @@ void CRealConsole::RenameTab(LPCWSTR asNewTabText /*= NULL*/)
 			tab->Renamed.Set(NULL);
 			tab->Info.Type &= ~fwt_Renamed;
 		}
+		_ASSERTE(tab->Info.Type & fwt_CurrentFarWnd);
 		tabs.nActiveType = tab->Info.Type;
 	}
 
