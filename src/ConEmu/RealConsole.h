@@ -255,6 +255,7 @@ enum StartDebugType
 };
 
 struct ConEmuHotKey;
+struct ConsoleInfoArg;
 
 #include "HotkeyChord.h"
 #include "RealServer.h"
@@ -445,6 +446,7 @@ class CRealConsole
 		LPCWSTR GetPanelTitle();
 		LPCWSTR GetTabTitle(CTab& tab);
 		void GetConsoleScreenBufferInfo(CONSOLE_SCREEN_BUFFER_INFO* sbi);
+		void GetConsoleInfo(ConsoleInfoArg* pInfo);
 		//void GetConsoleCursorPos(COORD *pcr);
 		void GetConsoleCursorInfo(CONSOLE_CURSOR_INFO *ci, COORD *cr = NULL);
 		DWORD GetConsoleCP();
@@ -477,6 +479,7 @@ class CRealConsole
 		bool isServerCreated(bool bFullRequired = false);
 		bool isServerAvailable();
 		bool isServerClosing();
+		void ResetTopLeft();
 		LRESULT DoScroll(int nDirection, UINT nCount = 1);
 		bool GetConsoleSelectionInfo(CONSOLE_SELECTION_INFO *sel);
 		bool isConSelectMode();

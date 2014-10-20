@@ -90,6 +90,15 @@ struct MsgSrvStartedArg
 	HWND  hWndBack;
 };
 
+struct ConsoleInfoArg
+{
+	CONSOLE_SCREEN_BUFFER_INFO sbi;
+	SMALL_RECT srRealWindow;
+	COORD crCursor;
+	CONSOLE_CURSOR_INFO cInfo;
+	TOPLEFTCOORD TopLeft;
+};
+
 #include "DwmHelper.h"
 #include "TaskBar.h"
 #include "FrameHolder.h"
@@ -565,7 +574,7 @@ class CConEmuMain
 		CVirtualConsole* GetVCon(int nIdx, bool bFromCycle = false);
 		int isVConValid(CVirtualConsole* apVCon);
 		CVirtualConsole* GetVConFromPoint(POINT ptScreen);
-		void UpdateCursorInfo(const CONSOLE_SCREEN_BUFFER_INFO* psbi, COORD crCursor, CONSOLE_CURSOR_INFO cInfo);
+		void UpdateCursorInfo(const ConsoleInfoArg* pInfo);
 		void UpdateProcessDisplay(BOOL abForce);
 		void UpdateSizes();
 

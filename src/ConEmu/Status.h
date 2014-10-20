@@ -48,6 +48,7 @@ enum CEStatusItems
 	csi_CapsLock,
 	csi_NumLock,
 	csi_ScrollLock,
+	csi_ViewLock,
 	csi_InputLocale,
 	csi_KeyHooks,
 
@@ -167,6 +168,9 @@ private:
 	DWORD_PTR mhk_Locale; // CConEmuMain::GetActiveKeyboardLayout()
 	bool IsKeyboardChanged();
 
+	bool mb_ViewLock;
+	wchar_t ms_ViewLockHint[100];
+
 	DWORD mn_Style, mn_ExStyle;
 	LONG mn_Zoom, mn_Dpi;
 	HWND mh_Fore, mh_Focus;
@@ -197,7 +201,7 @@ public:
 
 	void OnTimer();
 	void OnWindowReposition(const RECT* prcNew = NULL);
-	void OnConsoleChanged(const CONSOLE_SCREEN_BUFFER_INFO* psbi, const CONSOLE_CURSOR_INFO* pci, bool bForceUpdate);
+	void OnConsoleChanged(const CONSOLE_SCREEN_BUFFER_INFO* psbi, const CONSOLE_CURSOR_INFO* pci, const TOPLEFTCOORD* pTopLeft, bool bForceUpdate);
 	void OnCursorChanged(const COORD* pcr, const CONSOLE_CURSOR_INFO* pci, int nMaxX = 0, int nMaxY = 0);
 	void OnConsoleBufferChanged(CRealConsole* pRCon);
 	//void OnConsoleTitleChanged(CRealConsole* pRCon);

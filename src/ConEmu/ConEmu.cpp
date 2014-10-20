@@ -4953,27 +4953,24 @@ void CConEmuMain::UpdateProcessDisplay(BOOL abForce)
 	MCHKHEAP
 }
 
-void CConEmuMain::UpdateCursorInfo(const CONSOLE_SCREEN_BUFFER_INFO* psbi, COORD crCursor, CONSOLE_CURSOR_INFO cInfo)
+void CConEmuMain::UpdateCursorInfo(const ConsoleInfoArg* pInfo)
 {
-	if (psbi)
-		mp_Status->OnConsoleChanged(psbi, &cInfo, false);
-	else
-		mp_Status->OnCursorChanged(&crCursor, &cInfo);
+	mp_Status->OnConsoleChanged(&pInfo->sbi, &pInfo->cInfo, &pInfo->TopLeft, false);
 
 	if (!gpSetCls->GetPage(gpSetCls->thi_Info)) return;
 
 	if (!isMainThread())
 	{
-		DWORD wParam = MAKELONG(crCursor.X, crCursor.Y);
-		DWORD lParam = MAKELONG(cInfo.dwSize, cInfo.bVisible);
-		PostMessage(ghWnd, mn_MsgUpdateCursorInfo, wParam, lParam);
+		ConsoleInfoArg* pDup = (ConsoleInfoArg*)malloc(sizeof(*pDup));
+		*pDup = *pInfo;
+		PostMessage(ghWnd, mn_MsgUpdateCursorInfo, 0, (LPARAM)pDup);
 		return;
 	}
 
 	TCHAR szCursor[64];
 	_wsprintf(szCursor, SKIPLEN(countof(szCursor)) _T("%ix%i, %i %s"),
-		(int)crCursor.X, (int)crCursor.Y,
-		cInfo.dwSize, cInfo.bVisible ? L"vis" : L"hid");
+		(int)pInfo->crCursor.X, (int)pInfo->crCursor.Y,
+		pInfo->cInfo.dwSize, pInfo->cInfo.bVisible ? L"vis" : L"hid");
 	SetDlgItemText(gpSetCls->GetPage(gpSetCls->thi_Info), tCursorPos, szCursor);
 }
 
@@ -14235,9 +14232,9 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			}
 			else if (messg == this->mn_MsgUpdateCursorInfo)
 			{
-				COORD cr; cr.X = LOWORD(wParam); cr.Y = HIWORD(wParam);
-				CONSOLE_CURSOR_INFO ci; ci.dwSize = LOWORD(lParam); ci.bVisible = HIWORD(lParam);
-				this->UpdateCursorInfo(NULL, cr, ci);
+				ConsoleInfoArg* pInfo = (ConsoleInfoArg*)lParam;
+				this->UpdateCursorInfo(pInfo);
+				free(pInfo);
 				return 0;
 			}
 			else if (messg == this->mn_MsgSetWindowMode)

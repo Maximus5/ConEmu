@@ -5432,6 +5432,13 @@ LPCWSTR CRealConsole::GetTabTitle(CTab& tab)
 	return pszName;
 }
 
+void CRealConsole::ResetTopLeft()
+{
+	if (!this || !mp_RBuf)
+		return;
+	mp_RBuf->ResetTopLeft();
+}
+
 // nDirection is one of the standard SB_xxx constants
 LRESULT CRealConsole::DoScroll(int nDirection, UINT nCount /*= 1*/)
 {
@@ -13650,13 +13657,17 @@ void CRealConsole::UpdateCursorInfo()
 	if (!isActive())
 		return;
 
-	CONSOLE_SCREEN_BUFFER_INFO sbi = {};
-	CONSOLE_CURSOR_INFO ci = {};
-	//mp_RBuf->GetCursorInfo(&cr, &ci);
-	mp_ABuf->ConsoleCursorInfo(&ci);
-	mp_ABuf->ConsoleScreenBufferInfo(&sbi);
+	ConsoleInfoArg arg = {};
+	GetConsoleInfo(&arg);
 
-	mp_ConEmu->UpdateCursorInfo(&sbi, sbi.dwCursorPosition, ci);
+	mp_ConEmu->UpdateCursorInfo(&arg);
+}
+
+void CRealConsole::GetConsoleInfo(ConsoleInfoArg* pInfo)
+{
+	mp_ABuf->ConsoleCursorInfo(&pInfo->cInfo);
+	mp_ABuf->ConsoleScreenBufferInfo(&pInfo->sbi, &pInfo->srRealWindow, &pInfo->TopLeft);
+	pInfo->crCursor = pInfo->sbi.dwCursorPosition;
 }
 
 bool CRealConsole::isNeedCursorDraw()

@@ -699,6 +699,7 @@ void Settings::InitSettings()
 	isStatusColumnHidden[csi_ConsoleTitle] = true;
 	#ifndef _DEBUG
 	isStatusColumnHidden[csi_KeyHooks] = true;
+	isStatusColumnHidden[csi_ViewLock] = true;
 	#endif
 	isStatusColumnHidden[csi_InputLocale] = true;
 	isStatusColumnHidden[csi_WindowPos] = true;

@@ -1062,7 +1062,7 @@ BOOL CRealBuffer::SetConsoleSize(USHORT sizeX, USHORT sizeY, USHORT sizeBuffer, 
 
 		if (mp_RCon->isActive())
 		{
-			gpConEmu->mp_Status->OnConsoleChanged(&con.m_sbi, &con.m_ci, true);
+			gpConEmu->mp_Status->OnConsoleChanged(&con.m_sbi, &con.m_ci, NULL, true);
 		}
 
 		return TRUE;
@@ -6111,7 +6111,7 @@ void CRealBuffer::GetCursorInfo(COORD* pcr, CONSOLE_CURSOR_INFO* pci)
 	}
 }
 
-void CRealBuffer::ConsoleScreenBufferInfo(CONSOLE_SCREEN_BUFFER_INFO* sbi, SMALL_RECT* psrRealWindow /*= NULL*/)
+void CRealBuffer::ConsoleScreenBufferInfo(CONSOLE_SCREEN_BUFFER_INFO* sbi, SMALL_RECT* psrRealWindow /*= NULL*/, TOPLEFTCOORD* pTopLeft /*= NULL*/)
 {
 	if (!this) return;
 
@@ -6120,6 +6120,11 @@ void CRealBuffer::ConsoleScreenBufferInfo(CONSOLE_SCREEN_BUFFER_INFO* sbi, SMALL
 	if (psrRealWindow)
 	{
 		*psrRealWindow = con.srRealWindow;
+	}
+
+	if (pTopLeft)
+	{
+		*pTopLeft = con.TopLeft;
 	}
 
 	// В режиме выделения - положение курсора ставим сами
