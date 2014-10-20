@@ -1332,6 +1332,8 @@ bool CRealConsole::PostString(wchar_t* pszChars, size_t cchCount)
 		return false;
 	}
 
+	mp_RBuf->OnKeysSending();
+
 	wchar_t* pszEnd = pszChars + cchCount;
 	INPUT_RECORD r[2];
 	MSG64* pirChars = (MSG64*)malloc(sizeof(MSG64)+cchCount*2*sizeof(MSG64::MsgStr));
@@ -4284,6 +4286,12 @@ void CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y, bool abForce
 	if (isFarInStack() && !gpSet->isUseInjects)
 		return;
 
+	// Если MouseWheel таки посылается в консоль - сбросить TopLeft чтобы избежать коллизий
+	if ((messg == WM_MOUSEWHEEL || messg == WM_MOUSEWHEEL) && (mp_ABuf->m_Type == rbt_Primary))
+	{
+		mp_ABuf->ResetTopLeft();
+	}
+
 	PostMouseEvent(messg, wParam, crMouse, abForceSend);
 
 	if (messg == WM_MOUSEMOVE)
@@ -5757,6 +5765,18 @@ void CRealConsole::OnKeyboardInt(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lP
 			{
 				// Пропускать кнопки в консоль только если буфер реальный
 				return;
+			}
+
+			// Если видимый регион заблокирован, то имеет смысл его сбросить
+			// если нажата не кнопка-модификатор?
+			WORD vk = LOWORD(wParam);
+			if ((pszChars && *pszChars)
+				|| (vk && vk != VK_LWIN && vk != VK_RWIN
+					&& vk != VK_CONTROL && vk != VK_LCONTROL && vk != VK_RCONTROL
+					&& vk != VK_MENU && vk != VK_LMENU && vk != VK_RMENU
+					&& vk != VK_SHIFT && vk != VK_LSHIFT && vk != VK_RSHIFT))
+			{
+				mp_RBuf->OnKeysSending();
 			}
 
 			// А теперь собственно отсылка в консоль

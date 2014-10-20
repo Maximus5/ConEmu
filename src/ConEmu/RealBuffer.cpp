@@ -4817,6 +4817,26 @@ bool CRealBuffer::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	return false;
 }
 
+void CRealBuffer::OnKeysSending()
+{
+	_ASSERTE(m_Type == rbt_Primary);
+	if (!con.TopLeft.isLocked())
+		return;
+
+	bool bReset = false;
+	COORD crTopLeft = {con.TopLeft.x>=0 ? con.TopLeft.x : 0, con.TopLeft.y>=0 ? con.TopLeft.y : 0};
+
+	if (con.TopLeft.y == con.m_sbi.srWindow.Top)
+		bReset = true;
+	else if (!CoordInSmallRect(con.m_sbi.dwCursorPosition, con.srRealWindow))
+		bReset = true;
+	else if (mp_RCon->isFar())
+		bReset = true;
+
+	if (bReset)
+		ResetTopLeft();
+}
+
 COORD CRealBuffer::GetDefaultNtvdmHeight()
 {
 	// 100627 - con.m_sbi.dwSize.Y более использовать некорректно ввиду "far/w"

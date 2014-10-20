@@ -150,6 +150,7 @@ public:
 	bool isStreamSelection();
 
 	bool OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, const wchar_t *pszChars);
+	void OnKeysSending();
 	const ConEmuHotKey* ProcessSelectionHotKey(const ConEmuChord& VkState, bool bKeyDown, const wchar_t *pszChars);
 
 	COORD GetDefaultNtvdmHeight();
