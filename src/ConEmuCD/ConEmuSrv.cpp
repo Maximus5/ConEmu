@@ -444,7 +444,7 @@ int AttachRootProcess()
 
 		wchar_t szGuiWnd[32];
 		if (gpSrv->bRequestNewGuiWnd)
-			wcscat_c(szGuiWnd, L"/GHWND=NEW");
+			wcscpy_c(szGuiWnd, L"/GHWND=NEW");
 		else if (gpSrv->hGuiWnd)
 			_wsprintf(szGuiWnd, SKIPLEN(countof(szGuiWnd)) L"/GHWND=%08X", (DWORD)(DWORD_PTR)gpSrv->hGuiWnd);
 		else
