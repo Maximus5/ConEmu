@@ -322,7 +322,8 @@ int AttachRootProcess()
 		return CERR_RUNNEWCONSOLE;
 	}
 
-	if (gpSrv->dwRootProcess == 0 && !gpSrv->DbgInfo.bDebuggerActive)
+	// "/AUTOATTACH" must be asynchronous
+	if ((gbAttachMode & am_Auto) || (gpSrv->dwRootProcess == 0 && !gpSrv->DbgInfo.bDebuggerActive))
 	{
 		// Нужно попытаться определить PID корневого процесса.
 		// Родительским может быть cmd (comspec, запущенный из FAR)
