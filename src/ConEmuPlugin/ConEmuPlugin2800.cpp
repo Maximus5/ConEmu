@@ -720,13 +720,14 @@ void CPluginW2800::PostMacroApi(const wchar_t* asMacro, INPUT_RECORD* apRec)
 
 	MacroSendMacroText mcr = {sizeof(MacroSendMacroText)};
 	//mcr.Flags = 0; // По умолчанию - вывод на экран разрешен
+	bool bEnableOutput = true;
 
 	while ((asMacro[0] == L'@' || asMacro[0] == L'^') && asMacro[1] && asMacro[1] != L' ')
 	{
 		switch (*asMacro)
 		{
 		case L'@':
-			mcr.Flags |= KMFLAGS_DISABLEOUTPUT;
+			bEnableOutput = false;
 			break;
 		case L'^':
 			mcr.Flags |= KMFLAGS_NOSENDKEYSTOPLUGINS;
@@ -735,6 +736,8 @@ void CPluginW2800::PostMacroApi(const wchar_t* asMacro, INPUT_RECORD* apRec)
 		asMacro++;
 	}
 
+	if (bEnableOutput)
+		mcr.Flags |= KMFLAGS_ENABLEOUTPUT;
 
 	// This macro was not adopted to Lua?
 	_ASSERTE(*asMacro && *asMacro != L'$');
@@ -1260,13 +1263,13 @@ HANDLE CPluginW2800::Open(const void* apInfo)
 	}
 
 	HANDLE h = OpenPluginCommon(Info->OpenFrom, Item, (Info->OpenFrom == OPEN_FROMMACRO));
-	if ((Info->OpenFrom & OPEN_FROM_MASK) == OPEN_FROMMACRO)
+	if (Info->OpenFrom == OPEN_FROMMACRO)
 	{
 		h = (HANDLE)(h != NULL);
 	}
 	else if ((h == INVALID_HANDLE_VALUE) || (h == (HANDLE)-2))
 	{
-		if ((Info->OpenFrom & OPEN_FROM_MASK) == OPEN_ANALYSE)
+		if (Info->OpenFrom == OPEN_ANALYSE)
 			h = PANEL_STOP;
 		else
 			h = NULL;

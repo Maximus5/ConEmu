@@ -189,22 +189,13 @@ HANDLE OpenW2800(const void* aInfo)
 }
 
 // Common
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-
-int WINAPI ProcessSynchroEventW(int Event,void *Param);
-
-#ifdef __cplusplus
-};
-#endif
+int ProcessSynchroEventCommon(int Event, void *Param);
 
 // Far3 export
 INT_PTR WINAPI ProcessSynchroEventW3(void* p)
 {
 	const ProcessSynchroEventInfo *Info = (const ProcessSynchroEventInfo*)p;
-	return ProcessSynchroEventW(Info->Event, Info->Param);
+	return ProcessSynchroEventCommon(Info->Event, Info->Param);
 }
 
 void ExitFARW2800(void)
@@ -268,8 +259,11 @@ void PostMacroW2800(wchar_t* asMacro)
 
 	if (*asMacro == L'@' && asMacro[1] && asMacro[1] != L' ')
 	{
-		mcr.Flags |= KMFLAGS_DISABLEOUTPUT;
 		asMacro ++;
+	}
+	else
+	{
+		mcr.Flags |= KMFLAGS_ENABLEOUTPUT;
 	}
 
 	mcr.SequenceText = asMacro;

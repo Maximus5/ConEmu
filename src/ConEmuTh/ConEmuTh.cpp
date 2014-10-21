@@ -2257,7 +2257,7 @@ void ExecuteInMainThread(ConEmuThSynchroArg* pCmd)
 	}
 }
 
-int WINAPI ProcessSynchroEventW(int Event, void *Param)
+int ProcessSynchroEventCommon(int Event, void *Param)
 {
 	if (Event != SE_COMMONSYNCHRO) return 0;
 
@@ -2334,6 +2334,11 @@ int WINAPI ProcessSynchroEventW(int Event, void *Param)
 	gnMainThreadId = nPrevID;
 
 	return 0;
+}
+
+int WINAPI ProcessSynchroEventW(int Event, void *Param)
+{
+	return ProcessSynchroEventCommon(Event, Param);
 }
 
 
