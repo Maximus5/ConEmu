@@ -3129,6 +3129,7 @@ bool CConEmuSize::SetTileMode(ConEmuWindowCommand Tile)
 				 rc.left, rc.top, rc.right, rc.bottom
 				 );
 			mp_ConEmu->LogString(szInfo);
+			DEBUGSTRSIZE(szInfo);
 		}
 
 		mp_ConEmu->UpdateProcessDisplay(false);
@@ -3202,6 +3203,7 @@ ConEmuWindowCommand CConEmuSize::GetTileMode(bool Estimate, MONITORINFO* pmi/*=N
 			_wsprintf(szTile, SKIPLEN(countof(szTile)) L"Tile mode was changed externally: Our=%s, New=%s",
 				FormatTileMode(m_TileMode,szOldTile,countof(szOldTile)), FormatTileMode(CurTile,szNewTile,countof(szNewTile)));
 			LogString(szTile);
+			DEBUGSTRSIZE(szTile);
 
 			m_TileMode = CurTile;
 
