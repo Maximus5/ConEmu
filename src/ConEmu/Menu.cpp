@@ -2123,7 +2123,7 @@ LRESULT CConEmuMenu::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam, UINT 
 		case ID_ALWAYSONTOP:
 			{
 				gpSet->isAlwaysOnTop = !gpSet->isAlwaysOnTop;
-				gpConEmu->OnAlwaysOnTop();
+				gpConEmu->DoAlwaysOnTopSwitch();
 
 				HWND hExt = gpSetCls->GetPage(gpSetCls->thi_Ext);
 

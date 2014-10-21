@@ -401,8 +401,6 @@ class CConEmuMain
 	protected:
 		bool mb_ScClosePending; // Устанавливается в TRUE в CVConGroup::CloseQuery
 	protected:
-		DWORD mn_LastQuakeShowHide;
-
 		friend class CVConGroup;
 
 		friend class CGuiServer;
@@ -707,18 +705,12 @@ class CConEmuMain
 		void PreWndProc(UINT messg);
 		LRESULT WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 	public:
-		void DoFullScreen();
-		void DoMaximizeRestore();
 		bool DoMaximizeWidthHeight(bool bWidth, bool bHeight);
-		void DoMinimizeRestore(SingleInstanceShowHideType ShowHideType = sih_None);
-		void DoForcedFullScreen(bool bSet = true);
 		void OnSwitchGuiFocus(SwitchGuiFocusOp FocusOp);
-		void OnAlwaysOnTop();
 		void OnAlwaysShowScrollbar(bool abSync = true);
 		void OnBufferHeight();
 		void OnConsoleKey(WORD vk, LPARAM Mods);
 		LRESULT OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate);
-		void OnDesktopMode();
 		LRESULT OnDestroy(HWND hWnd);
 		LRESULT OnFlashWindow(WPARAM wParam, LPARAM lParam);
 		void DoFlashWindow(CESERVER_REQ_FLASHWINFO* pFlash, bool bFromMacro);

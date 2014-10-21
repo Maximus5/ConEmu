@@ -1309,7 +1309,7 @@ bool CConEmuCtrl::key_AlwaysOnTop(const ConEmuChord& VkState, bool TestOnly, con
 		return true;
 
 	gpSet->isAlwaysOnTop = !gpSet->isAlwaysOnTop;
-	gpConEmu->OnAlwaysOnTop();
+	gpConEmu->DoAlwaysOnTopSwitch();
 
 	return true;
 }

@@ -2437,7 +2437,7 @@ LPWSTR ConEmuMacro::SetOption(GuiMacro* p, CRealConsole* apRCon, bool abFromPlug
 			gpSet->isAlwaysOnTop = !gpSet->isAlwaysOnTop;
 			break;
 		}
-		gpConEmu->OnAlwaysOnTop();
+		gpConEmu->DoAlwaysOnTopSwitch();
 		pszResult = lstrdup(L"OK");
 	}
 	else if (!lstrcmpi(pszName, L"AlphaValue"))

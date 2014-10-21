@@ -49,6 +49,7 @@ protected:
 
 	bool mb_InSetQuakeMode;
 	LONG mn_IgnoreQuakeActivation;
+	DWORD mn_LastQuakeShowHide;
 public:
 	void SetIgnoreQuakeActivation(bool bNewValue);
 protected:
@@ -154,6 +155,12 @@ public:
 	bool IsPosLocked();
 	bool JumpNextMonitor(bool Next);
 	bool JumpNextMonitor(HWND hJumpWnd, HMONITOR hJumpMon, bool Next, const RECT rcJumpWnd);
+	void DoFullScreen();
+	void DoMaximizeRestore();
+	void DoMinimizeRestore(SingleInstanceShowHideType ShowHideType = sih_None);
+	void DoForcedFullScreen(bool bSet = true);
+	void DoAlwaysOnTopSwitch();
+	void DoDesktopModeSwitch();
 
 	void ReSize(bool abCorrect2Ideal = false);
 
