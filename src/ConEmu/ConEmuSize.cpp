@@ -3130,6 +3130,8 @@ bool CConEmuSize::SetTileMode(ConEmuWindowCommand Tile)
 				 );
 			mp_ConEmu->LogString(szInfo);
 		}
+
+		mp_ConEmu->UpdateProcessDisplay(false);
 	}
 
 	return true;
@@ -3202,6 +3204,8 @@ ConEmuWindowCommand CConEmuSize::GetTileMode(bool Estimate, MONITORINFO* pmi/*=N
 			LogString(szTile);
 
 			m_TileMode = CurTile;
+
+			mp_ConEmu->UpdateProcessDisplay(false);
 		}
 	}
 
@@ -4704,6 +4708,8 @@ void CConEmuSize::EndSizing(UINT nMouseMsg/*=0*/)
 			LogString(szTile);
 
 			m_TileMode = cwc_Current;
+
+			mp_ConEmu->UpdateProcessDisplay(false);
 		}
 
 		// Сама разберется, что надо/не надо

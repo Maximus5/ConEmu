@@ -4905,6 +4905,16 @@ void CConEmuMain::UpdateProcessDisplay(BOOL abForce)
 	CVConGuard VCon;
 	wchar_t szNo[32], szFlags[255]; szNo[0] = szFlags[0] = 0;
 
+	// Не совсем корректно это в статусе процессов показывать, но пока на владке Info больше негде
+	wchar_t szTile[32] = L"";
+	ConEmuWindowCommand tile = GetTileMode(false);
+	if (tile)
+	{
+		FormatTileMode(tile, szTile, countof(szTile)-1);
+		if (szTile[0]) wcscat_c(szTile, L" ");
+	}
+
+	// Статусы активной консоли
 	if (GetActiveVCon(&VCon) >= 0)
 	{
 		DWORD nProgramStatus = VCon->RCon()->GetProgramStatus();
@@ -4927,9 +4937,16 @@ void CConEmuMain::UpdateProcessDisplay(BOOL abForce)
 		//CodePage
 		_wsprintf(szNo, SKIPLEN(countof(szNo)) L"CP:%u:%u ", VCon->RCon()->GetConsoleCP(), VCon->RCon()->GetConsoleOutputCP());
 		wcscat_c(szFlags, szNo);
+		//GUI window tile mode
+		wcscat_c(szFlags, szTile);
 
 		//CheckDlgButton(hInfo, cbsProgressError, (nFarStatus&CES_OPER_ERROR) ? BST_CHECKED : BST_UNCHECKED);
 		_wsprintf(szNo, SKIPLEN(countof(szNo)) L"%i/%i", VCon->RCon()->GetFarPID(), VCon->RCon()->GetFarPID(TRUE));
+	}
+	else
+	{
+		//GUI window tile mode
+		wcscat_c(szFlags, szTile);
 	}
 
 	if (hInfo)
