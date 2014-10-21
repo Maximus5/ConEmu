@@ -12,6 +12,22 @@ Votes and awards (vote for ConEmu, if you please)
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+2014.10.20
+[*] Try to hilight "folder\file" and do not hilight fakes and dirs.
+[*] Internal. Helper script NewClass.ps1 for creating in-project cpp/h pairs
+[*] Make possible to use "\e]0;text\a".
+[*] Let process "^a" in "ConEmuC -e <string>" (-> "\x07").
+[*] Issue 660: Switch "/AUTOATTACH" was not run asynchronously in some cases.
+[*] Attach: Switch "/GHWND=NEW" may create garbaged command line.
+[*] Attach: If "/AUTOATTACH" is specified, run server of same bitness as root/parent process.
+[*] Scroll. Changing scrolling style.
+    All scrollings in ConEmu are now processed virtually,
+    RealConsole is not touched anymore.
+[*] Add status bar column: Visible region lock.
+[*] Favor first and grip status columns to be fully visible.
+[*] Log tab activation errors (Far windows).
+
+
 2014.10.17
 [*] Far editor was opened at 1-st line instead of stored cursor position on Ctrl+LClick on filename without line number.
 [*] Issue 657: Eager+recent tab switching doesn't cycle all tabs.
