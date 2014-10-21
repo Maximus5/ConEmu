@@ -1219,6 +1219,13 @@ void CPluginW2800::GuiMacroDlg()
 	CallGuiMacroProc();
 }
 
+static void WINAPI FreeMacroResult(void *CallbackData, struct FarMacroValue *Values, size_t Count)
+{
+	// Comes from CPluginW2800::Open
+	wchar_t* psz = (wchar_t*)Values[0].String;
+	free(psz);
+}
+
 HANDLE CPluginW2800::Open(const void* apInfo)
 {
 	const struct OpenInfo *Info = (const struct OpenInfo*)apInfo;
@@ -1227,8 +1234,9 @@ HANDLE CPluginW2800::Open(const void* apInfo)
 		return NULL;
 
 	INT_PTR Item = Info->Data;
+	bool bGuiMacroCall = false;
 
-	if ((Info->OpenFrom & OPEN_FROM_MASK) == OPEN_FROMMACRO)
+	if (Info->OpenFrom == OPEN_FROMMACRO)
 	{
 		Item = 0; // Сразу сброс
 		OpenMacroInfo* p = (OpenMacroInfo*)Info->Data;
@@ -1245,6 +1253,7 @@ HANDLE CPluginW2800::Open(const void* apInfo)
 					Item = (INT_PTR)p->Values[0].Double; break;
 				case FMVT_STRING:
 					_ASSERTE(p->Values[0].String!=NULL);
+					bGuiMacroCall = true;
 					Item = (INT_PTR)p->Values[0].String; break;
 				default:
 					_ASSERTE(p->Values[0].Type==FMVT_INTEGER || p->Values[0].Type==FMVT_STRING);
@@ -1265,7 +1274,30 @@ HANDLE CPluginW2800::Open(const void* apInfo)
 	HANDLE h = OpenPluginCommon(Info->OpenFrom, Item, (Info->OpenFrom == OPEN_FROMMACRO));
 	if (Info->OpenFrom == OPEN_FROMMACRO)
 	{
-		h = (HANDLE)(h != NULL);
+		// В Far/lua можно вернуть величину и не только булевского типа
+		if (h != NULL)
+		{
+			// That was GuiMacro call?
+			if (bGuiMacroCall)
+			{
+				static FarMacroCall rc = {sizeof(rc)};
+				static FarMacroValue val = {sizeof(val)};
+				rc.Count = 1;
+				rc.Values = &val;
+				rc.Callback = FreeMacroResult;
+				val.Type = FMVT_STRING;
+				val.String = GetEnvVar(CEGUIMACRORETENVVAR);
+				h = (HANDLE)&rc;
+			}
+			else
+			{
+				h = (HANDLE)TRUE;
+			}
+		}
+		else
+		{
+			h = NULL;
+		}
 	}
 	else if ((h == INVALID_HANDLE_VALUE) || (h == (HANDLE)-2))
 	{
