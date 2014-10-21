@@ -284,6 +284,7 @@ enum ConEmuWindowCommand
 	cwc_TileHeight  = 8,  // Same as Win+Shift+Up in Win7
 	cwc_PrevMonitor = 9,  // Same as Win+Shift+Left in Win7
 	cwc_NextMonitor = 10, // Same as Win+Shift+Right in Win7
+	cwc_TileWidth   = 11, // Maximize width (no analogue yet)
 	// for comparision
 	cwc_LastCmd
 };

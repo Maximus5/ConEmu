@@ -705,7 +705,6 @@ class CConEmuMain
 		void PreWndProc(UINT messg);
 		LRESULT WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 	public:
-		bool DoMaximizeWidthHeight(bool bWidth, bool bHeight);
 		void OnSwitchGuiFocus(SwitchGuiFocusOp FocusOp);
 		void OnAlwaysShowScrollbar(bool abSync = true);
 		void OnBufferHeight();

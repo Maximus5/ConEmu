@@ -8271,72 +8271,6 @@ void CConEmuMain::OnTaskbarSettingsChanged()
 	apiSetForegroundWindow(ghOpWnd ? ghOpWnd : ghWnd);
 }
 
-
-bool CConEmuMain::DoMaximizeWidthHeight(bool bWidth, bool bHeight)
-{
-	RECT rcWnd, rcNewWnd;
-	GetWindowRect(ghWnd, &rcWnd);
-	rcNewWnd = rcWnd;
-	MONITORINFO mon = {sizeof(MONITORINFO)};
-
-	if (bWidth)
-	{
-		// найти новую левую границу
-		POINT pt = {rcWnd.left,((rcWnd.top+rcWnd.bottom)>>2)};
-		HMONITOR hMonLeft = MonitorFromPoint(pt, MONITOR_DEFAULTTONEAREST);
-
-		if (!GetMonitorInfo(hMonLeft, &mon))
-			return false;
-
-		rcNewWnd.left = mon.rcWork.left;
-		// найти новую правую границу
-		pt.x = rcWnd.right;
-		HMONITOR hMonRight = MonitorFromPoint(pt, MONITOR_DEFAULTTONEAREST);
-
-		if (hMonRight != hMonLeft)
-			if (!GetMonitorInfo(hMonRight, &mon))
-				return false;
-
-		rcNewWnd.right = mon.rcWork.right;
-
-		//// Скорректировать границы на ширину рамки
-		//RECT rcFrame = CalcMargins(CEM_FRAMECAPTION);
-		//rcNewWnd.left -= rcFrame.left;
-		//rcNewWnd.right += rcFrame.right;
-	}
-
-	if (bHeight)
-	{
-		// найти новую верхнюю границу
-		POINT pt = {((rcWnd.left+rcWnd.right)>>2),rcWnd.top};
-		HMONITOR hMonTop = MonitorFromPoint(pt, MONITOR_DEFAULTTONEAREST);
-
-		if (!GetMonitorInfo(hMonTop, &mon))
-			return false;
-
-		rcNewWnd.top = mon.rcWork.top;
-		// найти новую нижнюю границу
-		pt.y = rcWnd.bottom;
-		HMONITOR hMonBottom = MonitorFromPoint(pt, MONITOR_DEFAULTTONEAREST);
-
-		if (hMonBottom != hMonTop)
-			if (!GetMonitorInfo(hMonBottom, &mon))
-				return false;
-
-		rcNewWnd.bottom = mon.rcWork.bottom;
-
-		//// Скорректировать границы на ширину рамки
-		//RECT rcFrame = CalcMargins(CEM_FRAMECAPTION);
-		//rcNewWnd.top -= rcFrame.bottom; // т.к. в top учтена высота заголовка
-		//rcNewWnd.bottom += rcFrame.bottom;
-	}
-
-	// Двигаем окошко
-	if (rcNewWnd.left != rcWnd.left || rcNewWnd.right != rcWnd.right || rcNewWnd.top != rcWnd.top || rcNewWnd.bottom != rcWnd.bottom)
-		MOVEWINDOW(ghWnd, rcNewWnd.left, rcNewWnd.top, rcNewWnd.right-rcNewWnd.left, rcNewWnd.bottom-rcNewWnd.top, 1);
-
-	return true;
-}
 bool CConEmuMain::InCreateWindow()
 {
 	return mb_InCreateWindow;
@@ -11190,7 +11124,7 @@ BOOL CConEmuMain::OnMouse_NCBtnDblClk(HWND hWnd, UINT& messg, WPARAM wParam, LPA
 			return FALSE;
 		}
 
-		DoMaximizeWidthHeight( (wParam == HTLEFT || wParam == HTRIGHT), (wParam == HTTOP || wParam == HTBOTTOM) );
+		SetTileMode((wParam == HTLEFT || wParam == HTRIGHT) ? cwc_TileWidth : cwc_TileHeight);
 
 		return TRUE;
 	}

@@ -2006,6 +2006,15 @@ LRESULT CConEmuSize::OnWindowPosChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 		//SetWindowStyleEx(dwStyleEx & ~WS_EX_TOPMOST);
 	}
 
+	GetTileMode(true);
+
+	#ifdef _DEBUG
+	if (isFullScreen() && !isZoomed())
+	{
+		_ASSERTE(GetTileMode(false)==cwc_Current);
+	}
+	#endif
+
 	//if (WindowPosStackCount == 1)
 	//{
 	//	#ifdef _DEBUG
@@ -2921,11 +2930,49 @@ LPCWSTR CConEmuSize::FormatTileMode(ConEmuWindowCommand Tile, wchar_t* pchBuf, s
 		_wcscpy_c(pchBuf, cchBufMax, L"cwc_TileRight"); break;
 	case cwc_TileHeight:
 		_wcscpy_c(pchBuf, cchBufMax, L"cwc_TileHeight"); break;
+	case cwc_TileWidth:
+		_wcscpy_c(pchBuf, cchBufMax, L"cwc_TileWidth"); break;
 	default:
 		_wsprintf(pchBuf, SKIPLEN(cchBufMax) L"%u", (UINT)Tile);
 	}
 
 	return pchBuf;
+}
+
+RECT CConEmuSize::SetNormalWindowSize()
+{
+	RECT rcNewWnd = GetDefaultRect();
+
+	if (!ghWnd)
+	{
+		_ASSERTE(ghWnd!=NULL);
+		return rcNewWnd;
+	}
+
+	if (m_TileMode != cwc_Current)
+	{
+		_ASSERTE(m_TileMode == cwc_Current);
+		m_TileMode = cwc_Current;
+	}
+
+	HMONITOR hMon = NULL;
+
+	if (!isIconic())
+		hMon = MonitorFromWindow(ghWnd, MONITOR_DEFAULTTONEAREST);
+	else
+		hMon = MonitorFromRect(&rcNewWnd, MONITOR_DEFAULTTONEAREST);
+
+	if (!hMon)
+	{
+		_ASSERTE(hMon!=NULL);
+		SetWindowPos(ghWnd, NULL, rcNewWnd.left, rcNewWnd.top, rcNewWnd.right-rcNewWnd.left, rcNewWnd.bottom-rcNewWnd.top, SWP_NOZORDER);
+	}
+	else
+	{
+		JumpNextMonitor(ghWnd, hMon, true/*без разницы, если указан монитор*/, rcNewWnd);
+	}
+
+	return rcNewWnd;
 }
 
 bool CConEmuSize::SetTileMode(ConEmuWindowCommand Tile)
@@ -2952,9 +2999,9 @@ bool CConEmuSize::SetTileMode(ConEmuWindowCommand Tile)
 		return false;
 	}
 
-	if (Tile != cwc_TileLeft && Tile != cwc_TileRight)
+	if (Tile != cwc_TileLeft && Tile != cwc_TileRight && Tile != cwc_TileHeight && Tile != cwc_TileWidth)
 	{
-		_ASSERTE(Tile==cwc_TileLeft || Tile==cwc_TileRight);
+		_ASSERTE(FALSE && "SetTileMode SKIPPED due to invalid mode");
 		mp_ConEmu->LogString(L"SetTileMode SKIPPED due to invalid mode");
 		return false;
 	}
@@ -2975,7 +3022,8 @@ bool CConEmuSize::SetTileMode(ConEmuWindowCommand Tile)
 
 		HMONITOR hMon = NULL;
 
-		// When window is tiled to the right edge, and user press Win+Right
+		// When window is snapped to the right edge, and user press Win+Right
+		// Same with left edge and Win+Left
 		// ConEmu must jump to next monitor and set tile to Left
 		if ((CurTile == Tile) && (CurTile == cwc_TileLeft || CurTile == cwc_TileRight))
 		{
@@ -2990,45 +3038,65 @@ bool CConEmuSize::SetTileMode(ConEmuWindowCommand Tile)
 				Tile = (CurTile == cwc_TileRight) ? cwc_TileLeft : cwc_TileRight;
 			}
 		}
-		else
+		// Already snapped to right, Win+Left must "restore" window
+		else if ((Tile == cwc_TileLeft) && (CurTile == cwc_TileRight))
 		{
-			if ((Tile == cwc_TileLeft) && (CurTile == cwc_TileRight))
-			{
-				rcNewWnd = GetDefaultRect();
-				m_TileMode = Tile = cwc_Current;
-				hMon = MonitorFromWindow(ghWnd, MONITOR_DEFAULTTONEAREST);
-				JumpNextMonitor(ghWnd, hMon, false, rcNewWnd);
-			}
-			else if ((Tile == cwc_TileRight) && (CurTile == cwc_TileLeft))
-			{
-				rcNewWnd = GetDefaultRect();
-				m_TileMode = Tile = cwc_Current;
-				hMon = MonitorFromWindow(ghWnd, MONITOR_DEFAULTTONEAREST);
-				JumpNextMonitor(ghWnd, hMon, true, rcNewWnd);
-			}
+			m_TileMode = Tile = cwc_Current;
+			rcNewWnd = SetNormalWindowSize();
+			bChange = false;
+		}
+		// Already snapped to left, Win+Right must "restore" window
+		else if ((Tile == cwc_TileRight) && (CurTile == cwc_TileLeft))
+		{
+			m_TileMode = Tile = cwc_Current;
+			rcNewWnd = SetNormalWindowSize();
+			bChange = false;
+		}
+		// Already maximized by width or height?
+		else if (((Tile == cwc_TileWidth) || (Tile == cwc_TileHeight))
+			&& ((CurTile == cwc_TileWidth) || (CurTile == cwc_TileHeight)))
+		{
+			m_TileMode = Tile = cwc_Current;
+			rcNewWnd = SetNormalWindowSize();
+			bChange = false;
 		}
 
 
-		if (Tile == cwc_Current)
+		switch (Tile)
 		{
+		case cwc_Current:
 			// Вернуться из Tile-режима в нормальный
 			rcNewWnd = GetDefaultRect();
 			//bChange = true;
-		}
-		else if (Tile == cwc_TileLeft)
-		{
+			break;
+
+		case cwc_TileLeft:
 			rcNewWnd.left = mi.rcWork.left;
 			rcNewWnd.top = mi.rcWork.top;
 			rcNewWnd.bottom = mi.rcWork.bottom;
 			rcNewWnd.right = (mi.rcWork.left + mi.rcWork.right) >> 1;
 			bChange = true;
-		}
-		else if (Tile == cwc_TileRight)
-		{
+			break;
+
+		case cwc_TileRight:
 			rcNewWnd.right = mi.rcWork.right;
 			rcNewWnd.top = mi.rcWork.top;
 			rcNewWnd.bottom = mi.rcWork.bottom;
 			rcNewWnd.left = (mi.rcWork.left + mi.rcWork.right) >> 1;
+			bChange = true;
+			break;
+
+		case cwc_TileHeight:
+			rcNewWnd = GetDefaultRect();
+			rcNewWnd.top = mi.rcWork.top;
+			rcNewWnd.bottom = mi.rcWork.bottom;
+			bChange = true;
+			break;
+
+		case cwc_TileWidth:
+			rcNewWnd = GetDefaultRect();
+			rcNewWnd.left = mi.rcWork.left;
+			rcNewWnd.right = mi.rcWork.right;
 			bChange = true;
 		}
 
@@ -3069,18 +3137,28 @@ bool CConEmuSize::SetTileMode(ConEmuWindowCommand Tile)
 
 ConEmuWindowCommand CConEmuSize::GetTileMode(bool Estimate, MONITORINFO* pmi/*=NULL*/)
 {
-	if (Estimate && IsSizePosFree())
+	if (Estimate && IsSizePosFree() && !isFullScreen() && !isZoomed() && !isIconic())
 	{
-		_ASSERTE(IsWindowVisible(ghWnd) && !isFullScreen() && !isZoomed() && !isIconic());
-
+		MONITORINFO mi = {};
+		RECT rcWnd = {};
 		ConEmuWindowCommand CurTile = cwc_Current;
 
-		MONITORINFO mi;
+		// Если окно развернуто - сбрасываем признак "Snap" (Tile)
+		if (isFullScreen() || isZoomed())
+		{
+			goto done;
+		}
+		// Если окно минимизировано - не трогать признак "Snap" (Tile)
+		if (!IsWindowVisible(ghWnd) || isIconic())
+		{
+			CurTile = m_TileMode;
+			goto done;
+		}
+
 		GetNearestMonitorInfo(&mi, NULL, NULL, ghWnd);
 		if (pmi)
 			*pmi = mi;
 
-		RECT rcWnd;
 		GetWindowRect(ghWnd, &rcWnd);
 		// _abs(x1-x2) <= 1 ?
 		if ((rcWnd.right == mi.rcWork.right)
@@ -3103,7 +3181,18 @@ ConEmuWindowCommand CConEmuSize::GetTileMode(bool Estimate, MONITORINFO* pmi/*=N
 				CurTile = cwc_TileLeft;
 			}
 		}
+		else if ((rcWnd.top == mi.rcWork.top)
+			&& (rcWnd.bottom == mi.rcWork.bottom))
+		{
+			CurTile = cwc_TileHeight;
+		}
+		else if ((rcWnd.left == mi.rcWork.left)
+			&& (rcWnd.right == mi.rcWork.right))
+		{
+			CurTile = cwc_TileWidth;
+		}
 
+	done:
 		if (m_TileMode != CurTile)
 		{
 			// Сменился!

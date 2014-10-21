@@ -211,6 +211,7 @@ protected:
 	RECT GetVirtualScreenRect(bool abFullScreen);
 	void StoreNormalRect(RECT* prcWnd);
 	void UpdateIdealRect(RECT rcNewIdeal);
+	RECT SetNormalWindowSize();
 
 	friend class CSettings;
 	friend class CSetDlgButtons;
