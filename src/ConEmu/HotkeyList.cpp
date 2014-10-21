@@ -246,10 +246,18 @@ int ConEmuHotKeyList::AllocateHotkeys()
 		->SetHotKey(VK_RBUTTON,VK_SHIFT);
 	Add(vkMaximize,       chk_User,  NULL,    L"Key.Maximize",          CConEmuCtrl::key_GuiMacro, false, L"WindowMaximize()") // Maximize window
 		->SetHotKey(VK_F9,VK_MENU);
-	Add(vkMaximizeWidth,  chk_User,  NULL,    L"Key.MaximizeWidth",     CConEmuCtrl::key_GuiMacro, false, L"WindowMaximize(1)") // Maximize window width
-		;
-	Add(vkMaximizeHeight, chk_User,  NULL,    L"Key.MaximizeHeight",    CConEmuCtrl::key_GuiMacro, false, L"WindowMaximize(2)") // Maximize window height
-		;
+	Add(vkMaximizeWidth,  chk_User,  NULL,    L"Key.MaximizeWidth",     CConEmuCtrl::key_GuiMacro, false, L"WindowMode(11)") // Maximize window width
+		->SetHotKey(VK_DOWN,VK_LWIN,VK_SHIFT);
+	Add(vkMaximizeHeight, chk_User,  NULL,    L"Key.MaximizeHeight",    CConEmuCtrl::key_GuiMacro, false, L"WindowMode(8)") // Maximize window height
+		->SetHotKey(VK_UP,VK_LWIN,VK_SHIFT);
+	Add(vkTileToLeft,     chk_User,  NULL,    L"Key.TileToLeft",        CConEmuCtrl::key_GuiMacro, false, L"WindowMode(6)"/*,  DontHookJumps*/)
+		->SetHotKey(VK_LEFT,VK_LWIN);
+	Add(vkTileToRight,    chk_User,  NULL,    L"Key.TileToRight",       CConEmuCtrl::key_GuiMacro, false, L"WindowMode(7)"/*, DontHookJumps*/)
+		->SetHotKey(VK_RIGHT,VK_LWIN);
+	Add(vkJumpPrevMonitor,chk_User,  NULL,    L"Key.JumpPrevMonitor",   CConEmuCtrl::key_GuiMacro, false, L"WindowMode(9)"/*,  DontHookJumps*/)
+		->SetHotKey(VK_LEFT,VK_LWIN,VK_SHIFT);
+	Add(vkJumpNextMonitor,chk_User,  NULL,    L"Key.JumpNextMonitor",   CConEmuCtrl::key_GuiMacro, false, L"WindowMode(10)"/*, DontHookJumps*/)
+		->SetHotKey(VK_RIGHT,VK_LWIN,VK_SHIFT);
 	Add(vkAltEnter,       chk_User,  NULL,    L"Key.FullScreen",        CConEmuCtrl::key_GuiMacro, false, L"WindowFullscreen()") // Full screen
 		->SetHotKey(VK_RETURN,VK_MENU);
 	Add(vkSystemMenu,     chk_User,  NULL,    L"Key.SysMenu",           CConEmuCtrl::key_SystemMenu, true/*OnKeyUp*/) // System menu
@@ -301,14 +309,6 @@ int ConEmuHotKeyList::AllocateHotkeys()
 		->SetHotKey('D',VK_CONTROL,VK_SHIFT);
 	Add(vkPasteCygwin,    chk_User,  NULL,    L"PasteCygwinKey",        CConEmuCtrl::key_GuiMacro, false, L"Paste(8)")
 		->SetHotKey(VK_INSERT,VK_APPS);
-	Add(vkJumpPrevMonitor,chk_User,  NULL,    L"Key.JumpPrevMonitor",   CConEmuCtrl::key_GuiMacro, false, L"WindowMode(9)"/*,  DontHookJumps*/)
-		->SetHotKey(VK_LEFT,VK_LWIN,VK_SHIFT);
-	Add(vkJumpNextMonitor,chk_User,  NULL,    L"Key.JumpNextMonitor",   CConEmuCtrl::key_GuiMacro, false, L"WindowMode(10)"/*, DontHookJumps*/)
-		->SetHotKey(VK_RIGHT,VK_LWIN,VK_SHIFT);
-	Add(vkTileToLeft,     chk_User,  NULL,    L"Key.TileToLeft",        CConEmuCtrl::key_GuiMacro, false, L"WindowMode(6)"/*,  DontHookJumps*/)
-		->SetHotKey(VK_LEFT,VK_LWIN);
-	Add(vkTileToRight,    chk_User,  NULL,    L"Key.TileToRIght",       CConEmuCtrl::key_GuiMacro, false, L"WindowMode(7)"/*, DontHookJumps*/)
-		->SetHotKey(VK_RIGHT,VK_LWIN);
 	/*
 		*** GUI Macros
 	*/
