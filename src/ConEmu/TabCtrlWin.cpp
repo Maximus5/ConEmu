@@ -49,7 +49,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Status.h"
 #include "Menu.h"
 #include "../common/MMap.h"
-#include "../common/WinUser.h"
+#include "../common/WUser.h"
 
 //WNDPROC CTabPanelWin::_defaultTabProc = NULL;
 //WNDPROC CTabPanelWin::_defaultToolProc = NULL;

@@ -30,7 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "common.hpp"
 #include "CmdArg.h"
 #include "CmdLine.h"
-#include "WinObjects.h"
+#include "WObjects.h"
 
 #ifndef CONEMU_MINIMAL
 // В ConEmuHk редиректор НЕ отключаем

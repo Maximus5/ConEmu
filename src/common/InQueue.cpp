@@ -33,7 +33,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 #include "../common/common.hpp"
 #include "../common/ConEmuCheck.h"
-#include "../common/WinObjects.h"
+#include "../common/WObjects.h"
 #include "InQueue.h"
 
 #define DEBUGSTRINPUTEVENT(s) //DEBUGSTR(s) // SetEvent(this->hInputEvent)

@@ -32,7 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/common.hpp"
 #include "../common/ConEmuCheck.h"
 #include "../common/MSectionSimple.h"
-#include "../common/WinUser.h"
+#include "../common/WUser.h"
 #include "ConEmu.h"
 #include "ConfirmDlg.h"
 #include "Inside.h"

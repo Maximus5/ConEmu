@@ -97,7 +97,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/ConsoleAnnotation.h"
 //#include "../common/clink.h"
 #include "../common/UnicodeChars.h"
-#include "../common/WinConsole.h"
+#include "../common/WConsole.h"
 
 
 bool USE_INTERNAL_QUEUE = true;

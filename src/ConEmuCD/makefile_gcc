@@ -21,10 +21,10 @@ SRCS = \
 		../common/ProcessSetEnv.cpp  \
 		../common/RConStartArgs.cpp  \
 		../common/SetEnvVar.cpp      \
-		../common/WinConsole.cpp     \
-		../common/WinFiles.cpp       \
-		../common/WinObjects.cpp     \
-		../common/WinUser.cpp        \
+		../common/WConsole.cpp     \
+		../common/WFiles.cpp       \
+		../common/WObjects.cpp     \
+		../common/WUser.cpp        \
 		../ConEmuHk/Injects.cpp      \
 		ConEmuCmd.cpp \
 		ConEmuSrv.cpp \

@@ -32,7 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "MAssert.h"
 #include "common.hpp"
 #include "Memory.h"
-#include "WinObjects.h"
+#include "WObjects.h"
 #include "ConEmuCheckEx.h"
 #include "MFileMapping.h"
 

@@ -54,7 +54,7 @@
     <ClCompile Include="..\common\RgnDetect.cpp">
       <Filter>0 - Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\common\WinObjects.cpp">
+    <ClCompile Include="..\common\WObjects.cpp">
       <Filter>0 - Source Files</Filter>
     </ClCompile>
     <ClCompile Include="ConEmuTh2800.cpp">
@@ -104,7 +104,7 @@
     <ClInclude Include="Modules\ThumbSDK.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\common\WinObjects.h">
+    <ClInclude Include="..\common\WObjects.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\common\ConEmuColors.h">

@@ -898,9 +898,9 @@ if exist C:\Utils\FAR170\Plugins\ConEmu\Thumbs\ConEmuTh.dll copy "$(TargetDir)Co
     <ClCompile Include="..\common\MSecurity.cpp" />
     <ClCompile Include="..\common\MStrSafe.cpp" />
     <ClCompile Include="..\common\RgnDetect.cpp" />
-    <ClCompile Include="..\common\WinFiles.cpp" />
-    <ClCompile Include="..\common\WinObjects.cpp" />
-    <ClCompile Include="..\common\WinUser.cpp" />
+    <ClCompile Include="..\common\WFiles.cpp" />
+    <ClCompile Include="..\common\WObjects.cpp" />
+    <ClCompile Include="..\common\WUser.cpp" />
     <ClCompile Include="ConEmuTh.cpp" />
     <ClCompile Include="ConEmuTh1900.cpp" />
     <ClCompile Include="ConEmuTh2800.cpp" />
@@ -999,9 +999,9 @@ if exist C:\Utils\FAR170\Plugins\ConEmu\Thumbs\ConEmuTh.dll copy "$(TargetDir)Co
     <ClInclude Include="..\common\pluginW1761.hpp" />
     <ClInclude Include="..\common\pluginW1900.hpp" />
     <ClInclude Include="..\common\RgnDetect.h" />
-    <ClInclude Include="..\common\WinFiles.h" />
-    <ClInclude Include="..\common\WinObjects.h" />
-    <ClInclude Include="..\common\WinUser.h" />
+    <ClInclude Include="..\common\WFiles.h" />
+    <ClInclude Include="..\common\WObjects.h" />
+    <ClInclude Include="..\common\WUser.h" />
     <ClInclude Include="ConEmuTh.h" />
     <ClInclude Include="ConEmuTh_Lang.h" />
     <ClInclude Include="Display.h" />

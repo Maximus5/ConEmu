@@ -37,7 +37,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "MFileLog.h"
 #include "MSectionSimple.h"
 #include "StartupEnvDef.h"
-#include "WinObjects.h"
+#include "WObjects.h"
 #include "../ConEmu/version.h"
 #pragma warning(disable: 4091)
 #include <shlobj.h>

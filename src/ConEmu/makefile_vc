@@ -112,11 +112,11 @@ $(INTDIR)\VConChild.obj \
 $(INTDIR)\VConGroup.obj \
 $(INTDIR)\VConRelease.obj \
 $(INTDIR)\VirtualConsole.obj \
-$(INTDIR)\WinConsole.obj \
-$(INTDIR)\WinFiles.obj \
-$(INTDIR)\WinObjects.obj \
-$(INTDIR)\WinRegistry.obj \
-$(INTDIR)\WinUser.obj
+$(INTDIR)\WConsole.obj \
+$(INTDIR)\WFiles.obj \
+$(INTDIR)\WObjects.obj \
+$(INTDIR)\WRegistry.obj \
+$(INTDIR)\WUser.obj
 
 
 LINK_LIBS=kernel32.lib user32.lib winspool.lib advapi32.lib shell32.lib mpr.lib ole32.lib secur32.lib gdi32.lib version.lib shlwapi.lib comctl32.lib Comdlg32.lib Winmm.lib Oleaut32.lib Netapi32.lib
@@ -282,7 +282,7 @@ $(INTDIR)\Background.obj: Background.cpp Background.h
 
 $(INTDIR)\BaseDragDrops.obj: BaseDragDrops.cpp BaseDragDrops.h DragDrop.h DragDropData.h
 
-$(INTDIR)\CmdArg.obj: ../common/CmdArg.cpp ../common/CmdArg.h ../common/WinUser.h
+$(INTDIR)\CmdArg.obj: ../common/CmdArg.cpp ../common/CmdArg.h ../common/WUser.h
 
 $(INTDIR)\CmdHistory.obj: CmdHistory.cpp CmdHistory.h
 
@@ -444,15 +444,15 @@ $(INTDIR)\VConRelease.obj: VConRelease.cpp VConRelease.h VirtualConsole.h VConCh
 
 $(INTDIR)\VirtualConsole.obj: VirtualConsole.cpp VConRelease.h VirtualConsole.h VConChild.h VConGroup.h
 
-$(INTDIR)\WinConsole.obj: ../common/WinConsole.cpp
+$(INTDIR)\WConsole.obj: ../common/WConsole.cpp
 
-$(INTDIR)\WinFiles.obj: ../common/WinFiles.cpp ../common/WinFiles.h
+$(INTDIR)\WFiles.obj: ../common/WFiles.cpp ../common/WFiles.h
 
-$(INTDIR)\WinObjects.obj: ../common/WinObjects.cpp
+$(INTDIR)\WObjects.obj: ../common/WObjects.cpp
 
-$(INTDIR)\WinRegistry.obj: ../common/WinRegistry.cpp
+$(INTDIR)\WRegistry.obj: ../common/WRegistry.cpp
 
-$(INTDIR)\WinUser.obj: ../common/WinUser.cpp
+$(INTDIR)\WUser.obj: ../common/WUser.cpp
 
 #LINK_OBJS end
 ##############

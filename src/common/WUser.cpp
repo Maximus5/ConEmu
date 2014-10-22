@@ -34,8 +34,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "common.hpp"
 #include <Sddl.h> // ConvertSidToStringSid
 #include "CmdLine.h"
-#include "WinObjects.h"
-#include "WinUser.h"
+#include "WObjects.h"
+#include "WUser.h"
 
 bool apiSetForegroundWindow(HWND ahWnd)
 {

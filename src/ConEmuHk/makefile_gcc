@@ -14,8 +14,8 @@ SRCS = \
 		../common/MSecurity.cpp      \
 		../common/MStrSafe.cpp       \
 		../common/RConStartArgs.cpp  \
-		../common/WinConsole.cpp     \
-		../common/WinObjects.cpp     \
+		../common/WConsole.cpp     \
+		../common/WObjects.cpp     \
 		Ansi.cpp \
 		ConEmuHooks.cpp \
 		DefTermHk.cpp \

@@ -45,10 +45,10 @@ $(INTDIR)\MStrSafe.obj \
 $(INTDIR)\PluginBackground.obj \
 $(INTDIR)\PluginSrv.obj \
 $(INTDIR)\SetEnvVar.obj \
-$(INTDIR)\WinConsole.obj \
-$(INTDIR)\WinFiles.obj \
-$(INTDIR)\WinObjects.obj \
-$(INTDIR)\WinUser.obj
+$(INTDIR)\WConsole.obj \
+$(INTDIR)\WFiles.obj \
+$(INTDIR)\WObjects.obj \
+$(INTDIR)\WUser.obj
 
 
 USERLIBS = version.lib wininet.lib
@@ -290,13 +290,13 @@ $(INTDIR)\PluginSrv.obj: PluginSrv.cpp ../common/PipeServer.h
 
 $(INTDIR)\SetEnvVar.obj: ../common/SetEnvVar.cpp
 
-$(INTDIR)\WinConsole.obj: ../common/WinConsole.cpp
+$(INTDIR)\WConsole.obj: ../common/WConsole.cpp
 
-$(INTDIR)\WinFiles.obj: ../common/WinFiles.cpp ../common/WinFiles.h
+$(INTDIR)\WFiles.obj: ../common/WFiles.cpp ../common/WFiles.h
 
-$(INTDIR)\WinObjects.obj: ../common/WinObjects.cpp
+$(INTDIR)\WObjects.obj: ../common/WObjects.cpp
 
-$(INTDIR)\WinUser.obj: ../common/WinUser.cpp
+$(INTDIR)\WUser.obj: ../common/WUser.cpp
 
 #LINK_OBJS end
 ##############

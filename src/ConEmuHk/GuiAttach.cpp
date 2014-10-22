@@ -37,7 +37,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/common.hpp"
 #include "../common/CmdLine.h"
 #include "../common/ConEmuCheck.h"
-#include "../common/WinObjects.h"
+#include "../common/WObjects.h"
 
 extern HMODULE ghOurModule;
 extern HWND    ghConEmuWnd;     // Root! ConEmu window

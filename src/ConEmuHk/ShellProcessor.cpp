@@ -43,7 +43,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ShellProcessor.h"
 #include "Injects.h"
 #include "GuiAttach.h"
-#include "../common/WinObjects.h"
+#include "../common/WObjects.h"
 #include "../common/CmdLine.h"
 #include "DefTermHk.h"
 #include "Ansi.h"

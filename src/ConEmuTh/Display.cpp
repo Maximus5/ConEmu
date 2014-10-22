@@ -47,7 +47,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/common.hpp"
 #include "../common/MSection.h"
 #include "../common/RgnDetect.h"
-#include "../common/WinUser.h"
+#include "../common/WUser.h"
 #include "ConEmuTh.h"
 #include "resource.h"
 #include "ImgCache.h"

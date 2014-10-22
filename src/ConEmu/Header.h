@@ -327,7 +327,7 @@ struct SettingsStorage
 
 #include "../common/UnicodeChars.h"
 #include "../common/defines.h"
-#include "../common/WinObjects.h"
+#include "../common/WObjects.h"
 #include "../common/CmdLine.h"
 
 #define IsWindowsXP ((gOSVer.dwMajorVersion >= 6) || (gOSVer.dwMajorVersion == 5 && gOSVer.dwMinorVersion > 0))

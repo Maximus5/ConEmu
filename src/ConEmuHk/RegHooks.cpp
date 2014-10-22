@@ -63,7 +63,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/common.hpp"
 #include "../common/ConEmuCheck.h"
 #include "../common/execute.h"
-#include "../common/WinObjects.h"
+#include "../common/WObjects.h"
 #include "ConEmuHooks.h"
 #include "SetHook.h"
 

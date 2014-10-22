@@ -35,7 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 #include "ConEmu_Lang.h"
 #include "FarDefaultMacros.h"
-#include "../common/WinObjects.h"
+#include "../common/WObjects.h"
 #include "../common/CmdLine.h"
 #include "PluginSrv.h"
 

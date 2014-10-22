@@ -5,9 +5,9 @@ SRCS = \
 		../common/Common.cpp         \
 		../common/MSection.cpp       \
 		../common/MSectionSimple.cpp \
-		../common/WinFiles.cpp       \
-		../common/WinObjects.cpp     \
-		../common/WinUser.cpp        \
+		../common/WFiles.cpp       \
+		../common/WObjects.cpp     \
+		../common/WUser.cpp        \
 		ConEmuTh.cpp \
 		ConEmuTh1900.cpp \
 		ConEmuTh2800.cpp \

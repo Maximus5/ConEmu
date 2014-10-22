@@ -37,7 +37,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ShObjIdl_Part.h"
 #endif // __GNUC__
 
-#include "../common/WinUser.h"
+#include "../common/WUser.h"
 #include "AboutDlg.h"
 #include "Background.h"
 #include "ConEmu.h"

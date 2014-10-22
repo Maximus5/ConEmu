@@ -31,8 +31,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <TlHelp32.h>
 #include "CmdLine.h"
 #include "Monitors.h"
-#include "WinConsole.h"
-#include "WinObjects.h"
+#include "WConsole.h"
+#include "WObjects.h"
 
 // Undocumented console message
 #define WM_SETCONSOLEINFO			(WM_USER+201)

@@ -411,8 +411,8 @@
       <File RelativePath="..\common\RConStartArgs.h" />
       <File RelativePath="..\common\StartupEnv.h" />
       <File RelativePath="..\common\StartupEnvDef.h" />
-      <File RelativePath="..\common\WinConsole.h" />
-      <File RelativePath="..\common\WinObjects.h" />
+      <File RelativePath="..\common\WConsole.h" />
+      <File RelativePath="..\common\WObjects.h" />
       <File RelativePath="..\ConEmuCD\ExitCodes.h" />
       <File RelativePath="Ansi.h" />
       <File RelativePath="ConEmuHooks.h" />
@@ -444,8 +444,8 @@
       <File RelativePath="..\common\MSecurity.cpp" />
       <File RelativePath="..\common\MStrSafe.cpp" />
       <File RelativePath="..\common\RConStartArgs.cpp" />
-      <File RelativePath="..\common\WinConsole.cpp" />
-      <File RelativePath="..\common\WinObjects.cpp" />
+      <File RelativePath="..\common\WConsole.cpp" />
+      <File RelativePath="..\common\WObjects.cpp" />
       <File RelativePath="Ansi.cpp" />
       <File RelativePath="ConEmuHooks.cpp" />
       <File RelativePath="DefTermHk.cpp" />

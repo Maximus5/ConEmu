@@ -29,7 +29,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include "MArray.h"
-#include "WinObjects.h"
+#include "WObjects.h"
 
 struct CmdArg;
 

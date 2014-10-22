@@ -66,7 +66,7 @@
     <ClInclude Include="UserImp.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\common\WinObjects.h">
+    <ClInclude Include="..\common\WObjects.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ExtConsole.h">
@@ -130,7 +130,7 @@
     <ClCompile Include="UserImp.cpp">
       <Filter>0 - Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\common\WinObjects.cpp">
+    <ClCompile Include="..\common\WObjects.cpp">
       <Filter>0 - Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Ansi.cpp">

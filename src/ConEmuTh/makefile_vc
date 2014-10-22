@@ -40,9 +40,9 @@ $(INTDIR)\MSectionSimple.obj \
 $(INTDIR)\MSecurity.obj \
 $(INTDIR)\MStrSafe.obj \
 $(INTDIR)\RgnDetect.obj \
-$(INTDIR)\WinFiles.obj \
-$(INTDIR)\WinObjects.obj \
-$(INTDIR)\WinUser.obj
+$(INTDIR)\WFiles.obj \
+$(INTDIR)\WObjects.obj \
+$(INTDIR)\WUser.obj
 
 
 RC_NAME=$(NAME)
@@ -248,11 +248,11 @@ $(INTDIR)\MStrSafe.obj: ../common/MStrSafe.cpp
 
 $(INTDIR)\RgnDetect.obj: ../common/RgnDetect.cpp
 
-$(INTDIR)\WinFiles.obj: ../common/WinFiles.cpp ../common/WinFiles.h
+$(INTDIR)\WFiles.obj: ../common/WFiles.cpp ../common/WFiles.h
 
-$(INTDIR)\WinObjects.obj: ../common/WinObjects.cpp
+$(INTDIR)\WObjects.obj: ../common/WObjects.cpp
 
-$(INTDIR)\WinUser.obj: ../common/WinUser.cpp
+$(INTDIR)\WUser.obj: ../common/WUser.cpp
 
 #LINK_OBJS end
 ##############

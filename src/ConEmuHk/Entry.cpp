@@ -87,8 +87,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/ConsoleAnnotation.h"
 #include "../common/MFileMapping.h"
 #include "../common/RConStartArgs.h"
-#include "../common/WinConsole.h"
-#include "../common/WinObjects.h"
+#include "../common/WConsole.h"
+#include "../common/WObjects.h"
 
 #include "../common/StartupEnv.h"
 

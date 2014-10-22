@@ -55,8 +55,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 #include "../common/ConsoleAnnotation.h"
 #include "../common/SetEnvVar.h"
-#include "../common/WinObjects.h"
-#include "../common/WinConsole.h"
+#include "../common/WObjects.h"
+#include "../common/WConsole.h"
 #include "../common/TerminalMode.h"
 #include "../common/MFileMapping.h"
 #include "../common/MSection.h"

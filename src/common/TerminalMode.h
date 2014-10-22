@@ -28,5 +28,5 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-// Code moved to WinObjects.cpp
+// Code moved to WObjects.cpp
 bool isTerminalMode();

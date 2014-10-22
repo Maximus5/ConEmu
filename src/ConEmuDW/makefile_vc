@@ -42,7 +42,7 @@ LINK_OBJS = \
 	$(INTDIR)\Memory.obj \
 	$(INTDIR)\MSecurity.obj \
 	$(INTDIR)\MStrSafe.obj \
-	$(INTDIR)\WinObjects.obj
+	$(INTDIR)\WObjects.obj
 	
 
 USERLIBS = 
@@ -270,7 +270,7 @@ $(INTDIR)\MSecurity.obj: ../common/MSecurity.cpp
 
 $(INTDIR)\MStrSafe.obj: ../common/MStrSafe.cpp
 
-$(INTDIR)\WinObjects.obj: ../common/WinObjects.cpp
+$(INTDIR)\WObjects.obj: ../common/WObjects.cpp
 
 #LINK_OBJS end
 ##############

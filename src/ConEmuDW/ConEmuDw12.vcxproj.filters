@@ -45,7 +45,7 @@
     <ClInclude Include="resource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\common\WinObjects.h">
+    <ClInclude Include="..\common\WObjects.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\ConEmu\version.h">
@@ -99,7 +99,7 @@
     <ClCompile Include="..\common\MStrSafe.cpp">
       <Filter>0 - Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\common\WinObjects.cpp">
+    <ClCompile Include="..\common\WObjects.cpp">
       <Filter>0 - Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\common\ConsoleRead.cpp">

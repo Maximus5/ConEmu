@@ -39,7 +39,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/RgnDetect.h"
 #include "../common/Execute.h"
 #include "../common/PipeServer.h"
-#include "../common/WinUser.h"
+#include "../common/WUser.h"
 #include "RealServer.h"
 #include "RealConsole.h"
 #include "RealBuffer.h"

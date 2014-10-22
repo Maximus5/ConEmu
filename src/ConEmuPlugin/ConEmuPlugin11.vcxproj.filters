@@ -63,13 +63,13 @@
     <ClCompile Include="PluginSrv.cpp">
       <Filter>0 - Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\common\WinObjects.cpp">
+    <ClCompile Include="..\common\WObjects.cpp">
       <Filter>0 - Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\common\Monitors.cpp">
       <Filter>0 - Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\common\WinConsole.cpp">
+    <ClCompile Include="..\common\WConsole.cpp">
       <Filter>0 - Source Files</Filter>
     </ClCompile>
     <ClCompile Include="ConEmuPlugin2800.cpp">
@@ -130,7 +130,7 @@
     <ClInclude Include="..\ConEmuHk\SetHook.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\common\WinObjects.h">
+    <ClInclude Include="..\common\WObjects.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\common\ConEmuColors.h">
@@ -157,7 +157,7 @@
     <ClInclude Include="..\common\Monitors.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\common\WinConsole.h">
+    <ClInclude Include="..\common\WConsole.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\common\ConEmuCheckEx.h">

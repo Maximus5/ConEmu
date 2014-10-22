@@ -61,7 +61,7 @@ extern DWORD   gnServerPID; // PID сервера (инициализирует�
 
 #include "../common/common.hpp"
 #include "../common/ConEmuCheck.h"
-#include "../common/WinObjects.h"
+#include "../common/WObjects.h"
 #include "../common/InQueue.h"
 #include "../common/MMap.h"
 

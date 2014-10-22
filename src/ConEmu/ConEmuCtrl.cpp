@@ -30,7 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define HIDE_USE_EXCEPTION_INFO
 #include "Header.h"
-#include "../common/WinUser.h"
+#include "../common/WUser.h"
 
 #include "AboutDlg.h"
 #include "ConEmu.h"

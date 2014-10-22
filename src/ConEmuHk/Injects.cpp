@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/ConEmuCheck.h"
 #include "../common/execute.h"
 #include "../ConEmuCD/ExitCodes.h"
-#include "../common/WinObjects.h"
+#include "../common/WObjects.h"
 //#include "ConEmuHooks.h"
 #include "Console2.h"
 

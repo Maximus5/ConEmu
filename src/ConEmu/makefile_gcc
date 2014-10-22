@@ -20,11 +20,11 @@ SRCS = \
 		../common/RConStartArgs.cpp  \
 		../common/RgnDetect.cpp      \
 		../common/SetEnvVar.cpp      \
-		../common/WinConsole.cpp     \
-		../common/WinFiles.cpp       \
-		../common/WinObjects.cpp     \
-		../common/WinRegistry.cpp    \
-		../common/WinUser.cpp        \
+		../common/WConsole.cpp     \
+		../common/WFiles.cpp       \
+		../common/WObjects.cpp     \
+		../common/WRegistry.cpp    \
+		../common/WUser.cpp        \
 		AboutDlg.cpp       \
 		Attach.cpp         \
 		Background.cpp     \

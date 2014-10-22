@@ -30,8 +30,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define HIDE_USE_EXCEPTION_INFO
 #include "common.hpp"
-#include "WinFiles.h"
-#include "WinObjects.h"
+#include "WFiles.h"
+#include "WObjects.h"
 
 // Returns true, if application was found in registry:
 // [HKCU|HKLM]\Software\Microsoft\Windows\CurrentVersion\App Paths

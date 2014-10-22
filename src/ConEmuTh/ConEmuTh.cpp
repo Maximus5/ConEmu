@@ -48,7 +48,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/FarVersion.h"
 #include "../common/MFileMapping.h"
 #include "../common/MSection.h"
-#include "../common/WinUser.h"
+#include "../common/WUser.h"
 #include "ConEmuTh.h"
 #include "ImgCache.h"
 

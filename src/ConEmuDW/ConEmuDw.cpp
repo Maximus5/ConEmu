@@ -61,7 +61,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmuDw.h"
 #include "resource.h"
 #ifdef _DEBUG
-#include "../common/WinObjects.h"
+#include "../common/WObjects.h"
 #endif
 
 #define DEBUGSTRCALL(s) //DEBUGSTR(s)

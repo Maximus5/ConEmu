@@ -30,7 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "common.hpp"
 #include "CmdArg.h"
 #include "CmdLine.h"
-#include "WinObjects.h"
+#include "WObjects.h"
 
 //Issue 60: BUGBUG: На некоторых системых (Win2k3, WinXP) SetConsoleCP (и иже с ними) просто зависают
 //Поэтому выполняем в отдельном потоке, и если он завис - просто зовем TerminateThread

@@ -28,8 +28,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define HIDE_USE_EXCEPTION_INFO
 #include "common.hpp"
-#include "WinConsole.h"
-#include "WinUser.h"
+#include "WConsole.h"
+#include "WUser.h"
 
 // Evaluate default width for the font
 int EvaluateDefaultFontWidth(int inSizeY, const wchar_t *asFontName)

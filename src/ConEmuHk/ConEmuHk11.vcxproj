@@ -841,8 +841,8 @@
     <ClInclude Include="..\common\RConStartArgs.h" />
     <ClInclude Include="..\common\StartupEnv.h" />
     <ClInclude Include="..\common\StartupEnvDef.h" />
-    <ClInclude Include="..\common\WinConsole.h" />
-    <ClInclude Include="..\common\WinObjects.h" />
+    <ClInclude Include="..\common\WConsole.h" />
+    <ClInclude Include="..\common\WObjects.h" />
     <ClInclude Include="..\ConEmuCD\ExitCodes.h" />
     <ClInclude Include="Ansi.h" />
     <ClInclude Include="ConEmuHooks.h" />
@@ -873,8 +873,8 @@
     <ClCompile Include="..\common\MSecurity.cpp" />
     <ClCompile Include="..\common\MStrSafe.cpp" />
     <ClCompile Include="..\common\RConStartArgs.cpp" />
-    <ClCompile Include="..\common\WinConsole.cpp" />
-    <ClCompile Include="..\common\WinObjects.cpp" />
+    <ClCompile Include="..\common\WConsole.cpp" />
+    <ClCompile Include="..\common\WObjects.cpp" />
     <ClCompile Include="Ansi.cpp" />
     <ClCompile Include="ConEmuHooks.cpp" />
     <ClCompile Include="DefTermHk.cpp" />

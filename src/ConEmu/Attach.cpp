@@ -37,7 +37,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/ConEmuCheck.h"
 #include "../common/Monitors.h"
 #include "../common/ProcessData.h"
-#include "../common/WinUser.h"
+#include "../common/WUser.h"
 #include "../ConEmuCD/ExitCodes.h"
 
 //#undef ALLOW_GUI_ATTACH

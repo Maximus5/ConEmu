@@ -174,7 +174,7 @@ extern HANDLE ghFarInExecuteEvent;
 #include "../common/MFileMapping.h"
 #include "../common/MFileLog.h"
 #include "../common/MSection.h"
-#include "../common/WinObjects.h"
+#include "../common/WObjects.h"
 #include "../common/ConsoleAnnotation.h"
 #include "../common/InQueue.h"
 #include "ExitCodes.h"

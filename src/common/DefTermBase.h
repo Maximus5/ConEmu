@@ -33,7 +33,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "common.hpp"
 #include "MArray.h"
 #include "MSectionSimple.h"
-#include "WinObjects.h"
+#include "WObjects.h"
 #include "../ConEmuCD/ExitCodes.h"
 #include <TlHelp32.h>
 

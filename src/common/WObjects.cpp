@@ -34,10 +34,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <windows.h>
 #include <TlHelp32.h>
 #include "CmdLine.h"
-#include "WinObjects.h"
+#include "WObjects.h"
 
 #if !defined(CONEMU_MINIMAL)
-#include "WinFiles.h"
+#include "WFiles.h"
 #endif
 
 #ifdef _DEBUG

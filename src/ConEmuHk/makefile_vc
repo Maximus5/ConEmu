@@ -71,8 +71,8 @@ $(INTDIR)\RConStartArgs.obj \
 $(INTDIR)\RegHooks.obj \
 $(INTDIR)\SetHook.obj \
 $(INTDIR)\ShellProcessor.obj \
-$(INTDIR)\WinConsole.obj \
-$(INTDIR)\WinObjects.obj
+$(INTDIR)\WConsole.obj \
+$(INTDIR)\WObjects.obj
 
 USERLIBS = 
 
@@ -331,9 +331,9 @@ $(INTDIR)\ShellProcessor.obj: ShellProcessor.cpp ShellProcessor.h
 
 $(INTDIR)\UserImp.obj: UserImp.cpp UserImp.h
 
-$(INTDIR)\WinConsole.obj: ../common/WinConsole.cpp ../common/WinConsole.h
+$(INTDIR)\WConsole.obj: ../common/WConsole.cpp ../common/WConsole.h
 
-$(INTDIR)\WinObjects.obj: ../common/WinObjects.cpp ../common/WinObjects.h
+$(INTDIR)\WObjects.obj: ../common/WObjects.cpp ../common/WObjects.h
 
 #LINK_OBJS end
 ##############

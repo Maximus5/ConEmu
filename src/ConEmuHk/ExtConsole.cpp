@@ -34,7 +34,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../ConEmu/version.h"
 #include "ExtConsole.h"
 #include "../common/ConEmuColors3.h"
-#include "../common/WinObjects.h"
+#include "../common/WObjects.h"
 
 #define MSG_TITLE "ConEmu writer"
 #define MSG_INVALID_CONEMU_VER "Unsupported ConEmu version detected!\nRequired version: " CONEMUVERS "\nConsole writer'll works in 4bit mode"

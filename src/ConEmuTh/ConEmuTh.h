@@ -30,7 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include "../common/common.hpp"
-#include "../Common/WinObjects.h"
+#include "../Common/WObjects.h"
 #include "ConEmuTh_Lang.h"
 #include "ImgCache.h"
 

@@ -63,7 +63,7 @@
     <ClCompile Include="PluginSrv.cpp">
       <Filter>0 - Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\common\WinObjects.cpp">
+    <ClCompile Include="..\common\WObjects.cpp">
       <Filter>0 - Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -115,7 +115,7 @@
     <ClInclude Include="..\ConEmuHk\SetHook.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\common\WinObjects.h">
+    <ClInclude Include="..\common\WObjects.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\common\ConEmuColors.h">

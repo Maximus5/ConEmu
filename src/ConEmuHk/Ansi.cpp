@@ -41,7 +41,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/ConsoleAnnotation.h"
 #include "ExtConsole.h"
 #include "../common/MSectionSimple.h"
-#include "../common/WinConsole.h"
+#include "../common/WConsole.h"
 #include "../ConEmu/version.h"
 
 ///* ***************** */

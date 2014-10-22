@@ -34,7 +34,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "MStrSafe.h"
 #include "RConStartArgs.h"
 #include "common.hpp"
-#include "WinObjects.h"
+#include "WObjects.h"
 #include "CmdLine.h"
 
 // Restricted in ConEmuHk!

@@ -54,7 +54,7 @@
     <ClCompile Include="..\common\RgnDetect.cpp">
       <Filter>0 - Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\common\WinObjects.cpp">
+    <ClCompile Include="..\common\WObjects.cpp">
       <Filter>0 - Source Files</Filter>
     </ClCompile>
     <ClCompile Include="ConEmuTh2800.cpp">
@@ -72,10 +72,10 @@
     <ClCompile Include="..\common\CmdLine.cpp">
       <Filter>0 - Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\common\WinFiles.cpp">
+    <ClCompile Include="..\common\WFiles.cpp">
       <Filter>0 - Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\common\WinUser.cpp">
+    <ClCompile Include="..\common\WUser.cpp">
       <Filter>0 - Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -122,7 +122,7 @@
     <ClInclude Include="Modules\ThumbSDK.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\common\WinObjects.h">
+    <ClInclude Include="..\common\WObjects.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\common\ConEmuColors.h">
@@ -155,10 +155,10 @@
     <ClInclude Include="..\common\CmdLine.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\common\WinFiles.h">
+    <ClInclude Include="..\common\WFiles.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\common\WinUser.h">
+    <ClInclude Include="..\common\WUser.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

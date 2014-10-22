@@ -28,8 +28,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ConEmuC.h"
 #include "../common/MAssert.h"
-#include "../common/WinFiles.h"
-#include "../common/WinObjects.h"
+#include "../common/WFiles.h"
+#include "../common/WObjects.h"
 #include "Infiltrate.h"
 #include "../ConEmuHk/Injects.h"
 #include "../ConEmu/version.h"

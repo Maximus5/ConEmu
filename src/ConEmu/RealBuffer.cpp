@@ -43,8 +43,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/Execute.h"
 #include "../common/MSetter.h"
 #include "../common/RgnDetect.h"
-#include "../common/WinConsole.h"
-#include "../common/WinFiles.h"
+#include "../common/WConsole.h"
+#include "../common/WFiles.h"
 #include "ConEmu.h"
 #include "ConEmuApp.h"
 #include "ConEmuPipe.h"
@@ -1676,7 +1676,7 @@ int CRealBuffer::BufferHeight(uint nNewBufferHeight/*=0*/)
 
 BOOL CRealBuffer::GetConWindowSize(const CONSOLE_SCREEN_BUFFER_INFO& sbi, int* pnNewWidth, int* pnNewHeight, DWORD* pnScroll)
 {
-	TODO("Заменить на вызов ::GetConWindowSize из WinObjects.cpp");
+	TODO("Заменить на вызов ::GetConWindowSize из WObjects.cpp");
 	DWORD nScroll = 0; // enum RealBufferScroll
 	int nNewWidth = 0, nNewHeight = 0;
 
@@ -1690,7 +1690,7 @@ BOOL CRealBuffer::GetConWindowSize(const CONSOLE_SCREEN_BUFFER_INFO& sbi, int* p
 	else
 	{
 		TODO("Добавить в con флажок горизонтальной прокрутки");
-		TODO("и вообще, заменить на вызов ::GetConWindowSize из WinObjects.cpp");
+		TODO("и вообще, заменить на вызов ::GetConWindowSize из WObjects.cpp");
 		if (sbi.dwSize.X <= EvalBufferTurnOnSize(max(nCurWidth,con.crMaxSize.X)))
 		{
 			nNewWidth = sbi.dwSize.X;

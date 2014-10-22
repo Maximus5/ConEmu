@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ToolBarClass.h"
 #include "TabBarEx.h"
 #include "Options.h"
-#include "../common/WinObjects.h"
+#include "../common/WObjects.h"
 #include "resource.h"
 
 #ifdef _DEBUG
