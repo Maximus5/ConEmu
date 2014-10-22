@@ -56,7 +56,7 @@ LPCWSTR CRConFiles::GetFileFromConsole(LPCWSTR asSrc, CmdArg& szFull)
 
 	if (IsFilePath(pszWinPath, true))
 	{
-		if (FileExists(pszWinPath)) // otherwise it will cover directories too
+		if (!FileExists(pszWinPath)) // otherwise it will cover directories too
 			return NULL;
 		szFull.Attach(szWinPath.Detach());
 	}
