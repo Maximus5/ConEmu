@@ -10425,6 +10425,12 @@ bool CRealConsole::ActivateFarWindow(int anWndIndex)
 					int iActive = -1;
 					if ((anWndIndex >= 0) && (TabHdr.nTabCount > 0))
 					{
+						// Последние изменения в фаре привели к невозможности
+						// проверки корректности активации таба по его ИД
+						// Очередной Far API breaking change
+						lbRc = true;
+
+						#if 0
 						for (UINT i = 0; i < TabHdr.nTabCount; i++)
 						{
 							if (pGetTabs[i].Current)
@@ -10439,6 +10445,7 @@ bool CRealConsole::ActivateFarWindow(int anWndIndex)
 								}
 							}
 						}
+						#endif
 					}
 					// Error reporting
 					if (!lbRc)

@@ -40,6 +40,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../ConEmu/version.h"
 #include "../common/farcolor3.hpp"
 #include "../common/ConEmuColors3.h"
+#include "../common/MArray.h"
 #include "../ConEmuHk/SetHook.h"
 
 #include "ConEmuPlugin2800.h"
@@ -486,6 +487,21 @@ int CPluginW2800::GetWindowCount()
 	return (int)windowCount;
 }
 
+static INT_PTR WExists(const WindowInfo& C, const MArray<WindowInfo>& wList)
+{
+	for (INT_PTR j = 0; j < wList.size(); j++)
+	{
+		const WindowInfo& L = wList[j];
+		if (L.Type != C.Type)
+			continue;
+		if ((L.Type != WTYPE_PANELS) && (L.Id != C.Id))
+			continue;
+		return j;
+	}
+
+	return -1;
+}
+
 bool CPluginW2800::UpdateConEmuTabsApi(int windowCount)
 {
 	if (!InfoW2800 || !InfoW2800->AdvControl || gbIgnoreUpdateTabs)
@@ -507,6 +523,73 @@ bool CPluginW2800::UpdateConEmuTabsApi(int windowCount)
 	_ASSERTE(bActiveInfo && (WActive.Flags & WIF_CURRENT));
 	static WindowInfo WLastActive;
 
+	// Another weird Far API breaking change. How more?..
+	static MArray<WindowInfo> wList;
+	MArray<WindowInfo> wCurrent;
+	// Load window list
+	for (int i = 0; i < windowCount; i++)
+	{
+		ZeroStruct(WInfo);
+		WInfo.StructSize = sizeof(WInfo);
+		WInfo.Pos = i;
+		if (!InfoW2800->AdvControl(&guid_ConEmu, ACTL_GETWINDOWINFO, 0, &WInfo))
+			continue;
+		if (WInfo.Type != WTYPE_EDITOR && WInfo.Type != WTYPE_VIEWER && WInfo.Type != WTYPE_PANELS)
+			continue;
+
+		if (WInfo.Type == WTYPE_PANELS)
+		{
+			if ((wCurrent.size() > 0) && (wCurrent[0].Type == WTYPE_PANELS))
+				wCurrent[0] = WInfo;
+			else
+				wCurrent.insert(0, WInfo);
+		}
+		else
+		{
+			wCurrent.push_back(WInfo);
+		}
+	}
+	// Clear closed windows
+	for (INT_PTR i = 0; i < wList.size();)
+	{
+		const WindowInfo& L = wList[i];
+
+		INT_PTR iFound = WExists(L, wCurrent);
+
+		if (iFound < 0)
+			wList.erase(i);
+		else
+			i++;
+	}
+	// Add new windows
+	for (INT_PTR i = 0; i < wCurrent.size(); i++)
+	{
+		const WindowInfo& C = wCurrent[i];
+
+		INT_PTR iFound = WExists(C, wList);
+
+		if (iFound >= 0)
+		{
+			wList[iFound] = C;
+		}
+		else
+		{
+			if (C.Type == WTYPE_PANELS)
+			{
+				if ((wList.size() > 0) && (wList[0].Type == WTYPE_PANELS))
+					wList[0] = C;
+				else
+					wList.insert(0, C);
+			}
+			else
+			{
+				wList.push_back(C);
+			}
+		}
+	}
+	// And check the count
+	windowCount = wList.size();
+
 	// Проверить, есть ли активный редактор/вьювер/панель
 	if (bActiveInfo && (WActive.Type == WTYPE_EDITOR || WActive.Type == WTYPE_VIEWER || WActive.Type == WTYPE_PANELS))
 	{
@@ -522,24 +605,22 @@ bool CPluginW2800::UpdateConEmuTabsApi(int windowCount)
 		// т.е. предпочитаем тот таб, который был активен ранее
 		for (int i = 0; i < windowCount; i++)
 		{
-			WInfo.Pos = i;
-			if (InfoW2800->AdvControl(&guid_ConEmu, ACTL_GETWINDOWINFO, 0, &WInfo)
-				&& (WInfo.Type == WTYPE_EDITOR || WInfo.Type == WTYPE_VIEWER || WInfo.Type == WTYPE_PANELS))
-			{
-				if (!nTabs)
-					WFirst = WInfo;
-				nTabs++;
-				if (WInfo.Flags & WIF_MODAL)
-				{
-					nModalTabs++;
-					WModal = WInfo;
-				}
+			WInfo = wList[i];
+			_ASSERTE(WInfo.Type == WTYPE_EDITOR || WInfo.Type == WTYPE_VIEWER || WInfo.Type == WTYPE_PANELS);
 
-				if (WLastActive.StructSize && (WInfo.Type == WLastActive.Type) && (WInfo.Id == WLastActive.Id))
-				{
-					bActiveInfo = bFound = true;
-					WActive = WInfo;
-				}
+			if (!nTabs)
+				WFirst = WInfo;
+			nTabs++;
+			if (WInfo.Flags & WIF_MODAL)
+			{
+				nModalTabs++;
+				WModal = WInfo;
+			}
+
+			if (WLastActive.StructSize && (WInfo.Type == WLastActive.Type) && (WInfo.Id == WLastActive.Id))
+			{
+				bActiveInfo = bFound = true;
+				WActive = WInfo;
 			}
 		}
 
@@ -560,12 +641,10 @@ bool CPluginW2800::UpdateConEmuTabsApi(int windowCount)
 
 	for (int i = 0; i < windowCount; i++)
 	{
-		WInfo.Pos = i;
-		InfoW2800->AdvControl(&guid_ConEmu, ACTL_GETWINDOWINFO, 0, &WInfo);
+		WInfo = wList[i];
 
 		if (WInfo.Type == WTYPE_EDITOR || WInfo.Type == WTYPE_VIEWER || WInfo.Type == WTYPE_PANELS)
 		{
-			WInfo.Pos = i;
 			WInfo.Name = szWNameBuffer;
 			WInfo.NameSize = CONEMUTABMAX;
 			InfoW2800->AdvControl(&guid_ConEmu, ACTL_GETWINDOWINFO, 0, &WInfo);
@@ -587,10 +666,10 @@ bool CPluginW2800::UpdateConEmuTabsApi(int windowCount)
 				}
 
 				TODO("Определение ИД редактора/вьювера");
-				lbCh |= AddTab(tabCount, i, false/*losingFocus*/, false/*editorSave*/,
+				lbCh |= AddTab(tabCount, WInfo.Pos, false/*losingFocus*/, false/*editorSave*/,
 				               WInfo.Type, WInfo.Name, /*editorSave ? ei.FileName :*/ NULL,
 				               (WInfo.Flags & WIF_CURRENT), (WInfo.Flags & WIF_MODIFIED), (WInfo.Flags & WIF_MODAL),
-							   0/*WInfo.Id?*/);
+							   WInfo.Id);
 			}
 		}
 	}
@@ -1281,7 +1360,7 @@ HANDLE CPluginW2800::Open(const void* apInfo)
 			if (bGuiMacroCall)
 			{
 				static FarMacroCall rc = {sizeof(rc)};
-				static FarMacroValue val = {sizeof(val)};
+				static FarMacroValue val;
 				rc.Count = 1;
 				rc.Values = &val;
 				rc.Callback = FreeMacroResult;
