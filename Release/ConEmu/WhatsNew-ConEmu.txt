@@ -12,6 +12,26 @@ Votes and awards (vote for ConEmu, if you please)
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+2014.10.22
+[*] Correct snap/tile ConEmu window to left/right/by-width/by-height.
+[*] Show snap/tile status on the Settings/Info page.
+[*] Rename maximize/tile hotkeys' descriptions.
+    Maximize height / width -> Snap .. to top/bottom / left/right edges ..
+    Tile ConEmu ... -> Snap ConEmu ...
+[*] Update Far3/lua headers to build 4040.
+[*] Let Plugin.SyncCall("4B675D80-1D4A-4EA9-8436-FDC23F2FC14B","...") returns result as string if succeeded.
+    lua:far.Message(Plugin.SyncCall("4B675D80-1D4A-4EA9-8436-FDC23F2FC14B","IsConEmu"))
+    lua:far.Message(Plugin.SyncCall("4B675D80-1D4A-4EA9-8436-FDC23F2FC14B","FindEditor(@\"C:\\autoexec.bat\")"))
+[*] Hyperlink detector false detect: full directory paths.
+[*] GuiMacro: New function `GetOption("<Name>")` return string representation of ConEmu option.
+    Example for "Internal CtrlTab" option check (Far 3 lua macro)
+    if Plugin.SyncCall("4B675D80-1D4A-4EA9-8436-FDC23F2FC14B","GetOption TabSelf") == "1" then
+      far.Message("ConEmu 'Internal CtrlTab' is ON")
+    end
+[*] Issue 1772: Scroll page up/down stopped to work.
+[*] Support another Far 3 API breaking change (tabs).
+
+
 2014.10.20
 [*] Try to hilight "folder\file" and do not hilight fakes and dirs.
 [*] Internal. Helper script NewClass.ps1 for creating in-project cpp/h pairs
