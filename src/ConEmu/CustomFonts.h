@@ -46,8 +46,8 @@ public:
 	virtual BOOL IsBold()=0;
 	virtual BOOL IsItalic()=0;
 	virtual BOOL IsUnderline()=0;
-	virtual void DrawText(HDC hDC, int X, int Y, LPCWSTR lpString, UINT cbCount)=0;
-	virtual void DrawText(COLORREF* pPixels, size_t iStride, COLORREF cFG, COLORREF cBG, LPCWSTR lpString, UINT cbCount)=0;
+	virtual void TextDraw(HDC hDC, int X, int Y, LPCWSTR lpString, UINT cbCount)=0;
+	virtual void TextDraw(COLORREF* pPixels, size_t iStride, COLORREF cFG, COLORREF cBG, LPCWSTR lpString, UINT cbCount)=0;
 	virtual ~CustomFont() {}
 };
 
@@ -153,8 +153,8 @@ struct CEDC
 	CEDC(HDC hDc);
 	//~CEDC(); -- it is caller responsibility
 
-	bool CreateDC(UINT Width, UINT Height);
-	void DeleteDC();
+	bool Create(UINT Width, UINT Height);
+	void Delete();
 
 	operator HDC() const { return hDC; }
 
@@ -162,9 +162,9 @@ struct CEDC
 	void SetTextColor(COLORREF color);
 	void SetBkColor(COLORREF color);
 	void SetBkMode( int iBkMode );
-	BOOL ExtTextOut(int X, int Y, UINT fuOptions, const RECT *lprc, LPCWSTR lpString, UINT cbCount, const INT *lpDx);
-	BOOL ExtTextOutA(int X, int Y, UINT fuOptions, const RECT *lprc, LPCSTR lpString, UINT cbCount, const INT *lpDx);
-	BOOL GetTextExtentPoint32( LPCTSTR ch, int c, LPSIZE sz );
+	BOOL TextDraw(int X, int Y, UINT fuOptions, const RECT *lprc, LPCWSTR lpString, UINT cbCount, const INT *lpDx);
+	BOOL TextDrawOem(int X, int Y, UINT fuOptions, const RECT *lprc, LPCSTR lpString, UINT cbCount, const INT *lpDx);
+	BOOL TextExtentPoint( LPCTSTR ch, int c, LPSIZE sz );
 private:
 	bool mb_ExtDc;
 	void Reset();

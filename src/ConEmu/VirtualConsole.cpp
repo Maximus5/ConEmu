@@ -405,7 +405,7 @@ CVirtualConsole::~CVirtualConsole()
 	HEAPVAL;
 
 
-	m_DC.DeleteDC();
+	m_DC.Delete();
 
 
 	PointersFree();
@@ -751,7 +751,7 @@ bool CVirtualConsole::InitDC(bool abNoDc, bool abNoWndResize, MSectionLock *pSDC
 		//// Если в этой нити уже заблокирован - секция не дергается
 		//(pSDC ? pSDC : &_SDC)->Lock(&csDC, TRUE, 200); // но по таймауту, чтобы не повисли ненароком
 
-		m_DC.DeleteDC();
+		m_DC.Delete();
 
 
 		Assert(gpSetCls->FontWidth() && gpSetCls->FontHeight());
@@ -778,7 +778,7 @@ bool CVirtualConsole::InitDC(bool abNoDc, bool abNoWndResize, MSectionLock *pSDC
 		if (ghOpWnd)
 			mp_ConEmu->UpdateSizes();
 
-		if (m_DC.CreateDC(Width+Pad, Height+Pad))
+		if (m_DC.Create(Width+Pad, Height+Pad))
 		{
 			// Запомнить кое-что
 			LastPadSize = gpSet->nCenterConsolePad;
@@ -1498,7 +1498,7 @@ WORD CVirtualConsole::CharWidth(wchar_t ch)
 	//BOOL lb1 = GetCharABCWidths((HDC)m_DC, ch, ch, &abc);
 	//#endif
 
-	if (m_DC.GetTextExtentPoint32(&ch, 1, &sz) && sz.cx)
+	if (m_DC.TextExtentPoint(&ch, 1, &sz) && sz.cx)
 		nWidth = sz.cx;
 	else
 		nWidth = nFontWidth;
@@ -3418,7 +3418,7 @@ void CVirtualConsole::UpdateText()
 								SelectFont(hFont2);
 
 							m_DC.SetTextColor(PrevAttr.crForeColor);
-							m_DC.ExtTextOut(rect.left, rect.top, nFlags, &rect, pchBorder, nCnt, 0);
+							m_DC.TextDraw(rect.left, rect.top, nFlags, &rect, pchBorder, nCnt, 0);
 							m_DC.SetTextColor(attr.crForeColor); // Вернуть
 						}
 						else
@@ -3793,7 +3793,7 @@ void CVirtualConsole::UpdateText()
 							}
 						}
 
-						m_DC.ExtTextOutA(rect.left, rect.top, nFlags,
+						m_DC.TextDrawOem(rect.left, rect.top, nFlags,
 						            &rect, tmpOem, nDrawLen, bProportional ? 0 : nDX);
 					}
 					else
@@ -3902,7 +3902,7 @@ void CVirtualConsole::UpdateText()
 						}
 
 						// nDX это сдвиги до начала следующего символа, с начала предыдущего
-						m_DC.ExtTextOut(rect.left+nShift0, rect.top, nFlags, &rect,
+						m_DC.TextDraw(rect.left+nShift0, rect.top, nFlags, &rect,
 						           pszDraw, nDrawLen, bProportional ? 0 : nDX);
 					}
 				}
@@ -4610,7 +4610,7 @@ void CVirtualConsole::PaintVConSimple(HDC hPaintDc, RECT rcClient, BOOL bGuiVisi
 			UINT nFlags = ETO_CLIPPED;
 			cePaintDc.SetTextColor(pColors[7]);
 			cePaintDc.SetBkColor(pColors[0]);
-			cePaintDc.ExtTextOut(rcClient.left, rcClient.top, nFlags, &rcClient,
+			cePaintDc.TextDraw(rcClient.left, rcClient.top, nFlags, &rcClient,
 				        pszStarting, _tcslen(pszStarting), 0);
 			cePaintDc.SelectObject(hOldF);
 		}

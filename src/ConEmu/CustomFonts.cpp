@@ -450,7 +450,7 @@ wrap:
 		*pY = m_Height;
 	}
 
-	virtual void DrawText(HDC hDC, int X, int Y, LPCWSTR lpString, UINT cbCount)
+	virtual void TextDraw(HDC hDC, int X, int Y, LPCWSTR lpString, UINT cbCount)
 	{
 		for (; cbCount; cbCount--, lpString++)
 		{
@@ -460,7 +460,7 @@ wrap:
 		}
 	}
 
-	virtual void DrawText(COLORREF* pDstPixels, size_t iDstStride, COLORREF cFG, COLORREF cBG, LPCWSTR lpString, UINT cbCount)
+	virtual void TextDraw(COLORREF* pDstPixels, size_t iDstStride, COLORREF cFG, COLORREF cBG, LPCWSTR lpString, UINT cbCount)
 	{
 		size_t iSrcSlack = m_Width * 255;
 		size_t iDstSlack = iDstStride - m_Width;
@@ -562,7 +562,7 @@ void CEDC::Reset()
 	m_BkMode = -1;
 }
 
-void CEDC::DeleteDC()
+void CEDC::Delete()
 {
 	if (hDC)
 	{
@@ -587,9 +587,9 @@ void CEDC::DeleteDC()
 	Reset();
 }
 
-bool CEDC::CreateDC(UINT Width, UINT Height)
+bool CEDC::Create(UINT Width, UINT Height)
 {
-	DeleteDC();
+	Delete();
 
 	const HDC hScreenDC = GetDC(NULL);
 	_ASSERTE(hScreenDC);
@@ -706,7 +706,7 @@ static COLORREF FlipChannels(COLORREF c)
 	return (c >> 16) | (c & 0x00FF00) | ((c & 0xFF) << 16);
 }
 
-BOOL CEDC::ExtTextOut(int X, int Y, UINT fuOptions, const RECT *lprc, LPCWSTR lpString, UINT cbCount, const INT *lpDx)
+BOOL CEDC::TextDraw(int X, int Y, UINT fuOptions, const RECT *lprc, LPCWSTR lpString, UINT cbCount, const INT *lpDx)
 {
 	switch (m_Font.iType)
 	{
@@ -716,7 +716,7 @@ BOOL CEDC::ExtTextOut(int X, int Y, UINT fuOptions, const RECT *lprc, LPCWSTR lp
 	case CEFONT_CUSTOM:
 		if (pPixels)
 		{
-			m_Font.pCustomFont->DrawText(pPixels + X + Y*iWidth, iWidth,
+			m_Font.pCustomFont->TextDraw(pPixels + X + Y*iWidth, iWidth,
 				FlipChannels(m_TextColor), fuOptions & ETO_OPAQUE ? FlipChannels(m_BkColor) : CLR_INVALID, lpString, cbCount);
 		}
 		else
@@ -732,7 +732,7 @@ BOOL CEDC::ExtTextOut(int X, int Y, UINT fuOptions, const RECT *lprc, LPCWSTR lp
 
 			HBRUSH hOldBrush = (HBRUSH)::SelectObject(hDC, m_FgBrush.Get(m_TextColor));
 
-			m_Font.pCustomFont->DrawText(hDC, X, Y, lpString, cbCount);
+			m_Font.pCustomFont->TextDraw(hDC, X, Y, lpString, cbCount);
 
 			::SelectObject(hDC, hOldBrush);
 		}
@@ -744,7 +744,7 @@ BOOL CEDC::ExtTextOut(int X, int Y, UINT fuOptions, const RECT *lprc, LPCWSTR lp
 	}
 }
 
-BOOL CEDC::ExtTextOutA(int X, int Y, UINT fuOptions, const RECT *lprc, LPCSTR lpString, UINT cbCount, const INT *lpDx)
+BOOL CEDC::TextDrawOem(int X, int Y, UINT fuOptions, const RECT *lprc, LPCSTR lpString, UINT cbCount, const INT *lpDx)
 {
 	BOOL lbRc = FALSE;
 
@@ -766,7 +766,7 @@ BOOL CEDC::ExtTextOutA(int X, int Y, UINT fuOptions, const RECT *lprc, LPCSTR lp
 				MultiByteToWideChar(CP_OEMCP, 0, lpString, -1, lpWString, cbCount);
 				lpWString[cbCount] = 0; // AsciiZ в принципе не требуется, но для удобства.
 
-				lbRc = ExtTextOut(X, Y, fuOptions, lprc, lpWString, cbCount, lpDx);
+				lbRc = TextDraw(X, Y, fuOptions, lprc, lpWString, cbCount, lpDx);
 
 				free(lpWString);
 			}
@@ -780,7 +780,7 @@ BOOL CEDC::ExtTextOutA(int X, int Y, UINT fuOptions, const RECT *lprc, LPCSTR lp
 	return lbRc;
 }
 
-BOOL CEDC::GetTextExtentPoint32(LPCTSTR ch, int c, LPSIZE sz)
+BOOL CEDC::TextExtentPoint(LPCTSTR ch, int c, LPSIZE sz)
 {
 	switch (m_Font.iType)
 	{
