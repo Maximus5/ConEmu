@@ -112,6 +112,7 @@ namespace ConEmuMacro
 	#ifdef _DEBUG
 	bool gbUnitTest = false;
 	#endif
+	LPWSTR Int2Str(UINT nValue, bool bSigned);
 
 	typedef LPWSTR (*MacroFunction)(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 
@@ -148,6 +149,8 @@ namespace ConEmuMacro
 	LPWSTR FontSetName(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Изменить размер шрифта. int nRelative, int N
 	LPWSTR FontSetSize(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
+	// GetOption("<Name>")
+	LPWSTR GetOption(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Change 'Highlight row/col' under mouse. Locally in current VCon.
 	LPWSTR HighlightMouse(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Проверка, есть ли ConEmu GUI. Функцию мог бы и сам плагин обработать, но для "общности" возвращаем "Yes" здесь
@@ -231,6 +234,7 @@ namespace ConEmuMacro
 		{Flash, {L"Flash", L"FlashWindow"}},
 		{FontSetName, {L"FontSetName"}},
 		{FontSetSize, {L"FontSetSize"}},
+		{GetOption, {L"GetOption"}},
 		{HighlightMouse, {L"HighlightMouse"}},
 		{IsConEmu, {L"IsConEmu"}},
 		{IsConsoleActive, {L"IsConsoleActive"}},
@@ -2356,6 +2360,54 @@ LPWSTR ConEmuMacro::SetDpi(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 	gpConEmu->OnDpiChanged(nValue, nValue, NULL, true);
 
 	return lstrdup(L"OK");
+}
+
+LPWSTR ConEmuMacro::Int2Str(UINT nValue, bool bSigned)
+{
+	wchar_t szNumber[20];
+	if (bSigned)
+		_wsprintf(szNumber, SKIPCOUNT(szNumber) L"%i", (int)nValue);
+	else
+		_wsprintf(szNumber, SKIPCOUNT(szNumber) L"%u", nValue);
+	return lstrdup(szNumber);
+}
+
+// GetOption("<Name>")
+LPWSTR ConEmuMacro::GetOption(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
+{
+	LPWSTR pszResult = NULL;
+	LPWSTR pszName = NULL;
+	int nID = 0;
+
+	if (p->GetIntArg(0, nID))
+	{
+		// TODO: ...
+	}
+	else if (p->GetStrArg(0, pszName))
+	{
+		if (!lstrcmpi(pszName, L"QuakeStyle") || !lstrcmpi(pszName, L"QuakeAutoHide"))
+		{
+			pszResult = Int2Str(gpSet->isQuakeStyle, false);
+		}
+		else if (!lstrcmpi(pszName, L"FarGotoEditorPath"))
+		{
+			pszResult = lstrdup(gpSet->sFarGotoEditor);
+		}
+		else if (!lstrcmpi(pszName, L"TabSelf"))
+		{
+			pszResult = Int2Str(gpSet->isTabSelf, false);
+		}
+		else if (!lstrcmpi(pszName, L"TabRecent"))
+		{
+			pszResult = Int2Str(gpSet->isTabRecent, false);
+		}
+		else if (!lstrcmpi(pszName, L"TabLazy"))
+		{
+			pszResult = Int2Str(gpSet->isTabLazy, false);
+		}
+	}
+
+	return pszResult ? pszResult : lstrdup(L"");
 }
 
 // SetOption("<Name>",<Value>)
