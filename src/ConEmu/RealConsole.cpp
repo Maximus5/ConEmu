@@ -5482,7 +5482,7 @@ LRESULT CRealConsole::DoScroll(int nDirection, UINT nCount /*= 1*/)
 	case SB_PAGEDOWN:
 	case SB_PAGEUP:
 		nCount = TextHeight();
-		nDirection -= SB_PAGEDOWN;
+		nDirection -= SB_PAGEUP;
 		_ASSERTE(nDirection==SB_LINEUP || nDirection==SB_LINEDOWN);
 		break;
 	case SB_TOP:
