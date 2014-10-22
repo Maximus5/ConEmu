@@ -71,9 +71,10 @@ BEGIN
     BEGIN
         BLOCK "000004b0"
         BEGIN
+            VALUE "CompanyName", "ConEmu-Maximus5\0"
+            VALUE "LegalCopyright", "© ConEmu.Maximus5@gmail.com"
             VALUE "FileDescription", "ConEmu console server" CONEMUPLTFRM
             VALUE "FileVersion", CONEMUVERS
-            VALUE "LegalCopyright", "(C) 2009-present Maximus5"
             VALUE "OriginalFilename", "ConEmuCD*.dll"
             VALUE "ProductName", "ConEmu"
             VALUE "ProductVersion", CONEMUVERS

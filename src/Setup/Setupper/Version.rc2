@@ -34,9 +34,10 @@ BEGIN
     BEGIN
         BLOCK "000004b0"
         BEGIN
+            VALUE "CompanyName", "ConEmu-Maximus5\0"
+            VALUE "LegalCopyright", "© ConEmu.Maximus5@gmail.com"
             VALUE "FileDescription", "ConEmu Installer"
             VALUE "FileVersion", CONEMUVERS
-            VALUE "LegalCopyright", "(C) 2011-present Maximus5"
             VALUE "OriginalFilename", "ConEmuSetup.exe"
             VALUE "ProductName", "ConEmu"
             VALUE "ProductVersion", CONEMUVERS

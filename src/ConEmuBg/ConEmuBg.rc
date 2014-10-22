@@ -71,9 +71,10 @@ BEGIN
     BEGIN
         BLOCK "000004b0"
         BEGIN
+            VALUE "CompanyName", "ConEmu-Maximus5\0"
+            VALUE "LegalCopyright", "© ConEmu.Maximus5@gmail.com"
             VALUE "FileDescription", "ConEmu Background for FAR manager 1.7x, 2.x, 3.x" CONEMUPLTFRM
             VALUE "FileVersion", CONEMUVERS
-            VALUE "LegalCopyright", "(C) 2011-present Maximus5"
             VALUE "OriginalFilename", "ConEmuBg.dll"
             VALUE "ProductName", "ConEmu"
             VALUE "ProductVersion", CONEMUVERS

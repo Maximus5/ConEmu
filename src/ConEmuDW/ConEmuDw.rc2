@@ -30,10 +30,11 @@ BEGIN
     BEGIN
         BLOCK "000004b0"
         BEGIN
+            VALUE "CompanyName", "ConEmu-Maximus5\0"
+            VALUE "LegalCopyright", "© ConEmu.Maximus5@gmail.com"
             VALUE "FileDescription", "ConEmu R/W handler" CONEMUPLTFRM
             VALUE "FileVersion", CONEMUVERS
-            VALUE "LegalCopyright", "(C) 2009-present Maximus5"
-            VALUE "OriginalFilename", "ConEmuDw*.dll"
+            VALUE "OriginalFilename", "ExtendedConsole*.dll"
             VALUE "ProductName", "ConEmu"
             VALUE "ProductVersion", CONEMUVERS
             VALUE "Comments", "Far truecolor extension for ConEmu"

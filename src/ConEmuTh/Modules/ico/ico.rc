@@ -71,9 +71,10 @@ BEGIN
     BEGIN
         BLOCK "041904b0"
         BEGIN
+            VALUE "CompanyName", "ConEmu-Maximus5\0"
+            VALUE "LegalCopyright", "© ConEmu.Maximus5@gmail.com"
             VALUE "FileDescription", "ICO for ConEmu Thumbnails"
             VALUE "FileVersion", "1.0"
-            VALUE "LegalCopyright", "(C) 2010-present Maximus5"
             VALUE "OriginalFilename", "ico"
             VALUE "ProductName", "ConEmu Thumbnails"
             VALUE "ProductVersion", "1.0"
