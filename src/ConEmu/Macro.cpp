@@ -1243,9 +1243,10 @@ LPWSTR ConEmuMacro::Close(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 		break;
 	case 5:
 	case 8:
+	case 9:
 		if (apRCon)
 		{
-			CVConGroup::CloseAllButActive((nCmd == 5) ? apRCon->VCon() : NULL);
+			CVConGroup::CloseAllButActive((nCmd == 5) ? apRCon->VCon() : NULL, (nCmd == 9), (nFlags & 1)==1);
 			pszResult = lstrdup(L"OK");
 		}
 		break;

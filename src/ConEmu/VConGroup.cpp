@@ -2541,7 +2541,7 @@ bool CVConGroup::DoCloseAllVCon(bool bMsgConfirmed)
 	return lbAllowed;
 }
 
-void CVConGroup::CloseAllButActive(CVirtualConsole* apVCon/*may be null*/)
+void CVConGroup::CloseAllButActive(CVirtualConsole* apVCon/*may be null*/, bool abZombies, bool abNoConfirm)
 {
 	int i;
 	MArray<CVConGuard*> VCons;
@@ -2551,12 +2551,14 @@ void CVConGroup::CloseAllButActive(CVirtualConsole* apVCon/*may be null*/)
 	{
 		if ((gp_VCon[i] == NULL) || (gp_VCon[i] == apVCon))
 			continue;
+		if (abZombies && (gp_VCon[i]->RCon()->GetActivePID() != 0))
+			continue;
 
 		pGuard = new CVConGuard(gp_VCon[i]);
 		VCons.push_back(pGuard);
 	}
 
-	if (CloseQuery(&VCons, NULL, false, true))
+	if (abNoConfirm || CloseQuery(&VCons, NULL, false, true))
 	{
 		gpConEmu->SetScClosePending(true); // Disable confirmation of each console closing
 

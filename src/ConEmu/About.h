@@ -207,15 +207,16 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"    Event==1: Generates a CTRL+BREAK signal\r\n" \
 	L"    More info in GenerateConsoleCtrlEvent WinAPI function\r\n" \
 	L"Close(<What>[,<Flags>])\r\n" \
-	L"  - close current console (0), without confirmation (0,1),\r\n" \
-	L"    terminate active process (1), without confirmation (1,1)\r\n" \
-	L"    close ConEmu window (2), without confirmation (2,1)\r\n" \
+	L"  - close current console (0), without confirmation (0,1)\r\n" \
+	L"    terminate active process (1), no confirm (1,1)\r\n" \
+	L"    close ConEmu window (2), no confirm (2,1)\r\n" \
 	L"    close active tab (3)\r\n" \
 	L"    close active group (4)\r\n" \
-	L"    close all tabs but active (5)\r\n" \
+	L"    close all tabs but active (5), no confirm (5,1)\r\n" \
 	L"    close active tab or group (6)\r\n" \
 	L"    close all active processes of the active group (7)\r\n" \
-	L"    close all tabs (8)\r\n" \
+	L"    close all tabs (8), no confirm (8,1)\r\n" \
+	L"    close all zombies (9), no confirm (9,1)\r\n" \
 	L"Copy(<What>[,<Format>[,\"<File>\"]])\r\n" \
 	L"  - Copy active console contents\r\n" \
 	L"    What==0: current selection\r\n" \

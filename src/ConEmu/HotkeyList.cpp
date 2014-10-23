@@ -182,6 +182,8 @@ int ConEmuHotKeyList::AllocateHotkeys()
 		;
 	Add(vkCloseAllCon,    chk_User,  NULL,    L"CloseAllConKey",        CConEmuCtrl::key_GuiMacro, false, L"Close(8)")
 		;
+	Add(vkCloseZombies,    chk_User,  NULL,   L"CloseZombiesKey",      CConEmuCtrl::key_GuiMacro, false, L"Close(9)")
+		;
 	Add(vkCloseExceptCon, chk_User,  NULL,    L"CloseExceptConKey",     CConEmuCtrl::key_GuiMacro, false, L"Close(5)")
 		;
 	Add(vkTerminateApp,   chk_User,  NULL,    L"TerminateProcessKey",   CConEmuCtrl::key_TerminateProcess/*sort of Close*/)

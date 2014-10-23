@@ -919,7 +919,8 @@ void CConEmuMenu::ExecPopupMenuCmd(TrackMenuPlace place, CVirtualConsole* apVCon
 			break;
 		case IDM_TERMINATEALLCON:
 		case IDM_TERMINATECONEXPT:
-			CVConGroup::CloseAllButActive((nCmd == IDM_TERMINATECONEXPT) ? apVCon : NULL);
+		case IDM_TERMINATEZOMBIES:
+			CVConGroup::CloseAllButActive((nCmd == IDM_TERMINATECONEXPT) ? apVCon : NULL, (nCmd == IDM_TERMINATEZOMBIES), false);
 			break;
 
 		case IDM_RESTART:
@@ -1775,6 +1776,7 @@ HMENU CConEmuMenu::CreateVConPopupMenu(CVirtualConsole* apVCon, HMENU ahExist, B
 		AppendMenu(hTerminate, MF_STRING | MF_ENABLED, IDM_TERMINATEPRCGROUP, MenuAccel(vkCloseGroupPrc,L"Kill active &processes"));
 		AppendMenu(hTerminate, MF_SEPARATOR, 0, L"");
 		AppendMenu(hTerminate, MF_STRING | MF_ENABLED, IDM_TERMINATEALLCON, MenuAccel(vkCloseAllCon,L"Close &all consoles"));
+		AppendMenu(hTerminate, MF_STRING | MF_ENABLED, IDM_TERMINATEZOMBIES, MenuAccel(vkCloseZombies,L"Close all &zombies"));
 		AppendMenu(hTerminate, MF_STRING | MF_ENABLED, IDM_TERMINATECONEXPT, MenuAccel(vkCloseExceptCon,L"Close e&xcept active"));
 		AppendMenu(hMenu, MF_POPUP | MF_ENABLED, (UINT_PTR)hTerminate, L"Close or &kill");
 		AppendMenu(hMenu, MF_STRING | ((apVCon && apVCon->GuiWnd()) ? MF_ENABLED : 0),     IDM_CHILDSYSMENU,    MenuAccel(vkChildSystemMenu,L"Child system menu..."));

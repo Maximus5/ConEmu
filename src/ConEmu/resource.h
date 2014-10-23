@@ -1040,6 +1040,7 @@
 #define cbHistoryClearAll               2710
 #define cbHistoryDelItem                2711
 #define stHistoryItems                  2712
+#define vkCloseZombies                  2713
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
@@ -1048,7 +1049,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        226
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2713
+#define _APS_NEXT_CONTROL_VALUE         2714
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif
