@@ -28,6 +28,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#if defined(_MSC_VER) && (_MSC_VER <= 1500)
+	#define RVAL_REF
+#else
+	#define RVAL_REF &&
+#endif
+
+
 // CEStr
 typedef struct CmdArg
 {
@@ -53,12 +60,18 @@ public:
 
 	bool mb_RestorePath; // Если используется для сохранения переменной %PATH%, восстановить при закрытии объекта
 
+private:
+	// Not copyable, not implemented, use explicit Set method
+	CmdArg& operator=(const CmdArg &);
+	LPCWSTR AttachInt(wchar_t*& asPtr);
+
 public:
 	operator LPCWSTR() const { return ms_Arg; };
+	CmdArg& operator=(wchar_t* RVAL_REF asPtr);
 
 	wchar_t* GetBuffer(INT_PTR cchMaxLen);
 	wchar_t* Detach();
-	LPCWSTR  Attach(wchar_t* asPtr);
+	LPCWSTR  Attach(wchar_t* RVAL_REF asPtr);
 	void Empty();
 	bool IsEmpty();
 	LPCWSTR Set(LPCWSTR asNewValue, INT_PTR anChars = -1);
@@ -68,6 +81,6 @@ public:
 	void GetPosFrom(const CmdArg& arg);
 
 	CmdArg();
-	CmdArg(wchar_t* asPtr);
+	CmdArg(wchar_t* RVAL_REF asPtr);
 	~CmdArg();
 } CEStr;

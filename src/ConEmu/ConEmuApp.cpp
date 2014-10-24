@@ -3511,6 +3511,48 @@ void DebugStrUnitTest()
 		iCmp = wcscmp(Tests[i].szTest, Tests[i].szCmp);
 		_ASSERTE(iCmp == 0);
 	}
+
+	// Some compilation and operators check
+
+	CEStr str1;
+	LPCWSTR pszTest = Tests[0].szTest;
+	{
+		str1 = lstrdup(pszTest);
+	}
+	iCmp = lstrcmp(str1, pszTest);
+	_ASSERTE(iCmp == 0);
+
+	{
+		CEStr str2(lstrdup(pszTest));
+		wchar_t* pszDup = lstrdup(pszTest);
+		iCmp = lstrcmp(str2, pszTest);
+		_ASSERTE(iCmp == 0 && str2.ms_Arg && str2.ms_Arg != pszTest);
+	}
+
+	// The following block must to be able to compile
+	#if 0
+	{
+		CEStr str3(pszDup);
+		str3 = pszTest;
+	}
+
+	{
+		CEStr str4;
+		str4 = pszTest;
+		iCmp = lstrcmp(str4, pszTest);
+		_ASSERTE(iCmp == 0 && str4.ms_Arg && str4.ms_Arg != pszTest);
+	}
+
+	{
+		CEStr str5;
+		str5 = str1;
+		iCmp = lstrcmp(str5, pszTest);
+		_ASSERTE(iCmp == 0 && str5.ms_Arg && str3.ms_Arg != str1.ms_Arg);
+	}
+	#endif
+
+	iCmp = lstrcmp(str1, pszTest);
+	_ASSERTE(iCmp == 0);
 }
 
 void DebugUnitTests()

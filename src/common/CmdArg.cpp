@@ -38,12 +38,17 @@ CmdArg::CmdArg()
 	Empty();
 }
 
-CmdArg::CmdArg(wchar_t* asPtr)
+CmdArg::CmdArg(wchar_t* RVAL_REF asPtr)
 {
 	mn_MaxLen = 0; ms_Arg = NULL;
 	mb_RestorePath = false;
-	Empty();
-	Attach(asPtr);
+	AttachInt(asPtr);
+}
+
+CmdArg& CmdArg::operator=(wchar_t* RVAL_REF asPtr)
+{
+	AttachInt(asPtr);
+	return *this;
 }
 
 CmdArg::~CmdArg()
@@ -96,7 +101,12 @@ wchar_t* CmdArg::Detach()
 	return psz;
 }
 
-LPCWSTR CmdArg::Attach(wchar_t* asPtr)
+LPCWSTR CmdArg::Attach(wchar_t* RVAL_REF asPtr)
+{
+	return AttachInt(asPtr);
+}
+
+LPCWSTR CmdArg::AttachInt(wchar_t*& asPtr)
 {
 	Empty();
 	SafeFree(ms_Arg);
