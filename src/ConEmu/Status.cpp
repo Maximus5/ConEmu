@@ -573,6 +573,8 @@ void CStatus::PaintStatus(HDC hPaint, LPRECT prcStatus /*= NULL*/)
 					{
 						if (!LoadActiveProcess(pRCon, m_Items[nDrawCount].sText, countof(m_Items[nDrawCount].sText)))
 							lstrcpyn(m_Items[nDrawCount].sText, gsReady, countof(m_Items[nDrawCount].sText));
+						else
+							pszCalcText = m_Items[nDrawCount].sText;
 					}
 					else
 					{
@@ -704,18 +706,10 @@ void CStatus::PaintStatus(HDC hPaint, LPRECT prcStatus /*= NULL*/)
 				m_Items[nDrawCount].TextSize.cx = nMinInfoWidth;
 		}
 
-		//if (nDrawCount) // перед вторым и далее - добавить разделитель
-		//	nTotalWidth += 2*nGapWidth + nDashWidth;
-
 		if (nID == csi_Info) // csi_Info добавим потом
 			iInfoID = (int)nDrawCount;
-		//else
-		//	nTotalWidth += m_Items[nDrawCount].TextSize.cx;
 
 		m_Items[nDrawCount++].bShow = TRUE;
-
-		//Next:
-		//	nID = nID<<1;
 	}
 
 	if (iInfoID != 0)
@@ -723,8 +717,6 @@ void CStatus::PaintStatus(HDC hPaint, LPRECT prcStatus /*= NULL*/)
 		_ASSERTE(iInfoID == 0);
 		goto wrap;
 	}
-
-	//nTotalWidth += nGapWidth;
 
 	// Сброс неиспользуемых ячеек
 	for (size_t i = nDrawCount; i < countof(m_Items); i++)
@@ -744,7 +736,7 @@ void CStatus::PaintStatus(HDC hPaint, LPRECT prcStatus /*= NULL*/)
 	}
 	else
 	{
-		int iFirstWidth = m_Items[0].TextSize.cx + szVerSize.cx;
+		int iFirstWidth = m_Items[0].TextSize.cx;
 
 		// Подсчет допустимой ширины
 		nTotalWidth = iFirstWidth + 2*nGapWidth + nDashWidth; // nMinInfoWidth + 2*nGapWidth + nDashWidth;
