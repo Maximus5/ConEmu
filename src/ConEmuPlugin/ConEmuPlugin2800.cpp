@@ -101,6 +101,8 @@ GUID guid_ConEmuMenu = { /* 2dc6b821-fd8e-4165-adcf-a4eda7b44e8e */
 struct PluginStartupInfo *InfoW2800=NULL;
 struct FarStandardFunctions *FSFW2800=NULL;
 
+static MArray<WindowInfo>* pwList = NULL;
+
 /* EXPORTS BEGIN */
 void WINAPI GetGlobalInfoW(struct GlobalInfo *Info)
 {
@@ -523,8 +525,10 @@ bool CPluginW2800::UpdateConEmuTabsApi(int windowCount)
 	_ASSERTE(bActiveInfo && (WActive.Flags & WIF_CURRENT));
 	static WindowInfo WLastActive;
 
+	if (!pwList)
+		pwList = new MArray<WindowInfo>();
+
 	// Another weird Far API breaking change. How more?..
-	static MArray<WindowInfo> wList;
 	MArray<WindowInfo> wCurrent;
 	// Load window list
 	for (int i = 0; i < windowCount; i++)
@@ -550,14 +554,14 @@ bool CPluginW2800::UpdateConEmuTabsApi(int windowCount)
 		}
 	}
 	// Clear closed windows
-	for (INT_PTR i = 0; i < wList.size();)
+	for (INT_PTR i = 0; i < pwList->size();)
 	{
-		const WindowInfo& L = wList[i];
+		const WindowInfo& L = (*pwList)[i];
 
 		INT_PTR iFound = WExists(L, wCurrent);
 
 		if (iFound < 0)
-			wList.erase(i);
+			pwList->erase(i);
 		else
 			i++;
 	}
@@ -566,29 +570,29 @@ bool CPluginW2800::UpdateConEmuTabsApi(int windowCount)
 	{
 		const WindowInfo& C = wCurrent[i];
 
-		INT_PTR iFound = WExists(C, wList);
+		INT_PTR iFound = WExists(C, *pwList);
 
 		if (iFound >= 0)
 		{
-			wList[iFound] = C;
+			(*pwList)[iFound] = C;
 		}
 		else
 		{
 			if (C.Type == WTYPE_PANELS)
 			{
-				if ((wList.size() > 0) && (wList[0].Type == WTYPE_PANELS))
-					wList[0] = C;
+				if ((pwList->size() > 0) && ((*pwList)[0].Type == WTYPE_PANELS))
+					(*pwList)[0] = C;
 				else
-					wList.insert(0, C);
+					pwList->insert(0, C);
 			}
 			else
 			{
-				wList.push_back(C);
+				pwList->push_back(C);
 			}
 		}
 	}
 	// And check the count
-	windowCount = wList.size();
+	windowCount = pwList->size();
 
 	// Проверить, есть ли активный редактор/вьювер/панель
 	if (bActiveInfo && (WActive.Type == WTYPE_EDITOR || WActive.Type == WTYPE_VIEWER || WActive.Type == WTYPE_PANELS))
@@ -605,7 +609,7 @@ bool CPluginW2800::UpdateConEmuTabsApi(int windowCount)
 		// т.е. предпочитаем тот таб, который был активен ранее
 		for (int i = 0; i < windowCount; i++)
 		{
-			WInfo = wList[i];
+			WInfo = (*pwList)[i];
 			_ASSERTE(WInfo.Type == WTYPE_EDITOR || WInfo.Type == WTYPE_VIEWER || WInfo.Type == WTYPE_PANELS);
 
 			if (!nTabs)
@@ -641,7 +645,7 @@ bool CPluginW2800::UpdateConEmuTabsApi(int windowCount)
 
 	for (int i = 0; i < windowCount; i++)
 	{
-		WInfo = wList[i];
+		WInfo = (*pwList)[i];
 
 		if (WInfo.Type == WTYPE_EDITOR || WInfo.Type == WTYPE_VIEWER || WInfo.Type == WTYPE_PANELS)
 		{
