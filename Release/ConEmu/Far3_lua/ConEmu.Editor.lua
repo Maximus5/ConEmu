@@ -23,19 +23,27 @@ action = function()
 
   s=APanel.Path;
   s=s..mf.iif(mf.substr(s,mf.len(s)-1)=="\\","","\\")..APanel.Current;
-  -- msgbox("Current item", s)
+  --msgbox("Current item", s)
   c = mf.substr(k,mf.len(k)-1,1);
   cmd = mf.iif(c=="4","FindEditor:","FindViewer:")..s;
-  iRc=Plugin.Call(ConEmu,cmd);
-  -- msgbox("EditOpen result", "callplugin="..iRc.."\n<"..mf.env("ConEmuMacroResult")..">")
-  if iRc then
-    r = mf.env("ConEmuMacroResult");
+  r = Plugin.Call(ConEmu,cmd);
+  --msgbox("EditOpen result", "callplugin="..r)
+  if r then
     if mf.substr(r,0,5)=="Found" then
       exit() -- OK
-    else if  mf.substr(r,0,6)=="Active" then
-      Keys("F12 "..mf.substr(r,7))
+    else if mf.substr(r,0,6)=="Active" then
+      --Keys("F12 "..mf.substr(r,7))
+      --iWnd = mf.atoi(mf.substr(r,7),10)
+      --far.Show(iWnd)
+      --far.AdvControl(ACTL_SETCURRENTWINDOW, iWnd, 0)
+      --far.AdvControl(ACTL_COMMIT, 0, 0)
+      Keys("F12 Down")
+      if Menu.Select(s,2,2) <= 0 then
+        Menu.Select(mf.fsplit(s,12),2,2)
+      end
+      Keys("Enter")
       exit() -- Ok
-    else if  r=="Blocked" then
+    else if r=="Blocked" then
       -- msgbox("ConEmu macro","Tab can't be activated now\n"+%s);
     end end end
   end
