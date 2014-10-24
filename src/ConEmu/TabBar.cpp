@@ -1496,7 +1496,7 @@ int CTabBarClass::PrepareTab(CTab& pTab, CVirtualConsole *apVCon)
 					pszText = fileName;
 					break;
 				case _T('i'): case _T('I'):
-					_wsprintf(szTmp, SKIPLEN(countof(szTmp)) _T("%i"), pTab->Info.nFarWindowID);
+					_wsprintf(szTmp, SKIPLEN(countof(szTmp)) _T("%i"), pTab->Info.nIndex);
 					pszText = szTmp;
 					break;
 				case _T('p'): case _T('P'):

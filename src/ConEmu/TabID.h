@@ -147,6 +147,7 @@ struct TabInfo
 	int nPID; // ИД процесса, содержащего таб (актуально для редакторов/вьюверов)
 	int nFarWindowID; // ИД окна фара (0-based). Far 4040 - new "Desktop" window type has "0" index
 	int nViewEditID;  // а это нам нужно потому, что во вьюверах может быть открыто несколько копий одного файла
+	int nIndex;       // Far 3 вообще не отдает индекс окна, а nFarWindowID перемешивается при каждом чихе
 };
 
 #ifdef TAB_REF_PLACE

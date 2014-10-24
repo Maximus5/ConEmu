@@ -527,6 +527,7 @@ bool CTabStack::GetTabByIndex(int anIndex, /*OUT*/ CTab& rTab)
 	if (iReal >= 0 && iReal < mn_Used)
 	{
 		rTab.Init(mpp_Stack[iReal]);
+		rTab->Info.nIndex = iReal;
 	}
 	else
 	{

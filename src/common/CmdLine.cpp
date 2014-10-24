@@ -354,7 +354,7 @@ LPCWSTR GetDrive(LPCWSTR pszPath, wchar_t* szDrive, int/*countof(szDrive)*/ cchD
 		// UNC format? "\\?\UNC\Server\Share"
 		LPCWSTR pszSlash = wcschr(pszPath+8, L'\\'); // point to end of server name
 		pszSlash = pszSlash ? wcschr(pszSlash+1, L'\\') : NULL; // point to end of share name
-		lstrcpyn(szDrive, pszPath, pszSlash ? min(cchDriveMax,pszSlash-pszPath+1) : cchDriveMax);
+		lstrcpyn(szDrive, pszPath, pszSlash ? (int)min((INT_PTR)cchDriveMax,pszSlash-pszPath+1) : cchDriveMax);
 	}
 	else if (lstrcmpni(pszPath, L"\\\\?\\", 4) == 0 && pszPath[4] && pszPath[5] == L':')
 	{
@@ -365,7 +365,7 @@ LPCWSTR GetDrive(LPCWSTR pszPath, wchar_t* szDrive, int/*countof(szDrive)*/ cchD
 		// "\\Server\Share"
 		LPCWSTR pszSlash = wcschr(pszPath+2, L'\\'); // point to end of server name
 		pszSlash = pszSlash ? wcschr(pszSlash+1, L'\\') : NULL; // point to end of share name
-		lstrcpyn(szDrive, pszPath, pszSlash ? min(cchDriveMax,pszSlash-pszPath+1) : cchDriveMax);
+		lstrcpyn(szDrive, pszPath, pszSlash ? (int)min((INT_PTR)cchDriveMax,pszSlash-pszPath+1) : cchDriveMax);
 	}
 	else
 	{
@@ -649,7 +649,7 @@ bool IsNeedCmd(BOOL bRootCmd, LPCWSTR asCmdLine, CmdArg &szExe,
 			}
 
 			// Пробуем найти "по путям" соответствующий exe-шник.
-			DWORD nCchMax = szExe.mn_MaxLen; // выделить память, длинее чем szExe вернуть не сможем
+			INT_PTR nCchMax = szExe.mn_MaxLen; // выделить память, длинее чем szExe вернуть не сможем
 			wchar_t* pszSearch = (wchar_t*)malloc(nCchMax*sizeof(wchar_t));
 			if (pszSearch)
 			{
@@ -657,7 +657,7 @@ bool IsNeedCmd(BOOL bRootCmd, LPCWSTR asCmdLine, CmdArg &szExe,
 				MWow64Disable wow; wow.Disable(); // Отключить редиректор!
 				#endif
 				wchar_t *pszName = NULL;
-				DWORD nRc = SearchPath(NULL, szExe, bHasExt ? NULL : L".exe", nCchMax, pszSearch, &pszName);
+				INT_PTR nRc = SearchPath(NULL, szExe, bHasExt ? NULL : L".exe", (DWORD)nCchMax, pszSearch, &pszName);
 				if (nRc && (nRc < nCchMax))
 				{
 					// Нашли, возвращаем что нашли
