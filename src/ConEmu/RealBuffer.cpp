@@ -2168,7 +2168,8 @@ BOOL CRealBuffer::ApplyConsoleInfo()
 			wchar_t szInfo[128];
 			_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"mp_RCon->m_GetDataPipe.Transact failed, code=%i\r\n", (int)mp_RCon->m_GetDataPipe.GetErrorCode());
 			wchar_t* pszFull = lstrmerge(szInfo, mp_RCon->m_GetDataPipe.GetErrorText());
-			MBoxA(pszFull);
+			//MBoxA(pszFull);
+			LogString(pszFull);
 			SafeFree(pszFull);
 		}
 		#endif
