@@ -883,6 +883,7 @@ bool CSetDlgButtons::ProcessButtonClick(HWND hDlg, WORD CB, BYTE uCheck)
 		case cbStatusDelSelected:
 		case cbStatusDelAll:
 			OnBtn_StatusAddDel(hDlg, CB, uCheck);
+			break;
 
 		default:
 			_ASSERTE(FALSE && "Button click was not processed");
