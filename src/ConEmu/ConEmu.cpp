@@ -115,6 +115,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRFOCUS(s) //DEBUGSTR(s)
 #define DEBUGSTRSESS(s) DEBUGSTR(s)
 #define DEBUGSTRDPI(s) DEBUGSTR(s)
+#define DEBUGSTRNOLOG(s) DEBUGSTR(s)
 #ifdef _DEBUG
 //#define DEBUGSHOWFOCUS(s) DEBUGSTR(s)
 #endif
@@ -1626,7 +1627,15 @@ bool CConEmuMain::CreateLog()
 void CConEmuMain::LogString(LPCWSTR asInfo, bool abWriteTime /*= true*/, bool abWriteLine /*= true*/)
 {
 	if (!this || !mp_Log)
+	{
+		#ifdef _DEBUG
+		if (asInfo && *asInfo)
+		{
+			DEBUGSTRNOLOG(asInfo);
+		}
+		#endif
 		return;
+	}
 
 	mp_Log->LogString(asInfo, abWriteTime, NULL, abWriteLine);
 }
