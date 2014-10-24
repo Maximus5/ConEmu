@@ -506,14 +506,15 @@ void UpdateComspec(ConEmuComspec* pOpt, bool DontModifyPath /*= false*/)
 
 				for (int i = 0; i <= 1; i++)
 				{
+					// Put '%ConEmuExeDir' on first place
 					switch (i)
 					{
-					case 0:
+					case 1:
 						if (!(pOpt->AddConEmu2Path & CEAP_AddConEmuExeDir))
 							continue;
 						pszAdd = pOpt->ConEmuExeDir;
 						break;
-					case 1:
+					case 0:
 						if (!(pOpt->AddConEmu2Path & CEAP_AddConEmuBaseDir))
 							continue;
 						if (lstrcmp(pOpt->ConEmuExeDir, pOpt->ConEmuBaseDir) == 0)
