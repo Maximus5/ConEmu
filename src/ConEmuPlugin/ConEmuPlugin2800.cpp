@@ -106,7 +106,8 @@ static MArray<WindowInfo>* pwList = NULL;
 /* EXPORTS BEGIN */
 void WINAPI GetGlobalInfoW(struct GlobalInfo *Info)
 {
-	_ASSERTE(Info->StructSize >= sizeof(GlobalInfo));
+	_ASSERTE(Info->StructSize >= (size_t)((LPBYTE)(&Info->Instance) - (LPBYTE)(Info)));
+
 	if (gFarVersion.dwBuild >= 2800)
 		Info->MinFarVersion = FARMANAGERVERSION;
 	else

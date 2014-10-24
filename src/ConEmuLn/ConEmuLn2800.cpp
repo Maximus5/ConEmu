@@ -77,12 +77,8 @@ GUID guid_ConEmuLnPluginConfig = { /* e3fc38bf-e634-4340-9933-77267c1a8a1b */
 
 void WINAPI GetGlobalInfoW(struct GlobalInfo *Info)
 {
-	//static wchar_t szTitle[16]; _wcscpy_c(szTitle, L"ConEmu");
-	//static wchar_t szDescr[64]; _wcscpy_c(szTitle, L"ConEmu support for Far Manager");
-	//static wchar_t szAuthr[64]; _wcscpy_c(szTitle, L"ConEmu.Maximus5@gmail.com");
+	_ASSERTE(Info->StructSize >= (size_t)((LPBYTE)(&Info->Instance) - (LPBYTE)(Info)));
 
-	//Info->StructSize = sizeof(GlobalInfo);
-	_ASSERTE(Info->StructSize >= sizeof(GlobalInfo));
 	if (gFarVersion.dwBuild >= FAR_Y2_VER)
 		Info->MinFarVersion = FARMANAGERVERSION;
 	else
