@@ -39,6 +39,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRDLGEVT(s) //DEBUGSTR(s)
 #define DEBUGSTRCMD(s) //DEBUGSTR(s)
 #define DEBUGSTRACTIVATE(s) //DEBUGSTR(s)
+#define DEBUGSTRCURDIR(s) DEBUGSTR(s)
 
 
 #include "PluginHeader.h"
@@ -185,15 +186,6 @@ PluginAndMenuCommands gpPluginMenu[menu_Last] =
 };
 
 //#define ConEmu_SysID 0x43454D55 // 'CEMU'
-enum CallPluginCmdId
-{
-	// Add new items - before first numbered item!
-	CE_CALLPLUGIN_UPDATEBG = 99,
-	CE_CALLPLUGIN_SENDTABS = 100,
-	SETWND_CALLPLUGIN_BASE /*= (CE_CALLPLUGIN_SENDTABS+1)*/
-	// Following number are reserved for "SetWnd(idx)" switching
-};
-
 
 CPluginBase* Plugin()
 {
@@ -256,6 +248,8 @@ void CPluginBase::DllMain_ProcessAttach(HMODULE hModule)
 	csTabs = new MSection();
 	csData = new MSection();
 
+	gPanelDirs.pcsDirs = new MSectionSimple();
+	gPanelDirs.pcsDirs->Init();
 	gPanelDirs.ActiveDir = new CmdArg();
 	gPanelDirs.PassiveDir = new CmdArg();
 
@@ -318,6 +312,12 @@ void CPluginBase::DllMain_ProcessDetach()
 	{
 		delete csData;
 		csData = NULL;
+	}
+
+	if (gPanelDirs.pcsDirs)
+	{
+		delete gPanelDirs.pcsDirs;
+		gPanelDirs.pcsDirs = NULL;
 	}
 
 	PlugServerStop(true);
@@ -599,11 +599,102 @@ void CPluginBase::FillUpdateBackground(struct PaintBackgroundArg* pFar)
 	}
 }
 
+bool CPluginBase::StorePanelDirs(LPCWSTR asActive, LPCWSTR asPassive)
+{
+	// No one was specified? Exit.
+	if (!(asActive && *asActive) && !(asPassive && *asPassive))
+	{
+		return false;
+	}
+
+	if (!gPanelDirs.pcsDirs || !gPanelDirs.ActiveDir || !gPanelDirs.PassiveDir)
+	{
+		_ASSERTE(gPanelDirs.pcsDirs && gPanelDirs.ActiveDir && gPanelDirs.PassiveDir);
+		return false;
+	}
+
+	bool bChanged = false;
+	MSectionLockSimple CS;
+
+	for (int i = 0; i <= 1; i++)
+	{
+		LPCWSTR pszSet = i ? asPassive : asActive;
+		CmdArg* pDir = i ? gPanelDirs.PassiveDir : gPanelDirs.ActiveDir;
+
+		if (pszSet && (lstrcmp(pszSet, pDir->ms_Arg ? pDir->ms_Arg : L"") != 0))
+		{
+			#ifdef _DEBUG
+			CEStr lsDbg = lstrmerge(i ? L"PPanelDir changed -> " : L"APanelDir changed -> ", pszSet);
+			DEBUGSTRCURDIR(lsDbg);
+			#endif
+
+			if (!CS.isLocked())
+				CS.Lock(gPanelDirs.pcsDirs);
+			pDir->Set(pszSet);
+			bChanged = true;
+		}
+	}
+
+	return bChanged;
+}
+
 void CPluginBase::UpdatePanelDirs()
 {
+	_ASSERTE(gPanelDirs.ActiveDir && gPanelDirs.PassiveDir);
+
+	// It is not safe to call GetPanelDir even from MainThread, even if APanel is not plugin
+	// FCTL_GETPANELDIRECTORY вызывает GetFindData что в некоторых случаях вызывает глюки в глючных плагинах...
+	// Макрос же вроде возвращает "текущую" информацию
+
+	if (gFarVersion.dwVerMajor >= 2)
+	{
+		wchar_t szMacro[200] = L"";
+		if (gFarVersion.dwVerMajor == 2)
+		{
+			_wsprintf(szMacro, SKIPCOUNT(szMacro)
+				L"$if (!APanel.Plugin) callplugin(0x%08X,%i) $end"
+				L" $if (!PPanel.Plugin) callplugin(0x%08X,%i) $end",
+				ConEmu_SysID, CE_CALLPLUGIN_REQ_DIRA, ConEmu_SysID, CE_CALLPLUGIN_REQ_DIRP);
+		}
+		else if (!gFarVersion.IsFarLua())
+		{
+			_wsprintf(szMacro, SKIPCOUNT(szMacro)
+				L"$if (APanel.Plugin) %%A=\"\"; $else %%A=APanel.Path0; $end"
+				L" $if (PPanel.Plugin) %%P=\"\"; $else %%P=PPanel.Path0; $end"
+				L" Plugin.Call(\"%s\",%i,%%A,%%P)",
+				ConEmu_GuidS, CE_CALLPLUGIN_REQ_DIRS);
+		}
+		else
+		{
+			_wsprintf(szMacro, SKIPCOUNT(szMacro)
+				L"Plugin.Call(\"%s\",%i,APanel.Plugin and \"\" or APanel.Path0,PPanel.Plugin and \"\" or PPanel.Path0)",
+				ConEmu_GuidS, CE_CALLPLUGIN_REQ_DIRS);
+		}
+
+		if (szMacro[0])
+		{
+			PostMacro(szMacro, NULL);
+			return; // Async
+		}
+	}
+
 	bool bChanged = false;
 
-	_ASSERTE(gPanelDirs.ActiveDir && gPanelDirs.PassiveDir);
+	wchar_t szTitle[MAX_PATH*2] = L"";
+	DWORD nLen = GetConsoleTitle(szTitle, countof(szTitle));
+	if (!nLen || nLen >= countof(szTitle))
+		return; // Invalid result?
+	if (szTitle[0] != L'{' || !isDriveLetter(szTitle[1]) || szTitle[2] != L':')
+		return; // Not a path in the title;
+
+	wchar_t * pszFar = wcsstr(szTitle, L"} - Far");
+	if (!pszFar)
+		return; // Valid terminator not found
+
+	*pszFar = 0;
+	bChanged = StorePanelDirs(szTitle+1, NULL);
+
+	#if 0
 	CmdArg* Pnls[] = {gPanelDirs.ActiveDir, gPanelDirs.PassiveDir};
 
 	for (int i = 0; i <= 1; i++)
@@ -619,6 +710,7 @@ void CPluginBase::UpdatePanelDirs()
 		}
 		SafeFree(pszDir);
 	}
+	#endif
 
 	if (bChanged)
 	{
@@ -2736,6 +2828,24 @@ HANDLE CPluginBase::OpenPluginCommon(int OpenFrom, INT_PTR Item, bool FromMacro)
 		{
 			ProcessCommandLine((wchar_t*)Item);
 		}
+		goto wrap;
+	}
+
+	// Asynchronous update of current panel directory
+	if (FromMacro && ((Item == CE_CALLPLUGIN_REQ_DIRA) || (Item == CE_CALLPLUGIN_REQ_DIRP)))
+	{
+		wchar_t* pszActive = NULL;
+		wchar_t* pszPassive = NULL;
+		if (Item == CE_CALLPLUGIN_REQ_DIRA)
+			pszActive = GetPanelDir(gpdf_Active|gpdf_NoPlugin);
+		else if (Item == CE_CALLPLUGIN_REQ_DIRP)
+			pszPassive = GetPanelDir(gpdf_Passive|gpdf_NoPlugin);
+		// Succeeded? Due to Far2 callplugin realization we can check/store only one panel at a time
+		if (pszActive || pszPassive)
+			StorePanelDirs(pszActive, pszPassive);
+		// Free mem
+		SafeFree(pszActive);
+		SafeFree(pszPassive);
 		goto wrap;
 	}
 

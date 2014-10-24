@@ -1318,6 +1318,17 @@ HANDLE CPluginW2800::Open(const void* apInfo)
 				default:
 					_ASSERTE(p->Values[0].Type==FMVT_INTEGER || p->Values[0].Type==FMVT_STRING);
 				}
+
+				if (Item == CE_CALLPLUGIN_REQ_DIRS)
+				{
+					if (p->Count == 3)
+					{
+						LPCWSTR pszActive = (p->Values[1].Type == FMVT_STRING) ? p->Values[1].String : NULL;
+						LPCWSTR pszPassive = (p->Values[2].Type == FMVT_STRING) ? p->Values[2].String : NULL;
+						StorePanelDirs(pszActive, pszPassive);
+					}
+					return PANEL_NONE;
+				}
 			}
 		}
 		else

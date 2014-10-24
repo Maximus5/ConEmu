@@ -413,6 +413,7 @@ BOOL WINAPI PlugServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &pp
 
 	case CECMD_STORECURDIR:
 	{
+		MSectionLockSimple CS; CS.Lock(gPanelDirs.pcsDirs);
 		if (AllocateSendCurrentDirectory(ppReply, pcbMaxReplySize, gPanelDirs.ActiveDir->ms_Arg, gPanelDirs.PassiveDir->ms_Arg))
 		{
 			lbRc = TRUE;

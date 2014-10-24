@@ -138,9 +138,12 @@ struct PanelViewRegInfo
 	PanelViewOutputCallback pfnWriteCall;
 };
 
+struct MSectionSimple;
+
 struct CurPanelDirs
 {
 	CmdArg *ActiveDir, *PassiveDir;
+	MSectionSimple *pcsDirs;
 };
 
 

@@ -44,6 +44,18 @@ const GetPanelDirFlags
 	gpdf_Passive  = 0
 ;
 
+enum CallPluginCmdId
+{
+	// Add new items - before first numbered item!
+	CE_CALLPLUGIN_REQ_DIRA = 96,
+	CE_CALLPLUGIN_REQ_DIRP = 97,
+	CE_CALLPLUGIN_REQ_DIRS = 98,
+	CE_CALLPLUGIN_UPDATEBG = 99,
+	CE_CALLPLUGIN_SENDTABS = 100,
+	SETWND_CALLPLUGIN_BASE /*= (CE_CALLPLUGIN_SENDTABS+1)*/
+	// Following number are reserved for "SetWnd(idx)" switching
+};
+
 struct CEPanelInfo
 {
 	BOOL bVisible;   // Наличие панели
@@ -103,6 +115,7 @@ public:
 	void PostMacro(const wchar_t* asMacro, INPUT_RECORD* apRec);
 	bool isMacroActive(int& iMacroActive);
 	void UpdatePanelDirs();
+	bool StorePanelDirs(LPCWSTR asActive, LPCWSTR asPassive);
 	bool RunExternalProgram(wchar_t* pszCommand);
 	bool ProcessCommandLine(wchar_t* pszCommand);
 	void ShowPluginMenu(PluginCallCommands nCallID = pcc_None);
