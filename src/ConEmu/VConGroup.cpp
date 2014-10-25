@@ -847,17 +847,21 @@ bool CVConGroup::ReSizeSplitter(int iCells)
 				// Считаем новый процент
 				int nNewSplitPercent10 = (iNewSize1 * 1000 / (iNewSize1 + iNewSize2));
 
-				int nOldPercent = mn_SplitPercent10;
-				mn_SplitPercent10 = max(1,min(nNewSplitPercent10,999)); // (0.1% - 99.9%)*10
+				// Do not try to calc if nNewSplitPercent10 was not changed into desired direction
+				if ((iCells < 0) == (nNewSplitPercent10 < mn_SplitPercent10))
+				{
+					int nOldPercent = mn_SplitPercent10;
+					mn_SplitPercent10 = max(1,min(nNewSplitPercent10,999)); // (0.1% - 99.9%)*10
 
-				CalcSplitRect(mrc_Full, rcNewCon1, rcNewCon2, rcNewSplitter);
+					CalcSplitRect(mrc_Full, rcNewCon1, rcNewCon2, rcNewSplitter);
 
-				int iChanged = ((m_SplitType == RConStartArgs::eSplitVert) ? rcNewSplitter.top : rcNewSplitter.left) - ((m_SplitType == RConStartArgs::eSplitVert) ? rcSplitter.top : rcSplitter.left);
-				int iCellsChanged = iChanged / nCellSize;
+					int iChanged = ((m_SplitType == RConStartArgs::eSplitVert) ? rcNewSplitter.top : rcNewSplitter.left) - ((m_SplitType == RConStartArgs::eSplitVert) ? rcSplitter.top : rcSplitter.left);
+					int iCellsChanged = iChanged / nCellSize;
 
-				bChanged = (m_SplitType == RConStartArgs::eSplitVert) ? (rcNewSplitter.top != rcSplitter.top) : (rcNewSplitter.left != rcSplitter.left);
-				if (bChanged)
-					break;
+					bChanged = (m_SplitType == RConStartArgs::eSplitVert) ? (rcNewSplitter.top != rcSplitter.top) : (rcNewSplitter.left != rcSplitter.left);
+					if (bChanged)
+						break;
+				}
 
 				// Из-за округлений - могли "несмочь"
 				iNewSize1 += iCellHalf; iNewSize2 -= iCellHalf;
