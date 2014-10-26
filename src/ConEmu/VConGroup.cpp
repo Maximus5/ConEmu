@@ -3571,7 +3571,8 @@ bool CVConGroup::ConActivate(int nCon)
 				pVCon->RCon()->LogString(szInfo);
 			}
 
-			if (nOldConWidth != nNewConWidth || nOldConHeight != nNewConHeight)
+			if (!pVCon->RCon()->isServerClosing()
+				&& (nOldConWidth != nNewConWidth || nOldConHeight != nNewConHeight))
 			{
 				lbSizeOK = pVCon->RCon()->SetConsoleSize(nNewConWidth,nNewConHeight);
 			}
@@ -3990,7 +3991,6 @@ RECT CVConGroup::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFr
 			if (pGroup && (tWhat != CER_CONSOLE_ALL)
 				&& (tFrom == CER_MAINCLIENT || tFrom == CER_WORKSPACE))
 			{
-				//
 				pGroup->CalcSplitRootRect(rcAll, rc);
 			}
 
@@ -4235,7 +4235,7 @@ void CVConGroup::SetConsoleSizes(const COORD& size, const RECT& rcNewCon, bool a
 
 		RECT rcCon = MakeRect(size.X,size.Y);
 
-		if (VCon.VCon() && VCon->RCon())
+		if (VCon.VCon() && VCon->RCon() && !VCon->RCon()->isServerClosing())
 		{
 			CRealConsole* pRCon = VCon->RCon();
 			COORD CurSize = {(SHORT)pRCon->TextWidth(), (SHORT)pRCon->TextHeight()};

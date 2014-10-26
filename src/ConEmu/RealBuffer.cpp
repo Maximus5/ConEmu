@@ -799,6 +799,9 @@ BOOL CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 	pOut = ExecuteCmd(mp_RCon->ms_ConEmuC_Pipe, pIn, nCallTimeout, ghWnd);
 	fSuccess = (pOut != NULL);
 
+	if (mp_RCon->isServerClosing())
+		goto wrap;
+
 	if (fSuccess /*&& (dwRead == (DWORD)nOutSize)*/)
 	{
 		int nSetWidth = sizeX, nSetHeight = sizeY;
@@ -827,10 +830,18 @@ BOOL CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 					pOut = ExecuteCmd(mp_RCon->ms_ConEmuC_Pipe, pIn, nCallTimeout, ghWnd);
 					fSuccess = (pOut != NULL);
 				}
-				_ASSERTE(FALSE && "Maximum real console size was reached");
-				// Inform user
-				mp_RCon->LogString(L"Maximum real console size was reached, lesser size was applyed");
-				Icon.ShowTrayIcon(L"Maximum real console size was reached\nDecrease font size in the real console properties", tsa_Console_Size);
+				// Server is closing? Ignore...
+				if (mp_RCon->isServerClosing())
+				{
+					goto wrap;
+				}
+				else
+				{
+					_ASSERTE(FALSE && "Maximum real console size was reached");
+					// Inform user
+					mp_RCon->LogString(L"Maximum real console size was reached, lesser size was applyed");
+					Icon.ShowTrayIcon(L"Maximum real console size was reached\nDecrease font size in the real console properties", tsa_Console_Size);
+				}
 			}
 		}
 	}
