@@ -66,7 +66,7 @@ protected:
 	CVConGroup* GetAnotherGroup();
 	void MoveToParent(CVConGroup* apParent);
 	void RepositionVCon(RECT rcNewCon, bool bVisible);
-	void CalcSplitRect(RECT rcNewCon, RECT& rcCon1, RECT& rcCon2, RECT& rcSplitter);
+	void CalcSplitRect(UINT nSplitPercent10, RECT rcNewCon, RECT& rcCon1, RECT& rcCon2, RECT& rcSplitter);
 	void CalcSplitRootRect(RECT rcAll, RECT& rcCon, CVConGroup* pTarget = NULL);
 	#if 0
 	void CalcSplitConSize(COORD size, COORD& sz1, COORD& sz2);
