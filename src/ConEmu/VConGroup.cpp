@@ -1174,6 +1174,7 @@ LRESULT CVConGroup::OnMouseEvent(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 	UINT nPrevSplit;
 	UINT nNewSplit;
 	RECT rcNewSplit;
+	bool bRedraw = false;
 
 	GetCursorPos(&pt);
 	MapWindowPoints(NULL, ghWnd, &pt, 1);
@@ -1265,18 +1266,29 @@ LRESULT CVConGroup::OnMouseEvent(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 			int nNewPos = pt.y - pGrp->mrc_Full.top;
 			int nHeight = pGrp->mrc_Splitter.bottom - pGrp->mrc_Splitter.top;
 			rcNewSplit = MakeRect(pGrp->mrc_Splitter.left, nNewPos, pGrp->mrc_Splitter.right, nNewPos + nHeight);
+			bRedraw = (nNewPos != pGrp->mrc_Splitter.top);
 		}
 		else
 		{
 			int nNewPos = pt.x - pGrp->mrc_Full.left;
 			int nWidth = pGrp->mrc_Splitter.right - pGrp->mrc_Splitter.left;
 			rcNewSplit = MakeRect(nNewPos, pGrp->mrc_Splitter.top, nNewPos+nWidth, pGrp->mrc_Splitter.bottom);
+			bRedraw = (nNewPos != pGrp->mrc_Splitter.left);
 		}
 		#endif
 		pGrp->mn_SplitPercent10 = nNewSplit;
 		gpConEmu->OnSize(false);
 	}
 
+	#if 0
+	if (bRedraw)
+	{
+		if (!IsRectEmpty(&pGrp->mrc_DragSplitter))
+			pGrp->DrawDragSplitter();
+		pGrp->mrc_DragSplitter = rcNewSplit;
+		pGrp->DrawDragSplitter();
+	}
+	#endif
 
 	if ((uMsg == WM_LBUTTONUP) || !isPressed(VK_LBUTTON))
 	{
@@ -1284,6 +1296,30 @@ LRESULT CVConGroup::OnMouseEvent(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 	}
 wrap:
 	return lRc;
+}
+
+void CVConGroup::DrawDragSplitter()
+{
+	if (IsRectEmpty(&mrc_DragSplitter))
+		return;
+
+#if 0
+	HDC hdc = GetDC(ghWnd);
+	if (hdc)
+	{
+		HBRUSH hbr = CreateSolidBrush(255);
+		if (hbr)
+		{
+			HBRUSH hbrOld = (HBRUSH)SelectObject(hdc, hbr);
+			//PatBlt(hdc, mrc_DragSplitter.left, mrc_DragSplitter.top, mrc_DragSplitter.right-mrc_DragSplitter.left, mrc_DragSplitter.bottom-mrc_DragSplitter.top, PATINVERT);
+			FillRect(hdc, &mrc_DragSplitter, hbr);
+			SelectObject(hdc, hbrOld);
+			DeleteObject(hbr);
+		}
+		ReleaseDC(ghWnd, hdc);
+		GdiFlush();
+	}
+#endif
 }
 
 void CVConGroup::StopSplitDragging()
@@ -1294,6 +1330,8 @@ void CVConGroup::StopSplitDragging()
 		CGroupGuard Grp(mp_GroupSplitDragging);
 		if (!IsRectEmpty(&mp_GroupSplitDragging->mrc_DragSplitter))
 		{
+			mp_GroupSplitDragging->DrawDragSplitter();
+
 			RECT rcFull = mp_GroupSplitDragging->mrc_Full;
 			RECT rcSplit = mp_GroupSplitDragging->mrc_DragSplitter;
 			int nAllSize = (mp_GroupSplitDragging->m_SplitType == RConStartArgs::eSplitVert)

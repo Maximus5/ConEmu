@@ -74,6 +74,7 @@ SRCS = \
 		SetDlgColors.cpp   \
 		SetDlgFonts.cpp    \
 		SetDlgLists.cpp    \
+		Splitter.cpp       \
 		Status.cpp         \
 		TabBar.cpp         \
 		TabCtrlBase.cpp    \

@@ -88,6 +88,7 @@ protected:
 	static CVConGroup* FindSplitGroup(POINT ptWork, CVConGroup* pFrom);
 	static bool isGroupVisible(CVConGroup* pGrp);
 	static void StopSplitDragging();
+	void DrawDragSplitter();
 
 private:
 	static CVirtualConsole* CreateVCon(RConStartArgs *args, CVirtualConsole*& ppVConI);
