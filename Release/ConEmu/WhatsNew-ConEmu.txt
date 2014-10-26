@@ -12,6 +12,26 @@ Votes and awards (vote for ConEmu, if you please)
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+2014.10.25
+[*] Issue 1321: Splitter calculation changed.
+[*] Try to move splitter with mouse dragging.
+[*] Consider monitor dpi in splitter size.
+[*] Issue 1747: Menu -> Close or kill -> Close all zombies.
+    This will close all dummy consoles, waiting for "Press Enter or Esc ..."
+    Hotkey is available and new GuiMacro Close(9[,1]).
+[*] Issue 1734: Try not to call FCTL_GETPANELDIRECTORY to get panel directories (ftp plugin issues).
+[*] Fix wrong StatusBar's first column width evaluation.
+[*] Due to useless Far3's window number let use 0-based window indexes as Far3build2798 and lower.
+[*] Adapt "`ConEmu.ShiftEnter.lua`" to broken Far windows behavior.
+[*] Add "%ConEmuExeDir%" before "%ConEmuBaseDir%" in "%PATH%".
+    So user may copy batch from "%ConEmuBaseDir%" to "%ConEmuExeDir%",
+    make desired changes and be sure it will not be overwrited
+    after new update. For example, move "csudo.cmd" from subfolder
+    with "ConEmuC.exe" to the folder with "ConEmu.exe" and change
+    the option in the beginning to: "set ConEmuSplit=NO".
+[*] Don't show "mp_RCon->m_GetDataPipe.Transact failed" errors, log them only.
+
+
 2014.10.22
 [*] Correct snap/tile ConEmu window to left/right/by-width/by-height.
 [*] Show snap/tile status on the Settings/Info page.
