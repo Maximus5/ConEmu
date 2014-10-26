@@ -4167,63 +4167,6 @@ RECT CVConGroup::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFr
 	return rc;
 }
 
-#if 0
-void CVConGroup::CalcSplitConSize(COORD size, COORD& sz1, COORD& sz2)
-{
-	sz1 = size; sz2 = size;
-
-	RECT rcCon = MakeRect(size.X, size.Y);
-	RECT rcPixels = gpConEmu->CalcRect(CER_DC, rcCon, CER_CONSOLE_CUR, gp_VActive);
-	// в пикселях нужно учитывать разделители и прокрутки
-	_ASSERTE(gpSet->isAlwaysShowScrollbar!=1); // доделать
-	if (m_SplitType == RConStartArgs::eSplitHorz)
-	{
-		if (gpSet->nSplitWidth && (rcPixels.right > (LONG)gpSet->nSplitWidth))
-			rcPixels.right -= gpSet->nSplitWidth;
-	}
-	else
-	{
-		if (gpSet->nSplitHeight && (rcPixels.bottom > (LONG)gpSet->nSplitHeight))
-			rcPixels.bottom -= gpSet->nSplitHeight;
-	}
-
-	RECT rc1 = rcPixels, rc2 = rcPixels, rcSplitter;
-	CalcSplitRect(rcPixels, rc1, rc2, rcSplitter);
-
-	RECT rcCon1 = CVConGroup::CalcRect(CER_CONSOLE_CUR, rc1, CER_BACK, gp_VActive);
-	RECT rcCon2 = CVConGroup::CalcRect(CER_CONSOLE_CUR, rc2, CER_BACK, gp_VActive);
-
-	//int nSplit = max(1,min(mn_SplitPercent10,999));
-
-	//RECT rcScroll = gpConEmu->CalcMargins(CEM_SCROLL);
-
-	if (m_SplitType == RConStartArgs::eSplitHorz)
-	{
-		//if (size.X >= gpSet->nSplitWidth)
-		//	size.X -= gpSet->nSplitWidth;
-
-		//_ASSERTE(rcScroll.left==0);
-		//if (size.X > (UINT)(rcScroll.right * 2))
-		//{
-		//	_ASSERTE(gpSet->isAlwaysShowScrollbar==1); // сюда должны попадать только при включенном постоянно скролле
-		//	size.X -= rcScroll.right * 2;
-		//}
-
-		//sz1.X = max(((size.X+1) * nSplit / 1000),MIN_CON_WIDTH);
-		//sz2.X = max((size.X - sz1.X),MIN_CON_WIDTH);
-		sz1.X = max(rcCon1.right,MIN_CON_WIDTH);
-		sz2.X = max(rcCon2.right,MIN_CON_WIDTH);
-	}
-	else
-	{
-		//sz1.Y = max(((size.Y+1) * nSplit / 1000),MIN_CON_HEIGHT);
-		//sz2.Y = max((size.Y - sz1.Y),MIN_CON_HEIGHT);
-		sz1.Y = max(rcCon1.bottom,MIN_CON_HEIGHT);
-		sz2.Y = max(rcCon2.bottom,MIN_CON_HEIGHT);
-	}
-}
-#endif
-
 void CVConGroup::SetConsoleSizes(const COORD& size, const RECT& rcNewCon, bool abSync)
 {
 	MSectionLockSimple lockGroups; lockGroups.Lock(gpcs_VGroups);
@@ -4302,11 +4245,6 @@ void CVConGroup::SetConsoleSizes(const COORD& size, const RECT& rcNewCon, bool a
 	rcSize2 = CalcRect(CER_CONSOLE_CUR, rcCon2, CER_BACK, VCon2.VCon());
 
 	COORD sz1 = {rcSize1.right,rcSize1.bottom}, sz2 = {rcSize2.right,rcSize2.bottom};
-
-#if 0
-	COORD sz1 = size, sz2 = size;
-	CalcSplitConSize(size, sz1, sz2);
-#endif
 
 	mp_Grp1->SetConsoleSizes(sz1, rcCon1, abSync);
 	mp_Grp2->SetConsoleSizes(sz2, rcCon2, abSync);
