@@ -890,11 +890,44 @@ bool CVConGroup::ReSizeSplitter(int iCells)
 	return bChanged;
 }
 
+struct ReSizeSplitterHelperArg
+{
+	CVirtualConsole* pVCon;
+	int iHorz /*= 0*/;
+	int iVert /*= 0*/;
+
+	ReSizeSplitterHelperArg(CVirtualConsole* apVCon, int aiHorz, int aiVert)
+	{
+		pVCon = apVCon; iHorz = aiHorz; iVert = aiVert;
+	};
+};
+
+LPARAM CVConGroup::ReSizeSplitterHelper(LPARAM lParam)
+{
+	ReSizeSplitterHelperArg* p = (ReSizeSplitterHelperArg*)lParam;
+	ReSizeSplitter(p->pVCon, p->iHorz, p->iVert);
+	delete p;
+	return 0;
+}
+
 bool CVConGroup::ReSizeSplitter(CVirtualConsole* apVCon, int iHorz /*= 0*/, int iVert /*= 0*/)
 {
 	if (!apVCon || (!iHorz && !iVert))
 	{
 		_ASSERTE(apVCon && (iHorz || iVert));
+		return false;
+	}
+
+	if (!isMainThread())
+	{
+		ReSizeSplitterHelperArg* p = new ReSizeSplitterHelperArg(apVCon, iHorz, iVert);
+		apVCon->mp_ConEmu->CallMainThread(false, ReSizeSplitterHelper, (LPARAM)p);
+		return false;
+	}
+
+	// Валидна, или успела закрыться?
+	if (!isValid(apVCon))
+	{
 		return false;
 	}
 
