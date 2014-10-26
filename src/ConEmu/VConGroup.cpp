@@ -1013,7 +1013,8 @@ void CVConGroup::CalcSplitRect(UINT nSplitPercent10, RECT rcNewCon, RECT& rcCon1
 	if (m_SplitType == RConStartArgs::eSplitHorz)
 	{
 		UINT nWidth = rcNewCon.right - rcNewCon.left;
-		UINT nPadX = gpSet->nSplitWidth;
+
+		UINT nPadX = gpSetCls->EvalSize(gpSet->nSplitWidth, esf_Horizontal|esf_CanUseDpi);
 		if (nWidth >= nPadX)
 			nWidth -= nPadX;
 		else
@@ -1057,7 +1058,8 @@ void CVConGroup::CalcSplitRect(UINT nSplitPercent10, RECT rcNewCon, RECT& rcCon1
 	else // RConStartArgs::eSplitVert
 	{
 		UINT nHeight = rcNewCon.bottom - rcNewCon.top;
-		UINT nPadY = gpSet->nSplitHeight;
+
+		UINT nPadY = gpSetCls->EvalSize(gpSet->nSplitHeight, esf_Vertical|esf_CanUseDpi);
 		if (nHeight >= nPadY)
 			nHeight -= nPadY;
 		else
