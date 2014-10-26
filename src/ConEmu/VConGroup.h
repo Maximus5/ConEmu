@@ -82,6 +82,8 @@ protected:
 
 	CVConGroup* FindNextPane(const RECT& rcPrev, int nHorz /*= 0*/, int nVert /*= 0*/);
 
+	static LPARAM ReSizeSplitterHelper(LPARAM lParam);
+
 private:
 	static CVirtualConsole* CreateVCon(RConStartArgs *args, CVirtualConsole*& ppVConI);
 
