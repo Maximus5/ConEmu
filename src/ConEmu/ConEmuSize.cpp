@@ -1859,9 +1859,9 @@ LRESULT CConEmuSize::OnGetMinMaxInfo(LPMINMAXINFO pInfo)
 		rcMin = CVConGroup::AllTextRect(&Splits, true);
 	RECT rcFrame = CalcRect(CER_MAIN, rcMin, CER_CONSOLE_ALL);
 	if (Splits.cx > 0)
-		rcFrame.right += Splits.cx * gpSet->nSplitWidth;
+		rcFrame.right += Splits.cx * gpSetCls->EvalSize(gpSet->nSplitWidth, esf_Horizontal|esf_CanUseDpi);
 	if (Splits.cy > 0)
-		rcFrame.bottom += Splits.cy * gpSet->nSplitHeight;
+		rcFrame.bottom += Splits.cy * gpSetCls->EvalSize(gpSet->nSplitHeight, esf_Vertical|esf_CanUseDpi);
 	#ifdef _DEBUG
 	RECT rcWork = CalcRect(CER_WORKSPACE, rcFrame, CER_MAIN);
 	#endif
@@ -2605,9 +2605,9 @@ LRESULT CConEmuSize::OnSizing(WPARAM wParam, LPARAM lParam)
 		{
 			calcRect = CalcRect(CER_MAIN, srctWindow, CER_CONSOLE_ALL);
 			if (Splits.cx > 0)
-				calcRect.right += Splits.cx * gpSet->nSplitWidth;
+				calcRect.right += Splits.cx * gpSetCls->EvalSize(gpSet->nSplitWidth, esf_Horizontal|esf_CanUseDpi);
 			if (Splits.cy > 0)
-				calcRect.bottom += Splits.cy * gpSet->nSplitHeight;
+				calcRect.bottom += Splits.cy * gpSetCls->EvalSize(gpSet->nSplitHeight, esf_Vertical|esf_CanUseDpi);
 			#ifdef _DEBUG
 			RECT rcRev = CalcRect(CER_CONSOLE_ALL, calcRect, CER_MAIN);
 			_ASSERTE(rcRev.right==srctWindow.right && rcRev.bottom==srctWindow.bottom);
