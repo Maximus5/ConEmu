@@ -65,6 +65,8 @@ static bool gb_InCreateGroup = false;
 static MSectionSimple* gpcs_VGroups = NULL;
 static CVConGroup* gp_VGroups[MAX_CONSOLE_COUNT*2] = {}; // на каждое разбиение добавляется +Parent
 
+CVConGroup* CVConGroup::mp_GroupSplitDragging = NULL;
+
 #ifdef _DEBUG
 MSectionSimple CRefRelease::mcs_Locks;
 #endif
@@ -202,7 +204,8 @@ CVConGroup* CVConGroup::SplitVConGroup(RConStartArgs::SplitType aSplitType /*eSp
 	// Параметры разбиения
 	m_SplitType = aSplitType; // eSplitNone/eSplitHorz/eSplitVert
 	mn_SplitPercent10 = max(1,min(anPercent10,999)); // (0.1% - 99.9%)*10
-	mrc_Splitter = MakeRect(0,0);
+	SetRectEmpty(&mrc_Splitter);
+	SetRectEmpty(&mrc_DragSplitter);
 
 	// Перенести в mp_Grp1 текущий VCon, mp_Grp2 - будет новый пустой (пока) панелью
 	mp_Grp1->mp_Item = mp_Item;
@@ -407,6 +410,12 @@ void CVConGroup::RemoveGroup()
 CVConGroup::~CVConGroup()
 {
 	_ASSERTE(isMainThread()); // во избежание сбоев в индексах?
+
+	if (mp_GroupSplitDragging == this)
+	{
+		StopSplitDragging();
+		mp_GroupSplitDragging = NULL;
+	}
 
 	if (!mb_Released)
 		RemoveGroup();
@@ -1137,11 +1146,211 @@ void CVConGroup::CalcSplitRootRect(RECT rcAll, RECT& rcCon, CVConGroup* pTarget 
 	else
 	{
 		RECT rc1, rc2, rcSplitter;
-		CalcSplitRect(rc, rc1, rc2, rcSplitter);
+		CalcSplitRect(mn_SplitPercent10, rc, rc1, rc2, rcSplitter);
 
 		_ASSERTE(pTarget == mp_Grp1 || pTarget == mp_Grp2);
 		rcCon = (pTarget == mp_Grp2) ? rc2 : rc1;
 	}
+}
+
+RConStartArgs::SplitType CVConGroup::isSplitterDragging()
+{
+	if (mp_GroupSplitDragging && !isPressed(VK_LBUTTON))
+	{
+		StopSplitDragging();
+	}
+
+	return (mp_GroupSplitDragging != NULL) ? mp_GroupSplitDragging->m_SplitType : RConStartArgs::eSplitNone;
+}
+
+LRESULT CVConGroup::OnMouseEvent(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	_ASSERTE(isMainThread());
+
+	LRESULT lRc = 0;
+	CVConGroup* pGrp = NULL;
+	POINT pt;
+	HCURSOR hCur;
+	UINT nPrevSplit;
+	UINT nNewSplit;
+	RECT rcNewSplit;
+
+	GetCursorPos(&pt);
+	MapWindowPoints(NULL, ghWnd, &pt, 1);
+
+	MSectionLockSimple lockGroups; lockGroups.Lock(gpcs_VGroups);
+
+	switch (uMsg)
+	{
+	case WM_SETCURSOR:
+	case WM_LBUTTONDOWN:
+	case WM_LBUTTONDBLCLK:
+		pGrp = mp_GroupSplitDragging ? mp_GroupSplitDragging : FindSplitGroup(pt, NULL);
+		break;
+
+	case WM_LBUTTONUP:
+	case WM_MOUSEMOVE:
+		if (isGroupVisible(mp_GroupSplitDragging))
+			pGrp = mp_GroupSplitDragging;
+		else
+			StopSplitDragging();
+		break;
+	}
+
+	if (!pGrp)
+	{
+		StopSplitDragging();
+		goto wrap;
+	}
+
+	if (uMsg == WM_SETCURSOR)
+	{
+		if (!pGrp || pGrp->m_SplitType == RConStartArgs::eSplitNone)
+			hCur = gpConEmu->mh_CursorArrow;
+		else if (pGrp->m_SplitType == RConStartArgs::eSplitHorz)
+			hCur = gpConEmu->mh_SplitH;
+		else if (pGrp->m_SplitType == RConStartArgs::eSplitVert)
+			hCur = gpConEmu->mh_SplitV;
+
+		if (hCur) // Must not be NULL, otherwise cursor will be hidden
+			SetCursor(hCur);
+
+		lRc = (hCur != gpConEmu->mh_CursorArrow);
+		goto wrap;
+	}
+
+	// No splitter - no actions
+	if (!pGrp || (pGrp->m_SplitType == RConStartArgs::eSplitNone))
+		goto wrap;
+
+	nNewSplit = nPrevSplit = pGrp->mn_SplitPercent10;
+	rcNewSplit = pGrp->mrc_DragSplitter;
+
+	switch (uMsg)
+	{
+	case WM_LBUTTONDBLCLK:
+		nNewSplit = 500; // Reset at center
+		break;
+
+	case WM_LBUTTONDOWN:
+		mp_GroupSplitDragging = pGrp;
+		SetCapture(hWnd);
+		break;
+
+	case WM_LBUTTONUP:
+	case WM_MOUSEMOVE:
+		if (mp_GroupSplitDragging)
+		{
+			int nAllSize = (pGrp->m_SplitType == RConStartArgs::eSplitVert)
+				? (pGrp->mrc_Full.bottom - pGrp->mrc_Full.top - (pGrp->mrc_Splitter.bottom - pGrp->mrc_Splitter.top))
+				: (pGrp->mrc_Full.right - pGrp->mrc_Full.left - (pGrp->mrc_Splitter.right - pGrp->mrc_Splitter.left));
+			int nNewPos = (pGrp->m_SplitType == RConStartArgs::eSplitVert)
+				? (pt.y - pGrp->mrc_Full.top)
+				: (pt.x - pGrp->mrc_Full.left);
+			// Need to consider scrollbars and pads?
+			if ((nAllSize > 0) && (nNewPos > 0) && (nNewPos < nAllSize))
+			{
+				nNewSplit = (nNewPos * 1000) / nAllSize;
+			}
+		}
+		break;
+	}
+
+	// New desired splitter position (for PatBlt)
+	if ((nNewSplit >= 1) && (nNewSplit <= 999) && (nNewSplit != nPrevSplit))
+	{
+		#if 0
+		if (pGrp->m_SplitType == RConStartArgs::eSplitVert)
+		{
+			int nNewPos = pt.y - pGrp->mrc_Full.top;
+			int nHeight = pGrp->mrc_Splitter.bottom - pGrp->mrc_Splitter.top;
+			rcNewSplit = MakeRect(pGrp->mrc_Splitter.left, nNewPos, pGrp->mrc_Splitter.right, nNewPos + nHeight);
+		}
+		else
+		{
+			int nNewPos = pt.x - pGrp->mrc_Full.left;
+			int nWidth = pGrp->mrc_Splitter.right - pGrp->mrc_Splitter.left;
+			rcNewSplit = MakeRect(nNewPos, pGrp->mrc_Splitter.top, nNewPos+nWidth, pGrp->mrc_Splitter.bottom);
+		}
+		#endif
+		pGrp->mn_SplitPercent10 = nNewSplit;
+		gpConEmu->OnSize(false);
+	}
+
+
+	if ((uMsg == WM_LBUTTONUP) || !isPressed(VK_LBUTTON))
+	{
+		StopSplitDragging();
+	}
+wrap:
+	return lRc;
+}
+
+void CVConGroup::StopSplitDragging()
+{
+	if (mp_GroupSplitDragging)
+	{
+		bool bChanged = false;
+		CGroupGuard Grp(mp_GroupSplitDragging);
+		if (!IsRectEmpty(&mp_GroupSplitDragging->mrc_DragSplitter))
+		{
+			RECT rcFull = mp_GroupSplitDragging->mrc_Full;
+			RECT rcSplit = mp_GroupSplitDragging->mrc_DragSplitter;
+			int nAllSize = (mp_GroupSplitDragging->m_SplitType == RConStartArgs::eSplitVert)
+				? (rcFull.bottom - rcFull.top - (rcSplit.bottom - rcSplit.top))
+				: (rcFull.right - rcFull.left - (rcSplit.right - rcSplit.left));
+			int nNewPos = (mp_GroupSplitDragging->m_SplitType == RConStartArgs::eSplitVert)
+				? (rcSplit.top - rcFull.top)
+				: (rcSplit.left - rcFull.left);
+			// Need to consider scrollbars and pads?
+			if ((nAllSize > 0) && (nNewPos > 0) && (nNewPos < nAllSize))
+			{
+				UINT nNewSplit = (nNewPos * 1000) / nAllSize;
+				if ((nNewSplit >= 1) && (nNewSplit <= 999) && (nNewSplit != mp_GroupSplitDragging->mn_SplitPercent10))
+				{
+					mp_GroupSplitDragging->mn_SplitPercent10 = nNewSplit;
+					bChanged = true;
+				}
+			}
+
+			SetRectEmpty(&mp_GroupSplitDragging->mrc_DragSplitter);
+		}
+		mp_GroupSplitDragging = NULL;
+		SetCapture(NULL);
+		gpConEmu->OnSize();
+	}
+}
+
+bool CVConGroup::isGroupVisible(CVConGroup* pGrp)
+{
+	if (!pGrp)
+		return false;
+	MSectionLockSimple lockGroups; lockGroups.Lock(gpcs_VGroups);
+	CVConGroup* p = GetRootOfVCon(gp_VActive);
+	return (p == pGrp->GetRootGroup());
+}
+
+CVConGroup* CVConGroup::FindSplitGroup(POINT ptWork, CVConGroup* pFrom)
+{
+	// gpcs_VGroups must be locked by caller!
+	CVConGroup* pGrp = pFrom ? pFrom : GetRootOfVCon(gp_VActive);
+
+	if (!pGrp || (pGrp->m_SplitType == RConStartArgs::eSplitNone))
+		return NULL;
+
+	if (PtInRect(&pGrp->mrc_Splitter, ptWork))
+		return pGrp;
+
+	if (!PtInRect(&pGrp->mrc_Full, ptWork))
+		return NULL;
+	
+	CVConGroup* pFind;
+	if (pGrp->mp_Grp1 && ((pFind = FindSplitGroup(ptWork, pGrp->mp_Grp1)) != NULL))
+		return pFind;
+	if (pGrp->mp_Grp2 && ((pFind = FindSplitGroup(ptWork, pGrp->mp_Grp2)) != NULL))
+		return pFind;
+
+	return NULL;
 }
 
 void CVConGroup::ShowAllVCon(int nShowCmd)

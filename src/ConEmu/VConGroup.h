@@ -57,6 +57,7 @@ protected:
 	void RemoveGroup();
 	RECT mrc_Full;
 	RECT mrc_Splitter;
+	RECT mrc_DragSplitter;
 	bool mb_ResizeFlag; // взводится в true для корня, когда в группе что-то меняется
 	void SetResizeFlags();
 	void* mp_ActiveGroupVConPtr; // указатель (CVirtualConsole*) на последнюю активную консоль в этой группе
@@ -82,7 +83,11 @@ protected:
 
 	CVConGroup* FindNextPane(const RECT& rcPrev, int nHorz /*= 0*/, int nVert /*= 0*/);
 
+	static CVConGroup* mp_GroupSplitDragging;
 	static LPARAM ReSizeSplitterHelper(LPARAM lParam);
+	static CVConGroup* FindSplitGroup(POINT ptWork, CVConGroup* pFrom);
+	static bool isGroupVisible(CVConGroup* pGrp);
+	static void StopSplitDragging();
 
 private:
 	static CVirtualConsole* CreateVCon(RConStartArgs *args, CVirtualConsole*& ppVConI);
@@ -206,6 +211,9 @@ public:
 	static void OnConsoleResize(bool abSizingToDo);
 	static void ReSizePanes(RECT mainClient);
 	static bool ReSizeSplitter(CVirtualConsole* apVCon, int iHorz = 0, int iVert = 0);
+
+	static LRESULT OnMouseEvent(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+	static RConStartArgs::SplitType isSplitterDragging();
 
 	static void NotifyChildrenWindows();
 

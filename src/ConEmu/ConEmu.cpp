@@ -11525,6 +11525,13 @@ LRESULT CConEmuMain::OnSetCursor(WPARAM wParam, LPARAM lParam)
 	}
 #endif
 
+	RConStartArgs::SplitType split = CVConGroup::isSplitterDragging();
+	if (split)
+	{
+		SetCursor((split == RConStartArgs::eSplitVert) ? mh_SplitV : mh_SplitH);
+		return TRUE;
+	}
+
 	POINT ptCur; GetCursorPos(&ptCur);
 	// Если сейчас идет trackPopupMenu - то на выход
 	CVirtualConsole* pVCon = isMenuActive() ? NULL : GetVConFromPoint(ptCur);
@@ -12883,6 +12890,14 @@ LRESULT CConEmuMain::WorkWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 
 			EndPaint(hWnd, &ps);
 		} // WM_PAINT
+		break;
+
+	case WM_SETCURSOR:
+	case WM_MOUSEMOVE:
+	case WM_LBUTTONDOWN:
+	case WM_LBUTTONUP:
+	case WM_LBUTTONDBLCLK:
+		result = CVConGroup::OnMouseEvent(hWnd, uMsg, wParam, lParam);
 		break;
 
 #ifdef _DEBUG
