@@ -771,6 +771,7 @@ void CConEmuMain::RegisterMessages()
 	mn_MsgActivateVCon = RegisterMessage("ActivateVCon");
 	mn_MsgPostScClose = RegisterMessage("ScClose");
 	mn_MsgOurSysCommand = RegisterMessage("UM_SYSCOMMAND");
+	mn_MsgCallMainThread = RegisterMessage("CallMainThread");
 }
 
 bool CConEmuMain::isMingwMode()
@@ -12925,6 +12926,18 @@ UINT CConEmuMain::GetRegisteredMessage(LPCSTR asLocal, LPCWSTR asGlobal)
 	return RegisterMessage(asLocal, asGlobal);
 }
 
+LRESULT CConEmuMain::CallMainThread(bool bSync, CallMainThreadFn fn, LPARAM lParam)
+{
+	LRESULT lRc;
+	if (isMainThread() && bSync)
+		lRc = fn(lParam);
+	else if (!bSync)
+		lRc = PostMessage(ghWnd, mn_MsgCallMainThread, (WPARAM)fn, lParam);
+	else
+		lRc = SendMessage(ghWnd, mn_MsgCallMainThread, (WPARAM)fn, lParam);
+	return lRc;
+}
+
 // Speed up selection modifier checks
 void CConEmuMain::PreWndProc(UINT messg)
 {
@@ -13745,6 +13758,11 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			{
 				this->mp_Menu->OnSysCommand(hWnd, wParam, lParam, messg);
 				return 0;
+			}
+			else if (messg == this->mn_MsgCallMainThread)
+			{
+				CallMainThreadFn fn = (CallMainThreadFn)wParam;
+				return fn ? fn(lParam) : -1;
 			}
 
 			//else if (messg == this->mn_MsgCmdStarted || messg == this->mn_MsgCmdStopped) {
