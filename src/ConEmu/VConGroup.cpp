@@ -1008,8 +1008,8 @@ void CVConGroup::CalcSplitRect(UINT nSplitPercent10, RECT rcNewCon, RECT& rcCon1
 
 	WARNING("Не учитывается gpSet->nCenterConsolePad?");
 
-	UINT nSplit = max(1,min(mn_SplitPercent10,999));
-	//UINT nPadSizeX = 0, nPadSizeY = 0;
+	UINT nSplit = max(1,min(nSplitPercent10,999));
+
 	if (m_SplitType == RConStartArgs::eSplitHorz)
 	{
 		UINT nWidth = rcNewCon.right - rcNewCon.left;
