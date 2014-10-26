@@ -126,6 +126,8 @@ typedef HIMC (WINAPI* ImmGetContext_t)(HWND hWnd);
 //	DWORD dwErrCode;
 //};
 
+typedef LRESULT (*CallMainThreadFn)(LPARAM lParam);
+
 
 typedef DWORD ConEmuInstallMode;
 const ConEmuInstallMode
@@ -490,6 +492,7 @@ class CConEmuMain
 		void CtrlWinAltSpace();
 		void DeleteVConMainThread(CVirtualConsole* apVCon);
 		UINT GetRegisteredMessage(LPCSTR asLocal, LPCWSTR asGlobal = NULL);
+		LRESULT CallMainThread(bool bSync, CallMainThreadFn fn, LPARAM lParam);
 	private:
 		UINT RegisterMessage(LPCSTR asLocal, LPCWSTR asGlobal = NULL);
 		void RegisterMessages();
@@ -549,6 +552,7 @@ class CConEmuMain
 		UINT mn_MsgActivateVCon;
 		UINT mn_MsgPostScClose;
 		UINT mn_MsgOurSysCommand;
+		UINT mn_MsgCallMainThread;
 
 		//
 		virtual void OnUseGlass(bool abEnableGlass) override;
