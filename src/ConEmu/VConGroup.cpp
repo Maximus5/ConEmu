@@ -848,7 +848,8 @@ bool CVConGroup::ReSizeSplitter(int iCells)
 				int nNewSplitPercent10 = (iNewSize1 * 1000 / (iNewSize1 + iNewSize2));
 
 				// Do not try to calc if nNewSplitPercent10 was not changed into desired direction
-				if ((iCells < 0) == (nNewSplitPercent10 < mn_SplitPercent10))
+				if ((nNewSplitPercent10 > 0) && (nNewSplitPercent10 <= 999)
+					&& ((iCells < 0) == (nNewSplitPercent10 < mn_SplitPercent10)))
 				{
 					int nOldPercent = mn_SplitPercent10;
 					mn_SplitPercent10 = max(1,min(nNewSplitPercent10,999)); // (0.1% - 99.9%)*10
@@ -863,7 +864,7 @@ bool CVConGroup::ReSizeSplitter(int iCells)
 						break;
 				}
 
-				// Из-за округлений - могли "несмочь"
+				// Из-за округлений, отступов и просветов на краях - могли не попасть в кратность ячейкам
 				iNewSize1 += iCellHalf; iNewSize2 -= iCellHalf;
 			}
 
@@ -1019,14 +1020,16 @@ void CVConGroup::CalcSplitRect(UINT nSplitPercent10, RECT rcNewCon, RECT& rcCon1
 			nWidth -= nPadX;
 		else
 			nPadX = 0;
+
 		RECT rcScroll = gpConEmu->CalcMargins(CEM_SCROLL|CEM_PAD);
-		if (rcScroll.right)
+		if (rcScroll.right || rcScroll.left)
 		{
 			if (nWidth > (UINT)((rcScroll.right + rcScroll.left) * 2))
 				nWidth -= (rcScroll.right + rcScroll.left) * 2;
 			else
 				rcScroll.right = 0;
 		}
+
 		UINT nScreenWidth = (nWidth * nSplit / 1000);
 		LONG nCellWidth = gpSetCls->FontWidth();
 		LONG nCon2Width;
@@ -1064,16 +1067,16 @@ void CVConGroup::CalcSplitRect(UINT nSplitPercent10, RECT rcNewCon, RECT& rcCon1
 			nHeight -= nPadY;
 		else
 			nPadY = 0;
-		RECT rcScroll = gpConEmu->CalcMargins(CEM_SCROLL);
-		_ASSERTE(rcScroll.top==0);
-		if (rcScroll.bottom)
+
+		RECT rcScroll = gpConEmu->CalcMargins(CEM_SCROLL|CEM_PAD);
+		if (rcScroll.bottom || rcScroll.top)
 		{
-			_ASSERTE(gpSet->isAlwaysShowScrollbar==1); // сюда должны попадать только при включенном постоянно скролле
-			if (nHeight > (UINT)(rcScroll.bottom * 2))
-				nHeight -= rcScroll.bottom * 2;
+			if (nHeight > (UINT)((rcScroll.bottom + rcScroll.top) * 2))
+				nHeight -= (rcScroll.bottom + rcScroll.top) * 2;
 			else
 				rcScroll.bottom = 0;
 		}
+
 		UINT nScreenHeight = (nHeight * nSplit / 1000);
 		LONG nCellHeight = gpSetCls->FontHeight();
 		LONG nCon2Height;
@@ -1086,8 +1089,8 @@ void CVConGroup::CalcSplitRect(UINT nSplitPercent10, RECT rcNewCon, RECT& rcCon1
 				_ASSERTE(FALSE && "Too small rect?");
 				nCellCountY = nTotalCellCountY - 1;
 			}
-			nScreenHeight = nCellCountY * nCellHeight;
-			nCon2Height = (nTotalCellCountY - nCellCountY) * nCellHeight;
+			nScreenHeight = nCellCountY * nCellHeight + (rcScroll.bottom + rcScroll.top);
+			nCon2Height = (nTotalCellCountY - nCellCountY) * nCellHeight + (rcScroll.bottom + rcScroll.top);
 			_ASSERTE(nCon2Height > 0);
 		}
 		else
@@ -1103,6 +1106,7 @@ void CVConGroup::CalcSplitRect(UINT nSplitPercent10, RECT rcNewCon, RECT& rcCon1
 	}
 }
 
+// Evaluate rect of exact group (pTarget) from root rectange (CER_WORKSPACE)
 void CVConGroup::CalcSplitRootRect(RECT rcAll, RECT& rcCon, CVConGroup* pTarget /*= NULL*/)
 {
 	if (!this)
