@@ -797,7 +797,7 @@ void CVConGroup::RepositionVCon(RECT rcNewCon, bool bVisible)
 	else if (mp_Grp1 && mp_Grp2)
 	{
 		RECT rcCon1, rcCon2, rcSplitter;
-		CalcSplitRect(rcNewCon, rcCon1, rcCon2, rcSplitter);
+		CalcSplitRect(mn_SplitPercent10, rcNewCon, rcCon1, rcCon2, rcSplitter);
 
 		mrc_Full = rcNewCon;
 		mrc_Splitter = rcSplitter;
@@ -825,7 +825,7 @@ bool CVConGroup::ReSizeSplitter(int iCells)
 	if (mp_Grp1 && mp_Grp2 && (nCellSize > 0))
 	{
 		RECT rcCon1 = {0}, rcCon2 = {0}, rcSplitter = {0};
-		CalcSplitRect(mrc_Full, rcCon1, rcCon2, rcSplitter);
+		CalcSplitRect(mn_SplitPercent10, mrc_Full, rcCon1, rcCon2, rcSplitter);
 
 		RECT rcScroll = gpConEmu->CalcMargins(CEM_SCROLL|CEM_PAD);
 
@@ -853,7 +853,7 @@ bool CVConGroup::ReSizeSplitter(int iCells)
 					int nOldPercent = mn_SplitPercent10;
 					mn_SplitPercent10 = max(1,min(nNewSplitPercent10,999)); // (0.1% - 99.9%)*10
 
-					CalcSplitRect(mrc_Full, rcNewCon1, rcNewCon2, rcNewSplitter);
+					CalcSplitRect(mn_SplitPercent10, mrc_Full, rcNewCon1, rcNewCon2, rcNewSplitter);
 
 					int iChanged = ((m_SplitType == RConStartArgs::eSplitVert) ? rcNewSplitter.top : rcNewSplitter.left) - ((m_SplitType == RConStartArgs::eSplitVert) ? rcSplitter.top : rcSplitter.left);
 					int iCellsChanged = iChanged / nCellSize;
@@ -950,7 +950,7 @@ bool CVConGroup::ReSizeSplitter(CVirtualConsole* apVCon, int iHorz /*= 0*/, int 
 }
 
 // Разбиение в координатах DC (pixels)
-void CVConGroup::CalcSplitRect(RECT rcNewCon, RECT& rcCon1, RECT& rcCon2, RECT& rcSplitter)
+void CVConGroup::CalcSplitRect(UINT nSplitPercent10, RECT rcNewCon, RECT& rcCon1, RECT& rcCon2, RECT& rcSplitter)
 {
 	rcCon1 = rcNewCon;
 	rcCon2 = rcNewCon;
@@ -4259,7 +4259,7 @@ void CVConGroup::SetConsoleSizes(const COORD& size, const RECT& rcNewCon, bool a
 	// Do Split
 
 	RECT rcCon1, rcCon2, rcSplitter, rcSize1, rcSize2;
-	CalcSplitRect(rcNewCon, rcCon1, rcCon2, rcSplitter);
+	CalcSplitRect(mn_SplitPercent10, rcNewCon, rcCon1, rcCon2, rcSplitter);
 
 	rcSize1 = CalcRect(CER_CONSOLE_CUR, rcCon1, CER_BACK, VCon1.VCon());
 	rcSize2 = CalcRect(CER_CONSOLE_CUR, rcCon2, CER_BACK, VCon2.VCon());
