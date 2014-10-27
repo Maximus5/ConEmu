@@ -3583,12 +3583,6 @@ void CSetDlgButtons::OnBtn_UserScreenTransparent(HWND hDlg, WORD CB, BYTE uCheck
 
 	gpSet->isUserScreenTransparent = uCheck;
 
-	if (hDlg)
-	{
-		checkDlgButton(hDlg, cbHideCaptionAlways, gpSet->isHideCaptionAlways() ? BST_CHECKED : BST_UNCHECKED);
-		EnableWindow(GetDlgItem(hDlg, cbHideCaptionAlways), !gpSet->isForcedHideCaptionAlways());
-	}
-
 	gpConEmu->OnHideCaption(); // при прозрачности - обязательно скрытие заголовка + кнопки
 	gpConEmu->UpdateWindowRgn();
 
