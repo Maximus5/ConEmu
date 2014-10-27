@@ -4688,6 +4688,7 @@ void CRealConsole::DoEndFindText()
 	if (mp_ABuf && (mp_ABuf->m_Type == rbt_Find))
 	{
 		SetActiveBuffer(rbt_Primary);
+		OnSelectionChanged();
 	}
 }
 
