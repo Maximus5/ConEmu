@@ -223,8 +223,8 @@ static LRESULT EditIconHintPaint(HWND hEditCtrl, CEIconHintInfo* p, UINT Msg = W
 			// Draw "Search" icon
 			if (dh.hIcon)
 			{
-				int X1 = rect.right - iw - 1;
-				int Y1 = max(1,((rect.bottom-rect.top-ih)>>1));
+				int X1 = rect.right - iw ;
+				int Y1 = max(0,((rect.bottom-rect.top-ih)/2));
 
 				DrawIconEx(hdc, X1, Y1, dh.hIcon, iw, ih, 0, NULL, DI_NORMAL);
 
