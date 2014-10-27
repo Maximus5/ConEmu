@@ -893,6 +893,7 @@ BEGIN
     CONTROL         "Copy plain text only",rbCopyFmtHtml0,"Button",BS_AUTORADIOBUTTON,11,212,98,8
     CONTROL         "Copy HTML format",rbCopyFmtHtml1,"Button",BS_AUTORADIOBUTTON,114,212,98,8
     CONTROL         "Copy as (RAW) HTML",rbCopyFmtHtml2,"Button",BS_AUTORADIOBUTTON,218,212,98,8
+    CTEXT           "",stCTSPreview,206,63,112,17,WS_BORDER
 END
 
 IDD_SPG_TABS DIALOGEX 0, 0, 328, 235

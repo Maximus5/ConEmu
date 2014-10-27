@@ -2323,6 +2323,11 @@ LRESULT CSettings::OnInitDialog_MarkCopy(HWND hWnd2, bool abInitial)
 	CSetDlgLists::FillListBoxItems(GetDlgItem(hWnd2, lbCTSForeIdx), CSetDlgLists::eColorIdx16, idxFore, false);
 	CSetDlgLists::FillListBoxItems(GetDlgItem(hWnd2, lbCTSBackIdx), CSetDlgLists::eColorIdx16, idxBack, false);
 
+	if (abInitial)
+	{
+		mf_MarkCopyPreviewProc = (WNDPROC)SetWindowLongPtr(GetDlgItem(hWnd2, stCTSPreview), GWLP_WNDPROC, (LONG_PTR)MarkCopyPreviewProc);
+	}
+
 	checkDlgButton(hWnd2, cbCTSDetectLineEnd, gpSet->AppStd.isCTSDetectLineEnd);
 	checkDlgButton(hWnd2, cbCTSBashMargin, gpSet->AppStd.isCTSBashMargin);
 	checkDlgButton(hWnd2, cbCTSTrimTrailing, gpSet->AppStd.isCTSTrimTrailing);
@@ -5877,6 +5882,7 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 						DWORD nFore = 0;
 						CSetDlgLists::GetListBoxItem(hWnd2, lbCTSForeIdx, CSetDlgLists::eColorIdx16, nFore);
 						gpSet->isCTSColorIndex = (gpSet->isCTSColorIndex & 0xF0) | (nFore & 0xF);
+						InvalidateRect(GetDlgItem(hWnd2, stCTSPreview), NULL, FALSE);
 						gpConEmu->Update(true);
 					} break;
 				case lbCTSBackIdx:
@@ -5884,6 +5890,7 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 						DWORD nBack = 0;
 						CSetDlgLists::GetListBoxItem(hWnd2, lbCTSBackIdx, CSetDlgLists::eColorIdx16, nBack);
 						gpSet->isCTSColorIndex = (gpSet->isCTSColorIndex & 0xF) | ((nBack & 0xF) << 4);
+						InvalidateRect(GetDlgItem(hWnd2, stCTSPreview), NULL, FALSE);
 						gpConEmu->Update(true);
 					} break;
 				default:
@@ -7981,6 +7988,69 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 	}
 
 	return iRc;
+}
+
+LRESULT CSettings::MarkCopyPreviewProc(HWND hCtrl, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	LRESULT lRc = 0;
+	PAINTSTRUCT ps = {};
+	HBRUSH hbr;
+	HDC hdc;
+
+	uint idxCon = gpSet->AppStd.nBackColorIdx;
+	if (idxCon > 15)
+		idxCon = 0;
+	uint idxBack = (gpSet->isCTSColorIndex & 0xF0) >> 4;
+	uint idxFore = (gpSet->isCTSColorIndex & 0xF);
+	RECT rcClient = {};
+
+	switch (uMsg)
+	{
+	case WM_ERASEBKGND:
+	case WM_PAINT:
+		hbr = CreateSolidBrush(gpSet->Colors[idxCon]);
+		GetClientRect(hCtrl, &rcClient);
+		if (uMsg == WM_ERASEBKGND)
+			hdc = (HDC)wParam;
+		else
+			hdc = BeginPaint(hCtrl, &ps);
+		if (!hdc)
+			goto wrap;
+		FillRect(hdc, &rcClient, hbr);
+		if (uMsg == WM_PAINT)
+		{
+			HFONT hOld = NULL;
+			HFONT hNew = NULL;
+			if (gpSetCls->mh_Font[0].iType == CEFONT_GDI)
+				hNew = gpSetCls->mh_Font[0].hFont;
+			else
+				hNew = (HFONT)SendMessage(GetParent(hCtrl), WM_GETFONT, 0, 0);
+			if (hNew)
+				hOld = (HFONT)SelectObject(hdc, hNew);
+			SetTextColor(hdc, gpSet->Colors[idxFore]);
+			SetBkColor(hdc, gpSet->Colors[idxBack]);
+			wchar_t szText[] = L" Selected text ";
+			SIZE sz = {};
+			GetTextExtentPoint32(hdc, szText, lstrlen(szText), &sz);
+			RECT rcText = {sz.cx, sz.cy};
+			OffsetRect(&rcText, max(0,(rcClient.right-rcClient.left-sz.cx)/2), max(0,(rcClient.bottom-rcClient.top-sz.cy)/2));
+			DrawText(hdc, szText, -1, &rcText, DT_VCENTER|DT_CENTER|DT_SINGLELINE);
+			if (hOld)
+				SelectObject(hdc, hOld);
+		}
+		DeleteObject(hbr);
+		if (uMsg == WM_PAINT)
+			EndPaint(hCtrl, &ps);
+		goto wrap;
+	}
+
+	if (gpSetCls->mf_MarkCopyPreviewProc)
+		lRc = ::CallWindowProc(gpSetCls->mf_MarkCopyPreviewProc, hCtrl, uMsg, wParam, lParam);
+	else
+		lRc = ::DefWindowProc(hCtrl, uMsg, wParam, lParam);
+wrap:
+	return lRc;
+
 }
 
 void CSettings::debugLogShell(HWND hWnd2, DebugLogShellActivity *pShl)
