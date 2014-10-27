@@ -660,7 +660,7 @@ struct Settings
 		bool isFrameHidden();
 		//reg->Load(L"HideCaptionAlwaysFrame", nHideCaptionAlwaysFrame);
 		BYTE nHideCaptionAlwaysFrame;
-		int HideCaptionAlwaysFrame() { return (gpSet->nHideCaptionAlwaysFrame > 0x7F) ? -1 : gpSet->nHideCaptionAlwaysFrame; };
+		int HideCaptionAlwaysFrame();
 		//reg->Load(L"HideCaptionAlwaysDelay", nHideCaptionAlwaysDelay);
 		DWORD nHideCaptionAlwaysDelay;
 		//reg->Load(L"HideCaptionAlwaysDisappear", nHideCaptionAlwaysDisappear);

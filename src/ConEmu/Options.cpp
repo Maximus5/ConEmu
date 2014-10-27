@@ -4416,6 +4416,11 @@ bool Settings::isCaptionHidden(ConEmuWindowMode wmNewMode /*= wmCurrent*/)
 	return bCaptionHidden;
 }
 
+int Settings::HideCaptionAlwaysFrame()
+{
+	return (gpSet->nHideCaptionAlwaysFrame > 0x7F) ? -1 : gpSet->nHideCaptionAlwaysFrame;
+}
+
 // Функция НЕ учитывает isCaptionHidden.
 // Возвращает true, если 'Frame width' меньше системной для ThickFame
 // иначе - false, меняем рамку на "NonResizable"
