@@ -1198,10 +1198,7 @@ LRESULT CVConGroup::OnMouseEvent(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 	}
 
 	if (!pGrp)
-	{
 		StopSplitDragging();
-		goto wrap;
-	}
 
 	if (uMsg == WM_SETCURSOR)
 	{
@@ -1333,7 +1330,7 @@ bool CVConGroup::isGroupVisible(CVConGroup* pGrp)
 CVConGroup* CVConGroup::FindSplitGroup(POINT ptWork, CVConGroup* pFrom)
 {
 	// gpcs_VGroups must be locked by caller!
-	CVConGroup* pGrp = pFrom ? pFrom : GetRootOfVCon(gp_VActive);
+	CVConGroup* pGrp = pFrom ? pFrom : gp_VActive ? GetRootOfVCon(gp_VActive) : NULL;
 
 	if (!pGrp || (pGrp->m_SplitType == RConStartArgs::eSplitNone))
 		return NULL;
