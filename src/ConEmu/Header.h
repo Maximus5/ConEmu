@@ -337,6 +337,7 @@ struct SettingsStorage
 #define IsWindows8_1 ((gOSVer.dwMajorVersion > 6) || (gOSVer.dwMajorVersion == 6 && gOSVer.dwMinorVersion > 2))
 
 #define SafeRelease(p) if ((p)!=NULL) { (p)->Release(); (p)=NULL; }
+#define SafeDeleteObject(h) if ((h)!=NULL) { DeleteObject((h)); (h)=NULL; }
 
 // GNU C HEADER PATCH
 #ifdef __GNUC__
