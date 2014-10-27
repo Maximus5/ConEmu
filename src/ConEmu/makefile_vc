@@ -51,6 +51,7 @@ $(INTDIR)\DragDropData.obj \
 $(INTDIR)\DwmHelper.obj \
 $(INTDIR)\Execute.obj \
 $(INTDIR)\FindDlg.obj \
+$(INTDIR)\FindPanel.obj \
 $(INTDIR)\FrameHolder.obj \
 $(INTDIR)\GestureEngine.obj \
 $(INTDIR)\GuiServer.obj \
@@ -321,6 +322,8 @@ $(INTDIR)\DwmHelper.obj: DwmHelper.cpp DwmHelper.h
 $(INTDIR)\Execute.obj: ../common/execute.cpp ../common/execute.h
 
 $(INTDIR)\FindDlg.obj: FindDlg.cpp FindDlg.h
+
+$(INTDIR)\FindPanel.obj: FindPanel.cpp FindPanel.h
 
 $(INTDIR)\FrameHolder.obj: FrameHolder.cpp FrameHolder.h
 

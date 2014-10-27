@@ -41,6 +41,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Options.h"
 #include "OptionsClass.h"
 #include "ConEmu.h"
+#include "FindPanel.h"
 #include "VirtualConsole.h"
 #include "ToolImg.h"
 #include "TrayIcon.h"
@@ -50,6 +51,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Menu.h"
 #include "../common/MMap.h"
 #include "../common/WUser.h"
+
+#define isFindPane true
 
 //WNDPROC CTabPanelWin::_defaultTabProc = NULL;
 //WNDPROC CTabPanelWin::_defaultToolProc = NULL;
@@ -64,6 +67,7 @@ enum ReBarIndex
 {
 	rbi_TabBar  = 1,
 	rbi_ToolBar = 2,
+	rbi_FindBar = 3,
 };
 
 // не используем size, т.к. приходит "новый" размер из висты и в XP обламываемся
@@ -74,6 +78,7 @@ CTabPanelWin::CTabPanelWin(CTabBarClass* ap_Owner)
 	: CTabPanelBase(ap_Owner)
 {
 	mh_Toolbar = NULL; mh_Tabbar = NULL; mh_Rebar = NULL;
+	mp_Find = NULL;
 	mb_ChangeAllowed = false;
 	mn_LastToolbarWidth = 0;
 	mn_ThemeHeightDiff = 0;
@@ -374,6 +379,7 @@ void CTabPanelWin::CreateRebar()
 	SendMessage(mh_Rebar, RB_SETWINDOWTHEME, 0, (LPARAM)L" ");
 	CreateTabbar();
 	CreateToolbar();
+
 	SIZE sz = {0,0};
 
 	if (mh_Toolbar)
@@ -387,13 +393,23 @@ void CTabPanelWin::CreateRebar()
 		sz.cy = rcClient.top - 3 - mn_ThemeHeightDiff;
 	}
 
+	HWND hFindPane = NULL;
+	if (isFindPane)
+	{
+		if (!mp_Find)
+			mp_Find = new CFindPanel(gpConEmu);
+		hFindPane = mp_Find->CreatePane(mh_Rebar, sz.cy);
+	}
+
+	int iFindPanelWidth = hFindPane ? mp_Find->GetMinWidth() : 0;
+
 	if (mh_Tabbar)
 	{
 		// Set values unique to the band with the toolbar.
 		rbBand.wID        = rbi_TabBar;
 		rbBand.hwndChild  = mh_Tabbar;
 		rbBand.cxMinChild = 100;
-		rbBand.cx = rbBand.cxIdeal = rcWnd.right - sz.cx - 80;
+		rbBand.cx = rbBand.cxIdeal = rcWnd.right - sz.cx - 80 - iFindPanelWidth;
 		rbBand.cyChild = rbBand.cyMinChild = rbBand.cyMaxChild = mn_TabHeight; // sz.cy;
 
 		if (!SendMessage(mh_Rebar, RB_INSERTBAND, (WPARAM)-1, (LPARAM)&rbBand))
@@ -414,6 +430,20 @@ void CTabPanelWin::CreateRebar()
 		if (!SendMessage(mh_Rebar, RB_INSERTBAND, (WPARAM)-1, (LPARAM)&rbBand))
 		{
 			DisplayLastError(_T("Can't initialize rebar (toolbar)"));
+		}
+	}
+
+	if (hFindPane)
+	{
+		rbBand.wID        = rbi_FindBar;
+		rbBand.hwndChild  = hFindPane;
+		rbBand.cx = rbBand.cxMinChild = rbBand.cxIdeal = iFindPanelWidth;
+		rbBand.cyChild = rbBand.cyMinChild = rbBand.cyMaxChild = sz.cy + mn_ThemeHeightDiff;
+
+		// Add the band that has the toolbar.
+		if (!SendMessage(mh_Rebar, RB_INSERTBAND, (WPARAM)-1, (LPARAM)&rbBand))
+		{
+			DisplayLastError(_T("Can't initialize rebar (find pane)"));
 		}
 	}
 
@@ -876,37 +906,7 @@ void CTabPanelWin::RepositionInt()
 
 	if (mh_Rebar)
 	{
-		SIZE sz = {0,0};
-		bool lbNeedShow = false, lbWideEnough = false;
-		INT_PTR nToolbarIndex = -1, nTabIndex = -1;
-
-		if (mh_Toolbar)
-		{
-			nToolbarIndex = SendMessage(mh_Rebar, RB_IDTOINDEX, rbi_ToolBar, 0);
-
-			if (gpSet->isMultiShowButtons)
-			{
-				SendMessage(mh_Toolbar, TB_GETMAXSIZE, 0, (LPARAM)&sz);
-				sz.cx += (gpSet->isHideCaptionAlways() ? gpSet->nToolbarAddSpace : 0);
-				lbWideEnough = ((sz.cx + 150) <= client.right);
-
-				if (!lbWideEnough)
-				{
-					if (IsWindowVisible(mh_Toolbar))
-						SendMessage(mh_Rebar, RB_SHOWBAND, nToolbarIndex, 0);
-				}
-				else
-				{
-					if (!IsWindowVisible(mh_Toolbar))
-						lbNeedShow = true;
-				}
-			}
-			else
-			{
-				SendMessage(mh_Rebar, RB_SHOWBAND, nToolbarIndex, 0);
-			}
-		}
-
+		// Rebar location (top/bottom)
 		if (gpSet->nTabsLocation == 1)
 		{
 			int nStatusHeight = gpSet->isStatusBarShow ? gpSet->StatusBarHeight() : 0;
@@ -917,26 +917,118 @@ void CTabPanelWin::RepositionInt()
 			MoveWindow(mh_Rebar, 0, 0, client.right, mn_TabHeight, 1);
 		}
 
-		// Toolbar must be after tabbar
-		if (lbWideEnough)
+		// Visible panes
+		bool bRebarChanged = false;
+		int iAllWidth = 0;
+		// Desired panes position
+		struct {
+			ReBarIndex iPaneID;
+			HWND hChild;
+			int iPaneMinWidth;
+			bool bNeedShow;
+		} Panes[3] = {
+			{rbi_TabBar}, {rbi_FindBar}, {rbi_ToolBar}
+		};
+
+		// Default (minimal) widths
+		for (size_t i = 0; i < countof(Panes); i++)
 		{
-			nTabIndex = SendMessage(mh_Rebar, RB_IDTOINDEX, rbi_TabBar, 0);
-			nToolbarIndex = SendMessage(mh_Rebar, RB_IDTOINDEX, rbi_ToolBar, 0);
-			// But after resizing it may jump before tabbar
-			if (nToolbarIndex < nTabIndex)
+			switch (Panes[i].iPaneID)
 			{
-				SendMessage(mh_Rebar, RB_MOVEBAND, nToolbarIndex, 1);
-				nToolbarIndex = SendMessage(mh_Rebar, RB_IDTOINDEX, rbi_ToolBar, 0);
-				_ASSERTE(nToolbarIndex > 0);
+			case rbi_TabBar:
+				Panes[i].hChild = mh_Tabbar;
+				Panes[i].iPaneMinWidth = max(150,mn_TabHeight*5);
+				break;
+			case rbi_FindBar:
+				if (mp_Find && ((Panes[i].hChild = mp_Find->GetHWND()) != NULL))
+				{
+					if (isFindPane)
+						Panes[i].iPaneMinWidth = mp_Find->GetMinWidth();
+				}
+				break;
+			case rbi_ToolBar:
+				if ((Panes[i].hChild = mh_Toolbar) != NULL)
+				{
+					SIZE sz = {0,0};
+					SendMessage(mh_Toolbar, TB_GETMAXSIZE, 0, (LPARAM)&sz);
+					sz.cx += (gpSet->isHideCaptionAlways() ? gpSet->nToolbarAddSpace : 0);
+					if (gpSet->isMultiShowButtons)
+						Panes[i].iPaneMinWidth = sz.cx;
+				}
+				break;
+			}
+			iAllWidth += Panes[i].iPaneMinWidth;
+		}
+
+		// Check what panes are fit
+		if (iAllWidth > client.right)
+		{
+			// Firstly we hide find-pane
+			if (Panes[1].iPaneMinWidth > 0)
+			{
+				iAllWidth -= Panes[1].iPaneMinWidth;
+				Panes[1].iPaneMinWidth = 0;
+			}
+			// If that is not enough - hide toolbar
+			if (iAllWidth > client.right)
+			{
+				Panes[2].iPaneMinWidth = 0;
 			}
 		}
 
-		if (lbNeedShow)
+		// Run through and hide don't fit panes
+		for (size_t i = 1; i < countof(Panes); i++)
 		{
-			SendMessage(mh_Rebar, RB_SHOWBAND, nToolbarIndex, TRUE);
+			if (!Panes[i].hChild)
+				continue;
+
+			INT_PTR nPaneIndex = SendMessage(mh_Rebar, RB_IDTOINDEX, Panes[i].iPaneID, 0);
+			if (nPaneIndex < 0)
+				continue;
+
+			if (IsWindowVisible(Panes[i].hChild))
+			{
+				if (Panes[i].iPaneMinWidth == 0)
+				{
+					SendMessage(mh_Rebar, RB_SHOWBAND, nPaneIndex, 0);
+					bRebarChanged = true;
+				}
+			}
+			else if (Panes[i].iPaneMinWidth > 0)
+			{
+				Panes[i].bNeedShow = true;
+			}
 		}
 
-		if (lbWideEnough)
+		// Fix probably tangled order
+		INT_PTR iAfter = 0;
+		for (size_t i = 0; i < countof(Panes); i++)
+		{
+			if (Panes[i].iPaneMinWidth <= 0)
+				continue;
+			INT_PTR nIndex = SendMessage(mh_Rebar, RB_IDTOINDEX, Panes[i].iPaneID, 0);
+			if (nIndex < 0)
+				continue;
+			if (nIndex > iAfter)
+			{
+				SendMessage(mh_Rebar, RB_MOVEBAND, nIndex, iAfter);
+				bRebarChanged = true;
+			}
+			iAfter++;
+		}
+
+		// Show panes was hidden
+		for (size_t i = 0; i < countof(Panes); i++)
+		{
+			if (!Panes[i].bNeedShow)
+				continue;
+			INT_PTR nIndex = SendMessage(mh_Rebar, RB_IDTOINDEX, Panes[i].iPaneID, 0);
+			SendMessage(mh_Rebar, RB_SHOWBAND, nIndex, TRUE);
+			bRebarChanged = true;
+		}
+
+		// If the toolbar is visible, and rebar was changed...
+		if (bRebarChanged && (Panes[2].iPaneMinWidth > 0))
 		{
 			UpdateToolbarPos();
 		}

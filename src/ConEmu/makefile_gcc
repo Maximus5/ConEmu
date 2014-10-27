@@ -44,6 +44,7 @@ SRCS = \
 		DragDropData.cpp   \
 		DwmHelper.cpp      \
 		FindDlg.cpp        \
+		FindPanel.cpp      \
 		FrameHolder.cpp    \
 		GestureEngine.cpp  \
 		GuiServer.cpp      \

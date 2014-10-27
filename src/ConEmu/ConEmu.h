@@ -718,6 +718,7 @@ class CConEmuMain
 		LRESULT OnFlashWindow(WPARAM wParam, LPARAM lParam);
 		void DoFlashWindow(CESERVER_REQ_FLASHWINFO* pFlash, bool bFromMacro);
 		LRESULT OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, LPCWSTR asMsgFrom = NULL, BOOL abForceChild = FALSE);
+		bool IsChildFocusAllowed(HWND hChild);
 		void OnHideCaption();
 		LRESULT OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 		LRESULT OnKeyboardHook(DWORD VkMod);

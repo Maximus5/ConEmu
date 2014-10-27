@@ -7515,6 +7515,26 @@ void CConEmuMain::CheckAllowAutoChildFocus(DWORD nDeactivatedTID)
 	mb_AllowAutoChildFocus = bAllowAutoChildFocus;
 }
 
+bool CConEmuMain::IsChildFocusAllowed(HWND hChild)
+{
+	DWORD dwStyle = GetWindowLong(hChild, GWL_STYLE);
+
+	if ((dwStyle & (WS_POPUP|WS_OVERLAPPEDWINDOW|WS_DLGFRAME)) != 0)
+		return true; // Это диалог, не трогаем
+
+	if (dwStyle & WS_CHILD)
+	{
+		wchar_t szClass[200] = L"";
+		if (GetClassName(hChild, szClass, countof(szClass)))
+		{
+			if (lstrcmp(szClass, L"EDIT") == 0)
+				return true; // Контрол поиска, и пр.
+		}
+	}
+
+	return false;
+}
+
 LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, LPCWSTR asMsgFrom /*= NULL*/, BOOL abForceChild /*= FALSE*/)
 {
 	// Чтобы избежать лишних вызовов по CtrlWinAltSpace при работе с GUI приложением
@@ -7796,15 +7816,12 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 
 		while ((hParent = GetParent(hNewFocus)) != NULL)
 		{
+			if (IsChildFocusAllowed(hNewFocus))
+				break; // не трогаем
 			if (hParent == hGuiWnd)
 				break;
 			else if (hParent == ghWnd)
 			{
-				DWORD dwStyle = GetWindowLong(hNewFocus, GWL_STYLE);
-
-				if ((dwStyle & (WS_POPUP|WS_OVERLAPPEDWINDOW|WS_DLGFRAME)) != 0)
-					break; // Это диалог, не трогаем
-
 				setFocus();
 				hNewFocus = GetFocus();
 

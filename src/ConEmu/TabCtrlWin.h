@@ -29,11 +29,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 class CToolImg;
+class CFindPanel;
 
 class CTabPanelWin : public CTabPanelBase
 {
 private:
 	HWND mh_Tabbar, mh_Toolbar, mh_Rebar;
+	CFindPanel* mp_Find;
 	bool mb_ChangeAllowed;
 	int  mn_LastToolbarWidth;
 	int  mn_ThemeHeightDiff;
