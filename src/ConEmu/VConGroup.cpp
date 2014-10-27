@@ -858,7 +858,7 @@ bool CVConGroup::ReSizeSplitter(int iCells)
 
 				// Do not try to calc if nNewSplitPercent10 was not changed into desired direction
 				if ((nNewSplitPercent10 > 0) && (nNewSplitPercent10 <= 999)
-					&& ((iCells < 0) == (nNewSplitPercent10 < mn_SplitPercent10)))
+					&& ((iCells < 0) == ((UINT)nNewSplitPercent10 < mn_SplitPercent10)))
 				{
 					int nOldPercent = mn_SplitPercent10;
 					mn_SplitPercent10 = max(1,min(nNewSplitPercent10,999)); // (0.1% - 99.9%)*10
