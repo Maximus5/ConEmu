@@ -523,8 +523,7 @@ DWORD ConEmuHotKey::GetModifier(DWORD VkMod, int idx)
 	else if (Mod == CEHOTKEY_NUMHOSTKEY)
 	{
 		// Только для цифирок!
-		WARNING("CConEmuCtrl:: Убрать пережиток F11/F12");
-		_ASSERTE((((VkMod & 0xFF)>='0' && ((VkMod & 0xFF)<='9'))) /*((VkMod & 0xFF)==VK_F11 || (VkMod & 0xFF)==VK_F12)*/);
+		_ASSERTE((VkMod & 0xFF)>='0' && ((VkMod & 0xFF)<='9'));
 		Mod = (gpSet->HostkeyNumberModifier() << 8);
 	}
 	else if (Mod == CEHOTKEY_ARRHOSTKEY)
