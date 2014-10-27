@@ -2206,7 +2206,7 @@ INT_PTR CSettings::pageOpProc_Start(HWND hWnd2, UINT messg, WPARAM wParam, LPARA
 	return iRc;
 }
 
-LRESULT CSettings::OnInitDialog_Ext(HWND hWnd2)
+LRESULT CSettings::OnInitDialog_Ext(HWND hWnd2, bool abInitial)
 {
 	checkDlgButton(hWnd2, cbAutoRegFonts, gpSet->isAutoRegisterFonts);
 
@@ -2296,7 +2296,7 @@ LRESULT CSettings::OnInitDialog_Comspec(HWND hWnd2, bool abInitial)
 	return 0;
 }
 
-LRESULT CSettings::OnInitDialog_MarkCopy(HWND hWnd2)
+LRESULT CSettings::OnInitDialog_MarkCopy(HWND hWnd2, bool abInitial)
 {
 	checkDlgButton(hWnd2, cbCTSIntelligent, gpSet->isCTSIntelligent);
 	wchar_t* pszExcept = gpSet->GetIntelligentExceptions();
@@ -2337,7 +2337,7 @@ LRESULT CSettings::OnInitDialog_MarkCopy(HWND hWnd2)
 	return 0;
 }
 
-LRESULT CSettings::OnInitDialog_Paste(HWND hWnd2)
+LRESULT CSettings::OnInitDialog_Paste(HWND hWnd2, bool abInitial)
 {
 	checkDlgButton(hWnd2, cbClipShiftIns, gpSet->AppStd.isPasteAllLines);
 	checkDlgButton(hWnd2, cbClipCtrlV, gpSet->AppStd.isPasteFirstLine);
@@ -6767,19 +6767,16 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 			gpSetCls->OnInitDialog_Startup(hWnd2, bInitial);
 			break;
 		case IDD_SPG_FEATURE:
-			if (bInitial)
-				gpSetCls->OnInitDialog_Ext(hWnd2);
+			gpSetCls->OnInitDialog_Ext(hWnd2, bInitial);
 			break;
 		case IDD_SPG_COMSPEC:
 			gpSetCls->OnInitDialog_Comspec(hWnd2, bInitial);
 			break;
 		case IDD_SPG_MARKCOPY:
-			if (bInitial)
-				gpSetCls->OnInitDialog_MarkCopy(hWnd2);
+			gpSetCls->OnInitDialog_MarkCopy(hWnd2, bInitial);
 			break;
 		case IDD_SPG_PASTE:
-			if (bInitial)
-				gpSetCls->OnInitDialog_Paste(hWnd2);
+			gpSetCls->OnInitDialog_Paste(hWnd2, bInitial);
 			break;
 		case IDD_SPG_HIGHLIGHT:
 			gpSetCls->OnInitDialog_Hilight(hWnd2, bInitial);
