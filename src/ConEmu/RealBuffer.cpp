@@ -5488,7 +5488,7 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 					#else
 					pcaDst->Flags &= ~CharAttr_Transparent;
 					#endif
-					pcaDst->ForeFont = 0;
+					pcaDst->nFontIndex = 0;
 				}
 			}
 
