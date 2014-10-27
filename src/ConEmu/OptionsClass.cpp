@@ -2326,7 +2326,7 @@ LRESULT CSettings::OnInitDialog_MarkCopy(HWND hWnd2)
 	checkDlgButton(hWnd2, cbCTSDetectLineEnd, gpSet->AppStd.isCTSDetectLineEnd);
 	checkDlgButton(hWnd2, cbCTSBashMargin, gpSet->AppStd.isCTSBashMargin);
 	checkDlgButton(hWnd2, cbCTSTrimTrailing, gpSet->AppStd.isCTSTrimTrailing);
-	CSetDlgLists::FillListBoxItems(GetDlgItem(hWnd2, lbCTSBackIdx), CSetDlgLists::eCRLF, gpSet->AppStd.isCTSEOL, false);
+	CSetDlgLists::FillListBoxItems(GetDlgItem(hWnd2, lbCTSEOL), CSetDlgLists::eCRLF, gpSet->AppStd.isCTSEOL, false);
 
 	checkDlgButton(hWnd2, cbCTSShiftArrowStartSel, gpSet->AppStd.isCTSShiftArrowStart);
 
