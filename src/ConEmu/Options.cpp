@@ -4426,7 +4426,7 @@ int Settings::HideCaptionAlwaysFrame()
 // иначе - false, меняем рамку на "NonResizable"
 bool Settings::isFrameHidden()
 {
-	if (!nHideCaptionAlwaysFrame || isQuakeStyle)
+	if (!nHideCaptionAlwaysFrame || isQuakeStyle || isUserScreenTransparent)
 		return true;
 	if (nHideCaptionAlwaysFrame > 0x7F)
 		return false; // sure

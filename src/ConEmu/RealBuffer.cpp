@@ -5584,18 +5584,31 @@ void CRealBuffer::PrepareTransparent(wchar_t* pChar, CharAttr* pAttr, int nWidth
 
 	TODO("Хорошо бы m_FarInfo тоже в дамп скидывать.");
 	CEFAR_INFO_MAPPING FI;
+	SMALL_RECT rcFarRect = {};
+	const CONSOLE_SCREEN_BUFFER_INFO* pSbi = GetSBI();
 
-	if (m_Type == rbt_Primary)
+	if ((m_Type == rbt_Primary) && mp_RCon->GetFarPID())
 	{
 		FI = mp_RCon->m_FarInfo;
 
 		// На (mp_RCon->isViewer() || mp_RCon->isEditor()) ориентироваться
 		// нельзя, т.к. CheckFarStates еще не был вызван
-		BOOL bViewerOrEditor = FALSE;
-		if (mp_RCon->GetFarPID(TRUE))
+		bool bViewerOrEditor = false;
+		if (mp_RCon->GetFarPID(true))
 		{
 			int nTabType = mp_RCon->GetActiveTabType();
 			bViewerOrEditor = ((nTabType & 0xFF) == 2 || (nTabType & 0xFF) == 3);
+
+			if (pSbi)
+			{
+				if (FI.bBufferSupport)
+				{
+					rcFarRect.Left = 0;
+					rcFarRect.Right = GetTextWidth() - 1;
+					rcFarRect.Bottom = pSbi->dwSize.Y - 1;
+					rcFarRect.Top =	rcFarRect.Bottom - GetTextHeight() + 1;
+				}
+			}
 		}
 
 		if (!bViewerOrEditor)
@@ -5622,11 +5635,11 @@ void CRealBuffer::PrepareTransparent(wchar_t* pChar, CharAttr* pAttr, int nWidth
 				FI.bFarRightPanel = false;
 			}
 
-			FI.bViewerOrEditor = FALSE;
+			FI.bViewerOrEditor = false;
 		}
 		else
 		{
-			FI.bViewerOrEditor = TRUE;
+			FI.bViewerOrEditor = true;
 			FI.bFarLeftPanel = false;
 			FI.bFarRightPanel = false;
 		}
@@ -5644,8 +5657,9 @@ void CRealBuffer::PrepareTransparent(wchar_t* pChar, CharAttr* pAttr, int nWidth
 	}
 
 	m_Rgn.SetNeedTransparency(gpSet->isUserScreenTransparent);
+	m_Rgn.SetFarRect(&rcFarRect);
 	TODO("При загрузке дампа хорошо бы из него и палитру фара доставать/отдавать");
-	m_Rgn.PrepareTransparent(&FI, mp_RCon->mp_VCon->mp_Colors, GetSBI(), pChar, pAttr, nWidth, nHeight);
+	m_Rgn.PrepareTransparent(&FI, mp_RCon->mp_VCon->mp_Colors, pSbi, pChar, pAttr, nWidth, nHeight);
 
 	#ifdef _DEBUG
 	int nCount = m_Rgn.GetDetectedDialogs(0,NULL,NULL);
