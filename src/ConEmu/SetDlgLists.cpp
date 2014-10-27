@@ -208,7 +208,7 @@ void CSetDlgLists::FillListBoxItems(HWND hList, eFillListBoxItems eWhat, DWORD& 
 	uint nItems = GetListItems(eWhat, Items);
 
 	_ASSERTE(hList!=NULL);
-	uint num = 0;
+	int num = -1;
 	wchar_t szNumber[32];
 
 	SendMessage(hList, CB_RESETCONTENT, 0, 0);
@@ -220,16 +220,20 @@ void CSetDlgLists::FillListBoxItems(HWND hList, eFillListBoxItems eWhat, DWORD& 
 		if (Items[i].nValue == nValue) num = i; //-V108
 	}
 
-	if (abExact)
+	if ((num != -1) || !abExact)
 	{
-		_wsprintf(szNumber, SKIPLEN(countof(szNumber)) L"%i", nValue);
-		SelectStringExact(hList, 0, szNumber);
+		// если код не валиден
+		if (num == -1)
+		{
+			nValue = 0;
+			num = 0;
+		}
+		SendMessage(hList, CB_SETCURSEL, num, 0);
 	}
 	else
 	{
-		if (!num)
-			nValue = 0;  // если код неизвестен?
-		SendMessage(hList, CB_SETCURSEL, num, 0);
+		_wsprintf(szNumber, SKIPLEN(countof(szNumber)) L"%i", nValue);
+		SelectStringExact(hList, 0, szNumber);
 	}
 }
 
