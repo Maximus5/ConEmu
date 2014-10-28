@@ -13002,7 +13002,22 @@ LRESULT CConEmuMain::OnActivateByMouse(HWND hWnd, UINT messg, WPARAM wParam, LPA
 	this->mouse.nSkipEvents[0] = 0;
 	this->mouse.nSkipEvents[1] = 0;
 
+	bool bSkipActivation = false;
+
+	if (mp_TabBar && mp_TabBar->IsSearchShown(true))
+	{
+		RECT rcWork = CalcRect(CER_WORKSPACE);
+		POINT ptCur = {}; GetCursorPos(&ptCur);
+		MapWindowPoints(NULL, ghWnd, &ptCur, 1);
+		if (PtInRect(&rcWork, ptCur))
+		{
+			bSkipActivation = true;
+			mp_TabBar->ActivateSearchPane(false);
+		}
+	}
+
 	if (this->mouse.bForceSkipActivation  // принудительная активация окна, лежащего на Desktop
+		|| bSkipActivation
 		|| (gpSet->isMouseSkipActivation
 			&& (LOWORD(lParam) == HTCLIENT)
 			&& !isMeForeground(false,false))
