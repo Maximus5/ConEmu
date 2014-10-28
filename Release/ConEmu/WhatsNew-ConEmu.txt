@@ -12,6 +12,20 @@ Votes and awards (vote for ConEmu, if you please)
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+2014.10.28
+[*] Some listboxes in the Settings dialog was not filled properly. ‘EOL’ and ‘Back color’ were messed up.
+[*] Foreground color for selected text was ignored.
+[*] Show selection colors preview on the ‘Mark/Copy’ settings page.
+[*] Far's ‘User screen transparency’ was not working properly.
+[*] Selection status message was not dropped when ‘Find text’ dialog was closed.
+[*] Create search control in the Tab bar. It may be focused by old shortcut (‘Apps+F’ by default).
+    When search control is focused, one may open search menu by ‘Apps’ or RClick.
+    Control may be shown/hid with checkbox on the ‘Appearance’ settings page.
+[*] Issue 1777: Skip Far macro execution errors in some cases.
+[*] Internal fixes of wrong MF_SEPARATOR usage.
+[*] Force search scroll-buffer on search repeat (‘Freeze console’ must be on).
+
+
 2014.10.25
 [*] Issue 1321: Splitter calculation changed.
 [*] Try to move splitter with mouse dragging.
