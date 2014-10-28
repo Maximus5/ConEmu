@@ -1025,6 +1025,8 @@ struct Settings
 		bool mb_isMulti;
 		//reg->Load(L"Multi.ShowButtons", isMultiShowButtons);
 		bool isMultiShowButtons;
+		//reg->Load(L"Multi.ShowSearch", isMultiShowSearch);
+		bool isMultiShowSearch;
 		//reg->Load(L"NumberInCaption", isNumberInCaption);
 		bool isNumberInCaption;
 		private:

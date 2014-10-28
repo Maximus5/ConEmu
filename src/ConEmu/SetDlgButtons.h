@@ -88,7 +88,7 @@ protected:
 	static void OnBtn_SingleInstance(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_ShowHelpTooltips(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_MultiCon(HWND hDlg, WORD CB, BYTE uCheck);
-	static void OnBtn_MultiShowButtons(HWND hDlg, WORD CB, BYTE uCheck);
+	static void OnBtn_MultiShowPanes(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_MultiIterate(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_NewConfirm(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_DupConfirm(HWND hDlg, WORD CB, BYTE uCheck);

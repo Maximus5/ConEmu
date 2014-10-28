@@ -1838,6 +1838,7 @@ LRESULT CSettings::OnInitDialog_Show(HWND hWnd2, bool abInitial)
 
 	checkDlgButton(hWnd2, cbMultiCon, gpSet->mb_isMulti);
 	checkDlgButton(hWnd2, cbMultiShowButtons, gpSet->isMultiShowButtons);
+	checkDlgButton(hWnd2, cbMultiShowSearch, gpSet->isMultiShowSearch);
 
 	checkDlgButton(hWnd2, cbSingleInstance, IsSingleInstanceArg());
 	EnableDlgItem(hWnd2, cbSingleInstance, (gpSet->isQuakeStyle == 0));

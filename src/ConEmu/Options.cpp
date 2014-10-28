@@ -379,6 +379,7 @@ void Settings::InitSettings()
 	isShowHelpTooltips = true;
 	mb_isMulti = true;
 	isMultiShowButtons = true;
+	isMultiShowSearch = true;
 	isNumberInCaption = false;
 	//vmMultiNew = 'W' | (nMultiHotkeyModifier << 8);
 	//vmMultiNext = 'Q' | (nMultiHotkeyModifier << 8);
@@ -2480,6 +2481,7 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 		reg->Load(L"ShowHelpTooltips", isShowHelpTooltips);
 		reg->Load(L"Multi", mb_isMulti);
 		reg->Load(L"Multi.ShowButtons", isMultiShowButtons);
+		reg->Load(L"Multi.ShowSearch", isMultiShowSearch);
 		reg->Load(L"Multi.NumberInCaption", isNumberInCaption);
 		//LoadVkMod(reg, L"Multi.NewConsole", vmMultiNew, vmMultiNew);
 		//LoadVkMod(reg, L"Multi.NewConsoleShift", vmMultiNewShift, SetModifier(vmMultiNew,VK_SHIFT, true/*Xor*/));
@@ -3455,6 +3457,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		reg->Save(L"ShowHelpTooltips", isShowHelpTooltips);
 		reg->Save(L"Multi", mb_isMulti);
 		reg->Save(L"Multi.ShowButtons", isMultiShowButtons);
+		reg->Save(L"Multi.ShowSearch", isMultiShowSearch);
 		reg->Save(L"Multi.NumberInCaption", isNumberInCaption);
 		//reg->Save(L"Multi.NewConsole", vmMultiNew);
 		//reg->Save(L"Multi.NewConsoleShift", vmMultiNewShift);

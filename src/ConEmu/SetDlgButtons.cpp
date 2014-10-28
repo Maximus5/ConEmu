@@ -208,7 +208,8 @@ bool CSetDlgButtons::ProcessButtonClick(HWND hDlg, WORD CB, BYTE uCheck)
 			OnBtn_MultiCon(hDlg, CB, uCheck);
 			break;
 		case cbMultiShowButtons:
-			OnBtn_MultiShowButtons(hDlg, CB, uCheck);
+		case cbMultiShowSearch:
+			OnBtn_MultiShowPanes(hDlg, CB, uCheck);
 			break;
 		case cbMultiIterate:
 			OnBtn_MultiIterate(hDlg, CB, uCheck);
@@ -1658,15 +1659,21 @@ void CSetDlgButtons::OnBtn_MultiCon(HWND hDlg, WORD CB, BYTE uCheck)
 } // cbMultiCon
 
 
-// cbMultiShowButtons
-void CSetDlgButtons::OnBtn_MultiShowButtons(HWND hDlg, WORD CB, BYTE uCheck)
+// cbMultiShowButtons, cbMultiShowSearch
+void CSetDlgButtons::OnBtn_MultiShowPanes(HWND hDlg, WORD CB, BYTE uCheck)
 {
-	_ASSERTE(CB==cbMultiShowButtons);
+	_ASSERTE(CB==cbMultiShowButtons || CB==cbMultiShowSearch);
 
-	gpSet->isMultiShowButtons = uCheck;
+	switch (CB)
+	{
+	case cbMultiShowButtons:
+		gpSet->isMultiShowButtons = uCheck; break;
+	case cbMultiShowSearch:
+		gpSet->isMultiShowSearch = uCheck; break;
+	}
 	gpConEmu->mp_TabBar->OnShowButtonsChanged();
 
-} // cbMultiShowButtons
+} // cbMultiShowButtons, cbMultiShowSearch
 
 
 // cbMultiIterate

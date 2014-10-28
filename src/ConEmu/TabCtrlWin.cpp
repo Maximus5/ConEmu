@@ -52,8 +52,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/MMap.h"
 #include "../common/WUser.h"
 
-#define isFindPane true
-
 //WNDPROC CTabPanelWin::_defaultTabProc = NULL;
 //WNDPROC CTabPanelWin::_defaultToolProc = NULL;
 //WNDPROC CTabPanelWin::_defaultReBarProc = NULL;
@@ -321,7 +319,7 @@ LRESULT CTabPanelWin::ToolProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 
 bool CTabPanelWin::IsSearchShownInt(bool bFilled)
 {
-	if (!mp_Find)
+	if (!mp_Find || !gpSet->isMultiShowSearch)
 		return false;
 	return mp_Find->IsAvailable(bFilled);
 }
@@ -400,7 +398,7 @@ void CTabPanelWin::CreateRebar()
 	if (gpSet->isMultiShowButtons)
 		ShowToolsPane(true);
 
-	if (isFindPane)
+	if (gpSet->isMultiShowSearch)
 		ShowSearchPane(true);
 
 	RepositionInt();
@@ -901,7 +899,7 @@ void CTabPanelWin::RepositionInt()
 			case rbi_FindBar:
 				if (mp_Find && ((Panes[i].hChild = mp_Find->GetHWND()) != NULL))
 				{
-					if (isFindPane)
+					if (gpSet->isMultiShowSearch)
 						Panes[i].iPaneMinWidth = mp_Find->GetMinWidth();
 				}
 				break;
@@ -1206,7 +1204,7 @@ void CTabPanelWin::ShowTabsPane(bool bShow)
 
 void CTabPanelWin::ShowSearchPane(bool bShow)
 {
-	if (bShow && isFindPane)
+	if (bShow && gpSet->isMultiShowSearch)
 	{
 		if (!IsSearchShownInt(false))
 		{

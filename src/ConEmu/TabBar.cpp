@@ -1321,6 +1321,7 @@ void CTabBarClass::OnAlternative(BOOL abAlternative)
 void CTabBarClass::OnShowButtonsChanged()
 {
 	mp_Rebar->ShowToolsPane(gpSet->isMultiShowButtons);
+	mp_Rebar->ShowSearchPane(gpSet->isMultiShowSearch);
 
 	Reposition();
 }

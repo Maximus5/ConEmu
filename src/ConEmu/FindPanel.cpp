@@ -35,6 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "FindPanel.h"
 #include "Menu.h"
 #include "Options.h"
+#include "OptionsClass.h"
 #include "SearchCtrl.h"
 #include "VConGroup.h"
 #include "../common/CmdArg.h"
@@ -60,6 +61,8 @@ CFindPanel::CFindPanel(CConEmuMain* apConEmu)
 
 CFindPanel::~CFindPanel()
 {
+	if (mh_Pane)
+		DestroyWindow(mh_Pane);
 	OnDestroy();
 	SafeDelete(ms_PrevSearch);
 }
@@ -228,7 +231,7 @@ bool CFindPanel::OnCreate(CREATESTRUCT* ps)
 	lf.lfCharSet = gpSet->nTabFontCharSet;
 	lf.lfPitchAndFamily = DEFAULT_PITCH | FF_SWISS;
 	wcscpy_c(lf.lfFaceName, gpSet->sTabFontFace);
-	lf.lfHeight = -max(6,ps->cy - 8);
+	lf.lfHeight = -max(6,ps->cy - gpSetCls->EvalSize(8, esf_Vertical|esf_CanUseDpi));
 	mh_Font = CreateFontIndirect(&lf);
 
 	SendMessage(mh_Edit, WM_SETFONT, (WPARAM)mh_Font, FALSE);
