@@ -64,11 +64,13 @@ public:
 	bool OnSetCursorRebar();
 
 public:
+	virtual HWND ActivateSearchPaneInt() = 0;
 	virtual void AddTabInt(LPCWSTR text, int i, bool bAdmin, int iTabIcon) = 0;
 	virtual void CreateRebar() = 0;
 	virtual void DestroyRebar() = 0;
 	virtual void DeleteItemInt(int I) = 0;
 	virtual bool IsCreated() = 0;
+	virtual bool IsSearchShownInt(bool bFilled) = 0;
 	virtual bool IsTabbarCreated() = 0;
 	virtual bool IsTabbarNotify(LPNMHDR nmhdr) = 0;
 	virtual bool IsToolbarCreated() = 0;

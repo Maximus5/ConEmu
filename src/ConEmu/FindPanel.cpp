@@ -33,9 +33,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Header.h"
 #include "ConEmu.h"
 #include "FindPanel.h"
+#include "Menu.h"
 #include "Options.h"
 #include "SearchCtrl.h"
 #include "VConGroup.h"
+#include "../common/CmdArg.h"
 #include "../common/MMap.h"
 
 ATOM CFindPanel::mh_Class = NULL;
@@ -49,14 +51,17 @@ CFindPanel::CFindPanel(CConEmuMain* apConEmu)
 	, mh_Pane(NULL)
 	, mh_Edit(NULL)
 	, mh_Font(NULL)
+	, mn_KeyDown(0)
 {
 	if (!g_FindMap.Initialized())
 		g_FindMap.Init(16);
+	ms_PrevSearch = new CmdArg();
 }
 
 CFindPanel::~CFindPanel()
 {
 	OnDestroy();
+	SafeDelete(ms_PrevSearch);
 }
 
 HWND CFindPanel::GetHWND()
@@ -73,8 +78,16 @@ int CFindPanel::GetMinWidth()
 	return max(80,6*(rcEdit.bottom - rcEdit.top));
 }
 
+void CFindPanel::ResetSearch()
+{
+	ms_PrevSearch->Empty();
+	mn_KeyDown = 0;
+}
+
 HWND CFindPanel::CreatePane(HWND hParent, int nHeight)
 {
+	ResetSearch();
+
 	if (mh_Pane && IsWindow(mh_Pane))
 		return mh_Pane;
 
@@ -174,44 +187,16 @@ LRESULT CFindPanel::EditCtrlProc(HWND hCtrl, UINT uMsg, WPARAM wParam, LPARAM lP
 	{
 	case WM_KEYDOWN:
 	case WM_KEYUP:
-		switch (LOWORD(wParam))
-		{
-		case VK_ESCAPE:
-		case VK_F10:
-			if (uMsg == WM_KEYUP)
-				pPanel->StopSearch();
-			goto wrap;
-		case VK_RETURN:
-		case VK_F3:
-			if (uMsg == WM_KEYDOWN)
-				gpConEmu->DoFindText(isPressed(VK_SHIFT) ? -1 : 1);
-			goto wrap;
-		}
-		break;
-
 	case WM_SYSKEYDOWN:
-		lRc = TRUE;
-		switch (LOWORD(wParam))
-		{
-		case 'W':
-			gpSet->FindOptions.bMatchWholeWords = !gpSet->FindOptions.bMatchWholeWords;
-			break;
-		case 'C':
-			gpSet->FindOptions.bMatchCase = !gpSet->FindOptions.bMatchCase;
-			break;
-		case 'F':
-			gpSet->FindOptions.bFreezeConsole = !gpSet->FindOptions.bFreezeConsole;
-			break;
-		case 'A':
-			gpSet->FindOptions.bHighlightAll = !gpSet->FindOptions.bHighlightAll;
-			break;
-		default:
-			goto wrap;
-		}
-		gpConEmu->DoFindText(isPressed(VK_SHIFT) ? -1 : 1);
-		goto wrap;
 	case WM_SYSKEYUP:
-		lRc = TRUE;
+	case WM_CHAR:
+		if (pPanel->OnKeyboard(uMsg, wParam, lParam, lRc))
+			goto wrap;
+		break;
+	case WM_RBUTTONDOWN:
+	case WM_RBUTTONUP:
+		if (uMsg == WM_RBUTTONUP)
+			pPanel->ShowMenu();
 		goto wrap;
 	}
 
@@ -227,12 +212,10 @@ bool CFindPanel::OnCreate(CREATESTRUCT* ps)
 {
 	mh_Edit = CreateWindowEx(WS_EX_CLIENTEDGE,
 		L"EDIT", L"",
-		WS_CHILD|WS_VISIBLE|WS_TABSTOP|ES_AUTOHSCROLL,
+		WS_CHILD|WS_VISIBLE|WS_TABSTOP|ES_AUTOHSCROLL|ES_WANTRETURN,
 		0,0,ps->cx,ps->cy, mh_Pane, (HMENU)1, NULL, NULL);
 	if (!mh_Edit)
 		return false;
-
-	mfn_EditProc = (WNDPROC)SetWindowLongPtr(mh_Edit, GWLP_WNDPROC, (LONG_PTR)EditCtrlProc);
 
 	g_FindMap.Set(mh_Pane, this);
 	g_FindMap.Set(mh_Edit, this);
@@ -249,6 +232,9 @@ bool CFindPanel::OnCreate(CREATESTRUCT* ps)
 	mh_Font = CreateFontIndirect(&lf);
 
 	SendMessage(mh_Edit, WM_SETFONT, (WPARAM)mh_Font, FALSE);
+
+	// -- // Ставим после EditIconHint_Set чтобы иметь приоритет обработки сообщений
+	mfn_EditProc = (WNDPROC)SetWindowLongPtr(mh_Edit, GWLP_WNDPROC, (LONG_PTR)EditCtrlProc);
 
 	EditIconHint_Set(mh_Pane, mh_Edit, true, SearchHint, false, UM_SEARCH, 0);
 
@@ -277,16 +263,170 @@ void CFindPanel::OnSearch()
 {
 	if (!CVConGroup::isVConExists(0))
 		return;
+
 	MyGetDlgItemText(mh_Edit, 0, gpSet->FindOptions.cchTextMax, gpSet->FindOptions.pszText);
 	if (gpSet->FindOptions.pszText && *gpSet->FindOptions.pszText)
-		gpConEmu->DoFindText(0);
+	{
+		int nDirection = 0;
+		if (ms_PrevSearch->ms_Arg && (lstrcmp(ms_PrevSearch->ms_Arg, gpSet->FindOptions.pszText) == 0))
+			nDirection = isPressed(VK_SHIFT) ? -1 : 1;
+		gpConEmu->DoFindText(nDirection);
+		ms_PrevSearch->Set(gpSet->FindOptions.pszText);
+	}
 }
 
 void CFindPanel::StopSearch()
 {
 	if (mh_Edit)
 		SetWindowText(mh_Edit, L"");
-	//gpSet->SaveFindOptions();
+	ms_PrevSearch->Empty();
+	gpSet->SaveFindOptions();
 	gpConEmu->setFocus();
 	gpConEmu->DoEndFindText();
+}
+
+void CFindPanel::ShowMenu()
+{
+	mn_KeyDown = 0;
+
+	enum MenuCommands
+	{
+		idFindNext = 1,
+		idFindPrev,
+		idMatchCase,
+		idMatchWhole,
+		idFreezeCon,
+		idHilightAll,
+	};
+
+	HMENU hPopup = CreatePopupMenu();
+	AppendMenu(hPopup, MF_STRING, idFindNext, L"Find next" L"\t" L"F3");
+	AppendMenu(hPopup, MF_STRING, idFindPrev, L"Find prev" L"\t" L"Shift+F3");
+	AppendMenu(hPopup, MF_SEPARATOR, 0, L"");
+	AppendMenu(hPopup, MF_STRING | (gpSet->FindOptions.bMatchCase?MF_CHECKED:0), idMatchCase, L"Match case" L"\t" L"Alt+C");
+	AppendMenu(hPopup, MF_STRING | (gpSet->FindOptions.bMatchWholeWords?MF_CHECKED:0), idMatchWhole, L"Match whole words" L"\t" L"Alt+W");
+	AppendMenu(hPopup, MF_STRING | (gpSet->FindOptions.bFreezeConsole?MF_CHECKED:0), idFreezeCon, L"Freeze console" L"\t" L"Alt+F");
+	#if 0
+	AppendMenu(hPopup, MF_STRING | (gpSet->FindOptions.bHighlightAll?MF_CHECKED:0), idHilightAll, L"Highlight all matches");
+	#endif
+
+	bool bTabsAtBottom = (gpSet->nTabsLocation == 1);
+	DWORD Align = TPM_LEFTALIGN | (bTabsAtBottom ? TPM_BOTTOMALIGN : TPM_TOPALIGN);
+	RECT rcEdit = {}; GetWindowRect(mh_Edit, &rcEdit);
+	POINT pt = {rcEdit.left, bTabsAtBottom ? rcEdit.top : rcEdit.bottom};
+
+	int nCmd = gpConEmu->mp_Menu->trackPopupMenu(tmp_SearchPopup, hPopup, Align|TPM_RETURNCMD,
+		pt.x, pt.y, ghWnd);
+
+	LRESULT lRc = 0;
+	switch (nCmd)
+	{
+	case idFindNext:
+		gpConEmu->DoFindText(1); break;
+	case idFindPrev:
+		gpConEmu->DoFindText(-1); break;
+	case idMatchCase:
+		OnKeyboard(WM_SYSKEYDOWN, 'C', 0, lRc); break;
+	case idMatchWhole:
+		OnKeyboard(WM_SYSKEYDOWN, 'W', 0, lRc); break;
+	case idFreezeCon:
+		OnKeyboard(WM_SYSKEYDOWN, 'F', 0, lRc); break;
+	case idHilightAll:
+		OnKeyboard(WM_SYSKEYDOWN, 'A', 0, lRc); break;
+	}
+
+	DestroyMenu(hPopup);
+}
+
+bool CFindPanel::OnKeyboard(UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT& lRc)
+{
+	bool bSkip = false;
+
+	switch (uMsg)
+	{
+	case WM_CHAR:
+		if (LOWORD(wParam) == VK_RETURN)
+			bSkip = true;
+		break;
+	case WM_SYSCHAR:
+		// Чтобы не пищало
+		lRc = bSkip = true;
+		break;
+	case WM_KEYDOWN:
+	case WM_KEYUP:
+		switch (LOWORD(wParam))
+		{
+		case VK_ESCAPE:
+		case VK_F10:
+			if (uMsg == WM_KEYDOWN)
+				mn_KeyDown = LOWORD(wParam);
+			else if (mn_KeyDown == LOWORD(wParam))
+				StopSearch();
+			bSkip = true;
+			break;
+
+		case VK_RETURN:
+		case VK_F3:
+			if (uMsg == WM_KEYDOWN)
+				gpConEmu->DoFindText(isPressed(VK_SHIFT) ? -1 : 1);
+			bSkip = true;
+			break;
+
+		case VK_APPS:
+			if (uMsg == WM_KEYDOWN)
+				mn_KeyDown = VK_APPS;
+			else if (mn_KeyDown == VK_APPS)
+				ShowMenu();
+			bSkip = true;
+			break;
+		}
+		break;
+
+	case WM_SYSKEYDOWN:
+		bSkip = true;
+		lRc = TRUE;
+		switch (LOWORD(wParam))
+		{
+		case 'C':
+			gpSet->FindOptions.bMatchCase = !gpSet->FindOptions.bMatchCase;
+			break;
+		case 'W':
+			gpSet->FindOptions.bMatchWholeWords = !gpSet->FindOptions.bMatchWholeWords;
+			break;
+		case 'F':
+			gpSet->FindOptions.bFreezeConsole = !gpSet->FindOptions.bFreezeConsole;
+			break;
+		case 'A':
+			gpSet->FindOptions.bHighlightAll = !gpSet->FindOptions.bHighlightAll;
+			break;
+		default:
+			goto wrap;
+		}
+		gpConEmu->DoFindText(isPressed(VK_SHIFT) ? -1 : 1);
+		break;
+	case WM_SYSKEYUP:
+		bSkip = true;
+		lRc = TRUE;
+		goto wrap;
+	}
+
+wrap:
+	return bSkip;
+}
+
+bool CFindPanel::IsAvailable(bool bFilled)
+{
+	if (!mh_Edit || !IsWindowVisible(mh_Edit) || !IsWindowEnabled(mh_Edit))
+		return false;
+	if (bFilled && (GetWindowTextLength(mh_Edit) <= 0))
+		return false;
+	return true;
+}
+
+HWND CFindPanel::Activate()
+{
+	if (!IsAvailable(false))
+		return NULL;
+	SetFocus(mh_Edit);
+	return mh_Edit;
 }

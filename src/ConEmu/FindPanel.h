@@ -32,6 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <windows.h>
 
 class CConEmuMain;
+struct CmdArg;
 
 class CFindPanel
 {
@@ -42,6 +43,8 @@ protected:
 	HFONT mh_Font;
 	static ATOM mh_Class;
 	WNDPROC mfn_EditProc;
+	UINT mn_KeyDown;
+	CmdArg* ms_PrevSearch;
 
 public:
 	CFindPanel(CConEmuMain* apConEmu);
@@ -50,6 +53,8 @@ public:
 	HWND CreatePane(HWND hParent, int nHeight);
 	HWND GetHWND();
 	int  GetMinWidth();
+	HWND Activate();
+	bool IsAvailable(bool bFilled);
 
 protected:
 	bool RegisterPaneClass();
@@ -59,5 +64,8 @@ protected:
 	void OnDestroy();
 	void OnSize();
 	void OnSearch();
+	bool OnKeyboard(UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT& lRc);
 	void StopSearch();
+	void ShowMenu();
+	void ResetSearch();
 };

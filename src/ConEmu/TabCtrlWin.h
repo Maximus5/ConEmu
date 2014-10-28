@@ -49,11 +49,13 @@ public:
 	virtual ~CTabPanelWin();
 
 public:
+	virtual HWND ActivateSearchPaneInt() override;
 	virtual void AddTabInt(LPCWSTR text, int i, bool bAdmin, int iTabIcon) override;
 	virtual void CreateRebar() override;
 	virtual void DestroyRebar() override;
 	virtual void DeleteItemInt(int I) override;
 	virtual bool IsCreated() override;
+	virtual bool IsSearchShownInt(bool bFilled) override;
 	virtual bool IsTabbarCreated() override;
 	virtual bool IsTabbarNotify(LPNMHDR nmhdr) override;
 	virtual bool IsToolbarCreated() override;

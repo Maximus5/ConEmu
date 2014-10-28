@@ -41,6 +41,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Options.h"
 #include "OptionsClass.h"
 #include "RealConsole.h"
+#include "TabBar.h"
 #include "VConChild.h"
 #include "VConGroup.h"
 #include "VirtualConsole.h"
@@ -69,6 +70,12 @@ void CEFindDlg::FindTextDialog()
 	if (!pRCon || (pRCon->GuiWnd() && !pRCon->isBufferHeight()) || !pRCon->GetView())
 	{
 		//DisplayLastError(L"No RealConsole, nothing to find");
+		return;
+	}
+
+	if (gpConEmu->mp_TabBar && gpConEmu->mp_TabBar->ActivateSearchPane())
+	{
+		// Контрол поиска встроен и показан в панели инструментов
 		return;
 	}
 

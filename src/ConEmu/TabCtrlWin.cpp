@@ -319,6 +319,20 @@ LRESULT CTabPanelWin::ToolProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 
 /* !!!Virtual!!! */
 
+bool CTabPanelWin::IsSearchShownInt(bool bFilled)
+{
+	if (!mp_Find)
+		return false;
+	return mp_Find->IsAvailable(bFilled);
+}
+
+HWND CTabPanelWin::ActivateSearchPaneInt()
+{
+	if (!IsSearchShownInt(false))
+		return NULL;
+	return mp_Find->Activate();
+}
+
 void CTabPanelWin::CreateRebar()
 {
 	RECT rcWnd = {-32000, -32000, -32000+300, -32000+100};

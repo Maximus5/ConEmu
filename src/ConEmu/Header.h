@@ -459,6 +459,7 @@ enum TrackMenuPlace
 	tmp_PasteCmdLine,
 	tmp_StatusBarCols,
 	tmp_ChildSysMenu,
+	tmp_SearchPopup,
 };
 
 enum ConEmuWindowMode

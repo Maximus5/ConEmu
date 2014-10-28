@@ -7842,6 +7842,14 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		}
 	}
 
+	if (lbSetFocus && !hNewFocus && pVCon && mp_TabBar)
+	{
+		if (mp_TabBar->IsSearchShown(true))
+		{
+			hNewFocus = mp_TabBar->ActivateSearchPane();
+		}
+	}
+
 	if (!lbSetFocus && !hNewFocus && (isPressed(VK_LBUTTON) || isPressed(VK_RBUTTON)))
 	{
 		// Клик по таскбару, или еще кому...
