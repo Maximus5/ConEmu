@@ -3733,6 +3733,10 @@ void CRealBuffer::MarkFindText(int nDirection, LPCWSTR asText, bool abCaseSensit
 			}
 			nStepMax = ((m_Type == rbt_Primary) || (nDirection >= 0)) ? 1 : 2;
 		}
+		else if ((m_Type == rbt_Find) && (nDirection != 0))
+		{
+			nStepMax = (nDirection >= 0) ? 1 : 2;
+		}
 
 		for (int i = 0; i <= nStepMax; i++)
 		{
