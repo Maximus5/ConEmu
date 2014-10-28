@@ -73,7 +73,7 @@ void CEFindDlg::FindTextDialog()
 		return;
 	}
 
-	if (gpConEmu->mp_TabBar && gpConEmu->mp_TabBar->ActivateSearchPane())
+	if (gpConEmu->mp_TabBar && gpConEmu->mp_TabBar->ActivateSearchPane(true))
 	{
 		// Контрол поиска встроен и показан в панели инструментов
 		return;

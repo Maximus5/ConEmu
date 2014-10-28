@@ -7846,7 +7846,7 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	{
 		if (mp_TabBar->IsSearchShown(true))
 		{
-			hNewFocus = mp_TabBar->ActivateSearchPane();
+			hNewFocus = mp_TabBar->ActivateSearchPane(true);
 		}
 	}
 

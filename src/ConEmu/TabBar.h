@@ -152,7 +152,7 @@ class CTabBarClass
 		virtual ~CTabBarClass();
 
 		void Activate(BOOL abPreSyncConsole=FALSE);
-		HWND ActivateSearchPane();
+		HWND ActivateSearchPane(bool bActivate);
 		int  ActiveTabByName(int anType, LPCWSTR asName, CVirtualConsole** ppVCon);
 		int  ActivateTabByPoint(LPPOINT pptCur, bool bScreen = true, bool bOverTabHitTest = true);
 		void CheckRebarCreated();

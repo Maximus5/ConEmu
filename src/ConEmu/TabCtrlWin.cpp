@@ -326,14 +326,14 @@ bool CTabPanelWin::IsSearchShownInt(bool bFilled)
 	return mp_Find->IsAvailable(bFilled);
 }
 
-HWND CTabPanelWin::ActivateSearchPaneInt()
+HWND CTabPanelWin::ActivateSearchPaneInt(bool bActivate)
 {
 	if (!IsSearchShownInt(false))
 		return NULL;
-	return mp_Find->Activate();
+	return mp_Find->Activate(bActivate);
 }
 
-void CTabPanelWin::CreateRebar()
+RECT CTabPanelWin::GetRect()
 {
 	RECT rcWnd = {-32000, -32000, -32000+300, -32000+100};
 	if (ghWnd)
@@ -344,6 +344,12 @@ void CTabPanelWin::CreateRebar()
 	{
 		_ASSERTE(ghWnd!=NULL); // вроде ReBar для теста не создается.
 	}
+	return rcWnd;
+}
+
+void CTabPanelWin::CreateRebar()
+{
+	RECT rcWnd = GetRect();
 
 	gpSetCls->CheckTheming();
 
@@ -375,7 +381,6 @@ void CTabPanelWin::CreateRebar()
 
 
 	REBARINFO     rbi = {sizeof(REBARINFO)};
-	REBARBANDINFO rbBand = {REBARBANDINFO_SIZE}; // не используем size, т.к. приходит "новый" размер из висты и в XP обламываемся
 
 	if (!SendMessage(mh_Rebar, RB_SETBARINFO, 0, (LPARAM)&rbi))
 	{
@@ -385,81 +390,20 @@ void CTabPanelWin::CreateRebar()
 		return;
 	}
 
-	rbBand.fMask  = RBBIM_SIZE | RBBIM_CHILD | RBBIM_CHILDSIZE | RBBIM_ID | RBBIM_STYLE | RBBIM_COLORS;
-	rbBand.fStyle = RBBS_CHILDEDGE | RBBS_FIXEDSIZE | RBBS_VARIABLEHEIGHT;
-	rbBand.clrBack = GetSysColor(COLOR_BTNFACE);
-	rbBand.clrFore = GetSysColor(COLOR_BTNTEXT);
-	SendMessage(mh_Rebar, RB_SETBKCOLOR, 0, rbBand.clrBack);
+	COLORREF clrBack = GetSysColor(COLOR_BTNFACE);
+	SendMessage(mh_Rebar, RB_SETBKCOLOR, 0, clrBack);
 	SendMessage(mh_Rebar, RB_SETWINDOWTHEME, 0, (LPARAM)L" ");
-	CreateTabbar();
-	CreateToolbar();
 
-	SIZE sz = {0,0};
+	// Пока табы есть всегда
+	ShowTabsPane(true);
 
-	if (mh_Toolbar)
-	{
-		SendMessage(mh_Toolbar, TB_GETMAXSIZE, 0, (LPARAM)&sz);
-	}
-	else
-	{
-		RECT rcClient = gpConEmu->GetGuiClientRect();
-		TabCtrl_AdjustRect(mh_Tabbar, FALSE, &rcClient);
-		sz.cy = rcClient.top - 3 - mn_ThemeHeightDiff;
-	}
+	if (gpSet->isMultiShowButtons)
+		ShowToolsPane(true);
 
-	HWND hFindPane = NULL;
 	if (isFindPane)
-	{
-		if (!mp_Find)
-			mp_Find = new CFindPanel(gpConEmu);
-		hFindPane = mp_Find->CreatePane(mh_Rebar, sz.cy);
-	}
+		ShowSearchPane(true);
 
-	int iFindPanelWidth = hFindPane ? mp_Find->GetMinWidth() : 0;
-
-	if (mh_Tabbar)
-	{
-		// Set values unique to the band with the toolbar.
-		rbBand.wID        = rbi_TabBar;
-		rbBand.hwndChild  = mh_Tabbar;
-		rbBand.cxMinChild = 100;
-		rbBand.cx = rbBand.cxIdeal = rcWnd.right - sz.cx - 80 - iFindPanelWidth;
-		rbBand.cyChild = rbBand.cyMinChild = rbBand.cyMaxChild = mn_TabHeight; // sz.cy;
-
-		if (!SendMessage(mh_Rebar, RB_INSERTBAND, (WPARAM)-1, (LPARAM)&rbBand))
-		{
-			DisplayLastError(_T("Can't initialize rebar (tabbar)"));
-		}
-	}
-
-	if (mh_Toolbar)
-	{
-		// Set values unique to the band with the toolbar.
-		rbBand.wID        = rbi_ToolBar;
-		rbBand.hwndChild  = mh_Toolbar;
-		rbBand.cx = rbBand.cxMinChild = rbBand.cxIdeal = mn_LastToolbarWidth = sz.cx;
-		rbBand.cyChild = rbBand.cyMinChild = rbBand.cyMaxChild = sz.cy + mn_ThemeHeightDiff;
-
-		// Add the band that has the toolbar.
-		if (!SendMessage(mh_Rebar, RB_INSERTBAND, (WPARAM)-1, (LPARAM)&rbBand))
-		{
-			DisplayLastError(_T("Can't initialize rebar (toolbar)"));
-		}
-	}
-
-	if (hFindPane)
-	{
-		rbBand.wID        = rbi_FindBar;
-		rbBand.hwndChild  = hFindPane;
-		rbBand.cx = rbBand.cxMinChild = rbBand.cxIdeal = iFindPanelWidth;
-		rbBand.cyChild = rbBand.cyMinChild = rbBand.cyMaxChild = sz.cy + mn_ThemeHeightDiff;
-
-		// Add the band that has the toolbar.
-		if (!SendMessage(mh_Rebar, RB_INSERTBAND, (WPARAM)-1, (LPARAM)&rbBand))
-		{
-			DisplayLastError(_T("Can't initialize rebar (find pane)"));
-		}
-	}
+	RepositionInt();
 
 	#ifdef _DEBUG
 	RECT rc;
@@ -469,6 +413,7 @@ void CTabPanelWin::CreateRebar()
 
 void CTabPanelWin::DestroyRebar()
 {
+	SafeDelete(mp_Find);
 	HWND* pWnd[] = {&mh_Toolbar, &mh_Tabbar, &mh_Rebar};
 	for (INT_PTR i = 0; i < countof(pWnd); i++)
 	{
@@ -1221,7 +1166,110 @@ void CTabPanelWin::OnConsoleActivatedInt(int nConNumber)
 	}
 }
 
-void CTabPanelWin::ShowToolbar(bool bShow)
+void CTabPanelWin::ShowTabsPane(bool bShow)
+{
+	if (bShow)
+	{
+		if (CreateTabbar())
+		{
+			RECT rcWnd = GetRect();
+
+			REBARBANDINFO rbBand = {REBARBANDINFO_SIZE}; // не используем size, т.к. приходит "новый" размер из висты и в XP обламываемся
+
+			rbBand.fMask  = RBBIM_SIZE | RBBIM_CHILD | RBBIM_CHILDSIZE | RBBIM_ID | RBBIM_STYLE;
+			rbBand.fStyle = RBBS_CHILDEDGE | RBBS_FIXEDSIZE | RBBS_VARIABLEHEIGHT;
+
+			#if 0
+			rbBand.fMask |= RBBIM_COLORS;
+			rbBand.clrFore = RGB(255,255,255);
+			rbBand.clrBack = RGB(0,0,0);
+			#endif
+
+			rbBand.wID        = rbi_TabBar;
+			rbBand.hwndChild  = mh_Tabbar;
+			rbBand.cxMinChild = 100;
+			rbBand.cx = /*rbBand.cxIdeal =*/ rcWnd.right - 20; // - sz.cx - 80 - iFindPanelWidth;
+			rbBand.cyChild = rbBand.cyMinChild = rbBand.cyMaxChild = mn_TabHeight; // sz.cy;
+
+			// Tabs are always on the first place
+			if (!SendMessage(mh_Rebar, RB_INSERTBAND, (WPARAM)0, (LPARAM)&rbBand))
+			{
+				DisplayLastError(_T("Can't initialize rebar (tabbar)"));
+			}
+		}
+	}
+	else
+	{
+		_ASSERTE(FALSE && "Deletion is not supported yet");
+	}
+}
+
+void CTabPanelWin::ShowSearchPane(bool bShow)
+{
+	if (bShow && isFindPane)
+	{
+		if (!IsSearchShownInt(false))
+		{
+			REBARBANDINFO rbBand = {REBARBANDINFO_SIZE}; // не используем size, т.к. приходит "новый" размер из висты и в XP обламываемся
+
+			HWND hFindPane = NULL;
+			if (!mp_Find)
+				mp_Find = new CFindPanel(gpConEmu);
+
+			int iPaneHeight;
+			SIZE sz = {0,0};
+			if (mh_Toolbar)
+			{
+				SendMessage(mh_Toolbar, TB_GETMAXSIZE, 0, (LPARAM)&sz);
+				iPaneHeight = sz.cy;
+			}
+			else
+			{
+				iPaneHeight = QueryTabbarHeight() - 4;
+			}
+
+			hFindPane = mp_Find->CreatePane(mh_Rebar, iPaneHeight);
+
+			if (hFindPane)
+			{
+				rbBand.fMask  = RBBIM_SIZE | RBBIM_CHILD | RBBIM_CHILDSIZE | RBBIM_ID | RBBIM_STYLE;
+				rbBand.fStyle = RBBS_CHILDEDGE | RBBS_FIXEDSIZE | RBBS_VARIABLEHEIGHT;
+
+				#if 0
+				rbBand.fMask |= RBBIM_COLORS;
+				rbBand.clrFore = RGB(255,255,255);
+				rbBand.clrBack = RGB(0,255,0);
+				#endif
+
+				rbBand.wID        = rbi_FindBar;
+				rbBand.hwndChild  = hFindPane;
+				rbBand.cx = rbBand.cxMinChild = rbBand.cxIdeal = mp_Find->GetMinWidth();
+				rbBand.cyChild = rbBand.cyMinChild = rbBand.cyMaxChild = iPaneHeight + mn_ThemeHeightDiff;
+			}
+
+			// Insert before toolbar
+			INT_PTR nPaneIndex = SendMessage(mh_Rebar, RB_IDTOINDEX, rbi_ToolBar, 0);
+			if (nPaneIndex < 0) nPaneIndex = -1;
+
+			if (!hFindPane || !SendMessage(mh_Rebar, RB_INSERTBAND, nPaneIndex, (LPARAM)&rbBand))
+			{
+				DisplayLastError(_T("Can't initialize rebar (searchbar)"));
+			}
+		}
+	}
+	else
+	{
+		_ASSERTEX(!bShow);
+		INT_PTR nPaneIndex = SendMessage(mh_Rebar, RB_IDTOINDEX, rbi_FindBar, 0);
+		if (nPaneIndex >= 0)
+		{
+			SendMessage(mh_Rebar, RB_DELETEBAND, nPaneIndex, 0);
+			SafeDelete(mp_Find);
+		}
+	}
+}
+
+void CTabPanelWin::ShowToolsPane(bool bShow)
 {
 	if (bShow)
 	{
@@ -1229,19 +1277,23 @@ void CTabPanelWin::ShowToolbar(bool bShow)
 		{
 			REBARBANDINFO rbBand = {REBARBANDINFO_SIZE}; // не используем size, т.к. приходит "новый" размер из висты и в XP обламываемся
 
-			rbBand.fMask  = RBBIM_SIZE | RBBIM_CHILD | RBBIM_CHILDSIZE | RBBIM_ID | RBBIM_STYLE /*| RBBIM_COLORS*/;
+			rbBand.fMask  = RBBIM_SIZE | RBBIM_CHILD | RBBIM_CHILDSIZE | RBBIM_ID | RBBIM_STYLE;
 			rbBand.fStyle = RBBS_CHILDEDGE | RBBS_FIXEDSIZE | RBBS_VARIABLEHEIGHT;
+
+			#if 0
+			rbBand.fMask |= RBBIM_COLORS;
+			rbBand.clrFore = RGB(255,255,255);
+			rbBand.clrBack = RGB(0,0,255);
+			#endif
 
 			SIZE sz = {0,0};
 			SendMessage(mh_Toolbar, TB_GETMAXSIZE, 0, (LPARAM)&sz);
 
-			// Set values unique to the band with the toolbar.
 			rbBand.wID        = rbi_ToolBar;
 			rbBand.hwndChild  = mh_Toolbar;
 			rbBand.cx = rbBand.cxMinChild = rbBand.cxIdeal = mn_LastToolbarWidth = sz.cx;
 			rbBand.cyChild = rbBand.cyMinChild = rbBand.cyMaxChild = sz.cy + mn_ThemeHeightDiff;
 
-			// Add the band that has the toolbar.
 			if (!SendMessage(mh_Rebar, RB_INSERTBAND, (WPARAM)-1, (LPARAM)&rbBand))
 			{
 				DisplayLastError(_T("Can't initialize rebar (toolbar)"));
@@ -1250,7 +1302,14 @@ void CTabPanelWin::ShowToolbar(bool bShow)
 	}
 	else
 	{
-		_ASSERTEX(bShow);
+		_ASSERTEX(!bShow);
+		INT_PTR nPaneIndex = SendMessage(mh_Rebar, RB_IDTOINDEX, rbi_ToolBar, 0);
+		if (nPaneIndex >= 0)
+		{
+			SendMessage(mh_Rebar, RB_DELETEBAND, nPaneIndex, 0);
+			DestroyWindow(mh_Toolbar);
+			mh_Toolbar = NULL;
+		}
 	}
 }
 

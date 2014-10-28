@@ -475,11 +475,11 @@ void CTabBarClass::Activate(BOOL abPreSyncConsole/*=FALSE*/)
 	UpdatePosition();
 }
 
-HWND CTabBarClass::ActivateSearchPane()
+HWND CTabBarClass::ActivateSearchPane(bool bActivate)
 {
 	if (!IsSearchShown(false))
 		return NULL;
-	return mp_Rebar->ActivateSearchPaneInt();
+	return mp_Rebar->ActivateSearchPaneInt(bActivate);
 }
 
 void CTabBarClass::Recreate()
@@ -1320,10 +1320,7 @@ void CTabBarClass::OnAlternative(BOOL abAlternative)
 
 void CTabBarClass::OnShowButtonsChanged()
 {
-	if (gpSet->isMultiShowButtons)
-	{
-		mp_Rebar->ShowToolbar(true);
-	}
+	mp_Rebar->ShowToolsPane(gpSet->isMultiShowButtons);
 
 	Reposition();
 }

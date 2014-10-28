@@ -53,7 +53,7 @@ public:
 	HWND CreatePane(HWND hParent, int nHeight);
 	HWND GetHWND();
 	int  GetMinWidth();
-	HWND Activate();
+	HWND Activate(bool bActivate);
 	bool IsAvailable(bool bFilled);
 
 protected:

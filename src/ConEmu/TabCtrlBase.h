@@ -64,7 +64,7 @@ public:
 	bool OnSetCursorRebar();
 
 public:
-	virtual HWND ActivateSearchPaneInt() = 0;
+	virtual HWND ActivateSearchPaneInt(bool bActivate) = 0;
 	virtual void AddTabInt(LPCWSTR text, int i, bool bAdmin, int iTabIcon) = 0;
 	virtual void CreateRebar() = 0;
 	virtual void DestroyRebar() = 0;
@@ -97,7 +97,9 @@ public:
 	virtual void SetTabbarFont(HFONT hFont) = 0;
 	virtual void SetToolBtnChecked(ToolbarCommandIdx iCmd, bool bChecked) = 0;
 	virtual void ShowBar(bool bShow) = 0;
-	virtual void ShowToolbar(bool bShow) = 0;
+	virtual void ShowSearchPane(bool bShow) = 0;
+	virtual void ShowTabsPane(bool bShow) = 0;
+	virtual void ShowToolsPane(bool bShow) = 0;
 
 public:
 	//int  GetTabIcon(bool bAdmin);

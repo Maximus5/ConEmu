@@ -423,10 +423,17 @@ bool CFindPanel::IsAvailable(bool bFilled)
 	return true;
 }
 
-HWND CFindPanel::Activate()
+HWND CFindPanel::Activate(bool bActivate)
 {
-	if (!IsAvailable(false))
-		return NULL;
-	SetFocus(mh_Edit);
+	if (bActivate)
+	{
+		if (!IsAvailable(false))
+			return NULL;
+		SetFocus(mh_Edit);
+	}
+	else
+	{
+		StopSearch();
+	}
 	return mh_Edit;
 }
