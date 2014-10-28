@@ -384,7 +384,7 @@ DWORD CPluginBase::BackgroundMacroError(LPVOID lpParameter)
 	return 0;
 }
 
-void CPluginBase::PostMacro(const wchar_t* asMacro, INPUT_RECORD* apRec)
+void CPluginBase::PostMacro(const wchar_t* asMacro, INPUT_RECORD* apRec, bool abShowParseErrors)
 {
 	if (!asMacro || !*asMacro)
 		return;
@@ -402,7 +402,7 @@ void CPluginBase::PostMacro(const wchar_t* asMacro, INPUT_RECORD* apRec)
 		mre = gLastMouseReadEvent;
 	}
 
-	PostMacroApi(asMacro, apRec);
+	PostMacroApi(asMacro, apRec, abShowParseErrors);
 
 	//FAR BUGBUG: Макрос не запускается на исполнение, пока мышкой не дернем :(
 	//  Это чаще всего проявляется при вызове меню по RClick
@@ -673,7 +673,8 @@ void CPluginBase::UpdatePanelDirs()
 
 		if (szMacro[0])
 		{
-			PostMacro(szMacro, NULL);
+			// Issue 1777: Хоть глюки фара и нужно лечить в фаре, но пока ошибки просто пропустим
+			PostMacro(szMacro, NULL, false);
 			return; // Async
 		}
 	}

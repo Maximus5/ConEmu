@@ -428,7 +428,7 @@ void CPluginAnsi::SetWindow(int nTab)
 }
 
 // Warning, напрямую НЕ вызывать. Пользоваться "общей" PostMacro
-void CPluginAnsi::PostMacroApi(const wchar_t* asMacro, INPUT_RECORD* apRec)
+void CPluginAnsi::PostMacroApi(const wchar_t* asMacro, INPUT_RECORD* apRec, bool abShowParseErrors)
 {
 	if (!InfoA || !InfoA->AdvControl) return;
 

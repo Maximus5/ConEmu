@@ -112,7 +112,7 @@ public:
 	virtual ~CPluginBase();
 
 	int ShowMessageGui(int aiMsg, int aiButtons);
-	void PostMacro(const wchar_t* asMacro, INPUT_RECORD* apRec);
+	void PostMacro(const wchar_t* asMacro, INPUT_RECORD* apRec, bool abShowParseErrors = true);
 	bool isMacroActive(int& iMacroActive);
 	void UpdatePanelDirs();
 	bool StorePanelDirs(LPCWSTR asActive, LPCWSTR asPassive);
@@ -247,7 +247,7 @@ public:
 	virtual HANDLE  Open(const void* apInfo) = 0;
 	virtual bool    OpenEditor(LPCWSTR asFileName, bool abView, bool abDeleteTempFile, bool abDetectCP = false, int anStartLine = 0, int anStartChar = 1) = 0;
 	virtual INT_PTR PanelControlApi(HANDLE hPanel, int Command, INT_PTR Param1, void* Param2) = 0;
-	virtual void    PostMacroApi(const wchar_t* asMacro, INPUT_RECORD* apRec) = 0;
+	virtual void    PostMacroApi(const wchar_t* asMacro, INPUT_RECORD* apRec, bool abShowParseErrors) = 0;
 	virtual int     ProcessEditorEventPtr(void* p) = 0;
 	virtual int     ProcessEditorInputPtr(LPCVOID Rec) = 0;
 	virtual int     ProcessSynchroEventPtr(void* p) = 0;

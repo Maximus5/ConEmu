@@ -530,7 +530,7 @@ void CPluginW995::SetWindow(int nTab)
 }
 
 // Warning, напрямую НЕ вызывать. Пользоваться "общей" PostMacro
-void CPluginW995::PostMacroApi(const wchar_t* asMacro, INPUT_RECORD* apRec)
+void CPluginW995::PostMacroApi(const wchar_t* asMacro, INPUT_RECORD* apRec, bool abShowParseErrors)
 {
 	if (!InfoW995 || !InfoW995->AdvControl)
 		return;

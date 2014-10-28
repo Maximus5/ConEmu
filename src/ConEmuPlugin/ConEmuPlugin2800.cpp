@@ -774,7 +774,7 @@ void CPluginW2800::SetWindow(int nTab)
 }
 
 // Warning, напрямую НЕ вызывать. Пользоваться "общей" PostMacro
-void CPluginW2800::PostMacroApi(const wchar_t* asMacro, INPUT_RECORD* apRec)
+void CPluginW2800::PostMacroApi(const wchar_t* asMacro, INPUT_RECORD* apRec, bool abShowParseErrors)
 {
 	if (!InfoW2800 || !InfoW2800->AdvControl)
 		return;
@@ -814,50 +814,53 @@ void CPluginW2800::PostMacroApi(const wchar_t* asMacro, INPUT_RECORD* apRec)
 
 	if (!InfoW2800->MacroControl(&guid_ConEmu, MCTL_SENDSTRING, MSSC_CHECK, &mcr))
 	{
-		wchar_t* pszErrText = NULL;
-		size_t iRcSize = InfoW2800->MacroControl(&guid_ConEmu, MCTL_GETLASTERROR, 0, NULL);
-		MacroParseResult* Result = iRcSize ? (MacroParseResult*)calloc(iRcSize,1) : NULL;
-		if (Result)
+		if (abShowParseErrors)
 		{
-			Result->StructSize = sizeof(*Result);
-			_ASSERTE(FALSE && "Check MCTL_GETLASTERROR");
-			InfoW2800->MacroControl(&guid_ConEmu, MCTL_GETLASTERROR, iRcSize, Result);
+			wchar_t* pszErrText = NULL;
+			size_t iRcSize = InfoW2800->MacroControl(&guid_ConEmu, MCTL_GETLASTERROR, 0, NULL);
+			MacroParseResult* Result = iRcSize ? (MacroParseResult*)calloc(iRcSize,1) : NULL;
+			if (Result)
+			{
+				Result->StructSize = sizeof(*Result);
+				_ASSERTE(FALSE && "Check MCTL_GETLASTERROR");
+				InfoW2800->MacroControl(&guid_ConEmu, MCTL_GETLASTERROR, iRcSize, Result);
 
-			size_t cchMax = (Result->ErrSrc ? lstrlen(Result->ErrSrc) : 0) + lstrlen(asMacro) + 255;
-			pszErrText = (wchar_t*)malloc(cchMax*sizeof(wchar_t));
-			_wsprintf(pszErrText, SKIPLEN(cchMax)
-				L"Error in Macro. Far %u.%u build %u r%u\n"
-				L"ConEmu plugin %02u%02u%02u%s[%u] {2800}\n"
-				L"Code: %u, Line: %u, Col: %u%s%s\n"
-				L"----------------------------------\n"
-				L"%s",
-				gFarVersion.dwVerMajor, gFarVersion.dwVerMinor, gFarVersion.dwBuild, gFarVersion.Bis ? 1 : 0,
-				MVV_1, MVV_2, MVV_3, _CRT_WIDE(MVV_4a), WIN3264TEST(32,64),
-				Result->ErrCode, (UINT)(int)Result->ErrPos.Y+1, (UINT)(int)Result->ErrPos.X+1,
-				Result->ErrSrc ? L", Hint: " : L"", Result->ErrSrc ? Result->ErrSrc : L"",
-				asMacro);
+				size_t cchMax = (Result->ErrSrc ? lstrlen(Result->ErrSrc) : 0) + lstrlen(asMacro) + 255;
+				pszErrText = (wchar_t*)malloc(cchMax*sizeof(wchar_t));
+				_wsprintf(pszErrText, SKIPLEN(cchMax)
+					L"Error in Macro. Far %u.%u build %u r%u\n"
+					L"ConEmu plugin %02u%02u%02u%s[%u] {2800}\n"
+					L"Code: %u, Line: %u, Col: %u%s%s\n"
+					L"----------------------------------\n"
+					L"%s",
+					gFarVersion.dwVerMajor, gFarVersion.dwVerMinor, gFarVersion.dwBuild, gFarVersion.Bis ? 1 : 0,
+					MVV_1, MVV_2, MVV_3, _CRT_WIDE(MVV_4a), WIN3264TEST(32,64),
+					Result->ErrCode, (UINT)(int)Result->ErrPos.Y+1, (UINT)(int)Result->ErrPos.X+1,
+					Result->ErrSrc ? L", Hint: " : L"", Result->ErrSrc ? Result->ErrSrc : L"",
+					asMacro);
 
-			SafeFree(Result);
-		}
-		else
-		{
-			size_t cchMax = lstrlen(asMacro) + 255;
-			pszErrText = (wchar_t*)malloc(cchMax*sizeof(wchar_t));
-			_wsprintf(pszErrText, SKIPLEN(cchMax)
-				L"Error in Macro. Far %u.%u build %u r%u\n"
-				L"ConEmu plugin %02u%02u%02u%s[%u] {2800}\n"
-				L"----------------------------------\n"
-				L"%s",
-				gFarVersion.dwVerMajor, gFarVersion.dwVerMinor, gFarVersion.dwBuild, gFarVersion.Bis ? 1 : 0,
-				MVV_1, MVV_2, MVV_3, _CRT_WIDE(MVV_4a), WIN3264TEST(32,64),
-				asMacro);
-		}
+				SafeFree(Result);
+			}
+			else
+			{
+				size_t cchMax = lstrlen(asMacro) + 255;
+				pszErrText = (wchar_t*)malloc(cchMax*sizeof(wchar_t));
+				_wsprintf(pszErrText, SKIPLEN(cchMax)
+					L"Error in Macro. Far %u.%u build %u r%u\n"
+					L"ConEmu plugin %02u%02u%02u%s[%u] {2800}\n"
+					L"----------------------------------\n"
+					L"%s",
+					gFarVersion.dwVerMajor, gFarVersion.dwVerMinor, gFarVersion.dwBuild, gFarVersion.Bis ? 1 : 0,
+					MVV_1, MVV_2, MVV_3, _CRT_WIDE(MVV_4a), WIN3264TEST(32,64),
+					asMacro);
+			}
 
-		if (pszErrText)
-		{
-			DWORD nTID;
-			HANDLE h = CreateThread(NULL, 0, BackgroundMacroError, pszErrText, 0, &nTID);
-			SafeCloseHandle(h);
+			if (pszErrText)
+			{
+				DWORD nTID;
+				HANDLE h = CreateThread(NULL, 0, BackgroundMacroError, pszErrText, 0, &nTID);
+				SafeCloseHandle(h);
+			}
 		}
 	}
 	else

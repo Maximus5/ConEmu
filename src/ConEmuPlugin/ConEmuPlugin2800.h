@@ -68,7 +68,7 @@ public:
 	virtual HANDLE  Open(const void* apInfo) override;
 	virtual bool    OpenEditor(LPCWSTR asFileName, bool abView, bool abDeleteTempFile, bool abDetectCP = false, int anStartLine = 0, int anStartChar = 1) override;
 	virtual INT_PTR PanelControlApi(HANDLE hPanel, int Command, INT_PTR Param1, void* Param2);
-	virtual void    PostMacroApi(const wchar_t* asMacro, INPUT_RECORD* apRec) override;
+	virtual void    PostMacroApi(const wchar_t* asMacro, INPUT_RECORD* apRec, bool abShowParseErrors) override;
 	virtual int     ProcessEditorEventPtr(void* p) override;
 	virtual int     ProcessEditorInputPtr(LPCVOID Rec) override;
 	virtual int     ProcessSynchroEventPtr(void* p) override;
