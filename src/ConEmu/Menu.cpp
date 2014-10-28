@@ -381,7 +381,7 @@ void CConEmuMenu::OnNewConPopupMenu(POINT* ptWhere /*= NULL*/, DWORD nFlags /*= 
 		if (bSeparator)
 		{
 			bSeparator = false;
-			InsertMenu(hPopup, nInsertPos, MF_BYPOSITION | MF_SEPARATOR, -1, NULL);
+			InsertMenu(hPopup, nInsertPos, MF_BYPOSITION|MF_SEPARATOR, 0, NULL);
 		}
 
 		//bool bSeparator = false;
@@ -820,7 +820,7 @@ void CConEmuMenu::ShowPopupMenu(CVirtualConsole* apVCon, POINT ptCur, DWORD Alig
 
 	if (lbNeedCreate)
 	{
-		AppendMenu(mh_PopupMenu, MF_BYPOSITION, MF_SEPARATOR, 0);
+		AppendMenu(mh_PopupMenu, MF_SEPARATOR, 0, 0);
 
 		_ASSERTE(mh_VConEditPopup == NULL);
 		mh_VConEditPopup = CreateEditMenuPopup(apVCon);
@@ -1037,7 +1037,7 @@ void CConEmuMenu::UpdateSysMenu(HMENU hSysMenu)
 				InsertMenu(hSysMenu, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_TOMONITOR, _T("Bring &here"));
 			InsertMenu(hSysMenu, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_TOTRAY, TRAY_ITEM_HIDE_NAME/* L"Hide to &TSA" */);
 		}
-		InsertMenu(hSysMenu, 0, MF_BYPOSITION, MF_SEPARATOR, 0);
+		InsertMenu(hSysMenu, 0, MF_BYPOSITION|MF_SEPARATOR, 0, 0);
 
 		//InsertMenu(hSysMenu, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_ABOUT, _T("&About / Help"));
 		if (mh_HelpPopup) DestroyMenu(mh_HelpPopup);
@@ -1047,7 +1047,7 @@ void CConEmuMenu::UpdateSysMenu(HMENU hSysMenu)
 		//	InsertMenu(hSysMenu, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_HELP, _T("&Help"));
 
 		// --------------------
-		InsertMenu(hSysMenu, 0, MF_BYPOSITION, MF_SEPARATOR, 0);
+		InsertMenu(hSysMenu, 0, MF_BYPOSITION|MF_SEPARATOR, 0, 0);
 
 		if (mh_SysDebugPopup) DestroyMenu(mh_SysDebugPopup);
 		mh_SysDebugPopup = CreateDebugMenuPopup();
@@ -1058,7 +1058,7 @@ void CConEmuMenu::UpdateSysMenu(HMENU hSysMenu)
 		InsertMenu(hSysMenu, 0, MF_BYPOSITION | MF_POPUP | MF_ENABLED, (UINT_PTR)mh_SysEditPopup, _T("&Edit"));
 
 		// --------------------
-		InsertMenu(hSysMenu, 0, MF_BYPOSITION, MF_SEPARATOR, 0);
+		InsertMenu(hSysMenu, 0, MF_BYPOSITION|MF_SEPARATOR, 0, 0);
 
 		if (mh_VConListPopup) DestroyMenu(mh_VConListPopup);
 		mh_VConListPopup = CreateVConListPopupMenu(mh_VConListPopup, TRUE/*abFirstTabOnly*/);
@@ -1070,7 +1070,7 @@ void CConEmuMenu::UpdateSysMenu(HMENU hSysMenu)
 		InsertMenu(hSysMenu, 0, MF_BYPOSITION | MF_POPUP | MF_ENABLED, (UINT_PTR)mh_ActiveVConPopup, _T("Acti&ve console"));
 
 		// --------------------
-		InsertMenu(hSysMenu, 0, MF_BYPOSITION, MF_SEPARATOR, 0);
+		InsertMenu(hSysMenu, 0, MF_BYPOSITION|MF_SEPARATOR, 0, 0);
 		if (!gpConEmu->mp_Inside)
 		{
 			InsertMenu(hSysMenu, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED | (gpSet->isAlwaysOnTop ? MF_CHECKED : 0),
@@ -1369,7 +1369,7 @@ LRESULT CConEmuMenu::OnInitMenuPopup(HWND hWnd, HMENU hMenu, LPARAM lParam)
 				if (nCount > 1)
 				{
 					CmdTaskPopupItem itm = {CmdTaskPopupItem::eNone};
-					InsertMenu(hMenu, 0, MF_BYPOSITION|MF_SEPARATOR, -1, NULL);
+					InsertMenu(hMenu, 0, MF_BYPOSITION|MF_SEPARATOR, 0, NULL);
 
 					itm.Reset(CmdTaskPopupItem::eTaskAll, ++mn_CmdLastID, L"All task tabs");
 					itm.pGrp = pGrp;
