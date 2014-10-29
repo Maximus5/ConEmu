@@ -42,13 +42,6 @@ protected:
 	};
 	MapItems *mp_Items;
 	size_t mn_MaxCount;
-
-public:
-	MMap()
-	{
-		mp_Items = NULL; mn_MaxCount = 0;
-	};
-
 public:
 	bool Init(size_t nMaxCount = 256, bool bOnCreate = false)
 	{
