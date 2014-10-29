@@ -45,7 +45,7 @@ ATOM CFindPanel::mh_Class = NULL;
 #define FindPanelClass L"ConEmuFindPanel"
 #define SearchHint L"Search"
 
-static MMap<HWND,CFindPanel*> g_FindMap = {};
+static MMap<HWND,CFindPanel*> g_FindMap;
 
 CFindPanel::CFindPanel(CConEmuMain* apConEmu)
 	: mp_ConEmu(apConEmu)
