@@ -12,6 +12,14 @@ Votes and awards (vote for ConEmu, if you please)
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+2014.10.29
+[*] Show menu item hints in the StatusBar instead of tool tips.
+[*] Issue 1731: Fix assertion on cancel split window dialog (user/password confirmation).
+[*] Fix resize/minimize/restore lags and asserts.
+[*] Don't create new console if user cancels new console dialog (split window, user/password confirmation).
+[*] Between-monitor jump fixes (per-monitor dpi related).
+
+
 2014.10.28
 [*] Some listboxes in the Settings dialog was not filled properly. ‘EOL’ and ‘Back color’ were messed up.
 [*] Foreground color for selected text was ignored.
