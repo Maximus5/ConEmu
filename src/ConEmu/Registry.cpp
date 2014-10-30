@@ -453,7 +453,7 @@ IXMLDOMDocument* SettingsXML::CreateDomDocument(wchar_t* pszErr /*= NULL*/, size
 				if (SUCCEEDED(hFact) && pFact)
 				{
 					hFact = pFact->CreateInstance(NULL, IID_IXMLDOMDocument, (void**)&pFile);
-					if (SUCCEEDED(hFact))
+					if (SUCCEEDED(hFact) && pFile)
 						hr = hFact;
 					else
 						_wsprintf(szDllErr, SKIPLEN(countof(szDllErr)) L"\nCreateInstance(IID_IXMLDOMDocument) failed\nErrCode=0x%08X", (DWORD)hFact);
@@ -559,7 +559,22 @@ bool SettingsXML::OpenStorage(uint access, wchar_t (&szErr)[512])
 		{
 			BY_HANDLE_FILE_INFORMATION bfi = {0};
 			if (GetFileInformationByHandle(hFile, &bfi))
+			{
 				mb_Empty = (bfi.nFileSizeHigh == 0 && bfi.nFileSizeLow == 0);
+				if (!mb_Empty)
+				{
+					// UTF-8 BOM? Xml DOM does not allows BOM
+					if (bfi.nFileSizeHigh == 0 && bfi.nFileSizeLow == 3)
+					{
+						BYTE bom[3] = {}; DWORD nRead = 0;
+						if (ReadFile(hFile, bom, sizeof(bom), &nRead, NULL) && (nRead == sizeof(bom))
+							&& (bom[0]==0xEF && bom[1]==0xBB && bom[2]==0xBF))
+						{
+							mb_Empty = true;
+						}
+					}
+				}
+			}
 			CloseHandle(hFile); hFile = NULL;
 			if (mb_Empty && bAllowCreate)
 			{
@@ -1036,7 +1051,7 @@ IXMLDOMNode* SettingsXML::FindItem(IXMLDOMNode* apFrom, const wchar_t* asType, c
 		// key[@name="abc"], but it is case-sensitive, and may fails in theory
 		bsText = lstrmerge(asType, L"[@name=\"", asName, L"\"]");
 		hr = apFrom->selectNodes(bsText, &pList);
-		if (SUCCEEDED(hr))
+		if (SUCCEEDED(hr) && pList)
 		{
 			hr = pList->get_length(&lFound);
 			if (FAILED(hr) || (lFound < 1))
@@ -1111,7 +1126,7 @@ IXMLDOMNode* SettingsXML::FindItem(IXMLDOMNode* apFrom, const wchar_t* asType, c
 		if (asType[0] == L'k')
 		{
 			hr = apFrom->get_lastChild(&pChild);
-			if (SUCCEEDED(hr))
+			if (SUCCEEDED(hr) && pChild)
 			{
 				hr = pChild->get_nodeType(&nodeTypeCheck);
 				if (SUCCEEDED(hr) && (nodeTypeCheck == NODE_TEXT))
@@ -1245,7 +1260,7 @@ bool SettingsXML::Load(const wchar_t *regName, wchar_t **value)
 			{
 				hr = pList->get_length(&nCount);
 
-				if (SUCCEEDED(hr) && nCount > 0)
+				if (SUCCEEDED(hr) && (nCount > 0))
 				{
 					HEAPVAL;
 					nMaxLen = ((MAX_PATH+1) * nCount) + 1;
