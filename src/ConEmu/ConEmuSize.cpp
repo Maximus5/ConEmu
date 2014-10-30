@@ -2034,6 +2034,24 @@ LRESULT CConEmuSize::OnWindowPosChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 
 	DEBUGTEST(WINDOWPOS ps1 = *p);
 
+	// If monitor jump was triggered by OS but not ConEmu internals
+	if (!mp_ConEmu->mb_IgnoreSizeChange
+		&& !(p->flags & (SWP_NOSIZE|SWP_NOMOVE))
+		&& !IsWindowModeChanging()
+		&& CDpiAware::IsPerMonitorDpi())
+	{
+		// We need to refresh "current monitor dpi" before resizing
+		// to avoid improper console size calls
+		DpiValue dpi;
+		if (CDpiAware::QueryDpi(ghWnd, &dpi) > 0)
+		{
+			if (gpSetCls->QueryDpi() != dpi.Ydpi)
+			{
+				OnDpiChanged(dpi.Xdpi, dpi.Ydpi, NULL, false);
+			}
+		}
+	}
+
 	// Иначе могут не вызваться события WM_SIZE/WM_MOVE
 	result = DefWindowProc(hWnd, uMsg, wParam, lParam);
 
