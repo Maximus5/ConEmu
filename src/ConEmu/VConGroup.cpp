@@ -2957,7 +2957,7 @@ void CVConGroup::OnUpdateFarSettings()
 	}
 }
 
-void CVConGroup::OnUpdateTextColorSettings(BOOL ChangeTextAttr /*= TRUE*/, BOOL ChangePopupAttr /*= TRUE*/)
+void CVConGroup::OnUpdateTextColorSettings(BOOL ChangeTextAttr /*= TRUE*/, BOOL ChangePopupAttr /*= TRUE*/, const AppSettings* apDistinct /*= NULL*/)
 {
 	for (size_t i = 0; i < countof(gp_VCon); i++)
 	{
@@ -2969,7 +2969,7 @@ void CVConGroup::OnUpdateTextColorSettings(BOOL ChangeTextAttr /*= TRUE*/, BOOL 
 
 		if (pRCon)
 		{
-			pRCon->UpdateTextColorSettings(ChangeTextAttr, ChangePopupAttr);
+			pRCon->UpdateTextColorSettings(ChangeTextAttr, ChangePopupAttr, apDistinct);
 		}
 	}
 }

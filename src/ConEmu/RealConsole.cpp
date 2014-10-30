@@ -12273,9 +12273,19 @@ void CRealConsole::UpdateFarSettings(DWORD anFarPID /*= 0*/, FAR_REQ_FARSETCHANG
 	}
 }
 
-void CRealConsole::UpdateTextColorSettings(BOOL ChangeTextAttr /*= TRUE*/, BOOL ChangePopupAttr /*= TRUE*/)
+void CRealConsole::UpdateTextColorSettings(BOOL ChangeTextAttr /*= TRUE*/, BOOL ChangePopupAttr /*= TRUE*/, const AppSettings* apDistinct /*= NULL*/)
 {
 	if (!this) return;
+
+	// Обновлять, только если наши настройки сменились
+	if (apDistinct)
+	{
+		const AppSettings* pApp = gpSet->GetAppSettings(GetActiveAppSettingsId());
+		if (pApp != apDistinct)
+		{
+			return;
+		}
+	}
 
 	BYTE nTextColorIdx /*= 7*/, nBackColorIdx /*= 0*/, nPopTextColorIdx /*= 5*/, nPopBackColorIdx /*= 15*/;
 	PrepareDefaultColors(nTextColorIdx, nBackColorIdx, nPopTextColorIdx, nPopBackColorIdx);

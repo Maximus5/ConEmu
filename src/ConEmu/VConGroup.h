@@ -36,6 +36,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 class CVirtualConsole;
 class CVConGuard;
 class CTabID;
+struct AppSettings;
 
 enum EnumVConFlags
 {
@@ -163,7 +164,7 @@ public:
 	static void OnAlwaysShowScrollbar(bool abSync = true);
 	static void OnUpdateScrollInfo();
 	static void OnUpdateFarSettings();
-	static void OnUpdateTextColorSettings(BOOL ChangeTextAttr = TRUE, BOOL ChangePopupAttr = TRUE);
+	static void OnUpdateTextColorSettings(BOOL ChangeTextAttr = TRUE, BOOL ChangePopupAttr = TRUE, const AppSettings* apDistinct = NULL);
 	static bool OnCloseQuery(bool* rbMsgConfirmed = NULL);
 	static bool DoCloseAllVCon(bool bMsgConfirmed = false);
 	static void CloseAllButActive(CVirtualConsole* apVCon/*may be null*/, bool abZombies, bool abNoConfirm);

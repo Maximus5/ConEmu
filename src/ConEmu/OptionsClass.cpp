@@ -3184,13 +3184,13 @@ void CSettings::OnInitDialog_StatusItems(HWND hWnd2)
 		SendMessage(hSeltd, LB_SETCURSEL, (iCurSeltd <= iMaxSeltd) ? iCurSeltd : iMaxSeltd, 0);
 }
 
-void CSettings::UpdateTextColorSettings(BOOL ChangeTextAttr /*= TRUE*/, BOOL ChangePopupAttr /*= TRUE*/)
+void CSettings::UpdateTextColorSettings(BOOL ChangeTextAttr /*= TRUE*/, BOOL ChangePopupAttr /*= TRUE*/, const AppSettings* apDistinct /*= NULL*/)
 {
 	// Обновить палитры
 	gpSet->PaletteSetStdIndexes();
 
 	// Обновить консоли
-	CVConGroup::OnUpdateTextColorSettings(ChangeTextAttr, ChangePopupAttr);
+	CVConGroup::OnUpdateTextColorSettings(ChangeTextAttr, ChangePopupAttr, apDistinct);
 }
 
 // This is used if user choose palette from dropdown in the Settings dialog
@@ -7549,6 +7549,10 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 					{
 						pApp->OverridePalette = bChecked;
 						bRedraw = true;
+						// Обновить палитры
+						gpSet->PaletteSetStdIndexes();
+						// Обновить консоли (считаем, что меняется только TextAttr, Popup не трогать
+						gpSetCls->UpdateTextColorSettings(TRUE, FALSE, pApp);
 					}
 					break;
 
@@ -7918,7 +7922,9 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 												pApp->isExtendColors = pPal->isExtendColors;
 												pApp->nExtendColorIdx = pPal->nExtendColorIdx;
 												if (bTextAttr || bPopupAttr)
-													gpSetCls->UpdateTextColorSettings(bTextAttr, bPopupAttr);
+												{
+													gpSetCls->UpdateTextColorSettings(bTextAttr, bPopupAttr, pApp);
+												}
 												bRedraw = true;
 											}
 											else

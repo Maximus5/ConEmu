@@ -228,6 +228,7 @@ class CRealBuffer;
 class CDpiForDialog;
 class MFileLog;
 class CRConFiles;
+struct AppSettings;
 
 enum RealBufferType
 {
@@ -579,7 +580,7 @@ class CRealConsole
 		bool SetProgress(short nState, short nValue, LPCWSTR pszName = NULL);
 		void UpdateGuiInfoMapping(const ConEmuGuiMapping* apGuiInfo);
 		void UpdateFarSettings(DWORD anFarPID = 0, FAR_REQ_FARSETCHANGED* rpSetEnvVar = NULL);
-		void UpdateTextColorSettings(BOOL ChangeTextAttr = TRUE, BOOL ChangePopupAttr = TRUE);
+		void UpdateTextColorSettings(BOOL ChangeTextAttr = TRUE, BOOL ChangePopupAttr = TRUE, const AppSettings* apDistinct = NULL);
 		int CoordInPanel(COORD cr, BOOL abIncludeEdges = FALSE);
 		BOOL GetPanelRect(BOOL abRight, RECT* prc, BOOL abFull = FALSE, BOOL abIncludeEdges = FALSE);
 		bool isAdministrator();
