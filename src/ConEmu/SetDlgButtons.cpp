@@ -1723,7 +1723,7 @@ void CSetDlgButtons::OnBtn_LongOutput(HWND hDlg, WORD CB, BYTE uCheck)
 	_ASSERTE(CB==cbLongOutput);
 
 	gpSet->AutoBufferHeight = uCheck;
-	gpConEmu->UpdateFarSettings();
+	CVConGroup::OnUpdateFarSettings();
 	EnableWindow(GetDlgItem(hDlg, tLongOutputHeight), gpSet->AutoBufferHeight);
 
 } // cbLongOutput
@@ -2134,7 +2134,7 @@ void CSetDlgButtons::OnBtn_FARuseASCIIsort(HWND hDlg, WORD CB, BYTE uCheck)
 	_ASSERTE(CB==cbFARuseASCIIsort);
 
 	gpSet->isFARuseASCIIsort = uCheck;
-	gpConEmu->UpdateFarSettings();
+	CVConGroup::OnUpdateFarSettings();
 
 } // cbFARuseASCIIsort
 
@@ -2145,7 +2145,7 @@ void CSetDlgButtons::OnBtn_ShellNoZoneCheck(HWND hDlg, WORD CB, BYTE uCheck)
 	_ASSERTE(CB==cbShellNoZoneCheck);
 
 	gpSet->isShellNoZoneCheck = uCheck;
-	gpConEmu->UpdateFarSettings();
+	CVConGroup::OnUpdateFarSettings();
 
 } // cbShellNoZoneCheck
 
@@ -3513,7 +3513,7 @@ void CSetDlgButtons::OnBtn_TrueColorer(HWND hDlg, WORD CB, BYTE uCheck)
 	_ASSERTE(CB==cbTrueColorer);
 
 	gpSet->isTrueColorer = uCheck;
-	gpConEmu->UpdateFarSettings();
+	CVConGroup::OnUpdateFarSettings();
 	gpConEmu->Update(true);
 
 } // cbTrueColorer

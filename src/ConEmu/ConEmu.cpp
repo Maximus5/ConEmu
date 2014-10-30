@@ -3420,18 +3420,6 @@ void CConEmuMain::UpdateActiveGhost(CVirtualConsole* apVCon)
 	}
 }
 
-// Послать во все активные фары CMD_FARSETCHANGED
-// Обновляются настройки: gpSet->isFARuseASCIIsort, gpSet->isShellNoZoneCheck;
-void CConEmuMain::UpdateFarSettings()
-{
-	CVConGroup::OnUpdateFarSettings();
-}
-
-void CConEmuMain::UpdateTextColorSettings(BOOL ChangeTextAttr /*= TRUE*/, BOOL ChangePopupAttr /*= TRUE*/)
-{
-	CVConGroup::OnUpdateTextColorSettings(ChangeTextAttr, ChangePopupAttr);
-}
-
 void CConEmuMain::DebugStep(LPCWSTR asMsg, BOOL abErrorSeverity/*=FALSE*/)
 {
 	if (asMsg && *asMsg)
@@ -8150,7 +8138,7 @@ void CConEmuMain::OnGlobalSettingsChanged()
 	CVConGroup::OnUpdateGuiInfoMapping(&m_GuiInfo);
 
 	// И фары тоже уведомить
-	gpConEmu->UpdateFarSettings();
+	CVConGroup::OnUpdateFarSettings();
 }
 
 void CConEmuMain::OnPanelViewSettingsChanged(BOOL abSendChanges/*=TRUE*/)

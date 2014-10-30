@@ -3190,7 +3190,7 @@ void CSettings::UpdateTextColorSettings(BOOL ChangeTextAttr /*= TRUE*/, BOOL Cha
 	gpSet->PaletteSetStdIndexes();
 
 	// Обновить консоли
-	gpConEmu->UpdateTextColorSettings(ChangeTextAttr, ChangePopupAttr);
+	CVConGroup::OnUpdateTextColorSettings(ChangeTextAttr, ChangePopupAttr);
 }
 
 // This is used if user choose palette from dropdown in the Settings dialog
@@ -5330,7 +5330,7 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 
 		if (gpSet->nCmdOutputCP == -1) gpSet->nCmdOutputCP = 0;
 
-		gpConEmu->UpdateFarSettings();
+		CVConGroup::OnUpdateFarSettings();
 		break;
 	}
 	case lbExtendFontNormalIdx:

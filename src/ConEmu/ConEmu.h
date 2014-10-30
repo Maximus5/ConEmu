@@ -694,11 +694,9 @@ class CConEmuMain
 		void SetSkipMouseEvent(UINT nMsg1, UINT nMsg2, UINT nReplaceDblClk);
 		void Update(bool isForce = false);
 		void UpdateActiveGhost(CVirtualConsole* apVCon);
-		void UpdateFarSettings();
 	protected:
 		void UpdateImeComposition();
 	public:
-		void UpdateTextColorSettings(BOOL ChangeTextAttr = TRUE, BOOL ChangePopupAttr = TRUE);
 		void CheckNeedUpdateTitle(LPCWSTR asRConTitle);
 		void UpdateTitle();
 		void UpdateProgress(/*BOOL abUpdateTitle*/);

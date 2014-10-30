@@ -2936,6 +2936,8 @@ void CVConGroup::OnUpdateScrollInfo()
 	}
 }
 
+// Послать во все активные фары CMD_FARSETCHANGED
+// Обновляются настройки: gpSet->isFARuseASCIIsort, gpSet->isShellNoZoneCheck;
 void CVConGroup::OnUpdateFarSettings()
 {
 	for (size_t i = 0; i < countof(gp_VCon); i++)

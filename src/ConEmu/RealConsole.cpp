@@ -2436,7 +2436,7 @@ DWORD CRealConsole::MonitorThreadWorker(bool bDetached, bool& rbChildProcessCrea
 
 				bLastAlive = bAlive;
 				//вроде не надо
-				//UpdateFarSettings(mn_FarPID_PluginDetected);
+				//CVConGroup::OnUpdateFarSettings(mn_FarPID_PluginDetected);
 				// Загрузить изменения из консоли
 				//if ((HWND)mp_ConsoleInfo->hConWnd && mp_ConsoleInfo->nCurDataMapIdx
 				//	&& mp_ConsoleInfo->nPacketId
