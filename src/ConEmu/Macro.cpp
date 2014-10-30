@@ -2593,6 +2593,11 @@ LPWSTR ConEmuMacro::Shell(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 					pszRc = lstrdup(L"OK");
 					goto wrap;
 				}
+				else
+				{
+					pszRc = lstrdup(L"VConCreateFailed");
+					goto wrap;
+				}
 			}
 
 			pszCmd = apRCon->GetCmd();
