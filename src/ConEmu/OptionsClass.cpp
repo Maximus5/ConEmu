@@ -454,24 +454,6 @@ const ConEmuHotKey* CSettings::GetHotKeyInfo(const ConEmuChord& VkState, bool bK
 	return p;
 }
 
-#if 0
-bool CSettings::HasSingleWinHotkey()
-{
-	for (int i = 0;; i++)
-	{
-		const ConEmuHotKey* pHK = GetHotKeyPtr(i);
-		if (!pHK)
-			break;
-		if (pHK->HkType == chk_Modifier)
-			continue;
-		// Win+<другой модификатор> вроде винда в приложение таки присылает?
-		if ((pHK->Key.Mod & cvk_ALLMASK) == cvk_Win)
-			return true; // А вот если больше модификаторов нет...
-	}
-	return false;
-}
-#endif
-
 void CSettings::UpdateWinHookSettings(HMODULE hLLKeyHookDll)
 {
 	BOOL *pbWinTabHook = (BOOL*)GetProcAddress(hLLKeyHookDll, "gbWinTabHook");

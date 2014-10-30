@@ -4470,7 +4470,7 @@ void CVConGroup::SetAllConsoleWindowsSize(RECT rcWnd, enum ConEmuRect tFrom /*= 
 	CVConGroup* pRoot = GetRootOfVCon(VCon.VCon());
 
 	// Некорректно. Нужно прокрутку просто вводить. А игнорировать установку размера окна нельзя.
-#if 0
+	#if 0
 	// Это не совсем корректно... ntvdm.exe не выгружается после выхода из 16бит приложения
 	if (isNtvdm())
 	{
@@ -4479,12 +4479,13 @@ void CVConGroup::SetAllConsoleWindowsSize(RECT rcWnd, enum ConEmuRect tFrom /*= 
 		//}
 		return; // запрет изменения размеров консоли для 16бит приложений
 	}
-#endif
+	#endif
 
-#ifdef MSGLOGGER
+	#ifdef MSGLOGGER
 	char szDbg[100]; wsprintfA(szDbg, "SetAllConsoleWindowsSize({%i,%i},%i)\n", size.X, size.Y, bSetRedraw);
 	DEBUGLOGFILE(szDbg);
-#endif
+	#endif
+
 	g_LastConSize = size;
 
 	if (!pRoot)

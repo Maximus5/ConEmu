@@ -115,7 +115,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRFOCUS(s) //DEBUGSTR(s)
 #define DEBUGSTRSESS(s) DEBUGSTR(s)
 #define DEBUGSTRDPI(s) DEBUGSTR(s)
-#define DEBUGSTRNOLOG(s) DEBUGSTR(s)
+#define DEBUGSTRNOLOG(s) //DEBUGSTR(s)
 #ifdef _DEBUG
 //#define DEBUGSHOWFOCUS(s) DEBUGSTR(s)
 #endif
@@ -4172,32 +4172,8 @@ bool CConEmuMain::IsKeyboardHookRegistered()
 
 void CConEmuMain::RegisterHooks()
 {
-//	#ifndef _DEBUG
-	// -- для GUI режима таки нужно
-	//// Для WinXP это не было нужно
-	//if (gOSVer.dwMajorVersion < 6)
-	//{
-	//	return;
-	//}
-//	#endif
-
 	// Будем ставить хуки (локальные, для нашего приложения) всегда
 	// чтобы иметь возможность (в будущем) обрабатывать ChildGui
-	#if 0
-	// Если Host-клавиша НЕ Win, или юзер не хочет переключаться Win+Number - хук не нужен
-	//if (!gpSet->isUseWinNumber || !gpSet->IsHostkeySingle(VK_LWIN))
-	if (!gpSetCls->HasSingleWinHotkey())
-	{
-		if (gpSetCls->isAdvLogging)
-		{
-			LogString("CConEmuMain::RegisterHooks() skipped, cause of !HasSingleWinHotkey()", TRUE);
-		}
-
-		UnRegisterHooks();
-
-		return;
-	}
-	#endif
 
 	DWORD dwErr = 0;
 
@@ -4214,21 +4190,9 @@ void CConEmuMain::RegisterHooks()
 		else
 		{
 			if (!mh_LLKeyHookDll)
+			{
 				LoadConEmuCD();
-			//{
-			//	wchar_t szConEmuDll[MAX_PATH+32];
-			//	lstrcpy(szConEmuDll, ms_ConEmuBaseDir);
-			//#ifdef WIN64
-			//	lstrcat(szConEmuDll, L"\\ConEmuCD64.dll");
-			//#else
-			//	lstrcat(szConEmuDll, L"\\ConEmuCD.dll");
-			//#endif
-			//	wchar_t szSkipEventName[128];
-			//	_wsprintf(szSkipEventName, SKIPLEN(countof(szSkipEventName)) CEHOOKDISABLEEVENT, GetCurrentProcessId());
-			//	HANDLE hSkipEvent = CreateEvent(NULL, TRUE, TRUE, szSkipEventName);
-			//	mh_LLKeyHookDll = LoadLibrary(szConEmuDll);
-			//	CloseHandle(hSkipEvent);
-			//}
+			}
 
 			_ASSERTE(mh_LLKeyHook==NULL); // Из другого потока регистрация прошла?
 
@@ -4244,9 +4208,6 @@ void CConEmuMain::RegisterHooks()
 					*pConEmuRoot = ghWnd;
 
 				UpdateWinHookSettings();
-
-				//if (pConEmuDc)
-				//	*pConEmuDc = ghWnd DC;
 
 				if (pfnLLHK)
 				{
