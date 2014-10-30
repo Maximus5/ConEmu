@@ -34,7 +34,6 @@ $(INTDIR)\BaseDragDrops.obj \
 $(INTDIR)\CmdArg.obj \
 $(INTDIR)\CmdHistory.obj \
 $(INTDIR)\CmdLine.obj \
-$(INTDIR)\CmdTasks.obj \
 $(INTDIR)\Common.obj \
 $(INTDIR)\ConEmu.obj \
 $(INTDIR)\ConEmuApp.obj \
@@ -93,6 +92,9 @@ $(INTDIR)\RgnDetect.obj \
 $(INTDIR)\RunQueue.obj \
 $(INTDIR)\ScreenDump.obj \
 $(INTDIR)\SearchCtrl.obj \
+$(INTDIR)\SetAppSettings.obj \
+$(INTDIR)\SetCmdTasks.obj \
+$(INTDIR)\SetColorPalette.obj \
 $(INTDIR)\SetDlgButtons.obj \
 $(INTDIR)\SetDlgColors.obj \
 $(INTDIR)\SetDlgFonts.obj \
@@ -289,8 +291,6 @@ $(INTDIR)\CmdHistory.obj: CmdHistory.cpp CmdHistory.h
 
 $(INTDIR)\CmdLine.obj: ../common/CmdLine.cpp ../common/CmdLine.h
 
-$(INTDIR)\CmdTasks.obj: CmdTasks.cpp CmdTasks.h
-
 $(INTDIR)\Common.obj: ../common/Common.cpp ../common/Common.hpp
 
 $(INTDIR)\ConEmu.obj: ConEmu.cpp Version.h GuiServer.h GestureEngine.h ../common/PipeServer.h
@@ -406,6 +406,12 @@ $(INTDIR)\RunQueue.obj: RunQueue.cpp RunQueue.h
 $(INTDIR)\ScreenDump.obj: ScreenDump.cpp
 
 $(INTDIR)\SearchCtrl.obj: SearchCtrl.cpp
+
+$(INTDIR)\SetAppSettings.obj: SetAppSettings.cpp SetAppSettings.h
+
+$(INTDIR)\SetCmdTask.obj: SetCmdTask.cpp SetCmdTask.h
+
+$(INTDIR)\SetColorPalette.obj: SetColorPalette.cpp SetColorPalette.h
 
 $(INTDIR)\SetDlgButtons.obj: SetDlgButtons.cpp SetDlgButtons.h
 

@@ -71,12 +71,15 @@ enum FarMacroVersion
 #define BgImageColorsDefaults (1|2)
 
 #include "Hotkeys.h"
-#include "CmdTasks.h"
+#include "SetTypes.h"
+#include "SetAppSettings.h"
 #include "UpdateSet.h"
 
 class CSettings;
 class CSetDlgButtons;
 struct CommandHistory;
+struct CommandTasks;
+struct ColorPalette;
 
 
 #define SCROLLBAR_DELAY_MIN 100
@@ -85,70 +88,6 @@ struct CommandHistory;
 #define CENTERCONSOLEPAD_MIN 0
 #define CENTERCONSOLEPAD_MAX 64
 
-struct FindTextOptions
-{
-	size_t   cchTextMax;
-	wchar_t* pszText;
-	bool     bMatchCase;
-	bool     bMatchWholeWords;
-	bool     bFreezeConsole;
-	bool     bHighlightAll;
-	bool     bTransparent;
-};
-
-
-enum CECursorStyle
-{
-	cur_Horz         = 0x00,
-	cur_Vert         = 0x01,
-	cur_Block        = 0x02,
-	cur_Rect         = 0x03,
-
-	// Used for Min/Max
-	cur_First        = cur_Horz,
-	cur_Last         = cur_Rect,
-};
-
-union CECursorType
-{
-	struct
-	{
-		CECursorStyle  CursorType   : 6;
-		unsigned int   isBlinking   : 1;
-		unsigned int   isColor      : 1;
-		unsigned int   isFixedSize  : 1;
-		unsigned int   FixedSize    : 7;
-		unsigned int   MinSize      : 7;
-		// set to true for use distinct settings for Inactive cursor
-		unsigned int   Used         : 1;
-	};
-
-	DWORD Raw;
-};
-
-enum TabStyle
-{
-	ts_VS2008 = 0,
-	ts_Win8   = 1,
-};
-
-typedef DWORD SettingsLoadedFlags;
-const SettingsLoadedFlags
-	slf_NeedCreateVanilla = 0x0001, // Call gpSet->SaveSettings after initializing
-	slf_AllowFastConfig   = 0x0002,
-	slf_OnStartupLoad     = 0x0004,
-	slf_OnResetReload     = 0x0008,
-	slf_DefaultSettings   = 0x0010,
-	slf_None              = 0x0000
-;
-
-enum AdminTabStyle
-{
-	ats_Empty        = 0,
-	ats_Shield       = 1,
-	ats_ShieldSuffix = 3,
-	ats_Disabled     = 4,
-};
 
 #define DefaultAdminTitleSuffix L" (Admin)"
 
@@ -215,203 +154,6 @@ struct Settings
 		wchar_t* psDefaultTerminalApps; // MSZ
 
 	public:
-		struct ColorPalette
-		{
-			wchar_t* pszName;
-			bool bPredefined;
-
-			//reg->Load(L"ExtendColors", isExtendColors);
-			bool isExtendColors;
-			//reg->Load(L"ExtendColorIdx", nExtendColorIdx);
-			BYTE nExtendColorIdx; // 0..15
-
-			//reg->Load(L"TextColorIdx", nTextColorIdx);
-			BYTE nTextColorIdx; // 0..15,16
-			//reg->Load(L"BackColorIdx", nBackColorIdx);
-			BYTE nBackColorIdx; // 0..15,16
-			//reg->Load(L"PopTextColorIdx", nPopTextColorIdx);
-			BYTE nPopTextColorIdx; // 0..15,16
-			//reg->Load(L"PopBackColorIdx", nPopBackColorIdx);
-			BYTE nPopBackColorIdx; // 0..15,16
-
-			// Loaded
-			COLORREF Colors[0x20];
-
-			// Computed
-			COLORREF ColorsFade[0x20];
-			bool FadeInitialized;
-
-			void FreePtr()
-			{
-				SafeFree(pszName);
-				ColorPalette* p = this;
-				SafeFree(p);
-			};
-		};
-
-		struct AppSettings
-		{
-			size_t   cchNameMax;
-			wchar_t* AppNames; // "far.exe|far64.exe" и т.п.
-			wchar_t* AppNamesLwr; // For internal use
-			BYTE Elevated; // 00 - unimportant, 01 - elevated, 02 - nonelevated
-
-			//const COLORREF* Palette/*[0x20]*/; // текущая палитра (Fade/не Fade)
-
-			bool OverridePalette; // Palette+Extend
-			wchar_t szPaletteName[128];
-			//TODO: Тут хорошо бы индекс палитры хранить...
-			int GetPaletteIndex() const;
-			void SetPaletteName(LPCWSTR asNewPaletteName);
-			void ResetPaletteIndex();
-
-			//reg->Load(L"ExtendColors", isExtendColors);
-			bool isExtendColors;
-			char ExtendColors() const { return (OverridePalette || !AppNames) ? isExtendColors : gpSet->AppStd.isExtendColors; };
-			//reg->Load(L"ExtendColorIdx", nExtendColorIdx);
-			BYTE nExtendColorIdx; // 0..15
-			BYTE ExtendColorIdx() const { return (OverridePalette || !AppNames) ? nExtendColorIdx : gpSet->AppStd.nExtendColorIdx; };
-
-			BYTE nTextColorIdx; // 0..15,16
-			BYTE TextColorIdx() const { return (OverridePalette || !AppNames) ? nTextColorIdx : gpSet->AppStd.nTextColorIdx; };
-			BYTE nBackColorIdx; // 0..15,16
-			BYTE BackColorIdx() const { return (OverridePalette || !AppNames) ? nBackColorIdx : gpSet->AppStd.nBackColorIdx; };
-			BYTE nPopTextColorIdx; // 0..15,16
-			BYTE PopTextColorIdx() const { return (OverridePalette || !AppNames) ? nPopTextColorIdx : gpSet->AppStd.nPopTextColorIdx; };
-			BYTE nPopBackColorIdx; // 0..15,16
-			BYTE PopBackColorIdx() const { return (OverridePalette || !AppNames) ? nPopBackColorIdx : gpSet->AppStd.nPopBackColorIdx; };
-
-
-			bool OverrideExtendFonts;
-			//reg->Load(L"ExtendFonts", isExtendFonts);
-			bool isExtendFonts;
-			bool ExtendFonts() const { return (OverrideExtendFonts || !AppNames) ? isExtendFonts : gpSet->AppStd.isExtendFonts; };
-			//reg->Load(L"ExtendFontNormalIdx", nFontNormalColor);
-			BYTE nFontNormalColor; // 0..15
-			BYTE FontNormalColor() const { return (OverrideExtendFonts || !AppNames) ? nFontNormalColor : gpSet->AppStd.nFontNormalColor; };
-			//reg->Load(L"ExtendFontBoldIdx", nFontBoldColor);
-			BYTE nFontBoldColor;   // 0..15
-			BYTE FontBoldColor() const { return (OverrideExtendFonts || !AppNames) ? nFontBoldColor : gpSet->AppStd.nFontBoldColor; };
-			//reg->Load(L"ExtendFontItalicIdx", nFontItalicColor);
-			BYTE nFontItalicColor; // 0..15
-			BYTE FontItalicColor() const { return (OverrideExtendFonts || !AppNames) ? nFontItalicColor : gpSet->AppStd.nFontItalicColor; };
-
-			bool OverrideCursor;
-			// *** Active ***
-			////reg->Load(L"CursorType", isCursorType);
-			////BYTE isCursorType; // 0 - Horz, 1 - Vert, 2 - Hollow-block
-			//reg->Load(L"CursorTypeActive", CursorActive.Raw);
-			//reg->Load(L"CursorTypeInactive", CursorActive.Raw);
-			CECursorType CursorActive; // storage
-			CECursorType CursorInactive; // storage
-			CECursorStyle CursorStyle(bool bActive) const { return (OverrideCursor || !AppNames)
-				? ((bActive || !CursorInactive.Used) ? CursorActive.CursorType : CursorInactive.CursorType)
-				: ((bActive || !gpSet->AppStd.CursorInactive.Used) ? gpSet->AppStd.CursorActive.CursorType : gpSet->AppStd.CursorInactive.CursorType); };
-			////reg->Load(L"CursorBlink", isCursorBlink);
-			////bool isCursorBlink;
-			bool CursorBlink(bool bActive) const { return (OverrideCursor || !AppNames)
-				? ((bActive || !CursorInactive.Used) ? CursorActive.isBlinking : CursorInactive.isBlinking)
-				: ((bActive || !gpSet->AppStd.CursorInactive.Used) ? gpSet->AppStd.CursorActive.isBlinking : gpSet->AppStd.CursorInactive.isBlinking); };
-			////reg->Load(L"CursorColor", isCursorColor);
-			////bool isCursorColor;
-			bool CursorColor(bool bActive) const { return (OverrideCursor || !AppNames)
-				? ((bActive || !CursorInactive.Used) ? CursorActive.isColor : CursorInactive.isColor)
-				: ((bActive || !gpSet->AppStd.CursorInactive.Used) ? gpSet->AppStd.CursorActive.isColor : gpSet->AppStd.CursorInactive.isColor); };
-			////reg->Load(L"CursorBlockInactive", isCursorBlockInactive);
-			////bool isCursorBlockInactive;
-			////bool CursorBlockInactive() const { return (OverrideCursor || !AppNames) ? isCursorBlockInactive : gpSet->AppStd.isCursorBlockInactive; };
-			////reg->Load(L"CursorIgnoreSize", isCursorIgnoreSize);
-			////bool isCursorIgnoreSize;
-			bool CursorIgnoreSize(bool bActive) const { return (OverrideCursor || !AppNames)
-				? ((bActive || !CursorInactive.Used) ? CursorActive.isFixedSize : CursorInactive.isFixedSize)
-				: ((bActive || !gpSet->AppStd.CursorInactive.Used) ? gpSet->AppStd.CursorActive.isFixedSize : gpSet->AppStd.CursorInactive.isFixedSize); };
-			////reg->Load(L"CursorFixedSize", nCursorFixedSize);
-			////BYTE nCursorFixedSize; // в процентах
-			BYTE CursorFixedSize(bool bActive) const { return (OverrideCursor || !AppNames)
-				? ((bActive || !CursorInactive.Used) ? CursorActive.FixedSize : CursorInactive.FixedSize)
-				: ((bActive || !gpSet->AppStd.CursorInactive.Used) ? gpSet->AppStd.CursorActive.FixedSize : gpSet->AppStd.CursorInactive.FixedSize); };
-			//reg->Load(L"CursorMinSize", nCursorMinSize);
-			//BYTE nCursorMinSize; // в пикселях
-			BYTE CursorMinSize(bool bActive) const { return (OverrideCursor || !AppNames)
-				? ((bActive || !CursorInactive.Used) ? CursorActive.MinSize : CursorInactive.MinSize)
-				: ((bActive || !gpSet->AppStd.CursorInactive.Used) ? gpSet->AppStd.CursorActive.MinSize : gpSet->AppStd.CursorInactive.MinSize); };
-
-			bool OverrideClipboard;
-			// *** Copying
-			//reg->Load(L"ClipboardDetectLineEnd", isCTSDetectLineEnd);
-			bool isCTSDetectLineEnd; // cbCTSDetectLineEnd
-			bool CTSDetectLineEnd() const { return (OverrideClipboard || !AppNames) ? isCTSDetectLineEnd : gpSet->AppStd.isCTSDetectLineEnd; };
-			//reg->Load(L"ClipboardBashMargin", isCTSBashMargin);
-			bool isCTSBashMargin; // cbCTSBashMargin
-			bool CTSBashMargin() const { return (OverrideClipboard || !AppNames) ? isCTSBashMargin : gpSet->AppStd.isCTSBashMargin; };
-			//reg->Load(L"ClipboardTrimTrailing", isCTSTrimTrailing);
-			BYTE isCTSTrimTrailing; // cbCTSTrimTrailing: 0 - нет, 1 - да, 2 - только для stream-selection
-			BYTE CTSTrimTrailing() const { return (OverrideClipboard || !AppNames) ? isCTSTrimTrailing : gpSet->AppStd.isCTSTrimTrailing; };
-			//reg->Load(L"ClipboardEOL", isCTSEOL);
-			BYTE isCTSEOL; // cbCTSEOL: 0="CR+LF", 1="LF", 2="CR"
-			BYTE CTSEOL() const { return (OverrideClipboard || !AppNames) ? isCTSEOL : gpSet->AppStd.isCTSEOL; };
-			//reg->Load(L"ClipboardArrowStart", pApp->isCTSShiftArrowStart);
-			bool isCTSShiftArrowStart;
-			bool CTSShiftArrowStart() const { return (OverrideClipboard || !AppNames) ? isCTSShiftArrowStart : gpSet->AppStd.isCTSShiftArrowStart; };
-			// *** Pasting
-			//reg->Load(L"ClipboardAllLines", isPasteAllLines);
-			bool isPasteAllLines;
-			bool PasteAllLines() const { return (OverrideClipboard || !AppNames) ? isPasteAllLines : gpSet->AppStd.isPasteAllLines; };
-			//reg->Load(L"ClipboardFirstLine", isPasteFirstLine);
-			bool isPasteFirstLine;
-			bool PasteFirstLine() const { return (OverrideClipboard || !AppNames) ? isPasteFirstLine : gpSet->AppStd.isPasteFirstLine; };
-			// *** Prompt
-			// cbCTSClickPromptPosition
-			//reg->Load(L"ClipboardClickPromptPosition", isCTSClickPromptPosition);
-			//0 - off, 1 - force, 2 - try to detect "ReadConsole" (don't use 2 in bash)
-			BYTE isCTSClickPromptPosition; // cbCTSClickPromptPosition
-			BYTE CTSClickPromptPosition() const { return (OverrideClipboard || !AppNames) ? isCTSClickPromptPosition : gpSet->AppStd.isCTSClickPromptPosition; };
-			BYTE isCTSDeleteLeftWord; // cbCTSDeleteLeftWord
-			BYTE CTSDeleteLeftWord() const { return (OverrideClipboard || !AppNames) ? isCTSDeleteLeftWord : gpSet->AppStd.isCTSDeleteLeftWord; };
-
-			bool OverrideBgImage;
-			//reg->Load(L"BackGround Image show", isShowBgImage);
-			char isShowBgImage; // cbBgImage
-			char ShowBgImage() const { return (OverrideBgImage || !AppNames) ? isShowBgImage : gpSet->AppStd.isShowBgImage; };
-			//reg->Load(L"BackGround Image", sBgImage, countof(sBgImage));
-			WCHAR sBgImage[MAX_PATH]; // tBgImage
-			LPCWSTR BgImage() const { return (OverrideBgImage || !AppNames) ? sBgImage : gpSet->AppStd.sBgImage; };
-			//reg->Load(L"bgOperation", nBgOperation);
-			BYTE nBgOperation; // BackgroundOp {eUpLeft = 0, eStretch = 1, eTile = 2, ...}
-			BYTE BgOperation() const { return (OverrideBgImage || !AppNames) ? nBgOperation : gpSet->AppStd.nBgOperation; };
-
-
-			void SetNames(LPCWSTR asAppNames)
-			{
-				size_t iLen = wcslen(asAppNames);
-
-				if (!AppNames || !AppNamesLwr || (iLen >= cchNameMax))
-				{
-					SafeFree(AppNames);
-					SafeFree(AppNamesLwr);
-
-					cchNameMax = iLen+32;
-					AppNames = (wchar_t*)malloc(cchNameMax*sizeof(wchar_t));
-					AppNamesLwr = (wchar_t*)malloc(cchNameMax*sizeof(wchar_t));
-					if (!AppNames || !AppNamesLwr)
-					{
-						_ASSERTE(AppNames!=NULL && AppNamesLwr!=NULL);
-						return;
-					}
-				}
-
-				_wcscpy_c(AppNames, iLen+1, asAppNames);
-				_wcscpy_c(AppNamesLwr, iLen+1, asAppNames);
-				CharLowerBuff(AppNamesLwr, iLen);
-			};
-
-			void FreeApps()
-			{
-				SafeFree(AppNames);
-				SafeFree(AppNamesLwr);
-				cchNameMax = 0;
-			};
-		};
 		int GetAppSettingsId(LPCWSTR asExeAppName, bool abElevated);
 		const AppSettings* GetAppSettings(int anAppId=-1);
 		COLORREF* GetColors(int anAppId=-1, BOOL abFade = FALSE);
@@ -453,6 +195,7 @@ struct Settings
 		void ProgressesSetDuration(LPCWSTR asName, DWORD anDuration);
 
 	protected:
+		friend struct AppSettings;
 		AppSettings AppStd;
 		int AppCount;
 		AppSettings** Apps;

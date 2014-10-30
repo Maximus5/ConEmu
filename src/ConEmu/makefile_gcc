@@ -30,7 +30,6 @@ SRCS = \
 		Background.cpp     \
 		BaseDragDrops.cpp  \
 		CmdHistory.cpp     \
-		CmdTasks.cpp       \
 		ConEmu.cpp         \
 		ConEmuApp.cpp      \
 		ConEmuCtrl.cpp     \
@@ -71,6 +70,9 @@ SRCS = \
 		RunQueue.cpp       \
 		ScreenDump.cpp     \
 		SearchCtrl.cpp     \
+		SetAppSettings.cpp \
+		SetCmdTask.cpp     \
+		SetColorPalette.cpp\
 		SetDlgButtons.cpp  \
 		SetDlgColors.cpp   \
 		SetDlgFonts.cpp    \

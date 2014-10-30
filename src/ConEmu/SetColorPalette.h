@@ -26,30 +26,36 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+
 #pragma once
 
-#include "Options.h"
+#include <windows.h>
 
-#define getR(inColorref) (byte)(inColorref)
-#define getG(inColorref) (byte)((inColorref) >> 8)
-#define getB(inColorref) (byte)((inColorref) >> 16)
-
-class CSetDlgColors
+struct ColorPalette
 {
-protected:
-	static const int MAX_COLOR_EDT_ID; // c31
-	static BOOL gbLastColorsOk; // FALSE
-	static ColorPalette gLastColors; // {}
+	wchar_t* pszName;
+	bool bPredefined;
 
-	static HBRUSH mh_CtlColorBrush;
-	static COLORREF acrCustClr[16]; // array of custom colors, используется в ChooseColor(...)
+	//reg->Load(L"ExtendColors", isExtendColors);
+	bool isExtendColors;
+	//reg->Load(L"ExtendColorIdx", nExtendColorIdx);
+	BYTE nExtendColorIdx; // 0..15
 
-	static bool GetColorById(WORD nID, COLORREF* color);
-	static bool GetColorRef(HWND hDlg, WORD TB, COLORREF* pCR);
-	static bool SetColorById(WORD nID, COLORREF color);
-	static void ColorSetEdit(HWND hWnd2, WORD c);
-	static bool ColorEditDialog(HWND hWnd2, WORD c);
-	static void FillBgImageColors(HWND hWnd2);
-	static INT_PTR ColorCtlStatic(HWND hWnd2, WORD c, HWND hItem);
-	static bool ShowColorDialog(HWND HWndOwner, COLORREF *inColor);
+	//reg->Load(L"TextColorIdx", nTextColorIdx);
+	BYTE nTextColorIdx; // 0..15,16
+	//reg->Load(L"BackColorIdx", nBackColorIdx);
+	BYTE nBackColorIdx; // 0..15,16
+	//reg->Load(L"PopTextColorIdx", nPopTextColorIdx);
+	BYTE nPopTextColorIdx; // 0..15,16
+	//reg->Load(L"PopBackColorIdx", nPopBackColorIdx);
+	BYTE nPopBackColorIdx; // 0..15,16
+
+	// Loaded
+	COLORREF Colors[0x20];
+
+	// Computed
+	COLORREF ColorsFade[0x20];
+	bool FadeInitialized;
+
+	void FreePtr();
 };

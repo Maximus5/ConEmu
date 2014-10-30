@@ -33,6 +33,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmu.h"
 #include "Options.h"
 #include "OptionsClass.h"
+#include "SetCmdTask.h"
 #include "VirtualConsole.h"
 
 // Некоторые комбинации нужно обрабатывать "на отпускание" во избежание глюков с интерфейсом
@@ -858,7 +859,7 @@ bool ConEmuHotKey::UseCTSShiftArrow()
 	if (!pRCon || pRCon->isFar() || pRCon->isSelectionPresent())
 		return false;
 
-	const Settings::AppSettings* pApp = gpSet->GetAppSettings(pRCon->GetActiveAppSettingsId());
+	const AppSettings* pApp = gpSet->GetAppSettings(pRCon->GetActiveAppSettingsId());
 	if (!pApp)
 		return false;
 

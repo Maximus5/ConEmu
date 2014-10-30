@@ -262,7 +262,7 @@ class CVirtualConsole :
 //public:
 		//MSection csBkImgData;
 
-		const Settings::AppSettings* mp_Set;
+		const AppSettings* mp_Set;
 
 	public:
 		bool isEditor, isViewer, isFilePanel, isFade, isForeground;

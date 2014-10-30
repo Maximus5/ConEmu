@@ -1328,7 +1328,7 @@ bool CConEmuCtrl::key_PasteTextAllApp(const ConEmuChord& VkState, bool TestOnly,
 	if (!pRCon || pRCon->GuiWnd())
 		return false;
 
-	const Settings::AppSettings* pApp = gpSet->GetAppSettings(pRCon->GetActiveAppSettingsId());
+	const AppSettings* pApp = gpSet->GetAppSettings(pRCon->GetActiveAppSettingsId());
 	if (!pApp->PasteAllLines())
 		return false;
 
@@ -1353,7 +1353,7 @@ bool CConEmuCtrl::key_PasteFirstLineAllApp(const ConEmuChord& VkState, bool Test
 	if (!pRCon || pRCon->GuiWnd())
 		return false;
 
-	const Settings::AppSettings* pApp = gpSet->GetAppSettings(pRCon->GetActiveAppSettingsId());
+	const AppSettings* pApp = gpSet->GetAppSettings(pRCon->GetActiveAppSettingsId());
 	if (!pApp->PasteFirstLine())
 		return false;
 

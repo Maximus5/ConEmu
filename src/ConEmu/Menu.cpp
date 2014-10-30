@@ -47,6 +47,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Options.h"
 #include "OptionsClass.h"
 #include "RealConsole.h"
+#include "SetColorPalette.h"
+#include "SetCmdTask.h"
 #include "Status.h"
 #include "TabBar.h"
 #include "TrayIcon.h"
@@ -1951,7 +1953,7 @@ HMENU CConEmuMenu::CreateViewMenuPopup(CVirtualConsole* apVCon, HMENU ahExist /*
 	bool  bNew = (ahExist == NULL);
 	HMENU hMenu = bNew ? CreatePopupMenu() : ahExist;
 
-	const Settings::ColorPalette* pPal;
+	const ColorPalette* pPal = NULL;
 
 	int iActiveIndex = apVCon->GetPaletteIndex();
 

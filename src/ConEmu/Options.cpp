@@ -58,6 +58,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "VConChild.h"
 #include "VConGroup.h"
 #include "VirtualConsole.h"
+#include "SetCmdTask.h"
+#include "SetColorPalette.h"
 
 
 //#define DEBUGSTRFONT(s) DEBUGSTR(s)
@@ -1042,7 +1044,7 @@ void Settings::LoadCursorSettings(SettingsBase* reg, CECursorType* pActive, CECu
 	}
 }
 
-void Settings::LoadAppSettings(SettingsBase* reg, Settings::AppSettings* pApp/*, COLORREF* pColors*/)
+void Settings::LoadAppSettings(SettingsBase* reg, AppSettings* pApp/*, COLORREF* pColors*/)
 {
 	// Для AppStd данные загружаются из основной ветки! В том числе и цвета (RGB[32] а не имя палитры)
 	bool bStd = (pApp == &AppStd);
@@ -1077,7 +1079,7 @@ void Settings::LoadAppSettings(SettingsBase* reg, Settings::AppSettings* pApp/*,
 		if (!reg->Load(L"PaletteName", pApp->szPaletteName, countof(pApp->szPaletteName)))
 			pApp->szPaletteName[0] = 0;
 		pApp->ResetPaletteIndex();
-		const Settings::ColorPalette* pPal = PaletteGet(pApp->GetPaletteIndex());
+		const ColorPalette* pPal = PaletteGet(pApp->GetPaletteIndex());
 
 		_ASSERTE(pPal!=NULL); // NULL не может быть. Всегда как минимум - стандартная палитра
 		pApp->isExtendColors = pPal->isExtendColors;
@@ -1723,14 +1725,14 @@ void Settings::SavePalettes(SettingsBase* reg)
 
 // 0-based, index of Palettes
 // -1 -- current palette, it will show name "<Current color scheme>"
-const Settings::ColorPalette* Settings::PaletteGet(int anIndex)
+const ColorPalette* Settings::PaletteGet(int anIndex)
 {
 	return PaletteGetPtr(anIndex);
 }
 
-const Settings::ColorPalette* Settings::PaletteFindCurrent(bool bMatchAttributes)
+const ColorPalette* Settings::PaletteFindCurrent(bool bMatchAttributes)
 {
-	const Settings::ColorPalette* pCur = PaletteGetPtr(-1);
+	const ColorPalette* pCur = PaletteGetPtr(-1);
 	if (!pCur)
 	{
 		// MUST be NOT NULL
@@ -1738,8 +1740,8 @@ const Settings::ColorPalette* Settings::PaletteFindCurrent(bool bMatchAttributes
 		return NULL;
 	}
 
-	const Settings::ColorPalette* pFound = NULL;
-	const Settings::ColorPalette* pPal = NULL;
+	const ColorPalette* pFound = NULL;
+	const ColorPalette* pPal = NULL;
 	for (int i = 0; (pPal = PaletteGetPtr(i)) != NULL; i++)
 	{
 		if ((memcmp(pCur->Colors, pPal->Colors, sizeof(pPal->Colors)) == 0)
@@ -1767,7 +1769,7 @@ const Settings::ColorPalette* Settings::PaletteFindCurrent(bool bMatchAttributes
 
 // 0-based, index of Palettes
 // -1 -- current palette, it will show name "<Current color scheme>"
-Settings::ColorPalette* Settings::PaletteGetPtr(int anIndex)
+ColorPalette* Settings::PaletteGetPtr(int anIndex)
 {
 	if ((anIndex >= 0) && (anIndex < PaletteCount) && Palettes && Palettes[anIndex])
 	{
@@ -1817,7 +1819,7 @@ void Settings::PaletteSetStdIndexes()
 	}
 }
 
-int Settings::AppSettings::GetPaletteIndex() const
+int AppSettings::GetPaletteIndex() const
 {
 	if (this == NULL) // *AppSettings
 	{
@@ -1827,7 +1829,7 @@ int Settings::AppSettings::GetPaletteIndex() const
 	return gpSet->PaletteGetIndex(szPaletteName);
 }
 
-void Settings::AppSettings::SetPaletteName(LPCWSTR asNewPaletteName)
+void AppSettings::SetPaletteName(LPCWSTR asNewPaletteName)
 {
 	if (this == NULL)
 	{
@@ -1838,12 +1840,12 @@ void Settings::AppSettings::SetPaletteName(LPCWSTR asNewPaletteName)
 	ResetPaletteIndex();
 }
 
-void Settings::AppSettings::ResetPaletteIndex()
+void AppSettings::ResetPaletteIndex()
 {
 	// TODO:
 }
 
-const Settings::ColorPalette* Settings::PaletteGetByName(LPCWSTR asName)
+const ColorPalette* Settings::PaletteGetByName(LPCWSTR asName)
 {
 	int iPal = PaletteGetIndex(asName);
 	return PaletteGet(iPal);
@@ -1872,7 +1874,7 @@ int Settings::PaletteSetActive(LPCWSTR asName)
 {
 	int nPalIdx = PaletteGetIndex(asName);
 
-	const Settings::ColorPalette* pPal = (nPalIdx != -1) ? PaletteGet(nPalIdx) : NULL;
+	const ColorPalette* pPal = (nPalIdx != -1) ? PaletteGet(nPalIdx) : NULL;
 
 	if (pPal)
 	{
@@ -3279,7 +3281,7 @@ void Settings::SaveAppsSettings(SettingsBase* reg)
 	}
 }
 
-void Settings::SaveAppSettings(SettingsBase* reg, Settings::AppSettings* pApp/*, COLORREF* pColors*/)
+void Settings::SaveAppSettings(SettingsBase* reg, AppSettings* pApp/*, COLORREF* pColors*/)
 {
 	// Для AppStd данные загружаются из основной ветки! В том числе и цвета (RGB[32] а не имя палитры)
 	bool bStd = (pApp == &AppStd);
@@ -4505,7 +4507,7 @@ int Settings::GetAppSettingsId(LPCWSTR asExeAppName, bool abElevated)
 	return -1;
 }
 
-const Settings::AppSettings* Settings::GetAppSettings(int anAppId/*=-1*/)
+const AppSettings* Settings::GetAppSettings(int anAppId/*=-1*/)
 {
 	if ((anAppId < 0) || (anAppId >= AppCount))
 	{
@@ -4526,7 +4528,7 @@ const Settings::AppSettings* Settings::GetAppSettings(int anAppId/*=-1*/)
 	return Apps[anAppId];
 }
 
-Settings::AppSettings* Settings::GetAppSettingsPtr(int anAppId, BOOL abCreateNew /*= FALSE*/)
+AppSettings* Settings::GetAppSettingsPtr(int anAppId, BOOL abCreateNew /*= FALSE*/)
 {
 	if ((anAppId == AppCount) && abCreateNew)
 	{

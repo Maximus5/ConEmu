@@ -33,7 +33,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "Header.h"
 #include "Hotkeys.h"
-#include "CmdTasks.h"
+#include "SetCmdTask.h"
 #include "Options.h"
 
 void CommandTasks::FreePtr()

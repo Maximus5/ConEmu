@@ -60,6 +60,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "DwmHelper.h"
 #include "ConEmuApp.h"
 #include "Update.h"
+#include "SetCmdTask.h"
 #include "Recreate.h"
 #include "DefaultTerm.h"
 #include "version.h"

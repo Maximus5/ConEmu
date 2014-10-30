@@ -38,6 +38,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "OptionsClass.h"
 #include "RealConsole.h"
 #include "Recreate.h"
+#include "SetCmdTask.h"
 #include "VConGroup.h"
 #include "VirtualConsole.h"
 

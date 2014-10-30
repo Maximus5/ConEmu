@@ -213,7 +213,7 @@
     <ClCompile Include="DpiAware.cpp">
       <Filter>0 - Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="CmdTasks.cpp">
+    <ClCompile Include="SetCmdTask.cpp">
       <Filter>0 - Source Files</Filter>
     </ClCompile>
     <ClCompile Include="ConEmuSize.cpp">
@@ -543,7 +543,7 @@
     <ClInclude Include="..\common\StartupEnv.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="CmdTasks.h">
+    <ClInclude Include="SetCmdTask.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ConEmuSize.h">

@@ -33,6 +33,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ConEmu.h"
 #include "OptionsClass.h"
+#include "SetColorPalette.h"
 #include "SetDlgColors.h"
 #include "Status.h"
 #include "VConGroup.h"
@@ -41,7 +42,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 const int CSetDlgColors::MAX_COLOR_EDT_ID = c31;
 
 BOOL CSetDlgColors::gbLastColorsOk = FALSE;
-Settings::ColorPalette CSetDlgColors::gLastColors = {};
+ColorPalette CSetDlgColors::gLastColors = {};
 
 HBRUSH CSetDlgColors::mh_CtlColorBrush = NULL;
 COLORREF CSetDlgColors::acrCustClr[16] = {}; // array of custom colors, используется в ChooseColor(...)

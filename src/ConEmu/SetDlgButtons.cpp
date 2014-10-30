@@ -48,6 +48,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "OptionsClass.h"
 #include "OptionsFast.h"
 #include "Recreate.h"
+#include "SetCmdTask.h"
 #include "SetDlgButtons.h"
 #include "SetDlgLists.h"
 #include "Status.h"
@@ -895,7 +896,7 @@ bool CSetDlgButtons::ProcessButtonClick(HWND hDlg, WORD CB, BYTE uCheck)
 }
 
 // rCursorH ... cbInactiveCursorIgnoreSize
-void CSetDlgButtons::OnButtonClicked_Cursor(HWND hDlg, WORD CB, BYTE uCheck, Settings::AppSettings* pApp)
+void CSetDlgButtons::OnButtonClicked_Cursor(HWND hDlg, WORD CB, BYTE uCheck, AppSettings* pApp)
 {
 	switch (CB)
 	{
@@ -1001,7 +1002,7 @@ LRESULT CSetDlgButtons::OnButtonClicked(HWND hDlg, WPARAM wParam, LPARAM lParam)
 /* *********************************************************** */
 
 // rCursorH || rCursorV || rCursorB || rCursorR
-void CSetDlgButtons::OnBtn_CursorX(HWND hDlg, WORD CB, BYTE uCheck, Settings::AppSettings* pApp)
+void CSetDlgButtons::OnBtn_CursorX(HWND hDlg, WORD CB, BYTE uCheck, AppSettings* pApp)
 {
 	_ASSERTE(CB==rCursorH || CB==rCursorV || CB==rCursorB || CB==rCursorR);
 
@@ -1011,7 +1012,7 @@ void CSetDlgButtons::OnBtn_CursorX(HWND hDlg, WORD CB, BYTE uCheck, Settings::Ap
 
 
 // cbCursorColor
-void CSetDlgButtons::OnBtn_CursorColor(HWND hDlg, WORD CB, BYTE uCheck, Settings::AppSettings* pApp)
+void CSetDlgButtons::OnBtn_CursorColor(HWND hDlg, WORD CB, BYTE uCheck, AppSettings* pApp)
 {
 	_ASSERTE(CB==cbCursorColor);
 
@@ -1021,7 +1022,7 @@ void CSetDlgButtons::OnBtn_CursorColor(HWND hDlg, WORD CB, BYTE uCheck, Settings
 
 
 // cbCursorBlink
-void CSetDlgButtons::OnBtn_CursorBlink(HWND hDlg, WORD CB, BYTE uCheck, Settings::AppSettings* pApp)
+void CSetDlgButtons::OnBtn_CursorBlink(HWND hDlg, WORD CB, BYTE uCheck, AppSettings* pApp)
 {
 	_ASSERTE(CB==cbCursorBlink);
 
@@ -1031,7 +1032,7 @@ void CSetDlgButtons::OnBtn_CursorBlink(HWND hDlg, WORD CB, BYTE uCheck, Settings
 
 
 // cbCursorIgnoreSize
-void CSetDlgButtons::OnBtn_CursorIgnoreSize(HWND hDlg, WORD CB, BYTE uCheck, Settings::AppSettings* pApp)
+void CSetDlgButtons::OnBtn_CursorIgnoreSize(HWND hDlg, WORD CB, BYTE uCheck, AppSettings* pApp)
 {
 	_ASSERTE(CB==cbCursorIgnoreSize);
 
@@ -1041,7 +1042,7 @@ void CSetDlgButtons::OnBtn_CursorIgnoreSize(HWND hDlg, WORD CB, BYTE uCheck, Set
 
 
 // cbInactiveCursor
-void CSetDlgButtons::OnBtn_InactiveCursor(HWND hDlg, WORD CB, BYTE uCheck, Settings::AppSettings* pApp)
+void CSetDlgButtons::OnBtn_InactiveCursor(HWND hDlg, WORD CB, BYTE uCheck, AppSettings* pApp)
 {
 	_ASSERTE(CB==cbInactiveCursor);
 
@@ -1050,7 +1051,7 @@ void CSetDlgButtons::OnBtn_InactiveCursor(HWND hDlg, WORD CB, BYTE uCheck, Setti
 
 
 // rInactiveCursorH || rInactiveCursorV || rInactiveCursorB || rInactiveCursorR
-void CSetDlgButtons::OnBtn_InactiveCursorX(HWND hDlg, WORD CB, BYTE uCheck, Settings::AppSettings* pApp)
+void CSetDlgButtons::OnBtn_InactiveCursorX(HWND hDlg, WORD CB, BYTE uCheck, AppSettings* pApp)
 {
 	_ASSERTE(CB==rInactiveCursorH || CB==rInactiveCursorV || CB==rInactiveCursorB || CB==rInactiveCursorR);
 
@@ -1060,7 +1061,7 @@ void CSetDlgButtons::OnBtn_InactiveCursorX(HWND hDlg, WORD CB, BYTE uCheck, Sett
 
 
 // cbInactiveCursorColor
-void CSetDlgButtons::OnBtn_InactiveCursorColor(HWND hDlg, WORD CB, BYTE uCheck, Settings::AppSettings* pApp)
+void CSetDlgButtons::OnBtn_InactiveCursorColor(HWND hDlg, WORD CB, BYTE uCheck, AppSettings* pApp)
 {
 	_ASSERTE(CB==cbInactiveCursorColor);
 
@@ -1070,7 +1071,7 @@ void CSetDlgButtons::OnBtn_InactiveCursorColor(HWND hDlg, WORD CB, BYTE uCheck, 
 
 
 // cbInactiveCursorBlink
-void CSetDlgButtons::OnBtn_InactiveCursorBlink(HWND hDlg, WORD CB, BYTE uCheck, Settings::AppSettings* pApp)
+void CSetDlgButtons::OnBtn_InactiveCursorBlink(HWND hDlg, WORD CB, BYTE uCheck, AppSettings* pApp)
 {
 	_ASSERTE(CB==cbInactiveCursorBlink);
 
@@ -1080,7 +1081,7 @@ void CSetDlgButtons::OnBtn_InactiveCursorBlink(HWND hDlg, WORD CB, BYTE uCheck, 
 
 
 // cbInactiveCursorIgnoreSize
-void CSetDlgButtons::OnBtn_InactiveCursorIgnoreSize(HWND hDlg, WORD CB, BYTE uCheck, Settings::AppSettings* pApp)
+void CSetDlgButtons::OnBtn_InactiveCursorIgnoreSize(HWND hDlg, WORD CB, BYTE uCheck, AppSettings* pApp)
 {
 	_ASSERTE(CB==cbInactiveCursorIgnoreSize);
 

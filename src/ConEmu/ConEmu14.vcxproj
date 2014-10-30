@@ -947,7 +947,6 @@
     <ClCompile Include="Background.cpp" />
     <ClCompile Include="BaseDragDrops.cpp" />
     <ClCompile Include="CmdHistory.cpp" />
-    <ClCompile Include="CmdTasks.cpp" />
     <ClCompile Include="ConEmu.cpp" />
     <ClCompile Include="ConEmuApp.cpp" />
     <ClCompile Include="ConEmuCtrl.cpp" />
@@ -988,6 +987,9 @@
     <ClCompile Include="RunQueue.cpp" />
     <ClCompile Include="ScreenDump.cpp" />
     <ClCompile Include="SearchCtrl.cpp" />
+    <ClCompile Include="SetAppSettings.cpp" />
+    <ClCompile Include="SetCmdTask.cpp" />
+    <ClCompile Include="SetColorPalette.cpp" />
     <ClCompile Include="SetDlgButtons.cpp" />
     <ClCompile Include="SetDlgColors.cpp" />
     <ClCompile Include="SetDlgFonts.cpp" />
@@ -1057,7 +1059,6 @@
     <ClInclude Include="Background.h" />
     <ClInclude Include="BaseDragDrops.h" />
     <ClInclude Include="CmdHistory.h" />
-    <ClInclude Include="CmdTasks.h" />
     <ClInclude Include="ConEmu.h" />
     <ClInclude Include="ConEmuApp.h" />
     <ClInclude Include="ConEmuCtrl.h" />
@@ -1105,10 +1106,14 @@
     <ClInclude Include="RunQueue.h" />
     <ClInclude Include="ScreenDump.h" />
     <ClInclude Include="SearchCtrl.h" />
+    <ClInclude Include="SetAppSettings.h" />
+    <ClInclude Include="SetCmdTask.h" />
+    <ClInclude Include="SetColorPalette.h" />
     <ClInclude Include="SetDlgButtons.h" />
     <ClInclude Include="SetDlgColors.h" />
     <ClInclude Include="SetDlgFonts.h" />
     <ClInclude Include="SetDlgLists.h" />
+    <ClInclude Include="SetTypes.h" />
     <ClInclude Include="Status.h" />
     <ClInclude Include="TabBar.h" />
     <ClInclude Include="TabCtrlBase.h" />

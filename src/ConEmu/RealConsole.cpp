@@ -64,6 +64,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "RealBuffer.h"
 #include "RealConsole.h"
 #include "RunQueue.h"
+#include "SetColorPalette.h"
 #include "Status.h"
 #include "TabBar.h"
 #include "VConChild.h"
@@ -1495,7 +1496,7 @@ bool CRealConsole::DeleteWordKeyPress(bool bTestOnly /*= false*/)
 	if (!nActivePID || (mp_ABuf->m_Type != rbt_Primary) || isFar() || isNtvdm())
 		return false;
 
-	const Settings::AppSettings* pApp = gpSet->GetAppSettings(GetActiveAppSettingsId());
+	const AppSettings* pApp = gpSet->GetAppSettings(GetActiveAppSettingsId());
 	if (!pApp || !pApp->CTSDeleteLeftWord())
 		return false;
 
@@ -2781,11 +2782,11 @@ void CRealConsole::PrepareDefaultColors(BYTE& nTextColorIdx, BYTE& nBackColorIdx
 
 	// Тут берем именно "GetDefaultAppSettingsId", а не "GetActiveAppSettingsId"
 	// т.к. довольно стремно менять АТРИБУТЫ консоли при выполнении пакетников и пр.
-	const Settings::AppSettings* pApp = gpSet->GetAppSettings(GetDefaultAppSettingsId());
+	const AppSettings* pApp = gpSet->GetAppSettings(GetDefaultAppSettingsId());
 	_ASSERTE(pApp!=NULL);
 
 	// User choose special palette for this console?
-	const Settings::ColorPalette* pPal = NULL;
+	const ColorPalette* pPal = NULL;
 	_ASSERTE(countof(pApp->szPaletteName)>0); // must be array, not pointer
 	LPCWSTR pszPalette = (m_Args.pszPalette && *m_Args.pszPalette) ? m_Args.pszPalette
 		: (pApp->OverridePalette && *pApp->szPaletteName) ? pApp->szPaletteName
@@ -4234,7 +4235,7 @@ void CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y, bool abForce
 	}
 
 
-	const Settings::AppSettings* pApp = NULL;
+	const AppSettings* pApp = NULL;
 	if ((messg == WM_LBUTTONUP) && !mb_WasMouseSelection
 		&& ((pApp = gpSet->GetAppSettings(GetActiveAppSettingsId())) != NULL)
 		&& pApp->CTSClickPromptPosition()
@@ -10832,7 +10833,7 @@ void CRealConsole::Paste(CEPasteMode PasteMode /*= pm_Standard*/, LPCWSTR asText
 	wchar_t* pszRN = wcspbrk(pszBuf, L"\r\n");
 	if (PasteMode == pm_OneLine)
 	{
-		const Settings::AppSettings* pApp = gpSet->GetAppSettings(GetActiveAppSettingsId());
+		const AppSettings* pApp = gpSet->GetAppSettings(GetActiveAppSettingsId());
 		bool bTrimTailing = pApp ? (pApp->CTSTrimTrailing() != 0) : false;
 
 		//PRAGMA_ERROR("Неправильно вставляется, если в превой строке нет trailing space");

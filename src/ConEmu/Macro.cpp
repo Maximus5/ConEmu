@@ -48,6 +48,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "AboutDlg.h"
 #include "Attach.h"
 #include "SetDlgButtons.h"
+#include "SetCmdTask.h"
+#include "SetColorPalette.h"
 
 
 /* ********************************* */
@@ -2103,7 +2105,7 @@ LPWSTR ConEmuMacro::Palette(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin
 	wchar_t* pszRc = NULL;
 	int nCmd = 0, iPal;
 	LPWSTR pszNewName = NULL;
-	const Settings::ColorPalette* pPal;
+	const ColorPalette* pPal;
 
 	p->GetIntArg(0, nCmd);
 

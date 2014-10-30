@@ -26,30 +26,17 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#pragma once
 
-#include "Options.h"
+#define HIDE_USE_EXCEPTION_INFO
+#define SHOWDEBUGSTR
 
-#define getR(inColorref) (byte)(inColorref)
-#define getG(inColorref) (byte)((inColorref) >> 8)
-#define getB(inColorref) (byte)((inColorref) >> 16)
+#include "Header.h"
 
-class CSetDlgColors
+#include "SetColorPalette.h"
+
+void ColorPalette::FreePtr()
 {
-protected:
-	static const int MAX_COLOR_EDT_ID; // c31
-	static BOOL gbLastColorsOk; // FALSE
-	static ColorPalette gLastColors; // {}
-
-	static HBRUSH mh_CtlColorBrush;
-	static COLORREF acrCustClr[16]; // array of custom colors, используется в ChooseColor(...)
-
-	static bool GetColorById(WORD nID, COLORREF* color);
-	static bool GetColorRef(HWND hDlg, WORD TB, COLORREF* pCR);
-	static bool SetColorById(WORD nID, COLORREF color);
-	static void ColorSetEdit(HWND hWnd2, WORD c);
-	static bool ColorEditDialog(HWND hWnd2, WORD c);
-	static void FillBgImageColors(HWND hWnd2);
-	static INT_PTR ColorCtlStatic(HWND hWnd2, WORD c, HWND hItem);
-	static bool ShowColorDialog(HWND HWndOwner, COLORREF *inColor);
-};
+	SafeFree(pszName);
+	ColorPalette* p = this;
+	SafeFree(p);
+}

@@ -4253,7 +4253,7 @@ bool CRealBuffer::DoSelectionCopyInt(CECopyMode CopyMode, bool bStreamMode, int 
 		return false;
 	}
 
-	const Settings::AppSettings* pApp = gpSet->GetAppSettings(mp_RCon->GetActiveAppSettingsId());
+	const AppSettings* pApp = gpSet->GetAppSettings(mp_RCon->GetActiveAppSettingsId());
 	if (pApp == NULL)
 	{
 		Assert(pApp!=NULL);
@@ -4933,7 +4933,7 @@ BOOL CRealBuffer::GetConsoleLine(int nLine, wchar_t** pChar, /*CharAttr** pAttr,
 	return TRUE;
 }
 
-void CRealBuffer::PrepareColorTable(bool bExtendFonts, CharAttr (&lcaTableExt)[0x100], CharAttr (&lcaTableOrg)[0x100], const Settings::AppSettings* pApp /*= NULL*/)
+void CRealBuffer::PrepareColorTable(bool bExtendFonts, CharAttr (&lcaTableExt)[0x100], CharAttr (&lcaTableOrg)[0x100], const AppSettings* pApp /*= NULL*/)
 {
 	CharAttr lca; // crForeColor, crBackColor, nFontIndex, nForeIdx, nBackIdx, crOrigForeColor, crOrigBackColor
 	//COLORREF lcrForegroundColors[0x100], lcrBackgroundColors[0x100];
@@ -5011,7 +5011,7 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 	if (!lbAllowHilightFileLine && (con.etr.etrLast != etr_None))
 		StoreLastTextRange(etr_None);
 	WARNING("lbIsFar - хорошо бы заменить на привязку к конкретным приложениям?");
-	const Settings::AppSettings* pApp = gpSet->GetAppSettings(mp_RCon->GetActiveAppSettingsId());
+	const AppSettings* pApp = gpSet->GetAppSettings(mp_RCon->GetActiveAppSettingsId());
 	_ASSERTE(pApp!=NULL);
 	// 120331 - зачем ограничивать настройку доп.цветов?
 	bool bExtendColors = /*lbIsFar &&*/ pApp->ExtendColors();
@@ -6133,7 +6133,7 @@ void CRealBuffer::ConsoleCursorInfo(CONSOLE_CURSOR_INFO *ci)
 	}
 	else
 	{
-		const Settings::AppSettings* pApp = gpSet->GetAppSettings(mp_RCon->GetActiveAppSettingsId());
+		const AppSettings* pApp = gpSet->GetAppSettings(mp_RCon->GetActiveAppSettingsId());
 		bool bActive = mp_RCon->isInFocus();
 		if (pApp->CursorIgnoreSize(bActive))
 			ci->dwSize = pApp->CursorFixedSize(bActive);

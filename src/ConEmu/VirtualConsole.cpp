@@ -72,6 +72,7 @@ FEFF    ZERO WIDTH NO-BREAK SPACE
 #include "OptionsClass.h"
 #include "Background.h"
 #include "ConEmuPipe.h"
+#include "SetColorPalette.h"
 #include "TabID.h"
 #include "TabBar.h"
 #include "TaskBarGhost.h"
@@ -2522,7 +2523,7 @@ int CVirtualConsole::GetPaletteIndex()
 		}
 		else
 		{
-			const Settings::AppSettings* pAppSet = gpSet->GetAppSettings(mp_RCon ? mp_RCon->GetActiveAppSettingsId() : -1);
+			const AppSettings* pAppSet = gpSet->GetAppSettings(mp_RCon ? mp_RCon->GetActiveAppSettingsId() : -1);
 			iActiveIndex = pAppSet ? pAppSet->GetPaletteIndex() : -1;
 		}
 	}
@@ -2534,8 +2535,8 @@ bool CVirtualConsole::ChangePalette(int aNewPaletteIdx)
 	if (!this || !mp_RCon)
 		return false;
 
-	const Settings::ColorPalette* pOldPal = gpSet->PaletteGet(GetPaletteIndex());
-	const Settings::ColorPalette* pPal = gpSet->PaletteGet(aNewPaletteIdx);
+	const ColorPalette* pOldPal = gpSet->PaletteGet(GetPaletteIndex());
+	const ColorPalette* pPal = gpSet->PaletteGet(aNewPaletteIdx);
 	if (!pPal)
 		return false;
 

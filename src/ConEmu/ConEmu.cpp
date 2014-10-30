@@ -80,6 +80,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "RealBuffer.h"
 #include "Recreate.h"
 #include "RunQueue.h"
+#include "SetCmdTask.h"
 #include "Status.h"
 #include "TabBar.h"
 #include "TrayIcon.h"
@@ -3863,7 +3864,7 @@ void CConEmuMain::PostChangeCurPalette(LPCWSTR pszPalette, bool bChangeDropDown,
 	}
 	else
 	{
-		const Settings::ColorPalette* pPal = gpSet->PaletteGetByName(pszPalette);
+		const ColorPalette* pPal = gpSet->PaletteGetByName(pszPalette);
 		gpSetCls->ChangeCurrentPalette(pPal, bChangeDropDown);
 	}
 }

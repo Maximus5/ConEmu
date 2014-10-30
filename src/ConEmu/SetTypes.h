@@ -26,30 +26,72 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+
 #pragma once
 
-#include "Options.h"
+#include <windows.h>
 
-#define getR(inColorref) (byte)(inColorref)
-#define getG(inColorref) (byte)((inColorref) >> 8)
-#define getB(inColorref) (byte)((inColorref) >> 16)
-
-class CSetDlgColors
+struct FindTextOptions
 {
-protected:
-	static const int MAX_COLOR_EDT_ID; // c31
-	static BOOL gbLastColorsOk; // FALSE
-	static ColorPalette gLastColors; // {}
+	size_t   cchTextMax;
+	wchar_t* pszText;
+	bool     bMatchCase;
+	bool     bMatchWholeWords;
+	bool     bFreezeConsole;
+	bool     bHighlightAll;
+	bool     bTransparent;
+};
 
-	static HBRUSH mh_CtlColorBrush;
-	static COLORREF acrCustClr[16]; // array of custom colors, используется в ChooseColor(...)
 
-	static bool GetColorById(WORD nID, COLORREF* color);
-	static bool GetColorRef(HWND hDlg, WORD TB, COLORREF* pCR);
-	static bool SetColorById(WORD nID, COLORREF color);
-	static void ColorSetEdit(HWND hWnd2, WORD c);
-	static bool ColorEditDialog(HWND hWnd2, WORD c);
-	static void FillBgImageColors(HWND hWnd2);
-	static INT_PTR ColorCtlStatic(HWND hWnd2, WORD c, HWND hItem);
-	static bool ShowColorDialog(HWND HWndOwner, COLORREF *inColor);
+enum CECursorStyle
+{
+	cur_Horz         = 0x00,
+	cur_Vert         = 0x01,
+	cur_Block        = 0x02,
+	cur_Rect         = 0x03,
+
+	// Used for Min/Max
+	cur_First        = cur_Horz,
+	cur_Last         = cur_Rect,
+};
+
+union CECursorType
+{
+	struct
+	{
+		CECursorStyle  CursorType   : 6;
+		unsigned int   isBlinking   : 1;
+		unsigned int   isColor      : 1;
+		unsigned int   isFixedSize  : 1;
+		unsigned int   FixedSize    : 7;
+		unsigned int   MinSize      : 7;
+		// set to true for use distinct settings for Inactive cursor
+		unsigned int   Used         : 1;
+	};
+
+	DWORD Raw;
+};
+
+enum TabStyle
+{
+	ts_VS2008 = 0,
+	ts_Win8   = 1,
+};
+
+typedef DWORD SettingsLoadedFlags;
+const SettingsLoadedFlags
+	slf_NeedCreateVanilla = 0x0001, // Call gpSet->SaveSettings after initializing
+	slf_AllowFastConfig   = 0x0002,
+	slf_OnStartupLoad     = 0x0004,
+	slf_OnResetReload     = 0x0008,
+	slf_DefaultSettings   = 0x0010,
+	slf_None              = 0x0000
+;
+
+enum AdminTabStyle
+{
+	ats_Empty        = 0,
+	ats_Shield       = 1,
+	ats_ShieldSuffix = 3,
+	ats_Disabled     = 4,
 };

@@ -213,7 +213,7 @@ private:
 
 	short CheckProgressInConsole(const wchar_t* pszCurLine);
 
-	void PrepareColorTable(bool bExtendFonts, CharAttr (&lcaTableExt)[0x100], CharAttr (&lcaTableOrg)[0x100], const Settings::AppSettings* pApp = NULL);
+	void PrepareColorTable(bool bExtendFonts, CharAttr (&lcaTableExt)[0x100], CharAttr (&lcaTableOrg)[0x100], const AppSettings* pApp = NULL);
 
 	bool ResetLastMousePos();
 
