@@ -150,7 +150,10 @@ DWORD CRunQueue::RunQueueThread()
 			bPending = !m_RunQueue.empty();
 		}
 
-		ProcessRunQueue();
+		if (bPending)
+		{
+			ProcessRunQueue();
+		}
 	}
 
 	return 0;
@@ -167,7 +170,6 @@ void CRunQueue::ProcessRunQueue()
 	#endif
 
 	// Block adding new requests from other threads
-	MArray<RunQueueItem> Stack;
 	MSectionLockSimple cs;
 	cs.Lock(mpcs_QueueLock);
 	RunQueueItem item = {};
@@ -176,7 +178,7 @@ void CRunQueue::ProcessRunQueue()
 		//item = m_RunQueue[0];
 		//m_RunQueue.erase(0);
 
-		Stack.push_back(item);
+		m_WorkStack.push_back(item);
 	}
 	cs.Unlock();
 
@@ -184,7 +186,7 @@ void CRunQueue::ProcessRunQueue()
 	bool bOpt;
 
 	// And process stack
-	while (!mb_Terminate && Stack.pop_back(item))
+	while (!mb_Terminate && m_WorkStack.pop_back(item))
 	{
 		if (!gpConEmu->isValid(item.pVCon))
 			continue;

@@ -208,6 +208,7 @@ public:
 	HRGN CreateWindowRgn(bool abTestOnly, bool abRoundTitle, int anX, int anY, int anWndWidth, int anWndHeight);
 
 protected:
+	static LRESULT OnDpiChangedCall(LPARAM lParam);
 	bool FixWindowRect(RECT& rcWnd, DWORD nBorders /* enum of ConEmuBorders */, bool bPopupDlg = false);
 	RECT GetVirtualScreenRect(bool abFullScreen);
 	void StoreNormalRect(RECT* prcWnd);

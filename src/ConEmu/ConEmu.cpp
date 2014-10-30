@@ -2737,25 +2737,6 @@ void CConEmuMain::AskChangeAlternative()
 	pRCon->OnBufferHeight();
 }
 
-bool CConEmuMain::ScreenToVCon(LPPOINT pt, CVirtualConsole** ppVCon)
-{
-	_ASSERTE(this!=NULL);
-	CVirtualConsole* lpVCon = GetVConFromPoint(*pt);
-
-	if (!lpVCon)
-		return false;
-
-#if 0
-	HWND hView = lpVCon->GetView();
-	ScreenToClient(hView, pt);
-#endif
-
-	if (ppVCon)
-		*ppVCon = lpVCon;
-
-	return true;
-}
-
 void CConEmuMain::SyncNtvdm()
 {
 	OnSize();
@@ -3351,7 +3332,7 @@ CVirtualConsole* CConEmuMain::CreateConGroup(LPCWSTR apszScript, bool abForceAsA
 					if (lbSetActive && !pSetActive)
 						pSetActive = pVCon;
 
-					if (GetVCon((int)MAX_CONSOLE_COUNT-1))
+					if (CVConGroup::isVConExists((int)MAX_CONSOLE_COUNT-1))
 						break; // Больше создать не получится
 				}
 			}
@@ -3409,7 +3390,7 @@ void CConEmuMain::CreateGhostVCon(CVirtualConsole* apVCon)
 
 void CConEmuMain::UpdateActiveGhost(CVirtualConsole* apVCon)
 {
-	_ASSERTE(isActive(apVCon));
+	_ASSERTE(apVCon->isVisible());
 	if (mh_LLKeyHookDll && mph_HookedGhostWnd)
 	{
 		// Win7 и выше!
@@ -5934,19 +5915,6 @@ bool CConEmuMain::IsActiveConAdmin()
 	return bAdmin;
 }
 
-// bFromCycle = true, для перебора в циклах (например, в CSettings::UpdateWinHookSettings), чтобы не вылезали ассерты
-CVirtualConsole* CConEmuMain::GetVCon(int nIdx, bool bFromCycle /*= false*/)
-{
-	CVConGuard VCon;
-	if (!CVConGroup::GetVCon(nIdx, &VCon))
-	{
-		_ASSERTE((nIdx>=0 && (nIdx<(int)MAX_CONSOLE_COUNT || (bFromCycle && nIdx==(int)MAX_CONSOLE_COUNT))));
-		return NULL;
-	}
-
-	return VCon.VCon();
-}
-
 // 0 - такой консоли нет
 // 1..MAX_CONSOLE_COUNT - "номер" консоли (1 based!)
 int CConEmuMain::isVConValid(CVirtualConsole* apVCon)
@@ -5955,20 +5923,6 @@ int CConEmuMain::isVConValid(CVirtualConsole* apVCon)
 	if (nIdx >= 0)
 		return (nIdx+1);
 	return 0;
-}
-
-CVirtualConsole* CConEmuMain::GetVConFromPoint(POINT ptScreen)
-{
-	CVConGuard VCon;
-	if (!CVConGroup::GetVConFromPoint(ptScreen, &VCon))
-		return NULL;
-
-	return VCon.VCon();
-}
-
-bool CConEmuMain::isActive(CVirtualConsole* apVCon, bool abAllowGroup /*= true*/)
-{
-	return CVConGroup::isActive(apVCon, abAllowGroup);
 }
 
 bool CConEmuMain::isConSelectMode()
@@ -6236,11 +6190,6 @@ bool CConEmuMain::isVConHWND(HWND hChild, CVConGuard* pVCon /*= NULL*/)
 bool CConEmuMain::isViewer()
 {
 	return CVConGroup::isViewer();
-}
-
-bool CConEmuMain::isVisible(CVirtualConsole* apVCon)
-{
-	return CVConGroup::isVisible(apVCon);
 }
 
 //bool CConEmuMain::isChildWindowVisible()
@@ -9733,7 +9682,7 @@ LRESULT CConEmuMain::OnLangChangeConsole(CVirtualConsole *apVCon, const DWORD ad
 	//Sleep(2000);
 #endif
 
-	if (isActive(apVCon))
+	if (apVCon->isActive(false))
 	{
 		apVCon->RCon()->OnConsoleLangChange(dwNewKeybLayout);
 	}
@@ -9775,7 +9724,7 @@ bool CConEmuMain::PatchMouseEvent(UINT messg, POINT& ptCurClient, POINT& ptCurSc
 			//bool bSkipThisEvent = false;
 
 			// WARNING! Тут строго, без учета активности группы!
-			if (VCon.VCon() && isVisible(VCon.VCon()) && !isActive(VCon.VCon(), false))
+			if (VCon.VCon() && VCon->isVisible() && !VCon->isActive(false))
 			{
 				// по клику - активировать кликнутый сплит
 				if ((messg == WM_LBUTTONDOWN) || (messg == WM_RBUTTONDOWN) || (messg == WM_MBUTTONDOWN))
@@ -11507,10 +11456,13 @@ LRESULT CConEmuMain::OnSetCursor(WPARAM wParam, LPARAM lParam)
 		return TRUE;
 	}
 
+	CVConGuard VCon;
 	POINT ptCur; GetCursorPos(&ptCur);
 	// Если сейчас идет trackPopupMenu - то на выход
-	CVirtualConsole* pVCon = isMenuActive() ? NULL : GetVConFromPoint(ptCur);
-	if (pVCon && !isActive(pVCon, false))
+	if (!isMenuActive())
+		CVConGroup::GetVConFromPoint(ptCur, &VCon);
+	CVirtualConsole* pVCon = VCon.VCon();
+	if (pVCon && !pVCon->isActive(false))
 		pVCon = NULL;
 	CRealConsole *pRCon = pVCon ? pVCon->RCon() : NULL;
 
@@ -12249,7 +12201,7 @@ void CConEmuMain::OnTimer_ActivateSplit()
 			{
 				if (CVConGroup::GetVConFromPoint(ptCur, &VConFromPoint))
 				{
-					bool bActive = isActive(VConFromPoint.VCon(), false);
+					bool bActive = VConFromPoint->isActive(false);
 					if (!bActive)
 					{
 						CVConGuard VCon;
@@ -12977,8 +12929,7 @@ LRESULT CConEmuMain::OnActivateByMouse(HWND hWnd, UINT messg, WPARAM wParam, LPA
 		POINT ptMouse = {0}; GetCursorPos(&ptMouse);
 		//RECT  rcDC = {0}; GetWindowRect('ghWnd DC', &rcDC);
 		//if (PtInRect(&rcDC, ptMouse))
-		CVirtualConsole* pVCon = GetVConFromPoint(ptMouse);
-		if (pVCon)
+		if (CVConGroup::GetVConFromPoint(ptMouse))
 		{
 			if (HIWORD(lParam) == WM_LBUTTONDOWN)
 			{
@@ -13634,12 +13585,12 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			}
 			else if (messg == this->mn_MsgInitInactiveDC)
 			{
-				CVirtualConsole* pVCon = (CVirtualConsole*)lParam;
-				if (isValid(pVCon) && !isActive(pVCon))
+				CVConGuard VCon;
+				if (VCon.Attach((CVirtualConsole*)lParam)
+					&& !VCon->isVisible())
 				{
-					CVConGuard guard(pVCon);
-					pVCon->InitDC(true, true, NULL, NULL);
-					pVCon->LoadConsoleData();
+					VCon->InitDC(true, true, NULL, NULL);
+					VCon->LoadConsoleData();
 				}
 
 				return 0;

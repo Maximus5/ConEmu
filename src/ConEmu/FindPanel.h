@@ -51,6 +51,7 @@ public:
 	~CFindPanel();
 
 	HWND CreatePane(HWND hParent, int nHeight);
+	bool OnCreateFinished();
 	HWND GetHWND();
 	int  GetMinWidth();
 	HWND Activate(bool bActivate);
@@ -63,6 +64,7 @@ protected:
 	bool OnCreate(CREATESTRUCT* ps);
 	void OnDestroy();
 	void OnSize();
+	void OnCreateFont();
 	void OnSearch();
 	bool OnKeyboard(UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT& lRc);
 	void StopSearch();

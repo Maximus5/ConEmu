@@ -103,7 +103,7 @@ public:
 
 public:
 	//int  GetTabIcon(bool bAdmin);
-	CVirtualConsole* FarSendChangeTab(int tabIndex);
+	bool FarSendChangeTab(int tabIndex, CVConGuard* rpVCon = NULL);
 	virtual bool OnTimerInt(WPARAM wParam);
 	void ShowTabErrorInt(LPCTSTR asInfo, int tabIndex);
 	void UpdateTabFontInt();

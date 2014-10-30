@@ -474,13 +474,10 @@ void CSettings::UpdateWinHookSettings(HMODULE hLLKeyHookDll)
 		if (gpSet->isSendPrintScrn) nNewValue |= 1<<ID_PRTSC;
 		if (gpSet->isSendCtrlEsc) nNewValue |= 1<<ID_CTRLESC;
 
-		CVirtualConsole* pVCon;
-		for (size_t i = 0;; i++)
+		CVConGuard VCon;
+		for (int i = 0; CVConGroup::GetVCon(i, &VCon, true); i++)
 		{
-			pVCon = gpConEmu->GetVCon(i, true);
-			if (!pVCon)
-				break;
-			nNewValue |= pVCon->RCon()->GetConsoleKeyShortcuts();
+			nNewValue |= VCon->RCon()->GetConsoleKeyShortcuts();
 		}
 
 		*pnConsoleKeyShortcuts = nNewValue;

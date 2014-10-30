@@ -744,7 +744,7 @@ CESERVER_REQ* CRealServer::cmdTabsChanged(LPVOID pInst, CESERVER_REQ* pIn, UINT 
 			mp_RCon->SetFarPluginPID(0);
 			mp_RCon->CloseFarMapData();
 
-			if (mp_RCon->isActive()) gpConEmu->UpdateProcessDisplay(FALSE);  // обновить PID в окне настройки
+			if (mp_RCon->isActive(false)) gpConEmu->UpdateProcessDisplay(FALSE);  // обновить PID в окне настройки
 		}
 
 		mp_RCon->tabs.m_Tabs.MarkTabsInvalid(CTabStack::MatchNonPanel, pIn->hdr.nSrcPID);
@@ -794,7 +794,7 @@ CESERVER_REQ* CRealServer::cmdTabsChanged(LPVOID pInst, CESERVER_REQ* pIn, UINT 
 			bool lbNewActive = lbCurrentActive;
 
 			// Если консолей более одной - видимость табов не изменится
-			if (gpConEmu->GetVCon(1) == NULL)
+			if (CVConGroup::isVConExists(1))
 			{
 				lbNewActive = (pIn->Tabs.nTabCount > 1);
 			}
@@ -953,7 +953,7 @@ CESERVER_REQ* CRealServer::cmdLangChange(LPVOID pInst, CESERVER_REQ* pIn, UINT n
 	//if ((gpSet->isMonitorConsoleLang & 1) == 1) {
 	//    if (con.dwKeybLayout != dwNewKeybLayout) {
 	//        con.dwKeybLayout = dwNewKeybLayout;
-	//		if (mp_RCon->isActive()) {
+	//		if (mp_RCon->isActive(false)) {
 	//            gpConEmu->SwitchKeyboardLayout(dwNewKeybLayout);
 	//
 	//			#ifdef _DEBUG
@@ -1024,7 +1024,7 @@ CESERVER_REQ* CRealServer::cmdResources(LPVOID pInst, CESERVER_REQ* pIn, UINT nD
 	// Разрешить мониторинг PID фара в MonitorThread (оно будет переоткрывать mp_RCon->OpenFarMapData)
 	mp_RCon->mb_SkipFarPidChange = FALSE;
 
-	if (mp_RCon->isActive()) gpConEmu->UpdateProcessDisplay(FALSE);  // обновить PID в окне настройки
+	if (mp_RCon->isActive(false)) gpConEmu->UpdateProcessDisplay(FALSE);  // обновить PID в окне настройки
 
 	//mn_Far_PluginInputThreadId      = pIn->dwData[1];
 	//CheckColorMapping(mp_RCon->mn_FarPID_PluginDetected);
@@ -1378,10 +1378,13 @@ CESERVER_REQ* CRealServer::cmdActivateTab(LPVOID pInst, CESERVER_REQ* pIn, UINT 
 	BOOL lbTabOk = FALSE;
 	if (nDataSize >= 2*sizeof(DWORD))
 	{
-		CVirtualConsole *pVCon = gpConEmu->GetVCon(pIn->dwData[0]);
-		if (pVCon && pVCon->RCon())
+		CVConGuard VCon;
+		if (CVConGroup::GetVCon(pIn->dwData[0], &VCon) && VCon->RCon())
 		{
-			lbTabOk = pVCon->RCon()->ActivateFarWindow(pIn->dwData[1]);
+			// Latest Far3 has broken tab-indexes/far-windows behavior
+			CTab tab(__FILE__,__LINE__);
+			if (VCon->RCon()->GetTab(pIn->dwData[1], tab))
+				lbTabOk = VCon->RCon()->ActivateFarWindow(tab->Info.nFarWindowID);
 		}
 		gpConEmu->ConActivate(pIn->dwData[0]);
 	}

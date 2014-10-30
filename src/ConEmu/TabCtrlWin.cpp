@@ -1168,6 +1168,7 @@ void CTabPanelWin::ShowTabsPane(bool bShow)
 {
 	if (bShow)
 	{
+		_ASSERTE(isMainThread());
 		if (CreateTabbar())
 		{
 			RECT rcWnd = GetRect();
@@ -1206,6 +1207,7 @@ void CTabPanelWin::ShowSearchPane(bool bShow)
 {
 	if (bShow && gpSet->isMultiShowSearch)
 	{
+		_ASSERTE(isMainThread());
 		if (!IsSearchShownInt(false))
 		{
 			REBARBANDINFO rbBand = {REBARBANDINFO_SIZE}; // не используем size, т.к. приходит "новый" размер из висты и в XP обламываемся
@@ -1216,7 +1218,11 @@ void CTabPanelWin::ShowSearchPane(bool bShow)
 
 			int iPaneHeight;
 			SIZE sz = {0,0};
-			if (mh_Toolbar)
+			if (mn_TabHeight > 0)
+			{
+				iPaneHeight = mn_TabHeight;
+			}
+			else if (mh_Toolbar)
 			{
 				SendMessage(mh_Toolbar, TB_GETMAXSIZE, 0, (LPARAM)&sz);
 				iPaneHeight = sz.cy;
@@ -1249,13 +1255,18 @@ void CTabPanelWin::ShowSearchPane(bool bShow)
 			INT_PTR nPaneIndex = SendMessage(mh_Rebar, RB_IDTOINDEX, rbi_ToolBar, 0);
 			if (nPaneIndex < 0) nPaneIndex = -1;
 
-			if (!hFindPane || !SendMessage(mh_Rebar, RB_INSERTBAND, nPaneIndex, (LPARAM)&rbBand))
+			if (!hFindPane
+				|| !SendMessage(mh_Rebar, RB_INSERTBAND, nPaneIndex, (LPARAM)&rbBand)
+				|| !mp_Find->OnCreateFinished())
 			{
 				DisplayLastError(_T("Can't initialize rebar (searchbar)"));
+				bShow = false;
 			}
 		}
 	}
-	else
+	
+	// Delete band?
+	if (!bShow)
 	{
 		_ASSERTEX(!bShow);
 		INT_PTR nPaneIndex = SendMessage(mh_Rebar, RB_IDTOINDEX, rbi_FindBar, 0);
@@ -1271,6 +1282,7 @@ void CTabPanelWin::ShowToolsPane(bool bShow)
 {
 	if (bShow)
 	{
+		_ASSERTE(isMainThread());
 		if (!IsToolbarCreated() && (CreateToolbar() != NULL))
 		{
 			REBARBANDINFO rbBand = {REBARBANDINFO_SIZE}; // не используем size, т.к. приходит "новый" размер из висты и в XP обламываемся

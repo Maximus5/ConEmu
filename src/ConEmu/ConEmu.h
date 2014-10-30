@@ -573,9 +573,7 @@ class CConEmuMain
 		LPCTSTR GetVConTitle(int nIdx);
 		void SetTitleTemplate(LPCWSTR asTemplate);
 		int GetActiveVCon(CVConGuard* pVCon = NULL, int* pAllCount = NULL);
-		CVirtualConsole* GetVCon(int nIdx, bool bFromCycle = false);
 		int isVConValid(CVirtualConsole* apVCon);
-		CVirtualConsole* GetVConFromPoint(POINT ptScreen);
 		void UpdateCursorInfo(const ConsoleInfoArg* pInfo);
 		void UpdateProcessDisplay(BOOL abForce);
 		void UpdateSizes();
@@ -634,7 +632,6 @@ class CConEmuMain
 		void Invalidate(LPRECT lpRect, BOOL bErase = TRUE);
 		void InvalidateAll();
 		void UpdateWindowChild(CVirtualConsole* apVCon);
-		bool isActive(CVirtualConsole* apVCon, bool abAllowGroup = true);
 		bool isCloseConfirmed();
 		bool isDestroyOnClose(bool ScCloseOnEmpty = false);
 		bool isConSelectMode();
@@ -655,7 +652,6 @@ class CConEmuMain
 		bool isVConExists(int nIdx);
 		bool isVConHWND(HWND hChild, CVConGuard* pVCon = NULL);
 		bool isViewer();
-		bool isVisible(CVirtualConsole* apVCon);
 		void LoadIcons();
 		void MoveActiveTab(CVirtualConsole* apVCon, bool bLeftward);
 		void InvalidateGaps();
@@ -677,7 +673,6 @@ class CConEmuMain
 		void RequestExitUpdate();
 		void RequestPostUpdateTabs();
 		BOOL RunSingleInstance(HWND hConEmuWnd = NULL, LPCWSTR apszCmd = NULL);
-		bool ScreenToVCon(LPPOINT pt, CVirtualConsole** ppVCon);
 		void SetDragCursor(HCURSOR hCur);
 		bool SetSkipOnFocus(bool abSkipOnFocus);
 		void SetWaitCursor(BOOL abWait);

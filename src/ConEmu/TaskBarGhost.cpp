@@ -187,7 +187,7 @@ BOOL CTaskBarGhost::UpdateTabSnapshoot(BOOL abSimpleBlack, BOOL abNoSnapshoot)
 
 	if (!abNoSnapshoot && NeedSnapshootCache())
 	{
-		if (gpConEmu->isVisible(mp_VCon))
+		if (mp_VCon->isVisible())
 			CreateTabSnapshoot();
 	}
 
@@ -420,7 +420,7 @@ HBITMAP CTaskBarGhost::CreateThumbnail(int nWidth, int nHeight)
 					if (NeedSnapshootCache())
 					{
 						// При наличии дочерних GUI окон - вероятно, snapshoot-ы имеют смысл только когда окна видимы
-						if (gpConEmu->isVisible(mp_VCon))
+						if (mp_VCon->isVisible())
 							CreateTabSnapshoot();
 
 						if (mh_Snap)
@@ -436,7 +436,7 @@ HBITMAP CTaskBarGhost::CreateThumbnail(int nWidth, int nHeight)
 					}
 					else
 					{
-						if (!gpConEmu->isActive(mp_VCon))
+						if (!mp_VCon->isVisible())
 							mp_VCon->Update(true);
 						if (mp_VCon->RCon()->isConsoleReady())
 							mp_VCon->StretchPaint(hdcMem, nX, nY, nShowWidth, nShowHeight);
@@ -589,7 +589,7 @@ LRESULT CTaskBarGhost::OnCreate()
 	if (IsWindows7)
 	{
 		// Tell the taskbar about this tab window
-		gpConEmu->Taskbar_RegisterTab(mh_Ghost, gpConEmu->isActive(mp_VCon));
+		gpConEmu->Taskbar_RegisterTab(mh_Ghost, mp_VCon->isActive(false));
 	}
 
 	#if 0
@@ -617,7 +617,7 @@ LRESULT CTaskBarGhost::OnTimer(WPARAM TimerID)
 	}
 	else
 	{
-		if (gpConEmu->isVisible(mp_VCon) && NeedSnapshootCache())
+		if (mp_VCon->isVisible() && NeedSnapshootCache())
 		{
 			UpdateTabSnapshoot(FALSE, FALSE);
 		}

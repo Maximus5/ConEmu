@@ -1071,7 +1071,7 @@ BOOL CRealBuffer::SetConsoleSize(USHORT sizeX, USHORT sizeY, USHORT sizeBuffer, 
 		con.bBufferHeight = (sizeBuffer != 0);
 		ChangeScreenBufferSize(con.m_sbi, sizeX, sizeY, sizeX, sizeBuffer ? sizeBuffer : sizeY);
 
-		if (mp_RCon->isActive())
+		if (mp_RCon->isActive(false))
 		{
 			gpConEmu->mp_Status->OnConsoleChanged(&con.m_sbi, &con.m_ci, NULL, true);
 		}
@@ -1173,7 +1173,7 @@ BOOL CRealBuffer::SetConsoleSize(USHORT sizeX, USHORT sizeY, USHORT sizeBuffer, 
 
 	goto wrap;
 #if 0
-	if (lbRc && mp_RCon->isActive())
+	if (lbRc && mp_RCon->isActive(false))
 	{
 		if (!mp_RCon->isNtvdm())
 		{
@@ -1218,7 +1218,7 @@ void CRealBuffer::SyncConsole2Window(USHORT wndSizeX, USHORT wndSizeY)
 		SetConsoleSize(wndSizeX, wndSizeY, 0/*Auto*/);
 
 
-		if (mp_RCon->isActive() && isMainThread())
+		if (mp_RCon->isActive(false) && isMainThread())
 		{
 			// Сразу обновить DC чтобы скорректировать Width & Height
 			mp_RCon->mp_VCon->OnConsoleSizeChanged();
@@ -1831,7 +1831,7 @@ void CRealBuffer::SetBufferHeightMode(BOOL abBufferHeight, BOOL abIgnoreLock/*=F
 
 	con.bBufferHeight = abBufferHeight;
 
-	if (mp_RCon->isActive())
+	if (mp_RCon->isActive(false))
 		OnBufferHeight();
 }
 
@@ -2204,7 +2204,6 @@ BOOL CRealBuffer::ApplyConsoleInfo()
 		mp_RCon->mb_DataChanged = TRUE; // Переменная используется внутри класса
 		con.bConsoleDataChanged = TRUE; // А эта - при вызовах из CVirtualConsole
 
-		//if (mp_RCon->isActive()) -- mp_RCon->isActive() проверит сама UpdateScrollInfo, а скроллбар может быть и в видимой но НЕ активной консоли
 		mp_RCon->UpdateScrollInfo();
 	}
 
@@ -2283,7 +2282,7 @@ void CRealBuffer::ApplyConsoleInfo(const CESERVER_REQ_CONINFO_INFO* pInfo, bool&
 
 		if (ghOpWnd
 			&& (bConMode || bConCP || bConOutCP)
-			&& mp_RCon->isActive())
+			&& mp_RCon->isActive(false))
 		{
 			if (bConMode)
 				gpSetCls->UpdateConsoleMode(pInfo->dwConsoleInMode, pInfo->dwConsoleOutMode);
@@ -2305,7 +2304,7 @@ void CRealBuffer::ApplyConsoleInfo(const CESERVER_REQ_CONINFO_INFO* pInfo, bool&
 				LOGCONSOLECHANGE("ApplyConsoleInfo: ScreenBufferInfo changed");
 				lbChanged = true;
 
-				//if (mp_RCon->isActive())
+				//if (mp_RCon->isActive(false))
 				//	gpConEmu->UpdateCursorInfo(&pInfo->sbi, pInfo->sbi.dwCursorPosition, pInfo->ci);
 			}
 
@@ -2736,7 +2735,7 @@ bool CRealBuffer::ProcessFarHyperlink(bool bUpdateScreen)
 
 bool CRealBuffer::CanProcessHyperlink(const COORD& crMouse)
 {
-	if (!mp_RCon->isActive())
+	if (!mp_RCon->isActive(false))
 		return false;
 
 	// Disallow hyperlinks on Far panels
@@ -2852,14 +2851,14 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom, bool bUpdateScre
 					// Проверить, может уже открыт таб с этим файлом?
 					LPCWSTR pszFileName = wcsrchr(cmd.szFile, L'\\');
 					if (!pszFileName) pszFileName = cmd.szFile; else pszFileName++;
-					CVirtualConsole* pVCon = NULL;
+					CVConGuard VCon;
 
 					//// Сброс подчерка, а то при возврате в консоль,
 					//// когда модификатор уже отпущен, остает артефакт...
 					//StoreLastTextRange(etr_None);
 					//UpdateSelection();
 
-					int liActivated = gpConEmu->mp_TabBar->ActiveTabByName(fwt_Editor|fwt_ActivateFound|fwt_PluginRequired, pszFileName, &pVCon);
+					int liActivated = gpConEmu->mp_TabBar->ActiveTabByName(fwt_Editor|fwt_ActivateFound|fwt_PluginRequired, pszFileName, &VCon);
 
 					if (liActivated == -2)
 					{
@@ -2874,8 +2873,8 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom, bool bUpdateScre
 							if (cmd.nLine > 0)
 							{
 								wchar_t szMacro[96];
-								_ASSERTE(pVCon!=NULL);
-								CRealConsole* pRCon = pVCon->RCon();
+								_ASSERTE(VCon.VCon()!=NULL);
+								CRealConsole* pRCon = VCon->RCon();
 
 								if (pRCon->m_FarInfo.FarVer.dwVerMajor == 1)
 									_wsprintf(szMacro, SKIPLEN(countof(szMacro)) L"@$if(Editor) AltF8 \"%i:%i\" Enter $end", cmd.nLine, cmd.nColon);
@@ -3060,7 +3059,7 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom, bool bUpdateScre
 
 								// Prepared, можно звать плагин
 								VCon->RCon()->PostCommand(CMD_OPENEDITORLINE, sizeof(cmd), &cmd);
-								if (!gpConEmu->isActive(VCon.VCon(), false))
+								if (!VCon->isActive(false))
 								{
 									gpConEmu->Activate(VCon.VCon());
 								}
@@ -5432,7 +5431,7 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 
 			WARNING("Не думаю, что это хорошее место для обновления мышиного курсора");
 			// Обновить мышиный курсор
-			if (mp_RCon->isActive() && this == mp_RCon->mp_ABuf)
+			if (mp_RCon->isActive(false) && (this == mp_RCon->mp_ABuf))
 			{
 				PostMessage(mp_RCon->GetView(), WM_SETCURSOR, -1, -1);
 			}
@@ -5959,7 +5958,7 @@ void CRealBuffer::FindPanels()
 
 #endif
 
-	if (mp_RCon->isActive())
+	if (mp_RCon->isActive(false))
 		lbNeedUpdateSizes = (memcmp(&mr_LeftPanel,&rLeftPanel,sizeof(mr_LeftPanel)) || memcmp(&mr_RightPanel,&rRightPanel,sizeof(mr_RightPanel)));
 
 	lbPanelsChanged = lbNeedUpdateSizes || (mb_LeftPanel != bLeftPanel) || (mb_RightPanel != bRightPanel)
