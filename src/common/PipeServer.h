@@ -946,7 +946,7 @@ struct PipeServer
 			//hWait[1] = mh_ServerSemaphore;
 
 			// debuging purposes
-			pPipe->dwState = STARTING_STATE;
+			pPipe->dwState = STARTED_STATE;
 			pPipe->nTerminateDelay = pPipe->nTerminateDelay1 = pPipe->nTerminateDelay2 = pPipe->nTerminateDelay3 = 0;
 			
 			_ASSERTEX(!mb_Overlapped || pPipe->hEvent != NULL);
@@ -1176,6 +1176,7 @@ struct PipeServer
 
 			pPipe->pServer = this;
 			pPipe->nThreadId = 0;
+			pPipe->dwState = STARTING_STATE;
 			//pPipe->hThreadEnd = CreateEvent(NULL, TRUE, FALSE, NULL);
 			PLOG("StartPipeInstance.Thread");
 			DWORD nCreateBegin = GetTickCount();
