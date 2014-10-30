@@ -150,7 +150,7 @@ BOOL MSectionLockSimple::Lock(MSectionSimple* apS, DWORD anTimeout/*=-1*/)
 
 	bool bLocked = false;
 	DWORD nStartTick = GetTickCount();
-	DWORD nDelta;
+	DWORD nDelta = -1;
 #if 0
 	EnterCriticalS	ection(&apS->m_S);
 
@@ -174,9 +174,10 @@ BOOL MSectionLockSimple::Lock(MSectionSimple* apS, DWORD anTimeout/*=-1*/)
 			break;
 		}
 
+		nDelta = GetTickCount() - nStartTick;
+
 		if (anTimeout != (DWORD)-1)
 		{
-			nDelta = GetTickCount() - nStartTick;
 			if (nDelta >= anTimeout)
 			{
 				_ASSERTEX(FALSE && "Failed to lock CriticalSection, timeout");
