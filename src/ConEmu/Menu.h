@@ -82,6 +82,7 @@ private:
 	void UpdateSysMenu(HMENU hSysMenu);
 
 	void ShowMenuHint(HMENU hMenu, WORD nID, WORD nFlags);
+	void ShowMenuHint(LPCWSTR pszText, POINT* ppt = NULL);
 
 	// В режиме "правый клик по keybar в FarManager" - при выделении
 	// пункта (например Alt+Shift+F9) "нажать" в консоли Alt+Shift

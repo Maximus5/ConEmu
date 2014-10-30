@@ -440,7 +440,7 @@ void CConEmuMenu::OnNewConPopupMenu(POINT* ptWhere /*= NULL*/, DWORD nFlags /*= 
 	int nId = trackPopupMenu(tmp_Cmd, hPopup, nAlign|TPM_RETURNCMD/*|TPM_NONOTIFY*/,
 	                         rcBtnRect.right,rcBtnRect.bottom, ghWnd, lpExcl);
 	mb_InNewConPopup = mb_InNewConRPopup = false;
-	//gpConEmu->mp_Tip->HideTip();
+	//ShowMenuHint(NULL);
 
 	if ((nId >= 1) || mp_CmdRClickForce)
 	{
@@ -738,16 +738,16 @@ bool CConEmuMenu::OnMenuSelected_NewCon(HMENU hMenu, WORD nID, WORD nFlags)
 				pt.y = rcMenuItem.bottom;
 			}
 
-			gpConEmu->mp_Tip->ShowTip(ghWnd, ghWnd, pszCmd, TRUE, pt, g_hInstance);
+			ShowMenuHint(pszCmd, &pt);
 		}
 		else
 		{
-			gpConEmu->mp_Tip->HideTip();
+			ShowMenuHint(NULL);
 		}
 	}
 	else
 	{
-		gpConEmu->mp_Tip->HideTip();
+		ShowMenuHint(NULL);
 	}
 	return true;
 }
@@ -1368,7 +1368,7 @@ LRESULT CConEmuMenu::OnInitMenuPopup(HWND hWnd, HMENU hMenu, LPARAM lParam)
 
 int CConEmuMenu::trackPopupMenu(TrackMenuPlace place, HMENU hMenu, UINT uFlags, int x, int y, HWND hWnd, RECT *prcRect /* = NULL*/)
 {
-	gpConEmu->mp_Tip->HideTip();
+	ShowMenuHint(NULL);
 	TrackMenuPlace prevPlace = mn_TrackMenuPlace;
 	if (prevPlace == place)
 	{
@@ -1400,9 +1400,61 @@ int CConEmuMenu::trackPopupMenu(TrackMenuPlace place, HMENU hMenu, UINT uFlags, 
 
 	mn_TrackMenuPlace = prevPlace;
 
-	gpConEmu->mp_Tip->HideTip();
+	ShowMenuHint(NULL);
 
 	return cmd;
+}
+
+void CConEmuMenu::ShowMenuHint(LPCWSTR pszText, POINT* ppt)
+{
+	enum LastHintStyle { eNone, eStatus, eTip };
+	static LastHintStyle last = eNone;
+
+	if (pszText && *pszText)
+	{
+		// Hide last hint
+		if (last != eNone)
+			ShowMenuHint(NULL);
+
+		POINT pt = {};
+		if (ppt)
+			pt = *ppt;
+		else
+			GetCursorPos(&pt);
+
+		// if status bar exists - show hint there
+		if (gpSet->isStatusBarShow)
+		{
+			if (gpConEmu->mp_Status)
+			{
+				gpConEmu->mp_Status->SetStatus(pszText);
+				last = eStatus;
+			}
+		}
+		else
+		{
+			if (gpConEmu->mp_Tip)
+			{
+				gpConEmu->mp_Tip->ShowTip(ghWnd, ghWnd, pszText, TRUE, pt, g_hInstance);
+				last = eTip;
+			}
+		}
+	}
+	else
+	{
+		switch (last)
+		{
+		case eStatus:
+			if (gpConEmu->mp_Status)
+				gpConEmu->mp_Status->SetStatus(NULL);
+			break;
+		case eTip:
+			if (gpConEmu->mp_Tip)
+				gpConEmu->mp_Tip->HideTip();
+			break;
+		}
+		last = eNone;
+	}
 }
 
 void CConEmuMenu::ShowMenuHint(HMENU hMenu, WORD nID, WORD nFlags)
@@ -1430,13 +1482,13 @@ void CConEmuMenu::ShowMenuHint(HMENU hMenu, WORD nID, WORD nFlags)
 			TCHAR szText[0x200];
 			if (LoadString(g_hInstance, nMenuID, szText, countof(szText)))
 			{
-				gpConEmu->mp_Tip->ShowTip(ghWnd, ghWnd, szText, TRUE, pt, g_hInstance);
+				ShowMenuHint(szText, &pt);
 				return;
 			}
 		}
 	}
 
-	gpConEmu->mp_Tip->HideTip();
+	ShowMenuHint(NULL);
 }
 
 void CConEmuMenu::ShowKeyBarHint(HMENU hMenu, WORD nID, WORD nFlags)
@@ -2484,7 +2536,7 @@ LRESULT CConEmuMenu::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam, UINT 
 				if (wParam == SC_SYSMENUPOPUP_SECRET)
 				{
 					mn_TrackMenuPlace = tmp_System;
-					gpConEmu->mp_Tip->HideTip();
+					ShowMenuHint(NULL);
 				}
 
 				result = DefWindowProc(hWnd, WM_SYSCOMMAND, wParam, lParam);
@@ -2492,7 +2544,7 @@ LRESULT CConEmuMenu::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam, UINT 
 				if (wParam == SC_SYSMENUPOPUP_SECRET)
 				{
 					mn_TrackMenuPlace = tmp_None;
-					gpConEmu->mp_Tip->HideTip();
+					ShowMenuHint(NULL);
 				}
 			}
 		} // default:

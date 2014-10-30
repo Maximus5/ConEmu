@@ -982,11 +982,20 @@ void CStatus::SetStatus(LPCWSTR asStatus)
 {
 	lstrcpyn(ms_Status, asStatus ? asStatus : L"", countof(ms_Status));
 
+	// Может придти из подсказки меню
+	wchar_t* pch;
+	while ((pch = wcspbrk(ms_Status, L"\r\n\t")) != NULL)
+	{
+		*pch = L' ';
+	}
+
+	// В лог?
 	if (ms_Status[0] && gpSetCls->isAdvLogging)
 	{
 		gpConEmu->LogString(ms_Status);
 	}
 
+	// Обновить статусную строку
 	UpdateStatusBar(true, false);
 }
 
