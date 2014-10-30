@@ -100,6 +100,8 @@ void CGroupGuard::Release()
 
 bool CGroupGuard::Attach(CVConGroup* apRef)
 {
+	MSectionLockSimple lockGroups; lockGroups.Lock(gpcs_VGroups);
+
 	if (mp_Ref != apRef)
 	{
 		CVConGroup *pOldRef = mp_Ref;
@@ -112,6 +114,8 @@ bool CGroupGuard::Attach(CVConGroup* apRef)
 			{
 				mp_Ref->AddRef();
 			}
+
+			lockGroups.Unlock();
 
 			if (pOldRef)
 			{
@@ -1464,6 +1468,8 @@ bool CVConGroup::isValid(CRealConsole* apRCon)
 	if (!apRCon)
 		return false;
 
+	MSectionLockSimple lockGroups; lockGroups.Lock(gpcs_VGroups);
+
 	for (size_t i = 0; i < countof(gp_VCon); i++)
 	{
 		if (gp_VCon[i] && apRCon == gp_VCon[i]->RCon())
@@ -1478,6 +1484,8 @@ bool CVConGroup::isValid(CVirtualConsole* apVCon)
 	if (!apVCon)
 		return false;
 
+	MSectionLockSimple lockGroups; lockGroups.Lock(gpcs_VGroups);
+
 	for (size_t i = 0; i < countof(gp_VCon); i++)
 	{
 		if (apVCon == gp_VCon[i])
@@ -1485,6 +1493,47 @@ bool CVConGroup::isValid(CVirtualConsole* apVCon)
 	}
 
 	return false;
+}
+
+bool CVConGroup::setRef(CVirtualConsole*& rpRef, CVirtualConsole* apVCon)
+{
+	MSectionLockSimple lockGroups; lockGroups.Lock(gpcs_VGroups);
+
+	bool bValid = isValid(apVCon);
+
+	if (apVCon && !bValid)
+	{
+		_ASSERTE(FALSE && "apVCon was destroyed before AddRef?");
+		apVCon = NULL;
+	}
+
+	if (rpRef != apVCon)
+	{
+		CVirtualConsole *pOldRef = rpRef;
+
+		rpRef = apVCon;
+
+		if (pOldRef != rpRef)
+		{
+			if (rpRef)
+			{
+				rpRef->AddRef();
+			}
+
+			lockGroups.Unlock();
+
+			if (pOldRef)
+			{
+				pOldRef->Release();
+			}
+		}
+		else
+		{
+			_ASSERTE(pOldRef != rpRef);
+		}
+	}
+
+	return bValid;
 }
 
 void CVConGroup::CheckTabValid(CTabID* apTab, bool& rbVConValid, bool& rbPidValid, bool& rbPassive)
@@ -1531,6 +1580,8 @@ bool CVConGroup::isVConHWND(HWND hChild, CVConGuard* rpVCon /*= NULL*/)
 
 	if (hChild)
 	{
+		MSectionLockSimple lockGroups; lockGroups.Lock(gpcs_VGroups);
+
 		for (size_t i = 0; i < countof(gp_VCon); i++)
 		{
 			if (gp_VCon[i] && (gp_VCon[i]->GetView() == hChild))
@@ -1552,6 +1603,7 @@ bool CVConGroup::isEditor()
 {
 	if (!gp_VActive) return false;
 
+	MSectionLockSimple lockGroups; lockGroups.Lock(gpcs_VGroups);
 	return gp_VActive->RCon()->isEditor();
 }
 
@@ -1559,6 +1611,7 @@ bool CVConGroup::isViewer()
 {
 	if (!gp_VActive) return false;
 
+	MSectionLockSimple lockGroups; lockGroups.Lock(gpcs_VGroups);
 	return gp_VActive->RCon()->isViewer();
 }
 
@@ -1566,6 +1619,7 @@ bool CVConGroup::isFar(bool abPluginRequired/*=false*/)
 {
 	if (!gp_VActive) return false;
 
+	MSectionLockSimple lockGroups; lockGroups.Lock(gpcs_VGroups);
 	return gp_VActive->RCon()->isFar(abPluginRequired);
 }
 
@@ -1582,10 +1636,12 @@ int CVConGroup::isFarExist(CEFarWindowType anWindowType/*=fwt_Any*/, LPWSTR asNa
 
 	for (INT_PTR i = -1; !iFound && (i < (INT_PTR)countof(gp_VCon)); i++)
 	{
+		MSectionLockSimple lockGroups; lockGroups.Lock(gpcs_VGroups);
 		if (i == -1)
 			VCon = gp_VActive;
 		else
 			VCon = gp_VCon[i];
+		lockGroups.Unlock();
 
 		if (VCon.VCon())
 		{
@@ -1738,6 +1794,7 @@ bool CVConGroup::EnumVCon(EnumVConFlags what, EnumVConProc pfn, LPARAM lParam)
 
 	for (size_t i = 0; i < countof(gp_VCon); i++)
 	{
+		MSectionLockSimple lockGroups; lockGroups.Lock(gpcs_VGroups);
 		CVConGuard VCon = gp_VCon[i];
 		CVirtualConsole* pVCon;
 		if ((pVCon = VCon.VCon()) != NULL)
@@ -1760,6 +1817,8 @@ bool CVConGroup::EnumVCon(EnumVConFlags what, EnumVConProc pfn, LPARAM lParam)
 int CVConGroup::GetActiveVCon(CVConGuard* pVCon /*= NULL*/, int* pAllCount /*= NULL*/)
 {
 	int nCount = 0, nFound = -1;
+
+	MSectionLockSimple lockGroups; lockGroups.Lock(gpcs_VGroups);
 
 	for (size_t i = 0; i < countof(gp_VCon); i++)
 	{
@@ -1789,11 +1848,15 @@ int CVConGroup::GetVConIndex(CVirtualConsole* apVCon)
 {
 	if (!apVCon)
 		return -1;
+
+	MSectionLockSimple lockGroups; lockGroups.Lock(gpcs_VGroups);
+
 	for (size_t i = 0; i < countof(gp_VCon); i++)
 	{
 		if (gp_VCon[i] == apVCon)
 			return i;
 	}
+
 	return -1;
 }
 
@@ -1806,6 +1869,8 @@ bool CVConGroup::GetProgressInfo(short* pnProgress, BOOL* pbActiveHasProgress, B
 	BOOL bWasError = FALSE;
 	BOOL bWasIndeterminate = FALSE;
 	int  nState = 0;
+
+	MSectionLockSimple lockGroups; lockGroups.Lock(gpcs_VGroups);
 
 	if (gp_VActive)
 	{
@@ -1862,6 +1927,8 @@ bool CVConGroup::GetProgressInfo(short* pnProgress, BOOL* pbActiveHasProgress, B
 
 void CVConGroup::OnDosAppStartStop(HWND hwnd, StartStopType sst, DWORD idChild)
 {
+	MSectionLockSimple lockGroups; lockGroups.Lock(gpcs_VGroups);
+
 	for (size_t i = 0; i < countof(gp_VCon); i++)
 	{
 		if (!gp_VCon[i]) continue;
@@ -1885,6 +1952,7 @@ void CVConGroup::InvalidateAll()
 {
 	for (size_t i = 0; i < countof(gp_VCon); i++)
 	{
+		MSectionLockSimple lockGroups; lockGroups.Lock(gpcs_VGroups);
 		CVConGuard VCon(gp_VCon[i]);
 
 		if (VCon.VCon() && isVisible(VCon.VCon()))
@@ -1894,10 +1962,15 @@ void CVConGroup::InvalidateAll()
 
 void CVConGroup::UpdateWindowChild(CVirtualConsole* apVCon)
 {
+	MSectionLockSimple lockGroups; lockGroups.Lock(gpcs_VGroups);
+	CVConGuard VCon;
 	if (apVCon)
 	{
-		if (apVCon->isVisible())
-			UpdateWindow(apVCon->GetView());
+		if (VCon.Attach(apVCon)
+			&& VCon->isVisible())
+		{
+			UpdateWindow(VCon->GetView());
+		}
 	}
 	else
 	{
@@ -1931,6 +2004,8 @@ void CVConGroup::RePaint()
 
 void CVConGroup::Update(bool isForce /*= false*/)
 {
+	MSectionLockSimple lockGroups; lockGroups.Lock(gpcs_VGroups);
+
 	if (isForce)
 	{
 		for (size_t i = 0; i < countof(gp_VCon); i++)
@@ -1951,6 +2026,8 @@ void CVConGroup::Update(bool isForce /*= false*/)
 
 bool CVConGroup::isActive(CVirtualConsole* apVCon, bool abAllowGroup /*= true*/)
 {
+	MSectionLockSimple lockGroups; lockGroups.Lock(gpcs_VGroups);
+
 	if (!gp_VActive || !isValid(apVCon))
 		return false;
 
@@ -1971,6 +2048,8 @@ bool CVConGroup::isActive(CVirtualConsole* apVCon, bool abAllowGroup /*= true*/)
 
 bool CVConGroup::isActiveGroupVCon(CVirtualConsole* pVCon)
 {
+	MSectionLockSimple lockGroups; lockGroups.Lock(gpcs_VGroups);
+
 	if (!isValid(pVCon))
 		return false;
 
@@ -1994,6 +2073,8 @@ bool CVConGroup::isActiveGroupVCon(CVirtualConsole* pVCon)
 
 bool CVConGroup::isVisible(CVirtualConsole* apVCon)
 {
+	MSectionLockSimple lockGroups; lockGroups.Lock(gpcs_VGroups);
+
 	if (!isValid(apVCon))
 		return false;
 
@@ -2012,6 +2093,8 @@ bool CVConGroup::isVisible(CVirtualConsole* apVCon)
 
 bool CVConGroup::isConSelectMode()
 {
+	MSectionLockSimple lockGroups; lockGroups.Lock(gpcs_VGroups);
+
 	//TODO: По курсору, что-ли попробовать определять?
 	//return gb_ConsoleSelectMode;
 	if (gp_VActive)
@@ -2022,6 +2105,7 @@ bool CVConGroup::isConSelectMode()
 
 bool CVConGroup::isInCreateRoot()
 {
+	MSectionLockSimple lockGroups; lockGroups.Lock(gpcs_VGroups);
 	CVConGuard VCon;
 	for (size_t i = 0; i < countof(gp_VCon); i++)
 	{
@@ -2036,6 +2120,7 @@ bool CVConGroup::isInCreateRoot()
 
 bool CVConGroup::isDetached()
 {
+	MSectionLockSimple lockGroups; lockGroups.Lock(gpcs_VGroups);
 	CVConGuard VCon;
 	for (size_t i = 0; i < countof(gp_VCon); i++)
 	{
@@ -2052,12 +2137,15 @@ bool CVConGroup::isFilePanel(bool abPluginAllowed/*=false*/)
 {
 	if (!gp_VActive) return false;
 
+	MSectionLockSimple lockGroups; lockGroups.Lock(gpcs_VGroups);
 	bool lbIsPanels = gp_VActive->RCon()->isFilePanel(abPluginAllowed);
 	return lbIsPanels;
 }
 
 bool CVConGroup::isNtvdm(BOOL abCheckAllConsoles/*=FALSE*/)
 {
+	MSectionLockSimple lockGroups; lockGroups.Lock(gpcs_VGroups);
+
 	if (gp_VActive)
 	{
 		CVConGuard VCon(gp_VActive);
@@ -4378,6 +4466,7 @@ RECT CVConGroup::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFr
 void CVConGroup::SetConsoleSizes(const COORD& size, const RECT& rcNewCon, bool abSync)
 {
 	MSectionLockSimple lockGroups; lockGroups.Lock(gpcs_VGroups);
+	CGroupGuard Grp(mp_Grp1);
 	CVConGuard VCon(mp_Item);
 
 	// Некорректно. Нужно прокрутку просто вводить. А игнорировать установку размера окна нельзя.
@@ -4400,6 +4489,7 @@ void CVConGroup::SetConsoleSizes(const COORD& size, const RECT& rcNewCon, bool a
 
 	if (isPictureView())
 	{
+		lockGroups.Unlock();
 		_ASSERTE(FALSE && "isPictureView() must distinct by panes/consoles");
 		gpConEmu->isPiewUpdate = true;
 		return;
@@ -4409,8 +4499,12 @@ void CVConGroup::SetConsoleSizes(const COORD& size, const RECT& rcNewCon, bool a
 
 
 	// Заблокируем заранее
+	CGroupGuard Grp1(mp_Grp1);
+	CGroupGuard Grp2(mp_Grp2);
 	CVConGuard VCon1(mp_Grp1 ? mp_Grp1->mp_Item : NULL);
 	CVConGuard VCon2(mp_Grp2 ? mp_Grp2->mp_Item : NULL);
+
+	lockGroups.Unlock();
 
 	if ((m_SplitType == RConStartArgs::eSplitNone) || !mp_Grp1 || !mp_Grp2)
 	{
@@ -4467,7 +4561,8 @@ void CVConGroup::SetAllConsoleWindowsSize(RECT rcWnd, enum ConEmuRect tFrom /*= 
 {
 	MSectionLockSimple lockGroups; lockGroups.Lock(gpcs_VGroups);
 	CVConGuard VCon(gp_VActive);
-	CVConGroup* pRoot = GetRootOfVCon(VCon.VCon());
+	CGroupGuard Root(GetRootOfVCon(VCon.VCon()));
+	lockGroups.Unlock();
 
 	// Некорректно. Нужно прокрутку просто вводить. А игнорировать установку размера окна нельзя.
 	#if 0
@@ -4488,9 +4583,9 @@ void CVConGroup::SetAllConsoleWindowsSize(RECT rcWnd, enum ConEmuRect tFrom /*= 
 
 	g_LastConSize = size;
 
-	if (!pRoot)
+	if (!Root.VGroup())
 	{
-		_ASSERTE(pRoot && "Must be defined already!");
+		_ASSERTE(Root.VGroup() && "Must be defined already!");
 		return;
 	}
 
@@ -4511,15 +4606,13 @@ void CVConGroup::SetAllConsoleWindowsSize(RECT rcWnd, enum ConEmuRect tFrom /*= 
 	RECT rcWorkspace = gpConEmu->CalcRect(CER_WORKSPACE, rcWnd, tFrom);
 
 	// Избежать мерцания панелей в Far
-	if (!bSetRedraw && pRoot->mp_Item && pRoot->m_SplitType == RConStartArgs::eSplitNone)
+	if (!bSetRedraw && Root->mp_Item && Root->m_SplitType == RConStartArgs::eSplitNone)
 	{
-		bSetRedraw = pRoot->mp_Item->RCon()->isFar(true);
+		bSetRedraw = Root->mp_Item->RCon()->isFar(true);
 	}
 
 	// Go (size real consoles)
-	pRoot->SetConsoleSizes(size, rcWorkspace, bSetRedraw/*as Sync*/);
-
-	lockGroups.Unlock();
+	Root->SetConsoleSizes(size, rcWorkspace, bSetRedraw/*as Sync*/);
 
 	if (bSetRedraw /*&& gp_VActive*/)
 	{

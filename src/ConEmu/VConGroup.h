@@ -107,6 +107,10 @@ protected:
 	virtual ~CVConGroup();
 	virtual void FinalRelease() override;
 
+protected:
+	friend class CVConGuard;
+	static bool setRef(CVirtualConsole*& rpRef, CVirtualConsole* apVCon);
+
 public:
 	static void Initialize();
 	static void Deinitialize();

@@ -121,24 +121,9 @@ CVConGuard::CVConGuard(CVirtualConsole* apRef)
 
 bool CVConGuard::Attach(CVirtualConsole* apRef)
 {
-	if (mp_Ref != apRef)
+	if (!CVConGroup::setRef(mp_Ref, apRef))
 	{
-		CVirtualConsole *pOldRef = mp_Ref;
-
-		mp_Ref = apRef;
-
-		if (pOldRef != mp_Ref)
-		{
-			if (mp_Ref)
-			{
-				mp_Ref->AddRef();
-			}
-
-			if (pOldRef)
-			{
-				pOldRef->Release();
-			}
-		}
+		_ASSERTE(mp_Ref == NULL);
 	}
 
 	mi_Valid = mp_Ref ? CVConGroup::isValid(mp_Ref) ? 1 : -1 : 0;
