@@ -4554,6 +4554,10 @@ void CVirtualConsole::PaintVCon(HDC hPaintDc)
 		if (guard.VCon() && mp_Ghost)
 			mp_Ghost->UpdateTabSnapshoot(); //CreateTabSnapshoot(hPaintDc, rcClient.right-rcClient.left, rcClient.bottom-rcClient.top);
 	}
+	else if (gpConEmu->IsWindowModeChanging())
+	{
+		LogString(L"PaintVCon skipped due to Min/Max/Restore");
+	}
 	else
 	{
 		PaintVConNormal(hPaintDc, rcClient);

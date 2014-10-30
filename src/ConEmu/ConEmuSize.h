@@ -147,6 +147,7 @@ public:
 	bool SetTileMode(ConEmuWindowCommand Tile);
 	ConEmuWindowMode GetWindowMode();
 	ConEmuWindowMode GetChangeFromWindowMode();
+	bool IsWindowModeChanging();
 	bool SetWindowMode(ConEmuWindowMode inMode, bool abForce = false, bool abFirstShow = false);
 	ConEmuWindowCommand GetTileMode(bool Estimate, MONITORINFO* pmi = NULL);
 	bool IsSizeFree(ConEmuWindowMode CheckMode = wmFullScreen);

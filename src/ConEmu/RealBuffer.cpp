@@ -63,7 +63,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "VConGroup.h"
 #include "VirtualConsole.h"
 
-#define DEBUGSTRSIZE(s) //DEBUGSTR(s)
+#define DEBUGSTRSIZE(s) DEBUGSTR(s)
 #define DEBUGSTRSIZE2(s) DEBUGSTR(s) // Warning level
 #define DEBUGSTRPKT(s) //DEBUGSTR(s)
 #define DEBUGSTRCURSORPOS(s) //DEBUGSTR(s)
