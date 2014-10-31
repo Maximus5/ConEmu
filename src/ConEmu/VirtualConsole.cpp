@@ -240,11 +240,20 @@ CVirtualConsole::CVirtualConsole(CConEmuMain* pOwner)
 	, mp_ConEmu(pOwner)
 	, mp_Ghost(NULL)
 	, mp_Group(NULL)
+	, mn_Flags(vf_None)
 	, m_DC(NULL)
 {
 	#pragma warning(default: 4355)
 	VConCreateLogger::Log(this, VConCreateLogger::eCreate);
 	mh_WndDC = NULL;
+}
+
+void CVirtualConsole::SetFlags(VConFlags flags)
+{
+	if (this && (flags != mn_Flags))
+	{
+		mn_Flags = flags;
+	}
 }
 
 bool CVirtualConsole::Constructor(RConStartArgs *args)
@@ -552,9 +561,19 @@ HWND CVirtualConsole::GhostWnd()
 	return NULL;
 }
 
+bool CVirtualConsole::isActive(bool abAllowGroup)
+{
+	if (!this)
+		return false;
+	VConFlags test = abAllowGroup ? vf_Visible : vf_Active;
+	return ((mn_Flags & test) == test);
+}
+
 bool CVirtualConsole::isVisible()
 {
-	return mp_ConEmu->isVisible(this);
+	if (!this)
+		return false;
+	return ((mn_Flags & vf_Visible) == vf_Visible);
 }
 
 void CVirtualConsole::PointersInit()

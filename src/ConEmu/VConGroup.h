@@ -111,6 +111,7 @@ protected:
 protected:
 	friend class CVConGuard;
 	static bool setRef(CVirtualConsole*& rpRef, CVirtualConsole* apVCon);
+	static void setActiveVConAndFlags(CVirtualConsole* apNewVConActive);
 
 public:
 	static void Initialize();

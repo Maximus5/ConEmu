@@ -3100,7 +3100,7 @@ void CVConGroup::OnVConClosed(CVirtualConsole* apVCon)
 			if (gp_VActive == apVCon)
 			{
 				bDbg4 = true;
-				gp_VActive = NULL;
+				setActiveVConAndFlags(NULL);
 			}
 
 			apVCon->DoDestroyDcWindow();
@@ -3126,7 +3126,7 @@ wrap: // Wrap to here, because gp_VActive may be invalid already and we need to 
 			}
 		}
 
-		gp_VActive = pNewActive;
+		setActiveVConAndFlags(pNewActive);
 	}
 
 	if (gp_VActive)
@@ -3918,7 +3918,8 @@ bool CVConGroup::ConActivate(int nCon)
 			CVConGroup::MoveAllVCon(pVCon, rcWork);
 		}
 
-		gp_VActive = pVCon;
+		setActiveVConAndFlags(pVCon);
+
 		pVCon->RCon()->OnActivate(nCon, nOldConNum);
 
 		if (!lbSizeOK)
@@ -4120,7 +4121,7 @@ CVirtualConsole* CVConGroup::CreateCon(RConStartArgs *args, bool abAllowScripts 
 
 				if (!lbInBackground)
 				{
-					gp_VActive = pVCon;
+					setActiveVConAndFlags(pVCon);
 				}
 				else
 				{
@@ -5214,7 +5215,7 @@ void CVConGroup::OnVConCreated(CVirtualConsole* apVCon, const RConStartArgs *arg
 {
 	if (!gp_VActive || (gb_CreatingActive && (args->BackgroundTab != crb_On)))
 	{
-		gp_VActive = apVCon;
+		setActiveVConAndFlags(apVCon);
 
 		HWND hWndDC = gp_VActive->GetView();
 		if (hWndDC != NULL)
@@ -5222,6 +5223,46 @@ void CVConGroup::OnVConCreated(CVirtualConsole* apVCon, const RConStartArgs *arg
 			_ASSERTE(hWndDC==NULL && "Called from constructor, NULL expected");
 			// Теперь можно показать созданную консоль
 			apiShowWindow(gp_VActive->GetView(), SW_SHOW);
+		}
+	}
+}
+
+void CVConGroup::setActiveVConAndFlags(CVirtualConsole* apNewVConActive)
+{
+	MSectionLockSimple lockGroups; lockGroups.Lock(gpcs_VGroups);
+	//TODO: lockVCons
+
+	if (apNewVConActive && !isValid(apNewVConActive))
+	{
+		_ASSERTE(FALSE && "apNewVConActive has invalid value!");
+		apNewVConActive = NULL;
+	}
+
+	gp_VActive = apNewVConActive;
+	CVConGroup* pActiveGrp = apNewVConActive ? GetRootOfVCon(apNewVConActive) : NULL;
+
+	// !!!   Do NOT use EnumVCon here because   !!!
+	// !!! EnumVCon uses flags must be set here !!!
+
+	CVConGuard VCon;
+	for (size_t i = 0; i < countof(gp_VCon); i++)
+	{
+		if (VCon.Attach(gp_VCon[i]))
+		{
+			DEBUGTEST(VConFlags oldFlags = VCon->mn_Flags);
+			VConFlags newFlags = VCon->mn_Flags;
+
+			if (apNewVConActive && (VCon.VCon() == apNewVConActive))
+				newFlags |= vf_Active;
+			else
+				newFlags &= ~vf_Active;
+
+			if (pActiveGrp && (GetRootOfVCon(VCon.VCon()) == pActiveGrp))
+				newFlags |= vf_Visible;
+			else
+				newFlags &= ~vf_Visible;
+
+			VCon->SetFlags(newFlags);
 		}
 	}
 }
