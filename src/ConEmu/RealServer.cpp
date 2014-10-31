@@ -794,7 +794,7 @@ CESERVER_REQ* CRealServer::cmdTabsChanged(LPVOID pInst, CESERVER_REQ* pIn, UINT 
 			bool lbNewActive = lbCurrentActive;
 
 			// Если консолей более одной - видимость табов не изменится
-			if (gpConEmu->GetVCon(1) == NULL)
+			if (CVConGroup::isVConExists(1))
 			{
 				lbNewActive = (pIn->Tabs.nTabCount > 1);
 			}
@@ -1378,10 +1378,10 @@ CESERVER_REQ* CRealServer::cmdActivateTab(LPVOID pInst, CESERVER_REQ* pIn, UINT 
 	BOOL lbTabOk = FALSE;
 	if (nDataSize >= 2*sizeof(DWORD))
 	{
-		CVirtualConsole *pVCon = gpConEmu->GetVCon(pIn->dwData[0]);
-		if (pVCon && pVCon->RCon())
+		CVConGuard VCon;
+		if (CVConGroup::GetVCon(pIn->dwData[0], &VCon) && VCon->RCon())
 		{
-			lbTabOk = pVCon->RCon()->ActivateFarWindow(pIn->dwData[1]);
+			lbTabOk = VCon->RCon()->ActivateFarWindow(pIn->dwData[1]);
 		}
 		gpConEmu->ConActivate(pIn->dwData[0]);
 	}

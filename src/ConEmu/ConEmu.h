@@ -573,9 +573,7 @@ class CConEmuMain
 		LPCTSTR GetVConTitle(int nIdx);
 		void SetTitleTemplate(LPCWSTR asTemplate);
 		int GetActiveVCon(CVConGuard* pVCon = NULL, int* pAllCount = NULL);
-		CVirtualConsole* GetVCon(int nIdx, bool bFromCycle = false);
 		int isVConValid(CVirtualConsole* apVCon);
-		CVirtualConsole* GetVConFromPoint(POINT ptScreen);
 		void UpdateCursorInfo(const ConsoleInfoArg* pInfo);
 		void UpdateProcessDisplay(BOOL abForce);
 		void UpdateSizes();
@@ -677,7 +675,6 @@ class CConEmuMain
 		void RequestExitUpdate();
 		void RequestPostUpdateTabs();
 		BOOL RunSingleInstance(HWND hConEmuWnd = NULL, LPCWSTR apszCmd = NULL);
-		bool ScreenToVCon(LPPOINT pt, CVirtualConsole** ppVCon);
 		void SetDragCursor(HCURSOR hCur);
 		bool SetSkipOnFocus(bool abSkipOnFocus);
 		void SetWaitCursor(BOOL abWait);

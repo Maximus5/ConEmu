@@ -1690,8 +1690,10 @@ HMENU CConEmuMenu::CreateVConListPopupMenu(HMENU ahExist, BOOL abFirstTabOnly)
 			;
 	}
 
-	for (int V = 0; (pVCon = gpConEmu->GetVCon(V, true))!=NULL; V++)
+	CVConGuard VCon;
+	for (int V = 0; CVConGroup::GetVCon(V, &VCon, true); V++)
 	{
+		CVirtualConsole* pVCon = VCon.VCon();
 		if ((lbActiveVCon = gpConEmu->isActive(pVCon)))
 			nActiveCmd = MAKELONG(1, V+1);
 		nAddFlags = 0; //(lbActiveVCon ? MF_DEFAULT : 0);
@@ -2069,20 +2071,12 @@ LRESULT CConEmuMenu::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam, UINT 
 		int nNewV = ((int)HIWORD(wParam))-1;
 		int nNewR = ((int)LOWORD(wParam))-1; UNREFERENCED_PARAMETER(nNewR);
 
-		CVirtualConsole* pVCon = gpConEmu->GetVCon(nNewV);
-		if (pVCon)
+		CVConGuard VCon;
+		if (CVConGroup::GetVCon(nNewV, &VCon))
 		{
 			// -- в SysMenu показываются только консоли (редакторов/вьюверов там нет)
-			//CRealConsole* pRCon = pVCon->RCon();
-			//if (pRCon)
-			//{
-			//	//if (pRCon->CanActivateFarWindow(nNewR))
-			//	pRCon->ActivateFarWindow(nNewR);
-			//}
-			if (!gpConEmu->isActive(pVCon))
-				gpConEmu->Activate(pVCon);
-			//else
-			//	UpdateTabs();
+			if (!gpConEmu->isActive(VCon.VCon()))
+				gpConEmu->Activate(VCon.VCon());
 		}
 		return 0;
 	}

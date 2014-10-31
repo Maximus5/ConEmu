@@ -2612,8 +2612,9 @@ void CSetDlgButtons::OnBtn_RConVisible(HWND hDlg, WORD CB, BYTE uCheck)
 		// А если скрывать - то все сразу
 		for (int i=0; i<MAX_CONSOLE_COUNT; i++)
 		{
-			CVirtualConsole *pCon = gpConEmu->GetVCon(i);
-
+			CVConGuard VCon;
+			CVConGroup::GetVCon(i, VCon);
+			CVirtualConsole *pCon = VCon.VCon();
 			if (pCon) pCon->RCon()->ShowConsole(FALSE);
 		}
 	}

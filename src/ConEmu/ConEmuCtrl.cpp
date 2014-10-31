@@ -1027,7 +1027,7 @@ bool CConEmuCtrl::key_ConsoleNum(const ConEmuChord& VkState, bool TestOnly, cons
 
 	int nNewIdx = -1;
 
-	if (gpConEmu->GetVCon(10))
+	if (CVConGroup::isVConExists(10))
 	{
 		// цифровая двухкнопочная активация, если уже больше 9-и консолей открыто
 		if (gpConEmu->mn_DoubleKeyConsoleNum)
@@ -1180,18 +1180,18 @@ void CConEmuCtrl::ChooseTabFromMenu(BOOL abFirstTabOnly, POINT pt, DWORD Align /
 		int nNewV = ((int)HIWORD(nTab))-1;
 		int nNewR = ((int)LOWORD(nTab))-1;
 
-		CVirtualConsole* pVCon = gpConEmu->GetVCon(nNewV);
-		if (pVCon)
+		CVConGuard VCon;
+		if (CVConGroup::GetVCon(nNewV, &VCon))
 		{
-			CRealConsole* pRCon = pVCon->RCon();
+			CRealConsole* pRCon = VCon->RCon();
 			if (pRCon)
 			{
 				CTab tab(__FILE__,__LINE__);
 				if (pRCon->GetTab(nNewR, tab))
 					pRCon->ActivateFarWindow(tab->Info.nFarWindowID);
 			}
-			if (!gpConEmu->isActive(pVCon))
-				gpConEmu->Activate(pVCon);
+			if (!gpConEmu->isActive(VCon.VCon()))
+				gpConEmu->Activate(VCon.VCon());
 		}
 	}
 
@@ -1454,9 +1454,11 @@ size_t CConEmuCtrl::GetOpenedTabs(CESERVER_REQ_GETALLTABS::TabInfo*& pTabs)
 	int nActiveCon = gpConEmu->ActiveConNum();
 	size_t cchMax = nConCount*16;
 	size_t cchCount = 0;
-	CVirtualConsole* pVCon;
+	CVConGuard VCon;
+
 	pTabs = (CESERVER_REQ_GETALLTABS::TabInfo*)calloc(cchMax, sizeof(*pTabs));
-	for (int V = 0; (pVCon = gpConEmu->GetVCon(V)) != NULL; V++)
+
+	for (int V = 0; CVConGroup::GetVCon(V, &VCon, true); V++)
 	{
 		if (!pTabs)
 		{
@@ -1464,7 +1466,7 @@ size_t CConEmuCtrl::GetOpenedTabs(CESERVER_REQ_GETALLTABS::TabInfo*& pTabs)
 			break;
 		}
 
-		CRealConsole* pRCon = pVCon->RCon();
+		CRealConsole* pRCon = VCon->RCon();
 		if (!pRCon)
 			continue;
 
@@ -1526,7 +1528,7 @@ size_t CConEmuCtrl::GetOpenedPanels(wchar_t*& pszDirs, int& iCount, int& iCurren
 	size_t cchAllLen = 1;
 	iCount = iCurrent = 0;
 
-	for (int V = 0; CVConGroup::GetVCon(V, &VCon); V++)
+	for (int V = 0; CVConGroup::GetVCon(V, &VCon, true); V++)
 	{
 		VCon->RCon()->GetPanelDirs(szActiveDir, szPassive);
 		if (CVConGroup::isActive(VCon.VCon(), false))

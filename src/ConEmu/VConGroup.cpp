@@ -2342,13 +2342,14 @@ void CVConGroup::OnRConTimerCheck()
 }
 
 // nIdx - 0 based
-bool CVConGroup::GetVCon(int nIdx, CVConGuard* pVCon /*= NULL*/)
+// bFromCycle = true, для перебора в циклах (например, в CSettings::UpdateWinHookSettings), чтобы не вылезали ассерты
+bool CVConGroup::GetVCon(int nIdx, CVConGuard* pVCon /*= NULL*/, bool bFromCycle /*= false*/)
 {
 	bool bFound = false;
 
 	if (nIdx < 0 || nIdx >= (int)countof(gp_VCon) || gp_VCon[nIdx] == NULL)
 	{
-		_ASSERTE(nIdx>=0 && nIdx<(int)countof(gp_VCon));
+		_ASSERTE((nIdx>=0) && (nIdx<(int)MAX_CONSOLE_COUNT || (bFromCycle && nIdx==(int)MAX_CONSOLE_COUNT)));
 		if (pVCon)
 			*pVCon = NULL;
 	}
@@ -2364,6 +2365,7 @@ bool CVConGroup::GetVCon(int nIdx, CVConGuard* pVCon /*= NULL*/)
 
 bool CVConGroup::GetVConFromPoint(POINT ptScreen, CVConGuard* pVCon /*= NULL*/)
 {
+	MSectionLockSimple lockGroups; lockGroups.Lock(gpcs_VGroups);
 	bool bFound = false;
 	CVConGuard VCon;
 
@@ -2376,9 +2378,7 @@ bool CVConGroup::GetVConFromPoint(POINT ptScreen, CVConGuard* pVCon /*= NULL*/)
 
 	for (size_t i = 0; i < countof(gp_VCon); i++)
 	{
-		VCon = gp_VCon[i];
-
-		if (VCon.VCon() != NULL && VCon->isVisible())
+		if (VCon.Attach(gp_VCon[i]) && VCon->isVisible())
 		{
 
 			HWND hView = VCon->GetView();
@@ -2396,10 +2396,14 @@ bool CVConGroup::GetVConFromPoint(POINT ptScreen, CVConGuard* pVCon /*= NULL*/)
 					break;
 				}
 			}
+			#ifdef _DEBUG
 			else
 			{
+				lockGroups.Unlock();
 				_ASSERTE((hView && hBack) && "(hView = VCon->GetView()) != NULL");
+				lockGroups.Lock(gpcs_VGroups);
 			}
+			#endif
 		}
 	}
 

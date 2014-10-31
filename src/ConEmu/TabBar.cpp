@@ -2042,9 +2042,10 @@ int CTabBarClass::ActiveTabByName(int anType, LPCWSTR asName, CVirtualConsole** 
 	INT_PTR V, I;
 	int tabIdx = 0;
 
-	for (V = 0; V < MAX_CONSOLE_COUNT && nTab == -1; V++)
+	CVConGuard VCon;
+	for (V = 0; (nTab == -1) && CVConGroup::GetVCon(V, &VCon, true); V++)
 	{
-		if (!(pVCon = gpConEmu->GetVCon(V))) continue;
+		pVCon = VCon.VCon();
 
 		#ifdef _DEBUG
 		BOOL lbActive = CVConGroup::isActive(pVCon, false);

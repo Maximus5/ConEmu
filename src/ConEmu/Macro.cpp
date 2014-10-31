@@ -2944,7 +2944,7 @@ LPWSTR ConEmuMacro::Tab(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 				if (nParm == 1)
 				{
 					// Прокрутка вперед (циклически)
-					if (gpConEmu->GetVCon(nActive+1))
+					if (CVConGroup::isVConExists(nActive+1))
 					{
 						gpConEmu->ConActivate(nActive+1);
 						pszResult = lstrdup(L"OK");
@@ -2976,7 +2976,7 @@ LPWSTR ConEmuMacro::Tab(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 			}
 			break;
 		case ctc_ActivateConsole: // activate console by number, parm=(one-based console index)
-			if (nParm >= 1 && gpConEmu->GetVCon(nParm-1))
+			if ((nParm >= 1) && CVConGroup::isVConExists(nParm-1))
 			{
 				gpConEmu->ConActivate(nParm-1);
 				pszResult = lstrdup(L"OK");

@@ -188,8 +188,7 @@ void CConEmuChild::ProcessVConClosed(CVirtualConsole* apVCon, BOOL abPosted /*= 
 	CVConGroup::OnVConClosed(apVCon);
 
 	// Передернуть главный таймер, а то GUI долго думает, если ни одной консоли уже не осталось
-	//if (mp_VCon[0] == NULL)
-	if (!gpConEmu->GetVCon(0))
+	if (!CVConGroup::isVConExists(0))
 		gpConEmu->OnTimer(TIMER_MAIN_ID, 0);
 
 	ShutdownGuiStep(L"ProcessVConClosed - done");

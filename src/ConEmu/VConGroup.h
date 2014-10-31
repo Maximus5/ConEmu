@@ -154,7 +154,7 @@ public:
 
 	static int  GetActiveVCon(CVConGuard* pVCon = NULL, int* pAllCount = NULL);
 	static int  GetVConIndex(CVirtualConsole* apVCon);
-	static bool GetVCon(int nIdx, CVConGuard* pVCon = NULL);
+	static bool GetVCon(int nIdx, CVConGuard* pVCon = NULL, bool bFromCycle = false);
 	static bool GetVConFromPoint(POINT ptScreen, CVConGuard* pVCon = NULL);
 	static bool GetProgressInfo(short* pnProgress, BOOL* pbActiveHasProgress, BOOL* pbWasError, BOOL* pbWasIndeterminate);
 
