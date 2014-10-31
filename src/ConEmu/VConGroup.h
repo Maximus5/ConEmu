@@ -126,9 +126,7 @@ public:
 	static void OnCreateGroupEnd();
 
 public:
-	static bool isActive(CVirtualConsole* apVCon, bool abAllowGroup = true);
 	static bool isActiveGroupVCon(CVirtualConsole* pVCon);
-	static bool isVisible(CVirtualConsole* apVCon);
 	static bool isValid(CRealConsole* apRCon);
 	static bool isValid(CVirtualConsole* apVCon);
 	static bool isVConExists(int nIdx);

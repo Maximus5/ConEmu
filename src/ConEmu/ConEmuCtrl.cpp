@@ -1190,7 +1190,7 @@ void CConEmuCtrl::ChooseTabFromMenu(BOOL abFirstTabOnly, POINT pt, DWORD Align /
 				if (pRCon->GetTab(nNewR, tab))
 					pRCon->ActivateFarWindow(tab->Info.nFarWindowID);
 			}
-			if (!gpConEmu->isActive(VCon.VCon()))
+			if (!VCon->isActive(false))
 				gpConEmu->Activate(VCon.VCon());
 		}
 	}
@@ -1531,7 +1531,7 @@ size_t CConEmuCtrl::GetOpenedPanels(wchar_t*& pszDirs, int& iCount, int& iCurren
 	for (int V = 0; CVConGroup::GetVCon(V, &VCon, true); V++)
 	{
 		VCon->RCon()->GetPanelDirs(szActiveDir, szPassive);
-		if (CVConGroup::isActive(VCon.VCon(), false))
+		if (VCon->isActive(false))
 			iCurrent = iCount;
 		LPCWSTR psz[] = {szActiveDir.ms_Arg, szPassive.ms_Arg};
 		for (int i = 0; i <= 1; i++)

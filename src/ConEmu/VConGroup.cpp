@@ -1344,7 +1344,7 @@ CVConGroup* CVConGroup::FindSplitGroup(POINT ptWork, CVConGroup* pFrom)
 
 	if (!PtInRect(&pGrp->mrc_Full, ptWork))
 		return NULL;
-	
+
 	CVConGroup* pFind;
 	if (pGrp->mp_Grp1 && ((pFind = FindSplitGroup(ptWork, pGrp->mp_Grp1)) != NULL))
 		return pFind;
@@ -1567,6 +1567,7 @@ void CVConGroup::CheckTabValid(CTabID* apTab, bool& rbVConValid, bool& rbPidVali
 	rbPassive = bPassive;
 }
 
+// nIdx - zero-based index
 bool CVConGroup::isVConExists(int nIdx)
 {
 	if (nIdx < 0 || nIdx >= (int)countof(gp_VCon))
@@ -1963,10 +1964,11 @@ void CVConGroup::InvalidateAll()
 	for (size_t i = 0; i < countof(gp_VCon); i++)
 	{
 		MSectionLockSimple lockGroups; lockGroups.Lock(gpcs_VGroups);
-		CVConGuard VCon(gp_VCon[i]);
-
-		if (VCon.VCon() && isVisible(VCon.VCon()))
+		CVConGuard VCon;
+		if (VCon.Attach(gp_VCon[i]) && VCon->isVisible())
+		{
 			VCon.VCon()->Invalidate();
+		}
 	}
 }
 
@@ -1986,26 +1988,25 @@ void CVConGroup::UpdateWindowChild(CVirtualConsole* apVCon)
 	{
 		for (size_t i = 0; i < countof(gp_VCon); i++)
 		{
-			if (gp_VCon[i] && gp_VCon[i]->isVisible())
-				UpdateWindow(gp_VCon[i]->GetView());
+			if (VCon.Attach(gp_VCon[i]) && VCon->isVisible())
+				UpdateWindow(VCon->GetView());
 		}
 	}
 }
 
 void CVConGroup::RePaint()
 {
+	CVConGuard VCon;
 	for (size_t i = 0; i < countof(gp_VCon); i++)
 	{
-		if (gp_VCon[i] && gp_VCon[i]->isVisible())
+		if (VCon.Attach(gp_VCon[i]) && VCon->isVisible())
 		{
-			CVirtualConsole* pVCon = gp_VCon[i];
-			CVConGuard guard(pVCon);
-			HWND hView = pVCon->GetView();
+			HWND hView = VCon->GetView();
 			if (hView)
 			{
 				HDC hDc = GetDC(hView);
 				//RECT rcClient = pVCon->GetDcClientRect();
-				pVCon->PaintVCon(hDc/*, rcClient*/);
+				VCon->PaintVCon(hDc/*, rcClient*/);
 				ReleaseDC(ghWnd, hDc);
 			}
 		}
@@ -2034,28 +2035,7 @@ void CVConGroup::Update(bool isForce /*= false*/)
 	}
 }
 
-bool CVConGroup::isActive(CVirtualConsole* apVCon, bool abAllowGroup /*= true*/)
-{
-	MSectionLockSimple lockGroups; lockGroups.Lock(gpcs_VGroups);
-
-	if (!gp_VActive || !isValid(apVCon))
-		return false;
-
-	if (apVCon == gp_VActive)
-		return true;
-
-	if (abAllowGroup)
-	{
-		// DoubleView: когда будет группировка ввода - чтобы курсором мигать во всех консолях
-		CVConGroup* pRoot = GetRootOfVCon(apVCon);
-		CVConGroup* pActiveRoot = GetRootOfVCon(gp_VActive);
-		if (pRoot && (pRoot == pActiveRoot))
-			return true;
-	}
-
-	return false;
-}
-
+// 2del???
 bool CVConGroup::isActiveGroupVCon(CVirtualConsole* pVCon)
 {
 	MSectionLockSimple lockGroups; lockGroups.Lock(gpcs_VGroups);
@@ -2077,26 +2057,6 @@ bool CVConGroup::isActiveGroupVCon(CVirtualConsole* pVCon)
 		pGr->StoreActiveVCon(pVCon);
 		return true;
 	}
-
-	return false;
-}
-
-bool CVConGroup::isVisible(CVirtualConsole* apVCon)
-{
-	MSectionLockSimple lockGroups; lockGroups.Lock(gpcs_VGroups);
-
-	if (!isValid(apVCon))
-		return false;
-
-	if (apVCon == gp_VActive)
-		return true;
-
-	_ASSERTE(gp_VActive || gpConEmu->mb_ScClosePending);
-
-	CVConGroup* pActiveRoot = gp_VActive ? GetRootOfVCon(gp_VActive) : NULL;
-	CVConGroup* pRoot = GetRootOfVCon(apVCon);
-	if (pRoot && pActiveRoot && (pRoot == pActiveRoot))
-		return true;
 
 	return false;
 }
@@ -2265,8 +2225,8 @@ bool CVConGroup::isChildWindowVisible()
 {
 	for (size_t i = 0; i < countof(gp_VCon); i++)
 	{
-		CVConGuard VCon(gp_VCon[i]);
-		if (VCon.VCon() && isVisible(VCon.VCon()))
+		CVConGuard VCon;
+		if (VCon.Attach(gp_VCon[i]) && VCon->isVisible())
 		{
 			CRealConsole* pRCon = VCon->RCon();
 			if (!pRCon)
@@ -2298,13 +2258,15 @@ bool CVConGroup::isPictureView()
 
 	for (size_t i = 0; !lbRc && i < countof(gp_VCon); i++)
 	{
-		CVConGuard VCon(gp_VCon[i]);
-		CVirtualConsole* pVCon = VCon.VCon();
-		// Было isVisible, но некорректно блокировать другие сплиты, в которых PicView нету
-		if (!pVCon || !isActive(pVCon) || !pVCon->RCon())
+		CVConGuard VCon;
+		if (!VCon.Attach(gp_VCon[i]))
 			continue;
 
-		hPicView = pVCon->RCon()->isPictureView();
+		// Было isVisible, но некорректно блокировать другие сплиты, в которых PicView нету
+		if (!VCon->isActive(false) || !VCon->RCon())
+			continue;
+
+		hPicView = VCon->RCon()->isPictureView();
 
 		lbRc = (hPicView != NULL);
 
@@ -2942,7 +2904,7 @@ void CVConGroup::OnUpdateScrollInfo()
 		CVConGuard VCon(gp_VCon[i]);
 		if (!VCon.VCon())
 			continue;
-		if (!isActive(VCon.VCon()))
+		if (!VCon->isVisible())
 			continue;
 
 		if (VCon->RCon())
@@ -4174,8 +4136,8 @@ HRGN CVConGroup::GetExclusionRgn(bool abTestOnly/*=false*/)
 
 	for (size_t i = 0; i < countof(gp_VCon); i++)
 	{
-		CVConGuard VCon(gp_VCon[i]);
-		if (VCon.VCon() && VCon->isVisible())
+		CVConGuard VCon;
+		if (VCon.Attach(gp_VCon[i]) && VCon->isVisible())
 		{
 			HRGN hVCon = VCon->GetExclusionRgn(abTestOnly);
 
@@ -4941,8 +4903,8 @@ void CVConGroup::Redraw()
 {
 	for (size_t i = 0; i < countof(gp_VCon); i++)
 	{
-		CVConGuard VCon(gp_VCon[i]);
-		if (VCon.VCon() && VCon->isVisible())
+		CVConGuard VCon;
+		if (VCon.Attach(gp_VCon[i]) && VCon->isVisible())
 			VCon->Redraw();
 	}
 }
@@ -5281,8 +5243,8 @@ void CVConGroup::OnGuiFocused(BOOL abFocus, BOOL abForceChild /*= FALSE*/)
 {
 	for (size_t i = 0; i < countof(gp_VCon); i++)
 	{
-		CVConGuard VCon(gp_VCon[i]);
-		if (VCon.VCon() && VCon->isVisible())
+		CVConGuard VCon;
+		if (VCon.Attach(gp_VCon[i]) && VCon->isVisible())
 			VCon->RCon()->OnGuiFocused(abFocus, abForceChild);
 	}
 }
@@ -5398,8 +5360,8 @@ void CVConGroup::NotifyChildrenWindows()
 	// Issue 878: ConEmu - Putty: Can't select in putty when ConEmu change display
 	for (size_t i = 0; i < countof(gp_VCon); i++)
 	{
-		CVConGuard VCon(gp_VCon[i]);
-		if (VCon.VCon() && isVisible(VCon.VCon()))
+		CVConGuard VCon;
+		if (VCon.Attach(gp_VCon[i]) && VCon->isVisible())
 		{
 			HWND hGuiWnd = VCon->GuiWnd(); // Child GUI Window
 			if (hGuiWnd)

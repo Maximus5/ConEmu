@@ -1666,7 +1666,7 @@ bool CVirtualConsole::Update(bool abForce, HDC *ahDc)
 
 		//if (mb_RequiredForceUpdate || updateText || updateCursor)
 		{
-			if (mp_ConEmu->isVisible(this))
+			if (isVisible())
 			{
 				if (gpSetCls->isAdvLogging>=3) mp_RCon->LogString("Invalidating from CVirtualConsole::Update.1");
 
@@ -1722,7 +1722,7 @@ bool CVirtualConsole::Update(bool abForce, HDC *ahDc)
 	//gpSetCls->Performance(tPerfRead, FALSE);
 	//if (gbNoDblBuffer) isForce = TRUE; // Debug, dblbuffer
 	isForeground = (mp_ConEmu->InQuakeAnimation() || mp_ConEmu->isMeForeground(true))
-		&& mp_ConEmu->isActive(this, false);
+		&& isActive(false);
 
 	if (isFade == isForeground && gpSet->isFadeInactive)
 		isForce = true;
@@ -1810,7 +1810,7 @@ bool CVirtualConsole::Update(bool abForce, HDC *ahDc)
 	//SDC.Leave();
 	SCON.Unlock();
 
-	bool bVisible = mp_ConEmu->isVisible(this);
+	bool bVisible = isVisible();
 
 	// Highlight row/col under mouse cursor
 	if (bVisible && isHighlightAny())
@@ -2005,7 +2005,7 @@ bool CVirtualConsole::CalcHighlightRowCol(COORD* pcrPos)
 {
 	if (!(isHighlightMouseRow() || isHighlightMouseCol())
 		//|| !mp_ConEmu->isMeForeground() // show highlights even if ConEmu loose focus
-		|| !mp_ConEmu->isVisible(this))
+		|| !isVisible())
 	{
 		m_HighlightInfo.mb_Exists = false;
 		m_HighlightInfo.m_Cur.X = m_HighlightInfo.m_Cur.Y = -1;
@@ -2068,7 +2068,7 @@ void CVirtualConsole::UpdateHighlights()
 void CVirtualConsole::UpdateHighlightsRowCol()
 {
 	_ASSERTE(this && (isHighlightMouseRow() || isHighlightMouseCol()));
-	_ASSERTE(mp_ConEmu->isVisible(this));
+	_ASSERTE(isVisible());
 
 	// Get COORDs (relative to upper-left visible pos)
 	COORD pos = {-1,-1};
@@ -4128,7 +4128,7 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
 	RECT rect;
 	TODO("DoubleView: обработка группировки ввода");
 	bool bActive = mp_ConEmu->isMeForeground()
-		&& CVConGroup::isActive(this, false);
+		&& isActive(false);
 
 	// указатель на настройки разделяемые по приложениям
 	mp_Set = gpSet->GetAppSettings(mp_RCon->GetActiveAppSettingsId());
@@ -4300,8 +4300,8 @@ void CVirtualConsole::UpdateCursor(bool& lRes)
 	BOOL lbUpdateTick = FALSE;
 	bool bForeground = mp_ConEmu->isMeForeground();
 	TODO("DoubleView: группировка ввода");
-	bool bConActive = CVConGroup::isActive(this, false); // а тут именно Active, т.к. курсор должен мигать в активной консоли
-	bool bConVisible = bConActive || mp_ConEmu->isVisible(this);
+	bool bConActive = isActive(false); // а тут именно Active, т.к. курсор должен мигать в активной консоли
+	bool bConVisible = bConActive || isVisible();
 	bool bIsAlive = mp_RCon ? (mp_RCon->isAlive() || !mp_RCon->isFar(TRUE)) : false; // не мигать, если фар "думает"
 	//if (bConActive) {
 	//	bForeground = mp_ConEmu->isMeForeground();
@@ -4649,7 +4649,7 @@ void CVirtualConsole::PaintVConSimple(HDC hPaintDc, RECT rcClient, BOOL bGuiVisi
 
 void CVirtualConsole::PaintVConNormal(HDC hPaintDc, RECT rcClient)
 {
-	if (mp_ConEmu->isActive(this))
+	if (isActive(false))
 		gpSetCls->Performance(tPerfFPS, TRUE); // считается по своему
 
 	// Проверить, не сменилась ли битность с последнего раза

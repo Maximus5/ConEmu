@@ -632,7 +632,6 @@ class CConEmuMain
 		void Invalidate(LPRECT lpRect, BOOL bErase = TRUE);
 		void InvalidateAll();
 		void UpdateWindowChild(CVirtualConsole* apVCon);
-		bool isActive(CVirtualConsole* apVCon, bool abAllowGroup = true);
 		bool isCloseConfirmed();
 		bool isDestroyOnClose(bool ScCloseOnEmpty = false);
 		bool isConSelectMode();
@@ -653,7 +652,6 @@ class CConEmuMain
 		bool isVConExists(int nIdx);
 		bool isVConHWND(HWND hChild, CVConGuard* pVCon = NULL);
 		bool isViewer();
-		bool isVisible(CVirtualConsole* apVCon);
 		void LoadIcons();
 		void MoveActiveTab(CVirtualConsole* apVCon, bool bLeftward);
 		void InvalidateGaps();

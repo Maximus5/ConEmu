@@ -328,7 +328,7 @@ BOOL CConEmuChild::ShowView(int nShowCmd)
 	if (nShowCmd && bGuiVisible)
 	{
 		// Если активируется таб с ChildGui
-		if (gpConEmu->isActive(pVCon, false))
+		if (pVCon->isActive(false))
 		{
 			PostRestoreChildFocus();
 		}
@@ -738,7 +738,7 @@ void CConEmuChild::PostRestoreChildFocus()
 
 void CConEmuChild::RestoreChildFocusPending(bool abSetPending)
 {
-	mb_RestoreChildFocusPending = abSetPending && gpConEmu->isActive(mp_VCon, false);
+	mb_RestoreChildFocusPending = abSetPending && mp_VCon->isActive(false);
 }
 
 LRESULT CConEmuChild::BackWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
@@ -952,7 +952,7 @@ LRESULT CConEmuChild::BackWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM l
 				else
 				{
 					CRealConsole* pRCon = pVCon->RCon();
-					if (gpConEmu->isActive(pVCon, false))
+					if (pVCon->isActive(false))
 					{
 						pRCon->GuiWndFocusRestore();
 					}
@@ -1118,7 +1118,7 @@ LRESULT CConEmuChild::OnPaint()
 			mh_LastGuiChild = VCon->RCon() ? VCon->RCon()->GuiWnd() : NULL;
 		}
 
-		bool bRightClickingPaint = gpConEmu->isRightClickingPaint() && gpConEmu->isActive(VCon.VCon());
+		bool bRightClickingPaint = gpConEmu->isRightClickingPaint() && VCon->isActive(false);
 		if (bRightClickingPaint)
 		{
 			// Скрыть окошко с "кружочком"
@@ -1406,8 +1406,7 @@ void CConEmuChild::OnAlwaysShowScrollbar(bool abSync /*= true*/)
 {
 	if (m_LastAlwaysShowScrollbar != gpSet->isAlwaysShowScrollbar)
 	{
-		CVirtualConsole* pVCon = mp_VCon;
-		CVConGuard guard(pVCon);
+		CVConGuard VCon(mp_VCon);
 
 		if (gpSet->isAlwaysShowScrollbar == 1)
 			ShowScroll(TRUE);
@@ -1416,10 +1415,10 @@ void CConEmuChild::OnAlwaysShowScrollbar(bool abSync /*= true*/)
 		else
 			TrackMouse();
 
-		if (abSync && pVCon->isVisible())
+		if (abSync && VCon->isVisible())
 		{
 			if (gpConEmu->GetWindowMode() != wmNormal)
-				pVCon->RCon()->SyncConsole2Window();
+				VCon->RCon()->SyncConsole2Window();
 			else
 				CVConGroup::SyncWindowToConsole(); // -- функция пустая, игнорируется
 		}
@@ -1439,7 +1438,7 @@ BOOL CConEmuChild::TrackMouse()
 
 	if (pVCon->WasHighlightRowColChanged())
 	{
-		_ASSERTE(gpConEmu->isVisible(pVCon));
+		_ASSERTE(pVCon->isVisible());
 		pVCon->Invalidate();
 	}
 

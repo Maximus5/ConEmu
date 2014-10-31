@@ -700,7 +700,7 @@ bool CRealConsole::SetActiveBuffer(CRealBuffer* aBuffer, bool abTouchMonitorEven
 	mp_ABuf = aBuffer;
 	mb_ABufChaged = true;
 
-	if (isActive())
+	if (isActive(false))
 	{
 		// Обновить на тулбаре статусы Scrolling(BufferHeight) & Alternative
 		OnBufferHeight();
@@ -1999,7 +1999,7 @@ DWORD CRealConsole::MonitorThreadWorker(bool bDetached, bool& rbChildProcessCrea
 
 	while (TRUE)
 	{
-		bActive = isActive();
+		bActive = isActive(false);
 		bVisible = bActive || isVisible();
 		bIconic = mp_ConEmu->isIconic();
 
@@ -2071,7 +2071,7 @@ DWORD CRealConsole::MonitorThreadWorker(bool bDetached, bool& rbChildProcessCrea
 		// Обновить флаги после ожидания
 		if (!bActive)
 		{
-			bActive = isActive();
+			bActive = isActive(false);
 			bVisible = bActive || isVisible();
 		}
 
@@ -6445,7 +6445,7 @@ void CRealConsole::SetMainSrvPID(DWORD anMainSrvPID, HANDLE ahMainSrv)
 
 	DEBUGTEST(isServerAlive());
 
-	if (isActive())
+	if (isActive(false))
 		mp_ConEmu->mp_Status->OnServerChanged(mn_MainSrv_PID, mn_AltSrv_PID);
 
 	DEBUGTEST(isServerAlive());
@@ -6514,7 +6514,7 @@ bool CRealConsole::InitAltServer(DWORD nAltServerPID/*, HANDLE hAltServer*/)
 		bOk = (nWait == WAIT_OBJECT_0);
 	}
 
-	if (isActive())
+	if (isActive(false))
 		mp_ConEmu->mp_Status->OnServerChanged(mn_MainSrv_PID, mn_AltSrv_PID);
 
 	return bOk;
@@ -6551,7 +6551,7 @@ bool CRealConsole::ReopenServerPipes()
 		return false;
 	}
 
-	bool bActive = isActive();
+	bool bActive = isActive(false);
 
 	if (bActive)
 		mp_ConEmu->mp_Status->OnServerChanged(mn_MainSrv_PID, mn_AltSrv_PID);
@@ -6908,7 +6908,7 @@ void CRealConsole::SetActivePID(DWORD anNewPID)
 	{
 		mn_ActivePID = anNewPID;
 
-		if (isActive())
+		if (isActive(false))
 		{
 			mp_ConEmu->mp_Status->UpdateStatusBar(true);
 		}
@@ -7898,7 +7898,7 @@ void CRealConsole::SetHwnd(HWND ahConWnd, BOOL abForceApprove /*= FALSE*/)
 	//if ((gpSet->isMonitorConsoleLang & 2) == 2) // Один Layout на все консоли
 	//    SwitchKeyboardLayout(INPUTLANGCHANGE_SYSCHARSET,mp_ConEmu->GetActiveKeyboardLayout());
 
-	if (isActive())
+	if (isActive(false))
 	{
 		#ifdef _DEBUG
 		ghConWnd = hConWnd; // на удаление
@@ -8860,7 +8860,7 @@ void CRealConsole::OnActivate(int nNewNum, int nOldNum)
 	if (!this)
 		return;
 
-	_ASSERTE(isActive());
+	_ASSERTE(isActive(false));
 	// Чтобы можно было найти хэндл окна по хэндлу консоли
 	mp_ConEmu->OnActiveConWndStore(hConWnd);
 
@@ -8926,10 +8926,10 @@ void CRealConsole::OnActivate(int nNewNum, int nOldNum)
 	//}
 	//mb_PicViewWasHidden = FALSE;
 
-	if (ghOpWnd && isActive())
+	if (ghOpWnd && isActive(false))
 		gpSetCls->UpdateConsoleMode(mp_RBuf->GetConInMode(), mp_RBuf->GetConOutMode());
 
-	if (isActive())
+	if (isActive(false))
 	{
 		mp_ConEmu->UpdateActiveGhost(mp_VCon);
 		mp_ConEmu->OnSetCursor(-1,-1);
@@ -9048,7 +9048,7 @@ void CRealConsole::OnGuiFocused(BOOL abFocus, BOOL abForceChild /*= FALSE*/)
 	//if (m_ConsoleMap.IsValid() && ms_MainSrv_Pipe[0])
 	if (abFocus)
 	{
-		BOOL lbActive = isActive();
+		BOOL lbActive = isActive(false);
 
 		// -- Проверки убираем. Overhead небольшой, а проблем огрести можно (например, мэппинг обновиться не успел)
 		//if ((BOOL)m_ConsoleMap.Ptr()->bConsoleActive == lbActive
@@ -9081,7 +9081,7 @@ void CRealConsole::UpdateServerActive(BOOL abImmediate /*= FALSE*/)
 
 	//mb_UpdateServerActive = abActive;
 	bool bActiveNonSleep = false;
-	bool bActive = isActive();
+	bool bActive = isActive(false);
 	bool bVisible = bActive || isVisible();
 	if (gpSet->isRetardInactivePanes ? bActive : bVisible)
 	{
@@ -9169,7 +9169,7 @@ void CRealConsole::UpdateServerActive(BOOL abImmediate /*= FALSE*/)
 
 void CRealConsole::UpdateScrollInfo()
 {
-	if (!isActive())
+	if (!isActive(false))
 		return;
 
 	if (!isMainThread())
@@ -9435,7 +9435,7 @@ void CRealConsole::SetTabs(ConEmuTab* apTabs, int anTabsCount, DWORD anFarPID)
 	if (mp_ConEmu->isValid(mp_VCon))    // Во время создания консоли она еще не добавлена в список...
 	{
 		// Если была показана ошибка "This tab can't be activated now"
-		if (bTabsChanged && mp_ConEmu->isActive(mp_VCon, false))
+		if (bTabsChanged && isActive(false))
 		{
 			// скрыть ее
 			mp_ConEmu->mp_TabBar->ShowTabError(NULL, 0);
@@ -11370,12 +11370,11 @@ void CRealConsole::OnBufferHeight()
 	mp_ABuf->OnBufferHeight();
 }
 
-bool CRealConsole::isActive(bool abAllowGroup /*= false*/)
+bool CRealConsole::isActive(bool abAllowGroup)
 {
 	if (!this || !mp_VCon)
 		return false;
-
-	return CVConGroup::isActive(mp_VCon, abAllowGroup);
+	return mp_VCon->isActive(abAllowGroup);
 }
 
 // Проверяет не только активность, но и "в фокусе ли ConEmu"
@@ -11385,7 +11384,7 @@ bool CRealConsole::isInFocus()
 		return false;
 
 	TODO("DoubleView: когда будет группировка ввода - чтобы курсором мигать во всех консолях");
-	if (!CVConGroup::isActive(mp_VCon, false/*abAllowGroup*/))
+	if (!isActive(false/*abAllowGroup*/))
 		return false;
 
 	if (!mp_ConEmu->isMeForeground(false, true))
@@ -11396,11 +11395,9 @@ bool CRealConsole::isInFocus()
 
 bool CRealConsole::isVisible()
 {
-	if (!this) return false;
+	if (!this || !mp_VCon) return false;
 
-	if (!mp_VCon) return false;
-
-	return mp_ConEmu->isVisible(mp_VCon);
+	return mp_VCon->isVisible();
 }
 
 // Результат зависит от распознанных регионов!
@@ -11692,7 +11689,7 @@ void CRealConsole::OnTitleChanged()
 	// заменил на GetProgress, т.к. он еще учитывает mn_PreWarningProgress
 	nNewProgress = GetProgress(NULL);
 
-	if (mp_ConEmu->isActive(mp_VCon) && wcscmp(GetTitle(), mp_ConEmu->GetLastTitle(false)))
+	if (isActive(false) && wcscmp(GetTitle(), mp_ConEmu->GetLastTitle(false)))
 	{
 		// Для активной консоли - обновляем заголовок. Прогресс обновится там же
 		setLastShownProgress(nNewProgress);
@@ -12125,7 +12122,7 @@ bool CRealConsole::SetProgress(short nState, short nValue, LPCWSTR pszName /*= N
 		// Показать прогресс в заголовке
 		mb_ForceTitleChanged = TRUE;
 
-		if (mp_ConEmu->isActive(mp_VCon))
+		if (isActive(false))
 			// Для активной консоли - обновляем заголовок. Прогресс обновится там же
 			mp_ConEmu->UpdateTitle();
 		else
@@ -12795,7 +12792,7 @@ void CRealConsole::SetGuiMode(DWORD anFlags, HWND ahGuiWnd, DWORD anStyle, DWORD
 #endif
 
 	// Ставим после "m_ChildGui.hGuiWnd = ahGuiWnd", т.к. для гуй-приложений логика кнопки другая.
-	if (isActive())
+	if (isActive(false))
 	{
 		// Обновить на тулбаре статусы Scrolling(BufferHeight) & Alternative
 		OnBufferHeight();
@@ -13734,7 +13731,7 @@ void CRealConsole::UpdateCursorInfo()
 	if (!this)
 		return;
 
-	if (!isActive())
+	if (!isActive(false))
 		return;
 
 	ConsoleInfoArg arg = {};

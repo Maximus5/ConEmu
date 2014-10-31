@@ -744,7 +744,7 @@ CESERVER_REQ* CRealServer::cmdTabsChanged(LPVOID pInst, CESERVER_REQ* pIn, UINT 
 			mp_RCon->SetFarPluginPID(0);
 			mp_RCon->CloseFarMapData();
 
-			if (mp_RCon->isActive()) gpConEmu->UpdateProcessDisplay(FALSE);  // обновить PID в окне настройки
+			if (mp_RCon->isActive(false)) gpConEmu->UpdateProcessDisplay(FALSE);  // обновить PID в окне настройки
 		}
 
 		mp_RCon->tabs.m_Tabs.MarkTabsInvalid(CTabStack::MatchNonPanel, pIn->hdr.nSrcPID);
@@ -953,7 +953,7 @@ CESERVER_REQ* CRealServer::cmdLangChange(LPVOID pInst, CESERVER_REQ* pIn, UINT n
 	//if ((gpSet->isMonitorConsoleLang & 1) == 1) {
 	//    if (con.dwKeybLayout != dwNewKeybLayout) {
 	//        con.dwKeybLayout = dwNewKeybLayout;
-	//		if (mp_RCon->isActive()) {
+	//		if (mp_RCon->isActive(false)) {
 	//            gpConEmu->SwitchKeyboardLayout(dwNewKeybLayout);
 	//
 	//			#ifdef _DEBUG
@@ -1024,7 +1024,7 @@ CESERVER_REQ* CRealServer::cmdResources(LPVOID pInst, CESERVER_REQ* pIn, UINT nD
 	// Разрешить мониторинг PID фара в MonitorThread (оно будет переоткрывать mp_RCon->OpenFarMapData)
 	mp_RCon->mb_SkipFarPidChange = FALSE;
 
-	if (mp_RCon->isActive()) gpConEmu->UpdateProcessDisplay(FALSE);  // обновить PID в окне настройки
+	if (mp_RCon->isActive(false)) gpConEmu->UpdateProcessDisplay(FALSE);  // обновить PID в окне настройки
 
 	//mn_Far_PluginInputThreadId      = pIn->dwData[1];
 	//CheckColorMapping(mp_RCon->mn_FarPID_PluginDetected);

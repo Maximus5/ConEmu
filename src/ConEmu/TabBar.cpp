@@ -290,7 +290,7 @@ int CTabBarClass::CountActiveTabs(int nMax /*= 0*/)
 
 		if (bHideInactiveConsoleTabs)
 		{
-			if (!CVConGroup::isActive(pVCon))
+			if (!pVCon->isVisible())
 				continue;
 		}
 
@@ -551,7 +551,7 @@ int  CTabBarClass::UpdateAddTab(HANDLE hUpdate, int& tabIdx, int& nCurTab, bool&
 		return 0;
 	}
 
-	bool bVConActive = CVConGroup::isActive(pVCon, false);
+	bool bVConActive = pVCon->isActive(false);
 	bool bAllWindows = (gpSet->bShowFarWindows && !(pRCon->GetActiveTabType() & fwt_ModalFarWnd));
 	int rFrom = bAllWindows ? 0 : pRCon->GetActiveTab();
 	int rFound = 0;
@@ -779,7 +779,7 @@ void CTabBarClass::Update(BOOL abPosted/*=FALSE*/)
 				continue;
 			CVirtualConsole* pVCon = guard.VCon();
 
-			BOOL lbActive = CVConGroup::isActive(pVCon, false);
+			BOOL lbActive = pVCon->isActive(false);
 
 			if (gpSet->bHideInactiveConsoleTabs && !lbActive)
 				continue;
@@ -807,7 +807,7 @@ void CTabBarClass::Update(BOOL abPosted/*=FALSE*/)
 
 					if (!lbActive)
 					{
-						lbActive = CVConGroup::isActive(pVCon, true);
+						lbActive = pVCon->isActive(true);
 					}
 
 					// Показывать редакторы из всех групп?

@@ -1173,7 +1173,7 @@ LPWSTR ConEmuMacro::IsConsoleActive(GuiMacro* p, CRealConsole* apRCon, bool abFr
 {
 	LPWSTR pszResult = NULL;
 
-	if (apRCon && apRCon->isActive())
+	if (apRCon && apRCon->isActive(false))
 		pszResult = lstrdup(L"Yes");
 	else
 		pszResult = lstrdup(L"No");

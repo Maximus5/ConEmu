@@ -1253,7 +1253,7 @@ bool CDragDropData::NeedRefreshToInfo(POINTL ptScreen)
 	if (bNeedRefresh && pRCon)
 	{
 		// When drag over INACTIVE pane (split-screen) - need to activate this VCon
-		if (!CVConGroup::isActive(VCon.VCon(), false))
+		if (!VCon->isActive(false))
 		{
 			DEBUGSTRFAR(L"-- need to refresh and activate console\n");
 			CVConGroup::Activate(VCon.VCon());
