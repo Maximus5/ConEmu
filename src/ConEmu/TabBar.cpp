@@ -1846,8 +1846,7 @@ void CTabBarClass::SwitchCommit()
 	{
 		int nCurSel = GetCurSel();
 		mb_InKeySwitching = false;
-		CVirtualConsole* pVCon = mp_Rebar->FarSendChangeTab(nCurSel);
-		UNREFERENCED_PARAMETER(pVCon);
+		mp_Rebar->FarSendChangeTab(nCurSel);
 	}
 	else
 	{
@@ -2030,12 +2029,12 @@ void CTabBarClass::OnChooseTabPopup()
 	gpConEmu->ChooseTabFromMenu(FALSE, pt, TPM_RIGHTALIGN|TPM_TOPALIGN);
 }
 
-int CTabBarClass::ActiveTabByName(int anType, LPCWSTR asName, CVirtualConsole** ppVCon)
+int CTabBarClass::ActiveTabByName(int anType, LPCWSTR asName, CVConGuard* rpVCon)
 {
 	int nTab = -1;
-	CVirtualConsole *pVCon = NULL;
-	if (ppVCon)
-		*ppVCon = NULL;
+
+	if (rpVCon)
+		rpVCon->Release();
 
 	TODO("TabBarClass::ActiveTabByName - найти таб по имени");
 
@@ -2045,10 +2044,8 @@ int CTabBarClass::ActiveTabByName(int anType, LPCWSTR asName, CVirtualConsole** 
 	CVConGuard VCon;
 	for (V = 0; (nTab == -1) && CVConGroup::GetVCon(V, &VCon, true); V++)
 	{
-		pVCon = VCon.VCon();
-
 		#ifdef _DEBUG
-		BOOL lbActive = CVConGroup::isActive(pVCon, false);
+		bool lbActive = VCon->isActive(false);
 		#endif
 
 		//111120 - Эту опцию игнорируем. Если редактор открыт в другой консоли - активируем ее потом
@@ -2057,7 +2054,7 @@ int CTabBarClass::ActiveTabByName(int anType, LPCWSTR asName, CVirtualConsole** 
 		//	if (!lbActive) continue;
 		//}
 
-		CRealConsole *pRCon = pVCon->RCon();
+		CRealConsole *pRCon = VCon->RCon();
 
 		for (I = 0; TRUE; I++)
 		{
@@ -2093,14 +2090,13 @@ int CTabBarClass::ActiveTabByName(int anType, LPCWSTR asName, CVirtualConsole** 
 		}
 		else
 		{
-			pVCon = mp_Rebar->FarSendChangeTab(nTab);
-			if (!pVCon)
+			if (!mp_Rebar->FarSendChangeTab(nTab, &VCon))
 				nTab = -2;
 		}
 	}
 
-	if (ppVCon)
-		*ppVCon = pVCon;
+	if (rpVCon)
+		rpVCon->Attach(VCon.VCon());
 
 	return nTab;
 }
@@ -2120,8 +2116,7 @@ int CTabBarClass::ActivateTabByPoint(LPPOINT pptCur, bool bScreen /*= true*/, bo
 	}
 	else
 	{
-		CVirtualConsole* pVCon = mp_Rebar->FarSendChangeTab(iHoverTab);
-		if (!pVCon)
+		if (!mp_Rebar->FarSendChangeTab(iHoverTab))
 			iHoverTab = -2;
 	}
 

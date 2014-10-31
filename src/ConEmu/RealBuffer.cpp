@@ -2852,14 +2852,14 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom, bool bUpdateScre
 					// Проверить, может уже открыт таб с этим файлом?
 					LPCWSTR pszFileName = wcsrchr(cmd.szFile, L'\\');
 					if (!pszFileName) pszFileName = cmd.szFile; else pszFileName++;
-					CVirtualConsole* pVCon = NULL;
+					CVConGuard VCon;
 
 					//// Сброс подчерка, а то при возврате в консоль,
 					//// когда модификатор уже отпущен, остает артефакт...
 					//StoreLastTextRange(etr_None);
 					//UpdateSelection();
 
-					int liActivated = gpConEmu->mp_TabBar->ActiveTabByName(fwt_Editor|fwt_ActivateFound|fwt_PluginRequired, pszFileName, &pVCon);
+					int liActivated = gpConEmu->mp_TabBar->ActiveTabByName(fwt_Editor|fwt_ActivateFound|fwt_PluginRequired, pszFileName, &VCon);
 
 					if (liActivated == -2)
 					{
@@ -2874,8 +2874,8 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom, bool bUpdateScre
 							if (cmd.nLine > 0)
 							{
 								wchar_t szMacro[96];
-								_ASSERTE(pVCon!=NULL);
-								CRealConsole* pRCon = pVCon->RCon();
+								_ASSERTE(VCon.VCon()!=NULL);
+								CRealConsole* pRCon = VCon->RCon();
 
 								if (pRCon->m_FarInfo.FarVer.dwVerMajor == 1)
 									_wsprintf(szMacro, SKIPLEN(countof(szMacro)) L"@$if(Editor) AltF8 \"%i:%i\" Enter $end", cmd.nLine, cmd.nColon);
@@ -3060,7 +3060,7 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom, bool bUpdateScre
 
 								// Prepared, можно звать плагин
 								VCon->RCon()->PostCommand(CMD_OPENEDITORLINE, sizeof(cmd), &cmd);
-								if (!gpConEmu->isActive(VCon.VCon(), false))
+								if (!VCon->isActive(false))
 								{
 									gpConEmu->Activate(VCon.VCon());
 								}

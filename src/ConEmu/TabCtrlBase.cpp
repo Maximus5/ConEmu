@@ -189,24 +189,29 @@ void CTabPanelBase::InitTooltips(HWND hParent)
 	}
 }
 
-CVirtualConsole* CTabPanelBase::FarSendChangeTab(int tabIndex)
+bool CTabPanelBase::FarSendChangeTab(int tabIndex, CVConGuard* rpVCon /*= NULL*/)
 {
 	CVConGuard VCon;
 	DWORD wndIndex = 0;
 	BOOL  bNeedActivate = FALSE, bChangeOk = FALSE;
 	ShowTabErrorInt(NULL, 0);
 
-	if (!mp_Owner->GetVConFromTab(tabIndex, &VCon, &wndIndex))
+	bool bVConOk = mp_Owner->GetVConFromTab(tabIndex, &VCon, &wndIndex);
+
+	if (rpVCon)
+		rpVCon->Release();
+
+	if (!bVConOk)
 	{
 		if (mp_Owner->IsInSwitch())
 			mp_Owner->Update();  // показать реальное положение дел
 
-		return NULL;
+		return false;
 	}
 
 	CVirtualConsole *pVCon = VCon.VCon();
 
-	if (!gpConEmu->isActive(pVCon, false))
+	if (!pVCon->isActive(false))
 		bNeedActivate = TRUE;
 
 	DWORD nCallStart = TimeGetTime(), nCallEnd = 0;
@@ -241,7 +246,7 @@ CVirtualConsole* CTabPanelBase::FarSendChangeTab(int tabIndex)
 				mp_Owner->Update();  // показать реальное положение дел
 
 			TODO("А текущий таб не слетит, если активировать не удалось?");
-			return NULL;
+			return false;
 		}
 	}
 
@@ -256,7 +261,9 @@ CVirtualConsole* CTabPanelBase::FarSendChangeTab(int tabIndex)
 	UNREFERENCED_PARAMETER(nCallStart);
 	UNREFERENCED_PARAMETER(nCallEnd);
 
-	return pVCon;
+	if (rpVCon)
+		rpVCon->Attach(pVCon);
+	return (pVCon != NULL);
 }
 
 LRESULT CTabPanelBase::OnMouseRebar(UINT uMsg, int x, int y)
@@ -477,15 +484,13 @@ LRESULT CTabPanelBase::OnMouseTabbar(UINT uMsg, int nTabIdx, int x, int y)
 
 			if (nTabIdx >= 0)
 			{
-				CVirtualConsole* pVCon = NULL;
+				CVConGuard VCon;
 				// для меню нужны экранные координаты, получим их сразу, чтобы менюшка вплывала на клике
 				// а то вдруг мышка уедет, во время активации таба...
 				POINT ptCur = {0,0}; GetCursorPos(&ptCur);
-				pVCon = FarSendChangeTab(nTabIdx);
 
-				if (pVCon)
+				if (FarSendChangeTab(nTabIdx, &VCon))
 				{
-					CVConGuard guard(pVCon);
 					BOOL lbCtrlPressed = isPressed(VK_CONTROL);
 
 					if (uMsg == WM_LBUTTONDBLCLK)
@@ -499,27 +504,24 @@ LRESULT CTabPanelBase::OnMouseTabbar(UINT uMsg, int nTabIdx, int x, int y)
 							gpConEmu->DoMaximizeRestore();
 							break;
 						case 2:
-							guard->RCon()->CloseTab();
+							VCon->RCon()->CloseTab();
 							break;
 						case 3:
-							gpConEmu->mp_Menu->ExecPopupMenuCmd(tmp_None, guard.VCon(), IDM_RESTART);
+							gpConEmu->mp_Menu->ExecPopupMenuCmd(tmp_None, VCon.VCon(), IDM_RESTART);
 							break;
 						case 4:
-							gpConEmu->mp_Menu->ExecPopupMenuCmd(tmp_None, guard.VCon(), IDM_DUPLICATE);
+							gpConEmu->mp_Menu->ExecPopupMenuCmd(tmp_None, VCon.VCon(), IDM_DUPLICATE);
 							break;
 						}
 					}
 					else if (uMsg == WM_RBUTTONUP && !lbCtrlPressed)
 					{
-						gpConEmu->mp_Menu->ShowPopupMenu(guard.VCon(), ptCur);
+						gpConEmu->mp_Menu->ShowPopupMenu(VCon.VCon(), ptCur);
 					}
 					else
 					{
-						guard->RCon()->CloseTab();
+						VCon->RCon()->CloseTab();
 					}
-
-					// борьба с оптимизатором в релизе
-					gpConEmu->isValid(pVCon);
 				}
 			}
 			break;
