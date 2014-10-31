@@ -38,6 +38,8 @@ class CVConGuard;
 class CTabID;
 struct AppSettings;
 
+// this is NOT a bitmask field!
+// only exact values are allowed!
 enum EnumVConFlags
 {
 	evf_Active  = 1,

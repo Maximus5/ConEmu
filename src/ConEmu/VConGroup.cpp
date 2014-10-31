@@ -1795,19 +1795,29 @@ bool CVConGroup::EnumVCon(EnumVConFlags what, EnumVConProc pfn, LPARAM lParam)
 	for (size_t i = 0; i < countof(gp_VCon); i++)
 	{
 		MSectionLockSimple lockGroups; lockGroups.Lock(gpcs_VGroups);
-		CVConGuard VCon = gp_VCon[i];
-		CVirtualConsole* pVCon;
-		if ((pVCon = VCon.VCon()) != NULL)
-		{
-			if ((what == evf_Visible) && !pVCon->isVisible())
-				continue;
-			else if ((what == evf_Active ) && (pVCon != gp_VActive))
-				continue;
+		CVConGuard VCon;
+		if (!VCon.Attach(gp_VCon[i]))
+			continue;
 
-			bProcessed = true;
-			if (!pfn(pVCon, lParam))
-				break;
+		switch (what)
+		{
+		case evf_Visible:
+			if (!VCon->isVisible())
+				continue;
+			break;
+		case evf_Active:
+			if (!VCon->isActive(false))
+				continue;
+			break;
 		}
+
+		// Unlock before possible long operation
+		lockGroups.Unlock();
+
+		// And call the callback
+		bProcessed = true;
+		if (!pfn(VCon.VCon(), lParam))
+			break;
 	}
 
 	return bProcessed;
