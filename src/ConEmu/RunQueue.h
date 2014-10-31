@@ -65,6 +65,7 @@ private:
 		CVirtualConsole* pVCon; // NOT CVConGuard. We need only PTR for further checking...
 	};
 	MArray<RunQueueItem> m_RunQueue;
+	MArray<RunQueueItem> m_WorkStack;
 	// We need simple lock here, without overhead
 	MSectionSimple* mpcs_QueueLock;
 	// Execution now?
