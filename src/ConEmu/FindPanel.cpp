@@ -44,6 +44,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ATOM CFindPanel::mh_Class = NULL;
 #define FindPanelClass L"ConEmuFindPanel"
 #define SearchHint L"Search"
+#define SearchCtrlId 1
+#define SearchTopPad 1
+#define SearchBottomPad 4
 
 static MMap<HWND,CFindPanel*> g_FindMap;
 
@@ -74,11 +77,11 @@ HWND CFindPanel::GetHWND()
 
 int CFindPanel::GetMinWidth()
 {
-	if (!this || !mh_Edit)
+	if (!this || !mh_Pane)
 		return 0;
-	RECT rcEdit = {};
-	GetWindowRect(mh_Edit, &rcEdit);
-	return max(80,6*(rcEdit.bottom - rcEdit.top));
+	RECT rcPane = {};
+	GetWindowRect(mh_Pane, &rcPane);
+	return max(80,5*(rcPane.bottom - rcPane.top));
 }
 
 void CFindPanel::ResetSearch()
@@ -97,11 +100,70 @@ HWND CFindPanel::CreatePane(HWND hParent, int nHeight)
 	if (!RegisterPaneClass())
 		return NULL;
 
+	_ASSERTE(mh_Edit==NULL);
+	mh_Edit = NULL;
+
 	mh_Pane = CreateWindowEx(WS_EX_CONTROLPARENT,
 		FindPanelClass, L"",
 		WS_CHILD|WS_VISIBLE, 0,0,0,nHeight, hParent, NULL, NULL, this);
 
 	return mh_Pane;
+}
+
+bool CFindPanel::OnCreateFinished()
+{
+	RECT rcClient = {};
+	GetClientRect(mh_Pane, &rcClient);
+
+	if (!mh_Edit)
+	{
+		mh_Edit = CreateWindowEx(WS_EX_CLIENTEDGE,
+			L"EDIT", L"",
+			WS_CHILD|WS_VISIBLE|WS_TABSTOP|ES_AUTOHSCROLL|ES_WANTRETURN,
+			0, SearchTopPad, rcClient.right, rcClient.bottom - SearchTopPad - SearchBottomPad,
+			mh_Pane, (HMENU)SearchCtrlId, NULL, NULL);
+		if (!mh_Edit)
+		{
+			return false;
+		}
+
+		g_FindMap.Set(mh_Edit, this);
+
+		OnCreateFont();
+
+		mfn_EditProc = (WNDPROC)SetWindowLongPtr(mh_Edit, GWLP_WNDPROC, (LONG_PTR)EditCtrlProc);
+
+		EditIconHint_Set(mh_Pane, mh_Edit, true, SearchHint, false, UM_SEARCH, 0);
+	}
+	else
+	{
+		OnSize();
+	}
+
+	return true;
+}
+
+void CFindPanel::OnCreateFont()
+{
+	if (!mh_Edit)
+		return;
+
+	HFONT hOldFont = mh_Font;
+	RECT rcEdit = {};
+	GetClientRect(mh_Edit, &rcEdit);
+
+	// CreateFont
+	LOGFONT lf = {};
+	lf.lfWeight = FW_DONTCARE;
+	lf.lfCharSet = gpSet->nTabFontCharSet;
+	lf.lfPitchAndFamily = DEFAULT_PITCH | FF_SWISS;
+	wcscpy_c(lf.lfFaceName, gpSet->sTabFontFace);
+	lf.lfHeight = -max(6,rcEdit.bottom - gpSetCls->EvalSize(3, esf_Vertical|esf_CanUseDpi));
+	mh_Font = CreateFontIndirect(&lf);
+
+	SendMessage(mh_Edit, WM_SETFONT, (WPARAM)mh_Font, FALSE);
+
+	SafeDeleteObject(hOldFont);
 }
 
 bool CFindPanel::RegisterPaneClass()
@@ -213,33 +275,7 @@ wrap:
 
 bool CFindPanel::OnCreate(CREATESTRUCT* ps)
 {
-	mh_Edit = CreateWindowEx(WS_EX_CLIENTEDGE,
-		L"EDIT", L"",
-		WS_CHILD|WS_VISIBLE|WS_TABSTOP|ES_AUTOHSCROLL|ES_WANTRETURN,
-		0,0,ps->cx,ps->cy, mh_Pane, (HMENU)1, NULL, NULL);
-	if (!mh_Edit)
-		return false;
-
 	g_FindMap.Set(mh_Pane, this);
-	g_FindMap.Set(mh_Edit, this);
-
-	SafeDeleteObject(mh_Font);
-
-	// CreateFont
-	LOGFONT lf = {};
-	lf.lfWeight = FW_DONTCARE;
-	lf.lfCharSet = gpSet->nTabFontCharSet;
-	lf.lfPitchAndFamily = DEFAULT_PITCH | FF_SWISS;
-	wcscpy_c(lf.lfFaceName, gpSet->sTabFontFace);
-	lf.lfHeight = -max(6,ps->cy - gpSetCls->EvalSize(8, esf_Vertical|esf_CanUseDpi));
-	mh_Font = CreateFontIndirect(&lf);
-
-	SendMessage(mh_Edit, WM_SETFONT, (WPARAM)mh_Font, FALSE);
-
-	// -- // Ставим после EditIconHint_Set чтобы иметь приоритет обработки сообщений
-	mfn_EditProc = (WNDPROC)SetWindowLongPtr(mh_Edit, GWLP_WNDPROC, (LONG_PTR)EditCtrlProc);
-
-	EditIconHint_Set(mh_Pane, mh_Edit, true, SearchHint, false, UM_SEARCH, 0);
 
 	return true;
 }
@@ -258,7 +294,9 @@ void CFindPanel::OnSize()
 	if (mh_Edit)
 	{
 		GetClientRect(mh_Pane, &rcClient);
-		MoveWindow(mh_Edit, 0, 0, rcClient.right-1, rcClient.bottom-2, TRUE);
+		int cx = rcClient.right - 1;
+		int cy = rcClient.bottom - SearchTopPad - SearchBottomPad;
+		MoveWindow(mh_Edit, 0, SearchTopPad, cx, cy, TRUE);
 	}
 }
 
