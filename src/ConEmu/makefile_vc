@@ -93,7 +93,7 @@ $(INTDIR)\RunQueue.obj \
 $(INTDIR)\ScreenDump.obj \
 $(INTDIR)\SearchCtrl.obj \
 $(INTDIR)\SetAppSettings.obj \
-$(INTDIR)\SetCmdTasks.obj \
+$(INTDIR)\SetCmdTask.obj \
 $(INTDIR)\SetColorPalette.obj \
 $(INTDIR)\SetDlgButtons.obj \
 $(INTDIR)\SetDlgColors.obj \
