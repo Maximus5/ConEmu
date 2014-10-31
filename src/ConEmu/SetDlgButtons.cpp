@@ -2593,6 +2593,12 @@ void CSetDlgButtons::OnBtn_CursorOptions(HWND hDlg, WORD CB, BYTE uCheck)
 } // rCursorH ... cbInactiveCursorIgnoreSize
 
 
+static bool ShowHideRealCon(CVirtualConsole* pVCon, LPARAM lParam)
+{
+	pVCon->RCon()->ShowConsole((int)lParam);
+	return true; // continue
+}
+
 // cbVisible
 void CSetDlgButtons::OnBtn_RConVisible(HWND hDlg, WORD CB, BYTE uCheck)
 {
@@ -2603,20 +2609,12 @@ void CSetDlgButtons::OnBtn_RConVisible(HWND hDlg, WORD CB, BYTE uCheck)
 	if (gpSet->isConVisible)
 	{
 		// Если показывать - то только текущую (иначе на экране мешанина консолей будет
-		CVConGuard VCon;
-		if (CVConGroup::GetActiveVCon(&VCon) >= 0)
-			VCon->RCon()->ShowConsole(gpSet->isConVisible);
+		CVConGroup::EnumVCon(evf_Active, ShowHideRealCon, 1);
 	}
 	else
 	{
 		// А если скрывать - то все сразу
-		for (int i=0; i<MAX_CONSOLE_COUNT; i++)
-		{
-			CVConGuard VCon;
-			CVConGroup::GetVCon(i, VCon);
-			CVirtualConsole *pCon = VCon.VCon();
-			if (pCon) pCon->RCon()->ShowConsole(FALSE);
-		}
+		CVConGroup::EnumVCon(evf_All, ShowHideRealCon, 0);
 	}
 
 	apiSetForegroundWindow(ghOpWnd);
