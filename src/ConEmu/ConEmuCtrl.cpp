@@ -1474,7 +1474,7 @@ size_t CConEmuCtrl::GetOpenedTabs(CESERVER_REQ_GETALLTABS::TabInfo*& pTabs)
 		wchar_t szMark[6];
 		for (int t = 0; pRCon->GetTab(t, tab); t++)
 		{
-			int T = tab->Info.nFarWindowID;
+			int T = t; //tab->Info.nFarWindowID; -- В Far3 номер из nFarWindowID стал бесполезным для пользователя
 
 			if (cchCount >= cchMax)
 			{
