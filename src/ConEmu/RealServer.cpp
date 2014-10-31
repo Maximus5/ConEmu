@@ -1381,7 +1381,10 @@ CESERVER_REQ* CRealServer::cmdActivateTab(LPVOID pInst, CESERVER_REQ* pIn, UINT 
 		CVConGuard VCon;
 		if (CVConGroup::GetVCon(pIn->dwData[0], &VCon) && VCon->RCon())
 		{
-			lbTabOk = VCon->RCon()->ActivateFarWindow(pIn->dwData[1]);
+			// Latest Far3 has broken tab-indexes/far-windows behavior
+			CTab tab(__FILE__,__LINE__);
+			if (VCon->RCon()->GetTab(pIn->dwData[1], tab))
+				lbTabOk = VCon->RCon()->ActivateFarWindow(tab->Info.nFarWindowID);
 		}
 		gpConEmu->ConActivate(pIn->dwData[0]);
 	}

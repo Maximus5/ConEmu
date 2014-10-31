@@ -936,7 +936,7 @@ void CPluginBase::ShowTabsList()
 
 				if (pOut->GetAllTabs.Tabs[nMenuRc].ActiveConsole && !pOut->GetAllTabs.Tabs[nMenuRc].ActiveTab)
 				{
-					DWORD nTab = pOut->GetAllTabs.Tabs[nMenuRc].TabIdx;
+					DWORD nTab = pOut->GetAllTabs.Tabs[nMenuRc].FarWindow;
 					int nOpenFrom = -1;
 					int nArea = Plugin()->GetMacroArea();
 					if (nArea != -1)
@@ -955,7 +955,7 @@ void CPluginBase::ShowTabsList()
 				{
 					CESERVER_REQ* pActIn = ExecuteNewCmd(CECMD_ACTIVATETAB, sizeof(CESERVER_REQ_HDR)+2*sizeof(DWORD));
 					pActIn->dwData[0] = pOut->GetAllTabs.Tabs[nMenuRc].ConsoleIdx;
-					pActIn->dwData[1] = pOut->GetAllTabs.Tabs[nMenuRc].TabIdx;
+					pActIn->dwData[1] = pOut->GetAllTabs.Tabs[nMenuRc].TabNo;
 					CESERVER_REQ* pActOut = ExecuteGuiCmd(FarHwnd, pActIn, FarHwnd);
 					ExecuteFreeResult(pActOut);
 					ExecuteFreeResult(pActIn);

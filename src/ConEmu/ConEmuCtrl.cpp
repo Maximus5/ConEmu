@@ -1492,7 +1492,8 @@ size_t CConEmuCtrl::GetOpenedTabs(CESERVER_REQ_GETALLTABS::TabInfo*& pTabs)
 			pTabs[cchCount].ActiveTab = ((tab->Flags() & fwt_CurrentFarWnd) == fwt_CurrentFarWnd);
 			pTabs[cchCount].Disabled = ((tab->Flags() & fwt_Disabled) == fwt_Disabled);
 			pTabs[cchCount].ConsoleIdx = V;
-			pTabs[cchCount].TabIdx = T;
+			pTabs[cchCount].TabNo = T;
+			pTabs[cchCount].FarWindow = tab->Info.nFarWindowID;
 
 			// Text
 			//wcscpy_c(szMark, tab.Modified ? L" * " : L"   ");
@@ -1510,6 +1511,11 @@ size_t CConEmuCtrl::GetOpenedTabs(CESERVER_REQ_GETALLTABS::TabInfo*& pTabs)
 				_wsprintf(pTabs[cchCount].Title, SKIPLEN(countof(pTabs[cchCount].Title)) L"[%i/&%i]%s", V+1, T, szMark);
 			else
 				_wsprintf(pTabs[cchCount].Title, SKIPLEN(countof(pTabs[cchCount].Title)) L"[%i/%i]%s", V+1, T, szMark);
+
+			#ifdef _DEBUG
+			if (pRCon->IsFarLua())
+				_wsprintf(pTabs[cchCount].Title+lstrlen(pTabs[cchCount].Title), SKIPLEN(30) L"{%i} ", tab->Info.nFarWindowID);
+			#endif
 
 			int nCurLen = lstrlen(pTabs[cchCount].Title);
 			lstrcpyn(pTabs[cchCount].Title+nCurLen, pRCon->GetTabTitle(tab), countof(pTabs[cchCount].Title)-nCurLen);

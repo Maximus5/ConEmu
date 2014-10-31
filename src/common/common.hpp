@@ -30,7 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _COMMON_HEADER_HPP_
 
 // Interface version
-#define CESERVER_REQ_VER    142
+#define CESERVER_REQ_VER    143
 
 // Max tabs/panes count
 #define MAX_CONSOLE_COUNT 30
@@ -399,7 +399,7 @@ const CECMD
 	CECMD_REGEXTCONSOLE  = 56, // CESERVER_REQ_REGEXTCON. Регистрация процесса, использующего ExtendedConsole.dll
 	#endif
 	CECMD_GETALLTABS     = 57, // CESERVER_REQ_GETALLTABS. Вернуть список всех табов, для показа в Far и использовании в макросах.
-	CECMD_ACTIVATETAB    = 58, // dwData[0]=0-based Console, dwData[1]=0-based Tab
+	CECMD_ACTIVATETAB    = 58, // dwData[0]=0-based console, dwData[1]=0-based tab number
 	CECMD_FREEZEALTSRV   = 59, // dwData[0]=1-Freeze, 0-Thaw; dwData[1]=New Alt server PID
 	CECMD_SETFULLSCREEN  = 60, // SetConsoleDisplayMode(CONSOLE_FULLSCREEN_MODE) -> CESERVER_REQ_FULLSCREEN
 	CECMD_MOUSECLICK     = 61, // CESERVER_REQ_PROMPTACTION - обработка клика, если консоль в ReadConsoleW
@@ -1564,7 +1564,8 @@ struct CESERVER_REQ_GETALLTABS
 		bool    ActiveTab;
 		bool    Disabled;
 		int     ConsoleIdx; // 0-based
-		int     TabIdx;     // 0-based
+		int     TabNo;      // 0-based
+		int     FarWindow;  // 0-based
 		wchar_t Title[MAX_PATH]; // Если не влезет - то и фиг с ним
 	} Tabs[1]; // Variable length
 };
