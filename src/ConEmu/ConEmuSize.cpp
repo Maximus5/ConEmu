@@ -4326,20 +4326,46 @@ void CConEmuSize::OnSizePanels(COORD cr)
 	}
 }
 
+struct OnDpiChangedArg
+{
+	CConEmuSize* pObject;
+	UINT DpiX, DpiY;
+	bool bResizeWindow;
+	bool bSuggested;
+	RECT rcSuggested;
+};
+
+LRESULT CConEmuSize::OnDpiChangedCall(LPARAM lParam)
+{
+	OnDpiChangedArg* p = (OnDpiChangedArg*)lParam;
+	return p->pObject->OnDpiChanged(p->DpiX, p->DpiY, p->bSuggested ? &p->rcSuggested : NULL, p->bResizeWindow);
+}
+
 LRESULT CConEmuSize::OnDpiChanged(UINT dpiX, UINT dpiY, LPRECT prcSuggested, bool bResizeWindow)
 {
-	wchar_t szInfo[100];
-	RECT rc = {}; if (prcSuggested) rc = *prcSuggested;
-	_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"WM_DPICHANGED: dpi={%u,%u}, rect={%i,%i}-{%i,%i} (%ix%i)\r\n",
-		dpiX, dpiY, rc.left, rc.top, rc.right, rc.bottom, rc.right-rc.left, rc.bottom-rc.top);
-	DEBUGSTRDPI(szInfo);
-	LogString(szInfo, true, false);
+	LRESULT lRc = 0;
 
-	gpSetCls->OnDpiChanged(dpiX, dpiY, prcSuggested);
+	if (!isMainThread())
+	{
+		OnDpiChangedArg args = {this, dpiX, dpiY, bResizeWindow, (prcSuggested!=NULL)};
+		if (prcSuggested) args.rcSuggested = *prcSuggested;
+		lRc = mp_ConEmu->CallMainThread(true, OnDpiChangedCall, (LPARAM)&args);
+	}
+	else
+	{
+		wchar_t szInfo[100];
+		RECT rc = {}; if (prcSuggested) rc = *prcSuggested;
+		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"WM_DPICHANGED: dpi={%u,%u}, rect={%i,%i}-{%i,%i} (%ix%i)\r\n",
+			dpiX, dpiY, rc.left, rc.top, rc.right, rc.bottom, rc.right-rc.left, rc.bottom-rc.top);
+		DEBUGSTRDPI(szInfo);
+		LogString(szInfo, true, false);
 
-	mp_ConEmu->RecreateControls(true/*bRecreateTabbar*/, true/*bRecreateStatus*/, bResizeWindow);
+		gpSetCls->OnDpiChanged(dpiX, dpiY, prcSuggested);
 
-	return 0;
+		mp_ConEmu->RecreateControls(true/*bRecreateTabbar*/, true/*bRecreateStatus*/, bResizeWindow, prcSuggested);
+	}
+
+	return lRc;
 }
 
 LRESULT CConEmuSize::OnDisplayChanged(UINT bpp, UINT screenWidth, UINT screenHeight)
@@ -4365,19 +4391,17 @@ void CConEmuSize::RecreateControls(bool bRecreateTabbar, bool bRecreateStatus, b
 		bool bNormal = IsSizePosFree() && !isZoomed() && !isFullScreen();
 		if (bNormal)
 		{
-			RECT rcNew = GetDefaultRect();
+			RECT rcNew;
 			// If Windows DWM sends new preferred RECT?
-			if (prcSuggested)
-			{
-				;
-			}
+			if (prcSuggested && !IsRectEmpty(prcSuggested))
+				rcNew = *prcSuggested;
+			else
+				rcNew = GetDefaultRect();
 			MoveWindowRect(ghWnd, rcNew, TRUE);
 		}
-		else
-		{
-			mp_ConEmu->OnSize();
-			mp_ConEmu->InvalidateGaps();
-		}
+		// Suggested size may be the same?
+		mp_ConEmu->OnSize();
+		mp_ConEmu->InvalidateGaps();
 	}
 }
 
