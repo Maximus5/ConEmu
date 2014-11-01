@@ -403,7 +403,7 @@ class CSettings
 		LRESULT OnInitDialog_Tabs(HWND hWnd2);
 		LRESULT OnInitDialog_Status(HWND hWnd2, bool abInitial);
 		void OnInitDialog_StatusItems(HWND hWnd2);
-		LRESULT OnInitDialog_Color(HWND hWnd2);
+		LRESULT OnInitDialog_Color(HWND hWnd2, bool abInitial);
 		LRESULT OnInitDialog_Transparent(HWND hWnd2);
 		LRESULT OnInitDialog_Tasks(HWND hWnd2, bool abForceReload);
 		LRESULT OnInitDialog_Apps(HWND hWnd2, bool abForceReload);

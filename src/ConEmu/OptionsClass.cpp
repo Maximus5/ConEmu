@@ -3264,7 +3264,7 @@ void CSettings::ChangeCurrentPalette(const ColorPalette* pPal, bool bChangeDropD
 	gpConEmu->Update(true);
 }
 
-LRESULT CSettings::OnInitDialog_Color(HWND hWnd2)
+LRESULT CSettings::OnInitDialog_Color(HWND hWnd2, bool abInitial)
 {
 	#if 0
 	if (gpSetCls->EnableThemeDialogTextureF)
@@ -3272,7 +3272,9 @@ LRESULT CSettings::OnInitDialog_Color(HWND hWnd2)
 	#endif
 
 	for (int c = c0; c <= MAX_COLOR_EDT_ID; c++)
+	{
 		ColorSetEdit(hWnd2, c);
+	}
 
 	CSetDlgLists::FillListBoxItems(GetDlgItem(hWnd2, lbConClrText), CSetDlgLists::eColorIdxTh, gpSet->AppStd.nTextColorIdx, true);
 	CSetDlgLists::FillListBoxItems(GetDlgItem(hWnd2, lbConClrBack), CSetDlgLists::eColorIdxTh, gpSet->AppStd.nBackColorIdx, true);
@@ -3299,8 +3301,11 @@ LRESULT CSettings::OnInitDialog_Color(HWND hWnd2)
 	const ColorPalette* pPal;
 
 	// Default colors
-	//memmove(gdwLastColors, gpSet->Colors, sizeof(gdwLastColors));
-	if ((pPal = gpSet->PaletteGet(-1)) != NULL)
+	if (!abInitial && gbLastColorsOk)
+	{
+		// активация уже загруженной вкладки, текущую палитру уже запомнили
+	}
+	else if ((pPal = gpSet->PaletteGet(-1)) != NULL)
 	{
 		memmove(&gLastColors, pPal, sizeof(gLastColors));
 		if (gLastColors.pszName == NULL)
@@ -6794,8 +6799,7 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 			gpSetCls->OnInitDialog_Status(hWnd2, bInitial);
 			break;
 		case IDD_SPG_COLORS:
-			if (bInitial)
-				gpSetCls->OnInitDialog_Color(hWnd2);
+			gpSetCls->OnInitDialog_Color(hWnd2, bInitial);
 			break;
 		case IDD_SPG_TRANSPARENT:
 			if (bInitial)
