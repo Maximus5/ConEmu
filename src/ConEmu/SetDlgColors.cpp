@@ -130,7 +130,9 @@ void CSetDlgColors::ColorSetEdit(HWND hWnd2, WORD c)
 {
 	_ASSERTE(hWnd2!=NULL);
 	WORD tc = (tc0-c0) + c;
-	SendDlgItemMessage(hWnd2, tc, EM_SETLIMITTEXT, 11, 0);
+	// Well, 11 chars are enough for "255 255 255"
+	// But sometimes it is interesting to copy/paste/cut when editing palettes, so x2
+	SendDlgItemMessage(hWnd2, tc, EM_SETLIMITTEXT, 23, 0);
 	COLORREF cr = 0;
 	GetColorById(c, &cr);
 	wchar_t temp[16];
