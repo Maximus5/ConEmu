@@ -139,7 +139,17 @@ void CSetDlgColors::ColorSetEdit(HWND hWnd2, WORD c)
 	COLORREF cr = 0;
 	GetColorById(c, &cr);
 	wchar_t temp[16];
-	_wsprintf(temp, SKIPLEN(countof(temp)) L"%i %i %i", getR(cr), getG(cr), getB(cr));
+	switch (gpSetCls->m_ColorFormat)
+	{
+	case CSettings::eRgbHex:
+		_wsprintf(temp, SKIPLEN(countof(temp)) L"#%02x%02x%02x", getR(cr), getG(cr), getB(cr));
+		break;
+	case CSettings::eBgrHex:
+		_wsprintf(temp, SKIPLEN(countof(temp)) L"0x%02x%02x%02x", getB(cr), getG(cr), getR(cr));
+		break;
+	default:
+		_wsprintf(temp, SKIPLEN(countof(temp)) L"%i %i %i", getR(cr), getG(cr), getB(cr));
+	}
 	SetDlgItemText(hWnd2, tc, temp);
 }
 

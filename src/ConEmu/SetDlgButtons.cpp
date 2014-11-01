@@ -645,6 +645,11 @@ bool CSetDlgButtons::ProcessButtonClick(HWND hDlg, WORD CB, BYTE uCheck)
 			OnBtn_DebugActivityRadio(hDlg, CB, uCheck);
 			break;
 
+		case rbColorRgbDec:
+		case rbColorRgbHex:
+		case rbColorBgrHex:
+			OnBtn_ColorFormat(hDlg, CB, uCheck);
+			break;
 		case cbExtendColors:
 			OnBtn_ExtendColors(hDlg, CB, uCheck);
 			break;
@@ -3456,6 +3461,20 @@ void CSetDlgButtons::OnBtn_DebugActivityRadio(HWND hDlg, WORD CB, BYTE uCheck)
 
 } // rbActivityDisabled || rbActivityShell || rbActivityInput || rbActivityCmd || rbActivityAnsi
 
+
+// rbColorRgbDec || rbColorRgbHex || rbColorBgrHex
+void CSetDlgButtons::OnBtn_ColorFormat(HWND hDlg, WORD CB, BYTE uCheck)
+{
+	_ASSERTE(CB==rbColorRgbDec || CB==rbColorRgbHex || CB==rbColorBgrHex);
+
+	gpSetCls->m_ColorFormat = (CSettings::ColorShowFormat)(CB - rbColorRgbDec);
+
+	if (hDlg)
+	{
+		gpSetCls->OnInitDialog_Color(hDlg, false);
+	}
+
+} // rbColorRgbDec || rbColorRgbHex || rbColorBgrHex
 
 // cbExtendColors
 void CSetDlgButtons::OnBtn_ExtendColors(HWND hDlg, WORD CB, BYTE uCheck)

@@ -221,6 +221,8 @@ class CSettings
 		CBackgroundInfo* mp_BgInfo;
 		#endif
 		CDpiForDialog* mp_DpiAware;
+	protected:
+		enum ColorShowFormat { eRgbDec = 0, eRgbHex, eBgrHex } m_ColorFormat;
 	public:
 		void SetBgImageDarker(u8 newValue, bool bUpdate);
 		#ifndef APPDISTINCTBACKGROUND

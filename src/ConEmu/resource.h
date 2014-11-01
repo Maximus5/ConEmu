@@ -1044,6 +1044,9 @@
 #define stCTSPreview                    2714
 #define cbMultiShowSearch               2715
 #define cbColorResetExt                 2716
+#define rbColorRgbDec                   2720
+#define rbColorRgbHex                   2721
+#define rbColorBgrHex                   2722
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
@@ -1052,7 +1055,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        226
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2717
+#define _APS_NEXT_CONTROL_VALUE         2725
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif

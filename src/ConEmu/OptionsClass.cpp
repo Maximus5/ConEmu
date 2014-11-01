@@ -229,6 +229,7 @@ CSettings::CSettings()
 	#else
 	mp_BgInfo = NULL;
 	#endif
+	m_ColorFormat = eRgbDec; // RRR GGG BBB (как показывать цвета на вкладке Colors)
 	mp_DpiAware = NULL;
 	mp_CurDpi = NULL;
 	mp_DpiDistinct2 = NULL;
@@ -3270,6 +3271,8 @@ LRESULT CSettings::OnInitDialog_Color(HWND hWnd2, bool abInitial)
 	if (gpSetCls->EnableThemeDialogTextureF)
 		gpSetCls->EnableThemeDialogTextureF(hWnd2, 6/*ETDT_ENABLETAB*/);
 	#endif
+
+	checkRadioButton(hWnd2, rbColorRgbDec, rbColorBgrHex, rbColorRgbDec + m_ColorFormat);
 
 	for (int c = c0; c <= MAX_COLOR_EDT_ID; c++)
 	{
