@@ -1522,8 +1522,8 @@ void Settings::CreatePredefinedPalettes(int iAddUserCount)
 			Palettes[n]->nTextColorIdx = Palettes[n]->nBackColorIdx = 16; // Auto
 			Palettes[n]->nPopTextColorIdx = Palettes[n]->nPopBackColorIdx = 16; // Auto
 		}
-		// Расширения - инициализируем теми же цветами
-		memmove(Palettes[n]->Colors+0x10, DefColors[n].dwDefColors, 0x10*sizeof(Palettes[n]->Colors[0]));
+		// Расширения - инициализируем цветами стандартной палитры
+		memmove(Palettes[n]->Colors+0x10, DefColors[0].dwDefColors, 0x10*sizeof(Palettes[n]->Colors[0]));
 	}
 
 	// Инициализировали "Палитрами по умолчанию"
