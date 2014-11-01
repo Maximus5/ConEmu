@@ -845,14 +845,30 @@ bool GetColorRef(LPCWSTR pszText, COLORREF* pCR)
 	bool result = false;
 	int r = 0, g = 0, b = 0;
 	const wchar_t *pch;
-	wchar_t *pchEnd;
+	wchar_t *pchEnd = NULL;
+	COLORREF clr = 0;
+	bool bHex = false;
 
-	if ((pszText[0] == L'#') || (pszText[0] == L'x' || pszText[0] == L'X') || (pszText[0] == L'0' && (pszText[1] == L'x' || pszText[1] == L'X')))
+	if ((pszText[0] == L'#') // #RRGGBB
+		|| (pszText[0] == L'x' || pszText[0] == L'X') // xBBGGRR (COLORREF)
+		|| (pszText[0] == L'0' && (pszText[1] == L'x' || pszText[1] == L'X'))) // 0xBBGGRR (COLORREF)
 	{
-		pch = (pszText[0] == L'0') ? (pszText+2) : (pszText+1);
 		// Считаем значение 16-ричным rgb кодом
-		pchEnd = NULL;
-		COLORREF clr = wcstoul(pch, &pchEnd, 16);
+		pch = (pszText[0] == L'0') ? (pszText+2) : (pszText+1);
+		clr = wcstoul(pch, &pchEnd, 16);
+		bHex = true;
+	}
+	else if ((pszText[0] == L'0') && (pszText[1] == L'0')) // 00BBGGRR (COLORREF, copy from *.reg)
+	{
+		// Это может быть 8 цифр (тоже hex) скопированных из reg-файла
+		pch = (pszText + 2);
+		clr = wcstoul(pch, &pchEnd, 16);
+		bHex = (pchEnd && ((pchEnd - pch) == 6));
+	}
+
+	if (bHex)
+	{
+		// Считаем значение 16-ричным rgb кодом
 		if (clr && (pszText[0] == L'#'))
 		{
 			// "#rrggbb", обменять местами rr и gg, нам нужен COLORREF (bbggrr)
