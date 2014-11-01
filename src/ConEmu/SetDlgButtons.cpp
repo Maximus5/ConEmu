@@ -648,6 +648,9 @@ bool CSetDlgButtons::ProcessButtonClick(HWND hDlg, WORD CB, BYTE uCheck)
 		case cbExtendColors:
 			OnBtn_ExtendColors(hDlg, CB, uCheck);
 			break;
+		case cbColorResetExt:
+			OnBtn_ColorResetExt(hDlg, CB, uCheck);
+			break;
 		case cbColorSchemeSave:
 		case cbColorSchemeDelete:
 			OnBtn_ColorSchemeSaveDelete(hDlg, CB, uCheck);
@@ -3475,6 +3478,34 @@ void CSetDlgButtons::OnBtn_ExtendColors(HWND hDlg, WORD CB, BYTE uCheck)
 	}
 
 } // cbExtendColors
+
+
+// cbColorResetExt
+void CSetDlgButtons::OnBtn_ColorResetExt(HWND hDlg, WORD CB, BYTE uCheck)
+{
+	_ASSERTE(CB==cbColorResetExt);
+
+	if (MsgBox(L"Reset colors 16..31 to default Windows palette?", MB_ICONQUESTION|MB_YESNO, NULL, ghOpWnd, true) != IDYES)
+		return;
+
+	const COLORREF* pcrColors = gpSet->GetDefColors();
+	if (!pcrColors)
+	{
+		Assert(pcrColors!=NULL);
+		return;
+	}
+
+	for (int i = 0; i < 16; i++)
+	{
+		CSetDlgColors::SetColorById(c16+i, pcrColors[i]);
+		CSetDlgColors::ColorSetEdit(hDlg, c16+i);
+		gpSetCls->InvalidateCtrl(GetDlgItem(hDlg, c16+i), TRUE);
+	}
+
+	gpConEmu->InvalidateAll();
+	gpConEmu->Update(true);
+
+} // cbColorResetExt
 
 
 // cbColorSchemeSave || cbColorSchemeDelete

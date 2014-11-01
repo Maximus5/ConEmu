@@ -545,6 +545,7 @@ BEGIN
     CONTROL         "Extend foreground colors with background",cbExtendColors,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,26,102,161,10
     COMBOBOX        lbExtendIdx,192,100,45,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "Default...",cbColorResetExt,273,100,50,14
     GROUPBOX        "Graphic enhancement",IDC_STATIC,4,193,319,29
     LTEXT           "Schemes:",IDC_STATIC,7,180,35,8
     COMBOBOX        lbDefaultColors,47,178,171,59,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP

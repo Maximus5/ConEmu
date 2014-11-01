@@ -156,6 +156,7 @@ struct Settings
 	public:
 		int GetAppSettingsId(LPCWSTR asExeAppName, bool abElevated);
 		const AppSettings* GetAppSettings(int anAppId=-1);
+		const COLORREF* GetDefColors(LPCWSTR asDefName = NULL);
 		COLORREF* GetColors(int anAppId=-1, BOOL abFade = FALSE);
 		COLORREF* GetPaletteColors(LPCWSTR asPalette, BOOL abFade = FALSE);
 		COLORREF GetFadeColor(COLORREF cr);

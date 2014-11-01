@@ -4663,6 +4663,30 @@ COLORREF* Settings::GetPaletteColors(LPCWSTR asPalette, BOOL abFade /*= FALSE*/)
 	return GetColorsPrepare(pColors, pColorsFade, pbFadeInitialized, abFade);
 }
 
+const COLORREF* Settings::GetDefColors(LPCWSTR asDefName /*= NULL*/)
+{
+	const COLORREF* pcrColors = NULL;
+
+	if (asDefName && *asDefName)
+	{
+		for (int i = 0; i < (int)countof(DefColors); i++)
+		{
+			if (lstrcmpi(DefColors[i].pszTitle, asDefName) == 0)
+			{
+				pcrColors = (const COLORREF*)DefColors[i].dwDefColors;
+				break;
+			}
+		}
+	}
+	else
+	{
+		// Windows standard
+		pcrColors = (const COLORREF*)DefColors[0].dwDefColors;
+	}
+
+	return pcrColors;
+}
+
 COLORREF* Settings::GetColors(int anAppId/*=-1*/, BOOL abFade)
 {
 	COLORREF *pColors = Colors;

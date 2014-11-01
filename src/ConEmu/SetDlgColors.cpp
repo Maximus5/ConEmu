@@ -120,7 +120,10 @@ bool CSetDlgColors::SetColorById(WORD nID, COLORREF color)
 			gpSet->mb_FadeInitialized = false;
 		}
 		else
+		{
+			_ASSERTE(FALSE && "Invalid cXX was specifed");
 			return false;
+		}
 	}
 
 	return true;
