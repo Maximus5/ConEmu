@@ -3498,8 +3498,11 @@ void CSetDlgButtons::OnBtn_ColorResetExt(HWND hDlg, WORD CB, BYTE uCheck)
 	for (int i = 0; i < 16; i++)
 	{
 		CSetDlgColors::SetColorById(c16+i, pcrColors[i]);
-		CSetDlgColors::ColorSetEdit(hDlg, c16+i);
-		gpSetCls->InvalidateCtrl(GetDlgItem(hDlg, c16+i), TRUE);
+		if (hDlg)
+		{
+			CSetDlgColors::ColorSetEdit(hDlg, c16+i);
+			gpSetCls->InvalidateCtrl(GetDlgItem(hDlg, c16+i), TRUE);
+		}
 	}
 
 	gpConEmu->InvalidateAll();
@@ -3512,6 +3515,12 @@ void CSetDlgButtons::OnBtn_ColorResetExt(HWND hDlg, WORD CB, BYTE uCheck)
 void CSetDlgButtons::OnBtn_ColorSchemeSaveDelete(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbColorSchemeSave || CB==cbColorSchemeDelete);
+
+	if (!hDlg)
+	{
+		_ASSERTE(hDlg!=NULL);
+		return;
+	}
 
 	HWND hList = GetDlgItem(hDlg, lbDefaultColors);
 	int nLen = GetWindowTextLength(hList);
