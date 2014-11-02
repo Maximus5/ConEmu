@@ -2067,10 +2067,9 @@ int CTabBarClass::ActiveTabByName(int anType, LPCWSTR asName, CVConGuard* rpVCon
 				// Тут GetName() использовать нельзя, т.к. оно может возвращать "переименованное пользователем"
 				// А здесь ищется конкретный редактор-вьювер фара (то есть нужно правильное полное имя-путь к файлу)
 				LPCWSTR pszNamePtr = tab->Name.Ptr();
-				LPCWSTR pszName = PointToName(pszNamePtr);
-				if (pszNamePtr
-					&& ((lstrcmpi(pszName, asName) == 0))
-						|| ((pszNamePtr != pszName) && (lstrcmpi(pszNamePtr, asName) == 0)))
+				// If asName (searched file) has been specified with path, we need to compare with tab full path
+				LPCWSTR pszCompareTab = wcspbrk(asName, L"\\/") ? pszNamePtr : PointToName(pszNamePtr);
+				if (pszNamePtr && ((lstrcmpi(pszCompareTab, asName) == 0)))
 				{
 					nTab = tabIdx;
 					break;
