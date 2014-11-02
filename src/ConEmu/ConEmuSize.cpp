@@ -3030,6 +3030,12 @@ bool CConEmuSize::SetTileMode(ConEmuWindowCommand Tile)
 		return false;
 	}
 
+	if (!gpConEmu->isMeForeground(false, false))
+	{
+		mp_ConEmu->LogString(L"SetTileMode SKIPPED because ConEmu is not a foreground window");
+		return false;
+	}
+
 	if (Tile != cwc_TileLeft && Tile != cwc_TileRight && Tile != cwc_TileHeight && Tile != cwc_TileWidth)
 	{
 		_ASSERTE(FALSE && "SetTileMode SKIPPED due to invalid mode");
