@@ -26,22 +26,15 @@ action = function()
   --msgbox("Current item", s)
   c = mf.substr(k,mf.len(k)-1,1);
   cmd = mf.iif(c=="4","FindEditor:","FindViewer:")..s;
-  r = Plugin.Call(ConEmu,cmd);
-  --msgbox("EditOpen result", "callplugin="..r)
+  r = Plugin.SyncCall(ConEmu,cmd);
+  --msgbox("EditOpen result", "Plugin.SyncCall="..r)
   if r then
     if mf.substr(r,0,5)=="Found" then
       exit() -- OK
     elseif mf.substr(r,0,6)=="Active" then
-      --Keys("F12 "..mf.substr(r,7))
-      --iWnd = mf.atoi(mf.substr(r,7),10)
-      --far.Show(iWnd)
-      --far.AdvControl(ACTL_SETCURRENTWINDOW, iWnd, 0)
-      --far.AdvControl(ACTL_COMMIT, 0, 0)
-      Keys("F12 Down")
-      if Menu.Select(s,2,2) <= 0 then
-        Menu.Select(mf.fsplit(s,12),2,2)
-      end
-      Keys("Enter")
+      iWnd = mf.atoi(mf.substr(r,7),10)+1
+      far.AdvControl(far.Flags.ACTL_SETCURRENTWINDOW,iWnd)
+      far.AdvControl(far.Flags.ACTL_COMMIT)
       exit() -- Ok
     elseif r=="Blocked" then
       -- msgbox("ConEmu macro","Tab can't be activated now\n"+%s);
