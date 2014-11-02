@@ -49,6 +49,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmuApp.h"
 #include "ConEmuPipe.h"
 #include "FindDlg.h"
+#include "HooksUnlocker.h"
 #include "HtmlCopy.h"
 #include "Macro.h"
 #include "Match.h"
@@ -2773,6 +2774,7 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom, bool bUpdateScre
 		return bChanged;
 	}
 
+	HooksUnlocker;
 
 	COORD crEnd = crStart;
 	CmdArg szText;
