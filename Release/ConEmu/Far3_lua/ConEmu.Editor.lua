@@ -31,7 +31,7 @@ action = function()
   if r then
     if mf.substr(r,0,5)=="Found" then
       exit() -- OK
-    else if mf.substr(r,0,6)=="Active" then
+    elseif mf.substr(r,0,6)=="Active" then
       --Keys("F12 "..mf.substr(r,7))
       --iWnd = mf.atoi(mf.substr(r,7),10)
       --far.Show(iWnd)
@@ -43,9 +43,9 @@ action = function()
       end
       Keys("Enter")
       exit() -- Ok
-    else if r=="Blocked" then
+    elseif r=="Blocked" then
       -- msgbox("ConEmu macro","Tab can't be activated now\n"+%s);
-    end end end
+    end
   end
 
   -- history.enable(0xF) ?

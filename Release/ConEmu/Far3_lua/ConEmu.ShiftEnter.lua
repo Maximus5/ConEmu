@@ -89,7 +89,7 @@ action = function()
         print(add)
       end
     end
-  else if APanel.FilePanel and not APanel.Plugin and not APanel.Empty and not APanel.Folder and mf.len(APanel.Current)>4 then
+  elseif APanel.FilePanel and not APanel.Plugin and not APanel.Empty and not APanel.Folder and mf.len(APanel.Current)>4 then
     -- The command line was empty
     -- Get the list of "executable" extensions
     exec = mf.ucase(mf.env("PATHEXT"));
@@ -112,7 +112,7 @@ action = function()
       Keys("ShiftEnter")
     end
     exit()
-  end end
+  end
 
   --Keys("Del") -- Remove possible autocompletion selection
 
