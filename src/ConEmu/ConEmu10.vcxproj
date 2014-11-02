@@ -981,6 +981,7 @@
     <ClCompile Include="FrameHolder.cpp" />
     <ClCompile Include="GestureEngine.cpp" />
     <ClCompile Include="GuiServer.cpp" />
+    <ClCompile Include="HooksUnlocker.cpp" />
     <ClCompile Include="HotkeyChord.cpp" />
     <ClCompile Include="HotkeyDlg.cpp" />
     <ClCompile Include="HotkeyList.cpp" />
@@ -1090,6 +1091,7 @@
     <ClInclude Include="globals.h" />
     <ClInclude Include="GuiServer.h" />
     <ClInclude Include="Header.h" />
+    <ClInclude Include="HooksUnlocker.h" />
     <ClInclude Include="HotkeyChord.h" />
     <ClInclude Include="HotkeyDlg.h" />
     <ClInclude Include="HotkeyList.h" />

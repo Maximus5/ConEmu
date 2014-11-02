@@ -486,7 +486,7 @@ class CConEmuMain
 		void RegisterMinRestore(bool abRegister);
 		bool IsKeyboardHookRegistered();
 		void RegisterHooks();
-		void UnRegisterHooks(BOOL abFinal=FALSE);
+		void UnRegisterHooks(bool abFinal=false);
 		void OnWmHotkey(WPARAM wParam);
 		void UpdateWinHookSettings();
 		void CtrlWinAltSpace();

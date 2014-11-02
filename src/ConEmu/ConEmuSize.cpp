@@ -38,6 +38,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmu.h"
 #include "ConEmuSize.h"
 #include "DpiAware.h"
+#include "HooksUnlocker.h"
 #include "Inside.h"
 #include "Menu.h"
 #include "OptionsClass.h"
@@ -3004,6 +3005,9 @@ RECT CConEmuSize::SetNormalWindowSize()
 
 bool CConEmuSize::SetTileMode(ConEmuWindowCommand Tile)
 {
+	// While debugging - low-level keyboard hooks almost lock DevEnv
+	HooksUnlocker;
+
 	wchar_t szInfo[200], szName[32];
 
 	if (gpSetCls->isAdvLogging)
@@ -3291,6 +3295,9 @@ bool CConEmuSize::IsPosLocked()
 
 bool CConEmuSize::JumpNextMonitor(bool Next)
 {
+	// While debugging - low-level keyboard hooks almost lock DevEnv
+	HooksUnlocker;
+
 	if (mp_ConEmu->mp_Inside || gpSet->isDesktopMode)
 	{
 		LogString(L"JumpNextMonitor skipped, not allowed in Inside/Desktop modes");

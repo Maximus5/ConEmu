@@ -47,6 +47,7 @@ SRCS = \
 		FrameHolder.cpp    \
 		GestureEngine.cpp  \
 		GuiServer.cpp      \
+		HooksUnlocker.cpp  \
 		HotkeyChord.cpp    \
 		HotkeyDlg.cpp      \
 		HotkeyList.cpp     \
