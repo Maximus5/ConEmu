@@ -68,7 +68,7 @@ struct CEDownloadInfo
 		// If no arguments - just return copy of format string
 		if (argCount == 0)
 			return lstrmerge(strFormat, bAppendNewLine?L"\n":NULL);
-		cchTotal += 1 + bAppendNewLine?1:0;
+		cchTotal += 1 + (bAppendNewLine?1:0);
 		// Calculate size of additional (arguments) length
 		for (size_t i = 0; i < argCount; i++)
 		{
