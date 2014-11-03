@@ -3008,10 +3008,9 @@ bool CConEmuSize::SetTileMode(ConEmuWindowCommand Tile)
 	// While debugging - low-level keyboard hooks almost lock DevEnv
 	HooksUnlocker;
 
-	wchar_t szInfo[200], szName[32];
-
 	if (gpSetCls->isAdvLogging)
 	{
+		wchar_t szInfo[64], szName[32];
 		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"SetTileMode(%s)", FormatTileMode(Tile,szName,countof(szName)));
 		mp_ConEmu->LogString(szInfo);
 	}
@@ -3148,32 +3147,50 @@ bool CConEmuSize::SetTileMode(ConEmuWindowCommand Tile)
 			// Сразу меняем, чтобы DefaultRect не слетел...
 			m_TileMode = Tile;
 
+			LogTileModeChange(L"SetTileMode", Tile, bChange, rcNewWnd, NULL, hMon);
+
 			SetWindowPos(ghWnd, NULL, rcNewWnd.left, rcNewWnd.top, rcNewWnd.right-rcNewWnd.left, rcNewWnd.bottom-rcNewWnd.top, SWP_NOZORDER);
 		}
 
 		changeFromWindowMode = wmNotChanging;
 
-		if (gpSetCls->isAdvLogging)
-		{
-			RECT rc = {}; GetWindowRect(ghWnd, &rc);
-			ConEmuWindowCommand NewTile = GetTileMode(true/*Estimate*/, &mi);
-			wchar_t szNewTile[32];
-			_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"result of SetTileMode(%s) -> %u {%i,%i}-{%i,%i} x%08X -> %s {%i,%i}-{%i,%i}",
-				 FormatTileMode(Tile,szName,countof(szName)),
-				 (UINT)bChange,
-				 rcNewWnd.left, rcNewWnd.top, rcNewWnd.right, rcNewWnd.bottom,
-				 (DWORD)(DWORD_PTR)hMon,
-				 FormatTileMode(NewTile,szNewTile,countof(szNewTile)),
-				 rc.left, rc.top, rc.right, rc.bottom
-				 );
-			mp_ConEmu->LogString(szInfo);
-			DEBUGSTRSIZE(szInfo);
-		}
+		RECT rc = {}; GetWindowRect(ghWnd, &rc);
+		LogTileModeChange(L"result of SetTileMode", Tile, bChange, rcNewWnd, &rc, hMon);
 
 		mp_ConEmu->UpdateProcessDisplay(false);
 	}
 
 	return true;
+}
+
+void CConEmuSize::LogTileModeChange(LPCWSTR asPrefix, ConEmuWindowCommand Tile, bool bChanged, const RECT& rcSet, LPRECT prcAfter, HMONITOR hMon)
+{
+	if (!gpSetCls->isAdvLogging && !IsDebuggerPresent())
+		return;
+
+	ConEmuWindowCommand NewTile = GetTileMode(true/*Estimate*/, NULL);
+	wchar_t szInfo[200], szName[32], szNewTile[32], szAfter[64];
+
+	if (prcAfter)
+		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L" -> %s {%i,%i}-{%i,%i}",
+			FormatTileMode(NewTile,szNewTile,countof(szNewTile)),
+			prcAfter->left, prcAfter->top, prcAfter->right, prcAfter->bottom
+			);
+	else
+		szInfo[0] = 0;
+
+	_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"%s(%s) -> %u {%i,%i}-{%i,%i} x%08X%s",
+		asPrefix,
+		FormatTileMode(Tile,szName,countof(szName)),
+		(UINT)bChanged,
+		rcSet.left, rcSet.top, rcSet.right, rcSet.bottom,
+		(DWORD)(DWORD_PTR)hMon,
+		szAfter);
+
+	if (gpSetCls->isAdvLogging)
+		mp_ConEmu->LogString(szInfo);
+	else
+		DEBUGSTRSIZE(szInfo);
 }
 
 ConEmuWindowCommand CConEmuSize::GetTileMode(bool Estimate, MONITORINFO* pmi/*=NULL*/)

@@ -214,6 +214,7 @@ protected:
 	void StoreNormalRect(RECT* prcWnd);
 	void UpdateIdealRect(RECT rcNewIdeal);
 	RECT SetNormalWindowSize();
+	void LogTileModeChange(LPCWSTR asPrefix, ConEmuWindowCommand Tile, bool bChanged, const RECT& rcSet, LPRECT prcAfter, HMONITOR hMon);
 
 	friend class CSettings;
 	friend class CSetDlgButtons;
