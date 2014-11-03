@@ -163,6 +163,7 @@ public:
 		int lRc = Enable(pszList, nCount);
 		
 		free(pszList);
+		va_end(argptr);
 		return lRc;
 	};
 	DWORD LastErrorCode()
