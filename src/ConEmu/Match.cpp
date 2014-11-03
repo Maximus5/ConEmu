@@ -344,7 +344,7 @@ bool CMatch::IsFileLineTerminator(LPCWSTR pChar, LPCWSTR pszTermint)
 		for (int i = 1; i < 20; i++)
 		{
 			if (pChar[i] == 0 || !isAlpha(pChar[i])) //wcschr(L" \t\xA0", pChar[i]))
-				break;
+				return true;
 			if (pChar[i+1] == L':')
 			{
 				if (isDigit(pChar[i+2]))
