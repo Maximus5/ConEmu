@@ -31,6 +31,15 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 class CConEmuMain;
 struct DpiValue;
 
+enum DpiChangeSource
+{
+	dcs_Api,
+	dcs_Macro,
+	dcs_Jump,
+	dcs_Snap,
+	dcs_Internal,
+};
+
 class CConEmuSize
 {
 private:
@@ -192,7 +201,7 @@ public:
 	LRESULT OnMoving(LPRECT prcWnd = NULL, bool bWmMove = false);
 	LRESULT OnWindowPosChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-	LRESULT OnDpiChanged(UINT dpiX, UINT dpiY, LPRECT prcSuggested, bool bResizeWindow);
+	LRESULT OnDpiChanged(UINT dpiX, UINT dpiY, LPRECT prcSuggested, bool bResizeWindow, DpiChangeSource src);
 	LRESULT OnDisplayChanged(UINT bpp, UINT screenWidth, UINT screenHeight);
 	void OnSizePanels(COORD cr);
 	void OnConsoleResize(bool abPosted = FALSE);
@@ -216,6 +225,7 @@ protected:
 	void UpdateIdealRect(RECT rcNewIdeal);
 	RECT SetNormalWindowSize();
 	void LogTileModeChange(LPCWSTR asPrefix, ConEmuWindowCommand Tile, bool bChanged, const RECT& rcSet, LPRECT prcAfter, HMONITOR hMon);
+	bool CheckDpiOnMoving(WINDOWPOS *p);
 	void EvalNewNormalPos(const MONITORINFO& miOld, HMONITOR hNextMon, const MONITORINFO& miNew, const RECT& rcOld, RECT& rcNew);
 
 	friend class CSettings;

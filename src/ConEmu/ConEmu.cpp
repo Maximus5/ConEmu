@@ -13147,7 +13147,9 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		} break;
 		case /*0x02E0*/ WM_DPICHANGED:
 		{
-			OnDpiChanged(LOWORD(wParam), HIWORD(wParam), (LPRECT)lParam, true);
+			// Update window DPI, recreate fonts and toolbars
+			OnDpiChanged(LOWORD(wParam), HIWORD(wParam), (LPRECT)lParam, true, dcs_Api);
+			// Call windows defaults?
 			result = ::DefWindowProc(hWnd, messg, wParam, lParam);
 		} break;
 

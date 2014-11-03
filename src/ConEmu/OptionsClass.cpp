@@ -306,7 +306,9 @@ int CSettings::QueryDpi()
 	return _dpi.Ydpi;
 }
 
-bool CSettings::OnDpiChanged(int dpiX, int dpiY, LPRECT prcSuggested)
+// Till now prcSuggested is not used
+// However it may be needed for 'Auto sized' fonts
+bool CSettings::RecreateFontByDpi(int dpiX, int dpiY, LPRECT prcSuggested)
 {
 	if ((_dpi.Xdpi == dpiX && _dpi.Ydpi == dpiY) || (dpiY < 72) || (dpiY > 960))
 	{

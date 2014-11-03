@@ -49,7 +49,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "VConGroup.h"
 #include "VirtualConsole.h"
 
-#define DEBUGSTRSIZE(s) //DEBUGSTR(s)
+#define DEBUGSTRSIZE(s) DEBUGSTR(s)
 #define DEBUGSTRDPI(s) DEBUGSTR(s)
 #define DEBUGSTRPANEL2(s) //DEBUGSTR(s)
 #define DEBUGSTRPANEL(s) //DEBUGSTR(s)
@@ -2056,21 +2056,10 @@ LRESULT CConEmuSize::OnWindowPosChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 	DEBUGTEST(WINDOWPOS ps1 = *p);
 
 	// If monitor jump was triggered by OS but not ConEmu internals
-	if (!mp_ConEmu->mb_IgnoreSizeChange
-		&& !(p->flags & (SWP_NOSIZE|SWP_NOMOVE))
-		&& !IsWindowModeChanging()
-		&& CDpiAware::IsPerMonitorDpi())
+	if (!(p->flags & (SWP_NOSIZE|SWP_NOMOVE)))
 	{
-		// We need to refresh "current monitor dpi" before resizing
-		// to avoid improper console size calls
-		DpiValue dpi;
-		if (CDpiAware::QueryDpi(ghWnd, &dpi) > 0)
-		{
-			if (gpSetCls->QueryDpi() != dpi.Ydpi)
-			{
-				OnDpiChanged(dpi.Xdpi, dpi.Ydpi, NULL, false);
-			}
-		}
+		// По идее, смена DPI обработана в OnWindowPosChanging
+		CheckDpiOnMoving(p);
 	}
 
 	// Иначе могут не вызваться события WM_SIZE/WM_MOVE
@@ -2429,21 +2418,20 @@ LRESULT CConEmuSize::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 	//	}
 	//}
 
-	if (!(p->flags & SWP_NOSIZE)
-	        && (hWnd == ghWnd) && !mp_ConEmu->mb_IgnoreSizeChange
-	        && isWindowNormal())
-	{
-		if (!mp_ConEmu->hPictureView)
-		{
-			TODO("Доработать, когда будет ресайз PicView на лету");
-			RECT rcWnd = {0,0,p->cx,p->cy};
-			CVConGroup::SyncAllConsoles2Window(rcWnd, CER_MAIN, true);
-			//CVConGuard VCon;
-			//CVirtualConsole* pVCon = (GetActiveVCon(&VCon) >= 0) ? VCon.VCon() : NULL;
 
-			//if (pVCon && pVCon->RCon())
-			//	pVCon->RCon()->SyncConsole2Window(FALSE, &rcWnd);
-		}
+	bool bResized = false;
+	// If monitor jump was triggered by OS but not ConEmu internals
+	if (!(p->flags & (SWP_NOSIZE|SWP_NOMOVE)))
+	{
+		// Per-monitor dpi? And moved to another monitor?
+		// Чтобы правильно был рассчитан размер консоли
+		bResized = CheckDpiOnMoving(p);
+	}
+
+	if (bResized)
+	{
+		RECT rcWnd = {0,0,p->cx,p->cy};
+		CVConGroup::SyncAllConsoles2Window(rcWnd, CER_MAIN, true);
 	}
 
 #if 0
@@ -2474,6 +2462,34 @@ LRESULT CConEmuSize::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 	}
 
 	return result;
+}
+
+// Returns true if dpi was changed and/or RealConsole recalc/resize is pending
+// Called from OnWindowPosChanging and OnWindowPosChanged
+bool CConEmuSize::CheckDpiOnMoving(WINDOWPOS *p)
+{
+	bool bResized = ((p->flags & SWP_NOSIZE) == 0);
+	HMONITOR hMon = NULL;
+	DpiValue dpi;
+	RECT rcNew = {p->x, p->y, p->x + p->cx, p->y + p->cy};
+
+	// If monitor jump was triggered by OS but not ConEmu internals
+	// Per-monitor dpi? And moved to another monitor?
+	if (!(p->flags & (SWP_NOMOVE|SWP_NOSIZE)) && CDpiAware::IsPerMonitorDpi())
+	{
+		if (CDpiAware::QueryDpiForRect(rcNew, &dpi) > 0)
+		{
+			// Это нужно делать до изменения размеров окна,
+			// иначе будет неправильно рассчитан размер консоли
+			if (OnDpiChanged(dpi.Xdpi, dpi.Ydpi, &rcNew, false, dcs_Internal))
+			{
+				// Вернуть флаг того, что DPI изменилось
+				bResized = true;
+			}
+		}
+	}
+
+	return bResized;
 }
 
 LRESULT CConEmuSize::OnSize(bool bResizeRCon/*=true*/, WPARAM wParam/*=0*/, WORD newClientWidth/*=(WORD)-1*/, WORD newClientHeight/*=(WORD)-1*/)
@@ -2977,7 +2993,7 @@ ConEmuWindowMode CConEmuSize::GetChangeFromWindowMode()
 
 bool CConEmuSize::IsWindowModeChanging()
 {
-	return (changeFromWindowMode != wmNotChanging) || m_JumpMonitor.bInJump;
+	return (changeFromWindowMode != wmNotChanging) || m_JumpMonitor.bInJump || mb_IgnoreSizeChange;
 }
 
 LPCWSTR CConEmuSize::FormatTileMode(ConEmuWindowCommand Tile, wchar_t* pchBuf, size_t cchBufMax)
@@ -3180,6 +3196,15 @@ bool CConEmuSize::SetTileMode(ConEmuWindowCommand Tile)
 			m_TileMode = Tile;
 
 			LogTileModeChange(L"SetTileMode", Tile, bChange, rcNewWnd, NULL, hMon);
+
+			if (CDpiAware::IsPerMonitorDpi())
+			{
+				DpiValue dpi;
+				if (CDpiAware::QueryDpiForRect(rcNewWnd, &dpi))
+				{
+					OnDpiChanged(dpi.Xdpi, dpi.Ydpi, &rcNewWnd, false, dcs_Snap);
+				}
+			}
 
 			SetWindowPos(ghWnd, NULL, rcNewWnd.left, rcNewWnd.top, rcNewWnd.right-rcNewWnd.left, rcNewWnd.bottom-rcNewWnd.top, SWP_NOZORDER);
 		}
@@ -3539,12 +3564,12 @@ bool CConEmuSize::JumpNextMonitor(HWND hJumpWnd, HMONITOR hJumpMon, bool Next, c
 	// прыжки и для других окон, например окна настроек
 	if (hJumpWnd == ghWnd)
 	{
-		if (gpSet->FontUseDpi && CDpiAware::IsPerMonitorDpi())
+		if (CDpiAware::IsPerMonitorDpi())
 		{
 			DpiValue dpi;
 			if (CDpiAware::QueryDpiForMonitor(hNext, &dpi))
 			{
-				OnDpiChanged(dpi.Xdpi, dpi.Ydpi, &rcNewMain, false);
+				OnDpiChanged(dpi.Xdpi, dpi.Ydpi, &rcNewMain, false, dcs_Jump);
 			}
 		}
 
@@ -4407,39 +4432,113 @@ struct OnDpiChangedArg
 {
 	CConEmuSize* pObject;
 	UINT DpiX, DpiY;
+	RECT rcSuggested;
 	bool bResizeWindow;
 	bool bSuggested;
-	RECT rcSuggested;
+	DpiChangeSource src;
+
+	OnDpiChangedArg(CConEmuSize* ap, UINT dx, UINT dy, LPRECT prc, bool abResize, DpiChangeSource asrc)
+	{
+		pObject = ap;
+		DpiX = dx; DpiY = dy;
+		bSuggested = (prc != NULL);
+		if (prc)
+			rcSuggested = *prc;
+		else
+			ZeroStruct(rcSuggested);
+		bResizeWindow = abResize;
+		src = asrc;
+	};
 };
 
 LRESULT CConEmuSize::OnDpiChangedCall(LPARAM lParam)
 {
 	OnDpiChangedArg* p = (OnDpiChangedArg*)lParam;
-	return p->pObject->OnDpiChanged(p->DpiX, p->DpiY, p->bSuggested ? &p->rcSuggested : NULL, p->bResizeWindow);
+	return p->pObject->OnDpiChanged(p->DpiX, p->DpiY, p->bSuggested ? &p->rcSuggested : NULL, p->bResizeWindow, p->src);
 }
 
-LRESULT CConEmuSize::OnDpiChanged(UINT dpiX, UINT dpiY, LPRECT prcSuggested, bool bResizeWindow)
+// Returns TRUE if DPI was really changed (compared with previous value)
+LRESULT CConEmuSize::OnDpiChanged(UINT dpiX, UINT dpiY, LPRECT prcSuggested, bool bResizeWindow, DpiChangeSource src)
 {
-	LRESULT lRc = 0;
+	LRESULT lRc = FALSE;
 
+	wchar_t szInfo[120];
+	RECT rc = {}; if (prcSuggested) rc = *prcSuggested;
+	_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"DpiChanged(%s): dpi={%u,%u}, rect={%i,%i}-{%i,%i} (%ix%i)",
+		(src == dcs_Api) ? L"Api" : (src == dcs_Macro) ? L"Mcr" : (src == dcs_Jump) ? L"Jmp" : (src == dcs_Snap) ? L"Snp" : L"Int",
+		dpiX, dpiY, rc.left, rc.top, rc.right, rc.bottom, rc.right-rc.left, rc.bottom-rc.top);
+
+	/*
+	if (m_JumpMonitor.bInJump || mb_IgnoreSizeChange)
+	{
+		wcscat_c(szInfo, L" - SKIPPED because of moving");
+		DEBUGSTRDPI(szInfo);
+		LogString(szInfo, true);
+		goto wrap;
+	}
+	*/
+
+	// Если прыжок на другой монитор был сделан из SetTileMode (например)
+	// то API может предложить некорректное значение в prcSuggested
+	// Корректный размер уже установлен, на менять его
+	if (IsWindowModeChanging())
+	{
+		prcSuggested = NULL;
+		wcscat_c(szInfo, L" {SuggestedRect was dropped}");
+	}
+
+	// Работать нужно в основном потоке!
 	if (!isMainThread())
 	{
-		OnDpiChangedArg args = {this, dpiX, dpiY, bResizeWindow, (prcSuggested!=NULL)};
-		if (prcSuggested) args.rcSuggested = *prcSuggested;
+		OnDpiChangedArg args(this, dpiX, dpiY, prcSuggested, bResizeWindow, src);
 		lRc = mp_ConEmu->CallMainThread(true, OnDpiChangedCall, (LPARAM)&args);
 	}
 	else
 	{
-		wchar_t szInfo[100];
-		RECT rc = {}; if (prcSuggested) rc = *prcSuggested;
-		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"WM_DPICHANGED: dpi={%u,%u}, rect={%i,%i}-{%i,%i} (%ix%i)\r\n",
-			dpiX, dpiY, rc.left, rc.top, rc.right, rc.bottom, rc.right-rc.left, rc.bottom-rc.top);
 		DEBUGSTRDPI(szInfo);
-		LogString(szInfo, true, false);
+		LogString(szInfo, true);
 
-		gpSetCls->OnDpiChanged(dpiX, dpiY, prcSuggested);
+		#ifdef _DEBUG
+		if ((rc.bottom-rc.top) > 1200)
+			rc.bottom = rc.bottom;
+		#endif
 
-		mp_ConEmu->RecreateControls(true/*bRecreateTabbar*/, true/*bRecreateStatus*/, bResizeWindow, prcSuggested);
+		// it returns false if DPI was not changed
+		if (gpSetCls->RecreateFontByDpi(dpiX, dpiY, prcSuggested))
+		{
+			// Вернуть флажок
+			lRc = TRUE;
+
+			// Пересоздать тулбары для соответсвия их размеров новому DPI
+			RecreateControls(true/*bRecreateTabbar*/, true/*bRecreateStatus*/, bResizeWindow, prcSuggested);
+
+			// Нельзя полагаться на то, что WM_SIZE вызовется сам
+			OnSize();
+
+			// Если вызывает наш внутренний Tile/Snap,
+			// и новый режим "прилепленный" к краю экрана,
+			// то не будет обновлен желаемый размер wmNormal консоли
+			ConEmuWindowCommand Tile = IsRectEmpty(&rc) ? m_TileMode : EvalTileMode(rc);
+			if (Tile != cwc_Current)
+			{
+				RECT rcOld = IsRectEmpty(&mrc_StoredNormalRect) ? GetDefaultRect() : mrc_StoredNormalRect;
+				RECT rcNew = {}, rcNewFix = {};
+				if (!IsRectEmpty(&rc))
+					rcNew = rc;
+				else
+					GetWindowRect(ghWnd, &rcNew);
+				MONITORINFO miOld = {}, miNew = {};
+				HMONITOR hOld = GetNearestMonitorInfo(&miOld, NULL, &rcOld);
+				HMONITOR hNew = GetNearestMonitorInfo(&miNew, NULL, &rcNew);
+				if (hOld && hNew && (hOld != hNew))
+				{
+					// Сменился монитор, нужно обновить NormalRect
+					EvalNewNormalPos(miOld, hNew, miNew, rcOld, rcNewFix);
+					// И сохранить
+					StoreNormalRect(&rcNewFix);
+				}
+			}
+		}
 	}
 
 	return lRc;
@@ -4468,13 +4567,15 @@ void CConEmuSize::RecreateControls(bool bRecreateTabbar, bool bRecreateStatus, b
 		bool bNormal = IsSizePosFree() && !isZoomed() && !isFullScreen();
 		if (bNormal)
 		{
-			RECT rcNew;
 			// If Windows DWM sends new preferred RECT?
 			if (prcSuggested && !IsRectEmpty(prcSuggested))
-				rcNew = *prcSuggested;
-			else
-				rcNew = GetDefaultRect();
-			MoveWindowRect(ghWnd, rcNew, TRUE);
+			{
+				// Change window position if only prcSuggested
+				// otherwise the size may be changed erroneously
+				// during jumping between monitors with different
+				// dpi properties (per-monitor-dpi)
+				MoveWindowRect(ghWnd, *prcSuggested, TRUE);
+			}
 		}
 		// Suggested size may be the same?
 		OnSize();

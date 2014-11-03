@@ -2361,7 +2361,7 @@ LPWSTR ConEmuMacro::SetDpi(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 		return lstrdup(L"InvalidArg");
 
 	RECT rcCurrent = gpConEmu->CalcRect(CER_MAIN);
-	gpConEmu->OnDpiChanged(nValue, nValue, &rcCurrent, true);
+	gpConEmu->OnDpiChanged(nValue, nValue, &rcCurrent, true, dcs_Macro);
 
 	return lstrdup(L"OK");
 }
