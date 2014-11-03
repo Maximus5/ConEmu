@@ -690,9 +690,17 @@ void Settings::InitSettings()
 
 	isStatusBarShow = true;
 	isStatusBarFlags = csf_HorzDelim;
+	#if 1
+	// Use solarized palette by default
+	nStatusBarBack = RGB(7,54,66);
+	nStatusBarLight = RGB(253,246,227);
+	nStatusBarDark = RGB(147,161,161);
+	#else
+	// Old palette
 	nStatusBarBack = RGB(64,64,64);
 	nStatusBarLight = RGB(255,255,255);
 	nStatusBarDark = RGB(160,160,160);
+	#endif
 	wcscpy_c(sStatusFontFace, gsDefMUIFont); nStatusFontCharSet = ANSI_CHARSET;
 	nStatusFontHeight = DEF_STATUSFONTY_P; // dpi must not be embedded into font height!
 	//nHideStatusColumns = ces_CursorInfo;
