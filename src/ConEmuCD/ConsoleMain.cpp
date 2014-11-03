@@ -9667,13 +9667,6 @@ int GetProcessCount(DWORD *rpdwPID, UINT nMaxCount)
 }
 
 #ifdef CRTPRINTF
-WARNING("Можно облегчить... заменить на wvsprintf");
-//void _printf(LPCSTR asFormat, ...)
-//{
-//    va_list argList; va_start(argList, an_StrResId);
-//    char szError[2000]; -- только нужно учесть длину %s
-//    wvsprintf(szError, asFormat, argList);
-//}
 
 void _printf(LPCSTR asFormat, DWORD dw1, DWORD dw2, LPCWSTR asAddLine)
 {

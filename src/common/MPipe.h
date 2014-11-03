@@ -109,9 +109,6 @@ class MPipe
 		};
 		void InitName(const wchar_t* asModule, const wchar_t *aszTemplate, const wchar_t *Parm1, DWORD Parm2)
 		{
-			//va_list args;
-			//va_start( args, aszTemplate );
-			//vswprintf_s(ms_PipeName, countof(ms_PipeName), aszTemplate, args);
 			msprintf(ms_PipeName, countof(ms_PipeName), aszTemplate, Parm1, Parm2);
 			lstrcpynW(ms_Module, asModule, countof(ms_Module)); //-V303
 
