@@ -1495,6 +1495,8 @@ void CDownloader::ReportMessage(CEDownloadCommand rm, LPCWSTR asFormat, CEDownlo
 		argType = va_arg( argptr, CEDownloadArgType );
 	}
 
+	va_end(argptr);
+
 	args.argCount = i;
 
 	mfn_Callback[rm](&args);

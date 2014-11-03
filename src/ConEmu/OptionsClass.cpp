@@ -4357,6 +4357,7 @@ void CSettings::OnInitDialog_CopyFonts(HWND hWnd2, int nList1, ...)
 		nCtrlIds[nCtrls++] = nNext;
 		nNext = va_arg( argptr, int );
 	}
+	va_end(argptr);
 
 
 	for (i = 0; i < nCount; i++)

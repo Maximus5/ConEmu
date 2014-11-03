@@ -247,6 +247,7 @@ LPCWSTR msprintf(LPWSTR lpOut, size_t cchOutMax, LPCWSTR lpFmt, ...)
 wrap:
 	*pszDst = 0;
 	_ASSERTE(lstrlen(lpOut) < (int)cchOutMax);
+	va_end(argptr);
 	return lpOut;
 }
 
@@ -418,6 +419,7 @@ LPCSTR msprintf(LPSTR lpOut, size_t cchOutMax, LPCSTR lpFmt, ...)
 wrap:
 	*pszDst = 0;
 	_ASSERTE(lstrlenA(lpOut) < (int)cchOutMax);
+	va_end(argptr);
 	return lpOut;
 }
 
@@ -468,6 +470,7 @@ int swprintf_c(wchar_t* Buffer, INT_PTR size, const wchar_t *Format, ...)
 	va_start(argList, Format);
 	int nRc;
 	nRc = StringCchVPrintfW(Buffer, size, Format, argList);
+	va_end(argList);
 	return nRc;
 }
 
@@ -480,6 +483,7 @@ int sprintf_c(char* Buffer, INT_PTR size, const char *Format, ...)
 	va_start(argList, Format);
 	int nRc;
 	nRc = StringCchVPrintfA(Buffer, size, Format, argList);
+	va_end(argList);
 	return nRc;
 }
 #endif // #if defined(_DEBUG) && !defined(STRSAFE_DISABLE)
