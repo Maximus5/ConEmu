@@ -2208,6 +2208,8 @@ BOOL CRealBuffer::ApplyConsoleInfo()
 		mp_RCon->UpdateScrollInfo();
 	}
 
+	ExecuteFreeResult(pIn);
+
 	return lbChanged;
 }
 
@@ -4294,6 +4296,7 @@ bool CRealBuffer::DoSelectionCopyInt(CECopyMode CopyMode, bool bStreamMode, int 
 	{
 		Assert(pch != NULL);
 		GlobalFree(hUnicode);
+		return false;
 	}
 
 	// Заполнить данными

@@ -243,8 +243,10 @@ static INT_PTR CALLBACK CheckOptionsFastProc(HWND hDlg, UINT messg, WPARAM wPara
 						if (!gpConEmu->SetConfigFile(pszNewPlace, true))
 						{
 							// Ошибка уже показана
+							SafeFree(pszNewPlace);
 							return 1;
 						}
+						SafeFree(pszNewPlace);
 					}
 
 

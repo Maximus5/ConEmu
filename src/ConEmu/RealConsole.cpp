@@ -10658,6 +10658,8 @@ BOOL CRealConsole::PrepareOutputFile(BOOL abUnicodeText, wchar_t* pszFilePathNam
 
 				ptrCur += nWidth;
 			}
+			SafeFree(pszAnsi);
+    		SafeFree(pszBuf);
 		}
 	}
 
@@ -12256,7 +12258,11 @@ void CRealConsole::UpdateFarSettings(DWORD anFarPID /*= 0*/, FAR_REQ_FARSETCHANG
 		// В консоли может быть активна и другая программа
 		DWORD dwFarPID = (mn_FarPID_PluginDetected == mn_FarPID) ? mn_FarPID : 0; // anFarPID ? anFarPID : GetFarPID();
 
-		if (!dwFarPID) return;
+		if (!dwFarPID)
+		{
+			SafeFree(pSetEnvVar);
+			return;
+		}
 
 		// Выполнить в плагине
 		CConEmuPipe pipe(dwFarPID, 300);
@@ -13961,6 +13967,7 @@ void CRealConsole::PostDragCopy(BOOL abMove)
 	}
 
 	PostMacro(mcr, TRUE/*abAsync*/);
+	SafeFree(mcr);
 }
 
 bool CRealConsole::GetFarVersion(FarVersion* pfv)

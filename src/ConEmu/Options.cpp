@@ -2228,6 +2228,7 @@ bool Settings::LoadProgress(SettingsBase* reg, Settings::ConEmuProgressStore* &p
 	reg->Load(L"Duration", p->nDuration);
 
 wrap:
+	pProgress = p;
 	return lbRc;
 }
 

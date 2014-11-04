@@ -61,6 +61,7 @@ bool CDefaultTerminal::IsRegisteredOsStartup(wchar_t* rsValue, DWORD cchMax, boo
 {
 	LPCWSTR ValueName = StartupValueName /* L"ConEmuDefaultTerminal" */;
 	bool bCurState = false, bLeaveTSA = gpSet->isRegisterOnOsStartupTSA;
+	bool brsValueAllocated = false;
 	HKEY hk;
 	DWORD nSize, nType = 0;
 	LONG lRc;
@@ -70,6 +71,7 @@ bool CDefaultTerminal::IsRegisteredOsStartup(wchar_t* rsValue, DWORD cchMax, boo
 		{
 			cchMax = MAX_PATH*3;
 			rsValue = (wchar_t*)calloc(cchMax+1,sizeof(*rsValue));
+			brsValueAllocated = true;
 		}
 
 		nSize = cchMax*sizeof(*rsValue);
@@ -86,6 +88,8 @@ bool CDefaultTerminal::IsRegisteredOsStartup(wchar_t* rsValue, DWORD cchMax, boo
 
 	if (pbLeaveInTSA)
 		*pbLeaveInTSA = bLeaveTSA;
+	if (brsValueAllocated)
+		SafeFree(rsValue);
 	return bCurState;
 }
 

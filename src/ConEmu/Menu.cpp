@@ -109,6 +109,7 @@ CConEmuMenu::~CConEmuMenu()
 			*mph_Menus[i] = NULL;
 		}
 	}
+	SafeFree(mph_Menus);
 }
 
 // Returns previous value
