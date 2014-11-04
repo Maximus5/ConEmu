@@ -8599,13 +8599,13 @@ void CSettings::UpdatePos(int ax, int ay, bool bGetRect)
 {
 	int x = ax, y = ay;
 
-	if (!gpConEmu->isFullScreen() && !gpConEmu->isZoomed())
+	if (!gpConEmu->isFullScreen()
+		&& !gpConEmu->isZoomed()
+		&& !gpConEmu->isIconic()
+		&& (gpConEmu->GetTileMode(false) == cwc_Current))
 	{
-		if (!gpConEmu->isIconic())
-		{
-			RECT rc; GetWindowRect(ghWnd, &rc);
-			x = rc.left; y = rc.top;
-		}
+		RECT rc; GetWindowRect(ghWnd, &rc);
+		x = rc.left; y = rc.top;
 	}
 
 	if ((gpConEmu->wndX != x) || (gpConEmu->wndY != y))
