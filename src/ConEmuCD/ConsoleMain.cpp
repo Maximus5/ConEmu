@@ -6659,7 +6659,7 @@ BOOL cmd_GetOutput(CESERVER_REQ& in, CESERVER_REQ** out)
 #endif
 
 // Запрос к серверу - "Подцепись в ConEmu GUI".
-// Может придти из
+// Может прийти из
 // * GUI (диалог аттача)
 // * из Far плагина (меню или команда "Attach to ConEmu")
 // * из "ConEmuC /ATTACH"
@@ -8621,7 +8621,7 @@ static void UndoConsoleWindowZoom()
 		while (IsZoomed(ghConWnd) && (GetTickCount()-dwStartTick)<=1000);
 
 		Sleep(20); // и еще чуть-чуть, чтобы консоль прочухалась
-		// Теперь нужно вернуть (вдруго он изменился) размер буфера консоли
+		// Теперь нужно вернуть (вдруг он изменился) размер буфера консоли
 		// Если этого не сделать - размер консоли нельзя УМЕНЬШИТЬ
 		RECT rcConPos;
 		GetWindowRect(ghConWnd, &rcConPos);

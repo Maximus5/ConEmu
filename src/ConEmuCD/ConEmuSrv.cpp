@@ -1888,7 +1888,7 @@ void CmdOutputStore(bool abCreateOnly /*= false*/)
 }
 
 // abSimpleMode==true  - просто восстановить экран на момент вызова CmdOutputStore
-//             ==false - пытаться подогнять строки вывода по текущее состояние
+//             ==false - пытаться подгонять строки вывода под текущее состояние
 //                       задел на будущее для выполнения команд из Far (без /w), mc, или еще кого.
 void CmdOutputRestore(bool abSimpleMode)
 {
@@ -3698,7 +3698,7 @@ static int ReadConsoleInfo()
 			if (!NTVDMACTIVE)  // НЕ при запущенном 16битном приложении - там мы все жестко фиксируем, иначе съезжает размер при закрытии 16бит
 			{
 				// ширина
-				if ((lsbi.srWindow.Left == 0  // или окно соответсвует полному буферу
+				if ((lsbi.srWindow.Left == 0  // или окно соответствует полному буферу
 				        && lsbi.dwSize.X == (lsbi.srWindow.Right - lsbi.srWindow.Left + 1)))
 				{
 					// Это значит, что прокрутки нет, и консольное приложение изменило размер буфера
@@ -3706,7 +3706,7 @@ static int ReadConsoleInfo()
 					gcrVisibleSize.X = lsbi.dwSize.X;
 				}
 				// высота
-				if ((lsbi.srWindow.Top == 0  // или окно соответсвует полному буферу
+				if ((lsbi.srWindow.Top == 0  // или окно соответствует полному буферу
 				        && lsbi.dwSize.Y == (lsbi.srWindow.Bottom - lsbi.srWindow.Top + 1)))
 				{
 					// Это значит, что прокрутки нет, и консольное приложение изменило размер буфера
@@ -3980,7 +3980,7 @@ static BOOL ReadConsoleData()
 	if (memcmp(gpSrv->pConsole->data, gpSrv->pConsoleDataCopy, nCurSize))
 	{
 		memmove(gpSrv->pConsole->data, gpSrv->pConsoleDataCopy, nCurSize);
-		gpSrv->pConsole->bDataChanged = TRUE; // TRUE уже может быть с прошлого раза, не сбросывать в FALSE
+		gpSrv->pConsole->bDataChanged = TRUE; // TRUE уже может быть с прошлого раза, не сбрасывать в FALSE
 		lbChanged = TRUE;
 	}
 
@@ -3993,7 +3993,7 @@ static BOOL ReadConsoleData()
 			if (gpSrv->ColorerHdr.flushCounter != ahdr.flushCounter && !ahdr.locked)
 			{
 				gpSrv->ColorerHdr = ahdr;
-				gpSrv->pConsole->bDataChanged = TRUE; // TRUE уже может быть с прошлого раза, не сбросывать в FALSE
+				gpSrv->pConsole->bDataChanged = TRUE; // TRUE уже может быть с прошлого раза, не сбрасывать в FALSE
 				lbChanged = TRUE;
 			}
 		}

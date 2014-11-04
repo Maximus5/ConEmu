@@ -336,7 +336,7 @@ bool CConEmuCtrl::ProcessHotKeyMsg(UINT messg, WPARAM wParam, LPARAM lParam, con
 			{
 				m_SkippedMsg = messg; m_SkippedMsgWParam = wParam; m_SkippedMsgLParam = lParam;
 				// Откладываем либо до
-				// *) нажатия другой кнопки, не перхватываемой нами (например Apps+U)
+				// *) нажатия другой кнопки, не перехватываемой нами (например Apps+U)
 				// *) отпускания самого Apps
 				return ConEmuSkipHotKey;
 			}

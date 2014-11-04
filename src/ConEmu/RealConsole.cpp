@@ -102,12 +102,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 WARNING("В каждой VCon создать буфер BYTE[256] для хранения распознанных клавиш (Ctrl,...,Up,PgDn,Add,и пр.");
 WARNING("Нераспознанные можно помещать в буфер {VKEY,wchar_t=0}, в котором заполнять последний wchar_t по WM_CHAR/WM_SYSCHAR");
 WARNING("При WM_(SYS)CHAR помещать wchar_t в начало, в первый незанятый VKEY");
-WARNING("При нераспознном WM_KEYUP - брать(и убрать) wchar_t из этого буфера, послав в консоль UP");
-TODO("А периодически - проводить процерку isKeyDown, и чистить буфер");
+WARNING("При нераспознанном WM_KEYUP - брать(и убрать) wchar_t из этого буфера, послав в консоль UP");
+TODO("А периодически - проводить проверку isKeyDown, и чистить буфер");
 WARNING("при переключении на другую консоль (да наверное и в процессе просто нажатий - модификатор может быть изменен в самой программе) требуется проверка caps, scroll, num");
 WARNING("а перед пересылкой символа/клавиши проверять нажат ли на клавиатуре Ctrl/Shift/Alt");
 
-WARNING("Часто после разблокирования компьютера размер консоли изменяется (OK), но обновленное содержимое консоли не приходит в GUI - там остется обрезанная верхняя и нижняя строка");
+WARNING("Часто после разблокирования компьютера размер консоли изменяется (OK), но обновленное содержимое консоли не приходит в GUI - там остaется обрезанная верхняя и нижняя строка");
 
 
 //Курсор, его положение, размер консоли, измененный текст, и пр...
@@ -915,7 +915,7 @@ BOOL CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, const CESER
 		mp_sei->hProcess = NULL;
 	}
 
-	// Иначе - отркрываем как обычно
+	// Иначе - открываем как обычно
 	if (!hProcess)
 	{
 		hProcess = OpenProcess(MY_PROCESS_ALL_ACCESS, FALSE, anConemuC_PID);
@@ -1113,7 +1113,7 @@ BOOL CRealConsole::AttachPID(DWORD dwPID)
 //
 //	TODO("Активной может быть нить ввода плагина фара а не сервера!");
 //
-//	//TODO("Преверка зависания нити и ее перезапуск");
+//	//TODO("Проверка зависания нити и ее перезапуск");
 //	PostThreadMessage(mn_ConEmuC_Input_TID, INPUT_THREAD_ALIVE_MSG, mn_FlushIn, 0);
 //
 //	while (mn_FlushOut != mn_FlushIn) {
@@ -2491,7 +2491,7 @@ DWORD CRealConsole::MonitorThreadWorker(bool bDetached, bool& rbChildProcessCrea
 				tabs.mb_TabsWasChanged = false;
 				mb_DataChanged = false;
 				// Функция загружает ТОЛЬКО ms_PanelTitle, чтобы показать
-				// корректный текст в закладке, соответсвующей панелям
+				// корректный текст в закладке, соответствующей панелям
 				CheckPanelTitle();
 				// выполнит ниже CheckFarStates & FindPanels
 				bCheckStatesFindPanels = true;
@@ -4263,7 +4263,7 @@ void CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y, bool abForce
 			}
 
 			if (bWasSendClickToReadCon)
-				return; // уже клик обработали (перемещение текствого курсора в ReadConsoleW)
+				return; // уже клик обработали (перемещение текстового курсора в ReadConsoleW)
 		}
 	}
 
@@ -5192,7 +5192,7 @@ void CRealConsole::StopThread(BOOL abRecreating)
 		}
 		else
 		{
-			// Должен быть NULL, если нет - значит завис предыдующий макрос
+			// Должен быть NULL, если нет - значит завис предыдущий макрос
 			_ASSERTE(mh_PostMacroThread==NULL && "Terminating mh_PostMacroThread");
 			TerminateThread(mh_PostMacroThread, 100);
 			CloseHandle(mh_PostMacroThread);
@@ -5624,7 +5624,7 @@ void CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 		return;
 	}
 
-	TODO("Добавить хоткей/макрос влючения/отключения группировки");
+	TODO("Добавить хоткей/макрос включения/отключения группировки");
 	// сохраняться флажок должен на уровне группы
 	bool bGrouped = false;
 	if (bGrouped)
@@ -12958,7 +12958,7 @@ int CRealConsole::CoordInPanel(COORD cr, BOOL abIncludeEdges /*= FALSE*/)
 		return 0;
 
 #ifdef _DEBUG
-	// Для отлова некорретных координат для "far /w"
+	// Для отлова некорректных координат для "far /w"
 	int nVisibleHeight = mp_ABuf->GetTextHeight();
 	if (cr.Y > (nVisibleHeight+16))
 	{
@@ -13905,7 +13905,7 @@ void CRealConsole::PostCommand(DWORD anCmdID, DWORD anCmdSize, LPCVOID ptrData)
 		}
 		else
 		{
-			// Должен быть NULL, если нет - значит завис предыдующий макрос
+			// Должен быть NULL, если нет - значит завис предыдущий макрос
 			_ASSERTE(mh_PostMacroThread==NULL && "Terminating mh_PostMacroThread");
 			TerminateThread(mh_PostMacroThread, 100);
 			CloseHandle(mh_PostMacroThread);
@@ -14066,7 +14066,7 @@ void CRealConsole::PostMacro(LPCWSTR asMacro, BOOL abAsync /*= FALSE*/)
 			}
 			else
 			{
-				// Должен быть NULL, если нет - значит завис предыдующий макрос
+				// Должен быть NULL, если нет - значит завис предыдущий макрос
 				_ASSERTE(mh_PostMacroThread==NULL && "Terminating mh_PostMacroThread");
 				TerminateThread(mh_PostMacroThread, 100);
 				CloseHandle(mh_PostMacroThread);

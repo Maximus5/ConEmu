@@ -68,7 +68,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	#undef LOG_GETANCESTOR
 #endif
 
-// Иначе не опередяется GetConsoleAliases (хотя он должен быть доступен в Win2k)
+// Иначе не определяется GetConsoleAliases (хотя он должен быть доступен в Win2k)
 #undef _WIN32_WINNT
 #define _WIN32_WINNT 0x0501
 
@@ -281,7 +281,7 @@ LONG WINAPI OnRegQueryValueExW(HKEY hKey, LPCWSTR lpValueName, LPDWORD lpReserve
 //	{(void*)OnCompareStringW, "CompareStringW", kernel32},
 //
 //	/* ************************ */
-//	//110131 попробуем просто добвавить ее в ExcludedModules
+//	//110131 попробуем просто добавить ее в ExcludedModules
 //	//{(void*)OnHttpSendRequestA, "HttpSendRequestA", wininet, 0},
 //	//{(void*)OnHttpSendRequestW, "HttpSendRequestW", wininet, 0},
 //	/* ************************ */
@@ -814,7 +814,7 @@ bool InitHooksFar()
 		{(void*)OnCompareStringW, "CompareStringW", kernel32},
 
 		/* ************************ */
-		//110131 попробуем просто добвавить ее в ExcludedModules
+		//110131 попробуем просто добавить ее в ExcludedModules
 		//{(void*)OnHttpSendRequestA, "HttpSendRequestA", wininet, 0},
 		//{(void*)OnHttpSendRequestW, "HttpSendRequestW", wininet, 0},
 		/* ************************ */
@@ -982,7 +982,7 @@ BOOL StartupHooks(HMODULE ahOurDll)
 {
 	//HLOG0("StartupHooks",0);
 #ifdef _DEBUG
-	// Консольное окно уже должно быть иницализировано в DllMain
+	// Консольное окно уже должно быть инициализировано в DllMain
 	_ASSERTE(gbAttachGuiClient || gbDosBoxProcess || gbPrepareDefaultTerminal || (ghConWnd != NULL && ghConWnd == GetRealConsoleWindow()));
 	wchar_t sClass[128];
 	if (ghConWnd)
@@ -999,7 +999,7 @@ BOOL StartupHooks(HMODULE ahOurDll)
 
 	WARNING("Получить из мэппинга gdwServerPID");
 
-	// Зовем LoadLibrary. Kernel-то должен был сразу загрузится (static link) в любой
+	// Зовем LoadLibrary. Kernel-то должен был сразу загрузиться (static link) в любой
 	// windows приложении, но вот shell32 - не обязательно, а нам нужно хуки проинициализировать
 	ghKernel32 = LoadLibrary(kernel32);
 	// user32/shell32/advapi32 тянут за собой много других библиотек, НЕ загружаем, если они еще не подлинкованы
