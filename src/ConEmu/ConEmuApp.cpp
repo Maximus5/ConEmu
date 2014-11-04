@@ -2725,6 +2725,7 @@ BOOL PrepareCommandLine(TCHAR*& cmdLine, TCHAR*& cmdNew, bool& isScript, uint& p
 			SplitCommandLine(cmdLine, &params);
 		}
 	}
+	SafeFree(pszExeNameOnly);
 
 	return TRUE;
 }
