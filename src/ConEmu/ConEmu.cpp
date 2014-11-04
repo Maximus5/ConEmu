@@ -2576,6 +2576,8 @@ CConEmuMain::~CConEmuMain()
 
 	SafeDelete(mp_RunQueue);
 
+	SafeDelete(mp_Find);
+
 	//if (m_Child)
 	//{
 	//	delete m_Child;
