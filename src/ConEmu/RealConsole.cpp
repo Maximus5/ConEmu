@@ -10658,6 +10658,7 @@ BOOL CRealConsole::PrepareOutputFile(BOOL abUnicodeText, wchar_t* pszFilePathNam
 
 				ptrCur += nWidth;
 			}
+			SafeFree(pszAnsi);
 		}
 	}
 
