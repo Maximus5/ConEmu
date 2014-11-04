@@ -1649,7 +1649,13 @@ void CConEmuSize::StoreNormalRect(RECT* prcWnd)
 		// иначе, если произошло Maximize при дотягивании до верхнего края экрана - то при
 		// восстановлении окна получаем глюк позиционирования - оно прыгает заголовком за пределы.
 		if (!isSizing())
+		{
+			#ifdef _DEBUG
+			int iDbg = 0; if (memcmp(&mrc_StoredNormalRect, &rcNormal, sizeof(rcNormal)) != 0)
+				iDbg = 1;
+			#endif
 			mrc_StoredNormalRect = rcNormal;
+		}
 
 		{
 			// При ресайзе через окно настройки - mp_ VActive еще не перерисовался
@@ -2210,20 +2216,26 @@ LRESULT CConEmuSize::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 		DEBUGSTRSIZE(szDbg);
 		DWORD nCurTick = GetTickCount();
 		static int cx, cy;
+		static int wx, wy;
 
-		if (!(p->flags & SWP_NOSIZE) && (cx != p->cx || cy != p->cy))
+		// При реальной попытке смены положения/размера окна здесь можно поставить точку
+		if ((!(p->flags & SWP_NOSIZE) && (cx != p->cx || cy != p->cy))
+			|| (!(p->flags & SWP_NOMOVE) && (wx != p->x || wy != p->y)))
 		{
-			cx = p->cx; cy = p->cy;
+			if (!(p->flags & SWP_NOSIZE)) { cx = p->cx; cy = p->cy; }
+			if (!(p->flags & SWP_NOMOVE)) { wx = p->x;  wy = p->y;  }
 		}
 
+		// Отлов неожиданной установки "AlwaysOnTop"
+		{
 			#ifdef CATCH_TOPMOST_SET
-			// Отлов неожиданной установки "AlwaysOnTop"
 			static bool bWasTopMost = false;
 			_ASSERTE(((p->flags & SWP_NOZORDER) || (p->hwndInsertAfter!=HWND_TOPMOST)) && "OnWindowPosChanging");
 			_ASSERTE(((dwStyleEx & WS_EX_TOPMOST) == 0) && "OnWindowPosChanging");
 			_ASSERTE((bWasTopMost || gpSet->isAlwaysOnTop || ((dwStyleEx & WS_EX_TOPMOST)==0)) && "TopMost mode detected in OnWindowPosChanging");
 			bWasTopMost = ((dwStyleEx & WS_EX_TOPMOST)==WS_EX_TOPMOST);
 			#endif
+		}
 	}
 	#endif
 
