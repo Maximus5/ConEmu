@@ -191,6 +191,7 @@ BOOL CConEmuPipe::Execute(int nCmd, LPCVOID apData, UINT anDataSize)
 	{
 		// Плагин не вернул данных, но обработал команду
 		Close();
+		SafeFree(pIn);
 		return TRUE;
 	}
 	else if (!fSuccess && (dwErr != ERROR_MORE_DATA))
@@ -200,6 +201,7 @@ BOOL CConEmuPipe::Execute(int nCmd, LPCVOID apData, UINT anDataSize)
 		_wsprintf(szError, SKIPLEN(countof(szError)) _T("Pipe: TransactNamedPipe failed, Cmd = %i, ErrCode = 0x%08X!"), nCmd, dwErr);
 		MBoxA(szError);
 		Close();
+		SafeFree(pIn);
 		return FALSE;
 	}
 
@@ -207,6 +209,7 @@ BOOL CConEmuPipe::Execute(int nCmd, LPCVOID apData, UINT anDataSize)
 	{
 		pOut = NULL;
 		Close();
+		SafeFree(pIn);
 		return FALSE;
 	}
 
@@ -218,6 +221,7 @@ BOOL CConEmuPipe::Execute(int nCmd, LPCVOID apData, UINT anDataSize)
 		_ASSERTE(pOut->hdr.cbSize == 0);
 		pOut = NULL;
 		Close();
+		SafeFree(pIn);
 		return FALSE;
 	}
 
@@ -226,6 +230,7 @@ BOOL CConEmuPipe::Execute(int nCmd, LPCVOID apData, UINT anDataSize)
 		gpConEmu->ReportOldCmdVersion(pOut->hdr.nCmd, pOut->hdr.nVersion, -1, pOut->hdr.nSrcPID, pOut->hdr.hModule, pOut->hdr.nBits);
 		pOut = NULL;
 		Close();
+		SafeFree(pIn);
 		return FALSE;
 	}
 
@@ -237,6 +242,7 @@ BOOL CConEmuPipe::Execute(int nCmd, LPCVOID apData, UINT anDataSize)
 		DEBUGSTR(L" - FAILED!\n");
 		DisplayLastError(L"Empty data recieved from server", 0);
 		Close();
+		SafeFree(pIn);
 		return FALSE;
 	}
 
