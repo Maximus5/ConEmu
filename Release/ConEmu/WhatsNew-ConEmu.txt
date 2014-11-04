@@ -12,6 +12,18 @@ Votes and awards (vote for ConEmu, if you please)
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+2014.11.03
+[*] Don't snap-jump by Win+Arrow if About dialog is at foreground.
+[*] Search for opened tab by full path instead of name only while Ctrl+Click on hyperlink (compiler errors).
+[*] Far Macro: Use ‘`elseif`’ keyword.
+[*] Far Macro: Use ‘`ACTL_SETCURRENTWINDOW`’ in ‘`ConEmu.Editor.lua`’.
+[*] Use solarized colors for StatusBar by default.
+[*] fix PVS warnings (from Michael Lukashov).
+[*] Issue 1784: Ctrl+Click did not recognize: C:\Work\Test.php:36
+[*] Change autoupdate source information to github.
+[*] Fix wrong per-monitor-dpi jumps.
+
+
 2014.11.01
 [*] Was failed with creating new xml config if empty xml file with BOM was exists.
 [*] Fix hung up after changing dpi with GuiMacro from command line.
