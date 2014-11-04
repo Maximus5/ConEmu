@@ -4636,7 +4636,7 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			}
 		}
 
-		// Если таки изменлся - обновим
+		// Если таки изменился - обновим
 		if (newBgColors && gpSet->nBgImageColors != newBgColors)
 		{
 			gpSet->nBgImageColors = newBgColors;
@@ -11658,7 +11658,7 @@ bool CSettings::IsBackgroundEnabled(CVirtualConsole* apVCon)
 		return true;
 	}
 
-	// Иначе - по настрокам ConEmu
+	// Иначе - по настройкам ConEmu
 	#ifndef APPDISTINCTBACKGROUND
 	if (!isBackgroundImageValid)
 		return false;

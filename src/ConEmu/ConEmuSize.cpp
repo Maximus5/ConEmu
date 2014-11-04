@@ -341,7 +341,7 @@ RECT CConEmuSize::CalcMargins(DWORD/*enum ConEmuMargins*/ mg, ConEmuWindowMode w
 
 	if ((mg & ((DWORD)CEM_STATUS)) && gpSet->isStatusBarShow)
 	{
-		TODO("Завистмость от темы/шрифта");
+		TODO("Зависимость от темы/шрифта");
 		rc.bottom += gpSet->StatusBarHeight();
 	}
 
@@ -1619,7 +1619,7 @@ void CConEmuSize::StoreNormalRect(RECT* prcWnd)
 {
 	mp_ConEmu->mouse.bCheckNormalRect = false;
 
-	// Обновить коордианты в gpSet, если требуется
+	// Обновить координаты в gpSet, если требуется
 	// Если сейчас окно в смене размера - игнорируем, размер запомнит SetWindowMode
 	if ((WindowMode == wmNormal) && !mp_ConEmu->mp_Inside && !isIconic())
 	{
@@ -1769,7 +1769,7 @@ void CConEmuSize::CascadedPosFix()
 
 void CConEmuSize::StorePreMinimizeMonitor()
 {
-	// Запомним, на каком мониторе мы были до минимзации
+	// Запомним, на каком мониторе мы были до минимизации
 	if (!isIconic())
 	{
 		mh_MinFromMonitor = MonitorFromWindow(ghWnd, MONITOR_DEFAULTTONEAREST);
@@ -2168,7 +2168,7 @@ LRESULT CConEmuSize::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 	_ASSERTE(iconic == ((dwStyle & WS_MINIMIZE) == WS_MINIMIZE));
 	#endif
 
-	// В процессе раскрытия/сворачивания могут меняться стили и вызвается ...Changing
+	// В процессе раскрытия/сворачивания могут меняться стили и вызывается ...Changing
 	if (!gpSet->isQuakeStyle && (changeFromWindowMode != wmNotChanging))
 	{
 		if (!zoomed && ((WindowMode == wmMaximized) || (WindowMode == wmFullScreen)))
@@ -2549,7 +2549,7 @@ LRESULT CConEmuSize::OnSize(bool bResizeRCon/*=true*/, WPARAM wParam/*=0*/, WORD
 	//RECT mainClient = MakeRect(0, nClientTop, newClientWidth, newClientHeight+nClientTop);
 	RECT mainClient = CalcRect(CER_MAINCLIENT);
 	RECT work = CalcRect(CER_WORKSPACE, mainClient, CER_MAINCLIENT);
-	_ASSERTE(ghWndWork && GetParent(ghWndWork)==ghWnd); // пока расчитано на дочерний режим
+	_ASSERTE(ghWndWork && GetParent(ghWndWork)==ghWnd); // пока рассчитано на дочерний режим
 	MoveWindowRect(ghWndWork, work, TRUE);
 
 	// Запомнить "идеальный" размер окна, выбранный пользователем
@@ -4023,7 +4023,7 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 				LogString(szInfo);
 			}
 
-			// Already resored, need to clear the flag to avoid incorrect sizing
+			// Already restored, need to clear the flag to avoid incorrect sizing
 			mp_ConEmu->mp_Menu->SetRestoreFromMinimized(false);
 
 			OnSize(false); // подровнять ТОЛЬКО дочерние окошки
@@ -4158,7 +4158,7 @@ void CConEmuSize::ReSize(bool abCorrect2Ideal /*= false*/)
 			// -- не годится. при запуске новой консоли и автопоказе табов
 			// -- размер "CVConGroup::AllTextRect()" --> {0x0}
 			RECT rcConsole = {}, rcCompWnd = {};
-			TODO("DoubleView: нужно с учетом видимых консолией");
+			TODO("DoubleView: нужно с учетом видимых консолей");
 			if (isVConExists(0))
 			{
 				rcConsole = CVConGroup::AllTextRect();
@@ -4172,7 +4172,7 @@ void CConEmuSize::ReSize(bool abCorrect2Ideal /*= false*/)
 			#endif
 
 			#if 1
-			// Выполняем всегда, даже если размер уже соответсвует...
+			// Выполняем всегда, даже если размер уже соответствует...
 			// Без учета DoubleView/SplitScreen
 			RECT rcIdeal = GetIdealRect();
 			AutoSizeFont(rcIdeal, CER_MAIN);
@@ -4182,7 +4182,7 @@ void CConEmuSize::ReSize(bool abCorrect2Ideal /*= false*/)
 
 			// При показе/скрытии табов высота консоли может "прыгать"
 			// Ее нужно скорректировать. Поскольку идет реальный ресайз
-			// главного окна - OnSize вызовается автоматически
+			// главного окна - OnSize вызовется автоматически
 			_ASSERTE(isMainThread());
 
 			CVConGroup::PreReSize(WindowMode, rcCompWnd, CER_MAIN, true);
@@ -4258,7 +4258,7 @@ void CConEmuSize::OnConsoleResize(bool abPosted /*= false*/)
 
 	if (lbIsSizing && !lbLBtnPressed)
 	{
-		// Сборс всех флагов ресайза мышкой
+		// Сброс всех флагов ресайза мышкой
 		ResetSizingFlags(MOUSE_SIZING_BEGIN|MOUSE_SIZING_TODO);
 	}
 
@@ -4509,7 +4509,7 @@ LRESULT CConEmuSize::OnDpiChanged(UINT dpiX, UINT dpiY, LPRECT prcSuggested, boo
 			// Вернуть флажок
 			lRc = TRUE;
 
-			// Пересоздать тулбары для соответсвия их размеров новому DPI
+			// Пересоздать тулбары для соответствия их размеров новому DPI
 			RecreateControls(true/*bRecreateTabbar*/, true/*bRecreateStatus*/, bResizeWindow, prcSuggested);
 
 			// Нельзя полагаться на то, что WM_SIZE вызовется сам
@@ -5418,7 +5418,7 @@ void CConEmuSize::DoMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 	//    Win+C  -->  ShowHideType = sih_None
 	// 2. При вызове из другого приложения
 	//    аргумент /single  --> ShowHideType = sih_Show
-	// 3. При вызове из дрегого приложения
+	// 3. При вызове из другого приложения
 	//    аргумент /showhide     --> ShowHideType = sih_ShowMinimize
 	//    аргумент /showhideTSA  --> ShowHideType = sih_ShowHideTSA
 	SingleInstanceShowHideType cmd = sih_None;
