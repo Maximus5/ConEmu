@@ -1470,6 +1470,8 @@ HRESULT CDragDrop::DropShellOp(IDataObject* pDataObject, DWORD* pdwEffect, STGME
 		DebugLog(NULL);
 	}
 
+	SafeDelete(sfop);
+
 	return hr;
 }
 
