@@ -89,6 +89,7 @@ public:
 	// if hWnd is NULL - returns DC's dpi
 	static int QueryDpiForWindow(HWND hWnd = NULL, DpiValue* pDpi = NULL);
 
+	static int QueryDpiForRect(const RECT& rcWnd, DpiValue* pDpi = NULL, MonitorDpiType dpiType = MDT_Default);
 	static int QueryDpiForMonitor(HMONITOR hmon, DpiValue* pDpi = NULL, MonitorDpiType dpiType = MDT_Default);
 
 	// Dialog helper

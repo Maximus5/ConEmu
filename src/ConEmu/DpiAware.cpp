@@ -246,6 +246,12 @@ int CDpiAware::QueryDpiForWindow(HWND hWnd /*= NULL*/, DpiValue* pDpi /*= NULL*/
 	return dpi;
 }
 
+int CDpiAware::QueryDpiForRect(const RECT& rcWnd, DpiValue* pDpi /*= NULL*/, MonitorDpiType dpiType /*= MDT_Default*/)
+{
+	HMONITOR hMon = MonitorFromRect(&rcWnd, MONITOR_DEFAULTTONEAREST);
+	return QueryDpiForMonitor(hMon, pDpi, dpiType);
+}
+
 int CDpiAware::QueryDpiForMonitor(HMONITOR hmon, DpiValue* pDpi /*= NULL*/, MonitorDpiType dpiType /*= MDT_Default*/)
 {
 	#if defined(_DEBUG) && defined(DPI_144)
