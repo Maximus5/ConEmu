@@ -4294,6 +4294,7 @@ bool CRealBuffer::DoSelectionCopyInt(CECopyMode CopyMode, bool bStreamMode, int 
 	{
 		Assert(pch != NULL);
 		GlobalFree(hUnicode);
+		return false;
 	}
 
 	// Заполнить данными
