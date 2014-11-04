@@ -13967,6 +13967,7 @@ void CRealConsole::PostDragCopy(BOOL abMove)
 	}
 
 	PostMacro(mcr, TRUE/*abAsync*/);
+	SafeFree(mcr);
 }
 
 bool CRealConsole::GetFarVersion(FarVersion* pfv)
