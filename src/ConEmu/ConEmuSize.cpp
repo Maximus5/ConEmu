@@ -3404,6 +3404,76 @@ bool CConEmuSize::JumpNextMonitor(bool Next)
 	return JumpNextMonitor(hJump, NULL, Next, rcMain);
 }
 
+void CConEmuSize::EvalNewNormalPos(const MONITORINFO& miOld, HMONITOR hNextMon, const MONITORINFO& miNew, const RECT& rcOld, RECT& rcNew)
+{
+	#ifdef _DEBUG
+	RECT rcPrevMon = miOld.rcWork;
+	RECT rcNextMon = miNew.rcWork;
+	#endif
+
+	// Если мониторы различаются по разрешению или рабочей области - коррекция позиционирования
+	int ShiftX = rcOld.left - miOld.rcWork.left;
+	int ShiftY = rcOld.top - miOld.rcWork.top;
+
+	int Width = (rcOld.right - rcOld.left);
+	int Height = (rcOld.bottom - rcOld.top);
+
+	// Если ширина или высота были заданы в процентах (от монитора)
+	if ((WndWidth.Style == ss_Percents) || (WndHeight.Style == ss_Percents))
+	{
+		_ASSERTE(!gpSet->isQuakeStyle); // Quake?
+
+		if ((WindowMode == wmNormal) && hNextMon)
+		{
+			RECT rcMargins = CalcMargins(CEM_FRAMECAPTION|CEM_SCROLL|CEM_STATUS|CEM_PAD|CEM_TAB);
+			SIZE szNewSize = GetDefaultSize(false, &WndWidth, &WndHeight, hNextMon);
+			if ((szNewSize.cx > 0) && (szNewSize.cy > 0))
+			{
+				if (WndWidth.Style == ss_Percents)
+					Width = szNewSize.cx + rcMargins.left + rcMargins.right;
+				if (WndHeight.Style == ss_Percents)
+					Height = szNewSize.cy + rcMargins.top + rcMargins.bottom;
+			}
+			else
+			{
+				_ASSERTE((szNewSize.cx > 0) && (szNewSize.cy > 0));
+			}
+		}
+	}
+
+
+	if (ShiftX > 0)
+	{
+		int SpaceX = ((miOld.rcWork.right - miOld.rcWork.left) - Width);
+		int NewSpaceX = ((miNew.rcWork.right - miNew.rcWork.left) - Width);
+		if (SpaceX > 0)
+		{
+			if (NewSpaceX <= 0)
+				ShiftX = 0;
+			else
+				ShiftX = ShiftX * NewSpaceX / SpaceX;
+		}
+	}
+
+	if (ShiftY > 0)
+	{
+		int SpaceY = ((miOld.rcWork.bottom - miOld.rcWork.top) - Height);
+		int NewSpaceY = ((miNew.rcWork.bottom - miNew.rcWork.top) - Height);
+		if (SpaceY > 0)
+		{
+			if (NewSpaceY <= 0)
+				ShiftY = 0;
+			else
+				ShiftY = ShiftY * NewSpaceY / SpaceY;
+		}
+	}
+
+	rcNew.left = miNew.rcWork.left + ShiftX;
+	rcNew.top = miNew.rcWork.top + ShiftY;
+	rcNew.right = rcNew.left + Width;
+	rcNew.bottom = rcNew.top + Height;
+}
+
 bool CConEmuSize::JumpNextMonitor(HWND hJumpWnd, HMONITOR hJumpMon, bool Next, const RECT rcJumpWnd)
 {
 	wchar_t szInfo[100];
@@ -3461,72 +3531,7 @@ bool CConEmuSize::JumpNextMonitor(HWND hJumpWnd, HMONITOR hJumpMon, bool Next, c
 	{
 		_ASSERTE(WindowMode==wmNormal || hJumpWnd!=ghWnd);
 
-		#ifdef _DEBUG
-		RECT rcPrevMon = bFullScreen ? miCur.rcMonitor : miCur.rcWork;
-		RECT rcNextMon = bFullScreen ? mi.rcMonitor : mi.rcWork;
-		#endif
-
-		// Если мониторы различаются по разрешению или рабочей области - коррекция позиционирования
-		int ShiftX = rcMain.left - miCur.rcWork.left;
-		int ShiftY = rcMain.top - miCur.rcWork.top;
-
-		int Width = (rcMain.right - rcMain.left);
-		int Height = (rcMain.bottom - rcMain.top);
-
-		// Если ширина или высота были заданы в процентах (от монитора)
-		if ((WndWidth.Style == ss_Percents) || (WndHeight.Style == ss_Percents))
-		{
-			_ASSERTE(!gpSet->isQuakeStyle); // Quake?
-
-			if ((WindowMode == wmNormal) && hNext)
-			{
-				RECT rcMargins = CalcMargins(CEM_FRAMECAPTION|CEM_SCROLL|CEM_STATUS|CEM_PAD|CEM_TAB);
-				SIZE szNewSize = GetDefaultSize(false, &this->WndWidth, &this->WndHeight, hNext);
-				if ((szNewSize.cx > 0) && (szNewSize.cy > 0))
-				{
-					if (WndWidth.Style == ss_Percents)
-						Width = szNewSize.cx + rcMargins.left + rcMargins.right;
-					if (WndHeight.Style == ss_Percents)
-						Height = szNewSize.cy + rcMargins.top + rcMargins.bottom;
-				}
-				else
-				{
-					_ASSERTE((szNewSize.cx > 0) && (szNewSize.cy > 0));
-				}
-			}
-		}
-
-
-		if (ShiftX > 0)
-		{
-			int SpaceX = ((miCur.rcWork.right - miCur.rcWork.left) - Width);
-			int NewSpaceX = ((mi.rcWork.right - mi.rcWork.left) - Width);
-			if (SpaceX > 0)
-			{
-				if (NewSpaceX <= 0)
-					ShiftX = 0;
-				else
-					ShiftX = ShiftX * NewSpaceX / SpaceX;
-			}
-		}
-
-		if (ShiftY > 0)
-		{
-			int SpaceY = ((miCur.rcWork.bottom - miCur.rcWork.top) - Height);
-			int NewSpaceY = ((mi.rcWork.bottom - mi.rcWork.top) - Height);
-			if (SpaceY > 0)
-			{
-				if (NewSpaceY <= 0)
-					ShiftY = 0;
-				else
-					ShiftY = ShiftY * NewSpaceY / SpaceY;
-			}
-		}
-
-		rcNewMain.left = mi.rcWork.left + ShiftX;
-		rcNewMain.top = mi.rcWork.top + ShiftY;
-		rcNewMain.right = rcNewMain.left + Width;
-		rcNewMain.bottom = rcNewMain.top + Height;
+		EvalNewNormalPos(miCur, hNext, mi, rcMain, rcNewMain);
 	}
 
 
