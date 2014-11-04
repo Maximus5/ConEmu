@@ -3632,6 +3632,10 @@ INT_PTR CSettings::pageOpProc_Integr(HWND hWnd2, UINT messg, WPARAM wParam, LPAR
 			}
 
 			bSkipCbSel = false;
+
+			SafeFree(pszCurInside);
+			SafeFree(pszCurHere);
+
 		}
 		break; // WM_INITDIALOG
 
