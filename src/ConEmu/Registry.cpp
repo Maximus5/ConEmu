@@ -393,7 +393,7 @@ IXMLDOMDocument* SettingsXML::CreateDomDocument(wchar_t* pszErr /*= NULL*/, size
 	// Если msxml3.dll (Msxml2.DOMDocument.3.0) не зарегистрирована - будет такая ошибка
 	if (FAILED(hr)) // (hr == REGDB_E_CLASSNOTREG)
 	{
-		HRESULT hFact;
+		HRESULT hFact = 0;
 		// Попробовать грузануть ее ручками
 		if (!hMsXml3)
 		{
