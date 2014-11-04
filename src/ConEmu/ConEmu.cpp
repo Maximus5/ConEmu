@@ -3641,7 +3641,7 @@ void CConEmuMain::LoadIcons()
 		return; // Уже загружены
 
 	wchar_t *lpszExt = NULL;
-	wchar_t szIconPath[MAX_PATH] = {};
+	wchar_t szIconPath[MAX_PATH+1] = {};
 
 	if (gpConEmu->mps_IconPath)
 	{
