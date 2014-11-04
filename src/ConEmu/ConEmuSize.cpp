@@ -2056,11 +2056,8 @@ LRESULT CConEmuSize::OnWindowPosChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 	DEBUGTEST(WINDOWPOS ps1 = *p);
 
 	// If monitor jump was triggered by OS but not ConEmu internals
-	if (!(p->flags & (SWP_NOSIZE|SWP_NOMOVE)))
-	{
-		// По идее, смена DPI обработана в OnWindowPosChanging
-		CheckDpiOnMoving(p);
-	}
+	// По идее, смена DPI обработана в OnWindowPosChanging
+	CheckDpiOnMoving(p);
 
 	// Иначе могут не вызваться события WM_SIZE/WM_MOVE
 	result = DefWindowProc(hWnd, uMsg, wParam, lParam);
@@ -2419,14 +2416,10 @@ LRESULT CConEmuSize::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 	//}
 
 
-	bool bResized = false;
 	// If monitor jump was triggered by OS but not ConEmu internals
-	if (!(p->flags & (SWP_NOSIZE|SWP_NOMOVE)))
-	{
-		// Per-monitor dpi? And moved to another monitor?
-		// Чтобы правильно был рассчитан размер консоли
-		bResized = CheckDpiOnMoving(p);
-	}
+	// Per-monitor dpi? And moved to another monitor?
+	// Чтобы правильно был рассчитан размер консоли
+	bool bResized = CheckDpiOnMoving(p);
 
 	if (bResized)
 	{
@@ -2468,6 +2461,18 @@ LRESULT CConEmuSize::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 // Called from OnWindowPosChanging and OnWindowPosChanged
 bool CConEmuSize::CheckDpiOnMoving(WINDOWPOS *p)
 {
+	// Nothing was changed (neither pos nor size)?
+	if ((p->flags & (SWP_NOMOVE|SWP_NOSIZE)) == (SWP_NOMOVE|SWP_NOSIZE))
+		return false;
+
+	// Currently minimizing?
+	if (InMinimizing())
+		return false;
+	// Last chance to check
+	if ((p->x <= -32000) || (p->y <= -32000))
+		return false;
+
+	// Lets go
 	bool bResized = ((p->flags & SWP_NOSIZE) == 0);
 	HMONITOR hMon = NULL;
 	DpiValue dpi;
@@ -2475,7 +2480,7 @@ bool CConEmuSize::CheckDpiOnMoving(WINDOWPOS *p)
 
 	// If monitor jump was triggered by OS but not ConEmu internals
 	// Per-monitor dpi? And moved to another monitor?
-	if (!(p->flags & (SWP_NOMOVE|SWP_NOSIZE)) && CDpiAware::IsPerMonitorDpi())
+	if (CDpiAware::IsPerMonitorDpi())
 	{
 		if (CDpiAware::QueryDpiForRect(rcNew, &dpi) > 0)
 		{
