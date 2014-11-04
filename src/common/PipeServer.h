@@ -1388,7 +1388,7 @@ struct PipeServer
 			
 			//#if 0
 			//// Overlapped, доделать
-			//// Созаем Instances
+			//// Создаем Instances
 			//int iRc = InitPipes();
 			//return (iRc == 0);
 			//#endif

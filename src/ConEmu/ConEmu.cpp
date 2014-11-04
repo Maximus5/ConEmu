@@ -2509,7 +2509,7 @@ void CConEmuMain::Destroy()
 	{
 		//HWND hWnd = ghWnd;
 		//ghWnd = NULL;
-		//DestroyWindow(hWnd); -- может быть вызывано из другой нити
+		//DestroyWindow(hWnd); -- может быть вызвано из другой нити
 		PostMessage(ghWnd, mn_MsgMyDestroy, GetCurrentThreadId(), 0);
 	}
 	else
@@ -4847,7 +4847,7 @@ void CConEmuMain::UpdateProcessDisplay(BOOL abForce)
 	CVConGuard VCon;
 	wchar_t szNo[32], szFlags[255]; szNo[0] = szFlags[0] = 0;
 
-	// Не совсем корректно это в статусе процессов показывать, но пока на владке Info больше негде
+	// Не совсем корректно это в статусе процессов показывать, но пока на вкладке Info больше негде
 	wchar_t szTile[32] = L"";
 	ConEmuWindowCommand tile = GetTileMode(false);
 	if (tile)
@@ -10856,7 +10856,7 @@ LRESULT CConEmuMain::OnMouse_RBtnUp(CVirtualConsole* pVCon, HWND hWnd, UINT mess
 		if (PTDIFFTEST(Rcursor,RCLICKAPPSDELTA))
 		{
 			//держали зажатой <.3
-			//убьем таймер, кликнием правой кнопкой
+			//убьем таймер, кликнем правой кнопкой
 			//KillTimer(hWnd, 1); -- Maximus5, таймер более не используется
 			DWORD dwCurTick = TimeGetTime(); //GetTickCount();
 			DWORD dwDelta=dwCurTick-mouse.RClkTick;

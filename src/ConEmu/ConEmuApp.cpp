@@ -2950,7 +2950,7 @@ HRESULT _CreateSeparatorLink(IShellLink **ppsl)
 
 bool UpdateWin7TaskList(bool bForce, bool bNoSuccMsg /*= false*/)
 {
-	// Добаляем Tasks, они есть только в Win7+
+	// Добавляем Tasks, они есть только в Win7+
 	if (gnOsVer < 0x601)
 		return false;
 
@@ -3966,7 +3966,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					}
 
 					RegCloseKey(hk);
-					// сбрость CreateInNewEnvironment для ConMan
+					// сбросить CreateInNewEnvironment для ConMan
 					ResetConman();
 					return nSetupRc;
 				}
@@ -4782,7 +4782,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	{
 		//gpSet->isUpdConHandle = TRUE;
 
-		// сбрость CreateInNewEnvironment для ConMan
+		// сбросить CreateInNewEnvironment для ConMan
 		ResetConman();
 	}
 

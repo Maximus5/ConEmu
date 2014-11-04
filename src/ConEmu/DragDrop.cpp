@@ -524,10 +524,10 @@ HRESULT CDragDrop::DropFromStream(IDataObject* pDataObject, BOOL abActive)
 		goto wrap;
 	}
 
-	// CF_HDROP в структуре отсутсвует!
+	// CF_HDROP в структуре отсутствует!
 	//fmtetc.cfFormat = RegisterClipboardFormat(CFSTR_FILEDESCRIPTORW);
 
-	// Опитизировано. объединены юникодная и ансишная ветки
+	// Оптимизировано. объединены юникодная и ансишная ветки
 
 	for (int iu = 0; iu <= 1; iu++)
 	{
@@ -1670,7 +1670,7 @@ HRESULT CDragDrop::DragOverInt(DWORD grfKeyState, POINTL pt, DWORD* pdwEffect)
 							*pdwEffect = DROPEFFECT_LINK; // при Drop - правая кнопка уже отпущена
 						else
 						{
-							// Смотрим на допустимые эфеекты, определенные источником (иначе драг из корзины не работает)
+							// Смотрим на допустимые эффекты, определенные источником (иначе драг из корзины не работает)
 							*pdwEffect = (gpSet->isDefCopy && (dwAllowed&DROPEFFECT_COPY)==DROPEFFECT_COPY) ? DROPEFFECT_COPY : DROPEFFECT_MOVE;
 						}
 

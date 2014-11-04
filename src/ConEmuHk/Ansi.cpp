@@ -845,7 +845,7 @@ fin:
 }
 
 TODO("По хорошему, после WriteConsoleOutputAttributes тоже нужно делать efof_ResetExt");
-// Но пока можно это проигнорировать, большинство (?) программ, используюет ее в связке
+// Но пока можно это проигнорировать, большинство (?) программ, использует ее в связке
 // WriteConsoleOutputAttributes/WriteConsoleOutputCharacter
 
 BOOL WINAPI CEAnsi::OnWriteConsoleOutputCharacterA(HANDLE hConsoleOutput, LPCSTR lpCharacter, DWORD nLength, COORD dwWriteCoord, LPDWORD lpNumberOfCharsWritten)
