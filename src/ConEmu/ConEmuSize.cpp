@@ -3204,12 +3204,12 @@ void CConEmuSize::LogTileModeChange(LPCWSTR asPrefix, ConEmuWindowCommand Tile, 
 	wchar_t szInfo[200], szName[32], szNewTile[32], szAfter[64];
 
 	if (prcAfter)
-		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L" -> %s {%i,%i}-{%i,%i}",
+		_wsprintf(szAfter, SKIPLEN(countof(szAfter)) L" -> %s {%i,%i}-{%i,%i}",
 			FormatTileMode(NewTile,szNewTile,countof(szNewTile)),
 			prcAfter->left, prcAfter->top, prcAfter->right, prcAfter->bottom
 			);
 	else
-		szInfo[0] = 0;
+		szAfter[0] = 0;
 
 	_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"%s(%s) -> %u {%i,%i}-{%i,%i} x%08X%s",
 		asPrefix,
