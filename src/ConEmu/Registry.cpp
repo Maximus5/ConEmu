@@ -1643,6 +1643,7 @@ bool SettingsXML::SetMultiLine(IXMLDOMNode* apNode, const wchar_t* asValue, long
 	bRc = true;
 wrap:
 	_ASSERTE(nAllLen <= 1);
+	::SysFreeString(bsNodeType);
 	return bRc;
 }
 
