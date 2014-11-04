@@ -2208,6 +2208,8 @@ BOOL CRealBuffer::ApplyConsoleInfo()
 		mp_RCon->UpdateScrollInfo();
 	}
 
+	ExecuteFreeResult(pIn);
+
 	return lbChanged;
 }
 
