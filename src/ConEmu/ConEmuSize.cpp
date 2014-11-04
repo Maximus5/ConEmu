@@ -355,10 +355,10 @@ RECT CConEmuSize::CalcRect(enum ConEmuRect tWhat, CVirtualConsole* pVCon /*= NUL
 	WINDOWPLACEMENT wpl = {sizeof(wpl)};
 	int nGetStyle = 0;
 
-	bool bNeedCalc = (mp_ConEmu->isIconic() || mp_ConEmu->mp_Menu->GetRestoreFromMinimized() || !IsWindowVisible(ghWnd));
+	bool bNeedCalc = (isIconic() || mp_ConEmu->mp_Menu->GetRestoreFromMinimized() || !IsWindowVisible(ghWnd));
 	if (!bNeedCalc)
 	{
-		if (mp_ConEmu->InMinimizing())
+		if (InMinimizing())
 		{
 			//_ASSERTE(!InMinimizing() || InQuakeAnimation()); -- вызывается при обновлении статусной строки, ну его...
 			bNeedCalc = true;
@@ -676,7 +676,7 @@ RECT CConEmuSize::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 			//HMONITOR hMonitor = NULL;
 			_ASSERTE(tFrom==tWhat || tFrom==CER_MAIN);
 
-			DEBUGTEST(bool bIconic = mp_ConEmu->isIconic());
+			DEBUGTEST(bool bIconic = isIconic());
 
 			//if (tWhat != CER_CORRECTED)
 			//    tFrom = tWhat;
@@ -742,7 +742,7 @@ RECT CConEmuSize::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 					{
 						RECT rcNormal = {0};
 						if (mp_ConEmu)
-							rcNormal = mp_ConEmu->mrc_StoredNormalRect;
+							rcNormal = mrc_StoredNormalRect;
 						int w = rcNormal.right - rcNormal.left;
 						int h = rcNormal.bottom - rcNormal.top;
 						if ((w > 0) && (h > 0))
@@ -1227,7 +1227,7 @@ RECT CConEmuSize::GetDefaultRect()
 				{
 					// Если выбран режим "Fixed" - разрешим задавать левую координату
 					if (!gpSet->wndCascade)
-						rcWnd.left = max(mi.rcWork.left,min(mp_ConEmu->wndX,(mi.rcWork.right - nWidth)));
+						rcWnd.left = max(mi.rcWork.left,min(wndX,(mi.rcWork.right - nWidth)));
 					else
 						rcWnd.left = max(mi.rcWork.left,((mi.rcWork.left + mi.rcWork.right - nWidth) / 2));
 					rcWnd.right = min(mi.rcWork.right,(rcWnd.left + nWidth));
@@ -1480,7 +1480,7 @@ void CConEmuSize::UpdateInsideRect(RECT rcNewPos)
 {
 	RECT rcWnd = rcNewPos;
 
-	mp_ConEmu->UpdateIdealRect(rcWnd);
+	UpdateIdealRect(rcWnd);
 
 	// Подвинуть
 	SetWindowPos(ghWnd, HWND_TOP, rcWnd.left, rcWnd.top, rcWnd.right-rcWnd.left, rcWnd.bottom-rcWnd.top, 0);
@@ -1701,7 +1701,7 @@ void CConEmuSize::StoreNormalRect(RECT* prcWnd)
 
 void CConEmuSize::CascadedPosFix()
 {
-	if (gpSet->wndCascade && (ghWnd == NULL) && (mp_ConEmu->WindowMode == wmNormal) && mp_ConEmu->IsSizePosFree(mp_ConEmu->WindowMode))
+	if (gpSet->wndCascade && (ghWnd == NULL) && (WindowMode == wmNormal) && IsSizePosFree(WindowMode))
 	{
 		// Сдвиг при каскаде
 		int nShift = (GetSystemMetrics(SM_CYSIZEFRAME)+GetSystemMetrics(SM_CYCAPTION))*1.5;
@@ -1741,20 +1741,20 @@ void CConEmuSize::CascadedPosFix()
 
 			if (!nDefWidth || !nDefHeight)
 			{
-				RECT rcDef = mp_ConEmu->GetDefaultRect();
+				RECT rcDef = GetDefaultRect();
 				nDefWidth = rcDef.right - rcDef.left;
 				nDefHeight = rcDef.bottom - rcDef.top;
 			}
 
 			if (nDefWidth > 0 && nDefHeight > 0)
 			{
-				mp_ConEmu->wndX = min(rcWnd.left + nShift, mi.rcWork.right - nDefWidth);
-				mp_ConEmu->wndY = min(rcWnd.top + nShift, mi.rcWork.bottom - nDefHeight);
+				wndX = min(rcWnd.left + nShift, mi.rcWork.right - nDefWidth);
+				wndY = min(rcWnd.top + nShift, mi.rcWork.bottom - nDefHeight);
 			}
 			else
 			{
-				mp_ConEmu->wndX = rcWnd.left + nShift;
-				mp_ConEmu->wndY = rcWnd.top + nShift;
+				wndX = rcWnd.left + nShift;
+				wndY = rcWnd.top + nShift;
 			}
 			break; // нашли, сдвинулись, выходим
 		}
@@ -1781,7 +1781,7 @@ HMONITOR CConEmuSize::GetNearestMonitor(MONITORINFO* pmi /*= NULL*/, LPCRECT prc
 	}
 	else if (!ghWnd || (gpSet->isQuakeStyle && isIconic()))
 	{
-		_ASSERTE(mp_ConEmu->WndWidth.Value>0 && mp_ConEmu->WndHeight.Value>0);
+		_ASSERTE(WndWidth.Value>0 && WndHeight.Value>0);
 		RECT rcEvalWnd = GetDefaultRect();
 		hMon = GetNearestMonitorInfo(&mi, NULL, &rcEvalWnd);
 	}
@@ -2076,9 +2076,9 @@ LRESULT CConEmuSize::OnWindowPosChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 
 	if (hWnd == ghWnd /*&& ghOpWnd*/)  //2009-05-08 запоминать wndX/wndY всегда, а не только если окно настроек открыто
 	{
-		if (!mp_ConEmu->mb_IgnoreSizeChange && !mp_ConEmu->isIconic())
+		if (!mb_IgnoreSizeChange && !isIconic())
 		{
-			RECT rc = mp_ConEmu->CalcRect(CER_MAIN);
+			RECT rc = CalcRect(CER_MAIN);
 			mp_ConEmu->mp_Status->OnWindowReposition(&rc);
 
 			if ((changeFromWindowMode == wmNotChanging) && isWindowNormal())
@@ -2265,7 +2265,7 @@ LRESULT CConEmuSize::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 	// -- // Если у нас режим скрытия заголовка (при максимизации/фулскрине)
 	// При любой смене. Т.к. мы меняем WM_GETMINMAXINFO - нужно корректировать и размеры :(
 	// Иначе возможны глюки
-	if (!(p->flags & (SWP_NOSIZE|SWP_NOMOVE)) && !mp_ConEmu->InMinimizing())
+	if (!(p->flags & (SWP_NOSIZE|SWP_NOMOVE)) && !InMinimizing())
 	{
 		if (gpSet->isQuakeStyle)
 		{
@@ -2868,7 +2868,7 @@ bool CConEmuSize::SetQuakeMode(BYTE NewQuakeMode, ConEmuWindowMode nNewWindowMod
 	if (NewQuakeMode && gpSet->isDesktopMode)  // этот режим с Desktop несовместим
 	{
 		gpSet->isDesktopMode = false;
-		mp_ConEmu->DoDesktopModeSwitch();
+		DoDesktopModeSwitch();
 	}
 
 	HWND hWnd2 = gpSetCls->GetPage(CSettings::thi_Show); // Страничка с настройками
@@ -3597,7 +3597,7 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 	if ((inMode != wmFullScreen) && (WindowMode == wmFullScreen))
 	{
 		// Отмена vkForceFullScreen
-		mp_ConEmu->DoForcedFullScreen(false);
+		DoForcedFullScreen(false);
 	}
 
 	#ifdef _DEBUG
@@ -3723,7 +3723,7 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 				{
 					if (gpSetCls->isAdvLogging) LogString(L"ShowWindow(SW_SHOWNORMAL)");
 
-					mp_ConEmu->ShowWindow(SW_SHOWNORMAL);
+					ShowWindow(SW_SHOWNORMAL);
 				}
 
 				//RePaint();
@@ -4450,7 +4450,7 @@ void CConEmuSize::RecreateControls(bool bRecreateTabbar, bool bRecreateStatus, b
 			MoveWindowRect(ghWnd, rcNew, TRUE);
 		}
 		// Suggested size may be the same?
-		mp_ConEmu->OnSize();
+		OnSize();
 		mp_ConEmu->InvalidateGaps();
 	}
 }
@@ -4855,7 +4855,7 @@ void CConEmuSize::CheckTopMostState()
 		if (IDYES == MsgBox(L"Some external program bring ConEmu OnTop\nRevert?", MB_SYSTEMMODAL|MB_ICONQUESTION|MB_YESNO))
 		{
 			//SetWindowStyleEx(dwStyleEx & ~WS_EX_TOPMOST);
-			mp_ConEmu->DoAlwaysOnTopSwitch();
+			DoAlwaysOnTopSwitch();
 		}
 		else
 		{
