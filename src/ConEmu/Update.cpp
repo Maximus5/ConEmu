@@ -1996,7 +1996,7 @@ bool CConEmuUpdate::wininet::Init(CConEmuUpdate* apUpd)
 		if (!DownloadCommand(dc_Init, 0, NULL))
 		{
 			DWORD nErr = GetLastError(); // No use?
-			pUpd->ReportError(L"Failed to re-inialize gpInet, code=%u", nErr);
+			pUpd->ReportError(L"Failed to re-initialize gpInet, code=%u", nErr);
 			return false;
 		}
 		bRc = true;
@@ -2030,7 +2030,7 @@ bool CConEmuUpdate::wininet::Init(CConEmuUpdate* apUpd)
 	if (!lDownloadCommand(dc_Init, 0, NULL))
 	{
 		DWORD nErr = GetLastError(); // No use?
-		pUpd->ReportError(L"Failed to inialize gpInet, code=%u", nErr);
+		pUpd->ReportError(L"Failed to initialize gpInet, code=%u", nErr);
 		goto wrap;
 	}
 
@@ -2053,7 +2053,7 @@ wrap:
 }
 bool CConEmuUpdate::wininet::Deinit(bool bFull)
 {
-	// if bFull - release allocaled object too
+	// if bFull - release allocated object too
 	if (!DownloadCommand)
 		return false;
 	if (!DownloadCommand(bFull ? dc_Deinit : dc_Reset, 0, NULL))

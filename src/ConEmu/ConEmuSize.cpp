@@ -4023,7 +4023,7 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 				LogString(szInfo);
 			}
 
-			// Already resored, need to clear the flag to avoid incorrect sizing
+			// Already restored, need to clear the flag to avoid incorrect sizing
 			mp_ConEmu->mp_Menu->SetRestoreFromMinimized(false);
 
 			OnSize(false); // подровнять ТОЛЬКО дочерние окошки

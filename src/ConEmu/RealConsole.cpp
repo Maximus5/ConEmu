@@ -859,7 +859,7 @@ BOOL CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, const CESER
 			{
 				_ASSERTE(rStartStop->hServerProcessHandle!=0);
 				_ASSERTE(mp_sei->hProcess!=NULL);
-				DisplayLastError(L"Server process handle was not recieved!", -1);
+				DisplayLastError(L"Server process handle was not received!", -1);
 			}
 		}
 		else
@@ -882,7 +882,7 @@ BOOL CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, const CESER
 
 			if (nWait != WAIT_TIMEOUT)
 			{
-				DisplayLastError(L"Invalid server process handle recieved!");
+				DisplayLastError(L"Invalid server process handle received!");
 			}
 		}
 	}
@@ -5217,7 +5217,7 @@ void CRealConsole::StopThread(BOOL abRecreating)
 
 	//if (mh_InputThread) {
 	//    if (WaitForSingleObject(mh_InputThread, 300) != WAIT_OBJECT_0) {
-	//        DEBUGSTRPROC(L"### Input Thread wating timeout, terminating...\n");
+	//        DEBUGSTRPROC(L"### Input Thread waiting timeout, terminating...\n");
 	//        TerminateThread(mh_InputThread, 1);
 	//    } else {
 	//        DEBUGSTRPROC(L"Input Thread closed normally\n");
@@ -9446,7 +9446,7 @@ void CRealConsole::SetTabs(ConEmuTab* apTabs, int anTabsCount, DWORD anFarPID)
 	}
 	else
 	{
-		_ASSERTE(FALSE && "Must be added in valid-list for consistense!");
+		_ASSERTE(FALSE && "Must be added in valid-list for consistence!");
 	}
 }
 
@@ -14516,11 +14516,11 @@ void CRealConsole::CtrlWinAltSpace()
 
 	if ((dwLastSpaceTick-GetTickCount())<1000)
 	{
-		//if (hWnd == ghWnd DC) MBoxA(_T("Space bounce recieved from DC")) else
-		//if (hWnd == ghWnd) MBoxA(_T("Space bounce recieved from MainWindow")) else
-		//if (hWnd == mp_ConEmu->m_Back->mh_WndBack) MBoxA(_T("Space bounce recieved from BackWindow")) else
-		//if (hWnd == mp_ConEmu->m_Back->mh_WndScroll) MBoxA(_T("Space bounce recieved from ScrollBar")) else
-		MBoxA(_T("Space bounce recieved from unknown window"));
+		//if (hWnd == ghWnd DC) MBoxA(_T("Space bounce received from DC")) else
+		//if (hWnd == ghWnd) MBoxA(_T("Space bounce received from MainWindow")) else
+		//if (hWnd == mp_ConEmu->m_Back->mh_WndBack) MBoxA(_T("Space bounce received from BackWindow")) else
+		//if (hWnd == mp_ConEmu->m_Back->mh_WndScroll) MBoxA(_T("Space bounce received from ScrollBar")) else
+		MBoxA(_T("Space bounce received from unknown window"));
 		return;
 	}
 
