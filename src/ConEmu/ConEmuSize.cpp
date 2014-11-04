@@ -1651,7 +1651,6 @@ void CConEmuSize::StoreNormalRect(RECT* prcWnd)
 		if (!isSizing())
 			mrc_StoredNormalRect = rcNormal;
 
-		if (CVConGroup::isVConExists(0))
 		{
 			// При ресайзе через окно настройки - mp_ VActive еще не перерисовался
 			// так что и TextWidth/TextHeight не обновился
@@ -1662,7 +1661,16 @@ void CConEmuSize::StoreNormalRect(RECT* prcWnd)
 			// Если хранятся размеры в ячейках - нужно позвать CVConGroup::AllTextRect()
 			if ((w.Style == ss_Standard) || (h.Style == ss_Standard))
 			{
-				RECT rcAll = CVConGroup::AllTextRect();
+				RECT rcAll;
+				if (CVConGroup::isVConExists(0))
+				{
+					rcAll = CVConGroup::AllTextRect();
+				}
+				else
+				{
+					rcAll = CalcRect(CER_CONSOLE_ALL, rcNormal, CER_MAIN);
+				}
+				// And set new values to w & h
 				if (w.Style == ss_Standard)
 					w.Set(true, ss_Standard, rcAll.right);
 				if (h.Style == ss_Standard)
