@@ -3200,7 +3200,7 @@ void CConEmuSize::LogTileModeChange(LPCWSTR asPrefix, ConEmuWindowCommand Tile, 
 	if (!gpSetCls->isAdvLogging && !IsDebuggerPresent())
 		return;
 
-	ConEmuWindowCommand NewTile = GetTileMode(true/*Estimate*/, NULL);
+	ConEmuWindowCommand NewTile = GetTileMode(false/*Estimate*/, NULL);
 	wchar_t szInfo[200], szName[32], szNewTile[32], szAfter[64];
 
 	if (prcAfter)
