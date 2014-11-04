@@ -12,6 +12,11 @@ Votes and awards (vote for ConEmu, if you please)
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+2014.11.04
+[*] Issue 1790: Minimize/restore crops console size (ff25dbc regression).
+[*] Fix Coverity warnings and leaks (from Michael Lukashov).
+
+
 2014.11.03
 [*] Don't snap-jump by Win+Arrow if About dialog is at foreground.
 [*] Search for opened tab by full path instead of name only while Ctrl+Click on hyperlink (compiler errors).
