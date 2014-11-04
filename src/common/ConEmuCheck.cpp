@@ -855,6 +855,8 @@ CESERVER_REQ* ExecuteCmd(const wchar_t* szPipeName, CESERVER_REQ* pIn, DWORD nWa
 		_ASSERTE(fSuccess && (cbRead == pIn->hdr.cbSize));
 		#endif
 
+		CloseHandle(hPipe);
+
 		pOut = NULL;
 		goto wrap;
 	}
