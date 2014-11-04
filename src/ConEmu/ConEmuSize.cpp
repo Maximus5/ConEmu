@@ -3225,11 +3225,54 @@ void CConEmuSize::LogTileModeChange(LPCWSTR asPrefix, ConEmuWindowCommand Tile, 
 		DEBUGSTRSIZE(szInfo);
 }
 
+ConEmuWindowCommand CConEmuSize::EvalTileMode(const RECT& rcWnd, MONITORINFO* pmi /*= NULL*/)
+{
+	ConEmuWindowCommand CurTile = cwc_Current;
+
+	MONITORINFO mi = {};
+	GetNearestMonitorInfo(&mi, NULL, &rcWnd, ghWnd);
+	if (pmi)
+		*pmi = mi;
+
+	// _abs(x1-x2) <= 1 ?
+	if ((rcWnd.right == mi.rcWork.right)
+		&& (rcWnd.top == mi.rcWork.top)
+		&& (rcWnd.bottom == mi.rcWork.bottom))
+	{
+		int nCenter = ((mi.rcWork.right + mi.rcWork.left) >> 1) - rcWnd.left;
+		if (_abs(nCenter) <= 4)
+		{
+			CurTile = cwc_TileRight;
+		}
+	}
+	else if ((rcWnd.left == mi.rcWork.left)
+		&& (rcWnd.top == mi.rcWork.top)
+		&& (rcWnd.bottom == mi.rcWork.bottom))
+	{
+		int nCenter = ((mi.rcWork.right + mi.rcWork.left) >> 1) - rcWnd.right;
+		if (_abs(nCenter) <= 4)
+		{
+			CurTile = cwc_TileLeft;
+		}
+	}
+	else if ((rcWnd.top == mi.rcWork.top)
+		&& (rcWnd.bottom == mi.rcWork.bottom))
+	{
+		CurTile = cwc_TileHeight;
+	}
+	else if ((rcWnd.left == mi.rcWork.left)
+		&& (rcWnd.right == mi.rcWork.right))
+	{
+		CurTile = cwc_TileWidth;
+	}
+
+	return CurTile;
+}
+
 ConEmuWindowCommand CConEmuSize::GetTileMode(bool Estimate, MONITORINFO* pmi/*=NULL*/)
 {
 	if (Estimate && IsSizePosFree() && !isFullScreen() && !isZoomed() && !isIconic())
 	{
-		MONITORINFO mi = {};
 		RECT rcWnd = {};
 		ConEmuWindowCommand CurTile = cwc_Current;
 
@@ -3245,42 +3288,9 @@ ConEmuWindowCommand CConEmuSize::GetTileMode(bool Estimate, MONITORINFO* pmi/*=N
 			goto done;
 		}
 
-		GetNearestMonitorInfo(&mi, NULL, NULL, ghWnd);
-		if (pmi)
-			*pmi = mi;
-
 		GetWindowRect(ghWnd, &rcWnd);
-		// _abs(x1-x2) <= 1 ?
-		if ((rcWnd.right == mi.rcWork.right)
-			&& (rcWnd.top == mi.rcWork.top)
-			&& (rcWnd.bottom == mi.rcWork.bottom))
-		{
-			int nCenter = ((mi.rcWork.right + mi.rcWork.left) >> 1) - rcWnd.left;
-			if (_abs(nCenter) <= 4)
-			{
-				CurTile = cwc_TileRight;
-			}
-		}
-		else if ((rcWnd.left == mi.rcWork.left)
-			&& (rcWnd.top == mi.rcWork.top)
-			&& (rcWnd.bottom == mi.rcWork.bottom))
-		{
-			int nCenter = ((mi.rcWork.right + mi.rcWork.left) >> 1) - rcWnd.right;
-			if (_abs(nCenter) <= 4)
-			{
-				CurTile = cwc_TileLeft;
-			}
-		}
-		else if ((rcWnd.top == mi.rcWork.top)
-			&& (rcWnd.bottom == mi.rcWork.bottom))
-		{
-			CurTile = cwc_TileHeight;
-		}
-		else if ((rcWnd.left == mi.rcWork.left)
-			&& (rcWnd.right == mi.rcWork.right))
-		{
-			CurTile = cwc_TileWidth;
-		}
+
+		CurTile = EvalTileMode(rcWnd, pmi);
 
 	done:
 		if (m_TileMode != CurTile)

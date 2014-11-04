@@ -150,6 +150,7 @@ public:
 	bool IsWindowModeChanging();
 	bool SetWindowMode(ConEmuWindowMode inMode, bool abForce = false, bool abFirstShow = false);
 	ConEmuWindowCommand GetTileMode(bool Estimate, MONITORINFO* pmi = NULL);
+	ConEmuWindowCommand EvalTileMode(const RECT& rcWnd, MONITORINFO* pmi = NULL);
 	bool IsSizeFree(ConEmuWindowMode CheckMode = wmFullScreen);
 	bool IsSizePosFree(ConEmuWindowMode CheckMode = wmFullScreen);
 	bool IsCantExceedMonitor();
