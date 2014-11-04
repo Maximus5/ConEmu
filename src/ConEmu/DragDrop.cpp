@@ -1376,7 +1376,7 @@ HRESULT CDragDrop::DropShellOp(IDataObject* pDataObject, DWORD* pdwEffect, STGME
 
 		if (!lbMultiDest)
 		{
-			// Copying from folder "C:\\1\\" to folder "C:\\1\\" (noting to do)?
+			// Copying from folder "C:\\1\\" to folder "C:\\1\\" (nothing to do)?
 			INT_PTR iToDirLen = _tcslen(pszDropPath);
 			if (iToDirLen > 0)
 			{
@@ -1389,7 +1389,7 @@ HRESULT CDragDrop::DropShellOp(IDataObject* pDataObject, DWORD* pdwEffect, STGME
 					curr[iToDirLen] = L'\\';
 					if (iCmp == 0)
 					{
-						// Src & Dst folders are equal, noting to do
+						// Src & Dst folders are equal, nothing to do
 						curr[0] = curr[1] = 0;
 						continue;
 					}

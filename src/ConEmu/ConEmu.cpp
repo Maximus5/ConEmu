@@ -850,7 +850,7 @@ void CConEmuMain::StoreWorkDir(LPCWSTR asNewCurDir /*= NULL*/)
 			FixDirEndSlash(szDir);
 		}
 
-		// Prepare WinDir for comparision
+		// Prepare WinDir for comparison
 		wchar_t szWinDir[MAX_PATH] = L"";
 		if (GetWindowsDirectory(szWinDir, MAX_PATH-10))
 			FixDirEndSlash(szWinDir);
@@ -1231,7 +1231,7 @@ LPCWSTR CConEmuMain::ConEmuCExeFull(LPCWSTR asCmdLine/*=NULL*/)
 	}
 	else
 	{
-		// Strip from cmdline some commands, wich ConEmuC can process internally
+		// Strip from cmdline some commands, which ConEmuC can process internally
 		ProcessSetEnvCmd(asCmdLine, false);
 
 		// Проверить битность asCmdLine во избежание лишних запусков серверов для Inject
@@ -3052,7 +3052,7 @@ bool CConEmuMain::CreateWnd(RConStartArgs *args)
 
 	BOOL bStart = FALSE;
 
-	// Start new ConEmu.exe process with choosen arguments...
+	// Start new ConEmu.exe process with chosen arguments...
 	STARTUPINFO si = {sizeof(si)};
 	PROCESS_INFORMATION pi = {};
 	wchar_t* pszCmdLine = NULL;
@@ -4456,7 +4456,7 @@ void CConEmuMain::RecreateAction(RecreateActionParm aRecreate, BOOL abConfirm, R
 			}
 			else
 			{
-				// Start new ConEmu.exe process with choosen arguments...
+				// Start new ConEmu.exe process with chosen arguments...
 				CreateWnd(&args);
 			}
 		}
