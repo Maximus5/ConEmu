@@ -1962,11 +1962,17 @@ LRESULT CConEmuSize::OnWindowPosChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 {
 	LRESULT result = 0; // DefWindowProc зовется в середине функции
 
+	WINDOWPOS *p = (WINDOWPOS*)lParam;
+
+	if (hWnd != ghWnd)
+	{
+		_ASSERTE(hWnd == ghWnd);
+		return DefWindowProc(hWnd, uMsg, wParam, lParam);
+	}
+
 	// Если нужно поправить параметры DWM
 	mp_ConEmu->ExtendWindowFrame();
 
-	//static int WindowPosStackCount = 0;
-	WINDOWPOS *p = (WINDOWPOS*)lParam;
 	DWORD dwStyle = GetWindowLong(ghWnd, GWL_STYLE);
 	DWORD dwStyleEx = GetWindowLong(ghWnd, GWL_EXSTYLE);
 
@@ -2133,6 +2139,12 @@ LRESULT CConEmuSize::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 
 	WINDOWPOS *p = (WINDOWPOS*)lParam;
 	DEBUGTEST(WINDOWPOS ps = *p);
+
+	if (hWnd != ghWnd)
+	{
+		_ASSERTE(hWnd == ghWnd);
+		return DefWindowProc(hWnd, uMsg, wParam, lParam);
+	}
 
 	bool zoomed = ::IsZoomed(ghWnd);
 	bool iconic = ::IsIconic(ghWnd);
