@@ -848,11 +848,12 @@ HRESULT CDragDrop::DropFromStream(IDataObject* pDataObject, BOOL abActive)
 
 					//continue; -- не нужно
 
-					if (pszNewFileName)
-					{
-						// Уже должен быть освобожден, но проверим
-						free(pszNewFileName); pszNewFileName = NULL;
-					}
+				}
+
+				if (pszNewFileName)
+				{
+					// Уже должен быть освобожден, но проверим
+					free(pszNewFileName); pszNewFileName = NULL;
 				}
 
 				// Ошибку показать один раз на дроп (чтобы не ругаться на КАЖДЫЙ бросаемый файл)
