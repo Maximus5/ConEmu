@@ -28,12 +28,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #define HIDE_USE_EXCEPTION_INFO
-#include <windows.h>
-#include <TlHelp32.h>
 #include "../common/common.hpp"
 #include "../common/CmdLine.h"
 #include "Execute.h"
 #include "WObjects.h"
+#include <TlHelp32.h>
 
 
 
