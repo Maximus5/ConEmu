@@ -427,7 +427,7 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 			#endif
 
 			// Уведомить ожидающую вкладку
-			CRealConsole* pRCon = gpConEmu->AttachRequestedGui(pIn->AttachGuiApp.nServerPID, pIn->AttachGuiApp.sAppFilePathName, pIn->AttachGuiApp.nPID);
+			CRealConsole* pRCon = CVConGroup::AttachRequestedGui(pIn->AttachGuiApp.nServerPID, pIn->AttachGuiApp.sAppFilePathName, pIn->AttachGuiApp.nPID);
 			if (pRCon)
 			{
 				CVConGuard VCon(pRCon->VCon());

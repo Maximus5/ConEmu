@@ -3546,18 +3546,46 @@ BOOL CVConGroup::AttachRequested(HWND ahConWnd, const CESERVER_REQ_STARTSTOP* pS
 
 CRealConsole* CVConGroup::AttachRequestedGui(DWORD anServerPID, LPCWSTR asAppFileName, DWORD anAppPID)
 {
-	CRealConsole* pRCon;
+	_ASSERTE(anServerPID!=0);
+	CRealConsole* pRCon = NULL;
+	CVConGuard VCon;
 
-	for (size_t i = 0; i < countof(gp_VCon); i++)
+	// Logging
+	wchar_t szLogInfo[MAX_PATH];
+	if (gpSetCls->isAdvLogging!=0)
 	{
-		if (gp_VCon[i] && (pRCon = gp_VCon[i]->RCon()) != NULL)
+		_wsprintf(szLogInfo, SKIPLEN(countof(szLogInfo)) L"AttachRequestedGui. SrvPID=%u. AppPID=%u, FileName=", anServerPID, anAppPID);
+		lstrcpyn(szLogInfo+_tcslen(szLogInfo), asAppFileName ? asAppFileName : L"<NULL>", 128);
+		LogString(szLogInfo);
+	}
+
+	{
+		for (size_t i = 0; i < countof(gp_VCon); i++)
 		{
-			if (pRCon->GuiAppAttachAllowed(anServerPID, asAppFileName, anAppPID))
-				return pRCon;
+			if (VCon.Attach(gp_VCon[i]))
+			{
+				if (VCon->RCon()->GuiAppAttachAllowed(anServerPID, asAppFileName, anAppPID))
+				{
+					pRCon = VCon->RCon();
+					break;
+				}
+			}
 		}
 	}
 
-	return NULL;
+	// Logging
+	if (gpSetCls->isAdvLogging!=0)
+	{
+		wchar_t szRc[64];
+		if (pRCon)
+			_wsprintf(szRc, SKIPLEN(countof(szRc)) L"Succeeded. ServerPID=%u", pRCon->GetServerPID());
+		else
+			wcscpy_c(szRc, L"Rejected");
+		_wsprintf(szLogInfo, SKIPLEN(countof(szLogInfo)) L"AttachRequestedGui. SrvPID=%u. AppPID=%u. %s", anServerPID, anAppPID, szRc);
+		LogString(szLogInfo);
+	}
+
+	return pRCon;
 }
 
 bool CVConGroup::GetVConBySrvPID(DWORD anServerPID, CVConGuard* pVCon)

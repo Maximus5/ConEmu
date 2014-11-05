@@ -589,7 +589,6 @@ class CConEmuMain
 		void AskChangeBufferHeight();
 		void AskChangeAlternative();
 		void AttachToDialog();
-		CRealConsole* AttachRequestedGui(DWORD anServerPID, LPCWSTR asAppFileName, DWORD anAppPID);
 		void CheckFocus(LPCWSTR asFrom);
 		bool CheckRequiredFiles();
 		void CheckUpdates(BOOL abShowMessages);
