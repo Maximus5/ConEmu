@@ -468,6 +468,17 @@ void Settings::InitSettings()
 	ConsoleFont.lfWidth = 3;
 	wcscpy_c(ConsoleFont.lfFaceName, gsDefConFont);
 
+	const COLORREF* pcrColors;
+	const COLORREF* pcrStd = DefColors[0].dwDefColors;
+	if ((pcrColors = GetDefColors(L"<Solarized>")) != NULL)
+	{
+		for (uint i = 0x10; i--;)
+		{
+			Colors[i] = pcrColors[i]; // Solarized color palette
+			Colors[i+0x10] = pcrStd[i]; // Windows standard colors
+		}
+	}
+	else
 	{
 		SettingsRegistry RegConColors, RegConDef;
 
