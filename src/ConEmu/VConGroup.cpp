@@ -321,6 +321,8 @@ CVirtualConsole* CVConGroup::CreateVCon(RConStartArgs *args, CVirtualConsole*& p
 		return NULL;
 	}
 
+	setActiveVConAndFlags(gp_VActive);
+
 	pGroup->GetRootGroup()->InvalidateAll();
 
 	return pVCon;
