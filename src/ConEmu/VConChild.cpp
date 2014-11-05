@@ -295,6 +295,7 @@ BOOL CConEmuChild::ShowView(int nShowCmd)
 
 	HWND hChildGUI = pVCon->GuiWnd();
 	BOOL bGuiVisible = (hChildGUI && nShowCmd) ? pVCon->RCon()->isGuiVisible() : FALSE;
+	DWORD nDcShowCmd = nShowCmd;
 
 
 	if (gpSetCls->isAdvLogging)
@@ -309,10 +310,13 @@ BOOL CConEmuChild::ShowView(int nShowCmd)
 	}
 
 
-	if ((GetCurrentThreadId() != nTID) || (hChildGUI != NULL))
+	if (hChildGUI || (GetCurrentThreadId() != nTID))
 	{
+		// Только Async, иначе можно получить dead-lock
 		bRc = ShowWindowAsync(mh_WndBack, nShowCmd);
-		bRc = ShowWindowAsync(mh_WndDC, bGuiVisible ? SW_HIDE : nShowCmd);
+		if (bGuiVisible && !mp_VCon->RCon()->isGuiForceConView())
+			nDcShowCmd = SW_HIDE;
+		bRc = ShowWindowAsync(mh_WndDC, nDcShowCmd);
 	}
 	else
 	{
@@ -396,13 +400,19 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 	{
 		case WM_SHOWWINDOW:
 			{
-				#ifdef _DEBUG
+				// Из-за многопоточности может случиться так,
+				// что m_ChildGui.hGuiWnd инициализируется после
+				// того, как был вызван ShowView, но до того
+				// как было получено WM_SHOWWINDOW
 				HWND hGui = pVCon->GuiWnd();
 				if (hGui)
 				{
-					_ASSERTE(((wParam==0) || pVCon->RCon()->isGuiForceConView()) && "Show DC while GuiWnd exists");
+					//_ASSERTE(((wParam==0) || pVCon->RCon()->isGuiForceConView()) && "Show DC while GuiWnd exists");
+					if (wParam && !pVCon->RCon()->isGuiForceConView())
+					{
+						wParam = SW_HIDE;
+					}
 				}
-				#endif
 				result = DefWindowProc(hWnd, messg, wParam, lParam);
 				break;
 			}
