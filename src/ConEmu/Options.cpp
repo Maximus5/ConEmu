@@ -698,9 +698,9 @@ void Settings::InitSettings()
 	isStatusBarFlags = csf_HorzDelim;
 	#if 1
 	// Use solarized palette by default
-	nStatusBarBack = RGB(7,54,66);
-	nStatusBarLight = RGB(253,246,227);
-	nStatusBarDark = RGB(147,161,161);
+	nStatusBarBack = RGB(7,54,66); // 101 123 131
+	nStatusBarLight = RGB(253,246,227); // 253 246 227
+	nStatusBarDark = RGB(147,161,161); // 147 161 161
 	#else
 	// Old palette
 	nStatusBarBack = RGB(64,64,64);
