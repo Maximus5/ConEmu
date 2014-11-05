@@ -496,17 +496,17 @@ void Settings::InitSettings()
 
 				if (!RegConColors.Load(ColorName, (LPBYTE)&(Colors[i]), sizeof(Colors[0])))
 					if (!RegConDef.Load(ColorName, (LPBYTE)&(Colors[i]), sizeof(Colors[0])))
-						Colors[i] = DefColors[0].dwDefColors[i]; //-V108
+						Colors[i] = pcrStd[i]; //-V108
 
 				if (Colors[i] == 0)
 				{
 					if (!lbBlackFound)
 						lbBlackFound = true;
 					else if (lbBlackFound)
-						Colors[i] = DefColors[0].dwDefColors[i]; //-V108
+						Colors[i] = pcrStd[i]; //-V108
 				}
 
-				Colors[i+0x10] = Colors[i]; // Умолчания
+				Colors[i+0x10] = pcrStd[i]; // Умолчания
 			}
 
 			RegConDef.CloseKey();
