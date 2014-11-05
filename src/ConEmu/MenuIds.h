@@ -55,8 +55,8 @@
 #define IDM_TERMINATEPRC 0xABD4 // Terminate -> Kill &active process
 #define IDM_TERMINATECON 0xABD5 // Terminate -> Close active &console
 #define IDM_ADMIN_DUPLICATE 0xABD6
-#define IDM_SAVE 0xABD7
-#define IDM_SAVEALL 0xABD8
+//#define IDM_SAVE 0xABD7
+//#define IDM_SAVEALL 0xABD8
 #define IDM_DETACH 0xABD9
 #define IDM_ATTACHTO 0xABDA
 #define IDM_RENAMETAB 0xABDB

@@ -927,12 +927,12 @@ void CConEmuMenu::ExecPopupMenuCmd(TrackMenuPlace place, CVirtualConsole* apVCon
 			OnSysCommand(ghWnd, IDM_ATTACHTO, 0);
 			break;
 
-		case IDM_SAVE:
-			apVCon->RCon()->PostMacro(L"F2");
-			break;
-		case IDM_SAVEALL:
-			apVCon->RCon()->PostMacro(gpSet->sSaveAllMacro);
-			break;
+		//case IDM_SAVE:
+		//	apVCon->RCon()->PostMacro(L"F2");
+		//	break;
+		//case IDM_SAVEALL:
+		//	apVCon->RCon()->PostMacro(gpSet->sSaveAllMacro);
+		//	break;
 
 		default:
 			if ((place == tmp_VCon) && (nCmd >= ID_CON_SETPALETTE_FIRST) && (nCmd <= ID_CON_SETPALETTE_LAST))
@@ -1843,19 +1843,19 @@ HMENU CConEmuMenu::CreateVConPopupMenu(CVirtualConsole* apVCon, HMENU ahExist, B
 
 	if (apVCon)
 	{
-		bool lbIsFar = apVCon->RCon()->isFar(TRUE/* abPluginRequired */)!=FALSE;
-		#ifdef _DEBUG
-		bool lbIsPanels = lbIsFar && apVCon->RCon()->isFilePanel(false/* abPluginAllowed */)!=FALSE;
-		#endif
-		bool lbIsEditorModified = lbIsFar && apVCon->RCon()->isEditorModified()!=FALSE;
-		bool lbHaveModified = lbIsFar && apVCon->RCon()->GetModifiedEditors()!=0;
+		//bool lbIsFar = apVCon->RCon()->isFar(TRUE/* abPluginRequired */)!=FALSE;
+		//#ifdef _DEBUG
+		//bool lbIsPanels = lbIsFar && apVCon->RCon()->isFilePanel(false/* abPluginAllowed */)!=FALSE;
+		//#endif
+		//bool lbIsEditorModified = lbIsFar && apVCon->RCon()->isEditorModified()!=FALSE;
+		//bool lbHaveModified = lbIsFar && apVCon->RCon()->GetModifiedEditors()!=0;
 		bool lbCanCloseTab = apVCon->RCon()->CanCloseTab();
 
-		if (lbHaveModified)
-		{
-			if (!gpSet->sSaveAllMacro || !*gpSet->sSaveAllMacro)
-				lbHaveModified = false;
-		}
+		//if (lbHaveModified)
+		//{
+		//	if (!gpSet->sSaveAllMacro || !*gpSet->sSaveAllMacro)
+		//		lbHaveModified = false;
+		//}
 
 		EnableMenuItem(hMenu,      IDM_CLOSE,             MF_BYCOMMAND|(lbCanCloseTab ? MF_ENABLED : MF_GRAYED));
 		EnableMenuItem(hMenu,      IDM_DETACH,            MF_BYCOMMAND|MF_ENABLED);
@@ -1870,8 +1870,8 @@ HMENU CConEmuMenu::CreateVConPopupMenu(CVirtualConsole* apVCon, HMENU ahExist, B
 		EnableMenuItem(hMenu,      IDM_RESTART,           MF_BYCOMMAND|MF_ENABLED);
 		EnableMenuItem(hMenu,      IDM_RESTARTAS,         MF_BYCOMMAND|MF_ENABLED);
 		//EnableMenuItem(hMenu,    IDM_ADMIN_DUPLICATE,   MF_BYCOMMAND|(lbIsPanels ? MF_ENABLED : MF_GRAYED));
-		EnableMenuItem(hMenu,      IDM_SAVE,              MF_BYCOMMAND|(lbIsEditorModified ? MF_ENABLED : MF_GRAYED));
-		EnableMenuItem(hMenu,      IDM_SAVEALL,           MF_BYCOMMAND|(lbHaveModified ? MF_ENABLED : MF_GRAYED));
+		//EnableMenuItem(hMenu,      IDM_SAVE,              MF_BYCOMMAND|(lbIsEditorModified ? MF_ENABLED : MF_GRAYED));
+		//EnableMenuItem(hMenu,      IDM_SAVEALL,           MF_BYCOMMAND|(lbHaveModified ? MF_ENABLED : MF_GRAYED));
 	}
 	else
 	{
@@ -1887,8 +1887,8 @@ HMENU CConEmuMenu::CreateVConPopupMenu(CVirtualConsole* apVCon, HMENU ahExist, B
 		EnableMenuItem(hMenu,      IDM_RESTARTDLG,        MF_BYCOMMAND|MF_GRAYED);
 		EnableMenuItem(hMenu,      IDM_RESTART,           MF_BYCOMMAND|MF_GRAYED);
 		EnableMenuItem(hMenu,      IDM_RESTARTAS,         MF_BYCOMMAND|MF_GRAYED);
-		EnableMenuItem(hMenu,      IDM_SAVE,              MF_BYCOMMAND|MF_GRAYED);
-		EnableMenuItem(hMenu,      IDM_SAVEALL,           MF_BYCOMMAND|MF_GRAYED);
+		//EnableMenuItem(hMenu,      IDM_SAVE,              MF_BYCOMMAND|MF_GRAYED);
+		//EnableMenuItem(hMenu,      IDM_SAVEALL,           MF_BYCOMMAND|MF_GRAYED);
 	}
 
 	return hMenu;
