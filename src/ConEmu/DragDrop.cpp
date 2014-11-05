@@ -162,6 +162,35 @@ CDragDrop::~CDragDrop()
 	SafeDelete(mp_CrThreads);
 }
 
+DWORD CDragDrop::DragStart(IDropSource *pDropSource, const DWORD dwAllowedEffects, DWORD& dwEffect)
+{
+	DWORD dwResult = E_UNEXPECTED;
+	wchar_t szStep[255]; _wsprintf(szStep, SKIPLEN(countof(szStep)) L"DoDragDrop(Eff=0x%X, DataObject=0x%08X, DropSource=0x%08X)", dwAllowedEffects, (DWORD)mp_DataObject, (DWORD)pDropSource); //-V205
+	DebugLog(szStep);
+	SAFETRY
+	{
+		dwResult = DoDragDrop(mp_DataObject, pDropSource, dwAllowedEffects, &dwEffect);
+	}
+	SAFECATCH
+	{
+		dwResult = DRAGDROP_S_CANCEL;
+		MBoxA(L"Exception in DoDragDrop\nConEmu restart is recommended");
+	}
+	_wsprintf(szStep, SKIPLEN(countof(szStep)) L"DoDragDrop finished, Code=0x%08X", dwResult);
+
+	switch(dwResult)
+	{
+		case S_OK: wcscat_c(szStep, L" (S_OK)"); break;
+		case DRAGDROP_S_DROP: wcscat_c(szStep, L" (DRAGDROP_S_DROP)"); break;
+		case DRAGDROP_S_CANCEL: wcscat_c(szStep, L" (DRAGDROP_S_CANCEL)"); break;
+			//case E_UNSPEC: lstrcat(szStep, L" (E_UNSPEC)"); break;
+	}
+
+	DebugLog(szStep, (dwResult!=S_OK && dwResult!=DRAGDROP_S_CANCEL && dwResult!=DRAGDROP_S_DROP));
+
+	return dwResult;
+}
+
 void CDragDrop::Drag(BOOL abClickNeed, COORD crMouseDC)
 {
 	DWORD dwAllowedEffects = 0, dwResult = 0, dwEffect = 0;;
@@ -214,28 +243,7 @@ void CDragDrop::Drag(BOOL abClickNeed, COORD crMouseDC)
 			else
 			{
 #endif
-				wchar_t szStep[255]; _wsprintf(szStep, SKIPLEN(countof(szStep)) L"DoDragDrop(Eff=0x%X, DataObject=0x%08X, DropSource=0x%08X)", dwAllowedEffects, (DWORD)mp_DataObject, (DWORD)pDropSource); //-V205
-				DebugLog(szStep);
-				SAFETRY
-				{
-					dwResult = DoDragDrop(mp_DataObject, pDropSource, dwAllowedEffects, &dwEffect);
-				}
-				SAFECATCH
-				{
-					dwResult = DRAGDROP_S_CANCEL;
-					MBoxA(L"Exception in DoDragDrop\nConEmu restart is recommended");
-				}
-				_wsprintf(szStep, SKIPLEN(countof(szStep)) L"DoDragDrop finished, Code=0x%08X", dwResult);
-
-				switch(dwResult)
-				{
-					case S_OK: wcscat_c(szStep, L" (S_OK)"); break;
-					case DRAGDROP_S_DROP: wcscat_c(szStep, L" (DRAGDROP_S_DROP)"); break;
-					case DRAGDROP_S_CANCEL: wcscat_c(szStep, L" (DRAGDROP_S_CANCEL)"); break;
-						//case E_UNSPEC: lstrcat(szStep, L" (E_UNSPEC)"); break;
-				}
-
-				DebugLog(szStep, (dwResult!=S_OK && dwResult!=DRAGDROP_S_CANCEL && dwResult!=DRAGDROP_S_DROP));
+				dwResult = DragStart(pDropSource, dwAllowedEffects, dwEffect);
 #ifdef UNLOCKED_DRAG
 			}
 		}

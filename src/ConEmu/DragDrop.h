@@ -59,6 +59,7 @@ class CDragDrop :
 		//BOOL IsDragStarting() {return FALSE;};
 		//BOOL ForwardMessage(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam) { return FALSE;};
 	protected:
+		DWORD DragStart(IDropSource *pDropSource, const DWORD dwAllowedEffects, DWORD& dwEffect);
 		HRESULT DragOverInt(DWORD grfKeyState, POINTL pt, DWORD * pdwEffect);
 		//BOOL mb_DragDropRegistered;
 		//void RetrieveDragToInfo();
