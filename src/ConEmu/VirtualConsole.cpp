@@ -566,14 +566,18 @@ bool CVirtualConsole::isActive(bool abAllowGroup)
 	if (!this)
 		return false;
 	VConFlags test = abAllowGroup ? vf_Visible : vf_Active;
-	return ((mn_Flags & test) == test);
+	if (!(mn_Flags & test))
+		return false;
+	return true;
 }
 
 bool CVirtualConsole::isVisible()
 {
 	if (!this)
 		return false;
-	return ((mn_Flags & vf_Visible) == vf_Visible);
+	if (!(mn_Flags & vf_Visible))
+		return false;
+	return true;
 }
 
 void CVirtualConsole::PointersInit()
