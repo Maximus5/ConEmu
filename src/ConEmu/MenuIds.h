@@ -68,7 +68,8 @@
 #define IDM_TERMINATEALLCON 0xABE1 // Terminate -> Close all consoles
 #define IDM_TERMINATECONEXPT 0xABE2 // Terminate -> Close except active
 #define IDM_TERMINATEZOMBIES 0xABE3 // Terminate -> Close all zombies
-#define IDM_VCONCMD_LAST IDM_TERMINATEZOMBIES
+#define IDM_UNFASTEN 0xABE4
+#define IDM_VCONCMD_LAST IDM_UNFASTEN
 
 // Consoles // DWORD MAKELONG(WORD wLow,WORD wHigh);
 #define IDM_VCON_FIRST MAKELONG(1,1)                   // 0x00010001

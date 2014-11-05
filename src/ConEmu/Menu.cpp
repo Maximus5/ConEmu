@@ -1793,6 +1793,9 @@ HMENU CConEmuMenu::CreateVConPopupMenu(CVirtualConsole* apVCon, HMENU ahExist, B
 		AppendMenu(hTerminate, MF_STRING|MF_ENABLED, IDM_TERMINATECONEXPT, MenuAccel(vkCloseExceptCon,L"Close e&xcept active"));
 		AppendMenu(hTerminate, MF_SEPARATOR, 0, L"");
 		AppendMenu(hTerminate, MF_STRING|MF_ENABLED, IDM_DETACH,           L"Detach");
+		#ifdef _DEBUG // Not yet implemented
+		AppendMenu(hTerminate, MF_STRING|MF_ENABLED, IDM_UNFASTEN,         L"Unfasten");
+		#endif
 	}
 
 	HMENU& hRestart = mh_RestartPopup;
