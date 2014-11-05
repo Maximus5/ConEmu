@@ -294,6 +294,9 @@
     <ClCompile Include="SetColorPalette.cpp">
       <Filter>0 - Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="HooksUnlocker.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Attach.h">
@@ -649,6 +652,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="SetTypes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="HooksUnlocker.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
