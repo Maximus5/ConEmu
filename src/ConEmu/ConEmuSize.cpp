@@ -2263,7 +2263,7 @@ LRESULT CConEmuSize::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 	// -- // Если у нас режим скрытия заголовка (при максимизации/фулскрине)
 	// При любой смене. Т.к. мы меняем WM_GETMINMAXINFO - нужно корректировать и размеры :(
 	// Иначе возможны глюки
-	if (!(p->flags & (SWP_NOSIZE|SWP_NOMOVE)) && !InMinimizing())
+	if (!(p->flags & (SWP_NOSIZE|SWP_NOMOVE)) && !InMinimizing(p))
 	{
 		if (gpSet->isQuakeStyle)
 		{
@@ -2466,10 +2466,7 @@ bool CConEmuSize::CheckDpiOnMoving(WINDOWPOS *p)
 		return false;
 
 	// Currently minimizing?
-	if (InMinimizing())
-		return false;
-	// Last chance to check
-	if ((p->x <= -32000) || (p->y <= -32000))
+	if (InMinimizing(p))
 		return false;
 
 	// Lets go
@@ -2477,6 +2474,10 @@ bool CConEmuSize::CheckDpiOnMoving(WINDOWPOS *p)
 	HMONITOR hMon = NULL;
 	DpiValue dpi;
 	RECT rcNew = {p->x, p->y, p->x + p->cx, p->y + p->cy};
+
+	#ifdef _DEBUG
+	BOOL bVis = IsWindowVisible(ghWnd);
+	#endif
 
 	// If monitor jump was triggered by OS but not ConEmu internals
 	// Per-monitor dpi? And moved to another monitor?
@@ -5017,12 +5018,25 @@ void CConEmuSize::StopForceShowFrame()
 	//UpdateWindowRgn();
 }
 
-bool CConEmuSize::InMinimizing()
+bool CConEmuSize::InMinimizing(WINDOWPOS *p /*= NULL*/)
 {
 	if (mb_InShowMinimized)
 		return true;
 	if (mp_ConEmu->mp_Menu && mp_ConEmu->mp_Menu->GetInScMinimize())
 		return true;
+
+	// Last chance to check (come from OnWindowPosChanging)
+	if (p && ((p->x <= -32000) || (p->y <= -32000)))
+		return true;
+
+	#ifdef _DEBUG
+	RECT rc = {}; GetWindowRect(ghWnd, &rc);
+	if (rc.left <= -32000 || rc.top <= -32000)
+	{
+		_ASSERTE((rc.left > -32000 && rc.top > -32000) || (p && (p->x > -32000 && p->y > -32000)));
+	}
+	#endif
+
 	return false;
 }
 

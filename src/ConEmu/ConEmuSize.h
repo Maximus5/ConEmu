@@ -212,7 +212,7 @@ public:
 	void ResetSizingFlags(DWORD nDropFlags = MOUSE_SIZING_BEGIN|MOUSE_SIZING_TODO);
 	void EndSizing(UINT nMouseMsg = 0);
 
-	bool InMinimizing();
+	bool InMinimizing(WINDOWPOS *p = NULL);
 
 	HRGN CreateWindowRgn(bool abTestOnly = false);
 	HRGN CreateWindowRgn(bool abTestOnly, bool abRoundTitle, int anX, int anY, int anWndWidth, int anWndHeight);
