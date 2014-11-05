@@ -55,7 +55,7 @@ public:
 	HMENU CreateViewMenuPopup(CVirtualConsole* apVCon, HMENU ahExist = NULL);
 	HMENU CreateHelpMenuPopup();
 	HMENU CreateVConListPopupMenu(HMENU ahExist, BOOL abFirstTabOnly);
-	HMENU CreateVConPopupMenu(CVirtualConsole* apVCon, HMENU ahExist, BOOL abAddNew, HMENU& hTerminate);
+	HMENU CreateVConPopupMenu(CVirtualConsole* apVCon, HMENU ahExist, BOOL abAddNew);
 
 	int trackPopupMenu(TrackMenuPlace place, HMENU hMenu, UINT uFlags, int x, int y, HWND hWnd, RECT *prcRect = NULL);
 
@@ -136,6 +136,7 @@ private:
 	// А это из VirtualConsole
 	HMENU mh_PopupMenu;
 	HMENU mh_TerminatePopup;
+	HMENU mh_RestartPopup;
 	HMENU mh_VConDebugPopup;
 	HMENU mh_VConEditPopup;
 	HMENU mh_VConViewPopup;

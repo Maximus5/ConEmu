@@ -85,6 +85,7 @@ CConEmuMenu::CConEmuMenu()
 		// А это для VirtualConsole
 		&mh_PopupMenu,
 		&mh_TerminatePopup,
+		&mh_RestartPopup,
 		&mh_VConDebugPopup,
 		&mh_VConEditPopup,
 		&mh_VConViewPopup,
@@ -814,7 +815,7 @@ void CConEmuMenu::ShowPopupMenu(CVirtualConsole* apVCon, POINT ptCur, DWORD Alig
 		Align = TPM_LEFTALIGN;
 
 	// Создать или обновить enable/disable
-	mh_PopupMenu = CreateVConPopupMenu(apVCon, mh_PopupMenu, TRUE, mh_TerminatePopup);
+	mh_PopupMenu = CreateVConPopupMenu(apVCon, mh_PopupMenu, TRUE);
 	if (!mh_PopupMenu)
 	{
 		MBoxAssert(mh_PopupMenu!=NULL);
@@ -1049,7 +1050,7 @@ void CConEmuMenu::UpdateSysMenu(HMENU hSysMenu)
 
 		if (mh_ActiveVConPopup) DestroyMenu(mh_ActiveVConPopup);
 		if (mh_TerminateVConPopup) { DestroyMenu(mh_TerminateVConPopup); mh_TerminateVConPopup = NULL; }
-		mh_ActiveVConPopup = CreateVConPopupMenu(NULL, NULL, FALSE, mh_TerminateVConPopup);
+		mh_ActiveVConPopup = CreateVConPopupMenu(NULL, NULL, FALSE);
 		InsertMenu(hSysMenu, 0, MF_BYPOSITION|MF_POPUP|MF_ENABLED, (UINT_PTR)mh_ActiveVConPopup, _T("Acti&ve console"));
 
 		// --------------------
@@ -1236,7 +1237,7 @@ LRESULT CConEmuMenu::OnInitMenuPopup(HWND hWnd, HMENU hMenu, LPARAM lParam)
 
 			if (mh_ActiveVConPopup)
 			{
-				CreateVConPopupMenu(NULL, mh_ActiveVConPopup, FALSE, mh_TerminateVConPopup);
+				CreateVConPopupMenu(NULL, mh_ActiveVConPopup, FALSE);
 			}
 			else
 			{
@@ -1767,7 +1768,7 @@ HMENU CConEmuMenu::CreateVConListPopupMenu(HMENU ahExist, BOOL abFirstTabOnly)
 	return h;
 }
 
-HMENU CConEmuMenu::CreateVConPopupMenu(CVirtualConsole* apVCon, HMENU ahExist, BOOL abAddNew, HMENU& hTerminate)
+HMENU CConEmuMenu::CreateVConPopupMenu(CVirtualConsole* apVCon, HMENU ahExist, BOOL abAddNew)
 {
 	//BOOL lbEnabled = TRUE;
 	HMENU hMenu = ahExist;
@@ -1776,34 +1777,11 @@ HMENU CConEmuMenu::CreateVConPopupMenu(CVirtualConsole* apVCon, HMENU ahExist, B
 	if (!apVCon && (CVConGroup::GetActiveVCon(&VCon) >= 0))
 		apVCon = VCon.VCon();
 
+	HMENU& hTerminate = mh_TerminatePopup;
 	if (!hTerminate)
-		hTerminate = CreatePopupMenu();
-
-	#define szRootCloseName MenuAccel(vkCloseTab,gpSet->isOneTabPerGroup ? L"&Close tab or group" : L"&Close tab")
-
-	if (!hMenu)
 	{
-		hMenu = CreatePopupMenu();
-
-		/*
-		MENUITEM "&Close",                      IDM_CLOSE
-		MENUITEM "Detach",                      IDM_DETACH
-		MENUITEM "&Terminate",                  IDM_TERMINATE
-		MENUITEM SEPARATOR
-		MENUITEM "&Restart",                    IDM_RESTART
-		MENUITEM "Restart as...",               IDM_RESTARTAS
-		MENUITEM SEPARATOR
-		MENUITEM "New console...",              IDM_NEW
-		MENUITEM SEPARATOR
-		MENUITEM "&Save",                       IDM_SAVE
-		MENUITEM "Save &all",                   IDM_SAVEALL
-		*/
-
-		AppendMenu(hMenu,      MF_STRING|MF_ENABLED, IDM_CLOSE,            szRootCloseName);
-		AppendMenu(hMenu,      MF_STRING|MF_ENABLED, IDM_DETACH,           L"Detach");
-		AppendMenu(hMenu,      MF_STRING|MF_ENABLED, IDM_DUPLICATE,        MenuAccel(vkDuplicateRoot,L"Duplica&te root..."));
-		//AppendMenu(hMenu,    MF_STRING|MF_ENABLED, IDM_ADMIN_DUPLICATE,  MenuAccel(vkDuplicateRootAs,L"Duplica&te as Admin..."));
-		AppendMenu(hMenu,      MF_STRING|MF_ENABLED, IDM_RENAMETAB,        MenuAccel(vkRenameTab,L"Rena&me tab..."));
+		// "Close or &kill"
+		hTerminate = CreatePopupMenu();
 		AppendMenu(hTerminate, MF_STRING|MF_ENABLED, IDM_TERMINATECON,     MenuAccel(vkMultiClose,L"Close active &console"));
 		AppendMenu(hTerminate, MF_STRING|MF_ENABLED, IDM_TERMINATEPRC,     MenuAccel(vkTerminateApp,L"Kill &active process"));
 		AppendMenu(hTerminate, MF_SEPARATOR, 0, L"");
@@ -1813,18 +1791,40 @@ HMENU CConEmuMenu::CreateVConPopupMenu(CVirtualConsole* apVCon, HMENU ahExist, B
 		AppendMenu(hTerminate, MF_STRING|MF_ENABLED, IDM_TERMINATEALLCON,  MenuAccel(vkCloseAllCon,L"Close &all consoles"));
 		AppendMenu(hTerminate, MF_STRING|MF_ENABLED, IDM_TERMINATEZOMBIES, MenuAccel(vkCloseZombies,L"Close all &zombies"));
 		AppendMenu(hTerminate, MF_STRING|MF_ENABLED, IDM_TERMINATECONEXPT, MenuAccel(vkCloseExceptCon,L"Close e&xcept active"));
+		AppendMenu(hTerminate, MF_SEPARATOR, 0, L"");
+		AppendMenu(hTerminate, MF_STRING|MF_ENABLED, IDM_DETACH,           L"Detach");
+	}
+
+	HMENU& hRestart = mh_RestartPopup;
+	if (!hRestart)
+	{
+		// "&Restart or duplicate"
+		hRestart = CreatePopupMenu();
+		AppendMenu(hRestart, MF_STRING|MF_ENABLED, IDM_DUPLICATE,        MenuAccel(vkDuplicateRoot,L"Duplica&te root..."));
+		AppendMenu(hRestart, MF_SEPARATOR, 0, L"");
+		//AppendMenu(hMenu,  MF_STRING|MF_ENABLED, IDM_ADMIN_DUPLICATE,  MenuAccel(vkDuplicateRootAs,L"Duplica&te as Admin..."));
+		AppendMenu(hRestart, MF_STRING|MF_ENABLED, IDM_RESTARTDLG,       MenuAccel(vkMultiRecreate,L"&Restart..."));
+		AppendMenu(hRestart, MF_STRING|MF_ENABLED, IDM_RESTART,          L"&Restart");
+		AppendMenu(hRestart, MF_STRING|MF_ENABLED, IDM_RESTARTAS,        L"Restart as Admin");
+	}
+
+	#define szRootCloseName MenuAccel(vkCloseTab,gpSet->isOneTabPerGroup ? L"&Close tab or group" : L"&Close tab")
+
+	if (!hMenu)
+	{
+		hMenu = CreatePopupMenu();
+
+		AppendMenu(hMenu,      MF_STRING|MF_ENABLED, IDM_CLOSE,            szRootCloseName);
+		AppendMenu(hMenu,      MF_STRING|MF_ENABLED, IDM_RENAMETAB,        MenuAccel(vkRenameTab,L"Rena&me tab..."));
+		AppendMenu(hMenu,      MF_POPUP|MF_ENABLED, (UINT_PTR)hRestart,    L"&Restart or duplicate");
 		AppendMenu(hMenu,      MF_POPUP|MF_ENABLED, (UINT_PTR)hTerminate,  L"Close or &kill");
 		AppendMenu(hMenu,      MF_STRING|((apVCon && apVCon->GuiWnd())?MF_ENABLED:0),
 		                                             IDM_CHILDSYSMENU,     MenuAccel(vkChildSystemMenu,L"Child system menu..."));
-		AppendMenu(hMenu,      MF_SEPARATOR, 0, L"");
-		AppendMenu(hMenu,      MF_STRING|MF_ENABLED, IDM_RESTARTDLG,       MenuAccel(vkMultiRecreate,L"&Restart..."));
-		AppendMenu(hMenu,      MF_STRING|MF_ENABLED, IDM_RESTART,          L"&Restart");
-		AppendMenu(hMenu,      MF_STRING|MF_ENABLED, IDM_RESTARTAS,        L"Restart as Admin");
 		if (abAddNew)
 		{
-			AppendMenu(hMenu, MF_SEPARATOR, 0, L"");
-			AppendMenu(hMenu, MF_STRING|MF_ENABLED, ID_NEWCONSOLE, MenuAccel(vkMultiNew,L"New console..."));
-			AppendMenu(hMenu, MF_STRING|MF_ENABLED, IDM_ATTACHTO,  MenuAccel(vkMultiNewAttach,L"Attach to..."));
+			AppendMenu(hMenu,  MF_SEPARATOR, 0, L"");
+			AppendMenu(hMenu,  MF_STRING|MF_ENABLED, ID_NEWCONSOLE,        MenuAccel(vkMultiNew,L"New console..."));
+			AppendMenu(hMenu,  MF_STRING|MF_ENABLED, IDM_ATTACHTO,         MenuAccel(vkMultiNewAttach,L"Attach to..."));
 		}
 		#if 0
 		// Смысл выносить избранный макро заточенный только под редактор Far?
