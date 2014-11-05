@@ -80,7 +80,7 @@ DWORD WINAPI MyAssertThread(LPVOID p)
 	if (ghInMyAssertTrap)
 		ResetEvent(ghInMyAssertTrap);
 	InterlockedIncrement(&gnInMyAssertTrap);
-	
+
 	DWORD nRc = 
 		#ifdef CONEMU_MINIMAL
 			GuiMessageBox(ghConEmuWnd, pa->szDebugInfo, pa->szTitle, MB_SETFOREGROUND|MB_SYSTEMMODAL|MB_RETRYCANCEL);
