@@ -257,11 +257,6 @@ const CONEMUDEFCOLORS DefColors[] =
 		},
 	},
 };
-//const DWORD *dwDefColors = DefColors[0].dwDefColors;
-//DWORD gdwLastColors[0x10] = {0};
-//BOOL  gbLastColorsOk = FALSE;
-
-//#define MAX_COLOR_EDT_ID c31
 
 
 
