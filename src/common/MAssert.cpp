@@ -29,6 +29,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define HIDE_USE_EXCEPTION_INFO
 #include <windows.h>
 #include <tchar.h>
+#if defined(AssertHooksUnlocker)
+#include "../ConEmu/HooksUnlocker.h"
+#endif
 #include "defines.h"
 #include "MAssert.h"
 #include "MStrSafe.h"
@@ -156,11 +159,15 @@ void MyAssertDumpToFile(const wchar_t* pszFile, int nLine, const wchar_t* pszTes
 }
 int MyAssertProc(const wchar_t* pszFile, int nLine, const wchar_t* pszTest, bool abNoPipe)
 {
-#ifdef _DEBUG
+	#if defined(AssertHooksUnlocker)
+	AssertHooksUnlocker;
+	#endif
+
+	#ifdef _DEBUG
 	static bool lbSkip = false;
 	if (lbSkip)
 		return 1;
-#endif
+	#endif
 
 	MyAssertDumpToFile(pszFile, nLine, pszTest);
 

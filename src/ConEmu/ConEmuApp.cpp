@@ -55,6 +55,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "OptionsClass.h"
 #include "ConEmu.h"
 #include "DpiAware.h"
+#include "HooksUnlocker.h"
 #include "Inside.h"
 #include "TaskBar.h"
 #include "DwmHelper.h"
@@ -2218,6 +2219,8 @@ int MsgBox(LPCTSTR lpText, UINT uType, LPCTSTR lpCaption /*= NULL*/, HWND ahPare
 	HWND hParent = gbMessagingStarted
 		? ((ahParent == (HWND)-1) ? ghWnd :ahParent)
 		: NULL;
+
+	HooksUnlocker;
 
 	int nBtn = MessageBox(hParent, lpText ? lpText : L"<NULL>", lpCaption ? lpCaption : gpConEmu->GetLastTitle(), uType);
 
