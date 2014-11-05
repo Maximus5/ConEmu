@@ -639,8 +639,8 @@ void CreateDefaultTasks(bool bForceAdd /*= false*/)
 		{L"NYAOS (Admin)",       L"nyaos.exe",                         L" -new_console:a"},
 
 		// Windows internal
-		{L"cmd",                 L"cmd.exe",                           NULL},
-		{L"cmd (Admin)",         L"cmd.exe",                           L" -new_console:a"},
+		{L"cmd",                 L"cmd.exe",                           NULL, L"set PROMPT=$E[92m$P$E[90m$G$E[m$S & "},
+		{L"cmd (Admin)",         L"cmd.exe",                           L" -new_console:a", L"set PROMPT=$E[91m$P$E[90m$G$E[m$S & "},
 		{L"PowerShell",          L"powershell.exe",                    NULL},
 		{L"PowerShell (Admin)",  L"powershell.exe",                    L" -new_console:a"},
 
@@ -712,7 +712,7 @@ void CreateDefaultTasks(bool bForceAdd /*= false*/)
 	// For 64bit Windows create task with splitted cmd 64/32
 	if (IsWindows64())
 	{
-		gpSet->CmdTaskSet(iCreatIdx++, L"cmd 64/32", L"", L">\"%windir%\\system32\\cmd.exe\" /k ver & echo This is Native cmd.exe\r\n\r\n\"%windir%\\syswow64\\cmd.exe\" /k ver & echo This is 32 bit cmd.exe -new_console:s50V");
+		gpSet->CmdTaskSet(iCreatIdx++, L"cmd 64/32", L"", L"> set PROMPT=$E[92m$P$E[90m$G$E[m$S & \"%windir%\\system32\\cmd.exe\" /k ver & echo This is Native cmd.exe\r\n\r\nset PROMPT=$E[93m$P$E[90m$G$E[m$S & \"%windir%\\syswow64\\cmd.exe\" /k ver & echo This is 32 bit cmd.exe -new_console:s50V");
 	}
 
 	// IRSSI
