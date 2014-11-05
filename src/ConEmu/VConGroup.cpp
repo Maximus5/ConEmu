@@ -3559,6 +3559,9 @@ CRealConsole* CVConGroup::AttachRequestedGui(DWORD anServerPID, LPCWSTR asAppFil
 		LogString(szLogInfo);
 	}
 
+	// The loop
+	DWORD nStartTick = GetTickCount(), nDelta = 0;
+	while (!pRCon && (nDelta <= 2500))
 	{
 		for (size_t i = 0; i < countof(gp_VCon); i++)
 		{
@@ -3571,6 +3574,12 @@ CRealConsole* CVConGroup::AttachRequestedGui(DWORD anServerPID, LPCWSTR asAppFil
 				}
 			}
 		}
+
+		if (pRCon)
+			break;
+
+		Sleep(100);
+		nDelta = (GetTickCount() - nStartTick);
 	}
 
 	// Logging
