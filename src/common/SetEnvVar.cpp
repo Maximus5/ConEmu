@@ -32,6 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "common.hpp"
 #include "CmdLine.h"
 #include "MStrSafe.h"
+#include "WUser.h"
 #include "../ConEmu/version.h"
 
 void SetConEmuEnvHWND(LPCWSTR pszVarName, HWND hWnd)
@@ -87,4 +88,6 @@ void SetConEmuWorkEnvVar(HMODULE hConEmuCD)
 	msprintf(szDrive, countof(szDrive), L"%02u%02u%02u%s%s",
 		(MVV_1%100), MVV_2, MVV_3, szVer4[0]&&szVer4[1]?L"-":L"", szVer4);
 	SetEnvironmentVariable(ENV_CONEMU_BUILD_W, szDrive);
+
+	SetEnvironmentVariable(ENV_CONEMU_ISADMIN_W, IsUserAdmin() ? L"ADMIN" : NULL);
 }

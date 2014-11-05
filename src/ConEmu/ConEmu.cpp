@@ -630,11 +630,16 @@ CConEmuMain::CConEmuMain()
 	SetEnvironmentVariable(ENV_CONEMU_BLOCKCHILDDEBUGGERS_W, NULL);
 
 
+	// Чтобы знать, может мы уже запущены под UAC админом?
+	mb_IsUacAdmin = IsUserAdmin();
+
+
 	// Добавить в окружение переменную с папкой к ConEmu.exe
 	SetEnvironmentVariable(ENV_CONEMUDIR_VAR_W, ms_ConEmuExeDir);
 	SetEnvironmentVariable(ENV_CONEMUBASEDIR_VAR_W, ms_ConEmuBaseDir);
 	SetEnvironmentVariable(ENV_CONEMU_BUILD_W, ms_ConEmuBuild);
 	SetEnvironmentVariable(ENV_CONEMU_CONFIG_W, L"");
+	SetEnvironmentVariable(ENV_CONEMU_ISADMIN_W, mb_IsUacAdmin ? L"ADMIN" : NULL);
 	// переменная "ConEmuArgs" заполняется в ConEmuApp.cpp:PrepareCommandLine
 
 	wchar_t szDrive[MAX_PATH];
@@ -695,16 +700,6 @@ CConEmuMain::CConEmuMain()
 	ms_PortableTempDir[0] = 0;
 	mh_PortableMountRoot = mh_PortableRoot = NULL;
 	CheckPortableReg();
-
-
-	if (gOSVer.dwMajorVersion >= 6)
-	{
-		mb_IsUacAdmin = IsUserAdmin(); // Чтобы знать, может мы уже запущены под UAC админом?
-	}
-	else
-	{
-		mb_IsUacAdmin = FALSE;
-	}
 
 	//mh_Psapi = NULL;
 	//GetModuleFileNameEx = (FGetModuleFileNameEx)GetProcAddress(GetModuleHandle(L"Kernel32.dll"), "GetModuleFileNameExW");

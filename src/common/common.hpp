@@ -140,6 +140,8 @@ typedef struct _CONSOLE_SELECTION_INFO
 #define ENV_CONEMU_BUILD_W               _CRT_WIDE(ENV_CONEMU_BUILD_A)
 #define ENV_CONEMU_CONFIG_A            "ConEmuConfig"
 #define ENV_CONEMU_CONFIG_W              _CRT_WIDE(ENV_CONEMU_CONFIG_A)
+#define ENV_CONEMU_ISADMIN_A           "ConEmuIsAdmin"
+#define ENV_CONEMU_ISADMIN_W             _CRT_WIDE(ENV_CONEMU_ISADMIN_A)
 #define ENV_CONEMU_WAITKEY_A           "ConEmuWaitKey"
 #define ENV_CONEMU_WAITKEY_W             _CRT_WIDE(ENV_CONEMU_WAITKEY_A)
 #define ENV_CONEMUREPORTEXE_VAR_A      "ConEmuReportExe"
