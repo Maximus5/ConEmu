@@ -12,6 +12,14 @@ Votes and awards (vote for ConEmu, if you please)
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+2014.11.05
+[*] Some splits were not displayed on startup (d592a05 regression).
+[*] ConEmuEnvironment: set ConEmuIsAdmin=ADMIN for those tabs/splits which were started elevated (UAC).
+[*] Add colored prompt to default cmd's tasks.
+[*] TabMenu was reorganized. Some menu items were moved into submenus.
+[*] Internal. Try to wait a little if GUI was not in time with RCon server initialization.
+
+
 2014.11.04a
 [*] Issue 1792: RBTray caused console crop (ff25dbc regression).
 [*] Use <Solarized> palette by default.
