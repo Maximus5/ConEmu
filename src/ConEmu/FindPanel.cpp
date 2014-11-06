@@ -45,8 +45,6 @@ ATOM CFindPanel::mh_Class = NULL;
 #define FindPanelClass L"ConEmuFindPanel"
 #define SearchHint L"Search"
 #define SearchCtrlId 1
-#define SearchTopPad 1
-#define SearchBottomPad 4
 
 static MMap<HWND,CFindPanel*> g_FindMap;
 
@@ -81,7 +79,7 @@ int CFindPanel::GetMinWidth()
 		return 0;
 	RECT rcPane = {};
 	GetWindowRect(mh_Pane, &rcPane);
-	return max(80,5*(rcPane.bottom - rcPane.top));
+	return klMax(80,(int)(5*(rcPane.bottom - rcPane.top)));
 }
 
 void CFindPanel::ResetSearch()
@@ -113,14 +111,14 @@ HWND CFindPanel::CreatePane(HWND hParent, int nHeight)
 bool CFindPanel::OnCreateFinished()
 {
 	RECT rcClient = {};
-	GetClientRect(mh_Pane, &rcClient);
+	OnSize(&rcClient);
 
 	if (!mh_Edit)
 	{
 		mh_Edit = CreateWindowEx(WS_EX_CLIENTEDGE,
 			L"EDIT", L"",
 			WS_CHILD|WS_VISIBLE|WS_TABSTOP|ES_AUTOHSCROLL|ES_WANTRETURN,
-			0, SearchTopPad, rcClient.right, rcClient.bottom - SearchTopPad - SearchBottomPad,
+			rcClient.left, rcClient.top, rcClient.right-rcClient.left, rcClient.bottom-rcClient.top,
 			mh_Pane, (HMENU)SearchCtrlId, NULL, NULL);
 		if (!mh_Edit)
 		{
@@ -134,10 +132,6 @@ bool CFindPanel::OnCreateFinished()
 		mfn_EditProc = (WNDPROC)SetWindowLongPtr(mh_Edit, GWLP_WNDPROC, (LONG_PTR)EditCtrlProc);
 
 		EditIconHint_Set(mh_Pane, mh_Edit, true, SearchHint, false, UM_SEARCH, 0);
-	}
-	else
-	{
-		OnSize();
 	}
 
 	return true;
@@ -158,7 +152,7 @@ void CFindPanel::OnCreateFont()
 	lf.lfCharSet = gpSet->nTabFontCharSet;
 	lf.lfPitchAndFamily = DEFAULT_PITCH | FF_SWISS;
 	wcscpy_c(lf.lfFaceName, gpSet->sTabFontFace);
-	lf.lfHeight = -max(6,rcEdit.bottom - gpSetCls->EvalSize(3, esf_Vertical|esf_CanUseDpi));
+	lf.lfHeight = -klMax(6,(int)(rcEdit.bottom - gpSetCls->EvalSize(3, esf_Vertical|esf_CanUseDpi)));
 	mh_Font = CreateFontIndirect(&lf);
 
 	SendMessage(mh_Edit, WM_SETFONT, (WPARAM)mh_Font, FALSE);
@@ -223,7 +217,7 @@ LRESULT CFindPanel::FindPaneProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 
 	case WM_SIZE:
 		if (pPanel)
-			pPanel->OnSize();
+			pPanel->OnSize(NULL);
 		break;
 
 	case WM_DESTROY:
@@ -288,15 +282,41 @@ void CFindPanel::OnDestroy()
 	mh_Pane = mh_Edit = NULL;
 }
 
-void CFindPanel::OnSize()
+void CFindPanel::OnSize(LPRECT prcEdit)
 {
-	RECT rcClient = {};
+	if (!mh_Pane || (!mh_Edit && !prcEdit))
+		return; // Nothing to do
+
+	RECT rcRebar = {}; GetWindowRect(GetParent(mh_Pane), &rcRebar);
+	RECT rcPane = {}; GetWindowRect(mh_Pane, &rcPane);
+
+	RECT rcClient = {}; GetClientRect(mh_Pane, &rcClient);
+	_ASSERTE(rcClient.top==0 && rcClient.left==0 && rcClient.bottom>0 && rcClient.right>0);
+
+	// оптимальный отступ от верхнего края окна
+	int iOptimal = gpSetCls->EvalSize(3, esf_Vertical|esf_CanUseDpi);
+	// Сдвиг панели по вертикали
+	int iShift = rcPane.top - rcRebar.top;
+	// Прикинем отступ контрола редактирования
+	rcClient.top = klMax(0,iOptimal-iShift);
+	// Панель может "кончаться" ниже чем rebar
+	if (rcPane.bottom > rcRebar.bottom)
+		rcClient.bottom -= (rcPane.bottom - rcRebar.bottom);
+	// Расположим симметрично
+	rcClient.bottom -= iOptimal;
+
+	// Правую границу подрезать?
+	//rcClient.right--;
+
+	// Если контрол уже создан - двигаем
 	if (mh_Edit)
 	{
-		GetClientRect(mh_Pane, &rcClient);
-		int cx = rcClient.right - 1;
-		int cy = rcClient.bottom - SearchTopPad - SearchBottomPad;
-		MoveWindow(mh_Edit, 0, SearchTopPad, cx, cy, TRUE);
+		MoveWindow(mh_Edit, rcClient.left, rcClient.top, rcClient.right-rcClient.left, rcClient.bottom-rcClient.top, TRUE);
+	}
+
+	if (prcEdit)
+	{
+		*prcEdit = rcClient;
 	}
 }
 

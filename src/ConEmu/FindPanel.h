@@ -63,7 +63,7 @@ protected:
 	static LRESULT WINAPI EditCtrlProc(HWND hCtrl, UINT uMsg, WPARAM wParam, LPARAM lParam);
 	bool OnCreate(CREATESTRUCT* ps);
 	void OnDestroy();
-	void OnSize();
+	void OnSize(LPRECT prcEdit);
 	void OnCreateFont();
 	void OnSearch();
 	bool OnKeyboard(UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT& lRc);
