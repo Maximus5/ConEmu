@@ -60,6 +60,7 @@ CTabPanelBase::CTabPanelBase(CTabBarClass* ap_Owner)
 	mn_prevTab = -1;
 	mn_LBtnDrag = 0;
 	mh_DragCursor = NULL;
+	ZeroStruct(mpt_DragStart);
 }
 
 CTabPanelBase::~CTabPanelBase()
