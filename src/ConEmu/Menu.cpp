@@ -56,6 +56,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "VConChild.h"
 #include "VConGroup.h"
 #include "VirtualConsole.h"
+#include "../common/MSetter.h"
 #include "../common/MToolTip.h"
 #include "../common/WUser.h"
 
@@ -939,6 +940,10 @@ void CConEmuMenu::ExecPopupMenuCmd(TrackMenuPlace place, CVirtualConsole* apVCon
 			if ((place == tmp_VCon) && (nCmd >= ID_CON_SETPALETTE_FIRST) && (nCmd <= ID_CON_SETPALETTE_LAST))
 			{
 				apVCon->ChangePalette(nCmd - ID_CON_SETPALETTE_FIRST);
+			}
+			else if (nCmd >= IDM_VCONCMD_FIRST && nCmd <= IDM_VCONCMD_LAST)
+			{
+				_ASSERTE(FALSE && "Unhandled command!");
 			}
 			else if (nCmd >= 0xAB00)
 			{
@@ -2051,9 +2056,11 @@ LPCWSTR CConEmuMenu::MenuAccel(int DescrID, LPCWSTR asText)
 
 LRESULT CConEmuMenu::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam, UINT Msg /*= 0*/)
 {
+	static LONG InCall = 0;
+	MSetter inCall(&InCall);
 	wchar_t szDbg[128], szName[32];
 	wcscpy_c(szName, Msg == WM_SYSCOMMAND ? L" - WM_SYSCOMMAND" : Msg == mn_MsgOurSysCommand ? L" - UM_SYSCOMMAND" : L"");
-	_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"OnSysCommand (%i(0x%X), %i)%s", (DWORD)wParam, (DWORD)wParam, (DWORD)lParam, szName);
+	_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"OnSysCommand (%i(0x%X), %i, %i)%s", (DWORD)wParam, (DWORD)wParam, (DWORD)lParam, InCall, szName);
 	LogString(szDbg);
 
 	#ifdef _DEBUG
@@ -2512,6 +2519,11 @@ LRESULT CConEmuMenu::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam, UINT 
 		{
 			if (wParam >= IDM_VCONCMD_FIRST && wParam <= IDM_VCONCMD_LAST)
 			{
+				if (InCall > 2)
+				{
+					_ASSERTE(InCall == 1); // Infinite loop?
+					break;
+				}
 				CVConGuard VCon;
 				if (CVConGroup::GetActiveVCon(&VCon) >= 0)
 					ExecPopupMenuCmd(tmp_System, VCon.VCon(), (int)(DWORD)wParam);
