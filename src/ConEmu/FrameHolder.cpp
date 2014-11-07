@@ -70,6 +70,11 @@ CFrameHolder::CFrameHolder()
 	mb_RedrawRequested = false;
 	mb_AllowPreserveClient = false;
 	mb_DontPreserveClient = false;
+	mn_WinCaptionHeight = 0;
+	mn_FrameWidth = 0;
+	mn_FrameHeight = 0;
+	mn_OurCaptionHeight = 0;
+	mn_CaptionDragHeight = 0;
 }
 
 CFrameHolder::~CFrameHolder()
