@@ -44,7 +44,7 @@ CHooksUnlocker::CHooksUnlocker()
 	mb_Processed = true;
 	if (InterlockedIncrement(&mn_LockCount) > 0)
 	{
-		gpConEmu->UnRegisterHooks();
+		if (gpConEmu) gpConEmu->UnRegisterHooks();
 	}
 }
 
@@ -54,6 +54,6 @@ CHooksUnlocker::~CHooksUnlocker()
 		return;
 	if (InterlockedDecrement(&mn_LockCount) <= 0)
 	{
-		gpConEmu->RegisterHooks();
+		if (gpConEmu) gpConEmu->RegisterHooks();
 	}
 }
