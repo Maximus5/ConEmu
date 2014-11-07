@@ -221,6 +221,11 @@ LRESULT CFindPanel::FindPaneProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 		break;
 
 	case WM_COMMAND:
+		switch (HIWORD(wParam))
+		{
+		case BN_CLICKED:
+			goto wrap;
+		}
 		break;
 
 	case WM_WINDOWPOSCHANGING:
@@ -412,8 +417,12 @@ bool CFindPanel::OnKeyboard(UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT& lR
 	switch (uMsg)
 	{
 	case WM_CHAR:
-		if (LOWORD(wParam) == VK_RETURN)
+		switch (LOWORD(wParam))
+		{
+		case VK_RETURN:
+		case VK_ESCAPE:
 			bSkip = true;
+		}
 		break;
 	case WM_SYSCHAR:
 		// Чтобы не пищало
