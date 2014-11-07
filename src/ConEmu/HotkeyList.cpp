@@ -372,13 +372,13 @@ int ConEmuHotKeyList::AllocateHotkeys()
 	/*
 		*** System (predefined, fixed)
 	*/
-	Add(vkWinAltA,        chk_System, NULL, L"", CConEmuCtrl::key_GuiMacro, true/*OnKeyUp*/, L"About()") // Settings
+	Add(vkWinAltA,        chk_System, NULL, L"", CConEmuCtrl::key_GuiMacro, true/*OnKeyUp*/, L"About()") // Show ‘About’ dialog
 		->SetHotKey('A',VK_LWIN,VK_MENU);
-	Add(vkWinAltK,        chk_System, NULL, L"", CConEmuCtrl::key_GuiMacro, true/*OnKeyUp*/, L"Settings(171)") // Settings -> Keys&Macro
-		->SetHotKey('K',VK_LWIN,VK_MENU);
-	Add(vkWinAltP,        chk_System, NULL, L"", CConEmuCtrl::key_GuiMacro, true/*OnKeyUp*/, L"Settings()") // Settings
+	Add(vkWinAltP,        chk_System, NULL, L"", CConEmuCtrl::key_GuiMacro, true/*OnKeyUp*/, L"Settings()") // Settings dialog
 		->SetHotKey('P',VK_LWIN,VK_MENU);
-	Add(vkWinAltSpace,    chk_System, NULL, L"", CConEmuCtrl::key_SystemMenu, true/*OnKeyUp*/) // System menu
+	Add(vkWinAltK,        chk_System, NULL, L"", CConEmuCtrl::key_GuiMacro, true/*OnKeyUp*/, L"Settings(171)") // Setup ‘Hotkeys’
+		->SetHotKey('K',VK_LWIN,VK_MENU);
+	Add(vkWinAltSpace,    chk_System, NULL, L"", CConEmuCtrl::key_SystemMenu, true/*OnKeyUp*/) // Show ConEmu menu
 		->SetHotKey(VK_SPACE,VK_LWIN,VK_MENU);
 	Add(vkCtrlWinAltSpace,chk_System, NULL, L"", CConEmuCtrl::key_ShowRealConsole) // Show real console
 		->SetHotKey(VK_SPACE,VK_CONTROL,VK_LWIN,VK_MENU);
