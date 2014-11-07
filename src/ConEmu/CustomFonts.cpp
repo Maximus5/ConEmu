@@ -547,6 +547,8 @@ CEDC::CEDC(HDC hDc)
 	, mh_OldBitmap(NULL)
 {
 	mb_ExtDc = (hDc != NULL);
+	iWidth = 0;
+	iHeight = 0;
 	Reset();
 }
 
@@ -560,6 +562,8 @@ void CEDC::Reset()
 	m_BkColor = CLR_INVALID;
 	m_TextColor = CLR_INVALID;
 	m_BkMode = -1;
+	iWidth = 0;
+	iHeight = 0;
 }
 
 void CEDC::Delete()
