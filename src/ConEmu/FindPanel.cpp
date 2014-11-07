@@ -475,12 +475,18 @@ bool CFindPanel::OnKeyboard(UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT& lR
 		case 'A':
 			gpSet->FindOptions.bHighlightAll = !gpSet->FindOptions.bHighlightAll;
 			break;
+		case VK_F10:
+			mn_KeyDown = LOWORD(wParam);
+			bSkip = true;
+			goto wrap;
 		default:
 			goto wrap;
 		}
 		gpConEmu->DoFindText(isPressed(VK_SHIFT) ? -1 : 1);
 		break;
 	case WM_SYSKEYUP:
+		if (mn_KeyDown == LOWORD(wParam))
+			StopSearch();
 		bSkip = true;
 		lRc = TRUE;
 		goto wrap;
