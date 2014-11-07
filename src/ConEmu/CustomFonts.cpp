@@ -132,6 +132,8 @@ private:
 	BDFFont()
 	{
 		m_Bold = m_HasUnicode = m_HasBorders = FALSE;
+		m_Width = 0;
+		m_Height = 0;
 	}
 
 	void CreateBitmap()
