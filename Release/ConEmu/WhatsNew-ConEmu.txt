@@ -12,6 +12,13 @@ Votes and awards (vote for ConEmu, if you please)
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+2014.11.06
+[*] When text is pasted immediately with RClick while selection is active - do not use Windows clipboard.
+[*] Search control position fix.
+[*] Rename tabs in the About dialog.
+[*] Switch cross-highlighting under mouse cursor with Apps+X (row highlighting - Apps+L).
+
+
 2014.11.05
 [*] Some splits were not displayed on startup (d592a05 regression).
 [*] ConEmuEnvironment: set ConEmuIsAdmin=ADMIN for those tabs/splits which were started elevated (UAC).
