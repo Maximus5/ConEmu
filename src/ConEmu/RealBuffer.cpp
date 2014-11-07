@@ -4723,7 +4723,8 @@ const ConEmuHotKey* CRealBuffer::ProcessSelectionHotKey(const ConEmuChord& VkSta
 		return NULL;
 
 	// If these was not processed by user HotKeys, lets do it...
-	if (VkState.IsEqual('V', cvk_Ctrl) || VkState.IsEqual(VK_INSERT, cvk_Ctrl))
+	// Ctrl+C or Ctrl+Ins must copy current selection to clipboard
+	if (VkState.IsEqual('C', cvk_Ctrl) || VkState.IsEqual(VK_INSERT, cvk_Ctrl))
 	{
 		if (bKeyDown)
 		{
