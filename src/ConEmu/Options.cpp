@@ -3237,6 +3237,9 @@ void Settings::SaveConsoleFont()
 
 void Settings::SaveFindOptions(SettingsBase* reg/* = NULL*/)
 {
+	if (!reg && gpConEmu->IsResetBasicSettings())
+		return;
+
 	bool bDelete = (reg == NULL);
 	if (!reg)
 	{
