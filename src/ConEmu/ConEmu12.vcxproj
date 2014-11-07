@@ -1044,6 +1044,7 @@
     <ClCompile Include="TaskBarGhost.cpp" />
     <ClCompile Include="ToolImg.cpp" />
     <ClCompile Include="TrayIcon.cpp" />
+    <ClCompile Include="UnitTests.cpp" />
     <ClCompile Include="Update.cpp" />
     <ClCompile Include="UpdateSet.cpp" />
     <ClCompile Include="VConChild.cpp" />
@@ -1165,6 +1166,7 @@
     <ClInclude Include="TaskBarGhost.h" />
     <ClInclude Include="ToolImg.h" />
     <ClInclude Include="TrayIcon.h" />
+    <ClInclude Include="UnitTests.h" />
     <ClInclude Include="Update.h" />
     <ClInclude Include="UpdateSet.h" />
     <ClInclude Include="VConChild.h" />

@@ -110,6 +110,7 @@ $(INTDIR)\TaskBar.obj \
 $(INTDIR)\TaskBarGhost.obj \
 $(INTDIR)\ToolImg.obj \
 $(INTDIR)\TrayIcon.obj \
+$(INTDIR)\UnitTests.obj \
 $(INTDIR)\Update.obj \
 $(INTDIR)\UpdateSet.obj \
 $(INTDIR)\VConChild.obj \
@@ -443,6 +444,8 @@ $(INTDIR)\TaskBarGhost.obj: TaskBarGhost.cpp
 $(INTDIR)\ToolImg.obj: ToolImg.cpp
 
 $(INTDIR)\TrayIcon.obj: TrayIcon.cpp
+
+$(INTDIR)\UnitTests.obj: UnitTests.cpp UnitTests.h
 
 $(INTDIR)\Update.obj: Update.cpp Update.h UpdateSet.h Version.h
 

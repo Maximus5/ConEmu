@@ -87,6 +87,7 @@ SRCS = \
 		TaskBarGhost.cpp   \
 		ToolImg.cpp        \
 		TrayIcon.cpp       \
+		UnitTests.cpp      \
 		Update.cpp         \
 		UpdateSet.cpp      \
 		VConChild.cpp      \
