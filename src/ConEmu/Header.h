@@ -568,6 +568,7 @@ enum CECopyMode
 	cm_CopySel = 0, // Copy current selection (old bCopyAll==false)
 	cm_CopyAll = 1, // Copy full buffer (old bCopyAll==true)
 	cm_CopyVis = 2, // Copy visible screen area
+	cm_CopyInt = 3, // Copy current selection into internal CEStr
 };
 
 #define CTSFormatDefault 0xFF /* use gpSet->isCTSHtmlFormat */

@@ -131,7 +131,7 @@ public:
 
 private:
 	bool OnMouseSelection(UINT messg, WPARAM wParam, int x, int y);
-	bool DoSelectionCopyInt(CECopyMode CopyMode, bool bStreamMode, int srSelection_X1, int srSelection_Y1, int srSelection_X2, int srSelection_Y2, BYTE nFormat = CTSFormatDefault, LPCWSTR pszDstFile = NULL);
+	bool DoSelectionCopyInt(CECopyMode CopyMode, bool bStreamMode, int srSelection_X1, int srSelection_Y1, int srSelection_X2, int srSelection_Y2, BYTE nFormat = CTSFormatDefault, LPCWSTR pszDstFile = NULL, HGLOBAL* phUnicode = NULL);
 	int  GetSelectionCharCount(bool bStreamMode, int srSelection_X1, int srSelection_Y1, int srSelection_X2, int srSelection_Y2, int* pnSelWidth, int* pnSelHeight, int nNewLineLen);
 	bool PatchMouseCoords(int& x, int& y, COORD& crMouse);
 	bool CanProcessHyperlink(const COORD& crMouse);
@@ -142,9 +142,9 @@ public:
 	void MarkFindText(int nDirection, LPCWSTR asText, bool abCaseSensitive, bool abWholeWords); // <<== CRealConsole::DoFindText
 	void StartSelection(BOOL abTextMode, SHORT anX=-1, SHORT anY=-1, BOOL abByMouse=FALSE, UINT anFromMsg=0, COORD *pcrTo=NULL);
 	void ExpandSelection(SHORT anX, SHORT anY, bool bWasSelection);
-	bool DoSelectionFinalize(bool abCopy, WPARAM wParam = 0);
+	bool DoSelectionFinalize(bool abCopy, CECopyMode CopyMode = cm_CopySel, WPARAM wParam = 0, HGLOBAL* phUnicode = NULL);
 	void DoSelectionStop();
-	bool DoSelectionCopy(CECopyMode CopyMode = cm_CopySel, BYTE nFormat = CTSFormatDefault, LPCWSTR pszDstFile = NULL);
+	bool DoSelectionCopy(CECopyMode CopyMode = cm_CopySel, BYTE nFormat = CTSFormatDefault, LPCWSTR pszDstFile = NULL, HGLOBAL* phUnicode = NULL);
 	void UpdateSelection();
 	bool isConSelectMode();
 	bool isStreamSelection();
