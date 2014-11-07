@@ -288,6 +288,10 @@ CSettings::CSettings()
 	m_Pages = NULL;
 	mn_PagesCount = 0;
 
+	memset(&tiConFontBalloon, 0, sizeof(tiConFontBalloon));
+	mf_MarkCopyPreviewProc = NULL;
+	mb_IgnoreSelPage = false;
+
 	// Вкладки-диалоги
 	InitVars_Pages();
 }
