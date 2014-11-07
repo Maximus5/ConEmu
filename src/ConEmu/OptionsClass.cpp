@@ -7007,6 +7007,7 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 				SendMessage(gpSetCls->hwndBalloon, TTM_TRACKACTIVATE, FALSE, (LPARAM)&gpSetCls->tiBalloon);
 				SendMessage(gpSetCls->hwndTip, TTM_ACTIVATE, TRUE, 0);
 			}
+			break;
 
 		default:
 		{
