@@ -249,7 +249,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"     Relative==2: N (per cents) - alias for Zoom(N)\r\n" \
 	L"     returns - \"OK\", or \"InvalidArg\"\r\n" \
 	L"HighlightMouse(<What>[,<Act>])\r\n" \
-	L"  - change highlighting int the ACTIVE console only\r\n" \
+	L"  - change highlighting in the ACTIVE console only\r\n" \
 	L"    What==0: switch off/row/col/row+col/off/...\r\n" \
 	L"    What==1: row, What==2 - col, What==3 - row+col\r\n" \
 	L"      Act==0 - off, Act==1 - on, Act==2 - switch (default)\r\n" \
