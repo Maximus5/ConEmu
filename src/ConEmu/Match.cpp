@@ -769,6 +769,11 @@ bool CMatch::MatchAny()
 			if (!bDigits && (mn_MatchLeft < mn_MatchRight) /*&& (m_SrcLine.ms_Arg[mn_MatchRight-1] == L':')*/)
 			{
 				bDigits = true;
+				// Если перед разделителем был реальный файл - сразу выставим флажок "номер строки найден"
+				if (IsValidFile(m_SrcLine.ms_Arg+mn_MatchLeft, mn_MatchRight - mn_MatchLeft - 1, pszBreak, pszSpacing, nNakedFileLen))
+				{
+					bLineNumberFound = true;
+				}
 			}
 		}
 		else
@@ -844,8 +849,8 @@ bool CMatch::MatchAny()
 				|| ((m_SrcLine.ms_Arg[mn_MatchRight] == L']') && (m_SrcLine.ms_Arg[mn_MatchRight+1] == L':'))
 					)
 				{
-					_ASSERTE(bLineNumberFound==false);
-					bLineNumberFound = true;
+					//_ASSERTE(bLineNumberFound==false);
+					//bLineNumberFound = true;
 					break; // found?
 				}
 			}
@@ -931,13 +936,10 @@ bool CMatch::MatchAny()
 	}
 	else
 	{
-		if (!bNakedFile && !bMaybeMail && ((mn_MatchRight+1) == mn_SrcLength) && !bLineNumberFound && !bDigits && (iExtFound == ef_ExtFound))
+		if (!bNakedFile && !bMaybeMail && ((mn_MatchRight+1) == mn_SrcLength) && !bLineNumberFound && (iExtFound == ef_ExtFound))
 		{
 			bNakedFile = IsValidFile(m_SrcLine.ms_Arg+mn_MatchLeft, mn_MatchRight - mn_MatchLeft + 1, pszBreak, pszSpacing, nNakedFileLen);
 		}
-
-		if (!bLineNumberFound && bDigits)
-			bLineNumberFound = true;
 
 		if (bLineNumberFound)
 			bMaybeMail = false;
