@@ -138,6 +138,7 @@ CRealBuffer::CRealBuffer(CRealConsole* apRCon, RealBufferType aType/*=rbt_Primar
 	m_TrueMode.nCmpMax = 0;
 
 	mpp_RunHyperlink = NULL;
+	ZeroStruct(mr_RightPanelFull);
 }
 
 CRealBuffer::~CRealBuffer()
