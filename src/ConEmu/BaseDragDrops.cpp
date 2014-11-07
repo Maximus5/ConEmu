@@ -45,6 +45,7 @@ extern HINSTANCE g_hInstance;
 
 CBaseDropTarget::CBaseDropTarget()
 {
+	m_lRefCount = 1;
 }
 
 CBaseDropTarget::~CBaseDropTarget()
