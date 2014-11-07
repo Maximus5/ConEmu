@@ -378,6 +378,8 @@ int ConEmuHotKeyList::AllocateHotkeys()
 		->SetHotKey('P',VK_LWIN,VK_MENU);
 	Add(vkWinAltK,        chk_System, NULL, L"", CConEmuCtrl::key_GuiMacro, true/*OnKeyUp*/, L"Settings(171)") // Setup ‘Hotkeys’
 		->SetHotKey('K',VK_LWIN,VK_MENU);
+	Add(vkWinAltT,        chk_System, NULL, L"", CConEmuCtrl::key_GuiMacro, true/*OnKeyUp*/, L"Settings(157)") // Setup ‘Tasks’
+		->SetHotKey('T',VK_LWIN,VK_MENU);
 	Add(vkWinAltSpace,    chk_System, NULL, L"", CConEmuCtrl::key_SystemMenu, true/*OnKeyUp*/) // Show ConEmu menu
 		->SetHotKey(VK_SPACE,VK_LWIN,VK_MENU);
 	Add(vkCtrlWinAltSpace,chk_System, NULL, L"", CConEmuCtrl::key_ShowRealConsole) // Show real console

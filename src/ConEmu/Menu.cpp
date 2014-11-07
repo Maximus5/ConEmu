@@ -373,7 +373,7 @@ void CConEmuMenu::OnNewConPopupMenu(POINT* ptWhere /*= NULL*/, DWORD nFlags /*= 
 		//// was any task appended?
 		//bSeparator = bWasTasks;
 
-		itm.Reset(CmdTaskPopupItem::eSetupTasks, ++mn_CmdLastID, L"Setup tasks...");
+		itm.Reset(CmdTaskPopupItem::eSetupTasks, ++mn_CmdLastID, MenuAccel(vkWinAltT,L"Setup tasks..."));
 		InsertMenu(hPopup, nInsertPos, MF_BYPOSITION|MF_ENABLED|MF_STRING, itm.nCmd, itm.szShort);
 		m_CmdTaskPopup.push_back(itm);
 		bSeparator = true;

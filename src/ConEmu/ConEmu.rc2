@@ -388,6 +388,7 @@ BEGIN
 	vkWinAltA               "Show ‘About’ dialog"
 	vkWinAltK               "Setup ‘Hotkeys’"
 	vkWinAltP               "Settings dialog"
+	vkWinAltT               "Setup ‘Tasks’"
 	vkWinAltSpace           "Show ConEmu menu"
 	vkWinDown               "Increase window height (check ‘Resize with arrows’)"
 	vkWinLeft               "Decrease window width (check ‘Resize with arrows’)"
