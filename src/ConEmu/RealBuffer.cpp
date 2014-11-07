@@ -130,6 +130,8 @@ CRealBuffer::CRealBuffer(CRealConsole* apRCon, RealBufferType aType/*=rbt_Primar
 	mr_RightPanel = rcNil;
 
 	mb_LeftPanel = mb_RightPanel = FALSE;
+	ZeroStruct(mr_LeftPanel); ZeroStruct(mr_RightPanel);
+	ZeroStruct(mr_LeftPanelFull); ZeroStruct(mr_RightPanelFull);
 
 	ZeroStruct(dump);
 
