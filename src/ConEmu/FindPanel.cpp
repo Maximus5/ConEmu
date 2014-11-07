@@ -494,6 +494,8 @@ bool CFindPanel::IsAvailable(bool bFilled)
 {
 	if (!mh_Edit || !IsWindowVisible(mh_Edit) || !IsWindowEnabled(mh_Edit))
 		return false;
+	if (mh_Edit && (GetFocus() == mh_Edit))
+		return true;
 	if (bFilled && (GetWindowTextLength(mh_Edit) <= 0))
 		return false;
 	return true;
