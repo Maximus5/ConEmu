@@ -3216,7 +3216,6 @@ void CSettings::ChangeCurrentPalette(const ColorPalette* pPal, bool bChangeDropD
 		CSetDlgLists::SelectStringExact(hDlg, lbDefaultColors, pPal->pszName);
 	}
 
-	wchar_t temp[32];
 	uint nCount = countof(pPal->Colors);
 
 	for (uint i = 0; i < nCount; i++)
