@@ -116,6 +116,8 @@ CDragDropData::CDragDropData()
 	mb_selfdrag = false;
 	mb_IsUpdatePackage = false;
 	mpsz_UpdatePackage = NULL;
+	mp_DroppedObject = NULL;
+	mp_DraggedVCon = NULL;
 }
 
 CDragDropData::~CDragDropData()
