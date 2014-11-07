@@ -44,13 +44,14 @@ protected:
 	static ATOM mh_Class;
 	WNDPROC mfn_EditProc;
 	UINT mn_KeyDown;
+	int mn_RebarHeight;
 	CmdArg* ms_PrevSearch;
 
 public:
 	CFindPanel(CConEmuMain* apConEmu);
 	~CFindPanel();
 
-	HWND CreatePane(HWND hParent, int nHeight);
+	HWND CreatePane(HWND hParent, int nBarHeight);
 	bool OnCreateFinished();
 	HWND GetHWND();
 	int  GetMinWidth();
@@ -63,6 +64,7 @@ protected:
 	static LRESULT WINAPI EditCtrlProc(HWND hCtrl, UINT uMsg, WPARAM wParam, LPARAM lParam);
 	bool OnCreate(CREATESTRUCT* ps);
 	void OnDestroy();
+	void OnWindowPosChanging(WINDOWPOS* p);
 	void OnSize(LPRECT prcEdit);
 	void OnCreateFont();
 	void OnSearch();

@@ -1237,7 +1237,7 @@ void CTabPanelWin::ShowSearchPane(bool bShow)
 			if (hFindPane)
 			{
 				rbBand.fMask  = RBBIM_SIZE | RBBIM_CHILD | RBBIM_CHILDSIZE | RBBIM_ID | RBBIM_STYLE;
-				rbBand.fStyle = RBBS_CHILDEDGE | RBBS_FIXEDSIZE | RBBS_VARIABLEHEIGHT;
+				rbBand.fStyle = RBBS_CHILDEDGE | RBBS_FIXEDSIZE /*| RBBS_VARIABLEHEIGHT*/;
 
 				#if 0
 				rbBand.fMask |= RBBIM_COLORS;
@@ -1248,7 +1248,7 @@ void CTabPanelWin::ShowSearchPane(bool bShow)
 				rbBand.wID        = rbi_FindBar;
 				rbBand.hwndChild  = hFindPane;
 				rbBand.cx = rbBand.cxMinChild = rbBand.cxIdeal = mp_Find->GetMinWidth();
-				rbBand.cyChild = rbBand.cyMinChild = rbBand.cyMaxChild = iPaneHeight + mn_ThemeHeightDiff;
+				rbBand.cyChild = rbBand.cyMinChild = rbBand.cyMaxChild = iPaneHeight; // + mn_ThemeHeightDiff;
 			}
 
 			// Insert before toolbar
