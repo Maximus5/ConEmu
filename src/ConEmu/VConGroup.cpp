@@ -4413,6 +4413,17 @@ RECT CVConGroup::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFr
 				CConEmuMain::AddMargins(rc, rcShift);
 			}
 
+			// Учесть сплиты
+			if ((tWhat == CER_CONSOLE_ALL) && gp_VActive && isVConExists(0))
+			{
+				SIZE Splits = {};
+				RECT rcMin = CVConGroup::AllTextRect(&Splits, true);
+				if ((Splits.cx > 0) && (gpSet->nSplitWidth > 0))
+					rc.right -= Splits.cx * gpSetCls->EvalSize(gpSet->nSplitWidth, esf_Horizontal|esf_CanUseDpi);
+				if ((Splits.cy > 0) && (gpSet->nSplitHeight > 0))
+					rc.bottom -= Splits.cy * gpSetCls->EvalSize(gpSet->nSplitHeight, esf_Vertical|esf_CanUseDpi);
+			}
+
 			// Если нужен размер консоли в символах сразу делим и выходим
 			if (tWhat == CER_CONSOLE_ALL || tWhat == CER_CONSOLE_CUR || tWhat == CER_CONSOLE_NTVDMOFF)
 			{
