@@ -61,6 +61,8 @@ CConEmuInside::CConEmuInside()
 	mh_InsideParentPath = mh_InsideParentCD = NULL; ms_InsideParentPath[0] = 0;
 	mb_TipPaneWasShown = false;
 	//mh_InsideSysMenu = NULL;
+	ZeroStruct(mrc_InsideParent);
+	ZeroStruct(mrc_InsideParentRel);
 }
 
 bool CConEmuInside::InitInside(bool bRunAsAdmin, bool bSyncDir, LPCWSTR pszSyncDirCmdFmt, DWORD nParentPID, HWND hParentWnd)
