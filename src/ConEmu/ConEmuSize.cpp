@@ -86,6 +86,8 @@ CConEmuSize::CConEmuSize(CConEmuMain* pOwner)
 	ZeroStruct(m_QuakePrevSize);
 	ZeroStruct(mr_Ideal);
 	ZeroStruct(mrc_StoredNormalRect);
+	ZeroStruct(ptFullScreenSize);
+	isRestoreFromMinimized = false;
 }
 
 CConEmuSize::~CConEmuSize()
