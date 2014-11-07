@@ -570,6 +570,8 @@ enum CECopyMode
 	cm_CopyVis = 2, // Copy visible screen area
 };
 
+#define CTSFormatDefault 0xFF /* use gpSet->isCTSHtmlFormat */
+
 enum CEPasteMode
 {
 	pm_Standard  = 0, // Paste with possible "Return" keypresses

@@ -4603,13 +4603,13 @@ void CRealConsole::OnSelectionChanged()
 	SetConStatus(szSelInfo);
 }
 
-bool CRealConsole::DoSelectionCopy(CECopyMode CopyMode /*= cm_CopySel*/, BYTE nFormat /*= 0xFF*/ /* use gpSet->isCTSHtmlFormat */, LPCWSTR pszDstFile /*= NULL*/)
+bool CRealConsole::DoSelectionCopy(CECopyMode CopyMode /*= cm_CopySel*/, BYTE nFormat /*= CTSFormatDefault*/ /* use gpSet->isCTSHtmlFormat */, LPCWSTR pszDstFile /*= NULL*/)
 {
 	bool bCopyRc = false;
 	bool bReturnPrimary = false;
 	CRealBuffer* pBuf = mp_ABuf;
 
-	if (nFormat == 0xFF)
+	if (nFormat == CTSFormatDefault)
 		nFormat = gpSet->isCTSHtmlFormat;
 
 	if (CopyMode == cm_CopyAll)

@@ -4084,7 +4084,7 @@ void CRealBuffer::DoSelectionStop()
 	con.m_sel.dwFlags = 0;
 }
 
-bool CRealBuffer::DoSelectionCopy(CECopyMode CopyMode /*= cm_CopySel*/, BYTE nFormat /*= 0xFF*/ /* use gpSet->isCTSHtmlFormat */, LPCWSTR pszDstFile /*= NULL*/)
+bool CRealBuffer::DoSelectionCopy(CECopyMode CopyMode /*= cm_CopySel*/, BYTE nFormat /*= CTSFormatDefault*/ /* use gpSet->isCTSHtmlFormat */, LPCWSTR pszDstFile /*= NULL*/)
 {
 	bool bRc = false;
 
@@ -4193,7 +4193,7 @@ int CRealBuffer::GetSelectionCharCount(bool bStreamMode, int srSelection_X1, int
 }
 
 // Здесь CopyMode уже не используется, передается для информации
-bool CRealBuffer::DoSelectionCopyInt(CECopyMode CopyMode, bool bStreamMode, int srSelection_X1, int srSelection_Y1, int srSelection_X2, int srSelection_Y2, BYTE nFormat /*= 0xFF*/ /* use gpSet->isCTSHtmlFormat */, LPCWSTR pszDstFile /*= NULL*/)
+bool CRealBuffer::DoSelectionCopyInt(CECopyMode CopyMode, bool bStreamMode, int srSelection_X1, int srSelection_Y1, int srSelection_X2, int srSelection_Y2, BYTE nFormat /*= CTSFormatDefault*/, LPCWSTR pszDstFile /*= NULL*/)
 {
 	// Warning!!! Здесь уже нельзя ориентироваться на con.m_sel !!!
 
@@ -4202,7 +4202,7 @@ bool CRealBuffer::DoSelectionCopyInt(CECopyMode CopyMode, bool bStreamMode, int 
 	CharAttr* pAttrStartEx = NULL;
 	int nTextWidth = 0, nTextHeight = 0;
 
-	if (nFormat == 0xFF)
+	if (nFormat == CTSFormatDefault)
 		nFormat = gpSet->isCTSHtmlFormat;
 
 	if (m_Type == rbt_Primary)
