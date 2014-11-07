@@ -755,8 +755,8 @@ bool CMatch::MatchAny()
 			goto wrap; // Не оно (комментарий в строке)
 		}
 
-		if (bWasSeparator
-			&& ((m_SrcLine.ms_Arg[mn_MatchRight] >= L'0' && m_SrcLine.ms_Arg[mn_MatchRight] <= L'9')
+		if (bWasSeparator // " \t:("
+			&& (isDigit(m_SrcLine.ms_Arg[mn_MatchRight])
 				|| (bDigits && (m_SrcLine.ms_Arg[mn_MatchRight] == L',')))) // FarCtrl.pas(1002,49) Error:
 		{
 			if (bLineNumberFound)
