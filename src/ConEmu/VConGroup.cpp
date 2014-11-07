@@ -4369,8 +4369,9 @@ RECT CVConGroup::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFr
 			//nShift = (gpSetCls->FontWidth() - 1) / 2; if (nShift < 1) nShift = 1;
 
 			// Если активен NTVDM.
-			TODO("Вообще это нужно расширить. Размер может менять и любое консольное приложение.");
-			if (tWhat != CER_CONSOLE_NTVDMOFF && pVCon && pVCon->RCon() && pVCon->RCon()->isNtvdm())
+			if ((tWhat != CER_CONSOLE_NTVDMOFF)
+				&& (tWhat == CER_DC || tWhat == CER_CONSOLE_CUR)
+				&& pVCon && pVCon->RCon() && pVCon->RCon()->isNtvdm())
 			{
 				// NTVDM устанавливает ВЫСОТУ экранного буфера... в 25/28/43/50 строк
 				// путем округления текущей высоты (то есть если до запуска 16bit
