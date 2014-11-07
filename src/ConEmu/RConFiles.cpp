@@ -68,14 +68,17 @@ LPCWSTR CRConFiles::GetFileFromConsole(LPCWSTR asSrc, CmdArg& szFull)
 
 		// Попытаться просканировать один-два уровеня подпапок
 		bool bFound = FileExistSubDir(pszDir, pszWinPath, 1, szFull);
+
 		if (!bFound)
 		{
+			// If there is "src" subfolder in the current folder
 			CEStr szSrc = JoinPath(pszDir, L"src");
 			if (DirectoryExists(szSrc))
 			{
 				bFound = FileExistSubDir(szSrc, pszWinPath, 1, szFull);
 			}
 		}
+
 		if (!bFound)
 		{
 			return NULL;
