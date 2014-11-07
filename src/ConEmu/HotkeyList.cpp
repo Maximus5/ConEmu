@@ -216,6 +216,8 @@ int ConEmuHotKeyList::AllocateHotkeys()
 		;
 	Add(vkHighlightMouse, chk_User,  NULL,    L"HighlightMouseSwitch",  CConEmuCtrl::key_GuiMacro, false, L"HighlightMouse(1)")
 		->SetHotKey('L',VK_APPS);
+	Add(vkHighlightMouseX,chk_User,  NULL,    L"HighlightMouseSwitchX", CConEmuCtrl::key_GuiMacro, false, L"HighlightMouse(3)")
+		->SetHotKey('X',VK_APPS);
 	Add(vkShowTabsList,   chk_User,  NULL,    L"Multi.ShowTabsList",    CConEmuCtrl::key_ShowTabsList)
 		;
 	Add(vkShowTabsList2,  chk_User,  NULL,    L"Multi.ShowTabsList2",   CConEmuCtrl::key_GuiMacro, false, L"Tabs(8)")

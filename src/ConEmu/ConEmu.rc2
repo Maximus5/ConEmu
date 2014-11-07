@@ -320,6 +320,7 @@ BEGIN
 	vkForceFullScreen       "Enter TEXT fullscreen mode, when available. If not - standard fullscreen and always on top"
 	vkGlobalRestore         "Restore (bring to front)"
 	vkHighlightMouse        "Highlighting: Switch ‘Highlight row under mouse cursor’"
+	vkHighlightMouseX       "Highlighting: Switch ‘Highlight row & col under mouse cursor’"
 	vkJumpNextMonitor       "Move ConEmu window to next monitor"
 	vkJumpPrevMonitor       "Move ConEmu window to previous monitor"
 	vkLDragKey              "Drag from Far panels with left mouse key (LDrag modifier)"
