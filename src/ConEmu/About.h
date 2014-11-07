@@ -127,6 +127,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"\r\n" \
 	L"Special Thanks\r\n" \
 	VCGCCTEST(L"––––––––––––––––––––––\r\n",L"----------------------\r\n") \
+	L"Michael Lukashov: bug- and warning-fixes\r\n" \
 	L"Rick Sladkey: bugfixes\r\n" \
 	L"ForNeVeR: some ConEmuBg improvements\r\n" \
 	L"thecybershadow: bdf support, Documentation\r\n" \
