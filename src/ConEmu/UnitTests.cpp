@@ -235,7 +235,9 @@ void DebugNeedCmdUnitTests()
 		{L"cmd /c \"\"C:\\Program Files\\Windows NT\\Accessories\\wordpad.exe\" -?\"", FALSE},
 		{L"cmd /c \"dir c:\\\"", FALSE},
 		{L"abc.cmd", TRUE},
-		{L"pskill explorer & start explorer", TRUE},
+		// Do not do too many heuristic. If user really needs redirection (for 'root'!)
+		// he must explicitly call "cmd /c ...". With only exception if first exe not found.
+		{L"notepad text & start explorer", FALSE},
 	};
 	LPCWSTR psArgs;
 	BOOL bNeedCut, bRootIsCmd, bAlwaysConfirm, bAutoDisable;
