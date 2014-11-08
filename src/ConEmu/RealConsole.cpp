@@ -9671,7 +9671,7 @@ bool CRealConsole::DuplicateRoot(bool bSkipMsg /*= false*/, bool bRunAsAdmin /*=
 			{
 				CRealConsole* pRCon = pVCon->RCon();
 
-				size_t cchCmdLen = (bRootCmdRedefined ? _tcslen(pszCmdRedefined) : 0);
+				size_t cchCmdLen = (bRootCmdRedefined && pszCmdRedefined ? _tcslen(pszCmdRedefined) : 0);
 				size_t cbMaxSize = sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_DUPLICATE) + cchCmdLen*sizeof(wchar_t);
 
 				CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_DUPLICATE, cbMaxSize);
