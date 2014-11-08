@@ -10570,7 +10570,7 @@ LRESULT CConEmuMain::OnMouse_LBtnDown(CVirtualConsole* pVCon, HWND hWnd, UINT me
 	mouse.bIgnoreMouseMove = false;
 	mouse.LClkCon = cr;
 	mouse.LClkDC = MakeCoord(ptCur.x,ptCur.y);
-	CRealConsole *pRCon = pVCon->RCon();
+	CRealConsole *pRCon = pVCon ? pVCon->RCon() : NULL;
 
 	if (!pRCon)  // если консоли нет - то и слать некуда
 		return 0;
