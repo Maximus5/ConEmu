@@ -904,6 +904,7 @@ LRESULT CFrameHolder::OnNcPaint(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 	HRGN hrgn = (HRGN)wParam;
 
 	GetWindowRect(hWnd, &wr);
+	ZeroStruct(cr);
 	CalculateCaptionPosition(wr, &cr);
 	CalculateTabPosition(wr, cr, &tr);
 
