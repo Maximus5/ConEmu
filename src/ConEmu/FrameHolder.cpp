@@ -898,7 +898,7 @@ LRESULT CFrameHolder::OnNcPaint(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 	}
 
 
-	RECT dirty_box, dirty, wr, tr, cr, xorRect;
+	RECT dirty_box, dirty, wr = {}, tr = {}, cr = {}, xorRect;
 	BOOL fRegionOwner = FALSE;
 	HDC hdc;
 	HRGN hrgn = (HRGN)wParam;
