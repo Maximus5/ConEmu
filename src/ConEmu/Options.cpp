@@ -1930,7 +1930,7 @@ void Settings::PaletteSaveAs(LPCWSTR asName)
 	int nIndex = PaletteGetIndex(asName);
 
 	// "Предопределенные" палитры перезаписывать нельзя
-	if ((nIndex != -1) && Palettes[nIndex]->bPredefined)
+	if ((nIndex != -1) && Palettes && Palettes[nIndex]->bPredefined)
 		nIndex = -1;
 
 	bool bNewPalette = false;
