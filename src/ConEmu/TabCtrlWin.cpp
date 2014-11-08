@@ -160,7 +160,7 @@ LRESULT CTabPanelWin::ReBarProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 				else if (nOverTabHit >= 0)
 				{
 					POINT ptTab = {GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)};
-					if (uMsg != WM_MOUSEWHEEL || uMsg != WM_MOUSEHWHEEL)
+					if (uMsg != WM_MOUSEWHEEL && uMsg != WM_MOUSEHWHEEL)
 						MapWindowPoints(mh_Rebar, mh_Tabbar, &ptTab, 1);
 					OnMouseTabbar(uMsg, nOverTabHit, ptTab.x, ptTab.y);
 				}

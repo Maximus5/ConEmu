@@ -904,6 +904,7 @@ LRESULT CFrameHolder::OnNcPaint(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 	HRGN hrgn = (HRGN)wParam;
 
 	GetWindowRect(hWnd, &wr);
+	ZeroStruct(cr);
 	CalculateCaptionPosition(wr, &cr);
 	CalculateTabPosition(wr, cr, &tr);
 
@@ -1284,7 +1285,7 @@ LRESULT CFrameHolder::OnNcCalcSize(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 
 LRESULT CFrameHolder::OnNcHitTest(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	LRESULT l_result;
+	LRESULT l_result = 0;
 
 	// Обработает клики на кнопках Min/Max/Close
 	if (gpConEmu->DrawType() >= fdt_Aero)

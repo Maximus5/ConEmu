@@ -10570,7 +10570,7 @@ LRESULT CConEmuMain::OnMouse_LBtnDown(CVirtualConsole* pVCon, HWND hWnd, UINT me
 	mouse.bIgnoreMouseMove = false;
 	mouse.LClkCon = cr;
 	mouse.LClkDC = MakeCoord(ptCur.x,ptCur.y);
-	CRealConsole *pRCon = pVCon->RCon();
+	CRealConsole *pRCon = pVCon ? pVCon->RCon() : NULL;
 
 	if (!pRCon)  // если консоли нет - то и слать некуда
 		return 0;
@@ -11386,6 +11386,7 @@ enum DragPanelBorder CConEmuMain::CheckPanelDrag(COORD crCon)
 	// Теперь - можно проверить
 	enum DragPanelBorder dpb = DPB_NONE;
 	RECT rcPanel;
+	ZeroStruct(rcPanel);
 
 	//TODO("Сделаем все-таки драг влево-вправо хватанием за «промежуток» между рамками");
 	//int nSplitWidth = gpSetCls->BorderFontWidth()/5;
@@ -12746,7 +12747,7 @@ LRESULT CConEmuMain::WorkWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 	MSG msgStr = {hWnd, uMsg, wParam, lParam};
 	ConEmuMsgLogger::Log(msgStr, ConEmuMsgLogger::msgWork);
 
-	if (gpSetCls->isAdvLogging >= 4)
+	if (gpSetCls->isAdvLogging >= 4 && gpConEmu)
 	{
 		gpConEmu->LogMessage(hWnd, uMsg, wParam, lParam);
 	}
@@ -13193,7 +13194,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		case WM_SYSDEADCHAR:
 		{
 			wchar_t szDbg[160]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"%s(%i='%c', Scan=%i, lParam=0x%08X) must be processed internally in CConEmuMain::OnKeyboard",
-				(messg == WM_CHAR) ? L"WM_CHAR" : (messg == WM_SYSCHAR) ? L"WM_SYSCHAR" : (messg == WM_SYSDEADCHAR) ? L"WM_DEADCHAR" : L"WM_DEADCHAR",
+				(messg == WM_CHAR) ? L"WM_CHAR" : (messg == WM_SYSCHAR) ? L"WM_SYSCHAR" : (messg == WM_SYSDEADCHAR) ? L"WM_SYSDEADCHAR" : L"WM_DEADCHAR",
 				(DWORD)wParam, wParam?(wchar_t)wParam:L' ', ((DWORD)lParam & 0xFF0000) >> 16, (DWORD)lParam);
 			//_ASSERTE(FALSE && "WM_CHAR, WM_SYSCHAR, WM_DEADCHAR, WM_SYSDEADCHAR must be processed internally in CConEmuMain::OnKeyboard");
 			//this->DebugStep(L"WM_CHAR, WM_SYSCHAR, WM_DEADCHAR, WM_SYSDEADCHAR must be processed internally in CConEmuMain::OnKeyboard", TRUE);
