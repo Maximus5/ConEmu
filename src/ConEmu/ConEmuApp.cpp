@@ -1174,7 +1174,7 @@ bool NextLine(const wchar_t*& pszFrom, wchar_t** pszLine)
 	bool bFound = false;
 	_ASSERTE(pszLine && !*pszLine);
 
-	while (*pszFrom == L'\r' || *pszFrom == L'\n' || *pszFrom == L'\t' || *pszFrom == L' ')
+	while (pszFrom && (*pszFrom == L'\r' || *pszFrom == L'\n' || *pszFrom == L'\t' || *pszFrom == L' '))
 		pszFrom++;
 
 	if (pszFrom && *pszFrom)
