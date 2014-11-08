@@ -1284,7 +1284,7 @@ LRESULT CFrameHolder::OnNcCalcSize(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 
 LRESULT CFrameHolder::OnNcHitTest(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	LRESULT l_result;
+	LRESULT l_result = 0;
 
 	// Обработает клики на кнопках Min/Max/Close
 	if (gpConEmu->DrawType() >= fdt_Aero)
