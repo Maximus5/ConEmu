@@ -11385,7 +11385,7 @@ enum DragPanelBorder CConEmuMain::CheckPanelDrag(COORD crCon)
 	//   	return DPB_NONE;
 	// Теперь - можно проверить
 	enum DragPanelBorder dpb = DPB_NONE;
-	RECT rcPanel;
+	RECT rcPanel = {};
 
 	//TODO("Сделаем все-таки драг влево-вправо хватанием за «промежуток» между рамками");
 	//int nSplitWidth = gpSetCls->BorderFontWidth()/5;
