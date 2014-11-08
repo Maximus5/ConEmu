@@ -1169,38 +1169,6 @@ wchar_t* SelectFile(LPCWSTR asTitle, LPCWSTR asDefFile /*= NULL*/, LPCWSTR asDef
 	return pszResult;
 }
 
-bool NextLine(const wchar_t*& pszFrom, wchar_t** pszLine)
-{
-	bool bFound = false;
-	_ASSERTE(pszLine && !*pszLine);
-
-	while (*pszFrom == L'\r' || *pszFrom == L'\n' || *pszFrom == L'\t' || *pszFrom == L' ')
-		pszFrom++;
-
-	if (pszFrom && *pszFrom)
-	{
-		const wchar_t* pszEnd = wcschr(pszFrom, L'\n');
-		if (pszEnd && (*(pszEnd-1) == L'\r'))
-			pszEnd--;
-
-		if (pszEnd)
-		{
-			size_t cchLen = pszEnd - pszFrom;
-			*pszLine = (wchar_t*)malloc((cchLen+1)*sizeof(**pszLine));
-			wmemcpy(*pszLine, pszFrom, cchLen);
-			(*pszLine)[cchLen] = 0;
-		}
-		else
-		{
-			*pszLine = lstrdup(pszFrom);
-		}
-
-		bFound = true;
-	}
-
-	return bFound;
-}
-
 // pszWords - '|'separated
 void StripWords(wchar_t* pszText, const wchar_t* pszWords)
 {
