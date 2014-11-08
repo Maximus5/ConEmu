@@ -1473,10 +1473,14 @@ HRESULT CDragDrop::DropShellOp(IDataObject* pDataObject, DWORD* pdwEffect, STGME
 			m_OpThread.push_back(th);
 			CS.Unlock();
 			hr = S_OK;
+			sfop = NULL; // Will be deleted in ShellOpThreadProc
 		}
 
 		DebugLog(NULL);
 	}
+
+	// on errors, release memory
+	SafeDelete(sfop);
 
 	return hr;
 }
