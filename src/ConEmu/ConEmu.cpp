@@ -12746,7 +12746,7 @@ LRESULT CConEmuMain::WorkWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 	MSG msgStr = {hWnd, uMsg, wParam, lParam};
 	ConEmuMsgLogger::Log(msgStr, ConEmuMsgLogger::msgWork);
 
-	if (gpSetCls->isAdvLogging >= 4)
+	if (gpSetCls->isAdvLogging >= 4 && gpConEmu)
 	{
 		gpConEmu->LogMessage(hWnd, uMsg, wParam, lParam);
 	}
