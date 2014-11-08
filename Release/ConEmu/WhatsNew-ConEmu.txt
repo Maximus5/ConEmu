@@ -12,6 +12,20 @@ Votes and awards (vote for ConEmu, if you please)
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+2014.11.07
+[*] FileLine detector. Fix false detection of "index 621e2f9..d0abbf9 100644".
+[*] FileLine detector. Support git diffs style: "a/src/ConEmu.cpp" and "b/src/ConEmu.cpp".
+[*] Splits was not taken into account when resizing window by top/bottom edges.
+[*] Hotkey Win+Alt+T shows ‘Tasks’ settings page.
+[*] After palette change selected color option was ignored, was used ‘RRR GGG BBB’.
+[*] Fix search pane size/pos (theming).
+[*] Don't beep on Esc press in search pane.
+[*] Lets stop search by F10 keypress.
+[*] If search pane was empty clicking in the workspace was not stop searching.
+[*] Lets drag window by free place of the TabBar.
+[*] Fix Coverity warning (from Michael Lukashov).
+
+
 2014.11.06
 [*] When text is pasted immediately with RClick while selection is active - do not use Windows clipboard.
 [*] Search control position fix.
