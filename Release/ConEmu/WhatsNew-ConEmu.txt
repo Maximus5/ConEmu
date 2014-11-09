@@ -12,6 +12,15 @@ Votes and awards (vote for ConEmu, if you please)
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+2014.11.09
+[*] Issue 1801: FileLineDetector: In addition to a/ b/ support i/ c/ w/ o/ also.
+[*] Move StatusBar's ‘Visible region lock’ column near to ‘Active console buffer’.
+[*] GuiMacro. Add description of ‘Progress 3’.
+[*] If ‘Copy on Left Button release’ was unchecked console was unexpectedly scrolled even if LButton was Up.
+[*] Fix admin consoles initialization.
+[*] Fix PVS warnings (from Michael Lukashov).
+
+
 2014.11.07
 [*] FileLine detector. Fix false detection of "index 621e2f9..d0abbf9 100644".
 [*] FileLine detector. Support git diffs style: "a/src/ConEmu.cpp" and "b/src/ConEmu.cpp".
