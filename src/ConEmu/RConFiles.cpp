@@ -73,7 +73,7 @@ LPCWSTR CRConFiles::GetFileFromConsole(LPCWSTR asSrc, CmdArg& szFull)
 		{
 			// git diffs style, but with backslashes (they are converted already)
 			// "a/src/ConEmu.cpp" and "b/src/ConEmu.cpp"
-			if ((pszWinPath[0] == L'a' || pszWinPath[0] == L'b') && (pszWinPath[1] == L'\\'))
+			if (pszWinPath[0] && (pszWinPath[1] == L'\\') && wcschr(L"abicwo", pszWinPath[0]))
 			{
 				LPCWSTR pszSlash = pszWinPath;
 				while (!bFound && ((pszSlash = wcschr(pszSlash, L'\\')) != NULL))
