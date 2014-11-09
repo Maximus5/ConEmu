@@ -197,43 +197,8 @@ wchar_t CVirtualConsole::ms_HorzSingl[MAX_SPACES];
 //HMENU CVirtualConsole::mh_DebugPopup = NULL;
 //HMENU CVirtualConsole::mh_EditPopup = NULL;
 
-//--> VConGroup
-//CVirtualConsole* CVirtualConsole::CreateVCon(RConStartArgs *args)
-//{
-//	if (!args)
-//	{
-//		_ASSERTE(args!=NULL);
-//		return NULL;
-//	}
-//
-//	if (args->pszSpecialCmd)
-//	{
-//		args->ProcessNewConArg();
-//	}
-//
-//	if (args->bForceUserDialog)
-//	{
-//		_ASSERTE(args->aRecreate!=cra_RecreateTab);
-//		args->aRecreate = cra_CreateTab;
-//
-//		int nRc = mp_ConEmu->RecreateDlg(args);
-//		if (nRc != IDC_START)
-//			return NULL;
-//	}
-//
-//	CVirtualConsole* pCon = new CVirtualConsole(args);
-//
-//	if (!pCon->mp_RCon->PreCreate(args))
-//	{
-//		delete pCon;
-//		return NULL;
-//	}
-//
-//	return pCon;
-//}
-
 #pragma warning(disable: 4355)
-CVirtualConsole::CVirtualConsole(CConEmuMain* pOwner)
+CVirtualConsole::CVirtualConsole(CConEmuMain* pOwner, int index)
 	: CVConRelease(this)
 	, CConEmuChild(this)
 	, mp_RCon(NULL)
@@ -241,6 +206,7 @@ CVirtualConsole::CVirtualConsole(CConEmuMain* pOwner)
 	, mp_Ghost(NULL)
 	, mp_Group(NULL)
 	, mn_Flags(vf_None)
+	, mn_Index(index) // !!! Informational !!!
 	, m_DC(NULL)
 {
 	#pragma warning(default: 4355)
@@ -248,12 +214,14 @@ CVirtualConsole::CVirtualConsole(CConEmuMain* pOwner)
 	mh_WndDC = NULL;
 }
 
-void CVirtualConsole::SetFlags(VConFlags flags)
+void CVirtualConsole::SetFlags(VConFlags flags, int index)
 {
-	if (this && (flags != mn_Flags))
-	{
+	if (!this)
+		return;
+	if (flags != mn_Flags)
 		mn_Flags = flags;
-	}
+	if (index != mn_Index)
+		mn_Index = index;
 }
 
 bool CVirtualConsole::Constructor(RConStartArgs *args)

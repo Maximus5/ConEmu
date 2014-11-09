@@ -222,7 +222,7 @@ CVConGroup* CVConGroup::SplitVConGroup(RConStartArgs::SplitType aSplitType /*eSp
 }
 
 
-CVirtualConsole* CVConGroup::CreateVCon(RConStartArgs *args, CVirtualConsole*& ppVConI)
+CVirtualConsole* CVConGroup::CreateVCon(RConStartArgs *args, CVirtualConsole*& ppVConI, int index)
 {
 	_ASSERTE(ppVConI == NULL);
 	if (!args)
@@ -277,7 +277,7 @@ CVirtualConsole* CVConGroup::CreateVCon(RConStartArgs *args, CVirtualConsole*& p
 			return NULL;
 	}
 
-	CVirtualConsole* pVCon = new CVirtualConsole(gpConEmu);
+	CVirtualConsole* pVCon = new CVirtualConsole(gpConEmu, index);
 	ppVConI = pVCon;
 	pGroup->mp_Item = pVCon;
 	pGroup->mp_ActiveGroupVConPtr = pActiveGroupVConPtr ? pActiveGroupVConPtr : pVCon;
@@ -4112,7 +4112,7 @@ CVirtualConsole* CVConGroup::CreateCon(RConStartArgs *args, bool abAllowScripts 
 			bool bTabbar = gpConEmu->mp_TabBar->IsTabsShown();
 			CVirtualConsole* pOldActive = gp_VActive;
 			gb_CreatingActive = true;
-			pVCon = CVConGroup::CreateVCon(args, gp_VCon[i]);
+			pVCon = CVConGroup::CreateVCon(args, gp_VCon[i], (int)i);
 			gb_CreatingActive = false;
 
 			// 130826 - "-new_console:sVb" - "b" was ignored!
@@ -5285,7 +5285,7 @@ void CVConGroup::setActiveVConAndFlags(CVirtualConsole* apNewVConActive)
 			else
 				newFlags &= ~vf_Visible;
 
-			VCon->SetFlags(newFlags);
+			VCon->SetFlags(newFlags, (int)i);
 		}
 	}
 }

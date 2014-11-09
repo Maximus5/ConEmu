@@ -72,13 +72,13 @@ class CVirtualConsole :
 		void* mp_Group; // For internal use of CVConGroup
 	protected:
 		VConFlags      mn_Flags;
-		void SetFlags(VConFlags flags);
+		int            mn_Index; // !!! Debug, Informational !!!
+		void SetFlags(VConFlags flags, int index);
 
 	protected:
-		CVirtualConsole(CConEmuMain* pOwner);
+		CVirtualConsole(CConEmuMain* pOwner, int index);
 		bool Constructor(RConStartArgs *args);
 	public:
-		//static CVirtualConsole* CreateVCon(RConStartArgs *args); --> VConGroup
 		void InitGhost();
 	protected:
 		virtual ~CVirtualConsole();
