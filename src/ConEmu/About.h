@@ -304,6 +304,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"     Type=0: remove progress\r\n" \
 	L"     Type=1: set progress value to <Value> (0-100)\r\n" \
 	L"     Type=2: set error state in progress\r\n" \
+	L"     Type=3: set indeterminate state in progress\r\n" \
 	L"Rename(<Type>,[\"<Title>\"])\r\n" \
 	L"  - Rename tab (Type=0) or console title (Type=1)\r\n" \
 	L"Scroll(<Type>,<Direction>,<Count=1>)\r\n" \

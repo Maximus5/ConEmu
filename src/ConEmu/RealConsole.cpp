@@ -12088,12 +12088,18 @@ bool CRealConsole::SetProgress(short nState, short nValue, LPCWSTR pszName /*= N
 
 	bool lbOk = false;
 
+	//SetProgress 0
+	//  -- Remove progress
+	//SetProgress 1 <Value>
+	//  -- Set progress value to <Value> (0-100)
+	//SetProgress 2
+	//  -- Set error state in progress
 	//SetProgress 3
-	//  -- Set progress indeterminate state
+	//  -- Set indeterminate state in progress
 	//SetProgress 4 <Name>
 	//  -- Start progress for some long process
 	//SetProgress 5 <Name>
-	//  -- Stop progress started with "3"
+	//  -- Stop progress started with "4"
 
 	switch (nState)
 	{
