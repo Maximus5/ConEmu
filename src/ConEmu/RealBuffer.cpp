@@ -3107,7 +3107,11 @@ bool CRealBuffer::PatchMouseCoords(int& x, int& y, COORD& crMouse)
 	}
 
 	// In mouse selection only
-	if (!(con.m_sel.dwFlags & CONSOLE_MOUSE_SELECTION))
+	if (!(con.m_sel.dwFlags & CONSOLE_MOUSE_SELECTION)
+		// And mouse button must be still pressed
+		|| !(con.m_sel.dwFlags & CONSOLE_MOUSE_DOWN)
+		// And VCon must be active
+		|| !mp_RCon->VCon()->isActive(false))
 	{
 		// No selection, mouse outside of VCon, skip this message!
 		DEBUGSTRMOUSE(L"!!! No mouse selection or mouse outside of VCon, message skipped !!!\n");
