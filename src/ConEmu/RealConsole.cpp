@@ -948,7 +948,7 @@ BOOL CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, const CESER
 	RECT rcWnd = mp_ConEmu->GetGuiClientRect();
 	TODO("DoubleView: ?");
 	mp_ConEmu->AutoSizeFont(rcWnd, CER_MAINCLIENT);
-	RECT rcCon = mp_ConEmu->CalcRect(CER_CONSOLE_CUR, rcWnd, CER_MAINCLIENT);
+	RECT rcCon = mp_ConEmu->CalcRect(CER_CONSOLE_CUR, rcWnd, CER_MAINCLIENT, mp_VCon);
 	// Скорректировать sbi на новый, который БУДЕТ установлен после отработки сервером аттача
 	lsbi.dwSize.X = rcCon.right;
 	lsbi.srWindow.Left = 0; lsbi.srWindow.Right = rcCon.right-1;
