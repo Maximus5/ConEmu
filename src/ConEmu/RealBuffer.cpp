@@ -1508,8 +1508,11 @@ wrap:
 
 	if (lbRc && ((size_t)(nNewWidth * nNewHeight) <= con.nConBufCells))
 	{
-		con.nCreatedBufWidth = nNewWidth;
-		con.nCreatedBufHeight = nNewHeight;
+		if ((con.nCreatedBufWidth != nNewWidth) || (con.nCreatedBufHeight != nNewHeight))
+		{
+			con.nCreatedBufWidth = nNewWidth;
+			con.nCreatedBufHeight = nNewHeight;
+		}
 	}
 
 	con.nTextWidth = nNewWidth;
