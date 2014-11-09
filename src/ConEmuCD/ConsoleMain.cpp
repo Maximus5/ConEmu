@@ -4729,16 +4729,16 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 				if ((nPopTextIdx <= 15) && (nPopBackIdx <= 15) && (nPopTextIdx != nPopBackIdx))
 					gnDefPopupColors = (WORD)(nPopTextIdx | (nPopBackIdx << 4));
 
+				HANDLE hConOut = ghConOut;
+				CONSOLE_SCREEN_BUFFER_INFO csbi5 = {};
+				GetConsoleScreenBufferInfo(hConOut, &csbi5);
+
 				if (gnDefTextColors || gnDefPopupColors)
 				{
-					HANDLE hConOut = ghConOut;
 					BOOL bPassed = FALSE;
 
 					if (gnDefPopupColors && (gnOsVer >= 0x600))
 					{
-						CONSOLE_SCREEN_BUFFER_INFO csbi0 = {};
-						GetConsoleScreenBufferInfo(hConOut, &csbi0);
-
 						MY_CONSOLE_SCREEN_BUFFER_INFOEX csbi = {sizeof(csbi)};
 						if (apiGetConsoleScreenBufferInfoEx(hConOut, &csbi))
 						{
@@ -7947,59 +7947,7 @@ BOOL cmd_SetConColors(CESERVER_REQ& in, CESERVER_REQ** out)
 		{
 			// Считать из консоли текущие атрибуты (построчно/поблочно)
 			// И там, где они совпадают с OldText - заменить на in.SetConColor.NewTextAttributes
-			DWORD nMaxLines = max(1,min((8000 / csbi5.dwSize.X),csbi5.dwSize.Y));
-			WORD* pnAttrs = (WORD*)malloc(nMaxLines*csbi5.dwSize.X*sizeof(*pnAttrs));
-			if (pnAttrs)
-			{
-				WORD NewText = in.SetConColor.NewTextAttributes;
-				COORD crRead = {0,0};
-				while (crRead.Y < csbi5.dwSize.Y)
-				{
-					DWORD nReadLn = min((int)nMaxLines,(csbi5.dwSize.Y-crRead.Y));
-					DWORD nReady = 0;
-					if (!ReadConsoleOutputAttribute(ghConOut, pnAttrs, nReadLn * csbi5.dwSize.X, crRead, &nReady))
-						break;
-
-					bool bStarted = false;
-					COORD crFrom = crRead;
-					//SHORT nLines = (SHORT)(nReady / csbi5.dwSize.X);
-					DWORD i = 0, iStarted = 0, iWritten;
-					while (i < nReady)
-					{
-						if ((pnAttrs[i] & 0xFF) == OldText)
-						{
-							if (!bStarted)
-							{
-								_ASSERT(crRead.X == 0);
-								crFrom.Y = (SHORT)(crRead.Y + (i / csbi5.dwSize.X));
-								crFrom.X = i % csbi5.dwSize.X;
-								iStarted = i;
-								bStarted = true;
-							}
-						}
-						else
-						{
-							if (bStarted)
-							{
-								bStarted = false;
-								if (iStarted < i)
-									FillConsoleOutputAttribute(ghConOut, NewText, i - iStarted, crFrom, &iWritten);
-							}
-						}
-						// Next cell checking
-						i++;
-					}
-					// Если хвост остался
-					if (bStarted && (iStarted < i))
-					{
-						FillConsoleOutputAttribute(ghConOut, NewText, i - iStarted, crFrom, &iWritten);
-					}
-
-					// Next block
-					crRead.Y += (USHORT)nReadLn;
-				}
-				free(pnAttrs);
-			}
+			RefillConsoleAttributes(csbi5, OldText, in.SetConColor.NewTextAttributes);
 		}
 
 		(*out)->SetConColor.ReFillConsole = bOk;
@@ -9301,6 +9249,69 @@ static bool ApplyConsoleSizeBuffer(const USHORT BufferHeight, const COORD& crNew
 	}
 
 	return false;
+}
+
+
+void RefillConsoleAttributes(const CONSOLE_SCREEN_BUFFER_INFO& csbi5, WORD OldText, WORD NewText)
+{
+	// Считать из консоли текущие атрибуты (построчно/поблочно)
+	// И там, где они совпадают с OldText - заменить на in.SetConColor.NewTextAttributes
+	DWORD nMaxLines = max(1,min((8000 / csbi5.dwSize.X),csbi5.dwSize.Y));
+	WORD* pnAttrs = (WORD*)malloc(nMaxLines*csbi5.dwSize.X*sizeof(*pnAttrs));
+	if (!pnAttrs)
+	{
+		// Memory allocation error
+		return;
+	}
+
+	COORD crRead = {0,0};
+	while (crRead.Y < csbi5.dwSize.Y)
+	{
+		DWORD nReadLn = min((int)nMaxLines,(csbi5.dwSize.Y-crRead.Y));
+		DWORD nReady = 0;
+		if (!ReadConsoleOutputAttribute(ghConOut, pnAttrs, nReadLn * csbi5.dwSize.X, crRead, &nReady))
+			break;
+
+		bool bStarted = false;
+		COORD crFrom = crRead;
+		//SHORT nLines = (SHORT)(nReady / csbi5.dwSize.X);
+		DWORD i = 0, iStarted = 0, iWritten;
+		while (i < nReady)
+		{
+			if ((pnAttrs[i] & 0xFF) == OldText)
+			{
+				if (!bStarted)
+				{
+					_ASSERT(crRead.X == 0);
+					crFrom.Y = (SHORT)(crRead.Y + (i / csbi5.dwSize.X));
+					crFrom.X = i % csbi5.dwSize.X;
+					iStarted = i;
+					bStarted = true;
+				}
+			}
+			else
+			{
+				if (bStarted)
+				{
+					bStarted = false;
+					if (iStarted < i)
+						FillConsoleOutputAttribute(ghConOut, NewText, i - iStarted, crFrom, &iWritten);
+				}
+			}
+			// Next cell checking
+			i++;
+		}
+		// Если хвост остался
+		if (bStarted && (iStarted < i))
+		{
+			FillConsoleOutputAttribute(ghConOut, NewText, i - iStarted, crFrom, &iWritten);
+		}
+
+		// Next block
+		crRead.Y += (USHORT)nReadLn;
+	}
+
+	free(pnAttrs);
 }
 
 
