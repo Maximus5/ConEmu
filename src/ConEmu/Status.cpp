@@ -105,10 +105,6 @@ static StatusColInfo gStatusCols[] =
 						L"Scroll Lock state",
 						L"Scroll Lock state, left click to change"},
 
-	{csi_ViewLock,		L"StatusBar.Hide.VisL",
-						L"Visible region lock",
-						gsViewLock},
-
 	{csi_KeyHooks,		L"StatusBar.Hide.KeyHooks",
 						L"Keyboard hooks",
 						L"Install keyboard hooks status"},
@@ -146,6 +142,10 @@ static StatusColInfo gStatusCols[] =
 	{csi_HwndFocus,		L"StatusBar.Hide.hFocus",
 						L"Focus HWND",
 						L"Focus HWND"},
+
+	{csi_ViewLock,		L"StatusBar.Hide.VisL",
+						L"Visible region lock",
+						gsViewLock},
 
 	{csi_ActiveBuffer,	L"StatusBar.Hide.ABuf",
 						L"Active console buffer",
