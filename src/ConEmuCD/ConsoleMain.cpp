@@ -5731,6 +5731,7 @@ void SendStarted()
 		}
 		pIn->StartStop.hWnd = ghConWnd;
 		pIn->StartStop.dwPID = gnSelfPID;
+		pIn->StartStop.dwAID = gpSrv->dwGuiAID;
 		#ifdef _WIN64
 		pIn->StartStop.nImageBits = 64;
 		#else

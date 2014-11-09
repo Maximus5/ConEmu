@@ -524,8 +524,13 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 		{
 			CRealServer* pRSrv = NULL;
 			CVConGuard VCon;
-			if (CVConGroup::GetVConBySrvPID(pIn->hdr.nSrcPID, &VCon))
+
+			DWORD nSrvPID = pIn->hdr.nSrcPID;
+			DWORD nMonitorTID = (pIn->DataSize() >= sizeof(pIn->StartStop)) ? pIn->StartStop.dwAID : 0;
+
+			if (CVConGroup::GetVConBySrvPID(nSrvPID, nMonitorTID, &VCon))
 				pRSrv = &VCon->RCon()->m_RConServer;
+
 			if (pRSrv)
 			{
 				CESERVER_REQ* pOut = pRSrv->cmdStartStop(pInst, pIn, pIn->DataSize());

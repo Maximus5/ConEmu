@@ -6405,6 +6405,9 @@ DWORD CRealConsole::GetServerPID(bool bMainOnly /*= false*/)
 	if (!this)
 		return 0;
 
+	#if 0
+	// During multiple tabs/splits initialization we may get bunch
+	// of RCon-s with mb_InCreateRoot but empty mn_MainSrv_PID
 	if (mb_InCreateRoot && !mn_MainSrv_PID)
 	{
 		_ASSERTE(!mb_InCreateRoot || mn_MainSrv_PID);
@@ -6414,6 +6417,7 @@ DWORD CRealConsole::GetServerPID(bool bMainOnly /*= false*/)
 		//	WaitForSingleObject(mh_CreateRootEvent, 30000); -- низя - DeadLock
 		//}
 	}
+	#endif
 
 	return (mn_AltSrv_PID && !bMainOnly) ? mn_AltSrv_PID : mn_MainSrv_PID;
 }

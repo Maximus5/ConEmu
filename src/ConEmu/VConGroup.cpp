@@ -3599,24 +3599,45 @@ CRealConsole* CVConGroup::AttachRequestedGui(DWORD anServerPID, LPCWSTR asAppFil
 	return pRCon;
 }
 
-bool CVConGroup::GetVConBySrvPID(DWORD anServerPID, CVConGuard* pVCon)
+bool CVConGroup::GetVConBySrvPID(DWORD anServerPID, DWORD anMonitorTID, CVConGuard* pVCon)
 {
 	bool bFound = false;
 	CRealConsole* pRCon;
+	DWORD nStartTick = GetTickCount(), nDelta = 0;
+	const DWORD nDeltaMax = 2500;
 
-	for (size_t i = 0; i < countof(gp_VCon); i++)
+	while (!bFound && (nDelta <= nDeltaMax))
 	{
-		CVConGuard VCon(gp_VCon[i]);
-		if (VCon.VCon() && (pRCon = VCon->RCon()) != NULL)
+		LONG nInCreate = 0;
+		CVConGuard VCon;
+
+		for (size_t i = 0; i < countof(gp_VCon); i++)
 		{
-			if (pRCon->GetServerPID() == anServerPID)
+			if (VCon.Attach(gp_VCon[i]) && (pRCon = VCon->RCon()) != NULL)
 			{
-				if (pVCon)
-					pVCon->Attach(VCon.VCon());
-				bFound = true;
+				if ((anMonitorTID && (pRCon->GetMonitorThreadID() == anMonitorTID))
+					|| (anServerPID && (pRCon->GetServerPID() == anServerPID)))
+				{
+					if (pVCon)
+						pVCon->Attach(VCon.VCon());
+					bFound = true;
+					break;
+				}
+				else if (pRCon->InCreateRoot())
+				{
+					nInCreate++;
+				}
 			}
 		}
+
+		if (bFound || !nInCreate)
+			break;
+
+		Sleep(100);
+		nDelta = GetTickCount() - nStartTick;
 	}
+
+	Assert(bFound && "Appropriate RCon was not found");
 
 	return bFound;
 }
