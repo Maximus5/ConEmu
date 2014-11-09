@@ -4789,6 +4789,7 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 					if (!bPassed && gnDefTextColors)
 					{
 						SetConsoleTextAttribute(hConOut, gnDefTextColors);
+						RefillConsoleAttributes(csbi5, csbi5.wAttributes, gnDefTextColors);
 					}
 				}
 			}
