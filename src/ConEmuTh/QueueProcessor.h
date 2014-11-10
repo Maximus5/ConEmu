@@ -277,6 +277,7 @@ class CQueueProcessor
 			mh_Queue = NULL; mn_QueueId = 0;
 			mp_Active = mp_SynchRequest = NULL;
 			mh_Alive = NULL; mn_AliveTick = NULL;
+			mb_TerminateRequested = false;
 		};
 		~CQueueProcessor()
 		{
