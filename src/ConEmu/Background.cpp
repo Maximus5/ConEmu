@@ -1238,6 +1238,7 @@ bool CBackgroundInfo::LoadBackgroundFile(bool abShowErrors)
 		}
 
 		pBkImgData = LoadImageEx(exPath, inf);
+		SafeFree(exPath);
 	}
 
 	if (pBkImgData)
