@@ -3561,6 +3561,7 @@ void CSetDlgButtons::OnBtn_ColorSchemeSaveDelete(HWND hDlg, WORD CB, BYTE uCheck
 	SetWindowLongPtr(hCB, GWL_STYLE, GetWindowLongPtr(hCB, GWL_STYLE) & ~BS_DEFPUSHBUTTON);
 	// Перетряхнуть
 	gpSetCls->OnInitDialog_Color(hDlg, false);
+	SafeFree(pszName);
 
 } // cbColorSchemeSave || cbColorSchemeDelete
 
