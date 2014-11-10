@@ -3545,7 +3545,7 @@ int DoParseArgs(LPCWSTR asCmdLine)
 	_printf("Standard shell splitter\n");
 	for (int j = 0; j < iShellCount; j++)
 	{
-		printf("%u: `", j);
+		_printf("%u: `", j);
 		_wprintf(ppszShl[j]);
 		_printf("`\n");
 	}
