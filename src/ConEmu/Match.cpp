@@ -62,6 +62,9 @@ const wchar_t gszBreak[] = {
 #undef MATCH_SPACINGS
 #define MATCH_SPACINGS L" \t\xB6\xB7\x2192\x25A1\x25D9\x266A"
 const wchar_t gszSpacing[] = MATCH_SPACINGS; // Пробел, таб, остальные для режима "Show white spaces" в редакторе фара
+// more quotation marks
+const wchar_t gszQuotStart[] = L"‘«`\'";
+const wchar_t gszQuotEnd[] = L"’»`\'";
 
 CMatch::CMatch(CRealConsole* apRCon)
 	:m_Type(etr_None)
@@ -661,6 +664,8 @@ bool CMatch::MatchAny()
 	} iExtFound = ef_NotFound;
 	int iBracket = 0;
 	int iSpaces = 0;
+	int iQuotStart = -1;
+	const wchar_t* pszTest;
 
 	mn_MatchLeft = mn_MatchRight = mn_SrcFrom;
 
@@ -700,6 +705,12 @@ bool CMatch::MatchAny()
 				goto wrap;
 			}
 		}
+	}
+
+	// Starts with quotation?
+	if ((pszTest = wcschr(gszQuotStart, m_SrcLine.ms_Arg[mn_MatchLeft])) != NULL)
+	{
+		iQuotStart = (int)(pszTest - gszQuotStart);
 	}
 
 	// Чтобы корректно флаги обработались (типа наличие расширения и т.п.)
@@ -775,6 +786,13 @@ bool CMatch::MatchAny()
 				{
 					bLineNumberFound = true;
 				}
+				// Skip leading quotation mark?
+				else if ((iQuotStart >= 0)
+					&& IsValidFile(m_SrcLine.ms_Arg+mn_MatchLeft+1, mn_MatchRight - mn_MatchLeft - 2, pszBreak, pszSpacing, nNakedFileLen))
+				{
+					mn_MatchLeft++;
+					bLineNumberFound = true;
+				}
 			}
 		}
 		else if (bWasSeparator && bLineNumberFound
@@ -836,6 +854,17 @@ bool CMatch::MatchAny()
 				else
 				{
 					bWasSeparator = (wcschr(pszSeparat, m_SrcLine.ms_Arg[mn_MatchRight]) != NULL);
+				}
+			}
+
+			if ((iQuotStart >= 0) && (m_SrcLine.ms_Arg[mn_MatchRight] == gszQuotEnd[iQuotStart]))
+			{
+				if (IsValidFile(m_SrcLine.ms_Arg+mn_MatchLeft+1, mn_MatchRight - mn_MatchLeft - 1, pszBreak, pszSpacing, nNakedFileLen))
+				{
+					bNakedFile = true;
+					mn_MatchLeft++;
+					mn_MatchRight--;
+					break;
 				}
 			}
 
