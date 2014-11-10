@@ -217,7 +217,7 @@ void DoDllStop(bool bFinal, bool bFromTerminate = false);
 #endif
 
 #ifdef USEHOOKLOG
-	#ifndef __GNUC__
+	#if !defined(__GNUC__) || defined(__MINGW64_VERSION_MAJOR)
 	#include <intrin.h>
 	#else
 	#define _InterlockedIncrement InterlockedIncrement

@@ -143,7 +143,7 @@ MConHandle::MConHandle(LPCWSTR asName)
 	//}
 };
 
-#ifndef __GNUC__
+#if !defined(__GNUC__) || defined(__MINGW64_VERSION_MAJOR)
 #include <intrin.h>
 #else
 #define _InterlockedIncrement InterlockedIncrement
