@@ -3367,7 +3367,7 @@ void CVConGroup::MoveActiveTab(CVirtualConsole* apVCon, bool bLeftward)
 			}
 			else
 			{
-				if ((i < (countof(gp_VCon))) && gp_VCon[i+1])
+				if ((i < (countof(gp_VCon)-1)) && gp_VCon[i+1])
 				{
 					CVirtualConsole* p = gp_VCon[i+1];
 					gp_VCon[i+1] = gp_VCon[i];
