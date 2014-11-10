@@ -396,8 +396,16 @@ void CMatch::StoreMatchText(LPCWSTR asPrefix, LPCWSTR pszTrimRight)
 
 bool CMatch::IsValidFile(LPCWSTR asFrom, int anLen, LPCWSTR pszInvalidChars, LPCWSTR pszSpacing, int& rnLen)
 {
-	while ((anLen > 0) && (wcschr(pszSpacing, asFrom[anLen-1]) || wcschr(pszInvalidChars, asFrom[anLen-1])))
-		anLen--;
+	while (anLen > 0)
+	{
+		wchar_t wc = asFrom[anLen-1];
+		if (wcschr(pszSpacing, asFrom[anLen-1])
+			|| wcschr(pszInvalidChars, asFrom[anLen-1])
+			)
+			anLen--;
+		else
+			break;
+	}
 
 	LPCWSTR pszFile, pszBadChar;
 
