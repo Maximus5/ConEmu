@@ -6428,27 +6428,6 @@ LRESULT CConEmuMain::OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate)
 		return -1;
 	}
 
-	//HMENU hwndMain = GetSysMenu(ghWnd, FALSE), hDebug = NULL;
-	//InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_TOMONITOR, _T("Bring &here"));
-	//InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_TOTRAY, TRAY_ITEM_HIDE_NAME/* L"Hide to &TSA" */);
-	//InsertMenu(hwndMain, 0, MF_BYPOSITION, MF_SEPARATOR, 0);
-	//InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_ABOUT, _T("&About / Help"));
-
-	//if (ms_ConEmuChm[0])  //Показывать пункт только если есть conemu.chm
-	//	InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_HELP, _T("&Help"));
-
-	//InsertMenu(hwndMain, 0, MF_BYPOSITION, MF_SEPARATOR, 0);
-	//hDebug = CreateDebugMenuPopup();
-	//InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_POPUP | MF_ENABLED, (UINT_PTR)hDebug, _T("&Debug"));
-	//PopulateEditMenuPopup(hwndMain);
-	//InsertMenu(hwndMain, 0, MF_BYPOSITION, MF_SEPARATOR, 0);
-	//InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED | (gpSet->isAlwaysOnTop ? MF_CHECKED : 0),
-	//           ID_ALWAYSONTOP, _T("Al&ways on top"));
-	//InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED | (gpSetCls->AutoScroll ? MF_CHECKED : 0),
-	//           ID_AUTOSCROLL, _T("Auto scro&ll"));
-	//InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_SETTINGS, _T("S&ettings..."));
-	//InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_NEWCONSOLE, _T("&New console..."));
-
 #ifdef _DEBUG
 	dwStyle = GetWindowLong(ghWnd, GWL_STYLE);
 #endif

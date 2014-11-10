@@ -1467,7 +1467,7 @@ void CConEmuMenu::ShowMenuHint(LPCWSTR pszText, POINT* ppt)
 
 void CConEmuMenu::ShowMenuHint(HMENU hMenu, WORD nID, WORD nFlags)
 {
-	if (nID && (nID != MF_SEPARATOR) && !(nFlags & MF_POPUP))
+	if (nID && !(nFlags & MF_POPUP))
 	{
 		//POINT pt; GetCursorPos(&pt);
 		RECT rcMenuItem = {};
@@ -1501,7 +1501,7 @@ void CConEmuMenu::ShowMenuHint(HMENU hMenu, WORD nID, WORD nFlags)
 
 void CConEmuMenu::ShowKeyBarHint(HMENU hMenu, WORD nID, WORD nFlags)
 {
-	if (nID && (nID != MF_SEPARATOR) && !(nFlags & MF_POPUP))
+	if (nID && !(nFlags & MF_POPUP))
 	{
 		CVConGuard VCon;
 		CVirtualConsole* pVCon = (CVConGroup::GetActiveVCon(&VCon) >= 0) ? VCon.VCon() : NULL;

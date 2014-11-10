@@ -1580,7 +1580,7 @@ LRESULT CSettings::OnInitDialog()
 	RegisterTipsFor(ghOpWnd);
 
 	HMENU hSysMenu = GetSystemMenu(ghOpWnd, FALSE);
-	InsertMenu(hSysMenu, 0, MF_BYPOSITION, MF_SEPARATOR, 0);
+	InsertMenu(hSysMenu, 0, MF_BYPOSITION | MF_SEPARATOR, 0, 0);
 	InsertMenu(hSysMenu, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED
 	           | ((GetWindowLong(ghOpWnd,GWL_EXSTYLE)&WS_EX_TOPMOST) ? MF_CHECKED : 0),
 	           ID_ALWAYSONTOP, _T("Al&ways on top..."));

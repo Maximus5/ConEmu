@@ -161,7 +161,7 @@ INT_PTR CRecreateDlg::OnInitDialog(HWND hDlg, UINT messg, WPARAM wParam, LPARAM 
 
 	// Add menu items
 	HMENU hSysMenu = GetSystemMenu(hDlg, FALSE);
-	InsertMenu(hSysMenu, 0, MF_BYPOSITION, MF_SEPARATOR, 0);
+	InsertMenu(hSysMenu, 0, MF_BYPOSITION | MF_SEPARATOR, 0, 0);
 	InsertMenu(hSysMenu, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED,
 				ID_RESETCMDHISTORY, L"Clear history...");
 	InsertMenu(hSysMenu, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED
