@@ -6975,6 +6975,7 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 				if (!CreateConGroup(pszDataW, FALSE, NULL/*ignored when 'args' specified*/, &args))
 				{
 					Destroy();
+					SafeFree(pszDataW);
 					return;
 				}
 
