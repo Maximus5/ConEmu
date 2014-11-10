@@ -2009,7 +2009,7 @@ HMENU CConEmuMenu::CreateHelpMenuPopup()
 	}
 
 	AppendMenu(hHelp, MF_STRING|MF_ENABLED, ID_HOMEPAGE, _T("&Visit home page"));
-	AppendMenu(hHelp, MF_STRING|MF_ENABLED, ID_DONATE_LINK, _T("&Donate (PayPal)"));
+	AppendMenu(hHelp, MF_STRING|MF_ENABLED, ID_DONATE_LINK, _T("&Donate ConEmu"));
 
 	AppendMenu(hHelp, MF_STRING|MF_ENABLED, ID_WHATS_NEW_FILE, _T("Whats &new (local)"));
 	AppendMenu(hHelp, MF_STRING|MF_ENABLED, ID_WHATS_NEW_WWW, _T("Whats new (&web)"));

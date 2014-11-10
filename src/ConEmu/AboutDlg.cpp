@@ -420,10 +420,7 @@ void ConEmuAbout::OnInfo_Donate()
 {
 	int nBtn = MsgBox(
 		L"You can show your appreciation and support future development by donating.\n\n"
-		L"Open PayPal website?"
-		//L"Donate (PayPal) button located on project website\r\n"
-		//L"under ConEmu sketch (upper right of page).\r\n\r\n"
-		//L"Open project website?"
+		L"Open ConEmu's donate web page?"
 		,MB_YESNO|MB_ICONINFORMATION);
 
 	if (nBtn == IDYES)
@@ -746,8 +743,6 @@ void ConEmuAbout::DonateBtns_Add(HWND hDlg, int AlignLeftId, int AlignVCenterId)
 
 bool ConEmuAbout::DonateBtns_Process(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam, INT_PTR& lResult)
 {
-	size_t iBtnIdx;
-
 	switch (messg)
 	{
 	case WM_SETCURSOR:
@@ -783,15 +778,21 @@ bool ConEmuAbout::DonateBtns_Process(HWND hDlg, UINT messg, WPARAM wParam, LPARA
 		{
 		case pLinkDonate:
 		case pLinkFlattr:
-			iBtnIdx = (LOWORD(wParam) == pLinkDonate)?0:1;
-			if (m_Btns[iBtnIdx].pImg)
+			for (int iBtnIdx = 0; iBtnIdx < countof(m_Btns); iBtnIdx++)
 			{
-				DRAWITEMSTRUCT* p = (DRAWITEMSTRUCT*)lParam;
-				bool bRc = m_Btns[iBtnIdx].pImg->PaintButton(-1, p->hDC, p->rcItem.left, p->rcItem.top, p->rcItem.right-p->rcItem.left, p->rcItem.bottom-p->rcItem.top);
-				if (bRc)
+				if (m_Btns[iBtnIdx].nCtrlId == LOWORD(wParam))
 				{
-					lResult = TRUE;
-					return true;
+					if (m_Btns[iBtnIdx].pImg)
+					{
+						DRAWITEMSTRUCT* p = (DRAWITEMSTRUCT*)lParam;
+						bool bRc = m_Btns[iBtnIdx].pImg->PaintButton(-1, p->hDC, p->rcItem.left, p->rcItem.top, p->rcItem.right-p->rcItem.left, p->rcItem.bottom-p->rcItem.top);
+						if (bRc)
+						{
+							lResult = TRUE;
+							return true;
+						}
+					}
+					break;
 				}
 			}
 			break;

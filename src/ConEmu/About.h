@@ -175,7 +175,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"Online documentation: http://code.google.com/p/conemu-maximus5/wiki/ConEmu\r\n" \
 	L"\r\n" \
 	L"You can show your appreciation and support future development by donating. " \
-	L"Donate (PayPal) button located on project website " \
+	L"Donate button located on project website " \
 	L"under ConEmu sketch (upper right of page)."
 
 
