@@ -279,7 +279,7 @@ class CQueueProcessor
 			mh_Alive = NULL; mn_AliveTick = NULL;
 			mb_TerminateRequested = false;
 		};
-		~CQueueProcessor()
+		virtual ~CQueueProcessor()
 		{
 			Terminate(250);
 
