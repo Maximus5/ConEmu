@@ -1354,8 +1354,8 @@ BOOL CreateProcessDemoted(LPCWSTR lpApplicationName, LPWSTR lpCommandLine,
 	HWND hCreated = NULL;
 
 
-	// Really working method: Run cmd-line via task sheduler
-	// But there is one caveat: Task sheduler may be disable on PC!
+	// Really working method: Run cmd-line via task scheduler
+	// But there is one caveat: Task scheduler may be disable on PC!
 
 	wchar_t szUniqTaskName[128];
 	wchar_t szVer4[8] = L""; lstrcpyn(szVer4, _T(MVV_4a), countof(szVer4));
@@ -2593,7 +2593,7 @@ BOOL PrepareCommandLine(TCHAR*& cmdLine, TCHAR*& cmdNew, bool& isScript, uint& p
 
 		if (!pszNext)
 		{
-			MBoxA(L"Invalid command line: quates are not balanced");
+			MBoxA(L"Invalid command line: quotes are not balanced");
 			return FALSE;
 		}
 
@@ -2703,7 +2703,7 @@ void ResetConman()
 	DWORD dw = 0;
 
 	// 24.09.2010 Maks - Только если ключ конмана уже создан!
-	// сбрость CreateInNewEnvironment для ConMan
+	// сбросить CreateInNewEnvironment для ConMan
 	//if (0 == RegCreateKeyEx(HKEY_CURRENT_USER, _T("Software\\HoopoePG_2x"),
 	//        NULL, NULL, NULL, KEY_ALL_ACCESS, NULL, &hk, &dw))
 	if (0 == RegOpenKeyEx(HKEY_CURRENT_USER, _T("Software\\HoopoePG_2x"), 0, KEY_ALL_ACCESS, &hk))
