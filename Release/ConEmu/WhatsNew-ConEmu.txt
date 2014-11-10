@@ -12,6 +12,17 @@ Votes and awards (vote for ConEmu, if you please)
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+2014.11.10
+[*] Issue 1802: GuiMacro: Add ‘Pause’ ability. When you press ‘Pause’ RCon is forced into
+    ‘internal selection’ state which cause pausing of most console writing applications.
+[*] StatusBar text color was broken after ‘Visible region lock’.
+[*] Old ‘PicViewSlide’ hotkeys were removed.
+[*] Donate link was changed.
+[*] FileLineDetector: Fix broken "file.cpp(123) : error...".
+[*] FileLineDetector: Support quotation trimming.
+[*] Fix warnings and typos (from Michael Lukashov).
+
+
 2014.11.09
 [*] Issue 1801: FileLineDetector: In addition to a/ b/ support i/ c/ w/ o/ also.
 [*] Move StatusBar's ‘Visible region lock’ column near to ‘Active console buffer’.
