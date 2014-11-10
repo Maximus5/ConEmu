@@ -47,7 +47,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define MCHKHEAP PRAGMA_ERROR("Restricted in ConEmuHk")
 #endif
 
-#ifdef __GNUC__
+#if defined(__GNUC__) && !defined(__MINGW64_VERSION_MAJOR)
 #define SecureZeroMemory(p,s) memset(p,0,s)
 #endif
 
