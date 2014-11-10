@@ -3088,6 +3088,7 @@ bool CConEmuMain::CreateWnd(RConStartArgs *args)
 		}
 	}
 
+	SafeFree(pszCmdLine);
 	return (bStart != FALSE);
 }
 
