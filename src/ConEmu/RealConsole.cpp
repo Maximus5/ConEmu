@@ -1170,6 +1170,7 @@ bool CRealConsole::PostPromptCmd(bool CD, LPCWSTR asCmd)
 				*(pszDst++) = 0;
 
 				PostMacro(pszMacro, TRUE/*async*/);
+				SafeFree(pszMacro);
 			}
 		}
 		else
