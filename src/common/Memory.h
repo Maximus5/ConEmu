@@ -120,6 +120,7 @@ void SafeDelete(T*& p)
 template <class T>
 void SafeDelete(T*& p)
 {
+	if (!p) return;
 	T* ps = p;
 	p = NULL;
 	delete ps;
