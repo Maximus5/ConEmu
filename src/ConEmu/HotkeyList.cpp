@@ -294,12 +294,14 @@ int ConEmuHotKeyList::AllocateHotkeys()
 	/*
 			Some internal keys for Far Manager PicView plugin
 	*/
+	#if 0
 	Add(vkPicViewSlide,   chk_User,  NULL,    L"Key.PicViewSlide",      CConEmuCtrl::key_PicViewSlideshow, true/*OnKeyUp*/) // Slideshow in PicView2
 		->SetHotKey(VK_PAUSE);
 	Add(vkPicViewSlower,  chk_User,  NULL,    L"Key.PicViewSlower",     CConEmuCtrl::key_PicViewSlideshow) // Slideshow in PicView2
 		->SetHotKey(0xbd/* -_ */);
 	Add(vkPicViewFaster,  chk_User,  NULL,    L"Key.PicViewFaster",     CConEmuCtrl::key_PicViewSlideshow) // Slideshow in PicView2
 		->SetHotKey(0xbb/* =+ */);
+	#endif
 	/*
 			Usability
 	*/
