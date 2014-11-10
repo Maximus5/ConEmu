@@ -104,7 +104,11 @@ void MyAssertDumpToFile(const wchar_t* pszFile, int nLine, const wchar_t* pszTes
 {
 	wchar_t dmpfile[MAX_PATH+64] = L"", szVer4[8] = L"", szLine[64];
 
-	HRESULT hrc = SHGetFolderPath(NULL, CSIDL_DESKTOPDIRECTORY, NULL, 0/*SHGFP_TYPE_CURRENT*/, dmpfile);
+	typedef HRESULT (WINAPI* SHGetFolderPath_t)(HWND hwnd, int csidl, HANDLE hToken, DWORD dwFlags, LPWSTR pszPath);
+	HMODULE hShell = LoadLibrary(L"shell32.dll");
+	SHGetFolderPath_t shGetFolderPath = hShell ? (SHGetFolderPath_t)GetProcAddress(hShell, "SHGetFolderPathW") : NULL;
+	HRESULT hrc = shGetFolderPath ? shGetFolderPath(NULL, CSIDL_DESKTOPDIRECTORY, NULL, 0/*SHGFP_TYPE_CURRENT*/, dmpfile) : E_FAIL;
+	if (hShell) FreeLibrary(hShell);
 	if (FAILED(hrc))
 	{
 		memset(dmpfile, 0, sizeof(dmpfile));
