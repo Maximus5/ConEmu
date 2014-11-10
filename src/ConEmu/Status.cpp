@@ -846,7 +846,7 @@ void CStatus::PaintStatus(HDC hPaint, LPRECT prcStatus /*= NULL*/)
 				SetTextColor(hDrawDC, mb_KeyHooks ? crText : crDash);
 				break;
 			default:
-				;
+				SetTextColor(hDrawDC, crText);
 			}
 
 			int iTopPad = (gpSet->isStatusBarFlags & csf_HorzDelim) ? 1 : 0;
@@ -863,7 +863,7 @@ void CStatus::PaintStatus(HDC hPaint, LPRECT prcStatus /*= NULL*/)
 					FillRect(hDrawDC, &rcText, hBr);
 
 					SelectObject(hDrawDC, hFont);
-					SetTextColor(hDrawDC, crText);
+					//SetTextColor(hDrawDC, crText);
 					SetBkColor(hDrawDC, crBack);
 					SetBkMode(hDrawDC, OPAQUE);
 				}
@@ -893,19 +893,6 @@ void CStatus::PaintStatus(HDC hPaint, LPRECT prcStatus /*= NULL*/)
 				}
 			}
 			#endif
-
-			switch (m_Items[i].nID)
-			{
-			case csi_SyncInside:
-			case csi_CapsLock:
-			case csi_NumLock:
-			case csi_ScrollLock:
-			case csi_KeyHooks:
-				SetTextColor(hDrawDC, crText);
-				break;
-			default:
-				;
-			}
 
 			if ((gpSet->isStatusBarFlags & csf_VertDelim) && ((i+1) < nDrawCount))
 			{
