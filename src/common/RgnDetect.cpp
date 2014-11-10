@@ -2559,6 +2559,7 @@ CRgnRects::CRgnRects()
 	nRgnState = NULLREGION;
 	nFieldMaxCells = nFieldWidth = nFieldHeight = 0;
 	pFieldCells = NULL;
+	memset(rcRect, 0, sizeof(rcRect));
 }
 
 CRgnRects::~CRgnRects()
