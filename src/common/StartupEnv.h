@@ -204,6 +204,7 @@ protected:
 
 		SafeFree(pszEnvPathStore);
 		SafeFree(pszExecMod);
+		SafeFree(pszWorkDir);
 
 		return (pEnv != NULL && ptrEnd != NULL);
 	}
