@@ -1154,7 +1154,7 @@ HRESULT CDragDrop::DropLinks(HDROP hDrop, int iQuantity, BOOL abActive)
 	INT_PTR nToLen = _tcslen(pszTo);
 	HRESULT hr = S_OK;
 
-	for(int i = 0 ; i < iQuantity; i++)
+	for (int i = 0 ; i < iQuantity; i++)
 	{
 		int nLen = DragQueryFile(hDrop, i, curr, MAX_DROP_PATH);
 
@@ -1311,22 +1311,25 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop(IDataObject* pDataObject, DWORD grfKey
 
 	DebugLog(_T("DnD: Drop starting"));
 
+	// Вставка в консоль путей/имен файлов (для фара опционально goto:, edit:, view:)
 	if (lbDropFileNamesOnly)
 	{
 		hr = DropNames(hDrop, iQuantity, lbActive);
 		ReleaseStgMedium(&stgMedium);
-		return hr;
 	}
-
 	// Если создавать линки - делаем сразу и выходим
-	if (*pdwEffect == DROPEFFECT_LINK)
+	else if (*pdwEffect == DROPEFFECT_LINK)
 	{
 		hr = DropLinks(hDrop, iQuantity, lbActive);
 		ReleaseStgMedium(&stgMedium);
-		return hr;
+	}
+	// Значит надо копировать файлы, используем SHFileOperation
+	else
+	{
+		hr = DropShellOp(pDataObject, pdwEffect, stgMedium, lbActive, iQuantity);
 	}
 
-	return DropShellOp(pDataObject, pdwEffect, stgMedium, lbActive, iQuantity);
+	return hr;
 }
 
 HRESULT CDragDrop::DropShellOp(IDataObject* pDataObject, DWORD* pdwEffect, STGMEDIUM& stgMedium, BOOL abActive, int iQuantity)
