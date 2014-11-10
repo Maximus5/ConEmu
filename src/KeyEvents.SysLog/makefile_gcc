@@ -18,7 +18,7 @@ NOSTART =
 NODEFLIBS = 
 
 
-CXX = g++
+CXX = $(CROSS_HOST)g++
 RM = rm -f
 RMDIR = rmdir
 CP = cp -f
@@ -26,7 +26,7 @@ M4 = tools/m4 -P -DFARBIT=$(DIRBIT)
 GAWK = tools/gawk
 MV = mv -f
 MKDIR = mkdir -p
-WINDRES = windres -D__FARBIT__=$(DIRBIT)
+WINDRES = $(CROSS_HOST)windres -D__FARBIT__=$(DIRBIT)
 DEFINES = -D FAR_ALPHA_VERSION -D UNICODE -D _UNICODE
 CXXFLAGS = $(ENCFLAGS) -mno-cygwin -pipe -Os $(DEFINES) -funsigned-char -fomit-frame-pointer -fno-exceptions -fno-rtti -Wall -Wno-missing-braces -Wno-unknown-pragmas -Wno-switch $(CXXWIDE)
 CFLAGS = -mno-cygwin -pipe -Os $(DEFINES) -funsigned-char -fomit-frame-pointer -fno-exceptions -Wall -Wno-missing-braces -Wno-unknown-pragmas -Wno-switch $(CCWIDE)

@@ -109,18 +109,18 @@ ifdef EXCLUDECRT
 COMMONLIB = 
 endif
 
-CXX = g++
-CC = gcc
-DLLTOOL = dlltool
+CXX = $(CROSS_HOST)g++
+CC = $(CROSS_HOST)gcc
+DLLTOOL = $(CROSS_HOST)dlltool
 RM = rm -f
 RMDIR = rmdir
 CP = cp -f
 M4 = m4 -P
 MV = mv -f
 MKDIR = mkdir -p
-WINDRES = windres
-AR = ar
-RANLIB = ranlib
+WINDRES = $(CROSS_HOST)windres
+AR = $(CROSS_HOST)ar
+RANLIB = $(CROSS_HOST)ranlib
 CXXFLAGS = $(ENCFLAGS) -I $(COMMON) -I $(COMINC) -Wall -Os -funsigned-char -fomit-frame-pointer -fstrict-aliasing -fno-rtti -fno-exceptions $(CXXWIDE) $(USERCPP) $(WINVER)
 CCFLAGS = -I $(COMMON) -I $(COMINC) -Wall -Os -funsigned-char -fomit-frame-pointer -fstrict-aliasing -fno-exceptions $(CCWIDE) $(USERCPP) $(WINVER)
 LNKFLAGS = -mdll -s -lgcc $(USERLIBSFIRST) $(COMMONLIB) -luser32 -lkernel32 -ladvapi32 -lshell32 $(USERLIBS)
