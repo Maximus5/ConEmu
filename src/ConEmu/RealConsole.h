@@ -150,7 +150,7 @@ struct ConProcess
 	bool  IsMainSrv; // Root ConEmuC
 	bool  IsConHost; // conhost.exe (Win7 и выше)
 	bool  IsFar, IsFarPlugin;
-	bool  IsTelnet;  // может быть включен ВМЕСТЕ с IsFar, если удалось подцепится к фару через сетевой пайп
+	bool  IsTelnet;  // может быть включен ВМЕСТЕ с IsFar, если удалось подцепиться к фару через сетевой пайп
 	bool  IsNtvdm;   // 16bit приложения
 	bool  IsCmd;     // значит фар выполняет команду
 	bool  NameChecked, RetryName;
@@ -750,7 +750,7 @@ class CRealConsole
 		int mn_DefaultBufferHeight;
 		DWORD mn_LastInactiveRgnCheck;
 		#ifdef _DEBUG
-		BOOL mb_DebugLocked; // для отладки - заморозить все нити, чтобы не мешали отладчику, ставится по контектному меню
+		BOOL mb_DebugLocked; // для отладки - заморозить все нити, чтобы не мешали отладчику, ставится по контекстному меню
 		#endif
 
 

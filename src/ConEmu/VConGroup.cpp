@@ -3413,7 +3413,7 @@ int CVConGroup::GetConCount(bool bNoDetached /*= false*/)
 
 		if (bNoDetached)
 		{
-			_ASSERTE(isMainThread()); // чтобы не морочится с блокировками
+			_ASSERTE(isMainThread()); // чтобы не морочиться с блокировками
 			if (gp_VCon[i]->RCon()->isDetached())
 				continue;
 		}
@@ -4484,9 +4484,9 @@ RECT CVConGroup::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFr
 					{
 						COORD crMaxConSize = {0,0};
 
-						// Даже если открыто несколько паналей - не разрешим устанавливать
+						// Даже если открыто несколько панелей - не разрешим устанавливать
 						// в общей сложности больший размер, т.к. при закрытии одной панели
-						// консоль слелит (превысит максимально допустимый размер)
+						// консоль слетит (превысит максимально допустимый размер)
 						if (pRCon->GetMaxConSize(&crMaxConSize))
 						{
 							if (rc.right > crMaxConSize.X)
@@ -5339,7 +5339,7 @@ void CVConGroup::OnConsoleResize(bool abSizingToDo)
 		CVConGuard VCon(gp_VActive);
 		gpConEmu->AutoSizeFont(client, CER_MAINCLIENT);
 		RECT c = CalcRect(CER_CONSOLE_CUR, client, CER_MAINCLIENT, gp_VActive);
-		// чтобы не насиловать консоль лишний раз - реальное измененение ее размеров только
+		// чтобы не насиловать консоль лишний раз - реальное изменение ее размеров только
 		// при отпускании мышкой рамки окна
 		BOOL lbSizeChanged = FALSE;
 		int nCurConWidth = (int)gp_VActive->RCon()->TextWidth();

@@ -226,7 +226,7 @@ typedef struct _CONSOLE_SELECTION_INFO
 //#define CEHOOKDISABLEEVENT  L"ConEmuSkipHooks.%u"
 #define CEGHOSTSKIPACTIVATE L"ConEmuGhostActivate.%u"
 #define CECONEMUROOTPROCESS L"ConEmuRootProcess.%u" // Если Event взведен - значит это корневой процесс, облегченную версию хуков не использовать!
-#define CECONEMUROOTTHREAD  L"ConEmuRootThread.%u"  // Если Event взведен - ConEmuHk загружен в главной нити, гонять snapshoot в GetMainThreadId не требуется
+#define CECONEMUROOTTHREAD  L"ConEmuRootThread.%u"  // Если Event взведен - ConEmuHk загружен в главной нити, гонять snapshot в GetMainThreadId не требуется
 
 #define CESECURITYNAME       "ConEmuLocalData"
 
@@ -287,7 +287,7 @@ enum ConEmuWindowCommand
 	cwc_PrevMonitor = 9,  // Same as Win+Shift+Left in Win7
 	cwc_NextMonitor = 10, // Same as Win+Shift+Right in Win7
 	cwc_TileWidth   = 11, // Maximize width (no analogue yet)
-	// for comparision
+	// for comparison
 	cwc_LastCmd
 };
 
@@ -837,9 +837,9 @@ struct BkPanelInfo
 	BOOL bPlugin;    // Плагиновая панель
 	int  nPanelType; // enum PANELINFOTYPE
 	wchar_t *szCurDir/*[32768]*/;    // Текущая папка на панели
-	wchar_t *szFormat/*[MAX_PATH]*/; // Доступно только в FAR2, в FAR3 это может быть префикс, если "формат" плагином не опереден
+	wchar_t *szFormat/*[MAX_PATH]*/; // Доступно только в FAR2, в FAR3 это может быть префикс, если "формат" плагином не определен
 	wchar_t *szHostFile/*[32768]*/;  // Доступно только в FAR2
-	RECT rcPanelRect; // Консольные кооринаты панели. В FAR 2+ с ключом /w верх может быть != {0,0}
+	RECT rcPanelRect; // Консольные координаты панели. В FAR 2+ с ключом /w верх может быть != {0,0}
 };
 
 struct PaintBackgroundArg
@@ -875,13 +875,13 @@ struct PaintBackgroundArg
 
 
 	// Для облегчения жизни плагинам - текущие параметры FAR
-	RECT rcConWorkspace; // Кооринаты рабочей области FAR. В FAR 2 с ключом /w верх может быть != {0,0}
+	RECT rcConWorkspace; // Координаты рабочей области FAR. В FAR 2 с ключом /w верх может быть != {0,0}
 	COORD conCursor; // положение курсора, или {-1,-1} если он не видим
 	CEFarInterfaceSettings FarInterfaceSettings; // ACTL_GETINTERFACESETTINGS
 	CEFarPanelSettings FarPanelSettings; // ACTL_GETPANELSETTINGS
 	BYTE nFarColors[col_LastIndex]; // Массив цветов фара
 
-	// Инфорация о панелях
+	// Информация о панелях
 	BOOL bPanelsAllowed;
 	BkPanelInfo LeftPanel;
 	BkPanelInfo RightPanel;
@@ -990,7 +990,7 @@ struct ConEmuLoadedArg
 	int (WINAPI *ActivateConsole)();
 	// Synchronous execute CallBack in Far main thread (FAR2 use ACTL_SYNCHRO).
 	// SyncExecute does not returns, until CallBack finished.
-	// ahModule must be module handle, wich contains CallBack
+	// ahModule must be module handle, which contains CallBack
 	int (WINAPI *SyncExecute)(HMODULE ahModule, SyncExecuteCallback_t CallBack, LONG_PTR lParam);
 };
 
@@ -1070,7 +1070,7 @@ const ConEmuConsoleFlags
 
 	CECF_BlockChildDbg   = 0x00000040, // When ConEmuC tries to debug process tree - force disable DEBUG_PROCESS/DEBUG_ONLY_THIS_PROCESS flags when creating subchildren
 
-	CECF_SuppressBells   = 0x00000080, // Suppress output of char(7) to console (wich producess annoing bell sound)
+	CECF_SuppressBells   = 0x00000080, // Suppress output of char(7) to console (which produces annoying bell sound)
 
 	CECF_ConExcHandler   = 0x00000100, // Set up "SetUnhandledExceptionFilter(CreateDumpOnException)" in alternative servers too
 
@@ -1619,7 +1619,7 @@ struct CESERVER_REQ_STARTSTOP
 	BOOL  bUserIsAdmin;
 	BOOL  bMainServerClosing; // if (nStarted == sst_AltServerStop)
 	DWORD dwKeybLayout; // Только при запуске сервера
-	// А это приходит из консоли, вдруго консольная программа успела поменять размер буфера
+	// А это приходит из консоли, вдруг консольная программа успела поменять размер буфера
 	CONSOLE_SCREEN_BUFFER_INFO sbi;
 	// Максимальный размер консоли на текущем шрифте
 	COORD crMaxSize;
@@ -1980,7 +1980,7 @@ struct CESERVER_REQ_ALTBUFFER
 struct CESERVER_REQ_SETCONSCRBUF
 {
 	HANDLE2 hRequestor; // HANDLE of requesting thread
-	HANDLE2 hTemp;      // Used internally, set to NULL when bLock and dont'change
+	HANDLE2 hTemp;      // Used internally, set to NULL when bLock and don't change
 	BOOL    bLock;      // Lock or release
 	COORD   dwSize;     // Informational, new size of the buffer
 };

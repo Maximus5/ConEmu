@@ -2,7 +2,7 @@
 //TODO: Нотация.
 //TODO: XXX       - вернуть значение переменной, возможно скорректировав ее
 //TODO: GetXXX    - вернуть значение переменной
-//TODO: SetXXX    - установить значение переменной, команда в консоль не послыается!
+//TODO: SetXXX    - установить значение переменной, команда в консоль не посылается!
 //TODO: ChangeXXX - послать в консоль и установить значение переменной
 
 /*
@@ -842,7 +842,7 @@ BOOL CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 				{
 					_ASSERTE(FALSE && "Maximum real console size was reached");
 					// Inform user
-					mp_RCon->LogString(L"Maximum real console size was reached, lesser size was applyed");
+					mp_RCon->LogString(L"Maximum real console size was reached, lesser size was applied");
 					Icon.ShowTrayIcon(L"Maximum real console size was reached\nDecrease font size in the real console properties", tsa_Console_Size);
 				}
 			}
@@ -936,7 +936,7 @@ BOOL CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 					    "SetConsoleSizeSrv: does not need wait" :
 					    (nWait != WAIT_OBJECT_0) ?
 					    "SetConsoleSizeSrv.WaitForSingleObject(mp_RCon->mh_ApplyFinished) TIMEOUT!!!" :
-					    "SetConsoleSizeSrv.WaitForSingleObject(mp_RCon->mh_ApplyFinished) succeded");
+					    "SetConsoleSizeSrv.WaitForSingleObject(mp_RCon->mh_ApplyFinished) succeeded");
 				}
 
 				// If sync resize was abandoned (timeout)
@@ -1564,7 +1564,7 @@ SHORT CRealBuffer::GetBufferPosY()
 	bool bInScroll = mp_RCon->InScroll();
 	if (nTop != csbi.srWindow.Top)
 	{
-		TODO("Пока не переделал скролл на пайп - данные могут приходить немного с запаздываением");
+		TODO("Пока не переделал скролл на пайп - данные могут приходить немного с запаздыванием");
 		_ASSERTE(nTop == csbi.srWindow.Top || bInScroll);
 		bool bDbgShowConsole = false;
 		if (bDbgShowConsole)

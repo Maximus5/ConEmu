@@ -251,7 +251,7 @@ class MPipe
 			{
 				_ASSERTE(cbRead >= sizeof(CESERVER_REQ_HDR));
 				msprintf(ms_Error, countof(ms_Error),
-				          L"%s: Only %i bytes recieved, required %i bytes at least!",
+				          L"%s: Only %i bytes received, required %i bytes at least!",
 				          ms_Module, cbRead, (DWORD)sizeof(CESERVER_REQ_HDR));
 				return FALSE;
 			}
@@ -260,7 +260,7 @@ class MPipe
 			{
 				_ASSERTE(((CESERVER_REQ_HDR*)apIn)->nCmd == ((CESERVER_REQ_HDR*)&m_In)->nCmd);
 				msprintf(ms_Error, countof(ms_Error),
-				          L"%s: Invalid CmdID=%i recieved, required CmdID=%i!",
+				          L"%s: Invalid CmdID=%i received, required CmdID=%i!",
 				          ms_Module, ((CESERVER_REQ_HDR*)apIn)->nCmd, ((CESERVER_REQ_HDR*)&m_In)->nCmd);
 				return FALSE;
 			}
@@ -269,7 +269,7 @@ class MPipe
 			{
 				_ASSERTE(((CESERVER_REQ_HDR*)ptrOut)->nVersion == CESERVER_REQ_VER);
 				msprintf(ms_Error, countof(ms_Error),
-				          L"%s: Old version packet recieved (%i), required (%i)!",
+				          L"%s: Old version packet received (%i), required (%i)!",
 				          ms_Module, ((CESERVER_REQ_HDR*)ptrOut)->nCmd, CESERVER_REQ_VER);
 				return FALSE;
 			}

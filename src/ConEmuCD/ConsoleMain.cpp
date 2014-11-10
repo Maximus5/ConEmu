@@ -5323,7 +5323,7 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 		nCmdLine += lstrlenW(gszComSpec)+15; // "/C", кавычки и возможный "/U"
 	}
 
-	size_t nCchLen = nCmdLine+1; // nCmdLine учитывает длинну lsCmdLine + gszComSpec + еще чуть-чуть на "/C" и прочее
+	size_t nCchLen = nCmdLine+1; // nCmdLine учитывает длину lsCmdLine + gszComSpec + еще чуть-чуть на "/C" и прочее
 	gpszRunCmd = (wchar_t*)calloc(nCchLen,sizeof(wchar_t));
 
 	if (!gpszRunCmd)
@@ -6839,7 +6839,7 @@ BOOL cmd_SaveAliases(CESERVER_REQ& in, CESERVER_REQ** out)
 		wchar_t* pszNew = (wchar_t*)calloc(nNewSize, 1);
 
 		if (!pszNew)
-			goto wrap;  // не удалось выдеить память
+			goto wrap;  // не удалось выделить память
 
 		MCHKHEAP;
 
@@ -7787,7 +7787,7 @@ BOOL cmd_LoadFullConsoleData(CESERVER_REQ& in, CESERVER_REQ** out)
 			CONSOLE_SCREEN_BUFFER_INFO lsbi2 = {{0,0}};
 			if (GetConsoleScreenBufferInfo(ghConOut, &lsbi2))
 			{
-				// Обновим только курсор, а то юзер может получить черный экран, вместо ожидаемого тектса
+				// Обновим только курсор, а то юзер может получить черный экран, вместо ожидаемого текста
 				// Если во время "dir c:\ /s" запросить AltConsole - получаем черный экран.
 				// Смысл в том, что пока читали строки НИЖЕ курсора - экран уже убежал.
 				lsbi.dwCursorPosition = lsbi2.dwCursorPosition;
@@ -9003,7 +9003,7 @@ static void EvalVisibleResizeRect(SMALL_RECT& rNewRect,
 	SHORT nScreenAtBottom,
 	const CONSOLE_SCREEN_BUFFER_INFO& csbi)
 {
-	// Абсолютная (буферна) координата
+	// Абсолютная (буферная) координата
 	const SHORT nMaxX = csbi.dwSize.X-1, nMaxY = csbi.dwSize.Y-1;
 
 	// сначала - не трогая rNewRect.Left, вдруг там горизонтальная прокрутка?
@@ -9059,7 +9059,7 @@ static void EvalVisibleResizeRect(SMALL_RECT& rNewRect,
 			}
 			else
 			{
-				// Иначе - не трогать вернюю границу
+				// Иначе - не трогать верхнюю границу
 				rNewRect.Bottom = min(nMaxY, rNewRect.Top+crNewSize.Y-1);
 			}
 			//rNewRect.Top = rNewRect.Bottom-crNewSize.Y+1; // на 0 скорректируем в конце
@@ -9540,7 +9540,7 @@ BOOL WINAPI HandlerRoutine(DWORD dwCtrlType)
 	{
 		if (gbTerminateOnCtrlBreak)
 		{
-			PRINT_COMSPEC(L"Ctrl+Break recieved, server will be terminated\n", 0);
+			PRINT_COMSPEC(L"Ctrl+Break received, server will be terminated\n", 0);
 			gbInShutdown = TRUE;
 		}
 		else if (gpSrv->DbgInfo.bDebugProcess)
@@ -9552,7 +9552,7 @@ BOOL WINAPI HandlerRoutine(DWORD dwCtrlType)
 			if (nWait == WAIT_OBJECT_0)
 			{
 				_ASSERTE(gbTerminateOnCtrlBreak==FALSE);
-				PRINT_COMSPEC(L"Ctrl+Break recieved, debgger will be stopped\n", 0);
+				PRINT_COMSPEC(L"Ctrl+Break received, debugger will be stopped\n", 0);
 				//if (pfnDebugActiveProcessStop) pfnDebugActiveProcessStop(gpSrv->dwRootProcess);
 				//gpSrv->DbgInfo.bDebuggerActive = FALSE;
 				//gbInShutdown = TRUE;
@@ -9809,7 +9809,7 @@ void _wprintf(LPCWSTR asBuffer)
 
 void DisableAutoConfirmExit(BOOL abFromFarPlugin)
 {
-	// Консоль моглы быть приаттачена к GUI в тот момент, когда сервер ожидает
+	// Консоль могла быть приаттачена к GUI в тот момент, когда сервер ожидает
 	// от юзера подтверждение закрытия консоли
 	if (!gbInExitWaitForKey)
 	{
@@ -9863,7 +9863,7 @@ bool IsKeyboardLayoutChanged(DWORD* pdwLayout)
 	if (pdwLayout)
 	{
 		wchar_t *pszEnd = NULL; //szCurKeybLayout+8;
-		//WARNING("BUGBUG: 16 цифр не вернет"); -- тут именно 8 цифт. Это LayoutNAME, а не string(HKL)
+		//WARNING("BUGBUG: 16 цифр не вернет"); -- тут именно 8 цифр. Это LayoutNAME, а не string(HKL)
 		// LayoutName: "00000409", "00010409", ...
 		// А HKL от него отличается, так что передаем DWORD
 		// HKL в x64 выглядит как: "0x0000000000020409", "0xFFFFFFFFF0010409"
@@ -9878,7 +9878,7 @@ void CheckKeyboardLayout()
 {
 	DWORD dwLayout = 0;
 
-	//WARNING("BUGBUG: 16 цифр не вернет"); -- тут именно 8 цифт. Это LayoutNAME, а не string(HKL)
+	//WARNING("BUGBUG: 16 цифр не вернет"); -- тут именно 8 цифр. Это LayoutNAME, а не string(HKL)
 	// LayoutName: "00000409", "00010409", ...
 	// А HKL от него отличается, так что передаем DWORD
 	// HKL в x64 выглядит как: "0x0000000000020409", "0xFFFFFFFFF0010409"
