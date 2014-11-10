@@ -34,7 +34,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/MSectionSimple.h"
 #include "Downloader.h"
 
-#ifdef __GNUC__
+#if defined(__GNUC__) && !defined(__MINGW64_VERSION_MAJOR)
 typedef struct {
     DWORD dwMajorVersion;
     DWORD dwMinorVersion;
