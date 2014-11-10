@@ -629,6 +629,8 @@ void restore_shortcut_props(MSIHANDLE h_install) {
     const wstring& props = *str;
     update_progress(h_install, file_path);
     set_shortcut_props(file_path, props);
+    if (str == str_list.end())
+      break;
     END_ERROR_HANDLER
   }
 }
