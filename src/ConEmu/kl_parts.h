@@ -24,7 +24,7 @@ typedef unsigned __int16 u16;
 typedef unsigned __int64 u64;
 typedef DWORD u32;
 
-#if defined(__GNUC__)
+#if defined(__GNUC__) && !defined(__MINGW64_VERSION_MAJOR)
 #define __forceinline __inline__
 #endif
 template <class T>__forceinline const T& klMin(const T &a, const T &b) {return a < b ? a : b;}
