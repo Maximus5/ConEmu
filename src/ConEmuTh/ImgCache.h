@@ -180,7 +180,7 @@ class CImgLoader : public CQueueProcessor<IMAGE_CACHE_INFO*>
 		//};
 		//// После завершения этих функций ячейка стирается!
 
-		// Если требуется останов всех запросов и выход из нити обрабочика
+		// Если требуется останов всех запросов и выход из нити обработчика
 		virtual bool IsTerminationRequested()
 		{
 			TODO("Вернуть TRUE при ExitFar");

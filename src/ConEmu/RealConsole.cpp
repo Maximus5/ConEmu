@@ -12167,7 +12167,7 @@ void CRealConsole::UpdateGuiInfoMapping(const ConEmuGuiMapping* apGuiInfo)
 	}
 }
 
-// Полать в активный фар CMD_FARSETCHANGED
+// Послать в активный фар CMD_FARSETCHANGED
 // Обновляются настройки: gpSet->isFARuseASCIIsort, gpSet->isShellNoZoneCheck;
 void CRealConsole::UpdateFarSettings(DWORD anFarPID /*= 0*/, FAR_REQ_FARSETCHANGED* rpSetEnvVar /*= NULL*/)
 {

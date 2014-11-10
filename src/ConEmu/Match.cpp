@@ -334,7 +334,7 @@ int CMatch::Match(ExpandTextRangeType etr, LPCWSTR asLine/*This may be NOT 0-ter
 
 bool CMatch::IsFileLineTerminator(LPCWSTR pChar, LPCWSTR pszTermint)
 {
-	// Расчитано на закрывающие : или ) или ] или ,
+	// Рассчитано на закрывающие : или ) или ] или ,
 	if (wcschr(pszTermint, *pChar))
 		return true;
 	// Script.ps1:35 знак:23
@@ -830,7 +830,7 @@ bool CMatch::MatchAny()
 				}
 			}
 
-			// Расчитано на закрывающие : или ) или ] или ,
+			// Рассчитано на закрывающие : или ) или ] или ,
 			_ASSERTE(pszTermint[0]==L':' && pszTermint[1]==L')' && pszTermint[2]==L']' && pszTermint[3]==L',' && pszTermint[5]==0);
 			// Script.ps1:35 знак:23
 			if (bDigits && IsFileLineTerminator(m_SrcLine.ms_Arg+mn_MatchRight, pszTermint))

@@ -52,7 +52,7 @@ MConHandle::MConHandle(LPCWSTR asName)
 
 	без плагов каких либо
 
-	пропиши одну ассоциацию
+	пропишем одну ассоциацию
 
 	[HKEY_CURRENT_USER\Software\Far2\Associations\Type0]
 	"Mask"="*.ini"
