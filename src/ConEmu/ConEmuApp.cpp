@@ -4400,6 +4400,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	if (gpConEmu->mp_Inside && (gpConEmu->mp_Inside->mh_InsideParentWND == INSIDE_PARENT_NOT_FOUND))
 	{
 		DEBUGSTRSTARTUP(L"Bad InsideParentHWND, exiting");
+		free(cmdLine);
 		return 100;
 	}
 
@@ -4408,6 +4409,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	if (!gpConEmu->CheckRequiredFiles())
 	{
 		DEBUGSTRSTARTUP(L"Required files were not found, exiting");
+		free(cmdLine);
 		return 100;
 	}
 
