@@ -3755,6 +3755,7 @@ INT_PTR CSettings::pageOpProc_Integr(HWND hWnd2, UINT messg, WPARAM wParam, LPAR
 									RegCloseKey(hkShell);
 								}
 							}
+							SafeFree(pszName);
 						}
 
 						SetDlgItemText(hWnd2, (CB==cbInsideName) ? tInsideConfig : tHereConfig,
@@ -4918,6 +4919,7 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 
 			SafeFree(pszName);
 			SafeFree(pszCmds);
+			SafeFree(pszGuiArgs);
 		}
 		break;
 	/* *** Command groups *** */

@@ -1593,7 +1593,8 @@ bool CConEmuCtrl::key_RunTask(const ConEmuChord& VkState, bool TestOnly, const C
 	{
 		wchar_t szMacro[64];
 		_wsprintf(szMacro, SKIPLEN(countof(szMacro)) L"Task(%i)", hk->GetTaskIndex()+1); //1-based
-		ConEmuMacro::ExecuteMacro(szMacro, pRCon);
+		wchar_t* pszResult = ConEmuMacro::ExecuteMacro(szMacro, pRCon);
+		SafeFree(pszResult);
 	}
 	return true;
 }
