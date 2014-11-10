@@ -343,6 +343,7 @@ BEGIN
 	vkMultiNewWnd           "Create new window (after ‘Create confirmation’)"
 	vkMultiNext             "Switch next console"
 	vkMultiNextShift        "Switch previous console"
+	vkMultiPause            "Pause current console"
 	vkMultiRecreate         "Recreate active console"
 	vkPasteCygwin           "Paste path from clipboard in unix format"
 	vkPasteDirectory        "Choose and paste folder path"

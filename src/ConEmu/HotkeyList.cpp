@@ -172,6 +172,8 @@ int ConEmuHotKeyList::AllocateHotkeys()
 		->SetHotKey(192/*VK_тильда*/,VK_LWIN);
 	Add(vkMultiAltCon,    chk_User,  NULL,    L"Multi.AltCon",          CConEmuCtrl::key_AlternativeBuffer)
 		->SetHotKey('A',VK_LWIN);
+	Add(vkMultiPause,     chk_User,  NULL,    L"Multi.Pause",           CConEmuCtrl::key_GuiMacro, false, L"Pause")
+		->SetHotKey(VK_PAUSE);
 	Add(vkMultiBuffer,    chk_User,  NULL,    L"Multi.Scroll",          CConEmuCtrl::key_MultiBuffer)
 		;
 	Add(vkMultiClose,     chk_User,  NULL,    L"Multi.Close",           CConEmuCtrl::key_MultiClose)

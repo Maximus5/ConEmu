@@ -173,6 +173,8 @@ namespace ConEmuMacro
 	LPWSTR Paste(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// PasteFile (<Cmd>[,"<File>"[,"<CommentMark>"]])
 	LPWSTR PasteFile(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
+	// Pause
+	LPWSTR Pause(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// print("<Text>") - alias for Paste(2,"<Text>")
 	LPWSTR Print(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Progress(<Type>[,<Value>])
@@ -247,6 +249,7 @@ namespace ConEmuMacro
 		{Palette, {L"Palette"}},
 		{Paste, {L"Paste"}},
 		{PasteFile, {L"PasteFile"}},
+		{Pause, {L"Pause"}},
 		{Print, {L"Print"}},
 		{Progress, {L"Progress"}},
 		{Rename, {L"Rename"}},
@@ -1785,6 +1788,27 @@ LPWSTR ConEmuMacro::Paste(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 	}
 
 	return lstrdup(L"InvalidArg");
+}
+
+LPWSTR ConEmuMacro::Pause(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
+{
+	int nCommand = 0;
+	LPWSTR pszResult = NULL;
+
+	p->GetIntArg(0, nCommand);
+
+	if (apRCon && (nCommand >= 0 && nCommand <= 2))
+	{
+		static bool bPaused = false;
+		if (!nCommand) nCommand = bPaused ? 2 : 1;
+		bPaused = nCommand==1;
+		UINT uMsg = nCommand==1 ? WM_SYSCOMMAND : WM_KEYDOWN;
+		WPARAM wParam = nCommand==1 ? 65522 : VK_ESCAPE;
+		apRCon->PostConsoleMessage(apRCon->ConWnd(), uMsg, wParam, 0);
+		pszResult = lstrdup(nCommand==1 ? L"PAUSED" : L"UNPAUSED");
+	}
+
+	return pszResult ? pszResult : lstrdup(L"FAILED");
 }
 
 // PasteFile (<Cmd>[,"<File>"[,"<CommentMark>"]])

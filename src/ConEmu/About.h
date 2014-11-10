@@ -297,6 +297,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"     Cmd==9: paste all lines space-separated\r\n" \
 	L"     Cmd==10: paste all lines space-separated, without confirmations\r\n" \
 	L"     If \"<CommentMark>\" specified - skip all lines starting with prefix\r\n" \
+	L"Pause([<Cmd>])\r\n" \
+	L"  - Pause current console\r\n" \
+	L"     Cmd==0: switch mode (default)\r\n" \
+	L"     Cmd==1: pause\r\n" \
+	L"     Cmd==2: un-pause\r\n" \
 	L"Print([\"<Text>\"[,\"<Text2>\"[...]]])\r\n" \
 	L"  - Alias for Paste(2,\"<Text>\")\r\n" \
 	L"Progress(<Type>[,<Value>])\r\n" \
