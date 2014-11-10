@@ -767,13 +767,6 @@ bool CMatch::MatchAny()
 			&& (isDigit(m_SrcLine.ms_Arg[mn_MatchRight])
 				|| (bDigits && (m_SrcLine.ms_Arg[mn_MatchRight] == L',')))) // FarCtrl.pas(1002,49) Error:
 		{
-			if (bLineNumberFound)
-			{
-				// gcc такие строки тоже может выкинуть
-				// file.cpp:29:29: error
-				mn_MatchRight--;
-				break;
-			}
 			if (!bDigits && (mn_MatchLeft < mn_MatchRight) /*&& (m_SrcLine.ms_Arg[mn_MatchRight-1] == L':')*/)
 			{
 				bDigits = true;
@@ -783,6 +776,14 @@ bool CMatch::MatchAny()
 					bLineNumberFound = true;
 				}
 			}
+		}
+		else if (bWasSeparator && bLineNumberFound
+			&& wcschr(L":)] \t", m_SrcLine.ms_Arg[mn_MatchRight]))
+		{
+			//// gcc такие строки тоже может выкинуть
+			//// file.cpp:29:29: error
+			//mn_MatchRight--;
+			break;
 		}
 		else
 		{
