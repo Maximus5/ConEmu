@@ -2077,8 +2077,9 @@ void CSetDlgButtons::OnBtn_QuakeStyles(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbQuakeAutoHide || CB==cbQuakeStyle);
 
-	BYTE NewQuakeMode = IsChecked(cbQuakeStyle, CB, uCheck)
-		? IsChecked(cbQuakeAutoHide, CB, uCheck) ? 2 : 1 : 0;
+	bool bQuake = (CB == cbQuakeStyle) ? (uCheck != 0) : (gpSet->isQuakeStyle != 0);
+	bool bAuto = (CB == cbQuakeAutoHide) ? (uCheck != 0) : (gpSet->isQuakeStyle == 2);
+	BYTE NewQuakeMode = bQuake ? bAuto ? 2 : 1 : 0;
 
 	//ConEmuWindowMode NewWindowMode =
 	//	IsChecked(rMaximized, CB, uCheck) ? wmMaximized :
