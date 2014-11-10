@@ -4918,6 +4918,7 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 
 			SafeFree(pszName);
 			SafeFree(pszCmds);
+			SafeFree(pszGuiArgs);
 		}
 		break;
 	/* *** Command groups *** */
