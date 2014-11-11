@@ -10,13 +10,16 @@ SRCS = \
 		../common/MAssert.cpp        \
 		../common/MConHandle.cpp     \
 		../common/Memory.cpp         \
+		../common/Monitors.cpp       \
 		../common/MSectionSimple.cpp \
 		../common/MSection.cpp       \
 		../common/MSecurity.cpp      \
 		../common/MStrSafe.cpp       \
 		../common/RConStartArgs.cpp  \
 		../common/WConsole.cpp     \
+		../common/WFiles.cpp       \
 		../common/WObjects.cpp     \
+		../common/WUser.cpp          \
 		Ansi.cpp \
 		ConEmuHooks.cpp \
 		DefTermHk.cpp \
@@ -113,7 +116,7 @@ AR = $(CROSS_HOST)ar
 RANLIB = $(CROSS_HOST)ranlib
 CXXFLAGS = $(ENCFLAGS) -I $(COMMON) -I $(COMINC) -Wall -Os -funsigned-char -fomit-frame-pointer -fstrict-aliasing -fno-rtti -fno-exceptions $(CXXWIDE) $(USERCPP) $(WINVER)
 CCFLAGS = -I $(COMMON) -I $(COMINC) -Wall -Os -funsigned-char -fomit-frame-pointer -fstrict-aliasing -fno-exceptions $(CCWIDE) $(USERCPP) $(WINVER)
-LNKFLAGS = -mdll $(BASEADDRESS) -s -lgcc $(USERLIBSFIRST) $(COMMONLIB) -luser32 -lkernel32 -ladvapi32 -lshell32 $(USERLIBS)
+LNKFLAGS = -mdll $(BASEADDRESS) -s -lgcc $(USERLIBSFIRST) $(COMMONLIB) -luser32 -lkernel32 -ladvapi32 -lshell32 -luuid -lgdi32 $(USERLIBS)
 RCFLAGS = -I $(COMINC) $(RCWIDE) $(USERRC)
 
 OBJS = $(patsubst %.cpp,$(OBJDIR)/%.o,$(filter %.cpp,$(SRCS))) $(patsubst %.c,$(OBJDIR)/%.o,$(filter %.c,$(SRCS))) $(RES)
