@@ -46,7 +46,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "RealConsole.h"
 #include "TabBar.h"
 
-#ifdef __GNUC__
+#if defined(__GNUC__) && (WINVER < 0x0601)
 	/*
 	 * Gesture flags - GESTUREINFO.dwFlags
 	 */

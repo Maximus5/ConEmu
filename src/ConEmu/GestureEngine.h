@@ -29,7 +29,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 #include <windows.h>
 
-#ifdef __GNUC__
+#if defined(__GNUC__) && (WINVER < 0x0601)
 
 	#define HGESTUREINFO HANDLE
 
