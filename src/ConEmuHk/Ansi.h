@@ -45,6 +45,14 @@ typedef BOOL (WINAPI* OnWriteConsoleW_t)(HANDLE hConsoleOutput, const VOID *lpBu
 
 struct MSectionSimple;
 
+#if defined(__GNUC__)
+extern "C" {
+#endif
+	BOOL WINAPI WriteProcessed(LPCWSTR lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten);
+#if defined(__GNUC__)
+};
+#endif
+
 struct CEAnsi
 {
 //private:
