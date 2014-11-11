@@ -428,6 +428,8 @@ void GetConsoleSizeInfo(CONSOLE_INFO *pci)
 #undef ENABLE_AUTO_POSITION
 #endif
 
+#if !defined(__MINGW64_VERSION_MAJOR)
+
 //VISTA support:
 #ifndef ENABLE_AUTO_POSITION
 typedef struct _CONSOLE_FONT_INFOEX
@@ -441,6 +443,7 @@ typedef struct _CONSOLE_FONT_INFOEX
 } CONSOLE_FONT_INFOEX, *PCONSOLE_FONT_INFOEX;
 #endif
 
+#endif
 
 // Vista+ only
 BOOL apiGetConsoleScreenBufferInfoEx(HANDLE hConsoleOutput, MY_CONSOLE_SCREEN_BUFFER_INFOEX* lpConsoleScreenBufferInfoEx)
