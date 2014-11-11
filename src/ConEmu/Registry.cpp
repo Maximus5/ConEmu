@@ -354,7 +354,7 @@ void SettingsINI::Save(const wchar_t *regName, LPCBYTE value, DWORD nType, DWORD
 
 
 /* *************************** */
-#ifndef __GNUC__
+#if !defined(__GNUC__) || defined(__MINGW64_VERSION_MAJOR)
 SettingsXML::SettingsXML(const SettingsStorage& Storage)
 	: SettingsBase(Storage)
 {

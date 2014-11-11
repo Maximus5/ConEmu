@@ -28,7 +28,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#ifndef __GNUC__
+#if !defined(__GNUC__) || defined(__MINGW64_VERSION_MAJOR)
 #include <msxml.h>
 #endif
 
@@ -147,7 +147,7 @@ struct SettingsINI : public SettingsBase
 		virtual ~SettingsINI();
 };
 
-#ifndef __GNUC__
+#if !defined(__GNUC__) || defined(__MINGW64_VERSION_MAJOR)
 struct SettingsXML : public SettingsBase
 {
 	protected:

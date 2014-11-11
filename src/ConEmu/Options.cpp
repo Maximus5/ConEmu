@@ -4229,7 +4229,7 @@ SettingsBase* Settings::CreateSettings(const SettingsStorage* apStorage)
 	}
 
 
-#ifndef __GNUC__
+#if !defined(__GNUC__) || defined(__MINGW64_VERSION_MAJOR)
 	DWORD dwAttr = -1;
 
 	if (!apStorage)
@@ -4288,7 +4288,7 @@ void Settings::GetSettingsType(SettingsStorage& Storage, bool& ReadOnly)
 
 	ZeroStruct(Storage);
 
-#ifndef __GNUC__
+#if !defined(__GNUC__) || defined(__MINGW64_VERSION_MAJOR)
 	HANDLE hFile = NULL;
 	LPWSTR pszXmlFile = gpConEmu->ConEmuXml();
 
