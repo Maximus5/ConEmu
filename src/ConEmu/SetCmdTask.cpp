@@ -234,6 +234,7 @@ bool CommandTasks::LoadCmdTask(SettingsBase* reg, int iIndex)
 	bool lbRc = false;
 	wchar_t szVal[32];
 	int iCmdMax = 0, iCmdCount = 0;
+	DWORD VkMod = 0;
 
 	wchar_t* pszNameSet = NULL;
 	if (iIndex >= 0)
@@ -262,7 +263,6 @@ bool CommandTasks::LoadCmdTask(SettingsBase* reg, int iIndex)
 	this->SetName(pszNameSet, iIndex);
 
 	this->HotKey.HkType = chk_Task;
-	DWORD VkMod = 0;
 	if ((iIndex >= 0) && reg->Load(L"Hotkey", VkMod))
 		this->HotKey.SetVkMod(VkMod);
 	else

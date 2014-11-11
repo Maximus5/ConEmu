@@ -701,6 +701,8 @@ BOOL CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 	//bool bLargestReached = false;
 	bool bSecondTry = false;
 
+	bool bNeedApplyConsole;
+
 	_ASSERTE(anCmdID==CECMD_SETSIZESYNC || anCmdID==CECMD_SETSIZENOSYNC || anCmdID==CECMD_CMDSTARTED || anCmdID==CECMD_CMDFINISHED);
 	//ExecutePrepareCmd(&lIn.hdr, anCmdID, lIn.hdr.cbSize);
 	if (!pIn /*|| !pOut*/)
@@ -821,7 +823,7 @@ BOOL CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 	ResetEvent(mp_RCon->mh_ApplyFinished);
 
 	_ASSERTE(mp_RCon->m_ConsoleMap.IsValid());
-	bool bNeedApplyConsole =
+	bNeedApplyConsole =
 		mp_RCon->m_ConsoleMap.IsValid()
 		&& (anCmdID == CECMD_SETSIZESYNC)
 		&& (mp_RCon->mn_MonitorThreadID != GetCurrentThreadId());

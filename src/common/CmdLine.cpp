@@ -460,6 +460,9 @@ bool IsNeedCmd(BOOL bRootCmd, LPCWSTR asCmdLine, CmdArg &szExe,
 	bool rbRootIsCmdExe = true;
 	bool rbAlwaysConfirmExit = false;
 	bool rbAutoDisableConfirmExit = false;
+
+	wchar_t *pwszEndSpace;
+
 	if (rsArguments) *rsArguments = NULL;
 
 	bool lbRc = false;
@@ -730,7 +733,7 @@ bool IsNeedCmd(BOOL bRootCmd, LPCWSTR asCmdLine, CmdArg &szExe,
 	//pwszCopy = wcsrchr(szArg, L'\\'); if (!pwszCopy) pwszCopy = szArg; else pwszCopy ++;
 	pwszCopy = PointToName(szExe);
 	//2009-08-27
-	wchar_t *pwszEndSpace = szExe.ms_Arg + lstrlenW(szExe) - 1;
+	pwszEndSpace = szExe.ms_Arg + lstrlenW(szExe) - 1;
 
 	while ((*pwszEndSpace == L' ') && (pwszEndSpace > szExe))
 	{

@@ -35,6 +35,7 @@ int InjectHookDLL(PROCESS_INFORMATION pi, InjectHookFunctions* pfn /*UINT_PTR fn
 	BYTE* 		code	 = NULL;
 	wchar_t 	strHookDllPath[MAX_PATH*2] = {};
 	DWORD 		dwErrCode = 0;
+	DWORD_PTR nLoadLibraryProcShift;
 #ifndef _WIN64
 	// starting a 32-bit process
 	LPCWSTR		pszDllName = L"\\ConEmuHk.dll";
@@ -74,7 +75,7 @@ int InjectHookDLL(PROCESS_INFORMATION pi, InjectHookFunctions* pfn /*UINT_PTR fn
 	}
 
 	//UINT_PTR fnGetDllByName = 0;
-	DWORD_PTR nLoadLibraryProcShift = 0;
+	nLoadLibraryProcShift = 0;
 	//HMODULE hNtDll, hKernel;
 	//if (nOsVer >= 0x0602)
 	if (pfn->fnLdrGetDllHandleByName)
