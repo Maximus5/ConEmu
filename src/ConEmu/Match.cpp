@@ -402,9 +402,7 @@ bool CMatch::IsValidFile(LPCWSTR asFrom, int anLen, LPCWSTR pszInvalidChars, LPC
 	while (anLen > 0)
 	{
 		wchar_t wc = asFrom[anLen-1];
-		if (wcschr(pszSpacing, asFrom[anLen-1])
-			|| wcschr(pszInvalidChars, asFrom[anLen-1])
-			)
+		if (wcschr(pszSpacing, wc) || wcschr(pszInvalidChars, wc))
 			anLen--;
 		else
 			break;
