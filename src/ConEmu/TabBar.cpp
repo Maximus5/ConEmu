@@ -482,6 +482,11 @@ HWND CTabBarClass::ActivateSearchPane(bool bActivate)
 	return mp_Rebar->ActivateSearchPaneInt(bActivate);
 }
 
+bool CTabBarClass::ShowSearchPane(bool bShow, bool bCtrlOnly /*= false*/)
+{
+	return mp_Rebar->ShowSearchPane(bShow, bCtrlOnly);
+}
+
 void CTabBarClass::Recreate()
 {
 	bool bWasVisible = IsTabsShown();

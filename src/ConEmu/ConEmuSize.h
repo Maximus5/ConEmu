@@ -227,6 +227,7 @@ protected:
 	void LogTileModeChange(LPCWSTR asPrefix, ConEmuWindowCommand Tile, bool bChanged, const RECT& rcSet, LPRECT prcAfter, HMONITOR hMon);
 	bool CheckDpiOnMoving(WINDOWPOS *p);
 	void EvalNewNormalPos(const MONITORINFO& miOld, HMONITOR hNextMon, const MONITORINFO& miNew, const RECT& rcOld, RECT& rcNew);
+	BOOL AnimateWindow(DWORD dwTime, DWORD dwFlags);
 
 	friend class CSettings;
 	friend class CSetDlgButtons;

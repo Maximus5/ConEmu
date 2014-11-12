@@ -321,7 +321,10 @@ bool CTabPanelWin::IsSearchShownInt(bool bFilled)
 {
 	if (!mp_Find || !gpSet->isMultiShowSearch)
 		return false;
-	return mp_Find->IsAvailable(bFilled);
+	INT_PTR nPaneIndex = SendMessage(mh_Rebar, RB_IDTOINDEX, rbi_ToolBar, 0);
+	if (nPaneIndex < 0)
+		return false;
+	return bFilled ? mp_Find->IsAvailable(bFilled) : true;
 }
 
 HWND CTabPanelWin::ActivateSearchPaneInt(bool bActivate)
@@ -1203,8 +1206,20 @@ void CTabPanelWin::ShowTabsPane(bool bShow)
 	}
 }
 
-void CTabPanelWin::ShowSearchPane(bool bShow)
+// Returns previous state
+bool CTabPanelWin::ShowSearchPane(bool bShow, bool bCtrlOnly /*= false*/)
 {
+	bool bWasShown = false;
+
+	if (bCtrlOnly)
+	{
+		HWND hPane = mp_Find ? mp_Find->GetHWND() : NULL;
+		bWasShown = IsSearchShownInt(false);
+		if (hPane)
+			::ShowWindow(hPane, bShow ? SW_SHOWNORMAL : SW_HIDE);
+		goto wrap;
+	}
+
 	if (bShow && gpSet->isMultiShowSearch)
 	{
 		_ASSERTE(isMainThread());
@@ -1263,6 +1278,10 @@ void CTabPanelWin::ShowSearchPane(bool bShow)
 				bShow = false;
 			}
 		}
+		else
+		{
+			bWasShown = true;
+		}
 	}
 
 	// Delete band?
@@ -1274,8 +1293,12 @@ void CTabPanelWin::ShowSearchPane(bool bShow)
 		{
 			SendMessage(mh_Rebar, RB_DELETEBAND, nPaneIndex, 0);
 			SafeDelete(mp_Find);
+			bWasShown = true;
 		}
 	}
+
+wrap:
+	return bWasShown;
 }
 
 void CTabPanelWin::ShowToolsPane(bool bShow)

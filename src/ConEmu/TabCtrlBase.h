@@ -97,7 +97,7 @@ public:
 	virtual void SetTabbarFont(HFONT hFont) = 0;
 	virtual void SetToolBtnChecked(ToolbarCommandIdx iCmd, bool bChecked) = 0;
 	virtual void ShowBar(bool bShow) = 0;
-	virtual void ShowSearchPane(bool bShow) = 0;
+	virtual bool ShowSearchPane(bool bShow, bool bCtrlOnly = false) = 0;
 	virtual void ShowTabsPane(bool bShow) = 0;
 	virtual void ShowToolsPane(bool bShow) = 0;
 

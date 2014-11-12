@@ -498,13 +498,22 @@ wrap:
 
 bool CFindPanel::IsAvailable(bool bFilled)
 {
-	if (!mh_Edit || !IsWindowVisible(mh_Edit) || !IsWindowEnabled(mh_Edit))
+	if (!mh_Edit || !IsWindowEnabled(mh_Edit))
 		return false;
+
+	// Если не нужно знать, заполнено ли поле (то есть мы в процессе поиска)
+	if (!bFilled)
+		return true;
+
+	// Фокус в поле - мы в поиске
 	if (mh_Edit && (GetFocus() == mh_Edit))
 		return true;
-	if (bFilled && (GetWindowTextLength(mh_Edit) <= 0))
-		return false;
-	return true;
+	// Или уже введен текст
+	if (GetWindowTextLength(mh_Edit) > 0)
+		return true;
+
+	// Поиск не был запущен
+	return false;
 }
 
 HWND CFindPanel::Activate(bool bActivate)
@@ -513,6 +522,8 @@ HWND CFindPanel::Activate(bool bActivate)
 	{
 		if (!IsAvailable(false))
 			return NULL;
+		if (!IsWindowVisible(mh_Pane))
+			::ShowWindow(mh_Pane, SW_SHOWNORMAL);
 		SetFocus(mh_Edit);
 	}
 	else

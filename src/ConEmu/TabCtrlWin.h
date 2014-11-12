@@ -82,7 +82,7 @@ public:
 	virtual void SetTabbarFont(HFONT hFont) override;
 	virtual void SetToolBtnChecked(ToolbarCommandIdx iCmd, bool bChecked) override;
 	virtual void ShowBar(bool bShow) override;
-	virtual void ShowSearchPane(bool bShow) override;
+	virtual bool ShowSearchPane(bool bShow, bool bCtrlOnly = false) override;
 	virtual void ShowTabsPane(bool bShow) override;
 	virtual void ShowToolsPane(bool bShow) override;
 private:

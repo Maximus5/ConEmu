@@ -4845,12 +4845,30 @@ bool CConEmuSize::ShowWindow(int anCmdShow, DWORD nAnimationMS /*= (DWORD)-1*/)
 		//else if (nAnimationMS > CONEMU_ANIMATE_DURATION_MAX)
 		//	nAnimationMS = CONEMU_ANIMATE_DURATION_MAX;
 
-		AnimateWindow(ghWnd, nAnimationMS, nFlags);
+		AnimateWindow(nAnimationMS, nFlags);
 	}
 
 	mb_InShowMinimized = bOldShowMinimized;
 
 	return (lbRc != FALSE);
+}
+
+BOOL CConEmuSize::AnimateWindow(DWORD dwTime, DWORD dwFlags)
+{
+	bool bWasShown = false;
+	if (gpSet->isQuakeStyle)
+	{
+		bWasShown = mp_ConEmu->mp_TabBar->ShowSearchPane(false, true);
+	}
+
+	BOOL bRc = ::AnimateWindow(ghWnd, dwTime, dwFlags);
+
+	if (bWasShown)
+	{
+		mp_ConEmu->mp_TabBar->ShowSearchPane(true, true);
+	}
+
+	return bRc;
 }
 
 //void CConEmuSize::SetPostUpdateWindowSize(bool bValue)
@@ -5636,7 +5654,7 @@ void CConEmuSize::DoMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 					UpdateWindowRgn();
 
 					// to enable animation
-					AnimateWindow(ghWnd, nAnimationMS, nFlags);
+					AnimateWindow(nAnimationMS, nFlags);
 				}
 				else
 				{
@@ -5728,7 +5746,7 @@ void CConEmuSize::DoMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 
 				DEBUGTEST(BOOL bVs1 = ::IsWindowVisible(ghWnd));
 				DEBUGTEST(RECT rc1; ::GetWindowRect(ghWnd, &rc1));
-				AnimateWindow(ghWnd, nAnimationMS, nFlags);
+				AnimateWindow(nAnimationMS, nFlags);
 				DEBUGTEST(BOOL bVs2 = ::IsWindowVisible(ghWnd));
 				DEBUGTEST(RECT rc2; ::GetWindowRect(ghWnd, &rc2));
 				DEBUGTEST(bVs1 = bVs2);

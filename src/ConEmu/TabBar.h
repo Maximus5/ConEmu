@@ -186,6 +186,7 @@ class CTabBarClass
 		void Reset();
 		void Retrieve();
 		void SetRedraw(BOOL abEnableRedraw);
+		bool ShowSearchPane(bool bShow, bool bCtrlOnly = false);
 		void UpdatePosition();
 		void UpdateToolConsoles(bool abForcePos=false);
 
