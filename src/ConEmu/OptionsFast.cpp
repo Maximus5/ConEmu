@@ -588,6 +588,72 @@ static bool WINAPI CreateVCTasks(HKEY hkVer, LPCWSTR pszVer, LPARAM lParam)
 	return true; // continue reg enum
 }
 
+void CreateDefaultTask(LPCWSTR asDrive, int& iCreatIdx, LPCWSTR asName, LPCWSTR asArgs, LPCWSTR asPrefix, LPCWSTR asGuiArg, LPCWSTR asExePath, ...)
+{
+	va_list argptr;
+	va_start(argptr, asExePath);
+
+	wchar_t szFound[MAX_PATH+1], szUnexpand[MAX_PATH+32], *pszFull = NULL; bool bNeedQuot = false;
+	MArray<wchar_t*> lsList;
+
+	while (asExePath)
+	{
+		LPCWSTR pszExePath = asExePath;
+		asExePath = va_arg( argptr, LPCWSTR );
+
+		// Return expanded env string
+		if (!FindOnDrives(asDrive, pszExePath, szFound, bNeedQuot))
+			continue;
+
+		// May be it was already found before?
+		bool bAlready = false;
+		for (INT_PTR j = 0; j < lsList.size(); j++)
+		{
+			LPCWSTR pszPrev = lsList[j];
+			if (pszPrev && lstrcmpi(szFound, pszPrev) == 0)
+			{
+				bAlready = true; break;
+			}
+		}
+		if (bAlready)
+			continue;
+
+		// Go
+		lsList.push_back(lstrdup(szFound));
+
+		// Try to use system env vars?
+		LPCWSTR pszFound = szFound;
+		if (PathUnExpandEnvStrings(szFound, szUnexpand, countof(szUnexpand)))
+			pszFound = szUnexpand;
+
+		// Spaces in path? (use expanded path)
+		if (bNeedQuot)
+			pszFull = lstrmerge(asPrefix, L"\"", pszFound, L"\"", asArgs);
+		else
+			pszFull = lstrmerge(asPrefix, pszFound, asArgs);
+
+		// Create task
+		if (pszFull)
+		{
+			gpSet->CmdTaskSet(iCreatIdx++, asName, asGuiArg, pszFull);
+			SafeFree(pszFull);
+		}
+	}
+
+	for (INT_PTR j = 0; j < lsList.size(); j++)
+	{
+		wchar_t* p = lsList[j];
+		SafeFree(p);
+	}
+
+	va_end(argptr);
+}
+
+void CreateFarTasks(LPCWSTR asDrive, int& iCreatIdx)
+{
+	CreateDefaultTask(asDrive, iCreatIdx, L"Far Manager", NULL, NULL, NULL, L"far.exe", NULL);
+}
+
 void CreateDefaultTasks(bool bForceAdd /*= false*/)
 {
 	int iCreatIdx = 0;
@@ -622,98 +688,49 @@ void CreateDefaultTasks(bool bForceAdd /*= false*/)
 		PuTTY?
 	*/
 
-	struct {
-		LPCWSTR asName, asExePath, asArgs, asPrefix, asGuiArg;
-		LPWSTR  pszFound;
-	} FindTasks[] = {
-		// Far Manager
-		// -- {L"Far Manager",         L"%ConEmuDir%\\far.exe"},
-		{L"Far Manager",         L"far.exe"},
+	wchar_t szFound[MAX_PATH+1], *pszFull; bool bNeedQuot = false;
 
-		// TakeCommand
-		{L"TCC",                 L"tcc.exe",                           NULL},
-		{L"TCC (Admin)",         L"tcc.exe",                           L" -new_console:a"},
+	// Far Manager
+	CreateFarTasks(szConEmuDrive, iCreatIdx);
 
-		// NYAOS - !!!TODO!!!
-		{L"NYAOS",               L"nyaos.exe",                         NULL},
-		{L"NYAOS (Admin)",       L"nyaos.exe",                         L" -new_console:a"},
+	// TakeCommand
+	CreateDefaultTask(szConEmuDrive, iCreatIdx, L"TCC", NULL, NULL, NULL, L"tcc.exe", NULL);
+	CreateDefaultTask(szConEmuDrive, iCreatIdx, L"TCC (Admin)", L" -new_console:a", NULL, NULL, L"tcc.exe", NULL);
 
-		// Windows internal
-		{L"cmd",                 L"cmd.exe",                           NULL, L"set PROMPT=$E[92m$P$E[90m$G$E[m$S & "},
-		{L"cmd (Admin)",         L"cmd.exe",                           L" -new_console:a", L"set PROMPT=$E[91m$P$E[90m$G$E[m$S & "},
-		{L"PowerShell",          L"powershell.exe",                    NULL},
-		{L"PowerShell (Admin)",  L"powershell.exe",                    L" -new_console:a"},
+	// NYAOS - !!!Registry TODO!!!
+	CreateDefaultTask(szConEmuDrive, iCreatIdx, L"NYAOS", NULL, NULL, NULL, L"nyaos.exe", NULL);
+	CreateDefaultTask(szConEmuDrive, iCreatIdx, L"NYAOS (Admin)", L" -new_console:a", NULL, NULL, L"nyaos.exe", NULL);
 
-		// Bash
-
-		// For cygwin we can check registry keys (todo?)
-		// HKLM\SOFTWARE\Wow6432Node\Cygwin\setup\rootdir
-		// HKLM\SOFTWARE\Cygwin\setup\rootdir
-		// HKCU\Software\Cygwin\setup\rootdir
-		{L"CygWin bash",    L"\\CygWin\\bin\\sh.exe",                  L" --login -i", L"set CHERE_INVOKING=1 & "},
-
-//		{L"CygWin mintty",  L"\\CygWin\\bin\\mintty.exe",              L" -"},
-		{L"MinGW bash",     L"\\MinGW\\msys\\1.0\\bin\\sh.exe",        L" --login -i"},
-//		{L"MinGW mintty",   L"\\MinGW\\msys\\1.0\\bin\\mintty.exe",    L" -"},
-		{L"Git bash",       L"%ProgramFiles%\\Git\\bin\\sh.exe",       L" --login -i"},
-		{L"Git bash",       L"%ProgramW6432%\\Git\\bin\\sh.exe",       L" --login -i"},
-		#ifdef _WIN64
-		{L"Git bash",       L"%ProgramFiles(x86)%\\Git\\bin\\sh.exe",  L" --login -i"},
-		#endif
-		// Last chance for bash
-		{L"bash",           L"sh.exe",                                 L" --login -i", L"set CHERE_INVOKING=1 & "},
-
-		// Putty?
-		{L"Putty",          L"Putty.exe",                              NULL},
-
-		// FIN
-		{NULL}
-	};
-
-	wchar_t szFound[MAX_PATH+1], szUnexpand[MAX_PATH+1], *pszFull = NULL; bool bNeedQuot = false;
-	for (int i = 0; FindTasks[i].asName; i++)
-	{
-		if (!FindOnDrives(szConEmuDrive, FindTasks[i].asExePath, szFound, bNeedQuot))
-			continue;
-		// May be it was already found before?
-		bool bAlready = false;
-		for (int j = 0; j < i; j++)
-		{
-			if (FindTasks[i].pszFound && lstrcmpi(szFound, FindTasks[i].pszFound) == 0)
-			{
-				bAlready = true; break;
-			}
-		}
-		if (bAlready)
-			continue;
-
-		// Go
-		FindTasks[i].pszFound = lstrdup(szFound);
-
-		// Try to use system env vars?
-		LPCWSTR pszFound = szFound;
-		if (PathUnExpandEnvStrings(szFound, szUnexpand, countof(szUnexpand)))
-			pszFound = szUnexpand;
-
-		// Spaces in path? (use expanded path)
-		if (bNeedQuot)
-			pszFull = lstrmerge(FindTasks[i].asPrefix, L"\"", pszFound, L"\"", FindTasks[i].asArgs);
-		else
-			pszFull = lstrmerge(FindTasks[i].asPrefix, pszFound, FindTasks[i].asArgs);
-
-		// Create task
-		if (pszFull)
-		{
-			gpSet->CmdTaskSet(iCreatIdx++, FindTasks[i].asName, FindTasks[i].asGuiArg, pszFull);
-			SafeFree(pszFull);
-		}
-	}
-
+	// Windows internal
+	CreateDefaultTask(szConEmuDrive, iCreatIdx, L"cmd", NULL, L"set PROMPT=$E[92m$P$E[90m$G$E[m$S & ", NULL, L"cmd.exe", NULL);
+	CreateDefaultTask(szConEmuDrive, iCreatIdx, L"cmd (Admin)", L" -new_console:a", L"set PROMPT=$E[91m$P$E[90m$G$E[m$S & ", NULL, L"cmd.exe", NULL);
+	CreateDefaultTask(szConEmuDrive, iCreatIdx, L"PowerShell", NULL, NULL, NULL, L"powershell.exe", NULL);
+	CreateDefaultTask(szConEmuDrive, iCreatIdx, L"PowerShell (Admin)", L" -new_console:a", NULL, NULL, L"powershell.exe", NULL);
 	// For 64bit Windows create task with splitted cmd 64/32
 	if (IsWindows64())
-	{
 		gpSet->CmdTaskSet(iCreatIdx++, L"cmd 64/32", L"", L"> set PROMPT=$E[92m$P$E[90m$G$E[m$S & \"%windir%\\system32\\cmd.exe\" /k ver & echo This is Native cmd.exe\r\n\r\nset PROMPT=$E[93m$P$E[90m$G$E[m$S & \"%windir%\\syswow64\\cmd.exe\" /k ver & echo This is 32 bit cmd.exe -new_console:s50V");
-	}
+
+	// Bash
+
+	// For cygwin we can check registry keys (todo?)
+	// HKLM\SOFTWARE\Wow6432Node\Cygwin\setup\rootdir
+	// HKLM\SOFTWARE\Cygwin\setup\rootdir
+	// HKCU\Software\Cygwin\setup\rootdir
+	CreateDefaultTask(szConEmuDrive, iCreatIdx, L"CygWin bash", L" --login -i", L"set CHERE_INVOKING=1 & ", NULL, L"\\CygWin\\bin\\sh.exe", NULL);
+	//{L"CygWin mintty", L"\\CygWin\\bin\\mintty.exe", L" -"},
+	CreateDefaultTask(szConEmuDrive, iCreatIdx, L"MinGW bash",  L" --login -i", L"set CHERE_INVOKING=1 & ", NULL, L"\\MinGW\\msys\\1.0\\bin\\sh.exe", NULL);
+	//{L"MinGW mintty", L"\\MinGW\\msys\\1.0\\bin\\mintty.exe", L" -"},
+	CreateDefaultTask(szConEmuDrive, iCreatIdx, L"Git bash", L" --login -i", NULL, NULL,
+		L"%ProgramFiles%\\Git\\bin\\sh.exe", L"%ProgramW6432%\\Git\\bin\\sh.exe",
+		#ifdef _WIN64
+		L"%ProgramFiles(x86)%\\Git\\bin\\sh.exe",
+		#endif
+		NULL);
+	// Last chance for bash
+	CreateDefaultTask(szConEmuDrive, iCreatIdx, L"bash", L" --login -i", L"set CHERE_INVOKING=1 & ", NULL, L"sh.exe", NULL);
+
+	// Putty?
+	CreateDefaultTask(szConEmuDrive, iCreatIdx, L"Putty", NULL, NULL, NULL, L"Putty.exe", NULL);
 
 	// IRSSI
 	// L"\"set PATH=C:\\irssi\\bin;%PATH%\" & set PERL5LIB=lib/perl5/5.8 & set TERMINFO_DIRS=terminfo & "
@@ -743,10 +760,4 @@ void CreateDefaultTasks(bool bForceAdd /*= false*/)
 
 	// Visual Studio prompt: HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\VisualStudio
 	RegEnumKeys(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\VisualStudio", CreateVCTasks, (LPARAM)&iCreatIdx);
-
-	// Done, free pointers
-	for (int i = 0; FindTasks[i].asName; i++)
-	{
-		SafeFree(FindTasks[i].pszFound);
-	}
 }
