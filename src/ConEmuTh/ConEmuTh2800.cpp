@@ -734,7 +734,7 @@ void GetFarRectW2800(SMALL_RECT* prcFarRect)
 	}
 }
 
-// Использовать только ACTL_GETSHORTWINDOWINFO. С ней проблем с синхронизацией быть не должно
+// Использовать только ACTL_GETWINDOWTYPE. С ней проблем с потоками быть не должно
 bool CheckFarPanelsW2800()
 {
 	if (!InfoW2800 || !InfoW2800->AdvControl) return false;
@@ -743,7 +743,10 @@ bool CheckFarPanelsW2800()
 	bool lbPanelsActive = false;
 	//_ASSERTE(GetCurrentThreadId() == gnMainThreadId); -- ACTL_GETWINDOWTYPE - thread safe
 	INT_PTR iRc = InfoW2800->AdvControl(&guid_ConEmuTh, ACTL_GETWINDOWTYPE, 0, &wt);
-	lbPanelsActive = (iRc != 0) && (wt.Type == WTYPE_PANELS);
+	lbPanelsActive = (iRc != 0)
+		&& ((wt.Type == WTYPE_PANELS)
+			|| (gFarVersion.Bis && (gFarVersion.dwBuild >= 4188) && (wt.Type == WTYPE_SEARCH)));
+
 	return lbPanelsActive;
 }
 
