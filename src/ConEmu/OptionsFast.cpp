@@ -623,8 +623,16 @@ void CreateDefaultTask(LPCWSTR asDrive, int& iCreatIdx, LPCWSTR asName, LPCWSTR 
 
 		// Try to use system env vars?
 		LPCWSTR pszFound = szFound;
-		if (PathUnExpandEnvStrings(szFound, szUnexpand, countof(szUnexpand)))
+		if (PathUnExpandEnvStrings(szFound, szUnexpand, countof(szUnexpand)) && (lstrcmp(szFound, szUnexpand) != 0))
+		{
 			pszFound = szUnexpand;
+		}
+		else if (asDrive && (lstrcmpni(szFound, asDrive, lstrlen(asDrive)) == 0))
+		{
+			wcscpy_c(szUnexpand, L"%ConEmuDrive%");
+			wcscat_c(szUnexpand, szFound+2);
+			pszFound = szUnexpand;
+		}
 
 		// Spaces in path? (use expanded path)
 		if (bNeedQuot)
@@ -676,6 +684,10 @@ void CreateDefaultTasks(bool bForceAdd /*= false*/)
 
 	wchar_t szConEmuDrive[MAX_PATH] = L"";
 	GetDrive(gpConEmu->ms_ConEmuExeDir, szConEmuDrive, countof(szConEmuDrive));
+
+	// Force use of "%ConEmuDrive%" instead of "%SystemDrive%"
+	CEStr sysSave;
+	sysSave.SaveEnvVar(L"SystemDrive", NULL);
 
 	/*
 		Far Manager
