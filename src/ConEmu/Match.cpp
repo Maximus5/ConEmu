@@ -842,7 +842,10 @@ bool CMatch::MatchAny()
 					iBracket = 0;
 					bWasSeparator = false;
 				}
-				else if (!bLineNumberFound && !bMaybeMail && !bUrlMode && wcschr(pszSpacing, m_SrcLine.ms_Arg[mn_MatchRight])
+				else if (!bLineNumberFound && !bMaybeMail && wcschr(pszSpacing, m_SrcLine.ms_Arg[mn_MatchRight])
+					&& !(((mn_MatchRight+3) < mn_SrcLength) // Чтобы не остановиться на файле если есть строка "abc.py (3): ..."
+							&& (m_SrcLine.ms_Arg[mn_MatchRight+1] == L'(')
+							&& isDigit(m_SrcLine.ms_Arg[mn_MatchRight+2]))
 					&& IsValidFile(m_SrcLine.ms_Arg+mn_MatchLeft, mn_MatchRight - mn_MatchLeft + 1, pszBreak, pszSpacing, nNakedFileLen))
 				{
 					// File without digits, just for opening in the editor
