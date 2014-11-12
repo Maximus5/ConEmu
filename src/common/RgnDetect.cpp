@@ -1730,6 +1730,9 @@ void CRgnDetect::OnWriteConsoleOutput(const CHAR_INFO *lpBuffer,COORD dwBufferSi
 
 	const CHAR_INFO *pSrcLine = lpBuffer + dwBufferCoord.Y * dwBufferSize.X;
 
+	if ((mn_MaxCells+1) > (mn_CurWidth*mn_CurHeight))
+		mpsz_Chars[mn_CurWidth*mn_CurHeight] = 0;
+
 	for(int Y = nY1; Y <= nY2; Y++)
 	{
 		const CHAR_INFO *pCharInfo = pSrcLine + dwBufferCoord.X;
