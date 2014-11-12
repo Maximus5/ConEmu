@@ -340,6 +340,8 @@ CVConGroup::CVConGroup(CVConGroup *apParent)
 	mrc_Splitter = MakeRect(0,0);
 	mp_Grp1 = mp_Grp2 = NULL; // Ссылки на "дочерние" панели
 	mp_Parent = apParent; // Ссылка на "родительскую" панель
+	mb_ResizeFlag = false;
+	ZeroStruct(mrc_DragSplitter);
 	mp_ActiveGroupVConPtr = NULL;
 
 
