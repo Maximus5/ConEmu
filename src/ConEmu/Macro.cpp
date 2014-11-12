@@ -153,6 +153,8 @@ namespace ConEmuMacro
 	LPWSTR FontSetSize(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// GetOption("<Name>")
 	LPWSTR GetOption(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
+	// GroupInput [<cmd>]
+	LPWSTR GroupInput(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Change 'Highlight row/col' under mouse. Locally in current VCon.
 	LPWSTR HighlightMouse(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Проверка, есть ли ConEmu GUI. Функцию мог бы и сам плагин обработать, но для "общности" возвращаем "Yes" здесь
@@ -239,6 +241,7 @@ namespace ConEmuMacro
 		{FontSetName, {L"FontSetName"}},
 		{FontSetSize, {L"FontSetSize"}},
 		{GetOption, {L"GetOption"}},
+		{GroupInput, {L"GroupInput"}},
 		{HighlightMouse, {L"HighlightMouse"}},
 		{IsConEmu, {L"IsConEmu"}},
 		{IsConsoleActive, {L"IsConsoleActive"}},
@@ -1809,6 +1812,24 @@ LPWSTR ConEmuMacro::Pause(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 	}
 
 	return pszResult ? pszResult : lstrdup(L"FAILED");
+}
+
+// GroupInput [<cmd>]
+LPWSTR ConEmuMacro::GroupInput(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
+{
+	if (!apRCon)
+		return lstrdup(L"NoActiveConsole");
+
+	int nCommand = 0;
+	p->GetIntArg(0, nCommand);
+
+	if (apRCon && (nCommand >= 0 && nCommand <= 2))
+	{
+		CVConGroup::GroupInput(apRCon->VCon(), (GroupInputCmd)nCommand);
+		return lstrdup(L"OK");
+	}
+
+	return lstrdup(L"InvalidArg");
 }
 
 // PasteFile (<Cmd>[,"<File>"[,"<CommentMark>"]])

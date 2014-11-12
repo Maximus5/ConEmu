@@ -548,6 +548,15 @@ bool CVirtualConsole::isVisible()
 	return true;
 }
 
+bool CVirtualConsole::isGroupedInput()
+{
+	if (!this)
+		return false;
+	if (!(mn_Flags & vf_Grouped))
+		return false;
+	return true;
+}
+
 void CVirtualConsole::PointersInit()
 {
 	mb_PointersAllocated = false;
@@ -4098,9 +4107,9 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
 		pix.X = ConCharX[CurChar-1];
 
 	RECT rect;
-	TODO("DoubleView: обработка группировки ввода");
-	bool bActive = mp_ConEmu->isMeForeground()
-		&& isActive(false);
+	bool bForeground = mp_ConEmu->isMeForeground();
+	bool bActive = bForeground && isActive(false);
+	bool bGroupActive = bForeground && isGroupedInput() && isActive(true);
 
 	// указатель на настройки разделяемые по приложениям
 	mp_Set = gpSet->GetAppSettings(mp_RCon->GetActiveAppSettingsId());
@@ -4207,7 +4216,7 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
 	// весь символ и его не видно
 	// 110131 Если курсор мигающий - разрешим нецветной курсор для AltIns в фаре
 	bool bCursorColor = bInSel ? true
-		: (mp_Set->CursorColor(bActive) || (dwSize >= 40 && !mp_Set->CursorBlink(bActive) && (curStyle != cur_Rect)));
+		: (mp_Set->CursorColor(bActive) || (dwSize >= 40 && !mp_Set->CursorBlink(bGroupActive) && (curStyle != cur_Rect)));
 
 	// Теперь в rect нужно отобразить курсор (XOR'ом попробуем?)
 	if (bCursorColor)
@@ -4250,6 +4259,21 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
 	DeleteObject(hBr);
 }
 
+bool CVirtualConsole::UpdateCursorGroup(CVirtualConsole* pVCon, LPARAM lParam)
+{
+	if (pVCon != ((CVirtualConsole*)lParam))
+	{
+		bool bNeedUpdate = false;
+		pVCon->UpdateCursor(bNeedUpdate);
+		if (bNeedUpdate)
+		{
+			pVCon->Invalidate();
+		}
+	}
+
+	return true; // continue group
+}
+
 void CVirtualConsole::UpdateCursor(bool& lRes)
 {
 	if (mp_RCon && mp_RCon->GuiWnd())
@@ -4271,18 +4295,15 @@ void CVirtualConsole::UpdateCursor(bool& lRes)
 	Cursor.isVisiblePrevFromInfo = cinf.bVisible;
 	BOOL lbUpdateTick = FALSE;
 	bool bForeground = mp_ConEmu->isMeForeground();
-	TODO("DoubleView: группировка ввода");
-	bool bConActive = isActive(false); // а тут именно Active, т.к. курсор должен мигать в активной консоли
-	bool bConVisible = bConActive || isVisible();
+	bool bConVisible = isVisible();
+	bool bConActive = isActive(false); // а тут именно Active и именно false!
+	bool bGroupActive = bConActive || (bConVisible && isGroupedInput());
 	bool bIsAlive = mp_RCon ? (mp_RCon->isAlive() || !mp_RCon->isFar(TRUE)) : false; // не мигать, если фар "думает"
-	//if (bConActive) {
-	//	bForeground = mp_ConEmu->isMeForeground();
-	//}
 
 	// Если курсор (в консоли) видим, и находится в видимой области (при прокрутке)
 	if (cinf.bVisible && isCursorValid)
 	{
-		if (!mp_Set->CursorBlink(bConActive && bForeground) /*|| !bForeground || !bConActive*/)
+		if (!mp_Set->CursorBlink(bGroupActive && bForeground))
 		{
 			Cursor.isVisible = true; // Видим всегда (даже в неактивной консоли), не мигает
 
@@ -4351,7 +4372,15 @@ void CVirtualConsole::UpdateCursor(bool& lRes)
 	Cursor.isVisiblePrev = Cursor.isVisible;
 
 	if (lbUpdateTick)
+	{
 		Cursor.nLastBlink = GetTickCount();
+	}
+
+	// Из активной консоли - дернем курсоры остальных видимых сплитов
+	if (bConActive && isGroupedInput())
+	{
+		CVConGroup::EnumVCon(evf_Visible, UpdateCursorGroup, (LPARAM)(CVirtualConsole*)this);
+	}
 }
 
 

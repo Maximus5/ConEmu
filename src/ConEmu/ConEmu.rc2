@@ -335,6 +335,7 @@ BEGIN
 	vkMultiBuffer           "Switch bufferheight mode"
 	vkMultiClose            "Close active console"
 	vkMultiCmd              "Create new ‘cmd.exe’ console"
+	vkMultiGroup            "Group keyboard input for visible splits"
 	vkMultiNew              "Create new console or new window (check ‘Multiple consoles in one ConEmu window’)"
 	vkMultiNewAttach        "Attach existing Console or GUI application"
 	vkMultiNewPopup         "Show create new console popup menu"

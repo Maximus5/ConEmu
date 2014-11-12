@@ -176,6 +176,8 @@ int ConEmuHotKeyList::AllocateHotkeys()
 		->SetHotKey(VK_PAUSE);
 	Add(vkMultiBuffer,    chk_User,  NULL,    L"Multi.Scroll",          CConEmuCtrl::key_MultiBuffer)
 		;
+	Add(vkMultiGroup,     chk_User,  NULL,    L"Multi.GroupInput",      CConEmuCtrl::key_GuiMacro, false, L"GroupInput")
+		->SetHotKey('G', VK_APPS);
 	Add(vkMultiClose,     chk_User,  NULL,    L"Multi.Close",           CConEmuCtrl::key_MultiClose)
 		->SetHotKey(VK_DELETE,VK_LWIN);
 	Add(vkCloseTab,       chk_User,  NULL,    L"CloseTabKey",           CConEmuCtrl::key_GuiMacro, false, L"Close(6)")

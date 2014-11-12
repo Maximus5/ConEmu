@@ -5625,10 +5625,8 @@ void CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 		return;
 	}
 
-	TODO("Добавить хоткей/макрос включения/отключения группировки");
-	// сохраняться флажок должен на уровне группы
-	bool bGrouped = false;
-	if (bGrouped)
+	// флажок на уровне группы
+	if (mp_VCon->isGroupedInput())
 	{
 		KeyboardIntArg args = {hWnd, messg, wParam, lParam, pszChars, pDeadCharMsg};
 		CVConGroup::EnumVCon(evf_Visible, OnKeyboardBackCall, (LPARAM)&args);

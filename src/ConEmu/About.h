@@ -248,6 +248,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"     Relative==1: N (+-1, +-2) - increase/decrease font height\r\n" \
 	L"     Relative==2: N (per cents) - alias for Zoom(N)\r\n" \
 	L"     returns - \"OK\", or \"InvalidArg\"\r\n" \
+	L"GroupInput([<Cmd>])\r\n" \
+	L"  - Group keyboard input for visible splits\r\n" \
+	L"     Cmd==0: switch mode (default)\r\n" \
+	L"     Cmd==1: group\r\n" \
+	L"     Cmd==2: un-group\r\n" \
 	L"HighlightMouse(<What>[,<Act>])\r\n" \
 	L"  - change highlighting in the ACTIVE console only\r\n" \
 	L"    What==0: switch off/row/col/row+col/off/...\r\n" \

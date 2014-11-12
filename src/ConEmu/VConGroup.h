@@ -48,6 +48,13 @@ enum EnumVConFlags
 };
 typedef bool (*EnumVConProc)(CVirtualConsole* pVCon, LPARAM lParam);
 
+enum GroupInputCmd
+{
+	gic_Switch  = 0,
+	gic_Enable  = 1,
+	gic_Disable = 2,
+};
+
 class CVConGroup : public CRefRelease
 {
 protected:
@@ -62,8 +69,10 @@ protected:
 	RECT mrc_Splitter;
 	RECT mrc_DragSplitter;
 	bool mb_ResizeFlag; // взводится в true для корня, когда в группе что-то меняется
-	void SetResizeFlags();
+	bool mb_GroupInputFlag; // Одновременный ввод во все сплиты (не гарантируется для ChildGui)
 	void* mp_ActiveGroupVConPtr; // указатель (CVirtualConsole*) на последнюю активную консоль в этой группе
+
+	void SetResizeFlags();
 
 	CVConGroup* GetRootGroup();
 	static CVConGroup* GetRootOfVCon(CVirtualConsole* apVCon);
@@ -180,6 +189,7 @@ public:
 	static HWND DoSrvCreated(const DWORD nServerPID, const HWND hWndCon, const DWORD dwKeybLayout, DWORD& t1, DWORD& t2, DWORD& t3, int& iFound, HWND& hWndBack);
 	static void OnVConCreated(CVirtualConsole* apVCon, const RConStartArgs *args);
 	static void OnGuiFocused(BOOL abFocus, BOOL abForceChild = FALSE);
+	static void GroupInput(CVirtualConsole* apVCon, GroupInputCmd cmd);
 
 	static bool Activate(CVirtualConsole* apVCon);
 	static bool ActivateNextPane(CVirtualConsole* apVCon, int nHorz = 0, int nVert = 0);

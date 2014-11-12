@@ -90,6 +90,7 @@ class CVirtualConsole :
 		HWND GhostWnd();
 		bool isActive(bool abAllowGroup);
 		bool isVisible();
+		bool isGroupedInput();
 	public:
 		WARNING("Сделать protected!");
 		uint TextWidth, TextHeight; // размер в символах
@@ -297,6 +298,7 @@ class CVirtualConsole :
 		bool Dump(LPCWSTR asFile);
 		bool Update(bool abForce = false, HDC *ahDc=NULL);
 		void UpdateCursor(bool& lRes);
+		static bool UpdateCursorGroup(CVirtualConsole* pVCon, LPARAM lParam);
 		void UpdateThumbnail(bool abNoSnapshoot = FALSE);
 		void SelectFont(CEFONT hNew);
 		void SelectBrush(HBRUSH hNew);
