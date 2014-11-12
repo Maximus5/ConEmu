@@ -139,6 +139,9 @@ void SetStartupInfoW2800(void *aInfo)
 	//lstrcpyW(pszSlash+1, L"ConEmuTh\\");
 }
 
+void SetCurrentPanelItemW2800Int(BOOL abLeftPanel, INT_PTR anTopItem, INT_PTR anCurItem);
+#define SetCurItem L"SetCurItem"
+
 extern BOOL gbInfoW_OK;
 HANDLE OpenW2800(const void* aInfo)
 {
@@ -168,8 +171,17 @@ HANDLE OpenW2800(const void* aInfo)
 					Item = (INT_PTR)p->Values[0].Double; break;
 				case FMVT_STRING:
 					_ASSERTE(p->Values[0].String!=NULL);
-					_ASSERTE(p->Values[0].Type!=FMVT_STRING); // No use in current version
-					Item = (INT_PTR)p->Values[0].String; break;
+					if (lstrcmp(p->Values[0].String, SetCurItem) == 0)
+					{
+						if (p->Count >= 4)
+						{
+							INT_PTR abLeftPanel = (INT_PTR)p->Values[1].Double;
+							INT_PTR anTopItem = (INT_PTR)p->Values[2].Double;
+							INT_PTR anCurItem = (INT_PTR)p->Values[3].Double;
+							SetCurrentPanelItemW2800Int(abLeftPanel!=0, anTopItem, anCurItem);
+						}
+					}
+					return PANEL_NONE;
 				default:
 					_ASSERTE(p->Values[0].Type==FMVT_INTEGER || p->Values[0].Type==FMVT_STRING);
 				}
@@ -645,6 +657,31 @@ void SetCurrentPanelItemW2800(BOOL abLeftPanel, INT_PTR anTopItem, INT_PTR anCur
 {
 	if (!InfoW2800) return;
 
+	wchar_t szMacro[200], szTop[65], szCur[65];
+	FSFW2800->itoa64(anTopItem, szTop, 10);
+	FSFW2800->itoa64(anCurItem, szCur, 10);
+	LPCWSTR pszEsc, pszFn;
+	if (gFarVersion.IsFarLua())
+	{
+		pszEsc = L"if Area.Search then Keys(\"Esc\") end";
+		pszFn = L"Plugin.SyncCall";
+	}
+	else
+	{
+		pszEsc = L"$if (Search) Esc $end";
+		pszFn = L"callplugin";
+	}
+	_wsprintf(szMacro, SKIPCOUNT(szMacro) L"%s %s(\"bd454d48-448e-46cc-909d-b6cf789c2d65\",\"%s\",%u,%s,%s)",
+			pszEsc, pszFn, SetCurItem, abLeftPanel, szTop, szCur);
+
+	MacroSendMacroText mcr = {sizeof(MacroSendMacroText)};
+	mcr.Flags = KMFLAGS_NOSENDKEYSTOPLUGINS;
+	mcr.SequenceText = szMacro;
+	InfoW2800->MacroControl(&guid_ConEmuTh, MCTL_SENDSTRING, 0, &mcr);
+}
+
+void SetCurrentPanelItemW2800Int(BOOL abLeftPanel, INT_PTR anTopItem, INT_PTR anCurItem)
+{
 	// В Far2 можно быстро проверить валидность индексов
 	HANDLE hPanel = NULL;
 	PanelInfo piActive = {sizeof(piActive)}, piPassive = {sizeof(piActive)}, *pi = NULL;
