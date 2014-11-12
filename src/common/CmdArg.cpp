@@ -29,19 +29,21 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define HIDE_USE_EXCEPTION_INFO
 #include "common.hpp"
 #include "CmdArg.h"
-
+#include "WObjects.h"
 
 CmdArg::CmdArg()
 {
 	mn_MaxLen = 0; ms_Arg = NULL;
-	mb_RestorePath = false;
+	mb_RestoreEnvVar = false;
+	ms_RestoreVarName[0] = 0;
 	Empty();
 }
 
 CmdArg::CmdArg(wchar_t* RVAL_REF asPtr)
 {
 	mn_MaxLen = 0; ms_Arg = NULL;
-	mb_RestorePath = false;
+	mb_RestoreEnvVar = false;
+	ms_RestoreVarName[0] = 0;
 	AttachInt(asPtr);
 }
 
@@ -53,9 +55,9 @@ CmdArg& CmdArg::operator=(wchar_t* RVAL_REF asPtr)
 
 CmdArg::~CmdArg()
 {
-	if (mb_RestorePath && !IsEmpty())
+	if (mb_RestoreEnvVar && *ms_RestoreVarName && !IsEmpty())
 	{
-		SetEnvironmentVariable(L"PATH", ms_Arg);
+		SetEnvironmentVariable(ms_RestoreVarName, ms_Arg);
 	}
 
 	SafeFree(ms_Arg);
@@ -133,7 +135,8 @@ void CmdArg::Empty()
 	ms_LastTokenEnd = NULL;
 	ms_LastTokenSave[0] = 0;
 	#endif
-	mb_RestorePath = false;
+	mb_RestoreEnvVar = false;
+	ms_RestoreVarName[0] = 0;
 }
 
 bool CmdArg::IsEmpty()
@@ -171,8 +174,24 @@ void CmdArg::SavePathVar(LPCWSTR asCurPath)
 	// Will restore environment variable "PATH" in destructor
 	if (Set(asCurPath))
 	{
-		mb_RestorePath = true;
+		mb_RestoreEnvVar = true;
+		lstrcpyn(ms_RestoreVarName, L"PATH", countof(ms_RestoreVarName));
 	}
+}
+
+void CmdArg::SaveEnvVar(LPCWSTR asVarName, LPCWSTR asNewValue)
+{
+	if (!asVarName || !*asVarName)
+		return;
+
+	_ASSERTE(!mb_RestoreEnvVar);
+	Empty();
+	SafeFree(ms_Arg);
+	Attach(GetEnvVar(asVarName));
+
+	mb_RestoreEnvVar = true;
+	lstrcpyn(ms_RestoreVarName, asVarName, countof(ms_RestoreVarName));
+	SetEnvironmentVariable(asVarName, asNewValue);
 }
 
 void CmdArg::SetAt(INT_PTR nIdx, wchar_t wc)

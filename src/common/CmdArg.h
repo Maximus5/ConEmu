@@ -58,7 +58,8 @@ public:
 	wchar_t ms_LastTokenSave[32];
 	#endif
 
-	bool mb_RestorePath; // Если используется для сохранения переменной %PATH%, восстановить при закрытии объекта
+	bool mb_RestoreEnvVar; // Если используется для сохранения переменной окружения, восстановить при закрытии объекта
+	wchar_t ms_RestoreVarName[32];
 
 private:
 	// Not copyable, not implemented, use explicit Set method
@@ -76,6 +77,7 @@ public:
 	bool IsEmpty();
 	LPCWSTR Set(LPCWSTR asNewValue, INT_PTR anChars = -1);
 	void SavePathVar(LPCWSTR asCurPath);
+	void SaveEnvVar(LPCWSTR asVarName, LPCWSTR asNewValue);
 	void SetAt(INT_PTR nIdx, wchar_t wc);
 
 	void GetPosFrom(const CmdArg& arg);
