@@ -5,11 +5,20 @@ SVN: http://conemu-maximus5.googlecode.com/svn/trunk/ConEmu/Release/ConEmu/Whats
 
 
 You can show your appreciation and support future development by donating.
-Donate (PayPal) button located on project website under ConEmu sketch (upper right of page)
+Donate button located on project website under ConEmu sketch (upper right of page)
 http://code.google.com/p/conemu-maximus5
 
 Votes and awards (vote for ConEmu, if you please)
 http://code.google.com/p/conemu-maximus5/wiki/Awards
+
+
+2014.11.11
+[*] Group keyboard input for visible splits: Apps+G.
+[*] Issue 1803: Unable to check quake-style setting ‘Auto-hide on focus lost’.
+[*] Fix Coverity warnings (from Michael Lukashov).
+[*] Fix broken theme on search control after quake activation.
+[*] FileLineDetector: Fix broken "abc.py (1): ..."
+[*] FileLineDetector: Fix broken mail detection, support stop on punctuations.
 
 
 2014.11.10
