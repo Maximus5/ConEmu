@@ -1733,13 +1733,13 @@ void CRgnDetect::OnWriteConsoleOutput(const CHAR_INFO *lpBuffer,COORD dwBufferSi
 	if ((mn_MaxCells+1) > (mn_CurWidth*mn_CurHeight))
 		mpsz_Chars[mn_CurWidth*mn_CurHeight] = 0;
 
-	for(int Y = nY1; Y <= nY2; Y++)
+	for (int Y = nY1; Y <= nY2; Y++)
 	{
 		const CHAR_INFO *pCharInfo = pSrcLine + dwBufferCoord.X;
 		wchar_t  *pChar = mpsz_Chars + Y * mn_CurWidth + rcRegion.Left;
 		CharAttr *pAttr = mp_Attrs + Y * mn_CurWidth + rcRegion.Left;
 
-		for(int X = nX1; X <= nX2; X++, pCharInfo++)
+		for (int X = nX1; X <= nX2; X++, pCharInfo++)
 		{
 			TODO("OPTIMIZE: *(lpAttr++) = lpCur->Attributes;");
 			*(pAttr++) = mca_Table[pCharInfo->Attributes & 0xFF];
