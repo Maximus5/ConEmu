@@ -649,10 +649,12 @@ bool CMatch::MatchAny()
 	const wchar_t* pszUrlDelim = L"\\\"<>{}[]^`'\r\n" MATCH_SPACINGS;
 	const wchar_t* pszUrlFileDelim = L"\"<>^\r\n" MATCH_SPACINGS;
 	const wchar_t* pszEndBrackets = L">])}";
+	const wchar_t* pszPuctuators = L".,:;…!?";
 	int nColons = 0;
 	bool bUrlMode = false, bMaybeMail = false;
 	SHORT MailX = -1;
 	bool bDigits = false, bLineNumberFound = false, bWasSeparator = false;
+	bool bWasPunctuator = false;
 	bool bNakedFile = false;
 	int nNakedFileLen = 0;
 	enum {
@@ -860,14 +862,39 @@ bool CMatch::MatchAny()
 
 			if ((iQuotStart >= 0) && (m_SrcLine.ms_Arg[mn_MatchRight] == gszQuotEnd[iQuotStart]))
 			{
-				if (IsValidFile(m_SrcLine.ms_Arg+mn_MatchLeft+1, mn_MatchRight - mn_MatchLeft - 1, pszBreak, pszSpacing, nNakedFileLen))
+				bNakedFile = IsValidFile(m_SrcLine.ms_Arg+mn_MatchLeft+1, mn_MatchRight - mn_MatchLeft - 1, pszBreak, pszSpacing, nNakedFileLen);
+				if (bNakedFile || bMaybeMail)
 				{
-					bNakedFile = true;
 					mn_MatchLeft++;
 					mn_MatchRight--;
 					break;
 				}
 			}
+
+			if (bWasPunctuator && !bLineNumberFound)
+			{
+				if (bMaybeMail)
+				{
+					// Если после мейла нашли что-то кроме точки
+					if ((m_SrcLine.ms_Arg[mn_MatchRight-1] != L'.')
+						// или после точки - пробельный символ
+						|| wcschr(pszSpacing, m_SrcLine.ms_Arg[mn_MatchRight]))
+					{
+						break;
+					}
+				}
+				else if (wcschr(pszSpacing, m_SrcLine.ms_Arg[mn_MatchRight]))
+				{
+					bNakedFile = IsValidFile(m_SrcLine.ms_Arg+mn_MatchLeft, mn_MatchRight - mn_MatchLeft - 1, pszBreak, pszSpacing, nNakedFileLen);
+					if (bNakedFile)
+					{
+						mn_MatchRight--;
+						break;
+					}
+				}
+			}
+
+			bWasPunctuator = (wcschr(pszPuctuators, m_SrcLine.ms_Arg[mn_MatchRight]) != NULL);
 
 			// Рассчитано на закрывающие : или ) или ] или ,
 			_ASSERTE(pszTermint[0]==L':' && pszTermint[1]==L')' && pszTermint[2]==L']' && pszTermint[3]==L',' && pszTermint[5]==0);
@@ -950,6 +977,8 @@ bool CMatch::MatchAny()
 			{
 				if ((bLineNumberFound) || !IsValidFile(m_SrcLine.ms_Arg+mn_MatchLeft, mn_MatchRight - mn_MatchLeft + 1, pszBreak, pszSpacing, nNakedFileLen))
 				{
+					if (!bLineNumberFound && bMaybeMail)
+						break;
 					MatchTestAlert();
 					goto wrap; // Не оно?
 				}
@@ -1079,11 +1108,6 @@ bool CMatch::MatchAny()
 		goto wrap;
 	}
 
-	if (bUrlMode)
-		m_Type = etr_Url;
-	else
-		m_Type = (bLineNumberFound ? etr_FileRow : etr_File);
-
 	// Ok
 	if (mn_MatchRight >= mn_MatchLeft)
 	{
@@ -1103,6 +1127,11 @@ bool CMatch::MatchAny()
 		}
 		#endif
 	}
+
+	if (bUrlMode)
+		m_Type = etr_Url;
+	else
+		m_Type = (bLineNumberFound ? etr_FileRow : etr_File);
 
 wrap:
 	return bFound;
