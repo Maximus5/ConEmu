@@ -957,7 +957,7 @@ bool CMatch::MatchAny()
 			break;
 
 		mn_MatchRight++;
-		if (wcschr(bUrlMode ? pszUrlDelim : pszBreak, m_SrcLine.ms_Arg[mn_MatchRight]))
+		if (wcschr(pszBreak, m_SrcLine.ms_Arg[mn_MatchRight]))
 		{
 			if (bMaybeMail)
 				break;
