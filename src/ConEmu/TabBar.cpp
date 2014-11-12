@@ -1645,10 +1645,6 @@ void CTabBarClass::PrintRecentStack()
 
 int CTabBarClass::GetNextTab(bool abForward, bool abAltStyle/*=false*/)
 {
-	BOOL lbRecentMode = (gpSet->isTabs != 0) &&
-	                    (((abAltStyle == FALSE) ? gpSet->isTabRecent : !gpSet->isTabRecent));
-	int nNewSel = -1;
-
 	// We need "visible" position (selected tab from tabbar)
 	// It may differs from actual active tab during switching
 	int nCurSel = GetCurSel();
@@ -1660,6 +1656,17 @@ int CTabBarClass::GetNextTab(bool abForward, bool abAltStyle/*=false*/)
 	DEBUGSTRRECENT(szTab);
 	PrintRecentStack();
 	#endif
+
+	if (nCurCount <= 1)
+	{
+		_ASSERTE((nCurCount > 0) && "At least one tab must be created");
+		_ASSERTE((nCurSel == 0) && "Invalid tab was marked as active");
+		return nCurSel;
+	}
+
+	bool lbRecentMode = (gpSet->isTabs != 0) &&
+	                    (((abAltStyle == false) ? gpSet->isTabRecent : !gpSet->isTabRecent));
+	int nNewSel = -1;
 
 	if (lbRecentMode)
 	{
