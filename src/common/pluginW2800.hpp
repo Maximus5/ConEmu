@@ -1265,6 +1265,7 @@ enum WINDOWINFO_TYPE
 	WTYPE_DIALOG                    = 4,
 	WTYPE_VMENU                     = 5,
 	WTYPE_HELP                      = 6,
+	WTYPE_SEARCH                    = 7, // Far3bis 4187+
 };
 
 typedef unsigned __int64 WINDOWINFO_FLAGS;
