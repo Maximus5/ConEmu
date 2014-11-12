@@ -12,6 +12,12 @@ Votes and awards (vote for ConEmu, if you please)
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+2014.11.12
+[*] Issue 1789: Far Thumbnails - current item was not changed if QSearch was active (Far 3 api break). Patch works with Far3bis 4188+ only.
+[*] Far Thumbnails - fix arrow move if QSearch is active.
+[*] Force using "%ConEmuDrive%" instead of "%SystemDrive%" when populating default tasks.
+
+
 2014.11.11
 [*] Group keyboard input for visible splits: Apps+G.
 [*] Issue 1803: Unable to check quake-style setting ‘Auto-hide on focus lost’.
