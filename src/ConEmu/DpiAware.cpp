@@ -429,7 +429,7 @@ bool CDpiForDialog::Attach(HWND hWnd, HWND hCenterParent, DpiValue* pCurDpi /*= 
 		// and application is marked as per-monitor-dpi aware
 		// Windows does not resize dialogs automatically.
 		// Our resources are designed for standard 96 dpi.
-		m_CurDpi.SetDpi(96, 96);
+		CDpiAware::QueryDpiForMonitor(NULL, &m_CurDpi);
 		MArray<DlgItem>* p = NULL;
 		if (m_Items.Get(m_CurDpi.Ydpi, &p) && p)
 			delete p;
