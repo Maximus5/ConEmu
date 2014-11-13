@@ -124,13 +124,14 @@ public:
 
 	~CDpiForDialog();
 
-	bool Attach(HWND hWnd, HWND hCenterParent, DpiValue* pCurDpi = NULL);
+	bool Attach(HWND hWnd, HWND hCenterParent);
 
 	bool SetDialogDPI(const DpiValue& newDpi, LPRECT lprcSuggested = NULL);
 
 	void Detach();
 
 public:
+	const DpiValue& GetCurDpi();
 	bool ProcessDpiMessages(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lParam);
 
 protected:

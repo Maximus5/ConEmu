@@ -386,7 +386,7 @@ CDpiForDialog::~CDpiForDialog()
 	Detach();
 }
 
-bool CDpiForDialog::Attach(HWND hWnd, HWND hCenterParent, DpiValue* pCurDpi /*= NULL*/)
+bool CDpiForDialog::Attach(HWND hWnd, HWND hCenterParent)
 {
 	mh_Dlg = hWnd;
 
@@ -441,9 +441,6 @@ bool CDpiForDialog::Attach(HWND hWnd, HWND hCenterParent, DpiValue* pCurDpi /*= 
 		{
 			if (!SetDialogDPI(m_InitDpi))
 				return false;
-
-			if (pCurDpi)
-				pCurDpi->SetDpi(m_InitDpi);
 		}
 	}
 	else
@@ -649,6 +646,11 @@ void CDpiForDialog::Detach()
 		}
 		m_Items.Release();
 	}
+}
+
+const DpiValue& CDpiForDialog::GetCurDpi()
+{
+	return m_CurDpi;
 }
 
 bool CDpiForDialog::ProcessDpiMessages(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lParam)

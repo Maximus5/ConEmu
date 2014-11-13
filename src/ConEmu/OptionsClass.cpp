@@ -231,7 +231,6 @@ CSettings::CSettings()
 	#endif
 	m_ColorFormat = eRgbDec; // RRR GGG BBB (как показывать цвета на вкладке Colors)
 	mp_DpiAware = NULL;
-	mp_CurDpi = NULL;
 	mp_DpiDistinct2 = NULL;
 	ZeroStruct(mh_Font);
 	mh_Font2 = NULL;
@@ -1536,12 +1535,7 @@ LRESULT CSettings::OnInitDialog()
 
 	if (mp_DpiAware)
 	{
-		if (mp_CurDpi == NULL)
-		{
-			_ASSERTE(mp_CurDpi!=NULL);
-			mp_CurDpi = new DpiValue();
-		}
-		mp_DpiAware->Attach(ghOpWnd, ghWnd, mp_CurDpi);
+		mp_DpiAware->Attach(ghOpWnd, ghWnd);
 	}
 
 	gbLastColorsOk = FALSE;
@@ -6087,7 +6081,6 @@ void CSettings::Dialog(int IdShowPage /*= 0*/)
 		if (!gpSetCls->mp_DpiAware && CDpiAware::IsPerMonitorDpi())
 		{
 			gpSetCls->mp_DpiAware = new CDpiForDialog();
-			gpSetCls->mp_CurDpi = new DpiValue();
 		}
 
 		wchar_t szLog[80]; _wsprintf(szLog, SKIPCOUNT(szLog) L"Creating settings dialog, IdPage=%u", IdShowPage);
@@ -6604,9 +6597,6 @@ INT_PTR CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPara
 		default:
 			if (gpSetCls->mp_DpiAware && gpSetCls->mp_DpiAware->ProcessDpiMessages(hWnd2, messg, wParam, lParam))
 			{
-				// Store active dpi
-				gpSetCls->mp_CurDpi->OnDpiChanged(wParam);
-
 				// Refresh the visible page and mark 'to be changed' others
 				for (ConEmuSetupPages* p = gpSetCls->m_Pages; p->PageID; p++)
 				{
@@ -12668,7 +12658,7 @@ HWND CSettings::CreatePage(ConEmuSetupPages* p)
 
 void CSettings::ProcessDpiChange(ConEmuSetupPages* p)
 {
-	if (!p->hPage || !p->pDpiAware)
+	if (!p->hPage || !p->pDpiAware || !mp_DpiAware)
 		return;
 
 	HWND hPlace = GetDlgItem(ghOpWnd, tSetupPagePlace);
@@ -12676,7 +12666,7 @@ void CSettings::ProcessDpiChange(ConEmuSetupPages* p)
 	MapWindowPoints(NULL, ghOpWnd, (LPPOINT)&rcClient, 2);
 
 	p->DpiChanged = false;
-	p->pDpiAware->SetDialogDPI(*mp_CurDpi, &rcClient);
+	p->pDpiAware->SetDialogDPI(mp_DpiAware->GetCurDpi(), &rcClient);
 
 	if ((p->PageID == thi_Apps) && mp_DpiDistinct2)
 	{
@@ -12684,7 +12674,7 @@ void CSettings::ProcessDpiChange(ConEmuSetupPages* p)
 		RECT rcPos = {}; GetWindowRect(hHolder, &rcPos);
 		MapWindowPoints(NULL, p->hPage, (LPPOINT)&rcPos, 2);
 
-		mp_DpiDistinct2->SetDialogDPI(*mp_CurDpi, &rcPos);
+		mp_DpiDistinct2->SetDialogDPI(mp_DpiAware->GetCurDpi(), &rcPos);
 	}
 }
 
@@ -12778,7 +12768,7 @@ void CSettings::ClearPages()
 
 int CSettings::GetDialogDpi()
 {
-	if (mp_CurDpi)
-		return mp_CurDpi->Ydpi;
+	if (mp_DpiAware)
+		return mp_DpiAware->GetCurDpi().Ydpi;
 	return _dpi.Ydpi;
 }
