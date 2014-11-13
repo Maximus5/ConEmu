@@ -6090,6 +6090,9 @@ void CSettings::Dialog(int IdShowPage /*= 0*/)
 			gpSetCls->mp_CurDpi = new DpiValue();
 		}
 
+		wchar_t szLog[80]; _wsprintf(szLog, SKIPCOUNT(szLog) L"Creating settings dialog, IdPage=%u", IdShowPage);
+		LogString(szLog);
+
 		//2009-05-03. DialogBox создает МОДАЛЬНЫЙ диалог, а нам нужен НЕмодальный
 		HWND hOpt = CreateDialog(g_hInstance, MAKEINTRESOURCE(IDD_SETTINGS), NULL, wndOpProc);
 
@@ -7200,6 +7203,7 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 	{
 		if ((messg == WM_INITDIALOG) || (messg == mn_ActivateTabMsg))
 		{
+			LogString(L"Creating child dialog IDD_SPG_APPDISTINCT2");
 			hChild = CreateDialogParam((HINSTANCE)GetModuleHandle(NULL),
 							MAKEINTRESOURCE(IDD_SPG_APPDISTINCT2), hWnd2, pageOpProc_AppsChild, 0);
 			if (!hChild)
@@ -12655,6 +12659,8 @@ HWND CSettings::CreatePage(ConEmuSetupPages* p)
 			p->pDpiAware = new CDpiForDialog();
 		p->DpiChanged = false;
 	}
+	wchar_t szLog[80]; _wsprintf(szLog, SKIPCOUNT(szLog) L"Creating child dialog ID=%u", p->PageID);
+	LogString(szLog);
 	p->hPage = CreateDialogParam((HINSTANCE)GetModuleHandle(NULL),
 					MAKEINTRESOURCE(p->PageID), ghOpWnd, pageOpProc, (LPARAM)p);
 	return p->hPage;

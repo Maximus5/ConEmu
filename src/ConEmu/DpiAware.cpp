@@ -472,6 +472,8 @@ bool CDpiForDialog::SetDialogDPI(const DpiValue& newDpi, LPRECT lprcSuggested /*
 	HFONT hf = NULL;
 
 	wchar_t szClass[100];
+	wchar_t szLog[160];
+	RECT rcClient = {}, rcCurWnd = {};
 
 	#ifdef _DEBUG
 	LOGFONT lftest1 = {}, lftest2 = {};
@@ -482,9 +484,6 @@ bool CDpiForDialog::SetDialogDPI(const DpiValue& newDpi, LPRECT lprcSuggested /*
 	// To avoid several nested passes
 	InterlockedIncrement(&mn_InSet);
 	m_CurDpi.SetDpi(newDpi);
-
-	_wsprintf(szClass, SKIPLEN(countof(szClass)) L"CDpiForDialog::SetDialogDPI(x%08X, {%i,%i})", (DWORD)(DWORD_PTR)mh_Dlg, newDpi.Xdpi, newDpi.Ydpi);
-	LogString(szClass);
 
 	// Eval
 	mn_CurFontHeight = (mn_InitFontHeight * newDpi.Ydpi / 96);
@@ -509,7 +508,6 @@ bool CDpiForDialog::SetDialogDPI(const DpiValue& newDpi, LPRECT lprcSuggested /*
 		DWORD dwStyle = GetWindowLong(mh_Dlg, GWL_STYLE);
 		DWORD dwStyleEx = GetWindowLong(mh_Dlg, GWL_EXSTYLE);
 
-		RECT rcClient = {}, rcCurWnd = {};
 		if (!GetClientRect(mh_Dlg, &rcClient) || !GetWindowRect(mh_Dlg, &rcCurWnd))
 		{
 			delete p;
@@ -546,6 +544,20 @@ bool CDpiForDialog::SetDialogDPI(const DpiValue& newDpi, LPRECT lprcSuggested /*
 		m_Items.Set(iNewDpi, p);
 	}
 
+	if (p->size() <= 0)
+	{
+		_ASSERTE(FALSE && "No elements");
+		goto wrap;
+	}
+	else
+	{
+		const DlgItem& di = (*p)[0];
+		_wsprintf(szLog, SKIPCOUNT(szLog) L"CDpiForDialog::SetDialogDPI x%08X, OldDpi={%i,%i}, NewDpi={%i,%i}, OldSize={%i,%i}, NewSize={%i,%i}",
+			(DWORD)(DWORD_PTR)mh_Dlg, curDpi.Xdpi, curDpi.Ydpi, newDpi.Xdpi, newDpi.Ydpi,
+			(rcCurWnd.right - rcCurWnd.left), (rcCurWnd.bottom - rcCurWnd.top), di.r.right, di.r.bottom);
+		LogString(szLog);
+	}
+
 	hf = CreateFontIndirect(&mlf_CurFont);
 	if (hf == NULL)
 	{
@@ -560,11 +572,14 @@ bool CDpiForDialog::SetDialogDPI(const DpiValue& newDpi, LPRECT lprcSuggested /*
 		DWORD nStyles = GetWindowLong(di.h, GWL_STYLE);
 		bool bResizeCombo = (lstrcmpi(szClass, L"ComboBox") == 0);
 		int iComboFieldHeight = 0, iComboWasHeight = 0;
+		LONG_PTR lFieldHeight = 0, lNewHeight = 0;
+		RECT rcCur = {};
+
 		if (bResizeCombo && (nStyles & CBS_OWNERDRAWFIXED))
 		{
-			RECT rcCur = {}; GetWindowRect(di.h, &rcCur);
+			GetWindowRect(di.h, &rcCur);
 			iComboWasHeight = (rcCur.bottom - rcCur.top);
-			LONG_PTR lFieldHeight = SendMessage(di.h, CB_GETITEMHEIGHT, -1, 0);
+			lFieldHeight = SendMessage(di.h, CB_GETITEMHEIGHT, -1, 0);
 			if (lFieldHeight < iComboWasHeight)
 			{
 				iComboFieldHeight = lFieldHeight;
@@ -579,7 +594,13 @@ bool CDpiForDialog::SetDialogDPI(const DpiValue& newDpi, LPRECT lprcSuggested /*
 		if (bResizeCombo)
 		{
 			if ((nStyles & CBS_OWNERDRAWFIXED) && (iComboWasHeight > 0) && (iComboFieldHeight > 0))
-				SendMessage(di.h, CB_SETITEMHEIGHT, -1, newH*iComboFieldHeight/iComboWasHeight);
+			{
+				lNewHeight = newH*iComboFieldHeight/iComboWasHeight;
+				_wsprintf(szLog, SKIPCOUNT(szLog) L"CDpiForDialog::Combo height changed - OldHeight=%i, ItemHeight=%i, NewHeight=%i, NewItemHeight=%i",
+					(rcCur.bottom - rcCur.top), lFieldHeight, newH, lNewHeight);
+				LogString(szLog);
+				SendMessage(di.h, CB_SETITEMHEIGHT, -1, lNewHeight);
+			}
 			SendMessage(di.h, CB_SETEDITSEL, 0, MAKELPARAM(-1,0));
 		}
 		EditIconHint_ResChanged(di.h);
