@@ -134,7 +134,6 @@ CSettings::CSettings()
 	gpSetCls = this;
 	gpSet = &m_Settings;
 
-	ZeroStruct(_dpi);
 	GetOverallDpi();
 
 	// Go
