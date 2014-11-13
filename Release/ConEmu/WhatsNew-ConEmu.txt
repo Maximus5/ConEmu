@@ -12,6 +12,10 @@ Votes and awards (vote for ConEmu, if you please)
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+2014.11.13
+[*] Issue 1745: Fix overscaled dialogs.
+
+
 2014.11.12
 [*] Issue 1789: Far Thumbnails - current item was not changed if QSearch was active (Far 3 api break). Patch works with Far3bis 4188+ only.
 [*] Far Thumbnails - fix arrow move if QSearch is active.
