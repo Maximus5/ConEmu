@@ -297,8 +297,9 @@ CSettings::CSettings()
 int CSettings::GetOverallDpi()
 {
 	// Must be called during initialization only
-	CDpiAware::QueryDpiForMonitor(NULL, &_dpi);
-	_ASSERTE(_dpi.Xdpi >= 96 && _dpi.Ydpi >= 96);
+	CDpiAware::QueryDpiForMonitor(NULL, &_dpi_all);
+	_ASSERTE(_dpi_all.Xdpi >= 96 && _dpi_all.Ydpi >= 96);
+	_dpi.SetDpi(_dpi_all);
 	return _dpi.Ydpi;
 }
 
@@ -6625,8 +6626,15 @@ INT_PTR CSettings::OnMeasureFontItem(HWND hWnd2, UINT messg, WPARAM wParam, LPAR
 	{
 		MEASUREITEMSTRUCT *pItem = (MEASUREITEMSTRUCT*)lParam;
 		int nDpi = GetDialogDpi();
-		_ASSERTE(nDpi >= 96);
-		pItem->itemHeight = 15 * nDpi / 96;
+		if (nDpi >= 96 && _dpi_all.Ydpi >= 96)
+		{
+			pItem->itemHeight = 15 * nDpi / 96;
+		}
+		else
+		{
+			_ASSERTE(nDpi >= 96 && _dpi_all.Ydpi >= 96);
+			pItem->itemHeight = 15;
+		}
 	}
 
 	return TRUE;

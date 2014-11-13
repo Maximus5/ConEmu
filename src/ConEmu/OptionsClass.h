@@ -369,6 +369,7 @@ class CSettings
 		LPCWSTR CreateConFontError(LPCWSTR asReqFont=NULL, LPCWSTR asGotFont=NULL);
 		TOOLINFO tiConFontBalloon;
 		DpiValue _dpi;
+		DpiValue _dpi_all;
 		int GetOverallDpi();
 	public:
 		int QueryDpi();
