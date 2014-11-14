@@ -2244,6 +2244,11 @@ wrap:
 		*psStartDir = szLnkDir.Detach();
 	}
 
+	if (m_Args.ForceHooksServer == crb_On)
+	{
+		CheckHookServer();
+	}
+
 	return lbChanged ? 1 : 0;
 }
 

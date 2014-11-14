@@ -79,6 +79,7 @@ struct RConStartArgs
 	RConBoolArg     LongOutputDisable;  // -new_console:o
 	RConBoolArg     InjectsDisable;     // -new_console:i
 	RConBoolArg     ForceNewWindow;     // -new_console:N - Force new ConEmu window with Default terminal
+	RConBoolArg     ForceHooksServer;   // -new_console:R - Force CheckHookServer (GitShowBranch.cmd, actually used with -cur_console)
 
  	enum {
  		eConfDefault = 0,

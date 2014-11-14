@@ -102,6 +102,7 @@ _DBGHLP(L"     l - lock console size, do not sync it to ConEmu window\r\n") \
 		L"     o - don't enable 'Long console output' when starting command from Far Manager\r\n" \
 		L"     P - see below\r\n" \
 		L"     r - run as restricted user\r\n" \
+		L"     R - force start hooks server in the parent process\r\n" \
 		L"     s[<SplitTab>T][<Percents>](H|V)\r\n" \
 		L"     t - see below\r\n" \
 _DBGHLP(L"     x<width>, y<height> - change size of visible area, use with 'l'\r\n") \

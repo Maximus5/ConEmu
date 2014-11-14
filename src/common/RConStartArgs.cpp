@@ -276,6 +276,7 @@ RConStartArgs::RConStartArgs()
 	nPTY = 0;
 	InjectsDisable = crb_Undefined;
 	ForceNewWindow = crb_Undefined;
+	ForceHooksServer = crb_Undefined;
 	eConfirmation = eConfDefault;
 	szUserPassword[0] = 0;
 	UseEmptyPassword = crb_Undefined;
@@ -384,6 +385,8 @@ SkipUserName:
 		this->InjectsDisable = args->InjectsDisable;
 	if (!abConcat || args->ForceNewWindow)
 		this->ForceNewWindow = args->ForceNewWindow;
+	if (!abConcat || args->ForceHooksServer)
+		this->ForceHooksServer = args->ForceHooksServer;
 	if (!abConcat || args->LongOutputDisable)
 		this->LongOutputDisable = args->LongOutputDisable;
 	if (!abConcat || args->OverwriteMode)
@@ -455,6 +458,7 @@ wchar_t* RConStartArgs::CreateCommandLine(bool abForTasks /*= false*/) const
 	cchMaxLen += (nPTY ? 15 : 0); // -new_console:e
 	if (InjectsDisable == crb_On) cchMaxLen++; // -new_console:i
 	if (ForceNewWindow == crb_On) cchMaxLen++; // -new_console:N
+	if (ForceHooksServer == crb_On) cchMaxLen++; // -new_console:R
 	if (eConfirmation) cchMaxLen++; // -new_console:c / -new_console:n
 	if (ForceDosBox == crb_On) cchMaxLen++; // -new_console:x
 	if (ForceInherit == crb_On) cchMaxLen++; // -new_console:I
@@ -527,6 +531,9 @@ wchar_t* RConStartArgs::CreateCommandLine(bool abForTasks /*= false*/) const
 
 	if (ForceNewWindow == crb_On)
 		wcscat_c(szAdd, L"N");
+
+	if (ForceHooksServer == crb_On)
+		wcscat_c(szAdd, L"R");
 
 	if (BufHeight == crb_On)
 	{
@@ -987,6 +994,11 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 					case L'N':
 						// N - Force new ConEmu window with Default terminal
 						ForceNewWindow = crb_On;
+						break;
+
+					case 'R':
+						// R - Force CheckHookServer (GitShowBranch.cmd, actually used with -cur_console)
+						ForceHooksServer = crb_On;
 						break;
 
 					case L'h':
