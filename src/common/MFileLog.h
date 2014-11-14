@@ -42,6 +42,7 @@ class MFileLog
 		wchar_t* ms_DefPath;
 		HANDLE   mh_LogFile;
 		HRESULT  InitFileName(LPCWSTR asName = NULL, DWORD anPID = 0);
+		static void LogStartEnvInt(LPCWSTR asText, LPARAM lParam, bool bFirst, bool bNewLine);
 	protected:
 		MSectionSimple* mpcs_Lock;
 	public:
