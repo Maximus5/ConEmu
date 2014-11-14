@@ -460,11 +460,22 @@ bool CRealBuffer::LoadDataFromDump(const CONSOLE_SCREEN_BUFFER_INFO& storedSbi, 
 	con.m_sbi.dwCursorPosition = dump.crCursor;
 	con.m_sbi.wAttributes = 7;
 
-	con.m_sbi.srWindow.Right = nX - 1;
-	con.m_sbi.srWindow.Left = 0;
-	con.m_sbi.srWindow.Bottom = min((storedSbi.srWindow.Top + (int)nY - 1),(storedSbi.dwSize.Y - 1));
+	TOPLEFTCOORD NewTopLeft; NewTopLeft.Reset();
+	if (mp_RCon->mp_ABuf && (mp_RCon->mp_ABuf != this))
+		mp_RCon->mp_ABuf->ConsoleScreenBufferInfo(NULL, NULL, &NewTopLeft);
+	SetTopLeft(NewTopLeft.y, NewTopLeft.x, false);
+
+	if (NewTopLeft.isLocked() && NewTopLeft.x >= 0)
+		con.m_sbi.srWindow.Right = klMin((NewTopLeft.x + (int)nX - 1),((int)storedSbi.dwSize.X - 1));
+	else
+		con.m_sbi.srWindow.Right = klMin(((int)nX - 1),((int)storedSbi.dwSize.X - 1));
+	con.m_sbi.srWindow.Left = max(0,con.m_sbi.srWindow.Right - nX + 1);
+
+	if (NewTopLeft.isLocked() && NewTopLeft.y >= 0)
+		con.m_sbi.srWindow.Bottom = min((NewTopLeft.y + (int)nY - 1),(storedSbi.dwSize.Y - 1));
+	else
+		con.m_sbi.srWindow.Bottom = min((storedSbi.srWindow.Top + (int)nY - 1),(storedSbi.dwSize.Y - 1));
 	con.m_sbi.srWindow.Top = max(0,con.m_sbi.srWindow.Bottom - nY + 1);
-	SetTopLeft();
 
 	con.crMaxSize = mp_RCon->mp_RBuf->con.crMaxSize; //MakeCoord(max(dump.crSize.X,nX),max(dump.crSize.Y,nY));
 	con.m_sbi.dwMaximumWindowSize = con.crMaxSize; //dump.crSize;
