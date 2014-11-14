@@ -12,6 +12,19 @@ Votes and awards (vote for ConEmu, if you please)
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+2014.11.14
+[*] Scroll position was ignored when starting selection with ‘Freeze console...’ enabled option.
+[*] Don't reset scroll position on KeyUp, only KeyDown are taken into account.
+[*] New switch "-cur_console:R" to force start of hooks server in the parent process.
+[*] AnsiEscapeCodes: Color change was ignored specified before ‘$E]9;8;"env"$E’.
+[*] Add "CmdInit.cmd" to "%ConEmuBaseDir%". Set up pretty cmd prompt with optional git info.
+[*] GitShowBranch: Take into account PROMPT settings was set in the "CmdInit.cmd".
+[*] Redesign About dialog (tabs on the right).
+[*] Add ‘SysInfo’ page to the About dialog.
+[*] Issue 1799: Log clipboard operations.
+[*] Fix dialog flickering while dragging to monitor with another dpi value.
+
+
 2014.11.13
 [*] Issue 1745: Fix overscaled dialogs.
 
