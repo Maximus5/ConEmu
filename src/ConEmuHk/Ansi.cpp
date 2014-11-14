@@ -2704,6 +2704,11 @@ void CEAnsi::WriteAnsiCode_OSC(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsole
 			}
 			else if (Code.ArgSZ[2] == L'8' && Code.ArgSZ[3] == L';')
 			{
+				if (lbApply)
+				{
+					ReSetDisplayParm(hConsoleOutput, FALSE, TRUE);
+					lbApply = FALSE;
+				}
 				DoPrintEnv(Code.ArgSZ+4, Code.cchArgSZ - 4);
 			}
 			else if (Code.ArgSZ[2] == L'9' && Code.ArgSZ[3] == L';')
