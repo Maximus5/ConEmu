@@ -5771,11 +5771,12 @@ void CRealConsole::OnKeyboardInt(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lP
 			// Если видимый регион заблокирован, то имеет смысл его сбросить
 			// если нажата не кнопка-модификатор?
 			WORD vk = LOWORD(wParam);
-			if ((pszChars && *pszChars)
-				|| (vk && vk != VK_LWIN && vk != VK_RWIN
-					&& vk != VK_CONTROL && vk != VK_LCONTROL && vk != VK_RCONTROL
-					&& vk != VK_MENU && vk != VK_LMENU && vk != VK_RMENU
-					&& vk != VK_SHIFT && vk != VK_LSHIFT && vk != VK_RSHIFT))
+			if ((messg != WM_KEYUP && messg != WM_SYSKEYUP)
+				&& ((pszChars && *pszChars)
+					|| (vk && vk != VK_LWIN && vk != VK_RWIN
+						&& vk != VK_CONTROL && vk != VK_LCONTROL && vk != VK_RCONTROL
+						&& vk != VK_MENU && vk != VK_LMENU && vk != VK_RMENU
+						&& vk != VK_SHIFT && vk != VK_LSHIFT && vk != VK_RSHIFT)))
 			{
 				mp_RBuf->OnKeysSending();
 			}
