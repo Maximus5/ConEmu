@@ -46,6 +46,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "VirtualConsole.h"
 #include "VConChild.h"
 #include "version.h"
+#include "../common/WObjects.h"
+#include "../common/StartupEnvEx.h"
 
 namespace ConEmuAbout
 {
@@ -88,11 +90,16 @@ namespace ConEmuAbout
 		{L"DosBox", pDosBoxHelpFull},
 		{L"Contributors", pAboutContributors},
 		{L"License", pAboutLicense},
+		{L"SysInfo", L""},
 	};
 
 	wchar_t sLastOpenTab[32] = L"";
 
 	void TabSelected(HWND hDlg, int idx);
+
+	wchar_t* gsSysInfo = NULL;
+	void ReloadSysInfo();
+	void LogStartEnvInt(LPCWSTR asText, LPARAM lParam, bool bFirst, bool bNewLine);
 
 	DWORD nTextSelStart = 0, nTextSelEnd = 0;
 };
@@ -456,6 +463,24 @@ void ConEmuAbout::TabSelected(HWND hDlg, int idx)
 	SetDlgItemText(hDlg, tAboutText, Pages[idx].Text);
 }
 
+void ConEmuAbout::LogStartEnvInt(LPCWSTR asText, LPARAM lParam, bool bFirst, bool bNewLine)
+{
+	lstrmerge(&gsSysInfo, asText, bNewLine ? L"\r\n" : NULL);
+}
+
+void ConEmuAbout::ReloadSysInfo()
+{
+	if (!gpStartEnv)
+		return;
+
+	_ASSERTE(lstrcmp(Pages[countof(Pages)-1].Title, L"SysInfo") == 0);
+	SafeFree(gsSysInfo);
+
+	LoadStartupEnvEx::ToString(gpStartEnv, LogStartEnvInt, 0);
+
+	Pages[countof(Pages)-1].Text = gsSysInfo;
+}
+
 void ConEmuAbout::OnInfo_About(LPCWSTR asPageName /*= NULL*/)
 {
 	InitCommCtrls();
@@ -467,6 +492,8 @@ void ConEmuAbout::OnInfo_About(LPCWSTR asPageName /*= NULL*/)
 		// Reopen last active tab
 		asPageName = sLastOpenTab;
 	}
+
+	ReloadSysInfo();
 
 	{
 		DontEnable de;
