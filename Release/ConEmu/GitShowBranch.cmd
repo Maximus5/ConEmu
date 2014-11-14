@@ -16,10 +16,18 @@ if /I "%~1" == "/i" (
     call cecho "GIT not found, change your ConEmuGitPath environment variable"
     goto :EOF
   )
-  prompt $P$E]9;7;"cmd /c%~nx0"$e\$E]9;8;"gitbranch"$e\$g
+  if defined ConEmuPrompt1 (
+    PROMPT %ConEmuPrompt1%$E]9;7;"cmd -cur_console:R /c%~nx0"$e\$E]9;8;"gitbranch"$e\%ConEmuPrompt2%%ConEmuPrompt3%
+  ) else (
+    PROMPT $P$E]9;7;"cmd -cur_console:R /c%~nx0"$e\$E]9;8;"gitbranch"$e\$g
+  )
   goto :EOF
 ) else if /I "%~1" == "/u" (
-  prompt $P$G
+  if defined ConEmuPrompt1 (
+    PROMPT %ConEmuPrompt1%%ConEmuPrompt2%%ConEmuPrompt3%
+  ) else (
+    PROMPT $P$G
+  )
   goto :EOF
 )
 
