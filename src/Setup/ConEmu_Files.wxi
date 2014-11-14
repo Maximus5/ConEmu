@@ -61,6 +61,9 @@
       <Component Id="Cmd_Autorun.cmd" Guid="$(var.Guid.Cmd_Autorun.cmd)" Win64="$(var.Win64)">
         <File Id="Cmd_Autorun.cmd" Source="..\..\Release\ConEmu\Cmd_Autorun.cmd"  KeyPath="yes" />
       </Component>
+      <Component Id="CmdInit.cmd" Guid="$(var.Guid.CmdInit.cmd)" Win64="$(var.Win64)">
+        <File Id="CmdInit.cmd" Source="..\..\Release\ConEmu\CmdInit.cmd"  KeyPath="yes" />
+      </Component>
       <Component Id="ColorPrompt.cmd" Guid="$(var.Guid.ColorPrompt.cmd)" Win64="$(var.Win64)">
         <File Id="ColorPrompt.cmd" Source="..\..\Release\ConEmu\ColorPrompt.cmd"  KeyPath="yes" />
       </Component>

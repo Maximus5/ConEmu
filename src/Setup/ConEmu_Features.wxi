@@ -53,6 +53,7 @@
       <ComponentRef Id="Attach.cmd" />
       <ComponentRef Id="ClsEx.cmd" />
       <ComponentRef Id="Cmd_Autorun.cmd" />
+      <ComponentRef Id="CmdInit.cmd" />
       <ComponentRef Id="ColorPrompt.cmd" />
       <ComponentRef Id="cecho.cmd" />
       <ComponentRef Id="csudo.cmd" />
