@@ -269,6 +269,7 @@ bool GetColorRef(LPCWSTR pszText, COLORREF* pCR);
 
 bool MyOpenClipboard(LPCWSTR asAction);
 void MyCloseClipboard();
+HANDLE MySetClipboardData(UINT uFormat, HANDLE hMem);
 bool CopyToClipboard(LPCWSTR asText);
 
 extern const wchar_t* gsEscaped;

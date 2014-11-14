@@ -4637,8 +4637,8 @@ bool CRealBuffer::DoSelectionCopyInt(CECopyMode CopyMode, bool bStreamMode, int 
 
 	lbRc = EmptyClipboard();
 	// Установить данные
-	Result = SetClipboardData(CF_UNICODETEXT, hUnicode)
-		&& (!i_CF_HTML || SetClipboardData(i_CF_HTML, hHtml));
+	Result = MySetClipboardData(CF_UNICODETEXT, hUnicode)
+		&& (!i_CF_HTML || MySetClipboardData(i_CF_HTML, hHtml));
 
 	while (!Result)
 	{
@@ -4651,8 +4651,8 @@ bool CRealBuffer::DoSelectionCopyInt(CECopyMode CopyMode, bool bStreamMode, int 
 			break;
 		}
 
-		Result = SetClipboardData(CF_UNICODETEXT, hUnicode)
-			&& (!i_CF_HTML || SetClipboardData(i_CF_HTML, hHtml));
+		Result = MySetClipboardData(CF_UNICODETEXT, hUnicode)
+			&& (!i_CF_HTML || MySetClipboardData(i_CF_HTML, hHtml));
 	}
 
 	MyCloseClipboard();

@@ -1331,17 +1331,20 @@ bool CRealConsole::PostString(wchar_t* pszChars, size_t cchCount)
 	if (!pszChars || !cchCount)
 	{
 		_ASSERTE(pszChars && cchCount);
+		gpConEmu->LogString(L"PostString fails, nothing to send");
 		return false;
 	}
 
 	mp_RBuf->OnKeysSending();
 
+	wchar_t szLog[80];
 	wchar_t* pszEnd = pszChars + cchCount;
 	INPUT_RECORD r[2];
 	MSG64* pirChars = (MSG64*)malloc(sizeof(MSG64)+cchCount*2*sizeof(MSG64::MsgStr));
 	if (!pirChars)
 	{
 		AssertMsg(L"Can't allocate (INPUT_RECORD* pirChars)!");
+		gpConEmu->LogString(L"PostString fails, memory allocation failed");
 		return false;
 	}
 
@@ -1397,10 +1400,21 @@ bool CRealConsole::PostString(wchar_t* pszChars, size_t cchCount)
 	}
 
 	if (cchSucceeded)
+	{
+		_wsprintf(szLog, SKIPCOUNT(szLog) L"PostString was prepared %u key events", (DWORD)cchSucceeded);
+		gpConEmu->LogString(szLog);
 		lbRc = PostConsoleEventPipe(pirChars, cchSucceeded);
+	}
+	else
+	{
+		gpConEmu->LogString(L"PostString fails, cchSucceeded is null");
+	}
 
 	if (!lbRc)
+	{
 		MBox(L"Key press sending failed!");
+		gpConEmu->LogString(L"PostConsoleEventPipe fails");
+	}
 
 	//lbRc = true;
 	//wrap:
@@ -10767,7 +10781,7 @@ void CRealConsole::Paste(CEPasteMode PasteMode /*= pm_Standard*/, LPCWSTR asText
 	{
 		HGLOBAL hglb = NULL;
 		LPCWSTR lptstr = NULL;
-		wchar_t szErr[128] = {}; DWORD nErrCode = 0;
+		wchar_t szErr[256] = {}; DWORD nErrCode = 0;
 		bool lbOpened = false;
 
 		// из буфера обмена
@@ -10779,19 +10793,37 @@ void CRealConsole::Paste(CEPasteMode PasteMode /*= pm_Standard*/, LPCWSTR asText
 		else if ((hglb = GetClipboardData(CF_UNICODETEXT)) == NULL)
 		{
 			nErrCode = GetLastError();
-			//wcscpy_c(szErr, L"Clipboard does not contains text.\nNothing to paste.");
-			szErr[0] = 0;
+			_wsprintf(szErr, SKIPCOUNT(szErr) L"Clipboard does not contain CF_UNICODETEXT, nothing to paste (code=%u)", nErrCode);
+			gpConEmu->LogString(szErr);
+			wcscpy_c(szErr, L"Available formats:"); int nLen = lstrlen(szErr); UINT fmt = 0;
+			while (((nLen + 11) < countof(szErr)) && ((fmt = EnumClipboardFormats(fmt)) != 0))
+			{
+				_wsprintf(szErr+nLen, SKIPLEN(countof(szErr)-nLen) L" x%04X", fmt);
+				nLen += lstrlen(szErr+nLen);
+			}
+			gpConEmu->LogString(szErr);
+			szErr[0] = 0; // Don't call DisplayLastError
 			TODO("Сделать статусное сообщение с таймаутом");
 			//this->SetConStatus(L"Clipboard does not contains text. Nothing to paste.");
 		}
 		else if ((lptstr = (LPCWSTR)GlobalLock(hglb)) == NULL)
 		{
 			nErrCode = GetLastError();
-			wcscpy_c(szErr, L"Can't lock CF_UNICODETEXT");
+			_wsprintf(szErr, SKIPCOUNT(szErr) L"Can't lock CF_UNICODETEXT, paste failed (code=%u)", nErrCode);
+			gpConEmu->LogString(szErr);
+		}
+		else if (*lptstr == 0)
+		{
+			nErrCode = GetLastError();
+			_wsprintf(szErr, SKIPCOUNT(szErr) L"CF_UNICODETEXT is empty, nothing to paste (code=%u)", nErrCode);
+			gpConEmu->LogString(szErr);
+			szErr[0] = 0; // Don't call DisplayLastError
+			GlobalUnlock(hglb);
 		}
 		else
 		{
 			pszBuf = lstrdup(lptstr, 1); // Reserve memory for space-termination
+			Assert(pszBuf!=NULL);
 			GlobalUnlock(hglb);
 		}
 
@@ -10821,13 +10853,14 @@ void CRealConsole::Paste(CEPasteMode PasteMode /*= pm_Standard*/, LPCWSTR asText
 
 	if (!pszBuf)
 	{
-		MBoxAssert(pszBuf && "lstrdup(lptstr) = NULL");
+		gpConEmu->LogString(L"pszBuf is NULL, nothing to paste");
 		return;
 	}
 	else if (!*pszBuf)
 	{
 		// Если текст "пустой" то и делать ничего не надо
 		SafeFree(pszBuf);
+		gpConEmu->LogString(L"pszBuf is empty, nothing to paste");
 		return;
 	}
 
@@ -10922,10 +10955,12 @@ void CRealConsole::Paste(CEPasteMode PasteMode /*= pm_Standard*/, LPCWSTR asText
 	else
 	{
 		_ASSERTE(pszEnd > pszBuf);
+		gpConEmu->LogString(L"Paste fails, pszEnd <= pszBuf");
 	}
 
 wrap:
 	SafeFree(pszBuf);
+	gpConEmu->LogString(L"Paste done");
 #endif
 }
 
