@@ -211,8 +211,7 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,27,310,8
     CONTROL         "Show buttons (toolbar) in tab bar",cbMultiShowButtons,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,40,148,8
-    CONTROL         "Show search field in tab bar",cbMultiShowSearch,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,158,40,148,8
+    CONTROL         "Show search field in tab bar",cbMultiShowSearch,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,158,40,148,8
     GROUPBOX        "Appearance",gbFeatureAppear,4,60,319,40
     CONTROL         "Enhance progressbars and scrollbars",cbEnhanceGraphics,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,73,140,8
@@ -445,9 +444,9 @@ EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     GROUPBOX        "Standard colors:",gbStandardColors,4,1,319,86
-    AUTORADIOBUTTON "RRR GGG BBB (dec)", rbColorRgbDec, 73, 1, 84, 8, 0, WS_EX_LEFT
-    AUTORADIOBUTTON "#RRGGBB (hex)", rbColorRgbHex, 159, 1, 69, 8, 0, WS_EX_LEFT
-    AUTORADIOBUTTON "0xBBGGRR (hex)", rbColorBgrHex, 231, 1, 71, 8, 0, WS_EX_LEFT
+    CONTROL         "RRR GGG BBB (dec)",rbColorRgbDec,"Button",BS_AUTORADIOBUTTON,73,1,84,8
+    CONTROL         "#RRGGBB (hex)",rbColorRgbHex,"Button",BS_AUTORADIOBUTTON,159,1,69,8
+    CONTROL         "0xBBGGRR (hex)",rbColorBgrHex,"Button",BS_AUTORADIOBUTTON,231,1,71,8
     RTEXT           "0.",IDC_STATIC,7,15,14,8
     LTEXT           "",c0,24,12,12,12,SS_NOTIFY | SS_SUNKEN
     RTEXT           "1/4.",IDC_STATIC,7,28,14,8
