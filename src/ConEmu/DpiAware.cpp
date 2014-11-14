@@ -561,7 +561,7 @@ bool CDpiForDialog::SetDialogDPI(const DpiValue& newDpi, LPRECT lprcSuggested /*
 		goto wrap;
 	}
 
-	for (INT_PTR k = p->size() - 1; k >= 0; k--)
+	for (INT_PTR k = p->size() - 1; k >= 1; k--)
 	{
 		const DlgItem& di = (*p)[k];
 		GetClassName(di.h, szClass, countof(szClass));
