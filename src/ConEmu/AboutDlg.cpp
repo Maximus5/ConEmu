@@ -80,10 +80,10 @@ namespace ConEmuAbout
 	static struct {LPCWSTR Title; LPCWSTR Text;} Pages[] =
 	{
 		{L"About", pAbout},
-		{L"ConEmu -?", pCmdLine},
+		{L"ConEmu /?", pCmdLine},
 		{L"Tasks", pAboutTasks},
 		{L"-new_console", pNewConsoleHelpFull},
-		{L"ConEmuC -?", pConsoleHelpFull},
+		{L"ConEmuC /?", pConsoleHelpFull},
 		{L"Macro", pGuiMacro},
 		{L"DosBox", pDosBoxHelpFull},
 		{L"Contributors", pAboutContributors},

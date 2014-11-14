@@ -1374,14 +1374,14 @@ STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_VISIBLE | WS_CAPT
 CAPTION "Dialog"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    DEFPUSHBUTTON   "OK",IDOK,368,187,50,14
+    DEFPUSHBUTTON   "OK",IDOK,362,187,57,14
     ICON            IDI_ICON1,pIconCtrl,7,7,20,20,WS_DISABLED
-    CONTROL         "",tbAboutTabs,"SysTabControl32",TCS_BUTTONS | WS_TABSTOP,6,33,356,16
-    EDITTEXT        tAboutText,7,50,411,131,ES_MULTILINE | ES_AUTOVSCROLL | ES_NOHIDESEL | ES_READONLY | WS_VSCROLL
-    EDITTEXT        tAboutSearch,365,33,53,13,ES_AUTOHSCROLL | ES_WANTRETURN
-    CTEXT           "Console Emulation program (local terminal)",stConEmuAbout,32,7,312,8
-    CTEXT           "http://code.google.com/p/conemu-maximus5",stConEmuUrl,167,189,185,8,SS_NOTIFY
-    CTEXT           "Version status:",stConEmuVersion,32,17,312,8
+    CONTROL         "",tbAboutTabs,"SysTabControl32",TCS_BUTTONS | TCS_MULTILINE | WS_TABSTOP | 0x8,362,33,57,149
+    EDITTEXT        tAboutText,7,33,348,148,ES_MULTILINE | ES_AUTOVSCROLL | ES_NOHIDESEL | ES_READONLY | WS_VSCROLL
+    EDITTEXT        tAboutSearch,362,14,57,13,ES_AUTOHSCROLL | ES_WANTRETURN
+    CTEXT           "Console Emulation program (local terminal)",stConEmuAbout,72,7,272,8
+    CTEXT           "Version status:",stConEmuVersion,72,17,272,8
+    CTEXT           "http://code.google.com/p/conemu-maximus5",stConEmuUrl,117,189,182,8,SS_NOTIFY
 END
 
 IDD_ACTION DIALOGEX 0, 0, 325, 157
