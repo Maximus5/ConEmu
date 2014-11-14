@@ -6151,7 +6151,7 @@ bool CRealBuffer::GetConsoleSelectionInfo(CONSOLE_SELECTION_INFO *sel)
 
 void CRealBuffer::ConsoleCursorInfo(CONSOLE_CURSOR_INFO *ci)
 {
-	if (!this) return;
+	if (!this || !ci) return;
 
 	*ci = con.m_ci;
 
@@ -6186,11 +6186,14 @@ void CRealBuffer::GetCursorInfo(COORD* pcr, CONSOLE_CURSOR_INFO* pci)
 	}
 }
 
-void CRealBuffer::ConsoleScreenBufferInfo(CONSOLE_SCREEN_BUFFER_INFO* sbi, SMALL_RECT* psrRealWindow /*= NULL*/, TOPLEFTCOORD* pTopLeft /*= NULL*/)
+void CRealBuffer::ConsoleScreenBufferInfo(CONSOLE_SCREEN_BUFFER_INFO* psbi, SMALL_RECT* psrRealWindow /*= NULL*/, TOPLEFTCOORD* pTopLeft /*= NULL*/)
 {
 	if (!this) return;
 
-	*sbi = con.m_sbi;
+	if (psbi)
+	{
+		*psbi = con.m_sbi;
+	}
 
 	if (psrRealWindow)
 	{
@@ -6203,14 +6206,16 @@ void CRealBuffer::ConsoleScreenBufferInfo(CONSOLE_SCREEN_BUFFER_INFO* sbi, SMALL
 	}
 
 	// В режиме выделения - положение курсора ставим сами
-	if (con.m_sel.dwFlags)
+	if (con.m_sel.dwFlags && psbi)
 	{
-		ConsoleCursorPos(&(sbi->dwCursorPosition));
+		ConsoleCursorPos(&(psbi->dwCursorPosition));
 	}
 }
 
 void CRealBuffer::ConsoleCursorPos(COORD *pcr)
 {
+	if (!this || !pcr) return;
+
 	if (con.m_sel.dwFlags)
 	{
 		// В режиме выделения - положение курсора ставим сами
