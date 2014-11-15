@@ -542,7 +542,6 @@ class CConEmuMain
 		UINT mn_MsgPostTaskbarActivate; BOOL mb_PostTaskbarActivate;
 		UINT mn_MsgInitVConGhost;
 		UINT mn_MsgCreateCon;
-		UINT mn_MsgRequestUpdate;
 		UINT mn_MsgTaskBarCreated;
 		UINT mn_MsgPanelViewMapCoord;
 		UINT mn_MsgTaskBarBtnCreated;
@@ -667,9 +666,6 @@ class CConEmuMain
 		bool PtDiffTest(POINT C, int aX, int aY, UINT D); //(((abs(C.x-LOWORD(lParam)))<D) && ((abs(C.y-HIWORD(lParam)))<D))
 		void RecreateAction(RecreateActionParm aRecreate, BOOL abConfirm, RConBoolArg bRunAs = crb_Undefined);
 		int RecreateDlg(RConStartArgs* apArg);
-		bool ReportUpdateConfirmation();
-		void ReportUpdateError();
-		void RequestExitUpdate();
 		void RequestPostUpdateTabs();
 		BOOL RunSingleInstance(HWND hConEmuWnd = NULL, LPCWSTR apszCmd = NULL);
 		void SetDragCursor(HCURSOR hCur);

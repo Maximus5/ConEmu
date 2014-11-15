@@ -757,7 +757,6 @@ void CConEmuMain::RegisterMessages()
 	mn_MsgPostTaskbarActivate = RegisterMessage("PostTaskbarActivate"); mb_PostTaskbarActivate = FALSE;
 	mn_MsgInitVConGhost = RegisterMessage("InitVConGhost");
 	mn_MsgCreateCon = RegisterMessage("CreateCon");
-	mn_MsgRequestUpdate = RegisterMessage("RequestUpdate");
 	mn_MsgPanelViewMapCoord = RegisterMessage("CONEMUMSG_PNLVIEWMAPCOORD",CONEMUMSG_PNLVIEWMAPCOORD);
 	mn_MsgTaskBarCreated = RegisterMessage("TaskbarCreated",L"TaskbarCreated");
 	mn_MsgTaskBarBtnCreated = RegisterMessage("TaskbarButtonCreated",L"TaskbarButtonCreated");
@@ -11225,64 +11224,6 @@ void CConEmuMain::CheckUpdates(BOOL abShowMessages)
 		gpUpd->StartCheckProcedure(abShowMessages);
 }
 
-bool CConEmuMain::ReportUpdateConfirmation()
-{
-	bool lbRc = false;
-
-	if (isMainThread())
-	{
-		if (gpUpd)
-			lbRc = gpUpd->ShowConfirmation();
-	}
-	else
-	{
-		lbRc = (SendMessage(ghWnd, mn_MsgRequestUpdate, 1, 0) != 0);
-	}
-
-	return lbRc;
-}
-
-void CConEmuMain::ReportUpdateError()
-{
-	if (isMainThread())
-	{
-		if (gpUpd)
-			gpUpd->ShowLastError();
-	}
-	else
-	{
-		PostMessage(ghWnd, mn_MsgRequestUpdate, 0, 0);
-	}
-}
-
-void CConEmuMain::RequestExitUpdate()
-{
-	CConEmuUpdate::UpdateStep step = CConEmuUpdate::us_NotStarted;
-	if (!gpUpd)
-		return;
-
-	step = gpUpd->InUpdate();
-	if (step != CConEmuUpdate::us_ExitAndUpdate)
-	{
-		_ASSERTE(step == CConEmuUpdate::us_ExitAndUpdate);
-		return;
-	}
-
-	// May be null, if update package was dropped on ConEmu icon
-	if (ghWnd)
-	{
-		if (isMainThread())
-		{
-			UpdateProgress();
-			PostScClose();
-		}
-		else
-		{
-			PostMessage(ghWnd, mn_MsgRequestUpdate, 2, 0);
-		}
-	}
-}
-
 void CConEmuMain::RequestPostUpdateTabs()
 {
 	PostMessage(ghWnd, mn_MsgUpdateTabs, 0, 0);
@@ -13618,21 +13559,6 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 				UNREFERENCED_PARAMETER(pVCon);
 				delete pArgs;
 				return (LRESULT)pVCon;
-			}
-			else if (messg == this->mn_MsgRequestUpdate)
-			{
-				switch (wParam)
-				{
-				case 0:
-					this->ReportUpdateError();
-					return 0;
-				case 1:
-					return (LRESULT)this->ReportUpdateConfirmation();
-				case 2:
-					this->RequestExitUpdate();
-					return 0;
-				}
-				return 0;
 			}
 			else if (messg == this->mn_MsgTaskBarCreated)
 			{

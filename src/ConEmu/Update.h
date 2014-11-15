@@ -81,8 +81,7 @@ protected:
 	ConEmuUpdateSettings* mp_Set;
 
 	long mn_InShowMsgBox;
-	wchar_t* ms_LastErrorInfo;
-	MSection* mp_LastErrorSC;
+	LPCWSTR ms_LastErrorInfo; // Informational
 
 	wchar_t* mpsz_DeleteIniFile;
 	wchar_t* mpsz_DeletePackageFile;
@@ -120,8 +119,6 @@ public:
 
 	void StartCheckProcedure(BOOL abShowMessages);
 	void StopChecking();
-	void ShowLastError();
-	bool ShowConfirmation();
 
 	static bool LocalUpdate(LPCWSTR asDownloadedPackage);
 	static bool IsUpdatePackage(LPCWSTR asFilePath);
@@ -152,6 +149,9 @@ protected:
 	wchar_t ms_CurVerInfo[100];  // Version + stable/preview/alpha
 	wchar_t ms_DefaultTitle[128];
 	wchar_t* mpsz_ConfirmSource;
+	static LRESULT QueryConfirmationCallback(LPARAM lParam);
+	static LRESULT RequestExitUpdate(LPARAM);
+	static LRESULT ShowLastError(LPARAM apErrText);
 	bool QueryConfirmation(UpdateStep step);
 	bool QueryConfirmationDownload();
 	bool QueryConfirmationUpdate();
