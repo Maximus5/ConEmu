@@ -2446,7 +2446,18 @@ bool CVConGroup::CloseQuery(MArray<CVConGuard*>* rpPanes, bool* rbMsgConfirmed /
 		}
 	}
 
-	if (nProgress || nEditors || (gpSet->isCloseConsoleConfirm && (nConsoles >= 1)))
+	bool bCloseConfirmSet = gpSet->isCloseConsoleConfirm;
+	if (bCloseConfirmSet && gpUpd)
+	{
+		// Если только что был запрос на обновление-и-закрытие, то нет смысла подтверждать закрытие
+		CConEmuUpdate::UpdateStep step = gpUpd->InUpdate();
+		if (step == CConEmuUpdate::us_ExitAndUpdate)
+		{
+			bCloseConfirmSet = false;
+		}
+	}
+
+	if (nProgress || nEditors || (bCloseConfirmSet && (nConsoles >= 1)))
 	{
 		int nBtn = IDCANCEL;
 
