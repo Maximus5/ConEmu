@@ -226,7 +226,7 @@ void ComspecDone(int aiRc)
 	xf_validate(NULL);
 #endif
 	//WARNING("Послать в GUI CONEMUCMDSTOPPED");
-	LogSize(NULL, "ComspecDone");
+	LogSize(NULL, 0, "ComspecDone");
 
 	// Это необходимо делать, т.к. при смене буфера (SetConsoleActiveScreenBuffer) приложением,
 	// дескриптор нужно закрыть, иначе conhost может не вернуть предыдущий буфер
@@ -402,11 +402,11 @@ void ComspecDone(int aiRc)
 					SMALL_RECT rc = {0};
 					sbi2.dwSize.Y = nNeedHeight;
 
-					if (gpLogSize) LogSize(&sbi2.dwSize, ":ComspecDone.RetSize.before");
+					if (gpLogSize) LogSize(&sbi2.dwSize, 0, ":ComspecDone.RetSize.before");
 
 					SetConsoleSize(0, sbi2.dwSize, rc, "ComspecDone.Force");
 
-					if (gpLogSize) LogSize(NULL, ":ComspecDone.RetSize.after");
+					if (gpLogSize) LogSize(NULL, 0, ":ComspecDone.RetSize.after");
 				}
 			}
 		}

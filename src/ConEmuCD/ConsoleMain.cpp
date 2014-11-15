@@ -1973,7 +1973,7 @@ wrap:
 
 	SafeCloseHandle(ghRootProcessFlag);
 
-	LogSize(NULL, "Shutdown");
+	LogSize(NULL, 0, "Shutdown");
 	//ghConIn.Close();
 	ghConOut.Close();
 	SafeDelete(gpLogSize);
@@ -6247,7 +6247,7 @@ void CreateLogSizeFile(int nLevel)
 
 	gpLogSize->LogStartEnv(gpStartEnv);
 
-	LogSize(NULL, "Startup");
+	LogSize(NULL, 0, "Startup");
 }
 
 void LogString(LPCSTR asText)
@@ -6298,7 +6298,7 @@ void LogString(LPCWSTR asText)
 	gpLogSize->LogString(asText, true, pszThread);
 }
 
-void LogSize(COORD* pcrSize, LPCSTR pszLabel)
+void LogSize(COORD* pcrSize, int newBufferHeight, LPCSTR pszLabel)
 {
 	if (!gpLogSize) return;
 
@@ -6317,8 +6317,8 @@ void LogSize(COORD* pcrSize, LPCSTR pszLabel)
 	{
 		bWriteLog = true;
 
-		_wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "CurSize={%ix%i} ChangeTo={%ix%i} %s (skipped=%i)",
-		           lsbi.dwSize.X, lsbi.dwSize.Y, pcrSize->X, pcrSize->Y, (pszLabel ? pszLabel : ""), nSkipped);
+		_wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "CurSize={%ix%i} ChangeTo={%ix%ix%i} %s (skipped=%i)",
+		           lsbi.dwSize.X, lsbi.dwSize.Y, pcrSize->X, pcrSize->Y, newBufferHeight, (pszLabel ? pszLabel : ""), nSkipped);
 	}
 	else
 	{
@@ -9404,7 +9404,7 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
 		return FALSE;
 	}
 
-	if (gpLogSize) LogSize(&crNewSize, asLabel);
+	if (gpLogSize) LogSize(&crNewSize, BufferHeight, asLabel);
 
 	_ASSERTE(crNewSize.X>=MIN_CON_WIDTH && crNewSize.Y>=MIN_CON_HEIGHT);
 

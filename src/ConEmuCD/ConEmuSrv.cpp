@@ -138,7 +138,7 @@ void ServerInitFont()
 	}
 	else if ((!gbAlienMode || gOSVer.dwMajorVersion >= 6) && !gpStartEnv->bIsReactOS)
 	{
-		if (gpLogSize) LogSize(NULL, ":SetConsoleFontSizeTo.before");
+		if (gpLogSize) LogSize(NULL, 0, ":SetConsoleFontSizeTo.before");
 
 		SetConsoleFontSizeTo(ghConWnd, gpSrv->nConFontHeight, gpSrv->nConFontWidth, gpSrv->szConsoleFont, gnDefTextColors, gnDefPopupColors);
 
@@ -156,7 +156,7 @@ void ServerInitFont()
 			}
 		}
 
-		if (gpLogSize) LogSize(NULL, ":SetConsoleFontSizeTo.after");
+		if (gpLogSize) LogSize(NULL, 0, ":SetConsoleFontSizeTo.after");
 	}
 }
 
@@ -3742,7 +3742,7 @@ static int ReadConsoleInfo()
 			}
 			#endif
 
-			if (gpLogSize) LogSize(NULL, ":ReadConsoleInfo");
+			if (gpLogSize) LogSize(NULL, 0, ":ReadConsoleInfo");
 
 			gpSrv->sbi = lsbi;
 			lbChanged = TRUE;
