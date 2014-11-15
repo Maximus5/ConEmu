@@ -12379,7 +12379,7 @@ bool CConEmuMain::isDestroyOnClose(bool ScCloseOnEmpty /*= false*/)
 
 	bool bNeedDestroy = false;
 
-	if (step == CConEmuUpdate::us_ExitAndUpdate)
+	if ((step == CConEmuUpdate::us_ExitAndUpdate) || (step == CConEmuUpdate::us_PostponeUpdate))
 	{
 		bNeedDestroy = true; // Иначе облом при обновлении
 	}

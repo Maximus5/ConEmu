@@ -126,11 +126,12 @@ public:
 	enum UpdateStep
 	{
 		us_NotStarted = 0,
-		us_Check = 1,
-		us_ConfirmDownload = 2,
-		us_Downloading = 3,
-		us_ConfirmUpdate = 4,
-		us_ExitAndUpdate = 5,
+		us_Check,
+		us_ConfirmDownload,
+		us_Downloading,
+		us_ConfirmUpdate,
+		us_PostponeUpdate,
+		us_ExitAndUpdate,
 	};
 	UpdateStep InUpdate();
 
@@ -152,10 +153,10 @@ protected:
 	static LRESULT QueryConfirmationCallback(LPARAM lParam);
 	static LRESULT RequestExitUpdate(LPARAM);
 	static LRESULT ShowLastError(LPARAM apErrText);
-	bool QueryConfirmation(UpdateStep step);
-	bool QueryConfirmationDownload();
-	bool QueryConfirmationUpdate();
-	void QueryConfirmationNoNewVer();
+	int QueryConfirmation(UpdateStep step);
+	int QueryConfirmationDownload();
+	int QueryConfirmationUpdate();
+	int QueryConfirmationNoNewVer();
 	void WaitAllInstances();
 	bool Check7zipInstalled();
 	#if 0

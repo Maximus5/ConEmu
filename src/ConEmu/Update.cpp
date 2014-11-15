@@ -123,7 +123,7 @@ CConEmuUpdate::~CConEmuUpdate()
 	ms_LastErrorInfo = NULL;
 	SafeFree(mpsz_ConfirmSource);
 
-	if (m_UpdateStep == us_ExitAndUpdate && mpsz_PendingBatchFile)
+	if (((m_UpdateStep == us_ExitAndUpdate) || (m_UpdateStep == us_PostponeUpdate)) && mpsz_PendingBatchFile)
 	{
 		WaitAllInstances();
 
@@ -170,7 +170,7 @@ void CConEmuUpdate::StartCheckProcedure(BOOL abShowMessages)
 	if (InUpdate() != us_NotStarted)
 	{
 		// Already in update procedure
-		if (m_UpdateStep == us_ExitAndUpdate)
+		if ((m_UpdateStep == us_PostponeUpdate) || (m_UpdateStep == us_ExitAndUpdate))
 		{
 			if (gpConEmu)
 			{
@@ -294,7 +294,7 @@ LRESULT CConEmuUpdate::ShowLastError(LPARAM apErrText)
 LRESULT CConEmuUpdate::QueryConfirmationCallback(LPARAM lParam)
 {
 	if (!gpUpd || gpUpd->mb_RequestTerminate)
-		return -1;
+		return 0;
 	return gpUpd->QueryConfirmation((UpdateStep)LOWORD(lParam));
 }
 
@@ -416,6 +416,7 @@ bool CConEmuUpdate::StartLocalUpdate(LPCWSTR asDownloadedPackage)
 	wchar_t *pszLocalPackage = NULL, *pszBatchFile = NULL;
 	DWORD nLocalCRC = 0;
 	BOOL lbDownloadRc = FALSE, lbExecuteRc = FALSE;
+	int iConfirmUpdate = -1;
 
 	LPCWSTR pszPackPref = L"conemupack.";
 	size_t lnPackPref = _tcslen(pszPackPref);
@@ -544,7 +545,8 @@ bool CConEmuUpdate::StartLocalUpdate(LPCWSTR asDownloadedPackage)
 	if (!pszBatchFile)
 		goto wrap;
 
-	if (!gpConEmu->CallMainThread(true, QueryConfirmationCallback, us_ConfirmUpdate))
+	iConfirmUpdate = gpConEmu->CallMainThread(true, QueryConfirmationCallback, us_ConfirmUpdate);
+	if ((iConfirmUpdate <= 0) || (iConfirmUpdate == IDCANCEL))
 	{
 		goto wrap;
 	}
@@ -556,9 +558,16 @@ bool CConEmuUpdate::StartLocalUpdate(LPCWSTR asDownloadedPackage)
 	pszLocalPackage = NULL;
 	mpsz_PendingBatchFile = pszBatchFile;
 	pszBatchFile = NULL;
-	m_UpdateStep = us_ExitAndUpdate;
-	if (gpConEmu)
-		gpConEmu->CallMainThread(true, RequestExitUpdate, 0);
+	if (iConfirmUpdate == IDYES)
+	{
+		m_UpdateStep = us_ExitAndUpdate;
+		if (gpConEmu) gpConEmu->CallMainThread(false, RequestExitUpdate, 0);
+	}
+	else
+	{
+		m_UpdateStep = us_PostponeUpdate;
+		if (gpConEmu) gpConEmu->UpdateProgress();
+	}
 	lbExecuteRc = TRUE;
 
 wrap:
@@ -660,7 +669,7 @@ DWORD CConEmuUpdate::CheckProcInt()
 	wchar_t *pszSource, *pszEnd, *pszFileName;
 	DWORD nSrcLen, nSrcCRC, nLocalCRC = 0;
 	bool lbSourceLocal;
-	//INT_PTR nShellRc = 0;
+	int iConfirmUpdate = -1;
 
 #ifdef _DEBUG
 	// Чтобы успел сервер проинититься и не ругался под отладчиком...
@@ -860,15 +869,8 @@ DWORD CConEmuUpdate::CheckProcInt()
 	if (!pszBatchFile)
 		goto wrap;
 
-	/*
-	nShellRc = (INT_PTR)ShellExecute(ghWnd, bNeedRunElevation ? L"runas" : L"open", pszBatchFile, NULL, NULL, SW_SHOWMINIMIZED);
-	if (nShellRc <= 32)
-	{
-		ReportError(L"Failed to start update batch\n%s\nError code=%i", pszBatchFile, (int)nShellRc);
-		goto wrap;
-	}
-	*/
-	if (!gpConEmu->CallMainThread(true, QueryConfirmationCallback, us_ConfirmUpdate))
+	iConfirmUpdate = gpConEmu->CallMainThread(true, QueryConfirmationCallback, us_ConfirmUpdate);
+	if ((iConfirmUpdate <= 0) || (iConfirmUpdate == IDCANCEL))
 	{
 		// Если пользователь отказался от обновления в этом сеансе - не предлагать ту же версию при ежечасных проверках
 		wcscpy_c(ms_SkipVersion, ms_NewVersion);
@@ -878,9 +880,16 @@ DWORD CConEmuUpdate::CheckProcInt()
 	pszLocalPackage = NULL;
 	mpsz_PendingBatchFile = pszBatchFile;
 	pszBatchFile = NULL;
-	m_UpdateStep = us_ExitAndUpdate;
-	if (gpConEmu)
-		gpConEmu->CallMainThread(true, RequestExitUpdate, 0);
+	if (iConfirmUpdate == IDYES)
+	{
+		m_UpdateStep = us_ExitAndUpdate;
+		if (gpConEmu) gpConEmu->CallMainThread(false, RequestExitUpdate, 0);
+	}
+	else
+	{
+		m_UpdateStep = us_PostponeUpdate;
+		if (gpConEmu) gpConEmu->UpdateProgress();
+	}
 	lbExecuteRc = TRUE;
 
 wrap:
@@ -1140,6 +1149,7 @@ CConEmuUpdate::UpdateStep CConEmuUpdate::InUpdate()
 		if (nWait == WAIT_OBJECT_0)
 			m_UpdateStep = us_NotStarted;
 		break;
+	case us_PostponeUpdate:
 	case us_ExitAndUpdate:
 		// Тут у нас нить уже имеет право завершиться
 		break;
@@ -1410,27 +1420,24 @@ void CConEmuUpdate::ReportError(LPCWSTR asFormat, LPCWSTR asArg1, LPCWSTR asArg2
 
 LRESULT CConEmuUpdate::RequestExitUpdate(LPARAM)
 {
-	LRESULT lRc = -1;
-	CConEmuUpdate::UpdateStep step = CConEmuUpdate::us_NotStarted;
-	if (gpUpd)
+	if (!gpUpd)
+		return 0;
+
+	CConEmuUpdate::UpdateStep step = gpUpd->InUpdate();
+
+	// Awaiting for exit?
+	if ((step != us_ExitAndUpdate) && (step != us_PostponeUpdate))
 	{
-		step = gpUpd->InUpdate();
-		// Awaiting for exit?
-		if (step != CConEmuUpdate::us_ExitAndUpdate)
-		{
-			_ASSERTE(step == CConEmuUpdate::us_ExitAndUpdate);
-		}
-		// May be null, if update package was dropped on ConEmu icon
-		else if (ghWnd)
-		{
-			gpConEmu->UpdateProgress();
-			gpConEmu->PostScClose();
-		}
-		// Done
-		lRc = 0;
+		_ASSERTE(step == us_ExitAndUpdate);
+	}
+	// May be null, if update package was dropped on ConEmu icon
+	else if (ghWnd)
+	{
+		gpConEmu->UpdateProgress();
+		gpConEmu->PostScClose();
 	}
 
-	return lRc;
+	return 0;
 }
 
 void CConEmuUpdate::ReportBrokenIni(LPCWSTR asSection, LPCWSTR asName, LPCWSTR asIni)
@@ -1566,14 +1573,14 @@ bool CConEmuUpdate::Check7zipInstalled()
 	return false;
 }
 
-bool CConEmuUpdate::QueryConfirmation(CConEmuUpdate::UpdateStep step)
+int CConEmuUpdate::QueryConfirmation(CConEmuUpdate::UpdateStep step)
 {
 	if (mb_RequestTerminate)
 	{
-		return false;
+		return 0;
 	}
 
-	bool lbRc = false;
+	int lRc = 0;
 	wchar_t* pszMsg = NULL;
 	size_t cchMax;
 
@@ -1588,11 +1595,11 @@ bool CConEmuUpdate::QueryConfirmation(CConEmuUpdate::UpdateStep step)
 
 			if (mb_ManualCallMode == 2)
 			{
-				lbRc = true;
+				lRc = TRUE;
 			}
 			else if (mp_Set->isUpdateConfirmDownload || mb_ManualCallMode)
 			{
-				lbRc = QueryConfirmationDownload();
+				lRc = QueryConfirmationDownload();
 			}
 			else
 			{
@@ -1604,18 +1611,18 @@ bool CConEmuUpdate::QueryConfirmation(CConEmuUpdate::UpdateStep step)
 					ms_NewVersion);
 				Icon.ShowTrayIcon(pszMsg, tsa_Source_Updater);
 
-				lbRc = false;
+				lRc = 0;
 			}
 		}
 		break;
 
 	case us_ConfirmUpdate:
 		m_UpdateStep = step;
-		lbRc = QueryConfirmationUpdate();
+		lRc = QueryConfirmationUpdate();
 		break;
 
 	default:
-		lbRc = false;
+		lRc = false;
 		_ASSERTE(mb_NewVersionAvailable == false);
 		if (step > us_Check)
 		{
@@ -1628,13 +1635,13 @@ bool CConEmuUpdate::QueryConfirmation(CConEmuUpdate::UpdateStep step)
 
 	SafeFree(pszMsg);
 
-	return lbRc;
+	return lRc;
 }
 
-bool CConEmuUpdate::QueryConfirmationDownload()
+int CConEmuUpdate::QueryConfirmationDownload()
 {
 	if ((mn_InShowMsgBox > 0) || !gpConEmu)
-		return false; // Если отображается ошибка - не звать
+		return 0; // Если отображается ошибка - не звать
 
 	DontEnable de;
 	InterlockedIncrement(&mn_InShowMsgBox);
@@ -1738,10 +1745,10 @@ wrap:
 	return (iBtn == IDYES);
 }
 
-bool CConEmuUpdate::QueryConfirmationUpdate()
+int CConEmuUpdate::QueryConfirmationUpdate()
 {
 	if ((mn_InShowMsgBox > 0) || !gpConEmu)
-		return false; // Если отображается ошибка - не звать
+		return 0; // Если отображается ошибка - не звать
 
 	DontEnable de;
 	InterlockedIncrement(&mn_InShowMsgBox);
@@ -1750,9 +1757,8 @@ bool CConEmuUpdate::QueryConfirmationUpdate()
 	HRESULT hr;
 	wchar_t szWWW[MAX_PATH];
 	TASKDIALOGCONFIG tsk = {sizeof(tsk)};
-	TASKDIALOG_BUTTON btns[2] = {};
+	TASKDIALOG_BUTTON btns[3] = {};
 	wchar_t szMsg[200];
-	wchar_t szBtn2[200];
 
 
 	if (gOSVer.dwMajorVersion < 6)
@@ -1773,8 +1779,8 @@ bool CConEmuUpdate::QueryConfirmationUpdate()
 		mb_DroppedMode ? L"dropped" : (mp_Set->isUpdateUseBuilds==1) ? L"new " CV_STABLE
 		: (mp_Set->isUpdateUseBuilds==3) ? L"new " CV_PREVIEW : L"new " CV_DEVEL, ms_NewVersion);
 	btns[0].nButtonID  = IDYES;    btns[0].pszButtonText = szMsg;
-	wcscpy_c(szBtn2, (mb_ManualCallMode == 1) ? L"Cancel" : L"Postpone\nupdate will be started when you close ConEmu window");
-	btns[1].nButtonID  = IDCANCEL; btns[1].pszButtonText = szBtn2;
+	btns[1].nButtonID  = IDNO; btns[1].pszButtonText = L"Postpone\nupdate will be started when you close ConEmu window";
+	btns[2].nButtonID  = IDCANCEL; btns[2].pszButtonText = L"Cancel";
 
 	tsk.dwFlags        = (hClassIcon?TDF_USE_HICON_MAIN:0)|TDF_USE_COMMAND_LINKS|TDF_ALLOW_DIALOG_CANCELLATION|TDF_ENABLE_HYPERLINKS;
 	tsk.pszWindowTitle = ms_DefaultTitle;
@@ -1789,21 +1795,22 @@ MsgOnly:
 
 	_wsprintf(szMsg, SKIPLEN(countof(szMsg))
 		L"Do you want to close ConEmu and\n"
-		L"update to %s version %s?",
+		L"update to %s version %s?\n\n"
+		L"Press <No> to postpone.",
 		mb_DroppedMode ? L"dropped" : (mp_Set->isUpdateUseBuilds==1) ? L"new " CV_STABLE
 		: (mp_Set->isUpdateUseBuilds==3) ? L"new " CV_PREVIEW : L"new " CV_DEVEL, ms_NewVersion);
 
-	iBtn = MessageBox(NULL, szMsg, ms_DefaultTitle, MB_SETFOREGROUND|MB_SYSTEMMODAL|MB_ICONQUESTION|MB_YESNO);
+	iBtn = MessageBox(NULL, szMsg, ms_DefaultTitle, MB_SETFOREGROUND|MB_SYSTEMMODAL|MB_ICONQUESTION|MB_YESNOCANCEL);
 
 wrap:
 	InterlockedDecrement(&mn_InShowMsgBox);
-	return (iBtn == IDYES);
+	return iBtn;
 }
 
-void CConEmuUpdate::QueryConfirmationNoNewVer()
+int CConEmuUpdate::QueryConfirmationNoNewVer()
 {
 	if ((mn_InShowMsgBox > 0) || !gpConEmu)
-		return; // Если отображается ошибка - не звать
+		return 0; // Если отображается ошибка - не звать
 
 	DontEnable de;
 	InterlockedIncrement(&mn_InShowMsgBox);
@@ -1873,7 +1880,7 @@ MsgOnly:
 wrap:
 	InterlockedDecrement(&mn_InShowMsgBox);
 	SafeFree(pszBtn2);
-	return;
+	return 0;
 }
 
 short CConEmuUpdate::GetUpdateProgress()
@@ -1884,6 +1891,7 @@ short CConEmuUpdate::GetUpdateProgress()
 	switch (InUpdate())
 	{
 	case us_NotStarted:
+	case us_PostponeUpdate:
 		return -1;
 	case us_Check:
 		return mb_ManualCallMode ? 1 : -1;
