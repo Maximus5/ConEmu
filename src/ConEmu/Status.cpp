@@ -1601,11 +1601,11 @@ void CStatus::OnConsoleChanged(const CONSOLE_SCREEN_BUFFER_INFO* psbi, const CON
 			if (pTopLeft->x >= 0)
 				_wsprintf(szX, SKIPCOUNT(szX) L"%i", pTopLeft->x+1);
 			else
-				wcscpy_c(szX, L"-");
+				wcscpy_c(szX, L"*");
 			if (pTopLeft->y >= 0)
 				_wsprintf(szY, SKIPCOUNT(szY) L"%i", pTopLeft->y+1);
 			else
-				wcscpy_c(szY, L"-");
+				wcscpy_c(szY, L"*");
 			_wsprintf(m_Values[csi_ViewLock].sText, SKIPLEN(countof(m_Values[csi_ViewLock].sText)) L"{%s,%s}", szX, szY);
 		}
 		else
