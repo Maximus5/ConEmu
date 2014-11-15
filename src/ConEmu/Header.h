@@ -267,11 +267,6 @@ size_t MyGetDlgItemText(HWND hDlg, WORD nID, size_t& cchMax, wchar_t*& pszText/*
 BOOL MySetDlgItemText(HWND hDlg, int nIDDlgItem, LPCTSTR lpString/*, bool bEscapes = false*/);
 bool GetColorRef(LPCWSTR pszText, COLORREF* pCR);
 
-bool MyOpenClipboard(LPCWSTR asAction);
-void MyCloseClipboard();
-HANDLE MySetClipboardData(UINT uFormat, HANDLE hMem);
-bool CopyToClipboard(LPCWSTR asText);
-
 extern const wchar_t* gsEscaped;
 //wchar_t* EscapeString(bool bSet, LPCWSTR pszSrc);
 void EscapeChar(bool bSet, LPCWSTR& pszSrc, LPWSTR& pszDst);

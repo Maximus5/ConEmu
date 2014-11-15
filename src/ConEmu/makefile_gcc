@@ -58,6 +58,7 @@ SRCS = \
 		Macro.cpp          \
 		Match.cpp          \
 		Menu.cpp           \
+		MyClipboard.cpp    \
 		Options.cpp        \
 		OptionsClass.cpp   \
 		OptionsFast.cpp    \

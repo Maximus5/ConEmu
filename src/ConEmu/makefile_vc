@@ -77,6 +77,7 @@ $(INTDIR)\MSetter.obj \
 $(INTDIR)\MStrSafe.obj \
 $(INTDIR)\MTimer.obj \
 $(INTDIR)\MToolTip.obj \
+$(INTDIR)\MyClipboard.obj \
 $(INTDIR)\Options.obj \
 $(INTDIR)\OptionsClass.obj \
 $(INTDIR)\OptionsFast.obj \
@@ -378,6 +379,8 @@ $(INTDIR)\MStrSafe.obj: ../common/MStrSafe.cpp
 $(INTDIR)\MTimer.obj: ../common/MTimer.cpp ../common/MTimer.h
 
 $(INTDIR)\MToolTip.obj: ../common/MToolTip.cpp ../common/MToolTip.h
+
+$(INTDIR)\MyClipboard.obj: MyClipboard.cpp MyClipboard.h
 
 $(INTDIR)\Options.obj: Options.cpp Options.h UpdateSet.h Version.h
 

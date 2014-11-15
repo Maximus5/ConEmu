@@ -950,6 +950,7 @@
     <ClCompile Include="Macro.cpp" />
     <ClCompile Include="Match.cpp" />
     <ClCompile Include="Menu.cpp" />
+    <ClCompile Include="MyClipboard.cpp" />
     <ClCompile Include="Options.cpp" />
     <ClCompile Include="OptionsClass.cpp" />
     <ClCompile Include="OptionsFast.cpp" />
@@ -1069,6 +1070,7 @@
     <ClInclude Include="Match.h" />
     <ClInclude Include="Menu.h" />
     <ClInclude Include="MenuIds.h" />
+    <ClInclude Include="MyClipboard.h" />
     <ClInclude Include="Options.h" />
     <ClInclude Include="OptionsClass.h" />
     <ClInclude Include="OptionsFast.h" />

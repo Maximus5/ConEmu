@@ -59,6 +59,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Inside.h"
 #include "Macro.h"
 #include "Menu.h"
+#include "MyClipboard.h"
 #include "OptionsClass.h"
 #include "RConFiles.h"
 #include "RealBuffer.h"
@@ -10782,54 +10783,11 @@ void CRealConsole::Paste(CEPasteMode PasteMode /*= pm_Standard*/, LPCWSTR asText
 		HGLOBAL hglb = NULL;
 		LPCWSTR lptstr = NULL;
 		wchar_t szErr[256] = {}; DWORD nErrCode = 0;
-		bool lbOpened = false;
 
 		// из буфера обмена
-		if (!(lbOpened = MyOpenClipboard(L"GetClipboard")))
+		if (MyOpenClipboard(L"GetClipboard"))
 		{
-			// Error already displayed
-			szErr[0] = 0;
-		}
-		else if ((hglb = GetClipboardData(CF_UNICODETEXT)) == NULL)
-		{
-			nErrCode = GetLastError();
-			_wsprintf(szErr, SKIPCOUNT(szErr) L"Clipboard does not contain CF_UNICODETEXT, nothing to paste (code=%u)", nErrCode);
-			gpConEmu->LogString(szErr);
-			wcscpy_c(szErr, L"Available formats:"); int nLen = lstrlen(szErr); UINT fmt = 0;
-			while (((nLen + 11) < countof(szErr)) && ((fmt = EnumClipboardFormats(fmt)) != 0))
-			{
-				_wsprintf(szErr+nLen, SKIPLEN(countof(szErr)-nLen) L" x%04X", fmt);
-				nLen += lstrlen(szErr+nLen);
-			}
-			gpConEmu->LogString(szErr);
-			szErr[0] = 0; // Don't call DisplayLastError
-			TODO("Сделать статусное сообщение с таймаутом");
-			//this->SetConStatus(L"Clipboard does not contains text. Nothing to paste.");
-		}
-		else if ((lptstr = (LPCWSTR)GlobalLock(hglb)) == NULL)
-		{
-			nErrCode = GetLastError();
-			_wsprintf(szErr, SKIPCOUNT(szErr) L"Can't lock CF_UNICODETEXT, paste failed (code=%u)", nErrCode);
-			gpConEmu->LogString(szErr);
-		}
-		else if (*lptstr == 0)
-		{
-			nErrCode = GetLastError();
-			_wsprintf(szErr, SKIPCOUNT(szErr) L"CF_UNICODETEXT is empty, nothing to paste (code=%u)", nErrCode);
-			gpConEmu->LogString(szErr);
-			szErr[0] = 0; // Don't call DisplayLastError
-			GlobalUnlock(hglb);
-		}
-		else
-		{
-			pszBuf = lstrdup(lptstr, 1); // Reserve memory for space-termination
-			Assert(pszBuf!=NULL);
-			GlobalUnlock(hglb);
-		}
-
-		// Done
-		if (lbOpened)
-		{
+			pszBuf = GetCliboardText(nErrCode, szErr, countof(szErr));
 			MyCloseClipboard();
 		}
 

@@ -65,6 +65,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Recreate.h"
 #include "DefaultTerm.h"
 #include "UnitTests.h"
+#include "MyClipboard.h"
 #include "version.h"
 
 #include "../common/StartupEnvEx.h"
@@ -2369,100 +2370,6 @@ RECT CenterInParent(RECT rcDlg, HWND hParent)
 BOOL MoveWindowRect(HWND hWnd, const RECT& rcWnd, BOOL bRepaint)
 {
 	return MoveWindow(hWnd, rcWnd.left, rcWnd.top, rcWnd.right - rcWnd.left, rcWnd.bottom - rcWnd.top, bRepaint);
-}
-
-static LONG gnMyClipboardOpened = 0;
-
-bool MyOpenClipboard(LPCWSTR asAction)
-{
-	_ASSERTE(gnMyClipboardOpened==0 || gnMyClipboardOpened==1);
-
-	if (gnMyClipboardOpened > 0)
-	{
-		InterlockedIncrement(&gnMyClipboardOpened);
-		return true;
-	}
-
-	BOOL lbRc;
-
-	// Открыть буфер обмена
-	while (!(lbRc = OpenClipboard(ghWnd)))
-	{
-		DWORD dwErr = GetLastError();
-
-		wchar_t szCode[32]; _wsprintf(szCode, SKIPCOUNT(szCode) L", Code=%u", dwErr);
-		wchar_t* pszMsg = lstrmerge(L"OpenClipboard failed (", asAction, L")", szCode);
-		LogString(pszMsg);
-		int iBtn = DisplayLastError(pszMsg, dwErr, MB_RETRYCANCEL|MB_ICONSTOP);
-		SafeFree(pszMsg);
-
-		if (iBtn != IDRETRY)
-			return false;
-	}
-
-	InterlockedIncrement(&gnMyClipboardOpened);
-	_ASSERTE(gnMyClipboardOpened==1);
-
-	LogString(L"OpenClipboard succeeded");
-	return true;
-}
-
-void MyCloseClipboard()
-{
-	_ASSERTE(gnMyClipboardOpened==1 || gnMyClipboardOpened==2);
-
-	if (InterlockedDecrement(&gnMyClipboardOpened) > 0)
-	{
-		return;
-	}
-
-	BOOL bRc = CloseClipboard();
-
-	LogString(bRc ? L"CloseClipboard succeeded" : L"CloseClipboard failed");
-}
-
-HANDLE MySetClipboardData(UINT uFormat, HANDLE hMem)
-{
-	HANDLE h = SetClipboardData(uFormat, hMem);
-
-	wchar_t szLog[100]; DWORD dwErr = (h == NULL) ? GetLastError() : 0;
-	if (h != NULL)
-		_wsprintf(szLog, SKIPCOUNT(szLog) L"SetClipboardData(x%04X, x%08X) succeeded", uFormat, (DWORD)(DWORD_PTR)hMem);
-	else
-		_wsprintf(szLog, SKIPCOUNT(szLog) L"SetClipboardData(x%04X, x%08X) failed, code=%u", uFormat, (DWORD)(DWORD_PTR)hMem, dwErr);
-	LogString(szLog);
-
-	return h;
-}
-
-bool CopyToClipboard(LPCWSTR asText)
-{
-	if (!asText)
-		return false;
-
-	bool bCopied = false;
-
-	if (MyOpenClipboard(L"CopyToClipboard"))
-	{
-		DWORD cch = lstrlen(asText);
-		HGLOBAL hglbCopy = GlobalAlloc(GMEM_MOVEABLE, (cch + 1) * sizeof(*asText));
-		if (hglbCopy)
-		{
-			wchar_t* lptstrCopy = (wchar_t*)GlobalLock(hglbCopy);
-			if (lptstrCopy)
-			{
-				_wcscpy_c(lptstrCopy, cch+1, asText);
-				GlobalUnlock(hglbCopy);
-
-				EmptyClipboard();
-				bCopied = (MySetClipboardData(CF_UNICODETEXT, hglbCopy) != NULL);
-			}
-		}
-
-		MyCloseClipboard();
-	}
-
-	return bCopied;
 }
 
 void MessageLoop()
