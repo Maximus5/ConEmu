@@ -30,7 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _COMMON_HEADER_HPP_
 
 // Interface version
-#define CESERVER_REQ_VER    143
+#define CESERVER_REQ_VER    144
 
 // Max tabs/panes count
 #define MAX_CONSOLE_COUNT 30
@@ -405,7 +405,7 @@ const CECMD
 	CECMD_FREEZEALTSRV   = 59, // dwData[0]=1-Freeze, 0-Thaw; dwData[1]=New Alt server PID
 	CECMD_SETFULLSCREEN  = 60, // SetConsoleDisplayMode(CONSOLE_FULLSCREEN_MODE) -> CESERVER_REQ_FULLSCREEN
 	CECMD_MOUSECLICK     = 61, // CESERVER_REQ_PROMPTACTION - обработка клика, если консоль в ReadConsoleW
-	CECMD_PROMPTCMD      = 62, // wData - это LPCWSTR
+	CECMD_PROMPTCMD      = 62, // wData - это LPCWSTR (GUI -> ConEmuHk)
 	CECMD_SETTABTITLE    = 63, // wData - это LPCWSTR, посылается в GUI
 	CECMD_SETPROGRESS    = 64, // wData[0]: 0 - remove, 1 - set, 2 - error. Для "1": wData[1] - 0..100%.
 	CECMD_SETCONCOLORS   = 65, // CESERVER_REQ_SETCONSOLORS
@@ -425,6 +425,7 @@ const CECMD
 	CECMD_STORECURDIR    = 79, // CESERVER_REQ_STORECURDIR <== GetCurrentDirectory()
 	CECMD_GETALLPANELS   = 80, // Result ==> CESERVER_REQ_GETALLPANELS
 	CECMD_SETTOPLEFT     = 81, // CESERVER_REQ_CONINFO
+	CECMD_PROMPTSTARTED  = 82, // CESERVER_PROMPTSTARTED (ConEmuHk -> Server)
 /** Команды FAR плагина **/
 	CMD_FIRST_FAR_CMD    = 200,
 	CMD_DRAGFROM         = 200,
@@ -2001,6 +2002,12 @@ struct CESERVER_REQ_GETALLPANELS
 	wchar_t szDirs[1]; // Variable length;
 };
 
+struct CESERVER_PROMPTSTARTED
+{
+	// If new fields will be required - add them before szExeName
+	wchar_t szExeName[1]; // because of variable length
+};
+
 struct CESERVER_REQ
 {
 	CESERVER_REQ_HDR hdr;
@@ -2057,6 +2064,7 @@ struct CESERVER_REQ
 		CESERVER_REQ_SETCONSCRBUF SetConScrBuf;
 		CESERVER_REQ_STORECURDIR CurDir;
 		CESERVER_REQ_GETALLPANELS Panels;
+		CESERVER_PROMPTSTARTED PromptStarted;
 	};
 
 	DWORD DataSize() { return (this && (hdr.cbSize >= sizeof(hdr))) ? (hdr.cbSize - sizeof(hdr)) : 0; };

@@ -8357,6 +8357,25 @@ BOOL cmd_CtrlBreakEvent(CESERVER_REQ& in, CESERVER_REQ** out)
 	return lbRc;
 }
 
+BOOL cmd_PromptStarted(CESERVER_REQ& in, CESERVER_REQ** out)
+{
+	BOOL lbRc = TRUE;
+	wchar_t szStarted[MAX_PATH+80];
+
+	if (in.DataSize() >= sizeof(wchar_t))
+	{
+		int iLen = lstrlen(in.PromptStarted.szExeName);
+		if (iLen > MAX_PATH) in.PromptStarted.szExeName[MAX_PATH] = 0;
+		_wsprintf(szStarted, SKIPCOUNT(szStarted) L"Prompt (Hook server) was started, PID=%u {%s}", in.hdr.nSrcPID, in.PromptStarted.szExeName);
+		LogFunction(szStarted);
+	}
+
+	*out = ExecuteNewCmd(CECMD_PROMPTSTARTED, sizeof(CESERVER_REQ_HDR));
+	lbRc = ((*out) != NULL);
+
+	return lbRc;
+}
+
 bool ProcessAltSrvCommand(CESERVER_REQ& in, CESERVER_REQ** out, BOOL& lbRc)
 {
 	bool lbProcessed = false;
@@ -8593,6 +8612,10 @@ BOOL ProcessSrvCommand(CESERVER_REQ& in, CESERVER_REQ** out)
 			*out = ExecuteNewCmd(CECMD_SETTOPLEFT, cbReplySize);
 			gpSrv->TopLeft = in.ReqConInfo.TopLeft;
 			lbRc = true;
+		} break;
+		case CECMD_PROMPTSTARTED:
+		{
+			lbRc = cmd_PromptStarted(in, out);
 		} break;
 		default:
 		{

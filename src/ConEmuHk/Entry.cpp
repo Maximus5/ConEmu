@@ -517,6 +517,7 @@ BOOL WINAPI HookServerCommand(LPVOID pInst, CESERVER_REQ* pCmd, CESERVER_REQ* &p
 BOOL WINAPI HookServerReady(LPVOID pInst, LPARAM lParam);
 void WINAPI HookServerFree(CESERVER_REQ* pReply, LPARAM lParam);
 
+LONG   gnPromptReported = 0;
 LONG   gnHookServerNeedStart = 0;
 HANDLE ghHookServerStarted = NULL;
 void   StartHookServer();
@@ -2629,8 +2630,33 @@ void StartHookServer()
 }
 #endif
 
+void ReportPromptStarted()
+{
+	if (!gnServerPID)
+	{
+		return;
+	}
+
+	INT_PTR cchMax = lstrlen(gsExeName) + 1;
+	size_t cbSize = sizeof(CESERVER_REQ_HDR) + cchMax * sizeof(wchar_t);
+	CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_PROMPTSTARTED, cbSize);
+	if (pIn)
+	{
+		_wcscpy_c(pIn->PromptStarted.szExeName, cchMax, gsExeName);
+		CESERVER_REQ* pOut = ExecuteSrvCmd(gnServerPID, pIn, ghConWnd);
+		ExecuteFreeResult(pOut);
+		ExecuteFreeResult(pIn);
+	}
+}
+
 void CheckHookServer()
 {
+	LONG l = InterlockedIncrement(&gnPromptReported);
+	if (l == 1)
+	{
+		ReportPromptStarted();
+	}
+
 	#ifdef USE_PIPE_SERVER
 	if (gnHookServerNeedStart == 1)
 	{
