@@ -350,8 +350,18 @@ void CopySrvMapFromGuiMap();
 void UpdateConsoleMapHeader();
 void InitAnsiLog(const ConEmuAnsiLog& AnsiLog);
 int Compare(const CESERVER_CONSOLE_MAPPING_HDR* p1, const CESERVER_CONSOLE_MAPPING_HDR* p2);
-void ReloadGuiSettings(ConEmuGuiMapping* apFromCmd);
 void FixConsoleMappingHdr(CESERVER_CONSOLE_MAPPING_HDR *pMap);
+
+enum LGSResult
+{
+	lgs_Failed = 0,
+	lgs_MapPtr,
+	lgs_WrongVersion,
+	lgs_WrongSize,
+	lgs_Succeeded,
+	lgs_Updated,
+};
+LGSResult ReloadGuiSettings(ConEmuGuiMapping* apFromCmd, LPDWORD pnWrongValue = NULL);
 
 int CreateColorerHeader(bool bForceRecreate = false);
 

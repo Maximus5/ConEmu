@@ -1821,6 +1821,7 @@ wrap:
 					&& iRc!=CERR_UNICODE_CHK_FAILED && iRc!=CERR_UNICODE_CHK_OKAY
 					&& iRc!=CERR_GUIMACRO_SUCCEEDED && iRc!=CERR_GUIMACRO_FAILED
 					&& iRc!=CERR_AUTOATTACH_NOT_ALLOWED && iRc!=CERR_ATTACHFAILED
+					&& iRc!=CERR_WRONG_GUI_VERSION
 					&& !(gnRunMode!=RM_SERVER && iRc==CERR_CREATEPROCESS))
 				|| gbAlwaysConfirmExit)
 	  )
@@ -5151,7 +5152,46 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 
 		// Если уже известен HWND ConEmu (root window)
 		if (gpSrv->hGuiWnd)
-			ReloadGuiSettings(NULL);
+		{
+			DWORD nGuiPID = 0; GetWindowThreadProcessId(gpSrv->hGuiWnd, &nGuiPID);
+			DWORD nWrongValue = 0;
+			SetLastError(0);
+			LGSResult lgsRc = ReloadGuiSettings(NULL, &nWrongValue);
+			if (lgsRc < lgs_Succeeded)
+			{
+				wchar_t szLgsError[200], szLGS[80];
+				_wsprintf(szLGS, SKIPCOUNT(szLGS) L"LGS=%u, Code=%u, GUI PID=%u, Srv PID=%u", lgsRc, GetLastError(), nGuiPID, GetCurrentProcessId());
+				switch (lgsRc)
+				{
+				case lgs_WrongVersion:
+					_wsprintf(szLgsError, SKIPCOUNT(szLgsError) L"Failed to load ConEmu info!\n"
+						L"Found ProtocolVer=%u but Required=%u.\n"
+						L"%s.\n"
+						L"Please update all ConEmu components!",
+						nWrongValue, (DWORD)CESERVER_REQ_VER, szLGS);
+					break;
+				case lgs_WrongSize:
+					_wsprintf(szLgsError, SKIPCOUNT(szLgsError) L"Failed to load ConEmu info!\n"
+						L"Found MapSize=%u but Required=%u."
+						L"%s.\n"
+						L"Please update all ConEmu components!",
+						nWrongValue, (DWORD)sizeof(ConEmuGuiMapping), szLGS);
+					break;
+				default:
+					_wsprintf(szLgsError, SKIPCOUNT(szLgsError) L"Failed to load ConEmu info!\n"
+						L"%s.\n"
+						L"Please update all ConEmu components!",
+						szLGS);
+				}
+				// Add log info
+				LogFunction(szLGS);
+				// Show user message
+				wchar_t szTitle[128];
+				_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuC[Srv]: PID=%u", GetCurrentProcessId());
+				MessageBox(NULL, szLgsError, szTitle, MB_ICONSTOP|MB_SYSTEMMODAL);
+				return CERR_WRONG_GUI_VERSION;
+			}
+		}
 	}
 
 	xf_check();

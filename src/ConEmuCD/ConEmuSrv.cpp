@@ -160,11 +160,79 @@ void ServerInitFont()
 	}
 }
 
-bool LoadGuiSettings(ConEmuGuiMapping& GuiMapping)
+LGSResult LoadGuiSettingsPtr(ConEmuGuiMapping& GuiMapping, const ConEmuGuiMapping* pInfo, bool abNeedReload, bool abForceCopy, DWORD& rnWrongValue)
 {
-	bool lbRc = false;
-	bool lbNeedReload = false;
+	LGSResult liRc = lgs_Failed;
+	DWORD cbSize = 0;
 	bool lbNeedCopy = false;
+	bool lbCopied = false;
+	wchar_t szLog[80];
+
+	if (!pInfo)
+	{
+		liRc = lgs_MapPtr;
+		wcscpy_c(szLog, L"LoadGuiSettings(Failed, MapPtr is null)");
+		LogFunction(szLog);
+		goto wrap;
+	}
+
+	if (abForceCopy)
+	{
+		cbSize = min(sizeof(GuiMapping), pInfo->cbSize);
+		memmove(&GuiMapping, pInfo, cbSize);
+		gpSrv->guiSettings.cbSize = cbSize;
+		lbCopied = true;
+	}
+
+	if (pInfo->cbSize >= (sizeof(pInfo->nProtocolVersion) + ((LPBYTE)&pInfo->nProtocolVersion) - (LPBYTE)pInfo))
+	{
+		if (pInfo->nProtocolVersion != CESERVER_REQ_VER)
+		{
+			liRc = lgs_WrongVersion;
+			rnWrongValue = pInfo->nProtocolVersion;
+			wcscpy_c(szLog, L"LoadGuiSettings(Failed, MapPtr is null)");
+			_wsprintf(szLog, SKIPCOUNT(szLog) L"LoadGuiSettings(Failed, Version=%u, Required=%u)", rnWrongValue, (DWORD)CESERVER_REQ_VER);
+			LogFunction(szLog);
+			goto wrap;
+		}
+	}
+
+	if (pInfo->cbSize != sizeof(ConEmuGuiMapping))
+	{
+		liRc = lgs_WrongSize;
+		rnWrongValue = pInfo->cbSize;
+		_wsprintf(szLog, SKIPCOUNT(szLog) L"LoadGuiSettings(Failed, cbSize=%u, Required=%u)", pInfo->cbSize, (DWORD)sizeof(ConEmuGuiMapping));
+		LogFunction(szLog);
+		goto wrap;
+	}
+
+	lbNeedCopy = abNeedReload
+		|| (gpSrv->guiSettingsChangeNum != pInfo->nChangeNum)
+		|| (GuiMapping.bGuiActive != pInfo->bGuiActive)
+		;
+
+	if (lbNeedCopy)
+	{
+		wcscpy_c(szLog, L"LoadGuiSettings(Changed)");
+		LogFunction(szLog);
+		if (!lbCopied)
+			memmove(&GuiMapping, pInfo, pInfo->cbSize);
+		_ASSERTE(GuiMapping.ComSpec.ConEmuExeDir[0]!=0 && GuiMapping.ComSpec.ConEmuBaseDir[0]!=0);
+		liRc = lgs_Updated;
+	}
+	else
+	{
+		liRc = lgs_Succeeded;
+	}
+
+wrap:
+	return liRc;
+}
+
+LGSResult LoadGuiSettings(ConEmuGuiMapping& GuiMapping, DWORD& rnWrongValue)
+{
+	LGSResult liRc = lgs_Failed;
+	bool lbNeedReload = false;
 	DWORD dwGuiThreadId, dwGuiProcessId;
 	HWND hGuiWnd = ghConEmuWnd ? ghConEmuWnd : gpSrv->hGuiWnd;
 	const ConEmuGuiMapping* pInfo = NULL;
@@ -188,6 +256,7 @@ bool LoadGuiSettings(ConEmuGuiMapping& GuiMapping)
 		if (!dwGuiThreadId)
 		{
 			_ASSERTE(dwGuiProcessId);
+			LogFunction(L"LoadGuiSettings(Failed, dwGuiThreadId==0)");
 			goto wrap;
 		}
 
@@ -209,51 +278,34 @@ bool LoadGuiSettings(ConEmuGuiMapping& GuiMapping)
 		pInfo = gpSrv->pGuiInfoMap->Ptr();
 	}
 
-	if (!pInfo
-		|| (pInfo->cbSize != sizeof(ConEmuGuiMapping))
-		|| (pInfo->nProtocolVersion != CESERVER_REQ_VER))
-	{
-		LogFunction(L"LoadGuiSettings(Failed, size or ver)");
-		goto wrap;
-	}
-
-	lbNeedCopy = lbNeedReload
-		|| (gpSrv->guiSettingsChangeNum != pInfo->nChangeNum)
-		|| (GuiMapping.bGuiActive != pInfo->bGuiActive)
-		;
-
-	if (lbNeedCopy)
-	{
-		LogFunction(L"LoadGuiSettings(Changed)");
-		memmove(&GuiMapping, pInfo, pInfo->cbSize);
-		_ASSERTE(GuiMapping.ComSpec.ConEmuExeDir[0]!=0 && GuiMapping.ComSpec.ConEmuBaseDir[0]!=0);
-		lbRc = true;
-	}
-
+	liRc = LoadGuiSettingsPtr(GuiMapping, pInfo, lbNeedReload, false, rnWrongValue);
 wrap:
-	return lbRc;
+	return liRc;
 }
 
-void ReloadGuiSettings(ConEmuGuiMapping* apFromCmd)
+LGSResult ReloadGuiSettings(ConEmuGuiMapping* apFromCmd, LPDWORD pnWrongValue /*= NULL*/)
 {
 	bool lbChanged = false;
+	LGSResult lgsResult = lgs_Failed;
+	DWORD nWrongValue = 0;
 
 	if (apFromCmd)
 	{
 		LogFunction(L"ReloadGuiSettings(apFromCmd)");
-		DWORD cbSize = min(sizeof(gpSrv->guiSettings), apFromCmd->cbSize);
-		memmove(&gpSrv->guiSettings, apFromCmd, cbSize);
-		_ASSERTE(cbSize == apFromCmd->cbSize);
-		gpSrv->guiSettings.cbSize = cbSize;
-		lbChanged = true;
+		lgsResult = LoadGuiSettingsPtr(gpSrv->guiSettings, apFromCmd, false, true, nWrongValue);
+		lbChanged = (lgsResult >= lgs_Succeeded);
 	}
 	else
 	{
 		gpSrv->guiSettings.cbSize = sizeof(ConEmuGuiMapping);
-		lbChanged = LoadGuiSettings(gpSrv->guiSettings)
+		lgsResult = LoadGuiSettings(gpSrv->guiSettings, nWrongValue);
+		lbChanged = (lgsResult >= lgs_Succeeded)
 			&& ((gpSrv->guiSettingsChangeNum != gpSrv->guiSettings.nChangeNum)
 				|| (gpSrv->pConsole && gpSrv->pConsole->hdr.ComSpec.ConEmuExeDir[0] == 0));
 	}
+
+	if (pnWrongValue)
+		*pnWrongValue = nWrongValue;
 
 	if (lbChanged)
 	{
@@ -284,6 +336,8 @@ void ReloadGuiSettings(ConEmuGuiMapping* apFromCmd)
 			UpdateConsoleMapHeader();
 		}
 	}
+
+	return lgsResult;
 }
 
 // AutoAttach делать нельзя, когда ConEmu запускает процесс обновления
