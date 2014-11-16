@@ -2479,6 +2479,9 @@ void CConEmuMain::Destroy()
 {
 	LogString(L"CConEmuMain::Destroy()");
 
+	WARNING("Подозрение на зависание в некоторых случаях");
+	session.SetSessionNotification(false);
+
 	// Ensure "RCon starting queue" is terminated
 	mp_RunQueue->Terminate();
 
@@ -2841,6 +2844,8 @@ void CConEmuMain::SessionInfo::SetSessionNotification(bool bSwitch)
 		pfnRegister = hWtsApi ? (WTSRegisterSessionNotification_t)GetProcAddress(hWtsApi, "WTSRegisterSessionNotification") : NULL;
 		pfnUnregister = hWtsApi ? (WTSUnRegisterSessionNotification_t)GetProcAddress(hWtsApi, "WTSUnRegisterSessionNotification") : NULL;
 
+		// May return RPC_S_INVALID_BINDING error code
+		// if "Global\\TermSrvReadyEvent" event was not set
 		if (!pfnRegister || !pfnUnregister || !pfnRegister(ghWnd, 0/*NOTIFY_FOR_THIS_SESSION*/))
 		{
 			if (hWtsApi)
@@ -13308,6 +13313,8 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			else if (messg == this->mn_MsgMyDestroy)
 			{
 				ShutdownGuiStep(L"DestroyWindow");
+				WARNING("Подозрение на зависание в некоторых случаях");
+				session.SetSessionNotification(false);
 				//this->OnDestroy(hWnd);
 				_ASSERTE(hWnd == ghWnd);
 				DestroyWindow(hWnd);
