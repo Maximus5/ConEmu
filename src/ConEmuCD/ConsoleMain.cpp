@@ -597,7 +597,8 @@ void OnProcessCreatedDbg(BOOL bRc, DWORD dwErr, LPPROCESS_INFORMATION pProcessIn
 
 BOOL createProcess(BOOL abSkipWowChange, LPCWSTR lpApplicationName, LPWSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment, LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation)
 {
-	LogFunction(L"createProcess");
+	CEStr fnDescr(lstrmerge(L"createProcess App={", lpApplicationName, L"} Cmd={", lpCommandLine, L"}"));
+	LogFunction(fnDescr);
 
 	MWow64Disable wow;
 	if (!abSkipWowChange)
@@ -606,8 +607,9 @@ BOOL createProcess(BOOL abSkipWowChange, LPCWSTR lpApplicationName, LPWSTR lpCom
 	// %PATHS% from [HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths]
 	// must be already processed in IsNeedCmd >> FileExistsSearch >> SearchAppPaths
 
-#if defined(SHOW_STARTED_PRINT_LITE)
 	DWORD nStartTick = GetTickCount();
+
+#if defined(SHOW_STARTED_PRINT_LITE)
 	if (gnRunMode == RM_SERVER)
 	{
 		_printf("Starting root: ");
@@ -619,9 +621,16 @@ BOOL createProcess(BOOL abSkipWowChange, LPCWSTR lpApplicationName, LPWSTR lpCom
 
 	BOOL lbRc = CreateProcess(lpApplicationName, lpCommandLine, lpProcessAttributes, lpThreadAttributes, bInheritHandles, dwCreationFlags, lpEnvironment, lpCurrentDirectory, lpStartupInfo, lpProcessInformation);
 	DWORD dwErr = GetLastError();
+	DWORD nStartDuration = GetTickCount() - nStartTick;
+
+	wchar_t szRunRc[80];
+	if (lbRc)
+		_wsprintf(szRunRc, SKIPCOUNT(szRunRc) L"Succeeded (%u ms) PID=%u", nStartDuration, lpProcessInformation->dwProcessId);
+	else
+		_wsprintf(szRunRc, SKIPCOUNT(szRunRc) L"Failed (%u ms) Code=%u(x%04X)", nStartDuration, dwErr, dwErr);
+	LogFunction(szRunRc);
 
 #if defined(SHOW_STARTED_PRINT_LITE)
-	DWORD nStartDuration = GetTickCount() - nStartTick;
 	if (gnRunMode == RM_SERVER)
 	{
 		if (lbRc)
@@ -1781,14 +1790,22 @@ wrap:
 	// Ассерт может быть если был запрос на аттач, который не удался
 	_ASSERTE(gnExitCode!=STILL_ACTIVE || (iRc==CERR_ATTACHFAILED) || (iRc==CERR_RUNNEWCONSOLE) || gbAsyncRun);
 
-	if (gbPrintRetErrLevel)
+	// Log exit code
 	{
 		wchar_t szInfo[80];
+		LPCWSTR pszName = (gnRunMode == RM_SERVER && gpSrv->hRootProcess) ? L"Shell" : L"Process";
+		DWORD nPID = (gnRunMode == RM_SERVER && gpSrv->hRootProcess) ? gpSrv->dwRootProcess : pi.dwProcessId;
 		if (gnExitCode >= 0x80000000)
-			_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"\nProcess exit code: %u (%i) {x%08X}\n", gnExitCode, (int)gnExitCode, gnExitCode);
+			_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"\n%s PID=%u ExitCode=%u (%i) {x%08X}", pszName, nPID, gnExitCode, (int)gnExitCode, gnExitCode);
 		else
-			_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"\nProcess exit code: %u {x%08X}\n", gnExitCode, gnExitCode);
-		_wprintf(szInfo);
+			_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"\n%s PID=%u ExitCode=%u {x%08X}", pszName, nPID, gnExitCode, gnExitCode);
+		LogFunction(szInfo+1);
+
+		if (gbPrintRetErrLevel)
+		{
+			wcscat_c(szInfo, L"\n");
+			_wprintf(szInfo);
+		}
 	}
 
 	if (iRc && (gbAttachMode & am_Auto))
