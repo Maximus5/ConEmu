@@ -665,8 +665,8 @@
     </ResourceCompile>
     <PostBuildEvent>
       <Command>if exist "$(SolutionDir)sign3.bat" call "$(SolutionDir)sign3.bat" "$(TargetPath)"
-echo Copying $(TargetFileName) to Z:\ - skipped
-rem copy "$(TargetPath)" Z:\</Command>
+echo Copying $(TargetFileName) to Z:\
+copy "$(TargetPath)" Z:\</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug_R|x64'">
