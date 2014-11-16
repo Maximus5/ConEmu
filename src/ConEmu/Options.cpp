@@ -186,8 +186,8 @@ const CONEMUDEFCOLORS DefColors[] =
 	},
 	{
 		L"<SolarMe>", {
-			0x00E3F6FD, 0x00D5E8EE, 0x00756E58, 0x008C8A77, 0x00164BCB, 0x00C4716C, 0x002F32DC, 0x00586E75,
-			0x00423607, 0x00D28B26, 0x0000BB7E, 0x0098A12A, 0x00837B65, 0x008236D3, 0x000089B5, 0x00362B00
+			0x00362b00, 0x00423607, 0x0098a12a, 0x00756e58, 0x00164bcb, 0x00542388, 0x00005875, 0x00d5e8ee,
+			0x00a1a193, 0x00c4716c, 0x00009985, 0x00d28b26, 0x002f32dc, 0x008236d3, 0x000089b5, 0x00e3f6fd
 		}
 	},
 	{
@@ -476,11 +476,15 @@ void Settings::InitSettings()
 
 	const COLORREF* pcrColors;
 	const COLORREF* pcrStd = DefColors[0].dwDefColors;
-	if ((pcrColors = GetDefColors(L"<Solarized>")) != NULL)
+	// Standard <Solarized> has too many monotones
+	// which made it unpleasant with many applications
+	// <SolarMe> has 3 monotones changed to scaled colors
+	// That made it nice for git and Far Manager
+	if ((pcrColors = GetDefColors(L"<SolarMe>")) != NULL)
 	{
 		for (uint i = 0x10; i--;)
 		{
-			Colors[i] = pcrColors[i]; // Solarized color palette
+			Colors[i] = pcrColors[i]; // SolarMe color palette
 			Colors[i+0x10] = pcrStd[i]; // Windows standard colors
 		}
 	}
