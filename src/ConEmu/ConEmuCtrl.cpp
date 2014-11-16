@@ -1743,14 +1743,7 @@ void CConEmuCtrl::MakeScreenshot(bool abFullscreen /*= false*/)
 		bool bDlg = ((GetWindowLongPtr(hWnd, GWL_STYLE) & DS_MODALFRAME) == DS_MODALFRAME);
 		if (gpConEmu->IsGlass())
 		{
-			if (bDlg && (gnOsVer == 0x601))
-			{
-				rcWnd.top -= 5;
-				rcWnd.left -= 5;
-				rcWnd.right += 3;
-				rcWnd.bottom += 5;
-			}
-			else if (gnOsVer >= 0x602)
+			if (gnOsVer >= 0x602)
 			{
 				if (bDlg)
 				{
@@ -1765,6 +1758,13 @@ void CConEmuCtrl::MakeScreenshot(bool abFullscreen /*= false*/)
 					rcWnd.right -= 2;
 					rcWnd.bottom -= 2;
 				}
+			}
+			else if (bDlg && (gnOsVer == 0x601))
+			{
+				rcWnd.top -= 5;
+				rcWnd.left -= 5;
+				rcWnd.right += 3;
+				rcWnd.bottom += 5;
 			}
 		}
 
