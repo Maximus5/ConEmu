@@ -300,6 +300,9 @@
     <ClCompile Include="UnitTests.cpp">
       <Filter>0 - Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="MyClipboard.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Attach.h">
@@ -661,6 +664,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="UnitTests.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MyClipboard.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
