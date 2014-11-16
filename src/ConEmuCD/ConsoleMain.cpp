@@ -8709,8 +8709,7 @@ BOOL MyGetConsoleScreenBufferInfo(HANDLE ahConOut, PCONSOLE_SCREEN_BUFFER_INFO a
 	// CONSOLE_FULLSCREEN/*1*/ or CONSOLE_FULLSCREEN_HARDWARE/*2*/
 	if (pfnGetConsoleDisplayMode && pfnGetConsoleDisplayMode(&gpSrv->dwDisplayMode))
 	{
-		// Need to be compared to CONSOLE_FULLSCREEN_HARDWARE/*2*/?
-		if (gpSrv->dwDisplayMode)
+		if (gpSrv->dwDisplayMode & CONSOLE_FULLSCREEN_HARDWARE)
 		{
 			// While in hardware fullscreen - srWindow still shows window region
 			// as it can be, if returned in GUI mode (I suppose)
