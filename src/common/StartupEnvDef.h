@@ -80,6 +80,8 @@ struct CEStartupEnv
 	} Monitors[16];
 	// HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Console\TrueTypeFont
 	LPCWSTR pszRegConFonts; // "Index/CP ~t Name ~t Index/CP ..."
+	// [HKCU|HKLM]\Software\Microsoft\Command Processor
+	LPCWSTR pszAutoruns; // "  <cmdline>\r\n..."
 };
 
 extern CEStartupEnv* gpStartEnv;

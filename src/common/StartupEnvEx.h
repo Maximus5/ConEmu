@@ -125,6 +125,37 @@ protected:
 		return pszFonts;
 	}
 
+	static void LoadAutorunsKey(HKEY& hk, wchar_t*& pszAutoruns, LPCWSTR pszPrefix)
+	{
+		if (!hk) return;
+		DWORD nSize = 0;
+		if ((RegQueryValueEx(hk, L"AutoRun", NULL, NULL, NULL, &nSize) == 0) && nSize)
+		{
+			wchar_t* pszData = (wchar_t*)calloc(nSize+2,1);
+			if (pszData && (RegQueryValueEx(hk, L"AutoRun", NULL, NULL, (LPBYTE)pszData, &nSize) == 0) && *pszData)
+			{
+				lstrmerge(&pszAutoruns, pszPrefix, pszData, L"\r\n");
+			}
+			SafeFree(pszData);
+		}
+		RegCloseKey(hk);
+		hk = NULL;
+	}
+
+	static wchar_t* LoadAutoruns()
+	{
+		wchar_t* pszAutoruns = NULL;
+		HKEY hk = NULL;
+		if (RegOpenKeyEx(HKEY_CURRENT_USER, L"Software\\Microsoft\\Command Processor", 0, KEY_READ, &hk) == 0)
+			LoadAutorunsKey(hk, pszAutoruns, L"  HKCU: ");
+		bool bWin64 = IsWindows64();
+		if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"Software\\Microsoft\\Command Processor", 0, KEY_READ|(bWin64?KEY_WOW64_32KEY:0), &hk) == 0)
+			LoadAutorunsKey(hk, pszAutoruns, L"  HKLM32: ");
+		if (bWin64 && RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"Software\\Microsoft\\Command Processor", 0, KEY_READ|KEY_WOW64_64KEY, &hk) == 0)
+			LoadAutorunsKey(hk, pszAutoruns, L"  HKLM64: ");
+		return pszAutoruns;
+	}
+
 public:
 	static CEStartupEnv* Create()
 	{
@@ -134,7 +165,10 @@ public:
 		wchar_t* pszFonts = LoadFonts();
 		size_t cchFnt = pszFonts ? (lstrlen(pszFonts)+1) : 0;
 
-		size_t cchTotal = cchFnt*sizeof(wchar_t);
+		wchar_t* pszAutoruns = LoadAutoruns();
+		size_t cchAut = pszAutoruns ? (lstrlen(pszAutoruns)+1) : 0;
+
+		size_t cchTotal = (cchFnt+cchAut)*sizeof(wchar_t);
 
 		if (Load(cchTotal, pEnv, ptrEnd))
 		{
@@ -175,9 +209,17 @@ public:
 				pEnv->pszRegConFonts = psz;
 				psz += cchFnt;
 			}
+
+			if (pszAutoruns)
+			{
+				_wcscpy_c(psz, cchAut, pszAutoruns);
+				pEnv->pszAutoruns = psz;
+				psz += cchAut;
+			}
 		}
 
 		SafeFree(pszFonts);
+		SafeFree(pszAutoruns);
 
 		return pEnv;
 	}
@@ -285,6 +327,16 @@ public:
 		DumpEnvStr(apStartEnv->pszPathEnv ? apStartEnv->pszPathEnv : L"<NULL>", lParam, false, true);
 		dumpEnvStr(L"ConFont: ", false);
 		DumpEnvStr(apStartEnv->pszRegConFonts ? apStartEnv->pszRegConFonts : L"<NULL>", lParam, false, true);
+
+		if (!apStartEnv->pszAutoruns)
+		{
+			DumpEnvStr(L"CMD's AutoRuns: {not defined}", lParam, false, true);
+		}
+		else
+		{
+			DumpEnvStr(L"CMD's AutoRuns:", lParam, false, true);
+			DumpEnvStr(apStartEnv->pszAutoruns, lParam, false, false); // Alredy "\r\n" terminated
+		}
 
 		// szSI уже не используется, можно
 
