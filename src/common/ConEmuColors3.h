@@ -79,7 +79,7 @@ public:
 			int G = (Color & 0xFF00) >> 8;
 			int R = (Color & 0xFF);
 			int nMax = Max(B,Max(R,G));
-			
+
 			Index =
 				(((B+32) > nMax) ? 1 : 0) | //-V112
 				(((G+32) > nMax) ? 2 : 0) | //-V112
@@ -157,7 +157,7 @@ public:
 			else
 				Con |= 8;
 		}
-		
+
 		Con |= (Index<<4);
 	}
 };
@@ -165,7 +165,7 @@ public:
 __inline BYTE FarColor_3_2(const FarColor& Color3)
 {
 	WORD Color2 = 0;
-	
+
 	DWORD nForeColor, nBackColor;
 	if (Color3.Flags & FCF_FG_4BIT)
 	{
@@ -197,6 +197,6 @@ __inline BYTE FarColor_3_2(const FarColor& Color3)
 		nBackColor = Color3.BackgroundColor & 0x00FFFFFF;
 		Far3Color::Color2BgIndex(nBackColor, nBackColor==nForeColor, Color2);
 	}
-	
+
 	return (BYTE)(Color2 & 0xFF);
 }

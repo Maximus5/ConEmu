@@ -1580,7 +1580,6 @@ INT_PTR CALLBACK ColorDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM 
 			//SetWindowPos(GetDlgItem(hwndDlg, IDC_TEXT), 0, 0,0,
 			//	rcText.right-rcText.left, rcCheck.bottom-rcText.top-10, SWP_NOMOVE|SWP_NOZORDER);
 		}
-		
 
 		SetFocus(GetDlgItem(hwndDlg, IDOK));
 		
