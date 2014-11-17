@@ -185,6 +185,9 @@ const CONEMUDEFCOLORS DefColors[] =
 		}
 	},
 	{
+		// Standard <Solarized> has too many monotones
+		// which made it unpleasant with some applications
+		// <SolarMe> has 3 monotones changed to scaled colors
 		L"<SolarMe>", {
 			0x00362b00, 0x00423607, 0x0098a12a, 0x00756e58, 0x00164bcb, 0x00542388, 0x00005875, 0x00d5e8ee,
 			0x00a1a193, 0x00c4716c, 0x00009985, 0x00d28b26, 0x002f32dc, 0x008236d3, 0x000089b5, 0x00e3f6fd
@@ -476,11 +479,9 @@ void Settings::InitSettings()
 
 	const COLORREF* pcrColors;
 	const COLORREF* pcrStd = DefColors[0].dwDefColors;
-	// Standard <Solarized> has too many monotones
-	// which made it unpleasant with many applications
-	// <SolarMe> has 3 monotones changed to scaled colors
-	// That made it nice for git and Far Manager
-	if ((pcrColors = GetDefColors(L"<SolarMe>")) != NULL)
+	// To get git's proper colored output for <Solarized> scheme
+	// run: git config --global color.diff.new "green bold"
+	if ((pcrColors = GetDefColors(L"<Solarized>")) != NULL)
 	{
 		for (uint i = 0x10; i--;)
 		{
