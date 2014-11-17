@@ -12,6 +12,20 @@ Votes and awards (vote for ConEmu, if you please)
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+2014.11.17
+[*] Default color scheme set back to <Solarized>.
+    To get git's proper colored output for <Solarized> scheme run:
+    git config --global color.diff.new "green bold"
+[*] Extend fonts listboxes were not enabled properly.
+[*] Esc was not working in the ‘Commands’ field on the ‘Tasks’ settings page.
+[*] Apply button on ‘Size & Pos’ page was not working, size fields were rolled back after ‘Apply’ was pressed.
+[*] Command "start cmd" from ConEmu tab must start new tab.
+[*] Issue 653: New ConEmu.exe switches: -Wnd{X|Y|W|H} <Value>.
+    This will force ConEmu window to position/size.
+    Size supports cells (-WndW 80), percents (-WndW 50%) and pixels (-WndW 100px).
+[*] Issue 1815: ConEmu panel view plugin does not despect AppDistinct palette overrides.
+
+
 2014.11.16
 [*] Issue 1812: Vertical scroll bar has disappeared in latest Win10 build.
 [*] Use modified <SolarMe> palette by default (for new configs).
