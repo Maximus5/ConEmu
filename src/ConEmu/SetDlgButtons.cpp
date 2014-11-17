@@ -2585,6 +2585,7 @@ void CSetDlgButtons::OnBtn_ExtendFonts(HWND hDlg, WORD CB, BYTE uCheck)
 	_ASSERTE(CB==cbExtendFonts);
 
 	gpSet->AppStd.isExtendFonts = uCheck;
+	CSetDlgLists::EnableDlgItems(hDlg, CSetDlgLists::eExtendFonts, gpSet->AppStd.isExtendFonts);
 	gpConEmu->Update(true);
 
 } // cbExtendFonts

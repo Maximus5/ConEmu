@@ -1726,7 +1726,7 @@ LRESULT CSettings::OnInitDialog_Main(HWND hWnd2, bool abInitial)
 	}
 
 	checkDlgButton(hWnd2, cbExtendFonts, gpSet->AppStd.isExtendFonts);
-	CSetDlgLists::EnableDlgItems(hWnd2, CSetDlgLists::eExtendFonts, gpSet->isShowBgImage);
+	CSetDlgLists::EnableDlgItems(hWnd2, CSetDlgLists::eExtendFonts, gpSet->AppStd.isExtendFonts);
 
 	checkDlgButton(hWnd2, cbFontAuto, gpSet->isFontAutoSize);
 
