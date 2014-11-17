@@ -2498,15 +2498,25 @@ bool CVirtualConsole::LoadConsoleData()
 
 COLORREF* CVirtualConsole::GetColors()
 {
-	// Update AppID if needed
-	int nCurAppId = mp_RCon ? mp_RCon->GetActiveAppSettingsId() : -1;
+	return GetColors(isFade);
+}
 
-	// Retrieve palette colors
+COLORREF* CVirtualConsole::GetColors(bool bFade)
+{
+	// Was specified palette forced to this console?
 	LPCWSTR pszPalName = mp_RCon ? mp_RCon->GetArgs().pszPalette : NULL;
+
 	if (pszPalName && *pszPalName)
-		mp_Colors = gpSet->GetPaletteColors(pszPalName, isFade);
+	{
+		mp_Colors = gpSet->GetPaletteColors(pszPalName, bFade);
+	}
 	else
-		mp_Colors = gpSet->GetColors(nCurAppId, isFade);
+	{
+		// Update AppID if needed
+		int nCurAppId = mp_RCon ? mp_RCon->GetActiveAppSettingsId() : -1;
+
+		mp_Colors = gpSet->GetColors(nCurAppId, bFade);
+	}
 
 	return mp_Colors;
 }

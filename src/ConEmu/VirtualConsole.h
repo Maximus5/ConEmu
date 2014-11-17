@@ -313,6 +313,7 @@ class CVirtualConsole :
 		bool CheckSelection(const CONSOLE_SELECTION_INFO& select, SHORT row, SHORT col);
 		//bool GetCharAttr(wchar_t ch, WORD atr, wchar_t& rch, BYTE& foreColorNum, BYTE& backColorNum, FONT* pFont);
 		COLORREF* GetColors();
+		COLORREF* GetColors(bool bFade);
 		int GetPaletteIndex();
 		bool ChangePalette(int aNewPaletteIdx);
 		void PaintVCon(HDC hPaintDc);
