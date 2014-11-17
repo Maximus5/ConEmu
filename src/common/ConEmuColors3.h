@@ -36,12 +36,18 @@ public:
 		return (i1 > i2) ? i1 : i2;
 	}
 
-	static int GetStdIndex(COLORREF Color)
+	static const COLORREF* GetStdPalette()
 	{
-		COLORREF StdPalette[16] = 
+		static COLORREF StdPalette[16] =
 			{0x00000000, 0x00800000, 0x00008000, 0x00808000, 0x00000080, 0x00800080, 0x00008080, 0x00c0c0c0,
 			0x00808080, 0x00ff0000, 0x0000ff00, 0x00ffff00, 0x000000ff, 0x00ff00ff, 0x0000ffff, 0x00ffffff};
-		for (size_t i = 0; i < countof(StdPalette); i++)
+		return StdPalette;
+	}
+
+	static int GetStdIndex(COLORREF Color, const COLORREF* apPalette = NULL)
+	{
+		const COLORREF* StdPalette = apPalette ? apPalette : GetStdPalette();
+		for (size_t i = 0; i < 16; i++)
 		{
 			if (Color == StdPalette[i])
 				return (int)i;
@@ -49,17 +55,15 @@ public:
 		return -1;
 	}
 
-	static COLORREF GetStdColor(int Index)
+	static COLORREF GetStdColor(int Index, const COLORREF* apPalette = NULL)
 	{
-		COLORREF StdPalette[16] = 
-			{0x00000000, 0x00800000, 0x00008000, 0x00808000, 0x00000080, 0x00800080, 0x00008080, 0x00c0c0c0,
-			0x00808080, 0x00ff0000, 0x0000ff00, 0x00ffff00, 0x000000ff, 0x00ff00ff, 0x0000ffff, 0x00ffffff};
+		const COLORREF* StdPalette = apPalette ? apPalette : GetStdPalette();
 		if (Index >= 0 && Index < 16)
 			return StdPalette[Index];
 		return 0;
 	}
-	
-	static void Color2FgIndex(COLORREF Color, WORD& Con)
+
+	static void Color2FgIndex(COLORREF Color, WORD& Con, const COLORREF* apPalette = NULL)
 	{
 		int Index = - 1;
 		static COLORREF LastColor;
@@ -70,7 +74,7 @@ public:
 		}
 		else if (Index == -1)
 		{
-			Index = GetStdIndex(Color);
+			Index = GetStdIndex(Color, apPalette);
 		}
 
 		if (Index == -1)
@@ -106,7 +110,7 @@ public:
 		Con |= Index;
 	}
 
-	static void Color2BgIndex(COLORREF Color, BOOL Equal, WORD& Con)
+	static void Color2BgIndex(COLORREF Color, BOOL Equal, WORD& Con, const COLORREF* apPalette = NULL)
 	{
 		int Index = -1;
 		static COLORREF LastColor;
@@ -117,7 +121,7 @@ public:
 		}
 		else if (Index == -1)
 		{
-			Index = GetStdIndex(Color);
+			Index = GetStdIndex(Color, apPalette);
 		}
 
 		if (Index == -1)
