@@ -1825,6 +1825,7 @@ int CShellProc::PrepareExecuteParms(
 	}
 
 	BOOL lbChanged = FALSE;
+	CEStr strForceNewConsole; // If was used "start" from cmd prompt or batch
 	mb_NeedInjects = FALSE;
 	//wchar_t szBaseDir[MAX_PATH+2]; szBaseDir[0] = 0;
 	CESERVER_REQ *pIn = NULL;
@@ -1932,6 +1933,19 @@ int CShellProc::PrepareExecuteParms(
 	if (mb_isCurrentGuiClient && (bNewConsoleArg || bForceNewConsole) && !lbGuiApp)
 	{
 		lbGuiApp = true;
+	}
+	if ((aCmd == eCreateProcess)
+		&& (anCreateFlags && (*anCreateFlags & (CREATE_NEW_CONSOLE)))
+		&& !bNewConsoleArg && !bForceNewConsole
+		&& (mn_ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI)
+		&& ((anShowCmd == NULL) || (*anShowCmd != SW_HIDE))
+		)
+	{
+		*anShowCmd = SW_HIDE;
+		bNewConsoleArg = true;
+		m_Args.NewConsole = crb_On;
+		strForceNewConsole.Attach(lstrmerge(asParam, (asParam && *asParam) ? L" " : NULL, L"-new_console"));
+		asParam = strForceNewConsole;
 	}
 
 	if (bLongConsoleOutput)
