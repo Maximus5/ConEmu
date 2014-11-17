@@ -1501,6 +1501,21 @@ CESERVER_REQ* CRealServer::cmdPortableStarted(LPVOID pInst, CESERVER_REQ* pIn, U
 	return pOut;
 }
 
+CESERVER_REQ* CRealServer::cmdQueryPalette(LPVOID pInst, CESERVER_REQ* pIn, UINT nDataSize)
+{
+	COLORREF* pcrColors = mp_RCon->VCon()->GetColors();
+	CESERVER_REQ* pOut = NULL;
+	if (pcrColors)
+	{
+		if ((pOut = ExecuteNewCmd(pIn->hdr.nCmd, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_PALETTE))) != NULL)
+		{
+			_ASSERTE(sizeof(pOut->Palette.crPalette) == sizeof(COLORREF)*16);
+			memmove(pOut->Palette.crPalette, pcrColors, sizeof(pOut->Palette.crPalette));
+		}
+	}
+	return pOut;
+}
+
 // Эта функция пайп не закрывает!
 //void CRealServer::ServerThreadCommand(HANDLE hPipe)
 BOOL CRealServer::ServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &ppReply, DWORD &pcbReplySize, DWORD &pcbMaxReplySize, LPARAM lParam)
@@ -1621,6 +1636,9 @@ BOOL CRealServer::ServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &
 	case CECMD_STORECURDIR:
 		pRSrv->mp_RCon->StoreCurWorkDir(&pIn->CurDir);
 		pOut = (CESERVER_REQ*)INVALID_HANDLE_VALUE;
+		break;
+	case CECMD_QUERYPALETTE:
+		pOut = pRSrv->cmdQueryPalette(pInst, pIn, nDataSize);
 		break;
 	//else if (pIn->hdr.nCmd == CECMD_ASSERT)
 	//	pOut = cmdAssert(pInst, pIn, nDataSize);

@@ -426,6 +426,7 @@ const CECMD
 	CECMD_GETALLPANELS   = 80, // Result ==> CESERVER_REQ_GETALLPANELS
 	CECMD_SETTOPLEFT     = 81, // CESERVER_REQ_CONINFO
 	CECMD_PROMPTSTARTED  = 82, // CESERVER_PROMPTSTARTED (ConEmuHk -> Server)
+	CECMD_QUERYPALETTE   = 83, // CESERVER_PALETTE
 /** Команды FAR плагина **/
 	CMD_FIRST_FAR_CMD    = 200,
 	CMD_DRAGFROM         = 200,
@@ -2008,6 +2009,11 @@ struct CESERVER_PROMPTSTARTED
 	wchar_t szExeName[1]; // because of variable length
 };
 
+struct CESERVER_PALETTE
+{
+	COLORREF crPalette[16];
+};
+
 struct CESERVER_REQ
 {
 	CESERVER_REQ_HDR hdr;
@@ -2065,6 +2071,7 @@ struct CESERVER_REQ
 		CESERVER_REQ_STORECURDIR CurDir;
 		CESERVER_REQ_GETALLPANELS Panels;
 		CESERVER_PROMPTSTARTED PromptStarted;
+		CESERVER_PALETTE Palette;
 	};
 
 	DWORD DataSize() { return (this && (hdr.cbSize >= sizeof(hdr))) ? (hdr.cbSize - sizeof(hdr)) : 0; };

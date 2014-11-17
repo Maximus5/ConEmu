@@ -86,5 +86,6 @@ protected:
 	CESERVER_REQ* cmdExportEnvVarAll(LPVOID pInst, CESERVER_REQ* pIn, UINT nDataSize);
 	CESERVER_REQ* cmdStartXTerm(LPVOID pInst, CESERVER_REQ* pIn, UINT nDataSize);
 	CESERVER_REQ* cmdPortableStarted(LPVOID pInst, CESERVER_REQ* pIn, UINT nDataSize);
+	CESERVER_REQ* cmdQueryPalette(LPVOID pInst, CESERVER_REQ* pIn, UINT nDataSize);
 	//CESERVER_REQ* cmdAssert(LPVOID pInst, CESERVER_REQ* pIn, UINT nDataSize);
 };
