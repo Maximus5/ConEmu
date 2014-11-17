@@ -82,6 +82,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 HMODULE ghOurModule = NULL; // ConEmuDw.dll
 HWND    ghConWnd = NULL; // VirtualCon. инициализируется в CheckBuffers()
+HWND    ghRealConWnd = NULL;
 
 HMODULE ghPluginModule = NULL;
 HookItemPreCallback_t PreWriteCallBack = NULL;
@@ -91,13 +92,14 @@ HookItemPreCallback_t PreWriteCallBack = NULL;
 /* extern для MAssert, Здесь НЕ используется */
 
 #ifdef USE_COMMIT_EVENT
-HWND    ghRealConWnd = NULL;
 bool    gbBatchStarted = false;
 HANDLE  ghBatchEvent = NULL;
 DWORD   gnBatchRegPID = 0;
 #endif
 
+#ifdef USE_COMMIT_EVENT
 CESERVER_CONSOLE_MAPPING_HDR SrvMapping = {};
+#endif
 
 AnnotationHeader* gpTrueColor = NULL;
 HANDLE ghTrueColor = NULL;
@@ -361,12 +363,11 @@ BOOL CheckBuffers(bool abWrite /*= false*/)
 		_ASSERTE((hApiCon == hRealCon && hApiCon != hCon) || hRootWnd == NULL);
 		#endif
 
+		ghRealConWnd = GetConEmuHWND(2);
+
 		ghConWnd = hCon;
 		CloseBuffers();
 
-		#ifdef USE_COMMIT_EVENT
-		ghRealConWnd = GetConEmuHWND(2);
-		#endif
 		
 		//TODO: Пока работаем "по-старому", через буфер TrueColor. Переделать, он не оптимален
 		RequestLocalServerParm prm = {sizeof(prm), slsf_RequestTrueColor|slsf_GetCursorEvent|slsf_GetFarCommitEvent};
