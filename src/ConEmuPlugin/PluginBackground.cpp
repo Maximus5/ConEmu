@@ -890,6 +890,7 @@ BOOL CPluginBackground::LoadThSet(BOOL abFromMainThread)
 				m_Default.MainFont = m_ThSet.MainFont;
 			}
 
+			//TODO: AppDistinct & fade палитры
 			if (memcmp(m_Default.crPalette, m_ThSet.crPalette, sizeof(m_ThSet.crPalette)))
 			{
 				mn_ReqActions |= ra_UpdateBackground;

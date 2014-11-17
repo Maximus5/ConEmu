@@ -214,6 +214,7 @@ enum CEPANELINFOFLAGS
 //};
 BOOL LoadThSet(DWORD anGuiPid=-1);
 extern PanelViewSetMapping gThSet;
+extern CESERVER_PALETTE gThPal;
 extern BOOL gbCancelAll;
 
 

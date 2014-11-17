@@ -477,7 +477,7 @@ LRESULT CALLBACK CeFullPanelInfo::DisplayWndProc(HWND hwnd, UINT uMsg, WPARAM wP
 				{
 					gbFadeColors = (lParam == 2);
 					//gcrCurColors = gbFadeColors ? gcrFadeColors : gcrActiveColors;
-					gcrCurColors = gbFadeColors ? gThSet.crFadePalette : gThSet.crPalette;
+					gcrCurColors = gbFadeColors ? gThPal.crFadePalette : gThPal.crPalette;
 					//Inva lidateRect(hwnd, NULL, FALSE); -- не требуется
 				}
 				return 0;
@@ -1838,7 +1838,7 @@ int CeFullPanelInfo::RegisterPanelView()
 	{
 		LoadThSet();
 		// Настройки отображения уже должны быть загружены!
-		_ASSERTE(gThSet.crPalette[0]!=0 || gThSet.crPalette[1]!=0);
+		_ASSERTE(gThPal.crPalette[0]!=0 || gThPal.crPalette[1]!=0);
 		//memset(&gThSet, 0, sizeof(gThSet));
 		//if (!pvi.ThSet.cbSize || !pvi.ThSet.Thumbs.nImgSize || !pvi.ThSet.Tiles.nImgSize) {
 		//	gnCreateViewError = CEInvalidSettingValues;
@@ -1855,7 +1855,7 @@ int CeFullPanelInfo::RegisterPanelView()
 		// Мы активны? По идее должны, при активации плагина-то
 		gbFadeColors = (pvi.bFadeColors!=FALSE);
 		//gcrCurColors = gbFadeColors ? gcrFadeColors : gcrActiveColors;
-		gcrCurColors = gbFadeColors ? gThSet.crFadePalette : gThSet.crPalette;
+		gcrCurColors = gbFadeColors ? gThPal.crFadePalette : gThPal.crPalette;
 		TODO("Вроде WINDOW_LONG_FADE не используется нигде?");
 		SetWindowLong(this->hView, WINDOW_LONG_FADE, gbFadeColors ? 2 : 1);
 		// Подготовить детектор диалогов

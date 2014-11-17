@@ -43,6 +43,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma warning( disable : 4995 )
 #include "../common/pluginW1761.hpp" // Отличается от 995 наличием SynchoApi
 #pragma warning( default : 4995 )
+#include "../common/ConEmuCheck.h"
 #include "../common/RgnDetect.h"
 #include "../common/TerminalMode.h"
 #include "../common/FarVersion.h"
@@ -88,13 +89,14 @@ int ShowLastError();
 CRgnDetect *gpRgnDetect = NULL;
 CImgCache  *gpImgCache = NULL;
 CEFAR_INFO_MAPPING gFarInfo = {0};
-COLORREF /*gcrActiveColors[16], gcrFadeColors[16],*/ *gcrCurColors = gThSet.crPalette;
+CESERVER_PALETTE gThPal = {};
+COLORREF /*gcrActiveColors[16], gcrFadeColors[16],*/ *gcrCurColors = gThPal.crPalette;
 bool gbFadeColors = false;
 //bool gbLastCheckWindow = false;
 bool gbFarPanelsReady = false;
 DWORD gnRgnDetectFlags = 0;
 void CheckVarsInitialized();
-SECURITY_ATTRIBUTES* gpLocalSecurity = NULL;
+//SECURITY_ATTRIBUTES* gpLocalSecurity = NULL;
 // *** lng resources begin ***
 wchar_t gsFolder[64], gsHardLink[64], gsSymLink[64], gsJunction[64], gsTitleThumbs[64], gsTitleTiles[64];
 // *** lng resources end ***
@@ -351,7 +353,7 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 		case DLL_PROCESS_ATTACH:
 		{
 			ghPluginModule = (HMODULE)hModule;
-			//ghWorkingModule = (u64)hModule;
+			ghWorkingModule = (u64)hModule;
 			gnSelfPID = GetCurrentProcessId();
 			gnMainThreadId = gnMainThreadIdInitial = GetMainThreadId();
 			HeapInitialize();
@@ -2366,7 +2368,30 @@ BOOL LoadThSet(DWORD anGuiPid/* =-1 */)
 	{
 		ThSetMap.GetTo(&gThSet);
 		ThSetMap.CloseMap();
-		lbRc = TRUE;
+
+		// Palette may ba AppDistict
+		HWND hRealConWnd = gfGetFarHWND2 ? gfGetFarHWND2(3) : NULL;
+		if (hRealConWnd)
+		{
+			CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_QUERYPALETTE, sizeof(CESERVER_REQ_HDR));
+			if (pIn)
+			{
+				CESERVER_REQ* pOut = ExecuteGuiCmd(hRealConWnd, pIn, hRealConWnd);
+				if (pOut->DataSize() >= sizeof(CESERVER_PALETTE))
+				{
+					memmove(gThPal.crPalette, pOut->Palette.crPalette, sizeof(gThPal.crPalette));
+					memmove(gThPal.crFadePalette, pOut->Palette.crFadePalette, sizeof(gThPal.crFadePalette));
+					lbRc = TRUE;
+				}
+				ExecuteFreeResult(pOut);
+				ExecuteFreeResult(pIn);
+			}
+		}
+
+		if (!lbRc)
+		{
+			MessageBox(NULL, L"Failed to get ConEmu palette!", L"ConEmuTh", MB_ICONSTOP|MB_SETFOREGROUND|MB_SYSTEMMODAL);
+		}
 	}
 
 	return lbRc;

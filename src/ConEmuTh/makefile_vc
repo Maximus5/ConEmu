@@ -26,6 +26,7 @@ LINK_OBJS = \
 $(INTDIR)\CmdArg.obj \
 $(INTDIR)\CmdLine.obj \
 $(INTDIR)\Common.obj \
+$(INTDIR)\ConEmuCheck.obj \
 $(INTDIR)\ConEmuTh.obj \
 $(INTDIR)\ConEmuTh1900.obj \
 $(INTDIR)\ConEmuTh2800.obj \
@@ -219,6 +220,8 @@ $(INTDIR)\CmdArg.obj: ../common/CmdArg.cpp ../common/CmdArg.h
 $(INTDIR)\CmdLine.obj: ../common/CmdLine.cpp ../common/CmdLine.h
 
 $(INTDIR)\common.obj: ../common/common.cpp
+
+$(INTDIR)\ConEmuCheck.obj: ../common/ConEmuCheck.cpp ../common/ConEmuCheck.h
 
 $(INTDIR)\ConEmuTh.obj: ConEmuTh.cpp
 
