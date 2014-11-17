@@ -1485,8 +1485,10 @@ void CSetDlgButtons::OnBtn_ApplyPos(HWND hDlg, WORD CB, BYTE uCheck)
 
 	if (!gpConEmu->mp_Inside)
 	{
+		DWORD Mode = gpSet->_WindowMode;
+
 		if (gpSet->isQuakeStyle
-			|| (IsChecked(rNormal, CB, uCheck) == BST_CHECKED))
+			|| (Mode == rNormal))
 		{
 			int newX, newY;
 			wchar_t* psSize;
@@ -1537,14 +1539,14 @@ void CSetDlgButtons::OnBtn_ApplyPos(HWND hDlg, WORD CB, BYTE uCheck)
 				SetWindowPos(ghWnd, NULL, newX, newY, 0,0, SWP_NOSIZE|SWP_NOZORDER);
 			}
 		}
-		else if (IsChecked(rMaximized, CB, uCheck) == BST_CHECKED)
+		else if (Mode == rMaximized)
 		{
 			SetFocus(GetDlgItem(hDlg, rMaximized));
 
 			if (!gpConEmu->isZoomed())
 				gpConEmu->SetWindowMode(wmMaximized);
 		}
-		else if (IsChecked(rFullScreen, CB, uCheck) == BST_CHECKED)
+		else if (Mode == rFullScreen)
 		{
 			SetFocus(GetDlgItem(hDlg, rFullScreen));
 
