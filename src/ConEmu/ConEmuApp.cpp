@@ -3423,6 +3423,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	bool UpdateSrcSetPrm = false; TCHAR* UpdateSrcSet = NULL;
 	bool AnsiLogPathPrm = false; TCHAR* AnsiLogPath = NULL;
 	bool QuakePrm = false; BYTE QuakeMode = 0;
+	bool SizePosPrm = false; TCHAR *sWndX = NULL, *sWndY = NULL, *sWndW = NULL, *sWndH = NULL;
 	bool SetUpDefaultTerminal = false;
 	bool ExitAfterActionPrm = false;
 #if 0
@@ -3995,6 +3996,29 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				{
 					gpSetCls->isDontCascade = true;
 				}
+				else if (!klstricmp(curCommand, _T("/WndX")) || !klstricmp(curCommand, _T("/WndY"))
+					|| !klstricmp(curCommand, _T("/WndW")) || !klstricmp(curCommand, _T("/WndWidth"))
+					|| !klstricmp(curCommand, _T("/WndH")) || !klstricmp(curCommand, _T("/WndHeight")))
+				{
+					TCHAR ch = curCommand[4], *psz = NULL;
+					CharUpperBuff(&ch, 1);
+					if (!GetCfgParm(i, curCommand, SizePosPrm, psz, 32))
+					{
+						return 100;
+					}
+
+					// Direct X/Y implies /nocascade
+					if (ch == _T('X') || ch == _T('Y'))
+						gpSetCls->isDontCascade = true;
+
+					switch (ch)
+					{
+					case _T('X'): sWndX = psz; break;
+					case _T('Y'): sWndY = psz; break;
+					case _T('W'): sWndW = psz; break;
+					case _T('H'): sWndH = psz; break;
+					}
+				}
 				else if ((!klstricmp(curCommand, _T("/Buffer")) || !klstricmp(curCommand, _T("/BufferHeight")))
 					&& i + 1 < params)
 				{
@@ -4216,6 +4240,21 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		SafeFree(gpSet->pszAnsiLog);
 		gpSet->pszAnsiLog = AnsiLogPath;
 		AnsiLogPath = NULL;
+	}
+
+	// Forced window size or pos
+	// Call this AFTER SettingsLoaded because we (may be)
+	// don't want to change ‘xml-stored’ values
+	if (SizePosPrm)
+	{
+		if (sWndX)
+			gpConEmu->SetWindowPosSizeParam(L'X', sWndX);
+		if (sWndY)
+			gpConEmu->SetWindowPosSizeParam(L'Y', sWndY);
+		if (sWndW)
+			gpConEmu->SetWindowPosSizeParam(L'W', sWndW);
+		if (sWndH)
+			gpConEmu->SetWindowPosSizeParam(L'H', sWndH);
 	}
 
 	DEBUGSTRSTARTUPLOG(L"SettingsLoaded");

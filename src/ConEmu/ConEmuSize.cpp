@@ -1128,6 +1128,32 @@ int CConEmuSize::GetInitialDpi(DpiValue* pDpi)
 	return dpiY;
 }
 
+void CConEmuSize::SetWindowPosSizeParam(wchar_t acType, LPCWSTR asValue)
+{
+	wchar_t* pch;
+	switch (acType)
+	{
+	case L'X':
+		wndX = wcstol(asValue, &pch, 10);
+		if (gpSet->isUseCurrentSizePos)
+			gpSet->_wndX = wndX;
+		break;
+	case L'Y':
+		wndY = wcstol(asValue, &pch, 10);
+		if (gpSet->isUseCurrentSizePos)
+			gpSet->_wndY = wndY;
+		break;
+	case L'W':
+		if (WndWidth.SetFromString(true, asValue) && gpSet->isUseCurrentSizePos)
+			gpSet->wndWidth.Raw = WndWidth.Raw;
+		break;
+	case L'H':
+		if (WndHeight.SetFromString(false, asValue) && gpSet->isUseCurrentSizePos)
+			gpSet->wndHeight.Raw = WndHeight.Raw;
+		break;
+	}
+}
+
 // Вызывается при старте программы, для вычисления mrc_Ideal - размера окна по умолчанию
 RECT CConEmuSize::GetDefaultRect()
 {

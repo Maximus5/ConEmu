@@ -158,6 +158,7 @@ public:
 	ConEmuWindowMode GetChangeFromWindowMode();
 	bool IsWindowModeChanging();
 	bool SetWindowMode(ConEmuWindowMode inMode, bool abForce = false, bool abFirstShow = false);
+	void SetWindowPosSizeParam(wchar_t acType, LPCWSTR asValue);
 	ConEmuWindowCommand GetTileMode(bool Estimate, MONITORINFO* pmi = NULL);
 	ConEmuWindowCommand EvalTileMode(const RECT& rcWnd, MONITORINFO* pmi = NULL);
 	bool IsSizeFree(ConEmuWindowMode CheckMode = wmFullScreen);
