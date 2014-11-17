@@ -12,6 +12,16 @@ Votes and awards (vote for ConEmu, if you please)
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+2014.11.16
+[*] Issue 1812: Vertical scroll bar has disappeared in latest Win10 build.
+[*] Use modified <SolarMe> palette by default (for new configs).
+[*] Show error box if Server and GUI has wrong protocol versions. Log errors also.
+[*] LogFiles: Add root shell's start/exit logging.
+[*] LogFiles: Log ‘CMD's AutoRuns’ strings from registry.
+[*] LogFiles: Log Prompt/HookServer starts.
+[*] Show actual 4-bit colors in the ExtendedConsole color selection dialog.
+
+
 2014.11.15
 [*] Show asterisk insted of minus in the ‘Visible region lock’ StatusBar column.
 [*] AutoUpdate: Postpone was not working.
