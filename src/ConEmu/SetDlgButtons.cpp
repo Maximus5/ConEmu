@@ -157,9 +157,12 @@ bool CSetDlgButtons::ProcessButtonClick(HWND hDlg, WORD CB, BYTE uCheck)
 	switch (CB)
 	{
 		case IDOK:
-		case IDCANCEL:
 		case IDCLOSE:
-			_ASSERTE(FALSE && "IDOK/IDCANCEL/IDCLOSE must be processed in wndOpProc");
+			_ASSERTE(FALSE && "IDOK/IDCLOSE must be processed in wndOpProc");
+			break;
+		case IDCANCEL:
+			// That may be triggered in Tasks' commands field (multiline edit)
+			PostMessage(ghOpWnd, WM_CLOSE, 0, 0);
 			break;
 		case rNoneAA:
 		case rStandardAA:
