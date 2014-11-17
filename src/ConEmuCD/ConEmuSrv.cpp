@@ -184,7 +184,7 @@ LGSResult LoadGuiSettingsPtr(ConEmuGuiMapping& GuiMapping, const ConEmuGuiMappin
 		lbCopied = true;
 	}
 
-	if (pInfo->cbSize >= (sizeof(pInfo->nProtocolVersion) + ((LPBYTE)&pInfo->nProtocolVersion) - (LPBYTE)pInfo))
+	if (pInfo->cbSize >= (size_t)(sizeof(pInfo->nProtocolVersion) + ((LPBYTE)&pInfo->nProtocolVersion) - (LPBYTE)pInfo))
 	{
 		if (pInfo->nProtocolVersion != CESERVER_REQ_VER)
 		{
