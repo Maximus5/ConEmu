@@ -385,7 +385,7 @@ class CSettings
 		// IDD_SETTINGS
 		LRESULT OnInitDialog();
 		// OnInitDialogPage_t: IDD_SPG_MAIN, и т.д.
-		LRESULT OnInitDialog_Main(HWND hWnd2);
+		LRESULT OnInitDialog_Main(HWND hWnd2, bool abInitial);
 		LRESULT OnInitDialog_Background(HWND hWnd2, bool abInitial);
 		LRESULT OnInitDialog_WndPosSize(HWND hWnd2, bool abInitial);
 		LRESULT OnInitDialog_Show(HWND hWnd2, bool abInitial);

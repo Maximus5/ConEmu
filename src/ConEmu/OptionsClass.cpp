@@ -1682,47 +1682,53 @@ LRESULT CSettings::OnInitDialog()
 	return 0;
 }
 
-LRESULT CSettings::OnInitDialog_Main(HWND hWnd2)
+LRESULT CSettings::OnInitDialog_Main(HWND hWnd2, bool abInitial)
 {
 	SetDlgItemText(hWnd2, tFontFace, LogFont.lfFaceName);
 	SetDlgItemText(hWnd2, tFontFace2, LogFont2.lfFaceName);
 
-	// Добавить шрифты рисованные ConEmu
-	//for (std::vector<RegFont>::iterator iter = m_RegFonts.begin(); iter != m_RegFonts.end(); ++iter)
-	for (INT_PTR j = 0; j < m_RegFonts.size(); ++j)
+	if (abInitial)
 	{
-		const RegFont* iter = &(m_RegFonts[j]);
-
-		if (iter->pCustom)
+		// Добавить шрифты рисованные ConEmu
+		for (INT_PTR j = 0; j < m_RegFonts.size(); ++j)
 		{
-			BOOL bMono = iter->pCustom->GetFont(0,0,0,0)->IsMonospace();
+			const RegFont* iter = &(m_RegFonts[j]);
 
-			int nIdx = SendDlgItemMessage(hWnd2, tFontFace, CB_ADDSTRING, 0, (LPARAM)iter->szFontName);
-			SendDlgItemMessage(hWnd2, tFontFace, CB_SETITEMDATA, nIdx, bMono ? 1 : 0);
+			if (iter->pCustom)
+			{
+				BOOL bMono = iter->pCustom->GetFont(0,0,0,0)->IsMonospace();
 
-			nIdx = SendDlgItemMessage(hWnd2, tFontFace2, CB_ADDSTRING, 0, (LPARAM)iter->szFontName);
-			SendDlgItemMessage(hWnd2, tFontFace2, CB_SETITEMDATA, nIdx, bMono ? 1 : 0);
+				int nIdx = SendDlgItemMessage(hWnd2, tFontFace, CB_ADDSTRING, 0, (LPARAM)iter->szFontName);
+				SendDlgItemMessage(hWnd2, tFontFace, CB_SETITEMDATA, nIdx, bMono ? 1 : 0);
+
+				nIdx = SendDlgItemMessage(hWnd2, tFontFace2, CB_ADDSTRING, 0, (LPARAM)iter->szFontName);
+				SendDlgItemMessage(hWnd2, tFontFace2, CB_SETITEMDATA, nIdx, bMono ? 1 : 0);
+			}
 		}
+
+		CSetDlgFonts::StartEnumFontsThread();
+
+		CSetDlgLists::FillListBoxItems(GetDlgItem(hWnd2, tFontSizeY), CSetDlgLists::eFSizesY, gpSet->FontSizeY, true);
+
+		CSetDlgLists::FillListBoxItems(GetDlgItem(hWnd2, tFontSizeX), CSetDlgLists::eFSizesX, gpSet->FontSizeX, true);
+		CSetDlgLists::FillListBoxItems(GetDlgItem(hWnd2, tFontSizeX2), CSetDlgLists::eFSizesX, gpSet->FontSizeX2, true);
+		CSetDlgLists::FillListBoxItems(GetDlgItem(hWnd2, tFontSizeX3), CSetDlgLists::eFSizesX, gpSet->FontSizeX3, true);
+
+		CSetDlgLists::FillListBoxItems(GetDlgItem(hWnd2, lbExtendFontBoldIdx), CSetDlgLists::eColorIdx, gpSet->AppStd.nFontBoldColor, false);
+		CSetDlgLists::FillListBoxItems(GetDlgItem(hWnd2, lbExtendFontItalicIdx), CSetDlgLists::eColorIdx, gpSet->AppStd.nFontItalicColor, false);
+		CSetDlgLists::FillListBoxItems(GetDlgItem(hWnd2, lbExtendFontNormalIdx), CSetDlgLists::eColorIdx, gpSet->AppStd.nFontNormalColor, false);
+
+		CSetDlgLists::FillListBoxItems(GetDlgItem(hWnd2, tFontCharset), CSetDlgLists::eCharSets, LogFont.lfCharSet, false);
 	}
-
-	CSetDlgFonts::StartEnumFontsThread();
-
-	CSetDlgLists::FillListBoxItems(GetDlgItem(hWnd2, tFontSizeY), CSetDlgLists::eFSizesY, gpSet->FontSizeY, true);
-
-	CSetDlgLists::FillListBoxItems(GetDlgItem(hWnd2, tFontSizeX), CSetDlgLists::eFSizesX, gpSet->FontSizeX, true);
-	CSetDlgLists::FillListBoxItems(GetDlgItem(hWnd2, tFontSizeX2), CSetDlgLists::eFSizesX, gpSet->FontSizeX2, true);
-	CSetDlgLists::FillListBoxItems(GetDlgItem(hWnd2, tFontSizeX3), CSetDlgLists::eFSizesX, gpSet->FontSizeX3, true);
-
-	CSetDlgLists::FillListBoxItems(GetDlgItem(hWnd2, lbExtendFontBoldIdx), CSetDlgLists::eColorIdx, gpSet->AppStd.nFontBoldColor, false);
-	CSetDlgLists::FillListBoxItems(GetDlgItem(hWnd2, lbExtendFontItalicIdx), CSetDlgLists::eColorIdx, gpSet->AppStd.nFontItalicColor, false);
-	CSetDlgLists::FillListBoxItems(GetDlgItem(hWnd2, lbExtendFontNormalIdx), CSetDlgLists::eColorIdx, gpSet->AppStd.nFontNormalColor, false);
+	else
+	{
+		//TODO: Обновить значения в списках?
+	}
 
 	checkDlgButton(hWnd2, cbExtendFonts, gpSet->AppStd.isExtendFonts);
 	CSetDlgLists::EnableDlgItems(hWnd2, CSetDlgLists::eExtendFonts, gpSet->isShowBgImage);
 
 	checkDlgButton(hWnd2, cbFontAuto, gpSet->isFontAutoSize);
-
-	CSetDlgLists::FillListBoxItems(GetDlgItem(hWnd2, tFontCharset), CSetDlgLists::eCharSets, LogFont.lfCharSet, false);
 
 	MCHKHEAP
 
@@ -6729,8 +6735,7 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 		switch (p->PageID)
 		{
 		case IDD_SPG_MAIN:
-			if (bInitial)
-				gpSetCls->OnInitDialog_Main(hWnd2);
+			gpSetCls->OnInitDialog_Main(hWnd2, bInitial);
 			break;
 		case IDD_SPG_WNDSIZEPOS:
 			{
