@@ -1512,14 +1512,24 @@ void CSetDlgButtons::OnBtn_ApplyPos(HWND hDlg, WORD CB, BYTE uCheck)
 			newY = (int)GetDlgItemInt(hDlg, tWndY, &lbOk, TRUE);
 			if (!lbOk) newY = gpConEmu->wndY;
 
+			// Чтобы GetDefaultRect сработал правильно - сразу обновим значения
+			if (!gpSet->wndCascade)
+			{
+				gpConEmu->wndX = newX;
+				if (!gpSet->isQuakeStyle)
+					gpConEmu->wndY = newY;
+			}
+			gpSet->_wndX = newX;
+			if (!gpSet->isQuakeStyle)
+				gpSet->_wndY = newY;
+			gpConEmu->WndWidth.Set(true, newW.Style, newW.Value);
+			gpConEmu->WndHeight.Set(false, newH.Style, newH.Value);
+			gpSet->wndWidth.Set(true, newW.Style, newW.Value);
+			gpSet->wndHeight.Set(true, newH.Style, newH.Value);
+
 			if (gpSet->isQuakeStyle)
 			{
 				SetFocus(GetDlgItem(hDlg, tWndWidth));
-				// Чтобы GetDefaultRect сработал правильно - сразу обновим значения
-				if (!gpSet->wndCascade)
-					gpConEmu->wndX = newX;
-				gpConEmu->WndWidth.Set(true, newW.Style, newW.Value);
-				gpConEmu->WndHeight.Set(false, newH.Style, newH.Value);
 				RECT rcQuake = gpConEmu->GetDefaultRect();
 				// And size/move!
 				SetWindowPos(ghWnd, NULL, rcQuake.left, rcQuake.top, rcQuake.right-rcQuake.left, rcQuake.bottom-rcQuake.top, SWP_NOZORDER);
