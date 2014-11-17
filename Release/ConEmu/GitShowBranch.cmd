@@ -11,6 +11,13 @@ if NOT exist %ConEmuGitPath% (
 )
 
 if /I "%~1" == "/i" (
+  if exist "%~dp0ConEmuC.exe" (
+    call "%~dp0ConEmuC.exe" /IsConEmu
+    if errorlevel 2 goto no_conemu
+  ) else if exist "%~dp0ConEmuC64.exe" (
+    call "%~dp0ConEmuC64.exe" /IsConEmu
+    if errorlevel 2 goto no_conemu
+  )
   call %ConEmuGitPath% --version
   if errorlevel 1 (
     call cecho "GIT not found, change your ConEmuGitPath environment variable"
@@ -100,7 +107,22 @@ goto :EOF
 for /F "delims=." %%l in ("%gitbranch%") do set gitbranch=%%l
 goto :EOF
 
+:no_conemu
+rem GitShowBranch works in ConEmu only
+rem Also gitbranch can't be modified
+rem because export will not be working
+exit /b 0
+goto :EOF
+
 :run
+
+if exist "%~dp0ConEmuC.exe" (
+  call "%~dp0ConEmuC.exe" /IsConEmu
+  if errorlevel 2 goto no_conemu
+) else if exist "%~dp0ConEmuC64.exe" (
+  call "%~dp0ConEmuC64.exe" /IsConEmu
+  if errorlevel 2 goto no_conemu
+)
 
 
 rem let gitlogpath be folder to store git output
