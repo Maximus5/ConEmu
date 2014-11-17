@@ -1503,7 +1503,8 @@ CESERVER_REQ* CRealServer::cmdPortableStarted(LPVOID pInst, CESERVER_REQ* pIn, U
 
 CESERVER_REQ* CRealServer::cmdQueryPalette(LPVOID pInst, CESERVER_REQ* pIn, UINT nDataSize)
 {
-	COLORREF* pcrColors = mp_RCon->VCon()->GetColors();
+	COLORREF* pcrColors = mp_RCon->VCon()->GetColors(false);
+	COLORREF* pcrFadeColors = mp_RCon->VCon()->GetColors(true);
 	CESERVER_REQ* pOut = NULL;
 	if (pcrColors)
 	{
@@ -1511,6 +1512,9 @@ CESERVER_REQ* CRealServer::cmdQueryPalette(LPVOID pInst, CESERVER_REQ* pIn, UINT
 		{
 			_ASSERTE(sizeof(pOut->Palette.crPalette) == sizeof(COLORREF)*16);
 			memmove(pOut->Palette.crPalette, pcrColors, sizeof(pOut->Palette.crPalette));
+
+			_ASSERTE(sizeof(pOut->Palette.crFadePalette) == sizeof(COLORREF)*16);
+			memmove(pOut->Palette.crFadePalette, pcrFadeColors, sizeof(pOut->Palette.crFadePalette));
 		}
 	}
 	return pOut;

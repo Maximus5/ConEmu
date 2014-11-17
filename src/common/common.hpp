@@ -30,7 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _COMMON_HEADER_HPP_
 
 // Interface version
-#define CESERVER_REQ_VER    144
+#define CESERVER_REQ_VER    145
 
 // Max tabs/panes count
 #define MAX_CONSOLE_COUNT 30
@@ -729,7 +729,8 @@ struct PanelViewSetMapping
 	bool  bRestoreOnStartup;
 
 
-	// Цвета теперь живут здесь!
+	// AppDistinct палитру нужно получить отдельно
+	// Здесь хранятся только "общие" цвета
 	COLORREF crPalette[16], crFadePalette[16];
 
 
@@ -2012,6 +2013,7 @@ struct CESERVER_PROMPTSTARTED
 struct CESERVER_PALETTE
 {
 	COLORREF crPalette[16];
+	COLORREF crFadePalette[16];
 };
 
 struct CESERVER_REQ
