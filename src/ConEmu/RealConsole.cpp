@@ -6693,19 +6693,22 @@ void CRealConsole::SetFarPluginPID(DWORD nFarPluginPID)
 {
 	bool bNeedUpdate = (mn_FarPID_PluginDetected != nFarPluginPID);
 
-	#ifdef _DEBUG
-	wchar_t szDbg[100];
-	_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"SetFarPluginPID: New=%u, Old=%u\n", nFarPluginPID, mn_FarPID_PluginDetected);
-	#endif
+	wchar_t szLog[100] = L"";
+	_wsprintf(szLog, SKIPCOUNT(szLog) L"SetFarPluginPID: New=%u, Old=%u", nFarPluginPID, mn_FarPID_PluginDetected);
 
 	mn_FarPID_PluginDetected = nFarPluginPID;
 
 	// Для фара могут быть настроены другие параметры фона и прочего...
 	if (bNeedUpdate)
 	{
-		DEBUGSTRFARPID(szDbg);
+		if (mp_Log)
+			LogString(szLog, true);
+		else
+			DEBUGSTRFARPID(szLog);
+
 		if (tabs.RefreshFarPID(nFarPluginPID))
 			mp_ConEmu->mp_TabBar->Update();
+
 		mp_VCon->Update(true);
 	}
 }
