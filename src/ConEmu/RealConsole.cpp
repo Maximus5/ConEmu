@@ -13885,12 +13885,19 @@ DWORD CRealConsole::PostMacroThread(LPVOID lpParameter)
 		if (pipe.Init(_T("CRealConsole::PostMacroThread"), TRUE))
 		{
 			pArg->pRCon->mp_ConEmu->DebugStep(_T("PostMacroThread: Waiting for result (10 sec)"));
-			pipe.Execute(pArg->nCmdID, pArg->Data, pArg->nCmdSize);
+			pArg->pRCon->LogString("... executing PipeCommand (thread)", true);
+			BOOL lbSent = pipe.Execute(pArg->nCmdID, pArg->Data, pArg->nCmdSize);
+			pArg->pRCon->LogString(lbSent ? L"... PipeCommand was sent (thread)" : L"... PipeCommand sending was failed (thread)", true);
 			pArg->pRCon->mp_ConEmu->DebugStep(NULL);
+		}
+		else
+		{
+			pArg->pRCon->LogString("Far pipe was not opened, Macro was skipped (thread)", true);
 		}
 	}
 	else
 	{
+		pArg->pRCon->LogString("... reentering PostMacro (thread)", true);
 		pArg->pRCon->PostMacro(pArg->szMacro, FALSE/*теперь - точно Sync*/);
 	}
 	free(pArg);
@@ -14010,7 +14017,10 @@ bool CRealConsole::IsFarLua()
 void CRealConsole::PostMacro(LPCWSTR asMacro, BOOL abAsync /*= FALSE*/)
 {
 	if (!this || !asMacro || !*asMacro)
+	{
+		mp_ConEmu->LogString(L"Null Far macro was skipped", true);
 		return;
+	}
 
 	if (*asMacro == GUI_MACRO_PREFIX/*L'#'*/)
 	{
@@ -14018,7 +14028,13 @@ void CRealConsole::PostMacro(LPCWSTR asMacro, BOOL abAsync /*= FALSE*/)
 		if (asMacro[1])
 		{
 			LPWSTR pszGui = lstrdup(asMacro+1);
+			if (m_UseLogs)
+			{
+				CEStr lsLog(lstrmerge(L"CRealConsole::PostMacro: ", asMacro));
+				LogString(lsLog, true);
+			}
 			LPWSTR pszRc = ConEmuMacro::ExecuteMacro(pszGui, this);
+			LogString(pszRc ? pszRc : L"<NULL>", true);
 			TODO("Показать результат в статусной строке?");
 			SafeFree(pszGui);
 			SafeFree(pszRc);
@@ -14031,6 +14047,7 @@ void CRealConsole::PostMacro(LPCWSTR asMacro, BOOL abAsync /*= FALSE*/)
 	if (!nPID)
 	{
 		_ASSERTE(FALSE && "Far with plugin was not found, Macro was skipped");
+		LogString("Far with plugin was not found, Macro was skipped", true);
 		return;
 	}
 
@@ -14038,6 +14055,7 @@ void CRealConsole::PostMacro(LPCWSTR asMacro, BOOL abAsync /*= FALSE*/)
 	if (!pInfo)
 	{
 		_ASSERTE(pInfo!=NULL);
+		LogString("Far mapping info was not found, Macro was skipped", true);
 		return;
 	}
 
@@ -14057,6 +14075,13 @@ void CRealConsole::PostMacro(LPCWSTR asMacro, BOOL abAsync /*= FALSE*/)
 		}
 	}
 
+	if (m_UseLogs)
+	{
+		wchar_t szPID[32]; _wsprintf(szPID, SKIPCOUNT(szPID) L"(FarPID=%u): ", nPID);
+		CEStr lsLog(lstrmerge(L"CRealConsole::PostMacro", szPID, asMacro));
+		LogString(lsLog, true);
+	}
+
 	if (abAsync)
 	{
 		if (mb_InCloseConsole)
@@ -14074,6 +14099,7 @@ void CRealConsole::PostMacro(LPCWSTR asMacro, BOOL abAsync /*= FALSE*/)
 			{
 				// Должен быть NULL, если нет - значит завис предыдущий макрос
 				_ASSERTE(mh_PostMacroThread==NULL && "Terminating mh_PostMacroThread");
+				LogString(L"Terminating mh_PostMacroThread (hung)", true);
 				TerminateThread(mh_PostMacroThread, 100);
 				CloseHandle(mh_PostMacroThread);
 			}
@@ -14085,6 +14111,7 @@ void CRealConsole::PostMacro(LPCWSTR asMacro, BOOL abAsync /*= FALSE*/)
 		pArg->pRCon = this;
 		pArg->bPipeCommand = FALSE;
 		_wcscpy_c(pArg->szMacro, nLen+1, asMacro);
+		LogString("... executing macro asynchronously", true);
 		mh_PostMacroThread = CreateThread(NULL, 0, PostMacroThread, pArg, 0, &mn_PostMacroThreadID);
 		if (mh_PostMacroThread == NULL)
 		{
@@ -14096,7 +14123,9 @@ void CRealConsole::PostMacro(LPCWSTR asMacro, BOOL abAsync /*= FALSE*/)
 	}
 
 	if (mb_InCloseConsole)
+	{
 		ShutdownGuiStep(L"PostMacro, calling pipe");
+	}
 
 #ifdef _DEBUG
 	DEBUGSTRMACRO(asMacro); DEBUGSTRMACRO(L"\n");
@@ -14105,14 +14134,21 @@ void CRealConsole::PostMacro(LPCWSTR asMacro, BOOL abAsync /*= FALSE*/)
 
 	if (pipe.Init(_T("CRealConsole::PostMacro"), TRUE))
 	{
-		//DWORD cbWritten=0;
+		LogString("... executing Macro synchronously", true);
 		mp_ConEmu->DebugStep(_T("Macro: Waiting for result (10 sec)"));
-		pipe.Execute(CMD_POSTMACRO, asMacro, (_tcslen(asMacro)+1)*2);
+		BOOL lbSent = pipe.Execute(CMD_POSTMACRO, asMacro, (_tcslen(asMacro)+1)*2);
+		LogString(lbSent ? L"... Macro was sent" : L"... Macro sending was failed", true);
 		mp_ConEmu->DebugStep(NULL);
+	}
+	else
+	{
+		LogString("Far pipe was not opened, Macro was skipped", true);
 	}
 
 	if (mb_InCloseConsole)
+	{
 		ShutdownGuiStep(L"PostMacro, done");
+	}
 }
 
 void CRealConsole::Detach(bool bPosted /*= false*/, bool bSendCloseConsole /*= false*/)
