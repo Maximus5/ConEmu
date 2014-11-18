@@ -481,12 +481,6 @@ LPCWSTR GetWindowModeName(ConEmuWindowMode wm)
 
 void ShutdownGuiStep(LPCWSTR asInfo, int nParm1 /*= 0*/, int nParm2 /*= 0*/, int nParm3 /*= 0*/, int nParm4 /*= 0*/)
 {
-#ifdef _DEBUG
-	static int nDbg = 0;
-	if (!nDbg)
-		nDbg = IsDebuggerPresent() ? 1 : 2;
-	if (nDbg != 1)
-		return;
 	wchar_t szFull[512];
 	msprintf(szFull, countof(szFull), L"%u:ConEmuG:PID=%u:TID=%u: ",
 		GetTickCount(), GetCurrentProcessId(), GetCurrentThreadId());
@@ -495,7 +489,15 @@ void ShutdownGuiStep(LPCWSTR asInfo, int nParm1 /*= 0*/, int nParm2 /*= 0*/, int
 		int nLen = lstrlen(szFull);
 		msprintf(szFull+nLen, countof(szFull)-nLen, asInfo, nParm1, nParm2, nParm3, nParm4);
 	}
-	lstrcat(szFull, L"\n");
+
+	LogString(szFull);
+
+#ifdef _DEBUG
+	static int nDbg = 0;
+	if (!nDbg)
+		nDbg = IsDebuggerPresent() ? 1 : 2;
+	if (nDbg != 1)
+		return;
 	DEBUGSTRSHUTSTEP(szFull);
 #endif
 }
