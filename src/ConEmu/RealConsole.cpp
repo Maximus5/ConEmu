@@ -1960,7 +1960,7 @@ wrap:
 		pRCon->StopSignal();
 	}
 
-	ShutdownGuiStep(L"Leaving MonitorThread\n");
+	ShutdownGuiStep(L"Leaving MonitorThread");
 	return 0;
 }
 
