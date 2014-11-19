@@ -5090,7 +5090,11 @@ void CConEmuMain::UpdateProgress()
 	if ((mn_Progress >= 0) && bNeedAddToTitle)
 	{
 		psTitle = MultiTitle;
-		wsprintf(MultiTitle+_tcslen(MultiTitle), L"{*%i%%} ", mn_Progress);
+		INT_PTR nCurTtlLen = _tcslen(MultiTitle);
+		if ((mn_Progress == 0) && bWasIndeterminate)
+			_wcscpy_c(MultiTitle+nCurTtlLen, countof(MultiTitle)-nCurTtlLen, L"{*%%} ");
+		else
+			_wsprintf(MultiTitle+nCurTtlLen, SKIPLEN(countof(MultiTitle)-nCurTtlLen) L"{*%i%%} ", mn_Progress);
 	}
 
 	if (gpSetCls->IsMulti() && (gpSet->isNumberInCaption || !gpConEmu->mp_TabBar->IsTabsShown()))

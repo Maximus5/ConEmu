@@ -11644,12 +11644,15 @@ void CRealConsole::OnTitleChanged()
 			// thats why we are not storing it in (common) member variable
 			nNewProgress = m_Progress.ConsoleProgress;
 
-			// Если в заголовке нет процентов (они есть только в консоли)
-			// добавить их в наш заголовок
+			// Подготовим строку с процентами
 			wchar_t szPercents[5];
-			_ltow(nConProgr, szPercents, 10);
-			lstrcatW(szPercents, L"%");
+			if ((nConProgr == 0) && (m_Progress.AppProgressState == 3))
+				wcscpy_c(szPercents, L"%%");
+			else
+				_wsprintf(szPercents, SKIPCOUNT(szPercents) L"%i%%", nConProgr);
 
+			// И если в заголовке нет процентов, добавить их в наш заголовок
+			// (проценты есть только в консоли или заданы через Guimacro)
 			if (!wcsstr(TitleCmp, szPercents))
 			{
 				TitleFull[0] = L'{'; TitleFull[1] = 0;
