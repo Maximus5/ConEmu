@@ -5338,24 +5338,35 @@ void CVConGroup::GroupInput(CVirtualConsole* apVCon, GroupInputCmd cmd)
 	if (!VCon.Attach(apVCon))
 		return;
 
-	CVConGroup* pGr = ((CVConGroup*)apVCon->mp_Group);
+	CVConGroup* pGr = ((CVConGroup*)VCon->mp_Group);
 	_ASSERTE(pGr);
 	if (pGr && (cmd == gic_Switch))
 		bGrouped = !pGr->mb_GroupInputFlag;
 	else
 		bGrouped = (cmd == gic_Enable);
 
+	CVConGroup* pActiveGrp = GetRootOfVCon(VCon.VCon());
+
 	VConFlags Set = bGrouped ? vf_Grouped : vf_None;
+
+	// !!!   Do NOT use EnumVCon here because   !!!
+	// !!! EnumVCon uses flags must be set here !!!
 
 	// Update flags
 	for (size_t i = 0; i < countof(gp_VCon); i++)
 	{
 		if (VCon.Attach(gp_VCon[i]))
 		{
+			if (GetRootOfVCon(VCon.VCon()) != pActiveGrp)
+				continue;
+
 			pGr = ((CVConGroup*)apVCon->mp_Group);
 			_ASSERTE(pGr);
-			if (pGr)
+			while (pGr)
+			{
 				pGr->mb_GroupInputFlag = bGrouped;
+				pGr = pGr->mp_Parent;
+			}
 
 			VCon->SetFlags(Set, vf_Grouped, (int)i);
 		}
