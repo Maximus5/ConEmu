@@ -100,26 +100,49 @@ HANDLE MySetClipboardData(UINT uFormat, HANDLE hMem)
 
 bool CopyToClipboard(LPCWSTR asText)
 {
-	if (!asText)
+	INT_PTR cch = asText ? lstrlen(asText) : -1;
+	if (cch < 0)
 		return false;
+
 
 	bool bCopied = false;
 
 	if (MyOpenClipboard(L"CopyToClipboard"))
 	{
-		DWORD cch = lstrlen(asText);
-		HGLOBAL hglbCopy = GlobalAlloc(GMEM_MOVEABLE, (cch + 1) * sizeof(*asText));
-		if (hglbCopy)
-		{
-			wchar_t* lptstrCopy = (wchar_t*)GlobalLock(hglbCopy);
-			if (lptstrCopy)
-			{
-				_wcscpy_c(lptstrCopy, cch+1, asText);
-				GlobalUnlock(hglbCopy);
+		size_t idx = 0;
+		HGLOBAL Hglbs[4] = {};
+		UINT Formats[4] = {};
 
-				EmptyClipboard();
-				bCopied = (MySetClipboardData(CF_UNICODETEXT, hglbCopy) != NULL);
+		// And CF_UNICODE
+		{
+			HGLOBAL hglbCopy = GlobalAlloc(GMEM_MOVEABLE, (cch + 1) * sizeof(*asText));
+			if (hglbCopy)
+			{
+				wchar_t* lptstrCopy = (wchar_t*)GlobalLock(hglbCopy);
+				if (lptstrCopy)
+				{
+					_wcscpy_c(lptstrCopy, cch+1, asText);
+					GlobalUnlock(hglbCopy);
+					Hglbs[idx] = hglbCopy;
+					Formats[idx] = CF_UNICODETEXT;
+					idx++;
+				}
 			}
+		}
+
+		_ASSERTE(idx <= countof(Hglbs));
+
+		if (idx)
+		{
+			EmptyClipboard();
+		}
+
+		for (size_t f = 0; f < idx; f++)
+		{
+			if (MySetClipboardData(Formats[f], Hglbs[f]) != NULL)
+				bCopied = true;
+			else
+				GlobalFree(Hglbs[f]);
 		}
 
 		MyCloseClipboard();
