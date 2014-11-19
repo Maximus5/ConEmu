@@ -464,6 +464,8 @@ struct Settings
 		bool isCTSSelectText;
 		//reg->Load(L"CTS.HtmlFormat", isCTSHtmlFormat);
 		BYTE isCTSHtmlFormat; // 0 - Plain text only, 1 - HTML formatting, 2 - Copy as HTML
+		//reg->Load(L"CTS.ForceLocale", isCTSForceLocale);
+		DWORD isCTSForceLocale; // Try to bypass clipboard locale problems (pasting to old non-unicode apps)
 
 		////reg->Load(L"CTS.ClickPromptPosition", isCTSClickPromptPosition);
 		//BYTE isCTSClickPromptPosition; // & vkCTSVkPromptClk
