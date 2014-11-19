@@ -549,6 +549,8 @@ bool CVirtualConsole::isVisible()
 		return false;
 	if (!(mn_Flags & vf_Visible))
 		return false;
+	if ((mn_Flags & vf_Maximized) && !(mn_Flags & vf_Active))
+		return false;
 	return true;
 }
 
