@@ -3939,42 +3939,41 @@ bool CVConGroup::ConActivate(int nCon)
 		}
 
 		// ПЕРЕД переключением на новую консоль - обновить ее размеры
-		if (pVCon)
+		CRealConsole* pRCon = pVCon->RCon();
+		int nOldConWidth = pRCon->TextWidth();
+		int nOldConHeight = pRCon->TextHeight();
+		RECT rcNewCon = gpConEmu->CalcRect(CER_CONSOLE_CUR, pVCon);
+		int nNewConWidth = rcNewCon.right;
+		int nNewConHeight = rcNewCon.bottom;
+
+		wchar_t szInfo[128];
+		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"Activating con #%u, OldSize={%u,%u}, NewSize={%u,%u}",
+			nCon, nOldConWidth, nOldConHeight, nNewConWidth, nNewConHeight);
+		if (gpSetCls->isAdvLogging)
 		{
-			//int nOldConWidth = gp_VActive->RCon()->TextWidth();
-			//int nOldConHeight = gp_VActive->RCon()->TextHeight();
-			int nOldConWidth = pVCon->RCon()->TextWidth();
-			int nOldConHeight = pVCon->RCon()->TextHeight();
-			//int nNewConWidth = pVCon->RCon()->TextWidth();
-			//int nNewConHeight = pVCon->RCon()->TextHeight();
-			//RECT rcMainClient = gpConEmu->CalcRect(CER_MAINCLIENT, pVCon);
-			RECT rcNewCon = gpConEmu->CalcRect(CER_CONSOLE_CUR, pVCon);
-			int nNewConWidth = rcNewCon.right;
-			int nNewConHeight = rcNewCon.bottom;
-
-			wchar_t szInfo[128];
-			_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"Activating con #%u, OldSize={%u,%u}, NewSize={%u,%u}",
-				nCon, nOldConWidth, nOldConHeight, nNewConWidth, nNewConHeight);
-			if (gpSetCls->isAdvLogging)
-			{
-				pVCon->RCon()->LogString(szInfo);
-			}
-
-			if (!pVCon->RCon()->isServerClosing()
-				&& (nOldConWidth != nNewConWidth || nOldConHeight != nNewConHeight))
-			{
-				lbSizeOK = pVCon->RCon()->SetConsoleSize(nNewConWidth,nNewConHeight);
-			}
-
-			// И поправить размеры VCon/Back
-			RECT rcWork = {};
-			rcWork = gpConEmu->CalcRect(CER_WORKSPACE, pVCon);
-			CVConGroup::MoveAllVCon(pVCon, rcWork);
+			pRCon->LogString(szInfo);
 		}
+		else
+		{
+			DEBUGSTRACTIVATE(szInfo);
+		}
+
+		if (!pRCon->isServerClosing()
+			&& (nOldConWidth != nNewConWidth || nOldConHeight != nNewConHeight))
+		{
+			DWORD nCmdID = CECMD_SETSIZESYNC;
+			if (!pRCon->isFar(true)) nCmdID = CECMD_SETSIZENOSYNC;
+			lbSizeOK = pRCon->SetConsoleSize(nNewConWidth, nNewConHeight, 0/*не менять*/, nCmdID);
+		}
+
+		// И поправить размеры VCon/Back
+		RECT rcWork = {};
+		rcWork = gpConEmu->CalcRect(CER_WORKSPACE, pVCon);
+		CVConGroup::MoveAllVCon(pVCon, rcWork);
 
 		setActiveVConAndFlags(pVCon);
 
-		pVCon->RCon()->OnActivate(nCon, nOldConNum);
+		pRCon->OnActivate(nCon, nOldConNum);
 
 		if (!lbSizeOK)
 			SyncWindowToConsole(); // -- функция пустая, игнорируется
