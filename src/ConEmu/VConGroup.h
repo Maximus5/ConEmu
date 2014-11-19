@@ -70,6 +70,7 @@ protected:
 	RECT mrc_DragSplitter;
 	bool mb_ResizeFlag; // взводится в true для корня, когда в группе что-то меняется
 	bool mb_GroupInputFlag; // Одновременный ввод во все сплиты (не гарантируется для ChildGui)
+	bool mb_PaneMaximized; // Активный сплит группы отображается "развернутым"
 	void* mp_ActiveGroupVConPtr; // указатель (CVirtualConsole*) на последнюю активную консоль в этой группе
 
 	void SetResizeFlags();
@@ -194,6 +195,8 @@ public:
 	static bool Activate(CVirtualConsole* apVCon);
 	static bool ActivateNextPane(CVirtualConsole* apVCon, int nHorz = 0, int nVert = 0);
 	static void MoveActiveTab(CVirtualConsole* apVCon, bool bLeftward);
+
+	static void PaneMaximizeRestore(CVirtualConsole* apVCon);
 
 	static void OnUpdateGuiInfoMapping(ConEmuGuiMapping* apGuiInfo);
 	static void OnPanelViewSettingsChanged();

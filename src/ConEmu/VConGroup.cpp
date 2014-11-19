@@ -346,6 +346,7 @@ CVConGroup::CVConGroup(CVConGroup *apParent)
 	ZeroStruct(mrc_DragSplitter);
 	mp_ActiveGroupVConPtr = NULL;
 	mb_GroupInputFlag = apParent ? apParent->mb_GroupInputFlag : false;
+	mb_PaneMaximized = apParent ? apParent->mb_PaneMaximized : false;
 
 
 	MSectionLockSimple lockGroups; lockGroups.Lock(gpcs_VGroups);
@@ -816,8 +817,15 @@ void CVConGroup::RepositionVCon(RECT rcNewCon, bool bVisible)
 	}
 	else if (mp_Grp1 && mp_Grp2)
 	{
-		RECT rcCon1, rcCon2, rcSplitter;
-		CalcSplitRect(mn_SplitPercent10, rcNewCon, rcCon1, rcCon2, rcSplitter);
+		RECT rcCon1, rcCon2, rcSplitter = {};
+		if (mb_PaneMaximized)
+		{
+			rcCon1 = rcCon2 = rcNewCon;
+		}
+		else
+		{
+			CalcSplitRect(mn_SplitPercent10, rcNewCon, rcCon1, rcCon2, rcSplitter);
+		}
 
 		mrc_Full = rcNewCon;
 		mrc_Splitter = rcSplitter;
@@ -963,6 +971,12 @@ bool CVConGroup::ReSizeSplitter(CVirtualConsole* apVCon, int iHorz /*= 0*/, int 
 
 	CVConGroup* p = (CVConGroup*)apVCon->mp_Group;
 
+	if (p->mb_PaneMaximized)
+	{
+		gpConEmu->LogString(L"ReSizeSplitter skipped because of mb_PaneMaximized");
+		return false;
+	}
+
 	if (iHorz != 0)
 	{
 		// Нужно найти ближайшую группу, разделенную слева-направо
@@ -1013,6 +1027,12 @@ void CVConGroup::CalcSplitRect(UINT nSplitPercent10, RECT rcNewCon, RECT& rcCon1
 	if (!this)
 	{
 		_ASSERTE(this);
+		return;
+	}
+
+	// Split is Maximized?
+	if (mb_PaneMaximized)
+	{
 		return;
 	}
 
@@ -1136,7 +1156,7 @@ void CVConGroup::CalcSplitRootRect(RECT rcAll, RECT& rcCon, CVConGroup* pTarget 
 		return;
 	}
 
-	if (!mp_Parent && !pTarget)
+	if (!mp_Parent && !pTarget || mb_PaneMaximized)
 	{
 		rcCon = rcAll;
 		return;
@@ -1376,6 +1396,8 @@ void CVConGroup::ShowAllVCon(int nShowCmd)
 		_ASSERTE(mp_Grp1==NULL && mp_Grp2==NULL);
 		if (VConI.VCon())
 		{
+			if (nShowCmd && mb_PaneMaximized && !VConI->isVisible())
+				nShowCmd = SW_HIDE;
 			VConI->ShowView(nShowCmd);
 		}
 	}
@@ -4587,7 +4609,10 @@ void CVConGroup::SetConsoleSizes(const COORD& size, const RECT& rcNewCon, bool a
 
 		RECT rcCon = MakeRect(size.X,size.Y);
 
-		if (VCon.VCon() && VCon->RCon() && !VCon->RCon()->isServerClosing())
+		if (VCon.VCon() && VCon->RCon()
+			&& !VCon->RCon()->isServerClosing()
+			&& ((!(VCon->mn_Flags & vf_Maximized)) || (VCon->mn_Flags & vf_Active))
+			)
 		{
 			CRealConsole* pRCon = VCon->RCon();
 			COORD CurSize = {(SHORT)pRCon->TextWidth(), (SHORT)pRCon->TextHeight()};
@@ -5371,6 +5396,52 @@ void CVConGroup::GroupInput(CVirtualConsole* apVCon, GroupInputCmd cmd)
 			VCon->SetFlags(Set, vf_Grouped, (int)i);
 		}
 	}
+}
+
+void CVConGroup::PaneMaximizeRestore(CVirtualConsole* apVCon)
+{
+	CVConGuard VConActive;
+	if (!VConActive.Attach(apVCon))
+		return;
+
+	bool bMaximized = false;
+	DEBUGTEST(VConFlags oldFlags = VConActive->mn_Flags);
+
+	CVConGroup* pGr = ((CVConGroup*)VConActive->mp_Group);
+	_ASSERTE(pGr);
+	bMaximized = pGr ? !pGr->mb_PaneMaximized : false;
+
+	CVConGroup* pActiveGrp = GetRootOfVCon(VConActive.VCon());
+
+	VConFlags Set = bMaximized ? vf_Maximized : vf_None;
+
+	// !!!   Do NOT use EnumVCon here because   !!!
+	// !!! EnumVCon uses flags must be set here !!!
+
+	CVConGuard VCon;
+
+	// Update flags
+	for (size_t i = 0; i < countof(gp_VCon); i++)
+	{
+		if (VCon.Attach(gp_VCon[i]))
+		{
+			if (GetRootOfVCon(VCon.VCon()) != pActiveGrp)
+				continue;
+
+			pGr = ((CVConGroup*)VCon->mp_Group);
+			_ASSERTE(pGr);
+			while (pGr)
+			{
+				pGr->mb_PaneMaximized = bMaximized;
+				pGr = pGr->mp_Parent;
+			}
+
+			VCon->SetFlags(Set, vf_Maximized, (int)i);
+		}
+	}
+
+	pActiveGrp->ShowAllVCon(SW_SHOW);
+	gpConEmu->OnSize();
 }
 
 void CVConGroup::OnGuiFocused(BOOL abFocus, BOOL abForceChild /*= FALSE*/)
