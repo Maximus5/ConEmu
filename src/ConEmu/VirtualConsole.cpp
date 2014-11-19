@@ -214,12 +214,16 @@ CVirtualConsole::CVirtualConsole(CConEmuMain* pOwner, int index)
 	mh_WndDC = NULL;
 }
 
-void CVirtualConsole::SetFlags(VConFlags flags, int index)
+void CVirtualConsole::SetFlags(VConFlags Set, VConFlags Mask, int index)
 {
 	if (!this)
 		return;
-	if (flags != mn_Flags)
-		mn_Flags = flags;
+
+	VConFlags NewFlags = ((mn_Flags & ~Mask) | Set);
+
+	if (NewFlags != mn_Flags)
+		mn_Flags = NewFlags;
+
 	if (index != mn_Index)
 		mn_Index = index;
 }

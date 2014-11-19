@@ -5310,19 +5310,15 @@ void CVConGroup::setActiveVConAndFlags(CVirtualConsole* apNewVConActive)
 		if (VCon.Attach(gp_VCon[i]))
 		{
 			DEBUGTEST(VConFlags oldFlags = VCon->mn_Flags);
-			VConFlags newFlags = VCon->mn_Flags;
+			VConFlags newFlags = vf_None;
 
 			if (apNewVConActive && (VCon.VCon() == apNewVConActive))
 				newFlags |= vf_Active;
-			else
-				newFlags &= ~vf_Active;
 
 			if (pActiveGrp && (GetRootOfVCon(VCon.VCon()) == pActiveGrp))
 				newFlags |= vf_Visible;
-			else
-				newFlags &= ~vf_Visible;
 
-			VCon->SetFlags(newFlags, (int)i);
+			VCon->SetFlags(newFlags, vf_Active|vf_Visible, (int)i);
 		}
 	}
 }
@@ -5342,6 +5338,8 @@ void CVConGroup::GroupInput(CVirtualConsole* apVCon, GroupInputCmd cmd)
 	else
 		bGrouped = (cmd == gic_Enable);
 
+	VConFlags Set = bGrouped ? vf_Grouped : vf_None;
+
 	// Update flags
 	for (size_t i = 0; i < countof(gp_VCon); i++)
 	{
@@ -5352,15 +5350,7 @@ void CVConGroup::GroupInput(CVirtualConsole* apVCon, GroupInputCmd cmd)
 			if (pGr)
 				pGr->mb_GroupInputFlag = bGrouped;
 
-			DEBUGTEST(VConFlags oldFlags = VCon->mn_Flags);
-			VConFlags newFlags = VCon->mn_Flags;
-
-			if (bGrouped)
-				newFlags |= vf_Grouped;
-			else
-				newFlags &= ~vf_Grouped;
-
-			VCon->SetFlags(newFlags, (int)i);
+			VCon->SetFlags(Set, vf_Grouped, (int)i);
 		}
 	}
 }
