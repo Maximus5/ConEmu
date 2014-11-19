@@ -287,6 +287,12 @@ LRESULT CTabPanelBase::OnMouseRebar(UINT uMsg, int x, int y)
 		{
 			gpConEmu->RecreateAction(cra_CreateTab/*FALSE*/, gpSet->isMultiNewConfirm || isPressed(VK_SHIFT));
 		}
+		#ifdef _DEBUG
+		else
+		{
+			_ASSERTE(FALSE && "gpSet->nTabBarDblClickAction: Action was not processed");
+		}
+		#endif
 	}
 	else if (uMsg == WM_RBUTTONUP)
 	{
@@ -513,6 +519,10 @@ LRESULT CTabPanelBase::OnMouseTabbar(UINT uMsg, int nTabIdx, int x, int y)
 						case 4:
 							gpConEmu->mp_Menu->ExecPopupMenuCmd(tmp_None, VCon.VCon(), IDM_DUPLICATE);
 							break;
+						#ifdef _DEBUG
+						default:
+							_ASSERTE(FALSE && "gpSet->nTabBtnDblClickAction: action was not processed");
+						#endif
 						}
 					}
 					else if (uMsg == WM_RBUTTONUP && !lbCtrlPressed)
