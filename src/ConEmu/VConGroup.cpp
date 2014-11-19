@@ -5385,7 +5385,6 @@ void CVConGroup::OnGuiFocused(BOOL abFocus, BOOL abForceChild /*= FALSE*/)
 
 void CVConGroup::OnConsoleResize(bool abSizingToDo)
 {
-	//DEBUGSTRERR(L"На удаление. ConEmu не должен дергаться при смене размера ИЗ КОНСОЛИ\n");
 	DEBUGSTRERR(L"CVConGroup::OnConsoleResize must NOT!!! be called while CONSOLE size is changed (from console)\n");
 
 	//MSetter lInConsoleResize(&mb_InConsoleResize);
