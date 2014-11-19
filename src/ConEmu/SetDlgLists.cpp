@@ -68,7 +68,7 @@ const DWORD CSetDlgLists::ExtendFonts[] = {lbExtendFontBoldIdx, lbExtendFontItal
 const ListBoxItem CSetDlgLists::TabBtnDblClickActions[] =
 {// gpSet->nTabBtnDblClickAction
 	{ 0, L"No action" },
-	{ 1, L"Maximize/restore window size" },
+	{ 1, L"Max/restore window" },
 	{ 2, L"Close tab" },
 	{ 3, L"Restart tab" },
 	{ 4, L"Duplicate tab" },
@@ -77,7 +77,7 @@ const ListBoxItem CSetDlgLists::TabBarDblClickActions[] =
 {// gpSet->nTabBarDblClickAction
 	{ 0, L"No action" },
 	{ 1, L"Auto" },
-	{ 2, L"Maximize/restore window size" },
+	{ 2, L"Max/restore window" },
 	{ 3, L"Open new shell" },
 };
 
