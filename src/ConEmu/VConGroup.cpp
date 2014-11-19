@@ -3893,6 +3893,12 @@ bool CVConGroup::ConActivate(int nCon)
 			return false; // консоль с этим номером не была создана!
 		}
 
+		if (pVCon->RCon() == NULL)
+		{
+			_ASSERTE(FALSE && "mp_RCon was not created");
+			return false;
+		}
+
 		if (pVCon == gp_VActive)
 		{
 			// Итерация табов
@@ -4532,6 +4538,8 @@ RECT CVConGroup::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFr
 
 void CVConGroup::SetConsoleSizes(const COORD& size, const RECT& rcNewCon, bool abSync)
 {
+	if (!this)
+		return;
 	MSectionLockSimple lockGroups; lockGroups.Lock(gpcs_VGroups);
 	CGroupGuard Grp(mp_Grp1);
 	CVConGuard VCon(mp_Item);
