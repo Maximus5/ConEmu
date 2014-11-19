@@ -519,6 +519,9 @@ LRESULT CTabPanelBase::OnMouseTabbar(UINT uMsg, int nTabIdx, int x, int y)
 						case 4:
 							gpConEmu->mp_Menu->ExecPopupMenuCmd(tmp_None, VCon.VCon(), IDM_DUPLICATE);
 							break;
+						case 5:
+							CVConGroup::PaneMaximizeRestore(VCon.VCon());
+							break;
 						#ifdef _DEBUG
 						default:
 							_ASSERTE(FALSE && "gpSet->nTabBtnDblClickAction: action was not processed");

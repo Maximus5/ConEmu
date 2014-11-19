@@ -2892,6 +2892,11 @@ LPWSTR ConEmuMacro::Split(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 			// You may choose preferred direction with Horz and Vert parameters
 			pszResult = CVConGroup::ActivateNextPane(apRCon->VCon(), nHorz, nVert) ? lstrdup(L"OK") : lstrdup(L"Failed");
 		}
+		else if (nCmd == 3)
+		{
+			// Maximize/Restore active pane
+			CVConGroup::PaneMaximizeRestore(apRCon->VCon());
+		}
 	}
 
 	return pszResult ? pszResult : lstrdup(L"InvalidArg");
