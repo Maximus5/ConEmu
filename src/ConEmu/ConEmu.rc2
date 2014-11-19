@@ -326,6 +326,7 @@ BEGIN
 	vkLDragKey              "Drag from Far panels with left mouse key (LDrag modifier)"
 	vkMaximize              "Maximize/restore"
 	vkMaximizeHeight        "Snap ConEmu window to the monitor's top/bottom edges (maximize height)"
+	vkMaximizePane          "Split: Maximize/restore active split"
 	vkMaximizeWidth         "Snap ConEmu window to the monitor's left/right edges (maximize width)"
 	vkMinimizeRestor2       "Minimize/Restore (alternative)"
 	vkMinimizeRestore       "Minimize/Restore (Quake-style hotkey also)"

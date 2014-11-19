@@ -69,6 +69,7 @@ const ListBoxItem CSetDlgLists::TabBtnDblClickActions[] =
 {// gpSet->nTabBtnDblClickAction
 	{ 0, L"No action" },
 	{ 1, L"Max/restore window" },
+	{ 5, L"Max/restore pane" },
 	{ 2, L"Close tab" },
 	{ 3, L"Restart tab" },
 	{ 4, L"Duplicate tab" },

@@ -1051,6 +1051,7 @@
 #define vkWinAltT                       2726
 #define vkMultiPause                    2727
 #define vkMultiGroup                    2728
+#define vkMaximizePane                  2729
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
@@ -1059,7 +1060,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        226
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2729
+#define _APS_NEXT_CONTROL_VALUE         2730
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif

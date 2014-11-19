@@ -371,6 +371,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"    Cmd=0, Horz=0, Vert=1..99: Duplicate active \"shell\" split to bottom\r\n" \
 	L"    Cmd=1, Horz=-1..1, Vert=-1..1: Move splitter between panes (aka resize panes)\r\n" \
 	L"    Cmd=2, Horz=-1..1, Vert=-1..1: Put cursor to the nearest pane\r\n" \
+	L"    Cmd=3, Maximize/restore active pane\r\n" \
 	L"Status(0[,<Parm>])\r\n" \
 	L"  - Show/Hide status bar, Parm=1 - Show, Parm=2 - Hide\r\n" \
 	L"Status(1[,\"<Text>\"])\r\n" \

@@ -129,6 +129,8 @@ int ConEmuHotKeyList::AllocateHotkeys()
 		->SetHotKey('O',VK_CONTROL,VK_SHIFT);
 	Add(vkSplitNewConH,   chk_User,  NULL,    L"Multi.NewSplitH",       CConEmuCtrl::key_GuiMacro, false, L"Split(0,50,0)")
 		->SetHotKey('E',VK_CONTROL,VK_SHIFT);
+	Add(vkMaximizePane,  chk_User,  NULL,     L"Multi.SplitMaximize",   CConEmuCtrl::key_GuiMacro, false, L"Split(3)") // Maximize/restore active split
+		->SetHotKey(VK_F9, VK_APPS);
 	Add(vkSplitSizeVup,   chk_User,  NULL,    L"Multi.SplitSizeVU",     CConEmuCtrl::key_GuiMacro, false, L"Split(1,0,-1)")
 		->SetHotKey(VK_UP,VK_APPS,VK_SHIFT);
 	Add(vkSplitSizeVdown, chk_User,  NULL,    L"Multi.SplitSizeVD",     CConEmuCtrl::key_GuiMacro, false, L"Split(1,0,1)")
