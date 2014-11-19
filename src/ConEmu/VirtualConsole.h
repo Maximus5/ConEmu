@@ -73,7 +73,7 @@ class CVirtualConsole :
 	protected:
 		VConFlags      mn_Flags;
 		int            mn_Index; // !!! Debug, Informational !!!
-		void SetFlags(VConFlags flags, int index);
+		void SetFlags(VConFlags Set, VConFlags Mask, int index);
 
 	protected:
 		CVirtualConsole(CConEmuMain* pOwner, int index);
