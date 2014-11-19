@@ -33,6 +33,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Header.h"
 #include "ConEmu.h"
 #include "MyClipboard.h"
+#include "Options.h"
 
 static LONG gnMyClipboardOpened = 0;
 
@@ -112,6 +113,29 @@ bool CopyToClipboard(LPCWSTR asText)
 		size_t idx = 0;
 		HGLOBAL Hglbs[4] = {};
 		UINT Formats[4] = {};
+
+		if (gpSet->isCTSForceAnsiOem)
+		{
+			_ASSERTE(CP_ACP==0 && CP_OEMCP==1);
+			for (int i = CP_ACP; i <= CP_OEMCP; i++)
+			{
+				HGLOBAL hglbCopy = GlobalAlloc(GMEM_MOVEABLE, (cch + 1) * sizeof(char));
+				char* lpstrCopy = (char*)GlobalLock(hglbCopy);
+				if (lpstrCopy)
+				{
+					int iLen = WideCharToMultiByte(i, 0, asText, cch+1, lpstrCopy, cch+1, NULL, NULL);
+					GlobalUnlock(hglbCopy);
+					if (iLen < 1)
+					{
+						GlobalFree(hglbCopy);
+						continue;
+					}
+					Hglbs[idx] = hglbCopy;
+					Formats[idx] = (i == CP_ACP) ? CF_TEXT : CF_OEMTEXT;
+					idx++;
+				}
+			}
+		}
 
 		// And CF_UNICODE
 		{

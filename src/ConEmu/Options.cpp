@@ -697,6 +697,7 @@ void Settings::InitSettings()
 	isCTSSelectBlock = true; //isCTSVkBlock = VK_LMENU; // по умолчанию - блок выделяется c LAlt
 	isCTSSelectText = true; //isCTSVkText = VK_LSHIFT; // а текст - при нажатом LShift
 	isCTSHtmlFormat = 0; // Don't use HTML formatting with copy (by default)
+	isCTSForceAnsiOem = 0; // Try to bypass clipboard locale problems (pasting to old non-unicode apps)
 	//vmCTSVkBlockStart = 0; // при желании, пользователь может назначить hotkey запуска выделения
 	//vmCTSVkTextStart = 0;  // при желании, пользователь может назначить hotkey запуска выделения
 	isCTSActMode = 2; // BufferOnly
@@ -2671,6 +2672,7 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 		//LoadVkMod(reg, L"CTS.VkBlockStart", vmCTSVkBlockStart, vmCTSVkBlockStart);
 		reg->Load(L"CTS.SelectText", isCTSSelectText);
 		reg->Load(L"CTS.HtmlFormat", isCTSHtmlFormat);
+		reg->Load(L"CTS.ForceAnsiOem", isCTSForceAnsiOem);
 		//reg->Load(L"CTS.ClickPromptPosition", isCTSClickPromptPosition); if (isCTSClickPromptPosition > 2) isCTSClickPromptPosition = 2;
 		//reg->Load(L"CTS.VkText", isCTSVkText);
 		//LoadVkMod(reg, L"CTS.VkTextStart", vmCTSVkTextStart, vmCTSVkTextStart);
@@ -3618,6 +3620,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		//reg->Save(L"CTS.VkBlockStart", vmCTSVkBlockStart);
 		reg->Save(L"CTS.SelectText", isCTSSelectText);
 		reg->Save(L"CTS.HtmlFormat", isCTSHtmlFormat);
+		reg->Save(L"CTS.ForceAnsiOem", isCTSForceAnsiOem);
 		//reg->Save(L"CTS.ClickPromptPosition", isCTSClickPromptPosition);
 		//reg->Save(L"CTS.VkText", isCTSVkText);
 		//reg->Save(L"CTS.VkTextStart", vmCTSVkTextStart);
