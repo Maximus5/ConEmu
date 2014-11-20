@@ -208,9 +208,9 @@ bool CEAnsi::IsAnsiCapable(HANDLE hFile, bool* bIsConsoleOutput /*= NULL*/)
 	DWORD Mode = 0;
 	bool bIsOut = false;
 
-	if (hFile == NULL)
+	if ((hFile == INVALID_HANDLE_VALUE) && (((HANDLE)bIsConsoleOutput) == INVALID_HANDLE_VALUE))
 	{
-		// Проверка настроек на старте?
+		// Проверка настроек на старте
 		bIsOut = true;
 		Mode = ENABLE_PROCESSED_OUTPUT;
 	}
@@ -751,7 +751,7 @@ BOOL WINAPI CEAnsi::OnWriteFile(HANDLE hFile, LPCVOID lpBuffer, DWORD nNumberOfB
 	//	nDBCSCP = GetConsoleOutputCP();
 	//}
 
-	if (lpBuffer && nNumberOfBytesToWrite && hFile && IsAnsiCapable(hFile))
+	if (lpBuffer && nNumberOfBytesToWrite && IsAnsiCapable(hFile))
 		lbRc = OnWriteConsoleA(hFile, lpBuffer, nNumberOfBytesToWrite, lpNumberOfBytesWritten, NULL);
 	else
 		lbRc = F(WriteFile)(hFile, lpBuffer, nNumberOfBytesToWrite, lpNumberOfBytesWritten, lpOverlapped);
@@ -786,7 +786,7 @@ BOOL WINAPI CEAnsi::OnWriteConsoleA(HANDLE hConsoleOutput, const VOID *lpBuffer,
 		goto badchar;
 	}
 
-	if (lpBuffer && nNumberOfCharsToWrite && hConsoleOutput && IsAnsiCapable(hConsoleOutput))
+	if (lpBuffer && nNumberOfCharsToWrite && IsAnsiCapable(hConsoleOutput))
 	{
 		cp = GetConsoleOutputCP();
 
@@ -836,7 +836,7 @@ BOOL WINAPI CEAnsi::OnWriteConsoleA(HANDLE hConsoleOutput, const VOID *lpBuffer,
 
 badchar:
 	// По идее, сюда попадать не должны. Ошибка в параметрах?
-	_ASSERTEX((lpBuffer && nNumberOfCharsToWrite && hConsoleOutput && IsAnsiCapable(hConsoleOutput)) || (curBadUnicode||badUnicode));
+	_ASSERTEX((lpBuffer && nNumberOfCharsToWrite && IsAnsiCapable(hConsoleOutput)) || (curBadUnicode||badUnicode));
 	lbRc = F(WriteConsoleA)(hConsoleOutput, lpBuffer, nNumberOfCharsToWrite, lpNumberOfCharsWritten, lpReserved);
 
 fin:
@@ -953,7 +953,7 @@ BOOL WINAPI CEAnsi::OnWriteConsoleW(HANDLE hConsoleOutput, const VOID *lpBuffer,
 
 	CEAnsi* pObj = NULL;
 
-	if (lpBuffer && nNumberOfCharsToWrite && hConsoleOutput && IsAnsiCapable(hConsoleOutput, &bIsConOut))
+	if (lpBuffer && nNumberOfCharsToWrite && IsAnsiCapable(hConsoleOutput, &bIsConOut))
 	{
 		if (ghAnsiLogFile)
 			CEAnsi::WriteAnsiLog((LPCWSTR)lpBuffer, nNumberOfCharsToWrite);
