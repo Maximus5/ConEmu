@@ -141,9 +141,14 @@ int ConfirmCloseConsoles(const ConfirmCloseParam& Parm)
 		// must be already initialized: CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
 
 		wchar_t szMessage[128];
-		lstrcpyn(szMessage,
-			Parm.asSingleConsole ? Parm.asSingleConsole : Parm.bForceKill ? L"Confirm killing?" : L"Confirm closing?",
-			countof(szMessage));
+		if (Parm.asSingleConsole)
+			lstrcpyn(szMessage, Parm.asSingleConsole, countof(szMessage));
+		else if (Parm.bForceKill)
+			wcscpy_c(szMessage, L"Confirm killing?");
+		else if (Parm.bGroup)
+			wcscpy_c(szMessage, L"Confirm closing group?");
+		else
+			wcscpy_c(szMessage, L"Confirm closing?");
 
 		wchar_t szWWW[MAX_PATH]; _wsprintf(szWWW, SKIPLEN(countof(szWWW)) L"<a href=\"%s\">%s</a>", gsHomePage, gsHomePage);
 
@@ -160,10 +165,12 @@ int ConfirmCloseConsoles(const ConfirmCloseParam& Parm)
 			_wsprintf(szCloseAll, SKIPLEN(countof(szCloseAll))
 				(Parm.bGroup && (Parm.nConsoles>1))
 					? ((Parm.bGroup == ConfirmCloseParam::eGroup)
-						? L"Close group (%u console%s)"
-						: L"Close (%u console%s)")
-					: L"Close all %u console%s.",
-				Parm.nConsoles, (Parm.nConsoles>1)?L"s":L"");
+						? L"Close group (%u consoles)"
+						: L"Close (%u consoles)")
+					: (Parm.nConsoles>1)
+						? L"Close all %u consoles."
+						: L"Close %u console.",
+				Parm.nConsoles);
 			pszText = szCloseAll + _tcslen(szCloseAll);
 		}
 		if ((Parm.asSingleConsole == NULL) || (Parm.nOperations || Parm.nUnsavedEditors))
