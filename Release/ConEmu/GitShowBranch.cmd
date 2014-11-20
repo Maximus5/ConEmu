@@ -127,8 +127,8 @@ if exist "%~dp0ConEmuC.exe" (
 
 rem let gitlogpath be folder to store git output
 if "%TEMP:~-1%" == "\" (set gitlogpath=%TEMP:~0,-1%) else (set gitlogpath=%TEMP%)
-set git_out=%gitlogpath%\conemu_git_1.log
-set git_err=%gitlogpath%\conemu_git_2.log
+set git_out=%gitlogpath%\conemu_git_%ConEmuServerPID%_1.log
+set git_err=%gitlogpath%\conemu_git_%ConEmuServerPID%_2.log
 
 call %ConEmuGitPath% -c color.status=false status --short --branch --porcelain 1>"%git_out%" 2>"%git_err%"
 if errorlevel 1 (
@@ -148,7 +148,7 @@ rem But we need only first line of it
 set gitbranch=%gitbranch%
 rem To ensure that %git_out% does not contain brackets
 pushd %gitlogpath%
-for /F %%l in (conemu_git_1.log) do call :calc "%%l"
+for /F %%l in (conemu_git_%ConEmuServerPID%_1.log) do call :calc "%%l"
 popd
 rem echo done ':calc', br='%gitbranch%', ad='%gitbranch_add%', ch='%gitbranch_chg%', dl='%gitbranch_del%'
 
