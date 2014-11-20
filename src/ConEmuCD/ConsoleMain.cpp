@@ -3413,15 +3413,17 @@ int DoParseArgs(LPCWSTR asCmdLine)
 	return i;
 }
 
-struct FindTopGuiOrConsoleArg
+struct MacroInstance
 {
-	HWND  hMacroInstance;
+	HWND  hConEmuWnd;  // Root! window
+	DWORD nTabIndex;   // Specially selected tab, 1-based
+	DWORD nSplitIndex; // Specially selected split, 1-based
 	DWORD nPID;
 };
 
 BOOL CALLBACK FindTopGuiOrConsole(HWND hWnd, LPARAM lParam)
 {
-	FindTopGuiOrConsoleArg* p = (FindTopGuiOrConsoleArg*)lParam;
+	MacroInstance* p = (MacroInstance*)lParam;
 	wchar_t szClass[MAX_PATH];
 	if (GetClassName(hWnd, szClass, countof(szClass)) < 1)
 		return TRUE; // continue search
@@ -3438,14 +3440,14 @@ BOOL CALLBACK FindTopGuiOrConsole(HWND hWnd, LPARAM lParam)
 	DWORD nTestPID = 0; GetWindowThreadProcessId(hWnd, &nTestPID);
 	if (nTestPID == p->nPID || !p->nPID)
 	{
-		p->hMacroInstance = hWnd;
+		p->hConEmuWnd = hWnd;
 		return FALSE; // Found! stop search
 	}
 
 	return TRUE; // continue search
 }
 
-void ArgGuiMacro(CmdArg& szArg, HWND& hMacroInstance)
+void ArgGuiMacro(CmdArg& szArg, MacroInstance& Inst)
 {
 	wchar_t szLog[200];
 	if (gpLogSize) gpLogSize->LogString(szArg);
@@ -3453,48 +3455,90 @@ void ArgGuiMacro(CmdArg& szArg, HWND& hMacroInstance)
 	// Могли указать PID или HWND требуемого инстанса
 	if (szArg[9] == L':' || szArg[9] == L'=')
 	{
+		wchar_t* pszEnd = NULL;
 		wchar_t* pszID = szArg.ms_Arg+10;
-		if (*pszID == L'0') pszID ++;
-		wchar_t* pszEnd;
-		if ((pszID[0] == L'0' && (pszID[1] == L'x' || pszID[1] == L'X'))
-			|| (pszID[0] == L'x' || pszID[0] == L'X'))
+		// Loop through GuiMacro options
+		while (pszID && *pszID)
 		{
-			hMacroInstance = (HWND)(DWORD_PTR)wcstoul(pszID[0] == L'0' ? (pszID+2) : (pszID+1), &pszEnd, 16);
-
-			if (gpLogSize)
+			// HWND of main ConEmu (GUI) window
+			if ((pszID[0] == L'0' && (pszID[1] == L'x' || pszID[1] == L'X'))
+				|| (pszID[0] == L'x' || pszID[0] == L'X'))
 			{
-				_wsprintf(szLog, SKIPLEN(countof(szLog)) L"Exact instance requested, HWND=x%08X", (DWORD)(DWORD_PTR)hMacroInstance);
-				gpLogSize->LogString(szLog);
+				Inst.hConEmuWnd = (HWND)(DWORD_PTR)wcstoul(pszID[0] == L'0' ? (pszID+2) : (pszID+1), &pszEnd, 16);
+				pszID = pszEnd;
+
+				if (gpLogSize)
+				{
+					_wsprintf(szLog, SKIPLEN(countof(szLog)) L"Exact instance requested, HWND=x%08X", (DWORD)(DWORD_PTR)Inst.hConEmuWnd);
+					gpLogSize->LogString(szLog);
+				}
 			}
-		}
-		else
-		{
-			// Если тут передать "0" - то выполняем в первом попавшемся (наверное в верхнем окне ConEmu)
-			FindTopGuiOrConsoleArg args = {NULL};
-			args.nPID = wcstoul(pszID, &pszEnd, 10);
-			EnumWindows(FindTopGuiOrConsole, (LPARAM)&args);
-			hMacroInstance = args.hMacroInstance;
-
-			if (gpLogSize)
+			else if (isDigit(pszID[0]))
 			{
-				if (hMacroInstance && args.nPID)
-					_wsprintf(szLog, SKIPLEN(countof(szLog)) L"Exact PID=%u requested, instance found HWND=x%08X", args.nPID, (DWORD)(DWORD_PTR)hMacroInstance);
-				else if (hMacroInstance && !args.nPID)
-					_wsprintf(szLog, SKIPLEN(countof(szLog)) L"First found requested, instance found HWND=x%08X", (DWORD)(DWORD_PTR)hMacroInstance);
-				else
-					_wsprintf(szLog, SKIPLEN(countof(szLog)) L"No instances was found (requested PID=%u) GuiMacro will fails", args.nPID);
+				// Если тут передать "0" - то выполняем в первом попавшемся (по Z-order) окне ConEmu
+				// То есть даже если ConEmuC вызван во вкладке, то
+				// а) макро может выполниться в другом окне ConEmu (если наше свернуто)
+				// б) макро может выполниться в другой вкладке (если наша не активна)
+				Inst.nPID = wcstoul(pszID, &pszEnd, 10);
+				EnumWindows(FindTopGuiOrConsole, (LPARAM)&Inst);
+
+				if (gpLogSize)
+				{
+					if (Inst.hConEmuWnd && Inst.nPID)
+						_wsprintf(szLog, SKIPLEN(countof(szLog)) L"Exact PID=%u requested, instance found HWND=x%08X", Inst.nPID, (DWORD)(DWORD_PTR)Inst.hConEmuWnd);
+					else if (Inst.hConEmuWnd && !Inst.nPID)
+						_wsprintf(szLog, SKIPLEN(countof(szLog)) L"First found requested, instance found HWND=x%08X", (DWORD)(DWORD_PTR)Inst.hConEmuWnd);
+					else
+						_wsprintf(szLog, SKIPLEN(countof(szLog)) L"No instances was found (requested PID=%u) GuiMacro will fails", Inst.nPID);
+					gpLogSize->LogString(szLog);
+				}
+
+				if (pszID == pszEnd)
+					break;
+				pszID = pszEnd;
+			}
+			else if (wcschr(L"SsTt", pszID[0]) && isDigit(pszID[1]))
+			{
+				switch (pszID[0])
+				{
+				case L'S': case L's':
+					Inst.nSplitIndex = wcstoul(pszID+1, &pszEnd, 10);
+					_wsprintf(szLog, SKIPLEN(countof(szLog)) L"Split was requested: %u", Inst.nSplitIndex);
+					break;
+				case L'T': case L't':
+					Inst.nTabIndex = wcstoul(pszID+1, &pszEnd, 10);
+					_wsprintf(szLog, SKIPLEN(countof(szLog)) L"Tab was requested: %u", Inst.nTabIndex);
+					break;
+				}
 				gpLogSize->LogString(szLog);
+				if (pszID == pszEnd)
+					break;
+				pszID = pszEnd;
+			}
+			else if (*pszID == L':')
+			{
+				pszID++;
+			}
+			else
+			{
+				_ASSERTE(FALSE && "Unsupported GuiMacro option");
+				if (gpLogSize)
+				{
+					CEStr strErr(lstrmerge(L"Unsupported GuiMacro option: ", szArg.ms_Arg));
+					gpLogSize->LogString(strErr);
+				}
+				break;
 			}
 		}
 
 		// This may be VirtualConsoleClassMain or RealConsoleClass...
-		if (hMacroInstance)
+		if (Inst.hConEmuWnd)
 		{
 			// Has no effect, if hMacroInstance == RealConsoleClass
 			wchar_t szClass[MAX_PATH] = L"";
-			if ((GetClassName(hMacroInstance, szClass, countof(szClass)) > 0) && (lstrcmp(szClass, VirtualConsoleClassMain) == 0))
+			if ((GetClassName(Inst.hConEmuWnd, szClass, countof(szClass)) > 0) && (lstrcmp(szClass, VirtualConsoleClassMain) == 0))
 			{
-				DWORD nGuiPID = 0; GetWindowThreadProcessId(hMacroInstance, &nGuiPID);
+				DWORD nGuiPID = 0; GetWindowThreadProcessId(Inst.hConEmuWnd, &nGuiPID);
 				AllowSetForegroundWindow(nGuiPID);
 			}
 			if (gpLogSize)
@@ -3506,12 +3550,12 @@ void ArgGuiMacro(CmdArg& szArg, HWND& hMacroInstance)
 	}
 }
 
-int DoGuiMacro(LPCWSTR asCmdArg, HWND hMacroInstance = NULL)
+int DoGuiMacro(LPCWSTR asCmdArg, MacroInstance& Inst)
 {
 	// If neither hMacroInstance nor ghConEmuWnd was set - Macro will fails most likely
-	_ASSERTE(hMacroInstance!=NULL || ghConEmuWnd!=NULL);
+	_ASSERTE(Inst.hConEmuWnd!=NULL || ghConEmuWnd!=NULL);
 
-	HWND hCallWnd = hMacroInstance ? hMacroInstance : ghConWnd;
+	HWND hCallWnd = Inst.hConEmuWnd ? Inst.hConEmuWnd : ghConWnd;
 
 	// Все что в asCmdArg - выполнить в Gui
 	int iRc = CERR_GUIMACRO_FAILED;
@@ -3519,6 +3563,8 @@ int DoGuiMacro(LPCWSTR asCmdArg, HWND hMacroInstance = NULL)
 	//SetEnvironmentVariable(CEGUIMACRORETENVVAR, NULL);
 	CESERVER_REQ *pIn = NULL, *pOut = NULL;
 	pIn = ExecuteNewCmd(CECMD_GUIMACRO, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_GUIMACRO)+nLen*sizeof(wchar_t));
+	pIn->GuiMacro.nTabIndex = Inst.nTabIndex;
+	pIn->GuiMacro.nSplitIndex = Inst.nSplitIndex;
 	lstrcpyW(pIn->GuiMacro.sMacro, asCmdArg);
 
 	pOut = ExecuteGuiCmd(hCallWnd, pIn, ghConWnd);
@@ -3818,7 +3864,7 @@ wrap:
 	return iRc;
 }
 
-int DoExecAction(ConEmuExecAction eExecAction, LPCWSTR asCmdArg /* rest of cmdline */, HWND hMacroInstance = NULL)
+int DoExecAction(ConEmuExecAction eExecAction, LPCWSTR asCmdArg /* rest of cmdline */, MacroInstance& Inst)
 {
 	int iRc = CERR_CARGUMENT;
 
@@ -3843,7 +3889,7 @@ int DoExecAction(ConEmuExecAction eExecAction, LPCWSTR asCmdArg /* rest of cmdli
 		}
 	case ea_GuiMacro:
 		{
-			iRc = DoGuiMacro(asCmdArg, hMacroInstance);
+			iRc = DoGuiMacro(asCmdArg, Inst);
 			break;
 		}
 	case ea_CheckUnicodeFont:
@@ -4182,7 +4228,7 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 
 	ConEmuStateCheck eStateCheck = ec_None;
 	ConEmuExecAction eExecAction = ea_None;
-	HWND hMacroInstance = NULL; // Special ConEmu instance for GUIMACRO
+	MacroInstance MacroInst = {}; // Special ConEmu instance for GUIMACRO and other options
 
 	if (!lsCmdLine || !*lsCmdLine)
 	{
@@ -4286,7 +4332,7 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 		else if (lstrcmpni(szArg, L"/GUIMACRO", 9) == 0)
 		{
 			// Все что в lsCmdLine - выполнить в Gui
-			ArgGuiMacro(szArg, hMacroInstance);
+			ArgGuiMacro(szArg, MacroInst);
 			eExecAction = ea_GuiMacro;
 			break;
 		}
@@ -5013,7 +5059,7 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 		}
 		else if (eExecAction)
 		{
-			iFRc = DoExecAction(eExecAction, lsCmdLine, hMacroInstance);
+			iFRc = DoExecAction(eExecAction, lsCmdLine, MacroInst);
 		}
 
 		// И сразу на выход

@@ -30,7 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _COMMON_HEADER_HPP_
 
 // Interface version
-#define CESERVER_REQ_VER    145
+#define CESERVER_REQ_VER    146
 
 // Max tabs/panes count
 #define MAX_CONSOLE_COUNT 30
@@ -1819,6 +1819,8 @@ struct CESERVER_REQ_ACTIVATECONSOLE
 struct CESERVER_REQ_GUIMACRO
 {
 	DWORD   nSucceeded;
+	DWORD   nTabIndex;    // Specially selected tab, 1-based
+	DWORD   nSplitIndex;  // Specially selected split, 1-based
 	wchar_t sMacro[1];    // Variable length
 };
 

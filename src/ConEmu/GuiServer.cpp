@@ -493,10 +493,12 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 		case CECMD_GUIMACRO:
 		{
 			// Допустимо, если GuiMacro пытаются выполнить извне
-			CVConGuard VCon; CVConGroup::GetActiveVCon(&VCon);
+			CVConGuard VCon;
+
+			CVConGroup::GetActiveVCon(&VCon);
 
 			DWORD nFarPluginPID = VCon->RCon()->GetFarPID(true);
-			LPWSTR pszResult = ConEmuMacro::ExecuteMacro(pIn->GuiMacro.sMacro, VCon->RCon(), (nFarPluginPID==pIn->hdr.nSrcPID));
+			LPWSTR pszResult = ConEmuMacro::ExecuteMacro(pIn->GuiMacro.sMacro, VCon->RCon(), (nFarPluginPID==pIn->hdr.nSrcPID), &pIn->GuiMacro);
 
 			int nLen = pszResult ? _tcslen(pszResult) : 0;
 

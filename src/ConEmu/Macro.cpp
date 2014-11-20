@@ -849,8 +849,43 @@ void ConEmuMacro::UnitTests()
 
 
 // Общая функция, для обработки любого известного макроса
-LPWSTR ConEmuMacro::ExecuteMacro(LPWSTR asMacro, CRealConsole* apRCon, bool abFromPlugin /*= false*/)
+LPWSTR ConEmuMacro::ExecuteMacro(LPWSTR asMacro, CRealConsole* apRCon, bool abFromPlugin /*= false*/, CESERVER_REQ_GUIMACRO* Opt /*= NULL*/)
 {
+	CRealConsole* pMacroRCon = apRCon;
+	CVConGuard VConTab, VConSplit;
+	MArray<CVConGuard*> Panes;
+	if (Opt && (Opt->nTabIndex || Opt->nSplitIndex))
+	{
+		// Special (non-active) tab or split was selected
+		if (Opt->nTabIndex)
+		{
+			gpConEmu->mp_TabBar->GetVConFromTab(Opt->nTabIndex-1, &VConTab, NULL);
+		}
+		else
+		{
+			VConTab.Attach(pMacroRCon->VCon());
+		}
+		if (!VConTab.VCon())
+			return lstrdup(L"InvalidTabIndex");
+		pMacroRCon = VConTab->RCon();
+		// And split
+		CVConGroup* pGr = NULL;
+		if (Opt->nSplitIndex && CVConGroup::isGroup(pMacroRCon->VCon(), &pGr))
+		{
+			int iCount = pGr->GetGroupPanes(&Panes);
+			if ((int)Opt->nSplitIndex > iCount)
+			{
+				CVConGroup::FreePanesArray(Panes);
+				return lstrdup(L"InvalidSplitIndex");
+			}
+			VConSplit.Attach(Panes[Opt->nSplitIndex-1]->VCon());
+			CVConGroup::FreePanesArray(Panes);
+			if (!VConSplit.VCon())
+				return lstrdup(L"InvalidSplit");
+			pMacroRCon = VConSplit->RCon();
+		}
+	}
+
 	wchar_t* pszErr = NULL;
 	GuiMacro* p = GetNextMacro(asMacro, false, &pszErr);
 	if (!p)
@@ -877,12 +912,12 @@ LPWSTR ConEmuMacro::ExecuteMacro(LPWSTR asMacro, CRealConsole* apRCon, bool abFr
 				{
 					if (Functions[f].NoThreadSafe && !bIsMainThread)
 					{
-						SyncExecMacroParm parm = {Functions[f].pfn, p, apRCon, abFromPlugin};
+						SyncExecMacroParm parm = {Functions[f].pfn, p, pMacroRCon, abFromPlugin};
 						pszResult = (LPWSTR)gpConEmu->SyncExecMacro(f, (LPARAM)&parm);
 					}
 					else
 					{
-						pszResult = Functions[f].pfn(p, apRCon, abFromPlugin);
+						pszResult = Functions[f].pfn(p, pMacroRCon, abFromPlugin);
 					}
 					goto executed;
 				}
