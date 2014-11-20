@@ -185,7 +185,7 @@ int ConEmuHotKeyList::AllocateHotkeys()
 	Add(vkCloseTab,       chk_User,  NULL,    L"CloseTabKey",           CConEmuCtrl::key_GuiMacro, false, L"Close(6)")
 		->SetHotKey(VK_DELETE,VK_LWIN,VK_MENU); // Close tab (may be editor/viewer too)
 	Add(vkCloseGroup,     chk_User,  NULL,    L"CloseGroupKey",         CConEmuCtrl::key_GuiMacro, false, L"Close(4)")
-		;
+		->SetHotKey(VK_DELETE,VK_LWIN,VK_CONTROL); // Close active group
 	Add(vkCloseGroupPrc,  chk_User,  NULL,    L"CloseGroupPrcKey",      CConEmuCtrl::key_GuiMacro, false, L"Close(7)")
 		;
 	Add(vkCloseAllCon,    chk_User,  NULL,    L"CloseAllConKey",        CConEmuCtrl::key_GuiMacro, false, L"Close(8)")
