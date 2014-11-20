@@ -180,8 +180,8 @@ int ConEmuHotKeyList::AllocateHotkeys()
 		;
 	Add(vkMultiGroup,     chk_User,  NULL,    L"Multi.GroupInput",      CConEmuCtrl::key_GuiMacro, false, L"GroupInput")
 		->SetHotKey('G', VK_APPS);
-	Add(vkMultiClose,     chk_User,  NULL,    L"Multi.Close",           CConEmuCtrl::key_MultiClose)
-		->SetHotKey(VK_DELETE,VK_LWIN);
+	Add(vkMultiClose,     chk_User,  NULL,    L"Multi.Close",           CConEmuCtrl::key_GuiMacro, false, L"Close(0)")
+		->SetHotKey(VK_DELETE,VK_LWIN); // Close active console
 	Add(vkCloseTab,       chk_User,  NULL,    L"CloseTabKey",           CConEmuCtrl::key_GuiMacro, false, L"Close(6)")
 		->SetHotKey(VK_DELETE,VK_LWIN,VK_MENU);
 	Add(vkCloseGroup,     chk_User,  NULL,    L"CloseGroupKey",         CConEmuCtrl::key_GuiMacro, false, L"Close(4)")

@@ -557,30 +557,6 @@ bool CConEmuCtrl::key_MultiBuffer(const ConEmuChord& VkState, bool TestOnly, con
 }
 
 // pRCon may be NULL
-bool CConEmuCtrl::key_MultiClose(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
-{
-	if (!pRCon)
-		return false;
-	if (TestOnly)
-		return true;
-
-	pRCon->CloseConsole(false, true);
-	return true;
-}
-
-//// pRCon may be NULL
-//bool CConEmuCtrl::key_CloseTab(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
-//{
-//	if (!pRCon)
-//		return false;
-//	if (TestOnly)
-//		return true;
-//
-//	pRCon->CloseTab();
-//	return true;
-//}
-
-// pRCon may be NULL
 bool CConEmuCtrl::key_TerminateProcess(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
 	if (!pRCon)
@@ -616,18 +592,6 @@ bool CConEmuCtrl::key_DuplicateRootAs(const ConEmuChord& VkState, bool TestOnly,
 	pRCon->AdminDuplicate();
 	return true;
 }
-
-//// pRCon may be NULL
-//bool CConEmuCtrl::key_CloseConEmu(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
-//{
-//	if (!pRCon)
-//		return false;
-//	if (TestOnly)
-//		return true;
-//
-//	PostScClose();
-//	return true;
-//}
 
 // pRCon may be NULL
 bool CConEmuCtrl::key_MultiCmd(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
