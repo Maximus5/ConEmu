@@ -183,14 +183,14 @@ int ConEmuHotKeyList::AllocateHotkeys()
 	Add(vkMultiClose,     chk_User,  NULL,    L"Multi.Close",           CConEmuCtrl::key_GuiMacro, false, L"Close(0)")
 		->SetHotKey(VK_DELETE,VK_LWIN); // Close active console
 	Add(vkCloseTab,       chk_User,  NULL,    L"CloseTabKey",           CConEmuCtrl::key_GuiMacro, false, L"Close(6)")
-		->SetHotKey(VK_DELETE,VK_LWIN,VK_MENU);
+		->SetHotKey(VK_DELETE,VK_LWIN,VK_MENU); // Close tab (may be editor/viewer too)
 	Add(vkCloseGroup,     chk_User,  NULL,    L"CloseGroupKey",         CConEmuCtrl::key_GuiMacro, false, L"Close(4)")
 		;
 	Add(vkCloseGroupPrc,  chk_User,  NULL,    L"CloseGroupPrcKey",      CConEmuCtrl::key_GuiMacro, false, L"Close(7)")
 		;
 	Add(vkCloseAllCon,    chk_User,  NULL,    L"CloseAllConKey",        CConEmuCtrl::key_GuiMacro, false, L"Close(8)")
 		;
-	Add(vkCloseZombies,    chk_User,  NULL,   L"CloseZombiesKey",      CConEmuCtrl::key_GuiMacro, false, L"Close(9)")
+	Add(vkCloseZombies,    chk_User,  NULL,   L"CloseZombiesKey",       CConEmuCtrl::key_GuiMacro, false, L"Close(9)")
 		;
 	Add(vkCloseExceptCon, chk_User,  NULL,    L"CloseExceptConKey",     CConEmuCtrl::key_GuiMacro, false, L"Close(5)")
 		;
@@ -198,8 +198,8 @@ int ConEmuHotKeyList::AllocateHotkeys()
 		->SetHotKey(VK_DELETE,VK_LWIN,VK_SHIFT);
 	Add(vkDuplicateRoot,  chk_User,  NULL,    L"DuplicateRootKey",      CConEmuCtrl::key_DuplicateRoot)
 		->SetHotKey('S',VK_LWIN);
-	Add(vkCloseConEmu,    chk_User,  NULL,    L"CloseConEmuKey",        /*sort of AltF4 for GUI apps*/CConEmuCtrl::key_GuiMacro, false, L"Close(2)")
-		->SetHotKey(VK_F4,VK_LWIN);
+	Add(vkCloseConEmu,    chk_User,  NULL,    L"CloseConEmuKey",        CConEmuCtrl::key_GuiMacro, false, L"Close(2)")
+		->SetHotKey(VK_F4,VK_LWIN); // sort of AltF4 for GUI apps
 	Add(vkRenameTab,      chk_User,  NULL,    L"Multi.Rename",          CConEmuCtrl::key_RenameTab, true/*OnKeyUp*/)
 		->SetHotKey('R',VK_APPS);
 	Add(vkMoveTabLeft,    chk_User,  NULL,    L"Multi.MoveLeft",        CConEmuCtrl::key_MoveTabLeft)
