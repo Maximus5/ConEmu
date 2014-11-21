@@ -842,6 +842,7 @@
     <ClInclude Include="..\common\StartupEnv.h" />
     <ClInclude Include="..\common\StartupEnvDef.h" />
     <ClInclude Include="..\common\WConsole.h" />
+    <ClInclude Include="..\common\WErrGuard.h" />
     <ClInclude Include="..\common\WObjects.h" />
     <ClInclude Include="..\ConEmuCD\ExitCodes.h" />
     <ClInclude Include="Ansi.h" />

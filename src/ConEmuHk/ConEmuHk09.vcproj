@@ -412,6 +412,7 @@
       <File RelativePath="..\common\StartupEnv.h" />
       <File RelativePath="..\common\StartupEnvDef.h" />
       <File RelativePath="..\common\WConsole.h" />
+      <File RelativePath="..\common\WErrGuard.h" />
       <File RelativePath="..\common\WObjects.h" />
       <File RelativePath="..\ConEmuCD\ExitCodes.h" />
       <File RelativePath="Ansi.h" />
