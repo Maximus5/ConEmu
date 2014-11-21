@@ -50,7 +50,7 @@ public:
 
 public:
 	virtual HWND ActivateSearchPaneInt(bool bActivate) override;
-	virtual void AddTabInt(LPCWSTR text, int i, bool bAdmin, int iTabIcon) override;
+	virtual void AddTabInt(LPCWSTR text, int i, CEFarWindowType Flags, int iTabIcon) override;
 	virtual void CreateRebar() override;
 	virtual void DestroyRebar() override;
 	virtual void DeleteItemInt(int I) override;

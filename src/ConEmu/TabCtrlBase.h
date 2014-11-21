@@ -65,7 +65,7 @@ public:
 
 public:
 	virtual HWND ActivateSearchPaneInt(bool bActivate) = 0;
-	virtual void AddTabInt(LPCWSTR text, int i, bool bAdmin, int iTabIcon) = 0;
+	virtual void AddTabInt(LPCWSTR text, int i, CEFarWindowType Flags, int iTabIcon) = 0;
 	virtual void CreateRebar() = 0;
 	virtual void DestroyRebar() = 0;
 	virtual void DeleteItemInt(int I) = 0;

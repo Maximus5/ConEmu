@@ -636,7 +636,7 @@ int  CTabBarClass::UpdateAddTab(HANDLE hUpdate, int& tabIdx, int& nCurTab, bool&
 		m_Tabs.UpdateAppend(hUpdate, tab, FALSE);
 
 		// Физически (WinAPI) добавляет закладку, или меняет (при необходимости) заголовок существующей
-		mp_Rebar->AddTabInt(tab->GetLabel(), tabIdx, (tab->Flags() & fwt_Elevated)==fwt_Elevated, iTabIcon);
+		mp_Rebar->AddTabInt(tab->GetLabel(), tabIdx, tab->Info.Type, iTabIcon);
 
 		// Add current (selected) tab to the top of recent stack
 		if ((tab->Flags() & fwt_CurrentFarWnd) && bVConActive)
@@ -872,7 +872,7 @@ void CTabBarClass::Update(BOOL abPosted/*=FALSE*/)
 		m_Tabs.UpdateAppend(hUpdate, mp_DummyTab, FALSE);
 
 		// Физически (WinAPI) добавляет закладку, или меняет (при необходимости) заголовок существующей
-		mp_Rebar->AddTabInt(gpConEmu->GetDefaultTabLabel(), tabIdx, gpConEmu->mb_IsUacAdmin, -1);
+		mp_Rebar->AddTabInt(gpConEmu->GetDefaultTabLabel(), tabIdx, gpConEmu->mb_IsUacAdmin ? fwt_Elevated : fwt_Any, -1);
 
 		nCurTab = tabIdx;
 		tabIdx++;

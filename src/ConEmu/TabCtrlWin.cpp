@@ -497,7 +497,7 @@ HWND CTabPanelWin::CreateTabbar()
 	}
 
 	// Добавляет закладку, или меняет (при необходимости) заголовок существующей
-	AddTabInt(gpConEmu->GetDefaultTabLabel(), 0, gpConEmu->mb_IsUacAdmin, -1);
+	AddTabInt(gpConEmu->GetDefaultTabLabel(), 0, gpConEmu->mb_IsUacAdmin ? fwt_Elevated : fwt_Any, -1);
 
 	// нас интересует смещение клиентской области. Т.е. начало - из 0. Остальное не важно
 	rcClient = MakeRect(600, 400);
@@ -753,11 +753,12 @@ bool CTabPanelWin::GetToolBtnRect(int nCmd, RECT* rcBtnRect)
 }
 
 // Добавляет закладку, или меняет (при необходимости) заголовок существующей
-void CTabPanelWin::AddTabInt(LPCWSTR text, int i, bool bAdmin, int iTabIcon)
+void CTabPanelWin::AddTabInt(LPCWSTR text, int i, CEFarWindowType Flags, int iTabIcon)
 {
 	if (!IsTabbarCreated())
 		return;
 
+	bool bAdmin = ((Flags & fwt_Elevated)==fwt_Elevated);
 	int iIconIdx = mp_Owner->GetTabIcon(bAdmin);
 
 	_ASSERTE(text && *text);
