@@ -1482,10 +1482,11 @@ int CShellProc::PrepareExecuteParms(
 	// В некоторых случаях - LongConsoleOutput бессмысленен
 	// ShellExecute(SW_HIDE) или CreateProcess(CREATE_NEW_CONSOLE|CREATE_NO_WINDOW|DETACHED_PROCESS,SW_HIDE)
 	bool bDetachedOrHidden = false;
+	bool bDontForceInjects = false;
 	if (aCmd == eShellExecute)
 	{
 		if (!anShellFlags && anShowCmd && *anShowCmd == 0)
-			bDetachedOrHidden = true;
+			bDontForceInjects = bDetachedOrHidden = true;
 	}
 	else if (aCmd == eCreateProcess)
 	{
@@ -1494,10 +1495,10 @@ int CShellProc::PrepareExecuteParms(
 		{
 			// Historical (create process detached from parent console)
 			if (anCreateFlags && (*anCreateFlags & (CREATE_NEW_CONSOLE|CREATE_NO_WINDOW|DETACHED_PROCESS)))
-				bDetachedOrHidden = true;
+				bDontForceInjects = bDetachedOrHidden = true;
 			// Detect creating "root" from mintty-like applications
 			else if ((gbAttachGuiClient || gbGuiClientAttached) && anCreateFlags && (*anCreateFlags & (CREATE_BREAKAWAY_FROM_JOB)))
-				bDetachedOrHidden = true;
+				bDontForceInjects = bDetachedOrHidden = true;
 		}
 		// Started with redirected output? For example, from Far cmd line:
 		// edit:<git log
@@ -2188,7 +2189,7 @@ int CShellProc::PrepareExecuteParms(
 		// И если просили не ставить хуки (-new_console:i) - тоже
 		mb_NeedInjects = (aCmd == eCreateProcess) && (mn_ImageBits != 16)
 			&& (m_Args.InjectsDisable != crb_On) && !gbPrepareDefaultTerminal
-			&& !bDetachedOrHidden;
+			&& !bDontForceInjects;
 
 		// Параметр -cur_console / -new_console нужно вырезать
 		if (bNewConsoleArg || bCurConsoleArg)
