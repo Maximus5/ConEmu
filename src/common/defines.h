@@ -125,6 +125,10 @@ WARNING("WIN64 was not defined");
 
 #define SafeCloseHandle(h) { if ((h) && (h)!=INVALID_HANDLE_VALUE) { HANDLE hh = (h); (h) = NULL; if (hh!=INVALID_HANDLE_VALUE) CloseHandle(hh); } }
 
+#define ScopedObject_Cat2(n,i) n##i
+#define ScopedObject_Cat1(n,i) ScopedObject_Cat2(n,i)
+#define ScopedObject(cls) cls ScopedObject_Cat1(cls,__COUNTER__)()
+
 #define isDriveLetter(c) ((c>=L'A' && c<=L'Z') || (c>=L'a' && c<=L'z'))
 #define isDigit(c) (c>=L'0' && c<=L'9')
 #define isAlpha(c) (IsCharAlpha(c))
