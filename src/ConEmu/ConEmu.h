@@ -515,7 +515,7 @@ class CConEmuMain
 		UINT mn_MsgSrvStarted;
 		//UINT mn_MsgVConTerminated;
 		UINT mn_MsgUpdateScrollInfo;
-		UINT mn_MsgUpdateTabs; // = RegisterWindowMessage(CONEMUMSG_UPDATETABS);
+		UINT mn_MsgUpdateTabs; LONG mn_ReqMsgUpdateTabs; // = RegisterWindowMessage(CONEMUMSG_UPDATETABS);
 		UINT mn_MsgOldCmdVer; BOOL mb_InShowOldCmdVersion;
 		UINT mn_MsgTabCommand;
 		UINT mn_MsgTabSwitchFromHook; /*BOOL mb_InWinTabSwitch;*/ // = RegisterWindowMessage(CONEMUMSG_SWITCHCON);

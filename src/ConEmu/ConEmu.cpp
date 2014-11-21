@@ -738,7 +738,7 @@ void CConEmuMain::RegisterMessages()
 	mn_MsgUpdateTitle = RegisterMessage("UpdateTitle");
 	mn_MsgSrvStarted = RegisterMessage("SrvStarted"); //RegisterWindowMessage(CONEMUMSG_SRVSTARTED);
 	mn_MsgUpdateScrollInfo = RegisterMessage("UpdateScrollInfo");
-	mn_MsgUpdateTabs = RegisterMessage("UpdateTabs"); //RegisterWindowMessage(CONEMUMSG_UPDATETABS);
+	mn_MsgUpdateTabs = RegisterMessage("UpdateTabs"); mn_ReqMsgUpdateTabs = 0; //RegisterWindowMessage(CONEMUMSG_UPDATETABS);
 	mn_MsgOldCmdVer = RegisterMessage("OldCmdVer"); mb_InShowOldCmdVersion = FALSE;
 	mn_MsgTabCommand = RegisterMessage("TabCommand");
 	mn_MsgTabSwitchFromHook = RegisterMessage("CONEMUMSG_SWITCHCON",CONEMUMSG_SWITCHCON); //mb_InWinTabSwitch = FALSE;
@@ -11235,7 +11235,11 @@ void CConEmuMain::CheckUpdates(BOOL abShowMessages)
 
 void CConEmuMain::RequestPostUpdateTabs()
 {
-	PostMessage(ghWnd, mn_MsgUpdateTabs, 0, 0);
+	LONG l = InterlockedIncrement(&mn_ReqMsgUpdateTabs);
+	if (l == 1)
+	{
+		PostMessage(ghWnd, mn_MsgUpdateTabs, 0, 0);
+	}
 }
 
 DWORD CConEmuMain::isSelectionModifierPressed(bool bAllowEmpty)
@@ -13394,6 +13398,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			}
 			else if (messg == this->mn_MsgUpdateTabs)
 			{
+				this->mn_ReqMsgUpdateTabs = 0;
 				DEBUGSTRTABS(L"OnUpdateTabs\n");
 				this->mp_TabBar->Update(TRUE);
 				return 0;
