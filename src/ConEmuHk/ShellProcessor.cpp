@@ -33,20 +33,20 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma warning(disable: 4091)
 #include <Shlobj.h>
 #pragma warning(default: 4091)
-#include "../ConEmuCD/ExitCodes.h"
-#include "../ConEmu/ShObjIdl_Part.h"
+#include "../common/CmdLine.h"
 #include "../common/common.hpp"
 #include "../common/ConEmuCheck.h"
-#include "SetHook.h"
 #include "../common/execute.h"
-#include "ConEmuHooks.h"
-#include "ShellProcessor.h"
-#include "Injects.h"
-#include "GuiAttach.h"
 #include "../common/WObjects.h"
-#include "../common/CmdLine.h"
-#include "DefTermHk.h"
+#include "../ConEmu/ShObjIdl_Part.h"
+#include "../ConEmuCD/ExitCodes.h"
 #include "Ansi.h"
+#include "ConEmuHooks.h"
+#include "DefTermHk.h"
+#include "GuiAttach.h"
+#include "Injects.h"
+#include "SetHook.h"
+#include "ShellProcessor.h"
 
 #ifndef SEE_MASK_NOZONECHECKS
 #define SEE_MASK_NOZONECHECKS 0x800000
