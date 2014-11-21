@@ -1398,6 +1398,8 @@ int CShellProc::PrepareExecuteParms(
 	if (!ghConEmuWndDC && !isDefaultTerminalEnabled())
 		return 0; // Перехватывать только под ConEmu
 
+	ScopedObject(CLastErrorGuard);
+
 	CmdArg szLnkExe, szLnkArg, szLnkDir;
 	if (asFile && (aCmd == eShellExecute))
 	{
@@ -1501,7 +1503,6 @@ int CShellProc::PrepareExecuteParms(
 		// edit:<git log
 		if (!bDetachedOrHidden && (gnInShellExecuteEx <= 0) && (lphStdOut || lphStdErr))
 		{
-			ScopedObject(CLastErrorGuard);
 			if (lphStdOut && *lphStdOut)
 			{
 				if (!CEAnsi::IsOutputHandle(*lphStdOut))
