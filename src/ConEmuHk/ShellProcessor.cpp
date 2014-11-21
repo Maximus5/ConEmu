@@ -37,6 +37,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/common.hpp"
 #include "../common/ConEmuCheck.h"
 #include "../common/execute.h"
+#include "../common/WErrGuard.h"
 #include "../common/WObjects.h"
 #include "../ConEmu/ShObjIdl_Part.h"
 #include "../ConEmuCD/ExitCodes.h"
@@ -1500,6 +1501,7 @@ int CShellProc::PrepareExecuteParms(
 		// edit:<git log
 		if (!bDetachedOrHidden && (gnInShellExecuteEx <= 0) && (lphStdOut || lphStdErr))
 		{
+			ScopedObject(CLastErrorGuard);
 			if (lphStdOut && *lphStdOut)
 			{
 				if (!CEAnsi::IsOutputHandle(*lphStdOut))
