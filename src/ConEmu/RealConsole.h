@@ -820,6 +820,9 @@ class CRealConsole
 		BOOL GetConWindowSize(const CONSOLE_SCREEN_BUFFER_INFO& sbi, int& nNewWidth, int& nNewHeight, BOOL* pbBufferHeight=NULL);
 		int mn_Focused; //-1 после запуска, 1 - в фокусе, 0 - не в фокусе
 		DWORD mn_InRecreate; // Tick, когда начали пересоздание
+		DWORD mn_StartTick; // для определения GetRunTime()
+		DWORD mn_RunTime; // для информации
+		DWORD GetRunTime();
 		BOOL mb_ProcessRestarted;
 		BOOL mb_InCloseConsole;
 		DWORD mn_CloseConfirmedTick;

@@ -280,6 +280,7 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 	memset(m_TerminatedPIDs, 0, sizeof(m_TerminatedPIDs)); mn_TerminatedIdx = 0;
 	mb_SkipFarPidChange = FALSE;
 	mn_InRecreate = 0; mb_ProcessRestarted = FALSE; mb_InCloseConsole = FALSE;
+	mn_StartTick = mn_RunTime = 0;
 	CloseConfirmReset();
 	mn_LastSetForegroundPID = 0;
 	mb_InPostCloseMacro = false;
@@ -1835,6 +1836,9 @@ void CRealConsole::OnTimerCheck()
 	if (InCreateRoot() || InRecreate())
 		return;
 
+	if (mn_StartTick)
+		GetRunTime();
+
 	//TODO: На проверку пайпов а не хэндла процесса
 	if (!mh_MainSrv)
 		return;
@@ -3325,6 +3329,7 @@ void CRealConsole::ResetVarsOnStart()
 	mb_InPostCloseMacro = false;
 	//mb_WasStartDetached = FALSE; -- не сбрасывать, на него смотрит и isDetached()
 	ZeroStruct(m_ServerClosing);
+	mn_StartTick = mn_RunTime = 0;
 
 	hConWnd = NULL;
 
@@ -3762,6 +3767,8 @@ BOOL CRealConsole::StartProcessInt(LPCWSTR& lpszCmd, wchar_t*& psCurCmd, LPCWSTR
 	BOOL lbRc = FALSE;
 	DWORD nColors = (nTextColorIdx) | (nBackColorIdx << 8) | (nPopTextColorIdx << 16) | (nPopBackColorIdx << 24);
 
+	_ASSERTE(mn_RunTime==0 && mn_StartTick==0); // еще не должно быть установлено или должно быть сброшено
+
 	int nCurLen = 0;
 	if (lpszCmd == NULL)
 	{
@@ -3879,6 +3886,8 @@ BOOL CRealConsole::StartProcessInt(LPCWSTR& lpszCmd, wchar_t*& psCurCmd, LPCWSTR
 
 	if (lbRc)
 	{
+		mn_StartTick = GetTickCount(); mn_RunTime = 0;
+
 		if (m_Args.RunAsAdministrator != crb_On)
 		{
 			ProcessUpdate(&pi.dwProcessId, 1);
@@ -14303,6 +14312,14 @@ bool CRealConsole::InCreateRoot()
 bool CRealConsole::InRecreate()
 {
 	return (this && mb_ProcessRestarted);
+}
+
+DWORD CRealConsole::GetRunTime()
+{
+	if (!this || !mn_StartTick)
+		return 0;
+	mn_RunTime = (GetTickCount() - mn_StartTick);
+	return mn_RunTime;
 }
 
 // Можно ли к этой консоли прицепить GUI приложение
