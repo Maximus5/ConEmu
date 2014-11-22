@@ -379,6 +379,30 @@ bool CTabBarClass::GetVConFromTab(int nTabIdx, CVConGuard* rpVCon, DWORD* rpWndI
 	return lbRc;
 }
 
+void CTabBarClass::HighlightTab(const CTabID* apTab, bool abHighlight)
+{
+	if (!this || !apTab)
+		return;
+
+	struct impl
+	{
+		const CTabID* pTab;
+		bool bHighlight;
+		CTabPanelBase* pRebar;
+		CTabStack* pTabs;
+		int iTab;
+		static LPARAM Execute(LPARAM lParam)
+		{
+			impl* i = (impl*)lParam;
+			if ((i->iTab = i->pTabs->GetIndexByTab(i->pTab)) >= 0)
+				i->pRebar->HighlightTab(i->iTab, i->bHighlight);
+			return 0;
+		};
+	} Impl = {apTab, abHighlight, mp_Rebar, &m_Tabs};
+
+	gpConEmu->CallMainThread(true, impl::Execute, (LPARAM)&Impl);
+}
+
 // Для поиска табов консоли (если показываются редакторы/вьюверы)
 int CTabBarClass::GetFirstLastVConTab(CVirtualConsole* pVCon, bool bFirst, int nFromTab /*= -1*/)
 {

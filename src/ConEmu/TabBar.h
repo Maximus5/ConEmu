@@ -165,6 +165,7 @@ class CTabBarClass
 		int  GetTabbarHeight();
 		int  GetTabFromPoint(LPPOINT pptCur, bool bScreen = true, bool bOverTabHitTest = true);
 		bool GetVConFromTab(int nTabIdx, CVConGuard* rpVCon, DWORD* rpWndIndex);
+		void HighlightTab(const CTabID* pTab, bool bHighlight);
 		void Invalidate();
 		bool IsTabsActive();
 		bool IsTabsShown();

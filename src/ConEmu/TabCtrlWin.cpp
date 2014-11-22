@@ -759,13 +759,16 @@ void CTabPanelWin::AddTabInt(LPCWSTR text, int i, CEFarWindowType Flags, int iTa
 		return;
 
 	bool bAdmin = ((Flags & fwt_Elevated)==fwt_Elevated);
+	bool bHight = ((Flags & fwt_Highlighted)==fwt_Highlighted);
 	int iIconIdx = mp_Owner->GetTabIcon(bAdmin);
 
 	_ASSERTE(text && *text);
 
 	TCITEM tie;
 	// иконку обновляем всегда. она может измениться для таба
-	tie.mask = TCIF_TEXT | (mp_Owner->GetTabIcons() ? TCIF_IMAGE : 0);
+	tie.mask = TCIF_TEXT | (mp_Owner->GetTabIcons() ? TCIF_IMAGE : 0) | TCIF_STATE;
+	tie.dwState = bHight ? TCIS_HIGHLIGHTED : 0;
+	tie.dwStateMask = TCIS_HIGHLIGHTED;
 	tie.pszText = (LPWSTR)text ;
 	tie.iImage = (iTabIcon > 0) ? iTabIcon : mp_Owner->GetTabIcon(bAdmin); // Пока иконка только одна - для табов со щитом
 	int nCurCount = GetItemCountInt();
@@ -774,6 +777,11 @@ void CTabPanelWin::AddTabInt(LPCWSTR text, int i, CEFarWindowType Flags, int iTa
 	{
 		DEBUGSTRTABS(L"Add", i, text);
 		TabCtrl_InsertItem(mh_Tabbar, i, &tie);
+		if (bHight)
+		{
+			tie.mask = TCIF_STATE;
+			TabCtrl_SetItem(mh_Tabbar, i, &tie);
+		}
 	}
 	else
 	{
@@ -787,14 +795,17 @@ void CTabPanelWin::AddTabInt(LPCWSTR text, int i, CEFarWindowType Flags, int iTa
 		#endif
 
 		// Изменилась ли иконка
-		if (tie.mask & TCIF_IMAGE)
+		if (tie.mask & (TCIF_IMAGE|TCIF_STATE))
 		{
 			TCITEM told;
-			told.mask = TCIF_IMAGE;
+			told.mask = TCIF_IMAGE|TCIF_STATE;
+			told.dwStateMask = TCIS_HIGHLIGHTED;
 			TabCtrl_GetItem(mh_Tabbar, i, &told);
 
 			if (told.iImage == tie.iImage)
 				tie.mask &= ~TCIF_IMAGE;
+			if ((told.dwState & TCIS_HIGHLIGHTED) == (tie.dwState & TCIS_HIGHLIGHTED))
+				tie.mask &= ~TCIF_STATE;
 		}
 
 		// "меняем" только если он реально меняется
@@ -1462,4 +1473,13 @@ bool CTabPanelWin::GetTabBarClientRect(RECT* rcTab)
 		return false;
 	GetClientRect(mh_Tabbar, rcTab);
 	return true;
+}
+
+void CTabPanelWin::HighlightTab(int iTab, bool bHighlight)
+{
+	TCITEM tie;
+	tie.mask = TCIF_STATE;
+	tie.dwState = bHighlight ? TCIS_HIGHLIGHTED : 0;
+	tie.dwStateMask = TCIS_HIGHLIGHTED;
+	TabCtrl_SetItem(mh_Tabbar, iTab, &tie);
 }

@@ -1149,8 +1149,9 @@ static const CEFarWindowType
 	fwt_CurrentFarWnd  = 0x20000, // Бывший ConEmuTab.Current
 	fwt_ModifiedFarWnd = 0x40000, // Бывший ConEmuTab.Modified
 	fwt_FarFullPathReq = 0x80000, // Аргумент для поиска окна
+	fwt_Highlighted   = 0x100000, // Подсветить таб
 
-	fwt_UpdateFlags    = fwt_Elevated|fwt_ModalFarWnd|fwt_Disabled|fwt_CurrentFarWnd|fwt_ModifiedFarWnd;
+	fwt_UpdateFlags    = fwt_Elevated|fwt_ModalFarWnd|fwt_Disabled|fwt_CurrentFarWnd|fwt_ModifiedFarWnd|fwt_Highlighted;
 	;
 
 //TODO("Restrict CONEMUTABMAX to 128 chars. Only filename, and may be ellipsed...");
