@@ -675,6 +675,8 @@ struct Settings
 		bool isTabRecent;
 		//reg->Load(L"TabLazy", isTabLazy);
 		bool isTabLazy;
+		//reg->Load(L"TabHighlightChanged", isTabHighlightChanged);
+		bool isTabHighlightChanged;
 
 		//reg->Load(L"TabDblClick", nTabDblClickAction);
 		DWORD nTabBarDblClickAction; // 0-None, 1-Auto, 2-Maximize/Restore, 3-NewTab (SettingsNS::tabBarDefaultClickActions)

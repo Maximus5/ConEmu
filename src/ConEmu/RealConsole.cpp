@@ -135,6 +135,9 @@ WARNING("Часто после разблокирования компьютер
 
 #define CHECK_CONHWND_TIMEOUT 500
 
+#define HIGHLIGHT_COUNT 5
+#define HIGHLIGHT_RUNTIME_MIN 10000
+
 static BOOL gbInSendConEvent = FALSE;
 
 
@@ -194,6 +197,7 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 	tabs.nActiveFarWindow = 0;
 	tabs.nActiveType = fwt_Panels|fwt_CurrentFarWnd;
 	tabs.sTabActivationErr[0] = 0;
+	tabs.nFlashCounter = 0;
 	tabs.mp_ActiveTab = new CTab("RealConsole:mp_ActiveTab",__LINE__);
 
 	#ifdef TAB_REF_PLACE
@@ -1830,6 +1834,38 @@ bool CRealConsole::PostConsoleEvent(INPUT_RECORD* piRec, bool bFromIME /*= false
 	return lbRc;
 }
 
+bool CRealConsole::isHighlighted()
+{
+	if (!this || !tabs.bHighlighted || !gpSet->isTabHighlightChanged)
+		return false;
+
+	if (mp_VCon->isVisible())
+	{
+		tabs.bHighlighted = false;
+		tabs.nFlashCounter = 0;
+		return false;
+	}
+
+	return tabs.bHighlighted;
+}
+
+// Вызывается при изменения текста/атрибутов в реальной консоли (mp_RBuf)
+void CRealConsole::OnConsoleDataChanged()
+{
+	if (!this || !gpSet->isTabHighlightChanged || mp_VCon->isVisible())
+		return;
+
+	if (!mb_WasVisibleOnce && (GetRunTime() < HIGHLIGHT_RUNTIME_MIN))
+		return;
+
+	if (!tabs.bHighlighted)
+	{
+		// Highlighting will be updated in ::OnTimerCheck
+		tabs.nFlashCounter = 0;
+		tabs.bHighlighted = true;
+	}
+}
+
 void CRealConsole::OnTimerCheck()
 {
 	if (!this)
@@ -1842,6 +1878,16 @@ void CRealConsole::OnTimerCheck()
 
 	if (mn_StartTick)
 		GetRunTime();
+
+	//Highlighting
+	if (isHighlighted())
+	{
+		if (tabs.nFlashCounter < (HIGHLIGHT_COUNT*2-1))
+		{
+			InterlockedIncrement(&tabs.nFlashCounter);
+			mp_ConEmu->mp_TabBar->HighlightTab(tabs.mp_ActiveTab->Tab(), (tabs.nFlashCounter&1)!=0);
+		}
+	}
 
 	//TODO: На проверку пайпов а не хэндла процесса
 	if (!mh_MainSrv)
@@ -10024,6 +10070,12 @@ bool CRealConsole::GetTab(int tabIdx, /*OUT*/ CTab& rTab)
 	// Go
 	if (!tabs.m_Tabs.GetTabByIndex(iGetTabIdx, rTab))
 		return false;
+
+	// Refresh its highlighted state
+	if ((rTab->Info.Type & fwt_CurrentFarWnd) && isHighlighted() && (tabs.nFlashCounter & 1))
+		rTab->Info.Type |= fwt_Highlighted;
+	else if (rTab->Info.Type & fwt_Highlighted)
+		rTab->Info.Type &= ~fwt_Highlighted;
 
 	// Update active tab info
 	if (rTab->Info.Type & fwt_CurrentFarWnd)

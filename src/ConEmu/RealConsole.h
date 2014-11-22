@@ -433,6 +433,7 @@ class CRealConsole
 		void OnMouse(UINT messg, WPARAM wParam, int x, int y, bool abForceSend = false);
 		void OnScroll(UINT messg, WPARAM wParam, int x, int y, bool abFromTouch = false);
 		void OnFocus(BOOL abFocused);
+		void OnConsoleDataChanged();
 
 		void StopSignal();
 		void StopThread(BOOL abRecreating=FALSE);
@@ -566,6 +567,7 @@ class CRealConsole
 		bool isFilePanel(bool abPluginAllowed = false, bool abSkipEditViewCheck = false);
 		bool isEditor();
 		bool isEditorModified();
+		bool isHighlighted();
 		bool isViewer();
 		bool isVisible();
 		bool isNtvdm();
@@ -790,6 +792,8 @@ class CRealConsole
 			CEFarWindowType nActiveType;
 			int  nActiveIndex;
 			int  nActiveFarWindow;
+			bool bHighlighted;
+			LONG nFlashCounter;
 			wchar_t sTabActivationErr[128];
 			void StoreActiveTab(int anActiveIndex, CTab& ActiveTab);
 			bool RefreshFarPID(DWORD nNewPID);

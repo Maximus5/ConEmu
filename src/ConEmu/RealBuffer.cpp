@@ -2504,6 +2504,7 @@ void CRealBuffer::ApplyConsoleInfo(const CESERVER_REQ_CONINFO_INFO* pInfo, bool&
 						if (LoadDataFromSrv(nCalcCount, pData))
 						{
 							LOGCONSOLECHANGE("ApplyConsoleInfo: InitBuffers&LoadDataFromSrv -> changed");
+							mp_RCon->OnConsoleDataChanged();
 							lbChanged = true;
 						}
 					}
