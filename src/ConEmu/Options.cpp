@@ -764,7 +764,7 @@ void Settings::InitSettings()
 	isTabs = 1; nTabsLocation = 0; isTabIcons = true; isOneTabPerGroup = false;
 	bActivateSplitMouseOver = 2; // Regarding Windows settings (Active window tracking)
 	isTabSelf = true; isTabRecent = true; isTabLazy = true;
-	isTabHighlightChanged = true;
+	nTabFlashChanged = 9;
 	nTabBarDblClickAction = TABBAR_DEFAULT_CLICK_ACTION; nTabBtnDblClickAction = TABBTN_DEFAULT_CLICK_ACTION;
 	ilDragHeight = 10;
 	m_isTabsOnTaskBar = 2;
@@ -2876,7 +2876,7 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 		reg->Load(L"ActivateSplitMouseOver", bActivateSplitMouseOver); MinMax(bActivateSplitMouseOver, 2);
 		reg->Load(L"TabSelf", isTabSelf);
 		reg->Load(L"TabLazy", isTabLazy);
-		reg->Load(L"TabHighlightChanged", isTabHighlightChanged);
+		reg->Load(L"TabFlashChanged", nTabFlashChanged);
 		reg->Load(L"TabRecent", isTabRecent);
 		reg->Load(L"TabDblClick", nTabBarDblClickAction); MinMax(nTabBarDblClickAction, 3);
 		reg->Load(L"TabBtnDblClick", nTabBtnDblClickAction); MinMax(nTabBtnDblClickAction, 4);
@@ -3702,7 +3702,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		reg->Save(L"ActivateSplitMouseOver", bActivateSplitMouseOver);
 		reg->Save(L"TabSelf", isTabSelf);
 		reg->Save(L"TabLazy", isTabLazy);
-		reg->Save(L"TabHighlightChanged", isTabHighlightChanged);
+		reg->Save(L"TabFlashChanged", nTabFlashChanged);
 		reg->Save(L"TabRecent", isTabRecent);
 		reg->Save(L"TabDblClick", nTabBarDblClickAction);
 		reg->Save(L"TabBtnDblClick", nTabBtnDblClickAction);

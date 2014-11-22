@@ -135,7 +135,6 @@ WARNING("Часто после разблокирования компьютер
 
 #define CHECK_CONHWND_TIMEOUT 500
 
-#define HIGHLIGHT_COUNT 5
 #define HIGHLIGHT_RUNTIME_MIN 10000
 
 static BOOL gbInSendConEvent = FALSE;
@@ -1836,7 +1835,7 @@ bool CRealConsole::PostConsoleEvent(INPUT_RECORD* piRec, bool bFromIME /*= false
 
 bool CRealConsole::isHighlighted()
 {
-	if (!this || !tabs.bHighlighted || !gpSet->isTabHighlightChanged)
+	if (!this || !tabs.bHighlighted || !gpSet->nTabFlashChanged)
 		return false;
 
 	if (mp_VCon->isVisible())
@@ -1852,7 +1851,7 @@ bool CRealConsole::isHighlighted()
 // Вызывается при изменения текста/атрибутов в реальной консоли (mp_RBuf)
 void CRealConsole::OnConsoleDataChanged()
 {
-	if (!this || !gpSet->isTabHighlightChanged || mp_VCon->isVisible())
+	if (!this || !gpSet->nTabFlashChanged || mp_VCon->isVisible())
 		return;
 
 	if (!mb_WasVisibleOnce && (GetRunTime() < HIGHLIGHT_RUNTIME_MIN))
@@ -1882,7 +1881,7 @@ void CRealConsole::OnTimerCheck()
 	//Highlighting
 	if (isHighlighted())
 	{
-		if (tabs.nFlashCounter < (HIGHLIGHT_COUNT*2-1))
+		if ((gpSet->nTabFlashChanged < 0) || (tabs.nFlashCounter < gpSet->nTabFlashChanged))
 		{
 			InterlockedIncrement(&tabs.nFlashCounter);
 			mp_ConEmu->mp_TabBar->HighlightTab(tabs.mp_ActiveTab->Tab(), (tabs.nFlashCounter&1)!=0);
