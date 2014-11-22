@@ -194,6 +194,7 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 	tabs.nActiveFarWindow = 0;
 	tabs.nActiveType = fwt_Panels|fwt_CurrentFarWnd;
 	tabs.sTabActivationErr[0] = 0;
+	tabs.mp_ActiveTab = new CTab("RealConsole:mp_ActiveTab",__LINE__);
 
 	#ifdef TAB_REF_PLACE
 	tabs.m_Tabs.SetPlace("RealConsole.cpp:tabs.m_Tabs",0);
@@ -428,6 +429,7 @@ CRealConsole::~CRealConsole()
 
 
 	tabs.mn_tabsCount = 0;
+	SafeDelete(tabs.mp_ActiveTab);
 	tabs.m_Tabs.MarkTabsInvalid(CTabStack::MatchAll, 0);
 	tabs.m_Tabs.ReleaseTabs(FALSE);
 	mp_ConEmu->mp_TabBar->PrintRecentStack();
@@ -9226,20 +9228,21 @@ bool CRealConsole::_TabsInfo::RefreshFarPID(DWORD nNewPID)
 	int nActiveTab = -1;
 	if (m_Tabs.RefreshFarStatus(nNewPID, ActiveTab, nActiveTab, mn_tabsCount, mb_HasModalWindow))
 	{
-		StoreActiveTab(nActiveTab, ActiveTab.Tab());
+		StoreActiveTab(nActiveTab, ActiveTab);
 		mb_TabsWasChanged = bChanged = true;
 	}
 	return bChanged;
 }
 
-void CRealConsole::_TabsInfo::StoreActiveTab(int anActiveIndex, const CTabID* apActiveTab)
+void CRealConsole::_TabsInfo::StoreActiveTab(int anActiveIndex, CTab& ActiveTab)
 {
-	if (apActiveTab && (anActiveIndex >= 0))
+	if (ActiveTab.Tab() && (anActiveIndex >= 0))
 	{
 		nActiveIndex = anActiveIndex;
-		nActiveFarWindow = apActiveTab->Info.nFarWindowID;
-		_ASSERTE(apActiveTab->Info.Type & fwt_CurrentFarWnd);
-		nActiveType = apActiveTab->Info.Type;
+		nActiveFarWindow = ActiveTab->Info.nFarWindowID;
+		_ASSERTE(ActiveTab->Info.Type & fwt_CurrentFarWnd);
+		nActiveType = ActiveTab->Info.Type;
+		mp_ActiveTab->Init(ActiveTab);
 	}
 	else
 	{
@@ -9247,6 +9250,7 @@ void CRealConsole::_TabsInfo::StoreActiveTab(int anActiveIndex, const CTabID* ap
 		nActiveIndex = 0;
 		nActiveFarWindow = 0;
 		nActiveType = fwt_Panels|fwt_CurrentFarWnd;
+		mp_ActiveTab->Init(NULL);
 	}
 }
 
@@ -9423,7 +9427,7 @@ void CRealConsole::SetTabs(ConEmuTab* apTabs, int anTabsCount, DWORD anFarPID)
 
 	tabs.mn_tabsCount = anTabsCount;
 	tabs.mb_HasModalWindow = bHasModal;
-	tabs.StoreActiveTab(nActiveIndex, ActiveTab.Tab());
+	tabs.StoreActiveTab(nActiveIndex, ActiveTab);
 
 	if (tabs.m_Tabs.UpdateEnd(hUpdate, GetFarPID(true)))
 		bTabsChanged = true;
@@ -10003,6 +10007,10 @@ bool CRealConsole::GetTab(int tabIdx, /*OUT*/ CTab& rTab)
 	// Go
 	if (!tabs.m_Tabs.GetTabByIndex(iGetTabIdx, rTab))
 		return false;
+
+	// Update active tab info
+	if (rTab->Info.Type & fwt_CurrentFarWnd)
+		tabs.StoreActiveTab(iGetTabIdx, rTab);
 
 #if 0
 	if ((tabIdx == 0) && (*tabs.ms_RenameFirstTab))

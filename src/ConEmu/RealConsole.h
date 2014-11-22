@@ -783,6 +783,7 @@ class CRealConsole
 		struct _TabsInfo
 		{
 			CTabStack m_Tabs;
+			CTab* mp_ActiveTab;
 			int  mn_tabsCount; // Число текущих табов. Может отличаться (в меньшую сторону) от m_Tabs.GetCount()
 			bool mb_TabsWasChanged;
 			bool mb_HasModalWindow; // Far Manager modal editor/viewer
@@ -790,7 +791,7 @@ class CRealConsole
 			int  nActiveIndex;
 			int  nActiveFarWindow;
 			wchar_t sTabActivationErr[128];
-			void StoreActiveTab(int anActiveIndex, const CTabID* apActiveTab);
+			void StoreActiveTab(int anActiveIndex, CTab& ActiveTab);
 			bool RefreshFarPID(DWORD nNewPID);
 		} tabs;
 		void CheckPanelTitle();
