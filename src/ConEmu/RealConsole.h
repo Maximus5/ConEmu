@@ -823,6 +823,7 @@ class CRealConsole
 		DWORD mn_StartTick; // для определения GetRunTime()
 		DWORD mn_RunTime; // для информации
 		DWORD GetRunTime();
+		bool mb_WasVisibleOnce;
 		BOOL mb_ProcessRestarted;
 		BOOL mb_InCloseConsole;
 		DWORD mn_CloseConfirmedTick;

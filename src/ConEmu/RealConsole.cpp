@@ -281,6 +281,7 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 	mb_SkipFarPidChange = FALSE;
 	mn_InRecreate = 0; mb_ProcessRestarted = FALSE; mb_InCloseConsole = FALSE;
 	mn_StartTick = mn_RunTime = 0;
+	mb_WasVisibleOnce = false;
 	CloseConfirmReset();
 	mn_LastSetForegroundPID = 0;
 	mb_InPostCloseMacro = false;
@@ -1836,6 +1837,9 @@ void CRealConsole::OnTimerCheck()
 	if (InCreateRoot() || InRecreate())
 		return;
 
+	if (!mb_WasVisibleOnce && mp_VCon->isVisible())
+		mb_WasVisibleOnce = true;
+
 	if (mn_StartTick)
 		GetRunTime();
 
@@ -3330,6 +3334,7 @@ void CRealConsole::ResetVarsOnStart()
 	//mb_WasStartDetached = FALSE; -- не сбрасывать, на него смотрит и isDetached()
 	ZeroStruct(m_ServerClosing);
 	mn_StartTick = mn_RunTime = 0;
+	mb_WasVisibleOnce = mp_VCon->isVisible();
 
 	hConWnd = NULL;
 
@@ -8896,6 +8901,9 @@ void CRealConsole::OnActivate(int nNewNum, int nOldNum)
 	_ASSERTE(isActive(false));
 	// Чтобы можно было найти хэндл окна по хэндлу консоли
 	mp_ConEmu->OnActiveConWndStore(hConWnd);
+
+	// Чтобы не мигать "измененными" консолями при старте
+	mb_WasVisibleOnce = true;
 
 	// Чтобы корректно таб для группы показывать
 	CVConGroup::OnConActivated(mp_VCon);
