@@ -639,16 +639,6 @@ size_t MyGetDlgItemText(HWND hDlg, WORD nID, size_t& cchMax, wchar_t*& pszText/*
 		{
 			pszText[0] = 0;
 			GetWindowText(hEdit, pszText, nLen+1);
-
-			//if (bEscapes)
-			//{
-			//	wchar_t* pszDst = EscapeString(false, pszText);
-			//	if (pszDst)
-			//	{
-			//		_wcscpy_c(pszText, cchMax, pszDst);
-			//		free(pszDst);
-			//	}
-			//}
 		}
 	}
 	else

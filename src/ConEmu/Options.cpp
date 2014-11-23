@@ -669,12 +669,7 @@ void Settings::InitSettings()
 	nIconID = IDI_ICON1;
 	isRClickSendKey = 2;
 	sRClickMacro = NULL;
-	//wcscpy_c(szTabConsole, L"<%c> %s `%p`" /*L "%s [%c]" */);
-	//wcscpy_c(szTabEditor, L"<%c.%i>{%s} `%p`" /* L"[%s]" */);
-	//wcscpy_c(szTabEditorModified, L"<%c.%i>[%s] `%p` *" /* L"[%s] *" */);
-	//wcscpy_c(szTabViewer, L"<%c.%i>[%s] `%p`" /* L"{%s}" */);
 	wcscpy_c(szTabConsole, L"<%c> %s");
-	//wcscpy_c(szTabSkipWords, L"Administrator:|Администратор:");
 	wchar_t szTabSkipWords[64];
 	lstrcpy(szTabSkipWords, L"Administrator:|Администратор:");
 	pszTabSkipWords = lstrdup(szTabSkipWords);

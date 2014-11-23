@@ -876,7 +876,7 @@ struct Settings
 		void SaveHotkeys(SettingsBase* reg);
 	public:
 
-		/* *** Заголовки табов *** */
+		/* *** Tab Templates *** */
 		//reg->Load(L"TabConsole", szTabConsole, countof(szTabConsole));
 		WCHAR szTabConsole[32];
 		//reg->Load(L"TabSkipWords", &pszTabSkipWords);

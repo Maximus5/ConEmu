@@ -1403,6 +1403,7 @@ int CTabBarClass::PrepareTab(CTab& pTab, CVirtualConsole *apVCon)
 
 	LPCWSTR pszTabName = pRCon->GetTabTitle(pTab);
 
+	// That will be Far Manager panels or simple consoles (cmd, posh, bash, etc.)
 	if (pTab->Name.Empty() || (pTab->Type() == fwt_Panels))
 	{
 		//_tcscpy(szFormat, _T("%s"));
