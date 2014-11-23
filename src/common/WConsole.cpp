@@ -691,7 +691,6 @@ void SetConsoleFontSizeTo(HWND inConWnd, int inSizeY, int inSizeX, const wchar_t
 			anPopupColors = MAKEWORD(0x5, 0xf);
 		}
 
-		int i;
 		// get current size/position settings rather than using defaults..
 		GetConsoleSizeInfo(gpConsoleInfoStr);
 		// set these to zero to keep current settings
@@ -746,7 +745,7 @@ void SetConsoleFontSizeTo(HWND inConWnd, int inSizeY, int inSizeX, const wchar_t
 		}
 
 		// color table
-		for(i = 0; i < 16; i++)
+		for(size_t i = 0; i < 16; i++)
 			gpConsoleInfoStr->ColorTable[i] = DefaultColors[i];
 
 		gpConsoleInfoStr->CodePage					= GetConsoleOutputCP();//0;//0x352;

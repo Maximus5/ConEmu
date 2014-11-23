@@ -475,8 +475,8 @@ int WriteTextFile(LPCWSTR asPath, const wchar_t* asBuffer, int anSrcLen/* = -1*/
 
 	if (WriteBOM)
 	{
-		BYTE UTF8BOM[] = {'\xEF','\xBB','\xBF'};
-		BYTE CP1200BOM[] = {'\xFF','\xFE'};
+		char UTF8BOM[] = {'\xEF','\xBB','\xBF'};
+		char CP1200BOM[] = {'\xFF','\xFE'};
 		BOOL bWrite = TRUE; DWORD nBomSize = 0;
 
 		switch (OutCP)

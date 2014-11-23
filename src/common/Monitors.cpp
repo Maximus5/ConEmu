@@ -235,7 +235,9 @@ HMONITOR GetNextMonitorInfo(MONITORINFO* pmi, LPCRECT prcWnd, bool Next)
 	_ASSERTE(prcWnd!=NULL); // Иначе будем искать от Primary
 
 	HMONITOR hNearest = prcWnd ? MonitorFromRect(prcWnd, MONITOR_DEFAULTTONEAREST) : GetPrimaryMonitorInfo(NULL);
-	MONITORINFO mi; GetMonitorInfoSafe(hNearest, mi);
+	#ifdef _DEBUG
+	MONITORINFO miNrst = {}; GetMonitorInfoSafe(hNearest, miNrst);
+	#endif
 
 	TODO("Доработать упорядочивание мониторов?");
 	Monitors.MonArray.sort(MonitorSortCallback);

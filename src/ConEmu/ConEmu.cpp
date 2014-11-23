@@ -5132,10 +5132,14 @@ VOID CConEmuMain::WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD anEvent, HWND 
 	_ASSERTE(hwnd!=NULL);
 
 	#ifdef _DEBUG
+	wchar_t szDbg[128];
+	#endif
+
+	#ifdef _DEBUG
 	switch(anEvent)
 	{
 		case EVENT_CONSOLE_START_APPLICATION:
-
+		{
 			//A new console process has started.
 			//The idObject parameter contains the process identifier of the newly created process.
 			//If the application is a 16-bit application, the idChild parameter is CONSOLE_APPLICATION_16BIT and idObject is the process identifier of the NTVDM session associated with the console.
@@ -5146,13 +5150,13 @@ VOID CConEmuMain::WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD anEvent, HWND 
 			}
 
 			#ifdef _DEBUG
-			WCHAR szDbg[128]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"EVENT_CONSOLE_START_APPLICATION(HWND=0x%08X, PID=%i%s)\n", (DWORD)hwnd, idObject, (idChild == CONSOLE_APPLICATION_16BIT) ? L" 16bit" : L"");
+			_wsprintf(szDbg, SKIPCOUNT(szDbg) L"EVENT_CONSOLE_START_APPLICATION(HWND=0x%08X, PID=%i%s)\n", (DWORD)hwnd, idObject, (idChild == CONSOLE_APPLICATION_16BIT) ? L" 16bit" : L"");
 			DEBUGSTRCONEVENT(szDbg);
 			#endif
 
-			break;
+		} break;
 		case EVENT_CONSOLE_END_APPLICATION:
-
+		{
 			//A console process has exited.
 			//The idObject parameter contains the process identifier of the terminated process.
 			if ((idChild == CONSOLE_APPLICATION_16BIT) && gpSetCls->isAdvLogging)
@@ -5162,12 +5166,12 @@ VOID CConEmuMain::WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD anEvent, HWND 
 			}
 
 			#ifdef _DEBUG
-			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"EVENT_CONSOLE_END_APPLICATION(HWND=0x%08X, PID=%i%s)\n", (DWORD)hwnd, idObject,
-			          (idChild == CONSOLE_APPLICATION_16BIT) ? L" 16bit" : L"");
+			_wsprintf(szDbg, SKIPCOUNT(szDbg) L"EVENT_CONSOLE_END_APPLICATION(HWND=0x%08X, PID=%i%s)\n", (DWORD)hwnd, idObject,
+				(idChild == CONSOLE_APPLICATION_16BIT) ? L" 16bit" : L"");
 			DEBUGSTRCONEVENT(szDbg);
 			#endif
 
-			break;
+		} break;
 		case EVENT_CONSOLE_UPDATE_REGION: // 0x4002
 		{
 			//More than one character has changed.
@@ -5175,7 +5179,7 @@ VOID CConEmuMain::WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD anEvent, HWND 
 			//The idChild parameter is a COORD structure that specifies the end of the changed region.
 			#ifdef _DEBUG
 			COORD crStart, crEnd; memmove(&crStart, &idObject, sizeof(idObject)); memmove(&crEnd, &idChild, sizeof(idChild));
-			WCHAR szDbg[128]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"EVENT_CONSOLE_UPDATE_REGION({%i, %i} - {%i, %i})\n", crStart.X,crStart.Y, crEnd.X,crEnd.Y);
+			_wsprintf(szDbg, SKIPCOUNT(szDbg) L"EVENT_CONSOLE_UPDATE_REGION({%i, %i} - {%i, %i})\n", crStart.X,crStart.Y, crEnd.X,crEnd.Y);
 			DEBUGSTRCONEVENT(szDbg);
 			#endif
 		} break;
@@ -5185,7 +5189,7 @@ VOID CConEmuMain::WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD anEvent, HWND 
 			//The idObject parameter is the horizontal distance the console has scrolled.
 			//The idChild parameter is the vertical distance the console has scrolled.
 			#ifdef _DEBUG
-			WCHAR szDbg[128]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"EVENT_CONSOLE_UPDATE_SCROLL(X=%i, Y=%i)\n", idObject, idChild);
+			_wsprintf(szDbg, SKIPCOUNT(szDbg) L"EVENT_CONSOLE_UPDATE_SCROLL(X=%i, Y=%i)\n", idObject, idChild);
 			DEBUGSTRCONEVENT(szDbg);
 			#endif
 		} break;
@@ -5198,7 +5202,7 @@ VOID CConEmuMain::WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD anEvent, HWND 
 			#ifdef _DEBUG
 			COORD crWhere; memmove(&crWhere, &idObject, sizeof(idObject));
 			WCHAR ch = (WCHAR)LOWORD(idChild); WORD wA = HIWORD(idChild);
-			WCHAR szDbg[128]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"EVENT_CONSOLE_UPDATE_SIMPLE({%i, %i} '%c'(\\x%04X) A=%i)\n", crWhere.X,crWhere.Y, ch, ch, wA);
+			_wsprintf(szDbg, SKIPCOUNT(szDbg) L"EVENT_CONSOLE_UPDATE_SIMPLE({%i, %i} '%c'(\\x%04X) A=%i)\n", crWhere.X,crWhere.Y, ch, ch, wA);
 			DEBUGSTRCONEVENT(szDbg);
 			#endif
 		} break;
@@ -5212,7 +5216,7 @@ VOID CConEmuMain::WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD anEvent, HWND 
 			//The idChild parameter is a COORD structure that specifies the cursor's current position.
 			#ifdef _DEBUG
 			COORD crWhere; memmove(&crWhere, &idChild, sizeof(idChild));
-			WCHAR szDbg[128]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"EVENT_CONSOLE_CARET({%i, %i} Sel=%c, Vis=%c\n", crWhere.X,crWhere.Y,
+			_wsprintf(szDbg, SKIPCOUNT(szDbg) L"EVENT_CONSOLE_CARET({%i, %i} Sel=%c, Vis=%c\n", crWhere.X,crWhere.Y,
 			                            ((idObject & CONSOLE_CARET_SELECTION)==CONSOLE_CARET_SELECTION) ? L'Y' : L'N',
 			                            ((idObject & CONSOLE_CARET_VISIBLE)==CONSOLE_CARET_VISIBLE) ? L'Y' : L'N');
 			DEBUGSTRCONEVENT(szDbg);
@@ -9355,12 +9359,12 @@ LRESULT CConEmuMain::OnLangChangeConsole(CVirtualConsole *apVCon, const DWORD ad
 
 
 	wchar_t szName[10]; _wsprintf(szName, SKIPLEN(countof(szName)) L"%08X", dwLayoutName);
-
+	HKL hkl;
 
 	#ifdef _DEBUG
 	//Sleep(2000);
 	WCHAR szMsg[255];
-	HKL hkl = GetKeyboardLayout(0);
+	hkl = GetKeyboardLayout(0);
 	_wsprintf(szMsg, SKIPLEN(countof(szMsg))
 		L"ConEmu: GetKeyboardLayout(0) in OnLangChangeConsole after GetKeyboardLayout(0) = "
 		WIN3264TEST(L"0x%08X",L"0x%08X%08X") L"\n",
@@ -9561,7 +9565,7 @@ LRESULT CConEmuMain::OnLangChangeConsole(CVirtualConsole *apVCon, const DWORD ad
 		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"Keyboard layout lookup (0x%08X) %s", dwLayoutName, lbFound ? L"Succeeded" : L"FAILED");
 		LogString(szInfo);
 
-		HKL hkl = GetKeyboardLayout(0);
+		hkl = GetKeyboardLayout(0);
 		_wsprintf(szInfo, SKIPLEN(countof(szInfo))
 			L"  Current keyboard layout:\r\n       " WIN3264TEST(L"0x%08X",L"0x%08X%08X") L"\n",
 			WIN3264WSPRINT((DWORD_PTR)hkl));
@@ -10887,7 +10891,7 @@ LRESULT CConEmuMain::OnMouse_RBtnUp(CVirtualConsole* pVCon, HWND hWnd, UINT mess
 
 								if (gpSet->sRClickMacro && *gpSet->sRClickMacro)
 								{
-									lstrcatA(szInfo, ", Macro: "); int nLen = lstrlenA(szInfo);
+									lstrcatA(szInfo, ", Macro: "); nLen = lstrlenA(szInfo);
 									WideCharToMultiByte(CP_ACP,0, gpSet->sRClickMacro,-1, szInfo+nLen, countof(szInfo)-nLen-1, 0,0);
 								}
 								else
@@ -11174,13 +11178,13 @@ void CConEmuMain::CheckFocus(LPCWSTR asFrom)
 							if (hAtPoint != ghWnd)
 							{
 								#ifdef _DEBUG
-								wchar_t szDbg[255], szClass[64];
+								wchar_t szDbgInfo[255], szDbgClass[64];
 
-								if (!hAtPoint || !GetClassName(hAtPoint, szClass, 63)) szClass[0] = 0;
+								if (!hAtPoint || !GetClassName(hAtPoint, szDbgClass, 63)) szDbgClass[0] = 0;
 
-								_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"Can't activate ConEmu on desktop. Opaque cell={%i,%i} screen={%i,%i}. WindowFromPoint=0x%08X (%s)\n",
-								          crOpaque.X, crOpaque.Y, pt.x, pt.y, (DWORD)hAtPoint, szClass);
-								DEBUGSTRFOREGROUND(szDbg);
+								_wsprintf(szDbgInfo, SKIPCOUNT(szDbgInfo) L"Can't activate ConEmu on desktop. Opaque cell={%i,%i} screen={%i,%i}. WindowFromPoint=0x%08X (%s)\n",
+								          crOpaque.X, crOpaque.Y, pt.x, pt.y, (DWORD)hAtPoint, szDbgClass);
+								DEBUGSTRFOREGROUND(szDbgInfo);
 								#endif
 							}
 							else

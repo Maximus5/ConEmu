@@ -119,7 +119,7 @@ void RConStartArgs::RunArgTests()
 	for (size_t i = 0; bTest; i++)
 	{
 		RConStartArgs arg;
-		int nDbg;
+		nDbg;
 		LPCWSTR pszCmp;
 
 		switch (i)
