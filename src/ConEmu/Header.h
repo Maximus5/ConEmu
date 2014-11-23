@@ -262,7 +262,10 @@ BOOL /*__forceinline*/ CoordInRect(const COORD& c, const RECT& r);
 
 BOOL IntersectSmallRect(RECT& rc1, SMALL_RECT& rc2);
 
+bool GetDlgItemSigned(HWND hDlg, WORD nID, int& nValue, int nMin = 0, int nMax = 0);
+bool GetDlgItemUnsigned(HWND hDlg, WORD nID, DWORD& nValue, DWORD nMin = 0, DWORD nMax = 0);
 wchar_t* GetDlgItemTextPtr(HWND hDlg, WORD nID);
+template <size_t size> bool MyGetDlgItemText(HWND hDlg, WORD nID, wchar_t (&rszText)[size]);
 size_t MyGetDlgItemText(HWND hDlg, WORD nID, size_t& cchMax, wchar_t*& pszText/*, bool bEscapes = false*/);
 BOOL MySetDlgItemText(HWND hDlg, int nIDDlgItem, LPCTSTR lpString/*, bool bEscapes = false*/);
 bool GetColorRef(LPCWSTR pszText, COLORREF* pCR);
