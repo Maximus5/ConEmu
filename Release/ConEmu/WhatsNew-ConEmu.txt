@@ -12,6 +12,32 @@ Votes and awards (vote for ConEmu, if you please)
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+2014.11.23
+[*] Add <Base16> color scheme.
+[*] LogFiles: Log Far plugin PID changes.
+[*] LogFiles: Log Far macro execution.
+[*] Show in the window title ‘{%%}’ if the progress was set to indeterminated state.
+[*] Remove lag switching to inactive cmd's tab after window resize.
+[*] Apps+G must group input only active panes.
+[*] Issue 1161: Maximize/restore active pane. Apps+Enter, GuiMacro Split(3), optional DblClick on tab.
+[*] Try to force set CF_LOCALE (optional setting "CTS.ForceLocale") while copying.
+[*] Make GitShowBranch.cmd multi-process aware.
+[*] Make close confirmation texts clearer.
+[*] Win+Ctrl+Del closes active group.
+[*] Issue 1807: Allow GuiMacro execution in specified tab or split.
+    ConEmuC /GUIMACRO[:PID|HWND][:T<tab>][:S<split>] <GuiMacro command>
+    <tab> is 1-based tab index
+    <split> is 1-based pane index of selected/active group of panes
+[*] Issue 1819: ConEmu broke cygwin's pipeline in some rare cases.
+[*] Issue 1809: Inactive (invisible) tab flash on activity.
+    Setting "TabFlashChanged". 0 - disabled, >0 - infinite, ODD - leave highlighted, EVEN - turn off after flashing.
+    Setting "TabModified" set template for those modified tabs.
+    Both settings are available on ‘Tabs’ settings page.
+[*] Use keyboard hooks to process ‘Switch focus between ConEmu and ChildGui’.
+[*] Use Win+Z (by default) for ‘Switch focus between ConEmu and ChildGui’.
+[*] Was not able to set focus into ConEmu after CtrlWinAltSpace with ChildGui.
+
+
 2014.11.17
 [*] Default color scheme set back to <Solarized>.
     To get git's proper colored output for <Solarized> scheme run:
