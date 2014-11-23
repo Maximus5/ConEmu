@@ -502,7 +502,9 @@ void CSettings::UpdateWinHookSettings(HMODULE hLLKeyHookDll)
 			if (!pHK)
 				break;
 
-			if ((pHK->HkType == chk_Modifier) || (pHK->HkType == chk_Global) || (pHK->HkType == chk_Local))
+			// chk_Local may fails to be registered by RegisterHotKey
+			// so it's better to try both ways if possible
+			if ((pHK->HkType == chk_Modifier) || (pHK->HkType == chk_Global))
 				continue;
 
 			DWORD VkMod = pHK->GetVkMod();
