@@ -113,7 +113,7 @@ int ConEmuHotKeyList::AllocateHotkeys()
 		-- Добавить chk_Local недостаточно, нужно еще и gActiveOnlyHotKeys обработать
 	*/
 	Add(vkSetFocusSwitch, chk_Local,  NULL,   L"SwitchGuiFocus",        CConEmuCtrl::key_SwitchGuiFocus)
-		;
+		->SetHotKey('Z',VK_LWIN);
 	Add(vkSetFocusGui,    chk_Local,  NULL,   L"SetFocusGui",           CConEmuCtrl::key_SwitchGuiFocus)
 		;
 	Add(vkSetFocusChild,  chk_Local,  NULL,   L"SetFocusChild",         CConEmuCtrl::key_SwitchGuiFocus)
