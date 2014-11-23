@@ -670,6 +670,7 @@ void Settings::InitSettings()
 	isRClickSendKey = 2;
 	sRClickMacro = NULL;
 	wcscpy_c(szTabConsole, L"<%c> %s");
+	wcscpy_c(szTabModified, szTabConsole); wcscat_c(szTabModified, L" *");
 	wchar_t szTabSkipWords[64];
 	lstrcpy(szTabSkipWords, L"Administrator:|Администратор:");
 	pszTabSkipWords = lstrdup(szTabSkipWords);
@@ -2899,6 +2900,10 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 
 
 		reg->Load(L"TabConsole", szTabConsole, countof(szTabConsole));
+		if (!reg->Load(L"TabModified", szTabModified, countof(szTabModified)))
+		{
+			lstrcpyn(szTabModified, szTabConsole, countof(szTabModified)-3); wcscat_c(szTabModified, L" *");
+		}
 		reg->Load(L"TabSkipWords", &pszTabSkipWords);
 		wcscpy_c(szTabPanels, szTabConsole); // Раньше была только настройка "TabConsole". Унаследовать ее в "TabPanels"
 		reg->Load(L"TabPanels", szTabPanels, countof(szTabPanels));
@@ -3713,6 +3718,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		//reg->Save(L"TabMargins", rcTabMargins);
 		reg->Save(L"ToolbarAddSpace", nToolbarAddSpace);
 		reg->Save(L"TabConsole", szTabConsole);
+		reg->Save(L"TabModified", szTabModified);
 		reg->Save(L"TabSkipWords", pszTabSkipWords);
 		reg->Save(L"TabPanels", szTabPanels);
 		reg->Save(L"TabEditor", szTabEditor);

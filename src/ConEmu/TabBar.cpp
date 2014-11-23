@@ -1407,7 +1407,11 @@ int CTabBarClass::PrepareTab(CTab& pTab, CVirtualConsole *apVCon)
 	if (pTab->Name.Empty() || (pTab->Type() == fwt_Panels))
 	{
 		//_tcscpy(szFormat, _T("%s"));
-		lstrcpyn(szFormat, bIsFar ? gpSet->szTabPanels : gpSet->szTabConsole, countof(szFormat));
+		lstrcpyn(szFormat,
+			bIsFar ? gpSet->szTabPanels
+			: (gpSet->szTabModified[0] && (pTab->Flags() & fwt_ModifiedFarWnd)) ? gpSet->szTabModified
+			: gpSet->szTabConsole,
+			countof(szFormat));
 		nMaxLen = gpSet->nTabLenMax - _tcslen(szFormat) + 2/* %s */;
 
 		lstrcpyn(fileName, pszTabName, countof(fileName));

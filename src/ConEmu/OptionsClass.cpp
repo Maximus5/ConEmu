@@ -3101,6 +3101,9 @@ LRESULT CSettings::OnInitDialog_Tabs(HWND hWnd2)
 	CSetDlgLists::FillListBoxItems(GetDlgItem(hWnd2, tTabBtnDblClickAction), CSetDlgLists::eTabBtnDblClickActions, gpSet->nTabBtnDblClickAction);
 
 	SetDlgItemText(hWnd2, tTabConsole, gpSet->szTabConsole);
+	SetDlgItemText(hWnd2, tTabInactiveModified, gpSet->szTabModified);
+	SetDlgItemInt(hWnd2, tTabFlashCounter, gpSet->nTabFlashChanged, TRUE);
+
 	SetDlgItemText(hWnd2, tTabSkipWords, gpSet->pszTabSkipWords ? gpSet->pszTabSkipWords : L"");
 	SetDlgItemInt(hWnd2, tTabLenMax, gpSet->nTabLenMax, FALSE);
 
@@ -4785,6 +4788,7 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		break;
 	}
 	case tTabConsole:
+	case tTabInactiveModified:
 	case tTabPanels:
 	case tTabViewer:
 	case tTabEditor:
@@ -4801,6 +4805,8 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			{
 				if (TB == tTabConsole)
 					wcscpy_c(gpSet->szTabConsole, temp);
+				else if (TB == tTabInactiveModified)
+					wcscpy_c(gpSet->szTabModified, temp);
 				else if (TB == tTabPanels)
 					wcscpy_c(gpSet->szTabPanels, temp);
 				else if (TB == tTabViewer)

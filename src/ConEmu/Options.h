@@ -879,6 +879,8 @@ struct Settings
 		/* *** Tab Templates *** */
 		//reg->Load(L"TabConsole", szTabConsole, countof(szTabConsole));
 		WCHAR szTabConsole[32];
+		//reg->Load(L"TabModified", szTabModified, countof(szTabModified));
+		WCHAR szTabModified[32];
 		//reg->Load(L"TabSkipWords", &pszTabSkipWords);
 		wchar_t* pszTabSkipWords;
 		//reg->Load(L"TabPanels", szTabPanels, countof(szTabPanels));

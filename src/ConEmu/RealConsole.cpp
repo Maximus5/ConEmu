@@ -1833,35 +1833,44 @@ bool CRealConsole::PostConsoleEvent(INPUT_RECORD* piRec, bool bFromIME /*= false
 	return lbRc;
 }
 
+// Highlight icon (flashing actually) on modified console contents
 bool CRealConsole::isHighlighted()
 {
-	if (!this || !tabs.bHighlighted || !gpSet->nTabFlashChanged)
+	if (!this || !tabs.bConsoleDataChanged)
 		return false;
 
 	if (mp_VCon->isVisible())
 	{
-		tabs.bHighlighted = false;
+		tabs.bConsoleDataChanged = false;
 		tabs.nFlashCounter = 0;
 		return false;
 	}
 
-	return tabs.bHighlighted;
+	if (!gpSet->nTabFlashChanged)
+		return false;
+
+	return tabs.bConsoleDataChanged;
 }
 
 // Вызывается при изменения текста/атрибутов в реальной консоли (mp_RBuf)
 void CRealConsole::OnConsoleDataChanged()
 {
-	if (!this || !gpSet->nTabFlashChanged || mp_VCon->isVisible())
+	// Do not take into account gpSet->nTabFlashChanged
+	// because bConsoleDataChanged may be used in tab template
+	if (!this || mp_VCon->isVisible())
 		return;
 
 	if (!mb_WasVisibleOnce && (GetRunTime() < HIGHLIGHT_RUNTIME_MIN))
 		return;
 
-	if (!tabs.bHighlighted)
+	if (!tabs.bConsoleDataChanged)
 	{
 		// Highlighting will be updated in ::OnTimerCheck
 		tabs.nFlashCounter = 0;
-		tabs.bHighlighted = true;
+		tabs.bConsoleDataChanged = true;
+		// But tab text labels - must be updated specially
+		if (gpSet->szTabModified[0])
+			mp_ConEmu->RequestPostUpdateTabs();
 	}
 }
 
@@ -10075,6 +10084,15 @@ bool CRealConsole::GetTab(int tabIdx, /*OUT*/ CTab& rTab)
 		rTab->Info.Type |= fwt_Highlighted;
 	else if (rTab->Info.Type & fwt_Highlighted)
 		rTab->Info.Type &= ~fwt_Highlighted;
+
+	// Refresh modified state of simple consoles (not the tabs of Far Manager)
+	if ((rTab->Info.Type & fwt_CurrentFarWnd) && !isFar())
+	{
+		if (tabs.bConsoleDataChanged)
+			rTab->Info.Type |= fwt_ModifiedFarWnd;
+		else
+			rTab->Info.Type &= ~fwt_ModifiedFarWnd;
+	}
 
 	// Update active tab info
 	if (rTab->Info.Type & fwt_CurrentFarWnd)

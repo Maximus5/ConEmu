@@ -792,7 +792,7 @@ class CRealConsole
 			CEFarWindowType nActiveType;
 			int  nActiveIndex;
 			int  nActiveFarWindow;
-			bool bHighlighted;
+			bool bConsoleDataChanged;
 			LONG nFlashCounter;
 			wchar_t sTabActivationErr[128];
 			void StoreActiveTab(int anActiveIndex, CTab& ActiveTab);
