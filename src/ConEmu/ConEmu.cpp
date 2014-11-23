@@ -13155,7 +13155,9 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 				{
 					this->mb_AllowAutoChildFocus = false; // для отладчика
 				}
-				else if (this->CanSetChildFocus() && (this->GetActiveVCon(&VCon) >= 0) && VCon->RCon()->GuiWnd())
+				else if (this->CanSetChildFocus()
+					&& (this->GetActiveVCon(&VCon) >= 0)
+					&& VCon->RCon()->isGuiEagerFocus())
 				{
 					VCon->PostRestoreChildFocus();
 				}

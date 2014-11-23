@@ -333,6 +333,8 @@ class CRealConsole
 		HWND    GuiWnd();  // HWND Gui приложения
 		DWORD   GuiWndPID();  // HWND Gui приложения
 		bool    isGuiForceConView(); // mb_GuiForceConView
+		bool    isGuiExternMode(); // bGuiExternMode
+		bool    isGuiEagerFocus(); // ставить фокус в ChildGui при попадании оного в ConEmu
 		void    GuiNotifyChildWindow();
 		void    GuiWndFocusStore();
 		void    GuiWndFocusRestore(bool bForce = false);

@@ -12611,6 +12611,18 @@ bool CRealConsole::isGuiForceConView()
 {
 	return m_ChildGui.bGuiForceConView;
 }
+bool CRealConsole::isGuiExternMode()
+{
+	return m_ChildGui.bGuiExternMode;
+}
+bool CRealConsole::isGuiEagerFocus()
+{
+	if (!GuiWnd())
+		return false;
+	if (isGuiForceConView() || isGuiExternMode())
+		return false;
+	return true;
+}
 
 // При движении окна ConEmu - нужно подергать дочерние окошки
 // Иначе PuTTY глючит с обработкой мышки
