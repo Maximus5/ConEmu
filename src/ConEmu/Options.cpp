@@ -125,7 +125,7 @@ struct CONEMUDEFCOLORS
 const CONEMUDEFCOLORS DefColors[] =
 {
 	{
-		L"<Default color scheme (Windows standard)>", {
+		L"<Default Windows scheme>", {
 			0x00000000, 0x00800000, 0x00008000, 0x00808000, 0x00000080, 0x00800080, 0x00008080, 0x00c0c0c0,
 			0x00808080, 0x00ff0000, 0x0000ff00, 0x00ffff00, 0x000000ff, 0x00ff00ff, 0x0000ffff, 0x00ffffff
 		}
