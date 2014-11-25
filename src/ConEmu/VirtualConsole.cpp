@@ -2046,8 +2046,11 @@ bool CVirtualConsole::CalcHighlightRowCol(COORD* pcrPos)
 	POINT ptCursor = {};
 	RECT  rcDC = {};
 
-	// But follow the cursor only when ConEmu is in foreground
-	if (!mp_ConEmu->isMenuActive() && mp_ConEmu->isMeForeground(false, false))
+	// When to skip?
+	if (!mp_ConEmu->isMenuActive()
+		// may be it is not handy, let check if Cursor is inside ConEmu window?
+		// && mp_ConEmu->isMeForeground(false, false)
+		)
 	{
 		GetCursorPos(&ptCursor);
 		GetWindowRect(mh_WndDC, &rcDC);
