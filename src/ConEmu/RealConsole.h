@@ -828,6 +828,7 @@ class CRealConsole
 		int mn_Focused; //-1 после запуска, 1 - в фокусе, 0 - не в фокусе
 		DWORD mn_InRecreate; // Tick, когда начали пересоздание
 		DWORD mn_StartTick; // для определения GetRunTime()
+		DWORD mn_DeactivateTick; // чтобы не мигать сразу после "cmd -new_console" из промпта
 		DWORD mn_RunTime; // для информации
 		DWORD GetRunTime();
 		bool mb_WasVisibleOnce;

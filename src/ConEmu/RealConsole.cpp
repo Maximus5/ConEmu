@@ -136,6 +136,7 @@ WARNING("Часто после разблокирования компьютер
 #define CHECK_CONHWND_TIMEOUT 500
 
 #define HIGHLIGHT_RUNTIME_MIN 10000
+#define HIGHLIGHT_INVISIBLE_MIN 2000
 
 static BOOL gbInSendConEvent = FALSE;
 
@@ -287,6 +288,7 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 	mn_InRecreate = 0; mb_ProcessRestarted = FALSE; mb_InCloseConsole = FALSE;
 	mn_StartTick = mn_RunTime = 0;
 	mb_WasVisibleOnce = false;
+	mn_DeactivateTick = 0;
 	CloseConfirmReset();
 	mn_LastSetForegroundPID = 0;
 	mb_InPostCloseMacro = false;
@@ -1865,6 +1867,12 @@ void CRealConsole::OnConsoleDataChanged()
 
 	if (!mb_WasVisibleOnce && (GetRunTime() < HIGHLIGHT_RUNTIME_MIN))
 		return;
+	// Don't annoy with flashing after typing in cmd prompt:
+	// cmd -new_console
+	// The active console was deactivated just now, no need to inform user about "changes".
+	DWORD nInvisibleTime = mn_DeactivateTick ? (GetTickCount() - mn_DeactivateTick) : 0;
+	if (nInvisibleTime < HIGHLIGHT_INVISIBLE_MIN)
+		return;
 
 	if (!tabs.bConsoleDataChanged)
 	{
@@ -3391,6 +3399,7 @@ void CRealConsole::ResetVarsOnStart()
 	//mb_WasStartDetached = FALSE; -- не сбрасывать, на него смотрит и isDetached()
 	ZeroStruct(m_ServerClosing);
 	mn_StartTick = mn_RunTime = 0;
+	mn_DeactivateTick = 0;
 	mb_WasVisibleOnce = mp_VCon->isVisible();
 
 	hConWnd = NULL;
@@ -8961,6 +8970,7 @@ void CRealConsole::OnActivate(int nNewNum, int nOldNum)
 
 	// Чтобы не мигать "измененными" консолями при старте
 	mb_WasVisibleOnce = true;
+	mn_DeactivateTick = 0;
 
 	// Чтобы корректно таб для группы показывать
 	CVConGroup::OnConActivated(mp_VCon);
@@ -9070,6 +9080,8 @@ void CRealConsole::OnDeactivate(int nNewNum)
 	{
 		mp_ConEmu->setFocus();
 	}
+
+	mn_DeactivateTick = GetTickCount();
 }
 
 void CRealConsole::OnGuiFocused(BOOL abFocus, BOOL abForceChild /*= FALSE*/)
