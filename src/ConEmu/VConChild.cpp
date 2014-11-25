@@ -1446,11 +1446,7 @@ BOOL CConEmuChild::TrackMouse()
 	CVirtualConsole* pVCon = mp_VCon;
 	CVConGuard guard(pVCon);
 
-	if (pVCon->WasHighlightRowColChanged())
-	{
-		_ASSERTE(pVCon->isVisible());
-		pVCon->Invalidate();
-	}
+	pVCon->WasHighlightRowColChanged();
 
 	#ifdef _DEBUG
 	CRealConsole* pRCon = pVCon->RCon();

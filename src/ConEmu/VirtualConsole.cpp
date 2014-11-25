@@ -1981,30 +1981,51 @@ void CVirtualConsole::ChangeHighlightMouse(int nWhat, int nSwitch)
 // This is called from TrackMouse. It must NOT trigger more than one invalidate before next repaint
 bool CVirtualConsole::WasHighlightRowColChanged()
 {
+	bool bChanged = false;
+	bool bInvalidate = false;
+	COORD crPos = {-1,-1};
+
 	if (isHighlightHyperlink() && (mp_RCon->isSelectionPresent() || !mp_RCon->IsFarHyperlinkAllowed(false)))
 	{
 		m_etr.etrLast = etr_None;
-		Invalidate();
+		bInvalidate = true;
 	}
 
 	// Invalidate already pended?
 	if (m_HighlightInfo.mb_ChangeDetected)
-		return false;
+	{
+		goto wrap;
+	}
 
 	// If cursor goes out of VCon - leave row/col marks?
-	COORD crPos = {-1,-1};
 	if (!CalcHighlightRowCol(&crPos))
-		return false;
+	{
+		if (!IsRectEmpty(&m_HighlightInfo.mrc_LastRow)
+			|| !IsRectEmpty(&m_HighlightInfo.mrc_LastCol))
+		{
+			bInvalidate = true;
+		}
+		goto wrap;
+	}
 
 	if ((isHighlightMouseRow() && (crPos.Y != m_HighlightInfo.m_Last.Y))
 		|| (isHighlightMouseCol() && (crPos.X != m_HighlightInfo.m_Last.X)))
 	{
 		// Refresh our state
 		m_HighlightInfo.mb_ChangeDetected = true;
-		return true;
+		bInvalidate = true;
+
+		// Tell the caller the state was changed
+		bChanged = true;
+		goto wrap;
 	}
 
-	return false;
+wrap:
+	if (bInvalidate)
+	{
+		Invalidate();
+	}
+	return bChanged;
 }
 
 bool CVirtualConsole::CalcHighlightRowCol(COORD* pcrPos)
