@@ -257,8 +257,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"HighlightMouse(<What>[,<Act>])\r\n" \
 	L"  - change highlighting in the ACTIVE console only\r\n" \
 	L"    What==0: switch off/row/col/row+col/off/...\r\n" \
-	L"    What==1: row, What==2 - col, What==3 - row+col\r\n" \
-	L"      Act==0 - off, Act==1 - on, Act==2 - switch (default)\r\n" \
+	L"    What==1: row, What==2: col, What==3: row+col\r\n" \
+	L"      Act==0: off, Act==1: on, Act==2: switch (default)\r\n" \
 	L"IsConEmu\r\n" \
 	L"  - Returns \"Yes\" when console was started under !ConEmu\r\n" \
 	L"IsConsoleActive\r\n" \
