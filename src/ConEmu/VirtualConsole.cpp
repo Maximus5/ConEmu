@@ -1974,6 +1974,21 @@ void CVirtualConsole::ChangeHighlightMouse(int nWhat, int nSwitch)
 		}
 	}
 
+	// Set same state to all visible panes
+	struct impl
+	{
+		bool bHighlightRow, bHighlightCol;
+		static bool SetOtherTheSame(CVirtualConsole* pVCon, LPARAM lParam)
+		{
+			pVCon->m_HighlightInfo.mb_SelfSettings = true;
+			pVCon->m_HighlightInfo.mb_HighlightRow = ((impl*)lParam)->bHighlightRow;
+			pVCon->m_HighlightInfo.mb_HighlightCol = ((impl*)lParam)->bHighlightCol;
+			pVCon->Invalidate();
+			return true;
+		}
+	} Impl = {m_HighlightInfo.mb_HighlightRow, m_HighlightInfo.mb_HighlightCol};
+	CVConGroup::EnumVCon(evf_Visible, impl::SetOtherTheSame, (LPARAM)&Impl);
+
 	// Redraw all consoles
 	Update(true);
 }
@@ -2025,6 +2040,23 @@ wrap:
 	{
 		Invalidate();
 	}
+
+	// Apply to all visible panes
+	if (isActive(false) && isGroup())
+	{
+		struct impl
+		{
+			CVirtualConsole* pSelf;
+			static bool RefreshOthers(CVirtualConsole* pVCon, LPARAM lParam)
+			{
+				if (pVCon != ((impl*)lParam)->pSelf)
+					pVCon->WasHighlightRowColChanged();
+				return true;
+			}
+		} Impl = {this};
+		CVConGroup::EnumVCon(evf_Visible, impl::RefreshOthers, (LPARAM)&Impl);
+	}
+
 	return bChanged;
 }
 
@@ -2045,6 +2077,7 @@ bool CVirtualConsole::CalcHighlightRowCol(COORD* pcrPos)
 	COORD pos = {-1,-1};
 	POINT ptCursor = {};
 	RECT  rcDC = {};
+	RECT  rcWork = {};
 
 	// When to skip?
 	if (!mp_ConEmu->isMenuActive()
@@ -2054,7 +2087,8 @@ bool CVirtualConsole::CalcHighlightRowCol(COORD* pcrPos)
 	{
 		GetCursorPos(&ptCursor);
 		GetWindowRect(mh_WndDC, &rcDC);
-		bCanChange = PtInRect(&rcDC, ptCursor);
+		GetWindowRect(ghWndWork, &rcWork);
+		bCanChange = PtInRect(&rcWork, ptCursor);
 	}
 
 	if (!bCanChange)
@@ -2068,8 +2102,14 @@ bool CVirtualConsole::CalcHighlightRowCol(COORD* pcrPos)
 	{
 		// Get COORDs (relative to upper-left visible pos)
 		pos = ClientToConsole(ptCursor.x-rcDC.left, ptCursor.y-rcDC.top);
+		// If cursor is outside of VCon, but fit with one of axis
+		if ((ptCursor.x < rcDC.left) || (ptCursor.x > rcDC.right))
+			pos.X = -1;
+		if ((ptCursor.y < rcDC.top) || (ptCursor.y > rcDC.bottom))
+			pos.Y = -1;
+		// And store
 		m_HighlightInfo.m_Cur = pos;
-		m_HighlightInfo.mb_Exists = bExist = (pos.X >= 0 && pos.Y >= 0);
+		m_HighlightInfo.mb_Exists = bExist = (pos.X >= 0 || pos.Y >= 0);
 	}
 
 	if (bExist && pcrPos)
@@ -2105,20 +2145,21 @@ void CVirtualConsole::UpdateHighlightsRowCol()
 	if (!CalcHighlightRowCol(&pos))
 		return;
 
-	int CurChar = pos.Y * TextWidth + pos.X;
-	if (CurChar < 0 || CurChar>=(int)(TextWidth * TextHeight))
-	{
-		return; // может быть или глюк - или размер консоли был резко уменьшен и предыдущая позиция курсора пропала с экрана
-	}
-
 	// And MARK! (nFontHeight or cell (nFontWidth))
 
 	COORD pix;
 	pix.X = pos.X * nFontWidth;
 	pix.Y = pos.Y * nFontHeight;
 
-	if (pos.X && ConCharX && ConCharX[CurChar-1])
-		pix.X = ConCharX[CurChar-1];
+	if ((pos.X >= 0) && ConCharX)
+	{
+		int CurChar = klMax(0, klMin((int)pos.Y, (int)TextHeight-1)) * TextWidth + pos.X;
+		if ((CurChar >= 0) && (CurChar < (int)(TextWidth * TextHeight)))
+		{
+			if (ConCharX[CurChar-1])
+				pix.X = ConCharX[CurChar-1];
+		}
+	}
 
 	HDC hPaintDC = (HDC)m_DC;
 	HBRUSH hBr = CreateSolidBrush(HILIGHT_PAT_COLOR);
@@ -2127,7 +2168,8 @@ void CVirtualConsole::UpdateHighlightsRowCol()
 	if (isHighlightMouseRow())
 	{
 		RECT rect = {0, pix.Y, Width, pix.Y+nFontHeight};
-		PatInvertRect(hPaintDC, rect, hPaintDC, false);
+		if (pos.Y >= 0)
+			PatInvertRect(hPaintDC, rect, hPaintDC, false);
 		m_HighlightInfo.m_Last.Y = pos.Y;
 		m_HighlightInfo.mrc_LastRow = rect;
 	}
@@ -2136,7 +2178,8 @@ void CVirtualConsole::UpdateHighlightsRowCol()
 	{
 		// This will be not "precise" on other rows if using proportional font...
 		RECT rect = {pix.X, 0, pix.X+nFontWidth, Height};
-		PatInvertRect(hPaintDC, rect, hPaintDC, false);
+		if (pos.X >= 0)
+			PatInvertRect(hPaintDC, rect, hPaintDC, false);
 		m_HighlightInfo.m_Last.X = pos.X;
 		m_HighlightInfo.mrc_LastCol = rect;
 	}
