@@ -563,6 +563,11 @@ bool CVirtualConsole::isVisible()
 	return true;
 }
 
+bool CVirtualConsole::isGroup()
+{
+	return CVConGroup::isGroup(this);
+}
+
 bool CVirtualConsole::isGroupedInput()
 {
 	if (!this)

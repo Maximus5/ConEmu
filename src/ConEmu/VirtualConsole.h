@@ -89,6 +89,7 @@ class CVirtualConsole :
 		HWND GhostWnd();
 		bool isActive(bool abAllowGroup);
 		bool isVisible();
+		bool isGroup();
 		bool isGroupedInput();
 	public:
 		WARNING("Сделать protected!");
