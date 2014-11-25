@@ -1948,12 +1948,16 @@ int CShellProc::PrepareExecuteParms(
 	{
 		lbGuiApp = true;
 	}
+	// Used with "start" for example, but ignore "start /min ..."
 	if ((aCmd == eCreateProcess)
 		&& !mb_Opt_SkipCmdStart // Issue 1822
 		&& (anCreateFlags && (*anCreateFlags & (CREATE_NEW_CONSOLE)))
 		&& !bNewConsoleArg && !bForceNewConsole
 		&& (mn_ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI)
-		&& ((anShowCmd == NULL) || (*anShowCmd != SW_HIDE))
+		&& ((anShowCmd == NULL)
+			|| ((*anShowCmd != SW_HIDE)
+				&& (*anShowCmd != SW_SHOWMINNOACTIVE) && (*anShowCmd != SW_SHOWMINIMIZED) && (*anShowCmd != SW_MINIMIZE))
+			)
 		)
 	{
 		*anShowCmd = SW_HIDE;
