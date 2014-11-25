@@ -469,16 +469,12 @@
 #define cbUseKeyboardHooksFast          2086
 #define cbEnableAutoUpdateFast          2087
 #define cbDisableConImeFast             2090
-#define stUseKeyboardHooksFast1         2091
-#define stUseKeyboardHooksFast2         2092
 #define stEnableAutoUpdateFast          2093
 #define stDisableConImeFast1            2094
 #define stDisableConImeFast2            2095
 #define stDisableConImeFast3            2096
 #define gbDisableConImeFast             2097
 #define cbInjectConEmuHkFast            2098
-#define stInjectConEmuHkFast2           2099
-#define stInjectConEmuHkFast1           2100
 #define lbHotKeyList                    2101
 #define cbDragPanelBothEdges            2102
 #define stHomePage                      2103
@@ -1063,6 +1059,11 @@
 #define tTabInactiveModified            2738
 #define tTabFlashCounter                2739
 #define cbProcessCmdStart               2740
+#define stStorageLocation               2741
+#define stSingleInstance                2742
+#define stUseKeyboardHooksFast          2743
+#define stInjectConEmuHkFast            2744
+#define gbFastConfig                    2745
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
@@ -1071,7 +1072,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        226
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2741
+#define _APS_NEXT_CONTROL_VALUE         2746
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif

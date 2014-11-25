@@ -32,6 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Options.h"
 #include "OptionsClass.h"
 #include "OptionsFast.h"
+#include "OptionsHelp.h"
 #include "ConEmu.h"
 #include "ConEmuApp.h"
 #include "../common/WRegistry.h"
@@ -42,6 +43,7 @@ static bool bCheckHooks, bCheckUpdate, bCheckIme;
 // Поэтому выбранные настройки здесь можно не сохранять (кроме StopWarningConIme)
 static bool bVanilla;
 static CDpiForDialog* gp_DpiAware = NULL;
+static CEHelpPopup* gp_FastHelp = NULL;
 
 static INT_PTR CALLBACK CheckOptionsFastProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam)
 {
@@ -68,7 +70,6 @@ static INT_PTR CALLBACK CheckOptionsFastProc(HWND hDlg, UINT messg, WPARAM wPara
 				MoveWindowRect(hDlg, rect);
 			}
 
-			LRESULT lbRc = FALSE;
 			if (lParam)
 			{
 				SetWindowText(hDlg, (LPCWSTR)lParam);
@@ -179,13 +180,15 @@ static INT_PTR CALLBACK CheckOptionsFastProc(HWND hDlg, UINT messg, WPARAM wPara
 					h = GetDlgItem(hDlg, stHomePage);
 					GetWindowRect(h, &rcBtn); MapWindowPoints(NULL, hDlg, (LPPOINT)&rcBtn, 2);
 					SetWindowPos(h, NULL, rcBtn.left, rcBtn.top - nShift, 0,0, SWP_NOSIZE|SWP_NOZORDER);
+					SetWindowText(h, gsHomePage);
 
 					GetWindowRect(hDlg, &rcWnd);
 					MoveWindow(hDlg, rcWnd.left, rcWnd.top+(nShift>>1), rcWnd.right-rcWnd.left, rcWnd.bottom-rcWnd.top-nShift, FALSE);
 				}
 			}
 
-			return lbRc;
+			SetFocus(GetDlgItem(hDlg, IDOK));
+			return FALSE; // Set focus to OK
 		}
 	case WM_CTLCOLORSTATIC:
 
@@ -224,6 +227,16 @@ static INT_PTR CALLBACK CheckOptionsFastProc(HWND hDlg, UINT messg, WPARAM wPara
 			return FALSE;
 		}
 		break;
+
+	case HELP_WM_HELP:
+		break;
+	case WM_HELP:
+		if (gp_FastHelp && (wParam == 0) && (lParam != 0))
+		{
+			HELPINFO* hi = (HELPINFO*)lParam;
+			gp_FastHelp->ShowItemHelp(hi);
+		}
+		return TRUE;
 
 	case WM_COMMAND:
 
@@ -439,10 +452,12 @@ void CheckOptionsFast(LPCWSTR asTitle, SettingsLoadedFlags slfFlags)
 		SkipOneShowWindow();
 
 		gp_DpiAware = new CDpiForDialog();
+		gp_FastHelp = new CEHelpPopup;
 
 		// Modal dialog (CreateDialog)
-		DialogBoxParam(g_hInstance, MAKEINTRESOURCE(IDD_FAST_CONFIG), NULL, CheckOptionsFastProc, (LPARAM)asTitle);
 
+		DialogBoxParam(g_hInstance, MAKEINTRESOURCE(IDD_FAST_CONFIG), NULL, CheckOptionsFastProc, (LPARAM)asTitle);
+		SafeDelete(gp_FastHelp);
 		SafeDelete(gp_DpiAware);
 	}
 

@@ -1216,39 +1216,39 @@ BEGIN
     GROUPBOX        "ConEmu latest version location info",IDC_STATIC,5,193,319,28
 END
 
-IDD_FAST_CONFIG DIALOGEX 0, 0, 323, 287
+IDD_FAST_CONFIG DIALOGEX 0, 0, 323, 243
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+EXSTYLE WS_EX_CONTEXTHELP
 CAPTION "ConEmu fast configuration"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    GROUPBOX        "You can change this on 'Appearance' page of Settings dialog later",IDC_STATIC,3,35,317,29
     CONTROL         "Single instance mode (use existing window instead of running new instance)",cbSingleInstance,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,48,295,8
-    GROUPBOX        "You can change this on 'Controls' page of Settings dialog later",IDC_STATIC,3,66,317,52
-    CONTROL         " Install keyboard hooks (required for Win+Number, Win+Tab, PrntScrn and so on)",cbUseKeyboardHooksFast,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,77,295,10
-    LTEXT           "Required for some keyboard combinations. When checked, ConEmu will install keyboard hook when ConEmu is foreground window. So, You must allow that in antiviral software (AVP for example).",stUseKeyboardHooksFast1,20,90,292,25
-    GROUPBOX        "You can change this on 'Features' page of Settings dialog later",IDC_STATIC,3,120,317,54
-    CONTROL         " Inject ConEmuHk.dll into all processes started in ConEmu tabs (may cause lags)",cbInjectConEmuHkFast,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,131,295,10
-    LTEXT           "Required for many features (ANSI X3.64, -new_console argument, GUI apps in ConEmu tabs, ...) and elimination of several problems (crash in Windows 8, telnet in Windows 7, dialogs and menus behind of ConEmu window, chcp hungs, and so on...)",stInjectConEmuHkFast1,20,144,292,25
-    GROUPBOX        "You can change settings on 'Update' page of Settings dialog later",IDC_STATIC,3,175,317,27
-    CONTROL         " Enable automatic updates",cbEnableAutoUpdateFast,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,186,104,10
-    CONTROL         "‘Stable’",rbAutoUpdateStableFast,"Button",BS_AUTORADIOBUTTON,120,186,46,10
-    CONTROL         "‘Preview’",rbAutoUpdatePreviewFast,"Button",BS_AUTORADIOBUTTON,170,186,50,10
-    CONTROL         "‘Developer’ builds",rbAutoUpdateDeveloperFast,"Button",BS_AUTORADIOBUTTON,224,186,71,10
-    GROUPBOX        "",gbDisableConImeFast,3,204,317,61
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,52,295,8
+    CONTROL         "Install keyboard hooks (required for Win+Number, Win+Tab, PrntScrn and so on)",cbUseKeyboardHooksFast,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,79,295,10
+    CONTROL         "Inject ConEmuHk.dll into all processes started in ConEmu tabs",cbInjectConEmuHkFast,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,109,295,10
+    CONTROL         "Enable automatic updates",cbEnableAutoUpdateFast,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,140,109,10
+    CONTROL         "‘Stable’",rbAutoUpdateStableFast,"Button",BS_AUTORADIOBUTTON,128,140,46,10
+    CONTROL         "‘Preview’",rbAutoUpdatePreviewFast,"Button",BS_AUTORADIOBUTTON,178,140,50,10
+    CONTROL         "‘Developer’ builds",rbAutoUpdateDeveloperFast,"Button",BS_AUTORADIOBUTTON,232,140,71,10
+    GROUPBOX        "",gbDisableConImeFast,3,161,317,61
     CONTROL         " Disable ConIme.exe autorun (Vista only)",cbDisableConImeFast,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,212,295,10
-    LTEXT           "Unwanted value of ‘LoadConIme’ registry parameter! This may cause hunging of other console applications! ConEmu may disable ConIme.exe via registry:",stDisableConImeFast1,20,224,292,19
-    LTEXT           "[HKEY_CURRENT_USER\\Console]",stDisableConImeFast2,20,243,292,8
-    LTEXT           """LoadConIme""=dword:00000000",stDisableConImeFast3,20,252,292,8
-    DEFPUSHBUTTON   "OK",IDOK,215,270,50,14
-    PUSHBUTTON      "Cancel",IDCANCEL,270,270,50,14
-    LTEXT           "http://code.google.com/p/conemu-maximus5",stHomePage,10,272,150,8,SS_NOTIFY
-    GROUPBOX        "Choose ConEmu settings storage location (You may turn on portable mode here)",IDC_STATIC,3,3,317,30
-    COMBOBOX        lbStorageLocation,8,14,308,75,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,169,295,10
+    LTEXT           "Unwanted value of ‘LoadConIme’ registry parameter! This may cause hanging of other console applications! ConEmu may disable ConIme.exe via registry:",stDisableConImeFast1,20,181,292,19
+    LTEXT           "[HKEY_CURRENT_USER\\Console]",stDisableConImeFast2,20,200,292,8
+    LTEXT           """LoadConIme""=dword:00000000",stDisableConImeFast3,20,209,292,8
+    DEFPUSHBUTTON   "OK",IDOK,215,226,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,270,226,50,14
+    LTEXT           "<homepage>",stHomePage,11,229,194,8,SS_NOTIFY
+    COMBOBOX        lbStorageLocation,11,19,302,75,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Choose ConEmu settings storage location (You may turn on/off portable mode here)",stStorageLocation,11,8,294,8
+    LTEXT           "You can change following on 'Appearance' page of Settings dialog later",stSingleInstance,11,41,279,8
+    LTEXT           "You can change following on 'Controls' page of Settings dialog later",stUseKeyboardHooksFast,11,70,276,8
+    LTEXT           "You can change following on 'Features' page of Settings dialog later",stInjectConEmuHkFast,11,98,275,8
+    LTEXT           "You can change following on 'Update' page of Settings dialog later",stEnableAutoUpdateFast,11,129,277,8
+    GROUPBOX        "",gbFastConfig,3,0,317,158
 END
 
 IDD_SPG_CMDTASKS DIALOGEX 0, 0, 328, 235
@@ -1612,7 +1612,7 @@ BEGIN
         LEFTMARGIN, 3
         RIGHTMARGIN, 320
         TOPMARGIN, 3
-        BOTTOMMARGIN, 284
+        BOTTOMMARGIN, 240
     END
 
     IDD_SPG_CMDTASKS, DIALOG
