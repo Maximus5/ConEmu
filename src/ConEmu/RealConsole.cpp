@@ -193,6 +193,7 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 	tabs.mn_tabsCount = 0;
 	tabs.mb_WasInitialized = false;
 	tabs.mb_TabsWasChanged = false;
+	tabs.bConsoleDataChanged = false;
 	tabs.nActiveIndex = 0;
 	tabs.nActiveFarWindow = 0;
 	tabs.nActiveType = fwt_Panels|fwt_CurrentFarWnd;
