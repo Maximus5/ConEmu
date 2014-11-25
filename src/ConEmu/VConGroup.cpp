@@ -5618,7 +5618,16 @@ bool CVConGroup::isGroup(CVirtualConsole* apVCon, CVConGroup** rpRoot /*= NULL*/
 	if (!apVCon)
 		return false;
 
-	CVConGroup* pGr = GetRootOfVCon(apVCon);
+	CVConGroup* pGr;
+
+	// If needs only the state of split/non-split
+	if (!rpRoot && !rpActiveVCon)
+	{
+		pGr = (CVConGroup*)apVCon->mp_Group;
+		return (pGr->mp_Parent != NULL);
+	}
+
+	pGr = GetRootOfVCon(apVCon);
 	if (!pGr)
 		return false;
 
