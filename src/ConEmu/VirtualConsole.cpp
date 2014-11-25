@@ -1935,6 +1935,7 @@ void CVirtualConsole::ChangeHighlightMouse(int nWhat, int nSwitch)
 
 	if (nWhat <= 0)
 	{
+		// GuiMacro ‘HighlightMouse(0)’ would change highlighting state cyclically
 		if (!m_HighlightInfo.mb_HighlightRow && !m_HighlightInfo.mb_HighlightCol)
 		{
 			m_HighlightInfo.mb_HighlightRow = true;
@@ -1954,10 +1955,12 @@ void CVirtualConsole::ChangeHighlightMouse(int nWhat, int nSwitch)
 	}
 	else
 	{
+		// nWhat is bitmask: 1 = row, 2 = col
 		for (int i = 1; i <= 2; i++)
 		{
 			if (!(nWhat & i))
 				continue;
+			// And what to change
 			bool& bOpt = (i == 1) ? m_HighlightInfo.mb_HighlightRow : m_HighlightInfo.mb_HighlightCol;
 			switch (nSwitch)
 			{
@@ -1971,6 +1974,7 @@ void CVirtualConsole::ChangeHighlightMouse(int nWhat, int nSwitch)
 		}
 	}
 
+	// Redraw all consoles
 	Update(true);
 }
 
@@ -1995,6 +1999,7 @@ bool CVirtualConsole::WasHighlightRowColChanged()
 	if ((isHighlightMouseRow() && (crPos.Y != m_HighlightInfo.m_Last.Y))
 		|| (isHighlightMouseCol() && (crPos.X != m_HighlightInfo.m_Last.X)))
 	{
+		// Refresh our state
 		m_HighlightInfo.mb_ChangeDetected = true;
 		return true;
 	}
