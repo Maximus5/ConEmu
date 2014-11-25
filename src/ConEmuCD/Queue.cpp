@@ -670,7 +670,12 @@ BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount)
 		_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"*** WriteConsoleInput(Write=%i, Written=%i, Left=%i)\n", nCount, cbWritten, gpSrv->InputQueue.GetNumberOfBufferEvents());
 		DEBUGSTRINPUTWRITEALL(szDbg);
 	}
-	_ASSERTE((fSuccess && cbWritten==nCount) || (!fSuccess && dwErr==ERROR_INVALID_HANDLE && gbAttachMode));
+	// Some Ctrl+<key> are eaten by console input buffer. ConsoleMode==0xA7 (cmd.exe)
+	bool bEaten = fSuccess && nCount==1 && !cbWritten && pr[0].EventType==KEY_EVENT
+		&& pr[0].Event.KeyEvent.bKeyDown
+		&& ((pr[0].Event.KeyEvent.dwControlKeyState & (LEFT_ALT_PRESSED|RIGHT_ALT_PRESSED|LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED|SHIFT_PRESSED))
+			== (pr[0].Event.KeyEvent.dwControlKeyState & (LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED)));
+	_ASSERTE((fSuccess && (cbWritten==nCount || bEaten)) || (!fSuccess && dwErr==ERROR_INVALID_HANDLE && gbAttachMode));
 #endif
 
 	if (prNew) free(prNew);
