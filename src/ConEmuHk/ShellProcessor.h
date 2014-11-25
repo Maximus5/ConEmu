@@ -71,6 +71,7 @@ private:
 	//BOOL mb_DosBoxAllowed;
 	bool mb_Opt_DontInject; // ConEmuHooks=OFF
 	bool mb_Opt_SkipNewConsole; // ConEmuHooks=NOARG
+	bool mb_Opt_SkipCmdStart; // ConEmuHooks=NOSTART
 	void CheckHooksDisabled();
 
 	BOOL mb_isCurrentGuiClient;

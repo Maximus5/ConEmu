@@ -1062,6 +1062,7 @@
 #define stTabTemplateDescr              2737
 #define tTabInactiveModified            2738
 #define tTabFlashCounter                2739
+#define cbProcessCmdStart               2740
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
@@ -1070,7 +1071,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        226
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2740
+#define _APS_NEXT_CONTROL_VALUE         2741
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif

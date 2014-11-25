@@ -481,6 +481,9 @@ bool CSetDlgButtons::ProcessButtonClick(HWND hDlg, WORD CB, BYTE uCheck)
 		case cbProcessNewConArg:
 			OnBtn_ProcessNewConArg(hDlg, CB, uCheck);
 			break;
+		case cbProcessCmdStart:
+			OnBtn_ProcessCmdStart(hDlg, CB, uCheck);
+			break;
 		case cbSuppressBells:
 			OnBtn_SuppressBells(hDlg, CB, uCheck);
 			break;
@@ -2688,6 +2691,17 @@ void CSetDlgButtons::OnBtn_ProcessNewConArg(HWND hDlg, WORD CB, BYTE uCheck)
 	gpConEmu->OnGlobalSettingsChanged();
 
 } // cbProcessNewConArg
+
+
+// cbProcessCmdStart
+void CSetDlgButtons::OnBtn_ProcessCmdStart(HWND hDlg, WORD CB, BYTE uCheck)
+{
+	_ASSERTE(CB==cbProcessCmdStart);
+
+	gpSet->isProcessCmdStart = uCheck;
+	gpConEmu->OnGlobalSettingsChanged();
+
+} // cbProcessCmdStart
 
 
 // cbSuppressBells

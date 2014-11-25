@@ -139,6 +139,7 @@ CShellProc::CShellProc()
 	mb_NeedInjects = FALSE;
 	mb_Opt_DontInject = false;
 	mb_Opt_SkipNewConsole = false;
+	mb_Opt_SkipCmdStart = false;
 	mb_DebugWasRequested = FALSE;
 	mb_HiddenConsoleDetachNeed = FALSE;
 	mb_PostInjectWasRequested = FALSE;
@@ -560,6 +561,7 @@ void CShellProc::CheckHooksDisabled()
 {
 	bool bHooksTempDisabled = false;
 	bool bHooksSkipNewConsole = false;
+	bool bHooksSkipCmdStart = false;
 
 	wchar_t szVar[32] = L"";
 	if (GetEnvironmentVariable(ENV_CONEMU_HOOKS_W, szVar, countof(szVar)))
@@ -570,14 +572,19 @@ void CShellProc::CheckHooksDisabled()
 
 		bHooksSkipNewConsole = (wcsstr(szVar, ENV_CONEMU_HOOKS_NOARGS) != NULL)
 			|| (m_SrvMapping.cbSize && !(m_SrvMapping.Flags & CECF_ProcessNewCon));
+
+		bHooksSkipCmdStart = (wcsstr(szVar, ENV_CONEMU_HOOKS_NOSTART) != NULL)
+			|| (m_SrvMapping.cbSize && !(m_SrvMapping.Flags & CECF_ProcessCmdStart));
 	}
 	else
 	{
 		bHooksSkipNewConsole = (m_SrvMapping.cbSize && !(m_SrvMapping.Flags & CECF_ProcessNewCon));
+		bHooksSkipCmdStart = (m_SrvMapping.cbSize && !(m_SrvMapping.Flags & CECF_ProcessCmdStart));
 	}
 
 	mb_Opt_DontInject = bHooksTempDisabled;
 	mb_Opt_SkipNewConsole = bHooksSkipNewConsole;
+	mb_Opt_SkipCmdStart = bHooksSkipCmdStart;
 }
 
 BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole,
@@ -1942,6 +1949,7 @@ int CShellProc::PrepareExecuteParms(
 		lbGuiApp = true;
 	}
 	if ((aCmd == eCreateProcess)
+		&& !mb_Opt_SkipCmdStart // Issue 1822
 		&& (anCreateFlags && (*anCreateFlags & (CREATE_NEW_CONSOLE)))
 		&& !bNewConsoleArg && !bForceNewConsole
 		&& (mn_ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI)

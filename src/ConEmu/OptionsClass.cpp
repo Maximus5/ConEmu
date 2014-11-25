@@ -2219,6 +2219,7 @@ LRESULT CSettings::OnInitDialog_Ext(HWND hWnd2, bool abInitial)
 	SetDlgItemText(hWnd2, tAnsiLogPath, gpSet->pszAnsiLog ? gpSet->pszAnsiLog : L"");
 
 	checkDlgButton(hWnd2, cbProcessNewConArg, gpSet->isProcessNewConArg);
+	checkDlgButton(hWnd2, cbProcessCmdStart, gpSet->isProcessCmdStart);
 
 	checkDlgButton(hWnd2, cbSuppressBells, gpSet->isSuppressBells);
 

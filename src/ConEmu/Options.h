@@ -959,6 +959,8 @@ struct Settings
 		wchar_t* pszAnsiLog;
 		//reg->Load(L"ProcessNewConArg", isProcessNewConArg)
 		bool isProcessNewConArg; // Enable processing of '-new_console' and '-cur_console' switches in your shell prompt, scripts etc. started in ConEmu tabs
+		//reg->Load(L"ProcessCmdStart", isProcessCmdStart)
+		bool isProcessCmdStart; // Use "start xxx.exe" to start new tab
 		//reg->Load(L"UseClink", mb_UseClink);
 		bool mb_UseClink; // использовать расширение командной строки (ReadConsole)
 		DWORD isUseClink(bool abCheckVersion = false);

@@ -152,6 +152,7 @@ typedef struct _CONSOLE_SELECTION_INFO
 #define ENV_CONEMU_HOOKS_ENABLED      L"Enabled" // Informational
 #define ENV_CONEMU_HOOKS_DISABLED     L"OFF" // don't set hooks from "ConEmuHk.dll"
 #define ENV_CONEMU_HOOKS_NOARGS       L"NOARG" // don't process -new_console & -cur_console arguments
+#define ENV_CONEMU_HOOKS_NOSTART      L"NOSTART" // don't use "start xxx.exe" to start new tab
 // This is set to "YES" during AutoUpdate script execution
 #define ENV_CONEMU_INUPDATE_A          "ConEmuInUpdate"
 #define ENV_CONEMU_INUPDATE_W            _CRT_WIDE(ENV_CONEMU_INUPDATE_A)
@@ -1078,6 +1079,7 @@ const ConEmuConsoleFlags
 	CECF_ConExcHandler   = 0x00000100, // Set up "SetUnhandledExceptionFilter(CreateDumpOnException)" in alternative servers too
 
 	CECF_ProcessNewCon   = 0x00000200, // Enable processing of '-new_console' and '-cur_console' switches in your shell prompt, scripts etc. started in ConEmu tabs
+	CECF_ProcessCmdStart = 0x00000400, // Use "start xxx.exe" to start new tab
 
 	CECF_Empty = 0
 	;

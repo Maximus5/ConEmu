@@ -164,6 +164,7 @@ protected:
 	static void OnBtn_ProcessAnsi(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_AnsiLog(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_ProcessNewConArg(HWND hDlg, WORD CB, BYTE uCheck);
+	static void OnBtn_ProcessCmdStart(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_SuppressBells(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_ConsoleExceptionHandler(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_UseClink(HWND hDlg, WORD CB, BYTE uCheck);

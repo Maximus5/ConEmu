@@ -646,6 +646,7 @@ void Settings::InitSettings()
 	isAnsiLog = false;
 	pszAnsiLog = lstrdup(L"%ConEmuDir%\\Logs\\");
 	isProcessNewConArg = true;
+	isProcessCmdStart = true;
 	isSuppressBells = false; // пока не доделано - false
 	isConsoleExceptionHandler = false; // по умолчанию - false
 	mb_UseClink = true;
@@ -2469,6 +2470,7 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 		reg->Load(L"AnsiLog", isAnsiLog);
 		reg->Load(L"AnsiLogPath", &pszAnsiLog);
 		reg->Load(L"ProcessNewConArg", isProcessNewConArg);
+		reg->Load(L"ProcessCmdStart", isProcessCmdStart);
 
 		reg->Load(L"SuppressBells", isSuppressBells);
 
@@ -3477,6 +3479,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		reg->Save(L"AnsiLog", isAnsiLog);
 		reg->Save(L"AnsiLogPath", pszAnsiLog);
 		reg->Save(L"ProcessNewConArg", isProcessNewConArg);
+		reg->Save(L"ProcessCmdStart", isProcessCmdStart);
 
 		_ASSERTE(isSuppressBells==false); // пока не доделано - не сохраняем
 		//reg->Save(L"SuppressBells", isSuppressBells);
