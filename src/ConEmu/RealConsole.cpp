@@ -191,6 +191,7 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 
 	// Tabs
 	tabs.mn_tabsCount = 0;
+	tabs.mb_WasInitialized = false;
 	tabs.mb_TabsWasChanged = false;
 	tabs.nActiveIndex = 0;
 	tabs.nActiveFarWindow = 0;
@@ -376,6 +377,7 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 	// -- т.к. автопоказ табов может вызвать ресайз - то табы в самом конце инициализации!
 	_ASSERTE(isMainThread()); // Иначе табы сразу не перетряхнутся
 	SetTabs(NULL, 1, 0); // Для начала - показывать вкладку Console, а там ФАР разберется
+	tabs.mb_WasInitialized = true;
 	MCHKHEAP;
 
 	/* *** Set start pending *** */
@@ -10033,8 +10035,13 @@ bool CRealConsole::GetTab(int tabIdx, /*OUT*/ CTab& rTab)
 	if (!this)
 		return false;
 
+	#ifdef _DEBUG
 	// Должен быть как минимум один (хотя бы пустой) таб
-	_ASSERTE(tabs.mn_tabsCount>0);
+	if (tabs.mn_tabsCount <= 0)
+	{
+		_ASSERTE(tabs.mn_tabsCount>0 || !tabs.mb_WasInitialized);
+	}
+	#endif
 
 	// Здесь именно mn_tabsCount, т.к. возвращаются "визуальные" табы, а не "ушедшие в фон"
 	if ((tabIdx < 0) || (tabIdx >= tabs.mn_tabsCount))

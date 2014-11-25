@@ -789,6 +789,7 @@ class CRealConsole
 			CTabStack m_Tabs;
 			CTab* mp_ActiveTab;
 			int  mn_tabsCount; // Число текущих табов. Может отличаться (в меньшую сторону) от m_Tabs.GetCount()
+			bool mb_WasInitialized; // Информационно, чтобы ассертов не было
 			bool mb_TabsWasChanged;
 			bool mb_HasModalWindow; // Far Manager modal editor/viewer
 			CEFarWindowType nActiveType;
