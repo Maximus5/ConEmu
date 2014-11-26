@@ -662,15 +662,15 @@ BEGIN
     CONTROL         "Retard inactive panes",cbRetardInactivePanes,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,128,41,87,8
     CONTROL         "Disable all flashing",cbDisableAllFlashing,"Button",BS_AUTO3STATE | WS_TABSTOP,128,27,89,8
     GROUPBOX        "In-console options",IDC_STATIC,4,62,319,71
-    CONTROL         "Inject ConEmuHk",cbUseInjects,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,75,117,8
+    CONTROL         "Inject ConEmuHk",cbUseInjects,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,75,110,8
     CONTROL         "DosBox (DOS apps)",cbDosBox,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,128,74,76,8
     PUSHBUTTON      "...",bDosBoxSettings,212,72,13,11
     CONTROL         "Use Clink in prompt",cbUseClink,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,231,74,75,8
     PUSHBUTTON      "...",cbClinkWebPage,306,72,13,11
-    CONTROL         "ANSI X3.64 / xterm 256 colors",cbProcessAnsi,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,90,117,8
+    CONTROL         "ANSI X3.64 / xterm 256 colors",cbProcessAnsi,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,90,110,8
     CONTROL         "Process '-new_console' and '-cur_console' switches",cbProcessNewConArg,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,118,187,8
-    CONTROL         "Log console output (*)",cbAnsiLog,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,104,117,8
+    CONTROL         "Log console output (*)",cbAnsiLog,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,104,110,8
     EDITTEXT        tAnsiLogPath,128,102,191,12,ES_AUTOHSCROLL
     CONTROL         "Exception handler (debug)",cbConsoleExceptionHandler,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,128,90,102,8
