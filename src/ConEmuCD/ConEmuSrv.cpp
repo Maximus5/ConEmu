@@ -4187,24 +4187,34 @@ BOOL ReloadFullConsoleInfo(BOOL abForceSend)
 }
 
 
-
-BOOL CheckIndicateSleepNum()
+enum SleepIndicatorType
 {
-	static BOOL  bCheckIndicateSleepNum = FALSE;
+	sit_None = 0,
+	sit_Num,
+	sit_Title,
+};
+
+SleepIndicatorType CheckIndicateSleepNum()
+{
+	static SleepIndicatorType bCheckIndicateSleepNum = sit_None;
 	static DWORD nLastCheckTick = 0;
 
 	if (!nLastCheckTick || ((GetTickCount() - nLastCheckTick) >= 3000))
 	{
-		wchar_t szVal[32];
-		DWORD nLen = GetEnvironmentVariable(ENV_CONEMU_SLEEP_INDICATE_W, szVal, countof(szVal));
+		wchar_t szVal[32] = L"";
+		DWORD nLen = GetEnvironmentVariable(ENV_CONEMU_SLEEP_INDICATE_W, szVal, countof(szVal)-1);
 		if (nLen && (nLen < countof(szVal)))
 		{
-			szVal[3] = 0; // только "NUM" - хвост отрезать (возможные пробелы не интересуют)
-			bCheckIndicateSleepNum = (lstrcmpi(szVal, ENV_CONEMU_SLEEP_INDICATE_NUM) == 0);
+			if (lstrcmpni(szVal, ENV_CONEMU_SLEEP_INDICATE_NUM, lstrlen(ENV_CONEMU_SLEEP_INDICATE_NUM)) == 0)
+				bCheckIndicateSleepNum = sit_Num;
+			else if (lstrcmpni(szVal, ENV_CONEMU_SLEEP_INDICATE_TTL, lstrlen(ENV_CONEMU_SLEEP_INDICATE_TTL)) == 0)
+				bCheckIndicateSleepNum = sit_Title;
+			else
+				bCheckIndicateSleepNum = sit_None;
 		}
 		else
 		{
-			bCheckIndicateSleepNum = FALSE; // Надо, ибо может быть обратный сброс переменной
+			bCheckIndicateSleepNum = sit_None; // Надо, ибо может быть обратный сброс переменной
 		}
 		nLastCheckTick = GetTickCount();
 	}
@@ -4212,7 +4222,39 @@ BOOL CheckIndicateSleepNum()
 	return bCheckIndicateSleepNum;
 }
 
-
+void ShowSleepIndicator(SleepIndicatorType SleepType, bool bSleeping)
+{
+	switch (SleepType)
+	{
+	case sit_Num:
+		{
+			// Num: Sleeping - OFF, Active - ON
+			bool bNum = (GetKeyState(VK_NUMLOCK) & 1) == 1;
+			if (bNum == bSleeping)
+			{
+				keybd_event(VK_NUMLOCK, 0, 0, 0);
+				keybd_event(VK_NUMLOCK, 0, KEYEVENTF_KEYUP, 0);
+			}
+		} break;
+	case sit_Title:
+		{
+			const wchar_t szSleepPrefix[] = L"[Sleep] ";
+			const int nPrefixLen = lstrlen(szSleepPrefix);
+			static wchar_t szTitle[2000];
+			DWORD nLen = GetConsoleTitle(szTitle+nPrefixLen, countof(szTitle)-nPrefixLen);
+			bool bOld = (wmemcmp(szTitle+nPrefixLen, szSleepPrefix, nPrefixLen) == 0);
+			if (bOld && !bSleeping)
+			{
+				SetConsoleTitle(szTitle+2*nPrefixLen);
+			}
+			else if (!bOld && bSleeping)
+			{
+				wmemmove(szTitle, szSleepPrefix, nPrefixLen);
+				SetConsoleTitle(szTitle);
+			}
+		} break;
+	}
+}
 
 
 
@@ -4241,7 +4283,7 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 	BOOL bSetRefreshDoneEvent;
 	DWORD nWaitCursor = 99;
 	DWORD nWaitCommit = 99;
-	BOOL bIndicateSleepNum = FALSE;
+	SleepIndicatorType SleepType = sit_None;
 
 	while (TRUE)
 	{
@@ -4627,7 +4669,7 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 
 
 		// Обновляется по таймауту
-		bIndicateSleepNum = CheckIndicateSleepNum();
+		SleepType = CheckIndicateSleepNum();
 
 
 		// Чтобы не грузить процессор неактивными консолями спим, если
@@ -4646,14 +4688,10 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 			DWORD nCurTick = GetTickCount();
 			nDelta = nCurTick - nLastReadTick;
 
-			if (bIndicateSleepNum)
+			if (SleepType)
 			{
-				bool bNum = (GetKeyState(VK_NUMLOCK) & 1) == 1;
-				if (bNum)
-				{
-					keybd_event(VK_NUMLOCK, 0, 0, 0);
-					keybd_event(VK_NUMLOCK, 0, KEYEVENTF_KEYUP, 0);
-				}
+				// Выключить индикатор (low speed)
+				ShowSleepIndicator(SleepType, true);
 			}
 
 			// #define MAX_FORCEREFRESH_INTERVAL 500
@@ -4663,14 +4701,9 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 				continue;
 			}
 		}
-		else if (bIndicateSleepNum)
+		else if (SleepType)
 		{
-			bool bNum = (GetKeyState(VK_NUMLOCK) & 1) == 1;
-			if (!bNum)
-			{
-				keybd_event(VK_NUMLOCK, 0, 0, 0);
-				keybd_event(VK_NUMLOCK, 0, KEYEVENTF_KEYUP, 0);
-			}
+			ShowSleepIndicator(SleepType, false);
 		}
 
 
