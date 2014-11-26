@@ -625,8 +625,6 @@ int MyGetDlgItemText(HWND hDlg, WORD nID, wchar_t (&rszText)[size])
 	CEStr szText;
 	size_t cchMax = 0;
 	int nLen = MyGetDlgItemText(hDlg, nID, cchMax, szText.ms_Arg);
-	if (!pszText)
-		return false;
 	if (lstrcmp(rszText, szText.ms_Arg) == 0)
 		return false;
 	lstrcpyn(rszText, szText.ms_Arg, size);
