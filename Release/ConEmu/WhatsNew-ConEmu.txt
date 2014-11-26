@@ -12,6 +12,11 @@ Votes and awards (vote for ConEmu, if you please)
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+2014.11.26
+[*] Issue 1590, Issue 1793: Slow input response in some cases (after startup or tab switching).
+[*] Some controls on the ‘Features’ page were overlapped.
+
+
 2014.11.25
 [*] Issue 1821: Don't force "start /min ..." to be new ConEmu tab.
 [*] Issue 1822: Option to disable forcing "start" to be new ConEmu tab.
