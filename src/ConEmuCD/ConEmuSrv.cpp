@@ -4610,7 +4610,8 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 		BOOL bNewFellInSleep = FALSE;
 
 		DWORD nLastConsoleActiveTick = gpSrv->nLastConsoleActiveTick;
-		if (!nLastConsoleActiveTick || ((GetTickCount() - nLastConsoleActiveTick) >= REFRESH_FELL_SLEEP_TIMEOUT))
+		DWORD nLastConsoleActiveDelta = GetTickCount() - nLastConsoleActiveTick;
+		if (!nLastConsoleActiveTick || (nLastConsoleActiveDelta >= REFRESH_FELL_SLEEP_TIMEOUT))
 		{
 			ReloadGuiSettings(NULL);
 			bConsoleVisible = IsWindowVisible(ghConEmuWndDC);
