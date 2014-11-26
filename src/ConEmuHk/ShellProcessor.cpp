@@ -39,7 +39,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/execute.h"
 #include "../common/WErrGuard.h"
 #include "../common/WObjects.h"
+#if defined(__GNUC__) && !defined(__MINGW32__)
 #include "../ConEmu/ShObjIdl_Part.h"
+#endif
 #include "../ConEmuCD/ExitCodes.h"
 #include "Ansi.h"
 #include "ConEmuHooks.h"

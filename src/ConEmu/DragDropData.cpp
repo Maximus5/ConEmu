@@ -34,7 +34,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma warning(disable: 4091)
 #include <shlobj.h>
 #pragma warning(default: 4091)
-#ifdef __GNUC__
+#if defined(__GNUC__) && !defined(__MINGW64_VERSION_MAJOR)
 #include "ShObjIdl_Part.h"
 #endif
 
