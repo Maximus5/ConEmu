@@ -359,6 +359,7 @@ enum LGSResult
 	lgs_WrongVersion,
 	lgs_WrongSize,
 	lgs_Succeeded,
+	lgs_ActiveChanged,
 	lgs_Updated,
 };
 LGSResult ReloadGuiSettings(ConEmuGuiMapping* apFromCmd, LPDWORD pnWrongValue = NULL);

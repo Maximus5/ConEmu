@@ -220,6 +220,13 @@ LGSResult LoadGuiSettingsPtr(ConEmuGuiMapping& GuiMapping, const ConEmuGuiMappin
 		_ASSERTE(GuiMapping.ComSpec.ConEmuExeDir[0]!=0 && GuiMapping.ComSpec.ConEmuBaseDir[0]!=0);
 		liRc = lgs_Updated;
 	}
+	else if (GuiMapping.dwActiveTick != pInfo->dwActiveTick)
+	{
+		// But active consoles list may be changed
+		if (!lbCopied)
+			memmove(GuiMapping.hActiveCons, pInfo->hActiveCons, sizeof(GuiMapping.hActiveCons));
+		liRc = lgs_ActiveChanged;
+	}
 	else
 	{
 		liRc = lgs_Succeeded;
