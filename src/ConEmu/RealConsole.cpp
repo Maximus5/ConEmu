@@ -3185,7 +3185,8 @@ DWORD CRealConsole::ConHostSearch(bool bFinal)
 		}
 		else if (CreatedHost.size() > 1)
 		{
-			_ASSERTE(FALSE && "More than one created conhost.exe was found!");
+			//_ASSERTE(FALSE && "More than one created conhost.exe was found!");
+			LogString(L"More than one created conhost.exe was found!");
 			Sleep(250); // Попробовать еще раз? Может кто-то левый проехал...
 			continue;
 		}
