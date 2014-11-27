@@ -6402,7 +6402,7 @@ void LogString(LPCWSTR asText)
 	gpLogSize->LogString(asText, true, pszThread);
 }
 
-void LogSize(COORD* pcrSize, int newBufferHeight, LPCSTR pszLabel)
+void LogSize(const COORD* pcrSize, int newBufferHeight, LPCSTR pszLabel)
 {
 	if (!gpLogSize) return;
 
