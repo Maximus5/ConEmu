@@ -7161,24 +7161,8 @@ BOOL cmd_OnActivation(CESERVER_REQ& in, CESERVER_REQ** out)
 {
 	BOOL lbRc = FALSE;
 
-	if (gpSrv /*->pConsole*/)
+	if (gpSrv)
 	{
-		//gpSrv->pConsole->hdr.bConsoleActive = in.dwData[0];
-		//gpSrv->pConsole->hdr.bThawRefreshThread = in.dwData[1];
-
-		//if (gpLogSize)
-		//{
-		//	char szInfo[128];
-		//	_wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "ConEmuC: cmd_OnActivation(active=%u, speed=%s)", in.dwData[0], in.dwData[1] ? "high" : "low");
-		//	LogString(szInfo);
-		//}
-
-		////gpSrv->pConsoleMap->SetFrom(&(gpSrv->pConsole->hdr));
-		//UpdateConsoleMapHeader();
-
-		//// Если консоль активировали - то принудительно перечитать ее содержимое
-		//if (gpSrv->pConsole->hdr.bConsoleActive)
-
 
 		// Принудить RefreshThread перечитать статус активности консоли
 		gpSrv->nLastConsoleActiveTick = 0;
@@ -7197,8 +7181,7 @@ BOOL cmd_OnActivation(CESERVER_REQ& in, CESERVER_REQ** out)
 		else
 		{
 			// Warning: If refresh thread is in an AltServerStop
-			// transaction, ReloadFullConsoleInfo will deadlock.
-			//ReloadFullConsoleInfo(TRUE);
+			// transaction, ReloadFullConsoleInfo with (TRUE) will deadlock.
 			ReloadFullConsoleInfo(FALSE);
 		}
 	}
