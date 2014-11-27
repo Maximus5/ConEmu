@@ -7184,6 +7184,8 @@ BOOL cmd_OnActivation(CESERVER_REQ& in, CESERVER_REQ** out)
 			// Warning: If refresh thread is in an AltServerStop
 			// transaction, ReloadFullConsoleInfo with (TRUE) will deadlock.
 			ReloadFullConsoleInfo(FALSE);
+			// Force refresh thread to cycle
+			SetEvent(gpSrv->hRefreshEvent);
 		}
 	}
 
