@@ -70,7 +70,7 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
 2014.11.16
-[*] Issue 1812: Vertical scroll bar has disappeared in latest Win10 build.
+[*] Issue 1812: Vertical scroll bar disappeared in latest Win10 build.
 [*] Use modified <SolarMe> palette by default (for new configs).
 [*] Show error box if Server and GUI has wrong protocol versions. Log errors also.
 [*] LogFiles: Add root shell's start/exit logging.
