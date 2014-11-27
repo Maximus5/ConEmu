@@ -4601,18 +4601,8 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 		if (nWait == WAIT_OBJECT_0)
 		{
 			break; // затребовано завершение нити
-		}// else if (nWait == WAIT_TIMEOUT && dwConWait == WAIT_OBJECT_0) {
+		}
 
-		//	nWait = (WAIT_OBJECT_0+1);
-		//}
-
-		//lbEventualChange = (nWait == (WAIT_OBJECT_0+1))/* || lbProcessChanged*/;
-		//lbForceSend = (nWait == (WAIT_OBJECT_0+1));
-
-		//WARNING("gpSrv->pConsole->hdr.bConsoleActive и gpSrv->pConsole->hdr.bThawRefreshThread могут быть неактуальными!");
-		//if (gpSrv->pConsole->hdr.bConsoleActive && gpSrv->pConsoleMap)
-		//{
-		//BOOL bNewThaw = TRUE;
 		BOOL bNewActive = TRUE;
 		BOOL bNewFellInSleep = FALSE;
 
@@ -4641,28 +4631,18 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 		}
 
 		if (bOurConActive || bDCWndVisible)
+		{
 			bNewActive = gpSrv->guiSettings.bGuiActive || !(gpSrv->guiSettings.Flags & CECF_SleepInBackg);
+		}
 		else
+		{
 			bNewActive = FALSE;
+		}
 
 		bNewFellInSleep = (gpSrv->guiSettings.Flags & CECF_SleepInBackg) && !bNewActive;
 
-		//if (gpSrv->pConsoleMap->IsValid())
-		//{
-		//	CESERVER_CONSOLE_MAPPING_HDR* p = gpSrv->pConsoleMap->Ptr();
-		//	bNewThaw = p->bThawRefreshThread;
-		//	bConsoleActive = p->bConsoleActive;
-		//}
-		//else
-		//{
-		//	bNewThaw = bConsoleActive = TRUE;
-		//}
-		////}
-
-		//if (bNewThaw != bThaw)
 		if ((bNewActive != bConsoleActive) || (bNewFellInSleep != bFellInSleep))
 		{
-			//bThaw = bNewThaw;
 			bConsoleActive = bNewActive;
 			bFellInSleep = bNewFellInSleep;
 
