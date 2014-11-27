@@ -7163,6 +7163,7 @@ BOOL cmd_OnActivation(CESERVER_REQ& in, CESERVER_REQ** out)
 
 	if (gpSrv)
 	{
+		LogString(L"CECMD_ONACTIVATION received, state update pending");
 
 		// Принудить RefreshThread перечитать статус активности консоли
 		gpSrv->nLastConsoleActiveTick = 0;
