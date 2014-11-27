@@ -1228,8 +1228,7 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,79,295,10
     CONTROL         "Inject ConEmuHk.dll into all processes started in ConEmu tabs",cbInjectConEmuHkFast,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,109,295,10
-    CONTROL         "Enable automatic updates",cbEnableAutoUpdateFast,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,140,109,10
+    CONTROL         "Enable automatic updates",cbEnableAutoUpdateFast,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,140,109,10
     CONTROL         "‘Stable’",rbAutoUpdateStableFast,"Button",BS_AUTORADIOBUTTON,128,140,46,10
     CONTROL         "‘Preview’",rbAutoUpdatePreviewFast,"Button",BS_AUTORADIOBUTTON,178,140,50,10
     CONTROL         "‘Developer’ builds",rbAutoUpdateDeveloperFast,"Button",BS_AUTORADIOBUTTON,232,140,71,10
