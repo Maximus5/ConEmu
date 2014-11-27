@@ -4640,7 +4640,7 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 			}
 		}
 
-		if (bOurConActive || !bOneConActive || bConsoleVisible)
+		if (bOurConActive || bConsoleVisible)
 			bNewActive = gpSrv->guiSettings.bGuiActive || !(gpSrv->guiSettings.Flags & CECF_SleepInBackg);
 		else
 			bNewActive = FALSE;
