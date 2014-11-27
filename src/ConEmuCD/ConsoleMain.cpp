@@ -8827,6 +8827,13 @@ BOOL MyGetConsoleScreenBufferInfo(HANDLE ahConOut, PCONSOLE_SCREEN_BUFFER_INFO a
 			//_ASSERTE(!csbi.srWindow.Left && !csbi.srWindow.Top);
 			csbi.dwSize.X = csbi.srWindow.Right+1-csbi.srWindow.Left;
 			csbi.dwSize.Y = csbi.srWindow.Bottom+1+csbi.srWindow.Top;
+			// Log that change
+			if (gpLogSize)
+			{
+				char szLabel[80];
+				_wsprintfA(szLabel, SKIPCOUNT(szLabel) "CONSOLE_FULLSCREEN_HARDWARE{x%08X}", gpSrv->dwDisplayMode);
+				LogSize(&csbi.dwSize, 0, szLabel);
+			}
 		}
 	}
 
