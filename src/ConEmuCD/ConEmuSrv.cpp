@@ -4249,10 +4249,15 @@ void ShowSleepIndicator(SleepIndicatorType SleepType, bool bSleeping)
 			const int nPrefixLen = lstrlen(szSleepPrefix);
 			static wchar_t szTitle[2000];
 			DWORD nLen = GetConsoleTitle(szTitle+nPrefixLen, countof(szTitle)-nPrefixLen);
-			bool bOld = (wmemcmp(szTitle+nPrefixLen, szSleepPrefix, nPrefixLen) == 0);
+			bool bOld = (wcsstr(szTitle+nPrefixLen, szSleepPrefix) != NULL);
 			if (bOld && !bSleeping)
 			{
-				SetConsoleTitle(szTitle+2*nPrefixLen);
+				wchar_t* psz;
+				while ((psz = wcsstr(szTitle+nPrefixLen, szSleepPrefix)) != NULL)
+				{
+					wmemmove(psz, psz+nPrefixLen, wcslen(psz+nPrefixLen)+1);
+				}
+				SetConsoleTitle(szTitle+nPrefixLen);
 			}
 			else if (!bOld && bSleeping)
 			{
