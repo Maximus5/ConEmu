@@ -4284,13 +4284,18 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 	BOOL lbWasSizeChange = FALSE;
 	//BOOL bThaw = TRUE; // Если FALSE - снизить нагрузку на conhost
 	BOOL bFellInSleep = FALSE; // Если TRUE - снизить нагрузку на conhost
-	BOOL bConsoleActive = TRUE;
-	BOOL bDCWndVisible = TRUE;
+	BOOL bConsoleActive = (BOOL)-1;
+	BOOL bDCWndVisible = (BOOL)-1;
+	BOOL bNewActive = (BOOL)-1, bNewFellInSleep = FALSE;
+	BOOL ActiveSleepInBg = (gpSrv->guiSettings.Flags & CECF_SleepInBackg);
+	BOOL bOurConActive = (BOOL)-1, bOneConActive = (BOOL)-1;
 	BOOL bOnlyCursorChanged;
 	BOOL bSetRefreshDoneEvent;
 	DWORD nWaitCursor = 99;
 	DWORD nWaitCommit = 99;
 	SleepIndicatorType SleepType = sit_None;
+	DWORD nLastConsoleActiveTick = 0;
+	DWORD nLastConsoleActiveDelta = 0;
 
 	while (TRUE)
 	{
@@ -4603,43 +4608,64 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 			break; // затребовано завершение нити
 		}
 
-		BOOL bNewActive = TRUE;
-		BOOL bNewFellInSleep = FALSE;
-
-		DWORD nLastConsoleActiveTick = gpSrv->nLastConsoleActiveTick;
-		DWORD nLastConsoleActiveDelta = GetTickCount() - nLastConsoleActiveTick;
+		nLastConsoleActiveTick = gpSrv->nLastConsoleActiveTick;
+		nLastConsoleActiveDelta = GetTickCount() - nLastConsoleActiveTick;
 		if (!nLastConsoleActiveTick || (nLastConsoleActiveDelta >= REFRESH_FELL_SLEEP_TIMEOUT))
 		{
 			ReloadGuiSettings(NULL);
-			bDCWndVisible = IsWindowVisible(ghConEmuWndDC);
+			BOOL lbDCWndVisible = bDCWndVisible;
+			bDCWndVisible = (IsWindowVisible(ghConEmuWndDC) != FALSE);
 			gpSrv->nLastConsoleActiveTick = GetTickCount();
+
+			if (gpLogSize && (bDCWndVisible != lbDCWndVisible))
+			{
+				LogString(bDCWndVisible ? L"bDCWndVisible changed to true" : L"bDCWndVisible changed to false");
+			}
 		}
 
-		bool bOurConActive = false, bOneConActive = false;
+		BOOL lbOurConActive = FALSE, lbOneConActive = FALSE;
 		for (size_t i = 0; i < countof(gpSrv->guiSettings.hActiveCons); i++)
 		{
 			HWND h = gpSrv->guiSettings.hActiveCons[i];
 			if (h)
 			{
-				bOneConActive = true;
+				lbOneConActive = TRUE;
 				if (ghConWnd == h)
 				{
-					bOurConActive = true;
+					lbOurConActive = TRUE;
 					break;
 				}
 			}
 		}
+		if (gpLogSize && (bOurConActive != lbOurConActive))
+			LogString(lbOurConActive ? L"bOurConActive changed to true" : L"bOurConActive changed to false");
+		bOurConActive = lbOurConActive;
+		if (gpLogSize && (bOneConActive != lbOneConActive))
+			LogString(lbOneConActive ? L"bOneConActive changed to true" : L"bOneConActive changed to false");
+		bOneConActive = lbOneConActive;
 
+		ActiveSleepInBg = (gpSrv->guiSettings.Flags & CECF_SleepInBackg);
+
+		BOOL lbNewActive;
 		if (bOurConActive || bDCWndVisible)
 		{
-			bNewActive = gpSrv->guiSettings.bGuiActive || !(gpSrv->guiSettings.Flags & CECF_SleepInBackg);
+			// Mismatch may appears during console closing
+			//if (gpLogSize && gbInShutdown && (bDCWndVisible != bOurConActive))
+			//	LogString(L"bDCWndVisible and bOurConActive mismatch");
+			lbNewActive = gpSrv->guiSettings.bGuiActive || !ActiveSleepInBg;
 		}
 		else
 		{
-			bNewActive = FALSE;
+			lbNewActive = FALSE;
 		}
+		if (gpLogSize && (bNewActive != lbNewActive))
+			LogString(lbNewActive ? L"bNewActive changed to true" : L"bNewActive changed to false");
+		bNewActive = lbNewActive;
 
-		bNewFellInSleep = (gpSrv->guiSettings.Flags & CECF_SleepInBackg) && !bNewActive;
+		BOOL lbNewFellInSleep = ActiveSleepInBg && !bNewActive;
+		if (gpLogSize && (bNewFellInSleep != lbNewFellInSleep))
+			LogString(lbNewFellInSleep ? L"bNewFellInSleep changed to true" : L"bNewFellInSleep changed to false");
+		bNewFellInSleep = lbNewFellInSleep;
 
 		if ((bNewActive != bConsoleActive) || (bNewFellInSleep != bFellInSleep))
 		{
