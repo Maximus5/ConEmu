@@ -6849,6 +6849,7 @@ BOOL cmd_PostConMsg(CESERVER_REQ& in, CESERVER_REQ** out)
 	{
 		// Чтобы при закрытии не _мелькало_ "Press Enter to Close console"
 		gbInShutdown = TRUE;
+		LogString(L"WM_CLOSE posted to console window, termination was requested");
 	}
 
 	// Info & Log
