@@ -231,6 +231,8 @@ BEGIN
 	tTabConsole             "Common tab template (any console program except Far Manager)"
 	tTabEditor              "Tab template for Far Manager internal editors"
 	tTabEditorMod           "Tab template for Far Manager internal modified editors"
+	tTabFlashCounter        "When something was changed in the inactive console\r\nConEmu may flash tab icon in that case\r\nSet ‘-1’ to flash infinitely\r\nUse odd values to leave tab in highlighted state"
+	tTabModifiedSuffix      "When something was changed in the inactive console\r\nConEmu may show that in the tab label\r\nSet or clear this suffix appended to the tab template"
 	tTabPanels              "Tab template for Far Manager panels"
 	tTabViewer              "Tab template for Far Manager internal viewers"
 	tThumbLoadingTimeout    "Maximal duration of preview generation (per file)"
