@@ -4856,6 +4856,12 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		break;
 	} // case tTabLenMax:
 
+	case tTabFlashCounter:
+	{
+		GetDlgItemSigned(hWnd2, tTabFlashCounter, gpSet->nTabFlashChanged, -1, 0);
+		break;
+	} // case tTabFlashCounter:
+
 	case tAdminSuffix:
 	{
 		wchar_t szNew[64];
