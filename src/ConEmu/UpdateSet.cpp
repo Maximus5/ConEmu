@@ -77,6 +77,7 @@ void ConEmuUpdateSettings::ResetToDefaults()
 	// Проверяем, была ли программа установлена через ConEmuSetup.exe?
 	isUpdateDownloadSetup = 0; // 0-Auto, 1-Installer (ConEmuSetup.exe), 2-7z archieve (ConEmu.7z), WinRar or 7z required
 	isSetupDetected = 0; // 0-пока не проверялся, 1-установлено через Installer, пути совпали, 2-Installer не запускался
+	isSetup64 = WIN3264TEST(false,true); // определяется вместе с isSetupDetected
 
 	szUpdateExeCmdLineDef = lstrdup(L"\"%1\" /p:%3 /qr");
 	SafeFree(szUpdateExeCmdLine);
@@ -231,10 +232,12 @@ bool ConEmuUpdateSettings::UpdatesAllowed(wchar_t (&szReason)[128])
 		return false; // Не указано, какие сборки можно загружать
 	}
 
+	wchar_t szCPU[4] = L"";
+
 	switch (UpdateDownloadSetup())
 	{
 	case 1:
-		if (!*UpdateExeCmdLine())
+		if (!*UpdateExeCmdLine(szCPU))
 		{
 			wcscpy_c(szReason, L"Update.ExeCmdLine is not specified");
 			return false; // Не указана строка запуска инсталлятора
@@ -306,7 +309,8 @@ BYTE ConEmuUpdateSettings::UpdateDownloadSetup()
 		for (size_t i = 0; i <= 2; i++)
 		{
 			DWORD dwSam = KEY_READ | ((i == 0) ? 0 : (i == 1) ? KEY_WOW64_32KEY : KEY_WOW64_64KEY);
-			LPCWSTR pszName = ((i == 0) ? WIN3264TEST(L"InstallDir",L"InstallDir_x64") : (i == 1) ? L"InstallDir" : L"InstallDir_x64");
+			bool x64 = ((i == 0) ? WIN3264TEST(false,true) : (i == 1) ? false : true);
+			LPCWSTR pszName = x64 ? L"InstallDir_x64" : L"InstallDir";
 			lRc = RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"SOFTWARE\\ConEmu", 0, dwSam, &hk);
 			if (lRc == 0)
 			{
@@ -320,6 +324,7 @@ BYTE ConEmuUpdateSettings::UpdateDownloadSetup()
 					if (lstrcmpi(szInstallDir, szExeDir) == 0)
 					{
 						isSetupDetected = 1;
+						isSetup64 = x64;
 					}
 				}
 				RegCloseKey(hk);
@@ -335,8 +340,9 @@ BYTE ConEmuUpdateSettings::UpdateDownloadSetup()
 	return isSetupDetected ? isSetupDetected : 2;
 }
 
-LPCWSTR ConEmuUpdateSettings::UpdateExeCmdLine()
+LPCWSTR ConEmuUpdateSettings::UpdateExeCmdLine(wchar_t (&szCPU)[4])
 {
+	wcscpy_c(szCPU, isSetup64 ? L"x64" : L"x86");
 	if (szUpdateExeCmdLine && *szUpdateExeCmdLine)
 		return szUpdateExeCmdLine;
 	return szUpdateExeCmdLineDef ? szUpdateExeCmdLineDef : L"";

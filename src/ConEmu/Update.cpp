@@ -948,8 +948,8 @@ wchar_t* CConEmuUpdate::CreateBatchFile(LPCWSTR asPackage)
 	size_t cchCmdMax = 0;
 
 	wchar_t szPID[16]; _wsprintf(szPID, SKIPLEN(countof(szPID)) L"%u", GetCurrentProcessId());
+	// Setupper bitness will be corrected in mp_Set->UpdateExeCmdLine
 	wchar_t szCPU[4]; wcscpy_c(szCPU, WIN3264TEST(L"x86",L"x64"));
-	WARNING("Битность установщика? Если ставим в ProgramFiles64 на Win64");
 
 	if (!gpConEmu)
 	{
@@ -980,7 +980,7 @@ wchar_t* CConEmuUpdate::CreateBatchFile(LPCWSTR asPackage)
 	WRITE_BATCH_A("\\\"\r\necho Current folder\r\ncd\r\necho .\r\n\r\necho Starting update...\r\n");
 
 	// Формат.
-	pszFormat = (mp_Set->UpdateDownloadSetup()==1) ? mp_Set->UpdateExeCmdLine() : mp_Set->UpdateArcCmdLine();
+	pszFormat = (mp_Set->UpdateDownloadSetup()==1) ? mp_Set->UpdateExeCmdLine(szCPU) : mp_Set->UpdateArcCmdLine();
 
 	// Замена %1 и т.п.
 	for (int s = 0; s < 2; s++)

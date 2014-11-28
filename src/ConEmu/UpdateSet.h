@@ -43,6 +43,7 @@ public:
 	BYTE isUpdateUseBuilds; // 0-спросить пользователя при первом запуске, 1-stable only, 2-latest, 3-preview
 	BYTE isUpdateDownloadSetup; // 0-Auto, 1-Installer (ConEmuSetup.exe), 2-7z archieve (ConEmu.7z), WinRar or 7z required
 	BYTE isSetupDetected; // 0-пока не проверялся, 1-установлено через Installer, пути совпали, 2-Installer не запускался
+	bool isSetup64; // нужно запомнить, какой именно setup был установлен
 	BYTE UpdateDownloadSetup();
 
 	bool isUpdateUseProxy;
@@ -52,7 +53,7 @@ public:
 
 	// "%1"-archive or setup file, "%2"-ConEmu.exe folder, "%3"-x86/x64, "%4"-ConEmu PID
 	wchar_t *szUpdateExeCmdLine, *szUpdateExeCmdLineDef; // isUpdateDownloadSetup==1
-	LPCWSTR UpdateExeCmdLine();
+	LPCWSTR UpdateExeCmdLine(wchar_t (&szCPU)[4]);
 	wchar_t *szUpdateArcCmdLine, *szUpdateArcCmdLineDef; // isUpdateDownloadSetup==2
 	LPCWSTR UpdateArcCmdLine();
 

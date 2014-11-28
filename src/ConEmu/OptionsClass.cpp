@@ -4465,10 +4465,28 @@ LRESULT CSettings::OnInitDialog_Update(HWND hWnd2)
 
 	int nPackage = p->UpdateDownloadSetup(); // 1-exe, 2-7zip
 	checkRadioButton(hWnd2, rbUpdateUseExe, rbUpdateUseArc, (nPackage==1) ? rbUpdateUseExe : rbUpdateUseArc);
-	SetDlgItemText(hWnd2, tUpdateExeCmdLine, p->UpdateExeCmdLine());
+	wchar_t szCPU[4] = L"";
+	SetDlgItemText(hWnd2, tUpdateExeCmdLine, p->UpdateExeCmdLine(szCPU));
 	SetDlgItemText(hWnd2, tUpdateArcCmdLine, p->UpdateArcCmdLine());
 	SetDlgItemText(hWnd2, tUpdatePostUpdateCmd, p->szUpdatePostUpdateCmd);
 	EnableDlgItem(hWnd2, (nPackage==1) ? tUpdateArcCmdLine : tUpdateExeCmdLine, FALSE);
+	if (nPackage == 1)
+	{
+		// Show used installer bitness
+		CEStr szFormat, szTitle; INT_PTR iLen;
+		if ((iLen = GetString(hWnd2, rbUpdateUseExe, &szFormat.ms_Arg)) > 0)
+		{
+			if (wcsstr(szFormat.ms_Arg, L"%s") != NULL)
+			{
+				wchar_t* psz = szTitle.GetBuffer(iLen+4);
+				if (psz)
+				{
+					_wsprintf(psz, SKIPLEN(iLen+4) szFormat.ms_Arg, szCPU);
+					SetDlgItemText(hWnd2, rbUpdateUseExe, szTitle);
+				}
+			}
+		}
+	}
 
 	checkDlgButton(hWnd2, cbUpdateLeavePackages, p->isUpdateLeavePackages);
 	SetDlgItemText(hWnd2, tUpdateDownloadPath, p->szUpdateDownloadPath);
