@@ -4470,20 +4470,17 @@ LRESULT CSettings::OnInitDialog_Update(HWND hWnd2)
 	SetDlgItemText(hWnd2, tUpdateArcCmdLine, p->UpdateArcCmdLine());
 	SetDlgItemText(hWnd2, tUpdatePostUpdateCmd, p->szUpdatePostUpdateCmd);
 	EnableDlgItem(hWnd2, (nPackage==1) ? tUpdateArcCmdLine : tUpdateExeCmdLine, FALSE);
-	if (nPackage == 1)
+	// Show used or preferred installer bitness
+	CEStr szFormat, szTitle; INT_PTR iLen;
+	if ((iLen = GetString(hWnd2, rbUpdateUseExe, &szFormat.ms_Arg)) > 0)
 	{
-		// Show used installer bitness
-		CEStr szFormat, szTitle; INT_PTR iLen;
-		if ((iLen = GetString(hWnd2, rbUpdateUseExe, &szFormat.ms_Arg)) > 0)
+		if (wcsstr(szFormat.ms_Arg, L"%s") != NULL)
 		{
-			if (wcsstr(szFormat.ms_Arg, L"%s") != NULL)
+			wchar_t* psz = szTitle.GetBuffer(iLen+4);
+			if (psz)
 			{
-				wchar_t* psz = szTitle.GetBuffer(iLen+4);
-				if (psz)
-				{
-					_wsprintf(psz, SKIPLEN(iLen+4) szFormat.ms_Arg, szCPU);
-					SetDlgItemText(hWnd2, rbUpdateUseExe, szTitle);
-				}
+				_wsprintf(psz, SKIPLEN(iLen+4) szFormat.ms_Arg, (nPackage == 1) ? szCPU : WIN3264TEST(L"x86",L"x64"));
+				SetDlgItemText(hWnd2, rbUpdateUseExe, szTitle);
 			}
 		}
 	}
