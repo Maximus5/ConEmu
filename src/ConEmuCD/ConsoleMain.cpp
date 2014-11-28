@@ -8806,6 +8806,9 @@ BOOL MyGetConsoleScreenBufferInfo(HANDLE ahConOut, PCONSOLE_SCREEN_BUFFER_INFO a
 	// CONSOLE_FULLSCREEN/*1*/ or CONSOLE_FULLSCREEN_HARDWARE/*2*/
 	if (pfnGetConsoleDisplayMode && pfnGetConsoleDisplayMode(&gpSrv->dwDisplayMode))
 	{
+		// The bug of Windows 10 b9879
+		if ((gnOsVer == 0x0604) && (gOSVer.dwBuildNumber == 9879))
+			gpSrv->dwDisplayMode = 0;
 		if (gpSrv->dwDisplayMode & CONSOLE_FULLSCREEN_HARDWARE)
 		{
 			// While in hardware fullscreen - srWindow still shows window region
