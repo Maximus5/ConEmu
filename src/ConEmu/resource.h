@@ -1056,7 +1056,7 @@
 #define stTabConsole                    2735
 #define stTabTemplateGroup              2736
 #define stTabTemplateDescr              2737
-#define tTabInactiveModified            2738
+#define tTabModifiedSuffix              2738
 #define tTabFlashCounter                2739
 #define cbProcessCmdStart               2740
 #define stStorageLocation               2741

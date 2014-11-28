@@ -1884,7 +1884,7 @@ void CRealConsole::OnConsoleDataChanged()
 		tabs.nFlashCounter = 0;
 		tabs.bConsoleDataChanged = true;
 		// But tab text labels - must be updated specially
-		if (gpSet->szTabModified[0])
+		if (gpSet->szTabModifiedSuffix[0])
 			mp_ConEmu->RequestPostUpdateTabs();
 	}
 }

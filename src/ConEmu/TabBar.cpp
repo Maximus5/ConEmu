@@ -1409,9 +1409,17 @@ int CTabBarClass::PrepareTab(CTab& pTab, CVirtualConsole *apVCon)
 		//_tcscpy(szFormat, _T("%s"));
 		lstrcpyn(szFormat,
 			bIsFar ? gpSet->szTabPanels
-			: (gpSet->szTabModified[0] && (pTab->Flags() & fwt_ModifiedFarWnd)) ? gpSet->szTabModified
 			: gpSet->szTabConsole,
 			countof(szFormat));
+		// Modified console contents - tab suffix
+		// Not only Far manager windows but simple consoles also
+		if (gpSet->szTabModifiedSuffix[0] && (pTab->Flags() & fwt_ModifiedFarWnd))
+		{
+			if ((_tcslen(szFormat) + _tcslen(gpSet->szTabModifiedSuffix)) < countof(szFormat))
+			{
+				wcscat_c(szFormat, gpSet->szTabModifiedSuffix);
+			}
+		}
 		nMaxLen = gpSet->nTabLenMax - _tcslen(szFormat) + 2/* %s */;
 
 		lstrcpyn(fileName, pszTabName, countof(fileName));

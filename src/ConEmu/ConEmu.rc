@@ -948,8 +948,8 @@ BEGIN
     RTEXT           "Invisible tab activity flash count:",IDC_STATIC,9,148,223,8
     LTEXT           "Tab font:",stTabFontFace,10,79,40,8
     LTEXT           "Tab double click actions",stTabDblClkActions,10,202,76,8
-    RTEXT           "Modified inactive:",IDC_STATIC,161,132,71,8
-    EDITTEXT        tTabInactiveModified,237,130,81,12,ES_AUTOHSCROLL
+    RTEXT           "Modified suffix:",IDC_STATIC,161,132,71,8
+    EDITTEXT        tTabModifiedSuffix,237,130,81,12,ES_AUTOHSCROLL
     EDITTEXT        tTabFlashCounter,237,146,81,12,ES_AUTOHSCROLL
 END
 
