@@ -10110,13 +10110,17 @@ bool CRealConsole::GetTab(int tabIdx, /*OUT*/ CTab& rTab)
 	else if (rTab->Info.Type & fwt_Highlighted)
 		rTab->Info.Type &= ~fwt_Highlighted;
 
-	// Refresh modified state of simple consoles (not the tabs of Far Manager)
-	if ((rTab->Info.Type & fwt_CurrentFarWnd) && !isFar())
+	// Refresh modified state of simple consoles (not the Editor tabs of Far Manager)
+	if ((rTab->Info.Type & fwt_CurrentFarWnd) && (rTab->Type() != fwt_Editor))
 	{
 		if (tabs.bConsoleDataChanged)
 			rTab->Info.Type |= fwt_ModifiedFarWnd;
 		else
 			rTab->Info.Type &= ~fwt_ModifiedFarWnd;
+	}
+	else if (rTab->Type() != fwt_Editor)
+	{
+		rTab->Info.Type &= ~fwt_ModifiedFarWnd;
 	}
 
 	// Update active tab info
