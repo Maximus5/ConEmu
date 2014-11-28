@@ -761,7 +761,7 @@ void Settings::InitSettings()
 	isTabs = 1; nTabsLocation = 0; isTabIcons = true; isOneTabPerGroup = false;
 	bActivateSplitMouseOver = 2; // Regarding Windows settings (Active window tracking)
 	isTabSelf = true; isTabRecent = true; isTabLazy = true;
-	nTabFlashChanged = 9;
+	nTabFlashChanged = 8;
 	nTabBarDblClickAction = TABBAR_DEFAULT_CLICK_ACTION; nTabBtnDblClickAction = TABBTN_DEFAULT_CLICK_ACTION;
 	ilDragHeight = 10;
 	m_isTabsOnTaskBar = 2;
