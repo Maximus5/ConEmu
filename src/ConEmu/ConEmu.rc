@@ -407,7 +407,7 @@ BEGIN
     CONTROL         "Never",rbDefaultTerminalConfNever,"Button",BS_AUTORADIOBUTTON,141,130,62,8
     CONTROL         "Register on OS startup",cbDefaultTerminalStartup,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,9,28,96,8
     CONTROL         "Leave in TSA",cbDefaultTerminalTSA,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,111,28,70,8
-    CONTROL         "Agressive mode",cbDefTermAgressive,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,188,28,96,8
+    CONTROL         "Aggressive mode",cbDefTermAgressive,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,188,28,96,8
     GROUPBOX        "Confirm close (Press Enter or Esc to close console)",gbDefaultTermConfClose,9,116,308,31
     CONTROL         "Use existing ConEmu window if available",cbDefaultTerminalUseExisting,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,9,101,305,8
