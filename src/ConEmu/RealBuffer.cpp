@@ -2002,13 +2002,29 @@ BOOL CRealBuffer::LoadDataFromSrv(DWORD CharCount, CHAR_INFO* pData)
 	}
 
 	HEAPVAL;
-	BOOL lbScreenChanged = FALSE;
+	bool lbScreenChanged = false;
+	bool bTopChanged = false;
+	bool bRestChanged = false;
 	wchar_t* lpChar = con.pConChar;
 	WORD* lpAttr = con.pConAttr;
 
 	_ASSERTE(sizeof(*con.pDataCmp) == sizeof(*pData));
 
-	lbScreenChanged = (memcmp(con.pDataCmp, pData, nCharCmp*sizeof(*pData)) != 0);
+	// Tricky... Ignore top line (with clocks) in Far manager to skip gpSet->nTabFlashChanged
+	// Do not take into account gpSet->nTabFlashChanged
+	// because bConsoleDataChanged may be used in tab template
+	if (mp_RCon->isFar())
+	{
+		DWORD nTopCmp = min(nCharCmp, (DWORD)con.nTextWidth);
+		DWORD nRestCmp = nCharCmp - nTopCmp;
+		bTopChanged = (memcmp(con.pDataCmp, pData, nTopCmp*sizeof(*pData)) != 0);
+		bRestChanged = nRestCmp ? (memcmp(con.pDataCmp+nTopCmp, pData+nTopCmp, nRestCmp*sizeof(*pData)) != 0) : false;
+	}
+	else
+	{
+		bRestChanged = (memcmp(con.pDataCmp, pData, nCharCmp*sizeof(*pData)) != 0);
+	}
+	lbScreenChanged = (bRestChanged || bTopChanged);
 
 	if (lbScreenChanged)
 	{
@@ -2074,6 +2090,11 @@ BOOL CRealBuffer::LoadDataFromSrv(DWORD CharCount, CHAR_INFO* pData)
 		}
 
 		HEAPVAL
+	}
+
+	if (bRestChanged)
+	{
+		mp_RCon->OnConsoleDataChanged();
 	}
 
 	return lbScreenChanged;
@@ -2504,7 +2525,6 @@ void CRealBuffer::ApplyConsoleInfo(const CESERVER_REQ_CONINFO_INFO* pInfo, bool&
 						if (LoadDataFromSrv(nCalcCount, pData))
 						{
 							LOGCONSOLECHANGE("ApplyConsoleInfo: InitBuffers&LoadDataFromSrv -> changed");
-							mp_RCon->OnConsoleDataChanged();
 							lbChanged = true;
 						}
 					}
