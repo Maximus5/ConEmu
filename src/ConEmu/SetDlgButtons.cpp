@@ -856,6 +856,7 @@ bool CSetDlgButtons::ProcessButtonClick(HWND hDlg, WORD CB, BYTE uCheck)
 		case cbDefaultTerminal:
 		case cbDefaultTerminalStartup:
 		case cbDefaultTerminalTSA:
+		case cbDefTermAgressive:
 		case cbDefaultTerminalNoInjects:
 		case cbDefaultTerminalUseExisting:
 		case rbDefaultTerminalConfAuto:
