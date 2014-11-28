@@ -1873,6 +1873,10 @@ void CRealConsole::OnConsoleDataChanged()
 	DWORD nInvisibleTime = mn_DeactivateTick ? (GetTickCount() - mn_DeactivateTick) : 0;
 	if (nInvisibleTime < HIGHLIGHT_INVISIBLE_MIN)
 		return;
+	// Don't flash in Far while it is showing progress
+	// That is useless because tab/caption/task-progress is changed during operation
+	if ((m_Progress.Progress >= 0) && isFar())
+		return;
 
 	if (!tabs.bConsoleDataChanged)
 	{
@@ -12089,10 +12093,17 @@ void CRealConsole::logProgress(LPCWSTR asFormat, int V1, int V2)
 
 void CRealConsole::setProgress(short value)
 {
-	DEBUGTEST(if (m_Progress.Progress != value))
+	if (m_Progress.Progress != value)
 	{
 		logProgress(L"RCon::setProgress(%i)", value);
 		m_Progress.Progress = value;
+
+		// Don't flash in Far while it is showing progress
+		// That is useless because tab/caption/task-progress is changed during operation
+		if (!tabs.bConsoleDataChanged && isFar())
+		{
+			mn_DeactivateTick = GetTickCount();
+		}
 	}
 }
 
