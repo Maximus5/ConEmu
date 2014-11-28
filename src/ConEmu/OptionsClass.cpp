@@ -3068,7 +3068,7 @@ LRESULT CSettings::OnInitDialog_Keys(HWND hWnd2, bool abInitial)
 	return 0;
 }
 
-LRESULT CSettings::OnInitDialog_Tabs(HWND hWnd2)
+LRESULT CSettings::OnInitDialog_Tabs(HWND hWnd2, bool abInitial)
 {
 	checkRadioButton(hWnd2, rbTabsAlways, rbTabsNone, (gpSet->isTabs == 2) ? rbTabsAuto : gpSet->isTabs ? rbTabsAlways : rbTabsNone);
 
@@ -3091,7 +3091,10 @@ LRESULT CSettings::OnInitDialog_Tabs(HWND hWnd2)
 	SetDlgItemText(hWnd2, tTabFontFace, gpSet->sTabFontFace);
 
 	if (CSetDlgFonts::EnumFontsFinished())  // Если шрифты уже считаны
-		OnInitDialog_CopyFonts(hWnd2, tTabFontFace, 0); // можно скопировать список с вкладки [thi_Main]
+	{
+		if (abInitial)
+			OnInitDialog_CopyFonts(hWnd2, tTabFontFace, 0); // можно скопировать список с вкладки [thi_Main]
+	}
 
 	DWORD nVal = gpSet->nTabFontHeight;
 	CSetDlgLists::FillListBoxItems(GetDlgItem(hWnd2, tTabFontHeight), CSetDlgLists::eFSizesSmall, nVal, true);
@@ -6818,8 +6821,7 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 			gpSetCls->OnInitDialog_Control(hWnd2, bInitial);
 			break;
 		case IDD_SPG_TABS:
-			if (bInitial)
-				gpSetCls->OnInitDialog_Tabs(hWnd2);
+			gpSetCls->OnInitDialog_Tabs(hWnd2, bInitial);
 			break;
 		case IDD_SPG_STATUSBAR:
 			gpSetCls->OnInitDialog_Status(hWnd2, bInitial);

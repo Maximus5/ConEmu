@@ -403,7 +403,7 @@ class CSettings
 		LRESULT OnInitDialog_FarMacro(HWND hWnd2, bool abInitial);
 		LRESULT OnInitDialog_Keys(HWND hWnd2, bool abInitial);
 		LRESULT OnInitDialog_Control(HWND hWnd2, bool abInitial);
-		LRESULT OnInitDialog_Tabs(HWND hWnd2);
+		LRESULT OnInitDialog_Tabs(HWND hWnd2, bool abInitial);
 		LRESULT OnInitDialog_Status(HWND hWnd2, bool abInitial);
 		void OnInitDialog_StatusItems(HWND hWnd2);
 		LRESULT OnInitDialog_Color(HWND hWnd2, bool abInitial);
