@@ -70,7 +70,7 @@ void MEvent::InitName(const wchar_t *aszTemplate, DWORD Parm1)
 	mn_LastError = 0;
 }
 
-HANDLE MEvent::Open()
+HANDLE MEvent::Open(bool bCreate /*= false*/, LPSECURITY_ATTRIBUTES pSec /*= NULL*/, bool bManualReset /*= false*/, bool bInitialState /*= false*/)
 {
 	if (mh_Event)  // Если уже открыто - сразу вернуть!
 		return mh_Event;
@@ -82,7 +82,18 @@ HANDLE MEvent::Open()
 	}
 
 	mn_LastError = 0;
-	mh_Event = OpenEvent(EVENT_MODIFY_STATE|SYNCHRONIZE, FALSE, ms_EventName);
+	if (bCreate)
+	{
+		mh_Event = CreateEvent(pSec, bManualReset, FALSE, ms_EventName);
+		if (mh_Event && bInitialState)
+		{
+			SetEvent(mh_Event);
+		}
+	}
+	else
+	{
+		mh_Event = OpenEvent(EVENT_MODIFY_STATE|SYNCHRONIZE, FALSE, ms_EventName);
+	}
 
 	if (!mh_Event)
 		mn_LastError = GetLastError();

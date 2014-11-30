@@ -43,7 +43,7 @@ public:
 	void InitName(const wchar_t *aszTemplate, DWORD Parm1=0);
 public:
 	void   Close();
-	HANDLE Open();
+	HANDLE Open(bool bCreate = false, LPSECURITY_ATTRIBUTES pSec = NULL, bool bManualReset = false, bool bInitialState = false);
 	DWORD  Wait(DWORD dwMilliseconds, BOOL abAutoOpen=TRUE);
 	HANDLE GetHandle();
 };
