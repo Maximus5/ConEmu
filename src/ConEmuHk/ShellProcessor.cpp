@@ -414,6 +414,7 @@ BOOL CShellProc::LoadSrvMapping(BOOL bLightCheck /*= FALSE*/)
 		#endif
 
 		const CEDefTermOpt* pOpt = gpDefTerm->GetOpt();
+		_ASSERTE(pOpt!=NULL); // Can't be null because it returns the pointer to member variable
 
 		ZeroStruct(m_SrvMapping);
 		m_SrvMapping.cbSize = sizeof(m_SrvMapping);
@@ -426,9 +427,9 @@ BOOL CShellProc::LoadSrvMapping(BOOL bLightCheck /*= FALSE*/)
 		m_SrvMapping.Flags = pOpt->nConsoleFlags;
 		m_SrvMapping.bUseInjects = pOpt->bNoInjects ? 0 : 1;
 		// Пути
-		lstrcpy(m_SrvMapping.sConEmuExe, pOpt->pszConEmuExe);
-		lstrcpy(m_SrvMapping.ComSpec.ConEmuBaseDir, pOpt->pszConEmuBaseDir);
-		lstrcpy(m_SrvMapping.ComSpec.ConEmuExeDir, pOpt->pszConEmuExe);
+		lstrcpy(m_SrvMapping.sConEmuExe, pOpt->pszConEmuExe ? pOpt->pszConEmuExe : L"");
+		lstrcpy(m_SrvMapping.ComSpec.ConEmuBaseDir, pOpt->pszConEmuBaseDir ? pOpt->pszConEmuBaseDir : L"");
+		lstrcpy(m_SrvMapping.ComSpec.ConEmuExeDir, pOpt->pszConEmuExe ? pOpt->pszConEmuExe : L"");
 		wchar_t* pszSlash = wcsrchr(m_SrvMapping.ComSpec.ConEmuExeDir, L'\\');
 		if (pszSlash) *pszSlash = 0;
 
