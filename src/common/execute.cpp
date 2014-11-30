@@ -817,7 +817,7 @@ bool FindImageSubsystem(const wchar_t *Module, /*wchar_t* pstrDest,*/ DWORD& Ima
 	// Actually, we need only to check, if the Module is executable (PE) or not
 	// Plus, if it is IMAGE_SUBSYSTEM_BATCH_FILE
 	// All other options are not interesting to us
-	wchar_t strPathExt[] = L".COM;.EXE;.BAT;.CMD;.BTM;"; // Must becode Zero-zero-terminated
+	wchar_t strPathExt[] = L".COM;.EXE;.BAT;.CMD;.BTM;"; // Must be Zero-zero-terminated
 	//strPathExt = GetEnvVar(L"PATHEXT");
 	//if (!strPathExt || !*strPathExt)
 	//{
