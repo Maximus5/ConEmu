@@ -1347,7 +1347,6 @@ struct CEFAR_INFO_MAPPING
 	DWORD nFarConsoleMode;
 	BOOL bBufferSupport; // FAR2 с ключом /w ?
 	CEFAR_PANELTABS PanelTabs; // Настройки плагина PanelTabs
-	//DWORD nFarReadIdx;    // index, +1, когда фар в последний раз позвал (Read|Peek)ConsoleInput или GetConsoleInputCount
 	// Далее идут строковые ресурсы, на которые в некоторых случаях ориентируется GUI
 	wchar_t sLngEdit[64]; // "edit"
 	wchar_t sLngView[64]; // "view"

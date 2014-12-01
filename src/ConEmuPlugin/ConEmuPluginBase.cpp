@@ -679,6 +679,9 @@ void CPluginBase::UpdatePanelDirs()
 		}
 	}
 
+	// Here we are only for Far 1.7x
+	_ASSERTE(gFarVersion.dwVerMajor == 1);
+
 	bool bChanged = false;
 
 	wchar_t szTitle[MAX_PATH*2] = L"";

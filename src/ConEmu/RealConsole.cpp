@@ -2466,15 +2466,13 @@ DWORD CRealConsole::MonitorThreadWorker(bool bDetached, bool& rbChildProcessCrea
 							mn_LastFarReadTick = nCurTick ? nCurTick : 1;
 							bAlive = true; // живой
 						}
-
-#ifdef _DEBUG
+						#ifdef _DEBUG
 						else
 						{
 							mn_LastFarReadTick = nCurTick - FAR_ALIVE_TIMEOUT - 1;
 							bAlive = false; // занят
 						}
-
-#endif
+						#endif
 					}
 					else
 					{
@@ -2499,8 +2497,8 @@ DWORD CRealConsole::MonitorThreadWorker(bool bDetached, bool& rbChildProcessCrea
 				if (bActive)
 				{
 					WARNING("Тут нужно бы сравнивать с переменной, хранящейся в mp_ConEmu, а не в этом instance RCon!");
-#ifdef _DEBUG
 
+					#ifdef _DEBUG
 					if (!IsDebuggerPresent())
 					{
 						bool lbIsAliveDbg = isAlive();
@@ -2510,8 +2508,7 @@ DWORD CRealConsole::MonitorThreadWorker(bool bDetached, bool& rbChildProcessCrea
 							_ASSERTE(lbIsAliveDbg == bAlive);
 						}
 					}
-
-#endif
+					#endif
 
 					if (bLastAlive != bAlive || !bLastAliveActive)
 					{
@@ -13394,6 +13391,7 @@ void CRealConsole::StoreCurWorkDir(CESERVER_REQ_STORECURDIR* pNewCurDir)
 
 	CS.Unlock();
 
+	// Tab templates are case insensitive yet
 	LPCWSTR pszTabTempl = isFar() ? gpSet->szTabPanels : gpSet->szTabConsole;
 	if (wcsstr(pszTabTempl, L"%d") || wcsstr(pszTabTempl, L"%D"))
 	{
