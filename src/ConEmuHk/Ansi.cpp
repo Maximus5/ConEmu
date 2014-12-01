@@ -1641,6 +1641,7 @@ void CEAnsi::DoSendCWD(LPCWSTR asCmd, INT_PTR cchLen)
 	{
 		EscCopyCtrlString(pszCWD, asCmd, cchLen);
 
+		// Sends CECMD_STORECURDIR into RConServer
 		SendCurrentDirectory(ghConWnd, pszCWD);
 
 		free(pszCWD);

@@ -3858,6 +3858,7 @@ int DoStoreCWD(LPCWSTR asCmdArg)
 			goto wrap;
 	}
 
+	// Sends CECMD_STORECURDIR into RConServer
 	SendCurrentDirectory(ghConWnd, szDir);
 	iRc = 0;
 wrap:

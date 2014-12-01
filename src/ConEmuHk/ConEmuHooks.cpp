@@ -4719,6 +4719,7 @@ void PreReadConsoleInput(HANDLE hConIn, bool abUnicode, bool abPeek)
 				CmdArg szDir;
 				if (GetDirectory(szDir) > 0)
 				{
+					// Sends CECMD_STORECURDIR into RConServer
 					SendCurrentDirectory(ghConWnd, szDir);
 				}
 			}
