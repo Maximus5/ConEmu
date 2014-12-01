@@ -12,6 +12,26 @@ Votes and awards (vote for ConEmu, if you please)
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+2014.11.30
+[*] Redesign ‘Features’ settings page.
+[*] Sleep in background: don't force inactive tabs to high activity state on startup.
+[*] More server-side logging of ‘sleep in background’.
+[*] Fix multiple [Sleep]-s appeared in tabs (ConEmuSleepIndicator=TITLE).
+[*] In some cases wrong installer bitness was used with autoupdate.
+    If ConEmu.exe was started but both x86 and x64 versions were installed.
+[*] Issue 1812: Bypass Windows 10 bug with GetConsoleDisplayMode.
+[*] Changes in the setting ‘tab flash count’ field were ignored.
+[*] Issue 1826: Changes of the checkbox ‘Aggressive mode’ were ignored.
+[*] Let inform user about unhandles checkbox clicks.
+[*] Don't leave flashed tab in highlighted state by default.
+    If one need to leave it highlighted set flash counter to ODD value.
+[*] InactiveFlash: Running Far ignore top visible line (with clock).
+[*] InactiveFlash: Don't flash while Far is doing something with progress.
+[*] InactiveFlash: Support flashing for Far viewers also.
+[*] InactiveFlash: Use tab suffix instead of separate template.
+[*] Issue 1825: Don't try to force Macro execution.
+
+
 2014.11.26
 [*] Issue 1590, Issue 1793: Slow input response in some cases (after startup or tab switching).
 [*] Some controls on the ‘Features’ page were overlapped.
