@@ -3529,7 +3529,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			bool lbNotFound = false;
 			bool lbSwitchChanged = false;
 
-			if (*curCommand == L'-' && curCommand[1] && !wcspbrk(curCommand+1, L"\\//|.&<>:^"))
+			// ':' removed from checks because otherwise it will not warn
+			// on invalid usage of "-new_console:a" for example
+			if (*curCommand == L'-' && curCommand[1] && !wcspbrk(curCommand+1, L"\\//|.&<>^"))
 			{
 				// Seems this is to be the "switch" too
 				*curCommand = L'/';
