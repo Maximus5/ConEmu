@@ -139,14 +139,6 @@ struct PanelViewRegInfo
 };
 
 struct MSectionSimple;
-
-struct CurPanelDirs
-{
-	CmdArg *ActiveDir, *PassiveDir;
-	MSectionSimple *pcsDirs;
-};
-
-
 class MSection;
 
 extern HMODULE ghPluginModule;
@@ -163,7 +155,6 @@ extern CESERVER_REQ* gpTabs;
 extern BOOL gbForceSendTabs;
 extern int gnCurrentWindowType; // WTYPE_PANELS / WTYPE_VIEWER / WTYPE_EDITOR
 extern PanelViewRegInfo gPanelRegLeft, gPanelRegRight;
-extern CurPanelDirs gPanelDirs;
 
 #if defined(__GNUC__)
 extern "C" {

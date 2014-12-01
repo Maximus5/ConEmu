@@ -30,7 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _COMMON_HEADER_HPP_
 
 // Interface version
-#define CESERVER_REQ_VER    146
+#define CESERVER_REQ_VER    147
 
 // Max tabs/panes count
 #define MAX_CONSOLE_COUNT 30
@@ -1351,8 +1351,11 @@ struct CEFAR_INFO_MAPPING
 	wchar_t sLngEdit[64]; // "edit"
 	wchar_t sLngView[64]; // "view"
 	wchar_t sLngTemp[64]; // "{Temporary panel"
-	//wchar_t sLngName[64]; // "Name"
-	wchar_t sReserved[MAX_PATH]; // Чтобы случайно GetMsg из допустимого диапазона не вышел
+
+	// Far current panel directories
+	// These MUST be last members!
+	LONG nPanelDirIdx; // Separately of nFarInfoIdx
+	wchar_t sActiveDir[0x8000], sPassiveDir[0x8000];
 };
 
 

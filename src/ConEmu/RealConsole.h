@@ -730,6 +730,7 @@ class CRealConsole
 		CmdArg ms_CurPassiveDir;
 		MSectionSimple* mpcs_CurWorkDir;
 		void StoreCurWorkDir(CESERVER_REQ_STORECURDIR* pNewCurDir);
+		bool ReloadFarWorkDir();
 		//wchar_t ms_ProfilePathTemp[MAX_PATH+1]; -- commented code
 		bool mb_WasStartDetached;
 		wchar_t ms_RootProcessName[MAX_PATH];

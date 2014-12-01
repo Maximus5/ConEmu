@@ -139,7 +139,7 @@ BOOL CConEmuPipe::Execute(int nCmd, LPCVOID apData, UINT anDataSize)
 	WARNING("Если указан mdw_Timeout - создать нить и выполнять команду в ней. Ожидать нить не более и прибить ее, если пришел Timeout");
 	MCHKHEAP
 
-	if (!((nCmd >= (int)CMD_FIRST_FAR_CMD && nCmd <= (int)CMD_LAST_FAR_CMD) || (nCmd == CECMD_STORECURDIR)))
+	if (!((nCmd >= (int)CMD_FIRST_FAR_CMD && nCmd <= (int)CMD_LAST_FAR_CMD)))
 	{
 		TCHAR szError[128];
 		_wsprintf(szError, SKIPLEN(countof(szError)) _T("Invalid command id (%i)!\nPID=%u, TID=%u"), nCmd, GetCurrentProcessId(), GetCurrentThreadId());

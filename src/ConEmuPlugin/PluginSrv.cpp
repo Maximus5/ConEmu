@@ -411,17 +411,6 @@ BOOL WINAPI PlugServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &pp
 		break;
 	} // CMD_ACTIVEWNDTYPE
 
-	case CECMD_STORECURDIR:
-	{
-		MSectionLockSimple CS; CS.Lock(gPanelDirs.pcsDirs);
-		if (AllocateSendCurrentDirectory(ppReply, pcbMaxReplySize, gPanelDirs.ActiveDir->ms_Arg, gPanelDirs.PassiveDir->ms_Arg))
-		{
-			lbRc = TRUE;
-			pcbReplySize = ppReply->hdr.cbSize;
-		}
-		break;
-	} // CECMD_STORECURDIR
-
 	case CECMD_ATTACH2GUI:
 	{
 		BOOL bAttached = Plugin()->Attach2Gui();

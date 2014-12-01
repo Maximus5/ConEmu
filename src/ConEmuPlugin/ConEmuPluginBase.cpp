@@ -101,7 +101,6 @@ BOOL gbForceSendTabs = FALSE;
 int  gnCurrentWindowType = 0; // WTYPE_PANELS / WTYPE_VIEWER / WTYPE_EDITOR
 BOOL gbIgnoreUpdateTabs = FALSE; // выставляется на время CMD_SETWINDOW
 BOOL gbRequestUpdateTabs = FALSE; // выставляется при получении события FOCUS/KILLFOCUS
-CurPanelDirs gPanelDirs = {};
 BOOL gbClosingModalViewerEditor = FALSE; // выставляется при закрытии модального редактора/вьювера
 MOUSE_EVENT_RECORD gLastMouseReadEvent = {{0,0}};
 BOOL gbUngetDummyMouseEvent = FALSE;
@@ -248,11 +247,6 @@ void CPluginBase::DllMain_ProcessAttach(HMODULE hModule)
 	csTabs = new MSection();
 	csData = new MSection();
 
-	gPanelDirs.pcsDirs = new MSectionSimple();
-	gPanelDirs.pcsDirs->Init();
-	gPanelDirs.ActiveDir = new CmdArg();
-	gPanelDirs.PassiveDir = new CmdArg();
-
 	PlugServerInit();
 
 	// Текущая нить не обязана быть главной! Поэтому ищем первую нить процесса!
@@ -312,12 +306,6 @@ void CPluginBase::DllMain_ProcessDetach()
 	{
 		delete csData;
 		csData = NULL;
-	}
-
-	if (gPanelDirs.pcsDirs)
-	{
-		delete gPanelDirs.pcsDirs;
-		gPanelDirs.pcsDirs = NULL;
 	}
 
 	PlugServerStop(true);
@@ -607,32 +595,51 @@ bool CPluginBase::StorePanelDirs(LPCWSTR asActive, LPCWSTR asPassive)
 		return false;
 	}
 
-	if (!gPanelDirs.pcsDirs || !gPanelDirs.ActiveDir || !gPanelDirs.PassiveDir)
+	if (!gpFarInfo)
 	{
-		_ASSERTE(gPanelDirs.pcsDirs && gPanelDirs.ActiveDir && gPanelDirs.PassiveDir);
+		_ASSERTE(gpFarInfo!=NULL);
 		return false;
 	}
 
 	bool bChanged = false;
-	MSectionLockSimple CS;
 
 	for (int i = 0; i <= 1; i++)
 	{
 		LPCWSTR pszSet = i ? asPassive : asActive;
-		CmdArg* pDir = i ? gPanelDirs.PassiveDir : gPanelDirs.ActiveDir;
+		_ASSERTE(countof(gpFarInfo->sActiveDir) == countof(gpFarInfo->sPassiveDir));
+		wchar_t* pDst = i ? gpFarInfo->sPassiveDir : gpFarInfo->sActiveDir;
+		wchar_t* pCpy = gpFarInfoMapping ? (i ? gpFarInfoMapping->sPassiveDir : gpFarInfoMapping->sActiveDir) : NULL;
+		int iLen = lstrlen(pszSet);
+		if (iLen >= countof(gpFarInfo->sActiveDir))
+		{
+			_ASSERTE(FALSE && "Far current dir path is too long");
+			iLen = countof(gpFarInfo->sActiveDir)-1;
+		}
 
-		if (pszSet && (lstrcmp(pszSet, pDir->ms_Arg ? pDir->ms_Arg : L"") != 0))
+		if (pszSet && (lstrcmp(pszSet, pDst) != 0))
 		{
 			#ifdef _DEBUG
 			CEStr lsDbg = lstrmerge(i ? L"PPanelDir changed -> " : L"APanelDir changed -> ", pszSet);
 			DEBUGSTRCURDIR(lsDbg);
 			#endif
 
-			if (!CS.isLocked())
-				CS.Lock(gPanelDirs.pcsDirs);
-			pDir->Set(pszSet);
+			pDst[iLen] = 0;
+			wmemmove(pDst, pszSet, iLen);
+
+			if (pCpy)
+			{
+				pCpy[iLen] = 0;
+				wmemmove(pCpy, pszSet, iLen);
+			}
+
 			bChanged = true;
 		}
+	}
+
+	if (bChanged && gpFarInfoMapping)
+	{
+		LONG lIdx = InterlockedIncrement(&gpFarInfo->nPanelDirIdx);
+		gpFarInfoMapping->nPanelDirIdx = lIdx;
 	}
 
 	return bChanged;
@@ -640,7 +647,11 @@ bool CPluginBase::StorePanelDirs(LPCWSTR asActive, LPCWSTR asPassive)
 
 void CPluginBase::UpdatePanelDirs()
 {
-	_ASSERTE(gPanelDirs.ActiveDir && gPanelDirs.PassiveDir);
+	if (!gpFarInfo)
+	{
+		_ASSERTE(gpFarInfo);
+		return;
+	}
 
 	// It is not safe to call GetPanelDir even from MainThread, even if APanel is not plugin
 	// FCTL_GETPANELDIRECTORY вызывает GetFindData что в некоторых случаях вызывает глюки в глючных плагинах...
@@ -696,31 +707,9 @@ void CPluginBase::UpdatePanelDirs()
 		return; // Valid terminator not found
 
 	*pszFar = 0;
-	bChanged = StorePanelDirs(szTitle+1, NULL);
 
-	#if 0
-	CmdArg* Pnls[] = {gPanelDirs.ActiveDir, gPanelDirs.PassiveDir};
-
-	for (int i = 0; i <= 1; i++)
-	{
-		GetPanelDirFlags Flags = ((i == 0) ? gpdf_Active : gpdf_Passive) | gpdf_NoPlugin;
-
-		wchar_t* pszDir = GetPanelDir(Flags);
-
-		if (pszDir && (lstrcmp(pszDir, Pnls[i]->ms_Arg ? Pnls[i]->ms_Arg : L"") != 0))
-		{
-			Pnls[i]->Set(pszDir);
-			bChanged = true;
-		}
-		SafeFree(pszDir);
-	}
-	#endif
-
-	if (bChanged)
-	{
-		// Send to GUI
-		SendCurrentDirectory(FarHwnd, gPanelDirs.ActiveDir->ms_Arg, gPanelDirs.PassiveDir->ms_Arg);
-	}
+	// It will update mapping and increase .nPanelDirIdx
+	StorePanelDirs(szTitle+1, NULL);
 }
 
 bool CPluginBase::RunExternalProgram(wchar_t* pszCommand)
@@ -4314,7 +4303,9 @@ bool CPluginBase::ReloadFarInfo(bool abForce)
 
 	if (lbSucceded)
 	{
-		if (abForce || memcmp(gpFarInfoMapping, gpFarInfo, sizeof(CEFAR_INFO_MAPPING))!=0)
+		// Don't compare sActiveDir/sPassiveDir, only nPanelDirIdx take into account
+		INT_PTR iCmpLen = ((LPBYTE)gpFarInfoMapping->sActiveDir) - ((LPBYTE)gpFarInfoMapping);
+		if (abForce || (memcmp(gpFarInfoMapping, gpFarInfo, iCmpLen) != 0))
 		{
 			lbChanged = true;
 			gpFarInfo->nFarInfoIdx++;
