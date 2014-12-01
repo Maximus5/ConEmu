@@ -39,7 +39,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // 0 - OK, иначе - ошибка
 // Здесь вызывается CreateRemoteThread
-CINFILTRATE_EXIT_CODES InfiltrateDll(HANDLE hProcess, LPCWSTR asConEmuHk)
+CINFILTRATE_EXIT_CODES InfiltrateDll(HANDLE hProcess, HMODULE ptrOuterKernel, LPCWSTR asConEmuHk)
 {
 	CINFILTRATE_EXIT_CODES iRc = CIR_InfiltrateGeneral/*-150*/;
 
@@ -141,6 +141,15 @@ CINFILTRATE_EXIT_CODES InfiltrateDll(HANDLE hProcess, LPCWSTR asConEmuHk)
 			iRc = CIR_CheckKernelExportAddr/*-111*/;
 			goto wrap;
 		}
+	}
+
+	// Kernel может быть загружен по другому адресу
+	if (ptrOuterKernel != hKernel)
+	{
+		INT_PTR ptrDiff = ((INT_PTR)ptrOuterKernel - (INT_PTR)hKernel);
+		dat._GetLastError = (GetLastError_t)((LPBYTE)dat._GetLastError + ptrDiff);
+		dat._SetLastError = (SetLastError_t)((LPBYTE)dat._SetLastError + ptrDiff);
+		dat._LoadLibraryW = (LoadLibraryW_t)((LPBYTE)dat._LoadLibraryW + ptrDiff);
 	}
 
 	// Копируем параметры в процесс
@@ -299,6 +308,7 @@ CINFILTRATE_EXIT_CODES InjectRemote(DWORD nRemotePID, bool abDefTermOnly /*= fal
 	bool bAlreadyHooked = false;
 	HANDLE hSnap = NULL;
 	MODULEENTRY32 mi = {sizeof(mi)};
+	HMODULE ptrOuterKernel = NULL;
 
 	if (!GetModuleFileName(NULL, szSelf, MAX_PATH))
 	{
@@ -319,6 +329,7 @@ CINFILTRATE_EXIT_CODES InjectRemote(DWORD nRemotePID, bool abDefTermOnly /*= fal
 	if (hSnap && Module32First(hSnap, &mi))
 	{
 		// 130829 - Let load newer(!) ConEmuHk.dll into target process.
+		// 141201 - Also we need to be sure in kernel32.dll address
 
 		LPCWSTR pszConEmuHk = WIN3264TEST(L"conemuhk.", L"conemuhk64.");
 		size_t nDllNameLen = lstrlen(pszConEmuHk);
@@ -334,26 +345,37 @@ CINFILTRATE_EXIT_CODES InjectRemote(DWORD nRemotePID, bool abDefTermOnly /*= fal
 		wchar_t szName[64];
 		do {
 			LPCWSTR pszName = PointToName(mi.szModule);
-			// Name of hooked module may be changed (copied to %APPDATA%)
-			if (pszName && *pszName)
+
+			// Name of ConEmuHk*.*.dll module may be changed (copied to %APPDATA%)
+			if (!pszName || !*pszName)
+				continue;
+
+			lstrcpyn(szName, pszName, countof(szName));
+			CharLowerBuff(szName, lstrlen(szName));
+
+			if (!ptrOuterKernel
+				&& (lstrcmp(szName, L"kernel32.dll") == 0))
 			{
-				lstrcpyn(szName, pszName, countof(szName));
-				CharLowerBuff(szName, lstrlen(szName));
-				// ConEmuHk*.*.dll?
-				if (wmemcmp(szName, pszConEmuHk, nDllNameLen) == 0
-					&& wmemcmp(szName+lstrlen(szName)-4, L".dll", 4) == 0)
+				ptrOuterKernel = mi.hModule;
+			}
+
+			// ConEmuHk*.*.dll?
+			if (!bAlreadyHooked
+				&& (wmemcmp(szName, pszConEmuHk, nDllNameLen) == 0)
+				&& (wmemcmp(szName+lstrlen(szName)-4, L".dll", 4) == 0))
+			{
+				// Yes! ConEmuHk.dll already loaded into nRemotePID!
+				// But what is the version? Let don't downgrade loaded version!
+				if (lstrcmp(szName, szOurName) >= 0)
 				{
-					// Yes! ConEmuHk.dll already loaded into nRemotePID!
-					// But what is the version? Let don't downgrade loaded version!
-					if (lstrcmp(szName, szOurName) >= 0)
-					{
-						// OK, szName is newer or equal to our build
-						bAlreadyHooked = true;
-					}
-					// Stop enumeration
-					break;
+					// OK, szName is newer or equal to our build
+					bAlreadyHooked = true;
 				}
 			}
+
+			// Stop enumeration?
+			if (bAlreadyHooked && ptrOuterKernel)
+				break;
 		} while (Module32Next(hSnap, &mi));
 
 		// Check done
@@ -365,6 +387,13 @@ CINFILTRATE_EXIT_CODES InjectRemote(DWORD nRemotePID, bool abDefTermOnly /*= fal
 	if (bAlreadyHooked)
 	{
 		iRc = CIR_AlreadyInjected/*1*/;
+		goto wrap;
+	}
+
+
+	if (!ptrOuterKernel)
+	{
+		iRc = CIR_OuterKernelAddr/*-112*/;
 		goto wrap;
 	}
 
@@ -476,7 +505,7 @@ CINFILTRATE_EXIT_CODES InjectRemote(DWORD nRemotePID, bool abDefTermOnly /*= fal
 		}
 	}
 
-	iRc = InfiltrateDll(hProc, szHooks);
+	iRc = InfiltrateDll(hProc, ptrOuterKernel, szHooks);
 
 	// Если создавали временную копию - запланировать ее удаление
 	if (abDefTermOnly && (lstrcmpi(szHooks, szSelf) != 0))
