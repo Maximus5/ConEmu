@@ -50,10 +50,10 @@ if "%ConEmuHWND%"=="" goto noconemu
 
 rem But we also need to check, is console is really in ConEmu tab,
 rem or just "ConEmuHWND" was set (or inherited) to any value?
-call %ConEmuPath% /GuiMacro IsConEmu > nul
-if errorlevel 1 goto noconemu
-
-goto conemufound
+call %ConEmuPath% /IsConEmu > nul
+if errorlevel 2 goto noconemu
+if errorlevel 1 goto conemufound
+goto noconemu
 
 
 :checkparm
