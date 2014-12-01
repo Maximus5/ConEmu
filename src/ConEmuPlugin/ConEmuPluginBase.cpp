@@ -409,7 +409,7 @@ void CPluginBase::PostMacro(const wchar_t* asMacro, INPUT_RECORD* apRec, bool ab
 	//  Если курсор на другой панели, то RClick сразу по пассивной
 	//  не вызывает отрисовку :(
 
-#if 1
+#if 0
 	//111002 - попробуем просто gbUngetDummyMouseEvent
 	//InterlockedIncrement(&gnDummyMouseEventFromMacro);
 	gnDummyMouseEventFromMacro = TRUE;
