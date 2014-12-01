@@ -2611,6 +2611,18 @@ DWORD CRealConsole::MonitorThreadWorker(bool bDetached, bool& rbChildProcessCrea
 				mp_RBuf->FindPanels();
 			}
 
+			// Far Manager? Refresh its working directories if they are in tabs
+			if (mn_FarPID_PluginDetected)
+			{
+				// Tab templates are case insensitive yet
+				LPCWSTR pszTabTempl = gpSet->szTabPanels;
+				if ((wcsstr(pszTabTempl, L"%d") || wcsstr(pszTabTempl, L"%D"))
+					&& ReloadFarWorkDir())
+				{
+					mp_ConEmu->mp_TabBar->Update();
+				}
+			}
+
 			if (m_Progress.ConsoleProgress >= 0
 				&& m_Progress.LastConsoleProgress == -1
 				&& m_Progress.LastConProgrTick != 0)
