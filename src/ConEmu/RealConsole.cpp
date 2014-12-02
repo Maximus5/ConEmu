@@ -4790,7 +4790,10 @@ void CRealConsole::DoFindText(int nDirection)
 			SetActiveBuffer(rbt_Primary);
 		}
 	}
-	mp_ABuf->MarkFindText(nDirection, gpSet->FindOptions.pszText, gpSet->FindOptions.bMatchCase, gpSet->FindOptions.bMatchWholeWords);
+	if (mp_ABuf)
+	{
+		mp_ABuf->MarkFindText(nDirection, gpSet->FindOptions.pszText, gpSet->FindOptions.bMatchCase, gpSet->FindOptions.bMatchWholeWords);
+	}
 }
 
 void CRealConsole::DoEndFindText()
