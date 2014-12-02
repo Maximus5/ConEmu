@@ -55,6 +55,7 @@ CFindPanel::CFindPanel(CConEmuMain* apConEmu)
 	, mh_Pane(NULL)
 	, mh_Edit(NULL)
 	, mh_Font(NULL)
+	, mfn_EditProc(NULL)
 	, mn_KeyDown(0)
 	, mn_RebarHeight(0)
 {
