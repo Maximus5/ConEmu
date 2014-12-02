@@ -493,7 +493,7 @@ CConEmuMain::CConEmuMain()
 	// Папка программы
 	wcscpy_c(ms_ConEmuExeDir, ms_ConEmuExe);
 	pszSlash = wcsrchr(ms_ConEmuExeDir, L'\\');
-	*pszSlash = 0;
+	if (pszSlash) *pszSlash = 0;
 
 	// Запомнить текущую папку (на момент запуска)
 	mb_ConEmuWorkDirArg = false; // May be overrided with app "/dir" switch
