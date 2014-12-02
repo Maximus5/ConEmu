@@ -1377,7 +1377,7 @@ int CTabBarClass::PrepareTab(CTab& pTab, CVirtualConsole *apVCon)
 		iTabIcon = apVCon->RCon()->GetRootProcessIcon();
 	}
 
-	LPCWSTR pszTabName = pRCon->GetTabTitle(pTab);
+	LPCWSTR pszTabName = pRCon ? pRCon->GetTabTitle(pTab) : L"";
 
 	if (pTab->Name.Empty() || (pTab->Type() == fwt_Panels))
 	{
