@@ -87,6 +87,8 @@ CConEmuUpdate::CConEmuUpdate()
 	lstrcpyn(ms_DefaultTitle, gpConEmu->GetDefaultTitle(), countof(ms_DefaultTitle));
 
 	ZeroStruct(Inet);
+	mb_ManualCallMode = FALSE;
+	bNeedRunElevation = false;
 }
 
 CConEmuUpdate::~CConEmuUpdate()
