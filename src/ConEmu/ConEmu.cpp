@@ -5111,7 +5111,7 @@ void CConEmuMain::UpdateProgress()
 	}
 
 	if (psTitle)
-		wcscat(MultiTitle, pszFixTitle);
+		wcscat_c(MultiTitle, pszFixTitle);
 	else
 		psTitle = pszFixTitle;
 
