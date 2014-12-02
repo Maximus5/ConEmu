@@ -4963,6 +4963,12 @@ BOOL WINAPI OnReadConsoleInputW(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DW
 	//_ASSERTE(nSemaphore<=1);
 	//#endif
 
+	#if 0
+	// Incomrehensible usage of console input leads to sort of ‘freezing’
+	// get-help Get-ChildItem -full | out-host -paging
+	HANDLE hInTest = GetStdHandle(STD_INPUT_HANDLE);
+	#endif
+
 	if (gFarMode.bFarHookMode && USE_INTERNAL_QUEUE) // ecompl speed-up
 	{
 		#ifdef _DEBUG
