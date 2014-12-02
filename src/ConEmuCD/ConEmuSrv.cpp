@@ -75,7 +75,7 @@ extern BOOL gbTerminateOnCtrlBreak;
 extern OSVERSIONINFO gOSVer;
 
 // Some forward definitions
-bool TryConnect2Gui(HWND hGui, CESERVER_REQ* pIn);
+bool TryConnect2Gui(HWND hGui, DWORD anGuiPID, CESERVER_REQ* pIn);
 
 
 // Установить мелкий шрифт, иначе может быть невозможно увеличение размера GUI окна
@@ -757,7 +757,7 @@ int ServerInitGuiTab()
 		// Сразу передать текущий KeyboardLayout
 		IsKeyboardLayoutChanged(&pIn->SrvStartStop.dwKeybLayout);
 
-		if (TryConnect2Gui(hGuiWnd, pIn))
+		if (TryConnect2Gui(hGuiWnd, 0, pIn))
 		{
 			iRc = 0;
 		}
@@ -2314,11 +2314,13 @@ void FixConsoleMappingHdr(CESERVER_CONSOLE_MAPPING_HDR *pMap)
 	pMap->hConEmuWndBack = ghConEmuWndBack;
 }
 
-bool TryConnect2Gui(HWND hGui, CESERVER_REQ* pIn)
+bool TryConnect2Gui(HWND hGui, DWORD anGuiPID, CESERVER_REQ* pIn)
 {
 	LogFunction(L"TryConnect2Gui");
 
 	bool bConnected = false;
+	CESERVER_REQ *pOut = NULL;
+	CESERVER_REQ_SRVSTARTSTOPRET* pStartStopRet = NULL;
 
 	_ASSERTE(pIn && ((pIn->hdr.nCmd==CECMD_ATTACH2GUI && gbAttachMode) || (pIn->hdr.nCmd==CECMD_SRVSTARTSTOP && !gbAttachMode)));
 
@@ -2345,7 +2347,8 @@ bool TryConnect2Gui(HWND hGui, CESERVER_REQ* pIn)
 		{
 			DWORD  nGuiPid = 0;
 
-			if (GetWindowThreadProcessId(hGui, &nGuiPid) && nGuiPid)
+			if ((hGui && GetWindowThreadProcessId(hGui, &nGuiPid) && nGuiPid)
+				|| ((nGuiPid = anGuiPID) != 0))
 			{
 				// Issue 791: Fails, when GUI started under different credentials (login) as server
 				HANDLE hGuiHandle = OpenProcess(PROCESS_DUP_HANDLE, FALSE, nGuiPid);
@@ -2384,9 +2387,20 @@ bool TryConnect2Gui(HWND hGui, CESERVER_REQ* pIn)
 	}
 
 	// Execute CECMD_ATTACH2GUI
-	wchar_t szServerPipe[64]; _wsprintf(szServerPipe, SKIPLEN(countof(szServerPipe)) CEGUIPIPENAME, L".", (DWORD)hGui); //-V205
-
-	CESERVER_REQ *pOut = NULL; //ExecuteCmd(szServerPipe, pIn, GUIATTACH_TIMEOUT, ghConWnd);
+	wchar_t szServerPipe[64];
+	if (hGui)
+	{
+		_wsprintf(szServerPipe, SKIPLEN(countof(szServerPipe)) CEGUIPIPENAME, L".", (DWORD)hGui); //-V205
+	}
+	else if (anGuiPID)
+	{
+		_wsprintf(szServerPipe, SKIPLEN(countof(szServerPipe)) CESERVERPIPENAME, L".", anGuiPID);
+	}
+	else
+	{
+		_ASSERTEX((hGui!=NULL) || (anGuiPID!=0));
+		goto wrap;
+	}
 
 	gpSrv->ConnectInfo.nInitTick = GetTickCount();
 
@@ -2424,7 +2438,7 @@ bool TryConnect2Gui(HWND hGui, CESERVER_REQ* pIn)
 	}
 
 	// Этот блок if-else нужно вынести в отдельную функцию инициализции сервера (для аттача и обычный)
-	CESERVER_REQ_SRVSTARTSTOPRET* pStartStopRet = (pOut->DataSize() >= sizeof(CESERVER_REQ_SRVSTARTSTOPRET)) ? &pOut->SrvStartStopRet : NULL;
+	pStartStopRet = (pOut->DataSize() >= sizeof(CESERVER_REQ_SRVSTARTSTOPRET)) ? &pOut->SrvStartStopRet : NULL;
 
 	if (!pStartStopRet || !pStartStopRet->Info.hWnd || !pStartStopRet->Info.hWndDc || !pStartStopRet->Info.hWndBack)
 	{
@@ -2563,6 +2577,7 @@ HWND Attach2Gui(DWORD nTimeout)
 	// ДО того, как отработает ресайз (тот размер, который указал установить GUI при аттаче)
 	_ASSERTE(gpSrv->dwRefreshThread==0 || gpSrv->bWasDetached);
 	HWND hGui = NULL;
+	DWORD nToolhelpFoundGuiPID = 0;
 	//UINT nMsg = RegisterWindowMessage(CONEMUMSG_ATTACH);
 	BOOL bNeedStartGui = FALSE;
 	DWORD nStartedGuiPID = 0;
@@ -2608,12 +2623,12 @@ HWND Attach2Gui(DWORD nTimeout)
 			gpSrv->hGuiWnd = NULL;
 	}
 
+	// That may fail if processes are running under different credentials or permissions
 	if (!hGui)
 		hGui = FindWindowEx(NULL, hGui, VirtualConsoleClassMain, NULL);
 
 	if (!hGui)
 	{
-		DWORD dwGuiPID = 0;
 		HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS,0);
 
 		if (hSnap != INVALID_HANDLE_VALUE)
@@ -2629,19 +2644,19 @@ HWND Attach2Gui(DWORD nTimeout)
 						if (lstrcmpiW(prc.szExeFile, L"conemu.exe")==0
 							|| lstrcmpiW(prc.szExeFile, L"conemu64.exe")==0)
 						{
-							dwGuiPID = prc.th32ProcessID;
+							nToolhelpFoundGuiPID = prc.th32ProcessID;
 							break;
 						}
 					}
 
-					if (dwGuiPID) break;
+					if (nToolhelpFoundGuiPID) break;
 				}
 				while (Process32Next(hSnap, &prc));
 			}
 
 			CloseHandle(hSnap);
 
-			if (!dwGuiPID) bNeedStartGui = TRUE;
+			if (!nToolhelpFoundGuiPID) bNeedStartGui = TRUE;
 		}
 	}
 
@@ -2861,14 +2876,18 @@ HWND Attach2Gui(DWORD nTimeout)
 		if (gpSrv->hGuiWnd)
 		{
 			// On success, it will set ghConEmuWndDC and others...
-			TryConnect2Gui(gpSrv->hGuiWnd, pIn);
+			TryConnect2Gui(gpSrv->hGuiWnd, 0, pIn);
 		}
 		else
 		{
-			HWND hFindGui = NULL;
+			HWND hFindGui = FindWindowEx(NULL, NULL, VirtualConsoleClassMain, NULL);
 			DWORD nFindPID;
 
-			while ((hFindGui = FindWindowEx(NULL, hFindGui, VirtualConsoleClassMain, NULL)) != NULL)
+			if ((hFindGui == NULL) && nToolhelpFoundGuiPID)
+			{
+				TryConnect2Gui(NULL, nToolhelpFoundGuiPID, pIn);
+			}
+			else do
 			{
 				// Если ConEmu.exe мы запустили сами
 				if (nStartedGuiPID)
@@ -2880,9 +2899,9 @@ HWND Attach2Gui(DWORD nTimeout)
 				}
 
 				// On success, it will set ghConEmuWndDC and others...
-				if (TryConnect2Gui(hFindGui, pIn))
+				if (TryConnect2Gui(hFindGui, 0, pIn))
 					break; // OK
-			}
+			} while ((hFindGui = FindWindowEx(NULL, hFindGui, VirtualConsoleClassMain, NULL)) != NULL);
 		}
 
 		if (ghConEmuWndDC)

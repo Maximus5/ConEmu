@@ -41,10 +41,9 @@ public:
 	void Stop(bool abDeinitialize=false);
 protected:
 	PipeServer<CESERVER_REQ>* mp_GuiServer;
-	//static DWORD CALLBACK GuiServerThread(LPVOID lpvParam);
-	//void GuiServerThreadCommand(HANDLE hPipe);
-	//DWORD mn_GuiServerThreadId; HANDLE mh_GuiServerThread, mh_GuiServerThreadTerminate;
+	PipeServer<CESERVER_REQ>* mp_GuiServerPID;
 	wchar_t ms_ServerPipe[MAX_PATH];
+	wchar_t ms_ServerPipePID[MAX_PATH];
 	static BOOL WINAPI GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &ppReply, DWORD &pcbReplySize, DWORD &pcbMaxReplySize, LPARAM lParam);
 	static void WINAPI GuiServerFree(CESERVER_REQ* pReply, LPARAM lParam);
 #ifdef _DEBUG

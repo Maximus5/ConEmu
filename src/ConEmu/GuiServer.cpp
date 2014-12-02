@@ -64,6 +64,9 @@ CGuiServer::CGuiServer()
 	mp_GuiServer = (PipeServer<CESERVER_REQ>*)calloc(1, sizeof(*mp_GuiServer));
 	mp_GuiServer->SetMaxCount(2);
 	ms_ServerPipe[0] = 0;
+	mp_GuiServerPID = (PipeServer<CESERVER_REQ>*)calloc(1, sizeof(*mp_GuiServerPID));
+	mp_GuiServerPID->SetMaxCount(2);
+	ms_ServerPipePID[0] = 0;
 }
 
 CGuiServer::~CGuiServer()
@@ -81,19 +84,25 @@ bool CGuiServer::Start()
 	mp_GuiServer->SetLoopCommands(false);
 	mp_GuiServer->SetDummyAnswerSize(sizeof(CESERVER_REQ_HDR));
 
+	// Issue 1828: FindWindowEx may fails in some cases, only PID will be working...
+	_wsprintf(ms_ServerPipePID, SKIPLEN(countof(ms_ServerPipePID)) CESERVERPIPENAME, L".", GetCurrentProcessId());
+
+	mp_GuiServerPID->SetOverlapped(true);
+	mp_GuiServerPID->SetLoopCommands(false);
+	mp_GuiServerPID->SetDummyAnswerSize(sizeof(CESERVER_REQ_HDR));
+
 	PipeServer<CESERVER_REQ>::PipeServerConnected_t lpfnOnConnected = NULL;
-#ifdef _DEBUG
+	#ifdef _DEBUG
 	lpfnOnConnected = CGuiServer::OnGuiServerConnected;
-#endif
+	#endif
 
 	if (!mp_GuiServer->StartPipeServer(false, ms_ServerPipe, (LPARAM)this, LocalSecurity(), GuiServerCommand, GuiServerFree, lpfnOnConnected, NULL))
 	{
 		// Ошибка уже показана
 		return false;
 	}
-	//mh_GuiServerThreadTerminate = CreateEvent(NULL, TRUE, FALSE, NULL);
-	//if (mh_GuiServerThreadTerminate) ResetEvent(mh_GuiServerThreadTerminate);
-	//mh_GuiServerThread = CreateThread(NULL, 0, GuiServerThread, (LPVOID)this, 0, &mn_GuiServerThreadId);
+
+	mp_GuiServerPID->StartPipeServer(false, ms_ServerPipePID, (LPARAM)this, LocalSecurity(), GuiServerCommand, GuiServerFree, lpfnOnConnected, NULL);
 
 	return true;
 }
@@ -114,6 +123,21 @@ void CGuiServer::Stop(bool abDeinitialize/*=false*/)
 		}
 
 		ShutdownGuiStep(L"mp_GuiServer->StopPipeServer - done");
+	}
+
+	if (mp_GuiServerPID)
+	{
+		ShutdownGuiStep(L"mp_GuiServerPID->StopPipeServer");
+
+		mp_GuiServerPID->StopPipeServer(false);
+
+		if (abDeinitialize)
+		{
+			free(mp_GuiServerPID);
+			mp_GuiServerPID = NULL;
+		}
+
+		ShutdownGuiStep(L"mp_GuiServerPID->StopPipeServer - done");
 	}
 }
 
