@@ -5976,8 +5976,8 @@ bool CVirtualConsole::UpdatePanelView(bool abLeftPanel, bool abOnRegister/*=fals
 	RECT rcCur; GetWindowRect(pp->hWnd, &rcCur);
 	//MapWindowPoints(NULL, ghWnd, (LPPOINT)&rcCur, 2);
 
-	if (rcCur.left != pt[0].x || rcCur.top != pt[0].y
-	        || rcCur.right != pt[1].x || rcCur.bottom != pt[1].y)
+	if (mp_RCon && (rcCur.left != pt[0].x || rcCur.top != pt[0].y
+	        || rcCur.right != pt[1].x || rcCur.bottom != pt[1].y))
 	{
 		lbRc = mp_RCon->SetOtherWindowPos(pp->hWnd, HWND_TOP,
 		                                  pt[0].x,pt[0].y, pt[1].x-pt[0].x,pt[1].y-pt[0].y,
