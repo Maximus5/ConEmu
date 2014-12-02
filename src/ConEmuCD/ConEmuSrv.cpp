@@ -695,7 +695,9 @@ int ServerInitAttach2Gui()
 		if (hDcWnd)
 			break; // OK
 
-		if (MessageBox(NULL, L"Available ConEmu GUI window not found!", L"ConEmu",
+		wchar_t szTitle[128];
+		_wsprintf(szTitle, SKIPCOUNT(szTitle) WIN3264TEST(L"ConEmuC",L"ConEmuC64") L" PID=%u", GetCurrentProcessId());
+		if (MessageBox(NULL, L"Available ConEmu GUI window not found!", szTitle,
 		              MB_RETRYCANCEL|MB_SYSTEMMODAL|MB_ICONQUESTION) != IDRETRY)
 			break; // Отказ
 	}
