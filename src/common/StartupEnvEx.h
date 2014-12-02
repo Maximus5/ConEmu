@@ -29,6 +29,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include "StartupEnv.h"
+#include "WUser.h"
 #include <TlHelp32.h>
 
 class LoadStartupEnvEx : public LoadStartupEnv
@@ -253,11 +254,12 @@ public:
 			pszReactOS++;
 
 		HWND hConWnd = GetConsoleWindow();
+		bool bIsAdmin = IsUserAdmin();
 
 		_wsprintf(szSI, SKIPLEN(countof(szSI)) L"Startup info\r\n"
 			L"  OsVer: %u.%u.%u.x%u, Product: %u, SP: %u.%u, Suite: 0x%X, SM_SERVERR2: %u\r\n"
 			L"  CSDVersion: %s, ReactOS: %u (%s), Rsrv: %u\r\n"
-			L"  DBCS: %u, WINE: %u, PE: %u, Remote: %u, ACP: %u, OEMCP: %u\r\n"
+			L"  DBCS: %u, WINE: %u, PE: %u, Remote: %u, ACP: %u, OEMCP: %u, Admin: %u\r\n"
 			L"  Desktop: %s; BPP: %u\r\n  Title: %s\r\n  Size: {%u,%u},{%u,%u}\r\n"
 			L"  Flags: 0x%08X, ShowWindow: %u, ConHWnd: 0x%08X\r\n"
 			L"  Handles: 0x%08X, 0x%08X, 0x%08X"
@@ -266,7 +268,7 @@ public:
 			osv.wProductType, osv.wServicePackMajor, osv.wServicePackMinor, osv.wSuiteMask, GetSystemMetrics(89/*SM_SERVERR2*/),
 			osv.szCSDVersion, apStartEnv->bIsReactOS, pszReactOS, osv.wReserved,
 			apStartEnv->bIsDbcs, apStartEnv->bIsWine, apStartEnv->bIsWinPE, apStartEnv->bIsRemote,
-			apStartEnv->nAnsiCP, apStartEnv->nOEMCP,
+			apStartEnv->nAnsiCP, apStartEnv->nOEMCP, bIsAdmin,
 			szDesktop, apStartEnv->nPixels, szTitle,
 			apStartEnv->si.dwX, apStartEnv->si.dwY, apStartEnv->si.dwXSize, apStartEnv->si.dwYSize,
 			apStartEnv->si.dwFlags, (DWORD)apStartEnv->si.wShowWindow, (DWORD)hConWnd,
