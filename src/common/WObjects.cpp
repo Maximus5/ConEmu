@@ -325,7 +325,7 @@ wchar_t* GetShortFileNameEx(LPCWSTR asLong, BOOL abFavorLength/*=TRUE*/)
 	int      nLen, nCurLen = 0;
 
 	// Если путь сетевой (или UNC?) пропустить префиксы/серверы
-	if (pszSrc[0] == L'\\' && pszSrc[1] == '\\')
+	if (pszSrc && pszSrc[0] == L'\\' && pszSrc[1] == '\\')
 	{
 		// пропуск первых двух слешей
 		pszSrc += 2;

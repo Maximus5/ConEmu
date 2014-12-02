@@ -885,7 +885,7 @@ void CRecreateDlg::InitVars()
 	else
 	{
 		// В диалоге запуска новой консоли - нечего делать автостартующему таску?
-		if (lstrcmpi(pszSystem, AutoStartTaskName) == 0)
+		if (pszSystem && lstrcmpi(pszSystem, AutoStartTaskName) == 0)
 		{
 			// Раз активной консоли нет - попробовать взять первую команду из AutoStartTaskName
 			if (!pszCmd)

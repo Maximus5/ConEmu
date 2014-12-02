@@ -99,6 +99,9 @@ CConEmuMenu::CConEmuMenu()
 	{
 		*mph_Menus[i] = NULL;
 	}
+	mb_CmdShowTaskItems = false;
+	mn_CmdLastID = 0;
+	mp_CmdRClickForce = NULL;
 }
 
 CConEmuMenu::~CConEmuMenu()

@@ -493,7 +493,7 @@ CConEmuMain::CConEmuMain()
 	// Папка программы
 	wcscpy_c(ms_ConEmuExeDir, ms_ConEmuExe);
 	pszSlash = wcsrchr(ms_ConEmuExeDir, L'\\');
-	*pszSlash = 0;
+	if (pszSlash) *pszSlash = 0;
 
 	// Запомнить текущую папку (на момент запуска)
 	mb_ConEmuWorkDirArg = false; // May be overrided with app "/dir" switch
@@ -5116,7 +5116,7 @@ void CConEmuMain::UpdateProgress()
 	}
 
 	if (psTitle)
-		wcscat(MultiTitle, pszFixTitle);
+		wcscat_c(MultiTitle, pszFixTitle);
 	else
 		psTitle = pszFixTitle;
 
@@ -6597,7 +6597,7 @@ wchar_t* CConEmuMain::LoadConsoleBatch_Drops(LPCWSTR asSource)
 		}
 
 		INT_PTR cchArguments = 32768;
-		wchar_t* pszArguments = (wchar_t*)calloc(cchArguments,sizeof(pszArguments));
+		wchar_t* pszArguments = (wchar_t*)calloc(cchArguments,sizeof(wchar_t));
 		if (!pszArguments)
 		{
 			SafeRelease(pShellLink);

@@ -518,7 +518,7 @@ LPWSTR ConEmuMacro::ConvertMacro(LPCWSTR asMacro, BYTE FromVersion, bool bShowEr
 		{
 			LPCWSTR pszPrefix = L"Failed to convert macro\n";
 			size_t cchMax = _tcslen(pszPrefix) + (pszError ? _tcslen(pszError) : 0) + _tcslen(asMacro) + 6;
-			wchar_t* pszFull = (wchar_t*)malloc(cchMax*sizeof(pszFull));
+			wchar_t* pszFull = (wchar_t*)malloc(cchMax*sizeof(wchar_t));
 			if (pszFull)
 			{
 				_wcscpy_c(pszFull, cchMax, pszPrefix);
@@ -2732,7 +2732,7 @@ LPWSTR ConEmuMacro::Shell(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 
 					if (bNewOper)
 					{
-						size_t nOperLen = _tcslen(pszOper);
+						size_t nOperLen = pszOper ? _tcslen(pszOper) : 0;
 						if ((nOperLen > 11) && (pszOper[11] == L':'))
 							nAllLen += (nOperLen + 6);
 						else
