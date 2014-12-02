@@ -5253,9 +5253,11 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 		// Если после -new_console идет пробел, или это вообще конец строки
 		// 111211 - после -new_console: допускаются параметры
 		if (pwszCopy
-			&& ((pwszCopy > lsCmdLine) || (*(pwszCopy-1) == L' ') || (*(pwszCopy-1) == L'"'))
-			&& (pwszCopy[nArgLen]==L' ' || pwszCopy[nArgLen]==L':' || pwszCopy[nArgLen]==0
-		         || (pwszCopy[nArgLen]==L'"' || pwszCopy[nArgLen+1]==0)))
+			// Must be started with space or double-quote or be the start of the string
+			&& ((pwszCopy == lsCmdLine) || ((*(pwszCopy-1) == L' ') || (*(pwszCopy-1) == L'"')))
+			// And check the end of parameter
+			&& ((pwszCopy[nArgLen] == 0) || wcschr(L" :", pwszCopy[nArgLen])
+				|| ((pwszCopy[nArgLen] == L'"') || (pwszCopy[nArgLen+1] == 0))))
 		{
 			if (!ghConWnd)
 			{
