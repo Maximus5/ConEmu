@@ -6597,7 +6597,7 @@ wchar_t* CConEmuMain::LoadConsoleBatch_Drops(LPCWSTR asSource)
 		}
 
 		INT_PTR cchArguments = 32768;
-		wchar_t* pszArguments = (wchar_t*)calloc(cchArguments,sizeof(pszArguments));
+		wchar_t* pszArguments = (wchar_t*)calloc(cchArguments,sizeof(wchar_t));
 		if (!pszArguments)
 		{
 			SafeRelease(pShellLink);
