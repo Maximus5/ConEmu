@@ -320,7 +320,7 @@ protected:
 		if (0 == (rc = RegQueryValueEx(hKeyNames, L"Counters", 0, &dwType, NULL, &dwSize)))
 		{
 			// Allocate the counter names buffer
-			wchar_t* buf = (wchar_t*)malloc(dwSize*sizeof(buf));
+			wchar_t* buf = (wchar_t*)malloc(dwSize*sizeof(wchar_t));
 			if (buf)
 			{
 				// read the counter names from the registry
