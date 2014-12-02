@@ -2732,7 +2732,7 @@ LPWSTR ConEmuMacro::Shell(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 
 					if (bNewOper)
 					{
-						size_t nOperLen = _tcslen(pszOper);
+						size_t nOperLen = pszOper ? _tcslen(pszOper) : 0;
 						if ((nOperLen > 11) && (pszOper[11] == L':'))
 							nAllLen += (nOperLen + 6);
 						else
