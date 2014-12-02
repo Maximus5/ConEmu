@@ -1401,7 +1401,7 @@ int CTabBarClass::PrepareTab(CTab& pTab, CVirtualConsole *apVCon)
 		iTabIcon = apVCon->RCon()->GetRootProcessIcon();
 	}
 
-	LPCWSTR pszTabName = pRCon->GetTabTitle(pTab);
+	LPCWSTR pszTabName = pRCon ? pRCon->GetTabTitle(pTab) : L"";
 
 	// That will be Far Manager panels or simple consoles (cmd, posh, bash, etc.)
 	if (pTab->Name.Empty() || (pTab->Type() == fwt_Panels))
