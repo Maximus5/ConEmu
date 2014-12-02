@@ -12,6 +12,15 @@ Votes and awards (vote for ConEmu, if you please)
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+2014.12.1
+[*] In some cases using ‘Cmd_Autorun’ was causing crashes.
+[*] Far active directory was not refresed in Tab labels if macro ‘%d’ was used in template.
+[*] Use simple "ConEmuC -IsConEmu" instead of "ConEmuC -GuiMacro IsConEmu" in ‘Cmd_Autorun’.
+[*] Was not warned about wrong place (invalid switch) of "-new_console:a" with ConEmu.exe.
+[*] Issue 1828: ‘Cmd_Autorun’ fails if processes were started under different credentials.
+[*] Command was forced into new ConEmu tab even if `-new_console` was quoted with non-double-quotes.
+
+
 2014.11.30
 [*] Redesign ‘Features’ settings page.
 [*] Sleep in background: don't force inactive tabs to high activity state on startup.
