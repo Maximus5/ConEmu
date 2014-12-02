@@ -59,6 +59,8 @@ CTaskBarGhost::CTaskBarGhost(CVirtualConsole* apVCon)
 	mh_SkipActivateEvent = NULL;
 	mb_WasSkipActivate = false;
 	ms_LastTitle[0] = 0;
+	ZeroMemory(&mbmi_Snap, sizeof(mbmi_Snap));
+	mpb_DS = NULL;
 }
 
 CTaskBarGhost::~CTaskBarGhost()
