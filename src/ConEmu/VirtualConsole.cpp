@@ -2528,8 +2528,8 @@ bool CVirtualConsole::LoadConsoleData()
 	const CRgnDetect* pRgn = mp_RCon->GetDetector();
 
 	_ASSERTE(countof(mrc_Dialogs)==countof(mn_DialogFlags));
-	mn_DialogsCount = pRgn->GetDetectedDialogs(countof(mrc_Dialogs), mrc_Dialogs, mn_DialogFlags);
-	mn_DialogAllFlags = pRgn->GetFlags();
+	mn_DialogsCount = pRgn ? pRgn->GetDetectedDialogs(countof(mrc_Dialogs), mrc_Dialogs, mn_DialogFlags) : 0;
+	mn_DialogAllFlags = pRgn ? pRgn->GetFlags() : 0;
 
 #if 0
 	if (mn_DialogsCount == 7 && mn_LastDialogsCount == 6)
