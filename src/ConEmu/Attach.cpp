@@ -83,6 +83,7 @@ CAttachDlg::CAttachDlg()
 	, mn_AttachPID(0)
 	, mh_AttachHWND(NULL)
 	, mp_ProcessData(NULL)
+	, mn_ExplorerPID(0)
 {
 	mb_IsWin64 = IsWindows64();
 }
