@@ -1180,7 +1180,8 @@ int CEAnsi::NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, wchar_t (&szPreDump)[CE
 					{
 						// Don't assert on rawdump of KeyEvents.exe Esc key presses
 						// 10:00:00 KEY_EVENT_RECORD: Dn, 1, Vk="VK_ESCAPE" [27/0x001B], Scan=0x0001 uChar=[U='\x1b' (0x001B): A='\x1b' (0x1B)]
-						_ASSERTEX((lpStart < lpSaveStart) && (*(lpSaveStart-1) == L'\'' && Code.Second == L'\'') && "Unsupported control sequence?");
+						bool bStandaloneEscChar = (lpStart < lpSaveStart) && ((*(lpSaveStart-1) == L'\'' && Code.Second == L'\'') || (*(lpSaveStart-1) == L' ' && Code.Second == L' '));
+						_ASSERTEX(bStandaloneEscChar && "Unsupported control sequence?");
 						continue; // invalid code
 					}
 
