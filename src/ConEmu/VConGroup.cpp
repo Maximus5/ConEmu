@@ -710,12 +710,14 @@ void CVConGroup::StopSignalAll()
 void CVConGroup::DestroyAllVCon()
 {
 	MCHKHEAP;
+	CVConGuard VCon;
 	for (size_t i = countof(gp_VCon); i--;)
 	{
-		if (gp_VCon[i])
+		if (VCon.Attach(gp_VCon[i]))
 		{
-			CVirtualConsole* p = gp_VCon[i];
+			CVirtualConsole* p = VCon.VCon();
 			gp_VCon[i] = NULL;
+			VCon.Release();
 			p->Release();
 		}
 	}
@@ -725,13 +727,15 @@ void CVConGroup::DestroyAllVCon()
 void CVConGroup::OnDestroyConEmu()
 {
 	// Нужно проверить, вдруг окно закрылось без нашего ведома (InsideIntegration)
+	CVConGuard VCon;
 	for (size_t i = countof(gp_VCon); i--;)
 	{
-		if (gp_VCon[i] && gp_VCon[i]->RCon())
+		if (VCon.Attach(gp_VCon[i]) && VCon->RCon())
 		{
-			if (!gp_VCon[i]->RCon()->isDetached())
+			if (!VCon->RCon()->isDetached()
+				&& VCon->RCon()->ConWnd())
 			{
-				gp_VCon[i]->RCon()->Detach(true, true);
+				VCon->RCon()->Detach(true, true);
 			}
 		}
 	}
@@ -739,11 +743,15 @@ void CVConGroup::OnDestroyConEmu()
 
 void CVConGroup::OnAlwaysShowScrollbar(bool abSync /*= true*/)
 {
-	for (size_t i = 0; i < countof(gp_VCon); i++)
+	struct impl
 	{
-		if (gp_VCon[i])
-			gp_VCon[i]->OnAlwaysShowScrollbar(abSync);
-	}
+		static bool ShowScroll(CVirtualConsole* pVCon, LPARAM lParam)
+		{
+			pVCon->OnAlwaysShowScrollbar(lParam!=0);
+			return true;
+		};
+	};
+	EnumVCon(evf_All, impl::ShowScroll, (LPARAM)abSync);
 }
 
 void CVConGroup::RepositionVCon(RECT rcNewCon, bool bVisible)
