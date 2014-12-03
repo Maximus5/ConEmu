@@ -6555,6 +6555,12 @@ void CRealConsole::SetMainSrvPID(DWORD anMainSrvPID, HANDLE ahMainSrv)
 		// Сброс
 		ConHostSetPID(0);
 	}
+	else if (gpSetCls->isAdvLogging)
+	{
+		wchar_t szInfo[100];
+		_wsprintf(szInfo, SKIPCOUNT(szInfo) L"ServerPID=%u was set for VCon%i", anMainSrvPID, mp_VCon->Index()+1);
+		gpConEmu->LogString(szInfo);
+	}
 
 	DEBUGTEST(isServerAlive());
 
