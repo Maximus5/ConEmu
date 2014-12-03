@@ -141,6 +141,8 @@ protected:
 			mn_Size = (nSize<=0) ? sizeof(T) : nSize; //-V105 //-V103
 			mb_WriteAllowed = abCreate || abReadWrite;
 
+			DWORD nFlags = mb_WriteAllowed ? (FILE_MAP_READ|FILE_MAP_WRITE) : FILE_MAP_READ;
+
 			if (abCreate)
 			{
 				mh_Mapping = CreateFileMapping(INVALID_HANDLE_VALUE,
@@ -148,7 +150,7 @@ protected:
 			}
 			else
 			{
-				mh_Mapping = OpenFileMapping(FILE_MAP_READ, FALSE, ms_MapName);
+				mh_Mapping = OpenFileMapping(nFlags, FALSE, ms_MapName);
 			}
 
 			if (!mh_Mapping)
@@ -159,7 +161,6 @@ protected:
 			}
 			else
 			{
-				DWORD nFlags = mb_WriteAllowed ? FILE_MAP_ALL_ACCESS : FILE_MAP_READ;
 				mp_Data = (T*)MapViewOfFile(mh_Mapping, nFlags,0,0,0);
 
 				if (!mp_Data)
