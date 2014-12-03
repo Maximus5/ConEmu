@@ -91,6 +91,7 @@ class CVirtualConsole :
 		bool isVisible();
 		bool isGroup();
 		bool isGroupedInput();
+		int  Index() { return mn_Index; };
 	public:
 		WARNING("Сделать protected!");
 		uint TextWidth, TextHeight; // размер в символах
