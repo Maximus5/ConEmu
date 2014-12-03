@@ -3083,8 +3083,8 @@ int CreateMapHeader()
 	if (!gpSrv->pGuiInfoMap)
 		gpSrv->pGuiInfoMap = new MFileMapping<ConEmuGuiMapping>;
 
-	gpSrv->pConsoleMap = new MFileMapping<CESERVER_CONSOLE_MAPPING_HDR>;
-
+	if (!gpSrv->pConsoleMap)
+		gpSrv->pConsoleMap = new MFileMapping<CESERVER_CONSOLE_MAPPING_HDR>;
 	if (!gpSrv->pConsoleMap)
 	{
 		_printf("ConEmuC: calloc(MFileMapping<CESERVER_CONSOLE_MAPPING_HDR>) failed, pConsoleMap is null", 0); //-V576
