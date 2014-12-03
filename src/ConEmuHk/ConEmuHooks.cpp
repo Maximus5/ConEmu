@@ -4964,9 +4964,22 @@ BOOL WINAPI OnReadConsoleInputW(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DW
 	//#endif
 
 	#if 0
-	// Incomrehensible usage of console input leads to sort of ‘freezing’
 	// get-help Get-ChildItem -full | out-host -paging
-	HANDLE hInTest = GetStdHandle(STD_INPUT_HANDLE);
+	HANDLE hInTest;
+	HANDLE hTestHandle = NULL;
+	DWORD nInMode, nArgMode;
+	BOOL bInTest = FALSE, bArgTest = FALSE;
+	if (gbPowerShellMonitorProgress)
+	{
+		hInTest = GetStdHandle(STD_INPUT_HANDLE);
+		#ifdef _DEBUG
+		bInTest = GetConsoleMode(hInTest, &nInMode);
+		bArgTest = GetConsoleMode(hConsoleInput, &nArgMode);
+		hTestHandle = CreateFile(L"CONIN$", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+		if (hTestHandle != INVALID_HANDLE_VALUE)
+			CloseHandle(hTestHandle);
+		#endif
+	}
 	#endif
 
 	if (gFarMode.bFarHookMode && USE_INTERNAL_QUEUE) // ecompl speed-up
