@@ -324,6 +324,9 @@ wchar_t* GetShortFileNameEx(LPCWSTR asLong, BOOL abFavorLength/*=TRUE*/)
 	bool     lbNetwork = false;
 	int      nLen, nCurLen = 0;
 
+	if (!pszLong || !pszShort || !szName)
+		goto wrap;
+
 	// Если путь сетевой (или UNC?) пропустить префиксы/серверы
 	if (pszSrc[0] == L'\\' && pszSrc[1] == '\\')
 	{
