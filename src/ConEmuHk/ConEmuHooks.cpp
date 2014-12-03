@@ -4982,6 +4982,13 @@ BOOL WINAPI OnReadConsoleInputW(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DW
 	}
 	#endif
 
+	CESERVER_CONSOLE_APP_MAPPING* pAppMap = gpAppMap ? gpAppMap->Ptr() : NULL;
+	DWORD nAppPID = 0;
+	if (pAppMap)
+	{
+		pAppMap->nReadConsoleInputPID = nAppPID = GetCurrentProcessId();
+	}
+
 	if (gFarMode.bFarHookMode && USE_INTERNAL_QUEUE) // ecompl speed-up
 	{
 		#ifdef _DEBUG
@@ -5005,6 +5012,11 @@ BOOL WINAPI OnReadConsoleInputW(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DW
 	else
 	{
 		lbRc = F(ReadConsoleInputW)(hConsoleInput, lpBuffer, nLength, lpNumberOfEventsRead);
+	}
+
+	if (pAppMap && (pAppMap->nReadConsoleInputPID == nAppPID))
+	{
+		pAppMap->nReadConsoleInputPID = 0;
 	}
 
 	//#ifdef USE_INPUT_SEMAPHORE

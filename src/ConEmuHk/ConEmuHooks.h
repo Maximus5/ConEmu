@@ -64,11 +64,11 @@ extern DWORD   gnServerPID; // PID сервера (инициализирует�
 #include "../common/WObjects.h"
 #include "../common/InQueue.h"
 #include "../common/MMap.h"
+#include "../common/MFileMapping.h"
 
 void SetServerPID(DWORD anMainSrvPID);
 
-//extern MFileMapping<CESERVER_CONSOLE_MAPPING_HDR> *gpConMap;
-//extern CESERVER_CONSOLE_MAPPING_HDR* gpConInfo;
+extern MFileMapping<CESERVER_CONSOLE_APP_MAPPING> *gpAppMap;
 CESERVER_CONSOLE_MAPPING_HDR* GetConMap(BOOL abForceRecreate=FALSE);
 void OnConWndChanged(HWND ahNewConWnd);
 bool AttachServerConsole();

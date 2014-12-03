@@ -30,7 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _COMMON_HEADER_HPP_
 
 // Interface version
-#define CESERVER_REQ_VER    147
+#define CESERVER_REQ_VER    148
 
 // Max tabs/panes count
 #define MAX_CONSOLE_COUNT 30
@@ -193,6 +193,7 @@ typedef struct _CONSOLE_SELECTION_INFO
 #define CEGUIINFOMAPNAME    L"ConEmuGuiInfoMapping.%u" // --> ConEmuGuiMapping            ( % == dwGuiProcessId )
 #define CECONMAPNAME        L"ConEmuFileMapping.%08X"  // --> CESERVER_CONSOLE_MAPPING_HDR ( % == (DWORD)ghConWnd )
 #define CECONMAPNAME_A       "ConEmuFileMapping.%08X"  // --> CESERVER_CONSOLE_MAPPING_HDR ( % == (DWORD)ghConWnd ) simplifying ansi
+#define CECONAPPMAPNAME     L"ConEmuAppMapping.%08X"   // --> CESERVER_CONSOLE_APP_MAPPING ( % == (DWORD)ghConWnd )
 #define CEFARMAPNAME        L"ConEmuFarMapping.%u"     // --> CEFAR_INFO_MAPPING               ( % == nFarPID )
 #define CECONVIEWSETNAME    L"ConEmuViewSetMapping.%u" // --> PanelViewSetMapping
 //#ifdef _DEBUG
@@ -1426,6 +1427,23 @@ struct CESERVER_CONSOLE_MAPPING_HDR
 	RealBufferScroll rbsAllowed; // пока любая - rbs_Any
 
 	ConEmuComspec ComSpec;
+};
+
+// CECONAPPMAPNAME
+struct CESERVER_CONSOLE_APP_MAPPING
+{
+	DWORD cbSize;
+	DWORD nProtocolVersion; // == CESERVER_REQ_VER
+
+	// Under construction, some fields may be void
+
+	// Updated before and after ReadConsoleInput (powershell especially)
+	DWORD nReadConsoleInputPID;
+	COORD crReadConsoleInputStart;
+
+	// Updated before and after ReadConsole/ReadFile
+	DWORD nReadConsolePID;
+	COORD crReadConsoleStart;
 };
 
 struct TOPLEFTCOORD

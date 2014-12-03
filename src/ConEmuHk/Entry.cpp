@@ -85,7 +85,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../ConEmu/version.h"
 #include "../common/CmdLine.h"
 #include "../common/ConsoleAnnotation.h"
-#include "../common/MFileMapping.h"
 #include "../common/RConStartArgs.h"
 #include "../common/WConsole.h"
 #include "../common/WObjects.h"
@@ -407,6 +406,7 @@ void SetServerPID(DWORD anMainSrvPID)
 
 MFileMapping<CESERVER_CONSOLE_MAPPING_HDR> *gpConMap = NULL;
 CESERVER_CONSOLE_MAPPING_HDR* gpConInfo = NULL;
+MFileMapping<CESERVER_CONSOLE_APP_MAPPING> *gpAppMap = NULL;
 
 CESERVER_CONSOLE_MAPPING_HDR* GetConMap(BOOL abForceRecreate/*=FALSE*/)
 {
@@ -414,8 +414,19 @@ CESERVER_CONSOLE_MAPPING_HDR* GetConMap(BOOL abForceRecreate/*=FALSE*/)
 	bool bAnsi = false;
 	bool bAnsiLog = false;
 
-	if (gpConInfo && !abForceRecreate)
+	if (gpConInfo && gpAppMap && !abForceRecreate)
 		goto wrap;
+
+	if (!gpAppMap || abForceRecreate)
+	{
+		if (!gpAppMap)
+			gpAppMap = new MFileMapping<CESERVER_CONSOLE_APP_MAPPING>;
+		if (gpAppMap)
+		{
+			gpAppMap->InitName(CECONAPPMAPNAME, (DWORD)ghConWnd); //-V205
+			gpAppMap->Open(TRUE);
+		}
+	}
 
 	if (!gpConMap || abForceRecreate)
 	{
@@ -1474,6 +1485,16 @@ void DllStop()
 		gpConInfo = NULL;
 		delete gpConMap;
 		gpConMap = NULL;
+		DLOGEND();
+	}
+
+	if (gpAppMap)
+	{
+		DLOG0("gpAppMap->CloseMap",0);
+		print_timings(L"gpAppMap->CloseMap");
+		gpAppMap->CloseMap();
+		delete gpAppMap;
+		gpAppMap = NULL;
 		DLOGEND();
 	}
 

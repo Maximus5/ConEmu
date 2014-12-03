@@ -489,6 +489,41 @@ BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount)
 		}
 		else
 		{
+			WORD vk = pr[n].Event.KeyEvent.wVirtualKeyCode;
+			if (((vk == VK_RETURN) || (vk == VK_SPACE)) && gpSrv->pAppMap)
+			{
+				// github#19: don't post Enter/Space KeyUp events to the console input buffer
+				// Also, type in PS prompt
+				// get-help Get-ChildItem -full | out-host -paging
+				// And press "Enter". You'll get one waste reaction for "Enter" KeyUp
+				static DWORD nLastPID = 0;
+				static WORD nLastVK = 0;
+				bool bBypass = false;
+				if (pr[n].Event.KeyEvent.bKeyDown)
+				{
+					nLastPID = gpSrv->pAppMap->Ptr()->nReadConsoleInputPID;
+					nLastVK = nLastPID ? vk : 0;
+					bBypass = true;
+				}
+				else
+				{
+					if ((nLastPID != gpSrv->pAppMap->Ptr()->nReadConsoleInputPID)
+						|| (nLastVK != vk))
+					{
+						// Skip this event
+						pr[n].EventType = 0;
+						nLastPID = 0; nLastVK = 0;
+						continue;
+					}
+					else
+					{
+						bBypass = true;
+					}
+				}
+				// Else - allow Enter/Space KeyUp
+				UNREFERENCED_PARAMETER(bBypass);
+			}
+
 			if (!pr[n].Event.KeyEvent.wRepeatCount)
 			{
 				_ASSERTE(pr[n].Event.KeyEvent.wRepeatCount!=0);
@@ -510,6 +545,9 @@ BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount)
 
 			for (UINT n = 0; n < nCount; n++)
 			{
+				if (!pr[n].EventType)
+					continue;
+
 				*(ppr++) = pr[n];
 
 				if (pr[n].EventType == KEY_EVENT)

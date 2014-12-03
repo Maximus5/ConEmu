@@ -3091,13 +3091,24 @@ int CreateMapHeader()
 		goto wrap;
 	}
 
+	if (!gpSrv->pAppMap)
+		gpSrv->pAppMap = new MFileMapping<CESERVER_CONSOLE_APP_MAPPING>;
+	if (!gpSrv->pAppMap)
+	{
+		_printf("ConEmuC: calloc(MFileMapping<CESERVER_CONSOLE_APP_MAPPING>) failed, pAppMap is null", 0); //-V576
+		goto wrap;
+	}
+
 	gpSrv->pConsoleMap->InitName(CECONMAPNAME, (DWORD)ghConWnd); //-V205
+	gpSrv->pAppMap->InitName(CECONAPPMAPNAME, (DWORD)ghConWnd); //-V205
 
 	BOOL lbCreated;
 	if (gnRunMode == RM_SERVER)
-		lbCreated = (gpSrv->pConsoleMap->Create() != NULL);
+		lbCreated = (gpSrv->pConsoleMap->Create() != NULL)
+			&& (gpSrv->pAppMap->Create() != NULL);
 	else
-		lbCreated = (gpSrv->pConsoleMap->Open() != NULL);
+		lbCreated = (gpSrv->pConsoleMap->Open() != NULL)
+			&& (gpSrv->pAppMap->Open(TRUE) != NULL);
 
 	if (!lbCreated)
 	{
@@ -3115,6 +3126,11 @@ int CreateMapHeader()
 				gpSrv->guiSettings.ComSpec = gpSrv->pConsole->hdr.ComSpec;
 			}
 		}
+	}
+	else if (gnRunMode == RM_SERVER)
+	{
+		CESERVER_CONSOLE_APP_MAPPING init = {sizeof(CESERVER_CONSOLE_APP_MAPPING), CESERVER_REQ_VER};
+		gpSrv->pAppMap->SetFrom(&init);
 	}
 
 	// !!! Warning !!! Изменил здесь, поменяй и ReloadGuiSettings() !!!

@@ -513,6 +513,7 @@ struct SrvInfo
 	MFileMapping<CESERVER_CONSAVE_MAP> *pStoredOutputItem;
 	//
 	MFileMapping<CESERVER_CONSOLE_MAPPING_HDR> *pConsoleMap;
+	MFileMapping<CESERVER_CONSOLE_APP_MAPPING> *pAppMap;
 	DWORD guiSettingsChangeNum;
 	DWORD nLastConsoleActiveTick;
 	HWND hGuiInfoMapWnd;
