@@ -310,7 +310,6 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 	mn_DefaultBufferHeight = gpSetCls->bForceBufferHeight ? gpSetCls->nForceBufferHeight : gpSet->DefaultBufferHeight;
 
 	mp_RBuf = new CRealBuffer(this);
-	_ASSERTE(mp_RBuf!=NULL);
 	mp_EBuf = NULL;
 	mp_SBuf = NULL;
 	SetActiveBuffer(mp_RBuf, false);
@@ -367,6 +366,12 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 	lstrcpy(ms_TempPanel, L"{Temporary panel");
 	lstrcpy(ms_TempPanelRus, L"{Временная панель");
 	//lstrcpy(ms_NameTitle, L"Name");
+
+	if (!mp_RBuf)
+	{
+		_ASSERTE(mp_RBuf);
+		return false;
+	}
 
 	PreInit(); // просто инициализировать переменные размеров...
 

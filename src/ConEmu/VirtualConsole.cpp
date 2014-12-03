@@ -369,7 +369,11 @@ bool CVirtualConsole::Constructor(RConStartArgs *args)
 
 	CreateView();
 	mp_RCon = new CRealConsole(this, mp_ConEmu);
-	_ASSERTE(mp_RCon);
+	if (!mp_RCon)
+	{
+		_ASSERTE(mp_RCon);
+		return false;
+	}
 	return mp_RCon->Construct(this, args);
 
 	//if (gpSet->isTabsOnTaskBar())
