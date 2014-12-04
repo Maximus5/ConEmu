@@ -12,6 +12,12 @@ Votes and awards (vote for ConEmu, if you please)
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+2014.12.3
+[*] Powershell's "get-help Get-ChildItem -full | out-host -paging" did not react to Space/Enter.
+[*] LogFiles: Log ‘IsAdmin’ state and ServerPID changes.
+[*] Fix Coverity warnings (from Michael Lukashov).
+
+
 2014.12.1
 [*] In some cases using ‘Cmd_Autorun’ was causing crashes.
 [*] Far active directory was not refresed in Tab labels if macro ‘%d’ was used in template.
