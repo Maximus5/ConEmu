@@ -932,7 +932,7 @@ int CeFullPanelInfo::DrawItemText(HDC hdc, LPRECT prcText, LPRECT prcMaxText, Ce
 					int nAll = (int)nSize;
 					int nL = nAll % 1000;
 					int nH = nAll / 1000;
-					_wsprintf(psz, SKIPLEN(countof(szFullInfo)-(psz-szFullInfo)) L"%i,%i %c", nH, nL, cType);
+					_wsprintf(psz, SKIPLEN(countof(szFullInfo)-(psz-szFullInfo)) L"%i,%03i %c", nH, nL, cType);
 				}
 				else
 				{
