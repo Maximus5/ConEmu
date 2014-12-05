@@ -9892,8 +9892,8 @@ void _wprintf(LPCWSTR asBuffer)
 	else
 	{
 		UINT  cp = GetConsoleOutputCP();
-		DWORD cchMax = (nAllLen * ((cp==CP_UTF8 || cp==CP_UTF7) ? 3 : 1)) + 1;
-		char* pszOem = (char*)malloc(cchMax);
+		int cchMax = WideCharToMultiByte(cp, 0, asBuffer, -1, NULL, 0, NULL, NULL) + 1;
+		char* pszOem = (cchMax > 1) ? (char*)malloc(cchMax) : NULL;
 		if (pszOem)
 		{
 			int nWrite = WideCharToMultiByte(cp, 0, asBuffer, -1, pszOem, cchMax, NULL, NULL);
