@@ -690,7 +690,7 @@ namespace InputLogger
 {
 	static const int BUFFER_INFO_SIZE = RELEASEDEBUGTEST(0x1000,0x1000);   // Must be a power of 2
 	struct Event {
-		DEBUGTEST(DWORD time;)
+		DWORD time;
 		enum Source {
 			evt_Empty,
 			evt_ReadInputQueue,
@@ -719,7 +719,7 @@ namespace InputLogger
 		LONG i = (_InterlockedIncrement(&g_evtidx) & (BUFFER_INFO_SIZE - 1));
 		// Write a message at this index
 		g_evt[i].what = what;
-		DEBUGTEST(g_evt[i].time = GetTickCount();)
+		g_evt[i].time = GetTickCount();
 		g_evt[i].val = val;
 	}
 
@@ -730,7 +730,7 @@ namespace InputLogger
 		LONG i = (_InterlockedIncrement(&g_evtidx) & (BUFFER_INFO_SIZE - 1));
 		// Write a message at this index
 		g_evt[i].what = what;
-		DEBUGTEST(g_evt[i].time = GetTickCount();)
+		g_evt[i].time = GetTickCount();
 		// Fill info
 		g_evt[i].val = val;
 		g_evt[i].ir = ir;
