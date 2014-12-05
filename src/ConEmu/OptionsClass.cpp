@@ -212,11 +212,11 @@ CSettings::CSettings()
 		sDefaultConFontName[0] = 0;
 	}
 	QueryPerformanceFrequency((LARGE_INTEGER *)&mn_Freq);
-	memset(mn_Counter, 0, sizeof(*mn_Counter)*(tPerfInterval-gbPerformance));
-	memset(mn_CounterMax, 0, sizeof(*mn_CounterMax)*(tPerfInterval-gbPerformance));
+	memset(mn_Counter, 0, sizeof(mn_Counter));
+	memset(mn_CounterMax, 0, sizeof(mn_CounterMax));
 	memset(mn_FPS, 0, sizeof(mn_FPS)); mn_FPS_CUR_FRAME = 0;
 	memset(mn_RFPS, 0, sizeof(mn_RFPS)); mn_RFPS_CUR_FRAME = 0;
-	memset(mn_CounterTick, 0, sizeof(*mn_CounterTick)*(tPerfInterval-gbPerformance));
+	memset(mn_CounterTick, 0, sizeof(mn_CounterTick));
 	//hBgBitmap = NULL; bgBmp = MakeCoord(0,0); hBgDc = NULL;
 	#ifndef APPDISTINCTBACKGROUND
 	mb_BgLastFade = false;
@@ -8786,25 +8786,34 @@ void CSettings::PostUpdateCounters(bool bPosted)
 					pFPS = mn_RFPS; nCount = countof(mn_RFPS);
 				}
 
-				i64 tmin = 0, tmax = 0;
-				tmin = pFPS[0];
+				i64 tmin, tmax;
+				i64 imin = 0, imax = 0;
+				tmax = tmin = pFPS[0];
 
 				for (UINT i = 0; i < nCount; i++)
 				{
-					if (pFPS[i] < tmin) tmin = pFPS[i]; //-V108
+					i64 vi = pFPS[i]; //-V108
+					if (!vi) continue;
 
-					if (pFPS[i] > tmax) tmax = pFPS[i]; //-V108
+					if (vi < tmin) { tmin = vi; imin = i; }
+					if (vi > tmax) { tmax = vi; imax = i; }
 				}
 
-				if (tmax > tmin)
-					v = ((__int64)200)* mn_Freq / (tmax - tmin);
+				if ((tmax > tmin) && mn_Freq > 0)
+				{
+					_ASSERTE(imin!=imax);
+					i64 iSamples = imax - imin;
+					if (iSamples < 0)
+						iSamples += nCount;
+					v = iSamples * 10 * mn_Freq / (tmax - tmin);
+				}
 			}
 			else
 			{
 				v = (10000*(__int64)mn_CounterMax[nID-tPerfFPS])/mn_Freq;
 			}
 
-			// WinApi не умеет float/double
+			// WinApi's wsprintf can't do float/double, so we use integer arithmetics for FPS and others
 			_wsprintf(sTemp, SKIPLEN(countof(sTemp)) L"%u.%u", (int)(v/10), (int)(v%10));
 
 			switch (nID)
@@ -8819,6 +8828,8 @@ void CSettings::PostUpdateCounters(bool bPosted)
 				wcscat_c(szTotal, L"   Blt:"); break;
 			case tPerfInterval:
 				wcscat_c(szTotal, L"   RPS:"); break;
+			default:
+				wcscat_c(szTotal, L"   ???:");
 			}
 			wcscat_c(szTotal, sTemp);
 		} // if (mn_Freq!=0)
@@ -8852,12 +8863,13 @@ void CSettings::Performance(UINT nID, BOOL bEnd)
 		return;
 	}
 
-	if (nID<tPerfFPS || nID>tPerfInterval)
+	if (nID >= tPerfLast)
 		return;
+
+	i64 tick2 = 0, t;
 
 	if (nID == tPerfFPS)
 	{
-		i64 tick2 = 0;
 		QueryPerformanceCounter((LARGE_INTEGER *)&tick2);
 		mn_FPS[mn_FPS_CUR_FRAME] = tick2;
 		mn_FPS_CUR_FRAME++;
@@ -8872,7 +8884,6 @@ void CSettings::Performance(UINT nID, BOOL bEnd)
 
 	if (nID == tPerfInterval)
 	{
-		i64 tick2 = 0;
 		QueryPerformanceCounter((LARGE_INTEGER *)&tick2);
 		mn_RFPS[mn_RFPS_CUR_FRAME] = tick2;
 		mn_RFPS_CUR_FRAME++;
@@ -8896,12 +8907,12 @@ void CSettings::Performance(UINT nID, BOOL bEnd)
 		return;
 	}
 
-	i64 tick2;
 	QueryPerformanceCounter((LARGE_INTEGER *)&tick2);
-	i64 t = (tick2-mn_Counter[nID-tPerfFPS]);
+	t = (tick2-mn_Counter[nID-tPerfFPS]);
 
-	if (mn_CounterMax[nID-tPerfFPS]<t ||
-	        (GetTickCount()-mn_CounterTick[nID-tPerfFPS])>COUNTER_REFRESH)
+	if ((t >= 0)
+		&& ((mn_CounterMax[nID-tPerfFPS] < t)
+	        || ((GetTickCount() - mn_CounterTick[nID-tPerfFPS]) > COUNTER_REFRESH)))
 	{
 		mn_CounterMax[nID-tPerfFPS] = t;
 		mn_CounterTick[nID-tPerfFPS] = GetTickCount();

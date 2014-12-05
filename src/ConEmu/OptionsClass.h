@@ -456,8 +456,8 @@ class CSettings
 		BOOL mb_IgnoreTtfChange;
 		//BOOL mb_CharSetWasSet;
 		i64 mn_Freq;
-		i64 mn_FPS[20]; int mn_FPS_CUR_FRAME;
-		i64 mn_RFPS[20]; int mn_RFPS_CUR_FRAME;
+		i64 mn_FPS[256]; int mn_FPS_CUR_FRAME;
+		i64 mn_RFPS[128]; int mn_RFPS_CUR_FRAME;
 		i64 mn_Counter[tPerfInterval-gbPerformance];
 		i64 mn_CounterMax[tPerfInterval-gbPerformance];
 		DWORD mn_CounterTick[tPerfInterval-gbPerformance];
