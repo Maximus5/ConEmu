@@ -58,3 +58,5 @@ const wchar_t* PointToName(const wchar_t* asFullPath);
 const char* PointToName(const char* asFileOrPath);
 const wchar_t* PointToExt(const wchar_t* asFullPath);
 const wchar_t* Unquote(wchar_t* asParm, bool abFirstQuote = false);
+
+bool IsNewConsoleArg(LPCWSTR lsCmdLine, LPCWSTR pszArg = L"-new_console");

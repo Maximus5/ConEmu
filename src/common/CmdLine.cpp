@@ -1012,3 +1012,24 @@ const wchar_t* Unquote(wchar_t* asParm, bool abFirstQuote /*= false*/)
 	*pszEndQ = 0;
 	return (asParm+1);
 }
+
+// Does proper "-new_console" switch exist?
+bool IsNewConsoleArg(LPCWSTR lsCmdLine, LPCWSTR pszArg /*= L"-new_console"*/)
+{
+	if (!lsCmdLine || !*lsCmdLine || !pszArg || !*pszArg)
+		return false;
+
+	int nArgLen = lstrlen(pszArg);
+	LPCWSTR pwszCopy = (wchar_t*)wcsstr(lsCmdLine, pszArg);
+
+	// Если после -new_console идет пробел, или это вообще конец строки
+	// 111211 - после -new_console: допускаются параметры
+	bool bFound = (pwszCopy
+		// Must be started with space or double-quote or be the start of the string
+		&& ((pwszCopy == lsCmdLine) || ((*(pwszCopy-1) == L' ') || (*(pwszCopy-1) == L'"')))
+		// And check the end of parameter
+		&& ((pwszCopy[nArgLen] == 0) || wcschr(L" :", pwszCopy[nArgLen])
+			|| ((pwszCopy[nArgLen] == L'"') || (pwszCopy[nArgLen+1] == 0))));
+
+	return bFound;
+}
