@@ -5247,17 +5247,7 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 	if (gnRunMode == RM_COMSPEC)
 	{
 		// Может просили открыть новую консоль?
-		int nArgLen = lstrlenA("-new_console");
-		LPCWSTR pwszCopy = (wchar_t*)wcsstr(lsCmdLine, L"-new_console");
-
-		// Если после -new_console идет пробел, или это вообще конец строки
-		// 111211 - после -new_console: допускаются параметры
-		if (pwszCopy
-			// Must be started with space or double-quote or be the start of the string
-			&& ((pwszCopy == lsCmdLine) || ((*(pwszCopy-1) == L' ') || (*(pwszCopy-1) == L'"')))
-			// And check the end of parameter
-			&& ((pwszCopy[nArgLen] == 0) || wcschr(L" :", pwszCopy[nArgLen])
-				|| ((pwszCopy[nArgLen] == L'"') || (pwszCopy[nArgLen+1] == 0))))
+		if (IsNewConsoleArg(lsCmdLine))
 		{
 			if (!ghConWnd)
 			{
