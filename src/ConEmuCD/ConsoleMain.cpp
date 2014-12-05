@@ -9862,7 +9862,6 @@ bool IsOutputRedirected()
 	}
 
 	HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
-	DWORD dwWritten = 0;
 
 	CONSOLE_SCREEN_BUFFER_INFO sbi = {};
 	BOOL bIsConsole = GetConsoleScreenBufferInfo(hOut, &sbi);
