@@ -62,8 +62,8 @@ struct CEStartupEnv
 	size_t  cchPathLen;
 	BOOL    bIsRemote; // SM_REMOTESESSION - Informational
 	UINT    nPixels;   // BITSPIXEL - Informational
-	UINT    bIsWine;   // Informational
-	UINT    bIsWinPE;  // Informational
+	UINT    bIsWine;   // Informational (FALSE/TRUE/ or 2 in ConEmuHk)
+	UINT    bIsWinPE;  // Informational (FALSE/TRUE/ or 2 in ConEmuHk)
 	BOOL    bIsReactOS;
 	BOOL    bIsDbcs;
 	UINT    nAnsiCP, nOEMCP;
