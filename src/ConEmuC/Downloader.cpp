@@ -1779,8 +1779,25 @@ int DoDownload(LPCWSTR asCmdLine)
 		pszUrl = szArg.Detach();
 		if (NextArg(&asCmdLine, szArg) != 0)
 		{
-			iRc = CERR_CARGUMENT;
-			goto wrap;
+			// If user omit file name - try to get it from pszUrl
+			LPCWSTR pszFS = wcsrchr(pszUrl, L'/');
+			LPCWSTR pszBS = wcsrchr(pszUrl, L'\\');
+			LPCWSTR pszSlash = (pszFS && pszBS) ? ((pszBS > pszFS) ? pszBS : pszFS) : pszFS ? pszFS : pszBS;
+
+			if (pszSlash)
+			{
+				pszSlash++;
+				pszFS = wcschr(pszSlash, L'?'); // some add args after file name (mirrors etc.)
+				if (!pszFS || (pszFS > pszSlash))
+					szArg.Set(pszSlash, pszFS ? (pszFS - pszSlash) : -1);
+				// Можно было бы еще позаменять недопустимые символы на '_' но пока обойдемся
+			}
+
+			if (szArg.IsEmpty())
+			{
+				iRc = CERR_CARGUMENT;
+				goto wrap;
+			}
 		}
 
 		// Proxy?
