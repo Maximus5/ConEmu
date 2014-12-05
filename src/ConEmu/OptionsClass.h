@@ -62,6 +62,7 @@ enum PerformanceCounterTypes
 	tPerfRender,
 	tPerfBlt,
 	tPerfInterval,
+	tPerfKeyboard,
 	tPerfLast
 };
 
@@ -471,6 +472,7 @@ class CSettings
 		i64 mn_Counter[tPerfLast];
 		i64 mn_CounterMax[tPerfLast];
 		DWORD mn_CounterTick[tPerfLast];
+		i64 mn_KbdDelayCounter, mn_KbdDelays[32/*must be power of 2*/]; LONG mn_KBD_CUR_FRAME;
 		HWND hwndTip, hwndBalloon;
 		static void ShowFontErrorTip(LPCTSTR asInfo);
 		TOOLINFO tiBalloon;

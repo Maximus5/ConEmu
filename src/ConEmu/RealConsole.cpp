@@ -1787,6 +1787,16 @@ bool CRealConsole::PostConsoleEvent(INPUT_RECORD* piRec, bool bFromIME /*= false
 			_ASSERTE(piRec->Event.KeyEvent.wRepeatCount!=0);
 			piRec->Event.KeyEvent.wRepeatCount = 0;
 		}
+
+		// Keyboard/Output/Delay performance
+		if (piRec->Event.KeyEvent.bKeyDown
+			&& ((piRec->Event.KeyEvent.uChar.UnicodeChar >= L' ')
+				|| (piRec->Event.KeyEvent.wVirtualKeyCode >= VK_PRIOR && piRec->Event.KeyEvent.wVirtualKeyCode <= VK_DOWN)
+				)
+			)
+		{
+			gpSetCls->Performance(tPerfKeyboard, FALSE);
+		}
 	}
 
 	if (gpSetCls->GetPage(gpSetCls->thi_Debug) && gpSetCls->m_ActivityLoggingType == glt_Input)
@@ -8989,6 +8999,9 @@ void CRealConsole::OnActivate(int nNewNum, int nOldNum)
 	// Чтобы не мигать "измененными" консолями при старте
 	mb_WasVisibleOnce = true;
 	mn_DeactivateTick = 0;
+
+	// Keyboard reaction counter
+	gpSetCls->Performance(tPerfKeyboard, (BOOL)-1);
 
 	// Чтобы корректно таб для группы показывать
 	CVConGroup::OnConActivated(mp_VCon);

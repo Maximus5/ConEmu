@@ -2526,6 +2526,14 @@ void CRealBuffer::ApplyConsoleInfo(const CESERVER_REQ_CONINFO_INFO* pInfo, bool&
 						{
 							LOGCONSOLECHANGE("ApplyConsoleInfo: InitBuffers&LoadDataFromSrv -> changed");
 							lbChanged = true;
+
+							// Update keyboard performance, do that here
+							// but not in the CRealConsole::OnConsoleDataChanged()
+							// because we are interested in cursor moving too!
+							if (mp_RCon->isActive(false))
+							{
+								gpSetCls->Performance(tPerfKeyboard, TRUE);
+							}
 						}
 					}
 				}

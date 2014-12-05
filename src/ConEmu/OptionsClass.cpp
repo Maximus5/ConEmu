@@ -217,6 +217,7 @@ CSettings::CSettings()
 	memset(mn_FPS, 0, sizeof(mn_FPS)); mn_FPS_CUR_FRAME = 0;
 	memset(mn_RFPS, 0, sizeof(mn_RFPS)); mn_RFPS_CUR_FRAME = 0;
 	memset(mn_CounterTick, 0, sizeof(mn_CounterTick));
+	memset(mn_KbdDelays, 0, sizeof(mn_KbdDelays)); mn_KbdDelayCounter = 0; mn_KBD_CUR_FRAME = -1;
 	//hBgBitmap = NULL; bgBmp = MakeCoord(0,0); hBgDc = NULL;
 	#ifndef APPDISTINCTBACKGROUND
 	mb_BgLastFade = false;
@@ -8772,7 +8773,7 @@ void CSettings::PostUpdateCounters(bool bPosted)
 		{
 			wchar_t sTemp[64];
 
-			i64 v = 0;
+			i64 v = 0, v2 = 0, v3 = 0;
 
 			if (nID == tPerfFPS || nID == tPerfInterval)
 			{
@@ -8810,13 +8811,38 @@ void CSettings::PostUpdateCounters(bool bPosted)
 					v = iSamples * 10 * mn_Freq / (tmax - tmin);
 				}
 			}
+			else if (nID == tPerfKeyboard)
+			{
+				v = v2 = mn_KbdDelays[0]; v3 = 0;
+
+				size_t nCount = max(0, min(mn_KBD_CUR_FRAME, (int)countof(mn_KbdDelays)));
+				for (size_t i = 0; i < nCount; i++)
+				{
+					i64 vi = mn_KbdDelays[i];
+					// Skip too large values, they may be false detected
+					if (vi <= 0 || vi >= 5000) continue;
+
+					if (vi < v)
+						v = vi;
+					if (vi > v2 && vi < 5000)
+						v2 = vi;
+					v3 += vi; // avg
+				}
+
+				if (nCount > 0)
+					v3 = v3 / nCount;
+			}
 			else
 			{
 				v = (10000*(__int64)mn_CounterMax[nID])/mn_Freq;
 			}
 
 			// WinApi's wsprintf can't do float/double, so we use integer arithmetics for FPS and others
-			_wsprintf(sTemp, SKIPLEN(countof(sTemp)) L"%u.%u", (int)(v/10), (int)(v%10));
+
+			if (nID == tPerfKeyboard)
+				_wsprintf(sTemp, SKIPLEN(countof(sTemp)) L"%u/%u/%u", (int)v, (int)v3, (int)v2);
+			else
+				_wsprintf(sTemp, SKIPLEN(countof(sTemp)) L"%u.%u", (int)(v/10), (int)(v%10));
 
 			switch (nID)
 			{
@@ -8830,6 +8856,8 @@ void CSettings::PostUpdateCounters(bool bPosted)
 				wcscat_c(szTotal, L"   Blt:"); break;
 			case tPerfInterval:
 				wcscat_c(szTotal, L"   RPS:"); break;
+			case tPerfKeyboard:
+				wcscat_c(szTotal, L"   KBD:"); break;
 			default:
 				wcscat_c(szTotal, L"   ???:");
 			}
@@ -8897,6 +8925,34 @@ void CSettings::Performance(UINT nID, BOOL bEnd)
 
 		if (ghOpWnd)
 			PostUpdateCounters(false);
+
+		return;
+	}
+
+	if (nID == tPerfKeyboard)
+	{
+		QueryPerformanceCounter((LARGE_INTEGER *)&tick2);
+
+		if (bEnd == (BOOL)-1)
+		{
+			// After tab switch for example (RCon changed);
+			mn_KbdDelayCounter = 0;
+		}
+		else if (!bEnd)
+		{
+			// Must be called when user press something on the keyboard
+			if (!mn_KbdDelayCounter)
+				mn_KbdDelayCounter = tick2;
+		}
+		else if (mn_KbdDelayCounter && mn_Freq)
+		{
+			i64 iPrev = mn_KbdDelayCounter; mn_KbdDelayCounter = 0;
+			// let eval ms the delay of console output is refreshed
+			t = (tick2 - iPrev) * 1000 / mn_Freq;
+			int idx = (InterlockedIncrement(&mn_KBD_CUR_FRAME) & (countof(mn_KbdDelays)-1));
+			mn_KbdDelays[idx] = t;
+			if (mn_KBD_CUR_FRAME < 0) mn_KBD_CUR_FRAME = countof(mn_KbdDelays)-1;
+		}
 
 		return;
 	}
