@@ -146,17 +146,15 @@ BOOL ProcessInputMessage(MSG64::MsgStr &msg, INPUT_RECORD &r)
 			}
 		}
 
-#ifdef _DEBUG
-
+		#ifdef _DEBUG
 		if (r.EventType == KEY_EVENT && r.Event.KeyEvent.bKeyDown &&
 		        r.Event.KeyEvent.wVirtualKeyCode == VK_F11)
 		{
 			DEBUGSTR(L"  ---  F11 recieved\n");
 		}
+		#endif
 
-#endif
-#ifdef _DEBUG
-
+		#ifdef _DEBUG
 		if (r.EventType == MOUSE_EVENT)
 		{
 			static DWORD nLastEventTick = 0;
@@ -171,8 +169,7 @@ BOOL ProcessInputMessage(MSG64::MsgStr &msg, INPUT_RECORD &r)
 			DEBUGLOGINPUT(szDbg);
 			nLastEventTick = GetTickCount();
 		}
-
-#endif
+		#endif
 
 		// Запомнить, когда была последняя активность пользователя
 		if (r.EventType == KEY_EVENT
@@ -386,7 +383,9 @@ BOOL WaitConsoleReady(BOOL abReqEmpty)
 {
 	// Если сейчас идет ресайз - нежелательно помещение в буфер событий
 	if (gpSrv->bInSyncResize)
+	{
 		WaitForSingleObject(gpSrv->hAllowInputEvent, MAX_SYNCSETSIZE_WAIT);
+	}
 
 	// если убить ожидание очистки очереди - перестает действовать 'Right selection fix'!
 
