@@ -111,7 +111,7 @@ int main(int argc, char** argv)
 	#ifdef _DEBUG
 	UnitTests();
 	#endif
-	
+
 
 	hConEmu = LoadLibrary(WIN3264TEST(L"ConEmuCD.dll",L"ConEmuCD64.dll"));
 	dwErr = GetLastError();
