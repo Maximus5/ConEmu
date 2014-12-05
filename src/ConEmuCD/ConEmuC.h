@@ -721,6 +721,7 @@ namespace InputLogger
 		g_evt[i].what = what;
 		g_evt[i].time = GetTickCount();
 		g_evt[i].val = val;
+		g_evt[i].ir.EventType = 0;
 	}
 
 	inline void Log(Event::Source what, const INPUT_RECORD& ir, LONG val = 0)
@@ -733,6 +734,17 @@ namespace InputLogger
 		g_evt[i].time = GetTickCount();
 		// Fill info
 		g_evt[i].val = val;
-		g_evt[i].ir = ir;
+		if (ir.EventType == KEY_EVENT)
+		{
+			ZeroStruct(g_evt[i].ir);
+			g_evt[i].ir.EventType = ir.EventType;
+			g_evt[i].ir.Event.KeyEvent.bKeyDown = ir.Event.KeyEvent.bKeyDown;
+			g_evt[i].ir.Event.KeyEvent.wRepeatCount = ir.Event.KeyEvent.wRepeatCount;
+			g_evt[i].ir.Event.KeyEvent.dwControlKeyState = ir.Event.KeyEvent.dwControlKeyState;
+		}
+		else
+		{
+			g_evt[i].ir = ir;
+		}
 	}
 }
