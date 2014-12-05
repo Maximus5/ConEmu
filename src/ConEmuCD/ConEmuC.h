@@ -704,6 +704,13 @@ namespace InputLogger
 			evt_WriteInputQueue2,
 			evt_InputQueueFlush,
 			evt_Overflow,
+			evt_SpeedHigh,
+			evt_SpeedLow,
+			evt_WaitConSize,
+			evt_WaitConEmpty,
+			evt_WriteConInput,
+			evt_ConSbiChanged,
+			evt_ConDataChanged,
 		} what;
 		LONG val;
 		INPUT_RECORD ir;

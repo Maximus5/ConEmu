@@ -384,6 +384,7 @@ BOOL WaitConsoleReady(BOOL abReqEmpty)
 	// Если сейчас идет ресайз - нежелательно помещение в буфер событий
 	if (gpSrv->bInSyncResize)
 	{
+		InputLogger::Log(InputLogger::Event::evt_WaitConSize);
 		WaitForSingleObject(gpSrv->hAllowInputEvent, MAX_SYNCSETSIZE_WAIT);
 	}
 
@@ -396,6 +397,8 @@ BOOL WaitConsoleReady(BOOL abReqEmpty)
 
 	if (abReqEmpty)
 	{
+		InputLogger::Log(InputLogger::Event::evt_WaitConEmpty);
+
 		//#ifdef USE_INPUT_SEMAPHORE
 		//// Нет смысла использовать вместе с семафором ввода
 		//_ASSERTE(FALSE);
@@ -672,6 +675,7 @@ BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount)
 	SetLastError(0);
 #endif
 
+	InputLogger::Log(InputLogger::Event::evt_WriteConInput, nCount);
 
 	HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE); // тут был ghConIn
 	// Strange VIM reaction on xterm-keypresses

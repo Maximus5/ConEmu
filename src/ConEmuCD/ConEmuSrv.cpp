@@ -3786,6 +3786,8 @@ static int ReadConsoleInfo()
 
 		if (memcmp(&gpSrv->sbi, &lsbi, sizeof(gpSrv->sbi)))
 		{
+			InputLogger::Log(InputLogger::Event::evt_ConSbiChanged);
+
 			_ASSERTE(lsbi.srWindow.Left == 0);
 			/*
 			//Issue 373: при запуске wmic устанавливается ШИРИНА буфера в 1500 символов
@@ -4083,6 +4085,7 @@ static BOOL ReadConsoleData()
 
 	if (memcmp(gpSrv->pConsole->data, gpSrv->pConsoleDataCopy, nCurSize))
 	{
+		InputLogger::Log(InputLogger::Event::evt_ConDataChanged);
 		memmove(gpSrv->pConsole->data, gpSrv->pConsoleDataCopy, nCurSize);
 		gpSrv->pConsole->bDataChanged = TRUE; // TRUE уже может быть с прошлого раза, не сбрасывать в FALSE
 		lbChanged = TRUE;
@@ -4722,6 +4725,7 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 			bFellInSleep = bNewFellInSleep;
 
 			bLowSpeed = (!bNewActive || bNewFellInSleep);
+			InputLogger::Log(bLowSpeed ? InputLogger::Event::evt_SpeedLow : InputLogger::Event::evt_SpeedHigh);
 
 			if (gpLogSize)
 			{
