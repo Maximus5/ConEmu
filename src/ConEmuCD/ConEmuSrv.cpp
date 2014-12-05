@@ -3102,16 +3102,22 @@ int CreateMapHeader()
 	gpSrv->pConsoleMap->InitName(CECONMAPNAME, (DWORD)ghConWnd); //-V205
 	gpSrv->pAppMap->InitName(CECONAPPMAPNAME, (DWORD)ghConWnd); //-V205
 
+
 	BOOL lbCreated;
 	if (gnRunMode == RM_SERVER)
+	{
 		lbCreated = (gpSrv->pConsoleMap->Create() != NULL)
 			&& (gpSrv->pAppMap->Create() != NULL);
+	}
 	else
+	{
 		lbCreated = (gpSrv->pConsoleMap->Open() != NULL)
 			&& (gpSrv->pAppMap->Open(TRUE) != NULL);
+	}
 
 	if (!lbCreated)
 	{
+		_ASSERTE(FALSE && "Failed to create/open mapping!");
 		_wprintf(gpSrv->pConsoleMap->GetErrorText());
 		delete gpSrv->pConsoleMap; gpSrv->pConsoleMap = NULL;
 		iRc = CERR_CREATEMAPPINGERR; goto wrap;
