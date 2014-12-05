@@ -138,7 +138,7 @@ int main(int argc, char** argv)
 		           "Procedure \"%s\"  not found in library \"%s\"",
 		           lfConsoleMain2 ? "HandlerRoutine" : "ConsoleMain2",
 		           WIN3264TEST(L"ConEmuCD.dll",L"ConEmuCD64.dll"));
-		WriteConsoleW(GetStdHandle(STD_ERROR_HANDLE), szErrInfo, lstrlenA(szErrInfo), &dwOut, NULL);
+		WriteConsoleA(GetStdHandle(STD_ERROR_HANDLE), szErrInfo, lstrlenA(szErrInfo), &dwOut, NULL);
 		FreeLibrary(hConEmu);
 		iRc = CERR_CONSOLEMAIN_NOTFOUND;
 		goto wrap;
