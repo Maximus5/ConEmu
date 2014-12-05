@@ -41,8 +41,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 //#pragma warning( disable : 4995 )
 #include "../common/common.hpp"
+#include "../common/CmdLine.h"
 
 #include "../ConEmuCD/ExitCodes.h"
+
+#include "Downloader.h"
 
 PHANDLER_ROUTINE gfHandlerRoutine = NULL;
 
@@ -86,6 +89,54 @@ void UnitTests()
 }
 #endif
 
+bool ProcessCommandLine(int& iRc)
+{
+	LPCWSTR pszCmdLine = GetCommandLineW();
+
+	// If there is '-new_console' or '-cur_console' switches...
+	if (IsNewConsoleArg(pszCmdLine) || IsNewConsoleArg(pszCmdLine, L"-cur_console"))
+		return false;
+
+	HeapInitialize();
+
+	bool bProcessed = false;
+	// Loop through switches to find supported
+	{
+		CEStr lsArg;
+		int iCount = 0;
+		while (NextArg(&pszCmdLine, lsArg) == 0)
+		{
+			iCount++;
+
+			if ((lsArg.ms_Arg[0] == L'-') && lsArg.ms_Arg[1] && !wcspbrk(lsArg.ms_Arg+1, L"\\//|.&<>^"))
+			{
+				// Seems this is to be the "switch" too
+				lsArg.ms_Arg[0] = L'/';
+			}
+
+			if ((lsArg.ms_Arg[0] != L'/') && (iCount > 1))
+			{
+				// Some unknown (here) switch, goto full version
+				break;
+			}
+
+			if (lstrcmpi(lsArg, L"/Download") == 0)
+			{
+				iRc = DoDownload(pszCmdLine);
+				bProcessed = true;
+				break;
+			}
+
+			// ToDo: /IsConEmu may be processed partially?
+
+			// TODO: Inject remote and standard, DefTerm
+		}
+	}
+
+	HeapDeinitialize();
+
+	return bProcessed;
+}
 
 int main(int argc, char** argv)
 {
@@ -112,7 +163,14 @@ int main(int argc, char** argv)
 	UnitTests();
 	#endif
 
+	// Some command we can process internally
+	if (ProcessCommandLine(iRc))
+	{
+		// Done, exiting
+		goto wrap;
+	}
 
+	// Otherwise - do the full cycle
 	hConEmu = LoadLibrary(WIN3264TEST(L"ConEmuCD.dll",L"ConEmuCD64.dll"));
 	dwErr = GetLastError();
 

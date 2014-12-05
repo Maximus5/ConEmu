@@ -39,6 +39,9 @@
     <ClCompile Include="..\common\WObjects.cpp">
       <Filter>0 -Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Downloader.cpp">
+      <Filter>0 -Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\common\MStrSafe.h">
@@ -66,6 +69,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\common\WObjects.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Downloader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

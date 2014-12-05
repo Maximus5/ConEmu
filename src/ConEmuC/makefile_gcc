@@ -7,7 +7,8 @@ SRCS = \
 		../common/MSectionSimple.cpp \
 		../common/MStrSafe.cpp       \
 		../common/WObjects.cpp       \
-		ConEmuC.cpp
+		ConEmuC.cpp                  \
+		Downloader.cpp
 
 USERLIBS = -lkernel32 -luser32
 #-lversion

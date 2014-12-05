@@ -30,6 +30,7 @@ LINK_OBJS = \
 $(INTDIR)\CmdArg.obj \
 $(INTDIR)\CmdLine.obj \
 $(INTDIR)\ConEmuC.obj \
+$(INTDIR)\Downloader.obj \
 $(INTDIR)\MAssert.obj \
 $(INTDIR)\Memory.obj \
 $(INTDIR)\MSectionSimple.obj \
@@ -199,6 +200,8 @@ $(INTDIR)\CmdArg.obj: ../common/CmdArg.cpp ../common/CmdArg.h
 $(INTDIR)\CmdLine.obj: ../common/CmdLine.cpp ../common/CmdLine.h
 
 $(INTDIR)\ConEmuC.obj: ConEmuC.cpp
+
+$(INTDIR)\Downloader.obj: Downloader.cpp Downloader.h
 
 $(INTDIR)\MAssert.obj: ../common/MAssert.cpp
 
