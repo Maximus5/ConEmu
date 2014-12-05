@@ -157,6 +157,17 @@ protected:
 		return pszAutoruns;
 	}
 
+	/*
+	static BOOL CALLBACK EnumLocalesProcEx(LPWSTR lpLocaleString, DWORD dwFlags, LPARAM lParam)
+	{
+		return TRUE;
+	}
+	static BOOL CALLBACK EnumLocalesProc(LPWSTR lpLocaleString)
+	{
+		return TRUE;
+	}
+	*/
+
 public:
 	static CEStartupEnv* Create()
 	{
@@ -318,6 +329,11 @@ public:
 			}
 			dumpEnvStr(szSI, true);
 		}
+
+		/*
+		EnumSystemLocales(EnumLocalesProc, LCID_INSTALLED);
+		EnumSystemLocalesEx(EnumLocalesProcEx, LOCALE_ALL, 0, NULL);
+		*/
 
 		dumpEnvStr(L"CmdLine: ", false);
 		DumpEnvStr(apStartEnv->pszCmdLine ? apStartEnv->pszCmdLine : L"<NULL>", lParam, false, true);
