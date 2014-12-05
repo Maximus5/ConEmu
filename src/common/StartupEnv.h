@@ -124,6 +124,7 @@ protected:
 			// Don't use them in ConEmuHk
 			pEnv->bIsWine = 2;
 			pEnv->bIsWinPE = 2;
+			pEnv->bIsAdmin = 2;
 
 			LPCWSTR pszReactCompare = GetReactOsName();
 			int nCmdLen = lstrlen(pszReactCompare);

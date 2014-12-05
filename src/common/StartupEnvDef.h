@@ -64,6 +64,7 @@ struct CEStartupEnv
 	UINT    nPixels;   // BITSPIXEL - Informational
 	UINT    bIsWine;   // Informational (FALSE/TRUE/ or 2 in ConEmuHk)
 	UINT    bIsWinPE;  // Informational (FALSE/TRUE/ or 2 in ConEmuHk)
+	UINT    bIsAdmin;  // Informational (FALSE/TRUE/ or 2 in ConEmuHk)
 	BOOL    bIsReactOS;
 	BOOL    bIsDbcs;
 	UINT    nAnsiCP, nOEMCP;

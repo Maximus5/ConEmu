@@ -187,6 +187,7 @@ public:
 			// no AdvApi32 loading during ConEmuHk initialization
 			pEnv->bIsWine = IsWine() ? 1 : 0;
 			pEnv->bIsWinPE = IsWinPE() ? 1 : 0;
+			pEnv->bIsAdmin = IsUserAdmin() ? 1 : 0;
 
 			if (!pEnv->bIsReactOS && (pEnv->os.dwMajorVersion == 5))
 			{
@@ -254,7 +255,6 @@ public:
 			pszReactOS++;
 
 		HWND hConWnd = GetConsoleWindow();
-		bool bIsAdmin = IsUserAdmin();
 
 		_wsprintf(szSI, SKIPLEN(countof(szSI)) L"Startup info\r\n"
 			L"  OsVer: %u.%u.%u.x%u, Product: %u, SP: %u.%u, Suite: 0x%X, SM_SERVERR2: %u\r\n"
@@ -268,7 +268,7 @@ public:
 			osv.wProductType, osv.wServicePackMajor, osv.wServicePackMinor, osv.wSuiteMask, GetSystemMetrics(89/*SM_SERVERR2*/),
 			osv.szCSDVersion, apStartEnv->bIsReactOS, pszReactOS, osv.wReserved,
 			apStartEnv->bIsDbcs, apStartEnv->bIsWine, apStartEnv->bIsWinPE, apStartEnv->bIsRemote,
-			apStartEnv->nAnsiCP, apStartEnv->nOEMCP, bIsAdmin,
+			apStartEnv->nAnsiCP, apStartEnv->nOEMCP, apStartEnv->bIsAdmin,
 			szDesktop, apStartEnv->nPixels, szTitle,
 			apStartEnv->si.dwX, apStartEnv->si.dwY, apStartEnv->si.dwXSize, apStartEnv->si.dwYSize,
 			apStartEnv->si.dwFlags, (DWORD)apStartEnv->si.wShowWindow, (DWORD)hConWnd,
