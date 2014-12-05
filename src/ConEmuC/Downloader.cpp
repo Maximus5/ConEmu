@@ -458,6 +458,9 @@ bool CDownloader::IsLocalFile(LPWSTR& asPathOrUrl)
 		return true;
 	}
 
+	if (asPathOrUrl[0] == L'-' && asPathOrUrl[1] == 0)
+		return true; // Write to StdOut
+
 	if (asPathOrUrl[0] == L'\\' && asPathOrUrl[1] == L'\\')
 		return true; // network or UNC
 	if (asPathOrUrl[1] == L':')
@@ -845,6 +848,7 @@ BOOL CDownloader::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDstFi
 	BOOL lbRc = FALSE, lbRead = FALSE, lbWrite = FALSE;
 	DWORD nRead;
 	bool lbNeedTargetClose = false;
+	bool lbStdOutWrite = false;
 	mb_InetMode = !IsLocalFile(asSource);
 	bool lbTargetLocal = IsLocalFile(asTarget);
 	_ASSERTE(lbTargetLocal);
@@ -960,8 +964,12 @@ BOOL CDownloader::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDstFi
 
 	if (hDstFile == NULL || hDstFile == INVALID_HANDLE_VALUE)
 	{
-		// Strange, in Update.cpp file was "created" with OPEN_EXISTING flag
-		hDstFile = CreateFile(asTarget, GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS, 0, NULL);
+		lbStdOutWrite = (lstrcmp(asTarget, L"-") == 0);
+
+		if (lbStdOutWrite)
+			hDstFile = GetStdHandle(STD_OUTPUT_HANDLE);
+		else
+			hDstFile = CreateFile(asTarget, GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS, 0, NULL);
 
 		if (!hDstFile || hDstFile == INVALID_HANDLE_VALUE)
 		{
@@ -970,7 +978,7 @@ BOOL CDownloader::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDstFi
 			goto wrap;
 		}
 
-		lbNeedTargetClose = true;
+		lbNeedTargetClose = !lbStdOutWrite;
 	}
 	
 	if (mb_InetMode)
@@ -1779,24 +1787,31 @@ int DoDownload(LPCWSTR asCmdLine)
 		pszUrl = szArg.Detach();
 		if (NextArg(&asCmdLine, szArg) != 0)
 		{
-			// If user omit file name - try to get it from pszUrl
-			LPCWSTR pszFS = wcsrchr(pszUrl, L'/');
-			LPCWSTR pszBS = wcsrchr(pszUrl, L'\\');
-			LPCWSTR pszSlash = (pszFS && pszBS) ? ((pszBS > pszFS) ? pszBS : pszFS) : pszFS ? pszFS : pszBS;
+			// If NOT redirected to file already
+			HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
+			CONSOLE_SCREEN_BUFFER_INFO sbi = {};
+			BOOL bIsConsole = GetConsoleScreenBufferInfo(hStdOut, &sbi);
 
-			if (pszSlash)
+			if (bIsConsole)
 			{
-				pszSlash++;
-				pszFS = wcschr(pszSlash, L'?'); // some add args after file name (mirrors etc.)
-				if (!pszFS || (pszFS > pszSlash))
-					szArg.Set(pszSlash, pszFS ? (pszFS - pszSlash) : -1);
-				// Можно было бы еще позаменять недопустимые символы на '_' но пока обойдемся
+				// If user omit file name - try to get it from pszUrl
+				LPCWSTR pszFS = wcsrchr(pszUrl, L'/');
+				LPCWSTR pszBS = wcsrchr(pszUrl, L'\\');
+				LPCWSTR pszSlash = (pszFS && pszBS) ? ((pszBS > pszFS) ? pszBS : pszFS) : pszFS ? pszFS : pszBS;
+
+				if (pszSlash)
+				{
+					pszSlash++;
+					pszFS = wcschr(pszSlash, L'?'); // some add args after file name (mirrors etc.)
+					if (!pszFS || (pszFS > pszSlash))
+						szArg.Set(pszSlash, pszFS ? (pszFS - pszSlash) : -1);
+					// Можно было бы еще позаменять недопустимые символы на '_' но пока обойдемся
+				}
 			}
 
 			if (szArg.IsEmpty())
 			{
-				iRc = CERR_CARGUMENT;
-				goto wrap;
+				szArg.Set(L"-");
 			}
 		}
 
@@ -1844,10 +1859,13 @@ int DoDownload(LPCWSTR asCmdLine)
 
 		// May be file name was specified relatively or even with env.vars?
 		SafeFree(pszExpanded);
-		pszExpanded = ExpandEnvStr(szArg);
-		nFullRc = GetFullPathName((pszExpanded && *pszExpanded) ? pszExpanded : (LPCWSTR)szArg, countof(szFullPath), szFullPath, NULL);
-		if (nFullRc && nFullRc < countof(szFullPath))
-			args[1].strArg = szFullPath;
+		if (lstrcmp(szArg, L"-") != 0)
+		{
+			pszExpanded = ExpandEnvStr(szArg);
+			nFullRc = GetFullPathName((pszExpanded && *pszExpanded) ? pszExpanded : (LPCWSTR)szArg, countof(szFullPath), szFullPath, NULL);
+			if (nFullRc && nFullRc < countof(szFullPath))
+				args[1].strArg = szFullPath;
+		}
 
 		InterlockedIncrement(&gnIsDownloading);
 		drc = DownloadCommand(dc_DownloadFile, 4, args);
