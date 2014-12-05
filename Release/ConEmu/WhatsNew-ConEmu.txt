@@ -12,6 +12,12 @@ Votes and awards (vote for ConEmu, if you please)
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+2014.12.4
+[*] Issue 1832: Some file size zeros was missed in Far's Tiles mode.
+[*] Update counters FPS/RPS calculation.
+[*] Add to counters keyboard performance (delay between keypress and console reaction).
+
+
 2014.12.3
 [*] Powershell's "get-help Get-ChildItem -full | out-host -paging" did not react to Space/Enter.
 [*] LogFiles: Log ‘IsAdmin’ state and ServerPID changes.
