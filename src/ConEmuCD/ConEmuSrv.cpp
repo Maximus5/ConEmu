@@ -4337,6 +4337,7 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 	BOOL bNewActive = (BOOL)-1, bNewFellInSleep = FALSE;
 	BOOL ActiveSleepInBg = (gpSrv->guiSettings.Flags & CECF_SleepInBackg);
 	BOOL bOurConActive = (BOOL)-1, bOneConActive = (BOOL)-1;
+	bool bLowSpeed = false;
 	BOOL bOnlyCursorChanged;
 	BOOL bSetRefreshDoneEvent;
 	DWORD nWaitCursor = 99;
@@ -4720,11 +4721,13 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 			bConsoleActive = bNewActive;
 			bFellInSleep = bNewFellInSleep;
 
+			bLowSpeed = (!bNewActive || bNewFellInSleep);
+
 			if (gpLogSize)
 			{
 				char szInfo[128];
 				_wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "ConEmuC: RefreshThread: Sleep changed, speed(%s)",
-					(!bNewActive || bNewFellInSleep) ? "low" : "high");
+					bLowSpeed ? "low" : "high");
 				LogString(szInfo);
 			}
 		}
