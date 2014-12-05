@@ -26,7 +26,15 @@ RES_FILE = "$(OBJDIR)\$(NAME).res"
 
 #PCH_FILE = "$(OBJDIR)\headers.pch"
 
-LINK_OBJS = $(OBJDIR)\ConEmuC.obj
+LINK_OBJS = \
+$(INTDIR)\CmdArg.obj \
+$(INTDIR)\CmdLine.obj \
+$(INTDIR)\ConEmuC.obj \
+$(INTDIR)\MAssert.obj \
+$(INTDIR)\Memory.obj \
+$(INTDIR)\MSectionSimple.obj \
+$(INTDIR)\MStrSafe.obj \
+$(INTDIR)\WObjects.obj
 
 
 LINK_LIBS=$(CRTLIB) kernel32.lib user32.lib
@@ -172,9 +180,6 @@ MSG=echo generating $@
 #	$(MSG)
 #	$(M4) $@.m4 > $@
 
-$(OBJDIR)\ConEmuC.obj: ConEmuC.cpp
-
-
 .PHONY: CLEAN
 CLEAN:
 	@echo Copying release files
@@ -186,3 +191,24 @@ CLEAN:
 	@echo moving `$(OUTDIR)\$(OUTNAME).map` to `$(RELEASEDIR)`
 	@move "$(OUTDIR)\$(OUTNAME).map" $(RELEASEDIR)
 
+################
+#LINK_OBJS begin
+
+$(INTDIR)\CmdArg.obj: ../common/CmdArg.cpp ../common/CmdArg.h
+
+$(INTDIR)\CmdLine.obj: ../common/CmdLine.cpp ../common/CmdLine.h
+
+$(INTDIR)\ConEmuC.obj: ConEmuC.cpp
+
+$(INTDIR)\MAssert.obj: ../common/MAssert.cpp
+
+$(INTDIR)\Memory.obj: ../common/Memory.cpp
+
+$(INTDIR)\MSectionSimple.obj: ../common/MSectionSimple.cpp ../common/MSectionSimple.h
+
+$(INTDIR)\MStrSafe.obj: ../common/MStrSafe.cpp
+
+$(INTDIR)\WObjects.obj: ../common/WObjects.cpp ../common/WObjects.h
+
+#LINK_OBJS end
+##############

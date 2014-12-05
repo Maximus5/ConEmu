@@ -890,12 +890,22 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\common\CmdArg.cpp" />
+    <ClCompile Include="..\common\CmdLine.cpp" />
     <ClCompile Include="..\common\MAssert.cpp" />
+    <ClCompile Include="..\common\Memory.cpp" />
+    <ClCompile Include="..\common\MSectionSimple.cpp" />
     <ClCompile Include="..\common\MStrSafe.cpp" />
+    <ClCompile Include="..\common\WObjects.cpp" />
     <ClCompile Include="ConEmuC.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\common\CmdArg.h" />
+    <ClInclude Include="..\common\CmdLine.h" />
+    <ClInclude Include="..\common\Memory.h" />
+    <ClInclude Include="..\common\MSectionSimple.h" />
     <ClInclude Include="..\common\MStrSafe.h" />
+    <ClInclude Include="..\common\WObjects.h" />
     <ClInclude Include="..\ConEmu\version.h" />
     <ClInclude Include="..\ConEmuCD\ExitCodes.h" />
     <ClInclude Include="resource.h" />
