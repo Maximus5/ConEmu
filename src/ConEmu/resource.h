@@ -150,11 +150,6 @@
 #define rMaximized                      1312
 #define rFullScreen                     1313
 #define gbPerformance                   1400
-#define tPerfFPS                        1401
-#define tPerfData                       1402
-#define tPerfRender                     1403
-#define tPerfBlt                        1404
-#define tPerfInterval                   1405
 #define lbLDragKey                      1501
 #define cbDropEnabled                   1502
 #define lbRDragKey                      1503

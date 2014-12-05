@@ -8766,7 +8766,9 @@ void CSettings::PostUpdateCounters(bool bPosted)
 
 	if (mn_Freq!=0)
 	{
-		for (INT_PTR nID = tPerfFPS; nID <= tPerfInterval; nID++)
+		_ASSERTE(tPerfFPS == 0);
+
+		for (INT_PTR nID = tPerfFPS; nID < tPerfLast; nID++)
 		{
 			wchar_t sTemp[64];
 
@@ -8810,7 +8812,7 @@ void CSettings::PostUpdateCounters(bool bPosted)
 			}
 			else
 			{
-				v = (10000*(__int64)mn_CounterMax[nID-tPerfFPS])/mn_Freq;
+				v = (10000*(__int64)mn_CounterMax[nID])/mn_Freq;
 			}
 
 			// WinApi's wsprintf can't do float/double, so we use integer arithmetics for FPS and others
@@ -8843,6 +8845,8 @@ void CSettings::PostUpdateCounters(bool bPosted)
 
 void CSettings::Performance(UINT nID, BOOL bEnd)
 {
+	_ASSERTE(gbPerformance > tPerfLast);
+
 	if (nID == gbPerformance)  //groupbox ctrl id
 	{
 		if (!isMainThread())
@@ -8899,23 +8903,23 @@ void CSettings::Performance(UINT nID, BOOL bEnd)
 
 	if (!bEnd)
 	{
-		QueryPerformanceCounter((LARGE_INTEGER *)&(mn_Counter[nID-tPerfFPS]));
+		QueryPerformanceCounter((LARGE_INTEGER *)&(mn_Counter[nID]));
 		return;
 	}
-	else if (!mn_Counter[nID-tPerfFPS] || !mn_Freq)
+	else if (!mn_Counter[nID] || !mn_Freq)
 	{
 		return;
 	}
 
 	QueryPerformanceCounter((LARGE_INTEGER *)&tick2);
-	t = (tick2-mn_Counter[nID-tPerfFPS]);
+	t = (tick2-mn_Counter[nID]);
 
 	if ((t >= 0)
-		&& ((mn_CounterMax[nID-tPerfFPS] < t)
-	        || ((GetTickCount() - mn_CounterTick[nID-tPerfFPS]) > COUNTER_REFRESH)))
+		&& ((mn_CounterMax[nID] < t)
+	        || ((GetTickCount() - mn_CounterTick[nID]) > COUNTER_REFRESH)))
 	{
-		mn_CounterMax[nID-tPerfFPS] = t;
-		mn_CounterTick[nID-tPerfFPS] = GetTickCount();
+		mn_CounterMax[nID] = t;
+		mn_CounterTick[nID] = GetTickCount();
 
 		if (ghOpWnd)
 			PostUpdateCounters(false);

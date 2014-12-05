@@ -55,6 +55,16 @@ enum SingleInstanceArgEnum
 	sgl_Disabled = 2,
 };
 
+enum PerformanceCounterTypes
+{
+	tPerfFPS = 0,
+	tPerfData,
+	tPerfRender,
+	tPerfBlt,
+	tPerfInterval,
+	tPerfLast
+};
+
 typedef DWORD EvalSizeFlags;
 const EvalSizeFlags
 	// May be used in combination
@@ -458,9 +468,9 @@ class CSettings
 		i64 mn_Freq;
 		i64 mn_FPS[256]; int mn_FPS_CUR_FRAME;
 		i64 mn_RFPS[128]; int mn_RFPS_CUR_FRAME;
-		i64 mn_Counter[tPerfInterval-gbPerformance];
-		i64 mn_CounterMax[tPerfInterval-gbPerformance];
-		DWORD mn_CounterTick[tPerfInterval-gbPerformance];
+		i64 mn_Counter[tPerfLast];
+		i64 mn_CounterMax[tPerfLast];
+		DWORD mn_CounterTick[tPerfLast];
 		HWND hwndTip, hwndBalloon;
 		static void ShowFontErrorTip(LPCTSTR asInfo);
 		TOOLINFO tiBalloon;
