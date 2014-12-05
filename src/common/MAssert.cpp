@@ -82,7 +82,7 @@ DWORD WINAPI MyAssertThread(LPVOID p)
 	InterlockedIncrement(&gnInMyAssertTrap);
 
 	DWORD nRc = 
-		#ifdef CONEMU_MINIMAL
+		#if defined(CONEMU_MINIMAL) && defined(ASSERT_PIPE_ALLOWED)
 			GuiMessageBox(ghConEmuWnd, pa->szDebugInfo, pa->szTitle, MB_SETFOREGROUND|MB_SYSTEMMODAL|MB_RETRYCANCEL);
 		#else
 			AssertMsgBox ? AssertMsgBox(pa->szDebugInfo, MB_SETFOREGROUND|MB_SYSTEMMODAL|MB_RETRYCANCEL, pa->szTitle, NULL, false) :
