@@ -1127,6 +1127,15 @@ BOOL CRealBuffer::SetConsoleSize(USHORT sizeX, USHORT sizeY, USHORT sizeBuffer, 
 
 	_ASSERTE(con.bBufferHeight || (!con.bBufferHeight && !sizeBuffer));
 
+	COORD crFixed = {};
+	if (mp_RCon->isFixAndCenter(&crFixed))
+	{
+		if ((crFixed.X != sizeX) || (crFixed.Y != sizeY))
+		{
+			_ASSERTE(FALSE && "NTVDM may fails if size will be changed");
+		}
+	}
+
 	if (con.bBufferHeight && !sizeBuffer)
 		sizeBuffer = BufferHeight(sizeBuffer);
 

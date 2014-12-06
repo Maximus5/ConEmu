@@ -4389,7 +4389,6 @@ RECT CVConGroup::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFr
 		{
 			_ASSERTE(tWhat!=CER_DC || (tFrom==CER_BACK || tFrom==CER_CONSOLE_CUR)); // CER_DC должен считаться от CER_BACK
 
-			// Заменить на isFixAndCenter
 			COORD crConFixSize = {};
 			if ((tWhat == CER_CONSOLE_CUR) && pVCon->RCon()->isFixAndCenter(&crConFixSize))
 			{
@@ -4633,6 +4632,7 @@ void CVConGroup::SetConsoleSizes(const COORD& size, const RECT& rcNewCon, bool a
 		if (VCon.VCon() && VCon->RCon()
 			&& !VCon->RCon()->isServerClosing()
 			&& ((!(VCon->mn_Flags & vf_Maximized)) || (VCon->mn_Flags & vf_Active))
+			&& !VCon->RCon()->isFixAndCenter()
 			)
 		{
 			CRealConsole* pRCon = VCon->RCon();

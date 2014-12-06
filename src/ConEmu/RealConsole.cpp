@@ -12021,10 +12021,10 @@ bool CRealConsole::isFixAndCenter(COORD* lpcrConSize /*= NULL*/)
 	if (!isNtvdm())
 		return false;
 
-	COORD crConSize = mp_RBuf->GetDefaultNtvdmHeight();
-
 	if (lpcrConSize)
-		*lpcrConSize = crConSize;
+	{
+		*lpcrConSize = mp_RBuf->GetDefaultNtvdmHeight();
+	}
 
 	return true;
 }
