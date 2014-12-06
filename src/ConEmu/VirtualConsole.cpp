@@ -2718,8 +2718,32 @@ bool CVirtualConsole::UpdatePrepare(HDC *ahDc, MSectionLock *pSDC, MSectionLock 
 
 		if (lbSizeChanged)
 		{
-			MSetter lInConsoleResize(&mb_InConsoleResize);
-			mp_ConEmu->OnConsoleResize(TRUE);
+			// Вобщем здесь, если размер RConSrv совпадает с размером RCon
+			// то нужно просто подровнять наше окошко...
+			// Это происходит при выходе из NTVDM
+			bool bSizeProcessed = false;
+			if (!mp_RCon->isFixAndCenter())
+			{
+				RECT rcBack = {}; GetClientRect(mh_WndBack, &rcBack);
+				RECT rcCon = CVConGroup::CalcRect(CER_CONSOLE_CUR, rcBack, CER_BACK, this);
+				if ((rcCon.right == TextWidth) && (rcCon.bottom == TextHeight))
+				{
+					// Просто подвинуть окошко
+					MapWindowPoints(mh_WndBack, ghWnd, (LPPOINT)&rcBack, 2);
+					RECT rcNewPos = CVConGroup::CalcRect(CER_DC, rcBack, CER_BACK, this);
+					RECT rcCurPos = {}; GetClientRect(mh_WndDC, &rcCurPos);
+					MapWindowPoints(mh_WndDC, ghWnd, (LPPOINT)&rcCurPos, 2);
+					if (memcmp(&rcNewPos, &rcCurPos, sizeof(rcCurPos)) != 0)
+					{
+						SetVConSizePos(rcBack, rcNewPos, true);
+					}
+				}
+			}
+			if (!bSizeProcessed)
+			{
+				MSetter lInConsoleResize(&mb_InConsoleResize);
+				mp_ConEmu->OnConsoleResize(TRUE);
+			}
 		}
 
 
