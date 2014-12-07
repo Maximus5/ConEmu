@@ -1976,7 +1976,12 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 
 	if (pRCon->mb_NeedStartProcess)
 	{
-		_ASSERTE(pRCon->mh_MainSrv==NULL);
+		#ifdef _DEBUG
+		if (pRCon->mh_MainSrv)
+		{
+			_ASSERTE(pRCon->mh_MainSrv==NULL);
+		}
+		#endif
 
 		HANDLE hWait[] = {pRCon->mh_TermEvent, pRCon->mh_StartExecuted};
 		DWORD nWait = WaitForMultipleObjects(countof(hWait), hWait, FALSE, INFINITE);
