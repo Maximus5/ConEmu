@@ -136,6 +136,7 @@ struct ConEmuHotKey
 	static bool UseWinArrows();
 	static bool UseCTSShiftArrow(); // { return gpSet->isUseWinArrows; }; // { return (OverrideClipboard || !AppNames) ? isCTSShiftArrowStart : gpSet->AppStd.isCTSShiftArrowStart; };
 	static bool UseCtrlTab();
+	static bool UseCtrlBS();
 	static bool InSelection();
 	static bool UseDndLKey();
 	static bool UseDndRKey();

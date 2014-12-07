@@ -232,7 +232,7 @@ int ConEmuHotKeyList::AllocateHotkeys()
 		->SetHotKey(VK_INSERT,VK_SHIFT);
 	Add(vkPasteFirstLine, chk_User,  NULL,    L"ClipboardVkFirstLine",  CConEmuCtrl::key_PasteFirstLine)
 		->SetHotKey('V',VK_CONTROL);
-	Add(vkDeleteLeftWord, chk_User,  NULL,    L"DeleteWordToLeft",      CConEmuCtrl::key_DeleteWordToLeft)
+	Add(vkDeleteLeftWord, chk_User,  ConEmuHotKey::UseCtrlBS, L"DeleteWordToLeft", CConEmuCtrl::key_DeleteWordToLeft)
 		->SetHotKey(VK_BACK,VK_CONTROL);
 	Add(vkFindTextDlg,    chk_User,  NULL,    L"FindTextKey",           CConEmuCtrl::key_FindTextDlg)
 		->SetHotKey('F',VK_APPS);

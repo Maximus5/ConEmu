@@ -871,6 +871,11 @@ bool ConEmuHotKey::UseCtrlTab()
 	return gpSet->isTabSelf;
 }
 
+bool ConEmuHotKey::UseCtrlBS()
+{
+	return (gpSet->GetAppSettings()->CTSDeleteLeftWord() != 0);
+}
+
 bool ConEmuHotKey::UseDndLKey()
 {
 	return ((gpSet->isDragEnabled & DRAG_L_ALLOWED) == DRAG_L_ALLOWED);
