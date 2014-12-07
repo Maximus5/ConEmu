@@ -143,6 +143,7 @@ public:
 	void StartSelection(BOOL abTextMode, SHORT anX=-1, SHORT anY=-1, BOOL abByMouse=FALSE, UINT anFromMsg=0, COORD *pcrTo=NULL);
 	void ExpandSelection(SHORT anX, SHORT anY, bool bWasSelection);
 	bool DoSelectionFinalize(bool abCopy, CECopyMode CopyMode = cm_CopySel, WPARAM wParam = 0, HGLOBAL* phUnicode = NULL);
+	void DoCopyPaste(bool abCopy, bool abPaste);
 	void DoSelectionStop();
 	bool DoSelectionCopy(CECopyMode CopyMode = cm_CopySel, BYTE nFormat = CTSFormatDefault, LPCWSTR pszDstFile = NULL, HGLOBAL* phUnicode = NULL);
 	void UpdateSelection();

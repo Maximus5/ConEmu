@@ -3694,46 +3694,63 @@ bool CRealBuffer::OnMouseSelection(UINT messg, WPARAM wParam, int x, int y)
 		bool bDoCopyWin = (bAction == 1);
 		bool bDoPaste = (bAction == 3);
 		bool bDoCopy = bDoCopyWin || bDoPaste;
-		bool bClipOpen = bDoCopyWin ? MyOpenClipboard(L"Copy&Paste") : false;
-		HGLOBAL hUnicode = NULL;
-		bool bCopyOk = DoSelectionFinalize(bDoCopy, bDoCopyWin ? cm_CopySel : cm_CopyInt, 0, bDoPaste ? &hUnicode : NULL);
 
-		if (bCopyOk && bDoPaste)
+		if (!bDoPaste)
 		{
-			LPCWSTR pszText = NULL;
-			if (hUnicode)
-			{
-				pszText = (LPCWSTR)GlobalLock(hUnicode);
-				if (!pszText)
-				{
-					DisplayLastError(L"GlobalLock failed, paste is impossible!");
-					bDoPaste = false;
-				}
-			}
-
-			// Immediately paste into console ('Auto' mode)?
-			if (bDoPaste)
-			{
-				mp_RCon->Paste(pm_OneLine, pszText);
-			}
-
-			if (hUnicode)
-			{
-				if (pszText)
-					GlobalUnlock(hUnicode);
-				GlobalFree(hUnicode);
-			}
+			// While "Paste" was not requested - that means "Copy to Windows clipboard"
+			DoSelectionFinalize(bDoCopy);
 		}
-
-		if (bClipOpen)
+		else
 		{
-			MyCloseClipboard();
+			// If Paste was requested - no need to use Windows clipboard, copy/paste internally
+			DoCopyPaste(true, true);
 		}
 
 		return true;
 	}
 
 	return false;
+}
+
+void CRealBuffer::DoCopyPaste(bool abCopy, bool abPaste)
+{
+	bool bDoCopyWin = abCopy && !abPaste;
+	bool bDoPaste = abPaste;
+	bool bClipOpen = bDoCopyWin ? MyOpenClipboard(L"Copy&Paste") : false;
+	HGLOBAL hUnicode = NULL;
+	bool bCopyOk = DoSelectionFinalize(abCopy, bDoCopyWin ? cm_CopySel : cm_CopyInt, 0, abPaste ? &hUnicode : NULL);
+
+	if (bCopyOk && bDoPaste)
+	{
+		LPCWSTR pszText = NULL;
+		if (hUnicode)
+		{
+			pszText = (LPCWSTR)GlobalLock(hUnicode);
+			if (!pszText)
+			{
+				DisplayLastError(L"GlobalLock failed, paste is impossible!");
+				bDoPaste = false;
+			}
+		}
+
+		// Immediately paste into console ('Auto' mode)?
+		if (bDoPaste)
+		{
+			mp_RCon->Paste(pm_OneLine, pszText);
+		}
+
+		if (hUnicode)
+		{
+			if (pszText)
+				GlobalUnlock(hUnicode);
+			GlobalFree(hUnicode);
+		}
+	}
+
+	if (bClipOpen)
+	{
+		MyCloseClipboard();
+	}
 }
 
 void CRealBuffer::MarkFindText(int nDirection, LPCWSTR asText, bool abCaseSensitive, bool abWholeWords)
