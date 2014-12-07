@@ -65,7 +65,8 @@ class CConEmuChild
 
 		void SetRedraw(BOOL abRedrawEnabled);
 
-		void SetVConSizePos(RECT arcBack, bool abReSize = true);
+		void SetVConSizePos(const RECT& arcBack, bool abReSize = true);
+		void SetVConSizePos(const RECT& arcBack, const RECT& arcDC, bool abReSize = true);
 
 		void SetScroll(BOOL abEnabled, int anTop, int anVisible, int anHeight);
 		bool InScroll();

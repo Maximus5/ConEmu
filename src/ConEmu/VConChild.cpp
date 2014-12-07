@@ -1298,31 +1298,37 @@ void CConEmuChild::Redraw(bool abRepaintNow /*= false*/)
 }
 
 // Вызывается из VConGroup::RepositionVCon
-void CConEmuChild::SetVConSizePos(RECT arcBack, bool abReSize /*= true*/)
+void CConEmuChild::SetVConSizePos(const RECT& arcBack, bool abReSize /*= true*/)
 {
 	CVirtualConsole* pVCon = mp_VCon;
-	RECT rcBack = arcBack;
-	TODO("Оптимизировать");
-	//RECT rcCon = gpConEmu->CalcRect(CER_CONSOLE_CUR, arcBack, CER_BACK, pVCon);
-	//RECT rcTmp = gpConEmu->CalcRect(CER_DC, rcCon, CER_CONSOLE_CUR, pVCon);
-	RECT rcDC = gpConEmu->CalcRect(CER_DC, arcBack, CER_BACK, pVCon/*, &rcTmp*/);
 
+	RECT rcDC = CVConGroup::CalcRect(CER_DC, arcBack, CER_BACK, pVCon);
+
+	SetVConSizePos(arcBack, rcDC, abReSize);
+}
+
+// Вызывается из CVirtualConsole::UpdatePrepare и CConEmuChild::SetVConSizePos
+void CConEmuChild::SetVConSizePos(const RECT& arcBack, const RECT& arcDC, bool abReSize /*= true*/)
+{
 	if (abReSize)
 	{
-		_ASSERTE((rcBack.right > rcBack.left) && (rcBack.bottom > rcBack.top));
-		_ASSERTE((rcDC.right > rcDC.left) && (rcDC.bottom > rcDC.top));
+		_ASSERTE((arcBack.right > arcBack.left) && (arcBack.bottom > arcBack.top));
+		_ASSERTE((arcDC.right > arcDC.left) && (arcDC.bottom > arcDC.top));
+
 		// Двигаем/ресайзим окошко DC
 		DEBUGTEST(RECT rc1; GetClientRect(mh_WndDC, &rc1););
-		SetWindowPos(mh_WndDC, HWND_TOP, rcDC.left, rcDC.top, rcDC.right - rcDC.left, rcDC.bottom - rcDC.top, 0);
+		SetWindowPos(mh_WndDC, HWND_TOP, arcDC.left, arcDC.top, arcDC.right - arcDC.left, arcDC.bottom - arcDC.top, 0);
 		DEBUGTEST(RECT rc2; GetClientRect(mh_WndDC, &rc2););
-		SetWindowPos(mh_WndBack, mh_WndDC, rcBack.left, rcBack.top, rcBack.right - rcBack.left, rcBack.bottom - rcBack.top, 0);
+
+		SetWindowPos(mh_WndBack, mh_WndDC, arcBack.left, arcBack.top, arcBack.right - arcBack.left, arcBack.bottom - arcBack.top, 0);
+
 		Invalidate();
 	}
 	else
 	{
 		// Двигаем окошко DC
-		SetWindowPos(mh_WndDC, HWND_TOP, rcDC.left, rcDC.top, 0,0, SWP_NOSIZE);
-		SetWindowPos(mh_WndBack, mh_WndDC, rcBack.left, rcBack.top, 0,0, SWP_NOSIZE);
+		SetWindowPos(mh_WndDC, HWND_TOP, arcDC.left, arcDC.top, 0,0, SWP_NOSIZE);
+		SetWindowPos(mh_WndBack, mh_WndDC, arcBack.left, arcBack.top, 0,0, SWP_NOSIZE);
 	}
 
 	// Обновить регион скролла, если он есть
