@@ -482,9 +482,9 @@ struct Settings
 		//reg->Load(L"CTS.VkAct", isCTSVkAct);
 		//BYTE isCTSVkAct; // режим и модификатор разрешения действий правой и средней кнопки мышки
 		//reg->Load(L"CTS.RBtnAction", isCTSRBtnAction);
-		BYTE isCTSRBtnAction; // 0-off, 1-copy, 2-paste, 3-auto
+		BYTE isCTSRBtnAction; // enum: 0-off, 1-copy, 2-paste, 3-auto
 		//reg->Load(L"CTS.MBtnAction", isCTSMBtnAction);
-		BYTE isCTSMBtnAction; // 0-off, 1-copy, 2-paste, 3-auto
+		BYTE isCTSMBtnAction; // enum: 0-off, 1-copy, 2-paste, 3-auto
 		//reg->Load(L"CTS.ColorIndex", isCTSColorIndex);
 		BYTE isCTSColorIndex;
 		//reg->Load(L"ClipboardConfirmEnter", isPasteConfirmEnter);
