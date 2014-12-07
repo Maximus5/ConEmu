@@ -3325,7 +3325,22 @@ bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse
 		        && ((gpSet->isCTSActMode == 2 && mp_RCon->isBufferHeight() && !mp_RCon->isFarBufferSupported())
 		            || (gpSet->isCTSActMode == 1 && gpSet->IsModifierPressed(vkCTSVkAct, true))))
 		{
-			if (messg == WM_RBUTTONUP) mp_RCon->Paste();
+			if (messg == WM_RBUTTONUP)
+			{
+				// If Paste was requested - no need to use Windows clipboard,
+				// and if selection exists copy it first and paste internally
+				if (isSelectionPresent() && gpSet->isCTSIntelligent)
+				{
+					DoCopyPaste(true, true);
+				}
+				else
+				{
+					// Paste is useless in "Alternative mode" or while selection is present...
+					DoSelectionFinalize(false);
+					// And Paste itself
+					mp_RCon->Paste();
+				}
+			}
 
 			return true;
 		}
