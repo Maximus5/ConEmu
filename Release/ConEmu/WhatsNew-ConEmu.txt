@@ -12,6 +12,11 @@ Votes and awards (vote for ConEmu, if you please)
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+2014.12.6
+[*] Issue 980: Fix resize issues with NTVDM (old DOS) applications.
+[*] Some more internal logging.
+
+
 2014.12.4
 [*] Issue 1832: Some file size zeros was missed in Far's Tiles mode.
 [*] Update counters FPS/RPS calculation.
