@@ -6195,7 +6195,7 @@ void CRealConsole::OnDosAppStartStop(enum StartStopType sst, DWORD anPID)
 		// Еще не отработал возврат размера консоли!
 		if (mn_Comspec4Ntvdm == 0)
 		{
-			SetProgramStatus(mn_ProgramStatus & ~CES_NTVDM);
+			SetProgramStatus(CES_NTVDM, 0/*Flags*/);
 		}
 
 		//2010-02-26 убрал. может прийти с задержкой и только создать проблемы
@@ -6757,9 +6757,30 @@ DWORD CRealConsole::GetFarPID(bool abPluginRequired/*=false*/)
 	return mn_FarPID;
 }
 
-void CRealConsole::SetProgramStatus(DWORD nNewProgramStatus)
+void CRealConsole::SetProgramStatus(DWORD nDrop, DWORD nSet)
 {
-	mn_ProgramStatus = nNewProgramStatus;
+	#ifdef _DEBUG
+	bool bWasNtvdm = (mn_ProgramStatus & CES_NTVDM)!=0;
+	DWORD nPrevStatus = mn_ProgramStatus;
+	#endif
+
+	if (nDrop == (DWORD)-1)
+	{
+		mn_ProgramStatus = nSet;
+	}
+	else if (nDrop && nSet)
+		mn_ProgramStatus = (mn_ProgramStatus & ~nDrop) | nSet;
+	else if (nDrop)
+		mn_ProgramStatus = (mn_ProgramStatus & ~nDrop);
+	else if (nSet)
+		mn_ProgramStatus = (mn_ProgramStatus | nSet);
+
+	#ifdef _DEBUG
+	if (bWasNtvdm && !(mn_ProgramStatus & CES_NTVDM))
+	{
+		bWasNtvdm = false; // For debug breakpoint
+	}
+	#endif
 }
 
 void CRealConsole::SetFarStatus(DWORD nNewFarStatus)
@@ -6780,12 +6801,12 @@ void CRealConsole::SetFarPID(DWORD nFarPID)
 	if (nFarPID)
 	{
 		if ((mn_ProgramStatus & (CES_FARACTIVE|CES_FARINSTACK)) != (CES_FARACTIVE|CES_FARINSTACK))
-			SetProgramStatus(mn_ProgramStatus|CES_FARACTIVE|CES_FARINSTACK);
+			SetProgramStatus(0, CES_FARACTIVE|CES_FARINSTACK/*Flags*/);
 	}
 	else
 	{
 		if (mn_ProgramStatus & CES_FARACTIVE)
-			SetProgramStatus(mn_ProgramStatus & ~CES_FARACTIVE);
+			SetProgramStatus(CES_FARACTIVE, 0/*Flags*/);
 	}
 
 	mn_FarPID = nFarPID;
@@ -7172,7 +7193,7 @@ BOOL CRealConsole::ProcessUpdateFlags(BOOL abProcessChanged)
 
 	if (mn_ProgramStatus != nNewProgramStatus)
 	{
-		SetProgramStatus(nNewProgramStatus);
+		SetProgramStatus((DWORD)-1, nNewProgramStatus);
 	}
 
 	mn_ProcessCount = (int)m_Processes.size();
@@ -8585,7 +8606,7 @@ BOOL CRealConsole::RecreateProcessStart()
 
 		bool bWasNTVDM = ((mn_ProgramStatus & CES_NTVDM) == CES_NTVDM);
 
-		SetProgramStatus(0);
+		SetProgramStatus((DWORD)-1, 0);
 		mb_IgnoreCmdStop = FALSE;
 
 		if (bWasNTVDM)

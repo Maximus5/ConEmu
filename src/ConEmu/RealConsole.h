@@ -466,7 +466,7 @@ class CRealConsole
 		DWORD GetFarPID(bool abPluginRequired=false);
 		void SetFarPID(DWORD nFarPID);
 		void SetFarPluginPID(DWORD nFarPluginPID);
-		void SetProgramStatus(DWORD nNewProgramStatus);
+		void SetProgramStatus(DWORD nDrop, DWORD nSet);
 		void SetFarStatus(DWORD nNewFarStatus);
 		DWORD GetActivePID();
 		LPCWSTR GetActiveProcessName();
