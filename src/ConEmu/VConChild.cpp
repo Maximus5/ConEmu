@@ -36,6 +36,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "VConChild.h"
 #include "Options.h"
 #include "OptionsClass.h"
+#include "Status.h"
 #include "TabBar.h"
 #include "VirtualConsole.h"
 #include "RealConsole.h"
@@ -565,6 +566,8 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 			{
 				WINDOWPOS* pwp = (WINDOWPOS*)lParam;
 				result = DefWindowProc(hWnd, messg, wParam, lParam);
+				// Refresh status columns
+				pVCon->OnVConSizePosChanged();
 			} break;
 
 		case WM_SETCURSOR:
@@ -1330,6 +1333,17 @@ void CConEmuChild::SetVConSizePos(const RECT& arcBack, const RECT& arcDC, bool a
 
 	// Обновить регион скролла, если он есть
 	UpdateScrollRgn(true);
+}
+
+// Refresh StatusBar columns
+void CConEmuChild::OnVConSizePosChanged()
+{
+	if (gpSet->isStatusColumnHidden[csi_WindowBack] && gpSet->isStatusColumnHidden[csi_WindowDC])
+		return;
+	if (!mp_VCon->isActive(false))
+		return;
+
+	mp_VCon->mp_ConEmu->mp_Status->OnWindowReposition(NULL);
 }
 
 void CConEmuChild::SetRedraw(BOOL abRedrawEnabled)

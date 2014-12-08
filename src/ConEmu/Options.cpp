@@ -741,6 +741,8 @@ void Settings::InitSettings()
 	isStatusColumnHidden[csi_WindowSize] = true;
 	isStatusColumnHidden[csi_WindowClient] = true;
 	isStatusColumnHidden[csi_WindowWork] = true;
+	isStatusColumnHidden[csi_WindowBack] = true;
+	isStatusColumnHidden[csi_WindowDC] = true;
 	isStatusColumnHidden[csi_WindowStyle] = true;
 	isStatusColumnHidden[csi_WindowStyleEx] = true;
 	isStatusColumnHidden[csi_HwndFore] = true;

@@ -129,6 +129,13 @@ static StatusColInfo gStatusCols[] =
 						L"ConEmu window work area size",
 						L"Width x Height: ConEmu work area size (virtual consoles place)"},
 
+	{csi_WindowBack,	L"StatusBar.Hide.WVBack",
+						L"ConEmu VCon full size",
+						L"Width x Height: ConEmu VCon full size (with pads)"},
+	{csi_WindowDC,		L"StatusBar.Hide.WVDC",
+						L"ConEmu VCon DC size",
+						L"Width x Height: ConEmu VCon drawing size"},
+
 	{csi_WindowStyle,	L"StatusBar.Hide.Style",
 						L"ConEmu window style",
 						L"GWL_STYLE: ConEmu window style"},
@@ -1567,7 +1574,26 @@ void CStatus::OnWindowReposition(const RECT *prcNew)
 		L"%ix%i", (rcWork.right-rcWork.left), (rcWork.bottom-rcWork.top));
 	wcscpy_c(m_Values[csi_WindowWork].szFormat, m_Values[csi_WindowWork].sText/*L"9999x9999"*/);
 
-	CEStatusItems Changed[] = {csi_WindowPos, csi_WindowSize, csi_WindowClient, csi_WindowWork};
+	// csi_WindowBack, csi_WindowDC
+	CVConGuard VCon; RECT rcDC = {}, rcBack = {};
+	if (gpConEmu->GetActiveVCon(&VCon) >= 0)
+	{
+		GetClientRect(VCon->GetBack(), &rcBack);
+		GetClientRect(VCon->GetView(), &rcDC);
+		_wsprintf(m_Values[csi_WindowBack].sText, SKIPLEN(countof(m_Values[csi_WindowBack].sText)-1)
+			L"%ix%i", (rcBack.right-rcBack.left), (rcBack.bottom-rcBack.top));
+		_wsprintf(m_Values[csi_WindowDC].sText, SKIPLEN(countof(m_Values[csi_WindowDC].sText)-1)
+			L"%ix%i", (rcDC.right-rcDC.left), (rcDC.bottom-rcDC.top));
+	}
+	else
+	{
+		wcscpy_c(m_Values[csi_WindowBack].sText, L"NIL");
+		wcscpy_c(m_Values[csi_WindowDC].sText, L"NIL");
+	}
+	wcscpy_c(m_Values[csi_WindowBack].szFormat, m_Values[csi_WindowBack].sText);
+	wcscpy_c(m_Values[csi_WindowDC].szFormat, m_Values[csi_WindowDC].sText);
+
+	CEStatusItems Changed[] = {csi_WindowPos, csi_WindowSize, csi_WindowClient, csi_WindowWork, csi_WindowBack, csi_WindowDC};
 	// -- обновляем сразу, иначе получаются странные эффекты "отставания" статуса от размера окна...
 	if (!OnDataChanged(Changed, countof(Changed), true))
 	{

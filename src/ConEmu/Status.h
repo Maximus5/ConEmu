@@ -56,6 +56,8 @@ enum CEStatusItems
 	csi_WindowSize,
 	csi_WindowClient,
 	csi_WindowWork,
+	csi_WindowBack,
+	csi_WindowDC,
 	csi_WindowStyle,
 	csi_WindowStyleEx,
 	csi_HwndFore,

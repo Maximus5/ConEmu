@@ -2736,6 +2736,8 @@ bool CVirtualConsole::UpdatePrepare(HDC *ahDc, MSectionLock *pSDC, MSectionLock 
 					if (memcmp(&rcNewPos, &rcCurPos, sizeof(rcCurPos)) != 0)
 					{
 						SetVConSizePos(rcBack, rcNewPos, true);
+						// Refresh status columns
+						OnVConSizePosChanged();
 					}
 				}
 			}

@@ -67,6 +67,7 @@ class CConEmuChild
 
 		void SetVConSizePos(const RECT& arcBack, bool abReSize = true);
 		void SetVConSizePos(const RECT& arcBack, const RECT& arcDC, bool abReSize = true);
+		void OnVConSizePosChanged(); // Status bar columns
 
 		void SetScroll(BOOL abEnabled, int anTop, int anVisible, int anHeight);
 		bool InScroll();
