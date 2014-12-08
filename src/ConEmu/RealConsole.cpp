@@ -841,6 +841,7 @@ void CRealConsole::SyncConsole2Window(BOOL abNtvdmOff/*=FALSE*/, LPRECT prcNewWn
 
 	if (abNtvdmOff && isNtvdm())
 	{
+		LogString(L"NTVDM was stopped (SyncConsole2Window), clearing CES_NTVDM", true);
 		SetProgramStatus(CES_NTVDM, 0);
 	}
 
@@ -6182,6 +6183,7 @@ void CRealConsole::OnDosAppStartStop(enum StartStopType sst, DWORD anPID)
 
 		if (!(mn_ProgramStatus & CES_NTVDM))
 		{
+			LogString(L"NTVDM was detected (sst_App16Start), setting CES_NTVDM", true);
 			mn_ProgramStatus |= CES_NTVDM;
 		}
 
@@ -6200,7 +6202,12 @@ void CRealConsole::OnDosAppStartStop(enum StartStopType sst, DWORD anPID)
 		// Еще не отработал возврат размера консоли!
 		if (mn_Comspec4Ntvdm == 0)
 		{
+			LogString(L"NTVDM was stopped (sst_App16Stop), clearing CES_NTVDM", true);
 			SetProgramStatus(CES_NTVDM, 0/*Flags*/);
+		}
+		else
+		{
+			LogString(L"NTVDM was stopped (sst_App16Stop), CES_NTVDM was left", true);
 		}
 
 		//2010-02-26 убрал. может прийти с задержкой и только создать проблемы
@@ -7193,7 +7200,13 @@ BOOL CRealConsole::ProcessUpdateFlags(BOOL abProcessChanged)
 
 	if (bIsNtvdm)  // определяется выше как "(mn_ProgramStatus & CES_NTVDM) == CES_NTVDM"
 	{
+		if (!(mn_ProgramStatus & CES_NTVDM))
+			LogString(L"NTVDM.EXE was detected, setting CES_NTVDM", true);
 		nNewProgramStatus |= CES_NTVDM;
+	}
+	else if (mn_ProgramStatus & CES_NTVDM)
+	{
+		LogString(L"NTVDM.EXE was terminated, clearing CES_NTVDM", true);
 	}
 
 	if (mn_ProgramStatus != nNewProgramStatus)
