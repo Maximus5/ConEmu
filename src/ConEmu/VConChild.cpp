@@ -556,20 +556,17 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 				result = DefWindowProc(hWnd, messg, wParam, lParam);
 			} break;
 
-#ifdef _DEBUG
 		case WM_WINDOWPOSCHANGING:
 			{
 				WINDOWPOS* pwp = (WINDOWPOS*)lParam;
 				result = DefWindowProc(hWnd, messg, wParam, lParam);
-			}
-			return result;
+			} break;
 		case WM_WINDOWPOSCHANGED:
 			{
 				WINDOWPOS* pwp = (WINDOWPOS*)lParam;
 				result = DefWindowProc(hWnd, messg, wParam, lParam);
-			}
-			break;
-#endif
+			} break;
+
 		case WM_SETCURSOR:
 			{
 				gpConEmu->WndProc(hWnd, messg, wParam, lParam);
