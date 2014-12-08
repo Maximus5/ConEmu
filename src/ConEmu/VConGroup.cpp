@@ -4433,7 +4433,7 @@ RECT CVConGroup::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFr
 			}
 
 			TODO("Вообще, для CER_CONSOLE_ALL CEM_PAD считать не нужно, но т.к. пока используется SetAllConsoleWindowsSize - оставим");
-			if (tWhat == CER_DC || tWhat == CER_CONSOLE_CUR || tWhat == CER_CONSOLE_ALL)
+			if (tWhat == CER_DC || tWhat == CER_CONSOLE_CUR || tWhat == CER_CONSOLE_ALL || tWhat == CER_CONSOLE_NTVDMOFF)
 			{
 				// Pad. Отступ от всех краев (gpSet->nCenterConsolePad)
 				RECT rcShift = gpConEmu->CalcMargins(CEM_PAD);
