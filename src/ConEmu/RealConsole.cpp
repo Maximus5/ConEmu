@@ -839,6 +839,11 @@ void CRealConsole::SyncConsole2Window(BOOL abNtvdmOff/*=FALSE*/, LPRECT prcNewWn
 	RECT newCon = mp_ConEmu->CalcRect(abNtvdmOff ? CER_CONSOLE_NTVDMOFF : CER_CONSOLE_CUR, rcClient, CER_MAINCLIENT, mp_VCon);
 	_ASSERTE(newCon.right>=MIN_CON_WIDTH && newCon.bottom>=MIN_CON_HEIGHT);
 
+	if (abNtvdmOff && isNtvdm())
+	{
+		SetProgramStatus(CES_NTVDM, 0);
+	}
+
 	#if 0
 	if (m_ChildGui.hGuiWnd && !m_ChildGui.bGuiExternMode)
 	{
