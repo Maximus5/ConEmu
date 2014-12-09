@@ -306,7 +306,8 @@ bool CheckXmlFile(bool abUpdateName /*= false*/)
 		if (gpszXmlFile)
 		{
 			gpszXmlFile[0] = 0;
-			if (*gsXmlConfigFile && wcschr(gsXmlConfigFile, L'\\'))
+			// If config file has full path or environment variable (supposing full path with %FARHOME% or %ConEmuDir%)
+			if (*gsXmlConfigFile && (wcschr(gsXmlConfigFile, L'\\') || wcschr(gsXmlConfigFile, L'%')))
 			{
 				DWORD nRc = ExpandEnvironmentStrings(gsXmlConfigFile, gpszXmlFile, MAX_PATH+1);
 				if (!nRc || nRc > MAX_PATH)
