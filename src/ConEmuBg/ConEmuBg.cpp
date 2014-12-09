@@ -299,9 +299,9 @@ bool CheckXmlFile(bool abUpdateName /*= false*/)
 	if (abUpdateName)
 	{
 		bool lbNameOk = false;
-		int nNameLen = lstrlen(szDefaultXmlName);
+		size_t cchMax = MAX_PATH+1;
 		if (!gpszXmlFile)
-			gpszXmlFile = (wchar_t*)malloc((MAX_PATH+1)*sizeof(*gpszXmlFile));
+			gpszXmlFile = (wchar_t*)malloc(cchMax*sizeof(*gpszXmlFile));
 
 		if (gpszXmlFile)
 		{
@@ -319,12 +319,17 @@ bool CheckXmlFile(bool abUpdateName /*= false*/)
 					lbNameOk = true;
 				}
 			}
-			if (!*gpszXmlFile && GetModuleFileName(ghPluginModule, gpszXmlFile, MAX_PATH-nNameLen))
+			if (!lbNameOk && !*gpszXmlFile)
 			{
-				wchar_t* pszSlash = wcsrchr(gpszXmlFile, L'\\');
-				if (pszSlash) pszSlash++; else pszSlash = gpszXmlFile;
-				_wcscpy_c(pszSlash, nNameLen+1, *gsXmlConfigFile ? gsXmlConfigFile : szDefaultXmlName);
-				lbNameOk = true;
+				LPCWSTR pszXmlName = *gsXmlConfigFile ? gsXmlConfigFile : szDefaultXmlName;
+				int nNameLen = lstrlen(pszXmlName);
+				if (GetModuleFileName(ghPluginModule, gpszXmlFile, MAX_PATH-nNameLen))
+				{
+					wchar_t* pszSlash = wcsrchr(gpszXmlFile, L'\\');
+					if (pszSlash) pszSlash++; else pszSlash = gpszXmlFile;
+					_wcscpy_c(pszSlash, cchMax-(pszSlash-gpszXmlFile), pszXmlName);
+					lbNameOk = true;
+				}
 			}
 		}
 		if (!lbNameOk)
