@@ -3820,15 +3820,8 @@ BOOL CRealConsole::StartProcess()
 	if (m_Args.RunAsAdministrator != crb_On)
 	{
 		CreateLogFiles();
-		//// Событие "изменения" консоль //2009-05-14 Теперь события обрабатываются в GUI, но прийти из консоли может изменение размера курсора
-		//swprintf_c(ms_ConEmuC_Pipe, CE_CURSORUPDATE, mn_MainSrv_PID);
-		//mh_CursorChanged = CreateEvent ( NULL, FALSE, FALSE, ms_ConEmuC_Pipe );
 		// Инициализировать имена пайпов, событий, мэппингов и т.п.
 		InitNames();
-		//// Имя пайпа для управления ConEmuC
-		//swprintf_c(ms_ConEmuC_Pipe, CESERVERPIPENAME, L".", mn_MainSrv_PID);
-		//swprintf_c(ms_ConEmuCInput_Pipe, CESERVERINPUTNAME, L".", mn_MainSrv_PID);
-		//MCHKHEAP
 	}
 
 wrap:
