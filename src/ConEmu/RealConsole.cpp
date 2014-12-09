@@ -8130,7 +8130,10 @@ void CRealConsole::OnFocus(BOOL abFocused)
 
 void CRealConsole::CreateLogFiles()
 {
-	if (!m_UseLogs) return;
+	if (!m_UseLogs || !mn_MainSrv_PID)
+	{
+		return;
+	}
 
 	if (!mp_Log)
 	{
