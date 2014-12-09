@@ -1008,8 +1008,6 @@ BOOL CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, const CESER
 	SetHwnd(ahConWnd);
 	ProcessUpdate(&anConemuC_PID, 1);
 
-	CreateLogFiles();
-
 	// Инициализировать имена пайпов, событий, мэппингов и т.п.
 	InitNames();
 
@@ -3819,7 +3817,6 @@ BOOL CRealConsole::StartProcess()
 
 	if (m_Args.RunAsAdministrator != crb_On)
 	{
-		CreateLogFiles();
 		// Инициализировать имена пайпов, событий, мэппингов и т.п.
 		InitNames();
 	}
@@ -6586,6 +6583,8 @@ void CRealConsole::SetMainSrvPID(DWORD anMainSrvPID, HANDLE ahMainSrv)
 		wchar_t szInfo[100];
 		_wsprintf(szInfo, SKIPCOUNT(szInfo) L"ServerPID=%u was set for VCon%i", anMainSrvPID, mp_VCon->Index()+1);
 		gpConEmu->LogString(szInfo);
+		// RCon logging
+		CreateLogFiles();
 	}
 
 	DEBUGTEST(isServerAlive());
