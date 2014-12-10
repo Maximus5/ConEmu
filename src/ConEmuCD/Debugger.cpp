@@ -642,6 +642,12 @@ void WriteMiniDump(DWORD dwProcessId, DWORD dwThreadId, EXCEPTION_RECORD *pExcep
 
 	wchar_t dmpfile[MAX_PATH]; dmpfile[0] = 0;
 
+	TODO("Добавить в dmpfile имя без пути <exename>-<pid>-<yymmddhhmmss>.[m]dmp");
+	SYSTEMTIME lt = {}; GetLocalTime(&lt);
+	_wsprintf(dmpfile, SKIPCOUNT(dmpfile) L"CEDump-%u-%02u%02u%02u%02u%02u%02u.%s",
+		dwProcessId, lt.wYear%100, lt.wMonth, lt.wDay, lt.wHour, lt.wMinute, lt.wSecond,
+		(dumpType == MiniDumpWithFullMemory) ? L"dmp" : L"mdmp");
+
 	typedef BOOL (WINAPI* MiniDumpWriteDump_t)(HANDLE hProcess, DWORD ProcessId, HANDLE hFile, MINIDUMP_TYPE DumpType,
 	        PMINIDUMP_EXCEPTION_INFORMATION ExceptionParam, PMINIDUMP_USER_STREAM_INFORMATION UserStreamParam,
 	        PMINIDUMP_CALLBACK_INFORMATION CallbackParam);
