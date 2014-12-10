@@ -172,7 +172,7 @@ int RunDebugger()
 
 HANDLE GetProcessHandleForDebug(DWORD nPID, LPDWORD pnErrCode = NULL)
 {
-	_ASSERTE(gpSrv->DbgInfo.bDebuggerActive);
+	_ASSERTE(gpSrv->DbgInfo.bDebugProcess);
 
 	HANDLE hProcess = NULL;
 	DWORD  nErrCode = 0;
@@ -222,7 +222,7 @@ HANDLE GetProcessHandleForDebug(DWORD nPID, LPDWORD pnErrCode = NULL)
 			if (nPID != gpSrv->dwRootProcess)
 			{
 				// Запомнить дескриптор
-				_ASSERTE(pi.nPID == nPID); // уже должен быть
+				_ASSERTE(pi.nPID == nPID || pi.nPID == 0); // уже должен быть
 				pi.nPID = nPID;
 				pi.hProcess = hProcess;
 				gpSrv->DbgInfo.pDebugTreeProcesses->Set(nPID, pi);
