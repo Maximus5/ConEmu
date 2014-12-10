@@ -4865,7 +4865,6 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 			//gnRunMode = RM_SERVER; -- не будем ставить, RM_UNDEFINED будет признаком того, что просто хотят дебаггер
 			gbNoCreateProcess = gpSrv->DbgInfo.bDebugProcess = TRUE;
 			wchar_t* pszEnd = NULL;
-			//gpSrv->dwRootProcess = _wtol(szArg+10);
 			gpSrv->dwRootProcess = wcstoul(szArg+10, &pszEnd, 10);
 
 			if (gpSrv->dwRootProcess == 0)
@@ -4914,29 +4913,8 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 				return CERR_CARGUMENT;
 			}
 
-			/*
-			STARTUPINFO si = {sizeof(si)};
-			PROCESS_INFORMATION pi = {};
-
-			if (!CreateProcess(NULL, pszDebugCmd, NULL, NULL, FALSE,
-				NORMAL_PRIORITY_CLASS|CREATE_NEW_CONSOLE|DEBUG_ONLY_THIS_PROCESS,
-				NULL, NULL, &si, &pi))
-			{
-				_printf("Debug of process was requested, but CreateProcess failed\n");
-				_ASSERTE(FALSE);
-				return CERR_CARGUMENT;
-			}
-			*/
-
 			gbNoCreateProcess = gpSrv->DbgInfo.bDebugProcess = TRUE;
 			gpSrv->DbgInfo.pszDebuggingCmdLine = pszDebugCmd;
-			/*
-			gpSrv->hRootProcess = pi.hProcess;
-			gpSrv->hRootThread = pi.hThread;
-			gpSrv->dwRootProcess = pi.dwProcessId;
-			gpSrv->dwRootThread = pi.dwThreadId;
-			gpSrv->dwRootStartTime = GetTickCount();
-			*/
 
 			break;
 		}

@@ -124,21 +124,6 @@ int RunDebugger()
 	MessageBox(GetConEmuHWND(2), szInfo, L"ConEmuC.Debugger", 0);
 	#endif
 
-	//if (!DebugActiveProcess(gpSrv->dwRootProcess))
-	//{
-	//	DWORD dwErr = GetLastError();
-	//	_printf("Can't start debugger! ErrCode=0x%08X\n", dwErr);
-	//	return CERR_CANTSTARTDEBUGGER;
-	//}
-	//// Дополнительная инициализация, чтобы закрытие дебагера (наш процесс) не привело
-	//// к закрытию "отлаживаемой" программы
-	//pfnDebugActiveProcessStop = (FDebugActiveProcessStop)GetProcAddress(GetModuleHandle(L"kernel32.dll"),"DebugActiveProcessStop");
-	//pfnDebugSetProcessKillOnExit = (FDebugSetProcessKillOnExit)GetProcAddress(GetModuleHandle(L"kernel32.dll"),"DebugSetProcessKillOnExit");
-	//if (pfnDebugSetProcessKillOnExit)
-	//	pfnDebugSetProcessKillOnExit(FALSE/*KillOnExit*/);
-	//gpSrv->DbgInfo.bDebuggerActive = TRUE;
-	//PrintDebugInfo();
-
 	if (gpSrv->DbgInfo.pszDebuggingCmdLine == NULL)
 	{
 		int iAttachRc = AttachRootProcessHandle();
@@ -440,22 +425,6 @@ DWORD WINAPI DebugThread(LPVOID lpvParam)
 					if (CreateProcess(NULL, szCmdLine, NULL, NULL, TRUE, NORMAL_PRIORITY_CLASS, NULL, NULL, &si, &pi))
 					{
 						// Ждать НЕ будем, сразу на выход
-
-						//HANDLE hEvents[2] = {pi.hProcess, ghExitQueryEvent};
-						//nWait = WaitForMultipleObjects(countof(hEvents), hEvents, FALSE, INFINITE);
-						//if (nWait == WAIT_OBJECT_0)
-						//{
-						//	//GetExitCodeProcess(pi.hProcess, &nExternalExitCode);
-						//	nExternalExitCode = 0;
-						//}
-
-						//CloseHandle(pi.hProcess);
-						//CloseHandle(pi.hThread);
-
-						//if (nExternalExitCode == 0)
-						//{
-						//	goto done;
-						//}
 
 						// Может там еще процессы в списке на дамп?
 						continue;
