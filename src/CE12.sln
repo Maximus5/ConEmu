@@ -27,6 +27,10 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Far.ExtendedConsole", "ConE
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Far.ConEmuBg", "ConEmuBg\ConEmuBg12.vcxproj", "{5BF285B7-DAB5-4B1E-89FE-85CDCB2A8EC7}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Dumps", "Dumps", "{B729D09D-944E-43D4-BC00-08DAFAAFC554}"
+	ProjectSection(SolutionItems) = preProject
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug_C|Mixed Platforms = Debug_C|Mixed Platforms
