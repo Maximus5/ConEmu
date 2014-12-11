@@ -6003,10 +6003,13 @@ void CRealConsole::ProcessKeyboard(UINT messg, WPARAM wParam, LPARAM lParam, con
 	}
 
 	// Эмуляция терминала?
-	static struct xTermKey {
+	struct xTermKey
+	{
 		UINT vk;
 		wchar_t szKeys[16];
-	} xTermKeys[] = {
+	};
+	static xTermKey xTermKeys[] =
+	{
 		// From vim "term.c"
 		{VK_UP,		L"\033O*A"},
 		{VK_DOWN,	L"\033O*B"},
@@ -6032,15 +6035,19 @@ void CRealConsole::ProcessKeyboard(UINT messg, WPARAM wParam, LPARAM lParam, con
 		{VK_DELETE,	L"\033[3;*~"}, // ???
 		{0}
 	};
+
 	xTermKey x = {0};
+
+	// Till now, this may be ‘te_xterm’ or ‘te_win32’ only
 	if (m_Term.Term)
 	{
-		// Processed keys?
+		// Processed xterm keys?
 
 		for (int i = 0; xTermKeys[i].vk; i++)
 		{
 			if (xTermKeys[i].vk == r.Event.KeyEvent.wVirtualKeyCode)
 			{
+				// Key found, remember the sequence we need to send to the console
 				x = xTermKeys[i];
 				break;
 			}
