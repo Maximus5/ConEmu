@@ -58,7 +58,9 @@ DWORD WINAPI DebugThread(LPVOID lpvParam);
 void WriteMiniDump(DWORD dwProcessId, DWORD dwThreadId, EXCEPTION_RECORD *pExceptionRecord, LPCSTR asConfirmText = NULL, BOOL bTreeBreak = FALSE);
 void GenerateTreeDebugBreak(DWORD nExcludePID);
 
-#define CE_TREE_TEMPLATE WIN3264TEST(L"ConEmuC",L"ConEmuC64") L": DebuggerPID=%u RootPID=%u Count=%i"
+#define CE_CONEMUC_NAME_W WIN3264TEST(L"ConEmuC[32]",L"ConEmuC[64]")
+#define CE_CONEMUC_NAME_A WIN3264TEST("ConEmuC[32]","ConEmuC[64]")
+#define CE_TREE_TEMPLATE CE_CONEMUC_NAME_W L": DebuggerPID=%u RootPID=%u Count=%i"
 
 
 void PrintDebugInfo()
