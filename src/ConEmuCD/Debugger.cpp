@@ -73,8 +73,18 @@ void UpdateDebuggerTitle()
 {
 	if (!gpSrv->DbgInfo.bDebugProcessTree)
 		return;
+
 	wchar_t szTitle[100];
-	_wsprintf(szTitle, SKIPLEN(countof(szTitle)) CE_TREE_TEMPLATE,
+	LPCWSTR pszTemplate = CE_TREE_TEMPLATE;
+	if (GetConsoleTitle(szTitle, sizeof(szTitle)))
+	{
+		// Заголовок уже установлен, возможно из другого процесса,
+		// при одновременном дампе/отладке нескольких процессов разных битностей
+		if ((wcsncmp(szTitle, pszTemplate, 8) == 0) && wcsstr(szTitle, L"DebuggerPID"))
+			return;
+	}
+
+	_wsprintf(szTitle, SKIPLEN(countof(szTitle)) pszTemplate,
 		GetCurrentProcessId(), gpSrv->dwRootProcess, gpSrv->DbgInfo.nProcessCount);
 	SetTitle(szTitle);
 }
