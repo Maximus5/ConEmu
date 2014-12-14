@@ -4880,10 +4880,12 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 				return CERR_CARGUMENT;
 			}
 
+			// "Comma" is a mark that debug/dump was requested for a bunch of processes
 			if (pszEnd && (*pszEnd == L','))
 			{
+				gpSrv->DbgInfo.bDebugMultiProcess = TRUE;
 				gpSrv->DbgInfo.pDebugAttachProcesses = new MArray<DWORD>;
-				while (pszEnd && (*pszEnd == L','))
+				while (pszEnd && (*pszEnd == L',') && *(pszEnd+1))
 				{
 					DWORD nPID = wcstoul(pszEnd+1, &pszEnd, 10);
 					if (nPID != 0)

@@ -53,6 +53,7 @@ struct DebuggerInfo
 	BOOL  bDebugProcess /*= FALSE*/;
 	BOOL  bDebugProcessTree /*= FALSE*/;
 	int   nDebugDumpProcess /*= 0*/; // 1 - ask user, 2 - minidump, 3 - fulldump
+	BOOL  bDebugMultiProcess; // Debugger was asked for multiple processes simultaneously
 	int   nProcessCount;
 	int   nWaitTreeBreaks;
 
