@@ -536,6 +536,19 @@ DWORD WINAPI DebugThread(LPVOID lpvParam)
 	return 0;
 }
 
+wchar_t* FormatDumpName(wchar_t* DmpFile, size_t cchDmpMax, DWORD dwProcessId, bool bTrap, bool bFull)
+{
+	//TODO: Добавить в DmpFile имя без пути? <exename>-<ver>-<pid>-<yymmddhhmmss>.[m]dmp
+	wchar_t szMinor[8] = L""; lstrcpyn(szMinor, _T(MVV_4a), countof(szMinor));
+	SYSTEMTIME lt = {}; GetLocalTime(&lt);
+	_wsprintf(DmpFile, SKIPLEN(cchDmpMax) L"%s-%02u%02u%02u%s-%u-%02u%02u%02u%02u%02u%02u.%s",
+		bTrap ? L"Trap" : L"CEDump",
+		MVV_1, MVV_2, MVV_3, szMinor, dwProcessId,
+		lt.wYear%100, lt.wMonth, lt.wDay, lt.wHour, lt.wMinute, lt.wSecond,
+		bFull ? L"dmp" : L"mdmp");
+	return DmpFile;
+}
+
 bool GetSaveDumpName(DWORD dwProcessId, bool bFull, wchar_t* dmpfile, DWORD cchMaxDmpFile)
 {
 	bool bRc = false;
@@ -601,10 +614,8 @@ bool GetSaveDumpName(DWORD dwProcessId, bool bFull, wchar_t* dmpfile, DWORD cchM
 			CreateDirectory(dmpfile, NULL);
 
 			INT_PTR nLen = lstrlen(dmpfile);
-			wchar_t szMinor[8] = L""; lstrcpyn(szMinor, _T(MVV_4a), countof(szMinor));
-			_wsprintf(dmpfile+nLen, SKIPLEN(cchMaxDmpFile-nLen) L"\\Trap-%02u%02u%02u%s-%u.%s",
-				MVV_1, MVV_2, MVV_3,szMinor, dwProcessId,
-				bFull ? L"dmp" : L"mdmp");
+			dmpfile[nLen++] = L'\\'; dmpfile[nLen] = 0;
+			FormatDumpName(dmpfile+nLen, cchMaxDmpFile-nLen, dwProcessId, gpSrv->DbgInfo.bDebuggerRequestDump, bFull);
 
 			bRc = true;
 		}
@@ -657,13 +668,9 @@ void WriteMiniDump(DWORD dwProcessId, DWORD dwThreadId, EXCEPTION_RECORD *pExcep
 	//HMODULE hDbghelp = NULL;
 	wchar_t szErrInfo[MAX_PATH*2];
 
-	wchar_t dmpfile[MAX_PATH]; dmpfile[0] = 0;
 
-	TODO("Добавить в dmpfile имя без пути <exename>-<pid>-<yymmddhhmmss>.[m]dmp");
-	SYSTEMTIME lt = {}; GetLocalTime(&lt);
-	_wsprintf(dmpfile, SKIPCOUNT(dmpfile) L"CEDump-%u-%02u%02u%02u%02u%02u%02u.%s",
-		dwProcessId, lt.wYear%100, lt.wMonth, lt.wDay, lt.wHour, lt.wMinute, lt.wSecond,
-		(dumpType == MiniDumpWithFullMemory) ? L"dmp" : L"mdmp");
+	wchar_t dmpfile[MAX_PATH] = L""; dmpfile[0] = 0;
+	FormatDumpName(dmpfile, countof(dmpfile), dwProcessId, false, (dumpType == MiniDumpWithFullMemory));
 
 	typedef BOOL (WINAPI* MiniDumpWriteDump_t)(HANDLE hProcess, DWORD ProcessId, HANDLE hFile, MINIDUMP_TYPE DumpType,
 	        PMINIDUMP_EXCEPTION_INFORMATION ExceptionParam, PMINIDUMP_USER_STREAM_INFORMATION UserStreamParam,
