@@ -3345,14 +3345,14 @@ bool CRealConsole::StartDebugger(StartDebugType sdt)
 		return false;
 	}
 
-#ifdef _DEBUG
+	#ifdef _DEBUG
 	// Для дампа - сразу, чтобы не тормозить процесс
 	if (sdt != sdt_DumpMemory)
 	{
 		if (MsgBox(szExe, MB_OKCANCEL|MB_SYSTEMMODAL, L"StartDebugLogConsole") != IDOK)
 			return false;
 	}
-#endif
+	#endif
 
 	// CreateOrRunAs needs to know how "original" process was started...
 	RConStartArgs Args;
