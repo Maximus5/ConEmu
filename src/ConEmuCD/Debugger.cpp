@@ -574,6 +574,10 @@ DWORD WINAPI DebugThread(LPVOID lpvParam)
 		gpSrv->DbgInfo.bDebugMultiProcess = TRUE;
 	}
 
+	if (gpSrv->DbgInfo.bUserRequestDump)
+	{
+		gpSrv->DbgInfo.nWaitTreeBreaks = iAttachedCount;
+	}
 
 	/* **************** */
 
@@ -610,6 +614,13 @@ DWORD WINAPI DebugThread(LPVOID lpvParam)
 
 	SetTerminateEvent(ste_DebugThread);
 	return 0;
+}
+
+bool IsDumpMulti()
+{
+	if (gpSrv->DbgInfo.bDebugProcessTree || gpSrv->DbgInfo.bDebugMultiProcess)
+		return true;
+	return false;
 }
 
 wchar_t* FormatDumpName(wchar_t* DmpFile, size_t cchDmpMax, DWORD dwProcessId, bool bTrap, bool bFull)
@@ -854,7 +865,13 @@ void WriteMiniDump(DWORD dwProcessId, DWORD dwThreadId, EXCEPTION_RECORD *pExcep
 
 
 	// В Win2k еще не было функции "отцепиться от процесса"
-	if (bDumpSucceeded && gpSrv->DbgInfo.nDebugDumpProcess && !gpSrv->DbgInfo.bDebugProcessTree && (gnOsVer >= 0x0501))
+	if ((gnOsVer >= 0x0501)
+		&& bDumpSucceeded && gpSrv->DbgInfo.bUserRequestDump
+		// И все дампы были созданы
+		&& (gpSrv->DbgInfo.nWaitTreeBreaks <= 1)
+		// И это не ключи /DEBUGEXE или /DEBUGTREE
+		&& !gpSrv->DbgInfo.pszDebuggingCmdLine
+		)
 	{
 		// По завершении создания дампов - выйти
 		SetTerminateEvent(ste_WriteMiniDump);
