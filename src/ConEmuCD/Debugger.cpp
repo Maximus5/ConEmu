@@ -714,33 +714,21 @@ bool GetSaveDumpName(DWORD dwProcessId, bool bFull, wchar_t* dmpfile, DWORD cchM
 // gpSrv->dwRootProcess
 void WriteMiniDump(DWORD dwProcessId, DWORD dwThreadId, EXCEPTION_RECORD *pExceptionRecord, LPCSTR asConfirmText /*= NULL*/, BOOL bTreeBreak /*= FALSE*/)
 {
-	MINIDUMP_TYPE dumpType = MiniDumpNormal;
-	
-	char szTitleA[64];
-	_wsprintfA(szTitleA, SKIPLEN(countof(szTitleA)) "ConEmuC Debugging PID=%u, Debugger PID=%u", dwProcessId, GetCurrentProcessId());
-
-	int nBtn = 0;
-	
-	if (gpSrv->DbgInfo.nDebugDumpProcess == 2 || gpSrv->DbgInfo.nDebugDumpProcess == 3)
-		nBtn = (gpSrv->DbgInfo.nDebugDumpProcess == 2) ? IDYES : IDNO;
-	else
-		nBtn = MessageBoxA(NULL, asConfirmText ? asConfirmText : "Create minidump (<No> - fulldump)?", szTitleA, MB_YESNOCANCEL|MB_SYSTEMMODAL);
-
-	switch (nBtn)
+	// 2 - minidump, 3 - fulldump
+	int nConfirmDumpType = ConfirmDumpType(dwProcessId, asConfirmText);
+	if (nConfirmDumpType < 2)
 	{
-	case IDYES:
-		break;
-	case IDNO:
-		dumpType = MiniDumpWithFullMemory;
-		break;
-	default:
+		// Отмена
 		return;
 	}
 
+	MINIDUMP_TYPE dumpType = (nConfirmDumpType == 2) ? MiniDumpNormal : MiniDumpWithFullMemory;
+
 	// Т.к. в режиме "ProcessTree" мы пишем пачку дампов - спрашивать тип дампа будем один раз.
-	if (gpSrv->DbgInfo.bDebugProcessTree && (gpSrv->DbgInfo.nDebugDumpProcess <= 1))
+	if (IsDumpMulti() // several processes were attached
+		&& (gpSrv->DbgInfo.nDebugDumpProcess <= 1)) // 2 - minidump, 3 - fulldump
 	{
-		gpSrv->DbgInfo.nDebugDumpProcess = (nBtn == IDNO) ? 3 : 2;
+		gpSrv->DbgInfo.nDebugDumpProcess = nConfirmDumpType;
 	}
 
 	if (bTreeBreak)
