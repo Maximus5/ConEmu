@@ -646,7 +646,6 @@ bool GetSaveDumpName(DWORD dwProcessId, bool bFull, wchar_t* dmpfile, DWORD cchM
 
 	if (!gpSrv->DbgInfo.bDebugProcessTree)
 	{
-		
 		if (!hCOMDLG32)
 			hCOMDLG32 = LoadLibraryW(L"COMDLG32.dll");
 		if (hCOMDLG32 && !_GetSaveFileName)
@@ -1175,7 +1174,7 @@ void ProcessDebugEvent()
 					}
 					StringCchCatA(szConfirm, countof(szConfirm), "\nCreate minidump (<No> - fulldump)?");
 
-					//GenerateTreeDebugBreak
+					//bGenerateTreeBreak -> GenerateTreeDebugBreak(evt.dwProcessId)
 
 					WriteMiniDump(evt.dwProcessId, evt.dwThreadId, &evt.u.Exception.ExceptionRecord, szConfirm, bGenerateTreeBreak);
 
