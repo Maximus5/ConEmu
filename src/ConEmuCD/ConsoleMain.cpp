@@ -9620,27 +9620,26 @@ BOOL WINAPI HandlerRoutine(DWORD dwCtrlType)
 		}
 		else
 		{
+			#if 0
+			wchar_t szTitle[128]; wsprintf(szTitle, L"ConEmuC, PID=%u", GetCurrentProcessId());
+			//MessageBox(NULL, L"CTRL_CLOSE_EVENT in ConEmuC", szTitle, MB_SYSTEMMODAL);
+			DWORD nWait = WaitForSingleObject(ghExitQueryEvent, CLOSE_CONSOLE_TIMEOUT);
+			if (nWait == WAIT_OBJECT_0)
+			{
+				#ifdef _DEBUG
+				OutputDebugString(L"All console processes was terminated\n");
+				#endif
+			}
+			else
+			{
+				// Поскольку мы (сервер) сейчас свалимся, то нужно показать
+				// консольное окно, раз в нем остались какие-то процессы
+				EmergencyShow();
+			}
+			#endif
+
 			// trick to let ConsoleMain2() finish correctly
 			ExitThread(1);
-			//return TRUE;
-
-			//#ifdef _DEBUG
-			//wchar_t szTitle[128]; wsprintf(szTitle, L"ConEmuC, PID=%u", GetCurrentProcessId());
-			////MessageBox(NULL, L"CTRL_CLOSE_EVENT in ConEmuC", szTitle, MB_SYSTEMMODAL);
-			//#endif
-			//DWORD nWait = WaitForSingleObject(ghExitQueryEvent, CLOSE_CONSOLE_TIMEOUT);
-			//if (nWait == WAIT_OBJECT_0)
-			//{
-			//	#ifdef _DEBUG
-			//	OutputDebugString(L"All console processes was terminated\n");
-			//	#endif
-			//}
-			//else
-			//{
-			//	// Поскольку мы (сервер) сейчас свалимся, то нужно показать
-			//	// консольное окно, раз в нем остались какие-то процессы
-			//	EmergencyShow();
-			//}
 		}
 	}
 	else if ((dwCtrlType == CTRL_C_EVENT) || (dwCtrlType == CTRL_BREAK_EVENT))
