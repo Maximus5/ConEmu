@@ -915,11 +915,11 @@ void ProcessDebugEvent()
 					{
 						_printf(CE_CONEMUC_NAME_A ": Press Ctrl+Break to create minidump of debugging process\n");
 					}
-					else
-					{
-						// Сразу сделать дамп и выйти
-						HandlerRoutine(CTRL_BREAK_EVENT);
-					}
+					//else // -- wrong way, HandlerRoutine will/may fails on first attach
+					//{
+					//	// Сразу сделать дамп и выйти
+					//	HandlerRoutine(CTRL_BREAK_EVENT);
+					//}
 				}
 
 				if (evt.dwDebugEventCode == CREATE_PROCESS_DEBUG_EVENT)
