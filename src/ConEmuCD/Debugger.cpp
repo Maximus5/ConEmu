@@ -90,6 +90,27 @@ void UpdateDebuggerTitle()
 	SetTitle(szTitle);
 }
 
+int ConfirmDumpType(DWORD dwProcessId, LPCSTR asConfirmText /*= NULL*/)
+{
+	if (gpSrv->DbgInfo.nDebugDumpProcess == 2 || gpSrv->DbgInfo.nDebugDumpProcess == 3)
+		return gpSrv->DbgInfo.nDebugDumpProcess;
+
+	// ANSI is used because of asConfirmText created as ANSI
+	char szTitleA[64];
+	_wsprintfA(szTitleA, SKIPLEN(countof(szTitleA)) CE_CONEMUC_NAME_A " Debugging PID=%u, Debugger PID=%u", dwProcessId, GetCurrentProcessId());
+
+	int nBtn = MessageBoxA(NULL, asConfirmText ? asConfirmText : "Create minidump (<No> - fulldump)?", szTitleA, MB_YESNOCANCEL|MB_SYSTEMMODAL);
+
+	switch (nBtn)
+	{
+	case IDYES:
+		return 2; // mini dump
+	case IDNO:
+		return 3; // full dump
+	default:
+		return 0;
+	}
+}
 
 int RunDebugger()
 {
@@ -156,6 +177,19 @@ int RunDebugger()
 	}
 
 	_ASSERTE(((gpSrv->hRootProcess!=NULL) || (gpSrv->DbgInfo.pszDebuggingCmdLine!=NULL)) && "Process handle must be opened");
+
+	// Если просили сделать дамп нескольких процессов - нужно сразу уточнить его тип
+	if (gpSrv->DbgInfo.bDebugMultiProcess && (gpSrv->DbgInfo.nDebugDumpProcess == 1))
+	{
+		// 2 - minidump, 3 - fulldump
+		int nConfirmDumpType = ConfirmDumpType(gpSrv->dwRootProcess, NULL);
+		if (nConfirmDumpType < 2)
+		{
+			// Отмена
+			return CERR_CANTSTARTDEBUGGER;
+		}
+		gpSrv->DbgInfo.nDebugDumpProcess = nConfirmDumpType;
+	}
 
 	// gpSrv->DbgInfo.bDebuggerActive must be set in DebugThread
 
