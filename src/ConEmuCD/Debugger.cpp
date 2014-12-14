@@ -374,6 +374,12 @@ DWORD WINAPI DebugThread(LPVOID lpvParam)
 	// Affect GetProcessHandleForDebug
 	gpSrv->DbgInfo.bDebuggerActive = TRUE;
 
+	// If dump was requested
+	if (gpSrv->DbgInfo.nDebugDumpProcess)
+	{
+		gpSrv->DbgInfo.bUserRequestDump = TRUE;
+	}
+
 	// "/DEBUGEXE" or "/DEBUGTREE"
 	if (gpSrv->DbgInfo.pszDebuggingCmdLine != NULL)
 	{

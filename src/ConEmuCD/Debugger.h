@@ -44,6 +44,7 @@ struct DebuggerInfo
 	LPWSTR pszDebuggingCmdLine;
 	BOOL   bDebuggerActive;
 	BOOL   bDebuggerRequestDump;
+	BOOL   bUserRequestDump;
 	HANDLE hDebugThread;
 	HANDLE hDebugReady;
 	DWORD  dwDebugThreadId;
