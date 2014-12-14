@@ -150,6 +150,7 @@ int RunDebugger()
 
 	_ASSERTE(((gpSrv->hRootProcess!=NULL) || (gpSrv->DbgInfo.pszDebuggingCmdLine!=NULL)) && "Process handle must be opened");
 
+	// Run DebugThread
 	gpSrv->DbgInfo.hDebugReady = CreateEvent(NULL, FALSE, FALSE, NULL);
 	// Перенес обработку отладочных событий в отдельную нить, чтобы случайно не заблокироваться с главной
 	gpSrv->DbgInfo.hDebugThread = CreateThread(NULL, 0, DebugThread, NULL, 0, &gpSrv->DbgInfo.dwDebugThreadId);
@@ -334,9 +335,9 @@ void AttachConHost(DWORD nConHostPID)
 DWORD WINAPI DebugThread(LPVOID lpvParam)
 {
 	DWORD nWait = WAIT_TIMEOUT;
-	//DWORD nExternalExitCode = -1;
 	wchar_t szInfo[1024];
 
+	// "/DEBUGEXE" or "/DEBUGTREE"
 	if (gpSrv->DbgInfo.pszDebuggingCmdLine != NULL)
 	{
 		STARTUPINFO si = {sizeof(si)};
@@ -400,7 +401,7 @@ DWORD WINAPI DebugThread(LPVOID lpvParam)
 				continue;
 			}
 		}
-	
+
 
 		_ASSERTE(hDbgProcess!=NULL && "Process handle must be opened");
 
@@ -411,6 +412,7 @@ DWORD WINAPI DebugThread(LPVOID lpvParam)
 			int nBits = GetProcessBits(nDbgProcessID, hDbgProcess);
 			if ((nBits == 32 || nBits == 64) && (nBits != WIN3264TEST(32,64)))
 			{
+				// If /DEBUGEXE or /DEBUGTREE was used
 				if (gpSrv->DbgInfo.pszDebuggingCmdLine != NULL)
 				{
 					_printf("Bitness of ConEmuC and debugging program does not match\n");
@@ -491,6 +493,9 @@ DWORD WINAPI DebugThread(LPVOID lpvParam)
 		iAttachedCount++;
 	}
 
+	//_ASSERTE(FALSE && "Continue to dump");
+
+	// If neither /DEBUG[EXE|TREE] nor /DEBUGPID was not succeeded
 	if (iAttachedCount == 0)
 	{
 		return CERR_CANTSTARTDEBUGGER;
@@ -508,7 +513,7 @@ DWORD WINAPI DebugThread(LPVOID lpvParam)
 	gpSrv->DbgInfo.bDebuggerActive = TRUE;
 	PrintDebugInfo();
 	SetEvent(gpSrv->DbgInfo.hDebugReady);
-	
+
 
 	while (nWait == WAIT_TIMEOUT)
 	{
@@ -591,7 +596,7 @@ bool GetSaveDumpName(DWORD dwProcessId, bool bFull, wchar_t* dmpfile, DWORD cchM
 		{
 			if (*dmpfile && dmpfile[lstrlen(dmpfile)-1] != L'\\')
 				_wcscat_c(dmpfile, cchMaxDmpFile, L"\\");
-			
+
 			_wcscat_c(dmpfile, cchMaxDmpFile, L"ConEmuTrap");
 			CreateDirectory(dmpfile, NULL);
 
@@ -671,7 +676,7 @@ void WriteMiniDump(DWORD dwProcessId, DWORD dwThreadId, EXCEPTION_RECORD *pExcep
 		{
 			CloseHandle(hDmpFile); hDmpFile = NULL;
 		}
-		
+
 		hDmpFile = CreateFileW(dmpfile, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL|FILE_FLAG_WRITE_THROUGH, NULL);
 
 		if (hDmpFile == INVALID_HANDLE_VALUE)
@@ -764,38 +769,12 @@ void WriteMiniDump(DWORD dwProcessId, DWORD dwThreadId, EXCEPTION_RECORD *pExcep
 		CloseHandle(hDmpFile);
 	}
 
-	//if (hDbghelp)
-	//{
-	//	FreeLibrary(hDbghelp);
-	//}
-
-	//if (hCOMDLG32)
-	//{
-	//	FreeLibrary(hCOMDLG32);
-	//}
 
 	// В Win2k еще не было функции "отцепиться от процесса"
 	if (bDumpSucceeded && gpSrv->DbgInfo.nDebugDumpProcess && !gpSrv->DbgInfo.bDebugProcessTree && (gnOsVer >= 0x0501))
 	{
-		// Дело сделали, закрываемся
+		// По завершении создания дампов - выйти
 		SetTerminateEvent(ste_WriteMiniDump);
-
-		//if (pfnGetConsoleProcessList)
-		//{
-		//	DWORD nCurCount = 0;
-		//	DWORD nConsolePids[128] = {};
-		//	nCurCount = pfnGetConsoleProcessList(nConsolePids, countof(nConsolePids));
-
-		//	// Но только если в консоли кроме нас никого нет
-		//	if (nCurCount == 0)
-		//	{
-		//		PostMessage(ghConWnd, WM_CLOSE, 0, 0);
-		//	}
-		//	else
-		//	{
-		//		SetTerminateEvent();
-		//	}
-		//}
 	}
 }
 
@@ -814,7 +793,7 @@ void ProcessDebugEvent()
 	//typedef BOOL (WINAPI* GetSaveFileName_t)(LPOPENFILENAMEW lpofn);
 	//GetSaveFileName_t _GetSaveFileName = NULL;
 	DWORD dwContinueStatus = DBG_EXCEPTION_NOT_HANDLED;
-	
+
 
 	if (lbEvent)
 	{
@@ -883,6 +862,7 @@ void ProcessDebugEvent()
 
 				break;
 			}
+
 			case LOAD_DLL_DEBUG_EVENT:
 			case UNLOAD_DLL_DEBUG_EVENT:
 			{
@@ -960,24 +940,13 @@ void ProcessDebugEvent()
 				_wsprintfA(szDbgText, SKIPLEN(countof(szDbgText)) "{%i.%i} %s%s%s\n", evt.dwProcessId,evt.dwThreadId, pszName, szBase, szFile);
 				_printf(szDbgText);
 				break;
-			}
+			} // LOAD_DLL_DEBUG_EVENT, UNLOAD_DLL_DEBUG_EVENT
+
 			case EXCEPTION_DEBUG_EVENT:
 				//1 Reports an exception debugging event. The value of u.Exception specifies an EXCEPTION_DEBUG_INFO structure.
 			{
 				lbNonContinuable = (evt.u.Exception.ExceptionRecord.ExceptionFlags&EXCEPTION_NONCONTINUABLE)==EXCEPTION_NONCONTINUABLE;
 
-				//static bool bAttachEventRecieved = false;
-				//if (!bAttachEventRecieved)
-				//{
-				//	bAttachEventRecieved = true;
-				//	StringCchPrintfA(szDbgText, countof(szDbgText),"{%i.%i} Debugger attached successfully. (0x%08X address 0x%08X flags 0x%08X%s)\n",
-				//		evt.dwProcessId,evt.dwThreadId,
-				//		evt.u.Exception.ExceptionRecord.ExceptionCode,
-				//		evt.u.Exception.ExceptionRecord.ExceptionAddress,
-				//		evt.u.Exception.ExceptionRecord.ExceptionFlags,
-				//		(evt.u.Exception.ExceptionRecord.ExceptionFlags&EXCEPTION_NONCONTINUABLE) ? "(EXCEPTION_NONCONTINUABLE)" : "");
-				//}
-				//else
 				switch (evt.u.Exception.ExceptionRecord.ExceptionCode)
 				{
 					case EXCEPTION_ACCESS_VIOLATION: // The thread tried to read from or write to a virtual address for which it does not have the appropriate access.
@@ -1132,8 +1101,10 @@ void ProcessDebugEvent()
 				{
 					dwContinueStatus = DBG_CONTINUE;
 				}
-			}
-			break;
+
+				break;
+			} // EXCEPTION_DEBUG_EVENT
+
 			case OUTPUT_DEBUG_STRING_EVENT:
 				//8 Reports an output-debugging-string debugging event. The value of u.DebugString specifies an OUTPUT_DEBUG_STRING_INFO structure.
 			{
@@ -1196,16 +1167,17 @@ void ProcessDebugEvent()
 						_printf("\n");
 				}
 				#endif
-				
+
 				dwContinueStatus = DBG_CONTINUE;
-			}
-			break;
-		}
+
+				break;
+			} // OUTPUT_DEBUG_STRING_EVENT
+		} //switch (evt.dwDebugEventCode)
 
 		// Продолжить отлаживаемый процесс
 		ContinueDebugEvent(evt.dwProcessId, evt.dwThreadId, dwContinueStatus);
 	}
-	
+
 	//if (hCOMDLG32)
 	//	FreeLibrary(hCOMDLG32);
 }
