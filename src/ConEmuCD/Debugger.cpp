@@ -370,6 +370,8 @@ DWORD WINAPI DebugThread(LPVOID lpvParam)
 {
 	DWORD nWait = WAIT_TIMEOUT;
 	wchar_t szInfo[1024];
+	wchar_t szPID[20];
+	CEStr szOtherBitPids, szOtherDebugCmd;
 
 	// Дополнительная инициализация, чтобы закрытие дебагера (наш процесс) не привело
 	// к закрытию "отлаживаемой" программы
@@ -464,65 +466,25 @@ DWORD WINAPI DebugThread(LPVOID lpvParam)
 				if (gpSrv->DbgInfo.pszDebuggingCmdLine != NULL)
 				{
 					_printf("Bitness of ConEmuC and debugging program does not match\n");
-					if (bFirstPID)
-						return CERR_CANTSTARTDEBUGGER;
-					else
-						continue;
-				}
-
-				wchar_t szExe[MAX_PATH+16];
-				wchar_t szCmdLine[MAX_PATH*2];
-				if (GetModuleFileName(NULL, szExe, countof(szExe)-16))
-				{
-					wchar_t* pszName = (wchar_t*)PointToName(szExe);
-					_wcscpy_c(pszName, 16, (nBits == 32) ? L"ConEmuC.exe" : L"ConEmuC64.exe");
-					_wsprintf(szCmdLine, SKIPLEN(countof(szCmdLine))
-						L"\"%s\" /DEBUGPID=%u %s", szExe, nDbgProcessID,
-						(gpSrv->DbgInfo.nDebugDumpProcess == 1) ? L"/DUMP" :
-						(gpSrv->DbgInfo.nDebugDumpProcess == 2) ? L"/MINIDUMP" :
-						(gpSrv->DbgInfo.nDebugDumpProcess == 3) ? L"/FULLDUMP" : L"");
-
-					STARTUPINFO si = {sizeof(si)};
-					PROCESS_INFORMATION pi = {};
-					if (CreateProcess(NULL, szCmdLine, NULL, NULL, TRUE, NORMAL_PRIORITY_CLASS, NULL, NULL, &si, &pi))
-					{
-						// Ждать НЕ будем, сразу на выход
-
-						// Может там еще процессы в списке на дамп?
-						continue;
-					}
-					else
-					{
-						DWORD dwErr = GetLastError();
-						_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"Can't start external debugger '%s'. ErrCode=0x%08X\n",
-							szCmdLine, dwErr);
-						_wprintf(szInfo);
-						if (bFirstPID)
-							return CERR_CANTSTARTDEBUGGER;
-						else
-							continue;
-					}
-				}
-
-
-				wchar_t szProc[64]; szProc[0] = 0;
-				PROCESSENTRY32 pi = {sizeof(pi)};
-				if (GetProcessInfo(nDbgProcessID, &pi))
-					_wcscpyn_c(szProc, countof(szProc), pi.szExeFile, countof(szProc));
-
-				_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"Bits are incompatible. Can't debug '%s' PID=%i\n",
-					szProc[0] ? szProc : L"not found", nDbgProcessID);
-				_wprintf(szInfo);
-				if (bFirstPID)
-					return CERR_CANTSTARTDEBUGGER;
-				else
 					continue;
+				}
+
+				// Добавить процесс в список для запуска альтернативного дебаггера соотвествующей битности
+				// Force trailing "," even if only one PID specified ( --> bDebugMultiProcess = TRUE)
+				lstrmerge(&szOtherBitPids.ms_Arg, _itow(nDbgProcessID, szPID, 10), L",");
+
+				// Может там еще процессы в списке на дамп?
+				continue;
 			}
 		}
 
 		if (gpSrv->DbgInfo.pszDebuggingCmdLine == NULL)
 		{
-			if (!DebugActiveProcess(nDbgProcessID))
+			if (DebugActiveProcess(nDbgProcessID))
+			{
+				iAttachedCount++;
+			}
+			else
 			{
 				DWORD dwErr = GetLastError();
 
@@ -534,11 +496,55 @@ DWORD WINAPI DebugThread(LPVOID lpvParam)
 				_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"Can't attach debugger to '%s' PID=%i. ErrCode=0x%08X\n",
 					szProc[0] ? szProc : L"not found", nDbgProcessID, dwErr);
 				_wprintf(szInfo);
-				return CERR_CANTSTARTDEBUGGER;
+
+				// Может другие подцепить получится?
+				continue;
 			}
 		}
 
 		iAttachedCount++;
+	}
+
+	// Different bitness, need to start appropriate debugger
+	if (szOtherBitPids.ms_Arg && *szOtherBitPids.ms_Arg)
+	{
+		wchar_t szExe[MAX_PATH+5], *pszName;
+		if (!GetModuleFileName(NULL, szExe, MAX_PATH))
+		{
+			_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"GetModuleFileName(NULL) failed. ErrCode=0x%08X\n", GetLastError());
+			_wprintf(szInfo);
+		}
+		else if (!(pszName = (wchar_t*)PointToName(szExe)))
+		{
+			_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"GetModuleFileName(NULL) returns invalid path\n%s\n", szExe);
+			_wprintf(szInfo);
+		}
+		else
+		{
+			*pszName = 0;
+			// Reverted to current bitness
+			wcscat_c(szExe, WIN3264TEST(L"ConEmuC64.exe", L"ConEmuC.exe"));
+
+			szOtherDebugCmd.Attach(lstrmerge(L"\"", szExe, L"\" "
+				L"/DEBUGPID=", szOtherBitPids.ms_Arg,
+				(gpSrv->DbgInfo.nDebugDumpProcess == 1) ? L" /DUMP" :
+				(gpSrv->DbgInfo.nDebugDumpProcess == 2) ? L" /MINIDUMP" :
+				(gpSrv->DbgInfo.nDebugDumpProcess == 3) ? L" /FULLDUMP" : L""));
+
+			STARTUPINFO si = {sizeof(si)};
+			PROCESS_INFORMATION pi = {};
+			if (CreateProcess(NULL, szOtherDebugCmd.ms_Arg, NULL, NULL, TRUE, NORMAL_PRIORITY_CLASS, NULL, NULL, &si, &pi))
+			{
+				// Ждать не будем
+			}
+			else
+			{
+				DWORD dwErr = GetLastError();
+				_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"Can't start external debugger, ErrCode=0x%08X\n", dwErr);
+				CEStr lsInfo(lstrmerge(szInfo, szOtherDebugCmd, L"\n"));
+				_wprintf(lsInfo);
+			}
+		}
 	}
 
 	//_ASSERTE(FALSE && "Continue to dump");
