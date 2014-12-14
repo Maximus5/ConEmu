@@ -148,7 +148,16 @@ int RunDebugger()
 		_ASSERTE(!gpSrv->DbgInfo.bDebuggerActive);
 	}
 
+	gpszRunCmd = (wchar_t*)calloc(1,sizeof(*gpszRunCmd));
+	if (!gpszRunCmd)
+	{
+		_printf("Can't allocate 1 wchar!\n");
+		return CERR_NOTENOUGHMEM1;
+	}
+
 	_ASSERTE(((gpSrv->hRootProcess!=NULL) || (gpSrv->DbgInfo.pszDebuggingCmdLine!=NULL)) && "Process handle must be opened");
+
+	// gpSrv->DbgInfo.bDebuggerActive must be set in DebugThread
 
 	// Run DebugThread
 	gpSrv->DbgInfo.hDebugReady = CreateEvent(NULL, FALSE, FALSE, NULL);
@@ -164,16 +173,7 @@ int RunDebugger()
 		return nExit;
 	}
 
-	gpszRunCmd = (wchar_t*)calloc(1,2);
-
-	if (!gpszRunCmd)
-	{
-		_printf("Can't allocate 1 wchar!\n");
-		return CERR_NOTENOUGHMEM1;
-	}
-
-	gpszRunCmd[0] = 0;
-	gpSrv->DbgInfo.bDebuggerActive = TRUE;
+	// gpSrv->DbgInfo.bDebuggerActive was set in DebugThread
 
 	// And wait for debugger thread completion
 	_ASSERTE(gnRunMode == RM_UNDEFINED);
@@ -337,6 +337,9 @@ DWORD WINAPI DebugThread(LPVOID lpvParam)
 	DWORD nWait = WAIT_TIMEOUT;
 	wchar_t szInfo[1024];
 
+	// Affect GetProcessHandleForDebug
+	gpSrv->DbgInfo.bDebuggerActive = TRUE;
+
 	// "/DEBUGEXE" or "/DEBUGTREE"
 	if (gpSrv->DbgInfo.pszDebuggingCmdLine != NULL)
 	{
@@ -498,6 +501,7 @@ DWORD WINAPI DebugThread(LPVOID lpvParam)
 	// If neither /DEBUG[EXE|TREE] nor /DEBUGPID was not succeeded
 	if (iAttachedCount == 0)
 	{
+		gpSrv->DbgInfo.bDebuggerActive = FALSE;
 		return CERR_CANTSTARTDEBUGGER;
 	}
 	/* **************** */
@@ -510,7 +514,6 @@ DWORD WINAPI DebugThread(LPVOID lpvParam)
 	if (pfnDebugSetProcessKillOnExit)
 		pfnDebugSetProcessKillOnExit(FALSE/*KillOnExit*/);
 
-	gpSrv->DbgInfo.bDebuggerActive = TRUE;
 	PrintDebugInfo();
 	SetEvent(gpSrv->DbgInfo.hDebugReady);
 
