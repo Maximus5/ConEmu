@@ -4798,7 +4798,7 @@ bool CConEmuMain::StartDebugActiveProcess()
 	return lbRc;
 }
 
-bool CConEmuMain::MemoryDumpActiveProcess()
+bool CConEmuMain::MemoryDumpActiveProcess(bool abProcessTree /*= false*/)
 {
 	CVConGuard VCon;
 	CRealConsole* pRCon = (CVConGroup::GetActiveVCon(&VCon) >= 0) ? VCon->RCon() : NULL;
@@ -4809,13 +4809,15 @@ bool CConEmuMain::MemoryDumpActiveProcess()
 	}
 
 	DWORD dwPID = pRCon->GetActivePID();
+	if (!dwPID && abProcessTree)
+		dwPID = pRCon->GetServerPID();
 	if (!dwPID)
 	{
 		MsgBox(L"There is no active process", MB_ICONSTOP, gpConEmu->GetDefaultTitle());
 		return false;
 	}
 
-	bool lbRc = pRCon->StartDebugger(sdt_DumpMemory);
+	bool lbRc = pRCon->StartDebugger(abProcessTree ? sdt_DumpMemoryTree : sdt_DumpMemory);
 	return lbRc;
 }
 

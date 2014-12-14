@@ -1679,6 +1679,7 @@ HMENU CConEmuMenu::CreateDebugMenuPopup()
 	AppendMenu(hDebug, MF_SEPARATOR, 0, NULL);
 	AppendMenu(hDebug, MF_STRING|MF_ENABLED, ID_DEBUGCON, _T("Debug &active process"));
 	AppendMenu(hDebug, MF_STRING|MF_ENABLED, ID_MINIDUMP, _T("Active process &memory dump..."));
+	AppendMenu(hDebug, MF_STRING|MF_ENABLED, ID_MINIDUMPTREE, _T("Active &tree memory dump..."));
 	return hDebug;
 }
 
@@ -2214,7 +2215,8 @@ LRESULT CConEmuMenu::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam, UINT 
 			gpConEmu->StartDebugActiveProcess();
 			return 0;
 		case ID_MINIDUMP:
-			gpConEmu->MemoryDumpActiveProcess();
+		case ID_MINIDUMPTREE:
+			gpConEmu->MemoryDumpActiveProcess(wParam==ID_MINIDUMPTREE);
 			return 0;
 
 		//case ID_MONITOR_SHELLACTIVITY:

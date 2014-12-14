@@ -677,7 +677,7 @@ class CConEmuMain
 		void setFocus();
 		bool StartDebugLogConsole();
 		bool StartDebugActiveProcess();
-		bool MemoryDumpActiveProcess();
+		bool MemoryDumpActiveProcess(bool abProcessTree = false);
 		void SyncNtvdm();
 		void SwitchKeyboardLayout(DWORD_PTR dwNewKeybLayout);
 		BOOL TrackMouse();

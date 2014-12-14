@@ -3324,10 +3324,35 @@ bool CRealConsole::StartDebugger(StartDebugType sdt)
 	switch (sdt)
 	{
 	case sdt_DumpMemory:
+	case sdt_DumpMemoryTree:
 		{
 			si.dwFlags |= STARTF_USESHOWWINDOW;
 			si.wShowWindow = SW_SHOWNORMAL;
-			_wsprintf(szExe, SKIPLEN(countof(szExe)) L"\"%s\" /DEBUGPID=%i /DUMP", pszServer, dwPID);
+
+			if (sdt == sdt_DumpMemory)
+			{
+				_wsprintf(szExe, SKIPLEN(countof(szExe)) L"\"%s\" /DEBUGPID=%i /DUMP", pszServer, dwPID);
+			}
+			else
+			{
+				// В режиме "Дамп дерева процессов" нас интересует и дамп текущего процесса ConEmu.exe
+				CEStr lsPID(lstrdup(_itow(GetCurrentProcessId(), szExe, 10)));
+				ConProcess* pPrc = NULL;
+				int nCount = GetProcesses(&pPrc, false/*ClientOnly*/);
+				if (!pPrc || (nCount < 1))
+				{
+					MsgBox(L"GetProcesses fails", MB_OKCANCEL|MB_SYSTEMMODAL, L"StartDebugLogConsole");
+					return false;
+				}
+				for (int i = 0; i < nCount; i++)
+				{
+					lstrmerge(&lsPID.ms_Arg, lsPID.ms_Arg ? L"," : NULL, _itow(pPrc[i].ProcessID, szExe, 10));
+					if (lstrlen(lsPID.ms_Arg) > MAX_PATH)
+						break;
+				}
+				_wsprintf(szExe, SKIPLEN(countof(szExe)) L"\"%s\" /DEBUGPID=%s /DUMP", pszServer, lsPID.ms_Arg);
+				free(pPrc);
+			}
 		} break;
 	case sdt_DebugActiveProcess:
 		{
@@ -3347,7 +3372,7 @@ bool CRealConsole::StartDebugger(StartDebugType sdt)
 
 	#ifdef _DEBUG
 	// Для дампа - сразу, чтобы не тормозить процесс
-	if (sdt != sdt_DumpMemory)
+	if ((sdt != sdt_DumpMemory) && (sdt != sdt_DumpMemoryTree))
 	{
 		if (MsgBox(szExe, MB_OKCANCEL|MB_SYSTEMMODAL, L"StartDebugLogConsole") != IDOK)
 			return false;

@@ -251,6 +251,7 @@ enum LoadAltMode
 enum StartDebugType
 {
 	sdt_DumpMemory,
+	sdt_DumpMemoryTree,
 	sdt_DebugActiveProcess,
 	sdt_DebugProcessTree,
 };
