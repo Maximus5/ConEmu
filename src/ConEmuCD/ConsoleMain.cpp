@@ -4863,7 +4863,11 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 		else if (lstrcmpni(szArg, L"/DEBUGPID=", 10)==0)
 		{
 			//gnRunMode = RM_SERVER; -- не будем ставить, RM_UNDEFINED будет признаком того, что просто хотят дебаггер
-			gbNoCreateProcess = gpSrv->DbgInfo.bDebugProcess = TRUE;
+
+			gbNoCreateProcess = TRUE;
+			gpSrv->DbgInfo.bDebugProcess = TRUE;
+			gpSrv->DbgInfo.bDebugProcessTree = FALSE;
+
 			wchar_t* pszEnd = NULL;
 			gpSrv->dwRootProcess = wcstoul(szArg+10, &pszEnd, 10);
 
@@ -4889,6 +4893,14 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 		}
 		else if (lstrcmpi(szArg, L"/DEBUGEXE")==0 || lstrcmpi(szArg, L"/DEBUGTREE")==0)
 		{
+			//gnRunMode = RM_SERVER; -- не будем ставить, RM_UNDEFINED будет признаком того, что просто хотят дебаггер
+
+			_ASSERTE(gpSrv->DbgInfo.bDebugProcess==FALSE);
+
+			gbNoCreateProcess = TRUE;
+			gpSrv->DbgInfo.bDebugProcess = TRUE;
+			gpSrv->DbgInfo.bDebugProcessTree = (lstrcmpi(szArg, L"/DEBUGTREE")==0);
+
 			wchar_t* pszLine = lstrdup(GetCommandLineW());
 			if (!pszLine || !*pszLine)
 			{
@@ -4896,8 +4908,6 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 				_ASSERTE(FALSE);
 				return CERR_CARGUMENT;
 			}
-
-			gpSrv->DbgInfo.bDebugProcessTree = (lstrcmpi(szArg, L"/DEBUGTREE")==0);
 
 			LPWSTR pszDebugCmd = wcsstr(pszLine, szArg);
 
@@ -4913,7 +4923,6 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 				return CERR_CARGUMENT;
 			}
 
-			gbNoCreateProcess = gpSrv->DbgInfo.bDebugProcess = TRUE;
 			gpSrv->DbgInfo.pszDebuggingCmdLine = pszDebugCmd;
 
 			break;
