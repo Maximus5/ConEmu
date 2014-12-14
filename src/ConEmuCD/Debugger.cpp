@@ -371,6 +371,11 @@ DWORD WINAPI DebugThread(LPVOID lpvParam)
 	DWORD nWait = WAIT_TIMEOUT;
 	wchar_t szInfo[1024];
 
+	// Дополнительная инициализация, чтобы закрытие дебагера (наш процесс) не привело
+	// к закрытию "отлаживаемой" программы
+	pfnDebugActiveProcessStop = (FDebugActiveProcessStop)GetProcAddress(GetModuleHandle(L"kernel32.dll"),"DebugActiveProcessStop");
+	pfnDebugSetProcessKillOnExit = (FDebugSetProcessKillOnExit)GetProcAddress(GetModuleHandle(L"kernel32.dll"),"DebugSetProcessKillOnExit");
+
 	// Affect GetProcessHandleForDebug
 	gpSrv->DbgInfo.bDebuggerActive = TRUE;
 
@@ -544,12 +549,7 @@ DWORD WINAPI DebugThread(LPVOID lpvParam)
 		gpSrv->DbgInfo.bDebuggerActive = FALSE;
 		return CERR_CANTSTARTDEBUGGER;
 	}
-	/* **************** */
 
-	// Дополнительная инициализация, чтобы закрытие дебагера (наш процесс) не привело
-	// к закрытию "отлаживаемой" программы
-	pfnDebugActiveProcessStop = (FDebugActiveProcessStop)GetProcAddress(GetModuleHandle(L"kernel32.dll"),"DebugActiveProcessStop");
-	pfnDebugSetProcessKillOnExit = (FDebugSetProcessKillOnExit)GetProcAddress(GetModuleHandle(L"kernel32.dll"),"DebugSetProcessKillOnExit");
 
 	if (pfnDebugSetProcessKillOnExit)
 		pfnDebugSetProcessKillOnExit(FALSE/*KillOnExit*/);
