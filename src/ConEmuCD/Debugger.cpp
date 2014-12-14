@@ -837,7 +837,8 @@ void WriteMiniDump(DWORD dwProcessId, DWORD dwThreadId, EXCEPTION_RECORD *pExcep
 			}
 			else
 			{
-				_printf("\nMiniDumpWriteDump succeeded\n");
+				int iLeft = (gpSrv->DbgInfo.nWaitTreeBreaks > 0) ? (gpSrv->DbgInfo.nWaitTreeBreaks - 1) : 0;
+				_wsprintf(szErrInfo, SKIPLEN(countof(szErrInfo)) L"\nMiniDumpWriteDump succeeded, %i left\n", iLeft);
 				bDumpSucceeded = true;
 			}
 
