@@ -371,6 +371,7 @@ DWORD WINAPI DebugThread(LPVOID lpvParam)
 	DWORD nWait = WAIT_TIMEOUT;
 	wchar_t szInfo[1024];
 	wchar_t szPID[20];
+	int iAttachedCount = 0;
 	CEStr szOtherBitPids, szOtherDebugCmd;
 
 	// Дополнительная инициализация, чтобы закрытие дебагера (наш процесс) не привело
@@ -421,11 +422,14 @@ DWORD WINAPI DebugThread(LPVOID lpvParam)
 		gpSrv->dwRootProcess = pi.dwProcessId;
 		gpSrv->dwRootThread = pi.dwThreadId;
 		gpSrv->dwRootStartTime = GetTickCount();
+
+		// Let's know that at least one process is debugging
+		iAttachedCount++;
 	}
 
 
 	/* ************************* */
-	int iDbgIdx = 0, iAttachedCount = 0;
+	int iDbgIdx = 0;
 	bool bSetKillOnExit = true;
 
 	while (true)
@@ -433,8 +437,7 @@ DWORD WINAPI DebugThread(LPVOID lpvParam)
 		HANDLE hDbgProcess = NULL;
 		DWORD  nDbgProcessID = 0;
 
-		bool bFirstPID = ((iDbgIdx++) == 0);
-		if (bFirstPID)
+		if ((iDbgIdx++) == 0)
 		{
 			hDbgProcess = gpSrv->hRootProcess;
 			nDbgProcessID = gpSrv->dwRootProcess;
@@ -504,7 +507,6 @@ DWORD WINAPI DebugThread(LPVOID lpvParam)
 			}
 		}
 
-		iAttachedCount++;
 		// To avoid debugged processes killing
 		if (bSetKillOnExit && pfnDebugSetProcessKillOnExit)
 		{
@@ -565,6 +567,11 @@ DWORD WINAPI DebugThread(LPVOID lpvParam)
 	{
 		gpSrv->DbgInfo.bDebuggerActive = FALSE;
 		return CERR_CANTSTARTDEBUGGER;
+	}
+	else if (iAttachedCount > 1)
+	{
+		_ASSERTE(gpSrv->DbgInfo.bDebugMultiProcess && "Already must be set from arguments parser");
+		gpSrv->DbgInfo.bDebugMultiProcess = TRUE;
 	}
 
 
