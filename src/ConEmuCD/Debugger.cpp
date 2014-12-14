@@ -426,6 +426,8 @@ DWORD WINAPI DebugThread(LPVOID lpvParam)
 
 	/* ************************* */
 	int iDbgIdx = 0, iAttachedCount = 0;
+	bool bSetKillOnExit = true;
+
 	while (true)
 	{
 		HANDLE hDbgProcess = NULL;
@@ -503,6 +505,15 @@ DWORD WINAPI DebugThread(LPVOID lpvParam)
 		}
 
 		iAttachedCount++;
+		// To avoid debugged processes killing
+		if (bSetKillOnExit && pfnDebugSetProcessKillOnExit)
+		{
+			// affects all current and future debuggees connected to the calling thread
+			if (pfnDebugSetProcessKillOnExit(FALSE/*KillOnExit*/))
+			{
+				bSetKillOnExit = false;
+			}
+		}
 	}
 
 	// Different bitness, need to start appropriate debugger
@@ -557,8 +568,17 @@ DWORD WINAPI DebugThread(LPVOID lpvParam)
 	}
 
 
-	if (pfnDebugSetProcessKillOnExit)
-		pfnDebugSetProcessKillOnExit(FALSE/*KillOnExit*/);
+	/* **************** */
+
+	// To avoid debugged processes killing (JIC, must be called already)
+	if (bSetKillOnExit && pfnDebugSetProcessKillOnExit)
+	{
+		// affects all current and future debuggees connected to the calling thread
+		if (pfnDebugSetProcessKillOnExit(FALSE/*KillOnExit*/))
+		{
+			bSetKillOnExit = false;
+		}
+	}
 
 	PrintDebugInfo();
 	SetEvent(gpSrv->DbgInfo.hDebugReady);
