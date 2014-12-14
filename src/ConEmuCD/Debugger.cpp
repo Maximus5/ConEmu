@@ -132,9 +132,9 @@ int RunDebugger()
 	PrintVersion();
 	#ifdef SHOW_DEBUG_STARTED_MSGBOX
 	wchar_t szInfo[128];
-	StringCchPrintf(szInfo, countof(szInfo), L"Attaching debugger...\nConEmuC PID = %u\nDebug PID = %u",
+	StringCchPrintf(szInfo, countof(szInfo), L"Attaching debugger...\n" CE_CONEMUC_NAME_W " PID = %u\nDebug PID = %u",
 	                GetCurrentProcessId(), gpSrv->dwRootProcess);
-	MessageBox(GetConEmuHWND(2), szInfo, L"ConEmuC.Debugger", 0);
+	MessageBox(GetConEmuHWND(2), szInfo, CE_CONEMUC_NAME_W L".Debugger", 0);
 	#endif
 
 	if (gpSrv->DbgInfo.pszDebuggingCmdLine == NULL)
@@ -360,9 +360,8 @@ DWORD WINAPI DebugThread(LPVOID lpvParam)
 				_wcscpyn_c(szProc, countof(szProc), pi.szExeFile, countof(szProc));
 
 			_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"Can't start debugging process. ErrCode=0x%08X\n", dwErr);
-			lstrcpyn(szInfo+lstrlen(szInfo), gpSrv->DbgInfo.pszDebuggingCmdLine, 400);
-			wcscat_c(szInfo, L"\n");
-			_wprintf(szInfo);
+			CEStr lsInfo(lstrmerge(szInfo, gpSrv->DbgInfo.pszDebuggingCmdLine, L"\n"));
+			_wprintf(lsInfo);
 			return CERR_CANTSTARTDEBUGGER;
 		}
 
