@@ -32,8 +32,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //	#define SHOW_INJECT_MSGBOX
 	#define SHOW_EXE_MSGBOX // показать сообщение при загрузке в определенный exe-шник (SHOW_EXE_MSGBOX_NAME)
 	#define SHOW_EXE_MSGBOX_NAME L"xxx.exe"
+	#define SLEEP_EXE_UNTIL_DEBUGGER
 //	#define SHOW_EXE_TIMINGS
 //	#define SHOW_FIRST_ANSI_CALL
+#else
+	#undef SLEEP_EXE_UNTIL_DEBUGGER
 #endif
 //#define SHOW_INJECT_MSGBOX
 //#define SHOW_STARTED_MSGBOX
@@ -767,7 +770,14 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 		HANDLE hTimingHandle = GetStdHandle(STD_OUTPUT_HANDLE);
 		if (!lstrcmpi(pszName, SHOW_EXE_MSGBOX_NAME))
 		{
+			#ifndef SLEEP_EXE_UNTIL_DEBUGGER
 			gbShowExeMsgBox = true;
+			#else
+			while (!IsDebuggerPresent())
+			{
+				Sleep(250);
+			}
+			#endif
 		}
 	#endif
 
