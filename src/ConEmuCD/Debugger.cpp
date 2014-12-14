@@ -643,8 +643,9 @@ bool GetSaveDumpName(DWORD dwProcessId, bool bFull, wchar_t* dmpfile, DWORD cchM
 	HMODULE hCOMDLG32 = NULL;
 	typedef BOOL (WINAPI* GetSaveFileName_t)(LPOPENFILENAMEW lpofn);
 	GetSaveFileName_t _GetSaveFileName = NULL;
+	bool bDumpMulti = IsDumpMulti();
 
-	if (!gpSrv->DbgInfo.bDebugProcessTree)
+	if (!bDumpMulti)
 	{
 		if (!hCOMDLG32)
 			hCOMDLG32 = LoadLibraryW(L"COMDLG32.dll");
@@ -677,7 +678,7 @@ bool GetSaveDumpName(DWORD dwProcessId, bool bFull, wchar_t* dmpfile, DWORD cchM
 		}
 	}
 
-	if (gpSrv->DbgInfo.bDebugProcessTree || !_GetSaveFileName)
+	if (bDumpMulti || !_GetSaveFileName)
 	{
 		HRESULT dwErr = SHGetFolderPath(NULL, CSIDL_DESKTOPDIRECTORY, NULL, 0/*SHGFP_TYPE_CURRENT*/, dmpfile);
 		if (FAILED(dwErr))
@@ -1112,7 +1113,9 @@ void ProcessDebugEvent()
 
 				BOOL bDumpOnBreakPoint = gpSrv->DbgInfo.bDebuggerRequestDump;
 
-				if (gpSrv->DbgInfo.bDebugProcessTree
+				// Если просили цеплять к отладчику создаваемые дочерние процессы
+				// или сделать дампы пачки процессов сразу
+				if (IsDumpMulti()
 					&& (!lbNonContinuable && (evt.u.Exception.ExceptionRecord.ExceptionCode==EXCEPTION_BREAKPOINT)))
 				{
 					// Когда отладчик цепляется к процессу в первый раз - возникает EXCEPTION_BREAKPOINT
@@ -1124,6 +1127,8 @@ void ProcessDebugEvent()
 						{
 							pi.bWasBreak = TRUE;
 							gpSrv->DbgInfo.pDebugTreeProcesses->Set(evt.dwProcessId, pi);
+							if (gpSrv->DbgInfo.bUserRequestDump)
+								bDumpOnBreakPoint = TRUE;
 						}
 						else
 						{
@@ -1135,7 +1140,7 @@ void ProcessDebugEvent()
 				if (gpSrv->DbgInfo.bDebuggerRequestDump
 					|| (!lbNonContinuable && !gpSrv->DbgInfo.bDebugProcessTree
 						&& (evt.u.Exception.ExceptionRecord.ExceptionCode != EXCEPTION_BREAKPOINT))
-					|| (gpSrv->DbgInfo.bDebugProcessTree
+					|| (IsDumpMulti()
 						&& ((evt.u.Exception.ExceptionRecord.ExceptionCode>=0xC0000000)
 							|| (bDumpOnBreakPoint && (evt.u.Exception.ExceptionRecord.ExceptionCode==EXCEPTION_BREAKPOINT))))
 					)
@@ -1178,7 +1183,7 @@ void ProcessDebugEvent()
 
 					WriteMiniDump(evt.dwProcessId, evt.dwThreadId, &evt.u.Exception.ExceptionRecord, szConfirm, bGenerateTreeBreak);
 
-					if (gpSrv->DbgInfo.bDebugProcessTree && (evt.u.Exception.ExceptionRecord.ExceptionCode==EXCEPTION_BREAKPOINT))
+					if (IsDumpMulti() && (evt.u.Exception.ExceptionRecord.ExceptionCode==EXCEPTION_BREAKPOINT))
 					{
 						if (gpSrv->DbgInfo.nWaitTreeBreaks > 0)
 							gpSrv->DbgInfo.nWaitTreeBreaks--;
