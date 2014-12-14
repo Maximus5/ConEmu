@@ -9598,12 +9598,14 @@ BOOL WINAPI HandlerRoutine(DWORD dwCtrlType)
 		if (gbInExitWaitForKey)
 			gbStopExitWaitForKey = TRUE;
 
-		// Остановить отладчик, иначе отлаживаемый процесс тоже схлопнется
+		// Our debugger is running?
 		if (gpSrv->DbgInfo.bDebuggerActive)
 		{
-			if (pfnDebugActiveProcessStop) pfnDebugActiveProcessStop(gpSrv->dwRootProcess);
+			// pfnDebugActiveProcessStop is useless, because
+			// 1. pfnDebugSetProcessKillOnExit was called already
+			// 2. we can debug more than a one process
 
-			gpSrv->DbgInfo.bDebuggerActive = FALSE;
+			//gpSrv->DbgInfo.bDebuggerActive = FALSE;
 		}
 		else
 		{
