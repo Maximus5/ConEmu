@@ -707,8 +707,6 @@ void WriteMiniDump(DWORD dwProcessId, DWORD dwThreadId, EXCEPTION_RECORD *pExcep
 	
 	char szTitleA[64];
 	_wsprintfA(szTitleA, SKIPLEN(countof(szTitleA)) "ConEmuC Debugging PID=%u, Debugger PID=%u", dwProcessId, GetCurrentProcessId());
-	wchar_t szTitle[64];
-	_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuC Debugging PID=%u, Debugger PID=%u", dwProcessId, GetCurrentProcessId());
 
 	int nBtn = 0;
 	
@@ -744,6 +742,8 @@ void WriteMiniDump(DWORD dwProcessId, DWORD dwThreadId, EXCEPTION_RECORD *pExcep
 	//HMODULE hDbghelp = NULL;
 	wchar_t szErrInfo[MAX_PATH*2];
 
+	wchar_t szTitle[64];
+	_wsprintf(szTitle, SKIPLEN(countof(szTitle)) CE_CONEMUC_NAME_W L" Debugging PID=%u, Debugger PID=%u", dwProcessId, GetCurrentProcessId());
 
 	wchar_t dmpfile[MAX_PATH] = L""; dmpfile[0] = 0;
 	FormatDumpName(dmpfile, countof(dmpfile), dwProcessId, false, (dumpType == MiniDumpWithFullMemory));
@@ -1272,7 +1272,7 @@ void GenerateMiniDumpFromCtrlBreak()
 	DebugBreakProcess_t DebugBreakProcess_f = (DebugBreakProcess_t)(hKernel ? GetProcAddress(hKernel, "DebugBreakProcess") : NULL);
 	if (DebugBreakProcess_f)
 	{
-		_printf("ConEmuC: Sending DebugBreak event to process\n");
+		_printf(CE_CONEMUC_NAME_A ": Sending DebugBreak event to process\n");
 		gpSrv->DbgInfo.bDebuggerRequestDump = TRUE;
 		DWORD dwErr = 0;
 		_ASSERTE(gpSrv->hRootProcess!=NULL);
@@ -1280,14 +1280,14 @@ void GenerateMiniDumpFromCtrlBreak()
 		{
 			dwErr = GetLastError();
 			//_ASSERTE(FALSE && dwErr==0);
-			_printf("ConEmuC: Sending DebugBreak event failed, Code=x%X, WriteMiniDump on the fly\n", dwErr);
+			_printf(CE_CONEMUC_NAME_A ": Sending DebugBreak event failed, Code=x%X, WriteMiniDump on the fly\n", dwErr);
 			gpSrv->DbgInfo.bDebuggerRequestDump = FALSE;
 			WriteMiniDump(gpSrv->dwRootProcess, gpSrv->dwRootThread, NULL);
 		}
 	}
 	else
 	{
-		_printf("ConEmuC: DebugBreakProcess not found in kernel32.dll\n");
+		_printf(CE_CONEMUC_NAME_A ": DebugBreakProcess not found in kernel32.dll\n");
 	}
 }
 
@@ -1301,7 +1301,7 @@ void GenerateTreeDebugBreak(DWORD nExcludePID)
 	DebugBreakProcess_t DebugBreakProcess_f = (DebugBreakProcess_t)(hKernel ? GetProcAddress(hKernel, "DebugBreakProcess") : NULL);
 	if (DebugBreakProcess_f)
 	{
-		_printf("ConEmuC: Sending DebugBreak event to processes:");
+		_printf(CE_CONEMUC_NAME_A ": Sending DebugBreak event to processes:");
 
 		DWORD nPID = 0; HANDLE hProcess = NULL;
 
@@ -1340,6 +1340,6 @@ void GenerateTreeDebugBreak(DWORD nExcludePID)
 	}
 	else
 	{
-		_printf("ConEmuC: DebugBreakProcess not found in kernel32.dll\n");
+		_printf(CE_CONEMUC_NAME_A ": DebugBreakProcess not found in kernel32.dll\n");
 	}
 }
