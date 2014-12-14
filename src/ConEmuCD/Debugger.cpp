@@ -913,7 +913,7 @@ void ProcessDebugEvent()
 					bFirstExitThreadEvent = true;
 					if (gpSrv->DbgInfo.nDebugDumpProcess == 0)
 					{
-						_printf("ConEmuC: Press Ctrl+Break to create minidump of debugging process\n");
+						_printf(CE_CONEMUC_NAME_A ": Press Ctrl+Break to create minidump of debugging process\n");
 					}
 					else
 					{
