@@ -1257,9 +1257,12 @@ BOOL CRealBuffer::isScroll(RealBufferScroll aiScroll/*=rbs_Any*/)
 }
 
 // Вызывается при аттаче (CRealConsole::AttachConemuC)
-void CRealBuffer::InitSBI(CONSOLE_SCREEN_BUFFER_INFO* ap_sbi)
+void CRealBuffer::InitSBI(CONSOLE_SCREEN_BUFFER_INFO* ap_sbi, BOOL abCurBufHeight)
 {
 	con.m_sbi = *ap_sbi;
+
+	TODO("Horizontal scroll");
+	con.bBufferHeight = abCurBufHeight;
 }
 
 void CRealBuffer::InitMaxSize(const COORD& crMaxSize)

@@ -988,7 +988,9 @@ BOOL CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, const CESER
 		lsbi.srWindow.Top = 0; lsbi.srWindow.Bottom = rcCon.bottom - 1;
 	}
 
-	mp_RBuf->InitSBI(&lsbi);
+	mp_RBuf->InitSBI(&lsbi, bCurBufHeight);
+
+	_ASSERTE(isBufferHeight() == bCurBufHeight);
 
 	//// Событие "изменения" консоли //2009-05-14 Теперь события обрабатываются в GUI, но прийти из консоли может изменение размера курсора
 	//swprintf_c(ms_ConEmuC_Pipe, CE_CURSORUPDATE, mn_MainSrv_PID);

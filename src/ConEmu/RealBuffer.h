@@ -77,7 +77,7 @@ public:
 	BOOL isScroll(RealBufferScroll aiScroll=rbs_Any);
 	BOOL isConsoleDataChanged();
 
-	void InitSBI(CONSOLE_SCREEN_BUFFER_INFO* ap_sbi);
+	void InitSBI(CONSOLE_SCREEN_BUFFER_INFO* ap_sbi, BOOL abCurBufHeight);
 	void InitMaxSize(const COORD& crMaxSize);
 	COORD GetMaxSize();
 
