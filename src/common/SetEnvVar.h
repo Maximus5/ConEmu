@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2013 Maximus5
+Copyright (c) 2013-2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -32,3 +32,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 void SetConEmuEnvVar(HWND hConEmuWnd);
 void SetConEmuEnvVarChild(HWND hDcWnd, HWND hBackWnd);
 void SetConEmuWorkEnvVar(HMODULE hConEmuCD);
+
+class CEnvStrings
+{
+public:
+	LPWSTR ms_Strings;
+	size_t mcch_Length;
+public:
+	CEnvStrings(LPWSTR pszStrings /* = GetEnvironmentStringsW() */);
+	~CEnvStrings();
+};
