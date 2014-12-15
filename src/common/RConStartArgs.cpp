@@ -284,6 +284,10 @@ RConStartArgs::RConStartArgs()
 	#if 0
 	hShlwapi = NULL; WcsStrI = NULL;
 	#endif
+	// Internal for GUI tab creation
+	#ifndef CONEMU_MINIMAL
+	cchEnvStrings = 0; pszEnvStrings = NULL;
+	#endif
 }
 
 #ifndef CONEMU_MINIMAL
@@ -401,6 +405,21 @@ SkipUserName:
 		this->nSplitPane = args->nSplitPane;
 	}
 
+	// Internal for GUI tab creation
+	#ifndef CONEMU_MINIMAL
+	SafeFree(this->pszEnvStrings);
+	this->cchEnvStrings = args->cchEnvStrings;
+	if (args->cchEnvStrings && args->pszEnvStrings)
+	{
+		size_t cbBytes = args->cchEnvStrings*sizeof(*this->pszEnvStrings);
+		this->pszEnvStrings = (wchar_t*)malloc(cbBytes);
+		if (this->pszEnvStrings)
+		{
+			memmove(this->pszEnvStrings, args->pszEnvStrings, cbBytes);
+		}
+	}
+	#endif
+
 	return true;
 }
 #endif
@@ -428,6 +447,11 @@ RConStartArgs::~RConStartArgs()
 		FreeLibrary(hShlwapi);
 	hShlwapi = NULL;
 	WcsStrI = NULL;
+	#endif
+
+	// Internal for GUI tab creation
+	#ifndef CONEMU_MINIMAL
+	SafeFree(this->pszEnvStrings);
 	#endif
 }
 

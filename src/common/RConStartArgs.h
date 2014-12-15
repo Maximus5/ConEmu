@@ -101,6 +101,12 @@ struct RConStartArgs
 	
 	RecreateActionParm aRecreate; // Информационно и для CRecreateDlg
 
+	// Internal for GUI tab creation
+	#ifndef CONEMU_MINIMAL
+	DWORD cchEnvStrings;
+	wchar_t* pszEnvStrings;
+	#endif
+
 	RConStartArgs();
 	~RConStartArgs();
 
