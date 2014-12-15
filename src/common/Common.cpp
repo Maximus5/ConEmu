@@ -237,6 +237,90 @@ void TranslateKeyPress(WORD vkKey, DWORD dwControlState, wchar_t wch, int ScanCo
 }
 
 
+/* *** struct CESERVER_REQ_NEWCMD -- CECMD_NEWCMD *** */
+wchar_t* CESERVER_REQ_NEWCMD::GetCommand()
+{
+	return (this && cchCommand) ? (wchar_t*)&ptrDataStart : L"";
+}
+
+wchar_t* CESERVER_REQ_NEWCMD::GetEnvStrings()
+{
+	return (this && cchEnvStrings) ? ((wchar_t*)&ptrDataStart)+cchCommand : NULL;
+}
+
+void CESERVER_REQ_NEWCMD::SetCommand(LPCWSTR asCommand)
+{
+	if (!this) return;
+	int iLen = asCommand ? lstrlen(asCommand) : 0;
+	if (iLen > 0)
+	{
+		cchCommand = iLen+1;
+		memmove(GetCommand(), asCommand, cchCommand*sizeof(*asCommand));
+	}
+	else
+	{
+		cchCommand = 0;
+	}
+}
+
+void CESERVER_REQ_NEWCMD::SetEnvStrings(LPCWSTR asStrings, DWORD cchLenZZ)
+{
+	if (!this) return;
+	if (cchLenZZ && asStrings)
+	{
+		cchEnvStrings = cchLenZZ;
+		//memmove(GetEnvStrings(), asStrings, cchEnvStrings*sizeof(*asStrings));
+		wchar_t* ptrString = GetEnvStrings();
+		if (ptrString)
+		{
+			wchar_t* ptr = ptrString;
+			LPCWSTR pszSrc = asStrings;
+			// ZZ-terminated pairs
+			while (*pszSrc)
+			{
+				// Pairs "Name=Value\0"
+				LPCWSTR pszName = pszSrc;
+				LPCWSTR pszNext = pszName + lstrlen(pszName) + 1;
+				// Next pair
+				pszSrc = pszNext;
+
+				// Строки типа "=C:=C:\\" и другое не валидное - пропускаем
+				LPCWSTR pszVal = wcschr(pszName, L'=');
+				if (!pszVal || pszVal == pszName)
+					continue;
+
+				// Skip all our internal vars, they must be set from prompt specially
+				// But let user a chance with different case. E.g. "set conemuhk=OFF"
+				// So, use case-sensitive comparison
+				if (wcsncmp(pszName, L"ConEmu", 6) != 0)
+				{
+					size_t cchCur = pszNext - pszName;
+					memmove(ptr, pszName, cchCur*sizeof(*pszName));
+					ptr[(pszVal-pszName)] = 0; // Make our storage "Name\0Value\0" like
+					ptr += cchCur;
+				}
+			}
+			// Copied size?
+			size_t cchAll = (ptr - ptrString);
+			_ASSERTE(cchAll < cchLenZZ);
+			if (cchAll > 0)
+			{
+				cchEnvStrings = (cchAll + 1); // ZZ-terminated
+			}
+			else
+			{
+				_ASSERTE(FALSE && "Nothing was copied, strange, env.block is empty?");
+				cchEnvStrings = 0;
+			}
+		}
+	}
+	else
+	{
+		cchEnvStrings = 0;
+	}
+}
+/* *** struct CESERVER_REQ_NEWCMD -- CECMD_NEWCMD *** */
+
 //#ifdef CONEMU_MINIMAL
 //#include "base64.h"
 //#endif

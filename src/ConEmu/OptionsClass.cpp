@@ -8414,7 +8414,7 @@ void CSettings::debugLogCommand(CESERVER_REQ* pInfo, BOOL abInput, DWORD anTick,
 		GetClassName(pInfo->Msg.hWnd, pData->szExtra+lstrlen(pData->szExtra), countof(pData->szExtra)-lstrlen(pData->szExtra));
 		break;
 	case CECMD_NEWCMD:
-		lstrcpyn(pData->szExtra, pInfo->NewCmd.szCommand, countof(pData->szExtra));
+		lstrcpyn(pData->szExtra, pInfo->NewCmd.GetCommand(), countof(pData->szExtra));
 		break;
 	case CECMD_GUIMACRO:
 		lstrcpyn(pData->szExtra, pInfo->GuiMacro.sMacro, countof(pData->szExtra));

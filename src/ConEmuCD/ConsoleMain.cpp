@@ -5261,13 +5261,17 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 
 				int iNewConRc = CERR_RUNNEWCONSOLE;
 
-				DWORD nCmdLen = lstrlen(lsCmdLine);
-				CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_NEWCMD, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_NEWCMD)+(nCmdLen*sizeof(wchar_t)));
+				// Query current environment
+				CEnvStrings strs(GetEnvironmentStringsW());
+
+				DWORD nCmdLen = lstrlen(lsCmdLine)+1;
+				CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_NEWCMD, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_NEWCMD)+((nCmdLen+strs.mcch_Length)*sizeof(wchar_t)));
 				if (pIn)
 				{
 					pIn->NewCmd.hFromConWnd = ghConWnd;
 					GetCurrentDirectory(countof(pIn->NewCmd.szCurDir), pIn->NewCmd.szCurDir);
-					lstrcpyn(pIn->NewCmd.szCommand, lsCmdLine, nCmdLen+1);
+					pIn->NewCmd.SetCommand(lsCmdLine);
+					pIn->NewCmd.SetEnvStrings(strs.ms_Strings, strs.mcch_Length);
 
 					CESERVER_REQ* pOut = ExecuteGuiCmd(hConEmu, pIn, ghConWnd);
 					if (pOut)

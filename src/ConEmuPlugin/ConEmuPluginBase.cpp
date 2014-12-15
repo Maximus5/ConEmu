@@ -1274,15 +1274,17 @@ bool CPluginBase::RunExternalProgramW(wchar_t* pszCommand, wchar_t* pszCurDir, b
 
 	if (bSilent)
 	{
-		DWORD nCmdLen = lstrlen(pszCommand);
-		CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_NEWCMD, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_NEWCMD)+(nCmdLen*sizeof(wchar_t)));
+		CEnvStrings strs(GetEnvironmentStringsW());
+		DWORD nCmdLen = lstrlen(pszCommand)+1;
+		CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_NEWCMD, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_NEWCMD)+((nCmdLen+strs.mcch_Length)*sizeof(wchar_t)));
 		if (pIn)
 		{
 			pIn->NewCmd.hFromConWnd = FarHwnd;
 			if (pszCurDir)
 				lstrcpyn(pIn->NewCmd.szCurDir, pszCurDir, countof(pIn->NewCmd.szCurDir));
 
-			lstrcpyn(pIn->NewCmd.szCommand, pszCommand, nCmdLen+1);
+			pIn->NewCmd.SetCommand(pszCommand);
+			pIn->NewCmd.SetEnvStrings(strs.ms_Strings, strs.mcch_Length);
 
 			HWND hGuiRoot = GetConEmuHWND(1);
 			CESERVER_REQ* pOut = ExecuteGuiCmd(hGuiRoot, pIn, FarHwnd);

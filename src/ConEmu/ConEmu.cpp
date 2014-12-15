@@ -4545,7 +4545,7 @@ BOOL CConEmuMain::RunSingleInstance(HWND hConEmuWnd /*= NULL*/, LPCWSTR apszCmd 
 				//GetModuleFileName(NULL, pIn->NewCmd.szConEmu, countof(pIn->NewCmd.szConEmu));
 				wcscpy_c(pIn->NewCmd.szConEmu, ms_ConEmuExeDir);
 
-				lstrcpyW(pIn->NewCmd.szCommand, lpszCmd ? lpszCmd : L"");
+				pIn->NewCmd.SetCommand(lpszCmd ? lpszCmd : L"");
 
 				// Task? That may have "/dir" switch in task parameters
 				if (lpszCmd && (*lpszCmd == TaskBracketLeft) && !mb_ConEmuWorkDirArg)

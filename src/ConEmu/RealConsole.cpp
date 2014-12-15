@@ -1060,6 +1060,23 @@ void CRealConsole::QueryStartStopRet(CESERVER_REQ_SRVSTARTSTOPRET& pRet)
 
 	// Return GUI info, let it be in one place
 	mp_ConEmu->GetGuiInfo(pRet.GuiMapping);
+
+	// Environment strings (inherited from parent console)
+	_ASSERTE(pRet.cchEnvStrings == 0 && pRet.pszStrings == NULL);
+	if (m_Args.cchEnvStrings && m_Args.pszEnvStrings)
+	{
+		pRet.pszStrings = (wchar_t*)malloc(m_Args.cchEnvStrings*sizeof(wchar_t));
+		if (pRet.pszStrings)
+		{
+			memmove(pRet.pszStrings, m_Args.pszEnvStrings, m_Args.cchEnvStrings*sizeof(wchar_t));
+			pRet.cchEnvStrings = m_Args.cchEnvStrings;
+		}
+	}
+	else
+	{
+		pRet.cchEnvStrings = 0;
+		pRet.pszStrings = NULL;
+	}
 }
 
 #if 0

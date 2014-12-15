@@ -30,7 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _COMMON_HEADER_HPP_
 
 // Interface version
-#define CESERVER_REQ_VER    148
+#define CESERVER_REQ_VER    149
 
 // Max tabs/panes count
 #define MAX_CONSOLE_COUNT 30
@@ -1555,7 +1555,14 @@ struct CESERVER_REQ_NEWCMD // CECMD_NEWCMD
 	wchar_t szConEmu[MAX_PATH]; // Для идентификации, чтобы можно было выполнять команду в instance по тому же пути (путь к папке с ConEmu.exe без слеша)
 	wchar_t szCurDir[MAX_PATH];
 	// Внимание! Может содержать параметр -new_console. GUI его должен вырезать перед запуском сервера!
-	wchar_t szCommand[1]; // На самом деле - variable_size !!!
+	//wchar_t szCommand[1]; // На самом деле - variable_size !!!
+	DWORD cchCommand;
+	DWORD cchEnvStrings;
+	DWORD ptrDataStart;
+	wchar_t* GetCommand();
+	wchar_t* GetEnvStrings();
+	void SetCommand(LPCWSTR asCommand);
+	void SetEnvStrings(LPCWSTR asStrings, DWORD cchLenZZ);
 };
 
 struct CESERVER_REQ_SETFONT
@@ -1735,6 +1742,14 @@ struct CESERVER_REQ_SRVSTARTSTOPRET
 	ConEmuAnsiLog AnsiLog;
 	// Avoid spare calls, let do all in one place
 	ConEmuGuiMapping GuiMapping;
+	// Environment block (inherited from parent console)
+	DWORD cchEnvStrings;
+	union
+	{
+		wchar_t  szStrings[1]; // Variable length
+		wchar_t* pszStrings;   // Used in GUI Internally
+		u64      Reserved;     // Required for same size in both versions
+	};
 };
 
 struct CESERVER_REQ_POSTMSG

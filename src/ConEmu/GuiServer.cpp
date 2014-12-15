@@ -181,6 +181,9 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 			// Приходит из другой копии ConEmu.exe, когда она запущена с ключом /single, /showhide, /showhideTSA
 			DEBUGSTRCMD(L"GUI recieved CECMD_NEWCMD\n");
 
+			LPCWSTR pszCommand = pIn->NewCmd.GetCommand();
+			_ASSERTE(pszCommand!=NULL && "Must be at least empty string but NOT NULL");
+
 			if (pIn->NewCmd.isAdvLogging && !gpSetCls->isAdvLogging)
 			{
 				gpSetCls->isAdvLogging = pIn->NewCmd.isAdvLogging;
@@ -197,13 +200,13 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 
 			if (gpSetCls->isAdvLogging)
 			{
-				size_t cchAll = 120 + _tcslen(pIn->NewCmd.szConEmu) + _tcslen(pIn->NewCmd.szCurDir) + _tcslen(pIn->NewCmd.szCommand);
+				size_t cchAll = 120 + _tcslen(pIn->NewCmd.szConEmu) + _tcslen(pIn->NewCmd.szCurDir) + _tcslen(pszCommand);
 				wchar_t* pszInfo = (wchar_t*)malloc(cchAll*sizeof(*pszInfo));
 				if (pszInfo)
 				{
 					_wsprintf(pszInfo, SKIPLEN(cchAll) L"CECMD_NEWCMD: Wnd=x%08X, Act=%u, ConEmu=%s, Dir=%s, Cmd=%s",
 						(DWORD)(DWORD_PTR)pIn->NewCmd.hFromConWnd, pIn->NewCmd.ShowHide,
-						pIn->NewCmd.szConEmu, pIn->NewCmd.szCurDir, pIn->NewCmd.szCommand);
+						pIn->NewCmd.szConEmu, pIn->NewCmd.szCurDir, pszCommand);
 					gpConEmu->LogString(pszInfo);
 					free(pszInfo);
 				}
@@ -224,15 +227,15 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 			{
 				bool bCreateTab = (pIn->NewCmd.ShowHide == sih_None || pIn->NewCmd.ShowHide == sih_StartDetached)
 					// Issue 1275: When minimized into TSA (on all VCon are closed) we need to restore and run new tab
-					|| (pIn->NewCmd.szCommand[0] && !CVConGroup::isVConExists(0));
+					|| (pszCommand[0] && !CVConGroup::isVConExists(0));
 				gpConEmu->DoMinimizeRestore(bCreateTab ? sih_SetForeground : pIn->NewCmd.ShowHide);
 
 				// Может быть пусто
-				if (bCreateTab && pIn->NewCmd.szCommand[0])
+				if (bCreateTab && pszCommand[0])
 				{
 					RConStartArgs *pArgs = new RConStartArgs;
 					pArgs->Detached = (pIn->NewCmd.ShowHide == sih_StartDetached) ? crb_On : crb_Off;
-					pArgs->pszSpecialCmd = lstrdup(pIn->NewCmd.szCommand);
+					pArgs->pszSpecialCmd = lstrdup(pszCommand);
 					if (pIn->NewCmd.szCurDir[0] == 0)
 					{
 						_ASSERTE(pIn->NewCmd.szCurDir[0] != 0);
@@ -240,6 +243,18 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 					else
 					{
 						pArgs->pszStartupDir = lstrdup(pIn->NewCmd.szCurDir);
+					}
+
+					LPCWSTR pszStrings = pIn->NewCmd.GetEnvStrings();
+					if (pszStrings && pIn->NewCmd.cchEnvStrings)
+					{
+						size_t cbBytes = pIn->NewCmd.cchEnvStrings*sizeof(*pArgs->pszEnvStrings);
+						pArgs->pszEnvStrings = (wchar_t*)malloc(cbBytes);
+						if (pArgs->pszEnvStrings)
+						{
+							memmove(pArgs->pszEnvStrings, pszStrings, cbBytes);
+							pArgs->cchEnvStrings = pIn->NewCmd.cchEnvStrings;
+						}
 					}
 
 					if (gpSetCls->IsMulti() || CVConGroup::isDetached())
@@ -295,9 +310,10 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 			CESERVER_REQ_SRVSTARTSTOPRET Ret = {};
 			lbRc = CVConGroup::AttachRequested(pIn->StartStop.hWnd, &(pIn->StartStop), Ret);
 
-			pcbReplySize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_SRVSTARTSTOPRET);
+			pcbReplySize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_SRVSTARTSTOPRET)+(Ret.cchEnvStrings*sizeof(wchar_t));
 			if (!ExecuteNewCmd(ppReply, pcbMaxReplySize, pIn->hdr.nCmd, pcbReplySize))
 			{
+				SafeFree(Ret.pszStrings);
 				goto wrap;
 			}
 
@@ -306,6 +322,17 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 				_ASSERTE(sizeof(ppReply->SrvStartStopRet) == sizeof(Ret));
 				memmove(&ppReply->SrvStartStopRet, &Ret, sizeof(Ret));
 
+				// Environment strings (inherited from parent console)
+				if (Ret.cchEnvStrings && Ret.pszStrings)
+				{
+					memmove(ppReply->SrvStartStopRet.szStrings, Ret.pszStrings, Ret.cchEnvStrings*sizeof(wchar_t));
+					ppReply->SrvStartStopRet.cchEnvStrings = Ret.cchEnvStrings;
+				}
+				else
+				{
+					ppReply->SrvStartStopRet.cchEnvStrings = 0;
+				}
+				SafeFree(Ret.pszStrings);
 
 				_ASSERTE((ppReply->StartStopRet.nBufferHeight == 0) || ((int)ppReply->StartStopRet.nBufferHeight > (pIn->StartStop.sbi.srWindow.Bottom-pIn->StartStop.sbi.srWindow.Top)));
 			}
@@ -400,15 +427,28 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 				}
 				#endif
 
-				pcbReplySize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_SRVSTARTSTOPRET);
+				pcbReplySize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_SRVSTARTSTOPRET)+(arg.Ret.cchEnvStrings*sizeof(wchar_t));
 				if (!ExecuteNewCmd(ppReply, pcbMaxReplySize, pIn->hdr.nCmd, pcbReplySize))
 				{
+					SafeFree(arg.Ret.pszStrings);
 					goto wrap;
 				}
 				lbAllocated = true;
 
 				_ASSERTE(sizeof(ppReply->SrvStartStopRet) == sizeof(arg.Ret));
 				memmove(&ppReply->SrvStartStopRet, &arg.Ret, sizeof(arg.Ret));
+
+				// Environment strings (inherited from parent console)
+				if (arg.Ret.cchEnvStrings && arg.Ret.pszStrings)
+				{
+					memmove(ppReply->SrvStartStopRet.szStrings, arg.Ret.pszStrings, arg.Ret.cchEnvStrings*sizeof(wchar_t));
+					ppReply->SrvStartStopRet.cchEnvStrings = arg.Ret.cchEnvStrings;
+				}
+				else
+				{
+					ppReply->SrvStartStopRet.cchEnvStrings = 0;
+				}
+				SafeFree(arg.Ret.pszStrings);
 			}
 			else if (pIn->SrvStartStop.Started == srv_Stopped)
 			{
