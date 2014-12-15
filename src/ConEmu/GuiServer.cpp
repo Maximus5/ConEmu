@@ -325,15 +325,64 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 
 				DWORD nStartTick = timeGetTime();
 
-				//LRESULT l = 0;
-				//DWORD_PTR dwRc = 0;
-				//2010-05-21 Поскольку это критично - лучше ждать до упора, хотя может быть DeadLock?
-				//l = SendMessageTimeout(ghWnd, gpConEmu->mn_MsgSrvStarted, (WPARAM)hConWnd, pIn->hdr.nSrcPID,
-				//	SMTO_BLOCK, 5000, &dwRc);
+				struct MsgSrvStartedArg
+				{
+					HWND  hConWnd;
+					DWORD nSrcPID;
+					DWORD dwKeybLayout;
+					DWORD timeStart;
+					DWORD timeRecv;
+					DWORD timeFin;
+					HWND  hWndDc;
+					HWND  hWndBack;
 
-				//111002 - вернуть должен HWND окна отрисовки (дочернее окно ConEmu)
-				MsgSrvStartedArg arg = {hConWnd, pIn->hdr.nSrcPID, pIn->SrvStartStop.dwKeybLayout, nStartTick};
-				SendMessage(ghWnd, gpConEmu->mn_MsgSrvStarted, 0, (LPARAM)&arg);
+					//111002 - вернуть должен HWND окна отрисовки (дочернее окно ConEmu)
+					static LRESULT OnSrvStarted(LPARAM lParam)
+					{
+						MsgSrvStartedArg *pArg = (MsgSrvStartedArg*)lParam;
+
+						HWND hWndDC = NULL, hWndBack = NULL;
+
+						DWORD nServerPID = pArg->nSrcPID;
+						HWND  hWndCon = pArg->hConWnd;
+						DWORD dwKeybLayout = pArg->dwKeybLayout;
+						pArg->timeRecv = timeGetTime();
+
+						DWORD t1, t2, t3; int iFound = -1;
+
+						hWndDC = CVConGroup::DoSrvCreated(nServerPID, hWndCon, dwKeybLayout, t1, t2, t3, iFound, hWndBack);
+
+						pArg->hWndDc = hWndDC;
+						pArg->hWndBack = hWndBack;
+
+						UNREFERENCED_PARAMETER(dwKeybLayout);
+						UNREFERENCED_PARAMETER(hWndCon);
+
+						pArg->timeFin = timeGetTime();
+						if (hWndDC == NULL)
+						{
+							_ASSERTE(hWndDC!=NULL);
+						}
+						else
+						{
+							#ifdef _DEBUG
+							DWORD nRecvDur = pArg->timeRecv - pArg->timeStart;
+							DWORD nProcDur = pArg->timeFin - pArg->timeRecv;
+
+							#define MSGSTARTED_TIMEOUT 10000
+							if ((nRecvDur > MSGSTARTED_TIMEOUT) || (nProcDur > MSGSTARTED_TIMEOUT))
+							{
+								_ASSERTE((nRecvDur <= MSGSTARTED_TIMEOUT) && (nProcDur <= MSGSTARTED_TIMEOUT));
+							}
+							#endif
+						}
+
+						return (LRESULT)hWndDC;
+					};
+				} arg = {hConWnd, pIn->hdr.nSrcPID, pIn->SrvStartStop.dwKeybLayout, nStartTick};
+
+				gpConEmu->CallMainThread(true, arg.OnSrvStarted, (LPARAM)&arg);
+
 				HWND hWndDC = arg.hWndDc;
 				HWND hWndBack = arg.hWndBack;
 				_ASSERTE(hWndDC!=NULL);

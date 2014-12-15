@@ -736,7 +736,6 @@ void CConEmuMain::RegisterMessages()
 	mn_MsgUpdateCursorInfo = RegisterMessage("UpdateCursorInfo");
 	mn_MsgSetWindowMode = RegisterMessage("SetWindowMode");
 	mn_MsgUpdateTitle = RegisterMessage("UpdateTitle");
-	mn_MsgSrvStarted = RegisterMessage("SrvStarted"); //RegisterWindowMessage(CONEMUMSG_SRVSTARTED);
 	mn_MsgUpdateScrollInfo = RegisterMessage("UpdateScrollInfo");
 	mn_MsgUpdateTabs = RegisterMessage("UpdateTabs"); mn_ReqMsgUpdateTabs = 0; //RegisterWindowMessage(CONEMUMSG_UPDATETABS);
 	mn_MsgOldCmdVer = RegisterMessage("OldCmdVer"); mb_InShowOldCmdVersion = FALSE;
@@ -13372,48 +13371,6 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			{
 				this->UpdateTitle();
 				return 0;
-			}
-			else if (messg == this->mn_MsgSrvStarted)
-			{
-				MsgSrvStartedArg *pArg = (MsgSrvStartedArg*)lParam;
-				HWND hWndDC = NULL, hWndBack = NULL;
-				//111002 - вернуть должен HWND окна отрисовки (дочернее окно ConEmu)
-
-				DWORD nServerPID = pArg->nSrcPID;
-				HWND  hWndCon = pArg->hConWnd;
-				DWORD dwKeybLayout = pArg->dwKeybLayout;
-				pArg->timeRecv = timeGetTime();
-
-				DWORD t1, t2, t3; int iFound = -1;
-
-				hWndDC = CVConGroup::DoSrvCreated(nServerPID, hWndCon, dwKeybLayout, t1, t2, t3, iFound, hWndBack);
-
-				pArg->hWndDc = hWndDC;
-				pArg->hWndBack = hWndBack;
-
-				UNREFERENCED_PARAMETER(dwKeybLayout);
-				UNREFERENCED_PARAMETER(hWndCon);
-
-				pArg->timeFin = timeGetTime();
-				if (hWndDC == NULL)
-				{
-					_ASSERTE(hWndDC!=NULL);
-				}
-				else
-				{
-					#ifdef _DEBUG
-					DWORD nRecvDur = pArg->timeRecv - pArg->timeStart;
-					DWORD nProcDur = pArg->timeFin - pArg->timeRecv;
-
-					#define MSGSTARTED_TIMEOUT 10000
-					if ((nRecvDur > MSGSTARTED_TIMEOUT) || (nProcDur > MSGSTARTED_TIMEOUT))
-					{
-						_ASSERTE((nRecvDur <= MSGSTARTED_TIMEOUT) && (nProcDur <= MSGSTARTED_TIMEOUT));
-					}
-					#endif
-				}
-
-				return (LRESULT)hWndDC;
 			}
 			else if (messg == this->mn_MsgUpdateScrollInfo)
 			{
