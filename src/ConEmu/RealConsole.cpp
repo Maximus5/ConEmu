@@ -6457,6 +6457,16 @@ int CRealConsole::GetProcesses(ConProcess** ppPrc, bool ClientOnly /*= false*/)
 		return 1; // Чтобы GUI не захлопнулся
 	}
 
+	// Сервер еще не отработал запуск?
+	if (!mn_ProcessCount && mh_MainSrv)
+	{
+		DWORD nWait = WaitForSingleObject(mh_MainSrv, 0);
+		if (nWait == WAIT_TIMEOUT)
+		{
+			return 1; // Чтобы GUI не закрылся
+		}
+	}
+
 	// Если хотят узнать только количество процессов
 	if (ppPrc == NULL || mn_ProcessCount == 0)
 	{
