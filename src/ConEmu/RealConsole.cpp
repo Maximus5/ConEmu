@@ -5227,6 +5227,7 @@ void CRealConsole::StopSignal()
 		m_Processes.clear();
 		SPRC.Unlock();
 		mn_ProcessCount = 0;
+		mn_ProcessClientCount = 0;
 	}
 
 	mn_TermEventTick = GetTickCount();
