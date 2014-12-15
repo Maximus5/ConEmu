@@ -3208,12 +3208,13 @@ HWND CVConGroup::DoSrvCreated(const DWORD nServerPID, const HWND hWndCon, const 
 	HWND hWndDC = NULL;
 
 	//gpConEmu->WinEventProc(NULL, EVENT_CONSOLE_START_APPLICATION, hWndCon, (LONG)nServerPID, 0, 0, 0);
+	CVConGuard VCon;
 	for (size_t i = 0; i < countof(gp_VCon); i++)
 	{
-		CVirtualConsole* pVCon = gp_VCon[i];
-		CVConGuard guard(pVCon);
-		CRealConsole* pRCon;
-		if (pVCon && ((pRCon = pVCon->RCon()) != NULL) && pRCon->isServerCreated())
+		if (!gp_VCon[i] || !VCon.Attach(gp_VCon[i]))
+			continue;
+		CRealConsole* pRCon = VCon->RCon();
+		if (pRCon && pRCon->isServerCreated())
 		{
 			if (pRCon->GetServerPID() == nServerPID)
 			{
