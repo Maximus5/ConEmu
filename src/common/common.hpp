@@ -1733,7 +1733,7 @@ struct CESERVER_REQ_SRVSTARTSTOPRET
 	CESERVER_REQ_SETFONT Font;
 	// Limited logging of console contents (same output as processed by CECF_ProcessAnsi)
 	ConEmuAnsiLog AnsiLog;
-	// Avoid space calls, let do all in one place
+	// Avoid spare calls, let do all in one place
 	ConEmuGuiMapping GuiMapping;
 };
 
