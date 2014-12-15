@@ -187,7 +187,7 @@ public:
 	static void UpdateWindowChild(CVirtualConsole* apVCon);
 	static void RePaint();
 	static void Update(bool isForce = false);
-	static HWND DoSrvCreated(const DWORD nServerPID, const HWND hWndCon, const DWORD dwKeybLayout, DWORD& t1, DWORD& t2, DWORD& t3, int& iFound, HWND& hWndBack);
+	static HWND DoSrvCreated(const DWORD nServerPID, const HWND hWndCon, const DWORD dwKeybLayout, DWORD& t1, DWORD& t2, int& iFound, CESERVER_REQ_SRVSTARTSTOPRET& pRet);
 	static void OnVConCreated(CVirtualConsole* apVCon, const RConStartArgs *args);
 	static void OnGuiFocused(BOOL abFocus, BOOL abForceChild = FALSE);
 	static void GroupInput(CVirtualConsole* apVCon, GroupInputCmd cmd);
@@ -213,7 +213,7 @@ public:
 	static bool ConActivateNext(bool abNext);
 	static DWORD CheckProcesses();
 	static CRealConsole* AttachRequestedGui(DWORD anServerPID, LPCWSTR asAppFileName, DWORD anAppPID);
-	static BOOL AttachRequested(HWND ahConWnd, const CESERVER_REQ_STARTSTOP* pStartStop, CESERVER_REQ_SRVSTARTSTOPRET* pRet);
+	static BOOL AttachRequested(HWND ahConWnd, const CESERVER_REQ_STARTSTOP* pStartStop, CESERVER_REQ_SRVSTARTSTOPRET& pRet);
 	static int GetConCount(bool bNoDetached = false);
 	static int ActiveConNum();
 	static bool GetVConBySrvPID(DWORD anServerPID, DWORD anMonitorTID, CVConGuard* pVCon = NULL);

@@ -859,11 +859,10 @@ void CRealConsole::SyncConsole2Window(BOOL abNtvdmOff/*=FALSE*/, LPRECT prcNewWn
 
 // Вызывается при аттаче (после детача), или после RunAs?
 // sbi передавать не ссылкой, а копией, ибо та же память
-BOOL CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, const CESERVER_REQ_STARTSTOP* rStartStop, CESERVER_REQ_SRVSTARTSTOPRET* pRet)
+BOOL CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, const CESERVER_REQ_STARTSTOP* rStartStop, CESERVER_REQ_SRVSTARTSTOPRET& pRet)
 {
 	DWORD dwErr = 0;
 	HANDLE hProcess = NULL;
-	_ASSERTE(pRet!=NULL);
 	DEBUGTEST(bool bAdmStateChanged = ((rStartStop->bUserIsAdmin!=FALSE) != (m_Args.RunAsAdministrator==crb_On)));
 	m_Args.RunAsAdministrator = rStartStop->bUserIsAdmin ? crb_On : crb_Off;
 
@@ -1022,34 +1021,45 @@ BOOL CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, const CESER
 	#endif
 
 	// Prepare result
-	pRet->Info.bWasBufferHeight = bCurBufHeight;
-	pRet->Info.hWnd = ghWnd;
-	pRet->Info.hWndDc = mp_VCon->GetView();
-	pRet->Info.hWndBack = mp_VCon->GetBack();
-	pRet->Info.dwPID = GetCurrentProcessId();
-	pRet->Info.nBufferHeight = bCurBufHeight ? lsbi.dwSize.Y : 0;
-	pRet->Info.nWidth = rcCon.right;
-	pRet->Info.nHeight = rcCon.bottom;
-	pRet->Info.dwMainSrvPID = anConemuC_PID;
-	pRet->Info.dwAltSrvPID = 0;
-	pRet->Info.bNeedLangChange = TRUE;
-	TODO("Проверить на x64, не будет ли проблем с 0xFFFFFFFFFFFFFFFFFFFFF");
-	pRet->Info.NewConsoleLang = mp_ConEmu->GetActiveKeyboardLayout();
-	// Установить шрифт для консоли
-	pRet->Font.cbSize = sizeof(pRet->Font);
-	pRet->Font.inSizeY = gpSet->ConsoleFont.lfHeight;
-	pRet->Font.inSizeX = gpSet->ConsoleFont.lfWidth;
-	lstrcpy(pRet->Font.sFontName, gpSet->ConsoleFont.lfFaceName);
-	// Limited logging of console contents (same output as processed by CECF_ProcessAnsi)
-	mp_ConEmu->GetAnsiLogInfo(pRet->AnsiLog);
-	// Return GUI info, let it be in one place
-	mp_ConEmu->GetGuiInfo(pRet->GuiMapping);
+	QueryStartStopRet(pRet);
+
 	// Передернуть нить MonitorThread
 	SetMonitorThreadEvent();
 
-	_ASSERTE((pRet->Info.nBufferHeight == 0) || ((int)pRet->Info.nBufferHeight > (rStartStop->sbi.srWindow.Bottom-rStartStop->sbi.srWindow.Top)));
+	_ASSERTE((pRet.Info.nBufferHeight == 0) || ((int)pRet.Info.nBufferHeight > (rStartStop->sbi.srWindow.Bottom-rStartStop->sbi.srWindow.Top)));
 
 	return TRUE;
+}
+
+void CRealConsole::QueryStartStopRet(CESERVER_REQ_SRVSTARTSTOPRET& pRet)
+{
+	BOOL bCurBufHeight = isBufferHeight();
+	pRet.Info.bWasBufferHeight = bCurBufHeight;
+	pRet.Info.hWnd = ghWnd;
+	pRet.Info.hWndDc = mp_VCon->GetView();
+	pRet.Info.hWndBack = mp_VCon->GetBack();
+	pRet.Info.dwPID = GetCurrentProcessId();
+	pRet.Info.nBufferHeight = bCurBufHeight ? mp_ABuf->GetBufferHeight() : 0;
+	pRet.Info.nWidth = TextWidth();
+	pRet.Info.nHeight = TextHeight();
+	pRet.Info.dwMainSrvPID = GetServerPID(true);
+	pRet.Info.dwAltSrvPID = 0;
+
+	pRet.Info.bNeedLangChange = TRUE;
+	TODO("Проверить на x64, не будет ли проблем с 0xFFFFFFFFFFFFFFFFFFFFF");
+	pRet.Info.NewConsoleLang = mp_ConEmu->GetActiveKeyboardLayout();
+
+	// Установить шрифт для консоли
+	pRet.Font.cbSize = sizeof(pRet.Font);
+	pRet.Font.inSizeY = gpSet->ConsoleFont.lfHeight;
+	pRet.Font.inSizeX = gpSet->ConsoleFont.lfWidth;
+	lstrcpy(pRet.Font.sFontName, gpSet->ConsoleFont.lfFaceName);
+
+	// Limited logging of console contents (same output as processed by CECF_ProcessAnsi)
+	mp_ConEmu->GetAnsiLogInfo(pRet.AnsiLog);
+
+	// Return GUI info, let it be in one place
+	mp_ConEmu->GetGuiInfo(pRet.GuiMapping);
 }
 
 #if 0
@@ -6280,19 +6290,19 @@ void CRealConsole::OnDosAppStartStop(enum StartStopType sst, DWORD anPID)
 
 // Это приходит из ConEmuC.exe::ServerInitGuiTab (CECMD_SRVSTARTSTOP)
 // здесь сервер только "запускается" и еще не готов принимать команды
-void CRealConsole::OnServerStarted(const HWND ahConWnd, const DWORD anServerPID, const DWORD dwKeybLayout)
+HWND CRealConsole::OnServerStarted(const HWND ahConWnd, const DWORD anServerPID, const DWORD dwKeybLayout, CESERVER_REQ_SRVSTARTSTOPRET& pRet)
 {
 	if (!this)
 	{
 		_ASSERTE(this);
-		return;
+		return NULL;
 	}
 	if ((ahConWnd == NULL) || (hConWnd && (ahConWnd != hConWnd)) || (anServerPID != mn_MainSrv_PID))
 	{
 		MBoxAssert(ahConWnd!=NULL);
 		MBoxAssert((hConWnd==NULL) || (ahConWnd==hConWnd));
 		MBoxAssert(anServerPID==mn_MainSrv_PID);
-		return;
+		return NULL;
 	}
 
 	// Окошко консоли скорее всего еще не инициализировано
@@ -6304,6 +6314,11 @@ void CRealConsole::OnServerStarted(const HWND ahConWnd, const DWORD anServerPID,
 
 	// Само разберется
 	OnConsoleKeyboardLayout(dwKeybLayout);
+
+	// Return required info
+	QueryStartStopRet(pRet);
+
+	return mp_VCon->GetView();
 }
 
 //void CRealConsole::OnWinEvent(DWORD anEvent, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime)

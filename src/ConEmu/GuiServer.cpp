@@ -288,22 +288,30 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 
 		case CECMD_ATTACH2GUI:
 		{
+			// Получен запрос на Attach из сервера
+
 			MCHKHEAP;
 
-			// Получен запрос на Attach из сервера
+			CESERVER_REQ_SRVSTARTSTOPRET Ret = {};
+			lbRc = CVConGroup::AttachRequested(pIn->StartStop.hWnd, &(pIn->StartStop), Ret);
+
 			pcbReplySize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_SRVSTARTSTOPRET);
 			if (!ExecuteNewCmd(ppReply, pcbMaxReplySize, pIn->hdr.nCmd, pcbReplySize))
+			{
 				goto wrap;
-			//CESERVER_REQ* pOut = ExecuteNewCmd(CECMD_ATTACH2GUI, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_STARTSTOPRET));
+			}
 
-			CVConGroup::AttachRequested(pIn->StartStop.hWnd, &(pIn->StartStop), &(ppReply->SrvStartStopRet));
+			if (lbRc)
+			{
+				_ASSERTE(sizeof(ppReply->SrvStartStopRet) == sizeof(Ret));
+				memmove(&ppReply->SrvStartStopRet, &Ret, sizeof(Ret));
 
-			_ASSERTE((ppReply->StartStopRet.nBufferHeight == 0) || ((int)ppReply->StartStopRet.nBufferHeight > (pIn->StartStop.sbi.srWindow.Bottom-pIn->StartStop.sbi.srWindow.Top)));
+
+				_ASSERTE((ppReply->StartStopRet.nBufferHeight == 0) || ((int)ppReply->StartStopRet.nBufferHeight > (pIn->StartStop.sbi.srWindow.Bottom-pIn->StartStop.sbi.srWindow.Top)));
+			}
 
 			MCHKHEAP;
 
-			lbRc = TRUE;
-			//ExecuteFreeResult(pOut);
 			break;
 		} // CECMD_ATTACH2GUI
 
@@ -312,10 +320,7 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 			MCHKHEAP;
 
 			// SRVSTART не приходит если запускается cmd под админом
-
-			pcbReplySize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_SRVSTARTSTOPRET);
-			if (!ExecuteNewCmd(ppReply, pcbMaxReplySize, pIn->hdr.nCmd, pcbReplySize))
-				goto wrap;
+			bool lbAllocated = false;
 
 			if (pIn->SrvStartStop.Started == srv_Started)
 			{
@@ -333,15 +338,14 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 					DWORD timeStart;
 					DWORD timeRecv;
 					DWORD timeFin;
-					HWND  hWndDc;
-					HWND  hWndBack;
+					CESERVER_REQ_SRVSTARTSTOPRET Ret;
 
 					//111002 - вернуть должен HWND окна отрисовки (дочернее окно ConEmu)
 					static LRESULT OnSrvStarted(LPARAM lParam)
 					{
 						MsgSrvStartedArg *pArg = (MsgSrvStartedArg*)lParam;
 
-						HWND hWndDC = NULL, hWndBack = NULL;
+						HWND hWndDC = NULL;
 
 						DWORD nServerPID = pArg->nSrcPID;
 						HWND  hWndCon = pArg->hConWnd;
@@ -350,10 +354,7 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 
 						DWORD t1, t2, t3; int iFound = -1;
 
-						hWndDC = CVConGroup::DoSrvCreated(nServerPID, hWndCon, dwKeybLayout, t1, t2, t3, iFound, hWndBack);
-
-						pArg->hWndDc = hWndDC;
-						pArg->hWndBack = hWndBack;
+						hWndDC = CVConGroup::DoSrvCreated(nServerPID, hWndCon, dwKeybLayout, t1, t2, iFound, pArg->Ret);
 
 						UNREFERENCED_PARAMETER(dwKeybLayout);
 						UNREFERENCED_PARAMETER(hWndCon);
@@ -383,8 +384,8 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 
 				gpConEmu->CallMainThread(true, arg.OnSrvStarted, (LPARAM)&arg);
 
-				HWND hWndDC = arg.hWndDc;
-				HWND hWndBack = arg.hWndBack;
+				HWND hWndDC = arg.Ret.Info.hWndDc;
+				HWND hWndBack = arg.Ret.Info.hWndBack;
 				_ASSERTE(hWndDC!=NULL);
 
 				#ifdef _DEBUG
@@ -399,17 +400,15 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 				}
 				#endif
 
-				//pIn->dwData[0] = (DWORD)ghWnd; //-V205
-				//pIn->dwData[1] = (DWORD)dwRc; //-V205
-				//pIn->dwData[0] = (l == 0) ? 0 : 1;
-				ppReply->SrvStartStopRet.Info.hWnd = ghWnd;
-				ppReply->SrvStartStopRet.Info.hWndDc = hWndDC;
-				ppReply->SrvStartStopRet.Info.hWndBack = hWndBack;
-				ppReply->SrvStartStopRet.Info.dwPID = GetCurrentProcessId();
-				// Limited logging of console contents (same output as processed by CECF_ProcessAnsi)
-				gpConEmu->GetAnsiLogInfo(ppReply->SrvStartStopRet.AnsiLog);
-				// Return GUI info, let it be in one place
-				gpConEmu->GetGuiInfo(ppReply->SrvStartStopRet.GuiMapping);
+				pcbReplySize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_SRVSTARTSTOPRET);
+				if (!ExecuteNewCmd(ppReply, pcbMaxReplySize, pIn->hdr.nCmd, pcbReplySize))
+				{
+					goto wrap;
+				}
+				lbAllocated = true;
+
+				_ASSERTE(sizeof(ppReply->SrvStartStopRet) == sizeof(arg.Ret));
+				memmove(&ppReply->SrvStartStopRet, &arg.Ret, sizeof(arg.Ret));
 			}
 			else if (pIn->SrvStartStop.Started == srv_Stopped)
 			{
@@ -441,6 +440,13 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 			}
 
 			MCHKHEAP;
+
+			if (!lbAllocated)
+			{
+				pcbReplySize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_SRVSTARTSTOPRET);
+				if (!ExecuteNewCmd(ppReply, pcbMaxReplySize, pIn->hdr.nCmd, pcbReplySize))
+					goto wrap;
+			}
 
 			lbRc = TRUE;
 			//// Отправляем

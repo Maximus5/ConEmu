@@ -460,7 +460,7 @@ class CRealConsole
 		void SyncConsole2Window(BOOL abNtvdmOff=FALSE, LPRECT prcNewWnd=NULL);
 		void SyncGui2Window(const RECT rcVConBack);
 		//void OnWinEvent(DWORD anEvent, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime);
-		void OnServerStarted(const HWND ahConWnd, const DWORD anServerPID, const DWORD dwKeybLayout);
+		HWND OnServerStarted(const HWND ahConWnd, const DWORD anServerPID, const DWORD dwKeybLayout, CESERVER_REQ_SRVSTARTSTOPRET& pRet);
 		void OnDosAppStartStop(enum StartStopType sst, DWORD anPID);
 		bool isProcessExist(DWORD anPID);
 		int  GetProcesses(ConProcess** ppPrc, bool ClientOnly = false);
@@ -512,7 +512,8 @@ class CRealConsole
 		void ShowGuiClientInt(bool bShow);
 		void ChildSystemMenu();
 		bool isDetached();
-		BOOL AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, const CESERVER_REQ_STARTSTOP* rStartStop, CESERVER_REQ_SRVSTARTSTOPRET* pRet);
+		BOOL AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, const CESERVER_REQ_STARTSTOP* rStartStop, CESERVER_REQ_SRVSTARTSTOPRET& pRet);
+		void QueryStartStopRet(CESERVER_REQ_SRVSTARTSTOPRET& pRet);
 		BOOL RecreateProcess(RConStartArgs *args);
 		void GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, ConEmuTextRange& etr);
 		ExpandTextRangeType GetLastTextRangeType();

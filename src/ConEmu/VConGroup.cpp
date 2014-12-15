@@ -3203,7 +3203,7 @@ void CVConGroup::OnUpdateProcessDisplay(HWND hInfo)
 }
 
 // Возвращает HWND окна отрисовки
-HWND CVConGroup::DoSrvCreated(const DWORD nServerPID, const HWND hWndCon, const DWORD dwKeybLayout, DWORD& t1, DWORD& t2, DWORD& t3, int& iFound, HWND& hWndBack)
+HWND CVConGroup::DoSrvCreated(const DWORD nServerPID, const HWND hWndCon, const DWORD dwKeybLayout, DWORD& t1, DWORD& t2, int& iFound, CESERVER_REQ_SRVSTARTSTOPRET& pRet)
 {
 	HWND hWndDC = NULL;
 
@@ -3220,14 +3220,9 @@ HWND CVConGroup::DoSrvCreated(const DWORD nServerPID, const HWND hWndCon, const 
 				iFound = i;
 				t1 = timeGetTime();
 
-				pRCon->OnServerStarted(hWndCon, nServerPID, dwKeybLayout);
+				hWndDC = pRCon->OnServerStarted(hWndCon, nServerPID, dwKeybLayout, pRet);
 
 				t2 = timeGetTime();
-
-				hWndDC = pVCon->GetView();
-				hWndBack = pVCon->GetBack();
-
-				t3 = timeGetTime();
 				break;
 			}
 		}
@@ -3470,7 +3465,7 @@ int CVConGroup::GetConCount(bool bNoDetached /*= false*/)
 	return nCount;
 }
 
-BOOL CVConGroup::AttachRequested(HWND ahConWnd, const CESERVER_REQ_STARTSTOP* pStartStop, CESERVER_REQ_SRVSTARTSTOPRET* pRet)
+BOOL CVConGroup::AttachRequested(HWND ahConWnd, const CESERVER_REQ_STARTSTOP* pStartStop, CESERVER_REQ_SRVSTARTSTOPRET& pRet)
 {
 	CVConGuard VCon;
 	bool bFound = false;
