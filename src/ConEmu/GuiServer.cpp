@@ -234,6 +234,27 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 				if (bCreateTab && pszCommand[0])
 				{
 					RConStartArgs *pArgs = new RConStartArgs;
+
+					// New tab must be started with same credentials that calling tab if others was not specified
+					{
+						RConStartArgs rTest;
+						rTest.pszSpecialCmd = lstrdup(pszCommand);
+						rTest.ProcessNewConArg();
+						if (!rTest.HasInheritedArgs())
+						{
+							CVConGuard VCon;
+							if ((pIn->NewCmd.hFromConWnd || pIn->NewCmd.hFromDcWnd)
+								&& CVConGroup::GetVConByHWND(pIn->NewCmd.hFromConWnd, pIn->NewCmd.hFromDcWnd, &VCon))
+							{
+								const RConStartArgs& r = VCon->RCon()->GetArgs();
+								if (r.HasInheritedArgs())
+								{
+									pArgs->AssignInheritedArgs(&r);
+								}
+							}
+						}
+					}
+
 					pArgs->Detached = (pIn->NewCmd.ShowHide == sih_StartDetached) ? crb_On : crb_Off;
 					pArgs->pszSpecialCmd = lstrdup(pszCommand);
 					if (pIn->NewCmd.szCurDir[0] == 0)

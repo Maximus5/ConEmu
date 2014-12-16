@@ -1549,6 +1549,7 @@ enum SingleInstanceShowHideType
 struct CESERVER_REQ_NEWCMD // CECMD_NEWCMD
 {
 	HWND2   hFromConWnd;
+	HWND2   hFromDcWnd;  // ConWnd may differs from parent process, but ENV_CONEMUDRAW_VAR_W would be inherited
 	SingleInstanceShowHideType ShowHide;
 	BYTE isAdvLogging;
 	BYTE Reserved;

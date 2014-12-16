@@ -5269,6 +5269,16 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 				if (pIn)
 				{
 					pIn->NewCmd.hFromConWnd = ghConWnd;
+
+					// ghConWnd may differs from parent process, but ENV_CONEMUDRAW_VAR_W would be inherited
+					wchar_t* pszDcWnd = GetEnvVar(ENV_CONEMUDRAW_VAR_W);
+					if (pszDcWnd && (pszDcWnd[0] == L'0') && (pszDcWnd[1] == L'x'))
+					{
+						wchar_t* pszEnd = NULL;
+						pIn->NewCmd.hFromDcWnd.u = wcstoul(pszDcWnd+2, &pszEnd, 16);
+					}
+					SafeFree(pszDcWnd);
+
 					GetCurrentDirectory(countof(pIn->NewCmd.szCurDir), pIn->NewCmd.szCurDir);
 					pIn->NewCmd.SetCommand(lsCmdLine);
 					pIn->NewCmd.SetEnvStrings(strs.ms_Strings, strs.mcch_Length);
