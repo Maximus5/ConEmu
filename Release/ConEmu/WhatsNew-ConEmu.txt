@@ -12,6 +12,18 @@ Votes and awards (vote for ConEmu, if you please)
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+2014.12.16
+[*] Issue 1705: In some cases ConEmuBg config xml file was not loaded properly.
+[*] Prefill MemoryDump Save as dialog with default dump file name.
+[*] Debugger. Fix creation of several memory dumps at a time.
+[*] Debug. Add menu item ‘SystemMenu\Debug\Active tree memory dump’.
+[*] Tab was sometimes closed unexpectedly while recreating as Admin.
+[*] Inherit environment variables while starting new tab from existing one (-new_console, start).
+[*] Issue 1840: Administrator privilege was not persisting to child tabs.
+[*] Fix ‘Numpad with NumLock is ON’, ‘Tab’ and ‘Shift-Tab’ processing within xterm keyboard emulation (Vim).
+[*] LogFiles ‘ConEmu-Input-*.log’ were not created in some cases.
+
+
 2014.12.8
 [*] Issue 980: Far Manager was not resized properly after exiting NTVDM application.
 [*] Status [Disabled] was not shown for ‘Delete word leftward to the cursor’ hotkey.
