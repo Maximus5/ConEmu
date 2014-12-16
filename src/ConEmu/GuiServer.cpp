@@ -379,7 +379,7 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 						DWORD dwKeybLayout = pArg->dwKeybLayout;
 						pArg->timeRecv = timeGetTime();
 
-						DWORD t1, t2, t3; int iFound = -1;
+						DWORD t1, t2; int iFound = -1;
 
 						hWndDC = CVConGroup::DoSrvCreated(nServerPID, hWndCon, dwKeybLayout, t1, t2, iFound, pArg->Ret);
 
