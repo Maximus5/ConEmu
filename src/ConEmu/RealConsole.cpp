@@ -68,6 +68,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "SetColorPalette.h"
 #include "Status.h"
 #include "TabBar.h"
+#include "TermX.h"
 #include "VConChild.h"
 #include "VConGroup.h"
 #include "VirtualConsole.h"
@@ -6058,109 +6059,26 @@ void CRealConsole::ProcessKeyboard(UINT messg, WPARAM wParam, LPARAM lParam, con
 	}
 
 	// Эмуляция терминала?
-	struct xTermKey
-	{
-		UINT vk;
-		wchar_t szKeys[16];
-		UINT vkRepl;
-	};
-	static xTermKey xTermKeys[] =
-	{
-		// From vim "term.c"
-		{VK_UP,		L"\033O*A"},
-		{VK_DOWN,	L"\033O*B"},
-		{VK_RIGHT,	L"\033O*C"},
-		{VK_LEFT,	L"\033O*D"},
-		{VK_F1,		L"\033[11;*~"},
-		{VK_F2,		L"\033[12;*~"},
-		{VK_F3,		L"\033[13;*~"},
-		{VK_F4,		L"\033[14;*~"},
-		{VK_F5,		L"\033[15;*~"},
-		{VK_F6,		L"\033[17;*~"},
-		{VK_F7,		L"\033[18;*~"},
-		{VK_F8,		L"\033[19;*~"},
-		{VK_F9,		L"\033[20;*~"},
-		{VK_F10,	L"\033[21;*~"},
-		{VK_F11,	L"\033[23;*~"},
-		{VK_F12,	L"\033[24;*~"},
-		{VK_INSERT,	L"\033[2;*~"},
-		{VK_HOME,	L"\033[1;*H"},
-		{VK_END,	L"\033[1;*F"},
-		{VK_PRIOR,	L"\033[5;*~"},
-		{VK_NEXT,	L"\033[6;*~"},
-		{VK_DELETE,	L"\033[3;*~"}, // ???
-		/* NumPad with NumLock ON */
-		{VK_NUMPAD0,  L"0", '0'},
-		{VK_NUMPAD1,  L"1", '1'},
-		{VK_NUMPAD2,  L"2", '2'},
-		{VK_NUMPAD3,  L"3", '3'},
-		{VK_NUMPAD4,  L"4", '4'},
-		{VK_NUMPAD5,  L"5", '5'},
-		{VK_NUMPAD6,  L"6", '6'},
-		{VK_NUMPAD7,  L"7", '7'},
-		{VK_NUMPAD8,  L"8", '8'},
-		{VK_NUMPAD9,  L"9", '9'},
-		{VK_DECIMAL,  L".", VK_OEM_PERIOD}, // Actually, this may be comma
-		{VK_DIVIDE,   L"/", '/'},
-		{VK_MULTIPLY, L"*", '*'},
-		{VK_SUBTRACT, L"-", '-'},
-		{VK_ADD,      L"+", '+'},
-		/* Fin */
-		{0}
-	};
+	wchar_t szSubstKeys[16] = L"";
 
-	xTermKey x = {0};
-
-	// Till now, this may be ‘te_xterm’ or ‘te_win32’ only
 	if (m_Term.Term)
 	{
-		// Processed xterm keys?
+		// Till now, this may be ‘te_xterm’ or ‘te_win32’ only
+		_ASSERTE(m_Term.Term == te_xterm);
 
-		for (int i = 0; xTermKeys[i].vk; i++)
+		if (!isProcessExist(m_Term.nCallTermPID))
 		{
-			if (xTermKeys[i].vk == r.Event.KeyEvent.wVirtualKeyCode)
-			{
-				// Keypad with NumLock ON must send just a digits/symbols
-				// Otherwise Vim reacts in a weird way...
-				if (xTermKeys[i].vkRepl && !r.Event.KeyEvent.uChar.UnicodeChar)
-				{
-					continue;
-				}
-
-				// Key found, remember the sequence we need to send to the console
-				x = xTermKeys[i];
-
-				// However these char representation must be equal
-				// to what OS was sent into our buffer
-				if (xTermKeys[i].vkRepl)
-				{
-					x.szKeys[0] = r.Event.KeyEvent.uChar.UnicodeChar; x.szKeys[1] = 0;
-				}
-
-				break;
-			}
+			StartStopXTerm(0, false/*te_win32*/);
 		}
-
-		if (x.vk)
+		// Processed xterm keys?
+		else if (TermX::GetSubstiture(r.Event.KeyEvent, szSubstKeys))
 		{
-			if (!isProcessExist(m_Term.nCallTermPID))
+			if (r.Event.KeyEvent.bKeyDown && szSubstKeys[0])
 			{
-				StartStopXTerm(0,false/*te_win32*/);
+				// only key presses are sent to terminal
+				PostString(szSubstKeys, _tcslen(szSubstKeys));
 			}
-			else if (!r.Event.KeyEvent.bKeyDown)
-			{
-				// only key pressed are sent to terminal
-				return;
-			}
-			else
-			{
-				PostString(x.szKeys, _tcslen(x.szKeys));
-				//pszChars = x.szKeys;
-				//r.Event.KeyEvent.wVirtualScanCode = 0;
-				//r.Event.KeyEvent.wVirtualKeyCode = x.szKeys[0]; // VK_ESCAPE?
-				//r.Event.KeyEvent.uChar.UnicodeChar = x.szKeys[0];
-				return;
-			}
+			return;
 		}
 	}
 

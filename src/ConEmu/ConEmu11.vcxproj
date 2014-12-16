@@ -978,6 +978,7 @@
     <ClCompile Include="TabID.cpp" />
     <ClCompile Include="TaskBar.cpp" />
     <ClCompile Include="TaskBarGhost.cpp" />
+    <ClCompile Include="TermX.cpp" />
     <ClCompile Include="ToolImg.cpp" />
     <ClCompile Include="TrayIcon.cpp" />
     <ClCompile Include="UnitTests.cpp" />
@@ -1101,6 +1102,7 @@
     <ClInclude Include="TabID.h" />
     <ClInclude Include="TaskBar.h" />
     <ClInclude Include="TaskBarGhost.h" />
+    <ClInclude Include="TermX.h" />
     <ClInclude Include="ToolImg.h" />
     <ClInclude Include="TrayIcon.h" />
     <ClInclude Include="UnitTests.h" />

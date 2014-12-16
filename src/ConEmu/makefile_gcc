@@ -86,6 +86,7 @@ SRCS = \
 		TabID.cpp          \
 		TaskBar.cpp        \
 		TaskBarGhost.cpp   \
+		TermX.cpp          \
 		ToolImg.cpp        \
 		TrayIcon.cpp       \
 		UnitTests.cpp      \

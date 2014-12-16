@@ -109,6 +109,7 @@ $(INTDIR)\TabCtrlWin.obj \
 $(INTDIR)\TabID.obj \
 $(INTDIR)\TaskBar.obj \
 $(INTDIR)\TaskBarGhost.obj \
+$(INTDIR)\TermX.obj \
 $(INTDIR)\ToolImg.obj \
 $(INTDIR)\TrayIcon.obj \
 $(INTDIR)\UnitTests.obj \
@@ -443,6 +444,8 @@ $(INTDIR)\TabID.obj: TabID.cpp
 $(INTDIR)\TaskBar.obj: TaskBar.cpp
 
 $(INTDIR)\TaskBarGhost.obj: TaskBarGhost.cpp
+
+$(INTDIR)\TermX.obj: TermX.cpp TermX.h
 
 $(INTDIR)\ToolImg.obj: ToolImg.cpp
 
