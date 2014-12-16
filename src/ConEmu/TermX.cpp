@@ -106,6 +106,13 @@ bool TermX::GetSubstiture(const KEY_EVENT_RECORD& k, wchar_t (&szSubst)[16])
 		wcscpy_c(szSubst, L"\033[3;*~"); // ???
 		return true;
 
+	case VK_TAB:
+		if (!(k.dwControlKeyState & (LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED|LEFT_ALT_PRESSED|RIGHT_ALT_PRESSED)))
+		{
+			wcscpy_c(szSubst, (k.dwControlKeyState & SHIFT_PRESSED) ? L"\033[Z" : L"\t");
+		}
+		return true;
+
 	/* NumPad with NumLock ON */
 	case VK_NUMPAD0:
 	case VK_NUMPAD1:
