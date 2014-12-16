@@ -432,6 +432,20 @@ bool RConStartArgs::AssignUserArgs(const struct RConStartArgs* args, bool abConc
 
 	return true;
 }
+
+bool RConStartArgs::HasInheritedArgs() const
+{
+	if (RunAsAdministrator || RunAsRestricted || pszUserName)
+		return true;
+	return false;
+}
+
+bool RConStartArgs::AssignInheritedArgs(const struct RConStartArgs* args, bool abConcat /*= false*/)
+{
+	if (!AssignUserArgs(args, abConcat))
+		return false;
+	return true;
+}
 #endif
 
 RConStartArgs::~RConStartArgs()
