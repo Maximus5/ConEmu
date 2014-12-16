@@ -37,6 +37,11 @@ bool TermX::GetSubstiture(const KEY_EVENT_RECORD& k, wchar_t (&szSubst)[16])
 {
 	_ASSERTE(szSubst[0] == 0);
 
+	static UINT F1Codes[24] = {
+		11, 12, 13, 14, 15, 17, 18, 19, 20, 21, 23, 24,
+		25, 26, 28, 29, 31, 32, 33, 34, 42, 43, 44, 45
+	};
+
 	switch (k.wVirtualKeyCode)
 	{
 	case VK_UP:
@@ -51,42 +56,14 @@ bool TermX::GetSubstiture(const KEY_EVENT_RECORD& k, wchar_t (&szSubst)[16])
 	case VK_LEFT:
 		wcscpy_c(szSubst, L"\033O*D");
 		return true;
-	case VK_F1:
-		wcscpy_c(szSubst, L"\033[11;*~");
+
+	case VK_F1: case VK_F2: case VK_F3: case VK_F4: case VK_F5: case VK_F6: case VK_F7: case VK_F8:
+	case VK_F9: case VK_F10: case VK_F11: case VK_F12: case VK_F13: case VK_F14: case VK_F15: case VK_F16:
+	case VK_F17: case VK_F18: case VK_F19: case VK_F20: case VK_F21: case VK_F22: case VK_F23: case VK_F24:
+		// "\033[11;*~" .. L"\033[15;*~", and so on: F1Codes[]
+		_wsprintf(szSubst, SKIPCOUNT(szSubst) L"\033[%u;*~", F1Codes[(k.wVirtualKeyCode-VK_F1)]);
 		return true;
-	case VK_F2:
-		wcscpy_c(szSubst, L"\033[12;*~");
-		return true;
-	case VK_F3:
-		wcscpy_c(szSubst, L"\033[13;*~");
-		return true;
-	case VK_F4:
-		wcscpy_c(szSubst, L"\033[14;*~");
-		return true;
-	case VK_F5:
-		wcscpy_c(szSubst, L"\033[15;*~");
-		return true;
-	case VK_F6:
-		wcscpy_c(szSubst, L"\033[17;*~");
-		return true;
-	case VK_F7:
-		wcscpy_c(szSubst, L"\033[18;*~");
-		return true;
-	case VK_F8:
-		wcscpy_c(szSubst, L"\033[19;*~");
-		return true;
-	case VK_F9:
-		wcscpy_c(szSubst, L"\033[20;*~");
-		return true;
-	case VK_F10:
-		wcscpy_c(szSubst, L"\033[21;*~");
-		return true;
-	case VK_F11:
-		wcscpy_c(szSubst, L"\033[23;*~");
-		return true;
-	case VK_F12:
-		wcscpy_c(szSubst, L"\033[24;*~");
-		return true;
+
 	case VK_INSERT:
 		wcscpy_c(szSubst, L"\033[2;*~");
 		return true;
