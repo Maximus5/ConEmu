@@ -121,6 +121,7 @@ struct RConStartArgs
 	HANDLE CheckUserToken();
 	wchar_t* CreateCommandLine(bool abForTasks = false) const;
 	bool AssignFrom(const struct RConStartArgs* args, bool abConcat = false);
+	bool AssignUserArgs(const struct RConStartArgs* args, bool abConcat = false);
 #endif
 
 	#if 0

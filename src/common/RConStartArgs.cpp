@@ -334,38 +334,10 @@ bool RConStartArgs::AssignFrom(const struct RConStartArgs* args, bool abConcat /
 		}
 	}
 
-	if (!abConcat || (args->RunAsRestricted || args->RunAsAdministrator || args->pszUserName))
+	if (!AssignUserArgs(args, abConcat))
 	{
-		this->RunAsRestricted = args->RunAsRestricted;
-		this->RunAsAdministrator = args->RunAsAdministrator;
+		return false;
 	}
-	else
-	{
-		goto SkipUserName;
-	}
-	SafeFree(this->pszUserName); //SafeFree(this->pszUserPassword);
-	SafeFree(this->pszDomain);
-	//SafeFree(this->pszUserProfile);
-
-	//if (this->hLogonToken) { CloseHandle(this->hLogonToken); this->hLogonToken = NULL; }
-	if (args->pszUserName)
-	{
-		this->pszUserName = lstrdup(args->pszUserName);
-		if (args->pszDomain)
-			this->pszDomain = lstrdup(args->pszDomain);
-		lstrcpy(this->szUserPassword, args->szUserPassword);
-		this->UseEmptyPassword = args->UseEmptyPassword;
-		//this->pszUserProfile = args->pszUserProfile ? lstrdup(args->pszUserProfile) : NULL;
-
-		//SecureZeroMemory(args->szUserPassword, sizeof(args->szUserPassword));
-
-		//this->pszUserPassword = lstrdup(args->pszUserPassword ? args->pszUserPassword : L"");
-		//this->hLogonToken = args->hLogonToken; args->hLogonToken = NULL;
-		// -- Do NOT fail when password is empty !!!
-		if (!this->pszUserName /*|| !*this->szUserPassword*/)
-			return false;
-	}
-SkipUserName:
 
 	if (!abConcat || args->BackgroundTab || args->ForegroungTab)
 	{
@@ -419,6 +391,44 @@ SkipUserName:
 		}
 	}
 	#endif
+
+	return true;
+}
+
+bool RConStartArgs::AssignUserArgs(const struct RConStartArgs* args, bool abConcat /*= false*/)
+{
+	if (!abConcat || (args->RunAsRestricted || args->RunAsAdministrator || args->pszUserName))
+	{
+		this->RunAsRestricted = args->RunAsRestricted;
+		this->RunAsAdministrator = args->RunAsAdministrator;
+	}
+	else
+	{
+		return true;
+	}
+
+	SafeFree(this->pszUserName); //SafeFree(this->pszUserPassword);
+	SafeFree(this->pszDomain);
+	//SafeFree(this->pszUserProfile);
+
+	//if (this->hLogonToken) { CloseHandle(this->hLogonToken); this->hLogonToken = NULL; }
+	if (args->pszUserName)
+	{
+		this->pszUserName = lstrdup(args->pszUserName);
+		if (args->pszDomain)
+			this->pszDomain = lstrdup(args->pszDomain);
+		lstrcpy(this->szUserPassword, args->szUserPassword);
+		this->UseEmptyPassword = args->UseEmptyPassword;
+		//this->pszUserProfile = args->pszUserProfile ? lstrdup(args->pszUserProfile) : NULL;
+
+		//SecureZeroMemory(args->szUserPassword, sizeof(args->szUserPassword));
+
+		//this->pszUserPassword = lstrdup(args->pszUserPassword ? args->pszUserPassword : L"");
+		//this->hLogonToken = args->hLogonToken; args->hLogonToken = NULL;
+		// -- Do NOT fail when password is empty !!!
+		if (!this->pszUserName /*|| !*this->szUserPassword*/)
+			return false;
+	}
 
 	return true;
 }
