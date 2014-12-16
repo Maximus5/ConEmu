@@ -217,6 +217,7 @@ public:
 	static int GetConCount(bool bNoDetached = false);
 	static int ActiveConNum();
 	static bool GetVConBySrvPID(DWORD anServerPID, DWORD anMonitorTID, CVConGuard* pVCon = NULL);
+	static bool GetVConByHWND(HWND hConWnd, HWND hDcWnd, CVConGuard* pVCon = NULL);
 
 	static void LogString(LPCSTR asText, BOOL abShowTime = FALSE);
 	static void LogString(LPCWSTR asText, BOOL abShowTime = FALSE);

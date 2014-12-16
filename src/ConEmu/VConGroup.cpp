@@ -3684,6 +3684,31 @@ bool CVConGroup::GetVConBySrvPID(DWORD anServerPID, DWORD anMonitorTID, CVConGua
 	return bFound;
 }
 
+bool CVConGroup::GetVConByHWND(HWND hConWnd, HWND hDcWnd, CVConGuard* pVCon /*= NULL*/)
+{
+	struct impl
+	{
+		HWND hConWnd, hDcWnd;
+		CVConGuard* rpVCon;
+		bool bFound;
+		static bool FindCon(CVirtualConsole* pVCon, LPARAM lParam)
+		{
+			impl* i = (impl*)lParam;
+			if ((i->hConWnd && (pVCon->RCon()->ConWnd() == i->hConWnd))
+				|| (i->hDcWnd && (pVCon->GetView() == i->hDcWnd)))
+			{
+				i->bFound = true;
+				if (i->rpVCon)
+					i->rpVCon->Attach(pVCon);
+				return false;
+			}
+			return true;
+		};
+	} Impl = {hConWnd, hDcWnd, pVCon};
+	EnumVCon(evf_All, impl::FindCon, (LPARAM)&Impl);
+	return Impl.bFound;
+}
+
 // Вернуть общее количество процессов по всем консолям
 DWORD CVConGroup::CheckProcesses()
 {
