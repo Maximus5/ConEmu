@@ -114,5 +114,7 @@ bool TermX::GetSubstiture(const KEY_EVENT_RECORD& k, wchar_t (&szSubst)[16])
 		return true;
 	}
 
+	// Ctrl+Char? A-->1, ..., J-->10, ...
+
 	return false;
 }
