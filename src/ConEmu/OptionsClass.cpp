@@ -9084,7 +9084,13 @@ void CSettings::RegisterTipsFor(HWND hChildDlg)
 
 		while ((hChild = FindWindowEx(hChildDlg, hChild, NULL, NULL)) != NULL)
 		{
-			//LONG wID = GetWindowLong(hChild, GWL_ID);
+			#ifdef _DEBUG
+			LONG wID = GetWindowLong(hChild, GWL_ID);
+			if (wID == stCmdGroupCommands)
+			{
+				wID = wID;
+			}
+			#endif
 
 			//if (wID == -1) continue;
 
