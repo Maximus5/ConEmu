@@ -31,6 +31,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "HotkeyChord.h"
 
+// Strings
+#define gsNoHotkey L"<None>"
+
 // Forward
 struct ConEmuHotKey;
 class CHotKeyDialog;

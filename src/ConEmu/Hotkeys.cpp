@@ -928,7 +928,7 @@ void ConEmuHotKey::HotkeyNameUnitTests()
 			{'W', {VK_LWIN, VK_SHIFT}, cvk_Win|cvk_Shift, L"Win+Shift+W"},
 			{'L', {VK_RCONTROL}, cvk_Ctrl|cvk_RCtrl, L"RCtrl+L"},
 			{'C', {VK_CONTROL}, cvk_Ctrl, L"Ctrl+C"},
-			{0, {}, cvk_Naked, L"<None>"},
+			{0, {}, cvk_Naked, gsNoHotkey},
 	};
 
 	ConEmuHotKey HK = {0, chk_User};
