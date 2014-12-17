@@ -811,6 +811,7 @@ bool CSetDlgButtons::ProcessButtonClick(HWND hDlg, WORD CB, BYTE uCheck)
 		/* *** Command groups *** */
 		case cbCmdGrpDefaultNew:
 		case cbCmdGrpDefaultCmd:
+		case cbCmdGrpTaskbar:
 			OnBtn_CmdTasksFlags(hDlg, CB, uCheck);
 			break;
 		case cbCmdTasksAdd:
@@ -1111,7 +1112,7 @@ void CSetDlgButtons::OnBtn_InactiveCursorIgnoreSize(HWND hDlg, WORD CB, BYTE uCh
 } // cbInactiveCursorIgnoreSize
 
 
-// cbCmdGrpDefaultNew, cbCmdGrpDefaultCmd
+// cbCmdGrpDefaultNew, cbCmdGrpDefaultCmd, cbCmdGrpTaskbar
 void CSetDlgButtons::OnBtn_CmdTasksFlags(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	// Only visual mode is supported
@@ -1155,6 +1156,12 @@ void CSetDlgButtons::OnBtn_CmdTasksFlags(HWND hDlg, WORD CB, BYTE uCheck)
 			p->Flags &= ~flag;
 		}
 		break;
+	case cbCmdGrpTaskbar:
+		if (IsChecked(hDlg, CB))
+			p->Flags &= ~CETF_NO_TASKBAR;
+		else
+			p->Flags |= CETF_NO_TASKBAR;
+		break;
 	}
 
 	if (bDistinct)
@@ -1168,7 +1175,7 @@ void CSetDlgButtons::OnBtn_CmdTasksFlags(HWND hDlg, WORD CB, BYTE uCheck)
 		}
 	}
 
-} // cbCmdGrpDefaultNew, cbCmdGrpDefaultCmd
+} // cbCmdGrpDefaultNew, cbCmdGrpDefaultCmd, cbCmdGrpTaskbar
 
 
 // cbCmdTasksAdd

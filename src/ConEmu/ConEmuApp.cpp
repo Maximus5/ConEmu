@@ -2946,7 +2946,8 @@ bool UpdateWin7TaskList(bool bForce, bool bNoSuccMsg /*= false*/)
 		const CommandTasks* pGrp = NULL;
 		while ((pGrp = gpSet->CmdTaskGet(nGroup++)) && (nTasksCount < countof(pszTasks)))
 		{
-			if (pGrp->pszName && *pGrp->pszName)
+			if (pGrp->pszName && *pGrp->pszName
+				&& !(pGrp->Flags & CETF_NO_TASKBAR))
 			{
 				pszTasksPrefix[nTasksCount] = pGrp->pszGuiArgs;
 				pszTasks[nTasksCount++] = pGrp->pszName;
