@@ -30,6 +30,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 struct ConEmuHotKey;
 
+typedef DWORD CETASKFLAGS;
+const CETASKFLAGS
+	CETF_NONE           = 0;
+
 struct CommandTasks
 {
 	size_t   cchNameMax;
@@ -40,6 +44,8 @@ struct CommandTasks
 	wchar_t* pszCommands; // "\r\n" separated commands
 
 	ConEmuHotKey HotKey;
+
+	CETASKFLAGS Flags;
 
 	void FreePtr();
 

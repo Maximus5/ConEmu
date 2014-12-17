@@ -268,6 +268,11 @@ bool CommandTasks::LoadCmdTask(SettingsBase* reg, int iIndex)
 	else
 		this->HotKey.Key.Set();
 
+	if (iIndex >= 0)
+	{
+		reg->Load(L"Flags", this->Flags);
+	}
+
 	if (!reg->Load(L"GuiArgs", &this->pszGuiArgs) || !*this->pszGuiArgs)
 	{
 		this->cchGuiArgMax = 0;
@@ -346,6 +351,7 @@ bool CommandTasks::SaveCmdTask(SettingsBase* reg, bool isStartup)
 	if (!isStartup)
 	{
 		reg->Save(L"Name", this->pszName);
+		reg->Save(L"Flags", this->Flags);
 		reg->Save(L"Hotkey", this->HotKey.GetVkMod());
 	}
 
