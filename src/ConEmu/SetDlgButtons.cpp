@@ -849,6 +849,8 @@ bool CSetDlgButtons::ProcessButtonClick(HWND hDlg, WORD CB, BYTE uCheck)
 		case cbCmdTaskbarUpdate:
 			OnBtn_CmdTaskbarUpdate(hDlg, CB, uCheck);
 			break;
+		case stCmdGroupCommands:
+			break; // если нужен тултип для StaticText - нужен стиль SS_NOTIFY, а тогда нужно этот ID просто пропустить, чтобы ассерта не было
 		/* *** Command groups *** */
 
 

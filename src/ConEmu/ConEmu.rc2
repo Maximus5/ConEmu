@@ -183,6 +183,7 @@ BEGIN
 	rCursorH                "Horizontal text cursor, like native console"
 	rCursorV                "Vertical text cursor, like standard graphic text editors"
 	slTransparent           "Transparency of the main ConEmu window"
+//	stCmdGroupCommands      "Commands (application, arguments, ""-new_console"" params). Command delimiter - empty line\nEach command creates tab in ConEmu when group started\nMark active console tab with '>' sign. Start console 'As Administrator' with '*' sign"
 	tAnsiLogPath            "You may choose folder for in-console log files\r\n(affect new consoles only)"
 	tBgImage                "Choose background image file (bmp, jpg, png, tif) or specify solid color in any form supported by ‘Colors’ page"
 	tBgImageColors          "Choose background color indexes,\r\nwhich will be replaced with background image,\r\ndefault is ‘#0 #1’ Black and Blue.\r\nUse ""*"" (asterisk) for Far Manager panels background color."
