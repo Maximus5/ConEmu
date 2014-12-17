@@ -2067,8 +2067,7 @@ INT_PTR CSettings::pageOpProc_Start(HWND hWnd2, UINT messg, WPARAM wParam, LPARA
 						EnableWindow(GetDlgItem(hWnd2, cbStartFarRestoreFolders), FALSE/*(CB == rbStartLastTabs)*/);
 						EnableWindow(GetDlgItem(hWnd2, cbStartFarRestoreEditors), FALSE/*(CB == rbStartLastTabs)*/);
 						//
-						EnableWindow(GetDlgItem(hWnd2, stCmdGroupCommands), (CB == rbStartNamedTask) || (CB == rbStartLastTabs));
-						EnableWindow(GetDlgItem(hWnd2, tCmdGroupCommands), (CB == rbStartNamedTask) || (CB == rbStartLastTabs));
+						EnableWindow(GetDlgItem(hWnd2, tStartGroupCommands), (CB == rbStartNamedTask) || (CB == rbStartLastTabs));
 						// Task source
 						pageOpProc_Start(hWnd2, MSG_SHOWTASKCONTENTS, CB, 0);
 						break;
@@ -2185,11 +2184,11 @@ INT_PTR CSettings::pageOpProc_Start(HWND hWnd2, UINT messg, WPARAM wParam, LPARA
 						nIdx = -2;
 				}
 				const CommandTasks* pTask = (nIdx >= -1) ? gpSet->CmdTaskGet(nIdx) : NULL;
-				SetDlgItemText(hWnd2, tCmdGroupCommands, pTask ? pTask->pszCommands : L"");
+				SetDlgItemText(hWnd2, tStartGroupCommands, pTask ? pTask->pszCommands : L"");
 			}
 			else
 			{
-				SetDlgItemText(hWnd2, tCmdGroupCommands, L"");
+				SetDlgItemText(hWnd2, tStartGroupCommands, L"");
 			}
 		}
 		break;

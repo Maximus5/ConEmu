@@ -433,9 +433,8 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,111,101,100,8
     PUSHBUTTON      "...",cbCmdLine,303,25,15,13,WS_DISABLED
     PUSHBUTTON      "...",cbStartTasksFile,303,49,15,13,WS_DISABLED
-    GROUPBOX        "Selected task contents (view only, change on Tasks page)",IDC_STATIC,4,116,319,114,WS_DISABLED
-    EDITTEXT        tCmdGroupCommands,8,155,309,71,ES_MULTILINE | ES_AUTOVSCROLL | ES_READONLY | ES_WANTRETURN | WS_DISABLED | WS_VSCROLL
-    LTEXT           "Commands (application, arguments, ""-new_console"" params). Command delimiter - empty line\nEach command creates tab in ConEmu when group started\nMark active console tab with '>' sign. Start console 'As Administrator' with '*' sign",stCmdGroupCommands,9,128,308,26,WS_DISABLED
+    GROUPBOX        "Selected task contents (view only, change on Tasks page)",gbSTartGroupCommands,4,120,319,110,WS_DISABLED
+    EDITTEXT        tStartGroupCommands,8,132,309,94,ES_MULTILINE | ES_AUTOVSCROLL | ES_READONLY | ES_WANTRETURN | WS_DISABLED | WS_VSCROLL
 END
 
 IDD_SPG_COLORS DIALOGEX 0, 0, 328, 235

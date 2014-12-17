@@ -1062,6 +1062,8 @@
 #define gbFeatureInConsole              2746
 #define gbFeatureDebug                  2747
 #define gbFeatureRetard                 2748
+#define gbSTartGroupCommands            2754
+#define tStartGroupCommands             2755
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
@@ -1070,7 +1072,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        226
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2749
+#define _APS_NEXT_CONTROL_VALUE         2756
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif
