@@ -35,6 +35,7 @@ const CETASKFLAGS
 	CETF_NEW_DEFAULT    = 0x0001,
 	CETF_CMD_DEFAULT    = 0x0002,
 	CETF_NO_TASKBAR     = 0x0004,
+	CETF_ADD_TOOLBAR    = 0x0008,
 	CETF_NONE           = 0;
 
 struct CommandTasks

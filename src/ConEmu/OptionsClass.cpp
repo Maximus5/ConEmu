@@ -3379,6 +3379,9 @@ LRESULT CSettings::OnInitDialog_Tasks(HWND hWnd2, bool abForceReload)
 	CEStr lsLabel(lstrmerge(L"Default shell (", szKey, L")"));
 	SetDlgItemText(hWnd2, cbCmdGrpDefaultCmd, lsLabel);
 
+	// Not implemented yet
+	ShowWindow(GetDlgItem(hWnd2, cbCmdGrpToolbar), SW_HIDE);
+
 	if (abForceReload)
 	{
 		int nTab = 4*4; // represent the number of quarters of the average character width for the font
@@ -5658,6 +5661,7 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			checkDlgButton(hWnd2, cbCmdGrpDefaultNew, (pCmd->Flags & CETF_NEW_DEFAULT) ? BST_CHECKED : BST_UNCHECKED);
 			checkDlgButton(hWnd2, cbCmdGrpDefaultCmd, (pCmd->Flags & CETF_CMD_DEFAULT) ? BST_CHECKED : BST_UNCHECKED);
 			checkDlgButton(hWnd2, cbCmdGrpTaskbar, ((pCmd->Flags & CETF_NO_TASKBAR) == CETF_NONE) ? BST_CHECKED : BST_UNCHECKED);
+			checkDlgButton(hWnd2, cbCmdGrpToolbar, (pCmd->Flags & CETF_ADD_TOOLBAR) ? BST_CHECKED : BST_UNCHECKED);
 
 			lbEnable = TRUE;
 		}

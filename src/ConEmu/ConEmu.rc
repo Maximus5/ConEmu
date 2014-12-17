@@ -1280,6 +1280,7 @@ BEGIN
     CONTROL         "Default task for new console",cbCmdGrpDefaultNew,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,109,28,115,10
     CONTROL         "Default shell (Win+X)",cbCmdGrpDefaultCmd,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,109,41,115,10
     CONTROL         "Taskbar jump lists",cbCmdGrpTaskbar,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,227,28,93,10
+    CONTROL         "Toolbar",cbCmdGrpToolbar,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,227,41,93,10
 END
 
 IDD_SPG_APPDISTINCT DIALOGEX 0, 0, 328, 235

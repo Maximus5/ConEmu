@@ -1065,6 +1065,7 @@
 #define cbCmdGrpDefaultNew              2750
 #define cbCmdGrpDefaultCmd              2751
 #define cbCmdGrpTaskbar                 2752
+#define cbCmdGrpToolbar                 2753
 #define gbSTartGroupCommands            2754
 #define tStartGroupCommands             2755
 #define IDC_STATIC                      -1
