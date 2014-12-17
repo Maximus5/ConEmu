@@ -10395,12 +10395,28 @@ LPCTSTR CSettings::GetCurCmd(bool *pIsCmdList /*= NULL*/)
 
 LPCTSTR CSettings::GetCmd(bool *pIsCmdList, bool bNoTask /*= false*/)
 {
-	LPCWSTR pszCmd = GetCurCmd(pIsCmdList);
-	if (pszCmd)
-		return pszCmd;
-
+	LPCWSTR pszCmd = NULL;
 	if (pIsCmdList)
 		*pIsCmdList = false;
+
+	// User choosed default task?
+	int nGroup = 0;
+	const CommandTasks* pGrp = NULL;
+	while ((pGrp = gpSet->CmdTaskGet(nGroup++)))
+	{
+		if (pGrp->pszName && *pGrp->pszName
+			&& (pGrp->Flags & CETF_NEW_DEFAULT))
+		{
+			ms_DefNewTaskName.Attach(lstrdup(pGrp->pszName));
+			if (pIsCmdList)
+				*pIsCmdList = true;
+			return ms_DefNewTaskName.ms_Arg;
+		}
+	}
+
+	// Old style otherwise
+	if ((pszCmd = GetCurCmd(pIsCmdList)) != NULL)
+		return pszCmd;
 
 	switch (gpSet->nStartType)
 	{
@@ -10510,6 +10526,7 @@ LPCTSTR CSettings::GetCmd(bool *pIsCmdList, bool bNoTask /*= false*/)
 	return GetCurCmd(pIsCmdList);
 }
 
+// TODO: Option for default task?
 LPCTSTR CSettings::GetDefaultCmd()
 {
 	_ASSERTE(szDefCmd[0]!=0);

@@ -42,6 +42,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "OptionsClass.h"
 #include "RealConsole.h"
 #include "ScreenDump.h"
+#include "SetCmdTask.h"
 #include "TabBar.h"
 #include "VConGroup.h"
 #include "VirtualConsole.h"
@@ -600,7 +601,29 @@ bool CConEmuCtrl::key_MultiCmd(const ConEmuChord& VkState, bool TestOnly, const 
 		return true;
 
 	RConStartArgs args;
-	args.pszSpecialCmd = GetComspec(&gpSet->ComSpec); //lstrdup(L"cmd");
+
+	// User choosed default task?
+	int nGroup = 0;
+	const CommandTasks* pGrp = NULL;
+	while ((pGrp = gpSet->CmdTaskGet(nGroup++)))
+	{
+		if (pGrp->pszName && *pGrp->pszName
+			&& (pGrp->Flags & CETF_CMD_DEFAULT))
+		{
+			// Scripts are not supported in that case
+			args.pszSpecialCmd = lstrdup(pGrp->pszCommands);
+			if (args.pszSpecialCmd)
+			{
+				wchar_t* pszLine = wcspbrk(args.pszSpecialCmd, L"\r\n");
+				if (pszLine) *pszLine = 0;
+			}
+			break;
+		}
+	}
+
+	if (!args.pszSpecialCmd)
+		args.pszSpecialCmd = GetComspec(&gpSet->ComSpec); //lstrdup(L"cmd");
+
 	gpConEmu->CreateCon(&args);
 	return true;
 }

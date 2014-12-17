@@ -185,6 +185,7 @@ class CSettings
 	private:
 		/* 'Default' command line (if nor Registry, nor /cmd specified) */
 		wchar_t  szDefCmd[MAX_PATH+32];
+		CEStr ms_DefNewTaskName;
 		/* Current command line, specified with "/cmd" or "/cmdlist" switches */
 		wchar_t* pszCurCmd;
 		bool isCurCmdList; // а это если был указан /cmdlist
