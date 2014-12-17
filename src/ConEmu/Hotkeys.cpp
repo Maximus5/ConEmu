@@ -621,7 +621,7 @@ LPCWSTR ConEmuHotKey::GetHotkeyName(wchar_t (&szFull)[128], bool bShowNone /*= t
 		}
 		else if (bShowNone)
 		{
-			wcscpy_c(szFull, L"<None>");
+			wcscpy_c(szFull, gsNoHotkey);
 		}
 		else
 		{
