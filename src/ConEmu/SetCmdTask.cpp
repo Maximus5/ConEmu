@@ -1,4 +1,4 @@
-
+п»ї
 /*
 Copyright (c) 2014 Maximus5
 All rights reserved.
@@ -63,7 +63,7 @@ void CommandTasks::SetName(LPCWSTR asName, int anCmdIndex)
 		asName = szCmd;
 	}
 
-	// Для простоты дальнейшей работы - имя должно быть заключено в угловые скобки
+	// Р”Р»СЏ РїСЂРѕСЃС‚РѕС‚С‹ РґР°Р»СЊРЅРµР№С€РµР№ СЂР°Р±РѕС‚С‹ - РёРјСЏ РґРѕР»Р¶РЅРѕ Р±С‹С‚СЊ Р·Р°РєР»СЋС‡РµРЅРѕ РІ СѓРіР»РѕРІС‹Рµ СЃРєРѕР±РєРё
 	size_t iLen = wcslen(asName);
 
 	if (!pszName || ((iLen+2) >= cchNameMax))
@@ -164,7 +164,7 @@ void CommandTasks::ParseGuiArgs(RConStartArgs* pArgs) const
 			{
 				wchar_t* pszExpand = NULL;
 
-				// Например, "%USERPROFILE%"
+				// РќР°РїСЂРёРјРµСЂ, "%USERPROFILE%"
 				if (wcschr(szArg, L'%'))
 				{
 					pszExpand = ExpandEnvStr(szArg);
@@ -182,7 +182,7 @@ void CommandTasks::ParseGuiArgs(RConStartArgs* pArgs) const
 			{
 				wchar_t* pszExpand = NULL;
 
-				// Например, "%USERPROFILE%"
+				// РќР°РїСЂРёРјРµСЂ, "%USERPROFILE%"
 				if (wcschr(szArg, L'%'))
 				{
 					pszExpand = ExpandEnvStr(szArg);
