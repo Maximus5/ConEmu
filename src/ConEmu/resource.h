@@ -1062,6 +1062,8 @@
 #define gbFeatureInConsole              2746
 #define gbFeatureDebug                  2747
 #define gbFeatureRetard                 2748
+#define cbCmdGrpDefaultNew              2750
+#define cbCmdGrpDefaultCmd              2751
 #define gbSTartGroupCommands            2754
 #define tStartGroupCommands             2755
 #define IDC_STATIC                      -1

@@ -60,7 +60,7 @@ const ListBoxItem  CSetDlgLists::ThumbMaxZoom[] = {{100,L"100%"},{200,L"200%"},{
 const ListBoxItem  CSetDlgLists::CRLF[] = {{0,L"CR+LF"}, {1,L"LF"}, {2,L"CR"}};
 
 const DWORD CSetDlgLists::SizeCtrlId[] = {tWndWidth, stWndWidth, tWndHeight, stWndHeight};
-const DWORD CSetDlgLists::TaskCtrlId[] = {tCmdGroupName, tCmdGroupKey, cbCmdGroupKey, tCmdGroupGuiArg, tCmdGroupCommands, stCmdTaskAdd, cbCmdGroupApp, cbCmdTasksDir, cbCmdTasksParm, cbCmdTasksActive};
+const DWORD CSetDlgLists::TaskCtrlId[] = {tCmdGroupName, tCmdGroupKey, cbCmdGroupKey, tCmdGroupGuiArg, tCmdGroupCommands, stCmdTaskAdd, cbCmdGroupApp, cbCmdTasksDir, cbCmdTasksParm, cbCmdTasksActive, cbCmdGrpDefaultNew, cbCmdGrpDefaultCmd};
 const DWORD CSetDlgLists::StatusColorIds[] = {stStatusColorBack, tc35, c35, stStatusColorLight, tc36, c36, stStatusColorDark, tc37, c37};
 const DWORD CSetDlgLists::ImgCtrls[] = {tBgImage, bBgImage};
 const DWORD CSetDlgLists::ExtendFonts[] = {lbExtendFontBoldIdx, lbExtendFontItalicIdx, lbExtendFontNormalIdx};

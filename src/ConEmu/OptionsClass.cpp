@@ -3370,6 +3370,15 @@ LRESULT CSettings::OnInitDialog_Tasks(HWND hWnd2, bool abForceReload)
 {
 	mb_IgnoreCmdGroupEdit = true;
 
+	wchar_t szKey[128] = L"";
+	const ConEmuHotKey* pDefCmdKey = NULL;
+	if (!gpSet->GetHotkeyById(vkMultiCmd, &pDefCmdKey) || !pDefCmdKey)
+		wcscpy_c(szKey, gsNoHotkey);
+	else
+		pDefCmdKey->GetHotkeyName(szKey, true);
+	CEStr lsLabel(lstrmerge(L"Default shell (", szKey, L")"));
+	SetDlgItemText(hWnd2, cbCmdGrpDefaultCmd, lsLabel);
+
 	if (abForceReload)
 	{
 		int nTab = 4*4; // represent the number of quarters of the average character width for the font
@@ -5645,6 +5654,10 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 
 			SetDlgItemText(hWnd2, tCmdGroupGuiArg, pCmd->pszGuiArgs ? pCmd->pszGuiArgs : L"");
 			SetDlgItemText(hWnd2, tCmdGroupCommands, pCmd->pszCommands ? pCmd->pszCommands : L"");
+
+			checkDlgButton(hWnd2, cbCmdGrpDefaultNew, (pCmd->Flags & CETF_NEW_DEFAULT) ? BST_CHECKED : BST_UNCHECKED);
+			checkDlgButton(hWnd2, cbCmdGrpDefaultCmd, (pCmd->Flags & CETF_CMD_DEFAULT) ? BST_CHECKED : BST_UNCHECKED);
+
 			lbEnable = TRUE;
 		}
 		else

@@ -32,6 +32,8 @@ struct ConEmuHotKey;
 
 typedef DWORD CETASKFLAGS;
 const CETASKFLAGS
+	CETF_NEW_DEFAULT    = 0x0001,
+	CETF_CMD_DEFAULT    = 0x0002,
 	CETF_NONE           = 0;
 
 struct CommandTasks

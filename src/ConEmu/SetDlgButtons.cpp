@@ -809,6 +809,10 @@ bool CSetDlgButtons::ProcessButtonClick(HWND hDlg, WORD CB, BYTE uCheck)
 		/* *** Update settings *** */
 
 		/* *** Command groups *** */
+		case cbCmdGrpDefaultNew:
+		case cbCmdGrpDefaultCmd:
+			OnBtn_CmdTasksFlags(hDlg, CB, uCheck);
+			break;
 		case cbCmdTasksAdd:
 			OnBtn_CmdTasksAdd(hDlg, CB, uCheck);
 			break;
@@ -1105,6 +1109,66 @@ void CSetDlgButtons::OnBtn_InactiveCursorIgnoreSize(HWND hDlg, WORD CB, BYTE uCh
 	pApp->CursorInactive.isFixedSize = uCheck;
 
 } // cbInactiveCursorIgnoreSize
+
+
+// cbCmdGrpDefaultNew, cbCmdGrpDefaultCmd
+void CSetDlgButtons::OnBtn_CmdTasksFlags(HWND hDlg, WORD CB, BYTE uCheck)
+{
+	// Only visual mode is supported
+	if (!hDlg)
+		return;
+
+	int iCur = (int)SendDlgItemMessage(hDlg, lbCmdTasks, LB_GETCURSEL, 0,0);
+	if (iCur < 0)
+		return;
+
+	CommandTasks* p = (CommandTasks*)gpSet->CmdTaskGet(iCur);
+	if (!p)
+		return;
+
+	bool bDistinct = false;
+	CETASKFLAGS flag = CETF_NONE;
+
+	switch (CB)
+	{
+	case cbCmdGrpDefaultNew:
+		flag = CETF_NEW_DEFAULT;
+		if (IsChecked(hDlg, CB))
+		{
+			bDistinct = true;
+			p->Flags |= flag;
+		}
+		else
+		{
+			p->Flags &= ~flag;
+		}
+		break;
+	case cbCmdGrpDefaultCmd:
+		flag = CETF_CMD_DEFAULT;
+		if (IsChecked(hDlg, CB))
+		{
+			bDistinct = true;
+			p->Flags |= flag;
+		}
+		else
+		{
+			p->Flags &= ~flag;
+		}
+		break;
+	}
+
+	if (bDistinct)
+	{
+		int nGroup = 0;
+		CommandTasks* pGrp = NULL;
+		while ((pGrp = (CommandTasks*)gpSet->CmdTaskGet(nGroup++)))
+		{
+			if (pGrp != p)
+				pGrp->Flags &= ~flag;
+		}
+	}
+
+} // cbCmdGrpDefaultNew, cbCmdGrpDefaultCmd
 
 
 // cbCmdTasksAdd
