@@ -50,4 +50,7 @@ struct CommandTasks
 	void SetCommands(LPCWSTR asCommands);
 
 	void ParseGuiArgs(RConStartArgs* pArgs) const;
+
+	bool LoadCmdTask(SettingsBase* reg, int iIndex);
+	bool SaveCmdTask(SettingsBase* reg, bool isStartup);
 };

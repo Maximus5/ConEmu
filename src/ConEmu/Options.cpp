@@ -1212,7 +1212,9 @@ void Settings::LoadCmdTasks(SettingsBase* reg, bool abFromOpDlg /*= false*/)
 		lbOpened = reg->OpenKey(szCmdKey, KEY_READ);
 		if (lbOpened)
 		{
-			LoadCmdTask(reg, StartupTask, -1);
+			_ASSERTE(StartupTask == NULL);
+			if ((StartupTask = (CommandTasks*)calloc(1, sizeof(CommandTasks))) != NULL)
+				StartupTask->LoadCmdTask(reg, -1);
 
 			reg->CloseKey();
 		}
@@ -1242,8 +1244,10 @@ void Settings::LoadCmdTasks(SettingsBase* reg, bool abFromOpDlg /*= false*/)
 			lbOpened = reg->OpenKey(szCmdKey, KEY_READ);
 			if (lbOpened)
 			{
-				if (LoadCmdTask(reg, CmdTasks[i], i))
-					nSucceeded++;
+				_ASSERTE(CmdTasks[i] == NULL);
+				if ((CmdTasks[i] = (CommandTasks*)calloc(1, sizeof(CommandTasks))) != NULL)
+					if (CmdTasks[i]->LoadCmdTask(reg, i))
+						nSucceeded++;
 
 				reg->CloseKey();
 			}
@@ -1253,113 +1257,6 @@ void Settings::LoadCmdTasks(SettingsBase* reg, bool abFromOpDlg /*= false*/)
 
 	if (lbDelete)
 		delete reg;
-}
-
-bool Settings::LoadCmdTask(SettingsBase* reg, CommandTasks* &pTask, int iIndex)
-{
-	bool lbRc = false;
-	wchar_t szVal[32];
-	int iCmdMax = 0, iCmdCount = 0;
-
-	wchar_t* pszNameSet = NULL;
-	if (iIndex >= 0)
-	{
-		if (!reg->Load(L"Name", &pszNameSet) || !*pszNameSet)
-		{
-			SafeFree(pszNameSet);
-			goto wrap;
-		}
-	}
-	else
-	{
-		_ASSERTE(&pTask == &StartupTask);
-	}
-
-	_ASSERTE(pTask==NULL);
-
-	pTask = (CommandTasks*)calloc(1, sizeof(CommandTasks));
-	if (!pTask)
-	{
-		SafeFree(pszNameSet);
-		goto wrap;
-	}
-
-	pTask->SetName(pszNameSet, iIndex);
-
-	pTask->HotKey.HkType = chk_Task;
-	DWORD VkMod = 0;
-	if ((iIndex >= 0) && reg->Load(L"Hotkey", VkMod))
-		pTask->HotKey.SetVkMod(VkMod);
-	else
-		pTask->HotKey.Key.Set();
-
-
-	if (!reg->Load(L"GuiArgs", &pTask->pszGuiArgs) || !*pTask->pszGuiArgs)
-	{
-		pTask->cchGuiArgMax = 0;
-		SafeFree(pTask->pszGuiArgs);
-	}
-	else
-	{
-		pTask->cchGuiArgMax = _tcslen(pTask->pszGuiArgs)+1;
-	}
-
-	lbRc = true;
-
-	if (reg->Load(L"Count", iCmdMax) && (iCmdMax > 0))
-	{
-		size_t nTotalLen = 1024; // с запасом, для редактирования через интерфейс
-		wchar_t** pszCommands = (wchar_t**)calloc(iCmdMax, sizeof(wchar_t*));
-
-		for (int j = 0; j < iCmdMax; j++)
-		{
-			_wsprintf(szVal, SKIPLEN(countof(szVal)) L"Cmd%i", j+1); // 1-based
-
-			if (reg->Load(szVal, &(pszCommands[j])) && pszCommands[j] && *pszCommands[j])
-			{
-				iCmdCount++;
-				nTotalLen += _tcslen(pszCommands[j])+8; // + ">\r\n\r\n"
-			}
-			else
-				SafeFree(pszCommands[j]);
-		}
-
-		if ((iCmdCount > 0) && (nTotalLen))
-		{
-			pTask->cchCmdMax = nTotalLen+1;
-			pTask->pszCommands = (wchar_t*)malloc(pTask->cchCmdMax*sizeof(wchar_t));
-			if (pTask->pszCommands)
-			{
-				//pTask->nCommands = iCmdCount;
-
-				int nActive = 0;
-				reg->Load(L"Active", nActive); // 1-based
-
-				wchar_t* psz = pTask->pszCommands; // dest script
-				for (int k = 0; k < iCmdCount; k++)
-				{
-					bool bActive = false;
-					gpConEmu->ParseScriptLineOptions(pszCommands[k], NULL, &bActive);
-
-					if (((k+1) == nActive) && !bActive)
-						*(psz++) = L'>';
-
-					lstrcpy(psz, pszCommands[k]);
-					SafeFree(pszCommands[k]);
-
-					if ((k+1) < iCmdCount)
-						lstrcat(psz, L"\r\n\r\n"); // для визуальности редактирования
-
-					psz += lstrlen(psz);
-				}
-			}
-		}
-
-		SafeFree(pszCommands);
-	}
-
-wrap:
-	return lbRc;
 }
 
 bool Settings::SaveCmdTasks(SettingsBase* reg)
@@ -1405,7 +1302,7 @@ bool Settings::SaveCmdTasks(SettingsBase* reg)
 			}
 			else
 			{
-				SaveCmdTask(reg, CmdTasks[i]);
+				CmdTasks[i]->SaveCmdTask(reg, false/*CmdTasks[i] == StartupTask*/);
 
 				reg->CloseKey();
 			}
@@ -1414,69 +1311,6 @@ bool Settings::SaveCmdTasks(SettingsBase* reg)
 
 	if (lbDelete)
 		delete reg;
-
-	return lbRc;
-}
-
-bool Settings::SaveCmdTask(SettingsBase* reg, CommandTasks* pTask)
-{
-	bool lbRc = true;
-	int iCmdCount = 0;
-	int nActive = 0; // 1-based
-	wchar_t szVal[32];
-
-	if (pTask != StartupTask)
-	{
-		reg->Save(L"Name", pTask->pszName);
-		reg->Save(L"Hotkey", pTask->HotKey.GetVkMod());
-	}
-
-	reg->Save(L"GuiArgs", pTask->pszGuiArgs);
-
-	if (pTask->pszCommands)
-	{
-		wchar_t* pszCmd = pTask->pszCommands;
-		while (*pszCmd == L'\r' || *pszCmd == L'\n' || *pszCmd == L'\t' || *pszCmd == L' ')
-			pszCmd++;
-
-		while (pszCmd && *pszCmd)
-		{
-			iCmdCount++;
-
-			wchar_t* pszEnd = wcschr(pszCmd, L'\n');
-			if (pszEnd && (*(pszEnd-1) == L'\r'))
-				pszEnd--;
-			wchar_t chSave = 0;
-			if (pszEnd)
-			{
-				chSave = *pszEnd;
-				*pszEnd = 0;
-			}
-
-			_wsprintf(szVal, SKIPLEN(countof(szVal)) L"Cmd%i", iCmdCount); // 1-based
-
-			if (*pszCmd == L'>')
-			{
-				//pszCmd++;
-				nActive = iCmdCount; // 1-based
-			}
-
-			reg->Save(szVal, pszCmd);
-
-			if (pszEnd)
-				*pszEnd = chSave;
-
-			if (!pszEnd)
-				break;
-			pszCmd = pszEnd+1;
-			while (*pszCmd == L'\r' || *pszCmd == L'\n' || *pszCmd == L'\t' || *pszCmd == L' ')
-				pszCmd++;
-		}
-
-		reg->Save(L"Active", nActive); // 1-based
-	}
-
-	reg->Save(L"Count", iCmdCount);
 
 	return lbRc;
 }
@@ -3210,7 +3044,7 @@ void Settings::SaveSettingsOnExit()
 						StartupTask->SetCommands(pszTabs);
 
 
-						SaveCmdTask(reg, StartupTask);
+						StartupTask->SaveCmdTask(reg, true);
 					}
 
 					reg->CloseKey();

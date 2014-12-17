@@ -208,8 +208,6 @@ struct Settings
 		int CmdTaskCount;
 		CommandTasks** CmdTasks;
 		CommandTasks* StartupTask;
-		bool LoadCmdTask(SettingsBase* reg, CommandTasks* &pTask, int iIndex);
-		bool SaveCmdTask(SettingsBase* reg, CommandTasks* pTask);
 		void FreeCmdTasks();
 
 		int PaletteCount;
