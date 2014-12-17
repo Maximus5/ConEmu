@@ -122,6 +122,20 @@ int ConEmuHotKeyList::AllocateHotkeys()
 	/*
 		*** User (Keys)
 	*/
+	Add(vkMultiNew,       chk_User,  NULL,    L"Multi.NewConsole",      CConEmuCtrl::key_MultiNew)
+		->SetHotKey('W',VK_LWIN);
+	Add(vkMultiNewShift,  chk_User,  NULL,    L"Multi.NewConsoleShift", CConEmuCtrl::key_MultiNewShift)
+		->SetHotKey('W',VK_LWIN,VK_SHIFT);
+	Add(vkMultiCmd,       chk_User,  NULL,    L"Multi.CmdKey",          CConEmuCtrl::key_MultiCmd)
+		->SetHotKey('X',VK_LWIN);
+	Add(vkMultiNewWnd,    chk_User,  NULL,    L"Multi.NewWindow",       CConEmuCtrl::key_MultiNewWindow)
+		;
+	Add(vkMultiNewPopup,  chk_User,  NULL,    L"Multi.NewConsolePopup", CConEmuCtrl::key_MultiNewPopupMenu)
+		->SetHotKey('N',VK_LWIN);
+	Add(vkMultiNewPopup2, chk_User,  NULL,    L"Multi.NewConsolePopup2",CConEmuCtrl::key_MultiNewPopupMenu2)
+		;
+	Add(vkMultiNewAttach, chk_User,  NULL,    L"Multi.NewAttach",       CConEmuCtrl::key_MultiNewAttach, true/*OnKeyUp*/)
+		->SetHotKey('G',VK_LWIN);
 	/*
 			Splitters
 	*/
@@ -151,21 +165,6 @@ int ConEmuHotKeyList::AllocateHotkeys()
 		->SetHotKey(VK_LEFT,VK_APPS);
 	Add(vkSplitFocusRight,chk_User,  NULL,    L"Multi.SplitFocusR",     CConEmuCtrl::key_GuiMacro, false, L"Split(2,1,0)")
 		->SetHotKey(VK_RIGHT,VK_APPS);
-	/*
-			Multi-console
-	*/
-	Add(vkMultiNew,       chk_User,  NULL,    L"Multi.NewConsole",      CConEmuCtrl::key_MultiNew)
-		->SetHotKey('W',VK_LWIN);
-	Add(vkMultiNewShift,  chk_User,  NULL,    L"Multi.NewConsoleShift", CConEmuCtrl::key_MultiNewShift)
-		->SetHotKey('W',VK_LWIN,VK_SHIFT);
-	Add(vkMultiNewPopup,  chk_User,  NULL,    L"Multi.NewConsolePopup", CConEmuCtrl::key_MultiNewPopupMenu)
-		->SetHotKey('N',VK_LWIN);
-	Add(vkMultiNewPopup2, chk_User,  NULL,    L"Multi.NewConsolePopup2",CConEmuCtrl::key_MultiNewPopupMenu2)
-		;
-	Add(vkMultiNewWnd,    chk_User,  NULL,    L"Multi.NewWindow",       CConEmuCtrl::key_MultiNewWindow)
-		;
-	Add(vkMultiNewAttach, chk_User,  NULL,    L"Multi.NewAttach",       CConEmuCtrl::key_MultiNewAttach, true/*OnKeyUp*/)
-		->SetHotKey('G',VK_LWIN);
 	Add(vkMultiNext,      chk_User,  NULL,    L"Multi.Next",            CConEmuCtrl::key_MultiNext)
 		->SetHotKey('Q',VK_LWIN);
 	Add(vkMultiNextShift, chk_User,  NULL,    L"Multi.NextShift",       CConEmuCtrl::key_MultiNextShift)
@@ -206,8 +205,6 @@ int ConEmuHotKeyList::AllocateHotkeys()
 		->SetHotKey(VK_LEFT,VK_LWIN,VK_MENU);
 	Add(vkMoveTabRight,   chk_User,  NULL,    L"Multi.MoveRight",       CConEmuCtrl::key_MoveTabRight)
 		->SetHotKey(VK_RIGHT,VK_LWIN,VK_MENU);
-	Add(vkMultiCmd,       chk_User,  NULL,    L"Multi.CmdKey",          CConEmuCtrl::key_MultiCmd)
-		->SetHotKey('X',VK_LWIN);
 	Add(vkCTSVkBlockStart,chk_User,  NULL,    L"CTS.VkBlockStart",      CConEmuCtrl::key_CTSVkBlockStart) // запуск выделения блока
 		;
 	Add(vkCTSVkTextStart, chk_User,  NULL,    L"CTS.VkTextStart",       CConEmuCtrl::key_CTSVkTextStart)  // запуск выделения текста
