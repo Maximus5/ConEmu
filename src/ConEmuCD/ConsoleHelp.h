@@ -44,7 +44,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 		L"   or: ConEmuC /IsConEmu | /IsAnsi | /IsAdmin | /IsTerm\r\n" \
 		L"   or: ConEmuC /DEBUGPID=<PID>[,<PID2>[,...]] [/DUMP | /MINI | /FULL]\r\n" \
 		L"   or: ConEmuC /DEBUGEXE | /DEBUGTREE <CommandLine>\r\n" \
-		L"   or: ConEmuC /EXPORT[=CON|ALL] [Var1 [Var2 [...]]]\r\n" \
+		L"   or: ConEmuC /EXPORT[=CON|GUI|ALL] [Var1 [Var2 [...]]]\r\n" \
 		L"   or: ConEmuC /ECHO | /TYPE [...]\r\n" \
 _DBGHLP(L"   or: ConEmuC /REGCONFONT=<FontName> -> RegisterConsoleFontHKLM\r\n") \
 		L"   or: ConEmuC /?\r\n" \

@@ -2731,7 +2731,8 @@ enum ConEmuExecAction
 	ea_GuiMacro,
 	ea_CheckUnicodeFont,
 	ea_ExportCon,  // export env.vars to processes of active console
-	ea_ExportGui,  // ea_ExportCon + ConEmu window
+	ea_ExportTab,  // ea_ExportCon + ConEmu window
+	ea_ExportGui,  // export env.vars to ConEmu window
 	ea_ExportAll,  // export env.vars to all opened tabs of current ConEmu window
 	ea_Download,   // after "/download" switch may be unlimited pairs of {"url","file"},{"url","file"},...
 	ea_ParseArgs,  // debug test of NextArg function... print args to STDOUT
@@ -3090,7 +3091,9 @@ int DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent = f
 
 	// Go, build tree (first step - query all running PIDs in the system)
 	nParentPID = nSelfPID;
-	h = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+	// Don't do snapshot if only GUI was requested
+	h = (eExecAction != ea_ExportGui) ? CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0) : NULL;
+	// Snapshot opened?
 	if (h && (h != INVALID_HANDLE_VALUE))
 	{
 		PROCESSENTRY32 PI = {sizeof(PI)};
@@ -3196,6 +3199,7 @@ int DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent = f
 			_ASSERTE(pIn->hdr.nCmd == CECMD_EXPORTVARS);
 		}
 
+		// ea_ExportTab, ea_ExportGui, ea_ExportAll -> export to ConEmu window
 		ExecuteGuiCmd(ghConWnd, pIn, ghConWnd, TRUE);
 	}
 
@@ -3899,6 +3903,7 @@ int DoExecAction(ConEmuExecAction eExecAction, LPCWSTR asCmdArg /* rest of cmdli
 			break;
 		}
 	case ea_ExportCon:
+	case ea_ExportTab:
 	case ea_ExportGui:
 	case ea_ExportAll:
 		{
@@ -4349,8 +4354,10 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 				eExecAction = ea_ExportAll;
 			else if (lstrcmpi(szArg, L"/EXPORT=CON")==0 || lstrcmpi(szArg, L"/EXPORTCON")==0)
 				eExecAction = ea_ExportCon;
-			else
+			else if (lstrcmpi(szArg, L"/EXPORT=GUI")==0 || lstrcmpi(szArg, L"/EXPORTGUI")==0)
 				eExecAction = ea_ExportGui;
+			else
+				eExecAction = ea_ExportTab;
 			break;
 		}
 		else if (lstrcmpi(szArg, L"/Download")==0)
