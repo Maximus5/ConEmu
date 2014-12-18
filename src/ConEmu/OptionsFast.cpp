@@ -747,7 +747,12 @@ void CreateDefaultTasks(bool bForceAdd /*= false*/)
 	//{L"CygWin mintty", L"\\CygWin\\bin\\mintty.exe", L" -"},
 	CreateDefaultTask(szConEmuDrive, iCreatIdx, L"MinGW bash",  L" --login -i", L"set CHERE_INVOKING=1 & ", NULL, L"\\MinGW\\msys\\1.0\\bin\\sh.exe", NULL);
 	//{L"MinGW mintty", L"\\MinGW\\msys\\1.0\\bin\\mintty.exe", L" -"},
-	CreateDefaultTask(szConEmuDrive, iCreatIdx, L"Git bash", L" --login -i", NULL, NULL,
+	#ifdef _WIN64
+	wchar_t gitBashIconPrefix[] = L"\"-new_console:C:%ProgramFiles(x86)%\\Git\\etc\\git.ico\" ";
+	#else
+	wchar_t gitBashIconPrefix[] = L"\"-new_console:C:%ProgramFiles%\\Git\\etc\\git.ico\" ";
+	#endif
+	CreateDefaultTask(szConEmuDrive, iCreatIdx, L"Git bash", L" --login -i", gitBashIconPrefix, NULL,
 		L"%ProgramFiles%\\Git\\bin\\sh.exe", L"%ProgramW6432%\\Git\\bin\\sh.exe",
 		#ifdef _WIN64
 		L"%ProgramFiles(x86)%\\Git\\bin\\sh.exe",
