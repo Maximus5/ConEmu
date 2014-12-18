@@ -3199,7 +3199,17 @@ CVirtualConsole* CConEmuMain::CreateConGroup(LPCWSTR apszScript, bool abForceAsA
 			RConStartArgs args;
 
 			if (apDefArgs)
+			{
 				args.AssignFrom(apDefArgs);
+
+				// If the caller has specified exact split configuration - use it only for the first creating pane
+				if (lbOneCreated && args.eSplit)
+				{
+					args.eSplit = args.eSplitNone;
+					args.nSplitValue = DefaultSplitValue;
+					args.nSplitPane = 0;
+				}
+			}
 
 			if (apDefArgs && apDefArgs->pszStartupDir && *apDefArgs->pszStartupDir)
 				args.pszStartupDir = lstrdup(apDefArgs->pszStartupDir);
