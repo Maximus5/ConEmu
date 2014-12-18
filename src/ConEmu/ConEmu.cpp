@@ -3296,7 +3296,7 @@ CVirtualConsole* CConEmuMain::CreateConGroup(LPCWSTR apszScript, bool abForceAsA
 				}
 				else
 				{
-					lbOneCreated = TRUE;
+					lbOneCreated = true;
 
 					const RConStartArgs& modArgs = pVCon->RCon()->GetArgs();
 					if (modArgs.ForegroungTab == crb_On)
