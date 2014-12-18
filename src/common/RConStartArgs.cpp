@@ -1104,18 +1104,18 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 									pszEnd = pszDigits;
 									if (*pszDigits == L'T')
 									{
-                                    	nTab = n;
-                                	}
-                                    else if ((*pszDigits == L'H') || (*pszDigits == L'V'))
-                                    {
-                                    	nValue = n;
-                                    	eSplit = (*pszDigits == L'H') ? eSplitHorz : eSplitVert;
-                                    }
-                                    else
-                                    {
-                                    	break;
-                                    }
-                                    pszEnd++;
+										nTab = n;
+									}
+									else if ((*pszDigits == L'H') || (*pszDigits == L'V'))
+									{
+										nValue = n;
+										eSplit = (*pszDigits == L'H') ? eSplitHorz : eSplitVert;
+									}
+									else
+									{
+										break;
+									}
+									pszEnd++;
 								}
 								else if (*pszEnd == L'T')
 								{
@@ -1124,9 +1124,9 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 								}
 								else if ((*pszEnd == L'H') || (*pszEnd == L'V'))
 								{
-	                            	nValue = DefaultSplitValue/10;
-	                            	eSplit = (*pszEnd == L'H') ? eSplitHorz : eSplitVert;
-	                            	pszEnd++;
+									nValue = DefaultSplitValue/10;
+									eSplit = (*pszEnd == L'H') ? eSplitHorz : eSplitVert;
+									pszEnd++;
 								}
 								else if (*pszEnd == L'N')
 								{
