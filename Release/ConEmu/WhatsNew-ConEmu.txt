@@ -12,6 +12,12 @@ Votes and awards (vote for ConEmu, if you please)
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+2014.12.17
+[*] Reorder create console hotkeys.
+[*] Now it's possible to choose ‘Default task for new console (Win+W)’ and ‘Default shell (Win+X)’.
+[*] Let's choose which tasks add to Windows 7 jump lists (check box ‘Taskbar jump lists’).
+
+
 2014.12.16
 [*] Issue 1705: In some cases ConEmuBg config xml file was not loaded properly.
 [*] Prefill MemoryDump Save as dialog with default dump file name.
