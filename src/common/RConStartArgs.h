@@ -43,6 +43,8 @@ enum RConBoolArg
 	crb_On,
 };
 
+#define DefaultSplitValue 500
+
 struct RConStartArgs
 {
 	RConBoolArg     Detached; // internal use

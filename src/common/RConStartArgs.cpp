@@ -47,8 +47,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define SecureZeroMemory(p,s) memset(p,0,s)
 #endif
 
-#define DefaultSplitValue 500
-
 #ifdef _DEBUG
 
 // На этом - ассерт возникает в NextArg
