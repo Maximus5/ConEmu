@@ -99,8 +99,10 @@ int RegGetStringValue(HKEY hk, LPCWSTR pszSubKey, LPCWSTR pszValueName, CEStr& r
 		}
 	}
 
-	if (hkChild != hk)
+	if (hkChild && (hkChild != hk))
+	{
 		RegCloseKey(hkChild);
+	}
 
 	return iLen;
 }
