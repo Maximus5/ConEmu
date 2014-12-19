@@ -828,6 +828,14 @@ void CreateDefaultTasks(bool bForceAdd /*= false*/)
 
 	// Bash
 
+	CreateDefaultTask(szConEmuDrive, iCreatIdx, L"Git bash",
+		L" --login -i -new_console:C:\"" FOUND_APP_PATH_STR L"\\..\\etc\\git.ico\"", NULL, NULL,
+		L"[SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Git_is1:InstallLocation]\\bin\\sh.exe",
+		L"%ProgramFiles%\\Git\\bin\\sh.exe", L"%ProgramW6432%\\Git\\bin\\sh.exe",
+		#ifdef _WIN64
+		L"%ProgramFiles(x86)%\\Git\\bin\\sh.exe",
+		#endif
+		NULL);
 	// For cygwin we can check registry keys (todo?)
 	// HKLM\SOFTWARE\Wow6432Node\Cygwin\setup\rootdir
 	// HKLM\SOFTWARE\Cygwin\setup\rootdir
@@ -836,12 +844,6 @@ void CreateDefaultTasks(bool bForceAdd /*= false*/)
 	//{L"CygWin mintty", L"\\CygWin\\bin\\mintty.exe", L" -"},
 	CreateDefaultTask(szConEmuDrive, iCreatIdx, L"MinGW bash",  L" --login -i", L"set CHERE_INVOKING=1 & ", NULL, L"\\MinGW\\msys\\1.0\\bin\\sh.exe", NULL);
 	//{L"MinGW mintty", L"\\MinGW\\msys\\1.0\\bin\\mintty.exe", L" -"},
-	CreateDefaultTask(szConEmuDrive, iCreatIdx, L"Git bash", L" --login -i", NULL, NULL,
-		L"%ProgramFiles%\\Git\\bin\\sh.exe", L"%ProgramW6432%\\Git\\bin\\sh.exe",
-		#ifdef _WIN64
-		L"%ProgramFiles(x86)%\\Git\\bin\\sh.exe",
-		#endif
-		NULL);
 	// Last chance for bash
 	CreateDefaultTask(szConEmuDrive, iCreatIdx, L"bash", L" --login -i", L"set CHERE_INVOKING=1 & ", NULL, L"sh.exe", NULL);
 
