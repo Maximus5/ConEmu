@@ -1542,8 +1542,7 @@ struct PipeServer
 						}
 					}
 					PLOG3(i,"CloseThreadHandle",m_Pipes[i].dwState);
-					CloseHandle(m_Pipes[i].hThread);
-					m_Pipes[i].hThread = NULL;
+					SafeCloseHandle(m_Pipes[i].hThread);
 					PLOG3(i,"CloseThreadHandle done",m_Pipes[i].dwState);
 				}
 			}
@@ -1563,8 +1562,7 @@ struct PipeServer
 				// And handles
 				if (m_Pipes[i].hEvent)
 				{
-					CloseHandle(m_Pipes[i].hEvent);
-					m_Pipes[i].hEvent = NULL;
+					SafeCloseHandle(m_Pipes[i].hEvent);
 				}
 				
 				// Release buffers memory
@@ -1587,13 +1585,11 @@ struct PipeServer
 			// Final release
 			if (mh_ServerSemaphore)
 			{
-				CloseHandle(mh_ServerSemaphore);
-				mh_ServerSemaphore = NULL;
+				SafeCloseHandle(mh_ServerSemaphore);
 			}
 			if (mh_TermEvent)
 			{
-				CloseHandle(mh_TermEvent);
-				mh_TermEvent = NULL;
+				SafeCloseHandle(mh_TermEvent);
 			}
 
 			free(m_Pipes);
