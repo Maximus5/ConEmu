@@ -35,6 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "OptionsHelp.h"
 #include "ConEmu.h"
 #include "ConEmuApp.h"
+#include "../common/WFiles.h"
 #include "../common/WRegistry.h"
 
 static bool bCheckHooks, bCheckUpdate, bCheckIme;
@@ -482,12 +483,17 @@ checkDefaults:
 // Search on asFirstDrive and all (other) fixed drive letters
 // asFirstDrive may be letter ("C:") or network (\\server\share)
 // asSearchPath is path to executable (\cygwin\bin\sh.exe)
-static bool FindOnDrives(LPCWSTR asFirstDrive, LPCWSTR asSearchPath, wchar_t (&rsFound)[MAX_PATH+1], bool& bNeedQuot)
+static bool FindOnDrives(LPCWSTR asFirstDrive, LPCWSTR asSearchPath, CEStr& rsFound, bool& bNeedQuot)
 {
 	bool bFound = false;
 	wchar_t* pszExpanded = NULL;
-	wchar_t szDrive[4] = L"C:\\";
+	wchar_t szDrive[4]; // L"C:"
+	wchar_t szTemp[MAX_PATH+1];
+
 	bNeedQuot = false;
+
+	if (!asSearchPath || !*asSearchPath)
+		goto wrap;
 
 	// Using environment variables?
 	if (wcschr(asSearchPath, L'%'))
@@ -496,7 +502,7 @@ static bool FindOnDrives(LPCWSTR asFirstDrive, LPCWSTR asSearchPath, wchar_t (&r
 		if (pszExpanded && FileExists(pszExpanded))
 		{
 			bNeedQuot = IsQuotationNeeded(pszExpanded);
-			lstrcpyn(rsFound, asSearchPath, countof(rsFound));
+			rsFound.Set(asSearchPath);
 			bFound = true;
 		}
 		goto wrap;
@@ -505,21 +511,28 @@ static bool FindOnDrives(LPCWSTR asFirstDrive, LPCWSTR asSearchPath, wchar_t (&r
 	// Only executable name was specified?
 	if (!wcschr(asSearchPath, L'\\'))
 	{
-		DWORD nFind = SearchPath(NULL, asSearchPath, NULL, countof(rsFound), rsFound, NULL);
-		if (nFind && nFind < countof(rsFound))
+		DWORD nFind = SearchPath(NULL, asSearchPath, NULL, countof(szTemp), szTemp, NULL);
+		if (nFind && (nFind < countof(szTemp)))
+		{
+			// OK, create task with just a name of exe file
+			bNeedQuot = IsQuotationNeeded(asSearchPath);
+			rsFound.Set(asSearchPath);
+			bFound = true;
+		}
+		// Search in [HKCU|HKLM]\Software\Microsoft\Windows\CurrentVersion\App Paths
+		if (SearchAppPaths(asSearchPath, rsFound, false/*abSetPath*/))
 		{
 			bNeedQuot = IsQuotationNeeded(asSearchPath);
-			lstrcpyn(rsFound, asSearchPath, countof(rsFound));
 			bFound = true;
 		}
 		goto wrap;
 	}
 
+	// ConEmu's drive
 	if (asFirstDrive && *asFirstDrive)
 	{
 		INT_PTR nDrvLen = _tcslen(asFirstDrive);
-		lstrcpyn(rsFound, asFirstDrive, countof(rsFound));
-		lstrcpyn(rsFound+nDrvLen, asSearchPath, countof(rsFound)-nDrvLen);
+		rsFound.Attach(JoinPath(asFirstDrive, asSearchPath));
 		if (FileExists(rsFound))
 		{
 			bNeedQuot = IsQuotationNeeded(rsFound);
@@ -528,13 +541,15 @@ static bool FindOnDrives(LPCWSTR asFirstDrive, LPCWSTR asSearchPath, wchar_t (&r
 		}
 	}
 
+	szDrive[1] = L':'; szDrive[2] = 0;
 	for (szDrive[0] = L'C'; szDrive[0] <= L'Z'; szDrive[0]++)
 	{
+		if ((asFirstDrive && *asFirstDrive) && (lstrcmpi(szDrive, asFirstDrive) == 0))
+			continue;
 		UINT nType = GetDriveType(szDrive);
 		if (nType != DRIVE_FIXED)
 			continue;
-		lstrcpyn(rsFound, szDrive, countof(rsFound));
-		lstrcpyn(rsFound+2, asSearchPath, countof(rsFound)-2);
+		rsFound.Attach(JoinPath(szDrive, asSearchPath));
 		if (FileExists(rsFound))
 		{
 			bNeedQuot = IsQuotationNeeded(rsFound);
@@ -608,7 +623,8 @@ void CreateDefaultTask(LPCWSTR asDrive, int& iCreatIdx, LPCWSTR asName, LPCWSTR 
 	va_list argptr;
 	va_start(argptr, asExePath);
 
-	wchar_t szFound[MAX_PATH+1], szUnexpand[MAX_PATH+32], *pszFull = NULL; bool bNeedQuot = false;
+	CEStr szFound, szArgs;
+	wchar_t szUnexpand[MAX_PATH+32], *pszFull = NULL; bool bNeedQuot = false;
 	MArray<wchar_t*> lsList;
 
 	while (asExePath)
@@ -699,6 +715,7 @@ void CreateDefaultTasks(bool bForceAdd /*= false*/)
 
 	wchar_t szConEmuDrive[MAX_PATH] = L"";
 	GetDrive(gpConEmu->ms_ConEmuExeDir, szConEmuDrive, countof(szConEmuDrive));
+	_ASSERTE(szConEmuDrive[0] && szConEmuDrive[_tcslen(szConEmuDrive)-1] != L'\\'); // Supposed to be simple "C:"
 
 	// Force use of "%ConEmuDrive%" instead of "%SystemDrive%"
 	CEStr sysSave;
@@ -715,7 +732,8 @@ void CreateDefaultTasks(bool bForceAdd /*= false*/)
 		PuTTY?
 	*/
 
-	wchar_t szFound[MAX_PATH+1], *pszFull; bool bNeedQuot = false;
+	CEStr szFound;
+	wchar_t *pszFull; bool bNeedQuot = false;
 
 	// Far Manager
 	CreateFarTasks(szConEmuDrive, iCreatIdx);
