@@ -1448,8 +1448,18 @@ struct PipeServer
 						{
 							// CreateThread was called, but thread routine was not entered yet.
 							PLOG3(i,"TerminateThread/STARTING_STATE",0);
-							_ASSERTE(mb_UseForceTerminate && "Do not use TerminateThread in GUI?");
-							TerminatePipeThread(m_Pipes[i].hThread, m_Pipes[i]);
+							DWORD nRet = (DWORD)-1; BOOL bRetGet = (BOOL)-1;
+							if (WaitForSingleObject(m_Pipes[i].hThread, 0) == WAIT_OBJECT_0)
+							{
+								bRetGet = GetExitCodeThread(m_Pipes[i].hThread, &nRet);
+								_ASSERTEX((m_Pipes[i].dwState != STARTING_STATE) && "Thread was terminated outside?");
+								SafeCloseHandle(m_Pipes[i].hThread);
+							}
+							else
+							{
+								_ASSERTEX(mb_UseForceTerminate && "Do not use TerminateThread in GUI?");
+								TerminatePipeThread(m_Pipes[i].hThread, m_Pipes[i]);
+							}
 							m_Pipes[i].dwState = THREAD_FINISHED_STATE;
 							PLOG3(i,"TerminateThread/STARTING_STATE done",0);
 						}
