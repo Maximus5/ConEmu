@@ -1249,20 +1249,26 @@ struct PipeServer
 			//}
 			return nResult;
 		};
-		static void TerminatePipeThread(HANDLE hThread, const PipeInst& pipe)
+		static void TerminatePipeThread(HANDLE& hThread, const PipeInst& pipe)
 		{
+			if (!hThread)
+				return;
+
 			#ifdef _DEBUG
+			LONG lSleeps = 0;
 			while (gnInMyAssertTrap > 0)
 			{
+				lSleeps++;
 				MessageBeep(MB_ICONSTOP);
 				Sleep(10000);
 			}
 			// Due to possible deadlocks when finalizing from DllMain
 			// the TerminateThread may be a sole way to terminate properly
-			_ASSERTE((pipe.dwState == TERMINATED_STATE) && "TerminatePipeThread");
+			_ASSERTEX((pipe.dwState == TERMINATED_STATE) && "TerminatePipeThread");
 			#endif
 
 			TerminateThread(hThread, 100);
+			SafeCloseHandle(hThread);
 		}
 	//public:
 	//	CPipeServer()
