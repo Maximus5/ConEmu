@@ -495,6 +495,32 @@ static bool FindOnDrives(LPCWSTR asFirstDrive, LPCWSTR asSearchPath, CEStr& rsFo
 	if (!asSearchPath || !*asSearchPath)
 		goto wrap;
 
+	// Using registry path?
+	if ((asSearchPath[0] == L'[') && wcschr(asSearchPath+1, L']'))
+	{
+		// L"[SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Git_is1:InstallLocation]\\bin\\sh.exe",
+		//   "InstallLocation"="C:\\Utils\\Lans\\GIT\\"
+		CEStr lsBuf, lsVal;
+		lsBuf.Set(asSearchPath+1);
+		wchar_t *pszFile = wcschr(lsBuf.ms_Arg, L']');
+		if (pszFile)
+		{
+			*(pszFile++) = 0;
+			wchar_t* pszValName = wcsrchr(lsBuf.ms_Arg, L':');
+			if (pszValName) *(pszValName++) = 0;
+			if (RegGetStringValue(NULL, lsBuf.ms_Arg, pszValName, lsVal) > 0)
+			{
+				rsFound.Attach(JoinPath(lsVal, pszFile));
+				if (FileExists(rsFound))
+				{
+					bNeedQuot = IsQuotationNeeded(pszExpanded);
+					bFound = true;
+				}
+			}
+		}
+		goto wrap;
+	}
+
 	// Using environment variables?
 	if (wcschr(asSearchPath, L'%'))
 	{
