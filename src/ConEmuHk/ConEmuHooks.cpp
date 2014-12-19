@@ -259,7 +259,7 @@ wchar_t gszTimeEnvVarSave[32] = L"";
 #if defined(__GNUC__)
 extern "C"
 #endif
-// Вызывается из OnTerminateProcess и OnTerminateThread
+// Вызывается из OnTerminateProcess/OnTerminateThread/OnExitProcess
 BOOL WINAPI DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpReserved);
 /* ************ From Entry.cpp ************ */
 
@@ -344,6 +344,7 @@ BOOL WINAPI OnCreateProcessW(LPCWSTR lpApplicationName, LPWSTR lpCommandLine, LP
 UINT WINAPI OnWinExec(LPCSTR lpCmdLine, UINT uCmdShow);
 BOOL WINAPI OnSetCurrentDirectoryA(LPCSTR lpPathName);
 BOOL WINAPI OnSetCurrentDirectoryW(LPCWSTR lpPathName);
+VOID WINAPI OnExitProcess(UINT uExitCode);
 BOOL WINAPI OnTerminateProcess(HANDLE hProcess, UINT uExitCode);
 BOOL WINAPI OnTerminateThread(HANDLE hThread, DWORD dwExitCode);
 
@@ -522,6 +523,7 @@ bool InitHooksCommon()
 		{(void*)OnSetConsoleKeyShortcuts, "SetConsoleKeyShortcuts", kernel32},
 		#endif
 		/* ************************ */
+		{(void*)OnExitProcess,			"ExitProcess",			kernel32},
 		{(void*)OnTerminateProcess,		"TerminateProcess",		kernel32},
 		{(void*)OnTerminateThread,		"TerminateThread",		kernel32},
 		/* ************************ */
@@ -1131,6 +1133,28 @@ void GuiFlashWindow(BOOL bSimple, HWND hWnd, BOOL bInvert, DWORD dwFlags, UINT u
 //wchar_t* str2wcs(const char* psz, UINT anCP);
 //wchar_t* wcs2str(const char* psz, UINT anCP);
 
+// May be called from "C" programs
+VOID WINAPI OnExitProcess(UINT uExitCode)
+{
+	typedef BOOL (WINAPI* OnExitProcess_t)(UINT uExitCode);
+	ORIGINALFAST(ExitProcess);
+
+	#if 0
+	if (gbIsLessProcess)
+	{
+		_ASSERTE(FALSE && "Continue to ExitProcess");
+	}
+	#endif
+
+	// We need not to unset hooks (due to process will be force-killed below)
+	extern BOOL gbHooksWasSet;
+	gbHooksWasSet = FALSE;
+	// And terminate our threads
+	DllMain(ghOurModule, DLL_PROCESS_DETACH, NULL);
+
+	F(ExitProcess)(uExitCode);
+}
+
 // For example, mintty is terminated ‘abnormally’. It calls TerminateProcess instead of ExitProcess.
 BOOL WINAPI OnTerminateProcess(HANDLE hProcess, UINT uExitCode)
 {
@@ -1157,6 +1181,13 @@ BOOL WINAPI OnTerminateThread(HANDLE hThread, DWORD dwExitCode)
 	typedef BOOL (WINAPI* OnTerminateThread_t)(HANDLE hThread, UINT dwExitCode);
 	ORIGINALFAST(TerminateThread);
 	BOOL lbRc;
+
+	#if 0
+	if (gbIsLessProcess)
+	{
+		_ASSERTE(FALSE && "Continue to terminate thread");
+	}
+	#endif
 
 	if (hThread == GetCurrentThread())
 	{
