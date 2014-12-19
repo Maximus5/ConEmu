@@ -38,6 +38,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/WFiles.h"
 #include "../common/WRegistry.h"
 
+#define FOUND_APP_PATH_CHR L'\1'
+#define FOUND_APP_PATH_STR L"\1"
+
 static bool bCheckHooks, bCheckUpdate, bCheckIme;
 // Если файл конфигурации пуст, то после вызова CheckOptionsFast
 // все равно будет SaveSettings(TRUE/*abSilent*/);
@@ -699,6 +702,38 @@ void CreateDefaultTask(LPCWSTR asDrive, int& iCreatIdx, LPCWSTR asName, LPCWSTR 
 			wcscpy_c(szUnexpand, L"%ConEmuDrive%");
 			wcscat_c(szUnexpand, szFound+2);
 			pszFound = szUnexpand;
+		}
+
+		if (asArgs && wcschr(asArgs, FOUND_APP_PATH_CHR))
+		{
+			CEStr szPath(lstrdup(pszFound));
+			if (!szPath.IsEmpty() && szArgs.Set(asArgs))
+			{
+				wchar_t* ptr;
+				ptr = wcsrchr(szPath.ms_Arg, L'\\');
+				if (ptr) *ptr = 0;
+				while ((ptr = wcschr(szArgs.ms_Arg, FOUND_APP_PATH_CHR)) != NULL)
+				{
+					*ptr = 0;
+					LPCWSTR pszTail = ptr+1;
+					ptr = (wcsncmp(pszTail, L"..\\", 3) != NULL) ? wcsrchr(szPath.ms_Arg, L'\\') : NULL;
+					if (ptr)
+					{
+						*ptr = 0;
+						pszTail += 3;
+					}
+
+					CEStr szTemp(JoinPath(szPath, pszTail));
+					szArgs.Attach(lstrmerge(szArgs.ms_Arg, szTemp));
+
+					if (ptr) *ptr = L'\\';
+				}
+			}
+			// Succeeded?
+			if (!szArgs.IsEmpty())
+			{
+				asArgs = szArgs.ms_Arg;
+			}
 		}
 
 		// Spaces in path? (use expanded path)
