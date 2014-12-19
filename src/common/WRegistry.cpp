@@ -31,6 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "defines.h"
 #include "Memory.h"
 #include "MAssert.h"
+#include "WObjects.h"
 #include "WRegistry.h"
 
 int RegEnumKeys(HKEY hkRoot, LPCWSTR pszParentPath, RegEnumKeysCallback fn, LPARAM lParam)
@@ -67,7 +68,7 @@ int RegEnumKeys(HKEY hkRoot, LPCWSTR pszParentPath, RegEnumKeysCallback fn, LPAR
 	return iRc;
 }
 
-int RegGetStringValue(HKEY hk, LPCWSTR pszSubKey, LPCWSTR pszValueName, CEStr& rszData)
+int RegGetStringValue(HKEY hk, LPCWSTR pszSubKey, LPCWSTR pszValueName, CEStr& rszData, DWORD Wow64Flags /*= 0*/)
 {
 	int iLen = -1;
 	HKEY hkChild = hk;
@@ -78,7 +79,25 @@ int RegGetStringValue(HKEY hk, LPCWSTR pszSubKey, LPCWSTR pszValueName, CEStr& r
 
 	if (pszSubKey && *pszSubKey)
 	{
-		if (0 != (lrc = RegOpenKeyEx(hk, pszSubKey, 0, KEY_READ, &hkChild)))
+		if (hk == NULL)
+		{
+			lrc = RegGetStringValue(HKEY_CURRENT_USER, pszSubKey, pszValueName, rszData, 0);
+			if (lrc < 0)
+			{
+				bool isWin64 = IsWindows64();
+				lrc = RegGetStringValue(HKEY_LOCAL_MACHINE, pszSubKey, pszValueName, rszData, isWin64 ? KEY_WOW64_64KEY : 0);
+				if ((lrc < 0) && isWin64)
+				{
+					lrc = RegGetStringValue(HKEY_LOCAL_MACHINE, pszSubKey, pszValueName, rszData, KEY_WOW64_32KEY);
+				}
+			}
+			if (lrc > 0)
+			{
+				return lrc;
+			}
+		}
+
+		if (0 != (lrc = RegOpenKeyEx(hk, pszSubKey, 0, KEY_READ|Wow64Flags, &hkChild)))
 			hkChild = NULL;
 	}
 

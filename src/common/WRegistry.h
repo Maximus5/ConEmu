@@ -35,4 +35,4 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 typedef bool (WINAPI* RegEnumKeysCallback)(HKEY hk, LPCWSTR pszSubkeyName, LPARAM lParam);
 int RegEnumKeys(HKEY hkRoot, LPCWSTR pszParentPath, RegEnumKeysCallback fn, LPARAM lParam);
 
-int RegGetStringValue(HKEY hk, LPCWSTR pszSubKey, LPCWSTR pszValueName, CEStr& rszData);
+int RegGetStringValue(HKEY hk, LPCWSTR pszSubKey, LPCWSTR pszValueName, CEStr& rszData, DWORD Wow64Flags = 0);
