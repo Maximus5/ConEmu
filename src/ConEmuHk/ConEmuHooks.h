@@ -141,6 +141,7 @@ extern bool gbIsNodeJSProcess;
 /* ************ Globals for cygwin/msys ************ */
 extern bool gbIsBashProcess;
 extern bool gbIsSshProcess;
+extern bool gbIsLessProcess;
 /* ************ Globals for cygwin/msys ************ */
 
 /* ************ Globals for ViM ************ */

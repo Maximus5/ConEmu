@@ -225,6 +225,7 @@ bool     gbIsNodeJSProcess = false;
 /* ************ Globals for cygwin/msys ************ */
 bool gbIsBashProcess = false;
 bool gbIsSshProcess = false;
+bool gbIsLessProcess = false;
 /* ************ Globals for cygwin/msys ************ */
 
 /* ************ Globals for ViM ************ */

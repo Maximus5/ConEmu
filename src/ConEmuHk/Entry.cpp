@@ -871,6 +871,10 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 		CreateThread(NULL, 0, DummyLibLoaderThread, NULL, 0, &gnDummyLibLoaderThreadTID);
 		#endif
 	}
+	else if (lstrcmpi(gsExeName, L"less.exe") == 0)
+	{
+		gbIsLessProcess = true;
+	}
 	else if (lstrcmpi(gsExeName, L"hiew32.exe") == 0)
 	{
 		gbIsHiewProcess = true;
