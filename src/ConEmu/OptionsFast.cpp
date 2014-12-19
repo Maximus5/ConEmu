@@ -528,6 +528,16 @@ static bool FindOnDrives(LPCWSTR asFirstDrive, LPCWSTR asSearchPath, CEStr& rsFo
 		goto wrap;
 	}
 
+	// Full path was specified? Check it.
+	if (IsFilePath(asSearchPath, true)
+		&& FileExists(asSearchPath))
+	{
+		bNeedQuot = IsQuotationNeeded(asSearchPath);
+		rsFound.Set(asSearchPath);
+		bFound = true;
+		goto wrap;
+	}
+
 	// ConEmu's drive
 	if (asFirstDrive && *asFirstDrive)
 	{
