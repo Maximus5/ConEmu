@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2011 Maximus5
+Copyright (c) 2011-2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -179,6 +179,8 @@ struct PipeServer
 			BOOL fPendingIO;
 			PipeState dwState;
 			//BOOL bSkipTerminate;
+			DWORD nCreateBegin, nCreateEnd, nStartedTick;
+			DWORD nCreateError; // Thread creation error?
 			
 			wchar_t sErrorMsg[128];
 
@@ -1179,19 +1181,30 @@ struct PipeServer
 			pPipe->dwState = STARTING_STATE;
 			//pPipe->hThreadEnd = CreateEvent(NULL, TRUE, FALSE, NULL);
 			PLOG("StartPipeInstance.Thread");
-			DWORD nCreateBegin = GetTickCount();
+			pPipe->nCreateBegin = GetTickCount(); pPipe->nCreateEnd = 0;
 			pPipe->hThread = CreateThread(NULL, 0, _PipeServerThread, pPipe, 0, &pPipe->nThreadId);
-			DWORD nCreateEnd = GetTickCount();
-			DWORD nThreadCreationTime = nCreateEnd - nCreateBegin;
+			pPipe->nCreateError = GetLastError();
+			pPipe->nCreateEnd = GetTickCount();
+			DWORD nThreadCreationTime = pPipe->nCreateEnd - pPipe->nCreateBegin;
 			UNREFERENCED_PARAMETER(nThreadCreationTime);
 			if (pPipe->hThread == NULL)
 			{
-				//_ASSERTEX(m_Pipes[i].hThread!=NULL);
+				_ASSERTEX(pPipe->hThread!=NULL && "Pipe thread creation failed");
 				DumpError(pPipe, L"StartPipeInstance:CreateThread failed, code=0x%08X");
 				return false; // Не удалось создать серверные потоки
 			}
 			if (mn_Priority)
+			{
 				::SetThreadPriority(pPipe->hThread, mn_Priority);
+			}
+			#ifdef _DEBUG
+			DWORD nRet = (DWORD)-1; BOOL bRetGet = (BOOL)-1;
+			if (WaitForSingleObject(pPipe->hThread, 0) == WAIT_OBJECT_0)
+			{
+				bRetGet = GetExitCodeThread(pPipe->hThread, &nRet);
+				_ASSERTEX((pPipe->dwState != STARTING_STATE) && "Thread was terminated outside?");
+			}
+			#endif
 
 			PLOG("StartPipeInstance.Done");
 			return true;
@@ -1202,6 +1215,7 @@ struct PipeServer
 			PipeInst* pPipe = (PipeInst*)lpvParam;
 			_ASSERTEX(pPipe!=NULL && pPipe->pServer!=NULL);
 
+			pPipe->nStartedTick = GetTickCount();
 			pPipe->dwState = STARTED_STATE;
 			PLOG("_PipeServerThread.Started");
 
