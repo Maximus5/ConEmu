@@ -10401,6 +10401,9 @@ LPCTSTR CSettings::GetCurCmd(bool *pIsCmdList /*= NULL*/)
 LPCTSTR CSettings::GetCmd(bool *pIsCmdList, bool bNoTask /*= false*/)
 {
 	LPCWSTR pszCmd = NULL;
+
+	// true - если передали "скрипт" (как бы содержимое Task вытянутое в строку)
+	// например: "ConEmu.exe -cmdlist cmd ||| powershell ||| far"
 	if (pIsCmdList)
 		*pIsCmdList = false;
 
@@ -10413,8 +10416,6 @@ LPCTSTR CSettings::GetCmd(bool *pIsCmdList, bool bNoTask /*= false*/)
 			&& (pGrp->Flags & CETF_NEW_DEFAULT))
 		{
 			ms_DefNewTaskName.Attach(lstrdup(pGrp->pszName));
-			if (pIsCmdList)
-				*pIsCmdList = true;
 			return ms_DefNewTaskName.ms_Arg;
 		}
 	}
