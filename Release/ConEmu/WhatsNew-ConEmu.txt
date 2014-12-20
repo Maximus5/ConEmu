@@ -12,6 +12,16 @@ Votes and awards (vote for ConEmu, if you please)
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+2014.12.19
+[*] Issue 1846: Script is not supported here (5909d9f regression).
+[*] Split options set in the ‘Create new console’ dialog not take precedence of any specified in the Task itself (first task's command actually).
+[*] CmdInit.cmd: Print Windows version while initializing.
+[*] Add "ConEmuC /EXPORT=GUI [Var1 [Var2 [...]]]" for exporting vars to ConEmu GUI only.
+[*] DefaultTasks. Use registry's ‘App Paths’ while searching for exe files.
+[*] Let Git bash use git.ico and try to find it using registry.
+[*] In some cases ConEmuHk was not properly deinitialized within cygwin/msys.
+
+
 2014.12.17
 [*] Reorder create console hotkeys.
 [*] Now it's possible to choose ‘Default task for new console (Win+W)’ and ‘Default shell (Win+X)’.
