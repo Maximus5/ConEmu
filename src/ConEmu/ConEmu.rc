@@ -941,7 +941,7 @@ BEGIN
     RTEXT           "Tab bar:",stTabBarDblClickAction,176,215,52,8
     COMBOBOX        tTabBarDblClickAction,232,213,84,67,CBS_DROPDOWNLIST | CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
     CONTROL         "One tab per group",cbOneTabPerGroup,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,97,57,82,8
-    CONTROL         "Activate split on mouse over",cbActivateSplitMouseOver,
+    CONTROL         "Activate split on mouse hover",cbActivateSplitMouseOver,
                     "Button",BS_AUTO3STATE | WS_TABSTOP,193,57,123,8
     LTEXT           "Tab templates (Far Manager ones are located on 'Far Manager' page)",stTabTemplateGroup,10,100,304,8
     RTEXT           "Invisible tab activity flash count:",IDC_STATIC,9,148,223,8
