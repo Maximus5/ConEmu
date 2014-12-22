@@ -62,7 +62,7 @@ _DBGHLP(L"   or: ConEmuC /REGCONFONT=<FontName> -> RegisterConsoleFontHKLM\r\n")
 		L"     /B{W|H|Z}       - define window width, height and buffer height\r\n" \
 		L"     /F{N|W|H}       - define console font name, width, height\r\n" \
 		L"     /GuiMacro ...   - http://code.google.com/p/conemu-maximus5/wiki/GuiMacro\r\n" \
-		L"     /Export[...]    - http://code.google.com/p/conemu-maximus5/wiki/ConEmuEnvironment#Export_variables\r\n" \
+		L"     /Export[...]    - http://code.google.com/p/conemu-maximus5/wiki/ExportEnvVar\r\n" \
 		L"     /IsAdmin        - returns 1 as errorlevel if current user has elevated privileges, 2 if not\r\n" \
 		L"     /IsAnsi         - returns 1 as errorlevel if ANSI are processed, 2 if not\r\n" \
 		L"     /IsConEmu       - returns 1 as errorlevel if running in ConEmu tab, 2 if not\r\n" \
