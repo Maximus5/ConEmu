@@ -57,6 +57,14 @@ goto fin
 :tab4
 call RenameTab "Test"
 cd /d "%~dp0UnitTests"
+MultiRun.exe /exit
+echo Errorlevel=%errorlevel%
+MultiRunX64.exe /exit
+echo Errorlevel=%errorlevel%
+MultiRun.exe /term
+echo Errorlevel=%errorlevel%
+MultiRunX64.exe /term
+echo Errorlevel=%errorlevel%
 MultiRun.exe
 echo Errorlevel=%errorlevel%
 MultiRunX64.exe
