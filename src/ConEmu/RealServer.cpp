@@ -1451,21 +1451,13 @@ CESERVER_REQ* CRealServer::cmdExportEnvVarAll(LPVOID pInst, CESERVER_REQ* pIn, U
 
 	// В свой процесс тоже засосать переменные, чтобы для новых табов применялись
 	LPCWSTR pszSrc = (LPCWSTR)pIn->wData;
-	while (*pszSrc)
-	{
-		LPCWSTR pszName = pszSrc;
-		LPCWSTR pszVal = pszName + lstrlen(pszName) + 1;
-		LPCWSTR pszNext = pszVal + lstrlen(pszVal) + 1;
-		// Skip ConEmu's internals!
-		if (lstrcmpni(pszName, L"ConEmu", 6) != 0)
-		{
-			SetEnvironmentVariableW(pszName, pszVal);
-		}
-		pszSrc = pszNext;
-	}
+	ApplyExportEnvVar(pszSrc);
 
 	// Применить переменные во всех открытых табах (кроме mp_RCon)
-	CVConGroup::ExportEnvVarAll(pIn, mp_RCon);
+	if (nCmd == CECMD_EXPORTVARSALL)
+	{
+		CVConGroup::ExportEnvVarAll(pIn, mp_RCon);
+	}
 
 	// pIn->hdr.nCmd перебивается на CECMD_EXPORTVARS, поэтому возвращаем сохраненный ID
 	CESERVER_REQ* pOut = ExecuteNewCmd(nCmd, sizeof(CESERVER_REQ_HDR)+sizeof(DWORD));
