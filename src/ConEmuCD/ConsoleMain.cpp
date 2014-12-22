@@ -3599,6 +3599,29 @@ int DoGuiMacro(LPCWSTR asCmdArg, MacroInstance& Inst)
 	return iRc;
 }
 
+HMODULE LoadConEmuHk()
+{
+	HMODULE hHooks = NULL;
+	LPCWSTR pszHooksName = WIN3264TEST(L"ConEmuHk.dll",L"ConEmuHk64.dll");
+
+	if ((hHooks = GetModuleHandle(pszHooksName)) == NULL)
+	{
+		wchar_t szSelf[MAX_PATH];
+		if (GetModuleFileName(ghOurModule, szSelf, countof(szSelf)))
+		{
+			wchar_t* pszName = (wchar_t*)PointToName(szSelf);
+			int nSelfName = lstrlen(pszName);
+			_ASSERTE(nSelfName == lstrlen(pszHooksName));
+			lstrcpyn(pszName, pszHooksName, nSelfName+1);
+
+			// ConEmuHk.dll / ConEmuHk64.dll
+			hHooks = LoadLibrary(szSelf);
+		}
+	}
+
+	return hHooks;
+}
+
 int DoOutput(ConEmuExecAction eExecAction, LPCWSTR asCmdArg)
 {
 	int iRc = 0;
@@ -3789,20 +3812,8 @@ int DoOutput(ConEmuExecAction eExecAction, LPCWSTR asCmdArg)
 		HMODULE hHooks = NULL;
 		if (bProcessed)
 		{
-			LPCWSTR pszHooksName = WIN3264TEST(L"ConEmuHk.dll",L"ConEmuHk64.dll");
-			if ((hHooks = GetModuleHandle(pszHooksName)) == NULL)
-			{
-				wchar_t szSelf[MAX_PATH];
-				if (GetModuleFileName(ghOurModule, szSelf, countof(szSelf)))
-				{
-					wchar_t* pszName = (wchar_t*)PointToName(szSelf);
-					int nSelfName = lstrlen(pszName);
-					_ASSERTE(nSelfName == lstrlen(pszHooksName));
-					lstrcpyn(pszName, pszHooksName, nSelfName+1);
-					hHooks = LoadLibrary(szSelf);
-				}
-			}
-			if (hHooks)
+			// ConEmuHk.dll / ConEmuHk64.dll
+			if ((hHooks = LoadConEmuHk()) != NULL)
 			{
 				WriteProcessed = (WriteProcessed_t)GetProcAddress(hHooks, "WriteProcessed");
 			}
