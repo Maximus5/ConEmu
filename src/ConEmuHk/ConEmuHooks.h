@@ -82,7 +82,8 @@ enum ConEmuHkDllState
 {
 	ds_Undefined = 0,
 	ds_DllProcessAttach = 1,
-	ds_DllProcessDetach = 2,
+	ds_DllMainThreadDetach = 2,
+	ds_DllProcessDetach = 4,
 };
 extern ConEmuHkDllState gnDllState;
 extern int gnDllThreadCount;

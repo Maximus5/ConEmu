@@ -1790,6 +1790,7 @@ BOOL DllMain_ThreadDetach(HANDLE hModule, DWORD  ul_reason_for_call)
 			// DLL_PROCESS_DETACH зовется как выяснилось не всегда
 			if (gnHookMainThreadId && (nTID == gnHookMainThreadId) && !gbDllDeinitialized)
 			{
+		gnDllState = ds_DllMainThreadDetach;
 				gbDllDeinitialized = bNeedDllStop = true;
 			}
 
