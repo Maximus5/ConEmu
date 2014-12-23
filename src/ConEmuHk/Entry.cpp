@@ -1748,6 +1748,7 @@ BOOL DllMain_ProcessAttach(HANDLE hModule, DWORD  ul_reason_for_call)
 		if (gbPrepareDefaultTerminal)
 		{
 			_ASSERTEX(gbPrepareDefaultTerminal && "Failed to set up default terminal");
+			lbAllow = FALSE;
 			goto wrap;
 		}
 	}
