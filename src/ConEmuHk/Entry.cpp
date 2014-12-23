@@ -1389,6 +1389,7 @@ void FlushMouseEvents()
 void DllStop()
 {
 	//DLOG0("DllStop",0);
+	print_timings(L"DllStop");
 
 	#if defined(SHOW_EXE_TIMINGS) || defined(SHOW_EXE_MSGBOX)
 		wchar_t szTimingMsg[512]; UNREFERENCED_PARAMETER(szTimingMsg);
@@ -1411,10 +1412,6 @@ void DllStop()
 	{
 		gpDefTerm->StopHookers();
 	}
-
-	print_timings(L"DllStop");
-	//gbDllStopCalled = TRUE; -- в конце
-
 
 	// Issue 689: Progress stuck at 100%
 	if (gbPowerShellMonitorProgress && (gnPowerShellProgressValue != -1))
