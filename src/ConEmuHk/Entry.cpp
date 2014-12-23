@@ -1410,7 +1410,7 @@ void DoDllStop(bool bFinal)
 	#ifdef _DEBUG
 	if (bUnload)
 	{
-	StopPTY();
+		StopPTY();
 	}
 	#endif
 
@@ -1455,7 +1455,7 @@ void DoDllStop(bool bFinal)
 	}
 
 
-#ifdef USE_PIPE_SERVER
+	#ifdef USE_PIPE_SERVER
 	if (gpHookServer)
 	{
 		DLOG0("StopPipeServer",0);
@@ -1466,7 +1466,7 @@ void DoDllStop(bool bFinal)
 		gpHookServer = NULL;
 		DLOGEND();
 	}
-#endif
+	#endif
 
 	#ifdef _DEBUG
 	if (ghGuiClientRetHook)
@@ -1548,7 +1548,7 @@ void DoDllStop(bool bFinal)
 
 	if (bUnload)
 	{
-	HeapDeinitialize();
+		HeapDeinitialize();
 	}
 
 	#ifdef _DEBUG
@@ -1568,264 +1568,261 @@ void DoDllStop(bool bFinal)
 BOOL DllMain_ProcessAttach(HANDLE hModule, DWORD  ul_reason_for_call)
 {
 	BOOL lbAllow = TRUE;
+	DLOG0("DllMain.DLL_PROCESS_ATTACH",ul_reason_for_call);
 
-			DLOG0("DllMain.DLL_PROCESS_ATTACH",ul_reason_for_call);
+	#ifdef USEHOOKLOG
+	QueryPerformanceFrequency(&HookLogger::g_freq);
+	#endif
 
-			#ifdef USEHOOKLOG
-			QueryPerformanceFrequency(&HookLogger::g_freq);
-			#endif
+	gnDllState = ds_DllProcessAttach;
+	#ifdef _DEBUG
+	HANDLE hProcHeap = GetProcessHeap();
+	#endif
+	HeapInitialize();
 
-			gnDllState = ds_DllProcessAttach;
-			#ifdef _DEBUG
-			HANDLE hProcHeap = GetProcessHeap();
-			#endif
-			HeapInitialize();
+	DLOG1("DllMain.LoadStartupEnv",ul_reason_for_call);
+	/* *** DEBUG PURPOSES */
+	gpStartEnv = LoadStartupEnv::Create();
+	DLOGEND1();
+	//if (gpStartEnv && gpStartEnv->hIn.hStd && !(gpStartEnv->hIn.nMode & 0x80000000))
+	//{
+	//	if ((gpStartEnv->hIn.nMode & 0xF0) == 0xE0)
+	//	{
+	//		_ASSERTE(FALSE && "ENABLE_MOUSE_INPUT was disabled! Enabling...");
+	//		SetConsoleMode(gpStartEnv->hIn.hStd, gpStartEnv->hIn.nMode|ENABLE_MOUSE_INPUT);
+	//	}
+	//}
+	/* *** DEBUG PURPOSES */
 
-			DLOG1("DllMain.LoadStartupEnv",ul_reason_for_call);
-			/* *** DEBUG PURPOSES */
-			gpStartEnv = LoadStartupEnv::Create();
-			DLOGEND1();
-			//if (gpStartEnv && gpStartEnv->hIn.hStd && !(gpStartEnv->hIn.nMode & 0x80000000))
-			//{
-			//	if ((gpStartEnv->hIn.nMode & 0xF0) == 0xE0)
-			//	{
-			//		_ASSERTE(FALSE && "ENABLE_MOUSE_INPUT was disabled! Enabling...");
-			//		SetConsoleMode(gpStartEnv->hIn.hStd, gpStartEnv->hIn.nMode|ENABLE_MOUSE_INPUT);
-			//	}
-			//}
-			/* *** DEBUG PURPOSES */
-
-			DLOG1_("DllMain.Console",ul_reason_for_call);
-			ghOurModule = (HMODULE)hModule;
-			ghConWnd = GetConsoleWindow();
-			if (ghConWnd)
-				GetConsoleTitle(gsInitConTitle, countof(gsInitConTitle));
-			gnSelfPID = GetCurrentProcessId();
-			ghWorkingModule = (u64)hModule;
-			gfGetRealConsoleWindow = GetConsoleWindow;
-			DLOGEND1();
-
-
-			InitExeName();
+	DLOG1_("DllMain.Console",ul_reason_for_call);
+	ghOurModule = (HMODULE)hModule;
+	ghConWnd = GetConsoleWindow();
+	if (ghConWnd)
+		GetConsoleTitle(gsInitConTitle, countof(gsInitConTitle));
+	gnSelfPID = GetCurrentProcessId();
+	ghWorkingModule = (u64)hModule;
+	gfGetRealConsoleWindow = GetConsoleWindow;
+	DLOGEND1();
 
 
-			DLOG1_("DllMain.RootEvents",ul_reason_for_call);
-			bool bCurrentThreadIsMain = false;
+	InitExeName();
 
-			wchar_t szEvtName[64];
+
+	DLOG1_("DllMain.RootEvents",ul_reason_for_call);
+
+	bool bCurrentThreadIsMain = false;
+	wchar_t szEvtName[64];
 	if (gbConEmuCProcess)
 	{
 		bCurrentThreadIsMain = true;
 	}
 	else
 	{
-			msprintf(szEvtName, countof(szEvtName), CECONEMUROOTPROCESS, gnSelfPID);
-			gEvtProcessRoot.hProcessFlag = OpenEvent(SYNCHRONIZE|EVENT_MODIFY_STATE, FALSE, szEvtName);
-			if (gEvtProcessRoot.hProcessFlag)
-			{
-				gEvtProcessRoot.nWait = WaitForSingleObject(gEvtProcessRoot.hProcessFlag, 0);
-				gEvtProcessRoot.nErrCode = GetLastError();
-				gbSelfIsRootConsoleProcess = (gEvtProcessRoot.nWait == WAIT_OBJECT_0);
-			}
-			else
-				gEvtProcessRoot.nErrCode = GetLastError();
-			//SafeCloseHandle(gEvtProcessRoot.hProcessFlag);
+		msprintf(szEvtName, countof(szEvtName), CECONEMUROOTPROCESS, gnSelfPID);
+		gEvtProcessRoot.hProcessFlag = OpenEvent(SYNCHRONIZE|EVENT_MODIFY_STATE, FALSE, szEvtName);
+		if (gEvtProcessRoot.hProcessFlag)
+		{
+			gEvtProcessRoot.nWait = WaitForSingleObject(gEvtProcessRoot.hProcessFlag, 0);
+			gEvtProcessRoot.nErrCode = GetLastError();
+			gbSelfIsRootConsoleProcess = (gEvtProcessRoot.nWait == WAIT_OBJECT_0);
+		}
+		else
+			gEvtProcessRoot.nErrCode = GetLastError();
+		//SafeCloseHandle(gEvtProcessRoot.hProcessFlag);
 
-			msprintf(szEvtName, countof(szEvtName), CECONEMUROOTTHREAD, gnSelfPID);
-			gEvtThreadRoot.hProcessFlag = OpenEvent(SYNCHRONIZE|EVENT_MODIFY_STATE, FALSE, szEvtName);
-			if (gEvtThreadRoot.hProcessFlag)
-			{
-				gEvtThreadRoot.nWait = WaitForSingleObject(gEvtThreadRoot.hProcessFlag, 0);
-				gEvtThreadRoot.nErrCode = GetLastError();
-				bCurrentThreadIsMain = (gEvtThreadRoot.nWait == WAIT_OBJECT_0);
-			}
-			else
-				gEvtThreadRoot.nErrCode = GetLastError();
-			//SafeCloseHandle(gEvtThreadRoot.hProcessFlag);
+		msprintf(szEvtName, countof(szEvtName), CECONEMUROOTTHREAD, gnSelfPID);
+		gEvtThreadRoot.hProcessFlag = OpenEvent(SYNCHRONIZE|EVENT_MODIFY_STATE, FALSE, szEvtName);
+		if (gEvtThreadRoot.hProcessFlag)
+		{
+			gEvtThreadRoot.nWait = WaitForSingleObject(gEvtThreadRoot.hProcessFlag, 0);
+			gEvtThreadRoot.nErrCode = GetLastError();
+			bCurrentThreadIsMain = (gEvtThreadRoot.nWait == WAIT_OBJECT_0);
+		}
+		else
+			gEvtThreadRoot.nErrCode = GetLastError();
+		//SafeCloseHandle(gEvtThreadRoot.hProcessFlag);
 	}
 
-			// When calling Attach (Win+G) from ConEmu GUI
-			gbForceStartPipeServer = (!bCurrentThreadIsMain);
+	// When calling Attach (Win+G) from ConEmu GUI
+	gbForceStartPipeServer = (!bCurrentThreadIsMain);
 
 	if (!gbSelfIsRootConsoleProcess && !gbConEmuCProcess)
+	{
+		msprintf(szEvtName, countof(szEvtName), CEDEFAULTTERMHOOK, gnSelfPID);
+		gEvtDefTerm.hProcessFlag = OpenEvent(SYNCHRONIZE|EVENT_MODIFY_STATE, FALSE, szEvtName);
+		if (gEvtDefTerm.hProcessFlag)
+		{
+			gEvtDefTerm.nWait = WaitForSingleObject(gEvtDefTerm.hProcessFlag, 0);
+			gEvtDefTerm.nErrCode = GetLastError();
+			gbPrepareDefaultTerminal = (gEvtDefTerm.nWait == WAIT_OBJECT_0);
+			//SafeCloseHandle(gEvtDefTerm.hProcessFlag);
+			// Если ждут, что мы отметимся...
+			if (gbPrepareDefaultTerminal)
 			{
-				msprintf(szEvtName, countof(szEvtName), CEDEFAULTTERMHOOK, gnSelfPID);
-				gEvtDefTerm.hProcessFlag = OpenEvent(SYNCHRONIZE|EVENT_MODIFY_STATE, FALSE, szEvtName);
-				if (gEvtDefTerm.hProcessFlag)
-				{
-					gEvtDefTerm.nWait = WaitForSingleObject(gEvtDefTerm.hProcessFlag, 0);
-					gEvtDefTerm.nErrCode = GetLastError();
-					gbPrepareDefaultTerminal = (gEvtDefTerm.nWait == WAIT_OBJECT_0);
-					//SafeCloseHandle(gEvtDefTerm.hProcessFlag);
-					// Если ждут, что мы отметимся...
-					if (gbPrepareDefaultTerminal)
-					{
-						msprintf(szEvtName, countof(szEvtName), CEDEFAULTTERMHOOKOK, gnSelfPID);
-						gEvtDefTermOk.hProcessFlag = OpenEvent(SYNCHRONIZE|EVENT_MODIFY_STATE, FALSE, szEvtName);
-						if (gEvtDefTermOk.hProcessFlag)
-							SetEvent(gEvtDefTermOk.hProcessFlag);
-						gEvtDefTermOk.nErrCode = GetLastError();
-					}
-				}
-				else
-					gEvtDefTerm.nErrCode = GetLastError();
-				//SafeCloseHandle(gEvtDefTerm.hProcessFlag);
+				msprintf(szEvtName, countof(szEvtName), CEDEFAULTTERMHOOKOK, gnSelfPID);
+				gEvtDefTermOk.hProcessFlag = OpenEvent(SYNCHRONIZE|EVENT_MODIFY_STATE, FALSE, szEvtName);
+				if (gEvtDefTermOk.hProcessFlag)
+					SetEvent(gEvtDefTermOk.hProcessFlag);
+				gEvtDefTermOk.nErrCode = GetLastError();
 			}
-			DLOGEND1();
+		}
+		else
+			gEvtDefTerm.nErrCode = GetLastError();
+		//SafeCloseHandle(gEvtDefTerm.hProcessFlag);
+	}
+	DLOGEND1();
 
 
 
-			DLOG1_("DllMain.MainThreadId",ul_reason_for_call);
-			GetMainThreadId(bCurrentThreadIsMain); // Инициализировать gnHookMainThreadId
-			// In some cases we need to know thread IDs was started 'normally'
-			gStartedThreads.Init(128,true);
-			gStartedThreads.Set(gnHookMainThreadId,true);
-			if (!bCurrentThreadIsMain)
-				gStartedThreads.Set(GetCurrentThreadId(),true);
-			DLOGEND1();
+	DLOG1_("DllMain.MainThreadId",ul_reason_for_call);
+	GetMainThreadId(bCurrentThreadIsMain); // Инициализировать gnHookMainThreadId
+	// In some cases we need to know thread IDs was started 'normally'
+	gStartedThreads.Init(128,true);
+	gStartedThreads.Set(gnHookMainThreadId,true);
+	if (!bCurrentThreadIsMain)
+		gStartedThreads.Set(GetCurrentThreadId(),true);
+	DLOGEND1();
 
-			DLOG1_("DllMain.InQueue",ul_reason_for_call);
-			//gcchLastWriteConsoleMax = 4096;
-			//gpszLastWriteConsole = (wchar_t*)calloc(gcchLastWriteConsoleMax,sizeof(*gpszLastWriteConsole));
-			gInQueue.Initialize(512, NULL);
-			DLOGEND1();
+	DLOG1_("DllMain.InQueue",ul_reason_for_call);
+	//gcchLastWriteConsoleMax = 4096;
+	//gpszLastWriteConsole = (wchar_t*)calloc(gcchLastWriteConsoleMax,sizeof(*gpszLastWriteConsole));
+	gInQueue.Initialize(512, NULL);
+	DLOGEND1();
 
-			DLOG1_("DllMain.Misc",ul_reason_for_call);
-			#ifdef _DEBUG
-			gAllowAssertThread = am_Pipe;
-			#endif
+	DLOG1_("DllMain.Misc",ul_reason_for_call);
+	#ifdef _DEBUG
+	gAllowAssertThread = am_Pipe;
+	#endif
 
-			#ifdef _DEBUG
-				#ifdef UseDebugExceptionFilter
-					gfnPrevFilter = SetUnhandledExceptionFilter(HkExceptionFilter);
-				#endif
-			#endif
+	#ifdef _DEBUG
+		#ifdef UseDebugExceptionFilter
+			gfnPrevFilter = SetUnhandledExceptionFilter(HkExceptionFilter);
+		#endif
+	#endif
 
-			#ifdef SHOW_STARTED_MSGBOX
-			if (!IsDebuggerPresent())
-			{
-				::MessageBox(ghConEmuWnd, L"ConEmuHk*.dll loaded", L"ConEmu hooks", MB_SYSTEMMODAL);
-			}
-			#endif
-			#ifdef _DEBUG
-			DWORD dwConMode = -1;
-			GetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), &dwConMode);
-			#endif
-			DLOGEND1();
+	#ifdef SHOW_STARTED_MSGBOX
+	if (!IsDebuggerPresent())
+	{
+		::MessageBox(ghConEmuWnd, L"ConEmuHk*.dll loaded", L"ConEmu hooks", MB_SYSTEMMODAL);
+	}
+	#endif
+	#ifdef _DEBUG
+	DWORD dwConMode = -1;
+	GetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), &dwConMode);
+	#endif
+	DLOGEND1();
 
-			//_ASSERTE(ghHeap == NULL);
-			//ghHeap = HeapCreate(HEAP_GENERATE_EXCEPTIONS, 200000, 0);
+	//_ASSERTE(ghHeap == NULL);
+	//ghHeap = HeapCreate(HEAP_GENERATE_EXCEPTIONS, 200000, 0);
 
 
-			DLOG1_("DllMain.DllStart",ul_reason_for_call);
-			#ifdef HOOK_USE_DLLTHREAD
-			_ASSERTEX(FALSE && "Hooks starting in background thread?");
-			//HANDLE hEvents[2];
-			//hEvents[0] = CreateEvent(NULL, FALSE, FALSE, NULL);
-			//hEvents[1] =
-			ghStartThread = CreateThread(NULL, 0, DllStart, NULL/*(LPVOID)(hEvents[0])*/, 0, &gnStartThreadID);
-			if (ghStartThread == NULL)
-			{
-				//_ASSERTE(ghStartThread!=NULL);
-				wchar_t szMsg[128]; DWORD nErrCode = GetLastError();
-				msprintf(szMsg, countof(szMsg),
-					L"Failed to start DllStart thread!\nErrCode=0x%08X\nPID=%u",
-					nErrCode, GetCurrentProcessId());
-				GuiMessageBox(ghConEmuWnd, szMsg, L"ConEmu hooks", 0);
-			}
-			else
-			{
-				DWORD nThreadWait = WaitForSingleObject(ghStartThread, 5000);
-				DllThreadClose();
-			}
-			//DWORD nThreadWait = WaitForMultipleObjects(hEvents, countof(hEvents), FALSE, INFINITE);
-			//CloseHandle(hEvents[0]);
-			#else
-			if (DllStart(NULL) != 0)
-			{
-				if (gbPrepareDefaultTerminal)
-				{
-					_ASSERTEX(gbPrepareDefaultTerminal && "Failed to set up default terminal");
+	DLOG1_("DllMain.DllStart",ul_reason_for_call);
+	#ifdef HOOK_USE_DLLTHREAD
+	_ASSERTEX(FALSE && "Hooks starting in background thread?");
+	//HANDLE hEvents[2];
+	//hEvents[0] = CreateEvent(NULL, FALSE, FALSE, NULL);
+	//hEvents[1] =
+	ghStartThread = CreateThread(NULL, 0, DllStart, NULL/*(LPVOID)(hEvents[0])*/, 0, &gnStartThreadID);
+	if (ghStartThread == NULL)
+	{
+		//_ASSERTE(ghStartThread!=NULL);
+		wchar_t szMsg[128]; DWORD nErrCode = GetLastError();
+		msprintf(szMsg, countof(szMsg),
+			L"Failed to start DllStart thread!\nErrCode=0x%08X\nPID=%u",
+			nErrCode, GetCurrentProcessId());
+		GuiMessageBox(ghConEmuWnd, szMsg, L"ConEmu hooks", 0);
+	}
+	else
+	{
+		DWORD nThreadWait = WaitForSingleObject(ghStartThread, 5000);
+		DllThreadClose();
+	}
+	//DWORD nThreadWait = WaitForMultipleObjects(hEvents, countof(hEvents), FALSE, INFINITE);
+	//CloseHandle(hEvents[0]);
+	#else
+	if (DllStart(NULL) != 0)
+	{
+		if (gbPrepareDefaultTerminal)
+		{
+			_ASSERTEX(gbPrepareDefaultTerminal && "Failed to set up default terminal");
 			goto wrap;
-				}
-			}
-			#endif
-			DLOGEND1();
+		}
+	}
+	#endif
+	DLOGEND1();
 
-			if (gbIsSshProcess && bCurrentThreadIsMain && (GetCurrentThreadId() == gnHookMainThreadId))
-			{
-				// Original complain was about git/ssh (crashed with third-party PGHook.dll)
-				// Cygwin version of ssh almost completely fails with FixSshThreads
-				// Different forking technologies?
-				HMODULE hMsys = GetModuleHandle(L"msys-1.0.dll");
-				if (hMsys != NULL)
-				{
-					FixSshThreads(0);
-				}
-			}
+	if (gbIsSshProcess && bCurrentThreadIsMain && (GetCurrentThreadId() == gnHookMainThreadId))
+	{
+		// Original complain was about git/ssh (crashed with third-party PGHook.dll)
+		// Cygwin version of ssh almost completely fails with FixSshThreads
+		// Different forking technologies?
+		HMODULE hMsys = GetModuleHandle(L"msys-1.0.dll");
+		if (hMsys != NULL)
+		{
+			FixSshThreads(0);
+		}
+	}
 
-			DLOGEND();
-
+	DLOGEND();
 wrap:
 	return lbAllow;
 }
 
 BOOL DllMain_ThreadAttach(HANDLE hModule, DWORD  ul_reason_for_call)
 {
-			DLOG0("DllMain.DLL_THREAD_ATTACH",ul_reason_for_call);
-			gnDllThreadCount++;
-			if (gbHooksWasSet)
-				InitHooksRegThread();
-			if (gbIsSshProcess && !gnFixSshThreadsResumeOk && gStartedThreads.Get(GetCurrentThreadId(), NULL))
-				FixSshThreads(1);
-			DLOGEND();
-
+	DLOG0("DllMain.DLL_THREAD_ATTACH",ul_reason_for_call);
+	gnDllThreadCount++;
+	if (gbHooksWasSet)
+		InitHooksRegThread();
+	if (gbIsSshProcess && !gnFixSshThreadsResumeOk && gStartedThreads.Get(GetCurrentThreadId(), NULL))
+		FixSshThreads(1);
+	DLOGEND();
 	return true;
 }
 
 BOOL DllMain_ThreadDetach(HANDLE hModule, DWORD  ul_reason_for_call)
 {
-			DLOG0("DllMain.DLL_THREAD_DETACH",ul_reason_for_call);
+	DLOG0("DllMain.DLL_THREAD_DETACH",ul_reason_for_call);
 
-			DWORD nTID = GetCurrentThreadId();
-			bool bNeedDllStop = false;
+	DWORD nTID = GetCurrentThreadId();
+	bool bNeedDllStop = false;
 
-			#ifdef SHOW_SHUTDOWN_STEPS
-			gnDbgPresent = 0;
-			ShutdownStep(L"DLL_THREAD_DETACH");
-			#endif
+	#ifdef SHOW_SHUTDOWN_STEPS
+	gnDbgPresent = 0;
+	ShutdownStep(L"DLL_THREAD_DETACH");
+	#endif
 
-			if (gbHooksWasSet)
-				DoneHooksRegThread();
-			// DLL_PROCESS_DETACH зовется как выяснилось не всегда
-			if (gnHookMainThreadId && (nTID == gnHookMainThreadId) && !gbDllDeinitialized)
-			{
+	if (gbHooksWasSet)
+		DoneHooksRegThread();
+
+	// DLL_PROCESS_DETACH зовется как выяснилось не всегда
+	if (gnHookMainThreadId && (nTID == gnHookMainThreadId) && !gbDllDeinitialized)
+	{
 		gnDllState = ds_DllMainThreadDetach;
-				gbDllDeinitialized = bNeedDllStop = true;
-			}
+		gbDllDeinitialized = bNeedDllStop = true;
+	}
 
-			if (ghHeap)
-			{
-				gStartedThreads.Del(nTID);
-			}
+	if (ghHeap)
+	{
+		gStartedThreads.Del(nTID);
+	}
 
-			if (bNeedDllStop)
-			{
-				DLOG1("DllMain.DllStop",ul_reason_for_call);
-				//WARNING!!! OutputDebugString must NOT be used from ConEmuHk::DllMain(DLL_PROCESS_DETACH). See Issue 465
+	if (bNeedDllStop)
+	{
+		DLOG1("DllMain.DllStop",ul_reason_for_call);
+		//WARNING!!! OutputDebugString must NOT be used from ConEmuHk::DllMain(DLL_PROCESS_DETACH). See Issue 465
 		DoDllStop(false);
-				DLOGEND1();
-			}
+		DLOGEND1();
+	}
 
-			gnDllThreadCount--;
-			ShutdownStep(L"DLL_THREAD_DETACH done, left=%i", gnDllThreadCount);
+	gnDllThreadCount--;
+	ShutdownStep(L"DLL_THREAD_DETACH done, left=%i", gnDllThreadCount);
 
-			#if 0
-			if (ghDebugSshLibsCan) SetEvent(ghDebugSshLibsCan);
-			#endif
+	#if 0
+	if (ghDebugSshLibsCan) SetEvent(ghDebugSshLibsCan);
+	#endif
 
-			DLOGEND();
-
+	DLOGEND();
 	return true;
 }
 
@@ -1833,31 +1830,32 @@ BOOL DllMain_ProcessDetach(HANDLE hModule, DWORD  ul_reason_for_call)
 {
 	BOOL lbAllow = !gbHooksWasSet; // Иначе свалимся, т.к. FreeLibrary перехвачена
 
-			DLOG0("DllMain.DLL_PROCESS_DETACH",ul_reason_for_call);
+	DLOG0("DllMain.DLL_PROCESS_DETACH",ul_reason_for_call);
 
-			ShutdownStep(L"DLL_PROCESS_DETACH");
-			gnDllState = ds_DllProcessDetach;
+	ShutdownStep(L"DLL_PROCESS_DETACH");
+	gnDllState = ds_DllProcessDetach;
 
-				gbDllDeinitialized = true;
-				DLOG1("DllMain.DllStop",ul_reason_for_call);
-				//WARNING!!! OutputDebugString must NOT be used from ConEmuHk::DllMain(DLL_PROCESS_DETACH). See Issue 465
+	// Уже могли дернуть в DLL_THREAD_DETACH, OnExitProcess и т.п.
+	gbDllDeinitialized = true;
+	DLOG1("DllMain.DllStop",ul_reason_for_call);
+	//WARNING!!! OutputDebugString must NOT be used from ConEmuHk::DllMain(DLL_PROCESS_DETACH). See Issue 465
 	DoDllStop(true);
-				DLOGEND1();
+	DLOGEND1();
 
 	// -- free не нужен, т.к. уже может быть вызван HeapDeinitialize()
-			//free(user);
-			ShutdownStep(L"DLL_PROCESS_DETACH done");
+	//free(user);
+	ShutdownStep(L"DLL_PROCESS_DETACH done");
 
-			#ifdef USEHOOKLOG
+	#ifdef USEHOOKLOG
 	if (bFinal)
 	{
-			DLOGEND();
-			#ifdef USEHOOKLOGANALYZE
-			HookLogger::RunAnalyzer();
-			_ASSERTEX(FALSE && "Hooks terminated");
-			#endif
+		DLOGEND();
+		#ifdef USEHOOKLOGANALYZE
+		HookLogger::RunAnalyzer();
+		_ASSERTEX(FALSE && "Hooks terminated");
+		#endif
 	}
-			#endif
+	#endif
 
 	return lbAllow;
 }
