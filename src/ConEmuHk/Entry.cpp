@@ -1555,22 +1555,10 @@ void DllStop()
 	//DLOGEND();
 }
 
-#if defined(__GNUC__)
-extern "C"
-#endif
-BOOL WINAPI DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
+BOOL DllMain_ProcessAttach(HANDLE hModule, DWORD  ul_reason_for_call)
 {
 	BOOL lbAllow = TRUE;
 
-#if defined(_DEBUG) && !defined(_WIN64)
-	// pThreadInfo[9] -> GetCurrentThreadId();
-	DWORD* pThreadInfo = ((DWORD*) __readfsdword(24));
-#endif
-
-	switch(ul_reason_for_call)
-	{
-		case DLL_PROCESS_ATTACH:
-		{
 			DLOG0("DllMain.DLL_PROCESS_ATTACH",ul_reason_for_call);
 
 			#ifdef USEHOOKLOG
@@ -1760,11 +1748,13 @@ BOOL WINAPI DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 			}
 
 			DLOGEND();
-		}
-		break; // DLL_PROCESS_ATTACH
 
-		case DLL_THREAD_ATTACH:
-		{
+wrap:
+	return lbAllow;
+}
+
+BOOL DllMain_ThreadAttach(HANDLE hModule, DWORD  ul_reason_for_call)
+{
 			DLOG0("DllMain.DLL_THREAD_ATTACH",ul_reason_for_call);
 			gnDllThreadCount++;
 			if (gbHooksWasSet)
@@ -1772,11 +1762,12 @@ BOOL WINAPI DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 			if (gbIsSshProcess && !gnFixSshThreadsResumeOk && gStartedThreads.Get(GetCurrentThreadId(), NULL))
 				FixSshThreads(1);
 			DLOGEND();
-		}
-		break; // DLL_THREAD_ATTACH
 
-		case DLL_THREAD_DETACH:
-		{
+	return true;
+}
+
+BOOL DllMain_ThreadDetach(HANDLE hModule, DWORD  ul_reason_for_call)
+{
 			DLOG0("DllMain.DLL_THREAD_DETACH",ul_reason_for_call);
 
 			DWORD nTID = GetCurrentThreadId();
@@ -1816,11 +1807,14 @@ BOOL WINAPI DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 			#endif
 
 			DLOGEND();
-		}
-		break; // DLL_THREAD_DETACH
 
-		case DLL_PROCESS_DETACH:
-		{
+	return true;
+}
+
+BOOL DllMain_ProcessDetach(HANDLE hModule, DWORD  ul_reason_for_call)
+{
+	BOOL lbAllow = TRUE;
+
 			DLOG0("DllMain.DLL_PROCESS_DETACH",ul_reason_for_call);
 
 			ShutdownStep(L"DLL_PROCESS_DETACH");
@@ -1847,9 +1841,39 @@ BOOL WINAPI DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 			_ASSERTEX(FALSE && "Hooks terminated");
 			#endif
 			#endif
-		}
-		break; // DLL_PROCESS_DETACH
-	}
+
+	return lbAllow;
+}
+
+#if defined(__GNUC__)
+extern "C"
+#endif
+BOOL WINAPI DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
+{
+	BOOL lbAllow;
+
+#if defined(_DEBUG) && !defined(_WIN64)
+	// pThreadInfo[9] -> GetCurrentThreadId();
+	DWORD* pThreadInfo = ((DWORD*) __readfsdword(24));
+#endif
+
+	switch(ul_reason_for_call)
+	{
+		case DLL_PROCESS_ATTACH:
+			lbAllow = DllMain_ProcessAttach(hModule, ul_reason_for_call);
+			break;
+		case DLL_THREAD_ATTACH:
+			lbAllow = DllMain_ThreadAttach(hModule, ul_reason_for_call);
+			break;
+		case DLL_THREAD_DETACH:
+			lbAllow = DllMain_ThreadDetach(hModule, ul_reason_for_call);
+			break;
+		case DLL_PROCESS_DETACH:
+			lbAllow = DllMain_ProcessDetach(hModule, ul_reason_for_call);
+			break;
+		default:
+			lbAllow = FALSE;
+	};
 
 	return lbAllow;
 }
