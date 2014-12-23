@@ -1821,14 +1821,13 @@ BOOL DllMain_ThreadDetach(HANDLE hModule, DWORD  ul_reason_for_call)
 
 BOOL DllMain_ProcessDetach(HANDLE hModule, DWORD  ul_reason_for_call)
 {
-	BOOL lbAllow = TRUE;
+	BOOL lbAllow = !gbHooksWasSet; // Иначе свалимся, т.к. FreeLibrary перехвачена
 
 			DLOG0("DllMain.DLL_PROCESS_DETACH",ul_reason_for_call);
 
 			ShutdownStep(L"DLL_PROCESS_DETACH");
 			gnDllState = ds_DllProcessDetach;
-			if (gbHooksWasSet)
-				lbAllow = FALSE; // Иначе свалимся, т.к. FreeLibrary перехвачена
+
 			// Уже могли дернуть в DLL_THREAD_DETACH
 			if (!gbDllDeinitialized)
 			{
