@@ -184,6 +184,7 @@ extern HHOOK ghGuiClientRetHook;
 //extern void StopVimTerm();
 
 CEStartupEnv* gpStartEnv = NULL;
+BOOL    gbConEmuCProcess = FALSE;
 DWORD   gnSelfPID = 0;
 BOOL    gbSelfIsRootConsoleProcess = FALSE;
 BOOL    gbForceStartPipeServer = FALSE;
@@ -743,57 +744,12 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 {
 	//DLOG0("DllStart",0);
 
-	wchar_t *szModule = (wchar_t*)calloc((MAX_PATH+1),sizeof(wchar_t));
-	if (!GetModuleFileName(NULL, szModule, MAX_PATH+1))
-		_wcscpy_c(szModule, MAX_PATH+1, L"GetModuleFileName failed");
-	const wchar_t* pszName = PointToName(szModule);
-	wchar_t szMsg[128];
-
-	// Process exe name must be known
-	_ASSERTEX(pszName);
-
-	// For reporting purposes. Users may define env.var and run program.
-	// When ConEmuHk.dll loaded in that process - it'll show msg box
-	// Example (for cmd.exe prompt):
-	// set ConEmuReportExe=sh.exe
-	// sh.exe --login -i
-	if (pszName && GetEnvironmentVariableW(ENV_CONEMUREPORTEXE_VAR_W, szMsg, countof(szMsg)) && *szMsg)
-	{
-		if (lstrcmpi(szMsg, pszName) == 0)
-		{
-			gbShowExeMsgBox = true;
-		}
-	}
-
-	#if defined(SHOW_EXE_TIMINGS) || defined(SHOW_EXE_MSGBOX)
-		wchar_t szTimingMsg[512]; UNREFERENCED_PARAMETER(szTimingMsg);
-		HANDLE hTimingHandle = GetStdHandle(STD_OUTPUT_HANDLE);
-		if (!lstrcmpi(pszName, SHOW_EXE_MSGBOX_NAME))
-		{
-			#ifndef SLEEP_EXE_UNTIL_DEBUGGER
-			gbShowExeMsgBox = true;
-			#else
-			while (!IsDebuggerPresent())
-			{
-				Sleep(250);
-			}
-			#endif
-		}
-	#endif
-
-
 	// *******************  begin  *********************
 
 	print_timings(L"DllStart: InitializeHookedModules");
 	InitializeHookedModules();
 
 	//HANDLE hStartedEvent = (HANDLE)apParm;
-
-
-	if (gbShowExeMsgBox)
-	{
-		ShowStartedMsgBox(L" loaded!", pszName);
-	}
 
 
 	#ifdef _DEBUG
@@ -805,113 +761,6 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 	}
 	#endif
 
-	lstrcpyn(gsExeName, pszName, countof(gsExeName)-5);
-	if (!wcschr(gsExeName, L'.'))
-	{
-		// Must be extension?
-		_ASSERTEX(wcschr(pszName,L'.')!=NULL);
-		wcscat_c(gsExeName, L".exe");
-	}
-
-	if (lstrcmpi(gsExeName, L"powershell.exe") == 0)
-	{
-		HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
-		if (CEAnsi::IsOutputHandle(hStdOut))
-		{
-			gbPowerShellMonitorProgress = true;
-			MY_CONSOLE_SCREEN_BUFFER_INFOEX csbi = {sizeof(csbi)};
-			if (apiGetConsoleScreenBufferInfoEx(hStdOut, &csbi))
-			{
-				gnConsolePopupColors = csbi.wPopupAttributes;
-			}
-			else
-			{
-				WARNING("Получить Popup атрибуты из мэппинга");
-				//gnConsolePopupColors = ...;
-				gnConsolePopupColors = 0;
-			}
-		}
-	}
-	else if ((lstrcmpi(gsExeName, L"far.exe") == 0) || (lstrcmpi(gsExeName, L"far64.exe") == 0) || (lstrcmpi(gsExeName, L"far32.exe") == 0))
-	{
-		gbIsFarProcess = true;
-	}
-	else if (lstrcmpi(gsExeName, L"cmd.exe") == 0)
-	{
-		gbIsCmdProcess = true;
-		#if 0
-		CreateThread(NULL, 0, DummyLibLoaderCmdThread, NULL, 0, &gnDummyLibLoaderCmdThreadTID);
-		#endif
-	}
-	else if (lstrcmpi(gsExeName, L"node.exe") == 0)
-	{
-		gbIsNodeJSProcess = true;
-	}
-	else if ((lstrcmpi(gsExeName, L"sh.exe") == 0)
-		|| (lstrcmpi(gsExeName, L"bash.exe") == 0)
-		|| (lstrcmpi(gsExeName, L"isatty.exe") == 0)
-		)
-	{
-		//_ASSERTEX(FALSE && "settings gbIsBashProcess");
-		gbIsBashProcess = true;
-
-		TODO("Start redirection of ConIn/ConOut to our pipes to achieve PTTY in bash");
-		#if 0
-		if (lstrcmpi(gsExeName, L"isatty.exe") == 0)
-			StartPTY();
-		#endif
-	}
-	else if (lstrcmpi(gsExeName, L"ssh.exe") == 0)
-	{
-		gbIsSshProcess = true;
-		#if 0
-		ghDebugSshLibs = CreateEvent(NULL, FALSE, FALSE, NULL);
-		ghDebugSshLibsRc = CreateEvent(NULL, FALSE, FALSE, NULL);
-		ghDebugSshLibsCan = CreateEvent(NULL, FALSE, FALSE, NULL);
-		CreateThread(NULL, 0, DummyLibLoaderThread, NULL, 0, &gnDummyLibLoaderThreadTID);
-		#endif
-	}
-	else if (lstrcmpi(gsExeName, L"less.exe") == 0)
-	{
-		gbIsLessProcess = true;
-	}
-	else if (lstrcmpi(gsExeName, L"hiew32.exe") == 0)
-	{
-		gbIsHiewProcess = true;
-	}
-	else if (lstrcmpi(gsExeName, L"dosbox.exe") == 0)
-	{
-		gbDosBoxProcess = true;
-	}
-	else if (lstrcmpi(gsExeName, L"vim.exe") == 0)
-	{
-		gbIsVimProcess = true;
-		//CEAnsi::StartVimTerm(true);
-	}
-	else if (lstrcmpni(gsExeName, L"mintty", 6) == 0) // Without extension? Or may be "minttyXXX.exe"?
-	{
-		gbIsMinTtyProcess = true;
-	}
-	else if (lstrcmpi(gsExeName, L"notepad.exe") == 0)
-	{
-		//_ASSERTE(FALSE && "Notepad.exe started!");
-	}
-	else if (IsVsNetHostExe(pszName)) // "*.vshost.exe", "*" may be long, so we use pszName instead of limited gsExeName
-	{
-		gbIsNetVsHost = true;
-	}
-	else if ((lstrcmpi(gsExeName, L"devenv.exe") == 0) || (lstrcmpi(gsExeName, L"WDExpress.exe") == 0))
-	{
-		gbIsVStudio = true;
-	}
-
-	if (gbIsNetVsHost
-		|| (lstrcmpi(gsExeName, L"chrome.exe") == 0)
-		|| (lstrcmpi(gsExeName, L"firefox.exe") == 0)
-		|| (lstrcmpi(gsExeName, L"link.exe") == 0))
-	{
-		gbSkipVirtualAllocErr = true;
-	}
 
 	// Поскольку процедура в принципе может быть кем-то перехвачена, сразу найдем адрес
 	// iFindAddress = FindKernelAddress(pi.hProcess, pi.dwProcessId, &fLoadLibrary);
@@ -1284,8 +1133,6 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 	#endif
 	*/
 
-	SafeFree(szModule);
-
 	//if (hStartedEvent)
 	//	SetEvent(hStartedEvent);
 
@@ -1315,6 +1162,166 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 	//DLOGEND();
 
 	return 0;
+}
+
+void InitExeName()
+{
+	wchar_t szMsg[MAX_PATH+1];
+	if (!GetModuleFileName(NULL, szMsg, countof(szMsg)))
+		wcscpy_c(szMsg, L"GetModuleFileName failed");
+	const wchar_t* pszName = PointToName(szMsg);
+
+	// Process exe name must be known
+	_ASSERTEX(pszName);
+
+	lstrcpyn(gsExeName, pszName, countof(gsExeName)-5);
+	if (!wcschr(gsExeName, L'.'))
+	{
+		// Must be extension?
+		_ASSERTEX(wcschr(pszName,L'.')!=NULL);
+		wcscat_c(gsExeName, L".exe");
+	}
+	pszName = gsExeName;
+
+	// For reporting purposes. Users may define env.var and run program.
+	// When ConEmuHk.dll loaded in that process - it'll show msg box
+	// Example (for cmd.exe prompt):
+	// set ConEmuReportExe=sh.exe
+	// sh.exe --login -i
+	if (pszName && GetEnvironmentVariableW(ENV_CONEMUREPORTEXE_VAR_W, szMsg, countof(szMsg)) && *szMsg)
+	{
+		if (lstrcmpi(szMsg, pszName) == 0)
+		{
+			gbShowExeMsgBox = true;
+		}
+	}
+
+	#if defined(SHOW_EXE_TIMINGS) || defined(SHOW_EXE_MSGBOX)
+		wchar_t szTimingMsg[512]; UNREFERENCED_PARAMETER(szTimingMsg);
+		HANDLE hTimingHandle = GetStdHandle(STD_OUTPUT_HANDLE);
+		if (!lstrcmpi(pszName, SHOW_EXE_MSGBOX_NAME))
+		{
+			#ifndef SLEEP_EXE_UNTIL_DEBUGGER
+			gbShowExeMsgBox = true;
+			#else
+			while (!IsDebuggerPresent())
+			{
+				Sleep(250);
+			}
+			#endif
+		}
+	#endif
+
+
+	if (gbShowExeMsgBox)
+	{
+		ShowStartedMsgBox(L" loaded!", pszName);
+	}
+
+
+	if ((lstrcmpi(gsExeName, L"ConEmuC.exe") == 0) || (lstrcmpi(gsExeName, L"ConEmuC64.exe") == 0))
+	{
+		gbConEmuCProcess = true;
+	}
+	else if (lstrcmpi(gsExeName, L"powershell.exe") == 0)
+	{
+		HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
+		if (CEAnsi::IsOutputHandle(hStdOut))
+		{
+			gbPowerShellMonitorProgress = true;
+			MY_CONSOLE_SCREEN_BUFFER_INFOEX csbi = {sizeof(csbi)};
+			if (apiGetConsoleScreenBufferInfoEx(hStdOut, &csbi))
+			{
+				gnConsolePopupColors = csbi.wPopupAttributes;
+			}
+			else
+			{
+				WARNING("Получить Popup атрибуты из мэппинга");
+				//gnConsolePopupColors = ...;
+				gnConsolePopupColors = 0;
+			}
+		}
+	}
+	else if ((lstrcmpi(gsExeName, L"far.exe") == 0) || (lstrcmpi(gsExeName, L"far64.exe") == 0) || (lstrcmpi(gsExeName, L"far32.exe") == 0))
+	{
+		gbIsFarProcess = true;
+	}
+	else if (lstrcmpi(gsExeName, L"cmd.exe") == 0)
+	{
+		gbIsCmdProcess = true;
+		#if 0
+		CreateThread(NULL, 0, DummyLibLoaderCmdThread, NULL, 0, &gnDummyLibLoaderCmdThreadTID);
+		#endif
+	}
+	else if (lstrcmpi(gsExeName, L"node.exe") == 0)
+	{
+		gbIsNodeJSProcess = true;
+	}
+	else if ((lstrcmpi(gsExeName, L"sh.exe") == 0)
+		|| (lstrcmpi(gsExeName, L"bash.exe") == 0)
+		|| (lstrcmpi(gsExeName, L"isatty.exe") == 0)
+		)
+	{
+		//_ASSERTEX(FALSE && "settings gbIsBashProcess");
+		gbIsBashProcess = true;
+
+		TODO("Start redirection of ConIn/ConOut to our pipes to achieve PTTY in bash");
+		#if 0
+		if (lstrcmpi(gsExeName, L"isatty.exe") == 0)
+			StartPTY();
+		#endif
+	}
+	else if (lstrcmpi(gsExeName, L"ssh.exe") == 0)
+	{
+		gbIsSshProcess = true;
+		#if 0
+		ghDebugSshLibs = CreateEvent(NULL, FALSE, FALSE, NULL);
+		ghDebugSshLibsRc = CreateEvent(NULL, FALSE, FALSE, NULL);
+		ghDebugSshLibsCan = CreateEvent(NULL, FALSE, FALSE, NULL);
+		CreateThread(NULL, 0, DummyLibLoaderThread, NULL, 0, &gnDummyLibLoaderThreadTID);
+		#endif
+	}
+	else if (lstrcmpi(gsExeName, L"less.exe") == 0)
+	{
+		gbIsLessProcess = true;
+	}
+	else if (lstrcmpi(gsExeName, L"hiew32.exe") == 0)
+	{
+		gbIsHiewProcess = true;
+	}
+	else if (lstrcmpi(gsExeName, L"dosbox.exe") == 0)
+	{
+		gbDosBoxProcess = true;
+	}
+	else if (lstrcmpi(gsExeName, L"vim.exe") == 0)
+	{
+		gbIsVimProcess = true;
+		//CEAnsi::StartVimTerm(true);
+	}
+	else if (lstrcmpni(gsExeName, L"mintty", 6) == 0) // Without extension? Or may be "minttyXXX.exe"?
+	{
+		gbIsMinTtyProcess = true;
+	}
+	else if (lstrcmpi(gsExeName, L"notepad.exe") == 0)
+	{
+		//_ASSERTE(FALSE && "Notepad.exe started!");
+	}
+	else if (IsVsNetHostExe(pszName)) // "*.vshost.exe", "*" may be long, so we use pszName instead of limited gsExeName
+	{
+		gbIsNetVsHost = true;
+	}
+	else if ((lstrcmpi(gsExeName, L"devenv.exe") == 0) || (lstrcmpi(gsExeName, L"WDExpress.exe") == 0))
+	{
+		gbIsVStudio = true;
+	}
+
+	if (gbIsNetVsHost
+		|| (lstrcmpi(gsExeName, L"chrome.exe") == 0)
+		|| (lstrcmpi(gsExeName, L"firefox.exe") == 0)
+		|| (lstrcmpi(gsExeName, L"link.exe") == 0))
+	{
+		gbSkipVirtualAllocErr = true;
+	}
 }
 
 #ifdef HOOK_USE_DLLTHREAD
@@ -1600,6 +1607,8 @@ BOOL WINAPI DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 			gfGetRealConsoleWindow = GetConsoleWindow;
 			DLOGEND1();
 
+
+			InitExeName();
 
 
 			DLOG1_("DllMain.RootEvents",ul_reason_for_call);
