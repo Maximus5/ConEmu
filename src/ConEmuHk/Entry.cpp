@@ -1603,6 +1603,12 @@ BOOL DllMain_ProcessAttach(HANDLE hModule, DWORD  ul_reason_for_call)
 			bool bCurrentThreadIsMain = false;
 
 			wchar_t szEvtName[64];
+	if (gbConEmuCProcess)
+	{
+		bCurrentThreadIsMain = true;
+	}
+	else
+	{
 			msprintf(szEvtName, countof(szEvtName), CECONEMUROOTPROCESS, gnSelfPID);
 			gEvtProcessRoot.hProcessFlag = OpenEvent(SYNCHRONIZE|EVENT_MODIFY_STATE, FALSE, szEvtName);
 			if (gEvtProcessRoot.hProcessFlag)
@@ -1626,11 +1632,12 @@ BOOL DllMain_ProcessAttach(HANDLE hModule, DWORD  ul_reason_for_call)
 			else
 				gEvtThreadRoot.nErrCode = GetLastError();
 			//SafeCloseHandle(gEvtThreadRoot.hProcessFlag);
+	}
 
 			// When calling Attach (Win+G) from ConEmu GUI
 			gbForceStartPipeServer = (!bCurrentThreadIsMain);
 
-			if (!gbSelfIsRootConsoleProcess)
+	if (!gbSelfIsRootConsoleProcess && !gbConEmuCProcess)
 			{
 				msprintf(szEvtName, countof(szEvtName), CEDEFAULTTERMHOOK, gnSelfPID);
 				gEvtDefTerm.hProcessFlag = OpenEvent(SYNCHRONIZE|EVENT_MODIFY_STATE, FALSE, szEvtName);
@@ -2025,6 +2032,12 @@ WARNING("Попробовать SendStarted пыполнять не из DllMain
 
 void SendStarted()
 {
+	// Don't do anything while loading into ConEmuC.exe/ConEmuC64.exe
+	if (gbConEmuCProcess)
+	{
+		return;
+	}
+
 	// When SendStarted is called in DefTerm mode (gbPrepareDefaultTerminal)
 	// for '*.vshost.exe' process, there is neither console nor server process yet
 	// So, server will not receive CECMD_CMDSTARTSTOP(sst_AppStart) message
@@ -2102,8 +2115,10 @@ void SendStarted()
 
 void SendStopped()
 {
-	if (gbNonGuiMode || !gnServerPID)
+	if (gbNonGuiMode || !gnServerPID || gbConEmuCProcess)
+	{
 		return;
+	}
 
 	// To avoid cmd-execute lagging - send Start/Stop info only for root(!) process
 	_ASSERTEX(gbSelfIsRootConsoleProcess);
