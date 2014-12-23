@@ -1386,26 +1386,32 @@ void FlushMouseEvents()
 	}
 }
 
-void DllStop()
+void DoDllStop(bool bFinal)
 {
 	//DLOG0("DllStop",0);
 	print_timings(L"DllStop");
+	bool bUnload = (bFinal && !gbHooksWasSet);
 
 	#if defined(SHOW_EXE_TIMINGS) || defined(SHOW_EXE_MSGBOX)
 		wchar_t szTimingMsg[512]; UNREFERENCED_PARAMETER(szTimingMsg);
 		HANDLE hTimingHandle = GetStdHandle(STD_OUTPUT_HANDLE);
 	#endif
 
-	if (gbIsVimProcess)
+	static bool bVimStopped = false;
+	if (gbIsVimProcess && !bVimStopped)
 	{
+		bVimStopped = true;
 		CEAnsi::StopVimTerm();
 	}
 
-	CEAnsi::DoneAnsiLog();
+	CEAnsi::DoneAnsiLog(bUnload);
 
 	TODO("Stop redirection of ConIn/ConOut to our pipes to achieve PTTY in bash");
 	#ifdef _DEBUG
+	if (bUnload)
+	{
 	StopPTY();
+	}
 	#endif
 
 	if (gpDefTerm)
@@ -1467,12 +1473,14 @@ void DllStop()
 	{
 		DLOG0("unhookWindowsHookEx",0);
 		print_timings(L"unhookWindowsHookEx");
-		UnhookWindowsHookEx(ghGuiClientRetHook);
+		HHOOK hh = ghGuiClientRetHook;
+		ghGuiClientRetHook = NULL;
+		UnhookWindowsHookEx(hh);
 		DLOGEND();
 	}
 	#endif
 
-	if (/*!gbSkipInjects &&*/ gbHooksWasSet)
+	if (gbHooksWasSet && bFinal)
 	{
 		DLOG0("ShutdownHooks",0);
 		print_timings(L"ShutdownHooks");
@@ -1486,16 +1494,18 @@ void DllStop()
 
 	// Do not send CECMD_CMDSTARTSTOP(sst_AppStop) to server
 	// when that is 'DefTerm' process - avoid termination lagging
-	if (gbSelfIsRootConsoleProcess && !gpDefTerm)
+	static bool bSentStopped = false;
+	if (gbSelfIsRootConsoleProcess && !gpDefTerm && !bSentStopped)
 	{
 		// To avoid cmd-execute lagging - send Start/Stop info only for root(!) process
 		DLOG0("SendStopped",0);
 		print_timings(L"SendStopped");
+		bSentStopped = true;
 		SendStopped();
 		DLOGEND();
 	}
 
-	if (gpConMap)
+	if (gpConMap && bUnload)
 	{
 		DLOG0("gpConMap->CloseMap",0);
 		print_timings(L"gpConMap->CloseMap");
@@ -1506,7 +1516,7 @@ void DllStop()
 		DLOGEND();
 	}
 
-	if (gpAppMap)
+	if (gpAppMap && bUnload)
 	{
 		DLOG0("gpAppMap->CloseMap",0);
 		print_timings(L"gpAppMap->CloseMap");
@@ -1517,6 +1527,7 @@ void DllStop()
 	}
 
 	// CommonShutdown
+	if (bUnload)
 	{
 		DLOG0("CommonShutdown",0);
 		//#ifndef TESTLINK
@@ -1527,6 +1538,7 @@ void DllStop()
 
 
 	// FinalizeHookedModules
+	if (bUnload)
 	{
 		DLOG0("FinalizeHookedModules",0);
 		print_timings(L"FinalizeHookedModules");
@@ -1534,9 +1546,10 @@ void DllStop()
 		DLOGEND();
 	}
 
-#ifndef _DEBUG
+	if (bUnload)
+	{
 	HeapDeinitialize();
-#endif
+	}
 
 	#ifdef _DEBUG
 		#ifdef UseDebugExceptionFilter
@@ -1800,7 +1813,7 @@ BOOL DllMain_ThreadDetach(HANDLE hModule, DWORD  ul_reason_for_call)
 			{
 				DLOG1("DllMain.DllStop",ul_reason_for_call);
 				//WARNING!!! OutputDebugString must NOT be used from ConEmuHk::DllMain(DLL_PROCESS_DETACH). See Issue 465
-				DllStop();
+		DoDllStop(false);
 				DLOGEND1();
 			}
 
@@ -1825,25 +1838,25 @@ BOOL DllMain_ProcessDetach(HANDLE hModule, DWORD  ul_reason_for_call)
 			ShutdownStep(L"DLL_PROCESS_DETACH");
 			gnDllState = ds_DllProcessDetach;
 
-			// Уже могли дернуть в DLL_THREAD_DETACH
-			if (!gbDllDeinitialized)
-			{
 				gbDllDeinitialized = true;
 				DLOG1("DllMain.DllStop",ul_reason_for_call);
 				//WARNING!!! OutputDebugString must NOT be used from ConEmuHk::DllMain(DLL_PROCESS_DETACH). See Issue 465
-				DllStop();
+	DoDllStop(true);
 				DLOGEND1();
-			}
-			// -- free не нужен, т.к. уже вызван HeapDeinitialize()
+
+	// -- free не нужен, т.к. уже может быть вызван HeapDeinitialize()
 			//free(user);
 			ShutdownStep(L"DLL_PROCESS_DETACH done");
 
 			#ifdef USEHOOKLOG
+	if (bFinal)
+	{
 			DLOGEND();
 			#ifdef USEHOOKLOGANALYZE
 			HookLogger::RunAnalyzer();
 			_ASSERTEX(FALSE && "Hooks terminated");
 			#endif
+	}
 			#endif
 
 	return lbAllow;

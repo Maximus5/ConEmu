@@ -133,12 +133,17 @@ void CEAnsi::InitAnsiLog(LPCWSTR asFilePath)
 	}
 }
 
-void CEAnsi::DoneAnsiLog()
+void CEAnsi::DoneAnsiLog(bool bFinal)
 {
-	HANDLE h;
-	if (ghAnsiLogFile)
+	if (!ghAnsiLogFile)
+		return;
+	if (!bFinal)
 	{
-		h = ghAnsiLogFile;
+		FlushFileBuffers(ghAnsiLogFile);
+	}
+	else
+	{
+		HANDLE h = ghAnsiLogFile;
 		ghAnsiLogFile = NULL;
 		CloseHandle(h);
 		SafeDelete(gcsAnsiLogFile);

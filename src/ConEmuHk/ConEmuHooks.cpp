@@ -255,15 +255,6 @@ wchar_t gszTimeEnvVarSave[32] = L"";
 /* ************ Hooking time functions ************ */
 
 
-/* ************ From Entry.cpp ************ */
-#if defined(__GNUC__)
-extern "C"
-#endif
-// Вызывается из OnTerminateProcess/OnTerminateThread/OnExitProcess
-BOOL WINAPI DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpReserved);
-/* ************ From Entry.cpp ************ */
-
-
 struct ReadConsoleInfo gReadConsoleInfo = {};
 
 int WINAPI OnCompareStringW(LCID Locale, DWORD dwCmpFlags, LPCWSTR lpString1, int cchCount1, LPCWSTR lpString2, int cchCount2);
@@ -1146,11 +1137,8 @@ VOID WINAPI OnExitProcess(UINT uExitCode)
 	}
 	#endif
 
-	// We need not to unset hooks (due to process will be force-killed below)
-	extern BOOL gbHooksWasSet;
-	gbHooksWasSet = FALSE;
 	// And terminate our threads
-	DllMain(ghOurModule, DLL_PROCESS_DETACH, NULL);
+	DoDllStop(false);
 
 	F(ExitProcess)(uExitCode);
 }
@@ -1165,10 +1153,8 @@ BOOL WINAPI OnTerminateProcess(HANDLE hProcess, UINT uExitCode)
 	if (hProcess == GetCurrentProcess())
 	{
 		// We need not to unset hooks (due to process will be force-killed below)
-		extern BOOL gbHooksWasSet;
-		gbHooksWasSet = FALSE;
 		// And terminate our threads
-		DllMain(ghOurModule, DLL_PROCESS_DETACH, NULL);
+		DoDllStop(false);
 	}
 
 	lbRc = F(TerminateProcess)(hProcess, uExitCode);
@@ -1191,7 +1177,8 @@ BOOL WINAPI OnTerminateThread(HANDLE hThread, DWORD dwExitCode)
 
 	if (hThread == GetCurrentThread())
 	{
-		DllMain(ghOurModule, DLL_THREAD_DETACH, NULL);
+		// And terminate our service threads
+		DoDllStop(false);
 	}
 
 	lbRc = F(TerminateThread)(hThread, dwExitCode);

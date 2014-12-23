@@ -127,7 +127,7 @@ public:
 	static bool IsOutputHandle(HANDLE hFile, DWORD* pMode = NULL);
 
 	static void InitAnsiLog(LPCWSTR asFilePath);
-	static void DoneAnsiLog();
+	static void DoneAnsiLog(bool bFinal);
 
 	static void GetFeatures(bool* pbAnsiAllowed, bool* pbSuppressBells);
 
