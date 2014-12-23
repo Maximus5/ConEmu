@@ -1397,6 +1397,9 @@ void DoDllStop(bool bFinal)
 		HANDLE hTimingHandle = GetStdHandle(STD_OUTPUT_HANDLE);
 	#endif
 
+	if (gnDllState < ds_DllStop)
+		gnDllState = ds_DllStop;
+
 	static bool bVimStopped = false;
 	if (gbIsVimProcess && !bVimStopped)
 	{
