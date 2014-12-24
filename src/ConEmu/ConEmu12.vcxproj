@@ -1001,6 +1001,7 @@ copy "$(TargetPath)" Z:\</Command>
     <ClCompile Include="DragDrop.cpp" />
     <ClCompile Include="DragDropData.cpp" />
     <ClCompile Include="DwmHelper.cpp" />
+    <ClCompile Include="DynDialog.cpp" />
     <ClCompile Include="FindDlg.cpp" />
     <ClCompile Include="FindPanel.cpp" />
     <ClCompile Include="FrameHolder.cpp" />
@@ -1117,6 +1118,7 @@ copy "$(TargetPath)" Z:\</Command>
     <ClInclude Include="DragDrop.h" />
     <ClInclude Include="DragDropData.h" />
     <ClInclude Include="DwmHelper.h" />
+    <ClInclude Include="DynDialog.h" />
     <ClInclude Include="FindDlg.h" />
     <ClInclude Include="FindPanel.h" />
     <ClInclude Include="FrameHolder.h" />

@@ -41,7 +41,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define StartupValueName L"ConEmuDefaultTerminal"
 
 CDefaultTerminal::CDefaultTerminal()
-	: CDefTermBase()
+	: CDefTermBase(true)
 {
 	mb_ExplorerHookAllowed = true;
 }

@@ -48,6 +48,7 @@ $(INTDIR)\DpiAware.obj \
 $(INTDIR)\DragDrop.obj \
 $(INTDIR)\DragDropData.obj \
 $(INTDIR)\DwmHelper.obj \
+$(INTDIR)\DynDialog.obj \
 $(INTDIR)\Execute.obj \
 $(INTDIR)\FindDlg.obj \
 $(INTDIR)\FindPanel.obj \
@@ -322,6 +323,8 @@ $(INTDIR)\DragDrop.obj: DragDrop.cpp BaseDragDrops.h DragDrop.h DragDropData.h
 $(INTDIR)\DragDropData.obj: DragDropData.cpp BaseDragDrops.h DragDrop.h DragDropData.h
 
 $(INTDIR)\DwmHelper.obj: DwmHelper.cpp DwmHelper.h
+
+$(INTDIR)\DynDialog.obj: DynDialog.cpp DynDialog.h
 
 $(INTDIR)\Execute.obj: ../common/execute.cpp ../common/execute.h
 

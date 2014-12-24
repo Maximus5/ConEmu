@@ -47,6 +47,7 @@
 #define IDD_SPG_PASTE                   179
 #define IDD_SPG_CONFIRM                 180
 #define IDD_SPG_HISTORY                 181
+#define IDD_SPG_BACK                    182
 #define IDD_MORE_CONFONT                209
 #define IDD_MORE_DOSBOX                 210
 #define IDD_ATTACHDLG                   212
@@ -59,7 +60,6 @@
 #define IDD_ACTION                      222
 #define IDD_HOTKEY                      223
 #define IDI_SEARCH                      224
-#define IDD_SPG_BACK                    225
 #define c0                              1000
 #define c1                              1001
 #define c2                              1002

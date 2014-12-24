@@ -45,6 +45,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "UnitTests.h"
 
 #ifdef _DEBUG
+#include "DynDialog.h"
+#endif
+
+#ifdef _DEBUG
 void UnitMaskTests()
 {
 	struct {
@@ -330,6 +334,7 @@ void DebugUnitTests()
 	CMatch::UnitTests();
 	ConEmuChord::ChordUnitTests();
 	ConEmuHotKey::HotkeyNameUnitTests();
+	CDynDialog::UnitTests();
 }
 #endif
 
