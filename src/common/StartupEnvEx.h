@@ -384,7 +384,7 @@ public:
 		ReleaseDC(NULL, hdcScreen);
 		dumpEnvStr(szSI, true);
 
-		dumpEnvStr(L"Monitors:", true);
+		dumpEnvStr(L"Monitors (dpi: WholeDesktop, Effective, Angular, RAW):", true);
 		for (size_t i = 0; i < apStartEnv->nMonitorsCount; i++)
 		{
 			CEStartupEnv::MyMonitorInfo* p = (apStartEnv->Monitors + i);
