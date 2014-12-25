@@ -176,7 +176,7 @@ bool InitDefaultTerm()
 
 
 CDefTermHk::CDefTermHk()
-	: CDefTermBase()
+	: CDefTermBase(false)
 {
 	mh_StopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 
@@ -247,6 +247,11 @@ void CDefTermHk::PostCreateThreadFinished()
 	HWND  hFore = NULL;
 	while ((dwWait = WaitForSingleObject(mh_StopEvent, FOREGROUND_CHECK_DELAY)) == WAIT_TIMEOUT)
 	{
+		// If non-aggressive - don't do anything here...
+		if (!isDefaultTerminalAllowed(true) || !m_Opt.bAgressive)
+			continue;
+
+		// Aggressive mode
 		hFore = GetForegroundWindow();
 		if (!hFore)
 			continue;

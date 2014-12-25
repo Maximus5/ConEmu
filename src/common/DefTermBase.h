@@ -285,6 +285,7 @@ protected:
 	};
 
 private:
+	bool   mb_ConEmuGui;
 	bool   mb_ReadyToHook;
 	bool   mb_PostCreatedThread;
 	bool   mb_Initialized;
@@ -327,8 +328,9 @@ protected:
 	}
 
 public:
-	CDefTermBase()
+	CDefTermBase(bool bConEmuGui)
 	{
+		mb_ConEmuGui = bConEmuGui;
 		mb_ReadyToHook = false;
 		mh_LastWnd = mh_LastIgnoredWnd = mh_LastCall = NULL;
 		mh_PostThread = NULL;
@@ -740,6 +742,10 @@ protected:
 
 		mb_ReadyToHook = true;
 
+		// Even if it is not a ConEmu.exe we need to start thread,
+		// aggressive mode may be turned on by user in any moment
+		// We need just slow down our thred as possible...
+
 		// Этот процесс занимает некоторое время, чтобы не блокировать основной поток - запускаем фоновый
 		mb_PostCreatedThread = true;
 		DWORD  nWait = WAIT_FAILED;
@@ -904,8 +910,11 @@ protected:
 	{
 		CDefTermBase *pTerm = (CDefTermBase*)lpParameter;
 
-		// Проверит Shell (Taskbar) и активное окно (GetForegroundWindow)
-		pTerm->CheckShellWindow();
+		if (pTerm->mb_ConEmuGui || pTerm->m_Opt.bAgressive)
+		{
+			// Проверит Shell (Taskbar) и активное окно (GetForegroundWindow)
+			pTerm->CheckShellWindow();
+		}
 
 		pTerm->PostCreateThreadFinished();
 
