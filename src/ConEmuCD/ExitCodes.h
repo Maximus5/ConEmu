@@ -78,6 +78,7 @@ const CINFILTRATE_EXIT_CODES
 	CIR_InInjectedCodeError = -100,
 	CIR_CheckKernelExportAddr = -111,
 	CIR_OuterKernelAddr = -112,
+	CIR_SnapshotCantBeOpened = -113,
 	CIR_InfiltrateGeneral = -150,
 	//
 	CIR_GetModuleFileName = -200,

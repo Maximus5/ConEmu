@@ -326,7 +326,12 @@ CINFILTRATE_EXIT_CODES InjectRemote(DWORD nRemotePID, bool abDefTermOnly /*= fal
 
 	// Hey, may be ConEmuHk.dll is already loaded?
 	hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, nRemotePID);
-	if (hSnap && Module32First(hSnap, &mi))
+	if (!hSnap || (hSnap == INVALID_HANDLE_VALUE))
+	{
+		iRc = CIR_SnapshotCantBeOpened/*-113*/;
+		goto wrap;
+	}
+	else if (hSnap && Module32First(hSnap, &mi))
 	{
 		// 130829 - Let load newer(!) ConEmuHk.dll into target process.
 		// 141201 - Also we need to be sure in kernel32.dll address
