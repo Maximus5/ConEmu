@@ -204,8 +204,10 @@ static LRESULT EditIconHintPaint(HWND hEditCtrl, CEIconHintInfo* p, UINT Msg = W
 		RECT rect = {};
 		if (GetClientRect(hEditCtrl, &rect))
 		{
-			int iw = GetSystemMetrics(SM_CXSMICON);
-			int ih = GetSystemMetrics(SM_CYSMICON);
+			//int iw = GetSystemMetrics(SM_CXSMICON);
+			//int ih = GetSystemMetrics(SM_CYSMICON);
+			int iw = rect.bottom+1;
+			int ih = iw;
 
 			// Paint background
 			HBRUSH hBr = GetSysColorBrush(COLOR_WINDOW);
