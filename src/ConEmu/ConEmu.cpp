@@ -3586,6 +3586,11 @@ void CConEmuMain::ExecuteProcessFinished(bool bOpt)
 //    return (dwCtrlType == CTRL_C_EVENT || dwCtrlType == CTRL_BREAK_EVENT ? true : false);
 //}
 
+void CConEmuMain::SetPostGuiMacro(LPCWSTR asGuiMacro)
+{
+	ms_PostGuiMacro.Set(asGuiMacro);
+}
+
 void CConEmuMain::SetWindowIcon(LPCWSTR asNewIcon)
 {
 	// Don't change TITLE BAR icon after initialization finished
@@ -7151,6 +7156,13 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 		}
 
 		mp_DefTrm->StartGuiDefTerm(false);
+
+		if (!ms_PostGuiMacro.IsEmpty())
+		{
+			CVConGuard VCon;
+			GetActiveVCon(&VCon);
+			ConEmuMacro::ExecuteMacro(ms_PostGuiMacro.ms_Arg, VCon.VCon() ? VCon->RCon() : NULL);
+		}
 	}
 
 	mn_StartupFinished = abReceived ? ss_PostCreate2Finished : ss_PostCreate1Finished;

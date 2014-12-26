@@ -84,6 +84,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"/SaveCfgFile <file> - Save configuration to the specified xml file.\r\n" \
 	L"/SetDefTerm - Set ConEmu as default terminal, use with \"/Exit\" switch.\r\n" \
 	L"/Exit - Don't create ConEmu window, exit after actions.\r\n" \
+	L"/GuiMacro - Execute some GuiMacro after ConEmu window creation.\r\n" \
 	/* L"/Attach [PID] - intercept console of specified process\n" */ \
 	L"/cmd <commandline>|@<taskfile>|{taskname} - Command line to start. This must be the last used switch.\r\n" \
 	L"\r\n" \

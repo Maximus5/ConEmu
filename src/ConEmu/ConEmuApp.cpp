@@ -3463,6 +3463,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	bool SaveCfgFilePrm = false; TCHAR* SaveCfgFile = NULL;
 	bool UpdateSrcSetPrm = false; TCHAR* UpdateSrcSet = NULL;
 	bool AnsiLogPathPrm = false; TCHAR* AnsiLogPath = NULL;
+	bool GuiMacroPrm = false; TCHAR* ExecGuiMacro = NULL;
 	bool QuakePrm = false; BYTE QuakeMode = 0;
 	bool SizePosPrm = false; TCHAR *sWndX = NULL, *sWndY = NULL, *sWndW = NULL, *sWndH = NULL;
 	bool SetUpDefaultTerminal = false;
@@ -4120,6 +4121,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 						return 100;
 					}
 				}
+				else if (!klstricmp(curCommand, _T("/GuiMacro")) && i + 1 < params)
+				{
+					// выполняется только последний
+					if (!GetCfgParm(i, curCommand, GuiMacroPrm, ExecGuiMacro, 0x8000, false))
+					{
+						return 100;
+					}
+				}
 				else if (!klstricmp(curCommand, _T("/UpdateSrcSet")) && i + 1 < params)
 				{
 					// используем последний из параметров, если их несколько
@@ -4372,6 +4381,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	{
 		DEBUGSTRSTARTUP(L"Exit was requested");
 		goto wrap;
+	}
+
+	if (GuiMacroPrm && ExecGuiMacro && *ExecGuiMacro)
+	{
+		gpConEmu->SetPostGuiMacro(ExecGuiMacro);
 	}
 
 
