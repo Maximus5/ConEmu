@@ -126,6 +126,10 @@ namespace ConEmuMacro
 		bool bFromPlugin;
 	};
 
+	static bool mb_ChangeContext = false;
+	static UINT mn_ChangeContextTab = 0, mn_ChangeContexSplit = 0;
+	CRealConsole* ChangeContext(CRealConsole* apRCon, UINT nTabIndex, UINT nSplitIndex, CVConGuard& VCon, LPWSTR& pszError);
+
 	/* ****************************** */
 	/* ****** Macros functions ****** */
 	/* ****************************** */
@@ -138,6 +142,8 @@ namespace ConEmuMacro
 	LPWSTR Break(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Закрыть/прибить текущую консоль
 	LPWSTR Close(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
+	// Change execution context (apRCon)
+	LPWSTR Context(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Copy (<What>)
 	LPWSTR Copy(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Найти окно и активировать его. // int nWindowType/*Panels=1, Viewer=2, Editor=3*/, LPWSTR asName
@@ -233,6 +239,7 @@ namespace ConEmuMacro
 		{Attach, {L"Attach"}},
 		{Break, {L"Break"}},
 		{Close, {L"Close"}},
+		{Context, {L"Context"}},
 		{Copy, {L"Copy"}},
 		{FindEditor, {L"FindEditor"}},
 		{FindFarWindow, {L"FindFarWindow"}},
@@ -786,6 +793,68 @@ GuiMacro* ConEmuMacro::GetNextMacro(LPWSTR& asString, bool abConvert, wchar_t** 
 	return pMacro;
 }
 
+CRealConsole* ConEmuMacro::ChangeContext(CRealConsole* apRCon, UINT nTabIndex, UINT nSplitIndex, CVConGuard& VCon, LPWSTR& pszError)
+{
+	if (!nTabIndex && !nSplitIndex)
+	{
+		// Just change context to current VCon
+		CVConGroup::GetActiveVCon(&VCon);
+	}
+	else
+	{
+		CVConGuard VConTab, VConSplit;
+
+		// Special (non-active) tab or split was selected
+		if (nTabIndex)
+		{
+			gpConEmu->mp_TabBar->GetVConFromTab(nTabIndex-1, &VConTab, NULL);
+		}
+		else if (apRCon)
+		{
+			VConTab.Attach(apRCon->VCon());
+		}
+		if (!VConTab.VCon())
+		{
+			pszError = lstrdup(L"InvalidTabIndex");;
+			return NULL;
+		}
+
+		// And split
+		CVConGroup* pGr = NULL;
+		if (nSplitIndex && CVConGroup::isGroup(VConTab.VCon(), &pGr))
+		{
+			MArray<CVConGuard*> Panes;
+			int iCount = pGr->GetGroupPanes(&Panes);
+			if ((int)nSplitIndex > iCount)
+			{
+				CVConGroup::FreePanesArray(Panes);
+				pszError = lstrdup(L"InvalidSplitIndex");
+				return NULL;
+			}
+			VConSplit.Attach(Panes[nSplitIndex-1]->VCon());
+			CVConGroup::FreePanesArray(Panes);
+			if (!VConSplit.VCon())
+			{
+				pszError = lstrdup(L"InvalidSplit");
+				return NULL;
+			}
+			VCon.Attach(VConSplit.VCon());
+		}
+		else
+		{
+			VCon.Attach(VConTab.VCon());
+		}
+	}
+
+	if (!VCon.VCon())
+	{
+		pszError = lstrdup(L"NoActiveCon");
+		return NULL;
+	}
+
+	return VCon->RCon();
+}
+
 
 #ifdef _DEBUG
 void ConEmuMacro::UnitTests()
@@ -852,37 +921,15 @@ void ConEmuMacro::UnitTests()
 LPWSTR ConEmuMacro::ExecuteMacro(LPWSTR asMacro, CRealConsole* apRCon, bool abFromPlugin /*= false*/, CESERVER_REQ_GUIMACRO* Opt /*= NULL*/)
 {
 	CRealConsole* pMacroRCon = apRCon;
-	CVConGuard VConTab, VConSplit;
-	MArray<CVConGuard*> Panes;
+	CVConGuard VConTab;
+
 	if (Opt && (Opt->nTabIndex || Opt->nSplitIndex))
 	{
-		// Special (non-active) tab or split was selected
-		if (Opt->nTabIndex)
+		LPWSTR pszError = NULL;
+		pMacroRCon = ChangeContext(pMacroRCon, Opt->nTabIndex, Opt->nSplitIndex, VConTab, pszError);
+		if (!pMacroRCon)
 		{
-			gpConEmu->mp_TabBar->GetVConFromTab(Opt->nTabIndex-1, &VConTab, NULL);
-		}
-		else
-		{
-			VConTab.Attach(pMacroRCon->VCon());
-		}
-		if (!VConTab.VCon())
-			return lstrdup(L"InvalidTabIndex");
-		pMacroRCon = VConTab->RCon();
-		// And split
-		CVConGroup* pGr = NULL;
-		if (Opt->nSplitIndex && CVConGroup::isGroup(pMacroRCon->VCon(), &pGr))
-		{
-			int iCount = pGr->GetGroupPanes(&Panes);
-			if ((int)Opt->nSplitIndex > iCount)
-			{
-				CVConGroup::FreePanesArray(Panes);
-				return lstrdup(L"InvalidSplitIndex");
-			}
-			VConSplit.Attach(Panes[Opt->nSplitIndex-1]->VCon());
-			CVConGroup::FreePanesArray(Panes);
-			if (!VConSplit.VCon())
-				return lstrdup(L"InvalidSplit");
-			pMacroRCon = VConSplit->RCon();
+			return pszError ? pszError : lstrdup(L"InvalidTabIndex");
 		}
 	}
 
@@ -928,6 +975,16 @@ LPWSTR ConEmuMacro::ExecuteMacro(LPWSTR asMacro, CRealConsole* apRCon, bool abFr
 		pszResult = lstrdup(L"UnknownMacro"); // Неизвестная функция
 
 	executed:
+		if (mb_ChangeContext)
+		{
+			CRealConsole* pChangedRCon = ChangeContext(pMacroRCon, mn_ChangeContextTab, mn_ChangeContexSplit, VConTab, pszResult);
+			mb_ChangeContext = false; mn_ChangeContextTab = 0; mn_ChangeContexSplit = 0;
+			if (pChangedRCon)
+			{
+				pMacroRCon = pChangedRCon;
+			}
+		}
+
 		if (pszResult == NULL)
 		{
 			_ASSERTE(FALSE && "MacroFunction must returns anything");
@@ -1306,6 +1363,21 @@ LPWSTR ConEmuMacro::Close(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 	}
 
 	return pszResult ? pszResult : lstrdup(L"Failed");
+}
+
+LPWSTR ConEmuMacro::Context(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
+{
+	int iVal = 0;
+	mb_ChangeContext = true;
+	if (p->GetIntArg(0, iVal))
+	{
+		mn_ChangeContextTab = iVal;
+		if (p->GetIntArg(1, iVal))
+		{
+			mn_ChangeContexSplit = iVal;
+		}
+	}
+	return NULL;
 }
 
 // Найти окно и активировать его. // LPWSTR asName

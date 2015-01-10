@@ -220,6 +220,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"    close all active processes of the active group (7)\r\n" \
 	L"    close all tabs (8), no confirm (8,1)\r\n" \
 	L"    close all zombies (9), no confirm (9,1)\r\n" \
+	L"Context([<Tab>[,<Split>]])\r\n" \
+	L"  - Change macro execution context\r\n" \
+	L"    Tab: 1-based tab index\r\n" \
+	L"    Split: 1-based split index\r\n" \
 	L"Copy(<What>[,<Format>[,\"<File>\"]])\r\n" \
 	L"  - Copy active console contents\r\n" \
 	L"    What==0: current selection\r\n" \
