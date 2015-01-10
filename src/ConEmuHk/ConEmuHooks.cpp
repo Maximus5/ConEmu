@@ -4370,6 +4370,7 @@ LONG WINAPI OnRegQueryValueExW(HKEY hKey, LPCWSTR lpValueName, LPDWORD lpReserve
 									if (lpcbData)
 										*lpcbData = cbSize;
 									free(pszCmd);
+									FreeLibrary(hAdvApi);
 									goto wrap;
 								}
 								free(pszCmd);
