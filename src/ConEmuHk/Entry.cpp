@@ -1302,10 +1302,6 @@ void InitExeName()
 	{
 		gbIsMinTtyProcess = true;
 	}
-	else if (lstrcmpi(gsExeName, L"notepad.exe") == 0)
-	{
-		//_ASSERTE(FALSE && "Notepad.exe started!");
-	}
 	else if (IsVsNetHostExe(pszName)) // "*.vshost.exe", "*" may be long, so we use pszName instead of limited gsExeName
 	{
 		gbIsNetVsHost = true;
