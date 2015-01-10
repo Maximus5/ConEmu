@@ -4351,7 +4351,7 @@ LONG WINAPI OnRegQueryValueExW(HKEY hKey, LPCWSTR lpValueName, LPDWORD lpReserve
 									_wcscpy_c(pszCmd+iLen, cchMax-iLen, L" & "); // conveyer next command indifferent to %errorlevel%
 
 									cbSize = cbMax - (iLen + 3)*sizeof(*pszCmd);
-									if (F(RegQueryValueExW)(hKey, lpValueName, NULL, NULL, (LPBYTE)pszCmd, &(cbSize = cbMax))
+									if (F(RegQueryValueExW)(hKey, lpValueName, NULL, NULL, (LPBYTE)(pszCmd + iLen + 3), &cbSize)
 										|| (pszCmd[iLen+3] == 0))
 									{
 										pszCmd[iLen] = 0; // There is no self value in registry
