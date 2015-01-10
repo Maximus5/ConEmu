@@ -4249,6 +4249,30 @@ bool InitializeClink()
 	//return (gpfnClinkReadLine != NULL);
 }
 
+static bool IsInteractive()
+{
+	const wchar_t* const cmdLine = ::GetCommandLineW();
+	if (!cmdLine)
+	{
+		return true;	// can't know - assume it is
+	}
+
+	const wchar_t* pos = cmdLine;
+	while ((pos = wcschr(pos, L'/')) != NULL)
+	{
+		switch (pos[1])
+		{
+		case L'K': case L'k':
+			return true;	// /k - execute and remain working
+		case L'C': case L'c':
+			return false;	// /c - execute and exit
+		}
+		++pos;
+	}
+
+	return true;
+}
+
 // cmd.exe only!
 LONG WINAPI OnRegQueryValueExW(HKEY hKey, LPCWSTR lpValueName, LPDWORD lpReserved, LPDWORD lpType, LPBYTE lpData, LPDWORD lpcbData)
 {
@@ -4278,9 +4302,9 @@ LONG WINAPI OnRegQueryValueExW(HKEY hKey, LPCWSTR lpValueName, LPDWORD lpReserve
 				lRc = 0;
 				goto wrap;
 			}
-			if (gbAllowClinkUsage && gszClinkCmdLine && lstrcmpi(lpValueName, L"AutoRun") == 0)
+			if (gbAllowClinkUsage && gszClinkCmdLine && (lstrcmpi(lpValueName, L"AutoRun") == 0)
+				&& IsInteractive())
 			{
-
 				// Is already loaded?
 				HMODULE hClink = GetModuleHandle(WIN3264TEST(L"clink_dll_x86.dll",L"clink_dll_x64.dll"));
 				if (hClink == NULL)
