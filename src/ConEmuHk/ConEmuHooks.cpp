@@ -4280,7 +4280,6 @@ LONG WINAPI OnRegQueryValueExW(HKEY hKey, LPCWSTR lpValueName, LPDWORD lpReserve
 	ORIGINALFASTEX(RegQueryValueExW,NULL);
 	//BOOL bMainThread = TRUE; // Does not care
 	LONG lRc = -1;
-	bool bNeedAppendClink = false;
 
 	if (gbIsCmdProcess && hKey && lpValueName)
 	{
@@ -4344,8 +4343,6 @@ LONG WINAPI OnRegQueryValueExW(HKEY hKey, LPCWSTR lpValueName, LPDWORD lpReserve
 								// Not installed via "Autorun"
 								if (!bClinkInstalled)
 								{
-									bNeedAppendClink = true;
-
 									int iLen = lstrlen(gszClinkCmdLine);
 									_wcscpy_c(pszCmd, cchMax, gszClinkCmdLine);
 									_wcscpy_c(pszCmd+iLen, cchMax-iLen, L" & "); // conveyer next command indifferent to %errorlevel%
