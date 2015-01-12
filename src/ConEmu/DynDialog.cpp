@@ -158,6 +158,14 @@ void CDynDialog::PrepareDlg(DLGPROC lpDialogFunc)
 	mp_Creating = this;
 }
 
+CDynDialog* CDynDialog::GetDlgClass(HWND hwndDlg)
+{
+	CDynDialog* pDlg = NULL;
+	if (mp_DlgMap)
+		mp_DlgMap->Get(hwndDlg, &pDlg);
+	return pDlg;
+}
+
 INT_PTR /*CALLBACK*/ CDynDialog::DynDialogBox(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	INT_PTR iRc = 0;
@@ -173,8 +181,7 @@ INT_PTR /*CALLBACK*/ CDynDialog::DynDialogBox(HWND hwndDlg, UINT uMsg, WPARAM wP
 	}
 	else
 	{
-		if (mp_DlgMap)
-			mp_DlgMap->Get(hwndDlg, &pDlg);
+		pDlg = GetDlgClass(hwndDlg);
 	}
 
 	if (pDlg && pDlg->mp_DlgProc)

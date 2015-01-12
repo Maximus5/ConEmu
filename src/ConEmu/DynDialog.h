@@ -48,6 +48,8 @@ public:
 	// Modal
 	static INT_PTR ExecuteDialog(UINT nDlgId, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM dwInitParam);
 
+	static CDynDialog* GetDlgClass(HWND hwndDlg);
+
 	static bool DrawButton(WPARAM wID, DRAWITEMSTRUCT* pDraw);
 
 public:
