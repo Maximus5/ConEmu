@@ -977,11 +977,17 @@ LPWSTR ConEmuMacro::ExecuteMacro(LPWSTR asMacro, CRealConsole* apRCon, bool abFr
 	executed:
 		if (mb_ChangeContext)
 		{
+			// Usage example: print("abc"); Split(2); Context(); print("def")
+			SafeFree(pszResult);
 			CRealConsole* pChangedRCon = ChangeContext(pMacroRCon, mn_ChangeContextTab, mn_ChangeContexSplit, VConTab, pszResult);
 			mb_ChangeContext = false; mn_ChangeContextTab = 0; mn_ChangeContexSplit = 0;
 			if (pChangedRCon)
 			{
 				pMacroRCon = pChangedRCon;
+			}
+			if (!pszResult)
+			{
+				pszResult = pChangedRCon ? lstrdup(L"OK") : lstrdup(L"FAILED");
 			}
 		}
 
@@ -1377,7 +1383,7 @@ LPWSTR ConEmuMacro::Context(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin
 			mn_ChangeContexSplit = iVal;
 		}
 	}
-	return NULL;
+	return lstrdup(L"");
 }
 
 // Найти окно и активировать его. // LPWSTR asName
