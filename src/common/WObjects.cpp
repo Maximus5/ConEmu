@@ -1253,7 +1253,8 @@ void ApplyExportEnvVar(LPCWSTR asEnvNameVal)
 		// Skip ConEmu's internals!
 		if (IsExportEnvVarAllowed(pszName))
 		{
-			SetEnvironmentVariableW(pszName, pszVal);
+			// Doubt that someone really needs to export empty var instead of its deletion
+			SetEnvironmentVariableW(pszName, *pszVal ? pszVal : NULL);
 		}
 		asEnvNameVal = pszNext;
 	}
