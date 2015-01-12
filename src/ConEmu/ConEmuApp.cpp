@@ -2412,6 +2412,21 @@ BOOL MoveWindowRect(HWND hWnd, const RECT& rcWnd, BOOL bRepaint)
 	return MoveWindow(hWnd, rcWnd.left, rcWnd.top, rcWnd.right - rcWnd.left, rcWnd.bottom - rcWnd.top, bRepaint);
 }
 
+HICON CreateNullIcon()
+{
+	static HICON hNullIcon = NULL;
+
+	if (!hNullIcon)
+	{
+		BYTE NilBits[16*16/8] = {};
+		BYTE SetBits[16*16/8] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+								0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+		hNullIcon = CreateIcon(NULL, 16, 16, 1, 1, SetBits, NilBits);
+	}
+
+	return hNullIcon;
+}
+
 void MessageLoop()
 {
 	MSG Msg = {NULL};

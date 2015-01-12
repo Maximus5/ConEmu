@@ -154,7 +154,7 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 			if (hClassIcon)
 			{
 				SendMessage(hDlg, WM_SETICON, ICON_BIG, (LPARAM)hClassIcon);
-				SendMessage(hDlg, WM_SETICON, ICON_SMALL, (LPARAM)hClassIconSm);
+				SendMessage(hDlg, WM_SETICON, ICON_SMALL, (LPARAM)CreateNullIcon());
 				SetClassLongPtr(hDlg, GCLP_HICON, (LONG_PTR)hClassIcon);
 			}
 

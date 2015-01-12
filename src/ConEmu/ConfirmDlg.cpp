@@ -52,6 +52,7 @@ static HRESULT CALLBACK TaskDlgCallback(HWND hwnd, UINT uNotification, WPARAM wP
 					SetWindowPos(hwnd, HWND_TOPMOST, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
 				}
 			}
+			SendMessage(hwnd, WM_SETICON, ICON_SMALL, (LPARAM)CreateNullIcon());
 			//if (!gbAlreadyAdmin)
 			//{
 			//	SendMessage(hwnd, TDM_SET_BUTTON_ELEVATION_REQUIRED_STATE, Ver86, 1);
@@ -96,9 +97,10 @@ HRESULT TaskDialog(TASKDIALOGCONFIG *pTaskConfig, int *pnButton, int *pnRadioBut
 
 	if (TaskDialogIndirect_f)
 	{
+		ghDlgPendingFrom = NULL;
 		if (!pTaskConfig->pfCallback)
 			pTaskConfig->pfCallback = TaskDlgCallback;
-		if (hClassIconSm)
+		else if (hClassIconSm)
 			ghDlgPendingFrom = GetForegroundWindow();
 
 		hr = TaskDialogIndirect_f(pTaskConfig, pnButton, pnRadioButton, &bCheckBox);
