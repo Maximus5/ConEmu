@@ -32,6 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Tlhelp32.h>
 #include "ConEmu.h"
 #include "Attach.h"
+#include "DynDialog.h"
 #include "Inside.h"
 #include "OptionsClass.h"
 #include "VConGroup.h"
@@ -79,6 +80,7 @@ CAttachDlg::CAttachDlg()
 	: mh_Dlg(NULL)
 	, mh_List(NULL)
 	, mp_DpiAware(NULL)
+	, mp_Dlg(NULL)
 	, mn_AttachType(0)
 	, mn_AttachPID(0)
 	, mh_AttachHWND(NULL)
@@ -125,7 +127,9 @@ void CAttachDlg::AttachDlg()
 
 	bool bPrev = gpConEmu->SetSkipOnFocus(true);
 	// (CreateDialog)
-	mh_Dlg = CreateDialogParam(g_hInstance, MAKEINTRESOURCE(IDD_ATTACHDLG), NULL, AttachDlgProc, (LPARAM)this);
+	SafeFree(mp_Dlg);
+	mp_Dlg = CDynDialog::ShowDialog(IDD_ATTACHDLG, NULL, AttachDlgProc, (LPARAM)this);
+	mh_Dlg = mp_Dlg ? mp_Dlg->mh_Dlg : NULL;
 	gpConEmu->SetSkipOnFocus(bPrev);
 }
 
@@ -144,6 +148,9 @@ void CAttachDlg::Close()
 		delete mp_ProcessData;
 		mp_ProcessData = NULL;
 	}
+
+	SafeDelete(mp_Dlg);
+	SafeDelete(mp_DpiAware);
 
 	gpConEmu->OnOurDialogClosed();
 }
@@ -527,7 +534,7 @@ INT_PTR CAttachDlg::AttachDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM l
 
 			if (pDlg->mp_DpiAware)
 			{
-				pDlg->mp_DpiAware->Attach(hDlg, ghWnd);
+				pDlg->mp_DpiAware->Attach(hDlg, ghWnd, pDlg->mp_Dlg);
 			}
 
 			// Если ConEmu - AlwaysOnTop, то и диалогу нужно выставит этот флаг

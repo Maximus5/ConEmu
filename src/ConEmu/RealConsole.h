@@ -226,6 +226,7 @@ class CVirtualConsole;
 class CRgnDetect;
 class CRealBuffer;
 class CDpiForDialog;
+class CDynDialog;
 class MFileLog;
 class CRConFiles;
 struct AppSettings;

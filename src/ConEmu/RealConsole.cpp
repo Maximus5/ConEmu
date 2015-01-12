@@ -56,6 +56,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmuApp.h"
 #include "ConEmuPipe.h"
 #include "ConfirmDlg.h"
+#include "DynDialog.h"
 #include "Inside.h"
 #include "Macro.h"
 #include "Menu.h"
@@ -9699,7 +9700,7 @@ INT_PTR CRealConsole::renameProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lP
 			SetWindowLongPtr(hDlg, DWLP_USER, (LONG_PTR)pRCon);
 
 			if (pRCon->mp_RenameDpiAware)
-				pRCon->mp_RenameDpiAware->Attach(hDlg, ghWnd);
+				pRCon->mp_RenameDpiAware->Attach(hDlg, ghWnd, CDynDialog::GetDlgClass(hDlg));
 
 			// Positioning
 			RECT rcDlg = {}; GetWindowRect(hDlg, &rcDlg);
@@ -9787,7 +9788,7 @@ void CRealConsole::DoRenameTab()
 	DontEnable de;
 	mp_RenameDpiAware = new CDpiForDialog();
 	// Modal dialog (CreateDialog)
-	INT_PTR iRc = DialogBoxParam(g_hInstance, MAKEINTRESOURCE(IDD_RENAMETAB), ghWnd, renameProc, (LPARAM)this);
+	INT_PTR iRc = CDynDialog::ExecuteDialog(IDD_RENAMETAB, ghWnd, renameProc, (LPARAM)this);
 	if (iRc == IDOK)
 	{
 		//mp_ConEmu->mp_TabBar->Update(); -- уже, в RenameTab(...)

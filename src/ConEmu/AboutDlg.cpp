@@ -38,6 +38,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "AboutDlg.h"
 #include "ConEmu.h"
 #include "DpiAware.h"
+#include "DynDialog.h"
 #include "OptionsClass.h"
 #include "RealConsole.h"
 #include "SearchCtrl.h"
@@ -127,7 +128,7 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 
 			if (mp_DpiAware)
 			{
-				mp_DpiAware->Attach(hDlg, ghWnd);
+				mp_DpiAware->Attach(hDlg, ghWnd, CDynDialog::GetDlgClass(hDlg));
 			}
 
 			RECT rect = {};
@@ -501,7 +502,7 @@ void ConEmuAbout::OnInfo_About(LPCWSTR asPageName /*= NULL*/)
 			mp_DpiAware = new CDpiForDialog();
 		HWND hParent = (ghOpWnd && IsWindowVisible(ghOpWnd)) ? ghOpWnd : ghWnd;
 		// Modal dialog (CreateDialog)
-		INT_PTR iRc = DialogBoxParam(g_hInstance, MAKEINTRESOURCE(IDD_ABOUT), hParent, aboutProc, (LPARAM)asPageName);
+		INT_PTR iRc = CDynDialog::ExecuteDialog(IDD_ABOUT, hParent, aboutProc, (LPARAM)asPageName);
 		bOk = (iRc != 0 && iRc != -1);
 
 		mh_AboutDlg = NULL;

@@ -96,6 +96,8 @@ public:
 	static void GetCenteredRect(HWND hWnd, RECT& rcCentered);
 };
 
+class CDynDialog;
+
 class CDpiForDialog
 {
 protected:
@@ -124,7 +126,7 @@ public:
 
 	~CDpiForDialog();
 
-	bool Attach(HWND hWnd, HWND hCenterParent);
+	bool Attach(HWND hWnd, HWND hCenterParent, CDynDialog* apDlgTemplate);
 
 	bool SetDialogDPI(const DpiValue& newDpi, LPRECT lprcSuggested = NULL);
 

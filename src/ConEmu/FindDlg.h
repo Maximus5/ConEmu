@@ -32,10 +32,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEFAULT_FINDDLG_ALPHA 180
 
 class CDpiForDialog;
+class CDynDialog;
 
 struct CEFindDlg
 {
 	HWND mh_FindDlg;
+	CDynDialog* mp_Dlg;
 	CDpiForDialog* mp_DpiAware;
 
 	CEFindDlg();

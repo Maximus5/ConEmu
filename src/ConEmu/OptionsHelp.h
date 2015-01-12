@@ -30,10 +30,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 class CDpiForDialog;
+class CDynDialog;
 
 struct CEHelpPopup
 {
 	HWND mh_Popup;
+	CDynDialog* mp_Dlg;
 	CDpiForDialog* mp_DpiAware;
 
 	CEHelpPopup();

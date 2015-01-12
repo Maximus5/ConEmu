@@ -29,6 +29,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define HIDE_USE_EXCEPTION_INFO
 #include "Header.h"
 #include "AboutDlg.h"
+#include "DynDialog.h"
 #include "Options.h"
 #include "OptionsClass.h"
 #include "OptionsFast.h"
@@ -64,7 +65,7 @@ static INT_PTR CALLBACK CheckOptionsFastProc(HWND hDlg, UINT messg, WPARAM wPara
 
 			if (gp_DpiAware)
 			{
-				gp_DpiAware->Attach(hDlg, NULL);
+				gp_DpiAware->Attach(hDlg, NULL, CDynDialog::GetDlgClass(hDlg));
 			}
 
 			RECT rect = {};
@@ -460,7 +461,8 @@ void CheckOptionsFast(LPCWSTR asTitle, SettingsLoadedFlags slfFlags)
 
 		// Modal dialog (CreateDialog)
 
-		DialogBoxParam(g_hInstance, MAKEINTRESOURCE(IDD_FAST_CONFIG), NULL, CheckOptionsFastProc, (LPARAM)asTitle);
+		CDynDialog::ExecuteDialog(IDD_FAST_CONFIG, NULL, CheckOptionsFastProc, (LPARAM)asTitle);
+
 		SafeDelete(gp_FastHelp);
 		SafeDelete(gp_DpiAware);
 	}

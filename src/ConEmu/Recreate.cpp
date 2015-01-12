@@ -35,6 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma warning(default: 4091)
 #include "ConEmu.h"
 #include "DpiAware.h"
+#include "DynDialog.h"
 #include "OptionsClass.h"
 #include "RealConsole.h"
 #include "Recreate.h"
@@ -115,7 +116,7 @@ int CRecreateDlg::RecreateDlg(RConStartArgs* apArgs)
 	if (!mp_DpiAware)
 		mp_DpiAware = new CDpiForDialog();
 	// Modal dialog (CreateDialog)
-	int nRc = DialogBoxParam(g_hInstance, MAKEINTRESOURCE(IDD_RESTART), mh_Parent, RecreateDlgProc, (LPARAM)this);
+	int nRc = CDynDialog::ExecuteDialog(IDD_RESTART, mh_Parent, RecreateDlgProc, (LPARAM)this);
 	UNREFERENCED_PARAMETER(nRc);
 	gpConEmu->SetSkipOnFocus(bPrev);
 
@@ -368,7 +369,7 @@ INT_PTR CRecreateDlg::OnInitDialog(HWND hDlg, UINT messg, WPARAM wParam, LPARAM 
 	// because we done some manual control reposition
 	if (mp_DpiAware)
 	{
-		mp_DpiAware->Attach(hDlg, ghWnd);
+		mp_DpiAware->Attach(hDlg, ghWnd, CDynDialog::GetDlgClass(hDlg));
 	}
 
 	// Ensure, it will be "on screen"

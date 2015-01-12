@@ -37,6 +37,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma warning(default: 4091)
 
 #include "ConEmu.h"
+#include "DynDialog.h"
 #include "FindDlg.h"
 #include "Options.h"
 #include "OptionsClass.h"
@@ -52,6 +53,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 CEFindDlg::CEFindDlg()
 {
 	mh_FindDlg = NULL;
+	mp_Dlg = NULL;
 	mp_DpiAware = NULL;
 }
 
@@ -85,7 +87,8 @@ void CEFindDlg::FindTextDialog()
 		mp_DpiAware = new CDpiForDialog();
 
 	// (CreateDialog)
-	mh_FindDlg = CreateDialogParam((HINSTANCE)GetModuleHandle(NULL), MAKEINTRESOURCE(IDD_FIND), ghWnd, findTextProc, 0/*Param*/);
+	mp_Dlg = CDynDialog::ShowDialog(IDD_FIND, ghWnd, findTextProc, 0/*Param*/);
+	mh_FindDlg = mp_Dlg ? mp_Dlg->mh_Dlg : NULL;
 	if (!mh_FindDlg)
 	{
 		DisplayLastError(L"Can't create Find text dialog", GetLastError());
@@ -129,7 +132,7 @@ INT_PTR CEFindDlg::findTextProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lP
 
 			if (gpConEmu->mp_Find->mp_DpiAware)
 			{
-				gpConEmu->mp_Find->mp_DpiAware->Attach(hWnd2, ghWnd);
+				gpConEmu->mp_Find->mp_DpiAware->Attach(hWnd2, ghWnd, gpConEmu->mp_Find->mp_Dlg);
 			}
 
 			#if 0
@@ -248,6 +251,7 @@ INT_PTR CEFindDlg::findTextProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lP
 			gpConEmu->DoEndFindText();
 			if (gpConEmu->mp_Find->mp_DpiAware)
 				gpConEmu->mp_Find->mp_DpiAware->Detach();
+			SafeDelete(gpConEmu->mp_Find->mp_Dlg);
 			break;
 
 		default:

@@ -30,6 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 class CProcessData;
 class CDpiForDialog;
+class CDynDialog;
 
 enum AttachProcessType
 {
@@ -51,6 +52,7 @@ class CAttachDlg
 protected:
 	HWND  mh_Dlg, mh_List;
 	CDpiForDialog* mp_DpiAware;
+	CDynDialog* mp_Dlg;
 	// Параметры аттача
 	int   mn_AttachType; // 1 - console, 2 - GUI
 	DWORD mn_AttachPID;  // PID процесса, к которому цепляемся

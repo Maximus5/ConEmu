@@ -31,6 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Header.h"
 #include <Commctrl.h>
 #include "DpiAware.h"
+#include "DynDialog.h"
 #include "SearchCtrl.h"
 #include "../common/Monitors.h"
 #include "../common/StartupEnvDef.h"
@@ -364,6 +365,7 @@ class CDpiForDialog - handle per-monitor dpi for our resource-based dialogs
 	UINT mn_TemplateFontSize;
 	int mn_CurFontHeight;
 	LOGFONT mlf_CurFont;
+	CDynDialog* mp_DlgTemplate;
 
 	HFONT mh_OldFont, mh_CurFont;
 
@@ -380,6 +382,7 @@ CDpiForDialog::CDpiForDialog()
 	mh_Dlg = NULL;
 	//mn_InitFontHeight = 8;
 	ZeroStruct(mlf_InitFont);
+	mn_TemplateFontSize = 8;
 	mn_CurFontHeight = 0;
 	ZeroStruct(mlf_CurFont);
 	mh_OldFont = mh_CurFont = NULL;
@@ -393,13 +396,13 @@ CDpiForDialog::~CDpiForDialog()
 	Detach();
 }
 
-bool CDpiForDialog::Attach(HWND hWnd, HWND hCenterParent)
+bool CDpiForDialog::Attach(HWND hWnd, HWND hCenterParent, CDynDialog* apDlgTemplate)
 {
 	mh_Dlg = hWnd;
 
 	wchar_t szLog[100];
 
-	mn_TemplateFontSize = 8;
+	mn_TemplateFontSize = apDlgTemplate ? apDlgTemplate->GetFontPointSize() : 8;
 
 	mh_OldFont = (HFONT)SendMessage(hWnd, WM_GETFONT, 0, 0);
 	if ((mh_OldFont != NULL)

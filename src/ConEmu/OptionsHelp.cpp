@@ -32,6 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "Header.h"
 #include "DpiAware.h"
+#include "DynDialog.h"
 #include "OptionsHelp.h"
 
 //#define DEBUGSTRFONT(s) DEBUGSTR(s)
@@ -39,6 +40,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 CEHelpPopup::CEHelpPopup()
 {
 	mh_Popup = NULL;
+	mp_Dlg = NULL;
 	mp_DpiAware = NULL;
 }
 
@@ -121,7 +123,9 @@ void CEHelpPopup::ShowItemHelp(int wID /* = 0*/, HWND hCtrl, POINT MousePos)
 		if (!mp_DpiAware)
 			mp_DpiAware = new CDpiForDialog();
 		// (CreateDialog)
-		mh_Popup = CreateDialogParam((HINSTANCE)GetModuleHandle(NULL), MAKEINTRESOURCE(IDD_HELP), ghOpWnd, helpProc, (LPARAM)this);
+		SafeDelete(mp_Dlg);
+		mp_Dlg = CDynDialog::ShowDialog(IDD_HELP, ghOpWnd, helpProc, (LPARAM)this);
+		mh_Popup = mp_Dlg ? mp_Dlg->mh_Dlg : NULL;
 		if (!mh_Popup)
 		{
 			DisplayLastError(L"Can't create help text dialog", GetLastError());
@@ -153,7 +157,7 @@ INT_PTR CEHelpPopup::helpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 			SetWindowLongPtr(hWnd2, DWLP_USER, (LONG_PTR)pPopup);
 			pPopup->mh_Popup = hWnd2;
 			if (pPopup->mp_DpiAware)
-				pPopup->mp_DpiAware->Attach(hWnd2, ghOpWnd);
+				pPopup->mp_DpiAware->Attach(hWnd2, ghOpWnd, pPopup->mp_Dlg);
 			helpProc(hWnd2, WM_SIZE, 0, 0);
 
 			break;
@@ -193,6 +197,7 @@ INT_PTR CEHelpPopup::helpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 				if (pPopup->mp_DpiAware)
 					pPopup->mp_DpiAware->Detach();
 				pPopup->mh_Popup = NULL;
+				SafeDelete(pPopup->mp_Dlg);
 			}
 			break;
 		}

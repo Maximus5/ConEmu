@@ -31,6 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Header.h"
 #include "HotkeyDlg.h"
 #include "DpiAware.h"
+#include "DynDialog.h"
 #include "OptionsClass.h"
 #include "SetDlgLists.h"
 
@@ -39,7 +40,7 @@ bool CHotKeyDialog::EditHotKey(HWND hParent, DWORD& VkMod)
 {
 	CHotKeyDialog Dlg(hParent, VkMod);
 	// Modal dialog (CreateDialog)
-	INT_PTR iRc = DialogBoxParam(g_hInstance, MAKEINTRESOURCE(IDD_HOTKEY), hParent, hkDlgProc, (LPARAM)&Dlg);
+	INT_PTR iRc = CDynDialog::ExecuteDialog(IDD_HOTKEY, hParent, hkDlgProc, (LPARAM)&Dlg);
 	bool bOk = (iRc == IDOK);
 	if (bOk)
 	{
@@ -120,7 +121,7 @@ INT_PTR CHotKeyDialog::hkDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lP
 
 			if (pDlg->mp_DpiAware)
 			{
-				pDlg->mp_DpiAware->Attach(hDlg, ghWnd);
+				pDlg->mp_DpiAware->Attach(hDlg, ghWnd, CDynDialog::GetDlgClass(hDlg));
 			}
 
 			// Ensure, it will be "on screen"

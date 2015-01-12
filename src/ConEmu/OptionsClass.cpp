@@ -56,6 +56,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmuCtrl.h"
 #include "DefaultTerm.h"
 #include "DpiAware.h"
+#include "DynDialog.h"
 #include "HotkeyDlg.h"
 #include "Inside.h"
 #include "LoadImg.h"
@@ -231,6 +232,7 @@ CSettings::CSettings()
 	#endif
 	m_ColorFormat = eRgbDec; // RRR GGG BBB (как показывать цвета на вкладке Colors)
 	mp_DpiAware = NULL;
+	mp_DlgDistinct2 = NULL;
 	mp_DpiDistinct2 = NULL;
 	ZeroStruct(mh_Font);
 	mh_Font2 = NULL;
@@ -284,6 +286,7 @@ CSettings::CSettings()
 	// Горячие клавиши
 	InitVars_Hotkeys();
 
+	mp_Dialog = NULL;
 	m_Pages = NULL;
 	mn_PagesCount = 0;
 
@@ -1538,7 +1541,7 @@ LRESULT CSettings::OnInitDialog()
 
 	if (mp_DpiAware)
 	{
-		mp_DpiAware->Attach(ghOpWnd, ghWnd);
+		mp_DpiAware->Attach(ghOpWnd, ghWnd, mp_Dialog);
 	}
 
 	gbLastColorsOk = FALSE;
@@ -6147,18 +6150,19 @@ void CSettings::Dialog(int IdShowPage /*= 0*/)
 		wchar_t szLog[80]; _wsprintf(szLog, SKIPCOUNT(szLog) L"Creating settings dialog, IdPage=%u", IdShowPage);
 		LogString(szLog);
 
-		//2009-05-03. DialogBox создает МОДАЛЬНЫЙ диалог, а нам нужен НЕмодальный
-		HWND hOpt = CreateDialog(g_hInstance, MAKEINTRESOURCE(IDD_SETTINGS), NULL, wndOpProc);
+		SafeDelete(gpSetCls->mp_Dialog);
+		//2009-05-03. Нам нужен НЕмодальный диалог
+		gpSetCls->mp_Dialog = CDynDialog::ShowDialog(IDD_SETTINGS, NULL, wndOpProc, 0/*dwInitParam*/);
 
-		if (!hOpt)
+		if (!gpSetCls->mp_Dialog)
 		{
 			DisplayLastError(L"Can't create settings dialog!");
 			goto wrap;
 		}
 		else
 		{
-			_ASSERTE(ghOpWnd == hOpt);
-			ghOpWnd = hOpt;
+			_ASSERTE(ghOpWnd == gpSetCls->mp_Dialog->mh_Dlg);
+			ghOpWnd = gpSetCls->mp_Dialog->mh_Dlg;
 		}
 	}
 
@@ -6778,7 +6782,7 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 			RECT rcClient; GetWindowRect(hPlace, &rcClient);
 			MapWindowPoints(NULL, ghOpWnd, (LPPOINT)&rcClient, 2);
 			if (p->pDpiAware)
-				p->pDpiAware->Attach(hWnd2, ghOpWnd);
+				p->pDpiAware->Attach(hWnd2, ghOpWnd, p->pDialog);
 			MoveWindowRect(hWnd2, rcClient);
 		}
 		else
@@ -7260,8 +7264,11 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 		if ((messg == WM_INITDIALOG) || (messg == mn_ActivateTabMsg))
 		{
 			LogString(L"Creating child dialog IDD_SPG_APPDISTINCT2");
-			hChild = CreateDialogParam((HINSTANCE)GetModuleHandle(NULL),
-							MAKEINTRESOURCE(IDD_SPG_APPDISTINCT2), hWnd2, pageOpProc_AppsChild, 0);
+			SafeDelete(mp_DlgDistinct2); // JIC
+
+			mp_DlgDistinct2 = CDynDialog::ShowDialog(IDD_SPG_APPDISTINCT2, hWnd2, pageOpProc_AppsChild, 0/*dwInitParam*/);
+			HWND hChild = mp_DlgDistinct2 ? mp_DlgDistinct2->mh_Dlg : NULL;
+
 			if (!hChild)
 			{
 				EnableWindow(hWnd2, FALSE);
@@ -7273,7 +7280,7 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 			if (!mp_DpiDistinct2 && mp_DpiAware)
 			{
 				mp_DpiDistinct2 = new CDpiForDialog();
-				mp_DpiDistinct2->Attach(hChild, hWnd2);
+				mp_DpiDistinct2->Attach(hChild, hWnd2, mp_DlgDistinct2);
 			}
 
 			HWND hHolder = GetDlgItem(hWnd2, tAppDistinctHolder);
@@ -12811,8 +12818,11 @@ HWND CSettings::CreatePage(ConEmuSetupPages* p)
 	}
 	wchar_t szLog[80]; _wsprintf(szLog, SKIPCOUNT(szLog) L"Creating child dialog ID=%u", p->PageID);
 	LogString(szLog);
-	p->hPage = CreateDialogParam((HINSTANCE)GetModuleHandle(NULL),
-					MAKEINTRESOURCE(p->PageID), ghOpWnd, pageOpProc, (LPARAM)p);
+	SafeDelete(p->pDialog);
+
+	p->pDialog = CDynDialog::ShowDialog(p->PageID, ghOpWnd, pageOpProc, (LPARAM)p);
+	p->hPage = p->pDialog ? p->pDialog->mh_Dlg : NULL;
+
 	return p->hPage;
 }
 
@@ -12913,11 +12923,13 @@ void CSettings::ClearPages()
 
 	if (mp_DpiDistinct2)
 		mp_DpiDistinct2->Detach();
+	SafeDelete(mp_DlgDistinct2);
 
 	for (ConEmuSetupPages *p = m_Pages; p->PageID; p++)
 	{
 		if (p->pDpiAware)
 			p->pDpiAware->Detach();
+		SafeDelete(p->pDialog);
 		p->hPage = NULL;
 		p->DpiChanged = false;
 	}

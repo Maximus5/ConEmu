@@ -33,7 +33,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Header.h"
 
 #include "DynDialog.h"
-#include "../ConEmu/DrawObjectsGdi.h"
 
 wchar_t CDynDialog::Button[] = L"Button";
 wchar_t CDynDialog::Edit[] = L"Edit";
@@ -45,8 +44,6 @@ wchar_t CDynDialog::Unknown[] = L"Unknown";
 
 CDynDialog* CDynDialog::mp_Creating = NULL;
 MMap<HWND,CDynDialog*>* CDynDialog::mp_DlgMap = NULL;
-
-CDrawFactoryGdi gdi;
 
 #ifdef _DEBUG
 void CDynDialog::UnitTests()
