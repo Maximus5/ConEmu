@@ -31,6 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <windows.h>
 #include "../common/MArray.h"
+#include "../common/MMap.h"
 
 class CDynDialog
 {
@@ -42,13 +43,41 @@ public:
 	CDynDialog(UINT nDlgId);
 	virtual ~CDynDialog();
 
+	// Modeless
+	static CDynDialog* ShowDialog(UINT nDlgId, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM dwInitParam);
+	// Modal
+	static INT_PTR ExecuteDialog(UINT nDlgId, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM dwInitParam);
+
+	static bool DrawButton(WPARAM wID, DRAWITEMSTRUCT* pDraw);
+
 public:
 	// Methods
+	#if 0
 	INT_PTR ShowDialog(bool Modal, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM dwInitParam);
+	#endif
+	bool LoadTemplate();
+	UINT GetFontPointSize();
 
 	#ifdef _DEBUG
 	static void UnitTests();
 	#endif
+
+public:
+	static wchar_t Button[]; // = L"Button";
+	static wchar_t Edit[]; // = L"Edit";
+	static wchar_t Static[]; // = L"Static";
+	static wchar_t ListBox[]; // = L"ListBox";
+	static wchar_t ScrollBar[]; // = L"ScrollBar";
+	static wchar_t ComboBox[]; // = L"ComboBox";
+	static wchar_t Unknown[]; // = L"Unknown";
+
+protected:
+	// Dialog proc
+	DLGPROC mp_DlgProc;
+	static INT_PTR CALLBACK DynDialogBox(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
+	static CDynDialog* mp_Creating;
+	static MMap<HWND,CDynDialog*>* mp_DlgMap;
+	void PrepareDlg(DLGPROC lpDialogFunc);
 
 protected:
 	// Types
@@ -133,6 +162,8 @@ protected:
 		BOOL  ex;
 		short *x, *y, *cx, *cy;
 		LPCWSTR ItemType;
+		LPDWORD pStyle;
+		DWORD Style;
 		union
 		{
 		DLGITEMTEMPLATE *ptr;
@@ -149,7 +180,6 @@ protected:
 	MArray<ItemInfo> m_Items;
 
 	// Methods
-	bool LoadTemplate();
 	bool ParseDialog(DWORD_PTR& data);
 	bool ParseItem(DWORD_PTR& data);
 	bool ParseDialogEx(DWORD_PTR& data);
@@ -157,4 +187,6 @@ protected:
 	LPWSTR SkipSz(DWORD_PTR& data);
 	LPWSTR SkipSzOrOrd(DWORD_PTR& data);
 	LPWSTR SkipSzOrAtom(DWORD_PTR& data);
+	void FixupDialogSize();
+	bool DrawButton(ItemInfo* pItem, DRAWITEMSTRUCT* pDraw);
 };

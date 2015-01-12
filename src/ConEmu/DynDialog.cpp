@@ -33,6 +33,20 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Header.h"
 
 #include "DynDialog.h"
+#include "../ConEmu/DrawObjectsGdi.h"
+
+wchar_t CDynDialog::Button[] = L"Button";
+wchar_t CDynDialog::Edit[] = L"Edit";
+wchar_t CDynDialog::Static[] = L"Static";
+wchar_t CDynDialog::ListBox[] = L"ListBox";
+wchar_t CDynDialog::ScrollBar[] = L"ScrollBar";
+wchar_t CDynDialog::ComboBox[] = L"ComboBox";
+wchar_t CDynDialog::Unknown[] = L"Unknown";
+
+CDynDialog* CDynDialog::mp_Creating = NULL;
+MMap<HWND,CDynDialog*>* CDynDialog::mp_DlgMap = NULL;
+
+CDrawFactoryGdi gdi;
 
 #ifdef _DEBUG
 void CDynDialog::UnitTests()
@@ -57,11 +71,62 @@ void CDynDialog::UnitTests()
 }
 #endif
 
+CDynDialog* CDynDialog::ShowDialog(UINT nDlgId, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM dwInitParam)
+{
+	CDynDialog* pDlg = new CDynDialog(nDlgId);
+	if (!pDlg->LoadTemplate())
+	{
+		SafeDelete(pDlg);
+		return NULL;
+	}
+
+	// Correct font size?
+	pDlg->FixupDialogSize();
+
+	// Create modeless dialog
+	pDlg->PrepareDlg(lpDialogFunc);
+	pDlg->mh_Dlg = CreateDialogIndirectParam(g_hInstance, (LPCDLGTEMPLATEW)pDlg->mlp_Template, hWndParent, DynDialogBox, dwInitParam);
+	_ASSERTE(mp_Creating == NULL);
+	if (!pDlg->mh_Dlg)
+	{
+		DisplayLastError(L"CreateDialogIndirectParam failed");
+		SafeDelete(pDlg);
+	}
+
+	return pDlg;
+}
+
+INT_PTR CDynDialog::ExecuteDialog(UINT nDlgId, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM dwInitParam)
+{
+	CDynDialog* pDlg = new CDynDialog(nDlgId);
+	if (!pDlg->LoadTemplate())
+	{
+		SafeDelete(pDlg);
+		return -1;
+	}
+
+	// Correct font size?
+	pDlg->FixupDialogSize();
+
+	// Create modal dialog
+	pDlg->PrepareDlg(lpDialogFunc);
+	INT_PTR iRc = DialogBoxIndirectParam(g_hInstance, (LPCDLGTEMPLATEW)pDlg->mlp_Template, hWndParent, DynDialogBox, dwInitParam);
+	_ASSERTE(mp_Creating == NULL);
+	if (iRc == 0 || iRc == -1)
+	{
+		DisplayLastError(L"DialogBoxIndirectParam failed");
+	}
+	SafeDelete(pDlg);
+
+	return iRc;
+}
+
 CDynDialog::CDynDialog(UINT nDlgId)
 	: mh_Dlg(NULL)
 	, mn_DlgId(nDlgId)
+	, mp_DlgProc(NULL)
 	, mlp_Template(NULL)
-	, mp_pointsize(0)
+	, mp_pointsize(NULL)
 	, mn_TemplateLength(0)
 {
 }
@@ -69,14 +134,81 @@ CDynDialog::CDynDialog(UINT nDlgId)
 CDynDialog::~CDynDialog()
 {
 	SafeFree(mlp_Template);
+
+	if (mp_DlgMap && mh_Dlg)
+	{
+		mp_DlgMap->Del(mh_Dlg);
+		if (!mp_DlgMap->GetNext(NULL, NULL, NULL))
+		{
+			MMap<HWND,CDynDialog*>* p = mp_DlgMap;
+			mp_DlgMap = NULL;
+			delete p;
+		}
+	}
 }
 
+void CDynDialog::PrepareDlg(DLGPROC lpDialogFunc)
+{
+	if (!mp_DlgMap)
+	{
+		mp_DlgMap = new MMap<HWND,CDynDialog*>();
+		mp_DlgMap->Init(256, true);
+	}
+	mp_DlgProc = lpDialogFunc;
+	mp_Creating = this;
+}
+
+INT_PTR /*CALLBACK*/ CDynDialog::DynDialogBox(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	INT_PTR iRc = 0;
+	CDynDialog* pDlg = NULL;
+
+	if (uMsg == WM_INITDIALOG)
+	{
+		pDlg = mp_Creating;
+		if (mp_DlgMap)
+			mp_DlgMap->Set(hwndDlg, pDlg);
+		_ASSERTE(pDlg->mh_Dlg == NULL || pDlg->mh_Dlg == hwndDlg);
+		pDlg->mh_Dlg = hwndDlg;
+	}
+	else
+	{
+		if (mp_DlgMap)
+			mp_DlgMap->Get(hwndDlg, &pDlg);
+	}
+
+	if (pDlg && pDlg->mp_DlgProc)
+	{
+		iRc = pDlg->mp_DlgProc(hwndDlg, uMsg, wParam, lParam);
+	}
+
+	if (uMsg == WM_DESTROY)
+	{
+		if (mp_DlgMap)
+		{
+			mp_DlgMap->Del(hwndDlg);
+			/*
+			if (!mp_DlgMap->GetNext(NULL, NULL, NULL))
+			{
+				delete mp_DlgMap;
+				mp_DlgMap = NULL;
+			}
+			*/
+		}
+	}
+
+	return iRc;
+}
+
+#if 0
 INT_PTR CDynDialog::ShowDialog(bool Modal, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM dwInitParam)
 {
 	INT_PTR iRc = 0;
 
 	if (!LoadTemplate())
 	{
+		LogString(L"Template loading failed, creating dialog by ID");
+
 		if (Modal)
 		{
 			iRc = DialogBoxParam(g_hInstance, MAKEINTRESOURCE(mn_DlgId), hWndParent, lpDialogFunc, dwInitParam);
@@ -102,12 +234,13 @@ INT_PTR CDynDialog::ShowDialog(bool Modal, HWND hWndParent, DLGPROC lpDialogFunc
 
 	return iRc;
 }
+#endif
 
 bool CDynDialog::LoadTemplate()
 {
 	if (mlp_Template)
 	{
-		_ASSERTE(FALSE && "Template was already loaded!");
+		// Template was already loaded
 		return true;
 	}
 
@@ -191,6 +324,7 @@ wrap:
 	if (!bOk)
 	{
 		DisplayLastError(szInfo, nErr);
+		SafeFree(mlp_Template);
 	}
 	return bOk;
 }
@@ -246,6 +380,9 @@ bool CDynDialog::ParseItem(DWORD_PTR& data)
 	DLGITEMTEMPLATE* ptr = (DLGITEMTEMPLATE*)data;
 	ItemInfo i = {ptr->id, FALSE, &ptr->x, &ptr->y, &ptr->cx, &ptr->cy};
 	i.ptr = ptr;
+
+	i.Style = ptr->style;
+	i.pStyle = &ptr->style;
 
 	data += 18; // sizeof may be aligned
 
@@ -325,6 +462,9 @@ bool CDynDialog::ParseItemEx(DWORD_PTR& data)
 	ItemInfo i = {ptr->id, TRUE, &ptr->x, &ptr->y, &ptr->cx, &ptr->cy};
 	i.ptrEx = ptr;
 
+	i.Style = ptr->style;
+	i.pStyle = &ptr->style;
+
 	data += 24; // sizeof may be aligned
 
 	// windowClass - sz_Or_Atom
@@ -379,29 +519,112 @@ LPWSTR CDynDialog::SkipSzOrAtom(DWORD_PTR& data)
 	{
 		data += sizeof(WORD);
 
-		static wchar_t Button[] = L"Button";
-		static wchar_t Edit[] = L"Edit";
-		static wchar_t Static[] = L"Static";
-		static wchar_t ListBox[] = L"ListBox";
-		static wchar_t ScrollBar[] = L"ScrollBar";
-		static wchar_t ComboBox[] = L"ComboBox";
-		static wchar_t Unknown[] = L"Unknown";
-
 		switch (*((LPWORD)data))
 		{
-		case 0x0080: pszItemType = Button; break;
-		case 0x0081: pszItemType = Edit; break;
-		case 0x0082: pszItemType = Static; break;
-		case 0x0083: pszItemType = ListBox; break;
-		case 0x0084: pszItemType = ScrollBar; break;
-		case 0x0085: pszItemType = ComboBox; break;
+		case 0x0080: pszItemType = CDynDialog::Button; break;
+		case 0x0081: pszItemType = CDynDialog::Edit; break;
+		case 0x0082: pszItemType = CDynDialog::Static; break;
+		case 0x0083: pszItemType = CDynDialog::ListBox; break;
+		case 0x0084: pszItemType = CDynDialog::ScrollBar; break;
+		case 0x0085: pszItemType = CDynDialog::ComboBox; break;
 		default:
 			_ASSERTE(FALSE && "Unknown control type?");
-			pszItemType = Unknown;
+			pszItemType = CDynDialog::Unknown;
 		}
 
 		data += sizeof(WORD);
 	}
 
 	return pszItemType;
+}
+
+UINT CDynDialog::GetFontPointSize()
+{
+	return (mp_pointsize && *mp_pointsize) ? *mp_pointsize : 8;
+}
+
+void CDynDialog::FixupDialogSize()
+{
+	#if 0
+	//if (mp_pointsize)
+	//	*mp_pointsize = 4;
+	for (INT_PTR i = m_Items.size()-1; i >= 0; i--)
+	{
+		ItemInfo& ii = m_Items[i];
+		if (ii.ItemType == CDynDialog::Button)
+		{
+			// Just use bitfieds to check for Radio/Check
+			if ((ii.Style & (BS_CHECKBOX|BS_RADIOBUTTON|BS_USERBUTTON)))
+			{
+				*ii.pStyle = ((ii.Style & ~BS_TYPEMASK) | BS_OWNERDRAW);
+			}
+		}
+	}
+	#endif
+}
+
+bool CDynDialog::DrawButton(WPARAM wID, DRAWITEMSTRUCT* pDraw)
+{
+	if (!pDraw || (pDraw->CtlType != ODT_BUTTON))
+		return false;
+
+	CDynDialog* pDlg = NULL;
+	if (!mp_DlgMap || !mp_DlgMap->Get(GetParent(pDraw->hwndItem), &pDlg))
+		return false;
+
+	ItemInfo* p = NULL;
+	for (INT_PTR i = pDlg->m_Items.size()-1; i >= 0; i--)
+	{
+		p = &(pDlg->m_Items[i]);
+		if ((p->ItemType == Button)
+			&& (p->ID == pDraw->CtlID))
+		{
+			DWORD style = (p->Style & BS_TYPEMASK);
+			switch (style)
+			{
+			case BS_CHECKBOX: case BS_AUTOCHECKBOX:
+			case BS_RADIOBUTTON: case BS_AUTORADIOBUTTON:
+			case BS_3STATE:
+				pDlg->DrawButton(p, pDraw);
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
+bool CDynDialog::DrawButton(ItemInfo* pItem, DRAWITEMSTRUCT* pDraw)
+{
+	int ih = pDraw->rcItem.bottom-pDraw->rcItem.top-1;
+	RECT rc = {pDraw->rcItem.left+1, pDraw->rcItem.top+1, pDraw->rcItem.left+ih, pDraw->rcItem.top+ih};
+	UINT uType = DFC_BUTTON;
+	UINT uState = 0;
+
+	DWORD style = (pItem->Style & BS_TYPEMASK);
+	switch (style)
+	{
+	case BS_CHECKBOX: case BS_AUTOCHECKBOX:
+		uState = DFCS_BUTTONCHECK|DFCS_FLAT
+			| ((pDraw->itemState & ODS_CHECKED) ? DFCS_CHECKED : 0)
+			| ((pDraw->itemState & ODS_DISABLED) ? DFCS_INACTIVE : 0)
+			;
+		break;
+	case BS_RADIOBUTTON: case BS_AUTORADIOBUTTON:
+		uState = DFCS_BUTTONRADIO/*|DFCS_FLAT*/
+			| ((pDraw->itemState & ODS_CHECKED) ? DFCS_CHECKED : 0)
+			| ((pDraw->itemState & ODS_DISABLED) ? DFCS_INACTIVE : 0)
+			;
+		break;
+	case BS_3STATE:
+		_ASSERTE(FALSE && "BS_3STATE");
+		return false;
+	}
+
+	DrawFrameControl(pDraw->hDC, &rc, uType, uState);
+	return true;
+
+	//HBRUSH hbr = (HBRUSH)GetStockObject(BLACK_BRUSH);
+	//FillRect(pDraw->hDC, &pDraw->rcItem, hbr);
+	//return true;
 }
