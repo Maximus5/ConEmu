@@ -121,7 +121,7 @@ void CAttachDlg::AttachDlg()
 	}
 
 	if (!mp_DpiAware)
-			mp_DpiAware = new CDpiForDialog();
+		mp_DpiAware = new CDpiForDialog();
 
 	bool bPrev = gpConEmu->SetSkipOnFocus(true);
 	// (CreateDialog)

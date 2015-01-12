@@ -6135,7 +6135,11 @@ void CSettings::Dialog(int IdShowPage /*= 0*/)
 		// Сначала обновить DC, чтобы некрасивостей не было
 		gpConEmu->UpdateWindowChild(NULL);
 
-		if (!gpSetCls->mp_DpiAware && CDpiAware::IsPerMonitorDpi())
+		if (!gpSetCls->mp_DpiAware
+			#ifndef _DEBUG
+			&& CDpiAware::IsPerMonitorDpi()
+			#endif
+			)
 		{
 			gpSetCls->mp_DpiAware = new CDpiForDialog();
 		}
