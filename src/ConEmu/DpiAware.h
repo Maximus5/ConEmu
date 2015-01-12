@@ -104,9 +104,9 @@ protected:
 	LONG mn_InSet;
 
 	DpiValue m_InitDpi;
-	int mn_InitFontHeight;
 	LOGFONT mlf_InitFont;
 	DpiValue m_CurDpi;
+	UINT mn_TemplateFontSize;
 	int mn_CurFontHeight;
 	LOGFONT mlf_CurFont;
 
@@ -136,4 +136,5 @@ public:
 
 protected:
 	static MArray<DlgItem>* LoadDialogItems(HWND hDlg);
+	int GetFontSizeForDpi(HDC hdc, int Ydpi);
 };

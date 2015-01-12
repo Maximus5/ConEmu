@@ -29,10 +29,15 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define HIDE_USE_EXCEPTION_INFO
 
 #include "Header.h"
+#include <Commctrl.h>
 #include "DpiAware.h"
 #include "SearchCtrl.h"
 #include "../common/Monitors.h"
 #include "../common/StartupEnvDef.h"
+
+#ifdef _DEBUG
+static bool gbSkipSetDialogDPI = false;
+#endif
 
 //#define DPI_144
 
@@ -351,10 +356,12 @@ void CDpiAware::GetCenteredRect(HWND hWnd, RECT& rcCentered)
 class CDpiForDialog - handle per-monitor dpi for our resource-based dialogs
 	HWND mh_Dlg;
 
+	LONG mn_InSet;
+
 	DpiValue m_InitDpi;
-	int mn_InitFontHeight;
 	LOGFONT mlf_InitFont;
 	DpiValue m_CurDpi;
+	UINT mn_TemplateFontSize;
 	int mn_CurFontHeight;
 	LOGFONT mlf_CurFont;
 
@@ -371,7 +378,7 @@ class CDpiForDialog - handle per-monitor dpi for our resource-based dialogs
 CDpiForDialog::CDpiForDialog()
 {
 	mh_Dlg = NULL;
-	mn_InitFontHeight = 8;
+	//mn_InitFontHeight = 8;
 	ZeroStruct(mlf_InitFont);
 	mn_CurFontHeight = 0;
 	ZeroStruct(mlf_CurFont);
@@ -392,22 +399,22 @@ bool CDpiForDialog::Attach(HWND hWnd, HWND hCenterParent)
 
 	wchar_t szLog[100];
 
+	mn_TemplateFontSize = 8;
+
 	mh_OldFont = (HFONT)SendMessage(hWnd, WM_GETFONT, 0, 0);
 	if ((mh_OldFont != NULL)
 		&& (GetObject(mh_OldFont, sizeof(mlf_InitFont), &mlf_InitFont) > 0))
 	{
-		mn_InitFontHeight = mlf_InitFont.lfHeight;
-		_wsprintf(szLog, SKIPLEN(countof(szLog)) L"CDpiForDialog(x%08X) Font='%s' lfHeight=%i", (DWORD)(DWORD_PTR)hWnd, mlf_InitFont.lfFaceName, mlf_InitFont.lfHeight);
+		_wsprintf(szLog, SKIPLEN(countof(szLog)) L"CDpiForDialog(x%08X) Font='%s' lfHeight=%i Points=%u", (DWORD)(DWORD_PTR)hWnd, mlf_InitFont.lfFaceName, mlf_InitFont.lfHeight, mn_TemplateFontSize);
 	}
 	else
 	{
-		mn_InitFontHeight = 8;
 		ZeroStruct(mlf_InitFont);
-		mlf_InitFont.lfHeight = mn_InitFontHeight;
+		mlf_InitFont.lfHeight = GetFontSizeForDpi(NULL, 96);
 		lstrcpyn(mlf_InitFont.lfFaceName, L"MS Shell Dlg", countof(mlf_InitFont.lfFaceName));
 		mlf_InitFont.lfWeight = 400;
 		mlf_InitFont.lfCharSet = DEFAULT_CHARSET;
-		_wsprintf(szLog, SKIPLEN(countof(szLog)) L"CDpiForDialog(x%08X) DefaultFont='%s' lfHeight=%i", (DWORD)(DWORD_PTR)hWnd, mlf_InitFont.lfFaceName, mlf_InitFont.lfHeight);
+		_wsprintf(szLog, SKIPLEN(countof(szLog)) L"CDpiForDialog(x%08X) DefaultFont='%s' lfHeight=%i Points=%u", (DWORD)(DWORD_PTR)hWnd, mlf_InitFont.lfFaceName, mlf_InitFont.lfHeight, mn_TemplateFontSize);
 	}
 
 	LogString(szLog);
@@ -418,28 +425,34 @@ bool CDpiForDialog::Attach(HWND hWnd, HWND hCenterParent)
 	// we need to re-scale our dialog manually!
 	// But if one dpi was choosed for all monitors?
 
-	CDpiAware::QueryDpi(hCenterParent ? hCenterParent : hWnd, &m_InitDpi);
+	CDpiAware::QueryDpiForMonitor(NULL, &m_InitDpi); // Whole desktop DPI (in most cases that will be Primary monitor DPI)
+	m_CurDpi.SetDpi(m_InitDpi);
 
 	if (!m_Items.Initialized())
 		m_Items.Init(8);
 
-	if (CDpiAware::IsPerMonitorDpi())
+	bool bPerMonitor = CDpiAware::IsPerMonitorDpi();
+	DEBUGTEST(bPerMonitor = true);
+
+	if (bPerMonitor)
 	{
 		// When Windows 8.1 is in per-monitor mode
 		// and application is marked as per-monitor-dpi aware
 		// Windows does not resize dialogs automatically.
 		// Our resources are designed for standard 96 dpi.
-		CDpiAware::QueryDpiForMonitor(NULL, &m_CurDpi);
 		MArray<DlgItem>* p = NULL;
 		if (m_Items.Get(m_CurDpi.Ydpi, &p) && p)
 			delete p;
 		p = LoadDialogItems(hWnd);
 		m_Items.Set(m_CurDpi.Ydpi, p);
 
+		DpiValue CurMonDpi;
+		CDpiAware::QueryDpi(hCenterParent ? hCenterParent : hWnd, &CurMonDpi);
+
 		// Need to resize the dialog?
-		if (m_InitDpi.Ydpi != m_CurDpi.Ydpi)
+		if (m_CurDpi.Ydpi != CurMonDpi.Ydpi)
 		{
-			if (!SetDialogDPI(m_InitDpi))
+			if (!SetDialogDPI(CurMonDpi))
 				return false;
 		}
 	}
@@ -453,6 +466,22 @@ bool CDpiForDialog::Attach(HWND hWnd, HWND hCenterParent)
 
 bool CDpiForDialog::SetDialogDPI(const DpiValue& newDpi, LPRECT lprcSuggested /*= NULL*/)
 {
+	wchar_t szLog[160];
+	RECT rcClient = {}, rcCurWnd = {};
+
+	#ifdef _DEBUG
+	if (gbSkipSetDialogDPI)
+	{
+		GetClientRect(mh_Dlg, &rcClient); GetWindowRect(mh_Dlg, &rcCurWnd);
+		_wsprintf(szLog, SKIPCOUNT(szLog) L"SKIPPED CDpiForDialog::SetDialogDPI x%08X, OldDpi={%i,%i}, NewDpi={%i,%i}, CurSize={%i,%i}, CurClient={%i,%i}",
+			(DWORD)(DWORD_PTR)mh_Dlg, m_CurDpi.Xdpi, m_CurDpi.Ydpi, newDpi.Xdpi, newDpi.Ydpi,
+			(rcCurWnd.right - rcCurWnd.left), (rcCurWnd.bottom - rcCurWnd.top),
+			(rcClient.right - rcClient.left), (rcClient.bottom - rcClient.top));
+		LogString(szLog);
+		return false;
+	}
+	#endif
+
 	if (mn_InSet > 0)
 		return false;
 
@@ -460,7 +489,24 @@ bool CDpiForDialog::SetDialogDPI(const DpiValue& newDpi, LPRECT lprcSuggested /*
 		return false;
 	if (m_CurDpi.Ydpi <= 0 || m_CurDpi.Xdpi <= 0)
 		return false;
-	if (m_CurDpi.Equals(newDpi))
+
+	// When overall DPI is very large but new dpi is small
+	// (example: primary mon is 192 high-dpi, new mon is 96 dpi)
+	// Windows goes crazy... HUGE caption, scrollbars, checkbox marks and so on...
+	// So huge difference makes dialog unattractive, let's try to smooth that
+	DpiValue setDpi(newDpi);
+	if (m_InitDpi.Ydpi > MulDiv(setDpi.Ydpi, 144, 96))
+	{
+		// Increase DPI one step up
+		setDpi.Ydpi = MulDiv(setDpi.Ydpi, 120, 96);
+		setDpi.Xdpi = MulDiv(setDpi.Xdpi, 120, 96);
+		// Log it
+		_wsprintf(szLog, SKIPCOUNT(szLog) L"CDpiForDialog::SetDialogDPI x%08X forces larger dpi value from {%i,%i} to {%i,%i}",
+			(DWORD)(DWORD_PTR)mh_Dlg, newDpi.Xdpi, newDpi.Ydpi, setDpi.Xdpi, setDpi.Ydpi);
+		LogString(szLog);
+	}
+
+	if (m_CurDpi.Equals(setDpi))
 		return false;
 
 	bool bRc = false;
@@ -469,8 +515,6 @@ bool CDpiForDialog::SetDialogDPI(const DpiValue& newDpi, LPRECT lprcSuggested /*
 	HFONT hf = NULL;
 
 	wchar_t szClass[100];
-	wchar_t szLog[160];
-	RECT rcClient = {}, rcCurWnd = {};
 
 	#ifdef _DEBUG
 	LOGFONT lftest1 = {}, lftest2 = {};
@@ -480,25 +524,26 @@ bool CDpiForDialog::SetDialogDPI(const DpiValue& newDpi, LPRECT lprcSuggested /*
 
 	// To avoid several nested passes
 	InterlockedIncrement(&mn_InSet);
-	m_CurDpi.SetDpi(newDpi);
+	m_CurDpi.SetDpi(setDpi);
 
 	// Eval
-	mn_CurFontHeight = (mn_InitFontHeight * newDpi.Ydpi / 96);
+	mn_CurFontHeight = GetFontSizeForDpi(NULL, m_CurDpi.Ydpi);
+	//(m_CurDpi.Ydpi && m_InitDpi.Ydpi) ? (mn_InitFontHeight * m_CurDpi.Ydpi / m_InitDpi.Ydpi) : -11;
 	mlf_CurFont = mlf_InitFont;
 	mlf_CurFont.lfHeight = mn_CurFontHeight;
 	mlf_CurFont.lfWidth = 0; // Font mapper fault
 
-	if (mn_CurFontHeight == 0 || mn_InitFontHeight == 0)
+	if (mn_CurFontHeight == 0)
 		goto wrap;
 
 
-	if (!m_Items.Get(newDpi.Ydpi, &p))
+	if (!m_Items.Get(m_CurDpi.Ydpi, &p))
 	{
 		MArray<DlgItem>* pOrig = NULL;
 		int iOrigDpi = 0;
 		if (!m_Items.GetNext(NULL, &iOrigDpi, &pOrig) || !pOrig || (iOrigDpi <= 0))
 			goto wrap;
-		int iNewDpi = newDpi.Ydpi;
+		int iNewDpi = m_CurDpi.Ydpi;
 
 		p = new MArray<DlgItem>();
 
@@ -512,8 +557,8 @@ bool CDpiForDialog::SetDialogDPI(const DpiValue& newDpi, LPRECT lprcSuggested /*
 		}
 
 		_ASSERTE(rcClient.left==0 && rcClient.top==0);
-		int calcDlgWidth = rcClient.right * newDpi.Xdpi / curDpi.Xdpi;
-		int calcDlgHeight = rcClient.bottom * newDpi.Ydpi / curDpi.Ydpi;
+		int calcDlgWidth = rcClient.right * m_CurDpi.Xdpi / curDpi.Xdpi;
+		int calcDlgHeight = rcClient.bottom * m_CurDpi.Ydpi / curDpi.Ydpi;
 
 		DlgItem i = {mh_Dlg};
 
@@ -549,9 +594,10 @@ bool CDpiForDialog::SetDialogDPI(const DpiValue& newDpi, LPRECT lprcSuggested /*
 	else
 	{
 		const DlgItem& di = (*p)[0];
-		_wsprintf(szLog, SKIPCOUNT(szLog) L"CDpiForDialog::SetDialogDPI x%08X, OldDpi={%i,%i}, NewDpi={%i,%i}, OldSize={%i,%i}, NewSize={%i,%i}",
+		_wsprintf(szLog, SKIPCOUNT(szLog) L"CDpiForDialog::SetDialogDPI x%08X, OldDpi={%i,%i}, NewDpi={%i,%i}, OldSize={%i,%i}, NewSize={%i,%i}, NewFont=%i",
 			(DWORD)(DWORD_PTR)mh_Dlg, curDpi.Xdpi, curDpi.Ydpi, newDpi.Xdpi, newDpi.Ydpi,
-			(rcCurWnd.right - rcCurWnd.left), (rcCurWnd.bottom - rcCurWnd.top), di.r.right, di.r.bottom);
+			(rcCurWnd.right - rcCurWnd.left), (rcCurWnd.bottom - rcCurWnd.top), di.r.right, di.r.bottom,
+			mlf_CurFont.lfHeight);
 		LogString(szLog);
 	}
 
@@ -571,10 +617,15 @@ bool CDpiForDialog::SetDialogDPI(const DpiValue& newDpi, LPRECT lprcSuggested /*
 		int iComboFieldHeight = 0, iComboWasHeight = 0;
 		LONG_PTR lFieldHeight = 0, lNewHeight = 0;
 		RECT rcCur = {};
+		HWND hComboEdit = NULL;
+		RECT rcEdit = {}, rcClient = {};
 
 		if (bResizeCombo && (nStyles & CBS_OWNERDRAWFIXED))
 		{
 			GetWindowRect(di.h, &rcCur);
+			hComboEdit = FindWindowEx(di.h, NULL, L"Edit", NULL);
+			GetClientRect(di.h, &rcClient);
+			GetClientRect(hComboEdit, &rcEdit);
 			iComboWasHeight = (rcCur.bottom - rcCur.top);
 			lFieldHeight = SendMessage(di.h, CB_GETITEMHEIGHT, -1, 0);
 			if (lFieldHeight < iComboWasHeight)
@@ -592,6 +643,9 @@ bool CDpiForDialog::SetDialogDPI(const DpiValue& newDpi, LPRECT lprcSuggested /*
 		{
 			if ((nStyles & CBS_OWNERDRAWFIXED) && (iComboWasHeight > 0) && (iComboFieldHeight > 0))
 			{
+				RECT rcEdit2 = {}, rcClient2 = {};
+				GetClientRect(di.h, &rcClient2);
+				GetClientRect(hComboEdit, &rcEdit2);
 				lNewHeight = newH*iComboFieldHeight/iComboWasHeight;
 				_wsprintf(szLog, SKIPCOUNT(szLog) L"CDpiForDialog::Combo height changed - OldHeight=%i, ItemHeight=%i, NewHeight=%i, NewItemHeight=%i",
 					(rcCur.bottom - rcCur.top), lFieldHeight, newH, lNewHeight);
@@ -686,9 +740,43 @@ MArray<CDpiForDialog::DlgItem>* CDpiForDialog::LoadDialogItems(HWND hDlg)
 	{
 		if (GetWindowRect(i.h, &i.r) && MapWindowPoints(NULL, hDlg, (LPPOINT)&i.r, 2))
 		{
+			#ifdef _DEBUG
+			DWORD_PTR ID = GetWindowLong(i.h, GWL_ID);
+			if (ID == cbExtendFonts)
+			{
+				RECT rcMargin = {};
+				if (Button_GetTextMargin(i.h, &rcMargin))
+				{
+					wchar_t szLog[100];
+					_wsprintf(szLog, SKIPCOUNT(szLog) L"CheckBox Rect={%i,%i}-{%i,%i} Margin={%i,%i}-{%i,%i}",
+						i.r.left, i.r.top, i.r.right, i.r.bottom,
+						rcMargin.left, rcMargin.top, rcMargin.right, rcMargin.bottom);
+					LogString(szLog);
+				}
+			}
+			#endif
+
 			p->push_back(i);
 		}
 	}
 
 	return p;
+}
+
+int CDpiForDialog::GetFontSizeForDpi(HDC hdc, int Ydpi)
+{
+	int iFontHeight = -11;
+
+	if (Ydpi > 0)
+	{
+		//bool bSelfDC = (hdc == NULL);
+		//if (bSelfDC) hdc = GetDC(mh_Dlg);
+		UINT nTemplSize = mn_TemplateFontSize ? mn_TemplateFontSize : 8;
+		int logY = 99; //GetDeviceCaps(hdc, LOGPIXELSY);
+		//if (logY <= 0) logY = 99;
+		iFontHeight = -MulDiv(nTemplSize, Ydpi*logY, 72*96);
+		//if (bSelfDC && hdc) ReleaseDC(mh_Dlg, hdc);
+	}
+
+	return iFontHeight;
 }
