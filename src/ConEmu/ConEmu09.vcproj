@@ -454,6 +454,8 @@
       <File RelativePath=".\DpiAware.cpp" />
       <File RelativePath=".\DragDrop.cpp" />
       <File RelativePath=".\DragDropData.cpp" />
+      <File RelativePath=".\DrawObjects.cpp" />
+      <File RelativePath=".\DrawObjectsGdi.cpp" />
       <File RelativePath=".\DwmHelper.cpp" />
       <File RelativePath=".\DynDialog.cpp" />
       <File RelativePath=".\FindDlg.cpp" />
@@ -632,6 +634,8 @@
       <File RelativePath=".\DpiAware.h" />
       <File RelativePath=".\DragDrop.h" />
       <File RelativePath=".\DragDropData.h" />
+      <File RelativePath=".\DrawObjects.h" />
+      <File RelativePath=".\DrawObjectsGdi.h" />
       <File RelativePath=".\DwmHelper.h" />
       <File RelativePath=".\DynDialog.h" />
       <File RelativePath=".\FindDlg.h" />

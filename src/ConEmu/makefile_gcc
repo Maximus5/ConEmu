@@ -86,6 +86,8 @@ SRCS = \
 		DpiAware.cpp       \
 		DragDrop.cpp       \
 		DragDropData.cpp   \
+		DrawObjects.cpp    \
+		DrawObjectsGdi.cpp \
 		DwmHelper.cpp      \
 		DynDialog.cpp      \
 		FindDlg.cpp        \

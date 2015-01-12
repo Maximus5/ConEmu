@@ -57,6 +57,8 @@ $(INTDIR)\DlgItemHelper.obj \
 $(INTDIR)\DpiAware.obj \
 $(INTDIR)\DragDrop.obj \
 $(INTDIR)\DragDropData.obj \
+$(INTDIR)\DrawObjects.obj \
+$(INTDIR)\DrawObjectsGdi.obj \
 $(INTDIR)\DwmHelper.obj \
 $(INTDIR)\DynDialog.obj \
 $(INTDIR)\Execute.obj \
@@ -380,6 +382,10 @@ $(INTDIR)\DpiAware.obj: DpiAware.cpp DpiAware.h
 $(INTDIR)\DragDrop.obj: DragDrop.cpp BaseDragDrops.h DragDrop.h DragDropData.h
 
 $(INTDIR)\DragDropData.obj: DragDropData.cpp BaseDragDrops.h DragDrop.h DragDropData.h
+
+$(INTDIR)\DrawObjects.obj: DrawObjects.cpp DrawObjects.h
+
+$(INTDIR)\DrawObjectsGdi.obj: DrawObjectsGdi.cpp DrawObjectsGdi.h
 
 $(INTDIR)\DwmHelper.obj: DwmHelper.cpp DwmHelper.h
 

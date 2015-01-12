@@ -995,6 +995,8 @@
     <ClCompile Include="DpiAware.cpp" />
     <ClCompile Include="DragDrop.cpp" />
     <ClCompile Include="DragDropData.cpp" />
+    <ClCompile Include="DrawObjects.cpp" />
+    <ClCompile Include="DrawObjectsGdi.cpp" />
     <ClCompile Include="DwmHelper.cpp" />
     <ClCompile Include="DynDialog.cpp" />
     <ClCompile Include="FindDlg.cpp" />
@@ -1169,6 +1171,8 @@
     <ClInclude Include="DpiAware.h" />
     <ClInclude Include="DragDrop.h" />
     <ClInclude Include="DragDropData.h" />
+    <ClInclude Include="DrawObjects.h" />
+    <ClInclude Include="DrawObjectsGdi.h" />
     <ClInclude Include="DwmHelper.h" />
     <ClInclude Include="DynDialog.h" />
     <ClInclude Include="FindDlg.h" />
