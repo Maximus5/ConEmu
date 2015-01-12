@@ -12,6 +12,20 @@ Votes and awards (vote for ConEmu, if you please)
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+2015.1.11
+[*] New ConEmu icon.
+[*] HighDpi fixes (if primary mon is 192dpi and secondary is 96dpi).
+    * Search icon size on secondary monitor was huge.
+    * Settings dialog controls were sized too large.
+[*] DefTerm. Aggressive mode was not be able to disabled actually.
+[*] GuiMacro. Allow to execute some GuiMacro after ConEmu window creation.
+    Example: ConEmu -Detached -GuiMacro "Task(""{cmd}""); Settings"
+[*] Issue 1861: GuiMacro. Context([<Tab>[,<Split>]]).
+[*] Don't try to start clink if cmd is started just for single command execution.
+[*] Fix incorrect buffer address passed when getting AutoRun reg key value.
+[*] Small improvements for build settings in VS12 project.
+
+
 2014.12.21
 [*] Issue 1846: Script is not supported here (5909d9f regression).
 [*] Split options set in the ‘Create new console’ dialog not take precedence of any specified in the Task itself (first task's command actually).
