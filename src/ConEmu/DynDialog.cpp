@@ -178,6 +178,7 @@ INT_PTR /*CALLBACK*/ CDynDialog::DynDialogBox(HWND hwndDlg, UINT uMsg, WPARAM wP
 			mp_DlgMap->Set(hwndDlg, pDlg);
 		_ASSERTE(pDlg->mh_Dlg == NULL || pDlg->mh_Dlg == hwndDlg);
 		pDlg->mh_Dlg = hwndDlg;
+		mp_Creating = NULL;
 	}
 	else
 	{
