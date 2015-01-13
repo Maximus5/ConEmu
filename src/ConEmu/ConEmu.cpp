@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2014 Maximus5
+Copyright (c) 2009-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -4802,6 +4802,13 @@ bool CConEmuMain::StartDebugActiveProcess()
 	}
 
 	DWORD dwPID = pRCon->GetActivePID();
+	if (!dwPID)
+	{
+		// For example, ChildGui started with: set ConEmuReportExe=notepad.exe & notepad.exe
+		// Check waiting dialog box with caption "ConEmuHk, PID=%u, ..."
+		// The content must be "<ms_RootProcessName> loaded!"
+		dwPID = pRCon->GetLoadedPID();
+	}
 	if (!dwPID)
 	{
 		MsgBox(L"There is no active process", MB_ICONSTOP, gpConEmu->GetDefaultTitle());

@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2014 Maximus5
+Copyright (c) 2009-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -471,6 +471,7 @@ class CRealConsole
 		void SetProgramStatus(DWORD nDrop, DWORD nSet);
 		void SetFarStatus(DWORD nNewFarStatus);
 		DWORD GetActivePID();
+		DWORD GetLoadedPID();
 		LPCWSTR GetActiveProcessName();
 		int GetActiveAppSettingsId(LPCWSTR* ppProcessName = NULL, bool* pbIsAdmin = NULL, int* pnBits = NULL, DWORD* pnPID = NULL);
 	private:

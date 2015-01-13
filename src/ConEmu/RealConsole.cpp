@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2014 Maximus5
+Copyright (c) 2009-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -3339,6 +3339,8 @@ LPCWSTR CRealConsole::GetStartupDir()
 bool CRealConsole::StartDebugger(StartDebugType sdt)
 {
 	DWORD dwPID = GetActivePID();
+	if (!dwPID)
+		dwPID = GetLoadedPID();
 	if (!dwPID)
 		return false;
 
@@ -6907,6 +6909,46 @@ DWORD CRealConsole::GetActivePID()
 	}
 
 	return mn_ActivePID;
+}
+
+DWORD CRealConsole::GetLoadedPID()
+{
+	if (isServerClosing() || !GetServerPID(true))
+		return 0;
+
+	// For example, ChildGui started with: set ConEmuReportExe=notepad.exe & notepad.exe
+	// Check waiting dialog box with caption "ConEmuHk, PID=%u, ..."
+	// The content must be "<ms_RootProcessName> loaded!"
+
+	struct Impl {
+		LPCWSTR pszName;
+		HWND hFound;
+		DWORD nPID;
+		wchar_t szText[255];
+		static BOOL CALLBACK EnumProc(HWND hWnd, LPARAM lParam)
+		{
+			Impl* p = (Impl*)lParam;
+			if ((GetClassName(hWnd, p->szText, countof(p->szText)) > 0)
+				&& (wcscmp(p->szText, L"#32770") == 0))
+			{
+				wchar_t szCmp[] = L"ConEmuHk, PID=";
+				INT_PTR iLen = wcslen(szCmp);
+				if ((GetWindowText(hWnd, p->szText, countof(p->szText)) > 0)
+					&& (wcsncmp(p->szText, szCmp, iLen) == 0))
+				{
+					wchar_t* pszEnd = NULL;
+					p->nPID = wcstoul(p->szText+iLen, &pszEnd, 10);
+					// TODO: Можно бы еще проверить текст в диалоге...
+					return (p->nPID == 0);
+				}
+			}
+			return TRUE; // Continue search
+		};
+	} impl = {ms_RootProcessName};
+
+	EnumWindows(Impl::EnumProc, (LPARAM)&impl);
+
+	return impl.nPID;
 }
 
 LPCWSTR CRealConsole::GetActiveProcessName()
