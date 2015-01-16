@@ -107,7 +107,7 @@ AllDirs:
 "$(OUTDIR)\$(OUTNAME).exe": $(DEF_FILE) $(LINK_OBJS) $(RES_FILE) $(NAME).exe.manifest $(NAME).rc
 	echo linking $@
 !ifndef LINK_ULINK
-   @echo $(LINK) $(LINKFLAGS)
+   @echo $(LINK) $(LINKFLAGS) $(LINK_LIBS)
 	$(LINK) @<<
 	$(LINKFLAGS) $(LINK_OBJS) $(RES_FILE) $(LINK_LIBS)
 <<
