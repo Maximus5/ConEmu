@@ -20,7 +20,7 @@ ULINK=ulink.exe
 M4=tools\m4 -P -DFARBIT=$(DIRBIT)
 GAWK=tools\gawk
 
-DEF_FILE = ".\$(NAME).def"
+DEF_FILE = .\$(NAME).def
 
 RES_FILE = "$(OBJDIR)\$(NAME).res"
 
