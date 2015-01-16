@@ -6158,20 +6158,23 @@ DWORD WINAPI OnGetEnvironmentVariableA(LPCSTR lpName, LPSTR lpBuffer, DWORD nSiz
 	typedef DWORD (WINAPI* OnGetEnvironmentVariableA_t)(LPCSTR lpName, LPSTR lpBuffer, DWORD nSize);
 	ORIGINALFAST(GetEnvironmentVariableA);
 	//BOOL bMainThread = FALSE; // поток не важен
+	DWORD lRc = 0;
 
-	if (lpName && (
-			(lstrcmpiA(lpName, ENV_CONEMUANSI_VAR_A) == 0)
+	if (lpName)
+	{
+		if ((lstrcmpiA(lpName, ENV_CONEMUANSI_VAR_A) == 0)
 			|| (lstrcmpiA(lpName, ENV_CONEMUHWND_VAR_A) == 0)
 			|| (lstrcmpiA(lpName, ENV_CONEMUDIR_VAR_A) == 0)
 			|| (lstrcmpiA(lpName, ENV_CONEMUBASEDIR_VAR_A) == 0)
-		))
-	{
-		CheckVariables();
+			)
+		{
+			CheckVariables();
+		}
 	}
 
-	BOOL lbRc = F(GetEnvironmentVariableA)(lpName, lpBuffer, nSize);
-
-	return lbRc;
+	lRc = F(GetEnvironmentVariableA)(lpName, lpBuffer, nSize);
+wrap:
+	return lRc;
 }
 
 DWORD WINAPI OnGetEnvironmentVariableW(LPCWSTR lpName, LPWSTR lpBuffer, DWORD nSize)
@@ -6179,19 +6182,23 @@ DWORD WINAPI OnGetEnvironmentVariableW(LPCWSTR lpName, LPWSTR lpBuffer, DWORD nS
 	typedef DWORD (WINAPI* OnGetEnvironmentVariableW_t)(LPCWSTR lpName, LPWSTR lpBuffer, DWORD nSize);
 	ORIGINALFAST(GetEnvironmentVariableW);
 	//BOOL bMainThread = FALSE; // поток не важен
+	DWORD lRc = 0;
 
-	if (lpName && (
-			(lstrcmpiW(lpName, ENV_CONEMUANSI_VAR_W) == 0)
+	if (lpName)
+	{
+		if ((lstrcmpiW(lpName, ENV_CONEMUANSI_VAR_W) == 0)
 			|| (lstrcmpiW(lpName, ENV_CONEMUHWND_VAR_W) == 0)
 			|| (lstrcmpiW(lpName, ENV_CONEMUDIR_VAR_W) == 0)
 			|| (lstrcmpiW(lpName, ENV_CONEMUBASEDIR_VAR_W) == 0)
-		))
-	{
-		CheckVariables();
+			)
+		{
+			CheckVariables();
+		}
 	}
 
-	BOOL lbRc = F(GetEnvironmentVariableW)(lpName, lpBuffer, nSize);
-	return lbRc;
+	lRc = F(GetEnvironmentVariableW)(lpName, lpBuffer, nSize);
+wrap:
+	return lRc;
 }
 
 #if 0
