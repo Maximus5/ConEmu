@@ -74,6 +74,7 @@ void OnConWndChanged(HWND ahNewConWnd);
 bool AttachServerConsole();
 typedef BOOL (WINAPI* AttachConsole_t)(DWORD dwProcessId);
 AttachConsole_t GetAttachConsoleProc();
+void CheckAnsiConVar(LPCWSTR asName);
 
 typedef HWND (WINAPI* GetConsoleWindow_T)();
 extern GetConsoleWindow_T gfGetRealConsoleWindow;

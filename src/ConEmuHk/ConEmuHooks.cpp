@@ -6117,6 +6117,35 @@ void CheckVariables()
 	GetConMap(FALSE);
 }
 
+void CheckAnsiConVar(LPCWSTR asName)
+{
+	bool bAnsi = false;
+	CEAnsi::GetFeatures(&bAnsi, NULL);
+
+	if (bAnsi)
+	{
+		HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+		CONSOLE_SCREEN_BUFFER_INFO lsbi = {{0,0}};
+		if (GetConsoleScreenBufferInfo(hOut, &lsbi))
+		{
+			wchar_t szInfo[40];
+			msprintf(szInfo, countof(szInfo), L"%ux%u (%ux%u)", lsbi.dwSize.X, lsbi.dwSize.Y, lsbi.srWindow.Right-lsbi.srWindow.Left+1, lsbi.srWindow.Bottom-lsbi.srWindow.Top+1);
+			SetEnvironmentVariable(ENV_ANSICON_VAR_W, szInfo);
+
+			static WORD clrDefault = 0xFFFF;
+			if ((clrDefault == 0xFFFF) && LOBYTE(lsbi.wAttributes))
+				clrDefault = LOBYTE(lsbi.wAttributes);
+			msprintf(szInfo, countof(szInfo), L"%X", clrDefault);
+			SetEnvironmentVariable(ENV_ANSICON_DEF_VAR_W, szInfo);
+		}
+	}
+	else
+	{
+		SetEnvironmentVariable(ENV_ANSICON_VAR_W, NULL);
+		SetEnvironmentVariable(ENV_ANSICON_DEF_VAR_W, NULL);
+	}
+}
+
 BOOL WINAPI OnSetEnvironmentVariableA(LPCSTR lpName, LPCSTR lpValue)
 {
 	typedef BOOL (WINAPI* OnSetEnvironmentVariableA_t)(LPCSTR lpName, LPCSTR lpValue);
@@ -6170,6 +6199,23 @@ DWORD WINAPI OnGetEnvironmentVariableA(LPCSTR lpName, LPSTR lpBuffer, DWORD nSiz
 		{
 			CheckVariables();
 		}
+		else if (lstrcmpiA(lpName, ENV_CONEMUANSI_VAR_A) == 0)
+		{
+			CheckAnsiConVar(ENV_CONEMUANSI_VAR_W);
+		}
+		else if (lstrcmpiA(lpName, ENV_ANSICON_DEF_VAR_A) == 0)
+		{
+			CheckAnsiConVar(ENV_ANSICON_DEF_VAR_W);
+		}
+		else if (lstrcmpiA(lpName, ENV_ANSICON_VER_VAR_A) == 0)
+		{
+			if (lpBuffer && ((INT_PTR)nSize > lstrlenA(ENV_ANSICON_VER_VALUE)))
+			{
+				lstrcpynA(lpBuffer, ENV_ANSICON_VER_VALUE, nSize);
+				lRc = lstrlenA(ENV_ANSICON_VER_VALUE);
+			}
+			goto wrap;
+		}
 	}
 
 	lRc = F(GetEnvironmentVariableA)(lpName, lpBuffer, nSize);
@@ -6193,6 +6239,20 @@ DWORD WINAPI OnGetEnvironmentVariableW(LPCWSTR lpName, LPWSTR lpBuffer, DWORD nS
 			)
 		{
 			CheckVariables();
+		}
+		else if ((lstrcmpiW(lpName, ENV_CONEMUANSI_VAR_W) == 0)
+				|| (lstrcmpiW(lpName, ENV_ANSICON_DEF_VAR_W) == 0))
+		{
+			CheckAnsiConVar(lpName);
+		}
+		else if (lstrcmpiW(lpName, ENV_ANSICON_VER_VAR_W) == 0)
+		{
+			if (lpBuffer && ((INT_PTR)nSize > lstrlenA(ENV_ANSICON_VER_VALUE)))
+			{
+				lstrcpynW(lpBuffer, _CRT_WIDE(ENV_ANSICON_VER_VALUE), nSize);
+				lRc = lstrlenA(ENV_ANSICON_VER_VALUE);
+			}
+			goto wrap;
 		}
 	}
 

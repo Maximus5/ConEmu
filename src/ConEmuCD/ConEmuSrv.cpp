@@ -917,6 +917,29 @@ void ServerInitEnvVars()
 
 		bool bAnsi = ((gpSrv->guiSettings.Flags & CECF_ProcessAnsi) != 0);
 		SetEnvironmentVariable(ENV_CONEMUANSI_VAR_W, bAnsi ? L"ON" : L"OFF");
+
+		if (bAnsi)
+		{
+			wchar_t szInfo[40];
+			HANDLE hOut = (HANDLE)ghConOut;
+			CONSOLE_SCREEN_BUFFER_INFO lsbi = {{0,0}}; // интересует реальное положение дел
+			GetConsoleScreenBufferInfo(hOut, &lsbi);
+
+			msprintf(szInfo, countof(szInfo), L"%ux%u (%ux%u)", lsbi.dwSize.X, lsbi.dwSize.Y, lsbi.srWindow.Right-lsbi.srWindow.Left+1, lsbi.srWindow.Bottom-lsbi.srWindow.Top+1);
+			SetEnvironmentVariable(ENV_ANSICON_VAR_W, szInfo);
+
+			//static SHORT Con2Ansi[16] = {0,4,2,6,1,5,3,7,8|0,8|4,8|2,8|6,8|1,8|5,8|3,8|7};
+			//DWORD clrDefault = Con2Ansi[CONFORECOLOR(lsbi.wAttributes)]
+			//	| (Con2Ansi[CONBACKCOLOR(lsbi.wAttributes)] << 4);
+			msprintf(szInfo, countof(szInfo), L"%X", LOBYTE(lsbi.wAttributes));
+			SetEnvironmentVariable(ENV_ANSICON_DEF_VAR_W, szInfo);
+		}
+		else
+		{
+			SetEnvironmentVariable(ENV_ANSICON_VAR_W, NULL);
+			SetEnvironmentVariable(ENV_ANSICON_DEF_VAR_W, NULL);
+		}
+		SetEnvironmentVariable(ENV_ANSICON_VER_VAR_W, NULL);
 	}
 	else
 	{

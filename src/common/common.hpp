@@ -172,6 +172,14 @@ typedef struct _CONSOLE_SELECTION_INFO
 
 #define CONEMU_CONHOST_CREATED_MSG L"ConEmu: ConHost was created PID=" // L"%u\n"
 
+// AnsiCon compatible variables
+#define ENV_ANSICON_VAR_A           "ANSICON"      // ex. -> "140x9999 (140x35)"
+#define ENV_ANSICON_VAR_W             _CRT_WIDE(ENV_ANSICON_VAR_A)
+#define ENV_ANSICON_DEF_VAR_A       "ANSICON_DEF"  // ex. -> "7"
+#define ENV_ANSICON_DEF_VAR_W         _CRT_WIDE(ENV_ANSICON_DEF_VAR_A)
+#define ENV_ANSICON_VER_VAR_A       "ANSICON_VER"  // "170"
+#define ENV_ANSICON_VER_VAR_W         _CRT_WIDE(ENV_ANSICON_VER_VAR_A)
+#define ENV_ANSICON_VER_VALUE       "170"
 
 
 //#define CE_CURSORUPDATE     L"ConEmuCursorUpdate%u" // ConEmuC_PID - изменился курсор (размер или выделение). положение курсора отслеживает GUI

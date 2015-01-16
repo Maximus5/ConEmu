@@ -493,6 +493,9 @@ wrap:
 		#endif
 		bLastAnsi = bAnsi;
 		SetEnvironmentVariable(ENV_CONEMUANSI_VAR_W, bAnsi ? L"ON" : L"OFF");
+
+		// Set AnsiCon compatible variables too
+		CheckAnsiConVar(NULL);
 	}
 	bAnsiLog = ((gpConInfo != NULL) && (gpConInfo->AnsiLog.Enabled && *gpConInfo->AnsiLog.Path));
 	if (bAnsiLog)
