@@ -147,12 +147,10 @@ ALL: dirs $(INSTALL) $(DLLFULLNAME) clean $(SUBMODULES)
 
 $(DLLFULLNAME) : $(LINK_OBJS) $(RES) $(LINK_DEP)
 !ifndef __MAKE__
-	echo $(LINK_FLAGS)
 	@$(LNK) @<<
 	$(LINK_FLAGS) $(LIBS) $(LINK_OBJS) $(RES)
 <<
 !else
-	echo $(LINK_FLAGS)
 	@$(LNK) $(LINK_FLAGS) $(LIBS) $(LINK_OBJS) $(RES)
 !endif
 !ifdef DOCS
@@ -196,6 +194,8 @@ dirs:
 	@if not exist "$(INTDIR)\$(NULL)" mkdir "$(INTDIR)"
 	@if not exist "$(OUTDIR)\$(NULL)" mkdir "$(OUTDIR)"
 	@if not exist "$(OUTDIR)$(ADDOUTDIR)\$(NULL)" mkdir "$(OUTDIR)$(ADDOUTDIR)"
+	@echo cl flags: $(CFLAGS)
+	@echo link flags: $(LINK_FLAGS) $(LIBS)
 
 .PHONY: clean
 clean:
