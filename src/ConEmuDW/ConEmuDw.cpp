@@ -901,7 +901,7 @@ BOOL WINAPI ReadOutput(FAR_CHAR_INFO* Buffer, COORD BufferSize, COORD BufferCoor
 	if (!GetBufferInfo(h, csbi, srWork))
 		return FALSE;
 
-	CHAR_INFO cDefReadBuf[1024];
+	CHAR_INFO cDefReadBuf[256];
 	CHAR_INFO *pcReadBuf = NULL;
 	int nWindowWidth  = srWork.Right - srWork.Left + 1;
 	if (BufferSize.X <= (int)countof(cDefReadBuf))
@@ -1056,7 +1056,7 @@ BOOL WINAPI WriteOutput(const FAR_CHAR_INFO* Buffer, COORD BufferSize, COORD Buf
 	if (!GetBufferInfo(h, csbi, srWork))
 		return FALSE;
 
-	CHAR_INFO cDefWriteBuf[1024];
+	CHAR_INFO cDefWriteBuf[256];
 	CHAR_INFO *pcWriteBuf = NULL;
 	int nWindowWidth  = srWork.Right - srWork.Left + 1;
 	if (BufferSize.X <= (int)countof(cDefWriteBuf))
