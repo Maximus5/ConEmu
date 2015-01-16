@@ -199,6 +199,7 @@ void PreReadConsoleInput(HANDLE hConIn, bool abUnicode, bool abPeek);
 
 /* ************ Globals for cmd.exe/clink ************ */
 bool     gbIsCmdProcess = false;
+static bool IsInteractive();
 //size_t   gcchLastWriteConsoleMax = 0;
 //wchar_t *gpszLastWriteConsole = NULL;
 //HMODULE  ghClinkDll = NULL;
@@ -1139,6 +1140,13 @@ VOID WINAPI OnExitProcess(UINT uExitCode)
 
 	// And terminate our threads
 	DoDllStop(false);
+
+	// Issue 1865: Weird hungs in LdrpAcquireLoaderLock(), so call TerminateProcess
+	if (gbIsCmdProcess && !IsInteractive())
+	{
+		TerminateProcess(GetCurrentProcess(), uExitCode);
+		return; // Assume not to get here
+	}
 
 	F(ExitProcess)(uExitCode);
 }
