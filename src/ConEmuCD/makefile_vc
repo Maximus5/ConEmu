@@ -5,7 +5,9 @@ NAME = ConEmuCD
 DIRNAME=$(NAME)
 RELEASEDIR=..\..\Release\ConEmu
 NEEDENTRY = 1
-NEEDDEFLIB = 1
+!undef NEEDDEFLIB
+#NEEDDEFLIB = 1
+USEDDKCRT = 1
 NO_OPTIMIZE = 1
 
 !include ../makefile_vc_defs
