@@ -1,8 +1,15 @@
+#
+# NEEDDEFLIB  - force using standard static multithreading libraries
+#
 
 WIDE = 1
 
 !ifdef DEFFILE
 !include $(DEFFILE)
+!endif
+
+!ifndef COMMONSRCDIR
+COMMONSRCDIR = ../common
 !endif
 
 #!if exists(make_vc_defs)
@@ -100,3 +107,22 @@ OUTDIR=$(WORKDIR)
 OBJDIR=$(OUTDIR)\obj$(ADDOBJDIR)
 INTDIR=$(OUTDIR)\obj$(ADDOBJDIR)
 CODDIR=$(OUTDIR)\cod$(ADDOBJDIR)
+
+!if defined(NEEDDEFLIB)
+# standard static multithreading libraries
+COMMONLIB =
+!elseif defined(AMD64)
+# Use precompiled libCRT64.lib
+COMMONLIB = $(COMMONSRCDIR)/libCRT64.lib
+#$(COMMONSRCDIR)chkstk64.obj
+!elseif defined(IA64)
+# Use precompiled libCRTIA64.lib
+COMMONLIB = $(COMMONSRCDIR)/libCRTIA64.lib
+#$(COMMONSRCDIR)chkstkIA64.obj
+!else
+# Use precompiled libCRT.lib
+COMMONLIB = $(COMMONSRCDIR)/libCRT.lib
+#$(COMMONSRCDIR)chkstk.obj
+!endif
+
+CRTLIB = $(COMMONLIB)

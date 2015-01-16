@@ -107,26 +107,26 @@ CPP_OPT=$(CPP_OPT) /DDEBUG /Zi /Fd$(PDBNAME) /DCRTPRINTF
 #/DCRTSTARTUP
 !endif
 
-COMMONLIB =
+#COMMONLIB =
 
 !ifdef AMD64
-!ifndef NEEDDEFLIB
-COMMONLIB = ../common/libCRT64.lib
-!endif
+#!ifndef NEEDDEFLIB
+#COMMONLIB = ../common/libCRT64.lib
+#!endif
 CPP_PROJ_NO=/nologo /c /W3 /wd4995 /Gy /GF /Zp8 /J $(COMPAT64) /GS- /Gr /GR- /EHs-c- /LD /I"$(COMINC)" $(ENV_INC_OPT) $(CPP_WIDE) /D_CRT_SECURE_NO_WARNINGS /D_CRT_NONSTDC_NO_WARNINGS /D_CRT_NON_CONFORMING_SWPRINTFS $(USERCPP)
 ULOUT=-Tpd+
 LINK_MACHINE = /MACHINE:X64
 !elseif defined(IA64)
-!ifndef NEEDDEFLIB
-COMMONLIB = ../common/libCRTIA64.lib
-!endif
+#!ifndef NEEDDEFLIB
+#COMMONLIB = ../common/libCRTIA64.lib
+#!endif
 CPP_PROJ_NO=/nologo /c /W3 /wd4995 /Gy /GF /Zp8 /J $(COMPAT64) /GS- /Gr /GR- /EHs-c- /LD /I"$(COMINC)" $(ENV_INC_OPT) $(CPP_WIDE) /D_CRT_SECURE_NO_WARNINGS /D_CRT_NONSTDC_NO_WARNINGS /D_CRT_NON_CONFORMING_SWPRINTFS $(USERCPP)
 ULOUT=-Tpd+
 LINK_MACHINE = /MACHINE:X64
 !else
-!ifndef NEEDDEFLIB
-COMMONLIB = ../common/libCRT.lib
-!endif
+#!ifndef NEEDDEFLIB
+#COMMONLIB = ../common/libCRT.lib
+#!endif
 #../pvdCRT.lib
 !ifdef CPP_UNALIGN
 CPP_ALIGN=/Zp1
@@ -142,7 +142,7 @@ CPP_PROJ=$(CPP_PROJ_NO) /Fo"$(INTDIR)\\"
 #!undef COMMONLIB
 #!endif
 #Wininet.lib
-LIBS = $(COMMONLIB) chkstk.obj kernel32.lib user32.lib gdi32.lib advapi32.lib shell32.lib ole32.lib uuid.lib mpr.lib version.lib oleaut32.lib wbemuuid.lib Comdlg32.lib $(USERLIBS)
+LIBS = $(CRTLIB) kernel32.lib user32.lib gdi32.lib advapi32.lib shell32.lib ole32.lib uuid.lib mpr.lib version.lib oleaut32.lib wbemuuid.lib Comdlg32.lib $(USERLIBS)
 
 !ifdef _BIN_PATH_
 !ifndef _CL_PATH_

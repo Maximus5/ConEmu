@@ -1,6 +1,7 @@
 
 RELEASEDIR = ..\..\..\..\Release\plugins\ConEmu\Thumbs
 COMMONWORKDIR = ..\..\..\_VCBUILD
+COMMONSRCDIR = ../../../common
 
 !if defined(AMD64) || "$(CPU)" == "AMD64" || "$(PLATFORM)" == "x64"
 EXT = t64
@@ -41,17 +42,17 @@ CPP_OPT=/DDEBUG /Od /Fd"$(PDBNAME)"
 !endif
 
 !ifdef AMD64
-COMMONLIB = ../../../common/libCRT64.lib
+#COMMONLIB = ../../../common/libCRT64.lib
 CPP_PROJ_NO=/nologo /c /W3 /wd4995 /Gy /GF /Zp8 /J $(COMPAT64) /GS- /Gr /GR- /EHs-c- /LD /I"$(COMINC)" $(ENV_INC_OPT) $(CPP_WIDE) /D_CRT_SECURE_NO_WARNINGS /D_CRT_NONSTDC_NO_WARNINGS /D_CRT_NON_CONFORMING_SWPRINTFS /D_WIN32_WINNT=0x0500 $(USERCPP)
 ULOUT=-Tpd+
 LINK_MACHINE = /MACHINE:X64
 !elseif defined(IA64)
-COMMONLIB = ../../../common/libCRTIA64.lib
+#COMMONLIB = ../../../common/libCRTIA64.lib
 CPP_PROJ_NO=/nologo /c /W3 /wd4995 /Gy /GF /Zp8 /J $(COMPAT64) /GS- /Gr /GR- /EHs-c- /LD /I"$(COMINC)" $(ENV_INC_OPT) $(CPP_WIDE) /D_CRT_SECURE_NO_WARNINGS /D_CRT_NONSTDC_NO_WARNINGS /D_CRT_NON_CONFORMING_SWPRINTFS /D_WIN32_WINNT=0x0500 $(USERCPP)
 ULOUT=-Tpd+
 LINK_MACHINE = /MACHINE:X64
 !else
-COMMONLIB = ../../../common/libCRT.lib
+#COMMONLIB = ../../../common/libCRT.lib
 !ifdef CPP_UNALIGN
 CPP_ALIGN=/Zp1
 !endif
@@ -65,7 +66,7 @@ CPP_PROJ=$(CPP_PROJ_NO) /Fo"$(OBJDIR)\\"
 #!ifdef EXCLUDECRT
 #!undef COMMONLIB
 #!endif
-LIBS = $(COMMONLIB) chkstk.obj kernel32.lib user32.lib gdi32.lib advapi32.lib shell32.lib ole32.lib uuid.lib mpr.lib version.lib oleaut32.lib wbemuuid.lib $(USERLIBS)
+LIBS = $(CRTLIB) kernel32.lib user32.lib gdi32.lib advapi32.lib shell32.lib ole32.lib uuid.lib mpr.lib version.lib oleaut32.lib wbemuuid.lib $(USERLIBS)
 
 !ifdef _BIN_PATH_
 !ifndef _CL_PATH_

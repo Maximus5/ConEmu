@@ -88,7 +88,7 @@ LINK_DEBUG=/MAP:"$(MAP)" /PDB:$(PDB)
 CPP_DEBUG=
 !endif
 
-COMMONLIB=
+#COMMONLIB=
 
 !ifdef AMD64
 CPP_PROJ_NO=/nologo /c /W3 /wd4995 /Gy /GF /Zp8 /J $(COMPAT64) /GS- /Gr /GR- /EHs-c- /MT /LD /I"$(COMINC)" $(ENV_INC_OPT) $(CPP_WIDE) /D_CRT_SECURE_NO_WARNINGS /D_CRT_NONSTDC_NO_WARNINGS /D_CRT_NON_CONFORMING_SWPRINTFS /D_WIN32_WINNT=0x0500 $(USERCPP)
@@ -116,7 +116,7 @@ CPP_PROJ=$(CPP_PROJ_NO) /Fo"$(INTDIR)\\"
 #!ifdef EXCLUDECRT
 #!undef COMMONLIB
 #!endif
-LIBS = $(COMMONLIB) kernel32.lib user32.lib gdi32.lib advapi32.lib shell32.lib ole32.lib uuid.lib mpr.lib version.lib oleaut32.lib wbemuuid.lib $(USERLIBS)
+LIBS = $(CRTLIB) kernel32.lib user32.lib gdi32.lib advapi32.lib shell32.lib ole32.lib uuid.lib mpr.lib version.lib oleaut32.lib wbemuuid.lib $(USERLIBS)
 
 !ifdef _BIN_PATH_
 !ifndef _CL_PATH_

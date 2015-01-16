@@ -29,7 +29,7 @@ RES_FILE = "$(OBJDIR)\$(NAME).res"
 LINK_OBJS = $(OBJDIR)\ConEmuC.obj
 
 
-LINK_LIBS=kernel32.lib user32.lib
+LINK_LIBS=$(CRTLIB) kernel32.lib user32.lib
 
 DEFINES=\
 	/DUNICODE \
