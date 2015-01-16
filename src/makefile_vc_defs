@@ -1,6 +1,8 @@
 #
 # NEEDDEFLIB  - force using standard static multithreading libraries
 #
+# USEDDKCRT   - force using msvcrt.dll (WinDDK required)
+#
 
 WIDE = 1
 
@@ -111,6 +113,15 @@ CODDIR=$(OUTDIR)\cod$(ADDOBJDIR)
 !if defined(NEEDDEFLIB)
 # standard static multithreading libraries
 COMMONLIB =
+!elseif defined(USEDDKCRT)
+# use msvcrt.dll (WinDDK LIB's are required)
+!if defined(AMD64)
+COMMONLIB = $(COMMONSRCDIR)/WinDDK/amd64/msvcrt.lib
+!elseif defined(IA64)
+COMMONLIB = $(COMMONSRCDIR)/WinDDK/ia64/msvcrt.lib
+!else
+COMMONLIB = $(COMMONSRCDIR)/WinDDK/i386/msvcrt.lib
+!endif
 !elseif defined(AMD64)
 # Use precompiled libCRT64.lib
 COMMONLIB = $(COMMONSRCDIR)/libCRT64.lib
@@ -129,6 +140,8 @@ CRTLIB = $(COMMONLIB)
 
 !if defined(DEBUG)
 MP = /MTd
+!elseif defined(USEDDKCRT)
+MP = /MD
 !else
 MP = /MT
 !endif
