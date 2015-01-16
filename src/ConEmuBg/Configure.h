@@ -152,7 +152,7 @@ static int ConfigureProc(int ItemNumber)
 		return false;
 
 	int height = 12, width = 50;
-	FarDialogItem items[] =
+	static FarDialogItem items[] =
 	{
 		{DI_DOUBLEBOX, 3,  1,  width - 4, height - 2}, //cfgTitle
 
