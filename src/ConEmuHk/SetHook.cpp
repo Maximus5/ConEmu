@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2014 Maximus5
+Copyright (c) 2009-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -1014,9 +1014,7 @@ bool __stdcall InitHooks(HookItem* apHooks)
 		KernelHooked = true;
 
 		_ASSERTEX(ghKernel32!=NULL);
-		OSVERSIONINFO osv = {sizeof(osv)};
-		GetVersionEx(&osv);
-		if (osv.dwMajorVersion > 6 || (osv.dwMajorVersion == 6 && osv.dwMinorVersion > 0))
+		if (IsWin7())
 		{
 			ghKernelBase = LoadLibrary(kernelbase);
 		}
@@ -1899,7 +1897,7 @@ bool SetExports(HMODULE Module)
 		{
 			wchar_t  szTitle[64];
 			OSVERSIONINFO osv = {sizeof(osv)};
-			GetVersionEx(&osv);
+			GetOsVersionInformational(&osv);
 			msprintf(szTitle, countof(szTitle), L"ConEmuHk64, PID=%u, TID=%u", GetCurrentProcessId(), GetCurrentThreadId());
 			msprintf(pszMsg, 250,
 				L"ConEmuHk64.dll was loaded below Kernel32.dll\n"

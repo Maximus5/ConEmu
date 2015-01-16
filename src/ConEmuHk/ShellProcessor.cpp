@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2011-2014 Maximus5
+Copyright (c) 2011-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -1557,20 +1557,15 @@ int CShellProc::PrepareExecuteParms(
 	if ((aCmd == eCreateProcess) && (gnInShellExecuteEx > 0)
 		&& lphStdOut && lphStdErr && anStartFlags && (*anStartFlags) == 0x401)
 	{
-		OSVERSIONINFO osv = {sizeof(OSVERSIONINFO)};
-
-		if (GetVersionEx(&osv))
+		// Win2k, WinXP, Win2k3
+		if (IsWin5family())
 		{
-			// Добавил Win2k, Minor можно не проверять
-			if (osv.dwMajorVersion == 5) // && (osv.dwMinorVersion == 1/*WinXP*/ || osv.dwMinorVersion == 2/*Win2k3*/))
+			if (//(*lphStdOut == (HANDLE)0x00010001)
+				(((DWORD_PTR)*lphStdOut) >= 0x00010000)
+				&& (*lphStdErr == NULL))
 			{
-				if (//(*lphStdOut == (HANDLE)0x00010001)
-					(((DWORD_PTR)*lphStdOut) >= 0x00010000)
-					&& (*lphStdErr == NULL))
-				{
-					*lphStdOut = NULL;
-					*anStartFlags &= ~0x400;
-				}
+				*lphStdOut = NULL;
+				*anStartFlags &= ~0x400;
 			}
 		}
 	}
@@ -2387,17 +2382,10 @@ BOOL CShellProc::FixShellArgs(DWORD afMask, HWND ahWnd, DWORD* pfMask, HWND* phW
 	// Включить флажок, чтобы Shell не задавал глупого вопроса "Хотите ли вы запустить этот файл"...
 	if (!(afMask & SEE_MASK_NOZONECHECKS) && gFarMode.bFarHookMode && gFarMode.bShellNoZoneCheck)
 	{
-		OSVERSIONINFOEX osv = {sizeof(OSVERSIONINFOEX)};
-		if (GetVersionEx((LPOSVERSIONINFO)&osv))
+		if (IsWinXPSP1())
 		{
-			if ((osv.dwMajorVersion >= 6)
-				|| (osv.dwMajorVersion == 5
-				&& (osv.dwMinorVersion > 1
-				|| (osv.dwMinorVersion == 1 && osv.wServicePackMajor >= 1))))
-			{
-				(*pfMask) |= SEE_MASK_NOZONECHECKS;
-				lbRc = TRUE;
-			}
+			(*pfMask) |= SEE_MASK_NOZONECHECKS;
+			lbRc = TRUE;
 		}
 	}
 

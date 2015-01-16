@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2014 Maximus5
+Copyright (c) 2009-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -929,7 +929,7 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 	//ghHeap = HeapCreate(HEAP_GENERATE_EXCEPTIONS, 200000, 0);
 	memset(&gOSVer, 0, sizeof(gOSVer));
 	gOSVer.dwOSVersionInfoSize = sizeof(gOSVer);
-	GetVersionEx(&gOSVer);
+	GetOsVersionInformational(&gOSVer);
 	gnOsVer = ((gOSVer.dwMajorVersion & 0xFF) << 8) | (gOSVer.dwMinorVersion & 0xFF);
 
 	gbIsWine = IsWine(); // В общем случае, на флажок ориентироваться нельзя. Это для информации.

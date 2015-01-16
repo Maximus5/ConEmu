@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2014 Maximus5
+Copyright (c) 2009-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -54,7 +54,7 @@ protected:
 		GetStartupInfoW(&si);
 
 		OSVERSIONINFOEXW os = {sizeof(os)};
-		GetVersionEx((OSVERSIONINFOW*)&os);
+		GetOsVersionInformational((OSVERSIONINFOW*)&os);
 
 		wchar_t* pszEnvPathStore = (wchar_t*)malloc(1024*sizeof(*pszEnvPathStore));
 		if (pszEnvPathStore)
