@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2014 Maximus5
+Copyright (c) 2009-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -62,6 +62,12 @@ wchar_t* GetShortFileNameEx(LPCWSTR asLong, BOOL abFavorLength=TRUE);
 
 bool IsDbcs();
 bool IsHwFullScreenAvailable();
+bool GetOsVersionInformational(OSVERSIONINFO* pOsVer);
+bool IsWinVerOrHigher(WORD OsVer); // Ex: 0x0601, _WIN32_WINNT_WIN10, ...
+bool IsWin5family();
+bool IsWinXPSP1();
+bool IsWin6();
+bool IsWin7();
 bool IsWin10();
 bool IsWindows64();
 bool IsWine();

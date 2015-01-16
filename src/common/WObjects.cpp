@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2014 Maximus5
+Copyright (c) 2009-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -544,15 +544,84 @@ bool IsWinPE()
 	return (ibIsWinPE == 1);
 }
 
+bool GetOsVersionInformational(OSVERSIONINFO* pOsVer)
+{
+	#pragma warning(disable: 4996)
+	BOOL result = GetVersionEx(pOsVer);
+	#pragma warning(default: 4996)
+	return (result != NULL);
+}
+
+bool IsWinVerOrHigher(WORD OsVer)
+{
+	OSVERSIONINFOEXW osvi = {sizeof(osvi), HIBYTE(OsVer), LOBYTE(OsVer)};
+	DWORDLONG const dwlConditionMask = VerSetConditionMask(VerSetConditionMask(0, VER_MAJORVERSION, VER_GREATER_EQUAL), VER_MINORVERSION, VER_GREATER_EQUAL);
+	BOOL ibIsWinOrHigher = VerifyVersionInfoW(&osvi, VER_MAJORVERSION | VER_MINORVERSION, dwlConditionMask);
+	return (ibIsWinOrHigher != FALSE);
+}
+
+// Only 5.x family (Win2k, WinXP, Win 2003 server)
+bool IsWin5family()
+{
+	static int ibIsWin5fam = 0;
+	if (!ibIsWin5fam)
+	{
+		OSVERSIONINFOEXW osvi = {sizeof(osvi), 5, 0};
+		DWORDLONG const dwlConditionMask = VerSetConditionMask(0, VER_MAJORVERSION, VER_EQUAL);
+		ibIsWin5fam = VerifyVersionInfoW(&osvi, VER_MAJORVERSION, dwlConditionMask) ? 1 : -1;
+	}
+	return (ibIsWin5fam == 1);
+}
+
+// WinXP SP1 or higher
+bool IsWinXPSP1()
+{
+	static int ibIsWinXPSP1 = 0;
+	if (!ibIsWinXPSP1)
+	{
+		OSVERSIONINFOEXW osvi = {sizeof(osvi), HIBYTE(_WIN32_WINNT_WINXP), LOBYTE(_WIN32_WINNT_WINXP)};
+		osvi.wServicePackMajor = 1;
+		DWORDLONG const dwlConditionMask = VerSetConditionMask(VerSetConditionMask(VerSetConditionMask(0,
+			VER_MAJORVERSION, VER_GREATER_EQUAL),
+			VER_MINORVERSION, VER_GREATER_EQUAL),
+			VER_SERVICEPACKMAJOR, VER_GREATER_EQUAL);
+		ibIsWinXPSP1 = VerifyVersionInfoW(&osvi, VER_MAJORVERSION | VER_MINORVERSION | VER_SERVICEPACKMAJOR, dwlConditionMask) ? 1 : -1;;
+	}
+	return (ibIsWinXPSP1 == 1);
+}
+
+// Vista and higher
+bool IsWin6()
+{
+	static int ibIsWin6 = 0;
+	if (!ibIsWin6)
+	{
+		_ASSERTE(_WIN32_WINNT_WIN6 == 0x600);
+		ibIsWin6 = IsWinVerOrHigher(_WIN32_WINNT_WIN6) ? 1 : -1;
+	}
+	return (ibIsWin6 == 1);
+}
+
+// Windows 7 and higher
+bool IsWin7()
+{
+	static int ibIsWin7 = 0;
+	if (!ibIsWin7)
+	{
+		_ASSERTE(_WIN32_WINNT_WIN7 == 0x601);
+		ibIsWin7 = IsWinVerOrHigher(_WIN32_WINNT_WIN7) ? 1 : -1;
+	}
+	return (ibIsWin7 == 1);
+}
+
+// Windows 10 and higher
 bool IsWin10()
 {
 	static int ibIsWin10 = 0;
 	if (!ibIsWin10)
 	{
 		#define _WIN32_WINNT_WIN10 0x604
-		OSVERSIONINFOEXW osvi = {sizeof(osvi), HIBYTE(_WIN32_WINNT_WIN10), LOBYTE(_WIN32_WINNT_WIN10)};
-		DWORDLONG const dwlConditionMask = VerSetConditionMask(VerSetConditionMask(0, VER_MAJORVERSION, VER_GREATER_EQUAL), VER_MINORVERSION, VER_GREATER_EQUAL);
-		ibIsWin10 = VerifyVersionInfoW(&osvi, VER_MAJORVERSION | VER_MINORVERSION, dwlConditionMask) ? 1 : -1;
+		ibIsWin10 = IsWinVerOrHigher(_WIN32_WINNT_WIN10) ? 1 : -1;
 	}
 	return (ibIsWin10 == 1);
 }
