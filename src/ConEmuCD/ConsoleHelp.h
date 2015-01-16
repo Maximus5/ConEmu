@@ -69,7 +69,7 @@ _DBGHLP(L"   or: ConEmuC /REGCONFONT=<FontName> -> RegisterConsoleFontHKLM\r\n")
 		L"     /IsTerm         - returns 1 as errorlevel if running in telnet, 2 if not\r\n" \
 		L"     /Log[N]         - create (debug) log file, N is number from 0 to 3\r\n" \
 		L"     /Echo | /Type   - http://code.google.com/p/conemu-maximus5/wiki/ConEmuC#Echo_and_Type\r\n" \
-_DBGHLP(L"     -- following switches are visible in debug builds only--\r\n") \
+_DBGHLP(L"     -- following switches are visible in debug builds only but available in release too--\r\n") \
 _DBGHLP(L"     /CHECKUNICODE -> print some colorized text with unicode characters\r\n") \
 _DBGHLP(L"     /CINMODE==<hex:gnConsoleModeFlags>\r\n") \
 _DBGHLP(L"     /CREATECON -> used internally for hidden console creation\r\n") \
