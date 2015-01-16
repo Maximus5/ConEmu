@@ -131,6 +131,8 @@ public:
 
 	static void GetFeatures(bool* pbAnsiAllowed, bool* pbSuppressBells);
 
+	static SHORT GetDefaultTextAttr();
+
 	static HANDLE ghLastAnsiCapable /*= NULL*/;
 	static HANDLE ghLastAnsiNotCapable /*= NULL*/;
 	static HANDLE ghAnsiLogFile /*= NULL*/;
@@ -139,7 +141,6 @@ public:
 	static bool gbWasXTermOutput;
 
 protected:
-	static SHORT GetDefaultTextAttr();
 	static int NextNumber(LPCWSTR& asMS);
 
 	static void StartXTermMode(bool bStart);
