@@ -126,3 +126,9 @@ COMMONLIB = $(COMMONSRCDIR)/libCRT.lib
 !endif
 
 CRTLIB = $(COMMONLIB)
+
+!if defined(DEBUG)
+MP = /MTd
+!else
+MP = /MT
+!endif
