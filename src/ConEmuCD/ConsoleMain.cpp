@@ -2663,6 +2663,38 @@ int CheckUnicodeFont()
 	return iRc;
 }
 
+// ConEmuC -OsVerInfo
+int OsVerInfo()
+{
+	OSVERSIONINFOEX osv = {sizeof(osv)};
+	GetOsVersionInformational((OSVERSIONINFO*)&osv);
+
+	UINT DBCS = IsDbcs();
+	UINT HWFS = IsHwFullScreenAvailable();
+	UINT W5fam = IsWin5family();
+	UINT WXPSP1 = IsWinXPSP1();
+	UINT W6 = IsWin6();
+	UINT W7 = IsWin7();
+	UINT W10 = IsWin10();
+	UINT Wx64 = IsWindows64();
+	UINT WINE = IsWine();
+	UINT WPE = IsWinPE();
+	UINT TELNET = isTerminalMode();
+
+	wchar_t szInfo[200];
+	_wsprintf(szInfo, SKIPCOUNT(szInfo)
+		L"OS version information\n"
+		L"%u.%u build %u SP%u.%u suite=x%04X type=%u\n"
+		L"W5fam=%u WXPSP1=%u W6=%u W7=%u W10=%u Wx64=%u\n"
+		L"HWFS=%u DBCS=%u WINE=%u WPE=%u TELNET=%u\n",
+		osv.dwMajorVersion, osv.dwMinorVersion, osv.dwBuildNumber, osv.wServicePackMajor, osv.wServicePackMinor, osv.wSuiteMask, osv.wProductType,
+		W5fam, WXPSP1, W6, W7, W10, Wx64, HWFS,
+		DBCS, WINE, WPE, TELNET);
+	_wprintf(szInfo);
+
+	return MAKEWORD(osv.dwMinorVersion, osv.dwMajorVersion);
+}
+
 enum ConEmuStateCheck
 {
 	ec_None = 0,
@@ -2730,6 +2762,7 @@ enum ConEmuExecAction
 	ea_InjectDefTrm,
 	ea_GuiMacro,
 	ea_CheckUnicodeFont,
+	ea_OsVerInfo,
 	ea_ExportCon,  // export env.vars to processes of active console
 	ea_ExportTab,  // ea_ExportCon + ConEmu window
 	ea_ExportGui,  // export env.vars to ConEmu window
@@ -3913,6 +3946,11 @@ int DoExecAction(ConEmuExecAction eExecAction, LPCWSTR asCmdArg /* rest of cmdli
 			iRc = CheckUnicodeFont();
 			break;
 		}
+	case ea_OsVerInfo:
+		{
+			iRc = OsVerInfo();
+			break;
+		}
 	case ea_ExportCon:
 	case ea_ExportTab:
 	case ea_ExportGui:
@@ -4299,6 +4337,11 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 		else if (lstrcmpi(szArg, L"/CheckUnicode")==0)
 		{
 			eExecAction = ea_CheckUnicodeFont;
+			break;
+		}
+		else if (lstrcmpi(szArg, L"/OsVerInfo")==0)
+		{
+			eExecAction = ea_OsVerInfo;
 			break;
 		}
 		else if (lstrcmpi(szArg, L"/ErrorLevel")==0)
