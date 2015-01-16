@@ -147,6 +147,9 @@ WARNING("WIN64 was not defined");
 #define WM_WTSSESSION_CHANGE 0x02B1
 #endif
 
+#define CONFORECOLOR(x) ((x & 0xF))
+#define CONBACKCOLOR(x) ((x & 0xF0)>>4)
+
 // Для облегчения кодинга - возвращает значение для соответствующей платформы
 #ifdef _WIN64
 	#define WIN3264TEST(v32,v64) v64

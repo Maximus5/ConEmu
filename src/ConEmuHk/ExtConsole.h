@@ -61,9 +61,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define COLORVALUE(x) ((x)&COLORMASK)
 #endif
 
-#define CONFORECOLOR(x) ((x & 0xF))
-#define CONBACKCOLOR(x) ((x & 0xF0)>>4)
-
 struct ExtAttributesParm
 {
 	size_t StructSize;
