@@ -2363,6 +2363,12 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 					// Reverse video
 					TODO("Check standard");
 					break;
+				case 27:
+					// Positive (not inverse)
+					break;
+				case 25:
+					// Steady (not blinking)
+					break;
 				case 30: case 31: case 32: case 33: case 34: case 35: case 36: case 37:
 					gDisplayParm.TextColor = (Code.ArgV[i] - 30);
 					gDisplayParm.Text256 = FALSE;
