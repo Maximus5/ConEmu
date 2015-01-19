@@ -402,6 +402,7 @@
       <File RelativePath="..\common\DefTermBase.h" />
       <File RelativePath="..\common\Execute.h" />
       <File RelativePath="..\common\InQueue.h" />
+      <File RelativePath="..\common\MConHandle.h" />
       <File RelativePath="..\common\Memory.h" />
       <File RelativePath="..\common\MSection.h" />
       <File RelativePath="..\common\MSectionSimple.h" />
@@ -439,6 +440,7 @@
       <File RelativePath="..\common\Execute.cpp" />
       <File RelativePath="..\common\InQueue.cpp" />
       <File RelativePath="..\common\MAssert.cpp" />
+      <File RelativePath="..\common\MConHandle.cpp" />
       <File RelativePath="..\common\Memory.cpp" />
       <File RelativePath="..\common\MSection.cpp" />
       <File RelativePath="..\common\MSectionSimple.cpp" />

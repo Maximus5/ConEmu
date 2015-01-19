@@ -8,6 +8,7 @@ SRCS = \
 		../common/execute.cpp        \
 		../common/InQueue.cpp        \
 		../common/MAssert.cpp        \
+		../common/MConHandle.cpp     \
 		../common/Memory.cpp         \
 		../common/MSectionSimple.cpp \
 		../common/MSection.cpp       \

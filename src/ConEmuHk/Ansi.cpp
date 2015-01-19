@@ -40,6 +40,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmuHooks.h"
 #include "../common/ConsoleAnnotation.h"
 #include "ExtConsole.h"
+#include "../common/MConHandle.h"
 #include "../common/MSectionSimple.h"
 #include "../common/WConsole.h"
 #include "../ConEmu/version.h"
@@ -263,6 +264,9 @@ bool CEAnsi::IsOutputHandle(HANDLE hFile, DWORD* pMode /*= NULL*/)
 {
 	if (!hFile)
 		return false;
+
+	if (hFile == ghLastConOut)
+		return true;
 
 	if (hFile == ghLastAnsiCapable)
 		return true;
@@ -860,8 +864,15 @@ BOOL WINAPI CEAnsi::OnWriteConsoleA(HANDLE hConsoleOutput, const VOID *lpBuffer,
 			_ASSERTEX(newLen==len);
 			buf[newLen] = 0; // ASCII-Z, хотя, если функцию WriteConsoleW зовет приложение - "\0" может и не быть...
 
+			HANDLE hWrite;
+			MConHandle hConOut(L"CONOUT$");
+			if (hConsoleOutput == ghLastConOut)
+				hWrite = hConOut;
+			else
+				hWrite = hConsoleOutput;
+
 			DWORD nWideWritten = 0;
-			lbRc = OnWriteConsoleW(hConsoleOutput, buf, len, &nWideWritten, NULL);
+			lbRc = OnWriteConsoleW(hWrite, buf, len, &nWideWritten, NULL);
 
 			// Issue 1291:	Python fails to print string sequence with ASCII character followed by Chinese character.
 			if (lpNumberOfCharsWritten)

@@ -63,6 +63,7 @@ $(INTDIR)\GuiAttach.obj \
 $(INTDIR)\Injects.obj \
 $(INTDIR)\InQueue.obj \
 $(INTDIR)\MAssert.obj \
+$(INTDIR)\MConHandle.obj \
 $(INTDIR)\Memory.obj \
 $(INTDIR)\MSectionSimple.obj \
 $(INTDIR)\MSection.obj \
@@ -311,6 +312,8 @@ $(INTDIR)\Injects.obj: Injects.cpp Console2.h
 $(INTDIR)\InQueue.obj: ../common/InQueue.cpp
 
 $(INTDIR)\MAssert.obj: ../common/MAssert.cpp
+
+$(INTDIR)\MConHandle.obj: ../common/MConHandle.cpp ../common/MConHandle.h
 
 $(INTDIR)\Memory.obj: ../common/Memory.cpp
 
