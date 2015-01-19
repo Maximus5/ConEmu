@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2012-2014 Maximus5
+Copyright (c) 2012-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -264,7 +264,8 @@ bool CEAnsi::IsOutputHandle(HANDLE hFile, DWORD* pMode /*= NULL*/)
 
 	if (hFile == ghLastAnsiCapable)
 		return true;
-	else if (hFile == ghLastAnsiNotCapable)
+
+	if (hFile == ghLastAnsiNotCapable)
 		return false;
 
 	bool  bOk = false;
@@ -836,7 +837,9 @@ BOOL WINAPI CEAnsi::OnWriteConsoleA(HANDLE hConsoleOutput, const VOID *lpBuffer,
 
 			// Issue 1291:	Python fails to print string sequence with ASCII character followed by Chinese character.
 			if (lpNumberOfCharsWritten)
+			{
 				*lpNumberOfCharsWritten = (nWideWritten == len) ? nNumberOfCharsToWrite : nWideWritten;
+			}
 		}
 		goto fin;
 	}
