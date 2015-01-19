@@ -1506,21 +1506,23 @@ BOOL WINAPI OnCloseHandle(HANDLE hObject)
 	//BOOL bMainThread = FALSE; // поток не важен
 	BOOL lbRc = FALSE;
 
-	if (CEAnsi::ghLastAnsiCapable && (CEAnsi::ghLastAnsiCapable == hObject))
+	LPHANDLE hh[] = {
+		&CEAnsi::ghLastAnsiCapable,
+		&CEAnsi::ghLastAnsiNotCapable,
+		&ghLastConInHandle,
+		&ghLastNotConInHandle,
+		NULL
+	};
+
+	if (hObject)
 	{
-		CEAnsi::ghLastAnsiCapable = NULL;
-	}
-	if (CEAnsi::ghLastAnsiNotCapable && (CEAnsi::ghLastAnsiNotCapable == hObject))
-	{
-		CEAnsi::ghLastAnsiNotCapable = NULL;
-	}
-	if (ghLastConInHandle && (ghLastConInHandle == hObject))
-	{
-		ghLastConInHandle = NULL;
-	}
-	if (ghLastNotConInHandle && (ghLastNotConInHandle == hObject))
-	{
-		ghLastNotConInHandle = NULL;
+		for (INT_PTR i = 0; hh[i]; i++)
+		{
+			if (hh[i] && (*(hh[i]) == hObject))
+			{
+				*(hh[i]) = NULL;
+			}
+		}
 	}
 
 	if (gpAnnotationHeader && (hObject == (HANDLE)gpAnnotationHeader))
