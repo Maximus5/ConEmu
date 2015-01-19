@@ -2345,7 +2345,9 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 					gDisplayParm.WasSet = TRUE;
 					break;
 				case 2:
-					TODO("Check standard");
+					// Faint, decreased intensity (ISO 6429)
+				case 22:
+					// Normal (neither bold nor faint).
 					gDisplayParm.BrightOrBold = FALSE;
 					gDisplayParm.WasSet = TRUE;
 					break;
@@ -2353,10 +2355,20 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 					gDisplayParm.ItalicOrInverse = TRUE;
 					gDisplayParm.WasSet = TRUE;
 					break;
+				case 23:
+					// Not italicized (ISO 6429)
+					gDisplayParm.ItalicOrInverse = FALSE;
+					gDisplayParm.WasSet = TRUE;
+					break;
 				case 4: // Underlined
 				case 5: // Blink
 					TODO("Check standard");
 					gDisplayParm.BackOrUnderline = TRUE;
+					gDisplayParm.WasSet = TRUE;
+					break;
+				case 24:
+					// Not underlined
+					gDisplayParm.BackOrUnderline = FALSE;
 					gDisplayParm.WasSet = TRUE;
 					break;
 				case 7:
