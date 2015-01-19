@@ -490,6 +490,7 @@ bool InitHooksCommon()
 		{(void*)OnWriteConsoleInputW,	"WriteConsoleInputW",	kernel32},
 		/* ANSI Escape Sequences SUPPORT */
 		//#ifdef HOOK_ANSI_SEQUENCES
+		{(void*)CEAnsi::OnCreateFileW,	"CreateFileW",  		kernel32},
 		{(void*)CEAnsi::OnWriteFile,	"WriteFile",  			kernel32},
 		{(void*)CEAnsi::OnWriteConsoleA,"WriteConsoleA",  		kernel32},
 		{(void*)CEAnsi::OnWriteConsoleW,"WriteConsoleW",  		kernel32},
@@ -1509,6 +1510,7 @@ BOOL WINAPI OnCloseHandle(HANDLE hObject)
 	LPHANDLE hh[] = {
 		&CEAnsi::ghLastAnsiCapable,
 		&CEAnsi::ghLastAnsiNotCapable,
+		&CEAnsi::ghLastConOut,
 		&ghLastConInHandle,
 		&ghLastNotConInHandle,
 		NULL

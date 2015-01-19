@@ -94,8 +94,10 @@ static bool gbVimTermWasChangedBuffer = false;
 
 BOOL WINAPI OnCreateProcessW(LPCWSTR lpApplicationName, LPWSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment, LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation);
 
+// These handles must be registered and released in OnCloseHandle.
 HANDLE CEAnsi::ghLastAnsiCapable = NULL;
 HANDLE CEAnsi::ghLastAnsiNotCapable = NULL;
+HANDLE CEAnsi::ghLastConOut = NULL;
 HANDLE CEAnsi::ghAnsiLogFile = NULL;
 MSectionSimple* CEAnsi::gcsAnsiLogFile = NULL;
 
@@ -742,6 +744,32 @@ BOOL WINAPI CEAnsi::OnScrollConsoleScreenBufferW(HANDLE hConsoleOutput, const SM
 	lbRc = F(ScrollConsoleScreenBufferW)(hConsoleOutput, lpScrollRectangle, lpClipRectangle, dwDestinationOrigin, lpFill);
 
 	return lbRc;
+}
+
+HANDLE WINAPI CEAnsi::OnCreateFileW(LPCWSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile)
+{
+	typedef HANDLE (WINAPI* OnCreateFileW_t)(LPCWSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile);
+	ORIGINALFAST(CreateFileW);
+	//BOOL bMainThread = FALSE; // поток не важен
+	HANDLE h;
+
+	h = F(CreateFileW)(lpFileName, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
+
+	// Just a check for "string" validity
+	if (lpFileName && (((DWORD_PTR)lpFileName) & ~0xFFFF)
+		// CON output is opening with following flags
+		&& (dwDesiredAccess & GENERIC_WRITE)
+		&& ((dwShareMode & (FILE_SHARE_READ|FILE_SHARE_WRITE)) == (FILE_SHARE_READ|FILE_SHARE_WRITE))
+		)
+	{
+		DEBUGTEST(HANDLE hStd = GetStdHandle(STD_OUTPUT_HANDLE));
+		if (lstrcmpi(lpFileName, L"CON") == 0)
+		{
+			ghLastConOut = h;
+		}
+	}
+
+	return h;
 }
 
 BOOL WINAPI CEAnsi::OnWriteFile(HANDLE hFile, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite, LPDWORD lpNumberOfBytesWritten, LPOVERLAPPED lpOverlapped)
