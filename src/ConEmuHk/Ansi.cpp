@@ -2353,8 +2353,8 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 					gDisplayParm.ItalicOrInverse = TRUE;
 					gDisplayParm.WasSet = TRUE;
 					break;
-				case 4:
-				case 5:
+				case 4: // Underlined
+				case 5: // Blink
 					TODO("Check standard");
 					gDisplayParm.BackOrUnderline = TRUE;
 					gDisplayParm.WasSet = TRUE;
