@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2012-2014 Maximus5
+Copyright (c) 2012-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -974,7 +974,9 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
 	SMALL_RECT srWork = {};
 	if (!ExtGetBufferInfo(h, csbi, srWork))
+	{
 		return FALSE;
+	}
 
 	bool  bWrap = true, bVirtualWrap = false;;
 	SHORT WrapAtCol = csbi.dwSize.X; // 1-based
