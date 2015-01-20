@@ -12,6 +12,28 @@ Votes and awards (vote for ConEmu, if you please)
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+2015.1.19
+[*] Issue 1864: ExportEnvVar. Drop variable instead of setting it to empty string.
+[*] Don't show both small and large icons in the confirmation/about dialogs.
+[*] Internal. GuiMacro "Context" was not returned result as expected.
+    BTW, usage example: print("abc"); Split(2); Context(); print("def")
+[*] Minor change in 16x16 icon, add 256x256 icon, update icons in setupper.
+[*] Allow ‘Debug active process’ while ChildGui is stopped by ConEmuReportExe on loading.
+[*] Remove GetVersionEx warnings (internal).
+[*] Debug purposes switch: ConEmuC -OsVerInfo. Sets errorlevel to OsVer. Ex.: Win7 -> 1537 (0x601)
+[*] Link ConEmuHk[64].dll and ConEmuCD[64].dll statically with msvcrt.dll.
+[*] Issue 1865: Fix weird hungs in LdrpAcquireLoaderLock (cmd.exe).
+[*] Emulate AnsiCon environment variables.
+    "ANSICON" = "WxH (wxh)", where W,H size of the buffer, w,h - window.
+    "ANSICON_DEF" = "BF", (B)ackground and (F)oreground color indexes (hex).
+    "ANSICON_VER" = "170", does not exist in the environment block.
+[*] Support some more ANSI SGR codes (22, 23, 24).
+    "ESC [ 22 m" - Unset BrightOrBold
+    "ESC [ 23 m" - Unset ItalicOrInverse
+    "ESC [ 24 m" - Unset BackOrUnderline
+[*] Issue 1865: Allow ANSI escape sequences when redirecting to device CON.
+
+
 2015.1.11
 [*] New ConEmu icon.
 [*] HighDpi fixes (if primary mon is 192dpi and secondary is 96dpi).
