@@ -116,11 +116,11 @@ COMMONLIB =
 !elseif defined(USEDDKCRT)
 # use msvcrt.dll (WinDDK LIB's are required)
 !if defined(AMD64)
-COMMONLIB = $(COMMONSRCDIR)/WinDDK/amd64/msvcrt.lib
+COMMONLIB = $(COMMONSRCDIR)/WinDDK/amd64/msvcrt.lib $(COMMONSRCDIR)/WinDDK/amd64/msvcrt_win2003.obj
 !elseif defined(IA64)
-COMMONLIB = $(COMMONSRCDIR)/WinDDK/ia64/msvcrt.lib
+COMMONLIB = $(COMMONSRCDIR)/WinDDK/ia64/msvcrt.lib $(COMMONSRCDIR)/WinDDK/ia64/msvcrt_win2003.obj
 !else
-COMMONLIB = $(COMMONSRCDIR)/WinDDK/i386/msvcrt.lib
+COMMONLIB = $(COMMONSRCDIR)/WinDDK/i386/msvcrt.lib # $(COMMONSRCDIR)/WinDDK/i386/msvcrt_win2000.obj
 !endif
 !elseif defined(AMD64)
 # Use precompiled libCRT64.lib
