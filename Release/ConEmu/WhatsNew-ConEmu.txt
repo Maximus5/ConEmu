@@ -12,6 +12,10 @@ Votes and awards (vote for ConEmu, if you please)
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+2015.1.19a
+[*] Issue 1876: Revert msvcrt.dll linkage.
+
+
 2015.1.19
 [*] Issue 1864: ExportEnvVar. Drop variable instead of setting it to empty string.
 [*] Don't show both small and large icons in the confirmation/about dialogs.
