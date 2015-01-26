@@ -2253,7 +2253,11 @@ void AssertBox(LPCTSTR szText, LPCTSTR szFile, UINT nLine, LPEXCEPTION_POINTERS 
 	wchar_t  szAssertInfo[4096], szCodes[128];
 	wchar_t  szFullInfo[1024] = L"";
 	wchar_t  szDmpFile[MAX_PATH+64] = L"";
-	size_t   cchMax = (szText ? _tcslen(szText) : 0) + (szFile ? _tcslen(szFile) : 0) + 300;
+	size_t   cchMax = (szText ? _tcslen(szText) : 0) + (szFile ? _tcslen(szFile) : 0)
+		+ (gpConEmu ? (
+				(gpConEmu->ms_ConEmuExe ? _tcslen(gpConEmu->ms_ConEmuExe) : 0)
+				+ (gpConEmu->ms_ConEmuBuild ? _tcslen(gpConEmu->ms_ConEmuBuild) : 0)) : 0)
+		+ 300;
 	wchar_t* pszFull = (cchMax <= countof(szAssertInfo)) ? szAssertInfo : (wchar_t*)malloc(cchMax*sizeof(*pszFull));
 	wchar_t* pszDumpMessage = NULL;
 
@@ -2267,10 +2271,12 @@ void AssertBox(LPCTSTR szText, LPCTSTR szFile, UINT nLine, LPEXCEPTION_POINTERS 
 	if (pszFull)
 	{
 		_wsprintf(pszFull, SKIPLEN(cchMax)
-			L"Assertion\r\n%s\r\nat\r\n%s:%i\r\n\r\n"
+			L"Assertion in %s [%s]\r\n%s\r\nat\r\n%s:%i\r\n\r\n"
 			L"Press <Abort> to throw exception, ConEmu will be terminated!\r\n\r\n"
 			L"Press <Retry> to copy text information to clipboard\r\n"
 			L"and report a bug (open project web page)",
+			(gpConEmu && gpConEmu->ms_ConEmuExe) ? gpConEmu->ms_ConEmuExe : L"<NULL>",
+			(gpConEmu && gpConEmu->ms_ConEmuBuild) ? gpConEmu->ms_ConEmuBuild : L"<NULL>",
 			szText, szFile, nLine);
 
 		DWORD nPostCode = (DWORD)-1;
