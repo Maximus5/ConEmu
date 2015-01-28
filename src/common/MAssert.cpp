@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2014 Maximus5
+Copyright (c) 2009-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -183,8 +183,11 @@ int MyAssertProc(const wchar_t* pszFile, int nLine, const wchar_t* pszTest, bool
 	if (szExeName && !GetModuleFileNameW(NULL, szExeName, MAX_PATH+1)) szExeName[0] = 0;
 	pa->bNoPipe = abNoPipe;
 	msprintf(pa->szTitle, countof(pa->szTitle), L"CEAssert PID=%u TID=%u", GetCurrentProcessId(), GetCurrentThreadId());
-	msprintf(pa->szDebugInfo, countof(pa->szDebugInfo), L"Assertion in %s\n%s\n\n%s: %i\n\nPress 'Retry' to trap.",
-	                szExeName ? szExeName : L"", pszTest ? pszTest : L"", pszFile, nLine);
+	wchar_t szVer4[2] = WSTRING(MVV_4a);
+	msprintf(pa->szDebugInfo, countof(pa->szDebugInfo), L"Assertion in %s [%02u%02u%02u%s]\n%s\n\n%s: %i\n\nPress 'Retry' to trap.",
+	                szExeName ? szExeName : L"<HeapAllocFailed>",
+					MVV_1, MVV_2, MVV_3, szVer4,
+					pszTest ? pszTest : L"", pszFile, nLine);
 	DWORD dwCode = 0;
 
 	if (gAllowAssertThread == am_Thread)
