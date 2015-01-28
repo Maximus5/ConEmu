@@ -53,7 +53,7 @@ bool InputServerStart()
 	gpSrv->InputServer.SetInputOnly(true);
 	//gpSrv->InputServer.SetDummyAnswerSize(sizeof(CESERVER_REQ_HDR));
 
-	if (!gpSrv->InputServer.StartPipeServer(true, gpSrv->szInputname, NULL, LocalSecurity(), InputServerCommand))
+	if (!gpSrv->InputServer.StartPipeServer(false, gpSrv->szInputname, NULL, LocalSecurity(), InputServerCommand))
 		return false;
 
 	return true;
@@ -73,7 +73,7 @@ bool CmdServerStart()
 	//gpSrv->CmdServer.SetPriority(THREAD_PRIORITY_ABOVE_NORMAL);
 	gpSrv->CmdServer.SetDummyAnswerSize(sizeof(CESERVER_REQ_HDR));
 
-	if (!gpSrv->CmdServer.StartPipeServer(true, gpSrv->szPipename, NULL, LocalSecurity(), CmdServerCommand, CmdServerFree))
+	if (!gpSrv->CmdServer.StartPipeServer(false, gpSrv->szPipename, NULL, LocalSecurity(), CmdServerCommand, CmdServerFree))
 		return false;
 
 	return true;
@@ -92,7 +92,7 @@ bool DataServerStart()
 	gpSrv->DataServer.SetPriority(THREAD_PRIORITY_ABOVE_NORMAL);
 	gpSrv->DataServer.SetDummyAnswerSize(sizeof(CESERVER_REQ_HDR));
 
-	if (!gpSrv->DataServer.StartPipeServer(true, gpSrv->szGetDataPipe, NULL, LocalSecurity(), DataServerCommand, DataServerFree))
+	if (!gpSrv->DataServer.StartPipeServer(false, gpSrv->szGetDataPipe, NULL, LocalSecurity(), DataServerCommand, DataServerFree))
 		return false;
 
 	return true;
