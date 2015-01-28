@@ -606,6 +606,7 @@ class CRealConsole
 		bool IsLogShellStarted();
 		wchar_t ms_LogShellActivity[MAX_PATH]; bool mb_ShellActivityLogged;
 		int GetStatusLineCount(int nLeftPanelEdge);
+		void GetStartTime(SYSTEMTIME& st);
 		LPCWSTR GetFileFromConsole(LPCWSTR asSrc, CmdArg& szFull);
 		LPCWSTR GetConsoleCurDir(CmdArg& szDir);
 		void GetPanelDirs(CmdArg& szActiveDir, CmdArg& szPassive);
@@ -730,6 +731,7 @@ class CRealConsole
 		BOOL mb_StartResult, mb_WaitingRootStartup;
 		BOOL mb_FullRetrieveNeeded; //, mb_Detached;
 		RConStartArgs m_Args;
+		SYSTEMTIME m_StartTime;
 		CmdArg ms_DefTitle;
 		CmdArg ms_CurWorkDir;
 		CmdArg ms_CurPassiveDir;

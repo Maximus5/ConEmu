@@ -267,6 +267,7 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 	//m_Args.pszSpecialCmd = NULL; -- не требуется
 	//mpsz_CmdBuffer = NULL;
 	mb_FullRetrieveNeeded = FALSE;
+	ZeroStruct(m_StartTime);
 	//mb_AdminShieldChecked = FALSE;
 	ZeroStruct(m_LastMouse);
 	ZeroStruct(m_LastMouseGuiPos);
@@ -4018,6 +4019,7 @@ BOOL CRealConsole::StartProcessInt(LPCWSTR& lpszCmd, wchar_t*& psCurCmd, LPCWSTR
 
 	nCreateBegin = GetTickCount();
 
+	GetLocalTime(&m_StartTime);
 	ms_CurWorkDir.Set(lpszWorkDir);
 	ms_CurPassiveDir.Set(NULL);
 
@@ -13489,6 +13491,14 @@ bool CRealConsole::ReloadFarWorkDir()
 	}
 
 	return bChanged;
+}
+
+void CRealConsole::GetStartTime(SYSTEMTIME& st)
+{
+	if (!this)
+		ZeroStruct(st);
+	else
+		st = m_StartTime;
 }
 
 LPCWSTR CRealConsole::GetConsoleCurDir(CmdArg& szDir)
