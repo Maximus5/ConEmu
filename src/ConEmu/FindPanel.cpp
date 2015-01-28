@@ -235,6 +235,7 @@ LRESULT CFindPanel::FindPaneProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 		break;
 
 	case WM_SIZE:
+	case WM_MOVE:
 		if (pPanel)
 			pPanel->OnSize(NULL);
 		break;
