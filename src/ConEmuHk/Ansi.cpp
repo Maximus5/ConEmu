@@ -1332,14 +1332,25 @@ int CEAnsi::NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, wchar_t (&szPreDump)[CE
 						while (lpBuffer < lpEnd)
 						{
 							if ((lpBuffer[0] == 7) ||
-								((lpBuffer[0] == 27) && ((lpBuffer + 1) < lpEnd) && (lpBuffer[1] == L'\\')))
+								(lpBuffer[0] == 27) /* we'll check the proper terminator below */)
 							{
 								Code.Action = *Code.ArgSZ; // первый символ последовательности
 								Code.cchArgSZ = (lpBuffer - Code.ArgSZ);
 								lpStart = lpSaveStart;
 								if (lpBuffer[0] == 27)
 								{
-									lpEnd = lpBuffer + 2;
+									if (((lpBuffer + 1) < lpEnd) && (lpBuffer[1] == L'\\'))
+									{
+										lpEnd = lpBuffer + 2;
+									}
+									else
+									{
+										lpEnd = lpBuffer - 1;
+										_ASSERTE(*(lpEnd+1) == 27);
+										DumpUnknownEscape(Code.pszEscStart,Code.nTotalLen);
+										iRc = 0;
+										goto wrap;
+									}
 								}
 								else
 								{
