@@ -321,7 +321,7 @@ bool CTabPanelWin::IsSearchShownInt(bool bFilled)
 {
 	if (!mp_Find || !gpSet->isMultiShowSearch)
 		return false;
-	INT_PTR nPaneIndex = SendMessage(mh_Rebar, RB_IDTOINDEX, rbi_ToolBar, 0);
+	INT_PTR nPaneIndex = SendMessage(mh_Rebar, RB_IDTOINDEX, rbi_FindBar, 0);
 	if (nPaneIndex < 0)
 		return false;
 	return bFilled ? mp_Find->IsAvailable(bFilled) : true;
