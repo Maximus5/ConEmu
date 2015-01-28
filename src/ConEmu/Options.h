@@ -103,6 +103,10 @@ struct ColorPalette;
 #define HI_GOTO_EDITOR_SCITE   L"#scite.exe \"-open:%4\" -goto:%1,%2"
 #define HI_GOTO_EDITOR_NPADP   L"#notepad++.exe -n%1 \"%3\""
 #define HI_GOTO_EDITOR_SUBLM   L"#sublime_text.exe \"%3:%1:%2\""
+// And just a starter for highlighted file
+#define HI_GOTO_EDITOR_CMD     L"cmd.exe /c \"echo Starting \"%3\" & \"%3\"\""
+#define HI_GOTO_EDITOR_CMD_NC  L"cmd.exe /c \"echo Starting \"%3\" & \"%3\"\" -new_console:n"
+
 
 struct Settings
 {

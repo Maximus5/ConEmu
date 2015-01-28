@@ -2361,6 +2361,8 @@ LRESULT CSettings::OnInitDialog_Hilight(HWND hWnd2, bool abInitial)
 		HI_GOTO_EDITOR_NPADP,  // Notepad++
 		HI_GOTO_EDITOR_VIMW,   // Vim, official, using Windows paths
 		HI_GOTO_EDITOR_SUBLM,  // Sublime text
+		HI_GOTO_EDITOR_CMD,    // Just ‘start’ highlighted file via cmd.exe
+		HI_GOTO_EDITOR_CMD_NC, // Just ‘start’ highlighted file via cmd.exe, same as prev. but without close confirmation
 		NULL};
 	FillCBList(GetDlgItem(hWnd2, lbGotoEditorCmd), abInitial, ppszDefEditors, gpSet->sFarGotoEditor);
 
