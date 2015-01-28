@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2012-2014 Maximus5
+Copyright (c) 2012-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -2245,7 +2245,8 @@ LRESULT CConEmuMenu::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam, UINT 
 			ConEmuAbout::OnInfo_ThrowTrapException(false);
 			return 0;
 		case ID_DEBUG_ASSERT:
-			Assert(FALSE && "This is test assertion");
+			_ASSERT(FALSE && "This is DEBUG test assertion");
+			Assert(FALSE && "This is RELEASE test assertion");
 			return 0;
 
 		case ID_DUMP_MEM_BLK:
