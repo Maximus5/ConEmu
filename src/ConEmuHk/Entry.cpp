@@ -541,6 +541,7 @@ HANDLE ghHookServerStarted = NULL;
 void   StartHookServer();
 
 PipeServer<CESERVER_REQ> *gpHookServer = NULL;
+bool gbHookServerForcedTermination = false;
 #endif
 
 void CheckHookServer();
@@ -1466,7 +1467,7 @@ void DoDllStop(bool bFinal)
 	{
 		DLOG0("StopPipeServer",0);
 		print_timings(L"StopPipeServer");
-		gpHookServer->StopPipeServer(true);
+		gpHookServer->StopPipeServer(true, gbHookServerForcedTermination);
 		SafeCloseHandle(ghHookServerStarted);
 		free(gpHookServer);
 		gpHookServer = NULL;
@@ -2718,7 +2719,7 @@ void StartHookServer()
 		if (!gpHookServer->StartPipeServer(true, szPipeName, (LPARAM)gpHookServer, LocalSecurity(), HookServerCommand, HookServerFree, NULL, NULL, HookServerReady))
 		{
 			_ASSERTEX(FALSE); // Ошибка запуска Pipes?
-			gpHookServer->StopPipeServer(true);
+			gpHookServer->StopPipeServer(true, gbHookServerForcedTermination);
 			free(gpHookServer);
 			gpHookServer = NULL;
 		}

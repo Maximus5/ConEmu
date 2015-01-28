@@ -487,6 +487,7 @@ struct SrvInfo
 	HANDLE hRefreshThread;  DWORD dwRefreshThread;  BOOL bRefreshTermination;
 	PipeServer<MSG64> InputServer;
 	PipeServer<CESERVER_REQ> DataServer;
+	bool   bServerForcedTermination;
 	//
 	OSVERSIONINFO osv;
 	BOOL bReopenHandleAllowed;

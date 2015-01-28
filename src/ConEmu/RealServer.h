@@ -57,6 +57,7 @@ protected:
 
 	//void ServerThreadCommand(HANDLE hPipe);
 	PipeServer<CESERVER_REQ>* mp_RConServer;
+	bool mb_RealForcedTermination;
 	static BOOL WINAPI ServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &ppReply, DWORD &pcbReplySize, DWORD &pcbMaxReplySize, LPARAM lParam);
 	static BOOL WINAPI ServerThreadReady(LPVOID pInst, LPARAM lParam);
 	static void WINAPI ServerCommandFree(CESERVER_REQ* pReply, LPARAM lParam);

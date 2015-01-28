@@ -67,6 +67,7 @@ CGuiServer::CGuiServer()
 	mp_GuiServerPID = (PipeServer<CESERVER_REQ>*)calloc(1, sizeof(*mp_GuiServerPID));
 	mp_GuiServerPID->SetMaxCount(2);
 	ms_ServerPipePID[0] = 0;
+	mb_GuiForcedTermination = false;
 }
 
 CGuiServer::~CGuiServer()
@@ -114,7 +115,7 @@ void CGuiServer::Stop(bool abDeinitialize/*=false*/)
 	{
 		ShutdownGuiStep(L"mp_GuiServer->StopPipeServer");
 
-		mp_GuiServer->StopPipeServer(false);
+		mp_GuiServer->StopPipeServer(false, mb_GuiForcedTermination);
 
 		if (abDeinitialize)
 		{
@@ -129,7 +130,7 @@ void CGuiServer::Stop(bool abDeinitialize/*=false*/)
 	{
 		ShutdownGuiStep(L"mp_GuiServerPID->StopPipeServer");
 
-		mp_GuiServerPID->StopPipeServer(false);
+		mp_GuiServerPID->StopPipeServer(false, mb_GuiForcedTermination);
 
 		if (abDeinitialize)
 		{

@@ -44,6 +44,7 @@ protected:
 	PipeServer<CESERVER_REQ>* mp_GuiServerPID;
 	wchar_t ms_ServerPipe[MAX_PATH];
 	wchar_t ms_ServerPipePID[MAX_PATH];
+	bool mb_GuiForcedTermination;
 	static BOOL WINAPI GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &ppReply, DWORD &pcbReplySize, DWORD &pcbMaxReplySize, LPARAM lParam);
 	static void WINAPI GuiServerFree(CESERVER_REQ* pReply, LPARAM lParam);
 #ifdef _DEBUG

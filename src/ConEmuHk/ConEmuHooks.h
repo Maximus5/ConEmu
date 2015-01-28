@@ -114,6 +114,7 @@ BOOL OnPromptBsDeleteWord(bool bForce, bool bBashMargin);
 BOOL OnExecutePromptCmd(LPCWSTR asCmd);
 
 void CheckHookServer();
+extern bool gbHookServerForcedTermination;
 
 /* ************ Globals for Far ************ */
 extern bool    gbIsFarProcess;

@@ -1249,7 +1249,7 @@ struct PipeServer
 			//}
 			return nResult;
 		};
-		static void TerminatePipeThread(HANDLE& hThread, const PipeInst& pipe)
+		static void TerminatePipeThread(HANDLE& hThread, const PipeInst& pipe, bool& rbForceTerminated)
 		{
 			if (!hThread)
 				return;
@@ -1268,6 +1268,8 @@ struct PipeServer
 			#endif
 
 			TerminateThread(hThread, 100);
+			rbForceTerminated = true;
+
 			SafeCloseHandle(hThread);
 		}
 	//public:
@@ -1416,7 +1418,7 @@ struct PipeServer
 			return true;
 		};
 
-		void StopPipeServer(bool bFromDllMain)
+		void StopPipeServer(bool bFromDllMain, bool& rbForceTerminated)
 		{
 			if (!mb_Initialized)
 				return;
@@ -1458,7 +1460,7 @@ struct PipeServer
 							else
 							{
 								_ASSERTEX(mb_UseForceTerminate && "Do not use TerminateThread in GUI?");
-								TerminatePipeThread(m_Pipes[i].hThread, m_Pipes[i]);
+								TerminatePipeThread(m_Pipes[i].hThread, m_Pipes[i], rbForceTerminated);
 							}
 							m_Pipes[i].dwState = THREAD_FINISHED_STATE;
 							PLOG3(i,"TerminateThread/STARTING_STATE done",0);
@@ -1535,8 +1537,8 @@ struct PipeServer
 
 							// When "C:\Program Files (x86)\F-Secure\apps\ComputerSecurity\HIPS\fshook64.dll"
 							// is loaded, possible TerminateThread locks together
-							_ASSERTE(mb_UseForceTerminate && "Do not use TerminateThread in GUI?");
-							TerminatePipeThread(m_Pipes[i].hThread, m_Pipes[i]);
+							_ASSERTE(mb_UseForceTerminate && "Do not use TerminateThread?");
+							TerminatePipeThread(m_Pipes[i].hThread, m_Pipes[i], rbForceTerminated);
 							m_Pipes[i].dwState = THREAD_FINISHED_STATE;
 							PLOG3(i,"TerminateThread/Timeout done",m_Pipes[i].dwState);
 						}

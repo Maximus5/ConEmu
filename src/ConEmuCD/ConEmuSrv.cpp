@@ -1583,17 +1583,17 @@ void ServerDone(int aiRc, bool abReportShutdown /*= false*/)
 
 	// Пайп консольного ввода
 	if (gpSrv)
-		gpSrv->InputServer.StopPipeServer(false);
+		gpSrv->InputServer.StopPipeServer(false, gpSrv->bServerForcedTermination);
 
 	//SafeCloseHandle(gpSrv->hInputPipe);
 	SafeCloseHandle(gpSrv->hInputEvent);
 	SafeCloseHandle(gpSrv->hInputWasRead);
 
 	if (gpSrv)
-		gpSrv->DataServer.StopPipeServer(false);
+		gpSrv->DataServer.StopPipeServer(false, gpSrv->bServerForcedTermination);
 
 	if (gpSrv)
-		gpSrv->CmdServer.StopPipeServer(false);
+		gpSrv->CmdServer.StopPipeServer(false, gpSrv->bServerForcedTermination);
 
 	if (gpSrv->hRefreshThread)
 	{

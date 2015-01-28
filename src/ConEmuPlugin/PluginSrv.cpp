@@ -88,6 +88,7 @@ WCHAR gszPluginServerPipe[MAX_PATH];
 #define MAX_SERVER_THREADS 3
 PipeServer<CESERVER_REQ> *gpPlugServer = NULL;
 HANDLE ghServerTerminateEvent = NULL;
+bool gbForcedServerTermination = false;
 //
 extern struct HookModeFar gFarMode;
 
@@ -133,7 +134,7 @@ void PlugServerStop(bool abDelete)
 {
 	if (gpPlugServer)
 	{
-		gpPlugServer->StopPipeServer(true);
+		gpPlugServer->StopPipeServer(true, gbForcedServerTermination);
 
 		if (abDelete)
 		{

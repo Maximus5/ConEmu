@@ -62,6 +62,7 @@ CRealServer::CRealServer()
 	mp_RCon = NULL;
 	mh_GuiAttached = NULL;
 	mp_RConServer = NULL;
+	mb_RealForcedTermination = false;
 }
 
 CRealServer::~CRealServer()
@@ -137,7 +138,7 @@ void CRealServer::Stop(bool abDeinitialize/*=false*/)
 
 	if (mp_RConServer)
 	{
-		mp_RConServer->StopPipeServer(false);
+		mp_RConServer->StopPipeServer(false, mb_RealForcedTermination);
 
 		if (abDeinitialize)
 		{
