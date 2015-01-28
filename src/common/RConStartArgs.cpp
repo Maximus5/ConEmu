@@ -963,7 +963,16 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 					//	break;
 					case L'"':
 						// Assert was happened, for example, with: "/C \"ConEmu:run:Far.exe  -new_console:\""
-						_ASSERTE((pszEnd > pszArgEnd) && "Wrong quotation usage in -new_console?");
+						if (!lbWasQuot && (pszEnd < pszArgEnd))
+						{
+							// For example: ""C:\Windows\system32\cmd.exe" /C "sign "FileZilla server.exe" FzGSS.dll -new_console:a""
+							_ASSERTE(*(pszEnd-1)==L'"' && *(pszEnd)==L'"' && *(pszEnd+1)==0);
+							pszEnd--;
+						}
+						else
+						{
+							_ASSERTE((pszEnd > pszArgEnd) && "Wrong quotation usage in -new_console?");
+						}
 						lbReady = true;
 						break;
 					case L' ':
