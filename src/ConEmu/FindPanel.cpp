@@ -320,6 +320,16 @@ void CFindPanel::OnSize(LPRECT prcEdit)
 	RECT rcClient = {}; GetClientRect(mh_Pane, &rcClient);
 	_ASSERTE(rcClient.top==0 && rcClient.left==0 && rcClient.bottom>0 && rcClient.right>0);
 
+	// Prettify it, let set small gap before right window frame edge
+	if (!gpSet->isMultiShowButtons)
+	{
+		POINT pt = {};
+		if (MapWindowPoints(mh_Pane, ghWnd, &pt, 1) && (pt.y > 0) && (pt.y < (rcClient.bottom/3)))
+		{
+			rcClient.right -= pt.y;
+		}
+	}
+
 	// Если контрол уже создан - двигаем
 	if (mh_Edit)
 	{
