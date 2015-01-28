@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2014 Maximus5
+Copyright (c) 2009-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -256,6 +256,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"     returns - \"OK\", or \"InvalidArg\"\r\n" \
 	L"GetOption(\"<Name>\")\r\n" \
 	L"  - Returns value of some ConEmu options (the set is limited)\r\n" \
+	L"GetInfo(\"PID\"[,\"HWND\"[,...]])\r\n" \
+	L"  - Returns values of some ConEmu environment variables\r\n" \
+	L"    GetInfo(\"PID\") returns \%ConEmuPID\% and so on\r\n" \
+	L"    It's processed in GUI so the result may differs from RealConsole\r\n" \
 	L"GroupInput([<Cmd>])\r\n" \
 	L"  - Group keyboard input for visible splits\r\n" \
 	L"     Cmd==0: switch mode (default)\r\n" \

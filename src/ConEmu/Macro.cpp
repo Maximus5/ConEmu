@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2011-2014 Maximus5
+Copyright (c) 2011-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -157,6 +157,8 @@ namespace ConEmuMacro
 	LPWSTR FontSetName(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Изменить размер шрифта. int nRelative, int N
 	LPWSTR FontSetSize(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
+	// GetInfo("<Var1>"[,"<Var2>"[,...]])
+	LPWSTR GetInfo(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// GetOption("<Name>")
 	LPWSTR GetOption(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// GroupInput [<cmd>]
@@ -247,6 +249,7 @@ namespace ConEmuMacro
 		{Flash, {L"Flash", L"FlashWindow"}},
 		{FontSetName, {L"FontSetName"}},
 		{FontSetSize, {L"FontSetSize"}},
+		{GetInfo, {L"GetInfo"}},
 		{GetOption, {L"GetOption"}},
 		{GroupInput, {L"GroupInput"}},
 		{HighlightMouse, {L"HighlightMouse"}},
@@ -2532,6 +2535,76 @@ LPWSTR ConEmuMacro::Int2Str(UINT nValue, bool bSigned)
 	else
 		_wsprintf(szNumber, SKIPCOUNT(szNumber) L"%u", nValue);
 	return lstrdup(szNumber);
+}
+
+// GetInfo("<Var1>"[,"<Var2>"[,...]])
+LPWSTR ConEmuMacro::GetInfo(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
+{
+	LPWSTR pszResult = NULL;
+	LPWSTR pszName = NULL;
+	CmdArg szDir;
+	int idx = 0;
+
+	while (p->GetStrArg(idx++, pszName))
+	{
+		wchar_t szTemp[MAX_PATH] = L"";
+		LPCWSTR pszVal = szTemp;
+
+		// Globals
+		if (lstrcmpi(pszName, L"PID") == 0)
+			_itow(GetCurrentProcessId(), szTemp, 10);
+		else if (lstrcmpi(pszName, L"HWND") == 0)
+			msprintf(szTemp, countof(szTemp), L"0x%08X", (DWORD)ghWnd);
+		else if (lstrcmpi(pszName, L"Build") == 0)
+			wcscpy_c(szTemp, gpConEmu->ms_ConEmuBuild);
+		else if (lstrcmpi(pszName, L"Drive") == 0)
+			GetDrive(gpConEmu->ms_ConEmuExeDir, szTemp, countof(szTemp));
+		else if (lstrcmpi(pszName, L"Dir") == 0)
+			wcscpy_c(szTemp, gpConEmu->ms_ConEmuExeDir);
+		else if (lstrcmpi(pszName, L"BaseDir") == 0)
+			wcscpy_c(szTemp, gpConEmu->ms_ConEmuBaseDir);
+		else if (lstrcmpi(pszName, L"Hooks") == 0)
+			wcscpy_c(szTemp, (gpSet->isUseInjects) ? L"Enabled" : L"OFF");
+		else if (lstrcmpi(pszName, L"ANSI") == 0)
+			wcscpy_c(szTemp, (gpSet->isUseInjects && gpSet->isProcessAnsi) ? L"ON" : L"OFF");
+		else if (lstrcmpi(pszName, L"Args") == 0)
+			pszVal = gpConEmu->mpsz_ConEmuArgs;
+		else if (lstrcmpi(pszName, L"Config") == 0)
+			pszVal = gpSetCls->GetConfigName();
+		else if (lstrcmpi(pszName, L"ConfigPath") == 0)
+			pszVal = gpSetCls->GetConfigPath();
+		// RCon related
+		else if (lstrcmpi(pszName, L"ServerPID") == 0)
+			_itow(apRCon ? apRCon->GetServerPID(true) : 0, szTemp, 10);
+		else if (lstrcmpi(pszName, L"DrawHWND") == 0)
+			msprintf(szTemp, countof(szTemp), L"0x%08X", (DWORD)(apRCon ? apRCon->VCon()->GetView() : 0));
+		else if (lstrcmpi(pszName, L"BackHWND") == 0)
+			msprintf(szTemp, countof(szTemp), L"0x%08X", (DWORD)(apRCon ? apRCon->VCon()->GetBack() : 0));
+		else if (lstrcmpi(pszName, L"WorkDir") == 0)
+			pszVal = apRCon ? apRCon->GetConsoleStartDir(szDir) : L"";
+		else if (lstrcmpi(pszName, L"CurDir") == 0)
+			pszVal = apRCon ? apRCon->GetConsoleCurDir(szDir) : L"";
+		else if (lstrcmpi(pszName, L"AnsiLog") == 0)
+		{
+			DWORD nSrvPID = apRCon->GetServerPID(true);
+			if (nSrvPID)
+			{
+				ConEmuAnsiLog AnsiLog = {}; gpConEmu->GetAnsiLogInfo(AnsiLog);
+				if (AnsiLog.Enabled)
+				{
+					SYSTEMTIME st = {}; apRCon->GetStartTime(st);
+					msprintf(szTemp, countof(szTemp), CEANSILOGNAMEFMT, st.wYear, st.wMonth, st.wDay, nSrvPID);
+					szDir = JoinPath(AnsiLog.Path, szTemp);
+					pszVal = szDir;
+				}
+			}
+		}
+
+		// Concat the string
+		lstrmerge(&pszResult, pszResult ? L"\n" : NULL, pszVal);
+	}
+
+	return pszResult ? pszResult : lstrdup(L"");
 }
 
 // GetOption("<Name>")
