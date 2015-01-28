@@ -4020,6 +4020,7 @@ BOOL CRealConsole::StartProcessInt(LPCWSTR& lpszCmd, wchar_t*& psCurCmd, LPCWSTR
 	nCreateBegin = GetTickCount();
 
 	GetLocalTime(&m_StartTime);
+	ms_StartWorkDir.Set(lpszWorkDir);
 	ms_CurWorkDir.Set(lpszWorkDir);
 	ms_CurPassiveDir.Set(NULL);
 
@@ -13499,6 +13500,18 @@ void CRealConsole::GetStartTime(SYSTEMTIME& st)
 		ZeroStruct(st);
 	else
 		st = m_StartTime;
+}
+
+LPCWSTR CRealConsole::GetConsoleStartDir(CmdArg& szDir)
+{
+	if (!this)
+	{
+		_ASSERTE(this);
+		return NULL;
+	}
+
+	szDir.Set(ms_StartWorkDir);
+	return szDir.IsEmpty() ? NULL : (LPCWSTR)szDir;
 }
 
 LPCWSTR CRealConsole::GetConsoleCurDir(CmdArg& szDir)
