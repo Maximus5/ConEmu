@@ -3553,7 +3553,7 @@ void InitAnsiLog(const ConEmuAnsiLog& AnsiLog)
 	wchar_t* pszExp = ExpandEnvStr(AnsiLog.Path);
 	// Max path = (MAX_PATH - "ConEmu-yyyy-mm-dd-p12345.log")
 	wchar_t szPath[MAX_PATH] = L"", szName[40] = L"";
-	SYSTEMTIME st; GetLocalTime(&st);
+	SYSTEMTIME st = {}; GetLocalTime(&st);
 	msprintf(szName, countof(szName), CEANSILOGNAMEFMT, st.wYear, st.wMonth, st.wDay, GetCurrentProcessId());
 	int nNameLen = lstrlen(szName);
 	lstrcpyn(szPath, pszExp ? pszExp : AnsiLog.Path, countof(szPath)-nNameLen);
