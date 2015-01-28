@@ -268,6 +268,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"      Act==0: off, Act==1: on, Act==2: switch (default)\r\n" \
 	L"IsConEmu\r\n" \
 	L"  - Returns \"Yes\" when console was started under !ConEmu\r\n" \
+	L"    Alternative is \"ConEmuC.exe -IsConEmu\" and checking errorlevel\r\n" \
 	L"IsConsoleActive\r\n" \
 	L"  - Check, is RealConsole active or not, \"Yes\"/\"No\"\r\n" \
 	L"IsRealVisible\r\n" \
