@@ -1228,6 +1228,7 @@ struct PipeServer
 			pPipe->dwState = TERMINATED_STATE;
 			PLOG("_PipeServerThread.Finished");
 
+			#if 0
 			// When StopPipeServer is called from DllMain
 			// we possibly get in deadlock on "normal" thread termination
 			// LdrShutdownThread in THIS thread fails to enter into critical section,
@@ -1238,6 +1239,7 @@ struct PipeServer
 				//WaitForSingleObject(pPipe->hThread, INFINITE); -- don't enter infinite lock
 				Sleep(RELEASEDEBUGTEST(1000,5000)); // just wait a little, main thread may be in time to terminate this thread
 			}
+			#endif
 			
 			// When "C:\Program Files (x86)\F-Secure\apps\ComputerSecurity\HIPS\fshook64.dll"
 			// is loaded, possible TerminateThread locks together
@@ -1267,8 +1269,17 @@ struct PipeServer
 			_ASSERTEX((pipe.dwState == TERMINATED_STATE) && "TerminatePipeThread");
 			#endif
 
-			TerminateThread(hThread, 100);
-			rbForceTerminated = true;
+			// Last chance
+			DWORD nWait = WaitForSingleObject(hThread, 150);
+			switch (nWait)
+			{
+			case WAIT_OBJECT_0:
+				// OK, thread managed to terminate properly
+				break;
+			default:
+				rbForceTerminated = true;
+				TerminateThread(hThread, 100);
+			}
 
 			SafeCloseHandle(hThread);
 		}
@@ -1436,6 +1447,7 @@ struct PipeServer
 			DEBUGTEST(DWORD nWarnTimeout = 500);
 			DWORD nStartTick = GetTickCount();
 			int nLeft = 0, nWaitLeft = 0;
+			const DWORD nSingleThreadWait = 5;
 
 			PLOG3(-1,"WaitFor TERMINATED_STATE",0);
 
@@ -1451,18 +1463,17 @@ struct PipeServer
 							// CreateThread was called, but thread routine was not entered yet.
 							PLOG3(i,"TerminateThread/STARTING_STATE",0);
 							DWORD nRet = (DWORD)-1; BOOL bRetGet = (BOOL)-1;
-							if (WaitForSingleObject(m_Pipes[i].hThread, 0) == WAIT_OBJECT_0)
+							if (WaitForSingleObject(m_Pipes[i].hThread, nSingleThreadWait) == WAIT_OBJECT_0)
 							{
 								bRetGet = GetExitCodeThread(m_Pipes[i].hThread, &nRet);
 								_ASSERTEX((m_Pipes[i].dwState != STARTING_STATE) && "Thread was terminated outside?");
-								SafeCloseHandle(m_Pipes[i].hThread);
+								m_Pipes[i].dwState = THREAD_FINISHED_STATE;
 							}
 							else
 							{
-								_ASSERTEX(mb_UseForceTerminate && "Do not use TerminateThread in GUI?");
-								TerminatePipeThread(m_Pipes[i].hThread, m_Pipes[i], rbForceTerminated);
+								nLeft++;
+								nWaitLeft++;
 							}
-							m_Pipes[i].dwState = THREAD_FINISHED_STATE;
 							PLOG3(i,"TerminateThread/STARTING_STATE done",0);
 						}
 						else if ((m_Pipes[i].dwState == TERMINATED_STATE) && mb_StopFromDllMain)
@@ -1474,7 +1485,7 @@ struct PipeServer
 						}
 						else if (m_Pipes[i].dwState != THREAD_FINISHED_STATE)
 						{
-							nWait = WaitForSingleObject(m_Pipes[i].hThread, 5);
+							nWait = WaitForSingleObject(m_Pipes[i].hThread, nSingleThreadWait);
 							if (nWait == WAIT_OBJECT_0)
 							{
 								m_Pipes[i].dwState = THREAD_FINISHED_STATE;
@@ -1516,7 +1527,7 @@ struct PipeServer
 				{
 					if (m_Pipes[i].hThread && (m_Pipes[i].dwState != THREAD_FINISHED_STATE))
 					{
-						nWait = mb_StopFromDllMain ? WAIT_TIMEOUT : WaitForSingleObject(m_Pipes[i].hThread, 1);
+						nWait = WaitForSingleObject(m_Pipes[i].hThread, mb_StopFromDllMain ? 0 : 1);
 						if (nWait != WAIT_OBJECT_0)
 						{
 							PLOG3(i,"TerminateThread/Timeout",m_Pipes[i].dwState);
