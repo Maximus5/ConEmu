@@ -12,6 +12,29 @@ Votes and awards (vote for ConEmu, if you please)
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+2015.1.28
+[*] Add missed GuiMacro GetOption description.
+[*] Debug. Show ConEmu build number in the _ASSERT dialog
+[*] Issue 1878: GuiMacro. Add ability to get some environment from ConEmu.
+    GetInfo("PID"[,"HWND"[,...]])
+     - Returns values of some ConEmu environment variables
+       GetInfo("PID") returns %ConEmuPID% and so on
+       It's processed in GUI so the result may differs from RealConsole
+[*] Search field sometimes disappeared after playing with toolbar visibility.
+[*] Add small gap between search field and right window frame edge if toolbar is hidden.
+[*] HighlightAndGoto: Add examples with 'cmd.exe /c ...'.
+
+    cmd.exe /c "echo Executing "%3" & "%3""
+
+    After Ctrl+Click on highlighted (underlined) file
+    ConEmu will start cmd.exe in new tab and highlighted file will be executed.
+    Documents will be opened using associated application.
+    Add "-new_console:n" suffix to suppress "Press Enter or Esc to close console".
+[*] Issue 1883: Search field activation hotkey was not working if toolbar buttons were hidden.
+[*] AnsiEscapeCodes: Change behavior on wrong ST terminator of OSC detected (allowed 'ESC \' or 'BEL').
+[*] Issue 1865: Deadlocks were happened sometimes, PipeServer termination sequence was changed.
+
+
 2015.1.19a
 [*] Issue 1876: Revert msvcrt.dll linkage.
 
