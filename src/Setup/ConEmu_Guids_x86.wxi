@@ -126,8 +126,8 @@
 	<?define Guid.Thumbnails_KeyBar.reg1 = "649CED0F-49DA-4AA4-B9A8-0E48AC9B8218" ?>
 	<?define Guid.FontSize.reg1 = "C023862C-3961-4121-9360-0BD174E915CD" ?>
 
-	<?define Guid.CallPlugin.txt = "E59E49D3-541B-489A-B46D-F0915397A3F7" ?>
 	<?define Guid.Disable_ConIme.reg = "7F6D00D5-DBFA-4D8C-88D9-5EF01B37F100" ?>
+	<?define Guid.CallPlugin.txt = "E59E49D3-541B-489A-B46D-F0915397A3F7" ?>
 	
 	<?define Guid.AnsiColors16.ans = "D0B94B0D-E1C4-4CD4-9E6B-5AD30BD299D6" ?>
 	<?define Guid.AnsiColors16t.ans = "590BFE53-BB03-492B-A713-82AD42C682C9" ?>
