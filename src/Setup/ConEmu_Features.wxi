@@ -178,6 +178,7 @@
                Description="Disable_ConIme.reg, CallPlugin.txt, some ps1 scripts, etc.">
         <ComponentRef Id="Disable_ConIme.reg"/>
         <ComponentRef Id="CallPlugin.txt"/>
+        <ComponentRef Id="RevokeMouseInput.ps1"/>
       </Feature>
       <Feature Id="FDosBox" AllowAdvertise="no" Title="DosBox example" Level="1"
                Description="Sample DosBox configuration file">

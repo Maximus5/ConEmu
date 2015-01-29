@@ -154,6 +154,9 @@
       <Component Id="CallPlugin.txt" Guid="$(var.Guid.CallPlugin.txt)" Win64="$(var.Win64)">
         <File Id="CallPlugin.txt" Source="..\..\Release\ConEmu\Addons\CallPlugin.txt"  KeyPath="yes" />
       </Component>
+      <Component Id="RevokeMouseInput.ps1" Guid="$(var.Guid.RevokeMouseInput.ps1)" Win64="$(var.Win64)">
+        <File Id="RevokeMouseInput.ps1" Source="..\..\Release\ConEmu\Addons\RevokeMouseInput.ps1"  KeyPath="yes" />
+      </Component>
       <Component Id="Disable_ConIme.reg" Guid="$(var.Guid.Disable_ConIme.reg)" Win64="$(var.Win64)">
         <File Id="Disable_ConIme.reg" Source="..\..\Release\ConEmu\Addons\Disable_ConIme.reg"  KeyPath="yes" />
       </Component>
