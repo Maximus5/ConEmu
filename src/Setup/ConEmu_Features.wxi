@@ -175,7 +175,7 @@
         <ComponentRef Id="Lines18a.bmp"/>
       </Feature>
       <Feature Id="FConEmuAddonsMisc" AllowAdvertise="no" Title="Miscellaneous" Level="1"
-               Description="Disable_ConIme.reg, CallPlugin.txt, etc.">
+               Description="Disable_ConIme.reg, CallPlugin.txt, some ps1 scripts, etc.">
         <ComponentRef Id="Disable_ConIme.reg"/>
         <ComponentRef Id="CallPlugin.txt"/>
       </Feature>
