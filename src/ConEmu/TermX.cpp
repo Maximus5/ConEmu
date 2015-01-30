@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2014 Maximus5
+Copyright (c) 2014-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -42,19 +42,50 @@ bool TermX::GetSubstiture(const KEY_EVENT_RECORD& k, wchar_t (&szSubst)[16])
 		25, 26, 28, 29, 31, 32, 33, 34, 42, 43, 44, 45
 	};
 
+	typedef DWORD XTermCtrls;
+	const XTermCtrls
+		xtc_Shift = 1,
+		xtc_Alt   = 2,
+		xtc_Ctrl  = 4,
+		xtc_None  = 0;
+	struct processor
+	{
+		XTermCtrls Mods;
+
+		void SetKey(wchar_t (&szSubst)[16], wchar_t c)
+		{
+			if (!Mods)
+			{
+				//wcscpy_c(szSubst, L"\033O*A");
+				msprintf(szSubst, countof(szSubst), L"\033O%c", c);
+			}
+			else
+			{
+				msprintf(szSubst, countof(szSubst), L"\033[1;%c%c", Mods+L'1', c);
+			}
+		}
+	} Processor = {xtc_None};
+
+	if (k.dwControlKeyState & (SHIFT_PRESSED))
+		Processor.Mods |= xtc_Shift;
+	if (k.dwControlKeyState & (LEFT_ALT_PRESSED|RIGHT_ALT_PRESSED))
+		Processor.Mods |= xtc_Alt;
+	if (k.dwControlKeyState & (LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED))
+		Processor.Mods |= xtc_Ctrl;
+
 	switch (k.wVirtualKeyCode)
 	{
 	case VK_UP:
-		wcscpy_c(szSubst, L"\033O*A");
+		Processor.SetKey(szSubst, L'A');
 		return true;
 	case VK_DOWN:
-		wcscpy_c(szSubst, L"\033O*B");
+		Processor.SetKey(szSubst, L'B');
 		return true;
 	case VK_RIGHT:
-		wcscpy_c(szSubst, L"\033O*C");
+		Processor.SetKey(szSubst, L'C');
 		return true;
 	case VK_LEFT:
-		wcscpy_c(szSubst, L"\033O*D");
+		Processor.SetKey(szSubst, L'D');
 		return true;
 
 	case VK_F1: case VK_F2: case VK_F3: case VK_F4: case VK_F5: case VK_F6: case VK_F7: case VK_F8:
