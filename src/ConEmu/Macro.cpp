@@ -1315,15 +1315,15 @@ LPWSTR ConEmuMacro::Close(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 
 	switch (nCmd)
 	{
-	case 0:
-	case 1:
+	case 0: // close current console (0), without confirmation (0,1)
+	case 1: // terminate active process (1), no confirm (1,1)
 		if (apRCon)
 		{
 			apRCon->CloseConsole(nCmd==1, (nFlags & 1)==0);
 			pszResult = lstrdup(L"OK");
 		}
 		break;
-	case 2:
+	case 2: // close ConEmu window (2), no confirm (2,1)
 	{
 		bool bPrevConfirm = gpSet->isCloseConsoleConfirm;
 		if (nFlags & 1)
@@ -1335,31 +1335,31 @@ LPWSTR ConEmuMacro::Close(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 			gpSet->isCloseConsoleConfirm = bPrevConfirm;
 		break;
 	}
-	case 3:
+	case 3: // close active tab (3)
 		if (apRCon)
 		{
 			apRCon->CloseTab();
 			pszResult = lstrdup(L"OK");
 		}
 		break;
-	case 4:
-	case 7:
+	case 4: // close active group (4)
+	case 7: // close all active processes of the active group (7)
 		if (apRCon)
 		{
 			CVConGroup::CloseGroup(apRCon->VCon(), (nCmd==7));
 			pszResult = lstrdup(L"OK");
 		}
 		break;
-	case 5:
-	case 8:
-	case 9:
+	case 5: // close all tabs but active (5), no confirm (5,1)
+	case 8: // close all tabs (8), no confirm (8,1)
+	case 9: // close all zombies (9), no confirm (9,1)
 		if (apRCon)
 		{
 			CVConGroup::CloseAllButActive((nCmd == 5) ? apRCon->VCon() : NULL, (nCmd == 9), (nFlags & 1)==1);
 			pszResult = lstrdup(L"OK");
 		}
 		break;
-	case 6:
+	case 6: // close active tab or group (6)
 		if (apRCon)
 		{
 			if (gpSet->isOneTabPerGroup && CVConGroup::isGroup(apRCon->VCon()))
