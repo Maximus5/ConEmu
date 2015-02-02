@@ -4496,11 +4496,16 @@ LRESULT CConEmuSize::OnDpiChanged(UINT dpiX, UINT dpiY, LPRECT prcSuggested, boo
 {
 	LRESULT lRc = FALSE;
 
-	wchar_t szInfo[120];
+	wchar_t szInfo[120], szPrefix[40];
 	RECT rc = {}; if (prcSuggested) rc = *prcSuggested;
-	_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"DpiChanged(%s): dpi={%u,%u}, rect={%i,%i}-{%i,%i} (%ix%i)",
-		(src == dcs_Api) ? L"Api" : (src == dcs_Macro) ? L"Mcr" : (src == dcs_Jump) ? L"Jmp" : (src == dcs_Snap) ? L"Snp" : L"Int",
-		dpiX, dpiY, rc.left, rc.top, rc.right, rc.bottom, rc.right-rc.left, rc.bottom-rc.top);
+	static UINT oldDpiX, oldDpiY;
+	bool bChanged = (dpiX != oldDpiX) || (dpiY != oldDpiY);
+	oldDpiX = dpiX; oldDpiY = dpiY;
+
+	_wsprintf(szPrefix, SKIPLEN(countof(szPrefix)) bChanged ? L"DpiChanged(%s)" : L"DpiNotChanged(%s)",
+		(src == dcs_Api) ? L"Api" : (src == dcs_Macro) ? L"Mcr" : (src == dcs_Jump) ? L"Jmp" : (src == dcs_Snap) ? L"Snp" : L"Int");
+	_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"%s: dpi={%u,%u}, rect={%i,%i}-{%i,%i} (%ix%i)",
+		szPrefix, dpiX, dpiY, rc.left, rc.top, rc.right, rc.bottom, rc.right-rc.left, rc.bottom-rc.top);
 
 	/*
 	if (m_JumpMonitor.bInJump || mb_IgnoreSizeChange)
