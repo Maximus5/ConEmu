@@ -405,7 +405,7 @@ void Settings::InitSettings()
 	isMultiHideOnClose = 0;
 	isMultiIterate = true;
 	isMultiMinByEsc = 2; isMapShiftEscToEsc = true; // isMapShiftEscToEsc used only when isMultiMinByEsc==1 and only for console apps
-	isMultiNewConfirm = true;
+	isMultiNewConfirm = false;
 	isMultiDupConfirm = true;
 	isMultiDetachConfirm = true;
 	isCloseConsoleConfirm = true;
