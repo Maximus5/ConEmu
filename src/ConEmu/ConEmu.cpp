@@ -13057,7 +13057,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 				result = this->OnMoving(pRc, true);
 
 				size_t cchLen = wcslen(szDbg);
-				_wsprintf(szDbg+cchLen, SKIPLEN(countof(szDbg)-cchLen) L" -> ({%i,%i}-{%i,%i})", pRc->left, pRc->top, pRc->right, pRc->bottom);
+				_wsprintf(szDbg+cchLen, SKIPLEN(countof(szDbg)-cchLen) L" -> ({%i,%i}-{%i,%i})\n", pRc->left, pRc->top, pRc->right, pRc->bottom);
 				LogString(szDbg, true, false);
 				DEBUGSTRSIZE(szDbg);
 			}
