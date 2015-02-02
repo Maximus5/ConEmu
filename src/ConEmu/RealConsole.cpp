@@ -6954,6 +6954,52 @@ DWORD CRealConsole::GetLoadedPID()
 	return impl.nPID;
 }
 
+// Используется при запросе подтверждения закрытия
+// В идеале - должен возвращать PID "работающего" процесса
+// то есть процесса, выполняющего в данный момент скрипт,
+// или копирующего файлы, или ждущего подтверждения пользователя...
+// PID или совпадает с GetActivePID или 0
+DWORD CRealConsole::GetRunningPID()
+{
+	if (!this)
+		return 0;
+
+	if (m_ChildGui.hGuiWnd)
+	{
+		return 0; // We can't handle ChildGui
+	}
+
+	if (!mn_ProcessCount)
+	{
+		return 0; // No process was found yet
+	}
+
+	DWORD nPID = 0, nCount = 0;
+
+	MSectionLock SPRC; SPRC.Lock(&csPRC);
+
+	for (int i = 0; i < mn_ProcessCount; i++)
+	{
+		const ConProcess& prc = m_Processes[i];
+		if (prc.IsConHost || prc.IsMainSrv || (prc.ProcessID == mn_MainSrv_PID))
+		{
+			continue;
+		}
+		nPID = prc.ProcessID; nCount++;
+	}
+
+	SPRC.Unlock();
+
+	// If the only shell is running now - consider it is free
+	if (nCount <= 1)
+	{
+		TODO("Recheck conditions. May be need to check if the shell is in ReadLine?");
+		return 0;
+	}
+
+	return nPID;
+}
+
 LPCWSTR CRealConsole::GetActiveProcessName()
 {
 	LPCWSTR pszName = NULL;

@@ -472,6 +472,7 @@ class CRealConsole
 		void SetFarStatus(DWORD nNewFarStatus);
 		DWORD GetActivePID();
 		DWORD GetLoadedPID();
+		DWORD GetRunningPID();
 		LPCWSTR GetActiveProcessName();
 		int GetActiveAppSettingsId(LPCWSTR* ppProcessName = NULL, bool* pbIsAdmin = NULL, int* pnBits = NULL, DWORD* pnPID = NULL);
 	private:
