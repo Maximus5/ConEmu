@@ -2541,7 +2541,7 @@ bool CVConGroup::CloseQuery(MArray<CVConGuard*>* rpPanes, bool* rbMsgConfirmed /
 		{
 			if (VCon.VCon())
 			{
-				if (VCon->RCon()->isCloseConfirmed(NULL, true))
+				if (VCon->RCon()->isCloseTabConfirmed(fwt_Panels, NULL, true))
 				{
 					nBtn = IDOK;
 				}

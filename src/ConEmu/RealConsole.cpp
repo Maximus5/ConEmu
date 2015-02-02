@@ -11251,7 +11251,7 @@ void CRealConsole::CloseConfirmReset()
 	mb_CloseFarMacroPosted = false;
 }
 
-bool CRealConsole::isCloseConfirmed(LPCWSTR asConfirmation, bool bForceAsk /*= false*/)
+bool CRealConsole::isCloseTabConfirmed(CEFarWindowType TabType, LPCWSTR asConfirmation, bool bForceAsk /*= false*/)
 {
 	if (!gpSet->isCloseConsoleConfirm)
 		return true;
@@ -11290,7 +11290,7 @@ void CRealConsole::CloseConsoleWindow(bool abConfirm)
 {
 	if (abConfirm)
 	{
-		if (!isCloseConfirmed(m_ChildGui.isGuiWnd() ? gsCloseGui : gsCloseCon))
+		if (!isCloseTabConfirmed(fwt_Panels, m_ChildGui.isGuiWnd() ? gsCloseGui : gsCloseCon))
 			return;
 	}
 
@@ -11315,7 +11315,7 @@ void CRealConsole::CloseConsole(bool abForceTerminate, bool abConfirm, bool abAl
 	// Don't show confirmation dialog, if this method was reentered (via GuiMacro call)
 	if (abConfirm && !abForceTerminate && !mb_InPostCloseMacro)
 	{
-		if (!isCloseConfirmed(NULL))
+		if (!isCloseTabConfirmed(fwt_Panels, NULL))
 			return;
 	}
 	#ifdef _DEBUG
@@ -11536,12 +11536,13 @@ void CRealConsole::CloseTab()
 
 	if (GuiWnd())
 	{
-		if (!isCloseConfirmed(gsCloseGui))
+		if (!isCloseTabConfirmed(fwt_Panels, gsCloseGui))
 			return;
 		PostConsoleMessage(GuiWnd(), WM_CLOSE, 0, 0);
 	}
 	else
 	{
+		CEFarWindowType tabtype = fwt_Panels;
 		// Проверить, можно ли послать макрос, чтобы закрыть таб (фар/не фар)?
 		BOOL bCanCloseMacro = CanCloseTab(TRUE);
 		if (bCanCloseMacro && !isAlive())
@@ -11564,13 +11565,13 @@ void CRealConsole::CloseTab()
 
 			if (bCanCloseMacro)
 			{
-				CEFarWindowType tabtype = GetActiveTabType();
+				tabtype = GetActiveTabType();
 				LPCWSTR pszConfirmText =
 					((tabtype & fwt_TypeMask) == fwt_Editor) ? gsCloseEditor :
 					((tabtype & fwt_TypeMask) == fwt_Viewer) ? gsCloseViewer :
 					gsCloseCon;
 
-				if (!isCloseConfirmed(pszConfirmText))
+				if (!isCloseTabConfirmed((tabtype & fwt_TypeMask), pszConfirmText))
 				{
 					// Отмена
 					return;
@@ -11583,7 +11584,7 @@ void CRealConsole::CloseTab()
 			LPCWSTR pszConfirmText = gsCloseCon;
 			if (bCanCloseMacro)
 			{
-				CEFarWindowType tabtype = GetActiveTabType();
+				tabtype = GetActiveTabType();
 				pszConfirmText =
 					((tabtype & fwt_TypeMask) == fwt_Editor) ? gsCloseEditor :
 					((tabtype & fwt_TypeMask) == fwt_Viewer) ? gsCloseViewer :
@@ -11597,7 +11598,7 @@ void CRealConsole::CloseTab()
 				}
 			}
 
-			if (!bSkipConfirm && !isCloseConfirmed(pszConfirmText))
+			if (!bSkipConfirm && !isCloseTabConfirmed((tabtype & fwt_TypeMask), pszConfirmText))
 			{
 				// Отмена
 				return;
