@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2014 Maximus5
+Copyright (c) 2009-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -408,7 +408,7 @@ void Settings::InitSettings()
 	isMultiNewConfirm = false;
 	isMultiDupConfirm = true;
 	isMultiDetachConfirm = true;
-	isCloseConsoleConfirm = true;
+	nCloseConfirmFlags = cc_Running;
 	isUseWinNumber = true; isUseWinArrows = false; isUseWinTab = false;
 	nSplitWidth = nSplitHeight = 4;
 	//nSplitClr1 = nSplitClr2 = RGB(160,160,160);
@@ -2362,8 +2362,15 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 		//LoadVkMod(reg, L"Multi.NextShift", vmMultiNextShift, SetModifier(vmMultiNext,VK_SHIFT, true/*Xor*/));
 		//LoadVkMod(reg, L"Multi.Recreate", vmMultiRecreate, vmMultiRecreate);
 		//LoadVkMod(reg, L"Multi.Close", vmMultiClose, vmMultiClose);
-		reg->Load(L"Multi.CloseConfirm", isCloseConsoleConfirm);
-		reg->Load(L"Multi.CloseEditViewConfirm", isCloseEditViewConfirm);
+		if (!reg->Load(L"Multi.CloseConfirmFlags", nCloseConfirmFlags))
+		{
+			bool isCloseConsoleConfirm = false, isCloseEditViewConfirm = false;
+			reg->Load(L"Multi.CloseConfirm", isCloseConsoleConfirm);
+			reg->Load(L"Multi.CloseEditViewConfirm", isCloseEditViewConfirm);
+			nCloseConfirmFlags = cc_Running
+				| (isCloseConsoleConfirm ? (cc_Console|cc_Window) : cc_None)
+				| (isCloseEditViewConfirm ? (cc_FarEV) : cc_None);
+		}
 		//LoadVkMod(reg, L"Multi.CmdKey", vmMultiCmd, vmMultiCmd);
 		reg->Load(L"Multi.NewConfirm", isMultiNewConfirm);
 		reg->Load(L"Multi.DupConfirm", isMultiDupConfirm);
@@ -3345,8 +3352,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		//reg->Save(L"Multi.NextShift", vmMultiNextShift);
 		//reg->Save(L"Multi.Recreate", vmMultiRecreate);
 		//reg->Save(L"Multi.Close", vmMultiClose);
-		reg->Save(L"Multi.CloseConfirm", isCloseConsoleConfirm);
-		reg->Save(L"Multi.CloseEditViewConfirm", isCloseEditViewConfirm);
+		reg->Save(L"Multi.CloseConfirmFlags", nCloseConfirmFlags);
 		//reg->Save(L"Multi.CmdKey", vmMultiCmd);
 		reg->Save(L"Multi.NewConfirm", isMultiNewConfirm);
 		reg->Save(L"Multi.DupConfirm", isMultiDupConfirm);

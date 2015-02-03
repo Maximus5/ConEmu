@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2014 Maximus5
+Copyright (c) 2009-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -1846,8 +1846,10 @@ LRESULT CSettings::OnInitDialog_Confirm(HWND hWnd2, bool abInitial)
 {
 	checkDlgButton(hWnd2, cbNewConfirm, gpSet->isMultiNewConfirm);
 	checkDlgButton(hWnd2, cbDupConfirm, gpSet->isMultiDupConfirm);
-	checkDlgButton(hWnd2, cbCloseConsoleConfirm, gpSet->isCloseConsoleConfirm);
-	checkDlgButton(hWnd2, cbCloseEditViewConfirm, gpSet->isCloseEditViewConfirm);
+	checkDlgButton(hWnd2, cbCloseWindowConfirm, (gpSet->nCloseConfirmFlags & Settings::cc_Window) ? BST_CHECKED : BST_UNCHECKED);
+	checkDlgButton(hWnd2, cbCloseConsoleConfirm, (gpSet->nCloseConfirmFlags & Settings::cc_Console) ? BST_CHECKED : BST_UNCHECKED);
+	checkDlgButton(hWnd2, cbConfirmCloseRunning, (gpSet->nCloseConfirmFlags & Settings::cc_Running) ? BST_CHECKED : BST_UNCHECKED);
+	checkDlgButton(hWnd2, cbCloseEditViewConfirm, (gpSet->nCloseConfirmFlags & Settings::cc_FarEV) ? BST_CHECKED : BST_UNCHECKED);
 	checkDlgButton(hWnd2, cbConfirmDetach, gpSet->isMultiDetachConfirm);
 	checkDlgButton(hWnd2, cbShowWasHiddenMsg, gpSet->isDownShowHiddenMessage ? BST_UNCHECKED : BST_CHECKED);
 

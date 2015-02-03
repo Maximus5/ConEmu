@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2014 Maximus5
+Copyright (c) 2009-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -805,8 +805,14 @@ struct Settings
 		//reg->Load(L"Multi.Close", vmMultiClose);
 		//DWORD vmMultiClose;
 		//reg->Load(L"Multi.CloseConfirm", isCloseConsoleConfirm);
-		bool isCloseConsoleConfirm;
-		bool isCloseEditViewConfirm;
+		enum CloseConfirmOptions {
+			cc_None      = 0, // Don't confirm any close actions
+			cc_Window    = 1, // Window close (cross clicking)
+			cc_Console   = 2, // Tab close (from tab menu for example)
+			cc_Running   = 4, // When running process was detected
+			cc_FarEV     = 8, // was isCloseEditViewConfirm
+		};
+		BYTE nCloseConfirmFlags; // CloseConfirmOptions
 		//reg->Load(L"Multi.CmdKey", vmMultiCmd);
 		//DWORD vmMultiCmd;
 		//reg->Load(L"Multi.AutoCreate", isMultiAutoCreate);

@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2014 Maximus5
+Copyright (c) 2009-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -2469,6 +2469,8 @@ bool CVConGroup::CloseQuery(MArray<CVConGuard*>* rpPanes, bool* rbMsgConfirmed /
 			// Прогрессы (копирование, удаление, и т.п.)
 			if (pRCon->GetProgress(NULL) != -1)
 				nProgress ++;
+			else if ((gpSet->nCloseConfirmFlags & Settings::cc_Running) && pRCon->GetRunningPID())
+				nProgress ++;
 
 			// Несохраненные редакторы
 			int n = pRCon->GetModifiedEditors();
@@ -2478,7 +2480,7 @@ bool CVConGroup::CloseQuery(MArray<CVConGuard*>* rpPanes, bool* rbMsgConfirmed /
 		}
 	}
 
-	bool bCloseConfirmSet = gpSet->isCloseConsoleConfirm;
+	bool bCloseConfirmSet = (gpSet->nCloseConfirmFlags & Settings::cc_Window) != 0;
 	if (bCloseConfirmSet && gpUpd)
 	{
 		// Если только что был запрос на обновление-и-закрытие, то нет смысла подтверждать закрытие
@@ -2814,7 +2816,7 @@ bool CVConGroup::DoCloseAllVCon(bool bMsgConfirmed)
 	int nConCount = 0, nDetachedCount = 0;
 	bool lbProceed = false;
 
-	bool bConfirmEach = (bMsgConfirmed || !gpSet->isCloseConsoleConfirm) ? false : true;
+	bool bConfirmEach = (bMsgConfirmed || !(gpSet->nCloseConfirmFlags & Settings::cc_Window)) ? false : true;
 
 	// Сохраним размер перед закрытием консолей, а то они могут напакостить и "вернуть" старый размер
 	gpSet->SaveSettingsOnExit();

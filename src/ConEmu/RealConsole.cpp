@@ -11299,11 +11299,24 @@ void CRealConsole::CloseConfirmReset()
 
 bool CRealConsole::isCloseTabConfirmed(CEFarWindowType TabType, LPCWSTR asConfirmation, bool bForceAsk /*= false*/)
 {
-	if (!gpSet->isCloseConsoleConfirm)
+	_ASSERTE(TabType && ((TabType & fwt_TypeMask) == TabType));
+
+	// Simple console or Far panels
+	if (((TabType == fwt_Panels)
+			&& !(gpSet->nCloseConfirmFlags & Settings::cc_Console)
+			&& !((gpSet->nCloseConfirmFlags & Settings::cc_Running) && GetRunningPID()))
+		// Far Manager editors/viewers
+		|| (((TabType == fwt_Viewer) || (TabType == fwt_Editor))
+			&& !(gpSet->nCloseConfirmFlags & Settings::cc_FarEV))
+		)
+	{
 		return true;
+	}
 
 	if (!bForceAsk && mp_ConEmu->isCloseConfirmed())
+	{
 		return true;
+	}
 
 	int nBtn = 0;
 	{
@@ -11635,7 +11648,7 @@ void CRealConsole::CloseTab()
 					((tabtype & fwt_TypeMask) == fwt_Editor) ? gsCloseEditor :
 					((tabtype & fwt_TypeMask) == fwt_Viewer) ? gsCloseViewer :
 					gsCloseCon;
-				if (!gpSet->isCloseEditViewConfirm)
+				if (!(gpSet->nCloseConfirmFlags & Settings::cc_FarEV))
 				{
 					if (((tabtype & fwt_TypeMask) == fwt_Editor) || ((tabtype & fwt_TypeMask) == fwt_Viewer))
 					{

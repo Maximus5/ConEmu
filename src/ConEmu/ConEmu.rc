@@ -252,17 +252,23 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "Confirm actions",gbConfirmActions,4,1,319,78
+    GROUPBOX        "Confirm actions",gbConfirmActions,4,1,319,53
     CONTROL         "Confirm creating new console/tab (Win+W, toolbar [+])",cbNewConfirm,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,14,307,8
     CONTROL         "Confirm tab duplicating (Duplicate root menu item)",cbDupConfirm,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,26,307,10
-    CONTROL         "Confirm tab closing",cbCloseConsoleConfirm,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,39,307,8
-    CONTROL         "Confirm Far Editor/Viewer tab closing",cbCloseEditViewConfirm,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,51,307,8
-    CONTROL         "Confirm console detach",cbConfirmDetach,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,64,307,8
-    GROUPBOX        "Miscellaneous",gbConfirmMisc,4,83,319,28
-    CONTROL         "Show ‘was hidden’ warning",cbShowWasHiddenMsg,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,96,307,8
+    CONTROL         "Confirm console detach",cbConfirmDetach,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,39,307,8
+    GROUPBOX        "Close confirmations",gbConfirmClose,4,63,319,81
+    CONTROL         "Confirm window closing (cross click)",cbCloseWindowConfirm,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,76,307,8
+    CONTROL         "Confirm tab closing",cbCloseConsoleConfirm,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,89,307,8
+    CONTROL         "When running process was detected",cbConfirmCloseRunning,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,102,307,8
+    GROUPBOX        "Far Manager",gbConfirmCloseFar,4,115,319,29
+    CONTROL         "Confirm Far Manager Editor/Viewer tab closing",cbCloseEditViewConfirm,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,128,307,8
+    GROUPBOX        "Miscellaneous",gbConfirmMisc,4,150,319,28
+    CONTROL         "Show ‘was hidden’ warning",cbShowWasHiddenMsg,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,163,307,8
 END
 
 IDD_SPG_HISTORY DIALOGEX 0, 0, 328, 235

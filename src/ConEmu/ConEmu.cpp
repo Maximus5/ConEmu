@@ -6392,7 +6392,9 @@ bool CConEmuMain::isScClosing()
 
 bool CConEmuMain::isCloseConfirmed()
 {
-	return (gpSet->isCloseConsoleConfirm && !DisableCloseConfirm) ? mb_ScClosePending : true;
+	if (!(gpSet->nCloseConfirmFlags & Settings::cc_Window))
+		return false;
+	return DisableCloseConfirm ? true : mb_ScClosePending;
 }
 
 LRESULT CConEmuMain::OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate)

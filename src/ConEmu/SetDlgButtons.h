@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2014 Maximus5
+Copyright (c) 2014-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -113,8 +113,7 @@ protected:
 	static void OnBtn_RClick(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_SafeFarClose(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_MinToTray(HWND hDlg, WORD CB, BYTE uCheck);
-	static void OnBtn_CloseConsoleConfirm(HWND hDlg, WORD CB, BYTE uCheck);
-	static void OnBtn_CloseEditViewConfirm(HWND hDlg, WORD CB, BYTE uCheck);
+	static void OnBtn_CloseConfirmFlags(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_AlwaysShowTrayIcon(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_QuakeStyles(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_HideCaption(HWND hDlg, WORD CB, BYTE uCheck);

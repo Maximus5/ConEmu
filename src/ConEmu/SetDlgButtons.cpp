@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2014 Maximus5
+Copyright (c) 2014-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -295,11 +295,11 @@ bool CSetDlgButtons::ProcessButtonClick(HWND hDlg, WORD CB, BYTE uCheck)
 		case cbMinToTray:
 			OnBtn_MinToTray(hDlg, CB, uCheck);
 			break;
+		case cbCloseWindowConfirm:
 		case cbCloseConsoleConfirm:
-			OnBtn_CloseConsoleConfirm(hDlg, CB, uCheck);
-			break;
+		case cbConfirmCloseRunning:
 		case cbCloseEditViewConfirm:
-			OnBtn_CloseEditViewConfirm(hDlg, CB, uCheck);
+			OnBtn_CloseConfirmFlags(hDlg, CB, uCheck);
 			break;
 		case cbAlwaysShowTrayIcon:
 			OnBtn_AlwaysShowTrayIcon(hDlg, CB, uCheck);
@@ -2140,24 +2140,36 @@ void CSetDlgButtons::OnBtn_MinToTray(HWND hDlg, WORD CB, BYTE uCheck)
 } // cbMinToTray
 
 
-// cbCloseConsoleConfirm
-void CSetDlgButtons::OnBtn_CloseConsoleConfirm(HWND hDlg, WORD CB, BYTE uCheck)
+// cbCloseWindowConfirm, cbCloseConsoleConfirm, cbConfirmCloseRunning, cbCloseEditViewConfirm
+void CSetDlgButtons::OnBtn_CloseConfirmFlags(HWND hDlg, WORD CB, BYTE uCheck)
 {
-	_ASSERTE(CB==cbCloseConsoleConfirm);
+	BYTE Flag = Settings::cc_None;
 
-	gpSet->isCloseConsoleConfirm = uCheck;
+	switch (CB)
+	{
+	case cbCloseWindowConfirm:
+		Flag = Settings::cc_Window;
+		break;
+	case cbCloseConsoleConfirm:
+		Flag = Settings::cc_Console;
+		break;
+	case cbConfirmCloseRunning:
+		Flag = Settings::cc_Running;
+		break;
+	case cbCloseEditViewConfirm:
+		Flag = Settings::cc_FarEV;
+		break;
+	default:
+		_ASSERTE(CB==cbCloseWindowConfirm || CB==cbCloseConsoleConfirm || CB==cbConfirmCloseRunning || CB==cbCloseEditViewConfirm);
+		return;
+	}
 
-} // cbCloseConsoleConfirm
+	if (uCheck)
+		gpSet->nCloseConfirmFlags |= Flag;
+	else
+		gpSet->nCloseConfirmFlags &= ~Flag;
 
-
-// cbCloseEditViewConfirm
-void CSetDlgButtons::OnBtn_CloseEditViewConfirm(HWND hDlg, WORD CB, BYTE uCheck)
-{
-	_ASSERTE(CB==cbCloseEditViewConfirm);
-
-	gpSet->isCloseEditViewConfirm = uCheck;
-
-} // cbCloseEditViewConfirm
+} // cbCloseWindowConfirm, cbCloseConsoleConfirm, cbConfirmCloseRunning, cbCloseEditViewConfirm
 
 
 // cbAlwaysShowTrayIcon

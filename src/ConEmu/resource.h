@@ -1068,6 +1068,10 @@
 #define cbCmdGrpToolbar                 2753
 #define gbSTartGroupCommands            2754
 #define tStartGroupCommands             2755
+#define gbConfirmClose                  2756
+#define cbCloseWindowConfirm            2757
+#define cbConfirmCloseRunning           2758
+#define gbConfirmCloseFar               2759
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
@@ -1076,7 +1080,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        226
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2756
+#define _APS_NEXT_CONTROL_VALUE         2760
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif
