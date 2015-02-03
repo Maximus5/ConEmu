@@ -12,6 +12,25 @@ Votes and awards (vote for ConEmu, if you please)
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+2015.2.3
+[*] Issue 1886: Change text cursor position with ‘LeftClick’ was not working when PSReadLine was loaded in your $profile. Look at RevokeMouseInput.ps1.
+[*] github#20: ‘Ctrl-Left’ and ‘Ctrl-Right’ was not working in Vim/xterm.
+[*] Create new console confirmation now if disabled by default.
+    So ‘Win+W’ or ‘LClick’ on the `[+]` button creates new default task.
+    The default task may be choosed in the ‘Tasks’ settings page.
+    New console dialog (command, directory, as admin, and so on)
+    may be shown with:
+    * ‘Win+Shift+W’;
+    * ‘Shift+LClick’, ‘RClick’ or ‘LongTap’ on the `[+]`;
+    * ‘New console dialog...’ menu item (down arrow about `[+]`).
+[*] Window and tab closing confirmations now are disabled by default.
+    But if there are more than a two user processes running in the console -
+    close confirmation may be shown. So, there are thee checkboxes now:
+    * Confirm window closing (unchecked);
+    * Confirm tab closing (unchecked);
+    * When running process was detected (checked).
+
+
 2015.1.28
 [*] Add missed GuiMacro GetOption description.
 [*] Debug. Show ConEmu build number in the _ASSERT dialog
