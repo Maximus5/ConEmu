@@ -111,7 +111,7 @@ BOOL WINAPI WriteProcessed(LPCWSTR lpBuffer, DWORD nNumberOfCharsToWrite, LPDWOR
 {
 	HANDLE hConsoleOutput = GetStdHandle(STD_OUTPUT_HANDLE);
 	InterlockedIncrement(&gnWriteProcessed);
-	BOOL bRc = CEAnsi::OnWriteConsoleW(hConsoleOutput, lpBuffer, nNumberOfCharsToWrite, lpNumberOfCharsWritten, NULL);
+	BOOL bRc = CEAnsi::OurWriteConsoleW(hConsoleOutput, lpBuffer, nNumberOfCharsToWrite, lpNumberOfCharsWritten, NULL);
 	InterlockedDecrement(&gnWriteProcessed);
 	return bRc;
 }
@@ -872,7 +872,7 @@ BOOL WINAPI CEAnsi::OnWriteConsoleA(HANDLE hConsoleOutput, const VOID *lpBuffer,
 				hWrite = hConsoleOutput;
 
 			DWORD nWideWritten = 0;
-			lbRc = OnWriteConsoleW(hWrite, buf, len, &nWideWritten, NULL);
+			lbRc = OurWriteConsoleW(hWrite, buf, len, &nWideWritten, NULL);
 
 			// Issue 1291:	Python fails to print string sequence with ASCII character followed by Chinese character.
 			if (lpNumberOfCharsWritten)
@@ -976,6 +976,11 @@ BOOL CEAnsi::WriteText(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, 
 }
 
 BOOL WINAPI CEAnsi::OnWriteConsoleW(HANDLE hConsoleOutput, const VOID *lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, LPVOID lpReserved)
+{
+	return OurWriteConsoleW(hConsoleOutput, lpBuffer, nNumberOfCharsToWrite, lpNumberOfCharsWritten, lpReserved, false);
+}
+
+BOOL WINAPI CEAnsi::OurWriteConsoleW(HANDLE hConsoleOutput, const VOID *lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, LPVOID lpReserved, bool bInternal /*= false*/)
 {
 	ORIGINALFAST(WriteConsoleW);
 	//BOOL bMainThread = FALSE; // поток не важен
