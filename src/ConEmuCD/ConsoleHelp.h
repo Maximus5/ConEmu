@@ -36,7 +36,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define pConsoleHelp \
 		L"This is a console part of ConEmu product.\r\n" \
 		L"Usage: ConEmuC [switches] /ROOT <program with arguments, far.exe for example>\r\n" \
-		L"   or: ConEmuC [switches] [/U | /A] /C <command line, passed to %COMSPEC%>\r\n" \
+		L"   or: ConEmuC [switches] [/U | /A] [/Async | /Fork] /C <command line>\r\n" \
 		L"   or: ConEmuC /AUTOATTACH [/GHWND=NEW|<HWND>]\r\n" \
 		L"   or: ConEmuC /ATTACH /NOCMD\r\n" \
 		L"   or: ConEmuC /ATTACH [/GHWND=NEW|<HWND>] /[FAR|CON|TRM]PID=<PID>\r\n" \
