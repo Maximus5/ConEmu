@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2014 Maximus5
+Copyright (c) 2009-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -169,6 +169,9 @@ typedef struct _CONSOLE_SELECTION_INFO
 #define ENV_CONEMU_SLEEP_INDICATE_W      _CRT_WIDE(ENV_CONEMU_SLEEP_INDICATE_A)
 #define ENV_CONEMU_SLEEP_INDICATE_NUM L"NUM"
 #define ENV_CONEMU_SLEEP_INDICATE_TTL L"TITLE"
+// Codepage conversions hacks: ConEmuCpCvt=perl.exe:1252:1251;less.exe:850:866;*:1234:866;...
+#define ENV_CONEMU_CPCVT_APP_A         "ConEmuCpCvt"
+#define ENV_CONEMU_CPCVT_APP_W           _CRT_WIDE(ENV_CONEMU_CPCVT_APP_A)
 
 #define CONEMU_CONHOST_CREATED_MSG L"ConEmu: ConHost was created PID=" // L"%u\n"
 

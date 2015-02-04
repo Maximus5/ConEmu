@@ -1006,11 +1006,42 @@ BOOL WINAPI CEAnsi::OurWriteConsoleW(HANDLE hConsoleOutput, const VOID *lpBuffer
 	#endif
 
 	CEAnsi* pObj = NULL;
+	CEStr CpCvt;
 
 	if (lpBuffer && nNumberOfCharsToWrite && hConsoleOutput && IsAnsiCapable(hConsoleOutput, &bIsConOut))
 	{
 		if (ghAnsiLogFile)
 			CEAnsi::WriteAnsiLog((LPCWSTR)lpBuffer, nNumberOfCharsToWrite);
+
+		// if that was API call of WriteConsoleW
+		if (!bInternal && gCpConv.nFromCP && gCpConv.nToCP)
+		{
+			// Convert from unicode to MBCS
+			char* pszTemp = NULL;
+			int iMBCSLen = WideCharToMultiByte(gCpConv.nFromCP, 0, (LPCWSTR)lpBuffer, nNumberOfCharsToWrite, NULL, 0, NULL, NULL);
+			if ((iMBCSLen > 0) && ((pszTemp = (char*)malloc(iMBCSLen)) != NULL))
+			{
+				iMBCSLen = WideCharToMultiByte(gCpConv.nFromCP, 0, (LPCWSTR)lpBuffer, nNumberOfCharsToWrite, pszTemp, iMBCSLen, NULL, NULL);
+				if (iMBCSLen > 0)
+				{
+					int iWideLen = MultiByteToWideChar(gCpConv.nToCP, 0, pszTemp, iMBCSLen, NULL, 0);
+					if (iWideLen > 0)
+					{
+						wchar_t* ptrBuf = CpCvt.GetBuffer(iWideLen);
+						if (ptrBuf)
+						{
+							iWideLen = MultiByteToWideChar(gCpConv.nToCP, 0, pszTemp, iMBCSLen, ptrBuf, iWideLen);
+							if (iWideLen > 0)
+							{
+								lpBuffer = ptrBuf;
+								nNumberOfCharsToWrite = iWideLen;
+							}
+						}
+					}
+				}
+			}
+			SafeFree(pszTemp);
+		}
 
 		pObj = CEAnsi::Object();
 		if (pObj)

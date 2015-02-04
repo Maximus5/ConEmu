@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2014 Maximus5
+Copyright (c) 2009-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -115,6 +115,14 @@ BOOL OnExecutePromptCmd(LPCWSTR asCmd);
 
 void CheckHookServer();
 extern bool gbHookServerForcedTermination;
+
+struct CpConv
+{
+	// for example, "git add -p" uses codepage 1252 while printing thunks to be staged
+	// that forces the printed text to be converted to nToCP before printing (OnWriteConsoleW)
+	DWORD nFromCP, nToCP;
+};
+extern struct CpConv gCpConv;
 
 /* ************ Globals for Far ************ */
 extern bool    gbIsFarProcess;

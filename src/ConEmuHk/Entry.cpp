@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2014 Maximus5
+Copyright (c) 2009-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -145,6 +145,14 @@ extern HMODULE ghOurModule;
 /* ************ Executable name ************ */
 wchar_t gsExeName[80] = L"";
 /* ************ Executable name ************ */
+
+//struct CpConv
+//{
+//	// for example, "git add -p" uses codepage 1252 while printing thunks to be staged
+//	// that forces the printed text to be converted to nToCP before printing (OnWriteConsoleW)
+//	DWORD nFromCP, nToCP;
+//}
+struct CpConv gCpConv = {};
 
 #define isPressed(inp) ((GetKeyState(inp) & 0x8000) == 0x8000)
 
@@ -1222,6 +1230,40 @@ void InitExeName()
 		ShowStartedMsgBox(L" loaded!", pszName);
 	}
 
+	// ConEmuCpCvt=perl.exe:1252:1251;less.exe:850:866;*:1234:866;...
+	ZeroStruct(szMsg);
+	if (GetEnvironmentVariable(ENV_CONEMU_CPCVT_APP_W, szMsg, countof(szMsg)-1) && *szMsg)
+	{
+		wchar_t *pszName = szMsg, *pszNext;
+		LPCWSTR pszEnd = NULL;
+		UINT nFrom, nTo;
+		while (pszName && *pszName)
+		{
+			pszNext = wcschr(pszName, L':');
+			if (!pszNext) break;
+			*pszNext = 0;
+
+			// All or exactly our exe name
+			if (lstrcmp(pszName, L"*") != 0 && lstrcmpi(pszName, gsExeName) != 0)
+			{
+				pszName = wcschr(pszNext+1, L';');
+				if (!pszName) break;
+				pszName++;
+				continue;
+			}
+
+			// Lets get codepages
+			nFrom = GetCpFromString(pszNext+1, &pszEnd);
+			if (!nFrom || !pszEnd || (*pszEnd != L':')) break;
+			nTo = GetCpFromString(pszEnd+1);
+			if (!nTo) break;
+
+			// Found
+			gCpConv.nFromCP = nFrom;
+			gCpConv.nToCP = nTo;
+			break;
+		}
+	}
 
 	// Lets check the name
 	if ((lstrcmpi(gsExeName, L"ConEmuC.exe") == 0) || (lstrcmpi(gsExeName, L"ConEmuC64.exe") == 0))
