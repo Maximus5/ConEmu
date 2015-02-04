@@ -1333,3 +1333,49 @@ bool CoordInSmallRect(const COORD& cr, const SMALL_RECT& rc)
 {
 	return (cr.X >= rc.Left && cr.X <= rc.Right && cr.Y >= rc.Top && cr.Y <= rc.Bottom);
 }
+
+UINT GetCpFromString(LPCWSTR asString, LPCWSTR* ppszEnd /*= NULL*/)
+{
+	UINT nCP = 0; wchar_t* pszEnd = NULL;
+
+	struct KnownCpList {
+		LPCWSTR pszName;
+		DWORD_PTR nCP;
+	} CP[] = {
+		// longer - first
+		{L"utf-8", CP_UTF8},
+		{L"utf8", CP_UTF8},
+		{L"ansicp", CP_ACP},
+		{L"ansi", CP_ACP},
+		{L"acp", CP_ACP},
+		{L"oemcp", CP_OEMCP},
+		{L"oem", CP_OEMCP},
+		{NULL}
+	};
+
+	for (KnownCpList* p = CP; p->pszName; p++)
+	{
+		int iLen = lstrlen(p->pszName);
+		if (lstrcmpni(asString, p->pszName, iLen) == 0)
+		{
+			// После имени могут быть разделители (знаки пунктуации)
+			if (asString[iLen] == 0 || (asString[iLen] && wcschr(L",.:; \t\r\n", asString[iLen])))
+			{
+				nCP = p->nCP;
+				pszEnd = (wchar_t*)asString+iLen;
+				// CP_ACP is 0, so jump to wrap instead of break
+				goto wrap;
+			}
+		}
+	}
+
+	nCP = wcstoul(asString, &pszEnd, 10);
+
+wrap:
+	if (ppszEnd)
+		*ppszEnd = pszEnd;
+
+	if (nCP <= 0xFFFF)
+		return nCP;
+	return 0;
+}

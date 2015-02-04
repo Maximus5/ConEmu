@@ -93,3 +93,5 @@ bool IsExportEnvVarAllowed(LPCWSTR szName);
 void ApplyExportEnvVar(LPCWSTR asEnvNameVal);
 
 bool CoordInSmallRect(const COORD& cr, const SMALL_RECT& rc);
+
+UINT GetCpFromString(LPCWSTR asString, LPCWSTR* ppszEnd = NULL);
