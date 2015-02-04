@@ -1223,6 +1223,7 @@ void InitExeName()
 	}
 
 
+	// Lets check the name
 	if ((lstrcmpi(gsExeName, L"ConEmuC.exe") == 0) || (lstrcmpi(gsExeName, L"ConEmuC64.exe") == 0))
 	{
 		gbConEmuCProcess = true;
