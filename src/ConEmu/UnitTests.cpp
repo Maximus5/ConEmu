@@ -317,6 +317,36 @@ void DebugStrUnitTest()
 	_ASSERTE(iCmp == 0);
 }
 
+void DebugCpUnitTest()
+{
+	typedef struct {
+		LPCWSTR sString;
+		UINT nCP;
+		wchar_t cEnd;
+	} Test;
+	Test Tests[] = {
+		{L"Utf-8", CP_UTF8},
+		{L"Utf-8;Acp", CP_UTF8, L';'},
+		{L"ansi", CP_ACP},
+		{L"ansicp;none", CP_ACP, L';'},
+		{L"65001:1251", 65001, L':'},
+		{NULL},
+	};
+
+	LPCWSTR pszEnd;
+	UINT nCP;
+
+	_ASSERTE(GetCpFromString(L"866") == 866);
+
+	for (INT_PTR i = 0; Tests[i].sString; i++)
+	{
+		const Test& p = Tests[i];
+		nCP = GetCpFromString(p.sString, &pszEnd);
+		_ASSERTE(nCP == p.nCP);
+		_ASSERTE((pszEnd == NULL && p.cEnd == 0) || (pszEnd && *pszEnd == p.cEnd));
+	}
+}
+
 void DebugUnitTests()
 {
 	RConStartArgs::RunArgTests();
@@ -331,6 +361,7 @@ void DebugUnitTests()
 	DebugFileExistTests();
 	ConEmuMacro::UnitTests();
 	DebugStrUnitTest();
+	DebugCpUnitTest();
 	CMatch::UnitTests();
 	ConEmuChord::ChordUnitTests();
 	ConEmuHotKey::HotkeyNameUnitTests();
