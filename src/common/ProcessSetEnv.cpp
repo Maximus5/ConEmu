@@ -84,15 +84,7 @@ bool ProcessSetEnvCmd(LPCWSTR& asCmdLine, bool bDoSet, CmdArg* rpsTitle /*= NULL
 		{
 			if (NextArg(&lsCmdLine, lsSet) == 0)
 			{
-				UINT nCP = 0; wchar_t* pszEnd;
-				if (lstrcmpi(lsSet, L"utf-8") == 0 || lstrcmpi(lsSet, L"utf8") == 0)
-					nCP = CP_UTF8;
-				else if (lstrcmpi(lsSet, L"acp") == 0 || lstrcmpi(lsSet, L"ansi") == 0 || lstrcmpi(lsSet, L"ansicp") == 0)
-					nCP = CP_ACP;
-				else if (lstrcmpi(lsSet, L"oem") == 0 || lstrcmpi(lsSet, L"oemcp") == 0)
-					nCP = CP_OEMCP;
-				else
-					nCP = wcstol(lsSet, &pszEnd, 10);
+				UINT nCP = GetCpFromString(lsSet);
 
 				if (nCP > 0 && nCP <= 0xFFFF)
 				{
