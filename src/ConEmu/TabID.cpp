@@ -1261,7 +1261,15 @@ bool CTabStack::RefreshFarStatus(DWORD nFarPID, CTab& rActiveTab, int& rnActiveI
 			iCount++;
 			if (mpp_Stack[i]->Info.Type & fwt_CurrentFarWnd)
 			{
-				_ASSERTE(iActive == -1 && "Only one active tab per console!");
+				if (iActive >= 0)
+				{
+					// That may be happened if some external command was started from Editor/Viewer
+					// so the first tab was marked as active (console/aka panels)
+					// And when the Far was back - there are two active tabs... but Editor/Viewer is active
+					_ASSERTE(((iActive == -1) || (mpp_Stack[iActive]->Type() == fwt_Panels)) && "Only one active tab per console!");
+					// To avoid weird behavior in future
+					mpp_Stack[iActive]->Info.Type &= ~fwt_CurrentFarWnd;
+				}
 				iActive = i;
 			}
 			if (mpp_Stack[i]->Info.Type & fwt_ModalFarWnd)
