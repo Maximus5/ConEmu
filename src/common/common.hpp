@@ -172,6 +172,9 @@ typedef struct _CONSOLE_SELECTION_INFO
 // Codepage conversions hacks: ConEmuCpCvt=perl.exe:1252:1251;less.exe:850:866;*:1234:866;...
 #define ENV_CONEMU_CPCVT_APP_A         "ConEmuCpCvt"
 #define ENV_CONEMU_CPCVT_APP_W           _CRT_WIDE(ENV_CONEMU_CPCVT_APP_A)
+// Override default console CP: ConEmuDefCp=65001
+#define ENV_CONEMU_DEFAULTCP_A         "ConEmuDefaultCp"
+#define ENV_CONEMU_DEFAULTCP_W           _CRT_WIDE(ENV_CONEMU_DEFAULTCP_A)
 
 #define CONEMU_CONHOST_CREATED_MSG L"ConEmu: ConHost was created PID=" // L"%u\n"
 

@@ -121,6 +121,8 @@ struct CpConv
 	// for example, "git add -p" uses codepage 1252 while printing thunks to be staged
 	// that forces the printed text to be converted to nToCP before printing (OnWriteConsoleW)
 	DWORD nFromCP, nToCP;
+	// that parm may be used for overriding default console CP
+	DWORD nDefaultCP;
 };
 extern struct CpConv gCpConv;
 

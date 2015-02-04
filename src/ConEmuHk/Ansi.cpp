@@ -828,7 +828,7 @@ BOOL WINAPI CEAnsi::OnWriteConsoleA(HANDLE hConsoleOutput, const VOID *lpBuffer,
 
 	if (lpBuffer && nNumberOfCharsToWrite && hConsoleOutput && IsAnsiCapable(hConsoleOutput))
 	{
-		cp = GetConsoleOutputCP();
+		cp = gCpConv.nDefaultCP ? gCpConv.nDefaultCP : GetConsoleOutputCP();
 
 		DWORD nLastErr = 0;
 		DWORD nFlags = 0; //MB_ERR_INVALID_CHARS;

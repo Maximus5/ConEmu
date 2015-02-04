@@ -151,6 +151,8 @@ wchar_t gsExeName[80] = L"";
 //	// for example, "git add -p" uses codepage 1252 while printing thunks to be staged
 //	// that forces the printed text to be converted to nToCP before printing (OnWriteConsoleW)
 //	DWORD nFromCP, nToCP;
+//	// that parm may be used for overriding default console CP
+//	DWORD nDefaultCP;
 //}
 struct CpConv gCpConv = {};
 
@@ -1263,6 +1265,13 @@ void InitExeName()
 			gCpConv.nToCP = nTo;
 			break;
 		}
+	}
+
+	// ConEmuDefCp=65001
+	ZeroStruct(szMsg);
+	if (GetEnvironmentVariable(ENV_CONEMU_DEFAULTCP_W, szMsg, countof(szMsg)-1) && *szMsg)
+	{
+		gCpConv.nDefaultCP = GetCpFromString(szMsg);
 	}
 
 	// Lets check the name
