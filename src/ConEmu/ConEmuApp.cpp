@@ -4033,7 +4033,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					else if (!klstricmp(curCommand, _T("/quakeauto")))
 						QuakeMode = 2;
 					else
+					{
 						QuakeMode = 0;
+						if (gpSetCls->SingleInstanceArg == sgl_Default)
+							gpSetCls->SingleInstanceArg = sgl_Disabled;
+					}
 				}
 				else if (!klstricmp(curCommand, _T("/showhide")) || !klstricmp(curCommand, _T("/showhideTSA")))
 				{
