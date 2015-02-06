@@ -485,6 +485,11 @@ checkDefaults:
 /*         Creating default tasks           */
 /* **************************************** */
 
+static void CreateDefaultTask(int& iCreatIdx, LPCWSTR asName, LPCWSTR asGuiArg, LPCWSTR asCommands)
+{
+	gpSet->CmdTaskSet(iCreatIdx++, asName, asGuiArg, asCommands);
+}
+
 // Search on asFirstDrive and all (other) fixed drive letters
 // asFirstDrive may be letter ("C:") or network (\\server\share)
 // asSearchPath is path to executable (\cygwin\bin\sh.exe)
@@ -622,7 +627,7 @@ static bool WINAPI CreateWinSdkTasks(HKEY hkVer, LPCWSTR pszVer, LPARAM lParam)
 				CEStr pszName = lstrmerge(L"WinSDK ", pszVer);
 				if (pszName)
 				{
-					gpSet->CmdTaskSet((*piCreatIdx)++, pszName, L"", pszFull);
+					CreateDefaultTask(*piCreatIdx, pszName, L"", pszFull);
 				}
 			}
 		}
@@ -651,7 +656,7 @@ static bool WINAPI CreateVCTasks(HKEY hkVer, LPCWSTR pszVer, LPARAM lParam)
 			{
 				CEStr pszName = lstrmerge(L"VS ", pszVer, L" x86 tools prompt");
 				CEStr pszFull = lstrmerge(L"cmd /k \"\"", pszVcVarsBat, L"\"\" x86 -new_console:t:\"VS ", pszVer, L"\"");
-				gpSet->CmdTaskSet((*piCreatIdx)++, pszName, L"", pszFull);
+				CreateDefaultTask(*piCreatIdx, pszName, L"", pszFull);
 			}
 		}
 	}
@@ -659,7 +664,7 @@ static bool WINAPI CreateVCTasks(HKEY hkVer, LPCWSTR pszVer, LPARAM lParam)
 	return true; // continue reg enum
 }
 
-void CreateDefaultTask(LPCWSTR asDrive, int& iCreatIdx, LPCWSTR asName, LPCWSTR asArgs, LPCWSTR asPrefix, LPCWSTR asGuiArg, LPCWSTR asExePath, ...)
+static void CreateDefaultTask(LPCWSTR asDrive, int& iCreatIdx, LPCWSTR asName, LPCWSTR asArgs, LPCWSTR asPrefix, LPCWSTR asGuiArg, LPCWSTR asExePath, ...)
 {
 	va_list argptr;
 	va_start(argptr, asExePath);
@@ -747,7 +752,7 @@ void CreateDefaultTask(LPCWSTR asDrive, int& iCreatIdx, LPCWSTR asName, LPCWSTR 
 		// Create task
 		if (pszFull)
 		{
-			gpSet->CmdTaskSet(iCreatIdx++, asName, asGuiArg, pszFull);
+			CreateDefaultTask(iCreatIdx, asName, asGuiArg, pszFull);
 			SafeFree(pszFull);
 		}
 	}
@@ -826,7 +831,7 @@ void CreateDefaultTasks(bool bForceAdd /*= false*/)
 	CreateDefaultTask(szConEmuDrive, iCreatIdx, L"PowerShell (Admin)", L" -new_console:a", NULL, NULL, L"powershell.exe", NULL);
 	// For 64bit Windows create task with splitted cmd 64/32
 	if (IsWindows64())
-		gpSet->CmdTaskSet(iCreatIdx++, L"cmd 64/32", L"", L"> set PROMPT=$E[92m$P$E[90m$G$E[m$S & \"%windir%\\system32\\cmd.exe\" /k ver & echo This is Native cmd.exe\r\n\r\nset PROMPT=$E[93m$P$E[90m$G$E[m$S & \"%windir%\\syswow64\\cmd.exe\" /k ver & echo This is 32 bit cmd.exe -new_console:s50V");
+		CreateDefaultTask(iCreatIdx, L"cmd 64/32", L"", L"> set PROMPT=$E[92m$P$E[90m$G$E[m$S & \"%windir%\\system32\\cmd.exe\" /k ver & echo This is Native cmd.exe\r\n\r\nset PROMPT=$E[93m$P$E[90m$G$E[m$S & \"%windir%\\syswow64\\cmd.exe\" /k ver & echo This is 32 bit cmd.exe -new_console:s50V");
 
 	// Bash
 
@@ -861,18 +866,18 @@ void CreateDefaultTasks(bool bForceAdd /*= false*/)
 	// cmd /k type "%ConEmuBaseDir%\Addons\AnsiColors16t.ans" -cur_console:n
 	if (FindOnDrives(NULL, L"%ConEmuBaseDir%\\Addons\\AnsiColors16t.ans", szFound, bNeedQuot))
 	{
-		gpSet->CmdTaskSet(iCreatIdx++, L"Show ANSI colors", L"", L"cmd /k type \"%ConEmuBaseDir%\\Addons\\AnsiColors16t.ans\" -cur_console:n");
+		CreateDefaultTask(iCreatIdx, L"Show ANSI colors", L"", L"cmd /k type \"%ConEmuBaseDir%\\Addons\\AnsiColors16t.ans\" -cur_console:n");
 	}
 
 	// Chocolatey gallery
-	//-- gpSet->CmdTaskSet(iCreatIdx++, L"Chocolatey", L"", L"*cmd /k powershell -NoProfile -ExecutionPolicy unrestricted -Command \"iex ((new-object net.webclient).DownloadString('https://chocolatey.org/install.ps1'))\" && SET PATH=%PATH%;%systemdrive%\\chocolatey\\bin");
+	//-- CreateDefaultTask(iCreatIdx, L"Chocolatey", L"", L"*cmd /k powershell -NoProfile -ExecutionPolicy unrestricted -Command \"iex ((new-object net.webclient).DownloadString('https://chocolatey.org/install.ps1'))\" && SET PATH=%PATH%;%systemdrive%\\chocolatey\\bin");
 	// @echo If you don't know about Chocolatey - read about it here https://chocolatey.org/
 	// powershell -NoProfile -ExecutionPolicy unrestricted -Command "iex ((new-object net.webclient).DownloadString('https://chocolatey.org/install.ps1'))" && SET PATH=%PATH%;%systemdrive%\chocolatey\bin
 	//-- that will be too long and unfriendly
-	// gpSet->CmdTaskSet(iCreatIdx++, L"Chocolatey (Admin)", L"", L"*cmd /k Title Chocolatey & @echo [1;32;40m******************************************************************** & @echo [1;32;40m** [0mIf you[1;31;40m don't know about Chocolatey [0m(apt-get style manager)     [1;32;40m** & @echo [1;32;40m** [1;31;40mread about it[0m here:[1;32;40m https://chocolatey.org/                    [1;32;40m** & @echo [1;32;40m** If you are sure about installing it, execute the following     [1;32;40m** & @echo [1;32;40m** [1;31;40mone-line command:                                              [1;32;40m** & @echo [1;32;40m** [1;37;40mpowershell -NoProfile -ExecutionPolicy unrestricted            [1;32;40m** & @echo [1;32;40m** [1;37;40m-Command @echo ^\"iex ((new-object net.webclient).DownloadString [1;32;40m** & @echo [1;32;40m** [1;37;40m('https://chocolatey.org/install.ps1'))^\"                       [1;32;40m** & @echo [1;32;40m** [1;37;40m^&^& SET PATH=^%PATH^%;^%systemdrive^%\\chocolatey\\bin                [1;32;40m** & @echo [1;32;40m********************************************************************[0m");
+	// CreateDefaultTask(iCreatIdx, L"Chocolatey (Admin)", L"", L"*cmd /k Title Chocolatey & @echo [1;32;40m******************************************************************** & @echo [1;32;40m** [0mIf you[1;31;40m don't know about Chocolatey [0m(apt-get style manager)     [1;32;40m** & @echo [1;32;40m** [1;31;40mread about it[0m here:[1;32;40m https://chocolatey.org/                    [1;32;40m** & @echo [1;32;40m** If you are sure about installing it, execute the following     [1;32;40m** & @echo [1;32;40m** [1;31;40mone-line command:                                              [1;32;40m** & @echo [1;32;40m** [1;37;40mpowershell -NoProfile -ExecutionPolicy unrestricted            [1;32;40m** & @echo [1;32;40m** [1;37;40m-Command @echo ^\"iex ((new-object net.webclient).DownloadString [1;32;40m** & @echo [1;32;40m** [1;37;40m('https://chocolatey.org/install.ps1'))^\"                       [1;32;40m** & @echo [1;32;40m** [1;37;40m^&^& SET PATH=^%PATH^%;^%systemdrive^%\\chocolatey\\bin                [1;32;40m** & @echo [1;32;40m********************************************************************[0m");
 	pszFull = ExpandEnvStr(L"%ConEmuBaseDir%\\Addons\\ChocolateyAbout.cmd");
 	if (pszFull && FileExists(pszFull))
-		gpSet->CmdTaskSet(iCreatIdx++, L"Chocolatey (Admin)", L"", L"*cmd /k Title Chocolatey & \"%ConEmuBaseDir%\\Addons\\ChocolateyAbout.cmd\"");
+		CreateDefaultTask(iCreatIdx, L"Chocolatey (Admin)", L"", L"*cmd /k Title Chocolatey & \"%ConEmuBaseDir%\\Addons\\ChocolateyAbout.cmd\"");
 	SafeFree(pszFull);
 
 	// Windows SDK: HKLM\SOFTWARE\Microsoft\Microsoft SDKs\Windows
