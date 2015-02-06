@@ -2712,6 +2712,11 @@ HRESULT _CreateShellLink(PCWSTR pszArguments, PCWSTR pszPrefix, PCWSTR pszTitle,
 		return E_INVALIDARG;
 	}
 
+	bool bSpecialXml = false;
+	LPCWSTR pszXmlFile = gpConEmu->ConEmuXml(&bSpecialXml);
+	if (pszXmlFile && (!bSpecialXml || !*pszXmlFile))
+		pszXmlFile = NULL;
+
 	LPCWSTR pszConfig = gpSetCls->GetConfigName();
 	if (pszConfig && !*pszConfig)
 		pszConfig = NULL;
@@ -2722,6 +2727,7 @@ HRESULT _CreateShellLink(PCWSTR pszArguments, PCWSTR pszPrefix, PCWSTR pszTitle,
 		size_t cchMax = _tcslen(pszTitle)
 			+ (pszPrefix ? _tcslen(pszPrefix) : 0)
 			+ (pszConfig ? _tcslen(pszConfig) : 0)
+			+ (pszXmlFile ? (_tcslen(pszXmlFile) + 32) : 0)
 			+ 32;
 
 		pszBuf = (wchar_t*)malloc(cchMax*sizeof(*pszBuf));
@@ -2729,6 +2735,12 @@ HRESULT _CreateShellLink(PCWSTR pszArguments, PCWSTR pszPrefix, PCWSTR pszTitle,
 			return E_UNEXPECTED;
 
 		pszBuf[0] = 0;
+		if (pszXmlFile)
+		{
+			_wcscat_c(pszBuf, cchMax, L"/LoadCfgFile \"");
+			_wcscat_c(pszBuf, cchMax, pszXmlFile);
+			_wcscat_c(pszBuf, cchMax, L"\" ");
+		}
 		if (pszPrefix)
 		{
 			_wcscat_c(pszBuf, cchMax, pszPrefix);
