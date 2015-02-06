@@ -186,7 +186,7 @@ class CConEmuMain
 	public:
 		bool SetConfigFile(LPCWSTR asFilePath, bool abWriteReq = false, bool abSpecialPath = false);
 		void SetForceUseRegistry();
-		LPWSTR ConEmuXml();
+		LPWSTR ConEmuXml(bool* pbSpecialPath = NULL);
 		LPWSTR ConEmuIni();
 		wchar_t ms_ConEmuChm[MAX_PATH+1];       // полный путь к chm-файлу (help)
 		wchar_t ms_ConEmuC32Full[MAX_PATH+12];  // полный путь к серверу (ConEmuC.exe) с длинными именами

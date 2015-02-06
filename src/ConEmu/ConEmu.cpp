@@ -1123,8 +1123,10 @@ void CConEmuMain::SetForceUseRegistry()
 	mb_ForceUseRegistry = true;
 }
 
-LPWSTR CConEmuMain::ConEmuXml()
+LPWSTR CConEmuMain::ConEmuXml(bool* pbSpecialPath /*= NULL*/)
 {
+	if (pbSpecialPath) *pbSpecialPath = false;
+
 	if (mb_ForceUseRegistry)
 	{
 		return L"";
@@ -1133,7 +1135,10 @@ LPWSTR CConEmuMain::ConEmuXml()
 	if (ms_ConEmuXml[0])
 	{
 		if (FileExists(ms_ConEmuXml))
+		{
+			if (pbSpecialPath) *pbSpecialPath = mb_SpecialConfigPath;
 			return ms_ConEmuXml;
+		}
 	}
 
 	TODO("Хорошо бы еще дать возможность пользователю использовать два файла - системный (предустановки) и пользовательский (настройки)");
