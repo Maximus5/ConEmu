@@ -664,6 +664,122 @@ static bool WINAPI CreateVCTasks(HKEY hkVer, LPCWSTR pszVer, LPARAM lParam)
 	return true; // continue reg enum
 }
 
+class CVarDefs
+{
+public:
+	struct VarDef
+	{
+		wchar_t* pszName;
+		wchar_t* pszValue;
+	};
+	MArray<VarDef> Vars;
+
+	void Store(wchar_t* asName, wchar_t* psValue)
+	{
+		if (!asName || !*asName || !psValue || !*psValue)
+		{
+			_ASSERTE(asName && *asName && psValue && *psValue);
+			return;
+		}
+
+		VarDef v = {asName, psValue};
+		Vars.push_back(v);
+	};
+
+	void Process(int nBackSteps, LPCWSTR asName)
+	{
+		wchar_t szName[80] = L"%"; wcscat_c(szName, asName); wcscat_c(szName, L"%");
+		wchar_t* psVal = GetEnvVar(asName);
+		while (psVal && *psVal)
+		{
+			wchar_t* pszSlash = wcsrchr(psVal, L'\\');
+			while (pszSlash && (*(pszSlash+1) == 0))
+			{
+				_ASSERTE(*(pszSlash+1) != 0 && "Must not be the trailing slash!");
+				*pszSlash = 0;
+				pszSlash = wcsrchr(psVal, L'\\');
+			}
+
+			Store(lstrdup(szName), lstrdup(psVal));
+
+			if ((--nBackSteps) < 0)
+				break;
+			if (!pszSlash)
+				break;
+			*pszSlash = 0;
+			if (!wcsrchr(psVal, L'\\'))
+				break;
+			wcscat_c(szName, L"\\..");
+		}
+		SafeFree(psVal);
+	}
+
+	CVarDefs()
+	{
+		Process(0, L"ConEmuBaseDir");
+		Process(3, L"ConEmuDir");
+		Process(0, L"WinDir");
+		Process(0, L"ConEmuDrive");
+	};
+
+	~CVarDefs()
+	{
+		VarDef v = {};
+		while (Vars.pop_back(v))
+		{
+			SafeFree(v.pszValue);
+		}
+	};
+};
+
+static CVarDefs *spVars = NULL;
+
+static bool UnExpandEnvStrings(LPCWSTR asSource, wchar_t* rsUnExpanded, INT_PTR cchMax)
+{
+	// Don't use PathUnExpandEnvStrings because it uses %SystemDrive% instead of %ConEmuDrive%,
+	// and %ProgramFiles% but it may fails on 64-bit OS due to bitness differences
+	// - if (UnExpandEnvStrings(szFound, szUnexpand, countof(szUnexpand)) && (lstrcmp(szFound, szUnexpand) != 0)) ;
+	if (!spVars)
+	{
+		_ASSERTE(spVars != NULL);
+		return false;
+	}
+
+	if (!IsFilePath(asSource, true))
+		return false;
+
+	CEStr szTemp(lstrdup(asSource));
+	wchar_t* ptrSrc = szTemp.ms_Arg;
+	if (!ptrSrc)
+		return false;
+	int iCmpLen, iCmp, iLen = lstrlen(ptrSrc);
+
+	for (INT_PTR i = 0; i < spVars->Vars.size(); i++)
+	{
+		CVarDefs::VarDef& v = spVars->Vars[i];
+		iCmpLen = lstrlen(v.pszValue);
+		if ((iCmpLen >= iLen) || !wcschr(L"/\\", ptrSrc[iCmpLen]))
+			continue;
+
+		wchar_t c = ptrSrc[iCmpLen]; ptrSrc[iCmpLen] = 0;
+		iCmp = lstrcmpi(ptrSrc, v.pszValue);
+		ptrSrc[iCmpLen] = c;
+
+		if (iCmp == 0)
+		{
+			if (!szTemp.Attach(lstrmerge(v.pszName, asSource+iCmpLen)))
+				return false;
+			iLen = lstrlen(szTemp);
+			if (iLen > cchMax)
+				return false;
+			_wcscpy_c(rsUnExpanded, cchMax, szTemp);
+			return true;
+		}
+	}
+
+	return false;
+}
+
 static void CreateDefaultTask(LPCWSTR asDrive, int& iCreatIdx, LPCWSTR asName, LPCWSTR asArgs, LPCWSTR asPrefix, LPCWSTR asGuiArg, LPCWSTR asExePath, ...)
 {
 	va_list argptr;
@@ -700,14 +816,9 @@ static void CreateDefaultTask(LPCWSTR asDrive, int& iCreatIdx, LPCWSTR asName, L
 
 		// Try to use system env vars?
 		LPCWSTR pszFound = szFound;
-		if (PathUnExpandEnvStrings(szFound, szUnexpand, countof(szUnexpand)) && (lstrcmp(szFound, szUnexpand) != 0))
+		// Don't use PathUnExpandEnvStrings because it do not do what we need
+		if (UnExpandEnvStrings(szFound, szUnexpand, countof(szUnexpand)) && (lstrcmp(szFound, szUnexpand) != 0))
 		{
-			pszFound = szUnexpand;
-		}
-		else if (asDrive && (lstrcmpni(szFound, asDrive, lstrlen(asDrive)) == 0))
-		{
-			wcscpy_c(szUnexpand, L"%ConEmuDrive%");
-			wcscat_c(szUnexpand, szFound+2);
 			pszFound = szUnexpand;
 		}
 
@@ -790,6 +901,9 @@ void CreateDefaultTasks(bool bForceAdd /*= false*/)
 		while (gpSet->CmdTaskGet(iCreatIdx))
 			iCreatIdx++;
 	}
+
+	CVarDefs Vars;
+	spVars = &Vars;
 
 	wchar_t szConEmuDrive[MAX_PATH] = L"";
 	GetDrive(gpConEmu->ms_ConEmuExeDir, szConEmuDrive, countof(szConEmuDrive));
