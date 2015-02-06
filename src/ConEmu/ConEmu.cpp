@@ -6743,21 +6743,8 @@ wchar_t* CConEmuMain::LoadConsoleBatch_Task(LPCWSTR asSource, RConStartArgs* pAr
 		wchar_t* psz = wcschr(szName, TaskBracketRight);
 		if (psz) psz[1] = 0;
 
-		const CommandTasks* pGrp = NULL;
-		if (lstrcmp(asSource, AutoStartTaskName) == 0)
-		{
-			pGrp = gpSet->CmdTaskGet(-1);
-		}
-		else
-		{
-			for (int i = 0; (pGrp = gpSet->CmdTaskGet(i)) != NULL; i++)
-			{
-				if (lstrcmpi(pGrp->pszName, szName) == 0)
-				{
-					break;
-				}
-			}
-		}
+		const CommandTasks* pGrp = gpSet->CmdTaskGetByName(szName);
+
 		if (pGrp)
 		{
 			pszDataW = lstrdup(pGrp->pszCommands);
