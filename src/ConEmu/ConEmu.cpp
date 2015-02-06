@@ -6784,7 +6784,7 @@ wchar_t* CConEmuMain::LoadConsoleBatch_Task(LPCWSTR asSource, RConStartArgs* pAr
 				LPCWSTR pszDefCmd = gpSetCls->GetDefaultCmd();
 
 				RConStartArgs args;
-				args.aRecreate = cra_EditTab;
+				args.aRecreate = (mn_StartupFinished == ss_Started) ? cra_EditTab : cra_CreateTab;
 				if (pszDefCmd && *pszDefCmd)
 					args.pszSpecialCmd = lstrdup(pszDefCmd);
 
