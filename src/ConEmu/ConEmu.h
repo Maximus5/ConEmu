@@ -180,10 +180,11 @@ class CConEmuMain
 		void CheckPortableReg();
 		void FinalizePortableReg();
 		bool mb_ForceUseRegistry;
+		bool mb_SpecialConfigPath;
 		wchar_t ms_ConEmuXml[MAX_PATH+1];       // полный путь к портабельным настройкам
 		wchar_t ms_ConEmuIni[MAX_PATH+1];       // полный путь к портабельным настройкам
 	public:
-		bool SetConfigFile(LPCWSTR asFilePath, bool abWriteReq = false);
+		bool SetConfigFile(LPCWSTR asFilePath, bool abWriteReq = false, bool abSpecialPath = false);
 		void SetForceUseRegistry();
 		LPWSTR ConEmuXml();
 		LPWSTR ConEmuIni();

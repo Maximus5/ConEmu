@@ -479,6 +479,7 @@ CConEmuMain::CConEmuMain()
 	ms_ConEmuExe[0] = ms_ConEmuExeDir[0] = ms_ConEmuBaseDir[0] = ms_ConEmuWorkDir[0] = 0;
 	ms_ConEmuC32Full[0] = ms_ConEmuC64Full[0] = 0;
 	ms_ConEmuXml[0] = ms_ConEmuIni[0] = ms_ConEmuChm[0] = 0;
+	mb_SpecialConfigPath = false;
 	mb_ForceUseRegistry = false;
 
 	wchar_t *pszSlash = NULL;
@@ -1028,7 +1029,7 @@ bool CConEmuMain::CheckBaseDir()
 	return lbBaseFound;
 }
 
-bool CConEmuMain::SetConfigFile(LPCWSTR asFilePath, bool abWriteReq /*= false*/)
+bool CConEmuMain::SetConfigFile(LPCWSTR asFilePath, bool abWriteReq /*= false*/, bool abSpecialPath /*= false*/)
 {
 	LPCWSTR pszExt = asFilePath ? PointToExt(asFilePath) : NULL;
 	int nLen = asFilePath ? lstrlen(asFilePath) : 0;
@@ -1111,6 +1112,8 @@ bool CConEmuMain::SetConfigFile(LPCWSTR asFilePath, bool abWriteReq /*= false*/)
 		ms_ConEmuIni[0] = 0;
 		wcscpy_c(ms_ConEmuXml, asFilePath);
 	}
+
+	mb_SpecialConfigPath = abSpecialPath;
 
 	return true;
 }

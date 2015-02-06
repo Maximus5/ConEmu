@@ -4267,7 +4267,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	{
 		DEBUGSTRSTARTUP(L"Exact cfg file was specified");
 		// При ошибке - не выходим, просто покажем ее пользователю
-		gpConEmu->SetConfigFile(LoadCfgFile);
+		gpConEmu->SetConfigFile(LoadCfgFile, false/*abWriteReq*/, true/*abSpecialPath*/);
 		// Release mem
 		SafeFree(LoadCfgFile);
 	}
@@ -4359,7 +4359,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	{
 		// Сохранять конфиг только если получилось сменить путь (создать файл)
 		DEBUGSTRSTARTUP(L"Force write current config to settings storage");
-		if (!gpConEmu->SetConfigFile(SaveCfgFile, true/*abWriteReq*/))
+		if (!gpConEmu->SetConfigFile(SaveCfgFile, true/*abWriteReq*/, true/*abSpecialPath*/))
 		{
 			if (!iMainRc) iMainRc = 11;
 		}
