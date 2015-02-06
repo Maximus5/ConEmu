@@ -4879,6 +4879,64 @@ const CommandTasks* Settings::CmdTaskGet(int anIndex)
 	return (CmdTasks[anIndex]);
 }
 
+const CommandTasks* Settings::CmdTaskGetByName(LPCWSTR asTaskName)
+{
+	if (!asTaskName || !*asTaskName)
+		return NULL;
+
+	const CommandTasks* pGrp = NULL;
+
+	wchar_t szName[MAX_PATH]; lstrcpyn(szName, asTaskName, countof(szName));
+	wchar_t* psz = wcschr(szName, TaskBracketRight);
+	if (psz) psz[1] = 0;
+
+	if (lstrcmp(szName, AutoStartTaskName) == 0)
+	{
+		pGrp = CmdTaskGet(-1);
+	}
+	else
+	{
+		for (int i = 0; (pGrp = CmdTaskGet(i)) != NULL; i++)
+		{
+			if (pGrp->pszName && (lstrcmpi(pGrp->pszName, szName) == 0))
+			{
+				break;
+			}
+		}
+
+		// May be task was requested without subfolder or subfolder was stripped from task?
+		if (!pGrp)
+		{
+			LPCWSTR pszCmpName = wcsstr(szName, L"::");
+
+			if (!pszCmpName)
+				pszCmpName = szName + 1; // Skip "{"
+			else
+				pszCmpName += 2; // Skip "::"
+
+			for (int i = 0; (pGrp = CmdTaskGet(i)) != NULL; i++)
+			{
+				if (!pGrp->pszName)
+					continue;
+
+				// Compare only task name, stripping "{Folder::"
+				LPCWSTR pszTaskName = wcsstr(pGrp->pszName, L"::");
+				if (!pszTaskName)
+					pszTaskName = pGrp->pszName + 1; // Skip "{"
+				else
+					pszTaskName += 2; // Skip "::"
+
+				if (lstrcmpi(pszTaskName, pszCmpName) == 0)
+				{
+					break;
+				}
+			}
+		}
+	}
+
+	return pGrp;
+}
+
 // anIndex - 0-based, index of CmdTasks
 void Settings::CmdTaskSetVkMod(int anIndex, DWORD VkMod)
 {
