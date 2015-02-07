@@ -6790,7 +6790,7 @@ wchar_t* CConEmuMain::LoadConsoleBatch_Task(LPCWSTR asSource, RConStartArgs* pAr
 
 				int nCreateRc = gpConEmu->RecreateDlg(&args);
 
-				if (nCreateRc == IDC_START)
+				if ((nCreateRc == IDC_START) && args.pszSpecialCmd && *args.pszSpecialCmd)
 				{
 					wchar_t* pszNewCmd = args.CreateCommandLine();
 					return pszNewCmd;
