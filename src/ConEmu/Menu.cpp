@@ -412,6 +412,7 @@ void CConEmuMenu::OnNewConPopupMenu(POINT* ptWhere /*= NULL*/, DWORD nFlags /*= 
 
 		itm.Reset(CmdTaskPopupItem::eClearHistory, ++mn_CmdLastID, L"Clear history...");
 		InsertMenu(hPopup, nInsertPos, MF_BYPOSITION|MF_STRING|MF_ENABLED, itm.nCmd, itm.szShort);
+		m_CmdTaskPopup.push_back(itm);
 	}
 
 
