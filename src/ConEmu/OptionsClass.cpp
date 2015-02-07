@@ -2034,7 +2034,9 @@ INT_PTR CSettings::pageOpProc_Start(HWND hWnd2, UINT messg, WPARAM wParam, LPARA
 			while ((pGrp = gpSet->CmdTaskGet(nGroup++)))
 				SendDlgItemMessage(hWnd2, lbStartNamedTask, CB_ADDSTRING, 0, (LPARAM)pGrp->pszName);
 			// Select active task
-			if (CSetDlgLists::SelectStringExact(hWnd2, lbStartNamedTask, gpSet->psStartTasksName ? gpSet->psStartTasksName : L"") <= 0)
+			pGrp = gpSet->psStartTasksName ? gpSet->CmdTaskGetByName(gpSet->psStartTasksName) : NULL;
+			if (!pGrp || !pGrp->pszName
+				|| (CSetDlgLists::SelectStringExact(hWnd2, lbStartNamedTask, pGrp->pszName) <= 0))
 			{
 				if (gpSet->nStartType == (rbStartNamedTask - rbStartSingleApp))
 				{
