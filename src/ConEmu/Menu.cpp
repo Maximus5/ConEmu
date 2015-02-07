@@ -332,18 +332,90 @@ void CConEmuMenu::OnNewConPopupMenu(POINT* ptWhere /*= NULL*/, DWORD nFlags /*= 
 		//const wchar_t* sMenuHotkey = L"1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 		int nMenuHotkeyMax = _tcslen(sMenuHotkey);
 		//bool bWasTasks = false;
+
+		struct FolderInfo
+		{
+			wchar_t szFolderName[64];
+			HMENU   hPopup;
+			int     nGrpCount;
+		};
+		MArray<FolderInfo> Folders;
+		CEStr szTempName;
+
 		while ((pGrp = gpSet->CmdTaskGet(nGroup++)) != NULL)
 		{
-			if ((nCurGroupCount++) >= MAX_CMD_GROUP_SHOW)
+			int nGrpCount = -1;
+			LPCWSTR pszFolder;
+			HMENU hGrpPopup = NULL;
+
+			LPCWSTR pszTaskName = pGrp->pszName ? pGrp->pszName : L"<NULL>";
+
+			if ((pszFolder = wcsstr(pszTaskName, L"::")) != NULL)
 			{
-				itm.Reset(CmdTaskPopupItem::eMore, -1);
-				wcscpy_c(itm.szShort, L"&More tasks"); // отдельной функцией, т.к. "Reset" - экранирует "&"
-				itm.hPopup = CreatePopupMenu();
-				if (!InsertMenu(hCurPopup, nInsertPos, MF_BYPOSITION|MF_POPUP|MF_STRING|MF_ENABLED, (UINT_PTR)itm.hPopup, itm.szShort))
-					break;
-				hCurPopup = itm.hPopup;
-				m_CmdTaskPopup.push_back(itm);
-				nCurGroupCount = 1;
+				// "Far::Latest", "Far::Far 1.7", "Build::ConEmu GUI", ...
+				wchar_t szFolderName[64] = L"";
+				lstrcpyn(szFolderName, pszTaskName, min(countof(szFolderName)-2, (pszFolder - pszTaskName + 1)));
+				wcscat_c(szFolderName, L"}");
+				for (INT_PTR f = 0; f < Folders.size(); f++)
+				{
+					FolderInfo& fl = Folders[f];
+					if (lstrcmp(fl.szFolderName, szFolderName) == 0)
+					{
+						nGrpCount = (++fl.nGrpCount);
+						hGrpPopup = fl.hPopup;
+					}
+				}
+
+				if (!hGrpPopup)
+				{
+					// So create new popup "1: {Shells}" for example
+
+					itm.Reset(CmdTaskPopupItem::eMore, -1);
+
+					nCurGroupCount++;
+					if (nCurGroupCount >= 1 && nCurGroupCount <= nMenuHotkeyMax)
+					{
+						_wsprintf(itm.szShort, SKIPLEN(countof(itm.szShort)) L"&%c: ", sMenuHotkey[nCurGroupCount-1]);
+						int iLen = lstrlen(itm.szShort);
+						lstrcpyn(itm.szShort+iLen, szFolderName, countof(itm.szShort)-iLen);
+					}
+					else
+					{
+						lstrcpyn(itm.szShort, szFolderName, countof(itm.szShort));
+					}
+
+					itm.hPopup = CreatePopupMenu();
+					if (!InsertMenu(hCurPopup, nInsertPos, MF_BYPOSITION|MF_POPUP|MF_STRING|MF_ENABLED, (UINT_PTR)itm.hPopup, itm.szShort))
+						break;
+					hGrpPopup = itm.hPopup;
+					m_CmdTaskPopup.push_back(itm);
+
+					FolderInfo flNew = {};
+					wcscpy_c(flNew.szFolderName, szFolderName);
+					flNew.hPopup = itm.hPopup;
+					flNew.nGrpCount = nGrpCount = 1;
+					Folders.push_back(flNew);
+				}
+
+				szTempName = lstrmerge(L"{", pszFolder + 2);
+				pszTaskName = szTempName;
+			}
+
+			if (!hGrpPopup)
+			{
+				if ((nCurGroupCount++) >= MAX_CMD_GROUP_SHOW)
+				{
+					itm.Reset(CmdTaskPopupItem::eMore, -1);
+					wcscpy_c(itm.szShort, L"&More tasks"); // отдельной функцией, т.к. "Reset" - экранирует "&"
+					itm.hPopup = CreatePopupMenu();
+					if (!InsertMenu(hCurPopup, nInsertPos, MF_BYPOSITION|MF_POPUP|MF_STRING|MF_ENABLED, (UINT_PTR)itm.hPopup, itm.szShort))
+						break;
+					hCurPopup = itm.hPopup;
+					m_CmdTaskPopup.push_back(itm);
+					nCurGroupCount = 1;
+				}
+				nGrpCount = nCurGroupCount;
+				hGrpPopup = hCurPopup;
 			}
 
 			// Next task
@@ -351,23 +423,23 @@ void CConEmuMenu::OnNewConPopupMenu(POINT* ptWhere /*= NULL*/, DWORD nFlags /*= 
 			itm.pGrp = pGrp;
 			//itm.pszCmd = NULL; // pGrp->pszCommands; - don't show hint, there is SubMenu on RClick
 
-			_ASSERTE(nCurGroupCount>=1 && nCurGroupCount<=MAX_CMD_GROUP_SHOW);
-			if (nCurGroupCount <= nMenuHotkeyMax)
-				_wsprintf(itm.szShort, SKIPLEN(countof(itm.szShort)) L"&%c: ", sMenuHotkey[nCurGroupCount-1]);
+			_ASSERTE(nGrpCount>=1 && nGrpCount<=MAX_CMD_GROUP_SHOW);
+			if (nGrpCount >= 1 && nGrpCount <= nMenuHotkeyMax)
+				_wsprintf(itm.szShort, SKIPLEN(countof(itm.szShort)) L"&%c: ", sMenuHotkey[nGrpCount-1]);
 			else
 				itm.szShort[0] = 0;
 
 			wchar_t szHotkey[128];
-			itm.SetShortName(pGrp->pszName, !mb_CmdShowTaskItems, pGrp->HotKey.GetHotkeyName(szHotkey, false));
+			itm.SetShortName(pszTaskName, !mb_CmdShowTaskItems, pGrp->HotKey.GetHotkeyName(szHotkey, false));
 
 			if (mb_CmdShowTaskItems)
 			{
 				itm.hPopup = CreatePopupMenu();
-				InsertMenu(hCurPopup, nInsertPos, MF_BYPOSITION|MF_POPUP|MF_STRING|MF_ENABLED, (UINT_PTR)itm.hPopup, itm.szShort);
+				InsertMenu(hGrpPopup, nInsertPos, MF_BYPOSITION|MF_POPUP|MF_STRING|MF_ENABLED, (UINT_PTR)itm.hPopup, itm.szShort);
 			}
 			else
 			{
-				InsertMenu(hCurPopup, nInsertPos, MF_BYPOSITION|MF_ENABLED|MF_STRING, itm.nCmd, itm.szShort);
+				InsertMenu(hGrpPopup, nInsertPos, MF_BYPOSITION|MF_ENABLED|MF_STRING, itm.nCmd, itm.szShort);
 			}
 			m_CmdTaskPopup.push_back(itm);
 
