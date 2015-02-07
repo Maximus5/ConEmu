@@ -192,7 +192,7 @@ void CommandTasks::ParseGuiArgs(RConStartArgs* pArgs) const
 				pArgs->pszIconFile = pszExpand ? pszExpand : lstrdup(szArg);
 			}
 		}
-		else if (lstrcmpi(szArg, L"/single") == 0)
+		else if ((lstrcmpi(szArg, L"/single") == 0) || (lstrcmpi(szArg, L"/reuse") == 0))
 		{
 			// Used in the other parts of code
 		}
