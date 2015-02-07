@@ -12,6 +12,44 @@ Votes and awards (vote for ConEmu, if you please)
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+2015.2.6
+[*] CP hack: Use ConEmuCpCvt to force output CP conversion.
+    If some command uses wrong CP while converting ANSI to Unicode
+    (the example may be perl.exe from "git add -p")
+    set variable to correct its output. Use asterisk for all apps.
+    This hack affects ONLY WriteConsoleW function calls.
+    Format:
+      <exename>:<badcp>:<goodcp>[;<exename>:<badcp>:<goodcp>[...]]
+    Example:
+      set ConEmuCpCvt=perl.exe:1252:1251;*:850:866;
+[*] CP hack: Use ConEmuDefaultCp to change output CP if you don't want to use chcp.
+    If you can't use "chcp <codepage>" to change whole console CP output,
+    you may change it using environment variable ConEmuDefaultCp.
+    It will affect only WriteFile and WriteConsoleA functions.
+    So, if you need to run several apps in one console simultaneously...
+      set ConEmuDefaultCp=1251
+      ConEmuC -fork -c App1.exe
+      set ConEmuDefaultCp=866
+      ConEmuC -fork -c App2.exe
+      set ConEmuDefaultCp=
+[*] Add information about "-Async", "-Fork", "-Download" switches.
+[*] Switch '-noquake' implies '-nosingle'.
+[*] Use self-implemented UnExpandEnvStrings while creating default tasks.
+[*] TaskBar jump list was created without directly specified xml configuration file.
+[*] Button ‘Save’ instead of ‘Start’ was shown if bad startup Task was detected.
+[*] The menu item ‘Clear history...’ was not working (the one in the `[+]` drop-down menu).
+[*] Sometimes ‘Console script are not supported here’ error appeared after running a task from NewConsole dialog.
+[*] Tasks may be organized with folders. Delimit task name from folder name with "::".
+    For example, type "Shells::PowerShell" instead of "PowerShell", and so on.
+    Only one level of folders is allowed. No need to reorder tasks of one folder
+    continuously, folders are filled by name. Generally this was implemented for
+    drop-down `[+]` menu.
+[*] Create default tasks with folders (Shells, Bash, SDK, and so on).
+[*] Find task by name with or without folder part (Startup page).
+[*] Button 'Add default tasks' will not create task duplicates (checking by task name).
+[*] Allow switch '/reuse' in task parameters (alias for '/single' yet).
+
+
 2015.2.3
 [*] Issue 1886: Change text cursor position with ‘LeftClick’ was not working when PSReadLine was loaded in your $profile. Look at RevokeMouseInput.ps1.
 [*] github#20: ‘Ctrl-Left’ and ‘Ctrl-Right’ was not working in Vim/xterm.
