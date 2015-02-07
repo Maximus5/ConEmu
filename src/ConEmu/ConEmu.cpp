@@ -6792,7 +6792,17 @@ wchar_t* CConEmuMain::LoadConsoleBatch_Task(LPCWSTR asSource, RConStartArgs* pAr
 
 				if ((nCreateRc == IDC_START) && args.pszSpecialCmd && *args.pszSpecialCmd)
 				{
-					wchar_t* pszNewCmd = args.CreateCommandLine();
+					wchar_t* pszNewCmd = NULL;
+					if ((*args.pszSpecialCmd == CmdFilePrefix) || (*args.pszSpecialCmd == TaskBracketLeft))
+					{
+						wchar_t* pszTaskName = args.pszSpecialCmd; args.pszSpecialCmd = NULL;
+						pszNewCmd = LoadConsoleBatch(pszTaskName, &args);
+						free(pszTaskName);
+					}
+					else
+					{
+						pszNewCmd = args.CreateCommandLine();
+					}
 					return pszNewCmd;
 				}
 			}
