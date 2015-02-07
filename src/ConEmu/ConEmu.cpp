@@ -6794,7 +6794,6 @@ wchar_t* CConEmuMain::LoadConsoleBatch_Task(LPCWSTR asSource, RConStartArgs* pAr
 				{
 					wchar_t* pszNewCmd = args.CreateCommandLine();
 					return pszNewCmd;
-					//return lstrdup(pszDefCmd);
 				}
 			}
 			return NULL;
