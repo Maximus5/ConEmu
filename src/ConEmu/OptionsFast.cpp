@@ -485,8 +485,18 @@ checkDefaults:
 /*         Creating default tasks           */
 /* **************************************** */
 
+static bool sbAppendMode = false;
+
 static void CreateDefaultTask(int& iCreatIdx, LPCWSTR asName, LPCWSTR asGuiArg, LPCWSTR asCommands)
 {
+	// Don't add duplicates in the append mode
+	if (sbAppendMode)
+	{
+		const CommandTasks* pTask = gpSet->CmdTaskGetByName(asName);
+		if (pTask != NULL)
+			return;
+	}
+
 	gpSet->CmdTaskSet(iCreatIdx++, asName, asGuiArg, asCommands);
 }
 
@@ -885,6 +895,8 @@ void CreateFarTasks(LPCWSTR asDrive, int& iCreatIdx)
 void CreateDefaultTasks(bool bForceAdd /*= false*/)
 {
 	int iCreatIdx = 0;
+
+	sbAppendMode = bForceAdd;
 
 	if (!bForceAdd)
 	{
