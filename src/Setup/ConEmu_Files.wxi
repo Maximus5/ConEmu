@@ -133,7 +133,7 @@
       <Component Id="ChocolateyAbout.cmd" Guid="$(var.Guid.ChocolateyAbout.cmd)" Win64="$(var.Win64)">
         <File Id="ChocolateyAbout.cmd" Source="..\..\Release\ConEmu\Addons\ChocolateyAbout.cmd"  KeyPath="yes" />
       </Component>
-      <Component Id="git.cmd" Guid="$(var.Guid.git.cmd)" Win64="$(var.Win64)">
+      <Component Id="git_sample.cmd" Guid="$(var.Guid.git_sample.cmd)" Win64="$(var.Win64)">
         <File Id="git_sample.cmd" Source="..\..\Release\ConEmu\Addons\git_sample.cmd"  KeyPath="yes" />
       </Component>
       <Component Id="FarHereInstall.cmd" Guid="$(var.Guid.FarHereInstall.cmd)" Win64="$(var.Win64)">

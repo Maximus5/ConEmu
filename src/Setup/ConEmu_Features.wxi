@@ -188,7 +188,7 @@
       <Feature Id="FGit" AllowAdvertise="no" Title="Git show branch" Level="1"
                Description="How to show git branch in cmd and Far prompt">
         <ComponentRef Id="GitShowBranch.cmd"/>
-        <ComponentRef Id="git.cmd"/>
+        <ComponentRef Id="git_sample.cmd"/>
       </Feature>
       <Feature Id="FChocolatey" AllowAdvertise="no" Title="Chocolatey" Level="1"
                Description="apt-get style package manager for Windows">

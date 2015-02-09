@@ -48,7 +48,7 @@
 	<?define Guid.Command_Processor_Off.reg = "DA4661C7-FD43-4A42-8EF0-1A0FC7CC2978" ?>
 	<!-- GIT Extensions -->
 	<?define Guid.GitShowBranch.cmd = "7835C881-EC84-4845-A5E9-9C6006E3BF8E" ?>
-	<?define Guid.git.cmd = "6738FF24-521C-4751-95FF-0A04B8506E90" ?>
+	<?define Guid.git_sample.cmd = "6738FF24-521C-4751-95FF-0A04B8506E90" ?>
 	<!-- Chocolatey -->
 	<?define Guid.ChocolateyAbout.cmd = "D47C8057-2E85-45C7-AC1F-C97D3ED459EE" ?>
 	<!-- clink -->
