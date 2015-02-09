@@ -129,6 +129,7 @@
 	<?define Guid.Disable_ConIme.reg = "8CB0AC7F-C11F-4608-BCBD-7E7E00733087" ?>
 	<?define Guid.CallPlugin.txt = "AD76AC9B-8734-4062-85F5-550A1B8DB8AD" ?>
 	<?define Guid.RevokeMouseInput.ps1 = "3542F524-92CC-45E0-BF51-0B131237F37E" ?>
+	<?define Guid.utf-8-test.cmd = "725D0BA4-BB54-46DD-87EF-F169E8495806" ?>
 	
 	<?define Guid.AnsiColors16.ans = "5E6CA67A-6EBD-4103-A36B-82DD4ADD45F2" ?>
 	<?define Guid.AnsiColors16t.ans = "C6471B71-252F-4BDF-B83A-7551F7C325CB" ?>
