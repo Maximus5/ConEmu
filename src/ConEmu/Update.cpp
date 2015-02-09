@@ -1468,6 +1468,7 @@ void CConEmuUpdate::ReportBrokenIni(LPCWSTR asSection, LPCWSTR asName, LPCWSTR a
 		free(pszIni);
 }
 
+// If we are installed in "C:\Program Files\..." or any other restricted location.
 bool CConEmuUpdate::NeedRunElevation()
 {
 	if (!gpConEmu)

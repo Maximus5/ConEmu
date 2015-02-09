@@ -102,7 +102,6 @@ protected:
 	bool IsLocalFile(LPCWSTR& asPathOrUrl);
 
 	bool bNeedRunElevation;
-	bool NeedRunElevation();
 
 	BOOL DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDstFile, DWORD& crc, BOOL abPackage = FALSE);
 
@@ -122,6 +121,7 @@ public:
 
 	static bool LocalUpdate(LPCWSTR asDownloadedPackage);
 	static bool IsUpdatePackage(LPCWSTR asFilePath);
+	static bool NeedRunElevation();
 
 	enum UpdateStep
 	{
