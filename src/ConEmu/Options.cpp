@@ -628,7 +628,7 @@ void Settings::InitSettings()
 		_wndX = rcWork.left; _wndY = rcWork.top;
 	}
 	wndCascade = true;
-	isAutoSaveSizePos = false;
+	isAutoSaveSizePos = true;
 	mb_ExitSettingsAutoSaved = false;
 	isConVisible = false; //isLockRealConsolePos = false;
 	isUseInjects = true; // Fuck... Features or speed. User must choose!
