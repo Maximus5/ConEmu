@@ -1374,23 +1374,24 @@ BOOL CreateProcessDemoted(LPWSTR lpCommandLine,
 							 LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation,
 							 LPDWORD pdwLastError)
 {
-	BOOL lbRc = FALSE;
-	BOOL lbTryStdCreate = FALSE;
-
 	if (!lpCommandLine || !*lpCommandLine)
 	{
 		DisplayLastError(L"CreateProcessDemoted failed, lpCommandLine is empty", -1);
 		return FALSE;
 	}
 
-	LPCWSTR pszCmdArgs = lpCommandLine;
-	CmdArg szExe;
-	if (0 != NextArg(&pszCmdArgs, szExe))
+	// Issue 1897: Created task stopped after 72 hour, so use "/bypass"
+	CEStr szExe;
+	if (!GetModuleFileName(NULL, szExe.GetBuffer(MAX_PATH), MAX_PATH) || szExe.IsEmpty())
 	{
-		DisplayLastError(L"Invalid cmd line. Executable not exists", -1);
-		return 100;
+		DisplayLastError(L"GetModuleFileName(NULL) failed");
+		return FALSE;
 	}
+	CEStr szCommand(lstrmerge(L"/bypass /cmd ", lpCommandLine));
+	LPCWSTR pszCmdArgs = szCommand;
 
+	BOOL lbRc = FALSE;
+	BOOL lbTryStdCreate = FALSE;
 
 #if !defined(__GNUC__)
 
