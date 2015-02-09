@@ -1691,7 +1691,7 @@ wrap:
 	if (0 != NextArg(&pszDefCmd, szExe))
 	{
 		DisplayLastError(L"Invalid cmd line. ConEmu.exe not exists", -1);
-		return 100;
+		return FALSE;
 	}
 
 	OleInitialize(NULL);
