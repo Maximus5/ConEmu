@@ -36,6 +36,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "OptionsHelp.h"
 #include "ConEmu.h"
 #include "ConEmuApp.h"
+#include "Update.h"
 #include "../common/WFiles.h"
 #include "../common/WRegistry.h"
 
@@ -122,6 +123,9 @@ static INT_PTR CALLBACK CheckOptionsFastProc(HWND hDlg, UINT messg, WPARAM wPara
 					}
 				}
 			}
+			// Index of the default location (relative to listbox, but not a pszSettingsPlaces)
+			// By default - suggest %APPDATA% or, if possible, %ConEmuDir%
+			int iDefault = (iAllowed == 0) ? (CConEmuUpdate::NeedRunElevation() ? 1 : 3) : 0;
 
 			// Populate lbStorageLocation
 			while (pszSettingsPlaces[iAllowed])
@@ -129,7 +133,7 @@ static INT_PTR CALLBACK CheckOptionsFastProc(HWND hDlg, UINT messg, WPARAM wPara
 				SendDlgItemMessage(hDlg, lbStorageLocation, CB_ADDSTRING, 0, (LPARAM)pszSettingsPlaces[iAllowed]);
 				iAllowed++;
 			}
-			SendDlgItemMessage(hDlg, lbStorageLocation, CB_SETCURSEL, 0, 0);
+			SendDlgItemMessage(hDlg, lbStorageLocation, CB_SETCURSEL, iDefault, 0);
 
 			// Release memory
 			for (int i = 0; pszSettingsPlaces[i]; i++)
