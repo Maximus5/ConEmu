@@ -1428,6 +1428,7 @@ BOOL CreateProcessDemoted(LPWSTR lpCommandLine,
 	ITrigger *pTrigger = NULL;
 	ITriggerCollection *pTriggerCollection = NULL;
 	ITaskDefinition *pTask = NULL;
+	ITaskSettings *pSettings = NULL;
 	ITaskFolder *pRootFolder = NULL;
 	ITaskService *pService = NULL;
 	HRESULT hr;
@@ -1436,6 +1437,7 @@ BOOL CreateProcessDemoted(LPWSTR lpCommandLine,
 	DWORD nTickStart, nDuration;
 	const DWORD nMaxTaskWait = 20000;
 	const DWORD nMaxWindowWait = 20000;
+	wchar_t szIndefinitely[] = L"PT0S";
 
 	//  ------------------------------------------------------
 	//  Initialize COM.
@@ -1496,6 +1498,21 @@ BOOL CreateProcessDemoted(LPWSTR lpCommandLine,
 	}
 
 	SafeRelease(pService);  // COM clean up.  Pointer is no longer used.
+
+	//  ------------------------------------------------------
+	//  Ensure there will be no execution time limit
+	hr = pTask->get_Settings(&pSettings);
+	if (FAILED(hr))
+	{
+		DisplayLastError(L"Cannot get task settings: 0x%08X", hr);
+		goto wrap;
+	}
+	hr = pSettings->put_ExecutionTimeLimit(szIndefinitely);
+	if (FAILED(hr))
+	{
+		DisplayLastError(L"Cannot set task execution time limit: 0x%08X", hr);
+		goto wrap;
+	}
 
 	//  ------------------------------------------------------
 	//  Get the trigger collection to insert the registration trigger.
