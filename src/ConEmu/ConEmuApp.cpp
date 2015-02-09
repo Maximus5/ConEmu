@@ -1377,6 +1377,11 @@ BOOL CreateProcessDemoted(LPWSTR lpCommandLine,
 	BOOL lbRc = FALSE;
 	BOOL lbTryStdCreate = FALSE;
 
+	if (!lpCommandLine || !*lpCommandLine)
+	{
+		DisplayLastError(L"CreateProcessDemoted failed, lpCommandLine is empty", -1);
+		return FALSE;
+	}
 
 	LPCWSTR pszCmdArgs = lpCommandLine;
 	CmdArg szExe;
