@@ -1368,7 +1368,7 @@ BOOL CreateProcessRestricted(LPCWSTR lpApplicationName, LPWSTR lpCommandLine,
 }
 
 
-BOOL CreateProcessDemoted(LPCWSTR lpApplicationName, LPWSTR lpCommandLine,
+BOOL CreateProcessDemoted(LPWSTR lpCommandLine,
 							 LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes,
 							 BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment,
 							 LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation,
@@ -1377,7 +1377,6 @@ BOOL CreateProcessDemoted(LPCWSTR lpApplicationName, LPWSTR lpCommandLine,
 	BOOL lbRc = FALSE;
 	BOOL lbTryStdCreate = FALSE;
 
-	Assert(lpApplicationName==NULL);
 
 	LPCWSTR pszCmdArgs = lpCommandLine;
 	CmdArg szExe;
@@ -1767,7 +1766,7 @@ wrap:
 		//}
 		else
 		{
-			if (CreateProcessAsUserW(hTokenRest, lpApplicationName, lpCommandLine,
+			if (CreateProcessAsUserW(hTokenRest, NULL, lpCommandLine,
 							 lpProcessAttributes, lpThreadAttributes,
 							 bInheritHandles, dwCreationFlags, lpEnvironment,
 							 lpCurrentDirectory, lpStartupInfo, lpProcessInformation))
@@ -1855,7 +1854,7 @@ wrap:
 				CreateProcessWithTokenW(hTokenDesktop, LOGON_WITH_PROFILE,
 				//CreateProcessAsUserW(hTokenDesktop,
 				//CreateProcessW(
-					lpApplicationName, lpCommandLine,
+					NULL, lpCommandLine,
 					//lpProcessAttributes, lpThreadAttributes, bInheritHandles,
 					dwCreationFlags, lpEnvironment,
 					lpCurrentDirectory, lpStartupInfo, lpProcessInformation);
@@ -1889,7 +1888,7 @@ wrap:
 	// If all methods fails - try to execute "as is"?
 	if (lbTryStdCreate)
 	{
-		lbRc = CreateProcess(lpApplicationName, lpCommandLine,
+		lbRc = CreateProcess(NULL, lpCommandLine,
 							 lpProcessAttributes, lpThreadAttributes,
 							 bInheritHandles, dwCreationFlags, lpEnvironment,
 							 lpCurrentDirectory, lpStartupInfo, lpProcessInformation);
@@ -3710,7 +3709,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					DWORD nErr = 0;
 
 
-					b = CreateProcessDemoted(NULL, cmdNew, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL,
+					b = CreateProcessDemoted(cmdNew, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL,
 							szCurDir, &si, &pi, &nErr);
 
 
