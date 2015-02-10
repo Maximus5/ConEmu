@@ -7123,6 +7123,7 @@ int CRealConsole::GetActiveAppSettingsId(LPCWSTR* ppProcessName /*= NULL*/, bool
 		return -1;
 
 	int   iAppId = -1;
+	int   iLastId = mn_LastAppSettingsId;
 	DWORD nPID = GetActivePID();
 	bool  isAdmin = isAdministrator();
 
@@ -7188,6 +7189,8 @@ wrap:
 		*pnBits = mn_LastProcessBits;
 	if (pnPID)
 		*pnPID = mn_LastProcessNamePID;
+	if (iLastId != mn_LastAppSettingsId)
+		mp_VCon->OnAppSettingsChanged(mn_LastAppSettingsId);
 	return mn_LastAppSettingsId;
 }
 

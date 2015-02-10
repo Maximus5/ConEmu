@@ -280,6 +280,7 @@ bool CVirtualConsole::Constructor(RConStartArgs *args)
 	memset(&TransparentInfo, 0, sizeof(TransparentInfo));
 	isFade = false; isForeground = true;
 	mp_Colors = gpSet->GetColors(-1);
+	mn_AppSettingsChangCount = 0;
 	memset(&m_LeftPanelView, 0, sizeof(m_LeftPanelView));
 	memset(&m_RightPanelView, 0, sizeof(m_RightPanelView));
 	mn_ConEmuFadeMsg = /*mn_ConEmuSettingsMsg =*/ 0;
@@ -2658,6 +2659,11 @@ bool CVirtualConsole::ChangePalette(int aNewPaletteIdx)
 
 	Update(true);
 	return true;
+}
+
+void CVirtualConsole::OnAppSettingsChanged(int iAppId /*= -1*/)
+{
+	LONG lNew = InterlockedIncrement(&mn_AppSettingsChangCount);
 }
 
 bool CVirtualConsole::UpdatePrepare(HDC *ahDc, MSectionLock *pSDC, MSectionLock *pSCON)

@@ -347,6 +347,9 @@ class CVirtualConsole :
 		void OnTaskbarSettingsChanged();
 		void OnTaskbarFocus();
 
+		void OnAppSettingsChanged(int iAppId = -1);
+		LONG mn_AppSettingsChangCount;
+
 	protected:
 		//inline void GetCharAttr(WORD atr, BYTE& foreColorNum, BYTE& backColorNum, HFONT* pFont);
 		wchar_t* mpsz_LogScreen; DWORD mn_LogScreenIdx;
