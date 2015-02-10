@@ -157,8 +157,8 @@
       <Component Id="RevokeMouseInput.ps1" Guid="$(var.Guid.RevokeMouseInput.ps1)" Win64="$(var.Win64)">
         <File Id="RevokeMouseInput.ps1" Source="..\..\Release\ConEmu\Addons\RevokeMouseInput.ps1"  KeyPath="yes" />
       </Component>
-      <Component Id="utf-8-test.cmd" Guid="$(var.Guid.utf-8-test.cmd)" Win64="$(var.Win64)">
-        <File Id="utf-8-test.cmd" Source="..\..\Release\ConEmu\Addons\utf-8-test.cmd"  KeyPath="yes" />
+      <Component Id="utf_8_test.cmd" Guid="$(var.Guid.utf_8_test.cmd)" Win64="$(var.Win64)">
+        <File Id="utf_8_test.cmd" Source="..\..\Release\ConEmu\Addons\utf-8-test.cmd"  KeyPath="yes" />
       </Component>
       <Component Id="Disable_ConIme.reg" Guid="$(var.Guid.Disable_ConIme.reg)" Win64="$(var.Win64)">
         <File Id="Disable_ConIme.reg" Source="..\..\Release\ConEmu\Addons\Disable_ConIme.reg"  KeyPath="yes" />

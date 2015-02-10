@@ -179,7 +179,7 @@
         <ComponentRef Id="Disable_ConIme.reg"/>
         <ComponentRef Id="CallPlugin.txt"/>
         <ComponentRef Id="RevokeMouseInput.ps1"/>
-        <ComponentRef Id="utf-8-test.cmd"/>
+        <ComponentRef Id="utf_8_test.cmd"/>
       </Feature>
       <Feature Id="FDosBox" AllowAdvertise="no" Title="DosBox example" Level="1"
                Description="Sample DosBox configuration file">
