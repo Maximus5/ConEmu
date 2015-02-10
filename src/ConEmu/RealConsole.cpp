@@ -9800,7 +9800,10 @@ INT_PTR CRealConsole::renameProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lP
 				RECT rcTab = {};
 				if (pRCon->mp_ConEmu->mp_TabBar->GetActiveTabRect(&rcTab))
 				{
-					OffsetRect(&rcDlg, rcTab.left - rcDlg.left, rcTab.bottom - rcDlg.top);
+					if (gpSet->nTabsLocation == 1)
+						OffsetRect(&rcDlg, rcTab.left - rcDlg.left, rcTab.top - rcDlg.bottom); // bottom
+					else
+						OffsetRect(&rcDlg, rcTab.left - rcDlg.left, rcTab.bottom - rcDlg.top); // top
 				}
 			}
 			else
