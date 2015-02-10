@@ -105,6 +105,7 @@ typedef struct _CONSOLE_SELECTION_INFO
 #define CEWHATSNEW     L"http://code.google.com/p/conemu-maximus5/wiki/Whats_New"
 #define CEMSBUGWIKI    L"http://code.google.com/p/conemu-maximus5/wiki/MicrosoftBugs"
 #define CEHOOKSWIKI    L"http://code.google.com/p/conemu-maximus5/wiki/ConEmuHk"
+#define CEWIKIBASE     L"http://code.google.com/p/conemu-maximus5/wiki/"
 #define CEDONATEPAGE   L"http://conemu.github.io/donate.html"
 #define CEFLATTRPAGE   L"http://flattr.com/thing/2002773/Maximus5ConEmu-on-GitHub"
 

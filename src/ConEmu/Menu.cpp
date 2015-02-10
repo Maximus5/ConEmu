@@ -2099,6 +2099,7 @@ HMENU CConEmuMenu::CreateHelpMenuPopup()
 
 	AppendMenu(hHelp, MF_SEPARATOR, 0, NULL);
 	AppendMenu(hHelp, MF_STRING|MF_ENABLED, ID_HOTKEYS, MenuAccel(vkWinAltK,L"Hot&keys"));
+	AppendMenu(hHelp, MF_STRING|MF_ENABLED, ID_ONLINEHELP, MenuAccel(vkWinAltH,L"Online &Help"));
 	AppendMenu(hHelp, MF_STRING|MF_ENABLED, ID_ABOUT, MenuAccel(vkWinAltA,L"&About / Help"));
 
 	return hHelp;
@@ -2376,6 +2377,12 @@ LRESULT CConEmuMenu::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam, UINT 
 		case ID_DONATE_LINK:
 		{
 			ConEmuAbout::OnInfo_Donate();
+			return 0;
+		}
+
+		case ID_ONLINEHELP:
+		{
+			ConEmuAbout::OnInfo_OnlineWiki();
 			return 0;
 		}
 

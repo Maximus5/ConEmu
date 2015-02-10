@@ -1072,6 +1072,7 @@
 #define cbCloseWindowConfirm            2757
 #define cbConfirmCloseRunning           2758
 #define gbConfirmCloseFar               2759
+#define vkWinAltH                       2760
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
@@ -1080,7 +1081,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        226
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2760
+#define _APS_NEXT_CONTROL_VALUE         2761
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif

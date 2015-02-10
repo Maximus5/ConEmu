@@ -397,6 +397,7 @@ BEGIN
 	vkTransparencyDec       "Transparency: more opaque"
 	vkTransparencyInc       "Transparency: more translucent"
 	vkWinAltA               "Show ‘About’ dialog"
+	vkWinAltH               "Open online help/wiki in your browser"
 	vkWinAltK               "Setup ‘Hotkeys’"
 	vkWinAltP               "Settings dialog"
 	vkWinAltT               "Setup ‘Tasks’"

@@ -412,6 +412,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"    Cmd==4, Value=<0/1> - AlphaValueSeparate\r\n" \
 	L"Task(\"Name\"[,\"Dir\"])\r\n" \
 	L"  - start task with specified name\r\n" \
+	L"Wiki([\"PageName\"])\r\n" \
+	L"  - Open online documentation\r\n" \
 	L"WindowFullscreen()\r\n" \
 	L"  - Switch fullscreen window mode\r\n" \
 	L"     returns previous window mode\r\n" \

@@ -424,6 +424,16 @@ void ConEmuAbout::InitCommCtrls()
 	mb_CommCtrlsInitialized = true;
 }
 
+void ConEmuAbout::OnInfo_OnlineWiki(LPCWSTR asPageName /*= NULL*/)
+{
+	CEStr szUrl(lstrmerge(CEWIKIBASE,asPageName ? asPageName : L"ConEmu"));
+	DWORD shellRc = (DWORD)(INT_PTR)ShellExecute(ghWnd, L"open", szUrl, NULL, NULL, SW_SHOWNORMAL);
+	if (shellRc <= 32)
+	{
+		DisplayLastError(L"ShellExecute failed", shellRc);
+	}
+}
+
 void ConEmuAbout::OnInfo_Donate()
 {
 	int nBtn = MsgBox(

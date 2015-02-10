@@ -216,6 +216,8 @@ namespace ConEmuMacro
 	// Transparency
 	LPWSTR Transparency(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 		LPWSTR TransparencyHelper(int nCmd, int nValue); // helper, это не макро-фукнция
+	// Wiki(["Page"])
+	LPWSTR Wiki(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Fullscreen
 	LPWSTR WindowFullscreen(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Maximize
@@ -278,6 +280,7 @@ namespace ConEmuMacro
 		{Tab, {L"Tab", L"Tabs", L"TabControl"}},
 		{Task, {L"Task"}},
 		{Transparency, {L"Transparency"}},
+		{Wiki, {L"Wiki"}},
 		{WindowFullscreen, {L"WindowFullscreen"}},
 		{WindowMaximize, {L"WindowMaximize"}},
 		{WindowMinimize, {L"WindowMinimize"}},
@@ -1461,6 +1464,17 @@ LPWSTR ConEmuMacro::FindFarWindowHelper(
 		lstrcpyn(pszResult, L"NotFound", cchSize);
 
 	return pszResult;
+}
+
+// Диалог Wiki(["Page"])
+LPWSTR ConEmuMacro::Wiki(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
+{
+	LPWSTR pszPage = NULL;
+	p->GetStrArg(0, pszPage);
+
+	ConEmuAbout::OnInfo_OnlineWiki(pszPage);
+
+	return lstrdup(L"OK");
 }
 
 // Fullscreen

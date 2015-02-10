@@ -32,6 +32,7 @@ namespace ConEmuAbout
 {
 	void OnInfo_Donate();
 	void OnInfo_About(LPCWSTR asPageName = NULL);
+	void OnInfo_OnlineWiki(LPCWSTR asPageName = NULL);
 	void OnInfo_WhatsNew(bool bLocal);
 	void OnInfo_Help();
 	void OnInfo_HomePage();
