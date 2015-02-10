@@ -12,6 +12,15 @@ Votes and awards (vote for ConEmu, if you please)
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+2015.2.9
+[*] Issue 1897: Tear off started "ConEmu.exe" from "taskeng.exe" (switch /demote).
+    Let process created from task sheduler runs indefinitely.
+[*] Auto save window size & pos is turned on by default.
+[*] Add test batch "utf-8-test.cmd" (check console unicode capabilities).
+[*] Suggest ConEmu.xml storage for new configurations by default.
+[*] Issue 1870: Rename dialog was shown out of screen if tabs were on bottom.
+
+
 2015.2.6
 [*] CP hack: Use ConEmuCpCvt to force output CP conversion.
     If some command uses wrong CP while converting ANSI to Unicode
