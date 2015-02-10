@@ -1368,19 +1368,15 @@ void CConEmuChild::Invalidate()
 
 	CVirtualConsole* pVCon = mp_VCon;
 
-	//if (gpConEmu->isActive(pVCon))
-	//	gpConEmu->mp_Status->UpdateStatusBar();
+	InvalidateView();
 
+	InvalidateBack();
 
-	// Здесь нужно invalidate'ить и GAPS !!!
-	// Иначе при запуске "conemu.exe /max" - gaps остаются зелеными, что означает потенциальную проблему
+	UNREFERENCED_PARAMETER(pVCon);
+}
 
-	//2009-06-22 Опять поперла непрорисовка. Причем если по экрану окошко повозить - изображение нормальное
-	// Так что пока лучше два раза нарисуем...
-	//if (mb_Invalidated) {
-	//	DEBUGSTRDRAW(L" ### Warning! Invalidate on DC window will be duplicated\n");
-	////	return;
-	//}
+void CConEmuChild::InvalidateView()
+{
 	if (mh_WndDC)
 	{
 		DEBUGSTRDRAW(L" +++ Invalidate on DC window called\n");
@@ -1409,7 +1405,10 @@ void CConEmuChild::Invalidate()
 	{
 		_ASSERTE(mh_WndDC != NULL);
 	}
+}
 
+void CConEmuChild::InvalidateBack()
+{
 	if (mh_WndBack)
 	{
 		InvalidateRect(mh_WndBack, NULL, FALSE);
@@ -1418,8 +1417,6 @@ void CConEmuChild::Invalidate()
 	{
 		_ASSERTE(mh_WndBack!=NULL);
 	}
-
-	UNREFERENCED_PARAMETER(pVCon);
 }
 
 //void CConEmuChild::Validate()

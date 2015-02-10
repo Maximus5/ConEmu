@@ -60,6 +60,10 @@ class CConEmuChild
 		HWND GetBack();
 		BOOL ShowView(int nShowCmd);
 		void Invalidate();
+	protected:
+		void InvalidateView();
+		void InvalidateBack();
+	public:
 		//void Validate();
 		void Redraw(bool abRepaintNow = false);
 
