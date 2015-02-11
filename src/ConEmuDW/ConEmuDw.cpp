@@ -849,6 +849,13 @@ BOOL WINAPI SetTextAttributes(const FarColor* Attributes)
 	return lbRc;
 }
 
+enum CLEAR_REGION
+{
+	CR_TOP=0x1,
+	CR_RIGHT=0x2,
+	CR_BOTH=CR_TOP|CR_RIGHT,
+};
+
 BOOL WINAPI ClearExtraRegions(const FarColor* Color, int Mode)
 {
 	#ifdef _DEBUG
@@ -856,9 +863,38 @@ BOOL WINAPI ClearExtraRegions(const FarColor* Color, int Mode)
 	DEBUGSTRCALL(szCall);
 	#endif
 
+	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
+	SMALL_RECT srWork = {};
+	HANDLE h;
+	if (!CheckBuffers() || !GetBufferInfo(h, csbi, srWork))
+		return FALSE;
+
+	AnnotationInfo t = {};
+	WORD ConColor = Far2ConEmuColor(Color, t);
+
+	if (Mode & CR_TOP)
+	{
+		DWORD CharsWritten, TopSize = csbi.dwSize.X*csbi.srWindow.Top;
+		COORD TopCoord = {};
+		FillConsoleOutputCharacter(h, L' ', TopSize, TopCoord, &CharsWritten);
+		FillConsoleOutputAttribute(h, ConColor, TopSize, TopCoord, &CharsWritten );
+	}
+
+	if (Mode & CR_RIGHT)
+	{
+		DWORD CharsWritten, RightSize = csbi.dwSize.X-csbi.srWindow.Right;
+		COORD RightCoord = {csbi.srWindow.Right,csbi.dwSize.Y-(csbi.srWindow.Bottom-csbi.srWindow.Top+1)};
+		for (; RightCoord.Y<csbi.dwSize.Y; RightCoord.Y++)
+		{
+			FillConsoleOutputCharacter(h, L' ', RightSize, RightCoord, &CharsWritten);
+			FillConsoleOutputAttribute(h, ConColor, RightSize, RightCoord, &CharsWritten);
+		}
+	}
+
 	//TODO: Пока работаем через старый Annotation buffer (переделать нужно)
 	//TODO: который по определению соответствует видимой области экрана
-	return SetTextAttributes(Color);
+	//return SetTextAttributes(Color);
+	return TRUE;
 }
 
 BOOL WINAPI ClearExtraRegionsOld(const FarColor* Color)
@@ -868,7 +904,7 @@ BOOL WINAPI ClearExtraRegionsOld(const FarColor* Color)
 	DEBUGSTRCALL(szCall);
 	#endif
 
-	return ClearExtraRegions(Color, 0);
+	return ClearExtraRegions(Color, CR_BOTH);
 }
 
 BOOL WINAPI ReadOutput(FAR_CHAR_INFO* Buffer, COORD BufferSize, COORD BufferCoord, SMALL_RECT* ReadRegion)
