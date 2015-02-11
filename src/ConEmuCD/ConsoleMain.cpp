@@ -9298,7 +9298,7 @@ static bool ApplyConsoleSizeBuffer(const USHORT BufferHeight, const COORD& crNew
 	// если только само консольное приложение не выполняет прокрутку.
 	// Сам ConEmu должен "крутить" консоль только виртуально, не трогая физический скролл.
 	bool lbCursorInScreen = CoordInSmallRect(csbi.dwCursorPosition, csbi.srWindow);
-	bool lbScreenAtBottom = (csbi.srWindow.Bottom >= (csbi.dwSize.Y - 1));
+	bool lbScreenAtBottom = (csbi.srWindow.Top > 0) && (csbi.srWindow.Bottom >= (csbi.dwSize.Y - 1));
 	bool lbCursorAtBottom = (lbCursorInScreen && (csbi.dwCursorPosition.Y >= (csbi.srWindow.Bottom - 2)));
 	SHORT nCursorAtBottom = lbCursorAtBottom ? (csbi.srWindow.Bottom - csbi.dwCursorPosition.Y + 1) : 0;
 	SHORT nBottomLine = csbi.srWindow.Bottom;
