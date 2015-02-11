@@ -707,6 +707,52 @@ BOOL WINAPI GetTextAttributes(FarColor* Attributes)
 	//return lbRc;
 }
 
+WORD Far2ConEmuColor(const FarColor* Attributes, AnnotationInfo& t)
+{
+	ZeroStruct(t);
+	WORD n = 0, f = 0;
+	unsigned __int64 Flags = Attributes->Flags;
+
+	if (Flags & FCF_FG_BOLD)
+		f |= AI_STYLE_BOLD;
+	if (Flags & FCF_FG_ITALIC)
+		f |= AI_STYLE_ITALIC;
+	if (Flags & FCF_FG_UNDERLINE)
+		f |= AI_STYLE_UNDERLINE;
+	t.style = f;
+
+	DWORD nForeColor, nBackColor;
+	if (Flags & FCF_FG_4BIT)
+	{
+		nForeColor = -1;
+		n |= (WORD)(Attributes->ForegroundColor & 0xF);
+		t.fg_valid = FALSE;
+	}
+	else
+	{
+		//n |= 0x07;
+		nForeColor = Attributes->ForegroundColor & 0x00FFFFFF;
+		Far3Color::Color2FgIndex(nForeColor, n);
+		t.fg_color = nForeColor;
+		t.fg_valid = TRUE;
+	}
+
+	if (Flags & FCF_BG_4BIT)
+	{
+		n |= (WORD)(Attributes->BackgroundColor & 0xF)<<4;
+		t.bk_valid = FALSE;
+	}
+	else
+	{
+		nBackColor = Attributes->BackgroundColor & 0x00FFFFFF;
+		Far3Color::Color2BgIndex(nBackColor, nBackColor==nForeColor, n);
+		t.bk_color = nBackColor;
+		t.bk_valid = TRUE;
+	}
+
+	return n;
+}
+
 //TODO: Юзкейс понят неправильно.
 //TODO: Это не "всего видимого экрана", это "цвет по умолчанию". То, что соответствует 
 //TODO: "Screen Text" и "Screen Background" в свойствах консоли. То, что задаётся командой
@@ -761,46 +807,7 @@ BOOL WINAPI SetTextAttributes(const FarColor* Attributes)
 
 	// <G|S>etTextAttributes должны ожидать указатель на ОДИН FarColor.
 	AnnotationInfo t = {};
-	WORD n = 0, f = 0;
-	unsigned __int64 Flags = Attributes->Flags;
-
-	if (Flags & FCF_FG_BOLD)
-		f |= AI_STYLE_BOLD;
-	if (Flags & FCF_FG_ITALIC)
-		f |= AI_STYLE_ITALIC;
-	if (Flags & FCF_FG_UNDERLINE)
-		f |= AI_STYLE_UNDERLINE;
-	t.style = f;
-
-	DWORD nForeColor, nBackColor;
-	if (Flags & FCF_FG_4BIT)
-	{
-		nForeColor = -1;
-		n |= (WORD)(Attributes->ForegroundColor & 0xF);
-		t.fg_valid = FALSE;
-	}
-	else
-	{
-		//n |= 0x07;
-		nForeColor = Attributes->ForegroundColor & 0x00FFFFFF;
-		Far3Color::Color2FgIndex(nForeColor, n);
-		t.fg_color = nForeColor;
-		t.fg_valid = TRUE;
-	}
-
-	if (Flags & FCF_BG_4BIT)
-	{
-		n |= (WORD)(Attributes->BackgroundColor & 0xF)<<4;
-		t.bk_valid = FALSE;
-	}
-	else
-	{
-		nBackColor = Attributes->BackgroundColor & 0x00FFFFFF;
-		Far3Color::Color2BgIndex(nBackColor, nBackColor==nForeColor, n);
-		t.bk_color = nBackColor;
-		t.bk_valid = TRUE;
-	}
-
+	WORD n = Far2ConEmuColor(Attributes, t);
 
 	//for (;cr.Y <= csbi.srWindow.Bottom;cr.Y++)
 	//{
