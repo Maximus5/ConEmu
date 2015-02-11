@@ -280,6 +280,11 @@ void ProcessCountChanged(BOOL abChanged, UINT anPrevCount, MSectionLock *pCS)
 			SetTerminateEvent(ste_ProcessCountChanged);
 		}
 	}
+	else if (abChanged && gpSrv->pConsole)
+	{
+		gpSrv->pConsole->bDataChanged = TRUE;
+		SetEvent(gpSrv->hRefreshEvent);
+	}
 
 	UNREFERENCED_PARAMETER(nWaitDbg1); UNREFERENCED_PARAMETER(nWaitDbg2); UNREFERENCED_PARAMETER(bForcedTo2);
 }
