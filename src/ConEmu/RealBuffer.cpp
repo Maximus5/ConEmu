@@ -5442,7 +5442,7 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 						// Colorer & Far - TrueMod
 						TODO("OPTIMIZE: вынести проверку bUseColorData за циклы");
 
-						if (bStartUseColorData)
+						if (bStartUseColorData && !bUseColorData)
 						{
 							// В случае "far /w" буфер цвета может начаться НИЖЕ верхней видимой границы,
 							// если буфер немного прокручен вверх
