@@ -558,20 +558,21 @@ BOOL CheckProcessCount(BOOL abForce/*=FALSE*/)
 				gpSrv->nProcessCount = nCurCount;
 			}
 
+			UINT nSize = sizeof(DWORD)*min(gpSrv->nMaxProcesses,START_MAX_PROCESSES);
+			#ifdef _DEBUG
+			_ASSERTE(!IsBadWritePtr(gpSrv->pnProcessesCopy,nSize));
+			_ASSERTE(!IsBadWritePtr(gpSrv->pnProcesses,nSize));
+			#endif
+
 			if (!lbChanged)
 			{
-				UINT nSize = sizeof(DWORD)*min(gpSrv->nMaxProcesses,START_MAX_PROCESSES);
-
-				#ifdef _DEBUG
-				_ASSERTE(!IsBadWritePtr(gpSrv->pnProcessesCopy,nSize));
-				_ASSERTE(!IsBadWritePtr(gpSrv->pnProcesses,nSize));
-				#endif
-
 				lbChanged = memcmp(gpSrv->pnProcessesCopy, gpSrv->pnProcesses, nSize) != 0;
 				MCHKHEAP;
+			}
 
-				if (lbChanged)
-					memmove(gpSrv->pnProcessesCopy, gpSrv->pnProcesses, nSize);
+			if (lbChanged)
+			{
+				memmove(gpSrv->pnProcessesCopy, gpSrv->pnProcesses, nSize);
 
 				MCHKHEAP;
 			}
