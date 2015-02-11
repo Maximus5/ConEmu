@@ -6,7 +6,7 @@
 //TODO: ChangeXXX - послать в консоль и установить значение переменной
 
 /*
-Copyright (c) 2009-2014 Maximus5
+Copyright (c) 2009-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -71,6 +71,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRCURSORPOS(s) //DEBUGSTR(s)
 #define DEBUGSTRMOUSE(s) //DEBUGSTR(s)
 #define DEBUGSTRTOPLEFT(s) DEBUGSTR(s)
+#define DEBUGSTRTRUEMOD(s) DEBUGSTR(s)
 
 // ANSI, without "\r\n"
 #define IFLOGCONSOLECHANGE gpSetCls->isAdvLogging>=2
@@ -5295,6 +5296,7 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 				{
 					if (mp_RCon->isFar() && !mp_RCon->isFarBufferSupported())
 					{
+						DEBUGSTRTRUEMOD(L"TrueMod skipped due to !isFarBufferSupported()");
 						bUseColorData = FALSE;
 					}
 					else
@@ -5310,6 +5312,7 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 							}
 							#endif
 							pcolSrc -= nShiftRows*con.nCreatedBufWidth;
+							DEBUGSTRTRUEMOD(L"TrueMod skipped due to nShiftRows, bStartUseColorData was set");
 							bUseColorData = FALSE;
 							bStartUseColorData = TRUE;
 						}
@@ -5321,6 +5324,10 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 						#endif
 					}
 				}
+			}
+			else
+			{
+				DEBUGSTRTRUEMOD(L"TrueMod is not allowed here");
 			}
 
 			DWORD cbDstLineSize = nWidth * 2;
@@ -5440,13 +5447,17 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 							// В случае "far /w" буфер цвета может начаться НИЖЕ верхней видимой границы,
 							// если буфер немного прокручен вверх
 							if (pcolSrc >= mp_RCon->mp_TrueColorerData)
+							{
+								DEBUGSTRTRUEMOD(L"TrueMod forced back due bStartUseColorData");
 								bUseColorData = TRUE;
+							}
 						}
 
 						if (bUseColorData)
 						{
 							if (pcolSrc >= pcolEnd)
 							{
+								DEBUGSTRTRUEMOD(L"TrueMod stopped - out of buffer");
 								bUseColorData = FALSE;
 							}
 							else
