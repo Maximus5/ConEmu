@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2014 Maximus5
+Copyright (c) 2014-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -387,10 +387,10 @@ bool CToolImg::PaintButton(int iBtn, HDC hdcDst, int nDstX, int nDstY, int nDstW
 
 	if (iBtn < 0)
 	{
-		int iFoundHeight = 0;
-		iBtn = mn_BtnCount - 1;
+		int iFoundHeight = (mprc_Btns[0].bottom - mprc_Btns[0].top);
+		iBtn = 0;
 
-		for (int i = 0; i < mn_BtnCount; i++)
+		for (int i = 1; i < mn_BtnCount; i++)
 		{
 			int h = (mprc_Btns[i].bottom - mprc_Btns[i].top);
 			if ((h <= nDstHeight) && (h > iFoundHeight))
@@ -414,10 +414,14 @@ bool CToolImg::PaintButton(int iBtn, HDC hdcDst, int nDstX, int nDstY, int nDstW
 		y += ((nDstHeight - h) >> 1);
 	}
 
-	if (!BitBlt(hdcDst, nDstX, y, w, h, mh_BmpDc, rc.left, rc.top, SRCCOPY))
-		return false;
+	bool bRc;
+	// Due to some adjustment errors after dpi downscaling the cropping may be occured, so use StretchBlt
+	if ((rc.bottom - rc.top) > h)
+		bRc = (StretchBlt(hdcDst, nDstX, y, w, h, mh_BmpDc, rc.left, rc.top, rc.right-rc.left+1, rc.bottom-rc.top+1, SRCCOPY) != FALSE);
+	else
+		bRc = (BitBlt(hdcDst, nDstX, y, w, h, mh_BmpDc, rc.left, rc.top, SRCCOPY) != FALSE);
 
-	return true;
+	return bRc;
 }
 
 int CToolImg::AddBitmap(HBITMAP hbm, int iNumBtns)
