@@ -1098,6 +1098,8 @@ const ConEmuConsoleFlags
 	CECF_ProcessNewCon   = 0x00000200, // Enable processing of '-new_console' and '-cur_console' switches in your shell prompt, scripts etc. started in ConEmu tabs
 	CECF_ProcessCmdStart = 0x00000400, // Use "start xxx.exe" to start new tab
 
+	CECF_RealConVisible  = 0x00000800, // Show real console
+
 	CECF_Empty = 0
 	;
 #define SetConEmuFlags(v,m,f) (v) = ((v) & ~(m)) | (f)

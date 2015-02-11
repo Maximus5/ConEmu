@@ -2552,7 +2552,10 @@ bool TryConnect2Gui(HWND hGui, DWORD anGuiPID, CESERVER_REQ* pIn)
 			// Но скорее всего, консоль запущенная под Админом в Win7 будет отображена ошибочно
 			// 110807 - Если gbAttachMode, тоже консоль нужно спрятать
 			if (gbForceHideConWnd || (gbAttachMode && (gbAttachMode != am_Admin)))
-				apiShowWindow(ghConWnd, SW_HIDE);
+			{
+				if (!(gpSrv->guiSettings.Flags & CECF_RealConVisible))
+					apiShowWindow(ghConWnd, SW_HIDE);
+			}
 
 			// Установить шрифт в консоли
 			if (pStartStopRet->Font.cbSize == sizeof(CESERVER_REQ_SETFONT))
