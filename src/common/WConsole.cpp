@@ -34,6 +34,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "WConsole.h"
 #include "WObjects.h"
 
+#ifndef CONEMU_MINIMAL
+#include "WUser.h"
+#endif
+
 // Undocumented console message
 #define WM_SETCONSOLEINFO			(WM_USER+201)
 
@@ -222,7 +226,7 @@ BOOL SetConsoleInfo(HWND hwndConsole, CONSOLE_INFO *pci)
 		{
 			//DEBUGTEST(Sleep(10));
 
-			ShowWindow(hwndConsole, SW_HIDE);
+			apiShowWindow(hwndConsole, SW_HIDE);
 			//SetWindowPos(hwndConsole, NULL, rcOldPos.left, rcOldPos.top, 0,0, SWP_NOSIZE|SWP_NOZORDER);
 			// -- чтобы на некоторых системах не возникала проблема с позиционированием -> {0,0}
 			// Issue 274: Окно реальной консоли позиционируется в неудобном месте
