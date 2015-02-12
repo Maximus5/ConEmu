@@ -4248,7 +4248,7 @@ DWORD WaitForRootConsoleProcess(DWORD nTimeout)
 
 	if (!nFoundPID)
 	{
-		ShowWindow(ghConWnd, SW_SHOWNORMAL);
+		apiShowWindow(ghConWnd, SW_SHOWNORMAL);
 		_ASSERTE(FALSE && "Was unable to find starting process");
 	}
 
@@ -4894,10 +4894,10 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 								//		GetWindowRect(gpSrv->hGuiWnd, &rcGui);
 								//	//SetWindowPos(ghConWnd, HWND_BOTTOM, rcGui.left+3, rcGui.top+3, 0,0, SWP_NOSIZE|SWP_SHOWWINDOW|SWP_NOZORDER);
 								//	SetWindowPos(ghConWnd, NULL, -30000, -30000, 0,0, SWP_NOSIZE|SWP_SHOWWINDOW|SWP_NOZORDER);
-								//	ShowWindow(ghConWnd, SW_SHOWMINNOACTIVE);
+								//	apiShowWindow(ghConWnd, SW_SHOWMINNOACTIVE);
 								//	#ifdef _DEBUG
-								//	ShowWindow(ghConWnd, SW_SHOWNORMAL);
-								//	ShowWindow(ghConWnd, SW_HIDE);
+								//	apiShowWindow(ghConWnd, SW_SHOWNORMAL);
+								//	apiShowWindow(ghConWnd, SW_HIDE);
 								//	#endif
 								//}
 
@@ -4906,7 +4906,7 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 								// Что-то Win7 хулиганит
 								if (!gbVisibleOnStartup)
 								{
-									ShowWindow(ghConWnd, SW_HIDE);
+									apiShowWindow(ghConWnd, SW_HIDE);
 								}
 							}
 						}
@@ -8040,7 +8040,7 @@ BOOL cmd_SetConColors(CESERVER_REQ& in, CESERVER_REQ** out)
 						bNeedRepaint = FALSE;
 						if (!bIsVisible && IsWindowVisible(ghConWnd))
 						{
-							ShowWindow(ghConWnd, SW_HIDE);
+							apiShowWindow(ghConWnd, SW_HIDE);
 						}
 						if (bOk)
 						{

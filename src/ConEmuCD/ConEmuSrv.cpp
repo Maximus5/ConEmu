@@ -1059,7 +1059,7 @@ int ServerInit(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/)
 		if (!gbVisibleOnStartup && IsWindowVisible(ghConWnd))
 		{
 			//DumpInitStatus("\nServerInit: Hiding console");
-			ShowWindow(ghConWnd, SW_HIDE);
+			apiShowWindow(ghConWnd, SW_HIDE);
 			//if (bMovedBottom)
 			//{
 			//	SetWindowPos(ghConWnd, HWND_TOP, 0, 0, 0,0, SWP_NOSIZE|SWP_NOMOVE);
@@ -1079,13 +1079,13 @@ int ServerInit(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/)
 	if (!gbNoCreateProcess && !gbIsWine)
 	{
 		//if (!gbVisibleOnStartup)
-		//	ShowWindow(ghConWnd, SW_HIDE);
+		//	apiShowWindow(ghConWnd, SW_HIDE);
 		//DumpInitStatus("\nServerInit: Set console window TOP_MOST");
 		SetWindowPos(ghConWnd, HWND_TOPMOST, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
 	}
 	//if (!gbVisibleOnStartup && IsWindowVisible(ghConWnd))
 	//{
-	//	ShowWindow(ghConWnd, SW_HIDE);
+	//	apiShowWindow(ghConWnd, SW_HIDE);
 	//}
 
 	// Подготовить буфер для длинного вывода
