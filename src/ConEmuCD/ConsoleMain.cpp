@@ -7262,7 +7262,7 @@ BOOL cmd_SetWindowPos(CESERVER_REQ& in, CESERVER_REQ** out)
 
 	if ((in.SetWndPos.uFlags & SWP_SHOWWINDOW) && !IsWindowVisible(in.SetWndPos.hWnd))
 	{
-		lbShowRc = ShowWindowAsync(in.SetWndPos.hWnd, SW_SHOW);
+		lbShowRc = apiShowWindowAsync(in.SetWndPos.hWnd, SW_SHOW);
 		nErrCode[1] = lbShowRc ? 0 : GetLastError();
 	}
 
