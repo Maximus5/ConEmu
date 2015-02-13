@@ -10,6 +10,8 @@
 #define IDB_RIGHTCLICKING               103
 #define IDB_SCROLL                      104
 #define IDB_SHIELD16                    107
+#define IDB_DONATE                      109
+#define IDB_FLATTR                      110
 #define IDC_COPY                        120
 #define IDC_LINK                        121
 #define IDC_MOVE                        122

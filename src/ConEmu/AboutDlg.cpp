@@ -696,7 +696,7 @@ void ConEmuAbout::LoadResources()
 		case 0:
 			m_Btns[i].ResId = L"DONATE";
 			m_Btns[i].pImg = new CToolImg();
-			if (m_Btns[i].pImg && !m_Btns[i].pImg->CreateDonateButton(GetSysColor(COLOR_BTNFACE)))
+			if (m_Btns[i].pImg && !m_Btns[i].pImg->CreateDonateButton())
 				SafeDelete(m_Btns[i].pImg);
 			m_Btns[i].nCtrlId = pLinkDonate;
 			m_Btns[i].pszUrl = gsDonatePage;
@@ -704,7 +704,7 @@ void ConEmuAbout::LoadResources()
 		case 1:
 			m_Btns[i].ResId = L"FLATTR";
 			m_Btns[i].pImg = new CToolImg();
-			if (m_Btns[i].pImg && !m_Btns[i].pImg->CreateFlattrButton(GetSysColor(COLOR_BTNFACE)))
+			if (m_Btns[i].pImg && !m_Btns[i].pImg->CreateFlattrButton())
 				SafeDelete(m_Btns[i].pImg);
 			m_Btns[i].nCtrlId = pLinkFlattr;
 			m_Btns[i].pszUrl = gsFlattrPage;

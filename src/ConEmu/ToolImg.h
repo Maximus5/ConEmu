@@ -40,11 +40,14 @@ protected:
 	COLORREF mcr_Background;
 	int      mn_BtnCount, mn_MaxBtnCount;
 	LPRECT   mprc_Btns;
+	bool     mb_HasAlpha;
 
+	#if 0
 	struct ButtonFieldInfo
 	{
 		LPCWSTR szName; int nWidth, nHeight;
 	};
+	#endif
 
 	struct ButtonRowInfo
 	{
@@ -58,11 +61,20 @@ protected:
 
 	void FreeDC();
 	void FreeBMP();
+
 	int  AddBitmap(HBITMAP hbm, int iNumBtns);
 	bool CreateField(int nImgWidth, int nImgHeight, COLORREF clrBackground);
-	bool CreateButtonField(COLORREF clrBackground, ButtonFieldInfo* pBtns, int nBtnCount);
-	bool CreateButtonField(LPCWSTR szImgRes, COLORREF clrBackground, ButtonRowInfo* pBtns, int nRowCount);
 	bool PaintBitmap(HBITMAP hbmSrc, int nSrcWidth, int nSrcHeight, HDC hdcDst, int nDstX, int nDstY, int nDstWidth, int nDstHeight);
+
+	bool CreateButtonField(LPCWSTR szImgRes, COLORREF clrBackground, ButtonRowInfo* pBtns, int nRowCount, bool bHasAlpha = false);
+
+	#ifdef __GNUC__
+	AlphaBlend_t GdiAlphaBlend;
+	#endif
+
+	#if 0
+	bool CreateButtonField(COLORREF clrBackground, ButtonFieldInfo* pBtns, int nBtnCount);
+	#endif
 
 public:
 	CToolImg();
@@ -79,8 +91,10 @@ public:
 
 public:
 	bool Create(int nBtnWidth, int nBtnHeight, int nMaxCount, COLORREF clrBackground);
-	bool CreateDonateButton(COLORREF clrBackground);
-	bool CreateFlattrButton(COLORREF clrBackground);
 	int  AddButtons(HINSTANCE hinst, INT_PTR resId, int iNumBtns);
 	int  AddButtonsMapped(HINSTANCE hinst, INT_PTR resId, int iNumBtns, int iNumMaps, COLORREF from, COLORREF to, ...);
+
+public:
+	bool CreateDonateButton();
+	bool CreateFlattrButton();
 };

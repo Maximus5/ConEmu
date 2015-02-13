@@ -53,6 +53,12 @@ CToolImg::CToolImg()
 	mn_BtnCount = 0;
 	mn_MaxBtnCount = 0;
 	mprc_Btns = NULL;
+	mb_HasAlpha = false;
+
+	#ifdef __GNUC__
+	HMODULE hGdi32 = GetModuleHandle(L"gdi32.dll");
+	GdiAlphaBlend = (AlphaBlend_t)(hGdi32 ? GetProcAddress(hGdi32, "GdiAlphaBlend") : NULL);
+	#endif
 }
 
 CToolImg::~CToolImg()
@@ -91,6 +97,7 @@ void CToolImg::FreeBMP()
 	}
 
 	mn_BtnCount = 0;
+	SafeFree(mprc_Btns);
 }
 
 bool CToolImg::Create(int nBtnWidth, int nBtnHeight, int nMaxCount, COLORREF clrBackground)
@@ -167,7 +174,7 @@ bool CToolImg::CreateField(int nImgWidth, int nImgHeight, COLORREF clrBackground
 	return true;
 }
 
-bool CToolImg::CreateDonateButton(COLORREF clrBackground)
+bool CToolImg::CreateDonateButton()
 {
 	ButtonRowInfo Btns[] = {
 		{74,  21},
@@ -182,10 +189,10 @@ bool CToolImg::CreateDonateButton(COLORREF clrBackground)
 		nY += 1 + Btns[i].nHeight;
 	}
 
-	return CreateButtonField(L"DONATE4", clrBackground, Btns, (int)countof(Btns));
+	return CreateButtonField(MAKEINTRESOURCE(IDB_DONATE), 0, Btns, (int)countof(Btns), true);
 }
 
-bool CToolImg::CreateFlattrButton(COLORREF clrBackground)
+bool CToolImg::CreateFlattrButton()
 {
 	ButtonRowInfo Btns[] = {
 		{55,  19},
@@ -200,9 +207,10 @@ bool CToolImg::CreateFlattrButton(COLORREF clrBackground)
 		nY += 1 + Btns[i].nHeight;
 	}
 
-	return CreateButtonField(L"FLATTR4", clrBackground, Btns, (int)countof(Btns));
+	return CreateButtonField(MAKEINTRESOURCE(IDB_FLATTR), 0, Btns, (int)countof(Btns), true);
 }
 
+#if 0
 bool CToolImg::CreateButtonField(COLORREF clrBackground, ButtonFieldInfo* pBtns, int nBtnCount)
 {
 	FreeDC();
@@ -268,17 +276,21 @@ bool CToolImg::CreateButtonField(COLORREF clrBackground, ButtonFieldInfo* pBtns,
 
 	return true;
 }
+#endif
 
-bool CToolImg::CreateButtonField(LPCWSTR szImgRes, COLORREF clrBackground, ButtonRowInfo* pBtns, int nRowCount)
+bool CToolImg::CreateButtonField(LPCWSTR szImgRes, COLORREF clrBackground, ButtonRowInfo* pBtns, int nRowCount, bool bHasAlpha /*= false*/)
 {
 	FreeDC();
 	FreeBMP();
+
+	mb_HasAlpha = bHasAlpha;
 
 	mprc_Btns = (LPRECT)calloc(nRowCount, sizeof(*mprc_Btns));
 	if (!mprc_Btns)
 		return false;
 	mn_MaxBtnCount = nRowCount;
 
+	#if defined(_DEBUG)
 	int nFieldWidth = pBtns[0].nWidth;
 	int nFieldHeight = pBtns[0].nHeight;
 	for (int i = 1; i < nRowCount; i++)
@@ -286,34 +298,32 @@ bool CToolImg::CreateButtonField(LPCWSTR szImgRes, COLORREF clrBackground, Butto
 		nFieldWidth = max(nFieldWidth, pBtns[i].nWidth);
 		nFieldHeight += 1 + pBtns[i].nHeight;
 	}
-
-	if (!CreateField(nFieldWidth, nFieldHeight, clrBackground))
-		return false;
-
-	//COLORMAP colorMap = {0xC0C0C0, clrBackground/*GetSysColor(COLOR_BTNFACE)*/};
+	#endif
 
 	bool bRc = true;
 
 	_ASSERTE(mn_BtnCount == 0);
+	_ASSERTE(mh_Bmp == NULL);
 
 	DWORD nErrCode = 0;
+	UINT flags = bHasAlpha ? (LR_CREATEDIBSECTION) : (LR_LOADTRANSPARENT|LR_LOADMAP3DCOLORS);
+	mh_Bmp = (HBITMAP)LoadImage(g_hInstance, szImgRes, IMAGE_BITMAP, 0, 0, flags);
 
-	//HBITMAP hbm = CreateMappedBitmap(g_hInstance, (INT_PTR)pBtns[i].szName, 0, &colorMap, 1);
-	HBITMAP hbm = (HBITMAP)LoadImage(g_hInstance, szImgRes, IMAGE_BITMAP, 0, 0, LR_LOADTRANSPARENT|LR_LOADMAP3DCOLORS);
-	if (hbm == NULL)
+	if (mh_Bmp == NULL)
 	{
 		nErrCode = GetLastError();
+		#ifdef _DEBUG
+		HRSRC hFind = FindResource(g_hInstance, szImgRes, MAKEINTRESOURCE(RT_BITMAP));
+		HGLOBAL hLoad = hFind ? LoadResource(g_hInstance, hFind) : NULL;
+		DWORD nSize = hFind ? SizeofResource(g_hInstance, hFind) : NULL;
+		BITMAPINFO* ptr = hLoad ? (BITMAPINFO*)LockResource(hLoad) : NULL;
+		#endif
+		_ASSERTE(mh_Bmp!=NULL && "LoadImage from app resources was failed");
 		bRc = false;
 	}
 	else
 	{
-		if (!PaintBitmap(hbm, nFieldWidth, nFieldHeight, mh_BmpDc, 0, 0, nFieldWidth, nFieldHeight))
-		{
-			nErrCode = GetLastError();
-			bRc = false;
-		}
-
-		DeleteObject(hbm);
+		bRc = true;
 	}
 
 	if (bRc)
@@ -382,7 +392,7 @@ bool CToolImg::GetSizeForHeight(int nPreferHeight, int& nDispW, int& nDispH)
 
 bool CToolImg::PaintButton(int iBtn, HDC hdcDst, int nDstX, int nDstY, int nDstWidth, int nDstHeight)
 {
-	if (!mh_BmpDc || !mh_Bmp || !mprc_Btns || (iBtn >= mn_BtnCount) || (mn_BtnCount <= 0))
+	if (!mh_Bmp || !mprc_Btns || (iBtn >= mn_BtnCount) || (mn_BtnCount <= 0))
 		return false;
 
 	if (iBtn < 0)
@@ -414,12 +424,49 @@ bool CToolImg::PaintButton(int iBtn, HDC hdcDst, int nDstX, int nDstY, int nDstW
 		y += ((nDstHeight - h) >> 1);
 	}
 
-	bool bRc;
-	// Due to some adjustment errors after dpi downscaling the cropping may be occured, so use StretchBlt
-	if ((rc.bottom - rc.top) > h)
-		bRc = (StretchBlt(hdcDst, nDstX, y, w, h, mh_BmpDc, rc.left, rc.top, rc.right-rc.left+1, rc.bottom-rc.top+1, SRCCOPY) != FALSE);
+	bool bRc = false;
+
+	if (mh_BmpDc != NULL)
+	{
+		// Due to some adjustment errors after dpi downscaling the cropping may be occured, so use StretchBlt
+		if ((rc.bottom - rc.top) > h)
+			bRc = (StretchBlt(hdcDst, nDstX, y, w, h, mh_BmpDc, rc.left, rc.top, rc.right-rc.left+1, rc.bottom-rc.top+1, SRCCOPY) != FALSE);
+		else
+			bRc = (BitBlt(hdcDst, nDstX, y, w, h, mh_BmpDc, rc.left, rc.top, SRCCOPY) != FALSE);
+	}
 	else
-		bRc = (BitBlt(hdcDst, nDstX, y, w, h, mh_BmpDc, rc.left, rc.top, SRCCOPY) != FALSE);
+	{
+		HDC hCompDC = CreateCompatibleDC(hdcDst);
+		if (hCompDC)
+		{
+			HBITMAP hOld = (HBITMAP)SelectObject(hCompDC, mh_Bmp);
+
+			if (mb_HasAlpha && ((void*)GdiAlphaBlend != NULL))
+			{
+				BLENDFUNCTION bf = {AC_SRC_OVER, 0, 255, AC_SRC_ALPHA};
+				// -- int iPrev = SetStretchBltMode(hdc, STRETCH_HALFTONE);
+				bRc = (GdiAlphaBlend(hdcDst, nDstX, y, w, h, hCompDC, rc.left, rc.top, rc.right-rc.left, rc.bottom-rc.top, bf) != FALSE);
+				// -- SetStretchBltMode(hdc, iPrev);
+			}
+			else if ((rc.bottom - rc.top) > h)
+			{
+				// Due to some adjustment errors after dpi downscaling the cropping may be occured, so use StretchBlt
+				// -- int iPrev = SetStretchBltMode(hdc, STRETCH_HALFTONE);
+				bRc = (StretchBlt(hdcDst, nDstX, y, w, h, hCompDC, rc.left, rc.top, rc.right-rc.left+1, rc.bottom-rc.top+1, SRCCOPY) != FALSE);
+				// -- SetStretchBltMode(hdc, iPrev);
+			}
+			else
+			{
+				bRc = (BitBlt(hdcDst, nDstX, y, w, h, hCompDC, rc.left, rc.top, SRCCOPY) != FALSE);
+			}
+
+			DEBUGTEST(DWORD nErr = GetLastError());
+
+			if (hOld && hCompDC)
+				SelectObject(hCompDC, hOld);
+			DeleteDC(hCompDC);
+		}
+	}
 
 	return bRc;
 }
