@@ -5717,6 +5717,8 @@ void CConEmuMain::RightClickingPaint(HDC hdcIntVCon, CVirtualConsole* apVCon)
 
 							if (hOld && hCompDC)
 								SelectObject(hCompDC, hOld);
+							if (hCompDC)
+								DeleteDC(hCompDC);
 
 							//if (/*lbSelfDC &&*/ hdcSelf)
 							DeleteDC(hdcSelf);
