@@ -12,6 +12,16 @@ Votes and awards (vote for ConEmu, if you please)
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+2015.2.15
+[*] Add menu item ‘Online &Help’ to the SystemMenu.
+[*] After AppDistinct settings change console was not redrawn properly sometimes.
+[*] Sometimes true colors were not used while executing smth like "edit:<git log".
+[*] Outscreen regions were not cleared by "cls" executed in "Far /w" prompt.
+[*] Issue 1881: Newly catched admin consoles were unexpectedly scrolled to the bottom (DefTerm).
+[*] Catched RealConsole (DefTerm) was hidden even if ‘Show real console’ was ticked.
+[*] Use bitmap resource for ‘Search’ icon.
+
+
 2015.2.9
 [*] Issue 1897: Tear off started "ConEmu.exe" from "taskeng.exe" (switch /demote).
     Let process created from task sheduler runs indefinitely.
