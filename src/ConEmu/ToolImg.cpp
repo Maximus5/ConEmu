@@ -210,6 +210,25 @@ bool CToolImg::CreateFlattrButton()
 	return CreateButtonField(MAKEINTRESOURCE(IDB_FLATTR), 0, Btns, (int)countof(Btns), true);
 }
 
+bool CToolImg::CreateSearchButton()
+{
+	ButtonRowInfo Btns[] = {
+		{12,  12},
+		{14,  14},
+		{18,  18},
+		{20,  20},
+		{23,  23},
+	};
+	int nY = 0;
+	for (size_t i = 0; i < countof(Btns); i++)
+	{
+		Btns[i].nY = nY; Btns[i].nCount = 1;
+		nY += 1 + Btns[i].nHeight;
+	}
+
+	return CreateButtonField(MAKEINTRESOURCE(IDB_SEARCH), 0, Btns, (int)countof(Btns), true);
+}
+
 #if 0
 bool CToolImg::CreateButtonField(COLORREF clrBackground, ButtonFieldInfo* pBtns, int nBtnCount)
 {
@@ -351,8 +370,8 @@ bool CToolImg::GetSizeForHeight(int nPreferHeight, int& nDispW, int& nDispH)
 	if (this == NULL || mn_BtnCount <= 0 || mprc_Btns == NULL)
 		return false;
 
-	// 100%, 125%, 150%, 200%
-	_ASSERTE(mn_BtnCount == 4);
+	// 100%, 125%, 150%, 200%, and some physical sized for search button
+	// _ASSERTE(mn_BtnCount == 4);
 
 	// Find max size (for 200% dpi)
 	int nMaxW = 0, nMaxH = 0;

@@ -1694,6 +1694,7 @@ IDB_SHIELD              BITMAP                  "Shield.bmp"
 IDB_SHIELD16            BITMAP                  "Shield16.bmp"
 IDB_SCROLL              BITMAP                  "Scroll.bmp"
 IDB_RIGHTCLICKING       BITMAP                  "graphics/circles.bmp"
+IDB_SEARCH              BITMAP                  "graphics/search.bmp"
 IDB_DONATE              BITMAP                  "graphics/donate.bmp"
 IDB_FLATTR              BITMAP                  "graphics/flattr.bmp"
 

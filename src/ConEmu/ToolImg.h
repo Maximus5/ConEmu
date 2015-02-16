@@ -97,4 +97,5 @@ public:
 public:
 	bool CreateDonateButton();
 	bool CreateFlattrButton();
+	bool CreateSearchButton();
 };

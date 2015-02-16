@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2014 Maximus5
+Copyright (c) 2014-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -32,9 +32,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Header.h"
 #include "OptionsClass.h"
 #include "Resource.h"
+#include "ToolImg.h"
 #include "../common/MMap.h"
 
 #define CE_ICON_SPACING 6
+#define CE_ICON_YPAD 2
 #define SEARCH_CTRL_TIMERID 1001
 #define SEARCH_CTRL_TIMER   1500
 #define SEARCH_CTRL_REFRID  1002
@@ -42,8 +44,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 struct CEIconDrawHandles
 {
-	HICON    hIcon;
-	HFONT    hFont;
+	CToolImg* pIcon;
+	HFONT     hFont;
 };
 
 struct CEIconHintInfo
@@ -69,14 +71,14 @@ struct CEIconHintOthers
 
 static MMap<HWND,CEIconHintInfo>* gpIconHints = NULL;
 static MMap<HWND,CEIconHintOthers>* gpIconOthers = NULL;
-// Map the font height (actually CEIconHintInfo.iRes) to hFont and hIcon
+// Map the font height (actually CEIconHintInfo.iRes) to hFont and pIcon
 static MMap<int,CEIconDrawHandles>* gpIconHandles = NULL;
 
 // Returns the index (new or existing) in the gpIconHandles
-static int EditIconHintCreateHandles(HWND hEditCtrl, HICON* phIcon = NULL, HFONT* phFont = NULL)
+static int EditIconHintCreateHandles(HWND hEditCtrl, CToolImg** pIcon = NULL, HFONT* phFont = NULL)
 {
-	if (phIcon)
-		*phIcon = NULL;
+	if (pIcon)
+		*pIcon = NULL;
 	if (phFont)
 		*phFont = NULL;
 
@@ -120,12 +122,11 @@ static int EditIconHintCreateHandles(HWND hEditCtrl, HICON* phIcon = NULL, HFONT
 	if (!gpIconHandles->Get(lf.lfHeight, &dh))
 	{
 		// Need to be created
-		TODO("Load appropriate icon resolution");
-		int iw = GetSystemMetrics(SM_CXSMICON);
-		int ih = GetSystemMetrics(SM_CYSMICON);
-		dh.hIcon = (HICON)LoadImage(GetModuleHandle(0), MAKEINTRESOURCE(IDI_SEARCH), IMAGE_ICON,
-						iw, ih, LR_DEFAULTCOLOR);
-		_ASSERTE(dh.hIcon!=NULL);
+		dh.pIcon = new CToolImg();
+		if (dh.pIcon && !dh.pIcon->CreateSearchButton())
+		{
+			SafeDelete(dh.pIcon);
+		}
 
 		dh.hFont = CreateFontIndirect(&lf);
 		if (!dh.hFont)
@@ -137,8 +138,8 @@ static int EditIconHintCreateHandles(HWND hEditCtrl, HICON* phIcon = NULL, HFONT
 		gpIconHandles->Set(lf.lfHeight, dh);
 	}
 
-	if (phIcon)
-		*phIcon = dh.hIcon;
+	if (pIcon)
+		*pIcon = dh.pIcon;
 	if (phFont)
 		*phFont = dh.hFont;
 
@@ -178,7 +179,7 @@ static LRESULT EditIconHintPaint(HWND hEditCtrl, CEIconHintInfo* p, UINT Msg = W
 	HDC hdc; bool bReleaseDC = false;
 	bool bDrawHint = ((*p->sHint) && dh.hFont && (iLen == 0) && (GetFocus() != hEditCtrl));
 
-	if (!bDrawHint || !dh.hIcon || (Msg != WM_PAINT))
+	if (!bDrawHint || !dh.pIcon || (Msg != WM_PAINT))
 	{
 		if (Msg == WM_PAINT)
 		{
@@ -188,7 +189,7 @@ static LRESULT EditIconHintPaint(HWND hEditCtrl, CEIconHintInfo* p, UINT Msg = W
 				lRc = DefWindowProc(hEditCtrl, WM_PAINT, 0, 0);
 		}
 		// Need to draw icon?
-		if (!dh.hIcon)
+		if (!dh.pIcon)
 			goto wrap;
 		// If drawing after standard procedure
 		hdc = GetDC(hEditCtrl);
@@ -201,13 +202,12 @@ static LRESULT EditIconHintPaint(HWND hEditCtrl, CEIconHintInfo* p, UINT Msg = W
 
 	if (hdc)
 	{
-		RECT rect = {};
-		if (GetClientRect(hEditCtrl, &rect))
+		RECT rcClient = {};
+		if (GetClientRect(hEditCtrl, &rcClient))
 		{
-			//int iw = GetSystemMetrics(SM_CXSMICON);
-			//int ih = GetSystemMetrics(SM_CYSMICON);
-			int iw = rect.bottom+1;
-			int ih = iw;
+			RECT rect = rcClient;
+			int ih = rect.bottom+1-CE_ICON_YPAD;
+			int iw = ih;
 
 			// Paint background
 			HBRUSH hBr = GetSysColorBrush(COLOR_WINDOW);
@@ -225,14 +225,15 @@ static LRESULT EditIconHintPaint(HWND hEditCtrl, CEIconHintInfo* p, UINT Msg = W
 			rect.right -= HIWORD(p->nMargins);
 
 			// Draw "Search" icon
-			if (dh.hIcon)
+			if (dh.pIcon)
 			{
-				int X1 = rect.right - iw ;
-				int Y1 = max(0,((rect.bottom-rect.top-ih)/2));
+				dh.pIcon->GetSizeForHeight(ih, iw, ih);
+				int X1 = rcClient.right - iw - 1;
+				int Y1 = max(0,((rcClient.bottom-rcClient.top-ih)/2));
 
-				DrawIconEx(hdc, X1, Y1, dh.hIcon, iw, ih, 0, NULL, DI_NORMAL);
+				dh.pIcon->PaintButton(-1, hdc, X1, Y1, iw, ih);
 
-				rect.right -= (iw + CE_ICON_SPACING);
+				rect.right = X1 - CE_ICON_SPACING;
 			}
 
 			// Draw "Hint"
@@ -324,7 +325,7 @@ static LRESULT WINAPI EditIconHintProc(HWND hEditCtrl, UINT Msg, WPARAM wParam, 
 	case WM_RBUTTONUP:
 	case WM_RBUTTONDBLCLK:
 	case WM_SETCURSOR:
-		if (gpIconHandles->Get(hi.iRes, &dh) && dh.hIcon)
+		if (gpIconHandles->Get(hi.iRes, &dh) && dh.pIcon)
 		{
 			// Cursor over icon?
 			if (EditIconHintOverIcon(hEditCtrl, &hi, (Msg==WM_SETCURSOR)?NULL:&lParam))
@@ -684,9 +685,9 @@ void EditIconHint_Set(HWND hRootDlg, HWND hEditCtrl, bool bSearchIcon, LPCWSTR s
 		lstrcpyn(hi.sHint, sHint, countof(hi.sHint));
 		hi.clrHint = GetSysColor(COLOR_GRAYTEXT);
 	}
-	HICON hIcon = NULL;
-	hi.iRes = EditIconHintCreateHandles(hEditCtrl, bSearchIcon ? &hIcon : NULL);
-	hi.bSearchIcon = bSearchIcon;
+	CToolImg* pIcon = NULL;
+	hi.iRes = EditIconHintCreateHandles(hEditCtrl, bSearchIcon ? &pIcon : NULL);
+	hi.bSearchIcon = (pIcon != NULL);
 	DWORD_PTR nMargins = SendMessage(hEditCtrl, EM_GETMARGINS, 0, 0);
 	hi.nMargins = (DWORD)nMargins;
 	hi.nSearchMsg = nSearchMsg;
@@ -698,9 +699,10 @@ void EditIconHint_Set(HWND hRootDlg, HWND hEditCtrl, bool bSearchIcon, LPCWSTR s
 	SetWindowLongPtr(hEditCtrl, GWLP_WNDPROC, (LONG_PTR)EditIconHintProc);
 
 	// Margins
-	if (hIcon)
+	RECT rect = {};
+	if (pIcon && GetClientRect(hEditCtrl, &rect))
 	{
-		int IconWidth = GetSystemMetrics(SM_CXSMICON);
+		int IconWidth = /* square, same as height */ rect.bottom+1-CE_ICON_YPAD;
 		SendMessage(hEditCtrl, EM_SETMARGINS, EC_RIGHTMARGIN, MAKELPARAM(LOWORD(nMargins),HIWORD(nMargins)+IconWidth+CE_ICON_SPACING));
 	}
 
