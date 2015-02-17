@@ -429,6 +429,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"     \"NOR\", \"MAX\", \"FS\" (fullscreen), \"MIN\", \"TSA\",\r\n" \
 	L"     \"TLEFT\", \"TRIGHT\" (tile to left/right), \"THEIGHT\",\r\n" \
 	L"     \"MPREV\", \"MNEXT\" (move ConEmu to prev/next monitor)\r\n" \
+	L"WindowPosSize(\"<X>\",\"<Y>\",\"<W>\",\"<H>\")\r\n" \
+	L"  - Change ConEmu window geometry\r\n" \
 	L"Zoom(N)\r\n" \
 	L"  - Set zoom value, 100 - original font size\r\n" \
 	L""

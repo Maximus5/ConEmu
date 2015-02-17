@@ -223,6 +223,8 @@ namespace ConEmuMacro
 	LPWSTR WindowMinimize(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Вернуть текущий статус: NOR/MAX/FS/MIN/TSA
 	LPWSTR WindowMode(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
+	// Change window pos and size, same as ‘Apply’ button in the ‘Size & Pos’ page of the Settings dialog
+	LPWSTR WindowPosSize(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Установить Zoom для шрифта. 100% и т.п.
 	LPWSTR Zoom(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 
@@ -282,6 +284,7 @@ namespace ConEmuMacro
 		{WindowMaximize, {L"WindowMaximize"}},
 		{WindowMinimize, {L"WindowMinimize"}},
 		{WindowMode, {L"WindowMode"}},
+		{WindowPosSize, {L"WindowPosSize"}},
 		{Zoom, {L"Zoom"}},
 		// End
 		{NULL}
@@ -1639,6 +1642,22 @@ LPWSTR ConEmuMacro::WindowMode(GuiMacro* p, CRealConsole* apRCon, bool abFromPlu
 	}
 
 	return lstrdup(pszRc);
+}
+
+// Change window pos and size, same as ‘Apply’ button in the ‘Size & Pos’ page of the Settings dialog
+LPWSTR ConEmuMacro::WindowPosSize(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
+{
+	LPWSTR pszX = NULL, pszY = NULL, pszW = NULL, pszH = NULL;
+
+	p->GetStrArg(0, pszX);
+	p->GetStrArg(1, pszY);
+	p->GetStrArg(2, pszW);
+	p->GetStrArg(3, pszH);
+
+	if (!gpConEmu->SetWindowPosSize(pszX, pszY, pszW, pszH))
+		return lstrdup(L"FAILED");
+
+	return lstrdup(L"OK");
 }
 
 // Menu(Type)
