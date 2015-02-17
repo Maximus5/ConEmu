@@ -1198,6 +1198,7 @@ bool CConEmuSize::SetWindowPosSize(LPCWSTR asX, LPCWSTR asY, LPCWSTR asW, LPCWST
 	return true;
 }
 
+// Used while parsing command line switches
 void CConEmuSize::SetWindowPosSizeParam(wchar_t acType, LPCWSTR asValue)
 {
 	wchar_t* pch;
