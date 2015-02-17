@@ -477,7 +477,7 @@ IXMLDOMDocument* SettingsXML::CreateDomDocument(wchar_t* pszErr /*= NULL*/, size
 		}
 		_wsprintf(pszErr, SKIPLEN(cchErrMax)
 				  L"XML setting file can not be used!\n"
-				  L"Dynamic libraries 'msxml3.dll'/'msxml3r.dll' was not found!\n\n"
+				  L"Dynamic libraries 'msxml3.dll'/'msxml3r.dll' were not found!\n\n"
 				  L"Can't create IID_IXMLDOMDocument!\n"
 				  L"ErrCode=0x%08X %s", (DWORD)hr, szDllErr);
 
