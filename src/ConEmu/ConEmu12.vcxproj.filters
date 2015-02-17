@@ -303,6 +303,12 @@
     <ClCompile Include="MyClipboard.cpp">
       <Filter>0 - Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="DynDialog.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="TermX.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Attach.h">
@@ -669,18 +675,18 @@
     <ClInclude Include="MyClipboard.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="DynDialog.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TermX.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Circles.bmp">
-      <Filter>Resource Files</Filter>
-    </None>
     <None Include="ConEmu.rc2">
       <Filter>Resource Files</Filter>
     </None>
     <None Include="Copy.bmp">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="hourglass.bmp">
       <Filter>Resource Files</Filter>
     </None>
     <None Include="hsplit.cur">
@@ -743,13 +749,16 @@
     <Image Include="Shield16.bmp">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="donate.bmp">
+    <Image Include="graphics\circles.bmp">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="flattr.bmp">
+    <Image Include="graphics\donate.bmp">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="Search.ico">
+    <Image Include="graphics\flattr.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="graphics\search.bmp">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>
