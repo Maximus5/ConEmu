@@ -125,7 +125,8 @@ static INT_PTR CALLBACK CheckOptionsFastProc(HWND hDlg, UINT messg, WPARAM wPara
 			}
 			// Index of the default location (relative to listbox, but not a pszSettingsPlaces)
 			// By default - suggest %APPDATA% or, if possible, %ConEmuDir%
-			int iDefault = (iAllowed == 0) ? (CConEmuUpdate::NeedRunElevation() ? 1 : 3) : 0;
+			// Win2k does not have 'msxml3.dll'/'msxml3r.dll' libraries
+			int iDefault = ((iAllowed == 0) && !IsWin2kEql()) ? (CConEmuUpdate::NeedRunElevation() ? 1 : 3) : 0;
 
 			// Populate lbStorageLocation
 			while (pszSettingsPlaces[iAllowed])
