@@ -8544,6 +8544,12 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 					))
 				//|| (msg.lParam & 0xFF0000) != lKey1ScanCode /* совпадение скан-кода */) // 120722 - убрал
 			{
+				#ifdef _DEBUG
+				wchar_t szDbg[160]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"  PeekMessage stops, get WM_%04X(0x%02X, 0x%08X)",
+					msg.message, (DWORD)msg.wParam, (DWORD)msg.lParam);
+				DEBUGSTRCHAR(szDbg);
+				#endif
+				// Stop queue checking
 				break;
 			}
 
@@ -8557,6 +8563,13 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 				{
 					gpConEmu->LogMessage(msg1.hwnd, msg1.message, msg1.wParam, msg1.lParam);
 				}
+
+				#ifdef _DEBUG
+				wchar_t szDbg[160]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"  %s(0x%02X='%c', Scan=%i, lParam=0x%08X)",
+					(messg == WM_CHAR) ? L"WM_CHAR" : (messg == WM_SYSCHAR) ? L"WM_SYSCHAR" : (messg == WM_SYSDEADCHAR) ? L"WM_SYSDEADCHAR" : L"WM_DEADCHAR",
+					(DWORD)wParam, wParam?(wchar_t)wParam:L' ', ((DWORD)lParam & 0xFF0000) >> 16, (DWORD)lParam);
+				DEBUGSTRCHAR(szDbg);
+				#endif
 
 				if (msg.message == WM_CHAR || msg.message == WM_SYSCHAR)
 				{
@@ -8589,7 +8602,7 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 				TranslateMessage(&msg1);
 				//DispatchMessage(&msg1);
 			}
-		}
+		} // end of "while nTranslatedChars && PeekMessage"
 
 		if (gpSetCls->isAdvLogging)
 		{
@@ -13185,14 +13198,14 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		case WM_DEADCHAR:
 		case WM_SYSDEADCHAR:
 		{
-			wchar_t szDbg[160]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"%s(%i='%c', Scan=%i, lParam=0x%08X) must be processed internally in CConEmuMain::OnKeyboard",
+			wchar_t szDbg[160]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"%s(0x%02X='%c', Scan=%i, lParam=0x%08X) must be processed internally in CConEmuMain::OnKeyboard",
 				(messg == WM_CHAR) ? L"WM_CHAR" : (messg == WM_SYSCHAR) ? L"WM_SYSCHAR" : (messg == WM_SYSDEADCHAR) ? L"WM_SYSDEADCHAR" : L"WM_DEADCHAR",
 				(DWORD)wParam, wParam?(wchar_t)wParam:L' ', ((DWORD)lParam & 0xFF0000) >> 16, (DWORD)lParam);
 			//_ASSERTE(FALSE && "WM_CHAR, WM_SYSCHAR, WM_DEADCHAR, WM_SYSDEADCHAR must be processed internally in CConEmuMain::OnKeyboard");
 			//this->DebugStep(L"WM_CHAR, WM_SYSCHAR, WM_DEADCHAR, WM_SYSDEADCHAR must be processed internally in CConEmuMain::OnKeyboard", TRUE);
+			DEBUGSTRCHAR(szDbg);
 			this->DebugStep(szDbg, TRUE);
 			wcscat_c(szDbg, L"\n");
-			DEBUGSTRCHAR(szDbg);
 		}
 		break;
 #endif
