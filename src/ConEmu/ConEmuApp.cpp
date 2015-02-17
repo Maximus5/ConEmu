@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2014 Maximus5
+Copyright (c) 2009-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -551,6 +551,34 @@ BOOL IntersectSmallRect(RECT& rc1, SMALL_RECT& rc2)
 	RECT tmp;
 	BOOL lb = IntersectRect(&tmp, &rc1, &frc2);
 	return lb;
+}
+
+bool IntFromString(int& rnValue, LPCWSTR asValue, int anBase /*= 10*/, LPCWSTR* rsEnd /*= NULL*/)
+{
+	bool bOk = false;
+	wchar_t* pszEnd = NULL;
+
+	if (!asValue || !*asValue)
+	{
+		rnValue = 0;
+	}
+	else
+	{
+		// Skip hex prefix if exists
+		if (anBase == 16)
+		{
+			if (asValue[0] == L'x' || asValue[0] == L'X')
+				asValue += 1;
+			else if (asValue[0] == L'0' && (asValue[1] == L'x' || asValue[1] == L'X'))
+				asValue += 2;
+		}
+
+		rnValue = wcstol(asValue, &pszEnd, anBase);
+		bOk = (pszEnd && (pszEnd != asValue));
+	}
+
+	if (rsEnd) *rsEnd = pszEnd;
+	return true;
 }
 
 bool GetDlgItemSigned(HWND hDlg, WORD nID, int& nValue, int nMin /*= 0*/, int nMax /*= 0*/)

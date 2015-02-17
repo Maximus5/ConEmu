@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2014 Maximus5
+Copyright (c) 2009-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -263,6 +263,7 @@ BOOL /*__forceinline*/ CoordInRect(const COORD& c, const RECT& r);
 
 BOOL IntersectSmallRect(RECT& rc1, SMALL_RECT& rc2);
 
+bool IntFromString(int& rnValue, LPCWSTR asValue, int anBase = 10, LPCWSTR* rsEnd = NULL);
 bool GetDlgItemSigned(HWND hDlg, WORD nID, int& nValue, int nMin = 0, int nMax = 0);
 bool GetDlgItemUnsigned(HWND hDlg, WORD nID, DWORD& nValue, DWORD nMin = 0, DWORD nMax = 0);
 wchar_t* GetDlgItemTextPtr(HWND hDlg, WORD nID);
