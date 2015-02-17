@@ -560,6 +560,21 @@ bool IsWinVerOrHigher(WORD OsVer)
 	return (ibIsWinOrHigher != FALSE);
 }
 
+// Only Windows 2000
+bool IsWin2kEql()
+{
+	static int ibIsWin2K = 0;
+	if (!ibIsWin2K)
+	{
+		OSVERSIONINFOEXW osvi = {sizeof(osvi), HIBYTE(_WIN32_WINNT_WIN2K), LOBYTE(_WIN32_WINNT_WIN2K)};
+		DWORDLONG const dwlConditionMask = VerSetConditionMask(VerSetConditionMask(0,
+			VER_MAJORVERSION, VER_EQUAL),
+			VER_MINORVERSION, VER_EQUAL);
+		ibIsWin2K = VerifyVersionInfoW(&osvi, VER_MAJORVERSION | VER_MINORVERSION | VER_SERVICEPACKMAJOR, dwlConditionMask) ? 1 : -1;;
+	}
+	return (ibIsWin2K == 1);
+}
+
 // Only 5.x family (Win2k, WinXP, Win 2003 server)
 bool IsWin5family()
 {
