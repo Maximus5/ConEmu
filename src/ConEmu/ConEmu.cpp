@@ -8532,6 +8532,45 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 		        && PeekMessage(&msg, 0,0,0, PM_NOREMOVE)
 		      )
 		{
+			// Windows иногда умудряется вклинить "левые" сообщения между WM_KEYDOWN & WM_CHAR
+			// в результате некоторые буквы могут "проглатываться" или вообще перемешиваться...
+			// Обработаем "посторонние" сообщения
+
+			if ((msg.message == WM_CLOSE) || (msg.message == WM_DESTROY)
+				|| (msg.message == WM_QUIT) || (msg.message == WM_QUERYENDSESSION))
+			{
+				#ifdef _DEBUG
+				wchar_t szDbg[160]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"  PeekMessage stops, get WM_%04X(0x%02X, 0x%08X)",
+					msg.message, (DWORD)msg.wParam, (DWORD)msg.lParam);
+				DEBUGSTRCHAR(szDbg);
+				#endif
+
+				// After these messages we certanly must stop trying to process keypress
+				break;
+			}
+			else if (!(msg.message == WM_CHAR || msg.message == WM_SYSCHAR
+						|| msg.message == WM_DEADCHAR || msg.message == WM_SYSDEADCHAR
+						|| msg.message == WM_KEYUP || msg.message == WM_KEYDOWN
+						))
+			{
+				// Remove from buffer and process
+				if (!GetMessage(&msg1, 0,0,0))
+					break;
+
+				#ifdef _DEBUG
+				wchar_t szDbg[160]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"  Recursion of WM_%04X(0x%02X, 0x%08X)",
+					msg.message, (DWORD)msg.wParam, (DWORD)msg.lParam);
+				DEBUGSTRCHAR(szDbg);
+				#endif
+
+				_ASSERTE(msg.message == msg1.message);
+				if (!ProcessMessage(msg1))
+					break;
+
+				// This message skipped
+				continue;
+			}
+
 			if (!(msg.message == WM_CHAR || msg.message == WM_SYSCHAR
 					|| msg.message == WM_DEADCHAR || msg.message == WM_SYSDEADCHAR
 					|| (iProcessDeadChars == 1 // был WM_DEADCHAR/WM_SYSDEADCHAR, ожидаем WM_KEYUP и WM_KEYDOWN
@@ -8553,7 +8592,14 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 				break;
 			}
 
-			if (GetMessage(&msg1, 0,0,0))  // убрать из буфера
+			// Remove from buffer
+			if (!GetMessage(&msg1, 0,0,0))
+			{
+				_ASSERTE(FALSE && "GetMessage was failed while PeekMessage was succeded");
+				break;
+			}
+
+			// Let process our message
 			{
 				ConEmuMsgLogger::Log(msg1, ConEmuMsgLogger::msgCommon);
 				_ASSERTEL(msg1.message == msg.message && msg1.wParam == msg.wParam && msg1.lParam == msg.lParam);
