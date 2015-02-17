@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2014 Maximus5
+Copyright (c) 2014-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -158,6 +158,7 @@ public:
 	ConEmuWindowMode GetChangeFromWindowMode();
 	bool IsWindowModeChanging();
 	bool SetWindowMode(ConEmuWindowMode inMode, bool abForce = false, bool abFirstShow = false);
+	bool SetWindowPosSize(LPCWSTR asX, LPCWSTR asY, LPCWSTR asW, LPCWSTR asH);
 	void SetWindowPosSizeParam(wchar_t acType, LPCWSTR asValue);
 	ConEmuWindowCommand GetTileMode(bool Estimate, MONITORINFO* pmi = NULL);
 	ConEmuWindowCommand EvalTileMode(const RECT& rcWnd, MONITORINFO* pmi = NULL);

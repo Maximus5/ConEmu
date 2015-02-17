@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2014 Maximus5
+Copyright (c) 2014-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -1126,6 +1126,76 @@ int CConEmuSize::GetInitialDpi(DpiValue* pDpi)
 		pDpi->SetDpi(dpi);
 
 	return dpiY;
+}
+
+bool CConEmuSize::SetWindowPosSize(LPCWSTR asX, LPCWSTR asY, LPCWSTR asW, LPCWSTR asH)
+{
+	if (gpConEmu->mp_Inside)
+	{
+		_ASSERTE(gpConEmu->mp_Inside == NULL);
+		return false;
+	}
+
+	int newX = 0, newY = 0;
+	CESize newW, newH;
+
+	HWND hDlg = gpSetCls->GetPage(CSettings::thi_SizePos); // ‘Size & Pos’ settings page
+
+	if (!asX || !*asX || !IntFromString(newX, asX))
+		newX = gpConEmu->wndX;
+
+	if (!asY || !*asY || !IntFromString(newY, asY))
+		newY = gpConEmu->wndY;
+
+	if (!asW || !*asW || !newW.SetFromString(true, asW))
+		newW.Raw = gpConEmu->WndWidth.Raw;
+
+	if (!asH || !*asH || !newH.SetFromString(false, asH))
+		newH.Raw = gpConEmu->WndHeight.Raw;
+
+	// Чтобы GetDefaultRect сработал правильно - сразу обновим значения
+	if (!gpSet->wndCascade)
+	{
+		gpConEmu->wndX = newX;
+		if (!gpSet->isQuakeStyle)
+			gpConEmu->wndY = newY;
+	}
+	gpSet->_wndX = newX;
+	if (!gpSet->isQuakeStyle)
+		gpSet->_wndY = newY;
+	gpConEmu->WndWidth.Set(true, newW.Style, newW.Value);
+	gpConEmu->WndHeight.Set(false, newH.Style, newH.Value);
+	gpSet->wndWidth.Set(true, newW.Style, newW.Value);
+	gpSet->wndHeight.Set(true, newH.Style, newH.Value);
+
+	if (gpSet->isQuakeStyle)
+	{
+		if (hDlg)
+			SetFocus(GetDlgItem(hDlg, tWndWidth));
+		RECT rcQuake = gpConEmu->GetDefaultRect();
+		// And size/move!
+		SetWindowPos(ghWnd, NULL, rcQuake.left, rcQuake.top, rcQuake.right-rcQuake.left, rcQuake.bottom-rcQuake.top, SWP_NOZORDER);
+	}
+	else
+	{
+		if (hDlg)
+			SetFocus(GetDlgItem(hDlg, rNormal));
+
+		if (gpConEmu->isZoomed() || gpConEmu->isIconic() || gpConEmu->isFullScreen())
+			gpConEmu->SetWindowMode(wmNormal);
+
+		SetWindowPos(ghWnd, NULL, newX, newY, 0,0, SWP_NOSIZE|SWP_NOZORDER);
+
+		// Установить размер
+		gpConEmu->SizeWindow(newW, newH);
+
+		SetWindowPos(ghWnd, NULL, newX, newY, 0,0, SWP_NOSIZE|SWP_NOZORDER);
+	}
+
+	// Запомнить "идеальный" размер окна, выбранный пользователем
+	gpConEmu->StoreIdealRect();
+
+	return true;
 }
 
 void CConEmuSize::SetWindowPosSizeParam(wchar_t acType, LPCWSTR asValue)
