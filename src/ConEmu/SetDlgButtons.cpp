@@ -1569,69 +1569,18 @@ void CSetDlgButtons::OnBtn_ApplyPos(HWND hDlg, WORD CB, BYTE uCheck)
 
 	if (!gpConEmu->mp_Inside)
 	{
+		bool bStored = false;
 		DWORD Mode = gpSet->_WindowMode;
 
 		if (gpSet->isQuakeStyle
 			|| (Mode == rNormal))
 		{
-			int newX, newY;
-			wchar_t* psSize;
-			CESize newW, newH;
-			//wchar_t temp[MAX_PATH];
-			//GetDlgItemText(hDlg, tWndWidth, temp, countof(temp));  newW = klatoi(temp);
-			//GetDlgItemText(hDlg, tWndHeight, temp, countof(temp)); newH = klatoi(temp);
-			BOOL lbOk;
+			CEStr psX(GetDlgItemTextPtr(hDlg, tWndX));
+			CEStr psY(GetDlgItemTextPtr(hDlg, tWndY));
+			CEStr psW(GetDlgItemTextPtr(hDlg, tWndWidth));
+			CEStr psH(GetDlgItemTextPtr(hDlg, tWndHeight));
 
-			psSize = GetDlgItemTextPtr(hDlg, tWndWidth);
-			if (!psSize || !newW.SetFromString(true, psSize))
-				newW.Raw = gpConEmu->WndWidth.Raw;
-			SafeFree(psSize);
-			psSize = GetDlgItemTextPtr(hDlg, tWndHeight);
-			if (!psSize || !newH.SetFromString(false, psSize))
-				newH.Raw = gpConEmu->WndHeight.Raw;
-			SafeFree(psSize);
-
-			newX = (int)GetDlgItemInt(hDlg, tWndX, &lbOk, TRUE);
-			if (!lbOk) newX = gpConEmu->wndX;
-			newY = (int)GetDlgItemInt(hDlg, tWndY, &lbOk, TRUE);
-			if (!lbOk) newY = gpConEmu->wndY;
-
-			// Чтобы GetDefaultRect сработал правильно - сразу обновим значения
-			if (!gpSet->wndCascade)
-			{
-				gpConEmu->wndX = newX;
-				if (!gpSet->isQuakeStyle)
-					gpConEmu->wndY = newY;
-			}
-			gpSet->_wndX = newX;
-			if (!gpSet->isQuakeStyle)
-				gpSet->_wndY = newY;
-			gpConEmu->WndWidth.Set(true, newW.Style, newW.Value);
-			gpConEmu->WndHeight.Set(false, newH.Style, newH.Value);
-			gpSet->wndWidth.Set(true, newW.Style, newW.Value);
-			gpSet->wndHeight.Set(true, newH.Style, newH.Value);
-
-			if (gpSet->isQuakeStyle)
-			{
-				SetFocus(GetDlgItem(hDlg, tWndWidth));
-				RECT rcQuake = gpConEmu->GetDefaultRect();
-				// And size/move!
-				SetWindowPos(ghWnd, NULL, rcQuake.left, rcQuake.top, rcQuake.right-rcQuake.left, rcQuake.bottom-rcQuake.top, SWP_NOZORDER);
-			}
-			else
-			{
-				SetFocus(GetDlgItem(hDlg, rNormal));
-
-				if (gpConEmu->isZoomed() || gpConEmu->isIconic() || gpConEmu->isFullScreen())
-					gpConEmu->SetWindowMode(wmNormal);
-
-				SetWindowPos(ghWnd, NULL, newX, newY, 0,0, SWP_NOSIZE|SWP_NOZORDER);
-
-				// Установить размер
-				gpConEmu->SizeWindow(newW, newH);
-
-				SetWindowPos(ghWnd, NULL, newX, newY, 0,0, SWP_NOSIZE|SWP_NOZORDER);
-			}
+			bStored = gpConEmu->SetWindowPosSize(psX, psY, psW, psH);
 		}
 		else if (Mode == rMaximized)
 		{
@@ -1649,7 +1598,8 @@ void CSetDlgButtons::OnBtn_ApplyPos(HWND hDlg, WORD CB, BYTE uCheck)
 		}
 
 		// Запомнить "идеальный" размер окна, выбранный пользователем
-		gpConEmu->StoreIdealRect();
+		if (!bStored)
+			gpConEmu->StoreIdealRect();
 		//gpConEmu->UpdateIdealRect(TRUE);
 
 		EnableWindow(GetDlgItem(hDlg, cbApplyPos), FALSE);
