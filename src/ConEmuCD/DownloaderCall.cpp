@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2013-2014 Maximus5
+Copyright (c) 2013-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/defines.h"
 #include "../common/MAssert.h"
 #include "../common/MSectionSimple.h"
-#include "Downloader.h"
+#include "DownloaderCall.h"
 
 #if defined(__GNUC__) && !defined(__MINGW64_VERSION_MAJOR)
 typedef struct {

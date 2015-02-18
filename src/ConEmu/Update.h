@@ -29,7 +29,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #define DOWNLOADER_IMPORTS
-#include "../ConEmuCD/Downloader.h"
+#include "../ConEmuCD/DownloaderCall.h"
 
 #define UPD_PROGRESS_CONFIRM_DOWNLOAD  5
 #define UPD_PROGRESS_DOWNLOAD_START   10

@@ -31,7 +31,7 @@ SRCS = \
 		ConProcess.cpp \
 		ConsoleMain.cpp \
 		Debugger.cpp \
-		Downloader.cpp \
+		DownloaderCall.cpp \
 		GuiHooks.cpp \
 		Infiltrate.cpp \
 		InjectRemote.cpp \

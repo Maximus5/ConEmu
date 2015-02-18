@@ -93,7 +93,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConProcess.h"
 #include "ConsoleHelp.h"
 #include "Debugger.h"
-#include "Downloader.h"
+#include "DownloaderCall.h"
 #include "UnicodeTest.h"
 
 

@@ -430,7 +430,7 @@
       <File RelativePath=".\ConEmuC.h" />
       <File RelativePath=".\ConsoleHelp.h" />
       <File RelativePath=".\Debugger.h" />
-      <File RelativePath=".\Downloader.h" />
+      <File RelativePath=".\DownloaderCall.h" />
       <File RelativePath=".\ExitCodes.h" />
       <File RelativePath=".\GuiHooks.h" />
       <File RelativePath=".\Queue.h" />
@@ -473,7 +473,7 @@
       <File RelativePath=".\ConProcess.cpp" />
       <File RelativePath=".\ConsoleMain.cpp" />
       <File RelativePath=".\Debugger.cpp" />
-      <File RelativePath=".\Downloader.cpp" />
+      <File RelativePath=".\DownloaderCall.cpp" />
       <File RelativePath=".\export.def" />
       <File RelativePath=".\GuiHooks.cpp" />
       <File RelativePath=".\InjectRemote.cpp" />

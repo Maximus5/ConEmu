@@ -40,7 +40,7 @@ $(INTDIR)\ConsoleMain.obj \
 $(INTDIR)\ConsoleMixAttr.obj \
 $(INTDIR)\ConsoleRead.obj \
 $(INTDIR)\Debugger.obj \
-$(INTDIR)\Downloader.obj \
+$(INTDIR)\DownloaderCall.obj \
 $(INTDIR)\EmergencyShow.obj \
 $(INTDIR)\ExecPty.obj \
 $(INTDIR)\execute.obj \
@@ -306,7 +306,7 @@ $(INTDIR)\ConsoleRead.obj: ../common/ConsoleRead.cpp ../common/ConsoleRead.h
 
 $(INTDIR)\Debugger.obj: Debugger.cpp Debugger.h
 
-$(INTDIR)\Downloader.obj: Downloader.cpp Downloader.h
+$(INTDIR)\DownloaderCall.obj: DownloaderCall.cpp DownloaderCall.h ../ConEmuC/DownloaderApi.h
 
 $(INTDIR)\EmergencyShow.obj: ../common/EmergencyShow.cpp ../common/EmergencyShow.h
 

@@ -927,7 +927,7 @@
     <ClInclude Include="ConProcess.h" />
     <ClInclude Include="ConsoleHelp.h" />
     <ClInclude Include="Debugger.h" />
-    <ClInclude Include="Downloader.h" />
+    <ClInclude Include="DownloaderCall.h" />
     <ClInclude Include="ExitCodes.h" />
     <ClInclude Include="GuiHooks.h" />
     <ClInclude Include="Queue.h" />
@@ -1250,7 +1250,7 @@
     <ClCompile Include="ConProcess.cpp" />
     <ClCompile Include="ConsoleMain.cpp" />
     <ClCompile Include="Debugger.cpp" />
-    <ClCompile Include="Downloader.cpp" />
+    <ClCompile Include="DownloaderCall.cpp" />
     <ClCompile Include="GuiHooks.cpp" />
     <ClCompile Include="InjectRemote.cpp" />
     <ClCompile Include="Queue.cpp" />
