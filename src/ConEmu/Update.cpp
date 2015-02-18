@@ -1243,7 +1243,8 @@ wchar_t* CConEmuUpdate::CreateTempFile(LPCWSTR asDir, LPCWSTR asFileNameTempl, H
 			_wsprintf(pszFilePart+_tcslen(pszFilePart), SKIPLEN(16) L"(%u)", i);
 		_wcscat_c(pszFilePart, MAX_PATH, pszExt);
 
-		hFile = CreateFile(szFile, GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL|FILE_ATTRIBUTE_TEMPORARY, NULL);
+		SECURITY_ATTRIBUTES sec = {sizeof(sec), NULL, TRUE};
+		hFile = CreateFile(szFile, GENERIC_WRITE, FILE_SHARE_READ, &sec, CREATE_NEW, FILE_ATTRIBUTE_NORMAL|FILE_ATTRIBUTE_TEMPORARY, NULL);
 		//ERROR_PATH_NOT_FOUND?
 		if (!hFile || (hFile == INVALID_HANDLE_VALUE))
 		{
