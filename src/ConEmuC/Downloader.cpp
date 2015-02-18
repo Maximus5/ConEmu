@@ -1727,6 +1727,7 @@ int DoDownload(LPCWSTR asCmdLine)
 	wchar_t *pszLogin = NULL, *pszPassword = NULL;
 	wchar_t *pszOTimeout = NULL, *pszTimeout = NULL;
 	wchar_t *pszAsync = NULL;
+	wchar_t *pszFHandle = NULL;
 
 	DownloadCommand(dc_Init, 0, NULL);
 
@@ -1751,6 +1752,7 @@ int DoDownload(LPCWSTR asCmdLine)
 		{L"otimeout", &pszOTimeout},
 		{L"timeout", &pszTimeout},
 		{L"async", &pszAsync},
+		{L"fhandle", &pszFHandle},
 		{NULL}
 	};
 
@@ -1855,6 +1857,17 @@ int DoDownload(LPCWSTR asCmdLine)
 		args[1].strArg = szArg;  args[1].argType = at_Str;
 		args[2].uintArg = 0;     args[2].argType = at_Uint;
 		args[3].uintArg = TRUE;  args[3].argType = at_Uint;
+		if (pszFHandle != NULL)
+		{
+			// ConEmuC must be called in the same bitness as caller
+			// So we will not lose any digits from HANDLE value
+			wchar_t* pszEnd = NULL;
+			#ifdef _WIN64
+			args[2].uintArg = (DWORD_PTR)_wcstoui64(pszFHandle, &pszEnd, 16);
+			#else
+			args[2].uintArg = wcstoul(pszFHandle, &pszEnd, 16);
+			#endif
+		}
 
 		// May be file name was specified relatively or even with env.vars?
 		SafeFree(pszExpanded);
