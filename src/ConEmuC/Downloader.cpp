@@ -1680,7 +1680,7 @@ static void PrintDownloadLog(LPCWSTR pszLabel, LPCWSTR pszInfo)
 	else
 	{
 		DWORD cp = GetConsoleCP();
-		DWORD nMax = WideCharToMultiByte(cp, 0, lsAll.ms_Arg, -1, NULL, 0, NULL, NULL);
+		DWORD nMax = WideCharToMultiByte(cp, 0, lsAll.ms_Arg, iLen, NULL, 0, NULL, NULL);
 
 		char szOem[200], *pszOem = NULL;
 
@@ -1695,7 +1695,9 @@ static void PrintDownloadLog(LPCWSTR pszLabel, LPCWSTR pszInfo)
 
 		if (pszOem)
 		{
-			if (WideCharToMultiByte(cp, 0, lsAll.ms_Arg, -1, pszOem, nMax+1, NULL, NULL) > 0)
+			pszOem[nMax] = 0; // just for debugging purposes, not requried
+
+			if (WideCharToMultiByte(cp, 0, lsAll.ms_Arg, iLen, pszOem, nMax+1, NULL, NULL) > 0)
 			{
 				WriteFile(hStdErr, pszOem, nMax, &nWritten, NULL);
 			}
