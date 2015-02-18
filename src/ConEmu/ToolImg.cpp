@@ -213,7 +213,7 @@ bool CToolImg::CreateFlattrButton()
 bool CToolImg::CreateSearchButton()
 {
 	ButtonRowInfo Btns[] = {
-		{12,  12},
+		{11,  11},
 		{14,  14},
 		{18,  18},
 		{20,  20},
