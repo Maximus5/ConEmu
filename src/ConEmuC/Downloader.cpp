@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2013-2014 Maximus5
+Copyright (c) 2013-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -62,9 +62,6 @@ struct InternetCookieHistory
 #endif
 
 
-#if defined(__GNUC__)
-extern "C"
-#endif
 bool WINAPI CalcCRC(const BYTE *pData, size_t cchSize, DWORD& crc)
 {
 	if (!pData)

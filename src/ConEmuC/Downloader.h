@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2013-2014 Maximus5
+Copyright (c) 2013-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -28,99 +28,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#define DOWNLOADTIMEOUT             30000
-#define DOWNLOADCLOSEHANDLETIMEOUT  5000
-#define DOWNLOADOPERATIONTIMEOUT    120000
+#include "DownloaderApi.h"
 
-enum CEDownloadArgType
-{
-	at_None = 0,
-	at_Uint = 1,
-	at_Str  = 2,
-};
-
-struct CEDownloadErrorArg
-{
-	union {
-	LPCWSTR   strArg;
-	DWORD_PTR uintArg;
-	};
-	CEDownloadArgType argType;
-};
-
-struct CEDownloadInfo
-{
-	size_t	strSize;
-	LPARAM  lParam;
-	LPCWSTR strFormat;
-	size_t  argCount;
-	CEDownloadErrorArg Args[3];
-
-	// For simplification of logging
-	wchar_t* GetFormatted(bool bAppendNewLine) const
-	{
-		if (!strFormat)
-			return NULL;
-		// Format string length
-		size_t cchTotal = lstrlen(strFormat);
-		if (bAppendNewLine && strFormat[cchTotal-1] == L'\n')
-			bAppendNewLine = false;
-		// If no arguments - just return copy of format string
-		if (argCount == 0)
-			return lstrmerge(strFormat, bAppendNewLine?L"\n":NULL);
-		cchTotal += 1 + (bAppendNewLine?1:0);
-		// Calculate size of additional (arguments) length
-		for (size_t i = 0; i < argCount; i++)
-		{
-			if (Args[i].argType == at_Uint)
-			{
-				cchTotal += 32;
-			}
-			else if (Args[i].argType == at_Str)
-			{
-				cchTotal += (Args[i].strArg ? lstrlen(Args[i].strArg) : 0);
-			}
-			else
-			{
-				_ASSERTE(Args[i].argType == at_Uint || Args[i].argType == at_Str);
-				return NULL;
-			}
-		}
-		wchar_t* pszAll = (wchar_t*)calloc(cchTotal, sizeof(*pszAll));
-		if (!pszAll)
-			return FALSE;
-		// Does not matter, what type of arguments put into msprintf
-		msprintf(pszAll, cchTotal, strFormat, Args[0].strArg, Args[1].strArg, Args[2].strArg);
-		if (bAppendNewLine) _wcscat_c(pszAll, cchTotal, L"\n");
-		// Done
-		return pszAll;
-	};
-};
-
-typedef void (WINAPI* FDownloadCallback)(const CEDownloadInfo* pError);
-
-// For internal use only!
-enum CEDownloadCommand
-{
-	// Callbacks. Must be sequental!
-	dc_ErrCallback = 0,     // [0]=FDownloadCallback, [1]=lParam
-	dc_ProgressCallback,    // [0]=FDownloadCallback, [1]=lParam
-	dc_LogCallback,         // [0]=FDownloadCallback, [1]=lParam
-	// Commands
-	dc_Init,
-	dc_DownloadFile,        // {IN}  - [0]="http", [1]="DestLocalFilePath", [2]=HANDLE(hDstFile), [3]=abShowAllErrors
-	                        // {OUT} - [0]=SizeInBytes, [1] = CRC32
-	dc_DownloadData,        // [0]="http" -- not implemented yet
-	dc_Reset,
-	dc_Deinit,
-	dc_SetProxy,            // [0]="Server:Port", [1]="User", [2]="Password"
-	dc_SetLogin,            // [0]="User", [1]="Password"
-	dc_RequestTerminate,    // Without args
-	dc_SetAsync,            // [0]=TRUE-Async, FALSE-Sync
-	dc_SetTimeout,          // [0]=type (0-operation, 1-receive), [1]=ms
-};
-
-// For internal use only!
-DWORD_PTR WINAPI DownloadCommand(CEDownloadCommand cmd, int argc, CEDownloadErrorArg* argv);
-bool WINAPI CalcCRC(const BYTE *pData, size_t cchSize, DWORD& crc);
 int DoDownload(LPCWSTR asCmdLine);
