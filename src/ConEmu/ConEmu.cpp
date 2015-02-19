@@ -8532,6 +8532,8 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 		        && PeekMessage(&msg, 0,0,0, PM_NOREMOVE)
 		      )
 		{
+			bool bNeedGet = true;
+
 			// Windows иногда умудряется вклинить "левые" сообщения между WM_KEYDOWN & WM_CHAR
 			// в результате некоторые буквы могут "проглатываться" или вообще перемешиваться...
 			// Обработаем "посторонние" сообщения
@@ -8548,7 +8550,8 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 				// After these messages we certanly must stop trying to process keypress
 				break;
 			}
-			else if (!(msg.message == WM_CHAR || msg.message == WM_SYSCHAR
+
+			if (!(msg.message == WM_CHAR || msg.message == WM_SYSCHAR
 						|| msg.message == WM_DEADCHAR || msg.message == WM_SYSDEADCHAR
 						|| msg.message == WM_KEYUP || msg.message == WM_KEYDOWN
 						))
@@ -8556,6 +8559,7 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 				// Remove from buffer and process
 				if (!GetMessage(&msg1, 0,0,0))
 					break;
+				bNeedGet = false;
 
 				#ifdef _DEBUG
 				wchar_t szDbg[160]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"  Recursion of WM_%04X(0x%02X, 0x%08X)",
@@ -8563,12 +8567,22 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 				DEBUGSTRCHAR(szDbg);
 				#endif
 
-				_ASSERTE(msg.message == msg1.message);
-				if (!ProcessMessage(msg1))
-					break;
+				if (!(msg.message == WM_CHAR || msg.message == WM_SYSCHAR
+						|| msg.message == WM_DEADCHAR || msg.message == WM_SYSDEADCHAR
+						|| msg.message == WM_KEYUP || msg.message == WM_KEYDOWN
+						))
+				{
+					if (!ProcessMessage(msg1))
+						break;
 
-				// This message skipped
-				continue;
+					// This message skipped
+					continue;
+				}
+				else
+				{
+					// Unexpected message ID, keyboard input may be garbled?
+					_ASSERTE(msg.message == msg1.message);
+				}
 			}
 
 			if (!(msg.message == WM_CHAR || msg.message == WM_SYSCHAR
@@ -8588,12 +8602,14 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 					msg.message, (DWORD)msg.wParam, (DWORD)msg.lParam);
 				DEBUGSTRCHAR(szDbg);
 				#endif
+				// Message was already removed from input buffer, but Peek and Get was returned different message IDs?
+				_ASSERTE(bNeedGet && "Keyboard message must be processed, but there was unexpected sequence");
 				// Stop queue checking
 				break;
 			}
 
 			// Remove from buffer
-			if (!GetMessage(&msg1, 0,0,0))
+			if (bNeedGet && !GetMessage(&msg1, 0,0,0))
 			{
 				_ASSERTE(FALSE && "GetMessage was failed while PeekMessage was succeded");
 				break;
