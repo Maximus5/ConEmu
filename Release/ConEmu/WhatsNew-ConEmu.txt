@@ -12,6 +12,11 @@ Votes and awards (vote for ConEmu, if you please)
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+2015.2.18
+[*] Issue 1817: Fix dropped or garbled keypresses sent from AHK.
+[*] Don't suggest by default xml storage on Windows 2000.
+
+
 2015.2.16
 [*] GuiMacro. Issue 1411, gh#58. WindowPosSize("<X>","<Y>","<W>","<H>")
     It changes window pos and size, same as ‘Apply’ button in the ‘Size & Pos’ page of the Settings dialog.
