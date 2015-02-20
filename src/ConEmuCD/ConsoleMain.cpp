@@ -7663,6 +7663,118 @@ BOOL cmd_GuiChanged(CESERVER_REQ& in, CESERVER_REQ** out)
 	return lbRc;
 }
 
+bool TerminateOneProcess(DWORD nPID, DWORD& nErrCode)
+{
+	bool lbRc = false;
+	bool bNeedClose = false;
+	HANDLE hProcess = NULL;
+
+	if (gpSrv && gpSrv->pConsole)
+	{
+		if (nPID == gpSrv->dwRootProcess)
+		{
+			hProcess = gpSrv->hRootProcess;
+			bNeedClose = FALSE;
+		}
+	}
+
+	if (!hProcess)
+	{
+		hProcess = OpenProcess(PROCESS_TERMINATE, FALSE, nPID);
+		if (hProcess != NULL)
+		{
+			bNeedClose = TRUE;
+		}
+		else
+		{
+			nErrCode = GetLastError();
+		}
+	}
+
+	if (hProcess != NULL)
+	{
+		if (TerminateProcess(hProcess, 100))
+		{
+			lbRc = true;
+		}
+		else
+		{
+			nErrCode = GetLastError();
+			if (!bNeedClose)
+			{
+				hProcess = OpenProcess(PROCESS_TERMINATE, FALSE, nPID);
+				if (hProcess != NULL)
+				{
+					bNeedClose = true;
+					if (TerminateProcess(hProcess, 100))
+						lbRc = true;
+				}
+			}
+		}
+	}
+
+	if (hProcess && bNeedClose)
+		CloseHandle(hProcess);
+
+	return lbRc;
+}
+
+bool TerminateProcessGroup(int nCount, LPDWORD pPID, DWORD& nErrCode)
+{
+	bool lbRc = false;
+	HANDLE hJob, hProcess;
+
+	if ((hJob = CreateJobObject(NULL, NULL)) == NULL)
+	{
+		// Job failed? Do it one-by-one
+		for (int i = nCount-1; i >= 0; i--)
+		{
+			lbRc = TerminateOneProcess(pPID[i], nErrCode);
+		}
+	}
+	else
+	{
+		MArray<HANDLE> hh;
+
+		for (int i = 0; i < nCount; i++)
+		{
+			if (pPID[i] == gpSrv->dwRootProcess)
+				continue;
+
+			hProcess = OpenProcess(PROCESS_TERMINATE|PROCESS_SET_QUOTA, FALSE, pPID[i]);
+			if (!hProcess) continue;
+
+			if (AssignProcessToJobObject(hJob, hProcess))
+			{
+				hh.push_back(hProcess);
+			}
+			else
+			{
+				// Strange, can't assign to jub? Do it manually
+				if (TerminateProcess(hProcess, 100))
+					lbRc = true;
+				CloseHandle(hProcess);
+			}
+		}
+
+		if (!hh.empty())
+		{
+			lbRc = (TerminateJobObject(hJob, 100) != FALSE);
+
+			while (hh.pop_back(hProcess))
+			{
+				if (!lbRc) // If job failed - last try
+					TerminateProcess(hProcess, 100);
+				CloseHandle(hProcess);
+			}
+		}
+
+		CloseHandle(hJob);
+	}
+
+	return lbRc;
+}
+
 // CECMD_TERMINATEPID
 BOOL cmd_TerminatePid(CESERVER_REQ& in, CESERVER_REQ** out)
 {
@@ -7678,51 +7790,11 @@ BOOL cmd_TerminatePid(CESERVER_REQ& in, CESERVER_REQ** out)
 	DWORD nCount = in.dwData[0];
 	LPDWORD pPID = in.dwData+1;
 
-	_ASSERTE(nCount == 1); // Only one per call is allowed yet
+	if (nCount == 1)
+		lbRc = TerminateOneProcess(pPID[0], nErrCode);
+	else
+		lbRc = TerminateProcessGroup(nCount, pPID, nErrCode);
 
-	if (gpSrv && gpSrv->pConsole)
-	{
-		if (pPID[0] == gpSrv->dwRootProcess)
-		{
-			hProcess = gpSrv->hRootProcess;
-			bNeedClose = FALSE;
-		}
-	}
-
-	if (!hProcess)
-	{
-		hProcess = OpenProcess(PROCESS_TERMINATE, FALSE, pPID[0]);
-		if (hProcess != NULL)
-		{
-			bNeedClose = TRUE;
-		}
-		else
-		{
-			nErrCode = GetLastError();
-		}
-	}
-
-	if (hProcess != NULL)
-	{
-		if (TerminateProcess(hProcess, 100))
-		{
-			lbRc = TRUE;
-		}
-		else
-		{
-			nErrCode = GetLastError();
-			if (!bNeedClose)
-			{
-				hProcess = OpenProcess(PROCESS_TERMINATE, FALSE, pPID[0]);
-				if (hProcess != NULL)
-				{
-					bNeedClose = TRUE;
-					if (TerminateProcess(hProcess, 100))
-						lbRc = TRUE;
-				}
-			}
-		}
-	}
 
 	if (lbRc)
 	{
@@ -7739,8 +7811,6 @@ BOOL cmd_TerminatePid(CESERVER_REQ& in, CESERVER_REQ** out)
 		(*out)->dwData[1] = nErrCode;
 	}
 
-	if (hProcess && bNeedClose)
-		CloseHandle(hProcess);
 	return lbRc;
 }
 
