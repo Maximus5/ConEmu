@@ -9958,6 +9958,10 @@ CEFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
 
 	if (hFont)
 	{
+		#ifdef _DEBUG
+		DumpFontMetrics(L"mh_Font", hDC, hFont);
+		#endif
+
 		DWORD dwFontErr = 0;
 		SetLastError(0);
 		HFONT hOldF = (HFONT)SelectObject(hDC, hFont);
