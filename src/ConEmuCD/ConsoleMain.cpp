@@ -9439,7 +9439,7 @@ static bool ApplyConsoleSizeBuffer(const USHORT BufferHeight, const COORD& crNew
 		dwErr = GetLastError();
 	}
 
-	return false;
+	return lbRc;
 }
 
 
