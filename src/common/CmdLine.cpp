@@ -829,18 +829,64 @@ bool IsExecutable(LPCWSTR aszFilePathName, wchar_t** rsExpandedVars /*= NULL*/)
 #pragma warning( pop )
 #endif
 
-bool IsFarExe(LPCWSTR asModuleName)
+bool CheckProcessName(LPCWSTR pszProcessName, LPCWSTR* lsNameExt, LPCWSTR* lsName)
 {
-	if (asModuleName && *asModuleName)
+	//LPCWSTR lsNameExt[] = {L"ConEmuC.exe", L"ConEmuC64.exe", L"csrss.exe", L"conhost.exe", NULL};
+	//LPCWSTR lsName[] = {L"ConEmuC", L"ConEmuC64", L"csrss", L"conhost", NULL};
+
+	LPCWSTR pszName = PointToName(pszProcessName);
+	if (!pszName || !*pszName)
 	{
-		LPCWSTR pszName = PointToName(asModuleName);
-		if (lstrcmpi(pszName, L"far.exe") == 0 || lstrcmpi(pszName, L"far") == 0
-			|| lstrcmpi(pszName, L"far64.exe") == 0 || lstrcmpi(pszName, L"far64") == 0)
+		_ASSERTE(pszName && *pszName);
+		return false;
+	}
+
+	if (wcschr(pszName, L'.'))
+	{
+		for (size_t i = 0; lsNameExt[i]; i++)
 		{
-			return true;
+			if (lstrcmpi(pszName, lsNameExt[i]) == 0)
+				return true;
 		}
 	}
+	else
+	{
+		for (size_t i = 0; lsName[i]; i++)
+		{
+			if (lstrcmpi(pszName, lsName[i]) == 0)
+				return true;
+		}
+	}
+
 	return false;
+}
+
+bool IsConsoleService(LPCWSTR pszProcessName)
+{
+	LPCWSTR lsNameExt[] = {L"csrss.exe", L"conhost.exe", NULL};
+	LPCWSTR lsName[] = {L"csrss", L"conhost", NULL};
+	return CheckProcessName(pszProcessName, lsNameExt, lsName);
+}
+
+bool IsConsoleServer(LPCWSTR pszProcessName)
+{
+	LPCWSTR lsNameExt[] = {L"ConEmuC.exe", L"ConEmuC64.exe", NULL};
+	LPCWSTR lsName[] = {L"ConEmuC", L"ConEmuC64", NULL};
+	return CheckProcessName(pszProcessName, lsNameExt, lsName);
+}
+
+bool IsFarExe(LPCWSTR asModuleName)
+{
+	LPCWSTR lsNameExt[] = {L"far.exe", L"far64.exe", NULL};
+	LPCWSTR lsName[] = {L"far", L"far64", NULL};
+	return CheckProcessName(asModuleName, lsNameExt, lsName);
+}
+
+bool IsCmdProcessor(LPCWSTR asModuleName)
+{
+	LPCWSTR lsNameExt[] = {L"cmd.exe", L"tcc.exe", NULL};
+	LPCWSTR lsName[] = {L"cmd", L"tcc", NULL};
+	return CheckProcessName(asModuleName, lsNameExt, lsName);
 }
 
 bool IsQuotationNeeded(LPCWSTR pszPath)

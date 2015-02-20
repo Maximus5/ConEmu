@@ -6468,10 +6468,10 @@ int CRealConsole::GetProcesses(ConProcess** ppPrc, bool ClientOnly /*= false*/)
 				}
 				if (prc.ProcessID == mn_MainSrv_PID)
 				{
-					_ASSERTE(isConsoleService(prc.Name));
+					_ASSERTE(IsConsoleServer(prc.Name));
 					continue;
 				}
-				_ASSERTE(!isConsoleService(prc.Name));
+				_ASSERTE(!IsConsoleService(prc.Name));
 			}
 			//(*ppPrc)[i] = *iter;
 			(*ppPrc)[nCount++] = prc;
@@ -9924,7 +9924,7 @@ bool CRealConsole::DuplicateRoot(bool bSkipMsg /*= false*/, bool bRunAsAdmin /*=
 			if (pProc[i].ProcessID == nServerPID)
 				continue;
 
-			if (isConsoleService(pProc[i].Name))
+			if (IsConsoleServer(pProc[i].Name) || IsConsoleService(pProc[i].Name))
 				continue;
 
 			if (!k)

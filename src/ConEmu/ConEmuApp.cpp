@@ -1961,39 +1961,6 @@ bool isKey(DWORD wp,DWORD vk)
 	return bEq;
 }
 
-bool isConsoleService(LPCWSTR pszProcessName)
-{
-	LPCWSTR pszName = PointToName(pszProcessName);
-	if (!pszName || !*pszName)
-	{
-		_ASSERTE(pszName && *pszName);
-		return false;
-	}
-
-	LPCWSTR lsNameExt[] = {L"ConEmuC.exe", L"ConEmuC64.exe", L"csrss.exe", L"conhost.exe"};
-	LPCWSTR lsName[] = {L"ConEmuC", L"ConEmuC64", L"csrss", L"conhost"};
-
-	if (wcschr(pszName, L'.'))
-	{
-		for (size_t i = 0; i < countof(lsNameExt); i++)
-		{
-			if (lstrcmpi(pszName, lsNameExt[i]) == 0)
-				return true;
-		}
-	}
-	else
-	{
-		for (size_t i = 0; i < countof(lsName); i++)
-		{
-			if (lstrcmpi(pszName, lsName[i]) == 0)
-				return true;
-		}
-	}
-
-	return false;
-}
-
-
 #ifdef DEBUG_MSG_HOOKS
 HHOOK ghDbgHook = NULL;
 LRESULT CALLBACK DbgCallWndProc(int nCode, WPARAM wParam, LPARAM lParam)

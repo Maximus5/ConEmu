@@ -303,8 +303,6 @@ BOOL CreateProcessRestricted(LPCWSTR lpApplicationName, LPWSTR lpCommandLine,
 
 
 bool isKey(DWORD wp,DWORD vk);
-bool isConsoleService(LPCWSTR pszProcessName);
-
 
 void RaiseTestException();
 
