@@ -310,27 +310,7 @@ static INT_PTR CALLBACK CheckOptionsFastProc(HWND hDlg, UINT messg, WPARAM wPara
 						}
 						else
 						{
-							if (reg->OpenKey(gpSetCls->GetConfigPath(), KEY_WRITE))
-							{
-								/* Force Single instance mode */
-								reg->Save(L"SingleInstance", gpSet->isSingleInstance);
-
-								/* Install Keyboard hooks */
-								reg->Save(L"KeyboardHooks", gpSet->m_isKeyboardHooks);
-
-								/* Inject ConEmuHk.dll */
-								reg->Save(L"UseInjects", gpSet->isUseInjects);
-
-								/* Auto Update settings */
-								reg->Save(L"Update.CheckOnStartup", gpSet->UpdSet.isUpdateCheckOnStartup);
-								reg->Save(L"Update.CheckHourly", gpSet->UpdSet.isUpdateCheckHourly);
-								reg->Save(L"Update.ConfirmDownload", gpSet->UpdSet.isUpdateConfirmDownload);
-								reg->Save(L"Update.UseBuilds", gpSet->UpdSet.isUpdateUseBuilds);
-
-								// Fast configuration done
-								reg->CloseKey();
-							}
-
+							gpSet->SaveVanilla(reg);
 							delete reg;
 						}
 					}

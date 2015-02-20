@@ -1025,6 +1025,7 @@ struct Settings
 		void LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* apStorage = NULL);
 		void InitSettings();
 		void InitVanilla();
+		bool SaveVanilla(SettingsBase* reg);
 		void LoadCmdTasks(SettingsBase* reg, bool abFromOpDlg = false);
 		void LoadPalettes(SettingsBase* reg);
 		void CreatePredefinedPalettes(int iAddUserCount);

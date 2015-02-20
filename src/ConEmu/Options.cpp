@@ -844,6 +844,8 @@ void Settings::InitVanilla()
 		return;
 	}
 
+	// WARNING!!! Following settings MUST be saved in Settings::SaveVanilla
+
 	// For new users, let use ‘standard’ font heights? Meaning of display units and character height
 	FontUseUnits = true;
 	// dpi must not be embedded into font height!
@@ -851,6 +853,45 @@ void Settings::InitVanilla()
 	FontSizeY = DEF_FONTSIZEY_U;
 	nStatusFontHeight = DEF_STATUSFONTY_U;
 	nTabFontHeight = DEF_TABFONTY_U;
+
+	// WARNING!!! These settings MUST be saved in Settings::SaveVanilla
+}
+
+bool Settings::SaveVanilla(SettingsBase* reg)
+{
+	bool bOk = false;
+
+	if (reg && reg->OpenKey(gpSetCls->GetConfigPath(), KEY_WRITE))
+	{
+		/* Force Single instance mode */
+		reg->Save(L"SingleInstance", gpSet->isSingleInstance);
+
+		/* Install Keyboard hooks */
+		reg->Save(L"KeyboardHooks", gpSet->m_isKeyboardHooks);
+
+		/* Inject ConEmuHk.dll */
+		reg->Save(L"UseInjects", gpSet->isUseInjects);
+
+		/* Auto Update settings */
+		reg->Save(L"Update.CheckOnStartup", gpSet->UpdSet.isUpdateCheckOnStartup);
+		reg->Save(L"Update.CheckHourly", gpSet->UpdSet.isUpdateCheckHourly);
+		reg->Save(L"Update.ConfirmDownload", gpSet->UpdSet.isUpdateConfirmDownload);
+		reg->Save(L"Update.UseBuilds", gpSet->UpdSet.isUpdateUseBuilds);
+
+		/* Font related */
+		reg->Save(L"FontUseDpi", FontUseDpi);
+		reg->Save(L"FontUseUnits", FontUseUnits);
+		reg->Save(L"FontSize", FontSizeY);
+		reg->Save(L"StatusFontHeight", nStatusFontHeight);
+		reg->Save(L"TabFontHeight", nTabFontHeight);
+
+		// Fast configuration done
+		reg->CloseKey();
+
+		bOk = true;
+	}
+
+	return bOk;
 }
 
 void Settings::ResetSavedOnExit()
