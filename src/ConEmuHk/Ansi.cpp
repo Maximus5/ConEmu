@@ -1021,8 +1021,9 @@ BOOL WINAPI CEAnsi::OurWriteConsoleW(HANDLE hConsoleOutput, const VOID *lpBuffer
 			int iMBCSLen = WideCharToMultiByte(gCpConv.nFromCP, 0, (LPCWSTR)lpBuffer, nNumberOfCharsToWrite, NULL, 0, NULL, NULL);
 			if ((iMBCSLen > 0) && ((pszTemp = (char*)malloc(iMBCSLen)) != NULL))
 			{
-				iMBCSLen = WideCharToMultiByte(gCpConv.nFromCP, 0, (LPCWSTR)lpBuffer, nNumberOfCharsToWrite, pszTemp, iMBCSLen, NULL, NULL);
-				if (iMBCSLen > 0)
+				BOOL bFailed = FALSE; // Do not do conversion if some chars can't be mapped
+				iMBCSLen = WideCharToMultiByte(gCpConv.nFromCP, 0, (LPCWSTR)lpBuffer, nNumberOfCharsToWrite, pszTemp, iMBCSLen, NULL, &bFailed);
+				if ((iMBCSLen > 0) && !bFailed)
 				{
 					int iWideLen = MultiByteToWideChar(gCpConv.nToCP, 0, pszTemp, iMBCSLen, NULL, 0);
 					if (iWideLen > 0)
