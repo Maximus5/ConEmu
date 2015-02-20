@@ -11395,7 +11395,9 @@ bool CRealConsole::TerminateAllButShell(bool abConfirm)
 		|| ((nCount == 2) && IsCmdProcessor(pPrc[0].Name) && IsFarExe(pPrc[1].Name))
 		)
 	{
-		MsgBox(L"Running process was not detected", MB_OKCANCEL|MB_SYSTEMMODAL, sMsgTitle);
+		// MsgBox(L"Running process was not detected", MB_OKCANCEL|MB_SYSTEMMODAL, sMsgTitle);
+		// Let ask user if he wants to kill active process even it is a shell
+		CloseConsole(true/*abForceTerminate*/, true/*abConfirm*/, false/*abAllowMacro*/);
 		return false;
 	}
 
