@@ -48,6 +48,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/MMap.h"
 #include "../common/execute.h"
 #include "../common/WFiles.h"
+#include "../common/WObjects.h"
 #include "../common/WUser.h"
 //#include "../common/TokenHelper.h"
 #include "AboutDlg.h"
@@ -3389,6 +3390,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	RemoveOldComSpecC();
 	AssertMsgBox = MsgBox;
 	gn_MainThreadId = GetCurrentThreadId();
+	gfnSearchAppPaths = SearchAppPaths;
 
 	// On Vista and higher ensure our process will be
 	// marked as fully dpi-aware, regardless of manifest

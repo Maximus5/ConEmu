@@ -309,6 +309,7 @@ BOOL WINAPI DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 
 			gnSelfPID = GetCurrentProcessId();
 			ghWorkingModule = (u64)hModule;
+			gfnSearchAppPaths = SearchAppPaths;
 
 			#ifdef _DEBUG
 			HANDLE hProcHeap = GetProcessHeap();

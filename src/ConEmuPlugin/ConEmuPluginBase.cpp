@@ -236,6 +236,7 @@ void CPluginBase::DllMain_ProcessAttach(HMODULE hModule)
 	ghWorkingModule = (u64)hModule;
 	gnSelfPID = GetCurrentProcessId();
 	HeapInitialize();
+	gfnSearchAppPaths = SearchAppPaths;
 
 	#ifdef SHOW_STARTED_MSGBOX
 	if (!IsDebuggerPresent())

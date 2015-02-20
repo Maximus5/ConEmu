@@ -49,6 +49,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/FarVersion.h"
 #include "../common/MFileMapping.h"
 #include "../common/MSection.h"
+#include "../common/WFiles.h"
 #include "../common/WUser.h"
 #include "ConEmuTh.h"
 #include "ImgCache.h"
@@ -357,6 +358,7 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 			gnSelfPID = GetCurrentProcessId();
 			gnMainThreadId = gnMainThreadIdInitial = GetMainThreadId();
 			HeapInitialize();
+			gfnSearchAppPaths = SearchAppPaths;
 			gpLocalSecurity = LocalSecurity();
 			_ASSERTE(FAR_X_VER<FAR_Y1_VER && FAR_Y1_VER<FAR_Y2_VER);
 #ifdef SHOW_STARTED_MSGBOX

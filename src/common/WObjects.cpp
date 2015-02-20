@@ -210,6 +210,8 @@ bool FileSearchInDir(LPCWSTR asFilePath, CmdArg& rsFound)
 	return false;
 }
 
+SearchAppPaths_t gfnSearchAppPaths = NULL;
+
 bool FileExistsSearch(LPCWSTR asFilePath, CmdArg& rsFound, bool abSetPath/*= true*/, bool abRegSearch /*= true*/)
 {
 	if (!asFilePath || !*asFilePath)
@@ -253,19 +255,21 @@ bool FileExistsSearch(LPCWSTR asFilePath, CmdArg& rsFound, bool abSetPath/*= tru
 	// в реестре, если на машине их несколько установлено.
 
 	#if !defined(CONEMU_MINIMAL)
+	_ASSERTE(gfnSearchAppPaths!=NULL);
+	#endif
+
 	// В ConEmuHk этот блок не активен, потому что может быть "только" перехват CreateProcess,
 	// а о его параметрах должно заботиться вызывающее (текущее) приложение
-	if (abRegSearch && !wcschr(asFilePath, L'\\'))
+	if (abRegSearch && gfnSearchAppPaths && !wcschr(asFilePath, L'\\'))
 	{
 		// Если в asFilePath НЕ указан путь - искать приложение в реестре,
 		// и там могут быть указаны доп. параметры (пока только добавка в %PATH%)
-		if (SearchAppPaths(asFilePath, rsFound, abSetPath))
+		if (gfnSearchAppPaths(asFilePath, rsFound, abSetPath, NULL))
 		{
 			// Нашли по реестру, возможно обновили %PATH%
 			return true;
 		}
 	}
-	#endif
 
 	return false;
 }
