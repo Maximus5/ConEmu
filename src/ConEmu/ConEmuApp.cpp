@@ -2539,6 +2539,7 @@ BOOL PrepareCommandLine(TCHAR*& cmdLine, TCHAR*& cmdNew, bool& isScript, uint& p
 		if (!pszNext)
 		{
 			MBoxA(L"Invalid command line: quotes are not balanced");
+			SafeFree(pszExeNameOnly);
 			return FALSE;
 		}
 
