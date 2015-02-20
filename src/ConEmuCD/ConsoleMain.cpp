@@ -7663,17 +7663,26 @@ BOOL cmd_GuiChanged(CESERVER_REQ& in, CESERVER_REQ** out)
 	return lbRc;
 }
 
+// CECMD_TERMINATEPID
 BOOL cmd_TerminatePid(CESERVER_REQ& in, CESERVER_REQ** out)
 {
 	// Прибить процесс (TerminateProcess)
+	size_t cbInSize = in.DataSize();
+	if ((cbInSize < 2*sizeof(DWORD)) || (cbInSize < (sizeof(DWORD)*(1+in.dwData[0]))))
+		return FALSE;
+
 	BOOL lbRc = FALSE;
 	HANDLE hProcess = NULL;
 	BOOL bNeedClose = FALSE;
 	DWORD nErrCode = 0;
+	DWORD nCount = in.dwData[0];
+	LPDWORD pPID = in.dwData+1;
+
+	_ASSERTE(nCount == 1); // Only one per call is allowed yet
 
 	if (gpSrv && gpSrv->pConsole)
 	{
-		if (in.dwData[0] == gpSrv->dwRootProcess)
+		if (pPID[0] == gpSrv->dwRootProcess)
 		{
 			hProcess = gpSrv->hRootProcess;
 			bNeedClose = FALSE;
@@ -7682,7 +7691,7 @@ BOOL cmd_TerminatePid(CESERVER_REQ& in, CESERVER_REQ** out)
 
 	if (!hProcess)
 	{
-		hProcess = OpenProcess(PROCESS_TERMINATE, FALSE, in.dwData[0]);
+		hProcess = OpenProcess(PROCESS_TERMINATE, FALSE, pPID[0]);
 		if (hProcess != NULL)
 		{
 			bNeedClose = TRUE;
@@ -7704,7 +7713,7 @@ BOOL cmd_TerminatePid(CESERVER_REQ& in, CESERVER_REQ** out)
 			nErrCode = GetLastError();
 			if (!bNeedClose)
 			{
-				hProcess = OpenProcess(PROCESS_TERMINATE, FALSE, in.dwData[0]);
+				hProcess = OpenProcess(PROCESS_TERMINATE, FALSE, pPID[0]);
 				if (hProcess != NULL)
 				{
 					bNeedClose = TRUE;

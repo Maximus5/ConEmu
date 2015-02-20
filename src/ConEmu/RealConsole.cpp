@@ -11507,10 +11507,11 @@ void CRealConsole::CloseConsole(bool abForceTerminate, bool abConfirm, bool abAl
 					if (nBtn == IDOK)
 					{
 						//Terminate
-						CESERVER_REQ *pIn = ExecuteNewCmd(CECMD_TERMINATEPID, sizeof(CESERVER_REQ_HDR)+sizeof(DWORD));
+						CESERVER_REQ *pIn = ExecuteNewCmd(CECMD_TERMINATEPID, sizeof(CESERVER_REQ_HDR)+2*sizeof(DWORD));
 						if (pIn)
 						{
-							pIn->dwData[0] = nActivePID;
+							pIn->dwData[0] = 1; // Count
+							pIn->dwData[1] = nActivePID;
 							DWORD dwTickStart = timeGetTime();
 
 							CESERVER_REQ *pOut = ExecuteSrvCmd(dwServerPID, pIn, ghWnd);

@@ -30,7 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _COMMON_HEADER_HPP_
 
 // Interface version
-#define CESERVER_REQ_VER    149
+#define CESERVER_REQ_VER    150
 
 // Max tabs/panes count
 #define MAX_CONSOLE_COUNT 30
@@ -404,7 +404,6 @@ const CECMD
 	CECMD_ASSERT         = 42, // Отобразить Assert в ConEmu. In=wchar_t[], Out=DWORD.
 	CECMD_GUICHANGED     = 43, // посылается в сервер, чтобы он обновил у себя ConEmuGuiMapping->CESERVER_CONSOLE_MAPPING_HDR
 	CECMD_PEEKREADINFO   = 44, // CESERVER_REQ_PEEKREADINFO: посылается в GUI на вкладку Debug
-	CECMD_TERMINATEPID   = 45,
 	CECMD_ATTACHGUIAPP   = 46, // CESERVER_REQ_ATTACHGUIAPP
 	CECMD_KEYSHORTCUTS   = 47, // BYTE Data[2]; SetConsoleKeyShortcuts from kernel32.dll
 	CECMD_SETFOCUS       = 48, // CESERVER_REQ_SETFOCUS
@@ -445,6 +444,7 @@ const CECMD
 	CECMD_SETTOPLEFT     = 81, // CESERVER_REQ_CONINFO
 	CECMD_PROMPTSTARTED  = 82, // CESERVER_PROMPTSTARTED (ConEmuHk -> Server)
 	CECMD_QUERYPALETTE   = 83, // CESERVER_PALETTE
+	CECMD_TERMINATEPID   = 84, // DWORD[0]=Count, DWORD[1..]=PIDs
 /** Команды FAR плагина **/
 	CMD_FIRST_FAR_CMD    = 200,
 	CMD_DRAGFROM         = 200,
