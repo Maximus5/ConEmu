@@ -9741,21 +9741,17 @@ void CSettings::RecreateBorderFont(const LOGFONT *inFont)
 	MBoxAssert(hDC);
 	HFONT hOldF = NULL;
 
-	// Font width?
-	if (gpSet->FontSizeX2 > 0)
-	{
-		// Eval first, width was defined in settings
-		EvalLogfontSizes(LogFont2, gpSet->FontSizeY, gpSet->FontSizeX2);
-		mn_BorderFontWidth = LogFont2.lfWidth;
-	}
-	else
+	// Eval first to consider DPI and FontUseUnits options
+	// Force the same height in pixels as main font
+	EvalLogfontSizes(LogFont2, gpSet->FontSizeY, gpSet->FontSizeX2);
+
+	// Font width was not defined?
+	if (gpSet->FontSizeX2 <= 0)
 	{
 		// Use main font width
-		LogFont2.lfWidth = mn_BorderFontWidth = inFont->lfWidth;
+		LogFont2.lfWidth = inFont->lfWidth;
 	}
-	// Force the same height in pixels as main font
-	_ASSERTE((inFont->lfHeight > 0) && "Must be already in cell pixels");
-	LogFont2.lfHeight = abs(inFont->lfHeight);
+	mn_BorderFontWidth = LogFont2.lfWidth;
 
 	// Иначе рамки прерывистыми получаются... поставил NONANTIALIASED_QUALITY
 	mh_Font2 = CEFONT(CreateFont(LogFont2.lfHeight, LogFont2.lfWidth, 0, 0, FW_NORMAL,
