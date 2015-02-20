@@ -391,7 +391,7 @@ BEGIN
 	vkTabMenu2              "Show Tab context menu"
 	vkTabPane               "Split: Put focus to next visible pane"
 	vkTabPaneShift          "Split: Put focus to previous visible pane"
-	vkTerminateApp          "Terminate active process in current console"
+	vkTerminateApp          "Terminate active process in the current console"
 	vkTileToLeft            "Snap ConEmu window to the monitor's left edge"
 	vkTileToRight           "Snap ConEmu window to the monitor's right edge"
 	vkTransparencyDec       "Transparency: more opaque"
