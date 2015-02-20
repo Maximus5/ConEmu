@@ -11380,21 +11380,6 @@ bool CRealConsole::TerminateAllButShell(bool abConfirm)
 		return false;
 	}
 
-	if (abConfirm)
-	{
-		ConfirmCloseParam Parm;
-		Parm.nConsoles = 1;
-		Parm.nOperations = (GetProgress(NULL,NULL)>=0) ? 1 : 0;
-		Parm.nUnsavedEditors = GetModifiedEditors();
-		Parm.asSingleConsole = gsTerminateAllButShell;
-		Parm.asSingleTitle = Title;
-
-		int nBtn = ConfirmCloseConsoles(Parm);
-
-		if (nBtn != IDYES)
-			return false;
-	}
-
 	const wchar_t sMsgTitle[] = L"Terminate all but shell";
 
 	ConProcess* pPrc = NULL;
@@ -11412,6 +11397,24 @@ bool CRealConsole::TerminateAllButShell(bool abConfirm)
 	{
 		MsgBox(L"Running process was not detected", MB_OKCANCEL|MB_SYSTEMMODAL, sMsgTitle);
 		return false;
+	}
+
+	if (abConfirm)
+	{
+		ConfirmCloseParam Parm;
+		Parm.nConsoles = 1;
+		Parm.nOperations = (GetProgress(NULL,NULL)>=0) ? 1 : 0;
+		Parm.nUnsavedEditors = GetModifiedEditors();
+		Parm.asSingleConsole = gsTerminateAllButShell;
+		Parm.asSingleTitle = Title;
+
+		int nBtn = ConfirmCloseConsoles(Parm);
+
+		if (nBtn != IDYES)
+		{
+			free(pPrc);
+			return false;
+		}
 	}
 
 	// Allocate enough storage
