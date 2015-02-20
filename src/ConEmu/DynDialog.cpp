@@ -124,7 +124,9 @@ CDynDialog::CDynDialog(UINT nDlgId)
 	, mp_DlgProc(NULL)
 	, mlp_Template(NULL)
 	, mp_pointsize(NULL)
+	, mpsz_TypeFace(NULL)
 	, mn_TemplateLength(0)
+	, mpsz_Title(NULL)
 {
 }
 
