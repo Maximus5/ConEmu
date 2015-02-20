@@ -1374,6 +1374,12 @@ LPWSTR ConEmuMacro::Close(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 			pszResult = lstrdup(L"OK");
 		}
 		break;
+	case 10: // terminate all but shell process (10), no confirm (10,1)
+		if (apRCon)
+		{
+			pszResult = apRCon->TerminateAllButShell((nFlags & 1)==0) ? lstrdup(L"OK") : lstrdup(L"FAILED");
+		}
+		break;
 	}
 
 	return pszResult ? pszResult : lstrdup(L"Failed");

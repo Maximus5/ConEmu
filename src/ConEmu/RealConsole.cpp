@@ -145,6 +145,7 @@ static BOOL gbInSendConEvent = FALSE;
 
 const wchar_t gsCloseGui[] = L"Confirm closing active child window?";
 const wchar_t gsCloseCon[] = L"Confirm closing console?";
+const wchar_t gsTerminateAllButShell[] = L"Terminate all but shell processes?";
 //const wchar_t gsCloseAny[] = L"Confirm closing console?";
 const wchar_t gsCloseEditor[] = L"Confirm closing Far editor?";
 const wchar_t gsCloseViewer[] = L"Confirm closing Far viewer?";
@@ -11368,6 +11369,85 @@ void CRealConsole::CloseConsoleWindow(bool abConfirm)
 	{
 		PostConsoleMessage(hConWnd, WM_CLOSE, 0, 0);
 	}
+}
+
+bool CRealConsole::TerminateAllButShell(bool abConfirm)
+{
+	DWORD dwServerPID = GetServerPID(true);
+	if (!dwServerPID)
+	{
+		// No server
+		return false;
+	}
+
+	if (abConfirm)
+	{
+		ConfirmCloseParam Parm;
+		Parm.nConsoles = 1;
+		Parm.nOperations = (GetProgress(NULL,NULL)>=0) ? 1 : 0;
+		Parm.nUnsavedEditors = GetModifiedEditors();
+		Parm.asSingleConsole = gsTerminateAllButShell;
+		Parm.asSingleTitle = Title;
+
+		int nBtn = ConfirmCloseConsoles(Parm);
+
+		if (nBtn != IDYES)
+			return false;
+	}
+
+	const wchar_t sMsgTitle[] = L"Terminate all but shell";
+
+	ConProcess* pPrc = NULL;
+	int nCount = GetProcesses(&pPrc, true/*ClientOnly*/);
+	// If console has only shell
+	if (!pPrc || (nCount < 1))
+	{
+		MsgBox(L"GetProcesses fails", MB_OKCANCEL|MB_SYSTEMMODAL, sMsgTitle);
+		return false;
+	}
+	// Some users are starting "far.exe" from batch files
+	if ((nCount == 1)
+		|| ((nCount == 2) && IsCmdProcessor(pPrc[0].Name) && IsFarExe(pPrc[1].Name))
+		)
+	{
+		MsgBox(L"Running process was not detected", MB_OKCANCEL|MB_SYSTEMMODAL, sMsgTitle);
+		return false;
+	}
+
+	// Allocate enough storage
+	CESERVER_REQ *pIn = ExecuteNewCmd(CECMD_TERMINATEPID, sizeof(CESERVER_REQ_HDR)+(1+nCount)*sizeof(DWORD));
+	if (!pIn)
+	{
+		// Not enough memory? System fails
+		return false;
+	}
+
+	int iFrom = 1; // Skip the shell (pPrc[0].Name is cmd.exe, far.exe, ipython, and so on)
+	if ((nCount >= 2) && (0==lstrcmpi(pPrc[0].Name, L"cmd.exe")) && IsFarExe(pPrc[1].Name))
+		iFrom++;   // the "shell" is "far.exe" started from batch
+	if ((nCount > iFrom) && IsFarExe(pPrc[iFrom-1].Name) && IsConsoleServer(pPrc[iFrom].Name))
+		iFrom++;   // ConEmuC was started from "far.exe" as "ComSpec"
+
+	int iKillCount = 0;
+	for (int i = iFrom; i < nCount; i++)
+	{
+		pIn->dwData[++iKillCount] = pPrc[i].ProcessID;
+	}
+	free(pPrc);
+	pIn->dwData[0] = iKillCount;
+
+	DEBUGTEST(DWORD dwTickStart = timeGetTime());
+
+	//Terminate
+	CESERVER_REQ *pOut = ExecuteSrvCmd(dwServerPID, pIn, ghWnd);
+
+	bool bOk = (pOut && (pOut->DataSize() > 2*sizeof(DWORD)) && (pOut->dwData[0] != 0));
+
+	DEBUGTEST(DWORD dwTickEnd = timeGetTime());
+	ExecuteFreeResult(pOut);
+	ExecuteFreeResult(pIn);
+
+	return bOk;
 }
 
 void CRealConsole::CloseConsole(bool abForceTerminate, bool abConfirm, bool abAllowMacro /*= true*/)
