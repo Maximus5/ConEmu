@@ -9754,9 +9754,11 @@ void CSettings::RecreateBorderFont(const LOGFONT *inFont)
 	mn_BorderFontWidth = LogFont2.lfWidth;
 
 	// Иначе рамки прерывистыми получаются... поставил NONANTIALIASED_QUALITY
+	DWORD fdwQuality = NONANTIALIASED_QUALITY/*ANTIALIASED_QUALITY*/;
+	DWORD fdwCharSet = DEFAULT_CHARSET;
 	mh_Font2 = CEFONT(CreateFont(LogFont2.lfHeight, LogFont2.lfWidth, 0, 0, FW_NORMAL,
-	                             0, 0, 0, DEFAULT_CHARSET, OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS,
-	                             NONANTIALIASED_QUALITY/*ANTIALIASED_QUALITY*/, 0, LogFont2.lfFaceName));
+	                             0, 0, 0, fdwCharSet, OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS,
+	                             fdwQuality, 0, LogFont2.lfFaceName));
 
 	if (mh_Font2.IsSet())
 	{
@@ -9789,8 +9791,8 @@ void CSettings::RecreateBorderFont(const LOGFONT *inFont)
 					mh_Font2.Delete();
 
 					mh_Font2 = CEFONT(CreateFont(LogFont2.lfHeight, LogFont2.lfWidth, 0, 0, FW_NORMAL,
-													0, 0, 0, DEFAULT_CHARSET, OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS,
-													NONANTIALIASED_QUALITY/*ANTIALIASED_QUALITY*/, 0, LogFont2.lfFaceName));
+													0, 0, 0, fdwCharSet, OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS,
+													fdwQuality, 0, LogFont2.lfFaceName));
 					hOldF = (HFONT)SelectObject(hDC, mh_Font2.hFont);
 					wchar_t szFontFace2[32];
 
