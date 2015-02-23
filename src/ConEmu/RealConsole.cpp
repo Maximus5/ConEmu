@@ -608,6 +608,32 @@ bool CRealConsole::PreCreate(RConStartArgs *args)
 	return true;
 }
 
+void CRealConsole::RepositionDialogWithTab(HWND hDlg)
+{
+	// Positioning
+	RECT rcDlg = {}; GetWindowRect(hDlg, &rcDlg);
+	if (mp_ConEmu->mp_TabBar->IsTabsShown())
+	{
+		RECT rcTab = {};
+		if (mp_ConEmu->mp_TabBar->GetActiveTabRect(&rcTab))
+		{
+			if (gpSet->nTabsLocation == 1)
+				OffsetRect(&rcDlg, rcTab.left - rcDlg.left, rcTab.top - rcDlg.bottom); // bottom
+			else
+				OffsetRect(&rcDlg, rcTab.left - rcDlg.left, rcTab.bottom - rcDlg.top); // top
+		}
+	}
+	else
+	{
+		RECT rcCon = {};
+		if (GetWindowRect(GetView(), &rcCon))
+		{
+			OffsetRect(&rcDlg, rcCon.left - rcDlg.left, rcCon.top - rcDlg.top);
+		}
+	}
+	MoveWindowRect(hDlg, rcDlg);
+}
+
 RealBufferType CRealConsole::GetActiveBufferType()
 {
 	if (!this || !mp_ABuf)
@@ -9798,27 +9824,7 @@ INT_PTR CRealConsole::renameProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lP
 				pRCon->mp_RenameDpiAware->Attach(hDlg, ghWnd, CDynDialog::GetDlgClass(hDlg));
 
 			// Positioning
-			RECT rcDlg = {}; GetWindowRect(hDlg, &rcDlg);
-			if (pRCon->mp_ConEmu->mp_TabBar->IsTabsShown())
-			{
-				RECT rcTab = {};
-				if (pRCon->mp_ConEmu->mp_TabBar->GetActiveTabRect(&rcTab))
-				{
-					if (gpSet->nTabsLocation == 1)
-						OffsetRect(&rcDlg, rcTab.left - rcDlg.left, rcTab.top - rcDlg.bottom); // bottom
-					else
-						OffsetRect(&rcDlg, rcTab.left - rcDlg.left, rcTab.bottom - rcDlg.top); // top
-				}
-			}
-			else
-			{
-				RECT rcCon = {};
-				if (GetWindowRect(pRCon->GetView(), &rcCon))
-				{
-					OffsetRect(&rcDlg, rcCon.left - rcDlg.left, rcCon.top - rcDlg.top);
-				}
-			}
-			MoveWindowRect(hDlg, rcDlg);
+			pRCon->RepositionDialogWithTab(hDlg);
 
 			HWND hEdit = GetDlgItem(hDlg, tNewTabName);
 
