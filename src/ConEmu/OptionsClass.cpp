@@ -12001,7 +12001,7 @@ void CSettings::ShowErrorTip(LPCTSTR asInfo, HWND hDlg, int nCtrlID, wchar_t* ps
 bool CSettings::EditConsoleFont(HWND hParent)
 {
 	hConFontDlg = NULL; nConFontError = 0;
-	int nRc = DialogBox(g_hInstance, MAKEINTRESOURCE(IDD_MORE_CONFONT), hParent, EditConsoleFontProc); //-V103
+	INT_PTR nRc = CDynDialog::ExecuteDialog(IDD_MORE_CONFONT, hParent, EditConsoleFontProc, 0);
 	hConFontDlg = NULL;
 	return (nRc == IDOK);
 }
