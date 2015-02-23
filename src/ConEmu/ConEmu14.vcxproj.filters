@@ -553,8 +553,5 @@
     <Image Include="flattr.bmp">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="Search.ico">
-      <Filter>Resource Files</Filter>
-    </Image>
   </ItemGroup>
 </Project>

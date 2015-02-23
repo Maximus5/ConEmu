@@ -481,9 +481,6 @@
     <None Include="Scroll.bmp">
       <Filter>Resource Files</Filter>
     </None>
-    <None Include="Search.ico">
-      <Filter>Resource Files</Filter>
-    </None>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="ConEmu.rc">

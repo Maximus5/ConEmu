@@ -62,7 +62,6 @@
 #define IDD_HELP                        221
 #define IDD_ACTION                      222
 #define IDD_HOTKEY                      223
-#define IDI_SEARCH                      224
 #define c0                              1000
 #define c1                              1001
 #define c2                              1002
