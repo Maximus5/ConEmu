@@ -203,6 +203,8 @@ int ConEmuHotKeyList::AllocateHotkeys()
 		->SetHotKey(VK_F4,VK_LWIN); // sort of AltF4 for GUI apps
 	Add(vkRenameTab,      chk_User,  NULL,    L"Multi.Rename",          CConEmuCtrl::key_RenameTab, true/*OnKeyUp*/)
 		->SetHotKey('R',VK_APPS);
+	Add(vkAffinity,       chk_User,  NULL,    L"AffinityPriorityKey",   CConEmuCtrl::key_GuiMacro, true/*OnKeyUp*/, L"AffinityPriority")
+		->SetHotKey('A',VK_APPS);
 	Add(vkMoveTabLeft,    chk_User,  NULL,    L"Multi.MoveLeft",        CConEmuCtrl::key_MoveTabLeft)
 		->SetHotKey(VK_LEFT,VK_LWIN,VK_MENU);
 	Add(vkMoveTabRight,   chk_User,  NULL,    L"Multi.MoveRight",       CConEmuCtrl::key_MoveTabRight)

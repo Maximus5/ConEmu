@@ -212,6 +212,14 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 	// -- т.к. автопоказ табов может вызвать ресайз - то табы в самом конце инициализации!
 	//SetTabs(NULL,1);
 
+	DWORD_PTR nSystemAffinity = (DWORD_PTR)-1, nProcessAffinity = (DWORD_PTR)-1;
+	if (GetProcessAffinityMask(GetCurrentProcess(), &nProcessAffinity, &nSystemAffinity))
+		mn_ProcessAffinity = nProcessAffinity;
+	else
+		mn_ProcessAffinity = 1;
+	mn_ProcessPriority = GetPriorityClass(GetCurrentProcess());
+	mp_PriorityDpiAware = NULL;
+
 	//memset(&m_PacketQueue, 0, sizeof(m_PacketQueue));
 	mn_FlushIn = mn_FlushOut = 0;
 	mb_MouseButtonDown = FALSE;
@@ -477,6 +485,8 @@ CRealConsole::~CRealConsole()
 
 	SafeDelete(mp_RenameDpiAware);
 
+	SafeDelete(mp_PriorityDpiAware);
+
 	SafeDelete(mpcs_CurWorkDir);
 
 	//SafeFree(mpsz_CmdBuffer);
@@ -632,6 +642,203 @@ void CRealConsole::RepositionDialogWithTab(HWND hDlg)
 		}
 	}
 	MoveWindowRect(hDlg, rcDlg);
+}
+
+INT_PTR CRealConsole::priorityProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam)
+{
+	CRealConsole* pRCon = NULL;
+	if (messg == WM_INITDIALOG)
+		pRCon = (CRealConsole*)lParam;
+	else
+		pRCon = (CRealConsole*)GetWindowLongPtr(hDlg, DWLP_USER);
+
+	if (!pRCon)
+		return FALSE;
+
+	switch (messg)
+	{
+		case WM_INITDIALOG:
+		{
+			SendMessage(hDlg, WM_SETICON, ICON_BIG, (LPARAM)hClassIcon);
+			SendMessage(hDlg, WM_SETICON, ICON_SMALL, (LPARAM)hClassIconSm);
+
+			pRCon->mp_ConEmu->OnOurDialogOpened();
+			_ASSERTE(pRCon!=NULL);
+			SetWindowLongPtr(hDlg, DWLP_USER, (LONG_PTR)pRCon);
+
+			if (pRCon->mp_PriorityDpiAware)
+				pRCon->mp_PriorityDpiAware->Attach(hDlg, ghWnd, CDynDialog::GetDlgClass(hDlg));
+
+			// Positioning
+			pRCon->RepositionDialogWithTab(hDlg);
+
+			// Show affinity/priority
+			DWORD_PTR nSystemAffinity = (DWORD_PTR)-1, nProcessAffinity = (DWORD_PTR)-1;
+			u64 All = GetProcessAffinityMask(GetCurrentProcess(), &nProcessAffinity, &nSystemAffinity) ? nSystemAffinity : 1;
+			u64 Current = pRCon->mn_ProcessAffinity;
+			for (int i = 0; i < 64; i++)
+			{
+				HWND hCheck = GetDlgItem(hDlg, cbAffinity0+i);
+				if (!hCheck)
+				{
+					_ASSERTE(hCheck != NULL);
+					continue;
+				}
+				EnableWindow(hCheck, (All & 1) != 0);
+				CheckDlgButton(hDlg, cbAffinity0+i, (Current & 1) ? BST_CHECKED : BST_UNCHECKED);
+				All = (All >> 1);
+				Current = (Current >> 1);
+			}
+
+			UINT rbPriority = rbPriorityNormal;
+			switch (pRCon->mn_ProcessPriority)
+			{
+			case REALTIME_PRIORITY_CLASS:
+				rbPriority = rbPriorityRealtime; break;
+			case HIGH_PRIORITY_CLASS:
+				rbPriority = rbPriorityHigh; break;
+			case ABOVE_NORMAL_PRIORITY_CLASS:
+				rbPriority = rbPriorityAbove; break;
+			case NORMAL_PRIORITY_CLASS:
+				rbPriority = rbPriorityNormal; break;
+			case BELOW_NORMAL_PRIORITY_CLASS:
+				rbPriority = rbPriorityBelow; break;
+			case IDLE_PRIORITY_CLASS:
+				rbPriority = rbPriorityIdle; break;
+			}
+			CheckRadioButton(hDlg, rbPriorityRealtime, rbPriorityIdle, rbPriority);
+
+			SetFocus(GetDlgItem(hDlg, IDOK));
+			return FALSE;
+		}
+
+		case WM_COMMAND:
+			if (HIWORD(wParam) == BN_CLICKED)
+			{
+				switch (LOWORD(wParam))
+				{
+					case IDOK:
+						{
+							// Get changes
+							u64 All = 0, Current = 1;
+							for (int i = 0; i < 64; i++)
+							{
+								HWND hCheck = GetDlgItem(hDlg, cbAffinity0+i);
+								if (IsDlgButtonChecked(hDlg, cbAffinity0+i))
+									All |= Current;
+								Current = (Current << 1);
+							}
+
+							DWORD nPriority = NORMAL_PRIORITY_CLASS;
+							if (IsDlgButtonChecked(hDlg, rbPriorityRealtime))
+								nPriority = REALTIME_PRIORITY_CLASS;
+							else if (IsDlgButtonChecked(hDlg, rbPriorityHigh))
+								nPriority = HIGH_PRIORITY_CLASS;
+							else if (IsDlgButtonChecked(hDlg, rbPriorityAbove))
+								nPriority = ABOVE_NORMAL_PRIORITY_CLASS;
+							else if (IsDlgButtonChecked(hDlg, rbPriorityBelow))
+								nPriority = BELOW_NORMAL_PRIORITY_CLASS;
+							else if (IsDlgButtonChecked(hDlg, rbPriorityIdle))
+								nPriority = IDLE_PRIORITY_CLASS;
+
+							// Return to pRCon
+							pRCon->mn_ProcessAffinity = All;
+							pRCon->mn_ProcessPriority = nPriority;
+
+							// Done
+							EndDialog(hDlg, IDOK);
+							return TRUE;
+						}
+					case IDCANCEL:
+					case IDCLOSE:
+						priorityProc(hDlg, WM_CLOSE, 0, 0);
+						return TRUE;
+				}
+			}
+			break;
+
+		case WM_CLOSE:
+			pRCon->mp_ConEmu->OnOurDialogClosed();
+			EndDialog(hDlg, IDCANCEL);
+			break;
+
+		case WM_DESTROY:
+			if (pRCon->mp_PriorityDpiAware)
+				pRCon->mp_PriorityDpiAware->Detach();
+			break;
+
+		default:
+			if (pRCon->mp_PriorityDpiAware && pRCon->mp_PriorityDpiAware->ProcessDpiMessages(hDlg, messg, wParam, lParam))
+			{
+				return TRUE;
+			}
+	}
+
+	return FALSE;
+}
+
+bool CRealConsole::ChangeAffinityPriority(LPCWSTR asAffinity /*= NULL*/, LPCWSTR asPriority /*= NULL*/)
+{
+	bool lbRc = false;
+	INT_PTR iRc = IDCANCEL;
+
+	DWORD dwServerPID = GetServerPID(true);
+	if (!dwServerPID)
+		return false;
+
+	if ((asAffinity && *asAffinity) || (asPriority && *asPriority))
+	{
+		wchar_t* pszEnd;
+		if (asAffinity && *asAffinity)
+		{
+			if (asAffinity[0] == L'0' && (asAffinity[1] == L'x' || asAffinity[1] == L'X'))
+				mn_ProcessAffinity = _wcstoui64(asAffinity+2, &pszEnd, 16);
+			else if (isDigit(asAffinity[0]))
+				mn_ProcessAffinity = _wcstoui64(asAffinity, &pszEnd, 10);
+		}
+		if (asPriority && *asPriority)
+		{
+			if (asPriority[0] == L'0' && (asPriority[1] == L'x' || asPriority[1] == L'X'))
+				mn_ProcessPriority = wcstoul(asPriority+2, &pszEnd, 16);
+			else if (isDigit(asPriority[0]))
+				mn_ProcessPriority = wcstoul(asPriority, &pszEnd, 10);
+		}
+	}
+	else
+	{
+		DontEnable de;
+		mp_PriorityDpiAware = new CDpiForDialog();
+		iRc = CDynDialog::ExecuteDialog(IDD_AFFINITY, ghWnd, priorityProc, (LPARAM)this);
+		SafeDelete(mp_PriorityDpiAware);
+	}
+
+	if (iRc == IDOK)
+	{
+		// Handles must have PROCESS_SET_INFORMATION access right, so we call MainServer
+
+		CESERVER_REQ *pIn = ExecuteNewCmd(CECMD_AFFNTYPRIORITY, sizeof(CESERVER_REQ_HDR)+2*sizeof(u64));
+		if (!pIn)
+		{
+			// Not enough memory? System fails
+			return false;
+		}
+
+		pIn->qwData[0] = mn_ProcessAffinity;
+		pIn->qwData[1] = mn_ProcessPriority;
+
+		DEBUGTEST(DWORD dwTickStart = timeGetTime());
+
+		//Terminate
+		CESERVER_REQ *pOut = ExecuteSrvCmd(dwServerPID, pIn, ghWnd);
+
+		lbRc = (pOut && (pOut->DataSize() > 2*sizeof(DWORD)) && (pOut->dwData[0] != 0));
+
+		DEBUGTEST(DWORD dwTickEnd = timeGetTime());
+		ExecuteFreeResult(pOut);
+		ExecuteFreeResult(pIn);
+	}
+
+	return lbRc;
 }
 
 RealBufferType CRealConsole::GetActiveBufferType()

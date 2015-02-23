@@ -1474,6 +1474,86 @@ BEGIN
     EDITTEXT        tDarkerPlugin,285,80,30,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
 END
 
+IDD_AFFINITY DIALOGEX 0, 0, 327, 112
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Set active console processes affinity and priority"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,237,94,86,14
+    GROUPBOX        "Priority",stPriorityBox,238,2,86,88
+    CONTROL         "&Realtime",rbPriorityRealtime,"Button",BS_AUTORADIOBUTTON,245,14,72,10
+    CONTROL         "&High",rbPriorityHigh,"Button",BS_AUTORADIOBUTTON,245,26,72,10
+    CONTROL         "&Above normal",rbPriorityAbove,"Button",BS_AUTORADIOBUTTON,245,38,72,10
+    CONTROL         "&Normal",rbPriorityNormal,"Button",BS_AUTORADIOBUTTON,245,50,72,10
+    CONTROL         "&Below normal",rbPriorityBelow,"Button",BS_AUTORADIOBUTTON,245,62,72,10
+    CONTROL         "&Idle",rbPriorityIdle,"Button",BS_AUTORADIOBUTTON,245,74,72,10
+    GROUPBOX        "Affinity",stAffinityBox,4,2,225,106
+    CONTROL         "&0",cbAffinity0,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,15,24,10
+    CONTROL         "&1",cbAffinity1,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,26,24,10
+    CONTROL         "&2",cbAffinity2,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,37,24,10
+    CONTROL         "&3",cbAffinity3,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,48,24,10
+    CONTROL         "&4",cbAffinity4,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,59,24,10
+    CONTROL         "&5",cbAffinity5,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,70,24,10
+    CONTROL         "&6",cbAffinity6,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,81,24,10
+    CONTROL         "&7",cbAffinity7,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,92,24,10
+    CONTROL         "&8",cbAffinity8,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,38,15,24,10
+    CONTROL         "&9",cbAffinity9,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,38,26,24,10
+    CONTROL         "10",cbAffinity10,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,38,37,24,10
+    CONTROL         "11",cbAffinity11,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,38,48,24,10
+    CONTROL         "12",cbAffinity12,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,38,59,24,10
+    CONTROL         "13",cbAffinity13,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,38,70,24,10
+    CONTROL         "14",cbAffinity14,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,38,81,24,10
+    CONTROL         "15",cbAffinity15,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,38,92,24,10
+    CONTROL         "16",cbAffinity16,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,65,15,24,10
+    CONTROL         "17",cbAffinity17,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,65,26,24,10
+    CONTROL         "18",cbAffinity18,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,65,37,24,10
+    CONTROL         "19",cbAffinity19,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,65,48,24,10
+    CONTROL         "20",cbAffinity20,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,65,59,24,10
+    CONTROL         "21",cbAffinity21,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,65,70,24,10
+    CONTROL         "22",cbAffinity22,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,65,81,24,10
+    CONTROL         "23",cbAffinity23,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,65,92,24,10
+    CONTROL         "24",cbAffinity24,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,92,15,24,10
+    CONTROL         "25",cbAffinity25,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,92,26,24,10
+    CONTROL         "26",cbAffinity26,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,92,37,24,10
+    CONTROL         "27",cbAffinity27,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,92,48,24,10
+    CONTROL         "28",cbAffinity28,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,92,59,24,10
+    CONTROL         "29",cbAffinity29,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,92,70,24,10
+    CONTROL         "30",cbAffinity30,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,92,81,24,10
+    CONTROL         "31",cbAffinity31,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,92,92,24,10
+    CONTROL         "32",cbAffinity32,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,119,15,24,10
+    CONTROL         "33",cbAffinity33,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,119,26,24,10
+    CONTROL         "34",cbAffinity34,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,119,37,24,10
+    CONTROL         "35",cbAffinity35,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,119,48,24,10
+    CONTROL         "36",cbAffinity36,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,119,59,24,10
+    CONTROL         "37",cbAffinity37,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,119,70,24,10
+    CONTROL         "38",cbAffinity38,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,119,81,24,10
+    CONTROL         "39",cbAffinity39,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,119,92,24,10
+    CONTROL         "40",cbAffinity40,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,146,15,24,10
+    CONTROL         "41",cbAffinity41,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,146,26,24,10
+    CONTROL         "42",cbAffinity42,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,146,37,24,10
+    CONTROL         "43",cbAffinity43,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,146,48,24,10
+    CONTROL         "44",cbAffinity44,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,146,59,24,10
+    CONTROL         "45",cbAffinity45,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,146,70,24,10
+    CONTROL         "46",cbAffinity46,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,146,81,24,10
+    CONTROL         "47",cbAffinity47,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,146,92,24,10
+    CONTROL         "48",cbAffinity48,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,173,15,24,10
+    CONTROL         "49",cbAffinity49,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,173,26,24,10
+    CONTROL         "50",cbAffinity50,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,173,37,24,10
+    CONTROL         "51",cbAffinity51,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,173,48,24,10
+    CONTROL         "52",cbAffinity52,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,173,59,24,10
+    CONTROL         "53",cbAffinity53,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,173,70,24,10
+    CONTROL         "54",cbAffinity54,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,173,81,24,10
+    CONTROL         "55",cbAffinity55,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,173,92,24,10
+    CONTROL         "56",cbAffinity56,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,200,15,24,10
+    CONTROL         "57",cbAffinity57,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,200,26,24,10
+    CONTROL         "58",cbAffinity58,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,200,37,24,10
+    CONTROL         "59",cbAffinity59,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,200,48,24,10
+    CONTROL         "60",cbAffinity60,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,200,59,24,10
+    CONTROL         "61",cbAffinity61,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,200,70,24,10
+    CONTROL         "62",cbAffinity62,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,200,81,24,10
+    CONTROL         "63",cbAffinity63,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,200,92,24,10
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -1668,6 +1748,14 @@ BEGIN
 
     IDD_SPG_BACK, DIALOG
     BEGIN
+    END
+
+    IDD_AFFINITY, DIALOG
+    BEGIN
+        LEFTMARGIN, 4
+        RIGHTMARGIN, 323
+        TOPMARGIN, 2
+        BOTTOMMARGIN, 108
     END
 END
 #endif    // APSTUDIO_INVOKED

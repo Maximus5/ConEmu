@@ -133,6 +133,8 @@ namespace ConEmuMacro
 
 	// Диалог About(["Tab"])
 	LPWSTR About(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
+	// AffinityPriority([Affinity,Priority])
+	LPWSTR AffinityPriority(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Attach - console or ChildGui by PID
 	LPWSTR Attach(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Break (0=CtrlC; 1=CtrlBreak)
@@ -239,6 +241,7 @@ namespace ConEmuMacro
 	} Functions[] = {
 		// List all functions
 		{About, {L"About"}},
+		{AffinityPriority, {L"AffinityPriority"}},
 		{Attach, {L"Attach"}},
 		{Break, {L"Break"}},
 		{Close, {L"Close"}},
@@ -1233,6 +1236,20 @@ LPWSTR ConEmuMacro::About(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 	ConEmuAbout::OnInfo_About(pszPageName);
 
 	return lstrdup(L"OK");
+}
+
+LPWSTR ConEmuMacro::AffinityPriority(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
+{
+	LPWSTR pszRc = NULL;
+	LPWSTR pszAffinity = NULL, pszPriority = NULL;
+
+	p->GetStrArg(0, pszAffinity);
+	p->GetStrArg(1, pszPriority);
+
+	if (apRCon && apRCon->ChangeAffinityPriority(pszAffinity, pszPriority))
+		pszRc = lstrdup(L"OK");
+
+	return pszRc ? pszRc : lstrdup(L"FAILED");
 }
 
 LPWSTR ConEmuMacro::Attach(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)

@@ -956,6 +956,9 @@ void CConEmuMenu::ExecPopupMenuCmd(TrackMenuPlace place, CVirtualConsole* apVCon
 		case IDM_RENAMETAB:
 			apVCon->RCon()->DoRenameTab();
 			break;
+		case IDM_CHANGEAFFINITY:
+			apVCon->RCon()->ChangeAffinityPriority();
+			break;
 		case IDM_DUPLICATE:
 		case IDM_ADMIN_DUPLICATE:
 			if ((nCmd == IDM_ADMIN_DUPLICATE) || isPressed(VK_SHIFT))
@@ -1905,6 +1908,7 @@ HMENU CConEmuMenu::CreateVConPopupMenu(CVirtualConsole* apVCon, HMENU ahExist, B
 
 		AppendMenu(hMenu,      MF_STRING|MF_ENABLED, IDM_CLOSE,            szRootCloseName);
 		AppendMenu(hMenu,      MF_STRING|MF_ENABLED, IDM_RENAMETAB,        MenuAccel(vkRenameTab,L"Rena&me tab..."));
+		AppendMenu(hMenu,      MF_STRING|MF_ENABLED, IDM_CHANGEAFFINITY,   MenuAccel(vkAffinity,L"A&ffinity/priority..."));
 		AppendMenu(hMenu,      MF_POPUP|MF_ENABLED, (UINT_PTR)hRestart,    L"&Restart or duplicate");
 		AppendMenu(hMenu,      MF_POPUP|MF_ENABLED, (UINT_PTR)hTerminate,  L"Close or &kill");
 		AppendMenu(hMenu,      MF_STRING|((apVCon && apVCon->GuiWnd())?MF_ENABLED:0),
@@ -1950,6 +1954,7 @@ HMENU CConEmuMenu::CreateVConPopupMenu(CVirtualConsole* apVCon, HMENU ahExist, B
 		EnableMenuItem(hMenu,      IDM_DETACH,            MF_BYCOMMAND|MF_ENABLED);
 		EnableMenuItem(hMenu,      IDM_DUPLICATE,         MF_BYCOMMAND|MF_ENABLED);
 		EnableMenuItem(hMenu,      IDM_RENAMETAB,         MF_BYCOMMAND|MF_ENABLED);
+		EnableMenuItem(hMenu,      IDM_CHANGEAFFINITY,    MF_BYCOMMAND|MF_ENABLED);
 		EnableMenuItem(hTerminate, IDM_TERMINATECON,      MF_BYCOMMAND|MF_ENABLED);
 		EnableMenuItem(hTerminate, IDM_TERMINATEGROUP,    MF_BYCOMMAND|MF_ENABLED);
 		EnableMenuItem(hTerminate, IDM_TERMINATEPRCGROUP, MF_BYCOMMAND|MF_ENABLED);
@@ -1969,6 +1974,7 @@ HMENU CConEmuMenu::CreateVConPopupMenu(CVirtualConsole* apVCon, HMENU ahExist, B
 		EnableMenuItem(hMenu,      IDM_DETACH,            MF_BYCOMMAND|MF_GRAYED);
 		EnableMenuItem(hMenu,      IDM_DUPLICATE,         MF_BYCOMMAND|MF_GRAYED);
 		EnableMenuItem(hMenu,      IDM_RENAMETAB,         MF_BYCOMMAND|MF_GRAYED);
+		EnableMenuItem(hMenu,      IDM_CHANGEAFFINITY,    MF_BYCOMMAND|MF_GRAYED);
 		EnableMenuItem(hTerminate, IDM_TERMINATECON,      MF_BYCOMMAND|MF_GRAYED);
 		EnableMenuItem(hTerminate, IDM_TERMINATEGROUP,    MF_BYCOMMAND|MF_GRAYED);
 		EnableMenuItem(hTerminate, IDM_TERMINATEPRCGROUP, MF_BYCOMMAND|MF_GRAYED);

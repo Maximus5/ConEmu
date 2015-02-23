@@ -559,6 +559,7 @@ class CRealConsole
 		void CloseConsole(bool abForceTerminate, bool abConfirm, bool abAllowMacro = true);
 		void CloseConsoleWindow(bool abConfirm);
 		bool TerminateAllButShell(bool abConfirm);
+		bool ChangeAffinityPriority(LPCWSTR asAffinity = NULL, LPCWSTR asPriority = NULL);
 		bool isCloseTabConfirmed(CEFarWindowType TabType, LPCWSTR asConfirmation, bool bForceAsk = false);
 		void CloseConfirmReset();
 		BOOL CanCloseTab(BOOL abPluginRequired = FALSE);
@@ -646,7 +647,10 @@ class CRealConsole
 		void SetAltSrvPID(DWORD anAltSrvPID/*, HANDLE ahAltSrv*/);
 		// Сервер и альтернативный сервер
 		DWORD mn_MainSrv_PID; HANDLE mh_MainSrv;
+		u64 mn_ProcessAffinity; DWORD mn_ProcessPriority;
+		CDpiForDialog* mp_PriorityDpiAware;
 		void RepositionDialogWithTab(HWND hDlg);
+		static INT_PTR CALLBACK priorityProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam);
 		DWORD mn_CheckFreqLock;
 		DWORD mn_ConHost_PID;
 		MMap<DWORD,BOOL>* mp_ConHostSearch;

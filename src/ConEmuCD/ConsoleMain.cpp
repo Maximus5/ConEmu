@@ -7814,6 +7814,58 @@ BOOL cmd_TerminatePid(CESERVER_REQ& in, CESERVER_REQ** out)
 	return lbRc;
 }
 
+// CECMD_AFFNTYPRIORITY
+BOOL cmd_AffinityPriority(CESERVER_REQ& in, CESERVER_REQ** out)
+{
+	size_t cbInSize = in.DataSize();
+	if (cbInSize < 2*sizeof(u64))
+		return FALSE;
+
+	BOOL lbRc = FALSE;
+	HANDLE hProcess = NULL;
+	BOOL bNeedClose = FALSE;
+	DWORD nErrCode = 0;
+
+	DWORD_PTR nAffinity = (DWORD_PTR)in.qwData[0];
+	DWORD nPriority = (DWORD)in.qwData[1];
+
+	MSectionLock CS; CS.Lock(gpSrv->csProc);
+	CheckProcessCount(TRUE);
+	for (UINT i = 0; i < gpSrv->nProcessCount; i++)
+	{
+		DWORD nPID = gpSrv->pnProcesses[i];
+		if (nPID == gnSelfPID) continue;
+
+		HANDLE hProcess = OpenProcess(PROCESS_SET_INFORMATION, FALSE, nPID);
+		if (hProcess)
+		{
+			if (SetProcessAffinityMask(hProcess, nAffinity)
+					&& SetPriorityClass(hProcess, nPriority))
+				lbRc = TRUE;
+			else
+				nErrCode = GetLastError();
+
+			CloseHandle(hProcess);
+		}
+		else
+		{
+			nErrCode = GetLastError();
+		}
+	}
+	CS.Unlock();
+
+	int nOutSize = sizeof(CESERVER_REQ_HDR) + 2*sizeof(DWORD);
+	*out = ExecuteNewCmd(CECMD_AFFNTYPRIORITY,nOutSize);
+
+	if (*out != NULL)
+	{
+		(*out)->dwData[0] = lbRc;
+		(*out)->dwData[1] = nErrCode;
+	}
+
+	return lbRc;
+}
+
 BOOL cmd_GuiAppAttached(CESERVER_REQ& in, CESERVER_REQ** out)
 {
 	BOOL lbRc = FALSE;
@@ -8700,6 +8752,10 @@ BOOL ProcessSrvCommand(CESERVER_REQ& in, CESERVER_REQ** out)
 		case CECMD_TERMINATEPID:
 		{
 			lbRc = cmd_TerminatePid(in, out);
+		} break;
+		case CECMD_AFFNTYPRIORITY:
+		{
+			lbRc = cmd_AffinityPriority(in, out);
 		} break;
 		case CECMD_ATTACHGUIAPP:
 		{
