@@ -5105,7 +5105,13 @@ void CRealConsole::DoEndFindText()
 
 	if (mp_ABuf && (mp_ABuf->m_Type == rbt_Find))
 	{
+		// Issue 1911: Do not scroll out of found position after clicking in the console to allow select text there.
+		CONSOLE_SCREEN_BUFFER_INFO csbi = {};
+		mp_ABuf->ConsoleScreenBufferInfo(&csbi);
+		mp_RBuf->DoScrollBuffer(SB_THUMBPOSITION, csbi.srWindow.Top);
+
 		SetActiveBuffer(rbt_Primary);
+
 		OnSelectionChanged();
 	}
 }
