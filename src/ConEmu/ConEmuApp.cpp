@@ -3686,7 +3686,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 					PROCESS_INFORMATION pi = {};
 
-					BOOL b = CreateProcess(NULL, cmdNew, NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi);
+					BOOL b = CreateProcess(NULL, cmdNew, NULL, NULL, TRUE, NORMAL_PRIORITY_CLASS, NULL, NULL, &si, &pi);
 					if (b)
 					{
 						CloseHandle(pi.hProcess);
