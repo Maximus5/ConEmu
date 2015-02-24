@@ -3184,7 +3184,7 @@ int CreateMapHeader()
 		gpSrv->pAppMap->SetFrom(&init);
 	}
 
-	// !!! Warning !!! Изменил здесь, поменяй и ReloadGuiSettings() !!!
+	// !!! Warning !!! Изменил здесь, поменяй и ReloadGuiSettings/CopySrvMapFromGuiMap !!!
 	gpSrv->pConsole->cbMaxSize = nTotalSize;
 	gpSrv->pConsole->hdr.cbSize = sizeof(gpSrv->pConsole->hdr);
 	if (!lbUseExisting)
