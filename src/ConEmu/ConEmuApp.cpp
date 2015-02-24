@@ -3720,8 +3720,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 						return 0;
 					}
 
-					// Failed
-					DisplayLastError(cmdNew, nErr);
+					// If the error was not shown yet
+					if (nErr) DisplayLastError(cmdNew, nErr);
 					return 100;
 				}
 				else if (!klstricmp(curCommand, _T("/multi")))
