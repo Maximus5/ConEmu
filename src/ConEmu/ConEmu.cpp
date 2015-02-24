@@ -8457,6 +8457,7 @@ void CConEmuMain::CheckNeedRepaint()
 	{
 		if (VCon->IsInvalidatePending())
 		{
+			LogString(L"Forcing active VCon redraw");
 			VCon->Redraw(true);
 		}
 	}

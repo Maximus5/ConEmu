@@ -430,6 +430,12 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 			break;
 		case WM_PAINT:
 			pVCon->mn_WmPaintCounter++;
+			if (gpSetCls->isAdvLogging)
+			{
+				wchar_t szInfo[80];
+				_wsprintf(szInfo, SKIPCOUNT(szInfo) L"VCon[%i] WM_PAINT %u times, %u pending", pVCon->Index(), pVCon->mn_WmPaintCounter, pVCon->mn_InvalidateViewPending);
+				LogString(szInfo);
+			}
 			pVCon->mn_InvalidateViewPending = 0;
 			result = pVCon->OnPaint();
 			break;
@@ -1054,6 +1060,7 @@ LRESULT CConEmuChild::OnPaintGaps()
 	return 0;
 }
 
+// Utilizes BeginPaint/EndPaint for obtaining HDC
 LRESULT CConEmuChild::OnPaint()
 {
 	if (!this)
@@ -1408,6 +1415,13 @@ void CConEmuChild::InvalidateView()
 
 			DeleteObject(hLock);
 			DeleteObject(hRgn);
+		}
+
+		if (l == 1)
+		{
+			wchar_t szInfo[80];
+			_wsprintf(szInfo, SKIPCOUNT(szInfo) L"VCon[%i] invalidate called", mp_VCon->Index());
+			LogString(szInfo);
 		}
 	}
 	else
