@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2014 Maximus5
+Copyright (c) 2009-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -29,6 +29,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#ifdef _DEBUG
 //#define USE_LOCK_SECTION
 //#endif
+
+//#define USE_FORCE_FLASH_LOG
+#undef USE_FORCE_FLASH_LOG
 
 #define HIDE_USE_EXCEPTION_INFO
 #include <windows.h>
@@ -362,7 +365,9 @@ void MFileLog::LogString(LPCWSTR asText, bool abWriteTime /*= true*/, LPCWSTR as
 		MSectionLockSimple lock; lock.Lock(mpcs_Lock);
 		DWORD dwLen = (DWORD)cchCur;
 		WriteFile(mh_LogFile, pszBuffer, dwLen, &dwLen, 0);
+		#if defined(USE_FORCE_FLASH_LOG)
 		FlushFileBuffers(mh_LogFile);
+		#endif
 	}
 	else
 	{
