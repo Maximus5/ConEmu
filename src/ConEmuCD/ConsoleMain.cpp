@@ -5834,7 +5834,7 @@ void SendStarted()
 			if (pConsoleInfo->cbSize >= sizeof(CESERVER_CONSOLE_MAPPING_HDR))
 			{
 				if (pConsoleInfo->nLogLevel)
-					CreateLogSizeFile(pConsoleInfo->nLogLevel);
+					CreateLogSizeFile(pConsoleInfo->nLogLevel, pConsoleInfo);
 			}
 
 			//UnmapViewOfFile(pConsoleInfo);
@@ -6325,7 +6325,7 @@ CESERVER_REQ* SendStopped(CONSOLE_SCREEN_BUFFER_INFO* psbi)
 
 
 WARNING("Добавить LogInput(INPUT_RECORD* pRec) но имя файла сделать 'ConEmuC-input-%i.log'");
-void CreateLogSizeFile(int nLevel)
+void CreateLogSizeFile(int nLevel, const CESERVER_CONSOLE_MAPPING_HDR* pConsoleInfo /*= NULL*/)
 {
 	if (gpLogSize) return;  // уже
 
@@ -6348,36 +6348,53 @@ void CreateLogSizeFile(int nLevel)
 		return; // ошибка
 	}
 
-	if (pszName > szFile)
+	if (pszName && (pszName > szFile))
 	{
-		*(pszName-1) = 0;
-		wcscpy_c(szDir, szFile);
-		pszDir = wcsrchr(szDir, L'\\');
-		if (!pszDir || (lstrcmpi(pszDir, L"\\ConEmu") != 0))
+		// If we were started from ConEmu, the pConsoleInfo must be defined...
+		if (pConsoleInfo && pConsoleInfo->cbSize && pConsoleInfo->sConEmuExe[0])
 		{
-			// Если ConEmuC.exe лежит НЕ в папке "ConEmu"
-			pszDir = szDir; // писать в текущую папку или на десктоп
-		}
-		else
-		{
-			// Иначе - попытаться найти соответствующий файл GUI
-			wchar_t szGuiFiles[] = L"\\ConEmu.exe" L"\0" L"\\ConEmu64.exe" L"\0\0";
-			if (FilesExists(szDir, szGuiFiles))
+			lstrcpyn(szDir, pConsoleInfo->sConEmuExe, countof(szDir));
+			wchar_t* pszConEmuExe = (wchar_t*)PointToName(szDir);
+			if (pszConEmuExe)
 			{
-				pszDir = szFile; // GUI лежит в той же папке, что и "сервер"
+				*(pszConEmuExe-1) = 0;
+				pszDir = szDir;
+			}
+		}
+
+		if (!pszDir)
+		{
+			// if our exe lays in subfolder of ConEmu.exe?
+			*(pszName-1) = 0;
+			wcscpy_c(szDir, szFile);
+			pszDir = wcsrchr(szDir, L'\\');
+
+			if (!pszDir || (lstrcmpi(pszDir, L"\\ConEmu") != 0))
+			{
+				// Если ConEmuC.exe лежит НЕ в папке "ConEmu"
+				pszDir = szDir; // писать в текущую папку или на десктоп
 			}
 			else
 			{
-				// На уровень выше?
-				*pszDir = 0;
+				// Иначе - попытаться найти соответствующий файл GUI
+				wchar_t szGuiFiles[] = L"\\ConEmu.exe" L"\0" L"\\ConEmu64.exe" L"\0\0";
 				if (FilesExists(szDir, szGuiFiles))
 				{
-					*pszDir = 0;
-					pszDir = szDir; // GUI лежит в родительской папке
+					pszDir = szFile; // GUI лежит в той же папке, что и "сервер"
 				}
 				else
 				{
-					pszDir = szFile; // GUI не нашли
+					// На уровень выше?
+					*pszDir = 0;
+					if (FilesExists(szDir, szGuiFiles))
+					{
+						*pszDir = 0;
+						pszDir = szDir; // GUI лежит в родительской папке
+					}
+					else
+					{
+						pszDir = szFile; // GUI не нашли
+					}
 				}
 			}
 		}

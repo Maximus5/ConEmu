@@ -273,7 +273,7 @@ void ComspecDone(int aiRc);
 bool CoordInSmallRect(const COORD& cr, const SMALL_RECT& rc);
 void RefillConsoleAttributes(const CONSOLE_SCREEN_BUFFER_INFO& csbi5, WORD OldText, WORD NewText);
 BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, LPCSTR asLabel = NULL);
-void CreateLogSizeFile(int nLevel);
+void CreateLogSizeFile(int nLevel, const CESERVER_CONSOLE_MAPPING_HDR* pConsoleInfo = NULL);
 void LogSize(const COORD* pcrSize, int newBufferHeight, LPCSTR pszLabel);
 void LogString(LPCSTR asText);
 void LogString(LPCWSTR asText);
