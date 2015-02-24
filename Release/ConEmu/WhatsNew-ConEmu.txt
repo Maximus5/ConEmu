@@ -12,6 +12,34 @@ Votes and awards (vote for ConEmu, if you please)
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+2015.2.24
+[*] One more correction of keyboard input processing.
+[*] Option ‘Treat font height as device units’ was not saved in new config.
+[*] Pseudographics font was incorrectly sized on some dpi-s.
+[*] HotKeys. Implemented ‘Kill all but shell’ function.
+    Default hotkey Win+Shift+Delete for new configs.
+	Also it is accessible from TabMenu or SystemMenu and
+    GuiMacro: terminate all but shell process Close(10), no confirm Close(10,1)
+    Note. If there is a shell only - confirm user to kill the shell.
+[*] Don't do "ConEmuCpCvt" conversion if some chars were failed.
+[*] Ability to change ‘processor affinity’ and ‘process priority’ for all running processes.
+    The function affects all running processes in the current console (tab/pane).
+    Available from TabMenu and SystemMenu item ‘Affinity/priority...’,
+    HotKey and GuiMacro AffinityPriority([Affinity,Priority]).
+    Unless you specify ‘Affinity’ or ‘Priority’ in GuiMacro function
+    ConEmu will show dialog with affinity/priority options.
+[*] Issue 1911: Do not scroll out of found position after clicking in the console to allow select text there.
+[*] Option ‘Skip click on activation’ was not working sometimes.
+[*] Allow physical scroll down of the console until the cursor remains visible.
+[*] Internal. Fix wrong logging message for WA_ACTIVE
+[*] During excessing keyboard activity console contents was updated slowly.
+[*] Switch "/bypass" creates processes with normal priority.
+[*] gh#59: Message ‘Failed to start task in user mode, timeout’ was appeared after updating.
+[*] gh#56: Do not use RVAL_REF with GCC
+[*] LogFiles were not created for far.exe sometimes.
+[*] Do not flush logs after each line to avoid lags.
+
+
 2015.2.18
 [*] Issue 1817: Fix dropped or garbled keypresses sent from AHK.
 [*] Don't suggest by default xml storage on Windows 2000.
