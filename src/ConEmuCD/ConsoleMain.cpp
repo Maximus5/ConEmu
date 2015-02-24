@@ -8596,6 +8596,27 @@ BOOL cmd_CtrlBreakEvent(CESERVER_REQ& in, CESERVER_REQ** out)
 	return lbRc;
 }
 
+BOOL cmd_SetTopLeft(CESERVER_REQ& in, CESERVER_REQ** out)
+{
+	BOOL lbRc = TRUE;
+	BOOL lbGenRc = FALSE;
+
+	if (in.DataSize() >= sizeof(in.ReqConInfo.TopLeft))
+	{
+		gpSrv->TopLeft = in.ReqConInfo.TopLeft;
+	}
+	else
+	{
+		_ASSERTE(FALSE && "Invalid SetTopLeft data");
+	}
+
+	size_t cbReplySize = sizeof(CESERVER_REQ_HDR);
+	*out = ExecuteNewCmd(CECMD_SETTOPLEFT, cbReplySize);
+	lbRc = ((*out) != NULL);
+
+	return lbRc;
+}
+
 BOOL cmd_PromptStarted(CESERVER_REQ& in, CESERVER_REQ** out)
 {
 	BOOL lbRc = TRUE;
@@ -8851,10 +8872,7 @@ BOOL ProcessSrvCommand(CESERVER_REQ& in, CESERVER_REQ** out)
 		} break;
 		case CECMD_SETTOPLEFT:
 		{
-			size_t cbReplySize = sizeof(CESERVER_REQ_HDR);
-			*out = ExecuteNewCmd(CECMD_SETTOPLEFT, cbReplySize);
-			gpSrv->TopLeft = in.ReqConInfo.TopLeft;
-			lbRc = true;
+			lbRc = cmd_SetTopLeft(in, out);
 		} break;
 		case CECMD_PROMPTSTARTED:
 		{
