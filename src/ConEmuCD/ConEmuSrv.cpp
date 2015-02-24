@@ -4131,6 +4131,7 @@ static BOOL ReadConsoleData()
 		memmove(gpSrv->pConsole->data, gpSrv->pConsoleDataCopy, nCurSize);
 		gpSrv->pConsole->bDataChanged = TRUE; // TRUE уже может быть с прошлого раза, не сбрасывать в FALSE
 		lbChanged = TRUE;
+		LogString("ReadConsoleData: content was changed");
 	}
 
 
