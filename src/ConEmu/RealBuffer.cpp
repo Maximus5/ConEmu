@@ -6759,6 +6759,7 @@ void CRealBuffer::ResetTopLeft()
 	if (con.TopLeft.isLocked())
 	{
 		SetTopLeft(-1, -1, true);
+		mp_RCon->UpdateScrollInfo();
 	}
 }
 
@@ -6887,10 +6888,12 @@ LRESULT CRealBuffer::DoScrollBuffer(int nDirection, short nTrackPos /*= -1*/, UI
 bool CRealBuffer::SetTopLeft(int ay /*= -1*/, int ax /*= -1*/, bool abServerCall /*= false*/)
 {
 	bool bChanged = false;
+	bool bLockChanged = false;
 
 	if (con.TopLeft.y != ay || con.TopLeft.x != ax)
 	{
 		bChanged = true;
+		bLockChanged = !con.TopLeft.isLocked();
 
 		#ifdef _DEBUG
 		wchar_t szDbg[120]; DWORD nSrvPID = mp_RCon->GetServerPID();
@@ -6913,6 +6916,11 @@ bool CRealBuffer::SetTopLeft(int ay /*= -1*/, int ax /*= -1*/, bool abServerCall
 			ExecuteFreeResult(pOut);
 			ExecuteFreeResult(pIn);
 		}
+	}
+
+	if (bLockChanged)
+	{
+		mp_RCon->UpdateScrollInfo();
 	}
 
 	return bChanged;
