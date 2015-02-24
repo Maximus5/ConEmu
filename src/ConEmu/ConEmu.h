@@ -620,7 +620,7 @@ class CConEmuMain
 			HWND  hLastFore;
 			DWORD ForegroundState;
 		} m_Foreground;
-		bool RecheckForegroundWindow(HWND* phFore=NULL);
+		bool RecheckForegroundWindow(LPCWSTR asFrom, HWND* phFore=NULL);
 
 	public:
 		DWORD GetWindowStyle();

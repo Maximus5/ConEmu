@@ -6080,7 +6080,7 @@ bool CConEmuMain::isLBDown()
 	return (mouse.state & DRAG_L_ALLOWED) == DRAG_L_ALLOWED;
 }
 
-bool CConEmuMain::RecheckForegroundWindow(HWND* phFore/*=NULL*/)
+bool CConEmuMain::RecheckForegroundWindow(LPCWSTR asFrom, HWND* phFore/*=NULL*/)
 {
 	DWORD NewState = fgf_Background;
 
@@ -6124,6 +6124,12 @@ bool CConEmuMain::RecheckForegroundWindow(HWND* phFore/*=NULL*/)
 				mp_DefTrm->CheckForeground(hForeWnd, nForePID);
 			}
 		}
+
+		// Logging
+		wchar_t szLog[120];
+		_wsprintf(szLog, SKIPCOUNT(szLog) L"Foreground state changed (%s): State=x%02X HWND=x%08X PID=%u OldHWND=x%08X OldState=x%02X",
+			asFrom, NewState, (DWORD)(DWORD_PTR)hForeWnd, nForePID, (DWORD)(DWORD_PTR)m_Foreground.hLastFore, m_Foreground.ForegroundState);
+		LogString(szLog);
 
 		// Save new state
 		if (m_Foreground.ForegroundState != NewState)
@@ -11989,7 +11995,7 @@ void CConEmuMain::OnTimer_Main(CVirtualConsole* pVCon)
 	}
 
 	HWND hForeWnd = NULL;
-	bool bForeground = RecheckForegroundWindow(&hForeWnd);
+	bool bForeground = RecheckForegroundWindow(L"OnTimer_Main", &hForeWnd);
 	if (bForeground && !m_GuiInfo.bGuiActive)
 	{
 		UpdateGuiInfoMappingActive(true);
@@ -13027,7 +13033,7 @@ LRESULT CConEmuMain::OnActivateByMouse(HWND hWnd, UINT messg, WPARAM wParam, LPA
 		apiSetForegroundWindow(ghWnd);
 	}
 
-	RecheckForegroundWindow();
+	RecheckForegroundWindow(L"OnActivateByMouse");
 
 	return result;
 }
@@ -13306,7 +13312,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 
 		case WM_ACTIVATE:
 			LogString((wParam == WA_CLICKACTIVE) ? L"Window was activated by mouse click" : (wParam == WA_CLICKACTIVE) ? L"Window was activated somehow" : L"Window was deactivated");
-			RecheckForegroundWindow();
+			RecheckForegroundWindow(L"WM_ACTIVATE");
 			result = this->OnFocus(hWnd, messg, wParam, lParam);
 			if (this->mb_AllowAutoChildFocus)
 			{
@@ -13337,7 +13343,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 				wParam = FALSE; lParam = 0;
 			}
 			LogString(wParam ? L"Application activating" : L"Application deactivating");
-			RecheckForegroundWindow();
+			RecheckForegroundWindow(L"WM_ACTIVATEAPP");
 			// просто так фокус в дочернее окно ставить нельзя
 			// если переключать фокус в дочернее приложение по любому чиху
 			// вообще не получается активировать окно ConEmu, открыть системное меню,
