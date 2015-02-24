@@ -3338,17 +3338,8 @@ CVirtualConsole* CConEmuMain::CreateConGroup(LPCWSTR apszScript, bool abForceAsA
 			MSG Msg;
 			while (PeekMessage(&Msg,0,0,0,PM_REMOVE))
 			{
-				ConEmuMsgLogger::Log(Msg, ConEmuMsgLogger::msgCommon);
-
-				if (Msg.message == WM_QUIT)
+				if (!ProcessMessage(Msg))
 					goto wrap;
-
-				BOOL lbDlgMsg = isDialogMessage(Msg);
-				if (!lbDlgMsg)
-				{
-					TranslateMessage(&Msg);
-					DispatchMessage(&Msg);
-				}
 			}
 
 			if (!ghWnd || !IsWindow(ghWnd))
