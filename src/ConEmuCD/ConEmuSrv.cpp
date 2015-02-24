@@ -3146,7 +3146,7 @@ int CreateMapHeader()
 	gpSrv->pAppMap->InitName(CECONAPPMAPNAME, (DWORD)ghConWnd); //-V205
 
 
-	BOOL lbCreated;
+	bool lbCreated, lbUseExisting = false;
 	if (gnRunMode == RM_SERVER)
 	{
 		lbCreated = (gpSrv->pConsoleMap->Create() != NULL)
@@ -3170,6 +3170,8 @@ int CreateMapHeader()
 		// На всякий случай, перекинем параметры
 		if (gpSrv->pConsoleMap->GetTo(&gpSrv->pConsole->hdr))
 		{
+			lbUseExisting = true;
+
 			if (gpSrv->pConsole->hdr.ComSpec.ConEmuExeDir[0] && gpSrv->pConsole->hdr.ComSpec.ConEmuBaseDir[0])
 			{
 				gpSrv->guiSettings.ComSpec = gpSrv->pConsole->hdr.ComSpec;
@@ -3187,7 +3189,8 @@ int CreateMapHeader()
 	//gpSrv->pConsole->cbActiveSize = ((LPBYTE)&(gpSrv->pConsole->data)) - ((LPBYTE)gpSrv->pConsole);
 	//gpSrv->pConsole->bChanged = TRUE; // Initially == changed
 	gpSrv->pConsole->hdr.cbSize = sizeof(gpSrv->pConsole->hdr);
-	gpSrv->pConsole->hdr.nLogLevel = (gpLogSize!=NULL) ? 1 : 0;
+	if (!lbUseExisting)
+		gpSrv->pConsole->hdr.nLogLevel = (gpLogSize!=NULL) ? 1 : 0;
 	gpSrv->pConsole->hdr.crMaxConSize = crMax;
 	gpSrv->pConsole->hdr.bDataReady = FALSE;
 	gpSrv->pConsole->hdr.hConWnd = ghConWnd; _ASSERTE(ghConWnd!=NULL);
