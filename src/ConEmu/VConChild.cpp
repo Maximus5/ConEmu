@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2014 Maximus5
+Copyright (c) 2009-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -102,6 +102,7 @@ CConEmuChild::CConEmuChild(CVirtualConsole* pOwner)
 	mn_WndDCStyle = mn_WndDCExStyle = 0;
 	mh_WndDC = NULL;
 	mh_WndBack = NULL;
+	mn_InvalidateViewPending = 0; mn_WmPaintCounter = 0;
 	mh_LastGuiChild = NULL;
 	mb_ScrollVisible = FALSE; mb_Scroll2Visible = FALSE; /*mb_ScrollTimerSet = FALSE;*/ mb_ScrollAutoPopup = FALSE;
 	mb_VTracking = FALSE;
@@ -428,6 +429,8 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 			result = 0;
 			break;
 		case WM_PAINT:
+			pVCon->mn_WmPaintCounter++;
+			pVCon->mn_InvalidateViewPending = 0;
 			result = pVCon->OnPaint();
 			break;
 		case WM_PRINTCLIENT:
@@ -1375,11 +1378,17 @@ void CConEmuChild::Invalidate()
 	UNREFERENCED_PARAMETER(pVCon);
 }
 
+bool CConEmuChild::IsInvalidatePending()
+{
+	return (this && (mn_InvalidateViewPending > 0));
+}
+
 void CConEmuChild::InvalidateView()
 {
 	if (mh_WndDC)
 	{
 		DEBUGSTRDRAW(L" +++ Invalidate on DC window called\n");
+		LONG l = InterlockedIncrement(&mn_InvalidateViewPending);
 
 		if (!m_LockDc.bLocked)
 		{

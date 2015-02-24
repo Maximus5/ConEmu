@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2014 Maximus5
+Copyright (c) 2009-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -60,7 +60,9 @@ class CConEmuChild
 		HWND GetBack();
 		BOOL ShowView(int nShowCmd);
 		void Invalidate();
+		bool IsInvalidatePending();
 	protected:
+		LONG mn_InvalidateViewPending, mn_WmPaintCounter;
 		void InvalidateView();
 		void InvalidateBack();
 	public:

@@ -8448,6 +8448,20 @@ void CConEmuMain::OnSwitchGuiFocus(SwitchGuiFocusOp FocusOp)
 	setFocus();
 }
 
+// During excessing keyboard activity weird things may happen:
+// WM_PAINT do not come into message queue until key is released
+void CConEmuMain::CheckNeedRepaint()
+{
+	CVConGuard VCon;
+	if ((GetActiveVCon(&VCon) >= 0) && VCon->RCon())
+	{
+		if (VCon->IsInvalidatePending())
+		{
+			VCon->Redraw(true);
+		}
+	}
+}
+
 LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 {
 #ifdef _DEBUG
@@ -8602,6 +8616,8 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 					if (!ProcessMessage(msg1))
 						break;
 
+					CheckNeedRepaint();
+
 					// This message skipped
 					continue;
 				}
@@ -8690,6 +8706,11 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 				// Требуется обработать сообщение
 				TranslateMessage(&msg1);
 				//DispatchMessage(&msg1);
+
+				if ((msg.message == WM_KEYDOWN) || (msg.message == WM_SYSKEYDOWN))
+				{
+					CheckNeedRepaint();
+				}
 			}
 		} // end of "while nTranslatedChars && PeekMessage"
 
