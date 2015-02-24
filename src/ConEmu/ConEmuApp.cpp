@@ -4222,6 +4222,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				{
 					gpConEmu->mb_FindBugMode = true;
 				}
+				else if (!klstricmp(curCommand, _T("/debug")) || !klstricmp(curCommand, _T("/debugi")))
+				{
+					// These switches were already processed
+				}
 				else if (!klstricmp(curCommand, _T("/?")) || !klstricmp(curCommand, _T("/h")) || !klstricmp(curCommand, _T("/help")))
 				{
 					//MessageBox(NULL, pHelp, L"About ConEmu...", MB_ICONQUESTION);
