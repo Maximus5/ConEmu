@@ -362,7 +362,7 @@ void MFileLog::LogString(LPCWSTR asText, bool abWriteTime /*= true*/, LPCWSTR as
 
 	if (mh_LogFile)
 	{
-		MSectionLockSimple lock; lock.Lock(mpcs_Lock);
+		MSectionLockSimple lock; lock.Lock(mpcs_Lock, 500);
 		DWORD dwLen = (DWORD)cchCur;
 		WriteFile(mh_LogFile, pszBuffer, dwLen, &dwLen, 0);
 		#if defined(USE_FORCE_FLASH_LOG)
