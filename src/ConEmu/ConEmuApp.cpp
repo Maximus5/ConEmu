@@ -1396,6 +1396,16 @@ BOOL CreateProcessRestricted(LPCWSTR lpApplicationName, LPWSTR lpCommandLine,
 	return lbRc;
 }
 
+#if !defined(__GNUC__)
+static void DisplayShedulerError(LPCWSTR pszStep, HRESULT hr, LPCWSTR bsTaskName, LPCWSTR lpCommandLine)
+{
+	wchar_t szInfo[200] = L"";
+	_wsprintf(szInfo, SKIPCOUNT(szInfo) L" Please check sheduler log.\n" L"HR=%u, TaskName=", (DWORD)hr);
+	wchar_t* pszErr = lstrmerge(pszStep, szInfo, bsTaskName, L"\n", lpCommandLine);
+	DisplayLastError(pszErr, hr);
+	free(pszErr);
+}
+#endif
 
 BOOL CreateProcessDemoted(LPWSTR lpCommandLine,
 							 LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes,
@@ -1473,7 +1483,7 @@ BOOL CreateProcessDemoted(LPWSTR lpCommandLine,
 	hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
 	if (FAILED(hr))
 	{
-		DisplayLastError(L"CoInitializeEx failed: 0x%08X", hr);
+		DisplayShedulerError(L"CoInitializeEx failed.", hr, bsTaskName, lpCommandLine);
 		goto wrap;
 	}
 	bCoInitialized = true;
@@ -1482,7 +1492,7 @@ BOOL CreateProcessDemoted(LPWSTR lpCommandLine,
 	hr = CoInitializeSecurity(NULL, -1, NULL, NULL, RPC_C_AUTHN_LEVEL_PKT_PRIVACY, RPC_C_IMP_LEVEL_IMPERSONATE, NULL, 0, NULL);
 	if (FAILED(hr))
 	{
-		DisplayLastError(L"CoInitializeSecurity failed: 0x%08X", hr);
+		DisplayShedulerError(L"CoInitializeSecurity failed.", hr, bsTaskName, lpCommandLine);
 		goto wrap;
 	}
 
@@ -1491,7 +1501,7 @@ BOOL CreateProcessDemoted(LPWSTR lpCommandLine,
 	hr = CoCreateInstance( CLSID_TaskScheduler, NULL, CLSCTX_INPROC_SERVER, IID_ITaskService, (void**)&pService );
 	if (FAILED(hr))
 	{
-		DisplayLastError(L"Failed to CoCreate an instance of the TaskService class: 0x%08X", hr);
+		DisplayShedulerError(L"Failed to CoCreate an instance of the TaskService class.", hr, bsTaskName, lpCommandLine);
 		goto wrap;
 	}
 
@@ -1499,7 +1509,7 @@ BOOL CreateProcessDemoted(LPWSTR lpCommandLine,
 	hr = pService->Connect(vtEmpty, vtEmpty, vtEmpty, vtEmpty);
 	if (FAILED(hr))
 	{
-		DisplayLastError(L"ITaskService::Connect failed: 0x%08X", hr);
+		DisplayShedulerError(L"ITaskService::Connect failed.", hr, bsTaskName, lpCommandLine);
 		goto wrap;
 	}
 
@@ -1509,7 +1519,7 @@ BOOL CreateProcessDemoted(LPWSTR lpCommandLine,
 	hr = pService->GetFolder(bsRoot, &pRootFolder);
 	if( FAILED(hr) )
 	{
-		DisplayLastError(L"Cannot get Root Folder pointer: 0x%08X", hr);
+		DisplayShedulerError(L"Cannot get Root Folder pointer.", hr, bsTaskName, lpCommandLine);
 		goto wrap;
 	}
 
@@ -1522,7 +1532,7 @@ BOOL CreateProcessDemoted(LPWSTR lpCommandLine,
 	hr = pService->NewTask(0, &pTask);
 	if (FAILED(hr))
 	{
-		DisplayLastError(L"Failed to CoCreate an instance of the TaskService class: 0x%08X", hr);
+		DisplayShedulerError(L"Failed to create an instance of the TaskService class.", hr, bsTaskName, lpCommandLine);
 		goto wrap;
 	}
 
@@ -1533,13 +1543,13 @@ BOOL CreateProcessDemoted(LPWSTR lpCommandLine,
 	hr = pTask->get_Settings(&pSettings);
 	if (FAILED(hr))
 	{
-		DisplayLastError(L"Cannot get task settings: 0x%08X", hr);
+		DisplayShedulerError(L"Cannot get task settings.", hr, bsTaskName, lpCommandLine);
 		goto wrap;
 	}
 	hr = pSettings->put_ExecutionTimeLimit(szIndefinitely);
 	if (FAILED(hr))
 	{
-		DisplayLastError(L"Cannot set task execution time limit: 0x%08X", hr);
+		DisplayShedulerError(L"Cannot set task execution time limit.", hr, bsTaskName, lpCommandLine);
 		goto wrap;
 	}
 
@@ -1569,7 +1579,7 @@ BOOL CreateProcessDemoted(LPWSTR lpCommandLine,
 	hr = pTask->get_Actions(&pActionCollection);
 	if (FAILED(hr))
 	{
-		DisplayLastError(L"Cannot get Task collection pointer: 0x%08X", hr);
+		DisplayShedulerError(L"Cannot get task collection pointer.", hr, bsTaskName, lpCommandLine);
 		goto wrap;
 	}
 
@@ -1577,7 +1587,7 @@ BOOL CreateProcessDemoted(LPWSTR lpCommandLine,
 	hr = pActionCollection->Create(TASK_ACTION_EXEC, &pAction);
 	if (FAILED(hr))
 	{
-		DisplayLastError(L"pActionCollection->Create failed: 0x%08X", hr);
+		DisplayShedulerError(L"pActionCollection->Create failed.", hr, bsTaskName, lpCommandLine);
 		goto wrap;
 	}
 	SafeRelease(pActionCollection);  // COM clean up.  Pointer is no longer used.
@@ -1585,7 +1595,7 @@ BOOL CreateProcessDemoted(LPWSTR lpCommandLine,
 	hr = pAction->QueryInterface(IID_IExecAction, (void**)&pExecAction);
 	if( FAILED(hr) )
 	{
-		DisplayLastError(L"pAction->QueryInterface failed: 0x%08X", hr);
+		DisplayShedulerError(L"pAction->QueryInterface failed.", hr, bsTaskName, lpCommandLine);
 		goto wrap;
 	}
 	SafeRelease(pAction);
@@ -1594,14 +1604,14 @@ BOOL CreateProcessDemoted(LPWSTR lpCommandLine,
 	hr = pExecAction->put_Path(bsExecutablePath);
 	if (FAILED(hr))
 	{
-		DisplayLastError(L"Cannot set path of executable: 0x%08X", hr);
+		DisplayShedulerError(L"Cannot set path of executable.", hr, bsTaskName, lpCommandLine);
 		goto wrap;
 	}
 
 	hr = pExecAction->put_Arguments(bsArgs);
 	if (FAILED(hr))
 	{
-		DisplayLastError(L"Cannot set arguments of executable: 0x%08X", hr);
+		DisplayShedulerError(L"Cannot set arguments of executable.", hr, bsTaskName, lpCommandLine);
 		goto wrap;
 	}
 
@@ -1610,7 +1620,7 @@ BOOL CreateProcessDemoted(LPWSTR lpCommandLine,
 		hr = pExecAction->put_WorkingDirectory(bsDir);
 		if (FAILED(hr))
 		{
-			DisplayLastError(L"Cannot set working directory of executable: 0x%08X", hr);
+			DisplayShedulerError(L"Cannot set working directory of executable.", hr, bsTaskName, lpCommandLine);
 			goto wrap;
 		}
 	}
@@ -1621,7 +1631,7 @@ BOOL CreateProcessDemoted(LPWSTR lpCommandLine,
 	hr = pRootFolder->RegisterTaskDefinition(bsTaskName, pTask, TASK_CREATE, vtUsersSID, vtEmpty, TASK_LOGON_GROUP, vtZeroStr, &pRegisteredTask);
 	if (FAILED(hr))
 	{
-		DisplayLastError(L"Error saving the Task : 0x%08X", hr);
+		DisplayShedulerError(L"Error registering the task instance.", hr, bsTaskName, lpCommandLine);
 		goto wrap;
 	}
 
@@ -1693,7 +1703,7 @@ BOOL CreateProcessDemoted(LPWSTR lpCommandLine,
 	hr = pRootFolder->DeleteTask(bsTaskName, NULL);
 	if( FAILED(hr) )
 	{
-		DisplayLastError(L"Error deleting the Task : 0x%08X", hr);
+		DisplayShedulerError(L"CoInitializeEx failed.", hr, bsTaskName, lpCommandLine);
 		goto wrap;
 	}
 	// Task successfully deleted
