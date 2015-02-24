@@ -8604,6 +8604,38 @@ BOOL cmd_SetTopLeft(CESERVER_REQ& in, CESERVER_REQ** out)
 	if (in.DataSize() >= sizeof(in.ReqConInfo.TopLeft))
 	{
 		gpSrv->TopLeft = in.ReqConInfo.TopLeft;
+
+		// May be we can scroll the console down?
+		if (in.ReqConInfo.TopLeft.isLocked())
+		{
+			// We need real (uncorrected) position
+			CONSOLE_SCREEN_BUFFER_INFO csbi = {};
+			if (GetConsoleScreenBufferInfo(ghConOut, &csbi))
+			{
+				bool bChange = false;
+				SMALL_RECT srNew = csbi.srWindow;
+				int height = srNew.Bottom - srNew.Top + 1;
+
+				// User've scrolled the console down?
+				if ((in.ReqConInfo.TopLeft.y >= 0)
+					&& (in.ReqConInfo.TopLeft.y > srNew.Top)
+					// cursor is still visible?
+					&& ((csbi.dwCursorPosition.Y >= in.ReqConInfo.TopLeft.y)
+						&& (csbi.dwCursorPosition.Y < (in.ReqConInfo.TopLeft.y + height)))
+					)
+				{
+					int shiftY = in.ReqConInfo.TopLeft.y - srNew.Top;
+					srNew.Top = in.ReqConInfo.TopLeft.y;
+					srNew.Bottom += shiftY;
+					bChange = true;
+				}
+
+				if (bChange)
+				{
+					SetConsoleWindowInfo(ghConOut, TRUE, &srNew);
+				}
+			}
+		}
 	}
 	else
 	{
