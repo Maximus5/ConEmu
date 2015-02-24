@@ -3186,8 +3186,6 @@ int CreateMapHeader()
 
 	// !!! Warning !!! Изменил здесь, поменяй и ReloadGuiSettings() !!!
 	gpSrv->pConsole->cbMaxSize = nTotalSize;
-	//gpSrv->pConsole->cbActiveSize = ((LPBYTE)&(gpSrv->pConsole->data)) - ((LPBYTE)gpSrv->pConsole);
-	//gpSrv->pConsole->bChanged = TRUE; // Initially == changed
 	gpSrv->pConsole->hdr.cbSize = sizeof(gpSrv->pConsole->hdr);
 	if (!lbUseExisting)
 		gpSrv->pConsole->hdr.nLogLevel = (gpLogSize!=NULL) ? 1 : 0;
@@ -3202,9 +3200,7 @@ int CreateMapHeader()
 	gpSrv->pConsole->hdr.hConEmuWndDc = ghConEmuWndDC;
 	gpSrv->pConsole->hdr.hConEmuWndBack = ghConEmuWndBack;
 	_ASSERTE(gpSrv->pConsole->hdr.hConEmuRoot==NULL || gpSrv->pConsole->hdr.nGuiPID!=0);
-	//gpSrv->pConsole->hdr.bConsoleActive = TRUE; // пока - TRUE (это на старте сервера)
 	gpSrv->pConsole->hdr.nServerInShutdown = 0;
-	//gpSrv->pConsole->hdr.bThawRefreshThread = TRUE; // пока - TRUE (это на старте сервера)
 	gpSrv->pConsole->hdr.nProtocolVersion = CESERVER_REQ_VER;
 	gpSrv->pConsole->hdr.nActiveFarPID = gpSrv->nActiveFarPID; // PID последнего активного фара
 

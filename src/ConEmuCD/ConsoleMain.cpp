@@ -5826,13 +5826,6 @@ void SendStarted()
 		ConsoleMap.InitName(CECONMAPNAME, (DWORD)hConWnd); //-V205
 		const CESERVER_CONSOLE_MAPPING_HDR* pConsoleInfo = ConsoleMap.Open();
 
-		//WCHAR sHeaderMapName[64];
-		//StringCchPrintf(sHeaderMapName, countof(sHeaderMapName), CECONMAPNAME, (DWORD)hConWnd);
-		//HANDLE hFileMapping = OpenFileMapping(FILE_MAP_READ/*|FILE_MAP_WRITE*/, FALSE, sHeaderMapName);
-		//if (hFileMapping) {
-		//	const CESERVER_CONSOLE_MAPPING_HDR* pConsoleInfo
-		//		= (CESERVER_CONSOLE_MAPPING_HDR*)MapViewOfFile(hFileMapping, FILE_MAP_READ/*|FILE_MAP_WRITE*/,0,0,0);
-		if (pConsoleInfo)
 		{
 			nMainServerPID = pConsoleInfo->nServerPID;
 			nAltServerPID = pConsoleInfo->nAltServerPID;
@@ -5847,9 +5840,6 @@ void SendStarted()
 			//UnmapViewOfFile(pConsoleInfo);
 			ConsoleMap.CloseMap();
 		}
-
-		//	CloseHandle(hFileMapping);
-		//}
 
 		if (nMainServerPID == 0)
 		{
