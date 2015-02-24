@@ -1461,11 +1461,10 @@ BOOL CreateProcessDemoted(LPWSTR lpCommandLine,
 	const IID IID_ITaskService    = {0x2faba4c7, 0x4da9, 0x4013, {0x96, 0x97, 0x20, 0xcc, 0x3f, 0xd4, 0x0f, 0x85}};
 
 	IRegisteredTask *pRegisteredTask = NULL;
+	IRunningTask *pRunningTask = NULL;
 	IAction *pAction = NULL;
 	IExecAction *pExecAction = NULL;
 	IActionCollection *pActionCollection = NULL;
-	ITrigger *pTrigger = NULL;
-	ITriggerCollection *pTriggerCollection = NULL;
 	ITaskDefinition *pTask = NULL;
 	ITaskSettings *pSettings = NULL;
 	ITaskFolder *pRootFolder = NULL;
@@ -1474,8 +1473,7 @@ BOOL CreateProcessDemoted(LPWSTR lpCommandLine,
 	TASK_STATE taskState;
 	bool bCoInitialized = false;
 	DWORD nTickStart, nDuration;
-	const DWORD nMaxTaskWait = 20000;
-	const DWORD nMaxWindowWait = 20000;
+	const DWORD nMaxWindowWait = 30000;
 	wchar_t szIndefinitely[] = L"PT0S";
 
 	//  ------------------------------------------------------
@@ -1554,25 +1552,6 @@ BOOL CreateProcessDemoted(LPWSTR lpCommandLine,
 	}
 
 	//  ------------------------------------------------------
-	//  Get the trigger collection to insert the registration trigger.
-	hr = pTask->get_Triggers(&pTriggerCollection);
-	if (FAILED(hr))
-	{
-		DisplayLastError(L"Cannot get trigger collection: 0x%08X", hr);
-		goto wrap;
-	}
-
-	//  Add the registration trigger to the task.
-	hr = pTriggerCollection->Create( TASK_TRIGGER_REGISTRATION, &pTrigger);
-	if (FAILED(hr))
-	{
-		DisplayLastError(L"Cannot add registration trigger to the Task 0x%08X", hr);
-		goto wrap;
-	}
-	SafeRelease(pTriggerCollection);  // COM clean up.  Pointer is no longer used.
-	SafeRelease(pTrigger);
-
-	//  ------------------------------------------------------
 	//  Add an Action to the task.
 
 	//  Get the task action collection pointer.
@@ -1635,36 +1614,28 @@ BOOL CreateProcessDemoted(LPWSTR lpCommandLine,
 		goto wrap;
 	}
 
-	// Success! Task successfully registered.
-	// Give 20 seconds for the task to start
-	nTickStart = GetTickCount();
-	nDuration = 0;
+	//  ------------------------------------------------------
+	//  Run the task
 	taskState = TASK_STATE_UNKNOWN;
-	while (nDuration <= nMaxTaskWait/*20000*/)
+	hr = pRegisteredTask->Run(vtEmpty, &pRunningTask);
+	if (FAILED(hr))
 	{
-		hr = pRegisteredTask->get_State(&taskState);
-		if (taskState == TASK_STATE_RUNNING)
-		{
-			// Task is running
-			break;
-		}
-		Sleep(100);
-		nDuration = (GetTickCount() - nTickStart);
+		DisplayShedulerError(L"Error starting the task instance.", hr, bsTaskName, lpCommandLine);
+		goto wrap;
 	}
 
-	if (taskState != TASK_STATE_RUNNING)
+	#ifdef _DEBUG
+	HRESULT hrRun; hrRun = pRunningTask->get_State(&taskState);
+	#endif
+
+	//  ------------------------------------------------------
+	// Success! Task successfully started. But our task may end
+	// promptly because it just bypassing the command line
 	{
-		wchar_t* pszErr = lstrmerge(L"Failed to start task in user mode, timeout!\n", lpCommandLine);
-		DisplayLastError(pszErr, hr);
-		free(pszErr);
-	}
-	else
-	{
-		// OK, считаем что успешно запустились
 		lbRc = TRUE;
 
 		// Success! Program was started.
-		// Give 20 seconds for new window appears and bring it to front
+		// Give 30 seconds for new window appears and bring it to front
 		LPCWSTR pszExeName = PointToName(szExe);
 		if (lstrcmpi(pszExeName, L"ConEmu.exe") == 0 || lstrcmpi(pszExeName, L"ConEmu64.exe") == 0)
 		{
@@ -1718,11 +1689,10 @@ wrap:
 	VariantClear(&vtUsersSID);
 	VariantClear(&vtZeroStr);
 	SafeRelease(pRegisteredTask);
+	SafeRelease(pRunningTask);
 	SafeRelease(pAction);
 	SafeRelease(pExecAction);
 	SafeRelease(pActionCollection);
-	SafeRelease(pTrigger);
-	SafeRelease(pTriggerCollection);
 	SafeRelease(pTask);
 	SafeRelease(pRootFolder);
 	SafeRelease(pService);
