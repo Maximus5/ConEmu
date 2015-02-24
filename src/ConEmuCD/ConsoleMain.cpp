@@ -5795,7 +5795,10 @@ void SendStarted()
 	static bool bSent = false;
 
 	if (bSent)
+	{
+		_ASSERTE(FALSE && "SendStarted repetition");
 		return; // отсылать только один раз
+	}
 
 	//crNewSize = gpSrv->sbi.dwSize;
 	//_ASSERTE(crNewSize.X>=MIN_CON_WIDTH && crNewSize.Y>=MIN_CON_HEIGHT);
@@ -5827,6 +5830,11 @@ void SendStarted()
 		ConsoleMap.InitName(CECONMAPNAME, (DWORD)hConWnd); //-V205
 		const CESERVER_CONSOLE_MAPPING_HDR* pConsoleInfo = ConsoleMap.Open();
 
+		if (!pConsoleInfo)
+		{
+			_ASSERTE(pConsoleInfo && "ConsoleMap was not initialized for AltServer/ComSpec");
+		}
+		else
 		{
 			nMainServerPID = pConsoleInfo->nServerPID;
 			nAltServerPID = pConsoleInfo->nAltServerPID;
@@ -6411,6 +6419,7 @@ void CreateLogSizeFile(int nLevel, const CESERVER_CONSOLE_MAPPING_HDR* pConsoleI
 	if (dwErr != 0)
 	{
 		_printf("Create console log file failed! ErrCode=0x%08X\n", dwErr, gpLogSize->GetLogFileName()); //-V576
+		_ASSERTE(FALSE && "gpLogSize->CreateLogFile failed");
 		SafeDelete(gpLogSize);
 		return;
 	}
