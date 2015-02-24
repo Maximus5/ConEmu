@@ -13311,7 +13311,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 #endif
 
 		case WM_ACTIVATE:
-			LogString((wParam == WA_CLICKACTIVE) ? L"Window was activated by mouse click" : (wParam == WA_CLICKACTIVE) ? L"Window was activated somehow" : L"Window was deactivated");
+			LogString((wParam == WA_CLICKACTIVE) ? L"Window was activated by mouse click" : (wParam == WA_ACTIVE) ? L"Window was activated somehow" : (wParam == WA_INACTIVE) ? L"Window was deactivated" : L"Unknown state in WM_ACTIVATE");
 			RecheckForegroundWindow(L"WM_ACTIVATE");
 			result = this->OnFocus(hWnd, messg, wParam, lParam);
 			if (this->mb_AllowAutoChildFocus)
