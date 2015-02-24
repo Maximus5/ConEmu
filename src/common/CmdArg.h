@@ -30,6 +30,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #if defined(_MSC_VER) && (_MSC_VER <= 1500)
 	#define RVAL_REF
+#elif !defined(__GNUC__)
+	#define RVAL_REF
 #else
 	#define RVAL_REF &&
 #endif
