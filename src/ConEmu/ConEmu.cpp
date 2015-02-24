@@ -289,6 +289,9 @@ CConEmuMain::CConEmuMain()
 
 	getForegroundWindow();
 
+	// ConEmu main window was not created yet, so...
+	ZeroStruct(m_Foreground);
+
 	_ASSERTE(gOSVer.dwMajorVersion>=5);
 	//ZeroStruct(gOSVer);
 	//gOSVer.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
@@ -6075,6 +6078,22 @@ bool CConEmuMain::isFirstInstance(bool bFolderIgnore /*= false*/)
 bool CConEmuMain::isLBDown()
 {
 	return (mouse.state & DRAG_L_ALLOWED) == DRAG_L_ALLOWED;
+}
+
+bool CConEmuMain::RecheckForegroundWindow(HWND* phFore/*=NULL*/)
+{
+	HWND hForeWnd = NULL;
+	bool bForeground = isMeForeground(false, true, &hForeWnd);
+
+	if (bForeground && (hForeWnd == ghWnd))
+		m_Foreground.ForegroundState |= fgf_ConEmuMain;
+	else
+		m_Foreground.ForegroundState &= ~fgf_ConEmuMain;
+
+	if (phFore)
+		*phFore = hForeWnd;
+
+	return ((m_Foreground.ForegroundState & fgf_ConEmuMain) != fgf_Background);
 }
 
 bool CConEmuMain::isMeForeground(bool abRealAlso/*=false*/, bool abDialogsAlso/*=true*/, HWND* phFore/*=NULL*/)
@@ -11959,7 +11978,7 @@ void CConEmuMain::OnTimer_Main(CVirtualConsole* pVCon)
 	}
 
 	HWND hForeWnd = NULL;
-	bool bForeground = isMeForeground(false, true, &hForeWnd);
+	bool bForeground = RecheckForegroundWindow(&hForeWnd);
 	if (bForeground && !m_GuiInfo.bGuiActive)
 	{
 		UpdateGuiInfoMappingActive(true);
@@ -12962,7 +12981,7 @@ LRESULT CConEmuMain::OnActivateByMouse(HWND hWnd, UINT messg, WPARAM wParam, LPA
 		|| bSkipActivation
 		|| (gpSet->isMouseSkipActivation
 			&& (LOWORD(lParam) == HTCLIENT)
-			&& !isMeForeground(false,false))
+			&& !(m_Foreground.ForegroundState & fgf_ConEmuMain))
 		)
 	{
 		this->mouse.bForceSkipActivation = FALSE; // Однократно
@@ -12996,6 +13015,8 @@ LRESULT CConEmuMain::OnActivateByMouse(HWND hWnd, UINT messg, WPARAM wParam, LPA
 	{
 		apiSetForegroundWindow(ghWnd);
 	}
+
+	RecheckForegroundWindow();
 
 	return result;
 }

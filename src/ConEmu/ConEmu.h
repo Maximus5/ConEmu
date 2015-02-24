@@ -606,6 +606,17 @@ class CConEmuMain
 		#endif
 
 	public:
+		enum {
+			fgf_Background = 0,
+			fgf_ConEmuMain = 1,
+		};
+	protected:
+		struct {
+			DWORD ForegroundState;
+		} m_Foreground;
+		bool RecheckForegroundWindow(HWND* phFore=NULL);
+
+	public:
 		DWORD GetWindowStyle();
 		DWORD FixWindowStyle(DWORD dwExStyle, ConEmuWindowMode wmNewMode = wmCurrent);
 		void SetWindowStyle(DWORD anStyle);
