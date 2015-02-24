@@ -377,6 +377,7 @@ class CConEmuMain
 		HCURSOR mh_SplitV, mh_SplitH;
 		HCURSOR mh_DragCursor;
 		CDragDrop *mp_DragDrop;
+		// TODO: ==>> m_Foreground
 		bool mb_SkipOnFocus;
 		bool mb_LastConEmuFocusState;
 		DWORD mn_ForceTimerCheckLoseFocus; // GetTickCount()
