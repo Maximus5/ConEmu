@@ -8616,10 +8616,12 @@ BOOL cmd_SetTopLeft(CESERVER_REQ& in, CESERVER_REQ** out)
 				SMALL_RECT srNew = csbi.srWindow;
 				int height = srNew.Bottom - srNew.Top + 1;
 
-				// User've scrolled the console down?
+				// In some cases we can do physical scrolling
 				if ((in.ReqConInfo.TopLeft.y >= 0)
-					&& (in.ReqConInfo.TopLeft.y > srNew.Top)
-					// cursor is still visible?
+					// cursor was visible?
+					&& ((csbi.dwCursorPosition.Y >= srNew.Top)
+						&& (csbi.dwCursorPosition.Y <= srNew.Bottom))
+					// and cursor is remains visible?
 					&& ((csbi.dwCursorPosition.Y >= in.ReqConInfo.TopLeft.y)
 						&& (csbi.dwCursorPosition.Y < (in.ReqConInfo.TopLeft.y + height)))
 					)
