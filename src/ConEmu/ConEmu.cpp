@@ -6082,13 +6082,54 @@ bool CConEmuMain::isLBDown()
 
 bool CConEmuMain::RecheckForegroundWindow(HWND* phFore/*=NULL*/)
 {
-	HWND hForeWnd = NULL;
-	bool bForeground = isMeForeground(false, true, &hForeWnd);
+	DWORD NewState = fgf_Background;
 
-	if (bForeground && (hForeWnd == ghWnd))
-		m_Foreground.ForegroundState |= fgf_ConEmuMain;
-	else
-		m_Foreground.ForegroundState &= ~fgf_ConEmuMain;
+	// Call this function only
+	HWND hForeWnd = getForegroundWindow();
+
+	if (hForeWnd != m_Foreground.hLastFore)
+	{
+		DWORD nForePID = 0;
+
+		if (hForeWnd != NULL)
+		{
+			if (hForeWnd == ghWnd)
+			{
+				NewState |= fgf_ConEmuMain;
+			}
+			else
+			{
+				GetWindowThreadProcessId(hForeWnd, &nForePID);
+
+				if (nForePID == GetCurrentProcessId())
+				{
+					NewState |= fgf_ConEmuDialog;
+				}
+				else if (mp_Inside && (hForeWnd == mp_Inside->mh_InsideParentRoot))
+				{
+					NewState |= fgf_InsideParent;
+				}
+				else if (CVConGroup::isOurWindow(hForeWnd))
+				{
+					NewState |= fgf_RealConsole;
+				}
+			}
+
+			// DefTerm checks
+			if (!(m_Foreground.ForegroundState & fgf_ConEmuAny)
+				&& nForePID && mp_DefTrm->IsReady() && gpSet->isSetDefaultTerminal && isMainThread())
+			{
+				// If user want to use ConEmu as default terminal for CUI apps
+				// we need to hook GUI applications (e.g. explorer)
+				mp_DefTrm->CheckForeground(hForeWnd, nForePID);
+			}
+		}
+
+		// Save new state
+		if (m_Foreground.ForegroundState != NewState)
+			m_Foreground.ForegroundState = NewState;
+		m_Foreground.hLastFore = hForeWnd;
+	}
 
 	if (phFore)
 		*phFore = hForeWnd;
@@ -6100,45 +6141,15 @@ bool CConEmuMain::isMeForeground(bool abRealAlso/*=false*/, bool abDialogsAlso/*
 {
 	if (!this) return false;
 
-	static HWND hLastFore = NULL;
-	static bool isMe = false;
-	static bool bLastRealAlso, bLastDialogsAlso;
-	HWND h = getForegroundWindow();
+	// Reuse states evaluated in RecheckForegroundWindow
+	DWORD nMask = fgf_ConEmuMain
+		| (abDialogsAlso ? fgf_ConEmuDialog : fgf_Background)
+		| (abRealAlso ? fgf_RealConsole : fgf_Background)
+		| (mp_Inside ? fgf_InsideParent : fgf_Background);
+	bool isMe = ((m_Foreground.ForegroundState & nMask) != fgf_Background);
+
 	if (phFore)
-		*phFore = h;
-
-	if ((h != hLastFore) || (bLastRealAlso != abRealAlso) || (bLastDialogsAlso != abDialogsAlso))
-	{
-		DWORD nForePID = 0;
-		if (h)
-			GetWindowThreadProcessId(h, &nForePID);
-		isMe = (h != NULL)
-			&& ((h == ghWnd)
-				|| (abDialogsAlso && (nForePID == GetCurrentProcessId()))
-					//((h == ghOpWnd)
-					//|| (mp_AttachDlg && (mp_AttachDlg->GetHWND() == h))
-					//|| (mp_RecreateDlg && (mp_RecreateDlg->GetHWND() == h))
-					//|| (mp_Find->mh_FindDlg == h)))
-				|| (mp_Inside && (h == mp_Inside->mh_InsideParentRoot)))
-			;
-
-		if (h && !isMe && abRealAlso)
-		{
-			if (CVConGroup::isOurWindow(h))
-				isMe = true;
-		}
-
-		hLastFore = h;
-		bLastRealAlso = abRealAlso;
-		bLastDialogsAlso = abDialogsAlso;
-
-		if (!isMe && nForePID && mp_DefTrm->IsReady() && gpSet->isSetDefaultTerminal && isMainThread())
-		{
-			// If user want to use ConEmu as default terminal for CUI apps
-			// we need to hook GUI applications (e.g. explorer)
-			mp_DefTrm->CheckForeground(h, nForePID);
-		}
-	}
+		*phFore = m_Foreground.hLastFore;
 
 	return isMe;
 }
@@ -13295,6 +13306,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 
 		case WM_ACTIVATE:
 			LogString((wParam == WA_CLICKACTIVE) ? L"Window was activated by mouse click" : (wParam == WA_CLICKACTIVE) ? L"Window was activated somehow" : L"Window was deactivated");
+			RecheckForegroundWindow();
 			result = this->OnFocus(hWnd, messg, wParam, lParam);
 			if (this->mb_AllowAutoChildFocus)
 			{
@@ -13325,6 +13337,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 				wParam = FALSE; lParam = 0;
 			}
 			LogString(wParam ? L"Application activating" : L"Application deactivating");
+			RecheckForegroundWindow();
 			// просто так фокус в дочернее окно ставить нельзя
 			// если переключать фокус в дочернее приложение по любому чиху
 			// вообще не получается активировать окно ConEmu, открыть системное меню,

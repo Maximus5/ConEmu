@@ -607,11 +607,17 @@ class CConEmuMain
 
 	public:
 		enum {
-			fgf_Background = 0,
-			fgf_ConEmuMain = 1,
+			fgf_Background   = 0x0000,
+			fgf_ConEmuMain   = 0x0001,
+			fgf_ConEmuDialog = 0x0002,
+			fgf_RealConsole  = 0x0004,
+			fgf_InsideParent = 0x0008,
+			fgf_ConEmuAny    = (fgf_ConEmuMain|fgf_RealConsole|fgf_ConEmuDialog|fgf_InsideParent),
 		};
+		bool isMeForeground(bool abRealAlso=false, bool abDialogsAlso=true, HWND* phFore=NULL);
 	protected:
 		struct {
+			HWND  hLastFore;
 			DWORD ForegroundState;
 		} m_Foreground;
 		bool RecheckForegroundWindow(HWND* phFore=NULL);
@@ -639,7 +645,6 @@ class CConEmuMain
 		bool isFirstInstance(bool bFolderIgnore = false);
 		bool isInImeComposition();
 		bool isLBDown();
-		bool isMeForeground(bool abRealAlso=false, bool abDialogsAlso=true, HWND* phFore=NULL);
 		bool isMouseOverFrame(bool abReal=false);
 		bool isNtvdm(BOOL abCheckAllConsoles=FALSE);
 		bool isOurConsoleWindow(HWND hCon);
