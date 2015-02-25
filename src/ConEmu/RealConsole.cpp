@@ -7614,17 +7614,8 @@ BOOL CRealConsole::ProcessUpdateFlags(BOOL abProcessChanged)
 	if (abProcessChanged)
 	{
 		mp_ConEmu->UpdateProcessDisplay(abProcessChanged);
-		//2009-09-10
-		//mp_ConEmu->mp_TabBar->Refresh(mn_ProgramStatus & CES_FARACTIVE);
+
 		mp_ConEmu->mp_TabBar->Update();
-
-		//if (!mb_AdminShieldChecked)
-		//{
-		//	mb_AdminShieldChecked = TRUE;
-
-		//	if ((gOSVer.dwMajorVersion > 6) || ((gOSVer.dwMajorVersion == 6) && (gOSVer.dwMinorVersion >= 1)))
-		//		mp_ConEmu->Taskbar_SetShield(true);
-		//}
 	}
 
 	return lbChanged;
