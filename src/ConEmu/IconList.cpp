@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2014 Maximus5
+Copyright (c) 2009-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -239,4 +239,12 @@ wrap:
 	}
 	SafeFree(pszExpanded);
 	return iIconIdx;
+}
+
+HICON CIconList::GetTabIconByIndex(int IconIndex)
+{
+	if (!this || !mh_TabIcons)
+		return NULL;
+	HICON hIcon = ImageList_GetIcon(mh_TabIcons, IconIndex, ILD_TRANSPARENT);
+	return hIcon;
 }

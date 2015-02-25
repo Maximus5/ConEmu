@@ -5931,6 +5931,24 @@ int CConEmuMain::GetActiveVCon(CVConGuard* pVCon /*= NULL*/, int* pAllCount /*= 
 	return CVConGroup::GetActiveVCon(pVCon, pAllCount);
 }
 
+HICON CConEmuMain::GetCurrentVConIcon()
+{
+	HICON hIcon = NULL;
+	int iRConIcon = 0;
+	CVConGuard VCon;
+
+	if (mp_TabBar && (GetActiveVCon(&VCon) >= 0))
+	{
+		iRConIcon = VCon->RCon()->GetRootProcessIcon();
+		if (iRConIcon >= 0)
+		{
+			hIcon = mp_TabBar->GetTabIconByIndex(iRConIcon);
+		}
+	}
+
+	return hIcon;
+}
+
 bool CConEmuMain::IsActiveConAdmin()
 {
 	CVConGuard VCon;
@@ -12617,7 +12635,7 @@ void CConEmuMain::OnAllVConClosed()
 
 	OnAllGhostClosed();
 
-	Taskbar_SetShield(false);
+	Taskbar_SetOverlay(NULL);
 
 	if (isDestroyOnClose())
 	{

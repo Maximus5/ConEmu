@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2011 Maximus5
+Copyright (c) 2011-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -87,5 +87,6 @@ public:
 	bool Taskbar_GhostSnapshootRequired();
 
 	void Taskbar_SetShield(bool abShield);
+	void Taskbar_SetOverlay(HICON ahIcon);
 	void Taskbar_UpdateOverlay();
 };

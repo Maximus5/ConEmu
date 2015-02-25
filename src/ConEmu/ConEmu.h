@@ -373,6 +373,7 @@ class CConEmuMain
 		DWORD m_ProcCount;
 		BOOL mb_IsUacAdmin; // ConEmu itself is started elevated
 		bool IsActiveConAdmin();
+		HICON GetCurrentVConIcon();
 		HCURSOR mh_CursorWait, mh_CursorArrow, mh_CursorAppStarting, mh_CursorMove, mh_CursorIBeam;
 		HCURSOR mh_SplitV, mh_SplitH;
 		HCURSOR mh_DragCursor;

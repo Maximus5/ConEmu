@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2014 Maximus5
+Copyright (c) 2009-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -86,6 +86,7 @@ class CTabBarClass
 	public:
 		HIMAGELIST GetTabIcons();
 		int GetTabIcon(bool bAdmin);
+		HICON GetTabIconByIndex(int IconIndex);
 
 	private:
 		bool _active, _visible;

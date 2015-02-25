@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2011-2013 Maximus5
+Copyright (c) 2011-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -321,9 +321,12 @@ void CTaskBar::Taskbar_SetShield(bool abShield)
 		}
 	}
 
-	HRESULT hr;
+	Taskbar_SetOverlay(abShield ? mh_Shield : NULL);
+}
 
-	hr = mp_TaskBar3->SetOverlayIcon(ghWnd, abShield ? mh_Shield : NULL, NULL);
+void CTaskBar::Taskbar_SetOverlay(HICON ahIcon)
+{
+	HRESULT hr = mp_TaskBar3->SetOverlayIcon(ghWnd, ahIcon, NULL);
 
 	_ASSERTE(hr==S_OK);
 	UNREFERENCED_PARAMETER(hr);

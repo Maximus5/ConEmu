@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2014 Maximus5
+Copyright (c) 2009-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -246,6 +246,11 @@ HIMAGELIST CTabBarClass::GetTabIcons()
 int CTabBarClass::GetTabIcon(bool bAdmin)
 {
 	return m_TabIcons.GetTabIcon(bAdmin);
+}
+
+HICON CTabBarClass::GetTabIconByIndex(int IconIndex)
+{
+	return m_TabIcons.GetTabIconByIndex(IconIndex);
 }
 
 void CTabBarClass::SelectTab(int i)

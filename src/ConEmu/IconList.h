@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2013 Maximus5
+Copyright (c) 2013-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -55,6 +55,8 @@ public:
 
 	int GetTabIcon(bool bAdmin);
 	int CreateTabIcon(LPCWSTR asIconDescr, bool bAdmin, LPCWSTR asWorkDir);
+
+	HICON GetTabIconByIndex(int IconIndex);
 
 	operator HIMAGELIST() const
 	{
