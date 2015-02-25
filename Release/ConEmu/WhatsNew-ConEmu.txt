@@ -39,6 +39,9 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 [*] LogFiles were not created for far.exe sometimes.
 [*] Do not flush logs after each line to avoid lags.
 
+2015.2.24a
+[*] Issue 1917: Avoid ‘Win+Shift+Delete is not unique’ error.
+
 
 2015.2.18
 [*] Issue 1817: Fix dropped or garbled keypresses sent from AHK.
