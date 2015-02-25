@@ -337,14 +337,25 @@ void CTaskBar::Taskbar_UpdateOverlay()
 	if (!IsWindows7)
 		return;
 
-	bool bAdmin = false;
-
-	if (gpSet->isTaskbarShield)
+	if (!gpSet->isTaskbarShield)
 	{
-		bAdmin = gpConEmu->IsActiveConAdmin();
+		Taskbar_SetOverlay(NULL);
+		return;
 	}
 
-	Taskbar_SetShield(bAdmin);
+	bool bAdmin;
+	HICON hIcon;
+
+	if ((hIcon = gpConEmu->GetCurrentVConIcon()) != NULL)
+	{
+		Taskbar_SetOverlay(hIcon);
+		DestroyIcon(hIcon);
+	}
+	else
+	{
+		bAdmin = gpConEmu->IsActiveConAdmin();
+		Taskbar_SetShield(bAdmin);
+	}
 }
 
 HRESULT CTaskBar::Taskbar_MarkFullscreenWindow(HWND hwnd, BOOL fFullscreen)
