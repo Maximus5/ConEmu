@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2014 Maximus5
+Copyright (c) 2009-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -37,6 +37,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmu.h"
 #include "ConEmuApp.h"
 #include "Update.h"
+#include "../common/FarVersion.h"
 #include "../common/WFiles.h"
 #include "../common/WRegistry.h"
 
@@ -879,9 +880,233 @@ static void CreateDefaultTask(LPCWSTR asDrive, int& iCreatIdx, LPCWSTR asName, L
 	va_end(argptr);
 }
 
+class FarVerList
+{
+public:
+	struct FarInfo
+	{
+		wchar_t* szFullPath;
+		wchar_t szTaskName[64];
+		FarVersion Ver; // bool LoadFarVersion(FarVersion& gFarVersion, wchar_t (&ErrText)[512])
+	};
+	MArray<FarInfo> Installed;
+
+protected:
+	wchar_t szFar32Name[16], szFar64Name[16];
+	LPCWSTR FarExe[3]; // = { szFar64Name, szFar32Name, NULL };
+
+protected:
+	// This will load Far version and check its existence
+	bool AddFarPath(LPCWSTR szPath)
+	{
+		bool bAdded = false;
+		FarInfo FI = {};
+		wchar_t ErrText[512];
+
+		if (LoadFarVersion(szPath, FI.Ver, ErrText))
+		{
+			// Far instance found, add it to Installed array?
+			bool bAlready = false;
+			for (INT_PTR a = 0; a < Installed.size(); a++)
+			{
+				if (lstrcmpi(Installed[a].szFullPath, szPath) == 0)
+				{
+					bAlready = true; break; // Do not add twice same path
+				}
+			}
+			if (!bAlready)
+			{
+				FI.szFullPath = lstrdup(szPath);
+				if (FI.szFullPath)
+				{
+					Installed.push_back(FI);
+					bAdded = true;
+				}
+			}
+		}
+
+		return bAdded;
+	}; // AddFarPath(LPCWSTR szPath)
+
+	void ScanRegistry()
+	{
+		LPCWSTR Locations[] = {
+			L"Software\\Far Manager",
+			L"Software\\Far2",
+			L"Software\\Far",
+			NULL
+		};
+		LPCWSTR Names[] = {
+			L"InstallDir_x64",
+			L"InstallDir",
+			NULL
+		};
+
+		int wow1, wow2;
+		if (IsWindows64())
+		{
+			wow1 = 1; wow2 = 2;
+		}
+		else
+		{
+			wow1 = wow2 = 0;
+		}
+
+		for (int hk = 0; hk <= 1; hk++)
+		{
+			for (int loc = 0; Locations[loc]; loc++)
+			{
+				for (int nam = 0; Names[nam]; nam++)
+				{
+					for (int wow = wow1; wow <= wow2; wow++)
+					{
+						CEStr szKeyValue;
+						HKEY hkParent = (hk == 0) ? HKEY_CURRENT_USER : HKEY_LOCAL_MACHINE;
+						DWORD Wow64Flags = (wow == 0) ? 0 : (wow == 1) ? KEY_WOW64_64KEY : KEY_WOW64_32KEY;
+						if (RegGetStringValue(hkParent, Locations[loc], Names[nam], szKeyValue, Wow64Flags))
+						{
+							for (int fe = 0; FarExe[fe]; fe++)
+							{
+								CEStr szPath(JoinPath(szKeyValue, FarExe[fe]));
+								// This will load Far version and check its existence
+								AddFarPath(szPath);
+							}
+						}
+					}
+				}
+			}
+		}
+	}; // ScanRegistry()
+
+public:
+	void FindInstalledVersions(LPCWSTR asDrive)
+	{
+		CEStr szFound;
+		bool bNeedQuot = false;
+		INT_PTR i;
+
+		const wchar_t szFarPrefix[] = L"Far Manager::";
+
+		// Scan our program dir subfolders
+		for (i = 0; FarExe[i]; i++)
+		{
+			if (FileExistSubDir(gpConEmu->ms_ConEmuExeDir, FarExe[i], 1, szFound))
+				AddFarPath(szFound);
+		}
+
+		// Check registry
+		ScanRegistry();
+
+		// Find in %Path% and on drives
+		for (i = 0; FarExe[i]; i++)
+		{
+			if (FindOnDrives(asDrive, FarExe[i], szFound, bNeedQuot))
+				AddFarPath(szFound);
+		}
+
+		// [HKCU|HKLM]\Software\Microsoft\Windows\CurrentVersion\App Paths
+		for (i = 0; FarExe[i]; i++)
+		{
+			if (SearchAppPaths(FarExe[i], szFound, false))
+				AddFarPath(szFound);
+		}
+
+		// Done, create task names
+		if (Installed.size() > 0)
+		{
+			UINT idx = 0;
+			LPCWSTR pszPrefix = (Installed.size() > 1) ? szFarPrefix : L"";
+
+			// All task names MUST be unique
+			for (int u = 0; u <= 2; u++)
+			{
+				bool bUnique = true;
+
+				for (i = 0; i < Installed.size(); i++)
+				{
+					FarInfo& FI = Installed[i];
+					wchar_t szPlatform[6] = L""; //TODO: x86/x64
+
+					switch (u)
+					{
+					case 0: // Naked
+						_wsprintf(FI.szTaskName, SKIPLEN(countof(FI.szTaskName)-16) L"%sFar %u.%u%s",
+							pszPrefix, FI.Ver.dwVerMajor, FI.Ver.dwVerMinor, szPlatform);
+						break;
+					case 1: // Add Far Build no?
+						_wsprintf(FI.szTaskName, SKIPLEN(countof(FI.szTaskName)-16) L"%sFar %u.%u.%u%s",
+							pszPrefix, FI.Ver.dwVerMajor, FI.Ver.dwVerMinor, FI.Ver.dwBuild, szPlatform);
+						break;
+					case 2: // Add Build and index
+						_wsprintf(FI.szTaskName, SKIPLEN(countof(FI.szTaskName)-16) L"%sFar %u.%u.%u%s (%u)",
+							pszPrefix, FI.Ver.dwVerMajor, FI.Ver.dwVerMinor, FI.Ver.dwBuild, szPlatform, ++idx);
+						break;
+					}
+
+					for (INT_PTR j = 0; j < i; j++)
+					{
+						if (lstrcmpi(FI.szTaskName, Installed[j].szTaskName) == 0)
+						{
+							bUnique = false; break;
+						}
+					}
+
+					if (!bUnique)
+						break;
+				}
+
+				if (bUnique)
+					break;
+			}
+		}
+	};
+
+public:
+	FarVerList()
+	{
+		wcscpy_c(szFar32Name, L"far.exe");
+		wcscpy_c(szFar64Name, L"far64.exe");
+		INT_PTR i = 0;
+		if (IsWindows64())
+			FarExe[i++] = szFar64Name;
+		FarExe[i++] = szFar32Name;
+		FarExe[i] = NULL;
+	};
+
+	~FarVerList() {};
+};
+
 void CreateFarTasks(LPCWSTR asDrive, int& iCreatIdx)
 {
-	CreateDefaultTask(asDrive, iCreatIdx, L"Far Manager", NULL, NULL, NULL, L"far.exe", NULL);
+	FarVerList Vers;
+	Vers.FindInstalledVersions(asDrive);
+
+	// Create Far tasks
+	for (INT_PTR i = 0; i < Vers.Installed.size(); i++)
+	{
+		FarVerList::FarInfo& FI = Vers.Installed[i];
+		bool bNeedQuot = (wcschr(FI.szFullPath, L' ') != NULL);
+
+		wchar_t* pszCommand = bNeedQuot ? lstrmerge(L"\"", FI.szFullPath, L"\"") : lstrdup(FI.szFullPath);
+		if (pszCommand)
+		{
+			if (FI.Ver.dwVerMajor >= 2)
+				lstrmerge(&pszCommand, L" /w");
+			wchar_t* pszName = (wchar_t*)PointToName(FI.szFullPath);
+			if (pszName && (pszName > FI.szFullPath))
+			{
+				*(pszName) = 0; // Cut to slash
+				lstrmerge(&pszCommand, L" /p\"%ConEmuDir%\\Plugins\\ConEmu;%FarHome%\\Plugins\"");
+
+				CreateDefaultTask(iCreatIdx, FI.szTaskName, NULL, pszCommand);
+			}
+		}
+
+		// Release memory
+		SafeFree(FI.szFullPath);
+		SafeFree(pszCommand);
+	}
+	Vers.Installed.clear();
 }
 
 void CreateDefaultTasks(bool bForceAdd /*= false*/)
