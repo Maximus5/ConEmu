@@ -250,6 +250,7 @@ protected:
 		SMALL_RECT srRealWindow; // Те реальные координаты, которые видимы в RealConsole (а не то, что видимо в GUI окне)
 		COORD crMaxSize; // Максимальный размер консоли на текущем шрифте
 		TOPLEFTCOORD TopLeft; // может отличаться от m_sbi.srWindow.Top, если прокрутка заблокирована
+		DWORD TopLeftTick; BOOL InTopLeftSet;
 		DWORD LastStartInitBuffersTick, LastEndInitBuffersTick, LastStartReadBufferTick, LastEndReadBufferTick;
 		BOOL bInGetConsoleData;
 		int nCreatedBufWidth, nCreatedBufHeight; // Informational
