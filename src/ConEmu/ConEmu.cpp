@@ -7194,7 +7194,7 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 
 		if (gpSet->isTaskbarShield && gpConEmu->mb_IsUacAdmin && gpSet->isWindowOnTaskBar())
 		{
-			// Bug in Win7? Sometimes after startup "As Admin" sheild does not appeears.
+			// Bug in Win7? Sometimes after startup "As Admin" shield was not appeared.
 			SetKillTimer(true, TIMER_ADMSHIELD_ID, TIMER_ADMSHIELD_ELAPSE);
 		}
 
@@ -8216,7 +8216,7 @@ void CConEmuMain::OnTaskbarButtonCreated()
 	{
 		if (gpConEmu->mb_IsUacAdmin)
 		{
-			// Bug in Win7? Sometimes after startup "As Admin" sheild does not appeears.
+			// Bug in Win7? Sometimes after startup "As Admin" shield was not appeared.
 			SetKillTimer(true, TIMER_ADMSHIELD_ID, TIMER_ADMSHIELD_ELAPSE);
 		}
 	}
@@ -12340,6 +12340,7 @@ void CConEmuMain::OnTimer_RClickPaint()
 	RightClickingPaint(NULL, NULL);
 }
 
+// Bug in Win7? Sometimes after startup "As Admin" shield was not appeared.
 void CConEmuMain::OnTimer_AdmShield()
 {
 	static int nStep = 0;

@@ -9436,8 +9436,6 @@ void CRealConsole::OnActivate(int nNewNum, int nOldNum)
 
 	mp_ConEmu->mp_Status->OnActiveVConChanged(nNewNum, this);
 
-	//if ((gOSVer.dwMajorVersion > 6) || ((gOSVer.dwMajorVersion == 6) && (gOSVer.dwMinorVersion >= 1)))
-	//	mp_ConEmu->Taskbar_SetShield(isAdministrator());
 	mp_ConEmu->Taskbar_UpdateOverlay();
 
 	if (m_ChildGui.hGuiWnd && !m_ChildGui.bGuiExternMode)
