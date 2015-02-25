@@ -28,13 +28,22 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-static bool LoadFarVersion(FarVersion& gFarVersion, wchar_t (&ErrText)[512])
+static void SetDefaultFarVersion(FarVersion& gFarVersion)
+{
+	gFarVersion.dwVer = 0; // Reset all fields
+	gFarVersion.dwVerMajor = 2;
+	gFarVersion.dwVerMinor = 0;
+	gFarVersion.dwBuild = 995; // "default"
+}
+
+static bool LoadFarVersion(LPCWSTR FarPath, FarVersion& gFarVersion, wchar_t (&ErrText)[512])
 {
 	bool lbRc = false;
-	wchar_t FarPath[MAX_PATH+1]; ErrText[0] = 0;
 	DWORD dwErr = 0;
 
-	if (GetModuleFileName(0,FarPath,MAX_PATH))
+	ErrText[0] = 0;
+
+	if (FarPath && *FarPath)
 	{
 		DWORD dwRsrvd = 0;
 		DWORD dwSize = GetFileVersionInfoSize(FarPath, &dwRsrvd);
@@ -90,7 +99,7 @@ static bool LoadFarVersion(FarVersion& gFarVersion, wchar_t (&ErrText)[512])
 	}
 	else
 	{
-		dwErr = GetLastError(); lstrcpyW(ErrText, L"LoadFarVersion.GetModuleFileName() failed!");
+		dwErr = 0; lstrcpyW(ErrText, L"Invalid FarPath was specified");
 	}
 
 	if (ErrText[0])
@@ -106,10 +115,27 @@ static bool LoadFarVersion(FarVersion& gFarVersion, wchar_t (&ErrText)[512])
 
 	if (!lbRc)
 	{
-		gFarVersion.dwVer = 0; // Reset all fields
-		gFarVersion.dwVerMajor = 2;
-		gFarVersion.dwVerMinor = 0;
-		gFarVersion.dwBuild = 995; // "default"
+		SetDefaultFarVersion(gFarVersion);
+	}
+
+	return lbRc;
+}
+
+static bool LoadFarVersion(FarVersion& gFarVersion, wchar_t (&ErrText)[512])
+{
+	bool lbRc = false;
+	wchar_t FarPath[MAX_PATH+1];
+
+	ErrText[0] = 0;
+
+	if (GetModuleFileName(0,FarPath,MAX_PATH))
+	{
+		lbRc = LoadFarVersion(FarPath, gFarVersion, ErrText);
+	}
+	else
+	{
+		lstrcpyW(ErrText, L"LoadFarVersion.GetModuleFileName() failed!");
+		SetDefaultFarVersion(gFarVersion);
 	}
 
 	return lbRc;
