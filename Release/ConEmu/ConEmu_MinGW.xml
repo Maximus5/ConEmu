@@ -9,7 +9,7 @@
 -->
 <key name="Software">
 	<key name="ConEmu">
-		<key name=".Vanilla" modified="2012-09-09 21:14:15">
+		<key name=".Vanilla" modified="2015-02-25 12:24:13" build="150224a">
 			<value name="ClipboardDetectLineEnd" type="hex" data="01"/>
 			<value name="ClipboardBashMargin" type="hex" data="01"/>
 			<value name="ClipboardTrimTrailing" type="hex" data="02"/>
@@ -62,6 +62,16 @@
 			<value name="CTS.VkAct" type="hex" data="00"/>
 			<value name="CTS.VkPrompt" type="hex" data="a0"/>
 			<value name="FarGotoEditorVk" type="hex" data="a2"/>
+			<value name="UseCurrentSizePos" type="hex" data="01"/>
+			<value name="WindowMode" type="dword" data="0000051f"/>
+			<value name="ConWnd Width" type="dword" data="00000050"/>
+			<value name="ConWnd Height" type="dword" data="00000019"/>
+			<value name="Cascaded" type="hex" data="01"/>
+			<value name="IntegralSize" type="hex" data="00"/>
+			<value name="ConWnd X" type="dword" data="000000b8"/>
+			<value name="ConWnd Y" type="dword" data="0000015b"/>
+			<value name="16bit Height" type="dword" data="00000000"/>
+			<value name="AutoSaveSizePos" type="hex" data="01"/>
 		</key>
 	</key>
 </key>
