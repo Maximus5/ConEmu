@@ -93,6 +93,7 @@ protected:
 
 	void StoreActiveVCon(CVirtualConsole* pVCon);
 	bool ReSizeSplitter(int iCells);
+	void PaintSplitter(HDC hdc, HBRUSH hbr);
 
 	CVConGroup* FindNextPane(const RECT& rcPrev, int nHorz /*= 0*/, int nVert /*= 0*/);
 

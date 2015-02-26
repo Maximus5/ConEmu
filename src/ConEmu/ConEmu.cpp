@@ -12925,6 +12925,12 @@ LRESULT CConEmuMain::WorkWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 			EndPaint(hWnd, &ps);
 		} // WM_PAINT
 		break;
+	case WM_PRINTCLIENT:
+		if (wParam && (lParam & PRF_CLIENT))
+		{
+			CVConGroup::PaintGaps((HDC)wParam);
+		}
+		break;
 
 	case WM_SETCURSOR:
 	case WM_MOUSEMOVE:
