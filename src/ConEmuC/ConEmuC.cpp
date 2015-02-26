@@ -246,8 +246,8 @@ int main(int argc, char** argv)
 {
 	int iRc = 0;
 	HMODULE hConEmu;
-	char szErrInfo[512];
-	DWORD dwErr, dwOut;
+	wchar_t szErrInfo[200];
+	DWORD dwErr;
 	typedef int (__stdcall* ConsoleMain2_t)(BOOL abAlternative);
 	ConsoleMain2_t lfConsoleMain2;
 
@@ -280,11 +280,11 @@ int main(int argc, char** argv)
 
 	if (!hConEmu)
 	{
-		_wsprintfA(szErrInfo, SKIPLEN(countof(szErrInfo))
-		           "Can't load library \"%s\", ErrorCode=0x%08X\n",
+		_wsprintf(szErrInfo, SKIPLEN(countof(szErrInfo))
+		           L"Can't load library \"%s\", ErrorCode=0x%08X\n",
 		           WIN3264TEST(L"ConEmuCD.dll",L"ConEmuCD64.dll"),
 		           dwErr);
-		WriteConsoleA(GetStdHandle(STD_ERROR_HANDLE), szErrInfo, lstrlenA(szErrInfo), &dwOut, NULL);
+       _wprintf(szErrInfo);
 		iRc = CERR_CONEMUHK_NOTFOUND;
 		goto wrap;
 	}
@@ -296,11 +296,11 @@ int main(int argc, char** argv)
 	if (!lfConsoleMain2 || !gfHandlerRoutine)
 	{
 		dwErr = GetLastError();
-		_wsprintfA(szErrInfo, SKIPLEN(countof(szErrInfo))
-		           "Procedure \"%s\"  not found in library \"%s\"",
-		           lfConsoleMain2 ? "HandlerRoutine" : "ConsoleMain2",
+		_wsprintf(szErrInfo, SKIPLEN(countof(szErrInfo))
+		           L"Procedure \"%s\"  not found in library \"%s\"",
+		           lfConsoleMain2 ? L"HandlerRoutine" : L"ConsoleMain2",
 		           WIN3264TEST(L"ConEmuCD.dll",L"ConEmuCD64.dll"));
-		WriteConsoleA(GetStdHandle(STD_ERROR_HANDLE), szErrInfo, lstrlenA(szErrInfo), &dwOut, NULL);
+		_wprintf(szErrInfo);
 		FreeLibrary(hConEmu);
 		iRc = CERR_CONSOLEMAIN_NOTFOUND;
 		goto wrap;
