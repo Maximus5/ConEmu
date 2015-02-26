@@ -12900,28 +12900,12 @@ LRESULT CConEmuMain::WorkWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 
 	case WM_PAINT:
 		{
-			// По идее, видимых частей ghWndWork быть не должно, но если таки есть - зальем
+			// Сплиттеры
 			PAINTSTRUCT ps = {};
 			BeginPaint(hWnd, &ps);
 			_ASSERTE(ghWndWork == hWnd);
 
 			CVConGroup::PaintGaps(ps.hdc);
-
-			//int nAppId = -1;
-			//CVConGuard VCon;
-			//if ((gpConEmu->GetActiveVCon(&VCon) >= 0) && VCon->RCon())
-			//{
-			//	nAppId = VCon->RCon()->GetActiveAppSettingsId();
-			//}
-
-			//int nColorIdx = RELEASEDEBUGTEST(0/*Black*/,1/*Blue*/);
-			//HBRUSH hBrush = CreateSolidBrush(gpSet->GetColors(nAppId, !gpConEmu->isMeForeground())[nColorIdx]);
-			//if (hBrush)
-			//{
-			//	FillRect(ps.hdc, &ps.rcPaint, hBrush);
-
-			//	DeleteObject(hBrush);
-			//}
 
 			EndPaint(hWnd, &ps);
 		} // WM_PAINT
