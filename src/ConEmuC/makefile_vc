@@ -41,6 +41,7 @@ $(INTDIR)\WObjects.obj
 LINK_LIBS=$(CRTLIB) kernel32.lib user32.lib
 
 DEFINES=\
+	/DCONEMU_MINIMAL \
 	/DUNICODE \
 	/D_UNICODE \
 	/D$(USEDEBUG) \
