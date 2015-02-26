@@ -1005,7 +1005,7 @@ BOOL CDownloader::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDstFi
 		// Открыть WinInet
 		if (mh_Internet == NULL)
 		{
-			ReportMessage(dc_LogCallback, L"Open internet");
+			ReportMessage(dc_LogCallback, L"Open internet with agent name '%s'", at_Str, pszAgent, at_None);
 			nFlags = (mb_AsyncMode ? INTERNET_FLAG_ASYNC : 0);
 			mh_Internet = wi->_InternetOpenW(pszAgent, ProxyType, ProxyName, NULL, nFlags);
 			if (!mh_Internet)
