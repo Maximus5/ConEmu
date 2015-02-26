@@ -158,6 +158,8 @@ protected:
 		wchar_t* szUser;
 		wchar_t* szPassword;
 	} m_Server;
+
+	wchar_t* msz_AgentName;
 	
 	DWORD mn_Timeout;     // DOWNLOADTIMEOUT by default
 	DWORD mn_ConnTimeout; // INTERNET_OPTION_RECEIVE_TIMEOUT
@@ -203,6 +205,7 @@ public:
 	void SetCallback(CEDownloadCommand cb, FDownloadCallback afnErrCallback, LPARAM lParam);
 	void SetAsync(bool bAsync);
 	void SetTimeout(bool bOperation, DWORD nTimeout);
+	void SetAgent(LPCWSTR aszAgentName);
 
 	BOOL DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDstFile, DWORD& crc, DWORD& size, BOOL abShowAllErrors = FALSE);
 
@@ -337,6 +340,7 @@ CDownloader::CDownloader()
 
 	ZeroStruct(m_Proxy);
 	ZeroStruct(m_Server);
+	msz_AgentName = NULL;
 
 	mb_AsyncMode = true;
 	mn_Timeout = DOWNLOADTIMEOUT;
@@ -363,6 +367,7 @@ CDownloader::~CDownloader()
 	CloseInternet(true);
 	SetProxy(NULL, NULL, NULL);
 	SetLogin(NULL, NULL);
+	SafeFree(msz_AgentName);
 	SafeCloseHandle(mh_CloseEvent);
 	SafeCloseHandle(mh_ReadyEvent);
 	mcs_Handle.Close();
@@ -865,10 +870,11 @@ BOOL CDownloader::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDstFi
 	bool bFtp = false;
 	HTTP_VERSION_INFO httpver = {1,1};
 	wchar_t szHttpVer[32]; _wsprintf(szHttpVer, SKIPLEN(countof(szHttpVer)) L"HTTP/%u.%u", httpver.dwMajorVersion, httpver.dwMinorVersion);
-	wchar_t szAgent[] =
+	const wchar_t szConEmuAgent[] =
 		//L"Mozilla/5.0 (compatible; ConEmu Update)" // This was the cause of not working download redirects
 		L"ConEmu Update" // so we use that to enable redirects
 		;
+	LPCWSTR pszAgent = msz_AgentName ? msz_AgentName : szConEmuAgent;
 	LPCWSTR szAcceptTypes[] = {L"*/*", NULL};
 	LPCWSTR* ppszAcceptTypes = szAcceptTypes;
 	LPCWSTR pszReferrer = NULL;
@@ -1001,7 +1007,7 @@ BOOL CDownloader::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDstFi
 		{
 			ReportMessage(dc_LogCallback, L"Open internet");
 			nFlags = (mb_AsyncMode ? INTERNET_FLAG_ASYNC : 0);
-			mh_Internet = wi->_InternetOpenW(szAgent, ProxyType, ProxyName, NULL, nFlags);
+			mh_Internet = wi->_InternetOpenW(pszAgent, ProxyType, ProxyName, NULL, nFlags);
 			if (!mh_Internet)
 			{
 				dwErr = GetLastError();
@@ -1398,6 +1404,12 @@ void CDownloader::SetTimeout(bool bOperation, DWORD nTimeout)
 	}
 }
 
+void CDownloader::SetAgent(LPCWSTR aszAgentName)
+{
+	SafeFree(msz_AgentName);
+	msz_AgentName = (aszAgentName && *aszAgentName) ? lstrdup(aszAgentName) : NULL;
+}
+
 BOOL CDownloader::ReadSource(LPCWSTR asSource, BOOL bInet, HANDLE hSource, BYTE* pData, DWORD cbData, DWORD* pcbRead)
 {
 	BOOL lbRc = FALSE;
@@ -1615,6 +1627,13 @@ DWORD_PTR WINAPI DownloadCommand(CEDownloadCommand cmd, int argc, CEDownloadErro
 			nResult = TRUE;
 		}
 		break;
+	case dc_SetAgent:
+		if (gpInet && (argc > 0) && (argv[0].argType == at_Str))
+		{
+			gpInet->SetAgent(argv[0].strArg);
+			nResult = TRUE;
+		}
+		break;
 
 	#ifdef _DEBUG
 	default:
@@ -1728,6 +1747,7 @@ int DoDownload(LPCWSTR asCmdLine)
 	wchar_t *pszOTimeout = NULL, *pszTimeout = NULL;
 	wchar_t *pszAsync = NULL;
 	wchar_t *pszFHandle = NULL;
+	wchar_t *pszAgent = NULL;
 
 	DownloadCommand(dc_Init, 0, NULL);
 
@@ -1753,6 +1773,7 @@ int DoDownload(LPCWSTR asCmdLine)
 		{L"timeout", &pszTimeout},
 		{L"async", &pszAsync},
 		{L"fhandle", &pszFHandle},
+		{L"agent", &pszAgent},
 		{NULL}
 	};
 
@@ -1851,6 +1872,12 @@ int DoDownload(LPCWSTR asCmdLine)
 			args[0].uintArg = 1; args[0].argType = at_Uint;
 			args[1].uintArg = wcstol(pszTimeout, &pszEnd, 10); args[1].argType = at_Uint;
 			DownloadCommand(dc_SetTimeout, 2, args);
+		}
+
+		if (pszAgent)
+		{
+			args[0].strArg = pszAgent; args[0].argType = at_Str;
+			DownloadCommand(dc_SetAgent, 1, args);
 		}
 
 		args[0].strArg = pszUrl; args[0].argType = at_Str;
