@@ -829,7 +829,13 @@ LRESULT CConEmuChild::BackWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM l
 			break;
 		case WM_PAINT:
 			_ASSERTE(hWnd == pVCon->mh_WndBack);
-			pVCon->OnPaintGaps();
+			pVCon->OnPaintGaps(NULL/*use BeginPaint/EndPaint*/);
+			break;
+		case WM_PRINTCLIENT:
+			if (wParam && (lParam & PRF_CLIENT))
+			{
+				pVCon->OnPaintGaps((HDC)wParam);
+			}
 			break;
 		case WM_MOUSEWHEEL:
 		case WM_MOUSEHWHEEL:
@@ -1021,7 +1027,7 @@ INT_PTR CConEmuChild::DbgChildDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LP
 }
 #endif
 
-LRESULT CConEmuChild::OnPaintGaps()
+LRESULT CConEmuChild::OnPaintGaps(HDC hdc)
 {
 	CVConGuard VCon(mp_VCon);
 	if (!VCon.VCon())
@@ -1045,17 +1051,45 @@ LRESULT CConEmuChild::OnPaintGaps()
 	}
 
 	PAINTSTRUCT ps = {};
-	BeginPaint(mh_WndBack, &ps);
+	if (hdc)
+	{
+		ps.hdc = hdc;
+		GetClientRect(mh_WndBack, &ps.rcPaint);
+	}
+	else
+	{
+		BeginPaint(mh_WndBack, &ps);
+	}
 
 	HBRUSH hBrush = CreateSolidBrush(clrPalette[nColorIdx]);
 	if (hBrush)
 	{
-		FillRect(ps.hdc, &ps.rcPaint, hBrush);
+		if (!hdc)
+		{
+			FillRect(ps.hdc, &ps.rcPaint, hBrush);
+		}
+		else
+		{
+			HRGN hrgn = CreateRectRgnIndirect(&ps.rcPaint);
+			RECT rcVCon = {}; GetClientRect(mh_WndDC, &rcVCon);
+			MapWindowPoints(mh_WndDC, mh_WndBack, (LPPOINT)&rcVCon, 2);
+			HRGN hrgnVCon = CreateRectRgnIndirect(&rcVCon);
+			int iRgn = CombineRgn(hrgn, hrgn, hrgnVCon, RGN_DIFF);
+			if (iRgn == SIMPLEREGION || iRgn == COMPLEXREGION)
+			{
+				FillRgn(ps.hdc, hrgn, hBrush);
+			}
+			SafeDeleteObject(hrgn);
+			SafeDeleteObject(hrgnVCon);
+		}
 
 		DeleteObject(hBrush);
 	}
 
-	EndPaint(mh_WndBack, &ps);
+	if (!hdc)
+	{
+		EndPaint(mh_WndBack, &ps);
+	}
 
 	return 0;
 }

@@ -54,7 +54,7 @@ class CConEmuChild
 		static void ProcessVConClosed(CVirtualConsole* apVCon, BOOL abPosted = FALSE);
 
 		LRESULT OnPaint();
-		LRESULT OnPaintGaps();
+		LRESULT OnPaintGaps(HDC hdc);
 		HWND CreateView();
 		HWND GetView();
 		HWND GetBack();
