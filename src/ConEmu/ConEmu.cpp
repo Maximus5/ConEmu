@@ -4134,6 +4134,21 @@ bool CConEmuMain::IsKeyboardHookRegistered()
 
 void CConEmuMain::RegisterHooks()
 {
+	// Must be executed in main thread only
+	if (!isMainThread())
+	{
+		struct Impl
+		{
+			static LRESULT CallRegisterHooks(LPARAM lParam)
+			{
+				_ASSERTE(gpConEmu == (CConEmuMain*)lParam);
+				gpConEmu->RegisterHooks();
+			}
+		};
+		CallMainThread(false, Impl::CallRegisterHooks, (LPARAM)this);
+		return;
+	}
+
 	// Будем ставить хуки (локальные, для нашего приложения) всегда
 	// чтобы иметь возможность (в будущем) обрабатывать ChildGui
 
