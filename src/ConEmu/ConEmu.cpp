@@ -4143,6 +4143,7 @@ void CConEmuMain::RegisterHooks()
 			{
 				_ASSERTE(gpConEmu == (CConEmuMain*)lParam);
 				gpConEmu->RegisterHooks();
+				return 0;
 			}
 		};
 		CallMainThread(false, Impl::CallRegisterHooks, (LPARAM)this);
