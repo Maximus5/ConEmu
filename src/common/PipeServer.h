@@ -1530,7 +1530,8 @@ struct PipeServer
 				{
 					if (m_Pipes[i].hThread && (m_Pipes[i].dwState != THREAD_FINISHED_STATE))
 					{
-						nWait = WaitForSingleObject(m_Pipes[i].hThread, mb_StopFromDllMain ? 0 : 1);
+						DWORD nTimeout = (m_Pipes[i].dwState == TERMINATED_STATE) ? 250 : mb_StopFromDllMain ? 0 : 1;
+						nWait = WaitForSingleObject(m_Pipes[i].hThread, nTimeout);
 						if (nWait != WAIT_OBJECT_0)
 						{
 							PLOG3(i,"TerminateThread/Timeout",m_Pipes[i].dwState);
