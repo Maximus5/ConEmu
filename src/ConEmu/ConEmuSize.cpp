@@ -5028,7 +5028,9 @@ bool CConEmuSize::isSizing(UINT nMouseMsg/*=0*/)
 		return false;
 
 	// могло не сброситься, проверим
-	if ((nMouseMsg==WM_NCLBUTTONUP) || !isPressed(VK_LBUTTON))
+	// но только если не ресайзят статусбаром (grip) - он сам все обработает
+	if (!mp_ConEmu->mp_Status->IsStatusResizing() &&
+		((nMouseMsg==WM_NCLBUTTONUP) || !isPressed(VK_LBUTTON)))
 	{
 		EndSizing(nMouseMsg);
 		return false;
