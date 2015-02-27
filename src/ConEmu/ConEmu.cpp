@@ -7238,7 +7238,8 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 		{
 			CVConGuard VCon;
 			GetActiveVCon(&VCon);
-			ConEmuMacro::ExecuteMacro(ms_PostGuiMacro.ms_Arg, VCon.VCon() ? VCon->RCon() : NULL);
+			LPWSTR pszRc = ConEmuMacro::ExecuteMacro(ms_PostGuiMacro.ms_Arg, VCon.VCon() ? VCon->RCon() : NULL);
+			SafeFree(pszRc);
 		}
 	}
 
