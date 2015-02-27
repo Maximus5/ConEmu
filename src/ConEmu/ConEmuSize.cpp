@@ -1251,16 +1251,46 @@ RECT CConEmuSize::GetDefaultRect()
 
 	Assert(gpSetCls->FontWidth() && gpSetCls->FontHeight());
 
-
-	RECT rcFrameMargin = CalcMargins(CEM_FRAMECAPTION|CEM_SCROLL|CEM_STATUS|CEM_PAD);
+	// Рамка, статус
+	RECT rcFrameMargin = CalcMargins(CEM_FRAMECAPTION|CEM_STATUS);
 	int nFrameX = rcFrameMargin.left + rcFrameMargin.right;
 	int nFrameY = rcFrameMargin.top + rcFrameMargin.bottom;
 	RECT rcTabMargins = mp_ConEmu->mp_TabBar->GetMargins();
 
+	// Отступы для VCon
+	RECT rcVConPad = CalcMargins(CEM_SCROLL|CEM_PAD);
+	if (CVConGroup::isVConExists(0))
+	{
+		// Если есть сплиты (даже если их размер == 0)
+		SIZE Splits = {};
+		RECT rcMin = CVConGroup::AllTextRect(&Splits, true);
+		// Умножить отступы
+		if (Splits.cx > 0)
+		{
+			rcVConPad.left *= (Splits.cx+1);
+			rcVConPad.right *= (Splits.cx+1);
+		}
+		if (Splits.cy > 0)
+		{
+			rcVConPad.top *= (Splits.cy+1);
+			rcVConPad.bottom *= (Splits.cy+1);
+		}
+		// Если размер самих разделителей не нулевой
+		if ((Splits.cx > 0) && (gpSet->nSplitWidth > 0))
+			rcVConPad.right += Splits.cx * gpSetCls->EvalSize(gpSet->nSplitWidth, esf_Horizontal|esf_CanUseDpi);
+		if ((Splits.cy > 0) && (gpSet->nSplitHeight > 0))
+			rcVConPad.bottom += Splits.cy * gpSetCls->EvalSize(gpSet->nSplitHeight, esf_Vertical|esf_CanUseDpi);
+	}
+
 	// Если табы показываются всегда (или сейчас) - сразу добавим их размер, чтобы размер консоли был заказанным
 	bool bTabs = mp_ConEmu->isTabsShown();
-	int nShiftX = nFrameX + (bTabs ? (rcTabMargins.left+rcTabMargins.right) : 0);
-	int nShiftY = nFrameY + (bTabs ? (rcTabMargins.top+rcTabMargins.bottom) : 0);
+
+	int nShiftX = nFrameX
+		+ (rcVConPad.left + rcVConPad.right)
+		+ (bTabs ? (rcTabMargins.left+rcTabMargins.right) : 0);
+	int nShiftY = nFrameY
+		+ (rcVConPad.top + rcVConPad.bottom)
+		+ (bTabs ? (rcTabMargins.top+rcTabMargins.bottom) : 0);
 
 	// Расчет размеров
 	SIZE szConPixels = GetDefaultSize(false);
