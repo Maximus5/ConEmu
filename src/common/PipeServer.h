@@ -179,7 +179,7 @@ struct PipeServer
 			BOOL fPendingIO;
 			PipeState dwState;
 			//BOOL bSkipTerminate;
-			DWORD nCreateBegin, nCreateEnd, nStartedTick;
+			DWORD nCreateBegin, nCreateEnd, nStartedTick, nTerminatedTick;
 			DWORD nCreateError; // Thread creation error?
 			
 			wchar_t sErrorMsg[128];
@@ -1225,6 +1225,7 @@ struct PipeServer
 				nResult = pPipe->pServer->PipeServerThread(pPipe);
 			}
 
+			pPipe->nTerminatedTick = GetTickCount();
 			pPipe->dwState = TERMINATED_STATE;
 			PLOG("_PipeServerThread.Finished");
 
@@ -1445,14 +1446,15 @@ struct PipeServer
 
 			DWORD nTimeout = RELEASEDEBUGTEST(250,5000);
 			DEBUGTEST(DWORD nWarnTimeout = 500);
-			DWORD nStartTick = GetTickCount();
-			int nLeft = 0, nWaitLeft = 0;
+			DWORD nStartTick = GetTickCount(), nEndTick = 0;
+			int nLeft = 0, nWaitLeft = 0, nLoops = 0;
 			const DWORD nSingleThreadWait = 5;
 
 			PLOG3(-1,"WaitFor TERMINATED_STATE",0);
 
 			// Waiting for TERMINATED_STATE for all threads
 			do {
+				nLoops++;
 				nLeft = nWaitLeft = 0;
 				for (int i = 0; i < mn_MaxCount; i++)
 				{
@@ -1515,7 +1517,7 @@ struct PipeServer
 					}
 				}
 				#endif
-			} while ((nWaitLeft > 0) && ((GetTickCount() - nStartTick) < nTimeout));
+			} while ((nWaitLeft > 0) && (((nEndTick = GetTickCount()) - nStartTick) < nTimeout));
 
 			// Non terminated threads exists?
 			if (nLeft > 0)
