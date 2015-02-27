@@ -1104,7 +1104,7 @@ void CVConGroup::CalcSplitRect(UINT nSplitPercent10, RECT rcNewCon, RECT& rcCon1
 		rcCon1 = MakeRect(rcNewCon.left, rcNewCon.top,
 			max(rcNewCon.left + nScreenWidth,rcNewCon.right - nCon2Width - nPadX), rcNewCon.bottom);
 		rcCon2 = MakeRect(rcNewCon.right - nCon2Width, rcNewCon.top, rcNewCon.right, rcNewCon.bottom);
-		rcSplitter = MakeRect(rcCon1.right+1, rcCon1.top, rcCon2.left, rcCon2.bottom);
+		rcSplitter = MakeRect(rcCon1.right, rcCon1.top, rcCon2.left, rcCon2.bottom);
 	}
 	else // RConStartArgs::eSplitVert
 	{
