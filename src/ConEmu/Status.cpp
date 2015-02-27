@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2014 Maximus5
+Copyright (c) 2009-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -32,6 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define DEBUGSTRSTAT(s) //DEBUGSTR(s)
 #define DEBUGSTRSIZE(s) DEBUGSTR(s)
+#define DEBUGSTRPAINT(s) //DEBUGSTR(s)
 
 #include <windows.h>
 #include <commctrl.h>
@@ -418,6 +419,15 @@ void CStatus::PaintStatus(HDC hPaint, LPRECT prcStatus /*= NULL*/)
 	{
 		GetStatusBarClientRect(&rcStatus);
 	}
+
+	#ifdef _DEBUG
+	{
+		wchar_t szPos[80]; RECT rcScreen = rcStatus;
+		MapWindowPoints(ghWnd, NULL, (LPPOINT)&rcScreen, 2);
+		_wsprintf(szPos, SKIPCOUNT(szPos) L"StatusBar painted at {%i,%i}-{%i,%i} screen coords", rcScreen.left, rcScreen.top, rcScreen.right, rcScreen.bottom);
+		DEBUGSTRPAINT(szPos);
+	}
+	#endif
 
 	// Сразу сбросим
 	//mb_Invalidated = false;

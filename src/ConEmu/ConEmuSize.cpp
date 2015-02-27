@@ -2526,6 +2526,15 @@ LRESULT CConEmuSize::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 		}
 	#endif
 	}
+	else
+	{
+		#ifdef _DEBUG
+		if (!(p->flags & SWP_NOMOVE) && (p->flags & SWP_NOSIZE))
+			DEBUGSTRSIZE(L"!!! Only position was changed !!!");
+		else if ((p->flags & SWP_NOMOVE) && !(p->flags & SWP_NOSIZE))
+			DEBUGSTRSIZE(L"!!! Only size was changed !!!");
+		#endif
+	}
 
 	//if (gpSet->isDontMinimize) {
 	//	if ((p->flags & (0x8000|SWP_NOACTIVATE)) == (0x8000|SWP_NOACTIVATE)
@@ -5057,6 +5066,13 @@ void CConEmuSize::SetSizingFlags(DWORD nSetFlags /*= MOUSE_SIZING_BEGIN*/)
 	_ASSERTE((nSetFlags & (~(MOUSE_SIZING_BEGIN|MOUSE_SIZING_TODO))) == 0); // Допустимые флаги
 
 	#ifdef _DEBUG
+	if ((nSetFlags & MOUSE_SIZING_BEGIN) && !(mp_ConEmu->mouse.state & MOUSE_SIZING_BEGIN))
+	{
+		DEBUGSTRSIZE(L"SetSizingFlags(MOUSE_SIZING_BEGIN)");
+	}
+	#endif
+
+	#ifdef _DEBUG
 	if (!(mp_ConEmu->mouse.state & nSetFlags)) // For debug purposes (breakpoints)
 	#endif
 	mp_ConEmu->mouse.state |= nSetFlags;
@@ -5065,6 +5081,13 @@ void CConEmuSize::SetSizingFlags(DWORD nSetFlags /*= MOUSE_SIZING_BEGIN*/)
 void CConEmuSize::ResetSizingFlags(DWORD nDropFlags /*= MOUSE_SIZING_BEGIN|MOUSE_SIZING_TODO*/)
 {
 	_ASSERTE((nDropFlags & (~(MOUSE_SIZING_BEGIN|MOUSE_SIZING_TODO))) == 0); // Допустимые флаги
+
+	#ifdef _DEBUG
+	if ((nDropFlags & MOUSE_SIZING_BEGIN) && (mp_ConEmu->mouse.state & MOUSE_SIZING_BEGIN))
+	{
+		DEBUGSTRSIZE(L"ResetSizingFlags(MOUSE_SIZING_BEGIN)");
+	}
+	#endif
 
 	#ifdef _DEBUG
 	if ((mp_ConEmu->mouse.state & nDropFlags)) // For debug purposes (breakpoints)

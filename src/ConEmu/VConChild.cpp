@@ -51,6 +51,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRTABS(s) //DEBUGSTR(s)
 #define DEBUGSTRLANG(s) //DEBUGSTR(s)
 #define DEBUGSTRCONS(s) //DEBUGSTR(s)
+#define DEBUGSTRPAINTGAPS(s) //DEBUGSTR(s)
+#define DEBUGSTRPAINTVCON(s) //DEBUGSTR(s)
 
 //#define SCROLLHIDE_TIMER_ID 1726
 #define TIMER_SCROLL_SHOW         3201
@@ -437,11 +439,25 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 				LogString(szInfo);
 			}
 			pVCon->mn_InvalidateViewPending = 0;
+			#ifdef _DEBUG
+			{
+				wchar_t szPos[80]; RECT rcScreen = {}; GetWindowRect(hWnd, &rcScreen);
+				_wsprintf(szPos, SKIPCOUNT(szPos) L"PaintClient VCon[%i] at {%i,%i}-{%i,%i} screen coords", pVCon->Index(), rcScreen.left, rcScreen.top, rcScreen.right, rcScreen.bottom);
+				DEBUGSTRPAINTVCON(szPos);
+			}
+			#endif
 			result = pVCon->OnPaint();
 			break;
 		case WM_PRINTCLIENT:
 			if (wParam && (lParam & PRF_CLIENT))
 			{
+				#ifdef _DEBUG
+				{
+					wchar_t szPos[80]; RECT rcScreen = {}; GetWindowRect(hWnd, &rcScreen);
+					_wsprintf(szPos, SKIPCOUNT(szPos) L"PrintClient VCon[%i] at {%i,%i}-{%i,%i} screen coords", pVCon->Index(), rcScreen.left, rcScreen.top, rcScreen.right, rcScreen.bottom);
+					DEBUGSTRPAINTVCON(szPos);
+				}
+				#endif
 				pVCon->PrintClient((HDC)wParam, false, NULL);
 			}
 			break;
@@ -1049,6 +1065,14 @@ LRESULT CConEmuChild::OnPaintGaps(HDC hdc)
 	{
 		nColorIdx = pRCon->GetDefaultBackColorIdx();
 	}
+
+	#ifdef _DEBUG
+	{
+		wchar_t szPos[80]; RECT rcScreen = {}; GetWindowRect(mh_WndBack, &rcScreen);
+		_wsprintf(szPos, SKIPCOUNT(szPos) L"PaintGaps VCon[%i] at {%i,%i}-{%i,%i} screen coords", mp_VCon->Index(), rcScreen.left, rcScreen.top, rcScreen.right, rcScreen.bottom);
+		DEBUGSTRPAINTGAPS(szPos);
+	}
+	#endif
 
 	PAINTSTRUCT ps = {};
 	if (hdc)
