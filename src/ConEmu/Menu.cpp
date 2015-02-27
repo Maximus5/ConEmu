@@ -42,6 +42,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Attach.h"
 #include "ConEmu.h"
 #include "FindDlg.h"
+#include "Macro.h"
 #include "Menu.h"
 #include "Menu.h"
 #include "Options.h"
@@ -966,6 +967,15 @@ void CConEmuMenu::ExecPopupMenuCmd(TrackMenuPlace place, CVirtualConsole* apVCon
 			else
 				apVCon->RCon()->DuplicateRoot();
 			break;
+		case IDM_SPLIT2RIGHT:
+		case IDM_SPLIT2BOTTOM:
+		{
+			LPWSTR pszMacro = lstrdup((nCmd == IDM_SPLIT2RIGHT) ? L"Split(0,50,0)" : L"Split(0,0,50)");
+			LPWSTR pszRc = ConEmuMacro::ExecuteMacro(pszMacro, apVCon->RCon());
+			SafeFree(pszMacro);
+			SafeFree(pszRc);
+			break;
+		}
 		case IDM_CHILDSYSMENU:
 			apVCon->RCon()->ChildSystemMenu();
 			break;
@@ -1893,8 +1903,11 @@ HMENU CConEmuMenu::CreateVConPopupMenu(CVirtualConsole* apVCon, HMENU ahExist, B
 		// "&Restart or duplicate"
 		hRestart = CreatePopupMenu();
 		AppendMenu(hRestart, MF_STRING|MF_ENABLED, IDM_DUPLICATE,        MenuAccel(vkDuplicateRoot,L"Duplica&te root..."));
-		AppendMenu(hRestart, MF_SEPARATOR, 0, L"");
 		//AppendMenu(hMenu,  MF_STRING|MF_ENABLED, IDM_ADMIN_DUPLICATE,  MenuAccel(vkDuplicateRootAs,L"Duplica&te as Admin..."));
+		AppendMenu(hRestart, MF_SEPARATOR, 0, L"");
+		AppendMenu(hRestart, MF_STRING|MF_ENABLED, IDM_SPLIT2RIGHT,      MenuAccel(vkSplitNewConH,L"Split to ri&ght"));
+		AppendMenu(hRestart, MF_STRING|MF_ENABLED, IDM_SPLIT2BOTTOM,     MenuAccel(vkSplitNewConV,L"Split to &bottom"));
+		AppendMenu(hRestart, MF_SEPARATOR, 0, L"");
 		AppendMenu(hRestart, MF_STRING|MF_ENABLED, IDM_RESTARTDLG,       MenuAccel(vkMultiRecreate,L"&Restart..."));
 		AppendMenu(hRestart, MF_STRING|MF_ENABLED, IDM_RESTART,          L"&Restart");
 		AppendMenu(hRestart, MF_STRING|MF_ENABLED, IDM_RESTARTAS,        L"Restart as Admin");
@@ -1953,6 +1966,8 @@ HMENU CConEmuMenu::CreateVConPopupMenu(CVirtualConsole* apVCon, HMENU ahExist, B
 		EnableMenuItem(hMenu,      IDM_CLOSE,             MF_BYCOMMAND|(lbCanCloseTab ? MF_ENABLED : MF_GRAYED));
 		EnableMenuItem(hMenu,      IDM_DETACH,            MF_BYCOMMAND|MF_ENABLED);
 		EnableMenuItem(hMenu,      IDM_DUPLICATE,         MF_BYCOMMAND|MF_ENABLED);
+		EnableMenuItem(hMenu,      IDM_SPLIT2RIGHT,       MF_BYCOMMAND|MF_ENABLED);
+		EnableMenuItem(hMenu,      IDM_SPLIT2BOTTOM,      MF_BYCOMMAND|MF_ENABLED);
 		EnableMenuItem(hMenu,      IDM_RENAMETAB,         MF_BYCOMMAND|MF_ENABLED);
 		EnableMenuItem(hMenu,      IDM_CHANGEAFFINITY,    MF_BYCOMMAND|MF_ENABLED);
 		EnableMenuItem(hTerminate, IDM_TERMINATECON,      MF_BYCOMMAND|MF_ENABLED);
@@ -1973,6 +1988,8 @@ HMENU CConEmuMenu::CreateVConPopupMenu(CVirtualConsole* apVCon, HMENU ahExist, B
 		EnableMenuItem(hMenu,      IDM_CLOSE,             MF_BYCOMMAND|MF_GRAYED);
 		EnableMenuItem(hMenu,      IDM_DETACH,            MF_BYCOMMAND|MF_GRAYED);
 		EnableMenuItem(hMenu,      IDM_DUPLICATE,         MF_BYCOMMAND|MF_GRAYED);
+		EnableMenuItem(hMenu,      IDM_SPLIT2RIGHT,       MF_BYCOMMAND|MF_GRAYED);
+		EnableMenuItem(hMenu,      IDM_SPLIT2BOTTOM,      MF_BYCOMMAND|MF_GRAYED);
 		EnableMenuItem(hMenu,      IDM_RENAMETAB,         MF_BYCOMMAND|MF_GRAYED);
 		EnableMenuItem(hMenu,      IDM_CHANGEAFFINITY,    MF_BYCOMMAND|MF_GRAYED);
 		EnableMenuItem(hTerminate, IDM_TERMINATECON,      MF_BYCOMMAND|MF_GRAYED);
