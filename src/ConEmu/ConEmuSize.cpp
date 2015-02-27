@@ -2405,28 +2405,37 @@ LRESULT CConEmuSize::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 			p->y = rc.top;
 
 			TODO("разрешить изменение ширины в Quake!");
-#if 0
 			ConEmuWindowMode wmCurQuake = GetWindowMode();
 
 			if (isSizing() && p->cx && (wmCurQuake == wmNormal))
 			{
+				// Если выбран режим "Fixed" - разрешим задавать левую координату, иначе - центрируется по монитору
+				int iDifMul = gpSet->wndCascade ? 2 : 1;
+
 				// Поскольку оно центрируется (wndCascade)... изменение ширину нужно множить на 2
 				RECT rcQNow = {}; GetWindowRect(hWnd, &rcQNow);
 				int width = rcQNow.right - rcQNow.left;
-				int shift = p->cx - width;
+				int shift = (p->cx - width);
 				// TODO: разрешить изменение ширины в Quake!
-				if (shift)
-				{
-					//_ASSERTE(shift==0);
-					#ifndef _DEBUG
-					shift = 0;
-					#endif
-				}
+				//if (shift)
+				//{
+				//	//_ASSERTE(shift==0);
+				//	#ifndef _DEBUG
+				//	shift = 0;
+				//	#endif
+				//}
 				//WndWidth.Set(true, ss_Pixels, width + 2*shift);
-				if (gpSet->wndCascade)
+				if (shift && gpSet->wndCascade)
 				{
+					#ifdef _DEBUG
+					wchar_t szQuake[200];
+					_wsprintf(szQuake, SKIPCOUNT(szQuake) L"QuakePosFix Shift=%i Old={%ix%i} Suggested={%ix%i} Fixed={%ix%i}",
+						shift, rcQNow.left, width, p->x, p->cx, (p->x - shift), (p->cx + shift));
+					DEBUGSTRSIZE(szQuake);
+					#endif
+
 					// Скорректировать координату!
-					wndX = rc.left - shift;
+					//wndX = rc.left - shift;
 
 					p->x -= shift;
 					p->cx += shift;
@@ -2437,7 +2446,6 @@ LRESULT CConEmuSize::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 				}
 			}
 			else
-#endif
 			{
 				p->x = rc.left;
 				p->cx = rc.right - rc.left; // + 1;
