@@ -2562,7 +2562,10 @@ LRESULT CConEmuSize::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 	if (bResized)
 	{
 		RECT rcWnd = {0,0,p->cx,p->cy};
-		CVConGroup::SyncAllConsoles2Window(rcWnd, CER_MAIN, true);
+		//CVConGroup::SyncAllConsoles2Window(rcWnd, CER_MAIN, true);
+		RECT rcClient = CalcRect(CER_MAINCLIENT, rcWnd, CER_MAIN);
+		OnSize(true, isZoomed() ? SIZE_MAXIMIZED : SIZE_RESTORED,
+			rcClient.right - rcClient.left, rcClient.bottom - rcClient.top);
 	}
 
 #if 0
