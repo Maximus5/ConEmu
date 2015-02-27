@@ -282,7 +282,7 @@ void CPluginBase::DllMain_ProcessDetach()
 	if (!gbExitFarCalled)
 	{
 		_ASSERTE(FALSE && "ExitFar was not called. Unsupported Far<->Plugin builds?");
-		Plugin()->ExitFarCommon();
+		Plugin()->ExitFarCommon(true);
 	}
 
 	if (gnSynchroCount > 0)
@@ -2950,7 +2950,7 @@ wrap:
 	return hResult;
 }
 
-void CPluginBase::ExitFarCommon()
+void CPluginBase::ExitFarCommon(bool bFromDllMain /*= false*/)
 {
 	ShutdownPluginStep(L"ExitFarCmn");
 
@@ -3174,7 +3174,7 @@ void CPluginBase::CommonPluginStartup()
 	}
 }
 
-void CPluginBase::StopThread()
+void CPluginBase::StopThread(bool bFromDllMain /*= false*/)
 {
 	ShutdownPluginStep(L"StopThread");
 	#ifdef _DEBUG
@@ -3201,7 +3201,7 @@ void CPluginBase::StopThread()
 	//}
 
 	ShutdownPluginStep(L"...Stopping server");
-	PlugServerStop();
+	PlugServerStop(bFromDllMain);
 
 	ShutdownPluginStep(L"...Finalizing");
 

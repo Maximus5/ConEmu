@@ -130,13 +130,13 @@ bool PlugServerStart()
 	return lbStarted;
 }
 
-void PlugServerStop(bool abDelete)
+void PlugServerStop(bool bFromDllMain)
 {
 	if (gpPlugServer)
 	{
-		gpPlugServer->StopPipeServer(true, gbForcedServerTermination);
+		gpPlugServer->StopPipeServer(bFromDllMain, gbForcedServerTermination);
 
-		if (abDelete)
+		if (bFromDllMain)
 		{
 			SafeFree(gpPlugServer);
 		}

@@ -33,6 +33,6 @@ extern HANDLE ghServerTerminateEvent;
 
 void PlugServerInit();
 bool PlugServerStart();
-void PlugServerStop(bool abDelete = false);
+void PlugServerStop(bool bFromDllMain);
 
 void cmd_FarSetChanged(FAR_REQ_FARSETCHANGED *pFarSet);

@@ -131,11 +131,11 @@ public:
 	void CheckResources(bool abFromStartup);
 	void InitResources();
 	HANDLE OpenPluginCommon(int OpenFrom, INT_PTR Item, bool FromMacro);
-	void ExitFarCommon();
+	void ExitFarCommon(bool bFromDllMain = false);
 	void OnMainThreadActivated();
 	void ProcessSetWindowCommand();
 	void CommonPluginStartup();
-	void StopThread();
+	void StopThread(bool bFromDllMain = false);
 	void ExecuteSynchro();
 	bool ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData, CESERVER_REQ** ppResult = NULL, bool bForceSendTabs = false);
 	static bool FarSetConsoleSize(SHORT nNewWidth, SHORT nNewHeight);
