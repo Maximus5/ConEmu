@@ -1357,7 +1357,7 @@ RECT CConEmuSize::GetDefaultRect()
 					// Если выбран режим "Fixed" - разрешим задавать левую координату
 					if (!gpSet->wndCascade)
 						rcWnd.left = max(mi.rcWork.left,min(wndX,(mi.rcWork.right - nWidth)));
-					else
+					else // Иначе - центрируется по монитору
 						rcWnd.left = max(mi.rcWork.left,((mi.rcWork.left + mi.rcWork.right - nWidth) / 2));
 					rcWnd.right = min(mi.rcWork.right,(rcWnd.left + nWidth));
 					rcWnd.top = mi.rcWork.top - rcFrameOnly.top;
