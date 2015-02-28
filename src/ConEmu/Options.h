@@ -50,6 +50,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define QUAKEVISIBLELIMIT 80 // Если "Видимая область" окна стала менее (%) - считаем что окно стало "не видимым"
 #define QUAKEVISIBLETRASH 10 // Не "выезжать" а просто "вынести наверх", если видимая область достаточно большая
 
+#define HIDECAPTIONALWAYSFRAME_DEF 255
+#define HIDECAPTIONALWAYSFRAME_MAX 0x7F
+
 enum FarMacroVersion
 {
 	fmv_Default = 0,

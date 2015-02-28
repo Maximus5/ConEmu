@@ -611,7 +611,7 @@ void Settings::InitSettings()
 	isHideCaption = false; mb_HideCaptionAlways = false; isQuakeStyle = false; nQuakeAnimation = QUAKEANIMATION_DEF;
 	isHideChildCaption = true;
 	isFocusInChildWindows = true;
-	nHideCaptionAlwaysFrame = 255; nHideCaptionAlwaysDelay = 2000; nHideCaptionAlwaysDisappear = 2000;
+	nHideCaptionAlwaysFrame = HIDECAPTIONALWAYSFRAME_DEF; nHideCaptionAlwaysDelay = 2000; nHideCaptionAlwaysDisappear = 2000;
 	isDesktopMode = false;
 	isSnapToDesktopEdges = false;
 	isAlwaysOnTop = false;
@@ -2462,7 +2462,7 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 		reg->Load(L"FocusInChildWindows", isFocusInChildWindows);
 		// грузим именно в mb_HideCaptionAlways, т.к. прозрачность сбивает темы в заголовке, поэтому возврат идет через isHideCaptionAlways()
 		reg->Load(L"HideCaptionAlways", mb_HideCaptionAlways);
-		reg->Load(L"HideCaptionAlwaysFrame", nHideCaptionAlwaysFrame); if (nHideCaptionAlwaysFrame > 0x7F) nHideCaptionAlwaysFrame = 255;
+		reg->Load(L"HideCaptionAlwaysFrame", nHideCaptionAlwaysFrame); if (nHideCaptionAlwaysFrame > HIDECAPTIONALWAYSFRAME_MAX) nHideCaptionAlwaysFrame = HIDECAPTIONALWAYSFRAME_DEF;
 
 		reg->Load(L"HideCaptionAlwaysDelay", nHideCaptionAlwaysDelay);
 
@@ -4351,7 +4351,7 @@ bool Settings::isCaptionHidden(ConEmuWindowMode wmNewMode /*= wmCurrent*/)
 
 int Settings::HideCaptionAlwaysFrame()
 {
-	return (gpSet->nHideCaptionAlwaysFrame > 0x7F) ? -1 : gpSet->nHideCaptionAlwaysFrame;
+	return (gpSet->nHideCaptionAlwaysFrame > HIDECAPTIONALWAYSFRAME_MAX) ? -1 : gpSet->nHideCaptionAlwaysFrame;
 }
 
 // Функция НЕ учитывает isCaptionHidden.
@@ -4361,7 +4361,7 @@ bool Settings::isFrameHidden()
 {
 	if (!nHideCaptionAlwaysFrame || isQuakeStyle || isUserScreenTransparent)
 		return true;
-	if (nHideCaptionAlwaysFrame > 0x7F)
+	if (nHideCaptionAlwaysFrame > HIDECAPTIONALWAYSFRAME_MAX)
 		return false; // sure
 
 	// otherwise - need to check system settings
