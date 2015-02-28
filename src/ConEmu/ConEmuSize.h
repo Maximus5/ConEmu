@@ -72,9 +72,11 @@ protected:
 		DWORD nFrame; // it's BYTE, DWORD here for alignment
 		ConEmuWindowMode WindowMode;
 		IdealRectInfo rcIdealInfo;
+		bool MinToTray;
 		// helper methods
-		void Save(const CESize& awndWidth, const CESize& awndHeight, const int& awndX, const int& awndY, const BYTE& anFrame, const ConEmuWindowMode& aWindowMode, const IdealRectInfo& arcIdealInfo);
-		ConEmuWindowMode Restore(CESize& rwndWidth, CESize& rwndHeight, int& rwndX, int& rwndY, BYTE& rnFrame, IdealRectInfo& rrcIdealInfo);
+		void Save(const CESize& awndWidth, const CESize& awndHeight, const int& awndX, const int& awndY, const BYTE& anFrame, const ConEmuWindowMode& aWindowMode, const IdealRectInfo& arcIdealInfo, const bool& abMinToTray);
+		ConEmuWindowMode Restore(CESize& rwndWidth, CESize& rwndHeight, int& rwndX, int& rwndY, BYTE& rnFrame, IdealRectInfo& rrcIdealInfo, bool& rbMinToTray);
+		void SetNonQuakeDefaults();
 	} m_QuakePrevSize;
 
 	ConEmuWindowCommand m_TileMode;

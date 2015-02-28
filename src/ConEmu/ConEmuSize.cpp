@@ -3005,7 +3005,7 @@ bool CConEmuSize::SizeWindow(const CESize sizeW, const CESize sizeH)
 	return bSizeOK;
 }
 
-void CConEmuSize::QuakePrevSize::Save(const CESize& awndWidth, const CESize& awndHeight, const int& awndX, const int& awndY, const BYTE& anFrame, const ConEmuWindowMode& aWindowMode, const IdealRectInfo& arcIdealInfo)
+void CConEmuSize::QuakePrevSize::Save(const CESize& awndWidth, const CESize& awndHeight, const int& awndX, const int& awndY, const BYTE& anFrame, const ConEmuWindowMode& aWindowMode, const IdealRectInfo& arcIdealInfo, const bool& abAlwaysShowTrayIcon)
 {
 	wndWidth = awndWidth;
 	wndHeight = awndHeight;
@@ -3014,11 +3014,12 @@ void CConEmuSize::QuakePrevSize::Save(const CESize& awndWidth, const CESize& awn
 	nFrame = anFrame;
 	WindowMode = aWindowMode;
 	rcIdealInfo = arcIdealInfo;
+	MinToTray = abAlwaysShowTrayIcon;
 	//
 	bWasSaved = true;
 }
 
-ConEmuWindowMode CConEmuSize::QuakePrevSize::Restore(CESize& rwndWidth, CESize& rwndHeight, int& rwndX, int& rwndY, BYTE& rnFrame, IdealRectInfo& rrcIdealInfo)
+ConEmuWindowMode CConEmuSize::QuakePrevSize::Restore(CESize& rwndWidth, CESize& rwndHeight, int& rwndX, int& rwndY, BYTE& rnFrame, IdealRectInfo& rrcIdealInfo, bool& rbAlwaysShowTrayIcon)
 {
 	rwndWidth = wndWidth;
 	rwndHeight = wndHeight;
@@ -3026,7 +3027,15 @@ ConEmuWindowMode CConEmuSize::QuakePrevSize::Restore(CESize& rwndWidth, CESize& 
 	rwndY = wndY;
 	rnFrame = nFrame;
 	rrcIdealInfo = rcIdealInfo;
+	rbAlwaysShowTrayIcon = MinToTray;
 	return WindowMode;
+}
+
+// If Quake mode was loaded from settings and user wants to get back "standard" behavior
+void CConEmuSize::QuakePrevSize::SetNonQuakeDefaults()
+{
+	gpSet->mb_MinToTray = false;
+	gpSet->nHideCaptionAlwaysFrame = HIDECAPTIONALWAYSFRAME_DEF;
 }
 
 bool CConEmuSize::SetQuakeMode(BYTE NewQuakeMode, ConEmuWindowMode nNewWindowMode /*= wmNotChanging*/, bool bFromDlg /*= false*/)
@@ -3084,11 +3093,14 @@ bool CConEmuSize::SetQuakeMode(BYTE NewQuakeMode, ConEmuWindowMode nNewWindowMod
 
 	if (gpSet->isQuakeStyle && !bPrevStyle)
 	{
-		m_QuakePrevSize.Save(this->WndWidth, this->WndHeight, this->wndX, this->wndY, gpSet->nHideCaptionAlwaysFrame, this->WindowMode, mr_Ideal);
+		m_QuakePrevSize.Save(this->WndWidth, this->WndHeight, this->wndX, this->wndY, gpSet->nHideCaptionAlwaysFrame, this->WindowMode, mr_Ideal, gpSet->mb_MinToTray);
 	}
-	else if (!gpSet->isQuakeStyle && m_QuakePrevSize.bWasSaved)
+	else if (!gpSet->isQuakeStyle)
 	{
-		nNewWindowMode = m_QuakePrevSize.Restore(this->WndWidth, this->WndHeight, this->wndX, this->wndY, gpSet->nHideCaptionAlwaysFrame, mr_Ideal);
+		if (m_QuakePrevSize.bWasSaved)
+			nNewWindowMode = m_QuakePrevSize.Restore(this->WndWidth, this->WndHeight, this->wndX, this->wndY, gpSet->nHideCaptionAlwaysFrame, mr_Ideal, gpSet->mb_MinToTray);
+		else
+			m_QuakePrevSize.SetNonQuakeDefaults();
 	}
 
 
