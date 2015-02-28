@@ -3516,6 +3516,10 @@ bool CConEmuSize::IsSizeFree(ConEmuWindowMode CheckMode /*= wmFullScreen*/)
 	if (gpSet->isDesktopMode && (CheckMode == wmFullScreen))
 		return false;
 
+	// В режиме "Quake" менять размер можно только в "Normal"
+	if (gpSet->isQuakeStyle && (GetWindowMode() != wmNormal))
+		return false;
+
 	// Размер И положение можно менять произвольно
 	return true;
 }
