@@ -2396,67 +2396,42 @@ LRESULT CConEmuSize::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 	{
 		if (gpSet->isQuakeStyle)
 		{
-			// Разрешить менять и ширину окна Quake
-			//CESize SaveWidth = {WndWidth.Raw};
-			//bool tempChanged = false;
-
-			RECT rc = GetDefaultRect();
-
-			p->y = rc.top;
-
-			TODO("разрешить изменение ширины в Quake!");
-			ConEmuWindowMode wmCurQuake = GetWindowMode();
-
-			if (isSizing() && p->cx && (wmCurQuake == wmNormal))
 			{
-				// Если выбран режим "Fixed" - разрешим задавать левую координату, иначе - центрируется по монитору
-				int iDifMul = gpSet->wndCascade ? 2 : 1;
+				RECT rc = GetDefaultRect();
 
-				// Поскольку оно центрируется (wndCascade)... изменение ширину нужно множить на 2
-				RECT rcQNow = {}; GetWindowRect(hWnd, &rcQNow);
-				int width = rcQNow.right - rcQNow.left;
-				int shift = (p->cx - width);
-				// TODO: разрешить изменение ширины в Quake!
-				//if (shift)
-				//{
-				//	//_ASSERTE(shift==0);
-				//	#ifndef _DEBUG
-				//	shift = 0;
-				//	#endif
-				//}
-				//WndWidth.Set(true, ss_Pixels, width + 2*shift);
-				if (shift && gpSet->wndCascade)
+				p->y = rc.top;
+
+				ConEmuWindowMode wmCurQuake = GetWindowMode();
+
+				if (isSizing() && p->cx && (wmCurQuake == wmNormal))
 				{
-					#ifdef _DEBUG
-					wchar_t szQuake[200];
-					_wsprintf(szQuake, SKIPCOUNT(szQuake) L"QuakePosFix Shift=%i Old={%ix%i} Suggested={%ix%i} Fixed={%ix%i}",
-						shift, rcQNow.left, width, p->x, p->cx, (p->x - shift), (p->cx + shift));
-					DEBUGSTRSIZE(szQuake);
-					#endif
+					// Если выбран режим "Fixed" - разрешим задавать левую координату, иначе - центрируется по монитору
+					int iDifMul = gpSet->wndCascade ? 2 : 1;
 
-					// Скорректировать координату!
-					//wndX = rc.left - shift;
+					// Поскольку оно центрируется (wndCascade)... изменение ширину нужно множить на 2
+					RECT rcQNow = {}; GetWindowRect(hWnd, &rcQNow);
+					int width = rcQNow.right - rcQNow.left;
+					int shift = (p->cx - width);
 
-					p->x -= shift;
-					p->cx += shift;
+					if (shift && gpSet->wndCascade)
+					{
+						#ifdef _DEBUG
+						wchar_t szQuake[200];
+						_wsprintf(szQuake, SKIPCOUNT(szQuake) L"QuakePosFix Shift=%i Old={%ix%i} Suggested={%ix%i} Fixed={%ix%i}",
+							shift, rcQNow.left, width, p->x, p->cx, (p->x - shift), (p->cx + shift));
+						DEBUGSTRSIZE(szQuake);
+						#endif
+
+						p->x -= shift;
+						p->cx += shift;
+					}
 				}
 				else
 				{
-					//p->cx = rc.right - rc.left + shift*(gpSet->wndCascade ? 2 : 1); // + 1;
+					p->x = rc.left;
+					p->cx = rc.right - rc.left; // + 1;
 				}
 			}
-			else
-			{
-				p->x = rc.left;
-				p->cx = rc.right - rc.left; // + 1;
-			}
-
-
-			//// Вернуть WndWidth, т.к. это было временно
-			//if (tempChanged)
-			//{
-			//	WndWidth.Set(true, SaveWidth.Style, SaveWidth.Value);
-			//}
 		}
 		else if (zoomed)
 		{
