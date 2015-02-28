@@ -329,6 +329,7 @@ CStatus::CStatus()
 	_wsprintf(ms_ConEmuBuild, SKIPLEN(countof(ms_ConEmuBuild)) L" %c %s[%u%s]",
 		0x00AB/* « */, gpConEmu->ms_ConEmuBuild, WIN3264TEST(32,64), RELEASEDEBUGTEST(L"","D"));
 	ZeroStruct(mpt_StatusResizePt);
+	ZeroStruct(mpt_StatusResizeCmp);
 	ZeroStruct(mrc_StatusResizeRect);
 }
 
@@ -1147,6 +1148,24 @@ bool CStatus::IsStatusResizing()
 	return mb_StatusResizing;
 }
 
+void CStatus::DoStatusResize(const POINT& ptScr)
+{
+	DEBUGSTRSIZE(L"Change size from status bar grip");
+
+	int nWidth = (mrc_StatusResizeRect.right - mrc_StatusResizeRect.left) + (ptScr.x - mpt_StatusResizePt.x);
+	int nHeight = (mrc_StatusResizeRect.bottom - mrc_StatusResizeRect.top) + (ptScr.y - mpt_StatusResizePt.y);
+
+	RECT rcNew = {mrc_StatusResizeRect.left, mrc_StatusResizeRect.top, mrc_StatusResizeRect.left + nWidth, mrc_StatusResizeRect.top + nHeight};
+	gpConEmu->OnSizing(WMSZ_BOTTOMRIGHT, (LPARAM)&rcNew);
+
+	SetWindowPos(ghWnd, NULL,
+		rcNew.left, rcNew.top, rcNew.right - rcNew.left, rcNew.bottom - rcNew.top,
+		SWP_NOZORDER|SWP_NOCOPYBITS);
+
+	// Store last point
+	mpt_StatusResizeCmp = ptScr;
+}
+
 bool CStatus::ProcessStatusMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, POINT ptCurClient, LRESULT& lResult)
 {
 	if (!gpSet->isStatusBarShow)
@@ -1169,30 +1188,28 @@ bool CStatus::ProcessStatusMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 			mb_StatusResizing = true;
 			SetCapture(ghWnd);
 			gpConEmu->BeginSizing(true);
+			// Force first resize
+			DoStatusResize(mpt_StatusResizePt);
 			break;
 		case WM_LBUTTONUP:
 		case WM_MOUSEMOVE:
-			if (mb_StatusResizing && GetCursorPos(&ptScr))
+			if (mb_StatusResizing)
 			{
-				DEBUGSTRSIZE(L"Change size from status bar grip");
+				if (GetCursorPos(&ptScr)
+					// Do resize if the cursor position was changed only
+					&& ((ptScr.x != mpt_StatusResizeCmp.x) || (ptScr.y != mpt_StatusResizeCmp.y))
+					)
+				{
+					DoStatusResize(ptScr);
+				}
 
-				int nWidth = (mrc_StatusResizeRect.right - mrc_StatusResizeRect.left) + (ptScr.x - mpt_StatusResizePt.x);
-				int nHeight = (mrc_StatusResizeRect.bottom - mrc_StatusResizeRect.top) + (ptScr.y - mpt_StatusResizePt.y);
-
-				RECT rcNew = {mrc_StatusResizeRect.left, mrc_StatusResizeRect.top, mrc_StatusResizeRect.left + nWidth, mrc_StatusResizeRect.top + nHeight};
-				gpConEmu->OnSizing(WMSZ_BOTTOMRIGHT, (LPARAM)&rcNew);
-
-				SetWindowPos(ghWnd, NULL,
-					rcNew.left, rcNew.top, rcNew.right - rcNew.left, rcNew.bottom - rcNew.top,
-					SWP_NOZORDER|SWP_NOCOPYBITS);
-			}
-
-			if (uMsg == WM_LBUTTONUP)
-			{
-				SetCapture(NULL);
-				gpConEmu->EndSizing();
-				mb_StatusResizing = false;
-				DEBUGSTRSIZE(L"Resize from status bar grip finished");
+				if (uMsg == WM_LBUTTONUP)
+				{
+					SetCapture(NULL);
+					gpConEmu->EndSizing();
+					mb_StatusResizing = false;
+					DEBUGSTRSIZE(L"Resize from status bar grip finished");
+				}
 			}
 			break;
 		case WM_SETCURSOR: // не приходит

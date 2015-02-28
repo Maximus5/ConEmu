@@ -136,7 +136,9 @@ private:
 	RECT mrc_LastResizeCol;
 	bool mb_StatusResizing;
 	POINT mpt_StatusResizePt;
+	POINT mpt_StatusResizeCmp;
 	RECT mrc_StatusResizeRect;
+	void DoStatusResize(const POINT& ptScr);
 
 	SIZE mn_BmpSize;
 	HBITMAP mh_Bmp, mb_OldBmp;
