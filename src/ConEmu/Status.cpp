@@ -1204,6 +1204,11 @@ bool CStatus::ProcessStatusMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 		switch (uMsg)
 		{
 		case WM_LBUTTONDOWN:
+			if (!gpConEmu->IsSizeFree())
+			{
+				DEBUGSTRSIZE(L"Resize from status bar grip skipped - size is fixed");
+				break;
+			}
 			DEBUGSTRSIZE(L"Starting resize from status bar grip");
 			GetCursorPos(&mpt_StatusResizePt);
 			GetWindowRect(ghWnd, &mrc_StatusResizeRect);
