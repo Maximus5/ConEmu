@@ -1152,15 +1152,35 @@ void CStatus::DoStatusResize(const POINT& ptScr)
 {
 	DEBUGSTRSIZE(L"Change size from status bar grip");
 
-	int nWidth = (mrc_StatusResizeRect.right - mrc_StatusResizeRect.left) + (ptScr.x - mpt_StatusResizePt.x);
-	int nHeight = (mrc_StatusResizeRect.bottom - mrc_StatusResizeRect.top) + (ptScr.y - mpt_StatusResizePt.y);
+	int iPosXdiff = 0;
+	int iWidthDiff = (ptScr.x - mpt_StatusResizePt.x);
+	int iHeightDiff = (ptScr.y - mpt_StatusResizePt.y);
 
-	RECT rcNew = {mrc_StatusResizeRect.left, mrc_StatusResizeRect.top, mrc_StatusResizeRect.left + nWidth, mrc_StatusResizeRect.top + nHeight};
+	// Quake + Centered on the monitor
+	if (gpSet->isQuakeStyle && gpSet->wndCascade)
+	{
+		iPosXdiff = - iWidthDiff / 2;
+	}
+
+	int nWidth = (mrc_StatusResizeRect.right - mrc_StatusResizeRect.left) + iWidthDiff;
+	int nHeight = (mrc_StatusResizeRect.bottom - mrc_StatusResizeRect.top) + iHeightDiff;
+
+	RECT rcNew = {mrc_StatusResizeRect.left + iPosXdiff, mrc_StatusResizeRect.top, mrc_StatusResizeRect.left + nWidth, mrc_StatusResizeRect.top + nHeight};
+
+	#ifdef _DEBUG
+	RECT rcBefore = {}; GetWindowRect(ghWnd, &rcBefore);
+	#endif
+
 	gpConEmu->OnSizing(WMSZ_BOTTOMRIGHT, (LPARAM)&rcNew);
 
 	SetWindowPos(ghWnd, NULL,
 		rcNew.left, rcNew.top, rcNew.right - rcNew.left, rcNew.bottom - rcNew.top,
 		SWP_NOZORDER|SWP_NOCOPYBITS);
+
+	#ifdef _DEBUG
+	RECT rcAfter = {}; GetWindowRect(ghWnd, &rcAfter);
+	#endif
+
 	// Force repaint to avoid artefacts
 	RedrawWindow(ghWnd, NULL, NULL, RDW_UPDATENOW);
 

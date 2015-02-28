@@ -2396,6 +2396,7 @@ LRESULT CConEmuSize::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 	{
 		if (gpSet->isQuakeStyle)
 		{
+			if (!mp_ConEmu->mp_Status->IsStatusResizing())
 			{
 				RECT rc = GetDefaultRect();
 
