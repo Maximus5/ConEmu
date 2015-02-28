@@ -568,7 +568,7 @@ void CSettings::InitVars_Pages()
 	{
 		// При добавлении вкладки нужно добавить OnInitDialog_XXX в pageOpProc
 		{IDD_SPG_MAIN,        0, L"Main",           thi_Main       /* OnInitDialog_Main */},
-		{IDD_SPG_WNDSIZEPOS,  1, L"Size & Pos",     thi_SizePos    /* OnInitDialog_WndPosSize */},
+		{IDD_SPG_WNDSIZEPOS,  1, L"Size & Pos",     thi_SizePos    /* OnInitDialog_WndSizePos */},
 		{IDD_SPG_SHOW,        1, L"Appearance",     thi_Show       /* OnInitDialog_Show */},
 		{IDD_SPG_BACK,        1, L"Background",     thi_Backgr     /* OnInitDialog_Background */},
 		{IDD_SPG_TABS,        1, L"Tabs",           thi_Tabs       /* OnInitDialog_Tabs */},
@@ -1899,7 +1899,8 @@ LRESULT CSettings::OnInitDialog_Taskbar(HWND hWnd2, bool abInitial)
 	return 0;
 }
 
-LRESULT CSettings::OnInitDialog_WndPosSize(HWND hWnd2, bool abInitial)
+// IDD_SPG_WNDSIZEPOS / thi_SizePos
+LRESULT CSettings::OnInitDialog_WndSizePos(HWND hWnd2, bool abInitial)
 {
 	_ASSERTE(GetPage(thi_SizePos) == hWnd2);
 
@@ -6807,7 +6808,7 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 		case IDD_SPG_WNDSIZEPOS:
 			{
 			bool lbOld = bSkipSelChange; bSkipSelChange = true;
-			gpSetCls->OnInitDialog_WndPosSize(hWnd2, bInitial);
+			gpSetCls->OnInitDialog_WndSizePos(hWnd2, bInitial);
 			bSkipSelChange = lbOld;
 			}
 			break;

@@ -400,7 +400,7 @@ class CSettings
 		// OnInitDialogPage_t: IDD_SPG_MAIN, и т.д.
 		LRESULT OnInitDialog_Main(HWND hWnd2, bool abInitial);
 		LRESULT OnInitDialog_Background(HWND hWnd2, bool abInitial);
-		LRESULT OnInitDialog_WndPosSize(HWND hWnd2, bool abInitial);
+		LRESULT OnInitDialog_WndSizePos(HWND hWnd2, bool abInitial);
 		LRESULT OnInitDialog_Show(HWND hWnd2, bool abInitial);
 		LRESULT OnInitDialog_Confirm(HWND hWnd2, bool abInitial);
 		LRESULT OnInitDialog_Taskbar(HWND hWnd2, bool abInitial);
