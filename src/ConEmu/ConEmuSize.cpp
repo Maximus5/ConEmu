@@ -1797,11 +1797,13 @@ void CConEmuSize::StoreNormalRect(RECT* prcWnd)
 			if ((w.Style == ss_Standard) || (h.Style == ss_Standard))
 			{
 				RECT rcAll;
+				/* -- removed that because console size was not changed until resize was finished
 				if (CVConGroup::isVConExists(0))
 				{
 					rcAll = CVConGroup::AllTextRect();
 				}
 				else
+				*/
 				{
 					rcAll = CalcRect(CER_CONSOLE_ALL, rcNormal, CER_MAIN);
 				}
