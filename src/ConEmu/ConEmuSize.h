@@ -79,6 +79,8 @@ protected:
 		void SetNonQuakeDefaults();
 	} m_QuakePrevSize;
 
+	bool CheckQuakeRect(LPRECT prcWnd);
+
 	ConEmuWindowCommand m_TileMode;
 
 	struct {

@@ -1225,6 +1225,81 @@ void CConEmuSize::SetWindowPosSizeParam(wchar_t acType, LPCWSTR asValue)
 	}
 }
 
+bool CConEmuSize::CheckQuakeRect(LPRECT prcWnd)
+{
+	RECT rcReal = *prcWnd;
+	if (ghWnd)
+		GetWindowRect(ghWnd, &rcReal);
+	MONITORINFO mi = {sizeof(mi)};
+	HMONITOR hMon = GetNearestMonitorInfo(&mi, NULL, &rcReal);
+
+	bool bChange = false;
+
+	RECT rcFrameOnly = CalcMargins(CEM_FRAMECAPTION);
+
+	// Если успешно - подгоняем по экрану
+	if (mi.rcWork.right > mi.rcWork.left)
+	{
+		int nWidth = prcWnd->right - prcWnd->left;
+		int nHeight = prcWnd->bottom - prcWnd->top;
+
+		switch (gpSet->_WindowMode)
+		{
+			case wmMaximized:
+			{
+				prcWnd->left = mi.rcWork.left - rcFrameOnly.left;
+				prcWnd->right = mi.rcWork.right + rcFrameOnly.right;
+				prcWnd->top = mi.rcWork.top - rcFrameOnly.top;
+				prcWnd->bottom = prcWnd->top + nHeight;
+
+				bChange = true;
+				break;
+			}
+
+			case wmFullScreen:
+			{
+				prcWnd->left = mi.rcMonitor.left - rcFrameOnly.left;
+				prcWnd->right = mi.rcMonitor.right + rcFrameOnly.right;
+				prcWnd->top = mi.rcMonitor.top - rcFrameOnly.top;
+				prcWnd->bottom = prcWnd->top + nHeight;
+
+				bChange = true;
+				break;
+			}
+
+			case wmNormal:
+			{
+				// Если выбран режим "Fixed" - разрешим задавать левую координату
+				if (!gpSet->wndCascade)
+					prcWnd->left = max(mi.rcWork.left,min(wndX,(mi.rcWork.right - nWidth)));
+				else // Иначе - центрируется по монитору
+					prcWnd->left = max(mi.rcWork.left,((mi.rcWork.left + mi.rcWork.right - nWidth) / 2));
+				prcWnd->right = min(mi.rcWork.right,(prcWnd->left + nWidth));
+				prcWnd->top = mi.rcWork.top - rcFrameOnly.top;
+				prcWnd->bottom = prcWnd->top + nHeight;
+
+				bChange = true;
+				break;
+			}
+		}
+	}
+
+	if (bChange)
+	{
+		ptFullScreenSize.x = prcWnd->right - prcWnd->left + 1;
+		ptFullScreenSize.y = mi.rcMonitor.bottom - mi.rcMonitor.top + (rcFrameOnly.bottom + rcFrameOnly.top);
+
+		DEBUGTEST(RECT rcCon = CalcRect(CER_CONSOLE_ALL, *prcWnd, CER_MAIN));
+		//if (rcCon.right)
+		//	this->wndWidth = rcCon.right;
+
+		this->wndX = prcWnd->left;
+		this->wndY = prcWnd->top;
+	}
+
+	return bChange;
+}
+
 // Вызывается при старте программы, для вычисления mrc_Ideal - размера окна по умолчанию
 RECT CConEmuSize::GetDefaultRect()
 {
@@ -1305,82 +1380,7 @@ RECT CConEmuSize::GetDefaultRect()
 	// Go
 	if (gpSet->isQuakeStyle)
 	{
-		HMONITOR hMon;
-		POINT pt = {this->wndX+2*nFrameX,this->wndY+2*nFrameY};
-		if (ghWnd)
-		{
-			RECT rcReal; GetWindowRect(ghWnd, &rcReal);
-			pt.x = (rcReal.left+rcReal.right)/2;
-			pt.y = (rcReal.top+rcReal.bottom)/2;
-		}
-		hMon = MonitorFromPoint(pt, MONITOR_DEFAULTTOPRIMARY);
-
-		MONITORINFO mi = {sizeof(mi)};
-		GetMonitorInfoSafe(hMon, mi);
-
-		bool bChange = false;
-
-		// Если успешно - подгоняем по экрану
-		if (mi.rcWork.right > mi.rcWork.left)
-		{
-			int nWidth = rcWnd.right - rcWnd.left;
-			int nHeight = rcWnd.bottom - rcWnd.top;
-
-			RECT rcFrameOnly = CalcMargins(CEM_FRAMECAPTION);
-
-			switch (gpSet->_WindowMode)
-			{
-				case wmMaximized:
-				{
-					rcWnd.left = mi.rcWork.left - rcFrameOnly.left;
-					rcWnd.right = mi.rcWork.right + rcFrameOnly.right;
-					rcWnd.top = mi.rcWork.top - rcFrameOnly.top;
-					rcWnd.bottom = rcWnd.top + nHeight;
-
-					bChange = true;
-					break;
-				}
-
-				case wmFullScreen:
-				{
-					rcWnd.left = mi.rcMonitor.left - rcFrameOnly.left;
-					rcWnd.right = mi.rcMonitor.right + rcFrameOnly.right;
-					rcWnd.top = mi.rcMonitor.top - rcFrameOnly.top;
-					rcWnd.bottom = rcWnd.top + nHeight;
-
-					bChange = true;
-					break;
-				}
-
-				case wmNormal:
-				{
-					// Если выбран режим "Fixed" - разрешим задавать левую координату
-					if (!gpSet->wndCascade)
-						rcWnd.left = max(mi.rcWork.left,min(wndX,(mi.rcWork.right - nWidth)));
-					else // Иначе - центрируется по монитору
-						rcWnd.left = max(mi.rcWork.left,((mi.rcWork.left + mi.rcWork.right - nWidth) / 2));
-					rcWnd.right = min(mi.rcWork.right,(rcWnd.left + nWidth));
-					rcWnd.top = mi.rcWork.top - rcFrameOnly.top;
-					rcWnd.bottom = rcWnd.top + nHeight;
-
-					bChange = true;
-					break;
-				}
-			}
-		}
-
-		if (bChange)
-		{
-			ptFullScreenSize.x = rcWnd.right - rcWnd.left + 1;
-			ptFullScreenSize.y = mi.rcMonitor.bottom - mi.rcMonitor.top + nFrameY;
-
-			DEBUGTEST(RECT rcCon = CalcRect(CER_CONSOLE_ALL, rcWnd, CER_MAIN));
-			//if (rcCon.right)
-			//	this->wndWidth = rcCon.right;
-
-			this->wndX = rcWnd.left;
-			this->wndY = rcWnd.top;
-		}
+		CheckQuakeRect(&rcWnd);
 	}
 	// При старте, если указан "Cascade" (то есть только при создании окна)
 	else if (gpSet->wndCascade && !ghWnd)
