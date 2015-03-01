@@ -1324,6 +1324,12 @@ RECT CConEmuSize::GetDefaultRect()
 		}
 	}
 
+	if (gpSet->isQuakeStyle && !IsRectEmpty(&m_QuakePrevSize.PreSlidedSize))
+	{
+		rcWnd = m_QuakePrevSize.PreSlidedSize;
+		return rcWnd;
+	}
+
 	Assert(gpSetCls->FontWidth() && gpSetCls->FontHeight());
 
 	// Рамка, статус
@@ -5872,6 +5878,7 @@ void CConEmuSize::DoMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 			}
 		}
 		mn_QuakePercent = 0; // 0 - отключен
+		ZeroStruct(m_QuakePrevSize.PreSlidedSize);
 
 		CVConGuard VCon;
 		if (mp_ConEmu->GetActiveVCon(&VCon) >= 0)
@@ -5913,6 +5920,18 @@ void CConEmuSize::DoMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 
 		if (gpSet->isQuakeStyle /*&& !isMouseOverFrame()*/)
 		{
+			BOOL bVs1 = ::IsWindowVisible(ghWnd);
+			RECT rc1 = {}; ::GetWindowRect(ghWnd, &rc1);
+			if (bVs1)
+			{
+				m_QuakePrevSize.PreSlidedSize = rc1;
+			}
+			else
+			{
+				_ASSERTE(FALSE && "Quake must not be slided up from hidden state");
+				ZeroStruct(m_QuakePrevSize.PreSlidedSize);
+			}
+
 			if (bUseQuakeAnimation)
 			{
 				DWORD nAnimationMS = gpSet->nQuakeAnimation; // (100 / nQuakeShift) * nQuakeDelay * 2;
@@ -5922,9 +5941,8 @@ void CConEmuSize::DoMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 
 				DWORD nFlags = AW_SLIDE|AW_VER_NEGATIVE|AW_HIDE;
 
-				DEBUGTEST(BOOL bVs1 = ::IsWindowVisible(ghWnd));
-				DEBUGTEST(RECT rc1; ::GetWindowRect(ghWnd, &rc1));
 				AnimateWindow(nAnimationMS, nFlags);
+
 				DEBUGTEST(BOOL bVs2 = ::IsWindowVisible(ghWnd));
 				DEBUGTEST(RECT rc2; ::GetWindowRect(ghWnd, &rc2));
 				DEBUGTEST(bVs1 = bVs2);
@@ -5976,6 +5994,10 @@ void CConEmuSize::DoMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 					UpdateWindowRgn();
 				}
 			}
+		}
+		else
+		{
+			ZeroStruct(m_QuakePrevSize.PreSlidedSize);
 		}
 		mn_QuakePercent = 0; // 0 - отключен
 
