@@ -608,10 +608,9 @@ HWND CTabPanelWin::CreateToolbar()
 	btn.iBitmap = nFirst + BID_APPCLOSE_IDX; btn.idCommand = TID_APPCLOSE;
 	SendMessage(mh_Toolbar, TB_ADDBUTTONS, 1, (LPARAM)&btn);
 	SendMessage(mh_Toolbar, TB_AUTOSIZE, 0, 0);
-#ifdef _DEBUG
-	SIZE sz;
-	SendMessage(mh_Toolbar, TB_GETMAXSIZE, 0, (LPARAM)&sz);
-#endif
+	#ifdef _DEBUG
+	SIZE sz = {}; SendMessage(mh_Toolbar, TB_GETMAXSIZE, 0, (LPARAM)&sz);
+	#endif
 	return mh_Toolbar;
 }
 
@@ -1115,12 +1114,20 @@ void CTabPanelWin::OnCaptionHiddenChanged(bool bCaptionHidden)
 
 	bool lbHideBtn = !bCaptionHidden;
 
+	#ifdef _DEBUG
+	SIZE sz1 = {}; SendMessage(mh_Toolbar, TB_GETMAXSIZE, 0, (LPARAM)&sz1);
+	#endif
+
 	OnWindowStateChanged(gpConEmu->GetWindowMode());
 	SendMessage(mh_Toolbar, TB_HIDEBUTTON, TID_MINIMIZE_SEP, lbHideBtn);
 	SendMessage(mh_Toolbar, TB_HIDEBUTTON, TID_MINIMIZE, lbHideBtn);
 	SendMessage(mh_Toolbar, TB_HIDEBUTTON, TID_MAXIMIZE, lbHideBtn);
 	SendMessage(mh_Toolbar, TB_HIDEBUTTON, TID_APPCLOSE, lbHideBtn);
 	SendMessage(mh_Toolbar, TB_AUTOSIZE, 0, 0);
+
+	#ifdef _DEBUG
+	SIZE sz2 = {}; SendMessage(mh_Toolbar, TB_GETMAXSIZE, 0, (LPARAM)&sz2);
+	#endif
 
 	RepositionInt();
 }
