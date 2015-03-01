@@ -3390,6 +3390,8 @@ bool CConEmuSize::SetTileMode(ConEmuWindowCommand Tile)
 		RECT rc = {}; GetWindowRect(ghWnd, &rc);
 		LogTileModeChange(L"result of SetTileMode", Tile, bChange, rcNewWnd, &rc, hMon);
 
+		CVConGroup::SyncConsoleToWindow();
+
 		mp_ConEmu->UpdateProcessDisplay(false);
 	}
 
