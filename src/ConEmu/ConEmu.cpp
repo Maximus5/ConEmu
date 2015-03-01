@@ -6900,11 +6900,10 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 
 	if (!abReceived)
 	{
-		//if (WindowMode == wmFullScreen || WindowMode == wmMaximized) {
-#ifdef MSGLOGGER
+		#ifdef MSGLOGGER
 		WINDOWPLACEMENT wpl; memset(&wpl, 0, sizeof(wpl)); wpl.length = sizeof(wpl);
 		GetWindowPlacement(ghWnd, &wpl);
-#endif
+		#endif
 
 		CheckActiveLayoutName();
 
