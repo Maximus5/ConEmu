@@ -359,7 +359,6 @@ CConEmuMain::CConEmuMain()
 	//mn_SysMenuOpenTick = mn_SysMenuCloseTick = 0;
 	//mb_PassSysCommand = false;
 	mb_ExternalHidden = FALSE;
-	mb_StartDetached = FALSE;
 	//mb_SkipSyncSize = false;
 	isPiewUpdate = false; //true; --Maximus5
 	hPictureView = NULL;  mrc_WndPosOnPicView = MakeRect(0,0);
@@ -4566,12 +4565,12 @@ BOOL CConEmuMain::RunSingleInstance(HWND hConEmuWnd /*= NULL*/, LPCWSTR apszCmd 
 				pIn->NewCmd.ShowHide = gpSetCls->SingleInstanceShowHide;
 				if (gpSetCls->SingleInstanceShowHide == sih_None)
 				{
-					if (gpConEmu->mb_StartDetached)
+					if (mb_StartDetached)
 						pIn->NewCmd.ShowHide = sih_StartDetached;
 				}
 				else
 				{
-					_ASSERTE(gpConEmu->mb_StartDetached==FALSE);
+					_ASSERTE(mb_StartDetached==false);
 				}
 
 				//GetCurrentDirectory(countof(pIn->NewCmd.szCurDir), pIn->NewCmd.szCurDir);
@@ -7030,7 +7029,7 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 		gpSet->CheckHotkeyUnique();
 
 
-		if (!isVConExists(0) || !gpConEmu->mb_StartDetached)  // Консоль уже может быть создана, если пришел Attach из ConEmuC
+		if (!isVConExists(0) || !mb_StartDetached)  // Консоль уже может быть создана, если пришел Attach из ConEmuC
 		{
 			// Если надо - подготовить портабельный реестр
 			if (mb_PortableRegExist)
@@ -7078,7 +7077,7 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 
 				lbCreated = TRUE;
 			}
-			else if ((*pszCmd == CmdFilePrefix || *pszCmd == TaskBracketLeft || lstrcmpi(pszCmd,AutoStartTaskName) == 0) && !gpConEmu->mb_StartDetached)
+			else if ((*pszCmd == CmdFilePrefix || *pszCmd == TaskBracketLeft || lstrcmpi(pszCmd,AutoStartTaskName) == 0) && !mb_StartDetached)
 			{
 				RConStartArgs args;
 				// Was "/dir" specified in the app switches?
@@ -7112,10 +7111,10 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 				lbCreated = TRUE;
 			}
 
-			if (!lbCreated && !gpConEmu->mb_StartDetached)
+			if (!lbCreated && !mb_StartDetached)
 			{
 				RConStartArgs args;
-				args.Detached = gpConEmu->mb_StartDetached ? crb_On : crb_Off;
+				args.Detached = mb_StartDetached ? crb_On : crb_Off;
 
 				if (args.Detached != crb_On)
 				{
@@ -7131,8 +7130,8 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 			}
 		}
 
-		if (gpConEmu->mb_StartDetached)
-			gpConEmu->mb_StartDetached = FALSE;  // действует только на первую консоль
+		if (mb_StartDetached)
+			mb_StartDetached = false;  // действует только на первую консоль
 
 		//// Может быть в настройке указано - всегда показывать иконку в TSA
 		//Icon.SettingsChanged();

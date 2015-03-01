@@ -55,6 +55,10 @@ public:
 	STARTUPINFOW ourSI;
 
 public:
+	/* switch -detached in the ConEmu.exe arguments */
+	bool mb_StartDetached;
+
+public:
 	/* Store/retrieve command line, specified with "/cmd" or "/cmdlist" switches */
 	void SetCurCmd(wchar_t*& pszNewCmd, bool bIsCmdList);
 	LPCTSTR GetCurCmd(bool *pIsCmdList = NULL);

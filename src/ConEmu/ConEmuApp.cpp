@@ -3899,7 +3899,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				}
 				else if (!klstricmp(curCommand, _T("/detached")))
 				{
-					gpConEmu->mb_StartDetached = TRUE;
+					gpConEmu->mb_StartDetached = true;
 				}
 				else if (!klstricmp(curCommand, _T("/noupdate")))
 				{

@@ -262,8 +262,6 @@ class CConEmuMain
 
 		BOOL  mb_ExternalHidden;
 
-		BOOL  mb_StartDetached;
-
 		enum StartupStage {
 			ss_Starting,
 			ss_PostCreate1Called,
