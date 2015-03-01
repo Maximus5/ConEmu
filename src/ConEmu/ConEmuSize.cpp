@@ -2865,6 +2865,15 @@ LRESULT CConEmuSize::OnSizing(WPARAM wParam, LPARAM lParam)
 
 		if (gpSet->isQuakeStyle)
 		{
+			switch (wParam)
+			{
+			case WMSZ_LEFT:
+			case WMSZ_TOPLEFT:
+			case WMSZ_BOTTOMLEFT:
+				// Save left coordinate if user drags left frame edge
+				wndX = pRect->left;
+			}
+			// And final corrections (especially for centered mode)
 			CheckQuakeRect(pRect);
 		}
 
