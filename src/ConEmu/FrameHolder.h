@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2014 Maximus5
+Copyright (c) 2009-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -68,7 +68,7 @@ protected:
 	LRESULT OnNcCalcSize(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnNcActivate(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnNcPaint(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-	LRESULT OnPaint(HWND hWnd, HDC hdc);
+	LRESULT OnPaint(HWND hWnd, HDC hdc, UINT uMsg);
 	// NC helpers
 	LRESULT NC_Wrapper(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 	// NC Invalidating

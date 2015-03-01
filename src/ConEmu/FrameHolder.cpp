@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2014 Maximus5
+Copyright (c) 2009-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -26,6 +26,8 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#define SHOWDEBUGSTR
+
 #define HIDE_USE_EXCEPTION_INFO
 #include <windows.h>
 #include "DwmApi_Part.h"
@@ -49,6 +51,7 @@ static int _nDbgStep = 0; wchar_t _szDbg[512];
 #endif
 #define DBGFUNCTION(s) //{ wsprintf(_szDbg, L"%i: %s", ++_nDbgStep, s); OutputDebugString(_szDbg); /*Sleep(1000);*/ }
 #define DEBUGSTRSIZE(s) DEBUGSTR(s)
+#define DEBUGSTRPAINT(s) DEBUGSTR(s)
 
 #ifdef _DEBUG
 	//#define RED_CLIENT_FILL
@@ -175,7 +178,7 @@ bool CFrameHolder::ProcessNcMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 
 	case WM_PAINT:
 		DBGFUNCTION(L"WM_PAINT \n");
-		lResult = OnPaint(hWnd, NULL/*use BeginPaint,EndPaint*/); return true;
+		lResult = OnPaint(hWnd, NULL/*use BeginPaint,EndPaint*/, WM_PAINT); return true;
 
 	case WM_NCPAINT:
 		DBGFUNCTION(L"WM_NCPAINT \n");
@@ -578,7 +581,7 @@ void CFrameHolder::PaintFrame2k(HWND hWnd, HDC hdc, RECT &cr)
 }
 #endif
 
-LRESULT CFrameHolder::OnPaint(HWND hWnd, HDC hdc)
+LRESULT CFrameHolder::OnPaint(HWND hWnd, HDC hdc, UINT uMsg)
 {
 	if (hdc == NULL)
 	{
@@ -588,7 +591,7 @@ LRESULT CFrameHolder::OnPaint(HWND hWnd, HDC hdc)
 
 		if (hdc != NULL)
 		{
-			lRc = OnPaint(hWnd, hdc);
+			lRc = OnPaint(hWnd, hdc, uMsg);
 
 			EndPaint(hWnd, &ps);
 		}
@@ -599,6 +602,11 @@ LRESULT CFrameHolder::OnPaint(HWND hWnd, HDC hdc)
 
 		return lRc;
 	}
+
+	#ifdef _DEBUG
+	RECT rcClientReal = {}; GetClientRect(hWnd, &rcClientReal);
+	MapWindowPoints(hWnd, NULL, (LPPOINT)&rcClientReal, 2);
+	#endif
 
 	// Если "завис" PostUpdate
 	if (gpConEmu->mp_TabBar->NeedPostUpdate())
@@ -611,11 +619,15 @@ LRESULT CFrameHolder::OnPaint(HWND hWnd, HDC hdc)
 	RecalculateFrameSizes();
 
 	wr = gpConEmu->GetGuiClientRect();
-	//GetClientRect(hWnd, &wr);
 
-#ifdef _DEBUG
-	RECT crTest; GetClientRect(hWnd, &crTest);
-#endif
+	#ifdef _DEBUG
+	wchar_t szPaint[140];
+	_wsprintf(szPaint, SKIPCOUNT(szPaint) L"MainClient %s at {%i,%i}-{%i,%i} screen coords, size (%ix%i) calc (%ix%i)",
+		(uMsg == WM_PAINT) ? L"WM_PAINT" : (uMsg == WM_PRINTCLIENT) ? L"WM_PRINTCLIENT" : L"UnknownMsg",
+		rcClientReal.left, rcClientReal.top, rcClientReal.right, rcClientReal.bottom, rcClientReal.right-rcClientReal.left, rcClientReal.bottom-rcClientReal.top,
+		wr.right-wr.left, wr.bottom-wr.top);
+	DEBUGSTRPAINT(szPaint);
+	#endif
 
 #if defined(CONEMU_TABBAR_EX)
 #ifdef RED_CLIENT_FILL

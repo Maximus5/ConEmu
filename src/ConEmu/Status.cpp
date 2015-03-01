@@ -32,7 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define DEBUGSTRSTAT(s) //DEBUGSTR(s)
 #define DEBUGSTRSIZE(s) DEBUGSTR(s)
-#define DEBUGSTRPAINT(s) //DEBUGSTR(s)
+#define DEBUGSTRPAINT(s) DEBUGSTR(s)
 
 #include <windows.h>
 #include <commctrl.h>
