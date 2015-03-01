@@ -998,8 +998,8 @@ void CTabPanelWin::RepositionInt()
 			bRebarChanged = true;
 		}
 
-		// If the toolbar is visible, and rebar was changed...
-		if (bRebarChanged && (Panes[2].iPaneMinWidth > 0))
+		// If the toolbar is visible
+		if (Panes[2].iPaneMinWidth > 0)
 		{
 			UpdateToolbarPos();
 		}
