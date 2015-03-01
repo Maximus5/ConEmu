@@ -2434,6 +2434,15 @@ LRESULT CConEmuSize::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 					p->x = rc.left;
 					p->cx = rc.right - rc.left; // + 1;
 				}
+
+				RECT rcFixup = {p->x, p->y, p->x + p->cx, p->y + p->cy};
+				if (CheckQuakeRect(&rcFixup))
+				{
+					p->x = rcFixup.left;
+					p->y = rcFixup.top;
+					p->cx = rcFixup.right - rcFixup.left;
+					p->cy = rcFixup.bottom - rcFixup.top;
+				}
 			}
 		}
 		else if (zoomed)
@@ -2844,6 +2853,11 @@ LRESULT CConEmuSize::OnSizing(WPARAM wParam, LPARAM lParam)
 					pRect->bottom = restrictRect.bottom;
 					break;
 			}
+		}
+
+		if (gpSet->isQuakeStyle)
+		{
+			CheckQuakeRect(pRect);
 		}
 
 		// При смене размера (пока ничего не делаем)
