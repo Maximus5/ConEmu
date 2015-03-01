@@ -65,6 +65,8 @@ public:
 
 	/* "Active" command line */
 	LPCTSTR GetCmd(bool *pIsCmdList = NULL, bool bNoTask = false);
+	/* If some task was marked ad "Default for new consoles" */
+	LPCTSTR GetDefaultTask();
 
 	/* "Default" command line "far/cmd" */
 	LPCTSTR GetDefaultCmd();

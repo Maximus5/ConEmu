@@ -137,20 +137,14 @@ LPCTSTR CConEmuStart::GetCmd(bool *pIsCmdList, bool bNoTask /*= false*/)
 	if (pIsCmdList)
 		*pIsCmdList = false;
 
-	// User choosed default task?
-	int nGroup = 0;
-	const CommandTasks* pGrp = NULL;
-	while ((pGrp = gpSet->CmdTaskGet(nGroup++)))
+	// User've choosed default task?
+	if (mp_ConEmu->mn_StartupFinished == CConEmuMain::ss_Started)
 	{
-		if (pGrp->pszName && *pGrp->pszName
-			&& (pGrp->Flags & CETF_NEW_DEFAULT))
-		{
-			ms_DefNewTaskName.Attach(lstrdup(pGrp->pszName));
-			return ms_DefNewTaskName.ms_Arg;
-		}
+		if ((pszCmd = GetDefaultTask()) != NULL)
+			return pszCmd;
 	}
 
-	// Old style otherwise
+	// Current command line, specified with "/cmd" or "/cmdlist" switches
 	if ((pszCmd = GetCurCmd(pIsCmdList)) != NULL)
 		return pszCmd;
 
@@ -176,6 +170,13 @@ LPCTSTR CConEmuStart::GetCmd(bool *pIsCmdList, bool bNoTask /*= false*/)
 		if (bNoTask)
 			return NULL;
 		return AutoStartTaskName;
+	}
+
+	// User've choosed default task?
+	if (mp_ConEmu->mn_StartupFinished <= CConEmuMain::ss_PostCreate2Called)
+	{
+		if ((pszCmd = GetDefaultTask()) != NULL)
+			return pszCmd;
 	}
 
 	wchar_t* pszNewCmd = NULL;
@@ -260,6 +261,24 @@ LPCTSTR CConEmuStart::GetCmd(bool *pIsCmdList, bool bNoTask /*= false*/)
 	SetCurCmd(pszNewCmd, false);
 
 	return GetCurCmd(pIsCmdList);
+}
+
+LPCTSTR CConEmuStart::GetDefaultTask()
+{
+	int nGroup = 0;
+	const CommandTasks* pGrp = NULL;
+
+	while ((pGrp = gpSet->CmdTaskGet(nGroup++)))
+	{
+		if (pGrp->pszName && *pGrp->pszName
+			&& (pGrp->Flags & CETF_NEW_DEFAULT))
+		{
+			ms_DefNewTaskName.Attach(lstrdup(pGrp->pszName));
+			return ms_DefNewTaskName.ms_Arg;
+		}
+	}
+
+	return NULL;
 }
 
 // TODO: Option for default task?
