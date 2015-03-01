@@ -51,7 +51,7 @@ static int _nDbgStep = 0; wchar_t _szDbg[512];
 #endif
 #define DBGFUNCTION(s) //{ wsprintf(_szDbg, L"%i: %s", ++_nDbgStep, s); OutputDebugString(_szDbg); /*Sleep(1000);*/ }
 #define DEBUGSTRSIZE(s) DEBUGSTR(s)
-#define DEBUGSTRPAINT(s) DEBUGSTR(s)
+#define DEBUGSTRPAINT(s) //DEBUGSTR(s)
 
 #ifdef _DEBUG
 	//#define RED_CLIENT_FILL
