@@ -825,7 +825,7 @@ LRESULT CConEmuChild::BackWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM l
 
 	switch (messg)
 	{
-	case WM_SHOWWINDOW:
+		case WM_SHOWWINDOW:
 			if (wParam)
 			{
 				HWND hView = pVCon->GetView();
