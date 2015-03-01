@@ -1159,13 +1159,14 @@ void CStatus::DoStatusResize(const POINT& ptScr)
 	// Quake + Centered on the monitor
 	if (gpSet->isQuakeStyle && gpSet->wndCascade)
 	{
-		iPosXdiff = - iWidthDiff / 2;
+		iPosXdiff = - iWidthDiff;
+		iWidthDiff *= 2;
 	}
 
 	int nWidth = (mrc_StatusResizeRect.right - mrc_StatusResizeRect.left) + iWidthDiff;
 	int nHeight = (mrc_StatusResizeRect.bottom - mrc_StatusResizeRect.top) + iHeightDiff;
 
-	RECT rcNew = {mrc_StatusResizeRect.left + iPosXdiff, mrc_StatusResizeRect.top, mrc_StatusResizeRect.left + nWidth, mrc_StatusResizeRect.top + nHeight};
+	RECT rcNew = {mrc_StatusResizeRect.left + iPosXdiff, mrc_StatusResizeRect.top, mrc_StatusResizeRect.left + iPosXdiff + nWidth, mrc_StatusResizeRect.top + nHeight};
 
 	#ifdef _DEBUG
 	RECT rcBefore = {}; GetWindowRect(ghWnd, &rcBefore);
