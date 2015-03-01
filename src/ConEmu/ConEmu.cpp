@@ -5194,7 +5194,7 @@ VOID CConEmuMain::WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD anEvent, HWND 
 	#endif
 
 	#ifdef _DEBUG
-	switch(anEvent)
+	switch (anEvent)
 	{
 		case EVENT_CONSOLE_START_APPLICATION:
 		{
@@ -5296,7 +5296,6 @@ VOID CConEmuMain::WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD anEvent, HWND 
 	StartStopType sst = (anEvent == EVENT_CONSOLE_START_APPLICATION) ? sst_App16Start : sst_App16Stop;
 
 	CVConGroup::OnDosAppStartStop(hwnd, sst, idChild);
-
 }
 #endif
 
