@@ -5184,6 +5184,7 @@ void CConEmuMain::UpdateProgress()
 }
 
 #ifndef _WIN64
+/* static */
 VOID CConEmuMain::WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD anEvent, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime)
 {
 	_ASSERTE(hwnd!=NULL);
@@ -5786,7 +5787,8 @@ void CConEmuMain::StopRightClickingPaint()
 	}
 }
 
-// Смысл этого окошка в том, чтобы отрисоваться поверх возможного PanelView
+/* static */
+/* Смысл этого окошка в том, чтобы отрисоваться поверх возможного PanelView */
 LRESULT CConEmuMain::RightClickingProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 {
 	switch (messg)
@@ -8310,6 +8312,7 @@ bool CConEmuMain::InQuakeAnimation()
 	return (mn_QuakePercent != 0);
 }
 
+/* static */
 BOOL CConEmuMain::EnumWindowsOverQuake(HWND hWnd, LPARAM lpData)
 {
 	DWORD nStyle = GetWindowLong(hWnd, GWL_STYLE);
@@ -12817,6 +12820,7 @@ void CConEmuMain::LogMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	LogString(szLog);
 }
 
+/* static */
 LRESULT CConEmuMain::MainWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 {
 	LRESULT result = 0;
@@ -12888,7 +12892,8 @@ bool CConEmuMain::isSkipNcMessage(const MSG& Msg)
 	return false;
 }
 
-// Window procedure for ghWndWork
+/* static */
+/* Window procedure for ghWndWork */
 LRESULT CConEmuMain::WorkWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	LRESULT result = 0;
