@@ -53,6 +53,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRCONS(s) //DEBUGSTR(s)
 #define DEBUGSTRPAINTGAPS(s) //DEBUGSTR(s)
 #define DEBUGSTRPAINTVCON(s) //DEBUGSTR(s)
+#define DEBUGSTRSIZE(s) DEBUGSTR(s)
 
 //#define SCROLLHIDE_TIMER_ID 1726
 #define TIMER_SCROLL_SHOW         3201
@@ -938,13 +939,17 @@ LRESULT CConEmuChild::BackWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM l
 #ifdef _DEBUG
 		case WM_WINDOWPOSCHANGING:
 			{
-				WINDOWPOS* pwp = (WINDOWPOS*)lParam;
+				WINDOWPOS* p = (WINDOWPOS*)lParam;
+				wchar_t szDbg[128]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"WM_WINDOWPOSCHANGED.BACK ({%i,%i}x{%i,%i} Flags=0x%08X)\n", p->x, p->y, p->cx, p->cy, p->flags);
+				DEBUGSTRSIZE(szDbg);
 				result = DefWindowProc(hWnd, messg, wParam, lParam);
 			}
 			return result;
 		case WM_WINDOWPOSCHANGED:
 			{
-				WINDOWPOS* pwp = (WINDOWPOS*)lParam;
+				WINDOWPOS* p = (WINDOWPOS*)lParam;
+				wchar_t szDbg[128]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"WM_WINDOWPOSCHANGED.BACK ({%i,%i}x{%i,%i} Flags=0x%08X)\n", p->x, p->y, p->cx, p->cy, p->flags);
+				DEBUGSTRSIZE(szDbg);
 				result = DefWindowProc(hWnd, messg, wParam, lParam);
 			}
 			break;
