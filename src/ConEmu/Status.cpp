@@ -1176,7 +1176,7 @@ void CStatus::DoStatusResize(const POINT& ptScr)
 
 	SetWindowPos(ghWnd, NULL,
 		rcNew.left, rcNew.top, rcNew.right - rcNew.left, rcNew.bottom - rcNew.top,
-		SWP_NOZORDER|SWP_NOCOPYBITS);
+		SWP_NOZORDER);
 
 	#ifdef _DEBUG
 	RECT rcAfter = {}; GetWindowRect(ghWnd, &rcAfter);
