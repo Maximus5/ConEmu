@@ -621,6 +621,7 @@ LRESULT CTabPanelBase::OnMouseToolbar(UINT uMsg, int nCmdId, int x, int y)
 
 bool CTabPanelBase::OnSetCursorRebar()
 {
+	TODO("Сделать выход из Maximized/Fullscreen драгом за таббар");
 	if (gpSet->isTabs
 		&& !(gpSet->isQuakeStyle && gpSet->wndCascade) // Quake можно двигать по горизонтали
 		&& (gpConEmu->GetWindowMode() == wmNormal)
