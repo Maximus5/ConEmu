@@ -3284,7 +3284,7 @@ CVirtualConsole* CConEmuMain::CreateConGroup(LPCWSTR apszScript, bool abForceAsA
 				}
 
 				wchar_t* pszErr = lstrmerge(L"Unsupported switch in task command:\r\n", pszLine);
-				int iBtn = MsgBox(pszErr, MB_ICONSTOP|MB_OKCANCEL, gpConEmu->GetDefaultTitle());
+				int iBtn = MsgBox(pszErr, MB_ICONSTOP|MB_OKCANCEL, GetDefaultTitle());
 				SafeFree(pszErr);
 				*pszLine = 0;
 				if (iBtn == IDCANCEL)
@@ -3605,8 +3605,8 @@ void CConEmuMain::SetWindowIcon(LPCWSTR asNewIcon)
 
 	HICON hOldClassIcon = hClassIcon, hOldClassIconSm = hClassIconSm;
 	hClassIcon = NULL; hClassIconSm = NULL;
-	SafeFree(gpConEmu->mps_IconPath);
-	gpConEmu->mps_IconPath = ExpandEnvStr(asNewIcon);
+	SafeFree(mps_IconPath);
+	mps_IconPath = ExpandEnvStr(asNewIcon);
 
 	LoadIcons();
 
@@ -3632,16 +3632,16 @@ void CConEmuMain::LoadIcons()
 	wchar_t *lpszExt = NULL;
 	wchar_t szIconPath[MAX_PATH+1] = {};
 
-	if (gpConEmu->mps_IconPath)
+	if (mps_IconPath)
 	{
-		if (FileExists(gpConEmu->mps_IconPath))
+		if (FileExists(mps_IconPath))
 		{
-			wcscpy_c(szIconPath, gpConEmu->mps_IconPath);
+			wcscpy_c(szIconPath, mps_IconPath);
 		}
 		else
 		{
 			wchar_t* pszFilePart;
-			DWORD n = SearchPath(NULL, gpConEmu->mps_IconPath, NULL, countof(szIconPath), szIconPath, &pszFilePart);
+			DWORD n = SearchPath(NULL, mps_IconPath, NULL, countof(szIconPath), szIconPath, &pszFilePart);
 			if (!n || (n >= countof(szIconPath)))
 				szIconPath[0] = 0;
 		}
@@ -3842,7 +3842,7 @@ void CConEmuMain::PostDisplayRConError(CRealConsole* apRCon, wchar_t* pszErrMsg)
 	//CVConGuard VCon(apRCon->VCon());
 	//SendMessage(ghWnd, mn_MsgDisplayRConError, (WPARAM)apRCon, (LPARAM)pszErrMsg);
 
-	if (RELEASEDEBUGTEST(gpConEmu->mb_FindBugMode,true))
+	if (RELEASEDEBUGTEST(mb_FindBugMode,true))
 	{
 		//_ASSERTE(FALSE && "Strange 'ConEmuCInput not found' error");
 		RaiseTestException();
@@ -4318,9 +4318,9 @@ void CConEmuMain::OnWmHotkey(WPARAM wParam)
 	else
 	{
 		//// vmMinimizeRestore -> Win+C
-		//else if (gpConEmu->mn_MinRestoreRegistered && (int)wParam == gpConEmu->mn_MinRestoreRegistered)
+		//else if (mn_MinRestoreRegistered && (int)wParam == mn_MinRestoreRegistered)
 		//{
-		//	gpConEmu->DoMinimizeRestore();
+		//	DoMinimizeRestore();
 		//}
 
 		for (size_t i = 0; i < countof(gRegisteredHotKeys); i++)
@@ -4816,7 +4816,7 @@ bool CConEmuMain::StartDebugActiveProcess()
 	CRealConsole* pRCon = (CVConGroup::GetActiveVCon(&VCon) >= 0) ? VCon->RCon() : NULL;
 	if (!pRCon)
 	{
-		MsgBox(L"There is no active VCon", MB_ICONSTOP, gpConEmu->GetDefaultTitle());
+		MsgBox(L"There is no active VCon", MB_ICONSTOP, GetDefaultTitle());
 		return false;
 	}
 
@@ -4830,7 +4830,7 @@ bool CConEmuMain::StartDebugActiveProcess()
 	}
 	if (!dwPID)
 	{
-		MsgBox(L"There is no active process", MB_ICONSTOP, gpConEmu->GetDefaultTitle());
+		MsgBox(L"There is no active process", MB_ICONSTOP, GetDefaultTitle());
 		return false;
 	}
 
@@ -4844,7 +4844,7 @@ bool CConEmuMain::MemoryDumpActiveProcess(bool abProcessTree /*= false*/)
 	CRealConsole* pRCon = (CVConGroup::GetActiveVCon(&VCon) >= 0) ? VCon->RCon() : NULL;
 	if (!pRCon)
 	{
-		MsgBox(L"There is no active VCon", MB_ICONSTOP, gpConEmu->GetDefaultTitle());
+		MsgBox(L"There is no active VCon", MB_ICONSTOP, GetDefaultTitle());
 		return false;
 	}
 
@@ -4853,7 +4853,7 @@ bool CConEmuMain::MemoryDumpActiveProcess(bool abProcessTree /*= false*/)
 		dwPID = pRCon->GetServerPID();
 	if (!dwPID)
 	{
-		MsgBox(L"There is no active process", MB_ICONSTOP, gpConEmu->GetDefaultTitle());
+		MsgBox(L"There is no active process", MB_ICONSTOP, GetDefaultTitle());
 		return false;
 	}
 
@@ -5154,7 +5154,7 @@ void CConEmuMain::UpdateProgress()
 			_wsprintf(MultiTitle+nCurTtlLen, SKIPLEN(countof(MultiTitle)-nCurTtlLen) L"{*%i%%} ", mn_Progress);
 	}
 
-	if (gpSetCls->IsMulti() && (gpSet->isNumberInCaption || !gpConEmu->mp_TabBar->IsTabsShown()))
+	if (gpSetCls->IsMulti() && (gpSet->isNumberInCaption || !mp_TabBar->IsTabsShown()))
 	{
 		int nCur = 1, nCount = 0;
 
@@ -5387,7 +5387,7 @@ void CConEmuMain::UpdateWindowChild(CVirtualConsole* apVCon)
 //	}
 //	else
 //	{
-//		BOOL lbUseCaption = gpSet->isTabsInCaption && gpConEmu->mp_TabBar->IsActive();
+//		BOOL lbUseCaption = gpSet->isTabsInCaption && mp_TabBar->IsActive();
 //
 //		switch(messg)
 //		{
@@ -5395,7 +5395,7 @@ void CConEmuMain::UpdateWindowChild(CVirtualConsole* apVCon)
 //			{
 //				lRc = DefWindowProc(hWnd, messg, wParam, lParam);
 //
-//				if (gpSet->isHideCaptionAlways() && !gpConEmu->mp_TabBar->IsShown() && lRc == HTTOP)
+//				if (gpSet->isHideCaptionAlways() && !mp_TabBar->IsShown() && lRc == HTTOP)
 //					lRc = HTCAPTION;
 //
 //				break;
@@ -5403,7 +5403,7 @@ void CConEmuMain::UpdateWindowChild(CVirtualConsole* apVCon)
 //			case WM_NCPAINT:
 //			{
 //				if (lbUseCaption)
-//					lRc = gpConEmu->OnNcPaint((HRGN)wParam);
+//					lRc = OnNcPaint((HRGN)wParam);
 //				else
 //					lRc = DefWindowProc(hWnd, messg, wParam, lParam);
 //
@@ -5881,7 +5881,7 @@ void CConEmuMain::InvalidateGaps()
 //{
 //	mb_SkipSyncSize = true;
 //
-//	gpConEmu->mp_TabBar->RePaint();
+//	mp_TabBar->RePaint();
 //	//m_Back->RePaint();
 //	HDC hDc = GetDC(ghWnd);
 //	//mp_ VActive->PaintVCon(hDc); // если mp_ VActive==NULL - будет просто выполнена заливка фоном.
@@ -5970,9 +5970,9 @@ HICON CConEmuMain::GetCurrentVConIcon()
 bool CConEmuMain::IsActiveConAdmin()
 {
 	CVConGuard VCon;
-	bool bAdmin = (gpConEmu->GetActiveVCon(&VCon) >= 0)
+	bool bAdmin = (GetActiveVCon(&VCon) >= 0)
 		? VCon->RCon()->isAdministrator()
-		: gpConEmu->mb_IsUacAdmin;
+		: mb_IsUacAdmin;
 	return bAdmin;
 }
 
@@ -6443,7 +6443,7 @@ void CConEmuMain::PostScClose()
 // returns true if gpConEmu->Destroy() was called
 bool CConEmuMain::OnScClose()
 {
-	gpConEmu->LogString(L"CVConGroup::OnScClose()");
+	LogString(L"CVConGroup::OnScClose()");
 
 	bool lbMsgConfirmed = false;
 
@@ -6575,7 +6575,7 @@ LRESULT CConEmuMain::OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate)
 	}
 
 	// Причесать размеры напоследок
-	gpConEmu->ReSize(TRUE);
+	ReSize(TRUE);
 
 	//CreateCon();
 	// Запустить серверную нить
@@ -6854,7 +6854,7 @@ wchar_t* CConEmuMain::LoadConsoleBatch_Task(LPCWSTR asSource, RConStartArgs* pAr
 				if (pszDefCmd && *pszDefCmd)
 					args.pszSpecialCmd = lstrdup(pszDefCmd);
 
-				int nCreateRc = gpConEmu->RecreateDlg(&args);
+				int nCreateRc = RecreateDlg(&args);
 
 				if ((nCreateRc == IDC_START) && args.pszSpecialCmd && *args.pszSpecialCmd)
 				{
@@ -6901,7 +6901,7 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 
 	if (!abReceived)
 	{
-		//if (gpConEmu->WindowMode == wmFullScreen || gpConEmu->WindowMode == wmMaximized) {
+		//if (WindowMode == wmFullScreen || WindowMode == wmMaximized) {
 #ifdef MSGLOGGER
 		WINDOWPLACEMENT wpl; memset(&wpl, 0, sizeof(wpl)); wpl.length = sizeof(wpl);
 		GetWindowPlacement(ghWnd, &wpl);
@@ -7037,7 +7037,7 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 			if (mb_PortableRegExist)
 			{
 				// Если реестр обломался, или юзер сказал "не продолжать"
-				if (!gpConEmu->PreparePortableReg())
+				if (!PreparePortableReg())
 				{
 					Destroy();
 					return;
@@ -7195,7 +7195,7 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 		{
 			_ASSERTE(!WindowStartNoClose || (WindowStartTsa && WindowStartNoClose));
 
-			if (WindowStartTsa || gpConEmu->ForceMinimizeToTray)
+			if (WindowStartTsa || ForceMinimizeToTray)
 			{
 				Icon.HideWindowToTray();
 
@@ -7228,7 +7228,7 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 		UNREFERENCED_PARAMETER(n);
 		OnActivateSplitChanged();
 
-		if (gpSet->isTaskbarShield && gpConEmu->mb_IsUacAdmin && gpSet->isWindowOnTaskBar())
+		if (gpSet->isTaskbarShield && mb_IsUacAdmin && gpSet->isWindowOnTaskBar())
 		{
 			// Bug in Win7? Sometimes after startup "As Admin" shield was not appeared.
 			SetKillTimer(true, TIMER_ADMSHIELD_ID, TIMER_ADMSHIELD_ELAPSE);
@@ -7466,7 +7466,7 @@ void CConEmuMain::CheckAllowAutoChildFocus(DWORD nDeactivatedTID)
 	CVConGuard VCon;
 	HWND hChild = NULL;
 
-	if (gpConEmu->GetActiveVCon(&VCon) >= 0
+	if (GetActiveVCon(&VCon) >= 0
 		&& ((hChild = VCon->GuiWnd()) != NULL))
 	{
 		if (nDeactivatedTID == (DWORD)-1)
@@ -7485,7 +7485,7 @@ void CConEmuMain::CheckAllowAutoChildFocus(DWORD nDeactivatedTID)
 			if ((nDeactivatedTID != nChildTID)
 				&& (nDeactivatedTID != nConEmuTID)) // это на всякий случай...
 			{
-				// gpConEmu->isMeForeground(true, true) -- уже дает неправильный результат, ConEmu считается активным
+				// isMeForeground(true, true) -- уже дает неправильный результат, ConEmu считается активным
 				bAllowAutoChildFocus = true;
 			}
 		}
@@ -8055,7 +8055,7 @@ void CConEmuMain::OnHideCaption()
 		{
 			wchar_t szInfo[128];
 			_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"Changing main window 0x%08X style to 0x%08X", (DWORD)ghWnd, nNewStyle);
-			gpConEmu->LogString(szInfo);
+			LogString(szInfo);
 		}
 
 		mb_IgnoreSizeChange = true;
@@ -8161,7 +8161,7 @@ void CConEmuMain::OnHideCaption()
 
 void CConEmuMain::OnGlobalSettingsChanged()
 {
-	gpConEmu->UpdateGuiInfoMapping();
+	UpdateGuiInfoMapping();
 
 	// и отослать в серверы
 	CVConGroup::OnUpdateGuiInfoMapping(&m_GuiInfo);
@@ -8251,7 +8251,7 @@ void CConEmuMain::OnTaskbarButtonCreated()
 	}
 	else
 	{
-		if (gpConEmu->mb_IsUacAdmin)
+		if (mb_IsUacAdmin)
 		{
 			// Bug in Win7? Sometimes after startup "As Admin" shield was not appeared.
 			SetKillTimer(true, TIMER_ADMSHIELD_ID, TIMER_ADMSHIELD_ELAPSE);
@@ -8705,7 +8705,7 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 
 				if (gpSetCls->isAdvLogging >= 4)
 				{
-					gpConEmu->LogMessage(msg1.hwnd, msg1.message, msg1.wParam, msg1.lParam);
+					LogMessage(msg1.hwnd, msg1.message, msg1.wParam, msg1.lParam);
 				}
 
 				#ifdef _DEBUG
@@ -9503,7 +9503,7 @@ LRESULT CConEmuMain::OnLangChange(UINT messg, WPARAM wParam, LPARAM lParam)
 	//{
 	//  if (pipe.Execute(CMD_LANGCHANGE, &lParam, sizeof(LPARAM)))
 	//  {
-	//      //gpConEmu->DebugStep(_T("ConEmu: Switching language (1 sec)"));
+	//      //DebugStep(_T("ConEmu: Switching language (1 sec)"));
 	//      // Подождем немножко, проверим что плагин живой
 	//      /*DWORD dwWait = WaitForSingleObject(pipe.hEventAlive, CONEMUALIVETIMEOUT);
 	//      if (dwWait == WAIT_OBJECT_0)*/
@@ -10289,10 +10289,10 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	if (gpSetCls->FontWidth()==0 || gpSetCls->FontHeight()==0)
 		return 0;
 
-	if ((messg==WM_LBUTTONUP || messg==WM_MOUSEMOVE) && (gpConEmu->mouse.state & MOUSE_SIZING_DBLCKL))
+	if ((messg==WM_LBUTTONUP || messg==WM_MOUSEMOVE) && (mouse.state & MOUSE_SIZING_DBLCKL))
 	{
 		if (messg==WM_LBUTTONUP)
-			gpConEmu->mouse.state &= ~MOUSE_SIZING_DBLCKL;
+			mouse.state &= ~MOUSE_SIZING_DBLCKL;
 
 		return 0; //2009-04-22 После DblCkl по заголовку в консоль мог проваливаться LBUTTONUP
 	}
@@ -10327,8 +10327,8 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	// все, что кроме - считаем кликами и они должны попадать в dcRect
 	if (messg != WM_MOUSEMOVE && messg != WM_MOUSEWHEEL && messg != WM_MOUSEHWHEEL)
 	{
-		if (gpConEmu->mouse.state & MOUSE_SIZING_DBLCKL)
-			gpConEmu->mouse.state &= ~MOUSE_SIZING_DBLCKL;
+		if (mouse.state & MOUSE_SIZING_DBLCKL)
+			mouse.state &= ~MOUSE_SIZING_DBLCKL;
 
 		if (hView == NULL /*!PtInRect(&dcRect, ptCur)*/)
 		{
@@ -10366,18 +10366,18 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	//* клик в консоль, чтобы при активации ConEmu случайно не задеть
 	//* (закрыть или отменить) висящий в FAR диалог
 	//* ****************************
-	if ((gpConEmu->mouse.nSkipEvents[0] && gpConEmu->mouse.nSkipEvents[0] == messg)
-	        || (gpConEmu->mouse.nSkipEvents[1]
-	            && (gpConEmu->mouse.nSkipEvents[1] == messg || messg == WM_MOUSEMOVE)))
+	if ((mouse.nSkipEvents[0] && mouse.nSkipEvents[0] == messg)
+	        || (mouse.nSkipEvents[1]
+	            && (mouse.nSkipEvents[1] == messg || messg == WM_MOUSEMOVE)))
 	{
-		if (gpConEmu->mouse.nSkipEvents[0] == messg)
+		if (mouse.nSkipEvents[0] == messg)
 		{
-			gpConEmu->mouse.nSkipEvents[0] = 0;
+			mouse.nSkipEvents[0] = 0;
 			DEBUGSTRMOUSE(L"Skipping Mouse down\n");
 		}
-		else if (gpConEmu->mouse.nSkipEvents[1] == messg)
+		else if (mouse.nSkipEvents[1] == messg)
 		{
-			gpConEmu->mouse.nSkipEvents[1] = 0;
+			mouse.nSkipEvents[1] = 0;
 			DEBUGSTRMOUSE(L"Skipping Mouse up\n");
 		}
 
@@ -11441,7 +11441,7 @@ void CConEmuMain::CheckFocus(LPCWSTR asFrom)
 
 void CConEmuMain::CheckUpdates(BOOL abShowMessages)
 {
-	if (!gpConEmu->isUpdateAllowed())
+	if (!isUpdateAllowed())
 		return;
 
 	_ASSERTE(isMainThread());
@@ -11531,7 +11531,7 @@ enum DragPanelBorder CConEmuMain::CheckPanelDrag(COORD crCon)
 		return DPB_NONE;
 
 	// Если удерживается модификатор запуска выделения текста
-	if (gpConEmu->isSelectionModifierPressed(false))
+	if (isSelectionModifierPressed(false))
 		return DPB_NONE;
 
 	//CONSOLE_CURSOR_INFO ci;
@@ -11938,7 +11938,7 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
 
 	//if (mb_InTimer) return 0; // чтобы ненароком два раза в одно событие не вошел (хотя не должен)
 	mb_InTimer = TRUE;
-	//result = gpConEmu->OnTimer(wParam, lParam);
+	//result = OnTimer(wParam, lParam);
 
 #ifdef DEBUGSHOWFOCUS
 	HWND hFocus = GetFocus();
@@ -12239,7 +12239,7 @@ void CConEmuMain::OnTimer_Main(CVirtualConsole* pVCon)
 	// Если был изменен файл background
 	if (gpSetCls->PollBackgroundFile())
 	{
-		gpConEmu->Update(true);
+		Update(true);
 	}
 	#endif
 
@@ -12672,7 +12672,7 @@ void CConEmuMain::OnAllVConClosed()
 		}
 		else if (gpSet->isMultiHideOnClose == 2)
 		{
-			if (!gpConEmu->isIconic())
+			if (!isIconic())
 				SendMessage(ghWnd, WM_SYSCOMMAND, SC_MINIMIZE, 0);
 		}
 
