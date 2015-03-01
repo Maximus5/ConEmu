@@ -277,6 +277,7 @@ const wchar_t gsFocusQuakeCheckTimer[] = L"TIMER_QUAKE_AUTOHIDE_ID";
 #pragma warning(disable: 4355)
 CConEmuMain::CConEmuMain()
 	: CConEmuSize(this)
+	, CConEmuStart(this)
 {
 	#pragma warning(default: 4355)
 	gpConEmu = this; // сразу!
@@ -567,7 +568,7 @@ CConEmuMain::CConEmuMain()
 	if (isMingwMode() && isMSysStartup())
 	{
 		// This is example. Will be replaced with full path.
-		gpSetCls->SetDefaultCmd(NULL /*L"sh.exe --login -i"*/);
+		SetDefaultCmd(NULL /*L"sh.exe --login -i"*/);
 	}
 
 	if (!isMingwMode())
@@ -1794,7 +1795,7 @@ BOOL CConEmuMain::CreateMainWindow()
 	//style |= WS_VISIBLE;
 	// cRect.right - cRect.left - 4, cRect.bottom - cRect.top - 4; -- все равно это было не правильно
 	WARNING("На ноуте вылезает за пределы рабочей области");
-	ghWnd = CreateWindowEx(styleEx, gsClassNameParent, gpSetCls->GetCmd(), style,
+	ghWnd = CreateWindowEx(styleEx, gsClassNameParent, GetCmd(), style,
 	                       this->wndX, this->wndY, nWidth, nHeight, hParent, NULL, (HINSTANCE)g_hInstance, NULL);
 
 	if (!ghWnd)
@@ -4452,7 +4453,7 @@ void CConEmuMain::RecreateAction(RecreateActionParm aRecreate, BOOL abConfirm, R
 			if (!args.pszSpecialCmd || !*args.pszSpecialCmd)
 			{
 				_ASSERTE((args.pszSpecialCmd && *args.pszSpecialCmd) || !abConfirm);
-				args.pszSpecialCmd = lstrdup(gpSetCls->GetCmd());
+				args.pszSpecialCmd = lstrdup(GetCmd());
 			}
 
 			if (!args.pszSpecialCmd || !*args.pszSpecialCmd)
@@ -4519,7 +4520,7 @@ int CConEmuMain::RecreateDlg(RConStartArgs* apArg)
 BOOL CConEmuMain::RunSingleInstance(HWND hConEmuWnd /*= NULL*/, LPCWSTR apszCmd /*= NULL*/)
 {
 	BOOL lbAccepted = FALSE;
-	LPCWSTR lpszCmd = apszCmd ? apszCmd : gpSetCls->GetCmd();
+	LPCWSTR lpszCmd = apszCmd ? apszCmd : GetCmd();
 
 	if ((lpszCmd && *lpszCmd) || (gpSetCls->SingleInstanceShowHide != sih_None))
 	{
@@ -6845,7 +6846,7 @@ wchar_t* CConEmuMain::LoadConsoleBatch_Task(LPCWSTR asSource, RConStartArgs* pAr
 
 			if (nBtn == IDYES)
 			{
-				LPCWSTR pszDefCmd = gpSetCls->GetDefaultCmd();
+				LPCWSTR pszDefCmd = GetDefaultCmd();
 
 				RConStartArgs args;
 				args.aRecreate = (mn_StartupFinished == ss_Started) ? cra_EditTab : cra_CreateTab;
@@ -7045,7 +7046,7 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 
 			BOOL lbCreated = FALSE;
 			bool isScript = false;
-			LPCWSTR pszCmd = gpSetCls->GetCmd(&isScript);
+			LPCWSTR pszCmd = GetCmd(&isScript);
 			_ASSERTE(pszCmd!=NULL && *pszCmd!=0); // Must be!
 
 			if (isScript)
@@ -7073,7 +7074,7 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 				SafeFree(pszDataW);
 
 				// сбросить команду, которая пришла из "/cmdlist" - загрузить настройку
-				gpSetCls->ResetCmdArg();
+				ResetCmdArg();
 
 				lbCreated = TRUE;
 			}
@@ -7118,7 +7119,7 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 
 				if (args.Detached != crb_On)
 				{
-					args.pszSpecialCmd = lstrdup(gpSetCls->GetCmd());
+					args.pszSpecialCmd = lstrdup(GetCmd());
 
 					if (!CreateCon(&args, TRUE))
 					{

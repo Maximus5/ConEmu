@@ -35,6 +35,7 @@ SRCS = \
 		ConEmuCtrl.cpp     \
 		ConEmuPipe.cpp     \
 		ConEmuSize.cpp     \
+		ConEmuStart.cpp    \
 		ConfirmDlg.cpp     \
 		CustomFonts.cpp    \
 		DefaultTerm.cpp    \

@@ -94,6 +94,7 @@ struct ConsoleInfoArg
 #include "GestureEngine.h"
 #include "ConEmuCtrl.h"
 #include "ConEmuSize.h"
+#include "ConEmuStart.h"
 #include "../common/MArray.h"
 #include "../common/MMap.h"
 #include "../common/MFileMapping.h"
@@ -133,6 +134,7 @@ class CConEmuMain
 	, public CGestures
 	, public CConEmuCtrl
 	, public CConEmuSize
+	, public CConEmuStart
 {
 	public:
 		wchar_t ms_ConEmuDefTitle[32];          // Название с версией, например "ConEmu 110117 (32)"

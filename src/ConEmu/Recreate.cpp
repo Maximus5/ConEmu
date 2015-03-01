@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2014 Maximus5
+Copyright (c) 2009-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -870,7 +870,7 @@ void CRecreateDlg::InitVars()
 	if (pszCmd && *pszCmd)
 		mpsz_CurCmd = lstrdup(pszCmd);
 
-	LPCWSTR pszSystem = gpSetCls->GetCmd();
+	LPCWSTR pszSystem = gpConEmu->GetCmd();
 	if (pszSystem && *pszSystem && (lstrcmpi(pszSystem, AutoStartTaskName) != 0))
 		mpsz_SysCmd = lstrdup(pszSystem);
 

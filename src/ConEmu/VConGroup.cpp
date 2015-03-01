@@ -4086,7 +4086,7 @@ CVirtualConsole* CVConGroup::CreateCon(RConStartArgs *args, bool abAllowScripts 
 		_ASSERTE(args->pszSpecialCmd==NULL);
 
 		// Сюда мы попадаем, если юзер жмет Win+W (создание без подтверждения)
-		LPCWSTR pszSysCmd = gpSetCls->GetCmd(NULL, !abAllowScripts);
+		LPCWSTR pszSysCmd = gpConEmu->GetCmd(NULL, !abAllowScripts);
 		LPCWSTR pszSysDir = NULL;
 		CVConGuard vActive;
 		// Не задано?
@@ -4113,7 +4113,7 @@ CVirtualConsole* CVConGroup::CreateCon(RConStartArgs *args, bool abAllowScripts 
 			// Хм? Команда по умолчанию тогда.
 			if (!pszSysCmd || !*pszSysCmd)
 			{
-				pszSysCmd = gpSetCls->GetDefaultCmd();
+				pszSysCmd = gpConEmu->GetDefaultCmd();
 			}
 		}
 

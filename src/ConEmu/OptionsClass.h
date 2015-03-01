@@ -123,7 +123,6 @@ class CSettings
 		SingleInstanceArgEnum SingleInstanceArg; // по умолчанию = sgl_Default, но для Quake переключается на = sgl_Enabled
 		bool IsSingleInstanceArg();
 		SingleInstanceShowHideType SingleInstanceShowHide; // по умолчанию = sih_None
-		void ResetCmdArg();
 		bool ResetCmdHistory(HWND hParent = NULL);
 		void SetSaveCmdHistory(bool bSaveHistory);
 
@@ -182,26 +181,6 @@ class CSettings
 			int     CellHeight;
 		};
 		MArray<FontHeightInfo> m_FontHeights;
-
-	private:
-		/* 'Default' command line (if nor Registry, nor /cmd specified) */
-		wchar_t  szDefCmd[MAX_PATH+32];
-		CEStr ms_DefNewTaskName;
-		/* Current command line, specified with "/cmd" or "/cmdlist" switches */
-		wchar_t* pszCurCmd;
-		bool isCurCmdList; // а это если был указан /cmdlist
-
-	public:
-		/* Store/retrieve command line, specified with "/cmd" or "/cmdlist" switches */
-		void SetCurCmd(wchar_t*& pszNewCmd, bool bIsCmdList);
-		LPCTSTR GetCurCmd(bool *pIsCmdList = NULL);
-		/* "Active" command line */
-		LPCTSTR GetCmd(bool *pIsCmdList = NULL, bool bNoTask = false);
-		/* "Default" command line "far/cmd", based on /BufferHeight switch */
-		LPCTSTR GetDefaultCmd();
-		void    SetDefaultCmd(LPCWSTR asCmd);
-		/* OUR(!) startup info */
-		STARTUPINFOW ourSI;
 
 	protected:
 

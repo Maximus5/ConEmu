@@ -42,6 +42,7 @@ $(INTDIR)\ConEmuCheck.obj \
 $(INTDIR)\ConEmuCtrl.obj \
 $(INTDIR)\ConEmuPipe.obj \
 $(INTDIR)\ConEmuSize.obj \
+$(INTDIR)\ConEmuStart.obj \
 $(INTDIR)\ConfirmDlg.obj \
 $(INTDIR)\CustomFonts.obj \
 $(INTDIR)\DefaultTerm.obj \
@@ -310,6 +311,8 @@ $(INTDIR)\ConEmuCtrl.obj: ConEmuCtrl.cpp ConEmuCtrl.h FindDlg.h
 $(INTDIR)\ConEmuPipe.obj: ConEmuPipe.cpp
 
 $(INTDIR)\ConEmuSize.obj: ConEmuSize.cpp ConEmuSize.h
+
+$(INTDIR)\ConEmuStart.obj: ConEmuStart.cpp ConEmuStart.h
 
 $(INTDIR)\ConfirmDlg.obj: ConfirmDlg.cpp ConfirmDlg.h
 

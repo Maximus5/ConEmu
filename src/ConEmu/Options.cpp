@@ -3962,7 +3962,7 @@ void Settings::HistoryAdd(LPCWSTR asCmd)
 		return;
 	// Issue 1564: Add tasks to history too
 
-	LPCWSTR psCurCmd = gpSetCls->GetCurCmd();
+	LPCWSTR psCurCmd = gpConEmu->GetCurCmd();
 	if (psCurCmd && lstrcmp(psCurCmd, asCmd)==0)
 		return;
 	if (pHistory && pHistory->Compare(0, asCmd)==0)

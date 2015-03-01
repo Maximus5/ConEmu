@@ -927,6 +927,7 @@
     <ClCompile Include="ConEmuCtrl.cpp" />
     <ClCompile Include="ConEmuPipe.cpp" />
     <ClCompile Include="ConEmuSize.cpp" />
+    <ClCompile Include="ConEmuStart.cpp" />
     <ClCompile Include="ConfirmDlg.cpp" />
     <ClCompile Include="CustomFonts.cpp" />
     <ClCompile Include="DefaultTerm.cpp" />
@@ -1044,6 +1045,7 @@
     <ClInclude Include="ConEmuCtrl.h" />
     <ClInclude Include="ConEmuPipe.h" />
     <ClInclude Include="ConEmuSize.h" />
+    <ClInclude Include="ConEmuStart.h" />
     <ClInclude Include="ConfirmDlg.h" />
     <ClInclude Include="CustomFonts.h" />
     <ClInclude Include="DefaultTerm.h" />
