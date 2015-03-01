@@ -2838,7 +2838,7 @@ LRESULT CConEmuSize::OnSizing(WPARAM wParam, LPARAM lParam)
 			restrictRect.left = pRect->right - calcRect.right;
 			restrictRect.top = pRect->bottom - calcRect.bottom;
 
-			switch(wParam)
+			switch (wParam)
 			{
 				case WMSZ_RIGHT:
 				case WMSZ_BOTTOM:
