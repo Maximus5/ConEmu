@@ -246,6 +246,8 @@ protected:
 		//
 		BOOL  ScrollRegion;
 		SHORT ScrollStart, ScrollEnd; // 1-based line indexes (relative to VISIBLE area, these are not absolute buffer coords)
+		//
+		BOOL  ShowRawAnsi; // \e[3h display ANSI control characters (TRUE), \e[3l process ANSI (FALSE, normal mode)
 	}; // gDisplayOpt;
 	// Bad thing again...
 	static DisplayOpt gDisplayOpt;

@@ -352,6 +352,8 @@ CEAnsi::DisplayCursorPos CEAnsi::gDisplayCursor = {};
 //	//
 //	BOOL  ScrollRegion;
 //	SHORT ScrollStart, ScrollEnd; // 1-based line indexes
+//	//
+//	BOOL  ShowRawAnsi; // \e[3h display ANSI control characters (TRUE), \e[3l process ANSI (FALSE, normal mode)
 //} gDisplayOpt;
 
 CEAnsi::DisplayOpt CEAnsi::gDisplayOpt = {};
@@ -2310,6 +2312,9 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 						StopVimTerm();
 					}
 				}
+				break;
+			case 3:
+				gDisplayOpt.ShowRawAnsi = (Code.Action == L'h');
 				break;
 			case 7:
 				//ESC [ ? 7 h
