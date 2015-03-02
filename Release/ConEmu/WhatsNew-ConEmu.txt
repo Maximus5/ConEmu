@@ -12,6 +12,21 @@ Votes and awards (vote for ConEmu, if you please)
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+2015.3.2
+[*] Show current tab icon as Windows 7 taskbar overlay icon.
+[*] Visible region lock (scrolling) was unexpectedly dropped sometimes.
+[*] Add all installed (and found) Far Manager installations while creating default tasks.
+[*] Issue 1920: Fix visual defect in window padding area during Quake style slide down animation.
+[*] Allow Quake window resizing and moving.
+[*] Fixed resize issues after Quake slide up/down.
+[*] Add to the TabMenu items ‘Split to right’ and ‘Split to bottom’.
+[*] Untick ‘Auto minimize to TSA’ when turning Quake mode off.
+[*] ToolBar buttons min/max/close were not properly shown/hidden on some options changing.
+[*] gh#57: Cannot restore prevoisly opened tabs if there was a task marked as ‘Default for new console’.
+[*] Consoles were not resized sometimes after Win+Left/Right (snap window to left/right monitor edge).
+[*] After restoring snapped window the snapped state was dropped (window was put to ‘Normal’ position).
+
+
 2015.2.24
 [*] One more correction of keyboard input processing.
 [*] Option ‘Treat font height as device units’ was not saved in new config.
