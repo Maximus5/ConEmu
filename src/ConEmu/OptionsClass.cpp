@@ -3737,7 +3737,9 @@ INT_PTR CSettings::pageOpProc_Integr(HWND hWnd2, UINT messg, WPARAM wParam, LPAR
 												if (*szArg != L'/')
 													continue;
 
-												if (lstrcmpi(szArg, L"/inside") == 0)
+												if ((lstrcmpi(szArg, L"/inside") == 0)
+													|| (lstrcmpi(szArg, L"/here") == 0)
+													)
 												{
 													// Nop
 												}
@@ -4194,7 +4196,7 @@ void CSettings::ShellIntegration(HWND hDlg, CSettings::ShellIntegrType iMode, bo
 				GetDlgItemText(hDlg, tHereShell, szShell, countof(szShell));
 				//_wsprintf(szIcon, SKIPLEN(countof(szIcon)) L"%s,0", gpConEmu->ms_ConEmuExe);
 				GetDlgItemText(hDlg, tHereIcon, szIcon, countof(szIcon));
-				RegisterShell(szName, NULL, SkipNonPrintable(szConfig), SkipNonPrintable(szShell), szIcon);
+				RegisterShell(szName, L"/here", SkipNonPrintable(szConfig), SkipNonPrintable(szShell), szIcon);
 			}
 			else if (*szName)
 			{

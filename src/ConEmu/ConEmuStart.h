@@ -57,6 +57,8 @@ public:
 public:
 	/* switch -detached in the ConEmu.exe arguments */
 	bool mb_StartDetached;
+	/* switch -here in the ConEmu.exe arguments (used with "ConEmu Here" feature) */
+	bool mb_ConEmuHere;
 
 public:
 	/* Store/retrieve command line, specified with "/cmd" or "/cmdlist" switches */

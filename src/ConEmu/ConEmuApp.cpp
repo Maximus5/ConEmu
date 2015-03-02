@@ -3901,6 +3901,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				{
 					gpConEmu->mb_StartDetached = true;
 				}
+				else if (!klstricmp(curCommand, _T("/here")))
+				{
+					gpConEmu->mb_ConEmuHere = true;
+					gpConEmu->StoreWorkDir();
+				}
 				else if (!klstricmp(curCommand, _T("/noupdate")))
 				{
 					gpConEmu->DisableAutoUpdate = true;
@@ -3941,6 +3946,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					bool bRunAsAdmin = isPressed(VK_SHIFT);
 					bool bSyncDir = false;
 					LPCWSTR pszSyncFmt = NULL;
+
+					gpConEmu->mb_ConEmuHere = true;
+					gpConEmu->StoreWorkDir();
 
 					if (curCommand[7] == _T('='))
 					{

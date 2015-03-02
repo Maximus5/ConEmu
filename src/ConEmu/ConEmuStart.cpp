@@ -43,6 +43,7 @@ CConEmuStart::CConEmuStart(CConEmuMain* pOwner)
 	_ASSERTE(mp_ConEmu!=NULL);
 
 	mb_StartDetached = false;
+	mb_ConEmuHere = false;
 	pszCurCmd = NULL; isCurCmdList = false;
 	SetDefaultCmd(L"far");
 
