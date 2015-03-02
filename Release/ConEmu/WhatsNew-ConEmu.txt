@@ -12,6 +12,26 @@ Votes and awards (vote for ConEmu, if you please)
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+2015.3.2b
+[*] Far Tasks. Show bitness x86/x64 in the task name.
+[*] Far Tasks. If only one Far installation found - just use {Far} as task name.
+[*] Far Tasks. Sort default Far tasks by version.
+[*] When dropping files in the Far Manager prompt, show ‘+ Enter’ menu items first.
+[*] TCC tasks were not created by default.
+[*] Issue 1923: ‘ConEmu here’ was forced to "%USERPROFILE%" from certain folders.
+    If user starts ‘ConEmu here’ from "%ConEmuDir%", "%windir%" or "%windir%\system32"
+    ConEmu was switched to "%USERPROFILE%". That's because these folders may be used
+    if user starts ConEmu (or just cmd as DefTerm) from bare Win+R.
+    So, the switch "/here" was implemented, it's not shown in the Settings dialog.
+    User needs to re-register ‘ConEmu here’ existing commands.
+[*] Process ‘ConEmu[64].exe’ returns exit code of last terminated shell.
+[*] Switch "/QuitOnClose" forces ConEmu window closing with last tab.
+
+
+2015.3.2a
+[*] Issue 1921: Regression: Fix a crash on last tab close (WinXP).
+
+
 2015.3.2
 [*] Show current tab icon as Windows 7 taskbar overlay icon.
 [*] Visible region lock (scrolling) was unexpectedly dropped sometimes.
