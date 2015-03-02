@@ -326,7 +326,7 @@ void CTaskBar::Taskbar_SetShield(bool abShield)
 
 void CTaskBar::Taskbar_SetOverlay(HICON ahIcon)
 {
-	HRESULT hr = mp_TaskBar3->SetOverlayIcon(ghWnd, ahIcon, NULL);
+	HRESULT hr = mp_TaskBar3 ? mp_TaskBar3->SetOverlayIcon(ghWnd, ahIcon, NULL) : E_FAIL;
 
 	_ASSERTE(hr==S_OK);
 	UNREFERENCED_PARAMETER(hr);
@@ -334,6 +334,9 @@ void CTaskBar::Taskbar_SetOverlay(HICON ahIcon)
 
 void CTaskBar::Taskbar_UpdateOverlay()
 {
+	if (!this || !mp_TaskBar3)
+		return;
+
 	if (!IsWindows7)
 		return;
 
