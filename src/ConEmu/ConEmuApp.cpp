@@ -4812,6 +4812,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_ABOVE_NORMAL);
 	MessageLoop();
 
+	iMainRc = gpConEmu->mn_ShellExitCode;
+
 done:
 	DEBUGSTRSTARTUP(L"Terminating");
 	ShutdownGuiStep(L"MessageLoop terminated");

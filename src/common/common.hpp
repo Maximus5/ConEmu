@@ -1647,6 +1647,7 @@ struct CESERVER_REQ_SRVSTARTSTOP
 	SrvStartStopType Started;
 	HWND2 hConWnd;
 	DWORD dwKeybLayout;
+	int nShellExitCode;
 };
 
 enum StartStopType

@@ -46,6 +46,7 @@ CConEmuStart::CConEmuStart(CConEmuMain* pOwner)
 	mb_ConEmuHere = false;
 	pszCurCmd = NULL; isCurCmdList = false;
 	SetDefaultCmd(L"far");
+	mn_ShellExitCode = STILL_ACTIVE;
 
 	ZeroStruct(ourSI);
 	ourSI.cb = sizeof(ourSI);

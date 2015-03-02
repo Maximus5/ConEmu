@@ -132,6 +132,7 @@ extern DWORD   gnAltServerPID; // PID сервера (инициализируе
 extern BOOL    gbLogProcess; // (pInfo->nLoggingType == glt_Processes)
 extern BOOL    gbWasBufferHeight;
 extern BOOL    gbNonGuiMode;
+extern DWORD   gnExitCode;
 extern HANDLE  ghExitQueryEvent; // выставляется когда в консоли не остается процессов
 extern int nExitQueryPlace, nExitPlaceStep, nExitPlaceThread;
 extern HANDLE  ghQuitEvent;      // когда мы в процессе закрытия (юзер уже нажал кнопку "Press to close console")

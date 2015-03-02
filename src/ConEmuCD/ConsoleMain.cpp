@@ -162,7 +162,7 @@ DWORD   gnAltServerPID = 0;
 BOOL    gbLogProcess = FALSE;
 BOOL    gbWasBufferHeight = FALSE;
 BOOL    gbNonGuiMode = FALSE;
-DWORD   gnExitCode = 0;
+DWORD   gnExitCode = STILL_ACTIVE;
 HANDLE  ghRootProcessFlag = NULL;
 HANDLE  ghExitQueryEvent = NULL; int nExitQueryPlace = 0, nExitPlaceStep = 0;
 #define EPS_WAITING4PROCESS  550

@@ -566,7 +566,7 @@ class CRealConsole
 		void CloseTab();
 		bool isConsoleClosing();
 		bool isConsoleReady();
-		void OnServerClosing(DWORD anSrvPID);
+		void OnServerClosing(DWORD anSrvPID, int* pnShellExitCode);
 		void Paste(CEPasteMode PasteMode = pm_Standard, LPCWSTR asText = NULL, bool abNoConfirm = false, bool abCygWin = false);
 		void LogString(LPCSTR asText, BOOL abShowTime = FALSE);
 		void LogString(LPCWSTR asText, BOOL abShowTime = FALSE);
@@ -782,6 +782,7 @@ class CRealConsole
 			DWORD  nRecieveTick;   // Tick, когда получено сообщение о закрытии
 			HANDLE hServerProcess; // Handle процесса сервера
 		} m_ServerClosing;
+		int mn_ShellExitCode;
 		//
 		MSection csPRC; //DWORD ncsTPRC;
 		MArray<ConProcess> m_Processes;

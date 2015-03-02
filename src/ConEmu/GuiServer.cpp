@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2014 Maximus5
+Copyright (c) 2009-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -491,8 +491,10 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 					pRCon = NULL;
 				}
 
+				gpConEmu->mn_ShellExitCode = pIn->SrvStartStop.nShellExitCode;
+
 				if (pRCon)
-					pRCon->OnServerClosing(pIn->hdr.nSrcPID);
+					pRCon->OnServerClosing(pIn->hdr.nSrcPID, &pIn->SrvStartStop.nShellExitCode);
 
 				//pIn->dwData[0] = 1;
 			}

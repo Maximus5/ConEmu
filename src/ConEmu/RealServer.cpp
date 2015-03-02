@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2014 Maximus5
+Copyright (c) 2009-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -255,7 +255,8 @@ CESERVER_REQ* CRealServer::cmdStartStop(LPVOID pInst, CESERVER_REQ* pIn, UINT nD
 		{
 			if (pIn->hdr.nSrcPID == mp_RCon->mn_MainSrv_PID) // должно приходить из главного сервера
 			{
-				mp_RCon->OnServerClosing(mp_RCon->mn_MainSrv_PID);
+				_ASSERTE(FALSE && "CECMD_SRVSTARTSTOP is used instead");
+				mp_RCon->OnServerClosing(mp_RCon->mn_MainSrv_PID, NULL);
 			}
 			else
 			{

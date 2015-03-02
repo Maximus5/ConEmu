@@ -53,6 +53,8 @@ private:
 public:
 	/* OUR(!) startup info */
 	STARTUPINFOW ourSI;
+	/* Last Shell exit code */
+	int mn_ShellExitCode;
 
 public:
 	/* switch -detached in the ConEmu.exe arguments */

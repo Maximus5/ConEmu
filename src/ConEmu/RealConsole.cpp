@@ -333,6 +333,7 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 	mb_DebugLocked = FALSE;
 	#endif
 
+	mn_ShellExitCode = STILL_ACTIVE;
 	ZeroStruct(m_ServerClosing);
 	ZeroStruct(m_Args);
 	ms_RootProcessName[0] = 0;
@@ -3719,6 +3720,7 @@ void CRealConsole::ResetVarsOnStart()
 	//Drop flag after Restart console
 	mb_InPostCloseMacro = false;
 	//mb_WasStartDetached = FALSE; -- не сбрасывать, на него смотрит и isDetached()
+	mn_ShellExitCode = STILL_ACTIVE;
 	ZeroStruct(m_ServerClosing);
 	mn_StartTick = mn_RunTime = 0;
 	mn_DeactivateTick = 0;
@@ -6576,7 +6578,7 @@ HWND CRealConsole::OnServerStarted(const HWND ahConWnd, const DWORD anServerPID,
 //}
 
 
-void CRealConsole::OnServerClosing(DWORD anSrvPID)
+void CRealConsole::OnServerClosing(DWORD anSrvPID, int* pnShellExitCode)
 {
 	if (anSrvPID == mn_MainSrv_PID && mh_MainSrv)
 	{
@@ -6594,6 +6596,11 @@ void CRealConsole::OnServerClosing(DWORD anSrvPID)
 	else
 	{
 		_ASSERTE(anSrvPID == mn_MainSrv_PID);
+	}
+	// Shell exit code
+	if (pnShellExitCode)
+	{
+		mn_ShellExitCode = *pnShellExitCode;
 	}
 }
 

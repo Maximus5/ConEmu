@@ -1530,6 +1530,7 @@ void ServerDone(int aiRc, bool abReportShutdown /*= false*/)
 		{
 			pIn->SrvStartStop.Started = srv_Stopped/*101*/;
 			pIn->SrvStartStop.hConWnd = ghConWnd;
+			pIn->SrvStartStop.nShellExitCode = gnExitCode;
 			// Здесь dwKeybLayout уже не интересен
 
 			// Послать в GUI уведомление, что сервер закрывается
