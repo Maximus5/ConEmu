@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2012 Maximus5
+Copyright (c) 2009-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -961,14 +961,14 @@ HRESULT CDragDrop::DropNames(HDROP hDrop, int iQuantity, BOOL abActive)
 			idEditEnter,
 			idViewEnter,
 		};
-		AppendMenu(hPopup, MF_STRING | MF_ENABLED, idNamesOnly, L"Paste &no prefix");
-		AppendMenu(hPopup, MF_STRING | ((iQuantity == 1) ? MF_ENABLED : MF_GRAYED), idGoto,      L"&Goto prefix");
-		AppendMenu(hPopup, MF_STRING | ((iQuantity == 1) ? MF_ENABLED : MF_GRAYED), idEdit,      L"&Edit prefix");
-		AppendMenu(hPopup, MF_STRING | ((iQuantity == 1) ? MF_ENABLED : MF_GRAYED), idView,      L"&View prefix");
-		AppendMenu(hPopup, MF_MENUBREAK | MF_STRING | MF_ENABLED, idNamesEnter, L"Pa&ste + Enter");
+		AppendMenu(hPopup, MF_STRING | MF_ENABLED, idNamesEnter, L"Pa&ste + Enter");
 		AppendMenu(hPopup, MF_STRING | ((iQuantity == 1) ? MF_ENABLED : MF_GRAYED), idGotoEnter,      L"Go&to + Enter");
 		AppendMenu(hPopup, MF_STRING | ((iQuantity == 1) ? MF_ENABLED : MF_GRAYED), idEditEnter,      L"E&dit + Enter");
 		AppendMenu(hPopup, MF_STRING | ((iQuantity == 1) ? MF_ENABLED : MF_GRAYED), idViewEnter,      L"V&iew + Enter");
+		AppendMenu(hPopup, MF_MENUBREAK | MF_STRING | MF_ENABLED, idNamesOnly, L"Paste &no prefix");
+		AppendMenu(hPopup, MF_STRING | ((iQuantity == 1) ? MF_ENABLED : MF_GRAYED), idGoto,      L"&Goto prefix");
+		AppendMenu(hPopup, MF_STRING | ((iQuantity == 1) ? MF_ENABLED : MF_GRAYED), idEdit,      L"&Edit prefix");
+		AppendMenu(hPopup, MF_STRING | ((iQuantity == 1) ? MF_ENABLED : MF_GRAYED), idView,      L"&View prefix");
 
 		POINT ptCur = {}; ::GetCursorPos(&ptCur);
 
