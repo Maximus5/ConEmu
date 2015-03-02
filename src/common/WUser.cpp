@@ -251,14 +251,26 @@ void FindComspec(ConEmuComspec* pOpt, bool bCmdAlso /*= true*/)
 		BOOL bWin64 = IsWindows64();
 		wchar_t szPath[MAX_PATH+1];
 
-		// Если tcc.exe положили в папку с ConEmuC.exe берем его?
-		DWORD nExpand = ExpandEnvironmentStrings(L"%ConEmuBaseDir%\\tcc.exe", szPath, countof(szPath));
-		if (nExpand && (nExpand < countof(szPath)))
+		// If tcc.exe can be found near to ConEmu location
+		LPCWSTR ppszPredefined[] = {
+			L"%ConEmuBaseDir%\\tcc.exe",
+			L"%ConEmuDir%\\tcc.exe",
+			// Sort of PortableApps locations
+			L"%ConEmuDir%\\..\\tcc\\tcc.exe",
+			L"%ConEmuDir%\\..\\..\\tcc\\tcc.exe",
+			// End of predefined list
+			NULL};
+		for (INT_PTR i = 0; ppszPredefined[i]; i++)
 		{
-			if (FileExists(szPath))
+			DWORD nExpand = ExpandEnvironmentStrings(ppszPredefined[i], szPath, countof(szPath));
+			if (nExpand && (nExpand < countof(szPath)))
 			{
-				wcscpy_c(pOpt->Comspec32, szPath);
-				wcscpy_c(pOpt->Comspec64, szPath);
+				if (FileExists(szPath))
+				{
+					wcscpy_c(pOpt->Comspec32, szPath);
+					wcscpy_c(pOpt->Comspec64, szPath);
+					break;
+				}
 			}
 		}
 
