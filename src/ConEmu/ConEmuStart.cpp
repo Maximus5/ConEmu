@@ -44,6 +44,7 @@ CConEmuStart::CConEmuStart(CConEmuMain* pOwner)
 
 	mb_StartDetached = false;
 	mb_ConEmuHere = false;
+	mb_ForceQuitOnClose = false;
 	pszCurCmd = NULL; isCurCmdList = false;
 	SetDefaultCmd(L"far");
 	mn_ShellExitCode = STILL_ACTIVE;

@@ -12618,7 +12618,7 @@ bool CConEmuMain::isDestroyOnClose(bool ScCloseOnEmpty /*= false*/)
 	{
 		bNeedDestroy = true; // Иначе облом при обновлении
 	}
-	else if (!gpSet->isMultiLeaveOnClose)
+	else if (!gpSet->isMultiLeaveOnClose || mb_ForceQuitOnClose)
 	{
 		bNeedDestroy = true;
 	}

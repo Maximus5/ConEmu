@@ -4197,6 +4197,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				{
 					ExitAfterActionPrm = true;
 				}
+				else if (!klstricmp(curCommand, _T("/QuitOnClose")))
+				{
+					gpConEmu->mb_ForceQuitOnClose = true;
+				}
 				else if (!klstricmp(curCommand, _T("/Title")) && i + 1 < params)
 				{
 					bool bOk = false; TCHAR* pszTitle = NULL;
