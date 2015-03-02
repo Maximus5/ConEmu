@@ -34,6 +34,7 @@ static void SetDefaultFarVersion(FarVersion& gFarVersion)
 	gFarVersion.dwVerMajor = 2;
 	gFarVersion.dwVerMinor = 0;
 	gFarVersion.dwBuild = 995; // "default"
+	gFarVersion.dwBits = WIN3264TEST(32,64);
 }
 
 static bool LoadFarVersion(LPCWSTR FarPath, FarVersion& gFarVersion, wchar_t (&ErrText)[512])
@@ -127,6 +128,8 @@ static bool LoadFarVersion(FarVersion& gFarVersion, wchar_t (&ErrText)[512])
 	wchar_t FarPath[MAX_PATH+1];
 
 	ErrText[0] = 0;
+
+	gFarVersion.dwBits = WIN3264TEST(32,64);
 
 	if (GetModuleFileName(0,FarPath,MAX_PATH))
 	{

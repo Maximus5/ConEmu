@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2014 Maximus5
+Copyright (c) 2009-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -253,6 +253,7 @@ void CPluginAnsi::SetStartupInfoPtr(void *aInfo)
 			gFarVersion.dwBuild = HIWORD(nFarVer);
 			gFarVersion.dwVerMajor = (HIBYTE(LOWORD(nFarVer)));
 			gFarVersion.dwVerMinor = (LOBYTE(LOWORD(nFarVer)));
+			_ASSERTE(gFarVersion.dwBits == WIN3264TEST(32,64));
 		}
 		else
 		{

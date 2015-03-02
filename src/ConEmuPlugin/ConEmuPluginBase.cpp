@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2014 Maximus5
+Copyright (c) 2009-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -338,6 +338,7 @@ bool CPluginBase::LoadFarVersion()
 		gFarVersion.dwVerMajor = 2;
 		gFarVersion.dwVerMinor = 0;
 		gFarVersion.dwBuild = MIN_FAR2_BUILD;
+		_ASSERTE(gFarVersion.dwBits == WIN3264TEST(32,64));
 	}
 
 	return lbRc;

@@ -30,7 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _COMMON_HEADER_HPP_
 
 // Interface version
-#define CESERVER_REQ_VER    150
+#define CESERVER_REQ_VER    151
 
 // Max tabs/panes count
 #define MAX_CONSOLE_COUNT 30
@@ -972,6 +972,8 @@ struct FarVersion
 		};
 	};
 	DWORD dwBuild;
+
+	DWORD dwBits; // 32/64
 
 	// Macro language changed to Lua
 	bool IsFarLua() const
