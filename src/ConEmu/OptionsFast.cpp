@@ -920,6 +920,7 @@ protected:
 			}
 			if (!bAlready)
 			{
+				wcscpy_c(FI.szTaskName, L"Far");
 				FI.szFullPath = lstrdup(szPath);
 				if (FI.szFullPath)
 				{
@@ -1016,7 +1017,8 @@ public:
 		}
 
 		// Done, create task names
-		if (Installed.size() > 0)
+		// If there is only one found instance - just use name {Far}
+		if (Installed.size() > 1)
 		{
 			UINT idx = 0;
 			LPCWSTR pszPrefix = (Installed.size() > 1) ? szFarPrefix : L"";
