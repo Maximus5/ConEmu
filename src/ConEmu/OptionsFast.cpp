@@ -37,6 +37,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmu.h"
 #include "ConEmuApp.h"
 #include "Update.h"
+#include "../common/execute.h"
 #include "../common/FarVersion.h"
 #include "../common/WFiles.h"
 #include "../common/WRegistry.h"
@@ -905,6 +906,9 @@ protected:
 
 		if (LoadFarVersion(szPath, FI.Ver, ErrText))
 		{
+			DWORD ImageSubsystem = 0, FileAttrs = 0;
+			GetImageSubsystem(szPath, ImageSubsystem, FI.Ver.dwBits, FileAttrs);
+
 			// Far instance found, add it to Installed array?
 			bool bAlready = false;
 			for (INT_PTR a = 0; a < Installed.size(); a++)
@@ -1025,7 +1029,7 @@ public:
 				for (i = 0; i < Installed.size(); i++)
 				{
 					FarInfo& FI = Installed[i];
-					wchar_t szPlatform[6] = L""; //TODO: x86/x64
+					wchar_t szPlatform[6]; wcscpy_c(szPlatform, (FI.Ver.dwBits == 64) ? L" x64" : (FI.Ver.dwBits == 32) ? L" x86" : L"");
 
 					switch (u)
 					{
