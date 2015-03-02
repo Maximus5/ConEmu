@@ -1023,6 +1023,26 @@ public:
 			UINT idx = 0;
 			LPCWSTR pszPrefix = (Installed.size() > 1) ? szFarPrefix : L"";
 
+			struct impl {
+				static int SortRoutine(FarInfo &e1, FarInfo &e2)
+				{
+					if (e1.Ver.dwVer < e2.Ver.dwVer)
+						return 1;
+					if (e1.Ver.dwVer > e2.Ver.dwVer)
+						return -1;
+					if (e1.Ver.dwBuild < e2.Ver.dwBuild)
+						return 1;
+					if (e1.Ver.dwBuild > e2.Ver.dwBuild)
+						return -1;
+					if (e1.Ver.dwBits < e2.Ver.dwBits)
+						return 1;
+					if (e1.Ver.dwBits > e2.Ver.dwBits)
+						return -1;
+					return 0;
+				};
+			};
+			Installed.sort(impl::SortRoutine);
+
 			// All task names MUST be unique
 			for (int u = 0; u <= 2; u++)
 			{
