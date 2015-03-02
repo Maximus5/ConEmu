@@ -160,6 +160,7 @@ public:
 
 	static LPCWSTR FormatTileMode(ConEmuWindowCommand Tile, wchar_t* pchBuf, size_t cchBufMax);
 	bool SetTileMode(ConEmuWindowCommand Tile);
+	RECT GetTileRect(ConEmuWindowCommand Tile, const MONITORINFO& mi);
 	ConEmuWindowMode GetWindowMode();
 	ConEmuWindowMode GetChangeFromWindowMode();
 	bool IsWindowModeChanging();

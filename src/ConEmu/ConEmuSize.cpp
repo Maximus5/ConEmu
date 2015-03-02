@@ -3323,43 +3323,21 @@ bool CConEmuSize::SetTileMode(ConEmuWindowCommand Tile)
 			bChange = false;
 		}
 
-
 		switch (Tile)
 		{
 		case cwc_Current:
 			// Вернуться из Tile-режима в нормальный
 			rcNewWnd = GetDefaultRect();
-			//bChange = true;
+			//bChange = true; -- already processed in SetNormalWindowSize
 			break;
 
 		case cwc_TileLeft:
-			rcNewWnd.left = mi.rcWork.left;
-			rcNewWnd.top = mi.rcWork.top;
-			rcNewWnd.bottom = mi.rcWork.bottom;
-			rcNewWnd.right = (mi.rcWork.left + mi.rcWork.right) >> 1;
-			bChange = true;
-			break;
-
 		case cwc_TileRight:
-			rcNewWnd.right = mi.rcWork.right;
-			rcNewWnd.top = mi.rcWork.top;
-			rcNewWnd.bottom = mi.rcWork.bottom;
-			rcNewWnd.left = (mi.rcWork.left + mi.rcWork.right) >> 1;
-			bChange = true;
-			break;
-
 		case cwc_TileHeight:
-			rcNewWnd = GetDefaultRect();
-			rcNewWnd.top = mi.rcWork.top;
-			rcNewWnd.bottom = mi.rcWork.bottom;
+		case cwc_TileWidth:
+			rcNewWnd = GetTileRect(Tile, mi);
 			bChange = true;
 			break;
-
-		case cwc_TileWidth:
-			rcNewWnd = GetDefaultRect();
-			rcNewWnd.left = mi.rcWork.left;
-			rcNewWnd.right = mi.rcWork.right;
-			bChange = true;
 		}
 
 		if (bChange)
@@ -3396,6 +3374,51 @@ bool CConEmuSize::SetTileMode(ConEmuWindowCommand Tile)
 	}
 
 	return true;
+}
+
+RECT CConEmuSize::GetTileRect(ConEmuWindowCommand Tile, const MONITORINFO& mi)
+{
+	RECT rcNewWnd;
+
+	switch (Tile)
+	{
+	case cwc_Current:
+		// Вернуться из Tile-режима в нормальный
+		rcNewWnd = GetDefaultRect();
+		break;
+
+	case cwc_TileLeft:
+		rcNewWnd.left = mi.rcWork.left;
+		rcNewWnd.top = mi.rcWork.top;
+		rcNewWnd.bottom = mi.rcWork.bottom;
+		rcNewWnd.right = (mi.rcWork.left + mi.rcWork.right) >> 1;
+		break;
+
+	case cwc_TileRight:
+		rcNewWnd.right = mi.rcWork.right;
+		rcNewWnd.top = mi.rcWork.top;
+		rcNewWnd.bottom = mi.rcWork.bottom;
+		rcNewWnd.left = (mi.rcWork.left + mi.rcWork.right) >> 1;
+		break;
+
+	case cwc_TileHeight:
+		rcNewWnd = GetDefaultRect();
+		rcNewWnd.top = mi.rcWork.top;
+		rcNewWnd.bottom = mi.rcWork.bottom;
+		break;
+
+	case cwc_TileWidth:
+		rcNewWnd = GetDefaultRect();
+		rcNewWnd.left = mi.rcWork.left;
+		rcNewWnd.right = mi.rcWork.right;
+		break;
+
+	default:
+		_ASSERTE(FALSE && "Must not get here");
+		rcNewWnd = GetDefaultRect();
+	}
+
+	return rcNewWnd;
 }
 
 void CConEmuSize::LogTileModeChange(LPCWSTR asPrefix, ConEmuWindowCommand Tile, bool bChanged, const RECT& rcSet, LPRECT prcAfter, HMONITOR hMon)
