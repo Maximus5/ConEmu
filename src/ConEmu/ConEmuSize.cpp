@@ -1531,7 +1531,13 @@ RECT CConEmuSize::GetVirtualScreenRect(bool abFullScreen)
 RECT CConEmuSize::GetIdealRect()
 {
 	RECT rcIdeal = mr_Ideal.rcIdeal;
-	if (mp_ConEmu->mp_Inside || (rcIdeal.right <= rcIdeal.left) || (rcIdeal.bottom <= rcIdeal.top))
+	if (!mp_ConEmu->mp_Inside && (m_TileMode == cwc_TileLeft || m_TileMode == cwc_TileRight || m_TileMode == cwc_TileHeight || m_TileMode == cwc_TileWidth))
+	{
+		MONITORINFO mi = {};
+		GetNearestMonitor(&mi);
+		rcIdeal = GetTileRect(m_TileMode, mi);
+	}
+	else if (mp_ConEmu->mp_Inside || (rcIdeal.right <= rcIdeal.left) || (rcIdeal.bottom <= rcIdeal.top))
 	{
 		rcIdeal = GetDefaultRect();
 	}
@@ -3942,6 +3948,7 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 			DEBUGLOGFILE("SetWindowMode(wmNormal)\n");
 			//RECT consoleSize;
 
+			bool bTiled = (m_TileMode == cwc_TileLeft || m_TileMode == cwc_TileRight || m_TileMode == cwc_TileHeight || m_TileMode == cwc_TileWidth);
 			RECT rcIdeal = (gpSet->isQuakeStyle) ? GetDefaultRect() : GetIdealRect();
 			AutoSizeFont(rcIdeal, CER_MAIN);
 			// Расчитать размер по оптимальному WindowRect
@@ -3999,24 +4006,29 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 			//if (mb_MaximizedHideCaption)
 			//	mb_MaximizedHideCaption = FALSE;
 
-			RECT rcNew = GetDefaultRect();
-			if (mp_ConEmu->mp_Inside == NULL)
+			RECT rcNew = rcIdeal;
+			if (!bTiled)
 			{
-				//130508 - интересует только ширина-высота
-				//rcNew = CalcRect(CER_MAIN, consoleSize, CER_CONSOLE_ALL);
-				rcNew.right -= rcNew.left; rcNew.bottom -= rcNew.top;
-				rcNew.top = rcNew.left = 0;
+				rcNew = GetDefaultRect();
 
-				if ((mrc_StoredNormalRect.right > mrc_StoredNormalRect.left) && (mrc_StoredNormalRect.bottom > mrc_StoredNormalRect.top))
+				if (mp_ConEmu->mp_Inside == NULL)
 				{
-					rcNew.left+=mrc_StoredNormalRect.left; rcNew.top+=mrc_StoredNormalRect.top;
-					rcNew.right+=mrc_StoredNormalRect.left; rcNew.bottom+=mrc_StoredNormalRect.top;
-				}
-				else
-				{
-					MONITORINFO mi; GetNearestMonitor(&mi);
-					rcNew.left+=mi.rcWork.left; rcNew.top+=mi.rcWork.top;
-					rcNew.right+=mi.rcWork.left; rcNew.bottom+=mi.rcWork.top;
+					//130508 - интересует только ширина-высота
+					//rcNew = CalcRect(CER_MAIN, consoleSize, CER_CONSOLE_ALL);
+					rcNew.right -= rcNew.left; rcNew.bottom -= rcNew.top;
+					rcNew.top = rcNew.left = 0;
+
+					if ((mrc_StoredNormalRect.right > mrc_StoredNormalRect.left) && (mrc_StoredNormalRect.bottom > mrc_StoredNormalRect.top))
+					{
+						rcNew.left+=mrc_StoredNormalRect.left; rcNew.top+=mrc_StoredNormalRect.top;
+						rcNew.right+=mrc_StoredNormalRect.left; rcNew.bottom+=mrc_StoredNormalRect.top;
+					}
+					else
+					{
+						MONITORINFO mi; GetNearestMonitor(&mi);
+						rcNew.left+=mi.rcWork.left; rcNew.top+=mi.rcWork.top;
+						rcNew.right+=mi.rcWork.left; rcNew.bottom+=mi.rcWork.top;
+					}
 				}
 			}
 
