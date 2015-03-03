@@ -12,6 +12,10 @@ Votes and awards (vote for ConEmu, if you please)
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+2015.3.3
+[*] Issue 1925: Single character between two gray blocks was obscured (ex. OEM ‘B1 C1 B1’).
+
+
 2015.3.2b
 [*] Far Tasks. Show bitness x86/x64 in the task name.
 [*] Far Tasks. If only one Far installation found - just use {Far} as task name.
