@@ -3788,7 +3788,7 @@ void CVirtualConsole::UpdateText()
 						wchar_t ch;
 						ch = c; // Графическая отрисовка прокрутки и прогресса
 
-						while (j2 < end && ConAttrLine[j2] == attr && ch == ConCharLine[j2+1])
+						while (j2 < end && ConAttrLine[j2] == attr && ch == ConCharLine[j2])
 						{
 							ConCharXLine[j2] = (j2 ? ConCharXLine[j2-1] : 0)+CharWidth(ch);
 							j2++;
