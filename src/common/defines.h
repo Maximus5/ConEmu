@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2013 Maximus5
+Copyright (c) 2009-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -124,6 +124,8 @@ WARNING("WIN64 was not defined");
 #define ZeroStruct(s) memset(&(s), 0, sizeof(s))
 
 #define SafeCloseHandle(h) { if ((h) && (h)!=INVALID_HANDLE_VALUE) { HANDLE hh = (h); (h) = NULL; if (hh!=INVALID_HANDLE_VALUE) CloseHandle(hh); } }
+#define SafeRelease(p) if ((p)!=NULL) { (p)->Release(); (p)=NULL; }
+#define SafeDeleteObject(h) if ((h)!=NULL) { DeleteObject((h)); (h)=NULL; }
 
 #define ScopedObject_Cat2(n,i) n ## i
 #define ScopedObject_Cat1(n,i) ScopedObject_Cat2(n,i)
