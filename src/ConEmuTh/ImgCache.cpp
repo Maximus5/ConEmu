@@ -28,6 +28,8 @@ class MFileLog;
 extern MFileLog* gpLogLoad;
 extern MFileLog* gpLogPaint;
 
+#ifdef _DEBUG
+#undef SafeRelease
 template <typename T>
 inline void SafeRelease(T *&p)
 {
@@ -37,6 +39,7 @@ inline void SafeRelease(T *&p)
 		p = NULL;
 	}
 }
+#endif
 
 #define SAFEDELETEOBJECT(o) if ((o)!=NULL) { DeleteObject(o); (o)=NULL; }
 #define SAFEDELETEDC(d) if ((d)!=NULL) { DeleteDC(d); (d)=NULL; }
