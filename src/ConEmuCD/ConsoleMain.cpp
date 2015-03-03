@@ -162,7 +162,7 @@ DWORD   gnAltServerPID = 0;
 BOOL    gbLogProcess = FALSE;
 BOOL    gbWasBufferHeight = FALSE;
 BOOL    gbNonGuiMode = FALSE;
-DWORD   gnExitCode = STILL_ACTIVE;
+DWORD   gnExitCode = 0;
 HANDLE  ghRootProcessFlag = NULL;
 HANDLE  ghExitQueryEvent = NULL; int nExitQueryPlace = 0, nExitPlaceStep = 0;
 #define EPS_WAITING4PROCESS  550
@@ -1063,13 +1063,18 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 	// По идее, при вызове дебаггера ParseCommandLine сразу должна послать на выход.
 	_ASSERTE(!(gpSrv->DbgInfo.bDebuggerActive || gpSrv->DbgInfo.bDebugProcess || gpSrv->DbgInfo.bDebugProcessTree))
 
-#ifdef _DEBUG
+
 	if (gnRunMode == RM_SERVER)
 	{
+		// Until the root process is not terminated - set to STILL_ACTIVE
+		gnExitCode = STILL_ACTIVE;
+
+		#ifdef _DEBUG
 		// отладка для Wine
-#ifdef USE_PIPE_DEBUG_BOXES
+		#ifdef USE_PIPE_DEBUG_BOXES
 		gbPipeDebugBoxes = true;
-#endif
+		#endif
+
 		if (gbIsWine)
 		{
 			wchar_t szMsg[128];
@@ -1079,8 +1084,8 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 			_wprintf(GetCommandLineW());
 			_wprintf(L"\r\n");
 		}
+		#endif
 	}
-#endif
 
 	_ASSERTE(!gpSrv->hRootProcessGui || (((DWORD)gpSrv->hRootProcessGui)!=0xCCCCCCCC && IsWindow(gpSrv->hRootProcessGui)));
 
