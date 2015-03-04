@@ -184,7 +184,7 @@ bool CTaskBar::Taskbar_GhostSnapshootRequired()
 
 HRESULT CTaskBar::Taskbar_RegisterTab(HWND hBtn, BOOL abSetActive)
 {
-	HRESULT hr;
+	HRESULT hr, hr1;
 
 	// mp_TaskBar1 may be NULL if NO task bar is created (e.g. 'explorer.exe' is closed)
 	_ASSERTE(mp_TaskBar1!=NULL || FindWindowEx(NULL, NULL, L"Shell_TrayWnd", NULL)==NULL);
@@ -193,7 +193,7 @@ HRESULT CTaskBar::Taskbar_RegisterTab(HWND hBtn, BOOL abSetActive)
 	if (mp_TaskBar3)
 	{
 		hr = mp_TaskBar3->RegisterTab(hBtn, ghWnd);
-		hr = mp_TaskBar3->SetTabOrder(hBtn, 0);
+		hr1 = mp_TaskBar3->SetTabOrder(hBtn, 0);
 	}
 	else if (mp_TaskBar1)
 	{
@@ -207,12 +207,12 @@ HRESULT CTaskBar::Taskbar_RegisterTab(HWND hBtn, BOOL abSetActive)
 
 	if (SUCCEEDED(hr) && abSetActive)
 	{
-		hr = Taskbar_SetActiveTab(hBtn);
+		hr1 = Taskbar_SetActiveTab(hBtn);
 	}
 
 	if (mp_TaskBar4)
 	{
-		hr = mp_TaskBar4->SetTabProperties(hBtn, STPF_NONE/*STPF_USEAPPTHUMBNAILWHENACTIVE|STPF_USEAPPPEEKWHENACTIVE*/);
+		hr1 = mp_TaskBar4->SetTabProperties(hBtn, STPF_NONE/*STPF_USEAPPTHUMBNAILWHENACTIVE|STPF_USEAPPPEEKWHENACTIVE*/);
 	}
 
 	return hr;
