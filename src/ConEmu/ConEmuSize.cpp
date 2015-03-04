@@ -4960,14 +4960,14 @@ void CConEmuSize::UpdateWindowRgn(int anX/*=-1*/, int anY/*=-1*/, int anWndWidth
 	UNREFERENCED_PARAMETER(bRc);
 }
 
-bool CConEmuSize::ShowWindow(int anCmdShow, DWORD nAnimationMS /*= (DWORD)-1*/)
+bool CConEmuSize::ShowWindow(int anCmdShow, DWORD nAnimationMS /*= ANIMATION_MS_DEFAULT*/)
 {
 	if (mb_LockShowWindow)
 	{
 		return false;
 	}
 
-	if (nAnimationMS == (DWORD)-1)
+	if (nAnimationMS == ANIMATION_MS_DEFAULT)
 	{
 		nAnimationMS = (((int)gpSet->nQuakeAnimation) >= 0) ? gpSet->nQuakeAnimation : QUAKEANIMATION_DEF;
 	}
