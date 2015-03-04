@@ -48,6 +48,7 @@ CTaskBarGhost::CTaskBarGhost(CVirtualConsole* apVCon)
 	mp_VCon = apVCon;
 
 	mh_Ghost = NULL;
+	mb_TaskbarRegistered = false;
 	memset(&m_TabSize, 0, sizeof(m_TabSize));
 	mh_Snap = NULL;
 	mn_LastUpdate = 0;
@@ -72,7 +73,11 @@ CTaskBarGhost::~CTaskBarGhost()
 	}
 	if (mh_Ghost && IsWindow(mh_Ghost))
 	{
-		//_ASSERTE(mh_Ghost==NULL);
+		if (mb_TaskbarRegistered)
+		{
+			mb_TaskbarRegistered = false;
+			gpConEmu->Taskbar_UnregisterTab(mh_Ghost);
+		}
 		DestroyWindow(mh_Ghost);
 	}
 
@@ -532,7 +537,10 @@ LPCWSTR CTaskBarGhost::CheckTitle(BOOL abSkipValidation /*= FALSE*/)
 
 void CTaskBarGhost::ActivateTaskbar()
 {
-	gpConEmu->Taskbar_SetActiveTab(mh_Ghost);
+	if (mb_TaskbarRegistered)
+	{
+		gpConEmu->Taskbar_SetActiveTab(mh_Ghost);
+	}
 #if 0
 	// -- смена родителя (owner) на WinXP не срабатывает
 	if (!IsWindows7)
@@ -591,7 +599,8 @@ LRESULT CTaskBarGhost::OnCreate()
 	if (IsWindows7)
 	{
 		// Tell the taskbar about this tab window
-		gpConEmu->Taskbar_RegisterTab(mh_Ghost, mp_VCon->isActive(false));
+		HRESULT hr = gpConEmu->Taskbar_RegisterTab(mh_Ghost, mp_VCon->isActive(false));
+		mb_TaskbarRegistered = SUCCEEDED(hr);
 	}
 
 	#if 0
@@ -654,7 +663,10 @@ LRESULT CTaskBarGhost::OnActivate(WPARAM wParam, LPARAM lParam)
 		apiSetForegroundWindow(ghWnd);
 
 		// Update taskbar
-		hr = gpConEmu->Taskbar_SetActiveTab(mh_Ghost);
+		if (mb_TaskbarRegistered)
+		{
+			hr = gpConEmu->Taskbar_SetActiveTab(mh_Ghost);
+		}
 		//hr = gpConEmu->DwmInvalidateIconicBitmaps(mh_Ghost); -- need?
 
 		// Activate tab.
@@ -892,8 +904,9 @@ LRESULT CTaskBarGhost::OnDestroy()
 	}
 	#endif
 
-	if (IsWindows7)
+	if (mb_TaskbarRegistered)
 	{
+		mb_TaskbarRegistered = false;
 		gpConEmu->Taskbar_UnregisterTab(mh_Ghost);
 	}
 

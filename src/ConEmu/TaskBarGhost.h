@@ -35,6 +35,7 @@ class CTaskBarGhost
 protected:
 	static ATOM mh_Class;
 	HWND mh_Ghost;
+	bool mb_TaskbarRegistered;
 	struct {
 		POINT VConSize;   // то, что было раньше в самом m_TabSize(cx/cy)
 		POINT BitmapSize; // размер сформированной превьюшки
