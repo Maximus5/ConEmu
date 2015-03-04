@@ -332,7 +332,7 @@ bool CToolImg::CreateButtonField(LPCWSTR szImgRes, COLORREF clrBackground, Butto
 	{
 		nErrCode = GetLastError();
 		#ifdef _DEBUG
-		HRSRC hFind = FindResource(g_hInstance, szImgRes, MAKEINTRESOURCE(RT_BITMAP));
+		HRSRC hFind = FindResource(g_hInstance, szImgRes, RT_BITMAP);
 		HGLOBAL hLoad = hFind ? LoadResource(g_hInstance, hFind) : NULL;
 		DWORD nSize = hFind ? SizeofResource(g_hInstance, hFind) : NULL;
 		BITMAPINFO* ptr = hLoad ? (BITMAPINFO*)LockResource(hLoad) : NULL;

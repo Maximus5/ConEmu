@@ -257,7 +257,7 @@ bool CDynDialog::LoadTemplate()
 	DWORD_PTR data;
 	DWORD nErr = 0;
 
-	hsrc = FindResource(g_hInstance, MAKEINTRESOURCE(mn_DlgId), MAKEINTRESOURCE(RT_DIALOG));
+	hsrc = FindResource(g_hInstance, MAKEINTRESOURCE(mn_DlgId), RT_DIALOG);
 	if (!hsrc)
 	{
 		nErr = GetLastError();
