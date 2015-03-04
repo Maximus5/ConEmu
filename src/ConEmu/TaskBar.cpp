@@ -210,7 +210,7 @@ HRESULT CTaskBar::Taskbar_RegisterTab(HWND hBtn, BOOL abSetActive)
 		hr1 = Taskbar_SetActiveTab(hBtn);
 	}
 
-	if (mp_TaskBar4)
+	if (SUCCEEDED(hr) && mp_TaskBar4)
 	{
 		hr1 = mp_TaskBar4->SetTabProperties(hBtn, STPF_NONE/*STPF_USEAPPTHUMBNAILWHENACTIVE|STPF_USEAPPPEEKWHENACTIVE*/);
 	}
