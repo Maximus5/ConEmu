@@ -865,7 +865,9 @@ struct PipeServer
 						// Проверить, какие коды ошибок? Может быть нужно CloseHandle дернуть?
 						// 120603 - см. комментарий на ERROR_IO_INCOMPLETE
 						// Если это (nOverRc==2 && mb_Terminate) - то _Disconnect будет вызван в StopPipeServer
-						_ASSERTEX(nOverRc==1 || (nOverRc==2 && pPipe->hPipeInst==NULL && pPipe->dwConnErr==ERROR_IO_PENDING && (pPipe->dwState==CLOSED_STATE || (pPipe->dwState==CONNECTING_STATE && mb_Terminate))));
+						_ASSERTEX(nOverRc==1
+							|| (nOverRc==2 && pPipe->hPipeInst==NULL && pPipe->dwConnErr==ERROR_IO_PENDING && pPipe->dwState==CLOSED_STATE)
+							|| (mb_Terminate && nOverRc==2 && pPipe->hPipeInst && pPipe->dwConnErr==ERROR_IO_PENDING && pPipe->dwState==CONNECTING_STATE));
 						continue; // ошибка, пробуем еще раз
 					}
 				} // end - mb_Overlapped
