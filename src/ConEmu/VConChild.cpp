@@ -54,6 +54,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRPAINTGAPS(s) //DEBUGSTR(s)
 #define DEBUGSTRPAINTVCON(s) //DEBUGSTR(s)
 #define DEBUGSTRSIZE(s) //DEBUGSTR(s)
+#define DEBUGSTRDESTROY(s) DEBUGSTR(s)
 
 //#define SCROLLHIDE_TIMER_ID 1726
 #define TIMER_SCROLL_SHOW         3201
@@ -403,6 +404,10 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 
 	switch (messg)
 	{
+		case WM_DESTROY:
+			DEBUGSTRDESTROY(L"WM_DESTROY: VCon");
+			result = DefWindowProc(hWnd, messg, wParam, lParam);
+			break;
 		case WM_SHOWWINDOW:
 			{
 				// Из-за многопоточности может случиться так,

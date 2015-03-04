@@ -40,6 +40,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "DwmApi_Part.h"
 //#endif
 
+#define DEBUGSTRDESTROY(s) DEBUGSTR(s)
+
 #define UPDATE_DELTA 1000
 
 ATOM CTaskBarGhost::mh_Class = 0;
@@ -895,6 +897,8 @@ LRESULT CTaskBarGhost::OnDwmSendIconicLivePreviewBitmap()
 
 LRESULT CTaskBarGhost::OnDestroy()
 {
+	DEBUGSTRDESTROY(L"WM_DESTROY: CTaskBarGhost");
+
 	KillTimer(mh_Ghost, 101);
 
 	#if 0

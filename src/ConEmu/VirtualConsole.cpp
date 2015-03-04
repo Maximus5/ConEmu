@@ -90,6 +90,7 @@ FEFF    ZERO WIDTH NO-BREAK SPACE
 #define DEBUGSTRCOORD(s) //DEBUGSTR(s)
 #define DEBUGSTRFAIL(s) DEBUGSTR(s)
 #define DEBUGSTRAPPID(s) DEBUGSTR(s)
+#define DEBUGSTRDESTROY(s) DEBUGSTR(s)
 
 // WARNING("не появляются табы во второй консоли");
 WARNING("На предыдущей строке символы под курсором прыгают влево");
@@ -499,6 +500,8 @@ void CVirtualConsole::InitGhost()
 // WM_DESTROY
 void CVirtualConsole::OnDestroy()
 {
+	DEBUGSTRDESTROY(L"CVirtualConsole::OnDestroy");
+
 	if (this && mp_Ghost)
 	{
 		CTaskBarGhost* p = mp_Ghost;
