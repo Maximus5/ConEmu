@@ -272,6 +272,7 @@ class CRealConsole
 	protected:
 		CVirtualConsole* mp_VCon; // соответствующая виртуальная консоль
 		CConEmuMain*     mp_ConEmu;
+		bool mb_ConstuctorFinished;
 
 	public:
 

@@ -161,6 +161,7 @@ const wchar_t gsCloseViewer[] = L"Confirm closing Far viewer?";
 CRealConsole::CRealConsole(CVirtualConsole* pVCon, CConEmuMain* pOwner)
 	: mp_VCon(pVCon)
 	, mp_ConEmu(pOwner)
+	, mb_ConstuctorFinished(false)
 {
 }
 
@@ -410,6 +411,7 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 		RequestStartup();
 	}
 
+	mb_ConstuctorFinished = true;
 	return true;
 }
 
@@ -10394,7 +10396,8 @@ CEFarWindowType CRealConsole::GetActiveTabType()
 	int iModal = -1, iTabCount;
 	if (tabs.mn_tabsCount < 1)
 	{
-		_ASSERTE(tabs.mn_tabsCount>=1);
+		// Possible situation if some windows message was processed during RCon construction (ex. status bar re-painting)
+		_ASSERTE(tabs.mn_tabsCount>=1 || !mb_ConstuctorFinished);
 		nType = fwt_Panels|fwt_CurrentFarWnd;
 	}
 	else
