@@ -1068,17 +1068,35 @@ bool CTabPanelWin::OnNotifyInt(LPNMHDR nmhdr, LRESULT& lResult)
 		_wsprintf(szInfo, SKIPCOUNT(szInfo) L"WinApi tab was changed: NewTab=%i", lnNewTab+1);
 		if (gpSetCls->isAdvLogging) { LogString(szInfo); } else { DEBUGSTRSEL(szInfo); }
 
-		if (mn_prevTab>=0)
-		{
-			SelectTabInt(mn_prevTab);
-			mn_prevTab = -1;
-		}
+		bool bRollbackTabs = false, bRefreshTabs = false;
 
 		if (!mb_ChangeAllowed)
 		{
-			FarSendChangeTab(lnNewTab);
+			if (!FarSendChangeTab(lnNewTab))
+			{
+				bRollbackTabs = bRefreshTabs = true;
+			}
 			// start waiting for title to change
 			//_titleShouldChange = true;
+		}
+		else
+		{
+			// This message was intended to be received from user interactions only
+			_ASSERTE(FALSE && "Must not be triggered from internal calls?");
+			bRollbackTabs = true;
+		}
+
+		if (bRollbackTabs)
+		{
+			if (mn_prevTab>=0)
+			{
+				SelectTabInt(mn_prevTab);
+				mn_prevTab = -1;
+			}
+			if (bRefreshTabs)
+			{
+				mp_Owner->Update();
+			}
 		}
 
 		if (gpSetCls->isAdvLogging) { LogString(L"WinApi tab change was finished"); } else { DEBUGSTRSEL(L"WinApi tab change was finished"); }
