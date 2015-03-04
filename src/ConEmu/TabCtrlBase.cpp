@@ -459,7 +459,6 @@ LRESULT CTabPanelBase::OnMouseTabbar(UINT uMsg, int nTabIdx, int x, int y)
 			int lnCurTab = GetCurSelInt();
 			if (lnCurTab != nTabIdx)
 			{
-				
 				_wsprintf(szInfo, SKIPCOUNT(szInfo) L"Tab was LeftClicked Tab=%i OldTab=%i InSelChange=%i", nTabIdx+1, lnCurTab+1, mn_InSelChange);
 				if (gpSetCls->isAdvLogging) { LogString(szInfo); } else { DEBUGSTRSEL(szInfo); }
 
