@@ -31,9 +31,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define SHOWDEBUGSTR
 
-#define DEBUGSTRTABS(s) //DEBUGSTR(s)
+#define DEBUGSTRTABS(s) DEBUGSTR(s)
 #define DEBUGSTRRECENT(s) //DEBUGSTR(s)
-#define DEBUGSTRCOUNT(s) //DEBUGSTR(s)
+#define DEBUGSTRCOUNT(s) DEBUGSTR(s)
+#define DEBUGSTRSEL(s) DEBUGSTR(s)
 
 #ifdef _DEBUG
 #define PRINT_RECENT_STACK
@@ -255,6 +256,10 @@ HICON CTabBarClass::GetTabIconByIndex(int IconIndex)
 
 void CTabBarClass::SelectTab(int i)
 {
+	wchar_t szInfo[120];
+	_wsprintf(szInfo, SKIPCOUNT(szInfo) L"SelectTab tab requested: Tab=%i", i+1);
+	if (gpSetCls->isAdvLogging) { LogString(szInfo); } else { DEBUGSTRSEL(szInfo); }
+
 	if (mp_Rebar->IsTabbarCreated())
 		mn_CurSelTab = mp_Rebar->SelectTabInt(i); // Меняем выделение, только если оно реально меняется
 	else if (i >= 0 && i < GetItemCount())

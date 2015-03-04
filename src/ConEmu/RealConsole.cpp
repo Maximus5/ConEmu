@@ -99,6 +99,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRPROGRESS(s) //DEBUGSTR(s)
 #define DEBUGSTRFARPID(s) DEBUGSTR(s)
 #define DEBUGSTRMOUSE(s) //DEBUGSTR(s)
+#define DEBUGSTRSEL(s) DEBUGSTR(s)
 
 // Иногда не отрисовывается диалог поиска полностью - только бежит текущая сканируемая директория.
 // Иногда диалог отрисовался, но часть до текста "..." отсутствует
@@ -9410,6 +9411,10 @@ void CRealConsole::OnActivate(int nNewNum, int nOldNum)
 {
 	if (!this)
 		return;
+
+	wchar_t szInfo[120];
+	_wsprintf(szInfo, SKIPCOUNT(szInfo) L"RCon was activated Index=%i OldIndex=%i", nNewNum+1, nOldNum+1);
+	if (gpSetCls->isAdvLogging) { LogString(szInfo); } else { DEBUGSTRSEL(szInfo); }
 
 	_ASSERTE(isActive(false));
 	// Чтобы можно было найти хэндл окна по хэндлу консоли

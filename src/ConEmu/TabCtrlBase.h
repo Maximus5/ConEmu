@@ -45,6 +45,8 @@ protected:
 	int        mn_LBtnDrag;
 	HCURSOR    mh_DragCursor;
 	POINT      mpt_DragStart;
+	LONG       mn_InSelChange;
+	DWORD      mn_LastChangeTick;
 
 protected:
 	//void InitIconList();

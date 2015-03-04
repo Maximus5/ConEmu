@@ -32,6 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define SHOWDEBUGSTR
 
 #define DEBUGSTRTABS(l,i,s) // { wchar_t szLbl[80]; _wsprintf(szLbl,SKIPLEN(countof(szLbl)) L"CTabPanelWin(%s,%i): ",l,i+1); wchar_t* pszDbg = lstrmerge(szLbl,s); DEBUGSTR(pszDbg); SafeFree(pszDbg); }
+#define DEBUGSTRSEL(s) DEBUGSTR(s)
 
 #include <windows.h>
 #include "header.h"
@@ -818,6 +819,10 @@ int CTabPanelWin::SelectTabInt(int i)
 	int iCurSel = GetCurSelInt();
 	mb_ChangeAllowed = true;
 
+	wchar_t szInfo[120];
+	_wsprintf(szInfo, SKIPCOUNT(szInfo) L"SelectTabInt Tab=%i CurTab=%i", i+1, iCurSel+1);
+	if (gpSetCls->isAdvLogging) { LogString(szInfo); } else { DEBUGSTRSEL(szInfo); }
+
 	if (i != iCurSel)    // Меняем выделение, только если оно реально меняется
 	{
 		iCurSel = i;
@@ -1056,7 +1061,12 @@ bool CTabPanelWin::OnNotifyInt(LPNMHDR nmhdr, LRESULT& lResult)
 
 	if (nmhdr->code == TCN_SELCHANGE)
 	{
+		InterlockedIncrement(&mn_InSelChange);
 		int lnNewTab = GetCurSelInt();
+
+		wchar_t szInfo[120];
+		_wsprintf(szInfo, SKIPCOUNT(szInfo) L"WinApi tab was changed: NewTab=%i", lnNewTab+1);
+		if (gpSetCls->isAdvLogging) { LogString(szInfo); } else { DEBUGSTRSEL(szInfo); }
 
 		if (mn_prevTab>=0)
 		{
@@ -1071,6 +1081,9 @@ bool CTabPanelWin::OnNotifyInt(LPNMHDR nmhdr, LRESULT& lResult)
 			//_titleShouldChange = true;
 		}
 
+		if (gpSetCls->isAdvLogging) { LogString(L"WinApi tab change was finished"); } else { DEBUGSTRSEL(L"WinApi tab change was finished"); }
+		mn_LastChangeTick = GetTickCount();
+		InterlockedDecrement(&mn_InSelChange);
 		lResult = FALSE; // Value ignored actually
 		return true; // Processed
 	}
