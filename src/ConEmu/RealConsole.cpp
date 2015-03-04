@@ -70,6 +70,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Status.h"
 #include "TabBar.h"
 #include "TermX.h"
+#include "TrayIcon.h"
 #include "VConChild.h"
 #include "VConGroup.h"
 #include "VirtualConsole.h"
@@ -3142,7 +3143,7 @@ BOOL CRealConsole::StartMonitorThread()
 		_wsprintf(szInfo, SKIPLEN(countof(szInfo))
 			L"[DBG] Very high CPU load? CreateThread takes %u ms", nThreadCreationTime);
 		#ifdef _DEBUG
-		AssertMsg(szInfo);
+		Icon.ShowTrayIcon(szInfo);
 		#endif
 		LogString(szInfo);
 	}
