@@ -528,7 +528,7 @@ static bool FindOnDrives(LPCWSTR asFirstDrive, LPCWSTR asSearchPath, CEStr& rsFo
 				rsFound.Attach(JoinPath(lsVal, pszFile));
 				if (FileExists(rsFound))
 				{
-					bNeedQuot = IsQuotationNeeded(pszExpanded);
+					bNeedQuot = IsQuotationNeeded(rsFound);
 					bFound = true;
 				}
 			}
@@ -563,7 +563,7 @@ static bool FindOnDrives(LPCWSTR asFirstDrive, LPCWSTR asSearchPath, CEStr& rsFo
 		// Search in [HKCU|HKLM]\Software\Microsoft\Windows\CurrentVersion\App Paths
 		if (SearchAppPaths(asSearchPath, rsFound, false/*abSetPath*/))
 		{
-			bNeedQuot = IsQuotationNeeded(asSearchPath);
+			bNeedQuot = IsQuotationNeeded(rsFound);
 			bFound = true;
 		}
 		goto wrap;
