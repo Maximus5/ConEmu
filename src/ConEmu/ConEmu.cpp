@@ -118,6 +118,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRSESS(s) DEBUGSTR(s)
 #define DEBUGSTRDPI(s) DEBUGSTR(s)
 #define DEBUGSTRNOLOG(s) //DEBUGSTR(s)
+#define DEBUGSTRDESTROY(s) DEBUGSTR(s)
 #ifdef _DEBUG
 //#define DEBUGSHOWFOCUS(s) DEBUGSTR(s)
 #endif
@@ -7273,7 +7274,7 @@ HWND CConEmuMain::PostCreateView(CConEmuChild* pChild)
 
 LRESULT CConEmuMain::OnDestroy(HWND hWnd)
 {
-	LogString(L"CConEmuMain::OnDestroy()");
+	if (this && mp_Log) { LogString(L"WM_DESTROY: CConEmuMain"); } else { DEBUGSTRDESTROY(L"WM_DESTROY: CConEmuMain"); }
 
 	WARNING("Подозрение на зависание в некоторых случаях");
 	session.SetSessionNotification(false);
