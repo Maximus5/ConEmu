@@ -50,6 +50,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Menu.h"
 
 #define TAB_DRAG_START_DELTA 5
+#define MIN_TABCLICK_CHANGE_DELTA 200
 
 CTabPanelBase::CTabPanelBase(CTabBarClass* ap_Owner)
 {
@@ -445,16 +446,32 @@ LRESULT CTabPanelBase::OnMouseTabbar(UINT uMsg, int nTabIdx, int x, int y)
 	{
 	case WM_LBUTTONDOWN:
 		{
+			wchar_t szInfo[120];
+			if (mn_LastChangeTick && ((GetTickCount() - mn_LastChangeTick) <= MIN_TABCLICK_CHANGE_DELTA))
+			{
+				wcscpy_c(szInfo, L"Tab LeftClick was skipped (mn_LastChangeTick)");
+				if (gpSetCls->isAdvLogging) { LogString(szInfo); } else { DEBUGSTRSEL(szInfo); }
+				break;
+			}
 			// Может приходить и из ReBar по клику НАД табами
 			mn_LBtnDrag = 1;
 			GetCursorPos(&mpt_DragStart);
 			int lnCurTab = GetCurSelInt();
 			if (lnCurTab != nTabIdx)
 			{
-				FarSendChangeTab(nTabIdx);
-				wchar_t szInfo[120];
+				
 				_wsprintf(szInfo, SKIPCOUNT(szInfo) L"Tab was LeftClicked Tab=%i OldTab=%i InSelChange=%i", nTabIdx+1, lnCurTab+1, mn_InSelChange);
 				if (gpSetCls->isAdvLogging) { LogString(szInfo); } else { DEBUGSTRSEL(szInfo); }
+
+				if (mn_InSelChange == 0)
+				{
+					FarSendChangeTab(nTabIdx);
+				}
+				else
+				{
+					wcscpy_c(szInfo, L"Tab LeftClick was skipped (mn_InSelChange)");
+					if (gpSetCls->isAdvLogging) { LogString(szInfo); } else { DEBUGSTRSEL(szInfo); }
+				}
 			}
 			mn_LastChangeTick = GetTickCount();
 			break;
