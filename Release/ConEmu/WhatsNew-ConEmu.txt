@@ -12,6 +12,17 @@ Votes and awards (vote for ConEmu, if you please)
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+2015.3.5
+[*] Wrong tab was activated sometimes by mouse click if there was a scroll buttons on the TabBar.
+[*] Do not do tab flickering while switching them by mouse clicks.
+[*] White background flickering was occured sometimes during ConEmu startup.
+[*] Default tasks were created sometimes not properly quoted.
+[*] Add ‘Ranges’ drop-down list to pseudographics font settings with some predefines.
+[*] Issue 1927: Key-Up event for ‘Space’ and ‘Enter’ in ReadConsoleInputA.
+[*] gh#63: Switch `-cur_console:d:...` was not stripped from Task while running shell sometimes.
+[*] While creating 'Auto save/restore' task add all `-cur_console` switches before the shell itself.
+
+
 2015.3.3
 [*] Issue 1925: Single character between two gray blocks was obscured (ex. OEM ‘B1 C1 B1’).
 
