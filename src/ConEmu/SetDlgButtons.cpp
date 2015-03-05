@@ -193,6 +193,9 @@ bool CSetDlgButtons::ProcessButtonClick(HWND hDlg, WORD CB, BYTE uCheck)
 		case cbFixFarBorders:
 			OnBtn_FixFarBorders(hDlg, CB, uCheck);
 			break;
+		case cbUnicodeRangesApply:
+			OnBtn_UnicodeRangesApply(hDlg, CB, uCheck);
+			break;
 		//case cbCursorColor:
 		//	gpSet->AppStd.isCursorColor = IsChecked(hDlg,cbCursorColor);
 		//	gpConEmu->Update(true);
@@ -1669,19 +1672,28 @@ void CSetDlgButtons::OnBtn_FixFarBorders(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbFixFarBorders);
 
-	//gpSet->isFixFarBorders = !gpSet->isFixFarBorders;
-	switch (uCheck)
-	{
-		case BST_UNCHECKED:
-			gpSet->isFixFarBorders = 0; break;
-		case BST_CHECKED:
-			gpSet->isFixFarBorders = 1; break;
-		case BST_INDETERMINATE:
-			gpSet->isFixFarBorders = 2; break;
-	}
+	gpSet->isFixFarBorders = (uCheck == BST_UNCHECKED) ? 0 : 1;
 
 	gpConEmu->Update(true);
 } // cbFixFarBorders
+
+
+// cbUnicodeRangesApply
+void CSetDlgButtons::OnBtn_UnicodeRangesApply(HWND hDlg, WORD CB, BYTE uCheck)
+{
+	_ASSERTE(CB==cbUnicodeRangesApply);
+
+	wchar_t* pszNameAndRange = GetDlgItemTextPtr(hDlg, tUnicodeRanges);
+	LPCWSTR pszRanges = pszNameAndRange ? wcsstr(pszNameAndRange, L": ") : NULL;
+	if (pszRanges) pszRanges += 2; else pszRanges = L"";
+	gpSet->ParseCharRanges(pszRanges, gpSet->mpc_FixFarBorderValues);
+	SafeFree(pszNameAndRange);
+
+	if (gpSet->isFixFarBorders)
+	{
+		gpConEmu->Update(true);
+	}
+} // cbUnicodeRangesApply
 
 
 // cbSingleInstance

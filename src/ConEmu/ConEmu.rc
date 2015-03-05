@@ -143,6 +143,10 @@ BEGIN
     COMBOBOX        tFontFace2,10,111,119,72,CBS_DROPDOWN | CBS_OWNERDRAWFIXED | CBS_AUTOHSCROLL | CBS_SORT | CBS_HASSTRINGS | WS_VSCROLL | WS_TABSTOP
     RTEXT           "Width:",stFontSizeX2,135,112,24,8
     COMBOBOX        tFontSizeX2,163,111,30,66,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Unicode ranges, the default is ""2013-25C4;""",stUnicodeRanges,11,126,308,8
+    COMBOBOX        tUnicodeRanges,10,136,260,72,CBS_DROPDOWN | CBS_AUTOHSCROLL | CBS_HASSTRINGS | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "Apply",cbUnicodeRangesApply,278,136,39,12
+    LTEXT           "By the cost of background colors you may change the used font to bold or italic",stExtendFonts,12,171,305,8
     GROUPBOX        "",gbExtendFonts,4,160,319,44
     CONTROL         "Extend fonts",cbExtendFonts,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,160,77,8
     COMBOBOX        lbExtendFontBoldIdx,45,185,37,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
@@ -151,9 +155,6 @@ BEGIN
     RTEXT           "Bold:",IDC_STATIC,11,187,30,8
     RTEXT           "Italic:",IDC_STATIC,86,187,30,8
     RTEXT           "Normal:",IDC_STATIC,161,187,30,8
-    LTEXT           "Unicode ranges, the default is ""2013-25C4;""",stUnicodeRanges,11,126,308,8
-    EDITTEXT        tUnicodeRanges,10,136,307,13,ES_AUTOHSCROLL
-    LTEXT           "By the cost of background colors you may change the used font to bold or italic",stExtendFonts,12,171,305,8
 END
 
 IDD_SPG_WNDSIZEPOS DIALOGEX 0, 0, 328, 235

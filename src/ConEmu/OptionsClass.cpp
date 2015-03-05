@@ -1733,7 +1733,44 @@ LRESULT CSettings::OnInitDialog_Main(HWND hWnd2, bool abInitial)
 
 	checkDlgButton(hWnd2, cbItalic, LogFont.lfItalic ? BST_CHECKED : BST_UNCHECKED);
 
-	checkDlgButton(hWnd2, cbFixFarBorders, BST(gpSet->isFixFarBorders));
+	/* Alternative font, initially created for prettifying Far Manager borders */
+	{
+		checkDlgButton(hWnd2, cbFixFarBorders, BST(gpSet->isFixFarBorders));
+
+		LPCWSTR cszFontRanges[] = {
+			L"Far Manager borders: 2500-25C4;",
+			L"Dashes and Borders: 2013-2015;2500-25C4;",
+			L"Pseudographics: 2013-25C4;",
+			L"CJK: 2E80-9FC3;F900-FAFF;FE30-FE4F;FF01-FF60;FFE0-FFE6;",
+			NULL
+		};
+		CEStr szCharRanges(gpSet->CreateCharRanges(gpSet->mpc_FixFarBorderValues));
+		LPCWSTR pszCurrentRange = szCharRanges.ms_Arg;
+		bool bExist = false;
+
+		HWND hCombo = GetDlgItem(hWnd2, tUnicodeRanges);
+		SendDlgItemMessage(hWnd2, tUnicodeRanges, CB_RESETCONTENT, 0,0);
+
+		// Fill our drop down with font ranges
+		for (INT_PTR i = 0; cszFontRanges[i]; i++)
+		{
+			LPCWSTR pszRange = wcsstr(cszFontRanges[i], L": ");
+			if (!pszRange) { _ASSERTE(pszRange); continue; }
+
+			SendMessageW(hCombo, CB_ADDSTRING, 0, (LPARAM)cszFontRanges[i]);
+
+			if (!bExist && (lstrcmpi(pszRange+2, pszCurrentRange) == 0))
+			{
+				pszCurrentRange = cszFontRanges[i];
+				bExist = true;
+			}
+		}
+		if (pszCurrentRange && *pszCurrentRange)
+			SendMessageW(hCombo, CB_ADDSTRING, 0, (LPARAM)pszCurrentRange);
+		// And show current value
+		SetWindowText(hCombo, pszCurrentRange ? pszCurrentRange : L"");
+	}
+	/* Alternative font ends */
 
 	checkDlgButton(hWnd2, cbFontMonitorDpi, gpSet->FontUseDpi ? BST_CHECKED : BST_UNCHECKED);
 	checkDlgButton(hWnd2, cbFontAsDeviceUnits, gpSet->FontUseUnits ? BST_CHECKED : BST_UNCHECKED);
@@ -5334,6 +5371,11 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			mn_LastChangingFontCtrlId = wId;
 		break;
 	}
+
+	case tUnicodeRanges:
+		// Do not required actually, the button "Apply" is enabled by default
+		EnableWindow(GetDlgItem(hWnd2, cbUnicodeRangesApply), TRUE);
+		break;
 
 	case lbBgPlacement:
 	{

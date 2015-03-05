@@ -86,6 +86,7 @@ protected:
 	static void OnBtn_AutoSaveSizePos(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_FontAuto(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_FixFarBorders(HWND hDlg, WORD CB, BYTE uCheck);
+	static void OnBtn_UnicodeRangesApply(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_SingleInstance(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_ShowHelpTooltips(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_MultiCon(HWND hDlg, WORD CB, BYTE uCheck);
