@@ -1188,46 +1188,45 @@ int ServerInit(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/)
 	// больше двух процессов в консоли вполне может быть, например, еще не отвалился
 	// предыдущий conemuc.exe, из которого этот запущен немодально.
 	_ASSERTE(gpSrv->DbgInfo.bDebuggerActive || (gpSrv->nProcessCount<=2) || ((gpSrv->nProcessCount>2) && gbAttachMode && gpSrv->dwRootProcess));
+
 	// Запустить нить обработки событий (клавиатура, мышь, и пр.)
-	gpSrv->hInputEvent = CreateEvent(NULL,FALSE,FALSE,NULL);
-	gpSrv->hInputWasRead = CreateEvent(NULL,FALSE,FALSE,NULL);
-
-	if (gpSrv->hInputEvent && gpSrv->hInputWasRead)
+	if (gnRunMode == RM_SERVER)
 	{
-		DumpInitStatus("\nServerInit: CreateThread(InputThread)");
-		gpSrv->hInputThread = CreateThread(
-		        NULL,              // no security attribute
-		        0,                 // default stack size
-		        InputThread,       // thread proc
-		        NULL,              // thread parameter
-		        0,                 // not suspended
-		        &gpSrv->dwInputThread);      // returns thread ID
-	}
+		gpSrv->hInputEvent = CreateEvent(NULL,FALSE,FALSE,NULL);
+		gpSrv->hInputWasRead = CreateEvent(NULL,FALSE,FALSE,NULL);
 
-	if (gpSrv->hInputEvent == NULL || gpSrv->hInputWasRead == NULL || gpSrv->hInputThread == NULL)
-	{
-		dwErr = GetLastError();
-		_printf("CreateThread(InputThread) failed, ErrCode=0x%08X\n", dwErr);
-		iRc = CERR_CREATEINPUTTHREAD; goto wrap;
-	}
+		if (gpSrv->hInputEvent && gpSrv->hInputWasRead)
+		{
+			DumpInitStatus("\nServerInit: CreateThread(InputThread)");
+			gpSrv->hInputThread = CreateThread(
+					NULL,              // no security attribute
+					0,                 // default stack size
+					InputThread,       // thread proc
+					NULL,              // thread parameter
+					0,                 // not suspended
+					&gpSrv->dwInputThread);      // returns thread ID
+		}
 
-	SetThreadPriority(gpSrv->hInputThread, THREAD_PRIORITY_ABOVE_NORMAL);
+		if (gpSrv->hInputEvent == NULL || gpSrv->hInputWasRead == NULL || gpSrv->hInputThread == NULL)
+		{
+			dwErr = GetLastError();
+			_printf("CreateThread(InputThread) failed, ErrCode=0x%08X\n", dwErr);
+			iRc = CERR_CREATEINPUTTHREAD; goto wrap;
+		}
 
-	DumpInitStatus("\nServerInit: InputQueue.Initialize");
-	gpSrv->InputQueue.Initialize(CE_MAX_INPUT_QUEUE_BUFFER, gpSrv->hInputEvent);
-	//gpSrv->nMaxInputQueue = CE_MAX_INPUT_QUEUE_BUFFER;
-	//gpSrv->pInputQueue = (INPUT_RECORD*)calloc(gpSrv->nMaxInputQueue, sizeof(INPUT_RECORD));
-	//gpSrv->pInputQueueEnd = gpSrv->pInputQueue+gpSrv->nMaxInputQueue;
-	//gpSrv->pInputQueueWrite = gpSrv->pInputQueue;
-	//gpSrv->pInputQueueRead = gpSrv->pInputQueueEnd;
+		SetThreadPriority(gpSrv->hInputThread, THREAD_PRIORITY_ABOVE_NORMAL);
 
-	// Запустить пайп обработки событий (клавиатура, мышь, и пр.)
-	DumpInitStatus("\nServerInit: InputServerStart");
-	if (!InputServerStart())
-	{
-		dwErr = GetLastError();
-		_printf("CreateThread(InputServerStart) failed, ErrCode=0x%08X\n", dwErr);
-		iRc = CERR_CREATEINPUTTHREAD; goto wrap;
+		DumpInitStatus("\nServerInit: InputQueue.Initialize");
+		gpSrv->InputQueue.Initialize(CE_MAX_INPUT_QUEUE_BUFFER, gpSrv->hInputEvent);
+
+		// Запустить пайп обработки событий (клавиатура, мышь, и пр.)
+		DumpInitStatus("\nServerInit: InputServerStart");
+		if (!InputServerStart())
+		{
+			dwErr = GetLastError();
+			_printf("CreateThread(InputServerStart) failed, ErrCode=0x%08X\n", dwErr);
+			iRc = CERR_CREATEINPUTTHREAD; goto wrap;
+		}
 	}
 
 	// Пайп возврата содержимого консоли
