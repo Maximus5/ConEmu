@@ -1575,6 +1575,18 @@ void DoDllStop(bool bFinal)
 		DLOGEND();
 	}
 
+	if (gpAppMap && gpAppMap->IsValid())
+	{
+		CESERVER_CONSOLE_APP_MAPPING* pAppMap = gpAppMap->Ptr();
+		DWORD nSelfPID = GetCurrentProcessId();
+		if (pAppMap->nReadConsolePID == nSelfPID)
+			pAppMap->nReadConsolePID = 0;
+		if (pAppMap->nReadConsoleInputPID == nSelfPID)
+			pAppMap->nReadConsoleInputPID = 0;
+		if (pAppMap->nLastReadConsoleInputPID == nSelfPID)
+			pAppMap->nLastReadConsoleInputPID = 0;
+	}
+
 	if (gpAppMap && bUnload)
 	{
 		DLOG0("gpAppMap->CloseMap",0);
