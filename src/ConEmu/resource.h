@@ -1150,6 +1150,9 @@
 #define cbAffinity62                    2832
 #define cbAffinity63                    2833
 #define vkAffinity                      2834
+#define tUnicodeRanges                  2835
+#define stExtendFonts                   2836
+#define stUnicodeRanges                 2837
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
@@ -1158,7 +1161,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        227
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2835
+#define _APS_NEXT_CONTROL_VALUE         2838
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif
