@@ -30,7 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _COMMON_HEADER_HPP_
 
 // Interface version
-#define CESERVER_REQ_VER    151
+#define CESERVER_REQ_VER    152
 
 // Max tabs/panes count
 #define MAX_CONSOLE_COUNT 30
@@ -1459,11 +1459,15 @@ struct CESERVER_CONSOLE_APP_MAPPING
 
 	// Updated before and after ReadConsoleInput (powershell especially)
 	DWORD nReadConsoleInputPID;
+	DWORD nLastReadConsoleInputPID;
 	COORD crReadConsoleInputStart;
 
 	// Updated before and after ReadConsole/ReadFile
 	DWORD nReadConsolePID;
 	COORD crReadConsoleStart;
+
+	// Reserved for in-console states
+	DWORD nConsoleFlags;
 };
 
 struct TOPLEFTCOORD
