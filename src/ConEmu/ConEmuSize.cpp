@@ -2539,9 +2539,13 @@ LRESULT CConEmuSize::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 	{
 		#ifdef _DEBUG
 		if (!(p->flags & SWP_NOMOVE) && (p->flags & SWP_NOSIZE))
+		{
 			DEBUGSTRSIZE(L"!!! Only position was changed !!!");
+		}
 		else if ((p->flags & SWP_NOMOVE) && !(p->flags & SWP_NOSIZE))
+		{
 			DEBUGSTRSIZE(L"!!! Only size was changed !!!");
+		}
 		#endif
 	}
 
