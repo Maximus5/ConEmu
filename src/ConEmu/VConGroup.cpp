@@ -5748,7 +5748,7 @@ wchar_t* CVConGroup::GetTasks(CVConGroup* apRoot /*= NULL*/)
 	if (nAllLen == 0)
 		return NULL; // Nothing to return
 
-	nAllLen += 2;
+	nAllLen += 3;
 	pszAll = (wchar_t*)malloc(nAllLen*sizeof(*pszAll));
 	if (!pszAll)
 		return NULL;
@@ -5765,6 +5765,8 @@ wchar_t* CVConGroup::GetTasks(CVConGroup* apRoot /*= NULL*/)
 		if (gp_VCon[i] == gp_VActive)
 		{
 			*(psz++) = L'>';
+			if (pszTask[i][0] != L'*')
+				*(psz++) = L' ';
 		}
 
 		_wcscpy_c(psz, nTaskLen[i]+1, pszTask[i]);

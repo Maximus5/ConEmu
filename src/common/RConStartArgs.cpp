@@ -521,32 +521,22 @@ wchar_t* RConStartArgs::CreateCommandLine(bool abForTasks /*= false*/) const
 		return NULL;
 	}
 
-	if (pszSpecialCmd)
-	{
-		if ((RunAsAdministrator == crb_On) && abForTasks)
-			_wcscpy_c(pszFull, cchMaxLen, L"*");
-		else
-			*pszFull = 0;						
-
-		// Не окавычиваем. Этим должен озаботиться пользователь
-		_wcscat_c(pszFull, cchMaxLen, pszSpecialCmd);
-
-		//131008 - лишние пробелы не нужны
-		wchar_t* pS = pszFull + lstrlen(pszFull);
-		while ((pS > pszFull) && wcschr(L" \t\r\n", *(pS - 1)))
-			*(--pS) = 0;
-		//_wcscat_c(pszFull, cchMaxLen, L" ");
-	}
+	if (pszSpecialCmd && (RunAsAdministrator == crb_On) && abForTasks)
+		_wcscpy_c(pszFull, cchMaxLen, L"* "); // `-new_console` will follow asterisk, so add a space to delimit
 	else
-	{
 		*pszFull = 0;
-	}
 
 	wchar_t szAdd[128] = L"";
 	if (RunAsAdministrator == crb_On)
-		wcscat_c(szAdd, L"a");
+	{
+		// Don't add -new_console:a if the asterisk was already set
+		if (*pszFull != L'*')
+			wcscat_c(szAdd, L"a");
+	}
 	else if (RunAsRestricted == crb_On)
+	{
 		wcscat_c(szAdd, L"r");
+	}
 
 	if ((ForceUserDialog == crb_On) && !(pszUserName && *pszUserName))
 		wcscat_c(szAdd, L"u");
@@ -607,10 +597,16 @@ wchar_t* RConStartArgs::CreateCommandLine(bool abForTasks /*= false*/) const
 		wcscat_c(szAdd, (eSplit == eSplitHorz) ? L"H" : L"V");
 	}
 
+	// The command itself will be appended at the end
+	//   to minimize modification of command line, also we skip all switches after certain executables
+	//   for example, only first must be processed (just an example): -cur_console:d:C:\Temp cmd.exe /k ConEmuC /e -cur_console
+	// so we add a space AFTER but not before
+
 	if (szAdd[0])
 	{
-		_wcscat_c(pszFull, cchMaxLen, (NewConsole == crb_On) ? L" -new_console:" : L" -cur_console:");
+		_wcscat_c(pszFull, cchMaxLen, (NewConsole == crb_On) ? L"-new_console:" : L"-cur_console:");
 		_wcscat_c(pszFull, cchMaxLen, szAdd);
+		_wcscat_c(pszFull, cchMaxLen, L" ");
 	}
 
 	struct CopyValues { wchar_t cOpt; bool bEscape; LPCWSTR pVal; } values[] =
@@ -631,9 +627,9 @@ wchar_t* RConStartArgs::CreateCommandLine(bool abForTasks /*= false*/) const
 			bool bQuot = wcspbrk(p->pVal, L" \"") != NULL;
 
 			if (bQuot)
-				msprintf(szCat, countof(szCat), (NewConsole == crb_On) ? L" \"-new_console:%c:" : L" \"-cur_console:%c:", p->cOpt);
+				msprintf(szCat, countof(szCat), (NewConsole == crb_On) ? L"-new_console:%c:\"" : L"-cur_console:%c:\"", p->cOpt);
 			else
-				msprintf(szCat, countof(szCat), (NewConsole == crb_On) ? L" -new_console:%c:" : L" -cur_console:%c:", p->cOpt);
+				msprintf(szCat, countof(szCat), (NewConsole == crb_On) ? L"-new_console:%c:" : L"-cur_console:%c:", p->cOpt);
 
 			_wcscat_c(pszFull, cchMaxLen, szCat);
 
@@ -655,15 +651,14 @@ wchar_t* RConStartArgs::CreateCommandLine(bool abForTasks /*= false*/) const
 				_wcscat_c(pszFull, cchMaxLen, p->pVal);
 			}
 
-			if (bQuot)
-				_wcscat_c(pszFull, cchMaxLen, L"\"");
+			_wcscat_c(pszFull, cchMaxLen, bQuot ? L"\" " : L" ");
 		}
 	}
 
 	// "-new_console:u:<user>:<pwd>"
 	if (pszUserName && *pszUserName)
 	{
-		_wcscat_c(pszFull, cchMaxLen, (NewConsole == crb_On) ? L" \"-new_console:u:" : L" \"-cur_console:u:");
+		_wcscat_c(pszFull, cchMaxLen, (NewConsole == crb_On) ? L"-new_console:u:\"" : L"-cur_console:u:\"");
 		if (pszDomain && *pszDomain)
 		{
 			_wcscat_c(pszFull, cchMaxLen, pszDomain);
@@ -678,8 +673,19 @@ wchar_t* RConStartArgs::CreateCommandLine(bool abForTasks /*= false*/) const
 		{
 			_wcscat_c(pszFull, cchMaxLen, szUserPassword);
 		}
-		_wcscat_c(pszFull, cchMaxLen, L"\"");
+		_wcscat_c(pszFull, cchMaxLen, L"\" ");
 	}
+
+	if (pszSpecialCmd)
+	{
+		// Не окавычиваем. Этим должен озаботиться пользователь
+		_wcscat_c(pszFull, cchMaxLen, pszSpecialCmd);
+	}
+
+	//131008 - лишние пробелы не нужны
+	wchar_t* pS = pszFull + lstrlen(pszFull);
+	while ((pS > pszFull) && wcschr(L" \t\r\n", *(pS - 1)))
+		*(--pS) = 0;
 
 	return pszFull;
 }
