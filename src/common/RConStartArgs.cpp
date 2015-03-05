@@ -783,13 +783,16 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 		LPCWSTR pszWords[] = {L"ConEmu", L"ConEmu.exe", L"ConEmu64", L"ConEmu64.exe", L"ConEmuC", L"ConEmuC.exe", L"ConEmuC64", L"ConEmuC64.exe", L"ConEmuPortable.exe", L"ConEmuPortable", NULL};
 		while (!pszStopAt && (0 == NextArg(&pszTemp, szExe)))
 		{
-			pszName = PointToName(szExe);
-			for (size_t i = 0; pszWords[i]; i++)
+			if (szExe.ms_Arg[0] != L'-')
 			{
-				if (lstrcmpi(pszName, pszWords[i]) == 0)
+				pszName = PointToName(szExe);
+				for (size_t i = 0; pszWords[i]; i++)
 				{
-					pszStopAt = pszSave;
-					break;
+					if (lstrcmpi(pszName, pszWords[i]) == 0)
+					{
+						pszStopAt = pszSave;
+						break;
+					}
 				}
 			}
 			pszSave = pszTemp;
