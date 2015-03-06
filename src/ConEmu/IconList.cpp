@@ -44,7 +44,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 CIconList::CIconList()
 {
 	mh_TabIcons = NULL;
-	mn_AdminIcon = 0;
+	mn_AdminIcon = -1;
 	mpcs = new MSectionSimple(true);
 }
 
@@ -208,26 +208,27 @@ int CIconList::CreateTabIconInt(LPCWSTR asIconDescr, bool bAdmin, LPCWSTR asWork
 		TabIconCache NewIcon = {lstrdup(asIconDescr), false, iIconIdx};
 		m_Icons.push_back(NewIcon);
 
-		HIMAGELIST hAdmList = ImageList_Merge(mh_TabIcons, iIconIdx, mh_TabIcons, mn_AdminIcon+2, 0,0);
-		if (hAdmList)
+		if (mn_AdminIcon >= 0)
 		{
-			HICON hNewIcon = ImageList_GetIcon(hAdmList, 0, ILD_TRANSPARENT);
-			if (hNewIcon)
+			HIMAGELIST hAdmList = ImageList_Merge(mh_TabIcons, iIconIdx, mh_TabIcons, mn_AdminIcon+2, 0,0);
+			if (hAdmList)
 			{
-				iIconIdxAdm = ImageList_ReplaceIcon(mh_TabIcons, -1, hNewIcon);
-				DestroyIcon(hNewIcon);
-
-				TabIconCache AdmIcon = {lstrdup(asIconDescr), true, iIconIdxAdm};
-				m_Icons.push_back(AdmIcon);
-
-				if (bAdmin && (iIconIdxAdm > 0))
+				HICON hNewIcon = ImageList_GetIcon(hAdmList, 0, ILD_TRANSPARENT);
+				if (hNewIcon)
 				{
-					iIconIdx = iIconIdxAdm;
+					iIconIdxAdm = ImageList_ReplaceIcon(mh_TabIcons, -1, hNewIcon);
+					DestroyIcon(hNewIcon);
+
+					TabIconCache AdmIcon = {lstrdup(asIconDescr), true, iIconIdxAdm};
+					m_Icons.push_back(AdmIcon);
+
+					if (bAdmin && (iIconIdxAdm > 0))
+					{
+						iIconIdx = iIconIdxAdm;
+					}
 				}
 			}
 		}
-
-		//TODO: bAdmin!!!
 
 		DestroyIcon(hFileIcon);
 	}
