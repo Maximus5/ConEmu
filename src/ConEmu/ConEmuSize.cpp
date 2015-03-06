@@ -1294,8 +1294,9 @@ bool CConEmuSize::CheckQuakeRect(LPRECT prcWnd)
 		//if (rcCon.right)
 		//	this->wndWidth = rcCon.right;
 
-		this->wndX = prcWnd->left;
-		this->wndY = prcWnd->top;
+		// Issue 1929: Quake position changed unexpectedly after Win+D
+		//this->wndX = prcWnd->left;
+		//this->wndY = prcWnd->top;
 	}
 
 	return bChange;
@@ -2411,7 +2412,8 @@ LRESULT CConEmuSize::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 	{
 		if (gpSet->isQuakeStyle)
 		{
-			if (!mp_ConEmu->mp_Status->IsStatusResizing())
+			if (!mp_ConEmu->mp_Status->IsStatusResizing()
+				&& !mn_IgnoreSizeChange)
 			{
 				RECT rc = GetDefaultRect();
 
