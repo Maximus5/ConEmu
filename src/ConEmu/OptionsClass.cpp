@@ -5284,7 +5284,7 @@ bool CSettings::OnEditChanged_Cursor(HWND hWnd2, WPARAM wParam, LPARAM lParam, A
 			{
 				if ((nNewVal >= CURSORSIZEPIX_MIN) && (nNewVal <= CURSORSIZEPIX_MAX))
 				{
-					CECursorType* pCur = (TB == tCursorFixedSize) ? &pApp->CursorActive : &pApp->CursorInactive;
+					CECursorType* pCur = (TB == tCursorMinSize) ? &pApp->CursorActive : &pApp->CursorInactive;
 
 					if (pCur->MinSize != nNewVal)
 					{
