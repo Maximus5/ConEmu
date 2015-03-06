@@ -368,6 +368,14 @@ bool CFrameHolder::ProcessNcMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 	case WM_SYSCOMMAND:
 		if (wParam == SC_MAXIMIZE || wParam == SC_MINIMIZE || wParam == SC_RESTORE)
 		{
+			// Win 10 build 9926 bug?
+			if ((wParam == SC_MAXIMIZE) && IsWin10())
+			{
+				if (!gpConEmu->isMeForeground(false,false))
+				{
+					return true;
+				}
+			}
 			mb_NcAnimate = TRUE;
 			//GetWindowText(hWnd, ms_LastCaption, countof(ms_LastCaption));
 			//SetWindowText(hWnd, L"");
