@@ -88,6 +88,10 @@ void CTabPanelBase::UpdateTabFontInt()
 	wcscpy_c(lf.lfFaceName, gpSet->sTabFontFace);
 	gpSetCls->EvalLogfontSizes(lf, gpSet->nTabFontHeight, 0);
 
+	wchar_t szInfo[100];
+	_wsprintf(szInfo, SKIPCOUNT(szInfo) L"Creating tab font name='%s' height=%i", lf.lfFaceName, lf.lfHeight);
+	LogString(szInfo);
+
 	// CreateFont
 	HFONT hFont = CreateFontIndirect(&lf);
 
