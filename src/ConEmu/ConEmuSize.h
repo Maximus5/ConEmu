@@ -110,7 +110,7 @@ protected:
 
 	bool mb_LockWindowRgn;
 	bool mb_LockShowWindow;
-	bool mb_IgnoreSizeChange;
+	LONG mn_IgnoreSizeChange;
 
 	HMONITOR mh_MinFromMonitor;
 

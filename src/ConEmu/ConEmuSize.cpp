@@ -33,6 +33,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "Header.h"
 #include "../common/Monitors.h"
+#include "../common/MSetter.h"
 #include "../common/WUser.h"
 
 #include "ConEmu.h"
@@ -68,7 +69,7 @@ CConEmuSize::CConEmuSize(CConEmuMain* pOwner)
 	isWndNotFSMaximized = false;
 	m_ForceShowFrame = fsf_Hide;
 	m_TileMode = cwc_Current;
-	mb_IgnoreSizeChange = false;
+	mn_IgnoreSizeChange = 0;
 	mb_InSetQuakeMode = false;
 	mb_InShowMinimized = false;
 	mb_LastRgnWasNull = true;
@@ -2211,7 +2212,7 @@ LRESULT CConEmuSize::OnWindowPosChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 
 	if (hWnd == ghWnd /*&& ghOpWnd*/)  //2009-05-08 запоминать wndX/wndY всегда, а не только если окно настроек открыто
 	{
-		if (!mb_IgnoreSizeChange && !isIconic())
+		if (!mn_IgnoreSizeChange && !isIconic())
 		{
 			RECT rc = CalcRect(CER_MAIN);
 			mp_ConEmu->mp_Status->OnWindowReposition(&rc);
@@ -2668,7 +2669,7 @@ LRESULT CConEmuSize::OnSize(bool bResizeRCon/*=true*/, WPARAM wParam/*=0*/, WORD
 		return 0;
 	}
 
-	if (mb_IgnoreSizeChange)
+	if (mn_IgnoreSizeChange)
 	{
 		// на время обработки WM_SYSCOMMAND
 		return 0;
@@ -2775,7 +2776,7 @@ LRESULT CConEmuSize::OnSizing(WPARAM wParam, LPARAM lParam)
 	else
 	#endif
 
-	if (mb_IgnoreSizeChange)
+	if (mn_IgnoreSizeChange)
 	{
 		// на время обработки WM_SYSCOMMAND
 	}
@@ -3179,7 +3180,7 @@ ConEmuWindowMode CConEmuSize::GetChangeFromWindowMode()
 
 bool CConEmuSize::IsWindowModeChanging()
 {
-	return (changeFromWindowMode != wmNotChanging) || m_JumpMonitor.bInJump || mb_IgnoreSizeChange;
+	return (changeFromWindowMode != wmNotChanging) || m_JumpMonitor.bInJump || mn_IgnoreSizeChange;
 }
 
 LPCWSTR CConEmuSize::FormatTileMode(ConEmuWindowCommand Tile, wchar_t* pchBuf, size_t cchBufMax)
@@ -3968,7 +3969,7 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 			if (isIconic() || ::IsZoomed(ghWnd))
 			{
 				//apiShow Window(ghWnd, SW_SHOWNORMAL); // WM_SYSCOMMAND использовать не хочется...
-				mb_IgnoreSizeChange = true;
+				MSetter lSet(&mn_IgnoreSizeChange);
 
 				if (gpSet->isDesktopMode)
 				{
@@ -3995,7 +3996,6 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 				}
 
 				//RePaint();
-				mb_IgnoreSizeChange = false;
 
 				//// Сбросить (заранее), вдруг оно isIconic?
 				//if (mb_MaximizedHideCaption)
@@ -4111,7 +4111,7 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 			//if (mb_MaximizedHideCaption || !::IsZoomed(ghWnd))
 			if (bIconic || (changeFromWindowMode != wmMaximized))
 			{
-				mb_IgnoreSizeChange = true;
+				MSetter lSet(&mn_IgnoreSizeChange);
 
 				mp_ConEmu->InvalidateAll();
 
@@ -4144,7 +4144,7 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 						rcMax.right-rcMax.left, rcMax.bottom-rcMax.top,
 						SWP_NOCOPYBITS|SWP_SHOWWINDOW);
 				}
-				mb_IgnoreSizeChange = false;
+				lSet.Unlock();
 
 				//RePaint();
 				mp_ConEmu->InvalidateAll();
@@ -4158,9 +4158,8 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 
 			if (!IsWindowVisible(ghWnd))
 			{
-				mb_IgnoreSizeChange = true;
+				MSetter lSet(&mn_IgnoreSizeChange);
 				ShowWindow((abFirstShow && mp_ConEmu->WindowStartMinimized) ? SW_SHOWMINNOACTIVE : SW_SHOWMAXIMIZED, ANIMATION_MS_DEFAULT, abFirstShow);
-				mb_IgnoreSizeChange = false;
 
 				if (gpSetCls->isAdvLogging) LogString(L"OnSize(false).3");
 			}
@@ -4215,7 +4214,7 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 			//120820 - Тут нужно проверять реальный IsZoomed
 			if (isIconic() || !::IsZoomed(ghWnd))
 			{
-					mb_IgnoreSizeChange = true;
+				MSetter lSet(&mn_IgnoreSizeChange);
 				//120820 для четкости, в FullScreen тоже ставим Maximized, а не Normal
 				ShowWindow((abFirstShow && mp_ConEmu->WindowStartMinimized) ? SW_SHOWMINNOACTIVE : SW_SHOWMAXIMIZED, ANIMATION_MS_DEFAULT, abFirstShow);
 
@@ -4223,7 +4222,6 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 				//if (mb_MaximizedHideCaption)
 				//	mb_MaximizedHideCaption = FALSE;
 
-				mb_IgnoreSizeChange = false;
 				//120820 - лишняя перерисовка?
 				//-- RePaint();
 			}
@@ -4262,9 +4260,9 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 
 			if (!IsWindowVisible(ghWnd))
 			{
-				mb_IgnoreSizeChange = true;
+				MSetter lSet(&mn_IgnoreSizeChange);
 				ShowWindow((abFirstShow && mp_ConEmu->WindowStartMinimized) ? SW_SHOWMINNOACTIVE : SW_SHOWNORMAL, ANIMATION_MS_DEFAULT, abFirstShow);
-				mb_IgnoreSizeChange = false;
+				lSet.Unlock();
 				//WindowMode = inMode; // Запомним!
 
 				if (gpSetCls->isAdvLogging) LogString(L"OnSize(false).5");
@@ -4695,7 +4693,7 @@ LRESULT CConEmuSize::OnDpiChanged(UINT dpiX, UINT dpiY, LPRECT prcSuggested, boo
 		szPrefix, dpiX, dpiY, rc.left, rc.top, rc.right, rc.bottom, rc.right-rc.left, rc.bottom-rc.top);
 
 	/*
-	if (m_JumpMonitor.bInJump || mb_IgnoreSizeChange)
+	if (m_JumpMonitor.bInJump || mn_IgnoreSizeChange)
 	{
 		wcscat_c(szInfo, L" - SKIPPED because of moving");
 		DEBUGSTRDPI(szInfo);
@@ -5849,6 +5847,7 @@ void CConEmuSize::DoMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 		// Здесь - интересует реальный IsIconic. Для isQuakeStyle может быть фейк
 		if (::IsIconic(ghWnd))
 		{
+			MSetter lSet(&mn_IgnoreSizeChange);
 			DEBUGTEST(WINDOWPLACEMENT wpl = {sizeof(wpl)}; GetWindowPlacement(ghWnd, &wpl););
 			bool b = mp_ConEmu->mp_Menu->SetPassSysCommand(true);
 			SendMessage(ghWnd, WM_SYSCOMMAND, SC_RESTORE, 0);

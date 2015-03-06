@@ -56,6 +56,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/Monitors.h"
 #include "../common/MToolTip.h"
 #include "../common/MWow64Disable.h"
+#include "../common/MSetter.h"
 #include "../common/ProcessSetEnv.h"
 #include "../common/StartupEnvDef.h"
 #include "../common/WFiles.h"
@@ -8060,7 +8061,7 @@ void CConEmuMain::OnHideCaption()
 			LogString(szInfo);
 		}
 
-		mb_IgnoreSizeChange = true;
+		MSetter lSet(&mn_IgnoreSizeChange);
 
 		RECT rcClient = {}, rcBefore = {}, rcAfter = {};
 		if (bNeedCorrect)
@@ -8135,7 +8136,6 @@ void CConEmuMain::OnHideCaption()
 		//{
 		//	m_FixPosAfterStyle = 0;
 		//}
-		mb_IgnoreSizeChange = false;
 
 		//if (changeFromWindowMode == wmNotChanging)
 		//{
