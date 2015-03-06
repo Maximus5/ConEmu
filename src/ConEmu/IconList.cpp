@@ -39,6 +39,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmu.h"
 #include "IconList.h"
 #include "Options.h"
+#include "OptionsClass.h"
+#include "ToolImg.h"
 #include "../common/MSectionSimple.h"
 
 CIconList::CIconList()
@@ -76,13 +78,32 @@ bool CIconList::Initialize()
 
 	if (!mh_TabIcons)
 	{
-		//mh_TabIcons = ImageList_LoadImage(g_hInstance, MAKEINTRESOURCE(IDB_SHIELD), 14, 1, RGB(128,0,0), IMAGE_BITMAP, LR_CREATEDIBSECTION);
-		mh_TabIcons = ImageList_Create(16, 16, ILC_COLOR24|ILC_MASK, 0, 16);
-		if (mh_TabIcons)
+		int iSysX = GetSystemMetrics(SM_CXSMICON), iSysY = GetSystemMetrics(SM_CYSMICON);
+		mn_CxIcon = gpSetCls->EvalSize(max(16,iSysX), esf_Horizontal|esf_CanUseDpi);
+		mn_CyIcon = gpSetCls->EvalSize(max(16,iSysY), esf_Vertical|esf_CanUseDpi);
+
+		wchar_t szLog[100];
+		_wsprintf(szLog, SKIPCOUNT(szLog) L"Creating IconList for size {%ix%i} SysIcon size is {%ix%i}", mn_CxIcon, mn_CyIcon, iSysX, iSysY);
+		gpConEmu->LogString(szLog);
+
+		if ((mh_TabIcons = ImageList_Create(mn_CxIcon, mn_CyIcon, ILC_COLOR24|ILC_MASK, 0, 16)) != NULL)
 		{
-			HBITMAP hShieldUser = LoadBitmap(g_hInstance, MAKEINTRESOURCE(IDB_SHIELD16));
-			int nFirstAdd = ImageList_AddMasked(mh_TabIcons, hShieldUser, RGB(128,0,0));
-			DeleteObject(hShieldUser);
+			CToolImg img;
+			int nFirstAdd = -1;
+			const int iShieldButtons = 4;
+			if (img.Create(mn_CxIcon * iShieldButtons, mn_CyIcon, 1, GetSysColor(COLOR_BTNFACE)))
+			{
+				if (img.AddButtons(g_hInstance, IDB_SHIELD16, iShieldButtons))
+				{
+					HBITMAP hShieldUser = img.GetBitmap();
+					#ifdef _DEBUG
+					BITMAP bmi = {};
+					GetObject(hShieldUser, sizeof(bmi), &bmi);
+					#endif
+
+					nFirstAdd = ImageList_AddMasked(mh_TabIcons, hShieldUser, RGB(128,0,0));
+				}
+			}
 
 			#ifdef _DEBUG
 			int iCount = ImageList_GetImageCount(mh_TabIcons);
@@ -185,15 +206,17 @@ int CIconList::CreateTabIconInt(LPCWSTR asIconDescr, bool bAdmin, LPCWSTR asWork
 
 	if (lstrcmpi(lpszExt, L".ico") == 0)
 	{
-		hFileIcon = (HICON)LoadImage(0, pszLoadFile, IMAGE_ICON,
-		                             GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), LR_DEFAULTCOLOR|LR_LOADFROMFILE);
+		hFileIcon = (HICON)LoadImage(0, pszLoadFile, IMAGE_ICON, mn_CxIcon, mn_CyIcon, LR_DEFAULTCOLOR|LR_LOADFROMFILE);
 	}
 	else if ((lstrcmpi(lpszExt, L".exe") == 0) || (lstrcmpi(lpszExt, L".dll") == 0))
 	{
 		//TODO: May be specified index of an icon in the file
-		HICON hIconLarge = NULL;
-		ExtractIconEx(pszLoadFile, 0, &hIconLarge, &hFileIcon, 1);
-		if (hIconLarge) DestroyIcon(hIconLarge);
+		HICON hIconLarge = NULL, hIconSmall = NULL;
+		ExtractIconEx(pszLoadFile, 0, &hIconLarge, &hIconSmall, 1);
+		bool bUseLargeIcon = ((mn_CxIcon > 16) && (hIconLarge != NULL)) || (hIconSmall == NULL);
+		HICON hDestroyIcon = bUseLargeIcon ? hIconSmall : hIconLarge;
+		if (hDestroyIcon) DestroyIcon(hDestroyIcon);
+		hFileIcon = bUseLargeIcon ? hIconLarge : hIconSmall;
 	}
 	else
 	{

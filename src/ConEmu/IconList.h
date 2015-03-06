@@ -42,6 +42,7 @@ protected:
 	};
 	MSectionSimple* mpcs;
 	MArray<TabIconCache> m_Icons;
+	int mn_CxIcon, mn_CyIcon;
 	int CreateTabIconInt(LPCWSTR asIconDescr, bool bAdmin, LPCWSTR asWorkDir);
 public:
 	HIMAGELIST mh_TabIcons;
