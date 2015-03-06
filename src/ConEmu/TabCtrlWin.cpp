@@ -532,21 +532,23 @@ HWND CTabPanelWin::CreateToolbar()
 	SendMessage(mh_Toolbar, TB_SETEXTENDEDSTYLE, 0, lExStyle);
 	SendMessage(mh_Toolbar, TB_BUTTONSTRUCTSIZE, (WPARAM) sizeof(TBBUTTON), 0);
 
-	// The default
-	int nBtnSize = 14;
-	// Nearest size of scaled resource
-	int nSize125 = nBtnSize * 125 / 100;
-	int nSize150 = nBtnSize * 150 / 100;
-	int nSize200 = nBtnSize * 2;
+	// Original size buttons was painted (no other resources yet)
+	const int nOriginalSize = 14;
 	// Preferred size of button?
 	int nPrefSize = mn_TabHeight - 10;
-	// Use fixed scales (may be special resources in future)
-	if (nPrefSize > nSize200)
-		nBtnSize = nSize200;
-	else if (nPrefSize > nSize150)
-		nBtnSize = nSize150;
-	else if (nPrefSize > nSize125)
-		nBtnSize = nSize125;
+	// Use it but not less than 14 pix
+	int nBtnSize = max(nOriginalSize, nPrefSize);
+
+	// But use fixed size for some ranges...
+	int nSize125 = nOriginalSize * 125 / 100;
+	int nSize150 = nOriginalSize * 150 / 100;
+	int nSize200 = nOriginalSize * 2;
+	if ((nBtnSize > nOriginalSize) && (nBtnSize < nSize125))
+		nBtnSize = nOriginalSize;
+
+	wchar_t szLog[100];
+	_wsprintf(szLog, SKIPCOUNT(szLog) L"Creating toolbar for size %i px", nBtnSize);
+	gpConEmu->LogString(szLog);
 
 	SendMessage(mh_Toolbar, TB_SETBITMAPSIZE, 0, MAKELONG(nBtnSize,nBtnSize));
 
