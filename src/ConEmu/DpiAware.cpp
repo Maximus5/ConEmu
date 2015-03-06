@@ -1,6 +1,6 @@
 
 /*
-Copyright (c) 2014 Maximus5
+Copyright (c) 2014-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -40,7 +40,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 static bool gbSkipSetDialogDPI = false;
 #endif
 
-//#define DPI_144
+//#define DPI_DEBUG_CUSTOM 144 // 96, 120, 144, 192 - these are standard dpi-s
+#undef DPI_DEBUG_CUSTOM
 
 /*
 struct DpiValue
@@ -50,8 +51,8 @@ struct DpiValue
 
 DpiValue::DpiValue()
 {
-	#if defined(_DEBUG) && defined(DPI_144)
-	SetDpi(144,144);
+	#if defined(_DEBUG) && defined(DPI_DEBUG_CUSTOM)
+	SetDpi(DPI_DEBUG_CUSTOM,DPI_DEBUG_CUSTOM);
 	#else
 	SetDpi(96,96);
 	#endif
@@ -59,8 +60,8 @@ DpiValue::DpiValue()
 
 DpiValue::DpiValue(WPARAM wParam)
 {
-	#if defined(_DEBUG) && defined(DPI_144)
-	SetDpi(144,144);
+	#if defined(_DEBUG) && defined(DPI_DEBUG_CUSTOM)
+	SetDpi(DPI_DEBUG_CUSTOM,DPI_DEBUG_CUSTOM);
 	#else
 	SetDpi(96,96);
 	#endif
@@ -170,7 +171,7 @@ void CDpiAware::UpdateStartupInfo(CEStartupEnv* pStartEnv)
 
 bool CDpiAware::IsPerMonitorDpi()
 {
-	#if defined(_DEBUG) && defined(DPI_144)
+	#if defined(_DEBUG) && defined(DPI_DEBUG_CUSTOM)
 	return true;
 	#endif
 
@@ -207,9 +208,9 @@ bool CDpiAware::IsPerMonitorDpi()
 
 int CDpiAware::QueryDpi(HWND hWnd /*= NULL*/, DpiValue* pDpi /*= NULL*/)
 {
-	#if defined(_DEBUG) && defined(DPI_144)
-	if (pDpi) pDpi->SetDpi(144,144);
-	return 144;
+	#if defined(_DEBUG) && defined(DPI_DEBUG_CUSTOM)
+	if (pDpi) pDpi->SetDpi(DPI_DEBUG_CUSTOM,DPI_DEBUG_CUSTOM);
+	return DPI_DEBUG_CUSTOM;
 	#endif
 
 	if (hWnd && IsPerMonitorDpi())
@@ -227,9 +228,9 @@ int CDpiAware::QueryDpi(HWND hWnd /*= NULL*/, DpiValue* pDpi /*= NULL*/)
 // if hWnd is NULL - returns DC's dpi
 int CDpiAware::QueryDpiForWindow(HWND hWnd /*= NULL*/, DpiValue* pDpi /*= NULL*/)
 {
-	#if defined(_DEBUG) && defined(DPI_144)
-	if (pDpi) pDpi->SetDpi(144,144);
-	return 144;
+	#if defined(_DEBUG) && defined(DPI_DEBUG_CUSTOM)
+	if (pDpi) pDpi->SetDpi(DPI_DEBUG_CUSTOM,DPI_DEBUG_CUSTOM);
+	return DPI_DEBUG_CUSTOM;
 	#endif
 
 	int dpi = 96;
@@ -260,9 +261,9 @@ int CDpiAware::QueryDpiForRect(const RECT& rcWnd, DpiValue* pDpi /*= NULL*/, Mon
 
 int CDpiAware::QueryDpiForMonitor(HMONITOR hmon, DpiValue* pDpi /*= NULL*/, MonitorDpiType dpiType /*= MDT_Default*/)
 {
-	#if defined(_DEBUG) && defined(DPI_144)
-	if (pDpi) pDpi->SetDpi(144,144);
-	return 144;
+	#if defined(_DEBUG) && defined(DPI_DEBUG_CUSTOM)
+	if (pDpi) pDpi->SetDpi(DPI_DEBUG_CUSTOM,DPI_DEBUG_CUSTOM);
+	return DPI_DEBUG_CUSTOM;
 	#endif
 
 	int dpiX = 96, dpiY = 96;
