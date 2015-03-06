@@ -5156,8 +5156,8 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 						gpSet->ThSet.Tiles.nLabelSpacing = nVal; break;
 					case tTilesPadding:
 						gpSet->ThSet.Tiles.nLabelPadding = nVal; break;
-				}
-			}
+				} // switch (TB)
+			} // if (bValOk)
 
 			if (TB >= tc32 && TB <= tc38)
 			{
@@ -5237,46 +5237,6 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 
 			break;
 		} // case thi_Status:
-
-		//case thi_Show:
-		//{
-		//	if (HIWORD(wParam) == EN_CHANGE)
-		//	{
-		//		WORD TB = LOWORD(wParam);
-		//		BOOL lbOk = FALSE;
-		//		UINT nNewVal = GetDlgItemInt(hWnd2, TB, &lbOk, FALSE);
-
-		//		if (lbOk)
-		//		{
-		//			switch (TB)
-		//			{
-		//			case tHideCaptionAlwaysFrame:
-		//				gpSet->nHideCaptionAlwaysFrame = nNewVal;
-		//				gpConEmu->UpdateWindowRgn();
-		//				break;
-		//			case tHideCaptionAlwaysDelay:
-		//				gpSet->nHideCaptionAlwaysDelay = nNewVal;
-		//				break;
-		//			case tHideCaptionAlwaysDissapear:
-		//				gpSet->nHideCaptionAlwaysDisappear = nNewVal;
-		//				break;
-		//			case tScrollAppearDelay:
-		//				if (nNewVal >= SCROLLBAR_DELAY_MIN && nNewVal <= SCROLLBAR_DELAY_MAX)
-		//					gpSet->nScrollBarAppearDelay = nNewVal;
-		//				else if (nNewVal > SCROLLBAR_DELAY_MAX)
-		//					SetDlgItemInt(hWnd2, tScrollAppearDelay, SCROLLBAR_DELAY_MAX, FALSE);
-		//				break;
-		//			case tScrollDisappearDelay:
-		//				if (nNewVal >= SCROLLBAR_DELAY_MIN && nNewVal <= SCROLLBAR_DELAY_MAX)
-		//					gpSet->nScrollBarDisappearDelay = nNewVal;
-		//				else if (nNewVal > SCROLLBAR_DELAY_MAX)
-		//					SetDlgItemInt(hWnd2, tScrollDisappearDelay, SCROLLBAR_DELAY_MAX, FALSE);
-		//				break;
-		//			}
-		//		}
-		//	}
-		//	break;
-		//} // case thi_Show:
 
 		} // switch (GetPageId(hWnd2))
 
