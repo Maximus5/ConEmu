@@ -1592,8 +1592,16 @@ int CTabBarClass::PrepareTab(CTab& pTab, CVirtualConsole *apVCon)
 					}
 					break;
 				case _T('d'): case _T('D'): // %d - current shell directory
+				case _T('f'): case _T('F'): // %f - current shell directory name (only)
 					{
+						// CTabBarClass::Update will be triggered from CRealConsole::StoreCurWorkDir
+						// http://code.google.com/p/conemu-maximus5/wiki/ShellWorkDir
 						pszText = pRCon ? pRCon->GetConsoleCurDir(szArg) : NULL;
+						if (pszText && (*pszFmt == _T('f') || *pszFmt == _T('F')))
+						{
+							pszText = PointToName(pszText);
+							if (!pszText || !*pszText) pszText = szArg.ms_Arg;
+						}
 						if (!pszText || !*pszText)
 							pszText = L"?";
 					}
