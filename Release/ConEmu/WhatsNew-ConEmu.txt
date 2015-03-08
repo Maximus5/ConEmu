@@ -12,6 +12,10 @@ Votes and awards (vote for ConEmu, if you please)
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+2015.3.7a
+[*] Issue 1931, gh#67: ConEmu's output was blocked after maximizing window.
+
+
 2015.3.7
 [*] gh#65: Min size for active cursor changes were not saved.
 [*] Create toolbar buttons as large as the size of the tabbar.
