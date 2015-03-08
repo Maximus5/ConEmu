@@ -4818,6 +4818,12 @@ bool CConEmuSize::isIconic(bool abRaw /*= false*/)
 			// Don't assume "iconic" while creating window
 			// otherwise "StoreNormalRect" will fails
 			|| (!mp_ConEmu->InCreateWindow() && !IsWindowVisible(ghWnd));
+		// Issue 1792: Win+D/D
+		if (!bIconic)
+		{
+			RECT rc = {}; GetWindowRect(ghWnd, &rc);
+			bIconic = (rc.left <= -32000 || rc.top <= -32000);
+		}
 	}
 	return bIconic;
 }
