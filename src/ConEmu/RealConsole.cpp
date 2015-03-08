@@ -4027,7 +4027,7 @@ BOOL CRealConsole::StartProcess()
 		{
 			RConStartArgs args;
 			args.AssignFrom(&m_Args);
-			args.aRecreate = cra_EditTab;
+			args.aRecreate = cra_CreateTab; // cra_EditTab; -- button "Start" is expected instead of ambiguous "Save"
 
 			int nCreateRc = mp_ConEmu->RecreateDlg(&args);
 
