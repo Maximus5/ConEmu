@@ -67,13 +67,16 @@ void MSetter::Unlock()
 	if (type==st_LONG)
 	{
 		if (mp_longVal) InterlockedDecrement(mp_longVal);
+		mp_longVal = NULL;
 	}
 	else if (type==st_bool)
 	{
 		if (mp_boolVal) *mp_boolVal = false;
+		mp_boolVal = NULL;
 	}
 	else if (type==st_DWORD)
 	{
 		if (mdw_DwordVal) *mdw_DwordVal = mdw_OldDwordValue;
+		mdw_DwordVal = NULL;
 	}
 }
