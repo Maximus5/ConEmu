@@ -1556,14 +1556,14 @@ int CTabBarClass::PrepareTab(CTab& pTab, CVirtualConsole *apVCon)
 			LPCTSTR pszText = NULL;
 			switch (*pszFmt)
 			{
-				case _T('s'): case _T('S'):
+				case _T('s'): case _T('S'): // %s - Title
 					pszText = fileName;
 					break;
-				case _T('i'): case _T('I'):
+				case _T('i'): case _T('I'): // %i - Far window number (you can see it in standard F12 menu)
 					_wsprintf(szTmp, SKIPLEN(countof(szTmp)) _T("%i"), pTab->Info.nIndex);
 					pszText = szTmp;
 					break;
-				case _T('p'): case _T('P'):
+				case _T('p'): case _T('P'): // %p - Active process PID
 					if (!apVCon || !apVCon->RCon())
 					{
 						wcscpy_c(szTmp, _T("?"));
@@ -1574,7 +1574,7 @@ int CTabBarClass::PrepareTab(CTab& pTab, CVirtualConsole *apVCon)
 					}
 					pszText = szTmp;
 					break;
-				case _T('c'): case _T('C'):
+				case _T('c'): case _T('C'): // %c - Console #
 					{
 						int iCon = gpConEmu->isVConValid(apVCon);
 						if (iCon > 0)
@@ -1584,25 +1584,25 @@ int CTabBarClass::PrepareTab(CTab& pTab, CVirtualConsole *apVCon)
 						pszText = szTmp;
 					}
 					break;
-				case _T('n'): case _T('N'):
+				case _T('n'): case _T('N'): // %n - Active process name
 					{
 						pszText = bRenamedTab ? fileName : pRCon ? pRCon->GetActiveProcessName() : NULL;
 						wcscpy_c(szTmp, (pszText && *pszText) ? pszText : L"?");
 						pszText = szTmp;
 					}
 					break;
-				case _T('d'): case _T('D'):
+				case _T('d'): case _T('D'): // %d - current shell directory
 					{
 						pszText = pRCon ? pRCon->GetConsoleCurDir(szArg) : NULL;
 						if (!pszText || !*pszText)
 							pszText = L"?";
 					}
 					break;
-				case _T('a'): case _T('A'):
+				case _T('a'): case _T('A'): // %a - ‘Admin’
 					pszText = bAppendAdmin ? gpSet->szAdminTitleSuffix : NULL;
 					bAppendAdmin = false;
 					break;
-				case _T('%'):
+				case _T('%'): // %% - %
 					pszText = L"%";
 					break;
 				case 0:
