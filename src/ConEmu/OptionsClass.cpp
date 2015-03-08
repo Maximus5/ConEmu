@@ -1954,6 +1954,7 @@ LRESULT CSettings::OnInitDialog_WndSizePos(HWND hWnd2, bool abInitial)
 	UpdatePos(gpConEmu->wndX, gpConEmu->wndY, true);
 
 	checkRadioButton(hWnd2, rCascade, rFixed, gpSet->wndCascade ? rCascade : rFixed);
+	SetDlgItemText(hWnd2, rFixed, gpSet->isQuakeStyle ? L"Free" : L"Fixed");
 	SetDlgItemText(hWnd2, rCascade, gpSet->isQuakeStyle ? L"Centered" : L"Cascade");
 
 	checkDlgButton(hWnd2, cbLongOutput, gpSet->AutoBufferHeight);
