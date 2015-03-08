@@ -8144,6 +8144,8 @@ void CConEmuMain::OnHideCaption()
 		//}
 	}
 
+	_ASSERTE(mn_IgnoreSizeChange>=0);
+
 	if (IsWindowVisible(ghWnd))
 	{
 		// Refresh JIC

@@ -3182,6 +3182,7 @@ ConEmuWindowMode CConEmuSize::GetChangeFromWindowMode()
 
 bool CConEmuSize::IsWindowModeChanging()
 {
+	_ASSERTE(mn_IgnoreSizeChange>=0);
 	return (changeFromWindowMode != wmNotChanging) || m_JumpMonitor.bInJump || mn_IgnoreSizeChange;
 }
 
@@ -4147,6 +4148,7 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 						SWP_NOCOPYBITS|SWP_SHOWWINDOW);
 				}
 				lSet.Unlock();
+				_ASSERTE(mn_IgnoreSizeChange>=0);
 
 				//RePaint();
 				mp_ConEmu->InvalidateAll();
@@ -4158,6 +4160,8 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 				gpSetCls->UpdateWindowMode(wmMaximized);
 			} // if (!gpSet->isHideCaption)
 
+			_ASSERTE(mn_IgnoreSizeChange>=0);
+
 			if (!IsWindowVisible(ghWnd))
 			{
 				MSetter lSet(&mn_IgnoreSizeChange);
@@ -4165,6 +4169,8 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 
 				if (gpSetCls->isAdvLogging) LogString(L"OnSize(false).3");
 			}
+
+			_ASSERTE(mn_IgnoreSizeChange>=0);
 
 			// Already resored, need to clear the flag to avoid incorrect sizing
 			mp_ConEmu->mp_Menu->SetRestoreFromMinimized(false);
@@ -4228,6 +4234,8 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 				//-- RePaint();
 			}
 
+			_ASSERTE(mn_IgnoreSizeChange>=0);
+
 			if (mp_ConEmu->mp_TaskBar2)
 			{
 				if (!gpSet->isDesktopMode)
@@ -4271,6 +4279,8 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 
 				OnSize(false); // подровнять ТОЛЬКО дочерние окошки
 			}
+
+			_ASSERTE(mn_IgnoreSizeChange>=0);
 
 			#ifdef _DEBUG
 			bool bZoomed = ::IsZoomed(ghWnd);
@@ -5861,6 +5871,8 @@ void CConEmuSize::DoMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 			SendMessage(ghWnd, WM_SYSCOMMAND, SC_RESTORE, 0);
 			mp_ConEmu->mp_Menu->SetPassSysCommand(b);
 		}
+
+		_ASSERTE(mn_IgnoreSizeChange>=0);
 
 		// Страховка, коррекция позиции для Quake
 		if (gpSet->isQuakeStyle)
