@@ -12,6 +12,15 @@ Votes and awards (vote for ConEmu, if you please)
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+2015.3.7
+[*] gh#65: Min size for active cursor changes were not saved.
+[*] Create toolbar buttons as large as the size of the tabbar.
+[*] Take current dpi into account while creating tab icons.
+[*] Issue 1929: Quake position was changed unexpectedly after Win+D / restore.
+[*] Issue 1792: Unexpected console resize happens after Win+D Win+D.
+[*] gh#66: New tab template ‘%f’ shows shell's current folder name. Check wiki ShellWorkDir.
+
+
 2015.3.5
 [*] Wrong tab was activated sometimes by mouse click if there was a scroll buttons on the TabBar.
 [*] Do not do tab flickering while switching them by mouse clicks.
