@@ -3635,7 +3635,7 @@ void CConEmuMain::LoadIcons()
 		return; // Уже загружены
 
 	wchar_t *lpszExt = NULL;
-	wchar_t szIconPath[MAX_PATH+1] = {};
+	wchar_t szIconPath[MAX_PATH+16] = {};
 
 	if (mps_IconPath)
 	{
@@ -3653,18 +3653,14 @@ void CConEmuMain::LoadIcons()
 	}
 	else
 	{
-		lstrcpyW(szIconPath, ms_ConEmuExe);
-		lpszExt = (wchar_t*)PointToExt(szIconPath);
-
-		if (!lpszExt)
+		wcscpy_c(szIconPath, ms_ConEmuExeDir);
+		wcscat_c(szIconPath, L"ConEmu.ico");
+		if (!FileExists(szIconPath))
 		{
 			szIconPath[0] = 0;
 		}
 		else
 		{
-			_tcscpy(lpszExt, _T(".ico"));
-			if (!FileExists(szIconPath))
-				szIconPath[0]=0;
 		}
 	}
 
