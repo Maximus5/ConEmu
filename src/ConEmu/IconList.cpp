@@ -225,6 +225,18 @@ int CIconList::CreateTabIconInt(LPCWSTR asIconDescr, bool bAdmin, LPCWSTR asWork
 
 	if (hFileIcon)
 	{
+		if (gpSetCls->isAdvLogging)
+		{
+			ICONINFO ii = {};
+			GetIconInfo(hFileIcon, &ii);
+			BITMAP bi = {};
+			GetObject(ii.hbmColor, sizeof(bi), &bi);
+			wchar_t szInfo[80];
+			_wsprintf(szInfo, SKIPCOUNT(szInfo) L"{%ix%i} planes=%u bpp=%u", bi.bmWidth, bi.bmHeight, bi.bmPlanes, bi.bmBitsPixel);
+			CEStr lsLog(lstrmerge(L"Icon `", asIconDescr, L"` was loaded: ", szInfo));
+			gpConEmu->LogString(lsLog);
+		}
+
 		int iIconIdxAdm = -1;
 		iIconIdx = ImageList_ReplaceIcon(mh_TabIcons, -1, hFileIcon);
 
@@ -262,6 +274,11 @@ wrap:
 		gpConEmu->ChangeWorkDir(NULL);
 	}
 	SafeFree(pszExpanded);
+	if (gpSetCls->isAdvLogging && (iIconIdx < 0))
+	{
+		CEStr lsLog(lstrmerge(L"Icon `", asIconDescr, L"` loading was failed"));
+		gpConEmu->LogString(lsLog);
+	}
 	return iIconIdx;
 }
 
