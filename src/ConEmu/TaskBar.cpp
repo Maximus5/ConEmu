@@ -328,6 +328,10 @@ void CTaskBar::Taskbar_SetOverlay(HICON ahIcon)
 {
 	HRESULT hr = mp_TaskBar3 ? mp_TaskBar3->SetOverlayIcon(ghWnd, ahIcon, NULL) : E_FAIL;
 
+	wchar_t szInfo[100];
+	_wsprintf(szInfo, SKIPCOUNT(szInfo) L"mp_TaskBar3->SetOverlayIcon(%s) %s code=x%08X", ahIcon?L"ICON":L"NULL", SUCCEEDED(hr)?L"succeeded":L"failed", hr);
+	LogString(szInfo);
+
 	_ASSERTE(hr==S_OK);
 	UNREFERENCED_PARAMETER(hr);
 }
@@ -335,14 +339,21 @@ void CTaskBar::Taskbar_SetOverlay(HICON ahIcon)
 void CTaskBar::Taskbar_UpdateOverlay()
 {
 	if (!this || !mp_TaskBar3)
+	{
+		LogString(L"Taskbar_UpdateOverlay skipped: !mp_TaskBar3");
 		return;
+	}
 
 	if (!IsWindows7)
+	{
+		LogString(L"Taskbar_UpdateOverlay skipped: !IsWindows7");
 		return;
+	}
 
 	if (!gpSet->isTaskbarShield)
 	{
 		Taskbar_SetOverlay(NULL);
+		LogString(L"Taskbar_UpdateOverlay skipped: !isTaskbarShield");
 		return;
 	}
 
@@ -351,11 +362,13 @@ void CTaskBar::Taskbar_UpdateOverlay()
 
 	if ((hIcon = gpConEmu->GetCurrentVConIcon()) != NULL)
 	{
+		LogString(L"Taskbar_UpdateOverlay executed with tab icon");
 		Taskbar_SetOverlay(hIcon);
 		DestroyIcon(hIcon);
 	}
 	else
 	{
+		LogString(L"Taskbar_UpdateOverlay executed with [non]admin icon");
 		bAdmin = gpConEmu->IsActiveConAdmin();
 		Taskbar_SetShield(bAdmin);
 	}
