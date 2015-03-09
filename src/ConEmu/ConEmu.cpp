@@ -7083,6 +7083,8 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 					*(pszNext++) = L'\n';
 				}
 
+				LogString(L"Creating console group using `|||` script");
+
 				// GO
 				if (!CreateConGroup(pszDataW, FALSE, NULL/*pszStartupDir*/))
 				{
@@ -7103,6 +7105,8 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 				// Was "/dir" specified in the app switches?
 				if (mb_ConEmuWorkDirArg)
 					args.pszStartupDir = lstrdup(ms_ConEmuWorkDir);
+				CEStr lsLog(lstrmerge(L"Creating console group using task ", pszCmd));
+				LogString(lsLog);
 				// В качестве "команды" указан "пакетный файл" или "группа команд" одновременного запуска нескольких консолей
 				wchar_t* pszDataW = LoadConsoleBatch(pszCmd, &args);
 				if (!pszDataW)
@@ -7139,6 +7143,9 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 				if (args.Detached != crb_On)
 				{
 					args.pszSpecialCmd = lstrdup(GetCmd());
+
+					CEStr lsLog(lstrmerge(L"Creating console using command ", args.pszSpecialCmd));
+					LogString(lsLog);
 
 					if (!CreateCon(&args, TRUE))
 					{
