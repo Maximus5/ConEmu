@@ -3636,19 +3636,28 @@ void CConEmuMain::LoadIcons()
 
 	wchar_t *lpszExt = NULL;
 	wchar_t szIconPath[MAX_PATH+16] = {};
+	CEStr lsLog;
 
 	if (mps_IconPath)
 	{
 		if (FileExists(mps_IconPath))
 		{
 			wcscpy_c(szIconPath, mps_IconPath);
+			lsLog.Attach(lstrmerge(L"Loading icon from '/icon' switch `", mps_IconPath, L"`"));
 		}
 		else
 		{
 			wchar_t* pszFilePart;
 			DWORD n = SearchPath(NULL, mps_IconPath, NULL, countof(szIconPath), szIconPath, &pszFilePart);
 			if (!n || (n >= countof(szIconPath)))
+			{
 				szIconPath[0] = 0;
+				lsLog.Attach(lstrmerge(L"Icon specified with '/icon' switch `", mps_IconPath, L"` was not found"));
+			}
+			else
+			{
+				lsLog.Attach(lstrmerge(L"Icon specified with '/icon' was found at `", szIconPath, L"`"));
+			}
 		}
 	}
 	else
@@ -3661,8 +3670,11 @@ void CConEmuMain::LoadIcons()
 		}
 		else
 		{
+			lsLog.Attach(lstrmerge(L"Loading icon `", szIconPath, L"`"));
 		}
 	}
+
+	if (!lsLog.IsEmpty()) LogString(lsLog);
 
 	if (szIconPath[0])
 	{
@@ -3681,7 +3693,12 @@ void CConEmuMain::LoadIcons()
 		}
 	}
 
-	if (!hClassIcon)
+	if (hClassIcon)
+	{
+		lsLog.Attach(lstrmerge(L"External icons were loaded, small=", hClassIconSm?L"OK":L"NULL", L", large=", hClassIcon?L"OK":L"NULL"));
+		LogString(lsLog);
+	}
+	else
 	{
 		szIconPath[0]=0;
 		hClassIcon = (HICON)LoadImage(GetModuleHandle(0),
@@ -3693,6 +3710,8 @@ void CConEmuMain::LoadIcons()
 		hClassIconSm = (HICON)LoadImage(GetModuleHandle(0),
 		                                MAKEINTRESOURCE(gpSet->nIconID), IMAGE_ICON,
 		                                GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), LR_DEFAULTCOLOR);
+
+		LogString(L"Using default ConEmu icon");
 	}
 }
 
