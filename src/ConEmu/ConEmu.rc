@@ -1104,8 +1104,8 @@ BEGIN
     CTEXT           "Change these settings very carefully!!!",IDC_STATIC,4,16,228,8
     CTEXT           "For example: True Type font ‘Lucida Console’ 5x3",IDC_STATIC,4,40,228,8
     GROUPBOX        "",IDC_STATIC,4,54,228,79
-    LTEXT           "Font must be declared in: HKEY_LOCAL_MACHINE\\Software\\",IDC_STATIC,12,82,214,8
-    LTEXT           "Microsoft\\Windows NT\\CurrentVersion\\Console\\TrueTypeFont",IDC_STATIC,12,91,214,8
+    LTEXT           "Font must be declared in: HKLM\\Software\\Microsoft\\",IDC_STATIC,12,82,214,8
+    LTEXT           "\\Windows NT\\CurrentVersion\\Console\\TrueTypeFont",IDC_STATIC,12,91,214,8
     PUSHBUTTON      "Add font to ‘...\\Console\\TrueTypeFont’",bConFontAdd2HKLM,11,102,214,14,WS_DISABLED
     LTEXT           "Console restart may be required",tConsoleFontConsoleNote,12,141,110,8,WS_DISABLED
     LTEXT           "NOTE!!! Computer restart may be required to apply registry changes",tConsoleFontHklmNote,12,120,213,8,WS_DISABLED
