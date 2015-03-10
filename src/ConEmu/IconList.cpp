@@ -95,7 +95,7 @@ bool CIconList::Initialize()
 			CToolImg img;
 			int nFirstAdd = -1;
 			const int iShieldButtons = 4;
-			if (img.Create(mn_CxIcon * iShieldButtons, mn_CyIcon, 1, GetSysColor(COLOR_BTNFACE)))
+			if (img.Create(mn_CxIcon, mn_CyIcon, iShieldButtons, GetSysColor(COLOR_BTNFACE)))
 			{
 				if (img.AddButtons(g_hInstance, IDB_SHIELD16, iShieldButtons))
 				{
