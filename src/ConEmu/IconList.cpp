@@ -283,6 +283,18 @@ wrap:
 	return iIconIdx;
 }
 
+LPCWSTR CIconList::GetIconInfoStr(HICON h, wchar_t (&szInfo)[80])
+{
+	ICONINFO ii = {};
+	GetIconInfo(h, &ii);
+	BITMAP bi = {};
+	GetObject(ii.hbmColor, sizeof(bi), &bi);
+	_wsprintf(szInfo, SKIPCOUNT(szInfo) L"{%ix%i} planes=%u bpp=%u", bi.bmWidth, bi.bmHeight, bi.bmPlanes, bi.bmBitsPixel);
+	SafeDeleteObject(ii.hbmColor);
+	SafeDeleteObject(ii.hbmMask);
+	return szInfo;
+}
+
 HICON CIconList::GetTabIconByIndex(int IconIndex)
 {
 	if (!this || !mh_TabIcons)

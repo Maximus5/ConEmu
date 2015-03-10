@@ -59,6 +59,8 @@ public:
 
 	HICON GetTabIconByIndex(int IconIndex);
 
+	static LPCWSTR GetIconInfoStr(HICON h, wchar_t (&szInfo)[80]);
+
 	operator HIMAGELIST() const
 	{
 		return (HIMAGELIST)mh_TabIcons;
