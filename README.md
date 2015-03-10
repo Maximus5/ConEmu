@@ -1,6 +1,6 @@
 ## About this Fork
 
-If you have problems with Vim (command line version) in Windows to scroll inside Vim 
+If you use Vim (command line version) in Windows and you have problems to scroll
 by using the mouse wheel, you can try this Fork.
 
 When Vim is running inside this version of ConEmu
