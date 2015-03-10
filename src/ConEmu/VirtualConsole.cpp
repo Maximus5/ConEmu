@@ -5466,15 +5466,15 @@ void CVirtualConsole::DistributeSpaces(wchar_t* ConCharLine, CharAttr* ConAttrLi
 		DWORD n2 = ConCharXLine[j2-1] - n1; // выделенная на пробелы ширина
 		HEAPVAL
 
-		for(int k=j, l=1; k<(j2-1); k++, l++)
+		for (int k = j, l = 1; k < (j2-1); k++, l++)
 		{
-#ifdef _DEBUG
+			#ifdef _DEBUG
 			DWORD nn = n1 + (n3 ? klMulDivU32(l, n2, n3) : 0);
 
 			if (nn != ConCharXLine[k])
 				ConCharXLine[k] = nn;
+			#endif
 
-#endif
 			ConCharXLine[k] = n1 + (n3 ? klMulDivU32(l, n2, n3) : 0);
 			//n1 + (n3 ? klMulDivU32(k-j, n2, n3) : 0);
 			HEAPVAL
