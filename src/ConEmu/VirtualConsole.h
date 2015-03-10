@@ -187,7 +187,7 @@ class CVirtualConsole :
 		// Working pointers
 		bool mb_PointersAllocated;
 		wchar_t  *mpsz_ConChar, *mpsz_ConCharSave;   // nMaxTextWidth * nMaxTextHeight
-		// CharAttr определен в RealConsole.h
+		// CharAttr определен в "common/RgnDetect.h"
 		CharAttr *mpn_ConAttrEx, *mpn_ConAttrExSave; // nMaxTextWidth * nMaxTextHeight
 		DWORD *ConCharX;      // nMaxTextWidth * nMaxTextHeight
 		DWORD *ConCharDX;     // nMaxTextWidth
