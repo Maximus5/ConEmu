@@ -504,6 +504,7 @@ int CToolImg::AddBitmap(HBITMAP hbm, int iNumBtns)
 	int iAdded = iNumBtns;
 	if (iAdded > (mn_MaxBtnCount - mn_BtnCount))
 	{
+		_ASSERTE((iAdded <= (mn_MaxBtnCount - mn_BtnCount)) && "CToolImg was overflowed");
 		iAdded = (mn_MaxBtnCount - mn_BtnCount);
 		if (iAdded < 1)
 		{
@@ -573,6 +574,9 @@ int CToolImg::AddButtons(HINSTANCE hinst, INT_PTR resId, int iNumBtns)
 	HBITMAP hbm = (HBITMAP)LoadImage(hinst, (LPCWSTR)resId, IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION);
 	if (hbm)
 	{
+		#ifdef _DEBUG
+		//SaveImageEx(L"T:\\AddButtons.png", hbm);
+		#endif
 		iAdded = AddBitmap(hbm, iNumBtns);
 		DeleteObject(hbm);
 	}
