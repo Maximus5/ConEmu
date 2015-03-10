@@ -109,6 +109,7 @@ bool CIconList::Initialize()
 			int iCount = ImageList_GetImageCount(mh_TabIcons);
 			_ASSERTE(iCount==4);
 			IMAGEINFO ii = {}; BOOL b;
+			// An application should not call DeleteObject to destroy the bitmaps retrieved by ImageList_GetImageInfo
 			b = ImageList_GetImageInfo(mh_TabIcons, 0, &ii);
 			b = ImageList_GetImageInfo(mh_TabIcons, 1, &ii);
 			#endif
