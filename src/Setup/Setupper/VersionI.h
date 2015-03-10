@@ -1,5 +1,5 @@
-#define CONEMUVERN 15,3,7,1
-#define CONEMUVERS "150307a"
-#define CONEMUVERL L"150307a"
-#define MSI86 "../ConEmu.150307a.x86.msi"
-#define MSI64 "../ConEmu.150307a.x64.msi"
+#define CONEMUVERN 15,3,9,0
+#define CONEMUVERS "150309"
+#define CONEMUVERL L"150309"
+#define MSI86 "../ConEmu.150309.x86.msi"
+#define MSI64 "../ConEmu.150309.x64.msi"

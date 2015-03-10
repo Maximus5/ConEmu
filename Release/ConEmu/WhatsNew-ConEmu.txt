@@ -12,6 +12,12 @@ Votes and awards (vote for ConEmu, if you please)
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+2015.3.9
+[*] Issue 1937: ‘Admin shield’ in TabBar was broken.
+[*] Only use "ConEmu.ico" name as possible external icon.
+[*] Logging. Log ConEmu icon loading, created startup consoles, overlay icon actions.
+
+
 2015.3.7a
 [*] Issue 1931, gh#67: ConEmu's output was blocked after maximizing window.
 
