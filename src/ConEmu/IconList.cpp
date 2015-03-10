@@ -43,6 +43,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ToolImg.h"
 #include "../common/MSectionSimple.h"
 
+#ifdef _DEBUG
+#include "LoadImg.h"
+#endif
+
 CIconList::CIconList()
 {
 	mh_TabIcons = NULL;
@@ -99,6 +103,9 @@ bool CIconList::Initialize()
 					#ifdef _DEBUG
 					BITMAP bmi = {};
 					GetObject(hShieldUser, sizeof(bmi), &bmi);
+					#ifdef _DEBUG
+					//SaveImageEx(L"T:\\ShieldUser.png", hShieldUser);
+					#endif
 					#endif
 
 					nFirstAdd = ImageList_AddMasked(mh_TabIcons, hShieldUser, RGB(128,0,0));
@@ -226,15 +233,12 @@ int CIconList::CreateTabIconInt(LPCWSTR asIconDescr, bool bAdmin, LPCWSTR asWork
 
 	if (hFileIcon)
 	{
+		wchar_t szIconInfo[80] = L"", szMergedInfo[80] = L"";
+		GetIconInfoStr(hFileIcon, szIconInfo);
+
 		if (gpSetCls->isAdvLogging)
 		{
-			ICONINFO ii = {};
-			GetIconInfo(hFileIcon, &ii);
-			BITMAP bi = {};
-			GetObject(ii.hbmColor, sizeof(bi), &bi);
-			wchar_t szInfo[80];
-			_wsprintf(szInfo, SKIPCOUNT(szInfo) L"{%ix%i} planes=%u bpp=%u", bi.bmWidth, bi.bmHeight, bi.bmPlanes, bi.bmBitsPixel);
-			CEStr lsLog(lstrmerge(L"Icon `", asIconDescr, L"` was loaded: ", szInfo));
+			CEStr lsLog(lstrmerge(L"Icon `", asIconDescr, L"` was loaded: ", szIconInfo));
 			gpConEmu->LogString(lsLog);
 		}
 
@@ -252,6 +256,9 @@ int CIconList::CreateTabIconInt(LPCWSTR asIconDescr, bool bAdmin, LPCWSTR asWork
 				HICON hNewIcon = ImageList_GetIcon(hAdmList, 0, ILD_TRANSPARENT);
 				if (hNewIcon)
 				{
+					CEStr lsLog(lstrmerge(L"Admin icon `", asIconDescr, L"` was created: ", GetIconInfoStr(hNewIcon, szMergedInfo)));
+					gpConEmu->LogString(lsLog);
+
 					iIconIdxAdm = ImageList_ReplaceIcon(mh_TabIcons, -1, hNewIcon);
 					DestroyIcon(hNewIcon);
 
@@ -263,6 +270,14 @@ int CIconList::CreateTabIconInt(LPCWSTR asIconDescr, bool bAdmin, LPCWSTR asWork
 						iIconIdx = iIconIdxAdm;
 					}
 				}
+				else
+				{
+					gpConEmu->LogString(L"GetIcon for admin icon was failed");
+				}
+			}
+			else
+			{
+				gpConEmu->LogString(L"Admin icon merging was failed");
 			}
 		}
 
