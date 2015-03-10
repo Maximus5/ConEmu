@@ -3263,7 +3263,11 @@ bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse
 
 	// Ensure that coordinates are correct
 	if (!PatchMouseCoords(x, y, crMouse))
+	{
+		if (isSelectionPresent())
+			return true; // even if outside - don't send to console!
 		return false;
+	}
 
 	mcr_LastMousePos = crMouse;
 

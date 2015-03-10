@@ -4607,6 +4607,13 @@ void CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y, bool abForce
 	if (mp_ABuf->OnMouse(messg, wParam, x, y, crMouse))
 		return; // В консоль не пересылать, событие обработал "сам буфер"
 
+	#ifdef _DEBUG
+	if (mp_ABuf->isSelectionPresent())
+	{
+		_ASSERTE(FALSE && "Buffer must process mouse internally");
+	}
+	#endif
+
 
 	if (isFar() && mp_ConEmu->IsGesturesEnabled())
 	{
