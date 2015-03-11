@@ -53,6 +53,7 @@ typedef struct tag_CharAttr
 			#define CharAttr_DialogCorner   4
 			#define CharAttr_SomeFilled     8
 			#define CharAttr_Transparent   16
+			#define CharAttr_DoubleSpaced  32 // DBCS glyphs used full (double) space
 			//bool bDialog;
 			//bool bDialogVBorder;
 			//bool bDialogCorner;
