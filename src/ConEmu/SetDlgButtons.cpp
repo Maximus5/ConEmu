@@ -1673,8 +1673,9 @@ void CSetDlgButtons::OnBtn_FixFarBorders(HWND hDlg, WORD CB, BYTE uCheck)
 	_ASSERTE(CB==cbFixFarBorders);
 
 	gpSet->isFixFarBorders = (uCheck == BST_UNCHECKED) ? 0 : 1;
-
+	gpSetCls->ResetFontWidth();
 	gpConEmu->Update(true);
+
 } // cbFixFarBorders
 
 
@@ -1691,6 +1692,7 @@ void CSetDlgButtons::OnBtn_UnicodeRangesApply(HWND hDlg, WORD CB, BYTE uCheck)
 
 	if (gpSet->isFixFarBorders)
 	{
+		gpSetCls->ResetFontWidth();
 		gpConEmu->Update(true);
 	}
 } // cbUnicodeRangesApply
