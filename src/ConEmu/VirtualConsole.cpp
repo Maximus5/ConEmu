@@ -1496,6 +1496,12 @@ WORD CVirtualConsole::CharWidth(wchar_t ch, const CharAttr& attr)
 	if (nWidth)
 		return nWidth;
 
+	if (gbIsDBCS && (attr.Flags & CharAttr_DoubleSpaced))
+	{
+		gpSetCls->CharWidth[ch] = 2*nFontWidth;
+		return 2*nFontWidth;
+	}
+
 	if (gpSet->isMonospace
 	        || (gpSet->isFixFarBorders && isCharBorder(ch))
 	        || (gpSet->isEnhanceGraphics && isCharProgress(ch))
@@ -3828,7 +3834,9 @@ void CVirtualConsole::UpdateText()
 								j2++;
 						}
 
-						DistributeSpaces(ConCharLine, ConAttrLine, ConCharXLine, j, j2, end);
+						// Why that was called? It breaks evaluated previously hieroglyphs positions on DBCS
+						//DistributeSpaces(ConCharLine, ConAttrLine, ConCharXLine, j, j2, end);
+
 						int nBorderWidth = CharWidth(c, attr);
 						rect.left = j ? ConCharXLine[j-1] : 0;
 						rect.right = (TextWidth>(UINT)j2) ? ConCharXLine[j2-1] : Width;
@@ -3985,10 +3993,16 @@ void CVirtualConsole::UpdateText()
 							if (!bForceMonospace)
 							{
 								// В этом режиме символ отрисовывается в начале своей ячейки
-								for (int idx = 0, n = nDrawLen; n; idx++, n--)
+								// Информация для GDI. Ширина отрисовки, т.е. сдвиг между текущим и следующим символом.
+								if (!gbIsDBCS || !pDrawAttr)
 								{
-									// Информация для GDI. Ширина отрисовки, т.е. сдвиг между текущим и следующим символом.
-									nDX[idx] = nFontWidth; //CharWidth(pszDraw[idx]); -- лишний вызов функции
+									for (int idx = 0, n = nDrawLen; n; idx++, n--)
+										nDX[idx] = nFontWidth;
+								}
+								else
+								{
+									for (int idx = 0, n = nDrawLen; n; idx++, n--)
+										nDX[idx] = (pDrawAttr[idx].Flags & CharAttr_DoubleSpaced) ? nFontWidth*2 : nFontWidth;
 								}
 							}
 							else
