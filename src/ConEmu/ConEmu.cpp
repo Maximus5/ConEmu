@@ -12412,12 +12412,14 @@ void CConEmuMain::OnTimer_AdmShield()
 {
 	if (gpSet->isTaskbarShield)
 	{
+		LogString(L"Calling Taskbar_UpdateOverlay from timer");
 		Taskbar_UpdateOverlay();
 		mn_AdmShieldTimerCounter++;
 	}
 	if ((mn_AdmShieldTimerCounter >= 5) || !gpSet->isTaskbarShield)
 	{
 		SetKillTimer(false, TIMER_ADMSHIELD_ID, 0);
+		LogString(L"Timer for Taskbar_UpdateOverlay was stopped");
 	}
 }
 
@@ -13789,6 +13791,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			}
 			else if (messg == this->mn_MsgTaskBarBtnCreated)
 			{
+				LogString(L"Message 'TaskbarButtonCreated' was received, reapplying icon properties");
 				this->OnTaskbarButtonCreated();
 				result = DefWindowProc(hWnd, messg, wParam, lParam);
 				return result;
