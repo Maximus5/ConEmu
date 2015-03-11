@@ -3617,8 +3617,10 @@ void CVirtualConsole::UpdateText()
 				}
 			}
 
-			ConCharXLine[j] = (j ? ConCharXLine[j-1] : 0)+CharWidth(c, attr);
+			WORD nCurCharWidth = CharWidth(c, attr);
+			ConCharXLine[j] = (j ? ConCharXLine[j-1] : 0)+nCurCharWidth;
 			HEAPVAL
+			DEBUGTEST(nCurCharWidth=nCurCharWidth);
 
 			#if 0
 			if (bForceMonospace)
