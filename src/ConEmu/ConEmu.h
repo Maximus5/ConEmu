@@ -744,6 +744,7 @@ class CConEmuMain
 		void OnTimer_FrameAppearDisappear(WPARAM wParam);
 		void OnTimer_RClickPaint();
 		void OnTimer_AdmShield();
+		int mn_AdmShieldTimerCounter;
 		void OnTimer_QuakeFocus();
 		void OnActivateSplitChanged();
 		void OnTransparent();

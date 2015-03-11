@@ -422,6 +422,7 @@ CConEmuMain::CConEmuMain()
 	mb_AllowAutoChildFocus = false;
 	mb_ScClosePending = false;
 	mb_UpdateJumpListOnStartup = false;
+	mn_AdmShieldTimerCounter = 0;
 
 	mps_IconPath = NULL;
 
@@ -7256,6 +7257,7 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 		if (gpSet->isTaskbarShield && mb_IsUacAdmin && gpSet->isWindowOnTaskBar())
 		{
 			// Bug in Win7? Sometimes after startup "As Admin" shield was not appeared.
+			mn_AdmShieldTimerCounter = 0;
 			SetKillTimer(true, TIMER_ADMSHIELD_ID, TIMER_ADMSHIELD_ELAPSE);
 		}
 
@@ -8280,6 +8282,7 @@ void CConEmuMain::OnTaskbarButtonCreated()
 		if (mb_IsUacAdmin)
 		{
 			// Bug in Win7? Sometimes after startup "As Admin" shield was not appeared.
+			mn_AdmShieldTimerCounter = 0;
 			SetKillTimer(true, TIMER_ADMSHIELD_ID, TIMER_ADMSHIELD_ELAPSE);
 		}
 	}
@@ -12407,13 +12410,12 @@ void CConEmuMain::OnTimer_RClickPaint()
 // Bug in Win7? Sometimes after startup "As Admin" shield was not appeared.
 void CConEmuMain::OnTimer_AdmShield()
 {
-	static int nStep = 0;
 	if (gpSet->isTaskbarShield)
 	{
 		Taskbar_UpdateOverlay();
-		nStep++;
+		mn_AdmShieldTimerCounter++;
 	}
-	if ((nStep >= 5) || !gpSet->isTaskbarShield)
+	if ((mn_AdmShieldTimerCounter >= 5) || !gpSet->isTaskbarShield)
 	{
 		SetKillTimer(false, TIMER_ADMSHIELD_ID, 0);
 	}
