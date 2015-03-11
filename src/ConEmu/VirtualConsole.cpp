@@ -1498,14 +1498,15 @@ WORD CVirtualConsole::CharWidth(wchar_t ch, const CharAttr& attr)
 
 	if (gbIsDBCS && (attr.Flags & CharAttr_DoubleSpaced))
 	{
-		gpSetCls->CharWidth[ch] = 2*nFontWidth;
-		return 2*nFontWidth;
+		// We need to check its real width - below
+		DEBUGTEST(int CJK = 2*nFontWidth);
+		//-- gpSetCls->CharWidth[ch] = 2*nFontWidth;
+		//-- return 2*nFontWidth;
 	}
-
-	if (gpSet->isMonospace
+	else if (gpSet->isMonospace
 	        || (gpSet->isFixFarBorders && isCharBorder(ch))
 	        || (gpSet->isEnhanceGraphics && isCharProgress(ch))
-	  )
+			)
 	{
 		//2009-09-09 Это некорректно. Ширина шрифта рамки может быть больше знакоместа
 		//return gpSet->BorderFontWidth();
@@ -4008,7 +4009,9 @@ void CVirtualConsole::UpdateText()
 								else
 								{
 									for (int idx = 0, n = nDrawLen; n; idx++, n--)
-										nDX[idx] = (pDrawAttr[idx].Flags & CharAttr_DoubleSpaced) ? nFontWidth*2 : nFontWidth;
+										nDX[idx] = (pDrawAttr[idx].Flags & CharAttr_DoubleSpaced)
+											? CharWidth(pszDraw[idx], attr)
+											: nFontWidth;
 								}
 							}
 							else
@@ -4020,12 +4023,16 @@ void CVirtualConsole::UpdateText()
 									// а по порядку отрисовки (что логично), то есть нужно смотреть на строку,
 									// брать кусок RTL и считать nDX для pszDraw в обратном порядке
 
-
 									wchar_t ch = pszDraw[idx];
-									if (isCharSpace(ch) || isCharBorder(ch) || isCharProgress(ch))
+									LONG nCharWidth = CharWidth(ch, attr);
+
+									if (isCharSpace(ch)
+										|| (attr.Flags & CharAttr_DoubleSpaced)
+										|| isCharBorder(ch)
+										|| isCharProgress(ch))
 									{
 										abc.abcA = abc.abcC = 0;
-										abc.abcB = nFontWidth;
+										abc.abcB = nCharWidth;
 									}
 									else
 									{
@@ -4057,9 +4064,9 @@ void CVirtualConsole::UpdateText()
 									//	nDX[idx] = abc.abcA + abc.abcB + abc.abcC;
 									//}
 									//else
-									if (nDrawWidth < nFontWidth)
+									if (nDrawWidth < nCharWidth)
 									{
-										int nEdge = ((nFontWidth - nDrawWidth) >> 1) - nPrevEdge;
+										int nEdge = ((nCharWidth - nDrawWidth) >> 1) - nPrevEdge;
 
 										if (idx)
 										{
@@ -4073,7 +4080,7 @@ void CVirtualConsole::UpdateText()
 
 										nPrevEdge += nEdge;
 
-										nDX[idx] = nFontWidth;
+										nDX[idx] = nCharWidth;
 
 										//if (abc.abcA < nEdge)
 										//{
@@ -4086,7 +4093,7 @@ void CVirtualConsole::UpdateText()
 										// Ширина отрисовываемой части больше чем знакоместо,
 										// но т.к. юзер хотел режим Monospace - принудительно
 										// выставляем ширину ячейки
-										nDX[idx] = nFontWidth; // abc.abcA + abc.abcB /*+ abc.abcC*/;
+										nDX[idx] = nCharWidth; // abc.abcA + abc.abcB /*+ abc.abcC*/;
 										if (nPrevEdge)
 										{
 											_ASSERTE(idx>0 && "Must be, cause of nPrevEdge");
@@ -5476,9 +5483,8 @@ void CVirtualConsole::DistributeSpaces(wchar_t* ConCharLine, CharAttr* ConAttrLi
 		{
 			TODO("Для пропорциональных шрифтов надо делать как-то по другому!");
 
-			//2009-09-09 а это соответственно не нужно (пока nFontWidth == nBordWidth)
-			//ConCharXLine[j2-1] = (j2-1) * nFontWidth + nBordWidth; // или тут [j] должен быть?
-			if (!gpSet->isMonospace && j > 1)
+			//CJK hieroglyps may take double width so we need to check if it will cover previous char/hieroglyps
+			if ((j > 1) && (!gpSet->isMonospace || (gbIsDBCS && (ConCharXLine[j-1] > (DWORD)(j * nBordWidth)))))
 			{
 				//2009-12-31 нужно плясать от предыдущего символа!
 				ConCharXLine[j2-1] = ConCharXLine[j-1] + (j2 - j) * nBordWidth;
