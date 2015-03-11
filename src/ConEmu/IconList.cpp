@@ -83,8 +83,34 @@ bool CIconList::Initialize()
 	if (!mh_TabIcons)
 	{
 		int iSysX = GetSystemMetrics(SM_CXSMICON), iSysY = GetSystemMetrics(SM_CYSMICON);
-		mn_CxIcon = gpSetCls->EvalSize(max(16,iSysX), esf_Horizontal|esf_CanUseDpi);
-		mn_CyIcon = gpSetCls->EvalSize(max(16,iSysY), esf_Vertical|esf_CanUseDpi);
+		int iFontY = gpSetCls->EvalSize(gpSet->nTabFontHeight, esf_Vertical|esf_CanUseUnits|esf_CanUseDpi|esf_CanUseZoom);
+		if (iFontY < 0)
+			iFontY = gpSetCls->EvalFontHeight(gpSet->sTabFontFace, iFontY, gpSet->nTabFontHeight);
+		int iDpyY = gpSetCls->EvalSize(max(16,iSysY), esf_Vertical|esf_CanUseDpi);
+		mn_CxIcon = iSysX; mn_CyIcon = iSysY;
+		if (iFontY > 16)
+		{
+			if (iDpyY <= iFontY)
+			{
+				mn_CxIcon = gpSetCls->EvalSize(max(16,iSysX), esf_Horizontal|esf_CanUseDpi);
+				mn_CyIcon = iDpyY;
+			}
+			else
+			{
+				// Issue 1939: Tab bar height too big since version 150307
+				int iSizes[] = {20, 24, 28, 32, 40, 48, 60, 64};
+				iFontY++; // Allow one pixes larger...
+				for (INT_PTR j = countof(iSizes)-1; j >= 0; j--)
+				{
+					if (iFontY >= iSizes[j])
+					{
+						mn_CyIcon = iSizes[j];
+						mn_CxIcon = (iSysX * iSizes[j]) / iSysY;
+						break;
+					}
+				}
+			}
+		}
 
 		wchar_t szLog[100];
 		_wsprintf(szLog, SKIPCOUNT(szLog) L"Creating IconList for size {%ix%i} SysIcon size is {%ix%i}", mn_CxIcon, mn_CyIcon, iSysX, iSysY);
