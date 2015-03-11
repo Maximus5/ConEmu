@@ -1,3 +1,6 @@
+Download binary for 32 and 64bit Windows: (http://xumbu.org/downloads/opensource/prebuild/ConEmu_VimScrollPack.zip)
+
+
 ## About this Fork
 
 If you use Vim (command line version) in Windows and you have problems to scroll
