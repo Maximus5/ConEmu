@@ -1,12 +1,13 @@
 ## About this Fork
 
-If you have problems with Vim (command line version) in Windows 
-when you try to scroll inside Vim by using the mouse wheel you can try this Fork.
+If you have problems with Vim (command line version) in Windows to scroll inside Vim 
+by using the mouse wheel, you can try this Fork.
 
-When Vim is running inside this version of ConEmu:
-The mouse wheel events vk_scroll_down and vk_scroll_up will be replaced with vk_f6 and vk_f7.
+When Vim is running inside this version of ConEmu
+the mouse wheel events vk_scroll_down and vk_scroll_up will be replaced with vk_f6 and vk_f7.
 
-You have to add following to your vimrc file 
+You have to add following to your vimrc file:
+
 <b>
 if !has("gui_running")
     "set mouse=a
@@ -16,7 +17,8 @@ if !has("gui_running")
     nnoremap <F7> <C-e>
 endif</b>
 
-
+Thats all. 
+Now you should be able to scroll inside Vim just like you do it in GVim.
 
 
 ## About ConEmu
