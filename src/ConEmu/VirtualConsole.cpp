@@ -3907,7 +3907,10 @@ void CVirtualConsole::UpdateText()
 
 				if (gbNoDblBuffer) GdiFlush();
 
-				if (isProgress && bEnhanceGraphics)
+				// There is no sense to try ‘partial brushes’ if foreground is equal to background
+				if (isProgress && bEnhanceGraphics
+					// Don't use PartBrush if bg==fg unless it is 100% filled box
+					&& ((attr.crBackColor != attr.crForeColor) || (c == ucBox100)))
 				{
 					HBRUSH hbr = PartBrush(c, attr.crBackColor, attr.crForeColor);
 					FillRect((HDC)m_DC, &rect, hbr);
