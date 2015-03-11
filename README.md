@@ -22,6 +22,18 @@ Thats all.
 Now you should be able to scroll inside Vim just like you do it in GVim.
 
 
+
+
+
+
+
+
+
+
+
+
+
+
 ## About ConEmu
 ConEmu-Maximus5 is a Windows console emulator with tabs, which represents
 multiple consoles as one customizable GUI window with various features.
