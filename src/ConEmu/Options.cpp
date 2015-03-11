@@ -474,7 +474,8 @@ void Settings::InitSettings()
 	nScrollBarDisappearDelay = 1000;
 
 	//Issue 577: Для иероглифов - по умолчанию отключим моноширность
-	isMonospace = bIsDbcs ? 0 : 1;
+	//150311 - proportial is not required for DBCS anymore
+	isMonospace = 1; // bIsDbcs ? 0 : 1;
 
 	mb_MinToTray = false;
 	mb_AlwaysShowTrayIcon = false;
