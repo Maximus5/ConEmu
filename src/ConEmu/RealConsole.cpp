@@ -2996,6 +2996,9 @@ DWORD CRealConsole::MonitorThreadWorker(bool bDetached, bool& rbChildProcessCrea
 				//	mp_ConEmu->OnSize(false); // послать в главную нить запрос на обновление размера
 				bool lbNeedRedraw = false;
 
+				if (lbForceUpdate && gpConEmu->isIconic())
+					mp_VCon->UpdateThumbnail();
+
 				if ((nWait == (WAIT_OBJECT_0+1)) || lbForceUpdate)
 				{
 					//2010-05-18 lbForceUpdate вызывал CVirtualConsole::Update(abForce=true), что приводило к тормозам
