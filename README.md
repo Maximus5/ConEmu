@@ -3,8 +3,6 @@
 If you use Vim (command line version) in Windows and you have problems to scroll
 by using the mouse wheel, you can try this Fork.
 
-When Vim is running inside this version of ConEmu
-the mouse wheel events vk_scroll_down and vk_scroll_up will be replaced with vk_f6 and vk_f7.
 
 You have to add following to your vimrc file:
 
