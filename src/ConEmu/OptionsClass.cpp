@@ -1765,7 +1765,7 @@ LRESULT CSettings::OnInitDialog_Main(HWND hWnd2, bool abInitial)
 				bExist = true;
 			}
 		}
-		if (pszCurrentRange && *pszCurrentRange)
+		if (pszCurrentRange && *pszCurrentRange && !bExist)
 			SendMessageW(hCombo, CB_ADDSTRING, 0, (LPARAM)pszCurrentRange);
 		// And show current value
 		SetWindowText(hCombo, pszCurrentRange ? pszCurrentRange : L"");
