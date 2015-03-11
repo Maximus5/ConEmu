@@ -7254,7 +7254,7 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 		UNREFERENCED_PARAMETER(n);
 		OnActivateSplitChanged();
 
-		if (gpSet->isTaskbarShield && mb_IsUacAdmin && gpSet->isWindowOnTaskBar())
+		if (gpSet->isTaskbarShield && gpSet->isWindowOnTaskBar())
 		{
 			// Bug in Win7? Sometimes after startup "As Admin" shield was not appeared.
 			mn_AdmShieldTimerCounter = 0;
