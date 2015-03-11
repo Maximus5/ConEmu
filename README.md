@@ -1,7 +1,7 @@
 ## About this Fork
 
 If you use Vim (command line version) in Windows and you have problems to scroll
-by using the mouse wheel, you can try this Fork.
+by using the mouse wheel, you can try this ConEmu Fork.
 
 
 You have to add following to your vimrc file:
