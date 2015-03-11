@@ -1,3 +1,24 @@
+## About this Fork
+
+If you have problems with Vim (command line version) in Windows 
+when you try to scroll inside Vim by using the mouse wheel you can try this Fork.
+
+When Vim is running inside this version of ConEmu:
+The mouse wheel events vk_scroll_down and vk_scroll_up will be replaced with vk_f6 and vk_f7.
+
+You have to add following to your vimrc file 
+<b>
+if !has("gui_running")
+    "set mouse=a
+    inoremap <F6> <C-x><C-Y>
+    inoremap <F7> <C-x><C-e>
+    nnoremap <F6> <C-Y>
+    nnoremap <F7> <C-e>
+endif</b>
+
+
+
+
 ## About ConEmu
 ConEmu-Maximus5 is a Windows console emulator with tabs, which represents
 multiple consoles as one customizable GUI window with various features.
