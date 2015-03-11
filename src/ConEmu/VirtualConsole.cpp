@@ -3759,7 +3759,8 @@ void CVirtualConsole::UpdateText()
 					while (j2 < end && ConAttrLine[j2] == attr
 					        && isCharNonSpacing(ch = ConCharLine[j2]))
 					{
-						ConCharXLine[j2] = (j2 ? ConCharXLine[j2-1] : 0)+CharWidth(ch, attr);
+						WORD nCurCharWidth2 = CharWidth(ch, attr);
+						ConCharXLine[j2] = (j2 ? ConCharXLine[j2-1] : 0)+nCurCharWidth2;
 						j2++;
 					}
 					SelectFont(hFont);
@@ -3780,7 +3781,8 @@ void CVirtualConsole::UpdateText()
 							&& !isCharNonSpacing(ch)
 							&& (!bProportional || !isFilePanel || (ch != L'}' && ch!=L' '))) // корректировка имен в колонках
 					{
-						ConCharXLine[j2] = (j2 ? ConCharXLine[j2-1] : 0)+CharWidth(ch, attr);
+						WORD nCurCharWidth2 = CharWidth(ch, attr);
+						ConCharXLine[j2] = (j2 ? ConCharXLine[j2-1] : 0)+nCurCharWidth2;
 						j2++;
 					}
 
@@ -3803,7 +3805,8 @@ void CVirtualConsole::UpdateText()
 
 						while (j2 < end && ConAttrLine[j2] == attr && ch == ConCharLine[j2])
 						{
-							ConCharXLine[j2] = (j2 ? ConCharXLine[j2-1] : 0)+CharWidth(ch, attr);
+							WORD nCurCharWidth2 = CharWidth(ch, attr);
+							ConCharXLine[j2] = (j2 ? ConCharXLine[j2-1] : 0)+nCurCharWidth2;
 							j2++;
 						}
 					}
@@ -3819,7 +3822,8 @@ void CVirtualConsole::UpdateText()
 
 						while (j2 < end && ConAttrLine[j2] == attr && isCharBorder(ch = ConCharLine[j2]))
 						{
-							ConCharXLine[j2] = (j2 ? ConCharXLine[j2-1] : 0)+CharWidth(ch, attr);
+							WORD nCurCharWidth2 = CharWidth(ch, attr);
+							ConCharXLine[j2] = (j2 ? ConCharXLine[j2-1] : 0)+nCurCharWidth2;
 							j2++;
 						}
 					}
