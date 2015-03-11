@@ -3663,7 +3663,7 @@ void CConEmuMain::LoadIcons()
 	else
 	{
 		wcscpy_c(szIconPath, ms_ConEmuExeDir);
-		wcscat_c(szIconPath, L"ConEmu.ico");
+		wcscat_c(szIconPath, L"\\ConEmu.ico");
 		if (!FileExists(szIconPath))
 		{
 			szIconPath[0] = 0;
