@@ -5336,6 +5336,8 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 	case tUnicodeRanges:
 		// Do not required actually, the button "Apply" is enabled by default
 		EnableWindow(GetDlgItem(hWnd2, cbUnicodeRangesApply), TRUE);
+		if (HIWORD(wParam) == CBN_SELCHANGE)
+			PostMessage(hWnd2, WM_COMMAND, cbUnicodeRangesApply, 0);
 		break;
 
 	case lbBgPlacement:
