@@ -8,7 +8,7 @@ You have to add following to your vimrc file:
 
 ```
 if !has("gui_running")
-    "set mouse=a
+    set mouse=a
     inoremap <F6> <C-x><C-Y>
     inoremap <F7> <C-x><C-e>
     nnoremap <F6> <C-Y>
