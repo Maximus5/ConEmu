@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <key name="Software">
 	<key name="ConEmu">
-		<key name=".Vanilla" modified="2015-03-02 11:40:42" build="150302a">
+		<key name=".Vanilla" modified="2015-03-11 12:25:10" build="150310">
 			<value name="TabConsole" type="string" data="%s"/>
 			<value name="SingleInstance" type="hex" data="00"/>
 			<value name="KeyboardHooks" type="hex" data="01"/>
@@ -14,7 +14,7 @@
 			<value name="UseCurrentSizePos" type="hex" data="01"/>
 			<value name="WindowMode" type="dword" data="0000051f"/>
 			<value name="ConWnd Width" type="dword" data="00000050"/>
-			<value name="ConWnd Height" type="dword" data="00000017"/>
+			<value name="ConWnd Height" type="dword" data="00000016"/>
 			<value name="Cascaded" type="hex" data="00"/>
 			<value name="IntegralSize" type="hex" data="00"/>
 			<value name="ConWnd X" type="dword" data="00000184"/>
