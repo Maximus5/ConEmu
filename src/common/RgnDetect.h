@@ -41,13 +41,13 @@ typedef struct tag_CharAttr
 		{
 			unsigned int crForeColor : 24; // чтобы в ui64 поместился и nFontIndex
 			unsigned int nFontIndex : 8; // 0=normal, or combination {1=bold,2=italic,4=underline}, or 8=UCharMap
-			unsigned int crBackColor : 32; // Старший байт зарезервируем, вдруг для прозрачности понадобится
+			unsigned int crBackColor : 24; // чтобы в ui64 поместился и Flags
+			unsigned int Flags : 8; // вспомогательные флаги CharAttr_XXX
 			unsigned int nForeIdx : 8;
 			unsigned int nBackIdx : 8; // может понадобиться для ExtendColors
 			unsigned int crOrigForeColor : 32;
 			unsigned int crOrigBackColor : 32; // Реальные цвета в консоли, crForeColor и crBackColor могут быть изменены колорером
 			// вспомогательные флаги
-			DWORD Flags;
 			#define CharAttr_Dialog         1
 			#define CharAttr_DialogVBorder  2
 			#define CharAttr_DialogCorner   4
