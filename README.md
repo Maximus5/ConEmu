@@ -4,7 +4,7 @@ If you use Vim (command line version) in Windows and you have problems to scroll
 by using the mouse wheel, you can try this ConEmu Fork.
 
 
-You have to add following to your vimrc file:
+You have to add following lines to your vimrc file:
 
 ```
 if !has("gui_running")
