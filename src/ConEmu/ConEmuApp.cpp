@@ -3384,13 +3384,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			wchar_t szVal[64] = {}; DWORD cbSize = sizeof(szVal)-2;
 			if (!RegQueryValueEx(hk, szName, NULL, NULL, (LPBYTE)szVal, &cbSize) && *szVal)
 			{
-				if (*szVal == L'*')
+				if (wcschr(szVal, L'?'))
 				{
-					lstrcpyn(gsDefConFont, szVal+1, countof(gsDefConFont));
+					// logging was not started yet... so we cant write to the log
+					// Just leave default 'Lucida Console'
+					// LogString(L"Invalid console font was registered in registry");
 				}
 				else
 				{
-					lstrcpyn(gsDefConFont, szVal, countof(gsDefConFont));
+					lstrcpyn(gsDefConFont, (*szVal == L'*') ? (szVal+1) : szVal, countof(gsDefConFont));
 				}
 			}
 			RegCloseKey(hk);
