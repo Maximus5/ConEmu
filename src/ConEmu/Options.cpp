@@ -4113,7 +4113,7 @@ wchar_t* Settings::CreateCharRanges(BYTE (&Chars)[0x10000])
 
 bool Settings::isCharBorder(wchar_t inChar)
 {
-	return mpc_FixFarBorderValues[(WORD)inChar];
+	return isFixFarBorders ? mpc_FixFarBorderValues[(WORD)inChar] : false;
 }
 
 void Settings::CheckConsoleSettings()
