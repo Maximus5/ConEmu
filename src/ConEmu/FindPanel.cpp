@@ -105,7 +105,7 @@ HWND CFindPanel::CreatePane(HWND hParent, int nBarHeight)
 
 	mn_RebarHeight = nBarHeight;
 
-	int nShiftY = gpSetCls->EvalSize(SearchCtrlShift, esf_Vertical|esf_CanUseDpi);
+	int nShiftY = SearchCtrlShift; //gpSetCls->EvalSize(SearchCtrlShift, esf_Vertical|esf_CanUseDpi);
 	int nHeight = nBarHeight - (2 * nShiftY);
 	int nWidth = nBarHeight * SearchCtrlWidthMul;
 
@@ -306,7 +306,7 @@ void CFindPanel::OnWindowPosChanging(WINDOWPOS* p)
 {
 	_ASSERTE(p->hwnd == mh_Pane);
 	RECT rcRebar = {}; GetWindowRect(GetParent(mh_Pane), &rcRebar);
-	int iOptimal = gpSetCls->EvalSize(SearchCtrlShift, esf_Vertical|esf_CanUseDpi);
+	int iOptimal = SearchCtrlShift; //gpSetCls->EvalSize(SearchCtrlShift, esf_Vertical|esf_CanUseDpi);
 	p->y = iOptimal;
 	p->cy = (rcRebar.bottom - rcRebar.top) - 2*iOptimal;
 }
