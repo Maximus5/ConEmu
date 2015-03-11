@@ -1473,7 +1473,8 @@ void CVirtualConsole::CharABC(wchar_t ch, ABC *abc)
 			if (!lbCharABCOk)
 			{
 				// Значит шрифт не TTF/OTF
-				gpSetCls->CharABC[ch].abcB = CharWidth(ch);
+				CharAttr nilAttr = {};
+				gpSetCls->CharABC[ch].abcB = CharWidth(ch, nilAttr);
 				_ASSERTE(gpSetCls->CharABC[ch].abcB);
 
 				if (!gpSetCls->CharABC[ch].abcB) gpSetCls->CharABC[ch].abcB = 1;
@@ -1487,7 +1488,7 @@ void CVirtualConsole::CharABC(wchar_t ch, ABC *abc)
 }
 
 // Возвращает ширину символа, учитывает FixBorders
-WORD CVirtualConsole::CharWidth(wchar_t ch)
+WORD CVirtualConsole::CharWidth(wchar_t ch, const CharAttr& attr)
 {
 	// Проверяем сразу, чтобы по условиям не бегать
 	WORD nWidth = gpSetCls->CharWidth[ch];
@@ -3569,7 +3570,7 @@ void CVirtualConsole::UpdateText()
 												  || c == ucBoxDblDownDblHorz || c == ucBoxDblUpDblHorz
 												  || c == ucBoxDblVertLeft
 												  || c == ucBoxDblVertHorz) ? ms_HorzDbl : ms_HorzSingl;
-							int nCnt = ((rect.right - rect.left) / CharWidth(pchBorder[0]))+1;
+							int nCnt = ((rect.right - rect.left) / CharWidth(pchBorder[0], attr))+1;
 
 							if (nCnt > MAX_SPACES)
 							{
@@ -3610,7 +3611,7 @@ void CVirtualConsole::UpdateText()
 				}
 			}
 
-			ConCharXLine[j] = (j ? ConCharXLine[j-1] : 0)+CharWidth(c);
+			ConCharXLine[j] = (j ? ConCharXLine[j-1] : 0)+CharWidth(c, attr);
 			HEAPVAL
 
 			#if 0
@@ -3727,6 +3728,7 @@ void CVirtualConsole::UpdateText()
 			#endif
 			{
 				wchar_t* pszDraw = NULL;
+				CharAttr* pDrawAttr = NULL;
 				int      nDrawLen = -1;
 				bool     bDrawReplaced = false;
 				RECT rect;
@@ -3749,7 +3751,7 @@ void CVirtualConsole::UpdateText()
 					while (j2 < end && ConAttrLine[j2] == attr
 					        && isCharNonSpacing(ch = ConCharLine[j2]))
 					{
-						ConCharXLine[j2] = (j2 ? ConCharXLine[j2-1] : 0)+CharWidth(ch);
+						ConCharXLine[j2] = (j2 ? ConCharXLine[j2-1] : 0)+CharWidth(ch, attr);
 						j2++;
 					}
 					SelectFont(hFont);
@@ -3770,7 +3772,7 @@ void CVirtualConsole::UpdateText()
 							&& !isCharNonSpacing(ch)
 							&& (!bProportional || !isFilePanel || (ch != L'}' && ch!=L' '))) // корректировка имен в колонках
 					{
-						ConCharXLine[j2] = (j2 ? ConCharXLine[j2-1] : 0)+CharWidth(ch);
+						ConCharXLine[j2] = (j2 ? ConCharXLine[j2-1] : 0)+CharWidth(ch, attr);
 						j2++;
 					}
 
@@ -3793,7 +3795,7 @@ void CVirtualConsole::UpdateText()
 
 						while (j2 < end && ConAttrLine[j2] == attr && ch == ConCharLine[j2])
 						{
-							ConCharXLine[j2] = (j2 ? ConCharXLine[j2-1] : 0)+CharWidth(ch);
+							ConCharXLine[j2] = (j2 ? ConCharXLine[j2-1] : 0)+CharWidth(ch, attr);
 							j2++;
 						}
 					}
@@ -3809,7 +3811,7 @@ void CVirtualConsole::UpdateText()
 
 						while (j2 < end && ConAttrLine[j2] == attr && isCharBorder(ch = ConCharLine[j2]))
 						{
-							ConCharXLine[j2] = (j2 ? ConCharXLine[j2-1] : 0)+CharWidth(ch);
+							ConCharXLine[j2] = (j2 ? ConCharXLine[j2-1] : 0)+CharWidth(ch, attr);
 							j2++;
 						}
 					}
@@ -3827,7 +3829,7 @@ void CVirtualConsole::UpdateText()
 						}
 
 						DistributeSpaces(ConCharLine, ConAttrLine, ConCharXLine, j, j2, end);
-						int nBorderWidth = CharWidth(c);
+						int nBorderWidth = CharWidth(c, attr);
 						rect.left = j ? ConCharXLine[j-1] : 0;
 						rect.right = (TextWidth>(UINT)j2) ? ConCharXLine[j2-1] : Width;
 						int nCnt = (rect.right - rect.left + (nBorderWidth>>1)) / nBorderWidth;
@@ -3870,6 +3872,7 @@ void CVirtualConsole::UpdateText()
 				if (!pszDraw)
 				{
 					pszDraw = ConCharLine + j;
+					pDrawAttr = ConAttrLine + j;
 					nDrawLen = j2 - j;
 				}
 
@@ -3961,7 +3964,7 @@ void CVirtualConsole::UpdateText()
 							for(int idx = 0; idx < nDrawLen; idx++)
 							{
 								WARNING("BUGBUG: что именно нужно передавать для получения ширины OEM символа?");
-								nDX[idx] = CharWidth(tmpOem[idx]);
+								nDX[idx] = CharWidth(tmpOem[idx], attr);
 							}
 						}
 

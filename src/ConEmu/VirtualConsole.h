@@ -368,7 +368,7 @@ class CVirtualConsole :
 		bool UpdatePrepare(HDC *ahDc, MSectionLock *pSDC, MSectionLock *pSCON);
 		void UpdateText();
 		void PatInvertRect(HDC hPaintDC, const RECT& rect, HDC hFromDC, bool bFill);
-		WORD CharWidth(wchar_t ch);
+		WORD CharWidth(wchar_t ch, const CharAttr& attr);
 		void CharABC(wchar_t ch, ABC *abc);
 		bool CheckChangedTextAttr();
 		bool CheckTransparentRgn(bool abHasChildWindows);
