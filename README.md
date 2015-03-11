@@ -8,14 +8,15 @@ the mouse wheel events vk_scroll_down and vk_scroll_up will be replaced with vk_
 
 You have to add following to your vimrc file:
 
-<b>
+```
 if !has("gui_running")
     "set mouse=a
     inoremap <F6> <C-x><C-Y>
     inoremap <F7> <C-x><C-e>
     nnoremap <F6> <C-Y>
     nnoremap <F7> <C-e>
-endif</b>
+endif
+```
 
 Thats all. 
 Now you should be able to scroll inside Vim just like you do it in GVim.
