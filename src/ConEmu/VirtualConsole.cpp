@@ -4240,6 +4240,13 @@ HBRUSH CVirtualConsole::PartBrush(wchar_t ch, COLORREF nBackCol, COLORREF nForeC
 	{
 		clrMy.color = clrBack.color;
 	}
+	#ifdef _DEBUG
+	else
+	{
+		// must be already set
+		_ASSERTE(ch == ucBox100 && clrMy.color == clrFore.color);
+	}
+	#endif
 
 	PARTBRUSHES pb;
 	pb.ch = ch; pb.nBackCol = nBackCol; pb.nForeCol = nForeCol;
