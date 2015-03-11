@@ -12,6 +12,16 @@ Votes and awards (vote for ConEmu, if you please)
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+2015.3.11
+[*] Try to force full-width for hieroglyphs. Still is not working with ‘Monospace’ checked.
+[*] Hangul syllables were not defined in CJK range.
+[*] We need real width of CJK hieroglyphs, they might not be double as large.
+[*] Don't try to use invalid fonts from registry (TrueTypeFont) on DBCS systems.
+[*] Current unicode range was doubled in drop-down.
+[*] Apply changes in unicode ranges immediately if was selected from drop-down.
+[*] Do not uncheck ‘Monospace’ on DBCS systems by default.
+
+
 2015.3.10
 [*] Mouse events were sometimes unexpectedly sent to the console during selection.
 [*] 150309 regression. "ConEmu.ico" was looked in wrong folder.
