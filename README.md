@@ -44,6 +44,7 @@ ConEmu toolbar ->
 "Create new console"(small arrow right next to the green button) 
 and select {your mintty task}
 
+Have fun
 
 
 
