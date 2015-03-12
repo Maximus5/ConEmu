@@ -28,12 +28,18 @@ endif
 Thats all. 
 Now you should be able to scroll inside Vim just like you do it in GVim.
 
+For SSH connections I recommend to use the 'mintty cygwin' shell.
+Don't start cygwin inside a cmd console! 
 
+Go to ConEmu Settings -> Startup -> Tasks and add a new task.
+In the 'Commands' TextBox add:
+C:\cygwin64\bin\mintty.exe -e "/cygwin.bat"
+Replace 'C:\cygwin64' with your cygwin path.
 
-
-
-
-
+To start mintty cygwin:
+ConEmu toolbar -> 
+"Create new console"(small arrow right next to the green button) 
+and select {your mintty task}
 
 
 
