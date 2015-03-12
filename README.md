@@ -3,7 +3,7 @@ Download binary for 32 and 64bit Windows: (http://xumbu.org/downloads/opensource
 
 ## About this Fork
 
-If you use Vim (command line version) in Windows and you have problems to scroll
+If you use Vim in Windows cmd.exe and you have problems to scroll
 by using the mouse wheel, you can try this ConEmu Fork.
 
 
