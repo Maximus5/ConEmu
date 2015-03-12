@@ -36,6 +36,7 @@ Don't start cygwin inside a cmd console!
 Go to ConEmu Settings -> Startup -> Tasks and add a new task.
 In the 'Commands' TextBox add:
 C:\cygwin64\bin\mintty.exe -e "/cygwin.bat"
+
 Replace 'C:\cygwin64' with your cygwin path.
 
 To start mintty cygwin:
