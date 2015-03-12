@@ -44,7 +44,7 @@ ConEmu toolbar ->
 "Create new console"(small arrow right next to the green button) 
 and select {your mintty task}
 
-dont forge to ':set mouse=a' in your remote vimrc
+Dont forge to ':set mouse=a' in your remote vimrc
 
 Have fun
 
