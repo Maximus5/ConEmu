@@ -16,6 +16,9 @@ if !has("gui_running")
     inoremap <F7> <C-x><C-e>
     nnoremap <F6> <C-Y>
     nnoremap <F7> <C-e>
+
+    snoremap <F6> <C-Y>
+    snoremap <F7> <C-e>
 endif
 ```
 
