@@ -6263,6 +6263,9 @@ bool CRealConsole::ProcessXtermSubst(const INPUT_RECORD& r)
 			break; // KEY_EVENT
 
 		case MOUSE_EVENT:
+			// Mouse event need to be translated?
+			bProcessed = TermX::GetSubstitute(r.Event.MouseEvent, szSubstKeys);
+			bSend = (bProcessed && szSubstKeys[0]);
 			break; // MOUSE_EVENT
 		}
 

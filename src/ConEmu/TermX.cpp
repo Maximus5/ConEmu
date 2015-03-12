@@ -149,3 +149,36 @@ bool TermX::GetSubstitute(const KEY_EVENT_RECORD& k, wchar_t (&szSubst)[16])
 
 	return false;
 }
+
+bool TermX::GetSubstitute(const MOUSE_EVENT_RECORD& m, wchar_t (&szSubst)[16])
+{
+	if (m.dwEventFlags & MOUSE_WHEELED)
+	{
+		// If the high word of the dwButtonState member contains
+		// a positive value, the wheel was rotated forward, away from the user.
+		// Otherwise, the wheel was rotated backward, toward the user.
+		short dir = (short)HIWORD(m.dwButtonState);
+
+		// Ctrl/Alt/Shift
+		DWORD mods = (m.dwControlKeyState & (LEFT_ALT_PRESSED|LEFT_CTRL_PRESSED|RIGHT_ALT_PRESSED|RIGHT_CTRL_PRESSED|SHIFT_PRESSED));
+
+		if (mods == 0)
+		{
+			if (dir <= 0)
+				wcscpy_c(szSubst, L"\033[62~"); // <MouseDown>
+			else
+				wcscpy_c(szSubst, L"\033[63~"); // <MouseUp>
+			return true;
+		}
+		else if (mods == SHIFT_PRESSED)
+		{
+			if (dir <= 0)
+				wcscpy_c(szSubst, L"\033[64~"); // <S-MouseDown>
+			else
+				wcscpy_c(szSubst, L"\033[65~"); // <S-MouseUp>
+			return true;
+		}
+	}
+
+	return false;
+}
