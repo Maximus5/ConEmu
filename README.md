@@ -25,9 +25,10 @@ if !has("gui_running")
 endif
 ```
 
-<b>Thats all.</b 
+Thats all.
 Now you should be able to scroll inside Vim just like you do it in GVim.
 
+________
 
 For SSH connections I recommend to use the 'mintty cygwin' shell.
 Don't start cygwin inside a cmd console! 
