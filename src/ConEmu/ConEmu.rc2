@@ -29,7 +29,7 @@ BEGIN
 	cbBold                  "Main font weight"
 	cbClinkWebPage          "Open clink's web page http://mridgers.github.io/clink/ in your browser"
 	cbCloseWindowConfirm    "Show confirmation before closing ConEmu window (cross clicking)"
-	cbCloseConsoleConfirm   "Show confirmation before closing tab or pange (tab ‘Close’ menu item)"
+	cbCloseConsoleConfirm   "Show confirmation before closing tab or page (tab ‘Close’ menu item)"
 	cbConfirmCloseRunning   "If there are two or more user processes in the console"
 	cbCloseEditViewConfirm  "Show confirmation before closing Far Manager editor or viewer tab"
 	cbComspecTest           "Show ‘calculated’ ComSpec path"
