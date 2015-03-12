@@ -1925,6 +1925,12 @@ bool CRealConsole::PostConsoleEvent(INPUT_RECORD* piRec, bool bFromIME /*= false
 		return lbRc;
 	}
 
+	// Эмуляция терминала?
+	if (m_Term.Term && ProcessXtermSubst(*piRec))
+	{
+		return true;
+	}
+
 	//DWORD dwTID = 0;
 	//#ifdef ALLOWUSEFARSYNCHRO
 	//	if (isFar() && mn_FarInputTID) {
@@ -6227,6 +6233,48 @@ void CRealConsole::OnKeyboardInt(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lP
 	return;
 }
 
+bool CRealConsole::ProcessXtermSubst(const INPUT_RECORD& r)
+{
+	// Эмуляция терминала?
+	if (!m_Term.Term)
+		return false;
+
+	bool bProcessed = false;
+	bool bSend = false;
+	wchar_t szSubstKeys[16] = L"";
+
+	// Till now, this may be ‘te_xterm’ or ‘te_win32’ only
+	_ASSERTE(m_Term.Term == te_xterm);
+
+	if (!isProcessExist(m_Term.nCallTermPID))
+	{
+		StartStopXTerm(0, false/*te_win32*/);
+	}
+	// Processed xterm keys?
+	else
+	{
+		switch (r.EventType)
+		{
+		case KEY_EVENT:
+			// Key need to be translated?
+			bProcessed = TermX::GetSubstitute(r.Event.KeyEvent, szSubstKeys);
+			// But only key presses are sent to terminal
+			bSend = (bProcessed && r.Event.KeyEvent.bKeyDown && szSubstKeys[0]);
+			break; // KEY_EVENT
+
+		case MOUSE_EVENT:
+			break; // MOUSE_EVENT
+		}
+
+		if (bSend)
+		{
+			PostString(szSubstKeys, _tcslen(szSubstKeys));
+		}
+	}
+
+	return bProcessed;
+}
+
 // pszChars may be NULL
 void CRealConsole::ProcessKeyboard(UINT messg, WPARAM wParam, LPARAM lParam, const wchar_t *pszChars)
 {
@@ -6322,27 +6370,9 @@ void CRealConsole::ProcessKeyboard(UINT messg, WPARAM wParam, LPARAM lParam, con
 	}
 
 	// Эмуляция терминала?
-	wchar_t szSubstKeys[16] = L"";
-
-	if (m_Term.Term)
+	if (m_Term.Term && ProcessXtermSubst(r))
 	{
-		// Till now, this may be ‘te_xterm’ or ‘te_win32’ only
-		_ASSERTE(m_Term.Term == te_xterm);
-
-		if (!isProcessExist(m_Term.nCallTermPID))
-		{
-			StartStopXTerm(0, false/*te_win32*/);
-		}
-		// Processed xterm keys?
-		else if (TermX::GetSubstitute(r.Event.KeyEvent, szSubstKeys))
-		{
-			if (r.Event.KeyEvent.bKeyDown && szSubstKeys[0])
-			{
-				// only key presses are sent to terminal
-				PostString(szSubstKeys, _tcslen(szSubstKeys));
-			}
-			return;
-		}
+		return;
 	}
 
 	PostConsoleEvent(&r);
