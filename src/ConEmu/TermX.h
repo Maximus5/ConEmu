@@ -33,5 +33,5 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 struct TermX
 {
-	static bool GetSubstiture(const KEY_EVENT_RECORD& k, wchar_t (&szSubst)[16]);
+	static bool GetSubstitute(const KEY_EVENT_RECORD& k, wchar_t (&szSubst)[16]);
 };

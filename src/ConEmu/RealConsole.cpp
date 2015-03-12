@@ -6334,7 +6334,7 @@ void CRealConsole::ProcessKeyboard(UINT messg, WPARAM wParam, LPARAM lParam, con
 			StartStopXTerm(0, false/*te_win32*/);
 		}
 		// Processed xterm keys?
-		else if (TermX::GetSubstiture(r.Event.KeyEvent, szSubstKeys))
+		else if (TermX::GetSubstitute(r.Event.KeyEvent, szSubstKeys))
 		{
 			if (r.Event.KeyEvent.bKeyDown && szSubstKeys[0])
 			{
