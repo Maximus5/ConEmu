@@ -471,7 +471,8 @@ void ConEmuAbout::TabSelected(HWND hDlg, int idx)
 		return;
 
 	wcscpy_c(sLastOpenTab, Pages[idx].Title);
-	SetDlgItemText(hDlg, tAboutText, Pages[idx].Text);
+	LPCWSTR pszNewText = Pages[idx].Text;
+	SetDlgItemText(hDlg, tAboutText, pszNewText);
 }
 
 void ConEmuAbout::LogStartEnvInt(LPCWSTR asText, LPARAM lParam, bool bFirst, bool bNewLine)
