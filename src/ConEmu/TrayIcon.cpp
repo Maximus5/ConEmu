@@ -306,10 +306,12 @@ LRESULT TrayIcon::OnTryIcon(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 				Icon.RestoreWindowFromTray();
 			}
 
-			if (m_MsgSource == tsa_Source_Updater)
+			switch (m_MsgSource)
 			{
+			case tsa_Source_Updater:
 				m_MsgSource = tsa_Source_None;
 				gpConEmu->CheckUpdates(2);
+				break;
 			}
 			break;
 		case NIN_BALLOONSHOW:
