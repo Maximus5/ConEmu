@@ -79,6 +79,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Menu.h"
 #include "Options.h"
 #include "OptionsClass.h"
+#include "PushInfo.h"
 #include "RealBuffer.h"
 #include "Recreate.h"
 #include "RunQueue.h"
@@ -425,6 +426,7 @@ CConEmuMain::CConEmuMain()
 	mn_AdmShieldTimerCounter = 0;
 
 	mps_IconPath = NULL;
+	mp_PushInfo = NULL;
 
 	#ifdef __GNUC__
 	HMODULE hGdi32 = GetModuleHandle(L"gdi32.dll");
@@ -2592,6 +2594,8 @@ CConEmuMain::~CConEmuMain()
 	SafeDelete(mp_RunQueue);
 
 	SafeDelete(mp_Find);
+
+	SafeDelete(mp_PushInfo);
 
 	//if (m_Child)
 	//{
@@ -7269,6 +7273,12 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 			GetActiveVCon(&VCon);
 			LPWSTR pszRc = ConEmuMacro::ExecuteMacro(ms_PostGuiMacro.ms_Arg, VCon.VCon() ? VCon->RCon() : NULL);
 			SafeFree(pszRc);
+		}
+
+		mp_PushInfo = new CPushInfo();
+		if (mp_PushInfo && !mp_PushInfo->ShowNotification())
+		{
+			SafeDelete(mp_PushInfo);
 		}
 	}
 

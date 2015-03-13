@@ -38,6 +38,7 @@ enum TrayIconMsgSource
 	tsa_Config_Error,
 	tsa_Console_Size,
 	tsa_Default_Term,
+	tsa_Push_Notify,
 };
 
 class TrayIcon

@@ -2894,6 +2894,9 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 		reg->Load(L"Update.LeavePackages", UpdSet.isUpdateLeavePackages);
 		reg->Load(L"Update.PostUpdateCmd", &UpdSet.szUpdatePostUpdateCmd);
 
+		/* *** Notification *** */
+		reg->Load(L"Notification.StopBuzzingDate", StopBuzzingDate, countof(StopBuzzingDate));
+
 		/* Hotkeys */
 		LoadHotkeys(reg);
 		// Для совместимости настроек
@@ -3109,6 +3112,29 @@ void Settings::SaveSettingsOnExit()
 	else
 	{
 		gpConEmu->LogWindowPos(L"SaveSettingsOnExit - FAILED(OpenKey(gpSetCls->GetConfigPath(), KEY_WRITE))");
+	}
+
+	delete reg;
+}
+
+void Settings::SaveStopBuzzingDate()
+{
+	if (gpConEmu->IsResetBasicSettings())
+		return;
+
+	SettingsBase* reg = CreateSettings(NULL);
+	if (!reg)
+	{
+		gpConEmu->LogWindowPos(L"SaveStopBuzzingDate - FAILED(CreateSettings)");
+		_ASSERTE(reg!=NULL);
+		return;
+	}
+
+	if (reg->OpenKey(gpSetCls->GetConfigPath(), KEY_WRITE))
+	{
+		SYSTEMTIME st = {}; GetLocalTime(&st);
+		_wsprintf(StopBuzzingDate, SKIPCOUNT(StopBuzzingDate) L"%u-%u-%u", st.wYear, st.wMonth, st.wDay);
+		reg->Save(L"Notification.StopBuzzingDate", StopBuzzingDate);
 	}
 
 	delete reg;

@@ -77,6 +77,7 @@ struct MSectionLockSimple;
 enum ConEmuWindowMode;
 struct CEFindDlg;
 union CESize;
+class CPushInfo;
 
 struct ConsoleInfoArg
 {
@@ -152,6 +153,7 @@ class CConEmuMain
 		void SetPostGuiMacro(LPCWSTR asGuiMacro);
 		wchar_t *mps_IconPath;
 		void SetWindowIcon(LPCWSTR asNewIcon);
+		CPushInfo *mp_PushInfo;
 		BOOL mb_DosBoxExists;
 		ConEmuInstallMode m_InstallMode;
 		bool isMingwMode();

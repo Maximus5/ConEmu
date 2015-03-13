@@ -37,6 +37,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Options.h"
 #include "OptionsClass.h"
 #include "Menu.h"
+#include "PushInfo.h"
 #include "../common/WUser.h"
 
 #ifndef NIN_BALLOONUSERCLICK
@@ -311,6 +312,10 @@ LRESULT TrayIcon::OnTryIcon(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 			case tsa_Source_Updater:
 				m_MsgSource = tsa_Source_None;
 				gpConEmu->CheckUpdates(2);
+				break;
+			case tsa_Push_Notify:
+				gpConEmu->mp_PushInfo->OnNotificationClick();
+				m_MsgSource = tsa_Source_None;
 				break;
 			}
 			break;
