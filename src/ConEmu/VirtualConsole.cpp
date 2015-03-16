@@ -121,9 +121,11 @@ WARNING("Часто после разблокирования компьютер
 #ifdef _DEBUG
 //#undef HEAPVAL
 #define HEAPVAL //HeapValidate(mh_Heap, 0, NULL);
+#define HEAPVALPTR(p) //xf_validate(p)
 #define CURSOR_ALWAYS_VISIBLE
 #else
 #define HEAPVAL
+#define HEAPVALPTR(p)
 #endif
 
 #define ISBGIMGCOLOR(a) (nBgImageColors & (1 << a))
@@ -3984,6 +3986,7 @@ void CVirtualConsole::UpdateText()
 								WARNING("BUGBUG: что именно нужно передавать для получения ширины OEM символа?");
 								nDX[idx] = CharWidth(tmpOem[idx], attr);
 							}
+							HEAPVALPTR(nDX);
 						}
 
 						m_DC.TextDrawOem(rect.left, rect.top, nFlags,
@@ -4005,6 +4008,7 @@ void CVirtualConsole::UpdateText()
 								{
 									for (int idx = 0, n = nDrawLen; n; idx++, n--)
 										nDX[idx] = nFontWidth;
+									HEAPVALPTR(nDX);
 								}
 								else
 								{
@@ -4012,6 +4016,7 @@ void CVirtualConsole::UpdateText()
 										nDX[idx] = (pDrawAttr[idx].Flags & CharAttr_DoubleSpaced)
 											? CharWidth(pszDraw[idx], attr)
 											: nFontWidth;
+									HEAPVALPTR(nDX);
 								}
 							}
 							else
@@ -4072,6 +4077,7 @@ void CVirtualConsole::UpdateText()
 										{
 											nDX[idx-1] += nEdge;
 											_ASSERTE(nDX[idx-1]>=-100);
+											HEAPVALPTR(nDX);
 										}
 										else
 										{
@@ -4081,6 +4087,7 @@ void CVirtualConsole::UpdateText()
 										nPrevEdge += nEdge;
 
 										nDX[idx] = nCharWidth;
+										HEAPVALPTR(nDX);
 
 										//if (abc.abcA < nEdge)
 										//{
@@ -4100,6 +4107,7 @@ void CVirtualConsole::UpdateText()
 											nDX[idx-1] -= nPrevEdge;
 											nPrevEdge = 0;
 										}
+										HEAPVALPTR(nDX);
 										//_ASSERTE(abc.abcC==0 && "Check what symbols can produce '!=0'");
 									}
 								}
@@ -4133,6 +4141,8 @@ void CVirtualConsole::UpdateText()
 			//    }
 			//}
 		}
+
+		HEAPVALPTR(nDX);
 	}
 
 	if ((pos > nMaxPos) && (pos < (int)Height))
@@ -4148,6 +4158,8 @@ void CVirtualConsole::UpdateText()
 	}
 
 	free(nDX);
+
+	HEAPVAL;
 
 	// Screen updated, reset until next "UpdateHighlights()" call
 	m_HighlightInfo.m_Last.X = m_HighlightInfo.m_Last.Y = -1;
