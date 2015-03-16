@@ -382,8 +382,17 @@ bool __cdecl xf_validate(void * _Memory /*= NULL*/)
 
 	if (_Memory)
 	{
+		int nCCcmp;
 		xf_mem_block* p = ((xf_mem_block*)_Memory)-1;
-		_ASSERTE(p->bBlockUsed == TRUE);
+		if (p->bBlockUsed == TRUE)
+		{
+			nCCcmp = memcmp(((LPBYTE)_Memory)+p->nBlockSize, "\xCC\xCC\xCC\xCC\xCC\xCC\xCC\xCC", 8);
+			_ASSERTE(nCCcmp == 0);
+		}
+		else
+		{
+			_ASSERTE(p->bBlockUsed == TRUE);
+		}
 		_Memory = (void*)p;
 	}
 
