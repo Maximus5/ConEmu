@@ -3983,7 +3983,7 @@ void CVirtualConsole::UpdateText()
 
 						if (!bProportional)
 						{
-							for(int idx = 0; idx < nDrawLen; idx++)
+							for (int idx = 0; idx < nDrawLen; idx++)
 							{
 								WARNING("BUGBUG: что именно нужно передавать для получения ширины OEM символа?");
 								nDX[idx] = CharWidth(tmpOem[idx], attr);
