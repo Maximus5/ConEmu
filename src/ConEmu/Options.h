@@ -884,7 +884,7 @@ struct Settings
 		// Проверить на дубли
 		void CheckHotkeyUnique();
 	private:
-		void LoadHotkeys(SettingsBase* reg);
+		void LoadHotkeys(SettingsBase* reg, const bool& bSendAltEnter, const bool& bSendAltSpace, const bool& bSendAltF9);
 		void SaveHotkeys(SettingsBase* reg);
 	public:
 
