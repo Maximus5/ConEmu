@@ -145,6 +145,8 @@ namespace ConEmuMacro
 	LPWSTR Context(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Copy (<What>)
 	LPWSTR Copy(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
+	// Detach
+	LPWSTR Detach(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Найти окно и активировать его. // int nWindowType/*Panels=1, Viewer=2, Editor=3*/, LPWSTR asName
 	LPWSTR FindEditor(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	LPWSTR FindFarWindow(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
@@ -215,6 +217,8 @@ namespace ConEmuMacro
 	// Transparency
 	LPWSTR Transparency(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 		LPWSTR TransparencyHelper(int nCmd, int nValue); // helper, это не макро-фукнция
+	// Unfasten
+	LPWSTR Unfasten(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Wiki(["Page"])
 	LPWSTR Wiki(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Fullscreen
@@ -247,6 +251,7 @@ namespace ConEmuMacro
 		{Close, {L"Close"}},
 		{Context, {L"Context"}},
 		{Copy, {L"Copy"}},
+		{Detach, {L"Detach"}},
 		{FindEditor, {L"FindEditor"}},
 		{FindFarWindow, {L"FindFarWindow"}},
 		{FindViewer, {L"FindViewer"}},
@@ -282,6 +287,7 @@ namespace ConEmuMacro
 		{Tab, {L"Tab", L"Tabs", L"TabControl"}},
 		{Task, {L"Task"}},
 		{Transparency, {L"Transparency"}},
+		{Unfasten, {L"Unfasten"}},
 		{Wiki, {L"Wiki"}},
 		{WindowFullscreen, {L"WindowFullscreen"}},
 		{WindowMaximize, {L"WindowMaximize"}},
@@ -1399,6 +1405,28 @@ LPWSTR ConEmuMacro::Close(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 		break;
 	}
 
+	return pszResult ? pszResult : lstrdup(L"Failed");
+}
+
+LPWSTR ConEmuMacro::Detach(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
+{
+	LPWSTR pszResult = NULL;
+	if (apRCon)
+	{
+		apRCon->Detach();
+		pszResult = lstrdup(L"OK");
+	}
+	return pszResult ? pszResult : lstrdup(L"Failed");
+}
+
+LPWSTR ConEmuMacro::Unfasten(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
+{
+	LPWSTR pszResult = NULL;
+	if (apRCon)
+	{
+		apRCon->Unfasten();
+		pszResult = lstrdup(L"OK");
+	}
 	return pszResult ? pszResult : lstrdup(L"Failed");
 }
 

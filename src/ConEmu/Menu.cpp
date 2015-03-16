@@ -954,6 +954,9 @@ void CConEmuMenu::ExecPopupMenuCmd(TrackMenuPlace place, CVirtualConsole* apVCon
 		case IDM_DETACH:
 			apVCon->RCon()->Detach();
 			break;
+		case IDM_UNFASTEN:
+			apVCon->RCon()->Unfasten();
+			break;
 		case IDM_RENAMETAB:
 			apVCon->RCon()->DoRenameTab();
 			break;
@@ -1891,9 +1894,9 @@ HMENU CConEmuMenu::CreateVConPopupMenu(CVirtualConsole* apVCon, HMENU ahExist, B
 		AppendMenu(hTerminate, MF_STRING|MF_ENABLED, IDM_TERMINATEZOMBIES, MenuAccel(vkCloseZombies,L"Close all &zombies"));
 		AppendMenu(hTerminate, MF_STRING|MF_ENABLED, IDM_TERMINATECONEXPT, MenuAccel(vkCloseExceptCon,L"Close e&xcept active"));
 		AppendMenu(hTerminate, MF_SEPARATOR, 0, L"");
-		AppendMenu(hTerminate, MF_STRING|MF_ENABLED, IDM_DETACH,           L"Detach");
+		AppendMenu(hTerminate, MF_STRING|MF_ENABLED, IDM_DETACH,           MenuAccel(vkConDetach,L"Detach"));
 		#ifdef _DEBUG // Not yet implemented
-		AppendMenu(hTerminate, MF_STRING|MF_ENABLED, IDM_UNFASTEN,         L"Unfasten");
+		AppendMenu(hTerminate, MF_STRING|MF_ENABLED, IDM_UNFASTEN,         MenuAccel(vkConUnfasten,L"Unfasten"));
 		#endif
 	}
 

@@ -15032,6 +15032,10 @@ void CRealConsole::Detach(bool bPosted /*= false*/, bool bSendCloseConsole /*= f
 	CConEmuChild::ProcessVConClosed(mp_VCon);
 }
 
+void CRealConsole::Unfasten()
+{
+}
+
 const CEFAR_INFO_MAPPING* CRealConsole::GetFarInfo()
 {
 	if (!this) return NULL;

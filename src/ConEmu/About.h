@@ -237,6 +237,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"    Format==1: copy HTML format\r\n" \
 	L"    Format==2: copy as HTML\r\n" \
 	L"    File: if specified - save to file instead of clipboard\r\n" \
+	L"Detach\r\n" \
+	L"  - Detach active RealConsole from ConEmu\r\n" \
 	L"FindEditor(\"<FullEditFileName>\")\r\n" \
 	L"FindViewer(\"<FullViewerFileName>\")\r\n" \
 	L"FindFarWindow(<WindowType>,\"<WindowTitle>\")\r\n" \
@@ -416,6 +418,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"    Cmd==4, Value=<0/1> - AlphaValueSeparate\r\n" \
 	L"Task(\"Name\"[,\"Dir\"])\r\n" \
 	L"  - start task with specified name\r\n" \
+DEBUGTEST(L"Unfasten\r\n") \
+DEBUGTEST(L"  - Unfasten active RealConsole from active ConEmu window\r\n") \
 	L"Wiki([\"PageName\"])\r\n" \
 	L"  - Open online documentation\r\n" \
 	L"WindowFullscreen()\r\n" \

@@ -623,6 +623,7 @@ class CRealConsole
 		void UpdateCursorInfo();
 		bool isNeedCursorDraw();
 		void Detach(bool bPosted = false, bool bSendCloseConsole = false);
+		void Unfasten();
 		void AdminDuplicate();
 		const CEFAR_INFO_MAPPING *GetFarInfo(); // FarVer и прочее
 		bool InCreateRoot();

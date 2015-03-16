@@ -179,6 +179,12 @@ int ConEmuHotKeyList::AllocateHotkeys()
 		;
 	Add(vkMultiGroup,     chk_User,  NULL,    L"Multi.GroupInput",      CConEmuCtrl::key_GuiMacro, false, L"GroupInput")
 		->SetHotKey('G', VK_APPS);
+	Add(vkConDetach,      chk_User,  NULL,    L"Multi.Detach",          CConEmuCtrl::key_GuiMacro, false, L"Detach")
+		;
+	#ifdef _DEBUG // Not yet implemented
+	Add(vkConUnfasten,    chk_User,  NULL,    L"Multi.Unfasten",        CConEmuCtrl::key_GuiMacro, false, L"Unfasten")
+		;
+	#endif
 	Add(vkMultiClose,     chk_User,  NULL,    L"Multi.Close",           CConEmuCtrl::key_GuiMacro, false, L"Close(0)")
 		->SetHotKey(VK_DELETE,VK_LWIN); // Close active console
 	Add(vkCloseTab,       chk_User,  NULL,    L"CloseTabKey",           CConEmuCtrl::key_GuiMacro, false, L"Close(6)")

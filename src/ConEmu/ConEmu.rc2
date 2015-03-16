@@ -278,6 +278,8 @@ BEGIN
 	vkCloseAllCon           "Close all consoles"
 	vkCloseZombies          "Close all zombies"
 	vkCloseExceptCon        "Close all but active"
+	vkConDetach             "Detach active RealConsole from ConEmu"
+	vkConUnfasten           "Unfasten active RealConsole from active ConEmu window"
 	vkConsole_1             "Activate console by number (Use ‘Host-key’+Number to switch consoles)"
 	vkConsole_10            "Activate console by number (Use ‘Host-key’+Number to switch consoles)"
 	vkConsole_2             "Activate console by number (Use ‘Host-key’+Number to switch consoles)"
