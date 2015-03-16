@@ -12,8 +12,32 @@ Votes and awards (vote for ConEmu, if you please)
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+2015.3.16
+[*] Issue 1931: Fix crash and broken Far frames after resize (regression).
+[*] Inform user about some project events using TaskBar status area notification.
+    Click on the icon or information balloon will show extended information
+    dialog where user may stop showing this notification.
+[*] Translate mouse wheel into escape sequences when ConEmu emulates xterm (vim especially).
+    If you want to use mouse wheel in Vim (official version was tested), just add to vimrc:
+    """"""""""""""""""""""""""""""""""""""
+    " let mouse wheel scroll file contents
+    """"""""""""""""""""""""""""""""""""""
+    if !has("gui_running")
+        set term=xterm
+        set mouse=a
+        set nocompatible
+        inoremap <Esc>[62~ <C-X><C-E>
+        inoremap <Esc>[63~ <C-X><C-Y>
+        nnoremap <Esc>[62~ <C-E>
+        nnoremap <Esc>[63~ <C-Y>
+    endif
+[*] Let user set up hotkey for ‘Detach’ action. Add GuiMacro ‘Detach’.
+[*] All HotKeys are stored now in the "HotKeys" settings subkey.
+[*] If anyone like to hide cursor in the inactive consoles just have to set inactive ‘Fixed cursor size’ to ‘0%’.
+
+
 2015.3.11
-[*] Try to force full-width for hieroglyphs. Still is not working with ‘Monospace’ checked.
+[*] Try to fix full-width hieroglyphs drawing.
 [*] Hangul syllables were not defined in CJK range.
 [*] We need real width of CJK hieroglyphs, they might not be double as large.
 [*] Don't try to use invalid fonts from registry (TrueTypeFont) on DBCS systems.
