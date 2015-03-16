@@ -3891,7 +3891,9 @@ void CVirtualConsole::UpdateText()
 					pszDraw = ConCharLine + j;
 					pDrawAttr = ConAttrLine + j;
 					nDrawLen = j2 - j;
+					_ASSERTE(nDrawLen <= (int)TextWidth);
 				}
+				_ASSERTE(nDrawLen >= 0);
 
 				//if (!gpSet->isProportional) {
 				//	TODO("Что-то как-то... ведь положения уже вроде расчитали?");
