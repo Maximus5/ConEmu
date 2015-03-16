@@ -5261,7 +5261,9 @@ bool CSettings::OnEditChanged_Cursor(HWND hWnd2, WPARAM wParam, LPARAM lParam, A
 			UINT nNewVal = GetDlgItemInt(hWnd2, TB, &lbOk, FALSE);
 			if (lbOk)
 			{
-				if ((nNewVal >= CURSORSIZE_MIN) && (nNewVal <= CURSORSIZE_MAX))
+				UINT nMinSize = (TB == tCursorFixedSize) ? CURSORSIZE_MIN : 0;
+				UINT nMaxSize = CURSORSIZE_MAX;
+				if ((nNewVal >= nMinSize) && (nNewVal <= nMaxSize))
 				{
 					CECursorType* pCur = (TB == tCursorFixedSize) ? &pApp->CursorActive : &pApp->CursorInactive;
 
@@ -5283,7 +5285,9 @@ bool CSettings::OnEditChanged_Cursor(HWND hWnd2, WPARAM wParam, LPARAM lParam, A
 			UINT nNewVal = GetDlgItemInt(hWnd2, TB, &lbOk, FALSE);
 			if (lbOk)
 			{
-				if ((nNewVal >= CURSORSIZEPIX_MIN) && (nNewVal <= CURSORSIZEPIX_MAX))
+				UINT nMinSize = (TB == tCursorMinSize) ? CURSORSIZEPIX_MIN : 0;
+				UINT nMaxSize = CURSORSIZEPIX_MAX;
+				if ((nNewVal >= nMinSize) && (nNewVal <= nMaxSize))
 				{
 					CECursorType* pCur = (TB == tCursorMinSize) ? &pApp->CursorActive : &pApp->CursorInactive;
 

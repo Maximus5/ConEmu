@@ -1079,8 +1079,8 @@ void Settings::LoadCursorSettings(SettingsBase* reg, CECursorType* pActive, CECu
 		reg->Load(L"CursorTypeInactive", pInactive->Raw);
 
 		_MinMax(pInactive->CursorType, cur_First, cur_Last);
-		_MinMax(pInactive->FixedSize, CURSORSIZE_MIN, CURSORSIZE_MAX);
-		_MinMax(pInactive->MinSize, CURSORSIZEPIX_MIN, CURSORSIZEPIX_MAX);
+		_MinMax(pInactive->FixedSize, 0, CURSORSIZE_MAX);
+		_MinMax(pInactive->MinSize, 0, CURSORSIZEPIX_MAX);
 	}
 	else
 	{

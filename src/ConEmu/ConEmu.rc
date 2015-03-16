@@ -367,7 +367,7 @@ BEGIN
     CONTROL         "Blinking",cbInactiveCursorBlink,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,209,112,50,8
     CONTROL         "Fixed cursor size",cbInactiveCursorIgnoreSize,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,129,88,8
     EDITTEXT        tInactiveCursorFixedSize,104,127,40,12,ES_AUTOHSCROLL
-    LTEXT           "(5-100) %",stInactiveCursorFixedSize,153,129,38,8
+    LTEXT           "(0-100) %",stInactiveCursorFixedSize,153,129,38,8
     RTEXT           "Min size (pix):",stInactiveCursorMinSize,204,129,50,8
     EDITTEXT        tInactiveCursorMinSize,260,127,40,12,ES_AUTOHSCROLL
 END
@@ -1386,7 +1386,7 @@ BEGIN
     CONTROL         "Blinking",cbInactiveCursorBlink,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,49,101,45,8
     CONTROL         "Fixed",cbInactiveCursorIgnoreSize,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,100,101,33,8
     EDITTEXT        tInactiveCursorFixedSize,133,99,25,12,ES_AUTOHSCROLL
-    LTEXT           "(5-100) %",stInactiveCursorFixedSize,164,101,38,8
+    LTEXT           "(0-100) %",stInactiveCursorFixedSize,164,101,38,8
     RTEXT           "Min size (pix):",stInactiveCursorMinSize,203,101,54,8
     EDITTEXT        tInactiveCursorMinSize,256,99,25,12,ES_AUTOHSCROLL
 END

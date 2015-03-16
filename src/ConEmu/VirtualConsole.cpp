@@ -4428,6 +4428,12 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
 			//if (nHeight < HCURSORHEIGHT) nHeight = HCURSORHEIGHT;
 		}
 
+		if (!nHeight)
+		{
+			// Hollow cursor, nothing to draw
+			return;
+		}
+
 		//if (nHeight < HCURSORHEIGHT) nHeight = HCURSORHEIGHT;
 		rect.top = max(rect.top, (rect.bottom-nHeight));
 	}
@@ -4467,6 +4473,12 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
 
 			nWidth = min(nMaxWidth,max(nWidth,MinSize));
 			//if (nWidth < VCURSORWIDTH) nWidth = VCURSORWIDTH;
+		}
+
+		if (!nWidth)
+		{
+			// Hollow cursor, nothing to draw
+			return;
 		}
 
 		rect.right = min(nR, (rect.left+nWidth));
