@@ -3904,9 +3904,39 @@ void CVirtualConsole::UpdateText()
 				//	TODO("Что-то как-то... ведь положения уже вроде расчитали?");
 				//  rect = MakeRect(j * nFontWidth, pos, j2 * nFontWidth, pos + nFontHeight);
 				//} else {
-				rect.left = j ? ConCharXLine[j-1] : 0;
+				if (j)
+				{
+					if (ConCharXLine[j-1])
+					{
+						rect.left = ConCharXLine[j-1];
+					}
+					else
+					{
+						_ASSERTE((ConCharXLine[j-1]!=0) && "Must be already filled");
+						rect.left = j * nFontWidth;
+					}
+				}
+				else
+				{
+					rect.left = 0;
+				}
 				rect.top = pos;
-				rect.right = (TextWidth>(UINT)j2) ? ConCharXLine[j2-1] : Width;
+				if (TextWidth>(UINT)j2)
+				{
+					if (ConCharXLine[j2-1])
+					{
+						rect.right = ConCharXLine[j2-1];
+					}
+					else
+					{
+						_ASSERTE((ConCharXLine[j2-1]!=0) && "Must be already filled");
+						rect.right = j2 * nFontWidth;
+					}
+				}
+				else
+				{
+					rect.right = Width;
+				}
 				rect.bottom = rect.top + nFontHeight;
 				_ASSERTE(rect.left > 0 || (j <= 2));
 				//}
