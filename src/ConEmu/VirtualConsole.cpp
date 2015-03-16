@@ -3903,6 +3903,7 @@ void CVirtualConsole::UpdateText()
 				rect.top = pos;
 				rect.right = (TextWidth>(UINT)j2) ? ConCharXLine[j2-1] : Width;
 				rect.bottom = rect.top + nFontHeight;
+				_ASSERTE(rect.left > 0 || (j <= 2));
 				//}
 				HEAPVAL
 				BOOL lbImgDrawn = FALSE;
@@ -4121,6 +4122,8 @@ void CVirtualConsole::UpdateText()
 								}
 							}
 						}
+
+						_ASSERTE(rect.left > 0 || (j <= 2));
 
 						// nDX это сдвиги до начала следующего символа, с начала предыдущего
 						m_DC.TextDraw(rect.left+nShift0, rect.top, nFlags, &rect,
