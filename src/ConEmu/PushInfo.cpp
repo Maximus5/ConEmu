@@ -39,22 +39,23 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 static CPushInfo::PushInfo gPushInfo[] = {
 	{
+		/* Valid for */
 		{ 2015, 3, 13 }, { 2015, 4, 15 },
 		/* Message for TSA icon */
 		L"ConEmu was selected to be on the ballot\n"
-		L"of SourceForge project of the month!\n"
+		L"of SourceForge.net project of the month!\n"
 		L"Project needs your vote!"
 		/* Full text for message box, used in About dialog, requires \r\n */
 		, L"Please vote for ConEmu! Project needs your help!\r\n"
 		L"\r\n"
 		L"SourceForge project of the month community choice ballot will end on 2015 April 15.\r\n"
 		L"\r\n"
-		L"User must be registered SourceForge user to vote.\r\n"
+		L"User must be registered at SourceForge.net to vote.\r\n"
 		L"Just post in the voting thread: ‘VOTE: conemu’\r\n"
 		L"\r\n"
-		L"SourceForge voting thread URL:\r\n"
+		L"SourceForge.net voting thread URL:\r\n"
 		L"https://sourceforge.net/p/potm/discussion/vote/thread/ca38c9ae/\r\n"
-		/* URL to be opened if user press OK */
+		/* URL to be opened if user press <Yes> in the confirmation dialog */
 		, L"https://sourceforge.net/p/potm/discussion/vote/thread/ca38c9ae/"
 	},
 };
