@@ -10,7 +10,8 @@ if NOT "%~1" == "" (
 set ConEmu
 
 cd /d "%~dp0"
-start ConEmu /loadcfgfile "%~dp0UnitTests\UnitTests.xml" /cmd cmd /k "%~0" in_gui
+rem start ConEmu /loadcfgfile "%~dp0UnitTests\UnitTests.xml" /cmd cmd /k "%~0" in_gui
+start "ConEmu32" "%~dp0ConEmu64.exe" -basic -nocascade -wndX 340 -wndY 100 -wndW 115 -wndH 30 -cmd cmd /k "%~0" in_gui
 goto :EOF
 
 :clear_env
@@ -25,12 +26,13 @@ goto :EOF
 :in_gui
 call RenameTab "Root"
 call cecho /Green "This is first tab, running new tab with two splits"
+echo on
 c:\windows\system32\cmd.exe -new_console /k "%~0" tab1
 c:\windows\syswow64\cmd.exe -new_console:s2TV /k "%~0" tab2
 c:\windows\syswow64\cmd.exe -new_console:b /k "%~0" tab3
 c:\windows\syswow64\cmd.exe -new_console:ba /k "%~0" tab4
-c:\windows\syswow32\cmd.exe "-new_console:abP:^<Solarized^>" /k "%~0" tab5
-c:\windows\syswow32\cmd.exe "-new_console:absVP:^<Solarized^>" /k "%~0" tab6
+c:\windows\syswow64\cmd.exe -new_console:bnt:"Far":C:"%ConEmuDrive%\Far30.Latest\far-bis\Far.exe" /c "%~0" tab5
+c:\windows\syswow64\cmd.exe -new_console:abP:"<Monokai>":t:Tab6 /k "%~0" tab6
 goto fin
 
 :tab1
@@ -70,6 +72,13 @@ echo Errorlevel=%errorlevel%
 MultiRunX64.exe
 echo Errorlevel=%errorlevel%
 goto fin
+
+:tab5
+conemuc /async /c %ConEmuDrive%\Far30.Latest\far-bis\Far.exe /w /x /p%ConEmuDir%\Plugins\ConEmu;%ConEmuDrive%\Far30.Latest\far-bis\Plugins;%ConEmuDrive%\Far30.Latest\Plugins;%ConEmuDrive%\Far30.Latest\Plugins.My
+goto :EOF
+
+:tab6
+goto :EOF
 
 :fin
 pause
