@@ -3999,6 +3999,12 @@ void CVirtualConsole::UpdateText()
 						int nShift0 = 0, nPrevEdge = 0;
 						ABC abc;
 
+						if (nDrawLen > (int)TextWidth)
+						{
+							_ASSERTE(nDrawLen <= (int)TextWidth);
+							nDrawLen = TextWidth;
+						}
+
 						// Для пропорциональных шрифтов - где рисовать каждый символ разбирается GDI
 						if (!bProportional)
 						{
