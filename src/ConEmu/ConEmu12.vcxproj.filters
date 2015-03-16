@@ -309,6 +309,12 @@
     <ClCompile Include="TermX.cpp">
       <Filter>0 - Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="ConEmuStart.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="PushInfo.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Attach.h">
@@ -679,6 +685,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="TermX.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmuStart.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PushInfo.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
