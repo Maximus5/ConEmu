@@ -3847,7 +3847,7 @@ void CVirtualConsole::UpdateText()
 						int nBorderWidth = CharWidth(c, attr);
 						rect.left = j ? ConCharXLine[j-1] : 0;
 						rect.right = (TextWidth>(UINT)j2) ? ConCharXLine[j2-1] : Width;
-						int nCnt = (rect.right - rect.left + (nBorderWidth>>1)) / nBorderWidth;
+						int nCnt = klMin((long)TextWidth,(rect.right - rect.left + (nBorderWidth>>1)) / nBorderWidth);
 
 						if (nCnt > (j2 - j))
 						{
