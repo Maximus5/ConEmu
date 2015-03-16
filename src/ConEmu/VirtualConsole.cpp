@@ -3839,8 +3839,13 @@ void CVirtualConsole::UpdateText()
 
 						if (bIsHorzBorder)
 						{
+							DEBUGTEST(WORD nCurCharWidth2 = CharWidth(c, attr));
+							_ASSERTE(nCurCharWidth2 == nCurCharWidth);
 							while (j2 < end && ConAttrLine[j2] == attr && c == ConCharLine[j2])
+							{
+								ConCharXLine[j2] = (j2 ? ConCharXLine[j2-1] : 0)+nCurCharWidth;
 								j2++;
+							}
 						}
 
 						// Why that was called? It breaks evaluated previously hieroglyphs positions on DBCS
