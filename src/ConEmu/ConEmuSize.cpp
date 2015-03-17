@@ -6290,9 +6290,9 @@ static TCHAR* getFocusedExplorerWindowPath()
 
 	return ret;
 
-#undef CHECK_OUTER_FAIL
-#undef CHECK_FAIL
-#undef RELEASE
+#undef FE_CHECK_OUTER_FAIL
+#undef FE_CHECK_FAIL
+#undef FE_RELEASE
 }
 
 void CConEmuSize::DoCdExplorerPath()
