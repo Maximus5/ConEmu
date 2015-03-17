@@ -1154,7 +1154,7 @@
 #define stExtendFonts                   2836
 #define stUnicodeRanges                 2837
 #define cbUnicodeRangesApply            2838
-#define vkCdExplorerPath				3839
+#define vkCdExplorerPath                2839
 #define IDC_STATIC                      -1
 
 // Next default values for new objects

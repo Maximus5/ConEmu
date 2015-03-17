@@ -230,7 +230,7 @@ int ConEmuHotKeyList::AllocateHotkeys()
 	Add(vkShowTabsList,   chk_User,  NULL,    L"Multi.ShowTabsList",    CConEmuCtrl::key_ShowTabsList)
 		;
 	Add(vkShowTabsList2,  chk_User,  NULL,    L"Multi.ShowTabsList2",   CConEmuCtrl::key_GuiMacro, false, L"Tabs(8)")
-		->SetHotKey(VK_F12, VK_APPS);
+		->SetHotKey(VK_F12,VK_APPS);
 	Add(vkPasteText,      chk_User,  NULL,    L"ClipboardVkAllLines",   CConEmuCtrl::key_PasteText)
 		->SetHotKey(VK_INSERT,VK_SHIFT);
 	Add(vkPasteFirstLine, chk_User,  NULL,    L"ClipboardVkFirstLine",  CConEmuCtrl::key_PasteFirstLine)
@@ -325,7 +325,7 @@ int ConEmuHotKeyList::AllocateHotkeys()
 	Add(vkPasteDirectory, chk_User,  NULL,    L"PastePathKey",          CConEmuCtrl::key_GuiMacro, false, L"Paste(5)")
 		->SetHotKey('D',VK_CONTROL,VK_SHIFT);
 	Add(vkPasteCygwin,    chk_User,  NULL,    L"PasteCygwinKey",        CConEmuCtrl::key_GuiMacro, false, L"Paste(8)")
-		->SetHotKey(VK_INSERT, VK_APPS);
+		->SetHotKey(VK_INSERT,VK_APPS);
 	/*
 		*** GUI Macros
 	*/
