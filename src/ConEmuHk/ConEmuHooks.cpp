@@ -2623,6 +2623,12 @@ int WINAPI OnGetWindowTextW(HWND hWnd, LPWSTR lpString, int nMaxCount)
 	if (F(GetWindowTextW))
 		iRc = F(GetWindowTextW)(hWnd, lpString, nMaxCount);
 
+	#ifdef _DEBUG
+	wchar_t szPrefix[32]; _wsprintf(szPrefix, SKIPCOUNT(szPrefix) L"GetWindowTextW(x%08X)='", (DWORD)(DWORD_PTR)hWnd);
+	CEStr lsDbg(lstrmerge(szPrefix, lpString, L"'\n"));
+	OutputDebugString(lsDbg);
+	#endif
+
 	return iRc;
 }
 // Не перехватываются пока, для информации
@@ -2639,6 +2645,12 @@ BOOL WINAPI OnSetConsoleTitleW(LPCWSTR lpConsoleTitle)
 {
 	typedef BOOL (WINAPI* OnSetConsoleTitleW_t)(LPCWSTR lpConsoleTitle);
 	ORIGINALFASTEX(SetConsoleTitleW,NULL);
+
+	#ifdef _DEBUG
+	CEStr lsDbg(lstrmerge(L"SetConsoleTitleW('", lpConsoleTitle, L"')\n"));
+	OutputDebugString(lsDbg);
+	#endif
+
 	BOOL bRc = FALSE;
 	if (F(SetConsoleTitleW))
 		bRc = F(SetConsoleTitleW)(lpConsoleTitle);
