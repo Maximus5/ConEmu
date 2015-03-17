@@ -110,7 +110,7 @@ int ConEmuHotKeyList::AllocateHotkeys()
 	Add(vkCdExplorerPath, chk_Global, NULL,   L"CdExplorerPath",        CConEmuCtrl::key_SendCDToExplorerPath)
 		;
 	Add(vkForceFullScreen,chk_Global, NULL,   L"ForcedFullScreen",      CConEmuCtrl::key_ForcedFullScreen)
-		->SetHotKey(VK_RETURN, VK_CONTROL, VK_LWIN, VK_MENU);
+		->SetHotKey(VK_RETURN,VK_CONTROL,VK_LWIN,VK_MENU);
 	/*
 		-- Добавить chk_Local недостаточно, нужно еще и gActiveOnlyHotKeys обработать
 	*/
