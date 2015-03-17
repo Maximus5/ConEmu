@@ -6216,70 +6216,83 @@ void CConEmuSize::DoForcedFullScreen(bool bSet /*= true*/)
 
 static TCHAR* getFocusedExplorerWindowPath()
 {
+#define FE_CHECK_OUTER_FAIL(statement) \
+	if (!SUCCEEDED(statement)) goto outer_fail;
+
+#define FE_CHECK_FAIL(statement) \
+	if (!SUCCEEDED(statement)) goto fail;
+
+#define FE_RELEASE(hnd) \
+	if (hnd) { hnd->Release(); hnd = NULL; }
+
 	TCHAR g_szPath[MAX_PATH];
 	TCHAR g_szItem[MAX_PATH];
 
 	TCHAR* ret = NULL;
 
+	IShellBrowser *psb = NULL;
+	IShellView *psv = NULL;
+	IFolderView *pfv = NULL;
+	IPersistFolder2 *ppf2 = NULL;
+	IDispatch  *pdisp = NULL;
+	IWebBrowserApp *pwba = NULL;
+	IServiceProvider *psp = NULL;
+	IShellWindows *psw = NULL;
+
+	VARIANT v;
+	HWND hwndWBA;
+	LPITEMIDLIST pidlFolder;
+
+	BOOL fFound = FALSE;
 	HWND hwndFind = GetForegroundWindow();
-	IShellWindows *psw;
-	if (SUCCEEDED(CoCreateInstance(CLSID_ShellWindows, NULL, CLSCTX_ALL,
-		IID_IShellWindows, (void**)&psw))) {
-		VARIANT v;
-		V_VT(&v) = VT_I4;
-		IDispatch  *pdisp;
-		BOOL fFound = FALSE;
-		for (V_I4(&v) = 0; !fFound && psw->Item(v, &pdisp) == S_OK;
-			V_I4(&v)++) {
-			IWebBrowserApp *pwba;
-			if (SUCCEEDED(pdisp->QueryInterface(IID_IWebBrowserApp, (void**)&pwba))) {
-				HWND hwndWBA;
-				if (SUCCEEDED(pwba->get_HWND((LONG_PTR*)&hwndWBA)) &&
-					hwndWBA == hwndFind) {
-					fFound = TRUE;
-					IServiceProvider *psp;
-					if (SUCCEEDED(pwba->QueryInterface(IID_IServiceProvider, (void**)&psp))) {
-						IShellBrowser *psb;
-						if (SUCCEEDED(psp->QueryService(SID_STopLevelBrowser,
-							IID_IShellBrowser, (void**)&psb))) {
-							IShellView *psv;
-							if (SUCCEEDED(psb->QueryActiveShellView(&psv))) {
-								IFolderView *pfv;
-								if (SUCCEEDED(psv->QueryInterface(IID_IFolderView,
-									(void**)&pfv))) {
-									IPersistFolder2 *ppf2;
-									if (SUCCEEDED(pfv->GetFolder(IID_IPersistFolder2,
-										(void**)&ppf2))) {
-										LPITEMIDLIST pidlFolder;
-										if (SUCCEEDED(ppf2->GetCurFolder(&pidlFolder))) {
-											if (!SHGetPathFromIDList(pidlFolder, g_szPath)) {
-												lstrcpyn(g_szPath, TEXT("<not a directory>"), MAX_PATH);
-											}
 
-											ret = (TCHAR*)malloc(sizeof(TCHAR) * MAX_PATH);
-											memcpy(ret, g_szPath, sizeof(TCHAR) * MAX_PATH);
+	FE_CHECK_OUTER_FAIL(CoCreateInstance(CLSID_ShellWindows, NULL, CLSCTX_ALL,
+		IID_IShellWindows, (void**)&psw))
 
-											CoTaskMemFree(pidlFolder);
-										}
-										ppf2->Release();
-									}
-									pfv->Release();
-								}
-								psv->Release();
-							}
-							psb->Release();
-						}
-						psp->Release();
-					}
-				}
-				pwba->Release();
-			}
-			pdisp->Release();
-		}
-		psw->Release();
+	V_VT(&v) = VT_I4;
+	for (V_I4(&v) = 0; !fFound && psw->Item(v, &pdisp) == S_OK;
+		V_I4(&v)++) {
+		
+		FE_CHECK_FAIL(pdisp->QueryInterface(IID_IWebBrowserApp, (void**)&pwba))
+		FE_CHECK_FAIL(pwba->get_HWND((LONG_PTR*)&hwndWBA))
+
+		if (hwndWBA != hwndFind)
+			goto fail;
+
+		fFound = TRUE;
+		FE_CHECK_FAIL(pwba->QueryInterface(IID_IServiceProvider, (void**)&psp))
+		FE_CHECK_FAIL(psp->QueryService(SID_STopLevelBrowser, IID_IShellBrowser, (void**)&psb))
+		FE_CHECK_FAIL(psb->QueryActiveShellView(&psv))
+		FE_CHECK_FAIL(psv->QueryInterface(IID_IFolderView, (void**)&pfv))
+		FE_CHECK_FAIL(pfv->GetFolder(IID_IPersistFolder2, (void**)&ppf2))
+		FE_CHECK_FAIL(ppf2->GetCurFolder(&pidlFolder))
+
+		if (!SHGetPathFromIDList(pidlFolder, g_szPath))
+			goto fail;
+
+		ret = (TCHAR*)malloc(sizeof(TCHAR) * MAX_PATH);
+		memcpy(ret, g_szPath, sizeof(TCHAR) * MAX_PATH);
+
+		CoTaskMemFree(pidlFolder);
+
+		fail:
+		FE_RELEASE(ppf2)
+		FE_RELEASE(pfv)
+		FE_RELEASE(psv)
+		FE_RELEASE(psb)
+		FE_RELEASE(psp)
+		FE_RELEASE(pwba)
+		FE_RELEASE(pdisp)
 	}
 
+	outer_fail:
+	FE_RELEASE(psw)
+
 	return ret;
+
+#undef FE_CHECK_OUTER_FAIL
+#undef FE_CHECK_FAIL
+#undef FE_RELEASE
 }
 
 void CConEmuSize::DoCdExplorerPath()
