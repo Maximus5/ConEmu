@@ -1301,6 +1301,15 @@ bool CConEmuCtrl::key_AlwaysOnTop(const ConEmuChord& VkState, bool TestOnly, con
 	return true;
 }
 
+bool CConEmuCtrl::key_SendCDToExplorerPath(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+{
+	if (TestOnly)
+		return true;
+
+	gpConEmu->DoCdExplorerPath();
+	return true;
+}
+
 bool CConEmuCtrl::key_PasteText(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
 	if (!pRCon || pRCon->isFar())

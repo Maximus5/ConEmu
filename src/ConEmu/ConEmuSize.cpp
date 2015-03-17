@@ -50,6 +50,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "VConGroup.h"
 #include "VirtualConsole.h"
 
+#include <shlobj.h>
+#include <exdisp.h>
+
 #define DEBUGSTRSIZE(s) //DEBUGSTR(s)
 #define DEBUGSTRDPI(s) //DEBUGSTR(s)
 #define DEBUGSTRPANEL2(s) //DEBUGSTR(s)
@@ -6208,6 +6211,98 @@ void CConEmuSize::DoForcedFullScreen(bool bSet /*= true*/)
 	if (!mp_ConEmu->isMeForeground())
 	{
 		SwitchToThisWindow(ghWnd, FALSE);
+	}
+}
+
+static TCHAR* getFocusedExplorerWindowPath()
+{
+	TCHAR g_szPath[MAX_PATH];
+	TCHAR g_szItem[MAX_PATH];
+
+	TCHAR* ret = NULL;
+
+	HWND hwndFind = GetForegroundWindow();
+	IShellWindows *psw;
+	if (SUCCEEDED(CoCreateInstance(CLSID_ShellWindows, NULL, CLSCTX_ALL,
+		IID_IShellWindows, (void**)&psw))) {
+		VARIANT v;
+		V_VT(&v) = VT_I4;
+		IDispatch  *pdisp;
+		BOOL fFound = FALSE;
+		for (V_I4(&v) = 0; !fFound && psw->Item(v, &pdisp) == S_OK;
+			V_I4(&v)++) {
+			IWebBrowserApp *pwba;
+			if (SUCCEEDED(pdisp->QueryInterface(IID_IWebBrowserApp, (void**)&pwba))) {
+				HWND hwndWBA;
+				if (SUCCEEDED(pwba->get_HWND((LONG_PTR*)&hwndWBA)) &&
+					hwndWBA == hwndFind) {
+					fFound = TRUE;
+					IServiceProvider *psp;
+					if (SUCCEEDED(pwba->QueryInterface(IID_IServiceProvider, (void**)&psp))) {
+						IShellBrowser *psb;
+						if (SUCCEEDED(psp->QueryService(SID_STopLevelBrowser,
+							IID_IShellBrowser, (void**)&psb))) {
+							IShellView *psv;
+							if (SUCCEEDED(psb->QueryActiveShellView(&psv))) {
+								IFolderView *pfv;
+								if (SUCCEEDED(psv->QueryInterface(IID_IFolderView,
+									(void**)&pfv))) {
+									IPersistFolder2 *ppf2;
+									if (SUCCEEDED(pfv->GetFolder(IID_IPersistFolder2,
+										(void**)&ppf2))) {
+										LPITEMIDLIST pidlFolder;
+										if (SUCCEEDED(ppf2->GetCurFolder(&pidlFolder))) {
+											if (!SHGetPathFromIDList(pidlFolder, g_szPath)) {
+												lstrcpyn(g_szPath, TEXT("<not a directory>"), MAX_PATH);
+											}
+
+											ret = (TCHAR*)malloc(sizeof(TCHAR) * MAX_PATH);
+											memcpy(ret, g_szPath, sizeof(TCHAR) * MAX_PATH);
+
+											CoTaskMemFree(pidlFolder);
+										}
+										ppf2->Release();
+									}
+									pfv->Release();
+								}
+								psv->Release();
+							}
+							psb->Release();
+						}
+						psp->Release();
+					}
+				}
+				pwba->Release();
+			}
+			pdisp->Release();
+		}
+		psw->Release();
+	}
+
+	return ret;
+}
+
+void CConEmuSize::DoCdExplorerPath()
+{
+	CRealConsole* pRCon = NULL;
+	CVConGuard VCon;
+	if (mp_ConEmu->GetActiveVCon(&VCon) >= 0)
+		pRCon = VCon->RCon();
+
+	if (!pRCon)
+		return;
+
+	TCHAR* path = getFocusedExplorerWindowPath();
+	if (path)
+	{
+		pRCon->PostPromptCmd(true, path);
+
+		if (!IsWindowVisible(VCon->GetView()))
+			DoMinimizeRestore();
+		else
+			VCon->setFocus();
+
+		free(path);
 	}
 }
 

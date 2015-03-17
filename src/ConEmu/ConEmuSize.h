@@ -181,6 +181,7 @@ public:
 	void DoMaximizeRestore();
 	void DoMinimizeRestore(SingleInstanceShowHideType ShowHideType = sih_None);
 	void DoForcedFullScreen(bool bSet = true);
+	void DoCdExplorerPath();
 	void DoAlwaysOnTopSwitch();
 	void DoDesktopModeSwitch();
 
