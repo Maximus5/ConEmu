@@ -115,7 +115,7 @@ LPCWSTR CmdArg::AttachInt(wchar_t*& asPtr)
 	if (asPtr)
 	{
 		ms_Arg = asPtr;
-		mn_MaxLen = lstrlen(asPtr+1);
+		mn_MaxLen = lstrlen(asPtr)+1;
 	}
 
 	return ms_Arg;
