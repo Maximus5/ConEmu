@@ -181,6 +181,7 @@ gRegisteredHotKeys[] = {
 	{vkMinimizeRestor2},
 	{vkGlobalRestore},
 	{vkForceFullScreen},
+	{vkCdExplorerPath},
 };
 
 namespace ConEmuMsgLogger
@@ -4380,6 +4381,9 @@ void CConEmuMain::OnWmHotkey(WPARAM wParam)
 					break;
 				case vkForceFullScreen:
 					DoForcedFullScreen(true);
+					break;
+				case vkCdExplorerPath:
+					DoCdExplorerPath();
 					break;
 				}
 				break;
