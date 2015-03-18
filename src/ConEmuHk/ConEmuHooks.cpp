@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2014 Maximus5
+Copyright (c) 2009-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -114,6 +114,16 @@ INPUT_RECORD gir_Virtual[16] = {};
 const LONG gn_LogReadCharsMax = 4096; // must be power of 2
 wchar_t gs_LogReadChars[gn_LogReadCharsMax*2+1] = L""; // "+1" для ASCIIZ
 LONG gn_LogReadChars = -1;
+#endif
+
+#ifdef _DEBUG
+	//#define DEBUG_CON_TITLE
+	#undef DEBUG_CON_TITLE
+	#ifdef DEBUG_CON_TITLE
+	CEStr* gpLastSetConTitle = NULL;
+	#endif
+#else
+	#undef DEBUG_CON_TITLE
 #endif
 
 
@@ -2623,10 +2633,15 @@ int WINAPI OnGetWindowTextW(HWND hWnd, LPWSTR lpString, int nMaxCount)
 	if (F(GetWindowTextW))
 		iRc = F(GetWindowTextW)(hWnd, lpString, nMaxCount);
 
-	#ifdef _DEBUG
+	#ifdef DEBUG_CON_TITLE
 	wchar_t szPrefix[32]; _wsprintf(szPrefix, SKIPCOUNT(szPrefix) L"GetWindowTextW(x%08X)='", (DWORD)(DWORD_PTR)hWnd);
 	CEStr lsDbg(lstrmerge(szPrefix, lpString, L"'\n"));
 	OutputDebugString(lsDbg);
+	if (gFarMode.cbSize && lpString && gpLastSetConTitle && gpLastSetConTitle->ms_Arg)
+	{
+		int iCmp = lstrcmp(gpLastSetConTitle->ms_Arg, lpString);
+		_ASSERTE((iCmp == 0) && "Console window title was changed outside or was not applied yet");
+	}
 	#endif
 
 	return iRc;
@@ -2646,7 +2661,11 @@ BOOL WINAPI OnSetConsoleTitleW(LPCWSTR lpConsoleTitle)
 	typedef BOOL (WINAPI* OnSetConsoleTitleW_t)(LPCWSTR lpConsoleTitle);
 	ORIGINALFASTEX(SetConsoleTitleW,NULL);
 
-	#ifdef _DEBUG
+	#ifdef DEBUG_CON_TITLE
+	if (!gpLastSetConTitle)
+		gpLastSetConTitle = new CEStr(lstrdup(lpConsoleTitle));
+	else
+		gpLastSetConTitle->Set(lpConsoleTitle);
 	CEStr lsDbg(lstrmerge(L"SetConsoleTitleW('", lpConsoleTitle, L"')\n"));
 	OutputDebugString(lsDbg);
 	#endif
