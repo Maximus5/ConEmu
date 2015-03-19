@@ -487,6 +487,7 @@ CConEmuMain::CConEmuMain()
 	ms_ConEmuExe[0] = ms_ConEmuExeDir[0] = ms_ConEmuBaseDir[0] = ms_ConEmuWorkDir[0] = 0;
 	ms_ConEmuC32Full[0] = ms_ConEmuC64Full[0] = 0;
 	ms_ConEmuXml[0] = ms_ConEmuIni[0] = ms_ConEmuChm[0] = 0;
+	mps_ConEmuExtraArgs = NULL;
 	mb_SpecialConfigPath = false;
 	mb_ForceUseRegistry = false;
 
@@ -928,6 +929,22 @@ bool CConEmuMain::ChangeWorkDir(LPCWSTR asTempCurDir)
 	UNREFERENCED_PARAMETER(bApi);
 	UNREFERENCED_PARAMETER(nApiErr);
 	return bChanged;
+}
+
+void CConEmuMain::AppendExtraArgs(LPCWSTR asSwitch, LPCWSTR asSwitchValue /*= NULL*/)
+{
+	if (!asSwitch || !*asSwitch)
+		return;
+
+	lstrmerge(&mps_ConEmuExtraArgs, L" ", asSwitch);
+
+	if (asSwitchValue && *asSwitchValue)
+	{
+		if (IsQuotationNeeded(asSwitchValue))
+			lstrmerge(&mps_ConEmuExtraArgs, L" \"", asSwitchValue, L"\"");
+		else
+			lstrmerge(&mps_ConEmuExtraArgs, L" ", asSwitchValue);
+	}
 }
 
 bool CConEmuMain::CheckRequiredFiles()

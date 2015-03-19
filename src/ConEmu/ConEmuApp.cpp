@@ -2720,6 +2720,8 @@ static HRESULT _CreateShellLink(PCWSTR pszArguments, PCWSTR pszPrefix, PCWSTR ps
 	if (pszConfig && !*pszConfig)
 		pszConfig = NULL;
 
+	LPCWSTR pszAddArgs = gpConEmu->mps_ConEmuExtraArgs;
+
 	wchar_t* pszBuf = NULL;
 	if (!pszArguments || !*pszArguments)
 	{
@@ -2727,6 +2729,7 @@ static HRESULT _CreateShellLink(PCWSTR pszArguments, PCWSTR pszPrefix, PCWSTR ps
 			+ (pszPrefix ? _tcslen(pszPrefix) : 0)
 			+ (pszConfig ? _tcslen(pszConfig) : 0)
 			+ (pszXmlFile ? (_tcslen(pszXmlFile) + 32) : 0)
+			+ (pszAddArgs ? _tcslen(pszAddArgs) : 0)
 			+ 32;
 
 		pszBuf = (wchar_t*)malloc(cchMax*sizeof(*pszBuf));
@@ -2750,6 +2753,10 @@ static HRESULT _CreateShellLink(PCWSTR pszArguments, PCWSTR pszPrefix, PCWSTR ps
 			_wcscat_c(pszBuf, cchMax, L"/config \"");
 			_wcscat_c(pszBuf, cchMax, pszConfig);
 			_wcscat_c(pszBuf, cchMax, L"\" ");
+		}
+		if (pszAddArgs)
+		{
+			_wcscat_c(pszBuf, cchMax, pszAddArgs);
 		}
 		_wcscat_c(pszBuf, cchMax, L"/cmd ");
 		_wcscat_c(pszBuf, cchMax, pszTitle);
@@ -3729,10 +3736,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				}
 				else if (!klstricmp(curCommand, _T("/multi")))
 				{
+					gpConEmu->AppendExtraArgs(curCommand);
 					MultiConValue = true; MultiConPrm = true;
 				}
 				else if (!klstricmp(curCommand, _T("/nomulti")))
 				{
+					gpConEmu->AppendExtraArgs(curCommand);
 					MultiConValue = false; MultiConPrm = true;
 				}
 				else if (!klstricmp(curCommand, _T("/visible")))
@@ -3762,6 +3771,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					{
 						FontPrm = true;
 						FontVal = curCommand;
+						gpConEmu->AppendExtraArgs(L"/font", curCommand);
 					}
 				}
 				// Высота шрифта
@@ -3865,6 +3875,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					{
 						return 100;
 					}
+					gpConEmu->AppendExtraArgs(L"/fontfile", pszFile);
 					gpSetCls->RegisterFont(pszFile, TRUE);
 				}
 				// Register all fonts from specified directory
@@ -3875,6 +3886,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					{
 						return 100;
 					}
+					gpConEmu->AppendExtraArgs(L"/fontdir", pszDir);
 					gpSetCls->RegisterFontsDir(pszDir);
 				}
 				else if (!klstricmp(curCommand, _T("/fs")))
@@ -4039,10 +4051,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				else if (!klstricmp(curCommand, _T("/single")) || !klstricmp(curCommand, _T("/reuse")))
 				{
 					// "/reuse" switch to be remastered
+					gpConEmu->AppendExtraArgs(curCommand);
 					gpSetCls->SingleInstanceArg = sgl_Enabled;
 				}
 				else if (!klstricmp(curCommand, _T("/nosingle")))
 				{
+					gpConEmu->AppendExtraArgs(curCommand);
 					gpSetCls->SingleInstanceArg = sgl_Disabled;
 				}
 				else if (!klstricmp(curCommand, _T("/quake"))
@@ -4085,6 +4099,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				else if (!klstricmp(curCommand, _T("/nocascade"))
 					|| !klstricmp(curCommand, _T("/dontcascade")))
 				{
+					gpConEmu->AppendExtraArgs(curCommand);
 					gpSetCls->isDontCascade = true;
 				}
 				else if (!klstricmp(curCommand, _T("/WndX")) || !klstricmp(curCommand, _T("/WndY"))
@@ -4150,6 +4165,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				}
 				else if (!klstricmp(curCommand, _T("/LoadRegistry")))
 				{
+					gpConEmu->AppendExtraArgs(curCommand);
 					ForceUseRegistryPrm = true;
 				}
 				else if (!klstricmp(curCommand, _T("/LoadCfgFile")) && i + 1 < params)
