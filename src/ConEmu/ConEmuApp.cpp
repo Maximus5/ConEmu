@@ -2703,7 +2703,8 @@ void ResetConman()
 #ifndef __GNUC__
 // Creates a CLSID_ShellLink to insert into the Tasks section of the Jump List.  This type of Jump
 // List item allows the specification of an explicit command line to execute the task.
-HRESULT _CreateShellLink(PCWSTR pszArguments, PCWSTR pszPrefix, PCWSTR pszTitle, IShellLink **ppsl)
+// Used only for JumpList creation...
+static HRESULT _CreateShellLink(PCWSTR pszArguments, PCWSTR pszPrefix, PCWSTR pszTitle, IShellLink **ppsl)
 {
 	if ((!pszArguments || !*pszArguments) && (!pszTitle || !*pszTitle))
 	{
