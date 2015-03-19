@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2012-2014 Maximus5
+Copyright (c) 2012-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -352,6 +352,23 @@ public:
 		return (this && mb_Initialized && mb_ReadyToHook);
 	};
 
+	static bool IsShellTrayWindowClass(LPCWSTR asClassName)
+	{
+		bool bShellTrayWnd = (asClassName != NULL)
+			&& ((lstrcmp(asClassName, L"Shell_TrayWnd") == 0)
+				);
+		return bShellTrayWnd;
+	};
+
+	static bool IsExplorerWindowClass(LPCWSTR asClassName)
+	{
+		bool bShellWnd = (asClassName != NULL)
+			&& ((lstrcmp(asClassName, L"CabinetWClass") == 0)
+				|| (lstrcmp(asClassName, L"ExploreWClass") == 0)
+				);
+		return bShellWnd;
+	};
+
 	bool CheckForeground(HWND hFore, DWORD nForePID, bool bRunInThread = true, bool bSkipShell = true)
 	{
 		if (!isDefaultTerminalAllowed())
@@ -450,8 +467,8 @@ public:
 		// Check window class
 		if (GetClassName(hFore, szClass, countof(szClass)))
 		{
-			bShellTrayWnd = (lstrcmp(szClass, L"Shell_TrayWnd") == 0);
-			bShellWnd = (lstrcmp(szClass, L"CabinetWClass") == 0) || (lstrcmp(szClass, L"ExploreWClass") == 0);
+			bShellTrayWnd = IsShellTrayWindowClass(szClass);
+			bShellWnd = IsExplorerWindowClass(szClass);
 
 			if ((lstrcmp(szClass, VirtualConsoleClass) == 0)
 				//|| (lstrcmp(szClass, L"#32770") == 0) // Ignore dialogs // -- Process dialogs too (Application may be dialog-based)
