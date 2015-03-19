@@ -1474,7 +1474,7 @@ bool CRealConsole::PostPromptCmd(bool CD, LPCWSTR asCmd)
 			wchar_t* pszMacro = (wchar_t*)malloc(cchMax*sizeof(*pszMacro));
 			if (pszMacro)
 			{
-				_wcscpy_c(pszMacro, cchMax, L"@panel.setpath(0,\"");
+				_wcscpy_c(pszMacro, cchMax, L"@Panel.SetPath(0,\"");
 				wchar_t* pszDst = pszMacro+_tcslen(pszMacro);
 				LPCWSTR pszSrc = asCmd;
 				while (*pszSrc)
