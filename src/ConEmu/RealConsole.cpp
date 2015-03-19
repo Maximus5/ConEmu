@@ -1431,6 +1431,30 @@ void CRealConsole::ShowKeyBarHint(WORD nID)
 		mp_RBuf->ShowKeyBarHint(nID);
 }
 
+void CRealConsole::DoCdExplorerPath(bool bSetFocus /*= true*/)
+{
+	if (!this)
+		return;
+
+	wchar_t* pszPath = getFocusedExplorerWindowPath();
+
+	if (pszPath)
+	{
+		PostPromptCmd(true, pszPath);
+
+		if (bSetFocus)
+		{
+			if (!isActive(false/*abAllowGroup*/))
+				gpConEmu->Activate(mp_VCon);
+
+			if (!mp_ConEmu->isMeForeground())
+				mp_ConEmu->DoMinimizeRestore(sih_SetForeground);
+		}
+
+		free(pszPath);
+	}
+}
+
 bool CRealConsole::PostPromptCmd(bool CD, LPCWSTR asCmd)
 {
 	if (!this || !asCmd || !*asCmd)

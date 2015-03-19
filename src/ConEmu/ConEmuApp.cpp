@@ -33,6 +33,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <commctrl.h>
 #pragma warning(disable: 4091)
 #include <shlobj.h>
+#include <exdisp.h>
 #pragma warning(default: 4091)
 #include <tlhelp32.h>
 #ifndef __GNUC__
@@ -45,6 +46,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 #include "../common/ConEmuCheck.h"
 #include "../common/CmdLine.h"
+#include "../common/DefTermBase.h"
 #include "../common/MMap.h"
 #include "../common/execute.h"
 #include "../common/WFiles.h"
@@ -2698,6 +2700,98 @@ void ResetConman()
 		              (LPBYTE)&(dw=0), sizeof(dw));
 		RegCloseKey(hk);
 	}
+}
+
+HWND FindTopExplorerWindow()
+{
+	wchar_t szClass[MAX_PATH] = L"";
+	HWND hwndFind = NULL;
+
+	while ((hwndFind = FindWindowEx(NULL, hwndFind, NULL, NULL)) != NULL)
+	{
+		if ((GetClassName(hwndFind, szClass, countof(szClass)) > 0)
+			&& CDefTermBase::IsExplorerWindowClass(szClass))
+			break;
+	}
+
+	return hwndFind;
+}
+
+wchar_t* getFocusedExplorerWindowPath()
+{
+#define FE_CHECK_OUTER_FAIL(statement) \
+	if (!SUCCEEDED(statement)) goto outer_fail;
+
+#define FE_CHECK_FAIL(statement) \
+	if (!SUCCEEDED(statement)) goto fail;
+
+#define FE_RELEASE(hnd) \
+	if (hnd) { hnd->Release(); hnd = NULL; }
+
+	wchar_t* ret = NULL;
+	wchar_t szPath[MAX_PATH] = L"";
+
+	IShellBrowser *psb = NULL;
+	IShellView *psv = NULL;
+	IFolderView *pfv = NULL;
+	IPersistFolder2 *ppf2 = NULL;
+	IDispatch  *pdisp = NULL;
+	IWebBrowserApp *pwba = NULL;
+	IServiceProvider *psp = NULL;
+	IShellWindows *psw = NULL;
+
+	VARIANT v;
+	HWND hwndWBA;
+	LPITEMIDLIST pidlFolder;
+
+	BOOL fFound = FALSE;
+	HWND hwndFind = FindTopExplorerWindow();
+
+	FE_CHECK_OUTER_FAIL(CoCreateInstance(CLSID_ShellWindows, NULL, CLSCTX_ALL,
+		IID_IShellWindows, (void**)&psw))
+
+	V_VT(&v) = VT_I4;
+	for (V_I4(&v) = 0; !fFound && psw->Item(v, &pdisp) == S_OK; V_I4(&v)++)
+	{
+		FE_CHECK_FAIL(pdisp->QueryInterface(IID_IWebBrowserApp, (void**)&pwba))
+		FE_CHECK_FAIL(pwba->get_HWND((LONG_PTR*)&hwndWBA))
+
+		if (hwndWBA != hwndFind)
+			goto fail;
+
+		fFound = TRUE;
+		FE_CHECK_FAIL(pwba->QueryInterface(IID_IServiceProvider, (void**)&psp))
+		FE_CHECK_FAIL(psp->QueryService(SID_STopLevelBrowser, IID_IShellBrowser, (void**)&psb))
+		FE_CHECK_FAIL(psb->QueryActiveShellView(&psv))
+		FE_CHECK_FAIL(psv->QueryInterface(IID_IFolderView, (void**)&pfv))
+		FE_CHECK_FAIL(pfv->GetFolder(IID_IPersistFolder2, (void**)&ppf2))
+		FE_CHECK_FAIL(ppf2->GetCurFolder(&pidlFolder))
+
+		if (!SHGetPathFromIDList(pidlFolder, szPath) || !*szPath)
+			goto fail;
+
+		ret = lstrdup(szPath);
+
+		CoTaskMemFree(pidlFolder);
+
+		fail:
+		FE_RELEASE(ppf2)
+		FE_RELEASE(pfv)
+		FE_RELEASE(psv)
+		FE_RELEASE(psb)
+		FE_RELEASE(psp)
+		FE_RELEASE(pwba)
+		FE_RELEASE(pdisp)
+	}
+
+	outer_fail:
+	FE_RELEASE(psw)
+
+	return ret;
+
+#undef FE_CHECK_OUTER_FAIL
+#undef FE_CHECK_FAIL
+#undef FE_RELEASE
 }
 
 #ifndef __GNUC__

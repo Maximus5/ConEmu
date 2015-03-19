@@ -510,6 +510,7 @@ class CRealConsole
 		void OnSelectionChanged();
 		void DoFindText(int nDirection);
 		void DoEndFindText();
+		void DoCdExplorerPath(bool bSetFocus = true);
 		void CtrlWinAltSpace();
 		void ShowConsoleOrGuiClient(int nMode); // -1 Toggle, 0 - Hide, 1 - Show
 		void ShowConsole(int nMode); // -1 Toggle, 0 - Hide, 1 - Show

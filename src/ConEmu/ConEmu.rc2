@@ -357,7 +357,7 @@ BEGIN
 	vkMultiNextShift        "Switch previous console"
 	vkMultiPause            "Pause current console"
 	vkMultiRecreate         "Recreate active console"
-	vkCdExplorerPath        "Send cd to focused Explorer path window"
+	vkCdExplorerPath        "Activate ConEmu and ‘CD’ to last (top in Z-order) Explorer window path"
 	vkPasteCygwin           "Paste path from clipboard in unix format"
 	vkPasteDirectory        "Choose and paste folder path"
 	vkPasteFilePath         "Choose and paste file pathname"

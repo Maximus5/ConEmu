@@ -4383,7 +4383,13 @@ void CConEmuMain::OnWmHotkey(WPARAM wParam)
 					DoForcedFullScreen(true);
 					break;
 				case vkCdExplorerPath:
-					DoCdExplorerPath();
+					{
+						CVConGuard VCon;
+						if (GetActiveVCon(&VCon) >= 0)
+						{
+							VCon->RCon()->DoCdExplorerPath();
+						}
+					}
 					break;
 				}
 				break;

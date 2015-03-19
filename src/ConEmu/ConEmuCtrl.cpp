@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2012-2014 Maximus5
+Copyright (c) 2012-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -1303,10 +1303,12 @@ bool CConEmuCtrl::key_AlwaysOnTop(const ConEmuChord& VkState, bool TestOnly, con
 
 bool CConEmuCtrl::key_SendCDToExplorerPath(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
+	if (!pRCon)
+		return false;
 	if (TestOnly)
 		return true;
 
-	gpConEmu->DoCdExplorerPath();
+	pRCon->DoCdExplorerPath(true);
 	return true;
 }
 
