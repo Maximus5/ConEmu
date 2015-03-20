@@ -12,6 +12,15 @@ Votes and awards (vote for ConEmu, if you please)
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+2015.3.19
+[*] Some required switches were not used while creating jump lists (/FontDir, /FontFile, etc.)
+[*] PostPromptCmd was not working with Far 3.
+[*] Added hotkey to activate ConEmu window and do ‘CD’ to the last (top in Z-order) Explorer window path. GuiMacro is available:
+    PasteExplorerPath (<DoCd>,<SetFocus>)
+      DoCd: 1 - ‘CD’, 0 - paste path only
+      SetFocus: 1 - bring ConEmu to the top, 0 - don't change active window
+
+
 2015.3.16
 [*] Issue 1931: Fix crash and broken Far frames after resize (regression).
 [*] Inform user about some project events using TaskBar status area notification.
