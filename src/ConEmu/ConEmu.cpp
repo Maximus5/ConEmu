@@ -4387,7 +4387,7 @@ void CConEmuMain::OnWmHotkey(WPARAM wParam)
 						CVConGuard VCon;
 						if (GetActiveVCon(&VCon) >= 0)
 						{
-							VCon->RCon()->DoCdExplorerPath();
+							VCon->RCon()->PasteExplorerPath(true, true);
 						}
 					}
 					break;

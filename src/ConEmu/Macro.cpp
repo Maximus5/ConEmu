@@ -182,6 +182,8 @@ namespace ConEmuMacro
 	LPWSTR Palette(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Paste (<Cmd>[,"<Text>"[,"<Text2>"[...]]])
 	LPWSTR Paste(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
+	// PasteExplorerPath (<DoCd>,<SetFocus>)
+	LPWSTR PasteExplorerPath(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// PasteFile (<Cmd>[,"<File>"[,"<CommentMark>"]])
 	LPWSTR PasteFile(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Pause
@@ -271,6 +273,7 @@ namespace ConEmuMacro
 		{Palette, {L"Palette"}},
 		{Paste, {L"Paste"}},
 		{PasteFile, {L"PasteFile"}},
+		{PasteExplorerPath, {L"PasteExplorerPath"}},
 		{Pause, {L"Pause"}},
 		{Print, {L"Print"}},
 		{Progress, {L"Progress"}},
@@ -2029,6 +2032,27 @@ LPWSTR ConEmuMacro::GroupInput(GuiMacro* p, CRealConsole* apRCon, bool abFromPlu
 	}
 
 	return lstrdup(L"InvalidArg");
+}
+
+// PasteExplorerPath (<DoCd>,<SetFocus>)
+LPWSTR ConEmuMacro::PasteExplorerPath(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
+{
+	int iDoCd = 1, iSetFocus = 1;
+
+	if (!apRCon)
+		return lstrdup(L"InvalidArg");
+
+	if (p->IsIntArg(0))
+	{
+		p->GetIntArg(0, iDoCd);
+
+		if (p->IsIntArg(1))
+			p->GetIntArg(1, iSetFocus);
+	}
+
+	apRCon->PasteExplorerPath((iDoCd!=0), (iSetFocus!=0));
+
+	return lstrdup(L"OK");
 }
 
 // PasteFile (<Cmd>[,"<File>"[,"<CommentMark>"]])

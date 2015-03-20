@@ -312,6 +312,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"     Cmd==8: paste path from clipboard converted to CygWin style\r\n" \
 	L"     Cmd==9: paste all lines space-separated\r\n" \
 	L"     Cmd==10: paste all lines space-separated, without confirmations\r\n" \
+	L"PasteExplorerPath (<DoCd>,<SetFocus>)\r\n" \
+	L"  - Activate ConEmu and ‘CD’ to last (top in Z-order) Explorer window path\r\n" \
+	L"     DoCd: 1 - ‘CD’, 0 - paste path only\r\n" \
+	L"     SetFocus: 1 - bring ConEmu to the top, 0 - don't change active window\r\n" \
 	L"PasteFile(<Cmd>[,\"<File>\"[,\"<CommentMark>\"]])\r\n" \
 	L"  - Paste <File> contents, omit <File> to show selection dialog\r\n" \
 	L"     Cmd==0: paste all lines\r\n" \

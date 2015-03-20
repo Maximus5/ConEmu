@@ -107,7 +107,7 @@ int ConEmuHotKeyList::AllocateHotkeys()
 		;
 	Add(vkGlobalRestore,  chk_Global, NULL,   L"GlobalRestore",         CConEmuCtrl::key_GlobalRestore)
 		;
-	Add(vkCdExplorerPath, chk_Global, NULL,   L"CdExplorerPath",        CConEmuCtrl::key_SendCDToExplorerPath)
+	Add(vkCdExplorerPath, chk_Global, NULL,   L"CdExplorerPath",        CConEmuCtrl::key_GuiMacro, false, L"PasteExplorerPath(1,1)")
 		;
 	Add(vkForceFullScreen,chk_Global, NULL,   L"ForcedFullScreen",      CConEmuCtrl::key_ForcedFullScreen)
 		->SetHotKey(VK_RETURN,VK_CONTROL,VK_LWIN,VK_MENU);

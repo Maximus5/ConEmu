@@ -1431,7 +1431,7 @@ void CRealConsole::ShowKeyBarHint(WORD nID)
 		mp_RBuf->ShowKeyBarHint(nID);
 }
 
-void CRealConsole::DoCdExplorerPath(bool bSetFocus /*= true*/)
+void CRealConsole::PasteExplorerPath(bool bDoCd /*= true*/, bool bSetFocus /*= true*/)
 {
 	if (!this)
 		return;
@@ -1440,7 +1440,7 @@ void CRealConsole::DoCdExplorerPath(bool bSetFocus /*= true*/)
 
 	if (pszPath)
 	{
-		PostPromptCmd(true, pszPath);
+		PostPromptCmd(bDoCd, pszPath);
 
 		if (bSetFocus)
 		{
