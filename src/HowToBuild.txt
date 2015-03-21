@@ -1,6 +1,6 @@
 == Sources location ==
 
-If you are reading this file, you have already get them.
+If you are reading this file, you already have them.
 But here are the official sources location list.
 
 https://github.com/Maximus5/ConEmu
