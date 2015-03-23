@@ -68,7 +68,7 @@ Installation
     2. Import Far Manager macroses, related to ConEmu. Macro files are located in
        ConEmu.Addons directory. Each macro file has description in header.
     3. By default (started without command line params), ConEmu runs "far.exe"
-       from it's home folder, or "cmd.exe"/"tcc.exe" if Far Manager not found.
+       from its home folder, or "cmd.exe"/"tcc.exe" if Far Manager not found.
        Alternatively, You may specify any root command, specifying
        "/Cmd <App with params>" argument in ConEmu shortcut or command line.
 
@@ -77,7 +77,7 @@ Command Line Syntax
 	ConEmu [/CT] [/FS | /MAX] [/Font ..] [/Size ..] [/FontFile ..] [/Config ..]
 	       [/Single] [/BufferHeight ..] [/Multi | /NoMulti] [/Cmd ..]
 
-    Started without params, ConEmu runs "far.exe" from it's home folder.
+    Started without params, ConEmu runs "far.exe" from its home folder.
 
 Parameters
 	/?
