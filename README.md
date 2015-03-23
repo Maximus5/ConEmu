@@ -26,9 +26,9 @@ Take a look at [screencast](http://dotnetsurfers.com/blog/2013/12/15/developer-t
 This fork grew up from ConEmu by Zoin.
 
 ### Some links
-Release stages: http://code.google.com/p/conemu-maximus5/wiki/StableVsPreview  
-Wiki: http://code.google.com/p/conemu-maximus5/wiki/ConEmu  
-What's new: http://code.google.com/p/conemu-maximus5/wiki/Whats_New  
+Release stages: http://conemu.github.io/en/StableVsPreview.html  
+Wiki: http://conemu.github.io/en/TableOfContents.html  
+What's new: http://conemu.github.io/en/Whats_New.html  
 Donate this project: http://conemu.github.io/donate.html
 
 
@@ -56,7 +56,7 @@ an alternative customizable GUI window with various features:
   * and more, and more...
 
 All settings are read from the registry or ConEmu.xml file, after which the
-[command line parameters](http://code.google.com/p/conemu-maximus5/wiki/Command_Line)
+[command line parameters](http://conemu.github.io/en/Command_Line.html)
 are applied. You may easily use several named configurations (for different PCs for example).
 
 
@@ -95,4 +95,4 @@ https://github.com/Maximus5/ConEmu/blob/master/src/HowToBuild.txt
 
 ![ConEmu+Powershell inside Windows Explorer pane](https://github.com/Maximus5/ConEmu/wiki/ConEmuInside.png)
 
-[More screenshots](http://code.google.com/p/conemu-maximus5/wiki/Screenshots)
+[More screenshots](http://conemu.github.io/en/Screenshots.html)
