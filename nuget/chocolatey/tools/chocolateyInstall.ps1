@@ -17,7 +17,8 @@ $params = @{
   PackageName = $package;
   FileType = 'exe';
   SilentArgs = "/p:$os /passive";
-  File = $tempInstall;
+  Url = $url;
+  Url64bit = $url;
 }
 Install-ChocolateyPackage @params
 
