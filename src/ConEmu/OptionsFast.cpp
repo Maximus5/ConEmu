@@ -969,7 +969,7 @@ protected:
 						CEStr szKeyValue;
 						HKEY hkParent = (hk == 0) ? HKEY_CURRENT_USER : HKEY_LOCAL_MACHINE;
 						DWORD Wow64Flags = (wow == 0) ? 0 : (wow == 1) ? KEY_WOW64_64KEY : KEY_WOW64_32KEY;
-						if (RegGetStringValue(hkParent, Locations[loc], Names[nam], szKeyValue, Wow64Flags))
+						if (RegGetStringValue(hkParent, Locations[loc], Names[nam], szKeyValue, Wow64Flags) > 0)
 						{
 							for (int fe = 0; FarExe[fe]; fe++)
 							{
