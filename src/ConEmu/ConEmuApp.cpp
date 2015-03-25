@@ -2322,7 +2322,7 @@ void AssertBox(LPCTSTR szText, LPCTSTR szFile, UINT nLine, LPEXCEPTION_POINTERS 
 		{
 			wchar_t* pszFileMsg = szDmpFile[0] ? lstrmerge(L"\r\n\r\n" L"Memory dump was saved to\r\n", szDmpFile,
 				L"\r\n\r\n" L"Please Zip it and send to developer (via DropBox etc.)\r\n",
-				CEREPORTCRASH /* http://code.google.com/p/conemu-maximus5/... */) : NULL;
+				CEREPORTCRASH /* http://conemu.github.io/en/Issues.html... */) : NULL;
 			pszDumpMessage = lstrmerge(pszFull, L"\r\n\r\n", szFullInfo, pszFileMsg);
 			CopyToClipboard(pszDumpMessage ? pszDumpMessage : szFullInfo);
 			SafeFree(pszFileMsg);
@@ -3386,7 +3386,7 @@ LONG WINAPI CreateDumpOnException(LPEXCEPTION_POINTERS ExceptionInfo)
 		wcscat_c(szAdd, L"\r\n\r\n" L"Memory dump was saved to\r\n");
 		wcscat_c(szAdd, szDmpFile);
 		wcscat_c(szAdd, L"\r\n\r\n" L"Please Zip it and send to developer (via DropBox etc.)\r\n");
-		wcscat_c(szAdd, CEREPORTCRASH /* http://code.google.com/p/conemu-maximus5/... */);
+		wcscat_c(szAdd, CEREPORTCRASH /* http://conemu.github.io/en/Issues.html... */);
 	}
 	wcscat_c(szAdd, L"\r\n\r\nPress <Yes> to copy this text to clipboard\r\nand open project web page");
 

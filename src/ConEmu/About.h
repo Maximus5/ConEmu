@@ -30,11 +30,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "../ConEmuCD/ConsoleHelp.h"
 
-//L"Console emulation program.\r\n"
-//L"Home page: http://conemu-maximus5.googlecode.com\r\n"
-//L"http://code.google.com/p/conemu-maximus5/wiki/Command_Line\r\n"
-//"\r\n"
-
 #define pCmdLine \
 	L"Command line examples\r\n" \
 	VCGCCTEST(L"––––––––––––––––––––––\r\n",L"----------------------\r\n") \
@@ -89,7 +84,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	/* L"/Attach [PID] - intercept console of specified process\n" */ \
 	L"/cmd <commandline>|@<taskfile>|{taskname} - Command line to start. This must be the last used switch.\r\n" \
 	L"\r\n" \
-	L"Read more online: http://code.google.com/p/conemu-maximus5/wiki/Command_Line\r\n"
+	L"Read more online: http://conemu.github.io/en/CommandLine.html\r\n"
 
 #define pAboutTasks \
 	L"You may set up most used shells as ConEmu's ‘Tasks’ (‘Settings’ dialog ‘Tasks’ page).\r\n" \
@@ -143,7 +138,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define pAboutTitle \
 	L"Console Emulation program (local terminal)"
 //#define pAboutUrl
-//	L"http://conemu-maximus5.googlecode.com"
+//	L"http://conemu.github.io"
 
 #define pAboutLicense \
 	L"\x00A9 2006-2008 Zoin (based on console emulator by SEt)\r\n" \
@@ -175,7 +170,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"\x00A9 2006-2008 Zoin (based on console emulator by SEt)\r\n" \
 	CECOPYRIGHTSTRING_W /*\x00A9 2009-present ConEmu.Maximus5@gmail.com*/ L"\r\n" \
 	L"\r\n" \
-	L"Online documentation: http://code.google.com/p/conemu-maximus5/wiki/ConEmu\r\n" \
+	L"Online documentation: http://conemu.github.io/en/TableOfContents.html\r\n" \
 	L"\r\n" \
 	L"You can show your appreciation and support future development by donating. " \
 	L"Donate button located on project website " \
@@ -193,14 +188,14 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define pDosBoxHelpFull \
 	L"ConEmu supports DosBox, read more online:\r\n" \
-	L"http://code.google.com/p/conemu-maximus5/wiki/DosBox\r\n" \
+	L"http://conemu.github.io/en/DosBox.html\r\n" \
 	VCGCCTEST(L"––––––––––––––––––––––\r\n",L"----------------------\r\n") \
 	pDosBoxHelp
 
 #define pGuiMacro \
 	L"Sort of simple macro language, use them with hotkeys or from your shell CLI.\r\n" \
 	L"CLI example: ConEmuC -GuiMacro Rename 0 PoSh\r\n" \
-	L"Read more online: http://code.google.com/p/conemu-maximus5/wiki/GuiMacro\r\n" \
+	L"Read more online: http://conemu.github.io/en/GuiMacro.html\r\n" \
 	VCGCCTEST(L"––––––––––––––––––––––\r\n",L"----------------------\r\n") \
 	L"About([\"<Page>\"])\r\n" \
 	L"  - Show ‘About’ dialog with page activated, e.g. ‘About(\"-new_console\")’\r\n" \

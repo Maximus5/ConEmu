@@ -159,11 +159,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#define CONEMU_ANIMATE_DURATION 200
 //#define CONEMU_ANIMATE_DURATION_MAX 5000
 
-const wchar_t* gsHomePage    = CEHOMEPAGE;    //L"http://conemu-maximus5.googlecode.com";
+const wchar_t* gsHomePage    = CEHOMEPAGE;    //L"http://conemu.github.io";
 const wchar_t* gsDownlPage   = CEDOWNLPAGE;   //L"http://www.fosshub.com/ConEmu.html";
-const wchar_t* gsReportBug   = CEREPORTBUG;   //L"http://code.google.com/p/conemu-maximus5/wiki/Issues?tm=3";
-const wchar_t* gsReportCrash = CEREPORTCRASH; //L"http://code.google.com/p/conemu-maximus5/wiki/Issues?tm=3";
-const wchar_t* gsWhatsNew    = CEWHATSNEW;    //L"http://code.google.com/p/conemu-maximus5/wiki/Whats_New";
+const wchar_t* gsReportBug   = CEREPORTBUG;   //L"http://conemu.github.io/en/Issues.html";
+const wchar_t* gsReportCrash = CEREPORTCRASH; //L"http://conemu.github.io/en/Issues.html";
+const wchar_t* gsWhatsNew    = CEWHATSNEW;    //L"http://conemu.github.io/en/Whats_New.html";
 
 #define gsPortableApps_LauncherIni  L"\\..\\AppInfo\\Launcher\\ConEmuPortable.ini"
 #define gsPortableApps_DefaultXml   L"\\..\\DefaultData\\settings\\ConEmu.xml"

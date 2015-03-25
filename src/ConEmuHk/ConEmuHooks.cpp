@@ -6651,7 +6651,7 @@ BOOL WINAPI OnSetConsoleWindowInfo(HANDLE hConsoleOutput, BOOL bAbsolute, const 
 }
 
 // Due to Microsoft bug we need to lock Server reading thread to avoid crash of kernel
-// https://code.google.com/p/conemu-maximus5/wiki/MicrosoftBugs#Exception_in_ReadConsoleOutput
+// http://conemu.github.io/en/MicrosoftBugs.html#Exception_in_ReadConsoleOutput
 void LockServerReadingThread(bool bLock, COORD dwSize, CESERVER_REQ*& pIn, CESERVER_REQ*& pOut)
 {
 	DWORD nServerPID = gnServerPID;

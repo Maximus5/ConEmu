@@ -427,7 +427,7 @@ void ConEmuAbout::InitCommCtrls()
 
 void ConEmuAbout::OnInfo_OnlineWiki(LPCWSTR asPageName /*= NULL*/)
 {
-	CEStr szUrl(lstrmerge(CEWIKIBASE,asPageName ? asPageName : L"ConEmu"));
+	CEStr szUrl(lstrmerge(CEWIKIBASE, asPageName ? asPageName : L"TableOfContents", L".html"));
 	DWORD shellRc = (DWORD)(INT_PTR)ShellExecute(ghWnd, L"open", szUrl, NULL, NULL, SW_SHOWNORMAL);
 	if (shellRc <= 32)
 	{

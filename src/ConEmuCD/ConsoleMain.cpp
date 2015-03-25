@@ -705,9 +705,9 @@ LONG WINAPI CreateDumpOnException(LPEXCEPTION_POINTERS ExceptionInfo)
 	if (bKernelTrap)
 	{
 		wcscat_c(szAdd, L"Due to Microsoft kernel bug the crash was occurred\r\n");
-		wcscat_c(szAdd, CEMSBUGWIKI /* http://code.google.com/p/conemu-maximus5/wiki/... */);
+		wcscat_c(szAdd, CEMSBUGWIKI /* http://conemu.github.io/en/MicrosoftBugs.html */);
 		wcscat_c(szAdd, L"\r\n\r\n" L"The only possible workaround: enabling ‘Inject ConEmuHk’\r\n");
-		wcscat_c(szAdd, CEHOOKSWIKI /* http://code.google.com/p/conemu-maximus5/wiki/... */);
+		wcscat_c(szAdd, CEHOOKSWIKI /* http://conemu.github.io/en/ConEmuHk.html */);
 		wcscat_c(szAdd, L"\r\n\r\n");
 	}
 
@@ -721,7 +721,7 @@ LONG WINAPI CreateDumpOnException(LPEXCEPTION_POINTERS ExceptionInfo)
 		if (!bKernelTrap)
 		{
 			wcscat_c(szAdd, L"\r\n\r\n" L"Please Zip it and send to developer (via DropBox etc.)\r\n");
-			wcscat_c(szAdd, CEREPORTCRASH /* http://code.google.com/p/conemu-maximus5/... */);
+			wcscat_c(szAdd, CEREPORTCRASH /* http://conemu.github.io/en/Issues.html... */);
 		}
 	}
 

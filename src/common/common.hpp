@@ -97,15 +97,15 @@ typedef struct _CONSOLE_SELECTION_INFO
 #define CECOPYRIGHTSTRING_W L"© 2009-2015 ConEmu.Maximus5@gmail.com"
 
 
-#define CEHOMEPAGE_A    "http://code.google.com/p/conemu-maximus5"
+#define CEHOMEPAGE_A    "http://conemu.github.io"
 #define CEHOMEPAGE     _CRT_WIDE(CEHOMEPAGE_A)
 #define CEDOWNLPAGE    L"http://www.fosshub.com/ConEmu.html"
-#define CEREPORTBUG    L"http://code.google.com/p/conemu-maximus5/wiki/Issues?tm=3"
-#define CEREPORTCRASH  L"http://code.google.com/p/conemu-maximus5/wiki/Issues?tm=3"
-#define CEWHATSNEW     L"http://code.google.com/p/conemu-maximus5/wiki/Whats_New"
-#define CEMSBUGWIKI    L"http://code.google.com/p/conemu-maximus5/wiki/MicrosoftBugs"
-#define CEHOOKSWIKI    L"http://code.google.com/p/conemu-maximus5/wiki/ConEmuHk"
-#define CEWIKIBASE     L"http://code.google.com/p/conemu-maximus5/wiki/"
+#define CEREPORTBUG    L"http://conemu.github.io/en/Issues.html"
+#define CEREPORTCRASH  L"http://conemu.github.io/en/Issues.html"
+#define CEWHATSNEW     L"http://conemu.github.io/en/Whats_New.html"
+#define CEMSBUGWIKI    L"http://conemu.github.io/en/MicrosoftBugs.html"
+#define CEHOOKSWIKI    L"http://conemu.github.io/en/ConEmuHk.html"
+#define CEWIKIBASE     L"http://conemu.github.io/en/"
 #define CEDONATEPAGE   L"http://conemu.github.io/donate.html"
 #define CEFLATTRPAGE   L"http://flattr.com/thing/2002773/Maximus5ConEmu-on-GitHub"
 
