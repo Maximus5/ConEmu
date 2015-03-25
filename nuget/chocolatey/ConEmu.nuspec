@@ -6,8 +6,8 @@
     <authors>Maximus5</authors>
     <owners>Maximus5, Xavier Decoster, Ethan J. Brown</owners>
     <licenseUrl>http://opensource.org/licenses/BSD-3-Clause</licenseUrl>
-    <projectUrl>http://code.google.com/p/conemu-maximus5/</projectUrl>
-    <iconUrl>http://code.google.com/p/conemu-maximus5/logo?cct=1340271535</iconUrl>
+    <projectUrl>http://conemu.github.io/</projectUrl>
+    <iconUrl>http://conemu.github.io/img/logo.png</iconUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>ConEmu starts a console program in a hidden console window, and provides an alternative customizable GUI window with various features:
 
@@ -37,7 +37,7 @@
     * configurable and clickable status bar;
     * and more, and more... take a look at the Settings dialog, What's New page and Settings.reg</description>
     <summary>ConEmu-Maximus5 is a Windows console emulator with tabs, which presents multiple consoles and simple GUI applications as one customizable GUI window with various features.</summary>
-    <releaseNotes>https://code.google.com/p/conemu-maximus5/wiki/Whats_New</releaseNotes>
+    <releaseNotes>http://conemu.github.io/en/Whats_New.html</releaseNotes>
     <copyright>Copyright (c) 2015, Maximus5</copyright>
     <tags>graphical console emulator tabs FAR farmanager powershell cmd bash</tags>
   </metadata>
