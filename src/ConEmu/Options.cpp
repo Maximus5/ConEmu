@@ -40,6 +40,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifdef _DEBUG
 #include <TlHelp32.h>
 #endif
+#include "../common/WRegistry.h"
 #include "../ConEmuCD/GuiHooks.h"
 #include "../ConEmuPlugin/FarDefaultMacros.h"
 #include "Background.h"
@@ -856,6 +857,17 @@ void Settings::InitVanilla()
 	nTabFontHeight = DEF_TABFONTY_U;
 
 	// WARNING!!! These settings MUST be saved in Settings::SaveVanilla
+
+
+	// And some settings we need to load from registry if started with "-basic" switch
+	if (gpConEmu->IsResetBasicSettings())
+	{
+		CEStr lsStr;
+		if (RegGetStringValue(HKEY_CURRENT_USER, CONEMU_ROOT_KEY, L"Notification.StopBuzzingDate", lsStr) > 0)
+		{
+			lstrcpyn(StopBuzzingDate, lsStr, countof(StopBuzzingDate));
+		}
+	}
 }
 
 bool Settings::SaveVanilla(SettingsBase* reg)
@@ -3098,8 +3110,15 @@ void Settings::SaveSettingsOnExit()
 
 void Settings::SaveStopBuzzingDate()
 {
+	SYSTEMTIME st = {}; GetLocalTime(&st);
+	_wsprintf(StopBuzzingDate, SKIPCOUNT(StopBuzzingDate) L"%u-%u-%u", st.wYear, st.wMonth, st.wDay);
+
+	// -basic switch?
 	if (gpConEmu->IsResetBasicSettings())
+	{
+		RegSetStringValue(HKEY_CURRENT_USER, CONEMU_ROOT_KEY, L"Notification.StopBuzzingDate", StopBuzzingDate);
 		return;
+	}
 
 	SettingsBase* reg = CreateSettings(NULL);
 	if (!reg)
@@ -3111,8 +3130,6 @@ void Settings::SaveStopBuzzingDate()
 
 	if (reg->OpenKey(gpSetCls->GetConfigPath(), KEY_WRITE))
 	{
-		SYSTEMTIME st = {}; GetLocalTime(&st);
-		_wsprintf(StopBuzzingDate, SKIPCOUNT(StopBuzzingDate) L"%u-%u-%u", st.wYear, st.wMonth, st.wDay);
 		reg->Save(L"Notification.StopBuzzingDate", StopBuzzingDate);
 	}
 
