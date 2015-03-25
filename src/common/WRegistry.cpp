@@ -125,3 +125,29 @@ int RegGetStringValue(HKEY hk, LPCWSTR pszSubKey, LPCWSTR pszValueName, CEStr& r
 
 	return iLen;
 }
+
+LONG RegSetStringValue(HKEY hk, LPCWSTR pszSubKey, LPCWSTR pszValueName, LPCWSTR pszData, DWORD Wow64Flags /*= 0*/)
+{
+	LONG lrc = -1;
+	HKEY hkChild = hk;
+	DWORD cbSize;
+
+	if (pszSubKey && *pszSubKey)
+	{
+		if (0 != (lrc = RegOpenKeyEx(hk, pszSubKey, 0, KEY_WRITE|Wow64Flags, &hkChild)))
+			hkChild = NULL;
+	}
+
+	if (hkChild)
+	{
+		cbSize = pszData ? ((lstrlen(pszData)+1)*sizeof(*pszData)) : 0;
+		lrc = RegSetValueEx(hkChild, pszValueName, 0, REG_SZ, (const BYTE*)pszData, cbSize);
+	}
+
+	if (hkChild && (hkChild != hk))
+	{
+		RegCloseKey(hkChild);
+	}
+
+	return lrc;
+}
