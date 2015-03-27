@@ -381,72 +381,85 @@ static INT_PTR CALLBACK CheckOptionsFastProc(HWND hDlg, UINT messg, WPARAM wPara
 
 void CheckOptionsFast(LPCWSTR asTitle, SettingsLoadedFlags slfFlags)
 {
+	bool bFastSetupDisabled = false;
 	if (gpConEmu->IsFastSetupDisabled())
 	{
+		bFastSetupDisabled = true;
 		gpConEmu->LogString(L"CheckOptionsFast was skipped due to '/basic' or '/resetdefault' switch");
-
-		goto checkDefaults;
 	}
-
-	bVanilla = (slfFlags & slf_NeedCreateVanilla) != slf_None;
-
-	bCheckHooks = (gpSet->m_isKeyboardHooks == 0);
-
-	bCheckUpdate = (gpSet->UpdSet.isUpdateUseBuilds == 0);
-
-	bCheckIme = false;
-	if (gOSVer.dwMajorVersion == 6 && gOSVer.dwMinorVersion == 0)
+	else
 	{
-		//;; Q. В Windows Vista зависают другие консольные процессы.
-		//	;; A. "Виноват" процесс ConIme.exe. Вроде бы он служит для ввода иероглифов
-		//	;;    (китай и т.п.). Зачем он нужен, если ввод теперь идет в графическом окне?
-		//	;;    Нужно запретить его автозапуск или вообще переименовать этот файл, например
-		//	;;    в 'ConIme.ex1' (видимо это возможно только в безопасном режиме).
-		//	;;    Запретить автозапуск: Внесите в реестр и перезагрузитесь
-		long  lbStopWarning = FALSE;
+		bVanilla = (slfFlags & slf_NeedCreateVanilla) != slf_None;
 
-		SettingsBase* reg = gpSet->CreateSettings(NULL);
-		if (reg)
+		bCheckHooks = (gpSet->m_isKeyboardHooks == 0);
+
+		bCheckUpdate = (gpSet->UpdSet.isUpdateUseBuilds == 0);
+
+		bCheckIme = false;
+		if (gOSVer.dwMajorVersion == 6 && gOSVer.dwMinorVersion == 0)
 		{
-			// БЕЗ имени конфигурации!
-			if (reg->OpenKey(CONEMU_ROOT_KEY, KEY_READ))
-			{
-				if (!reg->Load(_T("StopWarningConIme"), lbStopWarning))
-					lbStopWarning = FALSE;
+			//;; Q. В Windows Vista зависают другие консольные процессы.
+			//	;; A. "Виноват" процесс ConIme.exe. Вроде бы он служит для ввода иероглифов
+			//	;;    (китай и т.п.). Зачем он нужен, если ввод теперь идет в графическом окне?
+			//	;;    Нужно запретить его автозапуск или вообще переименовать этот файл, например
+			//	;;    в 'ConIme.ex1' (видимо это возможно только в безопасном режиме).
+			//	;;    Запретить автозапуск: Внесите в реестр и перезагрузитесь
+			long  lbStopWarning = FALSE;
 
-				reg->CloseKey();
+			SettingsBase* reg = gpSet->CreateSettings(NULL);
+			if (reg)
+			{
+				// БЕЗ имени конфигурации!
+				if (reg->OpenKey(CONEMU_ROOT_KEY, KEY_READ))
+				{
+					if (!reg->Load(_T("StopWarningConIme"), lbStopWarning))
+						lbStopWarning = FALSE;
+
+					reg->CloseKey();
+				}
+
+				delete reg;
 			}
 
-			delete reg;
-		}
-
-		if (!lbStopWarning)
-		{
-			HKEY hk = NULL;
-			DWORD dwValue = 1;
-
-			if (0 == RegOpenKeyEx(HKEY_CURRENT_USER, L"Console", 0, KEY_READ, &hk))
+			if (!lbStopWarning)
 			{
-				DWORD dwType = REG_DWORD, nSize = sizeof(DWORD);
+				HKEY hk = NULL;
+				DWORD dwValue = 1;
 
-				if (0 != RegQueryValueEx(hk, L"LoadConIme", 0, &dwType, (LPBYTE)&dwValue, &nSize))
-					dwValue = 1;
+				if (0 == RegOpenKeyEx(HKEY_CURRENT_USER, L"Console", 0, KEY_READ, &hk))
+				{
+					DWORD dwType = REG_DWORD, nSize = sizeof(DWORD);
 
-				RegCloseKey(hk);
+					if (0 != RegQueryValueEx(hk, L"LoadConIme", 0, &dwType, (LPBYTE)&dwValue, &nSize))
+						dwValue = 1;
 
-				if (dwValue!=0)
+					RegCloseKey(hk);
+
+					if (dwValue!=0)
+					{
+						bCheckIme = true;
+					}
+				}
+				else
 				{
 					bCheckIme = true;
 				}
 			}
-			else
-			{
-				bCheckIme = true;
-			}
 		}
 	}
 
-	if (bCheckHooks || bCheckUpdate || bCheckIme)
+	// Tasks and palettes must be created before dialog, to give user opportunity to choose startup task and palette
+
+	// Always check, if task list is empty - fill with defaults
+	CreateDefaultTasks();
+
+	// Some other settings, which must be filled with predefined values
+	if (slfFlags & slf_DefaultSettings)
+	{
+		gpSet->CreatePredefinedPalettes(0);
+	}
+
+	if (!bFastSetupDisabled && (bCheckHooks || bCheckUpdate || bCheckIme))
 	{
 		// First ShowWindow forced to use nCmdShow. This may be weird...
 		SkipOneShowWindow();
@@ -460,15 +473,6 @@ void CheckOptionsFast(LPCWSTR asTitle, SettingsLoadedFlags slfFlags)
 
 		SafeDelete(gp_FastHelp);
 		SafeDelete(gp_DpiAware);
-	}
-
-checkDefaults:
-	// Always check, if task list is empty - fill with defaults
-	CreateDefaultTasks();
-	// Some other settings, which must be filled with predefined values
-	if (slfFlags & slf_DefaultSettings)
-	{
-		gpSet->CreatePredefinedPalettes(0);
 	}
 }
 
