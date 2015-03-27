@@ -738,6 +738,8 @@ void Settings::InitSettings()
 	isStatusColumnHidden[csi_KeyHooks] = true;
 	isStatusColumnHidden[csi_ViewLock] = true;
 	#endif
+	isStatusColumnHidden[csi_CapsLock] = true;
+	isStatusColumnHidden[csi_ScrollLock] = true;
 	isStatusColumnHidden[csi_InputLocale] = true;
 	isStatusColumnHidden[csi_WindowPos] = true;
 	isStatusColumnHidden[csi_WindowSize] = true;
@@ -752,7 +754,8 @@ void Settings::InitSettings()
 	isStatusColumnHidden[csi_Zoom] = true;
 	isStatusColumnHidden[csi_DPI] = true;
 	isStatusColumnHidden[csi_ConEmuPID] = true;
-	isStatusColumnHidden[csi_ConsoleSize] = true;
+	isStatusColumnHidden[csi_ConsolePos] = true;
+	isStatusColumnHidden[csi_BufferSize] = true;
 	//isStatusColumnHidden[csi_CursorInfo] = true; -- show one info col instead of three cursor columns (by default)
 	isStatusColumnHidden[csi_CursorX] = true;
 	isStatusColumnHidden[csi_CursorY] = true;
