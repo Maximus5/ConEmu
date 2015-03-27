@@ -100,10 +100,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define MAX_SPLITTER_SIZE 32
 
 // That is positive value for LF.lfHeight
+#define DEF_INSIDESIZEY_P 10
 #define DEF_FONTSIZEY_P   16
 #define DEF_TABFONTY_P    16
 #define DEF_STATUSFONTY_P 14
 // That is positive value for LF.lfHeight
+#define DEF_INSIDESIZEY_U 9
 #define DEF_FONTSIZEY_U   14
 #define DEF_TABFONTY_U    13
 #define DEF_STATUSFONTY_U 12
@@ -445,6 +447,13 @@ void Settings::InitSettings()
 
 	bool bIsDbcs = (GetSystemMetrics(SM_DBCSENABLED) != 0);
 
+	/* ********** Font initialization begins ********** */
+	{
+	// Specially left it in ‘false’ state because that was the defaults in old builds
+	// Also use DEF_FONTSIZEY_P, DEF_STATUSFONTY_P, DEF_TABFONTY_P for the same reason
+	// Will be changed in ‘InitVanillaFontSettings’ if settings are ‘new’
+	FontUseUnits = false;
+
 	// Font initialization (all fields must be already zeroed)
 	_ASSERTE(!FontSizeY && !FontSizeX && !FontSizeX2 && !FontSizeX3 && !FontUseDpi && !FontUseUnits);
 	// Let take into account monitor dpi
@@ -467,6 +476,16 @@ void Settings::InitSettings()
 		mn_AntiAlias = ANTIALIASED_QUALITY;
 	// Some resets?
 	inFont[0] = inFont2[0] = 0;
+
+	// StatusBar fonts
+	wcscpy_c(sStatusFontFace, gsDefMUIFont); nStatusFontCharSet = ANSI_CHARSET;
+	nStatusFontHeight = DEF_STATUSFONTY_P; // dpi must not be embedded into font height!
+
+	// TabBar fonts
+	wcscpy_c(sTabFontFace, gsDefMUIFont); nTabFontCharSet = ANSI_CHARSET;
+	nTabFontHeight = DEF_TABFONTY_P; // dpi must not be embedded into font height!
+	}
+	/* ********** Font initialization ends ********** */
 
 	isTryToCenter = false;
 	nCenterConsolePad = 0;
@@ -727,8 +746,6 @@ void Settings::InitSettings()
 	nStatusBarLight = RGB(255,255,255);
 	nStatusBarDark = RGB(160,160,160);
 	#endif
-	wcscpy_c(sStatusFontFace, gsDefMUIFont); nStatusFontCharSet = ANSI_CHARSET;
-	nStatusFontHeight = DEF_STATUSFONTY_P; // dpi must not be embedded into font height!
 	//nHideStatusColumns = ces_CursorInfo;
 	_ASSERTE(countof(isStatusColumnHidden)>csi_Last);
 	memset(isStatusColumnHidden, 0, sizeof(isStatusColumnHidden));
@@ -780,8 +797,6 @@ void Settings::InitSettings()
 	isTabsInCaption = true;
 	#endif
 
-	wcscpy_c(sTabFontFace, gsDefMUIFont); nTabFontCharSet = ANSI_CHARSET;
-	nTabFontHeight = DEF_TABFONTY_P; // dpi must not be embedded into font height!
 	sTabCloseMacro = sSaveAllMacro = NULL;
 	nToolbarAddSpace = 0;
 	// Show only shield (szAdminTitleSuffix is ignored if ats_Shield)
@@ -850,15 +865,7 @@ void Settings::InitVanilla()
 	}
 
 	// WARNING!!! Following settings MUST be saved in Settings::SaveVanilla
-
-	// For new users, let use ‘standard’ font heights? Meaning of display units and character height
-	FontUseUnits = true;
-	// dpi must not be embedded into font height!
-	// To avoid fatal conflicts with old versions - we are storing only positive values
-	FontSizeY = DEF_FONTSIZEY_U;
-	nStatusFontHeight = DEF_STATUSFONTY_U;
-	nTabFontHeight = DEF_TABFONTY_U;
-
+	InitVanillaFontSettings();
 	// WARNING!!! These settings MUST be saved in Settings::SaveVanilla
 
 
@@ -871,6 +878,17 @@ void Settings::InitVanilla()
 			lstrcpyn(StopBuzzingDate, lsStr, countof(StopBuzzingDate));
 		}
 	}
+}
+
+void Settings::InitVanillaFontSettings()
+{
+	// For new users, let use ‘standard’ font heights? Meaning of display units and character height
+	FontUseUnits = true;
+	// dpi must not be embedded into font height!
+	// To avoid fatal conflicts with old versions - we are storing only positive values
+	FontSizeY = gpConEmu->mp_Inside ? DEF_INSIDESIZEY_U : DEF_FONTSIZEY_U;
+	nStatusFontHeight = DEF_STATUSFONTY_U;
+	nTabFontHeight = DEF_TABFONTY_U;
 }
 
 bool Settings::SaveVanilla(SettingsBase* reg)
@@ -2190,6 +2208,14 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 	}
 	gpConEmu->LogString(L"Settings::LoadSettings");
 
+	// Settings service
+	SettingsBase* reg = NULL;
+	bool lbOpened = false;
+
+	// For compatibility
+	bool bSendAltEnter = false, bSendAltSpace = false, bSendAltF9 = false;
+	bool bInitVanillaFontSizes = true;
+
 	MCHKHEAP
 	mb_CharSetWasSet = FALSE;
 
@@ -2217,14 +2243,14 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 			if (hParent == INSIDE_PARENT_NOT_FOUND)
 			{
 				_ASSERTE(FALSE && "Settings initialization skipped because InsideFindParent was failed");
-				return;
+				goto wrap;
 			}
 			else if (hParent)
 			{
 				// Типа, запуститься как панель в Explorer (не в таскбаре, а в проводнике)
 				//isStatusBarShow = false;
 				isTabs = 0;
-				FontSizeY = 10;
+				FontSizeY = DEF_FONTSIZEY_P;
 				isTryToCenter = true;
 				nCenterConsolePad = 3;
 				// Скрыть колонки, чтобы много слишком не было...
@@ -2251,16 +2277,15 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 //-----------------------------------------------------------------------
 ///| Loading from reg/xml |//////////////////////////////////////////////
 //-----------------------------------------------------------------------
-	SettingsBase* reg = CreateSettings(apStorage);
+	reg = CreateSettings(apStorage);
 	if (!reg)
 	{
 		_ASSERTE(reg!=NULL);
-		return;
+		goto wrap;
 	}
 
 	wcscpy_c(Type, reg->m_Storage.szType);
 
-	bool lbOpened = false;
 	rbNeedCreateVanilla = false;
 
 	lbOpened = reg->OpenKey(gpSetCls->GetConfigPath(), KEY_READ);
@@ -2299,12 +2324,19 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 		}
 	}
 
-	// Для совместимости настроек
-	bool bSendAltEnter = false, bSendAltSpace = false, bSendAltF9 = false;
-
 
 	if (lbOpened)
 	{
+		// Check, if user'd saved font settings before
+		{
+			DWORD dw = 0; bool b = false;
+			// If any of following options were saved before - don't change font size options
+			bInitVanillaFontSizes = !(reg->Load(L"FontUseUnits", b)
+				|| reg->Load(L"FontSize", dw)
+				|| reg->Load(L"StatusFontHeight", dw)
+				|| reg->Load(L"TabFontHeight", dw));
+		}
+
 		bool bCmdLine = reg->Load(L"CmdLine", &psStartSingleApp);
 		reg->Load(L"StartTasksFile", &psStartTasksFile);
 		reg->Load(L"StartTasksName", &psStartTasksName);
@@ -2928,6 +2960,14 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 	delete reg;
 	reg = NULL;
 
+wrap:
+	// In some cases for some options we must apply vanilla defaults
+	if (bInitVanillaFontSizes)
+	{
+		// For example, user had pressed ‘Esc’ in the ‘Fast settings’ dialog
+		// So, config will be not totally ‘new’ but font settins are ‘new’ actually
+		InitVanillaFontSettings();
+	}
 }
 
 void Settings::SaveSettingsOnExit()
