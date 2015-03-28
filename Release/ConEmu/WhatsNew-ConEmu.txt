@@ -12,6 +12,14 @@ Votes and awards (vote for ConEmu, if you please)
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+2015.3.27
+[*] All links were updated to ‘http://conemu.github.io’.
+[*] Default StatusBar columns were changed.
+[*] In some cases font size (StatusBar, TabBar) was smaller than expected in new configs.
+[*] Allow to stop buzzing when started with '-basic' switch.
+[*] Сhocolatey packets are released officially now.
+
+
 2015.3.19
 [*] Some required switches were not used while creating jump lists (/FontDir, /FontFile, etc.)
 [*] PostPromptCmd was not working with Far 3.
