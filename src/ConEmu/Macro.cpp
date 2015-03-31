@@ -239,6 +239,7 @@ namespace ConEmuMacro
 	typedef DWORD GuiMacroFlags;
 	const GuiMacroFlags
 		gmf_MainThread           = 1,
+		gmf_PostponeWhenActive   = 2,
 		gmf_None                 = 0;
 
 	/* ******************************* */
@@ -251,7 +252,7 @@ namespace ConEmuMacro
 	} Functions[] = {
 		// List all functions
 		{About, {L"About"}},
-		{AffinityPriority, {L"AffinityPriority"}},
+		{AffinityPriority, {L"AffinityPriority"}, gmf_PostponeWhenActive},
 		{Attach, {L"Attach"}},
 		{Break, {L"Break"}},
 		{Close, {L"Close"}},
@@ -271,15 +272,15 @@ namespace ConEmuMacro
 		{IsConEmu, {L"IsConEmu"}},
 		{IsConsoleActive, {L"IsConsoleActive"}},
 		{IsRealVisible, {L"IsRealVisible"}},
-		{Keys, {L"Keys"}},
+		{Keys, {L"Keys"}, gmf_PostponeWhenActive},
 		{Menu, {L"Menu"}},
 		{MsgBox, {L"MsgBox"}},
 		{Palette, {L"Palette"}},
-		{Paste, {L"Paste"}},
-		{PasteFile, {L"PasteFile"}},
-		{PasteExplorerPath, {L"PasteExplorerPath"}},
-		{Pause, {L"Pause"}},
-		{Print, {L"Print"}},
+		{Paste, {L"Paste"}, gmf_PostponeWhenActive},
+		{PasteFile, {L"PasteFile"}, gmf_PostponeWhenActive},
+		{PasteExplorerPath, {L"PasteExplorerPath"}, gmf_PostponeWhenActive},
+		{Pause, {L"Pause"}, gmf_PostponeWhenActive},
+		{Print, {L"Print"}, gmf_PostponeWhenActive},
 		{Progress, {L"Progress"}},
 		{Rename, {L"Rename"}},
 		{Scroll, {L"Scroll"}},
@@ -978,6 +979,13 @@ LPWSTR ConEmuMacro::ExecuteMacro(LPWSTR asMacro, CRealConsole* apRCon, bool abFr
 		LPWSTR pszResult = NULL;
 		LPCWSTR pszFunction = p->szFunc;
 		_ASSERTE(pszFunction && !wcschr(pszFunction,L';'));
+		// To force execution of that function when RCon sucessfully starts
+		bool bPostpone = false;
+		if (*pszFunction == L'@')
+		{
+			bPostpone = true;
+			pszFunction++;
+		}
 
 		// Поехали
 		MacroFunction pfn = NULL;
@@ -987,7 +995,14 @@ LPWSTR ConEmuMacro::ExecuteMacro(LPWSTR asMacro, CRealConsole* apRCon, bool abFr
 			{
 				if (lstrcmpi(pszFunction, Functions[f].Alias[n]) == 0)
 				{
-					if ((Functions[f].Flags & gmf_MainThread) && !bIsMainThread)
+					if ((bPostpone || (Functions[f].Flags & gmf_PostponeWhenActive)) && !pMacroRCon->isConsoleReady())
+					{
+						if (!pMacroRCon)
+							pszResult = lstrdup(L"VConRequired");
+						else
+							pszResult = pMacroRCon->PostponeMacro(p->AsString());
+					}
+					else if ((Functions[f].Flags & gmf_MainThread) && !bIsMainThread)
 					{
 						SyncExecMacroParm parm = {Functions[f].pfn, p, pMacroRCon, abFromPlugin};
 						pszResult = (LPWSTR)gpConEmu->SyncExecMacro(f, (LPARAM)&parm);
