@@ -599,7 +599,7 @@ GuiMacro* ConEmuMacro::GetNextMacro(LPWSTR& asString, bool abConvert, wchar_t** 
 
 	// Extract function name
 
-	wchar_t szFunction[64], chTerm = 0;
+	wchar_t szFunction[64] = L"", chTerm = 0;
 	bool lbFuncOk = false;
 
 	for (size_t i = 0; i < (countof(szFunction)-1); i++)
@@ -612,6 +612,7 @@ GuiMacro* ConEmuMacro::GetNextMacro(LPWSTR& asString, bool abConvert, wchar_t** 
 			if (chTerm == 0)
 			{
 				lbFuncOk = (i > 0);
+				szFunction[i] = 0;
 				asString = asString + i;
 			}
 
@@ -643,6 +644,14 @@ GuiMacro* ConEmuMacro::GetNextMacro(LPWSTR& asString, bool abConvert, wchar_t** 
 
 			lbFuncOk = true;
 			szFunction[i] = 0;
+			break;
+		}
+		else if (chTerm == L';')
+		{
+			// Function without any args
+			lbFuncOk = (i > 0);
+			szFunction[i] = 0;
+			asString = asString + i;
 			break;
 		}
 	}
