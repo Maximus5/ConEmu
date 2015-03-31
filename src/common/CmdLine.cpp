@@ -165,8 +165,6 @@ int NextArg(const wchar_t** asCmdLine, CmdArg &rsArg, const wchar_t** rsArgStart
 			// But must not fails with ‘simple’ command like (no escapes in "C:\"):
 			// /dir "C:\" /icon "cmd.exe" /single
 
-			//while (pch && (*(pch-1) == L'\\'))
-			//	pch = wcschr(pch+1, L'"');
 			pch = wcspbrk(psCmdLine, L"\\\"");
 			while (pch)
 			{
