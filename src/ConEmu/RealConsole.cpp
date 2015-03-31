@@ -1745,6 +1745,12 @@ bool CRealConsole::PostKeyPress(WORD vkKey, DWORD dwControlState, wchar_t wch, i
 	if (!this)
 		return false;
 
+	if (!hConWnd)
+	{
+		_ASSERTE(FALSE && "Must not get here, use mpsz_PostCreateMacro to postpone macroses");
+		return false;
+	}
+
 	INPUT_RECORD r[2] = {{KEY_EVENT},{KEY_EVENT}};
 	TranslateKeyPress(vkKey, dwControlState, wch, ScanCode, r, r+1);
 
@@ -11386,7 +11392,10 @@ void CRealConsole::Paste(CEPasteMode PasteMode /*= pm_Standard*/, LPCWSTR asText
 		return;
 
 	if (!hConWnd)
+	{
+		_ASSERTE(FALSE && "Must not get here, use mpsz_PostCreateMacro to postpone macroses");
 		return;
+	}
 
 	WARNING("warning: Хорошо бы слямзить из ClipFixer кусочек по корректировке текста. Настройка?");
 
