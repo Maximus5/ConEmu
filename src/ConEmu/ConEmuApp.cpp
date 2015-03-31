@@ -2626,7 +2626,7 @@ BOOL PrepareCommandLine(TCHAR*& cmdLine, TCHAR*& cmdNew, bool& isScript, uint& p
 	// запускаемую программу (прилепляться к концу ком.строки по умолчанию)
 	pszStart = cmdLine;
 
-	while(*pszStart == L' ' || *pszStart == L'"') pszStart++;  // пропустить пробелы и кавычки
+	while (*pszStart == L' ' || *pszStart == L'"') pszStart++;  // пропустить пробелы и кавычки
 
 	if (*pszStart == 0)
 	{
