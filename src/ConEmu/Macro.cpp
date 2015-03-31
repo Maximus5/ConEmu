@@ -192,6 +192,8 @@ namespace ConEmuMacro
 	LPWSTR Print(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Progress(<Type>[,<Value>])
 	LPWSTR Progress(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
+	// Recreate(<Action>[,<Confirm>[,<AsAdmin>]]), alias "Create"
+	LPWSTR Recreate(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Rename(<Type>,"<Title>")
 	LPWSTR Rename(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Scroll(<Type>,<Direction>,<Count=1>)
@@ -282,6 +284,7 @@ namespace ConEmuMacro
 		{Pause, {L"Pause"}, gmf_PostponeWhenActive},
 		{Print, {L"Print"}, gmf_PostponeWhenActive},
 		{Progress, {L"Progress"}},
+		{Recreate, {L"Recreate", L"Create"}, gmf_MainThread},
 		{Rename, {L"Rename"}},
 		{Scroll, {L"Scroll"}},
 		{Select, {L"Select"}},
@@ -2536,6 +2539,30 @@ LPWSTR ConEmuMacro::Progress(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugi
 	}
 
 	return lstrdup(L"InvalidArg");
+}
+
+// Recreate(<Action>[,<Confirm>[,<AsAdmin>]]), alias "Create"
+LPWSTR ConEmuMacro::Recreate(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
+{
+	RecreateActionParm Action = gpSetCls->GetDefaultCreateAction();
+	bool Confirm = gpSet->isMultiNewConfirm;
+	RConBoolArg AsAdmin = crb_Undefined;
+
+	int i = 0;
+	if (p->GetIntArg(0, i))
+	{
+		if ((i >= cra_CreateTab) && (i <= cra_CreateWindow))
+			impl.Action = (RecreateActionParm)i;
+		if (p->GetIntArg(1, i))
+			impl.Confirm = (i != 0);
+		if (p->GetIntArg(2, i))
+			impl.AsAdmin = i ? crb_On : crb_Off;
+	}
+
+	LPWSTR pszRc = gpConEmu->RecreateAction(Action, Confirm, AsAdmin)
+		? lstrdup(L"CREATED")
+		: lstrdup(L"FAILED");
+	return pszRc;
 }
 
 // Rename(<Type>,"<Title>")

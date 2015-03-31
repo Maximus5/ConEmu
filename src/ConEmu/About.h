@@ -333,6 +333,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"     Type=1: set progress value to <Value> (0-100)\r\n" \
 	L"     Type=2: set error state in progress\r\n" \
 	L"     Type=3: set indeterminate state in progress\r\n" \
+	L"Recreate(<Action>[,<Confirm>[,<AsAdmin>]]), alias \"Create\"\r\n" \
+	L"  - Create new tab or restart existing one\r\n" \
+	L"     Action: 0 - create tab, 1 - restart tab, 2 - create window\r\n" \
+	L"     Confirm: 1 - show ‘Create new console’ dialog, 0 - don't show\r\n" \
+	L"     AsAdmin: 1 - start elevated tab\r\n" \
 	L"Rename(<Type>,[\"<Title>\"])\r\n" \
 	L"  - Rename tab (Type=0) or console title (Type=1)\r\n" \
 	L"Scroll(<Type>,<Direction>,<Count=1>)\r\n" \
