@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2013-2014 Maximus5
+Copyright (c) 2013-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -124,7 +124,7 @@ int ConEmuHotKeyList::AllocateHotkeys()
 	/*
 		*** User (Keys)
 	*/
-	Add(vkMultiNew,       chk_User,  NULL,    L"Multi.NewConsole",      CConEmuCtrl::key_MultiNew)
+	Add(vkMultiNew,       chk_User,  NULL,    L"Multi.NewConsole",      CConEmuCtrl::key_MultiNew) // it can be used to create multiple consoles by holding Win+W
 		->SetHotKey('W',VK_LWIN);
 	Add(vkMultiNewShift,  chk_User,  NULL,    L"Multi.NewConsoleShift", CConEmuCtrl::key_MultiNewShift)
 		->SetHotKey('W',VK_LWIN,VK_SHIFT);
