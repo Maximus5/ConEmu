@@ -792,7 +792,7 @@ void CSettings::SettingsLoaded(SettingsLoadedFlags slfFlags, LPCWSTR pszCmdLine 
 		// Single instance?
 		if (gpSet->isSingleInstance && (gpSetCls->SingleInstanceArg == sgl_Default))
 		{
-			if ((pszCmdLine && *pszCmdLine) || gpConEmu->mb_StartDetached)
+			if ((pszCmdLine && *pszCmdLine) || (gpConEmu->m_StartDetached == crb_On))
 			{
 				// Должен быть "sih_None" иначе существующая копия не запустит команду
 				_ASSERTE(SingleInstanceShowHide == sih_None);

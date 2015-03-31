@@ -4617,12 +4617,12 @@ BOOL CConEmuMain::RunSingleInstance(HWND hConEmuWnd /*= NULL*/, LPCWSTR apszCmd 
 				pIn->NewCmd.ShowHide = gpSetCls->SingleInstanceShowHide;
 				if (gpSetCls->SingleInstanceShowHide == sih_None)
 				{
-					if (mb_StartDetached)
+					if (m_StartDetached == crb_On)
 						pIn->NewCmd.ShowHide = sih_StartDetached;
 				}
 				else
 				{
-					_ASSERTE(mb_StartDetached==false);
+					_ASSERTE(m_StartDetached==crb_Undefined);
 				}
 
 				//GetCurrentDirectory(countof(pIn->NewCmd.szCurDir), pIn->NewCmd.szCurDir);
@@ -7081,7 +7081,7 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 		gpSet->CheckHotkeyUnique();
 
 
-		if (!isVConExists(0) || !mb_StartDetached)  // Консоль уже может быть создана, если пришел Attach из ConEmuC
+		if (!isVConExists(0) || (m_StartDetached != crb_On))  // Консоль уже может быть создана, если пришел Attach из ConEmuC
 		{
 			// Если надо - подготовить портабельный реестр
 			if (mb_PortableRegExist)
@@ -7131,7 +7131,7 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 
 				lbCreated = TRUE;
 			}
-			else if ((*pszCmd == CmdFilePrefix || *pszCmd == TaskBracketLeft || lstrcmpi(pszCmd,AutoStartTaskName) == 0) && !mb_StartDetached)
+			else if ((*pszCmd == CmdFilePrefix || *pszCmd == TaskBracketLeft || lstrcmpi(pszCmd,AutoStartTaskName) == 0) && (m_StartDetached != crb_On))
 			{
 				RConStartArgs args;
 				// Was "/dir" specified in the app switches?
@@ -7167,10 +7167,10 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 				lbCreated = TRUE;
 			}
 
-			if (!lbCreated && !mb_StartDetached)
+			if (!lbCreated && (m_StartDetached != crb_On))
 			{
 				RConStartArgs args;
-				args.Detached = mb_StartDetached ? crb_On : crb_Off;
+				args.Detached = crb_Off;
 
 				if (args.Detached != crb_On)
 				{
@@ -7189,8 +7189,8 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 			}
 		}
 
-		if (mb_StartDetached)
-			mb_StartDetached = false;  // действует только на первую консоль
+		if (m_StartDetached == crb_On)
+			m_StartDetached = crb_Off;  // действует только на первую консоль
 
 		//// Может быть в настройке указано - всегда показывать иконку в TSA
 		//Icon.SettingsChanged();

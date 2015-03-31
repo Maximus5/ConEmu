@@ -4008,7 +4008,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				}
 				else if (!klstricmp(curCommand, _T("/detached")))
 				{
-					gpConEmu->mb_StartDetached = true;
+					gpConEmu->m_StartDetached = crb_On;
 				}
 				else if (!klstricmp(curCommand, _T("/here")))
 				{

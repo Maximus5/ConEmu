@@ -58,7 +58,7 @@ public:
 
 public:
 	/* switch -detached in the ConEmu.exe arguments */
-	bool mb_StartDetached;
+	RConBoolArg m_StartDetached;
 	/* switch -here in the ConEmu.exe arguments (used with "ConEmu Here" feature) */
 	bool mb_ConEmuHere;
 	/* switch -QuitOnClose: close ConEmu with last tab or cross-clicking */
