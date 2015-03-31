@@ -8484,7 +8484,8 @@ void CRealConsole::SetHwnd(HWND ahConWnd, BOOL abForceApprove /*= FALSE*/)
 	if (ahConWnd && mb_InCreateRoot)
 	{
 		// При запуске "под администратором" mb_InCreateRoot сразу не сбрасывается
-		_ASSERTE(m_Args.RunAsAdministrator == crb_On);
+		// При обычном запуске тоже иногда не успевает
+		// -- _ASSERTE(m_Args.RunAsAdministrator == crb_On);
 		mb_InCreateRoot = FALSE;
 	}
 
