@@ -4563,6 +4563,14 @@ bool CConEmuMain::RecreateAction(RecreateActionParm aRecreate, BOOL abConfirm, R
 
 int CConEmuMain::RecreateDlg(RConStartArgs* apArg)
 {
+	static LONG lnInCall = 0;
+	if (lnInCall > 0)
+	{
+		LogString(L"RecreateDlg was skipped because it is already shown");
+		return IDCANCEL;
+	}
+	MSetter lSet(&lnInCall);
+
 	if (!mp_RecreateDlg)
 		mp_RecreateDlg = new CRecreateDlg();
 
