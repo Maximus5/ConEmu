@@ -11594,6 +11594,8 @@ bool CRealConsole::isConsoleClosing()
 
 bool CRealConsole::isConsoleReady()
 {
+	if (!this)
+		return false;
 	if (hConWnd && mn_MainSrv_PID && mb_MainSrv_Ready)
 		return true;
 	return false;
