@@ -403,6 +403,7 @@ class CRealConsole
 		BOOL SetOtherWindowRgn(HWND hWnd, int nRects, LPRECT prcRects, BOOL bRedraw);
 		void PostDragCopy(BOOL abMove);
 		void PostMacro(LPCWSTR asMacro, BOOL abAsync = FALSE);
+		wchar_t* PostponeMacro(wchar_t* RVAL_REF asMacro);
 		bool GetFarVersion(FarVersion* pfv);
 		bool IsFarLua();
 		bool StartDebugger(StartDebugType sdt);
@@ -419,6 +420,8 @@ class CRealConsole
 				BYTE    Data[1];
 			};
 		};
+		wchar_t* mpsz_PostCreateMacro;
+		void ProcessPostponedMacro();
 		static DWORD WINAPI PostMacroThread(LPVOID lpParameter);
 		HANDLE mh_PostMacroThread; DWORD mn_PostMacroThreadID;
 		void PostCommand(DWORD anCmdID, DWORD anCmdSize, LPCVOID ptrData);

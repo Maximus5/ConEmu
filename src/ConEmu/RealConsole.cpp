@@ -242,6 +242,7 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 	m_Progress.ConsoleProgress = m_Progress.LastConsoleProgress = -1;
 	hPictureView = NULL; mb_PicViewWasHidden = FALSE;
 	mh_MonitorThread = NULL; mn_MonitorThreadID = 0; mb_WasForceTerminated = FALSE;
+	mpsz_PostCreateMacro = NULL;
 	mh_PostMacroThread = NULL; mn_PostMacroThreadID = 0;
 	//mh_InputThread = NULL; mn_InputThreadID = 0;
 	mp_sei = NULL;
@@ -493,6 +494,8 @@ CRealConsole::~CRealConsole()
 	SafeDelete(mp_PriorityDpiAware);
 
 	SafeDelete(mpcs_CurWorkDir);
+
+	SafeFree(mpsz_PostCreateMacro);
 
 	//SafeFree(mpsz_CmdBuffer);
 
@@ -2651,6 +2654,13 @@ DWORD CRealConsole::MonitorThreadWorker(bool bDetached, bool& rbChildProcessCrea
 		//		return 0;
 		//	}
 		//}
+
+		// If postponed macro was not executed (due to multithreading issues)
+		if (mpsz_PostCreateMacro && isConsoleReady())
+		{
+			// Run it now...
+			ProcessPostponedMacro();
+		}
 
 		// Если консоль не должна быть показана - но ее кто-то отобразил
 		if (!isShowConsole && !gpSet->isConVisible)
@@ -5582,6 +5592,9 @@ void CRealConsole::StopSignal()
 
 		// Очистка массива консолей и обновление вкладок
 		CConEmuChild::ProcessVConClosed(mp_VCon);
+
+		// Clear some vars
+		SafeFree(mpsz_PostCreateMacro);
 	}
 }
 
@@ -6575,6 +6588,9 @@ HWND CRealConsole::OnServerStarted(const HWND ahConWnd, const DWORD anServerPID,
 
 	// Само разберется
 	OnConsoleKeyboardLayout(dwKeybLayout);
+
+	// Are there postponed macros? Like print(...) for example
+	ProcessPostponedMacro();
 
 	// Return required info
 	QueryStartStopRet(pRet);
@@ -14950,6 +14966,44 @@ void CRealConsole::PostMacro(LPCWSTR asMacro, BOOL abAsync /*= FALSE*/)
 	{
 		ShutdownGuiStep(L"PostMacro, done");
 	}
+}
+
+wchar_t* CRealConsole::PostponeMacro(wchar_t* RVAL_REF asMacro)
+{
+	if (!this || !asMacro)
+	{
+		_ASSERTE(this && asMacro);
+		return lstrdup(L"InvalidPointer");
+	}
+
+	lstrmerge(&mpsz_PostCreateMacro, mpsz_PostCreateMacro ? L"; " : NULL, asMacro);
+	free(asMacro);
+
+	return lstrdup(L"Postponed");
+}
+
+void CRealConsole::ProcessPostponedMacro()
+{
+	if (!this)
+		return;
+
+	wchar_t* pszMacro = NULL;
+	wchar_t* pszResult = NULL;
+
+	if (mpsz_PostCreateMacro)
+	{
+		pszMacro = mpsz_PostCreateMacro;
+		mpsz_PostCreateMacro = NULL;
+	}
+
+	if (pszMacro)
+	{
+		CVConGuard VCon(mp_VCon);
+		pszResult = ConEmuMacro::ExecuteMacro(pszMacro, this);
+	}
+
+	SafeFree(pszMacro);
+	SafeFree(pszResult);
 }
 
 void CRealConsole::Detach(bool bPosted /*= false*/, bool bSendCloseConsole /*= false*/)
