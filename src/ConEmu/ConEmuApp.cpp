@@ -2510,40 +2510,6 @@ GetCommandLineW(): "ShowArg.exe" "test1" test2
 
 */
 
-void SplitCommandLine(wchar_t *str, uint *n)
-{
-	*n = 0;
-	wchar_t *dst = str, ts;
-
-	while(*str == ' ')
-		str++;
-
-	ts = ' ';
-
-	while(*str)
-	{
-		if (*str == '"')
-		{
-			ts ^= 2; // ' ' <-> '"'
-			str++;
-		}
-
-		while(*str && *str != '"' && *str != ts)
-			*dst++ = *str++;
-
-		if (*str == '"')
-			continue;
-
-		while(*str == ' ')
-			str++;
-
-		*dst++ = 0;
-		(*n)++;
-	}
-
-	return;
-}
-
 //Result:
 //  cmdLine - указатель на буфер с аргументами (!) он будет освобожден через free(cmdLine)
 //  cmdNew  - то что запускается (после аргумента /cmd)
@@ -2652,32 +2618,39 @@ BOOL PrepareCommandLine(TCHAR*& cmdLine, TCHAR*& cmdNew, bool& isScript, uint& p
 		}
 		else
 		{
-			// Если ком.строка содержит "/cmd" - все что после него используется для создания нового процесса
-			// или "/cmdlist cmd1 | cmd2 | ..."
-			cmdNew = wcsstr(cmdLine, L"/cmd");
-			if (!cmdNew) cmdNew = wcsstr(cmdLine, L"-cmd");
-
-			if (cmdNew)
+			CEStr lsArg;
+			wchar_t* pszSrc = cmdLine;
+			wchar_t* pszDst = cmdLine;
+			wchar_t* pszArgStart = NULL;
+			params = 0;
+			// Strip quotes, de-escape arguments
+			while (0 == NextArg((const wchar_t**)&pszSrc, lsArg, (const wchar_t**)&pszArgStart))
 			{
-				*cmdNew = 0;
-				cmdNew++;
-
-				if (lstrcmpni(cmdNew, L"cmdlist", 7) == 0)
+				// If command line contains "/cmd" - the trailer is used (without changes!) to create new process
+				// Optional "/cmdlist cmd1 | cmd2 | ..." can be used to start bunch of consoles at once
+				if ((lsArg.ms_Arg[0] == L'-') || (lsArg.ms_Arg[0] == L'/'))
 				{
-					cmdNew += 7;
-					isScript = true;
-				}
-				else
-				{
-					cmdNew += 3;
+					if (lstrcmpi(lsArg.ms_Arg+1, L"cmd") == 0)
+					{
+						cmdNew = (wchar_t*)SkipNonPrintable(pszSrc);
+						*pszDst = 0;
+						break;
+					}
+					else if (lstrcmpi(lsArg.ms_Arg+1, L"cmdlist") == 0)
+					{
+						isScript = true;
+						cmdNew = (wchar_t*)SkipNonPrintable(pszSrc);
+						*pszDst = 0;
+						break;
+					}
 				}
 
-				// Пропустить пробелы
-				cmdNew = (wchar_t*)SkipNonPrintable(cmdNew);
+				// Historically. Command line was splitted into "Arg1\0Arg2\0Arg3\0\0"
+				int iLen = lstrlen(lsArg.ms_Arg);
+				wmemcpy(pszDst, lsArg.ms_Arg, iLen+1); // Include trailing zero
+				pszDst += iLen+1;
+				params++;
 			}
-
-			// cmdLine готов к разбору
-			SplitCommandLine(cmdLine, &params);
 		}
 	}
 	SafeFree(pszExeNameOnly);
@@ -3654,7 +3627,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	{
 		TCHAR *curCommand = cmdLine;
 		TODO("Если первый (после запускаемого файла) аргумент начинается НЕ с '/' - завершить разбор параметров и не заменять '""' на пробелы");
-		//uint params; SplitCommandLine(curCommand, &params);
 		//if (params < 1) {
 		//	curCommand = NULL;
 		//}
