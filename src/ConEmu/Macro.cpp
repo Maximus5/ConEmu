@@ -2948,7 +2948,10 @@ LPWSTR ConEmuMacro::Shell(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 	bool bDontQuote = false;
 	int nShowCmd = SW_SHOWNORMAL;
 
-	if (p->GetStrArg(0, pszOper))
+	// Without any arguments - just starts default shell
+	p->GetStrArg(0, pszOper);
+
+	// And now, process the action
 	{
 		CVConGuard VCon(apRCon ? apRCon->VCon() : NULL);
 
@@ -3013,7 +3016,17 @@ LPWSTR ConEmuMacro::Shell(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 			pszFile = pszBuf;
 		}
 
-		if ((pszFile && *pszFile) || (pszParm && *pszParm))
+		if (!(pszFile && *pszFile) && !(pszParm && *pszParm))
+		{
+			struct Impl {
+				static LRESULT CallNewConsoleDlg(LPARAM lParam)
+				{
+					return (LRESULT)gpConEmu->RecreateAction(cra_CreateTab, true);
+				};
+			};
+			pszRc = gpConEmu->CallMainThread(true, Impl::CallNewConsoleDlg, 0) ? lstrdup(L"CREATED") : lstrdup(L"FAILED");
+		}
+		else
 		{
 
 			bool bNewTaskGroup = false;
