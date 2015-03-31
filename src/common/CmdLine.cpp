@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2014 Maximus5
+Copyright (c) 2009-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -165,6 +165,9 @@ int NextArg(const wchar_t** asCmdLine, CmdArg &rsArg, const wchar_t** rsArgStart
 			// But must not fails with ‘simple’ command like (no escapes in "C:\"):
 			// /dir "C:\" /icon "cmd.exe" /single
 
+			// Prev version fails while getting strings for -GuiMacro, example:
+			// ConEmu.exe -detached -GuiMacro "print(\" echo abc \"); Context;"
+
 			pch = wcspbrk(psCmdLine, L"\\\"");
 			while (pch)
 			{
@@ -173,9 +176,9 @@ int NextArg(const wchar_t** asCmdLine, CmdArg &rsArg, const wchar_t** rsArgStart
 				{
 					// It's allowed when:
 					// a) at the beginning of the line (handled above, bQuoteEscaped);
-					// b) after space;
+					// b) after space, left bracket or colon (-GuiMacro)
 					// c) when already was forced by bQuoteEscaped
-					if ((((pch - 1) >= psCmdLine) && (*(pch-1) == L' ')) || bQuoteEscaped)
+					if ((((pch - 1) >= psCmdLine) && wcschr(L" (,", *(pch-1))) || bQuoteEscaped)
 					{
 						bQuoteEscaped = true;
 						pch++; // Point to "
