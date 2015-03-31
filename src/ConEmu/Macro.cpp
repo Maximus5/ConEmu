@@ -618,6 +618,7 @@ GuiMacro* ConEmuMacro::GetNextMacro(LPWSTR& asString, bool abConvert, wchar_t** 
 			break;
 		}
 
+		// Don't use ‘switch(){}’ here, because of further break-s
 		if (chTerm == L':' || chTerm == L'(' || chTerm == L' ')
 		{
 			// Skip white-spaces
@@ -1148,7 +1149,7 @@ LPWSTR ConEmuMacro::GetNextString(LPWSTR& rsArguments, LPWSTR& rsString, bool bC
 
 	LPCWSTR pszSrc = NULL;
 
-	// C-style строки
+	// C-style strings
 	if (rsArguments[0] == L'"')
 	{
 		rsString = rsArguments+1;
