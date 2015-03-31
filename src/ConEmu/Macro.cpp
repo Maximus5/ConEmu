@@ -236,6 +236,10 @@ namespace ConEmuMacro
 	// Установить Zoom для шрифта. 100% и т.п.
 	LPWSTR Zoom(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 
+	typedef DWORD GuiMacroFlags;
+	const GuiMacroFlags
+		gmf_MainThread           = 1,
+		gmf_None                 = 0;
 
 	/* ******************************* */
 	/* ****** Macro enumeration ****** */
@@ -243,7 +247,7 @@ namespace ConEmuMacro
 	struct {
 		MacroFunction pfn;
 		LPCWSTR Alias[5]; // Some function can be called with different names (usability)
-		bool NoThreadSafe;
+		GuiMacroFlags Flags;
 	} Functions[] = {
 		// List all functions
 		{About, {L"About"}},
@@ -286,7 +290,7 @@ namespace ConEmuMacro
 		{Shell, {L"Shell", L"ShellExecute"}},
 		{Sleep, {L"Sleep"}},
 		{Split, {L"Split", L"Splitter"}},
-		{Status, {L"Status", L"StatusBar", L"StatusControl"}, true},
+		{Status, {L"Status", L"StatusBar", L"StatusControl"}, gmf_MainThread},
 		{Tab, {L"Tab", L"Tabs", L"TabControl"}},
 		{Task, {L"Task"}},
 		{Transparency, {L"Transparency"}},
@@ -962,7 +966,8 @@ LPWSTR ConEmuMacro::ExecuteMacro(LPWSTR asMacro, CRealConsole* apRCon, bool abFr
 	while (p)
 	{
 		LPWSTR pszResult = NULL;
-		LPCWSTR szFunction = p->szFunc;
+		LPCWSTR pszFunction = p->szFunc;
+		_ASSERTE(pszFunction && !wcschr(pszFunction,L';'));
 
 		// Поехали
 		MacroFunction pfn = NULL;
@@ -970,9 +975,9 @@ LPWSTR ConEmuMacro::ExecuteMacro(LPWSTR asMacro, CRealConsole* apRCon, bool abFr
 		{
 			for (size_t n = 0; (n < countof(Functions[f].Alias)) && Functions[f].Alias[n]; n++)
 			{
-				if (lstrcmpi(szFunction, Functions[f].Alias[n]) == 0)
+				if (lstrcmpi(pszFunction, Functions[f].Alias[n]) == 0)
 				{
-					if (Functions[f].NoThreadSafe && !bIsMainThread)
+					if ((Functions[f].Flags & gmf_MainThread) && !bIsMainThread)
 					{
 						SyncExecMacroParm parm = {Functions[f].pfn, p, pMacroRCon, abFromPlugin};
 						pszResult = (LPWSTR)gpConEmu->SyncExecMacro(f, (LPARAM)&parm);
