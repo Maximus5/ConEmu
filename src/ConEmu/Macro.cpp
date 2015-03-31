@@ -1173,6 +1173,48 @@ LPWSTR ConEmuMacro::GetNextString(LPWSTR& rsArguments, LPWSTR& rsString, bool bC
 		_ASSERTE(rsArguments>pszDst || (rsArguments==pszDst && *rsArguments==0));
 		*pszDst = 0;
 	}
+	// C-style strings, but quotes are escaped by '\' (may come from ConEmu -GuiMacro "...")
+	else if (rsArguments[0] == L'\\' && rsArguments[1] == L'"')
+	{
+		rsString = rsArguments+2;
+		pszSrc = rsString;
+		LPWSTR pszDst = rsString;
+		wchar_t szTemp[2], *pszTemp;
+		while (*pszSrc && (*pszSrc != L'"'))
+		{
+			if ((pszSrc[0] == L'\\') && pszSrc[1])
+			{
+				if (pszSrc[1] == L'"')
+				{
+					pszSrc++;
+					break;
+				}
+				else if (pszSrc[2])
+				{
+					DEBUGTEST(LPCWSTR pszStart = pszSrc);
+					pszTemp = szTemp;
+					EscapeChar(false, pszSrc, pszTemp);
+					EscapeChar(false, pszSrc, pszTemp);
+					_ASSERTE((pszTemp==(szTemp+2)) && (pszSrc==(pszStart+3) || pszSrc==(pszStart+4)));
+					pszTemp = szTemp;
+					LPCWSTR pszReent = szTemp;
+					EscapeChar(false, pszReent, pszDst);
+				}
+				else
+				{
+					EscapeChar(false, pszSrc, pszTemp);
+				}
+			}
+			else
+			{
+				EscapeChar(false, pszSrc, pszDst);
+			}
+		}
+		_ASSERTE((*pszSrc == L'"') || (*pszSrc == 0));
+		rsArguments = (wchar_t*)((*pszSrc == L'"') ? (pszSrc+1) : pszSrc);
+		_ASSERTE(rsArguments>pszDst || (rsArguments==pszDst && *rsArguments==0));
+		*pszDst = 0;
+	}
 	// "verbatim string"
 	else if ((rsArguments[0] == L'@') && (rsArguments[1] == L'"'))
 	{
