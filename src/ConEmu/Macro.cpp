@@ -2552,11 +2552,11 @@ LPWSTR ConEmuMacro::Recreate(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugi
 	if (p->GetIntArg(0, i))
 	{
 		if ((i >= cra_CreateTab) && (i <= cra_CreateWindow))
-			impl.Action = (RecreateActionParm)i;
+			Action = (RecreateActionParm)i;
 		if (p->GetIntArg(1, i))
-			impl.Confirm = (i != 0);
+			Confirm = (i != 0);
 		if (p->GetIntArg(2, i))
-			impl.AsAdmin = i ? crb_On : crb_Off;
+			AsAdmin = i ? crb_On : crb_Off;
 	}
 
 	LPWSTR pszRc = gpConEmu->RecreateAction(Action, Confirm, AsAdmin)
