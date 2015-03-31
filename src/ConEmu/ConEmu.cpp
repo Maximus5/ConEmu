@@ -4424,8 +4424,9 @@ void CConEmuMain::DeleteVConMainThread(CVirtualConsole* apVCon)
 // abRecreate: TRUE - пересоздать текущую, FALSE - создать новую
 // abConfirm:  TRUE - показать диалог подтверждения
 // abRunAs:    TRUE - под админом
-void CConEmuMain::RecreateAction(RecreateActionParm aRecreate, BOOL abConfirm, RConBoolArg bRunAs /*= crb_Undefined*/)
+bool CConEmuMain::RecreateAction(RecreateActionParm aRecreate, BOOL abConfirm, RConBoolArg bRunAs /*= crb_Undefined*/)
 {
+	bool bExecRc = false;
 	FLASHWINFO fl = {sizeof(FLASHWINFO)}; fl.dwFlags = FLASHW_STOP; fl.hwnd = ghWnd;
 	FlashWindowEx(&fl); // При многократных созданиях мигать начинает...
 	RConStartArgs args;
@@ -4480,7 +4481,7 @@ void CConEmuMain::RecreateAction(RecreateActionParm aRecreate, BOOL abConfirm, R
 			}
 
 			FlashWindowEx(&fl); // При многократных созданиях мигать начинает...
-			return;
+			return false;
 		}
 
 		if (abConfirm)
@@ -4489,7 +4490,7 @@ void CConEmuMain::RecreateAction(RecreateActionParm aRecreate, BOOL abConfirm, R
 
 			//int nRc = DialogBoxParam(g_hInstance, MAKEINTRESOURCE(IDD_RESTART), ghWnd, Recreate DlgProc, (LPARAM)&args);
 			if (nRc != IDC_START)
-				return;
+				return false;
 
 			CVConGroup::Redraw();
 		}
@@ -4497,7 +4498,8 @@ void CConEmuMain::RecreateAction(RecreateActionParm aRecreate, BOOL abConfirm, R
 		if (args.aRecreate == cra_CreateTab)
 		{
 			//Собственно, запуск
-			CreateCon(&args, true);
+			if (CreateCon(&args, true))
+				bExecRc = true;
 		}
 		else
 		{
@@ -4514,7 +4516,8 @@ void CConEmuMain::RecreateAction(RecreateActionParm aRecreate, BOOL abConfirm, R
 			else
 			{
 				// Start new ConEmu.exe process with chosen arguments...
-				CreateWnd(&args);
+				if (CreateWnd(&args))
+					bExecRc = true;
 			}
 		}
 	}
@@ -4534,11 +4537,11 @@ void CConEmuMain::RecreateAction(RecreateActionParm aRecreate, BOOL abConfirm, R
 				if (nRc == IDC_TERMINATE)
 				{
 					VCon->RCon()->CloseConsole(true, false);
-					return;
+					return true;
 				}
 
 				if (nRc != IDC_START)
-					return;
+					return false;
 			}
 
 			if (VCon.VCon())
@@ -4546,6 +4549,7 @@ void CConEmuMain::RecreateAction(RecreateActionParm aRecreate, BOOL abConfirm, R
 				VCon->Redraw();
 				// Собственно, Recreate
 				VCon->RCon()->RecreateProcess(&args);
+				bExecRc = true;
 			}
 		}
 	}
@@ -4554,6 +4558,7 @@ void CConEmuMain::RecreateAction(RecreateActionParm aRecreate, BOOL abConfirm, R
 	SafeFree(args.pszStartupDir);
 	SafeFree(args.pszUserName);
 	//SafeFree(args.pszUserPassword);
+	return bExecRc;
 }
 
 int CConEmuMain::RecreateDlg(RConStartArgs* apArg)
