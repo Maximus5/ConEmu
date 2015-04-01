@@ -2412,13 +2412,14 @@ void CSettings::CheckSelectionModifiers(HWND hWnd2)
 		TabHwndIndex nDlgID;
 		bool bEnabled;
 		int nVkIdx;
+		bool bIgnoreInFar;
 		// Service
 		BYTE Vk;
 		HWND hPage;
 	} Keys[] = {
 		{lbCTSBlockSelection, L"Block selection", thi_MarkCopy, gpSet->isCTSSelectBlock, vkCTSVkBlock},
 		{lbCTSTextSelection, L"Text selection", thi_MarkCopy, gpSet->isCTSSelectText, vkCTSVkText},
-		{lbCTSClickPromptPosition, L"Prompt position", thi_KeybMouse, gpSet->AppStd.isCTSClickPromptPosition!=0, vkCTSVkPromptClk},
+		{lbCTSClickPromptPosition, L"Prompt position", thi_KeybMouse, gpSet->AppStd.isCTSClickPromptPosition!=0, vkCTSVkPromptClk, true},
 
 		// Don't check it?
 		// -- {lbFarGotoEditorVk, L"Highlight and goto", ..., gpSet->isFarGotoEditor},
@@ -2456,7 +2457,13 @@ void CSettings::CheckSelectionModifiers(HWND hWnd2)
 			if (!Keys[j].bEnabled)
 				continue;
 
-			if (Keys[i].Vk == Keys[j].Vk)
+			if (((Keys[i].nDlgID == thi_Far) && Keys[j].bIgnoreInFar)
+				|| ((Keys[j].nDlgID == thi_Far) && Keys[i].bIgnoreInFar))
+				continue;
+
+			if ((Keys[i].Vk == Keys[j].Vk)
+				&& ((Keys[i].hPage == hWnd2) || (Keys[j].hPage == hWnd2))
+				)
 			{
 				wchar_t szInfo[255];
 				_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"You must set different\nmodifiers for\n<%s> and\n<%s>", Keys[i].Descr, Keys[j].Descr);
