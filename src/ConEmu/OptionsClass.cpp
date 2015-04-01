@@ -2412,7 +2412,9 @@ void CSettings::CheckSelectionModifiers(HWND hWnd2)
 		TabHwndIndex nDlgID;
 		bool bEnabled;
 		int nVkIdx;
+		// Service
 		BYTE Vk;
+		HWND hPage;
 	} Keys[] = {
 		{lbCTSBlockSelection, L"Block selection", thi_MarkCopy, gpSet->isCTSSelectBlock, vkCTSVkBlock},
 		{lbCTSTextSelection, L"Text selection", thi_MarkCopy, gpSet->isCTSSelectText, vkCTSVkText},
@@ -2430,6 +2432,8 @@ void CSettings::CheckSelectionModifiers(HWND hWnd2)
 
 	for (size_t i = 0; Keys[i].nCtrlID; i++)
 	{
+		Keys[i].hPage = GetPage(Keys[i].nDlgID);
+
 		if (!bIsFar && (Keys[i].nCtrlID == lbLDragKey))
 		{
 			Keys[i].bEnabled = false;
@@ -2457,7 +2461,7 @@ void CSettings::CheckSelectionModifiers(HWND hWnd2)
 				wchar_t szInfo[255];
 				_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"You must set different\nmodifiers for\n<%s> and\n<%s>", Keys[i].Descr, Keys[j].Descr);
 				HWND hDlg = hWnd2;
-				WORD nID = (GetPage(Keys[j].nDlgID) == hWnd2) ? Keys[j].nCtrlID : Keys[i].nCtrlID;
+				WORD nID = (Keys[j].hPage == hWnd2) ? Keys[j].nCtrlID : Keys[i].nCtrlID;
 				ShowErrorTip(szInfo, hDlg, nID, gpSetCls->szSelectionModError, countof(gpSetCls->szSelectionModError),
 							 gpSetCls->hwndBalloon, &gpSetCls->tiBalloon, gpSetCls->hwndTip, FAILED_SELMOD_TIMEOUT, true);
 				return;
@@ -11750,7 +11754,9 @@ void CSettings::ShowErrorTip(LPCTSTR asInfo, HWND hDlg, int nCtrlID, wchar_t* ps
 		if (hTip) SendMessage(hTip, TTM_ACTIVATE, FALSE, 0);
 
 		SendMessage(hBall, TTM_UPDATETIPTEXT, 0, (LPARAM)pti);
-		RECT rcControl; GetWindowRect(GetDlgItem(hDlg, nCtrlID), &rcControl);
+		RECT rcControl = {};
+		HWND hCtrl = nCtrlID ? GetDlgItem(hDlg, nCtrlID) : NULL;
+		GetWindowRect(hCtrl ? hCtrl : hDlg, &rcControl);
 		int ptx = bLeftAligh ? (rcControl.left + 10) : (rcControl.right - 10);
 		int pty = bLeftAligh ? rcControl.bottom : (rcControl.top + rcControl.bottom) / 2;
 		SendMessage(hBall, TTM_TRACKPOSITION, 0, MAKELONG(ptx,pty));
