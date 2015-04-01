@@ -12,6 +12,22 @@ Votes and awards (vote for ConEmu, if you please)
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+2015.3.31
+[*] gh#88: Allow ‘Apps’ key to use as single hotkey.
+[*] GuiMacro. Bugfixes and new function.
+    * Function delimiter ‘;’ was ignored without brackets.
+    * Support escapes in C-strings with "ConEmu -GuiMacro ...".
+    * ‘Shell’ function without args must create new console.
+    * Some functions will be postponed when RCon initialization finishes. To force postponing add ‘@’ prefix.
+    * Add ‘Recreate’ function (‘Create’ is an alias).
+      It can open ‘New console’ dialog, create default shell without confirmation,
+      restart current tab (pane), optionally as Administrator.
+      Following example shows ‘New console’ dialog, and inserts into started
+      command prompt: ‘echo "Hello world"’.
+
+      ConEmu.exe -Detached -GuiMacro "Create(0,1); Context; print(\"echo \\\"Hello world\\\"\");"
+
+
 2015.3.27
 [*] All links were updated to ‘http://conemu.github.io’.
 [*] Default StatusBar columns were changed.
