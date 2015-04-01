@@ -2432,8 +2432,8 @@ void CSettings::CheckSelectionModifiers(HWND hWnd2)
 	{
 		if (!bIsFar && (Keys[i].nCtrlID == lbLDragKey))
 		{
-			Keys[i].nCtrlID = 0;
-			break;
+			Keys[i].bEnabled = false;
+			continue;
 		}
 
 		//GetListBoxByte(hDlg, nCtrlID[i], SettingsNS::szKeysAct, SettingsNS::nKeysAct, Vk[i]);
