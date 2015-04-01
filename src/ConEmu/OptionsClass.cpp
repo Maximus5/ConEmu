@@ -2528,6 +2528,8 @@ LRESULT CSettings::OnInitDialog_Far(HWND hWnd2, bool abInitial)
 	SetDlgItemText(hWnd2, tTabEditor, gpSet->szTabEditor);
 	SetDlgItemText(hWnd2, tTabEditorMod, gpSet->szTabEditorModified);
 
+	CheckSelectionModifiers(hWnd2);
+
 	return 0;
 }
 
@@ -3051,6 +3053,8 @@ LRESULT CSettings::OnInitDialog_Control(HWND hWnd2, bool abInitial)
 	CSetDlgLists::FillListBoxItems(GetDlgItem(hWnd2, lbCTSActAlways), CSetDlgLists::eKeysAct, VkMod, false);
 	CSetDlgLists::FillListBoxItems(GetDlgItem(hWnd2, lbCTSRBtnAction), CSetDlgLists::eClipAct, gpSet->isCTSRBtnAction, false);
 	CSetDlgLists::FillListBoxItems(GetDlgItem(hWnd2, lbCTSMBtnAction), CSetDlgLists::eClipAct, gpSet->isCTSMBtnAction, false);
+
+	CheckSelectionModifiers(hWnd2);
 
 	return 0;
 }
