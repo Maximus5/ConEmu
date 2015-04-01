@@ -387,7 +387,6 @@ const ConEmuHotKey* CSettings::GetHotKeyInfo(const ConEmuChord& VkState, bool bK
 	switch (VkState.Vk)
 	{
 	case VK_LWIN: case VK_RWIN:
-	case VK_APPS: // "Apps" too, it is not supposed to be a "key" (in our hotkey list)
 	case VK_SHIFT: case VK_LSHIFT: case VK_RSHIFT:
 	case VK_CONTROL: case VK_LCONTROL: case VK_RCONTROL:
 	case VK_MENU: case VK_LMENU: case VK_RMENU:
