@@ -36,6 +36,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "OptionsFast.h"
 #include "OptionsHelp.h"
 #include "SetCmdTask.h"
+#include "SetColorPalette.h"
 #include "SetDlgLists.h"
 #include "ConEmu.h"
 #include "ConEmuApp.h"
@@ -154,6 +155,24 @@ static INT_PTR Fast_OnInitDialog(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lP
 	LPCWSTR pszStartup = (gpSet->nStartType == 2) ? gpSet->psStartTasksName : (gpSet->nStartType == 0) ? gpSet->psStartSingleApp : NULL;
 	if (pszStartup && *pszStartup)
 		CSetDlgLists::SelectStringExact(hDlg, lbStartupShellFast, pszStartup);
+
+
+	// Palettes (console color sets)
+	const ColorPalette* pPal = NULL;
+	for (int nPal = 0; (pPal = gpSet->PaletteGet(nPal)) != NULL; nPal++)
+	{
+		SendDlgItemMessage(hDlg, lbColorSchemeFast, CB_ADDSTRING, 0, (LPARAM)pPal->pszName);
+	}
+	// Show active (default) palette
+	gp_DefaultPalette = gpSet->PaletteFindCurrent(true);
+	if (gp_DefaultPalette)
+	{
+		CSetDlgLists::SelectStringExact(hDlg, lbColorSchemeFast, gp_DefaultPalette->pszName);
+	}
+	else
+	{
+		_ASSERTE(FALSE && "Current paletted was not defined?");
+	}
 
 
 	// Single instance

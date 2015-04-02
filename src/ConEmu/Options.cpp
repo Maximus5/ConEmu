@@ -903,6 +903,9 @@ bool Settings::SaveVanilla(SettingsBase* reg)
 		/* Start command */
 		SaveStartCommands(reg);
 
+		/* Palette */
+		SaveStdColors(reg);
+
 		/* Force Single instance mode */
 		reg->Save(L"SingleInstance", gpSet->isSingleInstance);
 
