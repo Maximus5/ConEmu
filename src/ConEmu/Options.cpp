@@ -3288,6 +3288,16 @@ void Settings::SaveStatusSettings(SettingsBase* reg)
 	}
 }
 
+void Settings::SaveStartCommands(SettingsBase* reg)
+{
+	reg->Save(L"StartType", nStartType);
+	reg->Save(L"CmdLine", psStartSingleApp);
+	reg->Save(L"StartTasksFile", psStartTasksFile);
+	reg->Save(L"StartTasksName", psStartTasksName);
+	reg->Save(L"StartFarFolders", isStartFarFolders);
+	reg->Save(L"StartFarEditors", isStartFarEditors);
+}
+
 BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* apStorage /*= NULL*/)
 {
 	if (!gpConEmu)
@@ -3326,12 +3336,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 			wcscpy_c(Type, reg->m_Storage.szType);
 		}
 
-		reg->Save(L"StartType", nStartType);
-		reg->Save(L"CmdLine", psStartSingleApp);
-		reg->Save(L"StartTasksFile", psStartTasksFile);
-		reg->Save(L"StartTasksName", psStartTasksName);
-		reg->Save(L"StartFarFolders", isStartFarFolders);
-		reg->Save(L"StartFarEditors", isStartFarEditors);
+		SaveStartCommands(reg);
 
 		SaveAppSettings(reg, &AppStd/*, Colors*/);
 

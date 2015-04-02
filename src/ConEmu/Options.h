@@ -255,6 +255,7 @@ struct Settings
 		void SaveAppSettings(SettingsBase* reg, AppSettings* pApp/*, COLORREF* pColors*/);
 
 		void SaveStdColors(SettingsBase* reg);
+		void SaveStartCommands(SettingsBase* reg);
 
 		void FreeApps(int NewAppCount = 0, AppSettings** NewApps = NULL/*, Settings::CEAppColors** NewAppColors = NULL*/);
 
