@@ -5621,7 +5621,7 @@ wrap:
 	}
 }
 
-void Settings::SaveHotkeys(SettingsBase* reg)
+void Settings::SaveHotkeys(SettingsBase* reg, int SaveDescrLangID /*= 0*/)
 {
 	if (!reg)
 	{
@@ -5651,11 +5651,14 @@ void Settings::SaveHotkeys(SettingsBase* reg)
 		return;
 	}
 
-	BYTE MacroVersion = GUI_MACRO_VERSION;
-	reg->Save(L"KeyMacroVersion", MacroVersion);
+	if (!SaveDescrLangID)
+	{
+		BYTE MacroVersion = GUI_MACRO_VERSION;
+		reg->Save(L"KeyMacroVersion", MacroVersion);
 
-	reg->Save(L"Multi.Modifier", nHostkeyNumberModifier);
-	reg->Save(L"Multi.ArrowsModifier", nHostkeyArrowModifier);
+		reg->Save(L"Multi.Modifier", nHostkeyNumberModifier);
+		reg->Save(L"Multi.ArrowsModifier", nHostkeyArrowModifier);
+	}
 
 	// Таски сохраняются отдельно
 
@@ -5666,6 +5669,9 @@ void Settings::SaveHotkeys(SettingsBase* reg)
 		ConEmuHotKey *ppHK = &(gpSetCls->m_HotKeys[i]);
 
 		if (!*ppHK->Name)
+			continue;
+
+		if (SaveDescrLangID && (ppHK->DescrLangID != SaveDescrLangID))
 			continue;
 
 		DWORD VkMod = ppHK->GetVkMod();

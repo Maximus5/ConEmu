@@ -885,7 +885,7 @@ struct Settings
 		void CheckHotkeyUnique();
 	private:
 		void LoadHotkeys(SettingsBase* reg, const bool& bSendAltEnter, const bool& bSendAltSpace, const bool& bSendAltF9);
-		void SaveHotkeys(SettingsBase* reg);
+		void SaveHotkeys(SettingsBase* reg, int SaveDescrLangID = 0);
 	public:
 
 		/* *** Tab Templates *** */
