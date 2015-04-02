@@ -3710,7 +3710,7 @@ static int ReadConsoleInfo()
 
 	if (CheckWasFullScreen())
 	{
-		LogString("ReadConsoleInfo was skipped due to CONSOLE_FULLSCREEN_HARDWARE");
+		LogString("!!! ReadConsoleInfo was skipped due to CONSOLE_FULLSCREEN_HARDWARE !!!");
 		return -1;
 	}
 
@@ -3792,7 +3792,7 @@ static int ReadConsoleInfo()
 	if (!MyGetConsoleScreenBufferInfo(hOut, &lsbi))
 	{
 		DWORD dwErr = GetLastError();
-		_ASSERTE(FALSE && "ReadConsole::MyGetConsoleScreenBufferInfo failed");
+		_ASSERTE(FALSE && "!!! ReadConsole::MyGetConsoleScreenBufferInfo failed !!!");
 
 		gpSrv->dwSbiRc = dwErr; if (!gpSrv->dwSbiRc) gpSrv->dwSbiRc = -1;
 

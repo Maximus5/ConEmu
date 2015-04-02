@@ -6493,16 +6493,24 @@ void LogSize(const COORD* pcrSize, int newBufferHeight, LPCSTR pszLabel)
 	static CONSOLE_SCREEN_BUFFER_INFO lsbiLast = {};
 	bool bWriteLog = false;
 	CONSOLE_SCREEN_BUFFER_INFO lsbi = {};
+
+	HANDLE hCon = ghConOut;
+	BOOL bHandleOK = (hCon != NULL);
+	if (!bHandleOK)
+		hCon = GetStdHandle(STD_OUTPUT_HANDLE);
+
 	// В дебажный лог помещаем реальные значения
-	GetConsoleScreenBufferInfo(ghConOut ? ghConOut : GetStdHandle(STD_OUTPUT_HANDLE), &lsbi);
+	BOOL bConsoleOK = GetConsoleScreenBufferInfo(hCon, &lsbi);
 	char szInfo[192]; szInfo[0] = 0;
+	DWORD nErrCode = GetLastError();
 
 	if (pcrSize)
 	{
 		bWriteLog = true;
 
-		_wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "CurSize={%ix%i} ChangeTo={%ix%ix%i} %s (skipped=%i)",
-		           lsbi.dwSize.X, lsbi.dwSize.Y, pcrSize->X, pcrSize->Y, newBufferHeight, (pszLabel ? pszLabel : ""), nSkipped);
+		_wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "CurSize={%ix%i} ChangeTo={%ix%ix%i} %s (skipped=%i) {%u:%u:x%X:%u}",
+		           lsbi.dwSize.X, lsbi.dwSize.Y, pcrSize->X, pcrSize->Y, newBufferHeight, (pszLabel ? pszLabel : ""), nSkipped,
+		           bConsoleOK, bHandleOK, (DWORD)(DWORD_PTR)hCon, nErrCode);
 	}
 	else
 	{
@@ -6512,8 +6520,9 @@ void LogSize(const COORD* pcrSize, int newBufferHeight, LPCSTR pszLabel)
 		else if (((GetTickCount() - nLastWriteTick) >= TickDelta) || (nSkipped >= SkipDelta))
 			bWriteLog = true;
 
-		_wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "CurSize={%ix%i} %s (skipped=%i)",
-		           lsbi.dwSize.X, lsbi.dwSize.Y, (pszLabel ? pszLabel : ""), nSkipped);
+		_wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "CurSize={%ix%i} %s (skipped=%i) {%u:%u:x%X:%u}",
+		           lsbi.dwSize.X, lsbi.dwSize.Y, (pszLabel ? pszLabel : ""), nSkipped,
+		           bConsoleOK, bHandleOK, (DWORD)(DWORD_PTR)hCon, nErrCode);
 	}
 
 	lsbiLast = lsbi;
@@ -9055,6 +9064,18 @@ BOOL MyGetConsoleScreenBufferInfo(HANDLE ahConOut, PCONSOLE_SCREEN_BUFFER_INFO a
 	if (!lbRc)
 	{
 		nErrCode = GetLastError();
+		if (gpLogSize) LogSize(NULL, 0, ":MyGetConsoleScreenBufferInfo");
+		_ASSERTE(FALSE && "GetConsoleScreenBufferInfo failed, conhost was destroyed?");
+		goto wrap;
+	}
+
+	if ((csbi.dwSize.X <= 0)
+		|| (csbi.dwSize.Y <= 0)
+		|| (csbi.dwSize.Y > LONGOUTPUTHEIGHT_MAX)
+		)
+	{
+		nErrCode = GetLastError();
+		if (gpLogSize) LogSize(NULL, 0, ":MyGetConsoleScreenBufferInfo");
 		_ASSERTE(FALSE && "GetConsoleScreenBufferInfo failed, conhost was destroyed?");
 		goto wrap;
 	}
