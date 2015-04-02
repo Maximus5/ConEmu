@@ -3251,7 +3251,10 @@ void CSettings::UpdateTextColorSettings(BOOL ChangeTextAttr /*= TRUE*/, BOOL Cha
 	gpSet->PaletteSetStdIndexes();
 
 	// Обновить консоли
-	CVConGroup::OnUpdateTextColorSettings(ChangeTextAttr, ChangePopupAttr, apDistinct);
+	if (ghWnd)
+	{
+		CVConGroup::OnUpdateTextColorSettings(ChangeTextAttr, ChangePopupAttr, apDistinct);
+	}
 }
 
 // This is used if user choose palette from dropdown in the Settings dialog
@@ -3305,7 +3308,10 @@ void CSettings::ChangeCurrentPalette(const ColorPalette* pPal, bool bChangeDropD
 		OnInitDialog_Color(hDlg, false);
 	}
 
-	gpConEmu->Update(true);
+	if (ghWnd)
+	{
+		gpConEmu->Update(true);
+	}
 }
 
 LRESULT CSettings::OnInitDialog_Color(HWND hWnd2, bool abInitial)
