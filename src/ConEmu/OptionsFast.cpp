@@ -34,6 +34,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "OptionsClass.h"
 #include "OptionsFast.h"
 #include "OptionsHelp.h"
+#include "SetCmdTask.h"
 #include "ConEmu.h"
 #include "ConEmuApp.h"
 #include "Update.h"
@@ -1324,4 +1325,29 @@ void CreateDefaultTasks(bool bForceAdd /*= false*/)
 
 	// Visual Studio prompt: HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\VisualStudio
 	RegEnumKeys(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\VisualStudio", CreateVCTasks, (LPARAM)&iCreatIdx);
+
+	// Choose default startup command
+	if (false)
+	{
+		const CommandTasks* pTask = NULL;
+		if (gn_FirstFarTask != -1)
+			pTask = gpSet->CmdTaskGet(gn_FirstFarTask);
+		LPCWSTR DefaultNames[] = {
+			L"Far",
+			L"TCC",
+			L"NYAOS",
+			L"cmd",
+			NULL
+		};
+		for (INT_PTR i = 0; !pTask && DefaultNames[i]; i++)
+		{
+			pTask = gpSet->CmdTaskGetByName(DefaultNames[i]);
+		}
+		if (pTask)
+		{
+			gpSet->nStartType = 2;
+			SafeFree(gpSet->psStartTasksName);
+			gpSet->psStartTasksName = lstrdup(pTask->pszName);
+		}
+	}
 }
