@@ -934,6 +934,9 @@ bool Settings::SaveVanilla(SettingsBase* reg)
 		// Fast configuration done
 		reg->CloseKey();
 
+		// Minimize/Restore key from Fast Settings
+		SaveHotkeys(reg, vkMinimizeRestore);
+
 		bOk = true;
 	}
 
