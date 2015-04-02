@@ -900,6 +900,9 @@ bool Settings::SaveVanilla(SettingsBase* reg)
 
 	if (reg && reg->OpenKey(gpSetCls->GetConfigPath(), KEY_WRITE))
 	{
+		/* Start command */
+		SaveStartCommands(reg);
+
 		/* Force Single instance mode */
 		reg->Save(L"SingleInstance", gpSet->isSingleInstance);
 

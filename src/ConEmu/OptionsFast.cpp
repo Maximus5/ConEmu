@@ -35,9 +35,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "OptionsFast.h"
 #include "OptionsHelp.h"
 #include "SetCmdTask.h"
+#include "SetDlgLists.h"
 #include "ConEmu.h"
 #include "ConEmuApp.h"
 #include "Update.h"
+#include "../common/CmdArg.h"
 #include "../common/execute.h"
 #include "../common/FarVersion.h"
 #include "../common/WFiles.h"
@@ -138,6 +140,18 @@ static INT_PTR Fast_OnInitDialog(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lP
 	{
 		SafeFree(pszSettingsPlaces[i]);
 	}
+
+
+	// Tasks
+	const CommandTasks* pGrp = NULL;
+	for (int nGroup = 0; (pGrp = gpSet->CmdTaskGet(nGroup)) != NULL; nGroup++)
+	{
+		SendDlgItemMessage(hDlg, lbStartupShellFast, CB_ADDSTRING, 0, (LPARAM)pGrp->pszName);
+	}
+	// Show startup task or shell command line
+	LPCWSTR pszStartup = (gpSet->nStartType == 2) ? gpSet->psStartTasksName : (gpSet->nStartType == 0) ? gpSet->psStartSingleApp : NULL;
+	if (pszStartup && *pszStartup)
+		CSetDlgLists::SelectStringExact(hDlg, lbStartupShellFast, pszStartup);
 
 
 	// Single instance
@@ -256,6 +270,8 @@ static INT_PTR Fast_OnButtonClicked(HWND hDlg, UINT messg, WPARAM wParam, LPARAM
 	{
 		case IDOK:
 		{
+			CEStr lsValue;
+
 			SettingsStorage CurStorage = {}; bool ReadOnly = false;
 			gpSet->GetSettingsType(CurStorage, ReadOnly);
 			LRESULT lSelStorage = SendDlgItemMessage(hDlg, lbStorageLocation, CB_GETCURSEL, 0, 0);
@@ -272,6 +288,40 @@ static INT_PTR Fast_OnButtonClicked(HWND hDlg, UINT messg, WPARAM wParam, LPARAM
 				SafeFree(pszNewPlace);
 			}
 
+			/* Startup task */
+			if (CSetDlgLists::GetSelectedString(hDlg, lbStartupShellFast, &lsValue.ms_Arg) > 0)
+			{
+				if (*lsValue.ms_Arg == TaskBracketLeft)
+				{
+					if (lsValue.ms_Arg[lstrlen(lsValue.ms_Arg)-1] != TaskBracketRight)
+					{
+						_ASSERTE(FALSE && "Doesn't match '{...}'");
+					}
+					else
+					{
+						gpSet->nStartType = 2;
+						SafeFree(gpSet->psStartTasksName);
+						gpSet->psStartTasksName = lstrdup(lsValue.ms_Arg);
+					}
+				}
+				else if (lstrcmp(lsValue.ms_Arg, AutoStartTaskName) == 0)
+				{
+					// Not shown yet in list
+					gpSet->nStartType = 3;
+				}
+				else if (*lsValue.ms_Arg == CmdFilePrefix)
+				{
+					gpSet->nStartType = 1;
+					SafeFree(gpSet->psStartTasksFile);
+					gpSet->psStartTasksFile = lstrdup(lsValue.ms_Arg);
+				}
+				else
+				{
+					gpSet->nStartType = 0;
+					SafeFree(gpSet->psStartSingleApp);
+					gpSet->psStartSingleApp = lstrdup(lsValue.ms_Arg);
+				}
+			}
 
 			/* Force Single instance mode */
 			gpSet->isSingleInstance = IsDlgButtonChecked(hDlg, cbSingleInstance);
