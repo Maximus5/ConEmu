@@ -660,7 +660,7 @@ void CheckOptionsFast(LPCWSTR asTitle, SettingsLoadedFlags slfFlags)
 	// Tasks and palettes must be created before dialog, to give user opportunity to choose startup task and palette
 
 	// Always check, if task list is empty - fill with defaults
-	CreateDefaultTasks();
+	CreateDefaultTasks(slfFlags);
 
 	// Some other settings, which must be filled with predefined values
 	if (slfFlags & slf_DefaultSettings)
@@ -1387,14 +1387,14 @@ void CreateTccTasks(LPCWSTR asDrive, int& iCreatIdx)
 	}
 }
 
-void CreateDefaultTasks(bool bForceAdd /*= false*/)
+void CreateDefaultTasks(SettingsLoadedFlags slfFlags)
 {
 	int iCreatIdx = 0;
 
-	sbAppendMode = bForceAdd;
+	sbAppendMode = ((slfFlags & slf_AppendTasks) == slf_AppendTasks);
 	gn_FirstFarTask = -1;
 
-	if (!bForceAdd)
+	if (!sbAppendMode)
 	{
 		const CommandTasks* pExist = gpSet->CmdTaskGet(iCreatIdx);
 		if (pExist != NULL)
@@ -1508,7 +1508,7 @@ void CreateDefaultTasks(bool bForceAdd /*= false*/)
 	RegEnumKeys(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\VisualStudio", CreateVCTasks, (LPARAM)&iCreatIdx);
 
 	// Choose default startup command
-	if (false)
+	if (slfFlags & slf_DefaultSettings)
 	{
 		const CommandTasks* pTask = NULL;
 		if (gn_FirstFarTask != -1)

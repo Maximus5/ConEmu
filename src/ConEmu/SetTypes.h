@@ -85,6 +85,7 @@ const SettingsLoadedFlags
 	slf_OnStartupLoad     = 0x0004,
 	slf_OnResetReload     = 0x0008,
 	slf_DefaultSettings   = 0x0010,
+	slf_AppendTasks       = 0x0020,
 	slf_None              = 0x0000
 ;
 

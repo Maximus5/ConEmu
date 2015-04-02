@@ -1474,7 +1474,7 @@ void CSetDlgButtons::OnBtn_AddDefaults(HWND hDlg, WORD CB, BYTE uCheck)
 		return;
 
 	// Добавить таски В КОНЕЦ
-	CreateDefaultTasks(true);
+	CreateDefaultTasks(slf_AppendTasks);
 
 	// Обновить список на экране
 	gpSetCls->OnInitDialog_Tasks(hDlg, true);

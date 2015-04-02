@@ -30,4 +30,4 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 void CheckOptionsFast(LPCWSTR asTitle, SettingsLoadedFlags slfFlags);
-void CreateDefaultTasks(bool bForceAdd = false);
+void CreateDefaultTasks(SettingsLoadedFlags slfFlags);
