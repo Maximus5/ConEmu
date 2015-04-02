@@ -254,6 +254,8 @@ struct Settings
 		void LoadAppSettings(SettingsBase* reg, AppSettings* pApp/*, COLORREF* pColors*/);
 		void SaveAppSettings(SettingsBase* reg, AppSettings* pApp/*, COLORREF* pColors*/);
 
+		void SaveStdColors(SettingsBase* reg);
+
 		void FreeApps(int NewAppCount = 0, AppSettings** NewApps = NULL/*, Settings::CEAppColors** NewAppColors = NULL*/);
 
 		DWORD mn_FadeMul;

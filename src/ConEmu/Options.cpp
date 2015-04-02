@@ -3209,6 +3209,26 @@ void Settings::SaveAppsSettings(SettingsBase* reg)
 	}
 }
 
+void Settings::SaveStdColors(SettingsBase* reg)
+{
+	TCHAR ColorName[] = L"ColorTable00";
+
+	for(uint i = 0; i<countof(Colors)/*0x20*/; i++)
+	{
+		ColorName[10] = i/10 + '0';
+		ColorName[11] = i%10 + '0';
+		reg->Save(ColorName, (DWORD)Colors[i]);
+	}
+
+	reg->Save(L"ExtendColors", AppStd.isExtendColors);
+	reg->Save(L"ExtendColorIdx", AppStd.nExtendColorIdx);
+
+	reg->Save(L"TextColorIdx", AppStd.nTextColorIdx);
+	reg->Save(L"BackColorIdx", AppStd.nBackColorIdx);
+	reg->Save(L"PopTextColorIdx", AppStd.nPopTextColorIdx);
+	reg->Save(L"PopBackColorIdx", AppStd.nPopBackColorIdx);
+}
+
 void Settings::SaveAppSettings(SettingsBase* reg, AppSettings* pApp/*, COLORREF* pColors*/)
 {
 	// Для AppStd данные загружаются из основной ветки! В том числе и цвета (RGB[32] а не имя палитры)
@@ -3216,22 +3236,7 @@ void Settings::SaveAppSettings(SettingsBase* reg, AppSettings* pApp/*, COLORREF*
 
 	if (bStd)
 	{
-		TCHAR ColorName[] = L"ColorTable00";
-
-		for(uint i = 0; i<countof(Colors)/*0x20*/; i++)
-		{
-			ColorName[10] = i/10 + '0';
-			ColorName[11] = i%10 + '0';
-			reg->Save(ColorName, (DWORD)Colors[i]);
-		}
-
-		reg->Save(L"ExtendColors", pApp->isExtendColors);
-		reg->Save(L"ExtendColorIdx", pApp->nExtendColorIdx);
-
-		reg->Save(L"TextColorIdx", pApp->nTextColorIdx);
-		reg->Save(L"BackColorIdx", pApp->nBackColorIdx);
-		reg->Save(L"PopTextColorIdx", pApp->nPopTextColorIdx);
-		reg->Save(L"PopBackColorIdx", pApp->nPopBackColorIdx);
+		SaveStdColors(reg);
 	}
 	else
 	{
