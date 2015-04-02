@@ -906,6 +906,9 @@ bool Settings::SaveVanilla(SettingsBase* reg)
 		/* Force Single instance mode */
 		reg->Save(L"SingleInstance", gpSet->isSingleInstance);
 
+		/* Quake mode? */
+		reg->Save(L"QuakeStyle", isQuakeStyle);
+
 		/* Install Keyboard hooks */
 		reg->Save(L"KeyboardHooks", gpSet->m_isKeyboardHooks);
 

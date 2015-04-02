@@ -158,6 +158,10 @@ static INT_PTR Fast_OnInitDialog(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lP
 	CheckDlgButton(hDlg, cbSingleInstance, gpSetCls->IsSingleInstanceArg());
 
 
+	// Quake style
+	CheckDlgButton(hDlg, cbQuakeFast, gpSet->isQuakeStyle ? BST_CHECKED : BST_UNCHECKED);
+
+
 	// Keyhooks required for Win+Number, Win+Arrows, etc.
 	CheckDlgButton(hDlg, cbUseKeyboardHooksFast, gpSet->isKeyboardHooks(true));
 
@@ -325,6 +329,9 @@ static INT_PTR Fast_OnButtonClicked(HWND hDlg, UINT messg, WPARAM wParam, LPARAM
 
 			/* Force Single instance mode */
 			gpSet->isSingleInstance = IsDlgButtonChecked(hDlg, cbSingleInstance);
+
+			/* Quake mode? */
+			gpSet->isQuakeStyle = IsDlgButtonChecked(hDlg, cbQuakeFast);
 
 			/* Install Keyboard hooks */
 			gpSet->m_isKeyboardHooks = IsDlgButtonChecked(hDlg, cbUseKeyboardHooksFast) ? 1 : 2;
