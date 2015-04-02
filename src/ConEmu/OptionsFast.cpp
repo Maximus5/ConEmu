@@ -30,6 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Header.h"
 #include "AboutDlg.h"
 #include "DynDialog.h"
+#include "HotkeyDlg.h"
 #include "Options.h"
 #include "OptionsClass.h"
 #include "OptionsFast.h"
@@ -57,6 +58,7 @@ static bool bVanilla;
 static CDpiForDialog* gp_DpiAware = NULL;
 static CEHelpPopup* gp_FastHelp = NULL;
 static int gn_FirstFarTask = -1;
+static ConEmuHotKey ghk_MinMaxKey = {};
 
 static INT_PTR Fast_OnInitDialog(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam)
 {
@@ -158,8 +160,15 @@ static INT_PTR Fast_OnInitDialog(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lP
 	CheckDlgButton(hDlg, cbSingleInstance, gpSetCls->IsSingleInstanceArg());
 
 
-	// Quake style
+	// Quake style and show/hide key
 	CheckDlgButton(hDlg, cbQuakeFast, gpSet->isQuakeStyle ? BST_CHECKED : BST_UNCHECKED);
+	const ConEmuHotKey* pHK = NULL;
+	if (gpSet->GetHotkeyById(vkMinimizeRestore, &pHK) && pHK)
+	{
+		wchar_t szKey[128] = L"";
+		SetDlgItemText(hDlg, tQuakeKeyFast, pHK->GetHotkeyName(szKey));
+		ghk_MinMaxKey.SetVkMod(pHK->GetVkMod());
+	}
 
 
 	// Keyhooks required for Win+Number, Win+Arrows, etc.
@@ -327,11 +336,24 @@ static INT_PTR Fast_OnButtonClicked(HWND hDlg, UINT messg, WPARAM wParam, LPARAM
 				}
 			}
 
+			/* Default pallette changed? */
+			if (CSetDlgLists::GetSelectedString(hDlg, lbColorSchemeFast, &lsValue.ms_Arg) > 0)
+			{
+				const ColorPalette* pPal = gpSet->PaletteGetByName(lsValue.ms_Arg);
+				if (pPal)
+				{
+					gpSetCls->ChangeCurrentPalette(pPal, false);
+				}
+			}
+
 			/* Force Single instance mode */
 			gpSet->isSingleInstance = IsDlgButtonChecked(hDlg, cbSingleInstance);
 
 			/* Quake mode? */
 			gpSet->isQuakeStyle = IsDlgButtonChecked(hDlg, cbQuakeFast);
+
+			/* Min/Restore key */
+			gpSet->SetHotkeyById(vkMinimizeRestore, ghk_MinMaxKey.GetVkMod());
 
 			/* Install Keyboard hooks */
 			gpSet->m_isKeyboardHooks = IsDlgButtonChecked(hDlg, cbUseKeyboardHooksFast) ? 1 : 2;
@@ -412,6 +434,18 @@ static INT_PTR Fast_OnButtonClicked(HWND hDlg, UINT messg, WPARAM wParam, LPARAM
 		case stHomePage:
 			ConEmuAbout::OnInfo_HomePage();
 			return 1;
+
+		case cbQuakeKeyFast:
+		{
+			DWORD VkMod = ghk_MinMaxKey.GetVkMod();
+			if (CHotKeyDialog::EditHotKey(hDlg, VkMod))
+			{
+				ghk_MinMaxKey.SetVkMod(VkMod);
+				wchar_t szKey[128] = L"";
+				SetDlgItemText(hDlg, tQuakeKeyFast, ghk_MinMaxKey.GetHotkeyName(szKey));
+			}
+			return 1;
+		}
 	}
 
 	return FALSE;
