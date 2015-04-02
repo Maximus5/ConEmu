@@ -53,6 +53,7 @@ static bool bCheckHooks, bCheckUpdate, bCheckIme;
 static bool bVanilla;
 static CDpiForDialog* gp_DpiAware = NULL;
 static CEHelpPopup* gp_FastHelp = NULL;
+static int gn_FirstFarTask = -1;
 
 static INT_PTR Fast_OnInitDialog(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam)
 {
@@ -1155,6 +1156,8 @@ void CreateFarTasks(LPCWSTR asDrive, int& iCreatIdx)
 				*(pszName) = 0; // Cut to slash
 				lstrmerge(&pszCommand, L" /p\"%ConEmuDir%\\Plugins\\ConEmu;%FarHome%\\Plugins\"");
 
+				if (gn_FirstFarTask == -1)
+					gn_FirstFarTask = iCreatIdx;
 				CreateDefaultTask(iCreatIdx, FI.szTaskName, NULL, pszCommand);
 			}
 		}
@@ -1207,6 +1210,7 @@ void CreateDefaultTasks(bool bForceAdd /*= false*/)
 	int iCreatIdx = 0;
 
 	sbAppendMode = bForceAdd;
+	gn_FirstFarTask = -1;
 
 	if (!bForceAdd)
 	{
