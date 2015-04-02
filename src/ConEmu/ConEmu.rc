@@ -1232,38 +1232,47 @@ BEGIN
     GROUPBOX        "ConEmu latest version location info",IDC_STATIC,5,193,319,28
 END
 
-IDD_FAST_CONFIG DIALOGEX 0, 0, 323, 243
+IDD_FAST_CONFIG DIALOGEX 0, 0, 323, 305
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
 EXSTYLE WS_EX_CONTEXTHELP
 CAPTION "ConEmu fast configuration"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    CONTROL         "Single instance mode (use existing window instead of running new instance)",cbSingleInstance,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,52,295,8
-    CONTROL         "Install keyboard hooks (required for Win+Number, Win+Tab, PrntScrn and so on)",cbUseKeyboardHooksFast,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,79,295,10
-    CONTROL         "Inject ConEmuHk.dll into all processes started in ConEmu tabs",cbInjectConEmuHkFast,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,109,295,10
-    CONTROL         "Enable automatic updates",cbEnableAutoUpdateFast,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,140,109,10
-    CONTROL         "‘Stable’",rbAutoUpdateStableFast,"Button",BS_AUTORADIOBUTTON,128,140,46,10
-    CONTROL         "‘Preview’",rbAutoUpdatePreviewFast,"Button",BS_AUTORADIOBUTTON,178,140,50,10
-    CONTROL         "‘Developer’ builds",rbAutoUpdateDeveloperFast,"Button",BS_AUTORADIOBUTTON,232,140,71,10
-    GROUPBOX        "",gbDisableConImeFast,3,161,317,61
-    CONTROL         " Disable ConIme.exe autorun (Vista only)",cbDisableConImeFast,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,169,295,10
-    LTEXT           "Unwanted value of ‘LoadConIme’ registry parameter! This may cause hanging of other console applications! ConEmu may disable ConIme.exe via registry:",stDisableConImeFast1,20,181,292,19
-    LTEXT           "[HKEY_CURRENT_USER\\Console]",stDisableConImeFast2,20,200,292,8
-    LTEXT           """LoadConIme""=dword:00000000",stDisableConImeFast3,20,209,292,8
-    DEFPUSHBUTTON   "OK",IDOK,215,226,50,14
-    PUSHBUTTON      "Cancel",IDCANCEL,270,226,50,14
-    LTEXT           "<homepage>",stHomePage,11,229,194,8,SS_NOTIFY
-    COMBOBOX        lbStorageLocation,11,19,302,75,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    GROUPBOX        "",gbFastConfig,3,0,317,220
     LTEXT           "Choose ConEmu settings storage location (You may turn on/off portable mode here)",stStorageLocation,11,8,294,8
-    LTEXT           "You can change following on 'Appearance' page of Settings dialog later",stSingleInstance,11,41,279,8
-    LTEXT           "You can change following on 'Controls' page of Settings dialog later",stUseKeyboardHooksFast,11,70,276,8
-    LTEXT           "You can change following on 'Features' page of Settings dialog later",stInjectConEmuHkFast,11,98,275,8
-    LTEXT           "You can change following on 'Update' page of Settings dialog later",stEnableAutoUpdateFast,11,129,277,8
-    GROUPBOX        "",gbFastConfig,3,0,317,158
+    COMBOBOX        lbStorageLocation,11,19,302,75,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Choose your startup task or even a shell with arguments:",stStartupShellFast,11,38,302,8
+    COMBOBOX        lbStartupShellFast,11,49,302,156,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Choose preferred color scheme:",stColorSchemeFast,11,67,190,8
+    COMBOBOX        lbColorSchemeFast,11,78,187,59,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "You can change following on 'Appearance' page of Settings dialog later",stSingleInstance,11,98,302,8
+    CONTROL         "Single instance mode (force using existing window)",cbSingleInstance,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,109,295,8
+    CONTROL         "Quake-style slide down from the to of the screen",cbQuakeFast,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,122,207,10
+    EDITTEXT        tQuakeKeyFast,222,121,72,12,ES_AUTOHSCROLL | ES_READONLY
+    PUSHBUTTON      "...",cbQuakeKeyFast,298,121,16,13
+    LTEXT           "You can change following on 'Controls' page of Settings dialog later",stUseKeyboardHooksFast,11,139,302,8
+    CONTROL         "Install keyboard hooks (required for Win+Number, Win+Tab, PrntScrn and so on)",cbUseKeyboardHooksFast,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,148,295,10
+    LTEXT           "You can change following on 'Features' page of Settings dialog later",stInjectConEmuHkFast,11,165,302,8
+    CONTROL         "Inject ConEmuHk.dll into all processes started in ConEmu tabs",cbInjectConEmuHkFast,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,176,295,10
+    LTEXT           "You can change following on 'Update' page of Settings dialog later",stEnableAutoUpdateFast,11,192,302,8
+    CONTROL         "Enable automatic updates",cbEnableAutoUpdateFast,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,203,109,10
+    CONTROL         "‘Stable’",rbAutoUpdateStableFast,"Button",BS_AUTORADIOBUTTON,128,203,46,10
+    CONTROL         "‘Preview’",rbAutoUpdatePreviewFast,"Button",BS_AUTORADIOBUTTON,178,203,50,10
+    CONTROL         "‘Developer’ builds",rbAutoUpdateDeveloperFast,"Button",BS_AUTORADIOBUTTON,232,203,71,10
+    GROUPBOX        "",gbDisableConImeFast,3,222,317,61
+    CONTROL         " Disable ConIme.exe autorun (Vista only)",cbDisableConImeFast,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,230,295,10
+    LTEXT           "Unwanted value of ‘LoadConIme’ registry parameter! This may cause hanging of other console applications! ConEmu may disable ConIme.exe via registry:",stDisableConImeFast1,20,242,292,19
+    LTEXT           "[HKEY_CURRENT_USER\\Console]",stDisableConImeFast2,20,261,292,8
+    LTEXT           """LoadConIme""=dword:00000000",stDisableConImeFast3,20,270,292,8
+    DEFPUSHBUTTON   "OK",IDOK,215,288,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,270,288,50,14
+    LTEXT           "<homepage>",stHomePage,11,291,194,11,SS_NOTIFY
+    CTEXT           "\ncolors\npreview",stPalettePreviewFast,205,67,108,24
 END
 
 IDD_SPG_CMDTASKS DIALOGEX 0, 0, 328, 235
@@ -1711,7 +1720,7 @@ BEGIN
         LEFTMARGIN, 3
         RIGHTMARGIN, 320
         TOPMARGIN, 3
-        BOTTOMMARGIN, 240
+        BOTTOMMARGIN, 302
     END
 
     IDD_SPG_CMDTASKS, DIALOG

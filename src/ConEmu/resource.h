@@ -1156,6 +1156,14 @@
 #define cbUnicodeRangesApply            2838
 #define vkConDetach                     2839
 #define vkConUnfasten                   2840
+#define lbStartupShellFast              2842
+#define stStartupShellFast              2843
+#define lbColorSchemeFast               2844
+#define stColorSchemeFast               2845
+#define cbQuakeFast                     2846
+#define tQuakeKeyFast                   2847
+#define cbQuakeKeyFast                  2848
+#define stPalettePreviewFast            2849
 #define vkCdExplorerPath                3841
 #define IDC_STATIC                      -1
 
@@ -1165,7 +1173,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        227
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2842
+#define _APS_NEXT_CONTROL_VALUE         2850
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif
