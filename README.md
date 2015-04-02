@@ -25,7 +25,7 @@ Take a look at [screencast](http://dotnetsurfers.com/blog/2013/12/15/developer-t
 
 This fork grew up from ConEmu by Zoin.
 
-### Some links
+## Some links
 Release stages: http://conemu.github.io/en/StableVsPreview.html  
 Wiki: http://conemu.github.io/en/TableOfContents.html  
 What's new: http://conemu.github.io/en/Whats_New.html  
