@@ -61,6 +61,65 @@ static CEHelpPopup* gp_FastHelp = NULL;
 static int gn_FirstFarTask = -1;
 static ConEmuHotKey ghk_MinMaxKey = {};
 
+static const ColorPalette* gp_DefaultPalette = NULL;
+static WNDPROC gpfn_DefaultColorBoxProc = NULL;
+static LRESULT CALLBACK Fast_ColorBoxProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	LRESULT lRc = 0;
+
+	switch (uMsg)
+	{
+		case WM_PAINT:
+		{
+			if (!gp_DefaultPalette)
+			{
+				_ASSERTE(gp_DefaultPalette!=NULL);
+				break;
+			}
+			RECT rcClient = {};
+			PAINTSTRUCT ps = {};
+			if (BeginPaint(hwnd, &ps))
+			{
+				GetClientRect(hwnd, &rcClient);
+				for (int i = 0; i < 16; i++)
+				{
+					int x = (i % 8);
+					int y = (i == x) ? 0 : 1;
+					RECT rc = {(x) * rcClient.right / 8, (y) * rcClient.bottom / 2,
+						(x+1) * rcClient.right / 8, (y+1) * rcClient.bottom / 2};
+					HBRUSH hbr = CreateSolidBrush(gp_DefaultPalette->Colors[i]);
+					FillRect(ps.hdc, &rc, hbr);
+					DeleteObject(hbr);
+				}
+				EndPaint(hwnd, &ps);
+			}
+			goto wrap;
+		} // WM_PAINT
+
+		case UM_PALETTE_FAST_CHG:
+		{
+			CEStr lsValue;
+			if (CSetDlgLists::GetSelectedString(GetParent(hwnd), lbColorSchemeFast, &lsValue.ms_Arg) > 0)
+			{
+				const ColorPalette* pPal = gpSet->PaletteGetByName(lsValue.ms_Arg);
+				if (pPal)
+				{
+					gp_DefaultPalette = pPal;
+					InvalidateRect(hwnd, NULL, FALSE);
+				}
+			}
+			goto wrap;
+		} // UM_PALETTE_FAST_CHG
+	}
+
+	if (gpfn_DefaultColorBoxProc)
+		lRc = CallWindowProc(gpfn_DefaultColorBoxProc, hwnd, uMsg, wParam, lParam);
+	else
+		lRc = ::DefWindowProc(hwnd, uMsg, wParam, lParam);
+wrap:
+	return lRc;
+}
+
 static INT_PTR Fast_OnInitDialog(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam)
 {
 	SendMessage(hDlg, WM_SETICON, ICON_BIG, (LPARAM)hClassIcon);
@@ -173,6 +232,10 @@ static INT_PTR Fast_OnInitDialog(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lP
 	{
 		_ASSERTE(FALSE && "Current paletted was not defined?");
 	}
+	// Show its colors in box
+	HWND hChild = GetDlgItem(hDlg, stPalettePreviewFast);
+	if (hChild)
+		gpfn_DefaultColorBoxProc = (WNDPROC)SetWindowLongPtr(hChild, GWLP_WNDPROC, (LONG_PTR)Fast_ColorBoxProc);
 
 
 	// Single instance
@@ -502,6 +565,14 @@ static INT_PTR CALLBACK CheckOptionsFastProc(HWND hDlg, UINT messg, WPARAM wPara
 		{
 		case BN_CLICKED:
 			return Fast_OnButtonClicked(hDlg, messg, wParam, lParam);
+		case CBN_SELCHANGE:
+			switch (LOWORD(wParam))
+			{
+			case lbColorSchemeFast:
+				SendDlgItemMessage(hDlg, stPalettePreviewFast, UM_PALETTE_FAST_CHG, wParam, lParam);
+				break;
+			}
+			break;
 		}
 
 		break;

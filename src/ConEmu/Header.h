@@ -791,3 +791,4 @@ bool isMainThread();
 #define UM_SEARCH           (WM_APP+35)
 #define UM_SEARCH_FOCUS     (WM_APP+36)
 #define UM_EDIT_KILL_FOCUS  (WM_APP+37)
+#define UM_PALETTE_FAST_CHG (WM_APP+38)
