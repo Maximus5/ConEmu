@@ -37,9 +37,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define MAX_FONT_STYLES 8  //normal/(bold|italic|underline)
 #define MAX_FONT_GROUPS 20 // Main, Borders, Japan, Cyrillic, ...
 
-#define LONGOUTPUTHEIGHT_MIN 300
-#define LONGOUTPUTHEIGHT_MAX 32766 /* 'magic' 0x7FFE */
-
 #define CURSORSIZE_MIN 5
 #define CURSORSIZE_MAX 100
 #define CURSORSIZEPIX_MIN 1
