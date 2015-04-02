@@ -518,6 +518,9 @@ void Settings::InitSettings()
 	}
 	else
 	{
+		// Default palette MUST exists in our list!
+		_ASSERTE(FALSE && "Must not get here");
+
 		SettingsRegistry RegConColors, RegConDef;
 
 		if (RegConColors.OpenKey(L"Console", KEY_READ))
