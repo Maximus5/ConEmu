@@ -138,9 +138,11 @@ static INT_PTR Fast_OnInitDialog(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lP
 	}
 
 
-	// continue
+	// Single instance
 	CheckDlgButton(hDlg, cbSingleInstance, gpSetCls->IsSingleInstanceArg());
 
+
+	// Keyhooks required for Win+Number, Win+Arrows, etc.
 	CheckDlgButton(hDlg, cbUseKeyboardHooksFast, gpSet->isKeyboardHooks(true));
 
 
@@ -150,8 +152,10 @@ static INT_PTR Fast_OnInitDialog(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lP
 	EnableWindow(GetDlgItem(hDlg, cbUseKeyboardHooksFast), !gpConEmu->DisableKeybHooks);
 	#endif
 
+	// Injects
 	CheckDlgButton(hDlg, cbInjectConEmuHkFast, gpSet->isUseInjects);
 
+	// Autoupdates
 	if (!gpConEmu->isUpdateAllowed())
 	{
 		EnableWindow(GetDlgItem(hDlg, cbEnableAutoUpdateFast), FALSE);
@@ -169,6 +173,7 @@ static INT_PTR Fast_OnInitDialog(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lP
 			(gpSet->UpdSet.isUpdateUseBuilds == 3) ? rbAutoUpdatePreviewFast : rbAutoUpdateDeveloperFast);
 	}
 
+	// Vista - ConIme bugs
 	if (!bCheckIme)
 	{
 		ShowWindow(GetDlgItem(hDlg, gbDisableConImeFast), SW_HIDE);
@@ -199,6 +204,7 @@ static INT_PTR Fast_OnInitDialog(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lP
 		}
 	}
 
+	// Done
 	SetFocus(GetDlgItem(hDlg, IDOK));
 	return FALSE; // Set focus to OK
 }
