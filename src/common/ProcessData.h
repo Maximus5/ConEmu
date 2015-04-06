@@ -290,7 +290,7 @@ protected:
 	{
 		wchar_t* p2;
 
-		for (p2 = p-2; _istdigit(*p2); p2--)
+		for (p2 = p-2; isDigit(*p2); p2--)
 			;
 
 		wchar_t *pe = NULL;
@@ -415,7 +415,7 @@ public:
 		GetModuleFileNameEx = (FGetModuleFileNameEx)(hKernel ? GetProcAddress(hKernel, "GetModuleFileNameExW") : NULL);
 		if (GetModuleFileNameEx == NULL)
 		{
-			mh_Psapi = LoadLibrary(_T("psapi.dll"));
+			mh_Psapi = LoadLibrary(L"psapi.dll");
 			if (mh_Psapi)
 			    GetModuleFileNameEx = (FGetModuleFileNameEx)GetProcAddress(mh_Psapi, "GetModuleFileNameExW");
 		}
