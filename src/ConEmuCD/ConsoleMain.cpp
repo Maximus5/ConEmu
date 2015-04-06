@@ -81,6 +81,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/MSectionSimple.h"
 #include "../common/MWow64Disable.h"
 #include "../common/ProcessSetEnv.h"
+#include "../common/ProcessData.h"
 #include "../common/RConStartArgs.h"
 #include "../common/SetEnvVar.h"
 #include "../common/StartupEnvEx.h"
@@ -2903,13 +2904,34 @@ int DoInjectRemote(LPWSTR asCmdArg, bool abDefTermOnly)
 			return iHookRc ? CERR_HOOKS_WAS_ALREADY_SET : CERR_HOOKS_WAS_SET;
 		}
 
+		CProcessData processes;
+		CEStr lsName, lsPath;
+		processes.GetProcessName(nRemotePID, lsName.GetBuffer(MAX_PATH), MAX_PATH, lsPath.GetBuffer(MAX_PATH*2), MAX_PATH*2, NULL);
+
+		DWORD nSelfPID = GetCurrentProcessId();
+		PROCESSENTRY32 self = {sizeof(self)}, parent = {sizeof(parent)};
+		// Not optimal, needs refactoring
+		if (GetProcessInfo(nSelfPID, &self))
+			GetProcessInfo(self.th32ParentProcessID, &parent);
+
 		// Ошибку (пока во всяком случае) лучше показать, для отлова возможных проблем
 		DWORD nErrCode = GetLastError();
 		//_ASSERTE(iHookRc == 0); -- ассерт не нужен, есть MsgBox
 		wchar_t szDbgMsg[255], szTitle[128];
-		_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuC, PID=%u", GetCurrentProcessId());
-		_wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"ConEmuC.X, PID=%u\nInjecting remote into PID=%u\nFAILED, code=%i:0x%08X", GetCurrentProcessId(), nRemotePID, iHookRc, nErrCode);
-		MessageBoxW(NULL, szDbgMsg, szTitle, MB_SYSTEMMODAL);
+		_wsprintf(szTitle, SKIPLEN(countof(szTitle))
+			L"ConEmuC[%u], PID=%u", WIN3264TEST(32,64), nSelfPID);
+		_wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg))
+			L"ConEmuC.X, PID=%u\n"
+			L"Injecting remote into PID=%u from ParentPID=%u\n"
+			L"FAILED, code=%i:0x%08X\r\n",
+			nSelfPID, nRemotePID, self.th32ParentProcessID, iHookRc, nErrCode);
+
+		CEStr lsError(lstrmerge(szDbgMsg,
+			L"Process: ",
+			lsPath.IsEmpty() ? lsName.IsEmpty() ? L"<Unknown>" : lsName.ms_Arg : lsPath.ms_Arg,
+			L"\n" L"Parent: ", parent.szExeFile));
+
+		MessageBoxW(NULL, lsError, szTitle, MB_SYSTEMMODAL);
 	}
 	else
 	{
