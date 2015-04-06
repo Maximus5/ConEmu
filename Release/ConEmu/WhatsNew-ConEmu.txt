@@ -12,6 +12,18 @@ Votes and awards (vote for ConEmu, if you please)
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+2015.4.5
+[*] Redesign ‘Fast configuration’ dialog. Add ‘Start command’, ‘Palette’, ‘Quake style with HotKey’.
+[*] Choose preferred startup Task for new configs (Far -> TCC -> NYAOS -> cmd).
+[*] Fix wrong position of duplicate hotkey warning balloon.
+[*] Detect console buffer corruption and log it.
+    Sometimes during kmk build script execution something very bad happens
+    with console buffer and lines like following were written to log
+    RefrThread CurSize={-18544x31} :ReadConsoleInfo (skipped=1)
+    After that an assertion appears like
+    nNewWidth>0 && nNewHeight>0 at RealBuffer.cpp:1784
+
+
 2015.3.31
 [*] gh#88: Allow ‘Apps’ key to use as single hotkey.
 [*] GuiMacro. Bugfixes and new function.

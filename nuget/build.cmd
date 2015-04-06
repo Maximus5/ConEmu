@@ -8,7 +8,7 @@ if exist "ConEmu.*.nupkg" del "ConEmu.*.nupkg"
 if exist "chocolatey\ConEmu.*.nupkg" del "chocolatey\ConEmu.*.nupkg"
 
 cd /d chocolatey
-call choco pack
+call choco pack -y
 if errorlevel 1 (
   call cecho "Creation Chocolatey package was failed"
   exit /b 100
