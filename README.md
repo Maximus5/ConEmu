@@ -1,6 +1,6 @@
 ## Please VOTE! - ConEmu has been selected to be on the ballot for the May 2015 Community Choice SourceForge project of the Month!
 
-Voting will end on will end on 2015 April 15. User must be registered at SourceForge.net to vote.
+Voting will end on Wednesday, April 15th, 2015. Users must be registered at SourceForge.net to vote.
 
 Just post in the voting thread (https://sourceforge.net/p/potm/discussion/vote/thread/ca38c9ae/):
 
@@ -17,7 +17,7 @@ command history and completion, powerful editor.
 
 Today, ConEmu can be used with any other console application or simple GUI tools
 (like PuTTY for example). ConEmu is an active project, open to
-[suggestions](http://code.google.com/p/conemu-maximus5/issues/list).
+[suggestions](https://github.com/Maximus5/ConEmu/issues).
 
 <a href="http://www.fosshub.com/ConEmu.html">![Fosshub.com ConEmu mirror](https://github.com/Maximus5/ConEmu/wiki/Downloads.png)</a>
 
@@ -31,14 +31,14 @@ This fork grew up from ConEmu by Zoin.
     IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
     OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
 
-Full text of license is here: [https://github.com/Maximus5/ConEmu/blob/master/Release/ConEmu/License.txt](Release/ConEmu/License.txt)
+See [Release/ConEmu/License.txt](https://github.com/Maximus5/ConEmu/blob/master/Release/ConEmu/License.txt) for the full license text.
 
 
 ## Some links
-Release stages: http://conemu.github.io/en/StableVsPreview.html  
-Wiki: http://conemu.github.io/en/TableOfContents.html  
-What's new: http://conemu.github.io/en/Whats_New.html  
-Donate this project: http://conemu.github.io/donate.html
+Release stages: https://conemu.github.io/en/StableVsPreview.html  
+Wiki: https://conemu.github.io/en/TableOfContents.html  
+What's new: https://conemu.github.io/en/Whats_New.html  
+Donate this project: https://conemu.github.io/donate.html
 
 
 
@@ -53,7 +53,7 @@ an alternative customizable GUI window with various features:
   * window font anti-aliasing: standard, clear type, disabled;
   * window fonts: family, height, width, bold, italic, etc.;
   * using normal/bold/italic fonts for different parts of console simultaneously;
-  * cursor: standard console (horisontal) or GUI (vertical);
+  * cursor: standard console (horizontal) or GUI (vertical);
   * and more, and more...
 
 ### Far Manager related features
@@ -65,7 +65,7 @@ an alternative customizable GUI window with various features:
   * and more, and more...
 
 All settings are read from the registry or ConEmu.xml file, after which the
-[command line parameters](http://conemu.github.io/en/Command_Line.html)
+[command line parameters](https://conemu.github.io/en/CommandLine.html)
 are applied. You may easily use several named configurations (for different PCs for example).
 
 
@@ -104,4 +104,4 @@ https://github.com/Maximus5/ConEmu/blob/master/src/HowToBuild.txt
 
 ![ConEmu+Powershell inside Windows Explorer pane](https://github.com/Maximus5/ConEmu/wiki/ConEmuInside.png)
 
-[More screenshots](http://conemu.github.io/en/Screenshots.html)
+[More screenshots](https://conemu.github.io/en/Screenshots.html)
