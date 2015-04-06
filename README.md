@@ -74,26 +74,12 @@ are applied. You may easily use several named configurations (for different PCs 
 
 
 ## Installation
+In general, ConEmu installation is easy.
+Just unpack or install to any folder and run `ConEmu.exe`.
 
-### If you are NOT a Far Manager user
-* Unpack all files (from appropriate `ConEmuPack.\*.7z`)
-	or install `ConEmuSetup.\*.exe` package to any folder your choice.
- 	Subfolder `plugins` (Far Manager related) is not required in your case.
-*  Run ConEmu.exe or ConEmu64.exe.
+Read [Installation wiki](https://conemu.github.io/en/Installation.html)
+about release stages, distro packets, some warnings and much more...
 
-### If you ARE a Far Manager user
-* Use of `ConEmuPack.\*.7z` and `ConEmuSetup.\*.exe` are slightly different
-  * `ConEmuPack.\*.7z`: Unpack all files to the folder, containing `far.exe`
-  * `ConEmuSetup.\*.exe`: On the `Features` page you must select destination
-	for `Far Manager plugins` to the folder, containing `far.exe`.
-* Import to the registry Far Manager macroses, related to ConEmu. Macro `*.reg`
-	files are located in `ConEmu.Addons` directory. Each macro file (`*.reg`) has
-	description in header. Just doubleclick chosen files in Windows Explorer
-	to import them.
-* By default (started without command line params), ConEmu runs `far.exe` from
-	it's home folder, or `cmd.exe` if Far Manager not found.
-	Alternatively, You may run any root command, specifying `/Cmd \<App with params\>`
-	argument in ConEmu shortcut or command line.
 
 ## Building from sources
 https://github.com/Maximus5/ConEmu/blob/master/src/HowToBuild.txt
