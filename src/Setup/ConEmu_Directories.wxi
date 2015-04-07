@@ -23,11 +23,6 @@
           -->
         </Directory>
       </Directory>
-      <!--<Directory Id="EXTCONSOLEFOLDER" Name="Far Manager">
-        <Component Id="CEExtConsoleDir" Guid="$(var.Guid.CEExtConsoleDir)" Win64="$(var.Win64)">
-          <RegistryValue Root="HKMU" Key="$(var.RegKey)" Name="$(var.CEExtConsoleDir)" Value="[EXTCONSOLEFOLDER]" Type="string" KeyPath="yes" />
-        </Component>
-      </Directory>-->
       <Directory Id="FARMANAGERFOLDER" Name="ConEmu">
         <Directory Id="FarPluginsFolder" Name="Plugins">
           <Directory Id="FARPLUGINSCONEMU" Name="ConEmu">
