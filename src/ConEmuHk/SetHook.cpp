@@ -84,6 +84,7 @@ MMap<DWORD,BOOL> gStartedThreads;
 extern HWND    ghConWnd;      // RealConsole
 
 extern BOOL gbDllStopCalled;
+extern BOOL gbHooksWasSet;
 
 extern bool gbPrepareDefaultTerminal;
 
@@ -700,7 +701,7 @@ void* __cdecl GetOriginalAddress(void* OurFunction, void* DefaultFunction, BOOL 
 		}
 	}
 
-	_ASSERT(gbLdrDllNotificationUsed && !gbIsFarProcess); // сюда мы попадать не должны
+	_ASSERT(!gbHooksWasSet || gbLdrDllNotificationUsed && !gbIsFarProcess); // сюда мы попадать не должны
 	return DefaultFunction;
 }
 
