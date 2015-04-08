@@ -1470,6 +1470,7 @@ void DoDllStop(bool bFinal, bool bFromTerminate)
 
 	//DLOG0("DllStop",0);
 	print_timings(L"DllStop");
+	bool bUnload = (bFinal && !gbHooksWasSet);
 
 	if (gnDllState < ds_DllStop)
 		gnDllState = ds_DllStop;
