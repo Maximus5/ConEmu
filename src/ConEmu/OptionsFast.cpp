@@ -711,7 +711,7 @@ static void CreateDefaultTask(int& iCreatIdx, LPCWSTR asName, LPCWSTR asGuiArg, 
 // Search on asFirstDrive and all (other) fixed drive letters
 // asFirstDrive may be letter ("C:") or network (\\server\share)
 // asSearchPath is path to executable (\cygwin\bin\sh.exe)
-static bool FindOnDrives(LPCWSTR asFirstDrive, LPCWSTR asSearchPath, CEStr& rsFound, bool& bNeedQuot)
+static bool FindOnDrives(LPCWSTR asFirstDrive, LPCWSTR asSearchPath, CEStr& rsFound, bool& bNeedQuot, CEStr& rsOptionalFull)
 {
 	bool bFound = false;
 	wchar_t* pszExpanded = NULL;
@@ -719,6 +719,8 @@ static bool FindOnDrives(LPCWSTR asFirstDrive, LPCWSTR asSearchPath, CEStr& rsFo
 	wchar_t szTemp[MAX_PATH+1];
 
 	bNeedQuot = false;
+
+	rsOptionalFull.Empty();
 
 	if (!asSearchPath || !*asSearchPath)
 		goto wrap;
@@ -756,6 +758,7 @@ static bool FindOnDrives(LPCWSTR asFirstDrive, LPCWSTR asSearchPath, CEStr& rsFo
 		if (pszExpanded && FileExists(pszExpanded))
 		{
 			bNeedQuot = IsQuotationNeeded(pszExpanded);
+			rsOptionalFull.Set(pszExpanded);
 			rsFound.Set(asSearchPath);
 			bFound = true;
 		}
@@ -1004,7 +1007,7 @@ static void CreateDefaultTask(LPCWSTR asDrive, int& iCreatIdx, LPCWSTR asName, L
 	va_list argptr;
 	va_start(argptr, asExePath);
 
-	CEStr szFound, szArgs;
+	CEStr szFound, szArgs, szOptFull;
 	wchar_t szUnexpand[MAX_PATH+32], *pszFull = NULL; bool bNeedQuot = false;
 	MArray<wchar_t*> lsList;
 
@@ -1014,7 +1017,7 @@ static void CreateDefaultTask(LPCWSTR asDrive, int& iCreatIdx, LPCWSTR asName, L
 		asExePath = va_arg( argptr, LPCWSTR );
 
 		// Return expanded env string
-		if (!FindOnDrives(asDrive, pszExePath, szFound, bNeedQuot))
+		if (!FindOnDrives(asDrive, pszExePath, szFound, bNeedQuot, szOptFull))
 			continue;
 
 		// May be it was already found before?
@@ -1201,7 +1204,7 @@ protected:
 public:
 	void FindInstalledVersions(LPCWSTR asDrive)
 	{
-		CEStr szFound;
+		CEStr szFound, szOptFull;
 		bool bNeedQuot = false;
 		INT_PTR i;
 
@@ -1220,7 +1223,7 @@ public:
 		// Find in %Path% and on drives
 		for (i = 0; FarExe[i]; i++)
 		{
-			if (FindOnDrives(asDrive, FarExe[i], szFound, bNeedQuot))
+			if (FindOnDrives(asDrive, FarExe[i], szFound, bNeedQuot, szOptFull))
 				AddFarPath(szFound);
 		}
 
@@ -1433,7 +1436,7 @@ void CreateDefaultTasks(SettingsLoadedFlags slfFlags)
 		PuTTY?
 	*/
 
-	CEStr szFound;
+	CEStr szFound, szOptFull;
 	wchar_t *pszFull; bool bNeedQuot = false;
 
 	// Far Manager
@@ -1486,7 +1489,7 @@ void CreateDefaultTasks(SettingsLoadedFlags slfFlags)
 
 	// Type ANSI color codes
 	// cmd /k type "%ConEmuBaseDir%\Addons\AnsiColors16t.ans" -cur_console:n
-	if (FindOnDrives(NULL, L"%ConEmuBaseDir%\\Addons\\AnsiColors16t.ans", szFound, bNeedQuot))
+	if (FindOnDrives(NULL, L"%ConEmuBaseDir%\\Addons\\AnsiColors16t.ans", szFound, bNeedQuot, szOptFull))
 	{
 		CreateDefaultTask(iCreatIdx, L"Tests::Show ANSI colors", L"", L"cmd /k type \"%ConEmuBaseDir%\\Addons\\AnsiColors16t.ans\" -cur_console:n");
 	}
