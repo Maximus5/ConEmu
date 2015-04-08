@@ -1752,6 +1752,11 @@ BOOL DllMain_ProcessAttach(HANDLE hModule, DWORD  ul_reason_for_call)
 		else
 			gEvtThreadRoot.nErrCode = GetLastError();
 		//SafeCloseHandle(gEvtThreadRoot.hProcessFlag);
+		// Event has not created or is inaccessible
+		if (!bCurrentThreadIsMain && (GetMainThreadId(false) == GetCurrentThreadId()))
+		{
+			bCurrentThreadIsMain = true;
+		}
 	}
 
 	// When calling Attach (Win+G) from ConEmu GUI
