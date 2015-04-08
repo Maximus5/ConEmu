@@ -4,7 +4,7 @@
 	<?define Guid.UpgradeCode = "75D2A1D0-92AC-4A7F-B4D0-A33D94E96018" ?>
 	<?define Guid.CEInstallDir = "7C748C5A-814E-4092-B703-BD44C9367CD9" ?>
 	<!--<?define Guid.CEExtConsoleDir = "D42407E6-9952-47EC-BE23-2C3F1CEA7485" ?>-->
-	<?define Guid.CEFarPluginsDir = "CAA0FA82-CBEA-4A4F-B6A1-91ED188DB5B4" ?>
+	<!--<?define Guid.CEFarPluginsDir = "CAA0FA82-CBEA-4A4F-B6A1-91ED188DB5B4" ?>-->
 <!-- shortcuts -->
 	<?define Guid.ConEmuStartShortcut = "F7005487-D8D6-41ED-8B75-FFFB4A218F3A" ?>
 	<?define Guid.ConEmuStartShortcut64 = "B7C99F54-D741-4DBA-B487-23A5B475A4A0" ?>

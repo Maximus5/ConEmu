@@ -19,7 +19,7 @@
     <?define ProgramFiles = "ProgramFilesFolder" ?>
     <?define CEInstallDir = "InstallDir" ?>
     <!--<?define CEExtConsoleDir = "ExtConsoleDir" ?>-->
-    <?define CEFarPluginsDir = "FarPluginsDir" ?>
+    <!--<?define CEFarPluginsDir = "FarPluginsDir" ?>-->
     <?define FarInstallDir = "InstallDir" ?>
   <?endif?>
   <?if $(var.Platform) = x64 ?>
@@ -29,7 +29,7 @@
     <?define ProgramFiles = "ProgramFiles64Folder" ?>
     <?define CEInstallDir = "InstallDir_x64" ?>
     <!--<?define CEExtConsoleDir = "ExtConsoleDir_x64" ?>-->
-    <?define CEFarPluginsDir = "FarPluginsDir_x64" ?>
+    <!--<?define CEFarPluginsDir = "FarPluginsDir_x64" ?>-->
     <?define FarInstallDir = "InstallDir_x64" ?>
   <?endif?>
 

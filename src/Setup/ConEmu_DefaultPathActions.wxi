@@ -10,8 +10,10 @@
 
     <CustomAction Id="SetConEmuInstallDirCEOld" Property="APPLICATIONFOLDER" Value="[APPLICATIONFOLDEROLD]" Execute="firstSequence" />
 
+    <!--
     <CustomAction Id="SetConEmuPluginDirOld" Property="FARPLUGINSCONEMU" Value="[FARPLUGINSCONEMUOLD]" Execute="firstSequence" />
     <CustomAction Id="SetConEmuPluginDirApp" Property="FARPLUGINSCONEMU" Value="[APPLICATIONFOLDER]\Plugins" Execute="firstSequence" />
+    -->
 
     <!--<CustomAction Id="SetExtConsoleFolderM3" Property="EXTCONSOLEFOLDER" Value="[FARMANAGERFOLDER3]" Execute="firstSequence" />
     <CustomAction Id="SetExtConsoleFolderU3" Property="EXTCONSOLEFOLDER" Value="[FARMANAGERFOLDERUSER3]" Execute="firstSequence" />-->

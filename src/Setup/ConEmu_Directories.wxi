@@ -22,14 +22,8 @@
           <Directory Id="Portable" Name="Portable"/>
           -->
         </Directory>
-      </Directory>
-      <Directory Id="FARMANAGERFOLDER" Name="ConEmu">
         <Directory Id="FarPluginsFolder" Name="Plugins">
-          <Directory Id="FARPLUGINSCONEMU" Name="ConEmu">
-            <Component Id="CEFarPluginsDir" Guid="$(var.Guid.CEFarPluginsDir)" Win64="$(var.Win64)">
-              <RegistryValue Root="HKMU" Key="$(var.RegKey)" Name="$(var.CEFarPluginsDir)" Value="[FARPLUGINSCONEMU]" Type="string" KeyPath="yes" />
-            </Component>
-          </Directory>
+          <Directory Id="FARPLUGINSCONEMU" Name="ConEmu"/>
         </Directory>
       </Directory>
     </Directory>
