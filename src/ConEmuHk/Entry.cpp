@@ -908,6 +908,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 
 			if (gbForceStartPipeServer || (gnImageSubsystem != IMAGE_SUBSYSTEM_WINDOWS_CUI))
 			{
+				_ASSERTE(lstrcmpi(gsExeName,L"ls.exe") != 0)
 				// For GUI applications - start server thread immediately
 				StartHookServer();
 			}
@@ -1761,6 +1762,7 @@ BOOL DllMain_ProcessAttach(HANDLE hModule, DWORD  ul_reason_for_call)
 
 	// When calling Attach (Win+G) from ConEmu GUI
 	gbForceStartPipeServer = (!bCurrentThreadIsMain);
+	_ASSERTE(!gbForceStartPipeServer || (lstrcmpi(gsExeName,L"ls.exe") != 0))
 
 	if (!gbSelfIsRootConsoleProcess && !gbConEmuCProcess)
 	{
@@ -2813,6 +2815,8 @@ void StartHookServer()
 		// Start server!
 		wchar_t szPipeName[128];
 		msprintf(szPipeName, countof(szPipeName), CEHOOKSPIPENAME, L".", GetCurrentProcessId());
+
+		_ASSERTE(lstrcmpi(gsExeName,L"ls.exe") != 0)
 
 		if (!gpHookServer->StartPipeServer(true, szPipeName, (LPARAM)gpHookServer, LocalSecurity(), HookServerCommand, HookServerFree, NULL, NULL, HookServerReady))
 		{
