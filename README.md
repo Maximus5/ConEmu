@@ -7,7 +7,7 @@ Just post in the voting thread (https://sourceforge.net/p/potm/discussion/vote/t
     VOTE: conemu
 
 ## About ConEmu
-ConEmu-Maximus5 is a Windows console emulator with tabs, which represents
+[ConEmu-Maximus5](https://conemu.github.io) is a Windows console emulator with tabs, which represents
 multiple consoles as one customizable GUI window with various features.
 
 Initially, the program was created as a companion to
@@ -35,10 +35,10 @@ See [Release/ConEmu/License.txt](https://github.com/Maximus5/ConEmu/blob/master/
 
 
 ## Some links
-Release stages: https://conemu.github.io/en/StableVsPreview.html  
 Wiki: https://conemu.github.io/en/TableOfContents.html  
 What's new: https://conemu.github.io/en/Whats_New.html  
-Donate this project: https://conemu.github.io/donate.html
+Release stages: https://conemu.github.io/en/StableVsPreview.html  
+Donate this project: <a ref="https://conemu.github.io/donate.html" rel="nofollow">https://conemu.github.io/donate.html</a>
 
 
 
