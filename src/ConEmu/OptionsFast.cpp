@@ -770,11 +770,12 @@ static bool FindOnDrives(LPCWSTR asFirstDrive, LPCWSTR asSearchPath, CEStr& rsFo
 		{
 			// OK, create task with just a name of exe file
 			bNeedQuot = IsQuotationNeeded(asSearchPath);
+			rsOptionalFull.Set(szTemp);
 			rsFound.Set(asSearchPath);
 			bFound = true;
 		}
 		// Search in [HKCU|HKLM]\Software\Microsoft\Windows\CurrentVersion\App Paths
-		if (SearchAppPaths(asSearchPath, rsFound, false/*abSetPath*/))
+		else if (SearchAppPaths(asSearchPath, rsFound, false/*abSetPath*/))
 		{
 			bNeedQuot = IsQuotationNeeded(rsFound);
 			bFound = true;
