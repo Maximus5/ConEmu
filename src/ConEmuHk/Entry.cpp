@@ -1536,6 +1536,7 @@ void DoDllStop(bool bFinal, bool bFromTerminate)
 	#ifdef USE_PIPE_SERVER
 	if (gpHookServer)
 	{
+		//TODO: Skip when (bFromTerminate == true)?
 		DLOG0("StopPipeServer",0);
 		print_timings(L"StopPipeServer");
 		gpHookServer->StopPipeServer(true, gbHookServerForcedTermination);
