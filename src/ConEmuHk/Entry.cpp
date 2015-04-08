@@ -106,8 +106,8 @@ DWORD gnLastShowExeTick = 0;
 #ifdef SHOW_EXE_TIMINGS
 #define print_timings(s) if (gbShowExeMsgBox) { \
 	DWORD w, nCurTick = GetTickCount(); \
-	msprintf(szTimingMsg, countof(szTimingMsg), L">>> %s >>> %u >>> %s\n", SHOW_EXE_MSGBOX_NAME, (nCurTick - gnLastShowExeTick), s); \
-	OnWriteConsoleW(hTimingHandle, szTimingMsg, lstrlen(szTimingMsg), &w, NULL); \
+	msprintf(szTimingMsg, countof(szTimingMsg), L">>> %s >>> %u >>> %s\n", SHOW_EXE_MSGBOX_NAME, gnLastShowExeTick?(nCurTick - gnLastShowExeTick):0, s); \
+	CEAnsi::OnWriteConsoleW(hTimingHandle, szTimingMsg, lstrlen(szTimingMsg), &w, NULL); \
 	gnLastShowExeTick = nCurTick; \
 	}
 #else
@@ -757,6 +757,10 @@ void FixSshThreads(int iStep)
 DWORD WINAPI DllStart(LPVOID /*apParm*/)
 {
 	//DLOG0("DllStart",0);
+	#if defined(SHOW_EXE_TIMINGS) || defined(SHOW_EXE_MSGBOX)
+		wchar_t szTimingMsg[512]; UNREFERENCED_PARAMETER(szTimingMsg);
+		HANDLE hTimingHandle = GetStdHandle(STD_OUTPUT_HANDLE);
+	#endif
 
 	// *******************  begin  *********************
 
@@ -771,6 +775,18 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 		wchar_t szCpInfo[128];
 		DWORD nCP = GetConsoleOutputCP();
 		msprintf(szCpInfo, countof(szCpInfo), L"Current Output CP = %u", nCP);
+		print_timings(szCpInfo);
+
+		FILETIME ftStart = {}, ft1 = {}, ft2 = {}, ft3 = {}, ftCur = {};
+		SYSTEMTIME stCur = {}, stRun = {};
+		GetProcessTimes(GetCurrentProcess(), &ftStart, &ft1, &ft2, &ft3);
+		GetSystemTime(&stCur); SystemTimeToFileTime(&stCur, &ftCur);
+		FileTimeToSystemTime(&ftStart, &stRun);
+		int iDuration = (int)(((*(__int64*)&ftCur) - (*(__int64*)&ftStart)) / 10000);
+		msprintf(szCpInfo, countof(szCpInfo),
+			L"Start duration: %i, Now: %u:%02u:%02u.%03u, Start: %u:%02u:%02u.%03u",
+			iDuration, stCur.wHour, stCur.wMinute, stCur.wSecond, stCur.wMilliseconds,
+			stRun.wHour, stRun.wMinute, stRun.wSecond, stRun.wMilliseconds);
 		print_timings(szCpInfo);
 	}
 	#endif
@@ -1444,14 +1460,15 @@ void FlushMouseEvents()
 
 void DoDllStop(bool bFinal, bool bFromTerminate)
 {
-	//DLOG0("DllStop",0);
-	print_timings(L"DllStop");
-	bool bUnload = (bFinal && !gbHooksWasSet);
+	DLOG0("DoDllStop",bFinal);
 
 	#if defined(SHOW_EXE_TIMINGS) || defined(SHOW_EXE_MSGBOX)
 		wchar_t szTimingMsg[512]; UNREFERENCED_PARAMETER(szTimingMsg);
 		HANDLE hTimingHandle = GetStdHandle(STD_OUTPUT_HANDLE);
 	#endif
+
+	//DLOG0("DllStop",0);
+	print_timings(L"DllStop");
 
 	if (gnDllState < ds_DllStop)
 		gnDllState = ds_DllStop;
@@ -1631,7 +1648,30 @@ void DoDllStop(bool bFinal, bool bFromTerminate)
 	#endif
 
 	gbDllStopCalled = TRUE;
-	print_timings(L"DllStop - Done");
+	wchar_t szDoneInfo[128];
+	{
+	FILETIME ftStart = {}, ft1 = {}, ft2 = {}, ft3 = {}, ftCur = {};
+	SYSTEMTIME stCur = {}, stRun = {};
+	GetProcessTimes(GetCurrentProcess(), &ftStart, &ft1, &ft2, &ft3);
+	GetSystemTime(&stCur); SystemTimeToFileTime(&stCur, &ftCur);
+	int iDuration = (int)(((*(__int64*)&ftCur) - (*(__int64*)&ftStart)) / 10000);
+	msprintf(szDoneInfo, countof(szDoneInfo),
+		L"DllStop - Done, Run duration: %i, Now: %u:%02u:%02u.%03u",
+		iDuration, stCur.wHour, stCur.wMinute, stCur.wSecond, stCur.wMilliseconds);
+	print_timings(szDoneInfo);
+	}
+
+	#ifdef USEHOOKLOG
+	if ((bFinal || bFromTerminate) && (lstrcmpi(gsExeName,L"ls.exe") == 0))
+	{
+		DLOGEND();
+		#ifdef USEHOOKLOGANALYZE
+		HookLogger::RunAnalyzer();
+		//_ASSERTEX(FALSE && "Hooks terminated");
+		#endif
+		print_timings(L"HookLogger::RunAnalyzer - Done");
+	}
+	#endif
 
 	//DLOGEND();
 }
@@ -1917,17 +1957,6 @@ BOOL DllMain_ProcessDetach(HANDLE hModule, DWORD  ul_reason_for_call)
 	// -- free не нужен, т.к. уже может быть вызван HeapDeinitialize()
 	//free(user);
 	ShutdownStep(L"DLL_PROCESS_DETACH done");
-
-	#ifdef USEHOOKLOG
-	if (bFinal)
-	{
-		DLOGEND();
-		#ifdef USEHOOKLOGANALYZE
-		HookLogger::RunAnalyzer();
-		_ASSERTEX(FALSE && "Hooks terminated");
-		#endif
-	}
-	#endif
 
 	return lbAllow;
 }
