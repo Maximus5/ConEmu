@@ -1442,7 +1442,7 @@ void FlushMouseEvents()
 	}
 }
 
-void DoDllStop(bool bFinal)
+void DoDllStop(bool bFinal, bool bFromTerminate)
 {
 	//DLOG0("DllStop",0);
 	print_timings(L"DllStop");

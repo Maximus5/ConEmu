@@ -201,7 +201,7 @@ extern "C" {
 };
 #endif
 
-void DoDllStop(bool bFinal);
+void DoDllStop(bool bFinal, bool bFromTerminate = false);
 
 #ifdef _DEBUG
 	//#define USEHOOKLOG
