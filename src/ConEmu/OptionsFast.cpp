@@ -1116,16 +1116,19 @@ protected:
 
 protected:
 	// This will load Far version and check its existence
-	bool AddFarPath(LPCWSTR szPath)
+	bool AddFarPath(LPCWSTR szPath, LPCWSTR pszOptFull)
 	{
 		bool bAdded = false;
 		FarInfo FI = {};
 		wchar_t ErrText[512];
 
-		if (LoadFarVersion(szPath, FI.Ver, ErrText))
+		_ASSERTE(!pszOptFull || *pszOptFull);
+		LPCWSTR pszPath = pszOptFull ? pszOptFull : szPath;
+
+		if (LoadFarVersion(pszPath, FI.Ver, ErrText))
 		{
 			DWORD ImageSubsystem = 0, FileAttrs = 0;
-			GetImageSubsystem(szPath, ImageSubsystem, FI.Ver.dwBits, FileAttrs);
+			GetImageSubsystem(pszPath, ImageSubsystem, FI.Ver.dwBits, FileAttrs);
 
 			// Far instance found, add it to Installed array?
 			bool bAlready = false;
@@ -1133,6 +1136,12 @@ protected:
 			{
 				if (lstrcmpi(Installed[a].szFullPath, szPath) == 0)
 				{
+					bAlready = true; break; // Do not add twice same path
+				}
+				else if (pszOptFull && (lstrcmpi(Installed[a].szFullPath, pszOptFull) == 0))
+				{
+					SafeFree(Installed[a].szFullPath);
+					Installed[a].szFullPath = lstrdup(szPath);
 					bAlready = true; break; // Do not add twice same path
 				}
 			}
@@ -1192,7 +1201,7 @@ protected:
 							{
 								CEStr szPath(JoinPath(szKeyValue, FarExe[fe]));
 								// This will load Far version and check its existence
-								AddFarPath(szPath);
+								AddFarPath(szPath, NULL);
 							}
 						}
 					}
@@ -1214,7 +1223,7 @@ public:
 		for (i = 0; FarExe[i]; i++)
 		{
 			if (FileExistSubDir(gpConEmu->ms_ConEmuExeDir, FarExe[i], 1, szFound))
-				AddFarPath(szFound);
+				AddFarPath(szFound, NULL);
 		}
 
 		// Check registry
@@ -1224,14 +1233,14 @@ public:
 		for (i = 0; FarExe[i]; i++)
 		{
 			if (FindOnDrives(asDrive, FarExe[i], szFound, bNeedQuot, szOptFull))
-				AddFarPath(szFound);
+				AddFarPath(szFound, szOptFull.IsEmpty() ? NULL : szOptFull.ms_Arg);
 		}
 
 		// [HKCU|HKLM]\Software\Microsoft\Windows\CurrentVersion\App Paths
 		for (i = 0; FarExe[i]; i++)
 		{
 			if (SearchAppPaths(FarExe[i], szFound, false))
-				AddFarPath(szFound);
+				AddFarPath(szFound, NULL);
 		}
 
 		// Done, create task names
@@ -1330,22 +1339,23 @@ void CreateFarTasks(LPCWSTR asDrive, int& iCreatIdx)
 	{
 		FarVerList::FarInfo& FI = Vers.Installed[i];
 		bool bNeedQuot = (wcschr(FI.szFullPath, L' ') != NULL);
+		LPCWSTR pszFullPath = FI.szFullPath;
+		wchar_t szUnexpanded[MAX_PATH];
+		if (wcschr(pszFullPath, L'\\') && UnExpandEnvStrings(pszFullPath, szUnexpanded, countof(szUnexpanded)))
+			pszFullPath = szUnexpanded;
 
-		wchar_t* pszCommand = bNeedQuot ? lstrmerge(L"\"", FI.szFullPath, L"\"") : lstrdup(FI.szFullPath);
+		wchar_t* pszCommand = bNeedQuot ? lstrmerge(L"\"", pszFullPath, L"\"") : lstrdup(pszFullPath);
 		if (pszCommand)
 		{
 			if (FI.Ver.dwVerMajor >= 2)
 				lstrmerge(&pszCommand, L" /w");
-			wchar_t* pszName = (wchar_t*)PointToName(FI.szFullPath);
-			if (pszName && (pszName > FI.szFullPath))
-			{
-				*(pszName) = 0; // Cut to slash
-				lstrmerge(&pszCommand, L" /p\"%ConEmuDir%\\Plugins\\ConEmu;%FarHome%\\Plugins\"");
 
-				if (gn_FirstFarTask == -1)
-					gn_FirstFarTask = iCreatIdx;
-				CreateDefaultTask(iCreatIdx, FI.szTaskName, NULL, pszCommand);
-			}
+			lstrmerge(&pszCommand, L" /p\"%ConEmuDir%\\Plugins\\ConEmu;%FarHome%\\Plugins\"");
+
+			if (gn_FirstFarTask == -1)
+				gn_FirstFarTask = iCreatIdx;
+
+			CreateDefaultTask(iCreatIdx, FI.szTaskName, NULL, pszCommand);
 		}
 
 		// Release memory
