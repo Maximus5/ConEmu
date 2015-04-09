@@ -40,7 +40,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 static CPushInfo::PushInfo gPushInfo[] = {
 	{
 		/* Valid for */
-		{ 2015, 3, 13 }, { 2015, 4, 15 },
+		{ 2015, 3, 13 }, { 2015, 4, 8 },
 		/* Message for TSA icon */
 		L"ConEmu was selected to be on the ballot\n"
 		L"of SourceForge.net project of the month!\n"
