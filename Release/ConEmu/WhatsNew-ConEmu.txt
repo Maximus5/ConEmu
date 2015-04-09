@@ -12,6 +12,15 @@ Votes and awards (vote for ConEmu, if you please)
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+2015.4.8
+[*] Far plugins folder can't be configured in MSI-installer anymore.
+    They are installed in `%ConEmuDir%\Plugins`.
+    If you need separate Far installations - use "Far.exe /p..." switch.
+[*] Issue 1590: Speed up cygwin commands execution.
+[*] Show process information in the 'Injecting remove failed' message.
+[*] Don't add spare default Far tasks, UnExpand paths if possible.
+
+
 2015.4.5
 [*] Redesign ‘Fast configuration’ dialog. Add ‘Start command’, ‘Palette’, ‘Quake style with HotKey’.
 [*] Choose preferred startup Task for new configs (Far -> TCC -> NYAOS -> cmd).
