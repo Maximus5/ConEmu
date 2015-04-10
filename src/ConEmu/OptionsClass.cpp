@@ -6157,6 +6157,8 @@ void CSettings::Dialog(int IdShowPage /*= 0*/)
 {
 	if (!ghOpWnd || !IsWindow(ghOpWnd))
 	{
+		_ASSERTE(isMainThread());
+
 		SetCursor(LoadCursor(NULL,IDC_WAIT));
 
 		// Сначала обновить DC, чтобы некрасивостей не было
