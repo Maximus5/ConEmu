@@ -4167,6 +4167,7 @@ CVirtualConsole* CVConGroup::CreateCon(RConStartArgs *args, bool abAllowScripts 
 		&& args->pszSpecialCmd
 		&& (*args->pszSpecialCmd == CmdFilePrefix
 			|| *args->pszSpecialCmd == DropLnkPrefix
+			|| (lstrcmp(args->pszSpecialCmd, AutoStartTaskName) == 0)
 			|| *args->pszSpecialCmd == TaskBracketLeft))
 	{
 		if (!abAllowScripts)
