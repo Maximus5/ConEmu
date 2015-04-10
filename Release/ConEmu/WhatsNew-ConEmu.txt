@@ -12,6 +12,11 @@ Votes and awards (vote for ConEmu, if you please)
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+2015.4.9
+[*] gh#63: Option ‘Auto save/restore tabs’ was conflicted with unchecked ‘Quit on close’.
+[*] Some of GuiMacro functions must be executed in the main thread only.
+
+
 2015.4.8
 [*] Far plugins folder can't be configured in MSI-installer anymore.
     They are installed in `%ConEmuDir%\Plugins`.
