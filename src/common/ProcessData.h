@@ -581,6 +581,14 @@ public:
 			}
 		}
 
+		if (!lbFound)
+		{
+			if (pProcessName)
+				*pProcessName = 0;
+			if (pProcessPath)
+				*pProcessPath = 0;
+		}
+
 		return lbFound;
 	};
 };
