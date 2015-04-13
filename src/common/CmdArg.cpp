@@ -71,6 +71,8 @@ wchar_t* CmdArg::GetBuffer(INT_PTR cchMaxLen)
 		return NULL;
 	}
 
+	INT_PTR nOldLen = (ms_Arg && (mn_MaxLen > 0)) ? (mn_MaxLen-1) : 0;
+
 	if (!ms_Arg || (cchMaxLen >= mn_MaxLen))
 	{
 		INT_PTR nNewMaxLen = max(mn_MaxLen,cchMaxLen+1);
@@ -87,8 +89,8 @@ wchar_t* CmdArg::GetBuffer(INT_PTR cchMaxLen)
 
 	if (ms_Arg)
 	{
-		_ASSERTE(cchMaxLen>0 && mn_MaxLen>1);
-		ms_Arg[min(cchMaxLen,mn_MaxLen-1)] = 0;
+		_ASSERTE(cchMaxLen>0 && nOldLen>=0);
+		ms_Arg[min(cchMaxLen,nOldLen)] = 0;
 	}
 
 	return ms_Arg;
