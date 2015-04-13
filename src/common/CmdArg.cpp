@@ -73,7 +73,7 @@ wchar_t* CmdArg::GetBuffer(INT_PTR cchMaxLen)
 
 	if (!ms_Arg || (cchMaxLen >= mn_MaxLen))
 	{
-		INT_PTR nNewMaxLen = cchMaxLen+1;
+		INT_PTR nNewMaxLen = max(mn_MaxLen,cchMaxLen+1);
 		if (ms_Arg)
 		{
 			ms_Arg = (wchar_t*)realloc(ms_Arg, nNewMaxLen*sizeof(*ms_Arg));
