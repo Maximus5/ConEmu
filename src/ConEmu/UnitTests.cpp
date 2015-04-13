@@ -46,6 +46,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #ifdef _DEBUG
 #include "DynDialog.h"
+#include "../common/ProcessData.h"
 #endif
 
 #ifdef _DEBUG
@@ -347,6 +348,15 @@ void DebugCpUnitTest()
 	}
 }
 
+void DebugProcessNameTest()
+{
+	CProcessData processes;
+	CEStr lsName(lstrdup(L"xxx.exe")), lsPath;
+	DWORD nPID = GetCurrentProcessId();
+	bool bRc = processes.GetProcessName(nPID, lsName.GetBuffer(MAX_PATH), MAX_PATH, lsPath.GetBuffer(MAX_PATH*2), MAX_PATH*2, NULL);
+	_ASSERTE(bRc);
+}
+
 void DebugUnitTests()
 {
 	RConStartArgs::RunArgTests();
@@ -366,6 +376,7 @@ void DebugUnitTests()
 	ConEmuChord::ChordUnitTests();
 	ConEmuHotKey::HotkeyNameUnitTests();
 	CDynDialog::UnitTests();
+	DebugProcessNameTest();
 }
 #endif
 
