@@ -1486,6 +1486,17 @@ void CreateDefaultTasks(SettingsLoadedFlags slfFlags)
 	//{L"CygWin mintty", L"\\CygWin\\bin\\mintty.exe", L" -"},
 	CreateDefaultTask(szConEmuDrive, iCreatIdx, L"Bash::MinGW bash",  L" --login -i", L"set CHERE_INVOKING=1 & ", NULL, L"\\MinGW\\msys\\1.0\\bin\\sh.exe", NULL);
 	//{L"MinGW mintty", L"\\MinGW\\msys\\1.0\\bin\\mintty.exe", L" -"},
+	// MSys2 project: 'HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\MSYS2 32bit'
+	CreateDefaultTask(szConEmuDrive, iCreatIdx, L"Bash::Msys2-64",
+		L" --login -i -new_console:C:\"" FOUND_APP_PATH_STR L"\\msys2.ico\"", L"set CHERE_INVOKING=1 & ", NULL,
+		L"[SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\MSYS2 64bit:InstallLocation]\\usr\\bin\\sh.exe",
+		L"msys64\\usr\\bin\\sh.exe",
+		NULL);
+	CreateDefaultTask(szConEmuDrive, iCreatIdx, L"Bash::Msys2-32",
+		L" --login -i -new_console:C:\"" FOUND_APP_PATH_STR L"\\msys2.ico\"", L"set CHERE_INVOKING=1 & ", NULL,
+		L"[SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\MSYS2 32bit:InstallLocation]\\usr\\bin\\sh.exe",
+		L"msys32\\usr\\bin\\sh.exe",
+		NULL);
 	// Last chance for bash
 	CreateDefaultTask(szConEmuDrive, iCreatIdx, L"Bash::bash", L" --login -i", L"set CHERE_INVOKING=1 & ", NULL, L"sh.exe", NULL);
 
