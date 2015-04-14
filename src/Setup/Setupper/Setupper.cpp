@@ -339,7 +339,7 @@ int ReportError(int nErr, LPCWSTR asLabel, void* pArg)
 	{
 		wsprintf(szMessage+lstrlen(szMessage), HIWORD(nLastErr) ? L"\nErrorCode=0x%08X" : L"\nErrorCode=%u", nLastErr);
 	}
-	MessageBox(NULL, szMessage, gsTitle, MB_ICONSTOP);
+	MessageBox(NULL, szMessage, gsTitle, MB_ICONSTOP|MB_SYSTEMMODAL);
 	return nErr;
 }
 
