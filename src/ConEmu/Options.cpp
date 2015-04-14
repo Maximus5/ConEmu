@@ -2949,7 +2949,9 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 		reg->Load(L"Update.Proxy", &UpdSet.szUpdateProxy);
 		reg->Load(L"Update.ProxyUser", &UpdSet.szUpdateProxyUser);
 		reg->Load(L"Update.ProxyPassword", &UpdSet.szUpdateProxyPassword);
-		reg->Load(L"Update.DownloadMode", UpdSet.isUpdateDownloadSetup); // 1-Installer (ConEmuSetup.exe), 2-7z archieve (ConEmu.7z), WinRar or 7z required
+		//It is not saved to settings, so must not be loaded from
+		//reg->Load(L"Update.DownloadMode", UpdSet.isUpdateDownloadSetup); // 1-Installer (ConEmuSetup.exe), 2-7z archieve (ConEmu.7z), WinRar or 7z required
+		UpdSet.isUpdateDownloadSetup = 0; // Use 'Auto' detection
 		reg->Load(L"Update.ExeCmdLine", &UpdSet.szUpdateExeCmdLine);
 		reg->Load(L"Update.ArcCmdLine", &UpdSet.szUpdateArcCmdLine);
 		reg->Load(L"Update.DownloadPath", &UpdSet.szUpdateDownloadPath);
