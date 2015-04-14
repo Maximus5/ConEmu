@@ -2666,6 +2666,8 @@ BOOL WINAPI HookServerCommand(LPVOID pInst, CESERVER_REQ* pCmd, CESERVER_REQ* &p
 				switch (pCmd->hdr.nCmd)
 				{
 				case CECMD_MOUSECLICK:
+					if (!gReadConsoleInfo.InReadConsoleTID && !pCmd->Prompt.Force)
+						break;
 					bProcessed = OnReadConsoleClick(pCmd->Prompt.xPos, pCmd->Prompt.yPos, (pCmd->Prompt.Force != 0), (pCmd->Prompt.BashMargin != 0));
 					break;
 				case CECMD_BSDELETEWORD:
