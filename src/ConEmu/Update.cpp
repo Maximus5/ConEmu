@@ -1714,6 +1714,7 @@ int CConEmuUpdate::QueryConfirmationDownload()
 	tsk.pButtons       = btns;
 	tsk.cButtons       = countof(btns);
 
+	tsk.hwndParent     = ghWnd;
 
 	hr = TaskDialog(&tsk, &iBtn, NULL, NULL);
 	if (hr == S_OK)
@@ -1790,6 +1791,8 @@ int CConEmuUpdate::QueryConfirmationUpdate()
 	tsk.pButtons       = btns;
 	tsk.cButtons       = countof(btns);
 
+	tsk.hwndParent     = ghWnd;
+
 	hr = TaskDialog(&tsk, &iBtn, NULL, NULL);
 	if (hr == S_OK)
 		goto wrap;
@@ -1860,6 +1863,7 @@ int CConEmuUpdate::QueryConfirmationNoNewVer()
 	tsk.pButtons       = btns;
 	tsk.cButtons       = countof(btns);
 
+	tsk.hwndParent     = ghWnd;
 
 	hr = TaskDialog(&tsk, &iBtn, NULL, NULL);
 	if (hr == S_OK)
