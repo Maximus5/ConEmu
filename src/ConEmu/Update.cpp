@@ -1779,9 +1779,10 @@ int CConEmuUpdate::QueryConfirmationUpdate()
 	_wsprintf(szWWW, SKIPLEN(countof(szWWW)) L"<a href=\"%s\">%s</a>", gsWhatsNew, szWhatsNewLabel);
 	tsk.pszFooter = szWWW;
 
-	_wsprintf(szMsg, SKIPLEN(countof(szMsg)) L"Close and update\nto %s version %s",
+	_wsprintf(szMsg, SKIPLEN(countof(szMsg)) L"Close and update\nto %s version %s%s",
 		mb_DroppedMode ? L"dropped" : (mp_Set->isUpdateUseBuilds==1) ? L"new " CV_STABLE
-		: (mp_Set->isUpdateUseBuilds==3) ? L"new " CV_PREVIEW : L"new " CV_DEVEL, ms_NewVersion);
+		: (mp_Set->isUpdateUseBuilds==3) ? L"new " CV_PREVIEW : L"new " CV_DEVEL, ms_NewVersion,
+		(mp_Set->UpdateDownloadSetup() == 1) ? (mp_Set->isSetup64 ? L".x64" : L".x86") : L" (7-Zip)");
 	btns[0].nButtonID  = IDYES;    btns[0].pszButtonText = szMsg;
 	btns[1].nButtonID  = IDNO; btns[1].pszButtonText = L"Postpone\nupdate will be started when you close ConEmu window";
 	btns[2].nButtonID  = IDCANCEL; btns[2].pszButtonText = L"Cancel";
