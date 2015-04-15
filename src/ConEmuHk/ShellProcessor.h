@@ -126,6 +126,10 @@ public:
 	// Вызывается после успешного создания процесса
 	void OnCreateProcessFinished(BOOL abSucceeded, PROCESS_INFORMATION *lpPI);
 	void OnShellFinished(BOOL abSucceeded, HINSTANCE ahInstApp, HANDLE ahProcess);
+	// Used with DefTerm+VSDebugger
+	static bool OnResumeDebugeeThreadCalled(HANDLE hThread, PROCESS_INFORMATION* lpPI = NULL);
+protected:
+	static PROCESS_INFORMATION m_WaitDebugVsThread;
 public:
 	// Helper
 	bool GetLinkProperties(LPCWSTR asLnkFile, CmdArg& rsExe, CmdArg& rsArgs, CmdArg& rsWorkDir);

@@ -357,6 +357,8 @@ BOOL WINAPI OnSetCurrentDirectoryW(LPCWSTR lpPathName);
 VOID WINAPI OnExitProcess(UINT uExitCode);
 BOOL WINAPI OnTerminateProcess(HANDLE hProcess, UINT uExitCode);
 BOOL WINAPI OnTerminateThread(HANDLE hThread, DWORD dwExitCode);
+DWORD WINAPI OnResumeThread(HANDLE hThread);
+
 
 
 
@@ -700,6 +702,12 @@ bool InitHooksDefaultTrm()
 		/* ************************ */
 		{0}
 	};
+	HookItem HooksDevStudio[] =
+	{
+		{(void*)OnResumeThread,			"ResumeThread",			kernel32},
+		/* ************************ */
+		{0}
+	};
 
 	InitHooks(HooksCommon);
 
@@ -717,6 +725,11 @@ bool InitHooksDefaultTrm()
 	if (gbIsNetVsHost)
 	{
 		InitHooks(HooksVshost);
+	}
+
+	if (gbIsVStudio)
+	{
+		InitHooks(HooksDevStudio);
 	}
 
 	return true;
@@ -5258,6 +5271,19 @@ bool AttachServerConsole()
 		}
 	}
 	return lbAttachRc;
+}
+
+// Used in VisualStudio only, required for DefTerm support while debugging
+DWORD WINAPI OnResumeThread(HANDLE hThread)
+{
+	typedef DWORD (WINAPI* OnResumeThread_t)(HANDLE);
+	ORIGINALFAST(ResumeThread);
+
+	CShellProc::OnResumeDebugeeThreadCalled(hThread);
+
+	DWORD nRc = F(ResumeThread)(hThread);
+
+	return nRc;
 }
 
 BOOL WINAPI OnAllocConsole(void)

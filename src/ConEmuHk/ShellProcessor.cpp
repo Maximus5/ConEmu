@@ -126,6 +126,7 @@ extern DWORD  gnHookMainThreadId;
 
 bool  CShellProc::mb_StartingNewGuiChildTab = 0;
 DWORD CShellProc::mn_LastStartedPID = 0;
+PROCESS_INFORMATION CShellProc:: m_WaitDebugVsThread = {};
 
 CShellProc::CShellProc()
 {
@@ -2747,13 +2748,15 @@ void CShellProc::OnCreateProcessFinished(BOOL abSucceeded, PROCESS_INFORMATION *
 			if (mb_PostInjectWasRequested)
 			{
 				// This is "*.vshost.exe", it is GUI wich can be used for debugging .Net console applications
-				//HANDLE hProcess = NULL; DWORD nResult = 0, nErrCode = 0;
-				int iHookRc = gpDefTerm->StartDefTermHooker(lpPI->dwProcessId, lpPI->hProcess);
-				//SafeCloseHandle(hProcess); // This is a handle of started "ConEmuC.exe /DEFTRM=..."
-				UNREFERENCED_PARAMETER(iHookRc);
-				// Отпустить процесс
-				if (!mb_WasSuspended)
-					ResumeThread(lpPI->hThread);
+				if (mb_WasSuspended)
+				{
+					// Supposing Studio will process only one "*.vshost.exe" at a time
+					m_WaitDebugVsThread = *lpPI;
+				}
+				else
+				{
+					OnResumeDebugeeThreadCalled(lpPI->hThread, lpPI);
+				}
 			}
 			// Starting debugging session from VS (for example)?
 			else if (mb_DebugWasRequested && !mb_HiddenConsoleDetachNeed)
@@ -2834,6 +2837,72 @@ void CShellProc::OnCreateProcessFinished(BOOL abSucceeded, PROCESS_INFORMATION *
 		FreeConsole();
 		SetServerPID(0);
 	}
+}
+
+bool CShellProc::OnResumeDebugeeThreadCalled(HANDLE hThread, PROCESS_INFORMATION* lpPI /*= NULL*/)
+{
+	if ((!hThread || (m_WaitDebugVsThread.hThread != hThread)) && !lpPI)
+		return false;
+
+	int iHookRc = -1;
+	DWORD nPreError = GetLastError();
+	DWORD nResumeRC = -1;
+
+	DWORD nPID = lpPI ? lpPI->dwProcessId : m_WaitDebugVsThread.dwProcessId;
+	HANDLE hProcess = lpPI ? lpPI->hProcess : m_WaitDebugVsThread.hProcess;
+	_ASSERTEX(hThread != NULL);
+	ZeroStruct(m_WaitDebugVsThread);
+
+	bool bNotInitialized = true;
+	DWORD nErrCode;
+	DWORD nStartTick = GetTickCount(), nCurTick, nDelta = 0, nDeltaMax = 5000;
+
+	// DefTermHooker needs to know about process modules
+	// But it is impossible if process was not initialized yet
+	while (bNotInitialized
+		&& (WaitForSingleObject(hProcess, 0) == WAIT_TIMEOUT))
+	{
+		nResumeRC = ResumeThread(hThread);
+		Sleep(50);
+		SuspendThread(hThread);
+
+
+		HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, nPID);
+		if (hSnap && (hSnap != INVALID_HANDLE_VALUE))
+		{
+			CloseHandle(hSnap);
+			bNotInitialized = false;
+		}
+		else
+		{
+			nErrCode = GetLastError();
+			bNotInitialized = (nErrCode == ERROR_PARTIAL_COPY);
+		}
+
+		nDelta = (nCurTick = GetTickCount()) - nStartTick;
+		if (nDelta > nDeltaMax)
+			break;
+	}
+
+
+	// *****************************************************
+	// if process was not terminated yet, call DefTermHooker
+	// *****************************************************
+	DWORD nProcessWait = WaitForSingleObject(hProcess, 0);
+	if (nProcessWait == WAIT_TIMEOUT)
+	{
+		iHookRc = gpDefTerm->StartDefTermHooker(nPID, hProcess);
+	}
+
+
+	// Resume thread if it was done by us
+	if (lpPI)
+		ResumeThread(hThread);
+
+	// Restore ErrCode
+	SetLastError(nPreError);
+
+	return (iHookRc == 0);
 }
 
 void CShellProc::OnShellFinished(BOOL abSucceeded, HINSTANCE ahInstApp, HANDLE ahProcess)
