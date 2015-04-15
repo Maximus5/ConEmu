@@ -1,6 +1,6 @@
 @echo off
 
-set ConEmuHttp=http://code.google.com/p/conemu-maximus5/wiki/ConEmu
+set ConEmuHttp=http://conemu.github.io/
 
 if "%~1"=="" goto noparm
 cd /d "%~dp0"
