@@ -8954,6 +8954,40 @@ BOOL CRealConsole::RecreateProcess(RConStartArgs *args)
 		return false;
 	}
 
+	if (!args)
+	{
+		AssertMsg(L"args were not specified!");
+		return false;
+	}
+
+	if (args->pszSpecialCmd && *args->pszSpecialCmd)
+	{
+		if (mp_ConEmu->IsConsoleBatchOrTask(args->pszSpecialCmd))
+		{
+			// Load Task contents
+			wchar_t* pszTaskCommands = mp_ConEmu->LoadConsoleBatch(args->pszSpecialCmd, args);
+			if (!pszTaskCommands || !*pszTaskCommands)
+			{
+				CEStr lsMsg(lstrmerge(L"Can't load task contents!\n", args->pszSpecialCmd));
+				MsgBox(lsMsg, MB_ICONSTOP);
+				return false;
+			}
+			// Only one command can started in a console
+			wchar_t* pszBreak = (wchar_t*)wcspbrk(pszTaskCommands, L"\r\n");
+			if (pszBreak)
+			{
+				CEStr lsMsg(lstrmerge(L"Task ", args->pszSpecialCmd, L" contains more than a command.\n" L"Only first will be executed."));
+				int iBtn = MsgBox(lsMsg, MB_ICONEXCLAMATION|MB_OKCANCEL);
+				if (iBtn != IDOK)
+					return false;
+				*pszBreak = 0;
+			}
+			// Run contents but not a "task"
+			SafeFree(args->pszSpecialCmd);
+			args->pszSpecialCmd = pszTaskCommands;
+		}
+	}
+
 	_ASSERTE(m_Args.pszStartupDir==NULL || (m_Args.pszStartupDir && args->pszStartupDir));
 	SafeFree(m_Args.pszStartupDir);
 
