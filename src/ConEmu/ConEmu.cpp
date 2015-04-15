@@ -6677,27 +6677,38 @@ wchar_t CConEmuMain::IsConsoleBatchOrTask(LPCWSTR asSource)
 
 wchar_t* CConEmuMain::LoadConsoleBatch(LPCWSTR asSource, RConStartArgs* pArgs /*= NULL*/)
 {
+	wchar_t cType = IsConsoleBatchOrTask(asSource);
+	if (!cType)
+	{
+		_ASSERTE(*asSource==CmdFilePrefix || *asSource==TaskBracketLeft);
+		return NULL;
+	}
+
 	wchar_t* pszDataW = NULL;
 
-	if (*asSource == CmdFilePrefix)
+	switch (cType)
 	{
+	case CmdFilePrefix:
 		// В качестве "команды" указан "пакетный файл" одновременного запуска нескольких консолей
 		pszDataW = LoadConsoleBatch_File(asSource);
-	}
-	else if ((*asSource == TaskBracketLeft) || (lstrcmp(asSource, AutoStartTaskName) == 0))
-	{
+		break;
+
+	case TaskBracketLeft:
+	case AutoStartTaskLeft: // AutoStartTaskName
 		// Имя задачи
 		pszDataW = LoadConsoleBatch_Task(asSource, pArgs);
-	}
-	else if (*asSource == DropLnkPrefix)
-	{
+		break;
+
+	case DropLnkPrefix:
 		// Сюда мы попадаем, если на ConEmu (или его ярлык)
 		// набрасывают (в проводнике?) один или несколько других файлов/программ
 		pszDataW = LoadConsoleBatch_Drops(asSource);
-	}
-	else
-	{
-		_ASSERTE(*asSource==CmdFilePrefix || *asSource==TaskBracketLeft);
+		break;
+
+	#ifdef _DEBUG
+	default:
+		_ASSERTE(FALSE && "Unsupported type of Task/Batch");
+	#endif
 	}
 
 	return pszDataW;
