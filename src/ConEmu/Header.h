@@ -768,6 +768,7 @@ typedef struct tagMYRGB
 #define TaskBracketLeft   L'{'
 #define TaskBracketRight  L'}'
 #define AutoStartTaskName L"<Startup>"
+#define AutoStartTaskLeft L'<'
 
 bool NextLine(const wchar_t*& pszFrom, wchar_t** pszLine);
 

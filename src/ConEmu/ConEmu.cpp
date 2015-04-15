@@ -6653,6 +6653,28 @@ LRESULT CConEmuMain::OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate)
 	return 0;
 }
 
+// Returns Zero if unsupported, otherwise - first asSource character (type)
+wchar_t CConEmuMain::IsConsoleBatchOrTask(LPCWSTR asSource)
+{
+	wchar_t Supported = 0;
+
+	if (asSource && *asSource && (
+			(*asSource == CmdFilePrefix)
+			|| (*asSource == TaskBracketLeft)
+			|| (lstrcmp(asSource, AutoStartTaskName) == 0)
+			|| (*asSource == DropLnkPrefix)
+		))
+	{
+		Supported = *asSource;
+	}
+	else
+	{
+		_ASSERTE(asSource && *asSource);
+	}
+
+	return Supported;
+}
+
 wchar_t* CConEmuMain::LoadConsoleBatch(LPCWSTR asSource, RConStartArgs* pArgs /*= NULL*/)
 {
 	wchar_t* pszDataW = NULL;
