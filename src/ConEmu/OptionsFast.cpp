@@ -839,17 +839,19 @@ static bool WINAPI CreateWinSdkTasks(HKEY hkVer, LPCWSTR pszVer, LPARAM lParam)
 
 	if (RegGetStringValue(hkVer, NULL, L"InstallationFolder", pszVerPath) > 0)
 	{
-		CEStr pszCmd = JoinPath(pszVerPath, L"Bin\\SetEnv.Cmd");
-		if (pszCmd && FileExists(pszCmd))
+		CEStr szCmd(JoinPath(pszVerPath, L"Bin\\SetEnv.Cmd"));
+		if (szCmd && FileExists(szCmd))
 		{
-			CEStr pszFull = lstrmerge(L"cmd /V /K \"", pszCmd, L"\" -new_console:t:\"WinSDK ", pszVer, L"\"");
+			CEStr szIcon(JoinPath(pszVerPath, L"Setup\\setup.ico"));
+			CEStr szArgs(lstrmerge(L"-new_console:t:\"WinSDK ", pszVer, L"\":C:\"", szIcon, L"\""));
+			CEStr szFull(lstrmerge(L"cmd /V /K ", szArgs, L" \"", szCmd, L"\""));
 			// Create task
-			if (pszFull)
+			if (szFull)
 			{
-				CEStr pszName = lstrmerge(L"SDK::WinSDK ", pszVer);
-				if (pszName)
+				CEStr szName(lstrmerge(L"SDK::WinSDK ", pszVer));
+				if (szName)
 				{
-					CreateDefaultTask(*piCreatIdx, pszName, L"", pszFull);
+					CreateDefaultTask(*piCreatIdx, szName, L"", szFull);
 				}
 			}
 		}
