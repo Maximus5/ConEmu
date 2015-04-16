@@ -1470,8 +1470,10 @@ void CreateDefaultTasks(SettingsLoadedFlags slfFlags)
 	// Windows internal
 	CreateDefaultTask(szConEmuDrive, iCreatIdx, L"Shells::cmd", NULL, L"set PROMPT=$E[92m$P$E[90m$G$E[m$S & ", NULL, L"cmd.exe", NULL);
 	CreateDefaultTask(szConEmuDrive, iCreatIdx, L"Shells::cmd (Admin)", L" -new_console:a", L"set PROMPT=$E[91m$P$E[90m$G$E[m$S & ", NULL, L"cmd.exe", NULL);
-	CreateDefaultTask(szConEmuDrive, iCreatIdx, L"Shells::PowerShell", NULL, NULL, NULL, L"powershell.exe", NULL);
-	CreateDefaultTask(szConEmuDrive, iCreatIdx, L"Shells::PowerShell (Admin)", L" -new_console:a", NULL, NULL, L"powershell.exe", NULL);
+	CreateDefaultTask(szConEmuDrive, iCreatIdx, L"Shells::PowerShell",
+		NULL, NULL, NULL, L"powershell.exe", NULL);
+	CreateDefaultTask(szConEmuDrive, iCreatIdx, L"Shells::PowerShell (Admin)",
+		L" -new_console:a", NULL, NULL, L"powershell.exe", NULL);
 	// For 64bit Windows create task with splitted cmd 64/32
 	if (IsWindows64())
 		CreateDefaultTask(iCreatIdx, L"Shells::cmd 64/32", L"", L"> set PROMPT=$E[92m$P$E[90m$G$E[m$S & \"%windir%\\system32\\cmd.exe\" /k ver & echo This is Native cmd.exe\r\n\r\nset PROMPT=$E[93m$P$E[90m$G$E[m$S & \"%windir%\\syswow64\\cmd.exe\" /k ver & echo This is 32 bit cmd.exe -new_console:s50V");
