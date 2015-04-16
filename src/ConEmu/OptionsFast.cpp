@@ -1482,9 +1482,13 @@ void CreateDefaultTasks(SettingsLoadedFlags slfFlags)
 	// HKLM\SOFTWARE\Wow6432Node\Cygwin\setup\rootdir
 	// HKLM\SOFTWARE\Cygwin\setup\rootdir
 	// HKCU\Software\Cygwin\setup\rootdir
-	CreateDefaultTask(szConEmuDrive, iCreatIdx, L"Bash::CygWin bash", L" --login -i", L"set CHERE_INVOKING=1 & ", NULL, L"\\CygWin\\bin\\sh.exe", NULL);
+	CreateDefaultTask(szConEmuDrive, iCreatIdx, L"Bash::CygWin bash",
+		L" --login -i", L"set CHERE_INVOKING=1 & ", NULL,
+		L"\\CygWin\\bin\\sh.exe", NULL);
 	//{L"CygWin mintty", L"\\CygWin\\bin\\mintty.exe", L" -"},
-	CreateDefaultTask(szConEmuDrive, iCreatIdx, L"Bash::MinGW bash",  L" --login -i", L"set CHERE_INVOKING=1 & ", NULL, L"\\MinGW\\msys\\1.0\\bin\\sh.exe", NULL);
+	CreateDefaultTask(szConEmuDrive, iCreatIdx, L"Bash::MinGW bash",
+		L" --login -i", L"set CHERE_INVOKING=1 & ", NULL,
+		L"\\MinGW\\msys\\1.0\\bin\\sh.exe", NULL);
 	//{L"MinGW mintty", L"\\MinGW\\msys\\1.0\\bin\\mintty.exe", L" -"},
 	// MSys2 project: 'HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\MSYS2 32bit'
 	CreateDefaultTask(szConEmuDrive, iCreatIdx, L"Bash::Msys2-64",
