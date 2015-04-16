@@ -1467,16 +1467,25 @@ void CreateDefaultTasks(SettingsLoadedFlags slfFlags)
 	CreateDefaultTask(szConEmuDrive, iCreatIdx, L"Shells::NYAOS", NULL, NULL, NULL, L"nyaos.exe", NULL);
 	CreateDefaultTask(szConEmuDrive, iCreatIdx, L"NYAOS (Admin)", L" -new_console:a", NULL, NULL, L"nyaos.exe", NULL);
 
-	// Windows internal
-	CreateDefaultTask(szConEmuDrive, iCreatIdx, L"Shells::cmd", NULL, L"set PROMPT=$E[92m$P$E[90m$G$E[m$S & ", NULL, L"cmd.exe", NULL);
-	CreateDefaultTask(szConEmuDrive, iCreatIdx, L"Shells::cmd (Admin)", L" -new_console:a", L"set PROMPT=$E[91m$P$E[90m$G$E[m$S & ", NULL, L"cmd.exe", NULL);
+	// Windows internal: cmd
+	CreateDefaultTask(szConEmuDrive, iCreatIdx, L"Shells::cmd",
+		L" /k \"%ConEmuBaseDir%\\CmdInit.cmd\"", NULL, NULL, L"cmd.exe", NULL);
+	CreateDefaultTask(szConEmuDrive, iCreatIdx, L"Shells::cmd (Admin)",
+		L" /k \"%ConEmuBaseDir%\\CmdInit.cmd\" -new_console:a", NULL, NULL, L"cmd.exe", NULL);
+	// Windows internal: For 64bit Windows create task with splitted cmd 64/32 (Example)
+	if (IsWindows64())
+	{
+		CreateDefaultTask(iCreatIdx, L"Shells::cmd 64/32", L"",
+			L"> \"%windir%\\system32\\cmd.exe\" /k \"\"%ConEmuBaseDir%\\CmdInit.cmd\" & echo This is Native cmd.exe\""
+			L"\r\n\r\n"
+			L"\"%windir%\\syswow64\\cmd.exe\" /k \"\"%ConEmuBaseDir%\\CmdInit.cmd\" & echo This is 32 bit cmd.exe -new_console:s50V\"");
+	}
+
+	// Windows internal: PowerShell
 	CreateDefaultTask(szConEmuDrive, iCreatIdx, L"Shells::PowerShell",
 		NULL, NULL, NULL, L"powershell.exe", NULL);
 	CreateDefaultTask(szConEmuDrive, iCreatIdx, L"Shells::PowerShell (Admin)",
 		L" -new_console:a", NULL, NULL, L"powershell.exe", NULL);
-	// For 64bit Windows create task with splitted cmd 64/32
-	if (IsWindows64())
-		CreateDefaultTask(iCreatIdx, L"Shells::cmd 64/32", L"", L"> set PROMPT=$E[92m$P$E[90m$G$E[m$S & \"%windir%\\system32\\cmd.exe\" /k ver & echo This is Native cmd.exe\r\n\r\nset PROMPT=$E[93m$P$E[90m$G$E[m$S & \"%windir%\\syswow64\\cmd.exe\" /k ver & echo This is 32 bit cmd.exe -new_console:s50V");
 
 	// Bash
 
