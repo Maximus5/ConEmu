@@ -271,11 +271,7 @@ protected:
 		HANDLE    hProcess;
 		DWORD     nPID;
 		DWORD     nHookTick; // informational field
-	};
-	struct ProcessIgnore
-	{
-		DWORD nPID;
-		DWORD nTick;
+		DWORD_PTR nHookResult; // _PTR for alignment
 	};
 	struct ThreadArg
 	{
@@ -518,7 +514,7 @@ public:
 			if (m_Processed[i].nPID == nForePID)
 			{
 				bMonitored = false;
-				break; // already hooked
+				break; // already hooked/processed
 			}
 		}
 
@@ -549,18 +545,22 @@ public:
 			goto wrap;
 		}
 
-		// And what?
-		if ((nResult == (UINT)CERR_HOOKS_WAS_SET) || (nResult == (UINT)CERR_HOOKS_WAS_ALREADY_SET))
+		// Always store to m_Processed
 		{
-			mh_LastWnd = hFore;
 			ProcessInfo inf = {};
 			inf.hWnd = hFore;
 			inf.hProcess = hProcess;
 			hProcess = NULL; // его закрывать (если есть) НЕ нужно, сохранен в массиве
 			inf.nPID = nForePID;
-			//inf.bHooksSucceeded = (nResult == (UINT)CERR_HOOKS_WAS_ALREADY_SET);
 			inf.nHookTick = GetTickCount();
+			inf.nHookResult = nResult;
 			m_Processed.push_back(inf);
+		}
+
+		// And what?
+		if ((nResult == (UINT)CERR_HOOKS_WAS_SET) || (nResult == (UINT)CERR_HOOKS_WAS_ALREADY_SET))
+		{
+			mh_LastWnd = hFore;
 			lbRc = true;
 			goto wrap;
 		}
@@ -604,26 +604,31 @@ public:
 		MSectionLockSimple CS;
 		CS.Lock(mcs);
 
+		// Сюда мы попадаем после CreateProcess (ConEmuHk) или из VisualStudio для "*.vshost.exe"
+		// Так что теоретически и дескриптор открыть должны уметь и хуки поставить
+
 		if (hDefProcess)
 		{
 			// This handle may come from CreateProcess (ConEmuHk), need to make a copy of it
 			DuplicateHandle(GetCurrentProcess(), hDefProcess, GetCurrentProcess(), &hProcess, 0, FALSE, DUPLICATE_SAME_ACCESS);
 		}
 
-		iRc = StartDefTermHooker(nPID, hProcess, nResult, m_Opt.pszConEmuBaseDir, nErrCode);
-
-		// Сюда мы попадаем после CreateProcess (ConEmuHk) или из VisualStudio для "*.vshost.exe"
-		// Так что теоретически и дескриптор открыть должны уметь и хуки поставить
-		if ((iRc == 0) && ((nResult == (UINT)CERR_HOOKS_WAS_SET) || (nResult == (UINT)CERR_HOOKS_WAS_ALREADY_SET)))
+		// Always store to m_Processed
 		{
 			ProcessInfo inf = {};
 			inf.hProcess = hProcess; // hProcess закрывать НЕ нужно, сохранен в массиве
 			inf.nPID = nPID;
 			inf.nHookTick = GetTickCount();
+			inf.nHookResult = STILL_ACTIVE;
 			m_Processed.push_back(inf);
 		}
 
+		// Because we must unlock the section before StartDefTermHooker to avoid dead locks in VS
 		CS.Unlock();
+
+		// Do the job
+		iRc = StartDefTermHooker(nPID, hProcess, nResult, m_Opt.pszConEmuBaseDir, nErrCode);
+
 		return iRc;
 	}
 
