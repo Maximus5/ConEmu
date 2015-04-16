@@ -633,7 +633,7 @@ public:
 	}
 
 private:
-	static int StartDefTermHooker(DWORD nForePID, HANDLE& hProcess, DWORD& nResult, LPCWSTR asConEmuBaseDir, DWORD& nErrCode)
+	int StartDefTermHooker(DWORD nForePID, HANDLE& hProcess, DWORD& nResult, LPCWSTR asConEmuBaseDir, DWORD& nErrCode)
 	{
 		int iRc = -1;
 		wchar_t szCmdLine[MAX_PATH*3];
@@ -711,9 +711,17 @@ private:
 			goto wrap;
 		}
 		CloseHandle(pi.hThread);
-		// Waiting for result
-		WaitForSingleObject(pi.hProcess, INFINITE);
-		GetExitCodeProcess(pi.hProcess, &nResult);
+		if (mb_ConEmuGui)
+		{
+			// Waiting for result if called in ConEmu GUI
+			WaitForSingleObject(pi.hProcess, INFINITE);
+			GetExitCodeProcess(pi.hProcess, &nResult);
+		}
+		else
+		{
+			// Within VisualStudio and others don't wait to avoid dead locks
+			nResult = STILL_ACTIVE;
+		}
 		CloseHandle(pi.hProcess);
 
 		iRc = 0;
