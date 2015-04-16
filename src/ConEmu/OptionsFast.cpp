@@ -1044,43 +1044,49 @@ static void CreateDefaultTask(LPCWSTR asDrive, int& iCreatIdx, LPCWSTR asName, L
 			pszFound = szUnexpand;
 		}
 
-		if (asArgs && wcschr(asArgs, FOUND_APP_PATH_CHR))
+		LPCWSTR pszArgs = asArgs;
+		if (pszArgs && wcschr(pszArgs, FOUND_APP_PATH_CHR))
 		{
-			CEStr szPath(lstrdup(pszFound));
-			if (!szPath.IsEmpty() && szArgs.Set(asArgs))
+			if (pszFound && *pszFound && szArgs.Set(pszArgs))
 			{
-				wchar_t* ptr;
-				ptr = wcsrchr(szPath.ms_Arg, L'\\');
-				if (ptr) *ptr = 0;
-				while ((ptr = wcschr(szArgs.ms_Arg, FOUND_APP_PATH_CHR)) != NULL)
+				CEStr szPath;
+				wchar_t *ptrFound, *ptrAdd;
+				while ((ptrAdd = wcschr(szArgs.ms_Arg, FOUND_APP_PATH_CHR)) != NULL)
 				{
-					*ptr = 0;
-					LPCWSTR pszTail = ptr+1;
-					ptr = (wcsncmp(pszTail, L"..\\", 3) != NULL) ? wcsrchr(szPath.ms_Arg, L'\\') : NULL;
-					if (ptr)
+					*ptrAdd = 0;
+					LPCWSTR pszTail = ptrAdd+1;
+
+					szPath.Set(pszFound);
+					ptrFound = wcsrchr(szPath.ms_Arg, L'\\');
+					if (ptrFound) *ptrFound = 0;
+
+					if (*pszTail == L'\\') pszTail ++;
+					while (wcsncmp(pszTail, L"..\\", 3) == 0)
 					{
-						*ptr = 0;
-						pszTail += 3;
+						ptrAdd = wcsrchr(szPath.ms_Arg, L'\\');
+						if (ptrAdd)
+						{
+							*ptrAdd = 0;
+							pszTail += 3;
+						}
 					}
 
 					CEStr szTemp(JoinPath(szPath, pszTail));
 					szArgs.Attach(lstrmerge(szArgs.ms_Arg, szTemp));
-
-					if (ptr) *ptr = L'\\';
 				}
 			}
 			// Succeeded?
 			if (!szArgs.IsEmpty())
 			{
-				asArgs = szArgs.ms_Arg;
+				pszArgs = szArgs.ms_Arg;
 			}
 		}
 
 		// Spaces in path? (use expanded path)
 		if (bNeedQuot)
-			pszFull = lstrmerge(asPrefix, L"\"", pszFound, L"\"", asArgs);
+			pszFull = lstrmerge(asPrefix, L"\"", pszFound, L"\"", pszArgs);
 		else
-			pszFull = lstrmerge(asPrefix, pszFound, asArgs);
+			pszFull = lstrmerge(asPrefix, pszFound, pszArgs);
 
 		// Create task
 		if (pszFull)
