@@ -45,6 +45,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <TlHelp32.h>
 
 #define DEF_TERM_ALIVE_CHECK_TIMEOUT 750
+#define DEF_TERM_ALIVE_RECHECK_TIMEOUT 1500
 #define DEF_TERM_INSTALL_TIMEOUT 30000
 
 /* *********** Default terminal settings *********** */
@@ -372,6 +373,108 @@ public:
 		return bShellWnd;
 	};
 
+	static bool IsWindowResponsive(HWND hFore)
+	{
+		LRESULT lMsgRc;
+		DWORD_PTR dwResult = 0;
+
+		// To be sure that application is responsive (started successfully and is not hunged)
+		// However, that does not guarantee that explorer.exe will be hooked properly
+		// During several restarts of explorer.exe from TaskMgr - sometimes it hungs...
+		// So, that is the last change but not sufficient (must be handled in GUI too)
+		// -- SMTO_ERRORONEXIT exist in Vista only
+		lMsgRc = SendMessageTimeout(hFore, WM_NULL, 0,0, SMTO_NORMAL, DEF_TERM_ALIVE_CHECK_TIMEOUT, &dwResult);
+		return (lMsgRc != 0);
+	}
+
+	bool IsAppMonitored(HWND hFore, DWORD nForePID, bool bSkipShell = true, PROCESSENTRY32* pPrc = NULL, LPWSTR pszClass/*[MAX_PATH]*/ = NULL)
+	{
+		// Должен выполнять все проверки, запоминать успех/не успех,
+		// чтобы при вызове CheckForeground не выполнять проверки повторно
+		// Т.к. оно должно вызываться из CConEmuMain::RecheckForegroundWindow
+
+		bool lbConHostLocked = false;
+		wchar_t szClass[MAX_PATH]; szClass[0] = 0;
+		PROCESSENTRY32 prc = {};
+		bool bMonitored = false;
+		bool bShellTrayWnd = false; // task bar
+		bool bShellWnd = false; // one of explorer windows (folder browsers)
+		#ifdef USEDEBUGSTRDEFTERM
+		wchar_t szInfo[MAX_PATH+80];
+		#endif
+
+		// Check window class
+		if (GetClassName(hFore, szClass, countof(szClass)))
+		{
+			bShellTrayWnd = IsShellTrayWindowClass(szClass);
+			bShellWnd = IsExplorerWindowClass(szClass);
+
+			#ifdef USEDEBUGSTRDEFTERM
+			_wsprintf(szInfo, SKIPCOUNT(szInfo) L"DefTerm::CheckForeground x%08X PID=%u %u %u '%s'", (DWORD)(DWORD_PTR)hFore, nForePID, (UINT)bShellTrayWnd, (UINT)bShellWnd, szClass);
+			DEBUGSTRDEFTERM(szInfo);
+			#endif
+
+			if ((lstrcmp(szClass, VirtualConsoleClass) == 0)
+				//|| (lstrcmp(szClass, L"#32770") == 0) // Ignore dialogs // -- Process dialogs too (Application may be dialog-based)
+				|| ((bSkipShell || !mb_ExplorerHookAllowed) && bShellTrayWnd) // Do not hook explorer windows?
+				|| isConsoleClass(szClass))
+			{
+				#ifdef USEDEBUGSTRDEFTERM
+				_wsprintf(szInfo, SKIPCOUNT(szInfo) L"DefTerm::CheckForeground x%08X PID=%u ignored by class", (DWORD)(DWORD_PTR)hFore, nForePID);
+				DEBUGSTRDEFTERM(szInfo);
+				#endif
+				goto wrap;
+			}
+		}
+
+		// May be hooked by class name? e.g. "TaskManagerWindow"
+		bMonitored = IsAppMonitored(szClass);
+		if (!bMonitored)
+		{
+			// Then check by process exe name
+			if (!GetProcessInfo(nForePID, &prc))
+			{
+				#ifdef USEDEBUGSTRDEFTERM
+				_wsprintf(szInfo, SKIPCOUNT(szInfo) L"DefTerm::CheckForeground x%08X PID=%u skipped, can't get process name", (DWORD)(DWORD_PTR)hFore, nForePID);
+				DEBUGSTRDEFTERM(szInfo);
+				#endif
+				goto wrap;
+			}
+
+			CharLowerBuff(prc.szExeFile, lstrlen(prc.szExeFile));
+
+			if (lstrcmp(prc.szExeFile, L"csrss.exe") == 0)
+			{
+				// This is "System" process and may not be hooked
+				#ifdef USEDEBUGSTRDEFTERM
+				_wsprintf(szInfo, SKIPCOUNT(szInfo) L"DefTerm::CheckForeground x%08X PID=%u skipped, csrss.exe", (DWORD)(DWORD_PTR)hFore, nForePID);
+				DEBUGSTRDEFTERM(szInfo);
+				#endif
+				goto wrap;
+			}
+
+			// Is it in monitored applications?
+			bMonitored = IsAppMonitored(prc.szExeFile);
+
+			// And how it is?
+			if (!bMonitored)
+			{
+				mh_LastIgnoredWnd = hFore;
+				#ifdef USEDEBUGSTRDEFTERM
+				_wsprintf(szInfo, SKIPCOUNT(szInfo) L"DefTerm::CheckForeground x%08X PID=%u skipped, app is not monitored", (DWORD)(DWORD_PTR)hFore, nForePID);
+				DEBUGSTRDEFTERM(szInfo);
+				#endif
+				goto wrap;
+			}
+		}
+	wrap:
+		if (pPrc)
+			memmove(pPrc, &prc, sizeof(*pPrc));
+		if (pszClass)
+			lstrcpyn(pszClass, szClass, MAX_PATH);
+		return bMonitored;
+	}
+
 	bool CheckForeground(HWND hFore, DWORD nForePID, bool bRunInThread = true, bool bSkipShell = true)
 	{
 		if (!isDefaultTerminalAllowed())
@@ -421,10 +524,6 @@ public:
 		bool bNotified = false;
 		HANDLE hProcess = NULL;
 		DWORD nErrCode = 0;
-		bool bShellTrayWnd = false; // task bar
-		bool bShellWnd = false; // one of explorer windows (folder browsers)
-		LRESULT lMsgRc;
-		DWORD_PTR dwResult = 0;
 		#ifdef USEDEBUGSTRDEFTERM
 		wchar_t szInfo[MAX_PATH+80];
 		#endif
@@ -476,8 +575,7 @@ public:
 		// During several restarts of explorer.exe from TaskMgr - sometimes it hungs...
 		// So, that is the last change but not sufficient (must be handled in GUI too)
 		// -- SMTO_ERRORONEXIT exist in Vista only
-		lMsgRc = SendMessageTimeout(hFore, WM_NULL, 0,0, SMTO_NORMAL, DEF_TERM_ALIVE_CHECK_TIMEOUT, &dwResult);
-		if (lMsgRc == 0)
+		if (!IsWindowResponsive(hFore))
 		{
 			// That app is not ready for hooking
 			if (mh_LastCall == hFore)
@@ -494,72 +592,13 @@ public:
 		// Clear dead processes and windows
 		ClearProcessed(false);
 
-		// Check window class
-		if (GetClassName(hFore, szClass, countof(szClass)))
-		{
-			bShellTrayWnd = IsShellTrayWindowClass(szClass);
-			bShellWnd = IsExplorerWindowClass(szClass);
+		// Check if app is monitored by window class and process name
+		bMonitored = IsAppMonitored(hFore, nForePID, bSkipShell, &prc, szClass);
 
-			#ifdef USEDEBUGSTRDEFTERM
-			_wsprintf(szInfo, SKIPCOUNT(szInfo) L"DefTerm::CheckForeground x%08X PID=%u %u %u '%s'", (DWORD)(DWORD_PTR)hFore, nForePID, (UINT)bShellTrayWnd, (UINT)bShellWnd, szClass);
-			DEBUGSTRDEFTERM(szInfo);
-			#endif
-
-			if ((lstrcmp(szClass, VirtualConsoleClass) == 0)
-				//|| (lstrcmp(szClass, L"#32770") == 0) // Ignore dialogs // -- Process dialogs too (Application may be dialog-based)
-				|| ((bSkipShell || !mb_ExplorerHookAllowed) && bShellTrayWnd) // Do not hook explorer windows?
-				|| isConsoleClass(szClass))
-			{
-				mh_LastIgnoredWnd = hFore;
-				#ifdef USEDEBUGSTRDEFTERM
-				_wsprintf(szInfo, SKIPCOUNT(szInfo) L"DefTerm::CheckForeground x%08X PID=%u ignored by class", (DWORD)(DWORD_PTR)hFore, nForePID);
-				DEBUGSTRDEFTERM(szInfo);
-				#endif
-				goto wrap;
-			}
-		}
-
-		// May be hooked by class name? e.g. "TaskManagerWindow"
-		bMonitored = IsAppMonitored(szClass);
 		if (!bMonitored)
 		{
-			// Then check by process exe name
-			if (!GetProcessInfo(nForePID, &prc))
-			{
-				mh_LastIgnoredWnd = hFore;
-				#ifdef USEDEBUGSTRDEFTERM
-				_wsprintf(szInfo, SKIPCOUNT(szInfo) L"DefTerm::CheckForeground x%08X PID=%u skipped, can't get process name", (DWORD)(DWORD_PTR)hFore, nForePID);
-				DEBUGSTRDEFTERM(szInfo);
-				#endif
-				goto wrap;
-			}
-
-			CharLowerBuff(prc.szExeFile, lstrlen(prc.szExeFile));
-
-			if (lstrcmp(prc.szExeFile, L"csrss.exe") == 0)
-			{
-				// This is "System" process and may not be hooked
-				mh_LastIgnoredWnd = hFore;
-				#ifdef USEDEBUGSTRDEFTERM
-				_wsprintf(szInfo, SKIPCOUNT(szInfo) L"DefTerm::CheckForeground x%08X PID=%u skipped, csrss.exe", (DWORD)(DWORD_PTR)hFore, nForePID);
-				DEBUGSTRDEFTERM(szInfo);
-				#endif
-				goto wrap;
-			}
-
-			// Is it in monitored applications?
-			bMonitored = IsAppMonitored(prc.szExeFile);
-
-			// And how it is?
-			if (!bMonitored)
-			{
-				mh_LastIgnoredWnd = hFore;
-				#ifdef USEDEBUGSTRDEFTERM
-				_wsprintf(szInfo, SKIPCOUNT(szInfo) L"DefTerm::CheckForeground x%08X PID=%u skipped, app is not monitored", (DWORD)(DWORD_PTR)hFore, nForePID);
-				DEBUGSTRDEFTERM(szInfo);
-				#endif
-				goto wrap;
-			}
+			mh_LastIgnoredWnd = hFore;
+			goto wrap;
 		}
 
 		// That is hooked executable/classname
