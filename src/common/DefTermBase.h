@@ -29,6 +29,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#if !defined(DEBUGSTRDEFTERM)
+#define DEBUGSTRDEFTERM(s)
+#undef USEDEBUGSTRDEFTERM
+#else
+#define USEDEBUGSTRDEFTERM
+#endif
+
 #include <Windows.h>
 #include "common.hpp"
 #include "MArray.h"
@@ -368,7 +375,17 @@ public:
 	bool CheckForeground(HWND hFore, DWORD nForePID, bool bRunInThread = true, bool bSkipShell = true)
 	{
 		if (!isDefaultTerminalAllowed())
+		{
+			#ifdef USEDEBUGSTRDEFTERM
+			static bool bNotified = false;
+			if (!bNotified)
+			{
+				bNotified = true;
+				DEBUGSTRDEFTERM(L"!!! DefTerm::CheckForeground skipped, !isDefaultTerminalAllowed !!!");
+			}
+			#endif
 			return false;
+		}
 
 		// Если еще не были инициализированы?
 		if (!mb_ReadyToHook
@@ -378,6 +395,7 @@ public:
 			|| (nForePID == GetCurrentProcessId()))
 		{
 			// Сразу выходим
+			DEBUGSTRDEFTERM(L"!!! DefTerm::CheckForeground skipped, uninitialized (mb_ReadyToHook, hFore, nForePID) !!!");
 			_ASSERTE(mb_ReadyToHook && "Must be initialized");
 			_ASSERTE(hFore && nForePID);
 			return false;
@@ -385,6 +403,7 @@ public:
 
 		if (hFore == mh_LastWnd || hFore == mh_LastIgnoredWnd)
 		{
+			DEBUGSTRDEFTERM(L"DefTerm::CheckForeground skipped, hFore was already checked");
 			// Это окно уже проверялось
 			return (hFore == mh_LastWnd);
 		}
@@ -406,11 +425,15 @@ public:
 		bool bShellWnd = false; // one of explorer windows (folder browsers)
 		LRESULT lMsgRc;
 		DWORD_PTR dwResult = 0;
+		#ifdef USEDEBUGSTRDEFTERM
+		wchar_t szInfo[MAX_PATH+80];
+		#endif
 
 
 		if (bRunInThread && (hFore == mh_LastCall))
 		{
 			// Просто выйти. Это проверка на частые фоновые вызовы.
+			DEBUGSTRDEFTERM(L"DefTerm::CheckForeground skipped, already bRunInThread");
 			goto wrap;
 		}
 		mh_LastCall = hFore;
@@ -430,11 +453,18 @@ public:
 			pArg->hFore = hFore;
 			pArg->nForePID = nForePID;
 
+			DEBUGSTRDEFTERM(L"DefTerm::CheckForeground creating background thread PostCheckThread");
+
 			hPostThread = CreateThread(NULL, 0, PostCheckThread, pArg, 0, &nThreadId);
 			_ASSERTE(hPostThread!=NULL);
 			if (hPostThread)
 			{
 				m_Threads.push_back(hPostThread);
+
+				#ifdef USEDEBUGSTRDEFTERM
+				_wsprintf(szInfo, SKIPCOUNT(szInfo) L"DefTerm::CheckForeground created TID=%u", nThreadId);
+				DEBUGSTRDEFTERM(szInfo);
+				#endif
 			}
 
 			lbRc = (hPostThread != NULL); // вернуть OK?
@@ -452,6 +482,10 @@ public:
 			// That app is not ready for hooking
 			if (mh_LastCall == hFore)
 				mh_LastCall = NULL;
+			#ifdef USEDEBUGSTRDEFTERM
+			_wsprintf(szInfo, SKIPCOUNT(szInfo) L"!!! DefTerm::CheckForeground skipped, x%08X is non-responsive !!!", (DWORD)(DWORD_PTR)hFore);
+			DEBUGSTRDEFTERM(szInfo);
+			#endif
 			goto wrap;
 		}
 
@@ -466,12 +500,21 @@ public:
 			bShellTrayWnd = IsShellTrayWindowClass(szClass);
 			bShellWnd = IsExplorerWindowClass(szClass);
 
+			#ifdef USEDEBUGSTRDEFTERM
+			_wsprintf(szInfo, SKIPCOUNT(szInfo) L"DefTerm::CheckForeground x%08X PID=%u %u %u '%s'", (DWORD)(DWORD_PTR)hFore, nForePID, (UINT)bShellTrayWnd, (UINT)bShellWnd, szClass);
+			DEBUGSTRDEFTERM(szInfo);
+			#endif
+
 			if ((lstrcmp(szClass, VirtualConsoleClass) == 0)
 				//|| (lstrcmp(szClass, L"#32770") == 0) // Ignore dialogs // -- Process dialogs too (Application may be dialog-based)
 				|| ((bSkipShell || !mb_ExplorerHookAllowed) && bShellTrayWnd) // Do not hook explorer windows?
 				|| isConsoleClass(szClass))
 			{
 				mh_LastIgnoredWnd = hFore;
+				#ifdef USEDEBUGSTRDEFTERM
+				_wsprintf(szInfo, SKIPCOUNT(szInfo) L"DefTerm::CheckForeground x%08X PID=%u ignored by class", (DWORD)(DWORD_PTR)hFore, nForePID);
+				DEBUGSTRDEFTERM(szInfo);
+				#endif
 				goto wrap;
 			}
 		}
@@ -484,6 +527,10 @@ public:
 			if (!GetProcessInfo(nForePID, &prc))
 			{
 				mh_LastIgnoredWnd = hFore;
+				#ifdef USEDEBUGSTRDEFTERM
+				_wsprintf(szInfo, SKIPCOUNT(szInfo) L"DefTerm::CheckForeground x%08X PID=%u skipped, can't get process name", (DWORD)(DWORD_PTR)hFore, nForePID);
+				DEBUGSTRDEFTERM(szInfo);
+				#endif
 				goto wrap;
 			}
 
@@ -493,6 +540,10 @@ public:
 			{
 				// This is "System" process and may not be hooked
 				mh_LastIgnoredWnd = hFore;
+				#ifdef USEDEBUGSTRDEFTERM
+				_wsprintf(szInfo, SKIPCOUNT(szInfo) L"DefTerm::CheckForeground x%08X PID=%u skipped, csrss.exe", (DWORD)(DWORD_PTR)hFore, nForePID);
+				DEBUGSTRDEFTERM(szInfo);
+				#endif
 				goto wrap;
 			}
 
@@ -503,6 +554,10 @@ public:
 			if (!bMonitored)
 			{
 				mh_LastIgnoredWnd = hFore;
+				#ifdef USEDEBUGSTRDEFTERM
+				_wsprintf(szInfo, SKIPCOUNT(szInfo) L"DefTerm::CheckForeground x%08X PID=%u skipped, app is not monitored", (DWORD)(DWORD_PTR)hFore, nForePID);
+				DEBUGSTRDEFTERM(szInfo);
+				#endif
 				goto wrap;
 			}
 		}
@@ -514,6 +569,10 @@ public:
 			if (m_Processed[i].nPID == nForePID)
 			{
 				bMonitored = false;
+				#ifdef USEDEBUGSTRDEFTERM
+				_wsprintf(szInfo, SKIPCOUNT(szInfo) L"DefTerm::CheckForeground x%08X PID=%u skipped, already processed", (DWORD)(DWORD_PTR)hFore, nForePID);
+				DEBUGSTRDEFTERM(szInfo);
+				#endif
 				break; // already hooked/processed
 			}
 		}
@@ -528,6 +587,11 @@ public:
 
 		_ASSERTE(isDefaultTerminalAllowed());
 
+		#ifdef USEDEBUGSTRDEFTERM
+		_wsprintf(szInfo, SKIPCOUNT(szInfo) L"DefTerm::CheckForeground x%08X PID=%u <<== trying to set hooks", (DWORD)(DWORD_PTR)hFore, nForePID);
+		DEBUGSTRDEFTERM(szInfo);
+		#endif
+
 		bNotified = NotifyHookingStatus(nForePID, prc.szExeFile[0] ? prc.szExeFile : szClass);
 
 		ConhostLocker(true, lbConHostLocked);
@@ -541,7 +605,9 @@ public:
 		{
 			mh_LastIgnoredWnd = hFore;
 			if (iHookerRc == -3)
+			{
 				DisplayLastError(L"Failed to start hooking application!\nDefault terminal feature will not be available!", nErrCode);
+			}
 			goto wrap;
 		}
 
@@ -556,6 +622,11 @@ public:
 			inf.nHookResult = nResult;
 			m_Processed.push_back(inf);
 		}
+
+		#ifdef USEDEBUGSTRDEFTERM
+		_wsprintf(szInfo, SKIPCOUNT(szInfo) L"DefTerm::CheckForeground x%08X PID=%u <<== nResult=%i iHookerRc=%i", (DWORD)(DWORD_PTR)hFore, nForePID, nResult, iHookerRc);
+		DEBUGSTRDEFTERM(szInfo);
+		#endif
 
 		// And what?
 		if ((nResult == (UINT)CERR_HOOKS_WAS_SET) || (nResult == (UINT)CERR_HOOKS_WAS_ALREADY_SET))

@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2012-2014 Maximus5
+Copyright (c) 2012-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -28,6 +28,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #pragma once
+
+#define SHOWDEBUGSTR
+
+#define DEBUGSTRDEFTERM(s) DEBUGSTR(s)
 
 #include "../common/DefTermBase.h"
 
