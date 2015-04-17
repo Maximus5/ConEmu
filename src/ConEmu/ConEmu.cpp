@@ -6177,10 +6177,11 @@ bool CConEmuMain::RecheckForegroundWindow(LPCWSTR asFrom, HWND* phFore/*=NULL*/)
 
 	// Call this function only
 	HWND hForeWnd = getForegroundWindow();
+	DWORD nForePID = 0;
 
 	if (hForeWnd != m_Foreground.hLastFore)
 	{
-		DWORD nForePID = 0;
+		bool bNonResponsive = false;
 
 		if (hForeWnd != NULL)
 		{
@@ -6207,12 +6208,29 @@ bool CConEmuMain::RecheckForegroundWindow(LPCWSTR asFrom, HWND* phFore/*=NULL*/)
 			}
 
 			// DefTerm checks
+			// If user want to use ConEmu as default terminal for CUI apps
+			// we need to hook GUI applications (e.g. explorer)
 			if (!(m_Foreground.ForegroundState & fgf_ConEmuAny)
 				&& nForePID && mp_DefTrm->IsReady() && gpSet->isSetDefaultTerminal && isMainThread())
 			{
-				// If user want to use ConEmu as default terminal for CUI apps
-				// we need to hook GUI applications (e.g. explorer)
-				mp_DefTrm->CheckForeground(hForeWnd, nForePID);
+				if (mp_DefTrm->IsAppMonitored(hForeWnd, nForePID))
+				{
+					// If window is non-responsive (application was not loaded yet)
+					if (!CDefTermBase::IsWindowResponsive(hForeWnd))
+					{
+						// DefTerm hooker will skip it
+						bNonResponsive = true;
+						#ifdef USEDEBUGSTRDEFTERM
+						wchar_t szInfo[120];
+						_wsprintf(szInfo, SKIPCOUNT(szInfo) L"!!! DefTerm::CheckForeground skipped (timer), x%08X PID=%u is non-responsive !!!", (DWORD)(DWORD_PTR)hForeWnd, nForePID);
+						DEBUGSTRDEFTERM(szInfo);
+						#endif
+					}
+					else
+					{
+						mp_DefTrm->CheckForeground(hForeWnd, nForePID);
+					}
+				}
 			}
 		}
 
@@ -6226,6 +6244,29 @@ bool CConEmuMain::RecheckForegroundWindow(LPCWSTR asFrom, HWND* phFore/*=NULL*/)
 		if (m_Foreground.ForegroundState != NewState)
 			m_Foreground.ForegroundState = NewState;
 		m_Foreground.hLastFore = hForeWnd;
+
+		// And remember 'non-responsive' state to be able recheck DefTerm
+		if ((m_Foreground.nDefTermNonResponsive && !bNonResponsive) || (m_Foreground.nDefTermNonResponsive != nForePID))
+		{
+			m_Foreground.nDefTermNonResponsive = bNonResponsive ? nForePID : 0;
+			m_Foreground.nDefTermTick = bNonResponsive ? GetTickCount() : 0;
+		}
+	}
+
+	// DefTerm, Recheck?
+	if (m_Foreground.nDefTermNonResponsive
+		&& ((GetTickCount() - m_Foreground.nDefTermTick) > DEF_TERM_ALIVE_RECHECK_TIMEOUT)
+		)
+	{
+		// For example, Visual Studio was non-responsive while loading
+		GetWindowThreadProcessId(hForeWnd, &nForePID);
+		if ((nForePID != m_Foreground.nDefTermNonResponsive)
+			|| (CDefTermBase::IsWindowResponsive(hForeWnd)
+				&& mp_DefTrm->CheckForeground(hForeWnd, nForePID))
+			)
+		{
+			m_Foreground.nDefTermNonResponsive = m_Foreground.nDefTermTick = 0;
+		}
 	}
 
 	if (phFore)

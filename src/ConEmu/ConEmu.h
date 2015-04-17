@@ -626,6 +626,8 @@ class CConEmuMain
 		struct {
 			HWND  hLastFore;
 			DWORD ForegroundState;
+			DWORD nDefTermNonResponsive;
+			DWORD nDefTermTick;
 		} m_Foreground;
 		bool RecheckForegroundWindow(LPCWSTR asFrom, HWND* phFore=NULL);
 
