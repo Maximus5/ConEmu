@@ -12,6 +12,17 @@ Votes and awards (vote for ConEmu, if you please)
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+2015.4.16
+[*] gh#96: DefTerm was failed to hook VS Debugging console applications. Avoid deadlocks.
+[*] Issue 1965: Correct 3rd state condition for ‘Change prompt text cursor position with LClick’.
+[*] gh#99: Make Update confirmation dialog a child of main ConEmu window.
+[*] Show in the update confirmation dialog the type of action: x86/x64 for installer or (7-Zip).
+[*] Allow using tasks in ‘Recreate’ dialog.
+[*] Let's create default tasks {Bash::Msys2-64} and {Bash::Msys2-32} in new configs.
+[*] Add tab icon to default tasks: {Bash::MinGW bash}, {Bash::CygWin bash}, {SDK::WinSDK x.x}.
+[*] Use "CmdInit.cmd" instead of direct "set PROMPT=..." in default cmd's tasks.
+
+
 2015.4.9
 [*] gh#63: Option ‘Auto save/restore tabs’ was conflicted with unchecked ‘Quit on close’.
 [*] Some of GuiMacro functions must be executed in the main thread only.
