@@ -2963,15 +2963,13 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 
 		/* Done */
 		reg->CloseKey();
+
+		/* Load all children objects */
+		LoadHotkeys(reg, bSendAltEnter, bSendAltSpace, bSendAltF9);
+		LoadPalettes(reg);
+		LoadAppsSettings(reg);
+		LoadCmdTasks(reg);
 	}
-
-	LoadHotkeys(reg, bSendAltEnter, bSendAltSpace, bSendAltF9);
-
-	LoadPalettes(reg);
-
-	LoadAppsSettings(reg);
-
-	LoadCmdTasks(reg);
 
 	// сервис больше не нужен
 	delete reg;
