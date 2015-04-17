@@ -1470,6 +1470,11 @@ void CreateDefaultTasks(SettingsLoadedFlags slfFlags)
 	// Windows internal: cmd
 	CreateDefaultTask(szConEmuDrive, iCreatIdx, L"Shells::cmd",
 		L" /k \"%ConEmuBaseDir%\\CmdInit.cmd\"", NULL, NULL, L"cmd.exe", NULL);
+	#if 0
+	// Need to "set" ConEmuGitPath to full path to the git.exe
+	CreateDefaultTask(szConEmuDrive, iCreatIdx, L"Shells::cmd+git",
+		L" /k \"%ConEmuBaseDir%\\CmdInit.cmd\" /git", NULL, NULL, L"cmd.exe", NULL);
+	#endif
 	CreateDefaultTask(szConEmuDrive, iCreatIdx, L"Shells::cmd (Admin)",
 		L" /k \"%ConEmuBaseDir%\\CmdInit.cmd\" -new_console:a", NULL, NULL, L"cmd.exe", NULL);
 	// Windows internal: For 64bit Windows create task with splitted cmd 64/32 (Example)
