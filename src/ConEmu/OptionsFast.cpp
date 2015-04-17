@@ -1494,6 +1494,14 @@ void CreateDefaultTasks(SettingsLoadedFlags slfFlags)
 
 	// Bash
 
+	CreateDefaultTask(szConEmuDrive, iCreatIdx, L"Bash::Git bash 2",
+		L" --login -i -new_console:C:\"" FOUND_APP_PATH_STR L"\\..\\..\\mingw32\\share\\git\\git-for-windows.ico\"", NULL, NULL,
+		L"[SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Git_is1:InstallLocation]\\usr\\bin\\sh.exe",
+		L"%ProgramFiles%\\Git\\usr\\bin\\sh.exe", L"%ProgramW6432%\\Git\\usr\\bin\\sh.exe",
+		#ifdef _WIN64
+		L"%ProgramFiles(x86)%\\Git\\usr\\bin\\sh.exe",
+		#endif
+		NULL);
 	CreateDefaultTask(szConEmuDrive, iCreatIdx, L"Bash::Git bash",
 		L" --login -i -new_console:C:\"" FOUND_APP_PATH_STR L"\\..\\etc\\git.ico\"", NULL, NULL,
 		L"[SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Git_is1:InstallLocation]\\bin\\sh.exe",
