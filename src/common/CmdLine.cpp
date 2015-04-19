@@ -113,7 +113,7 @@ bool IsNeedDequote(LPCWSTR asCmdLine, bool abFromCmdCK, LPCWSTR* rsEndQuote/*=NU
 	return true;
 }
 
-// Возвращает 0, если успешно, иначе - ошибка
+// Returns 0 if succeeded, other number on error
 int NextArg(const wchar_t** asCmdLine, CmdArg &rsArg, const wchar_t** rsArgStart/*=NULL*/)
 {
 	if (!asCmdLine || !*asCmdLine)
