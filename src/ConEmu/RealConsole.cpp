@@ -169,8 +169,19 @@ CRealConsole::CRealConsole(CVirtualConsole* pVCon, CConEmuMain* pOwner)
 bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 {
 	// Can't use Assert while object was not initialized yet
+	#ifdef _DEBUG
 	_ASSERTE(apVCon);
 	_ASSERTE(args && args->pszSpecialCmd && *args->pszSpecialCmd && !CConEmuMain::IsConsoleBatchOrTask(args->pszSpecialCmd));
+	LPCWSTR pszCmdTemp = args ? args->pszSpecialCmd : NULL;
+	CEStr lsFirstTemp;
+	if (pszCmdTemp)
+	{
+		if (NextArg(&pszCmdTemp, lsFirstTemp) == 0)
+		{
+			_ASSERTE(!CConEmuMain::IsConsoleBatchOrTask(lsFirstTemp));
+		}
+	}
+	#endif
 	MCHKHEAP;
 
 	_ASSERTE(mp_VCon == apVCon);
