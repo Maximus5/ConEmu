@@ -6699,6 +6699,17 @@ wchar_t CConEmuMain::IsConsoleBatchOrTask(LPCWSTR asSource)
 {
 	wchar_t Supported = 0;
 
+	// If task name is quoted
+	CEStr lsTemp;
+	if (asSource && (*asSource == L'"'))
+	{
+		LPCWSTR pszTemp = asSource;
+		if (NextArg(&pszTemp, lsTemp) == 0)
+		{
+			asSource = lsTemp.ms_Arg;
+		}
+	}
+
 	if (asSource && *asSource && (
 			(*asSource == CmdFilePrefix)
 			|| (*asSource == TaskBracketLeft)
@@ -6723,6 +6734,22 @@ wchar_t* CConEmuMain::LoadConsoleBatch(LPCWSTR asSource, RConStartArgs* pArgs /*
 	{
 		_ASSERTE(*asSource==CmdFilePrefix || *asSource==TaskBracketLeft);
 		return NULL;
+	}
+
+	// If task name is quoted
+	CEStr lsTemp;
+	if (asSource && (*asSource == L'"'))
+	{
+		LPCWSTR pszTemp = asSource;
+		if (NextArg(&pszTemp, lsTemp) == 0)
+		{
+			asSource = lsTemp.ms_Arg;
+
+			#ifdef _DEBUG
+			pszTemp = SkipNonPrintable(pszTemp);
+			_ASSERTE((!pszTemp || !*pszTemp) && "Task arguments are not supported yet");
+			#endif
+		}
 	}
 
 	wchar_t* pszDataW = NULL;
