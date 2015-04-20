@@ -110,6 +110,7 @@ typedef struct _CONSOLE_SELECTION_INFO
 #define CEWIKIBASE     L"http://conemu.github.io/en/"
 #define CEDONATEPAGE   L"http://conemu.github.io/donate.html"
 #define CEFLATTRPAGE   L"http://flattr.com/thing/2002773/Maximus5ConEmu-on-GitHub"
+#define CEMACTYPEWARN  L"http://conemu.github.io/en/Installation.html#mactype"
 
 
 // EnvVars

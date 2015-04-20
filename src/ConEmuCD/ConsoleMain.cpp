@@ -790,6 +790,79 @@ void ShowServerStartedMsgBox()
 #endif
 
 
+bool CheckAndWarnHookers()
+{
+	bool bHooked = false;
+	struct CheckModules {
+		LPCWSTR Title, File;
+	} modules [] = {
+		{L"MacType", WIN3264TEST(L"MacType.dll", L"MacType64.dll")},
+		{L"AnsiCon", WIN3264TEST(L"ANSI32.dll", L"ANSI64.dll")},
+		{NULL}
+	};
+	CEStr szMessage;
+	wchar_t szPath[MAX_PATH+16] = L"", szAddress[32] = L"";
+	LPCWSTR pszTitle = NULL, pszName = NULL;
+	HMODULE hModule = NULL;
+	bool bConOutChecked = false, bRedirected = false;
+	//BOOL bColorChanged = FALSE;
+	CONSOLE_SCREEN_BUFFER_INFO sbi = {};
+	HANDLE hOut = NULL;
+
+	for (INT_PTR i = 0; modules[i].Title; i++)
+	{
+		pszTitle = modules[i].Title;
+		pszName = modules[i].File;
+
+		hModule = GetModuleHandle(pszName);
+		if (hModule)
+		{
+			bHooked = true;
+			if (!GetModuleFileName(hModule, szPath, countof(szPath)))
+			{
+				wcscpy_c(szPath, pszName); // Must not get here, but show a name at least on errors
+			}
+
+			if (!bConOutChecked)
+			{
+				bConOutChecked = true;
+				hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+				GetConsoleScreenBufferInfo(hOut, &sbi);
+				bRedirected = IsOutputRedirected();
+
+				#if 0
+				// Useless in most cases, most of users are running cmd.exe
+				// but it clears all existing text attributes on start
+				if (!bRedirected)
+					bColorChanged = SetConsoleTextAttribute(hOut, 12); // LightRed on Black
+				#endif
+			}
+
+			_wsprintf(szAddress, SKIPCOUNT(szAddress) WIN3264TEST(L"0x%08X",L"0x%08X%08X"), WIN3264WSPRINT((DWORD_PTR)hModule));
+			szMessage = lstrmerge(
+				L"WARNING! The ", pszTitle, L"'s hooks are detected at ", szAddress, L"\r\n"
+				L"         ");
+			LPCWSTR pszTail = L"\r\n"
+				L"         Please add ConEmuC.exe and ConEmuC64.exe\r\n"
+				L"         to the exclusion list to avoid crashes!\r\n"
+				L"         " CEMACTYPEWARN L"\r\n\r\n";
+			_wprintf(szMessage);
+			_wprintf(szPath);
+			_wprintf(pszTail);
+		}
+	}
+
+	#if 0
+	// If we've set warning colors - return original ones
+	if (bColorChanged)
+		SetConsoleTextAttribute(hOut, sbi.wAttributes);
+	#endif
+
+	return bHooked;
+}
+
+
+
 
 // Main entry point for ConEmuC.exe
 #if defined(__GNUC__)
@@ -1086,6 +1159,9 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 			_wprintf(L"\r\n");
 		}
 		#endif
+
+		// Warn about external hookers
+		CheckAndWarnHookers();
 	}
 
 	_ASSERTE(!gpSrv->hRootProcessGui || (((DWORD)gpSrv->hRootProcessGui)!=0xCCCCCCCC && IsWindow(gpSrv->hRootProcessGui)));
