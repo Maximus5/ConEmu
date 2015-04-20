@@ -5725,6 +5725,9 @@ wchar_t* CVConGroup::GetTasks(CVConGroup* apRoot /*= NULL*/)
 	size_t nTaskLen[MAX_CONSOLE_COUNT] = {};
 	size_t t = 0, i, nAllLen = 0;
 
+	//TODO: Need to correct splits storing
+	//MSectionLockSimple lockGroups; lockGroups.Lock(gpcs_VGroups);
+
 	for (i = 0; i < countof(gp_VCon); i++)
 	{
 		CVConGuard VCon;
