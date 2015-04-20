@@ -6910,6 +6910,11 @@ bool CRealConsole::isServerClosing()
 	if (m_ServerClosing.nServerPID && (m_ServerClosing.nServerPID == mn_MainSrv_PID))
 		return true;
 
+	// Otherwise we can get weird errors 'Maximum real console size was reached'
+	// when closing a tab with several splits in it...
+	if (mb_InCloseConsole)
+		return true;
+
 	return false;
 }
 
