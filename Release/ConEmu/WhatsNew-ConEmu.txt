@@ -12,6 +12,14 @@ Votes and awards (vote for ConEmu, if you please)
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+2015.4.19
+[*] DefTerm. First VisualStudio debugging session was not processed by DefTerm.
+[*] Default settings were not applied on first start (suggested startup task).
+[*] gh#104: Add default task for Git-for-Windows-v2.
+[*] gh#107: Quoted Task names were not working after ConEmu.exe `-cmd` argument.
+[*] Warning 'Maximum real console size was reached' was appeared sometimes during several splits tab closing.
+
+
 2015.4.16
 [*] gh#96: DefTerm was failed to hook VS Debugging console applications. Avoid deadlocks.
 [*] Issue 1965: Correct 3rd state condition for ‘Change prompt text cursor position with LClick’.
