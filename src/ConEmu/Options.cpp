@@ -2836,7 +2836,7 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 		reg->Load(L"TabFlashChanged", nTabFlashChanged);
 		reg->Load(L"TabRecent", isTabRecent);
 		reg->Load(L"TabDblClick", nTabBarDblClickAction); MinMax(nTabBarDblClickAction, 3);
-		reg->Load(L"TabBtnDblClick", nTabBtnDblClickAction); MinMax(nTabBtnDblClickAction, 4);
+		reg->Load(L"TabBtnDblClick", nTabBtnDblClickAction); MinMax(nTabBtnDblClickAction, 5);
 		reg->Load(L"TabsOnTaskBar", m_isTabsOnTaskBar);
 		reg->Load(L"TaskBarOverlay", isTaskbarShield);
 		reg->Load(L"TaskbarProgress", isTaskbarProgress);
