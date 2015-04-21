@@ -1,15 +1,22 @@
-﻿You can read online version of this file
-English: http://code.google.com/p/conemu-maximus5/wiki/Whats_New?wl=en
-Russian: http://code.google.com/p/conemu-maximus5/wiki/Whats_New?wl=ru
-SVN: http://conemu-maximus5.googlecode.com/svn/trunk/ConEmu/Release/ConEmu/WhatsNew-ConEmu.txt
+﻿Automatic update is recommended
+-------------------------------
+New ConEmu builds arrives often, at least weekly. It's recommended to enable
+Automatic Update to get Preview or Alpha builds as soon as they are released.
 
+Any contributions are appreciated
+---------------------------------
+You can show your appreciation and support future development by:
++ bugreporting: http://conemu.github.io/en/Issues.html
++ funding: http://conemu.github.io/donate.html
++ helping with documentation: https://github.com/ConEmu/ConEmu.github.io
++ coding: https://github.com/Maximus5/ConEmu
++ voting: http://conemu.github.io/en/Awards.html#Voting
+or anything else, spreading the word for example.
 
-You can show your appreciation and support future development by donating.
-Donate button located on project website under ConEmu sketch (upper right of page)
-http://code.google.com/p/conemu-maximus5
-
-Votes and awards (vote for ConEmu, if you please)
-http://code.google.com/p/conemu-maximus5/wiki/Awards
+ConEmu changelog is always available online
+-------------------------------------------
+http://conemu.github.io/en/Whats_New.html
+-------------------------------------------
 
 
 2015.4.19
