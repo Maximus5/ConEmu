@@ -41,6 +41,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmu.h"
 #include "ConEmuApp.h"
 #include "Update.h"
+#include "../ConEmuCD/ExitCodes.h"
 #include "../common/CmdArg.h"
 #include "../common/execute.h"
 #include "../common/FarVersion.h"
@@ -576,6 +577,19 @@ static INT_PTR CALLBACK CheckOptionsFastProc(HWND hDlg, UINT messg, WPARAM wPara
 		}
 
 		break;
+
+	case WM_SYSCOMMAND:
+		if (wParam == SC_CLOSE)
+		{
+			BOOL b = gbMessagingStarted; gbMessagingStarted = TRUE;
+			int iQuitBtn = MsgBox(L"Close dialog and terminate ConEmu?", MB_ICONQUESTION|MB_YESNO, NULL, hDlg);
+			gbMessagingStarted = b;
+			if (iQuitBtn == IDYES)
+				TerminateProcess(GetCurrentProcess(), CERR_FASTCONFIG_QUIT);
+			return TRUE;
+		}
+		break;
+
 
 	default:
 		if (gp_DpiAware && gp_DpiAware->ProcessDpiMessages(hDlg, messg, wParam, lParam))
