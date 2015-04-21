@@ -213,8 +213,21 @@ static INT_PTR Fast_OnInitDialog(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lP
 	}
 	// Show startup task or shell command line
 	LPCWSTR pszStartup = (gpSet->nStartType == 2) ? gpSet->psStartTasksName : (gpSet->nStartType == 0) ? gpSet->psStartSingleApp : NULL;
+	// Check if that task exists
+	const CommandTasks* pTask = NULL;
+	if ((gpSet->nStartType == 2) && pszStartup)
+	{
+		pTask = gpSet->CmdTaskGetByName(gpSet->psStartTasksName);
+		if (pTask && pTask->pszName && (lstrcmp(pTask->pszName, pszStartup) != 0))
+			pszStartup = pTask->pszName;
+		else if (!pTask)
+			pszStartup = NULL;
+	}
+	// Show startup command or task
 	if (pszStartup && *pszStartup)
+	{
 		CSetDlgLists::SelectStringExact(hDlg, lbStartupShellFast, pszStartup);
+	}
 
 
 	// Palettes (console color sets)
