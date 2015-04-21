@@ -1,5 +1,6 @@
 $package = 'ConEmu'
 $version = '15.04.09'
+$stage   = 'Preview'
 
 
 $isSytem32Bit = (($Env:PROCESSOR_ARCHITECTURE -eq 'x86') -and `
@@ -7,7 +8,7 @@ $isSytem32Bit = (($Env:PROCESSOR_ARCHITECTURE -eq 'x86') -and `
 
 $os = if ($isSytem32Bit) { "x86" } else { "x64" }
 
-$url = "https://downloads.sf.net/project/conemu/Alpha/ConEmuSetup.$($version.replace('.','')).exe?use_mirror=autoselect"
+$url = "https://downloads.sf.net/project/conemu/$stage/ConEmuSetup.$($version.replace('.','')).exe?use_mirror=autoselect"
 
 # MSI installer, but packed inside wrapper to select x86 or x64
 # version. Therefore, treat it as EXE type.
