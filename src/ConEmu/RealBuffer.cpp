@@ -3851,7 +3851,7 @@ void CRealBuffer::MarkFindText(int nDirection, LPCWSTR asText, bool abCaseSensit
 			}
 			nStepMax = ((m_Type == rbt_Primary) || (nDirection >= 0)) ? 1 : 2;
 		}
-		else if ((m_Type == rbt_Find) && (nDirection != 0))
+		else if (m_Type == rbt_Find)
 		{
 			nStepMax = (nDirection >= 0) ? 1 : 2;
 		}
@@ -3927,6 +3927,12 @@ void CRealBuffer::MarkFindText(int nDirection, LPCWSTR asText, bool abCaseSensit
 				{
 					pszFrom = pszFrom1 + nFrom + 1;
 				}
+			}
+			else if (nDirection == 0)
+			{
+				// First 'auto' seek
+				pszEnd = pszFrom1;
+				nDirection = -1;
 			}
 		} // end of `for (int i = 0; i <= nStepMax; i++)`
 
