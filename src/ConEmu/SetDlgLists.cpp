@@ -444,29 +444,39 @@ int CSetDlgLists::SelectStringExact(HWND hParent, WORD nCtrlId, LPCWSTR asText)
 	if (nIdx < 0)
 	{
 		int nCount = SendMessage(hList, CB_GETCOUNT, 0, 0);
-		int nNewVal = _wtol(asText);
-		wchar_t temp[MAX_PATH] = {};
+		wchar_t* pszNumEnd = NULL;
+		int nNewVal = wcstol(asText, &pszNumEnd, 10), nCurVal;
+		bool bUseNumCmp = (pszNumEnd && !pszNumEnd) && ((nNewVal != 0) || (lstrcmp(pszNumEnd, L"0") == 0));
 
-		for(int i = 0; i < nCount; i++)
+		// For `Font Sizes` generally
+		if (bUseNumCmp)
 		{
-			if (!SendMessage(hList, CB_GETLBTEXT, i, (LPARAM)temp)) break;
+			wchar_t temp[MAX_PATH] = {};
 
-			int nCurVal = _wtol(temp);
+			for (int i = 0; i < nCount; i++)
+			{
+				if (!SendMessage(hList, CB_GETLBTEXT, i, (LPARAM)temp))
+					break;
 
-			if (nCurVal == nNewVal)
-			{
-				nIdx = i;
-				break;
-			}
-			else if (nCurVal > nNewVal)
-			{
-				nIdx = SendMessage(hList, CB_INSERTSTRING, i, (LPARAM) asText);
-				break;
+				nCurVal = _wtol(temp);
+
+				if (nCurVal == nNewVal)
+				{
+					nIdx = i;
+					break;
+				}
+				else if (nCurVal > nNewVal)
+				{
+					nIdx = SendMessage(hList, CB_INSERTSTRING, i, (LPARAM)asText);
+					break;
+				}
 			}
 		}
 
 		if (nIdx < 0)
-			nIdx = SendMessage(hList, CB_INSERTSTRING, 0, (LPARAM) asText);
+		{
+			nIdx = SendMessage(hList, CB_INSERTSTRING, 0, (LPARAM)asText);
+		}
 	}
 
 	if (nIdx >= 0)
