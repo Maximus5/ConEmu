@@ -3902,7 +3902,7 @@ void CRealBuffer::MarkFindText(int nDirection, LPCWSTR asText, bool abCaseSensit
 					bFound = true;
 					break; // OK, подходит
 				}
-			}
+			} // end of `while (pszFrom && (pszFrom < pszEnd) && *pszFrom)`
 
 			if ((nDirection < 0) && bFound && pszFound)
 			{
@@ -3928,7 +3928,7 @@ void CRealBuffer::MarkFindText(int nDirection, LPCWSTR asText, bool abCaseSensit
 					pszFrom = pszFrom1 + nFrom + 1;
 				}
 			}
-		}
+		} // end of `for (int i = 0; i <= nStepMax; i++)`
 
 
 		if (pszFrom && bFound)
