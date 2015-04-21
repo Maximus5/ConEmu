@@ -19,6 +19,14 @@ http://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2015.4.20
+[*] Warn if MacType hookers are loaded in ConEmuC/ConEmuC64. User have to exclude these processes in the MacType configuration.
+[*] Allow to quit ConEmu by cross-clicking in the ‘Fast configuration’ dialog.
+[*] Startup task field was not filled properly in the Fast configuration dialog sometimes.
+[*] User had to press `Enter` to start find text from SearchBox if the match was above visible area.
+[*] Clean up ConEmu_Tilde.xml from default settings.
+
+
 2015.4.19
 [*] DefTerm. First VisualStudio debugging session was not processed by DefTerm.
 [*] Default settings were not applied on first start (suggested startup task).
