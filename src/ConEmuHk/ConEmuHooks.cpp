@@ -1630,14 +1630,17 @@ BOOL WINAPI OnTrackPopupMenu(HMENU hMenu, UINT uFlags, int x, int y, int nReserv
 	DebugString(szMsg);
 #endif
 
-	if (ghConEmuWndDC)
+	// Seems like that is required(?) for Far's EMenu only
+	// and can harm other applications: gh#112
+	if (ghConEmuWndDC && (gFarMode.cbSize == sizeof(gFarMode)) && gFarMode.bFarHookMode)
 	{
-		// Необходимо "поднять" наверх консольное окно, т.к. от него идет меню
+		// We have to ensure that hWnd is on top (has focus) because menu expects that
 		GuiSetForeground(hWnd);
 
+		// Far Manager related (EMenu especially)
 		if (gFarMode.cbSize == sizeof(gFarMode) && gFarMode.bPopupMenuPos)
 		{
-			gFarMode.bPopupMenuPos = FALSE; // однократно
+			gFarMode.bPopupMenuPos = FALSE; // one time
 			POINT pt; GetCursorPos(&pt);
 			x = pt.x; y = pt.y;
 		}
