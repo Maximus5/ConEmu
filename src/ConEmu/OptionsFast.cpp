@@ -1374,23 +1374,43 @@ void CreateFarTasks(LPCWSTR asDrive, int& iCreatIdx)
 	{
 		FarVerList::FarInfo& FI = Vers.Installed[i];
 		bool bNeedQuot = (wcschr(FI.szFullPath, L' ') != NULL);
-		LPCWSTR pszFullPath = FI.szFullPath;
+		LPWSTR pszFullPath = FI.szFullPath;
 		wchar_t szUnexpanded[MAX_PATH];
 		if (wcschr(pszFullPath, L'\\') && UnExpandEnvStrings(pszFullPath, szUnexpanded, countof(szUnexpanded)))
 			pszFullPath = szUnexpanded;
 
-		wchar_t* pszCommand = bNeedQuot ? lstrmerge(L"\"", pszFullPath, L"\"") : lstrdup(pszFullPath);
-		if (pszCommand)
+		wchar_t* pszCommand = NULL;
+
+		// We have to set FARHOME variable before starting Far (proper plugins folder)
+		LPWSTR pszExeName = (LPWSTR)PointToName(pszFullPath);
+		if (pszExeName)
 		{
-			if (FI.Ver.dwVerMajor >= 2)
-				lstrmerge(&pszCommand, L" /w");
+			if (pszExeName > pszFullPath)
+			{
+				wchar_t chSave = *(pszExeName-1);
+				*(pszExeName-1) = 0;
+				pszCommand = lstrmerge(L"set \"FARHOME=", pszFullPath, L"\" & \"%FARHOME%\\", pszExeName, L"\"");
+				*(pszExeName-1) = chSave;
+			}
+			else
+			{
+				// No path? that is strange
+				_ASSERTE(!bNeedQuot);
+				pszCommand = bNeedQuot ? lstrmerge(L"\"", pszFullPath, L"\"") : lstrdup(pszFullPath);
+			}
 
-			lstrmerge(&pszCommand, L" /p\"%ConEmuDir%\\Plugins\\ConEmu;%FarHome%\\Plugins\"");
+			if (pszCommand)
+			{
+				if (FI.Ver.dwVerMajor >= 2)
+					lstrmerge(&pszCommand, L" /w");
 
-			if (gn_FirstFarTask == -1)
-				gn_FirstFarTask = iCreatIdx;
+				lstrmerge(&pszCommand, L" /p\"%ConEmuDir%\\Plugins\\ConEmu;%FARHOME%\\Plugins\"");
 
-			CreateDefaultTask(iCreatIdx, FI.szTaskName, NULL, pszCommand);
+				if (gn_FirstFarTask == -1)
+					gn_FirstFarTask = iCreatIdx;
+
+				CreateDefaultTask(iCreatIdx, FI.szTaskName, NULL, pszCommand);
+			}
 		}
 
 		// Release memory
