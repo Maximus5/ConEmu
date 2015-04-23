@@ -102,15 +102,15 @@ typedef struct _CONSOLE_SELECTION_INFO
 #define CEHOMEPAGE_A    "http://conemu.github.io/"
 #define CEHOMEPAGE     _CRT_WIDE(CEHOMEPAGE_A)
 #define CEDOWNLPAGE    L"http://www.fosshub.com/ConEmu.html"
-#define CEREPORTBUG    L"http://conemu.github.io/en/Issues.html"
-#define CEREPORTCRASH  L"http://conemu.github.io/en/Issues.html"
-#define CEWHATSNEW     L"http://conemu.github.io/en/Whats_New.html"
-#define CEMSBUGWIKI    L"http://conemu.github.io/en/MicrosoftBugs.html"
-#define CEHOOKSWIKI    L"http://conemu.github.io/en/ConEmuHk.html"
-#define CEWIKIBASE     L"http://conemu.github.io/en/"
-#define CEDONATEPAGE   L"http://conemu.github.io/donate.html"
 #define CEFLATTRPAGE   L"http://flattr.com/thing/2002773/Maximus5ConEmu-on-GitHub"
-#define CEMACTYPEWARN  L"http://conemu.github.io/en/Installation.html#mactype"
+#define CEDONATEPAGE   L"http://conemu.github.io/donate.html"
+#define CEWIKIBASE     L"http://conemu.github.io/en/"
+#define CEHOOKSWIKI    CEWIKIBASE L"ConEmuHk.html"
+#define CEMACTYPEWARN  CEWIKIBASE L"Installation.html#mactype"
+#define CEMSBUGWIKI    CEWIKIBASE L"MicrosoftBugs.html"
+#define CEREPORTBUG    CEWIKIBASE L"Issues.html"
+#define CEREPORTCRASH  CEWIKIBASE L"Issues.html"
+#define CEWHATSNEW     CEWIKIBASE L"Whats_New.html"
 
 
 // EnvVars
