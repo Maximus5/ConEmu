@@ -4337,12 +4337,24 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	if (psUnknown)
 	{
 		DEBUGSTRSTARTUP(L"Unknown switch, exiting!");
-		TCHAR* psMsg = (TCHAR*)calloc(_tcslen(psUnknown)+100,sizeof(TCHAR));
-		_tcscpy(psMsg, _T("Unknown switch specified:\r\n"));
-		_tcscat(psMsg, psUnknown);
-		gpConEmu->LogString(psMsg, false, false);
-		MBoxA(psMsg);
-		free(psMsg);
+		CEStr lsFail(lstrmerge(L"Unknown switch specified:\r\n", psUnknown));
+		gpConEmu->LogString(lsFail, false, false);
+
+		LPCWSTR pszNewConWarn = NULL;
+		if (wcsstr(psUnknown, L"new_console") || wcsstr(psUnknown, L"cur_console"))
+			pszNewConWarn = L"\r\n\r\n" L"Switch -new_console must be specified *after* /cmd or /cmdlist";
+
+		CEStr lsMsg(lstrmerge(
+			lsFail,
+			pszNewConWarn,
+			L"\r\n\r\n"
+			L"Visit website to get thorough switches description:\r\n"
+			CEGUIARGSPAGE
+			L"\r\n\r\n"
+			L"Or run ‘ConEmu.exe -?’ to get the brief."
+			));
+
+		MBoxA(lsMsg);
 		return 100;
 	}
 
