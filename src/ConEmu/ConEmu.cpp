@@ -5121,7 +5121,7 @@ void CConEmuMain::UpdateTitle()
 	{
 		CVConGuard VCon;
 		if ((GetActiveVCon(&VCon) >= 0) && VCon->RCon())
-			pszNewTitle = VCon->RCon()->GetTitle();
+			pszNewTitle = VCon->RCon()->GetTitle(true);
 	}
 
 	if (!pszNewTitle)

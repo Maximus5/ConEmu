@@ -6400,6 +6400,8 @@ void CVirtualConsole::OnTitleChanged()
 {
 	if (mp_Ghost)
 		mp_Ghost->CheckTitle();
+	if (isActive(false))
+		mp_ConEmu->UpdateTitle();
 }
 
 void CVirtualConsole::SavePaneSnapshoot()
