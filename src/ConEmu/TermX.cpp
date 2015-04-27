@@ -64,6 +64,18 @@ bool TermX::GetSubstitute(const KEY_EVENT_RECORD& k, wchar_t (&szSubst)[16])
 				msprintf(szSubst, countof(szSubst), L"\033[1;%c%c", Mods+L'1', c);
 			}
 		}
+
+		void SetTilde(wchar_t (&szSubst)[16], wchar_t c)
+		{
+			if (!Mods)
+			{
+				msprintf(szSubst, countof(szSubst), L"\033[%c~", c);
+			}
+			else
+			{
+				msprintf(szSubst, countof(szSubst), L"\033[%c;%c~", c, Mods+L'1');
+			}
+		}
 	} Processor = {xtc_None};
 
 	if (k.dwControlKeyState & (SHIFT_PRESSED))
@@ -102,16 +114,16 @@ bool TermX::GetSubstitute(const KEY_EVENT_RECORD& k, wchar_t (&szSubst)[16])
 		return true;
 
 	case VK_INSERT:
-		wcscpy_c(szSubst, L"\033[2;*~");
+		Processor.SetTilde(szSubst, L'2');
 		return true;
 	case VK_PRIOR:
-		wcscpy_c(szSubst, L"\033[5;*~");
+		Processor.SetTilde(szSubst, L'5');
 		return true;
 	case VK_NEXT:
-		wcscpy_c(szSubst, L"\033[6;*~");
+		Processor.SetTilde(szSubst, L'6');
 		return true;
 	case VK_DELETE:
-		wcscpy_c(szSubst, L"\033[3;*~"); // ???
+		Processor.SetTilde(szSubst, L'3');
 		return true;
 
 	case VK_TAB:
