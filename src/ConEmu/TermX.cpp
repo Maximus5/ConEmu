@@ -87,6 +87,12 @@ bool TermX::GetSubstitute(const KEY_EVENT_RECORD& k, wchar_t (&szSubst)[16])
 	case VK_LEFT:
 		Processor.SetKey(szSubst, L'D');
 		return true;
+	case VK_HOME:
+		Processor.SetKey(szSubst, L'H');
+		return true;
+	case VK_END:
+		Processor.SetKey(szSubst, L'F');
+		return true;
 
 	case VK_F1: case VK_F2: case VK_F3: case VK_F4: case VK_F5: case VK_F6: case VK_F7: case VK_F8:
 	case VK_F9: case VK_F10: case VK_F11: case VK_F12: case VK_F13: case VK_F14: case VK_F15: case VK_F16:
@@ -97,12 +103,6 @@ bool TermX::GetSubstitute(const KEY_EVENT_RECORD& k, wchar_t (&szSubst)[16])
 
 	case VK_INSERT:
 		wcscpy_c(szSubst, L"\033[2;*~");
-		return true;
-	case VK_HOME:
-		wcscpy_c(szSubst, L"\033[1;*H");
-		return true;
-	case VK_END:
-		wcscpy_c(szSubst, L"\033[1;*F");
 		return true;
 	case VK_PRIOR:
 		wcscpy_c(szSubst, L"\033[5;*~");
