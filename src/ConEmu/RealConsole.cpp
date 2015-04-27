@@ -9580,7 +9580,11 @@ void CRealConsole::OnActivate(int nNewNum, int nOldNum)
 	// Чтобы все в одном месте было
 	OnGuiFocused(TRUE, TRUE);
 
-	mp_ConEmu->InvalidateGaps();
+	// If there are no other splits - nothing to invalidate
+	if (CVConGroup::isGroup(mp_VCon))
+	{
+		mp_ConEmu->InvalidateGaps();
+	}
 
 	mp_ConEmu->mp_Status->OnActiveVConChanged(nNewNum, this);
 
