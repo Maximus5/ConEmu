@@ -4308,7 +4308,7 @@ BOOL CRealConsole::StartProcessInt(LPCWSTR& lpszCmd, wchar_t*& psCurCmd, LPCWSTR
 	MCHKHEAP;
 	dwLastError = 0;
 	#ifdef MSGLOGGER
-	DEBUGSTRPROC(psCurCmd); DEBUGSTRPROC(_T("\n"));
+	DEBUGSTRPROC(psCurCmd);
 	#endif
 
 	#ifdef _DEBUG
