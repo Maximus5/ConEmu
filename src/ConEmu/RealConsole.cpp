@@ -316,6 +316,7 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 	memset(m_TerminatedPIDs, 0, sizeof(m_TerminatedPIDs)); mn_TerminatedIdx = 0;
 	mb_SkipFarPidChange = FALSE;
 	mn_InRecreate = 0; mb_ProcessRestarted = FALSE; mb_InCloseConsole = FALSE;
+	mb_RecreateFailed = FALSE;
 	mn_StartTick = mn_RunTime = 0;
 	mb_WasVisibleOnce = false;
 	mn_DeactivateTick = 0;
@@ -3782,6 +3783,7 @@ void CRealConsole::SetSwitchActiveServer(bool bSwitch, CRealConsole::SwitchActiv
 void CRealConsole::ResetVarsOnStart()
 {
 	mb_InCloseConsole = FALSE;
+	mb_RecreateFailed = FALSE;
 	SetSwitchActiveServer(false, eResetEvent, eResetEvent);
 	//Drop flag after Restart console
 	mb_InPostCloseMacro = false;
@@ -4212,6 +4214,9 @@ wrap:
 	#endif
 	// Let know calling function about the problem
 	SetLastError(dwLastError);
+	// Allow to recreate console again
+	if (!lbRc && mn_InRecreate)
+		mb_RecreateFailed = TRUE;
 	return lbRc;
 }
 
@@ -8968,7 +8973,7 @@ BOOL CRealConsole::RecreateProcess(RConStartArgs *args)
 		return false; // консоль пока не создана?
 	}
 
-	if (mn_InRecreate)
+	if (mn_InRecreate && !mb_RecreateFailed)
 	{
 		AssertMsg(L"Console already in recreate...");
 		return false;
