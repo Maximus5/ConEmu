@@ -1396,7 +1396,11 @@ void CreateFarTasks(LPCWSTR asDrive, int& iCreatIdx)
 			{
 				// No path? that is strange
 				_ASSERTE(!bNeedQuot);
-				pszCommand = bNeedQuot ? lstrmerge(L"\"", pszFullPath, L"\"") : lstrdup(pszFullPath);
+				// Reset 'FARHOME' env.var before starting far.exe!
+				// Otherwise, we can inherit '%FARHOME%' from parent process and when far.exe starts
+				// it will get already expanded command line which may has erroneous path.
+				// That's very bad when running x64 Far, but %FARHOME% points to x86 Far.
+				pszCommand = lstrmerge(L"set \"FARHOME=\" & \"", pszFullPath, L"\"");
 			}
 
 			if (pszCommand)
