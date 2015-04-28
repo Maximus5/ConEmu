@@ -19,6 +19,19 @@ http://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2015.4.27
+[*] gh#112: Python with Tk: rightclick menu window not showing.
+[*] Set `FARHOME` env.var in default created Far tasks.
+    That is because otherwise FARHOME may hold wrong value
+    and plugins may be loaded from wrong place.
+    So, the example task {Far Manager::Far 3.0 x64} will be:
+      set "FARHOME=C:\Program Files\Far Manager" & "%FARHOME%\far.exe" /w /p"%ConEmuDir%\Plugins\ConEmu;%FARHOME%\Plugins"
+[*] Show link to ConEmuArgs.html on bad switch using.
+[*] If tab is renamed manually or via `-new_console:t:???` new name will be shown in ConEmu window title.
+    Now it's possible to create some AHK scripts checking ConEmu title.
+[*] xterm keys: Ctrl+Home, Ctrl+End, Ctrl+Ins, Ctrl+Del, Ctrl+PgUp, Ctrl+PgDn.
+
+
 2015.4.20
 [*] Warn if MacType hookers are loaded in ConEmuC/ConEmuC64. User have to exclude these processes in the MacType configuration.
 [*] Allow to quit ConEmu by cross-clicking in the ‘Fast configuration’ dialog.
