@@ -3453,7 +3453,7 @@ void CRealConsole::OnStartProcessAllowed()
 	if (!bStartRc)
 	{
 		wchar_t szErrInfo[128];
-		_wsprintf(szErrInfo, SKIPLEN(countof(szErrInfo)) L"Can't start root process, ErrCode=0x%08X...", GetLastError());
+		_wsprintf(szErrInfo, SKIPLEN(countof(szErrInfo)) L"Can't start root process (code %i)", (int)GetLastError());
 		DEBUGSTRPROC(L"### Can't start process\n");
 
 		SetConStatus(szErrInfo, cso_Critical);
@@ -4032,7 +4032,9 @@ BOOL CRealConsole::StartProcess()
 			_ASSERTE(mh_MainSrv==NULL);
 			SafeCloseHandle(mh_MainSrv);
 			_ASSERTE(isDetached());
-			SetConStatus(L"Restart console failed", cso_Critical);
+			wchar_t szErrInfo[80];
+			_wsprintf(szErrInfo, SKIPCOUNT(szErrInfo) L"Restart console failed (code %i)", (int)dwLastError);
+			SetConStatus(szErrInfo, cso_Critical);
 		}
 
 		//Box("Cannot execute the command.");
@@ -4208,6 +4210,8 @@ wrap:
 	#ifdef _DEBUG
 	SetEnvironmentVariable(ENV_CONEMU_MONITOR_INTERNAL_W, NULL);
 	#endif
+	// Let know calling function about the problem
+	SetLastError(dwLastError);
 	return lbRc;
 }
 
