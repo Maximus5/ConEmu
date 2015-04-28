@@ -2361,12 +2361,24 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 			nStartCreateDelay = RUNQUEUE_CREATE_LAG;
 		else
 			MinMax(nStartCreateDelay, 10, 10*1000);
-		if (!reg->Load(L"StartType", nStartType) && bCmdLine)
+		if (!reg->Load(L"StartType", nStartType))
 		{
-			if (*psStartSingleApp == CmdFilePrefix)
-				nStartType = 1;
-			else if (*psStartSingleApp == TaskBracketLeft)
-				nStartType = 2;
+			if (!bCmdLine)
+			{
+				// Config is new or partial (template)?
+				if (!IsConfigNew
+					&& !(psStartSingleApp || psStartTasksFile || psStartTasksName))
+				{
+					IsConfigPartial = true;
+				}
+			}
+			else
+			{
+				if (*psStartSingleApp == CmdFilePrefix)
+					nStartType = 1;
+				else if (*psStartSingleApp == TaskBracketLeft)
+					nStartType = 2;
+			}
 		}
 		// Check
 		if (nStartType > (rbStartLastTabs - rbStartSingleApp))

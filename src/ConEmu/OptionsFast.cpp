@@ -1620,7 +1620,7 @@ void CreateDefaultTasks(SettingsLoadedFlags slfFlags)
 	RegEnumKeys(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\VisualStudio", CreateVCTasks, (LPARAM)&iCreatIdx);
 
 	// Choose default startup command
-	if (slfFlags & slf_DefaultSettings)
+	if (slfFlags & (slf_DefaultSettings|slf_DefaultTasks))
 	{
 		const CommandTasks* pTask = NULL;
 		if (gn_FirstFarTask != -1)

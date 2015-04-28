@@ -86,6 +86,7 @@ const SettingsLoadedFlags
 	slf_OnResetReload     = 0x0008,
 	slf_DefaultSettings   = 0x0010,
 	slf_AppendTasks       = 0x0020,
+	slf_DefaultTasks      = 0x0040, // if config is partial (no tasks, no command line)
 	slf_None              = 0x0000
 ;
 

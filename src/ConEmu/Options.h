@@ -125,6 +125,7 @@ struct Settings
 		wchar_t Type[16]; // Информационно: L"[reg]" или L"[xml]"
 
 		bool IsConfigNew; // true, если конфигурация новая
+		bool IsConfigPartial; // true, if config has no task or start command
 
 		//reg->Load(L"DefaultBufferHeight", DefaultBufferHeight);
 		int DefaultBufferHeight;
