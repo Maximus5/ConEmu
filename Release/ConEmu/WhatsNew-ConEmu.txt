@@ -19,6 +19,13 @@ http://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2015.4.28
+[*] Reset `FARHOME` env.var when creating default {Far} task without full path to `far.exe`.
+[*] Default/startup task may be not initialized properly if saved config was partial.
+[*] Show proper error code in StatusBar if restart console was failed.
+[*] gh#121: Selecting 'No' when restarting console as admin produced error state.
+
+
 2015.4.27
 [*] gh#112: Python with Tk: rightclick menu window not showing.
 [*] Set `FARHOME` env.var in default created Far tasks.
