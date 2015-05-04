@@ -1630,9 +1630,9 @@ void Fast_FindStartupTask()
 
 	LPCWSTR DefaultNames[] = {
 		//L"Far", -- no need to find "Far" it must be processed already with gn_FirstFarTask
-		L"TCC",
-		L"NYAOS",
-		L"cmd",
+		L"{TCC}",
+		L"{NYAOS}",
+		L"{cmd}",
 		NULL
 	};
 
