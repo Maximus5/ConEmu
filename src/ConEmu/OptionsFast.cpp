@@ -63,6 +63,7 @@ static int gn_FirstFarTask = -1;
 static ConEmuHotKey ghk_MinMaxKey = {};
 
 void Fast_FindStartupTask();
+LPCWSTR Fast_GetStartupCommand(const CommandTasks*& pTask);
 
 static const ColorPalette* gp_DefaultPalette = NULL;
 static WNDPROC gpfn_DefaultColorBoxProc = NULL;
@@ -213,18 +214,10 @@ static INT_PTR Fast_OnInitDialog(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lP
 	{
 		SendDlgItemMessage(hDlg, lbStartupShellFast, CB_ADDSTRING, 0, (LPARAM)pGrp->pszName);
 	}
+
 	// Show startup task or shell command line
-	LPCWSTR pszStartup = (gpSet->nStartType == 2) ? gpSet->psStartTasksName : (gpSet->nStartType == 0) ? gpSet->psStartSingleApp : NULL;
-	// Check if that task exists
 	const CommandTasks* pTask = NULL;
-	if ((gpSet->nStartType == 2) && pszStartup)
-	{
-		pTask = gpSet->CmdTaskGetByName(gpSet->psStartTasksName);
-		if (pTask && pTask->pszName && (lstrcmp(pTask->pszName, pszStartup) != 0))
-			pszStartup = pTask->pszName;
-		else if (!pTask)
-			pszStartup = NULL;
-	}
+	LPCWSTR pszStartup = Fast_GetStartupCommand(pTask);
 	// Show startup command or task
 	if (pszStartup && *pszStartup)
 	{
@@ -1650,4 +1643,27 @@ void Fast_FindStartupTask()
 		SafeFree(gpSet->psStartTasksName);
 		gpSet->psStartTasksName = lstrdup(pTask->pszName);
 	}
+}
+
+LPCWSTR Fast_GetStartupCommand(const CommandTasks*& pTask)
+{
+	pTask = NULL;
+	// Show startup task or shell command line
+	LPCWSTR pszStartup = (gpSet->nStartType == 2) ? gpSet->psStartTasksName : (gpSet->nStartType == 0) ? gpSet->psStartSingleApp : NULL;
+	// Check if that task exists
+	if ((gpSet->nStartType == 2) && pszStartup)
+	{
+		pTask = gpSet->CmdTaskGetByName(gpSet->psStartTasksName);
+		if (pTask && pTask->pszName && (lstrcmp(pTask->pszName, pszStartup) != 0))
+		{
+			// Return pTask name because it may not match exactly with gpSet->psStartTasksName
+			// because CmdTaskGetByName uses some fuzzy logic to find tasks
+			pszStartup = pTask->pszName;
+		}
+		else if (!pTask)
+		{
+			pszStartup = NULL;
+		}
+	}
+	return pszStartup;
 }
