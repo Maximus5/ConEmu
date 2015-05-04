@@ -937,14 +937,14 @@ void CConEmuMain::AppendExtraArgs(LPCWSTR asSwitch, LPCWSTR asSwitchValue /*= NU
 	if (!asSwitch || !*asSwitch)
 		return;
 
-	lstrmerge(&mps_ConEmuExtraArgs, L" ", asSwitch);
+	lstrmerge(&mps_ConEmuExtraArgs, asSwitch, L" ");
 
 	if (asSwitchValue && *asSwitchValue)
 	{
 		if (IsQuotationNeeded(asSwitchValue))
-			lstrmerge(&mps_ConEmuExtraArgs, L" \"", asSwitchValue, L"\"");
+			lstrmerge(&mps_ConEmuExtraArgs, L"\"", asSwitchValue, L"\" ");
 		else
-			lstrmerge(&mps_ConEmuExtraArgs, L" ", asSwitchValue);
+			lstrmerge(&mps_ConEmuExtraArgs, asSwitchValue, L" ");
 	}
 }
 
