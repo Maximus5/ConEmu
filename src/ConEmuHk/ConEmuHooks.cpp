@@ -5900,6 +5900,36 @@ HANDLE WINAPI OnCreateNamedPipeW(LPCWSTR lpName, DWORD dwOpenMode, DWORD dwPipeM
 }
 #endif
 
+
+#ifdef _DEBUG
+bool FindModuleByAddress(const BYTE* lpAddress, LPWSTR pszModule, int cchMax)
+{
+	bool bFound = false;
+	HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, GetCurrentProcessId());
+	if (hSnap != INVALID_HANDLE_VALUE)
+	{
+		MODULEENTRY32 mi = {sizeof(mi)};
+		if (Module32First(hSnap, &mi))
+		{
+			do {
+				if ((lpAddress >= mi.modBaseAddr) && (lpAddress < (mi.modBaseAddr + mi.modBaseSize)))
+				{
+					bFound = true;
+					if (pszModule)
+						lstrcpyn(pszModule, mi.szExePath, cchMax);
+					break;
+				}
+			} while (Module32Next(hSnap, &mi));
+		}
+		CloseHandle(hSnap);
+	}
+
+	if (!bFound && pszModule)
+		*pszModule = 0;
+	return bFound;
+}
+#endif
+
 #ifdef _DEBUG
 LPVOID WINAPI OnVirtualAlloc(LPVOID lpAddress, SIZE_T dwSize, DWORD flAllocationType, DWORD flProtect)
 {
@@ -5909,17 +5939,34 @@ LPVOID WINAPI OnVirtualAlloc(LPVOID lpAddress, SIZE_T dwSize, DWORD flAllocation
 	LPVOID lpResult = F(VirtualAlloc)(lpAddress, dwSize, flAllocationType, flProtect);
 	DWORD dwErr = GetLastError();
 
-	wchar_t szText[MAX_PATH*3];
+	wchar_t szText[MAX_PATH*4];
 	if (lpResult == NULL)
 	{
 		wchar_t szTitle[64];
 		msprintf(szTitle, countof(szTitle), L"ConEmuHk, PID=%u, TID=%u", GetCurrentProcessId(), GetCurrentThreadId());
-		msprintf(szText, countof(szText),
-			L"\nVirtualAlloc " WIN3264TEST(L"%u",L"x%X%08X") L" bytes failed (0x%08X..0x%08X)\nErrorCode=%u %s\n\nWarning! This may cause an errors in Release!\nPress <OK> to VirtualAlloc at the default address\n\n",
-			WIN3264WSPRINT(dwSize),
-			(DWORD)lpAddress, (DWORD)((LPBYTE)lpAddress+dwSize),
-			dwErr, (dwErr == 487) ? L"(ERROR_INVALID_ADDRESS)" : L"");
+
+		MEMORY_BASIC_INFORMATION mbi = {};
+		SIZE_T mbiSize = VirtualQuery(lpAddress, &mbi, sizeof(mbi));
+		wchar_t szOwnedModule[MAX_PATH] = L"";
+		FindModuleByAddress((const BYTE*)lpAddress, szOwnedModule, countof(szOwnedModule));
+
+		msprintf(szText, countof(szText)-MAX_PATH,
+			L"VirtualAlloc " WIN3264TEST(L"%u",L"x%X%08X") L" bytes failed (0x%08X..0x%08X)\n"
+			L"ErrorCode=%u %s\n\n"
+			L"Allocated information (" WIN3264TEST(L"x%08X",L"x%X%08X") L".." WIN3264TEST(L"x%08X",L"x%X%08X") L")\n"
+			L"Size " WIN3264TEST(L"%u",L"x%X%08X") L" bytes State x%X Type x%X Protect x%X\n"
+			L"Module: %s\n\n"
+			L"Warning! This may cause an errors in Release!\n"
+			L"Press <OK> to VirtualAlloc at the default address\n\n",
+			WIN3264WSPRINT(dwSize), (DWORD)lpAddress, (DWORD)((LPBYTE)lpAddress+dwSize),
+			dwErr, (dwErr == 487) ? L"(ERROR_INVALID_ADDRESS)" : L"",
+			WIN3264WSPRINT(mbi.BaseAddress), WIN3264WSPRINT(((LPBYTE)mbi.BaseAddress+mbi.RegionSize)),
+			WIN3264WSPRINT(mbi.RegionSize), mbi.State, mbi.Type, mbi.Protect,
+			szOwnedModule[0] ? szOwnedModule : L"<Unknown>",
+			0);
+
 		GetModuleFileName(NULL, szText+lstrlen(szText), MAX_PATH);
+
 		DebugString(szText);
 
 	#if defined(REPORT_VIRTUAL_ALLOC)
