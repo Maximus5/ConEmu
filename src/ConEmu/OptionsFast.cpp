@@ -1624,19 +1624,23 @@ void CreateDefaultTasks(SettingsLoadedFlags slfFlags)
 void Fast_FindStartupTask()
 {
 	const CommandTasks* pTask = NULL;
+
 	if (gn_FirstFarTask != -1)
 		pTask = gpSet->CmdTaskGet(gn_FirstFarTask);
+
 	LPCWSTR DefaultNames[] = {
-		L"Far",
+		//L"Far", -- no need to find "Far" it must be processed already with gn_FirstFarTask
 		L"TCC",
 		L"NYAOS",
 		L"cmd",
 		NULL
 	};
+
 	for (INT_PTR i = 0; !pTask && DefaultNames[i]; i++)
 	{
 		pTask = gpSet->CmdTaskGetByName(DefaultNames[i]);
 	}
+
 	if (pTask)
 	{
 		gpSet->nStartType = 2;
