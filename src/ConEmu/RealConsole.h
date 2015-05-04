@@ -756,8 +756,10 @@ class CRealConsole
 		bool ReloadFarWorkDir();
 		//wchar_t ms_ProfilePathTemp[MAX_PATH+1]; -- commented code
 		bool mb_WasStartDetached;
+		void SetRootProcessName(LPCWSTR asProcessName);
 		wchar_t ms_RootProcessName[MAX_PATH];
 		int mn_RootProcessIcon;
+		bool mb_NeedLoadRootProcessIcon;
 		// Replace in asCmd some env.vars (!ConEmuBackHWND! and so on)
 		//wchar_t* ParseConEmuSubst(LPCWSTR asCmd);
 		//wchar_t* mpsz_CmdBuffer;

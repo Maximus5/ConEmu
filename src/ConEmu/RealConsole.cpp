@@ -356,6 +356,7 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 	ZeroStruct(m_Args);
 	ms_RootProcessName[0] = 0;
 	mn_RootProcessIcon = -1;
+	mb_NeedLoadRootProcessIcon = true;
 	mn_LastInvalidateTick = 0;
 
 	hConWnd = NULL;
@@ -3809,6 +3810,18 @@ void CRealConsole::ResetVarsOnStart()
 	tabs.m_Tabs.MarkTabsInvalid(CTabStack::MatchNonPanel, 0);
 	SetTabs(NULL, 1, 0);
 	mp_ConEmu->mp_TabBar->PrintRecentStack();
+}
+
+void CRealConsole::SetRootProcessName(LPCWSTR asProcessName)
+{
+	if (!asProcessName) asProcessName = L"";
+
+	if (lstrcmp(asProcessName, ms_RootProcessName) != 0)
+	{
+		mn_RootProcessIcon = -1;
+		lstrcpyn(ms_RootProcessName, asProcessName, countof(ms_RootProcessName));
+		mb_NeedLoadRootProcessIcon = true;
+	}
 }
 
 BOOL CRealConsole::StartProcess()
@@ -7423,7 +7436,7 @@ int CRealConsole::GetDefaultAppSettingsId()
 
 	if (!lpszCmd || !*lpszCmd)
 	{
-		ms_RootProcessName[0] = 0;
+		SetRootProcessName(NULL);
 		goto wrap;
 	}
 
@@ -7449,7 +7462,7 @@ int CRealConsole::GetDefaultAppSettingsId()
 
 	if (!pszName)
 	{
-		ms_RootProcessName[0] = 0;
+		SetRootProcessName(NULL);
 		goto wrap;
 	}
 
@@ -7461,7 +7474,7 @@ int CRealConsole::GetDefaultAppSettingsId()
 		pszName = szName;
 	}
 
-	lstrcpyn(ms_RootProcessName, pszName, countof(ms_RootProcessName));
+	SetRootProcessName(pszName);
 
 	// In fact, m_Args.bRunAsAdministrator may be not true on startup
 	bAsAdmin = m_Args.pszSpecialCmd ? (m_Args.RunAsAdministrator == crb_On) : mp_ConEmu->mb_IsUacAdmin;
@@ -7474,10 +7487,12 @@ int CRealConsole::GetDefaultAppSettingsId()
 
 wrap:
 	// Load (or create) icon for new tab
-	mn_RootProcessIcon = mp_ConEmu->mp_TabBar->CreateTabIcon(pszIconFile, bAsAdmin, GetStartupDir());
+	if (mb_NeedLoadRootProcessIcon)
+	{
+		mb_NeedLoadRootProcessIcon = false;
+		mn_RootProcessIcon = mp_ConEmu->mp_TabBar->CreateTabIcon(pszIconFile, bAsAdmin, GetStartupDir());
+	}
 	// Fin
-	if (!*ms_RootProcessName)
-		mn_RootProcessIcon = -1;
 	return iAppId;
 }
 
