@@ -29,8 +29,8 @@ echo %green%** %red%read about it%gray% here:%green% https://chocolatey.org/    
 echo %green%** %gray%If you are sure about installing it, execute the following %green%**
 echo %green%** %red%one-line command:                                          %green%**
 echo %green%** %white%powershell -NoProfile -ExecutionPolicy unrestricted        %green%**
-echo %green%**  %white%-Command "iex ((new-object net.webclient).DownloadString  %green%**
-echo %green%**  %white%('https://chocolatey.org/install.ps1'))"                  %green%**
-echo %green%**  %white%^&^& SET PATH=%%PATH%%;%%systemdrive%%\chocolatey\bin           %green%**
+echo %green%**  %white%-Command "iex ((new-object net.webclient).                %green%**
+echo %green%**  %white%DownloadString('https://chocolatey.org/install.ps1'))"    %green%**
+echo %green%**  %white%^&^& SET PATH=%%PATH%%;%%ALLUSERSPROFILE%%\chocolatey\bin       %green%**
 echo %green%****************************************************************%gray%
 endlocal
