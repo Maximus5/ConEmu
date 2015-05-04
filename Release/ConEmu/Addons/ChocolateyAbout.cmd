@@ -23,14 +23,23 @@ if "%ConEmuANSI%" == "ON" (
   set gray=
   set white=
 )
-echo %green%****************************************************************
-echo %green%** %gray%If you%red% don't know about Chocolatey %gray%(apt-get style manager) %green%**
-echo %green%** %red%read about it%gray% here:%green% https://chocolatey.org/                %green%**
-echo %green%** %gray%If you are sure about installing it, execute the following %green%**
-echo %green%** %red%one-line command:                                          %green%**
-echo %green%** %white%powershell -NoProfile -ExecutionPolicy unrestricted        %green%**
-echo %green%**  %white%-Command "iex ((new-object net.webclient).                %green%**
-echo %green%**  %white%DownloadString('https://chocolatey.org/install.ps1'))"    %green%**
-echo %green%**  %white%^&^& SET PATH=%%PATH%%;%%ALLUSERSPROFILE%%\chocolatey\bin       %green%**
-echo %green%****************************************************************%gray%
+rem Do not print ending '**' because it's not so easy to pad it with spaces
+echo %green%**************************************************************
+echo %green%** %gray%If you%red% don't know about Chocolatey %gray%(apt-get style manager) %green%
+echo %green%** %red%read about it%gray% here:%green% https://chocolatey.org/                %green%
+if DEFINED ChocolateyInstall (
+  if EXIST "%ChocolateyInstall%\choco.exe" (
+    echo %green%** %gray%Chocolatey is already installed on your PC:                %green%
+    echo %green%** %red%%ChocolateyInstall% %green%
+    goto done
+  )
+)
+echo %green%** %gray%If you are sure about installing it, execute the following %green%
+echo %green%** %red%one-line command:                                          %green%
+echo %green%** %white%powershell -NoProfile -ExecutionPolicy unrestricted        %green%
+echo %green%**  %white%-Command "iex ((new-object net.webclient).                %green%
+echo %green%**  %white%DownloadString('https://chocolatey.org/install.ps1'))"    %green%
+echo %green%**  %white%^&^& SET PATH=%%PATH%%;%%ALLUSERSPROFILE%%\chocolatey\bin       %green%
+:done
+echo %green%**************************************************************%gray%
 endlocal
