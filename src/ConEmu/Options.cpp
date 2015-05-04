@@ -4972,6 +4972,9 @@ const CommandTasks* Settings::CmdTaskGetByName(LPCWSTR asTaskName)
 	}
 	else
 	{
+		// Validate if it is a Task
+		_ASSERTE(szName[0] == TaskBracketLeft && szName[wcslen(szName)-1] == TaskBracketRight);
+
 		for (int i = 0; (pGrp = CmdTaskGet(i)) != NULL; i++)
 		{
 			if (pGrp->pszName && (lstrcmpi(pGrp->pszName, szName) == 0))
