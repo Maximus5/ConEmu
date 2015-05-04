@@ -62,6 +62,8 @@ static CEHelpPopup* gp_FastHelp = NULL;
 static int gn_FirstFarTask = -1;
 static ConEmuHotKey ghk_MinMaxKey = {};
 
+void Fast_FindStartupTask();
+
 static const ColorPalette* gp_DefaultPalette = NULL;
 static WNDPROC gpfn_DefaultColorBoxProc = NULL;
 static LRESULT CALLBACK Fast_ColorBoxProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -1622,25 +1624,30 @@ void CreateDefaultTasks(SettingsLoadedFlags slfFlags)
 	// Choose default startup command
 	if (slfFlags & (slf_DefaultSettings|slf_DefaultTasks))
 	{
-		const CommandTasks* pTask = NULL;
-		if (gn_FirstFarTask != -1)
-			pTask = gpSet->CmdTaskGet(gn_FirstFarTask);
-		LPCWSTR DefaultNames[] = {
-			L"Far",
-			L"TCC",
-			L"NYAOS",
-			L"cmd",
-			NULL
-		};
-		for (INT_PTR i = 0; !pTask && DefaultNames[i]; i++)
-		{
-			pTask = gpSet->CmdTaskGetByName(DefaultNames[i]);
-		}
-		if (pTask)
-		{
-			gpSet->nStartType = 2;
-			SafeFree(gpSet->psStartTasksName);
-			gpSet->psStartTasksName = lstrdup(pTask->pszName);
-		}
+		Fast_FindStartupTask();
+	}
+}
+
+void Fast_FindStartupTask()
+{
+	const CommandTasks* pTask = NULL;
+	if (gn_FirstFarTask != -1)
+		pTask = gpSet->CmdTaskGet(gn_FirstFarTask);
+	LPCWSTR DefaultNames[] = {
+		L"Far",
+		L"TCC",
+		L"NYAOS",
+		L"cmd",
+		NULL
+	};
+	for (INT_PTR i = 0; !pTask && DefaultNames[i]; i++)
+	{
+		pTask = gpSet->CmdTaskGetByName(DefaultNames[i]);
+	}
+	if (pTask)
+	{
+		gpSet->nStartType = 2;
+		SafeFree(gpSet->psStartTasksName);
+		gpSet->psStartTasksName = lstrdup(pTask->pszName);
 	}
 }
