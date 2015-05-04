@@ -3794,6 +3794,7 @@ void CRealConsole::ResetVarsOnStart()
 	mn_StartTick = mn_RunTime = 0;
 	mn_DeactivateTick = 0;
 	mb_WasVisibleOnce = mp_VCon->isVisible();
+	mb_NeedLoadRootProcessIcon = true;
 
 	hConWnd = NULL;
 
