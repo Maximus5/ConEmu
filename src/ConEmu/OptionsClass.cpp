@@ -781,9 +781,9 @@ void CSettings::SettingsLoaded(SettingsLoadedFlags slfFlags, LPCWSTR pszCmdLine 
 		LPCWSTR pszConfig = gpSetCls->GetConfigName();
 		wchar_t szTitle[1024];
 		if (pszConfig && *pszConfig)
-			_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"%s fast configuration (%s) %s", pszDef, pszConfig, Storage.szType);
+			_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"%s fast configuration (%s)", pszDef, pszConfig);
 		else
-			_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"%s fast configuration %s", pszDef, Storage.szType);
+			_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"%s fast configuration", pszDef);
 
 		// Run "Fast configuration dialog" and apply some final defaults (if was Reset of new settings)
 		CheckOptionsFast(szTitle, slfFlags);

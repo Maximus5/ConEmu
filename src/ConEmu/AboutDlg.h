@@ -37,6 +37,7 @@ namespace ConEmuAbout
 	void OnInfo_Help();
 	void OnInfo_HomePage();
 	void OnInfo_DownloadPage();
+	void OnInfo_FirstStartPage();
 	void OnInfo_ReportBug();
 	void OnInfo_ReportCrash(LPCWSTR asDumpWasCreatedMsg);
 	void OnInfo_ThrowTrapException(bool bMainThread);

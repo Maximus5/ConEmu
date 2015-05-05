@@ -317,7 +317,7 @@ static INT_PTR Fast_OnInitDialog(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lP
 			h = GetDlgItem(hDlg, stHomePage);
 			GetWindowRect(h, &rcBtn); MapWindowPoints(NULL, hDlg, (LPPOINT)&rcBtn, 2);
 			SetWindowPos(h, NULL, rcBtn.left, rcBtn.top - nShift, 0,0, SWP_NOSIZE|SWP_NOZORDER);
-			SetWindowText(h, gsHomePage);
+			SetWindowText(h, gsFirstStart);
 
 			GetWindowRect(hDlg, &rcWnd);
 			MoveWindow(hDlg, rcWnd.left, rcWnd.top+(nShift>>1), rcWnd.right-rcWnd.left, rcWnd.bottom-rcWnd.top-nShift, FALSE);
@@ -523,7 +523,7 @@ static INT_PTR Fast_OnButtonClicked(HWND hDlg, UINT messg, WPARAM wParam, LPARAM
 		}
 
 		case stHomePage:
-			ConEmuAbout::OnInfo_HomePage();
+			ConEmuAbout::OnInfo_FirstStartPage();
 			return 1;
 
 		case cbQuakeKeyFast:

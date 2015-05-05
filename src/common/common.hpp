@@ -107,6 +107,7 @@ typedef struct _CONSOLE_SELECTION_INFO
 #define CEWIKIBASE     L"http://conemu.github.io/en/"
 #define CEGUIARGSPAGE  CEWIKIBASE L"ConEmuArgs.html"
 #define CEHOOKSWIKI    CEWIKIBASE L"ConEmuHk.html"
+#define CEFIRSTSTART   CEWIKIBASE L"SettingsFast.html"
 #define CEMACTYPEWARN  CEWIKIBASE L"Installation.html#mactype"
 #define CEMSBUGWIKI    CEWIKIBASE L"MicrosoftBugs.html"
 #define CEREPORTBUG    CEWIKIBASE L"Issues.html"
