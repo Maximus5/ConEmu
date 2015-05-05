@@ -19,6 +19,15 @@ http://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2015.5.4
+[*] Jump list command was built erroneously if there was ‘-FontDir ...’ or some other switch.
+[*] The field ‘Startup task’ was not filled in the ConEmu Fast Configuration dialog.
+[*] Fix ChocolateyAbout.cmd script, correct PATH suggestion and powershell command.
+[*] Check if Chocolatey is already installed and show the path (ChocolateyAbout.cmd).
+[*] gh#127: ConEmu did not stay minimized if a new console tab was opened in background.
+[*] gh#106: ChildGui turned black after ConEmu was restored.
+
+
 2015.4.28
 [*] Reset `FARHOME` env.var when creating default {Far} task without full path to `far.exe`.
 [*] Default/startup task may be not initialized properly if saved config was partial.
