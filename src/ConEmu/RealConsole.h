@@ -642,7 +642,7 @@ class CRealConsole
 		void OnStartProcessAllowed();
 		void OnTimerCheck();
 
-		static bool ThawMonitorThread(CVirtualConsole* pVCon, LPARAM lParam);
+		static bool RefreshAfterRestore(CVirtualConsole* pVCon, LPARAM lParam);
 
 	public:
 		void MonitorAssertTrap();

@@ -3186,9 +3186,27 @@ void CRealConsole::SetMonitorThreadEvent()
 	SetEvent(mh_MonitorThreadEvent);
 }
 
-bool CRealConsole::ThawMonitorThread(CVirtualConsole* pVCon, LPARAM lParam)
+// static
+bool CRealConsole::RefreshAfterRestore(CVirtualConsole* pVCon, LPARAM lParam)
 {
-	pVCon->RCon()->SetMonitorThreadEvent();
+	CVConGuard VCon(pVCon);
+	CRealConsole* pRCon = VCon->RCon();
+	if (pRCon)
+	{
+		pRCon->SetMonitorThreadEvent();
+		HWND hChildGui = pRCon->GuiWnd();
+		BOOL bRedraw;
+		RECT rcClient;
+		if (hChildGui)
+		{
+			// We need to invalidate client and non-client areas, following lines does the trick
+			GetWindowRect(hChildGui, &rcClient);
+			MapWindowPoints(NULL, hChildGui, (LPPOINT)&rcClient, 2);
+			bRedraw = RedrawWindow(hChildGui, &rcClient, NULL, RDW_ALLCHILDREN|RDW_INVALIDATE|RDW_FRAME);
+			_ASSERTE(bRedraw);
+		}
+		UNREFERENCED_PARAMETER(bRedraw);
+	}
 	return true;
 }
 
