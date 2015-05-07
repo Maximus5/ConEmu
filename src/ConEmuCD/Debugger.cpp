@@ -43,10 +43,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConsoleHelp.h"
 #include "UnicodeTest.h"
 
-#ifdef __GNUC__
-	#include "../common/DbgHlpGcc.h"
+#if !defined(__GNUC__) || defined(__MINGW32__)
+	#include <dbghelp.h>
 #else
-	#include <Dbghelp.h>
+	#include "../common/DbgHlpGcc.h"
 #endif
 
 #ifndef _T
