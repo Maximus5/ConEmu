@@ -3,7 +3,7 @@ Read about enabling ANSI support in ConEmu
   http://code.google.com/p/conemu-maximus5/wiki/AnsiEscapeCodes
 
 To view this file colored just "type" it in your cmd/tcc/powershell prompt
-  Example: type "C:\Program Files\ConEmu\ConEmu\Addon\AnsiColors16t.ans"
+  Example: type "C:\Program Files\ConEmu\ConEmu\Addons\AnsiColors16t.ans"
 
 How to use ANSI in your scripts
 
