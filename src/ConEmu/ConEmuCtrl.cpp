@@ -1057,6 +1057,7 @@ bool CConEmuCtrl::key_ConsoleNum(const ConEmuChord& VkState, bool TestOnly, cons
 	return true;
 }
 
+#if 0
 bool CConEmuCtrl::key_PicViewSlideshow(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
 	if (!pRCon)
@@ -1127,6 +1128,7 @@ bool CConEmuCtrl::key_PicViewSlideshow(const ConEmuChord& VkState, bool TestOnly
 
 	return false;
 }
+#endif
 
 bool CConEmuCtrl::key_GuiMacro(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
