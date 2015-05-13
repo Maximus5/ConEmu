@@ -3511,7 +3511,11 @@ ConEmuWindowCommand CConEmuSize::EvalTileMode(const RECT& rcWnd, MONITORINFO* pm
 
 ConEmuWindowCommand CConEmuSize::GetTileMode(bool Estimate, MONITORINFO* pmi/*=NULL*/)
 {
-	if (Estimate && IsSizePosFree() && !isFullScreen() && !isZoomed() && !isIconic())
+	if (Estimate && IsSizePosFree()
+		// && !isFullScreen() && !isZoomed() -- gh#142
+		&& !isIconic()
+		&& IsWindowVisible(ghWnd)
+		)
 	{
 		RECT rcWnd = {};
 		ConEmuWindowCommand CurTile = cwc_Current;
@@ -3519,12 +3523,8 @@ ConEmuWindowCommand CConEmuSize::GetTileMode(bool Estimate, MONITORINFO* pmi/*=N
 		// Если окно развернуто - сбрасываем признак "Snap" (Tile)
 		if (isFullScreen() || isZoomed())
 		{
-			goto done;
-		}
-		// Если окно минимизировано - не трогать признак "Snap" (Tile)
-		if (!IsWindowVisible(ghWnd) || isIconic())
-		{
-			CurTile = m_TileMode;
+			if (pmi)
+				GetNearestMonitorInfo(pmi, NULL, NULL, ghWnd);
 			goto done;
 		}
 
