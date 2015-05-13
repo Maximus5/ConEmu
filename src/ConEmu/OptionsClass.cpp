@@ -1224,7 +1224,7 @@ void CSettings::SearchForControls()
 	HWND hSelTab = NULL, hCurTab = NULL, hCtrl = NULL;
 	static HWND hLastTab, hLastCtrl;
 	INT_PTR lLastListFind = -1;
-	wchar_t szText[255], szClass[80];
+	wchar_t szText[255] = L"", szClass[80];
 	static wchar_t szLastText[255];
 
 	#define ResetLastList() { lLastListFind = -1; szLastText[0] = 0; }
@@ -1343,7 +1343,7 @@ void CSettings::SearchForControls()
 							INT_PTR iCount = SendMessage(hCtrl, LB_GETCOUNT, 0, 0);
 							for (INT_PTR i = lLastListFind+1; i < iCount; i++)
 							{
-								INT_PTR iLen = SendMessage(hCtrl, LB_GETTEXTLEN, 0, 0);
+								INT_PTR iLen = SendMessage(hCtrl, LB_GETTEXTLEN, i, 0);
 								if (iLen >= (INT_PTR)countof(szText))
 								{
 									_ASSERTE(iLen < countof(szText));
@@ -1364,6 +1364,16 @@ void CSettings::SearchForControls()
 						{
 							lLastListFind = lFind;
 							SendMessage(hCtrl, LB_SETCURSEL, lFind, 0);
+							INT_PTR iLen = SendMessage(hCtrl, LB_GETTEXTLEN, lFind, 0);
+							if (iLen >= (INT_PTR)countof(szText))
+							{
+								_ASSERTE(iLen < countof(szText));
+								lstrcpyn(szText, pszPart, countof(szText));
+							}
+							else
+							{
+								SendMessage(hCtrl, LB_GETTEXT, lFind, (LPARAM)szText);
+							}
 							break; // Нашли
 						}
 					}
