@@ -19,6 +19,16 @@ http://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2015.5.13
+[*] Don't show [reg] or [xml] in Fast Configuration dialog because there is the storage location field.
+[*] gh#142: Win+Left/Right didn't snap window if it was maximized.
+[*] gh#139: If Quake was hidden when user presses Win key (Start menu), ConEmu was unexpectedly slided down after second Win press (after menu was hidden).
+[*] Garbage was shown sometimes while searching in Settings dialog.
+[*] gh#143: Add CygWin bash default tasks by checking registry (for new config).
+[*] RealConsole pause refactoring.
+[*] Execute RedrawWindow in the server process to avoid access violation.
+
+
 2015.5.4
 [*] Jump list command was built erroneously if there was ‘-FontDir ...’ or some other switch.
 [*] The field ‘Startup task’ was not filled in the ConEmu Fast Configuration dialog.
