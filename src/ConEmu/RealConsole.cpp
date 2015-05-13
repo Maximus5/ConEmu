@@ -3214,15 +3214,24 @@ bool CRealConsole::RefreshAfterRestore(CVirtualConsole* pVCon, LPARAM lParam)
 	if (pRCon)
 	{
 		pRCon->SetMonitorThreadEvent();
+		BOOL bRedraw = FALSE;
 		HWND hChildGui = pRCon->GuiWnd();
-		BOOL bRedraw;
-		RECT rcClient;
-		if (hChildGui)
+		DWORD dwServerPID = pRCon->GetServerPID(true);
+		if (hChildGui && dwServerPID)
 		{
 			// We need to invalidate client and non-client areas, following lines does the trick
-			GetWindowRect(hChildGui, &rcClient);
-			MapWindowPoints(NULL, hChildGui, (LPPOINT)&rcClient, 2);
-			bRedraw = RedrawWindow(hChildGui, &rcClient, NULL, RDW_ALLCHILDREN|RDW_INVALIDATE|RDW_FRAME);
+			CESERVER_REQ *pIn = ExecuteNewCmd(CECMD_REDRAWHWND, sizeof(CESERVER_REQ_HDR)+sizeof(DWORD));
+			if (pIn)
+			{
+				pIn->dwData[0] = (DWORD)(DWORD_PTR)hChildGui;
+				CESERVER_REQ *pOut = ExecuteSrvCmd(dwServerPID, pIn, ghWnd);
+				if (pOut && (pOut->DataSize() >= sizeof(DWORD)))
+				{
+					bRedraw = pOut->dwData[0];
+				}
+				ExecuteFreeResult(pOut);
+				ExecuteFreeResult(pIn);
+			}
 			_ASSERTE(bRedraw);
 		}
 		UNREFERENCED_PARAMETER(bRedraw);

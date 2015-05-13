@@ -8111,6 +8111,35 @@ BOOL cmd_GuiAppAttached(CESERVER_REQ& in, CESERVER_REQ** out)
 	return TRUE;
 }
 
+// CECMD_REDRAWHWND
+BOOL cmd_RedrawHWND(CESERVER_REQ& in, CESERVER_REQ** out)
+{
+	size_t cbInSize = in.DataSize();
+	if (cbInSize < sizeof(DWORD))
+		return FALSE;
+
+	BOOL bRedraw = FALSE;
+	HWND hWnd = (HWND)in.dwData[0];
+
+	// We need to invalidate client and non-client areas, following lines does the trick
+	RECT rcClient = {};
+	if (GetWindowRect(hWnd, &rcClient))
+	{
+		MapWindowPoints(NULL, hWnd, (LPPOINT)&rcClient, 2);
+		bRedraw = RedrawWindow(hWnd, &rcClient, NULL, RDW_ALLCHILDREN|RDW_INVALIDATE|RDW_FRAME);
+	}
+
+	int nOutSize = sizeof(CESERVER_REQ_HDR) + sizeof(DWORD);
+	*out = ExecuteNewCmd(CECMD_REDRAWHWND,nOutSize);
+
+	if (*out != NULL)
+	{
+		(*out)->dwData[0] = bRedraw;
+	}
+
+	return TRUE;
+}
+
 #ifdef USE_COMMIT_EVENT
 BOOL cmd_RegExtConsole(CESERVER_REQ& in, CESERVER_REQ** out)
 {
@@ -9005,6 +9034,10 @@ BOOL ProcessSrvCommand(CESERVER_REQ& in, CESERVER_REQ** out)
 		case CECMD_ATTACHGUIAPP:
 		{
 			lbRc = cmd_GuiAppAttached(in, out);
+		} break;
+		case CECMD_REDRAWHWND:
+		{
+			lbRc = cmd_RedrawHWND(in, out);
 		} break;
 		case CECMD_ALIVE:
 		{

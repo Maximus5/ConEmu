@@ -452,6 +452,7 @@ const CECMD
 	CECMD_TERMINATEPID   = 84, // DWORD[0]=Count, DWORD[1..]=PIDs
 	CECMD_AFFNTYPRIORITY = 85, // QDWORD[0]=Affinity, QDWORD[1]=PRIORITY
 	CECMD_PAUSE          = 86, // DWORD[0]: CEPauseCmd; Returns CEPauseCmd
+	CECMD_REDRAWHWND     = 87, // DWORD[0]: HWND
 /** Команды FAR плагина **/
 	CMD_FIRST_FAR_CMD    = 200,
 	CMD_DRAGFROM         = 200,
