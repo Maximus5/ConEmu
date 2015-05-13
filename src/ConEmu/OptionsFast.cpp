@@ -1562,6 +1562,7 @@ void CreateDefaultTasks(SettingsLoadedFlags slfFlags)
 	// HKCU\Software\Cygwin\setup\rootdir
 	CreateDefaultTask(szConEmuDrive, iCreatIdx, L"Bash::CygWin bash",
 		L" --login -i -new_console:C:\"" FOUND_APP_PATH_STR L"\\..\\Cygwin.ico\"", L"set CHERE_INVOKING=1 & ", NULL,
+		L"[SOFTWARE\\Cygwin\\setup:rootdir]\\bin\\sh.exe",
 		L"\\CygWin\\bin\\sh.exe", NULL);
 	//{L"CygWin mintty", L"\\CygWin\\bin\\mintty.exe", L" -"},
 	CreateDefaultTask(szConEmuDrive, iCreatIdx, L"Bash::MinGW bash",
