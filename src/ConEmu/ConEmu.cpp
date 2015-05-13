@@ -13546,6 +13546,10 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 				&& !mn_QuakePercent
 				&& !IsWindowVisible(ghWnd))
 			{
+				HWND hNextApp = FindNextSiblingApp(true);
+				wchar_t szInfo[100];
+				_wsprintf(szInfo, SKIPCOUNT(szInfo) L"WM_ACTIVATE skipped because Quake is hidden, bypass focus to x%08X", (DWORD)(DWORD_PTR)hNextApp);
+				LogFocusInfo(szInfo);
 				break;
 			}
 			result = this->OnFocus(hWnd, messg, wParam, lParam);
