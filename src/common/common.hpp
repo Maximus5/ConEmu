@@ -451,6 +451,7 @@ const CECMD
 	CECMD_QUERYPALETTE   = 83, // CESERVER_PALETTE
 	CECMD_TERMINATEPID   = 84, // DWORD[0]=Count, DWORD[1..]=PIDs
 	CECMD_AFFNTYPRIORITY = 85, // QDWORD[0]=Affinity, QDWORD[1]=PRIORITY
+	CECMD_PAUSE          = 86, // DWORD[0]: CEPauseCmd; Returns CEPauseCmd
 /** Команды FAR плагина **/
 	CMD_FIRST_FAR_CMD    = 200,
 	CMD_DRAGFROM         = 200,
@@ -1490,6 +1491,19 @@ struct CESERVER_REQ_CONINFO
 	TOPLEFTCOORD TopLeft;
 };
 
+enum CEPauseCmd
+{
+	CEPause_Switch  = 0,
+	CEPause_On      = 1,
+	CEPause_Off     = 2,
+	CEPause_Unknown = 3,
+};
+
+typedef DWORD CECI_FLAGS;
+const CECI_FLAGS
+	CECI_Paused = 1,
+	CECI_None   = 0;
+
 struct CESERVER_REQ_CONINFO_INFO
 {
 	CESERVER_REQ_HDR cmd;
@@ -1510,6 +1524,7 @@ struct CESERVER_REQ_CONINFO_INFO
 	COORD crWindow;
 	SMALL_RECT srRealWindow; // Те реальные координаты, которые видимы в RealConsole (а не то, что видимо в GUI окне)
 	COORD crMaxSize; // Максимальный размер консоли в символах (для текущего выбранного шрифта)
+	CECI_FLAGS Flags;
 	DWORD nDataShift; // Для удобства - сдвиг начала данных (data) От начала info
 	DWORD nDataCount; // Для удобства - количество ячеек (data)
 };

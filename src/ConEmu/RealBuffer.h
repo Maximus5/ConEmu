@@ -174,6 +174,9 @@ public:
 	bool GetConsoleSelectionInfo(CONSOLE_SELECTION_INFO *sel);
 	int  GetSelectionCellsCount();
 
+	bool isPaused();
+	void StorePausedState(CEPauseCmd state);
+
 	void ConsoleScreenBufferInfo(CONSOLE_SCREEN_BUFFER_INFO* psbi, SMALL_RECT* psrRealWindow = NULL, TOPLEFTCOORD* pTopLeft = NULL);
 	void ConsoleCursorInfo(CONSOLE_CURSOR_INFO *ci);
 	void ConsoleCursorPos(COORD* pcr);
@@ -251,6 +254,8 @@ protected:
 		COORD crMaxSize; // Максимальный размер консоли на текущем шрифте
 		TOPLEFTCOORD TopLeft; // может отличаться от m_sbi.srWindow.Top, если прокрутка заблокирована
 		DWORD TopLeftTick; BOOL InTopLeftSet;
+		CECI_FLAGS Flags;
+		DWORD FlagsUpdateTick;
 		DWORD LastStartInitBuffersTick, LastEndInitBuffersTick, LastStartReadBufferTick, LastEndReadBufferTick;
 		BOOL bInGetConsoleData;
 		int nCreatedBufWidth, nCreatedBufHeight; // Informational

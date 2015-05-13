@@ -7995,6 +7995,63 @@ BOOL cmd_AffinityPriority(CESERVER_REQ& in, CESERVER_REQ** out)
 	return lbRc;
 }
 
+// CECMD_PAUSE
+BOOL cmd_Pause(CESERVER_REQ& in, CESERVER_REQ** out)
+{
+	size_t cbInSize = in.DataSize();
+	if ((cbInSize < sizeof(DWORD)) || !gpSrv || !gpSrv->pConsole)
+		return FALSE;
+
+	BOOL bOk = FALSE; DWORD_PTR dwRc = 0;
+	DWORD nTimeout = 15000;
+	CONSOLE_SELECTION_INFO lsel1 = {}, lsel2 = {};
+	BOOL bSelInfo1, bSelInfo2;
+
+	bSelInfo1 = GetConsoleSelectionInfo(&lsel1);
+
+	CEPauseCmd cmd = (CEPauseCmd)in.dwData[0], newState;
+	if (cmd == CEPause_Switch)
+		cmd = (bSelInfo1 && (lsel1.dwFlags & CONSOLE_SELECTION_IN_PROGRESS)) ? CEPause_Off : CEPause_On;
+
+	switch (cmd)
+	{
+	case CEPause_On:
+		SetConEmuFlags(gpSrv->pConsole->info.Flags, CECI_Paused, CECI_Paused);
+		bOk = (SendMessageTimeout(ghConWnd, WM_SYSCOMMAND, 65522, 0, SMTO_NORMAL, nTimeout, &dwRc) != 0);
+		break;
+	case CEPause_Off:
+		SetConEmuFlags(gpSrv->pConsole->info.Flags, CECI_Paused, CECI_None);
+		bOk = (SendMessageTimeout(ghConWnd, WM_KEYDOWN, VK_ESCAPE, 0, SMTO_NORMAL, nTimeout, &dwRc) != 0);
+		break;
+	}
+
+	// May be console server will not react immediately?
+	DWORD nStartTick = GetTickCount();
+	while (true)
+	{
+		bSelInfo2 = GetConsoleSelectionInfo(&lsel2);
+		if (!bSelInfo2 || (lsel2.dwFlags != lsel1.dwFlags))
+			break;
+		Sleep(10);
+		if ((GetTickCount() - nStartTick) >= 500)
+			break;
+	}
+	// Return new state
+	newState = (bSelInfo2 && (lsel2.dwFlags & CONSOLE_SELECTION_IN_PROGRESS)) ? CEPause_On : CEPause_Off;
+	_ASSERTE(newState == cmd);
+
+	int nOutSize = sizeof(CESERVER_REQ_HDR) + 2*sizeof(DWORD);
+	*out = ExecuteNewCmd(CECMD_PAUSE,nOutSize);
+
+	if (*out != NULL)
+	{
+		(*out)->dwData[0] = newState;
+		(*out)->dwData[1] = bOk;
+	}
+
+	return TRUE;
+}
+
 BOOL cmd_GuiAppAttached(CESERVER_REQ& in, CESERVER_REQ** out)
 {
 	BOOL lbRc = FALSE;
@@ -8940,6 +8997,10 @@ BOOL ProcessSrvCommand(CESERVER_REQ& in, CESERVER_REQ** out)
 		case CECMD_AFFNTYPRIORITY:
 		{
 			lbRc = cmd_AffinityPriority(in, out);
+		} break;
+		case CECMD_PAUSE:
+		{
+			lbRc = cmd_Pause(in, out);
 		} break;
 		case CECMD_ATTACHGUIAPP:
 		{

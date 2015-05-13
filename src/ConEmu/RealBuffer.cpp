@@ -2178,6 +2178,35 @@ wrap:
 	return lbChanged;
 }
 
+// Unlike `Alternative buffer` this returns `Paused` state of RealConsole
+// We can "pause" applications which are using simple WriteFile to output data
+bool CRealBuffer::isPaused()
+{
+	if (!this)
+		return false;
+	return ((con.Flags & CECI_Paused) == CECI_Paused);
+}
+
+void CRealBuffer::StorePausedState(CEPauseCmd state)
+{
+	if (!this)
+		return;
+
+	con.FlagsUpdateTick = GetTickCount();
+
+	switch (state)
+	{
+	case CEPause_On:
+		SetConEmuFlags(con.Flags, CECI_Paused, CECI_Paused);
+		break;
+	case CEPause_Off:
+		SetConEmuFlags(con.Flags, CECI_Paused, CECI_None);
+		break;
+	default:
+		con.FlagsUpdateTick = 0;
+	}
+}
+
 BOOL CRealBuffer::ApplyConsoleInfo()
 {
 	bool bBufRecreate = false;
@@ -2293,6 +2322,14 @@ void CRealBuffer::ApplyConsoleInfo(const CESERVER_REQ_CONINFO_INFO* pInfo, bool&
 			_ASSERTE(hWnd==mp_RCon->hConWnd);
 		}
 		#endif
+
+		if (con.Flags != pInfo->Flags)
+		{
+			if (!con.FlagsUpdateTick || (pInfo->nSrvUpdateTick > con.FlagsUpdateTick))
+			{
+				con.Flags = pInfo->Flags;
+			}
+		}
 
 		//if (mp_RCon->hConWnd != hWnd) {
 		//    SetHwnd ( hWnd ); -- низя. Maps уже созданы!

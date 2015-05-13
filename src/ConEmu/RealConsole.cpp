@@ -1671,6 +1671,12 @@ bool CRealConsole::PostString(wchar_t* pszChars, size_t cchCount)
 		return false;
 	}
 
+	if (!m_ChildGui.hGuiWnd && isPaused())
+	{
+		gpConEmu->LogString(L"PostString skipped, console is paused");
+		return false;
+	}
+
 	mp_RBuf->OnKeysSending();
 
 	wchar_t szLog[80];
@@ -1766,6 +1772,12 @@ bool CRealConsole::PostKeyPress(WORD vkKey, DWORD dwControlState, wchar_t wch, i
 	if (!hConWnd)
 	{
 		_ASSERTE(FALSE && "Must not get here, use mpsz_PostCreateMacro to postpone macroses");
+		return false;
+	}
+
+	if (!m_ChildGui.hGuiWnd && isPaused())
+	{
+		gpConEmu->LogString(L"PostKeyPress skipped, console is paused");
 		return false;
 	}
 
@@ -1949,6 +1961,12 @@ bool CRealConsole::PostConsoleEvent(INPUT_RECORD* piRec, bool bFromIME /*= false
 
 	if (mn_MainSrv_PID == 0 || !m_ConsoleMap.IsValid())
 		return false; // Сервер еще не стартовал. События будут пропущены...
+
+	if (!m_ChildGui.hGuiWnd && isPaused())
+	{
+		gpConEmu->LogString(L"PostConsoleEvent skipped, console is paused");
+		return false;
+	}
 
 	bool lbRc = false;
 
@@ -2999,7 +3017,9 @@ DWORD CRealConsole::MonitorThreadWorker(bool bDetached, bool& rbChildProcessCrea
 				}
 			}
 
-			if (isConsoleReady() || m_ChildGui.hGuiWnd)  // Если знаем хэндл окна -
+			if (m_ChildGui.hGuiWnd
+				|| (isConsoleReady() && !isPaused()) // Don't show "Mark ..." when console is paused
+				)
 			{
 				int iLen = GetWindowText(m_ChildGui.isGuiWnd() ? m_ChildGui.hGuiWnd : hConWnd, TitleCmp, countof(TitleCmp)-2);
 				if (iLen <= 0)
@@ -13998,6 +14018,51 @@ bool CRealConsole::GetConsoleSelectionInfo(CONSOLE_SELECTION_INFO *sel)
 		return false;
 	}
 	return mp_ABuf->GetConsoleSelectionInfo(sel);
+}
+
+// Unlike `Alternative buffer` this returns `Paused` state of RealConsole
+// We can "pause" applications which are using simple WriteFile to output data
+bool CRealConsole::isPaused()
+{
+	if (!this)
+		return false;
+	return mp_RBuf->isPaused();
+}
+
+// Changes `isPaused` state
+CEPauseCmd CRealConsole::Pause(CEPauseCmd cmd)
+{
+	CEPauseCmd result = CEPause_Unknown;
+	DWORD dwServerPID = GetServerPID();
+
+	if (dwServerPID)
+	{
+		CESERVER_REQ *pIn = ExecuteNewCmd(CECMD_PAUSE, sizeof(CESERVER_REQ_HDR)+sizeof(DWORD));
+		if (pIn)
+		{
+			// Store before call if pausing
+			CEPauseCmd newState = (cmd == CEPause_Switch) ? (isPaused() ? CEPause_Off : CEPause_On) : cmd;
+			if (newState == CEPause_On)
+				mp_RBuf->StorePausedState(CEPause_On);
+
+			pIn->dwData[0] = cmd;
+			CESERVER_REQ *pOut = ExecuteSrvCmd(dwServerPID, pIn, ghWnd);
+			if (pOut && (pOut->DataSize() >= sizeof(DWORD)))
+			{
+				result = (CEPauseCmd)pOut->dwData[0];
+				mp_RBuf->StorePausedState(result);
+			}
+			else
+			{
+				mp_RBuf->StorePausedState(CEPause_Unknown);
+			}
+
+			ExecuteFreeResult(pOut);
+			ExecuteFreeResult(pIn);
+		}
+	}
+
+	return result;
 }
 
 void CRealConsole::GetConsoleCursorInfo(CONSOLE_CURSOR_INFO *ci, COORD *cr)

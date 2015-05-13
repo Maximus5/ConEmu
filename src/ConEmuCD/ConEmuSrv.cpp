@@ -3716,7 +3716,7 @@ static int ReadConsoleInfo()
 
 	//int liRc = 1;
 	BOOL lbChanged = gpSrv->pConsole->bDataChanged; // Если что-то еще не отослали - сразу TRUE
-	//CONSOLE_SELECTION_INFO lsel = {0}; // GetConsoleSelectionInfo
+	CONSOLE_SELECTION_INFO lsel = {0}; // GetConsoleSelectionInfo
 	CONSOLE_CURSOR_INFO lci = {0}; // GetConsoleCursorInfo
 	DWORD ldwConsoleCP=0, ldwConsoleOutputCP=0, ldwConsoleMode;
 	CONSOLE_SCREEN_BUFFER_INFO lsbi = {{0,0}}; // MyGetConsoleScreenBufferInfo
@@ -3730,6 +3730,15 @@ static int ReadConsoleInfo()
 
 	// Могут возникать проблемы при закрытии ComSpec и уменьшении высоты буфера
 	MCHKHEAP;
+
+	if (!GetConsoleSelectionInfo(&lsel))
+	{
+		SetConEmuFlags(gpSrv->pConsole->info.Flags,CECI_Paused,(CECI_None));
+	}
+	else
+	{
+		SetConEmuFlags(gpSrv->pConsole->info.Flags,CECI_Paused,((lsel.dwFlags & CONSOLE_SELECTION_IN_PROGRESS) ? CECI_Paused : CECI_None));
+	}
 
 	if (!GetConsoleCursorInfo(hOut, &lci))
 	{

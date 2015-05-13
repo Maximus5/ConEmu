@@ -2077,15 +2077,10 @@ LPWSTR ConEmuMacro::Pause(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 
 	p->GetIntArg(0, nCommand);
 
-	if (apRCon && (nCommand >= 0 && nCommand <= 2))
+	if (apRCon && (nCommand >= 0 && nCommand <= CEPause_Off))
 	{
-		static bool bPaused = false;
-		if (!nCommand) nCommand = bPaused ? 2 : 1;
-		bPaused = nCommand==1;
-		UINT uMsg = nCommand==1 ? WM_SYSCOMMAND : WM_KEYDOWN;
-		WPARAM wParam = nCommand==1 ? 65522 : VK_ESCAPE;
-		apRCon->PostConsoleMessage(apRCon->ConWnd(), uMsg, wParam, 0);
-		pszResult = lstrdup(nCommand==1 ? L"PAUSED" : L"UNPAUSED");
+		CEPauseCmd result = apRCon->Pause((CEPauseCmd)nCommand);
+		pszResult = lstrdup(result==CEPause_On ? L"PAUSED" : result==CEPause_Off ? L"UNPAUSED" : L"UNKNOWN");
 	}
 
 	return pszResult ? pszResult : lstrdup(L"FAILED");

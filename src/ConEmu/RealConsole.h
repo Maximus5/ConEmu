@@ -505,6 +505,8 @@ class CRealConsole
 		bool isSelectionAllowed();
 		bool isSelectionPresent();
 		bool isMouseSelectionPresent();
+		bool isPaused();
+		CEPauseCmd Pause(CEPauseCmd cmd);
 		void AutoCopyTimer(); // Чтобы разрулить "Auto Copy" & "Double click - select word"
 		void StartSelection(BOOL abTextMode, SHORT anX=-1, SHORT anY=-1, BOOL abByMouse=FALSE);
 		void ExpandSelection(SHORT anX, SHORT anY);
