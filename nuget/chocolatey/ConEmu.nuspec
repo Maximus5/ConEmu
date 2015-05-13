@@ -9,7 +9,7 @@
     <projectUrl>http://conemu.github.io/</projectUrl>
     <iconUrl>http://conemu.github.io/img/logo.png</iconUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    <description>ConEmu starts a console program in a hidden console window, and provides an alternative customizable GUI window with various features:
+    <description>ConEmu-Maximus5 is a Windows console window enhancement (local terminal emulator), which presents multiple consoles and simple GUI applications as one customizable tabbed GUI window with various features:
 
     * smooth and friendly window resizing;
     * tabs for editors, viewers, panels and consoles;
