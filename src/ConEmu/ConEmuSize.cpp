@@ -32,6 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#define HIDE_TODO
 
 #include "Header.h"
+#include "../common/DefTermBase.h"
 #include "../common/Monitors.h"
 #include "../common/MSetter.h"
 #include "../common/WUser.h"
@@ -6372,4 +6373,43 @@ void CConEmuSize::DoDesktopModeSwitch()
 
 	//SetWindowStyle(dwStyle);
 #endif
+}
+
+HWND CConEmuSize::FindNextSiblingApp(bool bActivate)
+{
+	HWND hNext = NULL;
+	wchar_t szClass[MAX_PATH] = L"";
+
+	#ifdef _DEBUG
+	DWORD nStyle;
+	DWORD nPID = 0;
+	wchar_t szTitle[MAX_PATH] = L"";
+	#endif
+
+	while ((hNext = FindWindowEx(NULL, hNext, NULL, NULL)) != NULL)
+	{
+		if (!IsWindowVisible(hNext) || !IsWindowEnabled(hNext))
+			continue;
+		if (CVConGroup::isOurWindow(hNext))
+			continue;
+		if (!GetClassName(hNext, szClass, countof(szClass)))
+			continue;
+		if (CDefTermBase::IsShellTrayWindowClass(szClass))
+			continue;
+		if (lstrcmpi(szClass, L"Button") == 0)
+			continue; // Windows' Start button
+
+		#ifdef _DEBUG
+		nStyle = GetWindowLong(hNext, GWL_STYLE);
+		GetWindowThreadProcessId(hNext, &nPID);
+		GetWindowText(hNext, szTitle, countof(szTitle));
+		#endif
+
+		// Found
+		if (bActivate)
+			apiSetForegroundWindow(hNext);
+		break;
+	}
+
+	return hNext;
 }

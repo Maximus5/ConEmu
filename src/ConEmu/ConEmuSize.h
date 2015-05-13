@@ -200,6 +200,8 @@ public:
 
 	void EvalVConCreateSize(CVirtualConsole* apVCon, uint& rnTextWidth, uint& rnTextHeight);
 
+	HWND FindNextSiblingApp(bool bActivate);
+
 public:
 	HMONITOR GetNearestMonitor(MONITORINFO* pmi = NULL, LPCRECT prcWnd = NULL);
 	HMONITOR GetPrimaryMonitor(MONITORINFO* pmi = NULL);
