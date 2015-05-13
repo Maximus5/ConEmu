@@ -13539,6 +13539,15 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		case WM_ACTIVATE:
 			LogString((wParam == WA_CLICKACTIVE) ? L"Window was activated by mouse click" : (wParam == WA_ACTIVE) ? L"Window was activated somehow" : (wParam == WA_INACTIVE) ? L"Window was deactivated" : L"Unknown state in WM_ACTIVATE");
 			RecheckForegroundWindow(L"WM_ACTIVATE");
+			// gh#139: Quake was hidden when user presses Win key (Task bar menu)
+			//   but ConEmu was unexpectedly slided down after second Win press (menu was hidden)
+			if ((gpSet->isQuakeStyle == 2)
+				&& (LOWORD(wParam) == WA_ACTIVE)
+				&& !mn_QuakePercent
+				&& !IsWindowVisible(ghWnd))
+			{
+				break;
+			}
 			result = this->OnFocus(hWnd, messg, wParam, lParam);
 			if (this->mb_AllowAutoChildFocus)
 			{
