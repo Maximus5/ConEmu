@@ -4411,6 +4411,30 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		gpConEmu->SetQuakeMode(QuakeMode);
 	}
 
+	// Update package was dropped on ConEmu icon?
+	// params == (uint)-1, если первый аргумент не начинается с '/'
+	if (cmdNew && *cmdNew && (params == (uint)-1))
+	{
+		CmdArg szPath;
+		LPCWSTR pszCmdLine = cmdNew;
+		if (0 == NextArg(&pszCmdLine, szPath))
+		{
+			if (CConEmuUpdate::IsUpdatePackage(szPath))
+			{
+				DEBUGSTRSTARTUP(L"Update package was dropped on ConEmu, updating");
+
+				// Чтобы при запуске НОВОЙ версии опять не пошло обновление - грохнуть ком-строку
+				SafeFree(gpConEmu->mpsz_ConEmuArgs);
+
+				// Создание скрипта обновления, запуск будет выполнен в деструкторе gpUpd
+				CConEmuUpdate::LocalUpdate(szPath);
+
+				// Перейти к завершению процесса и запуску обновления
+				goto done;
+			}
+		}
+	}
+
 	// Settings are loaded, fixup
 	SettingsLoadedFlags slfFlags = slf_OnStartupLoad | slf_AllowFastConfig
 		| (bNeedCreateVanilla ? slf_NeedCreateVanilla : slf_None)
@@ -4536,32 +4560,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	{
 		gpConEmu->SetPostGuiMacro(ExecGuiMacro);
 	}
-
-
-	// Update package was dropped on ConEmu icon?
-	// params == (uint)-1, если первый аргумент не начинается с '/'
-	if (cmdNew && *cmdNew && (params == (uint)-1))
-	{
-		CmdArg szPath;
-		LPCWSTR pszCmdLine = cmdNew;
-		if (0 == NextArg(&pszCmdLine, szPath))
-		{
-			if (CConEmuUpdate::IsUpdatePackage(szPath))
-			{
-				DEBUGSTRSTARTUP(L"Update package was dropped on ConEmu, updating");
-
-				// Чтобы при запуске НОВОЙ версии опять не пошло обновление - грохнуть ком-строку
-				SafeFree(gpConEmu->mpsz_ConEmuArgs);
-
-				// Создание скрипта обновления, запуск будет выполнен в деструкторе gpUpd
-				CConEmuUpdate::LocalUpdate(szPath);
-
-				// Перейти к завершению процесса и запуску обновления
-				goto done;
-			}
-		}
-	}
-
 
 //------------------------------------------------------------------------
 ///| Continue normal work mode  |/////////////////////////////////////////
