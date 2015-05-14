@@ -237,10 +237,7 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 					rTest.ProcessNewConArg();
 				}
 
-				if (rTest.BackgroundTab != crb_On)
-				{
-					gpConEmu->DoMinimizeRestore(bCreateTab ? sih_SetForeground : pIn->NewCmd.ShowHide);
-				}
+				bool bSkipActivation = false;
 
 				// Может быть пусто
 				if (bCreateTab && pszCommand[0])
@@ -296,11 +293,19 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 						// Если хотят в одном окне - только одну консоль
 						gpConEmu->CreateWnd(pArgs);
 						SafeDelete(pArgs);
+						// New window created? Don't activate this one.
+						bSkipActivation = true;
 					}
 				}
 				else
 				{
 					_ASSERTE(pIn->NewCmd.ShowHide==sih_ShowMinimize || pIn->NewCmd.ShowHide==sih_ShowHideTSA || pIn->NewCmd.ShowHide==sih_Show);
+				}
+
+				// gh#151: Do animation after starting tab creation
+				if (!bSkipActivation && (rTest.BackgroundTab != crb_On))
+				{
+					gpConEmu->DoMinimizeRestore(bCreateTab ? sih_SetForeground : pIn->NewCmd.ShowHide);
 				}
 			}
 

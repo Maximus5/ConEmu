@@ -6675,6 +6675,9 @@ LRESULT CConEmuMain::OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate)
 		if ((WindowMode == wmNormal) && !mp_Inside)
 		{
 			RECT rcWnd = GetDefaultRect();
+			//TODO: Here Quake (if selected) will be activated.
+			//      This may be rather "long" operation (animation)
+			//      and no RCon-s will be created until it finishes
 			setWindowPos(NULL, rcWnd.left, rcWnd.top, rcWnd.right-rcWnd.left, rcWnd.bottom-rcWnd.top, SWP_NOZORDER);
 			UpdateIdealRect(rcWnd);
 		}
