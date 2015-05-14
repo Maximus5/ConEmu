@@ -62,7 +62,7 @@ static CEHelpPopup* gp_FastHelp = NULL;
 static int gn_FirstFarTask = -1;
 static ConEmuHotKey ghk_MinMaxKey = {};
 
-void Fast_FindStartupTask();
+void Fast_FindStartupTask(SettingsLoadedFlags slfFlags);
 LPCWSTR Fast_GetStartupCommand(const CommandTasks*& pTask);
 
 static const ColorPalette* gp_DefaultPalette = NULL;
@@ -1618,11 +1618,11 @@ void CreateDefaultTasks(SettingsLoadedFlags slfFlags)
 	// Choose default startup command
 	if (slfFlags & (slf_DefaultSettings|slf_DefaultTasks))
 	{
-		Fast_FindStartupTask();
+		Fast_FindStartupTask(slfFlags);
 	}
 }
 
-void Fast_FindStartupTask()
+void Fast_FindStartupTask(SettingsLoadedFlags slfFlags)
 {
 	const CommandTasks* pTask = NULL;
 
