@@ -114,13 +114,7 @@ LPCTSTR CConEmuStart::GetCurCmd(bool *pIsCmdList /*= NULL*/)
 	if (!szCurCmd.IsEmpty())
 	{
 		if (pIsCmdList)
-		{
 			*pIsCmdList = isCurCmdList;
-		}
-		else
-		{
-			//_ASSERTE(isCurCmdList == false);
-		}
 		return szCurCmd;
 	}
 
