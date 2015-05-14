@@ -1641,6 +1641,15 @@ void Fast_FindStartupTask(SettingsLoadedFlags slfFlags)
 		{
 			pTask = gpSet->CmdTaskGetByName(pszCmdLine);
 		}
+		else if (!cType)
+		{
+			// Don't set default task, use exact command specified by user
+			if ((gpSet->nStartType == 0) && !gpSet->psStartSingleApp)
+			{
+				gpSet->psStartSingleApp = lstrdup(pszCmdLine);
+			}
+			return;
+		}
 	}
 
 	if (!pTask && (gn_FirstFarTask != -1))
