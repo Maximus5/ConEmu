@@ -1626,8 +1626,27 @@ void Fast_FindStartupTask(SettingsLoadedFlags slfFlags)
 {
 	const CommandTasks* pTask = NULL;
 
-	if (gn_FirstFarTask != -1)
+	// The idea is if user runs "ConEmu.exe -cmd {cmd}"
+	// and this is new config - we must set {cmd} as default task
+	// Same here with plain commands, at least show them in FastConfig dlg,
+	// don't store in settings if command was passed with "-cmdlist ..."
+
+	bool bIsCmdList = false;
+	LPCWSTR pszCmdLine = gpConEmu->GetCurCmd(&bIsCmdList);
+	if (pszCmdLine)
+	{
+		wchar_t cType = bIsCmdList ? CmdFilePrefix /*just for simplicity*/
+			: gpConEmu->IsConsoleBatchOrTask(pszCmdLine);
+		if (cType == TaskBracketLeft)
+		{
+			pTask = gpSet->CmdTaskGetByName(pszCmdLine);
+		}
+	}
+
+	if (!pTask && (gn_FirstFarTask != -1))
+	{
 		pTask = gpSet->CmdTaskGet(gn_FirstFarTask);
+	}
 
 	LPCWSTR DefaultNames[] = {
 		//L"Far", -- no need to find "Far" it must be processed already with gn_FirstFarTask
