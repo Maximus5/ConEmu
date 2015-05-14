@@ -47,7 +47,7 @@ private:
 	wchar_t  szDefCmd[MAX_PATH+32];
 	CEStr ms_DefNewTaskName;
 	/* Current command line, specified with "/cmd" or "/cmdlist" switches */
-	wchar_t* pszCurCmd;
+	CEStr szCurCmd;
 	bool isCurCmdList; // а это если был указан /cmdlist
 
 public:
@@ -66,7 +66,7 @@ public:
 
 public:
 	/* Store/retrieve command line, specified with "/cmd" or "/cmdlist" switches */
-	void SetCurCmd(wchar_t*& pszNewCmd, bool bIsCmdList);
+	void SetCurCmd(LPCWSTR pszNewCmd, bool bIsCmdList);
 	LPCTSTR GetCurCmd(bool *pIsCmdList = NULL);
 
 	/* "Active" command line */

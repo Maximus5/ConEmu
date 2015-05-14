@@ -3382,6 +3382,119 @@ void ResetEnvironmentVariables()
 	SetEnvironmentVariable(ENV_CONEMU_HOOKS_W, NULL);
 }
 
+// 0 - Succeeded, otherwise - exit code
+// isScript - several tabs or splits were requested via "-cmdlist ..."
+// isBare - true if there was no switches, for example "ConEmu.exe c:\tools\far.exe". That is not correct command line actually
+int ProcessCmdArg(LPCWSTR cmdNew, bool isScript, bool isBare, CEStr& szReady, bool& rbSaveHistory)
+{
+	rbSaveHistory = false;
+
+	if (!cmdNew || !*cmdNew)
+	{
+		return 0; // Nothing to do
+	}
+
+	// Command line was specified by "-cmd ..." or "-cmdlist ..."
+	DEBUGSTRSTARTUP(L"Preparing command line");
+
+	MCHKHEAP
+	const wchar_t* pszDefCmd = NULL;
+
+	if (isScript)
+	{
+		szReady.Set(cmdNew);
+		if (szReady.IsEmpty())
+		{
+			MBoxAssert(FALSE && "Memory allocation failed");
+			return 100;
+		}
+	}
+	else
+	{
+		int nLen = _tcslen(cmdNew)+8;
+
+		// For example "ConEmu.exe c:\tools\far.exe"
+		// That is not 'proper' command actually, but we may support this by courtesy
+		if (isBare /*(params == (uint)-1)*/
+			&& (gpSet->nStartType == 0)
+			&& (gpSet->psStartSingleApp && *gpSet->psStartSingleApp))
+		{
+			// psStartSingleApp may have path to "far.exe" defined...
+			// Then if user drops, for example, txt file on the ConEmu's icon,
+			// we may concatenate this argument with Far command line.
+			pszDefCmd = gpSet->psStartSingleApp;
+			CmdArg szExe;
+			if (0 != NextArg(&pszDefCmd, szExe))
+			{
+				_ASSERTE(FALSE && "NextArg failed");
+			}
+			else
+			{
+				// Только если szExe это Far.
+				if (IsFarExe(szExe))
+					pszDefCmd = gpSet->psStartSingleApp;
+				else
+					pszDefCmd = NULL; // Запускать будем только то, что "набросили"
+			}
+
+			if (pszDefCmd)
+			{
+				nLen += 3 + _tcslen(pszDefCmd);
+			}
+		}
+
+		wchar_t* pszReady = szReady.GetBuffer(nLen+1);
+		if (!pszReady)
+		{
+			MBoxAssert(FALSE && "Memory allocation failed");
+			return 100;
+		}
+
+
+		if (pszDefCmd)
+		{
+			lstrcpy(pszReady, pszDefCmd);
+			lstrcat(pszReady, L" ");
+			lstrcat(pszReady, SkipNonPrintable(cmdNew));
+
+			if (pszReady[0] != L'/' && pszReady[0] != L'-')
+			{
+				// gpSet->HistoryAdd(pszReady);
+				rbSaveHistory = true;
+			}
+		}
+		// There was no switches
+		else if (isBare)
+		{
+			*pszReady = DropLnkPrefix; // The sign we probably got command line by dropping smth on ConEmu's icon
+			lstrcpy(pszReady+1, SkipNonPrintable(cmdNew));
+
+			if (pszReady[1] != L'/' && pszReady[1] != L'-')
+			{
+				// gpSet->HistoryAdd(pszReady+1);
+				rbSaveHistory = true;
+			}
+		}
+		else
+		{
+			lstrcpy(pszReady, SkipNonPrintable(cmdNew));
+
+			if (pszReady[0] != L'/' && pszReady[0] != L'-')
+			{
+				// gpSet->HistoryAdd(pszReady);
+				rbSaveHistory = true;
+			}
+		}
+	}
+
+	MCHKHEAP
+
+	// Store it
+	gpConEmu->SetCurCmd(szReady, isScript);
+
+	return 0;
+}
+
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
 	DEBUGSTRSTARTUP(L"WinMain entered");
@@ -3605,8 +3718,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	TCHAR* cmdNew = NULL;
 	TCHAR *cmdLine = NULL;
 	TCHAR *psUnknown = NULL;
+	CEStr szReady;
 	uint  params = 0;
 	bool  isScript = false;
+	bool  ReqSaveHistory = false;
 
 	DEBUGSTRSTARTUP(L"Parsing command line");
 
@@ -4435,6 +4550,16 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		}
 	}
 
+	// Store command line in our class variables to be able show it in "Fast Configuration" dialog
+	if (cmdNew)
+	{
+		int iArgRc = ProcessCmdArg(cmdNew, isScript, (params == (uint)-1), szReady, ReqSaveHistory);
+		if (iArgRc != 0)
+		{
+			return iArgRc;
+		}
+	}
+
 	// Settings are loaded, fixup
 	SettingsLoadedFlags slfFlags = slf_OnStartupLoad | slf_AllowFastConfig
 		| (bNeedCreateVanilla ? slf_NeedCreateVanilla : slf_None)
@@ -4625,107 +4750,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		ResetConman();
 	}
 
-	// Установка параметров из командной строки
-	if (cmdNew)
+	// Need to add to the history?
+	if (ReqSaveHistory && !szReady.IsEmpty())
 	{
-		DEBUGSTRSTARTUP(L"Preparing command line");
-
-		MCHKHEAP
-		const wchar_t* pszDefCmd = NULL;
-		wchar_t* pszReady = NULL;
-
-		if (isScript)
-		{
-			pszReady = lstrdup(cmdNew);
-			if (!pszReady)
-			{
-				MBoxAssert(pszReady!=NULL);
-				return 100;
-			}
-		}
-		else
-		{
-			int nLen = _tcslen(cmdNew)+8;
-
-			// params == (uint)-1, если в первый аргумент не начинается с '/'
-			// т.е. комстрока такая "ConEmu.exe c:\tools\far.exe"
-			if ((params == (uint)-1)
-				&& (gpSet->nStartType == 0)
-				&& (gpSet->psStartSingleApp && *gpSet->psStartSingleApp))
-			{
-				// В psStartSingleApp может быть прописан путь к фару.
-				// Тогда, если в проводнике набросили, например, txt файл
-				// на иконку ConEmu, этот наброшенный путь прилепится
-				// к строке запуска фара.
-				pszDefCmd = gpSet->psStartSingleApp;
-				CmdArg szExe;
-				if (0 != NextArg(&pszDefCmd, szExe))
-				{
-					_ASSERTE(FALSE && "NextArg failed");
-				}
-				else
-				{
-					// Только если szExe это Far.
-					if (IsFarExe(szExe))
-						pszDefCmd = gpSet->psStartSingleApp;
-					else
-						pszDefCmd = NULL; // Запускать будем только то, что "набросили"
-				}
-
-				if (pszDefCmd)
-				{
-					nLen += 3 + _tcslen(pszDefCmd);
-				}
-			}
-
-			pszReady = (TCHAR*)malloc(nLen*sizeof(TCHAR));
-			if (!pszReady)
-			{
-				MBoxAssert(pszReady!=NULL);
-				return 100;
-			}
-
-
-			if (pszDefCmd)
-			{
-				lstrcpy(pszReady, pszDefCmd);
-				lstrcat(pszReady, L" ");
-				lstrcat(pszReady, SkipNonPrintable(cmdNew));
-
-				if (pszReady[0] != L'/' && pszReady[0] != L'-')
-				{
-					// Запомним в истории!
-					gpSet->HistoryAdd(pszReady);
-				}
-			}
-			// params == (uint)-1, если первый аргумент не начинается с '/'
-			else if (params == (uint)-1)
-			{
-				*pszReady = DropLnkPrefix; // Признак того, что это передача набрасыванием на ярлык
-				lstrcpy(pszReady+1, SkipNonPrintable(cmdNew));
-
-				if (pszReady[1] != L'/' && pszReady[1] != L'-')
-				{
-					// Запомним в истории!
-					gpSet->HistoryAdd(pszReady+1);
-				}
-			}
-			else
-			{
-				lstrcpy(pszReady, SkipNonPrintable(cmdNew));
-
-				if (pszReady[0] != L'/' && pszReady[0] != L'-')
-				{
-					// Запомним в истории!
-					gpSet->HistoryAdd(pszReady);
-				}
-			}
-		}
-
-		MCHKHEAP
-
-		// Запоминаем
-		gpConEmu->SetCurCmd(pszReady, isScript);
+		LPCWSTR pszCommand = szReady;
+		if (*pszCommand == DropLnkPrefix)
+			pszCommand++;
+		gpSet->HistoryAdd(pszCommand);
 	}
 
 	//if (FontFilePrm) {

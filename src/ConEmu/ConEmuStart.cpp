@@ -45,7 +45,7 @@ CConEmuStart::CConEmuStart(CConEmuMain* pOwner)
 	m_StartDetached = crb_Undefined;
 	mb_ConEmuHere = false;
 	mb_ForceQuitOnClose = false;
-	pszCurCmd = NULL; isCurCmdList = false;
+	isCurCmdList = false;
 	SetDefaultCmd(L"far");
 	mn_ShellExitCode = STILL_ACTIVE;
 
@@ -63,7 +63,6 @@ CConEmuStart::CConEmuStart(CConEmuMain* pOwner)
 
 CConEmuStart::~CConEmuStart()
 {
-	SafeFree(pszCurCmd);
 }
 
 void CConEmuStart::SetDefaultCmd(LPCWSTR asCmd)
@@ -102,20 +101,17 @@ void CConEmuStart::SetDefaultCmd(LPCWSTR asCmd)
 	}
 }
 
-void CConEmuStart::SetCurCmd(wchar_t*& pszNewCmd, bool bIsCmdList)
+void CConEmuStart::SetCurCmd(LPCWSTR pszNewCmd, bool bIsCmdList)
 {
-	_ASSERTE((pszNewCmd || isCurCmdList) && pszCurCmd != pszNewCmd);
+	_ASSERTE((pszNewCmd || isCurCmdList) && szCurCmd.ms_Arg != pszNewCmd);
 
-	if (pszNewCmd != pszCurCmd)
-		SafeFree(pszCurCmd);
-
-	pszCurCmd = pszNewCmd;
+	szCurCmd.Set(pszNewCmd);
 	isCurCmdList = bIsCmdList;
 }
 
 LPCTSTR CConEmuStart::GetCurCmd(bool *pIsCmdList /*= NULL*/)
 {
-	if (pszCurCmd && *pszCurCmd)
+	if (!szCurCmd.IsEmpty())
 	{
 		if (pIsCmdList)
 		{
@@ -125,7 +121,7 @@ LPCTSTR CConEmuStart::GetCurCmd(bool *pIsCmdList /*= NULL*/)
 		{
 			//_ASSERTE(isCurCmdList == false);
 		}
-		return pszCurCmd;
+		return szCurCmd;
 	}
 
 	return NULL;
