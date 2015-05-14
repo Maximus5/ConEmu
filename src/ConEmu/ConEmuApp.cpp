@@ -4405,6 +4405,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		gpSet->LoadSettings(bNeedCreateVanilla);
 	}
 
+	// Quake/NoQuake?
+	if (QuakePrm)
+	{
+		gpConEmu->SetQuakeMode(QuakeMode);
+	}
+
 	// Settings are loaded, fixup
 	SettingsLoadedFlags slfFlags = slf_OnStartupLoad | slf_AllowFastConfig
 		| (bNeedCreateVanilla ? slf_NeedCreateVanilla : slf_None)
@@ -4754,12 +4760,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		SizePrm ? SizeVal : -1,
 		ClearTypePrm ? ClearTypeVal : -1
 	);
-
-	// Quake/NoQuake?
-	if (QuakePrm)
-	{
-		gpConEmu->SetQuakeMode(QuakeMode);
-	}
 
 	if (gpSet->wndCascade)
 	{
