@@ -78,6 +78,9 @@
     <ClCompile Include="..\common\WUser.cpp">
       <Filter>0 - Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\common\ConEmuCheck.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="icon1.ico">
@@ -159,6 +162,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\common\WUser.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\ConEmuCheck.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

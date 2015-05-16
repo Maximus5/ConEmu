@@ -246,6 +246,7 @@
     <TargetExt>.exe</TargetExt>
     <LinkIncremental>true</LinkIncremental>
     <LinkKeyFile />
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_E|x64'">
     <OutDir>E:\Source\FARUnicode\trunk\unicode_far\Debug.32.vc\ConEmu\</OutDir>
@@ -254,6 +255,7 @@
     <TargetExt>.exe</TargetExt>
     <LinkIncremental>true</LinkIncremental>
     <LinkKeyFile />
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <OutDir>..\..\Release\</OutDir>
@@ -262,6 +264,7 @@
     <TargetExt>.exe</TargetExt>
     <LinkIncremental>false</LinkIncremental>
     <LinkKeyFile />
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <OutDir>..\..\Release\</OutDir>
@@ -270,6 +273,7 @@
     <TargetExt>.exe</TargetExt>
     <LinkIncremental>false</LinkIncremental>
     <LinkKeyFile />
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_C|Win32'">
     <OutDir>C:\ConEmu\</OutDir>
@@ -278,6 +282,7 @@
     <TargetExt>.exe</TargetExt>
     <LinkIncremental>true</LinkIncremental>
     <LinkKeyFile />
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_C|x64'">
     <OutDir>C:\ConEmu\</OutDir>
@@ -286,6 +291,7 @@
     <TargetExt>.exe</TargetExt>
     <LinkIncremental>true</LinkIncremental>
     <LinkKeyFile />
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Instrument|Win32'">
     <OutDir>\Far3\ConEmu\</OutDir>
@@ -294,6 +300,7 @@
     <TargetExt>.exe</TargetExt>
     <LinkIncremental>false</LinkIncremental>
     <LinkKeyFile />
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Instrument|x64'">
     <OutDir>..\..\Release.x64\</OutDir>
@@ -302,6 +309,7 @@
     <TargetExt>.exe</TargetExt>
     <LinkIncremental>false</LinkIncremental>
     <LinkKeyFile />
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_R|Win32'">
     <OutDir>$(SolutionDir)\_VCBUILD\$(Configuration).$(ProjectName).$(Platform)\</OutDir>
@@ -310,6 +318,7 @@
     <TargetExt>.exe</TargetExt>
     <LinkIncremental>true</LinkIncremental>
     <LinkKeyFile />
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_R|x64'">
     <OutDir>Z:\</OutDir>
@@ -318,6 +327,7 @@
     <TargetExt>.exe</TargetExt>
     <LinkIncremental>true</LinkIncremental>
     <LinkKeyFile />
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_F|Win32'">
     <OutDir>T:\Utils\ConEmu\</OutDir>
@@ -326,6 +336,7 @@
     <TargetExt>.exe</TargetExt>
     <LinkIncremental>true</LinkIncremental>
     <LinkKeyFile />
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_F|x64'">
     <OutDir>T:\Utils\ConEmu\</OutDir>
@@ -334,6 +345,7 @@
     <TargetExt>.exe</TargetExt>
     <LinkIncremental>true</LinkIncremental>
     <LinkKeyFile />
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release_PDB|Win32'">
     <OutDir>..\..\Release.PDB\</OutDir>
@@ -342,6 +354,7 @@
     <TargetExt>.exe</TargetExt>
     <LinkIncremental>false</LinkIncremental>
     <LinkKeyFile />
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release_PDB|x64'">
     <OutDir>..\..\Release.PDB\</OutDir>
@@ -350,6 +363,7 @@
     <TargetExt>.exe</TargetExt>
     <LinkIncremental>false</LinkIncremental>
     <LinkKeyFile />
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_F2|Win32'">
     <OutDir>\VCProject\FarPlugin\ConEmu\Maximus5\Debug\Far2x86\ConEmu\</OutDir>
@@ -358,6 +372,7 @@
     <TargetExt>.exe</TargetExt>
     <LinkIncremental>true</LinkIncremental>
     <LinkKeyFile />
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_F2|x64'">
     <OutDir>\VCProject\FarPlugin\ConEmu\Maximus5\Debug\Far2x86\ConEmu\</OutDir>
@@ -366,6 +381,7 @@
     <TargetExt>.exe</TargetExt>
     <LinkIncremental>true</LinkIncremental>
     <LinkKeyFile />
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_F3|Win32'">
     <OutDir>$(ConEmuDebugF3)\</OutDir>
@@ -374,6 +390,7 @@
     <TargetExt>.exe</TargetExt>
     <LinkIncremental>true</LinkIncremental>
     <LinkKeyFile />
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_F3|x64'">
     <OutDir>$(ConEmuDebugF3)\</OutDir>
@@ -382,6 +399,7 @@
     <TargetExt>.exe</TargetExt>
     <LinkIncremental>true</LinkIncremental>
     <LinkKeyFile />
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug_E|Win32'">
     <ClCompile>
