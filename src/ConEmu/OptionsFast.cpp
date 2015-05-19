@@ -1129,6 +1129,309 @@ static void CreateDefaultTask(LPCWSTR asName, LPCWSTR asArgs, LPCWSTR asPrefix, 
 	va_end(argptr);
 }
 
+class AppFoundList
+{
+public:
+	struct AppInfo
+	{
+		LPWSTR szFullPath, szExpanded;
+		wchar_t szTaskName[64], szTaskBaseName[40];
+		LPWSTR szArgs, szPrefix, szGuiArg;
+		VS_FIXEDFILEINFO Ver; // bool LoadAppVersion(LPCWSTR FarPath, VS_FIXEDFILEINFO& Version, wchar_t (&ErrText)[512])
+		DWORD dwSubsystem, dwBits;
+		FarVersion FarVer; // ConvertVersionToFarVersion
+		bool bNeedQuot;
+		void Free()
+		{
+			SafeFree(szFullPath);
+			SafeFree(szExpanded);
+			SafeFree(szArgs);
+			SafeFree(szPrefix);
+			SafeFree(szGuiArg);
+		};
+	};
+	MArray<AppInfo> Installed;
+
+protected:
+	// This will load App version and check if it was already added
+	virtual INT_PTR AddAppPath(LPCWSTR asName, LPCWSTR szPath, LPCWSTR pszOptFull, bool bNeedQuot,
+		LPCWSTR asArgs = NULL, LPCWSTR asPrefix = NULL, LPCWSTR asGuiArg = NULL)
+	{
+		INT_PTR iAdded = -1;
+		AppInfo FI = {};
+		wchar_t ErrText[512];
+		DWORD FileAttrs = 0;
+		_ASSERTE(!pszOptFull || *pszOptFull);
+		LPCWSTR pszPath = pszOptFull ? pszOptFull : szPath;
+
+		// Use GetImageSubsystem as condition because many exe-s may not have VersionInfo at all
+		if (GetImageSubsystem(pszPath, FI.dwSubsystem, FI.dwBits, FileAttrs))
+		{
+			LoadAppVersion(pszPath, FI.Ver, ErrText);
+
+			// App instance found, add it to Installed array?
+			bool bAlready = false;
+			for (INT_PTR a = 0; a < Installed.size(); a++)
+			{
+				AppInfo& ai = Installed[a];
+				if (lstrcmpi(ai.szFullPath, szPath) == 0)
+				{
+					bAlready = true; break; // Do not add twice same path
+				}
+				else if (pszOptFull && (lstrcmpi(ai.szFullPath, pszOptFull) == 0))
+				{
+					// Store path with environment variables (unexpanded) or without path at all (just "Far.exe" for example)
+					SafeFree(ai.szFullPath);
+					ai.szFullPath = lstrdup(szPath);
+					bAlready = true; break; // Do not add twice same path
+				}
+				else if (pszOptFull && ai.szExpanded && (lstrcmpi(ai.szExpanded, pszOptFull) == 0))
+				{
+					bAlready = true; break; // Do not add twice same path
+				}
+			}
+			// New instance, add it
+			if (!bAlready)
+			{
+				lstrcpyn(FI.szTaskName, asName, countof(FI.szTaskName));
+				lstrcpyn(FI.szTaskBaseName, asName, countof(FI.szTaskBaseName));
+				FI.szFullPath = lstrdup(szPath);
+				FI.szExpanded = pszOptFull ? lstrdup(pszOptFull) : ExpandEnvStr(szPath);
+				FI.bNeedQuot = bNeedQuot;
+				FI.szArgs = asArgs ? lstrdup(asArgs) : NULL;
+				FI.szPrefix = asPrefix ? lstrdup(asPrefix) : NULL;
+				FI.szGuiArg = asGuiArg ? lstrdup(asGuiArg) : NULL;
+				if (FI.szFullPath)
+				{
+					iAdded = Installed.push_back(FI);
+				}
+			}
+		}
+
+		return iAdded;
+	}; // AddAppPath(LPCWSTR szPath)
+
+	void Clean()
+	{
+		for (INT_PTR i = 0; i < Installed.size(); i++)
+		{
+			AppInfo& FI = Installed[i];
+			FI.Free();
+		}
+
+		Installed.clear();
+	}
+
+public:
+	AppFoundList* Add(LPCWSTR asName, LPCWSTR asArgs, LPCWSTR asPrefix, LPCWSTR asGuiArg, LPCWSTR asExePath, ...)
+	{
+		bool bCreated = false;
+		va_list argptr;
+		va_start(argptr, asExePath);
+		CEStr szFound, szArgs, szOptFull;
+		wchar_t szUnexpand[MAX_PATH+32];
+
+		while (asExePath)
+		{
+			bool bNeedQuot = false;
+			LPCWSTR pszExePath = asExePath;
+			asExePath = va_arg( argptr, LPCWSTR );
+
+			// Return expanded env string
+			TODO("Repace with list of 'drives'");
+			if (!FindOnDrives(szConEmuDrive, pszExePath, szFound, bNeedQuot, szOptFull))
+				continue;
+
+			LPCWSTR pszFound = szFound;
+			// Don't use PathUnExpandEnvStrings because it do not do what we need
+			if (UnExpandEnvStrings(szFound, szUnexpand, countof(szUnexpand)) && (lstrcmp(szFound, szUnexpand) != 0))
+			{
+				pszFound = szUnexpand;
+			}
+
+			if (AddAppPath(asName, pszFound, szOptFull.IsEmpty() ? szFound : szOptFull, bNeedQuot, asArgs, asPrefix, asGuiArg) >= 0)
+			{
+				bCreated = true;
+			}
+		}
+
+		va_end(argptr);
+
+		return this;
+	}
+
+	virtual void MakeUnique()
+	{
+		if (Installed.size() <= 0)
+			return;
+
+		// Ensure task names are unique
+		UINT idx = 0;
+
+		struct impl {
+			static int SortRoutine(AppInfo &e1, AppInfo &e2)
+			{
+				if (e1.Ver.dwFileVersionMS < e2.Ver.dwFileVersionMS)
+					return 1;
+				if (e1.Ver.dwFileVersionMS > e2.Ver.dwFileVersionMS)
+					return -1;
+				if (e1.Ver.dwFileVersionLS < e2.Ver.dwFileVersionLS)
+					return 1;
+				if (e1.Ver.dwFileVersionLS > e2.Ver.dwFileVersionLS)
+					return -1;
+				if (e1.dwBits < e2.dwBits)
+					return 1;
+				if (e1.dwBits > e2.dwBits)
+					return -1;
+				return 0;
+			};
+		};
+		Installed.sort(impl::SortRoutine);
+
+		// All task names MUST be unique
+		for (int u = 0; u <= 3; u++)
+		{
+			bool bUnique = true;
+
+			for (INT_PTR i = 0; i < Installed.size(); i++)
+			{
+				AppInfo& FI = Installed[i];
+				wchar_t szPlatform[6]; wcscpy_c(szPlatform, (FI.dwBits == 64) ? L" x64" : (FI.dwBits == 32) ? L" x86" : L"");
+
+				switch (u)
+				{
+				case 0: // Try as is
+					break;
+
+				case 1: // Naked, only add platform
+					_wsprintf(FI.szTaskName, SKIPLEN(countof(FI.szTaskName)-16) L"%s%s",
+						FI.szTaskBaseName, szPlatform);
+					break;
+
+				case 2: // Add App version and platform
+					if (FI.Ver.dwFileVersionMS)
+						_wsprintf(FI.szTaskName, SKIPLEN(countof(FI.szTaskName)-16) L"%s %u.%u%s",
+							FI.szTaskBaseName, HIWORD(FI.Ver.dwFileVersionMS), LOWORD(FI.Ver.dwFileVersionMS), szPlatform);
+					else
+						_wsprintf(FI.szTaskName, SKIPLEN(countof(FI.szTaskName)-16) L"%s%s",
+							FI.szTaskBaseName, szPlatform);
+					break;
+
+				case 3: // Add App version, platform and index
+					if (FI.Ver.dwFileVersionMS)
+						_wsprintf(FI.szTaskName, SKIPLEN(countof(FI.szTaskName)-16) L"%s %u.%u%s (%u)",
+							FI.szTaskBaseName, HIWORD(FI.Ver.dwFileVersionMS), LOWORD(FI.Ver.dwFileVersionMS), szPlatform, ++idx);
+					else
+						_wsprintf(FI.szTaskName, SKIPLEN(countof(FI.szTaskName)-16) L"%s%s (%u)",
+							FI.szTaskBaseName, szPlatform, ++idx);
+					break;
+				}
+
+				for (INT_PTR j = 0; j < i; j++)
+				{
+					if (lstrcmpi(FI.szTaskName, Installed[j].szTaskName) == 0)
+					{
+						bUnique = false; break;
+					}
+				}
+
+				if (!bUnique)
+				{
+					break; // Try next step
+				}
+			}
+
+			if (bUnique)
+			{
+				break; // Done, all task names are unique
+			}
+		}
+	}
+
+	virtual bool Commit()
+	{
+		if (Installed.size() <= 0)
+			return false;
+
+		bool bCreated = false;
+
+		// All task names MUST be unique
+		MakeUnique();
+
+		// Add them all
+		for (INT_PTR i = 0; i < Installed.size(); i++)
+		{
+			CEStr szFull, szArgs;
+			const AppInfo& ai = Installed[i];
+
+			// FOUND_APP_PATH_CHR mark is used generally for locating ico files
+			LPCWSTR pszArgs = ai.szArgs;
+			if (pszArgs && wcschr(pszArgs, FOUND_APP_PATH_CHR))
+			{
+				if (ai.szFullPath && *ai.szFullPath && szArgs.Set(pszArgs))
+				{
+					CEStr szPath;
+					wchar_t *ptrFound, *ptrAdd;
+					while ((ptrAdd = wcschr(szArgs.ms_Arg, FOUND_APP_PATH_CHR)) != NULL)
+					{
+						*ptrAdd = 0;
+						LPCWSTR pszTail = ptrAdd+1;
+
+						szPath.Set(ai.szFullPath);
+						ptrFound = wcsrchr(szPath.ms_Arg, L'\\');
+						if (ptrFound) *ptrFound = 0;
+
+						if (*pszTail == L'\\') pszTail ++;
+						while (wcsncmp(pszTail, L"..\\", 3) == 0)
+						{
+							ptrAdd = wcsrchr(szPath.ms_Arg, L'\\');
+							if (ptrAdd)
+							{
+								*ptrAdd = 0;
+								pszTail += 3;
+							}
+						}
+
+						CEStr szTemp(JoinPath(szPath, pszTail));
+						szArgs.Attach(lstrmerge(szArgs.ms_Arg, szTemp));
+					}
+				}
+				// Succeeded?
+				if (!szArgs.IsEmpty())
+				{
+					pszArgs = szArgs.ms_Arg;
+				}
+			}
+
+			// Spaces in path? (use expanded path)
+			if (ai.bNeedQuot)
+				szFull = lstrmerge(ai.szPrefix, L"\"", ai.szFullPath, L"\"", pszArgs);
+			else
+				szFull = lstrmerge(ai.szPrefix, ai.szFullPath, pszArgs);
+
+			// Create task
+			if (!szFull.IsEmpty())
+			{
+				CreateDefaultTask(ai.szTaskName, ai.szGuiArg, szFull);
+			}
+		}
+
+		Clean();
+
+		return bCreated;
+	};
+
+public:
+	AppFoundList()
+	{
+	};
+
+	~AppFoundList()
+	{
+		Clean();
+	};
+};
+
 class FarVerList
 {
 public:
