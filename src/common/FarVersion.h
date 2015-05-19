@@ -37,7 +37,7 @@ static void SetDefaultFarVersion(FarVersion& gFarVersion)
 	gFarVersion.dwBits = WIN3264TEST(32,64);
 }
 
-static bool LoadFarVersion(LPCWSTR FarPath, FarVersion& gFarVersion, wchar_t (&ErrText)[512])
+static bool LoadAppVersion(LPCWSTR FarPath, VS_FIXEDFILEINFO& Version, wchar_t (&ErrText)[512])
 {
 	bool lbRc = false;
 	DWORD dwErr = 0;
@@ -56,7 +56,7 @@ static bool LoadFarVersion(LPCWSTR FarPath, FarVersion& gFarVersion, wchar_t (&E
 			if (pVerData)
 			{
 				VS_FIXEDFILEINFO *lvs = NULL;
-				UINT nLen = sizeof(lvs);
+				UINT nLen = 0;
 
 				if (GetFileVersionInfo(FarPath, 0, dwSize, pVerData))
 				{
@@ -64,43 +64,37 @@ static bool LoadFarVersion(LPCWSTR FarPath, FarVersion& gFarVersion, wchar_t (&E
 
 					if (VerQueryValue((void*)pVerData, szSlash, (void**)&lvs, &nLen))
 					{
-						gFarVersion.dwVer = lvs->dwFileVersionMS;
-
-						// Начиная с XXX сборки - Build переехал в старшее слово
-						if (HIWORD(lvs->dwFileVersionLS) == 0)
-							gFarVersion.dwBuild = lvs->dwFileVersionLS;
-						else
-							gFarVersion.dwBuild = HIWORD(lvs->dwFileVersionLS);
-
+						_ASSERTE(nLen == sizeof(*lvs));
+						memmove(&Version, lvs, min(nLen, sizeof(Version)));
 						lbRc = true;
 					}
 					else
 					{
-						dwErr = GetLastError(); lstrcpyW(ErrText, L"LoadFarVersion.VerQueryValue(\"\\\") failed!\n");
+						dwErr = GetLastError(); lstrcpyW(ErrText, L"LoadAppVersion.VerQueryValue(\"\\\") failed!\n");
 					}
 				}
 				else
 				{
-					dwErr = GetLastError(); lstrcpyW(ErrText, L"LoadFarVersion.GetFileVersionInfo() failed!\n");
+					dwErr = GetLastError(); lstrcpyW(ErrText, L"LoadAppVersion.GetFileVersionInfo() failed!\n");
 				}
 
 				free(pVerData);
 			}
 			else
 			{
-				_wsprintf(ErrText, SKIPLEN(countof(ErrText)) L"LoadFarVersion failed! Can't allocate %n bytes!\n", dwSize);
+				_wsprintf(ErrText, SKIPLEN(countof(ErrText)) L"LoadAppVersion failed! Can't allocate %n bytes!\n", dwSize);
 			}
 		}
 		else
 		{
-			dwErr = GetLastError(); lstrcpyW(ErrText, L"LoadFarVersion.GetFileVersionInfoSize() failed!\n");
+			dwErr = GetLastError(); lstrcpyW(ErrText, L"LoadAppVersion.GetFileVersionInfoSize() failed!\n");
 		}
 
 		if (ErrText[0]) lstrcatW(ErrText, FarPath);
 	}
 	else
 	{
-		dwErr = 0; lstrcpyW(ErrText, L"Invalid FarPath was specified");
+		dwErr = 0; lstrcpyW(ErrText, L"Invalid AppPath was specified");
 	}
 
 	if (ErrText[0])
@@ -110,11 +104,43 @@ static bool LoadFarVersion(LPCWSTR FarPath, FarVersion& gFarVersion, wchar_t (&E
 			int nCurLen = lstrlen(ErrText);
 			_wsprintf(ErrText+nCurLen, SKIPLEN(countof(ErrText)-nCurLen) L"\nErrCode=0x%08X", dwErr);
 		}
-
-		//MessageBox(0, ErrText, L"ConEmu plugin", MB_OK|MB_ICONSTOP|MB_SETFOREGROUND);
 	}
 
 	if (!lbRc)
+	{
+		ZeroStruct(Version);
+	}
+
+	return lbRc;
+}
+
+static void ConvertVersionToFarVersion(const VS_FIXEDFILEINFO& lvs, FarVersion& gFarVersion)
+{
+	gFarVersion.dwVer = lvs.dwFileVersionMS;
+
+	// Начиная с XXX сборки - Build переехал в старшее слово
+	if (HIWORD(lvs.dwFileVersionLS) == 0)
+	{
+		gFarVersion.dwBuild = lvs.dwFileVersionLS;
+	}
+	else
+	{
+		gFarVersion.dwBuild = HIWORD(lvs.dwFileVersionLS);
+	}
+}
+
+static bool LoadFarVersion(LPCWSTR FarPath, FarVersion& gFarVersion, wchar_t (&ErrText)[512])
+{
+	bool lbRc = false;
+	VS_FIXEDFILEINFO lvs = {};
+
+	lbRc = LoadAppVersion(FarPath, lvs, ErrText);
+
+	if (lbRc)
+	{
+		ConvertVersionToFarVersion(lvs, gFarVersion);
+	}
+	else
 	{
 		SetDefaultFarVersion(gFarVersion);
 	}
