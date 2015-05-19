@@ -1817,15 +1817,16 @@ void CreateDefaultTasks(SettingsLoadedFlags slfFlags)
 	CreateDefaultTask(L"NYAOS (Admin)", L" -new_console:a", NULL, NULL, L"nyaos.exe", NULL);
 
 	// Windows internal: cmd
-	CreateDefaultTask(L"Shells::cmd",
-		L" /k \"%ConEmuBaseDir%\\CmdInit.cmd\"", NULL, NULL, L"cmd.exe", NULL);
+	// Don't use 'App.Add' here, we are creating "cmd.exe" tasks directly
+	CreateDefaultTask(L"Shells::cmd", L"",
+		L"cmd.exe /k \"%ConEmuBaseDir%\\CmdInit.cmd\"");
 	#if 0
 	// Need to "set" ConEmuGitPath to full path to the git.exe
-	CreateDefaultTask(L"Shells::cmd+git",
-		L" /k \"%ConEmuBaseDir%\\CmdInit.cmd\" /git", NULL, NULL, L"cmd.exe", NULL);
+	CreateDefaultTask(L"Shells::cmd+git", L"",
+		L"cmd.exe /k \"%ConEmuBaseDir%\\CmdInit.cmd\" /git");
 	#endif
-	CreateDefaultTask(L"Shells::cmd (Admin)",
-		L" /k \"%ConEmuBaseDir%\\CmdInit.cmd\" -new_console:a", NULL, NULL, L"cmd.exe", NULL);
+	CreateDefaultTask(L"Shells::cmd (Admin)", L"",
+		L"cmd.exe /k \"%ConEmuBaseDir%\\CmdInit.cmd\" -new_console:a");
 	// Windows internal: For 64bit Windows create task with splitted cmd 64/32 (Example)
 	if (IsWindows64())
 	{
@@ -1836,10 +1837,11 @@ void CreateDefaultTasks(SettingsLoadedFlags slfFlags)
 	}
 
 	// Windows internal: PowerShell
-	CreateDefaultTask(L"Shells::PowerShell",
-		NULL, NULL, NULL, L"powershell.exe", NULL);
-	CreateDefaultTask(L"Shells::PowerShell (Admin)",
-		L" -new_console:a", NULL, NULL, L"powershell.exe", NULL);
+	// Don't use 'App.Add' here, we are creating "powershell.exe" tasks directly
+	CreateDefaultTask(L"Shells::PowerShell", L"",
+		L"powershell.exe");
+	CreateDefaultTask(L"Shells::PowerShell (Admin)", L"",
+		L"powershell.exe -new_console:a");
 
 	// *** Bash ***
 
@@ -1902,18 +1904,19 @@ void CreateDefaultTasks(SettingsLoadedFlags slfFlags)
 	// cmd /k type "%ConEmuBaseDir%\Addons\AnsiColors16t.ans" -cur_console:n
 	if (FindOnDrives(NULL, L"%ConEmuBaseDir%\\Addons\\AnsiColors16t.ans", szFound, bNeedQuot, szOptFull))
 	{
-		CreateDefaultTask(L"Tests::Show ANSI colors", L"", L"cmd /k type \"%ConEmuBaseDir%\\Addons\\AnsiColors16t.ans\" -cur_console:n");
+		// Don't use 'App.Add' here, we are creating "cmd.exe" tasks directly
+		CreateDefaultTask(L"Tests::Show ANSI colors", L"", L"cmd.exe /k type \"%ConEmuBaseDir%\\Addons\\AnsiColors16t.ans\" -cur_console:n");
 	}
 
 	// Chocolatey gallery
-	//-- CreateDefaultTask(L"Chocolatey", L"", L"*cmd /k powershell -NoProfile -ExecutionPolicy unrestricted -Command \"iex ((new-object net.webclient).DownloadString('https://chocolatey.org/install.ps1'))\" && SET PATH=%PATH%;%systemdrive%\\chocolatey\\bin");
-	// @echo If you don't know about Chocolatey - read about it here https://chocolatey.org/
-	// powershell -NoProfile -ExecutionPolicy unrestricted -Command "iex ((new-object net.webclient).DownloadString('https://chocolatey.org/install.ps1'))" && SET PATH=%PATH%;%systemdrive%\chocolatey\bin
-	//-- that will be too long and unfriendly
-	// CreateDefaultTask(L"Chocolatey (Admin)", L"", L"*cmd /k Title Chocolatey & @echo [1;32;40m******************************************************************** & @echo [1;32;40m** [0mIf you[1;31;40m don't know about Chocolatey [0m(apt-get style manager)     [1;32;40m** & @echo [1;32;40m** [1;31;40mread about it[0m here:[1;32;40m https://chocolatey.org/                    [1;32;40m** & @echo [1;32;40m** If you are sure about installing it, execute the following     [1;32;40m** & @echo [1;32;40m** [1;31;40mone-line command:                                              [1;32;40m** & @echo [1;32;40m** [1;37;40mpowershell -NoProfile -ExecutionPolicy unrestricted            [1;32;40m** & @echo [1;32;40m** [1;37;40m-Command @echo ^\"iex ((new-object net.webclient).DownloadString [1;32;40m** & @echo [1;32;40m** [1;37;40m('https://chocolatey.org/install.ps1'))^\"                       [1;32;40m** & @echo [1;32;40m** [1;37;40m^&^& SET PATH=^%PATH^%;^%systemdrive^%\\chocolatey\\bin                [1;32;40m** & @echo [1;32;40m********************************************************************[0m");
+	//-- Placing ANSI in Task commands will be too long and unfriendly
+	//-- Also, automatic run of Chocolatey installation may harm user environment in some cases
 	pszFull = ExpandEnvStr(L"%ConEmuBaseDir%\\Addons\\ChocolateyAbout.cmd");
 	if (pszFull && FileExists(pszFull))
-		CreateDefaultTask(L"Scripts::Chocolatey (Admin)", L"", L"*cmd /k Title Chocolatey & \"%ConEmuBaseDir%\\Addons\\ChocolateyAbout.cmd\"");
+	{
+		// Don't use 'App.Add' here, we are creating "cmd.exe" tasks directly
+		CreateDefaultTask(L"Scripts::Chocolatey (Admin)", L"", L"*cmd.exe /k Title Chocolatey & \"%ConEmuBaseDir%\\Addons\\ChocolateyAbout.cmd\"");
+	}
 	SafeFree(pszFull);
 
 	// Windows SDK: HKLM\SOFTWARE\Microsoft\Microsoft SDKs\Windows
