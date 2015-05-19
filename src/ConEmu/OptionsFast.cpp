@@ -1784,6 +1784,8 @@ void CreateDefaultTasks(SettingsLoadedFlags slfFlags)
 	CVarDefs Vars;
 	spVars = &Vars;
 
+	AppFoundList App;
+
 	ZeroStruct(szConEmuDrive);
 	wchar_t szTemp[MAX_PATH];
 	GetDrive(gpConEmu->ms_ConEmuExeDir, szTemp, countof(szTemp));
@@ -1839,9 +1841,10 @@ void CreateDefaultTasks(SettingsLoadedFlags slfFlags)
 	CreateDefaultTask(L"Shells::PowerShell (Admin)",
 		L" -new_console:a", NULL, NULL, L"powershell.exe", NULL);
 
-	// Bash
+	// *** Bash ***
 
-	CreateDefaultTask(L"Bash::Git bash 2",
+	// From Git-for-Windows (aka msysGit v2)
+	App.Add(L"Bash::Git bash",
 		L" --login -i -new_console:C:\"" FOUND_APP_PATH_STR L"\\..\\..\\mingw32\\share\\git\\git-for-windows.ico\"", NULL, NULL,
 		L"[SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Git_is1:InstallLocation]\\usr\\bin\\sh.exe",
 		L"%ProgramFiles%\\Git\\usr\\bin\\sh.exe", L"%ProgramW6432%\\Git\\usr\\bin\\sh.exe",
@@ -1849,7 +1852,8 @@ void CreateDefaultTasks(SettingsLoadedFlags slfFlags)
 		L"%ProgramFiles(x86)%\\Git\\usr\\bin\\sh.exe",
 		#endif
 		NULL);
-	CreateDefaultTask(L"Bash::Git bash",
+	// From msysGit
+	App.Add(L"Bash::Git bash",
 		L" --login -i -new_console:C:\"" FOUND_APP_PATH_STR L"\\..\\etc\\git.ico\"", NULL, NULL,
 		L"[SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Git_is1:InstallLocation]\\bin\\sh.exe",
 		L"%ProgramFiles%\\Git\\bin\\sh.exe", L"%ProgramW6432%\\Git\\bin\\sh.exe",
@@ -1857,32 +1861,34 @@ void CreateDefaultTasks(SettingsLoadedFlags slfFlags)
 		L"%ProgramFiles(x86)%\\Git\\bin\\sh.exe",
 		#endif
 		NULL);
-	// For cygwin we can check registry keys (todo?)
+	// For cygwin we can check registry keys
 	// HKLM\SOFTWARE\Wow6432Node\Cygwin\setup\rootdir
 	// HKLM\SOFTWARE\Cygwin\setup\rootdir
 	// HKCU\Software\Cygwin\setup\rootdir
-	CreateDefaultTask(L"Bash::CygWin bash",
+	App.Add(L"Bash::CygWin bash",
 		L" --login -i -new_console:C:\"" FOUND_APP_PATH_STR L"\\..\\Cygwin.ico\"", L"set CHERE_INVOKING=1 & ", NULL,
 		L"[SOFTWARE\\Cygwin\\setup:rootdir]\\bin\\sh.exe",
 		L"\\CygWin\\bin\\sh.exe", NULL);
 	//{L"CygWin mintty", L"\\CygWin\\bin\\mintty.exe", L" -"},
-	CreateDefaultTask(L"Bash::MinGW bash",
+	App.Add(L"Bash::MinGW bash",
 		L" --login -i -new_console:C:\"" FOUND_APP_PATH_STR L"\\..\\msys.ico\"", L"set CHERE_INVOKING=1 & ", NULL,
 		L"\\MinGW\\msys\\1.0\\bin\\sh.exe", NULL);
 	//{L"MinGW mintty", L"\\MinGW\\msys\\1.0\\bin\\mintty.exe", L" -"},
 	// MSys2 project: 'HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\MSYS2 32bit'
-	CreateDefaultTask(L"Bash::Msys2-64",
+	App.Add(L"Bash::Msys2-64",
 		L" --login -i -new_console:C:\"" FOUND_APP_PATH_STR L"\\..\\..\\msys2.ico\"", L"set CHERE_INVOKING=1 & ", NULL,
 		L"[SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\MSYS2 64bit:InstallLocation]\\usr\\bin\\sh.exe",
 		L"msys64\\usr\\bin\\sh.exe",
 		NULL);
-	CreateDefaultTask(L"Bash::Msys2-32",
+	App.Add(L"Bash::Msys2-32",
 		L" --login -i -new_console:C:\"" FOUND_APP_PATH_STR L"\\..\\..\\msys2.ico\"", L"set CHERE_INVOKING=1 & ", NULL,
 		L"[SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\MSYS2 32bit:InstallLocation]\\usr\\bin\\sh.exe",
 		L"msys32\\usr\\bin\\sh.exe",
 		NULL);
 	// Last chance for bash
-	CreateDefaultTask(L"Bash::bash", L" --login -i", L"set CHERE_INVOKING=1 & ", NULL, L"sh.exe", NULL);
+	App.Add(L"Bash::bash", L" --login -i", L"set CHERE_INVOKING=1 & ", NULL, L"sh.exe", NULL);
+	// Create all bash tasks
+	App.Commit();
 
 	// Putty?
 	CreateDefaultTask(L"Putty", NULL, NULL, NULL, L"Putty.exe", NULL);
