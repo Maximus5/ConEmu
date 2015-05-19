@@ -61,6 +61,8 @@ static CDpiForDialog* gp_DpiAware = NULL;
 static CEHelpPopup* gp_FastHelp = NULL;
 static int gn_FirstFarTask = -1;
 static ConEmuHotKey ghk_MinMaxKey = {};
+static int iCreatIdx = 0;
+static CEStr szConEmuDrive;
 
 void Fast_FindStartupTask(SettingsLoadedFlags slfFlags);
 LPCWSTR Fast_GetStartupCommand(const CommandTasks*& pTask);
@@ -717,7 +719,7 @@ void CheckOptionsFast(LPCWSTR asTitle, SettingsLoadedFlags slfFlags)
 
 static bool sbAppendMode = false;
 
-static void CreateDefaultTask(int& iCreatIdx, LPCWSTR asName, LPCWSTR asGuiArg, LPCWSTR asCommands)
+static void CreateDefaultTask(LPCWSTR asName, LPCWSTR asGuiArg, LPCWSTR asCommands)
 {
 	// Don't add duplicates in the append mode
 	if (sbAppendMode)
@@ -856,7 +858,6 @@ wrap:
 // Windows SDK
 static bool WINAPI CreateWinSdkTasks(HKEY hkVer, LPCWSTR pszVer, LPARAM lParam)
 {
-	int* piCreatIdx = (int*)lParam;
 	CEStr pszVerPath;
 
 	if (RegGetStringValue(hkVer, NULL, L"InstallationFolder", pszVerPath) > 0)
@@ -873,7 +874,7 @@ static bool WINAPI CreateWinSdkTasks(HKEY hkVer, LPCWSTR pszVer, LPARAM lParam)
 				CEStr szName(lstrmerge(L"SDK::WinSDK ", pszVer));
 				if (szName)
 				{
-					CreateDefaultTask(*piCreatIdx, szName, L"", szFull);
+					CreateDefaultTask(szName, L"", szFull);
 				}
 			}
 		}
@@ -885,7 +886,6 @@ static bool WINAPI CreateWinSdkTasks(HKEY hkVer, LPCWSTR pszVer, LPARAM lParam)
 // Visual Studio C++
 static bool WINAPI CreateVCTasks(HKEY hkVer, LPCWSTR pszVer, LPARAM lParam)
 {
-	int* piCreatIdx = (int*)lParam;
 	//[HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\VisualStudio\11.0\Setup\VC]
 	//"ProductDir"="C:\\Program Files (x86)\\Microsoft Visual Studio 11.0\\VC\\"
 	//[HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\VisualStudio\12.0\Setup\VC]
@@ -902,7 +902,7 @@ static bool WINAPI CreateVCTasks(HKEY hkVer, LPCWSTR pszVer, LPARAM lParam)
 			{
 				CEStr pszName = lstrmerge(L"SDK::VS ", pszVer, L" x86 tools prompt");
 				CEStr pszFull = lstrmerge(L"cmd /k \"\"", pszVcVarsBat, L"\"\" x86 -new_console:t:\"VS ", pszVer, L"\"");
-				CreateDefaultTask(*piCreatIdx, pszName, L"", pszFull);
+				CreateDefaultTask(pszName, L"", pszFull);
 			}
 		}
 	}
@@ -1026,7 +1026,7 @@ static bool UnExpandEnvStrings(LPCWSTR asSource, wchar_t* rsUnExpanded, INT_PTR 
 	return false;
 }
 
-static void CreateDefaultTask(LPCWSTR asDrive, int& iCreatIdx, LPCWSTR asName, LPCWSTR asArgs, LPCWSTR asPrefix, LPCWSTR asGuiArg, LPCWSTR asExePath, ...)
+static void CreateDefaultTask(LPCWSTR asName, LPCWSTR asArgs, LPCWSTR asPrefix, LPCWSTR asGuiArg, LPCWSTR asExePath, ...)
 {
 	va_list argptr;
 	va_start(argptr, asExePath);
@@ -1041,7 +1041,7 @@ static void CreateDefaultTask(LPCWSTR asDrive, int& iCreatIdx, LPCWSTR asName, L
 		asExePath = va_arg( argptr, LPCWSTR );
 
 		// Return expanded env string
-		if (!FindOnDrives(asDrive, pszExePath, szFound, bNeedQuot, szOptFull))
+		if (!FindOnDrives(szConEmuDrive, pszExePath, szFound, bNeedQuot, szOptFull))
 			continue;
 
 		// May be it was already found before?
@@ -1115,7 +1115,7 @@ static void CreateDefaultTask(LPCWSTR asDrive, int& iCreatIdx, LPCWSTR asName, L
 		// Create task
 		if (pszFull)
 		{
-			CreateDefaultTask(iCreatIdx, asName, asGuiArg, pszFull);
+			CreateDefaultTask(asName, asGuiArg, pszFull);
 			SafeFree(pszFull);
 		}
 	}
@@ -1241,7 +1241,7 @@ protected:
 	}; // ScanRegistry()
 
 public:
-	void FindInstalledVersions(LPCWSTR asDrive)
+	void FindInstalledVersions()
 	{
 		CEStr szFound, szOptFull;
 		bool bNeedQuot = false;
@@ -1262,7 +1262,7 @@ public:
 		// Find in %Path% and on drives
 		for (i = 0; FarExe[i]; i++)
 		{
-			if (FindOnDrives(asDrive, FarExe[i], szFound, bNeedQuot, szOptFull))
+			if (FindOnDrives(szConEmuDrive, FarExe[i], szFound, bNeedQuot, szOptFull))
 				AddFarPath(szFound, szOptFull.IsEmpty() ? NULL : szOptFull.ms_Arg);
 		}
 
@@ -1359,10 +1359,10 @@ public:
 	~FarVerList() {};
 };
 
-void CreateFarTasks(LPCWSTR asDrive, int& iCreatIdx)
+void CreateFarTasks()
 {
 	FarVerList Vers;
-	Vers.FindInstalledVersions(asDrive);
+	Vers.FindInstalledVersions();
 
 	// Create Far tasks
 	for (INT_PTR i = 0; i < Vers.Installed.size(); i++)
@@ -1408,7 +1408,7 @@ void CreateFarTasks(LPCWSTR asDrive, int& iCreatIdx)
 				if (gn_FirstFarTask == -1)
 					gn_FirstFarTask = iCreatIdx;
 
-				CreateDefaultTask(iCreatIdx, FI.szTaskName, NULL, pszCommand);
+				CreateDefaultTask(FI.szTaskName, NULL, pszCommand);
 			}
 		}
 
@@ -1419,7 +1419,7 @@ void CreateFarTasks(LPCWSTR asDrive, int& iCreatIdx)
 	Vers.Installed.clear();
 }
 
-void CreateTccTasks(LPCWSTR asDrive, int& iCreatIdx)
+void CreateTccTasks()
 {
 	ConEmuComspec tcc = {}; tcc.csType = cst_AutoTccCmd;
 	FindComspec(&tcc, false/*bCmdAlso*/);
@@ -1444,20 +1444,20 @@ void CreateTccTasks(LPCWSTR asDrive, int& iCreatIdx)
 	if (!pszTcc) pszTcc = L"tcc.exe";
 
 	// Add tasks
-	CreateDefaultTask(asDrive, iCreatIdx, L"Shells::TCC", NULL, NULL, NULL, pszTcc, NULL);
-	CreateDefaultTask(asDrive, iCreatIdx, L"Shells::TCC (Admin)", L" -new_console:a", NULL, NULL, pszTcc, NULL);
+	CreateDefaultTask(L"Shells::TCC", NULL, NULL, NULL, pszTcc, NULL);
+	CreateDefaultTask(L"Shells::TCC (Admin)", L" -new_console:a", NULL, NULL, pszTcc, NULL);
 
 	// separate x64 version?
 	if (pszTcc64)
 	{
-		CreateDefaultTask(asDrive, iCreatIdx, L"Shells::TCC x64", NULL, NULL, NULL, pszTcc64, NULL);
-		CreateDefaultTask(asDrive, iCreatIdx, L"Shells::TCC x64 (Admin)", L" -new_console:a", NULL, NULL, pszTcc64, NULL);
+		CreateDefaultTask(L"Shells::TCC x64", NULL, NULL, NULL, pszTcc64, NULL);
+		CreateDefaultTask(L"Shells::TCC x64 (Admin)", L" -new_console:a", NULL, NULL, pszTcc64, NULL);
 	}
 }
 
 void CreateDefaultTasks(SettingsLoadedFlags slfFlags)
 {
-	int iCreatIdx = 0;
+	iCreatIdx = 0;
 
 	sbAppendMode = ((slfFlags & slf_AppendTasks) == slf_AppendTasks);
 	gn_FirstFarTask = -1;
@@ -1481,13 +1481,11 @@ void CreateDefaultTasks(SettingsLoadedFlags slfFlags)
 	CVarDefs Vars;
 	spVars = &Vars;
 
-	wchar_t szConEmuDrive[MAX_PATH] = L"";
-	GetDrive(gpConEmu->ms_ConEmuExeDir, szConEmuDrive, countof(szConEmuDrive));
-	_ASSERTE(szConEmuDrive[0] && szConEmuDrive[_tcslen(szConEmuDrive)-1] != L'\\'); // Supposed to be simple "C:"
-
-	// Force use of "%ConEmuDrive%" instead of "%SystemDrive%"
-	CEStr sysSave;
-	sysSave.SaveEnvVar(L"SystemDrive", NULL);
+	ZeroStruct(szConEmuDrive);
+	wchar_t szTemp[MAX_PATH];
+	GetDrive(gpConEmu->ms_ConEmuExeDir, szTemp, countof(szTemp));
+	_ASSERTE(szTemp[0] && szTemp[_tcslen(szTemp)-1] != L'\\'); // Supposed to be simple "C:"
+	szConEmuDrive.Set(szTemp);
 
 	/*
 		Far Manager
@@ -1504,43 +1502,43 @@ void CreateDefaultTasks(SettingsLoadedFlags slfFlags)
 	wchar_t *pszFull; bool bNeedQuot = false;
 
 	// Far Manager
-	CreateFarTasks(szConEmuDrive, iCreatIdx);
+	CreateFarTasks();
 
 	// TakeCommand
-	CreateTccTasks(szConEmuDrive, iCreatIdx);
+	CreateTccTasks();
 
 	// NYAOS - !!!Registry TODO!!!
-	CreateDefaultTask(szConEmuDrive, iCreatIdx, L"Shells::NYAOS", NULL, NULL, NULL, L"nyaos.exe", NULL);
-	CreateDefaultTask(szConEmuDrive, iCreatIdx, L"NYAOS (Admin)", L" -new_console:a", NULL, NULL, L"nyaos.exe", NULL);
+	CreateDefaultTask(L"Shells::NYAOS", NULL, NULL, NULL, L"nyaos.exe", NULL);
+	CreateDefaultTask(L"NYAOS (Admin)", L" -new_console:a", NULL, NULL, L"nyaos.exe", NULL);
 
 	// Windows internal: cmd
-	CreateDefaultTask(szConEmuDrive, iCreatIdx, L"Shells::cmd",
+	CreateDefaultTask(L"Shells::cmd",
 		L" /k \"%ConEmuBaseDir%\\CmdInit.cmd\"", NULL, NULL, L"cmd.exe", NULL);
 	#if 0
 	// Need to "set" ConEmuGitPath to full path to the git.exe
-	CreateDefaultTask(szConEmuDrive, iCreatIdx, L"Shells::cmd+git",
+	CreateDefaultTask(L"Shells::cmd+git",
 		L" /k \"%ConEmuBaseDir%\\CmdInit.cmd\" /git", NULL, NULL, L"cmd.exe", NULL);
 	#endif
-	CreateDefaultTask(szConEmuDrive, iCreatIdx, L"Shells::cmd (Admin)",
+	CreateDefaultTask(L"Shells::cmd (Admin)",
 		L" /k \"%ConEmuBaseDir%\\CmdInit.cmd\" -new_console:a", NULL, NULL, L"cmd.exe", NULL);
 	// Windows internal: For 64bit Windows create task with splitted cmd 64/32 (Example)
 	if (IsWindows64())
 	{
-		CreateDefaultTask(iCreatIdx, L"Shells::cmd 64/32", L"",
+		CreateDefaultTask(L"Shells::cmd 64/32", L"",
 			L"> \"%windir%\\system32\\cmd.exe\" /k \"\"%ConEmuBaseDir%\\CmdInit.cmd\" & echo This is Native cmd.exe\""
 			L"\r\n\r\n"
 			L"\"%windir%\\syswow64\\cmd.exe\" /k \"\"%ConEmuBaseDir%\\CmdInit.cmd\" & echo This is 32 bit cmd.exe -new_console:s50V\"");
 	}
 
 	// Windows internal: PowerShell
-	CreateDefaultTask(szConEmuDrive, iCreatIdx, L"Shells::PowerShell",
+	CreateDefaultTask(L"Shells::PowerShell",
 		NULL, NULL, NULL, L"powershell.exe", NULL);
-	CreateDefaultTask(szConEmuDrive, iCreatIdx, L"Shells::PowerShell (Admin)",
+	CreateDefaultTask(L"Shells::PowerShell (Admin)",
 		L" -new_console:a", NULL, NULL, L"powershell.exe", NULL);
 
 	// Bash
 
-	CreateDefaultTask(szConEmuDrive, iCreatIdx, L"Bash::Git bash 2",
+	CreateDefaultTask(L"Bash::Git bash 2",
 		L" --login -i -new_console:C:\"" FOUND_APP_PATH_STR L"\\..\\..\\mingw32\\share\\git\\git-for-windows.ico\"", NULL, NULL,
 		L"[SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Git_is1:InstallLocation]\\usr\\bin\\sh.exe",
 		L"%ProgramFiles%\\Git\\usr\\bin\\sh.exe", L"%ProgramW6432%\\Git\\usr\\bin\\sh.exe",
@@ -1548,7 +1546,7 @@ void CreateDefaultTasks(SettingsLoadedFlags slfFlags)
 		L"%ProgramFiles(x86)%\\Git\\usr\\bin\\sh.exe",
 		#endif
 		NULL);
-	CreateDefaultTask(szConEmuDrive, iCreatIdx, L"Bash::Git bash",
+	CreateDefaultTask(L"Bash::Git bash",
 		L" --login -i -new_console:C:\"" FOUND_APP_PATH_STR L"\\..\\etc\\git.ico\"", NULL, NULL,
 		L"[SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Git_is1:InstallLocation]\\bin\\sh.exe",
 		L"%ProgramFiles%\\Git\\bin\\sh.exe", L"%ProgramW6432%\\Git\\bin\\sh.exe",
@@ -1560,31 +1558,31 @@ void CreateDefaultTasks(SettingsLoadedFlags slfFlags)
 	// HKLM\SOFTWARE\Wow6432Node\Cygwin\setup\rootdir
 	// HKLM\SOFTWARE\Cygwin\setup\rootdir
 	// HKCU\Software\Cygwin\setup\rootdir
-	CreateDefaultTask(szConEmuDrive, iCreatIdx, L"Bash::CygWin bash",
+	CreateDefaultTask(L"Bash::CygWin bash",
 		L" --login -i -new_console:C:\"" FOUND_APP_PATH_STR L"\\..\\Cygwin.ico\"", L"set CHERE_INVOKING=1 & ", NULL,
 		L"[SOFTWARE\\Cygwin\\setup:rootdir]\\bin\\sh.exe",
 		L"\\CygWin\\bin\\sh.exe", NULL);
 	//{L"CygWin mintty", L"\\CygWin\\bin\\mintty.exe", L" -"},
-	CreateDefaultTask(szConEmuDrive, iCreatIdx, L"Bash::MinGW bash",
+	CreateDefaultTask(L"Bash::MinGW bash",
 		L" --login -i -new_console:C:\"" FOUND_APP_PATH_STR L"\\..\\msys.ico\"", L"set CHERE_INVOKING=1 & ", NULL,
 		L"\\MinGW\\msys\\1.0\\bin\\sh.exe", NULL);
 	//{L"MinGW mintty", L"\\MinGW\\msys\\1.0\\bin\\mintty.exe", L" -"},
 	// MSys2 project: 'HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\MSYS2 32bit'
-	CreateDefaultTask(szConEmuDrive, iCreatIdx, L"Bash::Msys2-64",
+	CreateDefaultTask(L"Bash::Msys2-64",
 		L" --login -i -new_console:C:\"" FOUND_APP_PATH_STR L"\\..\\..\\msys2.ico\"", L"set CHERE_INVOKING=1 & ", NULL,
 		L"[SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\MSYS2 64bit:InstallLocation]\\usr\\bin\\sh.exe",
 		L"msys64\\usr\\bin\\sh.exe",
 		NULL);
-	CreateDefaultTask(szConEmuDrive, iCreatIdx, L"Bash::Msys2-32",
+	CreateDefaultTask(L"Bash::Msys2-32",
 		L" --login -i -new_console:C:\"" FOUND_APP_PATH_STR L"\\..\\..\\msys2.ico\"", L"set CHERE_INVOKING=1 & ", NULL,
 		L"[SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\MSYS2 32bit:InstallLocation]\\usr\\bin\\sh.exe",
 		L"msys32\\usr\\bin\\sh.exe",
 		NULL);
 	// Last chance for bash
-	CreateDefaultTask(szConEmuDrive, iCreatIdx, L"Bash::bash", L" --login -i", L"set CHERE_INVOKING=1 & ", NULL, L"sh.exe", NULL);
+	CreateDefaultTask(L"Bash::bash", L" --login -i", L"set CHERE_INVOKING=1 & ", NULL, L"sh.exe", NULL);
 
 	// Putty?
-	CreateDefaultTask(szConEmuDrive, iCreatIdx, L"Putty", NULL, NULL, NULL, L"Putty.exe", NULL);
+	CreateDefaultTask(L"Putty", NULL, NULL, NULL, L"Putty.exe", NULL);
 
 	// IRSSI
 	// L"\"set PATH=C:\\irssi\\bin;%PATH%\" & set PERL5LIB=lib/perl5/5.8 & set TERMINFO_DIRS=terminfo & "
@@ -1595,25 +1593,27 @@ void CreateDefaultTasks(SettingsLoadedFlags slfFlags)
 	// cmd /k type "%ConEmuBaseDir%\Addons\AnsiColors16t.ans" -cur_console:n
 	if (FindOnDrives(NULL, L"%ConEmuBaseDir%\\Addons\\AnsiColors16t.ans", szFound, bNeedQuot, szOptFull))
 	{
-		CreateDefaultTask(iCreatIdx, L"Tests::Show ANSI colors", L"", L"cmd /k type \"%ConEmuBaseDir%\\Addons\\AnsiColors16t.ans\" -cur_console:n");
+		CreateDefaultTask(L"Tests::Show ANSI colors", L"", L"cmd /k type \"%ConEmuBaseDir%\\Addons\\AnsiColors16t.ans\" -cur_console:n");
 	}
 
 	// Chocolatey gallery
-	//-- CreateDefaultTask(iCreatIdx, L"Chocolatey", L"", L"*cmd /k powershell -NoProfile -ExecutionPolicy unrestricted -Command \"iex ((new-object net.webclient).DownloadString('https://chocolatey.org/install.ps1'))\" && SET PATH=%PATH%;%systemdrive%\\chocolatey\\bin");
+	//-- CreateDefaultTask(L"Chocolatey", L"", L"*cmd /k powershell -NoProfile -ExecutionPolicy unrestricted -Command \"iex ((new-object net.webclient).DownloadString('https://chocolatey.org/install.ps1'))\" && SET PATH=%PATH%;%systemdrive%\\chocolatey\\bin");
 	// @echo If you don't know about Chocolatey - read about it here https://chocolatey.org/
 	// powershell -NoProfile -ExecutionPolicy unrestricted -Command "iex ((new-object net.webclient).DownloadString('https://chocolatey.org/install.ps1'))" && SET PATH=%PATH%;%systemdrive%\chocolatey\bin
 	//-- that will be too long and unfriendly
-	// CreateDefaultTask(iCreatIdx, L"Chocolatey (Admin)", L"", L"*cmd /k Title Chocolatey & @echo [1;32;40m******************************************************************** & @echo [1;32;40m** [0mIf you[1;31;40m don't know about Chocolatey [0m(apt-get style manager)     [1;32;40m** & @echo [1;32;40m** [1;31;40mread about it[0m here:[1;32;40m https://chocolatey.org/                    [1;32;40m** & @echo [1;32;40m** If you are sure about installing it, execute the following     [1;32;40m** & @echo [1;32;40m** [1;31;40mone-line command:                                              [1;32;40m** & @echo [1;32;40m** [1;37;40mpowershell -NoProfile -ExecutionPolicy unrestricted            [1;32;40m** & @echo [1;32;40m** [1;37;40m-Command @echo ^\"iex ((new-object net.webclient).DownloadString [1;32;40m** & @echo [1;32;40m** [1;37;40m('https://chocolatey.org/install.ps1'))^\"                       [1;32;40m** & @echo [1;32;40m** [1;37;40m^&^& SET PATH=^%PATH^%;^%systemdrive^%\\chocolatey\\bin                [1;32;40m** & @echo [1;32;40m********************************************************************[0m");
+	// CreateDefaultTask(L"Chocolatey (Admin)", L"", L"*cmd /k Title Chocolatey & @echo [1;32;40m******************************************************************** & @echo [1;32;40m** [0mIf you[1;31;40m don't know about Chocolatey [0m(apt-get style manager)     [1;32;40m** & @echo [1;32;40m** [1;31;40mread about it[0m here:[1;32;40m https://chocolatey.org/                    [1;32;40m** & @echo [1;32;40m** If you are sure about installing it, execute the following     [1;32;40m** & @echo [1;32;40m** [1;31;40mone-line command:                                              [1;32;40m** & @echo [1;32;40m** [1;37;40mpowershell -NoProfile -ExecutionPolicy unrestricted            [1;32;40m** & @echo [1;32;40m** [1;37;40m-Command @echo ^\"iex ((new-object net.webclient).DownloadString [1;32;40m** & @echo [1;32;40m** [1;37;40m('https://chocolatey.org/install.ps1'))^\"                       [1;32;40m** & @echo [1;32;40m** [1;37;40m^&^& SET PATH=^%PATH^%;^%systemdrive^%\\chocolatey\\bin                [1;32;40m** & @echo [1;32;40m********************************************************************[0m");
 	pszFull = ExpandEnvStr(L"%ConEmuBaseDir%\\Addons\\ChocolateyAbout.cmd");
 	if (pszFull && FileExists(pszFull))
-		CreateDefaultTask(iCreatIdx, L"Scripts::Chocolatey (Admin)", L"", L"*cmd /k Title Chocolatey & \"%ConEmuBaseDir%\\Addons\\ChocolateyAbout.cmd\"");
+		CreateDefaultTask(L"Scripts::Chocolatey (Admin)", L"", L"*cmd /k Title Chocolatey & \"%ConEmuBaseDir%\\Addons\\ChocolateyAbout.cmd\"");
 	SafeFree(pszFull);
 
 	// Windows SDK: HKLM\SOFTWARE\Microsoft\Microsoft SDKs\Windows
-	RegEnumKeys(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\Microsoft SDKs\\Windows", CreateWinSdkTasks, (LPARAM)&iCreatIdx);
+	RegEnumKeys(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\Microsoft SDKs\\Windows", CreateWinSdkTasks, 0);
 
 	// Visual Studio prompt: HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\VisualStudio
-	RegEnumKeys(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\VisualStudio", CreateVCTasks, (LPARAM)&iCreatIdx);
+	RegEnumKeys(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\VisualStudio", CreateVCTasks, 0);
+
+	SafeFree(szConEmuDrive.ms_Arg);
 
 	// Choose default startup command
 	if (slfFlags & (slf_DefaultSettings|slf_DefaultTasks))
