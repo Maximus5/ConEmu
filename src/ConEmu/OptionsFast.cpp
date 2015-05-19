@@ -1026,109 +1026,6 @@ static bool UnExpandEnvStrings(LPCWSTR asSource, wchar_t* rsUnExpanded, INT_PTR 
 	return false;
 }
 
-static void CreateDefaultTask(LPCWSTR asName, LPCWSTR asArgs, LPCWSTR asPrefix, LPCWSTR asGuiArg, LPCWSTR asExePath, ...)
-{
-	va_list argptr;
-	va_start(argptr, asExePath);
-
-	CEStr szFound, szArgs, szOptFull;
-	wchar_t szUnexpand[MAX_PATH+32], *pszFull = NULL; bool bNeedQuot = false;
-	MArray<wchar_t*> lsList;
-
-	while (asExePath)
-	{
-		LPCWSTR pszExePath = asExePath;
-		asExePath = va_arg( argptr, LPCWSTR );
-
-		// Return expanded env string
-		if (!FindOnDrives(szConEmuDrive, pszExePath, szFound, bNeedQuot, szOptFull))
-			continue;
-
-		// May be it was already found before?
-		bool bAlready = false;
-		for (INT_PTR j = 0; j < lsList.size(); j++)
-		{
-			LPCWSTR pszPrev = lsList[j];
-			if (pszPrev && lstrcmpi(szFound, pszPrev) == 0)
-			{
-				bAlready = true; break;
-			}
-		}
-		if (bAlready)
-			continue;
-
-		// Go
-		lsList.push_back(lstrdup(szFound));
-
-		// Try to use system env vars?
-		LPCWSTR pszFound = szFound;
-		// Don't use PathUnExpandEnvStrings because it do not do what we need
-		if (UnExpandEnvStrings(szFound, szUnexpand, countof(szUnexpand)) && (lstrcmp(szFound, szUnexpand) != 0))
-		{
-			pszFound = szUnexpand;
-		}
-
-		LPCWSTR pszArgs = asArgs;
-		if (pszArgs && wcschr(pszArgs, FOUND_APP_PATH_CHR))
-		{
-			if (pszFound && *pszFound && szArgs.Set(pszArgs))
-			{
-				CEStr szPath;
-				wchar_t *ptrFound, *ptrAdd;
-				while ((ptrAdd = wcschr(szArgs.ms_Arg, FOUND_APP_PATH_CHR)) != NULL)
-				{
-					*ptrAdd = 0;
-					LPCWSTR pszTail = ptrAdd+1;
-
-					szPath.Set(pszFound);
-					ptrFound = wcsrchr(szPath.ms_Arg, L'\\');
-					if (ptrFound) *ptrFound = 0;
-
-					if (*pszTail == L'\\') pszTail ++;
-					while (wcsncmp(pszTail, L"..\\", 3) == 0)
-					{
-						ptrAdd = wcsrchr(szPath.ms_Arg, L'\\');
-						if (ptrAdd)
-						{
-							*ptrAdd = 0;
-							pszTail += 3;
-						}
-					}
-
-					CEStr szTemp(JoinPath(szPath, pszTail));
-					szArgs.Attach(lstrmerge(szArgs.ms_Arg, szTemp));
-				}
-			}
-			// Succeeded?
-			if (!szArgs.IsEmpty())
-			{
-				pszArgs = szArgs.ms_Arg;
-			}
-		}
-
-		// Spaces in path? (use expanded path)
-		if (bNeedQuot)
-			pszFull = lstrmerge(asPrefix, L"\"", pszFound, L"\"", pszArgs);
-		else
-			pszFull = lstrmerge(asPrefix, pszFound, pszArgs);
-
-		// Create task
-		if (pszFull)
-		{
-			CreateDefaultTask(asName, asGuiArg, pszFull);
-			SafeFree(pszFull);
-		}
-	}
-
-	for (INT_PTR j = 0; j < lsList.size(); j++)
-	{
-		wchar_t* p = lsList[j];
-		SafeFree(p);
-	}
-
-	va_end(argptr);
-}
-
 class AppFoundList
 {
 public:
@@ -1746,15 +1643,17 @@ void CreateTccTasks()
 	// Not found? Last chance
 	if (!pszTcc) pszTcc = L"tcc.exe";
 
+	AppFoundList App;
+
 	// Add tasks
-	CreateDefaultTask(L"Shells::TCC", NULL, NULL, NULL, pszTcc, NULL);
-	CreateDefaultTask(L"Shells::TCC (Admin)", L" -new_console:a", NULL, NULL, pszTcc, NULL);
+	App.Add(L"Shells::TCC", NULL, NULL, NULL, pszTcc, NULL)->Commit();
+	App.Add(L"Shells::TCC (Admin)", L" -new_console:a", NULL, NULL, pszTcc, NULL)->Commit();
 
 	// separate x64 version?
 	if (pszTcc64)
 	{
-		CreateDefaultTask(L"Shells::TCC x64", NULL, NULL, NULL, pszTcc64, NULL);
-		CreateDefaultTask(L"Shells::TCC x64 (Admin)", L" -new_console:a", NULL, NULL, pszTcc64, NULL);
+		App.Add(L"Shells::TCC x64", NULL, NULL, NULL, pszTcc64, NULL)->Commit();
+		App.Add(L"Shells::TCC x64 (Admin)", L" -new_console:a", NULL, NULL, pszTcc64, NULL)->Commit();
 	}
 }
 
@@ -1813,8 +1712,8 @@ void CreateDefaultTasks(SettingsLoadedFlags slfFlags)
 	CreateTccTasks();
 
 	// NYAOS - !!!Registry TODO!!!
-	CreateDefaultTask(L"Shells::NYAOS", NULL, NULL, NULL, L"nyaos.exe", NULL);
-	CreateDefaultTask(L"NYAOS (Admin)", L" -new_console:a", NULL, NULL, L"nyaos.exe", NULL);
+	App.Add(L"Shells::NYAOS", NULL, NULL, NULL, L"nyaos.exe", NULL)->Commit();
+	App.Add(L"NYAOS (Admin)", L" -new_console:a", NULL, NULL, L"nyaos.exe", NULL)->Commit();
 
 	// Windows internal: cmd
 	// Don't use 'App.Add' here, we are creating "cmd.exe" tasks directly
@@ -1893,7 +1792,7 @@ void CreateDefaultTasks(SettingsLoadedFlags slfFlags)
 	App.Commit();
 
 	// Putty?
-	CreateDefaultTask(L"Putty", NULL, NULL, NULL, L"Putty.exe", NULL);
+	App.Add(L"Putty", NULL, NULL, NULL, L"Putty.exe", NULL)->Commit();
 
 	// IRSSI
 	// L"\"set PATH=C:\\irssi\\bin;%PATH%\" & set PERL5LIB=lib/perl5/5.8 & set TERMINFO_DIRS=terminfo & "
