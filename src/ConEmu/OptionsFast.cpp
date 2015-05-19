@@ -1329,67 +1329,13 @@ public:
 	};
 };
 
-class FarVerList
+class FarVerList : public AppFoundList
 {
-public:
-	struct FarInfo
-	{
-		wchar_t* szFullPath;
-		wchar_t szTaskName[64];
-		FarVersion Ver; // bool LoadFarVersion(FarVersion& gFarVersion, wchar_t (&ErrText)[512])
-	};
-	MArray<FarInfo> Installed;
-
 protected:
 	wchar_t szFar32Name[16], szFar64Name[16];
 	LPCWSTR FarExe[3]; // = { szFar64Name, szFar32Name, NULL };
 
 protected:
-	// This will load Far version and check its existence
-	bool AddFarPath(LPCWSTR szPath, LPCWSTR pszOptFull)
-	{
-		bool bAdded = false;
-		FarInfo FI = {};
-		wchar_t ErrText[512];
-
-		_ASSERTE(!pszOptFull || *pszOptFull);
-		LPCWSTR pszPath = pszOptFull ? pszOptFull : szPath;
-
-		if (LoadFarVersion(pszPath, FI.Ver, ErrText))
-		{
-			DWORD ImageSubsystem = 0, FileAttrs = 0;
-			GetImageSubsystem(pszPath, ImageSubsystem, FI.Ver.dwBits, FileAttrs);
-
-			// Far instance found, add it to Installed array?
-			bool bAlready = false;
-			for (INT_PTR a = 0; a < Installed.size(); a++)
-			{
-				if (lstrcmpi(Installed[a].szFullPath, szPath) == 0)
-				{
-					bAlready = true; break; // Do not add twice same path
-				}
-				else if (pszOptFull && (lstrcmpi(Installed[a].szFullPath, pszOptFull) == 0))
-				{
-					SafeFree(Installed[a].szFullPath);
-					Installed[a].szFullPath = lstrdup(szPath);
-					bAlready = true; break; // Do not add twice same path
-				}
-			}
-			if (!bAlready)
-			{
-				wcscpy_c(FI.szTaskName, L"Far");
-				FI.szFullPath = lstrdup(szPath);
-				if (FI.szFullPath)
-				{
-					Installed.push_back(FI);
-					bAdded = true;
-				}
-			}
-		}
-
-		return bAdded;
-	}; // AddFarPath(LPCWSTR szPath)
-
 	void ScanRegistry()
 	{
 		LPCWSTR Locations[] = {
@@ -1431,7 +1377,7 @@ protected:
 							{
 								CEStr szPath(JoinPath(szKeyValue, FarExe[fe]));
 								// This will load Far version and check its existence
-								AddFarPath(szPath, NULL);
+								AddAppPath(L"Far", szPath, NULL, true);
 							}
 						}
 					}
@@ -1446,6 +1392,7 @@ public:
 		CEStr szFound, szOptFull;
 		bool bNeedQuot = false;
 		INT_PTR i;
+		wchar_t ErrText[512];
 
 		const wchar_t szFarPrefix[] = L"Far Manager::";
 
@@ -1453,7 +1400,7 @@ public:
 		for (i = 0; FarExe[i]; i++)
 		{
 			if (FileExistSubDir(gpConEmu->ms_ConEmuExeDir, FarExe[i], 1, szFound))
-				AddFarPath(szFound, NULL);
+				AddAppPath(L"Far", szFound, NULL, true);
 		}
 
 		// Check registry
@@ -1463,14 +1410,23 @@ public:
 		for (i = 0; FarExe[i]; i++)
 		{
 			if (FindOnDrives(szConEmuDrive, FarExe[i], szFound, bNeedQuot, szOptFull))
-				AddFarPath(szFound, szOptFull.IsEmpty() ? NULL : szOptFull.ms_Arg);
+				AddAppPath(L"Far", szFound, szOptFull.IsEmpty() ? NULL : szOptFull.ms_Arg, true);
 		}
 
 		// [HKCU|HKLM]\Software\Microsoft\Windows\CurrentVersion\App Paths
 		for (i = 0; FarExe[i]; i++)
 		{
 			if (SearchAppPaths(FarExe[i], szFound, false))
-				AddFarPath(szFound, NULL);
+				AddAppPath(L"Far", szFound, NULL, true);
+		}
+
+		for (i = 0; i < Installed.size(); i++)
+		{
+			AppInfo& FI = Installed[i];
+			if (LoadAppVersion(FI.szExpanded, FI.Ver, ErrText))
+				ConvertVersionToFarVersion(FI.Ver, FI.FarVer);
+			else
+				SetDefaultFarVersion(FI.FarVer);
 		}
 
 		// Done, create task names
@@ -1481,19 +1437,19 @@ public:
 			LPCWSTR pszPrefix = (Installed.size() > 1) ? szFarPrefix : L"";
 
 			struct impl {
-				static int SortRoutine(FarInfo &e1, FarInfo &e2)
+				static int SortRoutine(AppInfo &e1, AppInfo &e2)
 				{
-					if (e1.Ver.dwVer < e2.Ver.dwVer)
+					if (e1.FarVer.dwVer < e2.FarVer.dwVer)
 						return 1;
-					if (e1.Ver.dwVer > e2.Ver.dwVer)
+					if (e1.FarVer.dwVer > e2.FarVer.dwVer)
 						return -1;
-					if (e1.Ver.dwBuild < e2.Ver.dwBuild)
+					if (e1.FarVer.dwBuild < e2.FarVer.dwBuild)
 						return 1;
-					if (e1.Ver.dwBuild > e2.Ver.dwBuild)
+					if (e1.FarVer.dwBuild > e2.FarVer.dwBuild)
 						return -1;
-					if (e1.Ver.dwBits < e2.Ver.dwBits)
+					if (e1.dwBits < e2.dwBits)
 						return 1;
-					if (e1.Ver.dwBits > e2.Ver.dwBits)
+					if (e1.dwBits > e2.dwBits)
 						return -1;
 					return 0;
 				};
@@ -1507,22 +1463,22 @@ public:
 
 				for (i = 0; i < Installed.size(); i++)
 				{
-					FarInfo& FI = Installed[i];
-					wchar_t szPlatform[6]; wcscpy_c(szPlatform, (FI.Ver.dwBits == 64) ? L" x64" : (FI.Ver.dwBits == 32) ? L" x86" : L"");
+					AppInfo& FI = Installed[i];
+					wchar_t szPlatform[6]; wcscpy_c(szPlatform, (FI.dwBits == 64) ? L" x64" : (FI.dwBits == 32) ? L" x86" : L"");
 
 					switch (u)
 					{
 					case 0: // Naked
 						_wsprintf(FI.szTaskName, SKIPLEN(countof(FI.szTaskName)-16) L"%sFar %u.%u%s",
-							pszPrefix, FI.Ver.dwVerMajor, FI.Ver.dwVerMinor, szPlatform);
+							pszPrefix, FI.FarVer.dwVerMajor, FI.FarVer.dwVerMinor, szPlatform);
 						break;
 					case 1: // Add Far Build no?
 						_wsprintf(FI.szTaskName, SKIPLEN(countof(FI.szTaskName)-16) L"%sFar %u.%u.%u%s",
-							pszPrefix, FI.Ver.dwVerMajor, FI.Ver.dwVerMinor, FI.Ver.dwBuild, szPlatform);
+							pszPrefix, FI.FarVer.dwVerMajor, FI.FarVer.dwVerMinor, FI.FarVer.dwBuild, szPlatform);
 						break;
 					case 2: // Add Build and index
 						_wsprintf(FI.szTaskName, SKIPLEN(countof(FI.szTaskName)-16) L"%sFar %u.%u.%u%s (%u)",
-							pszPrefix, FI.Ver.dwVerMajor, FI.Ver.dwVerMinor, FI.Ver.dwBuild, szPlatform, ++idx);
+							pszPrefix, FI.FarVer.dwVerMajor, FI.FarVer.dwVerMinor, FI.FarVer.dwBuild, szPlatform, ++idx);
 						break;
 					}
 
@@ -1567,7 +1523,7 @@ void CreateFarTasks()
 	// Create Far tasks
 	for (INT_PTR i = 0; i < Vers.Installed.size(); i++)
 	{
-		FarVerList::FarInfo& FI = Vers.Installed[i];
+		FarVerList::AppInfo& FI = Vers.Installed[i];
 		bool bNeedQuot = (wcschr(FI.szFullPath, L' ') != NULL);
 		LPWSTR pszFullPath = FI.szFullPath;
 		wchar_t szUnexpanded[MAX_PATH];
@@ -1600,7 +1556,7 @@ void CreateFarTasks()
 
 			if (pszCommand)
 			{
-				if (FI.Ver.dwVerMajor >= 2)
+				if (FI.FarVer.dwVerMajor >= 2)
 					lstrmerge(&pszCommand, L" /w");
 
 				lstrmerge(&pszCommand, L" /p\"%ConEmuDir%\\Plugins\\ConEmu;%FARHOME%\\Plugins\"");
