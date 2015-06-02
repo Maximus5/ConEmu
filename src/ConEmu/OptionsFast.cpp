@@ -1530,42 +1530,26 @@ void CreateFarTasks()
 		if (wcschr(pszFullPath, L'\\') && UnExpandEnvStrings(pszFullPath, szUnexpanded, countof(szUnexpanded)))
 			pszFullPath = szUnexpanded;
 
-		wchar_t* pszCommand = NULL;
+		// Reset 'FARHOME' env.var before starting far.exe!
+		// Otherwise, we may inherit '%FARHOME%' from parent process and when far.exe starts
+		// it will get already expanded command line which may have erroneous path.
+		// That's very bad when running x64 Far, but %FARHOME% points to x86 Far.
+		// And don't preset FARHOME variable, it makes harder to find Tab icon.
+		wchar_t* pszCommand = lstrmerge(L"set \"FARHOME=\" & \"", pszFullPath, L"\"");
 
-		// We have to set FARHOME variable before starting Far (proper plugins folder)
-		LPWSTR pszExeName = (LPWSTR)PointToName(pszFullPath);
-		if (pszExeName)
+		if (pszCommand)
 		{
-			if (pszExeName > pszFullPath)
-			{
-				wchar_t chSave = *(pszExeName-1);
-				*(pszExeName-1) = 0;
-				pszCommand = lstrmerge(L"set \"FARHOME=", pszFullPath, L"\" & \"%FARHOME%\\", pszExeName, L"\"");
-				*(pszExeName-1) = chSave;
-			}
-			else
-			{
-				// No path? that is strange
-				_ASSERTE(!bNeedQuot);
-				// Reset 'FARHOME' env.var before starting far.exe!
-				// Otherwise, we can inherit '%FARHOME%' from parent process and when far.exe starts
-				// it will get already expanded command line which may has erroneous path.
-				// That's very bad when running x64 Far, but %FARHOME% points to x86 Far.
-				pszCommand = lstrmerge(L"set \"FARHOME=\" & \"", pszFullPath, L"\"");
-			}
+			if (FI.FarVer.dwVerMajor >= 2)
+				lstrmerge(&pszCommand, L" /w");
 
-			if (pszCommand)
-			{
-				if (FI.FarVer.dwVerMajor >= 2)
-					lstrmerge(&pszCommand, L" /w");
+			// Force Far to use proper plugins folders
+			lstrmerge(&pszCommand, L" /p\"%ConEmuDir%\\Plugins\\ConEmu;%FARHOME%\\Plugins\"");
 
-				lstrmerge(&pszCommand, L" /p\"%ConEmuDir%\\Plugins\\ConEmu;%FARHOME%\\Plugins\"");
+			// Suggest this task as ConEmu startup default
+			if (gn_FirstFarTask == -1)
+				gn_FirstFarTask = iCreatIdx;
 
-				if (gn_FirstFarTask == -1)
-					gn_FirstFarTask = iCreatIdx;
-
-				CreateDefaultTask(FI.szTaskName, NULL, pszCommand);
-			}
+			CreateDefaultTask(FI.szTaskName, NULL, pszCommand);
 		}
 
 		// Release memory
