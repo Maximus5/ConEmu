@@ -51,7 +51,7 @@
 #define IDD_SPG_CONFIRM                 180
 #define IDD_SPG_HISTORY                 181
 #define IDD_SPG_BACK                    182
-#define IDD_SPG_SETALIAS                183
+#define IDD_SPG_ENVIRONMENT             183
 #define IDD_MORE_CONFONT                209
 #define IDD_MORE_DOSBOX                 210
 #define IDD_ATTACHDLG                   212
