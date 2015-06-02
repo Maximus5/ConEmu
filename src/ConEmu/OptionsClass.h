@@ -245,6 +245,7 @@ class CSettings
 			thi_Startup,      // "Startup"
 			thi_Tasks,        //   "Tasks"
 			thi_Comspec,      //   "ComSpec"
+			thi_Environment,  //   "Environment"
 			thi_Ext,          // "Features"
 			thi_Cursor,       //   "Text cursor"
 			thi_Colors,       //   "Colors"
@@ -387,6 +388,7 @@ class CSettings
 		LRESULT OnInitDialog_Startup(HWND hWnd2, bool abInitial);
 		LRESULT OnInitDialog_Ext(HWND hWnd2, bool abInitial);
 		LRESULT OnInitDialog_Comspec(HWND hWnd2, bool abInitial);
+		LRESULT OnInitDialog_Environment(HWND hWnd2, bool abInitial);
 		//LRESULT OnInitDialog_Output(HWND hWnd2, bool abInitial);
 		LRESULT OnInitDialog_MarkCopy(HWND hWnd2, bool abInitial);
 		LRESULT OnInitDialog_Paste(HWND hWnd2, bool abInitial);

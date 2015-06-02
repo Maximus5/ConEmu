@@ -563,6 +563,7 @@ void CSettings::InitVars_Pages()
 		{IDD_SPG_STARTUP,     0, L"Startup",        thi_Startup    /* OnInitDialog_Startup */},
 		{IDD_SPG_CMDTASKS,    1, L"Tasks",          thi_Tasks      /* OnInitDialog_CmdTasks */},
 		{IDD_SPG_COMSPEC,     1, L"ComSpec",        thi_Comspec    /* OnInitDialog_Comspec */},
+		{IDD_SPG_ENVIRONMENT, 1, L"Environment",    thi_Environment/* OnInitDialog_Environment */},
 		{IDD_SPG_FEATURE,     0, L"Features",       thi_Ext        /* OnInitDialog_Ext */},
 		{IDD_SPG_CURSOR,      1, L"Text cursor",    thi_Cursor     /* OnInitDialog_Cursor */},
 		{IDD_SPG_COLORS,      1, L"Colors",         thi_Colors     /* OnInitDialog_Color */},
@@ -2309,8 +2310,6 @@ LRESULT CSettings::OnInitDialog_Comspec(HWND hWnd2, bool abInitial)
 	checkDlgButton(hWnd2, cbComspecUpdateEnv, gpSet->ComSpec.isUpdateEnv ? BST_CHECKED : BST_UNCHECKED);
 	EnableDlgItem(hWnd2, cbComspecUpdateEnv, (gpSet->ComSpec.csType!=cst_EnvVar));
 
-	checkDlgButton(hWnd2, cbAddConEmu2Path, (gpSet->ComSpec.AddConEmu2Path & CEAP_AddConEmuExeDir) ? BST_CHECKED : BST_UNCHECKED);
-	checkDlgButton(hWnd2, cbAddConEmuBase2Path, (gpSet->ComSpec.AddConEmu2Path & CEAP_AddConEmuBaseDir) ? BST_CHECKED : BST_UNCHECKED);
 	checkDlgButton(hWnd2, cbComspecUncPaths, gpSet->ComSpec.isAllowUncPaths ? BST_CHECKED : BST_UNCHECKED);
 
 	// Cmd.exe output cp
@@ -2325,6 +2324,14 @@ LRESULT CSettings::OnInitDialog_Comspec(HWND hWnd2, bool abInitial)
 
 	// Autorun (autoattach) with "cmd.exe" or "tcc.exe"
 	pageOpProc_Integr(hWnd2, UM_RELOAD_AUTORUN, UM_RELOAD_AUTORUN, 0);
+
+	return 0;
+}
+
+LRESULT CSettings::OnInitDialog_Environment(HWND hWnd2, bool abInitial)
+{
+	checkDlgButton(hWnd2, cbAddConEmu2Path, (gpSet->ComSpec.AddConEmu2Path & CEAP_AddConEmuExeDir) ? BST_CHECKED : BST_UNCHECKED);
+	checkDlgButton(hWnd2, cbAddConEmuBase2Path, (gpSet->ComSpec.AddConEmu2Path & CEAP_AddConEmuBaseDir) ? BST_CHECKED : BST_UNCHECKED);
 
 	return 0;
 }
@@ -6862,6 +6869,9 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 			break;
 		case IDD_SPG_COMSPEC:
 			gpSetCls->OnInitDialog_Comspec(hWnd2, bInitial);
+			break;
+		case IDD_SPG_ENVIRONMENT:
+			gpSetCls->OnInitDialog_Environment(hWnd2, bInitial);
 			break;
 		case IDD_SPG_MARKCOPY:
 			gpSetCls->OnInitDialog_MarkCopy(hWnd2, bInitial);

@@ -700,7 +700,7 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "Used command processor",gbComspec,4,1,319,154
+    GROUPBOX        "Used command processor",gbComspec,4,1,319,126
     CONTROL         "Auto (tcc - if installed, %ComSpec% - otherwise)",rbComspecAuto,
                     "Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,9,12,178,8
     CONTROL         "%ComSpec% (env.var.)",rbComspecEnvVar,"Button",BS_AUTORADIOBUTTON,189,12,98,8
@@ -718,7 +718,6 @@ BEGIN
     PUSHBUTTON      "Test",cbComspecTest,269,60,50,14
     LTEXT           "Cmd.exe output codepage:",IDC_STATIC,11,100,94,8
     COMBOBOX        lbCmdOutputCP,108,98,81,30,CBS_DROPDOWNLIST | WS_TABSTOP
-    CONTROL         "Add %ConEmuDir% to %PATH%",cbAddConEmu2Path,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,139,150,8
     CONTROL         "Support UNC paths in cmd.exe (\\\\server\\share\\folder)",cbComspecUncPaths,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,114,309,8
     GROUPBOX        "Automatic attach of cmd && Tcc/Le to ConEmu (new window will be started if not found)",IDC_STATIC,4,168,319,65
@@ -728,9 +727,6 @@ BEGIN
     PUSHBUTTON      "Register ConEmu autorun",bCmdAutoRegister,126,213,100,14
     PUSHBUTTON      "Unregister",bCmdAutoUnregister,230,213,50,14
     PUSHBUTTON      "Clear",bCmdAutoClear,283,213,34,14
-    GROUPBOX        "Add to %PATH% environment variable",IDC_STATIC,4,127,319,28
-    CONTROL         "Add %ConEmuBaseDir% to %PATH%",cbAddConEmuBase2Path,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,165,139,152,8
 END
 
 IDD_SPG_FEATURE_FAR DIALOGEX 0, 0, 328, 235
@@ -878,9 +874,13 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "Set environment variables and aliases",gbSetAlias,4,1,319,229
-    EDITTEXT        tSetCommands,9,59,309,166,ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL | ES_NOHIDESEL | ES_WANTRETURN | WS_VSCROLL | WS_HSCROLL
-    LTEXT           "Here you may set up your environment variables, default code page, and so on...\r\n---------------------\r\nset HOME=C:\\DropBox\\Home\r\nset PATH=%ConEmuDir%\\Tools;%PATH%\r\nchcp utf-8",stSetCommands,10,13,307,43
+    CONTROL         "Add %ConEmuBaseDir% to %PATH%",cbAddConEmuBase2Path,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,165,14,152,8
+    CONTROL         "Add %ConEmuDir% to %PATH%",cbAddConEmu2Path,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,14,150,8
+    GROUPBOX        "Set up environment variables",gbSetAlias,4,35,319,195
+    LTEXT           "Here you may set up your environment variables, default code page, and so on...\r\n---------------------\r\nset HOME=C:\\DropBox\\Home\r\nset PATH=%ConEmuDir%\\Tools;%PATH%\r\nchcp utf-8",stSetCommands,10,47,307,43
+    EDITTEXT        tSetCommands,9,93,309,132,ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL | ES_NOHIDESEL | ES_WANTRETURN | WS_VSCROLL | WS_HSCROLL
+    GROUPBOX        "Add to %PATH% environment variable",IDC_STATIC,4,1,319,28
 END
 
 IDD_SPG_MARKCOPY DIALOGEX 0, 0, 328, 235
