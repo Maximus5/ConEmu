@@ -15308,6 +15308,45 @@ bool CRealConsole::Detach(bool bPosted /*= false*/, bool bSendCloseConsole /*= f
 
 void CRealConsole::Unfasten()
 {
+	if (!this)
+		return;
+
+	// Unfasten of ChildGui is not working yet
+	if (m_ChildGui.hGuiWnd)
+	{
+		DisplayLastError(L"ChildGui unfastening is not working yet", -1);
+		return;
+	}
+
+	DWORD nAttachPID = m_ChildGui.hGuiWnd ? m_ChildGui.nGuiWndPID : GetServerPID(true);
+	if (!nAttachPID)
+	{
+		_ASSERTE(nAttachPID);
+		return;
+	}
+
+	if (!Detach(true, false))
+	{
+		return;
+	}
+
+	CEStr lsTempBuf;
+	LPCWSTR pszConEmuStartArgs = gpConEmu->MakeConEmuStartArgs(lsTempBuf);
+	wchar_t szMacro[64];
+	_wsprintf(szMacro, SKIPCOUNT(szMacro) L"-GuiMacro \"Attach %u\"", nAttachPID);
+	CEStr lsRunArgs = lstrmerge(L"\"", gpConEmu->ms_ConEmuExe, L"\" -Detached ", pszConEmuStartArgs, szMacro);
+
+	STARTUPINFO si = {sizeof(si)};
+	PROCESS_INFORMATION pi = {};
+	BOOL bStarted = CreateProcess(NULL, lsRunArgs.ms_Arg, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL, NULL, &si, &pi);
+	if (!bStarted)
+	{
+		DisplayLastError(lsRunArgs.ms_Arg, GetLastError(), MB_ICONSTOP, L"Failed to start new ConEmu instance", ghWnd);
+		return;
+	}
+
+	SafeCloseHandle(pi.hProcess);
+	SafeCloseHandle(pi.hThread);
 }
 
 const CEFAR_INFO_MAPPING* CRealConsole::GetFarInfo()

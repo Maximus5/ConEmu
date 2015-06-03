@@ -423,8 +423,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"    Cmd==4, Value=<0/1> - AlphaValueSeparate\r\n" \
 	L"Task(\"Name\"[,\"Dir\"])\r\n" \
 	L"  - start task with specified name\r\n" \
-DEBUGTEST(L"Unfasten\r\n") \
-DEBUGTEST(L"  - Unfasten active RealConsole from active ConEmu window\r\n") \
+	L"Unfasten\r\n" \
+	L"  - Unfasten active RealConsole from active ConEmu window\r\n" \
 	L"Wiki([\"PageName\"])\r\n" \
 	L"  - Open online documentation\r\n" \
 	L"WindowFullscreen()\r\n" \
