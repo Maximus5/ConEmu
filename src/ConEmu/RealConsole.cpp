@@ -15179,10 +15179,12 @@ void CRealConsole::ProcessPostponedMacro()
 	SafeFree(pszResult);
 }
 
-void CRealConsole::Detach(bool bPosted /*= false*/, bool bSendCloseConsole /*= false*/)
+bool CRealConsole::Detach(bool bPosted /*= false*/, bool bSendCloseConsole /*= false*/)
 {
 	if (!this)
-		return;
+		return false;
+
+	bool bDetached = false;
 
 	LogString(L"CRealConsole::Detach", TRUE);
 
@@ -15191,7 +15193,7 @@ void CRealConsole::Detach(bool bPosted /*= false*/, bool bSendCloseConsole /*= f
 		if (!bPosted)
 		{
 			if (MsgBox(L"Detach GUI application from ConEmu?", MB_ICONQUESTION|MB_YESNO|MB_DEFBUTTON2, GetTitle()) != IDYES)
-				return;
+				return false;
 
 			RECT rcGui = {};
 			GetWindowRect(m_ChildGui.hGuiWnd, &rcGui); // Логичнее все же оставить приложение в том же месте а не ставить в m_ChildGui.rcPreGuiWndRect
@@ -15204,7 +15206,7 @@ void CRealConsole::Detach(bool bPosted /*= false*/, bool bSendCloseConsole /*= f
 			SetOtherWindowPos(m_ChildGui.hGuiWnd, HWND_NOTOPMOST, rcGui.left, rcGui.top, rcGui.right-rcGui.left, rcGui.bottom-rcGui.top, SWP_SHOWWINDOW);
 
 			mp_VCon->PostDetach(bSendCloseConsole);
-			return;
+			return false; // Not yet
 		}
 
 		//#ifdef _DEBUG
@@ -15239,6 +15241,8 @@ void CRealConsole::Detach(bool bPosted /*= false*/, bool bSendCloseConsole /*= f
 
 		gpSetCls->debugLogCommand(pIn, FALSE, dwTickStart, timeGetTime()-dwTickStart, L"ExecuteSrvCmd", pOut);
 
+		if (pOut)
+			bDetached = true;
 		ExecuteFreeResult(pOut);
 		ExecuteFreeResult(pIn);
 
@@ -15252,11 +15256,11 @@ void CRealConsole::Detach(bool bPosted /*= false*/, bool bSendCloseConsole /*= f
 			if (gpSet->isMultiDetachConfirm
 				&& (MsgBox(L"Detach console from ConEmu?", MB_ICONQUESTION|MB_YESNO|MB_DEFBUTTON2, GetTitle()) != IDYES))
 			{
-				return;
+				return false;
 			}
 
 			mp_VCon->PostDetach(bSendCloseConsole);
-			return;
+			return false; // Not yet
 		}
 
 		//ShowConsole(1); -- уберем, чтобы не мигало
@@ -15276,9 +15280,14 @@ void CRealConsole::Detach(bool bPosted /*= false*/, bool bSendCloseConsole /*= f
 		gpSetCls->debugLogCommand(pIn, FALSE, dwTickStart, timeGetTime()-dwTickStart, L"ExecuteSrvCmd", pOut);
 
 		if (pOut)
+		{
+			bDetached = true;
 			ExecuteFreeResult(pOut);
+		}
 		else
+		{
 			ShowConsole(1);
+		}
 
 		ExecuteFreeResult(pIn);
 
@@ -15293,6 +15302,8 @@ void CRealConsole::Detach(bool bPosted /*= false*/, bool bSendCloseConsole /*= f
 	m_Args.Detached = crb_On;
 
 	CConEmuChild::ProcessVConClosed(mp_VCon);
+
+	return bDetached;
 }
 
 void CRealConsole::Unfasten()
