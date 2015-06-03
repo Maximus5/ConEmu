@@ -150,6 +150,7 @@ class CConEmuMain
 		bool ChangeWorkDir(LPCWSTR asTempCurDir);
 		LPWSTR  mps_ConEmuExtraArgs;            // Used with TaskBar jump list creation (/FontDir, /FontFile, etc.)
 		void AppendExtraArgs(LPCWSTR asSwitch, LPCWSTR asSwitchValue = NULL);
+		LPCWSTR MakeConEmuStartArgs(CEStr& rsArgs);
 		wchar_t ms_ComSpecInitial[MAX_PATH];
 		CEStr ms_PostGuiMacro;
 		void SetPostGuiMacro(LPCWSTR asGuiMacro);

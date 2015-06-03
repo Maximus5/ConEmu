@@ -949,6 +949,55 @@ void CConEmuMain::AppendExtraArgs(LPCWSTR asSwitch, LPCWSTR asSwitchValue /*= NU
 	}
 }
 
+LPCWSTR CConEmuMain::MakeConEmuStartArgs(CEStr& rsArgs)
+{
+	bool bSpecialXml = false;
+	LPCWSTR pszXmlFile = gpConEmu->ConEmuXml(&bSpecialXml);
+	if (pszXmlFile && (!bSpecialXml || !*pszXmlFile))
+		pszXmlFile = NULL;
+
+	LPCWSTR pszConfig = gpSetCls->GetConfigName();
+	if (pszConfig && !*pszConfig)
+		pszConfig = NULL;
+
+	LPCWSTR pszAddArgs = gpConEmu->mps_ConEmuExtraArgs;
+
+	size_t cchMax =
+		+ (pszConfig ? (_tcslen(pszConfig) + 16) : 0)
+		+ (pszXmlFile ? (_tcslen(pszXmlFile) + 32) : 0)
+		+ (pszAddArgs ? _tcslen(pszAddArgs) : 0);
+	if (!cchMax)
+	{
+		rsArgs.Empty();
+		return NULL;
+	}
+
+	wchar_t* pszBuf = rsArgs.GetBuffer(cchMax);
+	if (!pszBuf)
+		return NULL;
+
+	pszBuf[0] = 0;
+
+	if (pszXmlFile)
+	{
+		_wcscat_c(pszBuf, cchMax, L"/LoadCfgFile \"");
+		_wcscat_c(pszBuf, cchMax, pszXmlFile);
+		_wcscat_c(pszBuf, cchMax, L"\" ");
+	}
+	if (pszConfig)
+	{
+		_wcscat_c(pszBuf, cchMax, L"/config \"");
+		_wcscat_c(pszBuf, cchMax, pszConfig);
+		_wcscat_c(pszBuf, cchMax, L"\" ");
+	}
+	if (pszAddArgs)
+	{
+		_wcscat_c(pszBuf, cchMax, pszAddArgs);
+	}
+
+	return rsArgs.ms_Arg;
+}
+
 bool CConEmuMain::CheckRequiredFiles()
 {
 	wchar_t szPath[MAX_PATH+32];
