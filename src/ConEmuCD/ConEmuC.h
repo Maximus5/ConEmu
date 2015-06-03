@@ -300,7 +300,7 @@ BOOL MyGetConsoleScreenBufferInfo(HANDLE ahConOut, PCONSOLE_SCREEN_BUFFER_INFO a
 void CmdOutputStore(bool abCreateOnly = false);
 void CmdOutputRestore(bool abSimpleMode);
 void CheckConEmuHwnd();
-HWND FindConEmuByPID();
+HWND FindConEmuByPID(DWORD anSuggestedGuiPID = 0);
 typedef BOOL (__stdcall *FGetConsoleKeyboardLayoutName)(wchar_t*);
 extern FGetConsoleKeyboardLayoutName pfnGetConsoleKeyboardLayoutName;
 void CheckKeyboardLayout();

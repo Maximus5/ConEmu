@@ -2125,15 +2125,16 @@ static BOOL CALLBACK FindConEmuByPidProc(HWND hwnd, LPARAM lParam)
 	return TRUE;
 }
 
-HWND FindConEmuByPID()
+HWND FindConEmuByPID(DWORD anSuggestedGuiPID /*= 0*/)
 {
 	LogFunction(L"FindConEmuByPID");
 
 	HWND hConEmuWnd = NULL;
+	DWORD nConEmuPID = anSuggestedGuiPID ? anSuggestedGuiPID : gnConEmuPID;
 	DWORD dwGuiThreadId = 0, dwGuiProcessId = 0;
 
 	// В большинстве случаев PID GUI передан через параметры
-	if (gnConEmuPID == 0)
+	if (nConEmuPID == 0)
 	{
 		// GUI может еще "висеть" в ожидании или в отладчике, так что пробуем и через Snapshoot
 		HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS,0);
@@ -2148,7 +2149,7 @@ HWND FindConEmuByPID()
 				{
 					if (prc.th32ProcessID == gnSelfPID)
 					{
-						gnConEmuPID = prc.th32ParentProcessID;
+						nConEmuPID = prc.th32ParentProcessID;
 						break;
 					}
 				}
@@ -2159,7 +2160,7 @@ HWND FindConEmuByPID()
 		}
 	}
 
-	if (gnConEmuPID)
+	if (nConEmuPID)
 	{
 		HWND hGui = NULL;
 
@@ -2167,7 +2168,7 @@ HWND FindConEmuByPID()
 		{
 			dwGuiThreadId = GetWindowThreadProcessId(hGui, &dwGuiProcessId);
 
-			if (dwGuiProcessId == gnConEmuPID)
+			if (dwGuiProcessId == nConEmuPID)
 			{
 				hConEmuWnd = hGui;
 				break;
@@ -2176,11 +2177,17 @@ HWND FindConEmuByPID()
 
 		// Если "в лоб" по имени класса ничего не нашли - смотрим
 		// среди всех дочерних для текущего десктопа
-		if (hConEmuWnd == NULL)
+		if ((hConEmuWnd == NULL) && !anSuggestedGuiPID)
 		{
 			HWND hDesktop = GetDesktopWindow();
 			EnumChildWindows(hDesktop, FindConEmuByPidProc, (LPARAM)&hConEmuWnd);
 		}
+	}
+
+	// Ensure that returned hConEmuWnd match gnConEmuPID
+	if (!anSuggestedGuiPID && hConEmuWnd)
+	{
+		GetWindowThreadProcessId(hConEmuWnd, &gnConEmuPID);
 	}
 
 	return hConEmuWnd;
