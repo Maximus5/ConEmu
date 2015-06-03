@@ -621,6 +621,7 @@ void Settings::InitSettings()
 	isPartBrushBlack = 32; //-V112
 	isExtendUCharMap = true;
 	isDownShowHiddenMessage = false;
+	isDownShowExOnTopMessage = false;
 	ParseCharRanges(L"2013-25C4", mpc_FixFarBorderValues);
 
 	// [Debug] Максимальный видимый размер подкорректируется в CConEmuMain::CreateMainWindow()
@@ -2548,6 +2549,7 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 		if (nHideCaptionAlwaysDisappear > 30000) nHideCaptionAlwaysDisappear = 30000;
 
 		reg->Load(L"DownShowHiddenMessage", isDownShowHiddenMessage);
+		reg->Load(L"DownShowExOnTopMessage", isDownShowExOnTopMessage);
 
 		reg->Load(L"ConWnd X", _wndX); /*if (wndX<-10) wndX = 0;*/
 		reg->Load(L"ConWnd Y", _wndY); /*if (wndY<-10) wndY = 0;*/
@@ -3515,6 +3517,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		reg->Save(L"HideCaptionAlwaysDelay", nHideCaptionAlwaysDelay);
 		reg->Save(L"HideCaptionAlwaysDisappear", nHideCaptionAlwaysDisappear);
 		reg->Save(L"DownShowHiddenMessage", isDownShowHiddenMessage);
+		reg->Save(L"DownShowExOnTopMessage", isDownShowExOnTopMessage);
 		reg->Save(L"ConsoleFontName", ConsoleFont.lfFaceName);
 		reg->Save(L"ConsoleFontWidth", ConsoleFont.lfWidth);
 		reg->Save(L"ConsoleFontHeight", ConsoleFont.lfHeight);

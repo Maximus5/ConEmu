@@ -2176,6 +2176,10 @@ LRESULT CConEmuSize::OnWindowPosChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 		//_ASSERTE(((dwStyleEx & WS_EX_TOPMOST) == 0) && "Determined TopMost in OnWindowPosChanged");
 		//SetWindowStyleEx(dwStyleEx & ~WS_EX_TOPMOST);
 	}
+	else if (gpSet->isDownShowExOnTopMessage && gpSet->isAlwaysOnTop && !(dwStyleEx & WS_EX_TOPMOST))
+	{
+		gpSet->isAlwaysOnTop = false;
+	}
 
 	GetTileMode(true);
 
@@ -5258,12 +5262,14 @@ void CConEmuSize::CheckTopMostState()
 			wchar_t szInfo[200];
 			RECT rcWnd = {}; GetWindowRect(ghWnd, &rcWnd);
 			_wsprintf(szInfo, SKIPLEN(countof(szInfo))
-				L"Some external program bring ConEmu OnTop: HWND=x%08X, StyleEx=x%08X, Rect={%i,%i}-{%i,%i}",
+				L"Some external program brought ConEmu OnTop: HWND=x%08X, StyleEx=x%08X, Rect={%i,%i}-{%i,%i}",
 				(DWORD)ghWnd, dwStyleEx, rcWnd.left, rcWnd.top, rcWnd.right, rcWnd.bottom);
 			LogString(szInfo);
 		}
 
-		if (IDYES == MsgBox(L"Some external program bring ConEmu OnTop\nRevert?", MB_SYSTEMMODAL|MB_ICONQUESTION|MB_YESNO))
+		if (!gpSet->isDownShowExOnTopMessage
+			&& (IDYES == MsgBox(L"Some external program brought ConEmu OnTop\nRevert?", MB_SYSTEMMODAL|MB_ICONQUESTION|MB_YESNO))
+			)
 		{
 			//SetWindowStyleEx(dwStyleEx & ~WS_EX_TOPMOST);
 			DoAlwaysOnTopSwitch();

@@ -535,6 +535,9 @@ bool CSetDlgButtons::ProcessButtonClick(HWND hDlg, WORD CB, BYTE uCheck)
 		case cbShowWasHiddenMsg:
 			OnBtn_ShowWasHiddenMsg(hDlg, CB, uCheck);
 			break;
+		case cbShowWasSetOnTopMsg:
+			OnBtn_ShowWasSetOnTopMsg(hDlg, CB, uCheck);
+			break;
 		case cbTabsInCaption:
 			OnBtn_TabsInCaption(hDlg, CB, uCheck);
 			break;
@@ -2951,6 +2954,16 @@ void CSetDlgButtons::OnBtn_ShowWasHiddenMsg(HWND hDlg, WORD CB, BYTE uCheck)
 	gpSet->isDownShowHiddenMessage = uCheck ? false : true;
 
 } // cbShowWasHiddenMsg
+
+
+// cbShowWasSetOnTopMsg
+void CSetDlgButtons::OnBtn_ShowWasSetOnTopMsg(HWND hDlg, WORD CB, BYTE uCheck)
+{
+	_ASSERTE(CB==cbShowWasSetOnTopMsg);
+
+	gpSet->isDownShowExOnTopMessage = uCheck ? false : true;
+
+} // cbShowWasSetOnTopMsg
 
 
 // cbTabsInCaption

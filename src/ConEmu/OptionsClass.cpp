@@ -1883,6 +1883,7 @@ LRESULT CSettings::OnInitDialog_Confirm(HWND hWnd2, bool abInitial)
 	checkDlgButton(hWnd2, cbCloseEditViewConfirm, (gpSet->nCloseConfirmFlags & Settings::cc_FarEV) ? BST_CHECKED : BST_UNCHECKED);
 	checkDlgButton(hWnd2, cbConfirmDetach, gpSet->isMultiDetachConfirm);
 	checkDlgButton(hWnd2, cbShowWasHiddenMsg, gpSet->isDownShowHiddenMessage ? BST_UNCHECKED : BST_CHECKED);
+	checkDlgButton(hWnd2, cbShowWasSetOnTopMsg, gpSet->isDownShowExOnTopMessage ? BST_UNCHECKED : BST_CHECKED);
 
 	return 0;
 }

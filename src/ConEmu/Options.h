@@ -418,6 +418,8 @@ struct Settings
 		DWORD nHideCaptionAlwaysDisappear;
 		//reg->Load(L"DownShowHiddenMessage", isDownShowHiddenMessage);
 		bool isDownShowHiddenMessage;
+		//reg->Load(L"DownShowExOnTopMessage", isDownShowExOnTopMessage);
+		bool isDownShowExOnTopMessage;
 		//reg->Load(L"AlwaysOnTop", isAlwaysOnTop);
 		bool isAlwaysOnTop;
 		//reg->Load(L"DesktopMode", isDesktopMode);

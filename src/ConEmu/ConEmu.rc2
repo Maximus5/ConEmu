@@ -117,6 +117,7 @@ BEGIN
 	cbShowFarWindows        "Show all Far Manager windows (panels, editors, viewers) instead of one tab for one console"
 	cbShowHelpTooltips      "Don't like tooltips in settings dialog? Disable this feature."
 	cbShowWasHiddenMsg      "Show ‘ConEmu was hidden from some program’ message in TSA"
+	cbShowWasSetOnTopMsg    "Show ‘Some external program brought ConEmu OnTop. Revert?’ confirmation box"
 	cbSingleInstance        "Use one ConEmu window when starting new console from shortcut or somewhere\r\nMay be disabled by ‘/nosingle’ or forced by ‘/single’ switches"
 	cbSkipActivation        "Skip mouse button (left/right/middle)\r\nclick, while activating window"
 	cbSkipFocusEvents       "Don't send focus events to console to disable\r\nautoclosing of fast search dialog in panels"
