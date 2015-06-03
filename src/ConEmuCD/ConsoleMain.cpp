@@ -7561,15 +7561,16 @@ BOOL cmd_DetachCon(CESERVER_REQ& in, CESERVER_REQ** out)
 		EmergencyShow(ghConWnd);
 	}
 
-	DisableAutoConfirmExit(FALSE);
-
-	SafeCloseHandle(gpSrv->hRootProcess);
-	SafeCloseHandle(gpSrv->hRootThread);
-
 	if (hGuiApp != NULL)
 	{
+		DisableAutoConfirmExit(FALSE);
+
+		SafeCloseHandle(gpSrv->hRootProcess);
+		SafeCloseHandle(gpSrv->hRootThread);
+
 		//apiShowWindow(ghConWnd, SW_SHOWMINIMIZED);
 		apiSetForegroundWindow(hGuiApp);
+
 		SetTerminateEvent(ste_CmdDetachCon);
 	}
 
