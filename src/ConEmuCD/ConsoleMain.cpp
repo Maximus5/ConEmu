@@ -6960,6 +6960,10 @@ BOOL cmd_Attach2Gui(CESERVER_REQ& in, CESERVER_REQ** out)
 {
 	BOOL lbRc = FALSE;
 
+	// If command comes from GUI - update GUI HWND
+	// Else - gpSrv->hGuiWnd will be set to NULL and suitable HWND will be found in Attach2Gui
+	gpSrv->hGuiWnd = FindConEmuByPID(in.hdr.nSrcPID);
+
 	// Может придти из Attach2Gui() плагина
 	HWND hDc = Attach2Gui(ATTACH2GUI_TIMEOUT);
 
