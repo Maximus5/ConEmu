@@ -29,6 +29,36 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include "CmdArg.h"
+#include "MArray.h"
 
 bool ProcessSetEnvCmd(LPCWSTR& asCmdLine, bool bDoSet, CmdArg* rpsTitle = NULL);
 bool SetConsoleCpHelper(UINT nCP);
+
+class CProcessEnvCmd
+{
+public:
+	struct Command
+	{
+		wchar_t  szCmd[8]; // 'set', 'chcp', 'title', and may be 'alias' later...
+		wchar_t* pszName;
+		wchar_t* pszValue;
+	};
+	MArray<Command*> m_Commands;
+	size_t   mch_Total;   // wchar-s required to store all data, including all \0 terminators
+	size_t   mn_SetCount; // Counts only 'set' commands
+	Command* mp_CmdTitle;
+	Command* mp_CmdChCp;
+
+public:
+	CProcessEnvCmd();
+	~CProcessEnvCmd();
+
+public:
+	// Append helpers
+	void AddCommands(LPCWSTR asCommands, LPCWSTR* ppszEnd = NULL); // May comes from Task or ConEmu's /cmd switch
+	Command* Add(LPCWSTR asCmd, LPCWSTR asName, LPCWSTR asValue);
+
+public:
+	// Apply routine, returns true if environment was set/changed
+	bool Apply(CmdArg* rpsTitle = NULL);
+};

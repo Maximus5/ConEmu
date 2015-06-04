@@ -30,6 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "common.hpp"
 #include "CmdArg.h"
 #include "CmdLine.h"
+#include "ProcessSetEnv.h"
 #include "WObjects.h"
 
 //Issue 60: BUGBUG: На некоторых системых (Win2k3, WinXP) SetConsoleCP (и иже с ними) просто зависают
@@ -82,8 +83,52 @@ bool SetConsoleCpHelper(UINT nCP)
 bool ProcessSetEnvCmd(LPCWSTR& asCmdLine, bool bDoSet, CmdArg* rpsTitle /*= NULL*/)
 {
 	LPCWSTR lsCmdLine = asCmdLine;
-	bool bEnvChanged = false;
+
+	CProcessEnvCmd pc;
+	pc.AddCommands(asCmdLine, &lsCmdLine);
+
+	bool bEnvChanged = (pc.mn_SetCount != 0);
+
+	// Ask to be changed?
+	if (rpsTitle && pc.mp_CmdTitle)
+		rpsTitle->Set(pc.mp_CmdTitle->pszName);
+
+	asCmdLine = lsCmdLine;
+
+	// Fin
+	_ASSERTE(asCmdLine && *asCmdLine);
+
+	return bEnvChanged;
+}
+
+CProcessEnvCmd::CProcessEnvCmd()
+	: mch_Total(0)
+	, mn_SetCount(0)
+	, mp_CmdTitle(NULL)
+	, mp_CmdChCp(NULL)
+{
+}
+
+CProcessEnvCmd::~CProcessEnvCmd()
+{
+	for (INT_PTR i = 0; i < m_Commands.size(); i++)
+	{
+		Command* p = m_Commands[i];
+		SafeFree(p->pszName);
+		SafeFree(p->pszValue);
+		SafeFree(p);
+	}
+	m_Commands.clear();
+}
+
+// May comes from Task or ConEmu's /cmd switch
+void CProcessEnvCmd::AddCommands(LPCWSTR asCommands, LPCWSTR* ppszEnd/*= NULL*/)
+{
+	LPCWSTR lsCmdLine = asCommands;
 	CmdArg lsSet, lsAmp;
+
+	if (ppszEnd)
+		*ppszEnd = asCommands;
 
 	// Example: "set PATH=C:\Program Files;%PATH%" & set abc=def & cmd
 	while (NextArg(&lsCmdLine, lsSet) == 0)
@@ -115,26 +160,18 @@ bool ProcessSetEnvCmd(LPCWSTR& asCmdLine, bool bDoSet, CmdArg* rpsTitle /*= NULL
 			if (NextArg(&lsCmdLine, lsSet) == 0)
 			{
 				UINT nCP = GetCpFromString(lsSet);
-
 				if (nCP > 0 && nCP <= 0xFFFF)
 				{
 					bTokenOk = true;
 					_ASSERTE(lsNameVal == NULL);
-					// Ask to be changed?
-					if (bDoSet)
+					if (mp_CmdChCp)
 					{
-						//Issue 60: BUGBUG: На некоторых системых (Win2k3, WinXP) SetConsoleCP (и иже с ними) просто зависают
-						DWORD nTID;
-						HANDLE hThread = CreateThread(NULL, 0, OurSetConsoleCPThread, (LPVOID)nCP, 0, &nTID);
-						if (hThread)
-						{
-							DWORD nWait = WaitForSingleObject(hThread, 1000);
-							if (nWait == WAIT_TIMEOUT)
-							{
-								TerminateThread(hThread,100);
-							}
-							CloseHandle(hThread);
-						}
+						SafeFree(mp_CmdChCp->pszName);
+						mp_CmdChCp->pszName = lstrdup(lsSet);
+					}
+					else
+					{
+						Add(L"chcp", lsSet, NULL);
 					}
 				}
 			}
@@ -146,9 +183,15 @@ bool ProcessSetEnvCmd(LPCWSTR& asCmdLine, bool bDoSet, CmdArg* rpsTitle /*= NULL
 			{
 				bTokenOk = true;
 				_ASSERTE(lsNameVal == NULL);
-				// Ask to be changed?
-				if (rpsTitle)
-					rpsTitle->Set(lsSet);
+				if (mp_CmdTitle)
+				{
+					SafeFree(mp_CmdTitle->pszName);
+					mp_CmdTitle->pszName = lstrdup(lsSet);
+				}
+				else
+				{
+					Add(L"title", lsSet, NULL);
+				}
 			}
 		}
 
@@ -190,29 +233,97 @@ bool ProcessSetEnvCmd(LPCWSTR& asCmdLine, bool bDoSet, CmdArg* rpsTitle /*= NULL
 				break;
 			}
 
-			if (bDoSet)
-			{
-				*(pszEq++) = 0;
-				// Expand value
-				wchar_t* pszExpanded = ExpandEnvStr(pszEq);
-				LPCWSTR pszSet = pszExpanded ? pszExpanded : pszEq;
-				SetEnvironmentVariable(lsNameVal, (pszSet && *pszSet) ? pszSet : NULL);
-				SafeFree(pszExpanded);
-			}
+			*(pszEq++) = 0;
 
-			bEnvChanged = true;
+			Add(L"set", lsNameVal, pszEq ? pszEq : L"");
 		}
 
 		// Remember processed position
-		asCmdLine = lsCmdLine;
-
+		if (ppszEnd)
+		{
+			*ppszEnd = lsCmdLine;
+		}
 	} // end of "while (NextArg(&lsCmdLine, lsSet) == 0)"
 
 	// Fin
-	if (!asCmdLine || !*asCmdLine)
+	if (ppszEnd && (!*ppszEnd || !**ppszEnd))
 	{
 		static wchar_t szSimple[] = L"cmd";
-		asCmdLine = szSimple;
+		*ppszEnd = szSimple;
+	}
+}
+
+CProcessEnvCmd::Command* CProcessEnvCmd::Add(LPCWSTR asCmd, LPCWSTR asName, LPCWSTR asValue)
+{
+	if (!asCmd || !*asCmd || !asName || !*asName)
+	{
+		_ASSERTE(asCmd && *asCmd && asName && *asName);
+		return NULL;
+	}
+
+	Command* p = (Command*)malloc(sizeof(Command));
+	if (!p)
+		return NULL;
+
+	wcscpy_c(p->szCmd, asCmd);
+	p->pszName = lstrdup(asName);
+	p->pszValue = (asValue && *asValue) ? lstrdup(asValue) : NULL;
+
+	if (lstrcmp(asCmd, L"set") == 0)
+	{
+		mn_SetCount++;
+	}
+	else if (lstrcmp(asCmd, L"chcp") == 0)
+	{
+		_ASSERTE(mp_CmdChCp==NULL);
+		mp_CmdChCp = p;
+	}
+	else if (lstrcmp(asCmd, L"title") == 0)
+	{
+		_ASSERTE(mp_CmdTitle==NULL);
+		mp_CmdTitle = p;
+	}
+
+	m_Commands.push_back(p);
+
+	return p;
+}
+
+bool CProcessEnvCmd::Apply(CmdArg* rpsTitle /*= NULL*/)
+{
+	bool bEnvChanged = false;
+	Command* p;
+
+	for (INT_PTR i = 0; i < m_Commands.size(); i++)
+	{
+		p = m_Commands[i];
+
+		if (lstrcmp(p->szCmd, L"set") == 0)
+		{
+			bEnvChanged = true;
+			// Expand value
+			wchar_t* pszExpanded = ExpandEnvStr(p->pszValue);
+			LPCWSTR pszSet = pszExpanded ? pszExpanded : p->pszValue;
+			SetEnvironmentVariable(p->pszName, (pszSet && *pszSet) ? pszSet : NULL);
+			SafeFree(pszExpanded);
+		}
+		else if (lstrcmp(p->szCmd, L"chcp") == 0)
+		{
+			UINT nCP = GetCpFromString(p->pszName);
+			if (nCP > 0 && nCP <= 0xFFFF)
+			{
+				//Issue 60: BUGBUG: On some OS versions (Win2k3, WinXP) SetConsoleCP (and family) just hangs
+				SetConsoleCpHelper(nCP);
+			}
+		}
+		else if (lstrcmp(p->szCmd, L"title") == 0)
+		{
+			// Do not do anything here...
+		}
+		else
+		{
+			_ASSERTE(FALSE && "Command was not implemented!");
+		}
 	}
 
 	return bEnvChanged;
