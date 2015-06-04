@@ -272,16 +272,23 @@ CProcessEnvCmd::Command* CProcessEnvCmd::Add(LPCWSTR asCmd, LPCWSTR asName, LPCW
 	if (lstrcmp(asCmd, L"set") == 0)
 	{
 		mn_SetCount++;
+		mch_Total += (7 + lstrlen(asName) + (asValue ? lstrlen(asValue) : 0));
 	}
 	else if (lstrcmp(asCmd, L"chcp") == 0)
 	{
 		_ASSERTE(mp_CmdChCp==NULL);
 		mp_CmdChCp = p;
+		mch_Total += (6 + lstrlen(asName));
 	}
 	else if (lstrcmp(asCmd, L"title") == 0)
 	{
 		_ASSERTE(mp_CmdTitle==NULL);
 		mp_CmdTitle = p;
+		mch_Total += (7 + lstrlen(asName));
+	}
+	else
+	{
+		_ASSERTE(FALSE && "Command was not counted!");
 	}
 
 	m_Commands.push_back(p);
