@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2014 Maximus5
+Copyright (c) 2009-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -40,6 +40,36 @@ static DWORD WINAPI OurSetConsoleCPThread(LPVOID lpParameter)
 	SetConsoleCP(nCP);
 	SetConsoleOutputCP(nCP);
 	return 0;
+}
+
+bool SetConsoleCpHelper(UINT nCP)
+{
+	if (!nCP || nCP > 0xFFFF)
+		return false;
+
+	bool bOk = false;
+
+	//Issue 60: BUGBUG: On some OS versions (Win2k3, WinXP) SetConsoleCP (and family) just hangs
+	DWORD nTID;
+	HANDLE hThread = CreateThread(NULL, 0, OurSetConsoleCPThread, (LPVOID)nCP, 0, &nTID);
+
+	if (hThread)
+	{
+		DWORD nWait = WaitForSingleObject(hThread, 1000);
+
+		if (nWait == WAIT_TIMEOUT)
+		{
+			// That is dangerous operation, however there is no other workaround
+			// http://conemu.github.io/en/MicrosoftBugs.html#chcp_hung
+
+			TerminateThread(hThread,100);
+
+		}
+
+		CloseHandle(hThread);
+	}
+
+	return bOk;
 }
 
 // Return true if "SetEnvironmentVariable" was processed
