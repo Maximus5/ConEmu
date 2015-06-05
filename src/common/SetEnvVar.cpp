@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2013-2014 Maximus5
+Copyright (c) 2013-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -96,6 +96,7 @@ void SetConEmuWorkEnvVar(HMODULE hConEmuCD)
 CEnvStrings::CEnvStrings(LPWSTR pszStrings /* = GetEnvironmentStringsW() */)
 	: ms_Strings(pszStrings)
 	, mcch_Length(0)
+	, mn_Count(0)
 {
 	// Must be ZZ-terminated
 	if (pszStrings && *pszStrings)
@@ -105,8 +106,11 @@ CEnvStrings::CEnvStrings(LPWSTR pszStrings /* = GetEnvironmentStringsW() */)
 		while (*pszSrc)
 		{
 			pszSrc += lstrlen(pszSrc) + 1;
+			mn_Count++;
 		}
 		mcch_Length = pszSrc - pszStrings + 1;
+		// mn_Count must hold doubled variables count
+		_ASSERTE((mn_Count % 2) == 0);
 	}
 }
 

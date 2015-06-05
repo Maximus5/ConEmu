@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2013-2014 Maximus5
+Copyright (c) 2013-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -38,6 +38,7 @@ class CEnvStrings
 public:
 	LPWSTR ms_Strings;
 	size_t mcch_Length;
+	size_t mn_Count; // Holds doubled variables count
 public:
 	CEnvStrings(LPWSTR pszStrings /* = GetEnvironmentStringsW() */);
 	~CEnvStrings();
