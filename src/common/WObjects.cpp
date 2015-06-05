@@ -1372,6 +1372,9 @@ UINT GetCpFromString(LPCWSTR asString, LPCWSTR* ppszEnd /*= NULL*/)
 		{NULL}
 	};
 
+	if (!asString)
+		goto wrap;
+
 	for (KnownCpList* p = CP; p->pszName; p++)
 	{
 		int iLen = lstrlen(p->pszName);
