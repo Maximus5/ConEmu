@@ -269,8 +269,8 @@ void CESERVER_REQ_NEWCMD::SetEnvStrings(LPCWSTR asStrings, DWORD cchLenZZ)
 	if (cchLenZZ && asStrings)
 	{
 		cchEnvStrings = cchLenZZ;
-		//memmove(GetEnvStrings(), asStrings, cchEnvStrings*sizeof(*asStrings));
-		wchar_t* ptrString = GetEnvStrings();
+		// Acquire shifted pointer to dest storage
+		wchar_t* ptrString = this->GetEnvStrings();
 		if (ptrString)
 		{
 			wchar_t* ptr = ptrString;
