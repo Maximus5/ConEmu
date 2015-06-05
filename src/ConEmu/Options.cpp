@@ -5196,6 +5196,7 @@ wchar_t* Settings::MSZ2LineDelimited(const wchar_t* apszApps)
 	return pszRet;
 }
 // "|"-delimited string -> MSZ
+// !!! Returns LOWER-CASE string !!!
 wchar_t* Settings::LineDelimited2MSZ(const wchar_t* apszApps)
 {
 	wchar_t* pszDst = NULL;
