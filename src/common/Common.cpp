@@ -284,21 +284,15 @@ void CESERVER_REQ_NEWCMD::SetEnvStrings(LPCWSTR asStrings, DWORD cchLenZZ)
 				// Next pair
 				pszSrc = pszNext;
 
-				// Строки типа "=C:=C:\\" и другое не валидное - пропускаем
-				LPCWSTR pszVal = wcschr(pszName, L'=');
-				if (!pszVal || pszVal == pszName)
+				LPCWSTR pszEqnSign = NULL;
+				if (!IsEnvBlockVariableValid(pszName, pszEqnSign))
 					continue;
+				_ASSERTE(pszEqnSign!=NULL);
 
-				// Skip all our internal vars, they must be set from prompt specially
-				// But let user a chance with different case. E.g. "set conemuhk=OFF"
-				// So, use case-sensitive comparison
-				if (wcsncmp(pszName, L"ConEmu", 6) != 0)
-				{
-					size_t cchCur = pszNext - pszName;
-					memmove(ptr, pszName, cchCur*sizeof(*pszName));
-					ptr[(pszVal-pszName)] = 0; // Make our storage "Name\0Value\0" like
-					ptr += cchCur;
-				}
+				size_t cchCur = pszNext - pszName;
+				memmove(ptr, pszName, cchCur*sizeof(*pszName));
+				ptr[(pszEqnSign-pszName)] = 0; // Make our storage "Name\0Value\0" like
+				ptr += cchCur;
 			}
 			// Copied size?
 			size_t cchAll = (ptr - ptrString);
