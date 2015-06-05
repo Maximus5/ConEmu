@@ -321,6 +321,25 @@ void CESERVER_REQ_NEWCMD::SetEnvStrings(LPCWSTR asStrings, DWORD cchLenZZ)
 }
 /* *** struct CESERVER_REQ_NEWCMD -- CECMD_NEWCMD *** */
 
+bool IsEnvBlockVariableValid(LPCWSTR asName, LPCWSTR& rszEqnSign)
+{
+	if (!asName || !*asName)
+		return false;
+
+	// Skip lines like "=C:=C:\\" and other invalids
+	rszEqnSign = wcschr(asName, L'=');
+	if (!rszEqnSign || rszEqnSign == asName)
+		return false;
+
+	// Skip all our internal vars, they must be set from prompt specially
+	// But let user a chance with different case. E.g. "set conemuhk=OFF"
+	// So, use case-sensitive comparison
+	if (wcsncmp(asName, L"ConEmu", 6) == 0)
+		return false;
+
+	return true;
+}
+
 //#ifdef CONEMU_MINIMAL
 //#include "base64.h"
 //#endif
