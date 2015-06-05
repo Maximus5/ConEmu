@@ -445,6 +445,8 @@ void Settings::InitSettings()
 		}
 	}
 
+	psEnvironmentSet = lstrdup(L"set PATH=%ConEmuBaseDir%\\Scripts;%PATH%\r\n");
+
 	bool bIsDbcs = (GetSystemMetrics(SM_DBCSENABLED) != 0);
 
 	/* ********** Font initialization begins ********** */
@@ -2617,6 +2619,8 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 		//FindComspec(&ComSpec);
 		//Update Comspec(&ComSpec); --> CSettings::SettingsLoaded
 
+		this->LoadMSZ(reg, L"EnvironmentSet", psEnvironmentSet, L"\r\n", true);
+
 		reg->Load(L"CTS.Intelligent", isCTSIntelligent);
 		{
 		wchar_t* pszApps = NULL;
@@ -3532,6 +3536,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		reg->Save(L"ComSpec.EnvAddExePath", (bool)((ComSpec.AddConEmu2Path & CEAP_AddConEmuExeDir) == CEAP_AddConEmuExeDir));
 		reg->Save(L"ComSpec.UncPaths", (bool)ComSpec.isAllowUncPaths);
 		reg->Save(L"ComSpec.Path", ComSpec.ComspecExplicit);
+		this->SaveMSZ(reg, L"EnvironmentSet", psEnvironmentSet, L"\r\n", false);
 		reg->Save(L"CTS.Intelligent", isCTSIntelligent);
 		{
 		wchar_t* pszApps = GetIntelligentExceptions(); // MSZ -> "|"-delimited string

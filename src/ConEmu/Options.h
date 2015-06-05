@@ -140,6 +140,9 @@ struct Settings
 
 		ConEmuComspec ComSpec;
 
+		//reg->LoadMSZ(L"EnvironmentSet", psEnvironmentSet);
+		wchar_t* psEnvironmentSet; // commands: multiline, "\r\n" separated
+
 		// Service functions
 		wchar_t* LineDelimited2MSZ(const wchar_t* apszApps, bool bLowerCase = true); // "|"-delimited string -> MSZ
 		wchar_t* MSZ2LineDelimited(const wchar_t* apszLines, LPCWSTR asDelim = L"|", bool bFinalToo = false); // MSZ -> "<asDelim>"-delimited string
