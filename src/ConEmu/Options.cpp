@@ -5247,6 +5247,73 @@ wchar_t* Settings::LineDelimited2MSZ(const wchar_t* apszApps, bool bLowerCase /*
 	return pszDst;
 }
 
+
+// "\r\n"-delimited string -> MSZ
+wchar_t* Settings::MultiLine2MSZ(const wchar_t* apszLines, DWORD* pcbSize/*in bytes*/)
+{
+	wchar_t* pszDst = NULL;
+	DWORD cbSize = 0;
+
+	if (apszLines && *apszLines)
+	{
+		CEStr lsLine;
+		int nLenMax = lstrlen(apszLines);
+		if ((pszDst = (wchar_t*)malloc((nLenMax+2)*sizeof(wchar_t))) == NULL)
+		{
+			_ASSERTE(FALSE && "Memory allocation failed");
+		}
+		else
+		{
+			wchar_t* psz = pszDst;
+			LPCWSTR pszSrc = apszLines;
+			while (0 == NextLine(&pszSrc, lsLine, NLF_NONE))
+			{
+				int iLineLen = lstrlen(lsLine.ms_Arg) + 1;
+				_ASSERTE((psz - pszDst + 1 + iLineLen) <= ((nLenMax+2)*sizeof(wchar_t)));
+
+				wmemmove(psz, lsLine.ms_Arg, iLineLen);
+				psz += iLineLen;
+			}
+
+			cbSize = (psz - pszDst + 1)*sizeof(wchar_t);
+			_ASSERTE(cbSize <= ((nLenMax+2)*sizeof(wchar_t)));
+			_ASSERTE(*(psz-1) == 0 && *psz);
+			*psz = 0; // MSZZ
+		}
+	}
+
+	if (pcbSize)
+		*pcbSize = cbSize;
+	return pszDst;
+}
+
+bool Settings::LoadMSZ(SettingsBase* reg, LPCWSTR asName, wchar_t*& rsLines, LPCWSTR asDelim /*= L"|"*/, bool bFinalToo /*= false*/)
+{
+	SafeFree(rsLines);
+	wchar_t* pszMsz = NULL; // MSZZ
+
+	bool bRc = reg->Load(asName, &pszMsz);
+	if (bRc && pszMsz)
+	{
+		rsLines = MSZ2LineDelimited(pszMsz, asDelim, bFinalToo);
+		free(pszMsz);
+	}
+
+	return bRc;
+}
+
+// rsLines - "\r\n" separated lines
+void Settings::SaveMSZ(SettingsBase* reg, LPCWSTR asName, LPCWSTR rsLines, LPCWSTR asDelim /*= L"|"*/, bool bLowerCase /*= true*/)
+{
+	// MSZZ
+	DWORD nCbSize = 0;
+	wchar_t* psMSZ = MultiLine2MSZ(rsLines, &nCbSize/*in bytes*/);
+
+	reg->SaveMSZ(asName, psMSZ, nCbSize);
+
+	SafeFree(psMSZ);
+}
+
 // "\0"-delimited
 const wchar_t* Settings::GetIntelligentExceptionsMSZ()
 {
