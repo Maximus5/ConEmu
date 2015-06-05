@@ -5150,19 +5150,20 @@ void Settings::SetDefaultTerminalApps(const wchar_t* apszApps)
 }
 
 
-// MSZ -> "|"-delimited string
-wchar_t* Settings::MSZ2LineDelimited(const wchar_t* apszApps)
+// MSZ -> "<asDelim>"-delimited string
+wchar_t* Settings::MSZ2LineDelimited(const wchar_t* apszLines, LPCWSTR asDelim /*= L"|"*/, bool bFinalToo /*= false*/)
 {
-	if (!apszApps || !*apszApps)
+	if (!apszLines || !*apszLines)
 	{
 		return lstrdup(L"");
 	}
 	// Evaluate required len
 	INT_PTR nTotalLen = 0, nLen;
-	const wchar_t* psz = apszApps;
+	INT_PTR nDelimLen = asDelim ? _tcslen(asDelim) : 0;
+	const wchar_t* psz = apszLines;
 	while (*psz)
 	{
-		nLen = _tcslen(psz)+1;
+		nLen = _tcslen(psz)+nDelimLen;
 		psz += nLen;
 		nTotalLen += nLen;
 	}
@@ -5174,18 +5175,24 @@ wchar_t* Settings::MSZ2LineDelimited(const wchar_t* apszApps)
 		return lstrdup(L"");
 	}
 	// Conversion
-	wchar_t* pszDst = pszRet; psz = apszApps;
+	wchar_t* pszDst = pszRet; psz = apszLines;
 	while (*psz)
 	{
 		nLen = _tcslen(psz);
 		wmemmove(pszDst, psz, nLen);
-		psz += nLen+1;
+		psz += nLen+1; // + '\0'
 		pszDst += nLen;
-		if (*psz)
+
+		if (*psz || bFinalToo)
 		{
-			*(pszDst++) = L'|';
+			if (nDelimLen > 0)
+			{
+				wmemmove(pszDst, asDelim, nDelimLen);
+				pszDst += nDelimLen;
+			}
 		}
-		else
+
+		if (!*psz)
 		{
 			*(pszDst++) = 0;
 			break;

@@ -142,7 +142,7 @@ struct Settings
 
 		// Service functions
 		wchar_t* LineDelimited2MSZ(const wchar_t* apszApps, bool bLowerCase = true); // "|"-delimited string -> MSZ
-		wchar_t* MSZ2LineDelimited(const wchar_t* apszApps); // MSZ -> "|"-delimited string
+		wchar_t* MSZ2LineDelimited(const wchar_t* apszLines, LPCWSTR asDelim = L"|", bool bFinalToo = false); // MSZ -> "<asDelim>"-delimited string
 
 		// Replace default terminal
 		bool isSetDefaultTerminal;
