@@ -5197,7 +5197,7 @@ wchar_t* Settings::MSZ2LineDelimited(const wchar_t* apszApps)
 }
 // "|"-delimited string -> MSZ
 // !!! Returns LOWER-CASE string !!!
-wchar_t* Settings::LineDelimited2MSZ(const wchar_t* apszApps)
+wchar_t* Settings::LineDelimited2MSZ(const wchar_t* apszApps, bool bLowerCase /*= true*/)
 {
 	wchar_t* pszDst = NULL;
 
@@ -5221,7 +5221,11 @@ wchar_t* Settings::LineDelimited2MSZ(const wchar_t* apszApps)
 					wmemmove(psz, apszApps, pszNext-apszApps);
 					psz += pszNext-apszApps;
 					*(psz++) = 0;
-					CharLowerBuff(pszLwr, pszNext-apszApps);
+
+					if (bLowerCase)
+					{
+						CharLowerBuff(pszLwr, pszNext-apszApps);
+					}
 				}
 
 				if (!*pszNext)

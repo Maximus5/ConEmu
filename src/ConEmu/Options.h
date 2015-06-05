@@ -141,7 +141,7 @@ struct Settings
 		ConEmuComspec ComSpec;
 
 		// Service functions
-		wchar_t* LineDelimited2MSZ(const wchar_t* apszApps); // "|"-delimited string -> MSZ
+		wchar_t* LineDelimited2MSZ(const wchar_t* apszApps, bool bLowerCase = true); // "|"-delimited string -> MSZ
 		wchar_t* MSZ2LineDelimited(const wchar_t* apszApps); // MSZ -> "|"-delimited string
 
 		// Replace default terminal
