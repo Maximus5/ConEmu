@@ -35,6 +35,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 int NextArg(const wchar_t** asCmdLine, CmdArg &rsArg, const wchar_t** rsArgStart=NULL);
 
+typedef DWORD NEXTLINEFLAGS;
+const NEXTLINEFLAGS
+	NLF_SKIP_EMPTY_LINES = 1,
+	NLF_TRIM_SPACES = 2,
+	NLF_NONE = 0;
+int NextLine(const wchar_t** asLines, CEStr &rsLine, NEXTLINEFLAGS Flags = NLF_TRIM_SPACES|NLF_SKIP_EMPTY_LINES);
+
 bool CompareFileMask(const wchar_t* asFileName, const wchar_t* asMask);
 LPCWSTR GetDrive(LPCWSTR pszPath, wchar_t* szDrive, int/*countof(szDrive)*/ cchDriveMax);
 int GetDirectory(CmdArg& szDir);

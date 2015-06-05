@@ -276,6 +276,53 @@ int NextArg(const wchar_t** asCmdLine, CmdArg &rsArg, const wchar_t** rsArgStart
 	return 0;
 }
 
+int NextLine(const wchar_t** asLines, CEStr &rsLine, NEXTLINEFLAGS Flags /*= NLF_TRIM_SPACES|NLF_SKIP_EMPTY_LINES*/)
+{
+	if (!asLines || !*asLines)
+		return CERR_CMDLINEEMPTY;
+
+	const wchar_t* psz = *asLines;
+	//const wchar_t szSpaces[] = L" \t";
+	//const wchar_t szLines[] = L"\r\n";
+	//const wchar_t szSpacesLines[] = L" \t\r\n";
+
+	if ((Flags & (NLF_TRIM_SPACES|NLF_SKIP_EMPTY_LINES)) == (NLF_TRIM_SPACES|NLF_SKIP_EMPTY_LINES))
+		psz = SkipNonPrintable(psz);
+	else if (Flags & NLF_TRIM_SPACES)
+		while (*psz == L' ' || *psz == L'\t') psz++;
+	else if (Flags & NLF_SKIP_EMPTY_LINES)
+		while (*psz == L'\r' || *psz == L'\n') psz++;
+
+	if (!*psz)
+	{
+		*asLines = psz;
+		return CERR_CMDLINEEMPTY;
+	}
+
+	const wchar_t* pszEnd = wcspbrk(psz, L"\r\n");
+	if (!pszEnd)
+	{
+		pszEnd = psz + lstrlen(psz);
+	}
+
+	const wchar_t* pszTrim = pszEnd;
+	if (*pszEnd == L'\r') pszEnd++;
+	if (*pszEnd == L'\n') pszEnd++;
+
+	if (Flags & NLF_TRIM_SPACES)
+	{
+		while ((pszTrim > psz) && ((*(pszTrim-1) == L' ') || (*(pszTrim-1) == L'\t')))
+			pszTrim--;
+	}
+
+	_ASSERTE(pszTrim >= psz);
+	rsLine.Set(psz, pszTrim-psz);
+	psz = pszEnd;
+
+	*asLines = psz;
+	return 0;
+}
+
 int AddEndSlash(wchar_t* rsPath, int cchMax)
 {
 	if (!rsPath || !*rsPath)
