@@ -56,9 +56,19 @@ public:
 public:
 	// Append helpers
 	void AddCommands(LPCWSTR asCommands, LPCWSTR* ppszEnd = NULL); // May comes from Task or ConEmu's /cmd switch
+	void AddEnvironmentBlock(LPCWSTR asNameValueSeq); // Comes from GetEnvironmentStrings()
+	void AddLines(LPCWSTR asLines); // Comes from ConEmu's settings (Environment setting page)
 	Command* Add(LPCWSTR asCmd, LPCWSTR asName, LPCWSTR asValue);
 
 public:
 	// Apply routine, returns true if environment was set/changed
 	bool Apply(CmdArg* rpsTitle = NULL);
+
+public:
+	// Allocate MSZZ block
+	// "set\0name=value\0chcp\0utf-8\0\0"
+	wchar_t* Allocate(size_t* pchSize);
+
+protected:
+	void cpyadv(wchar_t*& pszDst, LPCWSTR asStr);
 };

@@ -253,6 +253,42 @@ void CProcessEnvCmd::AddCommands(LPCWSTR asCommands, LPCWSTR* ppszEnd/*= NULL*/)
 	}
 }
 
+// Comes from GetEnvironmentStrings()
+void CProcessEnvCmd::AddEnvironmentBlock(LPCWSTR asNameValueSeq)
+{
+	CEStr lsName;
+	LPCWSTR pszSrc = asNameValueSeq;
+	// ZZ-terminated pairs
+	while (*pszSrc)
+	{
+		// Pairs "Name=Value\0"
+		LPCWSTR pszName = pszSrc;
+		LPCWSTR pszNext = pszName + lstrlen(pszName) + 1;
+		// Next pair
+		pszSrc = pszNext;
+
+		LPCWSTR pszEqnSign = NULL;
+		if (IsEnvBlockVariableValid(pszName, pszEqnSign))
+		{
+			_ASSERTE(pszEqnSign!=NULL);
+			lsName.Set(pszName, pszEqnSign-pszName);
+			Add(L"set", lsName, pszEqnSign+1);
+		}
+	}
+}
+
+// Comes from ConEmu's settings (Environment setting page)
+void CProcessEnvCmd::AddLines(LPCWSTR asLines)
+{
+	LPCWSTR pszLines = asLines;
+	CEStr lsLine;
+
+	while (0 == NextLine(&pszLines, lsLine))
+	{
+		AddCommands(lsLine);
+	}
+}
+
 CProcessEnvCmd::Command* CProcessEnvCmd::Add(LPCWSTR asCmd, LPCWSTR asName, LPCWSTR asValue)
 {
 	if (!asCmd || !*asCmd || !asName || !*asName)
@@ -334,4 +370,73 @@ bool CProcessEnvCmd::Apply(CmdArg* rpsTitle /*= NULL*/)
 	}
 
 	return bEnvChanged;
+}
+
+wchar_t* CProcessEnvCmd::Allocate(size_t* pchSize)
+{
+	wchar_t* pszData = NULL;
+	size_t cchData = 0;
+
+	if (mch_Total)
+	{
+		pszData = (wchar_t*)malloc((mch_Total+1)*sizeof(*pszData));
+		if (pszData)
+		{
+			wchar_t* pszDst = pszData;
+
+			for (INT_PTR i = 0; i < m_Commands.size(); i++)
+			{
+				Command* p = m_Commands[i];
+
+				if (lstrcmp(p->szCmd, L"set") == 0)
+				{
+					cpyadv(pszDst, L"set");
+					pszDst++; // leave '\0'
+					cpyadv(pszDst, p->pszName);
+					*(pszDst++) = L'='; // replace '\0' with '='
+					if (p->pszValue)
+						cpyadv(pszDst, p->pszValue);
+					else
+						*pszDst = 0;
+					pszDst++; // leave '\0'
+				}
+				else if (lstrcmp(p->szCmd, L"chcp") == 0)
+				{
+					cpyadv(pszDst, L"chcp");
+					pszDst++; // leave '\0'
+					cpyadv(pszDst, p->pszName);
+					pszDst++; // leave '\0'
+				}
+				else if (lstrcmp(p->szCmd, L"title") == 0)
+				{
+					cpyadv(pszDst, L"title");
+					pszDst++; // leave '\0'
+					cpyadv(pszDst, p->pszName);
+					pszDst++; // leave '\0'
+				}
+				else
+				{
+					_ASSERTE(FALSE && "Command was not implemented!");
+				}
+			}
+
+			// Fin
+			cchData = (pszDst - pszData + 1);
+			_ASSERTE(cchData > 2 && pszData[cchData-2] == 0 && pszData[cchData-3] != 0 && pszData[cchData]);
+			pszData[cchData-1] = 0; // MSZZ
+		}
+	}
+
+	if (pchSize)
+		*pchSize = cchData;
+	return pszData;
+}
+
+void CProcessEnvCmd::cpyadv(wchar_t*& pszDst, LPCWSTR asStr)
+{
+	if (!asStr || !*asStr)
+		return;
+	size_t nLen = wcslen(asStr);
+	memmove(pszDst, asStr, (nLen+1)*sizeof(*pszDst));
+	pszDst += nLen; // set pointer to \0
 }
