@@ -555,6 +555,8 @@ bool CRealBuffer::LoadAlternativeConsole(LoadAltMode iMode /*= lam_Default*/)
 	con.m_sel.dwFlags = 0;
 	dump.Close();
 
+	DWORD nStartTick = GetTickCount(), nDurationTick;
+
 	if (iMode == lam_Default)
 	{
 		if (mp_RCon->isFar() && gpSet->AutoBufferHeight)
@@ -650,6 +652,19 @@ bool CRealBuffer::LoadAlternativeConsole(LoadAltMode iMode /*= lam_Default*/)
 wrap:
 	if (!lbRc)
 		dump.Close();
+	// Logging
+	nDurationTick = GetTickCount() - nStartTick;
+	if (!lbRc)
+	{
+		mp_RCon->LogString(L"!!! CRealBuffer::LoadAlternativeConsole FAILED !!!", TRUE);
+	}
+	else if (nDurationTick > 1000)
+	{
+		wchar_t szLog[80];
+		_wsprintf(szLog, SKIPCOUNT(szLog) L"!!! CRealBuffer::LoadAlternativeConsole takes %u ms !!!", nDurationTick);
+		_ASSERTE(!lbRc || (nDurationTick < 1000));
+		mp_RCon->LogString(szLog, TRUE);
+	}
 	return lbRc;
 }
 
