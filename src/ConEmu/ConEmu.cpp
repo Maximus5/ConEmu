@@ -1223,17 +1223,15 @@ LPWSTR CConEmuMain::ConEmuXml(bool* pbSpecialPath /*= NULL*/)
 	TODO("Хорошо бы еще дать возможность пользователю использовать два файла - системный (предустановки) и пользовательский (настройки)");
 
 	// Ищем файл портабельных настроек (возвращаем первый найденный, приоритет...)
-	LPWSTR pszSearchXml[] = {
-		ExpandEnvStr(L"%ConEmuDir%\\ConEmu.xml"),
-		ExpandEnvStr(L"%ConEmuDir%\\.ConEmu.xml"),
-		ExpandEnvStr(L"%ConEmuBaseDir%\\ConEmu.xml"),
-		ExpandEnvStr(L"%ConEmuBaseDir%\\.ConEmu.xml"),
-		ExpandEnvStr(L"%APPDATA%\\ConEmu.xml"),
-		ExpandEnvStr(L"%APPDATA%\\.ConEmu.xml"),
-		NULL
-	};
+	MArray<wchar_t*> pszSearchXml;
+	pszSearchXml.push_back(ExpandEnvStr(L"%ConEmuDir%\\ConEmu.xml"));
+	pszSearchXml.push_back(ExpandEnvStr(L"%ConEmuDir%\\.ConEmu.xml"));
+	pszSearchXml.push_back(ExpandEnvStr(L"%ConEmuBaseDir%\\ConEmu.xml"));
+	pszSearchXml.push_back(ExpandEnvStr(L"%ConEmuBaseDir%\\.ConEmu.xml"));
+	pszSearchXml.push_back(ExpandEnvStr(L"%APPDATA%\\ConEmu.xml"));
+	pszSearchXml.push_back(ExpandEnvStr(L"%APPDATA%\\.ConEmu.xml"));
 
-	for (size_t i = 0; pszSearchXml[i]; i++)
+	for (INT_PTR i = 0; i < pszSearchXml.size(); i++)
 	{
 		if (FileExists(pszSearchXml[i]))
 		{
@@ -1246,9 +1244,10 @@ LPWSTR CConEmuMain::ConEmuXml(bool* pbSpecialPath /*= NULL*/)
 	wcscpy_c(ms_ConEmuXml, ms_ConEmuBaseDir); wcscat_c(ms_ConEmuXml, L"\\ConEmu.xml");
 
 fin:
-	for (size_t i = 0; i < countof(pszSearchXml); i++)
+	for (INT_PTR i = 0; i < pszSearchXml.size(); i++)
 	{
-		SafeFree(pszSearchXml[i]);
+		wchar_t* psz = pszSearchXml[i];
+		SafeFree(psz);
 	}
 	return ms_ConEmuXml;
 }
