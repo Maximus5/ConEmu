@@ -78,5 +78,8 @@ public:
 	LPCTSTR GetDefaultCmd();
 	void    SetDefaultCmd(LPCWSTR asCmd);
 
+	/* Find bash (sh.exe) location. Different installations supported: MinGW, Git-For-Windows, Cygwin, ... */
+	bool    FindBashLocation(CEStr& lsBash);
+
 	void ResetCmdArg();
 };

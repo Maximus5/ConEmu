@@ -513,25 +513,14 @@ CConEmuMain::CConEmuMain()
 
 	bool lbBaseFound = false;
 
-	// Mingw/msys installation?
-	m_InstallMode = cm_Normal; // проверка ниже
 	wchar_t szFindFile[MAX_PATH+64];
-	wcscpy_c(szFindFile, ms_ConEmuExeDir);
-	pszSlash = wcsrchr(szFindFile, L'\\');
-	if (pszSlash) *pszSlash = 0;
-	pszSlash = szFindFile + _tcslen(szFindFile);
-	wcscat_c(szFindFile, L"\\msys\\1.0\\bin\\sh.exe");
-	if (FileExists(szFindFile))
+
+	// Mingw/msys installation?
+	m_InstallMode = cm_Normal;
+	CEStr lsBash;
+	if (FindBashLocation(lsBash))
 	{
 		m_InstallMode |= cm_MSysStartup;
-	}
-	else
-	{
-		// Git-bash mode
-		*pszSlash = 0;
-		wcscat_c(szFindFile, L"\\bin\\sh.exe");
-		if (FileExists(szFindFile))
-			m_InstallMode |= cm_MSysStartup;
 	}
 
 	// Сначала проверяем подпапку

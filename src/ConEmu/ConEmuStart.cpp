@@ -70,24 +70,8 @@ void CConEmuStart::SetDefaultCmd(LPCWSTR asCmd)
 	// !!! gpConEmu may be NULL due starting time !!!
 	if (gpConEmu && gpConEmu->isMingwMode() && gpConEmu->isMSysStartup())
 	{
-		wchar_t szSearch[MAX_PATH+32], *pszFile;
-		wcscpy_c(szSearch, gpConEmu->ms_ConEmuExeDir);
-		pszFile = wcsrchr(szSearch, L'\\');
-		if (pszFile)
-			*pszFile = 0;
-		pszFile = szSearch + _tcslen(szSearch);
-		wcscat_c(szSearch, L"\\msys\\1.0\\bin\\sh.exe");
-		if (!FileExists(szSearch))
-		{
-			// Git-Bash mode
-			*pszFile = 0;
-			wcscat_c(szSearch, L"\\bin\\sh.exe");
-			if (!FileExists(szSearch))
-			{
-				// Last chance, without path
-				wcscpy_c(szSearch, L"sh.exe");
-			}
-		}
+		CEStr szSearch;
+		FindBashLocation(szSearch);
 
 		_wsprintf(szDefCmd, SKIPLEN(countof(szDefCmd))
 			(wcschr(szSearch, L' ') != NULL)
@@ -295,4 +279,40 @@ void CConEmuStart::ResetCmdArg()
 		wchar_t* pszReset = NULL;
 		SetCurCmd(pszReset, false);
 	}
+}
+
+bool CConEmuStart::FindBashLocation(CEStr& lsBash)
+{
+	wchar_t szRoot[MAX_PATH+32], *pszSlash;
+	wcscpy_c(szRoot, gpConEmu->ms_ConEmuExeDir);
+
+	LPCWSTR pszPlaces[] = {
+		L"\\msys\\1.0\\bin\\sh.exe",  // Msys/MinGW
+		L"\\bin\\sh.exe",             // Git-Bash
+		L"\\usr\\bin\\sh.exe",        // Git-For-Windows
+		NULL
+	};
+
+	// Before ConEmu.exe was intended to be in /bin/ folder
+	// With Git-For-Windows it may be places in /opt/bin/ subfolder
+	// So we do searching with two steps
+	for (size_t i = 0; i <= 1; i++)
+	{
+		pszSlash = wcsrchr(szRoot, L'\\');
+		if (pszSlash)
+			*pszSlash = 0;
+
+		for (size_t j = 0; pszPlaces[j]; j++)
+		{
+			lsBash = JoinPath(szRoot, pszPlaces[j]);
+			if (FileExists(lsBash))
+			{
+				return true;
+			}
+		}
+	}
+
+	// Last chance, without path
+	lsBash = L"sh.exe";
+	return false;
 }
