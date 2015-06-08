@@ -345,10 +345,10 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 			CESERVER_REQ_SRVSTARTSTOPRET Ret = {};
 			lbRc = CVConGroup::AttachRequested(pIn->StartStop.hWnd, &(pIn->StartStop), Ret);
 
-			pcbReplySize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_SRVSTARTSTOPRET)+(Ret.cchEnvStrings*sizeof(wchar_t));
+			pcbReplySize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_SRVSTARTSTOPRET)+(Ret.cchEnvCommands*sizeof(wchar_t));
 			if (!ExecuteNewCmd(ppReply, pcbMaxReplySize, pIn->hdr.nCmd, pcbReplySize))
 			{
-				SafeFree(Ret.pszStrings);
+				SafeFree(Ret.pszCommands);
 				goto wrap;
 			}
 
@@ -358,16 +358,16 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 				memmove(&ppReply->SrvStartStopRet, &Ret, sizeof(Ret));
 
 				// Environment strings (inherited from parent console)
-				if (Ret.cchEnvStrings && Ret.pszStrings)
+				if (Ret.cchEnvCommands && Ret.pszCommands)
 				{
-					memmove(ppReply->SrvStartStopRet.szStrings, Ret.pszStrings, Ret.cchEnvStrings*sizeof(wchar_t));
-					ppReply->SrvStartStopRet.cchEnvStrings = Ret.cchEnvStrings;
+					memmove(ppReply->SrvStartStopRet.szCommands, Ret.pszCommands, Ret.cchEnvCommands*sizeof(wchar_t));
+					ppReply->SrvStartStopRet.cchEnvCommands = Ret.cchEnvCommands;
 				}
 				else
 				{
-					ppReply->SrvStartStopRet.cchEnvStrings = 0;
+					ppReply->SrvStartStopRet.cchEnvCommands = 0;
 				}
-				SafeFree(Ret.pszStrings);
+				SafeFree(Ret.pszCommands);
 
 				_ASSERTE((ppReply->StartStopRet.nBufferHeight == 0) || ((int)ppReply->StartStopRet.nBufferHeight > (pIn->StartStop.sbi.srWindow.Bottom-pIn->StartStop.sbi.srWindow.Top)));
 			}
@@ -462,10 +462,10 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 				}
 				#endif
 
-				pcbReplySize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_SRVSTARTSTOPRET)+(arg.Ret.cchEnvStrings*sizeof(wchar_t));
+				pcbReplySize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_SRVSTARTSTOPRET)+(arg.Ret.cchEnvCommands*sizeof(wchar_t));
 				if (!ExecuteNewCmd(ppReply, pcbMaxReplySize, pIn->hdr.nCmd, pcbReplySize))
 				{
-					SafeFree(arg.Ret.pszStrings);
+					SafeFree(arg.Ret.pszCommands);
 					goto wrap;
 				}
 				lbAllocated = true;
@@ -474,16 +474,16 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 				memmove(&ppReply->SrvStartStopRet, &arg.Ret, sizeof(arg.Ret));
 
 				// Environment strings (inherited from parent console)
-				if (arg.Ret.cchEnvStrings && arg.Ret.pszStrings)
+				if (arg.Ret.cchEnvCommands && arg.Ret.pszCommands)
 				{
-					memmove(ppReply->SrvStartStopRet.szStrings, arg.Ret.pszStrings, arg.Ret.cchEnvStrings*sizeof(wchar_t));
-					ppReply->SrvStartStopRet.cchEnvStrings = arg.Ret.cchEnvStrings;
+					memmove(ppReply->SrvStartStopRet.szCommands, arg.Ret.pszCommands, arg.Ret.cchEnvCommands*sizeof(wchar_t));
+					ppReply->SrvStartStopRet.cchEnvCommands = arg.Ret.cchEnvCommands;
 				}
 				else
 				{
-					ppReply->SrvStartStopRet.cchEnvStrings = 0;
+					ppReply->SrvStartStopRet.cchEnvCommands = 0;
 				}
-				SafeFree(arg.Ret.pszStrings);
+				SafeFree(arg.Ret.pszCommands);
 			}
 			else if (pIn->SrvStartStop.Started == srv_Stopped)
 			{

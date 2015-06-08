@@ -1323,21 +1323,27 @@ void CRealConsole::QueryStartStopRet(CESERVER_REQ_SRVSTARTSTOPRET& pRet)
 	mp_ConEmu->GetGuiInfo(pRet.GuiMapping);
 
 	// Environment strings (inherited from parent console)
-	_ASSERTE(pRet.cchEnvStrings == 0 && pRet.pszStrings == NULL);
+	_ASSERTE(pRet.cchEnvCommands == 0 && pRet.pszCommands == NULL);
+	SetInitEnvCommands(pRet);
+}
+
+void CRealConsole::SetInitEnvCommands(CESERVER_REQ_SRVSTARTSTOPRET& pRet)
+{
+	CProcessEnvCmd env;
+
 	if (m_Args.cchEnvStrings && m_Args.pszEnvStrings)
 	{
-		pRet.pszStrings = (wchar_t*)malloc(m_Args.cchEnvStrings*sizeof(wchar_t));
-		if (pRet.pszStrings)
-		{
-			memmove(pRet.pszStrings, m_Args.pszEnvStrings, m_Args.cchEnvStrings*sizeof(wchar_t));
-			pRet.cchEnvStrings = m_Args.cchEnvStrings;
-		}
+		env.AddEnvironmentBlock(m_Args.pszEnvStrings);
 	}
-	else
+
+	if (gpSet->psEnvironmentSet)
 	{
-		pRet.cchEnvStrings = 0;
-		pRet.pszStrings = NULL;
+		env.AddLines(gpSet->psEnvironmentSet);
 	}
+
+	size_t cchData = 0;
+	pRet.pszCommands = env.Allocate(&cchData);
+	pRet.cchEnvCommands = cchData;
 }
 
 #if 0

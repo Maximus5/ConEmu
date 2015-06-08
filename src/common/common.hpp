@@ -30,7 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _COMMON_HEADER_HPP_
 
 // Interface version
-#define CESERVER_REQ_VER    153
+#define CESERVER_REQ_VER    154
 
 // Max tabs/panes count
 #define MAX_CONSOLE_COUNT 30
@@ -1789,14 +1789,23 @@ struct CESERVER_REQ_SRVSTARTSTOPRET
 	ConEmuAnsiLog AnsiLog;
 	// Avoid spare calls, let do all in one place
 	ConEmuGuiMapping GuiMapping;
-	// Environment block (inherited from parent console)
-	DWORD cchEnvStrings;
+	// Initialization block of commands:
+	// # environment variables may be inherited from parent console,
+	// # environment, codepage, aliases and so on may come from ConEmu settings
+	// ...
+	// "set" \0 "VarName" \0 "VarValue" \0
+	// ...
+	// "chcp utf-8" \0
+	// ...
+	// Some more commands may be implemented later, "alias" for example
+	DWORD cchEnvCommands;
 	union
 	{
-		wchar_t  szStrings[1]; // Variable length
-		wchar_t* pszStrings;   // Used in GUI Internally
-		u64      Reserved;     // Required for same size in both versions
+		wchar_t  szCommands[1]; // Variable length
+		wchar_t* pszCommands;   // Used in GUI Internally
+		u64      Reserved;      // Required for same size in both versions
 	};
+	// void SetEnvironmentCommands(LPCWSTR aszzEnvVars, LPCWSTR aszSettingCommands);
 };
 
 struct CESERVER_REQ_POSTMSG
