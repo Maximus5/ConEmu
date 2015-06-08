@@ -53,6 +53,12 @@ CmdArg& CmdArg::operator=(wchar_t* RVAL_REF asPtr)
 	return *this;
 }
 
+CmdArg& CmdArg::operator=(const wchar_t* asPtr)
+{
+	Set(asPtr);
+	return *this;
+}
+
 CmdArg::~CmdArg()
 {
 	if (mb_RestoreEnvVar && *ms_RestoreVarName && !IsEmpty())

@@ -71,6 +71,7 @@ private:
 public:
 	operator LPCWSTR() const { return ms_Arg; };
 	CmdArg& operator=(wchar_t* RVAL_REF asPtr);
+	CmdArg& operator=(const wchar_t* asPtr);
 
 	wchar_t* GetBuffer(INT_PTR cchMaxLen);
 	wchar_t* Detach();
