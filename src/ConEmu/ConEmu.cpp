@@ -1215,6 +1215,14 @@ LPWSTR CConEmuMain::ConEmuXml(bool* pbSpecialPath /*= NULL*/)
 	// Search for portable xml file settings. Return first found due to defined priority.
 	// We support both "ConEmu.xml" and its ‘dot version’ ".ConEmu.xml"
 	MArray<wchar_t*> pszSearchXml;
+	if (isMingwMode())
+	{
+		// Since Git-For-Windows 2.x
+		// * ConEmu.exe is supposed to be in /opt/bin/
+		// * ConEmu.xml in /share/conemu/
+		pszSearchXml.push_back(ExpandEnvStr(L"%ConEmuDir%\\..\\..\\share\\conemu\\ConEmu.xml"));
+		pszSearchXml.push_back(ExpandEnvStr(L"%ConEmuDir%\\..\\..\\share\\conemu\\.ConEmu.xml"));
+	}
 	pszSearchXml.push_back(ExpandEnvStr(L"%ConEmuDir%\\ConEmu.xml"));
 	pszSearchXml.push_back(ExpandEnvStr(L"%ConEmuDir%\\.ConEmu.xml"));
 	pszSearchXml.push_back(ExpandEnvStr(L"%ConEmuBaseDir%\\ConEmu.xml"));
