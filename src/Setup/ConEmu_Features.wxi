@@ -76,6 +76,7 @@
       <ComponentRef Id="FAQ_ConEmu.txt" />
       <ComponentRef Id="Settings_ConEmu.reg" />
       <ComponentRef Id="WhatsNew_ConEmu.txt" />
+      <ComponentRef Id="Scripts_Readme.txt" />
     </Feature>
     <!-- ConEmu.Addons directory -->
     <Feature Id="FConEmuAddons" AllowAdvertise="no" Title="Addons" Level="1" Display="collapse"

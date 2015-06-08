@@ -123,6 +123,9 @@
       <Component Id="WhatsNew_ConEmu.txt" Guid="$(var.Guid.WhatsNew_ConEmu.txt)" Win64="$(var.Win64)">
         <File Id="WhatsNew_ConEmu.txt" Source="..\..\Release\ConEmu\WhatsNew-ConEmu.txt"  KeyPath="yes" />
       </Component>
+      <Component Id="Scripts_Readme.txt" Guid="$(var.Guid.Scripts_Readme.txt)" Win64="$(var.Win64)">
+        <File Id="Scripts_Readme.txt" Source="..\..\Release\ConEmu\Scripts\readme.txt"  KeyPath="yes" />
+      </Component>
     </DirectoryRef>
 
     <!-- Addons directory -->
