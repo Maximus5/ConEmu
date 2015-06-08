@@ -561,6 +561,17 @@ CConEmuMain::CConEmuMain()
 		}
 	}
 
+	// Git-For-Windows package?
+	if (isMSysStartup() /*&& !isMingwMode()*/)
+	{
+		// ConEmu.exe and other binaries may be located in /opt/bin
+		lsBash = JoinPath(ms_ConEmuExeDir, L"..\\..\\git-bash.exe");
+		if (FileExists(lsBash))
+		{
+			m_InstallMode |= (cm_MinGW|cm_GitForWin);
+		}
+	}
+
 	if (isMingwMode() && isMSysStartup())
 	{
 		// This is example. Will be replaced with full path.

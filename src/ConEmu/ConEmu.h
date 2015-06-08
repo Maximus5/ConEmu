@@ -124,6 +124,7 @@ const ConEmuInstallMode
 	cm_Normal       = 0x0000,
 	cm_MinGW        = 0x0001, // ConEmu was installed as MinGW package
 	cm_PortableApps = 0x0002, // ConEmu was installed as PortableApps.com package
+	cm_GitForWin    = 0x0004, // ConEmu was installed as ‘Git-For-Windows’ package (implies cm_MinGW)
 	cm_MSysStartup  = 0x1000  // the bash from msys was found: "%ConEmuDir%\..\msys\1.0\bin\sh.exe" (MinGW mode)
 	;
 
