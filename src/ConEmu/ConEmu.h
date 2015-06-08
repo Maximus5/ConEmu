@@ -122,9 +122,9 @@ typedef LRESULT (*CallMainThreadFn)(LPARAM lParam);
 typedef DWORD ConEmuInstallMode;
 const ConEmuInstallMode
 	cm_Normal       = 0x0000,
-	cm_MinGW        = 0x0001, // ConEmu установлен как пакет MinGW
-	cm_PortableApps = 0x0002, // ConEmu установлен как пакет PortableApps.com
-	cm_MSysStartup  = 0x1000  // найден баш из msys: "%ConEmuDir%\..\msys\1.0\bin\sh.exe" (MinGW mode)
+	cm_MinGW        = 0x0001, // ConEmu was installed as MinGW package
+	cm_PortableApps = 0x0002, // ConEmu was installed as PortableApps.com package
+	cm_MSysStartup  = 0x1000  // the bash from msys was found: "%ConEmuDir%\..\msys\1.0\bin\sh.exe" (MinGW mode)
 	;
 
 

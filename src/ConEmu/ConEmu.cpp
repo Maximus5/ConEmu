@@ -1223,6 +1223,8 @@ LPWSTR CConEmuMain::ConEmuXml(bool* pbSpecialPath /*= NULL*/)
 	TODO("Хорошо бы еще дать возможность пользователю использовать два файла - системный (предустановки) и пользовательский (настройки)");
 
 	// Ищем файл портабельных настроек (возвращаем первый найденный, приоритет...)
+	// Search for portable xml file settings. Return first found due to defined priority.
+	// We support both "ConEmu.xml" and its ‘dot version’ ".ConEmu.xml"
 	MArray<wchar_t*> pszSearchXml;
 	pszSearchXml.push_back(ExpandEnvStr(L"%ConEmuDir%\\ConEmu.xml"));
 	pszSearchXml.push_back(ExpandEnvStr(L"%ConEmuDir%\\.ConEmu.xml"));
