@@ -19,6 +19,31 @@ http://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2015.8.6
+[*] Quake mode enabled by `-quake` command line switch was not shown in Fast Configuration dialog.
+[*] Suggest the task user specified by `ConEmu.exe -cmd {cmd}` in Fast Configuration dialog.
+[*] Don't set default task in Fast Configuration dialog, use exact `-cmd ...` command specified by user.
+[*] gh#151: Do (quake) animation after starting RealConsole creation.
+[*] Add `-here` switch description in the About dialog.
+[*] Ensure all default bash tasks names will be unique.
+[*] Always reset FARHOME env.var when creating default Far tasks.
+[*] Move checkboxes ‘Add ConEmu??? to PATH’ to separate page ‘Environment’.
+[*] gh#171, Issue 1655: Add option to skip ‘... brought ConEmu OnTop. Revert?’ confirmation.
+[*] gh#173: Attach of detached console ignored new ConEmu instance.
+[*] gh#173: Implement Unfasten of console tabs (ChildGui not yet). Tab menu item, hotkey and GuiMacro.
+[*] Implement ‘Settings\Environment’ page.
+    User may define here multiple "set varname=varvalue" commands
+    or set default console code page with "chcp utf-8", "chcp 866" and so on.
+    Environment %variables% in 'varvalue' are allowed and would be expanded before do set.
+    One line - one command (set or chcp).
+[*] Create folder "ConEmu\Scripts" by installer.
+    May be useful for storing user scripts (bat-files and so on).
+    It would/may be added to PATH in the Settings\Environment page.
+[*] Git-For-Windows: Search for xml in /share/conemu while ConEmu.exe is intended to be in /opt/bin.
+[*] Log and warn (debug assertion) long alternative buffer loading.
+[*] Many MINGW-build related fixes from @Alexpux.
+
+
 2015.5.13
 [*] Don't show [reg] or [xml] in Fast Configuration dialog because there is the storage location field.
 [*] gh#142: Win+Left/Right didn't snap window if it was maximized.
