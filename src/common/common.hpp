@@ -2249,6 +2249,7 @@ typedef void(WINAPI* ShutdownConsole_t)();
 extern ShutdownConsole_t OnShutdownConsole;
 
 bool IsEnvBlockVariableValid(LPCWSTR asName, LPCWSTR& rszEqnSign);
+bool IsEnvBlockVariableValid(LPCWSTR asName);
 
 struct RequestLocalServerParm;
 struct AnnotationHeader;

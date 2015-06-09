@@ -325,6 +325,14 @@ bool IsEnvBlockVariableValid(LPCWSTR asName, LPCWSTR& rszEqnSign)
 	if (!rszEqnSign || rszEqnSign == asName)
 		return false;
 
+	return IsEnvBlockVariableValid(asName);
+}
+
+bool IsEnvBlockVariableValid(LPCWSTR asName)
+{
+	if (!asName || !*asName)
+		return false;
+
 	// Skip all our internal vars, they must be set from prompt specially
 	// But let user a chance with different case. E.g. "set conemuhk=OFF"
 	// So, use case-sensitive comparison
