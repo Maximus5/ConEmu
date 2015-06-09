@@ -291,7 +291,7 @@ namespace ConEmuMacro
 		{SetDpi, {L"SetDpi"}, gmf_MainThread},
 		{SetOption, {L"SetOption"}, gmf_MainThread},
 		{Settings, {L"Settings"}, gmf_MainThread},
-		{Shell, {L"Shell", L"ShellExecute"}},
+		{Shell, {L"Shell", L"ShellExecute"}, gmf_MainThread},
 		{Sleep, {L"Sleep"}},
 		{Split, {L"Split", L"Splitter"}, gmf_MainThread},
 		{Status, {L"Status", L"StatusBar", L"StatusControl"}, gmf_MainThread},
@@ -3151,7 +3151,8 @@ LPWSTR ConEmuMacro::Shell(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 				if (pszDir)
 					pArgs->pszStartupDir = lstrdup(pszDir);
 
-				gpConEmu->PostCreateCon(pArgs);
+				// Don't use PostCreateCon here, otherwise Context function will fail
+				gpConEmu->CreateCon(pArgs, true);
 
 				pszRc = lstrdup(L"OK");
 				goto wrap;
