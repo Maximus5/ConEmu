@@ -139,8 +139,35 @@ void CProcessEnvCmd::AddCommands(LPCWSTR asCommands, LPCWSTR* ppszEnd/*= NULL*/)
 		// It may contains only "set" if was not quoted
 		if (lstrcmpi(lsSet, L"set") == 0)
 		{
+			_ASSERTE(*lsCmdLine != L' ');
+			bool bProcessed = false;
 			// Now we shell get in lsSet "abc=def" token
-			if ((NextArg(&lsCmdLine, lsSet) == 0) && (wcschr(lsSet, L'=') > lsSet.ms_Arg))
+			// Or to simplify usage, the rest of line is supported too,
+			// so user may type in our Settings\Environment:
+			//   set V1=From Settings
+			// instead of
+			//   set "V1=From Settings"
+			if (*lsCmdLine != L'"')
+			{
+				LPCWSTR pszAmp = wcschr(lsCmdLine, L'&');
+				if (!pszAmp) // No ampersand? Use var value as the rest of line
+					pszAmp = lsCmdLine + lstrlen(lsCmdLine);
+				// Trim trailing spaces (only \x20)
+				LPCWSTR pszValEnd = pszAmp;
+				while ((pszValEnd > lsCmdLine) && (*(pszValEnd-1) == L' '))
+					pszValEnd--;
+				// OK, return it
+				lsSet.Empty(); // to avoid debug asserts
+				lsSet.Set(lsCmdLine, pszValEnd - lsCmdLine);
+				lsCmdLine = SkipNonPrintable(pszAmp); // Leave possible '&' at pointer
+				bProcessed = true;
+			}
+			// OK, lets get token like "name=var value"
+			if (!bProcessed)
+			{
+				bProcessed = (NextArg(&lsCmdLine, lsSet) == 0);
+			}
+			if (bProcessed && (wcschr(lsSet, L'=') > lsSet.ms_Arg))
 			{
 				lsNameVal = lsSet.ms_Arg;
 			}
