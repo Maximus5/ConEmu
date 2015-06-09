@@ -2504,45 +2504,7 @@ bool TryConnect2Gui(HWND hGui, DWORD anGuiPID, CESERVER_REQ* pIn)
 	// Environment initialization
 	if (pStartStopRet->cchEnvCommands && pStartStopRet->szCommands[0])
 	{
-		wchar_t* pszCommand = pStartStopRet->szCommands;
-		UINT nSetCP = 0; // Postponed
-
-		// Do loop
-		while (*pszCommand)
-		{
-			if (lstrcmpi(pszCommand, L"set") == 0)
-			{
-				// Get variable "Name=Value"
-				wchar_t* pszName = pszCommand + lstrlen(pszCommand) + 1;
-				// Get next command
-				pszCommand = pszName + lstrlen(pszName) + 1;
-				// Process it
-				wchar_t* pszValue = (wchar_t*)wcschr(pszName, L'=');
-				if (pszValue)
-					*(pszValue++) = 0;
-				wchar_t* pszExpand = ExpandEnvStr(pszValue);
-				SetEnvironmentVariable(pszName, pszExpand ? pszExpand : pszValue);
-				SafeFree(pszExpand);
-			}
-			else if (lstrcmpi(pszCommand, L"chcp") == 0)
-			{
-				wchar_t* pszCP = pszCommand + lstrlen(pszCommand) + 1;
-				pszCommand = pszCP + lstrlen(pszCP) + 1;
-				nSetCP = GetCpFromString(pszCP);
-			}
-			else
-			{
-				wchar_t* pszUnsupported = pszCommand + lstrlen(pszCommand) + 1;
-				_ASSERTE(FALSE && "Command was not implemented yet");
-				pszCommand = pszUnsupported + lstrlen(pszUnsupported) + 1;
-			}
-		}
-
-		// Postponed commands?
-		if (nSetCP)
-		{
-			SetConsoleCpHelper(nSetCP);
-		}
+		ApplyEnvironmentCommands(pStartStopRet->szCommands);
 	}
 
 	// Also calls SetConEmuEnvVar
