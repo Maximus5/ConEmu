@@ -109,8 +109,7 @@ CEnvStrings::CEnvStrings(LPWSTR pszStrings /* = GetEnvironmentStringsW() */)
 			mn_Count++;
 		}
 		mcch_Length = pszSrc - pszStrings + 1;
-		// mn_Count must hold doubled variables count
-		_ASSERTE((mn_Count % 2) == 0);
+		// mn_Count holds count of 'lines' like "name=value\0"
 	}
 }
 

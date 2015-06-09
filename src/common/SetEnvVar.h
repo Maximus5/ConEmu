@@ -38,7 +38,7 @@ class CEnvStrings
 public:
 	LPWSTR ms_Strings;
 	size_t mcch_Length;
-	size_t mn_Count; // Holds doubled variables count
+	size_t mn_Count; // Holds count of 'lines' like "name=value\0"
 public:
 	CEnvStrings(LPWSTR pszStrings /* = GetEnvironmentStringsW() */);
 	~CEnvStrings();
