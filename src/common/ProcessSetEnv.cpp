@@ -287,26 +287,26 @@ void CProcessEnvCmd::AddCommands(LPCWSTR asCommands, LPCWSTR* ppszEnd/*= NULL*/)
 	}
 }
 
-// Comes from GetEnvironmentStrings()
-void CProcessEnvCmd::AddEnvironmentBlock(LPCWSTR asNameValueSeq)
+// Comes from CESERVER_REQ::NewCmd.GetEnvStrings()
+void CProcessEnvCmd::AddZeroedPairs(LPCWSTR asNameValueSeq)
 {
-	CEStr lsName;
+	if (!asNameValueSeq)
+		return;
 	LPCWSTR pszSrc = asNameValueSeq;
 	// ZZ-terminated pairs
 	while (*pszSrc)
 	{
-		// Pairs "Name=Value\0"
+		// Pairs "Name\0Value\0\0"
 		LPCWSTR pszName = pszSrc;
-		LPCWSTR pszNext = pszName + lstrlen(pszName) + 1;
+		_ASSERTE(wcschr(pszName, L'=') == NULL);
+		LPCWSTR pszValue = pszName + lstrlen(pszName) + 1;
+		LPCWSTR pszNext = pszValue + lstrlen(pszValue) + 1;
 		// Next pair
 		pszSrc = pszNext;
 
-		LPCWSTR pszEqnSign = NULL;
-		if (IsEnvBlockVariableValid(pszName, pszEqnSign))
+		if (IsEnvBlockVariableValid(pszName))
 		{
-			_ASSERTE(pszEqnSign!=NULL);
-			lsName.Set(pszName, pszEqnSign-pszName);
-			Add(L"set", lsName, pszEqnSign+1);
+			Add(L"set", pszName, pszValue);
 		}
 	}
 }

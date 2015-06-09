@@ -1333,7 +1333,7 @@ void CRealConsole::SetInitEnvCommands(CESERVER_REQ_SRVSTARTSTOPRET& pRet)
 
 	if (m_Args.cchEnvStrings && m_Args.pszEnvStrings)
 	{
-		env.AddEnvironmentBlock(m_Args.pszEnvStrings);
+		env.AddZeroedPairs(m_Args.pszEnvStrings);
 	}
 
 	if (gpSet->psEnvironmentSet)

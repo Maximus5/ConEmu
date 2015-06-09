@@ -58,7 +58,7 @@ public:
 public:
 	// Append helpers
 	void AddCommands(LPCWSTR asCommands, LPCWSTR* ppszEnd = NULL); // May comes from Task or ConEmu's /cmd switch
-	void AddEnvironmentBlock(LPCWSTR asNameValueSeq); // Comes from GetEnvironmentStrings()
+	void AddZeroedPairs(LPCWSTR asNameValueSeq); // Comes from GetEnvironmentStrings()
 	void AddLines(LPCWSTR asLines); // Comes from ConEmu's settings (Environment setting page)
 	Command* Add(LPCWSTR asCmd, LPCWSTR asName, LPCWSTR asValue);
 
