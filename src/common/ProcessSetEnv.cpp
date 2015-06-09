@@ -359,7 +359,7 @@ CProcessEnvCmd::Command* CProcessEnvCmd::Add(LPCWSTR asCmd, LPCWSTR asName, LPCW
 	return p;
 }
 
-bool CProcessEnvCmd::Apply(CmdArg* rpsTitle /*= NULL*/)
+bool CProcessEnvCmd::Apply()
 {
 	bool bEnvChanged = false;
 	Command* p;

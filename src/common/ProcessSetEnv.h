@@ -62,7 +62,7 @@ public:
 
 public:
 	// Apply routine, returns true if environment was set/changed
-	bool Apply(CmdArg* rpsTitle = NULL);
+	bool Apply();
 
 public:
 	// Allocate MSZZ block
