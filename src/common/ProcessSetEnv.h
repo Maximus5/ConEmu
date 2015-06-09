@@ -31,7 +31,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "CmdArg.h"
 #include "MArray.h"
 
-bool ProcessSetEnvCmd(LPCWSTR& asCmdLine, bool bDoSet, CmdArg* rpsTitle = NULL);
+class CProcessEnvCmd;
+
+bool ProcessSetEnvCmd(LPCWSTR& asCmdLine, bool bDoSet, CmdArg* rpsTitle = NULL, CProcessEnvCmd* pSetEnv = NULL);
 bool SetConsoleCpHelper(UINT nCP);
 
 class CProcessEnvCmd

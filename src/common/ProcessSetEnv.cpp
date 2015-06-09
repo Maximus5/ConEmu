@@ -80,18 +80,25 @@ bool SetConsoleCpHelper(UINT nCP)
 //  "set PATH=C:\Program Files;%PATH%"
 //  chcp [utf8|ansi|oem|<cp_no>]
 //  title "Console init title"
-bool ProcessSetEnvCmd(LPCWSTR& asCmdLine, bool bDoSet, CmdArg* rpsTitle /*= NULL*/)
+bool ProcessSetEnvCmd(LPCWSTR& asCmdLine, bool bDoSet, CmdArg* rpsTitle /*= NULL*/, CProcessEnvCmd* pSetEnv /*= NULL*/)
 {
 	LPCWSTR lsCmdLine = asCmdLine;
 
-	CProcessEnvCmd pc;
-	pc.AddCommands(asCmdLine, &lsCmdLine);
+	CProcessEnvCmd tmp;
+	if (!pSetEnv)
+		pSetEnv = &tmp;
 
-	bool bEnvChanged = (pc.mn_SetCount != 0);
+	pSetEnv->AddCommands(asCmdLine, &lsCmdLine);
+
+	bool bEnvChanged = (pSetEnv->mn_SetCount != 0);
 
 	// Ask to be changed?
-	if (rpsTitle && pc.mp_CmdTitle)
-		rpsTitle->Set(pc.mp_CmdTitle->pszName);
+	if (bDoSet)
+		pSetEnv->Apply();
+
+	// Return requested title?
+	if (rpsTitle && pSetEnv->mp_CmdTitle)
+		rpsTitle->Set(pSetEnv->mp_CmdTitle->pszName);
 
 	asCmdLine = lsCmdLine;
 
