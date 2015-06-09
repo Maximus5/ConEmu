@@ -192,6 +192,7 @@ DWORD   gdwMainThreadId = 0;
 wchar_t* gpszRunCmd = NULL;
 wchar_t* gpszRootExe = NULL; // may be set with '/ROOTEXE' switch if used with '/TRMPID'. full path to root exe
 wchar_t* gpszForcedTitle = NULL;
+CProcessEnvCmd* gpSetEnv = NULL;
 LPCWSTR gpszCheck4NeedCmd = NULL; // Для отладки
 wchar_t gszComSpec[MAX_PATH+1] = {0};
 bool    gbRunInBackgroundTab = false;
@@ -4360,6 +4361,14 @@ DWORD WaitForRootConsoleProcess(DWORD nTimeout)
 	return nFoundPID;
 }
 
+void ApplyProcessSetEnvCmd()
+{
+	if (gpSetEnv)
+	{
+		gpSetEnv->Apply();
+	}
+}
+
 // Use here 'wchar_t*' because we replace '=' with '\0' here
 void ApplyEnvironmentCommands(wchar_t* pszCommand)
 {
@@ -5566,7 +5575,9 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 			//  chcp [utf8|ansi|oem|<cp_no>]
 			//  title "Console init title"
 			CmdArg lsForcedTitle;
-			ProcessSetEnvCmd(lsCmdLine, true, &lsForcedTitle);
+			if (!gpSetEnv)
+				gpSetEnv = new CProcessEnvCmd();
+			ProcessSetEnvCmd(lsCmdLine, true, &lsForcedTitle, gpSetEnv);
 			if (!lsForcedTitle.IsEmpty())
 				gpszForcedTitle = lsForcedTitle.Detach();
 		}

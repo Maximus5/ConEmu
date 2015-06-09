@@ -337,6 +337,7 @@ CINFILTRATE_EXIT_CODES InfiltrateDll(HANDLE hProcess, LPCWSTR dll);
 int ParseCommandLine(LPCWSTR asCmdLine /*, wchar_t** psNewCmd, BOOL* pbRunInBackgroundTab*/); // Разбор параметров командной строки
 wchar_t* ParseConEmuSubst(LPCWSTR asCmd);
 void ApplyEnvironmentCommands(wchar_t* pszCommand);
+void ApplyProcessSetEnvCmd();
 void UpdateConsoleTitle();
 BOOL SetTitle(LPCWSTR lsTitle);
 void Help();

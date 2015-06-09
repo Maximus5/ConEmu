@@ -1252,6 +1252,9 @@ int ServerInit(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/)
 			goto wrap;
 	}
 
+	// Ensure that "set" commands in the command line will override ConEmu's default environment (settings page)
+	ApplyProcessSetEnvCmd();
+
 	// Если "корневой" процесс консоли запущен не нами (аттач или дебаг)
 	// то нужно к нему "подцепиться" (открыть HANDLE процесса)
 	if (gbNoCreateProcess && (gbAttachMode || (gpSrv->DbgInfo.bDebuggerActive && (gpSrv->hRootProcess == NULL))))
