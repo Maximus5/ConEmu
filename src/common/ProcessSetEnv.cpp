@@ -132,7 +132,7 @@ CProcessEnvCmd::~CProcessEnvCmd()
 void CProcessEnvCmd::AddCommands(LPCWSTR asCommands, LPCWSTR* ppszEnd/*= NULL*/)
 {
 	LPCWSTR lsCmdLine = asCommands;
-	CmdArg lsSet, lsAmp;
+	CmdArg lsSet, lsAmp, lsCmd;
 
 	if (ppszEnd)
 		*ppszEnd = asCommands;
@@ -146,14 +146,17 @@ void CProcessEnvCmd::AddCommands(LPCWSTR asCommands, LPCWSTR* ppszEnd/*= NULL*/)
 		// It may contains only "set" if was not quoted
 		if (lstrcmpi(lsSet, L"set") == 0)
 		{
+			lsCmd.Set(lsSet);
+
 			_ASSERTE(*lsCmdLine != L' ');
-			bool bProcessed = false;
+
 			// Now we shell get in lsSet "abc=def" token
 			// Or to simplify usage, the rest of line is supported too,
 			// so user may type in our Settings\Environment:
 			//   set V1=From Settings
 			// instead of
 			//   set "V1=From Settings"
+			bool bProcessed = false;
 			if (*lsCmdLine != L'"')
 			{
 				LPCWSTR pszAmp = wcschr(lsCmdLine, L'&');
@@ -182,6 +185,7 @@ void CProcessEnvCmd::AddCommands(LPCWSTR asCommands, LPCWSTR* ppszEnd/*= NULL*/)
 		// Or full "set PATH=C:\Program Files;%PATH%" command (without quotes ATM)
 		else if (lstrcmpni(lsSet, L"set ", 4) == 0)
 		{
+			lsCmd = L"set";
 			LPCWSTR psz = SkipNonPrintable(lsSet.ms_Arg+4);
 			if (wcschr(psz, L'=') > psz)
 			{
@@ -191,6 +195,7 @@ void CProcessEnvCmd::AddCommands(LPCWSTR asCommands, LPCWSTR* ppszEnd/*= NULL*/)
 		// Process "chcp <cp>" too
 		else if (lstrcmpi(lsSet, L"chcp") == 0)
 		{
+			lsCmd = L"chcp";
 			if (NextArg(&lsCmdLine, lsSet) == 0)
 			{
 				UINT nCP = GetCpFromString(lsSet);
@@ -213,6 +218,7 @@ void CProcessEnvCmd::AddCommands(LPCWSTR asCommands, LPCWSTR* ppszEnd/*= NULL*/)
 		// Change title without need of cmd.exe
 		else if (lstrcmpi(lsSet, L"title") == 0)
 		{
+			lsCmd = L"title";
 			if (NextArg(&lsCmdLine, lsSet) == 0)
 			{
 				bTokenOk = true;
@@ -227,6 +233,10 @@ void CProcessEnvCmd::AddCommands(LPCWSTR asCommands, LPCWSTR* ppszEnd/*= NULL*/)
 					Add(L"title", lsSet, NULL);
 				}
 			}
+		}
+		else
+		{
+			lsCmd.Empty();
 		}
 
 		// Well, known command was detected. What is next?
@@ -269,7 +279,7 @@ void CProcessEnvCmd::AddCommands(LPCWSTR asCommands, LPCWSTR* ppszEnd/*= NULL*/)
 
 			*(pszEq++) = 0;
 
-			Add(L"set", lsNameVal, pszEq ? pszEq : L"");
+			Add(lsCmd, lsNameVal, pszEq ? pszEq : L"");
 		}
 
 		// Remember processed position
@@ -424,7 +434,7 @@ wchar_t* CProcessEnvCmd::Allocate(size_t* pchSize)
 
 				if (lstrcmp(p->szCmd, L"set") == 0)
 				{
-					cpyadv(pszDst, L"set");
+					cpyadv(pszDst, p->szCmd);
 					pszDst++; // leave '\0'
 					cpyadv(pszDst, p->pszName);
 					*(pszDst++) = L'='; // replace '\0' with '='
