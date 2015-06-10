@@ -1936,6 +1936,11 @@ int CShellProc::PrepareExecuteParms(
 				gnAttachPortableGuiCui = (GuiCui)IMAGE_SUBSYSTEM_WINDOWS_CUI;
 				mb_NeedInjects = TRUE;
 				bForceNewConsole = false;
+				if (anCreateFlags)
+				{
+					_ASSERTE(((*anCreateFlags) & (CREATE_NO_WINDOW|DETACHED_PROCESS)) == 0);
+					*anCreateFlags &= ~CREATE_NEW_CONSOLE;
+				}
 			}
 		}
 		else
