@@ -3258,6 +3258,7 @@ LPWSTR ConEmuMacro::Sleep(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 			}
 		}
 		if (apRCon) apRCon->SetConStatus(NULL);
+		pszRc = lstrdup(L"OK");
 	}
 
 	return pszRc ? pszRc : lstrdup(L"InvalidArg");
