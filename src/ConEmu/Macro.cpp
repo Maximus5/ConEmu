@@ -1157,7 +1157,7 @@ LPWSTR ConEmuMacro::GetNextInt(LPWSTR& rsArguments, GuiMacroArg& rnValue)
 	if (pszEnd && *pszEnd)
 	{
 		// Check, if next symbol is correct delimiter
-		if (wcschr(L" \t\r\n),", *pszEnd) == NULL)
+		if (wcschr(L" \t\r\n),;", *pszEnd) == NULL)
 		{
 			// We'll use it as string
 			return NULL;
