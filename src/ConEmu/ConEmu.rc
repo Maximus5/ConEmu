@@ -877,13 +877,14 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
+    GROUPBOX        "Add to %PATH% environment variable",IDC_STATIC,4,1,319,28
+    CONTROL         "Add %ConEmuDir% to %PATH%",cbAddConEmu2Path,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,14,150,8
     CONTROL         "Add %ConEmuBaseDir% to %PATH%",cbAddConEmuBase2Path,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,165,14,152,8
-    CONTROL         "Add %ConEmuDir% to %PATH%",cbAddConEmu2Path,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,14,150,8
-    GROUPBOX        "Set up environment variables",gbSetAlias,4,35,319,195
-    LTEXT           "Here you may set up your environment variables, default code page, and so on...\r\n---------------------\r\nset HOME=C:\\DropBox\\Home\r\nset PATH=%ConEmuBaseDir%\\Scripts;%PATH%\r\nchcp utf-8",stSetCommands,10,47,307,43
-    EDITTEXT        tSetCommands,9,93,309,132,ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL | ES_NOHIDESEL | ES_WANTRETURN | WS_VSCROLL | WS_HSCROLL
-    GROUPBOX        "Add to %PATH% environment variable",IDC_STATIC,4,1,319,28
+    GROUPBOX        "Set up environment variables, cmd.exe aliases, codepage",gbSetAlias,4,35,319,195
+    LTEXT           "Here you may set up your environment variables, default code page, and so on...",stSetCommands,10,47,307,10,SS_NOPREFIX
+    EDITTEXT        tSetCommands,9,104,309,121,ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL | ES_NOHIDESEL | ES_WANTRETURN | WS_VSCROLL | WS_HSCROLL
+    LTEXT           "set HOME=C:\\DB\\Home\r\nset ""PATH=%ConEmuBaseDir%\\Scripts;%PATH%""\r\nchcp utf-8\r\nalias st=start $* -cur_console:n\r\nalias sudo=ConEmuC -c $* -new_console:a",stSetCommands2,22,59,192,39,SS_NOPREFIX
 END
 
 IDD_SPG_MARKCOPY DIALOGEX 0, 0, 328, 235

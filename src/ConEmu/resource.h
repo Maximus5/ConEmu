@@ -1170,6 +1170,7 @@
 #define stSetCommands                   2852
 #define vkCdExplorerPath                2853
 #define cbShowWasSetOnTopMsg            2854
+#define stSetCommands2                  2855
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
@@ -1178,7 +1179,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        227
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2855
+#define _APS_NEXT_CONTROL_VALUE         2856
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif
