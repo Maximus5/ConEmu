@@ -276,8 +276,10 @@ BEGIN
     CONTROL         "Confirm Far Manager Editor/Viewer tab closing",cbCloseEditViewConfirm,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,128,307,8
     GROUPBOX        "Miscellaneous",gbConfirmMisc,4,150,319,39
-    CONTROL         "Show ‘... was hidden’ warning in TSA",cbShowWasHiddenMsg,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,163,307,8
-    CONTROL         "Show ‘... brought ConEmu OnTop. Revert?’ confirmation box",cbShowWasSetOnTopMsg,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,176,307,8
+    CONTROL         "Show ‘... was hidden’ warning in TSA",cbShowWasHiddenMsg,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,163,307,8
+    CONTROL         "Show ‘... brought ConEmu OnTop. Revert?’ confirmation box",cbShowWasSetOnTopMsg,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,176,307,8
 END
 
 IDD_SPG_HISTORY DIALOGEX 0, 0, 328, 235
