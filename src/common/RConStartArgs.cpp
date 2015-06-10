@@ -782,7 +782,7 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 
 	int nChanges = 0;
 
-	// 140219 - Остановить обработку, если встретим любой из: ConEmu[.exe], ConEmu64[.exe], ConEmuC[.exe], ConEmuC64[.exe]
+	// 140219 - Stop processing if found any of these: ConEmu[.exe], ConEmu64[.exe], ConEmuC[.exe], ConEmuC64[.exe]
 	LPCWSTR pszStopAt = NULL;
 	{
 		LPCWSTR pszTemp = pszSpecialCmd;
