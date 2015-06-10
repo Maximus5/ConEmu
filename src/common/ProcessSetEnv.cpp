@@ -143,8 +143,8 @@ void CProcessEnvCmd::AddCommands(LPCWSTR asCommands, LPCWSTR* ppszEnd/*= NULL*/)
 		bool bTokenOk = false;
 		wchar_t* lsNameVal = NULL;
 
-		// It may contains only "set" if was not quoted
-		if (lstrcmpi(lsSet, L"set") == 0)
+		// It may contains only "set" or "alias" if was not quoted
+		if ((lstrcmpi(lsSet, L"set") == 0) || (lstrcmpi(lsSet, L"alias") == 0))
 		{
 			lsCmd.Set(lsSet);
 
@@ -187,6 +187,16 @@ void CProcessEnvCmd::AddCommands(LPCWSTR asCommands, LPCWSTR* ppszEnd/*= NULL*/)
 		{
 			lsCmd = L"set";
 			LPCWSTR psz = SkipNonPrintable(lsSet.ms_Arg+4);
+			if (wcschr(psz, L'=') > psz)
+			{
+				lsNameVal = (wchar_t*)psz;
+			}
+		}
+		// Support "alias token=value" too
+		else if (lstrcmpni(lsSet, L"alias ", 6) == 0)
+		{
+			lsCmd = L"alias";
+			LPCWSTR psz = SkipNonPrintable(lsSet.ms_Arg+6);
 			if (wcschr(psz, L'=') > psz)
 			{
 				lsNameVal = (wchar_t*)psz;
@@ -354,6 +364,11 @@ CProcessEnvCmd::Command* CProcessEnvCmd::Add(LPCWSTR asCmd, LPCWSTR asName, LPCW
 		mn_SetCount++;
 		mch_Total += (7 + lstrlen(asName) + (asValue ? lstrlen(asValue) : 0));
 	}
+	else if (lstrcmp(asCmd, L"alias") == 0)
+	{
+		mn_SetCount++;
+		mch_Total += (9 + lstrlen(asName) + (asValue ? lstrlen(asValue) : 0));
+	}
 	else if (lstrcmp(asCmd, L"chcp") == 0)
 	{
 		_ASSERTE(mp_CmdChCp==NULL);
@@ -394,6 +409,12 @@ bool CProcessEnvCmd::Apply()
 			SetEnvironmentVariable(p->pszName, (pszSet && *pszSet) ? pszSet : NULL);
 			SafeFree(pszExpanded);
 		}
+		else if (lstrcmpi(p->szCmd, L"alias") == 0)
+		{
+			// NULL will remove alias
+			// We set aliases for "cmd.exe" executable, as Far Manager supports too
+			AddConsoleAlias(p->pszName, (p->pszValue && *p->pszValue) ? p->pszValue : NULL, L"cmd.exe");
+		}
 		else if (lstrcmp(p->szCmd, L"chcp") == 0)
 		{
 			UINT nCP = GetCpFromString(p->pszName);
@@ -432,7 +453,7 @@ wchar_t* CProcessEnvCmd::Allocate(size_t* pchSize)
 			{
 				Command* p = m_Commands[i];
 
-				if (lstrcmp(p->szCmd, L"set") == 0)
+				if ((lstrcmp(p->szCmd, L"set") == 0) || (lstrcmp(p->szCmd, L"alias") == 0))
 				{
 					cpyadv(pszDst, p->szCmd);
 					pszDst++; // leave '\0'

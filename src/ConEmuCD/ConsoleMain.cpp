@@ -4391,6 +4391,20 @@ void ApplyEnvironmentCommands(wchar_t* pszCommand)
 			SetEnvironmentVariable(pszName, pszExpand ? pszExpand : pszValue);
 			SafeFree(pszExpand);
 		}
+		else if (lstrcmpi(pszCommand, L"alias") == 0)
+		{
+			// Get variable "Name=Value"
+			wchar_t* pszName = pszCommand + lstrlen(pszCommand) + 1;
+			// Get next command
+			pszCommand = pszName + lstrlen(pszName) + 1;
+			// Process it
+			wchar_t* pszValue = (wchar_t*)wcschr(pszName, L'=');
+			if (pszValue)
+				*(pszValue++) = 0;
+			// NULL will remove alias
+			// We set aliases for "cmd.exe" executable, as Far Manager supports too
+			AddConsoleAlias(pszName, *pszValue ? pszValue : NULL, L"cmd.exe");
+		}
 		else if (lstrcmpi(pszCommand, L"chcp") == 0)
 		{
 			wchar_t* pszCP = pszCommand + lstrlen(pszCommand) + 1;
