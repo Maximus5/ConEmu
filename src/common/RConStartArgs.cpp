@@ -793,6 +793,7 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 			L"ConEmu", L"ConEmu.exe", L"ConEmu64", L"ConEmu64.exe",
 			L"ConEmuC", L"ConEmuC.exe", L"ConEmuC64", L"ConEmuC64.exe",
 			L"ConEmuPortable.exe", L"ConEmuPortable",
+			L"DosKey", L"DosKey.exe",
 			NULL};
 		while (!pszStopAt && (0 == NextArg(&pszTemp, szExe)))
 		{
