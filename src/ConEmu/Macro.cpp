@@ -3530,7 +3530,8 @@ LPWSTR ConEmuMacro::Task(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 		if (p->GetStrArg(1, pszDir) && pszDir && *pszDir)
 			pArgs->pszStartupDir = lstrdup(pszDir);
 
-		gpConEmu->PostCreateCon(pArgs);
+		// Don't use PostCreateCon here, otherwise Context function will fail
+		gpConEmu->CreateCon(pArgs, true);
 
 		pszResult = L"OK";
 	}
