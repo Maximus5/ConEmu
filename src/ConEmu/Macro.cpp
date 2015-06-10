@@ -597,7 +597,12 @@ GuiMacro* ConEmuMacro::GetNextMacro(LPWSTR& asString, bool abConvert, wchar_t** 
 	if (*asString == L'"')
 	{
 		if (rsErrMsg)
-			*rsErrMsg = lstrdup(L"Invalid Macro (remove quotas)");
+		{
+			*rsErrMsg = lstrmerge(
+				L"Invalid Macro, remove surrounding quotes:\r\n",
+				asString,
+				NULL);
+		}
 		return NULL;
 	}
 
@@ -666,12 +671,22 @@ GuiMacro* ConEmuMacro::GetNextMacro(LPWSTR& asString, bool abConvert, wchar_t** 
 		{
 			_ASSERTE(chTerm || (asString && (*asString == 0)));
 			if (rsErrMsg)
-				*rsErrMsg = lstrdup(L"Can't get function name");
+			{
+				*rsErrMsg = lstrmerge(
+					L"Invalid Macro, can't get function name:\r\n",
+					asString,
+					NULL);
+			}
 			return NULL;
 		}
 
 		if (rsErrMsg)
-			*rsErrMsg = lstrdup(L"Too long function name");
+		{
+			*rsErrMsg = lstrmerge(
+				L"Invalid Macro, too long function name:\r\n",
+				asString,
+				NULL);
+		}
 		return NULL;
 	}
 
