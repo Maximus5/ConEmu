@@ -1262,7 +1262,7 @@ BEGIN
     LTEXT           "You can change following on 'Appearance' page of Settings dialog later",stSingleInstance,11,98,302,8
     CONTROL         "Single instance mode (force using existing window)",cbSingleInstance,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,109,295,8
-    CONTROL         "Quake-style slide down from the to of the screen",cbQuakeFast,
+    CONTROL         "Quake-style slide down from the top of the screen",cbQuakeFast,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,122,207,10
     EDITTEXT        tQuakeKeyFast,222,121,72,12,ES_AUTOHSCROLL | ES_READONLY
     PUSHBUTTON      "...",cbQuakeKeyFast,298,121,16,13
