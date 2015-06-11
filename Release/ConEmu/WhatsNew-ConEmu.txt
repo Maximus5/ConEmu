@@ -19,6 +19,44 @@ http://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2015.8.10
+[*] Simplify `set` usage in Settings\Environment.
+[*] gh#179: Fix broken environment inheritance (ca9e31a regression).
+[*] Ensure that `set` commands in the task/command line will override ConEmu's default environment (settings page).
+[*] GuiMacro: Make Task and Shell functions synchronous to be able to use Context function after it.
+[*] GuiMacro: Return more information about wrong macro.
+[*] GuiMacro: Easify calling functions with int arguments. "Sleep 500;" was not working.
+[*] GuiMacro: Sleep function have not returned "OK" on success.
+[*] Allow using `-new_console` and `-cur_console` switches to set DosKey aliases.
+[*] Support aliases set up on the ConEmu Settings/Environment page.
+
+    Note! These console aliases are processed by `cmd.exe` and `far.exe` only.
+    If you need to set up aliases for other shells (PowerShell, bash, etc.)
+    please refer to their manuals.
+
+    Defining aliases are similar to `doskey.exe`. Actually, you may define:
+
+      alias alias=doskey $*
+
+    After that you can use `alias` in the `cmd.exe` prompt started in ConEmu:
+
+      alias sudo=ConEmuC -c $* -new_console:an
+
+    That is just an example. It's more handy to add `sudo` definition into
+    ConEmu Settings/Environment page.
+    And when `sudo` is defined you may run from `cmd.exe` prompt, for example:
+
+      sudo diskpart
+
+[*] gh#176: Avoid creating two tabs while starting "git-bash.exe --command=usr/bin/bash.exe -l -i".
+
+    However, preferred way to start Git-For-Windows in ConEmu tab is:
+
+      git-cmd.exe --command=usr/bin/bash.exe -l -i
+
+[*] Update ConEmuPortable.ini with Environment information.
+
+
 2015.8.6
 [*] Quake mode enabled by `-quake` command line switch was not shown in Fast Configuration dialog.
 [*] Suggest the task user specified by `ConEmu.exe -cmd {cmd}` in Fast Configuration dialog.
