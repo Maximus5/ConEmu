@@ -77,7 +77,7 @@ void CConEmuStart::SetDefaultCmd(LPCWSTR asCmd)
 			(wcschr(szSearch, L' ') != NULL)
 				? L"\"%s\" --login -i" /* -new_console:n" */
 				: L"%s --login -i" /* -new_console:n" */,
-			szSearch);
+			(LPCWSTR)szSearch);
 	}
 	else
 	{
