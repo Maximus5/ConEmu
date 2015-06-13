@@ -48,6 +48,10 @@ public:
 	{
 		mp_Items = NULL; mn_MaxCount = 0;
 	};
+	~MMap()
+	{
+		Release();
+	};
 
 public:
 	bool Init(size_t nMaxCount = 256, bool bOnCreate = false)
