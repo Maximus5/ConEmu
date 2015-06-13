@@ -647,6 +647,7 @@ CSettings::~CSettings()
 	SafeFree(m_Pages);
 
 	SafeDelete(mp_HelpPopup);
+	SafeDelete(mp_Dialog);
 }
 
 LPCWSTR CSettings::GetConfigPath()
