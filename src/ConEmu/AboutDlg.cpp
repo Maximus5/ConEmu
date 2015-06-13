@@ -718,6 +718,7 @@ void ConEmuAbout::LoadResources()
 		{
 		case 0:
 			m_Btns[i].ResId = L"DONATE";
+			SafeDelete(m_Btns[i].pImg);
 			m_Btns[i].pImg = new CToolImg();
 			if (m_Btns[i].pImg && !m_Btns[i].pImg->CreateDonateButton())
 				SafeDelete(m_Btns[i].pImg);
@@ -726,6 +727,7 @@ void ConEmuAbout::LoadResources()
 			break;
 		case 1:
 			m_Btns[i].ResId = L"FLATTR";
+			SafeDelete(m_Btns[i].pImg);
 			m_Btns[i].pImg = new CToolImg();
 			if (m_Btns[i].pImg && !m_Btns[i].pImg->CreateFlattrButton())
 				SafeDelete(m_Btns[i].pImg);
