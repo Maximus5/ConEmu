@@ -11955,6 +11955,7 @@ bool CSettings::CheckConsoleFontFast(LPCWSTR asCheckName /*= NULL*/)
 
 			free(lpOutl);
 		}
+		DeleteObject(hf);
 	}
 
 	// Если успешно - проверить зарегистрированность в реестре
