@@ -648,6 +648,7 @@ CSettings::~CSettings()
 
 	SafeDelete(mp_HelpPopup);
 	SafeDelete(mp_Dialog);
+	SafeDelete(mp_DpiAware);
 }
 
 LPCWSTR CSettings::GetConfigPath()
@@ -12769,7 +12770,10 @@ void CSettings::ClearPages()
 	for (ConEmuSetupPages *p = m_Pages; p->PageID; p++)
 	{
 		if (p->pDpiAware)
+		{
 			p->pDpiAware->Detach();
+			SafeDelete(p->pDpiAware);
+		}
 		SafeDelete(p->pDialog);
 		p->hPage = NULL;
 		p->DpiChanged = false;
