@@ -319,6 +319,11 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 			if (mp_DpiAware)
 				mp_DpiAware->Detach();
 			EndDialog(hDlg, IDOK);
+			
+			for (size_t i = 0; i < countof(m_Btns); i++)
+			{
+				SafeDelete(m_Btns[i].pImg);
+			}
 			//else
 			//	DestroyWindow(hDlg);
 			break;
