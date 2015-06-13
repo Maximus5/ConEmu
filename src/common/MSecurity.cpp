@@ -149,6 +149,7 @@ public:
 		#endif
 		memset(&m_LocalSecurity, 0, sizeof(m_LocalSecurity));
 		LocalFree(mp_LocalDesc); mp_LocalDesc = NULL;
+		LocalFree(mp_ACL); mp_ACL = NULL;
 	};
 public:
 	#ifndef CONEMU_MINIMAL
