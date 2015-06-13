@@ -91,6 +91,7 @@ CTabPanelWin::~CTabPanelWin()
 {
 	SafeFree(gp_TabPanelWinMap);
 	SafeDelete(mp_ToolImg);
+	SafeDelete(mp_Find);
 }
 
 
