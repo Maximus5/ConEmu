@@ -647,6 +647,8 @@ CSettings::~CSettings()
 	SafeFree(m_Pages);
 
 	SafeDelete(mp_HelpPopup);
+	SafeDelete(gpSetCls->mp_Dialog);
+	SafeDelete(mp_DpiAware);
 }
 
 LPCWSTR CSettings::GetConfigPath()
@@ -1081,6 +1083,7 @@ LONG CSettings::EvalFontHeight(LPCWSTR lfFaceName, LONG lfHeight, BYTE nFontChar
 				SelectObject(hdc, hOld);
 				DeleteObject(f);
 			}
+			DeleteObject(hdc);
 		}
 
 		if (!CellHeight)
@@ -11953,6 +11956,7 @@ bool CSettings::CheckConsoleFontFast(LPCWSTR asCheckName /*= NULL*/)
 
 			free(lpOutl);
 		}
+		DeleteObject(hf);
 	}
 
 	// Если успешно - проверить зарегистрированность в реестре
@@ -12766,7 +12770,10 @@ void CSettings::ClearPages()
 	for (ConEmuSetupPages *p = m_Pages; p->PageID; p++)
 	{
 		if (p->pDpiAware)
+		{
 			p->pDpiAware->Detach();
+			SafeDelete(p->pDpiAware);
+		}
 		SafeDelete(p->pDialog);
 		p->hPage = NULL;
 		p->DpiChanged = false;

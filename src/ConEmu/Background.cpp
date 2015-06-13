@@ -1234,6 +1234,7 @@ bool CBackgroundInfo::LoadBackgroundFile(bool abShowErrors)
 				MBoxA(szError);
 			}
 
+			SafeFree(exPath);
 			return false;
 		}
 

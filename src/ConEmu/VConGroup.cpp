@@ -5195,6 +5195,8 @@ void CVConGroup::PaintGaps(HDC hDC)
 		HBRUSH hBrush = CreateSolidBrush(gpSet->GetColors(-1, lbFade)[nColorIdx]);
 
 		FillRect(hDC, &rcClient, hBrush);
+		if (hBrush)
+			DeleteObject(hBrush);
 	}
 	else
 	{
