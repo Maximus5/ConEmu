@@ -174,6 +174,14 @@ void* __cdecl xf_realloc
 {
 	_ASSERTE(ghHeap);
 	_ASSERTE(_Size>0);
+	if (!_Memory)
+	{
+		return xf_malloc(_Size
+			#ifdef TRACK_MEMORY_ALLOCATIONS
+				, lpszFileName, nLine
+			#endif
+			);
+	}
 #ifdef TRACK_MEMORY_ALLOCATIONS
 	xf_mem_block* pOld = ((xf_mem_block*)_Memory)-1;
 
