@@ -1686,11 +1686,11 @@ void CreateDefaultTasks(SettingsLoadedFlags slfFlags)
 
 	// From Git-for-Windows (aka msysGit v2)
 	App.Add(L"Bash::Git bash",
-		L" --login -i -new_console:C:\"" FOUND_APP_PATH_STR L"\\..\\..\\mingw32\\share\\git\\git-for-windows.ico\"", NULL, NULL,
-		L"[SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Git_is1:InstallLocation]\\usr\\bin\\sh.exe",
-		L"%ProgramFiles%\\Git\\usr\\bin\\sh.exe", L"%ProgramW6432%\\Git\\usr\\bin\\sh.exe",
+		L" --no-cd --command=usr/bin/bash.exe -l -i", NULL, NULL,
+		L"[SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Git_is1:InstallLocation]\\git-cmd.exe",
+		L"%ProgramFiles%\\Git\\git-cmd.exe", L"%ProgramW6432%\\Git\\git-cmd.exe",
 		#ifdef _WIN64
-		L"%ProgramFiles(x86)%\\Git\\usr\\bin\\sh.exe",
+		L"%ProgramFiles(x86)%\\Git\\git-cmd.exe",
 		#endif
 		NULL);
 	// From msysGit
