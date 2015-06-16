@@ -48,6 +48,15 @@ public:
 	{
 		mp_Items = NULL; mn_MaxCount = 0;
 	};
+	~MMap()
+	{
+		// Don't use ‘Release()’ if heap is already deinitialized
+		// That may happen because MMap is used for global static variables
+		if (ghHeap)
+		{
+			Release();
+		}
+	};
 
 public:
 	bool Init(size_t nMaxCount = 256, bool bOnCreate = false)
