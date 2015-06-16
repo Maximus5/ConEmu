@@ -1693,6 +1693,10 @@ void CreateDefaultTasks(SettingsLoadedFlags slfFlags)
 		L"%ProgramFiles(x86)%\\Git\\git-cmd.exe",
 		#endif
 		NULL);
+	App.Add(L"Bash::GitSDK bash",
+		L" --no-cd --command=usr/bin/bash.exe -l -i", NULL, NULL,
+		L"\\GitSDK\\git-cmd.exe",
+		NULL);
 	// From msysGit
 	App.Add(L"Bash::Git bash",
 		L" --login -i -new_console:C:\"" FOUND_APP_PATH_STR L"\\..\\etc\\git.ico\"", NULL, NULL,
