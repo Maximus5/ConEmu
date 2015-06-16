@@ -129,7 +129,8 @@ CProcessEnvCmd::~CProcessEnvCmd()
 }
 
 // May comes from Task or ConEmu's /cmd switch
-void CProcessEnvCmd::AddCommands(LPCWSTR asCommands, LPCWSTR* ppszEnd/*= NULL*/)
+// or from Setting\Environment page where one line is a single command (bAlone == true)
+void CProcessEnvCmd::AddCommands(LPCWSTR asCommands, LPCWSTR* ppszEnd/*= NULL*/, bool bAlone /*= false*/)
 {
 	LPCWSTR lsCmdLine = asCommands;
 	CmdArg lsSet, lsAmp, lsCmd;
@@ -157,15 +158,26 @@ void CProcessEnvCmd::AddCommands(LPCWSTR asCommands, LPCWSTR* ppszEnd/*= NULL*/)
 			// instead of
 			//   set "V1=From Settings"
 			bool bProcessed = false;
-			if (*lsCmdLine != L'"')
+			if ((*lsCmdLine != L'"') || bAlone)
 			{
-				LPCWSTR pszAmp = wcschr(lsCmdLine, L'&');
-				if (!pszAmp) // No ampersand? Use var value as the rest of line
+				LPCWSTR pszAmp = bAlone ? NULL : wcschr(lsCmdLine, L'&');
+				if (!pszAmp) // No ampersand or bAlone? Use var value as the rest of line
 					pszAmp = lsCmdLine + lstrlen(lsCmdLine);
-				// Trim trailing spaces (only \x20)
+				// Set tail pointer
 				LPCWSTR pszValEnd = pszAmp;
+				// Trim trailing spaces (only \x20)
 				while ((pszValEnd > lsCmdLine) && (*(pszValEnd-1) == L' '))
 					pszValEnd--;
+				// Trim possible leading/trailing quotes
+				if (bAlone && (*lsCmdLine == L'"'))
+				{
+					lsCmdLine++;
+					if (((pszValEnd-1) > lsCmdLine) && (*(pszValEnd-1) == L'"'))
+					{
+						_ASSERTE(*pszValEnd == 0);
+						pszValEnd--;
+					}
+				}
 				// OK, return it
 				lsSet.Empty(); // to avoid debug asserts
 				lsSet.Set(lsCmdLine, pszValEnd - lsCmdLine);
@@ -339,7 +351,8 @@ void CProcessEnvCmd::AddLines(LPCWSTR asLines)
 
 	while (0 == NextLine(&pszLines, lsLine))
 	{
-		AddCommands(lsLine);
+		// Process this line
+		AddCommands(pszLine, NULL, true);
 	}
 }
 
