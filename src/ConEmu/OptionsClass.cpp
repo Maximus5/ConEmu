@@ -1083,7 +1083,7 @@ LONG CSettings::EvalFontHeight(LPCWSTR lfFaceName, LONG lfHeight, BYTE nFontChar
 				SelectObject(hdc, hOld);
 				DeleteObject(f);
 			}
-			DeleteObject(hdc);
+			DeleteDC(hdc);
 		}
 
 		if (!CellHeight)
