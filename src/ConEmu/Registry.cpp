@@ -1329,12 +1329,17 @@ bool SettingsXML::Load(const wchar_t *regName, wchar_t **value)
 			if (SUCCEEDED(hr) && bsData)
 			{
 				nLen = _tcslen(bsData);
-				if (*value) {free(*value); *value = NULL;}
-				*value = (wchar_t*)malloc((nLen+2)*sizeof(wchar_t));
-				lstrcpy(*value, bsData);
-				(*value)[nLen] = 0; // уже должен быть после lstrcpy
-				(*value)[nLen+1] = 0; // ASCIIZZ
-				lbRc = true;
+				if (!*value || (_tcslen(*value) <= nLen))
+				{
+					*value = (wchar_t*)realloc(*value, (nLen+2)*sizeof(wchar_t));
+				}
+				if (*value)
+				{
+					lstrcpy(*value, bsData);
+					(*value)[nLen] = 0; // уже должен быть после lstrcpy
+					(*value)[nLen+1] = 0; // ASCIIZZ
+					lbRc = true;
+				}
 			}
 		}
 
