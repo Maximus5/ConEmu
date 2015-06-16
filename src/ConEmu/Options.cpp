@@ -5163,17 +5163,17 @@ wchar_t* Settings::MSZ2LineDelimited(const wchar_t* apszLines, LPCWSTR asDelim /
 		return lstrdup(L"");
 	}
 	// Evaluate required len
-	INT_PTR nTotalLen = 0, nLen;
+	INT_PTR nTotalLen = bFinalToo ? 2 : 1, nLen;
 	INT_PTR nDelimLen = asDelim ? _tcslen(asDelim) : 0;
 	const wchar_t* psz = apszLines;
 	while (*psz)
 	{
-		nLen = _tcslen(psz)+nDelimLen;
-		psz += nLen;
-		nTotalLen += nLen;
+		nLen = _tcslen(psz);
+		psz += nLen + 1;
+		nTotalLen += nLen + nDelimLen;
 	}
 	// Buffer
-	wchar_t* pszRet = (wchar_t*)malloc((nTotalLen+1)*sizeof(*pszRet));
+	wchar_t* pszRet = (wchar_t*)malloc(nTotalLen*sizeof(*pszRet));
 	if (!pszRet)
 	{
 		_ASSERTE(pszRet);
@@ -5262,8 +5262,8 @@ wchar_t* Settings::MultiLine2MSZ(const wchar_t* apszLines, DWORD* pcbSize/*in by
 	if (apszLines && *apszLines)
 	{
 		CEStr lsLine;
-		int nLenMax = lstrlen(apszLines);
-		if ((pszDst = (wchar_t*)malloc((nLenMax+2)*sizeof(wchar_t))) == NULL)
+		INT_PTR nLenMax = lstrlen(apszLines) + 2;
+		if ((pszDst = (wchar_t*)malloc(nLenMax*sizeof(wchar_t))) == NULL)
 		{
 			_ASSERTE(FALSE && "Memory allocation failed");
 		}
@@ -5273,15 +5273,32 @@ wchar_t* Settings::MultiLine2MSZ(const wchar_t* apszLines, DWORD* pcbSize/*in by
 			LPCWSTR pszSrc = apszLines;
 			while (0 == NextLine(&pszSrc, lsLine, NLF_NONE))
 			{
+				// We can't store empty lines in the middle of MSZZ value
+				// That is a registry limitation
+				if (lsLine.IsEmpty())
+					lsLine.Set(L" ");
 				int iLineLen = lstrlen(lsLine.ms_Arg) + 1;
-				_ASSERTE((psz - pszDst + 1 + iLineLen) <= ((nLenMax+2)*sizeof(wchar_t)));
+				if ((psz - pszDst + 1 + iLineLen) >= nLenMax)
+				{
+					INT_PTR nNewLenMax = max((psz - pszDst + 1 + iLineLen), nLenMax) + 1024;
+					wchar_t* pszRealloc = (wchar_t*)realloc(pszDst, nNewLenMax*sizeof(wchar_t));
+					if (!pszRealloc)
+					{
+						_ASSERTE(FALSE && "Reallocation failed");
+						break;
+					}
+					psz = pszRealloc + (psz - pszDst);
+					pszDst = pszRealloc;
+					nLenMax = nNewLenMax;
+				}
+				_ASSERTE((psz - pszDst + 1 + iLineLen) <= nLenMax);
 
 				wmemmove(psz, lsLine.ms_Arg, iLineLen);
 				psz += iLineLen;
 			}
 
 			cbSize = (psz - pszDst + 1)*sizeof(wchar_t);
-			_ASSERTE(cbSize <= ((nLenMax+2)*sizeof(wchar_t)));
+			_ASSERTE(cbSize <= (nLenMax*sizeof(wchar_t)));
 			_ASSERTE(*(psz-1) == 0 && *psz);
 			*psz = 0; // MSZZ
 		}
