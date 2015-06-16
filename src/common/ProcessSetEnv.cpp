@@ -351,6 +351,17 @@ void CProcessEnvCmd::AddLines(LPCWSTR asLines)
 
 	while (0 == NextLine(&pszLines, lsLine))
 	{
+		// Skip empty lines
+		LPCWSTR pszLine = SkipNonPrintable(lsLine);
+		if (!pszLine || !*pszLine)
+			continue;
+		// A comment?
+		if ((pszLine[0] == L'#')
+			|| ((pszLine[0] == L'/') && (pszLine[1] == L'/'))
+			|| ((pszLine[0] == L'-') && (pszLine[1] == L'-'))
+			|| (lstrcmpni(pszLine, L"REM ", 4) == 0)
+			)
+			continue;
 		// Process this line
 		AddCommands(pszLine, NULL, true);
 	}
