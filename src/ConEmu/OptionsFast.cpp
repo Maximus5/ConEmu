@@ -1037,6 +1037,7 @@ public:
 		VS_FIXEDFILEINFO Ver; // bool LoadAppVersion(LPCWSTR FarPath, VS_FIXEDFILEINFO& Version, wchar_t (&ErrText)[512])
 		DWORD dwSubsystem, dwBits;
 		FarVersion FarVer; // ConvertVersionToFarVersion
+		int  iStep;
 		bool bNeedQuot;
 		void Free()
 		{
@@ -1157,6 +1158,30 @@ public:
 		return this;
 	}
 
+	bool CheckUnique(LPCWSTR pszTaskBaseName)
+	{
+		bool bUnique = true;
+
+		for (INT_PTR i = 0; i < Installed.size(); i++)
+		{
+			const AppInfo& FI = Installed[i];
+			if (pszTaskBaseName && (lstrcmpi(pszTaskBaseName, FI.szTaskBaseName) != 0))
+				continue;
+			for (INT_PTR j = Installed.size() - 1; j > i; j--)
+			{
+				const AppInfo& FJ = Installed[j];
+				if (pszTaskBaseName && (lstrcmpi(pszTaskBaseName, FJ.szTaskBaseName) != 0))
+					continue;
+				if (lstrcmpi(FI.szTaskName, FJ.szTaskName) == 0)
+				{
+					bUnique = false; break;
+				}
+			}
+		}
+
+		return bUnique;
+	}
+
 	virtual void MakeUnique()
 	{
 		if (Installed.size() <= 0)
@@ -1168,6 +1193,9 @@ public:
 		struct impl {
 			static int SortRoutine(AppInfo &e1, AppInfo &e2)
 			{
+				int iNameCmp = lstrcmpi(e1.szTaskBaseName, e2.szTaskBaseName);
+				if (iNameCmp)
+					return (iNameCmp < 0) ? -1 : 1;
 				if (e1.Ver.dwFileVersionMS < e2.Ver.dwFileVersionMS)
 					return 1;
 				if (e1.Ver.dwFileVersionMS > e2.Ver.dwFileVersionMS)
@@ -1185,60 +1213,88 @@ public:
 		};
 		Installed.sort(impl::SortRoutine);
 
-		// All task names MUST be unique
-		for (int u = 0; u <= 3; u++)
+		// To know if the task was already processed by task-base-name
+		for (INT_PTR i = 0; i < Installed.size(); i++)
 		{
-			bool bUnique = true;
+			Installed[i].iStep = 0;
+		}
 
+		// All task names MUST be unique
+		for (int u = 1; u <= 3; u++)
+		{
+			// Firstly check if all task names are already unique
+			if (CheckUnique(NULL))
+			{
+				break; // Done, all task names are unique already
+			}
+
+			// Now we have to modify task-name by adding some unique suffix to the task-base-name
 			for (INT_PTR i = 0; i < Installed.size(); i++)
 			{
-				AppInfo& FI = Installed[i];
-				wchar_t szPlatform[6]; wcscpy_c(szPlatform, (FI.dwBits == 64) ? L" x64" : (FI.dwBits == 32) ? L" x86" : L"");
+				const AppInfo& FI = Installed[i];
+				if (FI.iStep == u)
+					continue; // Already processed
 
-				switch (u)
+				// Do we need to make this task-base-name unique?
+				if (CheckUnique(FI.szTaskBaseName))
 				{
-				case 0: // Try as is
-					break;
-
-				case 1: // Naked, only add platform
-					_wsprintf(FI.szTaskName, SKIPLEN(countof(FI.szTaskName)-16) L"%s%s",
-						FI.szTaskBaseName, szPlatform);
-					break;
-
-				case 2: // Add App version and platform
-					if (FI.Ver.dwFileVersionMS)
-						_wsprintf(FI.szTaskName, SKIPLEN(countof(FI.szTaskName)-16) L"%s %u.%u%s",
-							FI.szTaskBaseName, HIWORD(FI.Ver.dwFileVersionMS), LOWORD(FI.Ver.dwFileVersionMS), szPlatform);
-					else
-						_wsprintf(FI.szTaskName, SKIPLEN(countof(FI.szTaskName)-16) L"%s%s",
-							FI.szTaskBaseName, szPlatform);
-					break;
-
-				case 3: // Add App version, platform and index
-					if (FI.Ver.dwFileVersionMS)
-						_wsprintf(FI.szTaskName, SKIPLEN(countof(FI.szTaskName)-16) L"%s %u.%u%s (%u)",
-							FI.szTaskBaseName, HIWORD(FI.Ver.dwFileVersionMS), LOWORD(FI.Ver.dwFileVersionMS), szPlatform, ++idx);
-					else
-						_wsprintf(FI.szTaskName, SKIPLEN(countof(FI.szTaskName)-16) L"%s%s (%u)",
-							FI.szTaskBaseName, szPlatform, ++idx);
-					break;
-				}
-
-				for (INT_PTR j = 0; j < i; j++)
-				{
-					if (lstrcmpi(FI.szTaskName, Installed[j].szTaskName) == 0)
+					for (INT_PTR j = Installed.size() - 1; j >= i; j--)
 					{
-						bUnique = false; break;
+						AppInfo& FJ = Installed[j];
+						if (lstrcmpi(FI.szTaskBaseName, FJ.szTaskBaseName) != 0)
+							continue;
+						FJ.iStep = u;
 					}
+					continue; // Don't
 				}
 
-				if (!bUnique)
+				bool bMatch = false;
+
+				for (INT_PTR j = i; j < Installed.size(); j++)
 				{
-					break; // Try next step
+					AppInfo& FJ = Installed[j];
+					if (FJ.iStep == u)
+						continue; // Already processed
+
+					// Check only tasks with the same base names
+					if (lstrcmpi(FI.szTaskBaseName, FJ.szTaskBaseName) != 0)
+						continue;
+					bMatch = true;
+
+					wchar_t szPlatform[6]; wcscpy_c(szPlatform, (FJ.dwBits == 64) ? L" x64" : (FJ.dwBits == 32) ? L" x86" : L"");
+
+					switch (u)
+					{
+					case 1: // Naked, only add platform
+						_wsprintf(FJ.szTaskName, SKIPLEN(countof(FJ.szTaskName)-16) L"%s%s",
+							FJ.szTaskBaseName, szPlatform);
+						break;
+
+					case 2: // Add App version and platform
+						if (FJ.Ver.dwFileVersionMS)
+							_wsprintf(FJ.szTaskName, SKIPLEN(countof(FJ.szTaskName)-16) L"%s %u.%u%s",
+								FJ.szTaskBaseName, HIWORD(FJ.Ver.dwFileVersionMS), LOWORD(FJ.Ver.dwFileVersionMS), szPlatform);
+						else // If there was not VersionInfo in the exe file (same as u==1)
+							_wsprintf(FJ.szTaskName, SKIPLEN(countof(FJ.szTaskName)-16) L"%s%s",
+								FJ.szTaskBaseName, szPlatform);
+						break;
+
+					case 3: // Add App version, platform and index
+						if (FJ.Ver.dwFileVersionMS)
+							_wsprintf(FJ.szTaskName, SKIPLEN(countof(FJ.szTaskName)-16) L"%s %u.%u%s (%u)",
+								FJ.szTaskBaseName, HIWORD(FJ.Ver.dwFileVersionMS), LOWORD(FJ.Ver.dwFileVersionMS), szPlatform, ++idx);
+						else // If there was not VersionInfo in the exe file
+							_wsprintf(FJ.szTaskName, SKIPLEN(countof(FI.szTaskName)-16) L"%s%s (%u)",
+								FI.szTaskBaseName, szPlatform, ++idx);
+						break;
+					}
+
+					// To know the task was processed
+					FJ.iStep = u;
 				}
 			}
 
-			if (bUnique)
+			if (CheckUnique(NULL))
 			{
 				break; // Done, all task names are unique
 			}
