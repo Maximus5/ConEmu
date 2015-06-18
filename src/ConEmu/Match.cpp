@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2014 Maximus5
+Copyright (c) 2014-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -130,6 +130,8 @@ void CMatch::UnitTests()
 		// Just a text files
 		{L"\t" L"License.txt	Portable.txt    WhatsNew-ConEmu.txt" L"\t",
 			etr_AnyClickable, true, {L"License.txt", L"Portable.txt", L"WhatsNew-ConEmu.txt"}, gpConEmu->ms_ConEmuBaseDir},
+		{L"\t" L"License.txt:err" L"\t",
+			etr_AnyClickable, true, {L"License.txt"}, gpConEmu->ms_ConEmuBaseDir},
 		{L"\t" L" \" abc.cpp \" \"def.h\" " L"\t",
 			etr_AnyClickable, true, {L"abc.cpp", L"def.h"}},
 		{L"\t" L"class.func('C:\\abc.xls')" L"\t",
@@ -844,14 +846,30 @@ bool CMatch::MatchAny()
 					iBracket = 0;
 					bWasSeparator = false;
 				}
+				// Stop on naked file if we found space after it
 				else if (!bLineNumberFound && !bMaybeMail && wcschr(pszSpacing, m_SrcLine.ms_Arg[mn_MatchRight])
-					&& !(((mn_MatchRight+3) < mn_SrcLength) // Чтобы не остановиться на файле если есть строка "abc.py (3): ..."
+					// But don't stop if there is a line number: "abc.py (3): ..."
+					&& !(((mn_MatchRight+3) < mn_SrcLength)
 							&& (m_SrcLine.ms_Arg[mn_MatchRight+1] == L'(')
 							&& isDigit(m_SrcLine.ms_Arg[mn_MatchRight+2]))
+					// Is this a file without digits (line/col)?
 					&& IsValidFile(m_SrcLine.ms_Arg+mn_MatchLeft, mn_MatchRight - mn_MatchLeft + 1, pszBreak, pszSpacing, nNakedFileLen))
 				{
 					// File without digits, just for opening in the editor
 					bNakedFile = true;
+					break;
+				}
+				// Stop if after colon there is another letter but a digit
+				else if (!bLineNumberFound && !bMaybeMail
+					&& (m_SrcLine.ms_Arg[mn_MatchRight] == L':')
+							&& (((mn_MatchRight+1) < mn_SrcLength)
+								|| !isDigit(m_SrcLine.ms_Arg[mn_MatchRight+1]))
+					// Is this a file without digits (line/col)?
+					&& IsValidFile(m_SrcLine.ms_Arg+mn_MatchLeft, mn_MatchRight - mn_MatchLeft, pszBreak, pszSpacing, nNakedFileLen))
+				{
+					// File without digits, just for opening in the editor
+					bNakedFile = true;
+					mn_MatchRight--;
 					break;
 				}
 				else
