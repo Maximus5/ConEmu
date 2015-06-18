@@ -6042,6 +6042,9 @@ DWORD CConEmuMain::GetFarPID(BOOL abPluginRequired/*=FALSE*/)
 
 LPCTSTR CConEmuMain::GetLastTitle(bool abUseDefault/*=true*/)
 {
+	if (!this)
+		return L"ConEmu";
+
 	if (!Title[0] && abUseDefault)
 		return GetDefaultTitle();
 
