@@ -4919,6 +4919,17 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	MessageLoop();
 
 	iMainRc = gpConEmu->mn_ShellExitCode;
+	switch (iMainRc)
+	{
+	case STATUS_CONTROL_C_EXIT:
+		DEBUGSTRSTARTUP(L"Shell has reported close by Ctrl+C. ConEmu is going to exit with code 0xC000013A."); break;
+	case STILL_ACTIVE:
+		DEBUGSTRSTARTUP(L"Shell has not reported its exit code. Abnormal termination or detached window? ConEmu is going to exit with code 259."); break;
+	case 0:
+		break;
+	default:
+		DEBUGSTRSTARTUP(L"ConEmu is going to exit with shell's exit code.");
+	}
 
 done:
 	DEBUGSTRSTARTUP(L"Terminating");
