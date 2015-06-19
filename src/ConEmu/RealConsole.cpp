@@ -1854,6 +1854,28 @@ bool CRealConsole::PostKeyUp(WORD vkKey, DWORD dwControlState, wchar_t wch, int 
 	if (ScanCode == -1)
 		ScanCode = MapVirtualKey(vkKey, 0/*MAPVK_VK_TO_VSC*/);
 
+	if (dwControlState == 0)
+	{
+		switch (vkKey)
+		{
+		case VK_RMENU:
+			dwControlState = ENHANCED_KEY;
+		case VK_LMENU:
+			vkKey = VK_MENU;
+			break;
+
+		case VK_RCONTROL:
+			dwControlState = ENHANCED_KEY;
+		case VK_LCONTROL:
+			vkKey = VK_CONTROL;
+			break;
+		}
+	}
+	else
+	{
+		_ASSERTE(vkKey!=VK_LMENU && vkKey!=VK_RMENU && vkKey!=VK_LCONTROL && vkKey!=VK_RCONTROL);
+	}
+
 	INPUT_RECORD r = {KEY_EVENT};
 	r.Event.KeyEvent.bKeyDown = FALSE;
 	r.Event.KeyEvent.wRepeatCount = 1;

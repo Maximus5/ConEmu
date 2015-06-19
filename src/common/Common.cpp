@@ -226,7 +226,12 @@ void TranslateKeyPress(WORD vkKey, DWORD dwControlState, wchar_t wch, int ScanCo
 	r.Event.KeyEvent.wVirtualKeyCode = vkKey;
 	r.Event.KeyEvent.wVirtualScanCode = ScanCode;
 	r.Event.KeyEvent.uChar.UnicodeChar = wch;
-	r.Event.KeyEvent.dwControlKeyState = dwControlState;
+	r.Event.KeyEvent.dwControlKeyState = dwControlState
+		| ((vkKey == VK_SHIFT || vkKey == VK_LSHIFT || vkKey == VK_RSHIFT) ? SHIFT_PRESSED : 0)
+		| ((vkKey == VK_CONTROL || vkKey == VK_LCONTROL) ? LEFT_CTRL_PRESSED : 0)
+		| ((vkKey == VK_RCONTROL) ? RIGHT_CTRL_PRESSED : 0)
+		| ((vkKey == VK_RMENU) ? RIGHT_ALT_PRESSED : 0)
+		;
 	*rDown = r;
 
 	TODO("Может нужно в dwControlKeyState применять модификатор, если он и есть vkKey?");
