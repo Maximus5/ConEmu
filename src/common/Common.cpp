@@ -245,7 +245,8 @@ void TranslateKeyPress(WORD vkKey, DWORD dwControlState, wchar_t wch, int ScanCo
 /* *** struct CESERVER_REQ_NEWCMD -- CECMD_NEWCMD *** */
 wchar_t* CESERVER_REQ_NEWCMD::GetCommand()
 {
-	return (this && cchCommand) ? (wchar_t*)&ptrDataStart : L"";
+	static wchar_t szNil[1] = L"";
+	return (this && cchCommand) ? (wchar_t*)&ptrDataStart : szNil;
 }
 
 wchar_t* CESERVER_REQ_NEWCMD::GetEnvStrings()
