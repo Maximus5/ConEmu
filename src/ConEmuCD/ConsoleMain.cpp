@@ -2974,7 +2974,8 @@ int DoInjectRemote(LPWSTR asCmdArg, bool abDefTermOnly)
 
 		// Go to hook
 		// InjectRemote waits for thread termination
-		CINFILTRATE_EXIT_CODES iHookRc = InjectRemote(nRemotePID, abDefTermOnly);
+		DWORD nErrCode = 0;
+		CINFILTRATE_EXIT_CODES iHookRc = InjectRemote(nRemotePID, abDefTermOnly, &nErrCode);
 
 		if (iHookRc == CIR_OK/*0*/ || iHookRc == CIR_AlreadyInjected/*1*/)
 		{
@@ -2992,7 +2993,6 @@ int DoInjectRemote(LPWSTR asCmdArg, bool abDefTermOnly)
 			GetProcessInfo(self.th32ParentProcessID, &parent);
 
 		// Ошибку (пока во всяком случае) лучше показать, для отлова возможных проблем
-		DWORD nErrCode = GetLastError();
 		//_ASSERTE(iHookRc == 0); -- ассерт не нужен, есть MsgBox
 		wchar_t szDbgMsg[255], szTitle[128];
 		_wsprintf(szTitle, SKIPLEN(countof(szTitle))

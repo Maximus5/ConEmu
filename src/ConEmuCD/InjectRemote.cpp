@@ -292,9 +292,10 @@ wrap:
 
 // CIR_OK=0 - OK, CIR_AlreadyInjected=1 - Already injected, иначе - ошибка
 // Здесь вызывается CreateRemoteThread
-CINFILTRATE_EXIT_CODES InjectRemote(DWORD nRemotePID, bool abDefTermOnly /*= false */)
+CINFILTRATE_EXIT_CODES InjectRemote(DWORD nRemotePID, bool abDefTermOnly /*= false */, LPDWORD pnErrCode /*= NULL*/)
 {
 	CINFILTRATE_EXIT_CODES iRc = CIR_GeneralError/*-1*/;
+	DWORD nErrCode = 0;
 	bool lbWin64 = WIN3264TEST((IsWindows64()!=0),true);
 	bool is32bit;
 	int  nBits;
@@ -312,6 +313,7 @@ CINFILTRATE_EXIT_CODES InjectRemote(DWORD nRemotePID, bool abDefTermOnly /*= fal
 
 	if (!GetModuleFileName(NULL, szSelf, MAX_PATH))
 	{
+		nErrCode = GetLastError();
 		iRc = CIR_GetModuleFileName/*-200*/;
 		goto wrap;
 	}
@@ -319,6 +321,7 @@ CINFILTRATE_EXIT_CODES InjectRemote(DWORD nRemotePID, bool abDefTermOnly /*= fal
 	pszNamePtr = (wchar_t*)PointToName(szHooks);
 	if (!pszNamePtr)
 	{
+		nErrCode = GetLastError();
 		iRc = CIR_GetModuleFileName/*-200*/;
 		goto wrap;
 	}
@@ -328,6 +331,7 @@ CINFILTRATE_EXIT_CODES InjectRemote(DWORD nRemotePID, bool abDefTermOnly /*= fal
 	hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, nRemotePID);
 	if (!hSnap || (hSnap == INVALID_HANDLE_VALUE))
 	{
+		nErrCode = GetLastError();
 		iRc = CIR_SnapshotCantBeOpened/*-113*/;
 		goto wrap;
 	}
@@ -407,6 +411,7 @@ CINFILTRATE_EXIT_CODES InjectRemote(DWORD nRemotePID, bool abDefTermOnly /*= fal
 	hProc = OpenProcess(PROCESS_CREATE_THREAD|PROCESS_QUERY_INFORMATION|PROCESS_VM_OPERATION|PROCESS_VM_WRITE|PROCESS_VM_READ, FALSE, nRemotePID);
 	if (hProc == NULL)
 	{
+		nErrCode = GetLastError();
 		iRc = CIR_OpenProcess/*-201*/;
 		goto wrap;
 	}
@@ -456,6 +461,7 @@ CINFILTRATE_EXIT_CODES InjectRemote(DWORD nRemotePID, bool abDefTermOnly /*= fal
 	if (nBits == 0)
 	{
 		// Do not even expected, ConEmu GUI must run ConEmuC elevated if required.
+		nErrCode = GetLastError();
 		iRc = CIR_GetProcessBits/*-204*/;
 		goto wrap;
 	}
@@ -474,6 +480,7 @@ CINFILTRATE_EXIT_CODES InjectRemote(DWORD nRemotePID, bool abDefTermOnly /*= fal
 
 		if (!CreateProcess(szHooks, szArgs, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL, NULL, &si, &pi))
 		{
+			nErrCode = GetLastError();
 			iRc = CIR_CreateProcess/*-202*/;
 			goto wrap;
 		}
@@ -484,6 +491,7 @@ CINFILTRATE_EXIT_CODES InjectRemote(DWORD nRemotePID, bool abDefTermOnly /*= fal
 		if ((nWrapperResult != CERR_HOOKS_WAS_SET) && (nWrapperResult != CERR_HOOKS_WAS_ALREADY_SET))
 		{
 			iRc = CIR_WrapperResult/*-203*/;
+			nErrCode = nWrapperResult;
 			SetLastError(nWrapperResult);
 			goto wrap;
 		}
@@ -518,6 +526,8 @@ CINFILTRATE_EXIT_CODES InjectRemote(DWORD nRemotePID, bool abDefTermOnly /*= fal
 		MoveFileEx(szHooks, NULL, MOVEFILE_DELAY_UNTIL_REBOOT);
 	}
 wrap:
+	if (pnErrCode)
+		*pnErrCode = nErrCode;
 	if (hProc != NULL)
 		CloseHandle(hProc);
 	// But check the result of the operation
