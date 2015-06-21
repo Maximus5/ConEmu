@@ -1,3 +1,6 @@
+# define USERCPPFLAGS to pass them to compiler, example below
+#   mingw32-make -f makefile_gcc USERCPPFLAGS=-fpermissive
+
 NAME = ConEmu
 SRCS = \
 		../common/CmdArg.cpp         \
@@ -199,7 +202,7 @@ MKDIR = mkdir -p
 WINDRES = $(CROSS_HOST)windres
 AR = $(CROSS_HOST)ar
 RANLIB = $(CROSS_HOST)ranlib
-CXXFLAGS = $(ENCFLAGS) $(DEBUGFLAGS) -mwindows -fexceptions -I $(COMMON) -I $(COMINC) -Wall -Os -funsigned-char -fomit-frame-pointer -fstrict-aliasing -fno-rtti $(CXXWIDE) $(USERCPP) 
+CXXFLAGS = $(ENCFLAGS) $(USERCPPFLAGS) $(DEBUGFLAGS) -mwindows -fexceptions -I $(COMMON) -I $(COMINC) -Wall -Os -funsigned-char -fomit-frame-pointer -fstrict-aliasing -fno-rtti $(CXXWIDE) $(USERCPP)
 CCFLAGS = $(DEBUGFLAGS) -mwindows -I $(COMMON) -I $(COMINC) -Wall -Os -funsigned-char -fomit-frame-pointer -fstrict-aliasing $(CCWIDE) $(USERCPP)
 LNKFLAGS = $(DEBUGLINKFLAGS) -mwindows $(USERLIBSFIRST) $(COMMONLIB) -luser32 -lkernel32 -ladvapi32 -lshell32 -lgdi32 -lcomdlg32 -lole32 -luuid -lcomctl32 $(USERLIBS)
 RCFLAGS = -I $(COMINC) $(RCWIDE) $(USERRC)
