@@ -147,7 +147,7 @@ DEBUGLINKFLAGS=-s
 else
 DEBUGFLAGS=-g
 DEBUGLINKFLAGS=
-endif                   
+endif
 
 WIDE = 1
 DIRSURF = W
