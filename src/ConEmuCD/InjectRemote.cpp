@@ -327,6 +327,56 @@ CINFILTRATE_EXIT_CODES InjectRemote(DWORD nRemotePID, bool abDefTermOnly /*= fal
 	}
 
 
+	// There is no sense to try to open TH32CS_SNAPMODULE snapshot of 64bit process from 32bit process
+	// And we can't properly evaluate kernel address procedures of 32bit process from 64bit process
+
+	// So, let determine target process bitness and if it differs
+	// from our (ConEmuC[64].exe) just restart appropriate version
+	nBits = GetProcessBits(nRemotePID, NULL/*it will open hProcess with bare PROCESS_QUERY_INFORMATION*/);
+	if (nBits == 0)
+	{
+		// Do not even expected, ConEmu GUI must run ConEmuC elevated if required.
+		nErrCode = GetLastError();
+		iRc = CIR_GetProcessBits/*-204*/;
+		goto wrap;
+	}
+
+	is32bit = (nBits == 32);
+
+	if (is32bit != WIN3264TEST(true,false))
+	{
+		// We must not get here, ConEmu have to run appropriate ConEmuC[64].exe at once
+		// But just in case of running from batch-files...
+		_ASSERTE(is32bit == WIN3264TEST(true,false));
+		PROCESS_INFORMATION pi = {};
+		STARTUPINFO si = {sizeof(si)};
+
+		_wcscpy_c(pszNamePtr, 16, is32bit ? L"ConEmuC.exe" : L"ConEmuC64.exe");
+		_wsprintf(szArgs, SKIPLEN(countof(szArgs)) L" /INJECT=%u", nRemotePID);
+
+		if (!CreateProcess(szHooks, szArgs, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL, NULL, &si, &pi))
+		{
+			nErrCode = GetLastError();
+			iRc = CIR_CreateProcess/*-202*/;
+			goto wrap;
+		}
+		nWrapperWait = WaitForSingleObject(pi.hProcess, INFINITE);
+		GetExitCodeProcess(pi.hProcess, &nWrapperResult);
+		CloseHandle(pi.hProcess);
+		CloseHandle(pi.hThread);
+		if ((nWrapperResult != CERR_HOOKS_WAS_SET) && (nWrapperResult != CERR_HOOKS_WAS_ALREADY_SET))
+		{
+			iRc = CIR_WrapperResult/*-203*/;
+			nErrCode = nWrapperResult;
+			SetLastError(nWrapperResult);
+			goto wrap;
+		}
+		// All the work was done by wrapper
+		iRc = CIR_OK/*0*/;
+		goto wrap;
+	}
+
+
 	// Hey, may be ConEmuHk.dll is already loaded?
 	hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, nRemotePID);
 	if (!hSnap || (hSnap == INVALID_HANDLE_VALUE))
@@ -402,6 +452,7 @@ CINFILTRATE_EXIT_CODES InjectRemote(DWORD nRemotePID, bool abDefTermOnly /*= fal
 
 	if (!ptrOuterKernel)
 	{
+		nErrCode = E_UNEXPECTED;
 		iRc = CIR_OuterKernelAddr/*-112*/;
 		goto wrap;
 	}
@@ -455,52 +506,7 @@ CINFILTRATE_EXIT_CODES InjectRemote(DWORD nRemotePID, bool abDefTermOnly /*= fal
 	}
 
 
-	// Определить битность процесса, Если он 32битный, а текущий - ConEmuC64.exe
-	// Перезапустить 32битную версию ConEmuC.exe
-	nBits = GetProcessBits(nRemotePID, hProc);
-	if (nBits == 0)
-	{
-		// Do not even expected, ConEmu GUI must run ConEmuC elevated if required.
-		nErrCode = GetLastError();
-		iRc = CIR_GetProcessBits/*-204*/;
-		goto wrap;
-	}
-
-	is32bit = (nBits == 32);
-
-	if (is32bit != WIN3264TEST(true,false))
-	{
-		// По идее, такого быть не должно. ConEmu должен был запустить соответствующий conemuC*.exe
-		_ASSERTE(is32bit == WIN3264TEST(true,false));
-		PROCESS_INFORMATION pi = {};
-		STARTUPINFO si = {sizeof(si)};
-
-		_wcscpy_c(pszNamePtr, 16, is32bit ? L"ConEmuC.exe" : L"ConEmuC64.exe");
-		_wsprintf(szArgs, SKIPLEN(countof(szArgs)) L" /INJECT=%u", nRemotePID);
-
-		if (!CreateProcess(szHooks, szArgs, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL, NULL, &si, &pi))
-		{
-			nErrCode = GetLastError();
-			iRc = CIR_CreateProcess/*-202*/;
-			goto wrap;
-		}
-		nWrapperWait = WaitForSingleObject(pi.hProcess, INFINITE);
-		GetExitCodeProcess(pi.hProcess, &nWrapperResult);
-		CloseHandle(pi.hProcess);
-		CloseHandle(pi.hThread);
-		if ((nWrapperResult != CERR_HOOKS_WAS_SET) && (nWrapperResult != CERR_HOOKS_WAS_ALREADY_SET))
-		{
-			iRc = CIR_WrapperResult/*-203*/;
-			nErrCode = nWrapperResult;
-			SetLastError(nWrapperResult);
-			goto wrap;
-		}
-		// Значит всю работу сделал враппер
-		iRc = CIR_OK/*0*/;
-		goto wrap;
-	}
-
-	// Поехали
+	// Let's do the inject
 	_wcscpy_c(pszNamePtr, 16, is32bit ? L"ConEmuHk.dll" : L"ConEmuHk64.dll");
 	if (!FileExists(szHooks))
 	{
