@@ -151,6 +151,7 @@ MConHandle ghConOut(L"CONOUT$");
 CEStartupEnv* gpStartEnv = NULL;
 HMODULE ghOurModule = NULL; // ConEmuCD.dll
 DWORD   gnSelfPID = 0;
+wchar_t gsModuleName[32] = L"";
 BOOL    gbTerminateOnExit = FALSE;
 //HANDLE  ghConIn = NULL, ghConOut = NULL;
 HWND    ghConWnd = NULL;
@@ -313,6 +314,14 @@ BOOL WINAPI DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 			ghWorkingModule = (u64)hModule;
 			gfnSearchAppPaths = SearchAppPaths;
 
+			wchar_t szExeName[MAX_PATH] = L"", szDllName[MAX_PATH] = L"";
+			GetModuleFileName(NULL, szExeName, countof(szExeName));
+			GetModuleFileName((HMODULE)hModule, szDllName, countof(szDllName));
+			if (IsConsoleServer(PointToName(szExeName)))
+				wcscpy_c(gsModuleName, WIN3264TEST(L"ConEmuC",L"ConEmuC64"));
+			else
+				wcscpy_c(gsModuleName, WIN3264TEST(L"ConEmuCD",L"ConEmuCD64"));
+
 			#ifdef _DEBUG
 			HANDLE hProcHeap = GetProcessHeap();
 			gAllowAssertThread = am_Pipe;
@@ -389,9 +398,6 @@ BOOL WINAPI DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 						gbLogProcess = (pInfo->nLoggingType == glt_Processes);
 						if (gbLogProcess)
 						{
-							wchar_t szExeName[MAX_PATH], szDllName[MAX_PATH]; szExeName[0] = szDllName[0] = 0;
-							GetModuleFileName(NULL, szExeName, countof(szExeName));
-							GetModuleFileName((HMODULE)hModule, szDllName, countof(szDllName));
 							int ImageBits = 0, ImageSystem = 0;
 							#ifdef _WIN64
 							ImageBits = 64;
