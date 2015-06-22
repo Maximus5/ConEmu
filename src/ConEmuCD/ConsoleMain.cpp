@@ -1463,14 +1463,14 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 
 			#ifdef SHOW_INJECT_MSGBOX
 			wchar_t szDbgMsg[128], szTitle[128];
-			swprintf_c(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuC, PID=%u", GetCurrentProcessId());
+			swprintf_c(szTitle, SKIPLEN(countof(szTitle)) L"%s PID=%u", gsModuleName, GetCurrentProcessId());
 			szDbgMsg[0] = 0;
 			#endif
 
 			if (gbDontInjectConEmuHk)
 			{
 				#ifdef SHOW_INJECT_MSGBOX
-				swprintf_c(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"ConEmuC, PID=%u\nConEmuHk injects skipped, PID=%u", GetCurrentProcessId(), pi.dwProcessId);
+				swprintf_c(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"%s PID=%u\nConEmuHk injects skipped, PID=%u", gsModuleName, GetCurrentProcessId(), pi.dwProcessId);
 				#endif
 			}
 			else
@@ -1481,7 +1481,7 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 				TODO("В принципе - завелось, но в сочетании с Anamorphosis получается странное зацикливание far->conemu->anamorph->conemu");
 
 				#ifdef SHOW_INJECT_MSGBOX
-				swprintf_c(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"ConEmuC, PID=%u\nInjecting hooks into PID=%u", GetCurrentProcessId(), pi.dwProcessId);
+				swprintf_c(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"%s PID=%u\nInjecting hooks into PID=%u", gsModuleName, GetCurrentProcessId(), pi.dwProcessId);
 				MessageBoxW(NULL, szDbgMsg, szTitle, MB_SYSTEMMODAL);
 				#endif
 
@@ -2972,7 +2972,7 @@ int DoInjectRemote(LPWSTR asCmdArg, bool abDefTermOnly)
 		#if defined(SHOW_ATTACH_MSGBOX)
 		if (!IsDebuggerPresent())
 		{
-			wchar_t szTitle[100]; _wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuC (PID=%i) /INJECT", gnSelfPID);
+			wchar_t szTitle[100]; _wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"%s PID=%u /INJECT", gsModuleName, gnSelfPID);
 			const wchar_t* pszCmdLine = GetCommandLineW();
 			MessageBox(NULL,pszCmdLine,szTitle,MB_SYSTEMMODAL);
 		}
@@ -3002,12 +3002,13 @@ int DoInjectRemote(LPWSTR asCmdArg, bool abDefTermOnly)
 		//_ASSERTE(iHookRc == 0); -- ассерт не нужен, есть MsgBox
 		wchar_t szDbgMsg[255], szTitle[128];
 		_wsprintf(szTitle, SKIPLEN(countof(szTitle))
-			L"ConEmuC[%u], PID=%u", WIN3264TEST(32,64), nSelfPID);
+			L"%s, PID=%u", gsModuleName, nSelfPID);
 		_wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg))
-			L"ConEmuC.X, PID=%u\n"
+			L"%s.X, PID=%u\n"
 			L"Injecting remote into PID=%u from ParentPID=%u\n"
 			L"FAILED, code=%i:0x%08X\r\n",
-			nSelfPID, nRemotePID, self.th32ParentProcessID, iHookRc, nErrCode);
+			gsModuleName, nSelfPID,
+			nRemotePID, self.th32ParentProcessID, iHookRc, nErrCode);
 
 		CEStr lsError(lstrmerge(szDbgMsg,
 			L"Process: ",
@@ -4632,7 +4633,7 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 			#if defined(SHOW_ATTACH_MSGBOX)
 			if (!IsDebuggerPresent())
 			{
-				wchar_t szTitle[100]; _wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuC (PID=%i) /ADMIN", gnSelfPID);
+				wchar_t szTitle[100]; _wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"%s PID=%u /ADMIN", gsModuleName, gnSelfPID);
 				const wchar_t* pszCmdLine = GetCommandLineW();
 				MessageBox(NULL,pszCmdLine,szTitle,MB_SYSTEMMODAL);
 			}
@@ -4646,7 +4647,7 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 			#if defined(SHOW_ATTACH_MSGBOX)
 			if (!IsDebuggerPresent())
 			{
-				wchar_t szTitle[100]; _wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuC (PID=%i) /ATTACH", gnSelfPID);
+				wchar_t szTitle[100]; _wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"%s PID=%u /ATTACH", gsModuleName, gnSelfPID);
 				const wchar_t* pszCmdLine = GetCommandLineW();
 				MessageBox(NULL,pszCmdLine,szTitle,MB_SYSTEMMODAL);
 			}
@@ -4661,7 +4662,7 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 			#if defined(SHOW_ATTACH_MSGBOX)
 			if (!IsDebuggerPresent())
 			{
-				wchar_t szTitle[100]; _wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuC (PID=%i) /AUTOATTACH", gnSelfPID);
+				wchar_t szTitle[100]; _wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"%s PID=%u %s", gsModuleName, gnSelfPID, szArg.ms_Arg);
 				const wchar_t* pszCmdLine = GetCommandLineW();
 				MessageBox(NULL,pszCmdLine,szTitle,MB_SYSTEMMODAL);
 			}
@@ -4697,7 +4698,7 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 			#if defined(SHOW_ATTACH_MSGBOX)
 			if (!IsDebuggerPresent())
 			{
-				wchar_t szTitle[100]; _wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuC (PID=%i) /GUIATTACH", gnSelfPID);
+				wchar_t szTitle[100]; _wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"%s PID=%u /GUIATTACH", gsModuleName, gnSelfPID);
 				const wchar_t* pszCmdLine = GetCommandLineW();
 				MessageBox(NULL,pszCmdLine,szTitle,MB_SYSTEMMODAL);
 			}
@@ -4871,7 +4872,7 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 						(DWORD)hSaveCon
 						);
 
-					_wsprintf(szTitle, SKIPLEN(countof(szTitle)) WIN3264TEST(L"ConEmuC",L"ConEmuC64") L": PID=%u", GetCurrentProcessId());
+					_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"%s: PID=%u", gsModuleName, GetCurrentProcessId());
 
 					int nBtn = MessageBox(NULL, pszMsg, szTitle, MB_ICONSTOP|MB_SYSTEMMODAL|MB_RETRYCANCEL);
 
