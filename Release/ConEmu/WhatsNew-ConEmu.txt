@@ -19,6 +19,32 @@ http://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2015.6.21
+[*] Use recommended launcher for Git-For-Windows bash (default tasks).
+[*] Try to create default task for GitSDK bash.
+[*] Let Settings\Environment page use one line for one command.
+
+    This will make concrete set commands with quotation marks.
+    Following two commands are equal.
+
+      set "PATH=C:\Program Files\ConEmu;%PATH%"
+      set PATH=C:\Program Files\ConEmu;%PATH%
+
+    But you still have to use quotations to keep trailing spaces
+
+      set "VarName=This is my value   "
+
+[*] Support empty lines and comments on the Settings\Environment page.
+    You may comment lines with '#', '//', '--' or 'REM '.
+[*] gh187: Highlight and goto did not work when filename not finished by :[space] or :[number].
+[*] Improve default task names unification and sorting.
+[*] The arrow char was inserted into Far Manager prompt after selecting text with Alt+Mouse.
+[*] Fix xml search path for Git-For-Windows package.
+    Correct one is /opt/share/conemu/ConEmu.xml while ConEmu.exe is placed
+    in /opt/bin folder.
+[*] Error code was not shown properly if DefTerm inject fails.
+
+
 2015.6.10
 [*] Simplify `set` usage in Settings\Environment.
 [*] gh#179: Fix broken environment inheritance (ca9e31a regression).
