@@ -186,9 +186,15 @@ bool CAttachDlg::OnStartAttach()
 		L.nPID = wcstoul(szItem, &psz, 10);
 		if (L.nPID)
 		{
-			psz = wcschr(szItem, L'*');
-			if (psz)
+			psz = wcschr(szItem, L'[');
+			if (!psz)
+			{
+				_ASSERTE(FALSE && "Process bitness was not detected?");
+			}
+			else
+			{
 				L.nBits = wcstoul(psz+1, &psz, 10);
+			}
 		}
 		ListView_GetItemText(mh_List, iCur, alc_Type, szItem, countof(szItem));
 		if (lstrcmp(szItem, szTypeCon) == 0)
