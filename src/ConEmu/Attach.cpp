@@ -730,10 +730,10 @@ INT_PTR CAttachDlg::AttachDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM l
 	return 0;
 }
 
+// Do the attach procedure for the requested process
 bool CAttachDlg::StartAttach(HWND ahAttachWnd, DWORD anPID, DWORD anBits, AttachProcessType anType, BOOL abAltMode)
 {
 	bool lbRc = false;
-	// Тут нужно получить инфу из списка и дернуть собственно аттач
 	wchar_t szPipe[MAX_PATH];
 	PROCESS_INFORMATION pi = {};
 	STARTUPINFO si = {sizeof(si)};
@@ -769,7 +769,9 @@ bool CAttachDlg::StartAttach(HWND ahAttachWnd, DWORD anPID, DWORD anBits, Attach
 		pOut = ExecuteSrvCmd(srv.nServerPID, pIn, ghWnd);
 		if (pOut && (pOut->hdr.cbSize >= (sizeof(CESERVER_REQ_HDR)+sizeof(DWORD))) && (pOut->dwData[0] != 0))
 		{
-			lbRc = true; // Успешно подцепились
+			// Our console server had been already started
+			// and we sucessfully have completed the attach
+			lbRc = true;
 			goto wrap;
 		}
 		ExecuteFreeResult(pIn);
@@ -777,7 +779,7 @@ bool CAttachDlg::StartAttach(HWND ahAttachWnd, DWORD anPID, DWORD anBits, Attach
 	}
 
 
-	// Может быть это Far Manager с загруженным плагином ConEmu.dll?
+	// Is it a Far Manager with our ConEmu.dll plugin loaded?
 	_wsprintf(szPipe, SKIPLEN(countof(szPipe)) CEPLUGINPIPENAME, L".", anPID);
 	hPluginTest = CreateFile(szPipe, GENERIC_READ|GENERIC_WRITE, 0, LocalSecurity(), OPEN_EXISTING, 0, NULL);
 	if (hPluginTest && hPluginTest != INVALID_HANDLE_VALUE)
@@ -786,7 +788,7 @@ bool CAttachDlg::StartAttach(HWND ahAttachWnd, DWORD anPID, DWORD anBits, Attach
 		goto DoPluginCall;
 	}
 
-	// Может быть в процессе уже есть ConEmuHk.dll? Или этот процесс вообще уже во вкладке другого ConEmu?
+	// May be there is already ConEmuHk[64].dll loaded? Either it is already in the another ConEmu VCon?
 	_wsprintf(szPipe, SKIPLEN(countof(szPipe)) CEHOOKSPIPENAME, L".", anPID);
 	hPipeTest = CreateFile(szPipe, GENERIC_READ|GENERIC_WRITE, 0, LocalSecurity(), OPEN_EXISTING, 0, NULL);
 	if (hPipeTest && hPipeTest != INVALID_HANDLE_VALUE)
@@ -810,7 +812,6 @@ bool CAttachDlg::StartAttach(HWND ahAttachWnd, DWORD anPID, DWORD anBits, Attach
 		abAltMode = FALSE;
 	}
 
-	TODO("Определить, может он уже под админом? Тогда и ConEmuC.exe под админом запускать нужно");
 	si.dwFlags = STARTF_USESHOWWINDOW;
 	si.wShowWindow = SW_HIDE;
 
@@ -821,6 +822,7 @@ bool CAttachDlg::StartAttach(HWND ahAttachWnd, DWORD anPID, DWORD anBits, Attach
 
 	hProcTest = OpenProcess(PROCESS_CREATE_THREAD|PROCESS_QUERY_INFORMATION|PROCESS_VM_OPERATION|PROCESS_VM_WRITE|PROCESS_VM_READ, FALSE, anPID);
 
+	// If the attaching process is running as admin (elevated) we have to run ConEmuC as admin too
 	if (hProcTest == NULL)
 	{
 		nErrCode = GetLastError();
@@ -843,6 +845,7 @@ bool CAttachDlg::StartAttach(HWND ahAttachWnd, DWORD anPID, DWORD anBits, Attach
 	}
 	else
 	{
+		// Normal start
 		DWORD dwFlags = 0
 			| (abAltMode ? CREATE_NO_WINDOW : CREATE_NEW_CONSOLE)
 			| CREATE_DEFAULT_ERROR_MODE
@@ -862,7 +865,6 @@ bool CAttachDlg::StartAttach(HWND ahAttachWnd, DWORD anPID, DWORD anBits, Attach
 
 	if (abAltMode)
 	{
-		TODO("Подождать бы завершения процесса, или пока он подцепится к GUI");
 		lbRc = true;
 		goto wrap;
 	}
@@ -879,7 +881,8 @@ bool CAttachDlg::StartAttach(HWND ahAttachWnd, DWORD anPID, DWORD anBits, Attach
 
 
 DoExecute:
-	// Теперь можно дернуть созданный в удаленном процессе пайп для запуска в той консоли сервера.
+	// Not the attaching process has our ConEmuHk[64].dll loaded
+	// and we can request to start console server for that console or ChildGui
 	pIn = ExecuteNewCmd(CECMD_STARTSERVER, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_START));
 	pIn->NewServer.nGuiPID = GetCurrentProcessId();
 	pIn->NewServer.hGuiWnd = ghWnd;
@@ -891,7 +894,7 @@ DoExecute:
 	goto DoPipeCall;
 
 DoPluginCall:
-	// Просто попросим плагин подцепиться к GUI
+	// Ask Far Manager plugin to do the attach
 	pIn = ExecuteNewCmd(CECMD_ATTACH2GUI, sizeof(CESERVER_REQ_HDR));
 	goto DoPipeCall;
 
