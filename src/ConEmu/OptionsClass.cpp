@@ -8730,14 +8730,18 @@ void CSettings::UpdatePos(int ax, int ay, bool bGetRect)
 
 	if ((gpConEmu->wndX != x) || (gpConEmu->wndY != y))
 	{
-		gpConEmu->wndX = x;
-		gpConEmu->wndY = y;
+		if (gpConEmu->wndX != x)
+			gpConEmu->wndX = x;
+		if (gpConEmu->wndY != y)
+			gpConEmu->wndY = y;
 	}
 
 	if (gpSet->isUseCurrentSizePos)
 	{
-		gpSet->_wndX = x;
-		gpSet->_wndY = y;
+		if (gpSet->_wndX != x)
+			gpSet->_wndX = x;
+		if (gpSet->_wndY != y)
+			gpSet->_wndY = y;
 	}
 
 	HWND hSizePosPg = GetPage(thi_SizePos);

@@ -2455,7 +2455,8 @@ LRESULT CConEmuSize::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 					p->cx = rc.right - rc.left; // + 1;
 				}
 
-				wndX = p->x;
+				if (wndX != p->x)
+					wndX = p->x;
 
 				RECT rcFixup = {p->x, p->y, p->x + p->cx, p->y + p->cy};
 				if (CheckQuakeRect(&rcFixup))
