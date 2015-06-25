@@ -909,7 +909,7 @@ DoPipeCall:
 		if (hPluginTest && hPluginTest != INVALID_HANDLE_VALUE)
 			wcscat_c(szMsg, L"\nFar ConEmu plugin was loaded");
 		if (hPipeTest && hPipeTest != INVALID_HANDLE_VALUE)
-			wcscat_c(szMsg, L"\nHooks already was set");
+			wcscat_c(szMsg, L"\nHooks already were set");
 		_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmu Attach, PID=%u, TID=%u", GetCurrentProcessId(), GetCurrentThreadId());
 		DisplayLastError(szMsg, (pOut && (pOut->hdr.cbSize >= pIn->hdr.cbSize)) ? pOut->dwData[1] : -1, 0, szTitle);
 		goto wrap;
