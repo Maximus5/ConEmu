@@ -3551,20 +3551,35 @@ BOOL CVConGroup::AttachRequested(HWND ahConWnd, const CESERVER_REQ_STARTSTOP* pS
 	// Если не нашли - определим, можно ли добавить новую консоль?
 	if (!bFound)
 	{
-		RConStartArgs* pArgs = new RConStartArgs;
-		pArgs->Detached = crb_On;
-		pArgs->BackgroundTab = pStartStop->bRunInBackgroundTab ? crb_On : crb_Undefined;
-		pArgs->RunAsAdministrator = pStartStop->bUserIsAdmin ? crb_On : crb_Undefined;
+		struct createVCon {
+			RConStartArgs* pArgs;
+			const CESERVER_REQ_STARTSTOP* pStartStop;
+			CVConGuard VCon;
+
+			static LRESULT createVConProc(LPARAM lParam)
+			{
+				createVCon* p = (createVCon*)lParam;
+				p->VCon = gpConEmu->CreateCon(p->pArgs);
+				if (!p->VCon.VCon())
+					return 0;
+				return (LRESULT)p->VCon.VCon();
+			};
+		} impl = {new RConStartArgs(), pStartStop};
+
+		impl.pArgs->Detached = crb_On;
+		impl.pArgs->BackgroundTab = pStartStop->bRunInBackgroundTab ? crb_On : crb_Undefined;
+		impl.pArgs->RunAsAdministrator = pStartStop->bUserIsAdmin ? crb_On : crb_Undefined;
 		_ASSERTE(pStartStop->sCmdLine[0]!=0);
-		pArgs->pszSpecialCmd = lstrdup(pStartStop->sCmdLine);
+		impl.pArgs->pszSpecialCmd = lstrdup(pStartStop->sCmdLine);
 
 		if (gpConEmu->isIconic())
 		{
 			gpConEmu->DoMinimizeRestore(sih_SetForeground);
 		}
 
-		// т.к. это приходит из серверного потока - зовем в главном
-		VCon = (CVirtualConsole*)SendMessage(ghWnd, gpConEmu->mn_MsgCreateCon, gpConEmu->mn_MsgCreateCon, (LPARAM)pArgs);
+		// Execute this in MainThread
+		VCon = (CVirtualConsole*)gpConEmu->CallMainThread(true, createVCon::createVConProc, (LPARAM)&impl);
+
 		if (VCon.VCon() && !isValid(VCon.VCon()))
 		{
 			_ASSERTE(FALSE && "MsgCreateCon failed");
