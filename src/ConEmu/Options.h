@@ -183,6 +183,7 @@ struct Settings
 		const ColorPalette* PaletteGet(int anIndex); // 0-based, index of Palettes, or -1 for "<Current color scheme>"
 		const ColorPalette* PaletteGetByName(LPCWSTR asName);
 		const ColorPalette* PaletteFindCurrent(bool bMatchAttributes);
+		const ColorPalette* PaletteFindByColors(bool bMatchAttributes, const ColorPalette* pCur);
 		int PaletteGetIndex(LPCWSTR asName);
 		void PaletteSaveAs(LPCWSTR asName); // Save active colors to named palette
 		void PaletteDelete(LPCWSTR asName); // Delete named palette

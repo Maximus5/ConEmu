@@ -1702,6 +1702,19 @@ const ColorPalette* Settings::PaletteFindCurrent(bool bMatchAttributes)
 		return NULL;
 	}
 
+	const ColorPalette* pFound = PaletteFindByColors(bMatchAttributes, pCur);
+
+	_ASSERTE(pFound != pCur); // pCur is expected to be StdPal ("<Current color scheme>")
+
+	// Return "<Current color scheme>" if was not found in saved palettes
+	if (!pFound)
+		pFound = pCur;
+
+	return pFound;
+}
+
+const ColorPalette* Settings::PaletteFindByColors(bool bMatchAttributes, const ColorPalette* pCur)
+{
 	const ColorPalette* pFound = NULL;
 	const ColorPalette* pPal = NULL;
 	for (int i = 0; (pPal = PaletteGetPtr(i)) != NULL; i++)
@@ -1721,11 +1734,6 @@ const ColorPalette* Settings::PaletteFindCurrent(bool bMatchAttributes)
 		}
 	}
 
-	_ASSERTE(pFound != pCur); // pCur is expected to be StdPal ("<Current color scheme>")
-
-	// Return "<Current color scheme>" if was not found in saved palettes
-	if (!pFound)
-		pFound = pCur;
 	return pFound;
 }
 
