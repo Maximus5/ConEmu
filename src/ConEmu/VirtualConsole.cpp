@@ -2622,6 +2622,31 @@ void CVirtualConsole::SetSelfPalette(WORD wAttributes, WORD wPopupAttributes, co
 
 	const ColorPalette* pFound = gpSet->PaletteFindByColors(true, &m_SelfPalette);
 
+	// If the matching palette does not exist - try to create temporary new one
+	if (!pFound)
+	{
+		wchar_t szAutoName[32];
+		// Don't create too many palettes...
+		for (int i = 1; i <= 99; i++)
+		{
+			_wsprintf(szAutoName, SKIPCOUNT(szAutoName)
+				L"#Attached:%02i",
+				i);
+			if (gpSet->PaletteGetIndex(szAutoName) != -1)
+				continue;
+
+			// Save new (temporary) palette
+			gpSet->PaletteSaveAs(szAutoName, false, CEDEF_ExtendColorIdx,
+				m_SelfPalette.nTextColorIdx, m_SelfPalette.nBackColorIdx,
+				m_SelfPalette.nPopTextColorIdx, m_SelfPalette.nPopBackColorIdx,
+				m_SelfPalette.Colors);
+			// And try to match it
+			pFound = gpSet->PaletteFindByColors(true, &m_SelfPalette);
+			_ASSERTE(pFound != NULL);
+			break;
+		}
+	}
+
 	if (pFound)
 	{
 		mp_RCon->SetPaletteName(pFound->pszName);
