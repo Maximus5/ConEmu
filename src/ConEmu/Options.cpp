@@ -1719,9 +1719,8 @@ const ColorPalette* Settings::PaletteFindByColors(bool bMatchAttributes, const C
 	const ColorPalette* pPal = NULL;
 	for (int i = 0; (pPal = PaletteGetPtr(i)) != NULL; i++)
 	{
-		if ((memcmp(pCur->Colors, pPal->Colors, sizeof(pPal->Colors)) == 0)
-			&& (pCur->isExtendColors == pPal->isExtendColors)
-			&& (pCur->nExtendColorIdx == pPal->nExtendColorIdx)
+		if ((pCur->isExtendColors == pPal->isExtendColors)
+			&& (!pPal->isExtendColors || (pCur->nExtendColorIdx == pPal->nExtendColorIdx))
 			&& (!bMatchAttributes
 				|| ((pCur->nTextColorIdx == pPal->nTextColorIdx)
 					&& (pCur->nBackColorIdx == pPal->nBackColorIdx)
@@ -1729,8 +1728,13 @@ const ColorPalette* Settings::PaletteFindByColors(bool bMatchAttributes, const C
 					&& (pCur->nPopBackColorIdx == pPal->nPopBackColorIdx)))
 			)
 		{
-			pFound = pPal;
-			// Do not break, prefer last palette (use saved)
+			size_t cmpSize = (pPal->isExtendColors ? 32 : 16) * sizeof(pPal->Colors[0]);
+			int iCmp = memcmp(pCur->Colors, pPal->Colors, cmpSize);
+			if (iCmp == 0)
+			{
+				pFound = pPal;
+				// Do not break, prefer last palette (use saved)
+			}
 		}
 	}
 
