@@ -3562,6 +3562,8 @@ BOOL CVConGroup::AttachRequested(HWND ahConWnd, const CESERVER_REQ_STARTSTOP* pS
 				p->VCon = gpConEmu->CreateCon(p->pArgs);
 				if (!p->VCon.VCon())
 					return 0;
+				if (p->pStartStop && p->pStartStop->bPalletteLoaded)
+					p->VCon->SetSelfPalette(p->pStartStop->wAttributes, p->pStartStop->wPopupAttributes, p->pStartStop->ColorTable);
 				return (LRESULT)p->VCon.VCon();
 			};
 		} impl = {new RConStartArgs(), pStartStop};
