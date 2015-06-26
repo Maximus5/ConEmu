@@ -31,6 +31,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <windows.h>
 
+#define CEDEF_ExtendColorIdx   14
+#define CEDEF_BackColorAuto    16
+#define CEDEF_FontNormalColor  1
+#define CEDEF_FontBoldColor    12
+#define CEDEF_FontItalicColor  13
+
 struct ColorPalette
 {
 	wchar_t* pszName;

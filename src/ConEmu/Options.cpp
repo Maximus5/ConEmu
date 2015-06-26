@@ -560,11 +560,13 @@ void Settings::InitSettings()
 	isTrueColorer = true; // включим по умолчанию, ибо Far3
 
 	AppStd.isExtendColors = false;
-	AppStd.nExtendColorIdx = 14;
-	AppStd.nTextColorIdx = AppStd.nBackColorIdx = 16; // Auto
-	AppStd.nPopTextColorIdx = AppStd.nPopBackColorIdx = 16; // Auto
+	AppStd.nExtendColorIdx = CEDEF_ExtendColorIdx/*14*/;
+	AppStd.nTextColorIdx = AppStd.nBackColorIdx = CEDEF_BackColorAuto/*16*/;
+	AppStd.nPopTextColorIdx = AppStd.nPopBackColorIdx = CEDEF_BackColorAuto/*16*/;
 	AppStd.isExtendFonts = false;
-	AppStd.nFontNormalColor = 1; AppStd.nFontBoldColor = 12; AppStd.nFontItalicColor = 13;
+	AppStd.nFontNormalColor = CEDEF_FontNormalColor/*1*/;
+	AppStd.nFontBoldColor = CEDEF_FontBoldColor/*12*/;
+	AppStd.nFontItalicColor = CEDEF_FontItalicColor/*13*/;
 	{
 		_ASSERTE(sizeof(AppStd.CursorActive) == sizeof(DWORD));
 		AppStd.CursorActive.Raw = 0; // Сброс
@@ -1190,16 +1192,16 @@ void Settings::LoadAppSettings(SettingsBase* reg, AppSettings* pApp/*, COLORREF*
 
 		reg->Load(L"ExtendColors", pApp->isExtendColors);
 		reg->Load(L"ExtendColorIdx", pApp->nExtendColorIdx);
-		if (pApp->nExtendColorIdx > 15) pApp->nExtendColorIdx=14;
+		if (pApp->nExtendColorIdx > 15) pApp->nExtendColorIdx=CEDEF_ExtendColorIdx/*14*/;
 
 		reg->Load(L"TextColorIdx", pApp->nTextColorIdx);
-		if (pApp->nTextColorIdx > 16) pApp->nTextColorIdx=16;
+		if (pApp->nTextColorIdx > 16) pApp->nTextColorIdx=CEDEF_BackColorAuto/*16*/;
 		reg->Load(L"BackColorIdx", pApp->nBackColorIdx);
-		if (pApp->nBackColorIdx > 16) pApp->nBackColorIdx=16;
+		if (pApp->nBackColorIdx > 16) pApp->nBackColorIdx=CEDEF_BackColorAuto/*16*/;
 		reg->Load(L"PopTextColorIdx", pApp->nPopTextColorIdx);
-		if (pApp->nPopTextColorIdx > 16) pApp->nPopTextColorIdx=16;
+		if (pApp->nPopTextColorIdx > 16) pApp->nPopTextColorIdx=CEDEF_BackColorAuto/*16*/;
 		reg->Load(L"PopBackColorIdx", pApp->nPopBackColorIdx);
-		if (pApp->nPopBackColorIdx > 16) pApp->nPopBackColorIdx=16;
+		if (pApp->nPopBackColorIdx > 16) pApp->nPopBackColorIdx=CEDEF_BackColorAuto/*16*/;
 	}
 	else
 	{
@@ -1467,9 +1469,9 @@ void Settings::CreatePredefinedPalettes(int iAddUserCount)
 		Palettes[n]->pszName = lstrdup(DefColors[n].pszTitle);
 		Palettes[n]->bPredefined = true;
 		Palettes[n]->isExtendColors = false;
-		Palettes[n]->nExtendColorIdx = 14;
-		Palettes[n]->nTextColorIdx = Palettes[n]->nBackColorIdx = 16; // Auto
-		Palettes[n]->nPopTextColorIdx = Palettes[n]->nPopBackColorIdx = 16; // Auto
+		Palettes[n]->nExtendColorIdx = CEDEF_ExtendColorIdx/*14*/;
+		Palettes[n]->nTextColorIdx = Palettes[n]->nBackColorIdx = CEDEF_BackColorAuto/*16*/;
+		Palettes[n]->nPopTextColorIdx = Palettes[n]->nPopBackColorIdx = CEDEF_BackColorAuto/*16*/;
 		_ASSERTE(countof(Palettes[n]->Colors)==0x20 && countof(DefColors[n].dwDefColors)==0x10);
 		memmove(Palettes[n]->Colors, DefColors[n].dwDefColors, 0x10*sizeof(Palettes[n]->Colors[0]));
 		if (DefColors[n].isIndexes())
