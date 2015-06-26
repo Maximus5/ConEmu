@@ -12808,6 +12808,7 @@ void CRealConsole::SetPaletteName(LPCWSTR asPaletteName)
 	m_Args.pszPalette = pszNew;
 	SafeFree(pszOld);
 	_ASSERTE(!mp_VCon->m_SelfPalette.bPredefined);
+	PrepareDefaultColors();
 }
 
 LPCWSTR CRealConsole::GetCmd(bool bThisOnly /*= false*/)

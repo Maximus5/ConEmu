@@ -2656,6 +2656,7 @@ void CVirtualConsole::SetSelfPalette(WORD wAttributes, WORD wPopupAttributes, co
 		m_SelfPalette.bPredefined = true;
 		m_SelfPalette.FadeInitialized = false;
 		gpSet->PrepareFadeColors(m_SelfPalette.Colors, m_SelfPalette.ColorsFade, &m_SelfPalette.FadeInitialized);
+		mp_RCon->PrepareDefaultColors();
 	}
 
 	Invalidate();
