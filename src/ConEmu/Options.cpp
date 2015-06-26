@@ -1876,6 +1876,17 @@ int Settings::PaletteSetActive(LPCWSTR asName)
 // Save active colors to named palette
 void Settings::PaletteSaveAs(LPCWSTR asName)
 {
+	PaletteSaveAs(asName,
+		AppStd.isExtendColors, AppStd.nExtendColorIdx,
+		AppStd.nTextColorIdx, AppStd.nBackColorIdx,
+		AppStd.nPopTextColorIdx, AppStd.nPopBackColorIdx,
+		this->Colors);
+}
+
+void Settings::PaletteSaveAs(LPCWSTR asName, bool abExtendColors, BYTE anExtendColorIdx,
+		BYTE anTextColorIdx, BYTE anBackColorIdx, BYTE anPopTextColorIdx, BYTE anPopBackColorIdx,
+		const COLORREF (&aColors)[0x20])
+{
 	// Пользовательские палитры не могут именоваться как "<...>"
 	if (!asName || !*asName || wcspbrk(asName, L"<>"))
 	{
@@ -1931,18 +1942,18 @@ void Settings::PaletteSaveAs(LPCWSTR asName)
 	// Сохранять допускается только пользовательские палитры
 	Palettes[nIndex]->bPredefined = false;
 	Palettes[nIndex]->pszName = lstrdup(asName);
-	Palettes[nIndex]->isExtendColors = AppStd.isExtendColors;
-	Palettes[nIndex]->nExtendColorIdx = AppStd.nExtendColorIdx;
+	Palettes[nIndex]->isExtendColors = abExtendColors;
+	Palettes[nIndex]->nExtendColorIdx = anExtendColorIdx;
 
-	BOOL bTextChanged = !bNewPalette && ((Palettes[nIndex]->nTextColorIdx != AppStd.nTextColorIdx) || (Palettes[nIndex]->nBackColorIdx != AppStd.nBackColorIdx));
-	BOOL bPopupChanged = !bNewPalette && ((Palettes[nIndex]->nPopTextColorIdx != AppStd.nPopTextColorIdx) || (Palettes[nIndex]->nPopBackColorIdx != AppStd.nPopBackColorIdx));
-	Palettes[nIndex]->nTextColorIdx = AppStd.nTextColorIdx;
-	Palettes[nIndex]->nBackColorIdx = AppStd.nBackColorIdx;
-	Palettes[nIndex]->nPopTextColorIdx = AppStd.nPopTextColorIdx;
-	Palettes[nIndex]->nPopBackColorIdx = AppStd.nPopBackColorIdx;
+	BOOL bTextChanged = !bNewPalette && ((Palettes[nIndex]->nTextColorIdx != anTextColorIdx) || (Palettes[nIndex]->nBackColorIdx != anBackColorIdx));
+	BOOL bPopupChanged = !bNewPalette && ((Palettes[nIndex]->nPopTextColorIdx != anPopTextColorIdx) || (Palettes[nIndex]->nPopBackColorIdx != anPopBackColorIdx));
+	Palettes[nIndex]->nTextColorIdx = anTextColorIdx;
+	Palettes[nIndex]->nBackColorIdx = anBackColorIdx;
+	Palettes[nIndex]->nPopTextColorIdx = anPopTextColorIdx;
+	Palettes[nIndex]->nPopBackColorIdx = anPopBackColorIdx;
 
-	_ASSERTE(sizeof(Palettes[nIndex]->Colors) == sizeof(this->Colors));
-	memmove(Palettes[nIndex]->Colors, this->Colors, sizeof(Palettes[nIndex]->Colors));
+	_ASSERTE(sizeof(Palettes[nIndex]->Colors) == sizeof(aColors));
+	memmove(Palettes[nIndex]->Colors, aColors, sizeof(Palettes[nIndex]->Colors));
 	_ASSERTE(nIndex < PaletteCount);
 
 	// Теперь, собственно, пишем настройки
