@@ -2625,26 +2625,51 @@ void CVirtualConsole::SetSelfPalette(WORD wAttributes, WORD wPopupAttributes, co
 	// If the matching palette does not exist - try to create temporary new one
 	if (!pFound)
 	{
-		wchar_t szAutoName[32];
-		// Don't create too many palettes...
-		for (int i = 1; i <= 99; i++)
+		CEStr lsPrefix;
+		if (mp_RCon->ms_RootProcessName[0])
 		{
-			_wsprintf(szAutoName, SKIPCOUNT(szAutoName)
-				L"#Attached:%02i",
-				i);
+			LPCWSTR pszExt = PointToExt(mp_RCon->ms_RootProcessName);
+			if (!pszExt || (pszExt > mp_RCon->ms_RootProcessName))
+			{
+				lsPrefix = lstrmerge(L"#Attached:", mp_RCon->ms_RootProcessName);
+				wchar_t* pszDot = lsPrefix.ms_Arg ? wcsrchr(lsPrefix.ms_Arg, L'.') : NULL;
+				if (pszDot)
+				{
+					*pszDot = 0;
+				}
+			}
+		}
+
+		CEStr szAutoName; wchar_t szSuffix[8];
+		// Don't create too many palettes...
+		for (int i = 0; i <= 99; i++)
+		{
+			if (!i)
+			{
+				if (lsPrefix.IsEmpty())
+					continue;
+				szAutoName.Set(lsPrefix);
+			}
+			else
+			{
+				_wsprintf(szSuffix, SKIPCOUNT(szSuffix) L":%02i", i);
+				szAutoName = lstrmerge(lsPrefix.IsEmpty() ? L"#Attached" : lsPrefix.ms_Arg, szSuffix);
+			}
+
 			if (gpSet->PaletteGetIndex(szAutoName) != -1)
 				continue;
 
-			// Save new (temporary) palette
-			gpSet->PaletteSaveAs(szAutoName, false, CEDEF_ExtendColorIdx,
-				m_SelfPalette.nTextColorIdx, m_SelfPalette.nBackColorIdx,
-				m_SelfPalette.nPopTextColorIdx, m_SelfPalette.nPopBackColorIdx,
-				m_SelfPalette.Colors, false);
-			// And try to match it
-			pFound = gpSet->PaletteFindByColors(true, &m_SelfPalette);
-			_ASSERTE(pFound != NULL);
 			break;
 		}
+
+		// Save new (temporary) palette
+		gpSet->PaletteSaveAs(szAutoName, false, CEDEF_ExtendColorIdx,
+			m_SelfPalette.nTextColorIdx, m_SelfPalette.nBackColorIdx,
+			m_SelfPalette.nPopTextColorIdx, m_SelfPalette.nPopBackColorIdx,
+			m_SelfPalette.Colors, false);
+		// And try to match it
+		pFound = gpSet->PaletteFindByColors(true, &m_SelfPalette);
+		_ASSERTE(pFound != NULL);
 	}
 
 	if (pFound)
