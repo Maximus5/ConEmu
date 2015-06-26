@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2014 Maximus5
+Copyright (c) 2014-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -56,6 +56,8 @@ struct ColorPalette
 	// Computed
 	COLORREF ColorsFade[0x20];
 	bool FadeInitialized;
+
+	COLORREF* GetColors(bool abFade);
 
 	void FreePtr();
 };

@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2014 Maximus5
+Copyright (c) 2014-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -32,6 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "Header.h"
 
+#include "Options.h"
 #include "SetColorPalette.h"
 
 void ColorPalette::FreePtr()
@@ -39,4 +40,9 @@ void ColorPalette::FreePtr()
 	SafeFree(pszName);
 	ColorPalette* p = this;
 	SafeFree(p);
+}
+
+COLORREF* ColorPalette::GetColors(bool abFade)
+{
+	return gpSet->GetColorsPrepare(Colors, ColorsFade, &FadeInitialized, abFade);
 }
