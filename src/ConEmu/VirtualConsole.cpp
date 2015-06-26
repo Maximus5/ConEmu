@@ -2639,7 +2639,7 @@ void CVirtualConsole::SetSelfPalette(WORD wAttributes, WORD wPopupAttributes, co
 			gpSet->PaletteSaveAs(szAutoName, false, CEDEF_ExtendColorIdx,
 				m_SelfPalette.nTextColorIdx, m_SelfPalette.nBackColorIdx,
 				m_SelfPalette.nPopTextColorIdx, m_SelfPalette.nPopBackColorIdx,
-				m_SelfPalette.Colors);
+				m_SelfPalette.Colors, false);
 			// And try to match it
 			pFound = gpSet->PaletteFindByColors(true, &m_SelfPalette);
 			_ASSERTE(pFound != NULL);

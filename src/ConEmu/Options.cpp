@@ -1880,12 +1880,12 @@ void Settings::PaletteSaveAs(LPCWSTR asName)
 		AppStd.isExtendColors, AppStd.nExtendColorIdx,
 		AppStd.nTextColorIdx, AppStd.nBackColorIdx,
 		AppStd.nPopTextColorIdx, AppStd.nPopBackColorIdx,
-		this->Colors);
+		this->Colors, true);
 }
 
 void Settings::PaletteSaveAs(LPCWSTR asName, bool abExtendColors, BYTE anExtendColorIdx,
 		BYTE anTextColorIdx, BYTE anBackColorIdx, BYTE anPopTextColorIdx, BYTE anPopBackColorIdx,
-		const COLORREF (&aColors)[0x20])
+		const COLORREF (&aColors)[0x20], bool abSaveSettings)
 {
 	// Пользовательские палитры не могут именоваться как "<...>"
 	if (!asName || !*asName || wcspbrk(asName, L"<>"))
@@ -1956,13 +1956,16 @@ void Settings::PaletteSaveAs(LPCWSTR asName, bool abExtendColors, BYTE anExtendC
 	memmove(Palettes[nIndex]->Colors, aColors, sizeof(Palettes[nIndex]->Colors));
 	_ASSERTE(nIndex < PaletteCount);
 
-	// Теперь, собственно, пишем настройки
-	SavePalettes(NULL);
-
-	// Обновить консоли
-	if (bTextChanged || bPopupChanged)
+	if (abSaveSettings)
 	{
-		gpSetCls->UpdateTextColorSettings(bTextChanged, bPopupChanged);
+		// Save setting now
+		SavePalettes(NULL);
+
+		// Refresh all consoles
+		if (bTextChanged || bPopupChanged)
+		{
+			gpSetCls->UpdateTextColorSettings(bTextChanged, bPopupChanged);
+		}
 	}
 }
 
