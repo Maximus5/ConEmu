@@ -170,6 +170,8 @@ struct Settings
 		const AppSettings* GetAppSettings(int anAppId=-1);
 		const COLORREF* GetDefColors(LPCWSTR asDefName = NULL);
 		COLORREF* GetColors(int anAppId=-1, BOOL abFade = FALSE);
+		COLORREF* GetColorsPrepare(COLORREF *pColors, COLORREF *pColorsFade, bool* pbFadeInitialized, BOOL abFade);
+		void PrepareFadeColors(COLORREF *pColors, COLORREF *pColorsFade, bool* pbFadeInitialized);
 		COLORREF* GetPaletteColors(LPCWSTR asPalette, BOOL abFade = FALSE);
 		COLORREF GetFadeColor(COLORREF cr);
 		void ResetFadeColors();
@@ -230,8 +232,6 @@ struct Settings
 		void SavePalettes(SettingsBase* reg);
 		void SortPalettes();
 		void FreePalettes();
-
-		COLORREF* GetColorsPrepare(COLORREF *pColors, COLORREF *pColorsFade, bool* pbFadeInitialized, BOOL abFade);
 
 		int ProgressesCount;
 		ConEmuProgressStore** Progresses;

@@ -381,7 +381,7 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 		{
 			MCHKHEAP;
 
-			// SRVSTART не приходит если запускается cmd под админом
+			// SRVSTART не приходит если запускается cmd под админом или из Win+G
 			bool lbAllocated = false;
 
 			if (pIn->SrvStartStop.Started == srv_Started)

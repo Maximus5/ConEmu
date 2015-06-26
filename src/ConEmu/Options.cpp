@@ -4696,27 +4696,32 @@ COLORREF* Settings::GetColorsPrepare(COLORREF *pColors, COLORREF *pColorsFade, b
 
 	if (!*pbFadeInitialized)
 	{
-		// Для ускорения, при повторных запросах, GetFadeColor кеширует результат
-		mn_LastFadeSrc = mn_LastFadeDst = -1;
-
-		// Валидация
-		if (((int)mn_FadeHigh - (int)mn_FadeLow) < 64)
-		{
-			mn_FadeLow = DEFAULT_FADE_LOW; mn_FadeHigh = DEFAULT_FADE_HIGH;
-		}
-
-		// Prepare
-		mn_FadeMul = mn_FadeHigh - mn_FadeLow;
-		*pbFadeInitialized = true;
-
-		// Посчитать "затемненные" цвета
-		for (size_t i = 0; i < countof(ColorsFade); i++)
-		{
-			pColorsFade[i] = GetFadeColor(pColors[i]);
-		}
+		PrepareFadeColors(pColors, pColorsFade, pbFadeInitialized);
 	}
 
 	return pColorsFade;
+}
+
+void Settings::PrepareFadeColors(COLORREF *pColors, COLORREF *pColorsFade, bool* pbFadeInitialized)
+{
+	// GetFadeColor cache the result
+	mn_LastFadeSrc = mn_LastFadeDst = -1;
+
+	// Валидация
+	if (((int)mn_FadeHigh - (int)mn_FadeLow) < 64)
+	{
+		mn_FadeLow = DEFAULT_FADE_LOW; mn_FadeHigh = DEFAULT_FADE_HIGH;
+	}
+
+	// Prepare
+	mn_FadeMul = mn_FadeHigh - mn_FadeLow;
+	*pbFadeInitialized = true;
+
+	// Evaluate fade color
+	for (size_t i = 0; i < countof(ColorsFade); i++)
+	{
+		pColorsFade[i] = GetFadeColor(pColors[i]);
+	}
 }
 
 COLORREF Settings::GetFadeColor(COLORREF cr)
