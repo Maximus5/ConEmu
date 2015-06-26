@@ -2620,9 +2620,18 @@ void CVirtualConsole::SetSelfPalette(WORD wAttributes, WORD wPopupAttributes, co
 	m_SelfPalette.nPopTextColorIdx = (BYTE)((wPopupAttributes & 0x0F));
 	m_SelfPalette.nPopBackColorIdx = (BYTE)((wPopupAttributes & 0xF0) >> 4);
 
-	m_SelfPalette.bPredefined = true;
-	m_SelfPalette.FadeInitialized = false;
-	gpSet->PrepareFadeColors(m_SelfPalette.Colors, m_SelfPalette.ColorsFade, &m_SelfPalette.FadeInitialized);
+	const ColorPalette* pFound = gpSet->PaletteFindByColors(true, &m_SelfPalette);
+
+	if (pFound)
+	{
+		mp_RCon->SetPaletteName(pFound->pszName);
+	}
+	else
+	{
+		m_SelfPalette.bPredefined = true;
+		m_SelfPalette.FadeInitialized = false;
+		gpSet->PrepareFadeColors(m_SelfPalette.Colors, m_SelfPalette.ColorsFade, &m_SelfPalette.FadeInitialized);
+	}
 
 	Invalidate();
 }
