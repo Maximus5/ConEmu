@@ -72,7 +72,6 @@ FEFF    ZERO WIDTH NO-BREAK SPACE
 #include "OptionsClass.h"
 #include "Background.h"
 #include "ConEmuPipe.h"
-#include "SetColorPalette.h"
 #include "TabID.h"
 #include "TabBar.h"
 #include "TaskBarGhost.h"
@@ -284,6 +283,7 @@ bool CVirtualConsole::Constructor(RConStartArgs *args)
 	memset(&TransparentInfo, 0, sizeof(TransparentInfo));
 	isFade = false; isForeground = true;
 	mp_Colors = gpSet->GetColors(-1);
+	ZeroStruct(m_SelfPalette);
 	mn_AppSettingsChangCount = 0;
 	memset(&m_LeftPanelView, 0, sizeof(m_LeftPanelView));
 	memset(&m_RightPanelView, 0, sizeof(m_RightPanelView));
@@ -2607,6 +2607,19 @@ bool CVirtualConsole::LoadConsoleData()
 	return true;
 }
 
+void CVirtualConsole::SetSelfPalette(const COLORREF (&ColorTable)[16])
+{
+	for (INT_PTR i = 0; i < 16; i++)
+	{
+		m_SelfPalette.Colors[i] = ColorTable[i];
+		m_SelfPalette.Colors[i+16] = ColorTable[i];
+	}
+	m_SelfPalette.bPredefined = true;
+	m_SelfPalette.FadeInitialized = false;
+	gpSet->PrepareFadeColors(m_SelfPalette.Colors, m_SelfPalette.ColorsFade, &m_SelfPalette.FadeInitialized);
+	Invalidate();
+}
+
 COLORREF* CVirtualConsole::GetColors()
 {
 	return GetColors(isFade);
@@ -2614,10 +2627,19 @@ COLORREF* CVirtualConsole::GetColors()
 
 COLORREF* CVirtualConsole::GetColors(bool bFade)
 {
-	// Was specified palette forced to this console?
-	LPCWSTR pszPalName = mp_RCon ? mp_RCon->GetArgs().pszPalette : NULL;
+	if (!this || !mp_RCon)
+	{
+		return gpSet->GetColors(bFade);
+	}
 
-	if (pszPalName && *pszPalName)
+	// Was specified palette forced to this console?
+	LPCWSTR pszPalName = NULL;
+
+	if (m_SelfPalette.bPredefined)
+	{
+		mp_Colors = m_SelfPalette.GetColors(bFade);
+	}
+	else if (((pszPalName = mp_RCon->GetArgs().pszPalette) != NULL) && *pszPalName)
 	{
 		mp_Colors = gpSet->GetPaletteColors(pszPalName, bFade);
 	}
@@ -2634,8 +2656,18 @@ COLORREF* CVirtualConsole::GetColors(bool bFade)
 
 int CVirtualConsole::GetPaletteIndex()
 {
+	if (!this || !mp_RCon)
+	{
+		return -1;
+	}
+
 	int iActiveIndex = -1;
-	if (this && mp_RCon)
+
+	if (m_SelfPalette.bPredefined)
+	{
+		iActiveIndex = 0; // Treat it as "Windows Default"
+	}
+	else
 	{
 		LPCWSTR pszPalName = mp_RCon->GetArgs().pszPalette;
 		if (pszPalName && *pszPalName)
@@ -2648,6 +2680,7 @@ int CVirtualConsole::GetPaletteIndex()
 			iActiveIndex = pAppSet ? pAppSet->GetPaletteIndex() : -1;
 		}
 	}
+
 	return iActiveIndex;
 }
 
@@ -2668,6 +2701,7 @@ bool CVirtualConsole::ChangePalette(int aNewPaletteIdx)
 		bPopupChanged = (pOldPal->nPopTextColorIdx != pPal->nPopTextColorIdx) || (pOldPal->nPopBackColorIdx != pPal->nPopBackColorIdx);
 	}
 
+	m_SelfPalette.bPredefined = false;
 	mp_RCon->SetPaletteName(pPal->pszName);
 	mp_RCon->UpdateTextColorSettings(bTextChanged, bPopupChanged);
 

@@ -30,7 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _COMMON_HEADER_HPP_
 
 // Interface version
-#define CESERVER_REQ_VER    154
+#define CESERVER_REQ_VER    155
 
 // Max tabs/panes count
 #define MAX_CONSOLE_COUNT 30
@@ -1725,6 +1725,10 @@ struct CESERVER_REQ_STARTSTOP
 	DWORD nAltServerPID;
 	// Если был успешный вызов функций типа ReadConsole/ReadConsoleInput
 	BOOL bWasSucceededInRead;
+	// Self console palette? Useful after Win+G
+	BOOL bPalletteLoaded;
+	WORD wAttributes, wPopupAttributes;
+	COLORREF ColorTable[16];
 	// CmdLine
 	wchar_t sCmdLine[1]; // variable length
 };

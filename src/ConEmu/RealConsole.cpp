@@ -3314,18 +3314,22 @@ void CRealConsole::PrepareDefaultColors(BYTE& nTextColorIdx, BYTE& nBackColorIdx
 	const AppSettings* pApp = gpSet->GetAppSettings(GetDefaultAppSettingsId());
 	_ASSERTE(pApp!=NULL);
 
-	// User choose special palette for this console?
-	const ColorPalette* pPal = NULL;
-	_ASSERTE(countof(pApp->szPaletteName)>0); // must be array, not pointer
-	LPCWSTR pszPalette = (m_Args.pszPalette && *m_Args.pszPalette) ? m_Args.pszPalette
-		: (pApp->OverridePalette && *pApp->szPaletteName) ? pApp->szPaletteName
-		: NULL;
-	if (pszPalette && *pszPalette)
+	// May be palette was inherited from RealConsole (Win+G attach)
+	const ColorPalette* pPal = mp_VCon->m_SelfPalette.bPredefined ? &mp_VCon->m_SelfPalette : NULL;
+	// User's choosed special palette for this console?
+	if (!pPal)
 	{
-		int iPalIdx = gpSet->PaletteGetIndex(pszPalette);
-		if (iPalIdx >= 0)
+		_ASSERTE(countof(pApp->szPaletteName)>0); // must be array, not pointer
+		LPCWSTR pszPalette = (m_Args.pszPalette && *m_Args.pszPalette) ? m_Args.pszPalette
+			: (pApp->OverridePalette && *pApp->szPaletteName) ? pApp->szPaletteName
+			: NULL;
+		if (pszPalette && *pszPalette)
 		{
-			pPal = gpSet->PaletteGet(iPalIdx);
+			int iPalIdx = gpSet->PaletteGetIndex(pszPalette);
+			if (iPalIdx >= 0)
+			{
+				pPal = gpSet->PaletteGet(iPalIdx);
+			}
 		}
 	}
 
@@ -12798,6 +12802,7 @@ void CRealConsole::SetPaletteName(LPCWSTR asPaletteName)
 		pszNew = lstrdup(asPaletteName);
 	m_Args.pszPalette = pszNew;
 	SafeFree(pszOld);
+	_ASSERTE(!mp_VCon->m_SelfPalette.bPredefined);
 }
 
 LPCWSTR CRealConsole::GetCmd(bool bThisOnly /*= false*/)

@@ -2417,6 +2417,15 @@ bool TryConnect2Gui(HWND hGui, DWORD anGuiPID, CESERVER_REQ* pIn)
 				}
 			}
 		}
+
+		MY_CONSOLE_SCREEN_BUFFER_INFOEX sbi_ex = {sizeof(sbi_ex)};
+		if ((pIn->StartStop.bPalletteLoaded = apiGetConsoleScreenBufferInfoEx((HANDLE)ghConOut, &sbi_ex)))
+		{
+			_ASSERTE(sizeof(pIn->StartStop.ColorTable) == sizeof(sbi_ex.ColorTable));
+			pIn->StartStop.wAttributes = sbi_ex.wAttributes;
+			pIn->StartStop.wPopupAttributes = sbi_ex.wPopupAttributes;
+			memmove(pIn->StartStop.ColorTable, sbi_ex.ColorTable, sizeof(pIn->StartStop.ColorTable));
+		}
 	}
 	else
 	{

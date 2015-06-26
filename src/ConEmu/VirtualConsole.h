@@ -37,6 +37,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "RealConsole.h"
 #include "VConChild.h"
 #include "CustomFonts.h"
+#include "SetColorPalette.h"
 
 #define MAX_COUNT_PART_BRUSHES 16*16*4
 #define MAX_SPACES 0x400
@@ -285,6 +286,11 @@ class CVirtualConsole :
 		bool isEditor, isViewer, isFilePanel, isFade, isForeground;
 		BYTE attrBackLast;
 		COLORREF *mp_Colors;
+
+		// In some cases (Win+G attach of external console)
+		// we use original RealConsole palette instead of ConEmu's default one
+		ColorPalette m_SelfPalette;
+		void SetSelfPalette(const COLORREF (&ColorTable)[16]);
 
 		//wchar_t *Spaces; WORD nSpaceCount;
 		static wchar_t ms_Spaces[MAX_SPACES], ms_HorzDbl[MAX_SPACES], ms_HorzSingl[MAX_SPACES];
