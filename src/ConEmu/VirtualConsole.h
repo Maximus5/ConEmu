@@ -290,7 +290,7 @@ class CVirtualConsole :
 		// In some cases (Win+G attach of external console)
 		// we use original RealConsole palette instead of ConEmu's default one
 		ColorPalette m_SelfPalette;
-		void SetSelfPalette(const COLORREF (&ColorTable)[16]);
+		void SetSelfPalette(WORD wAttributes, WORD wPopupAttributes, const COLORREF (&ColorTable)[16]);
 
 		//wchar_t *Spaces; WORD nSpaceCount;
 		static wchar_t ms_Spaces[MAX_SPACES], ms_HorzDbl[MAX_SPACES], ms_HorzSingl[MAX_SPACES];

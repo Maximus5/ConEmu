@@ -2607,16 +2607,23 @@ bool CVirtualConsole::LoadConsoleData()
 	return true;
 }
 
-void CVirtualConsole::SetSelfPalette(const COLORREF (&ColorTable)[16])
+void CVirtualConsole::SetSelfPalette(WORD wAttributes, WORD wPopupAttributes, const COLORREF (&ColorTable)[16])
 {
 	for (INT_PTR i = 0; i < 16; i++)
 	{
 		m_SelfPalette.Colors[i] = ColorTable[i];
 		m_SelfPalette.Colors[i+16] = ColorTable[i];
 	}
+
+	m_SelfPalette.nTextColorIdx = (BYTE)((wAttributes & 0x0F));
+	m_SelfPalette.nBackColorIdx = (BYTE)((wAttributes & 0xF0) >> 4);
+	m_SelfPalette.nPopTextColorIdx = (BYTE)((wPopupAttributes & 0x0F));
+	m_SelfPalette.nPopBackColorIdx = (BYTE)((wPopupAttributes & 0xF0) >> 4);
+
 	m_SelfPalette.bPredefined = true;
 	m_SelfPalette.FadeInitialized = false;
 	gpSet->PrepareFadeColors(m_SelfPalette.Colors, m_SelfPalette.ColorsFade, &m_SelfPalette.FadeInitialized);
+
 	Invalidate();
 }
 
