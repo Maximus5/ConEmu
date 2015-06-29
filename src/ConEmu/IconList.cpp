@@ -195,7 +195,7 @@ int CIconList::CreateTabIcon(LPCWSTR asIconDescr, bool bAdmin, LPCWSTR asWorkDir
 		goto wrap;
 	}
 
-	iCreatedIcon = CreateTabIconInt(asIconDescr, bAdmin, asWorkDir);
+	iCreatedIcon = mh_TabIcons ? CreateTabIconInt(asIconDescr, bAdmin, asWorkDir) : -1;
 
 	if (iCreatedIcon == -1)
 	{
