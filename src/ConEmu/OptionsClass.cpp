@@ -1414,7 +1414,8 @@ void CSettings::SearchForControls()
 							break; // Found
 						}
 					} // End of "SysListView32" processing
-					else if (((lstrcmpi(szClass, L"Button") == 0) || (lstrcmpi(szClass, L"Static") != 0))
+					else if (((lstrcmpi(szClass, L"Button") == 0)
+								|| (lstrcmpi(szClass, L"Static") == 0))
 						&& GetWindowText(hCtrl, szText, countof(szText)) && *szText)
 					{
 						// The control's text may has (&) accelerator confusing the search
@@ -1426,8 +1427,15 @@ void CSettings::SearchForControls()
 						}
 
 						if (StrStrI(szText, pszPart) != NULL)
-							break;
+							break; // Found
 					} // End of "Button" and "Static" processing
+					else if ((lstrcmpi(szClass, L"Edit") == 0)
+						&& GetWindowText(hCtrl, szText, countof(szText)) && *szText)
+					{
+						// Process "Edit" fields too (search for user-typed string)
+						if (StrStrI(szText, pszPart) != NULL)
+							break; // Found
+					} // End of "Edit" processing
 				}
 
 				hCtrl = FindWindowEx(hCurTab, hCtrl, NULL, NULL);
