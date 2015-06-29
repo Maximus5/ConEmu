@@ -10612,6 +10612,13 @@ int CRealConsole::GetRootProcessIcon()
 	return gpSet->isTabIcons ? mn_RootProcessIcon : -1;
 }
 
+LPCWSTR CRealConsole::GetRootProcessName()
+{
+	if (!this || !*ms_RootProcessName)
+		return NULL;
+	return ms_RootProcessName;
+}
+
 void CRealConsole::NeedRefreshRootProcessIcon()
 {
 	mb_NeedLoadRootProcessIcon = true;
