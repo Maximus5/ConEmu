@@ -549,6 +549,20 @@ void CTabBarClass::CheckRebarCreated()
 	if (!m_TabIcons.IsInitialized())
 	{
 		m_TabIcons.Initialize();
+
+		// Refresh all RCon where icons were not loaded yet
+		struct impl
+		{
+			static bool RefreshIcons(CVirtualConsole* pVCon, LPARAM lParam)
+			{
+				if (pVCon->RCon()->GetRootProcessIcon() == -1)
+				{
+					pVCon->RCon()->NeedRefreshRootProcessIcon();
+				}
+				return true;
+			}
+		};
+		CVConGroup::EnumVCon(evf_All, impl::RefreshIcons, 0);
 	}
 
 	// Создать
