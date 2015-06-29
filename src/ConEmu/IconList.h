@@ -39,6 +39,7 @@ protected:
 		wchar_t* pszIconDescr;
 		int nIconIdx;
 		bool bAdmin;
+		bool bWasNotLoaded;
 	};
 	MSectionSimple* mpcs;
 	MArray<TabIconCache> m_Icons;

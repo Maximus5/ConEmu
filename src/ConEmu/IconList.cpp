@@ -190,6 +190,14 @@ int CIconList::CreateTabIcon(LPCWSTR asIconDescr, bool bAdmin, LPCWSTR asWorkDir
 			continue;
 		if (lstrcmpi(icn.pszIconDescr, asIconDescr) != 0)
 			continue;
+
+		// If tab was not created yet?
+		if (icn.bWasNotLoaded && mh_TabIcons)
+		{
+			m_Icons.erase(i);
+			break;
+		}
+
 		// Already was created!
 		iCreatedIcon = icn.nIconIdx;
 		goto wrap;
@@ -200,7 +208,7 @@ int CIconList::CreateTabIcon(LPCWSTR asIconDescr, bool bAdmin, LPCWSTR asWorkDir
 	if (iCreatedIcon == -1)
 	{
 		// To avoid numerous CreateTabIconInt calls - just remember "No icon" for that asIconDescr
-		TabIconCache DummyIcon = {lstrdup(asIconDescr), -1, bAdmin};
+		TabIconCache DummyIcon = {lstrdup(asIconDescr), -1, bAdmin, (mh_TabIcons==NULL)};
 		m_Icons.push_back(DummyIcon);
 	}
 wrap:
