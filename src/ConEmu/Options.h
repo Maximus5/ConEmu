@@ -677,7 +677,7 @@ struct Settings
 		bool mb_StatusSettingsWasChanged;
 
 		//reg->Load(L"Tabs", isTabs);
-		char isTabs;
+		char isTabs; // 0 - don't show, 1 - always show, 2 - auto show
 		//reg->Load(L"TabsLocation", nTabsLocation);
 		BYTE nTabsLocation; // 0 - top, 1 - bottom
 		//reg->Load(L"TabIcons", isTabIcons);
