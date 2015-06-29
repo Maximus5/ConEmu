@@ -2626,12 +2626,13 @@ void CVirtualConsole::SetSelfPalette(WORD wAttributes, WORD wPopupAttributes, co
 	if (!pFound)
 	{
 		CEStr lsPrefix;
-		if (mp_RCon->ms_RootProcessName[0])
+		LPCWSTR pszRootProcessName = mp_RCon->GetRootProcessName();
+		if (pszRootProcessName)
 		{
-			LPCWSTR pszExt = PointToExt(mp_RCon->ms_RootProcessName);
-			if (!pszExt || (pszExt > mp_RCon->ms_RootProcessName))
+			LPCWSTR pszExt = PointToExt(pszRootProcessName);
+			if (!pszExt || (pszExt > pszRootProcessName))
 			{
-				lsPrefix = lstrmerge(L"#Attached:", mp_RCon->ms_RootProcessName);
+				lsPrefix = lstrmerge(L"#Attached:", pszRootProcessName);
 				wchar_t* pszDot = lsPrefix.ms_Arg ? wcsrchr(lsPrefix.ms_Arg, L'.') : NULL;
 				if (pszDot)
 				{
