@@ -1216,7 +1216,7 @@ BEGIN
     CONTROL         "Check on startup",cbUpdateCheckOnStartup,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,13,70,8
     CONTROL         "Hourly",cbUpdateCheckHourly,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,83,13,34,8
     CONTROL         "Show TSA balloon",cbUpdateConfirmDownload,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,121,13,73,8
-    CONTROL         "Stable",rbUpdateStableOnly,"Button",BS_AUTORADIOBUTTON,200,13,38,8
+    CONTROL         "Stable",rbUpdateStableOnly,"Button",BS_AUTORADIOBUTTON | WS_DISABLED,200,13,38,8
     CONTROL         "Preview",rbUpdatePreview,"Button",BS_AUTORADIOBUTTON,240,13,38,8
     CONTROL         "Latest",rbUpdateLatestAvailable,"Button",BS_AUTORADIOBUTTON,280,13,38,8
     GROUPBOX        "",IDC_STATIC,4,30,319,27
@@ -1274,7 +1274,7 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,176,295,10
     LTEXT           "You can change following on 'Update' page of Settings dialog later",stEnableAutoUpdateFast,11,192,302,8
     CONTROL         "Enable automatic updates",cbEnableAutoUpdateFast,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,203,109,10
-    CONTROL         "‘Stable’",rbAutoUpdateStableFast,"Button",BS_AUTORADIOBUTTON,128,203,46,10
+    CONTROL         "‘Stable’",rbAutoUpdateStableFast,"Button",BS_AUTORADIOBUTTON | WS_DISABLED,128,203,46,10
     CONTROL         "‘Preview’",rbAutoUpdatePreviewFast,"Button",BS_AUTORADIOBUTTON,178,203,50,10
     CONTROL         "‘Developer’ builds",rbAutoUpdateDeveloperFast,"Button",BS_AUTORADIOBUTTON,232,203,71,10
     GROUPBOX        "",gbDisableConImeFast,3,222,317,61
