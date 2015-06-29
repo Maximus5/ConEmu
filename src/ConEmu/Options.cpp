@@ -5430,6 +5430,21 @@ DWORD Settings::GetHotkeyById(int nDescrID, const ConEmuHotKey** ppHK)
 	return 0;
 }
 
+// Return hotkeyname by ID
+LPCWSTR Settings::GetHotkeyNameById(int nDescrID, wchar_t (&szFull)[128], bool bShowNone /*= true*/)
+{
+	const ConEmuHotKey* pHK = NULL;
+	if (gpSet->GetHotkeyById(nDescrID, &pHK) && pHK)
+	{
+		pHK->GetHotkeyName(szFull, bShowNone);
+	}
+	else
+	{
+		wcscpy_c(szFull, bShowNone ? gsNoHotkey : L"");
+	}
+	return szFull;
+}
+
 // Проверить, задан ли этот hotkey
 // nDescrID = vkXXX (e.g. vkMinimizeRestore)
 bool Settings::IsHotkey(int nDescrID)

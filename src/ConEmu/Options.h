@@ -885,6 +885,8 @@ struct Settings
 
 		// Вернуть заданный VkMod, или 0 если не задан. nDescrID = vkXXX (e.g. vkMinimizeRestore)
 		DWORD GetHotkeyById(int nDescrID, const ConEmuHotKey** ppHK = NULL);
+		// Return hotkeyname by ID
+		LPCWSTR GetHotkeyNameById(int nDescrID, wchar_t (&szFull)[128], bool bShowNone = true);
 		// Проверить, задан ли этот hotkey. nDescrID = vkXXX (e.g. vkMinimizeRestore)
 		bool IsHotkey(int nDescrID);
 		// Установить новый hotkey. nDescrID = vkXXX (e.g. vkMinimizeRestore).
