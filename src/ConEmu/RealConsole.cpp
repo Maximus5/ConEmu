@@ -4329,6 +4329,8 @@ BOOL CRealConsole::StartProcessInt(LPCWSTR& lpszCmd, wchar_t*& psCurCmd, LPCWSTR
 
 	_ASSERTE(mn_RunTime==0 && mn_StartTick==0); // еще не должно быть установлено или должно быть сброшено
 
+	LPCWSTR lpszConEmuC = mp_ConEmu->ConEmuCExeFull(lpszCmd);
+
 	int nCurLen = 0;
 	if (lpszCmd == NULL)
 	{
@@ -4357,7 +4359,7 @@ BOOL CRealConsole::StartProcessInt(LPCWSTR& lpszCmd, wchar_t*& psCurCmd, LPCWSTR
 
 	_wcscat_c(psCurCmd, nLen, L"\"");
 	// Copy to psCurCmd full path to ConEmuC.exe or ConEmuC64.exe
-	_wcscat_c(psCurCmd, nLen, mp_ConEmu->ConEmuCExeFull(lpszCmd));
+	_wcscat_c(psCurCmd, nLen, lpszConEmuC);
 	//lstrcat(psCurCmd, L"\\");
 	//lstrcpy(psCurCmd, mp_ConEmu->ms_ConEmuCExeName);
 	_wcscat_c(psCurCmd, nLen, L"\" ");
