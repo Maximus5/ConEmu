@@ -991,7 +991,7 @@ void CTabBarClass::Update(BOOL abPosted/*=FALSE*/)
 	return; // Just for clearness
 }
 
-RECT CTabBarClass::GetMargins()
+RECT CTabBarClass::GetMargins(bool bIgnoreVisibility /*= false*/)
 {
 	RECT rcNewMargins = {0,0};
 
@@ -1001,7 +1001,7 @@ RECT CTabBarClass::GetMargins()
 		return rcNewMargins;
 	}
 
-	if (_active || (gpSet->isTabs == 1))
+	if (bIgnoreVisibility || (_active || (gpSet->isTabs == 1)))
 	{
 		if (!_tabHeight)
 		{

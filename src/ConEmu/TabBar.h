@@ -161,7 +161,7 @@ class CTabBarClass
 		void Deactivate(BOOL abPreSyncConsole=FALSE);
 		bool GetActiveTabRect(RECT* rcTab);
 		int  GetCurSel();
-		RECT GetMargins();
+		RECT GetMargins(bool bIgnoreVisibility = false);
 		bool GetRebarClientRect(RECT* rc);
 		int  GetTabbarHeight();
 		int  GetTabFromPoint(LPPOINT pptCur, bool bScreen = true, bool bOverTabHitTest = true);
