@@ -1210,6 +1210,7 @@ void CSettings::InitFont(LPCWSTR asFontName/*=NULL*/, int anFontHeight/*=-1*/, i
 	MCHKHEAP
 }
 
+// Find setting by typed name in the "Search" box
 void CSettings::SearchForControls()
 {
 	HWND hSearchEdit = GetDlgItem(ghOpWnd, tOptionSearch);
@@ -1378,9 +1379,9 @@ void CSettings::SearchForControls()
 							{
 								SendMessage(hCtrl, LB_GETTEXT, lFind, (LPARAM)szText);
 							}
-							break; // Нашли
+							break; // Found
 						}
-					}
+					} // End of "ListBox" processing
 					else if (lstrcmpi(szClass, L"SysListView32") == 0)
 					{
 						LVITEM lvi = {LVIF_TEXT|LVIF_STATE|LVIF_PARAM};
@@ -1410,13 +1411,13 @@ void CSettings::SearchForControls()
 							ListView_SetItemState(hCtrl, lFind, LVIS_SELECTED, LVIS_SELECTED);
 							ListView_SetSelectionMark(hCtrl, lFind);
 							ListView_EnsureVisible(hCtrl, lFind, FALSE);
-							break; // Нашли
+							break; // Found
 						}
-					}
+					} // End of "SysListView32" processing
 					else if (((lstrcmpi(szClass, L"Button") == 0) || (lstrcmpi(szClass, L"Static") != 0))
 						&& GetWindowText(hCtrl, szText, countof(szText)) && *szText)
 					{
-						// В контроле может быть акселератор (&) мешающий поиску
+						// The control's text may has (&) accelerator confusing the search
 						wchar_t* p = wcschr(szText, L'&');
 						while (p)
 						{
@@ -1426,7 +1427,7 @@ void CSettings::SearchForControls()
 
 						if (StrStrI(szText, pszPart) != NULL)
 							break;
-					}
+					} // End of "Button" and "Static" processing
 				}
 
 				hCtrl = FindWindowEx(hCurTab, hCtrl, NULL, NULL);

@@ -373,7 +373,7 @@ class CSettings
 		void OnResetOrReload(bool abResetOnly, SettingsStorage* pXmlStorage = NULL);
 		void ExportSettings();
 		void ImportSettings();
-		void SearchForControls();
+		void SearchForControls(); // Find setting by typed name in the "Search" box
 		static void InvalidateCtrl(HWND hCtrl, BOOL bErase);
 		// IDD_SETTINGS
 		LRESULT OnInitDialog();
