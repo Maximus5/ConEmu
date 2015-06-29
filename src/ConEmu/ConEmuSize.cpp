@@ -245,7 +245,7 @@ RECT CConEmuSize::CalcMargins(DWORD/*enum ConEmuMargins*/ mg, ConEmuWindowMode w
 			// Главное окно уже создано, наличие таба определено
 			if (lbTabActive)  //TODO: + IsAllowed()?
 			{
-				RECT rcTab = mp_ConEmu->mp_TabBar->GetMargins();
+				RECT rcTab = mp_ConEmu->mp_TabBar->GetMargins(true);
 				// !!! AddMargins использовать нельзя! он расчитан на вычитание
 				//AddMargins(rc, rcTab, FALSE);
 				_ASSERTE(rcTab.top==0 || rcTab.bottom==0);

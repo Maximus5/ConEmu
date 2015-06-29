@@ -431,7 +431,7 @@ class CConEmuMain
 			DWORD nReadyToSel;
 		} m_Pressed;
 	public:
-		void OnTabbarActivated(bool bTabbarVisible);
+		void OnTabbarActivated(bool bTabbarVisible, bool bInAutoShowHide);
 	protected:
 		BOOL mb_MouseCaptured;
 		void CheckActiveLayoutName();

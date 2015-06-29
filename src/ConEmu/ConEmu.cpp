@@ -2845,9 +2845,53 @@ void CConEmuMain::SyncNtvdm()
 // Если табов не было, создается новая консоль, появляются табы
 // Размер окна ConEmu пытаемся НЕ менять, но размер КОНСОЛИ меняется
 // Нужно ее запомнить, иначе при Minimize/Restore установится некорректная высота!
-void CConEmuMain::OnTabbarActivated(bool bTabbarVisible)
+void CConEmuMain::OnTabbarActivated(bool bTabbarVisible, bool bInAutoShowHide)
 {
-	CVConGroup::SyncConsoleToWindow();
+	if (bInAutoShowHide/*(gpSet->isTabs == 2)*/ && IsSizeFree(GetWindowMode()))
+	{
+		if (!isIconic())
+		{
+			// Try to set new window size accomodating (dis)appearing tab bar height
+			RECT rcCur = CalcRect(CER_MAIN, NULL);
+			MONITORINFO mi = {};
+			GetNearestMonitorInfo(&mi, NULL, &rcCur);
+			RECT rcCon = CalcRect(CER_CONSOLE_ALL, rcCur, CER_MAIN, NULL, bTabbarVisible ? CEM_TABDEACTIVATE : CEM_TABACTIVATE);
+			RECT rcWnd = CalcRect(CER_MAIN, rcCon, CER_CONSOLE_ALL, NULL, bTabbarVisible ? CEM_TABACTIVATE : CEM_TABDEACTIVATE);
+			int iNewWidth = rcWnd.right-rcWnd.left, iNewHeight = rcWnd.bottom-rcWnd.top;
+			if ((iNewWidth != (rcCur.right - rcCur.left)) || (iNewHeight != (rcCur.bottom - rcCur.top)))
+			{
+				_ASSERTE(iNewWidth == (rcCur.right - rcCur.left)); // Width change is not expected
+
+				// If the window become LARGER than possible (going out of working area)
+				// we must decrease console height unfortunately...
+				if (bTabbarVisible && ((iNewHeight + rcCur.top) > mi.rcWork.bottom))
+				{
+					int iAllowedShift = (rcCur.bottom > mi.rcWork.bottom) ? (rcCur.bottom - mi.rcWork.bottom) : 0;
+					RECT rcWnd3 = {rcCur.left, rcCur.top, rcCur.right, (mi.rcWork.bottom + iAllowedShift)};
+					// Than we shall correct the integral size
+					RECT rcCon2 = CalcRect(CER_CONSOLE_ALL, rcWnd3, CER_MAIN, NULL, bTabbarVisible ? CEM_TABACTIVATE : CEM_TABDEACTIVATE);
+					RECT rcWnd2 = CalcRect(CER_MAIN, rcCon2, CER_CONSOLE_ALL, NULL, bTabbarVisible ? CEM_TABACTIVATE : CEM_TABDEACTIVATE);
+					// Final fix
+					iNewHeight = (rcWnd2.bottom-rcWnd2.top);
+					// Have to update normal rect
+					rcWnd3.bottom = rcWnd3.top + iNewHeight;
+					StoreNormalRect(&rcWnd3);
+				}
+
+				MSetter lSet(&mn_IgnoreSizeChange);
+				SetWindowPos(ghWnd, NULL,
+					0, 0, iNewWidth, iNewHeight,
+					SWP_NOZORDER|SWP_NOMOVE);
+			}
+		}
+	}
+	else
+	{
+		// Fullscreen or Inside, for example, we can't change window height, so
+		// do console resize to match new (lesser or larger) client area size
+		CVConGroup::SyncConsoleToWindow();
+	}
+
 	StoreNormalRect(NULL);
 }
 

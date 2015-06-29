@@ -4266,11 +4266,6 @@ CVirtualConsole* CVConGroup::CreateCon(RConStartArgs *args, bool abAllowScripts 
 					ShowActiveGroup(NULL);
 				}
 
-				// Если была смена конфигурации окна (появились табы)
-				if (!bTabbar && gpConEmu->mp_TabBar->IsTabsShown())
-				{
-					gpConEmu->OnTabbarActivated(true);
-				}
 			}
 
 			break;

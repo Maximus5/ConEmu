@@ -500,12 +500,8 @@ void CTabBarClass::Activate(BOOL abPreSyncConsole/*=FALSE*/)
 	CheckRebarCreated();
 
 	_active = true;
-	if (abPreSyncConsole && (gpConEmu->GetWindowMode() == wmNormal))
-	{
-		RECT rcIdeal = gpConEmu->GetIdealRect();
-		CVConGroup::SyncConsoleToWindow(&rcIdeal, TRUE);
-	}
-	gpConEmu->OnTabbarActivated(true);
+	bool bAutoShowHide = true;
+	gpConEmu->OnTabbarActivated(true, bAutoShowHide);
 	UpdatePosition();
 }
 
@@ -572,12 +568,8 @@ void CTabBarClass::Deactivate(BOOL abPreSyncConsole/*=FALSE*/)
 		return;
 
 	_active = false;
-	if (abPreSyncConsole && !(gpConEmu->isZoomed() || gpConEmu->isFullScreen()))
-	{
-		RECT rcIdeal = gpConEmu->GetIdealRect();
-		CVConGroup::SyncConsoleToWindow(&rcIdeal, true);
-	}
-	gpConEmu->OnTabbarActivated(false);
+	bool bAutoShowHide = true;
+	gpConEmu->OnTabbarActivated(false, bAutoShowHide);
 	UpdatePosition();
 }
 
@@ -1057,7 +1049,7 @@ void CTabBarClass::UpdatePosition()
 		if (!gpConEmu->InCreateWindow())
 		{
 			//gpConEmu->Sync ConsoleToWindow(); -- 2009.07.04 Sync должен быть выполнен в самом ReSize
-			gpConEmu->ReSize(TRUE);
+			gpConEmu->ReSize();
 		}
 	}
 	else
@@ -1065,7 +1057,7 @@ void CTabBarClass::UpdatePosition()
 		_visible = false;
 
 		//gpConEmu->Sync ConsoleToWindow(); -- 2009.07.04 Sync должен быть выполнен в самом ReSize
-		gpConEmu->ReSize(TRUE);
+		gpConEmu->ReSize();
 
 		// _active уже сбросили, поэтому реально спрятать можно и позже
 		mp_Rebar->ShowBar(false);
