@@ -10612,6 +10612,12 @@ int CRealConsole::GetRootProcessIcon()
 	return gpSet->isTabIcons ? mn_RootProcessIcon : -1;
 }
 
+void CRealConsole::NeedRefreshRootProcessIcon()
+{
+	mb_NeedLoadRootProcessIcon = true;
+	GetDefaultAppSettingsId();
+}
+
 int CRealConsole::GetTabCount(BOOL abVisibleOnly /*= FALSE*/)
 {
 	if (!this)

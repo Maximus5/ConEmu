@@ -556,6 +556,7 @@ class CRealConsole
 		void RenameWindow(LPCWSTR asNewWindowText = NULL);
 		int GetTabCount(BOOL abVisibleOnly = FALSE);
 		int GetRootProcessIcon();
+		void NeedRefreshRootProcessIcon();
 		int GetActiveTab();
 		CEFarWindowType GetActiveTabType();
 		bool GetTab(int tabIdx, /*OUT*/ CTab& rTab);
