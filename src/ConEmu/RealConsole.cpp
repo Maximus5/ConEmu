@@ -414,6 +414,8 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 	mb_WasStartDetached = (m_Args.Detached == crb_On);
 	_ASSERTE(mb_WasStartDetached == (args->Detached == crb_On));
 
+	ZeroStruct(mst_ServerStartingTime);
+
 	/* *** TABS *** */
 	// -- т.к. автопоказ табов может вызвать ресайз - то табы в самом конце инициализации!
 	_ASSERTE(isMainThread()); // Иначе табы сразу не перетряхнутся
@@ -4331,6 +4333,13 @@ BOOL CRealConsole::StartProcessInt(LPCWSTR& lpszCmd, wchar_t*& psCurCmd, LPCWSTR
 
 	LPCWSTR lpszConEmuC = mp_ConEmu->ConEmuCExeFull(lpszCmd);
 
+	GetLocalTime(&mst_ServerStartingTime);
+	LPSYSTEMTIME lpst = (lstrcmpi(PointToName(lpszConEmuC), L"ConEmuC64.exe") == 0) ? &mp_ConEmu->mst_LastConsole64StartTime : &mp_ConEmu->mst_LastConsole32StartTime;
+	bool bIsFirstConsole = ((lpst->wYear == mst_ServerStartingTime.wYear)
+							&& (lpst->wMonth == mst_ServerStartingTime.wMonth)
+							&& (lpst->wDay == mst_ServerStartingTime.wDay));
+	*lpst = mst_ServerStartingTime;
+
 	int nCurLen = 0;
 	if (lpszCmd == NULL)
 	{
@@ -4338,7 +4347,7 @@ BOOL CRealConsole::StartProcessInt(LPCWSTR& lpszCmd, wchar_t*& psCurCmd, LPCWSTR
 		lpszCmd = L"";
 	}
 	int nLen = _tcslen(lpszCmd);
-	nLen += _tcslen(mp_ConEmu->ms_ConEmuExe) + 330 + MAX_PATH*2;
+	nLen += _tcslen(mp_ConEmu->ms_ConEmuExe) + 350 + MAX_PATH*2;
 	MCHKHEAP;
 	psCurCmd = (wchar_t*)malloc(nLen*sizeof(wchar_t));
 	_ASSERTE(psCurCmd);
@@ -4368,6 +4377,11 @@ BOOL CRealConsole::StartProcessInt(LPCWSTR& lpszCmd, wchar_t*& psCurCmd, LPCWSTR
 	{
 		m_Args.Detached = crb_On;
 		_wcscat_c(psCurCmd, nLen, L" /ADMIN ");
+	}
+
+	if (!bIsFirstConsole)
+	{
+		_wcscat_c(psCurCmd, nLen, L"/SKIPHOOKERS ");
 	}
 
 	if ((gpSet->nConInMode != (DWORD)-1) || (m_Args.OverwriteMode == crb_On))

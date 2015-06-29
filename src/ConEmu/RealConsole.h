@@ -760,6 +760,7 @@ class CRealConsole
 		bool ReloadFarWorkDir();
 		//wchar_t ms_ProfilePathTemp[MAX_PATH+1]; -- commented code
 		bool mb_WasStartDetached;
+		SYSTEMTIME mst_ServerStartingTime;
 		void SetRootProcessName(LPCWSTR asProcessName);
 		wchar_t ms_RootProcessName[MAX_PATH];
 		int mn_RootProcessIcon;

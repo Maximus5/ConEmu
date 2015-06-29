@@ -268,6 +268,8 @@ class CConEmuMain
 
 		BOOL  mb_ExternalHidden;
 
+		SYSTEMTIME mst_LastConsole32StartTime, mst_LastConsole64StartTime;
+
 		enum StartupStage {
 			ss_Starting,
 			ss_PostCreate1Called,

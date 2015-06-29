@@ -178,6 +178,7 @@ BOOL    gbStopExitWaitForKey = FALSE;
 BOOL    gbCtrlBreakStopWaitingShown = FALSE;
 BOOL    gbTerminateOnCtrlBreak = FALSE;
 BOOL    gbPrintRetErrLevel = FALSE; // Вывести в StdOut код завершения процесса (RM_COMSPEC в основном)
+bool    gbSkipHookersCheck = false;
 int     gnConfirmExitParm = 0; // 1 - CONFIRM, 2 - NOCONFIRM
 BOOL    gbAlwaysConfirmExit = FALSE;
 BOOL    gbAutoDisableConfirmExit = FALSE; // если корневой процесс проработал достаточно (10 сек) - будет сброшен gbAlwaysConfirmExit
@@ -799,6 +800,12 @@ void ShowServerStartedMsgBox()
 
 bool CheckAndWarnHookers()
 {
+	if (gbSkipHookersCheck)
+	{
+		if (gpLogSize) gpLogSize->LogString(L"CheckAndWarnHookers skipped due to /SKIPHOOKERS switch");
+		return false;
+	}
+
 	bool bHooked = false;
 	struct CheckModules {
 		LPCWSTR Title, File;
@@ -4627,6 +4634,10 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 		{
 			gnConfirmExitParm = 2;
 			gbAlwaysConfirmExit = FALSE; gbAutoDisableConfirmExit = FALSE;
+		}
+		else if (wcscmp(szArg, L"/SKIPHOOKERS")==0)
+		{
+			gbSkipHookersCheck = true;
 		}
 		else if (wcscmp(szArg, L"/ADMIN")==0)
 		{

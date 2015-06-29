@@ -364,6 +364,7 @@ CConEmuMain::CConEmuMain()
 	//mn_SysMenuOpenTick = mn_SysMenuCloseTick = 0;
 	//mb_PassSysCommand = false;
 	mb_ExternalHidden = FALSE;
+	ZeroStruct(mst_LastConsole32StartTime); ZeroStruct(mst_LastConsole64StartTime);
 	//mb_SkipSyncSize = false;
 	isPiewUpdate = false; //true; --Maximus5
 	hPictureView = NULL;  mrc_WndPosOnPicView = MakeRect(0,0);
