@@ -10608,6 +10608,7 @@ void CRealConsole::RenameWindow(LPCWSTR asNewWindowText /*= NULL*/)
 
 int CRealConsole::GetRootProcessIcon()
 {
+	if (!this) return -1;
 	return gpSet->isTabIcons ? mn_RootProcessIcon : -1;
 }
 
