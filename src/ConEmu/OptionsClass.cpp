@@ -3085,9 +3085,10 @@ LRESULT CSettings::OnInitDialog_Control(HWND hWnd2, bool abInitial)
 	               (gpSet->m_isKeyboardHooks == 1) ? BST_CHECKED :
 	               ((gpSet->m_isKeyboardHooks == 0) ? BST_INDETERMINATE : BST_UNCHECKED));
 
-	checkDlgButton(hWnd2, cbUseWinNumber, gpSet->isUseWinNumber);
+	setHotkeyCheckbox(hWnd2, cbUseWinNumber, vkConsole_1, L"+1", L"+Numbers", gpSet->isUseWinNumber);
+	setHotkeyCheckbox(hWnd2, cbUseWinArrows, vkWinLeft, L"+Left", L"+Arrows", gpSet->isUseWinArrows);
+
 	checkDlgButton(hWnd2, cbUseWinTab, gpSet->isUseWinTab);
-	checkDlgButton(hWnd2, cbUseWinArrows, gpSet->isUseWinArrows);
 
 	checkDlgButton(hWnd2, cbSendAltTab, gpSet->isSendAltTab);
 	checkDlgButton(hWnd2, cbSendAltEsc, gpSet->isSendAltEsc);
