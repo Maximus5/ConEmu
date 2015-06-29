@@ -232,9 +232,8 @@ void CTabBarClass::Retrieve()
 
 int CTabBarClass::CreateTabIcon(LPCWSTR asIconDescr, bool bAdmin, LPCWSTR asWorkDir)
 {
-	if (!gpSet->isTabIcons)
-		return -1;
-	return m_TabIcons.CreateTabIcon(asIconDescr, bAdmin, asWorkDir);
+	int iIconIdx = gpSet->isTabIcons ? m_TabIcons.CreateTabIcon(asIconDescr, bAdmin, asWorkDir) : -1;
+	return iIconIdx;
 }
 
 HIMAGELIST CTabBarClass::GetTabIcons()
