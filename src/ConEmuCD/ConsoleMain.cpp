@@ -3320,7 +3320,7 @@ int DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent = f
 				continue; // Useless, we just inherited ALL those variables from our parent
 
 			// Apply environment
-			CESERVER_REQ *pOut = ExecuteHkCmd(nTestPID, pIn, ghConWnd);
+			CESERVER_REQ *pOut = ExecuteHkCmd(nTestPID, pIn, ghConWnd, FALSE, TRUE);
 
 			if (!pOut && !bSilent)
 			{
