@@ -3371,7 +3371,9 @@ int DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent = f
 
 	if (!bSilent)
 	{
-		_printf(WIN3264TEST("ConEmuC","ConEmuC64") ": %i %s processed\n", iVarCount, (iVarCount == 1) ? "variable was" : "variables were");
+		wchar_t szVars[80];
+		_wsprintf(szVars, SKIPCOUNT(szVars) WIN3264TEST(L"ConEmuC",L"ConEmuC64") L": %i %s processed\n", iVarCount, (iVarCount == 1) ? L"variable was" : L"variables were");
+		_wprintf(szVars);
 	}
 
 	iRc = 0;
