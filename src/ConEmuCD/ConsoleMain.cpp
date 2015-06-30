@@ -3042,6 +3042,7 @@ int DoInjectRemote(LPWSTR asCmdArg, bool abDefTermOnly)
 struct ProcInfo {
 	DWORD nPID, nParentPID;
 	DWORD_PTR Flags;
+	WCHAR szExeFile[64];
 };
 
 int DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent = false)
@@ -3262,13 +3263,13 @@ int DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent = f
 					// On the first step we'll get our parent process
 					nParentPID = PI.th32ParentProcessID;
 				}
-				CharUpperBuff(PI.szExeFile, lstrlen(PI.szExeFile));
 				LPCWSTR pszName = PointToName(PI.szExeFile);
 				ProcInfo pi = {
 					PI.th32ProcessID,
 					PI.th32ParentProcessID,
-					((lstrcmp(pszName, L"CONEMUC.EXE") == 0) || (lstrcmp(pszName, L"CONEMUC64.EXE") == 0)) ? 1 : 0
+					IsConsoleServer(pszName) ? 1 : 0
 				};
+				lstrcpyn(pi.szExeFile, pszName, countof(pi.szExeFile));
 				List.push_back(pi);
 			} while (Process32Next(h, &PI));
 		}
@@ -3284,6 +3285,7 @@ int DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent = f
 		bool bParentFound = true;
 		while (nParentPID != nSrvPID)
 		{
+			wchar_t szName[64] = L"???";
 			nTestPID = nParentPID;
 			bParentFound = false;
 			// find next parent
@@ -3302,6 +3304,8 @@ int DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent = f
 						nTestPID = nParentPID;
 						continue;
 					}
+					lstrcpyn(szName, pi.szExeFile, countof(szName));
+					// nTestPID is already pi.nPID
 					bParentFound = true;
 					break;
 				}
@@ -3320,7 +3324,12 @@ int DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent = f
 
 			if (!pOut && !bSilent)
 			{
-				_printf(ExpFailedPref " to PID=%u, check <Inject ConEmuHk>\n", nTestPID);
+				wchar_t szInfo[200];
+				_wsprintf(szInfo, SKIPCOUNT(szInfo)
+					WIN3264TEST(L"ConEmuC",L"ConEmuC64")
+					L": process %s PID=%u was skipped: noninteractive or lack of ConEmuHk\n",
+					szName, nTestPID);
+				_wprintf(szInfo);
 			}
 
 			ExecuteFreeResult(pOut);
