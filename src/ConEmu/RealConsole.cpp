@@ -1668,6 +1668,13 @@ bool CRealConsole::PostPromptCmd(bool CD, LPCWSTR asCmd)
 	return lbRc;
 }
 
+void CRealConsole::OnKeysSending()
+{
+	if (!this || !mp_RBuf)
+		return;
+	mp_RBuf->OnKeysSending();
+}
+
 // !!! Функция может менять буфер pszChars! !!! Private !!!
 bool CRealConsole::PostString(wchar_t* pszChars, size_t cchCount)
 {
@@ -1684,7 +1691,22 @@ bool CRealConsole::PostString(wchar_t* pszChars, size_t cchCount)
 		return false;
 	}
 
-	mp_RBuf->OnKeysSending();
+	if (mp_VCon->isGroupedInput())
+	{
+		struct implKeys
+		{
+			static bool DoKeysSending(CVirtualConsole* pVCon, LPARAM lParam)
+			{
+				pVCon->RCon()->OnKeysSending();
+				return true;
+			}
+		};
+		CVConGroup::EnumVCon(evf_Visible, implKeys::DoKeysSending, 0);
+	}
+	else
+	{
+		OnKeysSending();
+	}
 
 	wchar_t szLog[80];
 	wchar_t* pszEnd = pszChars + cchCount;
@@ -1752,7 +1774,28 @@ bool CRealConsole::PostString(wchar_t* pszChars, size_t cchCount)
 	{
 		_wsprintf(szLog, SKIPCOUNT(szLog) L"PostString was prepared %u key events", (DWORD)cchSucceeded);
 		gpConEmu->LogString(szLog);
-		lbRc = PostConsoleEventPipe(pirChars, cchSucceeded);
+
+		if (mp_VCon->isGroupedInput())
+		{
+			struct implPost
+			{
+				MSG64* pirChars;
+				size_t cchSucceeded;
+
+				static bool DoPost(CVirtualConsole* pVCon, LPARAM lParam)
+				{
+					implPost* p = (implPost*)lParam;
+					pVCon->RCon()->PostConsoleEventPipe(p->pirChars, p->cchSucceeded);
+					return true;
+				}
+			} impl = {pirChars, cchSucceeded};
+			CVConGroup::EnumVCon(evf_Visible, implPost::DoPost, (LPARAM)&impl);
+			lbRc = true;
+		}
+		else
+		{
+			lbRc = PostConsoleEventPipe(pirChars, cchSucceeded);
+		}
 	}
 	else
 	{
