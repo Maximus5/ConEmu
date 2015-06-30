@@ -19,6 +19,22 @@ http://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2015.6.29
+[*] Attach (Win+G) was not succeeded if ConEmu has different bitness.
+[*] Grab palette from Win+G attached consoles (Vista+) and create new
+    if matching one was not found. These palettes ‘#Attached:XX’ are not
+    saved automatically, but will be when user presses ‘Save settings’ button
+    in the settings dialog.
+[*] gh#193: Show hookers warning once per day.
+[*] Show real names for ‘Win+Number’ and ‘Win+Arrows’ on the Controls page.
+[*] Search for static text control in the Settings dialog was failed.
+[*] Issue 1977: Don't change RealConsole height on tabs auto-show/hide,
+    resize ConEmu window height instead.
+[*] Add some urls to ConEmu.nuspec (chocolatey).
+[*] When tabs are auto shown icon was not loaded for the first tab.
+[*] Environment variables export was improved (some internal fixes).
+
+
 2015.6.21
 [*] Use recommended launcher for Git-For-Windows bash (default tasks).
 [*] Try to create default task for GitSDK bash.

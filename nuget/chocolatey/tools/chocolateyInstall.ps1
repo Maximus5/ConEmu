@@ -1,5 +1,5 @@
 $package = 'ConEmu'
-$version = '15.06.21'
+$version = '15.06.29'
 $stage   = 'Preview'
 
 
