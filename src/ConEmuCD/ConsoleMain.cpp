@@ -153,6 +153,7 @@ HMODULE ghOurModule = NULL; // ConEmuCD.dll
 DWORD   gnSelfPID = 0;
 wchar_t gsModuleName[32] = L"";
 BOOL    gbTerminateOnExit = FALSE;
+bool    gbPrefereSilentMode = false;
 //HANDLE  ghConIn = NULL, ghConOut = NULL;
 HWND    ghConWnd = NULL;
 DWORD   gnConEmuPID = 0; // PID of ConEmu[64].exe (ghConEmuWnd)
@@ -4113,7 +4114,7 @@ int DoExecAction(ConEmuExecAction eExecAction, LPCWSTR asCmdArg /* rest of cmdli
 	case ea_ExportGui:
 	case ea_ExportAll:
 		{
-			iRc = DoExportEnv(asCmdArg, eExecAction);
+			iRc = DoExportEnv(asCmdArg, eExecAction, gbPrefereSilentMode);
 			break;
 		}
 	case ea_Download:
@@ -4622,6 +4623,10 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 		{
 			eExecAction = ea_StoreCWD;
 			break;
+		}
+		else if (lstrcmpi(szArg, L"/SILENT")==0)
+		{
+			gbPrefereSilentMode = true;
 		}
 		else if (lstrcmpni(szArg, L"/EXPORT", 7)==0)
 		{
