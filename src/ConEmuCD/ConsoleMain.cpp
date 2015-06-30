@@ -3050,6 +3050,7 @@ int DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent = f
 	//ProcInfo* pList = NULL;
 	MArray<ProcInfo> List;
 	LPWSTR pszAllVars = NULL, pszSrc;
+	int iVarCount = 0;
 	CESERVER_REQ *pIn = NULL;
 	const DWORD nSelfPID = GetCurrentProcessId();
 	DWORD nTestPID, nParentPID;
@@ -3133,6 +3134,7 @@ int DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent = f
 				wmemmove(pszBuffer, pszName, cchAdd);
 				pszBuffer += cchAdd;
 				_ASSERTE(*pszBuffer == 0);
+				iVarCount++;
 			}
 			*pszEq = L'=';
 			pszSrc = pszNext;
@@ -3180,6 +3182,7 @@ int DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent = f
 						goto wrap;
 					}
 					wmemmove(pszBuffer, pszName, cchAdd);
+					iVarCount++;
 					pszBuffer += cchAdd;
 					_ASSERTE(*pszBuffer == 0);
 					cchLeft -= cchAdd;
@@ -3201,6 +3204,7 @@ int DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent = f
 				{
 					// Copy "Name\0\0"
 					wmemmove(pszBuffer, szTest, cchAdd);
+					iVarCount++;
 					cchAdd++; // We need second zero after a Name
 					pszBuffer += cchAdd;
 					cchLeft -= cchAdd;
@@ -3354,6 +3358,11 @@ int DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent = f
 
 		// ea_ExportTab, ea_ExportGui, ea_ExportAll -> export to ConEmu window
 		ExecuteGuiCmd(ghConWnd, pIn, ghConWnd, TRUE);
+	}
+
+	if (!bSilent)
+	{
+		_printf(WIN3264TEST("ConEmuC","ConEmuC64") ": %i %s processed\n", iVarCount, (iVarCount == 1) ? "variable was" : "variables were");
 	}
 
 	iRc = 0;
