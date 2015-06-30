@@ -3061,6 +3061,9 @@ int DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent = f
 	HANDLE h;
 	size_t cchMaxEnvLen = 0;
 	wchar_t* pszBuffer;
+	CEStr szTmpPart;
+	LPCWSTR pszTmpPartStart;
+	LPCWSTR pszCmdArg;
 
 	//_ASSERTE(FALSE && "Continue with exporting environment");
 
@@ -3105,13 +3108,13 @@ int DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent = f
 	}
 	pszBuffer = (wchar_t*)pIn->wData;
 
-	asCmdArg = SkipNonPrintable(asCmdArg);
+	pszCmdArg = SkipNonPrintable(asCmdArg);
 
 	//_ASSERTE(FALSE && "Continue to export");
 
 	// Copy variables to buffer
-	if (!asCmdArg || !*asCmdArg || (lstrcmp(asCmdArg, L"*")==0) || (lstrcmp(asCmdArg, L"\"*\"")==0)
-		|| (wcsncmp(asCmdArg, L"* ", 2)==0) || (wcsncmp(asCmdArg, L"\"*\" ", 4)==0))
+	if (!pszCmdArg || !*pszCmdArg || (lstrcmp(pszCmdArg, L"*")==0) || (lstrcmp(pszCmdArg, L"\"*\"")==0)
+		|| (wcsncmp(pszCmdArg, L"* ", 2)==0) || (wcsncmp(pszCmdArg, L"\"*\" ", 4)==0))
 	{
 		// transfer ALL variables, except of ConEmu's internals
 		pszSrc = pszAllVars;
@@ -3141,10 +3144,23 @@ int DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent = f
 			pszSrc = pszNext;
 		}
 	}
-	else
+	else while (0==NextArg(&pszCmdArg, szTmpPart, &pszTmpPartStart))
 	{
+		if ((pszTmpPartStart > asCmdArg) && (*(pszTmpPartStart-1) != L'"'))
+		{
+			// Unless the argument name was surrounded by double-quotes
+			// replace commas with spaces, this allows more intuitive
+			// way to run something like this:
+			// ConEmuC -export=ALL SSH_AGENT_PID,SSH_AUTH_SOCK
+			wchar_t* pszComma = szTmpPart.ms_Arg;
+			while ((pszComma = (wchar_t*)wcspbrk(pszComma, L",;")) != NULL)
+			{
+				*pszComma = L' ';
+			}
+		}
+		LPCWSTR pszPart = szTmpPart;
 		CmdArg szTest;
-		while (0==NextArg(&asCmdArg, szTest))
+		while (0==NextArg(&pszPart, szTest))
 		{
 			if (!*szTest || *szTest == L'*')
 			{
