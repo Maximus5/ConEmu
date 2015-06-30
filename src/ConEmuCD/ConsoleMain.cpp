@@ -3064,7 +3064,7 @@ int DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent = f
 
 	//_ASSERTE(FALSE && "Continue with exporting environment");
 
-	#define ExpFailedPref "ConEmuC: can't export environment"
+	#define ExpFailedPref WIN3264TEST("ConEmuC","ConEmuC64") ": can't export environment"
 
 	if (!ghConWnd)
 	{
