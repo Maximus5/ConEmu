@@ -3149,7 +3149,7 @@ int DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent = f
 			if (!*szTest || *szTest == L'*')
 			{
 				if (!bSilent)
-					_printf(ExpFailedPref ", invalid name mask\n");
+					_printf(ExpFailedPref ", name masks can't be quoted\n");
 				goto wrap;
 			}
 
