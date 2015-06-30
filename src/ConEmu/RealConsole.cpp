@@ -4335,9 +4335,9 @@ BOOL CRealConsole::StartProcessInt(LPCWSTR& lpszCmd, wchar_t*& psCurCmd, LPCWSTR
 
 	GetLocalTime(&mst_ServerStartingTime);
 	LPSYSTEMTIME lpst = (lstrcmpi(PointToName(lpszConEmuC), L"ConEmuC64.exe") == 0) ? &mp_ConEmu->mst_LastConsole64StartTime : &mp_ConEmu->mst_LastConsole32StartTime;
-	bool bIsFirstConsole = ((lpst->wYear == mst_ServerStartingTime.wYear)
-							&& (lpst->wMonth == mst_ServerStartingTime.wMonth)
-							&& (lpst->wDay == mst_ServerStartingTime.wDay));
+	bool bIsFirstConsole = ((lpst->wYear != mst_ServerStartingTime.wYear)
+							|| (lpst->wMonth != mst_ServerStartingTime.wMonth)
+							|| (lpst->wDay != mst_ServerStartingTime.wDay));
 	*lpst = mst_ServerStartingTime;
 
 	int nCurLen = 0;
