@@ -182,4 +182,4 @@ if NOT "%FARHOME%" == "" set gitbranch=%gitbranch%^>
 
 :export
 rem Export to parent Far Manager or cmd.exe processes
-"%ConEmuBaseDir%\ConEmuC.exe" /export=CON gitbranch
+"%ConEmuBaseDir%\ConEmuC.exe" /silent /export=CON gitbranch
