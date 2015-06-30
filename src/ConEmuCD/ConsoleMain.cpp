@@ -3356,6 +3356,7 @@ int DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent = f
 		ExecuteGuiCmd(ghConWnd, pIn, ghConWnd, TRUE);
 	}
 
+	iRc = 0;
 wrap:
 	// Fin
 	if (pszAllVars)
