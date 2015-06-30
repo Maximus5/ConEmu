@@ -221,7 +221,7 @@ BOOL IsProcessDebugged(DWORD nPID)
 #endif
 
 // nTimeout - таймаут подключения
-HANDLE ExecuteOpenPipe(const wchar_t* szPipeName, wchar_t (&szErr)[MAX_PATH*2], const wchar_t* szModule, DWORD nServerPID, DWORD nTimeout, BOOL Overlapped /*= FALSE*/, HANDLE hStop /*= NULL*/)
+HANDLE ExecuteOpenPipe(const wchar_t* szPipeName, wchar_t (&szErr)[MAX_PATH*2], const wchar_t* szModule, DWORD nServerPID, DWORD nTimeout, BOOL Overlapped /*= FALSE*/, HANDLE hStop /*= NULL*/, BOOL bIgnoreAbsence /*= FALSE*/)
 {
 	HANDLE hPipe = NULL;
 	DWORD dwErr = 0, dwMode = 0;
@@ -327,7 +327,8 @@ HANDLE ExecuteOpenPipe(const wchar_t* szPipeName, wchar_t (&szErr)[MAX_PATH*2], 
 			          ModuleName(szModule), GetCurrentProcessId(), szPipeName, dwErr,
 			          (nTries <= 0) ? L", Tries" : L"", (nDuration > nOpenPipeTimeout) ? L", Duration" : L"");
 			//_ASSERTEX(FALSE && "Pipe open failed with timeout!");
-			int iBtn = MessageBox(NULL, szErr, L"Pipe open failed with timeout!", MB_ICONSTOP|MB_SYSTEMMODAL|MB_RETRYCANCEL);
+			int iBtn = bIgnoreAbsence ? IDCANCEL
+				: MessageBox(NULL, szErr, L"Pipe open failed with timeout!", MB_ICONSTOP|MB_SYSTEMMODAL|MB_RETRYCANCEL);
 			if (iBtn == IDRETRY)
 			{
 				nTries = nDefaultTries;
@@ -757,7 +758,7 @@ CESERVER_REQ* ExecuteSrvCmd(DWORD dwSrvPID, CESERVER_REQ* pIn, HWND hOwner, BOOL
 }
 
 // Выполнить в ConEmuHk
-CESERVER_REQ* ExecuteHkCmd(DWORD dwHkPID, CESERVER_REQ* pIn, HWND hOwner, BOOL bAsyncNoResult /*= FALSE*/)
+CESERVER_REQ* ExecuteHkCmd(DWORD dwHkPID, CESERVER_REQ* pIn, HWND hOwner, BOOL bAsyncNoResult /*= FALSE*/, BOOL bIgnoreAbsence /*= FALSE*/)
 {
 	wchar_t szPipeName[128];
 
@@ -767,7 +768,7 @@ CESERVER_REQ* ExecuteHkCmd(DWORD dwHkPID, CESERVER_REQ* pIn, HWND hOwner, BOOL b
 	DWORD nLastErr = GetLastError();
 	//_wsprintf(szPipeName, SKIPLEN(countof(szPipeName)) CESERVERPIPENAME, L".", (DWORD)dwSrvPID);
 	msprintf(szPipeName, countof(szPipeName), CEHOOKSPIPENAME, L".", (DWORD)dwHkPID);
-	CESERVER_REQ* lpRet = ExecuteCmd(szPipeName, pIn, 1000, hOwner, bAsyncNoResult, dwHkPID);
+	CESERVER_REQ* lpRet = ExecuteCmd(szPipeName, pIn, 1000, hOwner, bAsyncNoResult, dwHkPID, bIgnoreAbsence);
 	SetLastError(nLastErr); // Чтобы не мешать процессу своими возможными ошибками общения с пайпом
 	return lpRet;
 }
@@ -781,7 +782,7 @@ CESERVER_REQ* ExecuteHkCmd(DWORD dwHkPID, CESERVER_REQ* pIn, HWND hOwner, BOOL b
 //WARNING!!!
 //   Эта процедура не может получить с сервера более 600 байт данных!
 // В заголовке hOwner в дебаге может быть отображена ошибка
-CESERVER_REQ* ExecuteCmd(const wchar_t* szPipeName, CESERVER_REQ* pIn, DWORD nWaitPipe, HWND hOwner, BOOL bAsyncNoResult, DWORD nServerPID)
+CESERVER_REQ* ExecuteCmd(const wchar_t* szPipeName, CESERVER_REQ* pIn, DWORD nWaitPipe, HWND hOwner, BOOL bAsyncNoResult, DWORD nServerPID, BOOL bIgnoreAbsence /*= FALSE*/)
 {
 	CESERVER_REQ* pOut = NULL;
 	HANDLE hPipe = NULL;
@@ -813,7 +814,7 @@ CESERVER_REQ* ExecuteCmd(const wchar_t* szPipeName, CESERVER_REQ* pIn, DWORD nWa
 
 	_ASSERTE(pIn->hdr.nSrcPID && pIn->hdr.nSrcThreadId);
 	_ASSERTE(pIn->hdr.cbSize >= sizeof(pIn->hdr));
-	hPipe = ExecuteOpenPipe(szPipeName, szErr, NULL/*Сюда хорошо бы имя модуля подкрутить*/, nServerPID, nWaitPipe);
+	hPipe = ExecuteOpenPipe(szPipeName, szErr, NULL/*Сюда хорошо бы имя модуля подкрутить*/, nServerPID, nWaitPipe, FALSE, NULL, bIgnoreAbsence);
 
 	if (hPipe == NULL || hPipe == INVALID_HANDLE_VALUE)
 	{
