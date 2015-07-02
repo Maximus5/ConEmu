@@ -101,7 +101,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Ansi.h"
 #include "../common/CmdLine.h"
 #include "../common/ConsoleAnnotation.h"
-//#include "../common/clink.h"
+#include "../common/ConsoleRead.h"
 #include "../common/UnicodeChars.h"
 #include "../common/WConsole.h"
 
@@ -3725,42 +3725,35 @@ BOOL OnPromptBsDeleteWord(bool bForce, bool bBashMargin)
 				cr.Y--;
 				xPos = csbi.dwSize.X;
 			}
+			COORD cursorFix = {xPos, cr.Y};
 
-			char* pszLine = (char*)malloc(csbi.dwSize.X+1);
 			wchar_t* pwszLine = (wchar_t*)malloc((csbi.dwSize.X+1)*sizeof(*pwszLine));
 
 
-			if (pszLine && pwszLine)
+			if (pwszLine)
 			{
-				pszLine[csbi.dwSize.X] = 0;
 				pwszLine[csbi.dwSize.X] = 0;
 
 				// Считать строку
 				if (bDBCS)
 				{
-					// На DBCS кодировках "ReadConsoleOutputCharacterW" фигню возвращает
-					BOOL bReadOk = ReadConsoleOutputCharacterA(hConOut, pszLine, csbi.dwSize.X, cr, &nRead);
+					CHAR_INFO *pData = (CHAR_INFO*)calloc(csbi.dwSize.X, sizeof(CHAR_INFO));
+					COORD bufSize = {csbi.dwSize.X, 1};
+					SMALL_RECT rgn = {0, cr.Y, csbi.dwSize.X-1, cr.Y};
+
+					bReadOk = ReadConsoleOutputEx(hConOut, pData, bufSize, rgn, &cursorFix);
 					dwLastError = GetLastError();
+					_ASSERTE(bReadOk);
 
-					if (!bReadOk || !nRead)
+					if (bReadOk)
 					{
-						// Однако и ReadConsoleOutputCharacterA может глючить, пробуем "W"
-						bReadOk = ReadConsoleOutputCharacterW(hConOut, pwszLine, csbi.dwSize.X, cr, &nRead);
-						dwLastError = GetLastError();
-
-						if (!bReadOk || !nRead)
-							bReadOk = FALSE;
-						else
-							bDBCS = false; // Thread string as simple Unicode.
-					}
-					else
-					{
-						nRead = MultiByteToWideChar(nCP, 0, pszLine, nRead, pwszLine, csbi.dwSize.X);
+						for (int i = 0; i < csbi.dwSize.X; i++)
+							pwszLine[i] = pData[i].Char.UnicodeChar;
+						nRead = csbi.dwSize.X;
+						xPos = cursorFix.X;
 					}
 
-					// Check chars count
-					if (((int)nRead) <= 0)
-						bReadOk = FALSE;
+					SafeFree(pData);
 				}
 				else
 				{
@@ -3772,12 +3765,6 @@ BOOL OnPromptBsDeleteWord(bool bForce, bool bBashMargin)
 				if (bReadOk)
 				{
 					// Count chars
-					if (bDBCS)
-					{
-						TODO("DBCS!!! Must to convert cursor pos ('DBCS') to char pos!");
-						_ASSERTEX(bDBCS==false && "TODO!!!");
-					}
-					else
 					{
 						if ((int)nRead >= xPos)
 						{
