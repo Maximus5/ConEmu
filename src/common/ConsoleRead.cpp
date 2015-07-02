@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2014 Maximus5
+Copyright (c) 2009-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -67,7 +67,7 @@ BOOL AreCpInfoLeads(DWORD nCP, UINT* pnMaxCharSize)
 
 // Консоль любит глючить, при попытках запроса более определенного количества ячеек.
 // MAX_CONREAD_SIZE подобрано экспериментально
-BOOL ReadConsoleOutputEx(HANDLE hOut, CHAR_INFO *pData, COORD bufSize, SMALL_RECT rgn)
+BOOL ReadConsoleOutputEx(HANDLE hOut, CHAR_INFO *pData, COORD bufSize, SMALL_RECT rgn, COORD* lpCursor /*= NULL*/)
 {
 	BOOL lbRc = FALSE;
 
@@ -215,6 +215,10 @@ BOOL ReadConsoleOutputEx(HANDLE hOut, CHAR_INFO *pData, COORD bufSize, SMALL_REC
 				// If line was not fully processed (LVB was found)
 				if (pSrc < pEnd)
 				{
+					// If caller want to know correction status
+					CHAR_INFO* pCursorEnd = (lpCursor && (lpCursor->Y == rgn.Top)) ? (pLine + lpCursor->X) : pLine;
+					int iCellsSkipped = 0;
+
 					// Yes, Process this line with substitutions
 					while (pSrc < pEnd)
 					{
@@ -222,6 +226,12 @@ BOOL ReadConsoleOutputEx(HANDLE hOut, CHAR_INFO *pData, COORD bufSize, SMALL_REC
 						wchar_t wc = pSrc->Char.UnicodeChar;
 						if (pSrc->Attributes & COMMON_LVB_LEADING_BYTE)
 						{
+							// If caller want to know correction status
+							if ((pSrc+1) <= pCursorEnd)
+							{
+								iCellsSkipped++;
+							}
+							// Process LVB flags
 							while (((++pSrc) < pEnd) && !(pSrc->Attributes & COMMON_LVB_TRAILING_BYTE))
 							{
 								// May be 2 or 4 cells
@@ -229,6 +239,11 @@ BOOL ReadConsoleOutputEx(HANDLE hOut, CHAR_INFO *pData, COORD bufSize, SMALL_REC
 								{
 									wc = pSrc->Char.UnicodeChar;
 									*(++pDst) = *pSrc;
+								}
+								// If caller want to know correction status
+								else if (pSrc <= pCursorEnd)
+								{
+									iCellsSkipped++;
 								}
 							}
 							pDst->Attributes |= COMMON_LVB_TRAILING_BYTE;
@@ -242,6 +257,11 @@ BOOL ReadConsoleOutputEx(HANDLE hOut, CHAR_INFO *pData, COORD bufSize, SMALL_REC
 						pDst->Attributes = nLastAttr;
 						pDst->Char.UnicodeChar = L' ';
 						pDst++;
+					}
+					// If caller want to know correction status
+					if (lpCursor && (lpCursor->Y == rgn.Top))
+					{
+						lpCursor->X = max(0, (lpCursor->X - iCellsSkipped));
 					}
 				}
 
