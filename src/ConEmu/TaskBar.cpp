@@ -326,13 +326,22 @@ void CTaskBar::Taskbar_SetShield(bool abShield)
 
 void CTaskBar::Taskbar_SetOverlay(HICON ahIcon)
 {
-	HRESULT hr = mp_TaskBar3 ? mp_TaskBar3->SetOverlayIcon(ghWnd, ahIcon, NULL) : E_FAIL;
+	HRESULT hr = E_FAIL;
+	// WinXP does not have mp_TaskBar3
+	if (mp_TaskBar3)
+	{
+		hr = mp_TaskBar3 ? mp_TaskBar3->SetOverlayIcon(ghWnd, ahIcon, NULL) : E_FAIL;
 
-	wchar_t szInfo[100];
-	_wsprintf(szInfo, SKIPCOUNT(szInfo) L"mp_TaskBar3->SetOverlayIcon(%s) %s code=x%08X", ahIcon?L"ICON":L"NULL", SUCCEEDED(hr)?L"succeeded":L"failed", hr);
-	LogString(szInfo);
+		wchar_t szInfo[100];
+		_wsprintf(szInfo, SKIPCOUNT(szInfo) L"mp_TaskBar3->SetOverlayIcon(%s) %s code=x%08X", ahIcon?L"ICON":L"NULL", SUCCEEDED(hr)?L"succeeded":L"failed", hr);
+		LogString(szInfo);
 
-	_ASSERTE(hr==S_OK);
+		_ASSERTE(hr==S_OK);
+	}
+	else
+	{
+		LogString(L"Taskbar_SetOverlay skipped: !mp_TaskBar3");
+	}
 	UNREFERENCED_PARAMETER(hr);
 }
 
