@@ -398,6 +398,7 @@
       <File RelativePath="..\common\ConEmuCheck.h" />
       <File RelativePath="..\common\ConEmuPipeMode.h" />
       <File RelativePath="..\common\ConsoleMixAttr.h" />
+      <File RelativePath="..\common\ConsoleRead.h" />
       <File RelativePath="..\common\defines.h" />
       <File RelativePath="..\common\DefTermBase.h" />
       <File RelativePath="..\common\Execute.h" />
@@ -437,6 +438,7 @@
       <File RelativePath="..\common\Common.cpp" />
       <File RelativePath="..\common\ConEmuCheck.cpp" />
       <File RelativePath="..\common\ConsoleMixAttr.cpp" />
+      <File RelativePath="..\common\ConsoleRead.cpp" />
       <File RelativePath="..\common\Execute.cpp" />
       <File RelativePath="..\common\InQueue.cpp" />
       <File RelativePath="..\common\MAssert.cpp" />

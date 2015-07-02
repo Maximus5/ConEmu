@@ -828,6 +828,7 @@
     <ClInclude Include="..\common\common.hpp" />
     <ClInclude Include="..\common\ConEmuCheck.h" />
     <ClInclude Include="..\common\ConsoleMixAttr.h" />
+    <ClInclude Include="..\common\ConsoleRead.h" />
     <ClInclude Include="..\common\defines.h" />
     <ClInclude Include="..\common\DefTermBase.h" />
     <ClInclude Include="..\common\Execute.h" />
@@ -866,6 +867,7 @@
     <ClCompile Include="..\common\Common.cpp" />
     <ClCompile Include="..\common\ConEmuCheck.cpp" />
     <ClCompile Include="..\common\ConsoleMixAttr.cpp" />
+    <ClCompile Include="..\common\ConsoleRead.cpp" />
     <ClCompile Include="..\common\Execute.cpp" />
     <ClCompile Include="..\common\InQueue.cpp" />
     <ClCompile Include="..\common\MAssert.cpp" />
