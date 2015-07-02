@@ -41,6 +41,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 #ifdef _DEBUG
+	#define BsDelWordMsg(s) //MessageBox(NULL, s, L"OnPromptBsDeleteWord called", MB_SYSTEMMODAL);
+#else
+	#define BsDelWordMsg(s) //MessageBox(NULL, s, L"OnPromptBsDeleteWord called", MB_SYSTEMMODAL);
+#endif
+
+#ifdef _DEBUG
 	//#define PRE_PEEK_CONSOLE_INPUT
 	#undef PRE_PEEK_CONSOLE_INPUT
 #else
@@ -3671,7 +3677,10 @@ BOOL OnPromptBsDeleteWord(bool bForce, bool bBashMargin)
 {
 	HANDLE hConIn = NULL;
 	if (!IsPromptActionAllowed(bForce, bBashMargin, &hConIn))
+	{
+		BsDelWordMsg(L"Skipped due to !IsPromptActionAllowed!");
 		return FALSE;
+	}
 
 	int iBSCount = 0;
 	BOOL lbWrite = FALSE;
@@ -3702,6 +3711,12 @@ BOOL OnPromptBsDeleteWord(bool bForce, bool bBashMargin)
 					bDBCS = true;
 				}
 			}
+
+			#ifdef _DEBUG
+			wchar_t szDbg[120];
+			_wsprintf(szDbg, SKIPCOUNT(szDbg) L"CP=%u bDBCS=%u IsDbcs=%u X=%i", nCP, bDBCS, IsDbcs(), csbi.dwCursorPosition.X);
+			BsDelWordMsg(szDbg);
+			#endif
 
 			int xPos = csbi.dwCursorPosition.X;
 			COORD cr = {0, csbi.dwCursorPosition.Y};
@@ -3790,9 +3805,12 @@ BOOL OnPromptBsDeleteWord(bool bForce, bool bBashMargin)
 			}
 
 			// Done, string was processed
-			SafeFree(pszLine);
 			SafeFree(pwszLine);
 		}
+	}
+	else
+	{
+		BsDelWordMsg(L"GetConsoleScreenBufferInfo failed");
 	}
 
 	if (iBSCount > 0)
@@ -3832,6 +3850,10 @@ BOOL OnPromptBsDeleteWord(bool bForce, bool bBashMargin)
 
 			free(pr);
 		}
+	}
+	else
+	{
+		BsDelWordMsg(L"Nothing to delete");
 	}
 
 	UNREFERENCED_PARAMETER(dwLastError);
