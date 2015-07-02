@@ -1196,7 +1196,7 @@ BEGIN
     CONTROL         "Change prompt (cmd, powershell) text cursor position with Left Click",cbCTSClickPromptPosition,
                     "Button",BS_AUTO3STATE | WS_TABSTOP,11,156,237,8
     COMBOBOX        lbCTSClickPromptPosition,250,154,67,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    CONTROL         "Delete word leftward to the cursor (default Ctrl+BackSpace)",cbCTSDeleteLeftWord,
+    CONTROL         "Ctrl+BackSpace - delete word leftward to the text cursor",cbCTSDeleteLeftWord,
                     "Button",BS_AUTO3STATE | WS_TABSTOP,11,169,306,8
     GROUPBOX        "Mouse button actions",IDC_STATIC,4,188,319,30
     CONTROL         "",rbCTSActAlways,"Button",BS_AUTORADIOBUTTON,11,202,10,8
