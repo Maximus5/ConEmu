@@ -1935,11 +1935,15 @@ bool CRealConsole::DeleteWordKeyPress(bool bTestOnly /*= false*/)
 {
 	DWORD nActivePID = GetActivePID();
 	if (!nActivePID || (mp_ABuf->m_Type != rbt_Primary) || isFar() || isNtvdm())
+	{
 		return false;
+	}
 
 	const AppSettings* pApp = gpSet->GetAppSettings(GetActiveAppSettingsId());
 	if (!pApp || !pApp->CTSDeleteLeftWord())
+	{
 		return false;
+	}
 
 	if (!bTestOnly)
 	{
