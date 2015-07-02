@@ -1338,11 +1338,11 @@ public:
 						while (wcsncmp(pszTail, L"..\\", 3) == 0)
 						{
 							ptrAdd = wcsrchr(szPath.ms_Arg, L'\\');
-							if (ptrAdd)
-							{
-								*ptrAdd = 0;
-								pszTail += 3;
-							}
+							if (!ptrAdd)
+								break;
+							// szPath is a local copy, safe to change it
+							*ptrAdd = 0;
+							pszTail += 3;
 						}
 
 						CEStr szTemp(JoinPath(szPath, pszTail));
