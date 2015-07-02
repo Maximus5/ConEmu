@@ -4470,12 +4470,15 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
 		return; // защита
 	}
 
-	COORD pix;
-	pix.X = pos.X * nFontWidth;
-	pix.Y = pos.Y * nFontHeight;
-
+	POINT pix = {pos.X * nFontWidth, pos.Y * nFontHeight};
 	if (pos.X && ConCharX[CurChar-1])
-		pix.X = ConCharX[CurChar-1];
+		pix.x = ConCharX[CurChar-1];
+
+	POINT pix2 = {pix.x + nFontWidth, pix.y + nFontHeight};
+	if (((pos.X+1) < TextWidth) && ((CurChar+1) < (int)(TextWidth * TextHeight)) && ConCharX[CurChar])
+		pix2.x = ConCharX[CurChar];
+	else if (pix2.x > rcClient.right)
+		pix2.x = max(rcClient.right,pix2.x);
 
 	RECT rect;
 	bool bForeground = mp_ConEmu->isMeForeground();
@@ -4498,27 +4501,19 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
 	{
 		//bHollowBlock = true;
 		dwSize = 100; // percents
-		rect.left = pix.X; /*Cursor.x * nFontWidth;*/
-		rect.right = pix.X + nFontWidth; /*(Cursor.x+1) * nFontWidth;*/ //TODO: а ведь позиция следующего символа известна!
-		rect.bottom = (pos.Y+1) * nFontHeight;
-		rect.top = (pos.Y * nFontHeight) /*+ 1*/;
+		rect.left = pix.x;
+		rect.right = pix2.x;
+		rect.bottom = pix2.y;
+		rect.top = pix.y;
 	}
 	else if (curStyle == cur_Horz) // Horizontal
 	{
-		if (!gpSet->isMonospace)
-		{
-			rect.left = pix.X; /*Cursor.x * nFontWidth;*/
-			rect.right = pix.X + nFontWidth; /*(Cursor.x+1) * nFontWidth;*/ //TODO: а ведь позиция следующего символа известна!
-		}
-		else
-		{
-			rect.left = pos.X * nFontWidth;
-			rect.right = (pos.X+1) * nFontWidth;
-		}
+		rect.left = pix.x; /*Cursor.x * nFontWidth;*/
+		rect.right = pix2.x;
 
 		//rect.top = (Cursor.y+1) * nFontHeight - MulDiv(nFontHeight, cinf.dwSize, 100);
-		rect.bottom = (pos.Y+1) * nFontHeight;
-		rect.top = (pos.Y * nFontHeight) /*+ 1*/;
+		rect.bottom = pix2.y;
+		rect.top = pix.y;
 		//if (cinf.dwSize<50)
 		int nHeight = 0;
 
@@ -4543,24 +4538,10 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
 	{
 		_ASSERTE(curStyle == cur_Vert); // Validate type
 
-		if (!gpSet->isMonospace)
-		{
-			rect.left = pix.X; /*Cursor.x * nFontWidth;*/
-			//rect.right = rect.left/*Cursor.x * nFontWidth*/ //TODO: а ведь позиция следующего символа известна!
-			//  + klMax(1, MulDiv(nFontWidth, cinf.dwSize, 100)
-			//  + (cinf.dwSize > 10 ? 1 : 0));
-		}
-		else
-		{
-			rect.left = pos.X * nFontWidth;
-			//rect.right = Cursor.x * nFontWidth
-			//  + klMax(1, MulDiv(nFontWidth, cinf.dwSize, 100)
-			//  + (cinf.dwSize > 10 ? 1 : 0));
-		}
+		rect.left = pix.x;
 
 		rect.top = pos.Y * nFontHeight;
-		int nR = (!gpSet->isMonospace && ConCharX[CurChar]) // правая граница
-		         ? ConCharX[CurChar] : ((pos.X+1) * nFontWidth);
+		int nR = pix2.x;
 		//if (cinf.dwSize>=50)
 		//  rect.right = nR;
 		//else
@@ -4584,10 +4565,7 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
 		}
 
 		rect.right = min(nR, (rect.left+nWidth));
-		//rect.right = rect.left/*Cursor.x * nFontWidth*/ //TODO: а ведь позиция следующего символа известна!
-		//      + klMax(1, MulDiv(nFontWidth, cinf.dwSize, 100)
-		//      + (cinf.dwSize > 10 ? 1 : 0));
-		rect.bottom = (pos.Y+1) * nFontHeight;
+		rect.bottom = pix2.y;
 	}
 
 	rect.left += rcClient.left;
