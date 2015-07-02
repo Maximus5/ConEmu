@@ -19,6 +19,19 @@ http://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2015.7.1
+[*] Add optional ‘/Silent’ switch to suppress environment exporting messages.
+    ConEmuC [/SILENT] /EXPORT[=CON|GUI|ALL] [Var1 [Var2 [...]]]
+[*] gh#193: Fix wrong condition: ‘Warn if MacType hookers are loaded’.
+[*] Omit ConEmuC export variables message in GitShowBranch.cmd.
+[*] gh#174: Let paste to all ‘grouped input’ consoles at once.
+[*] Show actual hotkey instead of default Ctrl+BackSpace in Settings.
+[*] Vert/Horz text cursor was displayed in wrong position especially on DBCS systems.
+[*] Ctrl+BackSpace feature was not working on DBCS systems.
+[*] Redirect chocolatey downloads to github.
+[*] gh#204: ConEmu hung on startup in some cases while initializing default tasks.
+
+
 2015.6.29
 [*] Attach (Win+G) was not succeeded if ConEmu has different bitness.
 [*] Grab palette from Win+G attached consoles (Vista+) and create new
