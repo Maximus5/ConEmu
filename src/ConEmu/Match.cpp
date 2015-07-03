@@ -862,7 +862,7 @@ bool CMatch::MatchAny()
 				// Stop if after colon there is another letter but a digit
 				else if (!bLineNumberFound && !bMaybeMail
 					&& (m_SrcLine.ms_Arg[mn_MatchRight] == L':')
-							&& (((mn_MatchRight+1) < mn_SrcLength)
+							&& (((mn_MatchRight+1) >= mn_SrcLength)
 								|| !isDigit(m_SrcLine.ms_Arg[mn_MatchRight+1]))
 					// Is this a file without digits (line/col)?
 					&& IsValidFile(m_SrcLine.ms_Arg+mn_MatchLeft, mn_MatchRight - mn_MatchLeft, pszBreak, pszSpacing, nNakedFileLen))
