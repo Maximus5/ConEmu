@@ -4,9 +4,15 @@ rem *** Usage ***
 rem call 'GitShowBranch /i' for prompt initialization
 rem you may change ConEmuGitPath variable, if git.exe/git.cmd is not in your %PATH%
 
-rem predefined dir where git binaries are stored
-if NOT DEFINED ConEmuGitPath set ConEmuGitPath="%~d0\GitSDK\cmd\git.exe"
-if NOT exist %ConEmuGitPath% (
+rem Predefined dir where git binaries are stored
+
+rem ConEmuGitPath must contain quoted path, if it has spaces for instance
+
+if NOT DEFINED ConEmuGitPath (
+  rem set ConEmuGitPath=git
+  set ConEmuGitPath="%~d0\GitSDK\cmd\git.exe"
+)
+if NOT exist "%ConEmuGitPath%" (
   set ConEmuGitPath=git
 )
 
@@ -18,7 +24,7 @@ if /I "%~1" == "/i" (
     call "%~dp0ConEmuC64.exe" /IsConEmu
     if errorlevel 2 goto no_conemu
   )
-  call %ConEmuGitPath% --version
+  call "%ConEmuGitPath%" --version
   if errorlevel 1 (
     call cecho "GIT not found, change your ConEmuGitPath environment variable"
     goto :EOF
@@ -129,6 +135,11 @@ rem let gitlogpath be folder to store git output
 if "%TEMP:~-1%" == "\" (set "gitlogpath=%TEMP:~0,-1%") else (set "gitlogpath=%TEMP%")
 set git_out=%gitlogpath%\conemu_git_%ConEmuServerPID%_1.log
 set git_err=%gitlogpath%\conemu_git_%ConEmuServerPID%_2.log
+
+
+rem Due to a bug(?) of cmd.exe we can't quote ConEmuGitPath variable
+rem otherwise if it contains only unquoted "git" and matches "git.cmd" for example
+rem the "%~dp0" macros in that cmd will return a crap.
 
 call %ConEmuGitPath% -c color.status=false status --short --branch --porcelain 1>"%git_out%" 2>"%git_err%"
 if errorlevel 1 (
