@@ -461,6 +461,14 @@ bool CMatch::FindRangeStart(int& crFrom/*[In/Out]*/, int& crTo/*[In/Out]*/, bool
 	while ((crFrom > 0)
 		&& ((pChar[crFrom-1]==L'?') || !wcschr(bUrlMode ? pszUrlDelim : pszBreak, pChar[crFrom-1])))
 	{
+		// Check this before pszSpacing comparison because otherwise we'll fail on smth like
+		// Bla-bla-bla C:\your-file.txt
+		// if the mouse was over "C:\"
+		if (isAlpha(pChar[crFrom]))
+		{
+			iAlphas++;
+		}
+
 		if (iAlphas > 0)
 		{
 			TODO("Если вводить поддержку powershell 'Script.ps1:35 знак:23' нужно будет не прерываться перед национальными словами 'знак'");
@@ -468,8 +476,6 @@ bool CMatch::FindRangeStart(int& crFrom/*[In/Out]*/, int& crTo/*[In/Out]*/, bool
 			if (wcschr(pszSpacing, pChar[crFrom-1]))
 				break;
 		}
-		if (isAlpha(pChar[crFrom]))
-			iAlphas++;
 
 		if (!bUrlMode && pChar[crFrom] == L'/')
 		{
