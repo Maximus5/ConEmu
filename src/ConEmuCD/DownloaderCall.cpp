@@ -31,6 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/defines.h"
 #include "../common/MAssert.h"
 #include "../common/MSectionSimple.h"
+#include "crc32.h"
 #include "ConEmuC.h"
 #include "ExitCodes.h"
 #include "DownloaderCall.h"
@@ -156,6 +157,54 @@ protected:
 		SafeCloseHandle(m_PI.hThread);
 	};
 
+protected:
+	bool CalcFileHash(LPCWSTR asFile, DWORD& size, DWORD& crc)
+	{
+		bool bRc = false;
+		HANDLE hFile;
+		LARGE_INTEGER liSize = {};
+		const DWORD nBufSize = 0x10000;
+		BYTE* buf = new BYTE[nBufSize];
+		DWORD nReadLeft, nRead, nToRead;
+
+		crc = 0xFFFFFFFF;
+
+		hFile = CreateFile(asFile, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
+		if (!hFile || hFile == INVALID_HANDLE_VALUE)
+		{
+			Sleep(250);
+			hFile = CreateFile(asFile, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
+			if (!hFile || hFile == INVALID_HANDLE_VALUE)
+				goto wrap;
+		}
+
+		if (!GetFileSizeEx(hFile, &liSize) || liSize.HighPart)
+			goto wrap;
+
+		size = liSize.LowPart;
+		nReadLeft = liSize.LowPart;
+
+		while (nReadLeft)
+		{
+			nToRead = min(nBufSize, nReadLeft);
+			if (!ReadFile(hFile, buf, nToRead, &nRead, NULL) || (nToRead != nRead))
+				goto wrap;
+			if (!CalcCRC(buf, nRead, crc))
+				goto wrap;
+			_ASSERTE(nReadLeft >= nRead);
+			nReadLeft -= nRead;
+		}
+
+		// Succeeded
+		crc ^= 0xFFFFFFFF;
+		bRc = true;
+	wrap:
+		delete[] buf;
+		if (!hFile || hFile == INVALID_HANDLE_VALUE)
+			CloseHandle(hFile);
+		return bRc;
+	};
+
 public:
 	BOOL DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, DWORD& crc, DWORD& size, BOOL abShowAllErrors = FALSE)
 	{
@@ -228,8 +277,7 @@ public:
 		if (GetExitCodeProcess(m_PI.hProcess, &nWait)
 			&& (nWait == CERR_DOWNLOAD_SUCCEEDED))
 		{
-			_ASSERTE(FALSE && "Need to get size & crc!!!");
-			bRc = TRUE;
+			bRc = CalcFileHash(asTarget, size, crc);
 		}
 
 	wrap:
