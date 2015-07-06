@@ -33,10 +33,15 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/CmdLine.h"
 #include "../common/MSectionSimple.h"
 #include "../common/WObjects.h"
+#include "../ConEmuCD/crc32.h"
 #include "../ConEmuCD/ExitCodes.h"
 #include "Downloader.h"
 
 LONG gnIsDownloading = 0;
+
+#ifdef _DEBUG
+#define SLOW_CONNECTION_SIMULATE
+#endif
 
 #if defined(__GNUC__) && !defined(__MINGW64_VERSION_MAJOR)
 typedef struct {
@@ -1217,7 +1222,11 @@ BOOL CDownloader::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, DWORD& crc, D
 		lbWrite = WriteTarget(asTarget, hDstFile, ptrData, nRead);
 		if (!lbWrite)
 			goto wrap;
-		
+
+		#if defined(_DEBUG) && defined(SLOW_CONNECTION_SIMULATE)
+		Sleep(1000);
+		#endif
+
 		#if 0
 		if (lbFirstThunk)
 		{
