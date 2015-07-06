@@ -1084,6 +1084,7 @@ void CTabBarClass::Reposition()
 		return;
 	}
 
+	CheckRebarCreated();
 	mp_Rebar->RepositionInt();
 }
 
