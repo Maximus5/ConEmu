@@ -210,6 +210,9 @@ bool ProcessCommandLine(int& iRc, HMODULE& hConEmu)
 			if (lstrcmpi(lsArg, L"/Download") == 0)
 			{
 				iRc = DoDownload(pszCmdLine);
+				// Return '0' on download success for compatibility
+				if (iRc == CERR_DOWNLOAD_SUCCEEDED)
+					iRc = 0;
 				bProcessed = true;
 				break;
 			}

@@ -290,7 +290,7 @@ public:
 
 		nWait = WaitForSingleObject(m_PI.hProcess, INFINITE);
 		if (GetExitCodeProcess(m_PI.hProcess, &nWait)
-			&& (nWait == CERR_DOWNLOAD_SUCCEEDED))
+			&& (nWait == 0)) // CERR_DOWNLOAD_SUCCEEDED is not returned for compatibility purposes
 		{
 			if (CalcFileHash(asTarget, size, crc))
 			{
