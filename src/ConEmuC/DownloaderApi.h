@@ -108,7 +108,7 @@ enum CEDownloadCommand
 	dc_LogCallback,         // [0]=FDownloadCallback, [1]=lParam
 	// Commands
 	dc_Init,
-	dc_DownloadFile,        // {IN}  - [0]="http", [1]="DestLocalFilePath", [2]=HANDLE(hDstFile), [3]=abShowAllErrors
+	dc_DownloadFile,        // {IN}  - [0]="http", [1]="DestLocalFilePath", [2]=abShowAllErrors
 	                        // {OUT} - [0]=SizeInBytes, [1] = CRC32
 	dc_DownloadData,        // [0]="http" -- not implemented yet
 	dc_Reset,

@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2014 Maximus5
+Copyright (c) 2009-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -531,11 +531,11 @@ bool CConEmuUpdate::StartLocalUpdate(LPCWSTR asDownloadedPackage)
 
 
 	pszLocalPackage = CreateTempFile(mp_Set->szUpdateDownloadPath, PointToName(asDownloadedPackage), hTarget);
+	CloseHandle(hTarget);
 	if (!pszLocalPackage)
 		goto wrap;
 
-	lbDownloadRc = DownloadFile(asDownloadedPackage, pszLocalPackage, hTarget, nLocalCRC, TRUE);
-	CloseHandle(hTarget);
+	lbDownloadRc = DownloadFile(asDownloadedPackage, pszLocalPackage, nLocalCRC, TRUE);
 	if (!lbDownloadRc)
 		goto wrap;
 
@@ -715,12 +715,12 @@ DWORD CConEmuUpdate::CheckProcInt()
 
 		TODO("Было бы хорошо избавиться от *ini-файла* и парсить данные в памяти");
 		pszUpdateVerLocation = CreateTempFile(mp_Set->szUpdateDownloadPath/*L"%TEMP%"*/, L"ConEmuVersion.ini", hInfo);
+		CloseHandle(hInfo);
 		if (!pszUpdateVerLocation)
 			goto wrap;
 		bTempUpdateVerLocation = true;
 
-		bInfoRc = DownloadFile(pszUpdateVerLocationSet, pszUpdateVerLocation, hInfo, crc);
-		CloseHandle(hInfo);
+		bInfoRc = DownloadFile(pszUpdateVerLocationSet, pszUpdateVerLocation, crc);
 		if (!bInfoRc)
 		{
 			if (!mb_ManualCallMode)
@@ -834,17 +834,19 @@ DWORD CConEmuUpdate::CheckProcInt()
 		pszFileName++; // пропустить слеш
 
 		HANDLE hTarget = NULL;
+		LARGE_INTEGER liSize = {};
 
 		pszLocalPackage = CreateTempFile(mp_Set->szUpdateDownloadPath, szTemplFilename, hTarget);
+		CloseHandle(hTarget);
 		if (!pszLocalPackage)
 			goto wrap;
 
-		lbDownloadRc = DownloadFile(pszSource, pszLocalPackage, hTarget, nLocalCRC, TRUE);
+		// liSize returns only .LowPart yet
+		lbDownloadRc = DownloadFile(pszSource, pszLocalPackage, nLocalCRC, TRUE, &liSize);
 		if (lbDownloadRc)
 		{
 			wchar_t szInfo[2048];
-			LARGE_INTEGER liSize = {};
-			if (!GetFileSizeEx(hTarget, &liSize) || liSize.HighPart || liSize.LowPart != nSrcLen)
+			if (liSize.HighPart || liSize.LowPart != nSrcLen)
 			{
 				_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"%s\nRequired size=%u, local size=%u", pszSource, nSrcLen, liSize.LowPart);
 				ReportError(L"Downloaded file does not match\n%s\n%s", pszLocalPackage, szInfo, 0);
@@ -857,9 +859,11 @@ DWORD CConEmuUpdate::CheckProcInt()
 				lbDownloadRc = FALSE;
 			}
 		}
-		CloseHandle(hTarget);
+
 		if (!lbDownloadRc)
+		{
 			goto wrap;
+		}
 	}
 
 	Inet.Deinit(true);
@@ -1319,10 +1323,10 @@ bool CConEmuUpdate::IsLocalFile(LPWSTR& asPathOrUrl)
 	return false;
 }
 
-BOOL CConEmuUpdate::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDstFile, DWORD& crc, BOOL abPackage /*= FALSE*/)
+BOOL CConEmuUpdate::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, DWORD& crc, BOOL abPackage /*= FALSE*/, LARGE_INTEGER* rpSize /*= NULL*/)
 {
 	BOOL lbRc = FALSE, lbRead = FALSE, lbWrite = FALSE;
-	CEDownloadErrorArg args[4];
+	CEDownloadErrorArg args[3] = {};
 
 	mn_InternetContentReady = 0;
 
@@ -1351,13 +1355,16 @@ BOOL CConEmuUpdate::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDst
 
 	args[0].argType = at_Str;  args[0].strArg = asSource;
 	args[1].argType = at_Str;  args[1].strArg = asTarget;
-	args[2].argType = at_Uint; args[2].uintArg = (DWORD_PTR)hDstFile;
-	args[3].argType = at_Uint; args[3].uintArg = (mb_ManualCallMode || abPackage);
+	args[2].argType = at_Uint; args[2].uintArg = (mb_ManualCallMode || abPackage);
 
-	lbRc = Inet.DownloadCommand(dc_DownloadFile, 4, args);
+	lbRc = Inet.DownloadCommand(dc_DownloadFile, 3, args);
 	if (lbRc)
 	{
-		// args[0].uintArg - contains downloaded size
+		if (rpSize)
+		{
+			rpSize->LowPart = args[0].uintArg;
+			rpSize->HighPart = 0; // Files sizes larger than 4GB are not supported (doesn't matter for our update package)
+		}
 		crc = args[1].uintArg;
 	}
 wrap:

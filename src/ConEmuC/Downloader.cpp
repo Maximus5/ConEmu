@@ -207,7 +207,7 @@ public:
 	void SetTimeout(bool bOperation, DWORD nTimeout);
 	void SetAgent(LPCWSTR aszAgentName);
 
-	BOOL DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDstFile, DWORD& crc, DWORD& size, BOOL abShowAllErrors = FALSE);
+	BOOL DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, DWORD& crc, DWORD& size, BOOL abShowAllErrors = FALSE);
 
 	void CloseInternet(bool bFull);
 
@@ -845,11 +845,12 @@ wrap:
 	return bRc;
 }
 
-BOOL CDownloader::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDstFile, DWORD& crc, DWORD& size, BOOL abShowAllErrors /*= FALSE*/)
+BOOL CDownloader::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, DWORD& crc, DWORD& size, BOOL abShowAllErrors /*= FALSE*/)
 {
 	BOOL lbRc = FALSE, lbRead = FALSE, lbWrite = FALSE;
 	DWORD nRead;
 	bool lbNeedTargetClose = false;
+	HANDLE hDstFile = NULL;
 	bool lbStdOutWrite = false;
 	mb_InetMode = !IsLocalFile(asSource);
 	bool lbTargetLocal = IsLocalFile(asTarget);
@@ -965,7 +966,7 @@ BOOL CDownloader::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDstFi
 		goto wrap;
 	}
 
-	if (hDstFile == NULL || hDstFile == INVALID_HANDLE_VALUE)
+	// Acquire the destination handle
 	{
 		lbStdOutWrite = (lstrcmp(asTarget, L"-") == 0);
 
@@ -1332,6 +1333,7 @@ wrap:
 		mh_SrcFile = NULL;
 	}
 
+	// Close only real-file handle, skip obtained from GetStdHandle()
 	if (lbNeedTargetClose && hDstFile && hDstFile != INVALID_HANDLE_VALUE)
 	{
 		CloseHandle(hDstFile);
@@ -1585,16 +1587,15 @@ DWORD_PTR WINAPI DownloadCommand(CEDownloadCommand cmd, int argc, CEDownloadErro
 			nResult = TRUE;
 		}
 		break;
-	case dc_DownloadFile: // [0]="http", [1]="DestLocalFilePath"
+	case dc_DownloadFile: // [0]="http", [1]="DestLocalFilePath", [2]=abShowAllErrors
 		if (gpInet && (argc >= 2))
 		{
 			DWORD crc = 0, size = 0;
 			nResult = gpInet->DownloadFile(
 				(argc > 0 && argv[0].argType == at_Str) ? argv[0].strArg : NULL,
 				(argc > 1 && argv[1].argType == at_Str) ? argv[1].strArg : NULL,
-				(argc > 2) ? (HANDLE)argv[2].uintArg : 0,
 				crc, size,
-				(argc > 3) ? argv[3].uintArg : TRUE);
+				(argc > 2) ? argv[2].uintArg : TRUE);
 			// Succeeded?
 			if (nResult)
 			{
@@ -1746,7 +1747,6 @@ int DoDownload(LPCWSTR asCmdLine)
 	wchar_t *pszLogin = NULL, *pszPassword = NULL;
 	wchar_t *pszOTimeout = NULL, *pszTimeout = NULL;
 	wchar_t *pszAsync = NULL;
-	wchar_t *pszFHandle = NULL;
 	wchar_t *pszAgent = NULL;
 
 	DownloadCommand(dc_Init, 0, NULL);
@@ -1772,7 +1772,6 @@ int DoDownload(LPCWSTR asCmdLine)
 		{L"otimeout", &pszOTimeout},
 		{L"timeout", &pszTimeout},
 		{L"async", &pszAsync},
-		{L"fhandle", &pszFHandle},
 		{L"agent", &pszAgent},
 		{NULL}
 	};
@@ -1882,19 +1881,7 @@ int DoDownload(LPCWSTR asCmdLine)
 
 		args[0].strArg = pszUrl; args[0].argType = at_Str;
 		args[1].strArg = szArg;  args[1].argType = at_Str;
-		args[2].uintArg = 0;     args[2].argType = at_Uint;
-		args[3].uintArg = TRUE;  args[3].argType = at_Uint;
-		if (pszFHandle != NULL)
-		{
-			// ConEmuC must be called in the same bitness as caller
-			// So we will not lose any digits from HANDLE value
-			wchar_t* pszEnd = NULL;
-			#ifdef _WIN64
-			args[2].uintArg = (DWORD_PTR)_wcstoui64(pszFHandle, &pszEnd, 16);
-			#else
-			args[2].uintArg = wcstoul(pszFHandle, &pszEnd, 16);
-			#endif
-		}
+		args[2].uintArg = TRUE;  args[2].argType = at_Uint;
 
 		// May be file name was specified relatively or even with env.vars?
 		SafeFree(pszExpanded);
@@ -1907,7 +1894,7 @@ int DoDownload(LPCWSTR asCmdLine)
 		}
 
 		InterlockedIncrement(&gnIsDownloading);
-		drc = DownloadCommand(dc_DownloadFile, 4, args);
+		drc = DownloadCommand(dc_DownloadFile, 3, args);
 		InterlockedDecrement(&gnIsDownloading);
 
 		if (drc == 0)

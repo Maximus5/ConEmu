@@ -157,20 +157,17 @@ protected:
 	};
 
 public:
-	BOOL DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, HANDLE hDstFile, DWORD& crc, DWORD& size, BOOL abShowAllErrors = FALSE)
+	BOOL DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, DWORD& crc, DWORD& size, BOOL abShowAllErrors = FALSE)
 	{
 		BOOL bRc = FALSE;
 		DWORD nWait;
 		wchar_t szConEmuC[MAX_PATH] = L"", *psz, *pszCommand = NULL;
-		wchar_t szOTimeout[20] = L"", szTimeout[20] = L"", szDstFileHandle[32] = L"";
+		wchar_t szOTimeout[20] = L"", szTimeout[20] = L"";
 
 		if (mb_OTimeout)
 			_wsprintf(szOTimeout, SKIPCOUNT(szOTimeout) L"%u", mn_OTimeout);
 		if (mb_Timeout)
 			_wsprintf(szTimeout, SKIPCOUNT(szTimeout) L"%u", mn_Timeout);
-
-		if (hDstFile && (hDstFile != INVALID_HANDLE_VALUE))
-			_wsprintf(szDstFileHandle, SKIPCOUNT(szDstFileHandle) WIN3264TEST(L"%X",L"%X%08X"), WIN3264WSPRINT((DWORD_PTR)hDstFile));
 
 		struct _Switches {
 			LPCWSTR pszName, pszValue;
@@ -205,7 +202,6 @@ public:
 		ConEmuC /download [-login <name> -password <pwd>]
 		        [-proxy <address:port> [-proxylogin <name> -proxypassword <pwd>]]
 		        [-async Y|N] [-otimeout <ms>] [-timeout <ms>]
-		        [-fhandle <HexFileHandle>]
 		        "full_url_to_file" "local_path_name"
 		*/
 
@@ -323,16 +319,15 @@ DWORD_PTR WINAPI DownloadCommand(CEDownloadCommand cmd, int argc, CEDownloadErro
 			nResult = TRUE;
 		}
 		break;
-	case dc_DownloadFile: // [0]="http", [1]="DestLocalFilePath"
+	case dc_DownloadFile: // [0]="http", [1]="DestLocalFilePath", [2]=abShowErrors
 		if (gpInet && (argc >= 2))
 		{
 			DWORD crc = 0, size = 0;
 			nResult = gpInet->DownloadFile(
 				(argc > 0 && argv[0].argType == at_Str) ? argv[0].strArg : NULL,
 				(argc > 1 && argv[1].argType == at_Str) ? argv[1].strArg : NULL,
-				(argc > 2) ? (HANDLE)argv[2].uintArg : 0,
 				crc, size,
-				(argc > 3) ? argv[3].uintArg : TRUE);
+				(argc > 2) ? argv[2].uintArg : TRUE);
 			// Succeeded?
 			if (nResult)
 			{

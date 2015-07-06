@@ -3544,8 +3544,7 @@ int DoDownload(LPCWSTR asCmdLine)
 
 		args[0].strArg = pszUrl; args[0].argType = at_Str;
 		args[1].strArg = szArg;  args[1].argType = at_Str;
-		args[2].uintArg = 0;     args[2].argType = at_Uint;
-		args[3].uintArg = TRUE;  args[3].argType = at_Uint;
+		args[2].uintArg = TRUE;  args[2].argType = at_Uint;
 
 		// May be file name was specified relatively or even with env.vars?
 		SafeFree(pszExpanded);
@@ -3555,7 +3554,7 @@ int DoDownload(LPCWSTR asCmdLine)
 			args[1].strArg = szFullPath;
 
 		gbIsDownloading = true;
-		drc = DownloadCommand(dc_DownloadFile, 4, args);
+		drc = DownloadCommand(dc_DownloadFile, 3, args);
 		gbIsDownloading = false;
 		if (drc == 0)
 		{
