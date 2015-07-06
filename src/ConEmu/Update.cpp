@@ -1317,6 +1317,8 @@ bool CConEmuUpdate::IsLocalFile(LPWSTR& asPathOrUrl)
 	if (lstrcmpi(szPrefix, L"file://") == 0)
 	{
 		asPathOrUrl += 7;
+		if (asPathOrUrl[0] == L'/' && isDriveLetter(asPathOrUrl[1]) && asPathOrUrl[2] == L':')
+			asPathOrUrl++;
 		return true; // "file:" protocol
 	}
 
