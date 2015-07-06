@@ -284,7 +284,7 @@ int main(int argc, char** argv)
 		           L"Can't load library \"%s\", ErrorCode=0x%08X\n",
 		           WIN3264TEST(L"ConEmuCD.dll",L"ConEmuCD64.dll"),
 		           dwErr);
-       _wprintf(szErrInfo);
+		_wprintf(szErrInfo);
 		iRc = CERR_CONEMUHK_NOTFOUND;
 		goto wrap;
 	}
