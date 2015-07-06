@@ -19,6 +19,14 @@ http://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2015.7.5
+[*] Script "ConEmu/GitShowBranch.cmd" was improved.
+[*] Highlight & goto was broken at least for powershell scripts (c8c386a regression).
+    Only file name (path) was highlighted without following line number.
+[*] Highlight & goto detector was failed if mouse was before first backslash of the path.
+[*] gh#205: TabBar was not shown on startup in some monitor configurations (bacc66d regression).
+
+
 2015.7.1
 [*] Add optional ‘/Silent’ switch to suppress environment exporting messages.
     ConEmuC [/SILENT] /EXPORT[=CON|GUI|ALL] [Var1 [Var2 [...]]]
