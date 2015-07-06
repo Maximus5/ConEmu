@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2014 Maximus5
+Copyright (c) 2009-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -165,7 +165,7 @@ void Help()
 	_wprintf(pNewConsoleHelp);
 }
 
-bool ProcessCommandLine(int& iRc)
+bool ProcessCommandLine(int& iRc, HMODULE& hConEmu)
 {
 	LPCWSTR pszCmdLine = GetCommandLineW();
 
@@ -231,9 +231,19 @@ bool ProcessCommandLine(int& iRc)
 
 		if (bHelpRequested || (iCount == 0))
 		{
-			Help();
-			iRc = CERR_HELPREQUESTED;
-			bProcessed = true;
+			if (!hConEmu)
+			{
+				// Prefere Help from ConEmuCD.dll because ConEmuC.exe may be outdated (due to stability preference)
+				hConEmu = LoadLibrary(WIN3264TEST(L"ConEmuCD.dll",L"ConEmuCD64.dll"));
+
+				// Show internal Help variant if only ConEmuCD.dll was failed to load
+				if (hConEmu == NULL)
+				{
+					Help();
+					iRc = CERR_HELPREQUESTED;
+					bProcessed = true;
+				}
+			}
 		}
 	}
 
@@ -245,7 +255,7 @@ bool ProcessCommandLine(int& iRc)
 int main(int argc, char** argv)
 {
 	int iRc = 0;
-	HMODULE hConEmu;
+	HMODULE hConEmu = NULL;
 	wchar_t szErrInfo[200];
 	DWORD dwErr;
 	typedef int (__stdcall* ConsoleMain2_t)(BOOL abAlternative);
@@ -268,14 +278,15 @@ int main(int argc, char** argv)
 	#endif
 
 	// Some command we can process internally
-	if (ProcessCommandLine(iRc))
+	if (ProcessCommandLine(iRc, hConEmu))
 	{
 		// Done, exiting
 		goto wrap;
 	}
 
 	// Otherwise - do the full cycle
-	hConEmu = LoadLibrary(WIN3264TEST(L"ConEmuCD.dll",L"ConEmuCD64.dll"));
+	if (!hConEmu)
+		hConEmu = LoadLibrary(WIN3264TEST(L"ConEmuCD.dll",L"ConEmuCD64.dll"));
 	dwErr = GetLastError();
 
 	if (!hConEmu)
