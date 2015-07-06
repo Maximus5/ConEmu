@@ -206,9 +206,9 @@ protected:
 	};
 
 public:
-	BOOL DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, DWORD& crc, DWORD& size, BOOL abShowAllErrors = FALSE)
+	UINT DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, DWORD& crc, DWORD& size, BOOL abShowAllErrors = FALSE)
 	{
-		BOOL bRc = FALSE;
+		UINT iRc = E_UNEXPECTED;
 		DWORD nWait;
 		wchar_t szConEmuC[MAX_PATH] = L"", *psz, *pszCommand = NULL;
 		wchar_t szOTimeout[20] = L"", szTimeout[20] = L"";
@@ -229,19 +229,20 @@ public:
 			{L"-async", mb_AsyncMode ? L"Y" : L"N"},
 			{L"-otimeout", szOTimeout},
 			{L"-timeout", szTimeout},
-			{L"-fhandle", szDstFileHandle},
 		};
 
 		_ASSERTE(m_PI.hProcess==NULL);
 
 		if (!asSource || !*asSource || !asTarget || !*asTarget)
 		{
+			iRc = E_INVALIDARG;
 			goto wrap;
 		}
 
 		if (!GetModuleFileName(ghOurModule, szConEmuC, countof(szConEmuC)) || !(psz = wcsrchr(szConEmuC, L'\\')))
 		{
 			//ReportMessage(dc_LogCallback, L"GetModuleFileName(ghOurModule) failed, code=%u", at_Uint, GetLastError(), at_None);
+			iRc = E_HANDLE;
 			goto wrap;
 		}
 		psz[1] = 0;
@@ -255,35 +256,62 @@ public:
 		*/
 
 		if (!(pszCommand = lstrmerge(L"\"", szConEmuC, L"\" -download ")))
+		{
+			iRc = E_OUTOFMEMORY;
 			goto wrap;
+		}
 
 		for (INT_PTR i = 0; i < countof(Switches); i++)
 		{
 			LPCWSTR pszValue = Switches[i].pszValue;
 			if (pszValue && *pszValue && !lstrmerge(&pszCommand, Switches[i].pszName, L" \"", pszValue, L"\" "))
+			{
+				iRc = E_OUTOFMEMORY;
 				goto wrap;
+			}
 		}
 
 		if (!lstrmerge(&pszCommand, asSource, L" \"", asTarget, L"\""))
+		{
+			iRc = E_OUTOFMEMORY;
 			goto wrap;
+		}
 
 		ZeroStruct(m_SI);
 		ZeroStruct(m_PI);
 
 		if (!CreateProcess(NULL, pszCommand, NULL, NULL, TRUE, NORMAL_PRIORITY_CLASS, NULL, NULL, &m_SI, &m_PI))
+		{
+			iRc = GetLastError();
+			if (!iRc)
+				iRc = E_UNEXPECTED;
 			goto wrap;
+		}
 
 		nWait = WaitForSingleObject(m_PI.hProcess, INFINITE);
 		if (GetExitCodeProcess(m_PI.hProcess, &nWait)
 			&& (nWait == CERR_DOWNLOAD_SUCCEEDED))
 		{
-			bRc = CalcFileHash(asTarget, size, crc);
+			if (CalcFileHash(asTarget, size, crc))
+			{
+				iRc = 0; // OK
+			}
+			else
+			{
+				iRc = GetLastError();
+				if (!iRc)
+					iRc = E_UNEXPECTED;
+			}
+		}
+		else
+		{
+			iRc = nWait;
 		}
 
 	wrap:
 		SafeFree(pszCommand);
 		CloseHandles();
-		return bRc;
+		return iRc;
 	};
 
 public:
@@ -371,16 +399,22 @@ DWORD_PTR WINAPI DownloadCommand(CEDownloadCommand cmd, int argc, CEDownloadErro
 		if (gpInet && (argc >= 2))
 		{
 			DWORD crc = 0, size = 0;
-			nResult = gpInet->DownloadFile(
+			UINT iDlRc = gpInet->DownloadFile(
 				(argc > 0 && argv[0].argType == at_Str) ? argv[0].strArg : NULL,
 				(argc > 1 && argv[1].argType == at_Str) ? argv[1].strArg : NULL,
 				crc, size,
 				(argc > 2) ? argv[2].uintArg : TRUE);
 			// Succeeded?
-			if (nResult)
+			if (iDlRc == 0)
 			{
 				argv[0].uintArg = size;
 				argv[1].uintArg = crc;
+				nResult = TRUE;
+			}
+			else
+			{
+				argv[0].uintArg = iDlRc;
+				nResult = FALSE;
 			}
 		}
 		break;

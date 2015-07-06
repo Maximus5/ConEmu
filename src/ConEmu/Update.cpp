@@ -1369,6 +1369,10 @@ BOOL CConEmuUpdate::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, DWORD& crc,
 		}
 		crc = args[1].uintArg;
 	}
+	else
+	{
+		ReportError(L"File download was failed\n%s\nErrCode=0x%08X", asSource, args[0].uintArg);
+	}
 wrap:
 	Inet.SetCallback(dc_ProgressCallback, NULL, 0);
 	return lbRc;
