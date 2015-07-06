@@ -299,6 +299,7 @@ int main(int argc, char** argv)
 		           WIN3264TEST(L"ConEmuCD.dll",L"ConEmuCD64.dll"),
 		           dwErr);
 		_wprintf(szErrInfo);
+		_ASSERTE(FALSE && "LoadLibrary failed");
 		iRc = CERR_CONEMUHK_NOTFOUND;
 		goto wrap;
 	}
@@ -315,6 +316,7 @@ int main(int argc, char** argv)
 		           lfConsoleMain2 ? L"HandlerRoutine" : L"ConsoleMain2",
 		           WIN3264TEST(L"ConEmuCD.dll",L"ConEmuCD64.dll"));
 		_wprintf(szErrInfo);
+		_ASSERTE(FALSE && "GetProcAddress failed");
 		FreeLibrary(hConEmu);
 		iRc = CERR_CONSOLEMAIN_NOTFOUND;
 		goto wrap;
