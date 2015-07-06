@@ -2730,7 +2730,9 @@ LRESULT CConEmuSize::OnSize(bool bResizeRCon/*=true*/, WPARAM wParam/*=0*/, WORD
 	}
 
 	if (mp_ConEmu->mp_TabBar->IsTabsActive())
+	{
 		mp_ConEmu->mp_TabBar->Reposition();
+	}
 
 	// Background - должен занять все клиентское место под тулбаром
 	// Там же ресайзится ScrollBar
