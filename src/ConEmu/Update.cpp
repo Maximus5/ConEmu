@@ -2087,7 +2087,7 @@ void CConEmuUpdate::ProgressCallback(const CEDownloadInfo* pError)
 	CConEmuUpdate* pUpd = (CConEmuUpdate*)pError->lParam;
 	if (!pUpd)
 		return;
-	pUpd->mn_InternetContentReady = pError->Args[0].uintArg;
+	pUpd->mn_InternetContentReady = pError->Args[0].uintArg; // How many bytes were read
 	if (gpConEmu && ghWnd)
 	{
 		gpConEmu->UpdateProgress();
