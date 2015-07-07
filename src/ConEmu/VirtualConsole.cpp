@@ -4475,7 +4475,7 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
 		pix.x = ConCharX[CurChar-1];
 
 	POINT pix2 = {pix.x + nFontWidth, pix.y + nFontHeight};
-	if (((pos.X+1) < TextWidth) && ((CurChar+1) < (int)(TextWidth * TextHeight)) && ConCharX[CurChar])
+	if (((pos.X+1) < (int)TextWidth) && ((CurChar+1) < (int)(TextWidth * TextHeight)) && ConCharX[CurChar])
 		pix2.x = ConCharX[CurChar];
 	else if (pix2.x > rcClient.right)
 		pix2.x = max(rcClient.right,pix2.x);
