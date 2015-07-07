@@ -47,3 +47,8 @@ int ReadTextFile(LPCWSTR asPath, DWORD cchMax, wchar_t*& rsBuffer, DWORD& rnChar
 int WriteTextFile(LPCWSTR asPath, const wchar_t* asBuffer, int anSrcLen = -1, DWORD OutCP = CP_UTF8, bool WriteBOM = true, LPDWORD rnErrCode = NULL);
 
 bool FileCompare(LPCWSTR asFilePath1, LPCWSTR asFilePath2);
+
+#if 0
+int apiCancelIoEx(HANDLE hFile, LPOVERLAPPED lpOverlapped);
+#endif
+int apiCancelSynchronousIo(HANDLE hThread);

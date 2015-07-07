@@ -767,3 +767,57 @@ wrap:
 	SafeFree(pBuf2);
 	return bMatch;
 }
+
+#if 0
+// This cancels ASYNCHRONOUS calls
+int apiCancelIoEx(HANDLE hFile, LPOVERLAPPED lpOverlapped)
+{
+	int iRc = -1;
+	BOOL bRc = FALSE;
+
+	typedef BOOL (WINAPI* CancelIoEx_t)(HANDLE hFile, LPOVERLAPPED lpOverlapped);
+	static CancelIoEx_t fnCancelIoEx = NULL;
+	static bool fnChecked = false;
+
+	if (!fnChecked)
+	{
+		HMODULE hKernel = GetModuleHandle(L"Kernel32.dll");
+		fnCancelIoEx = hKernel ? (CancelIoEx_t)GetProcAddress(hKernel, "CancelIoEx") : NULL;
+		fnChecked = false;
+	}
+
+	if (fnCancelIoEx)
+	{
+		bRc = fnCancelIoEx(hFile, lpOverlapped);
+		iRc = bRc ? 1 : 0;
+	}
+
+	return iRc;
+}
+#endif
+
+// This cancels SYNCHRONOUS calls
+int apiCancelSynchronousIo(HANDLE hThread)
+{
+	int iRc = -1;
+	BOOL bRc = FALSE;
+
+	typedef BOOL (WINAPI* CancelSynchronousIo_t)(HANDLE hThread);
+	static CancelSynchronousIo_t fnCancelSynchronousIo = NULL;
+	static bool fnChecked = false;
+
+	if (!fnChecked)
+	{
+		HMODULE hKernel = GetModuleHandle(L"Kernel32.dll");
+		fnCancelSynchronousIo = hKernel ? (CancelSynchronousIo_t)GetProcAddress(hKernel, "CancelSynchronousIo") : NULL;
+		fnChecked = false;
+	}
+
+	if (fnCancelSynchronousIo)
+	{
+		bRc = fnCancelSynchronousIo(hThread);
+		iRc = bRc ? 1 : 0;
+	}
+
+	return iRc;
+}
