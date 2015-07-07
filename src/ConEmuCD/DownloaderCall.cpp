@@ -31,6 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/defines.h"
 #include "../common/MAssert.h"
 #include "../common/MSectionSimple.h"
+#include "../common/WFiles.h"
 #include "crc32.h"
 #include "ConEmuC.h"
 #include "ExitCodes.h"
@@ -206,20 +207,119 @@ protected:
 	};
 
 protected:
-	// The part related to stdin/out redirection
+	/* *** The part related to stdin/out redirection *** */
+
+	struct PipeThreadParm
+	{
+		CDownloader* pObj;
+	};
+
+	bool mb_Terminating;
+	HANDLE mh_PipeErrRead, mh_PipeErrWrite, mh_PipeErrThread;
+	DWORD mn_PipeErrThreadId;
+
+	static DWORD WINAPI StdErrReaderThread(LPVOID lpParameter)
+	{
+		CDownloader* pObj = ((PipeThreadParm*)lpParameter)->pObj;
+		char Line[4096+1]; // When output is redirected, RAW ASCII is used
+		const DWORD dwToRead = countof(Line)-1;
+		DWORD dwRead, nValue, nErrCode;
+		BOOL bSuccess;
+		char *ptr, *ptrEnd;
+		const char sProgressMark[] = " Progr: ";
+
+		while (!pObj->mb_Terminating)
+		{
+			bSuccess = ReadFile(pObj->mh_PipeErrRead, Line, dwToRead, &dwRead, NULL);
+			if (!bSuccess || dwRead == 0)
+			{
+				nErrCode = GetLastError();
+				break;
+			}
+			_ASSERTE(dwRead < countof(Line));
+			Line[dwRead] = 0; // Ensure it is ASCIIZ
+
+			// Parse read line
+			if (pObj->mfn_Callback[dc_ProgressCallback])
+			{
+				// 09:01:20.811{1234} Progr: Bytes downloaded 1656
+				ptr = strstr(Line, sProgressMark);
+				while (ptr)
+				{
+					ptr = strpbrk(ptr, "0123456789");
+					ptrEnd = NULL;
+					nValue = strtoul(ptr, &ptrEnd, 10);
+
+					if (nValue)
+					{
+						CEDownloadInfo progrInfo = {
+							sizeof(progrInfo),
+							pObj->m_CallbackLParam[dc_ProgressCallback]
+						};
+						progrInfo.argCount = 1;
+						progrInfo.Args[0].argType = at_Uint;
+						progrInfo.Args[0].uintArg = nValue;
+
+						pObj->mfn_Callback[dc_ProgressCallback](&progrInfo);
+					}
+
+					if (!ptrEnd || (ptrEnd <= ptr))
+						break;
+					ptr = strstr(ptrEnd, sProgressMark);
+				}
+			}
+		}
+
+		return 0;
+	};
+
 	UINT ExecuteDownloader(LPWSTR pszCommand)
 	{
 		UINT iRc;
 		DWORD nWait;
+		DWORD nThreadWait = WAIT_TIMEOUT;
 
 		ZeroStruct(m_SI); m_SI.cb = sizeof(m_SI);
 		ZeroStruct(m_PI);
 
-		// TODO: Create pipes
+		// We need to redirect only StdError output
 
-		if (!CreateProcess(NULL, pszCommand, NULL, NULL, TRUE, NORMAL_PRIORITY_CLASS, NULL, NULL, &m_SI, &m_PI))
+		DWORD nCreateFlags = 0
+			//| CREATE_NO_WINDOW
+			| NORMAL_PRIORITY_CLASS;
+
+		m_SI.dwFlags |= STARTF_USESHOWWINDOW;
+
+		m_SI.wShowWindow = RELEASEDEBUGTEST(SW_HIDE,SW_SHOWNA);
+
+		SECURITY_ATTRIBUTES saAttr = {sizeof(saAttr), NULL, TRUE};
+		if (!CreatePipe(&mh_PipeErrRead, &mh_PipeErrWrite, &saAttr, 0))
 		{
 			iRc = GetLastError();
+			_ASSERTE(FALSE && "CreatePipe was failed");
+			if (!iRc)
+				iRc = E_UNEXPECTED;
+			goto wrap;
+		}
+		// Ensure the read handle to the pipe for STDOUT is not inherited.
+		SetHandleInformation(mh_PipeErrRead, HANDLE_FLAG_INHERIT, 0);
+
+		mb_Terminating = false;
+
+		PipeThreadParm threadParm = {this};
+		mh_PipeErrThread = CreateThread(NULL, 0, StdErrReaderThread, (LPVOID)&threadParm, 0, &mn_PipeErrThreadId);
+		if (mh_PipeErrThread != NULL)
+		{
+			m_SI.dwFlags |= STARTF_USESTDHANDLES;
+			// Let's try to change only Error pipe?
+			m_SI.hStdError = mh_PipeErrWrite;
+		}
+
+		// Now we can run the downloader
+		if (!CreateProcess(NULL, pszCommand, NULL, NULL, TRUE/*!Inherit!*/, nCreateFlags, NULL, NULL, &m_SI, &m_PI))
+		{
+			iRc = GetLastError();
+			_ASSERTE(FALSE && "Create downloader process was failed");
 			if (!iRc)
 				iRc = E_UNEXPECTED;
 			goto wrap;
@@ -234,12 +334,39 @@ protected:
 		}
 		else
 		{
+			_ASSERTE(nWait == 0 && "Downloader has returned an error");
 			iRc = nWait;
 		}
 
 	wrap:
+		// Finalize reading routine
+		mb_Terminating = true;
+		if (mh_PipeErrThread)
+		{
+			nThreadWait = WaitForSingleObject(mh_PipeErrThread, 0);
+			if (nThreadWait == WAIT_TIMEOUT)
+			{
+				apiCancelSynchronousIo(mh_PipeErrThread);
+			}
+		}
+		SafeCloseHandle(mh_PipeErrRead);
+		SafeCloseHandle(mh_PipeErrWrite);
+		if (mh_PipeErrThread)
+		{
+			if (nThreadWait == WAIT_TIMEOUT)
+			{
+				nThreadWait = WaitForSingleObject(mh_PipeErrThread, 5000);
+			}
+			if (nThreadWait == WAIT_TIMEOUT)
+			{
+				_ASSERTE(FALSE && "StdErr reading thread hangs, terminating");
+				TerminateThread(mh_PipeErrThread, 999);
+			}
+			SafeCloseHandle(mh_PipeErrThread);
+		}
+		// Exit
 		return iRc;
-	}
+	};
 
 
 public:
@@ -349,6 +476,9 @@ public:
 		mb_RequestTerminate = false;
 		ZeroStruct(m_SI); m_SI.cb = sizeof(m_SI);
 		ZeroStruct(m_PI);
+		mb_Terminating = false;
+		mh_PipeErrRead = mh_PipeErrWrite = mh_PipeErrThread = NULL;
+		mn_PipeErrThreadId = 0;
 	};
 
 	~CDownloader()
