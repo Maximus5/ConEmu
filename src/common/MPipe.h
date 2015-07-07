@@ -48,7 +48,9 @@ class MPipe
 		BOOL mb_Overlapped;
 		OVERLAPPED m_Ovl;
 		typedef BOOL (WINAPI* CancelIo_t)(HANDLE hFile);
+		typedef BOOL (WINAPI* CancelIoEx_t)(HANDLE hFile, LPOVERLAPPED lpOverlapped);
 		CancelIo_t _CancelIo;
+		CancelIoEx_t _CancelIoEx;
 		T_IN m_In; // для справки...
 		T_OUT* mp_Out; DWORD mn_OutSize, mn_MaxOutSize;
 		T_OUT m_Tmp;
@@ -74,6 +76,7 @@ class MPipe
 			memset(&m_Ovl, 0, sizeof(m_Ovl));
 			HMODULE hKernel = GetModuleHandle(L"kernel32.dll");
 			_CancelIo = hKernel ? (CancelIo_t)GetProcAddress(hKernel,"CancelIo") : NULL;
+			_CancelIoEx = hKernel ? (CancelIoEx_t)GetProcAddress(hKernel,"CancelIoEx") : NULL;
 			_ASSERTE(mh_Heap!=NULL);
 		};
 		void SetTimeout(DWORD anTimeout)
@@ -101,7 +104,10 @@ class MPipe
 			if (mh_Pipe && mh_Pipe != INVALID_HANDLE_VALUE)
 			{
 				InterlockedIncrement(&mn_CloseCount);
-				if (_CancelIo) _CancelIo(mh_Pipe);
+				if (_CancelIoEx)
+					_CancelIoEx(mh_Pipe, NULL);
+				else if (_CancelIo)
+					_CancelIo(mh_Pipe);
 				CloseHandle(mh_Pipe);
 			}
 
