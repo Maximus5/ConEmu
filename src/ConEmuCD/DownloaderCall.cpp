@@ -205,11 +205,48 @@ protected:
 		return bRc;
 	};
 
+protected:
+	// The part related to stdin/out redirection
+	UINT ExecuteDownloader(LPWSTR pszCommand)
+	{
+		UINT iRc;
+		DWORD nWait;
+
+		ZeroStruct(m_SI); m_SI.cb = sizeof(m_SI);
+		ZeroStruct(m_PI);
+
+		// TODO: Create pipes
+
+		if (!CreateProcess(NULL, pszCommand, NULL, NULL, TRUE, NORMAL_PRIORITY_CLASS, NULL, NULL, &m_SI, &m_PI))
+		{
+			iRc = GetLastError();
+			if (!iRc)
+				iRc = E_UNEXPECTED;
+			goto wrap;
+		}
+
+		nWait = WaitForSingleObject(m_PI.hProcess, INFINITE);
+
+		if (GetExitCodeProcess(m_PI.hProcess, &nWait)
+			&& (nWait == 0)) // CERR_DOWNLOAD_SUCCEEDED is not returned for compatibility purposes
+		{
+			iRc = 0; // OK
+		}
+		else
+		{
+			iRc = nWait;
+		}
+
+	wrap:
+		return iRc;
+	}
+
+
 public:
 	UINT DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, DWORD& crc, DWORD& size, BOOL abShowAllErrors = FALSE)
 	{
 		UINT iRc = E_UNEXPECTED;
-		DWORD nWait;
+		UINT nWait;
 		wchar_t szConEmuC[MAX_PATH] = L"", *psz, *pszCommand = NULL;
 		wchar_t szOTimeout[20] = L"", szTimeout[20] = L"";
 
@@ -277,10 +314,14 @@ public:
 			goto wrap;
 		}
 
-		ZeroStruct(m_SI);
-		ZeroStruct(m_PI);
+		nWait = ExecuteDownloader(pszCommand);
+		if (nWait != 0)
+		{
+			iRc = nWait;
+			goto wrap;
+		}
 
-		if (!CreateProcess(NULL, pszCommand, NULL, NULL, TRUE, NORMAL_PRIORITY_CLASS, NULL, NULL, &m_SI, &m_PI))
+		if (!CalcFileHash(asTarget, size, crc))
 		{
 			iRc = GetLastError();
 			if (!iRc)
@@ -288,26 +329,7 @@ public:
 			goto wrap;
 		}
 
-		nWait = WaitForSingleObject(m_PI.hProcess, INFINITE);
-		if (GetExitCodeProcess(m_PI.hProcess, &nWait)
-			&& (nWait == 0)) // CERR_DOWNLOAD_SUCCEEDED is not returned for compatibility purposes
-		{
-			if (CalcFileHash(asTarget, size, crc))
-			{
-				iRc = 0; // OK
-			}
-			else
-			{
-				iRc = GetLastError();
-				if (!iRc)
-					iRc = E_UNEXPECTED;
-			}
-		}
-		else
-		{
-			iRc = nWait;
-		}
-
+		iRc = 0; // OK
 	wrap:
 		SafeFree(pszCommand);
 		CloseHandles();
