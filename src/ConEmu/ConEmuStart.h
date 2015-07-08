@@ -33,6 +33,64 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 class CConEmuMain;
 
+enum CESwitchType
+{
+	sw_None,
+	sw_Simple,  // just a bool
+	sw_Int,     // number, may be min/max specified
+	sw_FnSet,   // "/log1" -> Int=1
+	sw_Str,     // string, may be min/max length specified
+	sw_EnvStr,  // expanded env string, may be min/max length specified
+	sw_PathStr, // path, may contains env strings, may be min/max length specified
+	sw_Cmd,     // "/cmd ..."
+	sw_CmdList, // "/cmdlist ..."
+};
+
+struct CESwitch
+{
+public:
+	// The value
+	union
+	{
+		bool        Bool;
+		int         Int;
+		wchar_t*    Str;
+	};
+
+	// Type
+	CESwitchType Type;
+
+	// Was specified in command line?
+	bool Exists;
+
+public:
+	CESwitch();
+	~CESwitch();
+
+	void Clear();
+
+public:
+	// Helpers
+	void Undefine();
+
+	bool GetBool();
+	void SetBool(bool NewVal);
+	CESwitch& operator=(bool NewVal);
+
+	int GetInt();
+	void SetInt(int NewVal);
+	void SetInt(LPCWSTR NewVal, int Radix = 10);
+	CESwitch& operator=(int NewVal);
+
+	LPCWSTR GetStr();
+	void SetStr(LPCWSTR NewVal, CESwitchType NewType = sw_Str);
+	CESwitch& operator=(LPCWSTR NewVal);
+
+public:
+	operator bool();
+	// other operators are not defined to avoid unambiguous calls
+};
+
 class CConEmuStart
 {
 private:

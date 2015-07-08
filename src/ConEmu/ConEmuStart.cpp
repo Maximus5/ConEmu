@@ -37,6 +37,123 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Options.h"
 #include "SetCmdTask.h"
 
+// *****************
+CESwitch::CESwitch()
+{
+	Str = NULL;
+	Type = sw_None;
+	Exists = false;
+}
+
+CESwitch::~CESwitch()
+{
+	Clear();
+}
+
+// Helpers
+
+void CESwitch::Clear()
+{
+	if (GetStr())
+		free(Str);
+	Str = NULL; // empty most wide variable from union
+	Type = sw_None;
+	Exists = false;
+}
+
+void CESwitch::Undefine()
+{
+	Exists = false;
+}
+
+CESwitch::operator bool()
+{
+	return GetBool();
+}
+
+CESwitch& CESwitch::operator=(bool NewVal)
+{
+	SetBool(NewVal);
+	return *this;
+}
+
+CESwitch& CESwitch::operator=(int NewVal)
+{
+	SetInt(NewVal);
+	return *this;
+}
+
+CESwitch& CESwitch::operator=(LPCWSTR NewVal)
+{
+	SetStr(NewVal);
+	return *this;
+}
+
+bool CESwitch::GetBool()
+{
+	_ASSERTE(Type==sw_Simple);
+	return (Exists && Bool);
+}
+
+void CESwitch::SetBool(bool NewVal)
+{
+	Bool = NewVal;
+	Exists = true;
+	if (Type != sw_Simple)
+	{
+		_ASSERTE(Type == sw_Simple || Type == sw_None);
+		Type = sw_Simple;
+	}
+}
+
+int CESwitch::GetInt()
+{
+	_ASSERTE(Type==sw_Int);
+	return (Exists && (Type == sw_Int)) ? Int : 0;
+}
+
+void CESwitch::SetInt(int NewVal)
+{
+	Int = NewVal;
+	Exists = true;
+	if (Type != sw_Int)
+	{
+		_ASSERTE(Type == sw_Int || Type == sw_None);
+		Type = sw_Int;
+	}
+}
+
+void CESwitch::SetInt(LPCWSTR NewVal, int Radix /*= 10*/)
+{
+	wchar_t* EndPtr = NULL;
+	int iVal = wcstol(NewVal, &EndPtr, Radix);
+	SetInt(iVal);
+}
+
+LPCWSTR CESwitch::GetStr()
+{
+	if (!Exists || !(Type == sw_Str || Type == sw_EnvStr || Type == sw_PathStr))
+		return NULL;
+	if (!Str || !*Str)
+		return NULL;
+	return Str;
+}
+
+void CESwitch::SetStr(LPCWSTR NewVal, CESwitchType NewType /*= sw_Str*/)
+{
+	if (GetStr())
+		free(Str);
+	Str = (NewVal && *NewVal) ? lstrdup(NewVal) : NULL;
+	Exists = true;
+	if (Type != NewType)
+	{
+		_ASSERTE(Type == sw_Str || Type == sw_EnvStr || Type == sw_PathStr || Type == sw_None);
+		Type = NewType;
+	}
+}
+
+
+// ********************************************
 CConEmuStart::CConEmuStart(CConEmuMain* pOwner)
 {
 	mp_ConEmu = pOwner;
