@@ -3309,6 +3309,20 @@ bool GetCfgParm(uint& i, TCHAR*& curCommand, bool& Prm, TCHAR*& Val, int nMaxLen
 	return true;
 }
 
+bool GetCfgParm(uint& i, TCHAR*& curCommand, CESwitch& Val, int nMaxLen, bool bExpandAndDup = false)
+{
+	if (Val.Type == sw_Str || Val.Type == sw_EnvStr || Val.Type == sw_PathStr)
+	{
+		SafeFree(Val.Str);
+	}
+	else
+	{
+		Val.Type = bExpandAndDup ? sw_EnvStr : sw_Str;
+	}
+
+	return GetCfgParm(i, curCommand, Val.Exists, Val.Str, nMaxLen, bExpandAndDup);
+}
+
 bool CheckLockFrequentExecute(DWORD& Tick, DWORD Interval)
 {
 	DWORD CurTick = GetTickCount();
@@ -3642,37 +3656,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	ghDbgHook = SetWindowsHookEx(WH_CALLWNDPROC, DbgCallWndProc, NULL, GetCurrentThreadId());
 #endif
 
-
-	//pVCon = NULL;
-	//bool setParentDisabled=false;
-	bool ClearTypePrm = false; LONG ClearTypeVal = CLEARTYPE_NATURAL_QUALITY;
-	bool FontPrm = false; TCHAR* FontVal = NULL;
-	bool IconPrm = false;
-	bool SizePrm = false; LONG SizeVal = 0;
-	bool BufferHeightPrm = false; int BufferHeightVal = 0;
-	bool ConfigPrm = false; TCHAR* ConfigVal = NULL;
-	bool PalettePrm = false; TCHAR* PaletteVal = NULL;
-	//bool FontFilePrm = false; TCHAR* FontFile = NULL; //ADD fontname; by Mors
-	bool WindowPrm = false; int WindowModeVal = 0;
-	bool ForceUseRegistryPrm = false;
-	bool LoadCfgFilePrm = false; TCHAR* LoadCfgFile = NULL;
-	bool SaveCfgFilePrm = false; TCHAR* SaveCfgFile = NULL;
-	bool UpdateSrcSetPrm = false; TCHAR* UpdateSrcSet = NULL;
-	bool AnsiLogPathPrm = false; TCHAR* AnsiLogPath = NULL;
-	bool GuiMacroPrm = false; TCHAR* ExecGuiMacro = NULL;
-	bool QuakePrm = false; BYTE QuakeMode = 0;
-	bool SizePosPrm = false; TCHAR *sWndX = NULL, *sWndY = NULL, *sWndW = NULL, *sWndH = NULL;
-	bool SetUpDefaultTerminal = false;
-	bool ExitAfterActionPrm = false;
-#if 0
-	//120714 - аналогичные параметры работают в ConEmuC.exe, а в GUI они и не работали. убрал пока
-	bool AttachPrm = false; LONG AttachVal=0;
-#endif
-	bool MultiConPrm = false, MultiConValue = false;
-	bool VisPrm = false, VisValue = false;
-	bool ResetSettings = false;
-	//bool SingleInstance = false;
-
 	_ASSERTE(gpSetCls->SingleInstanceArg == sgl_Default);
 	gpSetCls->SingleInstanceArg = sgl_Default;
 	gpSetCls->SingleInstanceShowHide = sih_None;
@@ -3892,29 +3875,28 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				else if (!klstricmp(curCommand, _T("/multi")))
 				{
 					gpConEmu->AppendExtraArgs(curCommand);
-					MultiConValue = true; MultiConPrm = true;
+					gpConEmu->opt.MultiConValue = true;
 				}
 				else if (!klstricmp(curCommand, _T("/nomulti")))
 				{
 					gpConEmu->AppendExtraArgs(curCommand);
-					MultiConValue = false; MultiConPrm = true;
+					gpConEmu->opt.MultiConValue = false;
 				}
 				else if (!klstricmp(curCommand, _T("/visible")))
 				{
-					VisValue = true; VisPrm = true;
+					gpConEmu->opt.VisValue = true;
 				}
 				else if (!klstricmp(curCommand, _T("/ct")) || !klstricmp(curCommand, _T("/cleartype"))
 					|| !klstricmp(curCommand, _T("/ct0")) || !klstricmp(curCommand, _T("/ct1")) || !klstricmp(curCommand, _T("/ct2")))
 				{
-					ClearTypePrm = true;
 					switch (curCommand[3])
 					{
 					case L'0':
-						ClearTypeVal = NONANTIALIASED_QUALITY; break;
+						gpConEmu->opt.ClearTypeVal = NONANTIALIASED_QUALITY; break;
 					case L'1':
-						ClearTypeVal = ANTIALIASED_QUALITY; break;
+						gpConEmu->opt.ClearTypeVal = ANTIALIASED_QUALITY; break;
 					default:
-						ClearTypeVal = CLEARTYPE_NATURAL_QUALITY;
+						gpConEmu->opt.ClearTypeVal = CLEARTYPE_NATURAL_QUALITY;
 					}
 				}
 				// имя шрифта
@@ -3922,10 +3904,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				{
 					curCommand += _tcslen(curCommand) + 1; i++;
 
-					if (!FontPrm)
+					if (!gpConEmu->opt.FontVal.Exists)
 					{
-						FontPrm = true;
-						FontVal = curCommand;
+						gpConEmu->opt.FontVal = curCommand;
 						gpConEmu->AppendExtraArgs(L"/font", curCommand);
 					}
 				}
@@ -3934,10 +3915,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				{
 					curCommand += _tcslen(curCommand) + 1; i++;
 
-					if (!SizePrm)
+					if (!gpConEmu->opt.SizeVal.Exists)
 					{
-						SizePrm = true;
-						SizeVal = klatoi(curCommand);
+						gpConEmu->opt.SizeVal.SetInt(curCommand);
 					}
 				}
 				#if 0
@@ -4046,11 +4026,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				}
 				else if (!klstricmp(curCommand, _T("/fs")))
 				{
-					WindowModeVal = rFullScreen; WindowPrm = true;
+					gpConEmu->opt.WindowModeVal = rFullScreen;
 				}
 				else if (!klstricmp(curCommand, _T("/max")))
 				{
-					WindowModeVal = rMaximized; WindowPrm = true;
+					gpConEmu->opt.WindowModeVal = rMaximized;
 				}
 				else if (!klstricmp(curCommand, _T("/min"))
 					|| !klstricmp(curCommand, _T("/mintsa"))
@@ -4164,9 +4144,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				{
 					curCommand += _tcslen(curCommand) + 1; i++;
 
-					if (!IconPrm && *curCommand)
+					if (!gpConEmu->opt.IconPrm.Exists && *curCommand)
 					{
-						IconPrm = true;
+						gpConEmu->opt.IconPrm = true;
 						gpConEmu->mps_IconPath = ExpandEnvStr(curCommand);
 					}
 				}
@@ -4218,14 +4198,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					|| !klstricmp(curCommand, _T("/quakeauto"))
 					|| !klstricmp(curCommand, _T("/noquake")))
 				{
-					QuakePrm = true;
 					if (!klstricmp(curCommand, _T("/quake")))
-						QuakeMode = 1;
+						gpConEmu->opt.QuakeMode = 1;
 					else if (!klstricmp(curCommand, _T("/quakeauto")))
-						QuakeMode = 2;
+						gpConEmu->opt.QuakeMode = 2;
 					else
 					{
-						QuakeMode = 0;
+						gpConEmu->opt.QuakeMode = 0;
 						if (gpSetCls->SingleInstanceArg == sgl_Default)
 							gpSetCls->SingleInstanceArg = sgl_Disabled;
 					}
@@ -4240,7 +4219,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					|| !klstricmp(curCommand, _T("/resetdefault"))
 					|| !klstricmp(curCommand, _T("/basic")))
 				{
-					ResetSettings = true;
+					gpConEmu->opt.ResetSettings = true;
 					if (!klstricmp(curCommand, _T("/resetdefault")))
 					{
 						gpSetCls->isFastSetupDisabled = true;
@@ -4263,7 +4242,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				{
 					TCHAR ch = curCommand[4], *psz = NULL;
 					CharUpperBuff(&ch, 1);
-					if (!GetCfgParm(i, curCommand, SizePosPrm, psz, 32))
+					if (!GetCfgParm(i, curCommand, gpConEmu->opt.SizePosPrm, psz, 32))
 					{
 						return 100;
 					}
@@ -4274,10 +4253,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 					switch (ch)
 					{
-					case _T('X'): sWndX = psz; break;
-					case _T('Y'): sWndY = psz; break;
-					case _T('W'): sWndW = psz; break;
-					case _T('H'): sWndH = psz; break;
+					case _T('X'): gpConEmu->opt.sWndX = psz; break;
+					case _T('Y'): gpConEmu->opt.sWndY = psz; break;
+					case _T('W'): gpConEmu->opt.sWndW = psz; break;
+					case _T('H'): gpConEmu->opt.sWndH = psz; break;
 					}
 				}
 				else if ((!klstricmp(curCommand, _T("/Buffer")) || !klstricmp(curCommand, _T("/BufferHeight")))
@@ -4285,27 +4264,26 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				{
 					curCommand += _tcslen(curCommand) + 1; i++;
 
-					if (!BufferHeightPrm)
+					if (!gpConEmu->opt.BufferHeightVal.Exists)
 					{
-						BufferHeightPrm = true;
-						BufferHeightVal = klatoi(curCommand);
+						gpConEmu->opt.BufferHeightVal.SetInt(curCommand);
 
-						if (BufferHeightVal < 0)
+						if (gpConEmu->opt.BufferHeightVal.GetInt() < 0)
 						{
 							//setParent = true; -- Maximus5 - нефиг, все ручками
-							BufferHeightVal = -BufferHeightVal;
+							gpConEmu->opt.BufferHeightVal = -gpConEmu->opt.BufferHeightVal.GetInt();
 						}
 
-						if (BufferHeightVal < LONGOUTPUTHEIGHT_MIN)
-							BufferHeightVal = LONGOUTPUTHEIGHT_MIN;
-						else if (BufferHeightVal > LONGOUTPUTHEIGHT_MAX)
-							BufferHeightVal = LONGOUTPUTHEIGHT_MAX;
+						if (gpConEmu->opt.BufferHeightVal.GetInt() < LONGOUTPUTHEIGHT_MIN)
+							gpConEmu->opt.BufferHeightVal = LONGOUTPUTHEIGHT_MIN;
+						else if (gpConEmu->opt.BufferHeightVal.GetInt() > LONGOUTPUTHEIGHT_MAX)
+							gpConEmu->opt.BufferHeightVal = LONGOUTPUTHEIGHT_MAX;
 					}
 				}
 				else if (!klstricmp(curCommand, _T("/Config")) && i + 1 < params)
 				{
 					//if (!ConfigPrm) -- используем последний из параметров, если их несколько
-					if (!GetCfgParm(i, curCommand, ConfigPrm, ConfigVal, 127))
+					if (!GetCfgParm(i, curCommand, gpConEmu->opt.ConfigVal, 127))
 					{
 						return 100;
 					}
@@ -4313,7 +4291,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				else if (!klstricmp(curCommand, _T("/Palette")) && i + 1 < params)
 				{
 					//if (!ConfigPrm) -- используем последний из параметров, если их несколько
-					if (!GetCfgParm(i, curCommand, PalettePrm, PaletteVal, MAX_PATH))
+					if (!GetCfgParm(i, curCommand, gpConEmu->opt.PaletteVal, MAX_PATH))
 					{
 						return 100;
 					}
@@ -4321,12 +4299,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				else if (!klstricmp(curCommand, _T("/LoadRegistry")))
 				{
 					gpConEmu->AppendExtraArgs(curCommand);
-					ForceUseRegistryPrm = true;
+					gpConEmu->opt.ForceUseRegistryPrm = true;
 				}
 				else if (!klstricmp(curCommand, _T("/LoadCfgFile")) && i + 1 < params)
 				{
 					// используем последний из параметров, если их несколько
-					if (!GetCfgParm(i, curCommand, LoadCfgFilePrm, LoadCfgFile, MAX_PATH, true))
+					if (!GetCfgParm(i, curCommand, gpConEmu->opt.LoadCfgFile, MAX_PATH, true))
 					{
 						return 100;
 					}
@@ -4334,7 +4312,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				else if (!klstricmp(curCommand, _T("/SaveCfgFile")) && i + 1 < params)
 				{
 					// используем последний из параметров, если их несколько
-					if (!GetCfgParm(i, curCommand, SaveCfgFilePrm, SaveCfgFile, MAX_PATH, true))
+					if (!GetCfgParm(i, curCommand, gpConEmu->opt.SaveCfgFile, MAX_PATH, true))
 					{
 						return 100;
 					}
@@ -4342,7 +4320,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				else if (!klstricmp(curCommand, _T("/GuiMacro")) && i + 1 < params)
 				{
 					// выполняется только последний
-					if (!GetCfgParm(i, curCommand, GuiMacroPrm, ExecGuiMacro, 0x8000, false))
+					if (!GetCfgParm(i, curCommand, gpConEmu->opt.ExecGuiMacro, 0x8000, false))
 					{
 						return 100;
 					}
@@ -4350,7 +4328,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				else if (!klstricmp(curCommand, _T("/UpdateSrcSet")) && i + 1 < params)
 				{
 					// используем последний из параметров, если их несколько
-					if (!GetCfgParm(i, curCommand, UpdateSrcSetPrm, UpdateSrcSet, MAX_PATH*4, false))
+					if (!GetCfgParm(i, curCommand, gpConEmu->opt.UpdateSrcSet, MAX_PATH*4, false))
 					{
 						return 100;
 					}
@@ -4358,18 +4336,18 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				else if (!klstricmp(curCommand, _T("/AnsiLog")) && i + 1 < params)
 				{
 					// используем последний из параметров, если их несколько
-					if (!GetCfgParm(i, curCommand, AnsiLogPathPrm, AnsiLogPath, MAX_PATH-40, true))
+					if (!GetCfgParm(i, curCommand, gpConEmu->opt.AnsiLogPath, MAX_PATH-40, true))
 					{
 						return 100;
 					}
 				}
 				else if (!klstricmp(curCommand, _T("/SetDefTerm")))
 				{
-					SetUpDefaultTerminal = true;
+					gpConEmu->opt.SetUpDefaultTerminal = true;
 				}
 				else if (!klstricmp(curCommand, _T("/Exit")))
 				{
-					ExitAfterActionPrm = true;
+					gpConEmu->opt.ExitAfterActionPrm = true;
 				}
 				else if (!klstricmp(curCommand, _T("/QuitOnClose")))
 				{
@@ -4460,10 +4438,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 //------------------------------------------------------------------------
 
 	// set config name before settings (i.e. where to load from)
-	if (ConfigPrm)
+	if (gpConEmu->opt.ConfigVal.Exists)
 	{
 		DEBUGSTRSTARTUP(L"Initializing configuration name");
-		gpSetCls->SetConfigName(ConfigVal);
+		gpSetCls->SetConfigName(gpConEmu->opt.ConfigVal.GetStr());
 	}
 
 	// Сразу инициализировать событие для SingleInstance. Кто первый схватит.
@@ -4471,24 +4449,22 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	gpConEmu->isFirstInstance();
 
 	// xml-using disabled? Forced to registry?
-	if (ForceUseRegistryPrm)
+	if (gpConEmu->opt.ForceUseRegistryPrm)
 	{
 		gpConEmu->SetForceUseRegistry();
 	}
 	// special config file
-	else if (LoadCfgFilePrm)
+	else if (gpConEmu->opt.LoadCfgFile.Exists)
 	{
 		DEBUGSTRSTARTUP(L"Exact cfg file was specified");
 		// При ошибке - не выходим, просто покажем ее пользователю
-		gpConEmu->SetConfigFile(LoadCfgFile, false/*abWriteReq*/, true/*abSpecialPath*/);
-		// Release mem
-		SafeFree(LoadCfgFile);
+		gpConEmu->SetConfigFile(gpConEmu->opt.LoadCfgFile.GetStr(), false/*abWriteReq*/, true/*abSpecialPath*/);
 	}
 
 	// preparing settings
 	bool bNeedCreateVanilla = false;
 	SettingsLoadedFlags slfFlags = slf_None;
-	if (ResetSettings)
+	if (gpConEmu->opt.ResetSettings)
 	{
 		// force this config as "new"
 		DEBUGSTRSTARTUP(L"Clear config was requested");
@@ -4503,9 +4479,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	}
 
 	// Quake/NoQuake?
-	if (QuakePrm)
+	if (gpConEmu->opt.QuakeMode.Exists)
 	{
-		gpConEmu->SetQuakeMode(QuakeMode);
+		gpConEmu->SetQuakeMode(gpConEmu->opt.QuakeMode.GetInt());
 	}
 
 	// Update package was dropped on ConEmu icon?
@@ -4546,7 +4522,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	slfFlags |= slf_OnStartupLoad | slf_AllowFastConfig
 		| (bNeedCreateVanilla ? slf_NeedCreateVanilla : slf_None)
 		| (gpSet->IsConfigPartial ? slf_DefaultTasks : slf_None)
-		| ((ResetSettings || gpSet->IsConfigNew) ? slf_DefaultSettings : slf_None);
+		| ((gpConEmu->opt.ResetSettings || gpSet->IsConfigNew) ? slf_DefaultSettings : slf_None);
 	// выполнить дополнительные действия в классе настроек здесь
 	DEBUGSTRSTARTUP(L"Config loaded, post checks");
 	gpSetCls->SettingsLoaded(slfFlags, cmdNew);
@@ -4554,39 +4530,38 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	// Для gpSet->isQuakeStyle - принудительно включается gpSetCls->SingleInstanceArg
 
 	// When "/Palette <name>" is specified
-	if (PalettePrm)
+	if (gpConEmu->opt.PaletteVal.Exists)
 	{
-		gpSet->PaletteSetActive(PaletteVal);
+		gpSet->PaletteSetActive(gpConEmu->opt.PaletteVal.GetStr());
 	}
 
 	// Set another update location (-UpdateSrcSet <URL>)
-	if (UpdateSrcSetPrm)
+	if (gpConEmu->opt.UpdateSrcSet.Exists)
 	{
-		gpSet->UpdSet.SetUpdateVerLocation(UpdateSrcSet);
+		gpSet->UpdSet.SetUpdateVerLocation(gpConEmu->opt.UpdateSrcSet.GetStr());
 	}
 
 	// Force "AnsiLog" feature
-	if (AnsiLogPathPrm)
+	if (gpConEmu->opt.AnsiLogPath.GetStr())
 	{
-		gpSet->isAnsiLog = (AnsiLogPath && *AnsiLogPath);
+		gpSet->isAnsiLog = true;
 		SafeFree(gpSet->pszAnsiLog);
-		gpSet->pszAnsiLog = AnsiLogPath;
-		AnsiLogPath = NULL;
+		gpSet->pszAnsiLog = lstrdup(gpConEmu->opt.AnsiLogPath.GetStr());
 	}
 
 	// Forced window size or pos
 	// Call this AFTER SettingsLoaded because we (may be)
 	// don't want to change ‘xml-stored’ values
-	if (SizePosPrm)
+	if (gpConEmu->opt.SizePosPrm)
 	{
-		if (sWndX)
-			gpConEmu->SetWindowPosSizeParam(L'X', sWndX);
-		if (sWndY)
-			gpConEmu->SetWindowPosSizeParam(L'Y', sWndY);
-		if (sWndW)
-			gpConEmu->SetWindowPosSizeParam(L'W', sWndW);
-		if (sWndH)
-			gpConEmu->SetWindowPosSizeParam(L'H', sWndH);
+		if (gpConEmu->opt.sWndX.Exists)
+			gpConEmu->SetWindowPosSizeParam(L'X', gpConEmu->opt.sWndX.GetStr());
+		if (gpConEmu->opt.sWndY.Exists)
+			gpConEmu->SetWindowPosSizeParam(L'Y', gpConEmu->opt.sWndY.GetStr());
+		if (gpConEmu->opt.sWndW.Exists)
+			gpConEmu->SetWindowPosSizeParam(L'W', gpConEmu->opt.sWndW.GetStr());
+		if (gpConEmu->opt.sWndH.Exists)
+			gpConEmu->SetWindowPosSizeParam(L'H', gpConEmu->opt.sWndH.GetStr());
 	}
 
 	DEBUGSTRSTARTUPLOG(L"SettingsLoaded");
@@ -4600,7 +4575,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	// ExitAfterActionPrm - сразу выйти после выполнения действий
 	// не наколоться бы с isAutoSaveSizePos
 
-	if (gpConEmu->mb_UpdateJumpListOnStartup && ExitAfterActionPrm)
+	if (gpConEmu->mb_UpdateJumpListOnStartup && gpConEmu->opt.ExitAfterActionPrm)
 	{
 		DEBUGSTRSTARTUP(L"Updating Win7 task list");
 		if (!UpdateWin7TaskList(true/*bForce*/, true/*bNoSuccMsg*/))
@@ -4610,11 +4585,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	}
 
 	// special config file
-	if (SaveCfgFilePrm)
+	if (gpConEmu->opt.SaveCfgFile.Exists)
 	{
 		// Сохранять конфиг только если получилось сменить путь (создать файл)
 		DEBUGSTRSTARTUP(L"Force write current config to settings storage");
-		if (!gpConEmu->SetConfigFile(SaveCfgFile, true/*abWriteReq*/, true/*abSpecialPath*/))
+		if (!gpConEmu->SetConfigFile(gpConEmu->opt.SaveCfgFile.GetStr(), true/*abWriteReq*/, true/*abSpecialPath*/))
 		{
 			if (!iMainRc) iMainRc = 11;
 		}
@@ -4625,19 +4600,17 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				if (!iMainRc) iMainRc = 12;
 			}
 		}
-		// Release mem
-		SafeFree(SaveCfgFile);
 	}
 
 	// Only when ExitAfterActionPrm, otherwise - it will be called from ConEmu's PostCreate
-	if (SetUpDefaultTerminal)
+	if (gpConEmu->opt.SetUpDefaultTerminal)
 	{
 		_ASSERTE(!gpConEmu->DisableSetDefTerm);
 
 		gpSet->isSetDefaultTerminal = true;
 		gpSet->isRegisterOnOsStartup = true;
 
-		if (ExitAfterActionPrm)
+		if (gpConEmu->opt.ExitAfterActionPrm)
 		{
 			if (gpConEmu->mp_DefTrm)
 			{
@@ -4657,15 +4630,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	}
 
 	// Actions done
-	if (ExitAfterActionPrm)
+	if (gpConEmu->opt.ExitAfterActionPrm)
 	{
 		DEBUGSTRSTARTUP(L"Exit was requested");
 		goto wrap;
 	}
 
-	if (GuiMacroPrm && ExecGuiMacro && *ExecGuiMacro)
+	if (gpConEmu->opt.ExecGuiMacro.GetStr())
 	{
-		gpConEmu->SetPostGuiMacro(ExecGuiMacro);
+		gpConEmu->SetPostGuiMacro(gpConEmu->opt.ExecGuiMacro.GetStr());
 	}
 
 //------------------------------------------------------------------------
@@ -4698,12 +4671,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	//	_tcscpy(gpSet->LogFont.lfFaceName, FontVal);
 	//if (SizePrm)
 	//	gpSet->LogFont.lfHeight = SizeVal;
-	if (BufferHeightPrm)
+	if (gpConEmu->opt.BufferHeightVal.Exists)
 	{
-		gpSetCls->SetArgBufferHeight(BufferHeightVal);
+		gpSetCls->SetArgBufferHeight(gpConEmu->opt.BufferHeightVal.GetInt());
 	}
 
-	if (!WindowPrm)
+	if (!gpConEmu->opt.WindowModeVal.Exists)
 	{
 		if (nCmdShow == SW_SHOWMAXIMIZED)
 			gpSet->_WindowMode = wmMaximized;
@@ -4712,14 +4685,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	}
 	else
 	{
-		gpSet->_WindowMode = (ConEmuWindowMode)WindowModeVal;
+		gpSet->_WindowMode = (ConEmuWindowMode)gpConEmu->opt.WindowModeVal.GetInt();
 	}
 
-	if (MultiConPrm)
-		gpSet->mb_isMulti = MultiConValue;
+	if (gpConEmu->opt.MultiConValue.Exists)
+		gpSet->mb_isMulti = gpConEmu->opt.MultiConValue;
 
-	if (VisValue)
-		gpSet->isConVisible = VisPrm;
+	if (gpConEmu->opt.VisValue.Exists)
+		gpSet->isConVisible = gpConEmu->opt.VisValue;
 
 	// Если запускается conman (нафига?) - принудительно включить флажок "Обновлять handle"
 	//TODO("Deprecated: isUpdConHandle использоваться не должен");
@@ -4767,9 +4740,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	gpSetCls->RegisterFonts();
 	gpSetCls->InitFont(
-		FontPrm ? FontVal : NULL,
-		SizePrm ? SizeVal : -1,
-		ClearTypePrm ? ClearTypeVal : -1
+		gpConEmu->opt.FontVal.GetStr(),
+		gpConEmu->opt.SizeVal.Exists ? gpConEmu->opt.SizeVal.GetInt() : -1,
+		gpConEmu->opt.ClearTypeVal.Exists ? gpConEmu->opt.ClearTypeVal.GetInt() : -1
 	);
 
 	if (gpSet->wndCascade)

@@ -140,4 +140,32 @@ public:
 	bool    FindBashLocation(CEStr& lsBash);
 
 	void ResetCmdArg();
+
+public:
+	// Startup options configured via command line switches
+	struct StartOptions
+	{
+		CESwitch ClearTypeVal; // sw_Int: CLEARTYPE_NATURAL_QUALITY
+		CESwitch FontVal; // sw_Str
+		CESwitch IconPrm; // sw_Simple
+		CESwitch SizeVal; // sw_Int
+		CESwitch BufferHeightVal; // sw_Int
+		CESwitch ConfigVal; // sw_Str
+		CESwitch PaletteVal; // sw_Str
+		CESwitch WindowModeVal; // sw_Int
+		CESwitch ForceUseRegistryPrm;
+		CESwitch LoadCfgFile; // sw_Str
+		CESwitch SaveCfgFile; // sw_Str
+		CESwitch UpdateSrcSet; // sw_Str
+		CESwitch AnsiLogPath; // sw_Str
+		CESwitch ExecGuiMacro; // sw_Str
+		CESwitch QuakeMode; // sw_Int
+		bool SizePosPrm; // -WndX -WndY -WndW[idth] -WndH[eight]
+		CESwitch sWndX, sWndY, sWndW, sWndH; // sw_Str
+		CESwitch SetUpDefaultTerminal; // sw_Simple
+		CESwitch ExitAfterActionPrm; // sw_Simple
+		CESwitch MultiConValue; // sw_Simple
+		CESwitch VisValue; // sw_Simple
+		CESwitch ResetSettings; // sw_Simple
+	} opt;
 };
