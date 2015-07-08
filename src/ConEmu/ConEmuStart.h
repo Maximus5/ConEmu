@@ -141,10 +141,25 @@ public:
 
 	void ResetCmdArg();
 
+protected:
+	/* Processing helpers */
+	bool GetCfgParm(int& i, wchar_t*& curCommand, CESwitch& Val, int nMaxLen, bool bExpandAndDup = false);
+	bool GetCfgParm(int& i, wchar_t*& curCommand, bool& Prm, wchar_t*& Val, int nMaxLen, bool bExpandAndDup = false);
+	bool PrepareCommandLine(wchar_t*& cmdLine, wchar_t*& cmdNew, bool& isScript, int& params);
 public:
-	// Startup options configured via command line switches
+	bool ParseCommandLine(int& iResult);
+	void ResetConman();
+
+public:
+	/* Startup options configured via command line switches */
 	struct StartOptions
 	{
+		// Some variables
+		wchar_t* cmdLine;
+		wchar_t* cmdNew;
+		int      params;
+		bool     isScript;
+		// The options
 		CESwitch ClearTypeVal; // sw_Int: CLEARTYPE_NATURAL_QUALITY
 		CESwitch FontVal; // sw_Str
 		CESwitch IconPrm; // sw_Simple
