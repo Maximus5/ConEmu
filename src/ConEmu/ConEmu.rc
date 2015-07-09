@@ -1213,37 +1213,40 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    CONTROL         "Check on startup",cbUpdateCheckOnStartup,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,13,70,8
-    CONTROL         "Hourly",cbUpdateCheckHourly,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,83,13,34,8
-    CONTROL         "Show TSA balloon",cbUpdateConfirmDownload,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,121,13,73,8
-    CONTROL         "Stable",rbUpdateStableOnly,"Button",BS_AUTORADIOBUTTON | WS_DISABLED,200,13,38,8
-    CONTROL         "Preview",rbUpdatePreview,"Button",BS_AUTORADIOBUTTON,240,13,38,8
-    CONTROL         "Latest",rbUpdateLatestAvailable,"Button",BS_AUTORADIOBUTTON,280,13,38,8
-    GROUPBOX        "",IDC_STATIC,4,30,319,27
-    CONTROL         "Use proxy",cbUpdateUseProxy,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,29,51,10
-    LTEXT           "Server:port",stUpdateProxy,10,41,42,8,WS_DISABLED
-    EDITTEXT        tUpdateProxy,56,39,90,13,ES_AUTOHSCROLL | WS_DISABLED
-    RTEXT           "User",stUpdateProxyUser,147,41,19,8,WS_DISABLED
-    EDITTEXT        tUpdateProxyUser,169,39,54,13,ES_AUTOHSCROLL | WS_DISABLED
-    RTEXT           "Password",stUpdateProxyPassword,225,41,34,8,WS_DISABLED
-    EDITTEXT        tUpdateProxyPassword,263,39,54,13,ES_PASSWORD | ES_AUTOHSCROLL | WS_DISABLED
+    GROUPBOX        "Update settings",gbUpdate,4,1,319,230
+    LTEXT           "Do automatic check on",stUpdateCheck,10,13,87,8
+    CONTROL         "Startup",cbUpdateCheckOnStartup,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,104,13,51,8
+    CONTROL         "Hourly",cbUpdateCheckHourly,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,158,13,47,8
+    CONTROL         "TSA notification only",cbUpdateConfirmDownload,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,218,13,97,8
+    LTEXT           "Preferred release type",stUpdateReleaseType,10,28,87,8
+    CONTROL         "Stable",rbUpdateStableOnly,"Button",BS_AUTORADIOBUTTON | WS_DISABLED,104,29,51,8
+    CONTROL         "Preview",rbUpdatePreview,"Button",BS_AUTORADIOBUTTON,159,29,51,8
+    CONTROL         "Latest",rbUpdateLatestAvailable,"Button",BS_AUTORADIOBUTTON,218,29,51,8
+    CONTROL         "External downloader",cbUpdateInetTool,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,45,87,10
+    EDITTEXT        tUpdateInetTool,103,43,194,13,ES_AUTOHSCROLL
+    PUSHBUTTON      "...",cbUpdateInetToolPath,302,43,15,13
+    CONTROL         "Proxy",cbUpdateUseProxy,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,65,39,8
+    RTEXT           "Server:port",stUpdateProxy,55,65,42,8,WS_DISABLED
+    EDITTEXT        tUpdateProxy,103,63,62,13,ES_AUTOHSCROLL | WS_DISABLED
+    RTEXT           "User",stUpdateProxyUser,167,65,27,8,WS_DISABLED
+    EDITTEXT        tUpdateProxyUser,197,63,39,13,ES_AUTOHSCROLL | WS_DISABLED
+    RTEXT           "Password",stUpdateProxyPassword,241,65,34,8,WS_DISABLED
+    EDITTEXT        tUpdateProxyPassword,278,63,39,13,ES_PASSWORD | ES_AUTOHSCROLL | WS_DISABLED
+    CONTROL         "Leave downloaded packages",cbUpdateLeavePackages,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,85,126,10
+    EDITTEXT        tUpdateDownloadPath,138,84,159,13,ES_AUTOHSCROLL
+    PUSHBUTTON      "...",cbUpdateDownloadPath,302,84,15,13
+    LTEXT           "Update command (%1 - package, %2 - ConEmu.exe folder, %3 - x86/x64, %4 - PID)",stUpdateCommand,12,102,310,8
     CONTROL         "Installer (ConEmuSetup.exe /p:%s)",rbUpdateUseExe,
-                    "Button",BS_AUTORADIOBUTTON | WS_DISABLED,12,99,151,10
+                    "Button",BS_AUTORADIOBUTTON | WS_DISABLED,21,112,151,10
+    EDITTEXT        tUpdateExeCmdLine,21,124,295,14,ES_AUTOHSCROLL
     CONTROL         "7-Zip archieve (ConEmu.7z), WinRar or 7-Zip required",rbUpdateUseArc,
-                    "Button",BS_AUTORADIOBUTTON | WS_DISABLED,12,128,226,10
-    GROUPBOX        "Download path",IDC_STATIC,5,59,319,28
-    EDITTEXT        tUpdateDownloadPath,10,69,160,13,ES_AUTOHSCROLL
-    PUSHBUTTON      "...",cbUpdateDownloadPath,173,68,15,13
-    CONTROL         "Leave downloaded packages",cbUpdateLeavePackages,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,195,70,113,10
-    GROUPBOX        "Post-update command, don't forget ‘call’ for batches",IDC_STATIC,5,161,319,30
-    EDITTEXT        tUpdatePostUpdateCmd,10,172,310,13,ES_AUTOHSCROLL
-    GROUPBOX        "Update settings",IDC_STATIC,4,1,319,27
-    EDITTEXT        tUpdateArcCmdLine,10,140,290,13,ES_AUTOHSCROLL
-    PUSHBUTTON      "...",cbUpdateArcCmdLine,305,140,15,13
-    EDITTEXT        tUpdateVerLocation,10,204,310,13,ES_AUTOHSCROLL | ES_READONLY
-    EDITTEXT        tUpdateExeCmdLine,10,111,310,14,ES_AUTOHSCROLL
-    GROUPBOX        "Update command (%1 - package, %2 - ConEmu.exe folder, %3 - x86/x64, %4 - PID)",IDC_STATIC,6,89,319,70
-    GROUPBOX        "ConEmu latest version location info",IDC_STATIC,5,193,319,28
+                    "Button",BS_AUTORADIOBUTTON | WS_DISABLED,21,141,226,10
+    EDITTEXT        tUpdateArcCmdLine,21,153,276,13,ES_AUTOHSCROLL
+    PUSHBUTTON      "...",cbUpdateArcCmdLine,301,153,15,13
+    LTEXT           "Post-update command, don't forget ‘call’ for batches",stUpdatePostCommand,12,173,310,8
+    EDITTEXT        tUpdatePostUpdateCmd,21,185,295,13,ES_AUTOHSCROLL
+    LTEXT           "ConEmu latest version location info",stUpdateVerLocation,12,201,310,8
+    EDITTEXT        tUpdateVerLocation,21,212,295,13,ES_AUTOHSCROLL | ES_READONLY
 END
 
 IDD_FAST_CONFIG DIALOGEX 0, 0, 323, 305

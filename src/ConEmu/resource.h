@@ -1171,6 +1171,16 @@
 #define vkCdExplorerPath                2853
 #define cbShowWasSetOnTopMsg            2854
 #define stSetCommands2                  2855
+#define cbUpdateInetTool                2856
+#define tUpdateInetTool                 2857
+#define cbUpdateInetToolPath            2858
+#define tUpdateCommand                  2859
+#define stUpdateCommand                 2859
+#define stUpdatePostCommand             2860
+#define stUpdateVerLocation             2861
+#define stUpdateReleaseType             2862
+#define stUpdateCheck                   2863
+#define gbUpdate                        2864
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
@@ -1179,7 +1189,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        227
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2856
+#define _APS_NEXT_CONTROL_VALUE         2865
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif
