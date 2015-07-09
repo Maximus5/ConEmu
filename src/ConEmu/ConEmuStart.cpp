@@ -98,7 +98,7 @@ CESwitch& CESwitch::operator=(LPCWSTR NewVal)
 
 bool CESwitch::GetBool()
 {
-	_ASSERTE(Type==sw_Simple);
+	_ASSERTE(Type==sw_Simple || (Type==sw_None && !Exists));
 	return (Exists && Bool);
 }
 
@@ -115,7 +115,7 @@ void CESwitch::SetBool(bool NewVal)
 
 int CESwitch::GetInt()
 {
-	_ASSERTE(Type==sw_Int);
+	_ASSERTE(Type==sw_Int || (Type==sw_None && !Exists));
 	return (Exists && (Type == sw_Int)) ? Int : 0;
 }
 
