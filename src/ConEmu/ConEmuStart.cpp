@@ -45,10 +45,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRSTARTUP(s) DEBUGSTR(WIN3264TEST(L"ConEmu.exe: ",L"ConEmu64.exe: ") s L"\n")
 
 // *****************
-CESwitch::CESwitch()
+CESwitch::CESwitch(CESwitchType aType /*= sw_None*/)
 {
 	Str = NULL;
-	Type = sw_None;
+	Type = aType;
 	Exists = false;
 }
 

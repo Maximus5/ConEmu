@@ -64,7 +64,7 @@ public:
 	bool Exists;
 
 public:
-	CESwitch();
+	CESwitch(CESwitchType aType = sw_None);
 	~CESwitch();
 
 	void Clear();
