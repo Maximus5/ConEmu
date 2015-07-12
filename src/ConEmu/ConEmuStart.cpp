@@ -166,6 +166,9 @@ CConEmuStart::CConEmuStart(CConEmuMain* pOwner)
 	mp_ConEmu = pOwner;
 	_ASSERTE(mp_ConEmu!=NULL);
 
+	opt.params = 0;
+	opt.isScript = false; // true if switch ‘-cmdlist’ was used
+
 	m_StartDetached = crb_Undefined;
 	mb_ConEmuHere = false;
 	mb_ForceQuitOnClose = false;
@@ -187,7 +190,6 @@ CConEmuStart::CConEmuStart(CConEmuMain* pOwner)
 
 CConEmuStart::~CConEmuStart()
 {
-	SafeFree(opt.cmdLine);
 }
 
 void CConEmuStart::SetDefaultCmd(LPCWSTR asCmd)
@@ -459,19 +461,34 @@ void CConEmuStart::ResetConman()
 	}
 }
 
-bool CConEmuStart::GetCfgParm(int& i, wchar_t*& curCommand, bool& Prm, wchar_t*& Val, int nMaxLen, bool bExpandAndDup /*= false*/)
+bool CConEmuStart::GetCfgParm(LPCWSTR& cmdLineRest, CESwitch& Val, int nMaxLen, bool bExpandAndDup /*= false*/)
 {
-	if (!curCommand || !*curCommand)
+	if (Val.Type == sw_Str || Val.Type == sw_EnvStr || Val.Type == sw_PathStr)
 	{
-		_ASSERTE(curCommand && *curCommand);
+		SafeFree(Val.Str);
+	}
+	else
+	{
+		Val.Type = bExpandAndDup ? sw_EnvStr : sw_Str;
+	}
+	Val.Exists = false;
+
+	if (!cmdLineRest || !*cmdLineRest)
+	{
+		_ASSERTE(cmdLineRest && *cmdLineRest);
 		return false;
 	}
 
 	// Сохраним, может для сообщения об ошибке понадобится
-	wchar_t* pszName = curCommand;
+	LPCWSTR pszName = cmdLineRest;
+	CEStr szGetCfgParmTemp;
 
-	curCommand += _tcslen(curCommand) + 1; i++;
+	if (NextArg(&cmdLineRest, szGetCfgParmTemp) != 0)
+	{
+		return false;
+	}
 
+	LPCWSTR curCommand = szGetCfgParmTemp.ms_Arg;
 	int nLen = _tcslen(curCommand);
 
 	if (nLen >= nMaxLen)
@@ -488,30 +505,23 @@ bool CConEmuStart::GetCfgParm(int& i, wchar_t*& curCommand, bool& Prm, wchar_t*&
 		return false;
 	}
 
-	// Ok
-	Prm = true;
-
 	// We need independent absolute file paths, Working dir changes during ConEmu session
 	if (bExpandAndDup)
-		Val = GetFullPathNameEx(curCommand);
+		Val.Str = GetFullPathNameEx(curCommand); // it allocates memory
 	else
-		Val = curCommand;
+		Val.SetStr(curCommand, Val.Type);
+
+	// Ok
+	Val.Exists = (Val.Str && *Val.Str);
 
 	return true;
 }
 
-bool CConEmuStart::GetCfgParm(int& i, wchar_t*& curCommand, CESwitch& Val, int nMaxLen, bool bExpandAndDup /*= false*/)
+bool CConEmuStart::GetCfgParm(LPCWSTR& cmdLineRest, bool& Prm, CESwitch& Val, int nMaxLen, bool bExpandAndDup /*= false*/)
 {
-	if (Val.Type == sw_Str || Val.Type == sw_EnvStr || Val.Type == sw_PathStr)
-	{
-		SafeFree(Val.Str);
-	}
-	else
-	{
-		Val.Type = bExpandAndDup ? sw_EnvStr : sw_Str;
-	}
-
-	return GetCfgParm(i, curCommand, Val.Exists, Val.Str, nMaxLen, bExpandAndDup);
+	bool bRc = GetCfgParm(cmdLineRest, Val, nMaxLen, bExpandAndDup);
+	Prm = Val.Exists;
+	return bRc;
 }
 
 void CConEmuStart::ProcessConEmuArgsVar(LPCWSTR cmdLineRest)
@@ -545,153 +555,6 @@ GetCommandLineW(): "ShowArg.exe" "test1" test2
 
 */
 
-//Result:
-//  cmdLine - указатель на буфер с аргументами (!) он будет освобожден через free(cmdLine)
-//  cmdNew  - то что запускается (после аргумента /cmd)
-//  params  - количество аргументов
-//            0 - ком.строка пустая
-//            (-1) - весь cmdNew должен быть ПРИКЛЕЕН к строке запуска по умолчанию
-bool CConEmuStart::PrepareCommandLine(LPCWSTR pszCmdLine, wchar_t*& cmdLine, wchar_t*& cmdNew, bool& isScript, int& params)
-{
-	params = 0;
-	cmdNew = NULL;
-	isScript = false;
-
-	int nInitLen = _tcslen(pszCmdLine);
-	cmdLine = lstrdup(pszCmdLine);
-	// Имя исполняемого файла (conemu.exe)
-	const wchar_t* pszExeName = PointToName(gpConEmu->ms_ConEmuExe);
-	wchar_t* pszExeNameOnly = lstrdup(pszExeName);
-	wchar_t* pszDot = (wchar_t*)PointToExt(pszExeNameOnly);
-	_ASSERTE(pszDot);
-	if (pszDot) *pszDot = 0;
-
-	wchar_t *pszNext = NULL, *pszStart = NULL, chSave = 0;
-
-	if (*cmdLine == L' ')
-	{
-		// Исполняемого файла нет - сразу начинаются аргументы
-		pszNext = NULL;
-	}
-	else if (*cmdLine == L'"')
-	{
-		// Имя между кавычками
-		pszStart = cmdLine+1;
-		pszNext = wcschr(pszStart, L'"');
-
-		if (!pszNext)
-		{
-			MBoxA(L"Invalid command line: quotes are not balanced");
-			SafeFree(pszExeNameOnly);
-			return false;
-		}
-
-		chSave = *pszNext;
-		*pszNext = 0;
-	}
-	else
-	{
-		pszStart = cmdLine;
-		pszNext = wcschr(pszStart, L' ');
-
-		if (!pszNext) pszNext = pszStart + _tcslen(pszStart);
-
-		chSave = *pszNext;
-		*pszNext = 0;
-	}
-
-	if (pszNext)
-	{
-		wchar_t* pszFN = wcsrchr(pszStart, L'\\');
-		if (pszFN) pszFN++; else pszFN = pszStart;
-
-		// Если первый параметр - наш conemu.exe или его путь - нужно его выбросить
-		if (!lstrcmpi(pszFN, pszExeName) || !lstrcmpi(pszFN, pszExeNameOnly))
-		{
-			// Нужно отрезать
-			INT_PTR nCopy = (nInitLen - (pszNext - cmdLine)) * sizeof(wchar_t);
-			TODO("Проверить, чтобы длину корректно посчитать");
-
-			if (nCopy > 0)
-				memmove(cmdLine, pszNext+1, nCopy);
-			else
-				*cmdLine = 0;
-		}
-		else
-		{
-			*pszNext = chSave;
-		}
-	}
-
-	// AI. Если первый аргумент начинается НЕ с '/' - считаем что эта строка должна полностью передаваться в
-	// запускаемую программу (прилепляться к концу ком.строки по умолчанию)
-	pszStart = cmdLine;
-
-	while (*pszStart == L' ' || *pszStart == L'"') pszStart++;  // пропустить пробелы и кавычки
-
-	if (*pszStart == 0)
-	{
-		params = 0;
-		*cmdLine = 0;
-		cmdNew = NULL;
-		// Эта переменная нужна для того, чтобы conemu можно было перезапустить
-		// из cmd файла с теми же аргументами (selfupdate)
-		SetEnvironmentVariableW(L"ConEmuArgs", L"");
-	}
-	else
-	{
-		// Эта переменная нужна для того, чтобы conemu можно было перезапустить
-		// из cmd файла с теми же аргументами (selfupdate)
-		gpConEmu->mpsz_ConEmuArgs = lstrdup(SkipNonPrintable(cmdLine));
-		SetEnvironmentVariableW(L"ConEmuArgs", gpConEmu->mpsz_ConEmuArgs);
-
-		// Теперь проверяем наличие слеша
-		if (*pszStart != L'/' && *pszStart != L'-' && !wcschr(pszStart, L'/'))
-		{
-			params = -1;
-			cmdNew = cmdLine;
-		}
-		else
-		{
-			CEStr lsArg;
-			wchar_t* pszSrc = cmdLine;
-			wchar_t* pszDst = cmdLine;
-			wchar_t* pszArgStart = NULL;
-			params = 0;
-			// Strip quotes, de-escape arguments
-			while (0 == NextArg((const wchar_t**)&pszSrc, lsArg, (const wchar_t**)&pszArgStart))
-			{
-				// If command line contains "/cmd" - the trailer is used (without changes!) to create new process
-				// Optional "/cmdlist cmd1 | cmd2 | ..." can be used to start bunch of consoles at once
-				if ((lsArg.ms_Arg[0] == L'-') || (lsArg.ms_Arg[0] == L'/'))
-				{
-					if (lstrcmpi(lsArg.ms_Arg+1, L"cmd") == 0)
-					{
-						cmdNew = (wchar_t*)SkipNonPrintable(pszSrc);
-						*pszDst = 0;
-						break;
-					}
-					else if (lstrcmpi(lsArg.ms_Arg+1, L"cmdlist") == 0)
-					{
-						isScript = true;
-						cmdNew = (wchar_t*)SkipNonPrintable(pszSrc);
-						*pszDst = 0;
-						break;
-					}
-				}
-
-				// Historically. Command line was splitted into "Arg1\0Arg2\0Arg3\0\0"
-				int iLen = lstrlen(lsArg.ms_Arg);
-				wmemcpy(pszDst, lsArg.ms_Arg, iLen+1); // Include trailing zero
-				pszDst += iLen+1;
-				params++;
-			}
-		}
-	}
-	SafeFree(pszExeNameOnly);
-
-	return true;
-}
 
 //------------------------------------------------------------------------
 ///| Parsing the command line |///////////////////////////////////////////
@@ -701,75 +564,154 @@ bool CConEmuStart::PrepareCommandLine(LPCWSTR pszCmdLine, wchar_t*& cmdLine, wch
 //   false - exit process with iResult code
 bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 {
-	wchar_t* psUnknown = NULL;
+	bool bRc = false;
+	iResult = 100;
 
-	DEBUGSTRSTARTUP(L"Parsing command line");
+	_ASSERTE(pszCmdLine!=NULL);
+	opt.cmdLine.Set(pszCmdLine ? pszCmdLine : L"");
 
-	// [OUT] params = (-1), если первый аргумент не начинается с '/'
-	// т.е. комстрока такая "ConEmu.exe c:\tools\far.exe",
-	// а не такая "ConEmu.exe /cmd c:\tools\far.exe",
-	if (!PrepareCommandLine(pszCmdLine, /*OUT*/opt.cmdLine, /*OUT*/opt.cmdNew, /*OUT*/opt.isScript, /*OUT*/opt.params))
+	// pszCmdLine *may* or *may not* start with our executable or full path to our executable
+	LPCWSTR pszTemp = opt.cmdLine;
+	LPCWSTR cmdLineRest = SkipNonPrintable(opt.cmdLine);
+	LPCWSTR pszName, pszArgStart;
+	LPCWSTR psUnknown = NULL;
+	CEStr   szArg, szNext;
+	CEStr   szExeName, szExeNameOnly;
+
+	// Have to get our exectuable name and name without extension
+	szExeName.Set(PointToName(gpConEmu->ms_ConEmuExe));
+	szExeNameOnly.Set(szExeName);
+	wchar_t* pszDot = (wchar_t*)PointToExt(szExeNameOnly.ms_Arg);
+	_ASSERTE(pszDot);
+	if (pszDot) *pszDot = 0;
+
+
+	// Check the first argument in the command line (most probably it will be our executable path/name)
+	if (NextArg(&pszTemp, szArg) != 0)
 	{
-		iResult = 100;
-		return false;
+		_ASSERTE(FALSE && "GetCommandLine() is empty");
+		// Treat as empty command line, allow to start
+		bRc = true; iResult = 0;
+		goto wrap;
+	}
+	pszName = PointToName(szArg);
+	if ((lstrcmpi(pszName, szExeName) == 0)
+		|| (lstrcmpi(pszName, szExeNameOnly) == 0))
+	{
+		// OK, our executable was specified properly in the command line
+		_ASSERTE(*pszTemp != L' ');
+		cmdLineRest = SkipNonPrintable(pszTemp);
 	}
 
-	if (opt.params > 0)
+
+	// Set %ConEmuArgs% env var
+	// It may be usefull if we need to restart ConEmu
+	// from batch/script with the same arguments (selfupdate etc.)
+	ProcessConEmuArgsVar(cmdLineRest);
+
+
+	// Must be empty at the moment
+	_ASSERTE(opt.cmdNew.IsEmpty());
+
+	// Does the command line contain our switches?
+	// Or we need to append all switches to starting shell?
+	if (cmdLineRest && *cmdLineRest)
 	{
-		TCHAR *curCommand = opt.cmdLine;
-		TODO("Если первый (после запускаемого файла) аргумент начинается НЕ с '/' - завершить разбор параметров и не заменять '""' на пробелы");
+		pszTemp = cmdLineRest;
+		if (NextArg(&pszTemp, szArg) == 0)
+		{
+			if ((*szArg.ms_Arg != L'/')
+				&& (*szArg.ms_Arg != L'-')
+				/*&& !wcschr(szArg.ms_Arg, L'/')*/
+				)
+			{
+				// Save it for further use
+				opt.cmdNew.Set(cmdLineRest);
+				// And do not process it (no switches at all)
+				cmdLineRest = NULL;
+				opt.params = -1;
+			}
+		}
+	}
+
+
+	// Let parse the reset
+	szArg.Empty();
+	szNext.Empty();
+
+	// Processing loop begin
+	if (cmdLineRest && *cmdLineRest)
+	{
+		//TCHAR *curCommand = opt.cmdLine;
+		//TODO("Если первый (после запускаемого файла) аргумент начинается НЕ с '/' - завершить разбор параметров и не заменять '""' на пробелы");
 		//if (params < 1) {
 		//	curCommand = NULL;
 		//}
 		// Parse parameters.
 		// Duplicated parameters are permitted, the first value is used.
-		int i = 0;
+		//int i = 0;
 
-		while ((i < opt.params) && curCommand && *curCommand)
+		//while ((i < opt.params) && curCommand && *curCommand)
+		while (NextArg(&cmdLineRest, szArg, &pszArgStart) == 0)
 		{
 			bool lbNotFound = false;
-			bool lbSwitchChanged = false;
 
 			// ':' removed from checks because otherwise it will not warn
 			// on invalid usage of "-new_console:a" for example
-			if (*curCommand == L'-' && curCommand[1] && !wcspbrk(curCommand+1, L"\\//|.&<>^"))
+			if (szArg.ms_Arg[0] == L'-' && szArg.ms_Arg[1] && !wcspbrk(szArg.ms_Arg+1, L"\\//|.&<>^"))
 			{
 				// Seems this is to be the "switch" too
-				*curCommand = L'/';
-				lbSwitchChanged = true;
+				// Use both notations ('-' and '/')
+				*szArg.ms_Arg = L'/';
 			}
 
-			if (*curCommand == L'/')
+			LPCWSTR curCommand = szArg.ms_Arg;
+
+			#define NeedNextArg() \
+				if (NextArg(&cmdLineRest, szNext) != 0) { iResult = 101; goto wrap; } \
+				curCommand = szNext.ms_Arg;
+
+
+			#define AcquireCmdNew() \
+				_ASSERTE(opt.cmdNew.IsEmpty()); \
+				pszTemp = cmdLineRest; \
+				if ((NextArg(&pszTemp, szNext) == 0) \
+					&& (szNext.ms_Arg[0] == L'-' || szNext.ms_Arg[0] == L'/') \
+					&& (lstrcmpi(szNext.ms_Arg+1, L"cmd") == 0)) { \
+					opt.cmdNew.Set(pszTemp); \
+				} else { \
+					opt.cmdNew.Set(cmdLineRest); \
+				}
+
+
+			if (*curCommand != L'/')
 			{
+				continue; // Try next switch?
+			}
+			else
+			{
+				opt.params++;
+
 				if (!klstricmp(curCommand, _T("/autosetup")))
 				{
 					BOOL lbTurnOn = TRUE;
 
-					if ((i + 1) >= opt.params)
-					{
-						iResult = 101;
-						return false;
-					}
-
-					curCommand += _tcslen(curCommand) + 1; i++;
+					NeedNextArg();
 
 					if (*curCommand == _T('0'))
+					{
 						lbTurnOn = FALSE;
+					}
 					else
 					{
-						if ((i + 1) >= opt.params)
-						{
-							iResult = 101;
-							return false;
-						}
+						NeedNextArg();
 
-						curCommand += _tcslen(curCommand) + 1; i++;
 						DWORD dwAttr = GetFileAttributes(curCommand);
 
 						if (dwAttr == (DWORD)-1 || (dwAttr & FILE_ATTRIBUTE_DIRECTORY))
 						{
 							iResult = 102;
-							return false;
+							goto wrap;
 						}
 					}
 
@@ -780,21 +722,18 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 										   0, NULL, 0, KEY_ALL_ACCESS, NULL, &hk, &dw))
 					{
 						iResult = 103;
-						return false;
+						goto wrap;
 					}
 
 					if (lbTurnOn)
 					{
 						size_t cchMax = _tcslen(curCommand);
 						LPCWSTR pszArg1 = NULL;
-						if ((i + 1) < opt.params)
+						if (*cmdLineRest)
 						{
 							// May be ‘/GHWND=NEW’ or smth else
-							pszArg1 = curCommand + cchMax + 1;
-							if (!*pszArg1)
-								pszArg1 = NULL;
-							else
-								cchMax += _tcslen(pszArg1);
+							pszArg1 = cmdLineRest;
+							cchMax += _tcslen(pszArg1);
 						}
 						cchMax += 16; // + quotations, spaces and so on
 
@@ -819,7 +758,7 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 					// сбросить CreateInNewEnvironment для ConMan
 					ResetConman();
 					iResult = nSetupRc;
-					return false;
+					goto wrap;
 				}
 				else if (!klstricmp(curCommand, _T("/bypass")))
 				{
@@ -829,11 +768,12 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 					// Но не получилось, пока требуются хэндлы процесса, а их не получается
 					// передать в НЕ приподнятый процесс (исходный ConEmu GUI).
 
+					AcquireCmdNew();
+
 					if (!opt.cmdNew || !*opt.cmdNew)
 					{
 						DisplayLastError(L"Invalid cmd line. '/bypass' exists, '/cmd' not", -1);
-						iResult = 100;
-						return false;
+						goto wrap;
 					}
 
 					// Information
@@ -853,13 +793,12 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 						CloseHandle(pi.hProcess);
 						CloseHandle(pi.hThread);
 						iResult = 0;
-						return false;
+						goto wrap;
 					}
 
 					// Failed
 					DisplayLastError(opt.cmdNew);
-					iResult = 100;
-					return false;
+					goto wrap;
 				}
 				else if (!klstricmp(curCommand, _T("/demote")))
 				{
@@ -867,11 +806,12 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 					// когда текущий процесс уже запущен "под админом". "Понизить" текущие
 					// привилегии просто так нельзя, поэтому запуск идет через TaskSheduler.
 
+					AcquireCmdNew();
+
 					if (!opt.cmdNew || !*opt.cmdNew)
 					{
 						DisplayLastError(L"Invalid cmd line. '/demote' exists, '/cmd' not", -1);
-						iResult = 100;
-						return false;
+						goto wrap;
 					}
 
 
@@ -902,13 +842,12 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 						SafeCloseHandle(pi.hProcess);
 						SafeCloseHandle(pi.hThread);
 						iResult = 0;
-						return false;
+						goto wrap;
 					}
 
 					// If the error was not shown yet
 					if (nErr) DisplayLastError(opt.cmdNew, nErr);
-					iResult = 100;
-					return false;
+					goto wrap;
 				}
 				else if (!klstricmp(curCommand, _T("/multi")))
 				{
@@ -938,9 +877,9 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 					}
 				}
 				// имя шрифта
-				else if (!klstricmp(curCommand, _T("/font")) && ((i + 1) < opt.params))
+				else if (!klstricmp(curCommand, _T("/font")))
 				{
-					curCommand += _tcslen(curCommand) + 1; i++;
+					NeedNextArg();
 
 					if (!gpConEmu->opt.FontVal.Exists)
 					{
@@ -949,9 +888,9 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 					}
 				}
 				// Высота шрифта
-				else if (!klstricmp(curCommand, _T("/size")) && ((i + 1) < opt.params))
+				else if (!klstricmp(curCommand, _T("/size")))
 				{
-					curCommand += _tcslen(curCommand) + 1; i++;
+					NeedNextArg();
 
 					if (!gpConEmu->opt.SizeVal.Exists)
 					{
@@ -959,28 +898,26 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 					}
 				}
 				// ADD fontname; by Mors
-				else if (!klstricmp(curCommand, _T("/fontfile")) && ((i + 1) < opt.params))
+				else if (!klstricmp(curCommand, _T("/fontfile")))
 				{
-					bool bOk = false; wchar_t* pszFile = NULL;
-					if (!GetCfgParm(i, curCommand, bOk, pszFile, MAX_PATH))
+					CESwitch szFile(sw_Str);
+					if (!GetCfgParm(cmdLineRest, szFile, MAX_PATH))
 					{
-						iResult = 100;
-						return false;
+						goto wrap;
 					}
-					gpConEmu->AppendExtraArgs(L"/fontfile", pszFile);
-					gpSetCls->RegisterFont(pszFile, TRUE);
+					gpConEmu->AppendExtraArgs(L"/fontfile", szFile.GetStr());
+					gpSetCls->RegisterFont(szFile.GetStr(), TRUE);
 				}
 				// Register all fonts from specified directory
-				else if (!klstricmp(curCommand, _T("/fontdir")) && ((i + 1) < opt.params))
+				else if (!klstricmp(curCommand, _T("/fontdir")))
 				{
-					bool bOk = false; wchar_t* pszDir = NULL;
-					if (!GetCfgParm(i, curCommand, bOk, pszDir, MAX_PATH))
+					CESwitch szDir(sw_Str);
+					if (!GetCfgParm(cmdLineRest, szDir, MAX_PATH))
 					{
-						iResult = 100;
-						return false;
+						goto wrap;
 					}
-					gpConEmu->AppendExtraArgs(L"/fontdir", pszDir);
-					gpSetCls->RegisterFontsDir(pszDir);
+					gpConEmu->AppendExtraArgs(L"/fontdir", szDir.GetStr());
+					gpSetCls->RegisterFontsDir(szDir.GetStr());
 				}
 				else if (!klstricmp(curCommand, _T("/fs")))
 				{
@@ -1066,9 +1003,9 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 
 					CConEmuInside::InitInside(bRunAsAdmin, bSyncDir, pszSyncFmt, 0, NULL);
 				}
-				else if (!klstricmp(curCommand, _T("/insidepid")) && ((i + 1) < opt.params))
+				else if (!klstricmp(curCommand, _T("/insidepid")))
 				{
-					curCommand += _tcslen(curCommand) + 1; i++;
+					NeedNextArg();
 
 					bool bRunAsAdmin = isPressed(VK_SHIFT);
 
@@ -1080,9 +1017,10 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 						CConEmuInside::InitInside(bRunAsAdmin, false, NULL, nInsideParentPID, NULL);
 					}
 				}
-				else if (!klstricmp(curCommand, _T("/insidewnd")) && ((i + 1) < opt.params))
+				else if (!klstricmp(curCommand, _T("/insidewnd")))
 				{
-					curCommand += _tcslen(curCommand) + 1; i++;
+					NeedNextArg();
+
 					if (curCommand[0] == L'0' && (curCommand[1] == L'x' || curCommand[1] == L'X'))
 						curCommand += 2;
 					else if (curCommand[0] == L'x' || curCommand[0] == L'X')
@@ -1098,9 +1036,9 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 						CConEmuInside::InitInside(bRunAsAdmin, false, NULL, 0, hParent);
 					}
 				}
-				else if (!klstricmp(curCommand, _T("/icon")) && ((i + 1) < opt.params))
+				else if (!klstricmp(curCommand, _T("/icon")))
 				{
-					curCommand += _tcslen(curCommand) + 1; i++;
+					NeedNextArg();
 
 					if (!gpConEmu->opt.IconPrm.Exists && *curCommand)
 					{
@@ -1108,9 +1046,9 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 						gpConEmu->mps_IconPath = ExpandEnvStr(curCommand);
 					}
 				}
-				else if (!klstricmp(curCommand, _T("/dir")) && ((i + 1) < opt.params))
+				else if (!klstricmp(curCommand, _T("/dir")))
 				{
-					curCommand += _tcslen(curCommand) + 1; i++;
+					NeedNextArg();
 
 					if (*curCommand)
 					{
@@ -1198,17 +1136,21 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 					|| !klstricmp(curCommand, _T("/WndW")) || !klstricmp(curCommand, _T("/WndWidth"))
 					|| !klstricmp(curCommand, _T("/WndH")) || !klstricmp(curCommand, _T("/WndHeight")))
 				{
-					TCHAR ch = curCommand[4], *psz = NULL;
+					TCHAR ch = curCommand[4];
 					CharUpperBuff(&ch, 1);
-					if (!GetCfgParm(i, curCommand, gpConEmu->opt.SizePosPrm, psz, 32))
+
+					CESwitch psz(sw_Str);
+					if (!GetCfgParm(cmdLineRest, gpConEmu->opt.SizePosPrm, psz, 32))
 					{
-						iResult = 100;
-						return false;
+						goto wrap;
 					}
 
 					// Direct X/Y implies /nocascade
 					if (ch == _T('X') || ch == _T('Y'))
+					{
+						// TODO: isDontCascade must be in our opt struct !!!
 						gpSetCls->isDontCascade = true;
+					}
 
 					switch (ch)
 					{
@@ -1218,10 +1160,9 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 					case _T('H'): gpConEmu->opt.sWndH = psz; break;
 					}
 				}
-				else if ((!klstricmp(curCommand, _T("/Buffer")) || !klstricmp(curCommand, _T("/BufferHeight")))
-					&& ((i + 1) < opt.params))
+				else if (!klstricmp(curCommand, _T("/Buffer")) || !klstricmp(curCommand, _T("/BufferHeight")))
 				{
-					curCommand += _tcslen(curCommand) + 1; i++;
+					NeedNextArg();
 
 					if (!gpConEmu->opt.BufferHeightVal.Exists)
 					{
@@ -1239,22 +1180,20 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 							gpConEmu->opt.BufferHeightVal = LONGOUTPUTHEIGHT_MAX;
 					}
 				}
-				else if (!klstricmp(curCommand, _T("/Config")) && ((i + 1) < opt.params))
+				else if (!klstricmp(curCommand, _T("/Config")))
 				{
-					//if (!ConfigPrm) -- используем последний из параметров, если их несколько
-					if (!GetCfgParm(i, curCommand, gpConEmu->opt.ConfigVal, 127))
+					// -- используем последний из параметров, если их несколько
+					if (!GetCfgParm(cmdLineRest, gpConEmu->opt.ConfigVal, 127))
 					{
-						iResult = 100;
-						return false;
+						goto wrap;
 					}
 				}
-				else if (!klstricmp(curCommand, _T("/Palette")) && ((i + 1) < opt.params))
+				else if (!klstricmp(curCommand, _T("/Palette")))
 				{
-					//if (!ConfigPrm) -- используем последний из параметров, если их несколько
-					if (!GetCfgParm(i, curCommand, gpConEmu->opt.PaletteVal, MAX_PATH))
+					// -- используем последний из параметров, если их несколько
+					if (!GetCfgParm(cmdLineRest, gpConEmu->opt.PaletteVal, MAX_PATH))
 					{
-						iResult = 100;
-						return false;
+						goto wrap;
 					}
 				}
 				else if (!klstricmp(curCommand, _T("/LoadRegistry")))
@@ -1262,49 +1201,44 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 					gpConEmu->AppendExtraArgs(curCommand);
 					gpConEmu->opt.ForceUseRegistryPrm = true;
 				}
-				else if (!klstricmp(curCommand, _T("/LoadCfgFile")) && ((i + 1) < opt.params))
+				else if (!klstricmp(curCommand, _T("/LoadCfgFile")))
 				{
-					// используем последний из параметров, если их несколько
-					if (!GetCfgParm(i, curCommand, gpConEmu->opt.LoadCfgFile, MAX_PATH, true))
+					// -- используем последний из параметров, если их несколько
+					if (!GetCfgParm(cmdLineRest, gpConEmu->opt.LoadCfgFile, MAX_PATH, true))
 					{
-						iResult = 100;
-						return false;
+						goto wrap;
 					}
 				}
-				else if (!klstricmp(curCommand, _T("/SaveCfgFile")) && ((i + 1) < opt.params))
+				else if (!klstricmp(curCommand, _T("/SaveCfgFile")))
 				{
-					// используем последний из параметров, если их несколько
-					if (!GetCfgParm(i, curCommand, gpConEmu->opt.SaveCfgFile, MAX_PATH, true))
+					// -- используем последний из параметров, если их несколько
+					if (!GetCfgParm(cmdLineRest, gpConEmu->opt.SaveCfgFile, MAX_PATH, true))
 					{
-						iResult = 100;
-						return false;
+						goto wrap;
 					}
 				}
-				else if (!klstricmp(curCommand, _T("/GuiMacro")) && ((i + 1) < opt.params))
+				else if (!klstricmp(curCommand, _T("/GuiMacro")))
 				{
-					// выполняется только последний
-					if (!GetCfgParm(i, curCommand, gpConEmu->opt.ExecGuiMacro, 0x8000, false))
+					// -- выполняется только последний
+					if (!GetCfgParm(cmdLineRest, gpConEmu->opt.ExecGuiMacro, 0x8000, false))
 					{
-						iResult = 100;
-						return false;
+						goto wrap;
 					}
 				}
-				else if (!klstricmp(curCommand, _T("/UpdateSrcSet")) && ((i + 1) < opt.params))
+				else if (!klstricmp(curCommand, _T("/UpdateSrcSet")))
 				{
-					// используем последний из параметров, если их несколько
-					if (!GetCfgParm(i, curCommand, gpConEmu->opt.UpdateSrcSet, MAX_PATH*4, false))
+					// -- используем последний из параметров, если их несколько
+					if (!GetCfgParm(cmdLineRest, gpConEmu->opt.UpdateSrcSet, MAX_PATH*4, false))
 					{
-						iResult = 100;
-						return false;
+						goto wrap;
 					}
 				}
-				else if (!klstricmp(curCommand, _T("/AnsiLog")) && ((i + 1) < opt.params))
+				else if (!klstricmp(curCommand, _T("/AnsiLog")))
 				{
-					// используем последний из параметров, если их несколько
-					if (!GetCfgParm(i, curCommand, gpConEmu->opt.AnsiLogPath, MAX_PATH-40, true))
+					// -- используем последний из параметров, если их несколько
+					if (!GetCfgParm(cmdLineRest, gpConEmu->opt.AnsiLogPath, MAX_PATH-40, true))
 					{
-						iResult = 100;
-						return false;
+						goto wrap;
 					}
 				}
 				else if (!klstricmp(curCommand, _T("/SetDefTerm")))
@@ -1319,15 +1253,15 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 				{
 					gpConEmu->mb_ForceQuitOnClose = true;
 				}
-				else if (!klstricmp(curCommand, _T("/Title")) && ((i + 1) < opt.params))
+				else if (!klstricmp(curCommand, _T("/Title")))
 				{
-					bool bOk = false; wchar_t* pszTitle = NULL;
-					if (!GetCfgParm(i, curCommand, bOk, pszTitle, 127))
+					bool bOk = false;
+					CESwitch pszTitle(sw_Str);
+					if (!GetCfgParm(cmdLineRest, bOk, pszTitle, 127))
 					{
-						iResult = 100;
-						return false;
+						goto wrap;
 					}
-					gpConEmu->SetTitleTemplate(pszTitle);
+					gpConEmu->SetTitleTemplate(pszTitle.GetStr());
 				}
 				else if (!klstricmp(curCommand, _T("/FindBugMode")))
 				{
@@ -1342,38 +1276,36 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 					//MessageBox(NULL, pHelp, L"About ConEmu...", MB_ICONQUESTION);
 					ConEmuAbout::OnInfo_About();
 					iResult = -1;
-					return false;
+					goto wrap;
+				}
+				else if (!klstricmp(curCommand, _T("/cmd")))
+				{
+					opt.cmdNew.Set(SkipNonPrintable(cmdLineRest));
+					opt.isScript = false;
+					break;
+				}
+				else if (!klstricmp(curCommand, _T("/cmdlist")))
+				{
+					opt.cmdNew.Set(SkipNonPrintable(cmdLineRest));
+					opt.isScript = true;
+					break;
 				}
 				else
 				{
-					lbNotFound = true;
-
-					if (lbSwitchChanged)
-					{
-						*curCommand = L'-';
-					}
+					// Show error on unknown switch
+					psUnknown = pszArgStart;
+					break;
 				}
-			}
-
-			if (lbNotFound && /*i>0 &&*/ !psUnknown && (*curCommand == L'-' || *curCommand == L'/'))
-			{
-				// ругнуться на неизвестную команду
-				psUnknown = curCommand;
-			}
-
-			curCommand += _tcslen(curCommand) + 1; i++;
-		}
+			} // (*curCommand == L'/')
+		} // while (NextArg(&cmdLineRest, szArg, &pszArgStart) == 0)
 	}
+	// Processing loop end
 
 	if (gpSetCls->isAdvLogging)
 	{
 		DEBUGSTRSTARTUP(L"Creating log file");
 		gpConEmu->CreateLog();
 	}
-
-	//if (setParentDisabled && (gpConEmu->setParent || gpConEmu->setParent2)) {
-	//	gpConEmu->setParent=false; gpConEmu->setParent2=false;
-	//}
 
 	if (psUnknown)
 	{
@@ -1382,8 +1314,16 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 		gpConEmu->LogString(lsFail, false, false);
 
 		LPCWSTR pszNewConWarn = NULL;
-		if (wcsstr(psUnknown, L"new_console") || wcsstr(psUnknown, L"cur_console"))
+		LPCWSTR pszTestSwitch =
+			(psUnknown[0] == L'-' || psUnknown[0] == L'/')
+				? ((psUnknown[1] == L'-' || psUnknown[1] == L'/')
+					? (psUnknown+2) : (psUnknown+1))
+				: psUnknown;
+		if ((lstrcmpni(pszTestSwitch, L"new_console", 11) == 0)
+			|| (lstrcmpni(pszTestSwitch, L"cur_console", 11) == 0))
+		{
 			pszNewConWarn = L"\r\n\r\n" L"Switch -new_console must be specified *after* /cmd or /cmdlist";
+		}
 
 		CEStr lsMsg(lstrmerge(
 			lsFail,
@@ -1396,10 +1336,11 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 			));
 
 		MBoxA(lsMsg);
-		iResult = 100;
-		return false;
+		goto wrap;
 	}
 
 	// Continue normal startup
-	return true;
+	bRc = true;
+wrap:
+	return bRc;
 }
