@@ -789,14 +789,14 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 						LPCWSTR pszArg1 = NULL;
 						if ((i + 1) < opt.params)
 						{
-							// Здесь может быть "/GHWND=NEW"
+							// May be ‘/GHWND=NEW’ or smth else
 							pszArg1 = curCommand + cchMax + 1;
 							if (!*pszArg1)
 								pszArg1 = NULL;
 							else
 								cchMax += _tcslen(pszArg1);
 						}
-						cchMax += 16; // + кавычки и пробелы всякие
+						cchMax += 16; // + quotations, spaces and so on
 
 						wchar_t* pszCmd = (wchar_t*)calloc(cchMax, sizeof(*pszCmd));
 						_wsprintf(pszCmd, SKIPLEN(cchMax) L"\"%s\"%s%s%s", curCommand,
@@ -804,7 +804,7 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 
 
 						if (0 == RegSetValueEx(hk, _T("AutoRun"), 0, REG_SZ, (LPBYTE)pszCmd,
-											(DWORD)sizeof(TCHAR)*(_tcslen(pszCmd)+1))) //-V220
+											(DWORD)sizeof(*pszCmd)*(_tcslen(pszCmd)+1)))
 							nSetupRc = 1;
 
 						free(pszCmd);
