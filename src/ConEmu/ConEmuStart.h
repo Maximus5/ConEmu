@@ -146,6 +146,7 @@ protected:
 	bool GetCfgParm(int& i, wchar_t*& curCommand, CESwitch& Val, int nMaxLen, bool bExpandAndDup = false);
 	bool GetCfgParm(int& i, wchar_t*& curCommand, bool& Prm, wchar_t*& Val, int nMaxLen, bool bExpandAndDup = false);
 	bool PrepareCommandLine(wchar_t*& cmdLine, wchar_t*& cmdNew, bool& isScript, int& params);
+	void ProcessConEmuArgsVar(LPCWSTR cmdLineRest);
 public:
 	bool ParseCommandLine(int& iResult);
 	void ResetConman();

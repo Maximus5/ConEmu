@@ -514,6 +514,23 @@ bool CConEmuStart::GetCfgParm(int& i, wchar_t*& curCommand, CESwitch& Val, int n
 	return GetCfgParm(i, curCommand, Val.Exists, Val.Str, nMaxLen, bExpandAndDup);
 }
 
+void CConEmuStart::ProcessConEmuArgsVar(LPCWSTR cmdLineRest)
+{
+	// Эта переменная нужна для того, чтобы conemu можно было перезапустить
+	// из cmd файла с теми же аргументами (selfupdate)
+	if (!cmdLineRest || !*cmdLineRest)
+	{
+		// Empty command line, nothing to set.
+		// But we have to define the variable to be sure
+		SetEnvironmentVariableW(L"ConEmuArgs", L"");
+	}
+	else
+	{
+		gpConEmu->mpsz_ConEmuArgs = lstrdup(cmdLineRest);
+		SetEnvironmentVariableW(L"ConEmuArgs", gpConEmu->mpsz_ConEmuArgs);
+	}
+}
+
 /* С командной строкой (GetCommandLineW) у нас засада */
 /*
 
