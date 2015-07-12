@@ -847,7 +847,7 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 
 					PROCESS_INFORMATION pi = {};
 
-					BOOL b = CreateProcess(NULL, opt.cmdNew, NULL, NULL, TRUE, NORMAL_PRIORITY_CLASS, NULL, NULL, &si, &pi);
+					BOOL b = CreateProcess(NULL, opt.cmdNew.ms_Arg, NULL, NULL, TRUE, NORMAL_PRIORITY_CLASS, NULL, NULL, &si, &pi);
 					if (b)
 					{
 						CloseHandle(pi.hProcess);
@@ -893,7 +893,7 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 					DWORD nErr = 0;
 
 
-					b = CreateProcessDemoted(opt.cmdNew, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL,
+					b = CreateProcessDemoted(opt.cmdNew.ms_Arg, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL,
 							szCurDir, &si, &pi, &nErr);
 
 
