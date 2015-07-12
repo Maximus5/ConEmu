@@ -551,13 +551,12 @@ GetCommandLineW(): "ShowArg.exe" "test1" test2
 //  params  - количество аргументов
 //            0 - ком.строка пустая
 //            (-1) - весь cmdNew должен быть ПРИКЛЕЕН к строке запуска по умолчанию
-bool CConEmuStart::PrepareCommandLine(wchar_t*& cmdLine, wchar_t*& cmdNew, bool& isScript, int& params)
+bool CConEmuStart::PrepareCommandLine(LPCWSTR pszCmdLine, wchar_t*& cmdLine, wchar_t*& cmdNew, bool& isScript, int& params)
 {
 	params = 0;
 	cmdNew = NULL;
 	isScript = false;
 
-	LPCWSTR pszCmdLine = GetCommandLine();
 	int nInitLen = _tcslen(pszCmdLine);
 	cmdLine = lstrdup(pszCmdLine);
 	// Имя исполняемого файла (conemu.exe)
@@ -694,14 +693,14 @@ bool CConEmuStart::PrepareCommandLine(wchar_t*& cmdLine, wchar_t*& cmdNew, bool&
 	return true;
 }
 
-// Returns:
-//   true  - continue normal startup
-//   false - exit process with iResult code
-bool CConEmuStart::ParseCommandLine(int& iResult)
-{
 //------------------------------------------------------------------------
 ///| Parsing the command line |///////////////////////////////////////////
 //------------------------------------------------------------------------
+// Returns:
+//   true  - continue normal startup
+//   false - exit process with iResult code
+bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
+{
 	wchar_t* psUnknown = NULL;
 
 	DEBUGSTRSTARTUP(L"Parsing command line");
@@ -709,7 +708,7 @@ bool CConEmuStart::ParseCommandLine(int& iResult)
 	// [OUT] params = (-1), если первый аргумент не начинается с '/'
 	// т.е. комстрока такая "ConEmu.exe c:\tools\far.exe",
 	// а не такая "ConEmu.exe /cmd c:\tools\far.exe",
-	if (!PrepareCommandLine(/*OUT*/opt.cmdLine, /*OUT*/opt.cmdNew, /*OUT*/opt.isScript, /*OUT*/opt.params))
+	if (!PrepareCommandLine(pszCmdLine, /*OUT*/opt.cmdLine, /*OUT*/opt.cmdNew, /*OUT*/opt.isScript, /*OUT*/opt.params))
 	{
 		iResult = 100;
 		return false;

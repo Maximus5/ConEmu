@@ -3445,7 +3445,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	//gpSet->InitSettings();
 
 	int iParseRc = 0;
-	if (!gpConEmu->ParseCommandLine(iParseRc))
+	if (!gpConEmu->ParseCommandLine(GetCommandLine(), iParseRc))
 	{
 		return iParseRc;
 	}
