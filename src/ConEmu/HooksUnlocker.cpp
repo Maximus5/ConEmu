@@ -41,6 +41,8 @@ CHooksUnlocker::CHooksUnlocker()
 {
 	if (!IsDebuggerPresent())
 		return;
+	if (!gpConEmu || (gpConEmu->mn_StartupFinished == CConEmuMain::ss_Starting))
+		return;
 	mb_Processed = true;
 	if (InterlockedIncrement(&mn_LockCount) > 0)
 	{
