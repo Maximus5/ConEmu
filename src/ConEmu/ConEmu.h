@@ -117,6 +117,7 @@ typedef HIMC (WINAPI* ImmGetContext_t)(HWND hWnd);
 //};
 
 typedef LRESULT (*CallMainThreadFn)(LPARAM lParam);
+struct CallMainThreadArg;
 
 
 typedef DWORD ConEmuInstallMode;

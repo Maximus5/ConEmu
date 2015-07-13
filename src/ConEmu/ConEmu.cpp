@@ -13282,15 +13282,49 @@ UINT CConEmuMain::GetRegisteredMessage(LPCSTR asLocal, LPCWSTR asGlobal)
 	return RegisterMessage(asLocal, asGlobal);
 }
 
+struct CallMainThreadArg
+{
+public:
+	DWORD  nMagic; // cnMagic
+	BOOL   bNeedFree;
+	LPARAM lParam;
+	DWORD  nSourceTID;
+	DWORD  nCallTick;
+	DWORD  nReceiveTick;
+public:
+	static const DWORD cnMagic = 0x7847CABF;
+public:
+	CallMainThreadArg(LPARAM alParam, BOOL abNeedFree)
+		: nMagic(cnMagic)
+		, bNeedFree(abNeedFree)
+		, lParam(alParam)
+		, nSourceTID(GetCurrentThreadId())
+		, nCallTick(GetTickCount())
+		, nReceiveTick(0)
+	{
+	};
+};
+
 LRESULT CConEmuMain::CallMainThread(bool bSync, CallMainThreadFn fn, LPARAM lParam)
 {
 	LRESULT lRc;
+	DWORD nCallTime = 0;
 	if (isMainThread() && bSync)
+	{
 		lRc = fn(lParam);
+	}
 	else if (!bSync)
-		lRc = PostMessage(ghWnd, mn_MsgCallMainThread, (WPARAM)fn, lParam);
+	{
+		CallMainThreadArg* pArg = new CallMainThreadArg(lParam, TRUE);
+		lRc = PostMessage(ghWnd, mn_MsgCallMainThread, (WPARAM)fn, (LPARAM)pArg);
+	}
 	else
-		lRc = SendMessage(ghWnd, mn_MsgCallMainThread, (WPARAM)fn, lParam);
+	{
+		CallMainThreadArg arg = {lParam, FALSE};
+		lRc = SendMessage(ghWnd, mn_MsgCallMainThread, (WPARAM)fn, (LPARAM)&arg);
+		nCallTime = arg.nReceiveTick - arg.nCallTick;
+	}
+	UNREFERENCED_PARAMETER(nCallTime);
 	return lRc;
 }
 
@@ -14109,8 +14143,24 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			}
 			else if (messg == this->mn_MsgCallMainThread)
 			{
+				LRESULT lFnRc = -1;
 				CallMainThreadFn fn = (CallMainThreadFn)wParam;
-				return fn ? fn(lParam) : -1;
+				CallMainThreadArg* pArg = (CallMainThreadArg*)lParam;
+				if (pArg && (pArg->nMagic == CallMainThreadArg::cnMagic))
+				{
+					pArg->nReceiveTick = GetTickCount();
+
+					if (fn)
+					{
+						lFnRc = fn(pArg->lParam);
+					}
+
+					if (pArg->bNeedFree)
+					{
+						free(pArg);
+					}
+				}
+				return lFnRc;
 			}
 
 			//else if (messg == this->mn_MsgCmdStarted || messg == this->mn_MsgCmdStopped) {
