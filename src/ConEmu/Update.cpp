@@ -69,6 +69,7 @@ CConEmuUpdate::CConEmuUpdate()
 	mp_Set = NULL;
 	ms_LastErrorInfo = NULL;
 	mn_InShowMsgBox = 0;
+	mn_ErrorInfoCount = 0;
 	mb_InetMode = false;
 	mb_DroppedMode = false;
 	mn_InternetContentReady = mn_PackageSize = 0;
@@ -1384,6 +1385,7 @@ void CConEmuUpdate::ReportErrorInt(wchar_t* asErrorInfo)
 		return; // Две ошибки сразу не показываем, а то зациклимся
 
 	ms_LastErrorInfo = asErrorInfo;
+	InterlockedIncrement(&mn_ErrorInfoCount);
 
 	// This will call back ShowLastError
 	if (gpConEmu)

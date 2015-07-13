@@ -81,6 +81,7 @@ protected:
 	ConEmuUpdateSettings* mp_Set;
 
 	long mn_InShowMsgBox;
+	long mn_ErrorInfoCount;
 	LPCWSTR ms_LastErrorInfo; // Informational
 
 	wchar_t* mpsz_DeleteIniFile;
