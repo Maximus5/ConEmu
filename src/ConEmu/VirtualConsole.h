@@ -73,6 +73,7 @@ class CVirtualConsole :
 	protected:
 		VConFlags      mn_Flags;
 		int            mn_Index; // !!! Debug, Informational !!!
+		int            mn_ID;    // !!! Debug, Unique per session id of VCon !!!
 		bool SetFlags(VConFlags Set, VConFlags Mask, int index = -1);
 
 	protected:
@@ -93,6 +94,7 @@ class CVirtualConsole :
 		bool isGroup();
 		bool isGroupedInput();
 		int  Index() { return mn_Index; };
+		int  ID() { return mn_ID; };
 	public:
 		WARNING("Сделать protected!");
 		uint TextWidth, TextHeight; // размер в символах

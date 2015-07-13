@@ -200,6 +200,8 @@ wchar_t CVirtualConsole::ms_HorzSingl[MAX_SPACES];
 //HMENU CVirtualConsole::mh_DebugPopup = NULL;
 //HMENU CVirtualConsole::mh_EditPopup = NULL;
 
+static LONG gnVConLastCreatedID = 0;
+
 #pragma warning(disable: 4355)
 CVirtualConsole::CVirtualConsole(CConEmuMain* pOwner, int index)
 	: CVConRelease(this)
@@ -213,6 +215,7 @@ CVirtualConsole::CVirtualConsole(CConEmuMain* pOwner, int index)
 	, m_DC(NULL)
 {
 	#pragma warning(default: 4355)
+	mn_ID = InterlockedIncrement(&gnVConLastCreatedID);
 	VConCreateLogger::Log(this, VConCreateLogger::eCreate);
 	mh_WndDC = NULL;
 }
