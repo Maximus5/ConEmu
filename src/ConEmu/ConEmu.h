@@ -258,7 +258,6 @@ class CConEmuMain
 		bool  WindowStartTsa;       // ключики "/StartTSA" или "/MinTSA"
 		bool  WindowStartNoClose;   // ключик "/MinTSA"
 		bool  ForceMinimizeToTray;  // ключики "/tsa" или "/tray"
-		bool  DisableAutoUpdate;    // ключик "/noupdate"
 		bool  DisableKeybHooks;     // ключик "/nokeyhook"
 		bool  DisableAllMacro;      // ключик "/nomacro"
 		bool  DisableAllHotkeys;    // ключик "/nohotkey"

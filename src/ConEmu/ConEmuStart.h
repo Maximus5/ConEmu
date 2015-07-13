@@ -171,6 +171,8 @@ public:
 		CESwitch ForceUseRegistryPrm;
 		CESwitch LoadCfgFile; // sw_Str
 		CESwitch SaveCfgFile; // sw_Str
+		CESwitch DisableAutoUpdate; // sw_Simple /noupdate
+		CESwitch AutoUpdateOnStart; // sw_Simple /update
 		CESwitch UpdateSrcSet; // sw_Str
 		CESwitch AnsiLogPath; // sw_Str
 		CESwitch ExecGuiMacro; // sw_Str

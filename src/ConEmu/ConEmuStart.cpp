@@ -951,9 +951,14 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 					gpConEmu->mb_ConEmuHere = true;
 					gpConEmu->StoreWorkDir();
 				}
+				else if (!klstricmp(curCommand, _T("/update")))
+				{
+					gpConEmu->opt.AutoUpdateOnStart = true;
+				}
 				else if (!klstricmp(curCommand, _T("/noupdate")))
 				{
-					gpConEmu->DisableAutoUpdate = true;
+					// This one has more weight than AutoUpdateOnStart
+					gpConEmu->opt.DisableAutoUpdate = true;
 				}
 				else if (!klstricmp(curCommand, _T("/nokeyhook"))
 					|| !klstricmp(curCommand, _T("/nokeyhooks"))

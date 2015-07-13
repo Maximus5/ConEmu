@@ -354,7 +354,6 @@ CConEmuMain::CConEmuMain()
 	mb_InCreateWindow = true;
 	mb_LastTransparentFocused = false;
 
-	DisableAutoUpdate = false;
 	DisableKeybHooks = false;
 	DisableAllMacro = false;
 	DisableAllHotkeys = false;
@@ -7256,8 +7255,12 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 		}
 
 		//TODO: Возможно, стоит отложить запуск секунд на 5, чтобы не мешать инициализации?
-		if (gpSet->UpdSet.isUpdateCheckOnStartup && !DisableAutoUpdate)
+		if (!opt.DisableAutoUpdate
+			&& (gpSet->UpdSet.isUpdateCheckOnStartup || opt.AutoUpdateOnStart)
+			)
+		{
 			CheckUpdates(FALSE); // Не показывать сообщение "You are using latest available version"
+		}
 
 		//SetWindowRgn(ghWnd, CreateWindowRgn(), TRUE);
 
