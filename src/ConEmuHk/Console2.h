@@ -35,13 +35,13 @@ int InjectHookDLL(PROCESS_INFORMATION pi, InjectHookFunctions* pfn /*UINT_PTR fn
 	BYTE* 		code	 = NULL;
 	wchar_t 	strHookDllPath[MAX_PATH*2] = {};
 	DWORD 		dwErrCode = 0;
-	DWORD_PTR nLoadLibraryProcShift;
 #ifndef _WIN64
 	// starting a 32-bit process
 	LPCWSTR		pszDllName = L"\\ConEmuHk.dll";
 #else
 	// starting a 64-bit process
 	LPCWSTR		pszDllName = L"\\ConEmuHk64.dll";
+	DWORD_PTR   nLoadLibraryProcShift;
 #endif
 
 	typedef struct _UNICODE_STRING {
