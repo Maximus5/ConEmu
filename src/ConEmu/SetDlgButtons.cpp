@@ -115,6 +115,20 @@ bool CSetDlgButtons::checkRadioButton(HWND hParent, int nIDFirstButton, int nIDL
 	return (bRc != FALSE);
 }
 
+void CSetDlgButtons::enableDlgItems(HWND hParent, UINT* pnCtrlID, INT_PTR nCount, bool bEnabled)
+{
+	for (INT_PTR i = 0; i < nCount; i++)
+	{
+		HWND hItem = GetDlgItem(hParent, pnCtrlID[i]);
+		if (!hItem)
+		{
+			_ASSERTE(GetDlgItem(hParent, pnCtrlID[i])!=NULL);
+			continue;
+		}
+		EnableWindow(hItem, bEnabled);
+	}
+}
+
 // FALSE - выключена
 // TRUE (BST_CHECKED) - включена
 // BST_INDETERMINATE (2) - 3-d state
@@ -4088,18 +4102,11 @@ void CSetDlgButtons::OnBtn_UpdateUseProxy(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbUpdateUseProxy);
 
-	gpSet->UpdSet.isUpdateUseProxy = uCheck;
+	gpSet->UpdSet.isUpdateUseProxy = (uCheck != BST_UNCHECKED);
+	bool bEnabled = (gpSet->UpdSet.isUpdateUseProxy);
 	UINT nItems[] = {stUpdateProxy, tUpdateProxy, stUpdateProxyUser, tUpdateProxyUser, stUpdateProxyPassword, tUpdateProxyPassword};
-	for (size_t i = 0; i < countof(nItems); i++)
-	{
-		HWND hItem = GetDlgItem(hDlg, nItems[i]);
-		if (!hItem)
-		{
-			_ASSERTE(GetDlgItem(hDlg, nItems[i])!=NULL);
-			continue;
-		}
-		EnableWindow(hItem, gpSet->UpdSet.isUpdateUseProxy);
-	}
+	enableDlgItems(hDlg, nItems, countof(nItems), bEnabled);
+
 } // cbUpdateUseProxy
 
 

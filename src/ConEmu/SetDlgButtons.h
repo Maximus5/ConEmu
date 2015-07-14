@@ -35,6 +35,7 @@ class CSetDlgButtons
 public:
 	static bool checkDlgButton(HWND hParent, WORD nCtrlId, UINT uCheck);
 	static bool checkRadioButton(HWND hParent, int nIDFirstButton, int nIDLastButton, int nIDCheckButton);
+	static void enableDlgItems(HWND hParent, UINT* pnCtrlID, INT_PTR nCount, bool bEnabled);
 	static BYTE IsChecked(HWND hParent, WORD nCtrlId);
 	static BYTE IsChecked(WORD nCtrlId, WORD CB, BYTE uCheck);
 
