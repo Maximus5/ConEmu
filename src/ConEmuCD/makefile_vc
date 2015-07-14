@@ -67,6 +67,7 @@ $(INTDIR)\SrvPipes.obj \
 $(INTDIR)\WConsole.obj \
 $(INTDIR)\WFiles.obj \
 $(INTDIR)\WObjects.obj \
+$(INTDIR)\WThreads.obj \
 $(INTDIR)\WUser.obj
 
 USERLIBS = kernel32.lib user32.lib gdi32.lib advapi32.lib shell32.lib ole32.lib uuid.lib mpr.lib version.lib oleaut32.lib wbemuuid.lib Comdlg32.lib Shlwapi.lib
@@ -359,6 +360,8 @@ $(INTDIR)\WConsole.obj: ../common/WConsole.cpp ../common/WConsole.h
 $(INTDIR)\WFiles.obj: ../common/WFiles.cpp ../common/WFiles.h
 
 $(INTDIR)\WObjects.obj: ../common/WObjects.cpp ../common/WObjects.h
+
+$(INTDIR)\WThreads.obj: ../common/WThreads.cpp ../common/WThreads.h
 
 $(INTDIR)\WUser.obj: ../common/WUser.cpp ../common/WUser.h
 

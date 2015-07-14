@@ -1,6 +1,7 @@
 NAME = ConEmuLn
 SRCS = \
 		../common/Memory.cpp \
+		../common/WThreads.cpp       \
 		ConEmuLn.cpp \
 		ConEmuLn1900.cpp \
 		ConEmuLn2800.cpp \

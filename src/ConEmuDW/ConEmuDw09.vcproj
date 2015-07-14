@@ -404,6 +404,7 @@
       <File RelativePath="..\common\MStrSafe.h" />
       <File RelativePath="..\common\pluginW1900.hpp" />
       <File RelativePath="..\common\WObjects.h" />
+      <File RelativePath="..\common\WThreads.h" />
       <File RelativePath="..\ConEmuCD\ExitCodes.h" />
       <File RelativePath=".\ConEmuDw.h" />
       <File RelativePath=".\resource.h" />
@@ -485,6 +486,7 @@
       <File RelativePath="..\common\MSecurity.cpp" />
       <File RelativePath="..\common\MStrSafe.cpp" />
       <File RelativePath="..\common\WObjects.cpp" />
+      <File RelativePath="..\common\WThreads.cpp" />
       <File RelativePath=".\ConEmuDw.cpp" />
       <File RelativePath=".\export.def" />
     </Filter>

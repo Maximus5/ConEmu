@@ -127,6 +127,7 @@ $(INTDIR)\WConsole.obj \
 $(INTDIR)\WFiles.obj \
 $(INTDIR)\WObjects.obj \
 $(INTDIR)\WRegistry.obj \
+$(INTDIR)\WThreads.obj \
 $(INTDIR)\WUser.obj
 
 
@@ -482,6 +483,8 @@ $(INTDIR)\WFiles.obj: ../common/WFiles.cpp ../common/WFiles.h
 $(INTDIR)\WObjects.obj: ../common/WObjects.cpp
 
 $(INTDIR)\WRegistry.obj: ../common/WRegistry.cpp
+
+$(INTDIR)\WThreads.obj: ../common/WThreads.cpp ../common/WThreads.h
 
 $(INTDIR)\WUser.obj: ../common/WUser.cpp
 

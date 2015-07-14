@@ -916,6 +916,7 @@
     <ClCompile Include="..\common\WFiles.cpp" />
     <ClCompile Include="..\common\WObjects.cpp" />
     <ClCompile Include="..\common\WRegistry.cpp" />
+    <ClCompile Include="..\common\WThreads.cpp" />
     <ClCompile Include="..\common\WUser.cpp" />
     <ClCompile Include="AboutDlg.cpp" />
     <ClCompile Include="Attach.cpp" />
@@ -1031,6 +1032,7 @@
     <ClInclude Include="..\common\WFiles.h" />
     <ClInclude Include="..\common\WObjects.h" />
     <ClInclude Include="..\common\WRegistry.h" />
+    <ClInclude Include="..\common\WThreads.h" />
     <ClInclude Include="..\common\WUser.h" />
     <ClInclude Include="..\ConEmuCD\ConsoleHelp.h" />
     <ClInclude Include="..\ConEmuCD\ExitCodes.h" />

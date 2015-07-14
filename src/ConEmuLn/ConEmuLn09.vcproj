@@ -395,6 +395,7 @@
       <File RelativePath="..\common\MAssert.cpp" />
       <File RelativePath="..\common\Memory.cpp" />
       <File RelativePath="..\common\MStrSafe.cpp" />
+      <File RelativePath="..\common\WThreads.cpp" />
       <File RelativePath=".\ConEmuLn.cpp" />
       <File RelativePath=".\ConEmuLn1900.cpp" />
       <File RelativePath=".\ConEmuLn2800.cpp" />
@@ -406,6 +407,7 @@
       <File RelativePath="..\common\common.hpp" />
       <File RelativePath="..\common\Memory.h" />
       <File RelativePath="..\common\MStrSafe.h" />
+      <File RelativePath="..\common\WThreads.h" />
       <File RelativePath=".\ConEmuLn.h" />
       <File RelativePath=".\ConEmuLn_Lang.h" />
       <File RelativePath=".\Configure.h" />

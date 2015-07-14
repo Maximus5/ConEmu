@@ -399,6 +399,7 @@
       <File RelativePath="..\common\MSectionSimple.cpp" />
       <File RelativePath="..\common\MStrSafe.cpp" />
       <File RelativePath="..\common\WObjects.cpp" />
+      <File RelativePath="..\common\WThreads.cpp" />
       <File RelativePath=".\ConEmuC.cpp" />
       <File RelativePath=".\Downloader.cpp" />
     </Filter>
@@ -409,6 +410,7 @@
       <File RelativePath="..\common\MSectionSimple.h" />
       <File RelativePath="..\common\MStrSafe.h" />
       <File RelativePath="..\common\WObjects.h" />
+      <File RelativePath="..\common\WThreads.h" />
       <File RelativePath="..\ConEmuCD\ExitCodes.h" />
       <File RelativePath=".\Downloader.h" />
       <File RelativePath=".\resource.h" />

@@ -893,6 +893,7 @@ if exist C:\Utils\FAR170\Plugins\ConEmu\Lines\ConEmuLn.dll copy "$(TargetDir)Con
     <ClCompile Include="..\common\MAssert.cpp" />
     <ClCompile Include="..\common\Memory.cpp" />
     <ClCompile Include="..\common\MStrSafe.cpp" />
+    <ClCompile Include="..\common\WThreads.cpp" />
     <ClCompile Include="ConEmuLn.cpp" />
     <ClCompile Include="ConEmuLn1900.cpp" />
     <ClCompile Include="ConEmuLn2800.cpp" />
@@ -979,6 +980,7 @@ if exist C:\Utils\FAR170\Plugins\ConEmu\Lines\ConEmuLn.dll copy "$(TargetDir)Con
     <ClInclude Include="..\common\pluginA.hpp" />
     <ClInclude Include="..\common\pluginW1761.hpp" />
     <ClInclude Include="..\common\pluginW1900.hpp" />
+    <ClInclude Include="..\common\WThreads.h" />
     <ClInclude Include="ConEmuLn.h" />
     <ClInclude Include="ConEmuLn_Lang.h" />
     <ClInclude Include="Configure.h" />

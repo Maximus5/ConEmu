@@ -19,6 +19,7 @@ OUTNAME = ConEmuLn
 
 
 LINK_OBJS = \
+$(INTDIR)\WThreads.obj \
 $(OBJDIR)\ConEmuLn.obj \
 $(OBJDIR)\ConEmuLn995.obj \
 $(OBJDIR)\ConEmuLn1900.obj \

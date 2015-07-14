@@ -471,6 +471,7 @@
       <File RelativePath="..\..\..\common\MAssert.cpp" />
       <File RelativePath="..\..\..\common\Memory.cpp" />
       <File RelativePath="..\..\..\common\MStrSafe.cpp" />
+      <File RelativePath="..\..\..\common\WThreads.cpp" />
       <File RelativePath=".\pe.cpp" />
       <File RelativePath=".\pe.def" />
       <File RelativePath=".\ver_c0.def" />
@@ -478,6 +479,7 @@
     <Filter Name="Header Files" Filter="h;hpp;hxx;hm;inl;inc;xsd" UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}">
       <File RelativePath="..\..\..\common\Memory.h" />
       <File RelativePath="..\..\..\common\MStrSafe.h" />
+      <File RelativePath="..\..\..\common\WThreads.h" />
       <File RelativePath="..\ThumbSDK.h" />
       <File RelativePath=".\resource.h" />
     </Filter>

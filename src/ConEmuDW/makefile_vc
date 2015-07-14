@@ -42,7 +42,8 @@ LINK_OBJS = \
 	$(INTDIR)\Memory.obj \
 	$(INTDIR)\MSecurity.obj \
 	$(INTDIR)\MStrSafe.obj \
-	$(INTDIR)\WObjects.obj
+	$(INTDIR)\WObjects.obj \
+	$(INTDIR)\WThreads.obj
 	
 
 USERLIBS = 
@@ -73,10 +74,10 @@ NOWIN98=/OPT:NOWIN98
 PDBNAME="$(OUTDIR)$(ADDOUTDIR)\$(OUTNAME).pdb"
 
 !ifndef DEBUG
-CPP_OPT=/DNDEBUG /O1i /Fd$(PDBNAME) /DHIDE_TODO /DCRTPRINTF /DCRTSTARTUP
+CPP_OPT=/DNDEBUG /O1i /Fd$(PDBNAME) /DHIDE_TODO /DCRTPRINTF /DCRTSTARTUP /DCONEMU_MINIMAL
 #/DCRTSTARTUP
 !else
-CPP_OPT=/DDEBUG /Od /Fd$(PDBNAME) /DCRTPRINTF
+CPP_OPT=/DDEBUG /Od /Fd$(PDBNAME) /DCRTPRINTF /DCONEMU_MINIMAL
 #/DCRTSTARTUP
 !endif
 
@@ -271,6 +272,8 @@ $(INTDIR)\MSecurity.obj: ../common/MSecurity.cpp
 $(INTDIR)\MStrSafe.obj: ../common/MStrSafe.cpp
 
 $(INTDIR)\WObjects.obj: ../common/WObjects.cpp
+
+$(INTDIR)\WThreads.obj: ../common/WThreads.cpp
 
 #LINK_OBJS end
 ##############

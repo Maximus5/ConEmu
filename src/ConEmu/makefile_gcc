@@ -28,6 +28,7 @@ SRCS = \
 		../common/WFiles.cpp       \
 		../common/WObjects.cpp     \
 		../common/WRegistry.cpp    \
+		../common/WThreads.cpp       \
 		../common/WUser.cpp        \
 		AboutDlg.cpp       \
 		Attach.cpp         \

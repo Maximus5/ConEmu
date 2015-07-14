@@ -7,6 +7,7 @@ SRCS = \
 		../common/MSectionSimple.cpp \
 		../common/MStrSafe.cpp       \
 		../common/WObjects.cpp       \
+		../common/WThreads.cpp       \
 		ConEmuC.cpp                  \
 		Downloader.cpp
 

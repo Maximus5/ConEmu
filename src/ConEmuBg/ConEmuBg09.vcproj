@@ -396,6 +396,7 @@
       <File RelativePath="..\common\Memory.cpp" />
       <File RelativePath="..\common\MSectionSimple.cpp" />
       <File RelativePath="..\common\MStrSafe.cpp" />
+      <File RelativePath="..\common\WThreads.cpp" />
       <File RelativePath=".\ConEmuBg.cpp" />
       <File RelativePath=".\ConEmuBg1900.cpp" />
       <File RelativePath=".\ConEmuBg2800.cpp" />
@@ -408,6 +409,7 @@
       <File RelativePath="..\common\Memory.h" />
       <File RelativePath="..\common\MSectionSimple.h" />
       <File RelativePath="..\common\MStrSafe.h" />
+      <File RelativePath="..\common\WThreads.h" />
       <File RelativePath=".\ConEmuBg.h" />
       <File RelativePath=".\ConEmuBg_Lang.h" />
       <File RelativePath=".\Configure.h" />

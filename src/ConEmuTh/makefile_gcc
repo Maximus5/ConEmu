@@ -8,6 +8,7 @@ SRCS = \
 		../common/MSectionSimple.cpp \
 		../common/WFiles.cpp       \
 		../common/WObjects.cpp     \
+		../common/WThreads.cpp       \
 		../common/WUser.cpp        \
 		ConEmuTh.cpp \
 		ConEmuTh1900.cpp \

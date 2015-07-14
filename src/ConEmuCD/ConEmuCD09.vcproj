@@ -423,6 +423,7 @@
       <File RelativePath="..\common\WConsole.h" />
       <File RelativePath="..\common\WFiles.h" />
       <File RelativePath="..\common\WObjects.h" />
+      <File RelativePath="..\common\WThreads.h" />
       <File RelativePath="..\common\WUser.h" />
       <File RelativePath="..\ConEmuHk\Console2.h" />
       <File RelativePath="..\ConEmuHk\Injects.h" />
@@ -466,6 +467,7 @@
       <File RelativePath="..\common\WConsole.cpp" />
       <File RelativePath="..\common\WFiles.cpp" />
       <File RelativePath="..\common\WObjects.cpp" />
+      <File RelativePath="..\common\WThreads.cpp" />
       <File RelativePath="..\common\WUser.cpp" />
       <File RelativePath="..\ConEmuHk\Injects.cpp" />
       <File RelativePath=".\ConEmuCmd.cpp" />

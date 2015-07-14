@@ -20,6 +20,7 @@ SRCS = \
 		../common/WConsole.cpp     \
 		../common/WFiles.cpp       \
 		../common/WObjects.cpp     \
+		../common/WThreads.cpp       \
 		../common/WUser.cpp          \
 		Ansi.cpp \
 		ConEmuHooks.cpp \

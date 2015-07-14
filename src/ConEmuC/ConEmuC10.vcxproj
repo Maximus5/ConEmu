@@ -784,6 +784,7 @@
     <ClCompile Include="..\common\MSectionSimple.cpp" />
     <ClCompile Include="..\common\MStrSafe.cpp" />
     <ClCompile Include="..\common\WObjects.cpp" />
+    <ClCompile Include="..\common\WThreads.cpp" />
     <ClCompile Include="ConEmuC.cpp" />
     <ClCompile Include="Downloader.cpp" />
   </ItemGroup>
@@ -794,6 +795,7 @@
     <ClInclude Include="..\common\MSectionSimple.h" />
     <ClInclude Include="..\common\MStrSafe.h" />
     <ClInclude Include="..\common\WObjects.h" />
+    <ClInclude Include="..\common\WThreads.h" />
     <ClInclude Include="..\ConEmu\version.h" />
     <ClInclude Include="..\ConEmuCD\ExitCodes.h" />
     <ClInclude Include="Downloader.h" />

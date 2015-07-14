@@ -35,7 +35,8 @@ $(INTDIR)\MAssert.obj \
 $(INTDIR)\Memory.obj \
 $(INTDIR)\MSectionSimple.obj \
 $(INTDIR)\MStrSafe.obj \
-$(INTDIR)\WObjects.obj
+$(INTDIR)\WObjects.obj \
+$(INTDIR)\WThreads.obj
 
 
 LINK_LIBS=$(CRTLIB) kernel32.lib user32.lib
@@ -213,6 +214,8 @@ $(INTDIR)\MSectionSimple.obj: ../common/MSectionSimple.cpp ../common/MSectionSim
 $(INTDIR)\MStrSafe.obj: ../common/MStrSafe.cpp
 
 $(INTDIR)\WObjects.obj: ../common/WObjects.cpp ../common/WObjects.h
+
+$(INTDIR)\WThreads.obj: ../common/WThreads.cpp ../common/WThreads.h
 
 #LINK_OBJS end
 ##############

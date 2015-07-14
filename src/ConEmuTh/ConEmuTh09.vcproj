@@ -405,6 +405,7 @@
       <File RelativePath="..\common\RgnDetect.cpp" />
       <File RelativePath="..\common\WFiles.cpp" />
       <File RelativePath="..\common\WObjects.cpp" />
+      <File RelativePath="..\common\WThreads.cpp" />
       <File RelativePath="..\common\WUser.cpp" />
       <File RelativePath=".\ConEmuTh.cpp" />
       <File RelativePath=".\ConEmuTh1900.cpp" />
@@ -428,6 +429,7 @@
       <File RelativePath="..\common\RgnDetect.h" />
       <File RelativePath="..\common\WFiles.h" />
       <File RelativePath="..\common\WObjects.h" />
+      <File RelativePath="..\common\WThreads.h" />
       <File RelativePath="..\common\WUser.h" />
       <File RelativePath=".\ConEmuTh.h" />
       <File RelativePath=".\ConEmuTh_Lang.h" />

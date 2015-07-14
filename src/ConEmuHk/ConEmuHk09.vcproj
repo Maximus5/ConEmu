@@ -416,6 +416,7 @@
       <File RelativePath="..\common\WConsole.h" />
       <File RelativePath="..\common\WErrGuard.h" />
       <File RelativePath="..\common\WObjects.h" />
+      <File RelativePath="..\common\WThreads.h" />
       <File RelativePath="..\ConEmuCD\ExitCodes.h" />
       <File RelativePath="Ansi.h" />
       <File RelativePath="ConEmuHooks.h" />
@@ -451,6 +452,7 @@
       <File RelativePath="..\common\RConStartArgs.cpp" />
       <File RelativePath="..\common\WConsole.cpp" />
       <File RelativePath="..\common\WObjects.cpp" />
+      <File RelativePath="..\common\WThreads.cpp" />
       <File RelativePath="Ansi.cpp" />
       <File RelativePath="ConEmuHooks.cpp" />
       <File RelativePath="DefTermHk.cpp" />

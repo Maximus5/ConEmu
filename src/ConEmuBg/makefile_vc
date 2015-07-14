@@ -27,7 +27,8 @@ $(INTDIR)\ConEmuBgA.obj \
 $(INTDIR)\MAssert.obj \
 $(INTDIR)\Memory.obj \
 $(INTDIR)\MSectionSimple.obj \
-$(INTDIR)\MStrSafe.obj
+$(INTDIR)\MStrSafe.obj \
+$(INTDIR)\WThreads.obj
 
 #$(INTDIR)\LogBrowser.obj
 
@@ -54,11 +55,11 @@ NOWIN98=/OPT:NOWIN98
 
 
 !ifndef DEBUG
-CPP_OPT=/DNDEBUG /O1i /Fd$(PDB) /DHIDE_TODO /DCRTSTARTUP
+CPP_OPT=/DNDEBUG /O1i /Fd$(PDB) /DHIDE_TODO /DCRTSTARTUP /DCONEMU_MINIMAL
 LINK_DEBUG=/map:"$(MAP)" 
 CPP_DEBUG=
 !else
-CPP_OPT=/DDEBUG /Od /Fd$(PDB) /DCRTSTARTUP
+CPP_OPT=/DDEBUG /Od /Fd$(PDB) /DCRTSTARTUP /DCONEMU_MINIMAL
 LINK_DEBUG=/debug /map:"$(MAP)" /pdb:"$(PDB)"
 CPP_DEBUG=/Zi
 !endif
@@ -226,6 +227,8 @@ $(INTDIR)\Memory.obj: ../common/Memory.cpp
 $(INTDIR)\MSectionSimple.obj: ../common/MSectionSimple.cpp ../common/MSectionSimple.h
 
 $(INTDIR)\MStrSafe.obj: ../common/MStrSafe.cpp
+
+$(INTDIR)\WThreads.obj: ../common/WThreads.cpp
 
 #LINK_OBJS end
 ##############

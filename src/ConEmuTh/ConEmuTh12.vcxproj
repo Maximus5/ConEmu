@@ -907,6 +907,7 @@ if exist C:\Utils\FAR170\Plugins\ConEmu\Thumbs\ConEmuTh.dll copy "$(TargetDir)Co
     <ClCompile Include="..\common\RgnDetect.cpp" />
     <ClCompile Include="..\common\WFiles.cpp" />
     <ClCompile Include="..\common\WObjects.cpp" />
+    <ClCompile Include="..\common\WThreads.cpp" />
     <ClCompile Include="..\common\WUser.cpp" />
     <ClCompile Include="ConEmuTh.cpp" />
     <ClCompile Include="ConEmuTh1900.cpp" />
@@ -972,6 +973,7 @@ if exist C:\Utils\FAR170\Plugins\ConEmu\Thumbs\ConEmuTh.dll copy "$(TargetDir)Co
     <ClInclude Include="..\common\RgnDetect.h" />
     <ClInclude Include="..\common\WFiles.h" />
     <ClInclude Include="..\common\WObjects.h" />
+    <ClInclude Include="..\common\WThreads.h" />
     <ClInclude Include="..\common\WUser.h" />
     <ClInclude Include="ConEmuTh.h" />
     <ClInclude Include="ConEmuTh_Lang.h" />

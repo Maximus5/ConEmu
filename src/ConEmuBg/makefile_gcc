@@ -4,6 +4,7 @@ SRCS = \
 		../common/Memory.cpp \
 		../common/MSectionSimple.cpp \
 		../common/MStrSafe.cpp \
+		../common/WThreads.cpp       \
 		ConEmuBg.cpp \
 		ConEmuBg1900.cpp \
 		ConEmuBg2800.cpp \

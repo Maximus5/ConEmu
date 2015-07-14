@@ -846,6 +846,7 @@
     <ClInclude Include="..\common\WConsole.h" />
     <ClInclude Include="..\common\WErrGuard.h" />
     <ClInclude Include="..\common\WObjects.h" />
+    <ClInclude Include="..\common\WThreads.h" />
     <ClInclude Include="..\ConEmuCD\ExitCodes.h" />
     <ClInclude Include="Ansi.h" />
     <ClInclude Include="ConEmuHooks.h" />
@@ -880,6 +881,7 @@
     <ClCompile Include="..\common\RConStartArgs.cpp" />
     <ClCompile Include="..\common\WConsole.cpp" />
     <ClCompile Include="..\common\WObjects.cpp" />
+    <ClCompile Include="..\common\WThreads.cpp" />
     <ClCompile Include="Ansi.cpp" />
     <ClCompile Include="ConEmuHooks.cpp" />
     <ClCompile Include="DefTermHk.cpp" />
