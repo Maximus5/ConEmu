@@ -47,6 +47,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/common.hpp"
 #include "../common/MSection.h"
 #include "../common/RgnDetect.h"
+#include "../common/WThreads.h"
 #include "../common/WUser.h"
 #include "ConEmuTh.h"
 #include "resource.h"
@@ -161,7 +162,7 @@ HWND CeFullPanelInfo::CreateView()
 
 		// Сначала нужно запустить нить (ее еще не создавали)
 		HANDLE hReady = CreateEvent(NULL,FALSE,FALSE,NULL);
-		ghDisplayThread = CreateThread(NULL,0,DisplayThread,(LPVOID)hReady,0,&gnDisplayThreadId); //-V513
+		ghDisplayThread = apiCreateThread(DisplayThread, (LPVOID)hReady, &gnDisplayThreadId, "Thumbs::DisplayThread"); //-V513
 
 		if (!ghDisplayThread)
 		{

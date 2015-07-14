@@ -49,6 +49,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "VConGroup.h"
 #include "VirtualConsole.h"
 
+#include "../common/WThreads.h"
+
 
 #ifdef __GNUC__
 #define PCUIDLIST_RELATIVE LPCITEMIDLIST
@@ -3049,7 +3051,7 @@ CDragDropData::CEDragSource* CDragDropData::InitialCreateSource()
 	CEDragSource *pds = (CEDragSource*)calloc(sizeof(CEDragSource),1);
 	pds->hReady = CreateEvent(0,TRUE,FALSE,0);
 	pds->pDrag = this;
-	pds->hThread = CreateThread(0,0,DragThread,pds,0,&(pds->nTID));
+	pds->hThread = apiCreateThread(DragThread, pds, &(pds->nTID), "CDragDropData::DragThread");
 
 	if (pds->hThread == NULL)
 	{
@@ -3132,7 +3134,7 @@ void CDragDropData::TerminateDrag()
 		{
 			if (WaitForSingleObject(pds->hThread,100)!=WAIT_OBJECT_0)
 			{
-				TerminateThread(pds->hThread, 100);
+				apiTerminateThread(pds->hThread, 100);
 			}
 
 			CloseHandle(pds->hThread);

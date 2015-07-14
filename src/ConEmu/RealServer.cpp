@@ -119,7 +119,7 @@ bool CRealServer::Start()
 	//	if (mh_RConServerThreads[i])
 	//		continue;
 	//	mn_RConServerThreadsId[i] = 0;
-	//	mh_RConServerThreads[i] = CreateThread(NULL, 0, RConServerThread, (LPVOID)this, 0, &mn_RConServerThreadsId[i]);
+	//	mh_RConServerThreads[i] = apiCreateThread(NULL, 0, RConServerThread, (LPVOID)this, 0, &mn_RConServerThreadsId[i]);
 	//	_ASSERTE(mh_RConServerThreads[i]!=NULL);
 	//}
 

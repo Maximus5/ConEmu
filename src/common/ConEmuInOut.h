@@ -28,6 +28,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include "WThreads.h"
+
 #define CONEMUINOUTBUFSIZE 4096 
 
 struct ConEmuInOutPipe
@@ -136,7 +138,7 @@ struct ConEmuInOutPipe
 	{
 		if (!hThread)
 		{
-			hThread = CreateThread(NULL, 0, CEIO_ThreadProc, (PVOID)this, 0, &nThreadID);
+			hThread = apiCreateThread(CEIO_ThreadProc, (PVOID)this, &nThreadID, "CEIO_ThreadProc");
 			nLastErr = GetLastError();
 			nErrStep = 3;
 		}
@@ -154,7 +156,7 @@ struct ConEmuInOutPipe
 		if (hThread)
 		{
 			TODO("Try to stop correctly");
-			TerminateThread(hThread, 100);
+			apiTerminateThread(hThread, 100);
 
 			SafeCloseHandle(hThread);
 		}

@@ -59,6 +59,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/MWow64Disable.h"
 #include "../common/WFiles.h"
 #include "../common/WConsole.h"
+#include "../common/WThreads.h"
 #include "../common/SetEnvVar.h"
 #include "../ConEmuHk/SetHook.h"
 #include "../ConEmu/version.h"
@@ -2524,9 +2525,9 @@ void CPluginBase::InitHWND()
 	_ASSERTE(ghConsoleWrite!=NULL);
 	ghConsoleInputEmpty = CreateEvent(NULL,FALSE,FALSE,NULL);
 	_ASSERTE(ghConsoleInputEmpty!=NULL);
-	ghMonitorThread = CreateThread(NULL, 0, MonitorThreadProcW, 0, 0, &gnMonitorThreadId);
+	ghMonitorThread = apiCreateThread(MonitorThreadProcW, NULL, &gnMonitorThreadId, "Plugin::MonitorThread");
 
-	//ghInputThread = CreateThread(NULL, 0, InputThreadProcW, 0, 0, &gnInputThreadId);
+	//ghInputThread = apiCreateThread(NULL, 0, InputThreadProcW, 0, 0, &gnInputThreadId);
 
 	// Если мы не под эмулятором - больше ничего делать не нужно
 	if (ghConEmuWndDC)
@@ -3215,7 +3216,7 @@ void CPluginBase::StopThread(bool bFromDllMain /*= false*/)
 #if !defined(__GNUC__)
 #pragma warning (disable : 6258)
 #endif
-			TerminateThread(ghMonitorThread, 100);
+			apiTerminateThread(ghMonitorThread, 100);
 		}
 
 		SafeCloseHandle(ghMonitorThread);
@@ -3226,7 +3227,7 @@ void CPluginBase::StopThread(bool bFromDllMain /*= false*/)
 	//		#if !defined(__GNUC__)
 	//		#pragma warning (disable : 6258)
 	//		#endif
-	//		TerminateThread(ghInputThread, 100);
+	//		apiTerminateThread(ghInputThread, 100);
 	//	}
 	//	SafeCloseHandle(ghInputThread);
 	//}

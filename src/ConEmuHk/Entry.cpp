@@ -1323,7 +1323,7 @@ void InitExeName()
 	{
 		gbIsCmdProcess = true;
 		#if 0
-		CreateThread(NULL, 0, DummyLibLoaderCmdThread, NULL, 0, &gnDummyLibLoaderCmdThreadTID);
+		apiCreateThread(DummyLibLoaderCmdThread, NULL, &gnDummyLibLoaderCmdThreadTID, "DummyLibLoaderCmdThread");
 		#endif
 	}
 	else if (lstrcmpi(gsExeName, L"node.exe") == 0)
@@ -1351,7 +1351,7 @@ void InitExeName()
 		ghDebugSshLibs = CreateEvent(NULL, FALSE, FALSE, NULL);
 		ghDebugSshLibsRc = CreateEvent(NULL, FALSE, FALSE, NULL);
 		ghDebugSshLibsCan = CreateEvent(NULL, FALSE, FALSE, NULL);
-		CreateThread(NULL, 0, DummyLibLoaderThread, NULL, 0, &gnDummyLibLoaderThreadTID);
+		apiCreateThread(DummyLibLoaderThread, NULL, &gnDummyLibLoaderThreadTID, "DummyLibLoaderThread");
 		#endif
 	}
 	else if (lstrcmpi(gsExeName, L"less.exe") == 0)
@@ -1406,7 +1406,7 @@ void DllThreadClose()
 		if (nWait == WAIT_TIMEOUT)
 		{
 			// Нехорошо, но хуже, если заблокируется консольное приложение
-			TerminateThread(ghStartThread, 100);
+			apiTerminateThread(ghStartThread, 100);
 		}
 		CloseHandle(ghStartThread);
 		ghStartThread = NULL;
@@ -1842,7 +1842,7 @@ BOOL DllMain_ProcessAttach(HANDLE hModule, DWORD  ul_reason_for_call)
 	//HANDLE hEvents[2];
 	//hEvents[0] = CreateEvent(NULL, FALSE, FALSE, NULL);
 	//hEvents[1] =
-	ghStartThread = CreateThread(NULL, 0, DllStart, NULL/*(LPVOID)(hEvents[0])*/, 0, &gnStartThreadID);
+	ghStartThread = apiCreateThread(DllStart, NULL/*(LPVOID)(hEvents[0])*/, &gnStartThreadID, "ConEmuHk::DllStart");
 	if (ghStartThread == NULL)
 	{
 		//_ASSERTE(ghStartThread!=NULL);

@@ -40,6 +40,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/MMap.h"
 #include "../common/TokenHelper.h"
 #include "../common/WFiles.h"
+#include "../common/WThreads.h"
 #include "ConsoleHelp.h"
 #include "UnicodeTest.h"
 
@@ -196,7 +197,7 @@ int RunDebugger()
 	// Run DebugThread
 	gpSrv->DbgInfo.hDebugReady = CreateEvent(NULL, FALSE, FALSE, NULL);
 	// Перенес обработку отладочных событий в отдельную нить, чтобы случайно не заблокироваться с главной
-	gpSrv->DbgInfo.hDebugThread = CreateThread(NULL, 0, DebugThread, NULL, 0, &gpSrv->DbgInfo.dwDebugThreadId);
+	gpSrv->DbgInfo.hDebugThread = apiCreateThread(DebugThread, NULL, &gpSrv->DbgInfo.dwDebugThreadId, "DebugThread");
 	HANDLE hEvents[2] = {gpSrv->DbgInfo.hDebugReady, gpSrv->DbgInfo.hDebugThread};
 	DWORD nReady = WaitForMultipleObjects(countof(hEvents), hEvents, FALSE, INFINITE);
 

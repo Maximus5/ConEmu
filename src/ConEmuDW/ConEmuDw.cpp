@@ -55,6 +55,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/common.hpp"
 #include "../common/ConEmuCheck.h"
 #include "../common/UnicodeChars.h"
+#include "../common/WThreads.h"
 #include "../ConEmu/version.h"
 #include "../ConEmuCD/ExitCodes.h"
 #include "../ConEmuHk/SetHook.h"
@@ -2082,7 +2083,7 @@ int  WINAPI GetColorDialog(FarColor* Color, BOOL Centered, BOOL AddTransparent)
 
 	// Запускаем нить, чтобы 1) не драться с консолью; 2) не иметь проблем с обработчиком сообщений и дескрипторами GDI
 	DWORD dwThreadID = 0;
-	HANDLE hThread = CreateThread(NULL, 0, ColorDialogThread, &Parm, 0, &dwThreadID);
+	HANDLE hThread = apiCreateThread(ColorDialogThread, &Parm, &dwThreadID, "ColorDialogThread");
 	if (!hThread)
 	{
 		nRc = -1;

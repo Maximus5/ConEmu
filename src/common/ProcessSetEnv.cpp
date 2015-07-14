@@ -32,6 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "CmdLine.h"
 #include "ProcessSetEnv.h"
 #include "WObjects.h"
+#include "WThreads.h"
 
 //Issue 60: BUGBUG: На некоторых системых (Win2k3, WinXP) SetConsoleCP (и иже с ними) просто зависают
 //Поэтому выполняем в отдельном потоке, и если он завис - просто зовем TerminateThread
@@ -52,7 +53,7 @@ bool SetConsoleCpHelper(UINT nCP)
 
 	//Issue 60: BUGBUG: On some OS versions (Win2k3, WinXP) SetConsoleCP (and family) just hangs
 	DWORD nTID;
-	HANDLE hThread = CreateThread(NULL, 0, OurSetConsoleCPThread, (LPVOID)nCP, 0, &nTID);
+	HANDLE hThread = apiCreateThread(OurSetConsoleCPThread, (LPVOID)nCP, &nTID, "OurSetConsoleCPThread(%u)", nCP);
 
 	if (hThread)
 	{
@@ -63,7 +64,7 @@ bool SetConsoleCpHelper(UINT nCP)
 			// That is dangerous operation, however there is no other workaround
 			// http://conemu.github.io/en/MicrosoftBugs.html#chcp_hung
 
-			TerminateThread(hThread,100);
+			apiTerminateThread(hThread, 100);
 
 		}
 

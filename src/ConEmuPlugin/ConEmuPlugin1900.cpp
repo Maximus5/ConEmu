@@ -40,6 +40,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../ConEmu/version.h"
 #include "../common/farcolor3.hpp"
 #include "../common/ConEmuColors3.h"
+#include "../common/WThreads.h"
 #include "../ConEmuHk/SetHook.h"
 
 #include "ConEmuPlugin1900.h"
@@ -803,7 +804,7 @@ void CPluginW1900::PostMacroApi(const wchar_t* asMacro, INPUT_RECORD* apRec, boo
 			if (pszErrText)
 			{
 				DWORD nTID;
-				HANDLE h = CreateThread(NULL, 0, BackgroundMacroError, pszErrText, 0, &nTID);
+				HANDLE h = apiCreateThread(BackgroundMacroError, pszErrText, &nTID, "BackgroundMacroError");
 				SafeCloseHandle(h);
 			}
 		}

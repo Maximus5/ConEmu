@@ -32,6 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/MAssert.h"
 #include "../common/MSectionSimple.h"
 #include "../common/WFiles.h"
+#include "../common/WThreads.h"
 #include "crc32.h"
 #include "ConEmuC.h"
 #include "ExitCodes.h"
@@ -278,6 +279,7 @@ protected:
 		UINT iRc;
 		DWORD nWait;
 		DWORD nThreadWait = WAIT_TIMEOUT;
+		PipeThreadParm threadParm = {this};
 
 		ZeroStruct(m_SI); m_SI.cb = sizeof(m_SI);
 		ZeroStruct(m_PI);
@@ -306,8 +308,7 @@ protected:
 
 		mb_Terminating = false;
 
-		PipeThreadParm threadParm = {this};
-		mh_PipeErrThread = CreateThread(NULL, 0, StdErrReaderThread, (LPVOID)&threadParm, 0, &mn_PipeErrThreadId);
+		mh_PipeErrThread = apiCreateThread(StdErrReaderThread, (LPVOID)&threadParm, &mn_PipeErrThreadId, "Downloader::ReaderThread");
 		if (mh_PipeErrThread != NULL)
 		{
 			m_SI.dwFlags |= STARTF_USESTDHANDLES;
@@ -360,7 +361,7 @@ protected:
 			if (nThreadWait == WAIT_TIMEOUT)
 			{
 				_ASSERTE(FALSE && "StdErr reading thread hangs, terminating");
-				TerminateThread(mh_PipeErrThread, 999);
+				apiTerminateThread(mh_PipeErrThread, 999);
 			}
 			SafeCloseHandle(mh_PipeErrThread);
 		}

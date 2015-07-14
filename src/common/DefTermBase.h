@@ -41,6 +41,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "MArray.h"
 #include "MSectionSimple.h"
 #include "WObjects.h"
+#include "WThreads.h"
 #include "../ConEmuCD/ExitCodes.h"
 #include <TlHelp32.h>
 
@@ -554,7 +555,7 @@ public:
 
 			DEBUGSTRDEFTERM(L"DefTerm::CheckForeground creating background thread PostCheckThread");
 
-			hPostThread = CreateThread(NULL, 0, PostCheckThread, pArg, 0, &nThreadId);
+			hPostThread = apiCreateThread(PostCheckThread, pArg, &nThreadId, "DefTerm::PostCheckThread");
 			_ASSERTE(hPostThread!=NULL);
 			if (hPostThread)
 			{
@@ -889,7 +890,7 @@ protected:
 		// Этот процесс занимает некоторое время, чтобы не блокировать основной поток - запускаем фоновый
 		mb_PostCreatedThread = true;
 		DWORD  nWait = WAIT_FAILED;
-		HANDLE hPostThread = CreateThread(NULL, 0, PostCreatedThread, this, 0, &mn_PostThreadId);
+		HANDLE hPostThread = apiCreateThread(PostCreatedThread, this, &mn_PostThreadId, "DefTerm::PostCreatedThread");
 
 		if (hPostThread)
 		{
@@ -1032,7 +1033,7 @@ protected:
 				if (bForceTerminate)
 				{
 					_ASSERTE(FALSE && "Terminating DefTermBase hooker thread");
-					TerminateThread(hThread, 100);
+					apiTerminateThread(hThread, 100);
 				}
 				else
 				{

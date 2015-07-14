@@ -45,6 +45,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConfirmDlg.h"
 #include "../common/MSection.h"
 #include "../common/WFiles.h"
+#include "../common/WThreads.h"
 #include "../common/WUser.h"
 
 CConEmuUpdate* gpUpd = NULL;
@@ -107,7 +108,7 @@ CConEmuUpdate::~CConEmuUpdate()
 		if (nWait != WAIT_OBJECT_0)
 		{
 			_ASSERTE(FALSE && "Terminating Updater(mh_CheckThread) thread");
-			TerminateThread(mh_CheckThread, 100);
+			apiTerminateThread(mh_CheckThread, 100);
 		}
 
 		CloseHandle(mh_CheckThread);
@@ -217,7 +218,7 @@ void CConEmuUpdate::StartCheckProcedure(BOOL abShowMessages)
 	}
 
 	mb_InCheckProcedure = TRUE;
-	mh_CheckThread = CreateThread(NULL, 0, CheckThreadProc, this, 0, &mn_CheckThreadId);
+	mh_CheckThread = apiCreateThread(CheckThreadProc, this, &mn_CheckThreadId, "AutoUpdateThread");
 	if (!mh_CheckThread)
 	{
 		mb_InCheckProcedure = FALSE;
@@ -256,7 +257,7 @@ void CConEmuUpdate::StopChecking()
 		if (nWait != WAIT_OBJECT_0)
 		{
 			_ASSERTE(FALSE && "Terminating Updater(mh_CheckThread) thread");
-			TerminateThread(mh_CheckThread, 100);
+			apiTerminateThread(mh_CheckThread, 100);
 		}
 	}
 

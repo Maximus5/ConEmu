@@ -29,6 +29,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include "ConEmuPipeMode.h"
+#include "CmdLine.h" // required for PointToName
 
 #ifdef _DEBUG
 	#define USEPIPELOG
@@ -63,6 +64,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	//#pragma message("--PipeServer.h in _DEBUG mode")
 	#define PipeOutputDbg(x) OutputDebugStringW(x)
 #endif
+
+#include "WThreads.h"
 
 enum PipeState
 {
@@ -1185,7 +1188,8 @@ struct PipeServer
 			//pPipe->hThreadEnd = CreateEvent(NULL, TRUE, FALSE, NULL);
 			PLOG("StartPipeInstance.Thread");
 			pPipe->nCreateBegin = GetTickCount(); pPipe->nCreateEnd = 0;
-			pPipe->hThread = CreateThread(NULL, 0, _PipeServerThread, pPipe, 0, &pPipe->nThreadId);
+			char szPipeName[40] = ""; WideCharToMultiByte(CP_ACP, 0, PointToName(ms_PipeName), -1, szPipeName, countof(szPipeName)-1, NULL, NULL);
+			pPipe->hThread = apiCreateThread(_PipeServerThread, pPipe, &pPipe->nThreadId, szPipeName[0] ? szPipeName : "PipeServerThread");
 			pPipe->nCreateError = GetLastError();
 			pPipe->nCreateEnd = GetTickCount();
 			DWORD nThreadCreationTime = pPipe->nCreateEnd - pPipe->nCreateBegin;
@@ -1251,7 +1255,7 @@ struct PipeServer
 			//if (pPipe->pServer->mb_Terminate && !pPipe->bSkipTerminate)
 			//{
 			//	pPipe->dwState = TERMINATE_CALL_STATE;
-			//	TerminateThread(GetCurrentThread(), 100);
+			//	apiTerminateThread(GetCurrentThread(), 100);
 			//}
 			return nResult;
 		};
@@ -1282,7 +1286,7 @@ struct PipeServer
 				break;
 			default:
 				rbForceTerminated = true;
-				TerminateThread(hThread, 100);
+				apiTerminateThread(hThread, 100);
 			}
 
 			SafeCloseHandle(hThread);

@@ -104,6 +104,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/ConsoleRead.h"
 #include "../common/UnicodeChars.h"
 #include "../common/WConsole.h"
+#include "../common/WThreads.h"
 
 
 bool USE_INTERNAL_QUEUE = true;
@@ -3425,7 +3426,7 @@ BOOL WINAPI OnSetConsoleCP(UINT wCodePageID)
 	DWORD nPrevCP = GetConsoleCP();
 	#endif
 	DWORD nCurCP = 0;
-	HANDLE hThread = CreateThread(NULL,0,SetConsoleCPThread,&sco,0,&nTID);
+	HANDLE hThread = apiCreateThread(SetConsoleCPThread, &sco, &nTID, "OnSetConsoleCP(%u)", wCodePageID);
 
 	if (!hThread)
 	{
@@ -3452,7 +3453,7 @@ BOOL WINAPI OnSetConsoleCP(UINT wCodePageID)
 		else
 		{
 			//BUGBUG: На некоторых системых (Win2k3, WinXP) SetConsoleCP (и иже с ними) просто зависают
-			TerminateThread(hThread,100);
+			apiTerminateThread(hThread,100);
 			nCurCP = GetConsoleCP();
 			if (nCurCP == wCodePageID)
 			{
@@ -3474,7 +3475,7 @@ BOOL WINAPI OnSetConsoleCP(UINT wCodePageID)
 
 			//nWait = WaitForSingleObject(hThread, 0);
 			//if (nWait == WAIT_TIMEOUT)
-			//	TerminateThread(hThread,100);
+			//	apiTerminateThread(hThread,100);
 			//if (GetConsoleCP() == wCodePageID)
 			//	lbRc = TRUE;
 		}
@@ -3502,7 +3503,7 @@ BOOL WINAPI OnSetConsoleOutputCP(UINT wCodePageID)
 	DWORD nPrevCP = GetConsoleOutputCP();
 	#endif
 	DWORD nCurCP = 0;
-	HANDLE hThread = CreateThread(NULL,0,SetConsoleCPThread,&sco,0,&nTID);
+	HANDLE hThread = apiCreateThread(SetConsoleCPThread, &sco, &nTID, "OnSetConsoleOutputCP(%u)", wCodePageID);
 
 	if (!hThread)
 	{
@@ -3529,7 +3530,7 @@ BOOL WINAPI OnSetConsoleOutputCP(UINT wCodePageID)
 		else
 		{
 			//BUGBUG: На некоторых системых (Win2k3, WinXP) SetConsoleCP (и иже с ними) просто зависают
-			TerminateThread(hThread,100);
+			apiTerminateThread(hThread,100);
 			nCurCP = GetConsoleOutputCP();
 			if (nCurCP == wCodePageID)
 			{
@@ -3550,7 +3551,7 @@ BOOL WINAPI OnSetConsoleOutputCP(UINT wCodePageID)
 			}
 			//nWait = WaitForSingleObject(hThread, 0);
 			//if (nWait == WAIT_TIMEOUT)
-			//	TerminateThread(hThread,100);
+			//	apiTerminateThread(hThread,100);
 			//if (GetConsoleOutputCP() == wCodePageID)
 			//	lbRc = TRUE;
 		}

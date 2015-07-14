@@ -57,6 +57,7 @@ enum ProcessingStatus
 };
 
 #include "../common/MSectionSimple.h"
+#include "../common/WThreads.h"
 
 template<class T>
 class CQueueProcessor
@@ -338,7 +339,7 @@ class CQueueProcessor
 			if (nWait != WAIT_OBJECT_0)
 			{
 				_ASSERTE(nWait == WAIT_OBJECT_0);
-				TerminateThread(mh_Queue, 100);
+				apiTerminateThread(mh_Queue, 100);
 			}
 		};
 	public:
@@ -810,7 +811,7 @@ class CQueueProcessor
 			{
 				mb_TerminateRequested = false;
 				ResetEvent(mh_Alive);
-				mh_Queue = CreateThread(NULL, 0, ProcessingThread, this, 0, &mn_QueueId);
+				mh_Queue = apiCreateThread(ProcessingThread, this, &mn_QueueId, "Thumbs::ProcessingThread");
 			}
 
 			return (mh_Queue == NULL) ? E_UNEXPECTED : S_OK;

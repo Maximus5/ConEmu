@@ -39,6 +39,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/ConEmuCheck.h"
 #include "../common/Monitors.h"
 #include "../common/ProcessData.h"
+#include "../common/WThreads.h"
 #include "../common/WUser.h"
 #include "../ConEmuCD/ExitCodes.h"
 
@@ -244,7 +245,7 @@ bool CAttachDlg::OnStartAttach()
 	}
 	else
 	{
-		hThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)StartAttachThread, pParm, 0, &nTID);
+		hThread = apiCreateThread((LPTHREAD_START_ROUTINE)StartAttachThread, pParm, &nTID, "CAttachDlg::StartAttachThread#1");
 		if (!hThread)
 		{
 			DWORD dwErr = GetLastError();
@@ -310,7 +311,7 @@ CAttachDlg::AttachMacroRet CAttachDlg::AttachFromMacro(DWORD anPID, bool abAlter
 		return amr_Unexpected;
 
 	DWORD nTID = 0;
-	HANDLE hThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)StartAttachThread, pParm, 0, &nTID);
+	HANDLE hThread = apiCreateThread((LPTHREAD_START_ROUTINE)StartAttachThread, pParm, &nTID, "CAttachDlg::StartAttachThread#2");
 	if (!hThread)
 	{
 		//DWORD dwErr = GetLastError();

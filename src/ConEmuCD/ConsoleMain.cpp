@@ -87,6 +87,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/StartupEnvEx.h"
 #include "../common/WConsole.h"
 #include "../common/WFiles.h"
+#include "../common/WThreads.h"
 #include "../common/WUser.h"
 #include "../ConEmu/version.h"
 #include "../ConEmuHk/Injects.h"
@@ -6248,7 +6249,7 @@ void SendStarted()
 				gnMainServerPID = nMainServerPID;
 				gnAltServerPID = nAltServerPID;
 				// чтобы не тормозить основной поток (жалобы на замедление запуска программ из батников)
-				ghSendStartedThread = CreateThread(NULL, 0, SendStartedThreadProc, pIn, 0, &gnSendStartedThread);
+				ghSendStartedThread = apiCreateThread(SendStartedThreadProc, pIn, &gnSendStartedThread, "SendStartedThreadProc");
 	  			DWORD nErrCode = ghSendStartedThread ? 0 : GetLastError();
 	  			if (ghSendStartedThread == NULL)
 	  			{
@@ -6461,7 +6462,7 @@ CESERVER_REQ* SendStopped(CONSOLE_SCREEN_BUFFER_INFO* psbi)
 			#pragma warning( push )
 			#pragma warning( disable : 6258 )
 			#endif
-			TerminateThread(ghSendStartedThread, 100);    // раз корректно не хочет...
+			apiTerminateThread(ghSendStartedThread, 100);    // раз корректно не хочет...
 			#ifndef __GNUC__
 			#pragma warning( pop )
 			#endif

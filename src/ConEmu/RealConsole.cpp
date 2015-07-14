@@ -51,6 +51,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/RgnDetect.h"
 #include "../common/SetEnvVar.h"
 #include "../common/WFiles.h"
+#include "../common/WThreads.h"
 #include "../common/WUser.h"
 #include "ConEmu.h"
 #include "ConEmuApp.h"
@@ -3323,7 +3324,7 @@ BOOL CRealConsole::StartMonitorThread()
 	//_ASSERTE(mb_Detached || mh_MainSrv!=NULL); -- процесс теперь запускаем в MonitorThread
 	DWORD nCreateBegin = GetTickCount();
 	SetConStatus(L"Initializing ConEmu (4)", cso_ResetOnConsoleReady|cso_Critical);
-	mh_MonitorThread = CreateThread(NULL, 0, MonitorThread, (LPVOID)this, 0, &mn_MonitorThreadID);
+	mh_MonitorThread = apiCreateThread(MonitorThread, (LPVOID)this, &mn_MonitorThreadID, "RCon::MonitorThread ID=%i", mp_VCon->ID());
 	SetConStatus(L"Initializing ConEmu (5)", cso_ResetOnConsoleReady|cso_Critical);
 	DWORD nCreateEnd = GetTickCount();
 	DWORD nThreadCreationTime = nCreateEnd - nCreateBegin;
@@ -3338,7 +3339,7 @@ BOOL CRealConsole::StartMonitorThread()
 		LogString(szInfo);
 	}
 
-	//mh_InputThread = CreateThread(NULL, 0, InputThread, (LPVOID)this, 0, &mn_InputThreadID);
+	//mh_InputThread = apiCreateThread(NULL, 0, InputThread, (LPVOID)this, 0, &mn_InputThreadID);
 
 	if (mh_MonitorThread == NULL /*|| mh_InputThread == NULL*/)
 	{
@@ -5844,7 +5845,7 @@ void CRealConsole::StopThread(BOOL abRecreating)
 			DEBUGSTRPROC(L"### Main Thread wating timeout, terminating...\n");
 			_ASSERTE(FALSE && "Terminating mh_MonitorThread");
 			mb_WasForceTerminated = TRUE;
-			TerminateThread(mh_MonitorThread, 1);
+			apiTerminateThread(mh_MonitorThread, 1);
 		}
 		else
 		{
@@ -5866,7 +5867,7 @@ void CRealConsole::StopThread(BOOL abRecreating)
 		{
 			// Должен быть NULL, если нет - значит завис предыдущий макрос
 			_ASSERTE(mh_PostMacroThread==NULL && "Terminating mh_PostMacroThread");
-			TerminateThread(mh_PostMacroThread, 100);
+			apiTerminateThread(mh_PostMacroThread, 100);
 			CloseHandle(mh_PostMacroThread);
 		}
 	}
@@ -5890,7 +5891,7 @@ void CRealConsole::StopThread(BOOL abRecreating)
 	//if (mh_InputThread) {
 	//    if (WaitForSingleObject(mh_InputThread, 300) != WAIT_OBJECT_0) {
 	//        DEBUGSTRPROC(L"### Input Thread waiting timeout, terminating...\n");
-	//        TerminateThread(mh_InputThread, 1);
+	//        apiTerminateThread(mh_InputThread, 1);
 	//    } else {
 	//        DEBUGSTRPROC(L"Input Thread closed normally\n");
 	//    }
@@ -15025,7 +15026,7 @@ void CRealConsole::PostCommand(DWORD anCmdID, DWORD anCmdSize, LPCVOID ptrData)
 		{
 			// Должен быть NULL, если нет - значит завис предыдущий макрос
 			_ASSERTE(mh_PostMacroThread==NULL && "Terminating mh_PostMacroThread");
-			TerminateThread(mh_PostMacroThread, 100);
+			apiTerminateThread(mh_PostMacroThread, 100);
 			CloseHandle(mh_PostMacroThread);
 		}
 	}
@@ -15038,7 +15039,7 @@ void CRealConsole::PostCommand(DWORD anCmdID, DWORD anCmdSize, LPCVOID ptrData)
 	pArg->nCmdSize = anCmdSize;
 	if (ptrData && anCmdSize)
 		memmove(pArg->Data, ptrData, anCmdSize);
-	mh_PostMacroThread = CreateThread(NULL, 0, PostMacroThread, pArg, 0, &mn_PostMacroThreadID);
+	mh_PostMacroThread = apiCreateThread(PostMacroThread, pArg, &mn_PostMacroThreadID, "RCon::PostMacroThread#1 ID=%i", mp_VCon->ID());
 	if (mh_PostMacroThread == NULL)
 	{
 		// Если не удалось запустить нить
@@ -15205,7 +15206,7 @@ void CRealConsole::PostMacro(LPCWSTR asMacro, BOOL abAsync /*= FALSE*/)
 				// Должен быть NULL, если нет - значит завис предыдущий макрос
 				_ASSERTE(mh_PostMacroThread==NULL && "Terminating mh_PostMacroThread");
 				LogString(L"Terminating mh_PostMacroThread (hung)", true);
-				TerminateThread(mh_PostMacroThread, 100);
+				apiTerminateThread(mh_PostMacroThread, 100);
 				CloseHandle(mh_PostMacroThread);
 			}
 		}
@@ -15217,7 +15218,7 @@ void CRealConsole::PostMacro(LPCWSTR asMacro, BOOL abAsync /*= FALSE*/)
 		pArg->bPipeCommand = FALSE;
 		_wcscpy_c(pArg->szMacro, nLen+1, asMacro);
 		LogString("... executing macro asynchronously", true);
-		mh_PostMacroThread = CreateThread(NULL, 0, PostMacroThread, pArg, 0, &mn_PostMacroThreadID);
+		mh_PostMacroThread = apiCreateThread(PostMacroThread, pArg, &mn_PostMacroThreadID, "RCon::PostMacroThread#2 ID=%i", mp_VCon->ID());
 		if (mh_PostMacroThread == NULL)
 		{
 			// Если не удалось запустить нить

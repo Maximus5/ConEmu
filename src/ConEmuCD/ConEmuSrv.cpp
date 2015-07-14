@@ -43,6 +43,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/StartupEnvDef.h"
 #include "../common/WConsole.h"
 #include "../common/WFiles.h"
+#include "../common/WThreads.h"
 #include "../common/WUser.h"
 //#include "TokenHelper.h"
 #include "ConProcess.h"
@@ -977,14 +978,14 @@ int ServerInit(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/)
 			{
 				DumpInitStatus("\nServerInit: CreateThread(SetOemCpProc)");
 				DWORD nTID;
-				HANDLE h = CreateThread(NULL, 0, SetOemCpProc, (LPVOID)nOemCP, 0, &nTID);
+				HANDLE h = apiCreateThread(SetOemCpProc, (LPVOID)nOemCP, &nTID, "SetOemCpProc");
 				if (h && (h != INVALID_HANDLE_VALUE))
 				{
 					DWORD nWait = WaitForSingleObject(h, 5000);
 					if (nWait != WAIT_OBJECT_0)
 					{
 						_ASSERTE(nWait==WAIT_OBJECT_0 && "SetOemCpProc HUNGS!!!");
-						TerminateThread(h, 100);
+						apiTerminateThread(h, 100);
 					}
 					CloseHandle(h);
 				}
@@ -1199,13 +1200,8 @@ int ServerInit(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/)
 		if (gpSrv->hInputEvent && gpSrv->hInputWasRead)
 		{
 			DumpInitStatus("\nServerInit: CreateThread(InputThread)");
-			gpSrv->hInputThread = CreateThread(
-					NULL,              // no security attribute
-					0,                 // default stack size
-					InputThread,       // thread proc
-					NULL,              // thread parameter
-					0,                 // not suspended
-					&gpSrv->dwInputThread);      // returns thread ID
+			gpSrv->hInputThread = apiCreateThread(InputThread, NULL, &gpSrv->dwInputThread, "InputThread");
+
 		}
 
 		if (gpSrv->hInputEvent == NULL || gpSrv->hInputWasRead == NULL || gpSrv->hInputThread == NULL)
@@ -1379,7 +1375,7 @@ int ServerInit(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/)
 
 	// Запустить нить наблюдения за консолью
 	DumpInitStatus("\nServerInit: CreateThread(RefreshThread)");
-	gpSrv->hRefreshThread = CreateThread(NULL, 0, RefreshThread, NULL, 0, &gpSrv->dwRefreshThread);
+	gpSrv->hRefreshThread = apiCreateThread(RefreshThread, NULL, &gpSrv->dwRefreshThread, "RefreshThread");
 	if (gpSrv->hRefreshThread == NULL)
 	{
 		dwErr = GetLastError();
@@ -1390,7 +1386,7 @@ int ServerInit(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/)
 	//#ifdef USE_WINEVENT_SRV
 	////gpSrv->nMsgHookEnableDisable = RegisterWindowMessage(L"ConEmuC::HookEnableDisable");
 	//// The client thread that calls SetWinEventHook must have a message loop in order to receive events.");
-	//gpSrv->hWinEventThread = CreateThread(NULL, 0, WinEventThread, NULL, 0, &gpSrv->dwWinEventThread);
+	//gpSrv->hWinEventThread = apiCreateThread(NULL, 0, WinEventThread, NULL, 0, &gpSrv->dwWinEventThread);
 	//if (gpSrv->hWinEventThread == NULL)
 	//{
 	//	dwErr = GetLastError();
@@ -1575,7 +1571,7 @@ void ServerDone(int aiRc, bool abReportShutdown /*= false*/)
 			#pragma warning( push )
 			#pragma warning( disable : 6258 )
 			#endif
-			TerminateThread(gpSrv->hInputThread, 100);    // раз корректно не хочет...
+			apiTerminateThread(gpSrv->hInputThread, 100);    // раз корректно не хочет...
 			#ifndef __GNUC__
 			#pragma warning( pop )
 			#endif
@@ -1614,7 +1610,7 @@ void ServerDone(int aiRc, bool abReportShutdown /*= false*/)
 			#pragma warning( push )
 			#pragma warning( disable : 6258 )
 			#endif
-			TerminateThread(gpSrv->hRefreshThread, 100);
+			apiTerminateThread(gpSrv->hRefreshThread, 100);
 			#ifndef __GNUC__
 			#pragma warning( pop )
 			#endif

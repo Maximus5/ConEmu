@@ -35,6 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma warning(default: 4091)
 #include "Header.h"
 #include "../common/WFiles.h"
+#include "../common/WThreads.h"
 
 #include "ScreenDump.h"
 #include "DragDrop.h"
@@ -123,7 +124,7 @@ CDragDrop::~CDragDrop()
 				const ThInfo* iter = &(m_OpThread[j]);
 
 				HANDLE hThread = iter->hThread;
-				TerminateThread(hThread, 100);
+				apiTerminateThread(hThread, 100);
 				CloseHandle(hThread);
 
 				//iter = m_OpThread.erase(iter);
@@ -1461,7 +1462,7 @@ HRESULT CDragDrop::DropShellOp(IDataObject* pDataObject, DWORD* pdwEffect, STGME
 		//sfop->fop.fFlags=FOF_SIMPLEPROGRESS; -- пусть полностью показывает
 		DebugLog(_T("DnD: Shell operation starting"));
 		ThInfo th;
-		th.hThread = CreateThread(NULL, 0, CDragDrop::ShellOpThreadProc, sfop, 0, &th.dwThreadId);
+		th.hThread = apiCreateThread(CDragDrop::ShellOpThreadProc, sfop, &th.dwThreadId, "CDragDrop::ShellOpThreadProc");
 
 		if (th.hThread == NULL)
 		{

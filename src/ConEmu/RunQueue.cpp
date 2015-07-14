@@ -33,6 +33,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "../common/MArray.h"
 #include "../common/MSectionSimple.h"
+#include "../common/WThreads.h"
 #include "ConEmu.h"
 #include "RunQueue.h"
 #include "VConGroup.h"
@@ -51,7 +52,7 @@ CRunQueue::CRunQueue()
 	mn_ThreadId = 0;
 	mb_Terminate = false;
 	mh_AdvanceEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
-	mh_Thread = CreateThread(NULL, 0, RunQueueThreadHelper, this, 0, &mn_ThreadId);
+	mh_Thread = apiCreateThread(RunQueueThreadHelper, this, &mn_ThreadId, "RunQueueThreadHelper");
 	_ASSERTE(mh_Thread!=NULL);
 }
 
@@ -77,7 +78,7 @@ void CRunQueue::Terminate()
 		if (nWait == WAIT_TIMEOUT)
 		{
 			_ASSERTE(FALSE && "Terminating RunQueue(mh_Thread) thread");
-			TerminateThread(mh_Thread, 100);
+			apiTerminateThread(mh_Thread, 100);
 		}
 	}
 }

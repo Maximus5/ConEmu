@@ -52,6 +52,7 @@ bool gbAllowChkHeap = false;
 #endif
 
 #ifdef _DEBUG
+#include "WThreads.h"
 LONG gnInMyAssertTrap = 0;
 LONG gnInMyAssertPipe = 0;
 //bool gbAllowAssertThread = false;
@@ -193,7 +194,7 @@ int MyAssertProc(const wchar_t* pszFile, int nLine, const wchar_t* pszTest, bool
 	if (gAllowAssertThread == am_Thread)
 	{
 		DWORD dwTID;
-		HANDLE hThread = CreateThread(NULL, 0, MyAssertThread, pa, 0, &dwTID);
+		HANDLE hThread = apiCreateThread(MyAssertThread, pa, &dwTID, "MyAssertThread");
 
 		if (hThread == NULL)
 		{

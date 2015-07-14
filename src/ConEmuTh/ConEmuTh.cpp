@@ -683,7 +683,7 @@ void ExitPlugin(void)
 		dwWait = WaitForSingleObject(ghDisplayThread, 1000);
 
 	if (dwWait)
-		TerminateThread(ghDisplayThread, 100);
+		apiTerminateThread(ghDisplayThread, 100);
 
 	if (ghDisplayThread)
 	{

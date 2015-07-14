@@ -35,6 +35,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "SetDlgFonts.h"
 #include "SetDlgLists.h"
 
+#include "../common/WThreads.h"
+
 const wchar_t CSetDlgFonts::RASTER_FONTS_NAME[] = L"Raster Fonts";
 const wchar_t CSetDlgFonts::szRasterAutoError[] = L"Font auto size is not allowed for a fixed raster font size. Select 'Terminal' instead of '[Raster Fonts ...]'";
 SIZE CSetDlgFonts::szRasterSizes[100] = {{0,0}}; // {{16,8},{6,9},{8,9},{5,12},{7,12},{8,12},{16,12},{12,16},{10,18}};
@@ -207,7 +209,7 @@ bool CSetDlgFonts::StartEnumFontsThread()
 {
 	_ASSERTE(mh_EnumThread == NULL);
 	mb_EnumThreadFinished = false;
-	mh_EnumThread = CreateThread(0, 0, EnumFontsThread, 0, 0, &mn_EnumThreadId); // хэндл закроет сама нить
+	mh_EnumThread = apiCreateThread(EnumFontsThread, NULL, &mn_EnumThreadId, "EnumFontsThread"); // хэндл закроет сама нить
 	return (mh_EnumThread != NULL);
 }
 

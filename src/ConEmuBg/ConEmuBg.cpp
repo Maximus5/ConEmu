@@ -53,6 +53,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/UnicodeChars.h"
 #include "../common/FarVersion.h"
 #include "../common/MSectionSimple.h"
+#include "../common/WThreads.h"
 #include "ConEmuBg.h"
 
 #define MAKEFARVERSION(major,minor,build) ( ((major)<<8) | (minor) | ((build)<<16))
@@ -720,7 +721,7 @@ struct GDIPlusDecoder
 		{
 			//FreeLibrary(hGDIPlus);
 			DWORD nFreeTID = 0, nWait = 0, nErr = 0;
-			HANDLE hFree = CreateThread(NULL,0,FreeThreadProc,this,0,&nFreeTID);
+			HANDLE hFree = apiCreateThread(FreeThreadProc, this, &nFreeTID, "Bg::FreeThreadProc");
 
 			if (!hFree)
 			{
@@ -732,7 +733,7 @@ struct GDIPlusDecoder
 				nWait = WaitForSingleObject(hFree, 5000);
 
 				if (nWait != WAIT_OBJECT_0)
-					TerminateThread(hFree, 100);
+					apiTerminateThread(hFree, 100);
 
 				CloseHandle(hFree);
 			}
