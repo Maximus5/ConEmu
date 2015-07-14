@@ -13320,7 +13320,7 @@ LRESULT CConEmuMain::CallMainThread(bool bSync, CallMainThreadFn fn, LPARAM lPar
 	}
 	else
 	{
-		CallMainThreadArg arg = {lParam, FALSE};
+		CallMainThreadArg arg(lParam, FALSE);
 		lRc = SendMessage(ghWnd, mn_MsgCallMainThread, (WPARAM)fn, (LPARAM)&arg);
 		nCallTime = arg.nReceiveTick - arg.nCallTick;
 	}
