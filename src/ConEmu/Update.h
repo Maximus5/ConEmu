@@ -82,6 +82,7 @@ protected:
 
 	long mn_InShowMsgBox;
 	long mn_ErrorInfoCount;
+	long mn_ErrorInfoSkipCount;
 	LPCWSTR ms_LastErrorInfo; // Informational
 
 	wchar_t* mpsz_DeleteIniFile;

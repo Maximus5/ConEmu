@@ -70,6 +70,7 @@ CConEmuUpdate::CConEmuUpdate()
 	ms_LastErrorInfo = NULL;
 	mn_InShowMsgBox = 0;
 	mn_ErrorInfoCount = 0;
+	mn_ErrorInfoSkipCount = 0;
 	mb_InetMode = false;
 	mb_DroppedMode = false;
 	mn_InternetContentReady = mn_PackageSize = 0;
@@ -1381,8 +1382,15 @@ wrap:
 
 void CConEmuUpdate::ReportErrorInt(wchar_t* asErrorInfo)
 {
+	if (gpConEmu)
+		gpConEmu->LogString(asErrorInfo);
+
 	if (mn_InShowMsgBox > 0)
-		return; // Две ошибки сразу не показываем, а то зациклимся
+	{
+		InterlockedIncrement(&mn_ErrorInfoSkipCount);
+		SafeFree(asErrorInfo);
+		return; // to avoid infinite recursion
+	}
 
 	ms_LastErrorInfo = asErrorInfo;
 	InterlockedIncrement(&mn_ErrorInfoCount);
