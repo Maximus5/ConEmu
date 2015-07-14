@@ -46,6 +46,10 @@ public:
 	bool isSetup64; // нужно запомнить, какой именно setup был установлен
 	BYTE UpdateDownloadSetup();
 
+	bool isUpdateInetTool; // Use external downloader like `wget` or `curl`
+	wchar_t *szUpdateInetTool; // "<path>\curl.exe" -L %1 -o %2  :: %1 is url address, %2 is dst file name
+	LPCWSTR GetUpdateInetToolCmd();
+
 	bool isUpdateUseProxy;
 	wchar_t *szUpdateProxy; // "Server:port"
 	wchar_t *szUpdateProxyUser;

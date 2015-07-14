@@ -250,6 +250,8 @@ protected:
 	static void OnBtn_UpdateCheckHourly(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_UpdateConfirmDownload(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_UpdateTypeRadio(HWND hDlg, WORD CB, BYTE uCheck);
+	static void OnBtn_UpdateInetTool(HWND hDlg, WORD CB, BYTE uCheck);
+	static void OnBtn_UpdateInetToolCmd(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_UpdateUseProxy(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_UpdateLeavePackages(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_UpdateArcCmdLine(HWND hDlg, WORD CB, BYTE uCheck);

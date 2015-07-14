@@ -814,6 +814,12 @@ bool CSetDlgButtons::ProcessButtonClick(HWND hDlg, WORD CB, BYTE uCheck)
 		case rbUpdateLatestAvailable:
 			OnBtn_UpdateTypeRadio(hDlg, CB, uCheck);
 			break;
+		case cbUpdateInetTool:
+			OnBtn_UpdateInetTool(hDlg, CB, uCheck);
+			break;
+		case cbUpdateInetToolPath:
+			OnBtn_UpdateInetToolCmd(hDlg, CB, uCheck);
+			break;
 		case cbUpdateUseProxy:
 			OnBtn_UpdateUseProxy(hDlg, CB, uCheck);
 			break;
@@ -4097,13 +4103,63 @@ void CSetDlgButtons::OnBtn_UpdateTypeRadio(HWND hDlg, WORD CB, BYTE uCheck)
 } // rbUpdateStableOnly || rbUpdatePreview || rbUpdateLatestAvailable
 
 
+// cbUpdateInetTool
+void CSetDlgButtons::OnBtn_UpdateInetTool(HWND hDlg, WORD CB, BYTE uCheck)
+{
+	_ASSERTE(CB==cbUpdateInetTool);
+
+	gpSet->UpdSet.isUpdateInetTool = (uCheck != BST_UNCHECKED);
+	bool bEnabled = (gpSet->UpdSet.isUpdateInetTool);
+	UINT nItems[] = {tUpdateInetTool, cbUpdateInetToolPath};
+	enableDlgItems(hDlg, nItems, countof(nItems), bEnabled);
+	SetDlgItemText(hDlg, tUpdateInetTool, gpSet->UpdSet.GetUpdateInetToolCmd());
+
+	// Enable/Disable ‘Proxy’ fields too
+	OnBtn_UpdateUseProxy(hDlg, cbUpdateUseProxy, gpSet->UpdSet.isUpdateUseProxy?BST_CHECKED:BST_UNCHECKED);
+
+} // cbUpdateInetTool
+
+
+// cbUpdateInetToolPath
+void CSetDlgButtons::OnBtn_UpdateInetToolCmd(HWND hDlg, WORD CB, BYTE uCheck)
+{
+	_ASSERTE(CB==cbUpdateInetToolPath);
+
+	wchar_t szInetExe[MAX_PATH] = {};
+	OPENFILENAME ofn = {sizeof(ofn)};
+	ofn.hwndOwner = ghOpWnd;
+	ofn.lpstrFilter = L"Exe files (*.exe)\0*.exe\0\0";
+	ofn.nFilterIndex = 1;
+
+	ofn.lpstrFile = szInetExe;
+	ofn.nMaxFile = countof(szInetExe);
+	ofn.lpstrTitle = L"Choose downloader tool";
+	ofn.lpstrDefExt = L"exe";
+	ofn.Flags = OFN_ENABLESIZING|OFN_NOCHANGEDIR
+		| OFN_FILEMUSTEXIST|OFN_EXPLORER|OFN_HIDEREADONLY|OFN_OVERWRITEPROMPT;
+
+	if (GetOpenFileName(&ofn))
+	{
+		CEStr lsCmd;
+		LPCWSTR pszName = PointToName(szInetExe);
+		if (lstrcmpi(pszName, L"wget.exe") == 0)
+			lsCmd = lstrmerge(L"\"", szInetExe, L"\" %1 -O %2");
+		else if (lstrcmpi(pszName, L"curl.exe") == 0)
+			lsCmd = lstrmerge(L"\"", szInetExe, L"\" -L %1 -o %2");
+		else
+			lsCmd = lstrmerge(L"\"", szInetExe, L"\" %1 %2");
+		SetDlgItemText(hDlg, tUpdateInetTool, lsCmd.ms_Arg);
+	}
+} // cbUpdateInetToolPath
+
+
 // cbUpdateUseProxy
 void CSetDlgButtons::OnBtn_UpdateUseProxy(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbUpdateUseProxy);
 
 	gpSet->UpdSet.isUpdateUseProxy = (uCheck != BST_UNCHECKED);
-	bool bEnabled = (gpSet->UpdSet.isUpdateUseProxy);
+	bool bEnabled = (gpSet->UpdSet.isUpdateUseProxy && !gpSet->UpdSet.isUpdateInetTool);
 	UINT nItems[] = {stUpdateProxy, tUpdateProxy, stUpdateProxyUser, tUpdateProxyUser, stUpdateProxyPassword, tUpdateProxyPassword};
 	enableDlgItems(hDlg, nItems, countof(nItems), bEnabled);
 

@@ -2991,6 +2991,8 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 		reg->Load(L"Update.CheckHourly", UpdSet.isUpdateCheckHourly);
 		reg->Load(L"Update.ConfirmDownload", UpdSet.isUpdateConfirmDownload);
 		reg->Load(L"Update.UseBuilds", UpdSet.isUpdateUseBuilds); if (UpdSet.isUpdateUseBuilds>3) UpdSet.isUpdateUseBuilds = 3; // 1-stable only, 2-latest, 3-preview
+		reg->Load(L"Update.InetTool", UpdSet.isUpdateInetTool);
+		reg->Load(L"Update.InetToolCmd", &UpdSet.szUpdateInetTool);
 		reg->Load(L"Update.UseProxy", UpdSet.isUpdateUseProxy);
 		reg->Load(L"Update.Proxy", &UpdSet.szUpdateProxy);
 		reg->Load(L"Update.ProxyUser", &UpdSet.szUpdateProxyUser);
@@ -3739,6 +3741,8 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		reg->Save(L"Update.CheckHourly", UpdSet.isUpdateCheckHourly);
 		reg->Save(L"Update.ConfirmDownload", UpdSet.isUpdateConfirmDownload);
 		reg->Save(L"Update.UseBuilds", UpdSet.isUpdateUseBuilds);
+		reg->Save(L"Update.InetTool", UpdSet.isUpdateInetTool);
+		reg->Save(L"Update.InetToolCmd", UpdSet.szUpdateInetTool);
 		reg->Save(L"Update.UseProxy", UpdSet.isUpdateUseProxy);
 		reg->Save(L"Update.Proxy", UpdSet.szUpdateProxy);
 		reg->Save(L"Update.ProxyUser", UpdSet.szUpdateProxyUser);

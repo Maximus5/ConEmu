@@ -4597,11 +4597,15 @@ LRESULT CSettings::OnInitDialog_Update(HWND hWnd2, bool abInitial)
 	checkRadioButton(hWnd2, rbUpdateStableOnly, rbUpdateLatestAvailable,
 		(p->isUpdateUseBuilds==1) ? rbUpdateStableOnly : (p->isUpdateUseBuilds==3) ? rbUpdatePreview : rbUpdateLatestAvailable);
 
+	checkDlgButton(hWnd2, cbUpdateInetTool, p->isUpdateInetTool);
+	SetDlgItemText(hWnd2, tUpdateInetTool, p->GetUpdateInetToolCmd());
+
 	checkDlgButton(hWnd2, cbUpdateUseProxy, p->isUpdateUseProxy);
-	OnButtonClicked(hWnd2, cbUpdateUseProxy, 0); // Enable/Disable proxy fields
 	SetDlgItemText(hWnd2, tUpdateProxy, p->szUpdateProxy);
 	SetDlgItemText(hWnd2, tUpdateProxyUser, p->szUpdateProxyUser);
 	SetDlgItemText(hWnd2, tUpdateProxyPassword, p->szUpdateProxyPassword);
+
+	OnButtonClicked(hWnd2, cbUpdateInetTool, 0); // Enable/Disable command field, button '...' and ‘Proxy’ fields
 
 	int nPackage = p->UpdateDownloadSetup(); // 1-exe, 2-7zip
 	checkRadioButton(hWnd2, rbUpdateUseExe, rbUpdateUseArc, (nPackage==1) ? rbUpdateUseExe : rbUpdateUseArc);
@@ -5027,6 +5031,10 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 
 
 	/* *** Update settings *** */
+	case tUpdateInetTool:
+		if (p->isUpdateInetTool)
+			GetString(hWnd2, TB, &gpSet->UpdSet.szUpdateInetTool);
+		break;
 	case tUpdateProxy:
 		GetString(hWnd2, TB, &gpSet->UpdSet.szUpdateProxy);
 		break;

@@ -72,6 +72,8 @@ void ConEmuUpdateSettings::ResetToDefaults()
 	isUpdateCheckHourly = false;
 	isUpdateConfirmDownload = true; // true-Show MessageBox, false-notify via TSA only
 	isUpdateUseBuilds = 0; // 0-спросить пользователя при первом запуске, 1-stable only, 2-latest, 3-preview
+	isUpdateInetTool = false;
+	szUpdateInetTool = NULL;
 	isUpdateUseProxy = false;
 	szUpdateProxy = szUpdateProxyUser = szUpdateProxyPassword = NULL; // "Server:port"
 	// Проверяем, была ли программа установлена через ConEmuSetup.exe?
@@ -180,6 +182,7 @@ ConEmuUpdateSettings::~ConEmuUpdateSettings()
 void ConEmuUpdateSettings::FreePointers()
 {
 	SafeFree(szUpdateVerLocation);
+	SafeFree(szUpdateInetTool);
 	SafeFree(szUpdateProxy);
 	SafeFree(szUpdateProxyUser);
 	SafeFree(szUpdateProxyPassword);
@@ -200,6 +203,8 @@ void ConEmuUpdateSettings::LoadFrom(ConEmuUpdateSettings* apFrom)
 	isUpdateCheckHourly = apFrom->isUpdateCheckHourly;
 	isUpdateConfirmDownload = apFrom->isUpdateConfirmDownload;
 	isUpdateUseBuilds = (apFrom->isUpdateUseBuilds >= 1 && apFrom->isUpdateUseBuilds <= 3) ? apFrom->isUpdateUseBuilds : 2; // 1-stable only, 2-latest, 3-preivew
+	isUpdateInetTool = apFrom->isUpdateInetTool;
+	szUpdateInetTool = lstrdup(apFrom->szUpdateInetTool);
 	isUpdateUseProxy = apFrom->isUpdateUseProxy;
 	szUpdateProxy = lstrdup(apFrom->szUpdateProxy); // "Server:port"
 	szUpdateProxyUser = lstrdup(apFrom->szUpdateProxyUser);
@@ -353,6 +358,14 @@ LPCWSTR ConEmuUpdateSettings::UpdateArcCmdLine()
 	if (szUpdateArcCmdLine && *szUpdateArcCmdLine)
 		return szUpdateArcCmdLine;
 	return szUpdateArcCmdLineDef ? szUpdateArcCmdLineDef : L"";;
+}
+
+LPCWSTR ConEmuUpdateSettings::GetUpdateInetToolCmd()
+{
+	static wchar_t szDefault[] = L"\"%ConEmuBaseDir%\\ConEmuC.exe\" -download %1 %2";
+	LPCWSTR pszCommand = (isUpdateInetTool && szUpdateInetTool && *szUpdateInetTool)
+		? szUpdateInetTool : szDefault;
+	return pszCommand;
 }
 
 void ConEmuUpdateSettings::CheckHourlyUpdate()
