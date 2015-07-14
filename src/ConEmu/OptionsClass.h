@@ -409,7 +409,7 @@ class CSettings
 		LRESULT OnInitDialog_Views(HWND hWnd2);
 		void OnInitDialog_CopyFonts(HWND hWnd2, int nList1, ...); // скопировать список шрифтов с вкладки hMain
 		LRESULT OnInitDialog_Debug(HWND hWnd2);
-		LRESULT OnInitDialog_Update(HWND hWnd2);
+		LRESULT OnInitDialog_Update(HWND hWnd2, bool abInitial);
 		LRESULT OnInitDialog_Info(HWND hWnd2);
 		//
 		void InitCursorCtrls(HWND hWnd2, const AppSettings* pApp);

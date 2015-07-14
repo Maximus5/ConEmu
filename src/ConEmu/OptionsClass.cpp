@@ -4584,7 +4584,7 @@ LRESULT CSettings::OnInitDialog_Debug(HWND hWnd2)
 	return 0;
 }
 
-LRESULT CSettings::OnInitDialog_Update(HWND hWnd2)
+LRESULT CSettings::OnInitDialog_Update(HWND hWnd2, bool abInitial)
 {
 	ConEmuUpdateSettings* p = &gpSet->UpdSet;
 
@@ -6999,8 +6999,7 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 				gpSetCls->OnInitDialog_Debug(hWnd2);
 			break;
 		case IDD_SPG_UPDATE:
-			if (bInitial)
-				gpSetCls->OnInitDialog_Update(hWnd2);
+			gpSetCls->OnInitDialog_Update(hWnd2, bInitial);
 			break;
 		case IDD_SPG_INFO:
 			if (bInitial)
