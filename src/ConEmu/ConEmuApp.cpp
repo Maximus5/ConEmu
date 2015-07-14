@@ -3087,6 +3087,72 @@ bool UpdateWin7TaskList(bool bForce, bool bNoSuccMsg /*= false*/)
 	return bSucceeded;
 }
 
+// Set our unique application-defined Application User Model ID for Windows 7 TaskBar
+HRESULT UpdateAppUserModelID()
+{
+	// The MSDN says: An application must provide its AppUserModelID in the following form.
+	// It can have no more than 128 characters and cannot contain spaces. Each section should be camel-cased.
+	//    CompanyName.ProductName.SubProduct.VersionInformation
+	// CompanyName and ProductName should always be used, while the SubProduct and VersionInformation portions are optional
+
+	CEStr Config;
+	if (gpSetCls->isResetBasicSettings)
+	{
+		Config.Set(L".Basic");
+	}
+	else if (gpConEmu->opt.ForceUseRegistryPrm)
+	{
+		Config.Set(L".Registry");
+	}
+	else
+	{
+		CEStr lsTempBuf;
+		bool bSpecialXmlFile = false;
+		LPCWSTR pszConfigFile = gpConEmu->ConEmuXml(&bSpecialXmlFile);
+		LPCWSTR pszConfigName = gpSetCls->GetConfigName();
+		if (bSpecialXmlFile && pszConfigFile && *pszConfigFile)
+		{
+			lstrmerge(&lsTempBuf.ms_Arg, L".", pszConfigFile);
+		}
+		else
+		{
+			lsTempBuf.Set(L".Xml");
+		}
+		// Named configuration?
+		if (pszConfigName && *pszConfigName)
+		{
+			lstrmerge(&lsTempBuf.ms_Arg, L".", pszConfigName);
+		}
+		// Prepare the string
+		if (lsTempBuf.ms_Arg)
+		{
+			// Must not contain spaces (and may be some others? not mentioned but...)
+			wchar_t* pch = lsTempBuf.ms_Arg;
+			while ((pch = wcspbrk(pch+1, L".,\\/ :()")) != NULL)
+				*pch = L'$';
+			// lsTempBuf must not be longer than 110 chars
+			int iLen = lstrlen(lsTempBuf.ms_Arg);
+			LPCWSTR pszReady = (iLen <= 110) ? lsTempBuf.ms_Arg : (lsTempBuf.ms_Arg + iLen - 110);
+			Config.Set(pszReady);
+		}
+	}
+	CEStr AppID = lstrmerge(L"Maximus5.ConEmu", Config.ms_Arg);
+
+	// And update it
+	HRESULT hr = E_NOTIMPL;
+	typedef HRESULT (WINAPI* SetCurrentProcessExplicitAppUserModelID_t)(PCWSTR AppID);
+	HMODULE hShell = GetModuleHandle(L"Shell32.dll");
+	SetCurrentProcessExplicitAppUserModelID_t fnSetAppUserModelID = hShell
+		? (SetCurrentProcessExplicitAppUserModelID_t)GetProcAddress(hShell, "SetCurrentProcessExplicitAppUserModelID")
+		: NULL;
+	if (fnSetAppUserModelID)
+	{
+		hr = fnSetAppUserModelID(AppID);
+		_ASSERTE(hr == S_OK);
+	}
+	return hr;
+}
+
 bool CheckLockFrequentExecute(DWORD& Tick, DWORD Interval)
 {
 	DWORD CurTick = GetTickCount();
@@ -3476,6 +3542,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		DEBUGSTRSTARTUP(L"Exact cfg file was specified");
 		// При ошибке - не выходим, просто покажем ее пользователю
 		gpConEmu->SetConfigFile(gpConEmu->opt.LoadCfgFile.GetStr(), false/*abWriteReq*/, true/*abSpecialPath*/);
+	}
+
+	//------------------------------------------------------------------------
+	///| Set our own AppUserModelID for Win7 TaskBar |////////////////////////
+	//------------------------------------------------------------------------
+	if (IsWindows7)
+	{
+		UpdateAppUserModelID();
 	}
 
 	// preparing settings
