@@ -1009,20 +1009,6 @@ struct Settings
 
 		/* *** AutoUpdate *** */
 		ConEmuUpdateSettings UpdSet;
-		//wchar_t *szUpdateVerLocation; // ConEmu latest version location info
-		//bool isUpdateCheckOnStartup;
-		//bool isUpdateCheckHourly;
-		//bool isUpdateConfirmDownload;
-		//BYTE isUpdateUseBuilds; // 1-stable only, 2-latest, 3-preview
-		//bool isUpdateUseProxy;
-		//wchar_t *szUpdateProxy; // "Server:port"
-		//wchar_t *szUpdateProxyUser;
-		//wchar_t *szUpdateProxyPassword;
-		//BYTE isUpdateDownloadSetup; // 1-Installer (ConEmuSetup.exe), 2-7z archieve (ConEmu.7z), WinRar or 7z required
-		//wchar_t *szUpdateArcCmdLine; // "%1"-archive file, "%2"-ConEmu base dir
-		//wchar_t *szUpdateDownloadPath; // "%TEMP%"
-		//bool isUpdateLeavePackages;
-		//wchar_t *szUpdatePostUpdateCmd; // Юзер может чего-то свое делать с распакованными файлами
 
 		/* *** Notification *** */
 		wchar_t StopBuzzingDate[16];
