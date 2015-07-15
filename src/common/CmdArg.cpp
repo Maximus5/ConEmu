@@ -118,6 +118,11 @@ LPCWSTR CmdArg::Attach(wchar_t* RVAL_REF asPtr)
 
 LPCWSTR CmdArg::AttachInt(wchar_t*& asPtr)
 {
+	if (ms_Arg == asPtr)
+	{
+		return ms_Arg; // Already
+	}
+
 	Empty();
 	SafeFree(ms_Arg);
 	if (asPtr)
