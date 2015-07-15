@@ -120,4 +120,9 @@ public:
 
 	static void EnableDlgItems(HWND hParent, const DWORD* pnCtrlIds, size_t nCount, BOOL bEnabled);
 	static void EnableDlgItems(HWND hParent, eWordItems eWhat, BOOL bEnabled);
+
+	// List box with extended selection styles
+	static int GetListboxCurSel(HWND hDlg, UINT nCtrlID, bool bSingleReq = true);
+	static int GetListboxSelection(HWND hDlg, UINT nCtrlID, int*& rItems);
+	static void ListBoxMultiSel(HWND hDlg, UINT nCtrlID, int nItem);
 };

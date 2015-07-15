@@ -568,3 +568,100 @@ void CSetDlgLists::EnableDlgItems(HWND hParent, eWordItems eWhat, BOOL bEnabled)
 //	GetListBoxItem(GetDlgItem(hDlg,nDlgID), countof(Items), Items, dwVal); \
 //	Value = dwVal;
 //}
+
+// return selected item (item with cursor)
+// -1 on error or if no one was selected
+int CSetDlgLists::GetListboxCurSel(HWND hDlg, UINT nCtrlID, bool bSingleReq /*= true*/)
+{
+	HWND hCtrl = nCtrlID ? GetDlgItem(hDlg, nCtrlID) : hDlg;
+	if (!hCtrl)
+		return -1;
+
+	LRESULT lRc, lCount = SendMessage(hCtrl, LB_GETSELCOUNT, 0, 0);
+	if (lCount < 0 /* == LB_ERR*/)
+	{
+		// Single-selection list box
+		lRc = SendMessage(hCtrl, LB_GETCURSEL, 0, 0);
+		return lRc;
+	}
+	else if (lCount == 0)
+	{
+		return -1; // No one was selected
+	}
+
+	if (bSingleReq && (lCount > 1))
+	{
+		return -1; // More than one item - unexpected
+	}
+
+	// Now we must check what item has a `cursor`
+	lRc = SendMessage(hCtrl, LB_GETCARETINDEX, 0, 0);
+	// And we have to check if it's selected
+	lCount = SendMessage(hCtrl, LB_GETSEL, lRc, 0);
+	if (lCount > 0)
+		return lRc;
+
+	// No one is selected
+	return -1;
+}
+
+// returns
+//  -1 - on errors
+//  count of selected items on success
+// rItems must be freed by `delete[]`
+int CSetDlgLists::GetListboxSelection(HWND hDlg, UINT nCtrlID, int*& rItems)
+{
+	if (rItems)
+	{
+		_ASSERTE(rItems == NULL);
+		//delete[] rItems;
+		rItems = NULL;
+	}
+
+	HWND hCtrl = nCtrlID ? GetDlgItem(hDlg, nCtrlID) : hDlg;
+	if (!hCtrl)
+		return -1;
+
+	LRESULT lRc, lCount = SendMessage(hCtrl, LB_GETSELCOUNT, 0, 0);
+	if (lCount < 0 /* == LB_ERR*/)
+	{
+		// Single-selection list box
+		lRc = SendMessage(hCtrl, LB_GETCURSEL, 0, 0);
+		if (lRc < 0)
+			return 0;
+		rItems = new int[1];
+		rItems[0] = lRc;
+		return 1;
+	}
+	else if (lCount == 0)
+	{
+		return 0; // No one was selected
+	}
+
+	rItems = new int[lCount];
+	lCount = SendMessage(hCtrl, LB_GETSELITEMS, lCount, (LPARAM)rItems);
+	if (lCount <= 0)
+	{
+		delete[] rItems;
+		rItems = NULL;
+		return 0;
+	}
+	return lCount;
+}
+
+// For single-selection list boxes use simple SendDlgItemMessage(hWnd2, lbCmdTasks, LB_SETCURSEL, iCur, 0)
+void CSetDlgLists::ListBoxMultiSel(HWND hDlg, UINT nCtrlID, int nItem)
+{
+	HWND hCtrl = nCtrlID ? GetDlgItem(hDlg, nCtrlID) : hDlg;
+	if (!hCtrl)
+		return;
+
+	DEBUGTEST(LRESULT lRc =)
+	SendMessage(hCtrl, LB_SETSEL, FALSE, -1);
+
+	DEBUGTEST(lRc =)
+	SendMessage(hCtrl, LB_SETCARETINDEX, nItem, FALSE);
+
+	DEBUGTEST(lRc =)
+	SendMessage(hCtrl, LB_SETSEL, TRUE, nItem);
+}
