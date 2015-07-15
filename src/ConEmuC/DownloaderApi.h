@@ -119,4 +119,5 @@ enum CEDownloadCommand
 	dc_SetAsync,            // [0]=TRUE-Async, FALSE-Sync
 	dc_SetTimeout,          // [0]=type (0-operation, 1-receive), [1]=ms
 	dc_SetAgent,            // [0]="ConEmu Update"
+	dc_SetCmdString,        // [0]="curl -L %1 -o %2"
 };

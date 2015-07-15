@@ -53,7 +53,9 @@ protected:
 		wchar_t* szUser;
 		wchar_t* szPassword;
 	} m_Server;
-	
+
+	wchar_t* szCmdStringFormat; // "curl -L %1 -o %2", "wget %1 -O %2"
+
 	bool  mb_OTimeout;
 	DWORD mn_OTimeout; // [-otimeout <ms>]
 	bool  mb_Timeout;
@@ -130,6 +132,15 @@ public:
 			mn_Timeout = nTimeout;
 		}
 	};
+
+	void SetCmdStringFormat(LPCWSTR asFormat)
+	{
+		SafeFree(szCmdStringFormat);
+		if (asFormat && *asFormat)
+		{
+			szCmdStringFormat = lstrdup(asFormat);
+		}
+	}
 
 	void CloseInternet(bool bFull)
 	{
@@ -274,7 +285,7 @@ protected:
 		return 0;
 	};
 
-	UINT ExecuteDownloader(LPWSTR pszCommand)
+	UINT ExecuteDownloader(LPWSTR pszCommand, LPWSTR szCmdDirectory)
 	{
 		UINT iRc;
 		DWORD nWait;
@@ -284,7 +295,7 @@ protected:
 		ZeroStruct(m_SI); m_SI.cb = sizeof(m_SI);
 		ZeroStruct(m_PI);
 
-		// We need to redirect only StdError output
+		mb_Terminating = false;
 
 		DWORD nCreateFlags = 0
 			//| CREATE_NO_WINDOW
@@ -294,30 +305,33 @@ protected:
 
 		m_SI.wShowWindow = RELEASEDEBUGTEST(SW_HIDE,SW_SHOWNA);
 
-		SECURITY_ATTRIBUTES saAttr = {sizeof(saAttr), NULL, TRUE};
-		if (!CreatePipe(&mh_PipeErrRead, &mh_PipeErrWrite, &saAttr, 0))
+		if (!szCmdStringFormat || !*szCmdStringFormat)
 		{
-			iRc = GetLastError();
-			_ASSERTE(FALSE && "CreatePipe was failed");
-			if (!iRc)
-				iRc = E_UNEXPECTED;
-			goto wrap;
-		}
-		// Ensure the read handle to the pipe for STDOUT is not inherited.
-		SetHandleInformation(mh_PipeErrRead, HANDLE_FLAG_INHERIT, 0);
+			// We need to redirect only StdError output
 
-		mb_Terminating = false;
+			SECURITY_ATTRIBUTES saAttr = {sizeof(saAttr), NULL, TRUE};
+			if (!CreatePipe(&mh_PipeErrRead, &mh_PipeErrWrite, &saAttr, 0))
+			{
+				iRc = GetLastError();
+				_ASSERTE(FALSE && "CreatePipe was failed");
+				if (!iRc)
+					iRc = E_UNEXPECTED;
+				goto wrap;
+			}
+			// Ensure the read handle to the pipe for STDOUT is not inherited.
+			SetHandleInformation(mh_PipeErrRead, HANDLE_FLAG_INHERIT, 0);
 
-		mh_PipeErrThread = apiCreateThread(StdErrReaderThread, (LPVOID)&threadParm, &mn_PipeErrThreadId, "Downloader::ReaderThread");
-		if (mh_PipeErrThread != NULL)
-		{
-			m_SI.dwFlags |= STARTF_USESTDHANDLES;
-			// Let's try to change only Error pipe?
-			m_SI.hStdError = mh_PipeErrWrite;
+			mh_PipeErrThread = apiCreateThread(StdErrReaderThread, (LPVOID)&threadParm, &mn_PipeErrThreadId, "Downloader::ReaderThread");
+			if (mh_PipeErrThread != NULL)
+			{
+				m_SI.dwFlags |= STARTF_USESTDHANDLES;
+				// Let's try to change only Error pipe?
+				m_SI.hStdError = mh_PipeErrWrite;
+			}
 		}
 
 		// Now we can run the downloader
-		if (!CreateProcess(NULL, pszCommand, NULL, NULL, TRUE/*!Inherit!*/, nCreateFlags, NULL, NULL, &m_SI, &m_PI))
+		if (!CreateProcess(NULL, pszCommand, NULL, NULL, TRUE/*!Inherit!*/, nCreateFlags, NULL, szCmdDirectory, &m_SI, &m_PI))
 		{
 			iRc = GetLastError();
 			_ASSERTE(FALSE && "Create downloader process was failed");
@@ -369,80 +383,132 @@ protected:
 		return iRc;
 	};
 
-
-public:
-	UINT DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, DWORD& crc, DWORD& size, BOOL abShowAllErrors = FALSE)
+	wchar_t* CreateCommand(LPCWSTR asSource, LPCWSTR asTarget, UINT& iRc)
 	{
-		UINT iRc = E_UNEXPECTED;
-		UINT nWait;
-		wchar_t szConEmuC[MAX_PATH] = L"", *psz, *pszCommand = NULL;
-		wchar_t szOTimeout[20] = L"", szTimeout[20] = L"";
+		wchar_t* pszCommand = NULL;
 
-		if (mb_OTimeout)
-			_wsprintf(szOTimeout, SKIPCOUNT(szOTimeout) L"%u", mn_OTimeout);
-		if (mb_Timeout)
-			_wsprintf(szTimeout, SKIPCOUNT(szTimeout) L"%u", mn_Timeout);
-
-		struct _Switches {
-			LPCWSTR pszName, pszValue;
-		} Switches[] = {
-			{L"-login", m_Server.szUser},
-			{L"-password", m_Server.szPassword},
-			{L"-proxy", m_Proxy.szProxy},
-			{L"-proxylogin", m_Proxy.szProxyUser},
-			{L"-proxypassword", m_Proxy.szProxyPassword},
-			{L"-async", mb_AsyncMode ? L"Y" : L"N"},
-			{L"-otimeout", szOTimeout},
-			{L"-timeout", szTimeout},
-		};
-
-		_ASSERTE(m_PI.hProcess==NULL);
-
-		if (!asSource || !*asSource || !asTarget || !*asTarget)
+		if (!szCmdStringFormat || !*szCmdStringFormat)
 		{
-			iRc = E_INVALIDARG;
-			goto wrap;
+			wchar_t szConEmuC[MAX_PATH] = L"", *psz;
+			wchar_t szOTimeout[20] = L"", szTimeout[20] = L"";
+
+			if (mb_OTimeout)
+				_wsprintf(szOTimeout, SKIPCOUNT(szOTimeout) L"%u", mn_OTimeout);
+			if (mb_Timeout)
+				_wsprintf(szTimeout, SKIPCOUNT(szTimeout) L"%u", mn_Timeout);
+
+			struct _Switches {
+				LPCWSTR pszName, pszValue;
+			} Switches[] = {
+				{L"-login", m_Server.szUser},
+				{L"-password", m_Server.szPassword},
+				{L"-proxy", m_Proxy.szProxy},
+				{L"-proxylogin", m_Proxy.szProxyUser},
+				{L"-proxypassword", m_Proxy.szProxyPassword},
+				{L"-async", mb_AsyncMode ? L"Y" : L"N"},
+				{L"-otimeout", szOTimeout},
+				{L"-timeout", szTimeout},
+			};
+
+			if (!asSource || !*asSource || !asTarget || !*asTarget)
+			{
+				iRc = E_INVALIDARG;
+				goto wrap;
+			}
+
+			if (!GetModuleFileName(ghOurModule, szConEmuC, countof(szConEmuC)) || !(psz = wcsrchr(szConEmuC, L'\\')))
+			{
+				//ReportMessage(dc_LogCallback, L"GetModuleFileName(ghOurModule) failed, code=%u", at_Uint, GetLastError(), at_None);
+				iRc = E_HANDLE;
+				goto wrap;
+			}
+			psz[1] = 0;
+			wcscat_c(szConEmuC, WIN3264TEST(L"ConEmuC.exe",L"ConEmuC64.exe"));
+
+			/*
+			ConEmuC /download [-login <name> -password <pwd>]
+			        [-proxy <address:port> [-proxylogin <name> -proxypassword <pwd>]]
+			        [-async Y|N] [-otimeout <ms>] [-timeout <ms>]
+			        "full_url_to_file" "local_path_name"
+			*/
+
+			if (!(pszCommand = lstrmerge(L"\"", szConEmuC, L"\" -download ")))
+			{
+				iRc = E_OUTOFMEMORY;
+				goto wrap;
+			}
+
+			for (INT_PTR i = 0; i < countof(Switches); i++)
+			{
+				LPCWSTR pszValue = Switches[i].pszValue;
+				if (pszValue && *pszValue && !lstrmerge(&pszCommand, Switches[i].pszName, L" \"", pszValue, L"\" "))
+				{
+					iRc = E_OUTOFMEMORY;
+					goto wrap;
+				}
+			}
+
+			if (!lstrmerge(&pszCommand, asSource, L" \"", asTarget, L"\""))
+			{
+				iRc = E_OUTOFMEMORY;
+				goto wrap;
+			}
 		}
-
-		if (!GetModuleFileName(ghOurModule, szConEmuC, countof(szConEmuC)) || !(psz = wcsrchr(szConEmuC, L'\\')))
+		else
 		{
-			//ReportMessage(dc_LogCallback, L"GetModuleFileName(ghOurModule) failed, code=%u", at_Uint, GetLastError(), at_None);
-			iRc = E_HANDLE;
-			goto wrap;
-		}
-		psz[1] = 0;
-		wcscat_c(szConEmuC, WIN3264TEST(L"ConEmuC.exe",L"ConEmuC64.exe"));
+			// Environment string? Expand it
+			wchar_t* pszExp = ExpandEnvStr(szCmdStringFormat);
 
-		/*
-		ConEmuC /download [-login <name> -password <pwd>]
-		        [-proxy <address:port> [-proxylogin <name> -proxypassword <pwd>]]
-		        [-async Y|N] [-otimeout <ms>] [-timeout <ms>]
-		        "full_url_to_file" "local_path_name"
-		*/
+			// "curl -L %1 -o %2"
+			// "wget %1 -O %2"
+			LPCWSTR Values[] = {asSource, asTarget};
+			pszCommand = ExpandMacroValues((pszExp && *pszExp) ? pszExp : szCmdStringFormat, Values, countof(Values));
+			SafeFree(pszExp);
 
-		if (!(pszCommand = lstrmerge(L"\"", szConEmuC, L"\" -download ")))
-		{
-			iRc = E_OUTOFMEMORY;
-			goto wrap;
-		}
-
-		for (INT_PTR i = 0; i < countof(Switches); i++)
-		{
-			LPCWSTR pszValue = Switches[i].pszValue;
-			if (pszValue && *pszValue && !lstrmerge(&pszCommand, Switches[i].pszName, L" \"", pszValue, L"\" "))
+			if (!pszCommand)
 			{
 				iRc = E_OUTOFMEMORY;
 				goto wrap;
 			}
 		}
 
-		if (!lstrmerge(&pszCommand, asSource, L" \"", asTarget, L"\""))
+	wrap:
+		return pszCommand;
+	}
+
+
+public:
+	UINT DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, DWORD& crc, DWORD& size, BOOL abShowAllErrors = FALSE)
+	{
+		UINT iRc = E_UNEXPECTED;
+		UINT nWait;
+		wchar_t* pszCommand = NULL;
+		wchar_t* szCmdDirectory = NULL; // Destination directory for file creation
+
+		// Split target into directory and file-name
+		LPCWSTR pszName = PointToName(asTarget);
+		if (pszName > asTarget)
 		{
-			iRc = E_OUTOFMEMORY;
+			szCmdDirectory = lstrdup(asTarget);
+			if (!szCmdDirectory)
+			{
+				iRc = E_OUTOFMEMORY;
+				goto wrap;
+			}
+			szCmdDirectory[pszName-asTarget] = 0;
+		}
+
+		// Prepare command line for downloader tool
+		pszCommand = CreateCommand(asSource, pszName, iRc);
+		if (!pszCommand)
+		{
+			_ASSERTE(iRc!=0);
 			goto wrap;
 		}
 
-		nWait = ExecuteDownloader(pszCommand);
+		_ASSERTE(m_PI.hProcess==NULL);
+
+		nWait = ExecuteDownloader(pszCommand, szCmdDirectory);
 		if (nWait != 0)
 		{
 			iRc = nWait;
@@ -460,6 +526,7 @@ public:
 		iRc = 0; // OK
 	wrap:
 		SafeFree(pszCommand);
+		SafeFree(szCmdDirectory);
 		CloseHandles();
 		return iRc;
 	};
@@ -470,6 +537,7 @@ public:
 		mb_AsyncMode = true;
 		ZeroStruct(m_Server);
 		ZeroStruct(m_Proxy);
+		szCmdStringFormat = NULL;
 		ZeroStruct(mfn_Callback);
 		ZeroStruct(m_CallbackLParam);
 		mb_Timeout = false; mn_Timeout = DOWNLOADTIMEOUT;
@@ -487,6 +555,7 @@ public:
 		CloseInternet(true);
 		SetProxy(NULL, NULL, NULL);
 		SetLogin(NULL, NULL);
+		SafeFree(szCmdStringFormat);
 	};
 };
 
@@ -592,6 +661,13 @@ DWORD_PTR WINAPI DownloadCommand(CEDownloadCommand cmd, int argc, CEDownloadErro
 		if (gpInet && (argc > 1) && (argv[0].argType == at_Uint) && (argv[1].argType == at_Uint))
 		{
 			gpInet->SetTimeout(argv[0].uintArg == 0, argv[1].uintArg);
+			nResult = TRUE;
+		}
+		break;
+	case dc_SetCmdString:
+		if (gpInet && (argc > 0) && (argv[0].argType == at_Str))
+		{
+			gpInet->SetCmdStringFormat(argv[0].strArg);
 			nResult = TRUE;
 		}
 		break;

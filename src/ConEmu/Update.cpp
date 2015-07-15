@@ -1347,7 +1347,12 @@ BOOL CConEmuUpdate::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, DWORD& crc,
 	{
 		mb_DroppedMode = false;
 
-		if (mp_Set->isUpdateUseProxy)
+		if (mp_Set->isUpdateInetTool && mp_Set->szUpdateInetTool && *mp_Set->szUpdateInetTool)
+		{
+			args[0].argType = at_Str;args[0].strArg = mp_Set->szUpdateInetTool;
+			Inet.DownloadCommand(dc_SetCmdString, 1, args);
+		}
+		else if (mp_Set->isUpdateUseProxy)
 		{
 			args[0].argType = at_Str;args[0].strArg = mp_Set->szUpdateProxy;
 			args[1].argType = at_Str;args[1].strArg = mp_Set->szUpdateProxyUser;

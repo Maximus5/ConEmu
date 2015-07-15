@@ -5032,7 +5032,7 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 
 	/* *** Update settings *** */
 	case tUpdateInetTool:
-		if (p->isUpdateInetTool)
+		if (gpSet->UpdSet.isUpdateInetTool)
 			GetString(hWnd2, TB, &gpSet->UpdSet.szUpdateInetTool);
 		break;
 	case tUpdateProxy:
