@@ -1146,7 +1146,7 @@ void CSetDlgButtons::OnBtn_CmdTasksFlags(HWND hDlg, WORD CB, BYTE uCheck)
 	if (!hDlg)
 		return;
 
-	int iCur = (int)SendDlgItemMessage(hDlg, lbCmdTasks, LB_GETCURSEL, 0,0);
+	int iCur = CSetDlgLists::GetListboxCurSel(hDlg, lbCmdTasks, true);
 	if (iCur < 0)
 		return;
 
@@ -1222,7 +1222,7 @@ void CSetDlgButtons::OnBtn_CmdTasksAdd(HWND hDlg, WORD CB, BYTE uCheck)
 
 	gpSetCls->OnInitDialog_Tasks(hDlg, false);
 
-	SendDlgItemMessage(hDlg, lbCmdTasks, LB_SETCURSEL, iCount, 0);
+	CSetDlgLists::ListBoxMultiSel(hDlg, lbCmdTasks, iCount);
 	gpSetCls->OnComboBox(hDlg, MAKELONG(lbCmdTasks,LBN_SELCHANGE), 0);
 
 } // cbCmdTasksAdd
@@ -1233,43 +1233,68 @@ void CSetDlgButtons::OnBtn_CmdTasksDel(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbCmdTasksDel);
 
-	int iCur = (int)SendDlgItemMessage(hDlg, lbCmdTasks, LB_GETCURSEL, 0,0);
-	if (iCur < 0)
+	int *Selected = NULL, iCount = CSetDlgLists::GetListboxSelection(hDlg, lbCmdTasks, Selected);
+	if (iCount <= 0)
 		return;
 
-	const CommandTasks* p = gpSet->CmdTaskGet(iCur);
-	if (!p)
-		return;
-
+	const CommandTasks* p = NULL;
 	bool bIsStartup = false;
-	if (gpSet->psStartTasksName && p->pszName && (lstrcmpi(gpSet->psStartTasksName, p->pszName) == 0))
-		bIsStartup = true;
+
+	for (INT_PTR i = iCount-1; i >= 0; i--)
+	{
+		p = gpSet->CmdTaskGet(Selected[iCount-1]);
+		if (!p)
+		{
+			_ASSERTE(FALSE && "Failed to get selected task");
+			delete[] Selected;
+			return;
+		}
+
+		if (gpSet->psStartTasksName && p->pszName && (lstrcmpi(gpSet->psStartTasksName, p->pszName) == 0))
+			bIsStartup = true;
+	}
 
 	size_t cchMax = (p->pszName ? _tcslen(p->pszName) : 0) + 200;
 	wchar_t* pszMsg = (wchar_t*)malloc(cchMax*sizeof(*pszMsg));
 	if (!pszMsg)
+	{
+		delete[] Selected;
 		return;
+	}
 
-	_wsprintf(pszMsg, SKIPLEN(cchMax) L"%sDelete command group %s?",
+	wchar_t szOthers[64] = L"";
+	if (iCount > 1)
+		_wsprintf(szOthers, SKIPCOUNT(szOthers) L"\n" L"and %i other task(s)", (iCount-1));
+
+	_wsprintf(pszMsg, SKIPLEN(cchMax) L"%sDelete command group\n%s%s?",
 		bIsStartup ? L"Warning! You about to delete startup task!\n\n" : L"",
-		p->pszName ? p->pszName : L"{???}");
+		p->pszName ? p->pszName : L"{???}",
+		szOthers);
 
 	int nBtn = MsgBox(pszMsg, MB_YESNO|(bIsStartup ? MB_ICONEXCLAMATION : MB_ICONQUESTION), NULL, ghOpWnd);
 	SafeFree(pszMsg);
 
 	if (nBtn != IDYES)
+	{
+		delete[] Selected;
 		return;
+	}
 
-	gpSet->CmdTaskSet(iCur, NULL, NULL, NULL);
+	for (INT_PTR i = iCount-1; i >= 0; i--)
+	{
+		gpSet->CmdTaskSet(Selected[i], NULL, NULL, NULL);
 
-	if (bIsStartup && gpSet->psStartTasksName)
-		*gpSet->psStartTasksName = 0;
+		if (bIsStartup && gpSet->psStartTasksName)
+			*gpSet->psStartTasksName = 0;
+	}
 
 	gpSetCls->OnInitDialog_Tasks(hDlg, false);
 
-	int iCount = (int)SendDlgItemMessage(hDlg, lbCmdTasks, LB_GETCOUNT, 0,0);
-	SendDlgItemMessage(hDlg, lbCmdTasks, LB_SETCURSEL, min(iCur,(iCount-1)), 0);
+	iCount = (int)SendDlgItemMessage(hDlg, lbCmdTasks, LB_GETCOUNT, 0,0);
+	CSetDlgLists::ListBoxMultiSel(hDlg, lbCmdTasks, min(Selected[0],(iCount-1)));
 	gpSetCls->OnComboBox(hDlg, MAKELONG(lbCmdTasks,LBN_SELCHANGE), 0);
+
+	delete[] Selected;
 
 } // cbCmdTasksDel
 
@@ -1280,7 +1305,7 @@ void CSetDlgButtons::OnBtn_CmdTasksUpDown(HWND hDlg, WORD CB, BYTE uCheck)
 	_ASSERTE(CB==cbCmdTasksUp || CB==cbCmdTasksDown);
 
 	int iCur, iChg;
-	iCur = (int)SendDlgItemMessage(hDlg, lbCmdTasks, LB_GETCURSEL, 0,0);
+	iCur = CSetDlgLists::GetListboxCurSel(hDlg, lbCmdTasks, true);
 	if (iCur < 0)
 		return;
 	if (CB == cbCmdTasksUp)
@@ -1301,7 +1326,8 @@ void CSetDlgButtons::OnBtn_CmdTasksUpDown(HWND hDlg, WORD CB, BYTE uCheck)
 
 	gpSetCls->OnInitDialog_Tasks(hDlg, false);
 
-	SendDlgItemMessage(hDlg, lbCmdTasks, LB_SETCURSEL, iChg, 0);
+	CSetDlgLists::ListBoxMultiSel(hDlg, lbCmdTasks, iChg);
+	gpSetCls->OnComboBox(hDlg, MAKELONG(lbCmdTasks,LBN_SELCHANGE), 0);
 
 } // cbCmdTasksUp || cbCmdTasksDown
 
@@ -1311,7 +1337,7 @@ void CSetDlgButtons::OnBtn_CmdGroupKey(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbCmdGroupKey);
 
-	int iCur = (int)SendDlgItemMessage(hDlg, lbCmdTasks, LB_GETCURSEL, 0,0);
+	int iCur = CSetDlgLists::GetListboxCurSel(hDlg, lbCmdTasks, true);
 	if (iCur < 0)
 		return;
 	const CommandTasks* pCmd = gpSet->CmdTaskGet(iCur);

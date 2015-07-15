@@ -1298,7 +1298,7 @@ EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     GROUPBOX        "&Predefined tasks (command groups)",gbCmdTasks,4,1,319,230
-    LISTBOX         lbCmdTasks,9,12,93,163,LBS_USETABSTOPS | LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_HSCROLL | WS_TABSTOP
+    LISTBOX         lbCmdTasks,9,12,93,163,LBS_USETABSTOPS | LBS_NOINTEGRALHEIGHT | LBS_EXTENDEDSEL | WS_VSCROLL | WS_HSCROLL | WS_TABSTOP
     EDITTEXT        tCmdGroupName,109,12,81,12,ES_AUTOHSCROLL
     LTEXT           "&Commands (application, arguments, ""-new_console"" params)\nDelimit commands with empty lines\nEach command creates tab in ConEmu when group started\nMark active console tab with '>' sign\nStart console 'As Administrator' with '*' sign",stCmdGroupCommands,111,81,208,41
     EDITTEXT        tCmdGroupCommands,109,125,208,85,ES_MULTILINE | ES_AUTOVSCROLL | ES_WANTRETURN | WS_VSCROLL

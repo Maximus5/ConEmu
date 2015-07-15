@@ -5067,7 +5067,7 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			if (mb_IgnoreCmdGroupEdit)
 				break;
 
-			int iCur = (int)SendDlgItemMessage(hWnd2, lbCmdTasks, LB_GETCURSEL, 0,0);
+			int iCur = CSetDlgLists::GetListboxCurSel(hWnd2, lbCmdTasks, true);
 			if (iCur < 0)
 				break;
 
@@ -5091,7 +5091,7 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 
 				mb_IgnoreCmdGroupList = true;
 				OnInitDialog_Tasks(hWnd2, false);
-				SendDlgItemMessage(hWnd2, lbCmdTasks, LB_SETCURSEL, iCur, 0);
+				CSetDlgLists::ListBoxMultiSel(hWnd2, lbCmdTasks, iCur);
 				mb_IgnoreCmdGroupList = false;
 			}
 
@@ -5750,7 +5750,9 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 
 		mb_IgnoreCmdGroupEdit = true;
 		const CommandTasks* pCmd = NULL;
-		int iCur = (int)SendDlgItemMessage(hWnd2, lbCmdTasks, LB_GETCURSEL, 0,0);
+		int* Items = NULL;
+		int iSelCount = CSetDlgLists::GetListboxSelection(hWnd2, lbCmdTasks, Items);
+		int iCur = (iSelCount == 1) ? Items[0] : -1;
 		if (iCur >= 0)
 			pCmd = gpSet->CmdTaskGet(iCur);
 		BOOL lbEnable = FALSE;
@@ -5786,6 +5788,7 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		//	EnableWindow(GetDlgItem(hWnd2, SettingsNS::nTaskCtrlId[i]), lbEnable);
 		CSetDlgLists::EnableDlgItems(hWnd2, CSetDlgLists::eTaskCtrlId, lbEnable);
 		mb_IgnoreCmdGroupEdit = false;
+		delete[] Items;
 
 		break;
 	} // lbCmdTasks:
