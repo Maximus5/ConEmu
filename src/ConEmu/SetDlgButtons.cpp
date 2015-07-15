@@ -1518,12 +1518,15 @@ void CSetDlgButtons::OnBtn_AddDefaults(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbAddDefaults);
 
-	if (MsgBox(L"Do you want to ADD default tasks in your task list?",
-			MB_YESNO|MB_ICONEXCLAMATION, gpConEmu->GetDefaultTitle(), ghOpWnd) != IDYES)
+	int iBtn = MsgBox(
+		L"Do you want to ADD NEW default tasks in your task list?\n\n"
+		L"Choose <No> to REWRITE EXISTING tasks with defaults too."
+		, MB_YESNOCANCEL|MB_ICONEXCLAMATION, gpConEmu->GetDefaultTitle(), ghOpWnd);
+	if (iBtn == IDCANCEL)
 		return;
 
-	// Добавить таски В КОНЕЦ
-	CreateDefaultTasks(slf_AppendTasks);
+	// Append or rewrite default tasks
+	CreateDefaultTasks(slf_AppendTasks|((iBtn == IDNO) ? slf_RewriteExisting : slf_None));
 
 	// Обновить список на экране
 	gpSetCls->OnInitDialog_Tasks(hDlg, true);

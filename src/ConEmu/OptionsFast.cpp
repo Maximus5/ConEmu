@@ -717,19 +717,30 @@ void CheckOptionsFast(LPCWSTR asTitle, SettingsLoadedFlags slfFlags)
 /*         Creating default tasks           */
 /* **************************************** */
 
-static bool sbAppendMode = false;
+static SettingsLoadedFlags sAppendMode = slf_None;
 
 static void CreateDefaultTask(LPCWSTR asName, LPCWSTR asGuiArg, LPCWSTR asCommands)
 {
+	_ASSERTE(asName && asName[0] && asName[0] != TaskBracketLeft && asName[wcslen(asName)-1] != TaskBracketRight);
+	wchar_t szLeft[2] = {TaskBracketLeft}, szRight[2] = {TaskBracketRight};
+	CEStr lsName = lstrmerge(szLeft, asName, szRight);
+
 	// Don't add duplicates in the append mode
-	if (sbAppendMode)
+	if ((sAppendMode & slf_AppendTasks))
 	{
-		const CommandTasks* pTask = gpSet->CmdTaskGetByName(asName);
+		CommandTasks* pTask = (CommandTasks*)gpSet->CmdTaskGetByName(lsName);
 		if (pTask != NULL)
+		{
+			if ((sAppendMode & slf_RewriteExisting))
+			{
+				pTask->SetGuiArg(asGuiArg);
+				pTask->SetCommands(asCommands);
+			}
 			return;
+		}
 	}
 
-	gpSet->CmdTaskSet(iCreatIdx++, asName, asGuiArg, asCommands);
+	gpSet->CmdTaskSet(iCreatIdx++, lsName, asGuiArg, asCommands);
 }
 
 // Search on asFirstDrive and all (other) fixed drive letters
@@ -1657,10 +1668,10 @@ void CreateDefaultTasks(SettingsLoadedFlags slfFlags)
 {
 	iCreatIdx = 0;
 
-	sbAppendMode = ((slfFlags & slf_AppendTasks) == slf_AppendTasks);
+	sAppendMode = slfFlags;
 	gn_FirstFarTask = -1;
 
-	if (!sbAppendMode)
+	if (!(slfFlags & slf_AppendTasks))
 	{
 		const CommandTasks* pExist = gpSet->CmdTaskGet(iCreatIdx);
 		if (pExist != NULL)
