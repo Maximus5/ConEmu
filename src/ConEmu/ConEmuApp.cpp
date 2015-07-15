@@ -3090,12 +3090,29 @@ bool UpdateWin7TaskList(bool bForce, bool bNoSuccMsg /*= false*/)
 // Set our unique application-defined Application User Model ID for Windows 7 TaskBar
 HRESULT UpdateAppUserModelID()
 {
+	bool bSpecialXmlFile = false;
+	LPCWSTR pszConfigFile = gpConEmu->ConEmuXml(&bSpecialXmlFile);
+	LPCWSTR pszConfigName = gpSetCls->GetConfigName();
+
+	// Don't change the ID if application was started without arguments changing:
+	// ‘config-name’, ‘config-file’, ‘registry-use’ or ‘basic-settings’.
+	if (!gpSetCls->isResetBasicSettings
+		&& !gpConEmu->opt.ForceUseRegistryPrm
+		&& !bSpecialXmlFile
+		&& !(pszConfigName && *pszConfigName)
+		)
+	{
+		LogString(L"AppUserModelID was not changed due to special switches absence");
+		return S_FALSE;
+	}
+
 	// The MSDN says: An application must provide its AppUserModelID in the following form.
 	// It can have no more than 128 characters and cannot contain spaces. Each section should be camel-cased.
 	//    CompanyName.ProductName.SubProduct.VersionInformation
 	// CompanyName and ProductName should always be used, while the SubProduct and VersionInformation portions are optional
 
 	CEStr Config;
+	CEStr lsTempBuf;
 	if (gpSetCls->isResetBasicSettings)
 	{
 		Config.Set(L".Basic");
@@ -3106,10 +3123,6 @@ HRESULT UpdateAppUserModelID()
 	}
 	else
 	{
-		CEStr lsTempBuf;
-		bool bSpecialXmlFile = false;
-		LPCWSTR pszConfigFile = gpConEmu->ConEmuXml(&bSpecialXmlFile);
-		LPCWSTR pszConfigName = gpSetCls->GetConfigName();
 		if (bSpecialXmlFile && pszConfigFile && *pszConfigFile)
 		{
 			lstrmerge(&lsTempBuf.ms_Arg, L".", pszConfigFile);
@@ -3150,6 +3163,16 @@ HRESULT UpdateAppUserModelID()
 		hr = fnSetAppUserModelID(AppID);
 		_ASSERTE(hr == S_OK);
 	}
+
+	// Log the change
+	INT_PTR cchMax = lstrlen(AppID)+128;
+	wchar_t* pszLog = lsTempBuf.GetBuffer(cchMax);
+	if (pszLog)
+	{
+		_wsprintf(pszLog, SKIPLEN(cchMax) L"AppUserModelID was changed to `%s` Result=x%08X", AppID.ms_Arg, (DWORD)hr);
+		LogString(pszLog);
+	}
+
 	return hr;
 }
 
