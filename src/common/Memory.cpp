@@ -237,7 +237,11 @@ void __cdecl xf_free
 #endif
 )
 {
-	if (!ghHeap || !_Memory)
+	if (!_Memory)
+	{
+		return; // Nothing to do
+	}
+	if (!ghHeap)
 	{
 		//_ASSERTE(ghHeap && _Memory);
 		#ifdef _DEBUG
