@@ -68,6 +68,7 @@ CConEmuUpdate::CConEmuUpdate()
 	mh_CheckThread = NULL;
 	mb_RequestTerminate = false;
 	mp_Set = NULL;
+	mps_ErrorLock = new MSectionSimple(true);
 	ms_LastErrorInfo = NULL;
 	mn_InShowMsgBox = 0;
 	mn_ErrorInfoCount = 0;
@@ -125,7 +126,6 @@ CConEmuUpdate::~CConEmuUpdate()
 
 	Inet.Deinit(true);
 
-	ms_LastErrorInfo = NULL;
 	SafeFree(mpsz_ConfirmSource);
 
 	if (((m_UpdateStep == us_ExitAndUpdate) || (m_UpdateStep == us_PostponeUpdate)) && mpsz_PendingBatchFile)
@@ -166,6 +166,9 @@ CConEmuUpdate::~CConEmuUpdate()
 		delete mp_Set;
 		mp_Set = NULL;
 	}
+
+	SafeDelete(mps_ErrorLock);
+	SafeFree(ms_LastErrorInfo);
 }
 
 void CConEmuUpdate::StartCheckProcedure(BOOL abShowMessages)
@@ -206,7 +209,9 @@ void CConEmuUpdate::StartCheckProcedure(BOOL abShowMessages)
 	mp_Set->LoadFrom(&gpSet->UpdSet);
 
 	mb_ManualCallMode = abShowMessages;
-	ms_LastErrorInfo = NULL;
+
+	// Don't clear it here, must be cleared by display procedure
+	_ASSERTE(ms_LastErrorInfo == NULL);
 
 	wchar_t szReason[128];
 	if (!mp_Set->UpdatesAllowed(szReason))
@@ -279,16 +284,29 @@ void CConEmuUpdate::StopChecking()
 	}
 }
 
-LRESULT CConEmuUpdate::ShowLastError(LPARAM apErrText)
+LRESULT CConEmuUpdate::ShowLastError(LPARAM apObj)
 {
-	wchar_t* pszError = (wchar_t*)apErrText;
+	_ASSERTE(gpUpd == (CConEmuUpdate*)apObj);
+	// Now we store error text in member var protected by CS
+	CEStr szError; // (wchar_t*)apErrText;
+	{
+		MSectionLockSimple CS;
+		if (CS.Lock(gpUpd->mps_ErrorLock, 5000))
+		{
+			szError.Set(gpUpd->ms_LastErrorInfo);
+			SafeFree(gpUpd->ms_LastErrorInfo);
+		}
+		else
+		{
+			szError.Set(L"Updater error was occurred but we failed to lock it");
+		}
+	}
 
-	if (pszError && *pszError)
+	if (!szError.IsEmpty())
 	{
 		InterlockedIncrement(&gpUpd->mn_InShowMsgBox);
 
-		MsgBox(pszError, MB_ICONINFORMATION, gpConEmu?gpConEmu->GetDefaultTitle():L"ConEmu Update");
-		SafeFree(pszError);
+		MsgBox(szError, MB_ICONINFORMATION, gpConEmu?gpConEmu->GetDefaultTitle():L"ConEmu Update");
 
 		InterlockedDecrement(&gpUpd->mn_InShowMsgBox);
 	}
@@ -462,8 +480,8 @@ bool CConEmuUpdate::StartLocalUpdate(LPCWSTR asDownloadedPackage)
 
 	mb_RequestTerminate = false;
 
-	// Clear possible last error (informational)
-	ms_LastErrorInfo = NULL;
+	// Don't clear it here, must be cleared by display procedure
+	_ASSERTE(ms_LastErrorInfo == NULL);
 
 	ms_NewVersion[0] = 0;
 
@@ -1391,19 +1409,41 @@ void CConEmuUpdate::ReportErrorInt(wchar_t* asErrorInfo)
 	if (gpConEmu)
 		gpConEmu->LogString(asErrorInfo);
 
+	// Append error
+	{
+		wchar_t szTime[40] = L""; SYSTEMTIME st = {}; GetLocalTime(&st);
+		_wsprintf(szTime, SKIPLEN(countof(szTime)) L"\r\n%u-%02u-%02u %u:%02u:%02u.%03u", st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
+
+		MSectionLockSimple CS;
+		if (CS.Lock(mps_ErrorLock, 5000))
+		{
+			if (lstrmerge(&ms_LastErrorInfo, ms_LastErrorInfo?L"\r\n\r\n":NULL, asErrorInfo, szTime))
+			{
+				SafeFree(asErrorInfo);
+			}
+			else
+			{
+				ms_LastErrorInfo = asErrorInfo;
+			}
+		}
+		else
+		{
+			_ASSERTE(FALSE && "Can't lock ms_LastErrorInfo");
+			ms_LastErrorInfo = asErrorInfo;
+		}
+	}
+
 	if (mn_InShowMsgBox > 0)
 	{
 		InterlockedIncrement(&mn_ErrorInfoSkipCount);
-		SafeFree(asErrorInfo);
 		return; // to avoid infinite recursion
 	}
 
-	ms_LastErrorInfo = asErrorInfo;
 	InterlockedIncrement(&mn_ErrorInfoCount);
 
 	// This will call back ShowLastError
 	if (gpConEmu)
-		gpConEmu->CallMainThread(false, ShowLastError, (LPARAM)asErrorInfo);
+		gpConEmu->CallMainThread(false, ShowLastError, (LPARAM)this);
 	else
 		SafeFree(asErrorInfo);
 }

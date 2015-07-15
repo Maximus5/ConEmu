@@ -46,6 +46,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 struct ConEmuUpdateSettings;
 class CConEmuUpdate;
 class MSection;
+struct MSectionSimple;
 
 extern CConEmuUpdate* gpUpd;
 
@@ -83,7 +84,9 @@ protected:
 	long mn_InShowMsgBox;
 	long mn_ErrorInfoCount;
 	long mn_ErrorInfoSkipCount;
-	LPCWSTR ms_LastErrorInfo; // Informational
+
+	MSectionSimple* mps_ErrorLock;
+	wchar_t* ms_LastErrorInfo;
 
 	wchar_t* mpsz_DeleteIniFile;
 	wchar_t* mpsz_DeletePackageFile;
@@ -154,7 +157,7 @@ protected:
 	wchar_t* mpsz_ConfirmSource;
 	static LRESULT QueryConfirmationCallback(LPARAM lParam);
 	static LRESULT RequestExitUpdate(LPARAM);
-	static LRESULT ShowLastError(LPARAM apErrText);
+	static LRESULT ShowLastError(LPARAM apObj);
 	int QueryConfirmation(UpdateStep step);
 	int QueryConfirmationDownload();
 	int QueryConfirmationUpdate();
