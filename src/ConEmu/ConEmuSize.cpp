@@ -1613,7 +1613,7 @@ void CConEmuSize::UpdateIdealRect(RECT rcNewIdeal)
 	DEBUGTEST(RECT rc = rcNewIdeal);
 	_ASSERTE(rc.right>rc.left && rc.bottom>rc.top);
 
-	if (memcmp(&mr_Ideal.rcIdeal, &rc, sizeof(rc)) != 0)
+	if (memcmp(&mr_Ideal.rcIdeal, &rcNewIdeal, sizeof(rcNewIdeal)) != 0)
 	{
 		wchar_t szLog[120];
 		_wsprintf(szLog, SKIPCOUNT(szLog) L"UpdateIdealRect Cur={%i,%i}-{%i,%i} New={%i,%i}-{%i,%i}",
