@@ -12960,14 +12960,6 @@ void CRealConsole::logProgress(LPCWSTR asFormat, int V1, int V2)
 
 	wchar_t szInfo[100];
 	_wsprintf(szInfo, SKIPLEN(countof(szInfo)-1) asFormat, V1, V2);
-	if (*szInfo)
-	{
-		int nLen = lstrlen(szInfo);
-		if (szInfo[nLen-1] != L'\n')
-		{
-			szInfo[nLen++] = L'\n'; szInfo[nLen] = 0;
-		}
-	}
 
 	#ifdef _DEBUG
 	if (!mp_Log)
