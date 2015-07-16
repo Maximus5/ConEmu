@@ -294,6 +294,7 @@ LRESULT CTabPanelBase::OnMouseRebar(UINT uMsg, int x, int y)
 		if ((gpSet->nTabBarDblClickAction == 2)
 			|| ((gpSet->nTabBarDblClickAction == 1) && gpSet->isCaptionHidden()))
 		{
+			LogString(L"ToolBar: ReBar double click: DoMaximizeRestore");
 			// Чтобы клик случайно не провалился в консоль
 			gpConEmu->mouse.state |= MOUSE_SIZING_DBLCKL;
 			// Аналог AltF9
@@ -302,6 +303,7 @@ LRESULT CTabPanelBase::OnMouseRebar(UINT uMsg, int x, int y)
 		else if ((gpSet->nTabBarDblClickAction == 3)
 			|| ((gpSet->nTabBarDblClickAction == 1) && !gpSet->isCaptionHidden()))
 		{
+			LogString(L"ToolBar: ReBar double click: RecreateAction");
 			gpConEmu->RecreateAction(cra_CreateTab/*FALSE*/, gpSet->isMultiNewConfirm || isPressed(VK_SHIFT));
 		}
 		#ifdef _DEBUG
@@ -326,6 +328,7 @@ LRESULT CTabPanelBase::OnMouseRebar(UINT uMsg, int x, int y)
 	}
 	else if (uMsg == WM_MBUTTONUP)
 	{
+		LogString(L"ToolBar: ReBar MBtnUp: RecreateAction");
 		gpConEmu->RecreateAction(cra_CreateTab/*FALSE*/, gpSet->isMultiNewConfirm || isPressed(VK_SHIFT));
 	}
 
