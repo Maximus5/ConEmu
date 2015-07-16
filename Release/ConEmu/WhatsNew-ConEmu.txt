@@ -19,6 +19,23 @@ http://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2015.7.16
+[!] Now user may use any external downloader tool if ConEmu's internal does not suite.
+[*] Implement new switch `-update` to force automatic update procedure.
+[*] Describe switch `-LoadRegistry` in ConEmu's About dialog.
+[*] Force Win7 TaskBar to use different taskbar buttons for different configs
+    selected by one of the following switches:
+    `-config <name>`, `-loadcfgfile <file>`, `-loadregistry`, `-basic`.
+[*] Allow to delete several tasks at once, just select them with Shift or Ctrl pressed.
+[*] Button ‘Add default tasks’ behavior was changed. Confirmation dialog suggests to
+    either to add absent tasks or add and recreate all default tasks.
+    Recreation will affect tasks' commands and parameters.
+[*] gh#213: Improve update error reporting, more logging.
+[*] Switch processor refactoring (code moved to CConEmuStart class).
+[*] Internal changes in threads creating/killing.
+[*] Some more logging for toolbar buttons and window resizing.
+
+
 2015.7.7
 [*] This build changes the download procedure used within automatic updates.
     ConEmu.exe (GUI) do not call WinInet functions anymore, instead it calls
