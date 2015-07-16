@@ -25,6 +25,7 @@ static struct ConEmuThreadInfo
 	DWORD  nExitCode;
 	BOOL   bTerminated;
 	char   sName[THREAD_MAX_NAME_LEN];
+	char   sKiller[THREAD_MAX_NAME_LEN];
 } g_Threads[THREADS_LOG_SIZE];
 
 LONG g_ThreadsIdx = 0;
@@ -150,7 +151,7 @@ HANDLE apiCreateThread(LPTHREAD_START_ROUTINE lpStartAddress, LPVOID lpParameter
 	return hThread;
 }
 
-BOOL apiTerminateThread(HANDLE hThread, DWORD dwExitCode)
+BOOL apiTerminateThreadEx(HANDLE hThread, DWORD dwExitCode, LPCSTR asFile, int anLine)
 {
 	ConEmuThreadInfo* pThread = NULL;
 	for (INT_PTR c = THREADS_LOG_SIZE; --c >= 0;)
@@ -165,12 +166,28 @@ BOOL apiTerminateThread(HANDLE hThread, DWORD dwExitCode)
 		}
 	}
 
+	#ifndef __GNUC__
+	#pragma warning( push )
+	#pragma warning( disable : 6258 )
+	#endif
+
 	BOOL bRc = ::TerminateThread(hThread, dwExitCode);
 
+	#ifndef __GNUC__
+	#pragma warning( pop )
+	#endif
+
 	if (pThread)
+	{
+		char szKiller[30]; lstrcpynA(szKiller, PointToName(asFile), countof(szKiller));
+		_ASSERTE((countof(szKiller)+8) < SKIPCOUNT(pThread->sKiller));
+		_wsprintfA(pThread->sKiller, SKIPCOUNT(pThread->sKiller) L"%s:%i", szKiller, anLine);
 		pThread->bActive = FALSE;
+	}
 	else
+	{
 		g_TerminatedThreadIdx = -2;
+	}
 	return bRc;
 }
 
