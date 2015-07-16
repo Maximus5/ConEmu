@@ -8809,12 +8809,9 @@ void CSettings::UpdatePos(int ax, int ay, bool bGetRect)
 		mb_IgnoreEditChanged = FALSE;
 	}
 
-	if (isAdvLogging >= 2)
-	{
-		wchar_t szLabel[128];
-		_wsprintf(szLabel, SKIPLEN(countof(szLabel)) L"UpdatePos A={%i,%i} C={%i,%i} S={%i,%i}", ax,ay, gpConEmu->wndX, gpConEmu->wndY, gpSet->_wndX, gpSet->_wndY);
-		gpConEmu->LogWindowPos(szLabel);
-	}
+	wchar_t szLabel[128];
+	_wsprintf(szLabel, SKIPLEN(countof(szLabel)) L"UpdatePos A={%i,%i} C={%i,%i} S={%i,%i}", ax,ay, gpConEmu->wndX, gpConEmu->wndY, gpSet->_wndX, gpSet->_wndY);
+	gpConEmu->LogWindowPos(szLabel);
 }
 
 void CSettings::UpdateSize(const CESize w, const CESize h)
@@ -8856,14 +8853,11 @@ void CSettings::UpdateSize(const CESize w, const CESize h)
 		CSetDlgLists::EnableDlgItems(hSizePosPg, CSetDlgLists::eSizeCtrlId, bNormalChecked);
 	}
 
-	if (isAdvLogging >= 2)
-	{
-		wchar_t szLabel[128];
-		CESize ws = {w.Raw};
-		CESize hs = {h.Raw};
-		_wsprintf(szLabel, SKIPLEN(countof(szLabel)) L"UpdateSize A={%s,%s} C={%s,%s} S={%s,%s}", ws.AsString(), hs.AsString(), gpConEmu->WndWidth.AsString(), gpConEmu->WndHeight.AsString(), gpSet->wndWidth.AsString(), gpSet->wndHeight.AsString());
-		gpConEmu->LogWindowPos(szLabel);
-	}
+	wchar_t szLabel[128];
+	CESize ws = {w.Raw};
+	CESize hs = {h.Raw};
+	_wsprintf(szLabel, SKIPLEN(countof(szLabel)) L"UpdateSize A={%s,%s} C={%s,%s} S={%s,%s}", ws.AsString(), hs.AsString(), gpConEmu->WndWidth.AsString(), gpConEmu->WndHeight.AsString(), gpSet->wndWidth.AsString(), gpSet->wndHeight.AsString());
+	gpConEmu->LogWindowPos(szLabel);
 }
 
 // Пожалуй, не будем автоматически менять флажок "Monospace"

@@ -1610,12 +1610,23 @@ void CConEmuSize::AutoSizeFont(RECT arFrom, enum ConEmuRect tFrom)
 
 void CConEmuSize::UpdateIdealRect(RECT rcNewIdeal)
 {
-#ifdef _DEBUG
-	RECT rc = rcNewIdeal;
+	DEBUGTEST(RECT rc = rcNewIdeal);
 	_ASSERTE(rc.right>rc.left && rc.bottom>rc.top);
-	if (memcmp(&mr_Ideal.rcIdeal, &rc, sizeof(rc)) == 0)
+
+	if (memcmp(&mr_Ideal.rcIdeal, &rc, sizeof(rc)) != 0)
+	{
+		wchar_t szLog[120];
+		_wsprintf(szLog, SKIPCOUNT(szLog) L"UpdateIdealRect Cur={%i,%i}-{%i,%i} New={%i,%i}-{%i,%i}",
+			mr_Ideal.rcIdeal.left, mr_Ideal.rcIdeal.top, mr_Ideal.rcIdeal.right, mr_Ideal.rcIdeal.bottom,
+			rcNewIdeal.left, rcNewIdeal.top, rcNewIdeal.right, rcNewIdeal.bottom);
+		LogString(szLog);
+	}
+	#ifdef _DEBUG
+	else
+	{
 		return;
-#endif
+	}
+	#endif
 
 	mr_Ideal.rcIdeal = rcNewIdeal;
 }
@@ -1794,11 +1805,19 @@ void CConEmuSize::StoreNormalRect(RECT* prcWnd)
 		// восстановлении окна получаем глюк позиционирования - оно прыгает заголовком за пределы.
 		if (!isSizing())
 		{
-			#ifdef _DEBUG
-			int iDbg = 0; if (memcmp(&mrc_StoredNormalRect, &rcNormal, sizeof(rcNormal)) != 0)
-				iDbg = 1;
-			#endif
+			if (memcmp(&mrc_StoredNormalRect, &rcNormal, sizeof(rcNormal)) != 0)
+			{
+				wchar_t szLog[120];
+				_wsprintf(szLog, SKIPCOUNT(szLog) L"UpdateNormalRect Cur={%i,%i}-{%i,%i} New={%i,%i}-{%i,%i}",
+					mrc_StoredNormalRect.left, mrc_StoredNormalRect.top, mrc_StoredNormalRect.right, mrc_StoredNormalRect.bottom,
+					rcNormal.left, rcNormal.top, rcNormal.right, rcNormal.bottom);
+				LogString(szLog);
+			}
 			mrc_StoredNormalRect = rcNormal;
+		}
+		else
+		{
+			LogString(L"StoreNormalRect skipped due to `isSizing()`, continue to UpdateSize");
 		}
 
 		{
@@ -3867,11 +3886,8 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 
 	wchar_t szInfo[128];
 
-	if (gpSetCls->isAdvLogging)
-	{
-		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"SetWindowMode(%s) begin", GetWindowModeName(inMode));
-		LogString(szInfo);
-	}
+	_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"SetWindowMode begin: CurMode=%s inMode=%s", GetWindowModeName(GetWindowMode()), GetWindowModeName(inMode));
+	LogString(szInfo);
 
 	if ((inMode != wmFullScreen) && (WindowMode == wmFullScreen))
 	{
@@ -3946,11 +3962,8 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 	mp_ConEmu->GetActiveVCon(&VCon);
 	//CRealConsole* pRCon = (gpSetCls->isAdvLogging!=0) ? (VCon.VCon() ? VCon.VCon()->RCon() : NULL) : NULL;
 
-	if (gpSetCls->isAdvLogging)
-	{
-		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"SetWindowMode(%s)", GetWindowModeName(inMode));
-		LogString(szInfo);
-	}
+	_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"SetWindowMode exec: NewMode=%s", GetWindowModeName(NewMode));
+	LogString(szInfo);
 
 	mp_ConEmu->OnHideCaption(); // inMode из параметров убрал, т.к. WindowMode уже изменен
 
@@ -5218,6 +5231,7 @@ void CConEmuSize::EndSizing(UINT nMouseMsg/*=0*/)
 
 	if (bApplyResize)
 	{
+		LogString(L"EndSizing: Sync console sizes after resize");
 		CVConGroup::SyncConsoleToWindow();
 	}
 
