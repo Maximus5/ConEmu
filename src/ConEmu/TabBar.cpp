@@ -1247,17 +1247,25 @@ void CTabBarClass::OnCommand(WPARAM wParam, LPARAM lParam)
 	if (wParam == TID_ACTIVE_NUMBER)
 	{
 		//gpConEmu->ConActivate(wParam-1);
+		LogString(L"ToolBar: TID_ACTIVE_NUMBER");
 		OnChooseTabPopup();
 	}
 	else if (wParam == TID_CREATE_CON)
 	{
 		if (gpConEmu->IsGesturesEnabled())
+		{
+			LogString(L"ToolBar: TID_CREATE_CON/gesture");
 			gpConEmu->mp_Menu->OnNewConPopupMenu(NULL, 0, isPressed(VK_SHIFT));
+		}
 		else
+		{
+			LogString(L"ToolBar: TID_CREATE_CON/mouse");
 			gpConEmu->RecreateAction(gpSetCls->GetDefaultCreateAction(), gpSet->isMultiNewConfirm || isPressed(VK_SHIFT));
+		}
 	}
 	else if (wParam == TID_ALTERNATIVE)
 	{
+		LogString(L"ToolBar: TID_ALTERNATIVE");
 		CVConGuard VCon;
 		CVirtualConsole* pVCon = (gpConEmu->GetActiveVCon(&VCon) >= 0) ? VCon.VCon() : NULL;
 		// Вернуть на тулбар _текущее_ состояние режима
@@ -1267,6 +1275,7 @@ void CTabBarClass::OnCommand(WPARAM wParam, LPARAM lParam)
 	}
 	else if (wParam == TID_SCROLL)
 	{
+		LogString(L"ToolBar: TID_SCROLL");
 		CVConGuard VCon;
 		CVirtualConsole* pVCon = (gpConEmu->GetActiveVCon(&VCon) >= 0) ? VCon.VCon() : NULL;
 		// Вернуть на тулбар _текущее_ состояние режима
@@ -1276,10 +1285,12 @@ void CTabBarClass::OnCommand(WPARAM wParam, LPARAM lParam)
 	}
 	else if (wParam == TID_MINIMIZE)
 	{
+		LogString(L"ToolBar: TID_MINIMIZE");
 		PostMessage(ghWnd, WM_SYSCOMMAND, SC_MINIMIZE, 0);
 	}
 	else if (wParam == TID_MAXIMIZE)
 	{
+		LogString(L"ToolBar: TID_MAXIMIZE");
 		// Чтобы клик случайно не провалился в консоль
 		gpConEmu->mouse.state |= MOUSE_SIZING_DBLCKL;
 		// Аналог AltF9
@@ -1287,6 +1298,7 @@ void CTabBarClass::OnCommand(WPARAM wParam, LPARAM lParam)
 	}
 	else if (wParam == TID_APPCLOSE)
 	{
+		LogString(L"ToolBar: TID_APPCLOSE");
 		gpConEmu->PostScClose();
 	}
 	//else if (wParam == TID_COPYING)
@@ -1295,6 +1307,7 @@ void CTabBarClass::OnCommand(WPARAM wParam, LPARAM lParam)
 	//}
 	else if (wParam == TID_SYSMENU)
 	{
+		LogString(L"ToolBar: TID_SYSMENU");
 		RECT rcBtnRect = {0};
 		mp_Rebar->GetToolBtnRect(TID_SYSMENU, &rcBtnRect);
 		DWORD nAddFlags = ((gpSet->nTabsLocation == 1) ? TPM_BOTTOMALIGN : 0) | TPM_RIGHTALIGN;
@@ -1303,6 +1316,7 @@ void CTabBarClass::OnCommand(WPARAM wParam, LPARAM lParam)
 	}
 	else
 	{
+		LogString(L"ToolBar: click was not processed");
 		_ASSERTE(FALSE && "Toolbar click was not processed");
 	}
 }
