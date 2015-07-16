@@ -75,10 +75,13 @@ if errorlevel 1 goto err
 
 :do_move
 cd /d "%~dp0..\"
+call cecho /green "Waiting for file: %inst_name%"
+timeout /t 2
 move "%inst_name%" ..\ConEmu-Deploy\Setup\
 if errorlevel 1 (
-call cecho "Failed to move file: %inst_name%"
-pause
+call cecho "Failed to move file, will retry: %inst_name%"
+rem pause
+timeout /t 2
 goto do_move
 )
 
