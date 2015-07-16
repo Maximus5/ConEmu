@@ -1144,11 +1144,12 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 					TCHAR ch = curCommand[4];
 					CharUpperBuff(&ch, 1);
 
-					CESwitch psz(sw_Str);
-					if (!GetCfgParm(cmdLineRest, gpConEmu->opt.SizePosPrm, psz, 32))
+					CESwitch psz(sw_Str); bool bParm = false;
+					if (!GetCfgParm(cmdLineRest, bParm, psz, 32))
 					{
 						goto wrap;
 					}
+					gpConEmu->opt.SizePosPrm = true;
 
 					// Direct X/Y implies /nocascade
 					if (ch == _T('X') || ch == _T('Y'))
@@ -1159,10 +1160,10 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 
 					switch (ch)
 					{
-					case _T('X'): gpConEmu->opt.sWndX = psz; break;
-					case _T('Y'): gpConEmu->opt.sWndY = psz; break;
-					case _T('W'): gpConEmu->opt.sWndW = psz; break;
-					case _T('H'): gpConEmu->opt.sWndH = psz; break;
+					case _T('X'): gpConEmu->opt.sWndX.SetStr(psz.Str, sw_Str); break;
+					case _T('Y'): gpConEmu->opt.sWndY.SetStr(psz.Str, sw_Str); break;
+					case _T('W'): gpConEmu->opt.sWndW.SetStr(psz.Str, sw_Str); break;
+					case _T('H'): gpConEmu->opt.sWndH.SetStr(psz.Str, sw_Str); break;
 					}
 				}
 				else if (!klstricmp(curCommand, _T("/Buffer")) || !klstricmp(curCommand, _T("/BufferHeight")))
@@ -1302,6 +1303,9 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 					break;
 				}
 			} // (*curCommand == L'/')
+
+			// Avoid assertions in NextArg
+			szArg.Empty(); szNext.Empty();
 		} // while (NextArg(&cmdLineRest, szArg, &pszArgStart) == 0)
 	}
 	// Processing loop end
