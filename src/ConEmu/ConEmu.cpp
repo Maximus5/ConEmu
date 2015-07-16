@@ -13036,11 +13036,11 @@ void CConEmuMain::LogWindowPos(LPCWSTR asPrefix)
 		RECT rcWnd = {}; GetWindowRect(ghWnd, &rcWnd);
 		MONITORINFO mi;
 		HMONITOR hMon = GetNearestMonitor(&mi);
-		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"%s: %s %s WindowMode=%u Rect={%i,%i}-{%i,%i} Mon(x%08X)=({%i,%i}-{%i,%i}),({%i,%i}-{%i,%i})",
+		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"%s: %s %s WindowMode=%s Rect={%i,%i}-{%i,%i} Mon(x%08X)=({%i,%i}-{%i,%i}),({%i,%i}-{%i,%i})",
 			asPrefix ? asPrefix : L"WindowPos",
 			::IsWindowVisible(ghWnd) ? L"Visible" : L"Hidden",
 			::IsIconic(ghWnd) ? L"Iconic" : ::IsZoomed(ghWnd) ? L"Maximized" : L"Normal",
-			gpSet->isQuakeStyle ? gpSet->_WindowMode : WindowMode,
+			GetWindowModeName((ConEmuWindowMode)(gpSet->isQuakeStyle ? gpSet->_WindowMode : WindowMode)),
 			rcWnd.left, rcWnd.top, rcWnd.right, rcWnd.bottom,
 			(DWORD)hMon, mi.rcMonitor.left, mi.rcMonitor.top, mi.rcMonitor.right, mi.rcMonitor.bottom,
 			mi.rcWork.left, mi.rcWork.top, mi.rcWork.right, mi.rcWork.bottom);
