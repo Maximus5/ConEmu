@@ -74,12 +74,15 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"/Palette <name> - Choose named color palette.\r\n" \
 	L"/Log[1|2] - Used to create debug log files.\r\n" \
 	L"/Demote /cmd <command> - Run command de-elevated.\r\n" \
+	L"/Bypass /cmd <command> - Just execute the command detached.\r\n" \
 	L"/Reset - Don't load settings from registry/xml.\r\n" \
 	L"/UpdateJumpList - Update Windows 7 taskbar jump list.\r\n" \
 	L"/LoadCfgFile <file> - Use specified xml file as configuration storage.\r\n" \
 	L"/SaveCfgFile <file> - Save configuration to the specified xml file.\r\n" \
 	L"/LoadRegistry - Use Windows registry as configuration storage.\r\n" \
 	L"/SetDefTerm - Set ConEmu as default terminal, use with \"/Exit\" switch.\r\n" \
+	L"/UpdateSrcSet <url> - Force to check version.ini by another url.\r\n" \
+	L"/AnsiLog <folder> - Force console output logging into the folder.\r\n" \
 	L"/Exit - Don't create ConEmu window, exit after actions.\r\n" \
 	L"/QuitOnClose - Forces ConEmu window closing with last tab.\r\n" \
 	L"/GuiMacro - Execute some GuiMacro after ConEmu window creation.\r\n" \
