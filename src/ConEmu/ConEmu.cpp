@@ -8342,10 +8342,10 @@ void CConEmuMain::OnHideCaption()
 
 	if (nNewStyle != nStyle)
 	{
-		if (gpSetCls->isAdvLogging)
+		// Make debug output too
 		{
 			wchar_t szInfo[128];
-			_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"Changing main window 0x%08X style to 0x%08X", (DWORD)ghWnd, nNewStyle);
+			_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"Changing main window 0x%08X style Cur=x%08X New=x%08X ExStyle=x%08X", (DWORD)ghWnd, nStyle, nNewStyle, nStyleEx);
 			LogString(szInfo);
 		}
 
