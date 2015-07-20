@@ -712,32 +712,16 @@ RECT CConEmuSize::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 						rc.bottom += rcFrame.bottom;
 
 						// Issue 828: When taskbar is auto-hidden
-						APPBARDATA state = {sizeof(state)}; RECT rcTaskbar, rcMatch;
-						while ((state.hWnd = FindWindowEx(NULL, state.hWnd, L"Shell_TrayWnd", NULL)) != NULL)
+						UINT uEdge = (UINT)-1;
+						// Is task-bar found on current monitor?
+						if (IsTaskbarAutoHidden(&mi.rcMonitor, &uEdge))
 						{
-							if (GetWindowRect(state.hWnd, &rcTaskbar)
-								&& IntersectRect(&rcMatch, &rcTaskbar, &mi.rcMonitor))
+							switch (uEdge)
 							{
-								break; // OK, taskbar match monitor
-							}
-						}
-						// Ok, Is task-bar found on current monitor?
-						if (state.hWnd)
-						{
-							LRESULT lState = SHAppBarMessage(ABM_GETSTATE, &state);
-							if (lState & ABS_AUTOHIDE)
-							{
-								APPBARDATA pos = {sizeof(pos), state.hWnd};
-								if (SHAppBarMessage(ABM_GETTASKBARPOS, &pos))
-								{
-									switch (pos.uEdge)
-									{
-										case ABE_LEFT:   rc.left   += 1; break;
-										case ABE_RIGHT:  rc.right  -= 1; break;
-										case ABE_TOP:    rc.top    += 1; break;
-										case ABE_BOTTOM: rc.bottom -= 1; break;
-									}
-								}
+								case ABE_LEFT:   rc.left   += 1; break;
+								case ABE_RIGHT:  rc.right  -= 1; break;
+								case ABE_TOP:    rc.top    += 1; break;
+								case ABE_BOTTOM: rc.bottom -= 1; break;
 							}
 						}
 
