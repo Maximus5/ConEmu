@@ -425,7 +425,7 @@ void CStatus::PaintStatus(HDC hPaint, LPRECT prcStatus /*= NULL*/)
 	{
 		wchar_t szPos[80]; RECT rcScreen = rcStatus;
 		MapWindowPoints(ghWnd, NULL, (LPPOINT)&rcScreen, 2);
-		_wsprintf(szPos, SKIPCOUNT(szPos) L"StatusBar painted at {%i,%i}-{%i,%i} screen coords", rcScreen.left, rcScreen.top, rcScreen.right, rcScreen.bottom);
+		_wsprintf(szPos, SKIPCOUNT(szPos) L"StatusBar painted at {%i,%i}-{%i,%i} screen coords", LOGRECTCOORDS(rcScreen));
 		DEBUGSTRPAINT(szPos);
 	}
 	#endif

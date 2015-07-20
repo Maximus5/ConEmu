@@ -1617,8 +1617,7 @@ void CConEmuSize::UpdateIdealRect(RECT rcNewIdeal)
 	{
 		wchar_t szLog[120];
 		_wsprintf(szLog, SKIPCOUNT(szLog) L"UpdateIdealRect Cur={%i,%i}-{%i,%i} New={%i,%i}-{%i,%i}",
-			mr_Ideal.rcIdeal.left, mr_Ideal.rcIdeal.top, mr_Ideal.rcIdeal.right, mr_Ideal.rcIdeal.bottom,
-			rcNewIdeal.left, rcNewIdeal.top, rcNewIdeal.right, rcNewIdeal.bottom);
+			LOGRECTCOORDS(mr_Ideal.rcIdeal), LOGRECTCOORDS(rcNewIdeal));
 		LogString(szLog);
 	}
 	#ifdef _DEBUG
@@ -1809,8 +1808,7 @@ void CConEmuSize::StoreNormalRect(RECT* prcWnd)
 			{
 				wchar_t szLog[120];
 				_wsprintf(szLog, SKIPCOUNT(szLog) L"UpdateNormalRect Cur={%i,%i}-{%i,%i} New={%i,%i}-{%i,%i}",
-					mrc_StoredNormalRect.left, mrc_StoredNormalRect.top, mrc_StoredNormalRect.right, mrc_StoredNormalRect.bottom,
-					rcNormal.left, rcNormal.top, rcNormal.right, rcNormal.bottom);
+					LOGRECTCOORDS(mrc_StoredNormalRect), LOGRECTCOORDS(rcNormal));
 				LogString(szLog);
 			}
 			mrc_StoredNormalRect = rcNormal;
@@ -1994,9 +1992,7 @@ HMONITOR CConEmuSize::GetPrimaryMonitor(MONITORINFO* pmi /*= NULL*/)
 	{
 		wchar_t szInfo[128];
 		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"  GetPrimaryMonitor=%u -> hMon=x%08X Work=({%i,%i}-{%i,%i}) Area=({%i,%i}-{%i,%i})",
-			(hMon!=NULL), (DWORD)hMon,
-			mi.rcWork.left, mi.rcWork.top, mi.rcWork.right, mi.rcWork.bottom,
-			mi.rcMonitor.left, mi.rcMonitor.top, mi.rcMonitor.right, mi.rcMonitor.bottom);
+			(hMon!=NULL), (DWORD)hMon, LOGRECTCOORDS(mi.rcWork), LOGRECTCOORDS(mi.rcMonitor));
 		LogString(szInfo);
 	}
 
@@ -2021,7 +2017,7 @@ LRESULT CConEmuSize::OnGetMinMaxInfo(LPMINMAXINFO pInfo)
 	          pInfo->ptMaxPosition.x, pInfo->ptMaxPosition.y,
 	          pInfo->ptMinTrackSize.x, pInfo->ptMinTrackSize.y,
 	          pInfo->ptMaxTrackSize.x, pInfo->ptMaxTrackSize.y,
-			  rcWnd.left, rcWnd.top, rcWnd.right, rcWnd.bottom);
+			  LOGRECTCOORDS(rcWnd));
 		if (gpSetCls->isAdvLogging >= 2)
 			LogString(szMinMax, true, false);
 		DEBUGSTRSIZE(szMinMax);
@@ -2125,7 +2121,7 @@ LRESULT CConEmuSize::OnGetMinMaxInfo(LPMINMAXINFO pInfo)
 	          pInfo->ptMaxPosition.x, pInfo->ptMaxPosition.y,
 	          pInfo->ptMinTrackSize.x, pInfo->ptMinTrackSize.y,
 	          pInfo->ptMaxTrackSize.x, pInfo->ptMaxTrackSize.y,
-			  rcWnd.left, rcWnd.top, rcWnd.right, rcWnd.bottom);
+			  LOGRECTCOORDS(rcWnd));
 		if (gpSetCls->isAdvLogging >= 2)
 			LogString(szMinMax, true, false);
 		DEBUGSTRSIZE(szMinMax);
@@ -3473,7 +3469,7 @@ void CConEmuSize::LogTileModeChange(LPCWSTR asPrefix, ConEmuWindowCommand Tile, 
 	if (prcAfter)
 		_wsprintf(szAfter, SKIPLEN(countof(szAfter)) L" -> %s {%i,%i}-{%i,%i}",
 			FormatTileMode(NewTile,szNewTile,countof(szNewTile)),
-			prcAfter->left, prcAfter->top, prcAfter->right, prcAfter->bottom
+			LOGRECTCOORDS(*prcAfter)
 			);
 	else
 		szAfter[0] = 0;
@@ -3482,7 +3478,7 @@ void CConEmuSize::LogTileModeChange(LPCWSTR asPrefix, ConEmuWindowCommand Tile, 
 		asPrefix,
 		FormatTileMode(Tile,szName,countof(szName)),
 		(UINT)bChanged,
-		rcSet.left, rcSet.top, rcSet.right, rcSet.bottom,
+		LOGRECTCOORDS(rcSet),
 		(DWORD)(DWORD_PTR)hMon,
 		szAfter);
 
@@ -3773,7 +3769,7 @@ bool CConEmuSize::JumpNextMonitor(HWND hJumpWnd, HMONITOR hJumpMon, bool Next, c
 		{
 			_wsprintf(szInfo, SKIPLEN(countof(szInfo))
 				L"JumpNextMonitor(%i) skipped, GetNextMonitorInfo({%i,%i}-{%i,%i}) returns NULL",
-				(int)Next, rcMain.left, rcMain.top, rcMain.right, rcMain.bottom);
+				(int)Next, LOGRECTCOORDS(rcMain));
 			LogString(szInfo);
 		}
 		return false;
@@ -3782,8 +3778,8 @@ bool CConEmuSize::JumpNextMonitor(HWND hJumpWnd, HMONITOR hJumpMon, bool Next, c
 	{
 		_wsprintf(szInfo, SKIPLEN(countof(szInfo))
 			L"JumpNextMonitor(%i), GetNextMonitorInfo({%i,%i}-{%i,%i}) returns 0x%08X ({%i,%i}-{%i,%i})",
-			(int)Next, rcMain.left, rcMain.top, rcMain.right, rcMain.bottom,
-			(DWORD)(DWORD_PTR)hNext, mi.rcMonitor.left, mi.rcMonitor.top, mi.rcMonitor.right, mi.rcMonitor.bottom);
+			(int)Next, LOGRECTCOORDS(rcMain),
+			(DWORD)(DWORD_PTR)hNext, LOGRECTCOORDS(mi.rcMonitor));
 		LogString(szInfo);
 	}
 
@@ -4723,7 +4719,7 @@ LRESULT CConEmuSize::OnDpiChanged(UINT dpiX, UINT dpiY, LPRECT prcSuggested, boo
 	_wsprintf(szPrefix, SKIPLEN(countof(szPrefix)) bChanged ? L"DpiChanged(%s)" : L"DpiNotChanged(%s)",
 		(src == dcs_Api) ? L"Api" : (src == dcs_Macro) ? L"Mcr" : (src == dcs_Jump) ? L"Jmp" : (src == dcs_Snap) ? L"Snp" : L"Int");
 	_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"%s: dpi={%u,%u}, rect={%i,%i}-{%i,%i} (%ix%i)",
-		szPrefix, dpiX, dpiY, rc.left, rc.top, rc.right, rc.bottom, rc.right-rc.left, rc.bottom-rc.top);
+		szPrefix, dpiX, dpiY, LOGRECTCOORDS(rc), LOGRECTSIZE(rc));
 
 	/*
 	if (m_JumpMonitor.bInJump || mn_IgnoreSizeChange)
@@ -4987,7 +4983,7 @@ void CConEmuSize::UpdateWindowRgn(int anX/*=-1*/, int anY/*=-1*/, int anWndWidth
 		int nRgn = hRgn ? GetRgnBox(hRgn, &rcBox) : NULLREGION;
 		_wsprintf(szInfo, SKIPLEN(countof(szInfo))
 			nRgn ? L"SetWindowRgn(0x%08X, <%u> {%i,%i}-{%i,%i})" : L"SetWindowRgn(0x%08X, NULL)",
-			ghWnd, nRgn, rcBox.left, rcBox.top, rcBox.right, rcBox.bottom);
+			ghWnd, nRgn, LOGRECTCOORDS(rcBox));
 		LogString(szInfo);
 	}
 
@@ -5280,7 +5276,7 @@ void CConEmuSize::CheckTopMostState()
 			RECT rcWnd = {}; GetWindowRect(ghWnd, &rcWnd);
 			_wsprintf(szInfo, SKIPLEN(countof(szInfo))
 				L"Some external program brought ConEmu OnTop: HWND=x%08X, StyleEx=x%08X, Rect={%i,%i}-{%i,%i}",
-				(DWORD)ghWnd, dwStyleEx, rcWnd.left, rcWnd.top, rcWnd.right, rcWnd.bottom);
+				(DWORD)ghWnd, dwStyleEx, LOGRECTCOORDS(rcWnd));
 			LogString(szInfo);
 		}
 

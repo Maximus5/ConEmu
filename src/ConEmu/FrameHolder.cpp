@@ -632,8 +632,7 @@ LRESULT CFrameHolder::OnPaint(HWND hWnd, HDC hdc, UINT uMsg)
 	wchar_t szPaint[140];
 	_wsprintf(szPaint, SKIPCOUNT(szPaint) L"MainClient %s at {%i,%i}-{%i,%i} screen coords, size (%ix%i) calc (%ix%i)",
 		(uMsg == WM_PAINT) ? L"WM_PAINT" : (uMsg == WM_PRINTCLIENT) ? L"WM_PRINTCLIENT" : L"UnknownMsg",
-		rcClientReal.left, rcClientReal.top, rcClientReal.right, rcClientReal.bottom, rcClientReal.right-rcClientReal.left, rcClientReal.bottom-rcClientReal.top,
-		wr.right-wr.left, wr.bottom-wr.top);
+		LOGRECTCOORDS(rcClientReal), LOGRECTSIZE(rcClientReal), LOGRECTSIZE(wr));
 	DEBUGSTRPAINT(szPaint);
 	#endif
 

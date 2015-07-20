@@ -139,6 +139,9 @@ WARNING("WIN64 was not defined");
 #define LODWORD(ull) ((DWORD)((ULONGLONG)(ull) & 0x00000000ffffffff))
 #define HIDWORD(ull) ((DWORD)(ull>>32))
 
+#define LOGRECTCOORDS(rc) (rc).left, (rc).top, (rc).right, (rc).bottom
+#define LOGRECTSIZE(rc) (rc).right-(rc).left, (rc).bottom-(rc).top
+
 #define _abs(n) (((n)>=0) ? (n) : -(n))
 
 #define LDR_IS_DATAFILE(hm)      ((((ULONG_PTR)(hm)) & (ULONG_PTR)1) == (ULONG_PTR)1)

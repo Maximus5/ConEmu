@@ -13041,9 +13041,7 @@ void CConEmuMain::LogWindowPos(LPCWSTR asPrefix)
 			::IsWindowVisible(ghWnd) ? L"Visible" : L"Hidden",
 			::IsIconic(ghWnd) ? L"Iconic" : ::IsZoomed(ghWnd) ? L"Maximized" : L"Normal",
 			GetWindowModeName((ConEmuWindowMode)(gpSet->isQuakeStyle ? gpSet->_WindowMode : WindowMode)),
-			rcWnd.left, rcWnd.top, rcWnd.right, rcWnd.bottom,
-			(DWORD)hMon, mi.rcMonitor.left, mi.rcMonitor.top, mi.rcMonitor.right, mi.rcMonitor.bottom,
-			mi.rcWork.left, mi.rcWork.top, mi.rcWork.right, mi.rcWork.bottom);
+			LOGRECTCOORDS(rcWnd), (DWORD)hMon, LOGRECTCOORDS(mi.rcMonitor), LOGRECTCOORDS(mi.rcWork));
 		LogString(szInfo);
 	}
 }
@@ -13530,13 +13528,13 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		case WM_SIZING:
 		{
 			RECT* pRc = (RECT*)lParam;
-			wchar_t szDbg[128]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"WM_SIZING (Edge%i, {%i,%i}-{%i,%i})\n", (DWORD)wParam, pRc->left, pRc->top, pRc->right, pRc->bottom);
+			wchar_t szDbg[128]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"WM_SIZING (Edge%i, {%i,%i}-{%i,%i})\n", (DWORD)wParam, LOGRECTCOORDS(*pRc));
 
 			if (!isIconic())
 				result = this->OnSizing(wParam, lParam);
 
 			size_t cchLen = wcslen(szDbg);
-			_wsprintf(szDbg+cchLen, SKIPLEN(countof(szDbg)-cchLen) L" -> ({%i,%i}-{%i,%i})\n", pRc->left, pRc->top, pRc->right, pRc->bottom);
+			_wsprintf(szDbg+cchLen, SKIPLEN(countof(szDbg)-cchLen) L" -> ({%i,%i}-{%i,%i})\n", LOGRECTCOORDS(*pRc));
 			LogString(szDbg, true, false);
 			DEBUGSTRSIZE(szDbg);
 		} break;
@@ -13546,12 +13544,12 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			RECT* pRc = (RECT*)lParam;
 			if (pRc)
 			{
-				wchar_t szDbg[128]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"WM_MOVING ({%i,%i}-{%i,%i})", pRc->left, pRc->top, pRc->right, pRc->bottom);
+				wchar_t szDbg[128]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"WM_MOVING ({%i,%i}-{%i,%i})", LOGRECTCOORDS(*pRc));
 
 				result = this->OnMoving(pRc, true);
 
 				size_t cchLen = wcslen(szDbg);
-				_wsprintf(szDbg+cchLen, SKIPLEN(countof(szDbg)-cchLen) L" -> ({%i,%i}-{%i,%i})\n", pRc->left, pRc->top, pRc->right, pRc->bottom);
+				_wsprintf(szDbg+cchLen, SKIPLEN(countof(szDbg)-cchLen) L" -> ({%i,%i}-{%i,%i})\n", LOGRECTCOORDS(*pRc));
 				LogString(szDbg, true, false);
 				DEBUGSTRSIZE(szDbg);
 			}

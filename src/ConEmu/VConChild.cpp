@@ -448,7 +448,7 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 			#ifdef _DEBUG
 			{
 				wchar_t szPos[80]; RECT rcScreen = {}; GetWindowRect(hWnd, &rcScreen);
-				_wsprintf(szPos, SKIPCOUNT(szPos) L"PaintClient VCon[%i] at {%i,%i}-{%i,%i} screen coords", pVCon->Index(), rcScreen.left, rcScreen.top, rcScreen.right, rcScreen.bottom);
+				_wsprintf(szPos, SKIPCOUNT(szPos) L"PaintClient VCon[%i] at {%i,%i}-{%i,%i} screen coords", pVCon->Index(), LOGRECTCOORDS(rcScreen));
 				DEBUGSTRPAINTVCON(szPos);
 			}
 			#endif
@@ -460,7 +460,7 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 				#ifdef _DEBUG
 				{
 					wchar_t szPos[80]; RECT rcScreen = {}; GetWindowRect(hWnd, &rcScreen);
-					_wsprintf(szPos, SKIPCOUNT(szPos) L"PrintClient VCon[%i] at {%i,%i}-{%i,%i} screen coords", pVCon->Index(), rcScreen.left, rcScreen.top, rcScreen.right, rcScreen.bottom);
+					_wsprintf(szPos, SKIPCOUNT(szPos) L"PrintClient VCon[%i] at {%i,%i}-{%i,%i} screen coords", pVCon->Index(), LOGRECTCOORDS(rcScreen));
 					DEBUGSTRPAINTVCON(szPos);
 				}
 				#endif
@@ -1079,7 +1079,7 @@ LRESULT CConEmuChild::OnPaintGaps(HDC hdc)
 	#ifdef _DEBUG
 	{
 		wchar_t szPos[80]; RECT rcScreen = {}; GetWindowRect(mh_WndBack, &rcScreen);
-		_wsprintf(szPos, SKIPCOUNT(szPos) L"PaintGaps VCon[%i] at {%i,%i}-{%i,%i} screen coords", mp_VCon->Index(), rcScreen.left, rcScreen.top, rcScreen.right, rcScreen.bottom);
+		_wsprintf(szPos, SKIPCOUNT(szPos) L"PaintGaps VCon[%i] at {%i,%i}-{%i,%i} screen coords", mp_VCon->Index(), LOGRECTCOORDS(rcScreen));
 		DEBUGSTRPAINTGAPS(szPos);
 	}
 	#endif

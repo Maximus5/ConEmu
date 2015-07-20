@@ -362,7 +362,7 @@ public:
 		RECT rcFore = {0}; if (hFore) GetWindowRect(hFore, &rcFore);
 		if (hFore) GetClassName(hFore, szDesktop, countof(szDesktop)-1); else szDesktop[0] = 0;
 		if (hFore) GetWindowText(hFore, szTitle, countof(szTitle)-1); else szTitle[0] = 0;
-		_wsprintf(szSI, SKIPLEN(countof(szSI)) L"Foreground: x%08X {%i,%i}-{%i,%i} '%s' - %s", (DWORD)(DWORD_PTR)hFore, rcFore.left, rcFore.top, rcFore.right, rcFore.bottom, szDesktop, szTitle);
+		_wsprintf(szSI, SKIPLEN(countof(szSI)) L"Foreground: x%08X {%i,%i}-{%i,%i} '%s' - %s", (DWORD)(DWORD_PTR)hFore, LOGRECTCOORDS(rcFore), szDesktop, szTitle);
 		dumpEnvStr(szSI, true);
 
 		POINT ptCur = {0}; GetCursorPos(&ptCur);
@@ -403,8 +403,8 @@ public:
 			_wsprintf(szSI, SKIPLEN(countof(szSI))
 				L"  %08X: {%i,%i}-{%i,%i} (%ix%i), Working: {%i,%i}-{%i,%i} (%ix%i), dpi: %s `%s`%s",
 				(DWORD)(DWORD_PTR)p->hMon,
-				p->rcMonitor.left, p->rcMonitor.top, p->rcMonitor.right, p->rcMonitor.bottom, p->rcMonitor.right-p->rcMonitor.left, p->rcMonitor.bottom-p->rcMonitor.top,
-				p->rcWork.left, p->rcWork.top, p->rcWork.right, p->rcWork.bottom, p->rcWork.right-p->rcWork.left, p->rcWork.bottom-p->rcWork.top,
+				LOGRECTCOORDS(p->rcMonitor), LOGRECTSIZE(p->rcMonitor),
+				LOGRECTCOORDS(p->rcWork), LOGRECTSIZE(p->rcWork),
 				szDesktop, p->szDevice,
 				(p->dwFlags & MONITORINFOF_PRIMARY) ? L" <<== Primary" : L"");
 			dumpEnvStr(szSI, true);

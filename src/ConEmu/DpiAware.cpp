@@ -753,8 +753,7 @@ MArray<CDpiForDialog::DlgItem>* CDpiForDialog::LoadDialogItems(HWND hDlg)
 				{
 					wchar_t szLog[100];
 					_wsprintf(szLog, SKIPCOUNT(szLog) L"CheckBox Rect={%i,%i}-{%i,%i} Margin={%i,%i}-{%i,%i}",
-						i.r.left, i.r.top, i.r.right, i.r.bottom,
-						rcMargin.left, rcMargin.top, rcMargin.right, rcMargin.bottom);
+						LOGRECTCOORDS(i.r), LOGRECTCOORDS(rcMargin));
 					LogString(szLog);
 				}
 			}

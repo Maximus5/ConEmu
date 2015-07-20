@@ -13770,8 +13770,7 @@ void CRealConsole::SetGuiMode(DWORD anFlags, HWND ahGuiWnd, DWORD anStyle, DWORD
 				GetWindowRect(hBack, &rc);
 				_wsprintf(szTemp, SKIPLEN(countof(szTemp)) L"hGuiWnd=x%08X, Style=x%08X, StyleEx=x%08X, Prev={%i,%i}-{%i,%i}, Back={%i,%i}-{%i,%i}",
 					(DWORD)(DWORD_PTR)ahGuiWnd, (DWORD)(DWORD_PTR)hBack, anStyle, anStyleEx,
-					arcPrev.left, arcPrev.top, arcPrev.right, arcPrev.bottom,
-					rc.left, rc.top, rc.right, rc.bottom);
+					LOGRECTCOORDS(arcPrev), LOGRECTCOORDS(rc));
 				break;
 			case 1:
 				pszLabel = L"File";
