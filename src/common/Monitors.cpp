@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2013 Maximus5
+Copyright (c) 2013-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -297,4 +297,54 @@ HMONITOR GetNextMonitorInfo(MONITORINFO* pmi, LPCRECT prcWnd, bool Next)
 	}
 
 	return hFound;
+}
+
+HWND FindTaskbarWindow(LPRECT rcMon /*= NULL*/)
+{
+	HWND hTaskbar = NULL;
+	RECT rcTaskbar, rcMatch;
+
+	while ((hTaskbar = FindWindowEx(NULL, hTaskbar, L"Shell_TrayWnd", NULL)) != NULL)
+	{
+		if (!rcMon)
+		{
+			break; // OK, return first found
+		}
+		if (GetWindowRect(hTaskbar, &rcTaskbar)
+			&& IntersectRect(&rcMatch, &rcTaskbar, rcMon))
+		{
+			break; // OK, taskbar match monitor
+		}
+	}
+
+	return hTaskbar;
+}
+
+bool IsTaskbarAutoHidden(LPRECT rcMon /*= NULL*/, PUINT pEdge /*= NULL*/)
+{
+	HWND hTaskbar = FindTaskbarWindow(rcMon);
+	if (!hTaskbar)
+	{
+		return false;
+	}
+
+	APPBARDATA state = {sizeof(state), hTaskbar};
+	APPBARDATA pos = {sizeof(pos), hTaskbar};
+
+	LRESULT lState = SHAppBarMessage(ABM_GETSTATE, &state);
+	bool bAutoHidden = (lState & ABS_AUTOHIDE);
+
+	if (SHAppBarMessage(ABM_GETTASKBARPOS, &pos))
+	{
+		if (pEdge)
+			*pEdge = pos.uEdge;
+	}
+	else
+	{
+		_ASSERTE(FALSE && "Failed to get taskbar pos");
+		if (pEdge)
+			*pEdge = ABE_BOTTOM;
+	}
+
+	return bAutoHidden;
 }

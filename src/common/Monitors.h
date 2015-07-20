@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2013 Maximus5
+Copyright (c) 2013-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -35,3 +35,6 @@ bool GetMonitorInfoSafe(HMONITOR hMon, MONITORINFO& mi);
 HMONITOR GetPrimaryMonitorInfo(MONITORINFO* pmi = NULL);
 HMONITOR GetNearestMonitorInfo(MONITORINFO* pmi = NULL, HMONITOR hDefault = NULL, LPCRECT prcWnd = NULL, HWND hWnd = NULL);
 HMONITOR GetNextMonitorInfo(MONITORINFO* pmi, LPCRECT prcWnd, bool Next);
+
+HWND FindTaskbarWindow(LPRECT rcMon = NULL);
+bool IsTaskbarAutoHidden(LPRECT rcMon = NULL, PUINT pEdge = NULL);
