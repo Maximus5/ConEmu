@@ -1572,12 +1572,15 @@ LPWSTR ConEmuMacro::FindFarWindow(GuiMacro* p, CRealConsole* apRCon, bool abFrom
 	int nWindowType = 0;
 	LPWSTR pszName = NULL;
 
-	if (!p->GetStrArg(0, pszName))
-		return lstrdup(L"");
+	if (!p->GetIntArg(0, nWindowType))
+		return lstrdup(L"InvalidArg");
+
+	if (!p->GetStrArg(1, pszName))
+		return lstrdup(L"InvalidArg");
 
 	// Пустые строки не допускаются
 	if (!pszName || !*pszName)
-		return lstrdup(L"");
+		return lstrdup(L"InvalidArg");
 
 	return FindFarWindowHelper(nWindowType, pszName, apRCon, abFromPlugin);
 }

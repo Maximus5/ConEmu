@@ -2180,7 +2180,11 @@ LRESULT CConEmuSize::OnWindowPosChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 		gpSet->isAlwaysOnTop = false;
 	}
 
-	GetTileMode(true);
+	if (!IsWindowModeChanging())
+	{
+		GetTileMode(true);
+	}
+
 
 	#ifdef _DEBUG
 	if (isFullScreen() && !isZoomed())
@@ -3481,38 +3485,74 @@ ConEmuWindowCommand CConEmuSize::EvalTileMode(const RECT& rcWnd, MONITORINFO* pm
 	if (pmi)
 		*pmi = mi;
 
+	// Is auto-hidden task-bar found on current monitor?
+	UINT uEdge = (UINT)-1;
+	bool bAutoHidden = IsTaskbarAutoHidden(&mi.rcMonitor, &uEdge);
+	// Than we shall take it into account
+	RECT rcAlt = mi.rcWork;
+	if (bAutoHidden)
+	{
+		switch (uEdge)
+		{
+			case ABE_LEFT:   rcAlt.left   += 1; break;
+			case ABE_RIGHT:  rcAlt.right  -= 1; break;
+			case ABE_TOP:    rcAlt.top    += 1; break;
+			case ABE_BOTTOM: rcAlt.bottom -= 1; break;
+		}
+	}
+
+	_ASSERTE(IsWindowModeChanging() == false);
+
+	// If the window covers whole working area,
+	// that is not a "tile" mode, but sort of "Maximized"
+	if (((rcWnd.left == mi.rcWork.left) || (rcWnd.left == rcAlt.left))
+		&& ((rcWnd.right == mi.rcWork.right) || (rcWnd.right == rcAlt.right))
+		&& ((rcWnd.top == mi.rcWork.top) || (rcWnd.top == rcAlt.top))
+		&& ((rcWnd.bottom == mi.rcWork.bottom) || (rcWnd.bottom == rcAlt.bottom)))
+	{
+		goto wrap;
+	}
+
 	// _abs(x1-x2) <= 1 ?
-	if ((rcWnd.right == mi.rcWork.right)
-		&& (rcWnd.top == mi.rcWork.top)
-		&& (rcWnd.bottom == mi.rcWork.bottom))
+	if (((rcWnd.right == mi.rcWork.right) || (rcWnd.right == rcAlt.right))
+		&& ((rcWnd.top == mi.rcWork.top) || (rcWnd.top == rcAlt.top))
+		&& ((rcWnd.bottom == mi.rcWork.bottom) || (rcWnd.bottom == rcAlt.bottom)))
 	{
 		int nCenter = ((mi.rcWork.right + mi.rcWork.left) >> 1) - rcWnd.left;
 		if (_abs(nCenter) <= 4)
 		{
 			CurTile = cwc_TileRight;
+			goto wrap;
 		}
 	}
-	else if ((rcWnd.left == mi.rcWork.left)
-		&& (rcWnd.top == mi.rcWork.top)
-		&& (rcWnd.bottom == mi.rcWork.bottom))
+
+	if (((rcWnd.left == mi.rcWork.left) || (rcWnd.left == rcAlt.left))
+		&& ((rcWnd.top == mi.rcWork.top) || (rcWnd.top == rcAlt.top))
+		&& ((rcWnd.bottom == mi.rcWork.bottom) || (rcWnd.bottom == rcAlt.bottom)))
 	{
 		int nCenter = ((mi.rcWork.right + mi.rcWork.left) >> 1) - rcWnd.right;
 		if (_abs(nCenter) <= 4)
 		{
 			CurTile = cwc_TileLeft;
+			goto wrap;
 		}
 	}
-	else if ((rcWnd.top == mi.rcWork.top)
-		&& (rcWnd.bottom == mi.rcWork.bottom))
+
+	if (((rcWnd.top == mi.rcWork.top) || (rcWnd.top == rcAlt.top))
+		&& ((rcWnd.bottom == mi.rcWork.bottom) || (rcWnd.bottom == rcAlt.bottom)))
 	{
 		CurTile = cwc_TileHeight;
-	}
-	else if ((rcWnd.left == mi.rcWork.left)
-		&& (rcWnd.right == mi.rcWork.right))
-	{
-		CurTile = cwc_TileWidth;
+		goto wrap;
 	}
 
+	if (((rcWnd.left == mi.rcWork.left) || (rcWnd.left == rcAlt.left))
+		&& ((rcWnd.right == mi.rcWork.right) || (rcWnd.right == rcAlt.right)))
+	{
+		CurTile = cwc_TileWidth;
+		goto wrap;
+	}
+
+wrap:
 	return CurTile;
 }
 
