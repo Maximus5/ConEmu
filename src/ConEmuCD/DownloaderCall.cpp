@@ -485,6 +485,8 @@ public:
 		wchar_t* pszCommand = NULL;
 		wchar_t* szCmdDirectory = NULL; // Destination directory for file creation
 
+		MCHKHEAP;
+
 		// Split target into directory and file-name
 		LPCWSTR pszName = PointToName(asTarget);
 		if (pszName > asTarget)
@@ -507,6 +509,7 @@ public:
 		}
 
 		_ASSERTE(m_PI.hProcess==NULL);
+		MCHKHEAP;
 
 		nWait = ExecuteDownloader(pszCommand, szCmdDirectory);
 		if (nWait != 0)
@@ -525,6 +528,7 @@ public:
 
 		iRc = 0; // OK
 	wrap:
+		MCHKHEAP;
 		SafeFree(pszCommand);
 		SafeFree(szCmdDirectory);
 		CloseHandles();

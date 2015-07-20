@@ -1351,6 +1351,8 @@ BOOL CConEmuUpdate::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, DWORD& crc,
 	BOOL lbRc = FALSE, lbRead = FALSE, lbWrite = FALSE;
 	CEDownloadErrorArg args[3] = {};
 
+	MCHKHEAP;
+
 	mn_InternetContentReady = 0;
 
 	// This implies Inet.Deinit(false) too
@@ -1385,6 +1387,8 @@ BOOL CConEmuUpdate::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, DWORD& crc,
 	args[1].argType = at_Str;  args[1].strArg = asTarget;
 	args[2].argType = at_Uint; args[2].uintArg = (mb_ManualCallMode || abPackage);
 
+	MCHKHEAP;
+
 	lbRc = Inet.DownloadCommand(dc_DownloadFile, 3, args);
 	if (lbRc)
 	{
@@ -1401,11 +1405,14 @@ BOOL CConEmuUpdate::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, DWORD& crc,
 	}
 wrap:
 	Inet.SetCallback(dc_ProgressCallback, NULL, 0);
+	MCHKHEAP;
 	return lbRc;
 }
 
 void CConEmuUpdate::ReportErrorInt(wchar_t* asErrorInfo)
 {
+	MCHKHEAP;
+
 	if (gpConEmu)
 		gpConEmu->LogString(asErrorInfo);
 
@@ -1433,6 +1440,8 @@ void CConEmuUpdate::ReportErrorInt(wchar_t* asErrorInfo)
 		}
 	}
 
+	MCHKHEAP;
+
 	if (mn_InShowMsgBox > 0)
 	{
 		InterlockedIncrement(&mn_ErrorInfoSkipCount);
@@ -1446,6 +1455,8 @@ void CConEmuUpdate::ReportErrorInt(wchar_t* asErrorInfo)
 		gpConEmu->CallMainThread(false, ShowLastError, (LPARAM)this);
 	else
 		SafeFree(asErrorInfo);
+
+	MCHKHEAP;
 }
 
 void CConEmuUpdate::ReportError(LPCWSTR asFormat, DWORD nErrCode)
