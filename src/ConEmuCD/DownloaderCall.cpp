@@ -534,6 +534,7 @@ public:
 public:
 	CDownloader()
 	{
+		DEBUGTEST(gbAllowChkHeap = true);
 		mb_AsyncMode = true;
 		ZeroStruct(m_Server);
 		ZeroStruct(m_Proxy);

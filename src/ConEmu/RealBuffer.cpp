@@ -88,7 +88,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define Alloc calloc
 
 #ifdef _DEBUG
-#define HEAPVAL //MCHKHEAP
+#define HEAPVAL MCHKHEAP
 #else
 #define HEAPVAL
 #endif

@@ -89,7 +89,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //HWND ghOpWnd=NULL;
 
 #ifdef _DEBUG
-#define HEAPVAL //HeapValidate(GetProcessHeap(), 0, NULL);
+#define HEAPVAL HeapValidate(GetProcessHeap(), 0, NULL);
 #else
 #define HEAPVAL
 #endif

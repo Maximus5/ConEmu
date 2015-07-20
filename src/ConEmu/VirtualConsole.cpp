@@ -119,7 +119,7 @@ WARNING("Часто после разблокирования компьютер
 
 #ifdef _DEBUG
 //#undef HEAPVAL
-#define HEAPVAL //HeapValidate(mh_Heap, 0, NULL);
+#define HEAPVAL HeapValidate(mh_Heap, 0, NULL);
 #define HEAPVALPTR(p) //xf_validate(p)
 #define CURSOR_ALWAYS_VISIBLE
 #else
