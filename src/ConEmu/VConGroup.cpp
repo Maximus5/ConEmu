@@ -4049,6 +4049,8 @@ bool CVConGroup::ConActivate(int nCon)
 			SyncWindowToConsole(); // -- функция пустая, игнорируется
 
 		ShowActiveGroup(pOldActive);
+
+		return true; // Success
 	}
 
 	return false;
