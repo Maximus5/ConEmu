@@ -2252,7 +2252,9 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 		_ASSERTE(gpConEmu);
 		return;
 	}
-	gpConEmu->LogString(L"Settings::LoadSettings");
+	// Log xml/reg + file + config
+	CEStr lsDesc = GetStoragePlaceDescr(apStorage, L"Settings::LoadSettings");
+	gpConEmu->LogString(lsDesc.ms_Arg);
 
 	// Settings service
 	SettingsBase* reg = NULL;
@@ -4230,6 +4232,36 @@ void Settings::CheckConsoleSettings()
 			MBoxA(szWarning);
 		}
 	}
+}
+
+wchar_t* Settings::GetStoragePlaceDescr(const SettingsStorage* apStorage, LPCWSTR asPrefix)
+{
+	wchar_t* pszDescr = asPrefix ? lstrdup(asPrefix) : NULL;
+
+	if (apStorage)
+	{
+		lstrmerge(&pszDescr, L" ", apStorage->szType);
+		if (apStorage->pszFile && *apStorage->pszFile)
+			lstrmerge(&pszDescr, L" ", apStorage->pszFile);
+		if (apStorage->pszConfig && *apStorage->pszConfig)
+			lstrmerge(&pszDescr, L" -config ", apStorage->pszConfig);
+		return pszDescr;
+	}
+
+	LPCWSTR pszConfig = gpSetCls->GetConfigName();
+	LPCWSTR pszFile = gpConEmu->ConEmuXml();
+	if (pszFile && *pszFile && FileExists(pszFile))
+	{
+		lstrmerge(&pszDescr, L" ", CONEMU_CONFIGTYPE_XML, L" ", pszFile);
+		if (pszConfig && *pszConfig)
+			lstrmerge(&pszDescr, L" -config ", pszConfig);
+		return pszDescr;
+	}
+
+	lstrmerge(&pszDescr, L" ", CONEMU_CONFIGTYPE_REG,
+		(pszConfig && *pszConfig) ? L" -config " : NULL,
+		(pszConfig && *pszConfig) ? pszConfig : NULL);
+	return pszDescr;
 }
 
 SettingsBase* Settings::CreateSettings(const SettingsStorage* apStorage)

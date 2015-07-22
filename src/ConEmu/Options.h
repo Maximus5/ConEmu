@@ -1051,6 +1051,7 @@ struct Settings
 		void ResetSavedOnExit();
 
 		SettingsBase* CreateSettings(const SettingsStorage* apStorage);
+		wchar_t* GetStoragePlaceDescr(const SettingsStorage* apStorage, LPCWSTR asPrefix);
 
 		void GetSettingsType(SettingsStorage& Storage, bool& ReadOnly);
 };
