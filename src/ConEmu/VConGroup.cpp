@@ -4023,6 +4023,106 @@ void CVConGroup::StoreActiveVCon(CVirtualConsole* pVCon)
 	}
 }
 
+bool CVConGroup::ConActivate(CVConGuard& VCon, int nCon)
+{
+	CVirtualConsole* pVCon = VCon.VCon();
+
+	if (pVCon == NULL)
+	{
+		_ASSERTE(pVCon!=NULL && "VCon was not created");
+		return false;
+	}
+
+	if (pVCon->RCon() == NULL)
+	{
+		_ASSERTE(FALSE && "mp_RCon was not created");
+		return false;
+	}
+
+	if (pVCon == gp_VActive)
+	{
+		// Iterate tabs
+		int nTabCount;
+		CRealConsole *pRCon;
+
+		// By sequental pressing "Win+<Number>" - loop tabs of active console (Far Manager windows)
+		if (gpSet->isMultiIterate
+			    && ((pRCon = gp_VActive->RCon()) != NULL)
+			    && ((nTabCount = pRCon->GetTabCount())>1))
+		{
+			int nNextActive = pRCon->GetActiveTab()+1;
+
+			if (nNextActive >= nTabCount)
+				nNextActive = 0;
+
+			CTab tab(__FILE__,__LINE__);
+			if (pRCon->GetTab(nNextActive, tab))
+			{
+				int nFarWndId = tab->Info.nFarWindowID;
+				if (pRCon->CanActivateFarWindow(nFarWndId))
+					pRCon->ActivateFarWindow(nFarWndId);
+			}
+		}
+
+		return true; // Success
+	}
+
+	bool lbSizeOK = true;
+	int nOldConNum = ActiveConNum();
+
+	CVirtualConsole* pOldActive = gp_VActive;
+
+	// Hide PictureView and others...
+	if (gp_VActive && gp_VActive->RCon())
+	{
+		gp_VActive->RCon()->OnDeactivate(nCon);
+	}
+
+	// BEFORE switching into other console - update its dimensions
+	CRealConsole* pRCon = pVCon->RCon();
+	int nOldConWidth = pRCon->TextWidth();
+	int nOldConHeight = pRCon->TextHeight();
+	RECT rcNewCon = gpConEmu->CalcRect(CER_CONSOLE_CUR, pVCon);
+	int nNewConWidth = rcNewCon.right;
+	int nNewConHeight = rcNewCon.bottom;
+
+	wchar_t szInfo[128];
+	_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"Activating con #%u, OldSize={%u,%u}, NewSize={%u,%u}",
+		nCon, nOldConWidth, nOldConHeight, nNewConWidth, nNewConHeight);
+	if (gpSetCls->isAdvLogging)
+	{
+		pRCon->LogString(szInfo);
+	}
+	else
+	{
+		DEBUGSTRACTIVATE(szInfo);
+	}
+
+	if (!pRCon->isServerClosing()
+		&& (nOldConWidth != nNewConWidth || nOldConHeight != nNewConHeight))
+	{
+		DWORD nCmdID = CECMD_SETSIZESYNC;
+		if (!pRCon->isFar(true)) nCmdID = CECMD_SETSIZENOSYNC;
+		lbSizeOK = pRCon->SetConsoleSize(nNewConWidth, nNewConHeight, 0/*don't change buffer size*/, nCmdID);
+	}
+
+	// Currect sizes of VCon/Back
+	RECT rcWork = {};
+	rcWork = gpConEmu->CalcRect(CER_WORKSPACE, pVCon);
+	CVConGroup::MoveAllVCon(pVCon, rcWork);
+
+	setActiveVConAndFlags(pVCon);
+
+	pRCon->OnActivate(nCon, nOldConNum);
+
+	if (!lbSizeOK)
+		SyncWindowToConsole(); // -- dummy
+
+	ShowActiveGroup(pOldActive);
+
+	return true; // Success
+}
+
 // nCon - zero-based index of console
 bool CVConGroup::ConActivate(int nCon)
 {
@@ -4052,88 +4152,10 @@ bool CVConGroup::ConActivate(int nCon)
 			return false;
 		}
 
-		if (pVCon == gp_VActive)
-		{
-			// Итерация табов
-			int nTabCount;
-			CRealConsole *pRCon;
+		_ASSERTE(nCon == VCon->Index()); // Informational, but it must match
 
-			// При последовательном нажатии "Win+<Number>" - крутить табы активной консоли
-			if (gpSet->isMultiIterate
-			        && ((pRCon = gp_VActive->RCon()) != NULL)
-			        && ((nTabCount = pRCon->GetTabCount())>1))
-			{
-				int nNextActive = pRCon->GetActiveTab()+1;
-
-				if (nNextActive >= nTabCount)
-					nNextActive = 0;
-
-				CTab tab(__FILE__,__LINE__);
-				if (pRCon->GetTab(nNextActive, tab))
-				{
-					int nFarWndId = tab->Info.nFarWindowID;
-					if (pRCon->CanActivateFarWindow(nFarWndId))
-						pRCon->ActivateFarWindow(nFarWndId);
-				}
-			}
-
-			return true; // уже
-		}
-
-		bool lbSizeOK = true;
-		int nOldConNum = ActiveConNum();
-
-		CVirtualConsole* pOldActive = gp_VActive;
-
-		// Спрятать PictureView, или еще чего...
-		if (gp_VActive && gp_VActive->RCon())
-		{
-			gp_VActive->RCon()->OnDeactivate(nCon);
-		}
-
-		// ПЕРЕД переключением на новую консоль - обновить ее размеры
-		CRealConsole* pRCon = pVCon->RCon();
-		int nOldConWidth = pRCon->TextWidth();
-		int nOldConHeight = pRCon->TextHeight();
-		RECT rcNewCon = gpConEmu->CalcRect(CER_CONSOLE_CUR, pVCon);
-		int nNewConWidth = rcNewCon.right;
-		int nNewConHeight = rcNewCon.bottom;
-
-		wchar_t szInfo[128];
-		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"Activating con #%u, OldSize={%u,%u}, NewSize={%u,%u}",
-			nCon, nOldConWidth, nOldConHeight, nNewConWidth, nNewConHeight);
-		if (gpSetCls->isAdvLogging)
-		{
-			pRCon->LogString(szInfo);
-		}
-		else
-		{
-			DEBUGSTRACTIVATE(szInfo);
-		}
-
-		if (!pRCon->isServerClosing()
-			&& (nOldConWidth != nNewConWidth || nOldConHeight != nNewConHeight))
-		{
-			DWORD nCmdID = CECMD_SETSIZESYNC;
-			if (!pRCon->isFar(true)) nCmdID = CECMD_SETSIZENOSYNC;
-			lbSizeOK = pRCon->SetConsoleSize(nNewConWidth, nNewConHeight, 0/*не менять*/, nCmdID);
-		}
-
-		// И поправить размеры VCon/Back
-		RECT rcWork = {};
-		rcWork = gpConEmu->CalcRect(CER_WORKSPACE, pVCon);
-		CVConGroup::MoveAllVCon(pVCon, rcWork);
-
-		setActiveVConAndFlags(pVCon);
-
-		pRCon->OnActivate(nCon, nOldConNum);
-
-		if (!lbSizeOK)
-			SyncWindowToConsole(); // -- функция пустая, игнорируется
-
-		ShowActiveGroup(pOldActive);
-
-		return true; // Success
+		// Do the activation
+		return ConActivate(VCon, nCon);
 	}
 
 	return false;
