@@ -3374,6 +3374,8 @@ bool CVConGroup::Activate(CVirtualConsole* apVCon)
 
 	bool lbRc = false;
 
+	// Как-то все запутанно, с вызовами ConActivate и разными функциями...
+
 	for (size_t i = 0; i < countof(gp_VCon); i++)
 	{
 		if (gp_VCon[i] == apVCon)
