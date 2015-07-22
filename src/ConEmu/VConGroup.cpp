@@ -3728,6 +3728,89 @@ bool CVConGroup::GetVConByHWND(HWND hConWnd, HWND hDcWnd, CVConGuard* pVCon /*= 
 	return Impl.bFound;
 }
 
+// asName - renamed title, console title, active process name, root process name
+bool CVConGroup::GetVConByName(LPCWSTR asName, CVConGuard* rpVCon /*= NULL*/)
+{
+	if (!asName || !*asName)
+		return false;
+
+	struct impl
+	{
+		LPCWSTR pszName;
+		CVConGuard VCon;
+
+		enum {
+			m_Renamed = 0,
+			m_StdTitle,
+			m_ActiveExe,
+			m_RootExe,
+			m_Last
+		};
+		int  iMode;
+		bool bRenamed;
+
+		static bool FindVCon(CVirtualConsole* pVCon, LPARAM lParam)
+		{
+			impl* p = (impl*)lParam;
+			CRealConsole* pRCon = pVCon->RCon();
+			if (!pRCon)
+				return true; // Try next
+
+			// ‘Renamed’ flags match?
+			if (p->bRenamed != ((pRCon->GetActiveTabType() & fwt_Renamed) == fwt_Renamed))
+				return true; // Try next
+
+			LPCWSTR pszTitle;
+			switch (p->iMode)
+			{
+			case m_StdTitle:
+				pszTitle = pRCon->GetTitle(false);
+				break;
+			case m_ActiveExe:
+				pszTitle = pRCon->GetActiveProcessName();
+				break;
+			case m_RootExe:
+				pszTitle = pRCon->GetRootProcessName();
+				break;
+			default:
+				pszTitle = pRCon->GetTitle(true);
+			}
+
+			// Compare insensitively
+			if (pszTitle && (lstrcmpi(p->pszName, pszTitle)) == 0)
+			{
+				p->VCon.Attach(pVCon);
+				return false; // Found, stop iterations
+			}
+			return true;
+		};
+	} Impl = {asName};
+
+	// Try only renamed tabs first
+	Impl.iMode = impl::m_Renamed; Impl.bRenamed = true;
+	EnumVCon(evf_All, impl::FindVCon, (LPARAM)&Impl);
+
+	for (int step = 0; !Impl.VCon.VCon() && (step <= 1); step++)
+	{
+		// To be able activate "cmd.exe" tab which is NOT renamed,
+		// we shall find for non-renamed tabs first!
+		Impl.bRenamed = (step == 1);
+		for (Impl.iMode = impl::m_StdTitle; (Impl.iMode < impl::m_Last) && !Impl.VCon.VCon(); Impl.iMode++)
+		{
+			EnumVCon(evf_All, impl::FindVCon, (LPARAM)&Impl);
+		}
+	}
+
+	// Not found
+	if (!Impl.VCon.VCon())
+		return false;
+
+	// Found
+	if (rpVCon)
+		rpVCon->Attach(Impl.VCon.VCon());
+	return true;
+}
+
 // Вернуть общее количество процессов по всем консолям
 DWORD CVConGroup::CheckProcesses()
 {
