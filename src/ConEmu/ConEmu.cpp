@@ -3153,6 +3153,12 @@ bool CConEmuMain::ConActivate(int nCon)
 	return CVConGroup::ConActivate(nCon);
 }
 
+// asName - renamed title, console title, active process name, root process name
+bool CConEmuMain::ConActivateByName(LPCWSTR asName)
+{
+	return CVConGroup::ConActivateByName(asName);
+}
+
 bool CConEmuMain::CreateWnd(RConStartArgs *args)
 {
 	if (!args || !args->pszSpecialCmd || !*args->pszSpecialCmd)

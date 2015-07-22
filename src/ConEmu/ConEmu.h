@@ -596,6 +596,7 @@ class CConEmuMain
 		void ForceSelectionModifierPressed(DWORD nValue);
 		enum DragPanelBorder CheckPanelDrag(COORD crCon);
 		bool ConActivate(int nCon);
+		bool ConActivateByName(LPCWSTR asName);
 		bool ConActivateNext(BOOL abNext);
 		bool CreateWnd(RConStartArgs *args);
 		CVirtualConsole* CreateCon(RConStartArgs *args, bool abAllowScripts = false, bool abForceCurConsole = false);

@@ -3811,6 +3811,19 @@ bool CVConGroup::GetVConByName(LPCWSTR asName, CVConGuard* rpVCon /*= NULL*/)
 	return true;
 }
 
+// asName - renamed title, console title, active process name, root process name
+bool CVConGroup::ConActivateByName(LPCWSTR asName)
+{
+	CVConGuard VCon;
+	if (!GetVConByName(asName, &VCon))
+		return false;
+
+	if (VCon->isActive(false/*abAllowGroup*/))
+		return true; // Already active
+
+	return Activate(VCon.VCon());
+}
+
 // Вернуть общее количество процессов по всем консолям
 DWORD CVConGroup::CheckProcesses()
 {
