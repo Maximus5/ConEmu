@@ -288,6 +288,7 @@ enum ConEmuTabCommand
 	ctc_ShowTabsList = 8,
 	ctc_CloseTab = 9,
 	ctc_SwitchPaneDirect = 10,
+	ctc_ActivateByName = 11,
 };
 
 enum ConEmuStatusCommand

@@ -3453,6 +3453,19 @@ LPWSTR ConEmuMacro::Tab(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 				pszResult = lstrdup(L"OK");
 			}
 			break;
+		case ctc_ActivateByName: // activate console by renamed title, console title, active process name, root process name
+			if (p->IsStrArg(1))
+			{
+				LPWSTR pszName = NULL;
+				if (p->GetStrArg(1, pszName))
+				{
+					if (gpConEmu->ConActivateByName(pszName))
+						pszResult = lstrdup(L"OK");
+					else
+						pszResult = lstrdup(L"NotFound");
+				}
+			}
+			break;
 		case ctc_ShowTabsList: //
 			CConEmuCtrl::key_ShowTabsList(NullChord, false, NULL, NULL/*чтобы не зависимо от фара показала меню*/);
 			break;

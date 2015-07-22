@@ -416,6 +416,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"     Cmd==8: show tabs list menu (indiffirent Far/Not Far)\r\n" \
 	L"     Cmd==9: close active tab, same as Close(3)\r\n" \
 	L"     Cmd==10: switches visible split-panes, Parm=(1,-1)\r\n" \
+	L"     Cmd==11: activates tab by name, title or process name\r\n" \
 	L"Task(Index[,\"Dir\"])\r\n" \
 	L"  - start task with 1-based index\r\n" \
 	L"Transparency(<Cmd>,<Value>)\r\n" \
