@@ -19,6 +19,15 @@ http://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2015.7.22
+* gh#129: ‘Restore’ button didn't restore width if TaskBar was auto-hidden.
+* GuiMacro: Tab(11,"Name"): activates tab by name, title or process name
+* Describe some switches in the About dialog.
+* Some additional logging while resizing window.
+* Write to Log information about used storage location (xml-file/reg + config).
+* For debugging purposes SEH is disabled in this release.
+
+
 2015.7.16
 [!] Now user may use any external downloader tool if ConEmu's internal does not suite.
 [*] Implement new switch `-update` to force automatic update procedure.
