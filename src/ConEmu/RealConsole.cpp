@@ -33,6 +33,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define SHOWDEBUGSTR
 //#define ALLOWUSEFARSYNCHRO
 
+// To catch gh#222
+#undef USE_SEH
+
 #include "Header.h"
 #include <Tlhelp32.h>
 #pragma warning(disable: 4091)
