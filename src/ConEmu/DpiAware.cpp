@@ -327,7 +327,7 @@ int CDpiAware::QueryDpiForMonitor(HMONITOR hmon, DpiValue* pDpi /*= NULL*/, Moni
 	return dpiY;
 }
 
-void CDpiAware::GetCenteredRect(HWND hWnd, RECT& rcCentered)
+void CDpiAware::GetCenteredRect(HWND hWnd, RECT& rcCentered, HMONITOR hDefault /*= NULL*/)
 {
 	bool lbCentered = false;
 	HMONITOR hMon;
@@ -338,7 +338,7 @@ void CDpiAware::GetCenteredRect(HWND hWnd, RECT& rcCentered)
 		hMon = MonitorFromRect(&rcCentered, MONITOR_DEFAULTTONEAREST);
 
 	MONITORINFO mi = {};
-	GetNearestMonitorInfo(&mi, NULL, hWnd ? NULL : &rcCentered, hWnd);
+	GetNearestMonitorInfo(&mi, hDefault, hWnd ? NULL : &rcCentered, hWnd);
 
 	int iWidth  = rcCentered.right - rcCentered.left;
 	int iHeight = rcCentered.bottom - rcCentered.top;

@@ -93,7 +93,7 @@ public:
 	static int QueryDpiForMonitor(HMONITOR hmon, DpiValue* pDpi = NULL, MonitorDpiType dpiType = MDT_Default);
 
 	// Dialog helper
-	static void GetCenteredRect(HWND hWnd, RECT& rcCentered);
+	static void GetCenteredRect(HWND hWnd, RECT& rcCentered, HMONITOR hDefault = NULL);
 };
 
 class CDynDialog;
