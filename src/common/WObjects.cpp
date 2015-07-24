@@ -718,6 +718,14 @@ bool IsVsNetHostExe(LPCWSTR asFilePatName)
 	return bVsNetHostRequested;
 }
 
+bool IsGDB(LPCWSTR asFilePatName)
+{
+	// "gdb.exe"
+	LPCWSTR pszName = PointToName(asFilePatName);
+	bool bIsGdb = pszName ? (lstrcmpi(pszName, L"gdb.exe") == 0) : false;
+	return bIsGdb;
+}
+
 // Check running process bits - 32/64
 int GetProcessBits(DWORD nPID, HANDLE hProcess /*= NULL*/)
 {

@@ -55,6 +55,7 @@ typedef BOOL (WINAPI* AttachConsole_t)(DWORD dwProcessId);
 bool FileExists(LPCWSTR asFilePath, DWORD* pnSize = NULL);
 bool FileSearchInDir(LPCWSTR asFilePath, CmdArg& rsFound);
 bool IsVsNetHostExe(LPCWSTR asFilePatName);
+bool IsGDB(LPCWSTR asFilePatName);
 
 typedef bool (*SearchAppPaths_t)(LPCWSTR asFilePath, CmdArg& rsFound, bool abSetPath, CmdArg* rpsPathRestore /*= NULL*/);
 extern SearchAppPaths_t gfnSearchAppPaths /*= NULL*/;
