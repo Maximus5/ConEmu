@@ -53,7 +53,7 @@ bool SetConsoleCpHelper(UINT nCP)
 
 	//Issue 60: BUGBUG: On some OS versions (Win2k3, WinXP) SetConsoleCP (and family) just hangs
 	DWORD nTID;
-	HANDLE hThread = apiCreateThread(OurSetConsoleCPThread, (LPVOID)nCP, &nTID, "OurSetConsoleCPThread(%u)", nCP);
+	HANDLE hThread = apiCreateThread(OurSetConsoleCPThread, (LPVOID)(DWORD_PTR)nCP, &nTID, "OurSetConsoleCPThread(%u)", nCP);
 
 	if (hThread)
 	{

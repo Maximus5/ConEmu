@@ -204,7 +204,7 @@ bool CAttachDlg::OnStartAttach()
 			L.nType = apt_Gui;
 
 		ListView_GetItemText(mh_List, iCur, alc_HWND, szItem, countof(szItem));
-		L.hAttachWnd = (szItem[0]==L'0' && szItem[1]==L'x') ? (HWND)wcstoul(szItem+2, &psz, 16) : NULL;
+		L.hAttachWnd = (szItem[0]==L'0' && szItem[1]==L'x') ? (HWND)(DWORD_PTR)wcstoul(szItem+2, &psz, 16) : NULL;
 
 		if (!L.nPID || !L.nBits || !L.nType || !L.hAttachWnd)
 		{

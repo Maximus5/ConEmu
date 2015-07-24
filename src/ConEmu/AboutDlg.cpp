@@ -788,7 +788,7 @@ void ConEmuAbout::DonateBtns_Add(HWND hDlg, int AlignLeftId, int AlignVCenterId)
 		hCtrl = CreateWindow(L"STATIC", m_Btns[i].ResId,
 			WS_CHILD|WS_VISIBLE|SS_NOTIFY|SS_OWNERDRAW,
 			X, nY, nDispW, nDispH,
-			hDlg, (HMENU)m_Btns[i].nCtrlId, g_hInstance, NULL);
+			hDlg, (HMENU)(DWORD_PTR)m_Btns[i].nCtrlId, g_hInstance, NULL);
 
 		#ifdef _DEBUG
 		if (!hCtrl)

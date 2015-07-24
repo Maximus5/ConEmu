@@ -9565,7 +9565,7 @@ void CConEmuMain::CheckActiveLayoutName()
 	#ifdef TEST_JP_LANS
 	wcscpy_c(szLayout, L"00000411");
 	hkl = (HKL)0x04110411;
-	nCount = 3; hKeyb[0] = (HKL)0x04110411; hKeyb[0] = (HKL)0xE0200411; hKeyb[0] = (HKL)0x04090409;
+	nCount = 3; hKeyb[0] = (HKL)(DWORD_PTR)0x04110411; hKeyb[0] = (HKL)(DWORD_PTR)0xE0200411; hKeyb[0] = (HKL)(DWORD_PTR)0x04090409;
 	#endif
 
 	DWORD dwLayout = wcstoul(szLayout, &pszEnd, 16);

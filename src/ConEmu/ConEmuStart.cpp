@@ -1035,7 +1035,7 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 
 					wchar_t* pszEnd;
 					// Здесь указывается HWND, в котором нужно создаваться.
-					HWND hParent = (HWND)wcstol(curCommand, &pszEnd, 16);
+					HWND hParent = (HWND)(DWORD_PTR)wcstoul(curCommand, &pszEnd, 16);
 					if (hParent && IsWindow(hParent))
 					{
 						CConEmuInside::InitInside(bRunAsAdmin, false, NULL, 0, hParent);

@@ -387,7 +387,7 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 			if (pIn->SrvStartStop.Started == srv_Started)
 			{
 				// Запущен процесс сервера
-				HWND hConWnd = (HWND)pIn->dwData[1];
+				HWND hConWnd = (HWND)(DWORD_PTR)pIn->dwData[1];
 				_ASSERTE(hConWnd && IsWindow(hConWnd));
 
 				DWORD nStartTick = timeGetTime();
