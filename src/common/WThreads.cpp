@@ -162,7 +162,7 @@ BOOL apiTerminateThreadEx(HANDLE hThread, DWORD dwExitCode, LPCSTR asFile, int a
 			pThread->nExitCode = dwExitCode;
 			pThread->bTerminated = TRUE;
 			pThread->nEndTick = GetTickCount();
-			g_TerminatedThreadIdx = c;
+			g_TerminatedThreadIdx = LOLONG(c);
 		}
 	}
 

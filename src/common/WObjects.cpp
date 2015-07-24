@@ -1391,7 +1391,7 @@ UINT GetCpFromString(LPCWSTR asString, LPCWSTR* ppszEnd /*= NULL*/)
 			// После имени могут быть разделители (знаки пунктуации)
 			if (asString[iLen] == 0 || (asString[iLen] && wcschr(L",.:; \t\r\n", asString[iLen])))
 			{
-				nCP = p->nCP;
+				nCP = LODWORD(p->nCP);
 				pszEnd = (wchar_t*)asString+iLen;
 				// CP_ACP is 0, so jump to wrap instead of break
 				goto wrap;

@@ -38,7 +38,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //Поэтому выполняем в отдельном потоке, и если он завис - просто зовем TerminateThread
 static DWORD WINAPI OurSetConsoleCPThread(LPVOID lpParameter)
 {
-	UINT nCP = (UINT)lpParameter;
+	UINT nCP = LODWORD(lpParameter);
 	SetConsoleCP(nCP);
 	SetConsoleOutputCP(nCP);
 	return 0;
