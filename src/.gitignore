@@ -5,6 +5,7 @@ TabThemes
 Tools
 .build/
 .codeblocks/
+.vs
 Icons/
 CE2-preview.sln
 compile.txt
