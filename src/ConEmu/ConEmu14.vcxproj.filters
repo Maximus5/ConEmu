@@ -312,6 +312,12 @@
     <ClCompile Include="UnitTests.cpp">
       <Filter>0 - Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\common\WThreads.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="PushInfo.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Attach.h">
@@ -687,6 +693,12 @@
     <ClInclude Include="UnitTests.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\common\WThreads.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PushInfo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Circles.bmp">
@@ -747,26 +759,6 @@
     <ResourceCompile Include="ConEmu.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <CustomBuild Include="ConEmu.ico">
-      <Filter>Resource Files</Filter>
-    </CustomBuild>
-    <CustomBuild Include="CursorDragCopy.cur">
-      <Filter>Resource Files</Filter>
-    </CustomBuild>
-    <CustomBuild Include="CursorDragLink.cur">
-      <Filter>Resource Files</Filter>
-    </CustomBuild>
-    <CustomBuild Include="CursorDragMove.cur">
-      <Filter>Resource Files</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Far.ico">
-      <Filter>Resource Files</Filter>
-    </CustomBuild>
-    <CustomBuild Include="FAR2.ico">
-      <Filter>Resource Files</Filter>
-    </CustomBuild>
   </ItemGroup>
   <ItemGroup>
     <Image Include="Copy24.bmp">

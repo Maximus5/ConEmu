@@ -57,6 +57,18 @@
     <ClInclude Include="..\common\FarVersion.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\common\CmdArg.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\CmdLine.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\WThreads.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ConEmuCD\ExitCodes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="ConEmuDw.rc">
@@ -94,6 +106,15 @@
       <Filter>0 - Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\common\ConsoleRead.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\CmdArg.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\CmdLine.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\WThreads.cpp">
       <Filter>0 - Source Files</Filter>
     </ClCompile>
   </ItemGroup>
