@@ -184,6 +184,7 @@ extern bool gbPrepareDefaultTerminal;
 extern bool gbIsNetVsHost;
 extern bool gbIsVStudio;
 extern int  gnVsHostStartConsole;
+extern bool gbIsGdbHost;
 /* ************ Globals for "Default terminal ************ */
 
 void GuiSetProgress(WORD st, WORD pr, LPCWSTR pszName = NULL);

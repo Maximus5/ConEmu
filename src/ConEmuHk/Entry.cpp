@@ -1383,6 +1383,10 @@ void InitExeName()
 	{
 		gbIsNetVsHost = true;
 	}
+	else if (IsGDB(pszName))
+	{
+		gbIsGdbHost = true;
+	}
 	else if ((lstrcmpi(gsExeName, L"devenv.exe") == 0) || (lstrcmpi(gsExeName, L"WDExpress.exe") == 0))
 	{
 		gbIsVStudio = true;

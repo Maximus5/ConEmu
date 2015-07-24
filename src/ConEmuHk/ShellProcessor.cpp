@@ -1592,16 +1592,35 @@ int CShellProc::PrepareExecuteParms(
 	// We need the get executable name before some other checks
 	mn_ImageSubsystem = mn_ImageBits = 0;
 	GetStartingExeName(asFile, asParam, ms_ExeTmp);
+	bool lbGnuDebugger = false;
 
 	// Some additional checks for "Default terminal" mode
 	if (gbPrepareDefaultTerminal)
 	{
+		lbGnuDebugger = IsGDB(ms_ExeTmp); // Allow GDB in Lazarus etc.
+
 		if (aCmd == eCreateProcess)
 		{
-			if (anCreateFlags && ((*anCreateFlags) & (CREATE_NO_WINDOW|DETACHED_PROCESS)))
+			if (anCreateFlags && ((*anCreateFlags) & (CREATE_NO_WINDOW|DETACHED_PROCESS))
+				&& !lbGnuDebugger
+				)
 			{
 				// Creating process without console window, not our case
 				return 0;
+			}
+			// GDB console debugging
+			if (gbIsGdbHost
+				&& (anCreateFlags && ((*anCreateFlags) & (DEBUG_ONLY_THIS_PROCESS|DEBUG_PROCESS)))
+				)
+			{
+				if (FindImageSubsystem(ms_ExeTmp, mn_ImageSubsystem, mn_ImageBits))
+				{
+					if (mn_ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI)
+					{
+						mb_DebugWasRequested = true;
+						return 0;
+					}
+				}
 			}
 		}
 		else if (aCmd == eShellExecute)
@@ -1625,7 +1644,9 @@ int CShellProc::PrepareExecuteParms(
 			return 0;
 		}
 
-		if (anShowCmd && (*anShowCmd == SW_HIDE))
+		if (anShowCmd && (*anShowCmd == SW_HIDE)
+			&& !lbGnuDebugger
+			)
 		{
 			// Creating process with window initially hidden, not our case
 			return 0;
@@ -1795,6 +1816,11 @@ int CShellProc::PrepareExecuteParms(
 					{
 						bDebugWasRequested = true;
 					}
+				}
+				else if (lbGnuDebugger)
+				{
+					bDebugWasRequested = true;
+					mb_PostInjectWasRequested = true;
 				}
 			}
 		}
