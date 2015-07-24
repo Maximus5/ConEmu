@@ -1673,6 +1673,14 @@ static void WINAPI DownloadCallback(const CEDownloadInfo* pInfo)
 	PrintDownloadLog(pszLabel, szInfo);
 }
 
+FDownloadCallback gpfn_DownloadCallback = DownloadCallback;
+
+static void DownloadLog(CEDownloadCommand logLevel, LPCWSTR asMessage)
+{
+	CEDownloadInfo Info = {sizeof(Info), logLevel+1, asMessage};
+	gpfn_DownloadCallback(&Info);
+}
+
 int DoDownload(LPCWSTR asCmdLine)
 {
 	int iRc = CERR_CARGUMENT;
@@ -1692,7 +1700,7 @@ int DoDownload(LPCWSTR asCmdLine)
 
 	DownloadCommand(dc_Init, 0, NULL);
 
-	args[0].uintArg = (DWORD_PTR)DownloadCallback; args[0].argType = at_Uint;
+	args[0].uintArg = (DWORD_PTR)gpfn_DownloadCallback; args[0].argType = at_Uint;
 	args[1].argType = at_Uint;
 	_ASSERTE(dc_ErrCallback==0 && dc_LogCallback==2);
 	for (int i = dc_ErrCallback; i <= dc_LogCallback; i++)
@@ -1737,8 +1745,8 @@ int DoDownload(LPCWSTR asCmdLine)
 			}
 			if (!bKnown)
 			{
-				CEStr lsInfo(lstrmerge(L"Unknown argument '", psz, L"'\n"));
-				PrintDownloadLog(L"Error: ", lsInfo);
+				CEStr lsInfo(lstrmerge(L"Unknown argument '", psz, L"'"));
+				DownloadLog(dc_ErrCallback, lsInfo);
 				iRc = CERR_CARGUMENT;
 				goto wrap;
 			}
@@ -1841,15 +1849,15 @@ int DoDownload(LPCWSTR asCmdLine)
 		if (drc == 0)
 		{
 			iRc = CERR_DOWNLOAD_FAILED;
-			PrintDownloadLog(L"Error: ", L"Download failed\n");
+			DownloadLog(dc_ErrCallback, L"Download failed");
 			goto wrap;
 		}
 		else
 		{
 			wchar_t szInfo[100];
 			iFiles++;
-			_wsprintf(szInfo, SKIPCOUNT(szInfo) L"File #%u downloaded, size=%u, crc32=x%08X\n", (DWORD)iFiles, (DWORD)args[0].uintArg, (DWORD)args[1].uintArg);
-			PrintDownloadLog(L"Info:  ", szInfo);
+			_wsprintf(szInfo, SKIPCOUNT(szInfo) L"File #%u downloaded, size=%u, crc32=x%08X", (DWORD)iFiles, (DWORD)args[0].uintArg, (DWORD)args[1].uintArg);
+			DownloadLog(dc_LogCallback, szInfo);
 		}
 	}
 
