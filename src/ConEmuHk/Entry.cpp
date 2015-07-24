@@ -32,7 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //	#define SHOW_INJECT_MSGBOX
 	#define SHOW_EXE_MSGBOX // показать сообщение при загрузке в определенный exe-шник (SHOW_EXE_MSGBOX_NAME)
 	#define SHOW_EXE_MSGBOX_NAME L"xxx.exe"
-	#define SLEEP_EXE_UNTIL_DEBUGGER
+//	#define SLEEP_EXE_UNTIL_DEBUGGER
 //	#define SHOW_EXE_TIMINGS
 //	#define SHOW_FIRST_ANSI_CALL
 #else
