@@ -37,7 +37,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma warning(default: 4091)
 #include <tlhelp32.h>
 #if !defined(__GNUC__) || defined(__MINGW32__)
+#pragma warning(disable: 4091)
 #include <dbghelp.h>
+#pragma warning(default: 4091)
 #include <shobjidl.h>
 #include <propkey.h>
 #include <taskschd.h>
