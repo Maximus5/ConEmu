@@ -557,7 +557,7 @@ void ConEmuAbout::OnInfo_About(LPCWSTR asPageName /*= NULL*/)
 void ConEmuAbout::OnInfo_WhatsNew(bool bLocal)
 {
 	wchar_t sFile[MAX_PATH+80];
-	int iExec = -1;
+	INT_PTR iExec = -1;
 
 	if (bLocal)
 	{
@@ -566,7 +566,7 @@ void ConEmuAbout::OnInfo_WhatsNew(bool bLocal)
 
 		if (FileExists(sFile))
 		{
-			iExec = (int)ShellExecute(ghWnd, L"open", sFile, NULL, NULL, SW_SHOWNORMAL);
+			iExec = (INT_PTR)ShellExecute(ghWnd, L"open", sFile, NULL, NULL, SW_SHOWNORMAL);
 			if (iExec >= 32)
 			{
 				return;
@@ -576,13 +576,13 @@ void ConEmuAbout::OnInfo_WhatsNew(bool bLocal)
 
 	wcscpy_c(sFile, gsWhatsNew);
 
-	iExec = (int)ShellExecute(ghWnd, L"open", sFile, NULL, NULL, SW_SHOWNORMAL);
+	iExec = (INT_PTR)ShellExecute(ghWnd, L"open", sFile, NULL, NULL, SW_SHOWNORMAL);
 	if (iExec >= 32)
 	{
 		return;
 	}
 
-	DisplayLastError(L"File 'WhatsNew-ConEmu.txt' not found, go to web page failed", iExec);
+	DisplayLastError(L"File 'WhatsNew-ConEmu.txt' not found, go to web page failed", (int)LODWORD(iExec));
 }
 
 void ConEmuAbout::OnInfo_Help()

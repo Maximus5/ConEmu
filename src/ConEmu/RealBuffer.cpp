@@ -2900,7 +2900,7 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom, bool bUpdateScre
 		{
 			if (rc & etr_Url)
 			{
-				int iRc = (int)ShellExecute(ghWnd, L"open", szText, NULL, NULL, SW_SHOWNORMAL);
+				INT_PTR iRc = (INT_PTR)ShellExecute(ghWnd, L"open", szText, NULL, NULL, SW_SHOWNORMAL);
 				if (iRc <= 32)
 				{
 					DisplayLastError(szText, iRc, MB_ICONSTOP, L"URL open failed");

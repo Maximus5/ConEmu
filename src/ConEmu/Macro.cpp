@@ -3177,7 +3177,7 @@ LPWSTR ConEmuMacro::Shell(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 			}
 			else
 			{
-				int nRc = (int)ShellExecuteW(ghWnd, pszOper, pszFile, pszParm, pszDir, nShowCmd);
+				INT_PTR nRc = (INT_PTR)ShellExecuteW(ghWnd, pszOper, pszFile, pszParm, pszDir, nShowCmd);
 
 				if (nRc <= 32)
 				{
