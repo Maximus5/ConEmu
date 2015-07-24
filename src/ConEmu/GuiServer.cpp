@@ -79,7 +79,7 @@ bool CGuiServer::Start()
 {
 	// Запустить серверную нить
 	// 120122 - теперь через PipeServer
-	_wsprintf(ms_ServerPipe, SKIPLEN(countof(ms_ServerPipe)) CEGUIPIPENAME, L".", (DWORD)ghWnd); //-V205
+	_wsprintf(ms_ServerPipe, SKIPLEN(countof(ms_ServerPipe)) CEGUIPIPENAME, L".", LODWORD(ghWnd)); //-V205
 
 	mp_GuiServer->SetOverlapped(true);
 	mp_GuiServer->SetLoopCommands(false);

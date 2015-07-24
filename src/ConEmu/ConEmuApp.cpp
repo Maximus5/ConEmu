@@ -2048,7 +2048,7 @@ BOOL CheckCreateAppWindow()
 	if (gpSetCls->isAdvLogging)
 	{
 		wchar_t szCreated[128];
-		_wsprintf(szCreated, SKIPLEN(countof(szCreated)) L"App window created, HWND=0x%08X\r\n", (DWORD)ghWndApp);
+		_wsprintf(szCreated, SKIPLEN(countof(szCreated)) L"App window created, HWND=0x%08X\r\n", LODWORD(ghWndApp));
 		gpConEmu->LogString(szCreated, false, false);
 	}
 
@@ -2140,7 +2140,7 @@ void SkipOneShowWindow()
 		if (gpSetCls->isAdvLogging)
 		{
 			wchar_t szInfo[128];
-			_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"Skip window 0x%08X was created and destroyed", (DWORD)hSkip);
+			_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"Skip window 0x%08X was created and destroyed", LODWORD(hSkip));
 			gpConEmu->LogString(szInfo);
 		}
 	}
@@ -2438,7 +2438,7 @@ void MessageLoop()
 		#ifdef _DEBUG
 		if (Msg.message == WM_TIMER)
 		{
-			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"WM_TIMER(0x%08X,%u)\n", (DWORD)Msg.hwnd, Msg.wParam);
+			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"WM_TIMER(0x%08X,%u)\n", LODWORD(Msg.hwnd), Msg.wParam);
 			DEBUGSTRTIMER(szDbg);
 		}
 		#endif

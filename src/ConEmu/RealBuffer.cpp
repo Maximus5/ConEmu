@@ -600,7 +600,7 @@ bool CRealBuffer::LoadAlternativeConsole(LoadAltMode iMode /*= lam_Default*/)
 		DWORD cchMaxBufferSize = 0;
 		size_t nMaxSize = 0;
 
-		StoredOutputHdr.InitName(CECONOUTPUTNAME, (DWORD)mp_RCon->hConWnd); //-V205
+		StoredOutputHdr.InitName(CECONOUTPUTNAME, LODWORD(mp_RCon->hConWnd));
 		if (!(pHdr = StoredOutputHdr.Open()) || !pHdr->sCurrentMap[0])
 		{
 			DisplayLastError(L"Stored output mapping was not created!");

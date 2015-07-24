@@ -3838,7 +3838,7 @@ bool CRealConsole::StartDebugger(StartDebugType sdt)
 			int W = TextWidth();
 			int H = TextHeight();
 			_wsprintf(szExe, SKIPLEN(countof(szExe)) L"\"%s\" /ATTACH /GID=%i /GHWND=%08X /BW=%i /BH=%i /BZ=%u /ROOT \"%s\" /DEBUGPID=%i ",
-				pszServer, dwSelfPID, (DWORD)ghWnd, W, H, LONGOUTPUTHEIGHT_MAX, pszServer, dwPID);
+				pszServer, dwSelfPID, LODWORD(ghWnd), W, H, LONGOUTPUTHEIGHT_MAX, pszServer, dwPID);
 		} break;
 	default:
 		_ASSERTE(FALSE && "Unsupported debugger mode");
@@ -4461,7 +4461,7 @@ BOOL CRealConsole::StartProcessInt(LPCWSTR& lpszCmd, wchar_t*& psCurCmd, LPCWSTR
 	nCurLen = _tcslen(psCurCmd);
 	_wsprintf(psCurCmd+nCurLen, SKIPLEN(nLen-nCurLen)
 		        L"/AID=%u /GID=%u /GHWND=%08X /BW=%i /BH=%i /BZ=%i \"/FN=%s\" /FW=%i /FH=%i /TA=%08X",
-		        nAID, GetCurrentProcessId(), (DWORD)ghWnd, nWndWidth, nWndHeight, mn_DefaultBufferHeight,
+		        nAID, GetCurrentProcessId(), LODWORD(ghWnd), nWndWidth, nWndHeight, mn_DefaultBufferHeight,
 		        gpSet->ConsoleFont.lfFaceName, gpSet->ConsoleFont.lfWidth, gpSet->ConsoleFont.lfHeight,
 		        nColors);
 
@@ -5700,7 +5700,7 @@ bool CRealConsole::PostConsoleMessage(HWND hWnd, UINT nMsg, WPARAM wParam, LPARA
 		WIN3264TEST(L", x%08X",L", x%08X%08X")
 		WIN3264TEST(L", x%08X",L", x%08X%08X")
 		L")\n",
-		(DWORD)hWnd, nMsg, WIN3264WSPRINT(wParam), WIN3264WSPRINT(lParam));
+		LODWORD(hWnd), nMsg, WIN3264WSPRINT(wParam), WIN3264WSPRINT(lParam));
 	DEBUGSTRSENDMSG(szDbg);
 	#endif
 
@@ -8477,7 +8477,7 @@ void CRealConsole::ShowGuiClientExt(int nMode, BOOL bDetach /*= FALSE*/) // -1 T
 		{
 			wchar_t sInfo[200];
 			_wsprintf(sInfo, SKIPLEN(countof(sInfo)) L"ShowGuiClientExtern: PID=%u, hGuiWnd=x%08X, bExtern=%i, bDetach=%u",
-				m_ChildGui.nGuiWndPID, (DWORD)m_ChildGui.hGuiWnd, nMode, bDetach);
+				m_ChildGui.nGuiWndPID, LODWORD(m_ChildGui.hGuiWnd), nMode, bDetach);
 			mp_ConEmu->LogString(sInfo);
 		}
 
@@ -8701,8 +8701,8 @@ void CRealConsole::SetHwnd(HWND ahConWnd, BOOL abForceApprove /*= FALSE*/)
 
 	hConWnd = ahConWnd;
 	SetWindowLongPtr(mp_VCon->GetView(), 0, (LONG_PTR)ahConWnd);
-	SetWindowLong(mp_VCon->GetBack(), 0, (DWORD)ahConWnd);
-	SetWindowLong(mp_VCon->GetBack(), 4, (DWORD)mp_VCon->GetView());
+	SetWindowLong(mp_VCon->GetBack(), 0, LODWORD(ahConWnd));
+	SetWindowLong(mp_VCon->GetBack(), 4, LODWORD(mp_VCon->GetView()));
 	//if (mb_Detached && ahConWnd) // Не сбрасываем, а то нить может не успеть!
 	//  mb_Detached = FALSE; // Сброс флажка, мы уже подключились
 	//OpenColorMapping();
@@ -8716,7 +8716,7 @@ void CRealConsole::SetHwnd(HWND ahConWnd, BOOL abForceApprove /*= FALSE*/)
 	if (ms_VConServer_Pipe[0] == 0)
 	{
 		// Запустить серверный пайп
-		_wsprintf(ms_VConServer_Pipe, SKIPLEN(countof(ms_VConServer_Pipe)) CEGUIPIPENAME, L".", (DWORD)hConWnd); //был mn_MainSrv_PID //-V205
+		_wsprintf(ms_VConServer_Pipe, SKIPLEN(countof(ms_VConServer_Pipe)) CEGUIPIPENAME, L".", LODWORD(hConWnd)); //был mn_MainSrv_PID //-V205
 
 		m_RConServer.Start();
 	}
@@ -9521,7 +9521,7 @@ BOOL CRealConsole::SetOtherWindowPos(HWND hWnd, HWND hWndInsertAfter, int X, int
 	{
 		wchar_t sInfo[200];
 		_wsprintf(sInfo, SKIPLEN(countof(sInfo)) L"SetOtherWindowPos: hWnd=x%08X, hInsertAfter=x%08X, X=%i, Y=%i, CX=%i, CY=%i, Flags=x%04X",
-			(DWORD)hWnd, (DWORD)hWndInsertAfter, X,Y,cx,cy, uFlags);
+			LODWORD(hWnd), LODWORD(hWndInsertAfter), X,Y,cx,cy, uFlags);
 		mp_ConEmu->LogString(sInfo);
 	}
 
@@ -9560,7 +9560,9 @@ BOOL CRealConsole::SetOtherWindowPos(HWND hWnd, HWND hWndInsertAfter, int X, int
 			wchar_t szClass[64], szMessage[128];
 
 			if (!GetClassName(hWnd, szClass, 63))
-				_wsprintf(szClass, SKIPLEN(countof(szClass)) L"0x%08X", (DWORD)hWnd); else szClass[63] = 0; //-V205
+				_wsprintf(szClass, SKIPLEN(countof(szClass)) L"0x%08X", LODWORD(hWnd));
+			else
+				szClass[63] = 0;
 
 			_wsprintf(szMessage, SKIPLEN(countof(szMessage)) L"SetWindowPos(%s) failed!", szClass);
 			DisplayLastError(szMessage, dwErr);
@@ -11461,7 +11463,7 @@ BOOL CRealConsole::PrepareOutputFile(BOOL abUnicodeText, wchar_t* pszFilePathNam
 	CESERVER_CONSAVE_MAPHDR* pHdr = NULL;
 	CESERVER_CONSAVE_MAP* pData = NULL;
 
-	StoredOutputHdr.InitName(CECONOUTPUTNAME, (DWORD)hConWnd); //-V205
+	StoredOutputHdr.InitName(CECONOUTPUTNAME, LODWORD(hConWnd)); //-V205
 	if (!(pHdr = StoredOutputHdr.Open()) || !pHdr->sCurrentMap[0])
 	{
 		DisplayLastError(L"Stored output mapping was not created!");
@@ -13618,7 +13620,7 @@ void CRealConsole::GuiWndFocusStore()
 	if (gpSetCls->isAdvLogging && bHwndChanged)
 	{
 		wchar_t szInfo[100];
-		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"GuiWndFocusStore for PID=%u, hWnd=x%08X", nPID, (DWORD)m_ChildGui.hGuiWndFocusStore);
+		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"GuiWndFocusStore for PID=%u, hWnd=x%08X", nPID, LODWORD(m_ChildGui.hGuiWndFocusStore));
 		mp_ConEmu->LogString(szInfo);
 	}
 }
@@ -13656,7 +13658,7 @@ void CRealConsole::GuiWndFocusRestore(bool bForce /*= false*/)
 
 		wchar_t sInfo[200];
 		_wsprintf(sInfo, SKIPLEN(countof(sInfo)) L"GuiWndFocusRestore to x%08X, hGuiWnd=x%08X, Attach=%s, Err=%u%s",
-			(DWORD)hSetFocus, (DWORD)m_ChildGui.hGuiWnd,
+			LODWORD(hSetFocus), LODWORD(m_ChildGui.hGuiWnd),
 			bAttachCalled ? (bAttached ? L"Called" : L"Failed") : L"Skipped", nErr,
 			bSkipInvisible ? L", SkipInvisible" : L"");
 		DEBUGSTRFOCUS(sInfo);
@@ -14498,7 +14500,7 @@ void CRealConsole::CreateColorMapping()
 	AnnotationHeader *pHdr = NULL;
 	_ASSERTE(mp_VCon->GetView()!=NULL);
 	// 111101 - было "hConWnd", но GetConsoleWindow теперь перехватывается.
-	m_TrueColorerMap.InitName(AnnotationShareName, (DWORD)sizeof(AnnotationInfo), (DWORD)mp_VCon->GetView()); //-V205
+	m_TrueColorerMap.InitName(AnnotationShareName, (DWORD)sizeof(AnnotationInfo), LODWORD(mp_VCon->GetView())); //-V205
 
 	WARNING("Удалить и переделать!");
 	COORD crMaxSize = mp_RBuf->GetMaxSize();
@@ -14645,7 +14647,7 @@ BOOL CRealConsole::OpenMapHeader(BOOL abFromAttach)
 
 	//_ASSERTE(mh_FileMapping == NULL);
 	//CloseMapData();
-	m_ConsoleMap.InitName(CECONMAPNAME, (DWORD)hConWnd); //-V205
+	m_ConsoleMap.InitName(CECONMAPNAME, LODWORD(hConWnd)); //-V205
 
 	if (!m_ConsoleMap.Open())
 	{

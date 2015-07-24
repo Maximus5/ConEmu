@@ -686,12 +686,12 @@ void CStatus::PaintStatus(HDC hPaint, LPRECT prcStatus /*= NULL*/)
 				break;
 
 			case csi_HwndFore:
-				_wsprintf(m_Items[nDrawCount].sText, SKIPLEN(countof(m_Items[nDrawCount].sText)-1) L"x%08X[%u]", (DWORD)mh_Fore, mn_ForePID);
+				_wsprintf(m_Items[nDrawCount].sText, SKIPLEN(countof(m_Items[nDrawCount].sText)-1) L"x%08X[%u]", LODWORD(mh_Fore), mn_ForePID);
 				wcscpy_c(m_Items[nDrawCount].szFormat, L"xFFFFFFFF[99999]");
 				m_Values[nID].sHelp = ms_ForeInfo;
 				break;
 			case csi_HwndFocus:
-				_wsprintf(m_Items[nDrawCount].sText, SKIPLEN(countof(m_Items[nDrawCount].sText)-1) L"x%08X[%u]", (DWORD)mh_Focus, mn_FocusPID);
+				_wsprintf(m_Items[nDrawCount].sText, SKIPLEN(countof(m_Items[nDrawCount].sText)-1) L"x%08X[%u]", LODWORD(mh_Focus), mn_FocusPID);
 				wcscpy_c(m_Items[nDrawCount].szFormat, L"xFFFFFFFF[99999]");
 				m_Values[nID].sHelp = ms_FocusInfo;
 				break;
@@ -1604,7 +1604,7 @@ void CStatus::OnWindowReposition(const RECT *prcNew)
 
 	// csi_ConEmuHWND
 	_wsprintf(m_Values[csi_ConEmuHWND].sText, SKIPLEN(countof(m_Values[csi_ConEmuHWND].sText)-1)
-		L"x%08X(%u)", (DWORD)ghWnd, (DWORD)ghWnd);
+		L"x%08X(%u)", LODWORD(ghWnd), LODWORD(ghWnd));
 	wcscpy_c(m_Values[csi_ConEmuHWND].szFormat, m_Values[csi_ConEmuHWND].sText);
 
 	// csi_WindowPos
@@ -1874,12 +1874,12 @@ void CStatus::OnActiveVConChanged(int nIndex/*0-based*/, CRealConsole* pRCon)
 
 	// csi_ConEmuView
 	_wsprintf(m_Values[csi_ConEmuView].sText, SKIPLEN(countof(m_Values[csi_ConEmuView].sText)-1)
-		L"x%08X(%u)", (DWORD)hView, (DWORD)hView);
+		L"x%08X(%u)", LODWORD(hView), LODWORD(hView));
 	wcscpy_c(m_Values[csi_ConEmuView].szFormat, m_Values[csi_ConEmuView].sText);
 
 	// csi_ServerHWND
 	_wsprintf(m_Values[csi_ServerHWND].sText, SKIPLEN(countof(m_Values[csi_ServerHWND].sText)-1)
-		L"x%08X(%u)", (DWORD)hCon, (DWORD)hCon);
+		L"x%08X(%u)", LODWORD(hCon), LODWORD(hCon));
 	wcscpy_c(m_Values[csi_ServerHWND].szFormat, m_Values[csi_ServerHWND].sText);
 
 	// Чтобы уж точно обновилось - как минимум, меняется PID активного процесса

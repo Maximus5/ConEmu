@@ -169,7 +169,7 @@ void CGestures::DumpGesture(LPCWSTR tp, const GESTUREINFO& gi)
 
 	_wsprintf(szDump, SKIPLEN(countof(szDump))
 		L"Gesture(x%08X {%i,%i} %s",
-		(DWORD)gi.hwndTarget, gi.ptsLocation.x, gi.ptsLocation.y,
+		LODWORD(gi.hwndTarget), gi.ptsLocation.x, gi.ptsLocation.y,
 		tp); // tp - имя жеста
 
 	switch (gi.dwID)

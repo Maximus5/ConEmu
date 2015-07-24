@@ -513,7 +513,7 @@ BOOL LoadSrvMapping(HWND hConWnd, CESERVER_CONSOLE_MAPPING_HDR& SrvMapping)
 		return FALSE;
 
 	MFileMapping<CESERVER_CONSOLE_MAPPING_HDR> SrvInfoMapping;
-	SrvInfoMapping.InitName(CECONMAPNAME, (DWORD)hConWnd); //-V205
+	SrvInfoMapping.InitName(CECONMAPNAME, LODWORD(hConWnd));
 	const CESERVER_CONSOLE_MAPPING_HDR* pInfo = SrvInfoMapping.Open();
 	if (!pInfo)
 		return FALSE;
@@ -709,7 +709,7 @@ CESERVER_REQ* ExecuteGuiCmd(HWND hConWnd, CESERVER_REQ* pIn, HWND hOwner, BOOL b
 
 	DWORD nLastErr = GetLastError();
 	//_wsprintf(szGuiPipeName, SKIPLEN(countof(szGuiPipeName)) CEGUIPIPENAME, L".", (DWORD)hConWnd);
-	msprintf(szGuiPipeName, countof(szGuiPipeName), CEGUIPIPENAME, L".", (DWORD)hConWnd); //-V205
+	msprintf(szGuiPipeName, countof(szGuiPipeName), CEGUIPIPENAME, L".", LODWORD(hConWnd));
 
 	#ifdef _DEBUG
 	DWORD nStartTick = GetTickCount();
@@ -1170,7 +1170,7 @@ HWND GetConEmuHWND(int aiType)
 
 		CESERVER_CONSOLE_MAPPING_HDR* p = NULL;
 
-		msprintf(szGuiPipeName, cchMax, CECONMAPNAME, (DWORD)FarHwnd); //-V205
+		msprintf(szGuiPipeName, cchMax, CECONMAPNAME, LODWORD(FarHwnd));
 		#ifdef _DEBUG
 		size_t nSize = sizeof(*p);
 		#endif
@@ -1303,7 +1303,7 @@ int GuiMessageBox(HWND hConEmuWndRoot, LPCWSTR asText, LPCWSTR asTitle, int anBt
 		_wcscpyn_c(pIn->AssertInfo.szDebugInfo, countof(pIn->AssertInfo.szDebugInfo), asText, countof(pIn->AssertInfo.szDebugInfo)); //-V501
 
 		wchar_t szGuiPipeName[128];
-		msprintf(szGuiPipeName, countof(szGuiPipeName), CEGUIPIPENAME, L".", (DWORD)hConEmuWndRoot); //-V205
+		msprintf(szGuiPipeName, countof(szGuiPipeName), CEGUIPIPENAME, L".", LODWORD(hConEmuWndRoot));
 
 		CESERVER_REQ* pOut = ExecuteCmd(szGuiPipeName, pIn, 1000, hConWnd);
 

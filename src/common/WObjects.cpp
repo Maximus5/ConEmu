@@ -61,7 +61,7 @@ void getWindowInfo(HWND ahWnd, wchar_t (&rsInfo)[1024], bool bProcessName /*= fa
 	}
 	else if (!IsWindow(ahWnd))
 	{
-		msprintf(rsInfo, countof(rsInfo), L"0x%08X: Invalid window handle", (DWORD)ahWnd);
+		msprintf(rsInfo, countof(rsInfo), L"0x%08X: Invalid window handle", LODWORD(ahWnd));
 	}
 	else
 	{
@@ -84,7 +84,7 @@ void getWindowInfo(HWND ahWnd, wchar_t (&rsInfo)[1024], bool bProcessName /*= fa
 			}
 		}
 
-		msprintf(rsInfo, countof(rsInfo), L"0x%08X: %s - '%s'%s", (DWORD)ahWnd, szClass, szTitle, szProc);
+		msprintf(rsInfo, countof(rsInfo), L"0x%08X: %s - '%s'%s", LODWORD(ahWnd), szClass, szTitle, szProc);
 	}
 
 	if (pnPID)

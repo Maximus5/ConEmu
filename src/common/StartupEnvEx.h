@@ -282,8 +282,8 @@ public:
 			apStartEnv->nAnsiCP, apStartEnv->nOEMCP, apStartEnv->bIsAdmin,
 			szDesktop, apStartEnv->nPixels, szTitle,
 			apStartEnv->si.dwX, apStartEnv->si.dwY, apStartEnv->si.dwXSize, apStartEnv->si.dwYSize,
-			apStartEnv->si.dwFlags, (DWORD)apStartEnv->si.wShowWindow, (DWORD)hConWnd,
-			(DWORD)apStartEnv->si.hStdInput, (DWORD)apStartEnv->si.hStdOutput, (DWORD)apStartEnv->si.hStdError
+			apStartEnv->si.dwFlags, (DWORD)apStartEnv->si.wShowWindow, LODWORD(hConWnd),
+			LODWORD(apStartEnv->si.hStdInput), LODWORD(apStartEnv->si.hStdOutput), LODWORD(apStartEnv->si.hStdError)
 			);
 		DumpEnvStr(szSI, lParam, true, true);
 

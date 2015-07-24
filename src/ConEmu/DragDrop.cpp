@@ -166,7 +166,7 @@ CDragDrop::~CDragDrop()
 DWORD CDragDrop::DragStart(IDropSource *pDropSource, const DWORD dwAllowedEffects, DWORD& dwEffect)
 {
 	DWORD dwResult = E_UNEXPECTED;
-	wchar_t szStep[255]; _wsprintf(szStep, SKIPLEN(countof(szStep)) L"DoDragDrop(Eff=0x%X, DataObject=0x%08X, DropSource=0x%08X)", dwAllowedEffects, (DWORD)mp_DataObject, (DWORD)pDropSource); //-V205
+	wchar_t szStep[255]; _wsprintf(szStep, SKIPLEN(countof(szStep)) L"DoDragDrop(Eff=0x%X, DataObject=0x%08X, DropSource=0x%08X)", dwAllowedEffects, LODWORD(mp_DataObject), LODWORD(pDropSource));
 	DebugLog(szStep);
 	SAFETRY
 	{

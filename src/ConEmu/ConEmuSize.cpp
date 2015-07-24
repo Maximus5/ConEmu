@@ -1976,7 +1976,7 @@ HMONITOR CConEmuSize::GetPrimaryMonitor(MONITORINFO* pmi /*= NULL*/)
 	{
 		wchar_t szInfo[128];
 		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"  GetPrimaryMonitor=%u -> hMon=x%08X Work=({%i,%i}-{%i,%i}) Area=({%i,%i}-{%i,%i})",
-			(hMon!=NULL), (DWORD)hMon, LOGRECTCOORDS(mi.rcWork), LOGRECTCOORDS(mi.rcMonitor));
+			(hMon!=NULL), LODWORD(hMon), LOGRECTCOORDS(mi.rcWork), LOGRECTCOORDS(mi.rcMonitor));
 		LogString(szInfo);
 	}
 
@@ -3677,7 +3677,7 @@ bool CConEmuSize::JumpNextMonitor(bool Next)
 		{
 			_wsprintf(szInfo, SKIPLEN(countof(szInfo))
 				L"JumpNextMonitor skipped, not our window PID=%u, HWND=x%08X",
-				nWndPID, (DWORD)hJump);
+				nWndPID, LODWORD(hJump));
 			LogString(szInfo);
 		}
 		return false;
@@ -5306,7 +5306,7 @@ void CConEmuSize::CheckTopMostState()
 			RECT rcWnd = {}; GetWindowRect(ghWnd, &rcWnd);
 			_wsprintf(szInfo, SKIPLEN(countof(szInfo))
 				L"Some external program brought ConEmu OnTop: HWND=x%08X, StyleEx=x%08X, Rect={%i,%i}-{%i,%i}",
-				(DWORD)ghWnd, dwStyleEx, LOGRECTCOORDS(rcWnd));
+				LODWORD(ghWnd), dwStyleEx, LOGRECTCOORDS(rcWnd));
 			LogString(szInfo);
 		}
 
@@ -5703,7 +5703,7 @@ void CConEmuSize::DoMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 
 	wchar_t szInfo[120];
 	_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"DoMinimizeRestore(%i) Fore=x%08X Our=%u Iconic=%u Vis=%u",
-		ShowHideType, (DWORD)hCurForeground, bIsForeground, bIsIconic, bVis);
+		ShowHideType, LODWORD(hCurForeground), bIsForeground, bIsIconic, bVis);
 	LogFocusInfo(szInfo);
 
 	if (ShowHideType == sih_QuakeShowHide)

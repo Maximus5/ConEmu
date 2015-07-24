@@ -588,7 +588,7 @@ LRESULT CTaskBarGhost::OnCreate()
 	SetTimer(mh_Ghost, 101, 2500, NULL);
 
 	wchar_t szEvtName[64];
-	_wsprintf(szEvtName, SKIPLEN(countof(szEvtName)) CEGHOSTSKIPACTIVATE, (DWORD)mh_Ghost);
+	_wsprintf(szEvtName, SKIPLEN(countof(szEvtName)) CEGHOSTSKIPACTIVATE, LODWORD(mh_Ghost));
 	SafeCloseHandle(mh_SkipActivateEvent);
 	mh_SkipActivateEvent = CreateEvent(NULL, FALSE, FALSE, szEvtName);
 

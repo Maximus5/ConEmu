@@ -308,10 +308,10 @@ BOOL CConEmuChild::ShowView(int nShowCmd)
 	{
 		if (hChildGUI != NULL)
 			_wsprintf(sInfo, SKIPLEN(countof(sInfo)) L"ShowView: Back=x%08X, DC=x%08X, ChildGUI=x%08X, ShowCMD=%u, ChildVisible=%u",
-				(DWORD)mh_WndBack, (DWORD)mh_WndDC, (DWORD)hChildGUI, nShowCmd, bGuiVisible);
+				LODWORD(mh_WndBack), LODWORD(mh_WndDC), LODWORD(hChildGUI), nShowCmd, bGuiVisible);
 		else
 			_wsprintf(sInfo, SKIPLEN(countof(sInfo)) L"ShowView: Back=x%08X, DC=x%08X, ShowCMD=%u",
-				(DWORD)mh_WndBack, (DWORD)mh_WndDC, nShowCmd);
+				LODWORD(mh_WndBack), LODWORD(mh_WndDC), nShowCmd);
 		gpConEmu->LogString(sInfo);
 	}
 
@@ -1257,7 +1257,7 @@ LRESULT CConEmuChild::OnSize(WPARAM wParam, LPARAM lParam)
 	if (gpSetCls->isAdvLogging)
 	{
 		char szInfo[128];
-		_wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "VCon(0x%08X).OnSize(%ux%u)", (DWORD)mh_WndDC, (UINT)LOWORD(lParam), (UINT)HIWORD(lParam));
+		_wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "VCon(0x%08X).OnSize(%ux%u)", LODWORD(mh_WndDC), (UINT)LOWORD(lParam), (UINT)HIWORD(lParam));
 		gpConEmu->LogString(szInfo);
 	}
 
@@ -1297,7 +1297,7 @@ LRESULT CConEmuChild::OnMove(WPARAM wParam, LPARAM lParam)
 	if (gpSetCls->isAdvLogging)
 	{
 		char szInfo[128];
-		_wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "VCon(0x%08X).OnMove(%ux%u)", (DWORD)mh_WndDC, (int)(short)LOWORD(lParam), (int)(short)HIWORD(lParam));
+		_wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "VCon(0x%08X).OnMove(%ux%u)", LODWORD(mh_WndDC), (int)(short)LOWORD(lParam), (int)(short)HIWORD(lParam));
 		gpConEmu->LogString(szInfo);
 	}
 

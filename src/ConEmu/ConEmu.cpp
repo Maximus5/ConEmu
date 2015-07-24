@@ -1869,7 +1869,7 @@ BOOL CConEmuMain::CreateMainWindow()
 			gpSet->isQuakeStyle ? L" Quake" : L"",
 			this->mp_Inside ? L" Inside" : L"",
 			gpSet->isDesktopMode ? L" Desktop" : L"",
-			(DWORD)hParent,
+			LODWORD(hParent),
 			this->wndX, this->wndY, nWidth, nHeight, style, styleEx,
 			GetWindowModeName(gpSet->isQuakeStyle ? (ConEmuWindowMode)gpSet->_WindowMode : WindowMode));
 		LogString(szCreate);
@@ -2781,7 +2781,7 @@ void CConEmuMain::AskChangeBufferHeight()
 		if (dwFarPID)
 		{
 			// Это событие дергается в отладочной (мной поправленной) версии фара
-			wchar_t szEvtName[64]; _wsprintf(szEvtName, SKIPLEN(countof(szEvtName)) L"FARconEXEC:%08X", (DWORD)pRCon->ConWnd());
+			wchar_t szEvtName[64]; _wsprintf(szEvtName, SKIPLEN(countof(szEvtName)) L"FARconEXEC:%08X", LODWORD(pRCon->ConWnd()));
 			hFarInExecuteEvent = OpenEvent(EVENT_ALL_ACCESS, FALSE, szEvtName);
 
 			if (hFarInExecuteEvent)  // Иначе ConEmuC вызовет _ASSERTE в отладочном режиме
@@ -8063,7 +8063,7 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			{
 				HWND hFocus = GetFocus();
 				wchar_t szInfo[128];
-				_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"Focus event skipped, lbSetFocus=%u, mb_LastConEmuFocusState=%u, ghWnd=x%08X, hFore=x%08X, hFocus=x%08X", lbSetFocus, mb_LastConEmuFocusState, (DWORD)ghWnd, (DWORD)hNewFocus, (DWORD)hFocus);
+				_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"Focus event skipped, lbSetFocus=%u, mb_LastConEmuFocusState=%u, ghWnd=x%08X, hFore=x%08X, hFocus=x%08X", lbSetFocus, mb_LastConEmuFocusState, LODWORD(ghWnd), LODWORD(hNewFocus), LODWORD(hFocus));
 				LogFocusInfo(szInfo, 2);
 			}
 
@@ -8351,7 +8351,7 @@ void CConEmuMain::OnHideCaption()
 		// Make debug output too
 		{
 			wchar_t szInfo[128];
-			_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"Changing main window 0x%08X style Cur=x%08X New=x%08X ExStyle=x%08X", (DWORD)ghWnd, nStyle, nNewStyle, nStyleEx);
+			_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"Changing main window 0x%08X style Cur=x%08X New=x%08X ExStyle=x%08X", LODWORD(ghWnd), nStyle, nNewStyle, nStyleEx);
 			LogString(szInfo);
 		}
 
@@ -11698,7 +11698,7 @@ void CConEmuMain::CheckFocus(LPCWSTR asFrom)
 								if (!hAtPoint || !GetClassName(hAtPoint, szDbgClass, 63)) szDbgClass[0] = 0;
 
 								_wsprintf(szDbgInfo, SKIPCOUNT(szDbgInfo) L"Can't activate ConEmu on desktop. Opaque cell={%i,%i} screen={%i,%i}. WindowFromPoint=0x%08X (%s)\n",
-								          crOpaque.X, crOpaque.Y, pt.x, pt.y, (DWORD)hAtPoint, szDbgClass);
+								          crOpaque.X, crOpaque.Y, pt.x, pt.y, LODWORD(hAtPoint), szDbgClass);
 								DEBUGSTRFOREGROUND(szDbgInfo);
 								#endif
 							}
@@ -11729,7 +11729,7 @@ void CConEmuMain::CheckFocus(LPCWSTR asFrom)
 	else
 	{
 		#ifdef _DEBUG
-		_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"Foreground changed (%s). NewFore=0x%08X, ConEmu has focus, LBtn=%i\n", asFrom, (DWORD)hCurForeground, lbLDown);
+		_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"Foreground changed (%s). NewFore=0x%08X, ConEmu has focus, LBtn=%i\n", asFrom, LODWORD(hCurForeground), lbLDown);
 		#endif
 		mb_FocusOnDesktop = TRUE;
 	}
@@ -12853,7 +12853,7 @@ bool CConEmuMain::SetTransparent(HWND ahWnd, UINT anAlpha/*0..255*/, bool abColo
 				wchar_t szInfo[128];
 				DWORD nErr = bSet ? 0 : GetLastError();
 				_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"Transparency: Set(0x%08X, 0x%08X, %u, 0x%X) -> %u:%u",
-					(DWORD)ahWnd, acrColorKey, nTransparent, nNewFlags, bSet, nErr);
+					LODWORD(ahWnd), acrColorKey, nTransparent, nNewFlags, bSet, nErr);
 				LogString(szInfo);
 			}
 		}
@@ -13047,7 +13047,7 @@ void CConEmuMain::LogWindowPos(LPCWSTR asPrefix)
 			::IsWindowVisible(ghWnd) ? L"Visible" : L"Hidden",
 			::IsIconic(ghWnd) ? L"Iconic" : ::IsZoomed(ghWnd) ? L"Maximized" : L"Normal",
 			GetWindowModeName((ConEmuWindowMode)(gpSet->isQuakeStyle ? gpSet->_WindowMode : WindowMode)),
-			LOGRECTCOORDS(rcWnd), (DWORD)hMon, LOGRECTCOORDS(mi.rcMonitor), LOGRECTCOORDS(mi.rcWork));
+			LOGRECTCOORDS(rcWnd), LODWORD(hMon), LOGRECTCOORDS(mi.rcMonitor), LOGRECTCOORDS(mi.rcWork));
 		LogString(szInfo);
 	}
 }
@@ -13113,7 +13113,7 @@ void CConEmuMain::LogMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	size_t cchLen = strlen(szLog);
 	_wsprintfA(szLog+cchLen, SKIPLEN(countof(szLog)-cchLen)
 		": HWND=x%08X," WIN3264TEST(" W=x%08X, L=x%08X", " W=x%08X%08X, L=x%08X%08X"),
-		(DWORD)hWnd, WIN3264WSPRINT(wParam), WIN3264WSPRINT(lParam));
+		LODWORD(hWnd), WIN3264WSPRINT(wParam), WIN3264WSPRINT(lParam));
 
 	LogString(szLog);
 }

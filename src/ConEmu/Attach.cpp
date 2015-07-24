@@ -400,7 +400,7 @@ bool CAttachDlg::CanAttachWindow(HWND hFind, DWORD nSkipPID, CProcessData* apPro
 	if (gpSetCls->isAdvLogging)
 	{
 		wchar_t szLogInfo[MAX_PATH*3];
-		_wsprintf(szLogInfo, SKIPLEN(countof(szLogInfo)) L"Attach:%s x%08X/x%08X/x%08X {%s} \"%s\"", (DWORD)hFind, nStyle, nStyleEx, Info.szClass, Info.szTitle);
+		_wsprintf(szLogInfo, SKIPLEN(countof(szLogInfo)) L"Attach:%s x%08X/x%08X/x%08X {%s} \"%s\"", LODWORD(hFind), nStyle, nStyleEx, Info.szClass, Info.szTitle);
 		CVConGroup::LogString(szLogInfo);
 	}
 
@@ -805,7 +805,7 @@ bool CAttachDlg::StartAttach(HWND ahAttachWnd, DWORD anPID, DWORD anBits, Attach
 
 	if (abAltMode && (anType == apt_Console))
 	{
-		_wsprintf(szArgs, SKIPLEN(countof(szArgs)) L" /ATTACH /CONPID=%u /GID=%u /GHWND=%08X", anPID, GetCurrentProcessId(), (DWORD)ghWnd);
+		_wsprintf(szArgs, SKIPLEN(countof(szArgs)) L" /ATTACH /CONPID=%u /GID=%u /GHWND=%08X", anPID, GetCurrentProcessId(), LODWORD(ghWnd));
 	}
 	else
 	{

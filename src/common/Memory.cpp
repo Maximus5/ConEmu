@@ -337,7 +337,7 @@ void __cdecl xf_dump()
 	{
 		if (pLast == ent.lpData)
 		{
-			msprintf(sBlockInfo, countof(sBlockInfo), "!!! HeapWalk cycled at 0x%08X, size=0x%08X\n", (DWORD)ent.lpData, ent.cbData);
+			msprintf(sBlockInfo, countof(sBlockInfo), "!!! HeapWalk cycled at 0x%08X, size=0x%08X\n", LODWORD(ent.lpData), ent.cbData);
 			OutputDebugStringA(sBlockInfo);
 			_ASSERTE(pLast != ent.lpData);
 			break;
@@ -345,7 +345,7 @@ void __cdecl xf_dump()
 
 		if (((int)ent.cbData) < 0)
 		{
-			msprintf(sBlockInfo, countof(sBlockInfo), "!!! Invalid memory block size at 0x%08X, size=0x%08X\n", (DWORD)ent.lpData, ent.cbData);
+			msprintf(sBlockInfo, countof(sBlockInfo), "!!! Invalid memory block size at 0x%08X, size=0x%08X\n", LODWORD(ent.lpData), ent.cbData);
 			OutputDebugStringA(sBlockInfo);
 			_ASSERTE(((int)ent.cbData) >= 0);
 			break;
