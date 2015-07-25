@@ -42,6 +42,7 @@ CmdArg::CmdArg()
 CmdArg::CmdArg(wchar_t* RVAL_REF asPtr)
 {
 	mn_MaxLen = 0; ms_Arg = NULL;
+	mpsz_Dequoted = NULL;
 	mb_RestoreEnvVar = false;
 	ms_RestoreVarName[0] = 0;
 	AttachInt(asPtr);
