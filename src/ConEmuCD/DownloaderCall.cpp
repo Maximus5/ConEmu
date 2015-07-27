@@ -41,6 +41,85 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #undef _DOWNLOADER_ASSERT
 #define _DOWNLOADER_ASSERT(x) //_ASSERTE(x)
 
+struct LineBuffer
+{
+	char* ptrData;
+	size_t cchMax, cchUsed;
+
+	void AddBlock(const char* ptrRead, size_t cbSize)
+	{
+		// Enough storage?
+		if (!ptrData || ((cchMax - cchUsed) <= cbSize))
+		{
+			size_t cchNew = cchMax + max(8192,cbSize+1);
+			char* ptrNew = (char*)realloc(ptrData, cchNew);
+			if (!ptrNew)
+				return; // memory allocation failed
+			ptrData = ptrNew;
+			cchMax = cchNew;
+		}
+
+		// Append read data
+		size_t cchLen = strlen(ptrRead);
+		if (cchLen == cbSize)
+		{
+			memmove(ptrData+cchUsed, ptrRead, cbSize);
+		}
+		else
+		{
+			for (size_t i = cchUsed, j = 0; j < cbSize; i++, j++)
+			{
+				if ((ptrData[i] = ptrRead[i]) == 0)
+				{
+					ptrData[i] = ' ';
+				}
+			}
+		}
+		cchUsed += cbSize;
+		_ASSERTE(cchUsed < cchMax);
+		ptrData[cchUsed] = 0;
+	};
+
+	bool GetLine(CEStr& szLine)
+	{
+		if (!ptrData || !cchUsed)
+			return false;
+		const char* ptrLineEnd = strpbrk(ptrData, "\r\n");
+		if (!ptrLineEnd)
+			return false; // There is no one completed line yet
+
+		// Multi-line block?
+		if ((ptrLineEnd[0] == L'\n') && (ptrLineEnd[1] == L' ' || ptrLineEnd[1] == L'\t'))
+		{
+			const char* ptrTestEnd = strpbrk(ptrLineEnd+1, "\r\n");
+			if (ptrTestEnd)
+				ptrLineEnd = ptrTestEnd;
+		}
+
+		// \r\n is not expected, but if it happens...
+		const char* ptrNewLine = (ptrLineEnd[0] == '\r' && ptrLineEnd[1] == '\n') ? (ptrLineEnd+2) : (ptrLineEnd+1);
+		// Alloc the buffer
+		size_t cchLen = (ptrLineEnd - ptrData);
+		wchar_t* ptrDst = szLine.GetBuffer(cchLen);
+		if (!ptrDst)
+		{
+			return false; // memory allocation failed
+		}
+
+		// Return the string
+		MultiByteToWideChar(CP_OEMCP, 0, ptrData, cchLen, ptrDst, cchLen);
+		ptrDst[cchLen] = 0;
+		// Shift the tail
+		_ASSERTE((INT_PTR)cchUsed >= (ptrNewLine - ptrData));
+		cchUsed -= (ptrNewLine - ptrData);
+		_ASSERTE(cchUsed < cchMax);
+		memmove(ptrData, ptrNewLine, cchUsed);
+		ptrData[cchUsed] = 0;
+		// Succeeded
+		return true;
+	};
+};
+
 class CDownloader
 {
 protected:
@@ -240,10 +319,17 @@ protected:
 		const DWORD dwToRead = countof(Line)-1;
 		DWORD dwRead, nValue, nErrCode;
 		BOOL bSuccess;
-		char *ptr, *ptrEnd;
-		const char sProgressMark[] = " Progr: ";
 
-		while (!pObj->mb_Terminating)
+		CEStr szLine;
+		const wchar_t *ptr;
+		const wchar_t sProgressMark[]    = L" " CEDLOG_MARK_PROGR;
+		const wchar_t sInformationMark[] = L" " CEDLOG_MARK_INFO;
+		const wchar_t sErrorMark[]       = L" " CEDLOG_MARK_ERROR;
+
+		LineBuffer buffer = {};
+		bool bExit = false;
+
+		while (!bExit)
 		{
 			bSuccess = ReadFile(pObj->mh_PipeErrRead, Line, dwToRead, &dwRead, NULL);
 			if (!bSuccess || dwRead == 0)
@@ -253,34 +339,72 @@ protected:
 			}
 			_ASSERTE(dwRead < countof(Line));
 			Line[dwRead] = 0; // Ensure it is ASCIIZ
+			// Append to the line-buffer
+			buffer.AddBlock(Line, dwRead);
 
 			// Parse read line
-			if (pObj->mfn_Callback[dc_ProgressCallback])
+			while (buffer.GetLine(szLine))
 			{
-				// 09:01:20.811{1234} Progr: Bytes downloaded 1656
-				ptr = strstr(Line, sProgressMark);
-				while (ptr)
+				bool bProgress = false;
+				if ((ptr = wcsstr(szLine, sProgressMark)) != NULL)
 				{
-					ptr = strpbrk(ptr, "0123456789");
-					ptrEnd = NULL;
-					nValue = strtoul(ptr, &ptrEnd, 10);
-
-					if (nValue)
+					bProgress = true;
+					if (pObj->mfn_Callback[dc_ProgressCallback])
 					{
-						CEDownloadInfo progrInfo = {
-							sizeof(progrInfo),
-							pObj->m_CallbackLParam[dc_ProgressCallback]
-						};
-						progrInfo.argCount = 1;
-						progrInfo.Args[0].argType = at_Uint;
-						progrInfo.Args[0].uintArg = nValue;
+						// 09:01:20.811{1234} Progr: Bytes downloaded 1656
+						wchar_t* ptrEnd = NULL;
+						nValue = wcstoul(ptr, &ptrEnd, 10);
 
-						pObj->mfn_Callback[dc_ProgressCallback](&progrInfo);
+						if (nValue)
+						{
+							CEDownloadInfo progrInfo = {
+								sizeof(progrInfo),
+								pObj->m_CallbackLParam[dc_ProgressCallback]
+							};
+							progrInfo.argCount = 1;
+							progrInfo.Args[0].argType = at_Uint;
+							progrInfo.Args[0].uintArg = nValue;
+
+							pObj->mfn_Callback[dc_ProgressCallback](&progrInfo);
+						}
 					}
+				}
 
-					if (!ptrEnd || (ptrEnd <= ptr))
-						break;
-					ptr = strstr(ptrEnd, sProgressMark);
+				// For logging purposes
+				if (!bProgress && ((ptr = wcsstr(szLine, sErrorMark)) != NULL))
+				{
+					if (pObj->mfn_Callback[dc_ErrCallback])
+					{
+						CEDownloadInfo Error = {
+							sizeof(Error),
+							pObj->m_CallbackLParam[dc_ErrCallback],
+							szLine.ms_Arg
+						};
+						pObj->mfn_Callback[dc_ErrCallback](&Error);
+					}
+				}
+				else //if (bProgress || ((ptr = wcsstr(szLine, sInformationMark)) != NULL))
+				{
+					if (pObj->mfn_Callback[dc_LogCallback])
+					{
+						CEDownloadInfo Info = {
+							sizeof(Info),
+							pObj->m_CallbackLParam[dc_LogCallback],
+							szLine.ms_Arg
+						};
+						pObj->mfn_Callback[dc_LogCallback](&Info);
+					}
+					// Exit?
+					ptr = wcsstr(szLine, sInformationMark);
+					if (ptr)
+					{
+						ptr += wcslen(sInformationMark);
+						if (wcsncmp(ptr, L"Exit", 4) == 0)
+						{
+							bExit = true;
+							break;
+						}
+					}
 				}
 			}
 		}
@@ -361,7 +485,7 @@ protected:
 		mb_Terminating = true;
 		if (mh_PipeErrThread)
 		{
-			nThreadWait = WaitForSingleObject(mh_PipeErrThread, 0);
+			nThreadWait = WaitForSingleObject(mh_PipeErrThread, 2500);
 			if (nThreadWait == WAIT_TIMEOUT)
 			{
 				apiCancelSynchronousIo(mh_PipeErrThread);
@@ -373,7 +497,7 @@ protected:
 		{
 			if (nThreadWait == WAIT_TIMEOUT)
 			{
-				nThreadWait = WaitForSingleObject(mh_PipeErrThread, 5000);
+				nThreadWait = WaitForSingleObject(mh_PipeErrThread, 2500);
 			}
 			if (nThreadWait == WAIT_TIMEOUT)
 			{
@@ -440,6 +564,10 @@ protected:
 				iRc = E_OUTOFMEMORY;
 				goto wrap;
 			}
+
+			#if defined(_DEBUG)
+			lstrmerge(&pszCommand, L"-debug ");
+			#endif
 
 			for (INT_PTR i = 0; i < countof(Switches); i++)
 			{

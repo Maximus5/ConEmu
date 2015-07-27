@@ -224,6 +224,9 @@ void CConEmuUpdate::StartCheckProcedure(BOOL abShowMessages)
 		return;
 	}
 
+	if (gpConEmu)
+		gpConEmu->LogString(abShowMessages ? L"Update: starting in manual mode" : L"Update: starting in automatic mode");
+
 	mb_InCheckProcedure = TRUE;
 	mh_CheckThread = apiCreateThread(CheckThreadProc, this, &mn_CheckThreadId, "AutoUpdateThread");
 	if (!mh_CheckThread)
@@ -241,6 +244,8 @@ void CConEmuUpdate::StartCheckProcedure(BOOL abShowMessages)
 
 void CConEmuUpdate::RequestTerminate()
 {
+	if (gpConEmu)
+		gpConEmu->LogString(L"Update: TERMINATE WAS REQUESTED");
 	Inet.DownloadCommand(dc_RequestTerminate, 0, NULL);
 	mb_RequestTerminate = true;
 }
@@ -707,10 +712,14 @@ DWORD CConEmuUpdate::CheckProcInt()
 
 	DeleteBadTempFiles();
 
+	if (gpConEmu)
+		gpConEmu->LogString(L"Update: Initializing internet");
 
 	// This implies Inet.Deinit(false) too
 	if (!Inet.Init(this))
 	{
+		if (gpConEmu)
+			gpConEmu->LogString(L"Update: Internet failed");
 		goto wrap;
 	}
 
@@ -743,6 +752,9 @@ DWORD CConEmuUpdate::CheckProcInt()
 			goto wrap;
 		}
 	}
+
+	if (gpConEmu)
+		gpConEmu->LogString(L"Update: Checking version information");
 
 	// Проверить версии
 	_wcscpy_c(szSection, countof(szSection),
@@ -842,6 +854,9 @@ DWORD CConEmuUpdate::CheckProcInt()
 	}
 	else
 	{
+		if (gpConEmu)
+			gpConEmu->LogString(L"Update: Downloading package");
+
 		// Загрузить пакет обновления
 		pszFileName++; // пропустить слеш
 
@@ -883,6 +898,9 @@ DWORD CConEmuUpdate::CheckProcInt()
 	if (mb_RequestTerminate)
 		goto wrap;
 
+	if (gpConEmu)
+		gpConEmu->LogString(L"Update: Creating update script");
+
 	pszBatchFile = CreateBatchFile(pszLocalPackage);
 	if (!pszBatchFile)
 		goto wrap;
@@ -898,6 +916,8 @@ DWORD CConEmuUpdate::CheckProcInt()
 	pszLocalPackage = NULL;
 	mpsz_PendingBatchFile = pszBatchFile;
 	pszBatchFile = NULL;
+	if (gpConEmu)
+		gpConEmu->LogString(L"Update: Ready to update on exit");
 	if (iConfirmUpdate == IDYES)
 	{
 		m_UpdateStep = us_ExitAndUpdate;
@@ -1346,6 +1366,12 @@ BOOL CConEmuUpdate::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, DWORD& crc,
 
 	mn_InternetContentReady = 0;
 
+	if (gpConEmu)
+	{
+		CEStr lsMsg = lstrmerge(L"Update: Downloading ", asSource, L" to ", asTarget);
+		gpConEmu->LogString(lsMsg);
+	}
+
 	// This implies Inet.Deinit(false) too
 	if (!Inet.Init(this))
 	{
@@ -1405,7 +1431,12 @@ void CConEmuUpdate::ReportErrorInt(wchar_t* asErrorInfo)
 	MCHKHEAP;
 
 	if (gpConEmu)
-		gpConEmu->LogString(asErrorInfo);
+	{
+		CEStr lsLog = lstrmerge(L"Update: ", asErrorInfo);
+		wchar_t* ptr = lsLog.ms_Arg;
+		while ((ptr = wcspbrk(ptr, L"\r\n")) != NULL) *ptr = L' ';
+		gpConEmu->LogString(lsLog);
+	}
 
 	// Append error
 	{
@@ -2107,7 +2138,7 @@ wrap:
 	if (bRc)
 	{
 		SetCallback(dc_ErrCallback, ErrorCallback, (LPARAM)apUpd);
-		SetCallback(dc_LogCallback, (gpSetCls && gpSetCls->isAdvLogging)?LogCallback:NULL, (LPARAM)apUpd);
+		SetCallback(dc_LogCallback, LogCallback, (LPARAM)apUpd);
 	}
 	SafeFree(pszLib);
 	if (lhDll && !bRc)
@@ -2170,7 +2201,8 @@ void CConEmuUpdate::LogCallback(const CEDownloadInfo* pError)
 	wchar_t* pszText = pError->GetFormatted(false);
 	if (pszText)
 	{
-		gpConEmu->LogString(pszText);
+		CEStr lsLog = lstrmerge(L"Update: ", pszText);
+		gpConEmu->LogString(lsLog);
 		free(pszText);
 	}
 }
