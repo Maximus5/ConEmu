@@ -19,6 +19,14 @@ http://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2015.7.27
+* DefTerm. Support Lazarus' console applications debugging.
+  User must add `lazarus.exe|gdb.exe` to the hooked executable list.
+* Downloader. Switch `-debug` may be used to show console and print progress even if output is redirected.
+* Downloader. Improve logging of self-update activities.
+* Updater. Empty proxy server field is used for proxy-autoconfiguration.
+
+
 2015.7.22
 * gh#129: ‘Restore’ button didn't restore width if TaskBar was auto-hidden.
 * GuiMacro: Tab(11,"Name"): activates tab by name, title or process name
