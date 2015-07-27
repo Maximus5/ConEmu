@@ -765,7 +765,8 @@ DWORD CConEmuUpdate::CheckProcInt()
 
 	if (!GetPrivateProfileString(szSection, L"version", L"", ms_NewVersion, countof(ms_NewVersion), pszUpdateVerLocation) || !*ms_NewVersion)
 	{
-		ReportBrokenIni(szSection, L"version", pszUpdateVerLocationSet);
+		CEStr lsUrlAndLocal = lstrmerge(pszUpdateVerLocationSet, L"\n", pszUpdateVerLocation);
+		ReportBrokenIni(szSection, L"version", lsUrlAndLocal.ms_Arg);
 		goto wrap;
 	}
 
