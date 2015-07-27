@@ -642,7 +642,7 @@ VOID CDownloader::InetCallback(HINTERNET hInternet, DWORD_PTR dwContext, DWORD d
             break;
 
         case INTERNET_STATUS_HANDLE_CLOSING:
-            LogCallback(L"Handle Closing x%08x", (DWORD)*((HINTERNET*)lpvStatusInformation));
+            LogCallback(L"Handle Closing x%08x", LODWORD(*((HINTERNET*)lpvStatusInformation)));
 			SetEvent(pObj->mh_CloseEvent);
             break;
 
