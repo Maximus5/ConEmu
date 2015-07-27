@@ -38,6 +38,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ExitCodes.h"
 #include "DownloaderCall.h"
 
+#undef _DOWNLOADER_ASSERT
+#define _DOWNLOADER_ASSERT(x) //_ASSERTE(x)
+
 class CDownloader
 {
 protected:
@@ -349,7 +352,7 @@ protected:
 		}
 		else
 		{
-			_ASSERTE(nWait == 0 && "Downloader has returned an error");
+			_DOWNLOADER_ASSERT(nWait == 0 && "Downloader has returned an error");
 			iRc = nWait;
 		}
 
