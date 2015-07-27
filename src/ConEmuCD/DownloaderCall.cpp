@@ -163,8 +163,9 @@ public:
 			SecureZeroMemory(m_Proxy.szProxyPassword, lstrlen(m_Proxy.szProxyPassword)*sizeof(*m_Proxy.szProxyPassword));
 		SafeFree(m_Proxy.szProxyPassword);
 
-		if (asProxy)
-			m_Proxy.szProxy = lstrdup(asProxy);
+		// Empty string - for ‘autoconfig’
+		m_Proxy.szProxy = lstrdup(asProxy ? asProxy : L"");
+
 		if (asProxyUser)
 			m_Proxy.szProxyUser = lstrdup(asProxyUser);
 		if (asProxyPassword)
@@ -575,7 +576,11 @@ protected:
 			for (INT_PTR i = 0; i < countof(Switches); i++)
 			{
 				LPCWSTR pszValue = Switches[i].pszValue;
-				if (pszValue && *pszValue && !lstrmerge(&pszCommand, Switches[i].pszName, L" \"", pszValue, L"\" "))
+				if (pszValue
+					&& ((*pszValue)
+						|| (lstrcmp(Switches[i].pszName, L"-proxy") == 0) // Pass empty string for proxy autoconfig
+						)
+					&& !lstrmerge(&pszCommand, Switches[i].pszName, L" \"", pszValue, L"\" "))
 				{
 					iRc = E_OUTOFMEMORY;
 					goto wrap;
