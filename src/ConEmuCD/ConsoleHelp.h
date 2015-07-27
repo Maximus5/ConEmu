@@ -49,7 +49,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 		L"   or: ConEmuC /download [-login <name> -password <pwd>]\r\n" \
 		L"               [-proxy <address:port> [-proxylogin <name> -proxypassword <pwd>]]\r\n" \
 		L"               [-async Y|N] [-otimeout <ms>] [-timeout <ms>] [-agent <name>]\r\n" \
-		L"               \"full_url_to_file\" [\"local_path_name\" | - ]\r\n" \
+		L"               [-debug] \"full_url_to_file\" [\"local_path_name\" | - ]\r\n" \
 _DBGHLP(L"   or: ConEmuC /REGCONFONT=<FontName> -> RegisterConsoleFontHKLM\r\n") \
 		L"   or: ConEmuC /?\r\n" \
 		L"Switches:\r\n" \

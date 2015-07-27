@@ -39,6 +39,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 LONG gnIsDownloading = 0;
 
+static bool gbVerbose = false;
+static bool gbVerboseInitialized = false;
+
 #ifdef _DEBUG
 #define SLOW_CONNECTION_SIMULATE
 #endif
@@ -1588,6 +1591,32 @@ DWORD_PTR WINAPI DownloadCommand(CEDownloadCommand cmd, int argc, CEDownloadErro
 	return nResult;
 }
 
+bool PrintToConsole(HANDLE hCon, LPCWSTR asData, int anLen)
+{
+	bool bSuccess;
+	bool bNeedClose = false;
+	DWORD nWritten;
+
+	if (!hCon)
+	{
+		hCon = CreateFileW(L"CONOUT$", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE,
+			0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+		bNeedClose = (hCon && (hCon != INVALID_HANDLE_VALUE));
+	}
+
+	if (WriteConsoleW(hCon, asData, anLen, &nWritten, NULL))
+	{
+		bSuccess = true;
+	}
+
+	if (bNeedClose)
+	{
+		CloseHandle(hCon);
+	}
+
+	return bSuccess;
+}
+
 static void PrintDownloadLog(LPCWSTR pszLabel, LPCWSTR pszInfo)
 {
 	SYSTEMTIME st = {}; GetLocalTime(&st);
@@ -1630,15 +1659,24 @@ static void PrintDownloadLog(LPCWSTR pszLabel, LPCWSTR pszInfo)
 	}
 	else if (hStdErr == INVALID_HANDLE_VALUE)
 	{
+		if (gbVerbose)
+		{
+			PrintToConsole(NULL, lsAll.ms_Arg, iLen);
+		}
 		return;
 	}
 
 	if (!bRedirected)
 	{
-		WriteConsoleW(hStdErr, lsAll.ms_Arg, iLen, &nWritten, NULL);
+		PrintToConsole(hStdErr, lsAll.ms_Arg, iLen);
 	}
 	else
 	{
+		if (gbVerbose)
+		{
+			PrintToConsole(NULL, lsAll.ms_Arg, iLen);
+		}
+
 		DWORD cp = GetConsoleCP();
 		DWORD nMax = WideCharToMultiByte(cp, 0, lsAll.ms_Arg, iLen, NULL, 0, NULL, NULL);
 
@@ -1683,6 +1721,22 @@ FDownloadCallback gpfn_DownloadCallback = DownloadCallback;
 static void DownloadLog(CEDownloadCommand logLevel, LPCWSTR asMessage)
 {
 	CEDownloadInfo Info = {sizeof(Info), logLevel+1, asMessage};
+
+	if (gbVerbose)
+	{
+		 if (!gbVerboseInitialized)
+		 {
+			 gbVerboseInitialized = true;
+			 HWND hConWnd = GetConsoleWindow();
+			 if (hConWnd && !::IsWindowVisible(hConWnd))
+				 ::ShowWindowAsync(hConWnd, SW_SHOWNORMAL);
+		 }
+		 if (gpfn_DownloadCallback != DownloadCallback)
+		 {
+			 DownloadCallback(&Info);
+		 }
+	}
+
 	gpfn_DownloadCallback(&Info);
 }
 
@@ -1703,6 +1757,9 @@ int DoDownload(LPCWSTR asCmdLine)
 	wchar_t *pszAsync = NULL;
 	wchar_t *pszAgent = NULL;
 
+	gbVerbose = false;
+	gbVerboseInitialized = false;
+
 	DownloadCommand(dc_Init, 0, NULL);
 
 	args[0].uintArg = (DWORD_PTR)gpfn_DownloadCallback; args[0].argType = at_Uint;
@@ -1717,6 +1774,7 @@ int DoDownload(LPCWSTR asCmdLine)
 	struct {
 		LPCWSTR   pszArgName;
 		wchar_t** ppszValue;
+		bool*     pbValue;
 	} KnownArgs[] = {
 		{L"login", &pszLogin},
 		{L"password", &pszPassword},
@@ -1727,6 +1785,7 @@ int DoDownload(LPCWSTR asCmdLine)
 		{L"timeout", &pszTimeout},
 		{L"async", &pszAsync},
 		{L"agent", &pszAgent},
+		{L"debug", NULL, &gbVerbose}, {L"verbose", NULL, &gbVerbose},
 		{NULL}
 	};
 
@@ -1741,10 +1800,16 @@ int DoDownload(LPCWSTR asCmdLine)
 			{
 				if (lstrcmpi(psz, KnownArgs[i].pszArgName) == 0)
 				{
+					bKnown = true;
+					if (!KnownArgs[i].ppszValue)
+					{
+						if (KnownArgs[i].pbValue)
+							*KnownArgs[i].pbValue = true;
+						continue;
+					}
 					SafeFree(*KnownArgs[i].ppszValue);
 					if (NextArg(&asCmdLine, szArg) == 0)
 						*KnownArgs[i].ppszValue = szArg.Detach();
-					bKnown = true;
 					break;
 				}
 			}
@@ -1872,7 +1937,10 @@ wrap:
 	SafeFree(pszExpanded);
 	for (size_t i = 0; KnownArgs[i].pszArgName; i++)
 	{
-		SafeFree(*KnownArgs[i].ppszValue);
+		if (KnownArgs[i].ppszValue)
+		{
+			SafeFree(*KnownArgs[i].ppszValue);
+		}
 	}
 	return iRc;
 }
