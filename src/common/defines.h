@@ -139,6 +139,7 @@ WARNING("WIN64 was not defined");
 #define LODWORD(ull) ((DWORD)((ULONGLONG)(ull) & 0x00000000ffffffff))
 #define LOLONG(ull)  ((DWORD)((ULONGLONG)(ull) & 0x00000000ffffffff))
 #define HIDWORD(ull) ((DWORD)(ull>>32))
+#define LOSHORT(ll)  ((SHORT)LOWORD(ll))
 
 #define LOGRECTCOORDS(rc) (rc).left, (rc).top, (rc).right, (rc).bottom
 #define LOGRECTSIZE(rc) (rc).right-(rc).left, (rc).bottom-(rc).top
