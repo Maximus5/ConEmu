@@ -1753,6 +1753,7 @@ int DoDownload(LPCWSTR asCmdLine)
 	CEDownloadErrorArg args[4];
 	wchar_t* pszExpanded = NULL;
 	wchar_t szFullPath[MAX_PATH*2];
+	wchar_t szResult[80];
 	DWORD nFullRc;
 	wchar_t *pszProxy = NULL, *pszProxyLogin = NULL, *pszProxyPassword = NULL;
 	wchar_t *pszLogin = NULL, *pszPassword = NULL;
@@ -1936,6 +1937,16 @@ int DoDownload(LPCWSTR asCmdLine)
 
 	iRc = iFiles ? CERR_DOWNLOAD_SUCCEEDED : CERR_CARGUMENT;
 wrap:
+	// Log exit code
+	_wsprintf(szResult, SKIPCOUNT(szResult)
+		L"Exit with code %s (%i)",
+		(iRc==CERR_DOWNLOAD_SUCCEEDED) ? L"CERR_DOWNLOAD_SUCCEEDED" :
+		(iRc==CERR_DOWNLOAD_SUCCEEDED) ? L"CERR_DOWNLOAD_FAILED" :
+		(iRc==CERR_CARGUMENT) ? L"CERR_CARGUMENT" :
+		L"OtherExitCode",
+		iRc);
+	DownloadLog(dc_LogCallback, szResult);
+	// Finilize internet service
 	DownloadCommand(dc_Deinit, 0, NULL);
 	SafeFree(pszExpanded);
 	for (size_t i = 0; KnownArgs[i].pszArgName; i++)
