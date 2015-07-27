@@ -313,7 +313,7 @@ void CTaskBar::Taskbar_SetShield(bool abShield)
 
 	if (abShield && !mh_Shield)
 	{
-		mh_Shield = (HICON)LoadImage(g_hInstance, MAKEINTRESOURCE(IDI_SHIELD), IMAGE_ICON, 16,16, 0);
+		mh_Shield = (HICON)LoadImage(g_hInstance, IDI_SHIELD, IMAGE_ICON, 16,16, 0);
 		if (!mh_Shield)
 		{
 			_ASSERTE(mh_Shield!=NULL);
