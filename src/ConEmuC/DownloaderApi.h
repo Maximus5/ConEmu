@@ -99,13 +99,17 @@ struct CEDownloadInfo
 
 typedef void (WINAPI* FDownloadCallback)(const CEDownloadInfo* pError);
 
+#define CEDLOG_MARK_ERROR L"Error: "
+#define CEDLOG_MARK_PROGR L"Progr: "
+#define CEDLOG_MARK_INFO  L"Info:  "
+
 // For internal use only!
 enum CEDownloadCommand
 {
 	// Callbacks. Must be sequental!
-	dc_ErrCallback = 0,     // [0]=FDownloadCallback, [1]=lParam
-	dc_ProgressCallback,    // [0]=FDownloadCallback, [1]=lParam
-	dc_LogCallback,         // [0]=FDownloadCallback, [1]=lParam
+	dc_ErrCallback = 0,     // [0]=FDownloadCallback, [1]=lParam :: CEDLOG_MARK_ERROR
+	dc_ProgressCallback,    // [0]=FDownloadCallback, [1]=lParam :: CEDLOG_MARK_PROGR
+	dc_LogCallback,         // [0]=FDownloadCallback, [1]=lParam :: CEDLOG_MARK_INFO
 	// Commands
 	dc_Init,
 	dc_DownloadFile,        // {IN}  - [0]="http", [1]="DestLocalFilePath", [2]=abShowAllErrors

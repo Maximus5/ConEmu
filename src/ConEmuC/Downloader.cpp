@@ -1670,7 +1670,10 @@ static void PrintDownloadLog(LPCWSTR pszLabel, LPCWSTR pszInfo)
 
 static void WINAPI DownloadCallback(const CEDownloadInfo* pInfo)
 {
-	LPCWSTR pszLabel = pInfo->lParam==(dc_ErrCallback+1) ? L"Error: " : pInfo->lParam==(dc_LogCallback+1) ? L"Info:  " : pInfo->lParam==(dc_ProgressCallback+1) ? L"Progr: " : L"";
+	LPCWSTR pszLabel = pInfo->lParam==(dc_ErrCallback+1) ? CEDLOG_MARK_ERROR
+		: pInfo->lParam==(dc_ProgressCallback+1) ? CEDLOG_MARK_PROGR
+		: pInfo->lParam==(dc_LogCallback+1) ? CEDLOG_MARK_INFO
+		: L"";
 	CEStr szInfo(pInfo->GetFormatted(true));
 	PrintDownloadLog(pszLabel, szInfo);
 }
