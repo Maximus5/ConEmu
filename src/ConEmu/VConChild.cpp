@@ -438,7 +438,7 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 			break;
 		case WM_PAINT:
 			pVCon->mn_WmPaintCounter++;
-			if (gpSetCls->isAdvLogging)
+			if (gpSetCls->isAdvLogging >= 2)
 			{
 				wchar_t szInfo[80];
 				_wsprintf(szInfo, SKIPCOUNT(szInfo) L"VCon[%i] WM_PAINT %u times, %u pending", pVCon->Index(), pVCon->mn_WmPaintCounter, pVCon->mn_InvalidateViewPending);
@@ -1485,7 +1485,7 @@ void CConEmuChild::InvalidateView()
 			DeleteObject(hRgn);
 		}
 
-		if (l == 1)
+		if ((l == 1) && (gpSetCls->isAdvLogging >= 2))
 		{
 			wchar_t szInfo[80];
 			_wsprintf(szInfo, SKIPCOUNT(szInfo) L"VCon[%i] invalidate called", mp_VCon->Index());
