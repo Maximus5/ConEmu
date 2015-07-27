@@ -1737,7 +1737,10 @@ static void DownloadLog(CEDownloadCommand logLevel, LPCWSTR asMessage)
 		 }
 	}
 
-	gpfn_DownloadCallback(&Info);
+	if (gpfn_DownloadCallback)
+	{
+		gpfn_DownloadCallback(&Info);
+	}
 }
 
 int DoDownload(LPCWSTR asCmdLine)
