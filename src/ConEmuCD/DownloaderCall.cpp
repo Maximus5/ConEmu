@@ -432,6 +432,9 @@ protected:
 
 		m_SI.wShowWindow = RELEASEDEBUGTEST(SW_HIDE,SW_SHOWNA);
 
+		wchar_t szConTitle[] = L"ConEmu: Downloading from network";
+		m_SI.lpTitle = szConTitle;
+
 		if (!szCmdStringFormat || !*szCmdStringFormat)
 		{
 			// We need to redirect only StdError output
