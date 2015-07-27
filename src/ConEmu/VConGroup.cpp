@@ -3177,7 +3177,7 @@ void CVConGroup::OnUpdateProcessDisplay(HWND hInfo)
 
 	wchar_t temp[MAX_PATH];
 
-	for (size_t j = 0; j < countof(gp_VCon); j++)
+	for (int j = 0; j < countof(gp_VCon); j++)
 	{
 		if (gp_VCon[j] == NULL) continue;
 
