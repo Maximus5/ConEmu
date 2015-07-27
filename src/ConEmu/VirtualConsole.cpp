@@ -2189,7 +2189,7 @@ void CVirtualConsole::UpdateHighlightsRowCol()
 
 	if (isHighlightMouseRow())
 	{
-		RECT rect = {0, pix.Y, Width, pix.Y+nFontHeight};
+		RECT rect = {0, pix.Y, (LONG)Width, pix.Y+nFontHeight};
 		if (pos.Y >= 0)
 			PatInvertRect(hPaintDC, rect, hPaintDC, false);
 		m_HighlightInfo.m_Last.Y = pos.Y;
@@ -2199,7 +2199,7 @@ void CVirtualConsole::UpdateHighlightsRowCol()
 	if (isHighlightMouseCol())
 	{
 		// This will be not "precise" on other rows if using proportional font...
-		RECT rect = {pix.X, 0, pix.X+nFontWidth, Height};
+		RECT rect = {pix.X, 0, pix.X+nFontWidth, (LONG)Height};
 		if (pos.X >= 0)
 			PatInvertRect(hPaintDC, rect, hPaintDC, false);
 		m_HighlightInfo.m_Last.X = pos.X;
@@ -2851,7 +2851,8 @@ bool CVirtualConsole::UpdatePrepare(HDC *ahDc, MSectionLock *pSDC, MSectionLock 
 
 	#ifdef _DEBUG
 	COORD dbgWinSize = winSize;
-	COORD dbgTxtSize = {TextWidth,TextHeight};
+	_ASSERTE(!HIWORD(TextWidth)&&!HIWORD(TextHeight));
+	COORD dbgTxtSize = {LOSHORT(TextWidth),LOSHORT(TextHeight)};
 	#endif
 
 	_ASSERTE(isMainThread());
