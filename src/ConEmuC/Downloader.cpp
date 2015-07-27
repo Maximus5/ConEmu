@@ -498,15 +498,19 @@ bool CDownloader::InetCloseHandle(HINTERNET& h, bool bForceSync /*= false*/)
 	MSectionLockSimple CS;
 	CS.Lock(&mcs_Handle);
 
+	SetLastError(0);
 	bClose = wi->_InternetCloseHandle(h);
 	nErrCode = GetLastError();
 	if (!bClose)
 	{
 		ReportMessage(dc_LogCallback, L"Close handle x%08X failed, code=%u", at_Uint, (DWORD_PTR)h, at_Uint, nErrCode, at_None);
 	}
-	if (!bForceSync && mb_AsyncMode)
+	if (!bForceSync && mb_AsyncMode
+		&& (nErrCode != ERROR_INVALID_HANDLE) // Handles mh_SrcFile and mh_Connect fails in WinXP (bClose==true, nErrCode==ERROR_INVALID_HANDLE)
+		)
 	{
 		nWaitResult = WaitForSingleObject(mh_CloseEvent, DOWNLOADCLOSEHANDLETIMEOUT);
+		_ASSERTE(nWaitResult == WAIT_OBJECT_0 && "Handle must be closed properly");
 		ReportMessage(dc_LogCallback, L"Async close handle x%08X wait result=%u", at_Uint, (DWORD_PTR)h, at_Uint, nWaitResult, at_None);
 	}
 
