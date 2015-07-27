@@ -707,17 +707,6 @@ DWORD CConEmuUpdate::CheckProcInt()
 
 	DeleteBadTempFiles();
 
-	//120315 - OK, положим в архив и 64битный гуй
-	//#ifdef _WIN64
-	//if (mp_Set->UpdateDownloadSetup() == 2)
-	//{
-	//	if (mb_ManualCallMode)
-	//	{
-	//		ReportError(L"64bit versions of ConEmu may be updated with ConEmuSetup.exe only!", 0);
-	//	}
-	//	goto wrap;
-	//}
-	//#endif
 
 	// This implies Inet.Deinit(false) too
 	if (!Inet.Init(this))
