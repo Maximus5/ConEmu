@@ -84,7 +84,7 @@ protected:
 	DWORD mn_InternetContentLen, mn_InternetContentReady; // Used
 
 	bool InitInterface();
-	
+
 	struct {
 		wchar_t* szProxy;
 		wchar_t* szProxyUser;
@@ -97,12 +97,12 @@ protected:
 	} m_Server;
 
 	wchar_t* msz_AgentName;
-	
+
 	DWORD mn_Timeout;     // DOWNLOADTIMEOUT by default
 	DWORD mn_ConnTimeout; // INTERNET_OPTION_RECEIVE_TIMEOUT
 	DWORD mn_DataTimeout; // INTERNET_OPTION_DATA_RECEIVE_TIMEOUT
 	bool  SetupTimeouts();
-	
+
 	bool IsLocalFile(LPWSTR& asPathOrUrl);
 	bool IsLocalFile(LPCWSTR& asPathOrUrl);
 
@@ -115,7 +115,7 @@ protected:
 	LPARAM m_CallbackLParam[dc_LogCallback+1];
 
 	void UpdateProgress();
-	
+
 	void ReportMessage(CEDownloadCommand rm, LPCWSTR asFormat, CEDownloadArgType nextArgType = at_None, ...);
 
 	static VOID CALLBACK InetCallback(HINTERNET hInternet, DWORD_PTR dwContext, DWORD dwInternetStatus, LPVOID lpvStatusInformation, DWORD dwStatusInformationLength);
@@ -136,7 +136,7 @@ protected:
 public:
 	CDownloader();
 	virtual ~CDownloader();
-	
+
 	void SetProxy(LPCWSTR asProxy, LPCWSTR asProxyUser, LPCWSTR asProxyPassword);
 	void SetLogin(LPCWSTR asUser, LPCWSTR asPassword);
 	void SetCallback(CEDownloadCommand cb, FDownloadCallback afnErrCallback, LPARAM lParam);
@@ -404,7 +404,7 @@ bool CDownloader::IsLocalFile(LPWSTR& asPathOrUrl)
 		return true; // network or UNC
 	if (asPathOrUrl[1] == L':')
 		return true; // Local drive
-	
+
 	wchar_t szPrefix[8]; // "file:"
 	lstrcpyn(szPrefix, asPathOrUrl, countof(szPrefix));
 	if (lstrcmpi(szPrefix, L"file://") == 0)
@@ -412,7 +412,7 @@ bool CDownloader::IsLocalFile(LPWSTR& asPathOrUrl)
 		asPathOrUrl += 7;
 		return true; // "file:" protocol
 	}
-	
+
 	return false;
 }
 
@@ -562,24 +562,24 @@ VOID CDownloader::InetCallback(HINTERNET hInternet, DWORD_PTR dwContext, DWORD d
     InternetCookieHistory cookieHistory;
     CDownloader* pObj = (CDownloader*)dwContext;
 	wchar_t sFormat[200];
- 
+
     UNREFERENCED_PARAMETER(dwStatusInformationLength);
 
 	wcscpy_c(sFormat, L"InetCallback for handle x%08X: ");
 	#define LogCallback(msg,arg) \
 		wcscat_c(sFormat, msg);  \
 		pObj->ReportMessage(dc_LogCallback, sFormat, at_Uint, (DWORD_PTR)hInternet, at_Uint, arg, at_None);
-    
+
     switch (dwInternetStatus)
     {
         case INTERNET_STATUS_COOKIE_SENT:
 			LogCallback(L"Cookie found and will be sent with request", 0);
             break;
-            
+
         case INTERNET_STATUS_COOKIE_RECEIVED:
             LogCallback(L"Cookie Received", 0);
             break;
-            
+
         case INTERNET_STATUS_COOKIE_HISTORY:
 			wcscat_c(sFormat, L"Cookie History");
 
@@ -587,7 +587,7 @@ VOID CDownloader::InetCallback(HINTERNET hInternet, DWORD_PTR dwContext, DWORD d
             _ASSERTE(dwStatusInformationLength == sizeof(InternetCookieHistory));
 
             cookieHistory = *((InternetCookieHistory*)lpvStatusInformation);
-            
+
             if (cookieHistory.fAccepted)
             {
                 wcscat_c(sFormat, L": Cookie Accepted");
@@ -595,24 +595,24 @@ VOID CDownloader::InetCallback(HINTERNET hInternet, DWORD_PTR dwContext, DWORD d
             if (cookieHistory.fLeashed)
             {
                 wcscat_c(sFormat, L": Cookie Leashed");
-            }        
+            }
             if (cookieHistory.fDowngraded)
             {
                 wcscat_c(sFormat, L": Cookie Downgraded");
-            }        
+            }
             if (cookieHistory.fRejected)
             {
                 wcscat_c(sFormat, L": Cookie Rejected");
             }
 
 			LogCallback(L"", 0);
- 
+
             break;
-            
+
         case INTERNET_STATUS_CLOSING_CONNECTION:
             LogCallback(L"Closing Connection", 0);
             break;
-            
+
         case INTERNET_STATUS_CONNECTING_TO_SERVER:
         case INTERNET_STATUS_CONNECTED_TO_SERVER:
 			_ASSERTE(lpvStatusInformation);
@@ -636,39 +636,39 @@ VOID CDownloader::InetCallback(HINTERNET hInternet, DWORD_PTR dwContext, DWORD d
 				pObj->ReportMessage(dc_LogCallback, sFormat, at_Uint, (DWORD_PTR)hInternet, at_Uint, dwStatusInformationLength, at_None);
 			}
             break;
-            
+
         case INTERNET_STATUS_CONNECTION_CLOSED:
             LogCallback(L"Connection Closed", 0);
             break;
-            
+
         case INTERNET_STATUS_HANDLE_CLOSING:
             LogCallback(L"Handle Closing x%08x", (DWORD)*((HINTERNET*)lpvStatusInformation));
 			SetEvent(pObj->mh_CloseEvent);
             break;
-            
+
         case INTERNET_STATUS_HANDLE_CREATED:
             _ASSERTE(lpvStatusInformation);
-            LogCallback(L"Handle x%08X created", 
+            LogCallback(L"Handle x%08X created",
                     ((LPINTERNET_ASYNC_RESULT)lpvStatusInformation)->dwResult);
 
             break;
-            
+
         case INTERNET_STATUS_INTERMEDIATE_RESPONSE:
             LogCallback(L"Intermediate response", 0);
             break;
-            
+
         case INTERNET_STATUS_RECEIVING_RESPONSE:
-            LogCallback(L"Receiving Response", 0);    
+            LogCallback(L"Receiving Response", 0);
             break;
-            
+
         case INTERNET_STATUS_RESPONSE_RECEIVED:
             _ASSERTE(lpvStatusInformation);
             _ASSERTE(dwStatusInformationLength == sizeof(DWORD));
-            
+
             LogCallback(L"Response Received (%u bytes)", *((LPDWORD)lpvStatusInformation));
-            
+
             break;
-            
+
         case INTERNET_STATUS_REDIRECT:
 			wcscat_c(sFormat, L"Redirect to '%s'");
 			pObj->ReportMessage(dc_LogCallback, sFormat, at_Uint, (DWORD_PTR)hInternet, at_Str, lpvStatusInformation?(LPCWSTR)lpvStatusInformation:L"", at_None);
@@ -680,43 +680,43 @@ VOID CDownloader::InetCallback(HINTERNET hInternet, DWORD_PTR dwContext, DWORD d
 			pObj->ReportMessage(dc_LogCallback, sFormat, at_Uint, (DWORD_PTR)hInternet,
 				at_Uint, ((INTERNET_ASYNC_RESULT*)lpvStatusInformation)->dwResult,
 				at_Uint, ((INTERNET_ASYNC_RESULT*)lpvStatusInformation)->dwError, at_None);
-            
+
             pObj->m_Result = *(INTERNET_ASYNC_RESULT*)lpvStatusInformation;
 			SetEvent(pObj->mh_ReadyEvent);
 
             break;
-            
+
         case INTERNET_STATUS_REQUEST_SENT:
             ASSERTE(lpvStatusInformation);
             ASSERTE(dwStatusInformationLength == sizeof(DWORD));
 
             LogCallback(L"Request sent (%u bytes)", *((LPDWORD)lpvStatusInformation));
             break;
-            
+
         case INTERNET_STATUS_DETECTING_PROXY:
             LogCallback(L"Detecting Proxy", 0);
-            break;            
-            
+            break;
+
         case INTERNET_STATUS_RESOLVING_NAME:
             LogCallback(L"Resolving Name", 0);
             break;
-            
+
         case INTERNET_STATUS_NAME_RESOLVED:
             LogCallback(L"Name Resolved", 0);
             break;
-            
+
         case INTERNET_STATUS_SENDING_REQUEST:
             LogCallback(L"Sending request", 0);
             break;
-            
+
         case INTERNET_STATUS_STATE_CHANGE:
             LogCallback(L"State Change", 0);
             break;
-            
+
         case INTERNET_STATUS_P3P_HEADER:
             LogCallback(L"Received P3P header", 0);
             break;
-            
+
         default:
             LogCallback(L"Unknown callback status (%u)", dwInternetStatus);
             break;
@@ -842,9 +842,9 @@ BOOL CDownloader::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, DWORD& crc, D
 	mn_InternetContentReady = 0;
 	mn_InternetContentLen = 0;
 	mb_FtpMode = false;
-	
+
 	crc = 0xFFFFFFFF;
-	
+
 	if (mb_InetMode)
 	{
 		LPCWSTR pszSource;
@@ -895,7 +895,7 @@ BOOL CDownloader::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, DWORD& crc, D
 			L"DownloadFile. Invalid arguments", at_None);
 		goto wrap;
 	}
-	
+
 	if (!ptrData)
 	{
 		ReportMessage(dc_ErrCallback,
@@ -921,7 +921,7 @@ BOOL CDownloader::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, DWORD& crc, D
 
 		lbNeedTargetClose = !lbStdOutWrite;
 	}
-	
+
 	if (mb_InetMode)
 	{
 		if (m_Proxy.szProxy)
@@ -996,9 +996,9 @@ BOOL CDownloader::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, DWORD& crc, D
 		}
 
 
-		// 
+		//
 		_ASSERTE(mh_Connect == NULL);
-		
+
 		//TODO после включения ноута вылезла ошибка ERROR_INTERNET_NAME_NOT_RESOLVED==12007
 
 		// Server:Port
@@ -1194,7 +1194,7 @@ BOOL CDownloader::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, DWORD& crc, D
 	}
 
 	//WaitAsyncResult();
-	
+
 	while (TRUE)
 	{
 		if (mb_RequestTerminate)
@@ -1205,7 +1205,7 @@ BOOL CDownloader::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, DWORD& crc, D
 			goto wrap;
 
 		//WaitAsyncResult();
-			
+
 		if (!nRead)
 		{
 			if (!mn_InternetContentReady)
@@ -1216,9 +1216,9 @@ BOOL CDownloader::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, DWORD& crc, D
 			}
 			break;
 		}
-		
+
 		CalcCRC(ptrData, nRead, crc);
-		
+
 		lbWrite = WriteTarget(asTarget, hDstFile, ptrData, nRead);
 		if (!lbWrite)
 			goto wrap;
@@ -1251,7 +1251,7 @@ BOOL CDownloader::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, DWORD& crc, D
 
 		UpdateProgress();
 	}
-	
+
 	// Succeeded
 	crc ^= 0xFFFFFFFF;
 	lbRc = TRUE;
@@ -1357,7 +1357,7 @@ BOOL CDownloader::ReadSource(LPCWSTR asSource, BOOL bInet, HANDLE hSource, BYTE*
 {
 	BOOL lbRc = FALSE;
 	DWORD dwErr = 0;
-	
+
 	if (bInet)
 	{
 		ReportMessage(dc_LogCallback, L"Reading source");
@@ -1389,7 +1389,7 @@ BOOL CDownloader::ReadSource(LPCWSTR asSource, BOOL bInet, HANDLE hSource, BYTE*
 		else
 			ReportMessage(dc_LogCallback, L"Read %u bytes", at_Uint, *pcbRead, at_None);
 	}
-	
+
 	return lbRc;
 }
 
@@ -1400,7 +1400,7 @@ BOOL CDownloader::WriteTarget(LPCWSTR asTarget, HANDLE hTarget, const BYTE* pDat
 
 	ReportMessage(dc_LogCallback, L"Writing target file %u bytes", at_Uint, cbData, at_None);
 	lbRc = WriteFile(hTarget, pData, cbData, &nWritten, NULL);
-	
+
 	if (lbRc && (nWritten != cbData))
 	{
 		lbRc = FALSE;
@@ -1412,7 +1412,7 @@ BOOL CDownloader::WriteTarget(LPCWSTR asTarget, HANDLE hTarget, const BYTE* pDat
 		ReportMessage(dc_ErrCallback,
 			L"WriteFile(%s) failed, code=%u", at_Str, asTarget, at_Uint, GetLastError(), at_None);
 	}
-	
+
 	return lbRc;
 }
 
