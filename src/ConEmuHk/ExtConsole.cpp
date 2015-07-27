@@ -1168,7 +1168,7 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 				// координату - "отмотать" (она как бы не изменилась)
 				if (ScrollRegion && (ScrollBottom < csbi.dwSize.Y))
 				{
-					y2 = ScrollBottom - 1;
+					y2 = LOSHORT(ScrollBottom) - 1;
 					_ASSERTEX((int)y2 == (int)(ScrollBottom - 1));
 					
 					crScrollCursor.X = x2;
