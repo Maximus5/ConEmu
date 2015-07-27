@@ -46,6 +46,8 @@ static bool gbVerboseInitialized = false;
 #define SLOW_CONNECTION_SIMULATE
 #endif
 
+#undef WAIT_FOR_DEBUGGER_MSG
+
 #if defined(__GNUC__) && !defined(__MINGW64_VERSION_MAJOR)
 typedef struct {
     DWORD dwMajorVersion;
@@ -1722,23 +1724,43 @@ static void WINAPI DownloadCallback(const CEDownloadInfo* pInfo)
 
 FDownloadCallback gpfn_DownloadCallback = DownloadCallback;
 
+void InitVerbose()
+{
+	if (!gbVerboseInitialized)
+	{
+		#if defined(WAIT_FOR_DEBUGGER_MSG)
+		MessageBox(NULL, L"Waiting for debugger", L"ConEmu downloader", MB_SYSTEMMODAL);
+		#endif
+
+		gbVerboseInitialized = true;
+		HWND hConWnd = GetConsoleWindow();
+		if (hConWnd)
+		{
+			// If STARTUPINFO has SW_HIDE flag - first ShowWindow may be ignored
+			for (int i = 0; i <= 1; i++)
+			{
+				if (!::IsWindowVisible(hConWnd))
+					::ShowWindowAsync(hConWnd, SW_SHOWNORMAL);
+			}
+		}
+	}
+}
+
 static void DownloadLog(CEDownloadCommand logLevel, LPCWSTR asMessage)
 {
 	CEDownloadInfo Info = {sizeof(Info), logLevel+1, asMessage};
 
 	if (gbVerbose)
 	{
-		 if (!gbVerboseInitialized)
-		 {
-			 gbVerboseInitialized = true;
-			 HWND hConWnd = GetConsoleWindow();
-			 if (hConWnd && !::IsWindowVisible(hConWnd))
-				 ::ShowWindowAsync(hConWnd, SW_SHOWNORMAL);
-		 }
-		 if (gpfn_DownloadCallback != DownloadCallback)
-		 {
-			 DownloadCallback(&Info);
-		 }
+		if (!gbVerboseInitialized)
+		{
+			InitVerbose();
+		}
+
+		if (gpfn_DownloadCallback != DownloadCallback)
+		{
+			DownloadCallback(&Info);
+		}
 	}
 
 	if (gpfn_DownloadCallback)
@@ -1829,6 +1851,11 @@ int DoDownload(LPCWSTR asCmdLine)
 				goto wrap;
 			}
 			continue;
+		}
+
+		if (gbVerbose)
+		{
+			InitVerbose();
 		}
 
 		SafeFree(pszUrl);
