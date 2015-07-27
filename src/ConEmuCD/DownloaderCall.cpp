@@ -651,6 +651,8 @@ public:
 		MCHKHEAP;
 
 		nWait = ExecuteDownloader(pszCommand, szCmdDirectory);
+
+		// Now check the result of downloader proc
 		if (nWait != 0)
 		{
 			iRc = nWait;
