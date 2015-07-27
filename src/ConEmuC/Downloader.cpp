@@ -1376,8 +1376,10 @@ BOOL CDownloader::ReadSource(LPCWSTR asSource, BOOL bInet, HANDLE hSource, BYTE*
 		if (!lbRc)
 			ReportMessage(dc_ErrCallback,
 				L"DownloadFile(%s) failed, code=%u", at_Str, asSource, at_Uint, dwErr, at_None);
+		else if (*pcbRead)
+			ReportMessage(dc_LogCallback, L"Retrieved %u bytes in block", at_Uint, *pcbRead, at_None);
 		else
-			ReportMessage(dc_LogCallback, L"Retrieved %u bytes", at_Uint, *pcbRead, at_None);
+			ReportMessage(dc_LogCallback, L"No more data? code=%u", at_Uint, dwErr, at_None);
 	}
 	else
 	{
