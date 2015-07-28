@@ -701,7 +701,7 @@ void* __cdecl GetOriginalAddress(void* OurFunction, void* DefaultFunction, BOOL 
 		}
 	}
 
-	_ASSERT(!gbHooksWasSet || gbLdrDllNotificationUsed && !gbIsFarProcess); // сюда мы попадать не должны
+	_ASSERT(!gbHooksWasSet || (gbLdrDllNotificationUsed && !gbIsFarProcess) || (!abAllowModified && !DefaultFunction));
 	return DefaultFunction;
 }
 
