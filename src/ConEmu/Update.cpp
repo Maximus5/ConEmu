@@ -765,8 +765,7 @@ DWORD CConEmuUpdate::CheckProcInt()
 
 	if (!GetPrivateProfileString(szSection, L"version", L"", ms_NewVersion, countof(ms_NewVersion), pszUpdateVerLocation) || !*ms_NewVersion)
 	{
-		CEStr lsUrlAndLocal = lstrmerge(pszUpdateVerLocationSet, L"\n", pszUpdateVerLocation);
-		ReportBrokenIni(szSection, L"version", lsUrlAndLocal.ms_Arg);
+		ReportBrokenIni(szSection, L"version", pszUpdateVerLocationSet, pszUpdateVerLocation);
 		goto wrap;
 	}
 
@@ -777,7 +776,7 @@ DWORD CConEmuUpdate::CheckProcInt()
 
 	if (!GetPrivateProfileString(szSection, szItem, L"", szSourceFull, countof(szSourceFull), pszUpdateVerLocation) || !*szSourceFull)
 	{
-		ReportBrokenIni(szSection, szItem, pszUpdateVerLocationSet);
+		ReportBrokenIni(szSection, szItem, pszUpdateVerLocationSet, pszUpdateVerLocation);
 		goto wrap;
 	}
 
@@ -1546,30 +1545,25 @@ LRESULT CConEmuUpdate::RequestExitUpdate(LPARAM)
 	return 0;
 }
 
-void CConEmuUpdate::ReportBrokenIni(LPCWSTR asSection, LPCWSTR asName, LPCWSTR asIni)
+void CConEmuUpdate::ReportBrokenIni(LPCWSTR asSection, LPCWSTR asName, LPCWSTR asIniUrl, LPCWSTR asIniLocal)
 {
-	wchar_t szInfo[140];
 	DWORD nErr = GetLastError();
-	_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"[%s] \"%s\"", asSection, asName);
 
-	wchar_t* pszIni = (wchar_t*)asIni;
-	int nLen = lstrlen(asIni);
-	LPCWSTR pszSlash = (nLen > 50) ? wcschr(asIni+10, L'/') : NULL;
-	if (pszSlash)
-	{
-		pszIni = (wchar_t*)malloc((nLen+3)*sizeof(*pszIni));
-		if (pszIni)
-		{
-			lstrcpyn(pszIni, asIni, (pszSlash - asIni + 2));
-			_wcscat_c(pszIni, nLen+3, L"\n");
-			_wcscat_c(pszIni, nLen+3, pszSlash+1);
-		}
-	}
+	CEStr lsInfo = lstrmerge(
+		L"[", asSection, L"] \"", asName, L"\""
+		);
 
-	ReportError(L"Version update information is broken (not found)\n%s\n\n%s\n\nError code=%u", szInfo, pszIni?pszIni:L"<NULL>", nErr);
+	CEStr lsIni = lstrmerge(
+		L"URL: ", asIniUrl, L"\n"
+		L"File: ", asIniLocal
+		);
 
-	if (pszIni && pszIni != asIni)
-		free(pszIni);
+	ReportError(
+		L"Version update information is broken (not found)\n"
+		L"%s\n\n"
+		L"%s\n\n"
+		L"Error code=%u",
+		(LPCWSTR)lsInfo, (LPCWSTR)lsIni, nErr);
 }
 
 // If we are installed in "C:\Program Files\..." or any other restricted location.
