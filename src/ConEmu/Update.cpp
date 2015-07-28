@@ -64,6 +64,12 @@ CConEmuUpdate* gpUpd = NULL;
 	CEDOWNLPAGE /* http://www.fosshub.com/ConEmu.html */ L"\n" \
 	L"or let ConEmu retry the check.\n"
 
+#define szRetryPackageDownload \
+	L"ConEmu is unable to download update package.\n" \
+	L"You may either download new versions manually from\n" \
+	CEDOWNLPAGE /* http://www.fosshub.com/ConEmu.html */ L"\n" \
+	L"or let ConEmu retry the downloading.\n"
+
 
 
 CConEmuUpdate::CConEmuUpdate()
@@ -696,7 +702,7 @@ DWORD CConEmuUpdate::CheckProcInt()
 {
 	BOOL lbDownloadRc = FALSE, lbExecuteRc = FALSE;
 	wchar_t *pszLocalPackage = NULL, *pszBatchFile = NULL;
-	wchar_t *pszSource, *pszEnd, *pszFileName;
+	wchar_t *pszSource, *pszEnd;
 	DWORD nSrcLen, nSrcCRC, nLocalCRC = 0;
 	bool lbSourceLocal;
 	int iConfirmUpdate = -1;
@@ -807,49 +813,65 @@ DWORD CConEmuUpdate::CheckProcInt()
 		gpConEmu->UpdateProgress();
 	}
 
-	pszFileName = wcsrchr(pszSource, lbSourceLocal ? L'\\' : L'/');
-	if (!pszFileName)
+	// Download the package
+	while (!mb_RequestTerminate)
 	{
-		ReportError(L"Invalid source url\n%s", (LPCWSTR)ms_SourceFull, 0);
-		goto wrap;
-	}
-	else
-	{
-		if (gpConEmu)
-			gpConEmu->LogString(L"Update: Downloading package");
-
-		// Загрузить пакет обновления
-		pszFileName++; // пропустить слеш
-
 		HANDLE hTarget = NULL;
 		LARGE_INTEGER liSize = {};
+		lbDownloadRc = FALSE;
+
+		if (gpConEmu)
+		{
+			CEStr lsInfo = lstrmerge(L"Update: Downloading package: ", pszSource);
+			gpConEmu->LogString(lsInfo);
+		}
 
 		_ASSERTE(!ms_TemplFilename.IsEmpty());
 		pszLocalPackage = CreateTempFile(mp_Set->szUpdateDownloadPath, ms_TemplFilename, hTarget);
 		CloseHandle(hTarget);
-		if (!pszLocalPackage)
-			goto wrap;
-
-		// liSize returns only .LowPart yet
-		lbDownloadRc = DownloadFile(pszSource, pszLocalPackage, nLocalCRC, TRUE, &liSize);
-		if (lbDownloadRc)
+		if (pszLocalPackage)
 		{
-			wchar_t szInfo[2048];
-			if (liSize.HighPart || liSize.LowPart != nSrcLen)
+			// liSize returns only .LowPart yet
+			lbDownloadRc = DownloadFile(pszSource, pszLocalPackage, nLocalCRC, TRUE, &liSize);
+			if (lbDownloadRc)
 			{
-				_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"%s\nRequired size=%u, local size=%u", pszSource, nSrcLen, liSize.LowPart);
-				ReportError(L"Downloaded file does not match\n%s\n%s", pszLocalPackage, szInfo, 0);
-				lbDownloadRc = FALSE;
-			}
-			else if (nLocalCRC != nSrcCRC)
-			{
-				_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"Required CRC32=x%08X, local CRC32=x%08X", nSrcCRC, nLocalCRC);
-				ReportError(L"Invalid local file\n%s\n%s", pszLocalPackage, szInfo, 0);
-				lbDownloadRc = FALSE;
+				wchar_t szInfo[2048];
+				if (liSize.HighPart || liSize.LowPart != nSrcLen)
+				{
+					_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"%s\nRequired size=%u, local size=%u", pszSource, nSrcLen, liSize.LowPart);
+					ReportError(L"Downloaded file does not match\n%s\n%s", pszLocalPackage, szInfo, 0);
+					lbDownloadRc = FALSE;
+				}
+				else if (nLocalCRC != nSrcCRC)
+				{
+					_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"Required CRC32=x%08X, local CRC32=x%08X", nSrcCRC, nLocalCRC);
+					ReportError(L"Invalid local file\n%s\n%s", pszLocalPackage, szInfo, 0);
+					lbDownloadRc = FALSE;
+				}
 			}
 		}
 
-		if (!lbDownloadRc)
+		// Succeeded
+		if (lbDownloadRc)
+			break;
+
+		// Now we show an error even in automatic mode because
+		// the download was started after user confirmation
+		LRESULT lRetryRc = (!gpConEmu || mb_RequestTerminate)
+			? IDCANCEL
+			: gpConEmu->CallMainThread(true/*bSync*/, CConEmuUpdate::QueryRetryVersionCheck, (LPARAM)szRetryPackageDownload);
+
+		// Error must be already shown or logged, clear it
+		if (ms_LastErrorInfo)
+		{
+			MSectionLockSimple CS;
+			if (CS.Lock(mps_ErrorLock, 5000))
+			{
+				SafeFree(ms_LastErrorInfo);
+			}
+		}
+
+		if (lRetryRc != IDRETRY)
 		{
 			goto wrap;
 		}

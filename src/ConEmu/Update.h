@@ -175,4 +175,5 @@ protected:
 	#endif
 	bool StartLocalUpdate(LPCWSTR asDownloadedPackage);
 	bool LoadVersionInfoFromServer();
+	bool LoadPackageFromServer();
 };
