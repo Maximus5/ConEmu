@@ -701,11 +701,13 @@ DWORD CConEmuUpdate::CheckProcInt()
 	bool lbSourceLocal;
 	int iConfirmUpdate = -1;
 
-#ifdef _DEBUG
-	// Чтобы успел сервер проинититься и не ругался под отладчиком...
+	#if 0
+	// Under Windows7 we may get a debug warning
+	// if conhost.exe was not found yet for all
+	// started consoles...
 	if (!mb_ManualCallMode)
 		Sleep(2500);
-#endif
+	#endif
 
 	_ASSERTE(m_UpdateStep==us_NotStarted);
 	m_UpdateStep = us_Check;
