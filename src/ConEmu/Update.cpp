@@ -1464,6 +1464,9 @@ void CConEmuUpdate::ReportErrorInt(wchar_t* asErrorInfo)
 		}
 	}
 
+	// Show error message boxes in appropriate places only
+	return;
+#if 0
 	MCHKHEAP;
 
 	if (mn_InShowMsgBox > 0)
@@ -1481,6 +1484,7 @@ void CConEmuUpdate::ReportErrorInt(wchar_t* asErrorInfo)
 		SafeFree(asErrorInfo);
 
 	MCHKHEAP;
+#endif
 }
 
 void CConEmuUpdate::ReportError(LPCWSTR asFormat, DWORD nErrCode)
