@@ -96,6 +96,11 @@ protected:
 	wchar_t* mpsz_PendingPackageFile;
 	wchar_t* mpsz_PendingBatchFile;
 
+	CEStr ms_TempUpdateVerLocation;
+
+	CEStr ms_TemplFilename;
+	CEStr ms_SourceFull;
+
 	static DWORD WINAPI CheckThreadProc(LPVOID lpParameter);
 	DWORD CheckProcInt();
 	void GetVersionsFromIni(LPCWSTR pszUpdateVerLocation, wchar_t (&szServer)[100], wchar_t (&szServerRA)[100], wchar_t (&szInfo)[100]);
@@ -162,10 +167,12 @@ protected:
 	int QueryConfirmationDownload();
 	int QueryConfirmationUpdate();
 	int QueryConfirmationNoNewVer();
+	static LRESULT QueryRetryVersionCheck(LPARAM lParam);
 	void WaitAllInstances();
 	bool Check7zipInstalled();
 	#if 0
 	bool CanUpdateInstallation();
 	#endif
 	bool StartLocalUpdate(LPCWSTR asDownloadedPackage);
+	bool LoadVersionInfoFromServer();
 };
