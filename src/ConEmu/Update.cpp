@@ -1200,7 +1200,7 @@ CConEmuUpdate::UpdateStep CConEmuUpdate::InUpdate()
 	return m_UpdateStep;
 }
 
-// В asDir могут быть переменные окружения.
+// asDir is allowed to have environment variables, e.g. "%TEMP%\\ConEmu"
 wchar_t* CConEmuUpdate::CreateTempFile(LPCWSTR asDir, LPCWSTR asFileNameTempl, HANDLE& hFile)
 {
 	wchar_t szFile[MAX_PATH*2+2];
