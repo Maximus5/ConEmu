@@ -963,6 +963,8 @@ bool CConEmuUpdate::LoadVersionInfoFromServer()
 		gpConEmu->LogString(lsInfo);
 	}
 
+	ms_VersionUrlCheck.Set(pszUpdateVerLocationSet);
+
 	// Erase previous temp file if any
 	if (!ms_TempUpdateVerLocation.IsEmpty())
 	{
@@ -1037,6 +1039,17 @@ bool CConEmuUpdate::LoadVersionInfoFromServer()
 	bOk = true;
 wrap:
 	return bOk;
+}
+
+wchar_t* CConEmuUpdate::CreateVersionOnServerInfo(bool abRightAligned, LPCWSTR asSuffix /*= NULL*/)
+{
+	wchar_t* pszMsg = lstrmerge(
+		L"Versions on server\n",
+		(LPCWSTR)ms_VersionUrlCheck,
+		L"\n",
+		abRightAligned ? ms_VerOnServerRA : ms_VerOnServer,
+		asSuffix);
+	return pszMsg;
 }
 
 LRESULT CConEmuUpdate::QueryRetryVersionCheck(LPARAM lParam)
@@ -1928,7 +1941,7 @@ int CConEmuUpdate::QueryConfirmationDownload()
 	_wsprintf(szWWW, SKIPLEN(countof(szWWW)) L"<a href=\"%s\">%s</a>", gsWhatsNew, szWhatsNewLabel);
 	tsk.pszFooter = szWWW;
 
-	pszMsg = lstrmerge(L"Versions on server\n", ms_VerOnServerRA);
+	pszMsg = CreateVersionOnServerInfo(true);
 	tsk.pszContent = pszMsg;
 
 	pszBtn1 = lstrmerge(L"Download\n", pszServerPath, pszFile ? L"\n" : NULL, pszFile);
@@ -2052,7 +2065,7 @@ int CConEmuUpdate::QueryConfirmationNoNewVer()
 
 	int iBtn = -1;
 	HRESULT hr;
-	wchar_t szMsg[300];
+	CEStr szMsg, szInfo;
 	wchar_t szCurVer[120];
 	wchar_t szWWW[MAX_PATH];
 	TASKDIALOGCONFIG tsk = {sizeof(tsk)};
@@ -2060,6 +2073,8 @@ int CConEmuUpdate::QueryConfirmationNoNewVer()
 	LPCWSTR pszServerPath = L"";
 	wchar_t* pszBtn2 = NULL;
 
+	_wsprintf(szCurVer, SKIPLEN(countof(szCurVer)) L"No newer %s version is available",
+		(mp_Set->isUpdateUseBuilds==1) ? CV_STABLE : (mp_Set->isUpdateUseBuilds==3) ? CV_PREVIEW : CV_DEVEL);
 
 	if (gOSVer.dwMajorVersion < 6)
 		goto MsgOnly;
@@ -2070,18 +2085,16 @@ int CConEmuUpdate::QueryConfirmationNoNewVer()
 	else
 		tsk.pszMainIcon = MAKEINTRESOURCE(IDI_ICON1);
 
-	_wsprintf(szCurVer, SKIPLEN(countof(szCurVer)) L"No newer %s version is available",
-		(mp_Set->isUpdateUseBuilds==1) ? CV_STABLE : (mp_Set->isUpdateUseBuilds==3) ? CV_PREVIEW : CV_DEVEL);
 	tsk.pszMainInstruction = szCurVer;
 
 	_wsprintf(szWWW, SKIPLEN(countof(szWWW)) L"<a href=\"%s\">%s</a>", gsWhatsNew, szWhatsNewLabel);
 	tsk.pszFooter = szWWW;
 
-	_wsprintf(szMsg, SKIPLEN(countof(szMsg))
-		L"Your current ConEmu version is %s\n\n"
-		L"Versions on server\n%s",
-		ms_CurVerInfo, ms_VerOnServerRA);
-	tsk.pszContent = szMsg;
+	szInfo = CreateVersionOnServerInfo(true);
+	szMsg = lstrmerge(
+		L"Your current ConEmu version is ", ms_CurVerInfo, L"\n\n",
+		(LPCWSTR)szInfo);
+	tsk.pszContent = szMsg.ms_Arg;
 
 	btns[0].nButtonID  = IDOK;    btns[0].pszButtonText = L"OK";
 	pszBtn2 = lstrmerge(L"Visit download page\n", gsDownlPage);
@@ -2103,13 +2116,11 @@ int CConEmuUpdate::QueryConfirmationNoNewVer()
 	}
 
 MsgOnly:
-
-	_wsprintf(szMsg, SKIPLEN(countof(szMsg))
-		L"Your current ConEmu version is %s\n\n"
-		L"Versions on server\n%s\n\n"
-		L"No newer %s version is available",
-		ms_CurVerInfo, ms_VerOnServer,
-		(mp_Set->isUpdateUseBuilds==1) ? CV_STABLE : (mp_Set->isUpdateUseBuilds==3) ? CV_PREVIEW : CV_DEVEL, 0);
+	szInfo = CreateVersionOnServerInfo(false, L"\n\n");
+	szMsg = lstrmerge(
+		L"Your current ConEmu version is ", ms_CurVerInfo, L"\n\n",
+		(LPCWSTR)szInfo,
+		(LPCWSTR)szCurVer);
 
 	iBtn = MessageBox(NULL, szMsg, ms_DefaultTitle, MB_SETFOREGROUND|MB_SYSTEMMODAL|MB_ICONINFORMATION|MB_OK);
 

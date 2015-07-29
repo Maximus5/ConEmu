@@ -100,6 +100,7 @@ protected:
 
 	CEStr ms_TemplFilename;
 	CEStr ms_SourceFull;
+	CEStr ms_VersionUrlCheck;
 
 	static DWORD WINAPI CheckThreadProc(LPVOID lpParameter);
 	DWORD CheckProcInt();
@@ -176,4 +177,5 @@ protected:
 	bool StartLocalUpdate(LPCWSTR asDownloadedPackage);
 	bool LoadVersionInfoFromServer();
 	bool LoadPackageFromServer();
+	wchar_t* CreateVersionOnServerInfo(bool abRightAligned, LPCWSTR asSuffix = NULL);
 };
