@@ -45,7 +45,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //  #define SHOW_STARTED_MSGBOX
 #define PRINT_COMSPEC(f,a) //wprintf(f,a)
 //#define DEBUGSTR(s)
-#define CRTPRINTF
 #else
 #define PRINT_COMSPEC(f,a)
 #define DEBUGSTR(s)
@@ -320,15 +319,10 @@ extern FDebugSetProcessKillOnExit pfnDebugSetProcessKillOnExit;
 void ProcessDebugEvent();
 void _wprintf(LPCWSTR asBuffer);
 bool IsOutputRedirected();
-#ifdef CRTPRINTF
 void _printf(LPCSTR asBuffer);
 void _printf(LPCSTR asFormat, DWORD dwErr);
 void _printf(LPCSTR asFormat, DWORD dwErr, LPCWSTR asAddLine);
 void _printf(LPCSTR asFormat, DWORD dw1, DWORD dw2, LPCWSTR asAddLine=NULL);
-#else
-#define _printf printf
-//#define _wprintf(s) wprintf(L"%s",s)
-#endif
 void print_error(DWORD dwErr = 0, LPCSTR asFormat = NULL);
 HWND Attach2Gui(DWORD nTimeout);
 

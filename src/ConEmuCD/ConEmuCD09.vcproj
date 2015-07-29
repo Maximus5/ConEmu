@@ -51,7 +51,7 @@
       <Tool Name="VCXMLDataGeneratorTool" />
       <Tool Name="VCWebServiceProxyGeneratorTool" />
       <Tool Name="VCMIDLTool" />
-      <Tool Name="VCCLCompilerTool" Optimization="2" EnableIntrinsicFunctions="true" PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;CONEMUHK_EXPORTS;CRTPRINTF" RuntimeLibrary="0" EnableFunctionLevelLinking="true" UsePrecompiledHeader="0" WarningLevel="3" DebugInformationFormat="3" />
+      <Tool Name="VCCLCompilerTool" Optimization="2" EnableIntrinsicFunctions="true" PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;CONEMUHK_EXPORTS" RuntimeLibrary="0" EnableFunctionLevelLinking="true" UsePrecompiledHeader="0" WarningLevel="3" DebugInformationFormat="3" />
       <Tool Name="VCManagedResourceCompilerTool" />
       <Tool Name="VCResourceCompilerTool" />
       <Tool Name="VCPreLinkEventTool" />
@@ -70,7 +70,7 @@
       <Tool Name="VCXMLDataGeneratorTool" />
       <Tool Name="VCWebServiceProxyGeneratorTool" />
       <Tool Name="VCMIDLTool" TargetEnvironment="3" />
-      <Tool Name="VCCLCompilerTool" Optimization="2" EnableIntrinsicFunctions="true" PreprocessorDefinitions="WIN64;WIN32;NDEBUG;_WINDOWS;_USRDLL;CONEMUHK_EXPORTS;CRTPRINTF" RuntimeLibrary="0" EnableFunctionLevelLinking="true" UsePrecompiledHeader="0" WarningLevel="3" DebugInformationFormat="3" />
+      <Tool Name="VCCLCompilerTool" Optimization="2" EnableIntrinsicFunctions="true" PreprocessorDefinitions="WIN64;WIN32;NDEBUG;_WINDOWS;_USRDLL;CONEMUHK_EXPORTS" RuntimeLibrary="0" EnableFunctionLevelLinking="true" UsePrecompiledHeader="0" WarningLevel="3" DebugInformationFormat="3" />
       <Tool Name="VCManagedResourceCompilerTool" />
       <Tool Name="VCResourceCompilerTool" />
       <Tool Name="VCPreLinkEventTool" />

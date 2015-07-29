@@ -1248,19 +1248,7 @@ void ProcessDebugEvent()
 
 				WideCharToMultiByte(CP_OEMCP, 0, wszDbgText, -1, szDbgText, 1024, 0, 0);
 
-				#ifdef CRTPRINTF
-				{
-					_printf("{PID=%i.TID=%i} ", evt.dwProcessId,evt.dwThreadId, wszDbgText);
-				}
-				#else
-				{
-					_printf("{PID=%i.TID=%i} %s", evt.dwProcessId,evt.dwThreadId, szDbgText);
-					int nLen = lstrlenA(szDbgText);
-
-					if (nLen > 0 && szDbgText[nLen-1] != '\n')
-						_printf("\n");
-				}
-				#endif
+				_printf("{PID=%i.TID=%i} ", evt.dwProcessId,evt.dwThreadId, wszDbgText);
 
 				dwContinueStatus = DBG_CONTINUE;
 

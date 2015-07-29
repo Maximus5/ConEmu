@@ -10416,8 +10416,6 @@ int GetProcessCount(DWORD *rpdwPID, UINT nMaxCount)
 	return nRetCount;
 }
 
-#ifdef CRTPRINTF
-
 void _printf(LPCSTR asFormat, DWORD dw1, DWORD dw2, LPCWSTR asAddLine)
 {
 	char szError[MAX_PATH];
@@ -10436,8 +10434,12 @@ void _printf(LPCSTR asFormat, DWORD dwErr, LPCWSTR asAddLine)
 	char szError[MAX_PATH];
 	_wsprintfA(szError, SKIPLEN(countof(szError)) asFormat, dwErr);
 	_printf(szError);
-	_wprintf(asAddLine);
-	_printf("\n");
+
+	if (asAddLine)
+	{
+		_wprintf(asAddLine);
+		_printf("\n");
+	}
 }
 
 void _printf(LPCSTR asFormat, DWORD dwErr)
@@ -10454,10 +10456,10 @@ void _printf(LPCSTR asBuffer)
 	int nAllLen = lstrlenA(asBuffer);
 	HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
 	DWORD dwWritten = 0;
-	WriteConsoleA(hOut, asBuffer, nAllLen, &dwWritten, 0);
+	DEBUGTEST(BOOL bWriteRC =)
+	WriteFile(hOut, asBuffer, nAllLen, &dwWritten, 0);
+	UNREFERENCED_PARAMETER(dwWritten);
 }
-
-#endif
 
 void print_error(DWORD dwErr/*= 0*/, LPCSTR asFormat/*= NULL*/)
 {
@@ -10468,7 +10470,7 @@ void print_error(DWORD dwErr/*= 0*/, LPCSTR asFormat/*= NULL*/)
 	FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM, NULL, dwErr, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPWSTR)&lpMsgBuf, 0, NULL);
 
 	_printf(asFormat ? asFormat : "\nErrCode=0x%08X, Description:\n", dwErr);
-	_wprintf((lpMsgBuf == NULL) ? L"<Unknown error>" : lpMsgBuf);
+	_wprintf((!lpMsgBuf || !*lpMsgBuf) ? L"<Unknown error>" : lpMsgBuf);
 
 	if (lpMsgBuf) LocalFree(lpMsgBuf);
 	SetLastError(dwErr);
@@ -10526,21 +10528,6 @@ void _wprintf(LPCWSTR asBuffer)
 			free(pszOem);
 		}
 	}
-
-	//UINT nOldCP = GetConsoleOutputCP();
-	//char* pszOEM = (char*)malloc(nAllLen+1);
-	//
-	//if (pszOEM)
-	//{
-	//	WideCharToMultiByte(nOldCP,0, asBuffer, nAllLen, pszOEM, nAllLen, 0,0);
-	//	pszOEM[nAllLen] = 0;
-	//	WriteFile(hOut, pszOEM, nAllLen, &dwWritten, 0);
-	//	free(pszOEM);
-	//}
-	//else
-	//{
-	//	WriteFile(hOut, asBuffer, nAllLen*2, &dwWritten, 0);
-	//}
 }
 
 void DisableAutoConfirmExit(BOOL abFromFarPlugin)
