@@ -111,6 +111,9 @@
     <ClInclude Include="..\common\WErrGuard.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\common\MConHandle.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="ConEmuHk.rc">
@@ -194,6 +197,9 @@
       <Filter>0 - Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\common\CmdArg.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\MConHandle.cpp">
       <Filter>0 - Source Files</Filter>
     </ClCompile>
   </ItemGroup>
