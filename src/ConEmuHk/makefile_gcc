@@ -29,6 +29,7 @@ SRCS = \
 		ExtConsole.cpp \
 		GuiAttach.cpp \
 		Injects.cpp \
+		MainThread.cpp     \
 		RegHooks.cpp \
 		SetHook.cpp \
 		ShellProcessor.cpp

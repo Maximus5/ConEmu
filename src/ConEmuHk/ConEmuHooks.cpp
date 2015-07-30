@@ -99,6 +99,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ShellProcessor.h"
 #include "GuiAttach.h"
 #include "Ansi.h"
+#include "MainThread.h"
 #include "../common/CmdLine.h"
 #include "../common/ConsoleAnnotation.h"
 #include "../common/ConsoleRead.h"
@@ -180,7 +181,6 @@ extern DWORD gnLastShowExeTick;
 //#endif
 
 extern HMODULE ghOurModule; // Хэндл нашей dll'ки (здесь хуки не ставятся)
-extern DWORD   gnHookMainThreadId;
 extern BOOL    gbHooksTemporaryDisabled;
 extern MMap<DWORD,BOOL> gStartedThreads;
 //__declspec( thread )

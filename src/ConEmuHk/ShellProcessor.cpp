@@ -50,6 +50,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Injects.h"
 #include "SetHook.h"
 #include "ShellProcessor.h"
+#include "MainThread.h"
 
 #ifndef SEE_MASK_NOZONECHECKS
 #define SEE_MASK_NOZONECHECKS 0x800000
@@ -124,7 +125,6 @@ void TestShellProcessor()
 int gnInShellExecuteEx = 0;
 
 extern struct HookModeFar gFarMode;
-extern DWORD  gnHookMainThreadId;
 
 bool  CShellProc::mb_StartingNewGuiChildTab = 0;
 DWORD CShellProc::mn_LastStartedPID = 0;

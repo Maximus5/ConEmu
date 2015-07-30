@@ -64,6 +64,7 @@ $(INTDIR)\ExtConsole.obj \
 $(INTDIR)\GuiAttach.obj \
 $(INTDIR)\Injects.obj \
 $(INTDIR)\InQueue.obj \
+$(INTDIR)\MainThread.obj \
 $(INTDIR)\MAssert.obj \
 $(INTDIR)\MConHandle.obj \
 $(INTDIR)\Memory.obj \
@@ -315,6 +316,8 @@ $(INTDIR)\GuiAttach.obj: GuiAttach.cpp GuiAttach.h
 $(INTDIR)\Injects.obj: Injects.cpp Console2.h
 
 $(INTDIR)\InQueue.obj: ../common/InQueue.cpp
+
+$(INTDIR)\MainThread.obj: MainThread.cpp MainThread.h
 
 $(INTDIR)\MAssert.obj: ../common/MAssert.cpp
 

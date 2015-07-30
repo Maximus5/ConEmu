@@ -65,6 +65,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "SetHook.h"
 #include "ConEmuHooks.h"
 #include "Ansi.h"
+#include "MainThread.h"
 
 
 #ifdef _DEBUG
@@ -78,7 +79,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 HMODULE ghOurModule = NULL; // Хэндл нашей dll'ки (здесь хуки не ставятся)
-DWORD   gnHookMainThreadId = 0;
 MMap<DWORD,BOOL> gStartedThreads;
 
 extern HWND    ghConWnd;      // RealConsole
@@ -2533,54 +2533,6 @@ bool SetHookChange(LPCWSTR asModule, HMODULE Module, BOOL abForceHooks, bool (&b
 	}
 
 	return bHooked;
-}
-
-DWORD GetMainThreadId(bool bUseCurrentAsMain)
-{
-	// Найти ID основной нити
-	if (!gnHookMainThreadId)
-	{
-		if (bUseCurrentAsMain)
-		{
-			gnHookMainThreadId = GetCurrentThreadId();
-		}
-		else
-		{
-			DWORD dwPID = GetCurrentProcessId();
-			HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, dwPID);
-
-			if (snapshot != INVALID_HANDLE_VALUE)
-			{
-				THREADENTRY32 module = {sizeof(THREADENTRY32)};
-
-				if (Thread32First(snapshot, &module))
-				{
-					while (!gnHookMainThreadId)
-					{
-						if (module.th32OwnerProcessID == dwPID)
-						{
-							gnHookMainThreadId = module.th32ThreadID;
-							break;
-						}
-
-						if (!Thread32Next(snapshot, &module))
-							break;
-					}
-				}
-
-				CloseHandle(snapshot);
-			}
-		}
-	}
-
-	#ifdef _DEBUG
-	char szInfo[100];
-	msprintf(szInfo, countof(szInfo), "GetMainThreadId()=%u, TID=%u\n", gnHookMainThreadId, GetCurrentThreadId());
-	//OutputDebugStringA(szInfo);
-	#endif
-
-	_ASSERTE(gnHookMainThreadId!=0);
-	return gnHookMainThreadId;
 }
 
 VOID CALLBACK LdrDllNotification(ULONG NotificationReason, const LDR_DLL_NOTIFICATION_DATA* NotificationData, PVOID Context)

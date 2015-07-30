@@ -85,6 +85,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Injects.h"
 #include "Ansi.h"
 #include "DefTermHk.h"
+#include "MainThread.h"
 #include "../ConEmu/version.h"
 #include "../common/CmdLine.h"
 #include "../common/ConsoleAnnotation.h"
@@ -158,7 +159,6 @@ struct CpConv gCpConv = {};
 
 #define isPressed(inp) ((GetKeyState(inp) & 0x8000) == 0x8000)
 
-extern DWORD  gnHookMainThreadId;
 extern HANDLE ghHeap;
 //extern HMODULE ghKernel32, ghUser32, ghShell32, ghAdvapi32, ghComdlg32;
 extern HMODULE ghUser32;
@@ -182,7 +182,6 @@ extern BOOL StartupHooks(HMODULE ahOurDll);
 extern void ShutdownHooks();
 extern void InitializeHookedModules();
 extern void FinalizeHookedModules();
-extern DWORD GetMainThreadId(bool bUseCurrentAsMain);
 extern MMap<DWORD,BOOL> gStartedThreads;
 extern HRESULT OurShellExecCmdLine(HWND hwnd, LPCWSTR pwszCommand, LPCWSTR pwszStartDir, bool bRunAsAdmin, bool bForce);
 //HMODULE ghPsApi = NULL;

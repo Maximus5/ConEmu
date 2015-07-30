@@ -34,6 +34,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <windows.h>
 #include "GuiAttach.h"
+#include "MainThread.h"
 #include "../common/common.hpp"
 #include "../common/CmdLine.h"
 #include "../common/ConEmuCheck.h"
@@ -43,7 +44,6 @@ extern HMODULE ghOurModule;
 extern HWND    ghConEmuWnd;     // Root! ConEmu window
 extern HWND    ghConEmuWndDC;   // ConEmu DC window
 extern HWND    ghConEmuWndBack; // ConEmu Back window - holder for GUI client
-extern DWORD   gnHookMainThreadId;
 extern DWORD   gnServerPID;
 
 // Этот TID может отличаться от основного потока.
