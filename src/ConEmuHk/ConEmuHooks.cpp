@@ -181,7 +181,6 @@ extern DWORD gnLastShowExeTick;
 //#endif
 
 extern HMODULE ghOurModule; // Хэндл нашей dll'ки (здесь хуки не ставятся)
-extern BOOL    gbHooksTemporaryDisabled;
 extern MMap<DWORD,BOOL> gStartedThreads;
 //__declspec( thread )
 //static BOOL    gbInShellExecuteEx = FALSE;
@@ -1114,42 +1113,6 @@ BOOL StartupHooks(HMODULE ahOurDll)
 }
 
 
-
-
-//void ShutdownHooks()
-//{
-//	UnsetAllHooks();
-//
-//	//// Завершить работу с реестром
-//	//DoneHooksReg();
-//
-//	// Уменьшение счетчиков загрузок
-//	if (ghKernel32)
-//	{
-//		FreeLibrary(ghKernel32);
-//		ghKernel32 = NULL;
-//	}
-//	if (ghUser32)
-//	{
-//		FreeLibrary(ghUser32);
-//		ghUser32 = NULL;
-//	}
-//	if (ghShell32)
-//	{
-//		FreeLibrary(ghShell32);
-//		ghShell32 = NULL;
-//	}
-//	if (ghAdvapi32)
-//	{
-//		FreeLibrary(ghAdvapi32);
-//		ghAdvapi32 = NULL;
-//	}
-//	if (ghComdlg32)
-//	{
-//		FreeLibrary(ghComdlg32);
-//		ghComdlg32 = NULL;
-//	}
-//}
 
 
 
@@ -6095,70 +6058,6 @@ HANDLE WINAPI OnCreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dw
 
 	return hThread;
 }
-
-//110131 попробуем просто добвавить ее в ExcludedModules
-//// WinInet.dll
-//typedef BOOL (WINAPI* OnHttpSendRequestA_t)(LPVOID hRequest, LPCSTR lpszHeaders, DWORD dwHeadersLength, LPVOID lpOptional, DWORD dwOptionalLength);
-//typedef BOOL (WINAPI* OnHttpSendRequestW_t)(LPVOID hRequest, LPCWSTR lpszHeaders, DWORD dwHeadersLength, LPVOID lpOptional, DWORD dwOptionalLength);
-//// смысла нет - __try не помогает
-////BOOL OnHttpSendRequestA_SEH(OnHttpSendRequestA_t f, LPVOID hRequest, LPCSTR lpszHeaders, DWORD dwHeadersLength, LPVOID lpOptional, DWORD dwOptionalLength, BOOL* pbRc)
-////{
-////	BOOL lbOk = FALSE;
-////	SAFETRY {
-////		*pbRc = f(hRequest, lpszHeaders, dwHeadersLength, lpOptional, dwOptionalLength);
-////		lbOk = TRUE;
-////	} SAFECATCH {
-////		lbOk = FALSE;
-////	}
-////	return lbOk;
-////}
-////BOOL OnHttpSendRequestW_SEH(OnHttpSendRequestW_t f, LPVOID hRequest, LPCWSTR lpszHeaders, DWORD dwHeadersLength, LPVOID lpOptional, DWORD dwOptionalLength, BOOL* pbRc)
-////{
-////	BOOL lbOk = FALSE;
-////	SAFETRY {
-////		*pbRc = f(hRequest, lpszHeaders, dwHeadersLength, lpOptional, dwOptionalLength);
-////		lbOk = TRUE;
-////	} SAFECATCH {
-////		lbOk = FALSE;
-////	}
-////	return lbOk;
-////}
-//BOOL WINAPI OnHttpSendRequestA(LPVOID hRequest, LPCSTR lpszHeaders, DWORD dwHeadersLength, LPVOID lpOptional, DWORD dwOptionalLength)
-//{
-//	//MessageBoxW(NULL, L"HttpSendRequestA (1)", L"ConEmu plugin", MB_SETFOREGROUND|MB_SYSTEMMODAL|MB_ICONEXCLAMATION);
-//	ORIGINALFAST(HttpSendRequestA);
-//
-//	BOOL lbRc;
-//
-//	gbHooksTemporaryDisabled = TRUE;
-//	//MessageBoxW(NULL, L"HttpSendRequestA (2)", L"ConEmu plugin", MB_SETFOREGROUND|MB_SYSTEMMODAL|MB_ICONEXCLAMATION);
-//	lbRc = F(HttpSendRequestA)(hRequest, lpszHeaders, dwHeadersLength, lpOptional, dwOptionalLength);
-//	//if (!OnHttpSendRequestA_SEH(F(HttpSendRequestA), hRequest, lpszHeaders, dwHeadersLength, lpOptional, dwOptionalLength)) {
-//	//	MessageBoxW(NULL, L"Exception in HttpSendRequestA", L"ConEmu plugin", MB_SETFOREGROUND|MB_SYSTEMMODAL|MB_ICONSTOP);
-//	//}
-//	gbHooksTemporaryDisabled = FALSE;
-//	//MessageBoxW(NULL, L"HttpSendRequestA (3)", L"ConEmu plugin", MB_SETFOREGROUND|MB_SYSTEMMODAL|MB_ICONEXCLAMATION);
-//
-//	return lbRc;
-//}
-//BOOL WINAPI OnHttpSendRequestW(LPVOID hRequest, LPCWSTR lpszHeaders, DWORD dwHeadersLength, LPVOID lpOptional, DWORD dwOptionalLength)
-//{
-//	//MessageBoxW(NULL, L"HttpSendRequestW (1)", L"ConEmu plugin", MB_SETFOREGROUND|MB_SYSTEMMODAL|MB_ICONEXCLAMATION);
-//	ORIGINALFAST(HttpSendRequestW);
-//
-//	BOOL lbRc;
-//
-//	gbHooksTemporaryDisabled = TRUE;
-//	//MessageBoxW(NULL, L"HttpSendRequestW (2)", L"ConEmu plugin", MB_SETFOREGROUND|MB_SYSTEMMODAL|MB_ICONEXCLAMATION);
-//	lbRc = F(HttpSendRequestW)(hRequest, lpszHeaders, dwHeadersLength, lpOptional, dwOptionalLength);
-//	//if (!OnHttpSendRequestW_SEH(F(HttpSendRequestW), hRequest, lpszHeaders, dwHeadersLength, lpOptional, dwOptionalLength, &lbRc)) {
-//	//	MessageBoxW(NULL, L"Exception in HttpSendRequestW", L"ConEmu plugin", MB_SETFOREGROUND|MB_SYSTEMMODAL|MB_ICONSTOP);
-//	//}
-//	gbHooksTemporaryDisabled = FALSE;
-//	//MessageBoxW(NULL, L"HttpSendRequestW (3)", L"ConEmu plugin", MB_SETFOREGROUND|MB_SYSTEMMODAL|MB_ICONEXCLAMATION);
-//
-//	return lbRc;
-//}
 
 BOOL GuiSetForeground(HWND hWnd)
 {

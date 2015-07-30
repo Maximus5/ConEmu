@@ -63,7 +63,6 @@ DWORD AnsiTlsIndex = 0;
 
 /* ************ Globals ************ */
 extern HMODULE ghOurModule; // Хэндл нашей dll'ки (здесь хуки не ставятся)
-extern BOOL    gbHooksTemporaryDisabled;
 #include "MainThread.h"
 
 /* ************ Globals for SetHook ************ */
