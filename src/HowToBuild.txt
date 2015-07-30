@@ -15,6 +15,11 @@ http://conemu-maximus5.googlecode.com/svn/trunk/
   And stable version (may be old and obsolete):
     svn co http://conemu-maximus5.googlecode.com/svn/trunk/ConEmu-stable/ ConEmu-stable
 
+Submodule ‘minhook’ is available here:
+  git@github.com:Maximus5/minhook.git
+originally forked from here:
+  git@github.com:RaMMicHaeL/minhook.git
+
 == How to build ==
 
 1. Visual Studio solution (*.sln) files. Supported versions:
