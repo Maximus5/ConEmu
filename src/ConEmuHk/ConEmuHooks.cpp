@@ -376,7 +376,6 @@ HANDLE WINAPI OnOpenFileMappingW(DWORD dwDesiredAccess, BOOL bInheritHandle, LPC
 LPVOID WINAPI OnMapViewOfFile(HANDLE hFileMappingObject, DWORD dwDesiredAccess, DWORD dwFileOffsetHigh, DWORD dwFileOffsetLow, SIZE_T dwNumberOfBytesToMap);
 BOOL WINAPI OnUnmapViewOfFile(LPCVOID lpBaseAddress);
 BOOL WINAPI OnCloseHandle(HANDLE hObject);
-BOOL WINAPI OnGetModuleHandleExW(DWORD dwFlags, LPCWSTR lpModuleName, HMODULE *phModule);
 
 #ifdef _DEBUG
 HANDLE WINAPI OnCreateNamedPipeW(LPCWSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD nMaxInstances,DWORD nOutBufferSize, DWORD nInBufferSize, DWORD nDefaultTimeOut,LPSECURITY_ATTRIBUTES lpSecurityAttributes);
@@ -513,8 +512,6 @@ bool InitHooksCommon()
 		{(void*)OnReadConsoleInputA,	"ReadConsoleInputA",	kernel32},
 		{(void*)OnWriteConsoleInputA,	"WriteConsoleInputA",	kernel32},
 		{(void*)OnWriteConsoleInputW,	"WriteConsoleInputW",	kernel32},
-		// Issue 1899: Support GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS flag because of CreateFileW
-		{(void*)OnGetModuleHandleExW,	"GetModuleHandleExW",	kernel32},
 		/* ANSI Escape Sequences SUPPORT */
 		//#ifdef HOOK_ANSI_SEQUENCES
 		{(void*)CEAnsi::OnCreateFileW,	"CreateFileW",  		kernel32},
@@ -1489,30 +1486,6 @@ BOOL WINAPI OnCloseHandle(HANDLE hObject)
 	if (ghSkipSetThreadContextForThread == hObject)
 		ghSkipSetThreadContextForThread = NULL;
 
-	return lbRc;
-}
-
-BOOL WINAPI OnGetModuleHandleExW(DWORD dwFlags, LPCWSTR lpModuleName, HMODULE *phModule)
-{
-	typedef BOOL (WINAPI* OnGetModuleHandleExW_t)(DWORD dwFlags, LPCWSTR lpModuleName, HMODULE *phModule);
-	ORIGINALFAST(GetModuleHandleExW);
-	BOOL lbRc = FALSE;
-	LPCWSTR lpModuleName2 = lpModuleName;
-
-	// Issue 1899: Java uses following code
-	//		GetModuleHandleExW((GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT),
-	//			(LPCWSTR)&CreateFileW, &h)
-	// which caused NULL result because CreateFileW was hooked
-	if ((dwFlags & GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS) != 0)
-	{
-		void* ptrOldProc = GetOriginalAddress((LPVOID)lpModuleName, NULL, FALSE, NULL);
-		if (ptrOldProc)
-		{
-			lpModuleName2 = (LPCWSTR)ptrOldProc;
-		}
-	}
-
-	lbRc = F(GetModuleHandleExW)(dwFlags, lpModuleName2, phModule);
 	return lbRc;
 }
 
