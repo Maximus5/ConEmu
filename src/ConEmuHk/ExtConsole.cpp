@@ -959,12 +959,10 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 		return FALSE;
 	}
 
-#ifdef _DEBUG
-	static HMODULE hKernel = GetModuleHandle(L"kernel32.dll");
-	// в x64 получилось, что Info->Private указывает на собственно функцию,
-	// а WriteConsoleW - на заглушку/трамплин
-	_ASSERTE((Info->Private==NULL) || (Info->Private==(void*)WriteConsoleW || CheckCallbackPtr(hKernel, 1, (FARPROC*)&Info->Private, TRUE)));
-#endif
+	#ifdef _DEBUG
+	extern FARPROC CallWriteConsoleW;
+	_ASSERTE((CallWriteConsoleW!=NULL) && ((Info->Private==NULL) || (Info->Private==(void*)CallWriteConsoleW)));
+	#endif
 
 	// Проверка аргументов
 	if (!Info->ConsoleOutput || !Info->Buffer || !Info->NumberOfCharsToWrite)

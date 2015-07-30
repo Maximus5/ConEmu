@@ -243,7 +243,7 @@ class CInFuncCall
 
 
 #ifdef DEFINE_HOOK_MACROS
-void* __cdecl GetOriginalAddress(void* OurFunction, HookItem** ph);
+void* __cdecl GetOriginalAddress(void* OurFunction, HookItem** ph, bool abAllowNulls = false);
 
 #define ORIGINALFASTEX(n,o) \
 	static HookItem *ph = NULL; \

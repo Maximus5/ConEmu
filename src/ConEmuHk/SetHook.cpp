@@ -602,7 +602,7 @@ DWORD gnLastLogSetChange = 0;
 
 // Используется в том случае, если требуется выполнить оригинальную функцию, без нашей обертки
 // пример в OnPeekConsoleInputW
-void* __cdecl GetOriginalAddress(void* OurFunction, HookItem** ph)
+void* __cdecl GetOriginalAddress(void* OurFunction, HookItem** ph, bool abAllowNulls /*= false*/)
 {
 	if (gpHooks)
 	{
@@ -617,7 +617,7 @@ void* __cdecl GetOriginalAddress(void* OurFunction, HookItem** ph)
 		}
 	}
 
-	_ASSERT(!gbHooksWasSet);
+	_ASSERT(!gbHooksWasSet || abAllowNulls);
 	return NULL;
 }
 
@@ -805,6 +805,19 @@ bool __stdcall InitHooks(HookItem* apHooks)
 		if (!gpHooks)
 			return false;
 
+		// Load kernelbase
+		static bool KernelHooked = false;
+		if (!KernelHooked)
+		{
+			KernelHooked = true;
+
+			_ASSERTEX(ghKernel32 != NULL);
+			if (IsWin7())
+			{
+				ghKernelBase = LoadLibrary(kernelbase);
+			}
+		}
+
 		if (!InitHooksLibrary())
 			return false;
 	}
@@ -904,7 +917,22 @@ bool __stdcall InitHooks(HookItem* apHooks)
 			{
 				WARNING("Тут часто возвращается XXXStub вместо самой функции!");
 				const char* ExportName = gpHooks[i].NameOrdinal ? ((const char*)gpHooks[i].NameOrdinal) : gpHooks[i].Name;
-				gpHooks[i].HookedAddress = (void*)GetProcAddress(mod, ExportName);
+				if (mod == ghKernel32)
+				{
+					if (!(gpHooks[i].HookedAddress = (void*)GetProcAddress(ghKernelBase, ExportName)))
+					{
+						// Strange, most kernel functions are expected to be in KernelBase now
+						gpHooks[i].HookedAddress = (void*)GetProcAddress(mod, ExportName);
+					}
+					else
+					{
+						mod = ghKernelBase;
+					}
+				}
+				else
+				{
+					gpHooks[i].HookedAddress = (void*)GetProcAddress(mod, ExportName);
+				}
 
 
 				// WinXP does not have many hooked functions, will not show dozens of asserts
@@ -926,19 +954,6 @@ bool __stdcall InitHooks(HookItem* apHooks)
 
 				gpHooks[i].hDll = mod;
 			}
-		}
-	}
-
-	// Обработать экспорты в Kernel32.dll
-	static bool KernelHooked = false;
-	if (!KernelHooked)
-	{
-		KernelHooked = true;
-
-		_ASSERTEX(ghKernel32!=NULL);
-		if (IsWin7())
-		{
-			ghKernelBase = LoadLibrary(kernelbase);
 		}
 	}
 
@@ -1262,7 +1277,7 @@ VOID CALLBACK LdrDllNotification(ULONG NotificationReason, const LDR_DLL_NOTIFIC
 		if (PrepareNewModule(hModule, NULL, szModule, TRUE, TRUE))
 		{
 			HookItem* ph = NULL;;
-			GetOriginalAddress((void*)(FARPROC)OnLoadLibraryW, &ph);
+			GetOriginalAddress((void*)(FARPROC)OnLoadLibraryW, &ph, true);
 			if (ph && ph->PostCallBack)
 			{
 				SETARGS1(&hModule,szModule);

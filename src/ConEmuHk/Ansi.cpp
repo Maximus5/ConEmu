@@ -943,6 +943,8 @@ BOOL CEAnsi::WriteText(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, 
 	BOOL lbRc = FALSE;
 	DWORD /*nWritten = 0,*/ nTotalWritten = 0;
 
+	_ASSERTE(_WriteConsoleW != &WriteConsoleW && "It must point to CallPointer for 'unhooked' call");
+
 	ExtWriteTextParm write = {sizeof(write), ewtf_Current, hConsoleOutput};
 	write.Private = (void*)(FARPROC)_WriteConsoleW;
 
