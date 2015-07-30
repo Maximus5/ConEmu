@@ -681,6 +681,18 @@ FARPROC WINAPI GetWriteConsoleW()
 	return (FARPROC)GetOriginalAddress((void*)(FARPROC)CEAnsi::OnWriteConsoleW, (void*)(FARPROC)WriteConsoleW, FALSE, &ph);
 }
 
+FARPROC WINAPI GetVirtualAlloc()
+{
+	LPVOID fnVirtualAlloc = NULL;
+	#ifdef _DEBUG
+	extern LPVOID WINAPI OnVirtualAlloc(LPVOID lpAddress, SIZE_T dwSize, DWORD flAllocationType, DWORD flProtect);
+	fnVirtualAlloc = (FARPROC)GetOriginalAddress(OnVirtualAlloc, NULL);
+	#endif
+	if (!fnVirtualAlloc)
+		fnVirtualAlloc = &VirtualAlloc;
+	return (FARPROC)fnVirtualAlloc;
+}
+
 CInFuncCall::CInFuncCall()
 {
 	mpn_Counter = NULL;

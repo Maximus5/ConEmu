@@ -87,6 +87,9 @@ bool GetProcessInfo(DWORD nPID, PROCESSENTRY32W* Info);
 bool CheckCallbackPtr(HMODULE hModule, size_t ProcCount, FARPROC* CallBack, BOOL abCheckModuleInfo, BOOL abAllowNTDLL = FALSE, BOOL abTestVirtual = TRUE);
 bool IsModuleValid(HMODULE module, BOOL abTestVirtual = TRUE);
 
+typedef LPVOID(WINAPI* VirtualAlloc_t)(LPVOID lpAddress, SIZE_T dwSize, DWORD flAllocationType, DWORD flProtect);
+extern VirtualAlloc_t gfVirtualAlloc;
+
 wchar_t* ExpandMacroValues(LPCWSTR pszFormat, LPCWSTR* pszValues, size_t nValCount);
 wchar_t* ExpandEnvStr(LPCWSTR pszCommand);
 

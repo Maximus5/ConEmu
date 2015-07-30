@@ -4,6 +4,7 @@ EXPORTS
 	SetFarHookMode=SetFarHookMode@4
 	GetRealConsoleWindow=GetRealConsoleWindow@0
 	GetLoadLibraryW=GetLoadLibraryW@0
+	GetVirtualAlloc=GetVirtualAlloc@0
 	GetWriteConsoleW=GetWriteConsoleW@0
 	RequestLocalServer=RequestLocalServer@4
 	WriteProcessed=WriteProcessed@12

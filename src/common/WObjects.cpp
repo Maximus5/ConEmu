@@ -887,6 +887,9 @@ bool isTerminalMode()
 	return TerminalMode;
 }
 
+//typedef LPVOID (WINAPI* VirtualAlloc_t)(LPVOID lpAddress, SIZE_T dwSize, DWORD flAllocationType, DWORD flProtect);
+VirtualAlloc_t gfVirtualAlloc = NULL;
+
 // Проверить, валиден ли модуль?
 bool IsModuleValid(HMODULE module, BOOL abTestVirtual /*= TRUE*/)
 {
@@ -915,8 +918,26 @@ bool IsModuleValid(HMODULE module, BOOL abTestVirtual /*= TRUE*/)
 	// If module is hooked by ConEmuHk, we get excess debug "assertion" from ConEmu.dll (Far plugin)
 	if (abTestVirtual)
 	{
+		if (!gfVirtualAlloc)
+		{
+			HMODULE hHooks = GetModuleHandle(WIN3264TEST(L"ConEmuHk.dll", L"ConEmuHk64.dll"));
+			if (hHooks)
+			{
+				typedef FARPROC (WINAPI* GetVirtualAlloc_t)();
+				GetVirtualAlloc_t getf = (GetVirtualAlloc_t)GetProcAddress(hHooks, "GetVirtualAlloc");
+				if (getf)
+				{
+					gfVirtualAlloc = (VirtualAlloc_t)getf();
+				}
+			}
+			if (!gfVirtualAlloc)
+			{
+				gfVirtualAlloc = &VirtualAlloc;
+			}
+		}
+
 		// Issue 881
-		lpTest = (LPBYTE)VirtualAlloc((LPVOID)module, cbCommitSize, MEM_RESERVE|MEM_COMMIT, PAGE_READWRITE);
+		lpTest = (LPBYTE)gfVirtualAlloc((LPVOID)module, cbCommitSize, MEM_RESERVE|MEM_COMMIT, PAGE_READWRITE);
 		if (lpTest)
 		{
 			// If we can lock mem region with (IMAGE_DOS_HEADER) of checking module
