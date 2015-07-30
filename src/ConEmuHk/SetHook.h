@@ -130,7 +130,12 @@ struct HookItem
 	const void*     NewAddress;
 	const char*     Name;
 	const wchar_t*  DllName;
+	// Some functions are not exported by name,
+	// but only by ordinal, e.g. "ShellExecCmdLine"
 	DWORD           NameOrdinal;
+
+	// *** following members are not initialized on InitHooks call ***
+
 	char DllNameA[32];
 
 	DWORD NameCRC;
@@ -139,25 +144,9 @@ struct HookItem
 	DWORD Pad1;
 #endif
 	
-	//HookExeOnly     ExeOnly;    // Some functions must be separated for Far.exe and Plugins
-	//const wchar_t*  ModuleOnly; // others - only for the one module.
-	
-	//#ifdef _DEBUG
-	//DWORD   nOrdinal;      // Ordinal of the procedure // !!! Это не Ordinal, а Hint !
-	//#endif
-
-
-	// Next fields are for internal use only!
 	HMODULE hDll;          // handle of DllName
-	void*   OldAddress;    // Original address of function from hDll (GetProcAddress)
-#ifdef _DEBUG
-	BOOL    ReplacedInExe; // debug information only
-#endif
-	//BOOL    InExeOnly;     // replace only in Exe module (FAR sort functions)
-
-	// Stored for internal use in GetOriginalAddress
-	// Some other dll's may modify procaddress (Anamorphosis, etc.)
-	void*   ExeOldAddress; // function address from executable module (may be replaced by other libraries)
+	void*   HookedAddress; // Original exported function
+	void*   CallAddress;   // Address to call original function
 
 	// 'll be called before and after 'real' function
 	HMODULE                  hCallbackModule;
@@ -205,8 +194,6 @@ extern "C" {
 	bool __stdcall SetHookCallbacks(const char* ProcName, const wchar_t* DllName, HMODULE hCallbackModule,
 	                                HookItemPreCallback_t PreCallBack, HookItemPostCallback_t PostCallBack,
 	                                HookItemExceptCallback_t ExceptCallBack = NULL);
-
-	//void* __stdcall GetOriginalAddress( void* OurFunction, void* DefaultFunction, BOOL abAllowModified );
 
 	// apHooks->Name && apHooks->DllName MUST be static for a lifetime
 	bool __stdcall InitHooks(HookItem* apHooks);
@@ -256,57 +243,23 @@ class CInFuncCall
 
 
 #ifdef DEFINE_HOOK_MACROS
-void* __cdecl GetOriginalAddress(void* OurFunction, void* DefaultFunction, BOOL abAllowModified, HookItem** ph);
-
-//110202 поскольку хуки теперь ставятся при старте процесса, не будем морочиться с зацикливанием
-//#define ORIGINAL(n) \.
-//	static HookItem *ph = NULL; \.
-//	BOOL bMainThread = (GetCurrentThreadId() == gnHookMainThreadId); \.
-//	void* f##n = NULL; /* static низя - функции могут различаться по потокам */ \.
-//	static int nMainThCounter = 0; CInFuncCall CounterLocker; \.
-//	BOOL bAllowModified = bMainThread; \.
-//	if (bMainThread) bAllowModified = CounterLocker.Inc(&nMainThCounter); \.
-//	if (bAllowModified) { \.
-//		static void* f##n##Mod = NULL; \.
-//		if ((f##n##Mod)==NULL) f##n##Mod = (void*)GetOriginalAddress((void*)(On##n) , (void*)n , TRUE, &ph); \.
-//		f##n = f##n##Mod; \.
-//	} else { \.
-//		static void* f##n##Org = NULL; \.
-//		if ((f##n##Org)==NULL) f##n##Org = (void*)GetOriginalAddress((void*)(On##n) , (void*)n , FALSE, &ph); \.
-//		f##n = f##n##Org; \.
-//	} \.
-//	_ASSERTE((void*)(On##n)!=(void*)(f##n) && (void*)(f##n)!=NULL);.
+void* __cdecl GetOriginalAddress(void* OurFunction, HookItem** ph);
 
 #define ORIGINALFASTEX(n,o) \
 	static HookItem *ph = NULL; \
 	static void* f##n = NULL; \
 	ORIGINALSHOWCALL(n); \
-	if ((f##n)==NULL) f##n = (void*)GetOriginalAddress((void*)(On##n) , (void*)o , FALSE, &ph); \
+	if ((f##n)==NULL) f##n = (void*)GetOriginalAddress((void*)(On##n), &ph); \
 	_ASSERTE((void*)(On##n)!=(void*)(f##n) && (void*)(f##n)!=NULL);
 
 #define ORIGINALFAST(n) \
 	ORIGINALFASTEX(n,n)
-	//static HookItem *ph = NULL; \.
-	//static void* f##n = NULL; \.
-	//if ((f##n)==NULL) f##n = (void*)GetOriginalAddress((void*)(On##n) , (void*)n , FALSE, &ph); \.
-	//_ASSERTE((void*)(On##n)!=(void*)(f##n) && (void*)(f##n)!=NULL);
-
-//#define ORIGINALFASTx(n) 
-//	static HookItem *ph = NULL; 
-//	static void* f##n##x = NULL; 
-//	if ((f##n##x)==NULL) f##n##x = (void*)GetOriginalAddress((void*)(On##n##x) , (void*)n , FALSE, &ph); 
-//	_ASSERTE((void*)(On##n##x)!=(void*)(f##n##x) && (void*)(f##n##x)!=NULL);
 
 #define ORIGINAL(n) \
 	BOOL bMainThread = (GetCurrentThreadId() == gnHookMainThreadId); \
 	ORIGINALFAST(n)
 
-//#define ORIGINALx(n) 
-//	BOOL bMainThread = (GetCurrentThreadId() == gnHookMainThreadId); 
-//	ORIGINALFASTx(n)
-	
 #define F(n) ((On##n##_t)f##n)
-//#define Fx(n) ((On##n##x_t)f##n##x)
 
 #endif
 

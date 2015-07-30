@@ -13,6 +13,18 @@
       <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
       <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
     </Filter>
+    <Filter Include="MinHook">
+      <UniqueIdentifier>{1036aeb6-b7c1-49de-966c-1951ab28cf3a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="MinHook\HDE">
+      <UniqueIdentifier>{8d5bf90b-d14e-49af-a9ff-8a8e549e369d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="MinHook\Sources">
+      <UniqueIdentifier>{6ba390d6-931c-46ee-a21e-69a17a2b1c53}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="MinHook\Headers">
+      <UniqueIdentifier>{efa4bc58-23ef-48a7-a904-63c7b98682ba}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\common\common.hpp">
@@ -126,6 +138,30 @@
     <ClInclude Include="..\common\MFileLog.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\modules\minhook\src\HDE\hde32.h">
+      <Filter>MinHook\HDE</Filter>
+    </ClInclude>
+    <ClInclude Include="..\modules\minhook\src\HDE\hde64.h">
+      <Filter>MinHook\HDE</Filter>
+    </ClInclude>
+    <ClInclude Include="..\modules\minhook\src\HDE\pstdint.h">
+      <Filter>MinHook\HDE</Filter>
+    </ClInclude>
+    <ClInclude Include="..\modules\minhook\src\HDE\table32.h">
+      <Filter>MinHook\HDE</Filter>
+    </ClInclude>
+    <ClInclude Include="..\modules\minhook\src\HDE\table64.h">
+      <Filter>MinHook\HDE</Filter>
+    </ClInclude>
+    <ClInclude Include="..\modules\minhook\include\MinHook.h">
+      <Filter>MinHook</Filter>
+    </ClInclude>
+    <ClInclude Include="..\modules\minhook\src\buffer.h">
+      <Filter>MinHook\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\modules\minhook\src\trampoline.h">
+      <Filter>MinHook\Headers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="ConEmuHk.rc">
@@ -225,6 +261,24 @@
     </ClCompile>
     <ClCompile Include="..\common\MFileLog.cpp">
       <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\modules\minhook\src\HDE\hde32.c">
+      <Filter>MinHook\HDE</Filter>
+    </ClCompile>
+    <ClCompile Include="..\modules\minhook\src\HDE\hde64.c">
+      <Filter>MinHook\HDE</Filter>
+    </ClCompile>
+    <ClCompile Include="..\modules\minhook\src\buffer.c">
+      <Filter>MinHook\Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\modules\minhook\src\hook.c">
+      <Filter>MinHook\Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\modules\minhook\src\trampoline.c">
+      <Filter>MinHook\Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="hde.c">
+      <Filter>MinHook\HDE</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

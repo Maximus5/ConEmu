@@ -968,6 +968,8 @@ BOOL StartupHooks(HMODULE ahOurDll)
 
 	WARNING("Получить из мэппинга gdwServerPID");
 
+	//TODO: Change GetModuleHandle to GetModuleHandleEx? Does it exist in Win2k?
+
 	// Зовем LoadLibrary. Kernel-то должен был сразу загрузиться (static link) в любой
 	// windows приложении, но вот shell32 - не обязательно, а нам нужно хуки проинициализировать
 	ghKernel32 = LoadLibrary(kernel32);
