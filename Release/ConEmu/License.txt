@@ -1,3 +1,4 @@
+ConEmu-Maximus5 - Handy Windows terminal
 Copyright (c) 2006-2008, Zoin <zoinen@gmail.com>
 Copyright (c) 2009-2015, Maximus5 <ConEmu.Maximus5@gmail.com>
 
