@@ -1375,10 +1375,12 @@ bool __stdcall SetAllHooks(HMODULE ahOurDll, const wchar_t** aszExcludedModules 
 		if (gpHooks[i].HookedAddress && !gpHooks[i].CallAddress)
 		{
 			status = MH_CreateHook((FARPROC)gpHooks[i].HookedAddress, (FARPROC)gpHooks[i].NewAddress, &gpHooks[i].CallAddress);
+			_ASSERTE(status == MH_OK);
 		}
 	}
 
 	status = MH_EnableHook(MH_ALL_HOOKS);
+	_ASSERTE(status == MH_OK);
 
 	DebugString(L"SetAllHooks finished\n");
 
