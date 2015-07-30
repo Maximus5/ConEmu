@@ -1,0 +1,3 @@
+[submodule "src/modules/minhook"]
+	path = src/modules/minhook
+	url = git@github.com:Maximus5/minhook.git
