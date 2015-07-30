@@ -2565,7 +2565,7 @@ void LoadModuleFailed(LPCSTR asModuleA, LPCWSTR asModuleW)
 		, 0, NULL, NULL, NULL);
 	if (pIn)
 	{
-		HWND hConWnd = GetConsoleWindow();
+		HWND hConWnd = gfGetRealConsoleWindow();
 		CESERVER_REQ* pOut = ExecuteGuiCmd(hConWnd, pIn, hConWnd);
 		ExecuteFreeResult(pIn);
 		if (pOut) ExecuteFreeResult(pOut);
@@ -2674,7 +2674,7 @@ bool PrepareNewModule(HMODULE module, LPCSTR asModuleA, LPCWSTR asModuleW, BOOL 
 				, 0, NULL, NULL, NULL);
 			if (pIn)
 			{
-				HWND hConWnd = GetConsoleWindow();
+				HWND hConWnd = gfGetRealConsoleWindow();
 				CESERVER_REQ* pOut = ExecuteGuiCmd(hConWnd, pIn, hConWnd);
 				ExecuteFreeResult(pIn);
 				if (pOut) ExecuteFreeResult(pOut);
@@ -3139,7 +3139,7 @@ void UnprepareModule(HMODULE hModule, LPCWSTR pszModule, int iStep)
 				, 0, NULL, NULL, NULL);
 			if (pIn)
 			{
-				HWND hConWnd = GetConsoleWindow();
+				HWND hConWnd = gfGetRealConsoleWindow();
 				CESERVER_REQ* pOut = ExecuteGuiCmd(hConWnd, pIn, hConWnd);
 				ExecuteFreeResult(pIn);
 				if (pOut) ExecuteFreeResult(pOut);

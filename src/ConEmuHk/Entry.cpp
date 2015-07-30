@@ -875,7 +875,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 	{
 		// We can get here, if *.vshost.exe was started 'normally'
 		// and Win+G (attach) was initiated from ConEmu by user
-		_ASSERTE(ghConWnd == GetConsoleWindow());
+		_ASSERTE(ghConWnd == gfGetRealConsoleWindow());
 		gnImageSubsystem = IMAGE_SUBSYSTEM_WINDOWS_CUI;
 	}
 	// Проверка чего получилось
@@ -961,7 +961,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 					GetStdHandle(STD_INPUT_HANDLE), GetStdHandle(STD_OUTPUT_HANDLE), GetStdHandle(STD_ERROR_HANDLE));
 				if (pIn)
 				{
-					//HWND hConWnd = GetConsoleWindow();
+					//HWND hConWnd = gfGetRealConsoleWindow();
 					CESERVER_REQ* pOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd);
 					ExecuteFreeResult(pIn);
 					if (pOut) ExecuteFreeResult(pOut);
@@ -1713,12 +1713,13 @@ BOOL DllMain_ProcessAttach(HANDLE hModule, DWORD  ul_reason_for_call)
 
 	DLOG1_("DllMain.Console",ul_reason_for_call);
 	ghOurModule = (HMODULE)hModule;
-	ghConWnd = GetConsoleWindow();
+	if (!gfGetRealConsoleWindow)
+		gfGetRealConsoleWindow = GetConsoleWindow;
+	ghConWnd = gfGetRealConsoleWindow();
 	if (ghConWnd)
 		GetConsoleTitle(gsInitConTitle, countof(gsInitConTitle));
 	gnSelfPID = GetCurrentProcessId();
 	ghWorkingModule = (u64)hModule;
-	gfGetRealConsoleWindow = GetConsoleWindow;
 	DLOGEND1();
 
 

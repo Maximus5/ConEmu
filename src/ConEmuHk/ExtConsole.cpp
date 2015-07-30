@@ -36,6 +36,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/ConEmuColors3.h"
 #include "../common/WObjects.h"
 
+#define DEFINE_HOOK_MACROS
+#include "SetHook.h"
+
 #define MSG_TITLE "ConEmu writer"
 #define MSG_INVALID_CONEMU_VER "Unsupported ConEmu version detected!\nRequired version: " CONEMUVERS "\nConsole writer'll works in 4bit mode"
 #define MSG_TRUEMOD_DISABLED   "«Colorer TrueMod support» is not checked in the ConEmu settings\nConsole writer'll works in 4bit mode"
@@ -173,10 +176,14 @@ static BOOL ExtCheckBuffers(HANDLE h)
 		ghExtConEmuWndDC = ghConEmuWndDC;
 		ExtCloseBuffers();
 
+		typedef HANDLE(WINAPI* OnOpenFileMappingW_t)(DWORD dwDesiredAccess, BOOL bInheritHandle, LPCWSTR lpName);
+		extern HANDLE WINAPI OnOpenFileMappingW(DWORD dwDesiredAccess, BOOL bInheritHandle, LPCWSTR lpName);
+		ORIGINALFAST(OpenFileMappingW);
+
 		//TODO: Пока работаем "по-старому", через буфер TrueColor. Переделать, он не оптимален
 		wchar_t szMapName[128];
 		msprintf(szMapName, countof(szMapName), AnnotationShareName, (DWORD)sizeof(AnnotationInfo), (DWORD)ghExtConEmuWndDC); //-V205
-		ghTrueColor = OpenFileMapping(FILE_MAP_ALL_ACCESS, FALSE, szMapName);
+		ghTrueColor = F(OpenFileMappingW)(FILE_MAP_ALL_ACCESS, FALSE, szMapName);
 		if (!ghTrueColor)
 		{
 			return FALSE;

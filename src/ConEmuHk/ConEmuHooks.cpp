@@ -1108,6 +1108,7 @@ BOOL StartupHooks(HMODULE ahOurDll)
 	#ifdef _DEBUG
 	gfVirtualAlloc = (VirtualAlloc_t)GetOriginalAddress(OnVirtualAlloc, NULL);
 	#endif
+	gfGetRealConsoleWindow = (GetConsoleWindow_T)GetOriginalAddress(OnGetConsoleWindow, NULL);
 
 	print_timings(L"SetAllHooks - done");
 
@@ -1717,7 +1718,7 @@ BOOL WINAPI OnShellExecuteExA(LPSHELLEXECUTEINFOA lpExecInfo)
 	//// Under ConEmu only!
 	//if (ghConEmuWndDC)
 	//{
-	//	if (!lpNew->hwnd || lpNew->hwnd == GetConsoleWindow())
+	//	if (!lpNew->hwnd || lpNew->hwnd == gfGetRealConsoleWindow())
 	//		lpNew->hwnd = ghConEmuWnd;
 
 	//	HANDLE hDummy = NULL;
@@ -1936,7 +1937,7 @@ HINSTANCE WINAPI OnShellExecuteA(HWND hwnd, LPCSTR lpOperation, LPCSTR lpFile, L
 
 	if (ghConEmuWndDC)
 	{
-		if (!hwnd || hwnd == GetConsoleWindow())
+		if (!hwnd || hwnd == gfGetRealConsoleWindow())
 			hwnd = ghConEmuWnd;
 	}
 
@@ -1973,7 +1974,7 @@ HINSTANCE WINAPI OnShellExecuteW(HWND hwnd, LPCWSTR lpOperation, LPCWSTR lpFile,
 
 	if (ghConEmuWndDC)
 	{
-		if (!hwnd || hwnd == GetConsoleWindow())
+		if (!hwnd || hwnd == gfGetRealConsoleWindow())
 			hwnd = ghConEmuWnd;
 	}
 
@@ -3341,7 +3342,7 @@ DWORD WINAPI OnGetConsoleAliasesW(LPWSTR AliasBuffer, DWORD AliasBufferLength, L
 		if (nError == ERROR_NOT_ENOUGH_MEMORY) // && gdwServerPID)
 		{
 			DWORD nServerPID = gnServerPID;
-			HWND hConWnd = GetConsoleWindow();
+			HWND hConWnd = gfGetRealConsoleWindow();
 			_ASSERTE(hConWnd == ghConWnd);
 
 			//MFileMapping<CESERVER_CONSOLE_MAPPING_HDR> ConInfo;
@@ -5447,13 +5448,13 @@ HWND WINAPI OnGetConsoleWindow(void)
 	typedef HWND (WINAPI* OnGetConsoleWindow_t)(void);
 	ORIGINALFAST(GetConsoleWindow);
 
-	_ASSERTE(F(GetConsoleWindow) != GetRealConsoleWindow);
+	_ASSERTE(F(GetConsoleWindow) != GetRealConsoleWindow && F(GetConsoleWindow) != GetConsoleWindow);
 
 	if (ghConEmuWndDC && IsWindow(ghConEmuWndDC) /*ghConsoleHwnd*/)
 	{
 		if (ghAttachGuiClient)
 		{
-			// В GUI режиме (notepad, putty) отдавать реальный результат GetConsoleWindow()
+			// В GUI режиме (notepad, putty) отдавать реальный результат gfGetRealConsoleWindow()
 			// в этом режиме не нужно отдавать ни ghConEmuWndDC, ни серверную консоль
 			HWND hReal = GetRealConsoleWindow();
 			return hReal;
@@ -5777,7 +5778,7 @@ BOOL WINAPI OnChooseColorA(LPCHOOSECOLORA lpcc)
 {
 	ORIGINALFASTEX(ChooseColorA,ChooseColorA_f);
 	BOOL lbRc;
-	if (lpcc->hwndOwner == NULL || lpcc->hwndOwner == GetConsoleWindow())
+	if (lpcc->hwndOwner == NULL || lpcc->hwndOwner == gfGetRealConsoleWindow())
 		lbRc = MyChooseColor((SimpleApiFunction_t)F(ChooseColorA), lpcc, FALSE);
 	else
 		lbRc = F(ChooseColorA)(lpcc);
@@ -5788,7 +5789,7 @@ BOOL WINAPI OnChooseColorW(LPCHOOSECOLORW lpcc)
 {
 	ORIGINALFASTEX(ChooseColorW,ChooseColorW_f);
 	BOOL lbRc;
- 	if (lpcc->hwndOwner == NULL || lpcc->hwndOwner == GetConsoleWindow())
+	if (lpcc->hwndOwner == NULL || lpcc->hwndOwner == gfGetRealConsoleWindow())
 		lbRc = MyChooseColor((SimpleApiFunction_t)F(ChooseColorW), lpcc, TRUE);
 	else
 		lbRc = F(ChooseColorW)(lpcc);
@@ -6109,7 +6110,7 @@ void GuiFlashWindow(BOOL bSimple, HWND hWnd, BOOL bInvert, DWORD dwFlags, UINT u
 			pIn->Flash.dwFlags = dwFlags;
 			pIn->Flash.uCount = uCount;
 			pIn->Flash.dwTimeout = dwTimeout;
-			HWND hConWnd = GetConsoleWindow();
+			HWND hConWnd = gfGetRealConsoleWindow();
 			pOut = ExecuteGuiCmd(hConWnd, pIn, hConWnd);
 
 			if (pOut) ExecuteFreeResult(pOut);
