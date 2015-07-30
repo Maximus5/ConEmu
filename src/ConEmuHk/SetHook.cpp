@@ -472,9 +472,6 @@ void RemoveHookedModule(HMODULE hModule)
 
 
 
-BOOL gbHooksTemporaryDisabled = FALSE;
-//BOOL gbInShellExecuteEx = FALSE;
-
 //typedef VOID (WINAPI* OnLibraryLoaded_t)(HMODULE ahModule);
 HMODULE ghOnLoadLibModule = NULL;
 OnLibraryLoaded_t gfOnLibraryLoaded = NULL;
@@ -829,13 +826,6 @@ bool __stdcall InitHooks(HookItem* apHooks)
 	{
 		gpHookCS = new MSection;
 	}
-
-	//if (!gpcsHooksRootPtr)
-	//{
-	//	gpcsHooksRootPtr = (LPCRITICAL_SECTION)calloc(1,sizeof(*gpcsHooksRootPtr));
-	//	Initialize Critical Section(gpcsHooksRootPtr);
-	//}
-
 
 	if (gpHooks == NULL)
 	{
@@ -2843,9 +2833,6 @@ HMODULE WINAPI OnLoadLibraryAWork(FARPROC lpfn, HookItem *ph, BOOL bMainThread, 
 	HMODULE module = ((OnLoadLibraryA_t)lpfn)(lpFileName);
 	DWORD dwLoadErrCode = GetLastError();
 
-	if (gbHooksTemporaryDisabled)
-		return module;
-
 	// Issue 1079: Almost hangs with PHP
 	if (lstrcmpiA(lpFileName, "kernel32.dll") == 0)
 		return module;
@@ -2905,7 +2892,7 @@ HMODULE WINAPI OnLoadLibraryWWork(FARPROC lpfn, HookItem *ph, BOOL bMainThread, 
 		module = ((OnLoadLibraryW_t)lpfn)(lpFileName);
 	DWORD dwLoadErrCode = GetLastError();
 
-	if (gbHooksTemporaryDisabled || gbLdrDllNotificationUsed)
+	if (gbLdrDllNotificationUsed)
 		return module;
 
 	// Issue 1079: Almost hangs with PHP
@@ -2940,9 +2927,6 @@ HMODULE WINAPI OnLoadLibraryExAWork(FARPROC lpfn, HookItem *ph, BOOL bMainThread
 	HMODULE module = ((OnLoadLibraryExA_t)lpfn)(lpFileName, hFile, dwFlags);
 	DWORD dwLoadErrCode = GetLastError();
 
-	if (gbHooksTemporaryDisabled)
-		return module;
-
 	if (PrepareNewModule(module, lpFileName, NULL))
 	{
 		if (ph && ph->PostCallBack)
@@ -2970,9 +2954,6 @@ HMODULE WINAPI OnLoadLibraryExWWork(FARPROC lpfn, HookItem *ph, BOOL bMainThread
 	OnLoadLibraryLog(NULL,lpFileName);
 	HMODULE module = ((OnLoadLibraryExW_t)lpfn)(lpFileName, hFile, dwFlags);
 	DWORD dwLoadErrCode = GetLastError();
-
-	if (gbHooksTemporaryDisabled)
-		return module;
 
 	if (PrepareNewModule(module, NULL, lpFileName))
 	{
@@ -3009,17 +2990,7 @@ FARPROC WINAPI OnGetProcAddressWork(FARPROC lpfn, HookItem *ph, BOOL bMainThread
 		lstrcpynA(lsProcNameCut, lpProcName, countof(lsProcNameCut));
 	#endif
 
-	WARNING("Убрать gbHooksTemporaryDisabled?");
-	if (gbHooksTemporaryDisabled)
-	{
-		TODO("!!!");
-		#ifdef LOG_ORIGINAL_CALL
-		msprintf(gszLastGetProcAddress, countof(gszLastGetProcAddress), "   OnGetProcAddress(x%08X,%s,%u)",
-			(DWORD)hModule, (((DWORD_PTR)lpProcName) <= 0xFFFF) ? "" : lsProcNameCut,
-			(((DWORD_PTR)lpProcName) <= 0xFFFF) ? (UINT)(DWORD_PTR)lsProcNameCut : 0);
-		#endif
-	}
-	else if (gbDllStopCalled)
+	if (gbDllStopCalled)
 	{
 		//-- assert нельзя, т.к. все уже деинициализировано!
 		//_ASSERTE(ghHeap!=NULL);
