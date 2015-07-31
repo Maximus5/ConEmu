@@ -198,6 +198,7 @@ extern "C" {
 	FARPROC WINAPI GetWriteConsoleW();
 	int WINAPI RequestLocalServer(/*[IN/OUT]*/RequestLocalServerParm* Parm);
 	FARPROC WINAPI GetLoadLibraryW();
+	FARPROC WINAPI GetVirtualAlloc();
 #if defined(__GNUC__)
 };
 #endif
