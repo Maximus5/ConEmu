@@ -644,9 +644,9 @@ DWORD WINAPI DummyLibLoaderCmdThread(LPVOID /*apParm*/)
 #endif
 
 static long gnFixSshThreadsResumeOk = 0;
+struct ThInfoStr { DWORD_PTR nTID; HANDLE hThread; };
 void FixSshThreads(int iStep)
 {
-	struct ThInfoStr { DWORD_PTR nTID; HANDLE hThread; };
 	static MArray<ThInfoStr> *pThInfo = NULL;
 
 	#ifdef _DEBUG
