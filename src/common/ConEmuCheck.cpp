@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2014 Maximus5
+Copyright (c) 2009-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -741,7 +741,7 @@ CESERVER_REQ* ExecuteGuiCmd(HWND hConWnd, CESERVER_REQ* pIn, HWND hOwner, BOOL b
 }
 
 // Выполнить в ConEmuC
-CESERVER_REQ* ExecuteSrvCmd(DWORD dwSrvPID, CESERVER_REQ* pIn, HWND hOwner, BOOL bAsyncNoResult, DWORD nTimeout /*= 0*/)
+CESERVER_REQ* ExecuteSrvCmd(DWORD dwSrvPID, CESERVER_REQ* pIn, HWND hOwner, BOOL bAsyncNoResult, DWORD nTimeout /*= 0*/, BOOL bIgnoreAbsence /*= FALSE*/)
 {
 	wchar_t szPipeName[128];
 
@@ -751,7 +751,7 @@ CESERVER_REQ* ExecuteSrvCmd(DWORD dwSrvPID, CESERVER_REQ* pIn, HWND hOwner, BOOL
 	DWORD nLastErr = GetLastError();
 	//_wsprintf(szPipeName, SKIPLEN(countof(szPipeName)) CESERVERPIPENAME, L".", (DWORD)dwSrvPID);
 	msprintf(szPipeName, countof(szPipeName), CESERVERPIPENAME, L".", (DWORD)dwSrvPID);
-	CESERVER_REQ* lpRet = ExecuteCmd(szPipeName, pIn, nTimeout, hOwner, bAsyncNoResult, dwSrvPID);
+	CESERVER_REQ* lpRet = ExecuteCmd(szPipeName, pIn, nTimeout, hOwner, bAsyncNoResult, dwSrvPID, bIgnoreAbsence);
 	_ASSERTE(pIn->hdr.bAsync == bAsyncNoResult);
 	SetLastError(nLastErr); // Чтобы не мешать процессу своими возможными ошибками общения с пайпом
 	return lpRet;
