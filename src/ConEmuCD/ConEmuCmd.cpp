@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2014 Maximus5
+Copyright (c) 2009-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -271,7 +271,7 @@ void ComspecDone(int aiRc)
 						MCHKHEAP;
 						memmove(pIn->Data, pszPostAliases, nPostAliasSize);
 						MCHKHEAP;
-						CESERVER_REQ* pOut = ExecuteSrvCmd(gnMainServerPID, pIn, GetConEmuHWND(2));
+						CESERVER_REQ* pOut = ExecuteSrvCmd(gnMainServerPID, pIn, GetConEmuHWND(2), FALSE, 0, TRUE);
 						MCHKHEAP;
 
 						if (pOut) ExecuteFreeResult(pOut);
