@@ -3951,7 +3951,7 @@ int DoOutput(ConEmuExecAction eExecAction, LPCWSTR asCmdArg)
 								*(pszDst++) = *(pszSrc++);
 								continue;
 							}
-							*pszDst++; *pszSrc++;
+							pszDst++; pszSrc++;
 						}
 						else
 						{
