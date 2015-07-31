@@ -624,14 +624,14 @@ void* __cdecl GetOriginalAddress(void* OurFunction, HookItem** ph, bool abAllowN
 // Used in GetLoadLibraryAddress, however it may be obsolete with minhook
 FARPROC WINAPI GetLoadLibraryW()
 {
-	void* fnLoadLibraryW = &LoadLibraryW;
+	LPVOID fnLoadLibraryW = (LPVOID)&LoadLibraryW;
 	return (FARPROC)fnLoadLibraryW;
 }
 
 FARPROC WINAPI GetWriteConsoleW()
 {
 	HookItem* ph;
-	return (FARPROC)GetOriginalAddress(CEAnsi::OnWriteConsoleW, &ph);
+	return (FARPROC)GetOriginalAddress((LPVOID)CEAnsi::OnWriteConsoleW, &ph);
 }
 
 FARPROC WINAPI GetVirtualAlloc()
@@ -1374,7 +1374,7 @@ bool __stdcall SetAllHooks(HMODULE ahOurDll, const wchar_t** aszExcludedModules 
 	{
 		if (gpHooks[i].HookedAddress && !gpHooks[i].CallAddress)
 		{
-			status = MH_CreateHook((FARPROC)gpHooks[i].HookedAddress, (FARPROC)gpHooks[i].NewAddress, &gpHooks[i].CallAddress);
+			status = MH_CreateHook((LPVOID)gpHooks[i].HookedAddress, (LPVOID)gpHooks[i].NewAddress, &gpHooks[i].CallAddress);
 			_ASSERTE(status == MH_OK);
 		}
 	}
