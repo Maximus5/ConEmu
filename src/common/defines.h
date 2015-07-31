@@ -137,7 +137,7 @@ WARNING("WIN64 was not defined");
 #define isSpace(c) (wcschr(L" \xA0\t\r\n",c)!=NULL)
 
 #define LODWORD(ull) ((DWORD)((ULONGLONG)(ull) & 0x00000000ffffffff))
-#define LOLONG(ull)  ((DWORD)((ULONGLONG)(ull) & 0x00000000ffffffff))
+#define LOLONG(ull)  ((LONG)LODWORD(ull))
 #define HIDWORD(ull) ((DWORD)(ull>>32))
 #define LOSHORT(ll)  ((SHORT)LOWORD(ll))
 
