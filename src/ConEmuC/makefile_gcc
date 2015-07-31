@@ -65,7 +65,6 @@ CXXWIDE = -D UNICODE -D _UNICODE -D _WIN32_WINNT=0x0500 -D WINVER=0x0500 $(BITDE
 CCWIDE = -D UNICODE -D _UNICODE -D _WIN32_WINNT=0x0500 -D WINVER=0x0500 $(BITDEF)
 
 OBJDIR = ../../gcc/conemuc$(DIRBIT)
-REOBJDIR = \.\.\/\.\.\/gcc\/conemuc$(DIRBIT)
 EXEDIR = ../../Release/ConEmu
 COMMON = ../common
 COMINC = $(COMMON)
@@ -100,7 +99,7 @@ M4 = tools/m4 -P -DFARBIT=$(DIRBIT)
 GAWK = tools/gawk
 MV = mv -f
 MKDIR = mkdir -p
-WINDRES = $(CROSS_HOST)windres -D__FARBIT__=$(DIRBIT)
+WINDRES = $(CROSS_HOST)windres
 DEFINES = -D FAR_ALPHA_VERSION -D UNICODE -D _UNICODE
 CXXFLAGS = $(ENCFLAGS) -pipe -Os $(DEFINES) -funsigned-char -fomit-frame-pointer -fno-exceptions -fno-rtti -Wall -Wno-missing-braces -Wno-unknown-pragmas -Wno-switch $(CXXWIDE)
 CFLAGS = -pipe -Os $(DEFINES) -funsigned-char -fomit-frame-pointer -fno-exceptions -Wall -Wno-missing-braces -Wno-unknown-pragmas -Wno-switch $(CCWIDE)
@@ -108,9 +107,7 @@ LNKFLAGS = -mconsole -s $(USERLIBSFIRST) -lShlwapi -lgdi32 $(USERLIBS)
 RCFLAGS = -I $(COMINC) $(RCWIDE) $(USERRC)
 
 OBJS = $(patsubst %.cpp,$(OBJDIR)/%.o,$(filter %.cpp,$(SRCS))) $(patsubst %.c,$(OBJDIR)/%.o,$(filter %.c,$(SRCS))) $(RES)
-#ifndef DISABLEAUTODEPS
-#DEPS = $(patsubst %.cpp,$(OBJDIR)/%.d,$(filter %.cpp,$(SRCS)))
-#endif
+
 MAP = $(patsubst %.$(EXT),%.map,$(EXEFULLNAME))
 
 
@@ -118,13 +115,6 @@ MAP = $(patsubst %.$(EXT),%.map,$(EXEFULLNAME))
 all: $(EXEFULLNAME)
 
 
-#ifndef DISABLEAUTODEPS
-#$(OBJDIR)/%.d: %.cpp
-#	@echo making depends for $<
-#	@$(MKDIR) -p $(@D)
-#	@$(SHELL) -ec '$(CXX) -c -MM $(CXXFLAGS) $< \
-#                | sed '\''s/\($*\)\.o[ :]*/$(REOBJDIR)\1.o $(REOBJDIR)\1.d: /g'\'' > $@; [ -s $@ ] || $(RM) $@'
-#endif
 
 $(OBJDIR)/%.o: %.cpp
 	@echo compiling $<
