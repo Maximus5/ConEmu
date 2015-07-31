@@ -48,12 +48,16 @@ SRCS = \
 		../common/WObjects.cpp       \
 		../common/WThreads.cpp       \
 		../common/WUser.cpp          \
+		../modules/minhook/src/buffer.c     \
+		../modules/minhook/src/hook.c       \
+		../modules/minhook/src/trampoline.c \
 		Ansi.cpp \
 		ConEmuHooks.cpp \
 		DefTermHk.cpp \
 		Entry.cpp \
 		ExtConsole.cpp \
 		GuiAttach.cpp \
+		hde.c \
 		Injects.cpp \
 		MainThread.cpp     \
 		RegHooks.cpp       \

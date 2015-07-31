@@ -84,6 +84,15 @@ $(INTDIR)\WThreads.obj
 USERLIBS = 
 
 
+# minhook begin
+LINK_OBJS = $(LINK_OBJS) \
+$(INTDIR)\buffer.obj \
+$(INTDIR)\hde.obj \
+$(INTDIR)\hook.obj \
+$(INTDIR)\trampoline.obj
+# minhook end
+
+
 !ifndef RC_NAME
 RC_NAME=$(NAME)
 !endif
@@ -244,11 +253,25 @@ $(DLLFULLNAME) : $(LINK_OBJS) $(RES) $(LINK_DEP)
 	$(CC) @<<
 	$(CFLAGS) $<
 <<
+.c{$(INTDIR)}.obj::
+	$(CC) @<<
+	$(CFLAGS) $<
+<<
+{../modules/minhook/src/}.c{$(INTDIR)}.obj::
+	$(CC) @<<
+	$(CFLAGS) $<
+<<
 !else
 .cpp{$(INTDIR)}.obj:
 	@$(CC) $(CFLAGS) { $< } 
 
 {../common/}.cpp{$(INTDIR)}.obj:
+	@$(CC) $(CFLAGS) { $< } 
+
+.c{$(INTDIR)}.obj:
+	@$(CC) $(CFLAGS) { $< } 
+
+{../modules/minhook/src/}.c{$(INTDIR)}.obj:
 	@$(CC) $(CFLAGS) { $< } 
 !endif
 
@@ -276,6 +299,15 @@ clean:
 	@move $(MAP) $(RELEASEDIR)\$(OUTNAME).map
 
 
+# minhook begin
+$(INTDIR)\hde.obj:        hde.c
+
+$(INTDIR)\buffer.obj:     ../modules/minhook/src/buffer.c
+
+$(INTDIR)\hook.obj:       ../modules/minhook/src/hook.c
+
+$(INTDIR)\trampoline.obj: ../modules/minhook/src/trampoline.c
+# minhook end
 
 ################
 #LINK_OBJS begin
