@@ -182,7 +182,7 @@ static BOOL ExtCheckBuffers(HANDLE h)
 
 		//TODO: Пока работаем "по-старому", через буфер TrueColor. Переделать, он не оптимален
 		wchar_t szMapName[128];
-		msprintf(szMapName, countof(szMapName), AnnotationShareName, (DWORD)sizeof(AnnotationInfo), (DWORD)ghExtConEmuWndDC); //-V205
+		msprintf(szMapName, countof(szMapName), AnnotationShareName, (DWORD)sizeof(AnnotationInfo), LODWORD(ghExtConEmuWndDC)); //-V205
 		ghTrueColor = F(OpenFileMappingW)(FILE_MAP_ALL_ACCESS, FALSE, szMapName);
 		if (!ghTrueColor)
 		{

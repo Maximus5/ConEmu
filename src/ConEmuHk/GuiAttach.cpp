@@ -633,7 +633,7 @@ void OnGuiWindowAttached(HWND hWindow, HMENU hMenu, LPCSTR asClassA, LPCWSTR asC
 	pIn->AttachGuiApp.hkl = (DWORD)(LONG)(LONG_PTR)GetKeyboardLayout(0);
 
 	wchar_t szGuiPipeName[128];
-	msprintf(szGuiPipeName, countof(szGuiPipeName), CEGUIPIPENAME, L".", (DWORD)ghConEmuWnd);
+	msprintf(szGuiPipeName, countof(szGuiPipeName), CEGUIPIPENAME, L".", LODWORD(ghConEmuWnd));
 
 
 	// AttachThreadInput
@@ -825,7 +825,7 @@ void OnShowGuiClientWindow(HWND hWnd, int &nCmdShow, BOOL &rbGuiAttach, BOOL &rb
 			GetModuleFileName(NULL, pIn->AttachGuiApp.sAppFilePathName, countof(pIn->AttachGuiApp.sAppFilePathName));
 
 			wchar_t szGuiPipeName[128];
-			msprintf(szGuiPipeName, countof(szGuiPipeName), CEGUIPIPENAME, L".", (DWORD)ghConEmuWnd);
+			msprintf(szGuiPipeName, countof(szGuiPipeName), CEGUIPIPENAME, L".", LODWORD(ghConEmuWnd));
 
 			CESERVER_REQ* pOut = ExecuteCmd(szGuiPipeName, pIn, 0/*Default timeout*/, NULL);
 			ExecuteFreeResult(pIn);
@@ -889,7 +889,7 @@ void CorrectGuiChildRect(DWORD anStyle, DWORD anStyleEx, RECT& rcGui)
 			lstrcpyn(pIn->GuiAppShifts.szExeName, PointToName(szOurExe), countof(pIn->GuiAppShifts.szExeName));
 
 			wchar_t szGuiPipeName[128];
-			msprintf(szGuiPipeName, countof(szGuiPipeName), CEGUIPIPENAME, L".", (DWORD)ghConEmuWnd);
+			msprintf(szGuiPipeName, countof(szGuiPipeName), CEGUIPIPENAME, L".", LODWORD(ghConEmuWnd));
 
 			CESERVER_REQ* pOut = ExecuteCmd(szGuiPipeName, pIn, 10000, NULL);
 			if (pOut)

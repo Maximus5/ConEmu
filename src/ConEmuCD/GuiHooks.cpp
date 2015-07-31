@@ -227,7 +227,7 @@ LRESULT CALLBACK LLKeybHook(int nCode,WPARAM wParam,LPARAM lParam)
 				if (pKB->vkCode == VK_TAB && IsWindow(ghActiveGhost))
 				{
 					wchar_t szEvtName[64];
-					_wsprintf(szEvtName, SKIPLEN(countof(szEvtName)) CEGHOSTSKIPACTIVATE, (DWORD)ghActiveGhost);
+					_wsprintf(szEvtName, SKIPLEN(countof(szEvtName)) CEGHOSTSKIPACTIVATE, LODWORD(ghActiveGhost));
 					HANDLE hSkipActivateEvent = OpenEvent(EVENT_MODIFY_STATE, FALSE, szEvtName);
 					if (hSkipActivateEvent)
 					{

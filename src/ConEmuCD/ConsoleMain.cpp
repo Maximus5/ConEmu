@@ -382,7 +382,7 @@ BOOL WINAPI DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 			if (ghConWnd)
 			{
 				MFileMapping<CESERVER_CONSOLE_MAPPING_HDR> ConInfo;
-				ConInfo.InitName(CECONMAPNAME, (DWORD)ghConWnd); //-V205
+				ConInfo.InitName(CECONMAPNAME, LODWORD(ghConWnd)); //-V205
 				CESERVER_CONSOLE_MAPPING_HDR *pInfo = ConInfo.Open();
 				if (pInfo)
 				{
@@ -1672,7 +1672,7 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 			if (dwWaitGui == WAIT_OBJECT_0)
 			{
 				// GUI пайп готов
-				_wsprintf(gpSrv->szGuiPipeName, SKIPLEN(countof(gpSrv->szGuiPipeName)) CEGUIPIPENAME, L".", (DWORD)ghConWnd); // был gnSelfPID //-V205
+				_wsprintf(gpSrv->szGuiPipeName, SKIPLEN(countof(gpSrv->szGuiPipeName)) CEGUIPIPENAME, L".", LODWORD(ghConWnd)); // был gnSelfPID //-V205
 			}
 		}
 
@@ -2438,7 +2438,7 @@ int CheckAttachProcess()
 		if (!IsWindow(gpSrv->hRootProcessGui))
 		{
 			_wsprintf(szFailMsg, SKIPLEN(countof(szFailMsg)) L"Attach of GUI application was requested,\n"
-				L"but required HWND(0x%08X) not found!", (DWORD)gpSrv->hRootProcessGui);
+				L"but required HWND(0x%08X) not found!", LODWORD(gpSrv->hRootProcessGui));
 			liArgsFailed = 1;
 			// will return CERR_CARGUMENT
 		}
@@ -2449,7 +2449,7 @@ int CheckAttachProcess()
 			{
 				_wsprintf(szFailMsg, SKIPLEN(countof(szFailMsg)) L"Attach of GUI application was requested,\n"
 					L"but PID(%u) of HWND(0x%08X) does not match Root(%u)!",
-					nPid, (DWORD)gpSrv->hRootProcessGui, gpSrv->dwRootProcess);
+					nPid, LODWORD(gpSrv->hRootProcessGui), gpSrv->dwRootProcess);
 				liArgsFailed = 2;
 				// will return CERR_CARGUMENT
 			}
@@ -2596,7 +2596,7 @@ int CheckUnicodeFont()
 		GetSystemMetrics(SM_IMMENABLED), GetSystemMetrics(SM_DBCSENABLED), GetACP(), GetOEMCP());
 	WriteConsoleW(hOut, szInfo, lstrlen(szInfo), &nTmp, NULL);
 
-	msprintf(szInfo, countof(szInfo), L"ConHWND=0x%08X, Class=\"", (DWORD)ghConWnd);
+	msprintf(szInfo, countof(szInfo), L"ConHWND=0x%08X, Class=\"", LODWORD(ghConWnd));
 	GetClassName(ghConWnd, szInfo+lstrlen(szInfo), 255);
 	lstrcpyn(szInfo+lstrlen(szInfo), L"\"\r\n", 4);
 	WriteConsoleW(hOut, szInfo, lstrlen(szInfo), &nTmp, NULL);
@@ -2946,7 +2946,7 @@ int DoInjectHooks(LPWSTR asCmdArg)
 		wchar_t szDbgMsg[512], szTitle[128];
 		_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuC, PID=%u", GetCurrentProcessId());
 		_wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"ConEmuC.X, PID=%u\nCmdLine parsing FAILED (%u,%u,%u,%u,%u)!\n%s",
-			GetCurrentProcessId(), (DWORD)pi.hProcess, (DWORD)pi.hThread, pi.dwProcessId, pi.dwThreadId, lbForceGui, //-V205
+			GetCurrentProcessId(), LODWORD(pi.hProcess), LODWORD(pi.hThread), pi.dwProcessId, pi.dwThreadId, lbForceGui, //-V205
 			asCmdArg);
 		MessageBoxW(NULL, szDbgMsg, szTitle, MB_SYSTEMMODAL);
 	}
@@ -4921,8 +4921,8 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 						L"Retry?",
 						gpSrv->dwRootProcess, nErr,
 						gpSrv->dwRootProcess, piRoot.szExeFile,
-						(DWORD)hFindConWnd, nFindConPID, piCon.szExeFile, szTitle,
-						(DWORD)hSaveCon
+						LODWORD(hFindConWnd), nFindConPID, piCon.szExeFile, szTitle,
+						LODWORD(hSaveCon)
 						);
 
 					_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"%s: PID=%u", gsModuleName, GetCurrentProcessId());
@@ -6058,7 +6058,7 @@ void SendStarted()
 	if (gnRunMode /*== RM_COMSPEC*/ > RM_SERVER)
 	{
 		MFileMapping<CESERVER_CONSOLE_MAPPING_HDR> ConsoleMap;
-		ConsoleMap.InitName(CECONMAPNAME, (DWORD)hConWnd); //-V205
+		ConsoleMap.InitName(CECONMAPNAME, LODWORD(hConWnd)); //-V205
 		const CESERVER_CONSOLE_MAPPING_HDR* pConsoleInfo = ConsoleMap.Open();
 
 		if (!pConsoleInfo)
@@ -7105,7 +7105,7 @@ BOOL cmd_Attach2Gui(CESERVER_REQ& in, CESERVER_REQ** out)
 			// Чтобы не отображалась "Press any key to close console"
 			DisableAutoConfirmExit();
 			//
-			(*out)->dwData[0] = (DWORD)hDc; //-V205 // Дескриптор окна
+			(*out)->dwData[0] = LODWORD(hDc); //-V205 // Дескриптор окна
 			lbRc = TRUE;
 
 			gpSrv->bWasReattached = TRUE;
@@ -7194,7 +7194,7 @@ BOOL cmd_PostConMsg(CESERVER_REQ& in, CESERVER_REQ** out)
 		{
 			char szInfo[255];
 			_wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "ConEmuC: %s(0x%08X, %s, CP:%i, HKL:0x%08I64X)",
-			           in.Msg.bPost ? "PostMessage" : "SendMessage", (DWORD)hSendWnd, //-V205
+			           in.Msg.bPost ? "PostMessage" : "SendMessage", LODWORD(hSendWnd), //-V205
 			           (in.Msg.nMsg == WM_INPUTLANGCHANGE) ? "WM_INPUTLANGCHANGE" :
 			           (in.Msg.nMsg == WM_INPUTLANGCHANGEREQUEST) ? "WM_INPUTLANGCHANGEREQUEST" :
 			           "<Other message>",

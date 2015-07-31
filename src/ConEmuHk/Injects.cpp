@@ -291,7 +291,7 @@ CINJECTHK_EXIT_CODES InjectHooks(PROCESS_INFORMATION pi, BOOL abLogProcess)
 		msprintf(sz64helper, countof(sz64helper),
 		          L"\"%s\\ConEmuC%s.exe\" /SETHOOKS=%X,%u,%X,%u",
 		          szPluginPath, (ImageBits==64) ? L"64" : L"",
-		          (DWORD)hProcess, pi.dwProcessId, (DWORD)hThread, pi.dwThreadId);
+		          LODWORD(hProcess), pi.dwProcessId, LODWORD(hThread), pi.dwThreadId);
 		STARTUPINFO si = {sizeof(STARTUPINFO)};
 		PROCESS_INFORMATION pi64 = {NULL};
 		LPSECURITY_ATTRIBUTES lpNotInh = LocalSecurity();

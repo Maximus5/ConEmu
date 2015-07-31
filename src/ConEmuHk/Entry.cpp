@@ -436,7 +436,7 @@ CESERVER_CONSOLE_MAPPING_HDR* GetConMap(BOOL abForceRecreate/*=FALSE*/)
 			gpAppMap = new MFileMapping<CESERVER_CONSOLE_APP_MAPPING>;
 		if (gpAppMap)
 		{
-			gpAppMap->InitName(CECONAPPMAPNAME, (DWORD)ghConWnd); //-V205
+			gpAppMap->InitName(CECONAPPMAPNAME, LODWORD(ghConWnd)); //-V205
 			gpAppMap->Open(TRUE);
 		}
 	}
@@ -450,7 +450,7 @@ CESERVER_CONSOLE_MAPPING_HDR* GetConMap(BOOL abForceRecreate/*=FALSE*/)
 			gpConInfo = NULL;
 			goto wrap;
 		}
-		gpConMap->InitName(CECONMAPNAME, (DWORD)ghConWnd); //-V205
+		gpConMap->InitName(CECONMAPNAME, LODWORD(ghConWnd)); //-V205
 	}
 
 	if (!gpConInfo || abForceRecreate)
@@ -2610,7 +2610,7 @@ BOOL WINAPI HookServerCommand(LPVOID pInst, CESERVER_REQ* pCmd, CESERVER_REQ* &p
 			pcbReplySize = sizeof(CESERVER_REQ_HDR)+sizeof(DWORD);
 			lbRc = ExecuteNewCmd(ppReply, pcbMaxReplySize, pCmd->hdr.nCmd, pcbReplySize);
 			if (lbRc)
-				ppReply->dwData[0] = (DWORD)ghAttachGuiClient;
+				ppReply->dwData[0] = LODWORD(ghAttachGuiClient);
 		} // CECMD_ATTACHGUIAPP
 		break;
 	case CECMD_SETFOCUS:
