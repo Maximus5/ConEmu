@@ -1,3 +1,11 @@
+######################################################
+# to build correct bitness user have to specify DIRBIT
+#   make -f makefile_gcc DIRBIT=32
+# or
+#   make -f makefile_gcc DIRBIT=64
+# default is 32 bit make
+######################################################
+
 NAME = ConEmuC
 SRCS = \
 		../common/CmdArg.cpp         \
@@ -15,6 +23,7 @@ USERLIBS = -lkernel32 -luser32
 #-lversion
 ENCFLAGS = -finput-charset=utf-8
 
+DIRBIT ?= 32
 
 
 #The following variables can be set by the user:
@@ -61,10 +70,11 @@ else
   BITNAME = 
 endif
 RCWIDE = -D UNICODE -D _UNICODE $(BITDEF)
-CXXWIDE = -D UNICODE -D _UNICODE -D _WIN32_WINNT=0x0500 -D WINVER=0x0500 $(BITDEF)
-CCWIDE = -D UNICODE -D _UNICODE -D _WIN32_WINNT=0x0500 -D WINVER=0x0500 $(BITDEF)
+CXXWIDE = -D UNICODE -D _UNICODE -D _WIN32_WINNT=0x0500 -D WINVER=0x0500 $(BITDEF) -m$(DIRBIT)
+CCWIDE = -D UNICODE -D _UNICODE -D _WIN32_WINNT=0x0500 -D WINVER=0x0500 $(BITDEF) -m$(DIRBIT)
 
 OBJDIR = ../../gcc/conemuc$(DIRBIT)
+OBJCMN = $(OBJDIR)common
 EXEDIR = ../../Release/ConEmu
 COMMON = ../common
 COMINC = $(COMMON)
@@ -103,10 +113,21 @@ WINDRES = $(CROSS_HOST)windres
 DEFINES = -D FAR_ALPHA_VERSION -D UNICODE -D _UNICODE
 CXXFLAGS = $(ENCFLAGS) -pipe -Os $(DEFINES) -funsigned-char -fomit-frame-pointer -fno-exceptions -fno-rtti -Wall -Wno-missing-braces -Wno-unknown-pragmas -Wno-switch $(CXXWIDE)
 CFLAGS = -pipe -Os $(DEFINES) -funsigned-char -fomit-frame-pointer -fno-exceptions -Wall -Wno-missing-braces -Wno-unknown-pragmas -Wno-switch $(CCWIDE)
-LNKFLAGS = -mconsole -s $(USERLIBSFIRST) -lShlwapi -lgdi32 $(USERLIBS)
+LNKFLAGS = -m$(DIRBIT) -mconsole -s $(USERLIBSFIRST) -lShlwapi -lgdi32 $(USERLIBS)
 RCFLAGS = -I $(COMINC) $(RCWIDE) $(USERRC)
 
-OBJS = $(patsubst %.cpp,$(OBJDIR)/%.o,$(filter %.cpp,$(SRCS))) $(patsubst %.c,$(OBJDIR)/%.o,$(filter %.c,$(SRCS))) $(RES)
+ifeq ($(DIRBIT),32)
+ LNKFLAGS += -Xlinker --large-address-aware
+ WINDRES += -F pe-i386
+else
+ WINDRES += -F pe-x86-64
+endif
+
+OBJS = \
+  $(patsubst ../common/%.cpp,$(OBJCMN)/%.o,$(filter ../common/%.cpp,$(SRCS))) \
+  $(patsubst %.cpp,$(OBJDIR)/%.o,$(filter %.cpp,$(filter-out ../common/%.cpp,$(SRCS)))) \
+  $(patsubst %.c,$(OBJDIR)/%.o,$(filter %.c,$(SRCS))) \
+  $(RES)
 
 MAP = $(patsubst %.$(EXT),%.map,$(EXEFULLNAME))
 
@@ -117,6 +138,11 @@ all: $(EXEFULLNAME)
 
 
 $(OBJDIR)/%.o: %.cpp
+	@echo compiling $<
+	@$(MKDIR) -p $(@D)
+	@$(CXX) $(CXXFLAGS) -c -o $@ $<
+
+$(OBJCMN)/%.o: ../common/%.cpp
 	@echo compiling $<
 	@$(MKDIR) -p $(@D)
 	@$(CXX) $(CXXFLAGS) -c -o $@ $<
