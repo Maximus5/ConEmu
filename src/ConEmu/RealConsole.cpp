@@ -14230,7 +14230,7 @@ LPCWSTR CRealConsole::GetFileFromConsole(LPCWSTR asSrc, CmdArg& szFull)
 bool CRealConsole::ReloadFarWorkDir()
 {
 	DWORD nFarPID = GetFarPID(true);
-	if (!nFarPID != NULL)
+	if (!nFarPID)
 		return false;
 
 	bool bChanged = false;
