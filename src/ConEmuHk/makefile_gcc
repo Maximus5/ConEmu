@@ -159,6 +159,11 @@ $(OBJDIR)/%.o: %.cpp
 	@$(MKDIR) -p $(@D)
 	@$(CXX) $(CXXFLAGS) -c -o $@ $<
 
+$(OBJDIR)/%.o: %.c
+	@echo compiling $<
+	@$(MKDIR) -p $(@D)
+	@$(CC) $(CCFLAGS) -c -o $@ $<
+
 $(RES): $(RC_NAME)
 	@echo compiling resources $<
 	@$(MKDIR) -p $(@D)
