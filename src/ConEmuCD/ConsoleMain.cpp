@@ -4314,7 +4314,7 @@ void CdToProfileDir()
 	HRESULT hr = SHGetFolderPath(NULL, CSIDL_PROFILE, NULL, 0, szPath);
 	if (FAILED(hr))
 		GetEnvironmentVariable(L"USERPROFILE", szPath, countof(szPath));
-	if (szPath)
+	if (szPath[0])
 		bRc = SetCurrentDirectory(szPath);
 	// Write action to log file
 	if (gpLogSize)
