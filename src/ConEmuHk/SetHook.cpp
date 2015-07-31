@@ -689,7 +689,7 @@ FARPROC WINAPI GetVirtualAlloc()
 	fnVirtualAlloc = (FARPROC)GetOriginalAddress(OnVirtualAlloc, NULL);
 	#endif
 	if (!fnVirtualAlloc)
-		fnVirtualAlloc = &VirtualAlloc;
+		fnVirtualAlloc = (LPVOID)&VirtualAlloc;
 	return (FARPROC)fnVirtualAlloc;
 }
 
