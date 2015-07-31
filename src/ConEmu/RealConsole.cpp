@@ -15343,9 +15343,9 @@ bool CRealConsole::Detach(bool bPosted /*= false*/, bool bSendCloseConsole /*= f
 		//// Закрыть консоль
 		//CloseConsole(false, false);
 
-		// Уведомить сервер, что нужно закрыться
+		// Inform server about close
 		CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_DETACHCON, sizeof(CESERVER_REQ_HDR)+2*sizeof(DWORD));
-		pIn->dwData[0] = (DWORD)lhGuiWnd;
+		pIn->dwData[0] = LODWORD(lhGuiWnd); // HWND handles can't be larger than DWORD to not harm 32bit apps
 		pIn->dwData[1] = bSendCloseConsole;
 		DWORD dwTickStart = timeGetTime();
 
