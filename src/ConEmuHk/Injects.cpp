@@ -280,9 +280,9 @@ CINJECTHK_EXIT_CODES InjectHooks(PROCESS_INFORMATION pi, BOOL abLogProcess)
 		_ASSERTE(hProcess && hThread);
 		#ifdef _WIN64
 		// Если превышение DWORD в Handle - то запускаемый 32битный обломится. Но вызывается ли он вообще?
-		if (((DWORD)hProcess != (DWORD_PTR)hProcess) || ((DWORD)hThread != (DWORD_PTR)hThread))
+		if ((LODWORD(hProcess) != (DWORD_PTR)hProcess) || (LODWORD(hThread) != (DWORD_PTR)hThread))
 		{
-			_ASSERTE(((DWORD)hProcess == (DWORD_PTR)hProcess) && ((DWORD)hThread == (DWORD_PTR)hThread));
+			_ASSERTE((LODWORD(hProcess) == (DWORD_PTR)hProcess) && (LODWORD(hThread) == (DWORD_PTR)hThread));
 			iRc = CIH_WrongHandleBitness/*-509*/;
 			goto wrap;
 		}
