@@ -41,6 +41,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	#define DEBUGSTRPPCMD(s)
 #endif
 
+// Defines GuiMessageBox
+#include "ConEmuCheck.h"
+
 #ifndef PIPEBUFSIZE
 #define PIPEBUFSIZE 4096
 #endif
