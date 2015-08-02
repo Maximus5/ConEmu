@@ -885,12 +885,16 @@
     <ClCompile Include="..\common\WConsole.cpp" />
     <ClCompile Include="..\common\WObjects.cpp" />
     <ClCompile Include="..\common\WThreads.cpp" />
+    <ClCompile Include="..\modules\minhook\src\buffer.c" />
+    <ClCompile Include="..\modules\minhook\src\hook.c" />
+    <ClCompile Include="..\modules\minhook\src\trampoline.c" />
     <ClCompile Include="Ansi.cpp" />
     <ClCompile Include="ConEmuHooks.cpp" />
     <ClCompile Include="DefTermHk.cpp" />
     <ClCompile Include="Entry.cpp" />
     <ClCompile Include="ExtConsole.cpp" />
     <ClCompile Include="GuiAttach.cpp" />
+    <ClCompile Include="hde.c" />
     <ClCompile Include="Injects.cpp" />
     <ClCompile Include="MainThread.cpp" />
     <ClCompile Include="RegHooks.cpp" />
