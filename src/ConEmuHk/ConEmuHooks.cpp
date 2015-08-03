@@ -1106,9 +1106,9 @@ BOOL StartupHooks(HMODULE ahOurDll)
 	HLOGEND1();
 
 	#ifdef _DEBUG
-	gfVirtualAlloc = (VirtualAlloc_t)GetOriginalAddress(OnVirtualAlloc, NULL);
+	gfVirtualAlloc = (VirtualAlloc_t)GetOriginalAddress(OnVirtualAlloc, NULL, FALSE, NULL);
 	#endif
-	gfGetRealConsoleWindow = (GetConsoleWindow_T)GetOriginalAddress((LPVOID)OnGetConsoleWindow, NULL);
+	gfGetRealConsoleWindow = (GetConsoleWindow_T)GetOriginalAddress((LPVOID)OnGetConsoleWindow, NULL, FALSE, NULL);
 
 	print_timings(L"SetAllHooks - done");
 
