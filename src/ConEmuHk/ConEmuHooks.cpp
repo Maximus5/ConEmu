@@ -1564,8 +1564,7 @@ BOOL WINAPI OnGetModuleHandleExW(DWORD dwFlags, LPCWSTR lpModuleName, HMODULE *p
 	// which caused NULL result because CreateFileW was hooked
 	if ((dwFlags & GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS) != 0)
 	{
-		HookItem* ph = NULL;
-		void* ptrOldProc = GetOriginalAddress((FARPROC)lpModuleName, NULL, FALSE, &ph);
+		void* ptrOldProc = GetOriginalAddress((LPVOID)lpModuleName, NULL, FALSE, NULL);
 		if (ptrOldProc)
 		{
 			lpModuleName2 = (LPCWSTR)ptrOldProc;
