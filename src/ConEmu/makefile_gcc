@@ -1,7 +1,27 @@
+######################################################
+# to build correct bitness user have to specify DIRBIT
+#   make -f makefile_gcc DIRBIT=32
+# or
+#   make -f makefile_gcc DIRBIT=64
+# default is 32 bit make
+#
 # define USERCPPFLAGS to pass them to compiler, example below
 #   mingw32-make -f makefile_gcc USERCPPFLAGS=-fpermissive
+######################################################
 
 NAME = ConEmu
+EXT = exe
+RELEASESUBDIR =
+DEF =
+USERCPP =
+LNKPLATFORM = -mwindows
+BASEADDRESS =
+
+include ../makefile_gcc_inc
+
+USERLIBS += -lversion -lshlwapi -loleaut32 -lNetapi32 -lwinmm
+USERLIBS += -ladvapi32 -lshell32 -lgdi32 -lcomdlg32 -lole32 -luuid -lcomctl32
+
 SRCS = \
 		../common/CmdArg.cpp         \
 		../common/CmdLine.cpp        \
@@ -24,12 +44,12 @@ SRCS = \
 		../common/RConStartArgs.cpp  \
 		../common/RgnDetect.cpp      \
 		../common/SetEnvVar.cpp      \
-		../common/WConsole.cpp     \
-		../common/WFiles.cpp       \
-		../common/WObjects.cpp     \
-		../common/WRegistry.cpp    \
+		../common/WConsole.cpp       \
+		../common/WFiles.cpp         \
+		../common/WObjects.cpp       \
+		../common/WRegistry.cpp      \
 		../common/WThreads.cpp       \
-		../common/WUser.cpp        \
+		../common/WUser.cpp          \
 		AboutDlg.cpp       \
 		Attach.cpp         \
 		Background.cpp     \
@@ -105,166 +125,4 @@ SRCS = \
 		VConRelease.cpp    \
 		VirtualConsole.cpp
 
-USERLIBS = -lversion -lshlwapi -loleaut32 -lNetapi32 -lwinmm
-ENCFLAGS = -finput-charset=utf-8
-
-#The following variables can be set by the user:
-#
-#NAME - the name of the plugin (project name|dll name).
-#
-#EXT - extension of the plugin executable (dll by default).
-#
-#ADDOUTDIR - you can set it to /dir if the target folder for the plugin
-#            is a folder inside the default target folder.
-#            This is used in multiarc for building *.fmt.
-#
-#USERCPP - user defined switches for the compiler (added after the default
-#          ones).
-#
-#USERLIBS - specify additional libs you need in the form -llib
-#           (added after the default ones).
-#
-#USERLIBSFIRST - same as USERLIBS but added before the default libs
-#                (libraries order is important for gcc).
-#
-#USERRC - user defined switches for windres
-#
-#NEEDENTRY - set if you want to disable the -nostartfiles link flag
-#
-#NEEDDEFLIB - set if you want to disable the -nodefaultlibs link flag
-#
-#EXCLUDECRT - set if you do not want to link with common/crt lib.
-#
-#SRCS - a list of the *.cpp source files.
-#
-#DOCS - a list of additional files that need to copied to the target folder.
-#
-#WIDE - set for a unicode build
-#
-
-ifndef DEBUG
-DEBUGFLAGS=
-DEBUGLINKFLAGS=-s
-else
-DEBUGFLAGS=-g
-DEBUGLINKFLAGS=
-endif
-
-WIDE = 1
-DIRSURF = W
-ifeq ($(DIRBIT),64)
-  BITDEF = -D _WIN64 -D WIN64
-  BITNAME = 64
-else
-  BITDEF = 
-  BITNAME = 
-endif
-RCWIDE = -D UNICODE -D _UNICODE $(BITDEF)
-CXXWIDE = -D UNICODE -D _UNICODE -D _WIN32_WINNT=0x0601 -D WINVER=0x0601 -D _WIN32_IE=0x0601 -std=c++11 $(BITDEF)
-CCWIDE = -D UNICODE -D _UNICODE -D _WIN32_WINNT=0x0601 -D WINVER=0x0601 -D _WIN32_IE=0x0601 -std=c++11 $(BITDEF)
-
-OBJDIR = ../../gcc/conemu$(DIRBIT)
-REOBJDIR = \.\.\/\.\.\/gcc\/conemu$(DIRBIT)
-EXEDIR = ../../Release
-COMMON = ../common
-#COMINC = "C:\Program Files\Microsoft SDKs\Windows\v7.0\Include"
-COMINC = $(COMMON)
-EXT = exe
-EXENAME = $(NAME)$(BITNAME).$(EXT)
-EXEFULLNAME = $(EXEDIR)/$(EXENAME)
-#DEF = export.gcc.def
-RC_NAME = ConEmu.rc
-RES = $(OBJDIR)/$(NAME).res.o
-
-NOSTART = -nostartfiles
-ifdef NEEDENTRY
-NOSTART = 
-endif
-
-NODEFLIBS = -nodefaultlibs
-ifdef NEEDDEFLIB
-NODEFLIBS = 
-endif
-
-COMMONLIB = -L $(COMMON)
-ifdef EXCLUDECRT
-COMMONLIB = 
-endif
-
-CXX = $(CROSS_HOST)g++
-CC = $(CROSS_HOST)gcc
-RM = rm -f
-RMDIR = rmdir
-CP = cp -f
-M4 = tools/m4 -P -DFARBIT=$(DIRBIT)
-GAWK = tools/gawk
-MV = mv -f
-MKDIR = mkdir -p
-WINDRES = $(CROSS_HOST)windres
-AR = $(CROSS_HOST)ar
-RANLIB = $(CROSS_HOST)ranlib
-CXXFLAGS = $(ENCFLAGS) $(USERCPPFLAGS) $(DEBUGFLAGS) -mwindows -fexceptions -I $(COMMON) -I $(COMINC) -Wall -Os -funsigned-char -fomit-frame-pointer -fstrict-aliasing -fno-rtti $(CXXWIDE) $(USERCPP)
-CCFLAGS = $(DEBUGFLAGS) -mwindows -I $(COMMON) -I $(COMINC) -Wall -Os -funsigned-char -fomit-frame-pointer -fstrict-aliasing $(CCWIDE) $(USERCPP)
-LNKFLAGS = $(DEBUGLINKFLAGS) -mwindows $(USERLIBSFIRST) $(COMMONLIB) -luser32 -lkernel32 -ladvapi32 -lshell32 -lgdi32 -lcomdlg32 -lole32 -luuid -lcomctl32 $(USERLIBS)
-RCFLAGS = -I $(COMINC) $(RCWIDE) $(USERRC)
-
-OBJS = $(patsubst %.cpp,$(OBJDIR)/%.o,$(filter %.cpp,$(SRCS))) $(patsubst %.c,$(OBJDIR)/%.o,$(filter %.c,$(SRCS))) $(RES)
-ifndef DISABLEAUTODEPS
-DEPS = $(patsubst %.cpp,$(OBJDIR)/%.d,$(filter %.cpp,$(SRCS)))
-endif
-MAP = $(patsubst %.$(EXT),%.map,$(EXEFULLNAME))
-
-
-
-all: $(EXEFULLNAME)
-
-#ifndef DISABLEAUTODEPS
-#$(OBJDIR)/%.d: %.cpp
-#	@echo making depends for $<
-#	@$(MKDIR) -p $(@D)
-#	@$(SHELL) -ec '$(CXX) -c -MM $(CXXFLAGS) $< \
-#                | sed '\''s/\($*\)\.o[ :]*/$(REOBJDIR)\1.o $(REOBJDIR)\1.d: /g'\'' > $@; [ -s $@ ] || $(RM) $@'
-#endif
-
-$(OBJDIR)/%.o: %.cpp
-	@echo compiling $<
-	@$(MKDIR) -p $(@D)
-	@$(CXX) $(CXXFLAGS) -c -o $@ $<
-
-$(OBJDIR)/%.o: %.c
-	@echo compiling $<
-	@$(MKDIR) -p $(@D)
-	@$(CC) $(CCFLAGS) -c -o $@ $<
-
-$(RES): $(RC_NAME)
-	@echo compiling $<
-	@$(MKDIR) -p $(@D)
-	@$(WINDRES) $(RCFLAGS) -i $< -o $@
-
-$(EXEFULLNAME): $(OBJS) $(DEF)
-	@echo linking $@
-	@$(CXX) -o $(EXENAME) $(OBJS) $(LNKFLAGS) -Xlinker -Map -Xlinker $(MAP)
-	@$(MV) $(EXENAME) $(EXEDIR)
-#$(EXEFULLNAME): $(OBJS) $(DEF)
-#	@echo linking $@
-#	@$(MKDIR) -p $(@D)
-#	@$(CXX) -mdll -o $(EXENAME) -Xlinker --base-file -Xlinker $(DLLNAME).base $(OBJS) $(LNKFLAGS)
-#	@$(DLLTOOL) --dllname $(DLLNAME) --base-file $(DLLNAME).base --output-exp $(DLLNAME).exp --def $(DEF)
-#	@$(CXX) -mdll  -o $(EXENAME) $(OBJS) $(EXENAME).exp $(LNKFLAGS) -Xlinker -Map -Xlinker $(MAP)
-#	@$(MV) $(DLLNAME) $(DLLDIR)
-#	@$(RM) $(DLLNAME).base
-#	@$(RM) $(DLLNAME).exp
-#ifdef DOCS
-#	@$(CP) $(DOCS) $(EXEDIR)
-#endif
-
-ifndef DISABLEAUTODEPS
--include $(DEPS)
-endif
-
-.PHONY: clean
-clean:
-	@echo final cleaning
-	@$(RM) $(OBJS)
-	@$(RMDIR) $(OBJDIR)
-	@$(RMDIR) ../../gcc
+include ../makefile_gcc_target

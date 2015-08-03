@@ -1,4 +1,26 @@
+######################################################
+# to build correct bitness user have to specify DIRBIT
+#   make -f makefile_gcc DIRBIT=32
+# or
+#   make -f makefile_gcc DIRBIT=64
+# default is 32 bit make
+#
+# define USERCPPFLAGS to pass them to compiler, example below
+#   mingw32-make -f makefile_gcc USERCPPFLAGS=-fpermissive
+######################################################
+
 NAME = ConEmuCD
+EXT = dll
+RELEASESUBDIR = /ConEmu
+DEF = export.gcc.def
+USERCPP =
+LNKPLATFORM = -mconsole
+BASEADDRESS =
+
+include ../makefile_gcc_inc
+
+USERLIBS += -lAdvapi32 -lGdi32 -lShell32 -lShlwapi
+
 SRCS = \
 		../common/CmdArg.cpp         \
 		../common/CmdLine.cpp        \
@@ -21,173 +43,23 @@ SRCS = \
 		../common/ProcessSetEnv.cpp  \
 		../common/RConStartArgs.cpp  \
 		../common/SetEnvVar.cpp      \
-		../common/WConsole.cpp     \
-		../common/WFiles.cpp       \
-		../common/WObjects.cpp     \
+		../common/WConsole.cpp       \
+		../common/WFiles.cpp         \
+		../common/WObjects.cpp       \
 		../common/WThreads.cpp       \
-		../common/WUser.cpp        \
+		../common/WUser.cpp          \
 		../ConEmuHk/Injects.cpp      \
-		ConEmuCmd.cpp \
-		ConEmuSrv.cpp \
-		ConProcess.cpp \
-		ConsoleMain.cpp \
-		Debugger.cpp \
+		ConEmuCmd.cpp      \
+		ConEmuSrv.cpp      \
+		ConProcess.cpp     \
+		ConsoleMain.cpp    \
+		Debugger.cpp       \
 		DownloaderCall.cpp \
-		GuiHooks.cpp \
-		Infiltrate.cpp \
-		InjectRemote.cpp \
-		Queue.cpp \
-		RegPrepare.cpp \
+		GuiHooks.cpp       \
+		Infiltrate.cpp     \
+		InjectRemote.cpp   \
+		Queue.cpp          \
+		RegPrepare.cpp     \
 		SrvPipes.cpp
 
-
-USERLIBS =  -lgdi32
-ENCFLAGS = -finput-charset=utf-8
-
-# USERCPP = -D SHOW_STARTED_MSGBOX
-
-#The following variables can be set by the user:
-#
-#NAME - the name of the plugin (project name|dll name).
-#
-#EXT - extension of the plugin executable (dll by default).
-#
-#ADDOUTDIR - you can set it to /dir if the target folder for the plugin
-#            is a folder inside the default target folder.
-#            This is used in multiarc for building *.fmt.
-#
-#USERCPP - user defined switches for the compiler (added after the default
-#          ones).
-#
-#USERLIBS - specify additional libs you need in the form -llib
-#           (added after the default ones).
-#
-#USERLIBSFIRST - same as USERLIBS but added before the default libs
-#                (libraries order is important for gcc).
-#
-#USERRC - user defined switches for windres
-#
-#EXCLUDECRT - set if you do not want to link with common/crt lib.
-#
-#SRCS - a list of the *.cpp source files.
-#
-#DOCS - a list of additional files that need to copied to the target folder.
-#
-#WIDE - set for a unicode build
-#
-
-WIDE = 1
-DIRSURF = W
-ifeq ($(DIRBIT),64)
-  BITDEF = -D _WIN64 -D WIN64
-  BITNAME = 64
-else
-  BITDEF = 
-  BITNAME = 
-endif
-RCWIDE = -D UNICODE -D _UNICODE $(BITDEF)
-CXXWIDE = -D UNICODE -D _UNICODE $(BITDEF)
-CCWIDE = -D UNICODE -D _UNICODE $(BITDEF)
-WINVER = -D _WIN32_WINNT=0x0500 -D WINVER=0x0500
-
-TMPDIR = ../../gcc
-OBJDIR = $(TMPDIR)/conemucd$(DIRBIT)
-COMDIR = $(TMPDIR)/common
-#REOBJDIR = \.\.\/\.\.\/gcc\/conemuhk
-DLLDIR = ../../Release/ConEmu
-COMMON = ../common
-COMINC = $(COMMON)
-EXT = dll
-BITS = x86
-DLLNAME = $(NAME)$(BITNAME).$(EXT)
-DLLFULLNAME = $(DLLDIR)/$(DLLNAME)
-DEF = export.gcc.def
-RC_NAME = $(NAME).rc
-RES = $(OBJDIR)/$(NAME).res.o
-
-COMMONLIB = -L $(COMMON) 
-ifdef EXCLUDECRT
-COMMONLIB = 
-endif
-
-CXX = $(CROSS_HOST)g++
-CC = $(CROSS_HOST)gcc
-DLLTOOL = $(CROSS_HOST)dlltool
-RM = rm -f
-RMDIR = rmdir
-CP = cp -f
-M4 = m4 -P
-MV = mv -f
-MKDIR = mkdir -p
-WINDRES = $(CROSS_HOST)windres
-AR = $(CROSS_HOST)ar
-RANLIB = $(CROSS_HOST)ranlib
-CXXFLAGS = $(ENCFLAGS) -I $(COMMON) -I $(COMINC) -Wall -Os -funsigned-char -fomit-frame-pointer -fstrict-aliasing -fno-rtti -fno-exceptions $(CXXWIDE) $(USERCPP) $(WINVER)
-CCFLAGS = -I $(COMMON) -I $(COMINC) -Wall -Os -funsigned-char -fomit-frame-pointer -fstrict-aliasing -fno-exceptions $(CCWIDE) $(USERCPP) $(WINVER)
-LNKFLAGS = -mdll -s -lgcc $(USERLIBSFIRST) $(COMMONLIB) -luser32 -lkernel32 -ladvapi32 -lshell32 $(USERLIBS)
-RCFLAGS = -I $(COMINC) $(RCWIDE) $(USERRC)
-
-OBJS = $(patsubst %.cpp,$(OBJDIR)/%.o,$(filter %.cpp,$(SRCS))) $(patsubst %.c,$(OBJDIR)/%.o,$(filter %.c,$(SRCS))) $(RES)
-#ifndef DISABLEAUTODEPS
-#DEPS = $(patsubst %.cpp,$(OBJDIR)/%.d,$(filter %.cpp,$(SRCS)))
-#endif
-MAP = $(patsubst %.$(EXT),%.map,$(DLLFULLNAME))
-
-
-.PHONY: all
-all: build
-#all: iclean build
-#	@$(MAKE) -f makefile_gcc build 
-# clean
-
-.PHONY: iclean
-iclean:
-	@echo prebuild cleaning
-	@$(RM) $(COMDIR)/*.*
-#	@$(RM) $(OBJDIR)/*.*
-
-.PHONY: build
-build: $(DLLFULLNAME)
-
-#all: $(DLLFULLNAME)
-
-#ifndef DISABLEAUTODEPS
-#$(OBJDIR)/%.d: %.cpp
-#	@echo making depends for $<
-#	@$(MKDIR) -p $(@D)
-#	@$(SHELL) -ec '$(CXX) -c -MM $(CXXFLAGS) $< \
-#                | sed '\''s/\($*\)\.o[ :]*/$(REOBJDIR)\1.o $(REOBJDIR)\1.d: /g'\'' > $@; [ -s $@ ] || $(RM) $@'
-#endif
-
-$(OBJDIR)/%.o: %.cpp
-	@echo compiling $<
-	@$(MKDIR) -p $(@D)
-	@$(CXX) $(CXXFLAGS) -c -o $@ $<
-
-$(RES): $(RC_NAME)
-	@echo compiling resources $<
-	@$(MKDIR) -p $(@D)
-	@$(WINDRES) $(RCFLAGS) -i $< -o $@
-
-$(DLLFULLNAME): $(OBJS) $(DEF)
-	@echo linking $@
-	@$(MKDIR) -p $(@D)
-	@$(CXX) -mdll -o $(DLLNAME) -Xlinker --base-file -Xlinker $(DLLNAME).base $(OBJS) $(LNKFLAGS)
-	@$(DLLTOOL) --dllname $(DLLNAME) --base-file $(DLLNAME).base --output-exp $(DLLNAME).exp --def $(DEF)
-	@$(CXX) -mdll  -o $(DLLNAME) $(OBJS) $(DLLNAME).exp $(LNKFLAGS) -Xlinker -Map -Xlinker $(MAP)
-	@$(MV) $(DLLNAME) $(DLLDIR)
-	@$(RM) $(DLLNAME).base
-	@$(RM) $(DLLNAME).exp
-#ifdef DOCS
-#	@$(CP) $(DOCS) $(DLLDIR)
-#endif
-
-#ifndef DISABLEAUTODEPS
-#-include $(DEPS)
-#endif
-
-.PHONY: clean
-clean:
-	@echo final cleaning
-	@$(RM) $(OBJS)
-	@$(RMDIR) $(OBJDIR) $(COMDIR) $(TMPDIR)
+include ../makefile_gcc_target

@@ -1,0 +1,101 @@
+######################################################
+# Included defines to build with GCC
+######################################################
+#
+# The following variables can be set by the user:
+#
+# NAME - the name of the exe/dll
+#
+# EXT - extension of the exe/dll
+#
+# USERCPP - user defined switches for the compiler (added after the default
+#           ones).
+#
+# USERLIBS - specify additional libs you need in the form -llib
+#            (added after the default ones).
+#
+# USERLIBSFIRST - same as USERLIBS but added before the default libs
+#                 (libraries order is important for gcc).
+#
+# USERRC - user defined switches for windres
+#
+# SRCS - a list of the *.cpp source files.
+#
+# RELEASESUBDIR = /ConEmu
+# DEF = ConEmuC.def
+# LNKPLATFORM = -mconsole / -mwindows
+# BASEADDRESS = 0x7E110000
+#
+######################################################
+
+TMPDIR = ../../gcc
+
+DIRBIT ?= 32
+
+USERLIBS = -lKernel32 -lUser32
+ENCFLAGS = -finput-charset=utf-8
+
+ifndef DEBUG
+	DEBUGFLAGS =
+	DEBUGLINKFLAGS = -s
+else
+	DEBUGFLAGS = -g
+	DEBUGLINKFLAGS =
+endif
+
+ifeq ($(DIRBIT),64)
+  BITDEF = -D _WIN64 -D WIN64
+  BITNAME = 64
+else
+  BITDEF =
+  BITNAME =
+endif
+
+CCWIDE = -D UNICODE -D _UNICODE
+RCWIDE = $(CCWIDE)
+WINVER = -D _WIN32_WINNT=0x0601 -D WINVER=0x0601
+
+OBJDIR = $(TMPDIR)/$(NAME)$(DIRBIT)
+OBJCMN = $(OBJDIR)common
+OBJCHK = $(OBJDIR)hk
+OBJMOD = $(OBJDIR)mod
+RELEASEDIR = ../../Release$(RELEASESUBDIR)
+COMMON = ../common
+COMINC = $(COMMON)
+RELEASENAME = $(NAME)$(BITNAME).$(EXT)
+RELEASEFULLNAME = $(RELEASEDIR)/$(RELEASENAME)
+RC_NAME = $(NAME).rc
+RES = $(OBJDIR)/$(NAME).res.o
+
+CXX = $(CROSS_HOST)g++
+CC = $(CROSS_HOST)gcc
+DLLTOOL = $(CROSS_HOST)dlltool
+RM = rm -f
+RMDIR = rmdir
+CP = cp -f
+MV = mv -f
+MKDIR = mkdir -p
+WINDRES = $(CROSS_HOST)windres
+
+GCCWARNINGS = -Wall
+#GCCWARNINGS += -Wno-missing-braces
+GCCWARNINGS += -Wno-switch
+GCCWARNINGS += -Wno-unknown-pragmas
+#GCCWARNINGS += -Wsign-compare
+GCCWARNINGS += -Wconversion-null
+#GCCWARNINGS += -Wunused-but-set-variable
+#GCCWARNINGS += -Wunused-variable
+GCCWARNINGS += -Wwrite-strings
+GCCWARNINGS += -Wparentheses
+GCCWARNINGS += -Wnarrowing
+
+FCPPOPT = -fstrict-aliasing -funsigned-char
+FCPPOPT += -fno-rtti
+#FCPPOPT += -fno-exceptions
+
+COPTIMIZE ?= -Os
+
+CFLAGS = -pipe $(CCWIDE) $(BITDEF) $(USERCPPFLAGS) $(DEBUGFLAGS) $(COPTIMIZE) $(USERCPP) $(WINVER)
+
+CXXFLAGS = $(CFLAGS) $(ENCFLAGS)  -Os $(FCPPOPT) $(GCCWARNINGS) $(CXXWIDE) -std=c++11
+CCFLAGS = $(CFLAGS)
