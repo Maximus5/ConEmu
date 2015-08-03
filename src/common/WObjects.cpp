@@ -553,7 +553,7 @@ bool GetOsVersionInformational(OSVERSIONINFO* pOsVer)
 	#pragma warning(disable: 4996)
 	BOOL result = GetVersionEx(pOsVer);
 	#pragma warning(default: 4996)
-	return (result != NULL);
+	return (result != FALSE);
 }
 
 bool IsWinVerOrHigher(WORD OsVer)
