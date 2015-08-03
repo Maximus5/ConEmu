@@ -49,19 +49,13 @@ static bool gbVerboseInitialized = false;
 #undef WAIT_FOR_DEBUGGER_MSG
 
 #if defined(__CYGWIN__)
-typedef struct {
-    DWORD dwMajorVersion;
-    DWORD dwMinorVersion;
-} HTTP_VERSION_INFO, * LPHTTP_VERSION_INFO;
+typedef unsigned short u_short;
 #define INTERNET_OPTION_HTTP_VERSION 59
-#define SecureZeroMemory(p,s) memset(p,0,s)
-struct InternetCookieHistory
-{
-    BOOL    fAccepted;
-    BOOL    fLeashed;
-    BOOL    fDowngraded;
-    BOOL    fRejected;
-};
+typedef struct sockaddr {
+    u_short sa_family;              /* address family */
+    char    sa_data[14];            /* up to 14 bytes of direct address */
+} SOCKADDR, *PSOCKADDR;
+
 #define INTERNET_STATUS_COOKIE_SENT             320
 #define INTERNET_STATUS_COOKIE_RECEIVED         321
 #define INTERNET_STATUS_COOKIE_HISTORY          327
