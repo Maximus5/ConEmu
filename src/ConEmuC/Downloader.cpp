@@ -1469,7 +1469,7 @@ void CDownloader::ReportMessage(CEDownloadCommand rm, LPCWSTR asFormat, CEDownlo
 		if (i >= countof(args.Args))
 			break;
 
-		argType = va_arg( argptr, CEDownloadArgType );
+		argType = (CEDownloadArgType)va_arg( argptr, int );
 	}
 
 	va_end(argptr);
