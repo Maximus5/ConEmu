@@ -658,7 +658,7 @@ void* __cdecl GetOriginalAddress(void* OurFunction, void* DefaultFunction, BOOL 
 		{
 			if (gpHooks[i].NewAddress == OurFunction)
 			{
-				*ph = &(gpHooks[i]);
+				if (ph) *ph = &(gpHooks[i]);
 				// По идее, ExeOldAddress должен совпадать с OldAddress, если включен "Inject ConEmuHk"
 				return (abAllowModified && gpHooks[i].ExeOldAddress) ? gpHooks[i].ExeOldAddress : gpHooks[i].OldAddress;
 			}
