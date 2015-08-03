@@ -90,6 +90,9 @@ else
 endif
 	@$(MV) $(TMPDIR)/$(RELEASENAME) $(RELEASEFULLNAME)
 
+.PHONY: defines
+defines:
+	@$(CXX) $(CXXFLAGS) -dM -E - < /dev/null
 
 .PHONY: clean
 clean:
