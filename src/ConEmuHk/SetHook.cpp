@@ -991,6 +991,26 @@ bool __stdcall InitHooks(HookItem* apHooks)
 	return true;
 }
 
+HookItem* FindFunction(const char* pszFuncName)
+{
+	DWORD NameCRC = CalculateNameCRC32(pszFuncName);
+
+	for (HookItem* p = gpHooks; p->NewAddress; ++p)
+	{
+		if (p->NameCRC == NameCRC)
+		{
+			if (strcmp(p->Name, pszFuncName) == 0)
+				return p;
+		}
+	}
+
+	//HookItemNode* pc = FindFunctionNode(gpHooksRoot, pszFuncName);
+	//if (pc)
+	//	return pc->p;
+
+	return NULL;
+}
+
 void ShutdownHooks()
 {
 	HLOG1("ShutdownHooks.UnsetAllHooks",0);
