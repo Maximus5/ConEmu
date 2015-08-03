@@ -48,7 +48,7 @@ static bool gbVerboseInitialized = false;
 
 #undef WAIT_FOR_DEBUGGER_MSG
 
-#if defined(__GNUC__) && !defined(__MINGW64_VERSION_MAJOR)
+#if defined(__CYGWIN__)
 typedef struct {
     DWORD dwMajorVersion;
     DWORD dwMinorVersion;
