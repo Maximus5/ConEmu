@@ -28,6 +28,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include <wchar.h>
+
 #define STRSAFE_NO_DEPRECATE
 
 // В некоторых случаях использовать StringCch и прочие нельзя

@@ -61,10 +61,16 @@ void __cdecl operator delete[](void *ptr);
 
 	//#define DEBUG_NEW new(THIS_FILE, __LINE__)
 
+	#if defined(__CYGWIN__)
+	extern "C" {
+	#endif
 	void * __cdecl xf_malloc(size_t _Size, LPCSTR lpszFileName, int nLine);
 	void * __cdecl xf_calloc(size_t _Count, size_t _Size, LPCSTR lpszFileName, int nLine);
 	void * __cdecl xf_realloc(void * _Memory, size_t _Size, LPCSTR lpszFileName, int nLine);
 	void __cdecl xf_free(void * _Memory, LPCSTR lpszFileName, int nLine);
+	#if defined(__CYGWIN__)
+	}
+	#endif
 
 	void __cdecl xf_dump();
 	#ifdef FORCE_HEAP_CHECK
@@ -80,10 +86,16 @@ void __cdecl operator delete[](void *ptr);
 
 #else
 
+	#if defined(__CYGWIN__)
+	extern "C" {
+	#endif
 	void * __cdecl xf_malloc(size_t _Size);
 	void * __cdecl xf_calloc(size_t _Count, size_t _Size);
 	void * __cdecl xf_realloc(void * _Memory, size_t _Size);
 	void __cdecl xf_free(void * _Memory);
+	#if defined(__CYGWIN__)
+	}
+	#endif
 
 	#define malloc xf_malloc
 	#define calloc xf_calloc
