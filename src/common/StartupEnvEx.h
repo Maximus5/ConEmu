@@ -273,6 +273,7 @@ public:
 			L"  DBCS: %u, WINE: %u, PE: %u, Remote: %u, ACP: %u, OEMCP: %u, Admin: %u\r\n"
 			L"  Desktop: %s; BPP: %u\r\n  Title: %s\r\n  Size: {%u,%u},{%u,%u}\r\n"
 			L"  Flags: 0x%08X, ShowWindow: %u, ConHWnd: 0x%08X\r\n"
+			L"  char: %u, short: %u, int: %u, long: %u, u64: %u\r\n"
 			L"  Handles: 0x%08X, 0x%08X, 0x%08X"
 			,
 			osv.dwMajorVersion, osv.dwMinorVersion, osv.dwBuildNumber, bWin64 ? 64 : 32,
@@ -283,6 +284,7 @@ public:
 			szDesktop, apStartEnv->nPixels, szTitle,
 			apStartEnv->si.dwX, apStartEnv->si.dwY, apStartEnv->si.dwXSize, apStartEnv->si.dwYSize,
 			apStartEnv->si.dwFlags, (DWORD)apStartEnv->si.wShowWindow, LODWORD(hConWnd),
+			LODWORD(sizeof(CHAR)), LODWORD(sizeof(short)), LODWORD(sizeof(int)), LODWORD(sizeof(long)), LODWORD(sizeof(u64)),
 			LODWORD(apStartEnv->si.hStdInput), LODWORD(apStartEnv->si.hStdOutput), LODWORD(apStartEnv->si.hStdError)
 			);
 		DumpEnvStr(szSI, lParam, true, true);
