@@ -12,6 +12,8 @@ else
 endif
 
 LNKFLAGS += -m$(DIRBIT) $(DEBUGLINKFLAGS) $(LNKPLATFORM) $(USERLIBSFIRST) $(USERLIBS)
+#avoid dynamic link to libgcc_s_dw2-1.dll
+LNKFLAGS += -static-libgcc -static-libstdc++ -static -lpthread
 
 ifndef DEBUG
 	LNKFLAGS += -s
