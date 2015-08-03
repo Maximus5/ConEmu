@@ -493,7 +493,8 @@ bool CDownloader::InetCloseHandle(HINTERNET& h, bool bForceSync /*= false*/)
 
 	ReportMessage(dc_LogCallback, L"Close handle x%08X", at_Uint, (DWORD_PTR)h, at_None);
 	// Debugging and checking purposes
-	LONG lCur = InterlockedIncrement(&mn_CloseRef);
+	DEBUGTEST(LONG lCur =)
+	InterlockedIncrement(&mn_CloseRef);
 	_ASSERTE(lCur == 1);
 	ResetEvent(mh_CloseEvent);
 
