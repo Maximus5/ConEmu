@@ -921,7 +921,7 @@ bool CMatch::MatchAny()
 			bWasPunctuator = (wcschr(pszPuctuators, m_SrcLine.ms_Arg[mn_MatchRight]) != NULL);
 
 			// Рассчитано на закрывающие : или ) или ] или ,
-			_ASSERTE(pszTermint[0]==L':' && pszTermint[1]==L')' && pszTermint[2]==L']' && pszTermint[3]==L',' && pszTermint[5]==0);
+			_ASSERTE(pszTermint[0]==L':' && pszTermint[1]==L')' && pszTermint[2]==L']' && pszTermint[3]==L',' && pszTermint[4]==0);
 			// Script.ps1:35 знак:23
 			if (bDigits && IsFileLineTerminator(m_SrcLine.ms_Arg+mn_MatchRight, pszTermint))
 			{
