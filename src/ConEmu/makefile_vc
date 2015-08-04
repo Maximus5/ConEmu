@@ -23,7 +23,7 @@ GAWK=tools\gawk
 
 #DEF_FILE = ".\$(NAME).def"
 
-RES_FILE = "$(INTDIR)\$(NAME).res"
+RES_FILE = $(INTDIR)\$(NAME).res
 
 #PCH_FILE = "$(INTDIR)\headers.pch"
 
@@ -185,26 +185,9 @@ CPPFLAGS=$(CPPFLAGS) /Zp8 /D_WIN64 /DWIN64
 LINKFLAGS=$(LINKFLAGS) /machine:IA64
 !endif
 
-# compiler-cpecific
-!if "$(VC)"=="8"
-CPPFLAGS=$(CPPFLAGS) /Wp64
-LINKFLAGS=$(LINKFLAGS) /opt:nowin98
-!else
-RFLAGS=$(RFLAGS) 
-!endif
 
 ALL: AllDirs build clean
-#ALL: AllDirs lng depfile
-#	$(MAKE) /nologo /f makefile_vc build USEDEPS=1
 
-#.PHONY: lng
-#lng: farlang.templ
-#	echo generating language files
-#	tools\lng.generator.exe -nc -i lang.ini -ol "$(OUTDIR)" farlang.templ
-
-#.PHONY: depfile
-#depfile:
-#	$(GAWK) -f .\scripts\mkdep.awk mkdep.list > $(DEPFILE)
 
 .PHONY: build
 build: "$(OUTDIR)\$(OUTNAME).exe"
