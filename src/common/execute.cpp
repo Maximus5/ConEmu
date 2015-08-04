@@ -915,7 +915,7 @@ bool FindImageSubsystem(const wchar_t *Module, /*wchar_t* pstrDest,*/ DWORD& Ima
 	// второй проход - по правилам SearchPath
 
 	// поиск по переменной PATH
-	if (strPathEnv = GetEnvVar(L"PATH"))
+	if ((strPathEnv = GetEnvVar(L"PATH")))
 	{
 		LPWSTR pszPathEnvEnd = strPathEnv + lstrlen(strPathEnv);
 
