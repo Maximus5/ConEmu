@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2012 Maximus5
+Copyright (c) 2009-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -39,9 +39,16 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define _ARRAY_ASSERTE(x)
 
-template<class _Ty>
+template<typename _Ty>
 class MArray
 {
+    protected:
+        INT_PTR mn_TySize;
+        INT_PTR mn_Elements;
+        INT_PTR mn_MaxSize;
+        INT_PTR mn_Reserved; // Debug purposes
+        _Ty *mp_Elements;
+
     public:
         MArray()
         {
@@ -66,30 +73,30 @@ class MArray
             clear();
         };
 
-        const _Ty & operator[](INT_PTR _P) const
+        const _Ty & operator[](INT_PTR _Index) const
         {
             #ifdef _DEBUG
-            if (_P<0 || _P>=mn_Elements)
+            if (_Index<0 || _Index>=mn_Elements)
             {
-            	_ARRAY_ASSERTE(!(_P<0 || _P>=mn_Elements));
+            	_ARRAY_ASSERTE(!(_Index<0 || _Index>=mn_Elements));
             }
-            _Ty _p = ((_Ty*)mp_Elements)[_P];
+            _Ty _Item = ((_Ty*)mp_Elements)[_Index];
             #endif
-            return ((_Ty*)mp_Elements)[_P];
-        }
-        _Ty & operator[](INT_PTR _P)
+            return ((_Ty*)mp_Elements)[_Index];
+        };
+        _Ty & operator[](INT_PTR _Index)
         {
             #ifdef _DEBUG
-            if (_P<0 || _P>=mn_Elements)
+            if (_Index<0 || _Index>=mn_Elements)
             {
-                _ARRAY_ASSERTE(!(_P<0 || _P>=mn_Elements));
+                _ARRAY_ASSERTE(!(_Index<0 || _Index>=mn_Elements));
             }
-            _Ty _p = ((_Ty*)mp_Elements)[_P];
+            _Ty _Item = ((_Ty*)mp_Elements)[_Index];
             #endif
-            return ((_Ty*)mp_Elements)[_P];
-        }
+            return ((_Ty*)mp_Elements)[_Index];
+        };
 
-        INT_PTR push_back(const _Ty& _X)
+        INT_PTR push_back(const _Ty& _Item)
         {
             if (mn_TySize==0)
             {
@@ -106,11 +113,11 @@ class MArray
             memmove(
                 ((_Ty*)mp_Elements)+
                 nPos,
-                &_X, mn_TySize);
+                &_Item, mn_TySize);
             MCHKHEAP;
 			return nPos;
-        }
-        void insert(INT_PTR nPos, const _Ty& _X)
+        };
+        void insert(INT_PTR nPos, const _Ty& _Item)
         {
             if (mn_TySize==0)
             {
@@ -123,7 +130,7 @@ class MArray
             }
             if (nPos == mn_Elements)
             {
-            	push_back(_X);
+            	push_back(_Item);
             	return;
             }
             MCHKHEAP;
@@ -138,11 +145,11 @@ class MArray
                 mn_TySize*mn_Elements);
             memmove(
                 ((_Ty*)mp_Elements),
-                &_X, mn_TySize);
+                &_Item, mn_TySize);
             mn_Elements++;
             MCHKHEAP;
-        }
-        bool pop_back(_Ty& _X)
+        };
+        bool pop_back(_Ty& _Item)
         {
             if ((mn_TySize==0) || (mn_Elements<=0))
             {
@@ -151,19 +158,19 @@ class MArray
             }
             MCHKHEAP;
             memmove(
-                 &_X,
+                 &_Item,
                  ((_Ty*)mp_Elements)+(mn_Elements-1),
                  mn_TySize);
             MCHKHEAP;
             mn_Elements--;
             return true;
-        }
+        };
         _Ty* detach()
         {
             _Ty* p = mp_Elements;  mp_Elements = NULL;
             clear();
             return p;
-        }
+        };
         void clear()
         {
             if (mp_Elements)
@@ -173,27 +180,27 @@ class MArray
             }
             mn_MaxSize = 0; mn_Elements = 0;
             MCHKHEAP;
-        }
-        void erase(INT_PTR _P)
+        };
+        void erase(INT_PTR _Index)
         {
             #ifdef _DEBUG
-            if (_P<0 || _P>=mn_Elements)
+            if (_Index<0 || _Index>=mn_Elements)
             {
-                _ARRAY_ASSERTE(!(_P<0 || _P>=mn_Elements));
+                _ARRAY_ASSERTE(!(_Index<0 || _Index>=mn_Elements));
             }
             #endif
 
-            if ((_P+1)<mn_Elements)
+            if ((_Index+1)<mn_Elements)
             {
                 MCHKHEAP;
-                memmove(((_Ty*)mp_Elements)+_P,((_Ty*)mp_Elements)+_P+1,
-                    mn_TySize*(mn_Elements - _P - 1));
+                memmove(((_Ty*)mp_Elements)+_Index,((_Ty*)mp_Elements)+_Index+1,
+                    mn_TySize*(mn_Elements - _Index - 1));
                 //TODO: проверить, правильно ли зачищается элемент
                 memset(((_Ty*)mp_Elements)+mn_Elements-1,0,mn_TySize);
                 MCHKHEAP;
             }
             mn_Elements--;
-        }
+        };
         void eraseall()
         {
             mn_Elements = 0;
@@ -306,8 +313,8 @@ class MArray
                 //mn_Elements = min(_nCount,mn_MaxSize); 
             }
 			return true;
-        }
-        void set_at(INT_PTR _P, _Ty & _X)
+        };
+        void set_at(INT_PTR _Index, _Ty & _Item)
         {
             if (mn_TySize==0)
             {
@@ -315,38 +322,31 @@ class MArray
                 return;
             }
             #ifdef _DEBUG
-            if (_P<0/* || _P>=mn_Elements*/)
+            if (_Index<0/* || _Index>=mn_Elements*/)
             {
-                _ARRAY_ASSERTE(!(_P<0/* || _P>=mn_Elements*/));
+                _ARRAY_ASSERTE(!(_Index<0/* || _Index>=mn_Elements*/));
             }
             #endif
             
-            if (_P>=mn_Elements)
+            if (_Index>=mn_Elements)
             {
-                if (_P>=mn_MaxSize)
+                if (_Index>=mn_MaxSize)
                 {
-                    addsize(max(256,(_P-mn_MaxSize+1)));
+                    addsize(max(256,(_Index-mn_MaxSize+1)));
                 }
-                mn_Elements = _P+1;
+                mn_Elements = _Index+1;
             }
 
             #ifdef _DEBUG
-            _Ty _p = ((_Ty*)mp_Elements)[_P];
+            _Ty _Item = ((_Ty*)mp_Elements)[_Index];
             #endif
 
             MCHKHEAP;
             memmove(
-                ((_Ty*)mp_Elements)+(_P),
-                &_X, mn_TySize);
+                ((_Ty*)mp_Elements)+(_Index),
+                &_Item, mn_TySize);
             MCHKHEAP;
-        }
-
-    protected:
-        INT_PTR mn_TySize;
-        INT_PTR mn_Elements;
-        INT_PTR mn_MaxSize;
-        INT_PTR mn_Reserved; // Debug purposes
-        _Ty *mp_Elements;
+        };
 };
 
 //#pragma warning( default : 4101 )
