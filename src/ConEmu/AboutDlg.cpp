@@ -541,14 +541,13 @@ void ConEmuAbout::OnInfo_About(LPCWSTR asPageName /*= NULL*/)
 
 	if (!bOk)
 	{
-		wchar_t* pszTitle = lstrmerge(gpConEmu->GetDefaultTitle(), L" About");
+		CEStr szTitle = lstrmerge(gpConEmu->GetDefaultTitle(), L" About");
 		DontEnable de;
 		MSGBOXPARAMS mb = {sizeof(MSGBOXPARAMS), ghWnd, g_hInstance,
 			pAbout,
-			pszTitle,
+			szTitle.ms_Arg,
 			MB_USERICON, MAKEINTRESOURCE(IMAGE_ICON), 0, NULL, LANG_NEUTRAL
 		};
-		SafeFree(pszTitle);
 		// Use MessageBoxIndirect instead of MessageBox to show our icon instead of std ICONINFORMATION
 		MessageBoxIndirect(&mb);
 	}
