@@ -46,11 +46,11 @@ else
 	COPTIMIZE = -O0
 endif
 
+BITDEF = -D _WIN32 -D WIN32
 ifeq ($(DIRBIT),64)
-  BITDEF = -D _WIN64 -D WIN64
+  BITDEF += -D _WIN64 -D WIN64
   BITNAME = 64
 else
-  BITDEF =
   BITNAME =
 endif
 
