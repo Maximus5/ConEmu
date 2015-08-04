@@ -405,7 +405,7 @@
       <TargetMachine>MachineX86</TargetMachine>
     </Link>
     <Manifest>
-      <AdditionalManifestFiles>conemu.manifest;DeclareDPIAware.manifest;%(AdditionalManifestFiles)</AdditionalManifestFiles>
+      <AdditionalManifestFiles>conemu.manifest;%(AdditionalManifestFiles)</AdditionalManifestFiles>
     </Manifest>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug_E|x64'">

@@ -404,7 +404,7 @@
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
     <Manifest>
-      <AdditionalManifestFiles>conemu.manifest;DeclareDPIAware.manifest;%(AdditionalManifestFiles)</AdditionalManifestFiles>
+      <AdditionalManifestFiles>conemu.manifest;%(AdditionalManifestFiles)</AdditionalManifestFiles>
     </Manifest>
     <ResourceCompile>
       <PreprocessorDefinitions>_DEBUG;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
