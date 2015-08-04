@@ -25,6 +25,8 @@ GAWK=tools\gawk
 
 RES_FILE = $(INTDIR)\$(NAME).res
 
+MINGW_RES_FILE = $(NAME)MinGW.res
+
 #PCH_FILE = "$(INTDIR)\headers.pch"
 
 LINK_OBJS = \
@@ -154,8 +156,7 @@ LINKFLAGS=/nologo /subsystem:WINDOWS /out:"$(OUTDIR)\$(OUTNAME).exe" /map:"$(MAP
 LINKFLAGS=$(LINKFLAGS) /DEBUG /pdb:"$(PDB)"
 !endif
 ULINKFLAGS=-q -m- -ap -Gz -O- -o- -Gh -Gh-
-#__GNUC__ чтобы манифест включился
-RFLAGS=$(RCWIN64) /D__GNUC__ /l 0x409 /fo"$(RES_FILE)" /d $(USEDEBUG)
+RFLAGS=$(RCWIN64) /DCERC_MANIFEST /l 0x409 /d $(USEDEBUG)
 
 # config-cpecific
 !ifdef DEBUG
@@ -171,7 +172,7 @@ LINKFLAGS=$(LINKFLAGS)
 LINKFLAGS=$(LINKFLAGS) /incremental:no /OPT:REF /OPT:ICF
 !endif
 
-# platform-cpecific
+# platform-specific
 !ifdef X86
 #Struct member alignment must be 8bytes even on x86 (Win7 API)
 CPPFLAGS=$(CPPFLAGS) /Zp8
@@ -185,12 +186,23 @@ CPPFLAGS=$(CPPFLAGS) /Zp8 /D_WIN64 /DWIN64
 LINKFLAGS=$(LINKFLAGS) /machine:IA64
 !endif
 
+# Due to a bug(?) in MinGW windres
+# we have to prepare some resources
+!ifdef X86
+MINGWRES=$(MINGW_RES_FILE)
+!else
+MINGWRES=
+!endif
 
 ALL: AllDirs build clean
 
 
 .PHONY: build
-build: "$(OUTDIR)\$(OUTNAME).exe"
+build: "$(OUTDIR)\$(OUTNAME).exe" $(MINGWRES)
+
+# Due to bugs(?) of MinGW's windres it fails to
+# include properly our truecolor images and icons
+mingw: $(MINGW_RES_FILE)
 
 .PHONY: AllDirs
 AllDirs:
@@ -198,7 +210,7 @@ AllDirs:
 	if not exist "$(INTDIR)" mkdir "$(INTDIR)"
 	if not exist "$(CODDIR)" mkdir "$(CODDIR)"
 
-"$(OUTDIR)\$(OUTNAME).exe": $(DEF_FILE) $(LINK_OBJS) $(RES_FILE) conemu.gcc.manifest
+"$(OUTDIR)\$(OUTNAME).exe": $(DEF_FILE) $(LINK_OBJS) $(RES_FILE) $(MINGWRES) conemu.gcc.manifest
 	echo linking $@
 !ifndef LINK_ULINK
 	$(LINK) @<<
@@ -247,9 +259,13 @@ AllDirs:
 #	$(CPPFLAGS) $<
 # <<
 
-$(RES_FILE): ConEmu.rc Version.h
+$(RES_FILE): ConEmu.rc ConEmu.rc2 Externals.rc2 Version.h Version.rc2
 	echo compiling resource file
-	$(RC) $(RFLAGS) ConEmu.rc
+	$(RC) $(RFLAGS) /fo"$(RES_FILE)" ConEmu.rc
+
+$(MINGW_RES_FILE): ConEmuMinGW.rc Externals.rc2
+	echo compiling mingw resource file
+	$(RC) $(RFLAGS) /fo"$(MINGW_RES_FILE)" ConEmuMINGW.rc
 
 #!ifdef USEDEPS
 #!include "$(DEPFILE)"

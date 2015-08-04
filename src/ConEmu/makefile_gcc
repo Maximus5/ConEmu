@@ -16,6 +16,7 @@ DEF =
 USERCPP =
 LNKPLATFORM = -mwindows
 BASEADDRESS =
+RES_NAME2 = ConEmuMinGW
 
 include ../makefile_gcc_inc
 

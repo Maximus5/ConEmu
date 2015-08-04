@@ -1,6 +1,9 @@
 
-// Manifest 4 GCC
-#if defined(__GNUC__)
+/////////////////////////////////////////////////////////////////////////////
+//
+// Release MANIFEST
+//
+#if defined(CERC_MANIFEST)
 1 24 DISCARDABLE "conemu.gcc.manifest"
 #endif
 

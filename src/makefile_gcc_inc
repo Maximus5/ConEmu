@@ -67,6 +67,12 @@ RELEASEFULLNAME = $(RELEASEDIR)/$(RELEASENAME)
 RC_NAME = $(NAME).rc
 RES = $(OBJDIR)/$(NAME).res.o
 
+ifndef RES_NAME2
+RES2 =
+else
+RES2 = $(OBJDIR)/$(RES_NAME2).res.o
+endif
+
 CXX = $(CROSS_HOST)g++
 CC = $(CROSS_HOST)gcc
 DLLTOOL = $(CROSS_HOST)dlltool

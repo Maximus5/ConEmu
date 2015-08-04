@@ -37,7 +37,7 @@ OBJS = \
 	$(patsubst ../modules/minhook/src/%.c,$(OBJMOD)/%.o,$(filter ../modules/minhook/src/%.c,$(SRCS))) \
 	$(patsubst %.cpp,$(OBJDIR)/%.o,$(filter %.cpp,$(SRC_LOCAL))) \
 	$(patsubst %.c,$(OBJDIR)/%.o,$(filter %.c,$(SRC_LOCAL))) \
-	$(RES)
+	$(RES) $(RES2)
 
 MAP = $(patsubst %.$(EXT),%.map,$(RELEASEFULLNAME))
 
@@ -74,6 +74,11 @@ $(OBJMOD)/%.o: ../modules/minhook/src/%.c
 	@$(CC) $(CCFLAGS) -c -o $@ $<
 
 $(RES): $(RC_NAME)
+	@echo compiling resources $<
+	@$(MKDIR) -p $(@D)
+	@$(WINDRES) $(RCFLAGS) -i $< -o $@
+
+$(RES2): $(RES_NAME2).res
 	@echo compiling resources $<
 	@$(MKDIR) -p $(@D)
 	@$(WINDRES) $(RCFLAGS) -i $< -o $@

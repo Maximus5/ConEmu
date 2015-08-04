@@ -1,0 +1,46 @@
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Release Graphic Resources
+//
+
+#if defined(CERC_IMAGES)
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Cursor
+//
+
+IDC_SPLITV              CURSOR                  "vsplit.cur"
+IDC_SPLITH              CURSOR                  "hsplit.cur"
+IDC_COPY                CURSOR                  "CursorDragCopy.cur"
+IDC_LINK                CURSOR                  "CursorDragLink.cur"
+IDC_MOVE                CURSOR                  "CursorDragMove.cur"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Bitmap
+//
+
+IDB_MAIN_TOOLBAR        BITMAP                  "toolbar1.bmp"
+IDB_SHIELD              BITMAP                  "Shield.bmp"
+IDB_SHIELD16            BITMAP                  "Shield16.bmp"
+IDB_SCROLL              BITMAP                  "Scroll.bmp"
+IDB_RIGHTCLICKING       BITMAP                  "graphics/circles.bmp"
+IDB_SEARCH              BITMAP                  "graphics/search.bmp"
+IDB_DONATE              BITMAP                  "graphics/donate.bmp"
+IDB_FLATTR              BITMAP                  "graphics/flattr.bmp"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDI_ICON1               ICON                    "ConEmu.ico"
+IDI_ICON2               ICON                    "Far.ico"
+IDI_ICON3               ICON                    "Far2.ico"
+IDI_SHIELD              ICON                    "shield.ico"
+
+#endif

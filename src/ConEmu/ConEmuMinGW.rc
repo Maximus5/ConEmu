@@ -1,0 +1,10 @@
+
+#include <windows.h>
+#include "resource.h"
+
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+
+#define CERC_IMAGES  1
+
+#include "Externals.rc2"
