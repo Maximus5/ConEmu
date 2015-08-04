@@ -44,12 +44,8 @@
 #define CONEMUVERN MVV_1,MVV_2,MVV_3n,MVV_4
 #endif
 
-#ifdef _WIN64
-#define CONEMUPLTFRM " (x64)"
-#else
-#ifdef WIN64
+#if defined(_WIN64) || defined(WIN64)
 #define CONEMUPLTFRM " (x64)"
 #else
 #define CONEMUPLTFRM " (x86)"
-#endif
 #endif
