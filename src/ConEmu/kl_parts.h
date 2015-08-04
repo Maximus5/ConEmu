@@ -1,6 +1,4 @@
 ﻿#pragma once
-#include <windows.h>
-#include <tchar.h>
 
 #if !defined(__GNUC__)
 #pragma warning(disable: 4244) // convertion to lower size
