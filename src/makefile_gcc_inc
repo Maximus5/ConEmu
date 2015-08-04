@@ -36,11 +36,14 @@ USERLIBS = -lKernel32 -lUser32
 ENCFLAGS = -finput-charset=utf-8
 
 ifndef DEBUG
-	DEBUGFLAGS =
+	DEBUGFLAGS = -D NDEBUG
 	DEBUGLINKFLAGS = -s
+	COPTIMIZE ?= -Os
 else
 	DEBUGFLAGS = -g
+	DEBUGFLAGS += -D _DEBUG -D DEBUG
 	DEBUGLINKFLAGS =
+	COPTIMIZE = -O0
 endif
 
 ifeq ($(DIRBIT),64)
@@ -98,8 +101,6 @@ GCCWARNINGS += -Wnarrowing
 FCPPOPT = -fstrict-aliasing -funsigned-char
 FCPPOPT += -fno-rtti
 #FCPPOPT += -fno-exceptions
-
-COPTIMIZE ?= -Os
 
 CFLAGS = -pipe $(CCWIDE) $(BITDEF) $(USERCPPFLAGS) $(DEBUGFLAGS) $(COPTIMIZE) $(USERCPP) $(WINVER)
 

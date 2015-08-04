@@ -200,7 +200,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 
-#if defined(_DEBUG) && !defined(STRSAFE_DISABLE)
+#if defined(_DEBUG) && !defined(STRSAFE_DISABLE) && !defined(__GNUC__)
+// buggy with L" %c %s[%u%s]" in MinGW build
 // Только под дебагом, т.к. StringCchVPrintf вызывает vsprintf, который не линкуется в релизе статиком.
 #define SKIPLEN(l) (l),
 #define SKIPCOUNT(l) (countof(l)),

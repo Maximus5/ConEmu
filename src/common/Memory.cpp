@@ -52,6 +52,8 @@ static const char* _PointToName(const char* asFileOrPath)
 	}
 
 	const char* pszSlash = strrchr(asFileOrPath, '\\');
+	if (!pszSlash) // MinGW builds
+		pszSlash = strrchr(asFileOrPath, '/');
 
 	if (pszSlash)
 		return pszSlash+1;
