@@ -490,8 +490,8 @@ $(INTDIR)\WUser.obj: ../common/WUser.cpp
 #LINK_OBJS end
 ##############
 
-.PHONY: CLEAN
-CLEAN:
+.PHONY: clean
+clean:
 	@echo Copying release files
 	@if not exist "$(RELEASEDIR)\$(NULL)" mkdir "$(RELEASEDIR)"
 	@echo moving `$(OUTDIR)\$(OUTNAME).exe` to `$(RELEASEDIR)`
