@@ -189,8 +189,8 @@ CLEAN:
 	@if not exist "$(RELEASEDIR)\$(NULL)" mkdir "$(RELEASEDIR)"
 	@echo moving `$(OUTDIR)\$(OUTNAME).exe` to `$(RELEASEDIR)`
 	@move "$(OUTDIR)\$(OUTNAME).exe" $(RELEASEDIR)
-	@echo moving `$(OUTDIR)\$(OUTNAME).pdb` to `$(RELEASEDIR)`
-	@move "$(OUTDIR)\$(OUTNAME).pdb" $(RELEASEDIR)
+	@echo copying `$(OUTDIR)\$(OUTNAME).pdb` to `$(RELEASEDIR)`
+	@copy "$(OUTDIR)\$(OUTNAME).pdb" $(RELEASEDIR)
 	@echo moving `$(OUTDIR)\$(OUTNAME).map` to `$(RELEASEDIR)`
 	@move "$(OUTDIR)\$(OUTNAME).map" $(RELEASEDIR)
 

@@ -499,6 +499,6 @@ clean:
 	@echo moving `$(MAP)` to `$(RELEASEDIR)`
 	@move "$(MAP)" $(RELEASEDIR)
 !ifndef NO_RELEASE_PDB
-	@echo moving `$(PDB)` to `$(RELEASEDIR)\$(PDB_NAME)`
-	@move "$(PDB)" "$(RELEASEDIR)\$(PDB_NAME)"
+	@echo copying `$(PDB)` to `$(RELEASEDIR)\$(PDB_NAME)`
+	@copy "$(PDB)" "$(RELEASEDIR)\$(PDB_NAME)"
 !endif
