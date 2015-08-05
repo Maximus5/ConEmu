@@ -3193,7 +3193,8 @@ void CVConGroup::OnUpdateProcessDisplay(HWND hInfo)
 				else
 					temp[0] = 0;
 
-				swprintf(temp+_tcslen(temp), _T("[%i.%i] %s - PID:%i"),
+				int iUsed = lstrlen(temp);
+				_wsprintf(temp+iUsed, SKIPLEN(MAX_PATH-iUsed) L"[%i.%i] %s - PID:%i",
 						 j+1, i, pPrc[i].Name, pPrc[i].ProcessID);
 				if (hInfo)
 					SendDlgItemMessage(hInfo, lbProcesses, LB_ADDSTRING, 0, (LPARAM)temp);

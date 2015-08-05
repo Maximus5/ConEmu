@@ -876,8 +876,8 @@ bool CVirtualConsole::Dump(LPCWSTR asFile)
 	LPCTSTR pszTitle = mp_ConEmu->GetLastTitle();
 	WriteFile(hFile, pszTitle, _tcslen(pszTitle)*sizeof(*pszTitle), &dw, NULL);
 	wchar_t temp[100];
-	swprintf(temp, _T("\r\nSize: %ix%i   Cursor: %ix%i\r\n"), TextWidth, TextHeight, Cursor.x, Cursor.y);
-	WriteFile(hFile, temp, _tcslen(temp)*sizeof(wchar_t), &dw, NULL);
+	_wsprintf(temp, SKIPCOUNT(temp) L"\r\nSize: %ix%i   Cursor: %ix%i\r\n", TextWidth, TextHeight, Cursor.x, Cursor.y);
+	WriteFile(hFile, temp, wcslen(temp)*sizeof(wchar_t), &dw, NULL);
 	WriteFile(hFile, mpsz_ConChar, TextWidth * TextHeight * sizeof(*mpsz_ConChar), &dw, NULL);
 	WriteFile(hFile, mpn_ConAttrEx, TextWidth * TextHeight * sizeof(*mpn_ConAttrEx), &dw, NULL);
 	WriteFile(hFile, mpsz_ConCharSave, TextWidth * TextHeight * sizeof(*mpsz_ConCharSave), &dw, NULL);
