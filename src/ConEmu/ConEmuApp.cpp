@@ -3485,9 +3485,31 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 //		'я', (wchar_t)0x44F, 0x44F, L"End");
 //#endif
 
+	// lpCmdLine is not a UNICODE string, that's why we have to use GetCommandLineW()
+	// However, cygwin breaks normal way of creating Windows' processes,
+	// and GetCommandLineW will be useless in cygwin's builds (returns only exe full path)
+	CEStr lsCvtCmdLine;
+	if (lpCmdLine && *lpCmdLine)
+	{
+		int iLen = lstrlenA(lpCmdLine);
+		MultiByteToWideChar(CP_ACP, 0, lpCmdLine, -1, lsCvtCmdLine.GetBuffer(iLen), iLen+1);
+	}
+	// Prepared command line
+	CEStr lsCommandLine;
+	#if !defined(__CYGWIN__)
+	lsCommandLine.Set(GetCommandLineW());
+	#else
+	lsCommandLine.Set(lsCvtCmdLine.ms_Arg);
+	#endif
+	if (lsCommandLine.IsEmpty())
+	{
+		lsCommandLine.Set(L"");
+	}
+
 #if defined(SHOW_STARTED_MSGBOX)
 	wchar_t szTitle[128]; _wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"Conemu started, PID=%i", GetCurrentProcessId());
-	MessageBox(NULL, GetCommandLineW(), szTitle, MB_OK|MB_ICONINFORMATION|MB_SETFOREGROUND|MB_SYSTEMMODAL);
+	CEStr lsText = lstrmerge(L"GetCommandLineW()\n", GetCommandLineW(), L"\n\n\n" L"lpCmdLine\n", lsCvtCmdLine.ms_Arg);
+	MessageBox(NULL, lsText, szTitle, MB_OK|MB_ICONINFORMATION|MB_SETFOREGROUND|MB_SYSTEMMODAL);
 #elif defined(WAIT_STARTED_DEBUGGER)
 	while (!IsDebuggerPresent())
 		Sleep(250);
@@ -3495,13 +3517,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 #else
 
 #ifdef _DEBUG
-	if (_tcsstr(GetCommandLine(), L"/debugi"))
+	if (_tcsstr(lsCommandLine, L"/debugi"))
 	{
 		if (!IsDebuggerPresent()) _ASSERT(FALSE);
 	}
 	else
 #endif
-		if (_tcsstr(GetCommandLine(), L"/debug"))
+		if (_tcsstr(lsCommandLine, L"/debug"))
 		{
 			if (!IsDebuggerPresent()) MBoxA(L"Conemu started");
 		}
@@ -3536,7 +3558,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	//gpSet->InitSettings();
 
 	int iParseRc = 0;
-	if (!gpConEmu->ParseCommandLine(GetCommandLine(), iParseRc))
+	if (!gpConEmu->ParseCommandLine(lsCommandLine, iParseRc))
 	{
 		return iParseRc;
 	}
