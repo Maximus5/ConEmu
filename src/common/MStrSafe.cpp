@@ -541,3 +541,38 @@ int sprintf_c(char* Buffer, INT_PTR size, const char *Format, ...)
 	return nRc;
 }
 #endif // #if defined(_DEBUG) && !defined(STRSAFE_DISABLE)
+
+#if defined(__CYGWIN__)
+
+wchar_t* _itow(int value, wchar_t *str, int radix)
+{
+	if (radix == 16)
+	{
+		wsprintf(str, L"%X", value);
+	}
+	else if (radix == 10)
+	{
+		wsprintf(str, L"%i", value);
+	}
+	else
+	{
+		_ASSERTE(FALSE && "Not supported in CygWin");
+		*str = 0;
+	}
+	return str;
+}
+
+int _wtoi(const wchar_t *str)
+{
+	//char sz[32] = "";
+	//WideCharToMultiByte(CP_ACP, 0, str, -1, sz, 32, NULL, NULL);
+	//return _atoi(sz);
+
+	//int i = 0;
+	//swscanf(str, "%d", &i);
+	//return i;
+
+	wchar_t* p;
+	return wcstol(str, &p, 10);
+}
+#endif

@@ -182,6 +182,30 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _getts      gets
 #endif
 
+#else // STRSAFE_NO_DEPRECATE
+
+#if defined(__CYGWIN__)
+	// bug: Cygwin's tchar.h
+	#define __T(x) L ## x
+	#define _T(x) __T(x)
+	#define _tcslen wcslen
+	#define _tcscmp wcscmp
+	#define _tcsstr wcsstr
+	#define _tcsrchr wcsrchr
+	#define _tcsncmp wcsncmp
+	#define _tcscpy wcscpy
+	// WARNING!!! Precision lose
+	#define _wcstoui64 wcstoul
+	// Some other absent defines
+	#define wmemmove_s(dest,numberOfElements,src,count) wmemmove(dest,src,count)
+	wchar_t* _itow(int value, wchar_t *str, int radix);
+	#define _ltow _itow
+	int _wtoi(const wchar_t *str);
+	#define _wtol _wtoi
+	#define _strnicmp lstrcmpni
+	#define _tcsncpy(d,s,l) lstrcpyn(d,s,l)
+#endif
+
 #endif // STRSAFE_NO_DEPRECATE
 
 
