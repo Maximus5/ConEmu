@@ -43,8 +43,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 
-//#define MSTRSAFE_NO_DEPRECATE
-
 #ifdef STRSAFE_DISABLE
 	#define StringCchCopyA(d,n,s) lstrcpyA(d,s)
 	#define StringCchCopyW(d,n,s) lstrcpyW(d,s)
@@ -184,7 +182,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _getts      gets
 #endif
 
-#endif // MSTRSAFE_NO_DEPRECATE
+#endif // STRSAFE_NO_DEPRECATE
 
 
 #ifndef _DEBUG
