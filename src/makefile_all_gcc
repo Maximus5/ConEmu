@@ -12,7 +12,7 @@ FICTIVE=_fictive_
 $(FICTIVE):
 
 $(ALLDIRS): $(FICTIVE)
-	@echo ===========$@
+	@echo ===========$@$(DIRBIT)
 	@rm -f ../gcc/common/*.*
 	@$(MAKE) -C $@ -f makefile_gcc
 
