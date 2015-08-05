@@ -423,24 +423,78 @@ wrap:
 	return lpOut;
 }
 
-int lstrcmpni(LPCWSTR asStr1, LPCWSTR asStr2, int cchMax)
+int lstrcmpni(LPCSTR asStr1, LPCSTR asStr2, int cchMax)
 {
-	wchar_t sz1[64], sz2[64];
+	char sz1[64], sz2[64];
+	char *ptr1, *ptr2;
 
 	int nCmp = 0;
 
 	if (cchMax >= 64)
 	{
-		_ASSERTE(FALSE && "Too long strings");
-		nCmp = wcsncmp(asStr1, asStr2, cchMax);
+		ptr1 = new char[cchMax+1];
+		ptr2 = new char[cchMax+1];
 	}
 	else
 	{
-		lstrcpyn(sz1, asStr1, cchMax+1);
-		lstrcpyn(sz2, asStr2, cchMax+1);
-
-		nCmp = lstrcmpi(sz1, sz2);
+		ptr1 = sz1;
+		ptr2 = sz2;
 	}
+
+	if (!ptr1 || !ptr2)
+	{
+		_ASSERTE(ptr1 && ptr2);
+		nCmp = 0;
+	}
+	else
+	{
+		lstrcpynA(ptr1, asStr1, cchMax+1);
+		lstrcpynA(ptr2, asStr2, cchMax+1);
+		nCmp = lstrcmpiA(ptr1, ptr2);
+	}
+
+	if (ptr1 && ptr1 != sz1)
+		delete[] ptr1;
+	if (ptr2 && ptr2 != sz2)
+		delete[] ptr2;
+
+	return nCmp;
+}
+
+int lstrcmpni(LPCWSTR asStr1, LPCWSTR asStr2, int cchMax)
+{
+	wchar_t sz1[64], sz2[64];
+	wchar_t *ptr1, *ptr2;
+
+	int nCmp = 0;
+
+	if (cchMax >= 64)
+	{
+		ptr1 = new wchar_t[cchMax+1];
+		ptr2 = new wchar_t[cchMax+1];
+	}
+	else
+	{
+		ptr1 = sz1;
+		ptr2 = sz2;
+	}
+
+	if (!ptr1 || !ptr2)
+	{
+		_ASSERTE(ptr1 && ptr2);
+		nCmp = 0;
+	}
+	else
+	{
+		lstrcpyn(ptr1, asStr1, cchMax+1);
+		lstrcpyn(ptr2, asStr2, cchMax+1);
+		nCmp = lstrcmpi(ptr1, ptr2);
+	}
+
+	if (ptr1 && ptr1 != sz1)
+		delete[] ptr1;
+	if (ptr2 && ptr2 != sz2)
+		delete[] ptr2;
 
 	return nCmp;
 }

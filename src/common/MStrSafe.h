@@ -334,6 +334,7 @@ int wcscat_c(wchar_t (&Dst)[size], const wchar_t *Src)
 LPCWSTR msprintf(LPWSTR lpOut, size_t cchOutMax, LPCWSTR lpFmt, ...);
 LPCSTR msprintf(LPSTR lpOut, size_t cchOutMax, LPCSTR lpFmt, ...);
 
+int lstrcmpni(LPCSTR asStr1, LPCSTR asStr2, int cchMax);
 int lstrcmpni(LPCWSTR asStr1, LPCWSTR asStr2, int cchMax);
 int startswith(LPCWSTR asStr, LPCWSTR asPattern, bool abIgnoreCase);
 
