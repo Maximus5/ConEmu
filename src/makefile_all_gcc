@@ -6,6 +6,8 @@ ALLDIRS = ConEmu \
 
 all: preclean dirs $(ALLDIRS) clean
 
+build: dirs $(ALLDIRS)
+
 FICTIVE=_fictive_
 $(FICTIVE):
 
