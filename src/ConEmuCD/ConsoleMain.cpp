@@ -982,21 +982,21 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 
 #if defined(SHOW_STARTED_PRINT)
 	BOOL lbDbgWrite; DWORD nDbgWrite; HANDLE hDbg; char szDbgString[255], szHandles[128];
-	sprintf(szDbgString, "ConEmuC: PID=%u", GetCurrentProcessId());
+	_wsprintfA(szDbgString, SKIPLEN(szDbgString) "ConEmuC: PID=%u", GetCurrentProcessId());
 	MessageBoxA(0, GetCommandLineA(), szDbgString, MB_SYSTEMMODAL);
 	hDbg = CreateFile(L"CONOUT$", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE,
 	                  0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
-	sprintf(szHandles, "STD_OUTPUT_HANDLE(0x%08X) STD_ERROR_HANDLE(0x%08X) CONOUT$(0x%08X)",
+	_wsprintfA(szHandles, SKIPLEN(szHandles) "STD_OUTPUT_HANDLE(0x%08X) STD_ERROR_HANDLE(0x%08X) CONOUT$(0x%08X)",
 	        (DWORD)GetStdHandle(STD_OUTPUT_HANDLE), (DWORD)GetStdHandle(STD_ERROR_HANDLE), (DWORD)hDbg);
 	printf("ConEmuC: Printf: %s\n", szHandles);
-	sprintf(szDbgString, "ConEmuC: STD_OUTPUT_HANDLE: %s\n", szHandles);
+	_wsprintfA(szDbgString, SKIPLEN(szDbgString) "ConEmuC: STD_OUTPUT_HANDLE: %s\n", szHandles);
 	lbDbgWrite = WriteFile(GetStdHandle(STD_OUTPUT_HANDLE), szDbgString, lstrlenA(szDbgString), &nDbgWrite, NULL);
-	sprintf(szDbgString, "ConEmuC: STD_ERROR_HANDLE:  %s\n", szHandles);
+	_wsprintfA(szDbgString, SKIPLEN(szDbgString) "ConEmuC: STD_ERROR_HANDLE:  %s\n", szHandles);
 	lbDbgWrite = WriteFile(GetStdHandle(STD_ERROR_HANDLE), szDbgString, lstrlenA(szDbgString), &nDbgWrite, NULL);
-	sprintf(szDbgString, "ConEmuC: CONOUT$: %s", szHandles);
+	_wsprintfA(szDbgString, SKIPLEN(szDbgString) "ConEmuC: CONOUT$: %s", szHandles);
 	lbDbgWrite = WriteFile(hDbg, szDbgString, lstrlenA(szDbgString), &nDbgWrite, NULL);
 	CloseHandle(hDbg);
-	//sprintf(szDbgString, "ConEmuC: PID=%u", GetCurrentProcessId());
+	//_wsprintfA(szDbgString, SKIPLEN(szDbgString) "ConEmuC: PID=%u", GetCurrentProcessId());
 	//MessageBoxA(0, "Press Ok to continue", szDbgString, MB_SYSTEMMODAL);
 #elif defined(SHOW_STARTED_PRINT_LITE)
 	{
@@ -1304,7 +1304,7 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 	/* *** Запуск дочернего процесса *** */
 	/* ********************************* */
 #ifdef SHOW_STARTED_PRINT
-	sprintf(szDbgString, "ConEmuC: PID=%u", GetCurrentProcessId());
+	_wsprintfA(szDbgString, SKIPLEN(szDbgString) "ConEmuC: PID=%u", GetCurrentProcessId());
 	MessageBoxA(0, "Press Ok to continue", szDbgString, MB_SYSTEMMODAL);
 #endif
 
