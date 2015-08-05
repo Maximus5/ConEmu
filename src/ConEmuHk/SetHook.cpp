@@ -630,8 +630,7 @@ FARPROC WINAPI GetLoadLibraryW()
 
 FARPROC WINAPI GetWriteConsoleW()
 {
-	HookItem* ph;
-	return (FARPROC)GetOriginalAddress((LPVOID)CEAnsi::OnWriteConsoleW, &ph);
+	return (FARPROC)GetOriginalAddress((LPVOID)CEAnsi::OnWriteConsoleW, NULL);
 }
 
 FARPROC WINAPI GetVirtualAlloc()
@@ -639,7 +638,7 @@ FARPROC WINAPI GetVirtualAlloc()
 	LPVOID fnVirtualAlloc = NULL;
 	#ifdef _DEBUG
 	extern LPVOID WINAPI OnVirtualAlloc(LPVOID lpAddress, SIZE_T dwSize, DWORD flAllocationType, DWORD flProtect);
-	fnVirtualAlloc = (FARPROC)GetOriginalAddress(OnVirtualAlloc, NULL, FALSE, NULL);
+	fnVirtualAlloc = GetOriginalAddress((LPVOID)OnVirtualAlloc, NULL);
 	#endif
 	if (!fnVirtualAlloc)
 		fnVirtualAlloc = (LPVOID)&VirtualAlloc;
@@ -1276,8 +1275,8 @@ VOID CALLBACK LdrDllNotification(ULONG NotificationReason, const LDR_DLL_NOTIFIC
 	case LDR_DLL_NOTIFICATION_REASON_LOADED:
 		if (PrepareNewModule(hModule, NULL, szModule, TRUE, TRUE))
 		{
-			HookItem* ph = NULL;;
-			GetOriginalAddress((void*)(FARPROC)OnLoadLibraryW, &ph, true);
+			HookItem* ph = NULL;
+			GetOriginalAddress((LPVOID)OnLoadLibraryW, &ph, true);
 			if (ph && ph->PostCallBack)
 			{
 				SETARGS1(&hModule,szModule);
