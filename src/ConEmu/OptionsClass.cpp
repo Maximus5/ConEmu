@@ -1961,9 +1961,7 @@ LRESULT CSettings::OnInitDialog_WndSizePos(HWND hWnd2, bool abInitial)
 	else
 		checkRadioButton(hWnd2, rNormal, rFullScreen, rNormal);
 
-	//swprintf_c(temp, L"%i", wndWidth);   SetDlgItemText(hWnd2, tWndWidth, temp);
 	SendDlgItemMessage(hWnd2, tWndWidth, EM_SETLIMITTEXT, 6, 0);
-	//swprintf_c(temp, L"%i", wndHeight);  SetDlgItemText(hWnd2, tWndHeight, temp);
 	SendDlgItemMessage(hWnd2, tWndHeight, EM_SETLIMITTEXT, 6, 0);
 
 	UpdateSize(gpConEmu->WndWidth, gpConEmu->WndHeight);
@@ -9026,7 +9024,6 @@ void CSettings::Performance(UINT nID, BOOL bEnd)
 			// Performance
 			wchar_t sTemp[128];
 			//Нихрена это не мегагерцы. Например на "AMD Athlon 64 X2 1999 MHz" здесь отображается "0.004 GHz"
-			//swprintf(sTemp, L"Performance counters (%.3f GHz)", ((double)(mn_Freq/1000)/1000000));
 			_wsprintf(sTemp, SKIPLEN(countof(sTemp)) L"Performance counters (%I64i)", ((i64)(mn_Freq/1000)));
 			SetDlgItemText(GetPage(thi_Info), nID, sTemp);
 			// Обновить сразу (значений еще нет)

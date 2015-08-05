@@ -74,63 +74,6 @@ BOOL CConEmuPipe::Init(LPCTSTR asOp, BOOL abSilent)
 	}
 
 	return TRUE;
-	//DWORD dwErr = 0;
-	//
-	//// Try to open a named pipe; wait for it, if necessary.
-	//while (1)
-	//{
-	//	mh_Pipe = CreateFile(
-	//		ms_PipeName,    // pipe name
-	//		GENERIC_READ |  // read and write access
-	//		GENERIC_WRITE,
-	//		0,              // no sharing
-	//		NULL,           // default security attributes
-	//		OPEN_EXISTING,  // opens existing pipe
-	//		0,              // default attributes
-	//		NULL);          // no template file
-	//
-	//	// Break if the pipe handle is valid.
-	//	if (mh_Pipe != INVALID_HANDLE_VALUE)
-	//		break;
-	//
-	//	// Exit if an error other than ERROR_PIPE_BUSY occurs.
-	//	dwErr = GetLastError();
-	//	if (dwErr != ERROR_PIPE_BUSY)
-	//	{
-	//		if (!abSilent) {
-	//			WCHAR szMsg[128];
-	//			swprintf(szMsg, _T("Can't open plugin pipe! Plugin is not installed?\r\nFAR PID: %i, ErrCode: 0x%08X"), mn_FarPID, dwErr);
-	//			MBoxA(szMsg);
-	//		}
-	//		return FALSE;
-	//	}
-	//
-	//	// All pipe instances are busy, so wait for 1 second.
-	//	if (!WaitNamedPipe(ms_PipeName, 1000) )
-	//	{
-	//		if (!abSilent) {
-	//			WCHAR szMsg[128];
-	//			swprintf(szMsg, _T("Plugin pipe timeout!\r\nFAR PID: %i"), mn_FarPID);
-	//			MBoxA(szMsg);
-	//		}
-	//		return FALSE;
-	//	}
-	//}
-	//
-	//// The pipe connected; change to message-read mode.
-	//DWORD dwMode = CE_PIPE_READMODE;
-	//BOOL fSuccess = SetNamedPipeHandleState(
-	//	mh_Pipe,    // pipe handle
-	//	&dwMode,  // new pipe mode
-	//	NULL,     // don't set maximum bytes
-	//	NULL);    // don't set maximum time
-	//if (!fSuccess)
-	//{
-	//	SafeCloseHandle(mh_Pipe);
-	//	return FALSE;
-	//}
-	//
-	//return TRUE;
 }
 
 // Не интересуется результатом команды!
