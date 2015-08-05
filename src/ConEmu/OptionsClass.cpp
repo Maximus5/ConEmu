@@ -11165,10 +11165,7 @@ BOOL CSettings::GetFontNameFromFile_TTF(LPCTSTR lpszFilePath, wchar_t (&rsFontNa
 		//f.Read(&tblDir, sizeof(TT_TABLE_DIRECTORY));
 		if (ReadFile(f, &tblDir, sizeof(TT_TABLE_DIRECTORY), &(dwRead=0), NULL) && dwRead)
 		{
-			//strncpy(szRetVal, tblDir.szTag, 4); szRetVal[4] = 0;
-			//if (lstrcmpi(szRetVal, L"name") == 0)
-			//if (memcmp(tblDir.szTag, "name", 4) == 0)
-			if (strnicmp(tblDir.szTag, "name", 4) == 0) //-V112
+			if (lstrcmpni(tblDir.szTag, "name", 4) == 0) //-V112
 			{
 				bFound = TRUE;
 				tblDir.uLength = SWAPLONG(tblDir.uLength);
@@ -11319,7 +11316,7 @@ BOOL CSettings::GetFontNameFromFile_OTF(LPCTSTR lpszFilePath, wchar_t (&rsFontNa
 
 	root.NumTables = SWAPWORD(root.NumTables);
 
-	if (strnicmp(root.szTag, "OTTO", 4) != 0) //-V112
+	if (lstrcmpni(root.szTag, "OTTO", 4) != 0) //-V112
 		goto wrap; // Не поддерживается
 
 
@@ -11328,7 +11325,7 @@ BOOL CSettings::GetFontNameFromFile_OTF(LPCTSTR lpszFilePath, wchar_t (&rsFontNa
 		//f.Read(&tblDir, sizeof(TT_TABLE_DIRECTORY));
 		if (ReadFile(f, &tbl, sizeof(tbl), &(dwRead=0), NULL) && dwRead)
 		{
-			if (strnicmp(tbl.szTag, "name", 4) == 0) //-V112
+			if (lstrcmpni(tbl.szTag, "name", 4) == 0) //-V112
 			{
 				bFound = TRUE;
 				tbl.Length = SWAPLONG(tbl.Length);

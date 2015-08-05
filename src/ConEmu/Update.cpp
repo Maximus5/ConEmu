@@ -1750,9 +1750,11 @@ bool CConEmuUpdate::NeedRunElevation()
 					{
 						szSystem[nLen++] = L'\\'; szSystem[nLen] = 0;
 					}
-					// наш внутренний lstrcmpni не прокатит - он для коротких строк
-					if (_wcsnicmp(szTestFile, szSystem, nLen) == 0)
-						return true; // Установлены в ProgramFiles
+
+					if (lstrcmpni(szTestFile, szSystem, nLen) == 0)
+					{
+						return true; // installed in the ProgramFiles
+					}
 				}
 			}
 		}
