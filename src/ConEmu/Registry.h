@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2014 Maximus5
+Copyright (c) 2009-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -63,26 +63,28 @@ struct SettingsBase
 
 		virtual void Save(const wchar_t *regName, LPCBYTE value, DWORD nType, DWORD nSize) = 0;
 
-		//virtual void Save(const wchar_t *regName, const wchar_t *value) = 0; // value = _T(""); // сюда мог придти и NULL
 		void Save(const wchar_t *regName, const wchar_t *value)
 		{
-			if (!value) value = L"";  // сюда мог придти и NULL
+			if (!value) value = L"";  // protect against NULL values
 
 			Save(regName, (LPCBYTE)value, REG_SZ, (_tcslen(value)+1)*sizeof(wchar_t));
 		}
 
-		void SaveMSZ(const wchar_t *regName, const wchar_t *value, DWORD nSize) // size in BYTES!!!
+		// nSize in BYTES!!!
+		void SaveMSZ(const wchar_t *regName, const wchar_t *value, DWORD nSize)
 		{
 			if (!value || !*value)
 				Delete(regName);
 			else
 				Save(regName, (LPBYTE)value, REG_MULTI_SZ, nSize);
 		}
+
+		// ensure that following template will not be used
 		void Save(const wchar_t *regName, wchar_t *value)
 		{
-			// нада, чтобы вниз в template не провалился
 			Save(regName, (const wchar_t*)value);
 		}
+
 		// bool, dword, rect, etc.
 		template <class T> void Save(const wchar_t *regName, T value)
 		{
