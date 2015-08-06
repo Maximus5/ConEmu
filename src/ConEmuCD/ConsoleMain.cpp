@@ -6727,16 +6727,53 @@ void LogSize(const COORD* pcrSize, int newBufferHeight, LPCSTR pszLabel)
 
 	// В дебажный лог помещаем реальные значения
 	BOOL bConsoleOK = GetConsoleScreenBufferInfo(hCon, &lsbi);
-	char szInfo[192]; szInfo[0] = 0;
+	char szInfo[300]; szInfo[0] = 0;
 	DWORD nErrCode = GetLastError();
+
+	int fontX = 0, fontY = 0; wchar_t szFontName[LF_FACESIZE] = L""; char szFontInfo[60] = "<NA>";
+	if (apiGetConsoleFontSize(hCon, fontY, fontX, szFontName))
+	{
+		LPCSTR szState = "";
+		if (!g_LastSetConsoleFont.cbSize)
+		{
+			szState = " <?>";
+		}
+		else if ((g_LastSetConsoleFont.dwFontSize.Y != fontY)
+			|| (g_LastSetConsoleFont.dwFontSize.X != fontX))
+		{
+			// nConFontHeight/nConFontWidth не совпадает с получаемым,
+			// нужно организовать спец переменные в WConsole
+			_ASSERTE(g_LastSetConsoleFont.dwFontSize.Y==fontY && g_LastSetConsoleFont.dwFontSize.X==fontX);
+			szState = " <!>";
+		}
+
+		szFontInfo[0] = '`';
+		WideCharToMultiByte(CP_UTF8, 0, szFontName, -1, szFontInfo+1, 40, NULL, NULL);
+		int iLen = lstrlenA(szFontInfo); // result of WideCharToMultiByte is not suitable (contains trailing zero)
+		_wsprintfA(szFontInfo+iLen, SKIPLEN(countof(szFontInfo)-iLen) "` %ix%i%s",
+			fontY, fontX, szState);
+	}
+
+	#ifdef _DEBUG
+	wchar_t szClass[100] = L"";
+	GetClassName(ghConWnd, szClass, countof(szClass));
+	_ASSERTE(lstrcmp(szClass, L"ConsoleWindowClass")==0);
+	#endif
+
+	char szWindowInfo[40] = "<NA>"; RECT rcConsole = {};
+	if (GetWindowRect(ghConWnd, &rcConsole))
+	{
+		_wsprintfA(szWindowInfo, SKIPCOUNT(szWindowInfo) "{(%i,%i) (%ix%i)}", rcConsole.left, rcConsole.top, LOGRECTSIZE(rcConsole));
+	}
 
 	if (pcrSize)
 	{
 		bWriteLog = true;
 
-		_wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "CurSize={%ix%i} ChangeTo={%ix%ix%i} %s (skipped=%i) {%u:%u:x%X:%u}",
+		_wsprintfA(szInfo, SKIPCOUNT(szInfo) "CurSize={%ix%i} ChangeTo={%ix%ix%i} %s (skipped=%i) {%u:%u:x%X:%u} %s %s",
 		           lsbi.dwSize.X, lsbi.dwSize.Y, pcrSize->X, pcrSize->Y, newBufferHeight, (pszLabel ? pszLabel : ""), nSkipped,
-		           bConsoleOK, bHandleOK, (DWORD)(DWORD_PTR)hCon, nErrCode);
+		           bConsoleOK, bHandleOK, (DWORD)(DWORD_PTR)hCon, nErrCode,
+				   szWindowInfo, szFontInfo);
 	}
 	else
 	{
@@ -6746,9 +6783,10 @@ void LogSize(const COORD* pcrSize, int newBufferHeight, LPCSTR pszLabel)
 		else if (((GetTickCount() - nLastWriteTick) >= TickDelta) || (nSkipped >= SkipDelta))
 			bWriteLog = true;
 
-		_wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "CurSize={%ix%i} %s (skipped=%i) {%u:%u:x%X:%u}",
+		_wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "CurSize={%ix%i} %s (skipped=%i) {%u:%u:x%X:%u} %s %s",
 		           lsbi.dwSize.X, lsbi.dwSize.Y, (pszLabel ? pszLabel : ""), nSkipped,
-		           bConsoleOK, bHandleOK, (DWORD)(DWORD_PTR)hCon, nErrCode);
+		           bConsoleOK, bHandleOK, (DWORD)(DWORD_PTR)hCon, nErrCode,
+				   szWindowInfo, szFontInfo);
 	}
 
 	lsbiLast = lsbi;
@@ -7517,6 +7555,9 @@ BOOL cmd_SetWindowPos(CESERVER_REQ& in, CESERVER_REQ** out)
 	BOOL lbWndRc = FALSE, lbShowRc = FALSE;
 	DWORD nErrCode[2] = {};
 
+	if ((in.SetWndPos.hWnd == ghConWnd) && gpLogSize)
+		LogSize(NULL, 0, ":SetWindowPos.before");
+
 	lbWndRc = SetWindowPos(in.SetWndPos.hWnd, in.SetWndPos.hWndInsertAfter,
 	             in.SetWndPos.X, in.SetWndPos.Y, in.SetWndPos.cx, in.SetWndPos.cy,
 	             in.SetWndPos.uFlags);
@@ -7527,6 +7568,9 @@ BOOL cmd_SetWindowPos(CESERVER_REQ& in, CESERVER_REQ** out)
 		lbShowRc = apiShowWindowAsync(in.SetWndPos.hWnd, SW_SHOW);
 		nErrCode[1] = lbShowRc ? 0 : GetLastError();
 	}
+
+	if ((in.SetWndPos.hWnd == ghConWnd) && gpLogSize)
+		LogSize(NULL, 0, ":SetWindowPos.after");
 
 	// Результат
 	int nOutSize = sizeof(CESERVER_REQ_HDR) + sizeof(DWORD)*4;
