@@ -30,6 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <wchar.h>
 #include <tchar.h>
+#include "MAssert.h"
 
 #define STRSAFE_NO_DEPRECATE
 
