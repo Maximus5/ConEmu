@@ -90,6 +90,8 @@ const UINT gnConsoleSectionSize = sizeof(CONSOLE_INFO)+1024;
 //#pragma pack(pop)
 #include <poppack.h>
 
+MY_CONSOLE_FONT_INFOEX g_LastSetConsoleFont = {};
+
 #ifndef CONEMU_MINIMAL
 void WINAPI ShutdownConsole()
 {
@@ -532,6 +534,10 @@ BOOL apiSetConsoleFontSize(HANDLE hOutput, int inSizeY, int inSizeX, const wchar
 	PSetCurrentConsoleFontEx SetCurrentConsoleFontEx = (PSetCurrentConsoleFontEx)
 	        GetProcAddress(hKernel, "SetCurrentConsoleFontEx");
 
+	//typedef BOOL (WINAPI *PGetCurrentConsoleFontEx)(HANDLE /*hConsoleOutput*/, BOOL /*bMaximumWindow*/, MY_CONSOLE_FONT_INFOEX* /*lpConsoleCurrentFontEx*/);
+	PGetCurrentConsoleFontEx GetCurrentConsoleFontEx = (PGetCurrentConsoleFontEx)
+	        GetProcAddress(hKernel, "GetCurrentConsoleFontEx");
+
 	if (SetCurrentConsoleFontEx)  // We have Vista
 	{
 		MY_CONSOLE_FONT_INFOEX cfi = {sizeof(cfi)};
@@ -542,6 +548,23 @@ BOOL apiSetConsoleFontSize(HANDLE hOutput, int inSizeY, int inSizeX, const wchar
 
 		HANDLE hConOut = GetStdHandle(STD_OUTPUT_HANDLE);
 		lbRc = SetCurrentConsoleFontEx(hConOut, FALSE, &cfi);
+
+		// Store for further comparison
+		if (lbRc)
+		{
+			MY_CONSOLE_FONT_INFOEX cfiSet = {sizeof(cfiSet)};
+			if (GetCurrentConsoleFontEx && GetCurrentConsoleFontEx(hConOut, FALSE, &cfiSet))
+			{
+				_ASSERTE(cfiSet.dwFontSize.X==cfi.dwFontSize.X && cfiSet.dwFontSize.Y==cfi.dwFontSize.Y);
+				g_LastSetConsoleFont = cfiSet;
+			}
+			else
+			{
+				DEBUGTEST(DWORD dwErr = GetLastError());
+				_ASSERTE(FALSE && "apiGetConsoleScreenBufferInfoEx failed");
+				g_LastSetConsoleFont = cfi;
+			}
+		}
 	}
 
 	return lbRc;
