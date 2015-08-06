@@ -615,6 +615,9 @@
     <None Include="export.def" />
     <None Include="!Todo.txt" />
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\modules\minhook\LICENSE.txt" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

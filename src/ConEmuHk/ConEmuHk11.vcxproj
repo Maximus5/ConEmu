@@ -849,6 +849,7 @@
     <ClInclude Include="..\common\WObjects.h" />
     <ClInclude Include="..\common\WThreads.h" />
     <ClInclude Include="..\ConEmuCD\ExitCodes.h" />
+    <ClInclude Include="..\modules\minhook\include\MinHook.h" />
     <ClInclude Include="Ansi.h" />
     <ClInclude Include="ConEmuHooks.h" />
     <ClInclude Include="Console2.h" />
@@ -904,6 +905,9 @@
   <ItemGroup>
     <None Include="export.def" />
     <None Include="!Todo.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\modules\minhook\LICENSE.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

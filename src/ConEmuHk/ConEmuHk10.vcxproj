@@ -861,6 +861,7 @@
     <ClInclude Include="..\common\WObjects.h" />
     <ClInclude Include="..\common\WThreads.h" />
     <ClInclude Include="..\ConEmuCD\ExitCodes.h" />
+    <ClInclude Include="..\modules\minhook\include\MinHook.h" />
     <ClInclude Include="Ansi.h" />
     <ClInclude Include="ConEmuHooks.h" />
     <ClInclude Include="Console2.h" />
@@ -914,6 +915,7 @@
     <ClCompile Include="ShellProcessor.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\modules\minhook\LICENSE.txt" />
     <None Include="export.def" />
     <None Include="!Todo.txt" />
   </ItemGroup>

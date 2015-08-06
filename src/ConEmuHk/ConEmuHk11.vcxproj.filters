@@ -13,6 +13,9 @@
       <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
       <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
     </Filter>
+    <Filter Include="MinHook">
+      <UniqueIdentifier>{027ec10a-7228-49b9-b10f-fdf9e59b99bf}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\common\common.hpp">
@@ -123,6 +126,9 @@
     <ClInclude Include="MainThread.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\modules\minhook\include\MinHook.h">
+      <Filter>MinHook</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="ConEmuHk.rc">
@@ -220,11 +226,28 @@
     <ClCompile Include="MainThread.cpp">
       <Filter>0 - Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\modules\minhook\src\buffer.c">
+      <Filter>MinHook</Filter>
+    </ClCompile>
+    <ClCompile Include="hde.c">
+      <Filter>MinHook</Filter>
+    </ClCompile>
+    <ClCompile Include="..\modules\minhook\src\hook.c">
+      <Filter>MinHook</Filter>
+    </ClCompile>
+    <ClCompile Include="..\modules\minhook\src\trampoline.c">
+      <Filter>MinHook</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="export.def">
       <Filter>0 - Source Files</Filter>
     </None>
     <None Include="!Todo.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\modules\minhook\LICENSE.txt">
+      <Filter>MinHook</Filter>
+    </Text>
   </ItemGroup>
 </Project>

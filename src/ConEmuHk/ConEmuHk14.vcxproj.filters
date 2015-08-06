@@ -287,4 +287,9 @@
     </None>
     <None Include="!Todo.txt" />
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\modules\minhook\LICENSE.txt">
+      <Filter>MinHook</Filter>
+    </Text>
+  </ItemGroup>
 </Project>

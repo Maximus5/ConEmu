@@ -456,10 +456,6 @@
       <File RelativePath="..\common\WConsole.cpp" />
       <File RelativePath="..\common\WObjects.cpp" />
       <File RelativePath="..\common\WThreads.cpp" />
-      <File RelativePath="..\modules\minhook\src\buffer.c" />
-      <File RelativePath="..\modules\minhook\src\hook.c" />
-      <File RelativePath="..\modules\minhook\src\trampoline.c" />
-      <File RelativePath="hde.c" />
       <File RelativePath="Ansi.cpp" />
       <File RelativePath="ConEmuHooks.cpp" />
       <File RelativePath="DefTermHk.cpp" />
@@ -472,6 +468,14 @@
       <File RelativePath="RegHooks.cpp" />
       <File RelativePath="SetHook.cpp" />
       <File RelativePath="ShellProcessor.cpp" />
+    </Filter>
+    <Filter Name="MinHook">
+      <File RelativePath="..\modules\minhook\src\buffer.c" />
+      <File RelativePath="hde.c" />
+      <File RelativePath="..\modules\minhook\src\hook.c" />
+      <File RelativePath="..\modules\minhook\LICENSE.txt" />
+      <File RelativePath="..\modules\minhook\include\MinHook.h" />
+      <File RelativePath="..\modules\minhook\src\trampoline.c" />
     </Filter>
     <File RelativePath=".\!Todo.txt">
     </File>
