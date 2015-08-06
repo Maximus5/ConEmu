@@ -48,7 +48,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifdef _DEBUG
 #define DebugString(x) //OutputDebugString(x)
 #define DebugStringA(x) //OutputDebugStringA(x)
-#define DEBUGSTRLOG(x) //OutputDebugStringA(x)
+#define DEBUGSTRLOG(x) OutputDebugStringA(x)
 #else
 #define DebugString(x) //OutputDebugString(x)
 #define DebugStringA(x) //OutputDebugStringA(x)
@@ -369,12 +369,10 @@ void MFileLog::LogString(LPCWSTR asText, bool abWriteTime /*= true*/, LPCWSTR as
 		FlushFileBuffers(mh_LogFile);
 		#endif
 	}
-	else
-	{
-		#ifdef _DEBUG
-		DEBUGSTRLOG(asText);
-		#endif
-	}
+
+	#ifdef _DEBUG
+	DEBUGSTRLOG(pszBuffer);
+	#endif
 
 	SafeFree(pszTemp);
 
