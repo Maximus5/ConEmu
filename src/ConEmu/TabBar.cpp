@@ -498,8 +498,13 @@ void CTabBarClass::Activate(BOOL abPreSyncConsole/*=FALSE*/)
 {
 	CheckRebarCreated();
 
-	_active = true;
 	bool bAutoShowHide = true;
+	// If tabs are shown on startup, than we must not pass `true` to bAutoShowHide
+	// to avoid erroneous accidental resizes
+	if ((gpConEmu->mn_StartupFinished < CConEmuMain::ss_PostCreate2Called) && (gpSet->isTabs == 1))
+		bAutoShowHide = false;
+
+	_active = true;
 	gpConEmu->OnTabbarActivated(true, bAutoShowHide);
 	UpdatePosition();
 }
