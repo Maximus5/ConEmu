@@ -1733,9 +1733,13 @@ void CreateDefaultTasks(SettingsLoadedFlags slfFlags)
 	#endif
 	CreateDefaultTask(L"Shells::cmd (Admin)", L"",
 		L"cmd.exe /k \"%ConEmuBaseDir%\\CmdInit.cmd\" -new_console:a");
-	// Windows internal: For 64bit Windows create task with splitted cmd 64/32 (Example)
+	// On 64-bit OS we suggest more options
 	if (IsWindows64())
 	{
+		// Add {cmd-32} task to run 32-bit cmd.exe
+		CreateDefaultTask(L"Shells::cmd-32", L"",
+			L"\"%windir%\\syswow64\\cmd.exe\" /k \"%ConEmuBaseDir%\\CmdInit.cmd\"");
+		// Windows internal: For 64bit Windows create task with splitted cmd 64/32 (Example)
 		CreateDefaultTask(L"Shells::cmd 64/32", L"",
 			L"> \"%windir%\\system32\\cmd.exe\" /k \"\"%ConEmuBaseDir%\\CmdInit.cmd\" & echo This is Native cmd.exe\""
 			L"\r\n\r\n"
