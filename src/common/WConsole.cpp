@@ -422,28 +422,6 @@ void GetConsoleSizeInfo(CONSOLE_INFO *pci)
 #endif
 
 
-#if defined(__GNUC__)
-#define __in
-#define __out
-#undef ENABLE_AUTO_POSITION
-#endif
-
-#if !defined(__MINGW64_VERSION_MAJOR)
-
-//VISTA support:
-#ifndef ENABLE_AUTO_POSITION
-typedef struct _CONSOLE_FONT_INFOEX
-{
-	ULONG cbSize;
-	DWORD nFont;
-	COORD dwFontSize;
-	UINT FontFamily;
-	UINT FontWeight;
-	WCHAR FaceName[LF_FACESIZE];
-} CONSOLE_FONT_INFOEX, *PCONSOLE_FONT_INFOEX;
-#endif
-
-#endif
 
 // Vista+ only
 BOOL apiGetConsoleScreenBufferInfoEx(HANDLE hConsoleOutput, MY_CONSOLE_SCREEN_BUFFER_INFOEX* lpConsoleScreenBufferInfoEx)
@@ -502,6 +480,9 @@ BOOL apiSetConsoleScreenBufferInfoEx(HANDLE hConsoleOutput, MY_CONSOLE_SCREEN_BU
 	return lbRc;
 }
 
+typedef BOOL (WINAPI *PSetCurrentConsoleFontEx)(HANDLE /*hConsoleOutput*/, BOOL /*bMaximumWindow*/, MY_CONSOLE_FONT_INFOEX* /*lpConsoleCurrentFontEx*/);
+typedef BOOL (WINAPI *PGetCurrentConsoleFontEx)(HANDLE /*hConsoleOutput*/, BOOL /*bMaximumWindow*/, MY_CONSOLE_FONT_INFOEX* /*lpConsoleCurrentFontEx*/);
+
 // Vista+ only
 BOOL apiGetConsoleFontSize(HANDLE hOutput, int &SizeY, int &SizeX, wchar_t (&rsFontName)[LF_FACESIZE])
 {
@@ -515,13 +496,13 @@ BOOL apiGetConsoleFontSize(HANDLE hOutput, int &SizeY, int &SizeX, wchar_t (&rsF
 
 	BOOL lbRc = FALSE;
 
-	typedef BOOL (WINAPI *PGetCurrentConsoleFontEx)(HANDLE /*hConsoleOutput*/, BOOL /*bMaximumWindow*/, PCONSOLE_FONT_INFOEX /*lpConsoleCurrentFontEx*/);
+	//typedef BOOL (WINAPI *PGetCurrentConsoleFontEx)(HANDLE /*hConsoleOutput*/, BOOL /*bMaximumWindow*/, MY_CONSOLE_FONT_INFOEX* /*lpConsoleCurrentFontEx*/);
 	PGetCurrentConsoleFontEx GetCurrentConsoleFontEx = (PGetCurrentConsoleFontEx)
 	        GetProcAddress(hKernel, "GetCurrentConsoleFontEx");
 
 	if (GetCurrentConsoleFontEx)  // We have Vista
 	{
-		CONSOLE_FONT_INFOEX cfi = {sizeof(cfi)};
+		MY_CONSOLE_FONT_INFOEX cfi = {sizeof(cfi)};
 		lbRc = GetCurrentConsoleFontEx(GetStdHandle(STD_OUTPUT_HANDLE), FALSE, &cfi);
 		if (lbRc)
 		{
@@ -547,18 +528,20 @@ BOOL apiSetConsoleFontSize(HANDLE hOutput, int inSizeY, int inSizeX, const wchar
 
 	BOOL lbRc = FALSE;
 
-	typedef BOOL (WINAPI *PSetCurrentConsoleFontEx)(HANDLE /*hConsoleOutput*/, BOOL /*bMaximumWindow*/, PCONSOLE_FONT_INFOEX /*lpConsoleCurrentFontEx*/);
+	//typedef BOOL (WINAPI *PSetCurrentConsoleFontEx)(HANDLE /*hConsoleOutput*/, BOOL /*bMaximumWindow*/, MY_CONSOLE_FONT_INFOEX* /*lpConsoleCurrentFontEx*/);
 	PSetCurrentConsoleFontEx SetCurrentConsoleFontEx = (PSetCurrentConsoleFontEx)
 	        GetProcAddress(hKernel, "SetCurrentConsoleFontEx");
 
 	if (SetCurrentConsoleFontEx)  // We have Vista
 	{
-		CONSOLE_FONT_INFOEX cfi = {sizeof(cfi)};
+		MY_CONSOLE_FONT_INFOEX cfi = {sizeof(cfi)};
 		//GetCurrentConsoleFontEx(GetStdHandle(STD_OUTPUT_HANDLE), FALSE, &cfi);
 		cfi.dwFontSize.X = inSizeX;
 		cfi.dwFontSize.Y = inSizeY;
 		lstrcpynW(cfi.FaceName, asFontName ? asFontName : L"Lucida Console", countof(cfi.FaceName));
-		lbRc = SetCurrentConsoleFontEx(GetStdHandle(STD_OUTPUT_HANDLE), FALSE, &cfi);
+
+		HANDLE hConOut = GetStdHandle(STD_OUTPUT_HANDLE);
+		lbRc = SetCurrentConsoleFontEx(hConOut, FALSE, &cfi);
 	}
 
 	return lbRc;
