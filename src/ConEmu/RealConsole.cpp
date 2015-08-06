@@ -9525,14 +9525,17 @@ BOOL CRealConsole::SetOtherWindowPos(HWND hWnd, HWND hWndInsertAfter, int X, int
 		mp_ConEmu->LogString(sInfo);
 	}
 
-
-	BOOL lbRc = SetWindowPos(hWnd, hWndInsertAfter, X, Y, cx, cy, uFlags);
+	BOOL lbRc = FALSE; DWORD dwErr = ERROR_ACCESS_DENIED/*5*/;
+	// It'll be better to show console window from server threads
+	if (hWnd == this->hConWnd)
+	{
+		lbRc = SetWindowPos(hWnd, hWndInsertAfter, X, Y, cx, cy, uFlags);
+		dwErr = GetLastError();
+	}
 
 	if (!lbRc)
 	{
-		DWORD dwErr = GetLastError();
-
-		if (dwErr == 5 /*E_access*/)
+		if (dwErr == ERROR_ACCESS_DENIED/*5*/)
 		{
 			CESERVER_REQ in;
 			ExecutePrepareCmd(&in, CECMD_SETWINDOWPOS, sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_SETWINDOWPOS));
