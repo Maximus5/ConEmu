@@ -2116,9 +2116,9 @@ INT_PTR CSettings::pageOpProc_Start(HWND hWnd2, UINT messg, WPARAM wParam, LPARA
 						EnableWindow(GetDlgItem(hWnd2, cbStartTasksFile), (CB == rbStartTasksFile));
 						//
 						EnableWindow(GetDlgItem(hWnd2, lbStartNamedTask), (CB == rbStartNamedTask));
-						// -- пока не поддерживается
-						EnableWindow(GetDlgItem(hWnd2, cbStartFarRestoreFolders), FALSE/*(CB == rbStartLastTabs)*/);
-						EnableWindow(GetDlgItem(hWnd2, cbStartFarRestoreEditors), FALSE/*(CB == rbStartLastTabs)*/);
+						// -- not supported yet
+						ShowWindow(GetDlgItem(hWnd2, cbStartFarRestoreFolders), SW_HIDE);
+						ShowWindow(GetDlgItem(hWnd2, cbStartFarRestoreEditors), SW_HIDE);
 						//
 						EnableWindow(GetDlgItem(hWnd2, tStartGroupCommands), (CB == rbStartNamedTask) || (CB == rbStartLastTabs));
 						// Task source
