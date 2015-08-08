@@ -279,6 +279,8 @@ int CDpiAware::QueryDpiForMonitor(HMONITOR hmon, DpiValue* pDpi /*= NULL*/, Moni
 
 		if ((Shcore == NULL) || (getDPIForMonitor == NULL))
 		{
+			if (Shcore)
+				FreeLibrary(Shcore);
 			Shcore = (HMODULE)INVALID_HANDLE_VALUE;
 		}
 	}
