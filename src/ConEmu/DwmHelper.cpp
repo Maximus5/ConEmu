@@ -220,6 +220,7 @@ void CDwmHelper::InitDwm()
 				{
 					HRESULT hr = _BufferedPaintInit();
 					mb_BufferedAllowed = SUCCEEDED(hr);
+					_BufferedPaintUnInit();
 				}
 			}
 		}
