@@ -4943,6 +4943,7 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 
 	case tTabSkipWords:
 	{
+		SafeFree(gpSet->pszTabSkipWords);
 		gpSet->pszTabSkipWords = GetDlgItemTextPtr(hWnd2, TB);
 		gpConEmu->mp_TabBar->Update(TRUE);
 		break;
