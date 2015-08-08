@@ -2633,6 +2633,8 @@ CConEmuMain::~CConEmuMain()
 
 	SafeDelete(mp_AttachDlg);
 	SafeDelete(mp_RecreateDlg);
+	SafeCloseHandle(mh_ConEmuAliveEvent);
+	SafeCloseHandle(mh_ConEmuAliveEventNoDir);
 
 	CVConGroup::DestroyAllVCon();
 
