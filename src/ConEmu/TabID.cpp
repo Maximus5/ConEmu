@@ -396,7 +396,7 @@ CTabStack::CTabStack()
 	mn_Used = 0;
 	// Thought, most of users will get only one tab per console
 	mn_MaxCount = 1;
-	mpp_Stack = (CTabID**)calloc(mn_MaxCount,sizeof(CTabID**));
+	mpp_Stack = (CTabID**)calloc(mn_MaxCount,sizeof(CTabID*));
 	mpc_Section = new MSectionSimple(true);
 	mn_UpdatePos = -1;
 	mb_FarUpdateMode = false;
@@ -426,11 +426,11 @@ void CTabStack::RequestSize(int anCount, MSectionLockSimple* pSC)
 		#endif
 			;
 
-		CTabID** ppNew = (CTabID**)calloc(nNewMaxCount, sizeof(CTabID**));
+		CTabID** ppNew = (CTabID**)calloc(nNewMaxCount, sizeof(CTabID*));
 		if (mpp_Stack)
 		{
 			if (mn_Used > 0)
-				memmove(ppNew, mpp_Stack, sizeof(CTabID**)*mn_Used);
+				memmove(ppNew, mpp_Stack, sizeof(CTabID*)*mn_Used);
 			free(mpp_Stack);
 		}
 
@@ -466,7 +466,7 @@ int CTabStack::AppendInt(CTabID* pTab, BOOL abMoveFirst, MSectionLockSimple* pSC
 
 	if (abMoveFirst && mn_Used > 0)
 	{
-		memmove(mpp_Stack+1, mpp_Stack, mn_Used*sizeof(CTabID**));
+		memmove(mpp_Stack+1, mpp_Stack, mn_Used*sizeof(CTabID*));
 		mpp_Stack[0] = NULL;
 	}
 
@@ -780,11 +780,11 @@ void CTabStack::TabDeleted(MSectionLockSimple* pUpdateLock, int i)
 			pUpdateLock->RelockExclusive();
 			#endif
 			// Все что между {mn_UpdatePos .. (i-1)} теперь уже забито NULL
-			memmove(mpp_Stack+mn_UpdatePos, mpp_Stack+i, (mn_Used - i) * sizeof(CTabID**));
+			memmove(mpp_Stack+mn_UpdatePos, mpp_Stack+i, (mn_Used - i) * sizeof(CTabID*));
 		}
 		mn_Used -= (i - mn_UpdatePos);
 		_ASSERTE(mn_Used>0);
-		memset(mpp_Stack+mn_Used, 0, (i - mn_UpdatePos) * sizeof(CTabID**));
+		memset(mpp_Stack+mn_Used, 0, (i - mn_UpdatePos) * sizeof(CTabID*));
 	}
 }
 #endif
@@ -878,7 +878,7 @@ void CTabStack::UpdateAppend(HANDLE hUpdate, CTabID* pTab, BOOL abMoveFirst)
 			#else
 			pUpdateLock->RelockExclusive();
 			#endif
-			memmove(mpp_Stack+1, mpp_Stack, sizeof(CTabID**) * (nIndex-1));
+			memmove(mpp_Stack+1, mpp_Stack, sizeof(CTabID*) * (nIndex-1));
 			mpp_Stack[0] = pTab; // AddRef не нужен, таб уже у нас в списке!
 		}
 		mn_UpdatePos++;
@@ -1162,7 +1162,7 @@ void CTabStack::ReleaseTabs(BOOL abInvalidOnly /*= TRUE*/)
 		// Сдвинуть хвост, если есть
 		if (abInvalidOnly && (mn_Used > 1) && (i < (mn_Used-1)))
 		{
-			memmove(mpp_Stack+i, mpp_Stack+i+1, sizeof(CTabID**) * (mn_Used - i));
+			memmove(mpp_Stack+i, mpp_Stack+i+1, sizeof(CTabID*) * (mn_Used - i));
 		}
 	}
 }
