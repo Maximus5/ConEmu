@@ -13134,7 +13134,7 @@ LRESULT CConEmuMain::MainWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lP
 	//	'ghWnd DC' = hWnd; // ставим сразу, чтобы функции могли пользоваться
 	//}
 
-	if (hWnd == ghWnd)
+	if (hWnd == ghWnd && gpConEmu)
 		result = gpConEmu->WndProc(hWnd, messg, wParam, lParam);
 	else
 		result = CConEmuChild::ChildWndProc(hWnd, messg, wParam, lParam);
