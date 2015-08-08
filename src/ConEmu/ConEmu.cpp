@@ -538,7 +538,7 @@ CConEmuMain::CConEmuMain()
 
 	if (!lbBaseFound)
 	{
-		// Если все-равно не нашли - промерить, может это mingw?
+		// Если все-равно не нашли - проверить, может это mingw?
 		pszSlash = wcsrchr(ms_ConEmuExeDir, L'\\');
 		if (pszSlash && (lstrcmpi(pszSlash, L"\\bin") == 0))
 		{

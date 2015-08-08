@@ -178,7 +178,7 @@ public:
 	CEFarWindowType Type()  { return (Info.Type &  fwt_TypeMask); };
 	CEFarWindowType Flags() { return (Info.Type & ~fwt_TypeMask); };
 
-	// Имя и переименованое юзером
+	// Имя и переименованное юзером
 	TabName Name, Renamed;
 	// С учетом возможного переименования
 	LPCWSTR GetName();
