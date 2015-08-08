@@ -7530,9 +7530,11 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 		if (!ms_PostGuiMacro.IsEmpty())
 		{
 			CVConGuard VCon;
-			GetActiveVCon(&VCon);
-			LPWSTR pszRc = ConEmuMacro::ExecuteMacro(ms_PostGuiMacro.ms_Arg, VCon.VCon() ? VCon->RCon() : NULL);
-			SafeFree(pszRc);
+			if (GetActiveVCon(&VCon) >= 0)
+			{
+				LPWSTR pszRc = ConEmuMacro::ExecuteMacro(ms_PostGuiMacro.ms_Arg, VCon.VCon() ? VCon->RCon() : NULL);
+				SafeFree(pszRc);
+			}
 		}
 
 		mp_PushInfo = new CPushInfo();
