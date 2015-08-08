@@ -783,8 +783,8 @@ BOOL CDragDropData::PrepareDrag(BOOL abClickNeed, COORD crMouseDC, DWORD* pdwAll
 	CreateDataObject(NULL, NULL, 0, &mp_DataObject) ;
 
 	// Т.к. у нас появились сплиты - нужно помнить, из какой консоли вытащили файлы
-	CVConGroup::GetActiveVCon(&VCon);
-	mp_DraggedVCon = VCon.VCon();
+	if (CVConGroup::GetActiveVCon(&VCon) >= 0)
+		mp_DraggedVCon = VCon.VCon();
 
 	if (!mp_DataObject)
 	{
