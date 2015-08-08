@@ -3497,8 +3497,9 @@ LPWSTR ConEmuMacro::Tab(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 LPWSTR ConEmuMacro::Task(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 {
 	LPCWSTR pszResult = NULL;
-	LPCWSTR pszName = NULL;
+	LPWSTR pszName = NULL;
 	wchar_t* pszBuf = NULL;
+	bool needToFreeName = false;
 	int nTaskIndex = 0;
 
 	if (p->argc < 1)
@@ -3520,6 +3521,7 @@ LPWSTR ConEmuMacro::Task(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 					pszBuf[cchMax-2] = TaskBracketRight;
 					pszBuf[cchMax-1] = 0;
 					pszName = pszBuf;
+					needToFreeName = true;
 				}
 			}
 			else
@@ -3551,6 +3553,8 @@ LPWSTR ConEmuMacro::Task(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 		gpConEmu->CreateCon(pArgs, true);
 
 		pszResult = L"OK";
+		if (needToFreeName)
+			SafeFree(pszName);
 	}
 
 	return pszResult ? lstrdup(pszResult) : lstrdup(L"InvalidArg");
