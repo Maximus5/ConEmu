@@ -64,11 +64,11 @@ MSection::MSection()
 
 MSection::~MSection()
 {
-	m_cs.Close();
-	m_lock_cs.Close();
-
 	SafeCloseHandle(mh_ReleaseEvent);
 	SafeCloseHandle(mh_ExclusiveThread);
+
+	m_cs.Close();
+	m_lock_cs.Close();
 }
 
 void MSection::Process_Lock()
