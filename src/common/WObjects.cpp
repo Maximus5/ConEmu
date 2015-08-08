@@ -854,7 +854,7 @@ bool isTerminalMode()
 				}
 				nProcCount++;
 			} while (Process32Next(hSnap, &P));
-			// Snapshoot больше не нужен
+			// Snapshot больше не нужен
 			CloseHandle(hSnap);
 
 			int nSteps = 128; // защита от зацикливания

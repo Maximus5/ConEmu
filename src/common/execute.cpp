@@ -617,7 +617,7 @@ LPVOID GetPtrFromRVA(DWORD rva, IMAGE_MAPPING* pImg)
 //	IMAGE_HEADERS hdr;
 //	MODULEENTRY32 mi = {sizeof(MODULEENTRY32)};
 //	// Must be TH32CS_SNAPMODULE32 for spy 32bit from 64bit process
-//	// Сначала пробуем как Native, если процесс окажется другой битности - переоткроем snapshoot
+//	// Сначала пробуем как Native, если процесс окажется другой битности - переоткроем snapshot
 //	HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, anPID);
 //
 //	if (!hSnap || hSnap == INVALID_HANDLE_VALUE)
@@ -646,7 +646,7 @@ LPVOID GetPtrFromRVA(DWORD rva, IMAGE_MAPPING* pImg)
 //			nBits = (hdr.OptionalHeader32.Magic == IMAGE_NT_OPTIONAL_HDR32_MAGIC) ? 32 : 64;
 //#ifdef WIN64
 //
-//			// Если ahProcess - 64 бита, но нужно переоткрыть snapshoot с флагом TH32CS_SNAPMODULE32
+//			// Если ahProcess - 64 бита, но нужно переоткрыть snapshot с флагом TH32CS_SNAPMODULE32
 //			// В принципе, мы сюда попадать не должны, т.к. ConEmuC.exe - 32битный.
 //			if (nBits == 32)
 //			{

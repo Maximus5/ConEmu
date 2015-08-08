@@ -2588,7 +2588,7 @@ bool CVirtualConsole::LoadConsoleData()
 					}
 				}
 
-				// Шрифт создали, теперь - пометить соответсвующий регион для использования этого шрифта
+				// Шрифт создали, теперь - пометить соответствующий регион для использования этого шрифта
 				if (mh_UCharMapFont)
 				{
 					for(int Y = rcGlyph.Top; Y <= rcGlyph.Bottom; Y++)
@@ -5240,7 +5240,7 @@ void CVirtualConsole::PaintVConDebug(HDC hPaintDc, RECT rcClient)
 		#ifdef DEBUGDRAW_RCONPOS
 		if (GetKeyState(DEBUGDRAW_RCONPOS) & 1)
 		{
-			// Прямоугольник, соответвующий положения окна RealConsole
+			// Прямоугольник, соответствующий положению окна RealConsole
 			HWND hConWnd = mp_RCon->hConWnd;
 			RECT rcCon; GetWindowRect(hConWnd, &rcCon);
 			MapWindowPoints(NULL, GetView(), (LPPOINT)&rcCon, 2);
