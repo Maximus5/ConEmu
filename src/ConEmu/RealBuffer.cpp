@@ -154,6 +154,9 @@ CRealBuffer::~CRealBuffer()
 	if (con.pConAttr)
 		{ Free(con.pConAttr); con.pConAttr = NULL; }
 
+	if (con.pDataCmp)
+		{ Free(con.pDataCmp); con.pDataCmp = NULL; }
+
 	dump.Close();
 
 	SafeDelete(m_TrueMode.pcsLock);
