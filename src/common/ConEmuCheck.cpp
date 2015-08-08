@@ -1337,6 +1337,8 @@ int GuiMessageBox(HWND hConEmuWndRoot, LPCWSTR asText, LPCWSTR asTitle, int anBt
 			_CrtDbgBreak();
 			#endif
 		}
+		if (hUser32)
+			FreeLibrary(hUser32);
 	}
 
 	return nResult;
