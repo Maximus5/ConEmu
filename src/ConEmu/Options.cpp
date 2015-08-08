@@ -368,6 +368,7 @@ void Settings::ReleasePointers()
 	ProgressesCount = 0;
 
 	UpdSet.FreePointers();
+	SafeFree(FindOptions.pszText);
 }
 
 Settings::~Settings()
