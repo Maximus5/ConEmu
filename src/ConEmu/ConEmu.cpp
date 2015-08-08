@@ -1938,7 +1938,7 @@ bool CConEmuMain::SetParent(HWND hNewParent)
 void CConEmuMain::FillConEmuMainFont(ConEmuMainFont* pFont)
 {
 	// Параметры основного шрифта ConEmu
-	lstrcpy(pFont->sFontName, gpSetCls->FontFaceName());
+	lstrcpyn(pFont->sFontName, gpSetCls->FontFaceName(), countof(pFont->sFontName));
 	pFont->nFontHeight = gpSetCls->FontHeight();
 	pFont->nFontWidth = gpSetCls->FontWidth();
 	pFont->nFontCellWidth = gpSetCls->FontCellWidth();
@@ -1946,7 +1946,7 @@ void CConEmuMain::FillConEmuMainFont(ConEmuMainFont* pFont)
 	pFont->nFontCharSet = gpSetCls->FontCharSet();
 	pFont->Bold = gpSetCls->FontBold();
 	pFont->Italic = gpSetCls->FontItalic();
-	lstrcpy(pFont->sBorderFontName, gpSetCls->BorderFontFaceName());
+	lstrcpyn(pFont->sBorderFontName, gpSetCls->BorderFontFaceName(), countof(pFont->sBorderFontName));
 	pFont->nBorderFontWidth = gpSetCls->BorderFontWidth();
 }
 
