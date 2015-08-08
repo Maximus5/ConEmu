@@ -4676,7 +4676,7 @@ BOOL CRealConsole::CreateOrRunAs(CRealConsole* pRCon, RConStartArgs& Args,
 			}
 
 			wchar_t szCurrentDirectory[MAX_PATH+1];
-			wcscpy(szCurrentDirectory, lpszWorkDir);
+			_wcscpy_c(szCurrentDirectory, countof(szCurrentDirectory), lpszWorkDir);
 
 			int nWholeSize = sizeof(SHELLEXECUTEINFO)
 				                + sizeof(wchar_t) *
