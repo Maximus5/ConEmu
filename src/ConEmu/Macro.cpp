@@ -2249,7 +2249,7 @@ LPWSTR ConEmuMacro::Keys(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 		// + the key
 		UINT VK = 0;
 		// Parse modifiers
-		while (pszKey[0] && pszKey[1])
+		while (pszKey && pszKey[0] && pszKey[1])
 		{
 			switch (*pszKey)
 			{
