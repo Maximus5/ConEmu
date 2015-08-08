@@ -11887,11 +11887,13 @@ LRESULT CConEmuMain::OnSetCursor(WPARAM wParam, LPARAM lParam)
 	CVConGuard VCon;
 	POINT ptCur; GetCursorPos(&ptCur);
 	// Если сейчас идет trackPopupMenu - то на выход
-	if (!isMenuActive())
-		CVConGroup::GetVConFromPoint(ptCur, &VCon);
-	CVirtualConsole* pVCon = VCon.VCon();
-	if (pVCon && !pVCon->isActive(false))
-		pVCon = NULL;
+	CVirtualConsole* pVCon = NULL;
+	if (!isMenuActive() && CVConGroup::GetVConFromPoint(ptCur, &VCon))
+	{
+		pVCon = VCon.VCon();
+		if (pVCon && !pVCon->isActive(false))
+			pVCon = NULL;
+	}
 	CRealConsole *pRCon = pVCon ? pVCon->RCon() : NULL;
 
 	// Курсор НЕ над консолью?
