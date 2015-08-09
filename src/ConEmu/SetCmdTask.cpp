@@ -338,6 +338,7 @@ bool CommandTasks::LoadCmdTask(SettingsBase* reg, int iIndex)
 	}
 
 wrap:
+	SafeFree(pszNameSet);
 	return lbRc;
 }
 
