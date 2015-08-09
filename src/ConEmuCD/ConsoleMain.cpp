@@ -4292,7 +4292,7 @@ void UpdateConsoleTitle()
 	}
 
 	// Need to change title? Do it.
-	if (pszSetTitle && pszSetTitle)
+	if (pszSetTitle && *pszSetTitle)
 	{
 		#ifdef _DEBUG
 		int nLen = 4096; //GetWindowTextLength(ghConWnd); -- KIS2009 гундит "Посылка оконного сообщения"...
