@@ -4679,15 +4679,13 @@ BOOL CRealConsole::CreateOrRunAs(CRealConsole* pRCon, RConStartArgs& Args,
 				SafeFree(pp_sei);
 			}
 
-			wchar_t szCurrentDirectory[MAX_PATH+1];
-			wcscpy(szCurrentDirectory, lpszWorkDir);
-
+			INT_PTR iDirLen = (lpszWorkDir ? _tcslen(lpszWorkDir) : 0);
 			int nWholeSize = sizeof(SHELLEXECUTEINFO)
 				                + sizeof(wchar_t) *
 				                (10  /* Verb */
 				                + _tcslen(szExec)+2
 				                + ((pszCmd == NULL) ? 0 : (_tcslen(pszCmd)+2))
-				                + _tcslen(szCurrentDirectory) + 2
+				                + iDirLen + 2
 				                );
 			pp_sei = (SHELLEXECUTEINFO*)calloc(nWholeSize, 1);
 			pp_sei->cbSize = sizeof(SHELLEXECUTEINFO);
@@ -4713,8 +4711,8 @@ BOOL CRealConsole::CreateOrRunAs(CRealConsole* pRCon, RConStartArgs& Args,
 
 			pp_sei->lpDirectory = pp_sei->lpParameters + _tcslen(pp_sei->lpParameters) + 2;
 
-			if (szCurrentDirectory[0])
-				wcscpy((wchar_t*)pp_sei->lpDirectory, szCurrentDirectory);
+			if (lpszWorkDir && *lpszWorkDir)
+				_wcscpy_c((wchar_t*)pp_sei->lpDirectory, iDirLen+1, lpszWorkDir);
 			else
 				pp_sei->lpDirectory = NULL;
 
