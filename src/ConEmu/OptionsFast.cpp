@@ -984,6 +984,7 @@ public:
 		VarDef v = {};
 		while (Vars.pop_back(v))
 		{
+			SafeFree(v.pszName);
 			SafeFree(v.pszValue);
 		}
 	};

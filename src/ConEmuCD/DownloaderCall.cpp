@@ -296,8 +296,7 @@ protected:
 		bRc = true;
 	wrap:
 		delete[] buf;
-		if (!hFile || hFile == INVALID_HANDLE_VALUE)
-			CloseHandle(hFile);
+		SafeCloseHandle(hFile);
 		return bRc;
 	};
 

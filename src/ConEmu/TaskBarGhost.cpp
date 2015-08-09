@@ -677,8 +677,7 @@ LRESULT CTaskBarGhost::OnActivate(WPARAM wParam, LPARAM lParam)
 		// сначала проверяем активный таб
 		CVConGuard guard(mp_VCon);
 		CVConGuard VCon;
-		gpConEmu->GetActiveVCon(&VCon);
-		if (VCon.VCon() != mp_VCon)
+		if (gpConEmu->GetActiveVCon(&VCon) && (VCon.VCon() != mp_VCon))
 			gpConEmu->Activate(mp_VCon);
 
 		// Forward message

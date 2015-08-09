@@ -783,8 +783,8 @@ BOOL CDragDropData::PrepareDrag(BOOL abClickNeed, COORD crMouseDC, DWORD* pdwAll
 	CreateDataObject(NULL, NULL, 0, &mp_DataObject) ;
 
 	// Т.к. у нас появились сплиты - нужно помнить, из какой консоли вытащили файлы
-	CVConGroup::GetActiveVCon(&VCon);
-	mp_DraggedVCon = VCon.VCon();
+	if (CVConGroup::GetActiveVCon(&VCon) >= 0)
+		mp_DraggedVCon = VCon.VCon();
 
 	if (!mp_DataObject)
 	{
@@ -1299,6 +1299,7 @@ void CDragDropData::SetDragToInfo(const ForwardedPanelInfo* pInfo, size_t cbInfo
 		if (!m_pfpi)
 		{
 			mn_PfpiSizeMax = sizeof(ForwardedPanelInfo)+(MAX_PATH*5*sizeof(wchar_t));
+			SafeFree(m_pfpi);
 			m_pfpi = (ForwardedPanelInfo*)calloc(1,mn_PfpiSizeMax);
 		}
 
@@ -1336,6 +1337,7 @@ void CDragDropData::SetDragToInfo(const ForwardedPanelInfo* pInfo, size_t cbInfo
 
 	// Reserve additional space
 	mn_PfpiSizeMax = cbInfoSize+(MAX_PATH*5*sizeof(wchar_t));
+	SafeFree(m_pfpi);
 	m_pfpi = (ForwardedPanelInfo*)calloc(1, mn_PfpiSizeMax);
 	if (!m_pfpi)
 	{
@@ -1834,6 +1836,7 @@ BOOL CDragDropData::PaintDragImageBits(wchar_t* pszFiles, HDC& hDrawDC, HBITMAP&
 
 		ptCursor->y = 17; // под первой строкой
 	}
+	DeleteObject(hf);
 	return TRUE;
 }
 

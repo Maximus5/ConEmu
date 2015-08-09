@@ -2136,7 +2136,7 @@ HWND FindConEmuByPID(DWORD anSuggestedGuiPID /*= 0*/)
 	// В большинстве случаев PID GUI передан через параметры
 	if (nConEmuPID == 0)
 	{
-		// GUI может еще "висеть" в ожидании или в отладчике, так что пробуем и через Snapshoot
+		// GUI может еще "висеть" в ожидании или в отладчике, так что пробуем и через Snapshot
 		HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS,0);
 
 		if (hSnap != INVALID_HANDLE_VALUE)
@@ -2284,7 +2284,7 @@ void CheckConEmuHwnd()
 		SendStarted(); // Он и окно проверит, и параметры перешлет и размер консоли скорректирует
 	}
 
-	// GUI может еще "висеть" в ожидании или в отладчике, так что пробуем и через Snapshoot
+	// GUI может еще "висеть" в ожидании или в отладчике, так что пробуем и через Snapshot
 	if (ghConEmuWnd == NULL)
 	{
 		ghConEmuWnd = FindConEmuByPID();

@@ -525,6 +525,10 @@ CRealConsole::~CRealConsole()
 	//	delete mp_Rgn;
 	//	mp_Rgn = NULL;
 	//}
+	SafeCloseHandle(mh_ApplyFinished);
+	SafeCloseHandle(mh_UpdateServerActiveEvent);
+	SafeCloseHandle(mh_MonitorThreadEvent);
+	SafeDelete(mp_Files);
 	MCHKHEAP;
 }
 
@@ -4676,7 +4680,7 @@ BOOL CRealConsole::CreateOrRunAs(CRealConsole* pRCon, RConStartArgs& Args,
 			}
 
 			wchar_t szCurrentDirectory[MAX_PATH+1];
-			wcscpy(szCurrentDirectory, lpszWorkDir);
+			_wcscpy_c(szCurrentDirectory, countof(szCurrentDirectory), lpszWorkDir);
 
 			int nWholeSize = sizeof(SHELLEXECUTEINFO)
 				                + sizeof(wchar_t) *
@@ -8072,12 +8076,12 @@ BOOL CRealConsole::ProcessUpdate(const DWORD *apPID, UINT anCount)
 		{
 			DWORD dwErr = GetLastError();
 			wchar_t szError[255];
-			_wsprintf(szError, SKIPLEN(countof(szError)) L"Can't create process snapshoot, ErrCode=0x%08X", dwErr);
+			_wsprintf(szError, SKIPLEN(countof(szError)) L"Can't create process snapshot, ErrCode=0x%08X", dwErr);
 			mp_ConEmu->DebugStep(szError);
 		}
 		else
 		{
-			//Snapshoot создан, поехали
+			//Snapshot создан, поехали
 			// Перед добавлением нового - поставить пометочку на все процессы, вдруг кто уже убился
 			for (INT_PTR ii = 0; ii < m_Processes.size(); ii++)
 			{

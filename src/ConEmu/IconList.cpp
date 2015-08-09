@@ -308,6 +308,7 @@ int CIconList::CreateTabIconInt(LPCWSTR asIconDescr, bool bAdmin, LPCWSTR asWork
 				{
 					gpConEmu->LogString(L"GetIcon for admin icon was failed");
 				}
+				ImageList_Destroy(hAdmList);
 			}
 			else
 			{

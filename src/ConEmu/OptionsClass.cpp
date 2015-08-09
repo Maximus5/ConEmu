@@ -707,7 +707,7 @@ bool CSettings::SetOption(LPCWSTR asName, LPCWSTR asValue)
 	if (!lstrcmpi(asName, L"FarGotoEditorPath"))
 	{
 		wchar_t* pszNewVal = lstrdup(asValue);
-		if (pszNewVal && pszNewVal)
+		if (pszNewVal && *pszNewVal)
 		{
 			wchar_t* pszOld = (wchar_t*)InterlockedExchangePointer((PVOID*)&gpSet->sFarGotoEditor, pszNewVal);
 			SafeFree(pszOld);
@@ -4945,6 +4945,7 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 
 	case tTabSkipWords:
 	{
+		SafeFree(gpSet->pszTabSkipWords);
 		gpSet->pszTabSkipWords = GetDlgItemTextPtr(hWnd2, TB);
 		gpConEmu->mp_TabBar->Update(TRUE);
 		break;

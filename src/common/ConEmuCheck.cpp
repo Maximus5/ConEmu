@@ -856,7 +856,7 @@ CESERVER_REQ* ExecuteCmd(const wchar_t* szPipeName, CESERVER_REQ* pIn, DWORD nWa
 		_ASSERTE(fSuccess && (cbRead == pIn->hdr.cbSize));
 		#endif
 
-		// -- Do not close hPipe, otherwise the reader may fails with that packet
+		// -- Do not close hPipe, otherwise the reader may fail with that packet
 		// -- with error ‘pipe was closed before end’.
 		// -- Handle leak, yeah, however this is rarely used op.
 		// -- Must be refactored, but not so critical...
@@ -1337,6 +1337,8 @@ int GuiMessageBox(HWND hConEmuWndRoot, LPCWSTR asText, LPCWSTR asTitle, int anBt
 			_CrtDbgBreak();
 			#endif
 		}
+		if (hUser32)
+			FreeLibrary(hUser32);
 	}
 
 	return nResult;

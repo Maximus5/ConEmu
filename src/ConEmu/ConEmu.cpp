@@ -538,7 +538,7 @@ CConEmuMain::CConEmuMain()
 
 	if (!lbBaseFound)
 	{
-		// Если все-равно не нашли - промерить, может это mingw?
+		// Если все-равно не нашли - проверить, может это mingw?
 		pszSlash = wcsrchr(ms_ConEmuExeDir, L'\\');
 		if (pszSlash && (lstrcmpi(pszSlash, L"\\bin") == 0))
 		{
@@ -1938,7 +1938,7 @@ bool CConEmuMain::SetParent(HWND hNewParent)
 void CConEmuMain::FillConEmuMainFont(ConEmuMainFont* pFont)
 {
 	// Параметры основного шрифта ConEmu
-	lstrcpy(pFont->sFontName, gpSetCls->FontFaceName());
+	lstrcpyn(pFont->sFontName, gpSetCls->FontFaceName(), countof(pFont->sFontName));
 	pFont->nFontHeight = gpSetCls->FontHeight();
 	pFont->nFontWidth = gpSetCls->FontWidth();
 	pFont->nFontCellWidth = gpSetCls->FontCellWidth();
@@ -1946,7 +1946,7 @@ void CConEmuMain::FillConEmuMainFont(ConEmuMainFont* pFont)
 	pFont->nFontCharSet = gpSetCls->FontCharSet();
 	pFont->Bold = gpSetCls->FontBold();
 	pFont->Italic = gpSetCls->FontItalic();
-	lstrcpy(pFont->sBorderFontName, gpSetCls->BorderFontFaceName());
+	lstrcpyn(pFont->sBorderFontName, gpSetCls->BorderFontFaceName(), countof(pFont->sBorderFontName));
 	pFont->nBorderFontWidth = gpSetCls->BorderFontWidth();
 }
 
@@ -2633,6 +2633,8 @@ CConEmuMain::~CConEmuMain()
 
 	SafeDelete(mp_AttachDlg);
 	SafeDelete(mp_RecreateDlg);
+	SafeCloseHandle(mh_ConEmuAliveEvent);
+	SafeCloseHandle(mh_ConEmuAliveEventNoDir);
 
 	CVConGroup::DestroyAllVCon();
 
@@ -3431,6 +3433,7 @@ CVirtualConsole* CConEmuMain::CreateConGroup(LPCWSTR apszScript, bool abForceAsA
 
 			if (*pszLine)
 			{
+				SafeFree(args.pszSpecialCmd);
 				args.pszSpecialCmd = lstrdup(pszLine);
 
 				if (lbRunAdmin) // don't reset one that may come from apDefArgs
@@ -4615,6 +4618,7 @@ bool CConEmuMain::RecreateAction(RecreateActionParm aRecreate, BOOL abConfirm, R
 			if (!args.pszSpecialCmd || !*args.pszSpecialCmd)
 			{
 				_ASSERTE((args.pszSpecialCmd && *args.pszSpecialCmd) || !abConfirm);
+				SafeFree(args.pszSpecialCmd);
 				args.pszSpecialCmd = lstrdup(GetCmd());
 			}
 
@@ -7132,7 +7136,10 @@ wchar_t* CConEmuMain::LoadConsoleBatch_Task(LPCWSTR asSource, RConStartArgs* pAr
 				RConStartArgs args;
 				args.aRecreate = (mn_StartupFinished == ss_Started) ? cra_EditTab : cra_CreateTab;
 				if (pszDefCmd && *pszDefCmd)
+				{
+					SafeFree(args.pszSpecialCmd);
 					args.pszSpecialCmd = lstrdup(pszDefCmd);
+				}
 
 				int nCreateRc = RecreateDlg(&args);
 
@@ -7407,6 +7414,7 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 
 				if (args.Detached != crb_On)
 				{
+					SafeFree(args.pszSpecialCmd);
 					args.pszSpecialCmd = lstrdup(GetCmd());
 
 					CEStr lsLog(lstrmerge(L"Creating console using command ", args.pszSpecialCmd));
@@ -7530,9 +7538,11 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 		if (!ms_PostGuiMacro.IsEmpty())
 		{
 			CVConGuard VCon;
-			GetActiveVCon(&VCon);
-			LPWSTR pszRc = ConEmuMacro::ExecuteMacro(ms_PostGuiMacro.ms_Arg, VCon.VCon() ? VCon->RCon() : NULL);
-			SafeFree(pszRc);
+			if (GetActiveVCon(&VCon) >= 0)
+			{
+				LPWSTR pszRc = ConEmuMacro::ExecuteMacro(ms_PostGuiMacro.ms_Arg, VCon.VCon() ? VCon->RCon() : NULL);
+				SafeFree(pszRc);
+			}
 		}
 
 		mp_PushInfo = new CPushInfo();
@@ -11885,11 +11895,13 @@ LRESULT CConEmuMain::OnSetCursor(WPARAM wParam, LPARAM lParam)
 	CVConGuard VCon;
 	POINT ptCur; GetCursorPos(&ptCur);
 	// Если сейчас идет trackPopupMenu - то на выход
-	if (!isMenuActive())
-		CVConGroup::GetVConFromPoint(ptCur, &VCon);
-	CVirtualConsole* pVCon = VCon.VCon();
-	if (pVCon && !pVCon->isActive(false))
-		pVCon = NULL;
+	CVirtualConsole* pVCon = NULL;
+	if (!isMenuActive() && CVConGroup::GetVConFromPoint(ptCur, &VCon))
+	{
+		pVCon = VCon.VCon();
+		if (pVCon && !pVCon->isActive(false))
+			pVCon = NULL;
+	}
 	CRealConsole *pRCon = pVCon ? pVCon->RCon() : NULL;
 
 	// Курсор НЕ над консолью?
@@ -13134,7 +13146,7 @@ LRESULT CConEmuMain::MainWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lP
 	//	'ghWnd DC' = hWnd; // ставим сразу, чтобы функции могли пользоваться
 	//}
 
-	if (hWnd == ghWnd)
+	if (hWnd == ghWnd && gpConEmu)
 		result = gpConEmu->WndProc(hWnd, messg, wParam, lParam);
 	else
 		result = CConEmuChild::ChildWndProc(hWnd, messg, wParam, lParam);

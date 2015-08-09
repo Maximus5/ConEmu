@@ -93,6 +93,8 @@ HRESULT TaskDialog(TASKDIALOGCONFIG *pTaskConfig, int *pnButton, int *pnRadioBut
 			hDll = LoadLibrary(L"comctl32.dll");
 		}
 		TaskDialogIndirect_f = (TaskDialogIndirect_t)(hDll?GetProcAddress(hDll, "TaskDialogIndirect"):NULL);
+		if (hDll)
+			FreeLibrary(hDll);
 	}
 
 	if (TaskDialogIndirect_f)
