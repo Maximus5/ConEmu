@@ -1321,6 +1321,7 @@ void CDragDropData::SetDragToInfo(const ForwardedPanelInfo* pInfo, size_t cbInfo
 		if (!m_pfpi)
 		{
 			mn_PfpiSizeMax = sizeof(ForwardedPanelInfo)+(MAX_PATH*5*sizeof(wchar_t));
+			SafeFree(m_pfpi);
 			m_pfpi = (ForwardedPanelInfo*)calloc(1,mn_PfpiSizeMax);
 		}
 
@@ -1358,6 +1359,7 @@ void CDragDropData::SetDragToInfo(const ForwardedPanelInfo* pInfo, size_t cbInfo
 
 	// Reserve additional space
 	mn_PfpiSizeMax = cbInfoSize+(MAX_PATH*5*sizeof(wchar_t));
+	SafeFree(m_pfpi);
 	m_pfpi = (ForwardedPanelInfo*)calloc(1, mn_PfpiSizeMax);
 	if (!m_pfpi)
 	{
