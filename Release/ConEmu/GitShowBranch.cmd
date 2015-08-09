@@ -207,9 +207,9 @@ call :drop_ext
 
 rem Are there changes? Or we need to display branch name only?
 if "%gitbranch_add% %gitbranch_chg% %gitbranch_del%" == "0 0 0" (
-  set gitbranch= [%gitbranch:~3%]
+  set "gitbranch= [%gitbranch:~3%]"
 ) else (
-  set gitbranch= [%gitbranch:~3% +%gitbranch_add% ~%gitbranch_chg% -%gitbranch_del%]
+  set "gitbranch= [%gitbranch:~3% +%gitbranch_add% ~%gitbranch_chg% -%gitbranch_del%]"
 )
 rem echo "%gitbranch%"
 
