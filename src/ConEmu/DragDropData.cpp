@@ -1834,6 +1834,7 @@ BOOL CDragDropData::PaintDragImageBits(wchar_t* pszFiles, HDC& hDrawDC, HBITMAP&
 
 		ptCursor->y = 17; // под первой строкой
 	}
+	DeleteObject(hf);
 	return TRUE;
 }
 
