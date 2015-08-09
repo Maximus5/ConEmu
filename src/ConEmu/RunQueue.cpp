@@ -64,6 +64,7 @@ CRunQueue::~CRunQueue()
 		SafeCloseHandle(mh_Thread);
 	}
 
+	SafeCloseHandle(mh_AdvanceEvent);
 	SafeDelete(mpcs_QueueLock);
 }
 
