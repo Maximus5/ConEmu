@@ -112,7 +112,7 @@ _DBGHLP(L"     l - lock console size, do not sync it to ConEmu window\r\n") \
 		L"     t - see below\r\n" \
 _DBGHLP(L"     x<width>, y<height> - change size of visible area, use with 'l'\r\n") \
 		L"     u - ConEmu choose user dialog\r\n" \
-		L"     w - Enable 'Overwrite' mode in command prompt by default\r\n" \
+		L"     w[0] - Enable [disable] 'Overwrite' mode in command prompt by default\r\n" \
 		L"     W - see below\r\n" \
 		L"     z - Don't use 'Default terminal' feature for this command\r\n" \
 		L"\r\n" \

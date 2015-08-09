@@ -507,7 +507,7 @@ wchar_t* RConStartArgs::CreateCommandLine(bool abForTasks /*= false*/) const
 	if (ForegroungTab == crb_On) cchMaxLen++; // -new_console:f
 	if (BufHeight == crb_On) cchMaxLen += 32; // -new_console:h<lines>
 	if (LongOutputDisable == crb_On) cchMaxLen++; // -new_console:o
-	if (OverwriteMode == crb_On) cchMaxLen++; // -new_console:w
+	if (OverwriteMode != crb_Off) cchMaxLen += 2; // -new_console:w[0|1]
 	cchMaxLen += (nPTY ? 15 : 0); // -new_console:e
 	if (InjectsDisable == crb_On) cchMaxLen++; // -new_console:i
 	if (ForceNewWindow == crb_On) cchMaxLen++; // -new_console:N
@@ -565,6 +565,8 @@ wchar_t* RConStartArgs::CreateCommandLine(bool abForTasks /*= false*/) const
 
 	if (OverwriteMode == crb_On)
 		wcscat_c(szAdd, L"w");
+	else if (OverwriteMode == crb_Off)
+		wcscat_c(szAdd, L"w0");
 
 	if (nPTY)
 		wcscat_c(szAdd, (nPTY == 1) ? L"p1" : (nPTY == 2) ? L"p2" : L"p0");
@@ -1034,8 +1036,23 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 						break;
 
 					case L'w':
-						// e - enable "Overwrite" mode in console prompt
-						OverwriteMode = crb_On;
+						// w[1] - enable "Overwrite" mode in console prompt
+						// w0  - disable "Overwrite" mode in console prompt
+						// This will affect only default ReadConsole API function
+						if (isDigit(*pszEnd))
+						{
+							switch (*(pszEnd++))
+							{
+							case 0:
+								OverwriteMode = crb_Off;
+							default:
+								OverwriteMode = crb_On;
+							}
+						}
+						else
+						{
+							OverwriteMode = crb_On;
+						}
 						break;
 
 					case L'p':
