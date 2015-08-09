@@ -4439,14 +4439,16 @@ BOOL CRealConsole::StartProcessInt(LPCWSTR& lpszCmd, wchar_t*& psCurCmd, LPCWSTR
 		_wcscat_c(psCurCmd, nLen, L"/SKIPHOOKERS ");
 	}
 
-	if ((gpSet->nConInMode != (DWORD)-1) || (m_Args.OverwriteMode == crb_On))
+	// Console modes (insert/overwrite)
 	{
-		DWORD nMode = (gpSet->nConInMode != (DWORD)-1) ? gpSet->nConInMode : 0;
+		DWORD nMode =
+			// (gpSet->nConInMode != (DWORD)-1) ? gpSet->nConInMode : 0
+			(ENABLE_INSERT_MODE << 16) // Mask for insert/overwrite mode
+			;
 		if (m_Args.OverwriteMode == crb_On)
-		{
-			nMode |= (ENABLE_INSERT_MODE << 16); // Mask
-			nMode &= ~ENABLE_INSERT_MODE; // Turn bit OFF
-		}
+			nMode &= ~ENABLE_INSERT_MODE; // Turn bit OFF (Overwrite mode). Yep, it's NOP, but here for compatibility and clearness.
+		else
+			nMode |= ENABLE_INSERT_MODE; // Turn bit ON (Insert mode)
 
 		nCurLen = _tcslen(psCurCmd);
 		_wsprintf(psCurCmd+nCurLen, SKIPLEN(nLen-nCurLen) L" /CINMODE=%X ", nMode);

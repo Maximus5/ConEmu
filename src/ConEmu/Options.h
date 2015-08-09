@@ -441,8 +441,6 @@ struct Settings
 		bool isExtendUCharMap;
 		//reg->Load(L"DisableMouse", isDisableMouse);
 		bool isDisableMouse;
-		//reg->Load(L"ConInMode", nConInMode);
-		DWORD nConInMode;
 		//reg->Load(L"MouseSkipActivation", isMouseSkipActivation);
 		bool isMouseSkipActivation;
 		//reg->Load(L"MouseSkipMoving", isMouseSkipMoving);

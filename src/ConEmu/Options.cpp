@@ -686,14 +686,6 @@ void Settings::InitSettings()
 	isPortableReg = false;
 	#endif
 
-	// By default (ConInMode==-1, DisableMouse==false)
-	// ==> turn OFF "Quick edit mode", turn ON "Insert mode"
-	// User can change behavior using mask. E.g 0x00300000 - uncheck both
-	// HIWORD(nConInMode) - mask (for clearing bits), LOWORD(nConInMode) - OR operator
-	// ((ENABLE_QUICK_EDIT_MODE|ENABLE_INSERT_MODE)<<16) | (ENABLE_QUICK_EDIT_MODE|ENABLE_INSERT_MODE);
-	// Note, ENABLE_EXTENDED_FLAGS is always turned ON
-	// This (nConInMode) is passed to the ConEmuC (server) with "/CINMODE=" switch
-	nConInMode = (DWORD)-1;
 	isDisableMouse = false;
 
 	nSlideShowElapse = 2500;
@@ -2433,7 +2425,6 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 
 		// Debugging
 		reg->Load(L"ConVisible", isConVisible);
-		reg->Load(L"ConInMode", nConInMode);
 
 
 		reg->Load(L"UseInjects", isUseInjects); //MinMax(isUseInjects, BST_INDETERMINATE);
@@ -3416,7 +3407,6 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 			wndY = rcPos.top;
 		}*/
 		reg->Save(L"ConVisible", isConVisible);
-		reg->Save(L"ConInMode", nConInMode);
 
 		reg->Save(L"UseInjects", isUseInjects);
 

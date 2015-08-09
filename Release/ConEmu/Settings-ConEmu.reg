@@ -231,11 +231,6 @@ REGEDIT4
 ;; Debug. 1 - Don't hide console window
 "ConVisible"=hex:00
 
-;; Check or Uncheck "QuickEdit Mode" and "Insert mode" in real console window properties
-;; HIWORD - mask, LOWORD - flags for SetConsoleMode function
-;; FFFFFFFF - Defaults (Check), 00300000 - Uncheck
-"ConInMode"=dword:FFFFFFFF
-
 ;; Allow injects of ConEmuHk.dll in every process of ConEmu console window
 "UseInjects"=hex:01
 

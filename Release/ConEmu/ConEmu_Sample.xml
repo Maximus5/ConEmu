@@ -89,11 +89,6 @@
 			<value name="FadeInactiveHigh" type="hex" data="d0"/>
 			<value name="ConVisible" type="hex" data="00"/>
 
-			<!-- Check or UnCheck "QuickEdit Mode" and "Insert mode" in real console window properties -->
-			<!-- HIWORD - mask, LOWORD - flags for SetConsoleMode function -->
-			<!-- FFFFFFFF - Defaults (Check), 00300000 - Uncheck -->
-			<value name="ConInMode" type="dword" data="ffffffff"/>
-
 			<value name="SetDefaultTerminal" type="hex" data="00"/>
 			<value name="SetDefaultTerminalStartup" type="hex" data="00"/>
 			<value name="SetDefaultTerminalStartupTSA" type="hex" data="00"/>
