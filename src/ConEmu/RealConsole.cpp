@@ -528,6 +528,7 @@ CRealConsole::~CRealConsole()
 	SafeCloseHandle(mh_ApplyFinished);
 	SafeCloseHandle(mh_UpdateServerActiveEvent);
 	SafeCloseHandle(mh_MonitorThreadEvent);
+	SafeDelete(mp_Files);
 	MCHKHEAP;
 }
 
