@@ -3433,6 +3433,7 @@ CVirtualConsole* CConEmuMain::CreateConGroup(LPCWSTR apszScript, bool abForceAsA
 
 			if (*pszLine)
 			{
+				SafeFree(args.pszSpecialCmd);
 				args.pszSpecialCmd = lstrdup(pszLine);
 
 				if (lbRunAdmin) // don't reset one that may come from apDefArgs
@@ -4617,6 +4618,7 @@ bool CConEmuMain::RecreateAction(RecreateActionParm aRecreate, BOOL abConfirm, R
 			if (!args.pszSpecialCmd || !*args.pszSpecialCmd)
 			{
 				_ASSERTE((args.pszSpecialCmd && *args.pszSpecialCmd) || !abConfirm);
+				SafeFree(args.pszSpecialCmd);
 				args.pszSpecialCmd = lstrdup(GetCmd());
 			}
 
@@ -7134,7 +7136,10 @@ wchar_t* CConEmuMain::LoadConsoleBatch_Task(LPCWSTR asSource, RConStartArgs* pAr
 				RConStartArgs args;
 				args.aRecreate = (mn_StartupFinished == ss_Started) ? cra_EditTab : cra_CreateTab;
 				if (pszDefCmd && *pszDefCmd)
+				{
+					SafeFree(args.pszSpecialCmd);
 					args.pszSpecialCmd = lstrdup(pszDefCmd);
+				}
 
 				int nCreateRc = RecreateDlg(&args);
 
@@ -7409,6 +7414,7 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 
 				if (args.Detached != crb_On)
 				{
+					SafeFree(args.pszSpecialCmd);
 					args.pszSpecialCmd = lstrdup(GetCmd());
 
 					CEStr lsLog(lstrmerge(L"Creating console using command ", args.pszSpecialCmd));
