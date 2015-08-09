@@ -137,17 +137,25 @@ set git_out=%gitlogpath%\conemu_git_%ConEmuServerPID%_1.log
 set git_err=%gitlogpath%\conemu_git_%ConEmuServerPID%_2.log
 
 
+rem Just to ensure that non-oem characters will not litter the prompt
+set "ConEmu_SaveLang=%LANG%"
+set LANG=en_US
+
 rem Due to a bug(?) of cmd.exe we can't quote ConEmuGitPath variable
 rem otherwise if it contains only unquoted "git" and matches "git.cmd" for example
 rem the "%~dp0" macros in that cmd will return a crap.
 
 call %ConEmuGitPath% -c color.status=false status --short --branch --porcelain 1>"%git_out%" 2>"%git_err%"
 if errorlevel 1 (
+set "LANG=%ConEmu_SaveLang%"
+set ConEmu_SaveLang=
 del "%git_out%">nul
 del "%git_err%">nul
 set gitbranch=
 goto prepare
 )
+set "LANG=%ConEmu_SaveLang%"
+set ConEmu_SaveLang=
 
 rem Firstly check if it is not a git repository
 rem Set "gitbranch" to full contents of %git_out% file
