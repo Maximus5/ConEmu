@@ -525,6 +525,9 @@ CRealConsole::~CRealConsole()
 	//	delete mp_Rgn;
 	//	mp_Rgn = NULL;
 	//}
+	SafeCloseHandle(mh_ApplyFinished);
+	SafeCloseHandle(mh_UpdateServerActiveEvent);
+	SafeCloseHandle(mh_MonitorThreadEvent);
 	MCHKHEAP;
 }
 
