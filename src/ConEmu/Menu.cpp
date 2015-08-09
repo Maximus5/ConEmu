@@ -2443,8 +2443,12 @@ LRESULT CConEmuMenu::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam, UINT 
 			POINT ptCur = {}; GetCursorPos(&ptCur);
 			HMONITOR hMon = MonitorFromPoint(ptCur, MONITOR_DEFAULTTOPRIMARY);
 			MONITORINFO mi = {sizeof(mi)};
-			if (GetMonitorInfo(hMon, &mi))
-				SetWindowPos(ghWnd, HWND_TOP, mi.rcWork.left, mi.rcWork.top, 0,0, SWP_NOSIZE);
+			if (!GetMonitorInfo(hMon, &mi))
+			{
+				_ASSERTE(FALSE && "GetMonitorInfo fails");
+				mi.rcWork.left = mi.rcWork.top = 0;
+			}
+			SetWindowPos(ghWnd, HWND_TOP, mi.rcWork.left, mi.rcWork.top, 0,0, SWP_NOSIZE);
 			return 0;
 		}
 
