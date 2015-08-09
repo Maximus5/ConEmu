@@ -871,6 +871,7 @@ struct Settings
 		bool isShellNoZoneCheck;
 
 		// FindText: bMatchCase, bMatchWholeWords, bFreezeConsole, bHighlightAll;
+		// FindOptions.pszText may be used to pre-fill search dialog field if search-bar is hidden
 		FindTextOptions FindOptions;
 
 

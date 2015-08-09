@@ -2958,7 +2958,8 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 
 		reg->Load(L"DisableAllFlashing", isDisableAllFlashing); if (isDisableAllFlashing>2) isDisableAllFlashing = 2;
 
-		/* FindText: bMatchCase, bMatchWholeWords, bFreezeConsole, bHighlightAll */
+		// FindText: bMatchCase, bMatchWholeWords, bFreezeConsole, bHighlightAll
+		// FindOptions.pszText may be used to pre-fill search dialog field if search-bar is hidden
 		reg->Load(L"FindText", &FindOptions.pszText);
 		reg->Load(L"FindMatchCase", FindOptions.bMatchCase);
 		reg->Load(L"FindMatchWholeWords", FindOptions.bMatchWholeWords);
