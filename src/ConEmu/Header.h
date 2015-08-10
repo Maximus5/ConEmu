@@ -775,8 +775,6 @@ typedef struct tagMYRGB
 #define AutoStartTaskName L"<Startup>"
 #define AutoStartTaskLeft L'<'
 
-bool NextLine(const wchar_t*& pszFrom, wchar_t** pszLine);
-
 // pszWords - '|'separated
 void StripWords(wchar_t* pszText, const wchar_t* pszWords);
 
