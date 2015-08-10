@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2012-2014 Maximus5
+Copyright (c) 2012-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -306,6 +306,182 @@ int ConfirmCloseConsoles(const ConfirmCloseParam& Parm)
 		nBtn = IDYES; // для однозначности
 	}
 
+wrap:
+	InterlockedDecrement(&lCounter);
+	return nBtn;
+}
+
+// uType - flags from MessageBox, i.e. MB_YESNOCANCEL
+int ConfirmDialog(LPCWSTR asMessage,
+	LPCWSTR asMainLabel, LPCWSTR asCaption, LPCWSTR asUrl, UINT uType,
+	LPCWSTR asBtn1Name /*= NULL*/, LPCWSTR asBtn1Hint /*= NULL*/,
+	LPCWSTR asBtn2Name /*= NULL*/, LPCWSTR asBtn2Hint /*= NULL*/,
+	LPCWSTR asBtn3Name /*= NULL*/, LPCWSTR asBtn3Hint /*= NULL*/)
+{
+	DontEnable de;
+
+	int nBtn = IDCANCEL, nBtnCount;
+	CEStr szText, szWWW, lsBtn1, lsBtn2, lsBtn3;
+	LPCWSTR pszName1 = NULL, pszName2 = NULL, pszName3 = NULL;
+	TASKDIALOG_BUTTON buttons[3] = {};
+
+	static LONG lCounter = 0;
+	LONG l = InterlockedIncrement(&lCounter);
+	if (l > 1)
+	{
+		if (l == 2)
+		{
+			_ASSERTE(FALSE && "Confirm stack overflow!");
+		}
+		goto wrap;
+	}
+
+	if (!asUrl || !*asUrl)
+		asUrl = gsHomePage;
+	szWWW = lstrmerge(L"<a href=\"", asUrl, L"\">", asUrl, L"</a>");
+
+	switch (uType & 0xF)
+	{
+	case MB_OK:
+		pszName1 = L"OK";      buttons[0].nButtonID = IDOK;
+		nBtnCount = 1; break;
+	case MB_OKCANCEL:
+		pszName1 = L"OK";      buttons[0].nButtonID = IDOK;
+		pszName2 = L"Cancel";  buttons[1].nButtonID = IDCANCEL;
+		nBtnCount = 2; break;
+	case MB_ABORTRETRYIGNORE:
+		pszName1 = L"Abort";   buttons[0].nButtonID = IDABORT;
+		pszName2 = L"Retry";   buttons[1].nButtonID = IDRETRY;
+		pszName3 = L"Ignore";  buttons[2].nButtonID = IDIGNORE;
+		nBtnCount = 3; break;
+	case MB_YESNOCANCEL:
+		pszName1 = L"Yes";     buttons[0].nButtonID = IDYES;
+		pszName2 = L"No";      buttons[1].nButtonID = IDNO;
+		pszName3 = L"Cancel";  buttons[2].nButtonID = IDCANCEL;
+		nBtnCount = 3; break;
+	case MB_YESNO:
+		pszName1 = L"Yes";     buttons[0].nButtonID = IDYES;
+		pszName2 = L"No";      buttons[1].nButtonID = IDNO;
+		nBtnCount = 2; break;
+	case MB_RETRYCANCEL:
+		pszName1 = L"Retry";   buttons[0].nButtonID = IDRETRY;
+		pszName2 = L"Cancel";  buttons[1].nButtonID = IDCANCEL;
+		nBtnCount = 2; break;
+	case MB_CANCELTRYCONTINUE:
+		pszName1 = L"Cancel";  buttons[0].nButtonID = IDCANCEL;
+		pszName2 = L"Try";     buttons[1].nButtonID = IDTRYAGAIN;
+		pszName3 = L"Continue";buttons[2].nButtonID = IDCONTINUE;
+		nBtnCount = 3; break;
+	default:
+		_ASSERTE(FALSE && "Flag not supported");
+		goto wrap;
+	}
+
+	// Use TaskDialog?
+	if (gOSVer.dwMajorVersion >= 6)
+	{
+		HRESULT hr = E_FAIL;
+		int nButtonPressed = 0;
+		TASKDIALOGCONFIG config = {sizeof(config)};
+
+		config.cButtons = nBtnCount;
+
+		// must be already initialized: CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+
+		switch (uType & 0xF00)
+		{
+		case MB_DEFBUTTON3:
+			config.nDefaultButton = buttons[2].nButtonID; break;
+		case MB_DEFBUTTON2:
+			config.nDefaultButton = buttons[1].nButtonID; break;
+		default:
+			config.nDefaultButton = buttons[0].nButtonID;
+		}
+
+		if (config.cButtons >= 1)
+		{
+			lsBtn1 = lstrmerge(asBtn1Name ? asBtn1Name : pszName1, asBtn1Hint ? L"\n" : NULL, asBtn1Hint);
+			buttons[0].pszButtonText = lsBtn1.ms_Arg;
+		}
+		if (config.cButtons >= 2)
+		{
+			lsBtn2 = lstrmerge(asBtn2Name ? asBtn2Name : pszName2, asBtn2Hint ? L"\n" : NULL, asBtn2Hint);
+			buttons[1].pszButtonText = lsBtn2.ms_Arg;
+		}
+		if (config.cButtons >= 3)
+		{
+			lsBtn3 = lstrmerge(asBtn3Name ? asBtn3Name : pszName3, asBtn3Hint ? L"\n" : NULL, asBtn3Hint);
+			buttons[2].pszButtonText = lsBtn3.ms_Arg;
+		}
+
+		config.hwndParent                   = ghWnd;
+		config.dwFlags                      = /*TDF_USE_HICON_MAIN|*/TDF_USE_COMMAND_LINKS|TDF_ALLOW_DIALOG_CANCELLATION
+		                                      |TDF_ENABLE_HYPERLINKS; //|TDIF_SIZE_TO_CONTENT|TDF_CAN_BE_MINIMIZED;
+		config.pszWindowTitle               = asCaption ? asCaption : gpConEmu->GetDefaultTitle();
+		config.pszMainInstruction           = asMainLabel;
+		config.pszContent                   = asMessage;
+		config.pButtons                     = buttons;
+		config.pszFooter                    = szWWW;
+
+		config.hInstance = g_hInstance;
+		config.pszMainIcon = MAKEINTRESOURCE(IDI_ICON1);
+
+
+		// Show dialog
+		hr = TaskDialog(&config, &nButtonPressed, NULL, NULL);
+
+		if (hr == S_OK)
+		{
+			switch (nButtonPressed)
+			{
+			case IDOK:
+			case IDCANCEL:
+			case IDABORT:
+			case IDRETRY:
+			case IDIGNORE:
+			case IDYES:
+			case IDNO:
+			case IDTRYAGAIN:
+			case IDCONTINUE:
+				nBtn = nButtonPressed;
+				goto wrap;
+
+			default:
+				_ASSERTE(FALSE && "Unsupported result value");
+				break; // should never happen
+			}
+		}
+	}
+
+
+	// **********************************
+	// Use standard message box otherwise
+	// **********************************
+
+	szText = lstrmerge(
+		asMainLabel, asMainLabel ? L"\r\n" : NULL,
+		asMessage);
+
+	// URL hint?
+	if (asUrl)
+	{
+		lstrmerge(&szText.ms_Arg, L"\r\n\r\n", asUrl);
+	}
+
+	// Button hints?
+	if (asBtn1Hint || asBtn2Hint || asBtn3Hint)
+	{
+		lstrmerge(&szText.ms_Arg, L"\r\n\r\n");
+		if (asBtn1Hint)
+			lstrmerge(&szText.ms_Arg, L"\r\n<", pszName1, L"> - ", asBtn1Hint);
+		if (asBtn2Hint)
+			lstrmerge(&szText.ms_Arg, L"\r\n<", pszName2, L"> - ", asBtn2Hint);
+		if (asBtn3Hint)
+			lstrmerge(&szText.ms_Arg, L"\r\n<", pszName3, L"> - ", asBtn3Hint);
+	}
+
+	// Show dialog
+	nBtn = MsgBox(szText, uType, asCaption, ghWnd);
 wrap:
 	InterlockedDecrement(&lCounter);
 	return nBtn;
