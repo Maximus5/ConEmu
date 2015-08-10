@@ -1251,6 +1251,10 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 				{
 					gpConEmu->opt.SetUpDefaultTerminal = true;
 				}
+				else if (!klstricmp(curCommand, _T("/ZoneId")))
+				{
+					gpConEmu->opt.FixZoneId = true;
+				}
 				else if (!klstricmp(curCommand, _T("/Exit")))
 				{
 					gpConEmu->opt.ExitAfterActionPrm = true;

@@ -83,6 +83,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"/SetDefTerm - Set ConEmu as default terminal, use with \"/Exit\" switch.\r\n" \
 	L"/UpdateSrcSet <url> - Force to check version.ini by another url.\r\n" \
 	L"/AnsiLog <folder> - Force console output logging into the folder.\r\n" \
+_DBGHLP(L"/ZoneId - Try to drop :Zone.Identifier without confirmation.\r\n") \
 	L"/Exit - Don't create ConEmu window, exit after actions.\r\n" \
 	L"/QuitOnClose - Forces ConEmu window closing with last tab.\r\n" \
 	L"/GuiMacro - Execute some GuiMacro after ConEmu window creation.\r\n" \

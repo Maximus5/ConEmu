@@ -184,6 +184,7 @@ public:
 		bool SizePosPrm; // -WndX -WndY -WndW[idth] -WndH[eight]
 		CESwitch sWndX, sWndY, sWndW, sWndH; // sw_Str
 		CESwitch SetUpDefaultTerminal; // sw_Simple
+		CESwitch FixZoneId; // sw_Simple
 		CESwitch ExitAfterActionPrm; // sw_Simple
 		CESwitch MultiConValue; // sw_Simple
 		CESwitch VisValue; // sw_Simple
