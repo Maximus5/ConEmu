@@ -355,6 +355,8 @@ class CConEmuMain
 			LONG g_evtidx;
 			void Log(WPARAM State, LPARAM SessionID);
 
+			BOOL bWasLocked; // To be sure that mn_IgnoreSizeChange will be processed properly
+
 			bool Connected();
 
 			void SessionChanged(WPARAM State, LPARAM SessionID);

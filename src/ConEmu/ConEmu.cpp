@@ -3055,6 +3055,45 @@ LRESULT CConEmuMain::OnSessionChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 	LogString(szInfo, true, false);
 	DEBUGSTRSESS(szInfo);
 
+	if ((nSessionCode == WTS_SESSION_LOCK)
+		|| (nSessionCode == WTS_SESSION_UNLOCK)
+		)
+	{
+		// Ignore window size changes until station will be unlocked
+		if (nSessionCode == WTS_SESSION_LOCK)
+		{
+			_ASSERTE(bPrevConnected && (mn_IgnoreSizeChange >= 0));
+
+			if (!session.bWasLocked)
+			{
+				session.bWasLocked = TRUE;
+				InterlockedIncrement(&mn_IgnoreSizeChange);
+			}
+		}
+		else if (nSessionCode == WTS_SESSION_UNLOCK)
+		{
+			_ASSERTE(!bPrevConnected && (mn_IgnoreSizeChange > 0));
+			if (session.bWasLocked && (mn_IgnoreSizeChange > 0))
+			{
+				session.bWasLocked = FALSE;
+				InterlockedDecrement(&mn_IgnoreSizeChange);
+			}
+		}
+
+		// Stop all servers from reading console contents
+		struct impl {
+			static bool DoLockUnlock(CVirtualConsole* pVCon, LPARAM lParam)
+			{
+				pVCon->RCon()->DoLockUnlock(lParam == WTS_SESSION_LOCK);
+				return true; // continue;
+			};
+		};
+		CVConGroup::EnumVCon(evf_All, impl::DoLockUnlock, (LPARAM)nSessionCode);
+
+		// Refresh child windows
+		OnSize();
+	}
+
 	return 0; // Return value ignored
 }
 

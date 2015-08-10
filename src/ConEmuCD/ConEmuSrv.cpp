@@ -4598,6 +4598,12 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 		// 120507 - Если крутится альт.сервер - то игнорировать
 		if (!nAltWait && (gpSrv->nRequestChangeSize > 0))
 		{
+			if (gpSrv->bStationLocked)
+			{
+				LogString("!!! Change size request received while station is LOCKED !!!");
+				_ASSERTE(!gpSrv->bStationLocked);
+			}
+
 			InterlockedDecrement(&gpSrv->nRequestChangeSize);
 			// AVP гундит... да вроде и не нужно
 			//DWORD dwSusp = 0, dwSuspErr = 0;
@@ -4622,6 +4628,18 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 		// Функция срабатывает только через интервал CHECK_PROCESSES_TIMEOUT (внутри защита от частых вызовов)
 		// #define CHECK_PROCESSES_TIMEOUT 500
 		CheckProcessCount();
+
+		// While station is locked - no sense to scan console contents
+		if (gpSrv->bStationLocked)
+		{
+			nWait = WaitForSingleObject(ghQuitEvent, 50);
+			if (nWait == WAIT_OBJECT_0)
+			{
+				break; // Server stop was requested
+			}
+			// Skip until station will be unlocked
+			continue;
+		}
 
 		// Подождать немножко
 		if (gpSrv->nMaxFPS>0)

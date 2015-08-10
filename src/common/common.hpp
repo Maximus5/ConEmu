@@ -455,6 +455,8 @@ const CECMD
 	CECMD_AFFNTYPRIORITY = 85, // QDWORD[0]=Affinity, QDWORD[1]=PRIORITY
 	CECMD_PAUSE          = 86, // DWORD[0]: CEPauseCmd; Returns CEPauseCmd
 	CECMD_REDRAWHWND     = 87, // DWORD[0]: HWND
+	CECMD_LOCKSTATION    = 88, // When user press Win+L
+	CECMD_UNLOCKSTATION  = 89, // CESERVER_REQ_SETSIZE
 /** Команды FAR плагина **/
 	CMD_FIRST_FAR_CMD    = 200,
 	CMD_DRAGFROM         = 200,

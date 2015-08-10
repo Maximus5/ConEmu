@@ -1008,6 +1008,52 @@ bool CRealConsole::SetActiveBuffer(CRealBuffer* aBuffer, bool abTouchMonitorEven
 	return true;
 }
 
+void CRealConsole::DoLockUnlock(bool bLock)
+{
+	DWORD nServerPID = GetServerPID(true);
+	if (!nServerPID)
+		return;
+
+	wchar_t szInfo[80];
+	CESERVER_REQ *pIn = NULL, *pOut = NULL;
+
+	if (bLock)
+	{
+		_wsprintf(szInfo, SKIPCOUNT(szInfo) L"RCon ID=%i is locking", mp_VCon->ID());
+		mp_ConEmu->LogString(szInfo);
+
+		pIn = ExecuteNewCmd(CECMD_LOCKSTATION, sizeof(CESERVER_REQ_HDR));
+		if (pIn)
+		{
+			pOut = ExecuteSrvCmd(nServerPID, pIn, ghWnd);
+		}
+	}
+	else
+	{
+		RECT rcCon = mp_ConEmu->CalcRect(CER_CONSOLE_CUR, mp_VCon);
+
+		_wsprintf(szInfo, SKIPCOUNT(szInfo) L"RCon ID=%i is unlocking, NewSize={%i,%i}", mp_VCon->ID(), rcCon.right, rcCon.bottom);
+		mp_ConEmu->LogString(szInfo);
+
+		// Don't call SetConsoleSize to avoid skipping server calls due optimization
+		pIn = ExecuteNewCmd(CECMD_UNLOCKSTATION, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_SETSIZE));
+		if (pIn)
+		{
+			pIn->SetSize.size = MakeCoord(rcCon.right, rcCon.bottom);
+			pIn->SetSize.nBufferHeight = mp_RBuf->BufferHeight(0);
+			pOut = ExecuteSrvCmd(nServerPID, pIn, ghWnd);
+		}
+	}
+
+	if (pOut)
+	{
+		SetConStatus(bLock ? L"LOCKED" : NULL);
+	}
+
+	ExecuteFreeResult(pIn);
+	ExecuteFreeResult(pOut);
+}
+
 BOOL CRealConsole::SetConsoleSize(USHORT sizeX, USHORT sizeY, USHORT sizeBuffer, DWORD anCmdID/*=CECMD_SETSIZESYNC*/)
 {
 	if (!this) return FALSE;

@@ -370,6 +370,8 @@ class CRealConsole
 		RealBufferType GetActiveBufferType();
 		bool SetActiveBuffer(RealBufferType aBufferType);
 
+		void DoLockUnlock(bool bLock);
+
 		BOOL SetConsoleSize(USHORT sizeX, USHORT sizeY, USHORT sizeBuffer=0, DWORD anCmdID=CECMD_SETSIZESYNC);
 	private:
 		bool SetActiveBuffer(CRealBuffer* aBuffer, bool abTouchMonitorEvent = true);

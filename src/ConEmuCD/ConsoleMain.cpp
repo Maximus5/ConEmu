@@ -6903,6 +6903,8 @@ BOOL cmd_SetSizeXXX_CmdStartedFinished(CESERVER_REQ& in, CESERVER_REQ** out)
 		lstrcpynA(szCmdName, ":CECMD_CMDSTARTED", countof(szCmdName)); break;
 	case CECMD_CMDFINISHED:
 		lstrcpynA(szCmdName, ":CECMD_CMDFINISHED", countof(szCmdName)); break;
+	case CECMD_UNLOCKSTATION:
+		lstrcpynA(szCmdName, ":CECMD_UNLOCKSTATION", countof(szCmdName)); bForceWriteLog = true; break;
 	default:
 		_ASSERTE(FALSE && "Unnamed command");
 		_wsprintfA(szCmdName, SKIPCOUNT(szCmdName) ":UnnamedCmd(%u)", in.hdr.nCmd);
@@ -9059,6 +9061,52 @@ BOOL cmd_PromptStarted(CESERVER_REQ& in, CESERVER_REQ** out)
 	return lbRc;
 }
 
+BOOL cmd_LockStation(CESERVER_REQ& in, CESERVER_REQ** out)
+{
+	BOOL lbRc = TRUE;
+
+	gpSrv->bStationLocked = TRUE;
+
+	LogSize(NULL, 0, ":CECMD_LOCKSTATION");
+
+	*out = ExecuteNewCmd(CECMD_LOCKSTATION, sizeof(CESERVER_REQ_HDR));
+	lbRc = ((*out) != NULL);
+
+	return lbRc;
+}
+
+BOOL cmd_UnlockStation(CESERVER_REQ& in, CESERVER_REQ** out, bool bProcessed)
+{
+	BOOL lbRc = TRUE;
+
+	gpSrv->bStationLocked = FALSE;
+
+	LogString("CECMD_UNLOCKSTATION");
+
+	if (!bProcessed)
+	{
+		lbRc = cmd_SetSizeXXX_CmdStartedFinished(in, out);
+	}
+	else
+	{
+		*out = ExecuteNewCmd(CECMD_UNLOCKSTATION, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_RETSIZE));
+
+		if (*out)
+		{
+			(*out)->SetSizeRet.crMaxSize = MyGetLargestConsoleWindowSize(ghConOut);
+			MyGetConsoleScreenBufferInfo(ghConOut, &((*out)->SetSizeRet.SetSizeRet));
+			DWORD lnNextPacketId = (DWORD)InterlockedIncrement(&gpSrv->nLastPacketID);
+			(*out)->SetSizeRet.nNextPacketId = lnNextPacketId;
+		}
+
+		LogSize(NULL, 0, ":UnlockStation");
+
+		lbRc = ((*out) != NULL);
+	}
+
+	return lbRc;
+}
+
 bool ProcessAltSrvCommand(CESERVER_REQ& in, CESERVER_REQ** out, BOOL& lbRc)
 {
 	bool lbProcessed = false;
@@ -9308,6 +9356,18 @@ BOOL ProcessSrvCommand(CESERVER_REQ& in, CESERVER_REQ** out)
 		case CECMD_PROMPTSTARTED:
 		{
 			lbRc = cmd_PromptStarted(in, out);
+		} break;
+		case CECMD_LOCKSTATION:
+		{
+			// Execute command in the alternative server too
+			ProcessAltSrvCommand(in, out, lbRc);
+			lbRc = cmd_LockStation(in, out);
+		} break;
+		case CECMD_UNLOCKSTATION:
+		{
+			// Execute command in the alternative server too
+			bool lbProcessed = ProcessAltSrvCommand(in, out, lbRc);
+			lbRc = cmd_UnlockStation(in, out, lbProcessed);
 		} break;
 		default:
 		{

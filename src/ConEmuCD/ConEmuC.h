@@ -480,6 +480,7 @@ struct SrvInfo
 	DWORD  nActiveFarPID; // PID последнего активного Far
 	BOOL   bWasDetached; // Выставляется в TRUE при получении CECMD_DETACHCON
 	BOOL   bWasReattached; // Если TRUE - то при следующем цикле нужно передернуть ReloadFullConsoleInfo(true)
+	BOOL   bStationLocked; // Don't read console output while station is locked
 	//
 	PipeServer<CESERVER_REQ> CmdServer;
 	HANDLE hRefreshThread;  DWORD dwRefreshThread;  BOOL bRefreshTermination;
