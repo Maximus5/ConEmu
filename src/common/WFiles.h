@@ -52,3 +52,6 @@ bool FileCompare(LPCWSTR asFilePath1, LPCWSTR asFilePath2);
 int apiCancelIoEx(HANDLE hFile, LPOVERLAPPED lpOverlapped);
 #endif
 int apiCancelSynchronousIo(HANDLE hThread);
+
+bool HasZoneIdentifier(LPCWSTR asFile, int& nZoneID);
+bool DropZoneIdentifier(LPCWSTR asFile, DWORD& nErrCode);

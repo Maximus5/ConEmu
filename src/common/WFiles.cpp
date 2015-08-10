@@ -819,3 +819,55 @@ int apiCancelSynchronousIo(HANDLE hThread)
 
 	return iRc;
 }
+
+// URLZONE_LOCAL_MACHINE = 0
+// URLZONE_INTRANET      = 1
+// URLZONE_TRUSTED       = 2
+// URLZONE_INTERNET      = 3
+// URLZONE_UNTRUSTED     = 4
+bool HasZoneIdentifier(LPCWSTR asFile, int& nZoneID)
+{
+	if (!asFile || !*asFile)
+	{
+		_ASSERTE(asFile && *asFile);
+		return false;
+	}
+
+	bool bHasZone = false;
+	CEStr lsZoneStream = lstrmerge(asFile, L":Zone.Identifier");
+
+	#ifdef _DEBUG
+	char szData[128] = ""; DWORD nRead = 0; BOOL bRead;
+	#endif
+	HANDLE hStream = CreateFile(lsZoneStream, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
+	if (hStream && (hStream != INVALID_HANDLE_VALUE))
+	{
+		#ifdef _DEBUG
+		bRead = ReadFile(hStream, szData, sizeof(szData), &nRead, NULL);
+		#endif
+		CloseHandle(hStream);
+
+		nZoneID = (int)GetPrivateProfileInt(L"ZoneTransfer", L"ZoneId", 3, lsZoneStream);
+		bHasZone = true;
+	}
+
+	return bHasZone;
+}
+
+bool DropZoneIdentifier(LPCWSTR asFile, DWORD& nErrCode)
+{
+	CEStr lsZoneStream = lstrmerge(asFile, L":Zone.Identifier");
+
+	// First, try to delete "Zone.Identifier" stream
+	if (DeleteFile(lsZoneStream))
+		return true;
+	nErrCode = GetLastError();
+
+	// If failed - try to change it
+	if (WritePrivateProfileString(L"ZoneTransfer", L"ZoneId", 0, lsZoneStream))
+		return true;
+	nErrCode = GetLastError();
+
+	// Access denied?
+	return false;
+}
