@@ -1726,7 +1726,7 @@ void CreateDefaultTasks(SettingsLoadedFlags slfFlags)
 	// Windows internal: cmd
 	// Don't use 'App.Add' here, we are creating "cmd.exe" tasks directly
 	CreateDefaultTask(L"Shells::cmd", L"",
-		L"cmd.exe /k \"%ConEmuBaseDir%\\CmdInit.cmd\"");
+		L"cmd.exe /k \"%ConEmuBaseDir%\\CmdInit.cmd\"", CETF_CMD_DEFAULT);
 	#if 0
 	// Need to "set" ConEmuGitPath to full path to the git.exe
 	CreateDefaultTask(L"Shells::cmd+git", L"",
