@@ -113,6 +113,7 @@ typedef struct _CONSOLE_SELECTION_INFO
 #define CEREPORTBUG    CEWIKIBASE L"Issues.html"
 #define CEREPORTCRASH  CEWIKIBASE L"Issues.html"
 #define CEWHATSNEW     CEWIKIBASE L"Whats_New.html"
+#define CEZONEID       CEWIKIBASE L"ZoneId.html"
 
 
 // EnvVars
