@@ -158,7 +158,7 @@ set "LANG=%ConEmu_SaveLang%"
 set ConEmu_SaveLang=
 
 rem Firstly check if it is not a git repository
-rem Set "gitbranch" to full contents of %git_out% file
+rem Set "gitbranch" to full contents of %git_err% file
 set /P gitbranch=<"%git_err%"
 rem But we need only first line of it
 set "gitbranch=%gitbranch%"
