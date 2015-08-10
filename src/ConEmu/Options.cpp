@@ -5098,7 +5098,7 @@ void Settings::CmdTaskSetVkMod(int anIndex, DWORD VkMod)
 // anIndex - 0-based, index of CmdTasks
 // asName - имя, или NULL, если эту группу нужно удалить (хвост сдвигается вверх)
 // asCommands - список команд (скрипт)
-void Settings::CmdTaskSet(int anIndex, LPCWSTR asName, LPCWSTR asGuiArgs, LPCWSTR asCommands)
+void Settings::CmdTaskSet(int anIndex, LPCWSTR asName, LPCWSTR asGuiArgs, LPCWSTR asCommands, CETASKFLAGS aFlags /*= CETF_DONT_CHANGE*/)
 {
 	if (anIndex < 0)
 	{
@@ -5161,6 +5161,9 @@ void Settings::CmdTaskSet(int anIndex, LPCWSTR asName, LPCWSTR asGuiArgs, LPCWST
 	CmdTasks[anIndex]->SetName(asName, anIndex);
 	CmdTasks[anIndex]->SetGuiArg(asGuiArgs);
 	CmdTasks[anIndex]->SetCommands(asCommands);
+
+	if (aFlags != CETF_DONT_CHANGE)
+		CmdTasks[anIndex]->Flags = aFlags;
 
 	if (anIndex >= CmdTaskCount)
 		CmdTaskCount = anIndex+1;

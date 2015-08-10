@@ -73,12 +73,12 @@ enum FarMacroVersion
 #include "Hotkeys.h"
 #include "SetTypes.h"
 #include "SetAppSettings.h"
+#include "SetCmdTask.h"
 #include "UpdateSet.h"
 
 class CSettings;
 class CSetDlgButtons;
 struct CommandHistory;
-struct CommandTasks;
 struct ColorPalette;
 
 
@@ -179,7 +179,7 @@ struct Settings
 		const CommandTasks* CmdTaskGet(int anIndex); // 0-based, index of CmdTasks. "-1" == autosaved task
 		const CommandTasks* CmdTaskGetByName(LPCWSTR asTaskName);
 		void CmdTaskSetVkMod(int anIndex, DWORD VkMod); // 0-based, index of CmdTasks
-		void CmdTaskSet(int anIndex, LPCWSTR asName, LPCWSTR asGuiArgs, LPCWSTR asCommands); // 0-based, index of CmdTasks
+		void CmdTaskSet(int anIndex, LPCWSTR asName, LPCWSTR asGuiArgs, LPCWSTR asCommands, CETASKFLAGS aFlags = CETF_DONT_CHANGE); // 0-based, index of CmdTasks
 		bool CmdTaskXch(int anIndex1, int anIndex2); // 0-based, index of CmdTasks
 
 		const ColorPalette* PaletteGet(int anIndex); // 0-based, index of Palettes, or -1 for "<Current color scheme>"

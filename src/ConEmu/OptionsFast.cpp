@@ -719,7 +719,7 @@ void CheckOptionsFast(LPCWSTR asTitle, SettingsLoadedFlags slfFlags)
 
 static SettingsLoadedFlags sAppendMode = slf_None;
 
-static void CreateDefaultTask(LPCWSTR asName, LPCWSTR asGuiArg, LPCWSTR asCommands)
+static void CreateDefaultTask(LPCWSTR asName, LPCWSTR asGuiArg, LPCWSTR asCommands, CETASKFLAGS aFlags = CETF_DONT_CHANGE)
 {
 	_ASSERTE(asName && asName[0] && asName[0] != TaskBracketLeft && asName[wcslen(asName)-1] != TaskBracketRight);
 	wchar_t szLeft[2] = {TaskBracketLeft}, szRight[2] = {TaskBracketRight};
@@ -740,7 +740,7 @@ static void CreateDefaultTask(LPCWSTR asName, LPCWSTR asGuiArg, LPCWSTR asComman
 		}
 	}
 
-	gpSet->CmdTaskSet(iCreatIdx++, lsName, asGuiArg, asCommands);
+	gpSet->CmdTaskSet(iCreatIdx++, lsName, asGuiArg, asCommands, aFlags);
 }
 
 // Search on asFirstDrive and all (other) fixed drive letters
