@@ -235,7 +235,7 @@ bool CVirtualConsole::SetFlags(VConFlags Set, VConFlags Mask, int index)
 		bChanged = true;
 	}
 
-	if ((index > 0) && (index != mn_Index))
+	if ((index >= 0) && (index != mn_Index))
 	{
 		mn_Index = index;
 	}

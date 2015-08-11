@@ -3124,6 +3124,10 @@ void CVConGroup::OnVConClosed(CVirtualConsole* apVCon)
 				bDbg4 = true;
 				setActiveVConAndFlags(NULL);
 			}
+			else
+			{
+				setActiveVConAndFlags(gp_VActive);
+			}
 
 			apVCon->DoDestroyDcWindow();
 			apVCon->Release();
