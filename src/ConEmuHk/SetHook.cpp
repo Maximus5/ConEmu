@@ -686,7 +686,7 @@ FARPROC WINAPI GetVirtualAlloc()
 	LPVOID fnVirtualAlloc = NULL;
 	#ifdef _DEBUG
 	extern LPVOID WINAPI OnVirtualAlloc(LPVOID lpAddress, SIZE_T dwSize, DWORD flAllocationType, DWORD flProtect);
-	fnVirtualAlloc = (FARPROC)GetOriginalAddress(OnVirtualAlloc, NULL);
+	fnVirtualAlloc = (FARPROC)GetOriginalAddress(OnVirtualAlloc, NULL, FALSE, NULL);
 	#endif
 	if (!fnVirtualAlloc)
 		fnVirtualAlloc = (LPVOID)&VirtualAlloc;
