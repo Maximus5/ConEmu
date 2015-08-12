@@ -1,5 +1,5 @@
 ConEmu source code is available from the ConEmu home page:
-http://conemu-maximus5.googlecode.com
+http://conemu.github.io/
 
 The launcher source code is available from PortableApps.com:
 http://portableapps.com/apps/development/portableapps.com_launcher

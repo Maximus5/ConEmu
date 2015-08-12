@@ -13,9 +13,9 @@ About ConEmu
 
     Today, ConEmu can be used with any other console application or simple
     GUI tools (like PuTTY for example).
-    
+
     ConEmu is an active project, open to suggestions.
-    http://code.google.com/p/conemu-maximus5/issues/list
+    https://github.com/Maximus5/ConEmu/issues
 
 
 Description
@@ -64,7 +64,7 @@ Installation
     1. Unpack all files (from appropriate "ConEmu.*.7z") to the folder,
        Note, if You are not using FAR manager, You may unpack files to any folder.
        Warning, cause of frequent breaks of Far 3 API, it's strongly recommended
-       to use latest developer build, when you are using Far 3. 
+       to use latest developer build, when you are using Far 3.
     2. Import Far Manager macroses, related to ConEmu. Macro files are located in
        ConEmu.Addons directory. Each macro file has description in header.
     3. By default (started without command line params), ConEmu runs "far.exe"
@@ -142,4 +142,4 @@ Command Line Examples
 
 
 Documentation
-    Please, visit: http://code.google.com/p/conemu-maximus5/wiki/ConEmu
+    Please, visit: http://conemu.github.io/en/TableOfContents.html
