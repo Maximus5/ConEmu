@@ -797,12 +797,13 @@ COORD MyGetLargestConsoleWindowSize(HANDLE hConsoleOutput)
 	COORD crMax = GetLargestConsoleWindowSize(hConsoleOutput);
 	DWORD dwErr = (crMax.X && crMax.Y) ? 0 : GetLastError();
 	UNREFERENCED_PARAMETER(dwErr);
+
 	// Wine BUG
 	//if (!crMax.X || !crMax.Y)
 	if ((crMax.X == 80 && crMax.Y == 24) && IsWine())
 	{
-		crMax.X = 255;
-		crMax.Y = 255;
+		crMax.X = 999;
+		crMax.Y = 999;
 	}
 	else if (IsWin10())
 	{
