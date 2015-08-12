@@ -72,8 +72,8 @@ extern HWND    ghConEmuWndDC; // ConEmu DC window
 extern DWORD   gnGuiPID;
 extern GetConsoleWindow_T gfGetRealConsoleWindow;
 //extern HWND WINAPI GetRealConsoleWindow(); // Entry.cpp
-extern HANDLE ghCurrentOutBuffer;
-extern HANDLE ghStdOutHandle;
+extern HANDLE  ghCurrentOutBuffer;
+extern HANDLE  ghStdOutHandle;
 extern wchar_t gsInitConTitle[512];
 /* ************ Globals for SetHook ************ */
 
