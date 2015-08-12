@@ -82,8 +82,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 HMODULE ghOurModule = NULL; // ConEmuDw.dll
-HWND    ghConWnd = NULL; // VirtualCon. инициализируется в CheckBuffers()
-HWND    ghRealConWnd = NULL;
+HWND    ghVConWnd = NULL;   // VirtualCon. инициализируется в CheckBuffers()
+HWND    ghRConWnd = NULL;
 
 HMODULE ghPluginModule = NULL;
 HookItemPreCallback_t PreWriteCallBack = NULL;
@@ -354,7 +354,7 @@ BOOL CheckBuffers(bool abWrite /*= false*/)
 		SetLastError(E_HANDLE);
 		return FALSE;
 	}
-	if (hCon != ghConWnd)
+	if (hCon != ghVConWnd)
 	{
 		#ifdef _DEBUG
 		// Функция GetConsoleWindow НЕ должна быть перехвачена в ConEmuHk, проверим
@@ -364,9 +364,9 @@ BOOL CheckBuffers(bool abWrite /*= false*/)
 		_ASSERTE((hApiCon == hRealCon && hApiCon != hCon) || hRootWnd == NULL);
 		#endif
 
-		ghRealConWnd = GetConEmuHWND(2);
+		ghRConWnd = GetConEmuHWND(2);
 
-		ghConWnd = hCon;
+		ghVConWnd = hCon;
 		CloseBuffers();
 
 		
@@ -410,7 +410,7 @@ BOOL CheckBuffers(bool abWrite /*= false*/)
 		}
 		
 		#ifdef USE_COMMIT_EVENT
-		if (!LoadSrvMapping(ghRealConWnd, SrvMapping))
+		if (!LoadSrvMapping(ghRConWnd, SrvMapping))
 		{
 			CloseBuffers();
 			SetLastError(E_HANDLE);
@@ -452,7 +452,7 @@ BOOL CheckBuffers(bool abWrite /*= false*/)
 							if (DuplicateHandle(GetCurrentProcess(), ghBatchEvent, hServer, &hDupEvent, 0, FALSE, DUPLICATE_SAME_ACCESS))
 							{
 								pIn->RegExtCon.hCommitEvent = hDupEvent;
-								CESERVER_REQ* pOut = ExecuteSrvCmd(gnBatchRegPID, pIn, ghRealConWnd);
+								CESERVER_REQ* pOut = ExecuteSrvCmd(gnBatchRegPID, pIn, ghRConWnd);
 								if (pOut)
 									ExecuteFreeResult(pOut);
 							}
@@ -1591,7 +1591,7 @@ void ReloadGuiPalette()
 	CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_QUERYPALETTE, sizeof(CESERVER_REQ_HDR));
 	if (pIn)
 	{
-		CESERVER_REQ* pOut = ExecuteGuiCmd(ghRealConWnd, pIn, ghConWnd);
+		CESERVER_REQ* pOut = ExecuteGuiCmd(ghRConWnd, pIn, ghVConWnd);
 		if (pOut->DataSize() >= sizeof(CESERVER_PALETTE))
 		{
 			memmove(gcrPalette, pOut->Palette.crPalette, sizeof(gcrPalette));
