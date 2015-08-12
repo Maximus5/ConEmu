@@ -7085,7 +7085,7 @@ BOOL cmd_SetSizeXXX_CmdStartedFinished(CESERVER_REQ& in, CESERVER_REQ** out)
 
 	nTick5 = GetTickCount();
 
-	DWORD lnNextPacketId = ++gpSrv->nLastPacketID;
+	DWORD lnNextPacketId = (DWORD)InterlockedIncrement(&gpSrv->nLastPacketID);
 	(*out)->SetSizeRet.nNextPacketId = lnNextPacketId;
 
 	//gpSrv->bForceFullSend = TRUE;

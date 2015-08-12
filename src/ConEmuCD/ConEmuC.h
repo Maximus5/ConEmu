@@ -576,7 +576,7 @@ struct SrvInfo
 	//
 	HANDLE hAllowInputEvent; BOOL bInSyncResize;
 	//
-	DWORD nLastPacketID; // ИД пакета для отправки в GUI
+	LONG nLastPacketID; // ИД пакета для отправки в GUI
 
 	// Keyboard layout name
 	wchar_t szKeybLayout[KL_NAMELENGTH+1];
