@@ -2527,6 +2527,10 @@ void __stdcall UnsetAllHooks()
 
 	// Set all "original" function calls to NULL
 	{
+	extern FARPROC CallWriteConsoleW;
+	CallWriteConsoleW = NULL;
+	extern VirtualAlloc_t gfVirtualAlloc;
+	gfVirtualAlloc = NULL;
 	extern GetConsoleWindow_T gfGetRealConsoleWindow; // from ConEmuCheck.cpp
 	gfGetRealConsoleWindow = NULL;
 	}
