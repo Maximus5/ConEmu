@@ -164,9 +164,9 @@
         <Media Id="1" Cabinet="data.cab" EmbedCab="yes" />
         <Property Id="ALLUSERS" Value="1" />
         <Property Id="ARPPRODUCTICON" Value="SetupIcon.ico" />
-        <Property Id="ARPHELPLINK" Value="http://code.google.com/p/conemu-maximus5/issues" />
-        <Property Id="ARPURLINFOABOUT" Value="http://conemu-maximus5.googlecode.com/" />
-        <Property Id="ARPURLUPDATEINFO" Value="http://conemu-maximus5.googlecode.com/" />
+        <Property Id="ARPHELPLINK" Value="https://github.com/Maximus5/ConEmu/issues" />
+        <Property Id="ARPURLINFOABOUT" Value="http://conemu.github.io/" />
+        <Property Id="ARPURLUPDATEINFO" Value="http://conemu.github.io/" />
         <Property Id="ApplicationFolderName" Value="ConEmu" />
         <Property Id="WixAppFolder" Value="WixPerMachineFolder" />
         <Property Id="FARMANAGERFOLDER">
