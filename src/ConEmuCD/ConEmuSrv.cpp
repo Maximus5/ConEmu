@@ -3465,6 +3465,10 @@ int CreateColorerHeader(bool bForceRecreate /*= false*/)
 	// Заголовок мэппинга содержит информацию о размере, нужно заполнить!
 	//AnnotationHeader* pHdr = (AnnotationHeader*)MapViewOfFile(gpSrv->hColorerMapping, FILE_MAP_ALL_ACCESS,0,0,0);
 	// 111101 - было "Create(nMapSize);"
+
+	// AnnotationShareName is CREATED in ConEmu.exe
+	// May be it would be better, to avoid hooking and cycling (minhook),
+	// call CreateFileMapping instead of OpenFileMapping...
 	pHdr = gpSrv->pColorerMapping->Open();
 
 	if (!pHdr)

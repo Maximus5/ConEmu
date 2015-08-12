@@ -383,6 +383,9 @@ BOOL CheckBuffers(bool abWrite /*= false*/)
 		{
 			wchar_t szMapName[128];
 			wsprintf(szMapName, AnnotationShareName, (DWORD)sizeof(AnnotationInfo), (DWORD)hCon); //-V205
+			// AnnotationShareName is CREATED in ConEmu.exe
+			// May be it would be better, to avoid hooking and cycling (minhook),
+			// call CreateFileMapping instead of OpenFileMapping...
 			ghTrueColor = OpenFileMapping(FILE_MAP_ALL_ACCESS, FALSE, szMapName);
 			if (!ghTrueColor)
 			{
