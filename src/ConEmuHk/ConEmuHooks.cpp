@@ -888,68 +888,6 @@ bool InitHooksClink()
 }
 
 
-
-//static HookItem HooksCommon[] =
-//{
-//	/* ***** MOST CALLED ***** */
-////	{(void*)OnGetConsoleWindow,     "GetConsoleWindow",     kernel32}, -- пока смысла нет. инжекты еще не на старте ставятся
-//	//{(void*)OnWriteConsoleOutputWx,	"WriteConsoleOutputW",  kernel32},
-//	//{(void*)OnWriteConsoleOutputAx,	"WriteConsoleOutputA",  kernel32},
-//	{(void*)OnWriteConsoleOutputW,	"WriteConsoleOutputW",  kernel32},
-//	{(void*)OnWriteConsoleOutputA,	"WriteConsoleOutputA",  kernel32},
-//	/* ************************ */
-//	//{(void*)OnPeekConsoleInputWx,	"PeekConsoleInputW",	kernel32},
-//	//{(void*)OnPeekConsoleInputAx,	"PeekConsoleInputA",	kernel32},
-//	//{(void*)OnReadConsoleInputWx,	"ReadConsoleInputW",	kernel32},
-//	//{(void*)OnReadConsoleInputAx,	"ReadConsoleInputA",	kernel32},
-//	{(void*)OnPeekConsoleInputW,	"PeekConsoleInputW",	kernel32},
-//	{(void*)OnPeekConsoleInputA,	"PeekConsoleInputA",	kernel32},
-//	{(void*)OnReadConsoleInputW,	"ReadConsoleInputW",	kernel32},
-//	{(void*)OnReadConsoleInputA,	"ReadConsoleInputA",	kernel32},
-//	/* ************************ */
-//	{(void*)OnCreateProcessA,		"CreateProcessA",		kernel32},
-//	{(void*)OnCreateProcessW,		"CreateProcessW",		kernel32},
-//	/* ************************ */
-//	{(void*)OnGetConsoleAliasesW,	"GetConsoleAliasesW",	kernel32},
-//	{(void*)OnAllocConsole,			"AllocConsole",			kernel32},
-//	{(void*)OnFreeConsole,			"FreeConsole",			kernel32},
-//	{
-//		(void*)OnGetNumberOfConsoleInputEvents,
-//		"GetNumberOfConsoleInputEvents",
-//		kernel32
-//	},
-//	{
-//		(void*)OnCreateConsoleScreenBuffer,
-//		"CreateConsoleScreenBuffer",
-//		kernel32
-//	},
-//#ifdef _DEBUG
-//	{(void*)OnCreateNamedPipeW,		"CreateNamedPipeW",		kernel32},
-//#endif
-//#ifdef _DEBUG
-//	{(void*)OnVirtualAlloc,			"VirtualAlloc",			kernel32},
-//#endif
-//	// Microsoft bug?
-//	// http://code.google.com/p/conemu-maximus5/issues/detail?id=60
-//	{(void*)OnSetConsoleCP,			"SetConsoleCP",			kernel32},
-//	{(void*)OnSetConsoleOutputCP,	"SetConsoleOutputCP",	kernel32},
-//	/* ************************ */
-//	{(void*)OnTrackPopupMenu,		"TrackPopupMenu",		user32},
-//	{(void*)OnTrackPopupMenuEx,		"TrackPopupMenuEx",		user32},
-//	{(void*)OnFlashWindow,			"FlashWindow",			user32},
-//	{(void*)OnFlashWindowEx,		"FlashWindowEx",		user32},
-//	{(void*)OnSetForegroundWindow,	"SetForegroundWindow",	user32},
-//	{(void*)OnGetWindowRect,		"GetWindowRect",		user32},
-//	{(void*)OnScreenToClient,		"ScreenToClient",		user32},
-//	/* ************************ */
-//	{(void*)OnShellExecuteExA,		"ShellExecuteExA",		shell32},
-//	{(void*)OnShellExecuteExW,		"ShellExecuteExW",		shell32},
-//	{(void*)OnShellExecuteA,		"ShellExecuteA",		shell32},
-//	{(void*)OnShellExecuteW,		"ShellExecuteW",		shell32},
-//	/* ************************ */
-//	{0}
-//};
-
 void __stdcall SetFarHookMode(struct HookModeFar *apFarMode)
 {
 	if (!apFarMode)
