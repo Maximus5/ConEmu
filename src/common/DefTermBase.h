@@ -40,6 +40,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "common.hpp"
 #include "MArray.h"
 #include "MSectionSimple.h"
+#include "ConEmuCheck.h"
 #include "WObjects.h"
 #include "WThreads.h"
 #include "../ConEmuCD/ExitCodes.h"
