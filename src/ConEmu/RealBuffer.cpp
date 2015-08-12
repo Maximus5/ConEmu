@@ -869,7 +869,7 @@ BOOL CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 				else
 				{
 					_ASSERTE(FALSE && "Maximum real console size was reached");
-					// Inform user
+					// Inform user -- Add exact numbers to log and hint
 					mp_RCon->LogString(L"Maximum real console size was reached, lesser size was applied");
 					Icon.ShowTrayIcon(L"Maximum real console size was reached\nDecrease font size in the real console properties", tsa_Console_Size);
 				}
