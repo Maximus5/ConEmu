@@ -8821,15 +8821,19 @@ void CRealConsole::CreateLogFiles()
 		mp_Log = new MFileLog(L"ConEmu-input", mp_ConEmu->ms_ConEmuExeDir, mn_MainSrv_PID);
 	}
 
+	wchar_t szInfo[MAX_PATH * 2];
+
 	HRESULT hr = mp_Log ? mp_Log->CreateLogFile(L"ConEmu-input", mn_MainSrv_PID, gpSetCls->isAdvLogging) : E_UNEXPECTED;
 	if (hr != 0)
 	{
-		wchar_t szError[MAX_PATH*2];
-		_wsprintf(szError, SKIPLEN(countof(szError)) L"Create log file failed! ErrCode=0x%08X\n%s\n", (DWORD)hr, mp_Log->GetLogFileName());
-		MBoxA(szError);
+		_wsprintf(szInfo, SKIPCOUNT(szInfo) L"Create log file failed! ErrCode=0x%08X\n%s\n", (DWORD)hr, mp_Log->GetLogFileName());
+		MBoxA(szInfo);
 		SafeDelete(mp_Log);
 		return;
 	}
+
+	_wsprintf(szInfo, SKIPCOUNT(szInfo) L"RCon ID=%i started", mp_VCon->ID());
+	mp_Log->LogString(szInfo);
 
 	//mp_Log->LogStartEnv(gpStartEnv);
 
