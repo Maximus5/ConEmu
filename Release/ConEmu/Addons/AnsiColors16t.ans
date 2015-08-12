@@ -1,6 +1,6 @@
 This file contains full map of standard ANSI colors
 Read about enabling ANSI support in ConEmu
-  http://code.google.com/p/conemu-maximus5/wiki/AnsiEscapeCodes
+  https://conemu.github.io/en/AnsiEscapeCodes.html
 
 To view this file colored just "type" it in your cmd/tcc/powershell prompt
   Example: type "C:\Program Files\ConEmu\ConEmu\Addons\AnsiColors16t.ans"
