@@ -2967,6 +2967,7 @@ bool CConEmuMain::SessionInfo::Connected()
 	return (wState!=7/*WTS_SESSION_LOCK*/);
 }
 
+// Called from: WM_WTSSESSION_CHANGE -> CConEmuMain::OnSessionChanged
 void CConEmuMain::SessionInfo::SessionChanged(WPARAM State, LPARAM SessionID)
 {
 	wState = State;
@@ -3015,12 +3016,16 @@ void CConEmuMain::SessionInfo::SetSessionNotification(bool bSwitch)
 	}
 }
 
+// WM_WTSSESSION_CHANGE
 LRESULT CConEmuMain::OnSessionChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+	DEBUGTEST(bool bPrevConnected = session.Connected());
+
 	session.SessionChanged(wParam, lParam);
 
 	wchar_t szInfo[128], szState[32];
-	switch (LOWORD(wParam))
+	WORD nSessionCode = LOWORD(wParam);
+	switch (nSessionCode)
 	{
 		//0x1 The session identified by lParam was connected to the console terminal or RemoteFX session.
 		case WTS_CONSOLE_CONNECT: wcscpy_c(szState, L"WTS_CONSOLE_CONNECT"); break;
@@ -3044,7 +3049,7 @@ LRESULT CConEmuMain::OnSessionChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 		case 0xA/*WTS_SESSION_CREATE*/: wcscpy_c(szState, L"WTS_SESSION_CREATE"); break;
 		//0xB Reserved for future use.
 		case 0xB/*WTS_SESSION_TERMINATE*/: wcscpy_c(szState, L"WTS_SESSION_TERMINATE"); break;
-		default: _wsprintf(szState, SKIPLEN(countof(szState)) L"x%08X", (DWORD)wParam);
+		default: _wsprintf(szState, SKIPLEN(countof(szState)) WIN3264TEST(L"x%08X",L"x%0X%08X"), WIN3264WSPRINT(wParam));
 	}
 	_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"Session State (#%i): %s\r\n", (int)lParam, szState);
 	LogString(szInfo, true, false);
