@@ -2525,6 +2525,12 @@ void __stdcall UnsetAllHooks()
 		}
 	}
 
+	// Set all "original" function calls to NULL
+	{
+	extern GetConsoleWindow_T gfGetRealConsoleWindow; // from ConEmuCheck.cpp
+	gfGetRealConsoleWindow = NULL;
+	}
+
 	#ifdef _DEBUG
 	DebugStringA("UnsetAllHooks finished\n");
 	#endif

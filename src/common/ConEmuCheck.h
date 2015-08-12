@@ -68,7 +68,16 @@ int ConEmuCheck(HWND* ahConEmuWnd);
 //  aiType==0: Gui console DC window
 //        ==1: Gui Main window
 //        ==2: Console window
+//        ==3: Back window
 HWND GetConEmuHWND(int aiType);
+
+// RealConsole window
+HWND myGetConsoleWindow();
+
+// Don't use gfGetRealConsoleWindow indirectly,
+// Use myGetConsoleWindow instead!
+typedef HWND(WINAPI* GetConsoleWindow_T)();
+//extern GetConsoleWindow_T gfGetRealConsoleWindow;
 
 bool isConsoleClass(LPCWSTR asClass);
 bool isConsoleWindow(HWND hWnd);
@@ -97,8 +106,6 @@ CESERVER_REQ* ExecuteNewCmdOnCreate(CESERVER_CONSOLE_MAPPING_HDR* pSrvMap, HWND 
 				DWORD* anShellFlags, DWORD* anCreateFlags, DWORD* anStartFlags, DWORD* anShowCmd,
 				int mn_ImageBits, int mn_ImageSubsystem,
 				HANDLE hStdIn, HANDLE hStdOut, HANDLE hStdErr);
-
-HWND myGetConsoleWindow();
 
 extern SECURITY_ATTRIBUTES* gpLocalSecurity;
 extern u64 ghWorkingModule;

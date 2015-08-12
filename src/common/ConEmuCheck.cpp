@@ -1077,13 +1077,32 @@ bool isConsoleWindow(HWND hWnd)
 	return true;
 }
 
+GetConsoleWindow_T gfGetRealConsoleWindow = NULL;
+
 HWND myGetConsoleWindow()
 {
 	HWND hConWnd = NULL;
+
+	// If we are in ConEmuHk than gfGetRealConsoleWindow may be set
+	if (gfGetRealConsoleWindow)
+	{
+		hConWnd = gfGetRealConsoleWindow();
+		// If the function pointer was set - it must be proper function
+		_ASSERTEX(hConWnd==NULL || isConsoleWindow(hConWnd));
+		return hConWnd;
+	}
+
+	// To avoid infinite loops
+	static HMODULE hOurModule = NULL;
+	if (!hOurModule)
+		GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS| GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+			(LPCWSTR)&myGetConsoleWindow, &hOurModule);
+
+	WARNING("DANGER zone. If ConEmuHk unloads following may cause crashes");
 	static HMODULE hHookLib = NULL;
 	if (!hHookLib)
 		hHookLib = GetModuleHandle(WIN3264TEST(L"ConEmuHk.dll",L"ConEmuHk64.dll"));
-	if (hHookLib)
+	if (hHookLib && (hHookLib != hOurModule))
 	{
 		typedef HWND (WINAPI* GetRealConsoleWindow_t)();
 		static GetRealConsoleWindow_t GetRealConsoleWindow_f = NULL;
@@ -1102,55 +1121,25 @@ HWND myGetConsoleWindow()
 	if (!hConWnd)
 	{
 		hConWnd = GetConsoleWindow();
-		// Это может быть GUI приложение
+		// Current process may be GUI and have no console at all
 		if (!hConWnd)
 			return NULL;
-	}
 
-#ifdef _DEBUG
-	// Избежать статической линковки для user32.dll
-	HMODULE hUser32 = GetModuleHandle(L"user32.dll");
-	if (!hUser32)
-	{
-		// Скорее всего, user32 уже должен быть загружен, но если вдруг - сильно
-		// плохо, если он будет вызываться из DllMain
-		_ASSERTE(hUser32!=NULL);
-		hUser32 = LoadLibrary(L"user32.dll");
-	}
-	typedef LONG_PTR (WINAPI* GetWindowLongPtr_t)(HWND,int);
-	GetWindowLongPtr_t GetWindowLongPtr_f = (GetWindowLongPtr_t)GetProcAddress(hUser32,WIN3264TEST("GetWindowLongW","GetWindowLongPtrW"));
-	typedef int (WINAPI* GetClassName_t)(HWND hWnd,LPWSTR lpClassName,int nMaxCount);
-	GetClassName_t GetClassName_f = (GetClassName_t)GetProcAddress(hUser32,"GetClassNameW");
-	typedef LONG_PTR (WINAPI* IsWindow_t)(HWND);
-	IsWindow_t IsWindow_f = (IsWindow_t)GetProcAddress(hUser32,"IsWindow");
-
-	if (!(GetClassName_f && GetWindowLongPtr_f && IsWindow_f))
-	{
-		_ASSERTE(GetClassName_f && GetWindowLongPtr_f);
-	}
-	else
-	{
-		wchar_t sClass[64];
-		if (hConWnd)
-			GetClassName_f(hConWnd, sClass, countof(sClass));
-		_ASSERTE(hConWnd==NULL || isConsoleClass(sClass));
-		#if 0
-		if (lstrcmp(sClass, VirtualConsoleClass) == 0)
+		// RealConsole handle is stored in the Window DATA
+		if (hHookLib && (hHookLib != hOurModule))
 		{
-			// в данных окна DC - хранится хэндл окна консоли
-			HWND h = (HWND)GetWindowLongPtr_f(hConWnd, 0);
-			if (h && IsWindow_f(h))
+			#ifdef _DEBUG
+			wchar_t sClass[64] = L""; GetClassName(hConWnd, sClass, countof(sClass));
+			#endif
+
+			// Regardless of GetClassName result, it may be VirtualConsoleClass
+			HWND h = (HWND)GetWindowLongPtr(hConWnd, 0);
+			if (h && IsWindow(h) && isConsoleWindow(h))
 			{
 				hConWnd = h;
 			}
-			else
-			{
-				_ASSERTE(h && IsWindow_f(h));
-			}
 		}
-		#endif
 	}
-#endif
 
 	return hConWnd;
 

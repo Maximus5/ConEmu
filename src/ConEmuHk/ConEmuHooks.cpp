@@ -196,8 +196,6 @@ extern HWND    ghConEmuWndDC; // ConEmu DC window
 extern DWORD   gnGuiPID;
 extern BOOL    gbWasSucceededInRead;
 HDC ghTempHDC = NULL;
-GetConsoleWindow_T gfGetRealConsoleWindow = NULL;
-//extern HWND WINAPI GetRealConsoleWindow(); // Entry.cpp
 extern HANDLE ghCurrentOutBuffer;
 HANDLE ghStdOutHandle = NULL;
 HANDLE ghLastConInHandle = NULL, ghLastNotConInHandle = NULL;
@@ -1108,6 +1106,8 @@ BOOL StartupHooks(HMODULE ahOurDll)
 	#ifdef _DEBUG
 	gfVirtualAlloc = (VirtualAlloc_t)GetOriginalAddress(OnVirtualAlloc, NULL, FALSE, NULL);
 	#endif
+
+	extern GetConsoleWindow_T gfGetRealConsoleWindow; // from ConEmuCheck.cpp
 	gfGetRealConsoleWindow = (GetConsoleWindow_T)GetOriginalAddress((LPVOID)OnGetConsoleWindow, NULL, FALSE, NULL);
 
 	print_timings(L"SetAllHooks - done");
