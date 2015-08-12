@@ -1032,6 +1032,51 @@ void SendCurrentDirectory(HWND hConWnd, LPCWSTR asDirectory, LPCWSTR asPassiveDi
 	ExecuteFreeResult(pIn);
 }
 
+bool isConsoleClass(LPCWSTR asClass)
+{
+	if ((asClass && *asClass)
+		&& (
+			(lstrcmp(asClass, RealConsoleClass) == 0)
+			|| (lstrcmp(asClass, WineConsoleClass) == 0)
+		))
+		return true;
+
+	return false;
+}
+
+bool isConsoleWindow(HWND hWnd)
+{
+	wchar_t szClass[64] = L"";
+
+	if (!hWnd)
+		return false;
+	if (!GetClassName(hWnd, szClass, countof(szClass)))
+		return false;
+	if (!isConsoleClass(szClass))
+		return false;
+
+	// But when process is hooked, GetConsoleClass will return "proper" name
+	// even if hWnd points to our VirtualConsole
+
+	// RealConsole handle is stored in the Window DATA
+	wchar_t szClassPtr[64] = L"";
+	HWND h = (HWND)GetWindowLongPtr(hWnd, 0);
+	if (h && (h != hWnd) && IsWindow(h))
+	{
+		if (GetClassName(h, szClassPtr, countof(szClassPtr)))
+		{
+			if (isConsoleClass(szClassPtr))
+			{
+				_ASSERTE(FALSE && "RealConsole handle was not retrieved properly!");
+				return false;
+			}
+		}
+	}
+
+	// Well, it's a RealConsole
+	return true;
+}
+
 HWND myGetConsoleWindow()
 {
 	HWND hConWnd = NULL;

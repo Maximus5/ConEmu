@@ -70,6 +70,9 @@ int ConEmuCheck(HWND* ahConEmuWnd);
 //        ==2: Console window
 HWND GetConEmuHWND(int aiType);
 
+bool isConsoleClass(LPCWSTR asClass);
+bool isConsoleWindow(HWND hWnd);
+
 //LPCWSTR CreatePipeName(wchar_t (&szGuiPipeName)[128], LPCWSTR asFormat, DWORD anValue);
 int GuiMessageBox(HWND hConEmuWndRoot, LPCWSTR asText, LPCWSTR asTitle, int anBtns);
 

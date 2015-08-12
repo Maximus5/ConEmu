@@ -85,7 +85,7 @@ typedef struct _CONSOLE_SELECTION_INFO
 
 #define RealConsoleClass L"ConsoleWindowClass"
 #define WineConsoleClass L"WineConsoleClass"
-#define isConsoleClass(sClass) (lstrcmp(sClass, RealConsoleClass)==0 || lstrcmp(sClass, WineConsoleClass)==0)
+// functions isConsoleClass & isConsoleWindow are defined in ConEmuCheck.cpp
 
 // Some ANSI & Controls
 #define DSC 0x90
