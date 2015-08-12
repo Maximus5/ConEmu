@@ -2579,7 +2579,7 @@ http://conemu.github.io/en/Whats_New.html
 [%] AutoUpdate fixes.
 [%] Don't execute ‘ConEmu autorun’ when console window is minimized (AutoUpdate issue).
 [%] ‘Duplicate root’ fails sometimes with error code 0xC0000148.
-    
+
 
 2013.02.20
 [%] Issue 949: Selection failed with buffer and ‘Freeze console’ checked.
@@ -3107,7 +3107,7 @@ http://conemu.github.io/en/Whats_New.html
       WhatsNew-ConEmu.txt and others
 [!] AutoUpdate is disabled in MinGW mode.
 [*] Minor changes in command line parser.
-[%] Selection ended unexpectedly when Modifier for selection start was set and 
+[%] Selection ended unexpectedly when Modifier for selection start was set and
 [%] Some GUI windows was ignored by Attach.
 
 
@@ -3216,7 +3216,7 @@ http://conemu.github.io/en/Whats_New.html
 
 2012.07.22
 [%] Issue 348: Maximize errors with Hide caption.
-[+] Issue 641: Show current console title in the status bar. 
+[+] Issue 641: Show current console title in the status bar.
 [+] Issue 645: PowerShell cmdlet Write-Progress detection.
 [%] Issue 646: ConEmu eats dead keys.
 [%] Issue 647: Mouse wheel does not respect Control Panel settings.
@@ -3628,7 +3628,7 @@ http://conemu.github.io/en/Whats_New.html
     Если больше - то допускаются однокнопочные и двухкнопочные активации. Например:
     ‘Win(down) 1 5’ - активирует 15-ю консоль;
     ‘Win(down) 1 Win(up)’ - активирует 1-ю консоль.
-[%] Еще раз 'Sleep in background' bugfix. 
+[%] Еще раз 'Sleep in background' bugfix.
 [%] Issue 541: В режиме эскизов некорректно выделяются файлы правой кнопкой мыши.
 
 
@@ -3648,7 +3648,7 @@ http://conemu.github.io/en/Whats_New.html
 [%] Issue 538: Неверные иконки в Thumbnails/Tiles в корне архивов.
 [%] Issue 539: Некорректная отрисовка Thumbnails/Tiles поверх панели QView (Ctrl+Q) или Info (Ctrl+L).
 [+] Разрешен Shell Drop файлов в редактор и диалоги. Drop, естественно, в виде вставки текста (имен/путей перетаскиваемых файлов).
-[%] Еще раз 'Sleep in background' bugfix. 
+[%] Еще раз 'Sleep in background' bugfix.
 [*] Настройка 'Command line' переехала на новую вкладку 'Startup' окна 'Settings'.
 [*] В меню (кнопка [+] на тулбаре) добавлены пункты 'New console dialog' и 'Setup tasks'.
 
@@ -4418,7 +4418,7 @@ http://conemu.github.io/en/Whats_New.html
 
 
 2011.01.17
-[%] Issue 347: Странность показа данных на закладках. 
+[%] Issue 347: Странность показа данных на закладках.
 [%] Не выполнялся батник: ver|find "6."
 [*] 'Press Enter to close console' -> 'Press Enter or Esc to close console'.
 [+] Стрелка у кнопки '+' на toolbar показывает меню из последних 16 запущенных команд, для быстрого запуска новой консоли.
@@ -4885,7 +4885,7 @@ Maximus5 - 2010.02.11
 [*] Переделано скрытие заголовка 'Hide caption always'. Теперь заголовок скрывается вместе с рамкой, но
     при наведении мышки на скрытый заголовок/рамку - они появляются. Вокруг видимой части остается
     видимой тонкая (1 пиксел) часть рамки. Ширина настраивается "HideCaptionAlwaysFrame".
-[+] Желающие иметь FAR на рабочем столе могут поиграться с новой версией. 
+[+] Желающие иметь FAR на рабочем столе могут поиграться с новой версией.
     Включать флажок 'Desktop mode'. При желании - настроить стартовый размер и положение.
 [+] В тестовом режиме появилась 'прозрачность панелей'. Пока тормознуто и будет переделано.
     Смысл в том, чтобы при скрытии одной или двух панелей вместо них отображался рабочий стол,
@@ -5142,9 +5142,9 @@ Maximus5 - 2009.09.15
 
 [%] Могли злобно виснуть (или падать?) при попытке ресайза.
 [*] В FAR2 активация плагина переведена на ACTL_SYNCHRO. Теперь в макросе для EMenu можно использовать перфикс '@'.
-    Текстовое EMenu теперь всегда активируется по центру экрана 
+    Текстовое EMenu теперь всегда активируется по центру экрана
     (Side effect - при нажатии клавиатуры скрытая реальная консоль сдвигается в сторону от мышки).
-    В текущей версии рекомендуются такие настройки EMenu: 
+    В текущей версии рекомендуются такие настройки EMenu:
     Apps - показывает текстовое меню (автоматически отображается по центру окна).
     Для мыши - макрос вида "RightClickMacro2"="@F11 e Enter Enter" в настройках ConEmu.
 
@@ -5344,7 +5344,7 @@ Maximus5 - 2009.07.01
 Maximus5 - 2009.06.28
 
 %) Правки в GCC мейке.
-%) Кнопки тулбара иногда помещались перед табами при сужении окна. 
+%) Кнопки тулбара иногда помещались перед табами при сужении окна.
 %) Изменения в 'Window size' (окно настроек) не применялись при нажатии 'Save settings'.
 %) Выпадающие списки размеров шрифта отображали некорректную информацию, если в списке не было текущего значения.
 %) Не обрабатывался прогресс плагина FTP (пример: {13.1%}).
@@ -5488,7 +5488,7 @@ Maximus5 - 2009.06.09
 +) Добавлена обработка параметра -new_console. Пример:
    dir -new_console c:\windows\*.*
    запустится в новой вкладке ConEmu.
-   ! Вкладка автоматически не закрывается 
+   ! Вкладка автоматически не закрывается
    ! закрытие только после завершения выполненной команды и нажатия Enter.
 *) Форматирование заголовка 'панельной' вкладки (изменено имя параметра реестра на "TabConsole").
 +) В диалоге подтверждения перезапуска консоли (Win+~) кнопка 'Yes' - перезапуск, кнопка 'No' - закрытие, 'Cancel' - отказ.
@@ -5967,12 +5967,12 @@ alex_itd - 2009.01.18
 * частично переписал общение с плагином через пайпы
 * детект закрытия фара как советовал DrKnS (проверяйте Updater)
 * отключил XP темы у прогресс баров (темами не пользуюсь, проверить не могу) (чуть попозже сделаю подстройку цвета под палитру)
-	
-* Drag'n'Drop теперь работает только на файловых панелях 
+
+* Drag'n'Drop теперь работает только на файловых панелях
 * крыжик в настройках Drag'n'Drop 'Copy by default'
-* фикс переключения раскладки от Maximus5 
+* фикс переключения раскладки от Maximus5
 * фикс мелких шрифтов от NightRoman
-	  
+
 
 
 = 2009.01.18 === (NightRoman changelog below) ===
