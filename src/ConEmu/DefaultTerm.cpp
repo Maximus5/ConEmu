@@ -273,3 +273,8 @@ bool CDefaultTerminal::NotifyHookingStatus(DWORD nPID, LPCWSTR sName)
 	// descendant must return true if status bar was changed
 	return true;
 }
+
+void CDefaultTerminal::LogHookingStatus(LPCWSTR sMessage)
+{
+	gpConEmu->LogString(sMessage);
+}

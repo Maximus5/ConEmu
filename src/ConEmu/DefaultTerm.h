@@ -61,4 +61,6 @@ protected:
 	// nPID = 0 when hooking is done (remove status bar notification)
 	// sName is executable name or window class name
 	virtual bool NotifyHookingStatus(DWORD nPID, LPCWSTR sName);
+public:
+	virtual void LogHookingStatus(LPCWSTR sMessage);
 };
