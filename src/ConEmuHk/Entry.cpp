@@ -875,7 +875,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 	{
 		// We can get here, if *.vshost.exe was started 'normally'
 		// and Win+G (attach) was initiated from ConEmu by user
-		_ASSERTE(ghConWnd == gfGetRealConsoleWindow());
+		_ASSERTE(ghConWnd == GetRealConsoleWindow());
 		gnImageSubsystem = IMAGE_SUBSYSTEM_WINDOWS_CUI;
 	}
 	// Проверка чего получилось
@@ -961,7 +961,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 					GetStdHandle(STD_INPUT_HANDLE), GetStdHandle(STD_OUTPUT_HANDLE), GetStdHandle(STD_ERROR_HANDLE));
 				if (pIn)
 				{
-					//HWND hConWnd = gfGetRealConsoleWindow();
+					//HWND hConWnd = GetRealConsoleWindow();
 					CESERVER_REQ* pOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd);
 					ExecuteFreeResult(pIn);
 					if (pOut) ExecuteFreeResult(pOut);
@@ -1713,9 +1713,7 @@ BOOL DllMain_ProcessAttach(HANDLE hModule, DWORD  ul_reason_for_call)
 
 	DLOG1_("DllMain.Console",ul_reason_for_call);
 	ghOurModule = (HMODULE)hModule;
-	if (!gfGetRealConsoleWindow)
-		gfGetRealConsoleWindow = GetConsoleWindow;
-	ghConWnd = gfGetRealConsoleWindow();
+	ghConWnd = GetRealConsoleWindow();
 	if (ghConWnd)
 		GetConsoleTitle(gsInitConTitle, countof(gsInitConTitle));
 	gnSelfPID = GetCurrentProcessId();
@@ -2568,12 +2566,10 @@ wrap:
 // можно дергать эту экспортируемую функцию
 HWND WINAPI GetRealConsoleWindow()
 {
-	_ASSERTE(gfGetRealConsoleWindow);
-	HWND hConWnd = gfGetRealConsoleWindow ? gfGetRealConsoleWindow() : NULL; //GetConsoleWindow();
-#ifdef _DEBUG
-	wchar_t sClass[64]; GetClassName(hConWnd, sClass, countof(sClass));
-	_ASSERTEX(hConWnd==NULL || isConsoleClass(sClass));
-#endif
+	HWND hConWnd = myGetConsoleWindow();
+
+	_ASSERTEX(hConWnd==NULL || isConsoleWindow(hConWnd));
+
 	return hConWnd;
 }
 

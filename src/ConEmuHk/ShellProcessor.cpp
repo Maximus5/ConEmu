@@ -1850,7 +1850,7 @@ int CShellProc::PrepareExecuteParms(
 			hIn, hOut, hErr/*, szBaseDir, mb_DosBoxAllowed*/);
 	if (pIn)
 	{
-		HWND hConWnd = gfGetRealConsoleWindow();
+		HWND hConWnd = GetRealConsoleWindow();
 		CESERVER_REQ *pOut = NULL;
 		pOut = ExecuteGuiCmd(hConWnd, pIn, hConWnd);
 		ExecuteFreeResult(pIn); pIn = NULL;
@@ -2155,7 +2155,7 @@ int CShellProc::PrepareExecuteParms(
 			// Замена на "ConEmuC.exe ...", все "-new_console" / "-cur_console" будут обработаны в нем
 			bCurConsoleArg = false;
 
-			HWND hConWnd = gfGetRealConsoleWindow();
+			HWND hConWnd = GetRealConsoleWindow();
 
 			if (lbGuiApp && (bNewConsoleArg || bForceNewConsole))
 			{
@@ -2663,7 +2663,7 @@ BOOL CShellProc::OnCreateProcessW(LPCWSTR* asFile, LPCWSTR* asCmdLine, LPCWSTR* 
 			{
 				// Запуск отладчика Win32 приложения из VisualStudio (например)
 				// Финт ушами для избежания мелькания RealConsole window
-				HWND hConWnd = gfGetRealConsoleWindow();
+				HWND hConWnd = GetRealConsoleWindow();
 				if (hConWnd == NULL)
 				{
 					_ASSERTE(gnServerPID==0);

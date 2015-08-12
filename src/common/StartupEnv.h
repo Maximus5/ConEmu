@@ -29,6 +29,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include "StartupEnvDef.h"
+#include "ConEmuCheck.h"
 
 class LoadStartupEnv
 {
@@ -111,7 +112,7 @@ protected:
 			pEnv->cbSize = cchTotal;
 
 			pEnv->OsBits = IsWindows64() ? 64 : 32;
-			pEnv->hConWnd = GetConsoleWindow();
+			pEnv->hConWnd = myGetConsoleWindow();
 
 			pEnv->si = si;
 			pEnv->os = os;
