@@ -893,6 +893,7 @@ bool CSetDlgButtons::ProcessButtonClick(HWND hDlg, WORD CB, BYTE uCheck)
 		case cbDefTermAgressive:
 		case cbDefaultTerminalNoInjects:
 		case cbDefaultTerminalUseExisting:
+		case cbApplyDefTerm:
 		case rbDefaultTerminalConfAuto:
 		case rbDefaultTerminalConfAlways:
 		case rbDefaultTerminalConfNever:
@@ -4279,6 +4280,10 @@ void CSetDlgButtons::OnBtn_DefTerm(HWND hDlg, WORD CB, BYTE uCheck)
 	{
 	case cbDefaultTerminal:
 		gpSet->isSetDefaultTerminal = uCheck;
+		bSetupDefaultTerminal = gpSet->isSetDefaultTerminal;
+		break;
+
+	case cbApplyDefTerm:
 		bSetupDefaultTerminal = gpSet->isSetDefaultTerminal;
 		break;
 
