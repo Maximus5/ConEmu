@@ -357,11 +357,11 @@ BOOL CheckBuffers(bool abWrite /*= false*/)
 	if (hCon != ghVConWnd)
 	{
 		#ifdef _DEBUG
-		// Функция GetConsoleWindow НЕ должна быть перехвачена в ConEmuHk, проверим
+		// After minhook implementation GetConsoleWindow will return VCon HWND
 		HWND hApiCon = GetConsoleWindow();
 		HWND hRealCon = GetConEmuHWND(2);
 		HWND hRootWnd = GetConEmuHWND(1);
-		_ASSERTE((hApiCon == hRealCon && hApiCon != hCon) || hRootWnd == NULL);
+		_ASSERTE(hApiCon == hCon && hApiCon != hRealCon);
 		#endif
 
 		ghRConWnd = GetConEmuHWND(2);
