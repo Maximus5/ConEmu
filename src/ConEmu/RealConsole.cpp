@@ -2798,6 +2798,12 @@ DWORD CRealConsole::MonitorThreadWorker(bool bDetached, bool& rbChildProcessCrea
 				ShowOtherWindow(hConWnd, SW_HIDE);
 		}
 
+		// Ensure that window data match hConWnd - some external app may damage it
+		if (hConWnd)
+		{
+			CheckVConRConPointer(false);
+		}
+
 		// Размер консоли меняем в том треде, в котором это требуется. Иначе можем заблокироваться при Update (InitDC)
 		// Требуется изменение размеров консоли
 		/*if (nWait == (IDEVENT_SYNC2WINDOW)) {
@@ -8704,9 +8710,7 @@ void CRealConsole::SetHwnd(HWND ahConWnd, BOOL abForceApprove /*= FALSE*/)
 	}
 
 	hConWnd = ahConWnd;
-	SetWindowLongPtr(mp_VCon->GetView(), 0, (LONG_PTR)ahConWnd);
-	SetWindowLong(mp_VCon->GetBack(), 0, LODWORD(ahConWnd));
-	SetWindowLong(mp_VCon->GetBack(), 4, LODWORD(mp_VCon->GetView()));
+	CheckVConRConPointer(true);
 	//if (mb_Detached && ahConWnd) // Не сбрасываем, а то нить может не успеть!
 	//  mb_Detached = FALSE; // Сброс флажка, мы уже подключились
 	//OpenColorMapping();
@@ -8746,6 +8750,29 @@ void CRealConsole::SetHwnd(HWND ahConWnd, BOOL abForceApprove /*= FALSE*/)
 		// StatusBar
 		mp_ConEmu->mp_Status->OnActiveVConChanged(mp_ConEmu->ActiveConNum(), this);
 	}
+}
+
+void CRealConsole::CheckVConRConPointer(bool bForceSet)
+{
+	if (!this)
+		return;
+
+	_ASSERTE(hConWnd != NULL);
+	HWND hVCon = mp_VCon->GetView();
+	HWND hVConBack = mp_VCon->GetBack();
+
+	if (!bForceSet)
+	{
+		HWND h = (HWND)GetWindowLongPtr(hVCon, 0);
+		if (h == hConWnd)
+			return; // OK, was not changed externally
+		_ASSERTE(FALSE && "WindowLongPtr was changed externally?");
+	}
+
+	SetWindowLongPtr(hVCon, 0, (LONG_PTR)hConWnd);
+
+	SetWindowLong(hVConBack, 0, LODWORD(hConWnd));
+	SetWindowLong(hVConBack, 4, LODWORD(hVCon));
 }
 
 void CRealConsole::OnFocus(BOOL abFocused)
