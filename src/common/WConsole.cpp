@@ -555,7 +555,8 @@ BOOL apiSetConsoleFontSize(HANDLE hOutput, int inSizeY, int inSizeX, const wchar
 			MY_CONSOLE_FONT_INFOEX cfiSet = {sizeof(cfiSet)};
 			if (GetCurrentConsoleFontEx && GetCurrentConsoleFontEx(hConOut, FALSE, &cfiSet))
 			{
-				_ASSERTE(cfiSet.dwFontSize.X==cfi.dwFontSize.X && cfiSet.dwFontSize.Y==cfi.dwFontSize.Y);
+				// Win10 can't set "Lucida Console 3x5" and we get "4x6"
+				_ASSERTE(_abs(cfiSet.dwFontSize.X-cfi.dwFontSize.X)<=1 && _abs(cfiSet.dwFontSize.Y-cfi.dwFontSize.Y)<=1);
 				g_LastSetConsoleFont = cfiSet;
 			}
 			else
