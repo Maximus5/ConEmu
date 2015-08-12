@@ -273,9 +273,9 @@ int ComspecInit();
 void ComspecDone(int aiRc);
 bool CoordInSmallRect(const COORD& cr, const SMALL_RECT& rc);
 void RefillConsoleAttributes(const CONSOLE_SCREEN_BUFFER_INFO& csbi5, WORD OldText, WORD NewText);
-BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, LPCSTR asLabel = NULL);
+BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, LPCSTR asLabel = NULL, bool bForceWriteLog = false);
 void CreateLogSizeFile(int nLevel, const CESERVER_CONSOLE_MAPPING_HDR* pConsoleInfo = NULL);
-void LogSize(const COORD* pcrSize, int newBufferHeight, LPCSTR pszLabel);
+void LogSize(const COORD* pcrSize, int newBufferHeight, LPCSTR pszLabel, bool bForceWriteLog = false);
 void LogString(LPCSTR asText);
 void LogString(LPCWSTR asText);
 void PrintExecuteError(LPCWSTR asCmd, DWORD dwErr, LPCWSTR asSpecialInfo=NULL);
@@ -566,6 +566,7 @@ struct SrvInfo
 	// Смена размера консоли через RefreshThread
 	LONG nRequestChangeSize;
 	BOOL bRequestChangeSizeResult;
+	bool bReqSizeForceLog;
 	USHORT nReqSizeBufferHeight;
 	COORD crReqSizeNewSize;
 	SMALL_RECT rReqSizeNewRect;

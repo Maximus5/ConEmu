@@ -6708,7 +6708,7 @@ void LogString(LPCWSTR asText)
 	gpLogSize->LogString(asText, true, pszThread);
 }
 
-void LogSize(const COORD* pcrSize, int newBufferHeight, LPCSTR pszLabel)
+void LogSize(const COORD* pcrSize, int newBufferHeight, LPCSTR pszLabel, bool bForceWriteLog)
 {
 	if (!gpLogSize) return;
 
@@ -6777,8 +6777,10 @@ void LogSize(const COORD* pcrSize, int newBufferHeight, LPCSTR pszLabel)
 	}
 	else
 	{
+		if (bForceWriteLog)
+			bWriteLog = true;
 		// Avoid numerous writing of equal lines to log
-		if ((lsbi.dwSize.X != lsbiLast.dwSize.X) || (lsbi.dwSize.Y != lsbiLast.dwSize.Y))
+		else if ((lsbi.dwSize.X != lsbiLast.dwSize.X) || (lsbi.dwSize.Y != lsbiLast.dwSize.Y))
 			bWriteLog = true;
 		else if (((GetTickCount() - nLastWriteTick) >= TickDelta) || (nSkipped >= SkipDelta))
 			bWriteLog = true;
@@ -6889,10 +6891,22 @@ BOOL cmd_SetSizeXXX_CmdStartedFinished(CESERVER_REQ& in, CESERVER_REQ** out)
 {
 	BOOL lbRc = FALSE;
 
-		//case CECMD_SETSIZESYNC:
-		//case CECMD_SETSIZENOSYNC:
-		//case CECMD_CMDSTARTED:
-		//case CECMD_CMDFINISHED:
+	bool bForceWriteLog = false;
+	char szCmdName[40];
+	switch (in.hdr.nCmd)
+	{
+	case CECMD_SETSIZESYNC:
+		lstrcpynA(szCmdName, ":CECMD_SETSIZESYNC", countof(szCmdName)); break;
+	case CECMD_SETSIZENOSYNC:
+		lstrcpynA(szCmdName, ":CECMD_SETSIZENOSYNC", countof(szCmdName)); break;
+	case CECMD_CMDSTARTED:
+		lstrcpynA(szCmdName, ":CECMD_CMDSTARTED", countof(szCmdName)); break;
+	case CECMD_CMDFINISHED:
+		lstrcpynA(szCmdName, ":CECMD_CMDFINISHED", countof(szCmdName)); break;
+	default:
+		_ASSERTE(FALSE && "Unnamed command");
+		_wsprintfA(szCmdName, SKIPCOUNT(szCmdName) ":UnnamedCmd(%u)", in.hdr.nCmd);
+	}
 
 	MCHKHEAP;
 	int nOutSize = sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_RETSIZE);
@@ -6987,7 +7001,7 @@ BOOL cmd_SetSizeXXX_CmdStartedFinished(CESERVER_REQ& in, CESERVER_REQ** out)
 		csRead.Unlock();
 		WARNING("Если указан dwFarPID - это что-ли два раза подряд выполнится?");
 		// rNewRect по идее вообще не нужен, за блокировку при прокрутке отвечает nSendTopLine
-		nWasSetSize = SetConsoleSize(nBufferHeight, crNewSize, rNewRect, ":CECMD_SETSIZESYNC");
+		nWasSetSize = SetConsoleSize(nBufferHeight, crNewSize, rNewRect, szCmdName, bForceWriteLog);
 		WARNING("!! Не может ли возникнуть конфликт с фаровским фиксом для убирания полос прокрутки?");
 		nTick2 = GetTickCount();
 
@@ -9678,7 +9692,7 @@ wrap:
 // No buffer (scrolling) in the console
 // По идее, это только для приложений которые сами меняют высоту буфера
 // для работы в "полноэкранном" режиме, типа Far 1.7x или Far 2+ без ключа /w
-static bool ApplyConsoleSizeSimple(const COORD& crNewSize, const CONSOLE_SCREEN_BUFFER_INFO& csbi, DWORD& dwErr)
+static bool ApplyConsoleSizeSimple(const COORD& crNewSize, const CONSOLE_SCREEN_BUFFER_INFO& csbi, DWORD& dwErr, bool bForceWriteLog)
 {
 	bool lbRc = true;
 	dwErr = 0;
@@ -9732,6 +9746,8 @@ static bool ApplyConsoleSizeSimple(const COORD& crNewSize, const CONSOLE_SCREEN_
 			dwErr = GetLastError();
 		}
 	}
+
+	LogSize(NULL, 0, lbRc ? "ApplyConsoleSizeSimple OK" : "ApplyConsoleSizeSimple FAIL", bForceWriteLog);
 
 	return lbRc;
 }
@@ -9882,7 +9898,7 @@ static void EvalVisibleResizeRect(SMALL_RECT& rNewRect,
 
 // There is the buffer (scrolling) in the console
 // Ресайз для BufferHeight
-static bool ApplyConsoleSizeBuffer(const USHORT BufferHeight, const COORD& crNewSize, const CONSOLE_SCREEN_BUFFER_INFO& csbi, DWORD& dwErr)
+static bool ApplyConsoleSizeBuffer(const USHORT BufferHeight, const COORD& crNewSize, const CONSOLE_SCREEN_BUFFER_INFO& csbi, DWORD& dwErr, bool bForceWriteLog)
 {
 	bool lbRc = true;
 	dwErr = 0;
@@ -10029,6 +10045,8 @@ static bool ApplyConsoleSizeBuffer(const USHORT BufferHeight, const COORD& crNew
 		dwErr = GetLastError();
 	}
 
+	LogSize(NULL, 0, lbRc ? "ApplyConsoleSizeBuffer OK" : "ApplyConsoleSizeBuffer FAIL", bForceWriteLog);
+
 	return lbRc;
 }
 
@@ -10100,7 +10118,7 @@ void RefillConsoleAttributes(const CONSOLE_SCREEN_BUFFER_INFO& csbi5, WORD OldTe
 // crNewSize     - размер ОКНА (ширина окна == ширине буфера)
 // rNewRect      - для (BufferHeight!=0) определяет new upper-left and lower-right corners of the window
 //	!!! rNewRect по идее вообще не нужен, за блокировку при прокрутке отвечает nSendTopLine
-BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, LPCSTR asLabel)
+BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, LPCSTR asLabel, bool bForceWriteLog)
 {
 	_ASSERTE(ghConWnd);
 	_ASSERTE(BufferHeight==0 || BufferHeight>crNewSize.Y); // Otherwise - it will be NOT a bufferheight...
@@ -10126,6 +10144,7 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
 		WARNING("выпилить gpSrv->rReqSizeNewRect и rNewRect");
 		gpSrv->rReqSizeNewRect = rNewRect;
 		gpSrv->sReqSizeLabel = asLabel;
+		gpSrv->bReqSizeForceLog = bForceWriteLog;
 
 		// Ресайз выполнять только в нити RefreshThread. Поэтому если нить другая - ждем...
 		if (gpSrv->dwRefreshThread && dwCurThId != gpSrv->dwRefreshThread)
@@ -10240,12 +10259,12 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
 	if (BufferHeight == 0)
 	{
 		// No buffer in the console
-		lbRc = ApplyConsoleSizeSimple(crNewSize, csbi, dwErr);
+		lbRc = ApplyConsoleSizeSimple(crNewSize, csbi, dwErr, bForceWriteLog);
 	}
 	else
 	{
 		// Начался ресайз для BufferHeight
-		lbRc = ApplyConsoleSizeBuffer(gnBufferHeight, crNewSize, csbi, dwErr);
+		lbRc = ApplyConsoleSizeBuffer(gnBufferHeight, crNewSize, csbi, dwErr, bForceWriteLog);
 	}
 
 

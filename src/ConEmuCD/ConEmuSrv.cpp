@@ -4607,7 +4607,7 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 			//	dwSusp = SuspendThread(gpSrv->hRootThread);
 			//	if (dwSusp == (DWORD)-1) dwSuspErr = GetLastError();
 			//}
-			SetConsoleSize(gpSrv->nReqSizeBufferHeight, gpSrv->crReqSizeNewSize, gpSrv->rReqSizeNewRect, gpSrv->sReqSizeLabel);
+			SetConsoleSize(gpSrv->nReqSizeBufferHeight, gpSrv->crReqSizeNewSize, gpSrv->rReqSizeNewRect, gpSrv->sReqSizeLabel, gpSrv->bReqSizeForceLog);
 			//if (gpSrv->hRootThread) {
 			//	ResumeThread(gpSrv->hRootThread);
 			//}
