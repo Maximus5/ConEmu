@@ -125,6 +125,7 @@ class CVirtualConsole :
 		bool    mb_RequiredForceUpdate; // Сменился шрифт, например...
 		bool    isForce; // а это - сейчас (устанавливается по аргументу в Update)
 		bool    isFontSizeChanged;
+		bool    mb_PaintSkippedLogged;
 		DWORD   mn_LastBitsPixel;
 	protected:
 		friend class CConEmuChild;

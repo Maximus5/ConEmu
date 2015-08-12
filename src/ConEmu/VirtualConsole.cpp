@@ -320,6 +320,7 @@ bool CVirtualConsole::Constructor(RConStartArgs *args)
 	Cursor.nBlinkTime = GetCaretBlinkTime();
 	TextWidth = TextHeight = Width = Height = nMaxTextWidth = nMaxTextHeight = 0;
 	LastPadSize = 0;
+	mb_PaintSkippedLogged = false;
 
 	_ASSERTE((HDC)m_DC == NULL);
 	hBgDc = NULL; bgBmpSize.X = bgBmpSize.Y = 0;
@@ -4942,10 +4943,17 @@ void CVirtualConsole::PaintVCon(HDC hPaintDc)
 	}
 	else if (gpConEmu->IsWindowModeChanging())
 	{
-		LogString(L"PaintVCon skipped due to Min/Max/Restore");
+		if (!mb_PaintSkippedLogged)
+		{
+			mb_PaintSkippedLogged = true;
+			LogString(L"PaintVCon are skipped till Min/Max/Restore/Lock end");
+		}
 	}
 	else
 	{
+		if (mb_PaintSkippedLogged)
+			mb_PaintSkippedLogged = false;
+
 		PaintVConNormal(hPaintDc, rcClient);
 
 		if (mp_Ghost)
