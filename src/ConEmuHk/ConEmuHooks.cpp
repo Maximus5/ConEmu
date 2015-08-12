@@ -1369,7 +1369,9 @@ HANDLE WINAPI OnOpenFileMappingW(DWORD dwDesiredAccess, BOOL bInheritHandle, LPC
 	//BOOL bMainThread = FALSE; // поток не важен
 	HANDLE hRc = FALSE;
 
-	if (ghConEmuWndDC && lpName && *lpName)
+	extern BOOL gbTrueColorServerRequested;
+	if (ghConEmuWndDC && lpName && *lpName
+		&& !gbTrueColorServerRequested)
 	{
 		/**
 		* Share name to search for

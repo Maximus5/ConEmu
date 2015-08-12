@@ -211,6 +211,7 @@ BOOL    gbNonGuiMode = FALSE;
 DWORD   gnImageSubsystem = 0;
 DWORD   gnImageBits = WIN3264TEST(32,64); //-V112
 wchar_t gsInitConTitle[512] = {};
+BOOL    gbTrueColorServerRequested = FALSE;
 
 struct ProcessEventFlags {
 	HANDLE hProcessFlag; // = OpenEvent(SYNCHRONIZE|EVENT_MODIFY_STATE, FALSE, szEvtName);
@@ -2955,6 +2956,9 @@ int WINAPI RequestLocalServer(/*[IN/OUT]*/RequestLocalServerParm* Parm)
 		goto wrap;
 
 	_ASSERTE(CheckCallbackPtr(ghSrvDll, 1, (FARPROC*)&gfRequestLocalServer, TRUE));
+
+	if (Parm->Flags & slsf_RequestTrueColor)
+		gbTrueColorServerRequested = TRUE;
 
 	//iRc = gfRequestLocalServer(&gpAnnotationHeader, &ghCurrentOutBuffer);
 	iRc = gfRequestLocalServer(Parm);
