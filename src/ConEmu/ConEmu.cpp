@@ -11635,7 +11635,7 @@ void CConEmuMain::CheckFocus(LPCWSTR asFrom)
 			GetGUIThreadInfo(0/*dwTID*/, &gti);
 
 			#ifdef _DEBUG
-			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"Foreground changed (%s). NewFore=0x%08X, Active=0x%08X, Focus=0x%08X, Class=%s, LBtn=%i\n", asFrom, (DWORD)hCurForeground, (DWORD)gti.hwndActive, (DWORD)gti.hwndFocus, szClass, lbLDown);
+			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"Foreground changed (%s). NewFore=0x%08X, Active=0x%08X, Focus=0x%08X, Class=%s, LBtn=%i\n", asFrom, LODWORD(hCurForeground), LODWORD(gti.hwndActive), LODWORD(gti.hwndFocus), szClass, lbLDown);
 			#endif
 
 			// mh_ShellWindow чисто для информации. Хоть родитель ConEmu и меняется на mh_ShellWindow
