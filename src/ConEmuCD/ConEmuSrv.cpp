@@ -4662,14 +4662,28 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 
 			if (gpSrv->bFarCommitRegistered)
 			{
-				nFarCommit = nEvtCount;
-				hEvents[nEvtCount++] = gpSrv->hFarCommitEvent;
-				nWaitTimeout = 2500; // No need to force console scanning, Far & ExtendedConsole.dll takes care
+				if (nEvtCount < countof(hEvents))
+				{
+					nFarCommit = nEvtCount;
+					hEvents[nEvtCount++] = gpSrv->hFarCommitEvent;
+					nWaitTimeout = 2500; // No need to force console scanning, Far & ExtendedConsole.dll takes care
+				}
+				else
+				{
+					_ASSERTE(nEvtCount < countof(hEvents));
+				}
 			}
 			if (gpSrv->bCursorChangeRegistered)
 			{
-				nCursorChanged = nEvtCount;
-				hEvents[nEvtCount++] = gpSrv->hCursorChangeEvent;
+				if (nEvtCount < countof(hEvents))
+				{
+					nCursorChanged = nEvtCount;
+					hEvents[nEvtCount++] = gpSrv->hCursorChangeEvent;
+				}
+				else
+				{
+					_ASSERTE(nEvtCount < countof(hEvents));
+				}
 			}
 
 			nWait = WaitForMultipleObjects(nEvtCount, hEvents, FALSE, nWaitTimeout);
