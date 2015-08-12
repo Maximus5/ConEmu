@@ -1385,7 +1385,7 @@ http://conemu.github.io/en/Whats_New.html
 [+] Two new switches (commands actually) in ConEmuC: "-e" and "-t".
     ConEmuC -e [-n] [-r] [-b] "string" for printing some string
     ConEmuC -t [-r] [-b] "file" for printing some text file
-    Read more in wiki: http://code.google.com/p/conemu-maximus5/wiki/ConEmuC#Echo_and_Type
+    Read more in wiki: http://conemu.github.io/en/ConEmuC.html#EchoAndType
 [*] Force "CHERE_INVOKING" in default tasks for cygwin.
 
 
@@ -3328,7 +3328,7 @@ http://conemu.github.io/en/Whats_New.html
 
 2012.07.03
 [+] Now DoubleClick (for ‘words’) and TripleClick (for ‘lines’) both works for text selection.
-[+] Расширены ANSI коды (ESC ] 9 ; ...) - http://code.google.com/p/conemu-maximus5/wiki/AnsiEscapeCodes#ConEmu_specific_OSC.
+[+] Расширены ANSI коды (ESC ] 9 ; ...) - http://conemu.github.io/en/AnsiEscapeCodes.html#ConEmu_specific_OSC.
 [*] Issue 623: Checking...
 
 
@@ -3493,7 +3493,7 @@ http://conemu.github.io/en/Whats_New.html
 
 
 2012.06.08
-[+] Добавлена страничка: http://code.google.com/p/conemu-maximus5/wiki/RoadMap
+[+] Добавлена страничка: http://conemu.github.io/en/RoadMap.html
 [*] Уточнение подтверждения закрытия консоли.
 [+] GuiMacro: WindowFullscreen, WindowMaximize, WindowMode, Status.
 [+] Keys: Always on Top, Show/hide status bar (Apps+S), Show/hide tab bar (Apps+T), About (Win+Alt+A).
@@ -3584,7 +3584,7 @@ http://conemu.github.io/en/Whats_New.html
 
 2012.05.22
 [+] Новая опция 'ANSI X3.64 / 256color' на вкладке 'Features'. Описание будет здесь:
-    http://code.google.com/p/conemu-maximus5/wiki/AnsiEscapeCodes
+    http://conemu.github.io/en/AnsiEscapeCodes.html
     Адресуется консоль целиком (с прокруткой), но Xterm 256color влияет только на 'рабочую'
     область (нижняя часть консоли, если есть прокрутка).
     Чтобы ANSI работало - должен быть включен 'Inject ConEmuHk'.
@@ -4317,7 +4317,7 @@ http://conemu.github.io/en/Whats_New.html
 
 
 2011.02.27
-[*] Documentation (http://code.google.com/p/conemu-maximus5/wiki/ConEmu) updated. Anybody read it?
+[*] Documentation (http://conemu.github.io/en/TableOfContents.html) updated. Anybody read it?
 [%] Правки в запускаторе.
 [*] Добавлена опция 'Use ConEmuHk injects'. В release сборке пока отключена.
 [*] При включении лога 'Shell and processes' (вкладка Debug) отображаются LoadLibrary & FreeLibrary.
@@ -4809,7 +4809,7 @@ http://conemu.github.io/en/Whats_New.html
 
 2010.03.09
 [%] Issue 206: Win-Number вызывал Start menu, если Win отпускался перед Number.
-[*] Documentation was started as Wiki (http://code.google.com/p/conemu-maximus5/w/list). Comments and additions are accepted.
+[*] Documentation was started as Wiki (http://conemu.github.io/en/TableOfContents.html). Comments and additions are accepted.
 
 
 Maximus5 - 2010.03.08
@@ -5978,7 +5978,7 @@ alex_itd - 2009.01.18
 = 2009.01.18 === (NightRoman changelog below) ===
 
 Roman Kuzmin (aka NightRoman)
-http://code.google.com/p/farnet/
+https://github.com/nightroman/FarNet
 PowerShell and .NET in FAR Manager
 
 *) Решена проблема отрисовки больших окон с мелкими шрифтами, иными словами
