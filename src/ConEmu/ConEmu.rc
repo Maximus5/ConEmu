@@ -16,7 +16,7 @@
 /////////////////////////////////////////////////////////////////////////////
 // English (United States) resources
 
-#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_RUS)
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 #pragma code_page(1252)
 
@@ -54,6 +54,7 @@ BEGIN
 END
 
 #endif    // APSTUDIO_INVOKED
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -1618,6 +1619,10 @@ BEGIN
     BEGIN
     END
 
+    IDD_SPG_WNDSIZEPOS, DIALOG
+    BEGIN
+    END
+
     IDD_SPG_SHOW, DIALOG
     BEGIN
     END
@@ -1794,6 +1799,17 @@ BEGIN
     END
 END
 #endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// AFX_DIALOG_LAYOUT
+//
+
+IDD_SPG_DEFTERM AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
 
 #endif    // English (United States) resources
 /////////////////////////////////////////////////////////////////////////////
