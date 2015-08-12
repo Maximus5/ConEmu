@@ -15,7 +15,7 @@ About ConEmu
     GUI tools (like PuTTY for example).
     
     ConEmu is an active project, open to suggestions.
-    http://conemu.github.io/en/Issues.html
+    https://conemu.github.io/en/Issues.html
 
 
 Description
@@ -47,7 +47,7 @@ Description
     * transparency and desktop mode;
     * customizable starting tabs;
     * configurable and clickable status bar;
-    * and much more - take a look at the Settings dialog or http://conemu.github.io/en/Settings.html
+    * and much more - take a look at the Settings dialog or https://conemu.github.io/en/Settings.html
 
     All settings are read from the registry or xml-file (multiple named
     configurations are supported), after which the command line parameters
@@ -68,7 +68,7 @@ Installation
        Subfolder "plugins" is required if you are using "Far Manager"!
     2. Run `ConEmu.exe` or `ConEmu64.exe`.
 
-    For more details please refer to: http://conemu.github.io/en/Installation.html
+    For more details please refer to: https://conemu.github.io/en/Installation.html
 
 Command Line Syntax
 
@@ -77,8 +77,8 @@ Command Line Syntax
     Run "ConEmu.exe /?" or "ConEmu64.exe /?" to view the list of switches,
     or visit our website to examine switches description:
 
-    * http://conemu.github.io/en/ConEmuArgs.html
-    * http://conemu.github.io/en/ConEmuC.html
+    * https://conemu.github.io/en/ConEmuArgs.html
+    * https://conemu.github.io/en/ConEmuC.html
 
 
 Command Line Examples
@@ -89,4 +89,4 @@ Command Line Examples
 
 Documentation
 
-    Please, visit: http://conemu.github.io/
+    Please, visit: https://conemu.github.io/
