@@ -794,6 +794,7 @@ void SetConsoleBufferSize(HWND inConWnd, int anWidth, int anHeight, int anBuffer
 
 COORD MyGetLargestConsoleWindowSize(HANDLE hConsoleOutput)
 {
+	PRAGMA_ERROR("minhook - GetLargestConsoleWindowSize хукается и возвращает заблокированный размер");
 	// В Wine не работает
 	COORD crMax = GetLargestConsoleWindowSize(hConsoleOutput);
 	DWORD dwErr = (crMax.X && crMax.Y) ? 0 : GetLastError();
