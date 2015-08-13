@@ -3024,7 +3024,7 @@ FARPROC WINAPI OnGetProcAddressWork(FARPROC lpfn, HookItem *ph, BOOL bMainThread
 	FARPROC lpfnRc = NULL;
 
 	#ifdef LOG_ORIGINAL_CALL
-	char gszLastGetProcAddress[255], lsProcNameCut[64];
+	char gszLastGetProcAddress[255] = "", lsProcNameCut[64] = "";
 
 	if (((DWORD_PTR)lpProcName) <= 0xFFFF)
 		msprintf(lsProcNameCut, countof(lsProcNameCut), "%u", LOWORD(lpProcName));
