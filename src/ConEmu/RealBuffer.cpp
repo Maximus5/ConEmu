@@ -836,6 +836,7 @@ BOOL CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 	if (fSuccess /*&& (dwRead == (DWORD)nOutSize)*/)
 	{
 		int nSetWidth = sizeX, nSetHeight = sizeY;
+		int nSetWidth2 = -1, nSetHeight2 = -1;
 		if (GetConWindowSize(pOut->SetSizeRet.SetSizeRet, &nSetWidth, &nSetHeight, NULL))
 		{
 			// If change-size (enlarging) was failed
@@ -856,22 +857,38 @@ BOOL CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 				// Try again with lesser size?
 				if (bSecondTry)
 				{
-					/*fSuccess = CallNamedPipe(mp_RCon->ms_ConEmuC_Pipe, pIn, pIn->hdr.cbSize, pOut, pOut->hdr.cbSize, &dwRead, nCallTimeout);*/
-					ExecuteFreeResult(pOut);
-					pOut = ExecuteCmd(mp_RCon->ms_ConEmuC_Pipe, pIn, nCallTimeout, ghWnd);
-					fSuccess = (pOut != NULL);
+					CESERVER_REQ* pOut2 = ExecuteCmd(mp_RCon->ms_ConEmuC_Pipe, pIn, nCallTimeout, ghWnd);
+					fSuccess = (pOut2 != NULL);
+					if (pOut2)
+					{
+						ExecuteFreeResult(pOut);
+						pOut = pOut2;
+						if (GetConWindowSize(pOut->SetSizeRet.SetSizeRet, &nSetWidth2, &nSetHeight2, NULL))
+						{
+							nSetWidth = nSetWidth2; nSetHeight = nSetHeight2;
+						}
+					}
 				}
 				// Server is closing? Ignore...
 				if (mp_RCon->isServerClosing())
 				{
 					goto wrap;
 				}
-				else
+				else if ((sizeX > (UINT)nSetWidth) || (sizeY > (UINT)nSetHeight))
 				{
 					_ASSERTE(FALSE && "Maximum real console size was reached");
 					// Inform user -- Add exact numbers to log and hint
+					wchar_t szInfo[240];
+					_wsprintf(szInfo, SKIPCOUNT(szInfo)
+						L"Maximum real console size {%i,%i} was reached, lesser size {%i,%i} was applied than requested {%u,%u}",
+						pOut ? (int)pOut->SetSizeRet.crMaxSize.X : -1, pOut ? (int)pOut->SetSizeRet.crMaxSize.Y : -1,
+						nSetWidth, nSetHeight, (UINT)sizeX, (UINT)sizeY);
 					mp_RCon->LogString(L"Maximum real console size was reached, lesser size was applied");
-					Icon.ShowTrayIcon(L"Maximum real console size was reached\nDecrease font size in the real console properties", tsa_Console_Size);
+
+					_wsprintf(szInfo, SKIPCOUNT(szInfo)
+						L"Maximum real console size {%i,%i} was reached\nDecrease font size in the real console properties",
+						nSetWidth, nSetHeight);
+					Icon.ShowTrayIcon(szInfo, tsa_Console_Size);
 				}
 			}
 		}
