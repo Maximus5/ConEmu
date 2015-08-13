@@ -443,7 +443,7 @@ struct PipeServer
 					}
 					else
 					{
-						_ASSERTEX(dwErrT == ERROR_IO_INCOMPLETE);
+						_ASSERTEX(dwErrT == ERROR_IO_INCOMPLETE || dwErrT == ERROR_BROKEN_PIPE);
 						DumpError(pPipe, L"PipeServerThread:GetOverlappedResult failed with 0x%08X", FALSE);
 					}
 				}
