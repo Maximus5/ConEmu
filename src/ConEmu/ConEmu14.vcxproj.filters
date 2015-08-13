@@ -701,9 +701,6 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Circles.bmp">
-      <Filter>Resource Files</Filter>
-    </None>
     <None Include="ConEmu.rc2">
       <Filter>Resource Files</Filter>
     </None>
@@ -771,12 +768,6 @@
       <Filter>Resource Files</Filter>
     </Image>
     <Image Include="Shield16.bmp">
-      <Filter>Resource Files</Filter>
-    </Image>
-    <Image Include="donate.bmp">
-      <Filter>Resource Files</Filter>
-    </Image>
-    <Image Include="flattr.bmp">
       <Filter>Resource Files</Filter>
     </Image>
     <Image Include="graphics\circles.bmp">

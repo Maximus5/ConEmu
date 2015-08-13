@@ -758,7 +758,6 @@
     <None Include="..\..\Release\ConEmu\License.txt" />
     <None Include="..\..\Release\ConEmu\Settings-ConEmu.reg" />
     <None Include="..\..\Release\ConEmu\WhatsNew-ConEmu.txt" />
-    <None Include="Circles.bmp" />
     <None Include="ConEmu.ico" />
     <None Include="ConEmu.rc2" />
     <None Include="Copy.bmp" />
@@ -788,8 +787,6 @@
   <ItemGroup>
     <Image Include="Copy24.bmp" />
     <Image Include="Copy4.bmp" />
-    <Image Include="donate.bmp" />
-    <Image Include="flattr.bmp" />
     <Image Include="graphics\circles.bmp" />
     <Image Include="graphics\donate.bmp" />
     <Image Include="graphics\flattr.bmp" />
