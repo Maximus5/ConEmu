@@ -767,7 +767,6 @@ void CConEmuMain::RegisterMessages()
 	mn_MsgCreateViewWindow = RegisterMessage("CreateViewWindow");
 	mn_MsgPostTaskbarActivate = RegisterMessage("PostTaskbarActivate"); mb_PostTaskbarActivate = FALSE;
 	mn_MsgInitVConGhost = RegisterMessage("InitVConGhost");
-	mn_MsgCreateCon = RegisterMessage("CreateCon");
 	mn_MsgPanelViewMapCoord = RegisterMessage("CONEMUMSG_PNLVIEWMAPCOORD",CONEMUMSG_PNLVIEWMAPCOORD);
 	mn_MsgTaskBarCreated = RegisterMessage("TaskbarCreated",L"TaskbarCreated");
 	mn_MsgTaskBarBtnCreated = RegisterMessage("TaskbarButtonCreated",L"TaskbarButtonCreated");
@@ -3312,7 +3311,25 @@ CVirtualConsole* CConEmuMain::CreateCon(RConStartArgs *args, bool abAllowScripts
 void CConEmuMain::PostCreateCon(RConStartArgs *pArgs)
 {
 	_ASSERTE((pArgs->pszStartupDir == NULL) || (*pArgs->pszStartupDir != 0));
-	PostMessage(ghWnd, mn_MsgCreateCon, mn_MsgCreateCon+1, (LPARAM)pArgs);
+
+	struct impl {
+		CConEmuMain* pObj;
+		RConStartArgs *pArgs;
+
+		static LRESULT CreateConMainThread(LPARAM lParam)
+		{
+			impl *p = (impl*)lParam;
+			CVirtualConsole* pVCon = p->pObj->CreateCon(p->pArgs, true);
+			delete p->pArgs;
+			delete p;
+			return (LRESULT)pVCon;
+		};
+	} *Impl = new impl;
+	Impl->pObj = this;
+	Impl->pArgs = pArgs;
+
+	// Execute asynchronously
+	CallMainThread(false, impl::CreateConMainThread, (LPARAM)Impl);
 }
 
 LPCWSTR CConEmuMain::ParseScriptLineOptions(LPCWSTR apszLine, bool* rpbAsAdmin, bool* rpbSetActive, size_t cchNameMax, wchar_t* rsName/*[MAX_RENAME_TAB_LEN]*/)
@@ -14139,15 +14156,6 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 				if (this->isValid(pVCon))
 					pVCon->InitGhost();
 				return 0;
-			}
-			else if (messg == this->mn_MsgCreateCon)
-			{
-				_ASSERTE(wParam == this->mn_MsgCreateCon || wParam == (this->mn_MsgCreateCon+1));
-				RConStartArgs *pArgs = (RConStartArgs*)lParam;
-				CVirtualConsole* pVCon = CreateCon(pArgs, (wParam == (this->mn_MsgCreateCon+1)));
-				UNREFERENCED_PARAMETER(pVCon);
-				delete pArgs;
-				return (LRESULT)pVCon;
 			}
 			else if (messg == this->mn_MsgTaskBarCreated)
 			{
