@@ -3485,6 +3485,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	DEBUGSTRSTARTUP(L"WinMain entered");
 	int iMainRc = 0;
 
+	g_hInstance = hInstance;
+	ghWorkingModule = (u64)hInstance;
+
 #ifdef _DEBUG
 	gbAllowChkHeap = true;
 #endif
@@ -3582,8 +3585,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	nCmp = lstrcmp(L" ", L"-");
 	nCmp = lstrcmpi(L" ", L"-");
 	nCmp = StrCmpI(L" ", L"\\");*/
-	g_hInstance = hInstance;
-	ghWorkingModule = (u64)hInstance;
 	gpLocalSecurity = LocalSecurity();
 
 	#ifdef _DEBUG

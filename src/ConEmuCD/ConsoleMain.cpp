@@ -305,6 +305,7 @@ BOOL WINAPI DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 		case DLL_PROCESS_ATTACH:
 		{
 			ghOurModule = (HMODULE)hModule;
+			ghWorkingModule = (u64)hModule;
 
 			DWORD nImageBits = WIN3264TEST(32,64), nImageSubsystem = IMAGE_SUBSYSTEM_WINDOWS_CUI;
 			GetImageSubsystem(nImageSubsystem,nImageBits);
@@ -314,7 +315,6 @@ BOOL WINAPI DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 				ghConWnd = GetConEmuHWND(2);
 
 			gnSelfPID = GetCurrentProcessId();
-			ghWorkingModule = (u64)hModule;
 			gfnSearchAppPaths = SearchAppPaths;
 
 			wchar_t szExeName[MAX_PATH] = L"", szDllName[MAX_PATH] = L"";

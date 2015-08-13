@@ -1687,6 +1687,9 @@ BOOL DllMain_ProcessAttach(HANDLE hModule, DWORD  ul_reason_for_call)
 	BOOL lbAllow = TRUE;
 	DLOG0("DllMain.DLL_PROCESS_ATTACH",ul_reason_for_call);
 
+	ghOurModule = (HMODULE)hModule;
+	ghWorkingModule = (u64)hModule;
+
 	#ifdef USEHOOKLOG
 	QueryPerformanceFrequency(&HookLogger::g_freq);
 	#endif
@@ -1712,12 +1715,10 @@ BOOL DllMain_ProcessAttach(HANDLE hModule, DWORD  ul_reason_for_call)
 	/* *** DEBUG PURPOSES */
 
 	DLOG1_("DllMain.Console",ul_reason_for_call);
-	ghOurModule = (HMODULE)hModule;
 	ghConWnd = GetRealConsoleWindow();
 	if (ghConWnd)
 		GetConsoleTitle(gsInitConTitle, countof(gsInitConTitle));
 	gnSelfPID = GetCurrentProcessId();
-	ghWorkingModule = (u64)hModule;
 	DLOGEND1();
 
 
