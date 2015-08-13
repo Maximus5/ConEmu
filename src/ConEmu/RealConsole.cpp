@@ -8807,11 +8807,14 @@ void CRealConsole::CheckVConRConPointer(bool bForceSet)
 	HWND hVCon = mp_VCon->GetView();
 	HWND hVConBack = mp_VCon->GetBack();
 
+	HWND hCurrent = (HWND)INVALID_HANDLE_VALUE;
 	if (!bForceSet)
 	{
-		HWND h = (HWND)GetWindowLongPtr(hVCon, 0);
-		if (h == hConWnd)
+		hCurrent = (HWND)GetWindowLongPtr(hVCon, 0);
+		if (hCurrent == hConWnd)
 			return; // OK, was not changed externally
+		if (isServerClosing())
+			return; // Skip - server is already in the shutdown state
 		_ASSERTE(FALSE && "WindowLongPtr was changed externally?");
 	}
 
