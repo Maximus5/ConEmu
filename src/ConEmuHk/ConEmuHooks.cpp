@@ -1769,10 +1769,14 @@ BOOL WINAPI OnShellExecuteExW(LPSHELLEXECUTEINFOW lpExecInfo)
 	return lbRc;
 }
 
+// Called from OnShellExecCmdLine
 HRESULT OurShellExecCmdLine(HWND hwnd, LPCWSTR pwszCommand, LPCWSTR pwszStartDir, bool bRunAsAdmin, bool bForce)
 {
 	HRESULT hr = E_UNEXPECTED;
 	BOOL bShell = FALSE;
+
+	CEStr lsLog = lstrmerge(L"OnShellExecCmdLine", bRunAsAdmin ? L"(RunAs): " : L": ", pwszCommand);
+	DefTermLogString(lsLog);
 
 	// Bad thing, ShellExecuteEx needs File&Parm, but we get both in pwszCommand
 	CmdArg szExe;
@@ -1794,11 +1798,13 @@ HRESULT OurShellExecCmdLine(HWND hwnd, LPCWSTR pwszCommand, LPCWSTR pwszStartDir
 		if (!FindImageSubsystem(pszFile, nCheckSybsystem1, nCheckBits1))
 		{
 			hr = (HRESULT)-1;
+			DefTermLogString(L"OnShellExecCmdLine: FindImageSubsystem failed");
 			goto wrap;
 		}
 		if (nCheckSybsystem1 != IMAGE_SUBSYSTEM_WINDOWS_CUI)
 		{
 			hr = (HRESULT)-1;
+			DefTermLogString(L"OnShellExecCmdLine: !=IMAGE_SUBSYSTEM_WINDOWS_CUI");
 			goto wrap;
 		}
 	}

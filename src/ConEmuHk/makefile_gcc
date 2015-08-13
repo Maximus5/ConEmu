@@ -36,6 +36,7 @@ SRCS = \
 		../common/MAssert.cpp        \
 		../common/MConHandle.cpp     \
 		../common/Memory.cpp         \
+		../common/MFileLog.cpp       \
 		../common/Monitors.cpp       \
 		../common/MSectionSimple.cpp \
 		../common/MSection.cpp       \

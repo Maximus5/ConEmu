@@ -59,12 +59,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define SEE_MASK_NOASYNC 0x00000100
 #endif
 
-#ifdef _DEBUG
-	#define DefTermMsg(s) //MessageBox(NULL, s, L"ConEmuHk", MB_SYSTEMMODAL)
-#else
-	#define DefTermMsg(s) //MessageBox(NULL, s, L"ConEmuHk", MB_SYSTEMMODAL)
-#endif
-
 
 #ifdef _DEBUG
 #ifndef CONEMU_MINIMAL
@@ -1363,8 +1357,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd,
 		_wcscat_c((*psParam), nCchSize, L"\"");
 	}
 
-
-#ifdef _DEBUG
+	// logging
 	{
 		int cchLen = (*psFile ? lstrlen(*psFile) : 0) + (*psParam ? lstrlen(*psParam) : 0) + 128;
 		wchar_t* pszDbgMsg = (wchar_t*)calloc(cchLen, sizeof(wchar_t));
@@ -1374,11 +1367,10 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd,
 				GetCurrentProcessId(),
 				(aCmd == eShellExecute) ? L"Shell" : (aCmd == eCreateProcess) ? L"Create" : L"???",
 				*psFile ? *psFile : L"", *psParam ? *psParam : L"");
-			OutputDebugString(pszDbgMsg);
+			DefTermLogString(pszDbgMsg);
 			free(pszDbgMsg);
 		}
 	}
-#endif
 
 	lbRc = TRUE;
 wrap:
@@ -1488,12 +1480,48 @@ int CShellProc::PrepareExecuteParms(
 		}
 		DWORD nLen = lstrlen(sErrMsg);
 		WriteConsoleW(hStdOut, sErrMsg, nLen, &nLen, NULL);
+		DefTermLogString(L"ANSICON was blocked");
 		return -1;
 	}
 	ms_ExeTmp.Empty();
 
 
 	BOOL bGoChangeParm = FALSE;
+
+	// DefTerm logging
+	wchar_t szInfo[140];
+	#define LogExit(frc) \
+		msprintf(szInfo, countof(szInfo), \
+			L"PrepareExecuteParms rc=%i %u:%u:%u W:%u I:%u,%u,%u D:%u H:%u S:%u,%u line=%i", \
+			(frc), \
+			(UINT)mn_ImageSubsystem, (UINT)mn_ImageBits, (UINT)mb_isCurrentGuiClient, \
+			(UINT)mb_WasSuspended, (UINT)mb_NeedInjects, (UINT)mb_PostInjectWasRequested, \
+			(UINT)mb_Opt_DontInject, (UINT)mb_DebugWasRequested, (UINT)mb_HiddenConsoleDetachNeed, \
+			(UINT)mb_Opt_SkipNewConsole, (UINT)mb_Opt_SkipCmdStart, \
+			__LINE__); \
+		DefTermLogString(szInfo);
+
+	{ // Log PrepareExecuteParms function call -begin
+	lstrcpyn(szInfo, asAction ? asAction : L"-exec-", countof(szInfo));
+	struct ParmsStr { LPDWORD pVal; LPCWSTR pName; }
+	Parms[] = {
+		{anShellFlags, L"ShellFlags"},
+		{anCreateFlags, L"CreateFlags"},
+		{anStartFlags, L"StartFlags"},
+		{anShowCmd, L"ShowCmd"}
+	};
+	for (INT_PTR i = 0; i < countof(Parms); i++)
+	{
+		if (!Parms[i].pVal)
+			continue;
+		int iLen = lstrlen(szInfo);
+		msprintf(szInfo+iLen, countof(szInfo)-iLen, L" %s:x%X", Parms[i].pName, *Parms[i].pVal);
+	}
+	CEStr lsLog = lstrmerge(
+		(aCmd == eShellExecute) ? L"PrepareExecuteParms Shell " : L"PrepareExecuteParms Create ",
+		szInfo, asFile, asParam);
+	DefTermLogString(lsLog);
+	} // Log PrepareExecuteParms function call -end
 
 	// Для логирования - запомним сразу
 	HANDLE hIn  = lphStdIn  ? *lphStdIn  : NULL;
@@ -1589,6 +1617,7 @@ int CShellProc::PrepareExecuteParms(
 		// Настройка в ConEmu ConEmuGuiMapping.bUseInjects, или gFarMode.bFarHookMode. Иначе - сразу выходим
 		if (!bLongConsoleOutput)
 		{
+			LogExit(0);
 			return 0;
 		}
 	}
@@ -1615,6 +1644,7 @@ int CShellProc::PrepareExecuteParms(
 				)
 			{
 				// Creating process without console window, not our case
+				LogExit(0);
 				return 0;
 			}
 			// GDB console debugging
@@ -1627,6 +1657,7 @@ int CShellProc::PrepareExecuteParms(
 					if (mn_ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI)
 					{
 						mb_DebugWasRequested = true;
+						LogExit(0);
 						return 0;
 					}
 				}
@@ -1638,18 +1669,21 @@ int CShellProc::PrepareExecuteParms(
 			if (!asAction || (lstrcmpi(asAction, L"runas") != 0))
 			{
 				// This may be, for example, starting of "Taskmgr.exe" from "explorer.exe"
+				LogExit(0);
 				return 0;
 			}
 			// Skip some executions
 			if (anShellFlags
 				&& ((*anShellFlags) & (SEE_MASK_CLASSNAME|SEE_MASK_CLASSKEY|SEE_MASK_IDLIST|SEE_MASK_INVOKEIDLIST)))
 			{
+				LogExit(0);
 				return 0;
 			}
 		}
 		else
 		{
 			_ASSERTE(FALSE && "Unsupported in Default terminal");
+			LogExit(0);
 			return 0;
 		}
 
@@ -1658,6 +1692,7 @@ int CShellProc::PrepareExecuteParms(
 			)
 		{
 			// Creating process with window initially hidden, not our case
+			LogExit(0);
 			return 0;
 		}
 
@@ -1719,14 +1754,16 @@ int CShellProc::PrepareExecuteParms(
 			if (FAILED(hr) || !pShellLink)
 			{
 				DisplayLastError(L"Can't create IID_IShellLinkW", (DWORD)hr);
-				return NULL;
+				LogExit(0);
+				return 0;
 			}
 			hr = pShellLink->QueryInterface(IID_IPersistFile, (void**)&pFile);
 			if (FAILED(hr) || !pFile)
 			{
 				DisplayLastError(L"Can't create IID_IPersistFile", (DWORD)hr);
 				pShellLink->Release();
-				return NULL;
+				LogExit(0);
+				return 0;
 			}
 		}
 
@@ -1881,7 +1918,7 @@ int CShellProc::PrepareExecuteParms(
 		goto wrap;
 	}
 
-#ifdef _DEBUG
+	// logging
 	{
 		int cchLen = (asFile ? lstrlen(asFile) : 0) + (asParam ? lstrlen(asParam) : 0) + 128;
 		wchar_t* pszDbgMsg = (wchar_t*)calloc(cchLen, sizeof(wchar_t));
@@ -1891,11 +1928,10 @@ int CShellProc::PrepareExecuteParms(
 				GetCurrentProcessId(),
 				(aCmd == eShellExecute) ? L"Shell" : (aCmd == eCreateProcess) ? L"Create" : L"???",
 				asFile ? asFile : L"", asParam ? asParam : L"");
-			OutputDebugString(pszDbgMsg);
+			DefTermLogString(pszDbgMsg);
 			free(pszDbgMsg);
 		}
 	}
-#endif
 
 	//wchar_t* pszExecFile = (wchar_t*)pOut->OnCreateProcRet.wsValue;
 	//wchar_t* pszBaseDir = (wchar_t*)(pOut->OnCreateProcRet.wsValue); // + pOut->OnCreateProcRet.nFileLen);
@@ -2293,6 +2329,7 @@ wrap:
 		CheckHookServer();
 	}
 
+	LogExit(lbChanged ? 1 : 0);
 	return lbChanged ? 1 : 0;
 } // PrepareExecuteParms
 
@@ -2329,7 +2366,10 @@ void CShellProc::GetStartingExeName(LPCWSTR asFile, LPCWSTR asParam, CmdArg& rsE
 BOOL CShellProc::OnShellExecuteA(LPCSTR* asAction, LPCSTR* asFile, LPCSTR* asParam, LPCSTR* asDir, DWORD* anFlags, DWORD* anShowCmd)
 {
 	if ((!ghConEmuWndDC || !IsWindow(ghConEmuWndDC)) && !isDefTermEnabled())
+	{
+		DefTermLogString(L"OnShellExecuteA skipped");
 		return TRUE; // Перехватывать только под ConEmu
+	}
 
 	mb_InShellExecuteEx = TRUE;
 	gnInShellExecuteEx ++;
@@ -2382,7 +2422,10 @@ BOOL CShellProc::OnShellExecuteA(LPCSTR* asAction, LPCSTR* asFile, LPCSTR* asPar
 BOOL CShellProc::OnShellExecuteW(LPCWSTR* asAction, LPCWSTR* asFile, LPCWSTR* asParam, LPCWSTR* asDir, DWORD* anFlags, DWORD* anShowCmd)
 {
 	if ((!ghConEmuWndDC || !IsWindow(ghConEmuWndDC)) && !isDefTermEnabled())
+	{
+		DefTermLogString(L"OnShellExecuteW skipped");
 		return TRUE; // Перехватывать только под ConEmu
+	}
 
 	mb_InShellExecuteEx = TRUE;
 	gnInShellExecuteEx ++;
@@ -2450,7 +2493,10 @@ BOOL CShellProc::OnShellExecuteExA(LPSHELLEXECUTEINFOA* lpExecInfo)
 		return TRUE;
 
 	if ((!ghConEmuWndDC || !IsWindow(ghConEmuWndDC)) && !isDefTermEnabled())
+	{
+		DefTermLogString(L"OnShellExecuteExA skipped");
 		return TRUE; // Перехватывать только под ConEmu
+	}
 
 	mlp_SaveExecInfoA = *lpExecInfo;
 	mlp_ExecInfoA = (LPSHELLEXECUTEINFOA)malloc((*lpExecInfo)->cbSize);
@@ -2478,7 +2524,10 @@ BOOL CShellProc::OnShellExecuteExW(LPSHELLEXECUTEINFOW* lpExecInfo)
 		return TRUE;
 
 	if ((!ghConEmuWndDC || !IsWindow(ghConEmuWndDC)) && !isDefTermEnabled())
+	{
+		DefTermLogString(L"OnShellExecuteExW skipped");
 		return TRUE; // Перехватывать только под ConEmu или в DefTerm
+	}
 
 	mlp_SaveExecInfoW = *lpExecInfo;
 	mlp_ExecInfoW = (LPSHELLEXECUTEINFOW)malloc((*lpExecInfo)->cbSize);
@@ -2503,7 +2552,10 @@ BOOL CShellProc::OnShellExecuteExW(LPSHELLEXECUTEINFOW* lpExecInfo)
 BOOL CShellProc::OnCreateProcessA(LPCSTR* asFile, LPCSTR* asCmdLine, LPCSTR* asDir, DWORD* anCreationFlags, LPSTARTUPINFOA lpSI)
 {
 	if (!ghConEmuWndDC || !IsWindow(ghConEmuWndDC))
+	{
+		DefTermLogString(L"OnCreateProcessA skipped");
 		return TRUE; // Перехватывать только под ConEmu
+	}
 
 	mpwsz_TempFile = str2wcs(asFile ? *asFile : NULL, mn_CP);
 	mpwsz_TempParam = str2wcs(asCmdLine ? *asCmdLine : NULL, mn_CP);
@@ -2572,6 +2624,7 @@ BOOL CShellProc::OnCreateProcessW(LPCWSTR* asFile, LPCWSTR* asCmdLine, LPCWSTR* 
 		}
 		else
 		{
+			DefTermLogString(L"OnCreateProcessW skipped");
 			return TRUE; // Перехватывать только под ConEmu
 		}
 	}
@@ -2723,7 +2776,7 @@ BOOL CShellProc::OnCreateProcessW(LPCWSTR* asFile, LPCWSTR* asCmdLine, LPCWSTR* 
 
 void CShellProc::OnCreateProcessFinished(BOOL abSucceeded, PROCESS_INFORMATION *lpPI)
 {
-#ifdef _DEBUG
+	// logging
 	{
 		int cchLen = 255;
 		wchar_t* pszDbgMsg = (wchar_t*)calloc(cchLen, sizeof(wchar_t));
@@ -2747,11 +2800,10 @@ void CShellProc::OnCreateProcessFinished(BOOL abSucceeded, PROCESS_INFORMATION *
 				}
 			}
 			_wcscat_c(pszDbgMsg, cchLen, L"\n");
-			OutputDebugString(pszDbgMsg);
+			DefTermLogString(pszDbgMsg);
 			free(pszDbgMsg);
 		}
 	}
-#endif
 
 	BOOL bAttachCreated = FALSE;
 
@@ -2827,15 +2879,17 @@ void CShellProc::OnCreateProcessFinished(BOOL abSucceeded, PROCESS_INFORMATION *
 						CloseHandle(pi.hProcess);
 						CloseHandle(pi.hThread);
 					}
-					#ifdef _DEBUG
 					else
 					{
 						DWORD nErr = GetLastError();
 						wchar_t* pszDbg = (wchar_t*)malloc(MAX_PATH*3*sizeof(*pszDbg));
-						msprintf(pszDbg, MAX_PATH*3, L"ConEmuHk: Failed to start attach server, Err=%u! %s\n", nErr, pszCmdLine);
-						OutputDebugString(pszDbg);
+						if (pszDbg)
+						{
+							msprintf(pszDbg, MAX_PATH*3, L"ConEmuHk: Failed to start attach server, Err=%u! %s\n", nErr, pszCmdLine);
+							DefTermLogString(pszDbg);
+							free(pszDbg);
+						}
 					}
-					#endif
 					free(pszCmdLine);
 				}
 			}
@@ -2843,7 +2897,6 @@ void CShellProc::OnCreateProcessFinished(BOOL abSucceeded, PROCESS_INFORMATION *
 		else if (mb_NeedInjects)
 		{
 			wchar_t szDbgMsg[255];
-			#ifdef _DEBUG
 			msprintf(szDbgMsg, countof(szDbgMsg), L"InjectHooks(x%u), ParentPID=%u, ChildPID=%u\n",
 					#ifdef _WIN64
 						64
@@ -2851,8 +2904,7 @@ void CShellProc::OnCreateProcessFinished(BOOL abSucceeded, PROCESS_INFORMATION *
 						86
 					#endif
 						, GetCurrentProcessId(), lpPI->dwProcessId);
-			OutputDebugString(szDbgMsg);
-			#endif
+			DefTermLogString(szDbgMsg);
 
 			CINJECTHK_EXIT_CODES iHookRc = InjectHooks(*lpPI, (m_SrvMapping.cbSize && (m_SrvMapping.nLoggingType == glt_Processes)));
 

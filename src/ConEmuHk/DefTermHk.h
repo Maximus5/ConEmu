@@ -32,6 +32,16 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/DefTermBase.h"
 #include "../common/CmdLine.h"
 
+class MFileLog;
+class CDefTermHk;
+
+extern CDefTermHk* gpDefTerm;
+
+bool InitDefTerm();
+bool isDefTermEnabled();
+void DefTermLogString(LPCSTR asMessage, LPCWSTR asLabel = NULL);
+void DefTermLogString(LPCWSTR asMessage, LPCWSTR asLabel = NULL);
+
 class CDefTermHk : public CDefTermBase
 {
 public:
@@ -62,9 +72,14 @@ protected:
 	virtual int  DisplayLastError(LPCWSTR asLabel, DWORD dwError=0, DWORD dwMsgFlags=0, LPCWSTR asTitle=NULL, HWND hParent=NULL);
 	virtual void ShowTrayIconError(LPCWSTR asErrText); // Icon.ShowTrayIcon(asErrText, tsa_Default_Term);
 	virtual void PostCreateThreadFinished();
+
+protected:
+	MFileLog* mp_FileLog;
+	void LogInit();
+	virtual void LogHookingStatus(LPCWSTR asMessage);
+protected:
+	friend bool InitDefTerm();
+	friend void DefTermLogInit();
+	friend void DefTermLogString(LPCSTR asMessage, LPCWSTR asLabel /*= NULL*/);
+	friend void DefTermLogString(LPCWSTR asMessage, LPCWSTR asLabel /*= NULL*/);
 };
-
-extern CDefTermHk* gpDefTerm;
-
-bool InitDefTerm();
-bool isDefTermEnabled();
