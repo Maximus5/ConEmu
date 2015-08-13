@@ -5388,7 +5388,8 @@ HWND WINAPI OnGetConsoleWindow(void)
 	typedef HWND (WINAPI* OnGetConsoleWindow_t)(void);
 	ORIGINALFAST(GetConsoleWindow);
 
-	_ASSERTE(F(GetConsoleWindow) != GetRealConsoleWindow && F(GetConsoleWindow) != GetConsoleWindow);
+	_ASSERTE(F(GetConsoleWindow) != GetRealConsoleWindow);
+	// && F(GetConsoleWindow) != GetConsoleWindow - for minhook generation
 
 	if (ghConEmuWndDC && IsWindow(ghConEmuWndDC) /*ghConsoleHwnd*/)
 	{
