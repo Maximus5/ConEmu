@@ -158,6 +158,7 @@ struct Settings
 		bool isRegisterAgressive;
 		bool isDefaultTerminalNoInjects;
 		bool isDefaultTerminalNewWindow;
+		bool isDefaultTerminalDebugLog;
 		BYTE nDefaultTerminalConfirmClose; // "Press Enter to close console". 0 - Auto, 1 - Always, 2 - Never
 		wchar_t* GetDefaultTerminalApps(); // "|" delimited
 		const wchar_t* GetDefaultTerminalAppsMSZ(); // "\0" delimited

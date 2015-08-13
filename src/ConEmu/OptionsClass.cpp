@@ -3583,6 +3583,7 @@ LRESULT CSettings::OnInitDialog_DefTerm(HWND hWnd2, bool abInitial)
 	CheckDlgButton(hWnd2, cbDefTermAgressive, gpSet->isRegisterAgressive);
 	CheckDlgButton(hWnd2, cbDefaultTerminalNoInjects, gpSet->isDefaultTerminalNoInjects);
 	CheckDlgButton(hWnd2, cbDefaultTerminalUseExisting, !gpSet->isDefaultTerminalNewWindow);
+	CheckDlgButton(hWnd2, cbDefaultTerminalDebugLog, gpSet->isDefaultTerminalDebugLog);
 	CheckRadioButton(hWnd2, rbDefaultTerminalConfAuto, rbDefaultTerminalConfNever, rbDefaultTerminalConfAuto+gpSet->nDefaultTerminalConfirmClose);
 	wchar_t* pszApps = gpSet->GetDefaultTerminalApps();
 	_ASSERTE(pszApps!=NULL);

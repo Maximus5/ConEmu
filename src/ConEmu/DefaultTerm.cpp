@@ -218,6 +218,7 @@ void CDefaultTerminal::ReloadSettings()
 	m_Opt.bAgressive = gpSet->isRegisterAgressive;
 	m_Opt.bNoInjects = gpSet->isDefaultTerminalNoInjects;
 	m_Opt.bNewWindow = gpSet->isDefaultTerminalNewWindow;
+	m_Opt.bDebugLog  = gpSet->isDefaultTerminalDebugLog;
 	m_Opt.nDefaultTerminalConfirmClose = gpSet->nDefaultTerminalConfirmClose;
 
 	ConEmuGuiMapping GuiInfo = {};

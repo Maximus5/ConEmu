@@ -893,6 +893,7 @@ bool CSetDlgButtons::ProcessButtonClick(HWND hDlg, WORD CB, BYTE uCheck)
 		case cbDefTermAgressive:
 		case cbDefaultTerminalNoInjects:
 		case cbDefaultTerminalUseExisting:
+		case cbDefaultTerminalDebugLog:
 		case cbApplyDefTerm:
 		case rbDefaultTerminalConfAuto:
 		case rbDefaultTerminalConfAlways:
@@ -4330,6 +4331,10 @@ void CSetDlgButtons::OnBtn_DefTerm(HWND hDlg, WORD CB, BYTE uCheck)
 
 	case cbDefaultTerminalUseExisting:
 		gpSet->isDefaultTerminalNewWindow = !uCheck;
+		break;
+
+	case cbDefaultTerminalDebugLog:
+		gpSet->isDefaultTerminalDebugLog = (uCheck != BST_UNCHECKED);
 		break;
 
 	case rbDefaultTerminalConfAuto:

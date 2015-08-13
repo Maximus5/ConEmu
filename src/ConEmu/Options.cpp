@@ -669,6 +669,7 @@ void Settings::InitSettings()
 	isRegisterAgressive = true;
 	isDefaultTerminalNoInjects = false;
 	isDefaultTerminalNewWindow = false;
+	isDefaultTerminalDebugLog = false;
 	nDefaultTerminalConfirmClose = 1 /* Always */;
 	SetDefaultTerminalApps(L"explorer.exe"/* to default value */); // "|"-delimited string -> MSZ
 
@@ -2435,6 +2436,7 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 		reg->Load(L"DefaultTerminalAgressive", isRegisterAgressive);
 		reg->Load(L"DefaultTerminalNoInjects", isDefaultTerminalNoInjects);
 		reg->Load(L"DefaultTerminalNewWindow", isDefaultTerminalNewWindow);
+		reg->Load(L"DefaultTerminalDebugLog", isDefaultTerminalDebugLog);
 		reg->Load(L"DefaultTerminalConfirm", nDefaultTerminalConfirmClose);
 		{
 		wchar_t* pszApps = NULL;
@@ -3416,6 +3418,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		reg->Save(L"DefaultTerminalAgressive", isRegisterAgressive);
 		reg->Save(L"DefaultTerminalNoInjects", isDefaultTerminalNoInjects);
 		reg->Save(L"DefaultTerminalNewWindow", isDefaultTerminalNewWindow);
+		reg->Save(L"DefaultTerminalDebugLog", isDefaultTerminalDebugLog);
 		reg->Save(L"DefaultTerminalConfirm", nDefaultTerminalConfirmClose);
 		{
 		wchar_t* pszApps = GetDefaultTerminalApps(); // MSZ -> "|"-delimited string

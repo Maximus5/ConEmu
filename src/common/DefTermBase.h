@@ -58,6 +58,7 @@ public:
 	BOOL     bAgressive;
 	BOOL     bNoInjects; // " /NOINJECT"
 	BOOL     bNewWindow; // " /GHWND=NEW"
+	BOOL     bDebugLog;
 	BOOL     nDefaultTerminalConfirmClose; // "Press Enter to close console". 0 - Auto, 1 - Always, 2 - Never | " /CONFIRM" | " /NOCONFIRM"
 	ConEmuConsoleFlags nConsoleFlags; // Used for populating m_SrvMapping in ShellProcessor
 	wchar_t* pszConEmuExe; // Полный путь к ConEmu.exe
@@ -74,6 +75,7 @@ public:
 		bAgressive = FALSE;
 		bNoInjects = FALSE;
 		bNewWindow = FALSE;
+		bDebugLog = FALSE;
 		nDefaultTerminalConfirmClose = 0;
 		nConsoleFlags = CECF_Empty;
 		pszConEmuExe = NULL;
@@ -168,6 +170,7 @@ public:
 			{L"DefTerm-Agressive", &bAgressive, sizeof(bAgressive), REG_DWORD},
 			{L"DefTerm-NoInjects", &bNoInjects, sizeof(bNoInjects), REG_DWORD},
 			{L"DefTerm-NewWindow", &bNewWindow, sizeof(bNewWindow), REG_DWORD},
+			{L"DefTerm-DebugLog",  &bDebugLog,  sizeof(bDebugLog),  REG_DWORD},
 			{L"DefTerm-Confirm",   &nDefaultTerminalConfirmClose, sizeof(nDefaultTerminalConfirmClose), REG_DWORD},
 			{L"DefTerm-Flags",     &nConsoleFlags, sizeof(nConsoleFlags), REG_DWORD},
 			{L"DefTerm-ConEmuExe", &pszConEmuExe, 0, REG_SZ},
