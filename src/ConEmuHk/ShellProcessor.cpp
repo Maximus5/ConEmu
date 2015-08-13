@@ -591,9 +591,9 @@ void CShellProc::CheckHooksDisabled()
 	mb_Opt_SkipCmdStart = bHooksSkipCmdStart;
 }
 
-BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole,
+BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd,
 				LPCWSTR asFile, LPCWSTR asParam, LPCWSTR asExeFile,
-				const RConStartArgs& args,
+				ChangeExecFlags Flags, const RConStartArgs& args,
 				DWORD& ImageBits, DWORD& ImageSubsystem,
 				LPWSTR* psFile, LPWSTR* psParam)
 {
@@ -762,7 +762,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 			{
 				if (psz[0] == L'/' && wcschr(L"CcKk", psz[1]))
 				{
-					if (abNewConsole)
+					if (Flags & CEF_NEWCON_SWITCH)
 					{
 						// 111211 - "-new_console" передается в GUI
 						lbComSpecK = FALSE;
@@ -1069,6 +1069,11 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 		nCchSize += gpDefTerm->GetSrvAddArgs((aCmd == eCreateProcess), szDefTermArg, szDefTermArg2);
 	}
 
+	if (Flags & CEF_NEWCON_PREPEND)
+	{
+		nCchSize += 16; // + "-new_console " for "start" processing
+	}
+
 	// В ShellExecute необходимо "ConEmuC.exe" вернуть в psFile, а для CreatePocess - в psParam
 	// /C или /K в обоих случаях нужно пихать в psParam
 	_ASSERTE(lbEndQuote == FALSE); // Must not be set yet
@@ -1150,6 +1155,9 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 	else
 	{
 		_wcscat_c((*psParam), nCchSize, lbComSpecK ? L" /K " : L" /C ");
+		// If was used "start" from cmd prompt or batch
+		if (Flags & CEF_NEWCON_PREPEND)
+			_wcscat_c((*psParam), nCchSize, L"-new_console ");
 	}
 	if (asParam && *asParam == L' ')
 		asParam++;
@@ -1543,7 +1551,8 @@ int CShellProc::PrepareExecuteParms(
 	// Current application is GUI subsystem run in ConEmu tab?
 	CheckIsCurrentGuiClient();
 
-	bool bNewConsoleArg = false, bForceNewConsole = false, bCurConsoleArg = false;
+	ChangeExecFlags NewConsoleFlags = CEF_DEFAULT;
+	bool bForceNewConsole = false, bCurConsoleArg = false;
 
 	// Service object (moved to members: RConStartArgs m_Args)
 	_ASSERTEX(m_Args.pszSpecialCmd == NULL); // Must not be touched yet!
@@ -1839,7 +1848,6 @@ int CShellProc::PrepareExecuteParms(
 	}
 
 	BOOL lbChanged = FALSE;
-	CEStr strForceNewConsole; // If was used "start" from cmd prompt or batch
 	mb_NeedInjects = FALSE;
 	//wchar_t szBaseDir[MAX_PATH+2]; szBaseDir[0] = 0;
 	CESERVER_REQ *pIn = NULL;
@@ -1899,7 +1907,7 @@ int CShellProc::PrepareExecuteParms(
 		{
 			if (m_Args.NewConsole == crb_On)
 			{
-				bNewConsoleArg = true;
+				NewConsoleFlags |= CEF_NEWCON_SWITCH;
 			}
 			else
 			{
@@ -1923,7 +1931,7 @@ int CShellProc::PrepareExecuteParms(
 	}
 	// Если GUI приложение работает во вкладке ConEmu - запускать консольные приложение в новой вкладке ConEmu
 	// Use mb_isCurrentGuiClient instead of ghAttachGuiClient, because of 'CommandPromptPortable.exe' for example
-	if (!bNewConsoleArg
+	if (!(NewConsoleFlags & CEF_NEWCON_SWITCH)
 		&& mb_isCurrentGuiClient && (mn_ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI)
 		&& ((anShowCmd == NULL) || (*anShowCmd != SW_HIDE)))
 	{
@@ -1949,7 +1957,7 @@ int CShellProc::PrepareExecuteParms(
 			bForceNewConsole = true;
 		}
 	}
-	if (mb_isCurrentGuiClient && (bNewConsoleArg || bForceNewConsole) && !lbGuiApp)
+	if (mb_isCurrentGuiClient && ((NewConsoleFlags & CEF_NEWCON_SWITCH) || bForceNewConsole) && !lbGuiApp)
 	{
 		lbGuiApp = true;
 	}
@@ -1957,7 +1965,7 @@ int CShellProc::PrepareExecuteParms(
 	if ((aCmd == eCreateProcess)
 		&& !mb_Opt_SkipCmdStart // Issue 1822
 		&& (anCreateFlags && (*anCreateFlags & (CREATE_NEW_CONSOLE)))
-		&& !bNewConsoleArg && !bForceNewConsole
+		&& !(NewConsoleFlags & CEF_NEWCON_SWITCH) && !bForceNewConsole
 		&& (mn_ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI)
 		&& ((anShowCmd == NULL)
 			|| ((*anShowCmd != SW_HIDE)
@@ -1966,10 +1974,8 @@ int CShellProc::PrepareExecuteParms(
 		)
 	{
 		*anShowCmd = SW_HIDE;
-		bNewConsoleArg = true;
+		NewConsoleFlags |= CEF_NEWCON_PREPEND;
 		m_Args.NewConsole = crb_On;
-		strForceNewConsole.Attach(lstrmerge(asParam, (asParam && *asParam) ? L" " : NULL, L"-new_console"));
-		asParam = strForceNewConsole;
 	}
 
 	if (bLongConsoleOutput)
@@ -1996,7 +2002,7 @@ int CShellProc::PrepareExecuteParms(
 		else
 		{
 			// Если bNewConsoleArg - то однозначно стартовать в новой вкладке ConEmu (GUI теперь тоже цеплять умеем)
-			if (bNewConsoleArg || bForceNewConsole)
+			if (NewConsoleFlags || bForceNewConsole)
 			{
 				if (anShellFlags)
 				{
@@ -2052,7 +2058,7 @@ int CShellProc::PrepareExecuteParms(
 	//if (GetImageSubsystem(pszExecFile,ImageSubsystem,ImageBits))
 	//lbGuiApp = (ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_GUI);
 
-	if (lbGuiApp && !(bNewConsoleArg || bForceNewConsole || bVsNetHostRequested))
+	if (lbGuiApp && !(NewConsoleFlags || bForceNewConsole || bVsNetHostRequested))
 	{
 		if (gbAttachGuiClient && !ghAttachGuiClient && (mn_ImageBits != 16) && (m_Args.InjectsDisable != crb_On))
 		{
@@ -2096,10 +2102,10 @@ int CShellProc::PrepareExecuteParms(
 	else
 	{
 		bGoChangeParm = ((bLongConsoleOutput)
-			|| (lbGuiApp && (bNewConsoleArg || bForceNewConsole)) // хотят GUI прицепить к новой вкладке в ConEmu, или новую консоль из GUI
+			|| (lbGuiApp && (NewConsoleFlags || bForceNewConsole)) // хотят GUI прицепить к новой вкладке в ConEmu, или новую консоль из GUI
 			// eCreateProcess перехватывать не нужно (сами сделаем InjectHooks после CreateProcess)
 			|| ((mn_ImageBits != 16) && (m_SrvMapping.bUseInjects & 1)
-				&& (bNewConsoleArg
+				&& (NewConsoleFlags
 					|| (bLongConsoleOutput && (aCmd == eShellExecute))
 					|| (bCurConsoleArg && (m_Args.LongOutputDisable != crb_On))
 					#ifdef _DEBUG
@@ -2141,8 +2147,8 @@ int CShellProc::PrepareExecuteParms(
 			goto wrap;
 		}
 
-		lbChanged = ChangeExecuteParms(aCmd, bNewConsoleArg, asFile, asParam,
-						ms_ExeTmp, m_Args, mn_ImageBits, mn_ImageSubsystem, psFile, psParam);
+		lbChanged = ChangeExecuteParms(aCmd, asFile, asParam, ms_ExeTmp,
+			NewConsoleFlags, m_Args, mn_ImageBits, mn_ImageSubsystem, psFile, psParam);
 
 		if (!lbChanged)
 		{
@@ -2157,7 +2163,7 @@ int CShellProc::PrepareExecuteParms(
 
 			HWND hConWnd = GetRealConsoleWindow();
 
-			if (lbGuiApp && (bNewConsoleArg || bForceNewConsole))
+			if (lbGuiApp && (NewConsoleFlags || bForceNewConsole))
 			{
 				if (anShowCmd)
 					*anShowCmd = SW_HIDE;
@@ -2210,7 +2216,7 @@ int CShellProc::PrepareExecuteParms(
 			&& !bDontForceInjects;
 
 		// Параметр -cur_console / -new_console нужно вырезать
-		if (bNewConsoleArg || bCurConsoleArg)
+		if (NewConsoleFlags || bCurConsoleArg)
 		{
 			_ASSERTEX(m_Args.pszSpecialCmd!=NULL && "Must be replaced already!");
 
@@ -2288,7 +2294,7 @@ wrap:
 	}
 
 	return lbChanged ? 1 : 0;
-}
+} // PrepareExecuteParms
 
 void CShellProc::GetStartingExeName(LPCWSTR asFile, LPCWSTR asParam, CmdArg& rsExeTmp)
 {
