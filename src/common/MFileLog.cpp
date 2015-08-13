@@ -82,30 +82,6 @@ HRESULT MFileLog::InitFileName(LPCWSTR asName /*= NULL*/, DWORD anPID /*= 0*/)
 	_wsprintf(ms_FileName, SKIPLEN(cchMax) L"%s-%u.log", asName, anPID);
 
 	return S_OK;
-
-	//wchar_t szTemp[MAX_PATH]; szTemp[0] = 0;
-	//GetTempPath(MAX_PATH-16, szTemp);
-
-	//if (!asDir || !*asDir)
-	//{
-	//	wcscat_c(szTemp, L"ConEmuLog");
-	//	CreateDirectoryW(szTemp, NULL);
-	//	wcscat_c(szTemp, L"\\");
-	//	asDir = szTemp;
-	//}
-
-	//int nDirLen = lstrlenW(asDir);
-	//wchar_t szFile[MAX_PATH*2];
-	//_wsprintf(szFile, SKIPLEN(countof(szFile)) L"%s-%u.log", asName ? asName : L"LogFile", anPID);
-	//int nFileLen = lstrlenW(szFile);
-	//int nCchMax = nDirLen+nFileLen+3;
-	//ms_FilePathName = (wchar_t*)calloc(nCchMax,2);
-	//_wcscpy_c(ms_FilePathName, nCchMax, asDir);
-
-	//if (nDirLen > 0 && ms_FilePathName[nDirLen-1] != L'\\')
-	//	_wcscat_c(ms_FilePathName, nCchMax, L"\\");
-
-	//_wcscat_c(ms_FilePathName, nCchMax, szFile);
 }
 
 MFileLog::~MFileLog()
