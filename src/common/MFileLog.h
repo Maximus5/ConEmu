@@ -48,6 +48,7 @@ class MFileLog
 	public:
 		MFileLog(LPCWSTR asName, LPCWSTR asDir = NULL, DWORD anPID = 0);
 		~MFileLog();
+		bool IsLogOpened();
 		void CloseLogFile();
 		HRESULT CreateLogFile(LPCWSTR asName = NULL, DWORD anPID = 0, DWORD anLevel = 0); // Returns 0 if succeeded, otherwise - GetLastError() code
 		LPCWSTR GetLogFileName();

@@ -91,6 +91,11 @@ MFileLog::~MFileLog()
 	SafeDelete(mpcs_Lock);
 }
 
+bool MFileLog::IsLogOpened()
+{
+	return (mh_LogFile && (mh_LogFile != INVALID_HANDLE_VALUE));
+}
+
 void MFileLog::CloseLogFile()
 {
 	SafeCloseHandle(mh_LogFile);
