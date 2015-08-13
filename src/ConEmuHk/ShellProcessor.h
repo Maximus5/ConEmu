@@ -33,6 +33,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 struct RConStartArgs;
 
+typedef DWORD ChangeExecFlags;
+const ChangeExecFlags
+	CEF_NEWCON_SWITCH   = 1, // If command line has "-new_console"
+	CEF_NEWCON_PREPEND  = 2, // If we need to prepend command with "-new_console" to ensure that "start cmd" will be processed properly
+	CEF_DEFAULT = 0;
+
 class CShellProc
 {
 public:
@@ -95,11 +101,6 @@ private:
 				DWORD* anShellFlags, DWORD* anCreateFlags, DWORD* anStartFlags, DWORD* anShowCmd, // или Shell & Create флаги
 				HANDLE* lphStdIn, HANDLE* lphStdOut, HANDLE* lphStdErr,
 				LPWSTR* psFile, LPWSTR* psParam, LPWSTR* psStartDir);
-	typedef DWORD ChangeExecFlags;
-	const ChangeExecFlags
-		CEF_NEWCON_SWITCH   = 1, // If command line has "-new_console"
-		CEF_NEWCON_PREPEND  = 2, // If we need to prepend command with "-new_console" to ensure that "start cmd" will be processed properly
-		CEF_DEFAULT = 0;
 	BOOL ChangeExecuteParms(enum CmdOnCreateType aCmd,
 				LPCWSTR asFile, LPCWSTR asParam, LPCWSTR asExeFile,
 				ChangeExecFlags Flags, const RConStartArgs& args,
