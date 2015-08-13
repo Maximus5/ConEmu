@@ -167,12 +167,14 @@ HRESULT MFileLog::CreateLogFile(LPCWSTR asName /*= NULL*/, DWORD anPID /*= 0*/, 
 
     		mh_LogFile = CreateFileW(ms_FilePathName, GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
     		// Нет прав на запись в текущую папку?
-			if (mh_LogFile == INVALID_HANDLE_VALUE)
+			if (!mh_LogFile || (mh_LogFile == INVALID_HANDLE_VALUE))
 			{
 				dwErr = GetLastError();
-				if (dwErr == ERROR_ACCESS_DENIED/*5*/)
-					mh_LogFile = NULL;
+				_ASSERTEX(FALSE && "Access denied?"); // ERROR_ACCESS_DENIED/*5*/?
+				// Clean variable to try Desktop folder
+				mh_LogFile = NULL;
 				SafeFree(ms_FilePathName);
+				UNREFERENCED_PARAMETER(dwErr);
 			}
 		}
 
@@ -195,10 +197,11 @@ HRESULT MFileLog::CreateLogFile(LPCWSTR asName /*= NULL*/, DWORD anPID /*= 0*/, 
 	    		_wcscat_c(ms_FilePathName, cchMax, ms_FileName);
 
 	    		mh_LogFile = CreateFileW(ms_FilePathName, GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-	    		// Нет прав на запись в текущую папку?
-				if (mh_LogFile == INVALID_HANDLE_VALUE)
+	    		// Access denied? On desktop? Really?
+				if (!mh_LogFile || (mh_LogFile == INVALID_HANDLE_VALUE))
 				{
 					dwErr = GetLastError();
+					_ASSERTEX(FALSE && "Can't create file on desktop");
 					mh_LogFile = NULL;
 				}
 			}
@@ -209,11 +212,14 @@ HRESULT MFileLog::CreateLogFile(LPCWSTR asName /*= NULL*/, DWORD anPID /*= 0*/, 
 		if (!ms_FilePathName || !*ms_FilePathName)
 			return -1;
 
-		mh_LogFile = CreateFileW(ms_FilePathName, GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-		if (mh_LogFile == INVALID_HANDLE_VALUE)
+		// Reopen same file after temporary close?
+		// Use append mode, don't clear existing contents.
+		mh_LogFile = CreateFileW(ms_FilePathName, GENERIC_WRITE, FILE_SHARE_READ, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+		if (!mh_LogFile || (mh_LogFile == INVALID_HANDLE_VALUE))
 		{
-			mh_LogFile = NULL;
 			dwErr = GetLastError();
+			_ASSERTEX(FALSE && "Can't open file for writing");
+			mh_LogFile = NULL;
 		}
 	}
 
