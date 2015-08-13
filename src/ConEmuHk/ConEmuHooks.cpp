@@ -1041,8 +1041,11 @@ BOOL StartupHooks(HMODULE ahOurDll)
 	bool lbRc = SetAllHooks(ahOurDll, NULL, TRUE);
 	HLOGEND1();
 
+	extern FARPROC CallWriteConsoleW;
+	CallWriteConsoleW = (FARPROC)GetOriginalAddress((LPVOID)CEAnsi::OnWriteConsoleW, NULL, FALSE, NULL);
+
 	#ifdef _DEBUG
-	gfVirtualAlloc = (VirtualAlloc_t)GetOriginalAddress(OnVirtualAlloc, NULL, FALSE, NULL);
+	gfVirtualAlloc = (VirtualAlloc_t)GetOriginalAddress((LPVOID)OnVirtualAlloc, NULL, FALSE, NULL);
 	#endif
 
 	extern GetConsoleWindow_T gfGetRealConsoleWindow; // from ConEmuCheck.cpp

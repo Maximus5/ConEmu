@@ -53,6 +53,8 @@ extern "C" {
 };
 #endif
 
+extern FARPROC CallWriteConsoleW;
+
 struct CEAnsi
 {
 //private:

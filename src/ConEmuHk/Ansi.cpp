@@ -104,6 +104,7 @@ bool CEAnsi::gbWasXTermOutput = false;
 
 /* ************ Export ANSI printings ************ */
 LONG gnWriteProcessed = 0;
+FARPROC CallWriteConsoleW = NULL;
 BOOL WINAPI WriteProcessed(LPCWSTR lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten)
 {
 	HANDLE hConsoleOutput = GetStdHandle(STD_OUTPUT_HANDLE);
