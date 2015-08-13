@@ -294,10 +294,11 @@ bool CVirtualConsole::Constructor(RConStartArgs *args)
 	// Эти переменные устанавливаются в TRUE, если при следующем Redraw нужно обновить размер панелей
 	mb_LeftPanelRedraw = mb_RightPanelRedraw = FALSE;
 	mn_LastDialogsCount = 0;
-	memset(mrc_LastDialogs, 0, sizeof(mrc_LastDialogs));
+	ZeroStruct(mn_LastDialogFlags);
+	ZeroStruct(mrc_LastDialogs);
 	mn_DialogsCount = 0; mn_DialogAllFlags = 0;
-	memset(mrc_Dialogs, 0, sizeof(mrc_Dialogs));
-	memset(mn_DialogFlags, 0, sizeof(mn_DialogFlags));
+	ZeroStruct(mrc_Dialogs);
+	ZeroStruct(mn_DialogFlags);
 	//InitializeCriticalSection(&csDC); ncsTDC = 0;
 	//mb_PaintRequested = FALSE;
 	//mb_PaintLocked = FALSE;
@@ -311,16 +312,24 @@ bool CVirtualConsole::Constructor(RConStartArgs *args)
 	mb_ConDataChanged = false;
 	mh_TransparentRgn = NULL;
 	mb_ChildWindowWasFound = false;
-#ifdef _DEBUG
-	mn_BackColorIdx = 2; // Green
-#else
-	mn_BackColorIdx = 0; // Black
-#endif
-	memset(&Cursor, 0, sizeof(Cursor));
+	mn_BackColorIdx = RELEASEDEBUGTEST(0/*Black*/,2/*Green*/);
+	ZeroStruct(Cursor);
 	Cursor.nBlinkTime = GetCaretBlinkTime();
 	TextWidth = TextHeight = Width = Height = nMaxTextWidth = nMaxTextHeight = 0;
 	LastPadSize = 0;
 	mb_PaintSkippedLogged = false;
+
+	isForce = true;
+	isFontSizeChanged = true;
+	ZeroStruct(mrc_Client);
+	ZeroStruct(mrc_Back);
+	ZeroStruct(mrc_UCharMap);
+	attrBackLast = 0;
+	mn_LogScreenIdx = 0;
+	isCursorValid = true;
+	drawImage = true;
+	textChanged = true;
+	attrChanged = true;
 
 	_ASSERTE((HDC)m_DC == NULL);
 	hBgDc = NULL; bgBmpSize.X = bgBmpSize.Y = 0;
