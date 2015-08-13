@@ -40,10 +40,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "MFileLog.h"
 #include "MSectionSimple.h"
 #include "WObjects.h"
-#include "StartupEnvEx.h"
 #include "../ConEmu/version.h"
 #pragma warning(disable: 4091)
 #include <shlobj.h>
+
+#if !defined(CONEMU_MINIMAL)
+#include "StartupEnvEx.h"
+#endif
 
 #ifdef _DEBUG
 #define DebugString(x) //OutputDebugString(x)
@@ -178,10 +181,38 @@ HRESULT MFileLog::CreateLogFile(LPCWSTR asName /*= NULL*/, DWORD anPID /*= 0*/, 
 			}
 		}
 
+		// If folder was not specified or is not writable
 		if (mh_LogFile == NULL)
 		{
 			wchar_t szDesktop[MAX_PATH+1] = L"";
-			if (S_OK == SHGetFolderPath(NULL, CSIDL_DESKTOPDIRECTORY|CSIDL_FLAG_CREATE, NULL, 0/*SHGFP_TYPE_CURRENT*/, szDesktop))
+
+			typedef HRESULT (WINAPI* SHGetFolderPathW_t)(HWND hwndOwner, int nFolder, HANDLE hToken, DWORD dwFlags, LPWSTR pszPath);
+			SHGetFolderPathW_t _SHGetFolderPath;
+			HRESULT hFolderRc = E_NOTIMPL;
+
+			// To avoid static link in ConEmuHk
+			#if !defined(CONEMU_MINIMAL)
+				_SHGetFolderPath = SHGetFolderPathW;
+			#else
+				HMODULE hShell32 = LoadLibrary(L"Shell32.dll");
+				_SHGetFolderPath = hShell32 ? (SHGetFolderPathW_t)GetProcAddress(hShell32, "SHGetFolderPathW") : NULL;
+				_ASSERTEX(_SHGetFolderPath!=NULL);
+			#endif
+
+			if (_SHGetFolderPath)
+			{
+				hFolderRc = _SHGetFolderPath(NULL, CSIDL_DESKTOPDIRECTORY|CSIDL_FLAG_CREATE, NULL, 0/*SHGFP_TYPE_CURRENT*/, szDesktop);
+			}
+
+			#if defined(CONEMU_MINIMAL)
+			if (hShell32)
+			{
+				FreeLibrary(hShell32);
+			}
+			#endif
+
+			// Check the result
+			if (hFolderRc == S_OK)
 			{
 				size_t cchDirLen = lstrlen(szDesktop);
 				cchMax = cchDirLen + cchNamLen + 32;
@@ -396,6 +427,7 @@ void MFileLog::LogString(LPCWSTR asText, bool abWriteTime /*= true*/, LPCWSTR as
 #endif
 }
 
+#if !defined(CONEMU_MINIMAL)
 void MFileLog::LogStartEnvInt(LPCWSTR asText, LPARAM lParam, bool bFirst, bool bNewLine)
 {
 	MFileLog* p = (MFileLog*)lParam;
@@ -406,3 +438,4 @@ void MFileLog::LogStartEnv(CEStartupEnv* apStartEnv)
 {
 	LoadStartupEnvEx::ToString(apStartEnv, LogStartEnvInt, (LPARAM)this);
 }
+#endif
