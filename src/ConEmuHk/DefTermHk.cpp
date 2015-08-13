@@ -61,7 +61,7 @@ bool gbIsGdbHost = false;
 CDefTermHk* gpDefTerm = NULL;
 
 // helper
-bool isDefaultTerminalEnabled()
+bool isDefTermEnabled()
 {
 	if (!gbPrepareDefaultTerminal || !gpDefTerm)
 		return false;
@@ -70,7 +70,7 @@ bool isDefaultTerminalEnabled()
 	return true;
 }
 
-bool InitDefaultTerm()
+bool InitDefTerm()
 {
 	bool lbRc = true;
 
@@ -292,9 +292,9 @@ HWND CDefTermHk::AllocHiddenConsole(bool bTempForVS)
 	DefTermMsg(L"AllocHiddenConsole");
 
 	ReloadSettings();
-	_ASSERTEX(isDefaultTerminalEnabled() && (gbIsNetVsHost || bTempForVS));
+	_ASSERTEX(isDefTermEnabled() && (gbIsNetVsHost || bTempForVS));
 
-	if (!isDefaultTerminalEnabled())
+	if (!isDefTermEnabled())
 	{
 		// Disabled in settings or registry
 		return NULL;
@@ -338,7 +338,7 @@ DWORD CDefTermHk::StartConsoleServer(DWORD nAttachPID, bool bNewConWnd, PHANDLE 
 {
 	// Options must be loaded already
 	const CEDefTermOpt* pOpt = GetOpt();
-	if (!pOpt || !isDefaultTerminalEnabled())
+	if (!pOpt || !isDefTermEnabled())
 	{
 		return 0;
 	}
@@ -438,9 +438,9 @@ void CDefTermHk::OnAllocConsoleFinished()
 	}
 
 	ReloadSettings();
-	_ASSERTEX(isDefaultTerminalEnabled() && gbIsNetVsHost);
+	_ASSERTEX(isDefTermEnabled() && gbIsNetVsHost);
 
-	if (!isDefaultTerminalEnabled())
+	if (!isDefTermEnabled())
 	{
 		// Disabled in settings or registry
 		return;

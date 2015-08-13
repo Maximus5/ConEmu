@@ -1078,7 +1078,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 	// gbPrepareDefaultTerminal turned on in DllMain
 	if (gbPrepareDefaultTerminal)
 	{
-		if (!InitDefaultTerm())
+		if (!InitDefTerm())
 		{
 			TODO("Show error message?");
 		}

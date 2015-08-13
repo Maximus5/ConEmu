@@ -66,5 +66,5 @@ protected:
 
 extern CDefTermHk* gpDefTerm;
 
-bool InitDefaultTerm();
-bool isDefaultTerminalEnabled();
+bool InitDefTerm();
+bool isDefTermEnabled();

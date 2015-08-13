@@ -384,7 +384,7 @@ BOOL CShellProc::LoadSrvMapping(BOOL bLightCheck /*= FALSE*/)
 		}
 
 		// Parameters are stored in the registry now
-		if (!isDefaultTerminalEnabled())
+		if (!isDefTermEnabled())
 		{
 			return FALSE;
 		}
@@ -409,7 +409,7 @@ BOOL CShellProc::LoadSrvMapping(BOOL bLightCheck /*= FALSE*/)
 			*gpDefaultTermParm = m_GuiMapping;
 
 			// Checking loaded settings
-			if (!isDefaultTerminalEnabled())
+			if (!isDefTermEnabled())
 			{
 				return FALSE; // disabled now
 			}
@@ -1406,7 +1406,7 @@ int CShellProc::PrepareExecuteParms(
 	// !!! anFlags может быть NULL;
 	// !!! asAction может быть NULL;
 	_ASSERTE(*psFile==NULL && *psParam==NULL);
-	if (!ghConEmuWndDC && !isDefaultTerminalEnabled())
+	if (!ghConEmuWndDC && !isDefTermEnabled())
 		return 0; // Перехватывать только под ConEmu
 
 	// Just in case of unexpected LastError changes
@@ -2322,7 +2322,7 @@ void CShellProc::GetStartingExeName(LPCWSTR asFile, LPCWSTR asParam, CmdArg& rsE
 // returns FALSE if need to block execution
 BOOL CShellProc::OnShellExecuteA(LPCSTR* asAction, LPCSTR* asFile, LPCSTR* asParam, LPCSTR* asDir, DWORD* anFlags, DWORD* anShowCmd)
 {
-	if ((!ghConEmuWndDC || !IsWindow(ghConEmuWndDC)) && !isDefaultTerminalEnabled())
+	if ((!ghConEmuWndDC || !IsWindow(ghConEmuWndDC)) && !isDefTermEnabled())
 		return TRUE; // Перехватывать только под ConEmu
 
 	mb_InShellExecuteEx = TRUE;
@@ -2375,7 +2375,7 @@ BOOL CShellProc::OnShellExecuteA(LPCSTR* asAction, LPCSTR* asFile, LPCSTR* asPar
 // returns FALSE if need to block execution
 BOOL CShellProc::OnShellExecuteW(LPCWSTR* asAction, LPCWSTR* asFile, LPCWSTR* asParam, LPCWSTR* asDir, DWORD* anFlags, DWORD* anShowCmd)
 {
-	if ((!ghConEmuWndDC || !IsWindow(ghConEmuWndDC)) && !isDefaultTerminalEnabled())
+	if ((!ghConEmuWndDC || !IsWindow(ghConEmuWndDC)) && !isDefTermEnabled())
 		return TRUE; // Перехватывать только под ConEmu
 
 	mb_InShellExecuteEx = TRUE;
@@ -2443,7 +2443,7 @@ BOOL CShellProc::OnShellExecuteExA(LPSHELLEXECUTEINFOA* lpExecInfo)
 	if (!lpExecInfo)
 		return TRUE;
 
-	if ((!ghConEmuWndDC || !IsWindow(ghConEmuWndDC)) && !isDefaultTerminalEnabled())
+	if ((!ghConEmuWndDC || !IsWindow(ghConEmuWndDC)) && !isDefTermEnabled())
 		return TRUE; // Перехватывать только под ConEmu
 
 	mlp_SaveExecInfoA = *lpExecInfo;
@@ -2471,7 +2471,7 @@ BOOL CShellProc::OnShellExecuteExW(LPSHELLEXECUTEINFOW* lpExecInfo)
 	if (!lpExecInfo)
 		return TRUE;
 
-	if ((!ghConEmuWndDC || !IsWindow(ghConEmuWndDC)) && !isDefaultTerminalEnabled())
+	if ((!ghConEmuWndDC || !IsWindow(ghConEmuWndDC)) && !isDefTermEnabled())
 		return TRUE; // Перехватывать только под ConEmu или в DefTerm
 
 	mlp_SaveExecInfoW = *lpExecInfo;
@@ -2560,7 +2560,7 @@ BOOL CShellProc::OnCreateProcessW(LPCWSTR* asFile, LPCWSTR* asCmdLine, LPCWSTR* 
 {
 	if (!ghConEmuWndDC || !IsWindow(ghConEmuWndDC))
 	{
-		if (isDefaultTerminalEnabled())
+		if (isDefTermEnabled())
 		{
 			// OK, continue to "Default terminal" feature (console applications and batch files only)
 		}
@@ -2653,7 +2653,7 @@ BOOL CShellProc::OnCreateProcessW(LPCWSTR* asFile, LPCWSTR* asCmdLine, LPCWSTR* 
 		}
 	}
 	// Avoid flickering of RealConsole while starting debugging with DefTerm feature
-	else if (isDefaultTerminalEnabled() && !bConsoleNoWindow && nShowCmd && anCreationFlags && lpSI)
+	else if (isDefTermEnabled() && !bConsoleNoWindow && nShowCmd && anCreationFlags && lpSI)
 	{
 		switch (mn_ImageSubsystem)
 		{
@@ -2778,7 +2778,7 @@ void CShellProc::OnCreateProcessFinished(BOOL abSucceeded, PROCESS_INFORMATION *
 			}
 		}
 
-		if (isDefaultTerminalEnabled())
+		if (isDefTermEnabled())
 		{
 			_ASSERTEX(!mb_NeedInjects);
 			// Starting .Net debugging session from VS

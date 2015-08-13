@@ -681,7 +681,7 @@ bool InitHooksCommon()
 	return true;
 }
 
-bool InitHooksDefaultTrm()
+bool InitHooksDefTerm()
 {
 	// Хуки требующиеся для установки ConEmu как терминала по умолчанию
 	HookItem HooksCommon[] =
@@ -993,7 +993,7 @@ BOOL StartupHooks(HMODULE ahOurDll)
 	if (gbPrepareDefaultTerminal)
 	{
 		HLOG1("StartupHooks.InitHooks",0);
-		InitHooksDefaultTrm();
+		InitHooksDefTerm();
 		HLOGEND1();
 	}
 	else
