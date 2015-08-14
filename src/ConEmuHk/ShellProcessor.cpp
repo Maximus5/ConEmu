@@ -1409,6 +1409,9 @@ int CShellProc::PrepareExecuteParms(
 	if (!ghConEmuWndDC && !isDefTermEnabled())
 		return 0; // Перехватывать только под ConEmu
 
+	if (!asFile && !asParam)
+		return 0; // That is most probably asAction="OpenNewWindow"
+
 	// Just in case of unexpected LastError changes
 	ScopedObject(CLastErrorGuard);
 
