@@ -787,7 +787,7 @@ BOOL WINAPI CEAnsi::OnWriteFile(HANDLE hFile, LPCVOID lpBuffer, DWORD nNumberOfB
 	ORIGINALFAST(WriteFile);
 	//BOOL bMainThread = FALSE; // поток не важен
 	BOOL lbRc = FALSE;
-	DWORD nDBCSCP = 0;
+	//DWORD nDBCSCP = 0;
 
 	FIRST_ANSI_CALL((const BYTE*)lpBuffer, nNumberOfBytesToWrite);
 
