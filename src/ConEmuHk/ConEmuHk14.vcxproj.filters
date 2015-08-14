@@ -123,6 +123,9 @@
     <ClInclude Include="MainThread.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\common\MFileLog.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="ConEmuHk.rc">
@@ -218,6 +221,9 @@
       <Filter>0 - Source Files</Filter>
     </ClCompile>
     <ClCompile Include="MainThread.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\MFileLog.cpp">
       <Filter>0 - Source Files</Filter>
     </ClCompile>
   </ItemGroup>
