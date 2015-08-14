@@ -77,7 +77,7 @@ BOOL FindConEmuBaseDir(wchar_t (&rsConEmuBaseDir)[MAX_PATH+1], wchar_t (&rsConEm
 	// Сначала пробуем Mapping консоли (вдруг есть?)
 	{
 		MFileMapping<CESERVER_CONSOLE_MAPPING_HDR> ConMap;
-		ConMap.InitName(CECONMAPNAME, (DWORD)myGetConsoleWindow()); //-V205
+		ConMap.InitName(CECONMAPNAME, LODWORD(myGetConsoleWindow()));
 		CESERVER_CONSOLE_MAPPING_HDR* p = ConMap.Open();
 		if (p && p->ComSpec.ConEmuBaseDir[0])
 		{
