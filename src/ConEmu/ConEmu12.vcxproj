@@ -979,7 +979,7 @@ copy "$(TargetPath)" Z:\</Command>
     <ClCompile Include="..\common\RConStartArgs.cpp" />
     <ClCompile Include="..\common\RgnDetect.cpp" />
     <ClCompile Include="..\common\SetEnvVar.cpp" />
-    <ClCompile Include="..\common\WConsole.cpp" />
+    <ClCompile Include="..\common\WConsoleInfo.cpp" />
     <ClCompile Include="..\common\WFiles.cpp" />
     <ClCompile Include="..\common\WObjects.cpp" />
     <ClCompile Include="..\common\WRegistry.cpp" />
@@ -1095,7 +1095,7 @@ copy "$(TargetPath)" Z:\</Command>
     <ClInclude Include="..\common\StartupEnvDef.h" />
     <ClInclude Include="..\common\StartupEnvEx.h" />
     <ClInclude Include="..\common\UnicodeChars.h" />
-    <ClInclude Include="..\common\WConsole.h" />
+    <ClInclude Include="..\common\WConsoleInfo.h" />
     <ClInclude Include="..\common\WFiles.h" />
     <ClInclude Include="..\common\WObjects.h" />
     <ClInclude Include="..\common\WRegistry.h" />

@@ -65,6 +65,7 @@ $(INTDIR)\RegPrepare.obj \
 $(INTDIR)\SetEnvVar.obj \
 $(INTDIR)\SrvPipes.obj \
 $(INTDIR)\WConsole.obj \
+$(INTDIR)\WConsoleInfo.obj \
 $(INTDIR)\WFiles.obj \
 $(INTDIR)\WObjects.obj \
 $(INTDIR)\WThreads.obj \
@@ -352,6 +353,8 @@ $(INTDIR)\SetEnvVar.obj: ../common/SetEnvVar.cpp
 $(INTDIR)\SrvPipes.obj: SrvPipes.cpp ../common/PipeServer.h
 
 $(INTDIR)\WConsole.obj: ../common/WConsole.cpp ../common/WConsole.h
+
+$(INTDIR)\WConsoleInfo.obj: ../common/WConsoleInfo.cpp ../common/WConsoleInfo.h
 
 $(INTDIR)\WFiles.obj: ../common/WFiles.cpp ../common/WFiles.h
 

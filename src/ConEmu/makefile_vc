@@ -125,7 +125,7 @@ $(INTDIR)\VConChild.obj \
 $(INTDIR)\VConGroup.obj \
 $(INTDIR)\VConRelease.obj \
 $(INTDIR)\VirtualConsole.obj \
-$(INTDIR)\WConsole.obj \
+$(INTDIR)\WConsoleInfo.obj \
 $(INTDIR)\WFiles.obj \
 $(INTDIR)\WObjects.obj \
 $(INTDIR)\WRegistry.obj \
@@ -475,7 +475,7 @@ $(INTDIR)\VConRelease.obj: VConRelease.cpp VConRelease.h VirtualConsole.h VConCh
 
 $(INTDIR)\VirtualConsole.obj: VirtualConsole.cpp VConRelease.h VirtualConsole.h VConChild.h VConGroup.h
 
-$(INTDIR)\WConsole.obj: ../common/WConsole.cpp
+$(INTDIR)\WConsoleInfo.obj: ../common/WConsoleInfo.cpp
 
 $(INTDIR)\WFiles.obj: ../common/WFiles.cpp ../common/WFiles.h
 

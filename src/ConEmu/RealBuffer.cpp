@@ -43,7 +43,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/Execute.h"
 #include "../common/MSetter.h"
 #include "../common/RgnDetect.h"
-#include "../common/WConsole.h"
+#include "../common/WConsoleInfo.h"
 #include "../common/WFiles.h"
 #include "ConEmu.h"
 #include "ConEmuApp.h"
