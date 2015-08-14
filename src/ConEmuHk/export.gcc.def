@@ -5,6 +5,7 @@ EXPORTS
 	GetRealConsoleWindow=GetRealConsoleWindow@0
 	GetLoadLibraryW=GetLoadLibraryW@0
 	GetVirtualAlloc=GetVirtualAlloc@0
+	GetTrampoline=GetTrampoline@4
 	GetWriteConsoleW=GetWriteConsoleW@0
 	RequestLocalServer=RequestLocalServer@4
 	WriteProcessed=WriteProcessed@12

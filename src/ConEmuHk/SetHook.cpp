@@ -645,6 +645,23 @@ FARPROC WINAPI GetVirtualAlloc()
 	return (FARPROC)fnVirtualAlloc;
 }
 
+FARPROC WINAPI GetTrampoline(LPCSTR pszName)
+{
+	if (gpHooks)
+	{
+		for (int i = 0; gpHooks[i].NewAddress; i++)
+		{
+			if (strcmp(gpHooks[i].Name, pszName) == 0)
+			{
+				// Return address where we may call "original" function
+				return (FARPROC)gpHooks[i].CallAddress;
+			}
+		}
+	}
+	//_ASSERT(!gbHooksWasSet); -- DON'T CALL ANY VISUAL FUNCTIONS HERE !!!
+	return NULL;
+}
+
 CInFuncCall::CInFuncCall()
 {
 	mpn_Counter = NULL;

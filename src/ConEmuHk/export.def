@@ -8,6 +8,7 @@ EXPORTS
 	GetRealConsoleWindow
 	GetLoadLibraryW
 	GetVirtualAlloc
+	GetTrampoline
 	GetWriteConsoleW
 	RequestLocalServer
 	WriteProcessed
