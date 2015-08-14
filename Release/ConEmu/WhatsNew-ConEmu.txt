@@ -19,6 +19,34 @@ http://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2015.8.13
+* Default task {Shells:cmd-32} to run 32-bit cmd.exe on 64-bit OS.
+* Updater. Show in the confirmation message URL of downloaded version.ini.
+* Up to date supplied documentation files (About, License, etc.)
+* GitShowBranch.cmd: Fix `unexpected apparance: (`. Force to use english.
+* Mark ConEmuC.exe as dpiAware (manifest).
+* Some internal fix of TabBar activation during startup.
+* Add more logging of RealConsole window size and used font.
+* Rename settings page to ‘Tab bar’.
+* Let `-new_console:w0` force ‘Insert’ mode and `-new_console:w1` force ‘Overwrite’ mode.
+* Don't load/save `ConInMode` option from settings. There is `-new_console:w[0]` instead.
+* Add ZoneId check and unblock for ConEmu's binaries.
+  Under some circumstances ConEmu binaries may be marked
+  as ‘Downloaded from internet’. That, in turn, may cause
+  blocking by SmartScreen or antiviral software.
+  ConEmu will do checking of Zone.Identifier NTFS stream
+  and warn user if it's found. User may let ConEmu try to
+  unblock files automatically or do this themselves.
+  More info here: http://conemu.github.io/en/ZoneId.html
+* Let default task {cmd} be used for `Win+X` ConEmu hotkey.
+  That is the configurable hotkey for ‘Create new ‘cmd.exe’ console’ action.
+* gh#224: Try to fix 'Maximum real console size was reached' error.
+* DefTerm. Add ‘Apply’ button to settings page.
+* DefTerm. Add option to log all ‘exec’ activities of hooked processes (debug purposes).
+* Update PortableApps icons.
+* A LOT of internal fixes.
+
+
 2015.7.28
 * Updater. Show user-friendly information download fails, add ‘Retry’ button in the error dialog.
 * Issue 1899: Java 7 has been crashed with java.lang.InternalError.
