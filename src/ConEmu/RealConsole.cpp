@@ -3242,6 +3242,8 @@ DWORD CRealConsole::MonitorThreadWorker(bool bDetached, bool& rbChildProcessCrea
 					// UpdateCursor Invalidate не зовет
 					if (lbNeedBlink)
 					{
+						DEBUGSTRDRAW(L"+++ Force invalidate by lbNeedBlink\n");
+
 						if (m_UseLogs>2) LogString("Invalidating from CRealConsole::MonitorThread.1");
 
 						lbNeedRedraw = true;
