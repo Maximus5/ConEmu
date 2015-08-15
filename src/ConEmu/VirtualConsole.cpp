@@ -4651,7 +4651,12 @@ bool CVirtualConsole::UpdateCursorGroup(CVirtualConsole* pVCon, LPARAM lParam)
 
 void CVirtualConsole::UpdateCursor(bool& lRes)
 {
-	if (mp_RCon && mp_RCon->GuiWnd())
+	if (!this || !mp_RCon)
+	{
+		return; // Exceptional
+	}
+
+	if (mp_RCon->GuiWnd())
 	{
 		// В GUI режиме VirtualConsole скрыта под GUI окном и видна только при "включении" BufferHeight
 		if (!mp_RCon->isBufferHeight())
