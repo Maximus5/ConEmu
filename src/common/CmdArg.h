@@ -65,6 +65,7 @@ public:
 
 private:
 	// Not copyable, not implemented, use explicit Set method
+	CmdArg(const CmdArg &);
 	CmdArg& operator=(const CmdArg &);
 	LPCWSTR AttachInt(wchar_t*& asPtr);
 
