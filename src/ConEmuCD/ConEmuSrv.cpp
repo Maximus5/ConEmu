@@ -3574,7 +3574,7 @@ void InitAnsiLog(const ConEmuAnsiLog& AnsiLog)
 	int nNameLen = lstrlen(szName);
 	lstrcpyn(szPath, pszExp ? pszExp : AnsiLog.Path, countof(szPath)-nNameLen);
 	int nLen = lstrlen(szPath);
-	if (szPath[nLen-1] != L'\\')
+	if ((nLen >= 1) && (szPath[nLen-1] != L'\\'))
 		szPath[nLen++] = L'\\';
 	if (!DirectoryExists(szPath))
 	{
