@@ -4661,6 +4661,12 @@ void CVirtualConsole::UpdateCursor(bool& lRes)
 		}
 	}
 
+	if (mp_RCon->isMouseSelectionPresent())
+	{
+		// TextCursor is not shown during *mouse* selection
+		return;
+	}
+
 	// указатель на настройки разделяемые по приложениям
 	mp_Set = gpSet->GetAppSettings(mp_RCon->GetActiveAppSettingsId());
 
