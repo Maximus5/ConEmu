@@ -1045,6 +1045,7 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 							{
 							case 0:
 								OverwriteMode = crb_Off;
+								break;
 							default:
 								OverwriteMode = crb_On;
 							}
