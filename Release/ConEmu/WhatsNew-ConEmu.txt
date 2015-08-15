@@ -19,6 +19,12 @@ http://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2015.8.14
+* Use minhook for hooking. Absolutely different method may eliminate
+  a lot of weird problems (import pointers are not changed anymore).
+* In some circumstances ConEmu ‘drawing’ almost hangs during mouse text selection.
+
+
 2015.8.13
 * Default task {Shells:cmd-32} to run 32-bit cmd.exe on 64-bit OS.
 * Updater. Show in the confirmation message URL of downloaded version.ini.
