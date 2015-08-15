@@ -34,6 +34,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 struct HkFunc
 {
 public:
+	HkFunc();
+
+public:
 	COORD  getLargestConsoleWindowSize(HANDLE hConsoleOutput);
 	BOOL   setConsoleScreenBufferSize(HANDLE hConsoleOutput, COORD dwSize);
 	HWND   getConsoleWindow();

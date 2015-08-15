@@ -30,7 +30,18 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "common.hpp"
 #include "HkFunc.h"
 
-HkFunc hkFunc = {};
+HkFunc hkFunc;
+
+HkFunc::HkFunc()
+	: State(sNotChecked)
+	, hConEmuHk(NULL)
+	, fnGetTrampoline(NULL)
+	, fnGetLargestConsoleWindowSize(NULL)
+	, fnSetConsoleScreenBufferSize(NULL)
+	, fnGetConsoleWindow(NULL)
+	, fnVirtualAlloc(NULL)
+{
+}
 
 WARNING("DANGER zone. If ConEmuHk unloads calling saved pointers may cause crashes");
 
