@@ -162,6 +162,9 @@
     <ClInclude Include="..\modules\minhook\src\trampoline.h">
       <Filter>MinHook\Headers</Filter>
     </ClInclude>
+    <ClInclude Include="..\common\HkFunc.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="ConEmuHk.rc">
@@ -279,6 +282,9 @@
     </ClCompile>
     <ClCompile Include="hde.c">
       <Filter>MinHook\HDE</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\HkFunc.cpp">
+      <Filter>0 - Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

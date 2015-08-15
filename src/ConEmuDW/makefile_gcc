@@ -3,6 +3,7 @@ SRCS = \
 		../common/CmdArg.cpp         \
 		../common/CmdLine.cpp        \
 		../common/ConsoleRead.cpp    \
+		../common/HkFunc.cpp         \
 		../common/WThreads.cpp       \
 		ConEmuDw.cpp
 

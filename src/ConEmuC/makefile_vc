@@ -31,6 +31,7 @@ $(INTDIR)\CmdArg.obj \
 $(INTDIR)\CmdLine.obj \
 $(INTDIR)\ConEmuC.obj \
 $(INTDIR)\Downloader.obj \
+$(INTDIR)\HkFunc.obj \
 $(INTDIR)\MAssert.obj \
 $(INTDIR)\Memory.obj \
 $(INTDIR)\MSectionSimple.obj \
@@ -204,6 +205,8 @@ $(INTDIR)\CmdLine.obj: ../common/CmdLine.cpp ../common/CmdLine.h
 $(INTDIR)\ConEmuC.obj: ConEmuC.cpp
 
 $(INTDIR)\Downloader.obj: Downloader.cpp Downloader.h
+
+$(INTDIR)\HkFunc.obj: ../common/HkFunc.cpp ../common/HkFunc.h
 
 $(INTDIR)\MAssert.obj: ../common/MAssert.cpp
 

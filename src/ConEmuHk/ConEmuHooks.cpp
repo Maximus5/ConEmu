@@ -103,6 +103,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/CmdLine.h"
 #include "../common/ConsoleAnnotation.h"
 #include "../common/ConsoleRead.h"
+#include "../common/HkFunc.h"
 #include "../common/UnicodeChars.h"
 #include "../common/WConsole.h"
 #include "../common/WThreads.h"
@@ -1042,10 +1043,6 @@ BOOL StartupHooks(HMODULE ahOurDll)
 
 	extern FARPROC CallWriteConsoleW;
 	CallWriteConsoleW = (FARPROC)GetOriginalAddress((LPVOID)CEAnsi::OnWriteConsoleW, NULL);
-
-	#ifdef _DEBUG
-	gfVirtualAlloc = (VirtualAlloc_t)GetOriginalAddress((LPVOID)OnVirtualAlloc, NULL);
-	#endif
 
 	extern GetConsoleWindow_T gfGetRealConsoleWindow; // from ConEmuCheck.cpp
 	gfGetRealConsoleWindow = (GetConsoleWindow_T)GetOriginalAddress((LPVOID)OnGetConsoleWindow, NULL);
@@ -5288,7 +5285,7 @@ BOOL WINAPI OnAllocConsole(void)
 				#ifdef _DEBUG
 				COORD crNewSize = {crLocked.X, max(crLocked.Y, csbi.dwSize.Y)};
 				#endif
-				SetConsoleScreenBufferSize(hStdOut, crLocked);
+				hkFunc.setConsoleScreenBufferSize(hStdOut, crLocked);
 			}
 		}
 	}

@@ -510,6 +510,7 @@ if exist C:\Utils\FAR170\Plugins\ConEmu\Thumbs\ConEmuTh.dll copy "$(TargetDir)Co
     <ClCompile Include="..\common\CmdLine.cpp" />
     <ClCompile Include="..\common\Common.cpp" />
     <ClCompile Include="..\common\ConEmuCheck.cpp" />
+    <ClCompile Include="..\common\HkFunc.cpp" />
     <ClCompile Include="..\common\MAssert.cpp" />
     <ClCompile Include="..\common\Memory.cpp" />
     <ClCompile Include="..\common\MSection.cpp" />
@@ -559,6 +560,7 @@ if exist C:\Utils\FAR170\Plugins\ConEmu\Thumbs\ConEmuTh.dll copy "$(TargetDir)Co
     <ClInclude Include="..\common\ConEmuCheck.h" />
     <ClInclude Include="..\common\ConEmuColors.h" />
     <ClInclude Include="..\common\ConEmuColors3.h" />
+    <ClInclude Include="..\common\HkFunc.h" />
     <ClInclude Include="..\common\Memory.h" />
     <ClInclude Include="..\common\MSection.h" />
     <ClInclude Include="..\common\MSectionSimple.h" />

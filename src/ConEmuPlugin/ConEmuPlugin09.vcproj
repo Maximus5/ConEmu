@@ -399,6 +399,7 @@
       <File RelativePath="..\common\ConEmuCheckEx.cpp" />
       <File RelativePath="..\common\EmergencyShow.cpp" />
       <File RelativePath="..\common\execute.cpp" />
+      <File RelativePath="..\common\HkFunc.cpp" />
       <File RelativePath="..\common\MAssert.cpp" />
       <File RelativePath="..\common\Memory.cpp" />
       <File RelativePath="..\common\Monitors.cpp" />
@@ -448,6 +449,7 @@
       <File RelativePath="..\common\defines.h" />
       <File RelativePath="..\common\EmergencyShow.h" />
       <File RelativePath="..\common\farcolor1.hpp" />
+      <File RelativePath="..\common\HkFunc.h" />
       <File RelativePath="..\common\Memory.h" />
       <File RelativePath="..\common\Monitors.h" />
       <File RelativePath="..\common\MSection.h" />

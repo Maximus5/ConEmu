@@ -403,6 +403,7 @@
       <File RelativePath="..\common\EmergencyShow.h" />
       <File RelativePath="..\common\ExecPty.h" />
       <File RelativePath="..\common\Execute.h" />
+      <File RelativePath="..\common\HkFunc.h" />
       <File RelativePath="..\common\InQueue.h" />
       <File RelativePath="..\common\MConHandle.h" />
       <File RelativePath="..\common\Memory.h" />
@@ -421,6 +422,7 @@
       <File RelativePath="..\common\StartupEnvDef.h" />
       <File RelativePath="..\common\StartupEnvEx.h" />
       <File RelativePath="..\common\WConsole.h" />
+      <File RelativePath="..\common\WConsoleInfo.h" />
       <File RelativePath="..\common\WFiles.h" />
       <File RelativePath="..\common\WObjects.h" />
       <File RelativePath="..\common\WThreads.h" />
@@ -451,6 +453,7 @@
       <File RelativePath="..\common\EmergencyShow.cpp" />
       <File RelativePath="..\common\ExecPty.cpp" />
       <File RelativePath="..\common\Execute.cpp" />
+      <File RelativePath="..\common\HkFunc.cpp" />
       <File RelativePath="..\common\InQueue.cpp" />
       <File RelativePath="..\common\MAssert.cpp" />
       <File RelativePath="..\common\MConHandle.cpp" />
@@ -465,6 +468,7 @@
       <File RelativePath="..\common\RConStartArgs.cpp" />
       <File RelativePath="..\common\SetEnvVar.cpp" />
       <File RelativePath="..\common\WConsole.cpp" />
+      <File RelativePath="..\common\WConsoleInfo.cpp" />
       <File RelativePath="..\common\WFiles.cpp" />
       <File RelativePath="..\common\WObjects.cpp" />
       <File RelativePath="..\common\WThreads.cpp" />

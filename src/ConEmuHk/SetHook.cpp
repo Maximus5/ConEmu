@@ -67,6 +67,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Ansi.h"
 #include "MainThread.h"
 #include "../modules/minhook/include/MinHook.h"
+#include "../common/HkFunc.h"
 
 
 #ifdef _DEBUG
@@ -1419,10 +1420,10 @@ void __stdcall UnsetAllHooks()
 	{
 	extern FARPROC CallWriteConsoleW;
 	CallWriteConsoleW = NULL;
-	extern VirtualAlloc_t gfVirtualAlloc;
-	gfVirtualAlloc = NULL;
 	extern GetConsoleWindow_T gfGetRealConsoleWindow; // from ConEmuCheck.cpp
 	gfGetRealConsoleWindow = NULL;
+
+	hkFunc.OnHooksUnloaded();
 	}
 
 	MH_STATUS status = MH_Uninitialize();

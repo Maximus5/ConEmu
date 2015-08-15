@@ -89,6 +89,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../ConEmu/version.h"
 #include "../common/CmdLine.h"
 #include "../common/ConsoleAnnotation.h"
+#include "../common/HkFunc.h"
 #include "../common/RConStartArgs.h"
 #include "../common/WConsole.h"
 #include "../common/WObjects.h"
@@ -1700,6 +1701,8 @@ BOOL DllMain_ProcessAttach(HANDLE hModule, DWORD  ul_reason_for_call)
 	HANDLE hProcHeap = GetProcessHeap();
 	#endif
 	HeapInitialize();
+
+	hkFunc.SetInternalMode((HMODULE)hModule, (FARPROC)GetTrampoline);
 
 	DLOG1("DllMain.LoadStartupEnv",ul_reason_for_call);
 	/* *** DEBUG PURPOSES */

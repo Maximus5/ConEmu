@@ -37,6 +37,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/common.hpp"
 #include "../common/ConEmuCheck.h"
 #include "../common/execute.h"
+#include "../common/HkFunc.h"
 #include "../common/WErrGuard.h"
 #include "../common/WObjects.h"
 #if defined(__GNUC__) && !defined(__MINGW32__)
@@ -2314,7 +2315,7 @@ wrap:
 
 					if (bNeedChange)
 					{
-						bBufChanged = SetConsoleScreenBufferSize(hConOut, csbi.dwSize);
+						bBufChanged = hkFunc.setConsoleScreenBufferSize(hConOut, csbi.dwSize);
 					}
 					UNREFERENCED_PARAMETER(bBufChanged);
 				}

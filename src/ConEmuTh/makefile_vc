@@ -33,6 +33,7 @@ $(INTDIR)\ConEmuTh2800.obj \
 $(INTDIR)\ConEmuTh995.obj \
 $(INTDIR)\ConEmuThA.obj \
 $(INTDIR)\Display.obj \
+$(INTDIR)\HkFunc.obj \
 $(INTDIR)\ImgCache.obj \
 $(INTDIR)\MAssert.obj \
 $(INTDIR)\Memory.obj \
@@ -235,6 +236,8 @@ $(INTDIR)\ConEmuTh995.obj: ConEmuTh995.cpp
 $(INTDIR)\ConEmuThA.obj: ConEmuThA.cpp
 
 $(INTDIR)\Display.obj: Display.cpp
+
+$(INTDIR)\HkFunc.obj: ../common/HkFunc.cpp ../common/HkFunc.h
 
 $(INTDIR)\ImgCache.obj: ImgCache.cpp
 

@@ -402,6 +402,7 @@
       <File RelativePath="..\common\defines.h" />
       <File RelativePath="..\common\DefTermBase.h" />
       <File RelativePath="..\common\Execute.h" />
+      <File RelativePath="..\common\HkFunc.h" />
       <File RelativePath="..\common\InQueue.h" />
       <File RelativePath="..\common\MConHandle.h" />
       <File RelativePath="..\common\Memory.h" />
@@ -443,6 +444,7 @@
       <File RelativePath="..\common\ConsoleMixAttr.cpp" />
       <File RelativePath="..\common\ConsoleRead.cpp" />
       <File RelativePath="..\common\Execute.cpp" />
+      <File RelativePath="..\common\HkFunc.cpp" />
       <File RelativePath="..\common\InQueue.cpp" />
       <File RelativePath="..\common\MAssert.cpp" />
       <File RelativePath="..\common\MConHandle.cpp" />

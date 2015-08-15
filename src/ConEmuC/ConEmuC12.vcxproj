@@ -892,6 +892,7 @@
   <ItemGroup>
     <ClCompile Include="..\common\CmdArg.cpp" />
     <ClCompile Include="..\common\CmdLine.cpp" />
+    <ClCompile Include="..\common\HkFunc.cpp" />
     <ClCompile Include="..\common\MAssert.cpp" />
     <ClCompile Include="..\common\Memory.cpp" />
     <ClCompile Include="..\common\MSectionSimple.cpp" />
@@ -904,6 +905,7 @@
   <ItemGroup>
     <ClInclude Include="..\common\CmdArg.h" />
     <ClInclude Include="..\common\CmdLine.h" />
+    <ClInclude Include="..\common\HkFunc.h" />
     <ClInclude Include="..\common\Memory.h" />
     <ClInclude Include="..\common\MSectionSimple.h" />
     <ClInclude Include="..\common\MStrSafe.h" />

@@ -45,6 +45,7 @@ $(INTDIR)\EmergencyShow.obj \
 $(INTDIR)\ExecPty.obj \
 $(INTDIR)\execute.obj \
 $(INTDIR)\GuiHooks.obj \
+$(INTDIR)\HkFunc.obj \
 $(INTDIR)\Infiltrate.obj \
 $(INTDIR)\InjectRemote.obj \
 $(INTDIR)\Injects.obj \
@@ -313,6 +314,8 @@ $(INTDIR)\ExecPty.obj: ../common/ExecPty.cpp ../common/ExecPty.h
 $(INTDIR)\execute.obj: ../common/execute.cpp ../common/execute.h
 
 $(INTDIR)\GuiHooks.obj: GuiHooks.cpp GuiHooks.h
+
+$(INTDIR)\HkFunc.obj: ../common/HkFunc.cpp ../common/HkFunc.h
 
 $(INTDIR)\Infiltrate.obj: Infiltrate.cpp
 

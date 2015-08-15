@@ -398,6 +398,7 @@
       <File RelativePath="..\common\ConEmuColors3.h" />
       <File RelativePath="..\common\ConsoleAnnotation.h" />
       <File RelativePath="..\common\ConsoleRead.h" />
+      <File RelativePath="..\common\HkFunc.h" />
       <File RelativePath="..\common\MAssert.h" />
       <File RelativePath="..\common\Memory.h" />
       <File RelativePath="..\common\MSecurity.h" />
@@ -481,6 +482,7 @@
       <File RelativePath="..\common\Common.cpp" />
       <File RelativePath="..\common\ConEmuCheck.cpp" />
       <File RelativePath="..\common\ConsoleRead.cpp" />
+      <File RelativePath="..\common\HkFunc.cpp" />
       <File RelativePath="..\common\MAssert.cpp" />
       <File RelativePath="..\common\Memory.cpp" />
       <File RelativePath="..\common\MSecurity.cpp" />

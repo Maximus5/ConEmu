@@ -5193,13 +5193,6 @@ VOID /*WINAPI*/ CPluginBase::OnConsoleWasAttached(HookCallbackArg* pArgs)
 
 	if (gbWasDetached)
 	{
-		/*
-		HANDLE hOutput = GetStdHandle(STD_OUTPUT_HANDLE);
-		SetConsoleScreenBufferSize(hOutput,sbi.dwSize);
-		SetConsoleWindowInfo(hOutput,TRUE,&sbi.srWindow);
-		SetConsoleScreenBufferSize(hOutput,sbi.dwSize);
-		*/
-
 		// сразу переподцепимся к GUI
 		if (!Plugin()->Attach2Gui())
 		{

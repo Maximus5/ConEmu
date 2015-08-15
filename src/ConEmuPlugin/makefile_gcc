@@ -6,6 +6,7 @@ SRCS = \
 		../common/ConEmuCheck.cpp    \
 		../common/ConEmuCheckEx.cpp  \
 		../common/EmergencyShow.cpp  \
+		../common/HkFunc.cpp         \
 		../common/Memory.cpp         \
 		../common/Monitors.cpp       \
 		../common/MSection.cpp       \

@@ -34,6 +34,7 @@ $(INTDIR)\ConEmuPluginA.obj \
 $(INTDIR)\ConEmuPluginBase.obj \
 $(INTDIR)\EmergencyShow.obj \
 $(INTDIR)\Execute.obj \
+$(INTDIR)\HkFunc.obj \
 $(INTDIR)\MAssert.obj \
 $(INTDIR)\Memory.obj \
 $(INTDIR)\Monitors.obj \
@@ -270,6 +271,8 @@ $(INTDIR)\ConEmuPluginBase.obj: ConEmuPluginBase.cpp ConEmuPluginBase.h
 $(INTDIR)\EmergencyShow.obj: ../common/EmergencyShow.cpp ../common/EmergencyShow.h
 
 $(INTDIR)\Execute.obj: ../common/execute.cpp
+
+$(INTDIR)\HkFunc.obj: ../common/HkFunc.cpp ../common/HkFunc.h
 
 $(INTDIR)\MAssert.obj: ../common/MAssert.cpp
 

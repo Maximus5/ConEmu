@@ -916,6 +916,7 @@
     <ClInclude Include="..\common\ConsoleAnnotation.h" />
     <ClInclude Include="..\common\ConsoleRead.h" />
     <ClInclude Include="..\common\FarVersion.h" />
+    <ClInclude Include="..\common\HkFunc.h" />
     <ClInclude Include="..\common\MAssert.h" />
     <ClInclude Include="..\common\Memory.h" />
     <ClInclude Include="..\common\MSecurity.h" />
@@ -960,6 +961,7 @@
     <ClCompile Include="..\common\Common.cpp" />
     <ClCompile Include="..\common\ConEmuCheck.cpp" />
     <ClCompile Include="..\common\ConsoleRead.cpp" />
+    <ClCompile Include="..\common\HkFunc.cpp" />
     <ClCompile Include="..\common\MAssert.cpp" />
     <ClCompile Include="..\common\Memory.cpp" />
     <ClCompile Include="..\common\MSecurity.cpp" />

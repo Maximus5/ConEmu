@@ -30,6 +30,7 @@ SRCS = \
 		../common/ConsoleRead.cpp    \
 		../common/EmergencyShow.cpp  \
 		../common/execute.cpp        \
+		../common/HkFunc.cpp         \
 		../common/InQueue.cpp        \
 		../common/MAssert.cpp        \
 		../common/MConHandle.cpp     \

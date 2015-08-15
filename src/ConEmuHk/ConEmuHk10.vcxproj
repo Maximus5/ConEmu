@@ -844,6 +844,7 @@
     <ClInclude Include="..\common\defines.h" />
     <ClInclude Include="..\common\DefTermBase.h" />
     <ClInclude Include="..\common\Execute.h" />
+    <ClInclude Include="..\common\HkFunc.h" />
     <ClInclude Include="..\common\InQueue.h" />
     <ClInclude Include="..\common\MConHandle.h" />
     <ClInclude Include="..\common\Memory.h" />
@@ -885,6 +886,7 @@
     <ClCompile Include="..\common\ConsoleMixAttr.cpp" />
     <ClCompile Include="..\common\ConsoleRead.cpp" />
     <ClCompile Include="..\common\Execute.cpp" />
+    <ClCompile Include="..\common\HkFunc.cpp" />
     <ClCompile Include="..\common\InQueue.cpp" />
     <ClCompile Include="..\common\MAssert.cpp" />
     <ClCompile Include="..\common\MConHandle.cpp" />

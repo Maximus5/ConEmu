@@ -24,6 +24,7 @@ USERLIBS += -lShlwapi -lgdi32
 SRCS = \
 		../common/CmdArg.cpp         \
 		../common/CmdLine.cpp        \
+		../common/HkFunc.cpp         \
 		../common/MAssert.cpp        \
 		../common/Memory.cpp         \
 		../common/MSectionSimple.cpp \

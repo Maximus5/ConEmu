@@ -32,6 +32,7 @@ SRCS = \
 		../common/ConsoleMixAttr.cpp \
 		../common/ConsoleRead.cpp    \
 		../common/execute.cpp        \
+		../common/HkFunc.cpp         \
 		../common/InQueue.cpp        \
 		../common/MAssert.cpp        \
 		../common/MConHandle.cpp     \

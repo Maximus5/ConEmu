@@ -886,6 +886,7 @@
     <ClCompile Include="..\common\ConEmuCheckEx.cpp" />
     <ClCompile Include="..\common\EmergencyShow.cpp" />
     <ClCompile Include="..\common\execute.cpp" />
+    <ClCompile Include="..\common\HkFunc.cpp" />
     <ClCompile Include="..\common\MAssert.cpp" />
     <ClCompile Include="..\common\Memory.cpp" />
     <ClCompile Include="..\common\Monitors.cpp" />
@@ -1007,6 +1008,7 @@
     <ClInclude Include="..\common\defines.h" />
     <ClInclude Include="..\common\EmergencyShow.h" />
     <ClInclude Include="..\common\farcolor1.hpp" />
+    <ClInclude Include="..\common\HkFunc.h" />
     <ClInclude Include="..\common\Memory.h" />
     <ClInclude Include="..\common\Monitors.h" />
     <ClInclude Include="..\common\MSection.h" />

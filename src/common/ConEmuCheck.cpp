@@ -33,6 +33,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmuCheck.h"
 #include "ConEmuPipeMode.h"
 #include "MFileMapping.h"
+#include "HkFunc.h"
 
 #ifdef _DEBUG
 #include "CmdLine.h"
@@ -1094,26 +1095,17 @@ HWND myGetConsoleWindow()
 
 	// To avoid infinite loops (GetModuleHandleEx is not available in Win2k)
 	_ASSERTE(ghWorkingModule != 0);
-	HMODULE hOurModule = (HMODULE)(DWORD_PTR)ghWorkingModule;
-
+	DEBUGTEST(HMODULE hOurModule = (HMODULE)(DWORD_PTR)ghWorkingModule);
 	WARNING("DANGER zone. If ConEmuHk unloads following may cause crashes");
-	static HMODULE hHookLib = NULL;
-	if (!hHookLib)
-		hHookLib = GetModuleHandle(WIN3264TEST(L"ConEmuHk.dll",L"ConEmuHk64.dll"));
-	if (hHookLib && (hHookLib != hOurModule))
+	if (!hkFunc.isConEmuHk())
 	{
-		typedef HWND (WINAPI* GetRealConsoleWindow_t)();
-		static GetRealConsoleWindow_t GetRealConsoleWindow_f = NULL;
-		if (!GetRealConsoleWindow_f)
-			GetRealConsoleWindow_f = (GetRealConsoleWindow_t)GetProcAddress(hHookLib, "GetRealConsoleWindow");
-		if (GetRealConsoleWindow_f)
-		{
-			hConWnd = GetRealConsoleWindow_f();
-		}
-		else
-		{
-			_ASSERTE(GetRealConsoleWindow_f!=NULL);
-		}
+		#ifdef _DEBUG
+		static HMODULE hHookLib = NULL;
+		if (!hHookLib) hHookLib = GetModuleHandle(WIN3264TEST(L"ConEmuHk.dll",L"ConEmuHk64.dll"));
+		_ASSERTEX(hHookLib != hOurModule);
+		#endif
+
+		hConWnd = hkFunc.getConsoleWindow();
 	}
 
 	if (!hConWnd)
@@ -1124,7 +1116,7 @@ HWND myGetConsoleWindow()
 			return NULL;
 
 		// RealConsole handle is stored in the Window DATA
-		if (hHookLib && (hHookLib != hOurModule))
+		if (!hkFunc.isConEmuHk())
 		{
 			#ifdef _DEBUG
 			wchar_t sClass[64] = L""; GetClassName(hConWnd, sClass, countof(sClass));

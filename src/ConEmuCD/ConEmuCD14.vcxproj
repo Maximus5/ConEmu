@@ -490,6 +490,7 @@
     <ClInclude Include="..\common\EmergencyShow.h" />
     <ClInclude Include="..\common\ExecPty.h" />
     <ClInclude Include="..\common\Execute.h" />
+    <ClInclude Include="..\common\HkFunc.h" />
     <ClInclude Include="..\common\InQueue.h" />
     <ClInclude Include="..\common\MArray.h" />
     <ClInclude Include="..\common\MConHandle.h" />
@@ -707,6 +708,7 @@
     <ClCompile Include="..\common\EmergencyShow.cpp" />
     <ClCompile Include="..\common\ExecPty.cpp" />
     <ClCompile Include="..\common\Execute.cpp" />
+    <ClCompile Include="..\common\HkFunc.cpp" />
     <ClCompile Include="..\common\InQueue.cpp" />
     <ClCompile Include="..\common\MAssert.cpp" />
     <ClCompile Include="..\common\MConHandle.cpp" />

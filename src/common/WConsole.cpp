@@ -33,6 +33,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Monitors.h"
 #include "WConsole.h"
 #include "WObjects.h"
+#include "HkFunc.h"
 
 #ifndef CONEMU_MINIMAL
 #include "WUser.h"
@@ -648,9 +649,8 @@ void SetConsoleBufferSize(HWND inConWnd, int anWidth, int anHeight, int anBuffer
 
 COORD MyGetLargestConsoleWindowSize(HANDLE hConsoleOutput)
 {
-	PRAGMA_ERROR("minhook - GetLargestConsoleWindowSize хукается и возвращает заблокированный размер");
-	// В Wine не работает
-	COORD crMax = GetLargestConsoleWindowSize(hConsoleOutput);
+	// Fails in Wine
+	COORD crMax = hkFunc.getLargestConsoleWindowSize(hConsoleOutput);
 	DWORD dwErr = (crMax.X && crMax.Y) ? 0 : GetLastError();
 	UNREFERENCED_PARAMETER(dwErr);
 

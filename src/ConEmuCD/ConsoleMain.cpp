@@ -76,6 +76,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/ConsoleRead.h"
 #include "../common/EmergencyShow.h"
 #include "../common/execute.h"
+#include "../common/HkFunc.h"
 #include "../common/MArray.h"
 #include "../common/MMap.h"
 #include "../common/MSectionSimple.h"
@@ -9414,14 +9415,14 @@ static void UndoConsoleWindowZoom()
 		if (gnBufferHeight == 0)
 		{
 			//specified width and height cannot be less than the width and height of the console screen buffer's window
-			lbRc = SetConsoleScreenBufferSize(ghConOut, gcrVisibleSize);
+			lbRc = hkFunc.setConsoleScreenBufferSize(ghConOut, gcrVisibleSize);
 		}
 		else
 		{
 			// ресайз для BufferHeight
 			COORD crHeight = {gcrVisibleSize.X, gnBufferHeight};
 			MoveWindow(ghConWnd, rcConPos.left, rcConPos.top, 1, 1, 1);
-			lbRc = SetConsoleScreenBufferSize(ghConOut, crHeight); // а не crNewSize - там "оконные" размеры
+			lbRc = hkFunc.setConsoleScreenBufferSize(ghConOut, crHeight); // а не crNewSize - там "оконные" размеры
 		}
 
 		// И вернуть тот видимый прямоугольник, который был получен в последний раз (успешный раз)
@@ -9790,7 +9791,7 @@ static bool ApplyConsoleSizeSimple(const COORD& crNewSize, const CONSOLE_SCREEN_
 		}
 
 		//specified width and height cannot be less than the width and height of the console screen buffer's window
-		if (!SetConsoleScreenBufferSize(ghConOut, crNewSize))
+		if (!hkFunc.setConsoleScreenBufferSize(ghConOut, crNewSize))
 		{
 			lbRc = false;
 			dwErr = GetLastError();
@@ -10061,7 +10062,7 @@ static bool ApplyConsoleSizeBuffer(const USHORT BufferHeight, const COORD& crNew
 	}
 
 	// crHeight, а не crNewSize - там "оконные" размеры
-	if (!SetConsoleScreenBufferSize(ghConOut, crHeight))
+	if (!hkFunc.setConsoleScreenBufferSize(ghConOut, crHeight))
 	{
 		lbRc = false;
 		dwErr = GetLastError();

@@ -4,6 +4,7 @@ SRCS = \
 		../common/CmdLine.cpp        \
 		../common/Common.cpp         \
 		../common/ConEmuCheck.cpp    \
+		../common/HkFunc.cpp         \
 		../common/MSection.cpp       \
 		../common/MSectionSimple.cpp \
 		../common/WFiles.cpp       \

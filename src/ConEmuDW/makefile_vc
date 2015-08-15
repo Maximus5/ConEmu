@@ -263,6 +263,8 @@ $(INTDIR)\ConEmuCheck.obj: ../common/ConEmuCheck.cpp
 
 $(INTDIR)\ConsoleRead.obj: ../common/ConsoleRead.cpp ../common/ConsoleRead.h
 
+$(INTDIR)\HkFunc.obj: ../common/HkFunc.cpp ../common/HkFunc.h
+
 $(INTDIR)\MAssert.obj: ../common/MAssert.cpp
 
 $(INTDIR)\Memory.obj: ../common/Memory.cpp

@@ -396,6 +396,7 @@
       <File RelativePath="..\common\CmdLine.cpp" />
       <File RelativePath="..\common\Common.cpp" />
       <File RelativePath="..\common\ConEmuCheck.cpp" />
+      <File RelativePath="..\common\HkFunc.cpp" />
       <File RelativePath="..\common\MAssert.cpp" />
       <File RelativePath="..\common\Memory.cpp" />
       <File RelativePath="..\common\MSection.cpp" />
@@ -421,6 +422,7 @@
       <File RelativePath="..\common\CmdLine.h" />
       <File RelativePath="..\common\common.hpp" />
       <File RelativePath="..\common\ConEmuCheck.h" />
+      <File RelativePath="..\common\HkFunc.h" />
       <File RelativePath="..\common\Memory.h" />
       <File RelativePath="..\common\MSection.h" />
       <File RelativePath="..\common\MSectionSimple.h" />

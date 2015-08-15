@@ -59,6 +59,7 @@ $(INTDIR)\FindPanel.obj \
 $(INTDIR)\FrameHolder.obj \
 $(INTDIR)\GestureEngine.obj \
 $(INTDIR)\GuiServer.obj \
+$(INTDIR)\HkFunc.obj \
 $(INTDIR)\HooksUnlocker.obj \
 $(INTDIR)\HotkeyChord.obj \
 $(INTDIR)\HotkeyDlg.obj \
@@ -342,6 +343,8 @@ $(INTDIR)\FrameHolder.obj: FrameHolder.cpp FrameHolder.h
 $(INTDIR)\GestureEngine.obj: GestureEngine.cpp GestureEngine.h
 
 $(INTDIR)\GuiServer.obj: GuiServer.cpp GuiServer.h ConEmu.h RealConsole.h VirtualConsole.h
+
+$(INTDIR)\HkFunc.obj: ../common/HkFunc.cpp ../common/HkFunc.h
 
 $(INTDIR)\HooksUnlocker.obj: HooksUnlocker.cpp HooksUnlocker.h
 

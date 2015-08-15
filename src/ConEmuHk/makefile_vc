@@ -62,6 +62,7 @@ $(INTDIR)\Entry.obj \
 $(INTDIR)\Execute.obj \
 $(INTDIR)\ExtConsole.obj \
 $(INTDIR)\GuiAttach.obj \
+$(INTDIR)\HkFunc.obj \
 $(INTDIR)\Injects.obj \
 $(INTDIR)\InQueue.obj \
 $(INTDIR)\MainThread.obj \
@@ -341,6 +342,8 @@ $(INTDIR)\Execute.obj: ../common/Execute.cpp ../common/Execute.h
 $(INTDIR)\ExtConsole.obj: ExtConsole.cpp ExtConsole.h
 
 $(INTDIR)\GuiAttach.obj: GuiAttach.cpp GuiAttach.h
+
+$(INTDIR)\HkFunc.obj: ../common/HkFunc.cpp ../common/HkFunc.h
 
 $(INTDIR)\Injects.obj: Injects.cpp Console2.h
 

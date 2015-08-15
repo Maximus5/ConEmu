@@ -29,6 +29,7 @@ SRCS = \
 		../common/Common.cpp         \
 		../common/ConEmuCheck.cpp    \
 		../common/execute.cpp        \
+		../common/HkFunc.cpp         \
 		../common/MAssert.cpp        \
 		../common/Memory.cpp         \
 		../common/MEvent.cpp         \

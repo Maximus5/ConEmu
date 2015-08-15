@@ -394,6 +394,7 @@
     <Filter Name="0 -Source Files" Filter="cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx" UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}">
       <File RelativePath="..\common\CmdArg.cpp" />
       <File RelativePath="..\common\CmdLine.cpp" />
+      <File RelativePath="..\common\HkFunc.cpp" />
       <File RelativePath="..\common\MAssert.cpp" />
       <File RelativePath="..\common\Memory.cpp" />
       <File RelativePath="..\common\MSectionSimple.cpp" />
@@ -406,6 +407,7 @@
     <Filter Name="Header Files" Filter="h;hpp;hxx;hm;inl;inc;xsd" UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}">
       <File RelativePath="..\common\CmdArg.h" />
       <File RelativePath="..\common\CmdLine.h" />
+      <File RelativePath="..\common\HkFunc.h" />
       <File RelativePath="..\common\Memory.h" />
       <File RelativePath="..\common\MSectionSimple.h" />
       <File RelativePath="..\common\MStrSafe.h" />
