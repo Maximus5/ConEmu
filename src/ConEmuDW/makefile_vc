@@ -38,6 +38,7 @@ LINK_OBJS = \
 	$(INTDIR)\Common.obj \
 	$(INTDIR)\ConEmuCheck.obj \
 	$(INTDIR)\ConsoleRead.obj \
+	$(INTDIR)\HkFunc.obj \
 	$(INTDIR)\MAssert.obj \
 	$(INTDIR)\Memory.obj \
 	$(INTDIR)\MSecurity.obj \
