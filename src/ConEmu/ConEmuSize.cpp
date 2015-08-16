@@ -2584,7 +2584,9 @@ LRESULT CConEmuSize::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 	// Чтобы правильно был рассчитан размер консоли
 	bool bResized = CheckDpiOnMoving(p);
 
-	if (bResized)
+	// Add `SWP_NOSIZE` check because in that case {p->cx,p->cy} are 0
+	// therefore OnSize CalcRect will return invalid result on empty src rect
+	if (bResized && !(p->flags & SWP_NOSIZE))
 	{
 		RECT rcWnd = {0,0,p->cx,p->cy};
 		//CVConGroup::SyncAllConsoles2Window(rcWnd, CER_MAIN, true);
@@ -4805,7 +4807,10 @@ LRESULT CConEmuSize::OnDpiChanged(UINT dpiX, UINT dpiY, LPRECT prcSuggested, boo
 			// Если вызывает наш внутренний Tile/Snap,
 			// и новый режим "прилепленный" к краю экрана,
 			// то не будет обновлен желаемый размер wmNormal консоли
-			ConEmuWindowCommand Tile = IsRectEmpty(&rc) ? m_TileMode : EvalTileMode(rc);
+			// 150816 - Called from JumpNextMonitor, EvalTileMode raises an assertion (IsWindowModeChanged)
+			ConEmuWindowCommand Tile = (m_JumpMonitor.bInJump || IsRectEmpty(&rc))
+				? m_TileMode
+				: EvalTileMode(rc);
 			if (Tile != cwc_Current)
 			{
 				RECT rcOld = IsRectEmpty(&mrc_StoredNormalRect) ? GetDefaultRect() : mrc_StoredNormalRect;
