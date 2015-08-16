@@ -5777,9 +5777,23 @@ void CConEmuSize::DoMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 	//    аргумент /showhideTSA  --> ShowHideType = sih_ShowHideTSA
 	SingleInstanceShowHideType cmd = sih_None;
 
+	// gh#255, old#1065: Move window to "active" monitor
+	if ((ShowHideType == sih_None) && gpSet->isRestore2ActiveMon)
+	{
+		POINT ptCur = {}; GetCursorPos(&ptCur);
+		RECT rcCur = CalcRect(CER_MAIN, NULL);
+		HMONITOR hMonCur = MonitorFromRect(&rcCur, MONITOR_DEFAULTTONEAREST);
+		HMONITOR hMonAct = MonitorFromPoint(ptCur, MONITOR_DEFAULTTONEAREST);
+		if (hMonCur && hMonAct && (hMonCur != hMonAct))
+		{
+			ShowHideType = sih_Show;
+			bVis = false;
+		}
+	}
+
+	// Choose default action otherwise
 	if (ShowHideType == sih_None)
 	{
-		// По настройкам
 		ShowHideType = gpSet->isMinToTray() ? sih_ShowHideTSA : sih_ShowMinimize;
 	}
 
