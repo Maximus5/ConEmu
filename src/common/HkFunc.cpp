@@ -40,6 +40,7 @@ HkFunc::HkFunc()
 	, fnSetConsoleScreenBufferSize(NULL)
 	, fnGetConsoleWindow(NULL)
 	, fnVirtualAlloc(NULL)
+	, fnCreateProcess(NULL)
 {
 }
 
@@ -86,6 +87,7 @@ void HkFunc::OnHooksUnloaded()
 	fnSetConsoleScreenBufferSize = NULL;
 	fnGetConsoleWindow = NULL;
 	fnVirtualAlloc = NULL;
+	fnCreateProcess = NULL;
 }
 
 bool HkFunc::isConEmuHk()
@@ -143,4 +145,17 @@ LPVOID HkFunc::virtualAlloc(LPVOID lpAddress, SIZE_T dwSize, DWORD flAllocationT
 	}
 
 	return VirtualAlloc(lpAddress, dwSize, flAllocationType, flProtect);
+}
+
+BOOL HkFunc::createProcess(LPCWSTR lpApplicationName, LPWSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment, LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation)
+{
+	if (Init())
+	{
+		if (!fnCreateProcess)
+			fnCreateProcess = (CreateProcessW_t)fnGetTrampoline("CreateProcessW");
+		if (fnCreateProcess)
+			return fnCreateProcess(lpApplicationName, lpCommandLine, lpProcessAttributes, lpThreadAttributes, bInheritHandles, dwCreationFlags, lpEnvironment, lpCurrentDirectory, lpStartupInfo, lpProcessInformation);
+	}
+
+	return CreateProcessW(lpApplicationName, lpCommandLine, lpProcessAttributes, lpThreadAttributes, bInheritHandles, dwCreationFlags, lpEnvironment, lpCurrentDirectory, lpStartupInfo, lpProcessInformation);
 }

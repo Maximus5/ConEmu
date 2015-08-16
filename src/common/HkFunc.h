@@ -41,6 +41,7 @@ public:
 	BOOL   setConsoleScreenBufferSize(HANDLE hConsoleOutput, COORD dwSize);
 	HWND   getConsoleWindow();
 	LPVOID virtualAlloc(LPVOID lpAddress, SIZE_T dwSize, DWORD flAllocationType, DWORD flProtect);
+	BOOL   createProcess(LPCWSTR lpApplicationName, LPWSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment, LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation);
 
 public:
 	void  SetInternalMode(HMODULE hSelf, FARPROC pfnGetTrampoline);
@@ -69,6 +70,8 @@ protected:
 	GetConsoleWindow_t fnGetConsoleWindow;
 	typedef LPVOID(WINAPI* VirtualAlloc_t)(LPVOID lpAddress, SIZE_T dwSize, DWORD flAllocationType, DWORD flProtect);
 	VirtualAlloc_t fnVirtualAlloc;
+	typedef BOOL (WINAPI* CreateProcessW_t)(LPCWSTR lpApplicationName, LPWSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment, LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation);
+	CreateProcessW_t fnCreateProcess;
 };
 
 extern HkFunc hkFunc;
