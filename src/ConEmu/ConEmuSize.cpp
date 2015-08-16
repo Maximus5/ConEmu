@@ -5932,6 +5932,22 @@ void CConEmuSize::DoMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 		if (gpSet->isQuakeStyle)
 		{
 			RECT rcWnd = GetDefaultRect();
+
+			if (gpSet->isRestore2ActiveMon)
+			{
+				HMONITOR hMonCur = MonitorFromRect(&rcWnd, MONITOR_DEFAULTTONEAREST);
+				POINT ptCur = {}; GetCursorPos(&ptCur);
+				HMONITOR hMonAct = MonitorFromPoint(ptCur, MONITOR_DEFAULTTONEAREST);
+				if (hMonCur && hMonAct && (hMonCur != hMonAct))
+				{
+					if (JumpNextMonitor(ghWnd, hMonAct, true, rcWnd, &m_QuakePrevSize.PreSlidedSize))
+					{
+						RECT rcNew = GetDefaultRect();
+						rcWnd = rcNew;
+					}
+				}
+			}
+
 			SetWindowPos(ghWnd, NULL, rcWnd.left, rcWnd.top, 0,0, SWP_NOZORDER|SWP_NOSIZE);
 		}
 
