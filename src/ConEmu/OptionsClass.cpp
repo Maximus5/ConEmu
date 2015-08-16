@@ -2003,6 +2003,8 @@ LRESULT CSettings::OnInitDialog_WndSizePos(HWND hWnd2, bool abInitial)
 
 	checkDlgButton(hWnd2, cbIntegralSize, !gpSet->mb_IntegralSize);
 
+	checkDlgButton(hWnd2, cbRestore2ActiveMonitor, gpSet->isRestore2ActiveMon);
+
 	checkDlgButton(hWnd2, cbSnapToDesktopEdges, gpSet->isSnapToDesktopEdges);
 
 	return 0;

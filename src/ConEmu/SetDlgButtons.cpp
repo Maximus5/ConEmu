@@ -355,6 +355,9 @@ bool CSetDlgButtons::ProcessButtonClick(HWND hDlg, WORD CB, BYTE uCheck)
 		case cbIntegralSize:
 			OnBtn_IntegralSize(hDlg, CB, uCheck);
 			break;
+		case cbRestore2ActiveMonitor:
+			OnBtn_Restore2ActiveMonitor(hDlg, CB, uCheck);
+			break;
 		case rbScrollbarHide:
 		case rbScrollbarShow:
 		case rbScrollbarAuto:
@@ -2342,6 +2345,16 @@ void CSetDlgButtons::OnBtn_IntegralSize(HWND hDlg, WORD CB, BYTE uCheck)
 	gpSet->mb_IntegralSize = (uCheck == BST_UNCHECKED);
 
 } // cbIntegralSize
+
+
+// cbRestore2ActiveMonitor
+void CSetDlgButtons::OnBtn_Restore2ActiveMonitor(HWND hDlg, WORD CB, BYTE uCheck)
+{
+	_ASSERTE(CB==cbRestore2ActiveMonitor);
+
+	gpSet->isRestore2ActiveMon = (uCheck != BST_UNCHECKED);
+
+} // cbRestore2ActiveMonitor
 
 
 // rbScrollbarAuto || rbScrollbarHide || rbScrollbarShow
