@@ -3765,7 +3765,7 @@ void CConEmuSize::EvalNewNormalPos(const MONITORINFO& miOld, HMONITOR hNextMon, 
 	rcNew.bottom = rcNew.top + Height;
 }
 
-bool CConEmuSize::JumpNextMonitor(HWND hJumpWnd, HMONITOR hJumpMon, bool Next, const RECT rcJumpWnd)
+bool CConEmuSize::JumpNextMonitor(HWND hJumpWnd, HMONITOR hJumpMon, bool Next, const RECT rcJumpWnd, LPRECT prcNewPos /*= NULL*/)
 {
 	wchar_t szInfo[100];
 	RECT rcMain = {};
@@ -3859,6 +3859,10 @@ bool CConEmuSize::JumpNextMonitor(HWND hJumpWnd, HMONITOR hJumpMon, bool Next, c
 		CVConGroup::PreReSize(WindowMode, rcNewMain);
 	}
 
+	if (prcNewPos)
+	{
+		*prcNewPos = rcNewMain;
+	}
 
 	// И перемещение
 	SetWindowPos(hJumpWnd, NULL, rcNewMain.left, rcNewMain.top, rcNewMain.right-rcNewMain.left, rcNewMain.bottom-rcNewMain.top, SWP_NOZORDER/*|SWP_DRAWFRAME*/|SWP_NOCOPYBITS);
@@ -3878,7 +3882,7 @@ bool CConEmuSize::JumpNextMonitor(HWND hJumpWnd, HMONITOR hJumpMon, bool Next, c
 		m_JumpMonitor.bInJump = false;
 	}
 
-	return false;
+	return true;
 }
 
 // inMode: wmNormal, wmMaximized, wmFullScreen

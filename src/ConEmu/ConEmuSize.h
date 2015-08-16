@@ -176,7 +176,7 @@ public:
 	bool IsCantExceedMonitor();
 	bool IsPosLocked();
 	bool JumpNextMonitor(bool Next);
-	bool JumpNextMonitor(HWND hJumpWnd, HMONITOR hJumpMon, bool Next, const RECT rcJumpWnd);
+	bool JumpNextMonitor(HWND hJumpWnd, HMONITOR hJumpMon, bool Next, const RECT rcJumpWnd, LPRECT prcNewPos = NULL);
 	void DoFullScreen();
 	void DoMaximizeRestore();
 	void DoMinimizeRestore(SingleInstanceShowHideType ShowHideType = sih_None);
