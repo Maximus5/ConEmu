@@ -3769,6 +3769,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	if (gpConEmu->opt.QuakeMode.Exists)
 	{
 		gpConEmu->SetQuakeMode(gpConEmu->opt.QuakeMode.GetInt());
+		gpSet->isRestore2ActiveMon = true;
 	}
 
 	// Update package was dropped on ConEmu icon?
