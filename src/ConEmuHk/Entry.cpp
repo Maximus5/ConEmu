@@ -2446,7 +2446,7 @@ int DuplicateRoot(CESERVER_REQ_DUPLICATE* Duplicate)
 							si.dwFlags = STARTF_USESHOWWINDOW;
 							PROCESS_INFORMATION pi = {};
 							DWORD nCreateFlags = NORMAL_PRIORITY_CLASS|CREATE_NEW_CONSOLE;
-							if (CreateProcess(NULL, szSrvCmd, NULL, NULL, FALSE, nCreateFlags, NULL, NULL, &si, &pi))
+							if (hkFunc.createProcess(NULL, szSrvCmd, NULL, NULL, FALSE, nCreateFlags, NULL, NULL, &si, &pi))
 							{
 								CloseHandle(pi.hProcess);
 								CloseHandle(pi.hThread);
@@ -2554,7 +2554,7 @@ int DuplicateRoot(CESERVER_REQ_DUPLICATE* Duplicate)
 	}
 	else
 	{
-		BOOL bRunRc = CreateProcess(NULL, pszCmd, NULL, NULL, FALSE, CREATE_NEW_CONSOLE, NULL, NULL, &si, &pi);
+		BOOL bRunRc = hkFunc.createProcess(NULL, pszCmd, NULL, NULL, FALSE, CREATE_NEW_CONSOLE, NULL, NULL, &si, &pi);
 		iRc = bRunRc ? 0 : GetLastError();
 		goto wrap;
 	}
@@ -2744,7 +2744,7 @@ BOOL WINAPI HookServerCommand(LPVOID pInst, CESERVER_REQ* pCmd, CESERVER_REQ* &p
 					si.wShowWindow = SW_SHOWNORMAL;
 				}
 
-				lbRc = CreateProcess(NULL, szCmdLine, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL, NULL, &si, &pi);
+				lbRc = hkFunc.createProcess(NULL, szCmdLine, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL, NULL, &si, &pi);
 				if (lbRc)
 				{
 					CloseHandle(pi.hProcess); CloseHandle(pi.hThread);
