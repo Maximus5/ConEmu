@@ -1183,6 +1183,7 @@
 #define gbUpdate                        2864
 #define cbApplyDefTerm                  2865
 #define cbDefaultTerminalDebugLog       2866
+#define cbRestore2ActiveMonitor         2867
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
@@ -1191,7 +1192,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        228
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2867
+#define _APS_NEXT_CONTROL_VALUE         2868
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif

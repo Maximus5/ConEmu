@@ -106,6 +106,7 @@ BEGIN
 	cbProcessNewConArg      "Enable processing of '-new_console' and '-cur_console' switches in your shell prompt, scripts etc. started in ConEmu tabs"
 	cbQuakeStyle            "Slide console window from the top of the screen like gaming consoles\r\nChoose desired hotkey for ‘Minimize/Restore’ action on ‘Keys & Macro’ page"
 	cbRClick                "Off - all RClicks passed to console\r\nOn - EMenu called instead of RClick\r\n3rd-state - Short RClick passed, Long RClick -> EMenu\r\nWarning! This may conflict with RDrag"
+	cbRestore2ActiveMonitor "When restoring or sliding-down move window to the active monitor, where mouse cursor is located"
 	cbRetardInactivePanes   "Retard inactive but visible split-panes in the active ConEmu window"
 	cbRSelectionFix         "Fix dashed selection with fast right mouse drag\r\nFar 3: restore files selection instead of EMenu"
 	cbSafeFarClose          "Try to close Far Manager softly, instead of closing console window, when you close ConEmu window"

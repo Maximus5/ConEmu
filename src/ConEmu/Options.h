@@ -408,6 +408,8 @@ struct Settings
 		//reg->Load(L"QuakeStyle", isQuakeStyle);
 		BYTE isQuakeStyle; // 0 - NoQuake, 1 - Quake, 2 - Quake+HideOnLoseFocus
 		DWORD nQuakeAnimation;
+		//reg->Load(L"Restore2ActiveMon", isRestore2ActiveMon);
+		bool isRestore2ActiveMon;
 		protected:
 		//reg->Load(L"HideCaptionAlways", mb_HideCaptionAlways);
 		bool mb_HideCaptionAlways;
