@@ -707,6 +707,8 @@ bool InitHooksDefTerm()
 		/* ************************ */
 		{0}
 	};
+	// Required in VisualStudio and CodeBlocks (gdb) debuggers
+	// Don't restrict to them, other Dev Envs may behave in similar way
 	HookItem HooksDevStudio[] =
 	{
 		{(void*)OnResumeThread,			"ResumeThread",			kernel32},
@@ -732,7 +734,8 @@ bool InitHooksDefTerm()
 		InitHooks(HooksVshost);
 	}
 
-	if (gbIsVStudio)
+	// Required in VisualStudio and CodeBlocks (gdb) debuggers
+	// Don't restrict to them, other Dev Envs may behave in similar way
 	{
 		InitHooks(HooksDevStudio);
 	}
@@ -5202,7 +5205,7 @@ bool AttachServerConsole()
 	return lbAttachRc;
 }
 
-// Used in VisualStudio only, required for DefTerm support while debugging
+// Required in VisualStudio and CodeBlocks (gdb) for DefTerm support while debugging
 DWORD WINAPI OnResumeThread(HANDLE hThread)
 {
 	typedef DWORD (WINAPI* OnResumeThread_t)(HANDLE);

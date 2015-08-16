@@ -2843,10 +2843,11 @@ void CShellProc::OnCreateProcessFinished(BOOL abSucceeded, PROCESS_INFORMATION *
 		if (isDefTermEnabled())
 		{
 			_ASSERTEX(!mb_NeedInjects);
-			// Starting .Net debugging session from VS
+			// Starting .Net debugging session from VS or CodeBlocks console app (gdb)
 			if (mb_PostInjectWasRequested)
 			{
 				// This is "*.vshost.exe", it is GUI wich can be used for debugging .Net console applications
+				// Also in CodeBlocks' gdb debugger
 				if (mb_WasSuspended)
 				{
 					// Supposing Studio will process only one "*.vshost.exe" at a time
