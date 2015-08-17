@@ -89,10 +89,10 @@ extern AppMsgBox_t AssertMsgBox;
 #endif
 
 #undef _ASSERT
-#define _ASSERT ASSERT
+#define _ASSERT(x) ASSERT(x)
 #undef _ASSERTE
-#define _ASSERTE ASSERTE
+#define _ASSERTE(x) ASSERTE(x)
 #undef _ASSERTEX
-#define _ASSERTEX ASSERTEX
+#define _ASSERTEX(x) ASSERTEX(x)
 
 #endif // #ifndef MASSERT_HEADER_DEFINED
