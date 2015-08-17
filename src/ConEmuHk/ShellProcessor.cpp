@@ -2117,7 +2117,7 @@ int CShellProc::PrepareExecuteParms(
 
 	#ifdef _DEBUG
 	// Для принудительной вставки ConEmuC.exe - поставить true. Только для отладки!
-	bool lbAlwaysAddConEmuC = false;
+	bool lbAlwaysAddConEmuC; lbAlwaysAddConEmuC = false;
 	#endif
 
 	if ((mn_ImageBits == 0) && (mn_ImageSubsystem == 0)
