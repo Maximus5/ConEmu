@@ -338,7 +338,7 @@ class MArray
 			}
 
 			#ifdef _DEBUG
-			_Ty _Item = ((_Ty*)mp_Elements)[_Index];
+			_Ty _ItemDbg = ((_Ty*)mp_Elements)[_Index];
 			#endif
 
 			MCHKHEAP;
