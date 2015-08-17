@@ -759,7 +759,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 {
 	//DLOG0("DllStart",0);
 	#if defined(SHOW_EXE_TIMINGS) || defined(SHOW_EXE_MSGBOX)
-		wchar_t szTimingMsg[512]; UNREFERENCED_PARAMETER(szTimingMsg);
+		wchar_t szTimingMsg[512]; UNREFERENCED_PARAMETER(szTimingMsg[0]);
 		HANDLE hTimingHandle = GetStdHandle(STD_OUTPUT_HANDLE);
 	#endif
 
@@ -1229,7 +1229,7 @@ void InitExeName()
 	}
 
 	#if defined(SHOW_EXE_TIMINGS) || defined(SHOW_EXE_MSGBOX)
-		wchar_t szTimingMsg[512]; UNREFERENCED_PARAMETER(szTimingMsg);
+		wchar_t szTimingMsg[512]; UNREFERENCED_PARAMETER(szTimingMsg[0]);
 		HANDLE hTimingHandle = GetStdHandle(STD_OUTPUT_HANDLE);
 		if (!lstrcmpi(pszName, SHOW_EXE_MSGBOX_NAME))
 		{
@@ -1469,7 +1469,7 @@ void DoDllStop(bool bFinal, bool bFromTerminate)
 	DLOG0("DoDllStop",bFinal);
 
 	#if defined(SHOW_EXE_TIMINGS) || defined(SHOW_EXE_MSGBOX)
-		wchar_t szTimingMsg[512]; UNREFERENCED_PARAMETER(szTimingMsg);
+		wchar_t szTimingMsg[512]; UNREFERENCED_PARAMETER(szTimingMsg[0]);
 		HANDLE hTimingHandle = GetStdHandle(STD_OUTPUT_HANDLE);
 	#endif
 
