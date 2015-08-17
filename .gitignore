@@ -30,6 +30,7 @@ _*.sln
 \!*.xlsx
 
 /gcc
+/Debug
 /MinGW
 /Portable_Test
 /ConEmuPortableRarInfo.txt
