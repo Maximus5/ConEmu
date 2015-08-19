@@ -749,7 +749,7 @@ int GetProcessBits(DWORD nPID, HANDLE hProcess /*= NULL*/)
 	if (IsWow64Process_f)
 	{
 		BOOL bWow64 = FALSE;
-		HANDLE h = hProcess ? hProcess : hProcess = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, nPID);
+		HANDLE h = hProcess ? hProcess : OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, nPID);
 
 		// IsWow64Process would be succeessfull for PROCESS_QUERY_LIMITED_INFORMATION (Vista+)
 		if ((h == NULL) && IsWin6())
