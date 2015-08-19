@@ -73,6 +73,10 @@ public:
 	{
 		sName[0] = 0;
 	};
+	~ConEmuThreadStartArg()
+	{
+		SafeCloseHandle(hThread);
+	}
 };
 
 DWORD WINAPI apiThreadHelper(LPVOID lpParameter)
