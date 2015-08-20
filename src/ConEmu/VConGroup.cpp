@@ -4303,6 +4303,23 @@ CVirtualConsole* CVConGroup::CreateCon(RConStartArgs *args, bool abAllowScripts 
 		args->RunAsAdministrator = crb_On;
 	}
 
+	// Support starting new tasks by hotkey in the Active VCon working directory
+	// User have to add to Task parameters: /dir "%CD%"
+	if (args->pszStartupDir)
+	{
+		if (lstrcmpi(args->pszStartupDir, L"%CD%") == 0)
+		{
+			CEStr lsActiveDir;
+			CVConGuard vActive;
+			if ((GetActiveVCon(&vActive) >= 0) && (vActive->RCon()))
+				vActive->RCon()->GetConsoleCurDir(lsActiveDir);
+			if (lsActiveDir.IsEmpty())
+				lsActiveDir.Set(gpConEmu->WorkDir());
+			SafeFree(args->pszStartupDir);
+			args->pszStartupDir = lsActiveDir.Detach();
+		}
+	}
+
 	//wchar_t* pszScript = NULL; //, szScript[MAX_PATH];
 
 	_ASSERTE(args->pszSpecialCmd!=NULL);
