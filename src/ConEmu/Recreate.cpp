@@ -182,8 +182,21 @@ INT_PTR CRecreateDlg::OnInitDialog(HWND hDlg, UINT messg, WPARAM wParam, LPARAM 
 	// Set text in command and folder fields
 	SetDlgItemText(hDlg, IDC_RESTART_CMD, mpsz_DefCmd ? mpsz_DefCmd : pArgs->pszSpecialCmd ? pArgs->pszSpecialCmd : L"");
 
+	// "%CD%" was specified as startup dir? In Task parameters for example...
+	CEStr lsStartDir;
+	if (pArgs->pszStartupDir
+		&& (lstrcmpi(pArgs->pszStartupDir, L"%CD%") == 0))
+	{
+		lsStartDir.Set(ms_RConCurDir);
+	}
+	// Suggest default ConEmu working directory otherwise (unless it's a cra_RecreateTab)
+	if (lsStartDir.IsEmpty())
+	{
+		lsStartDir.Set(gpConEmu->WorkDir());
+	}
+
 	// Current directory, startup directory, ConEmu startup directory, and may be startup directory history in the future
-	AddDirectoryList(mpsz_DefDir ? mpsz_DefDir : pArgs->pszStartupDir);
+	AddDirectoryList(mpsz_DefDir ? mpsz_DefDir : lsStartDir.ms_Arg);
 	AddDirectoryList(ms_RConCurDir);
 	AddDirectoryList(ms_RConStartDir);
 	AddDirectoryList(gpConEmu->WorkDir());
@@ -191,7 +204,7 @@ INT_PTR CRecreateDlg::OnInitDialog(HWND hDlg, UINT messg, WPARAM wParam, LPARAM 
 	if ((pArgs->aRecreate == cra_RecreateTab) && !ms_RConCurDir.IsEmpty())
 		pszShowDir = ms_RConCurDir;
 	else
-		pszShowDir = mpsz_DefDir ? mpsz_DefDir : pArgs->pszStartupDir ? pArgs->pszStartupDir : gpConEmu->WorkDir();
+		pszShowDir = mpsz_DefDir ? mpsz_DefDir : lsStartDir.ms_Arg;
 	SetDlgItemText(hDlg, IDC_STARTUP_DIR, pszShowDir);
 
 	// Split controls
