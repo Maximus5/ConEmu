@@ -185,6 +185,8 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 			_ASSERTE(!CConEmuMain::IsConsoleBatchOrTask(lsFirstTemp));
 		}
 	}
+	// Add check for un-processed working directory
+	_ASSERTE(args && (!args->pszStartupDir || args->pszStartupDir[0]!=L'%'));
 	#endif
 	MCHKHEAP;
 
