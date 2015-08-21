@@ -36,10 +36,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _InterlockedIncrement InterlockedIncrement
 #endif
 
+struct ConEmuThreadStartArg;
+
 #define THREADS_LOG_SIZE 256 // must be power of 2
 #define THREAD_MAX_NAME_LEN 40
 static struct ConEmuThreadInfo
 {
+	ConEmuThreadStartArg* p;
 	BOOL   bActive;
 	DWORD  nThreadID;
 	HANDLE hThread;
@@ -75,12 +78,15 @@ public:
 	};
 };
 
+#pragma optimize( "", off )
+
 DWORD WINAPI apiThreadHelper(LPVOID lpParameter)
 {
 	ConEmuThreadStartArg* p = (ConEmuThreadStartArg*)lpParameter;
 	SetThreadName((DWORD)-1, p->sName);
 
 	ConEmuThreadInfo Info = {
+		p,
 		TRUE,
 		GetCurrentThreadId(),
 		p->hThread,
@@ -123,6 +129,8 @@ DWORD WINAPI apiThreadHelper(LPVOID lpParameter)
 	delete p;
 	return nRc;
 }
+
+#pragma optimize( "", on )
 
 
 HANDLE apiCreateThread(LPTHREAD_START_ROUTINE lpStartAddress, LPVOID lpParameter, LPDWORD lpThreadId, LPCSTR asThreadNameFormat /*= NULL*/, int anFormatArg /*= 0*/)
