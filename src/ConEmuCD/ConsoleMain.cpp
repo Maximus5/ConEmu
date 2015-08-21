@@ -3778,11 +3778,16 @@ int DoGuiMacro(LPCWSTR asCmdArg, MacroInstance& Inst)
 				DoExportEnv(CEGUIMACRORETENVVAR, ea_ExportCon, true/*bSilent*/);
 			}
 
-			// Show macro result in StdOutput
-			_wprintf(pOut->GuiMacro.sMacro);
-			// PowerShell... it does not insert linefeed
-			if (!IsOutputRedirected())
-				_wprintf(L"\n");
+			// Let reuse `-Silent` switch
+			if (!gbPrefereSilentMode || IsOutputRedirected())
+			{
+				// Show macro result in StdOutput
+				_wprintf(pOut->GuiMacro.sMacro);
+
+				// PowerShell... it does not insert linefeed
+				if (!IsOutputRedirected())
+					_wprintf(L"\n");
+			}
 			iRc = CERR_GUIMACRO_SUCCEEDED; // OK
 		}
 		ExecuteFreeResult(pOut);
