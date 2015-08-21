@@ -610,10 +610,15 @@ bool CConEmuCtrl::key_MultiCmd(const ConEmuChord& VkState, bool TestOnly, const 
 		if (pGrp->pszName && *pGrp->pszName
 			&& (pGrp->Flags & CETF_CMD_DEFAULT))
 		{
+			// Process "/dir ..." and other switches
+			pGrp->ParseGuiArgs(&args);
+			SafeFree(args.pszSpecialCmd);
+
 			// Scripts are not supported in that case
 			args.pszSpecialCmd = lstrdup(pGrp->pszCommands);
 			if (args.pszSpecialCmd)
 			{
+				// Run only first command of the task
 				wchar_t* pszLine = wcspbrk(args.pszSpecialCmd, L"\r\n");
 				if (pszLine) *pszLine = 0;
 			}
