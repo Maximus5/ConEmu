@@ -179,7 +179,7 @@ BOOL gbDllStopCalled = FALSE;
 BOOL gbHooksWasSet = false;
 BOOL gbDllDeinitialized = false;
 
-extern BOOL StartupHooks(HMODULE ahOurDll);
+extern BOOL StartupHooks();
 extern void ShutdownHooks();
 extern void InitializeHookedModules();
 extern void FinalizeHookedModules();
@@ -1116,7 +1116,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 
 		DLOG0("StartupHooks",0);
 		print_timings(L"StartupHooks");
-		gbHooksWasSet = StartupHooks(ghOurModule);
+		gbHooksWasSet = StartupHooks();
 		print_timings(L"StartupHooks - done");
 		DLOGEND();
 

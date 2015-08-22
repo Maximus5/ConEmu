@@ -356,7 +356,7 @@ bool InitHooksReg()
 		/* ************************ */
 		{0}
 	};
-	lbRc = InitHooks(HooksRegistry);
+	lbRc = (InitHooks(HooksRegistry) >= 0);
 
 	if (lbRc)
 	{

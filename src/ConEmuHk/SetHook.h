@@ -188,25 +188,18 @@ extern SetFarHookMode_t SetFarHookMode;
 #if defined(__GNUC__)
 extern "C" {
 #endif
-
 	extern void __stdcall SetFarHookMode(struct HookModeFar *apFarMode);
 
 	bool __stdcall SetHookCallbacks(const char* ProcName, const wchar_t* DllName, HMODULE hCallbackModule,
 	                                HookItemPreCallback_t PreCallBack, HookItemPostCallback_t PostCallBack,
 	                                HookItemExceptCallback_t ExceptCallBack = NULL);
-
-	// apHooks->Name && apHooks->DllName MUST be static for a lifetime
-	bool __stdcall InitHooks(HookItem* apHooks);
-	void __stdcall InitHooksSort();
-
-	// All *aszExcludedModules must be valid all time
-	bool __stdcall SetAllHooks(HMODULE ahOurDll, const wchar_t** aszExcludedModules, BOOL abForceHooks);
-	
 #if defined(__GNUC__)
 }
 #endif
 
-void __stdcall UnsetAllHooks();
+int  InitHooks(HookItem* apHooks);
+bool SetAllHooks();
+void UnsetAllHooks();
 
 
 //typedef VOID (WINAPI* OnLibraryLoaded_t)(HMODULE ahModule);

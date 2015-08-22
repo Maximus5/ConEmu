@@ -80,7 +80,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 
-HMODULE ghOurModule = NULL; // Хэндл нашей dll'ки (здесь хуки не ставятся)
+HMODULE ghOurModule = NULL; // Our dll library
 MMap<DWORD,BOOL> gStartedThreads;
 
 extern HWND    ghConWnd;      // RealConsole
@@ -765,8 +765,9 @@ DWORD CalculateNameCRC32(const char *apszName)
 
 // Заполнить поле HookItem.OldAddress (реальные процедуры из внешних библиотек)
 // apHooks->Name && apHooks->DllName MUST be for a lifetime
-bool __stdcall InitHooks(HookItem* apHooks)
+int InitHooks(HookItem* apHooks)
 {
+	int iFunc = 0;
 	size_t i, j;
 	bool skip;
 
@@ -815,12 +816,14 @@ bool __stdcall InitHooks(HookItem* apHooks)
 		if (status != MH_OK)
 		{
 			_ASSERTE(status == MH_OK);
-			return false;
+			return -1;
 		}
 
 		gpHooks = (HookItem*)calloc(sizeof(HookItem),MAX_HOOKED_PROCS);
 		if (!gpHooks)
-			return false;
+		{
+			return -2;
+		}
 
 		// Load kernelbase
 		static bool KernelHooked = false;
@@ -836,7 +839,10 @@ bool __stdcall InitHooks(HookItem* apHooks)
 		}
 
 		if (!InitHooksLibrary())
-			return false;
+		{
+			SafeFree(gpHooks);
+			return -3;
+		}
 	}
 
 	if (apHooks && gpHooks)
@@ -951,10 +957,13 @@ bool __stdcall InitHooks(HookItem* apHooks)
 					gpHooks[i].HookedAddress = (void*)GetProcAddress(mod, ExportName);
 				}
 
-
+				if (gpHooks[i].HookedAddress != NULL)
+				{
+					iFunc++;
+				}
 				// WinXP does not have many hooked functions, will not show dozens of asserts
 				#ifdef _DEBUG
-				if (gpHooks[i].HookedAddress == NULL)
+				else
 				{
 					static int isWin7 = 0;
 					if (isWin7 == 0)
@@ -974,7 +983,7 @@ bool __stdcall InitHooks(HookItem* apHooks)
 		}
 	}
 
-	return true;
+	return iFunc;
 }
 
 HookItem* FindFunction(const char* pszFuncName)
@@ -1313,11 +1322,8 @@ VOID CALLBACK LdrDllNotification(ULONG NotificationReason, const LDR_DLL_NOTIFIC
 
 // Подменить Импортируемые функции во всех модулях процесса, загруженных ДО conemuhk.dll
 // *aszExcludedModules - должны указывать на константные значения (program lifetime)
-bool __stdcall SetAllHooks(HMODULE ahOurDll, const wchar_t** aszExcludedModules /*= NULL*/, BOOL abForceHooks)
+bool SetAllHooks()
 {
-	// т.к. SetAllHooks может быть вызван из разных dll - запоминаем однократно
-	if (!ghOurModule) ghOurModule = ahOurDll;
-
 	if (!gpHooks)
 	{
 		HLOG1("SetAllHooks.InitHooks",0);
@@ -1404,7 +1410,7 @@ bool __stdcall SetAllHooks(HMODULE ahOurDll, const wchar_t** aszExcludedModules 
 	return true;
 }
 
-void __stdcall UnsetAllHooks()
+void UnsetAllHooks()
 {
 	HMODULE hExecutable = GetModuleHandle(0);
 
@@ -1515,13 +1521,14 @@ bool PrepareNewModule(HMODULE module, LPCSTR asModuleA, LPCWSTR asModuleW, BOOL 
 		}
 	}
 
+	int iFunc = 0;
 	if (!lbAllSysLoaded)
 	{
 		// Некоторые перехватываемые библиотеки могли быть
 		// не загружены во время первичной инициализации
 		// Соответственно для них (если они появились) нужно
 		// получить "оригинальные" адреса процедур
-		InitHooks(NULL);
+		iFunc = InitHooks(NULL);
 	}
 
 
@@ -1598,6 +1605,11 @@ bool PrepareNewModule(HMODULE module, LPCSTR asModuleA, LPCWSTR asModuleW, BOOL 
 		sp = NULL;
 	}
 
+	// Refresh hooked exports in the loaded library
+	if (iFunc > 0)
+	{
+		SetAllHooks();
+	}
 
 	lbModuleOk = true;
 

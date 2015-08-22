@@ -919,7 +919,7 @@ void __stdcall SetFarHookMode(struct HookModeFar *apFarMode)
 //}
 
 // Эту функцию нужно позвать из DllMain
-BOOL StartupHooks(HMODULE ahOurDll)
+BOOL StartupHooks()
 {
 	//HLOG0("StartupHooks",0);
 #ifdef _DEBUG
@@ -1009,7 +1009,7 @@ BOOL StartupHooks(HMODULE ahOurDll)
 
 	// Теперь можно обработать модули
 	HLOG1("SetAllHooks",0);
-	bool lbRc = SetAllHooks(ahOurDll, NULL, TRUE);
+	bool lbRc = SetAllHooks();
 	HLOGEND1();
 
 	extern FARPROC CallWriteConsoleW;
