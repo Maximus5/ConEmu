@@ -2977,7 +2977,8 @@ bool CShellProc::OnResumeDebugeeThreadCalled(HANDLE hThread, PROCESS_INFORMATION
 		Sleep(50);
 		SuspendThread(hThread);
 
-
+		// We need to ensure that process has been 'started'
+		// If not - CreateToolhelp32Snapshot will return ERROR_PARTIAL_COPY
 		HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, nPID);
 		if (hSnap && (hSnap != INVALID_HANDLE_VALUE))
 		{
@@ -2990,6 +2991,7 @@ bool CShellProc::OnResumeDebugeeThreadCalled(HANDLE hThread, PROCESS_INFORMATION
 			bNotInitialized = (nErrCode == ERROR_PARTIAL_COPY);
 		}
 
+		// Wait for 5 seconds max
 		nDelta = (nCurTick = GetTickCount()) - nStartTick;
 		if (nDelta > nDeltaMax)
 			break;
