@@ -108,6 +108,7 @@ private:
 				LPWSTR* psFile, LPWSTR* psParam);
 	BOOL FixShellArgs(DWORD afMask, HWND ahWnd, DWORD* pfMask, HWND* phWnd);
 	HWND FindCheckConEmuWindow();
+	void LogShellString(LPCWSTR asMessage);
 public:
 	CESERVER_REQ* NewCmdOnCreate(enum CmdOnCreateType aCmd,
 				LPCWSTR asAction, LPCWSTR asFile, LPCWSTR asParam,
