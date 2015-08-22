@@ -44,6 +44,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 struct CEIconDrawHandles
 {
+	~CEIconDrawHandles()
+	{
+		SafeDelete(pIcon);
+		SafeDeleteObject(hFont);
+	}
+
 	CToolImg* pIcon;
 	HFONT     hFont;
 };

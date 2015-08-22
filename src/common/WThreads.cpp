@@ -76,6 +76,10 @@ public:
 	{
 		sName[0] = 0;
 	};
+	~ConEmuThreadStartArg()
+	{
+		SafeCloseHandle(hThread);
+	}
 };
 
 #pragma optimize( "", off )
