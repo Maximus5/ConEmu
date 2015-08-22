@@ -560,43 +560,6 @@ bool InitHooksLibrary()
 }
 
 
-
-#define MAX_EXCLUDED_MODULES 40
-// Skip/ignore/don't set hooks in modules...
-const wchar_t* ExcludedModules[MAX_EXCLUDED_MODULES] =
-{
-	L"ntdll.dll",
-	L"kernelbase.dll",
-	L"kernel32.dll",
-	L"user32.dll",
-	L"advapi32.dll",
-//	L"shell32.dll", -- shell нужно обрабатывать обязательно. по крайней мере в WinXP/Win2k3 (ShellExecute должен звать наш CreateProcess)
-	L"wininet.dll", // какой-то криминал с этой библиотекой?
-//#ifndef _DEBUG
-	L"mssign32.dll",
-	L"crypt32.dll",
-	L"setupapi.dll", // "ConEmu\Bugs\2012\z120711\"
-	L"uxtheme.dll", // подозрение на exception на некоторых Win7 & Far3 (Bugs\2012\120124\Info.txt, пункт 3)
-	WIN3264TEST(L"ConEmuCD.dll",L"ConEmuCD64.dll"), // Loaded in-process when AlternativeServer is started
-	WIN3264TEST(L"ExtendedConsole.dll",L"ExtendedConsole64.dll"), // Our API for Far Manager TrueColor support
-	/*
-	// test
-	L"twext.dll",
-	L"propsys.dll",
-	L"ntmarta.dll",
-	L"Wldap32.dll",
-	L"userenv.dll",
-	L"zipfldr.dll",
-	L"shdocvw.dll",
-	L"linkinfo.dll",
-	L"ntshrui.dll",
-	L"cscapi.dll",
-	*/
-//#endif
-	// А также исключаются все "API-MS-Win-..." в функции IsModuleExcluded
-	0
-};
-
 BOOL gbLogLibraries = FALSE;
 DWORD gnLastLogSetChange = 0;
 
@@ -1108,38 +1071,6 @@ bool FindModuleFileName(HMODULE ahModule, LPWSTR pszName, size_t cchNameMax)
 	return lbFound;
 }
 
-bool IsModuleExcluded(HMODULE module, LPCSTR asModuleA, LPCWSTR asModuleW)
-{
-	if (module == ghOurModule)
-		return true;
-
-	BOOL lbResource = LDR_IS_RESOURCE(module);
-	if (lbResource)
-		return true;
-
-	// игнорировать системные библиотеки вида
-    // API-MS-Win-Core-Util-L1-1-0.dll
-	if (asModuleA)
-	{
-		char szTest[12]; lstrcpynA(szTest, asModuleA, 12);
-		if (lstrcmpiA(szTest, "API-MS-Win-") == 0)
-			return true;
-	}
-	else if (asModuleW)
-	{
-		wchar_t szTest[12]; lstrcpynW(szTest, asModuleW, 12);
-		if (lstrcmpiW(szTest, L"API-MS-Win-") == 0)
-			return true;
-	}
-
-	for (int i = 0; ExcludedModules[i]; i++)
-		if (module == GetModuleHandle(ExcludedModules[i]))
-			return true;
-
-	return false;
-}
-
-
 #define GetPtrFromRVA(rva,pNTHeader,imageBase) (PVOID)((imageBase)+(rva))
 
 extern BOOL gbInCommonShutdown;
@@ -1348,43 +1279,6 @@ bool SetAllHooks()
 		DebugString(szHookProc);
 	}
 	#endif
-
-	// Запомнить aszExcludedModules
-	if (aszExcludedModules)
-	{
-		INT_PTR j;
-		bool skip;
-
-		for (INT_PTR i = 0; aszExcludedModules[i]; i++)
-		{
-			j = 0; skip = false;
-
-			while (ExcludedModules[j])
-			{
-				if (lstrcmpi(ExcludedModules[j], aszExcludedModules[i]) == 0)
-				{
-					skip = true; break;
-				}
-
-				j++;
-			}
-
-			if (skip) continue;
-
-			if (j > 0)
-			{
-				if ((j+1) >= MAX_EXCLUDED_MODULES)
-				{
-					// Превышено допустимое количество
-					_ASSERTE((j+1) < MAX_EXCLUDED_MODULES);
-					continue;
-				}
-
-				ExcludedModules[j] = aszExcludedModules[i];
-				ExcludedModules[j+1] = NULL; // на всякий
-			}
-		}
-	}
 
 	// Для исполняемого файла могут быть заданы дополнительные inject-ы (сравнение в FAR)
 	HMODULE hExecutable = GetModuleHandle(0);
