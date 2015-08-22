@@ -1498,12 +1498,6 @@ void LoadModuleFailed(LPCSTR asModuleA, LPCWSTR asModuleW)
 	SetLastError(dwErrCode);
 }
 
-#ifdef USECHECKPROCESSMODULES
-// В процессе загрузки модуля (module) могли подгрузиться
-// (статически или динамически) и другие библиотеки!
-void CheckProcessModules(HMODULE hFromModule);
-#endif
-
 // Заменить в модуле Module ЭКСпортируемые функции на подменяемые плагином нихрена
 // НЕ получится, т.к. в Win32 библиотека shell32 может быть загружена ПОСЛЕ conemu.dll
 //   что вызовет некорректные смещения функций,
@@ -1534,12 +1528,6 @@ bool PrepareNewModule(HMODULE module, LPCSTR asModuleA, LPCWSTR asModuleW, BOOL 
 	if (!module)
 	{
 		LoadModuleFailed(asModuleA, asModuleW);
-
-		#ifdef USECHECKPROCESSMODULES
-		// В процессе загрузки модуля (module) могли подгрузиться
-		// (статически или динамически) и другие библиотеки!
-		CheckProcessModules(module);
-		#endif
 		return false;
 	}
 

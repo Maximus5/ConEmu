@@ -144,10 +144,6 @@ void PatchDialogParentWnd(HWND& hWndParent);
 #undef isPressed
 #define isPressed(inp) ((GetKeyState(inp) & 0x8000) == 0x8000)
 
-//110131 попробуем просто добвавить ее в ExcludedModules
-//#include <WinInet.h>
-//#pragma comment(lib, "wininet.lib")
-
 
 #ifdef _DEBUG
 extern bool gbShowExeMsgBox;
@@ -287,30 +283,9 @@ int WINAPI OnCompareStringW(LCID Locale, DWORD dwCmpFlags, LPCWSTR lpString1, in
 LONG WINAPI OnRegQueryValueExW(HKEY hKey, LPCWSTR lpValueName, LPDWORD lpReserved, LPDWORD lpType, LPBYTE lpData, LPDWORD lpcbData);
 
 
-//
-//static BOOL WINAPI OnHttpSendRequestA(LPVOID hRequest, LPCSTR lpszHeaders, DWORD dwHeadersLength, LPVOID lpOptional, DWORD dwOptionalLength);
-//static BOOL WINAPI OnHttpSendRequestW(LPVOID hRequest, LPCWSTR lpszHeaders, DWORD dwHeadersLength, LPVOID lpOptional, DWORD dwOptionalLength);
-
-//static HookItem HooksFarOnly[] =
-//{
-////	{OnlstrcmpiA,      "lstrcmpiA",      kernel32, 0},
-//	{(void*)OnCompareStringW, "CompareStringW", kernel32},
-//
-//	/* ************************ */
-//	//110131 попробуем просто добавить ее в ExcludedModules
-//	//{(void*)OnHttpSendRequestA, "HttpSendRequestA", wininet, 0},
-//	//{(void*)OnHttpSendRequestW, "HttpSendRequestW", wininet, 0},
-//	/* ************************ */
-//
-//	{0, 0, 0}
-//};
-
 // Service functions
 //typedef DWORD (WINAPI* GetProcessId_t)(HANDLE Process);
 GetProcessId_t gfGetProcessId = NULL;
-
-//BOOL gbShowOnSetForeground = FALSE;
-
 
 
 // Forward declarations of the hooks
@@ -841,19 +816,12 @@ bool InitHooksFar()
 	}
 
 	if (!lbIsFar)
-		return true; // не хукать
+		return true; // Don't hook
 
 	HookItem HooksFarOnly[] =
 	{
-	//	{OnlstrcmpiA,      "lstrcmpiA",      kernel32, 0},
 		{(void*)OnCompareStringW, "CompareStringW", kernel32},
-
 		/* ************************ */
-		//110131 попробуем просто добавить ее в ExcludedModules
-		//{(void*)OnHttpSendRequestA, "HttpSendRequestA", wininet, 0},
-		//{(void*)OnHttpSendRequestW, "HttpSendRequestW", wininet, 0},
-		/* ************************ */
-
 		{0, 0, 0}
 	};
 	InitHooks(HooksFarOnly);
