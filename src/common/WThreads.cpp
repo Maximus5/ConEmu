@@ -83,7 +83,13 @@ public:
 DWORD WINAPI apiThreadHelper(LPVOID lpParameter)
 {
 	ConEmuThreadStartArg* p = (ConEmuThreadStartArg*)lpParameter;
-	SetThreadName((DWORD)-1, p->sName);
+
+	#if defined(_MSC_VER) && !defined(CONEMU_MINIMAL)
+	if (IsDebuggerPresent())
+	{
+		SetThreadName((DWORD)-1, p->sName);
+	}
+	#endif
 
 	ConEmuThreadInfo Info = {
 		p,
