@@ -19,6 +19,19 @@ http://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2015.8.21
+* Article in wikipedia [was proposed for deletion](https://github.com/Maximus5/ConEmu/issues/289).
+* Support `/dir %CD%` in Task parameters.
+  Than task will be started in the active console working directory.
+  [Configure your shell properly](http://conemu.github.io/en/ShellWorkDir.html)
+  [Launch task in specific directory](http://conemu.github.io/en/LaunchNewTab.html)
+* Task parameter `/dir` was ignored if task was started by `Win+X` hotkey (‘Default shell’ checkbox).
+* GuiMacro: Use `ConEmuC -Silent -GuiMacro ..` to suppress GuiMacro result printing.
+* gh#287: Fix crashes while starting threads.
+* Some internal changes in ConEmuHk.
+* Set gcc debug make destination to 'Debug' dir.
+
+
 2015.8.16
 * gh#268: Support DefTerm for CodeBlocks. User have to add `codeblocks.exe|gdb.exe` to hooked executables.
 * gh#255, old#1065: Add option ‘Restore to active monitor’ to the ‘Size & Pos’ settings page.
