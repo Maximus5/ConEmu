@@ -105,7 +105,7 @@ DWORD WINAPI apiThreadHelper(LPVOID lpParameter)
 	ConEmuThreadInfo* pInfo = NULL;
 	for (INT_PTR c = THREADS_LOG_SIZE; --c >= 0;)
 	{
-		LONG i = _InterlockedIncrement(&g_ThreadsIdx);
+		LONG i = (_InterlockedIncrement(&g_ThreadsIdx) & (THREADS_LOG_SIZE-1));
 		if (!g_Threads[i].bActive)
 		{
 			g_Threads[i] = Info;
