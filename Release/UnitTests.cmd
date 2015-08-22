@@ -62,14 +62,14 @@ call RenameTab "Test"
 cd /d "%~dp0UnitTests"
 MultiRun.exe /exit
 echo Errorlevel=%errorlevel%
-MultiRunX64.exe /exit
-echo Errorlevel=%errorlevel%
+rem MultiRunX64.exe /exit
+rem echo Errorlevel=%errorlevel%
 MultiRun.exe /term
 echo Errorlevel=%errorlevel%
 MultiRunX64.exe /term
 echo Errorlevel=%errorlevel%
-MultiRun.exe
-echo Errorlevel=%errorlevel%
+rem MultiRun.exe
+rem echo Errorlevel=%errorlevel%
 MultiRunX64.exe
 echo Errorlevel=%errorlevel%
 goto fin
