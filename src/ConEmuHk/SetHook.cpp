@@ -1337,11 +1337,14 @@ bool SetAllHooks()
 	wchar_t szHookProc[128];
 	for (int i = 0; gpHooks[i].NewAddress; i++)
 	{
+		if (!gpHooks[i].HookedAddress || gpHooks[i].CallAddress)
+			continue; // Already processed
 		msprintf(szHookProc, countof(szHookProc),
-			L"## %S -> " WIN3264TEST(L"x%08X", L"x%X%08X") L" (exe: " WIN3264TEST(L"x%08X", L"x%X%08X") L")\n",
+			L"## %S :: " WIN3264TEST(L"x%08X", L"x%X%08X") L" ==>> " WIN3264TEST(L"x%08X", L"x%X%08X") L"\n",
 			gpHooks[i].Name,
-			WIN3264WSPRINT(gpHooks[i].NewAddress),
-			WIN3264WSPRINT(gpHooks[i].HookedAddress));
+			WIN3264WSPRINT(gpHooks[i].HookedAddress),
+			WIN3264WSPRINT(gpHooks[i].NewAddress)
+			);
 		DebugString(szHookProc);
 	}
 	#endif
