@@ -40,6 +40,20 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 static CPushInfo::PushInfo gPushInfo[] = {
 	{
 		/* Valid for */
+		{ 2015, 8, 22 }, { 2015, 8, 27 },
+		/* Message for TSA icon */
+		L"Article in Wikipedia needs your help!\n"
+		L"It was proposed for deletion..."
+		/* Full text for message box, used in About dialog, requires \r\n */
+		, L"Article in Wikipedia needs your help!\r\n"
+		L"It was proposed for deletion...\r\n\r\n"
+		L"Please, check for details in the issue:\r\n"
+		L"https://github.com/Maximus5/ConEmu/issues/289"
+		/* URL to be opened if user press <Yes> in the confirmation dialog */
+		, L"https://github.com/Maximus5/ConEmu/issues/289"
+	},
+	{
+		/* Valid for */
 		{ 2015, 3, 13 }, { 2015, 4, 8 },
 		/* Message for TSA icon */
 		L"ConEmu was selected to be on the ballot\n"
