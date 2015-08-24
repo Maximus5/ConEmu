@@ -19,6 +19,17 @@ http://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2015.8.13a
+* This preview build includes patches from alpha branch, because alpha has some problems with NVIDIA CoProcManager.
+* Article in wikipedia [was proposed for deletion](https://github.com/Maximus5/ConEmu/issues/289).
+* gh#287: Fix crashes while starting threads.
+* Task parameter `/dir` was ignored if task was started by `Win+X` hotkey (‘Default shell’ checkbox).
+* GuiMacro: Use `ConEmuC -Silent -GuiMacro ..` to suppress GuiMacro result printing.
+* Support `/dir %CD%` in Task parameters.
+* gh#268: Support DefTerm for CodeBlocks. User have to add `codeblocks.exe|gdb.exe` to hooked executables.
+* In some circumstances ConEmu ‘drawing’ almost hangs during mouse text selection.
+
+
 2015.8.13
 * Default task {Shells:cmd-32} to run 32-bit cmd.exe on 64-bit OS.
 * Updater. Show in the confirmation message URL of downloaded version.ini.
