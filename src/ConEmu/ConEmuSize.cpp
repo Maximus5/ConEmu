@@ -932,7 +932,7 @@ SIZE CConEmuSize::GetDefaultSize(bool bCells, const CESize* pSizeW /*= NULL*/, c
 	}
 
 
-	// Шрифт
+	// Font size must be initialized already!
 	int nFontWidth = gpSetCls->FontWidth();
 	int nFontHeight = gpSetCls->FontHeight();
 	if ((nFontWidth <= 0) || (nFontHeight <= 0))
@@ -950,7 +950,7 @@ SIZE CConEmuSize::GetDefaultSize(bool bCells, const CESize* pSizeW /*= NULL*/, c
 
 	COORD conSize = {80, 25};
 
-	// Если табы показываются всегда - сразу добавим их размер, чтобы размер консоли был заказанным
+	// When tabs as visible - add their sized to evaluate proper console size
 	bool bTabs = mp_ConEmu->isTabsShown();
 	int nShiftX = nFrameX + (bTabs ? (rcTabMargins.left+rcTabMargins.right) : 0);
 	int nShiftY = nFrameY + (bTabs ? (rcTabMargins.top+rcTabMargins.bottom) : 0);
@@ -973,10 +973,6 @@ SIZE CConEmuSize::GetDefaultSize(bool bCells, const CESize* pSizeW /*= NULL*/, c
 			hMon = FindInitialMonitor(&mi);
 		}
 	}
-
-	//// >> rcWnd
-	//rcWnd.left = this->wndX;
-	//rcWnd.top = this->wndY;
 
 	int nPixelWidth = 0, nPixelHeight = 0;
 
@@ -1043,17 +1039,15 @@ SIZE CConEmuSize::GetDefaultSize(bool bCells, const CESize* pSizeW /*= NULL*/, c
 		}
 	}
 
-
-	//// >> rcWnd
-	//rcWnd.bottom = this->wndY + nPixelHeight + nShiftY;
-
 	if (bCells)
 	{
+		// nPixelXXX - VCon size
 		sz.cx = nPixelWidth / nFontWidth;
 		sz.cy = nPixelHeight / nFontHeight;
 	}
 	else
 	{
+		// nPixelXXX - whole window size
 		sz.cx = nPixelWidth;
 		sz.cy = nPixelHeight;
 	}
@@ -2946,7 +2940,7 @@ bool CConEmuSize::SizeWindow(const CESize sizeW, const CESize sizeH)
 		return false;
 	}
 
-	// Установить размер окна по расчетным значениям
+	// Set window size by evaluated values
 
 	RECT rcMargins = CalcMargins(CEM_FRAMECAPTION|CEM_SCROLL|CEM_STATUS|CEM_PAD|CEM_TAB);
 	SIZE szPixelSize = GetDefaultSize(false, &sizeW, &sizeH);
