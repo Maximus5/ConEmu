@@ -46,6 +46,9 @@ struct CEIconDrawHandles
 {
 	CToolImg* pIcon;
 	HFONT     hFont;
+
+	// !!! Do NOT add destructor here to free objects/handles !!!
+	// !!! These life-time objects are returned to callers !!!
 };
 
 struct CEIconHintInfo
