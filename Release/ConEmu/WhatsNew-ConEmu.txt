@@ -19,6 +19,10 @@ http://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2015.8.13b
+* gh#279: ConEmu window grew in size after relaunch if size was defined in pixels or percents.
+
+
 2015.8.13a
 * This preview build includes patches from alpha branch, because alpha has some problems with NVIDIA CoProcManager.
 * Article in wikipedia [was proposed for deletion](https://github.com/Maximus5/ConEmu/issues/289).
