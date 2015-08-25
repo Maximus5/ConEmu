@@ -942,18 +942,59 @@ SIZE CConEmuSize::GetDefaultSize(bool bCells, const CESize* pSizeW /*= NULL*/, c
 	}
 
 
+	COORD conSize = {80, 25}; // Used only with cell-sized options
 
-	RECT rcFrameMargin = CalcMargins(CEM_FRAMECAPTION|CEM_SCROLL|CEM_STATUS|CEM_PAD);
+
+	RECT rcFrameMargin = CalcMargins(CEM_FRAMECAPTION|CEM_STATUS);
 	int nFrameX = rcFrameMargin.left + rcFrameMargin.right;
 	int nFrameY = rcFrameMargin.top + rcFrameMargin.bottom;
-	RECT rcTabMargins = mp_ConEmu->mp_TabBar->GetMargins();
-
-	COORD conSize = {80, 25};
 
 	// When tabs as visible - add their sized to evaluate proper console size
+	int nTabsX = 0, nTabsY = 0;
 	bool bTabs = mp_ConEmu->isTabsShown();
-	int nShiftX = nFrameX + (bTabs ? (rcTabMargins.left+rcTabMargins.right) : 0);
-	int nShiftY = nFrameY + (bTabs ? (rcTabMargins.top+rcTabMargins.bottom) : 0);
+	if (bTabs)
+	{
+		// Check tabs condition - if they are enabled (1==always show) their size must be taken into account
+		RECT rcTabMargins = mp_ConEmu->mp_TabBar->GetMargins();
+		nTabsX = bTabs ? (rcTabMargins.left+rcTabMargins.right) : 0;
+		nTabsY = bTabs ? (rcTabMargins.top+rcTabMargins.bottom) : 0;
+	}
+	_ASSERTE((gpSet->isTabs != 1) || (nTabsY > 0));
+
+	// Consoles spliters, pads and scrolling
+	RECT rcVConPad = CalcMargins(CEM_SCROLL|CEM_PAD);
+	if (CVConGroup::isVConExists(0))
+	{
+		SIZE Splits = {};
+		RECT rcMin = CVConGroup::AllTextRect(&Splits, true);
+		// If any split exists
+		if (Splits.cx > 0)
+		{
+			rcVConPad.left *= (Splits.cx+1);
+			rcVConPad.right *= (Splits.cx+1);
+		}
+		if (Splits.cy > 0)
+		{
+			rcVConPad.top *= (Splits.cy+1);
+			rcVConPad.bottom *= (Splits.cy+1);
+		}
+		// Splitter bars?
+		if ((Splits.cx > 0) && (gpSet->nSplitWidth > 0))
+		{
+			rcVConPad.right += Splits.cx * gpSetCls->EvalSize(gpSet->nSplitWidth, esf_Horizontal|esf_CanUseDpi);
+		}
+		if ((Splits.cy > 0) && (gpSet->nSplitHeight > 0))
+		{
+			rcVConPad.bottom += Splits.cy * gpSetCls->EvalSize(gpSet->nSplitHeight, esf_Vertical|esf_CanUseDpi);
+		}
+	}
+	int nConX = (rcVConPad.right + rcVConPad.left), nConY = (rcVConPad.bottom + rcVConPad.top);
+
+
+	// Final padding
+	int nShiftX = nFrameX + nTabsX + nConX;
+	int nShiftY = nFrameY + nTabsY + nConY;
+
 
 	ConEmuWindowMode wmCurMode = GetWindowMode();
 
@@ -975,52 +1016,75 @@ SIZE CConEmuSize::GetDefaultSize(bool bCells, const CESize* pSizeW /*= NULL*/, c
 	}
 
 	int nPixelWidth = 0, nPixelHeight = 0;
+	{	// Calculation begins
+
+	// We store size of whole window to avoid ambiguity
+
+	// Well, there is some ambiguity in size storing.
+	// * When user specify cells count on the "Size & Pos" page,
+	//   they await this cells count in the created console
+	// * When they set percentage of monitor working area,
+	//   window size must not be larger than 100%, therefore percentage
+	//   is treated as whole window size, but not a VCons size.
+	// * Same with pixels. This is expected whole *window* size,
+	//   VCon size is derivative and will be smaller...
 
 	// Calculate width
 	if (sizeW.Style == ss_Pixels)
 	{
+		// Read comment above about size storing
 		nPixelWidth = sizeW.Value;
 	}
 	else if (sizeW.Style == ss_Percents)
 	{
-		nPixelWidth = ((mi.rcWork.right - mi.rcWork.left) * sizeW.Value / 100) - nShiftX;
+		// Read comment above about size storing
+		nPixelWidth = ((mi.rcWork.right - mi.rcWork.left) * sizeW.Value / 100);
 	}
 	else if (sizeW.Value > 0)
 	{
+		// It's a cells count
 		conSize.X = sizeW.Value;
 	}
 
 	if (nPixelWidth <= 0)
-		nPixelWidth = conSize.X * nFontWidth;
-
-	//// >> rcWnd
-	//rcWnd.right = this->wndX + nPixelWidth + nShiftX;
+	{
+		nPixelWidth = conSize.X * nFontWidth + (bCells ? 0 : nShiftX);
+	}
 
 	// Calculate height
 	if (sizeH.Style == ss_Pixels)
 	{
+		// Read comment above about size storing
 		nPixelHeight = sizeH.Value;
 	}
 	else if (sizeH.Style == ss_Percents)
 	{
-		nPixelHeight = ((mi.rcWork.bottom - mi.rcWork.top) * sizeH.Value / 100) - nShiftY;
+		// Read comment above about size storing
+		nPixelHeight = ((mi.rcWork.bottom - mi.rcWork.top) * sizeH.Value / 100);
 	}
 	else if (sizeH.Value > 0)
 	{
+		// It's a cells count
 		conSize.Y = sizeH.Value;
 	}
 
 	if (nPixelHeight <= 0)
-		nPixelHeight = conSize.Y * nFontHeight;
+	{
+		nPixelHeight = conSize.Y * nFontHeight + (bCells ? 0 : nShiftY);
+	}
+
+	}	// Calculation ends
 
 
-	// Для Quake & FS/Maximized нужно убедиться, что размеры НЕ превышают размеры монитора/рабочей области
-	if (gpSet->isQuakeStyle || (wmCurMode == wmMaximized || wmCurMode == wmFullScreen))
+	// Quake size/pos will be corrected later in CheckQuakeRect method
+	#ifdef _DEBUG
+	// Maximized/fullscreen size must not exceed display rect
+	if (!gpSet->isQuakeStyle && (wmCurMode == wmMaximized || wmCurMode == wmFullScreen))
 	{
 		if (mi.cbSize)
 		{
-			int nMaxWidth  = (wmCurMode == wmFullScreen) ? (mi.rcMonitor.right - mi.rcMonitor.left) : (mi.rcWork.right - mi.rcWork.left);
-			int nMaxHeight = (wmCurMode == wmFullScreen) ? (mi.rcMonitor.bottom - mi.rcMonitor.top) : (mi.rcWork.bottom - mi.rcWork.top);
+			const RECT rcMon = (wmCurMode == wmFullScreen) ? mi.rcMonitor : mi.rcWork;
+			int nMaxWidth  = rcMon.right - rcMon.left, nMaxHeight = rcMon.bottom - rcMon.top;
 			// Maximized/Fullscreen - frame may come out of working area
 			RECT rcFrameOnly = CalcMargins(CEM_FRAMEONLY);
 			_ASSERTE(nFrameX>=0 && nFrameY>=0 && rcFrameOnly.left>=0 && rcFrameOnly.top>=0 && rcFrameOnly.right>=0 && rcFrameOnly.bottom>=0);
@@ -1028,17 +1092,17 @@ SIZE CConEmuSize::GetDefaultSize(bool bCells, const CESize* pSizeW /*= NULL*/, c
 			nMaxWidth += (rcFrameOnly.left + rcFrameOnly.right) - nShiftX;
 			nMaxHeight += (rcFrameOnly.top + rcFrameOnly.bottom) - nShiftY;
 			// Check it
-			if (nPixelWidth > nMaxWidth)
-				nPixelWidth = nMaxWidth;
-			if (nPixelHeight > nMaxHeight)
-				nPixelHeight = nMaxHeight;
+			_ASSERTE((nPixelWidth <= nMaxWidth) && (nPixelHeight <= nMaxHeight));
 		}
 		else
 		{
 			_ASSERTE(mi.cbSize!=0);
 		}
 	}
+	#endif
 
+
+	// Prepare result
 	if (bCells)
 	{
 		// nPixelXXX - VCon size
@@ -1311,58 +1375,14 @@ RECT CConEmuSize::GetDefaultRect()
 		return rcWnd;
 	}
 
-	Assert(gpSetCls->FontWidth() && gpSetCls->FontHeight());
-
-	// Рамка, статус
-	RECT rcFrameMargin = CalcMargins(CEM_FRAMECAPTION|CEM_STATUS);
-	int nFrameX = rcFrameMargin.left + rcFrameMargin.right;
-	int nFrameY = rcFrameMargin.top + rcFrameMargin.bottom;
-	RECT rcTabMargins = mp_ConEmu->mp_TabBar->GetMargins();
-
-	// Отступы для VCon
-	RECT rcVConPad = CalcMargins(CEM_SCROLL|CEM_PAD);
-	if (CVConGroup::isVConExists(0))
-	{
-		// Если есть сплиты (даже если их размер == 0)
-		SIZE Splits = {};
-		RECT rcMin = CVConGroup::AllTextRect(&Splits, true);
-		// Умножить отступы
-		if (Splits.cx > 0)
-		{
-			rcVConPad.left *= (Splits.cx+1);
-			rcVConPad.right *= (Splits.cx+1);
-		}
-		if (Splits.cy > 0)
-		{
-			rcVConPad.top *= (Splits.cy+1);
-			rcVConPad.bottom *= (Splits.cy+1);
-		}
-		// Если размер самих разделителей не нулевой
-		if ((Splits.cx > 0) && (gpSet->nSplitWidth > 0))
-			rcVConPad.right += Splits.cx * gpSetCls->EvalSize(gpSet->nSplitWidth, esf_Horizontal|esf_CanUseDpi);
-		if ((Splits.cy > 0) && (gpSet->nSplitHeight > 0))
-			rcVConPad.bottom += Splits.cy * gpSetCls->EvalSize(gpSet->nSplitHeight, esf_Vertical|esf_CanUseDpi);
-	}
-
-	// Если табы показываются всегда (или сейчас) - сразу добавим их размер, чтобы размер консоли был заказанным
-	bool bTabs = mp_ConEmu->isTabsShown();
-
-	int nShiftX = nFrameX
-		+ (rcVConPad.left + rcVConPad.right)
-		+ (bTabs ? (rcTabMargins.left+rcTabMargins.right) : 0);
-	int nShiftY = nFrameY
-		+ (rcVConPad.top + rcVConPad.bottom)
-		+ (bTabs ? (rcTabMargins.top+rcTabMargins.bottom) : 0);
-
 	// Расчет размеров
 	SIZE szConPixels = GetDefaultSize(false);
 
 	// >> rcWnd
 	rcWnd.left = this->wndX;
 	rcWnd.top = this->wndY;
-	rcWnd.right = this->wndX + szConPixels.cx + nShiftX;
-	rcWnd.bottom = this->wndY + szConPixels.cy + nShiftY;
-
+	rcWnd.right = this->wndX + szConPixels.cx;
+	rcWnd.bottom = this->wndY + szConPixels.cy;
 
 	// Go
 	if (gpSet->isQuakeStyle)
@@ -2940,20 +2960,14 @@ bool CConEmuSize::SizeWindow(const CESize sizeW, const CESize sizeH)
 
 	// Set window size by evaluated values
 
-	RECT rcMargins = CalcMargins(CEM_FRAMECAPTION|CEM_SCROLL|CEM_STATUS|CEM_PAD|CEM_TAB);
 	SIZE szPixelSize = GetDefaultSize(false, &sizeW, &sizeH);
-
-	_ASSERTE(rcMargins.left>=0 && rcMargins.right>=0 && rcMargins.top>=0 && rcMargins.bottom>=0);
-
-	int nWidth  = szPixelSize.cx + rcMargins.left + rcMargins.right;
-	int nHeight = szPixelSize.cy + rcMargins.top + rcMargins.bottom;
 
 	bool bSizeOK = false;
 
 	WndWidth.Set(true, sizeW.Style, sizeW.Value);
 	WndHeight.Set(false, sizeH.Style, sizeH.Value);
 
-	if (SetWindowPos(ghWnd, NULL, 0,0, nWidth, nHeight, SWP_NOMOVE|SWP_NOZORDER))
+	if (SetWindowPos(ghWnd, NULL, 0,0, szPixelSize.cx, szPixelSize.cy, SWP_NOMOVE|SWP_NOZORDER))
 	{
 		bSizeOK = true;
 	}
@@ -3639,14 +3653,13 @@ void CConEmuSize::EvalNewNormalPos(const MONITORINFO& miOld, HMONITOR hNextMon, 
 
 		if ((WindowMode == wmNormal) && hNextMon)
 		{
-			RECT rcMargins = CalcMargins(CEM_FRAMECAPTION|CEM_SCROLL|CEM_STATUS|CEM_PAD|CEM_TAB);
 			SIZE szNewSize = GetDefaultSize(false, &WndWidth, &WndHeight, hNextMon);
 			if ((szNewSize.cx > 0) && (szNewSize.cy > 0))
 			{
 				if (WndWidth.Style == ss_Percents)
-					Width = szNewSize.cx + rcMargins.left + rcMargins.right;
+					Width = szNewSize.cx;
 				if (WndHeight.Style == ss_Percents)
-					Height = szNewSize.cy + rcMargins.top + rcMargins.bottom;
+					Height = szNewSize.cy;
 			}
 			else
 			{
