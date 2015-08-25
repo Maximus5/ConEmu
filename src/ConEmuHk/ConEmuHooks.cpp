@@ -1782,7 +1782,7 @@ wrap:
 // Issue 1125: Hook undocumented function used for running commands typed in Windows 7 Win-menu search string.
 HRESULT WINAPI OnShellExecCmdLine(HWND hwnd, LPCWSTR pwszCommand, LPCWSTR pwszStartDir, int nShow, LPVOID pUnused, DWORD dwSeclFlags)
 {
-	typedef BOOL (WINAPI* OnShellExecCmdLine_t)(HWND hwnd, LPCWSTR pwszCommand, LPCWSTR pwszStartDir, int nShow, LPVOID pUnused, DWORD dwSeclFlags);
+	typedef HRESULT (WINAPI* OnShellExecCmdLine_t)(HWND hwnd, LPCWSTR pwszCommand, LPCWSTR pwszStartDir, int nShow, LPVOID pUnused, DWORD dwSeclFlags);
 	ORIGINALFASTEX(ShellExecCmdLine,NULL);
 	HRESULT hr = S_OK;
 
