@@ -13191,6 +13191,9 @@ LRESULT CConEmuMain::MainWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lP
 {
 	LRESULT result = 0;
 
+	extern LONG gnMessageNestingLevel;
+	MSetter nestedLevel(&gnMessageNestingLevel);
+
 	if (gpConEmu)
 		gpConEmu->PreWndProc(messg);
 
