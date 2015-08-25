@@ -943,6 +943,7 @@ SIZE CConEmuSize::GetDefaultSize(bool bCells, const CESize* pSizeW /*= NULL*/, c
 
 
 	COORD conSize = {80, 25}; // Used only with cell-sized options
+	wchar_t szInfo[80];
 
 
 	RECT rcFrameMargin = CalcMargins(CEM_FRAMECAPTION|CEM_STATUS);
@@ -1108,13 +1109,18 @@ SIZE CConEmuSize::GetDefaultSize(bool bCells, const CESize* pSizeW /*= NULL*/, c
 		// nPixelXXX - VCon size
 		sz.cx = nPixelWidth / nFontWidth;
 		sz.cy = nPixelHeight / nFontHeight;
+		// Debug purposes
+		_wsprintf(szInfo, SKIPCOUNT(szInfo) L"GetDefaultSize: {%i,%i} cells", sz.cx, sz.cy);
 	}
 	else
 	{
 		// nPixelXXX - whole window size
 		sz.cx = nPixelWidth;
 		sz.cy = nPixelHeight;
+		// Debug purposes
+		_wsprintf(szInfo, SKIPCOUNT(szInfo) L"GetDefaultSize: {%i,%i} pixels", sz.cx, sz.cy);
 	}
+	DEBUGSTRSIZE(szInfo);
 
 	return sz;
 }
@@ -1391,6 +1397,11 @@ RECT CConEmuSize::GetDefaultRect()
 	}
 
 	OnMoving(&rcWnd);
+
+	// Debug purposes
+	wchar_t szInfo[100];
+	_wsprintf(szInfo, SKIPCOUNT(szInfo) L"GetDefaultRect: {%i,%i} (%ix%i)", rcWnd.left, rcWnd.top, LOGRECTSIZE(rcWnd));
+	DEBUGSTRSIZE(szInfo);
 
 	return rcWnd;
 }
@@ -2282,8 +2293,7 @@ LRESULT CConEmuSize::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 		}
 	}
 
-	wchar_t szInfo[255];
-	if (gpSetCls->isAdvLogging >= 2)
+	wchar_t szInfo[255] = L"";
 	{
 		wcscpy_c(szInfo, L"OnWindowPosChanging:");
 		if (zoomed) wcscat_c(szInfo, L" (zoomed)");
@@ -2559,11 +2569,15 @@ LRESULT CConEmuSize::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 	result = DefWindowProc(hWnd, uMsg, wParam, lParam);
 	p = (WINDOWPOS*)lParam;
 
+	size_t cchLen = wcslen(szInfo);
+	_wsprintf(szInfo + cchLen, SKIPLEN(countof(szInfo) - cchLen) L" --> (F:x%08X X:%i Y:%i W:%i H:%i)", p->flags, p->x, p->y, p->cx, p->cy);
 	if (gpSetCls->isAdvLogging >= 2)
 	{
-		size_t cchLen = wcslen(szInfo);
-		_wsprintf(szInfo+cchLen, SKIPLEN(countof(szInfo)-cchLen) L" --> (F:x%08X X:%i Y:%i W:%i H:%i)", p->flags, p->x, p->y, p->cx, p->cy);
 		LogString(szInfo);
+	}
+	else
+	{
+		DEBUGSTRSIZE(szInfo);
 	}
 
 	return result;

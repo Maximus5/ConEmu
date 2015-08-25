@@ -6759,14 +6759,20 @@ LRESULT CConEmuMain::OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate)
 	_ASSERTE(ghWnd == hWnd);
 	ghWnd = hWnd;
 
+	RECT rcWndS = {}, rcWndT = {}, rcBeforeResize = {}, rcAfterResize = {};
+
+	GetWindowRect(ghWnd, &rcWndS);
+	wchar_t szInfo[200];
+	_wsprintf(szInfo, SKIPLEN(countof(szInfo))
+		L"OnCreate: hWnd=x%08X, x=%i, y=%i, cx=%i, cy=%i, style=x%08X, exStyle=x%08X (%ix%i)",
+		(DWORD)(DWORD_PTR)hWnd, lpCreate->x, lpCreate->y, lpCreate->cx, lpCreate->cy, lpCreate->style, lpCreate->dwExStyle, LOGRECTSIZE(rcWndS));
 	if (gpSetCls->isAdvLogging)
 	{
-		char szInfo[200];
-		RECT rcWnd = {}; GetWindowRect(ghWnd, &rcWnd);
-		_wsprintfA(szInfo, SKIPLEN(countof(szInfo))
-			"OnCreate: hWnd=x%08X, x=%i, y=%i, cx=%i, cy=%i, style=x%08X, exStyle=x%08X",
-			(DWORD)(DWORD_PTR)hWnd, lpCreate->x, lpCreate->y, lpCreate->cx, lpCreate->cy, lpCreate->style, lpCreate->dwExStyle);
 		LogString(szInfo);
+	}
+	else
+	{
+		DEBUGSTRSIZE(szInfo);
 	}
 
 	// Continue
@@ -6827,17 +6833,21 @@ LRESULT CConEmuMain::OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate)
 		// size evaluations were approximate
 		if ((WindowMode == wmNormal) && !mp_Inside)
 		{
-			RECT rcWnd = GetDefaultRect();
+			rcWndT = GetDefaultRect();
 			//TODO: Here Quake (if selected) will be activated.
 			//      This may be rather "long" operation (animation)
 			//      and no RCon-s will be created until it finishes
-			setWindowPos(NULL, rcWnd.left, rcWnd.top, rcWnd.right-rcWnd.left, rcWnd.bottom-rcWnd.top, SWP_NOZORDER);
-			UpdateIdealRect(rcWnd);
+			setWindowPos(NULL, rcWndT.left, rcWndT.top, rcWndT.right- rcWndT.left, rcWndT.bottom- rcWndT.top, SWP_NOZORDER);
+			UpdateIdealRect(rcWndT);
 		}
 	}
 
+	GetWindowRect(ghWnd, &rcBeforeResize);
+
 	// Brush up window size
 	ReSize(TRUE);
+
+	GetWindowRect(ghWnd, &rcAfterResize);
 
 	// Start pipe server
 	if (!m_GuiServer.Start())
@@ -6845,6 +6855,8 @@ LRESULT CConEmuMain::OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate)
 		return -1; // The error already must be shown
 	}
 
+	UNREFERENCED_PARAMETER(rcWndS.left); UNREFERENCED_PARAMETER(rcWndT.left);
+	UNREFERENCED_PARAMETER(rcBeforeResize.left); UNREFERENCED_PARAMETER(rcAfterResize.left);
 	return 0;
 }
 
