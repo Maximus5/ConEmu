@@ -1382,7 +1382,7 @@ void CConEmuCtrl::StatusCommand(ConEmuStatusCommand nStatusCmd, int IntParm, LPC
 				CVConGroup::SyncConsoleToWindow(&rcIdeal, true);
 			}
 
-			gpConEmu->ReSize(TRUE);
+			gpConEmu->ReSize(true);
 			gpConEmu->InvalidateGaps();
 		}
 		break;

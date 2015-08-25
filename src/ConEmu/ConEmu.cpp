@@ -6845,7 +6845,7 @@ LRESULT CConEmuMain::OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate)
 	GetWindowRect(ghWnd, &rcBeforeResize);
 
 	// Brush up window size
-	ReSize(TRUE);
+	ReSize(gpSet->isIntegralSize());
 
 	GetWindowRect(ghWnd, &rcAfterResize);
 
@@ -8479,7 +8479,7 @@ void CConEmuMain::OnHideCaption()
 	if (changeFromWindowMode == wmNotChanging)
 	{
 		UpdateWindowRgn();
-		ReSize(FALSE);
+		ReSize();
 	}
 
 	//OnTransparent();
