@@ -76,6 +76,10 @@ public:
 	{
 		sName[0] = 0;
 	};
+
+	// !!! Do NOT add destructor here to free hThread !!!
+	// !!! It's stored as value for informational purposes only !!!
+
 };
 
 #pragma optimize( "", off )
