@@ -1734,8 +1734,9 @@ void CConEmuSize::StoreNormalRect(RECT* prcWnd)
 			if (memcmp(&mrc_StoredNormalRect, &rcNormal, sizeof(rcNormal)) != 0)
 			{
 				wchar_t szLog[120];
-				_wsprintf(szLog, SKIPCOUNT(szLog) L"UpdateNormalRect Cur={%i,%i}-{%i,%i} New={%i,%i}-{%i,%i}",
-					LOGRECTCOORDS(mrc_StoredNormalRect), LOGRECTCOORDS(rcNormal));
+				_wsprintf(szLog, SKIPCOUNT(szLog) L"UpdateNormalRect Cur={%i,%i}-{%i,%i} (%ix%i) New={%i,%i}-{%i,%i} (%ix%i)",
+					LOGRECTCOORDS(mrc_StoredNormalRect), LOGRECTSIZE(mrc_StoredNormalRect),
+					LOGRECTCOORDS(rcNormal), LOGRECTSIZE(rcNormal));
 				LogString(szLog);
 			}
 			mrc_StoredNormalRect = rcNormal;
