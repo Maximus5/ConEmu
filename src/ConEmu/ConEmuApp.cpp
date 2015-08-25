@@ -47,6 +47,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/DbgHlpGcc.h"
 #endif
 #include "../common/ConEmuCheck.h"
+#include "../common/MSetter.h"
 #include "../common/WFiles.h"
 #include "AboutDlg.h"
 #include "Options.h"
@@ -180,6 +181,7 @@ wchar_t gsAltConFont[32] = L"Courier New"; // "Lucida Console" is not installed?
 // Use this (default) in ConEmu interface, where allowed (tabs, status, panel views, ...)
 wchar_t gsDefMUIFont[32] = L"Tahoma";         // WindowsVista ? L"Segoe UI" : L"Tahoma"
 
+LONG gnMessageNestingLevel = 0;
 
 #ifdef MSGLOGGER
 void DebugLogMessage(HWND h, UINT m, WPARAM w, LPARAM l, int posted, BOOL extra)
@@ -357,14 +359,14 @@ void DebugLogMessage(HWND h, UINT m, WPARAM w, LPARAM l, int posted, BOOL extra)
 		{
 			static SYSTEMTIME st;
 			GetLocalTime(&st);
-			wsprintfA(szWhole, "%02i:%02i.%03i %s%s: %s, %s, %s)\n", st.wMinute, st.wSecond, st.wMilliseconds,
-				pszSrc, (extra ? "+" : ""), szMess, szWP, szLP);
+			wsprintfA(szWhole, "%02i:%02i.%03i %s%s: <%i> %s, %s, %s)\n", st.wMinute, st.wSecond, st.wMilliseconds,
+				pszSrc, (extra ? "+" : ""), gnMessageNestingLevel, szMess, szWP, szLP);
 			OutputDebugStringA(szWhole);
 		}
 		else if (bSendToFile)
 		{
-			wsprintfA(szWhole, "%s%s: %s, %s, %s)\n",
-				pszSrc, (extra ? "+" : ""), szMess, szWP, szLP);
+			wsprintfA(szWhole, "%s%s: <%i> %s, %s, %s)\n",
+				pszSrc, (extra ? "+" : ""), gnMessageNestingLevel, szMess, szWP, szLP);
 			DebugLogFile(szWhole);
 		}
 	}
@@ -2500,6 +2502,8 @@ bool ProcessMessage(MSG& Msg)
 {
 	bool bRc = true;
 	static bool bQuitMsg = false;
+
+	MSetter nestedLevel(&gnMessageNestingLevel);
 
 	if (Msg.message == WM_QUIT)
 	{
