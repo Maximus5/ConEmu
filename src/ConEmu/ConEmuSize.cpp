@@ -239,7 +239,7 @@ RECT CConEmuSize::CalcMargins(DWORD/*enum ConEmuMargins*/ mg, ConEmuWindowMode w
 	{
 		if (ghWnd)
 		{
-			bool lbTabActive = ((mg & CEM_TAB_MASK) == CEM_TAB) ? mp_ConEmu->mp_TabBar->IsTabsActive()
+			bool lbTabActive = ((mg & CEM_TAB_MASK) == CEM_TAB) ? mp_ConEmu->isTabsShown()
 			                   : ((mg & ((DWORD)CEM_TABACTIVATE)) == ((DWORD)CEM_TABACTIVATE));
 
 			// Главное окно уже создано, наличие таба определено
