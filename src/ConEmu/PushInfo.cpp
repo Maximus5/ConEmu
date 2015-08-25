@@ -42,12 +42,11 @@ static CPushInfo::PushInfo gPushInfo[] = {
 		/* Valid for */
 		{ 2015, 8, 22 }, { 2015, 8, 27 },
 		/* Message for TSA icon */
-		L"Article in Wikipedia needs your help!\n"
-		L"It was proposed for deletion..."
+		L"The article needs your help,\n"
+		L"please consider to read issue#289"
 		/* Full text for message box, used in About dialog, requires \r\n */
-		, L"Article in Wikipedia needs your help!\r\n"
-		L"It was proposed for deletion...\r\n\r\n"
-		L"Please, check for details in the issue:\r\n"
+		, L"The article needs your help,\r\n"
+		L"please consider to read GitHub issue#289\r\n"
 		L"https://github.com/Maximus5/ConEmu/issues/289"
 		/* URL to be opened if user press <Yes> in the confirmation dialog */
 		, L"https://github.com/Maximus5/ConEmu/issues/289"
