@@ -186,7 +186,7 @@ LRESULT SENDMESSAGE(HWND h,UINT m,WPARAM w,LPARAM l);
 void DebugLogFile(LPCSTR asMessage);
 void DebugLogBufSize(HANDLE h, COORD sz);
 void DebugLogPos(HWND hw, int x, int y, int w, int h, LPCSTR asFunc);
-void DebugLogMessage(HWND h, UINT m, WPARAM w, LPARAM l, BOOL posted, BOOL extra);
+void DebugLogMessage(HWND h, UINT m, WPARAM w, LPARAM l, int posted, BOOL extra);
 #else
 #define POSTMESSAGE(h,m,w,l,e) PostMessage(h,m,w,l)
 #define SENDMESSAGE(h,m,w,l) SendMessage(h,m,w,l)
@@ -195,6 +195,7 @@ void DebugLogMessage(HWND h, UINT m, WPARAM w, LPARAM l, BOOL posted, BOOL extra
 #define SETCONSOLESCREENBUFFERSIZERET(h,s,r) r=SetConsoleScreenBufferSize(h,s)
 #define SETCONSOLESCREENBUFFERSIZE(h,s) SetConsoleScreenBufferSize(h,s)
 #define DEBUGLOGFILE(m)
+#define DebugLogMessage(h,m,w,l,posted,extra)
 #endif
 
 void LogString(LPCWSTR asInfo, bool abWriteTime = true, bool abWriteLine = true);

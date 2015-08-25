@@ -182,7 +182,7 @@ wchar_t gsDefMUIFont[32] = L"Tahoma";         // WindowsVista ? L"Segoe UI" : L"
 
 
 #ifdef MSGLOGGER
-void DebugLogMessage(HWND h, UINT m, WPARAM w, LPARAM l, BOOL posted, BOOL extra)
+void DebugLogMessage(HWND h, UINT m, WPARAM w, LPARAM l, int posted, BOOL extra)
 {
 	if (bBlockDebugLog || (!bSendToFile && !IsDebuggerPresent()))
 		return;
@@ -216,7 +216,39 @@ void DebugLogMessage(HWND h, UINT m, WPARAM w, LPARAM l, BOOL posted, BOOL extra
 
 				break;
 			}
-			MSG1(WM_SIZE);
+
+			MSG2(WM_SIZE);
+			{
+				wsprintfA(szLP, "{%ix%i}", GET_X_LPARAM(l), GET_Y_LPARAM(l));
+				break;
+			}
+			MSG2(WM_MOVE);
+			{
+				wsprintfA(szLP, "{%i,%i}", GET_X_LPARAM(l), GET_Y_LPARAM(l));
+				break;
+			}
+			MSG1(WM_GETMINMAXINFO);
+			MSG2(WM_NCCALCSIZE);
+			{
+				if (l)
+				{
+					RECT r = w ? ((LPNCCALCSIZE_PARAMS)l)->rgrc[0] : *(LPRECT)l;
+					wsprintfA(szLP, "{%i,%i} {%ix%i}", r.left, r.top, LOGRECTSIZE(r));
+				}
+				break;
+			}
+
+			MSG2(WM_WINDOWPOSCHANGING);
+			{
+				wsprintfA(szLP, "{%i,%i} {%ix%i}", ((LPWINDOWPOS)l)->x, ((LPWINDOWPOS)l)->y, ((LPWINDOWPOS)l)->cx, ((LPWINDOWPOS)l)->cy);
+				break;
+			}
+			MSG2(WM_WINDOWPOSCHANGED);
+			{
+				wsprintfA(szLP, "{%i,%i} {%ix%i}", ((LPWINDOWPOS)l)->x, ((LPWINDOWPOS)l)->y, ((LPWINDOWPOS)l)->cx, ((LPWINDOWPOS)l)->cy);
+				break;
+			}
+
 			MSG1(WM_KEYDOWN);
 			MSG1(WM_KEYUP);
 			MSG1(WM_SYSKEYDOWN);
@@ -313,24 +345,26 @@ void DebugLogMessage(HWND h, UINT m, WPARAM w, LPARAM l, BOOL posted, BOOL extra
 
 	if (bSendToDebugger || bSendToFile)
 	{
-		if (!szMess[0]) wsprintfA(szMess, "%i", m);
+		if (!szMess[0]) wsprintfA(szMess, "%i(x%02X)", m, m);
 
 		if (!szWP[0]) wsprintfA(szWP, "%i", (DWORD)w);
 
 		if (!szLP[0]) wsprintfA(szLP, "%i(0x%08X)", (int)l, (DWORD)l);
 
+		LPCSTR pszSrc = (posted < 0) ? "Recv" : (posted ? "Post" : "Send");
+
 		if (bSendToDebugger)
 		{
 			static SYSTEMTIME st;
 			GetLocalTime(&st);
-			wsprintfA(szWhole, "%02i:%02i.%03i %s%s(%s, %s, %s)\n", st.wMinute, st.wSecond, st.wMilliseconds,
-			          (posted ? "Post" : "Send"), (extra ? "+" : ""), szMess, szWP, szLP);
+			wsprintfA(szWhole, "%02i:%02i.%03i %s%s: %s, %s, %s)\n", st.wMinute, st.wSecond, st.wMilliseconds,
+				pszSrc, (extra ? "+" : ""), szMess, szWP, szLP);
 			OutputDebugStringA(szWhole);
 		}
 		else if (bSendToFile)
 		{
-			wsprintfA(szWhole, "%s%s(%s, %s, %s)\n",
-			          (posted ? "Post" : "Send"), (extra ? "+" : ""), szMess, szWP, szLP);
+			wsprintfA(szWhole, "%s%s: %s, %s, %s)\n",
+				pszSrc, (extra ? "+" : ""), szMess, szWP, szLP);
 			DebugLogFile(szWhole);
 		}
 	}
@@ -429,13 +463,13 @@ void DebugLogFile(LPCSTR asMessage)
 BOOL POSTMESSAGE(HWND h,UINT m,WPARAM w,LPARAM l,BOOL extra)
 {
 	MCHKHEAP;
-	DebugLogMessage(h,m,w,l,TRUE,extra);
+	DebugLogMessage(h,m,w,l,1,extra);
 	return PostMessage(h,m,w,l);
 }
 LRESULT SENDMESSAGE(HWND h,UINT m,WPARAM w,LPARAM l)
 {
 	MCHKHEAP;
-	DebugLogMessage(h,m,w,l,FALSE,FALSE);
+	DebugLogMessage(h,m,w,l,0,FALSE);
 	return SendMessage(h,m,w,l);
 }
 #endif

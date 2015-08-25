@@ -113,7 +113,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRFOREGROUND(s) //DEBUGSTR(s)
 #define DEBUGSTRLLKB(s) //DEBUGSTR(s)
 #define DEBUGSTRTIMER(s) //DEBUGSTR(s)
-#define DEBUGSTRMSG(s) //DEBUGSTR(s)
+#define DEBUGSTRMSG(h,m,w,l) //DebugLogMessage(h, m, w, l, -1, FALSE)
 #define DEBUGSTRMSG2(s) //DEBUGSTR(s)
 #define DEBUGSTRANIMATE(s) //DEBUGSTR(s)
 #define DEBUGSTRFOCUS(s) //DEBUGSTR(s)
@@ -13499,6 +13499,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	}
 
 	#ifdef _DEBUG
+	wchar_t szDbg[127] = L"";
 	if (messg == WM_TIMER || messg == WM_GETICON)
 	{
 		bool lbDbg1 = false;
@@ -13506,8 +13507,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	else if (messg >= WM_APP)
 	{
 		bool lbDbg2 = false;
-
-		wchar_t szDbg[127], szName[64];
+		wchar_t szName[64];
 		LPCSTR pszReg = NULL;
 		if (m__AppMsgs.Get(messg, &pszReg) && pszReg && *pszReg)
 			MultiByteToWideChar(CP_ACP, 0, pszReg, -1, szName, countof(szName));
@@ -13518,8 +13518,8 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	}
 	else
 	{
-		wchar_t szDbg[127]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"WndProc(%i{x%03X},%i,%i)\n", messg, messg, (DWORD)wParam, (DWORD)lParam);
-		DEBUGSTRMSG(szDbg);
+		_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"WndProc(%i{x%03X},%i,%i)\n", messg, messg, (DWORD)wParam, (DWORD)lParam);
+		DEBUGSTRMSG(hWnd, messg, wParam, lParam);
 	}
 	#endif
 
