@@ -6859,8 +6859,8 @@ LRESULT CConEmuMain::OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate)
 		}
 	}
 
-	// Причесать размеры напоследок
-	ReSize(TRUE);
+	// Brush up window size
+	ReSize(gpSet->isIntegralSize());
 
 	//CreateCon();
 	// Запустить серверную нить
@@ -8519,7 +8519,7 @@ void CConEmuMain::OnHideCaption()
 	if (changeFromWindowMode == wmNotChanging)
 	{
 		UpdateWindowRgn();
-		ReSize(FALSE);
+		ReSize();
 	}
 
 	//OnTransparent();
