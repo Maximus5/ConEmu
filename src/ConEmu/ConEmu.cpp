@@ -8478,32 +8478,6 @@ void CConEmuMain::OnHideCaption()
 		SetWindowStyle(nNewStyle);
 
 		mb_InCaptionChange = false;
-
-		//POINT ptAfter = {}; ClientToScreen(ghWnd, &ptAfter);
-		//if ((!isIconic() && !isZoomed() && !isFullScreen())
-		//	&& (ptBefore.x != ptAfter.x || ptBefore.y != ptAfter.y))
-		//{
-		//	RECT rcPos = {}; GetWindowRect(ghWnd, &rcPos);
-		//	SetWindowPos(ghWnd, NULL, rcPos.left+ptBefore.x-ptAfter.x, rcPos.top+ptBefore.y-ptAfter.y, 0,0, SWP_NOSIZE|SWP_NOZORDER);
-		//}
-		//if (bNeedCorrect && (rcBefore.left != rcAfter.left || rcBefore.top != rcAfter.top))
-		//{
-		//	m_FixPosAfterStyle = GetTickCount();
-		//	mrc_FixPosAfterStyle = rcAfter;
-		//	//DWORD nFlags = SWP_NOSIZE|SWP_NOZORDER;
-		//	/////nFlags |= SWP_DRAWFRAME;
-		//	//SetWindowPos(ghWnd, NULL, rcAfter.left, rcAfter.top, 0,0, nFlags);
-		//}
-		//else
-		//{
-		//	m_FixPosAfterStyle = 0;
-		//}
-
-		//if (changeFromWindowMode == wmNotChanging)
-		//{
-		//	//TODO: Поменять на FALSE
-		//	ReSize(TRUE);
-		//}
 	}
 
 	_ASSERTE(mn_IgnoreSizeChange>=0);
