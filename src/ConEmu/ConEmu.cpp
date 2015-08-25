@@ -6755,8 +6755,9 @@ bool CConEmuMain::isCloseConfirmed()
 
 LRESULT CConEmuMain::OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate)
 {
-	_ASSERTE(ghWnd == hWnd); // Уже должно было быть выставлено (CConEmuMain::MainWndProc)
-	ghWnd = hWnd; // ставим сразу, чтобы функции могли пользоваться
+	// Must be set laready from CConEmuMain::MainWndProc, but just to be sure
+	_ASSERTE(ghWnd == hWnd);
+	ghWnd = hWnd;
 
 	if (gpSetCls->isAdvLogging)
 	{
@@ -6768,24 +6769,11 @@ LRESULT CConEmuMain::OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate)
 		LogString(szInfo);
 	}
 
+	// Continue
 	OnTaskbarButtonCreated();
-
-	//DWORD_PTR dwStyle = GetWindowLongPtr(hWnd, GWL_STYLE);
-	//if (gpSet->isHideCaptionAlways) {
-	//	if ((dwStyle & (WS_CAPTION|WS_THICKFRAME)) != 0) {
-	//		lpCreate->style &= ~(WS_CAPTION|WS_THICKFRAME);
-	//		dwStyle = lpCreate->style;
-	//		SetWindowStyle(dwStyle);
-	//	}
-	//}
-
-	// lpCreate->cx/cy может содержать CW_USEDEFAULT
-	//RECT rcWnd = CalcRect(CER_MAIN);
-	//GetWindowRect(ghWnd, &rcWnd);
 
 	// It's better to store current mrc_Ideal values now, after real window creation
 	StoreIdealRect();
-	//UpdateIdealRect();
 
 	// Used for restoring from Maximized/Fullscreen/Iconic. Remember current Pos/Size.
 	StoreNormalRect(NULL);
@@ -6803,7 +6791,8 @@ LRESULT CConEmuMain::OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate)
 
 
 	Icon.LoadIcon(hWnd, gpSet->nIconID/*IDI_ICON1*/);
-	// Позволяет реагировать на запросы FlashWindow из фара и запуск приложений
+
+	// Support FlashWindow requests from Far Manager and application starting up
 	HMODULE hUser32 = GetModuleHandle(L"user32.dll");
 	FRegisterShellHookWindow fnRegisterShellHookWindow = NULL;
 
@@ -6811,30 +6800,17 @@ LRESULT CConEmuMain::OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate)
 
 	if (fnRegisterShellHookWindow) fnRegisterShellHookWindow(hWnd);
 
-	_ASSERTE(ghConWnd==NULL && "ConWnd must not be created yet"); // оно еще не должно быть создано
-	// Чтобы можно было найти хэндл окна по хэндлу консоли
-	OnActiveConWndStore(NULL); // 31.03.2009 Maximus - только нихрена оно еще не создано!
-	//m_Back->Create();
+	_ASSERTE(ghConWnd==NULL && "ConWnd must not be created yet");
+	OnActiveConWndStore(NULL); // Refresh window data
 
-	//if (!m_Child->Create())
-	//	return -1;
-
-	//mn_StartTick = GetTickCount();
-	//if (gpSet->isGUIpb && !ProgressBars) {
-	//	ProgressBars = new CProgressBars(ghWnd, g_hInstance);
-	//}
-	//// Установить переменную среды с дескриптором окна
-	//SetConEmuEnvVar('ghWnd DC');
-
-	// Сформировать или обновить системное меню
+	// Create or update SystemMenu
 	mp_Menu->GetSysMenu(TRUE);
 
 	// Holder
 	_ASSERTE(ghWndWork==NULL); // еще не должен был быть создан
 	if (!ghWndWork && !CreateWorkWindow())
 	{
-		// Ошибка уже показана
-		return -1;
+		return -1; // The error already must be shown
 	}
 
 #ifdef _DEBUG
@@ -6843,11 +6819,12 @@ LRESULT CConEmuMain::OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate)
 
 	_ASSERTE(InCreateWindow() == true);
 
-	if (gpSet->isTabs==1)  // "Табы всегда"
+	if (gpSet->isTabs==1)  // TabBar is always visible?
 	{
-		ForceShowTabs(TRUE); // Показать табы
+		ForceShowTabs(TRUE); // Show TabBar
 
-		// Расчет высоты таббара был выполнен "примерно"
+		// Without created real child TabBar window,
+		// size evaluations were approximate
 		if ((WindowMode == wmNormal) && !mp_Inside)
 		{
 			RECT rcWnd = GetDefaultRect();
@@ -6859,16 +6836,13 @@ LRESULT CConEmuMain::OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate)
 		}
 	}
 
-	// Причесать размеры напоследок
+	// Brush up window size
 	ReSize(TRUE);
 
-	//CreateCon();
-	// Запустить серверную нить
-	// 120122 - теперь через PipeServer
+	// Start pipe server
 	if (!m_GuiServer.Start())
 	{
-		// Ошибка уже показана
-		return -1;
+		return -1; // The error already must be shown
 	}
 
 	return 0;
