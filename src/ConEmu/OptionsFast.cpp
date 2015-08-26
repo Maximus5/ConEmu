@@ -1133,7 +1133,7 @@ protected:
 	}
 
 public:
-	AppFoundList* Add(LPCWSTR asName, LPCWSTR asArgs, LPCWSTR asPrefix, LPCWSTR asGuiArg, LPCWSTR asExePath, ...)
+	bool Add(LPCWSTR asName, LPCWSTR asArgs, LPCWSTR asPrefix, LPCWSTR asGuiArg, LPCWSTR asExePath, ...)
 	{
 		bool bCreated = false;
 		va_list argptr;
@@ -1167,7 +1167,7 @@ public:
 
 		va_end(argptr);
 
-		return this;
+		return bCreated;
 	}
 
 	bool CheckUnique(LPCWSTR pszTaskBaseName)
@@ -1654,14 +1654,16 @@ void CreateTccTasks()
 	AppFoundList App;
 
 	// Add tasks
-	App.Add(L"Shells::TCC", NULL, NULL, NULL, pszTcc, NULL)->Commit();
-	App.Add(L"Shells::TCC (Admin)", L" -new_console:a", NULL, NULL, pszTcc, NULL)->Commit();
+	App.Add(L"Shells::TCC", NULL, NULL, NULL, pszTcc, NULL);
+	App.Add(L"Shells::TCC (Admin)", L" -new_console:a", NULL, NULL, pszTcc, NULL);
+	App.Commit();
 
 	// separate x64 version?
 	if (pszTcc64)
 	{
-		App.Add(L"Shells::TCC x64", NULL, NULL, NULL, pszTcc64, NULL)->Commit();
-		App.Add(L"Shells::TCC x64 (Admin)", L" -new_console:a", NULL, NULL, pszTcc64, NULL)->Commit();
+		App.Add(L"Shells::TCC x64", NULL, NULL, NULL, pszTcc64, NULL);
+		App.Add(L"Shells::TCC x64 (Admin)", L" -new_console:a", NULL, NULL, pszTcc64, NULL);
+		App.Commit();
 	}
 }
 
@@ -1720,8 +1722,9 @@ void CreateDefaultTasks(SettingsLoadedFlags slfFlags)
 	CreateTccTasks();
 
 	// NYAOS - !!!Registry TODO!!!
-	App.Add(L"Shells::NYAOS", NULL, NULL, NULL, L"nyaos.exe", NULL)->Commit();
-	App.Add(L"NYAOS (Admin)", L" -new_console:a", NULL, NULL, L"nyaos.exe", NULL)->Commit();
+	App.Add(L"Shells::NYAOS", NULL, NULL, NULL, L"nyaos.exe", NULL);
+	App.Add(L"NYAOS (Admin)", L" -new_console:a", NULL, NULL, L"nyaos.exe", NULL);
+	App.Commit();
 
 	// Windows internal: cmd
 	// Don't use 'App.Add' here, we are creating "cmd.exe" tasks directly
@@ -1808,7 +1811,8 @@ void CreateDefaultTasks(SettingsLoadedFlags slfFlags)
 	App.Commit();
 
 	// Putty?
-	App.Add(L"Putty", NULL, NULL, NULL, L"Putty.exe", NULL)->Commit();
+	App.Add(L"Putty", NULL, NULL, NULL, L"Putty.exe", NULL);
+	App.Commit();
 
 	// IRSSI
 	// L"\"set PATH=C:\\irssi\\bin;%PATH%\" & set PERL5LIB=lib/perl5/5.8 & set TERMINFO_DIRS=terminfo & "
