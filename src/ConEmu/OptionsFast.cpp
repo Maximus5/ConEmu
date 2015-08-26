@@ -1760,6 +1760,7 @@ void CreateDefaultTasks(SettingsLoadedFlags slfFlags)
 	// *** Bash ***
 
 	// From Git-for-Windows (aka msysGit v2)
+	bool bGitBashExist = // No sense to add both `git-cmd.exe` and `bin/sh.exe`
 	App.Add(L"Bash::Git bash",
 		L" --no-cd --command=usr/bin/bash.exe -l -i", NULL, NULL,
 		L"[SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Git_is1:InstallLocation]\\git-cmd.exe",
@@ -1773,6 +1774,7 @@ void CreateDefaultTasks(SettingsLoadedFlags slfFlags)
 		L"\\GitSDK\\git-cmd.exe",
 		NULL);
 	// From msysGit
+	if (!bGitBashExist) // Skip if `git-cmd.exe` was already found
 	App.Add(L"Bash::Git bash",
 		L" --login -i -new_console:C:\"" FOUND_APP_PATH_STR L"\\..\\etc\\git.ico\"", NULL, NULL,
 		L"[SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Git_is1:InstallLocation]\\bin\\sh.exe",
