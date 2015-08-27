@@ -30,8 +30,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include "IconList.h"
+#include "WinObjBase.h"
 
-class CTabPanelBase
+class CTabPanelBase : public CWinObjBase
 {
 private:
 	HFONT      mh_TabFont;

@@ -128,6 +128,7 @@ $(INTDIR)\VConRelease.obj \
 $(INTDIR)\VirtualConsole.obj \
 $(INTDIR)\WConsoleInfo.obj \
 $(INTDIR)\WFiles.obj \
+$(INTDIR)\WinObjBase.obj \
 $(INTDIR)\WObjects.obj \
 $(INTDIR)\WRegistry.obj \
 $(INTDIR)\WThreads.obj \
@@ -481,6 +482,8 @@ $(INTDIR)\VirtualConsole.obj: VirtualConsole.cpp VConRelease.h VirtualConsole.h 
 $(INTDIR)\WConsoleInfo.obj: ../common/WConsoleInfo.cpp
 
 $(INTDIR)\WFiles.obj: ../common/WFiles.cpp ../common/WFiles.h
+
+$(INTDIR)\WinObjBase.obj: WinObjBase.cpp WinObjBase.h
 
 $(INTDIR)\WObjects.obj: ../common/WObjects.cpp
 

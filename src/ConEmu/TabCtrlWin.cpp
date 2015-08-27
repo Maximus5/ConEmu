@@ -50,15 +50,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "VConGroup.h"
 #include "Status.h"
 #include "Menu.h"
-#include "../common/MMap.h"
 #include "../common/WUser.h"
 
 //WNDPROC CTabPanelWin::_defaultTabProc = NULL;
 //WNDPROC CTabPanelWin::_defaultToolProc = NULL;
 //WNDPROC CTabPanelWin::_defaultReBarProc = NULL;
-
-struct TabPanelWinMap { CTabPanelWin* object; HWND hWnd; WNDPROC defaultProc; };
-static MMap<HWND,TabPanelWinMap>* gp_TabPanelWinMap = NULL;
 
 typedef BOOL (WINAPI* FAppThemed)();
 
@@ -81,15 +77,12 @@ CTabPanelWin::CTabPanelWin(CTabBarClass* ap_Owner)
 	mb_ChangeAllowed = false;
 	mn_LastToolbarWidth = 0;
 	mn_ThemeHeightDiff = 0;
-	gp_TabPanelWinMap = (MMap<HWND,TabPanelWinMap>*)calloc(1,sizeof(*gp_TabPanelWinMap));
-	gp_TabPanelWinMap->Init(8);
 	mn_TabHeight = 0;
 	mp_ToolImg = new CToolImg();
 }
 
 CTabPanelWin::~CTabPanelWin()
 {
-	SafeFree(gp_TabPanelWinMap);
 	SafeDelete(mp_ToolImg);
 	SafeDelete(mp_Find);
 }
@@ -101,8 +94,8 @@ LRESULT CALLBACK CTabPanelWin::_ReBarProc(HWND hwnd, UINT uMsg, WPARAM wParam, L
 {
 	LRESULT lRc;
 	TabPanelWinMap map = {NULL};
-	if (gp_TabPanelWinMap && gp_TabPanelWinMap->Get(hwnd, &map, (uMsg == WM_DESTROY)))
-		lRc = map.object->ReBarProc(hwnd, uMsg, wParam, lParam, map.defaultProc);
+	if (GetObj(hwnd, &map, (uMsg == WM_DESTROY)))
+		lRc = ((CTabPanelWin*)map.object)->ReBarProc(hwnd, uMsg, wParam, lParam, map.defaultProc);
 	else
 		lRc = ::DefWindowProc(hwnd, uMsg, wParam, lParam);
 	return lRc;
@@ -179,8 +172,8 @@ LRESULT CALLBACK CTabPanelWin::_TabProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPA
 {
 	LRESULT lRc;
 	TabPanelWinMap map = {NULL};
-	if (gp_TabPanelWinMap && gp_TabPanelWinMap->Get(hwnd, &map, (uMsg == WM_DESTROY)))
-		lRc = map.object->TabProc(hwnd, uMsg, wParam, lParam, map.defaultProc);
+	if (GetObj(hwnd, &map, (uMsg == WM_DESTROY)))
+		lRc = ((CTabPanelWin*)map.object)->TabProc(hwnd, uMsg, wParam, lParam, map.defaultProc);
 	else
 		lRc = ::DefWindowProc(hwnd, uMsg, wParam, lParam);
 	return lRc;
@@ -249,8 +242,8 @@ LRESULT CALLBACK CTabPanelWin::_ToolProc(HWND hwnd, UINT uMsg, WPARAM wParam, LP
 {
 	LRESULT lRc;
 	TabPanelWinMap map = {NULL};
-	if (gp_TabPanelWinMap && gp_TabPanelWinMap->Get(hwnd, &map, (uMsg == WM_DESTROY)))
-		lRc = map.object->ToolProc(hwnd, uMsg, wParam, lParam, map.defaultProc);
+	if (GetObj(hwnd, &map, (uMsg == WM_DESTROY)))
+		lRc = ((CTabPanelWin*)map.object)->ToolProc(hwnd, uMsg, wParam, lParam, map.defaultProc);
 	else
 		lRc = ::DefWindowProc(hwnd, uMsg, wParam, lParam);
 	return lRc;
@@ -377,10 +370,8 @@ void CTabPanelWin::CreateRebar()
 	#pragma warning (disable : 4312)
 	#endif
 	// Надо
-	TabPanelWinMap map = {this}; //{ CTabPanelWin* object; HWND hWnd; WNDPROC defaultProc; };
-	map.defaultProc = (WNDPROC)SetWindowLongPtr(mh_Rebar, GWLP_WNDPROC, (LONG_PTR)_ReBarProc);
-	map.hWnd = mh_Rebar;
-	gp_TabPanelWinMap->Set(mh_Rebar, map);
+	WNDPROC defaultProc = (WNDPROC)SetWindowLongPtr(mh_Rebar, GWLP_WNDPROC, (LONG_PTR)_ReBarProc);
+	SetObj(mh_Rebar, this, defaultProc);
 
 
 	REBARINFO     rbi = {sizeof(REBARINFO)};
@@ -479,10 +470,8 @@ HWND CTabPanelWin::CreateTabbar()
 
 
 	// Надо
-	TabPanelWinMap map = {this}; //{ CTabPanelWin* object; HWND hWnd; WNDPROC defaultProc; };
-	map.defaultProc = (WNDPROC)SetWindowLongPtr(mh_Tabbar, GWLP_WNDPROC, (LONG_PTR)_TabProc);
-	map.hWnd = mh_Tabbar;
-	gp_TabPanelWinMap->Set(mh_Tabbar, map);
+	WNDPROC defaultProc = (WNDPROC)SetWindowLongPtr(mh_Tabbar, GWLP_WNDPROC, (LONG_PTR)_TabProc);
+	SetObj(mh_Tabbar, this, defaultProc);
 
 
 	SendMessage(mh_Tabbar, TCM_SETIMAGELIST, 0, (LPARAM)mp_Owner->GetTabIcons());
@@ -529,10 +518,8 @@ HWND CTabPanelWin::CreateToolbar()
 	                            0, 0, 0, 0, mh_Rebar,
 	                            NULL, NULL, NULL);
 
-	TabPanelWinMap map = {this}; //{ CTabPanelWin* object; HWND hWnd; WNDPROC defaultProc; };
-	map.defaultProc = (WNDPROC)SetWindowLongPtr(mh_Toolbar, GWLP_WNDPROC, (LONG_PTR)_ToolProc);
-	map.hWnd = mh_Toolbar;
-	gp_TabPanelWinMap->Set(mh_Toolbar, map);
+	WNDPROC defaultProc = (WNDPROC)SetWindowLongPtr(mh_Toolbar, GWLP_WNDPROC, (LONG_PTR)_ToolProc);
+	SetObj(mh_Toolbar, this, defaultProc);
 
 	DWORD lExStyle = ((DWORD)SendMessage(mh_Toolbar, TB_GETEXTENDEDSTYLE, 0, 0)) | TBSTYLE_EX_DRAWDDARROWS;
 	SendMessage(mh_Toolbar, TB_SETEXTENDEDSTYLE, 0, lExStyle);

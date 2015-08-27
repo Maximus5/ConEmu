@@ -125,6 +125,7 @@ SRCS = \
 		VConChild.cpp      \
 		VConGroup.cpp      \
 		VConRelease.cpp    \
-		VirtualConsole.cpp
+		VirtualConsole.cpp \
+		WinObjBase.cpp
 
 include ../makefile_gcc_target

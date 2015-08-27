@@ -623,6 +623,7 @@
     <ClCompile Include="VConGroup.cpp" />
     <ClCompile Include="VConRelease.cpp" />
     <ClCompile Include="VirtualConsole.cpp" />
+    <ClCompile Include="WinObjBase.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\common\CmdArg.h" />
@@ -753,6 +754,7 @@
     <ClInclude Include="VConRelease.h" />
     <ClInclude Include="version.h" />
     <ClInclude Include="VirtualConsole.h" />
+    <ClInclude Include="WinObjBase.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\Release\ConEmu\About-ConEmu.txt" />
