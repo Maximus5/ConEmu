@@ -8201,8 +8201,7 @@ BOOL cmd_Pause(CESERVER_REQ& in, CESERVER_REQ** out)
 	if ((cbInSize < sizeof(DWORD)) || !gpSrv || !gpSrv->pConsole)
 		return FALSE;
 
-	BOOL bOk = FALSE; DWORD_PTR dwRc = 0;
-	DWORD nTimeout = 15000;
+	BOOL bOk = FALSE;
 	CONSOLE_SELECTION_INFO lsel1 = {}, lsel2 = {};
 	BOOL bSelInfo1, bSelInfo2;
 
@@ -8216,11 +8215,11 @@ BOOL cmd_Pause(CESERVER_REQ& in, CESERVER_REQ** out)
 	{
 	case CEPause_On:
 		SetConEmuFlags(gpSrv->pConsole->info.Flags, CECI_Paused, CECI_Paused);
-		bOk = (SendMessageTimeout(ghConWnd, WM_SYSCOMMAND, 65522, 0, SMTO_NORMAL, nTimeout, &dwRc) != 0);
+		bOk = apiPauseConsoleOutput(ghConWnd, true);
 		break;
 	case CEPause_Off:
 		SetConEmuFlags(gpSrv->pConsole->info.Flags, CECI_Paused, CECI_None);
-		bOk = (SendMessageTimeout(ghConWnd, WM_KEYDOWN, VK_ESCAPE, 0, SMTO_NORMAL, nTimeout, &dwRc) != 0);
+		bOk = apiPauseConsoleOutput(ghConWnd, false);
 		break;
 	}
 

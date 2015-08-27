@@ -647,7 +647,37 @@ void SetConsoleBufferSize(HWND inConWnd, int anWidth, int anHeight, int anBuffer
 }
 */
 
+static bool gbPauseConsoleWasRequested = false;
+
+BOOL apiPauseConsoleOutput(HWND hConWnd, bool bPause)
+{
+	BOOL bOk = FALSE, bCi = FALSE;
+	DWORD_PTR dwRc = 0;
+	DWORD nTimeout = 15000;
+
+	if (bPause)
+	{
+		CONSOLE_CURSOR_INFO ci = {};
+		bCi = GetConsoleCursorInfo(GetStdHandle(STD_OUTPUT_HANDLE), &ci);
+
+		bOk = (SendMessageTimeout(hConWnd, WM_SYSCOMMAND, 65522, 0, SMTO_NORMAL, nTimeout, &dwRc) != 0);
+
+		// In Win2k we can't be sure about active selection,
+		// so we check for cursor height equal to 100%
+		gbPauseConsoleWasRequested = (bCi && ci.dwSize < 100);
+	}
+	else
+	{
+		bOk = (SendMessageTimeout(hConWnd, WM_KEYDOWN, VK_ESCAPE, 0, SMTO_NORMAL, nTimeout, &dwRc) != 0);
+		gbPauseConsoleWasRequested = false;
+	}
+
+	return bOk;
+}
+
 // Function GetConsoleSelectionInfo does NOT exists in Windows 2000
+// The function is used ONLY for checking if console is "Paused",
+// because when selection is present - StdOut is placed in "halt" state
 BOOL apiGetConsoleSelectionInfo(PCONSOLE_SELECTION_INFO lpConsoleSelectionInfo)
 {
 	typedef BOOL (WINAPI* GetConsoleSelectionInfo_t)(PCONSOLE_SELECTION_INFO lpConsoleSelectionInfo);
@@ -665,6 +695,30 @@ BOOL apiGetConsoleSelectionInfo(PCONSOLE_SELECTION_INFO lpConsoleSelectionInfo)
 	if (getConsoleSelectionInfo)
 	{
 		bRc = getConsoleSelectionInfo(lpConsoleSelectionInfo);
+	}
+	else if (IsWin2kEql()) // Otherwise, that might be Windows 2000
+	{
+		// We can't be sure, but if cursor height is 100% it will be selection most probably
+		bool bProbableSelection = false;
+		CONSOLE_CURSOR_INFO ci = {};
+		if (gbPauseConsoleWasRequested)
+		{
+			bRc = GetConsoleCursorInfo(GetStdHandle(STD_OUTPUT_HANDLE), &ci);
+			if (bRc && (ci.dwSize == 100))
+			{
+				bProbableSelection = true;
+			}
+		}
+
+		memset(lpConsoleSelectionInfo, sizeof(*lpConsoleSelectionInfo), 0);
+		if (bProbableSelection)
+		{
+			lpConsoleSelectionInfo->dwFlags = CONSOLE_SELECTION_IN_PROGRESS;
+		}
+	}
+	else
+	{
+		_ASSERTE(FALSE && "GetConsoleSelectionInfo was not found!");
 	}
 	return bRc;
 }
