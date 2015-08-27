@@ -575,7 +575,7 @@ bool IsWin2kEql()
 		DWORDLONG const dwlConditionMask = VerSetConditionMask(VerSetConditionMask(0,
 			VER_MAJORVERSION, VER_EQUAL),
 			VER_MINORVERSION, VER_EQUAL);
-		ibIsWin2K = VerifyVersionInfoW(&osvi, VER_MAJORVERSION | VER_MINORVERSION | VER_SERVICEPACKMAJOR, dwlConditionMask) ? 1 : -1;;
+		ibIsWin2K = VerifyVersionInfoW(&osvi, VER_MAJORVERSION | VER_MINORVERSION, dwlConditionMask) ? 1 : -1;;
 	}
 	return (ibIsWin2K == 1);
 }
