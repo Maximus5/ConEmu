@@ -38,7 +38,6 @@ private:
 	CFindPanel* mp_Find;
 	bool mb_ChangeAllowed;
 	int  mn_LastToolbarWidth;
-	int  mn_ThemeHeightDiff;
 	int  mn_TabHeight;
 
 private:

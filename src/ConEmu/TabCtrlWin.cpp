@@ -56,8 +56,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //WNDPROC CTabPanelWin::_defaultToolProc = NULL;
 //WNDPROC CTabPanelWin::_defaultReBarProc = NULL;
 
-typedef BOOL (WINAPI* FAppThemed)();
-
 enum ReBarIndex
 {
 	rbi_TabBar  = 1,
@@ -76,7 +74,6 @@ CTabPanelWin::CTabPanelWin(CTabBarClass* ap_Owner)
 	mp_Find = NULL;
 	mb_ChangeAllowed = false;
 	mn_LastToolbarWidth = 0;
-	mn_ThemeHeightDiff = 0;
 	mn_TabHeight = 0;
 	mp_ToolImg = new CToolImg();
 }
@@ -257,7 +254,7 @@ LRESULT CTabPanelWin::ToolProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 		case WM_WINDOWPOSCHANGING:
 		{
 			LPWINDOWPOS pos = (LPWINDOWPOS)lParam;
-			pos->y = (mn_ThemeHeightDiff == 0) ? 2 : 1;
+			pos->y = gpConEmu->IsThemed() ? 2 : 1;
 
 			if (gpSet->isHideCaptionAlways() && gpSet->nToolbarAddSpace > 0)
 			{
@@ -426,27 +423,6 @@ HWND CTabPanelWin::CreateTabbar()
 
 	if (mh_Tabbar)
 		return mh_Tabbar; // Уже создали
-
-	// Важно проверку делать после создания главного окна, иначе IsAppThemed будет возвращать FALSE
-	BOOL bAppThemed = FALSE, bThemeActive = FALSE;
-	FAppThemed pfnThemed = NULL;
-	HMODULE hUxTheme = LoadLibrary(L"UxTheme.dll");
-
-	if (hUxTheme)
-	{
-		pfnThemed = (FAppThemed)GetProcAddress(hUxTheme, "IsAppThemed");
-
-		if (pfnThemed) bAppThemed = pfnThemed();
-
-		pfnThemed = (FAppThemed)GetProcAddress(hUxTheme, "IsThemeActive");
-
-		if (pfnThemed) bThemeActive = pfnThemed();
-
-		FreeLibrary(hUxTheme); hUxTheme = NULL;
-	}
-
-	if (!bAppThemed || !bThemeActive)
-		mn_ThemeHeightDiff = 2;
 
 	RECT rcClient = {-32000, -32000, -32000+300, -32000+100};
 	if (ghWnd)
@@ -1308,7 +1284,7 @@ bool CTabPanelWin::ShowSearchPane(bool bShow, bool bCtrlOnly /*= false*/)
 				rbBand.wID        = rbi_FindBar;
 				rbBand.hwndChild  = hFindPane;
 				rbBand.cx = rbBand.cxMinChild = rbBand.cxIdeal = mp_Find->GetMinWidth();
-				rbBand.cyChild = rbBand.cyMinChild = rbBand.cyMaxChild = iPaneHeight; // + mn_ThemeHeightDiff;
+				rbBand.cyChild = rbBand.cyMinChild = rbBand.cyMaxChild = iPaneHeight;
 			}
 
 			// Insert before toolbar
@@ -1370,7 +1346,7 @@ void CTabPanelWin::ShowToolsPane(bool bShow)
 			rbBand.wID        = rbi_ToolBar;
 			rbBand.hwndChild  = mh_Toolbar;
 			rbBand.cx = rbBand.cxMinChild = rbBand.cxIdeal = mn_LastToolbarWidth = sz.cx;
-			rbBand.cyChild = rbBand.cyMinChild = rbBand.cyMaxChild = sz.cy + mn_ThemeHeightDiff;
+			rbBand.cyChild = rbBand.cyMinChild = rbBand.cyMaxChild = sz.cy + (gpConEmu->IsThemed() ? 0 : 2);
 
 			if (!SendMessage(mh_Rebar, RB_INSERTBAND, (WPARAM)-1, (LPARAM)&rbBand))
 			{
@@ -1410,7 +1386,7 @@ int CTabPanelWin::QueryTabbarHeight()
 		RECT rcClient = MakeRect(600, 400);
 		//rcClient = gpConEmu->GetGuiClientRect();
 		TabCtrl_AdjustRect(mh_Tabbar, FALSE, &rcClient);
-		mn_TabHeight = rcClient.top - mn_ThemeHeightDiff - (gpSet->FontUseUnits ? 1 : 0);
+		mn_TabHeight = rcClient.top - (gpConEmu->IsThemed() ? 0 : 2) - (gpSet->FontUseUnits ? 1 : 0);
 	}
 	else
 	{
