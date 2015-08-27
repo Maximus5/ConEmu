@@ -647,6 +647,28 @@ void SetConsoleBufferSize(HWND inConWnd, int anWidth, int anHeight, int anBuffer
 }
 */
 
+// Function GetConsoleSelectionInfo does NOT exists in Windows 2000
+BOOL apiGetConsoleSelectionInfo(PCONSOLE_SELECTION_INFO lpConsoleSelectionInfo)
+{
+	typedef BOOL (WINAPI* GetConsoleSelectionInfo_t)(PCONSOLE_SELECTION_INFO lpConsoleSelectionInfo);
+	static GetConsoleSelectionInfo_t getConsoleSelectionInfo = NULL;
+	static bool bFuncChecked = false;
+
+	if (!bFuncChecked)
+	{
+		HMODULE hKernel32 = GetModuleHandle(L"kernel32.dll");
+		getConsoleSelectionInfo = hKernel32 ? (GetConsoleSelectionInfo_t)GetProcAddress(hKernel32, "GetConsoleSelectionInfo") : NULL;
+		bFuncChecked = true;
+	}
+
+	BOOL bRc = FALSE;
+	if (getConsoleSelectionInfo)
+	{
+		bRc = getConsoleSelectionInfo(lpConsoleSelectionInfo);
+	}
+	return bRc;
+}
+
 COORD MyGetLargestConsoleWindowSize(HANDLE hConsoleOutput)
 {
 	// Fails in Wine

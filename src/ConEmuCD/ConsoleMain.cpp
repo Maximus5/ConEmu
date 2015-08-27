@@ -8206,7 +8206,7 @@ BOOL cmd_Pause(CESERVER_REQ& in, CESERVER_REQ** out)
 	CONSOLE_SELECTION_INFO lsel1 = {}, lsel2 = {};
 	BOOL bSelInfo1, bSelInfo2;
 
-	bSelInfo1 = GetConsoleSelectionInfo(&lsel1);
+	bSelInfo1 = apiGetConsoleSelectionInfo(&lsel1);
 
 	CEPauseCmd cmd = (CEPauseCmd)in.dwData[0], newState;
 	if (cmd == CEPause_Switch)
@@ -8228,7 +8228,7 @@ BOOL cmd_Pause(CESERVER_REQ& in, CESERVER_REQ** out)
 	DWORD nStartTick = GetTickCount();
 	while (true)
 	{
-		bSelInfo2 = GetConsoleSelectionInfo(&lsel2);
+		bSelInfo2 = apiGetConsoleSelectionInfo(&lsel2);
 		if (!bSelInfo2 || (lsel2.dwFlags != lsel1.dwFlags))
 			break;
 		Sleep(10);
