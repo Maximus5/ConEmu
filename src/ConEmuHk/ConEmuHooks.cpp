@@ -1498,7 +1498,7 @@ BOOL WINAPI OnCloseHandle(HANDLE hObject)
 BOOL WINAPI OnGetModuleHandleExW(DWORD dwFlags, LPCWSTR lpModuleName, HMODULE *phModule)
 {
 	typedef BOOL (WINAPI* OnGetModuleHandleExW_t)(DWORD dwFlags, LPCWSTR lpModuleName, HMODULE *phModule);
-	ORIGINALFAST(GetModuleHandleExW);
+	ORIGINALFASTEX(GetModuleHandleExW,NULL);
 	BOOL lbRc = FALSE;
 	LPCWSTR lpModuleName2 = lpModuleName;
 
@@ -1515,7 +1515,10 @@ BOOL WINAPI OnGetModuleHandleExW(DWORD dwFlags, LPCWSTR lpModuleName, HMODULE *p
 		}
 	}
 
-	lbRc = F(GetModuleHandleExW)(dwFlags, lpModuleName2, phModule);
+	if (F(GetModuleHandleExW))
+	{
+		lbRc = F(GetModuleHandleExW)(dwFlags, lpModuleName2, phModule);
+	}
 	return lbRc;
 }
 
