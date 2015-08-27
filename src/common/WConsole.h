@@ -82,6 +82,7 @@ BOOL apiGetConsoleFontSize(HANDLE hOutput, int &SizeY, int &SizeX, wchar_t (&rsF
 BOOL apiSetConsoleFontSize(HANDLE hOutput, int inSizeY, int inSizeX, const wchar_t *asFontName); //Vista+ only!
 BOOL apiFixFontSizeForBufferSize(HANDLE hOutput, COORD dwSize, char* pszUtfLog = NULL, int cchLogMax = 0);
 
+BOOL apiPauseConsoleOutput(HWND hConWnd, bool bPause);
 BOOL apiGetConsoleSelectionInfo(PCONSOLE_SELECTION_INFO lpConsoleSelectionInfo);
 
 COORD MyGetLargestConsoleWindowSize(HANDLE hConsoleOutput);
