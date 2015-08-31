@@ -7564,6 +7564,9 @@ DWORD CRealConsole::GetRunningPID()
 
 	DWORD nPID = 0, nCount = 0;
 
+	// `git-cmd.exe` or `git-bash.exe` from Git-for-Windows v2.x
+	DWORD nGitHelperPID = 0, nGitHelper = 0;
+
 	MSectionLock SPRC; SPRC.Lock(&csPRC);
 
 	for (int i = 0; i < mn_ProcessCount; i++)
@@ -7574,9 +7577,26 @@ DWORD CRealConsole::GetRunningPID()
 			continue;
 		}
 		nPID = prc.ProcessID; nCount++;
+		// `git-cmd.exe` or `git-bash.exe` from Git-for-Windows v2.x
+		// They are waiting for actual root process bash.exe or smth...
+		if (IsGitBashHelper(prc.Name))
+		{
+			if (!nGitHelper)
+				nGitHelperPID = prc.ProcessID;
+			nGitHelper++;
+		}
 	}
 
 	SPRC.Unlock();
+
+	// If root was `git-bash.exe` or `git-cmd.exe` than correct process counter
+	if ((nCount == 2) && (nGitHelper == 1))
+	{
+		if (nGitHelperPID != nPID)
+		{
+			nCount = 1;
+		}
+	}
 
 	// If the only shell is running now - consider it is free
 	if (nCount <= 1)
