@@ -10190,6 +10190,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		}
 
 
+		// Now, get VCon under mouse cursor
 		CVConGuard VCon;
 		if (CVConGroup::GetVConFromPoint(ptCurScreen, &VCon))
 		{
