@@ -10189,6 +10189,12 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			DEBUGSTRMOUSEWHEEL(szDbg);
 		}
 
+		// gh#216: Mouse wheel only works on first console in split window
+		// https://conemu.github.io/en/MicrosoftBugs.html#WM_MOUSEWHEEL-10
+		if (IsWin10())
+		{
+			ptCurClient = ptCurScreen = ptRealScreen;
+		}
 
 		// Now, get VCon under mouse cursor
 		CVConGuard VCon;
