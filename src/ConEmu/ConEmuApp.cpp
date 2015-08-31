@@ -359,13 +359,13 @@ void DebugLogMessage(HWND h, UINT m, WPARAM w, LPARAM l, int posted, BOOL extra)
 		{
 			static SYSTEMTIME st;
 			GetLocalTime(&st);
-			wsprintfA(szWhole, "%02i:%02i.%03i %s%s: <%i> %s, %s, %s)\n", st.wMinute, st.wSecond, st.wMilliseconds,
+			wsprintfA(szWhole, "%02i:%02i.%03i %s%s: <%i> %s, %s, %s\n", st.wMinute, st.wSecond, st.wMilliseconds,
 				pszSrc, (extra ? "+" : ""), gnMessageNestingLevel, szMess, szWP, szLP);
 			OutputDebugStringA(szWhole);
 		}
 		else if (bSendToFile)
 		{
-			wsprintfA(szWhole, "%s%s: <%i> %s, %s, %s)\n",
+			wsprintfA(szWhole, "%s%s: <%i> %s, %s, %s\n",
 				pszSrc, (extra ? "+" : ""), gnMessageNestingLevel, szMess, szWP, szLP);
 			DebugLogFile(szWhole);
 		}
