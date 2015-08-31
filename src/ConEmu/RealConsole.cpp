@@ -12003,7 +12003,9 @@ bool CRealConsole::isCloseTabConfirmed(CEFarWindowType TabType, LPCWSTR asConfir
 	{
 		ConfirmCloseParam Parm;
 		Parm.nConsoles = 1;
-		Parm.nOperations = (GetProgress(NULL,NULL)>=0) ? 1 : 0;
+		Parm.nOperations = ((GetProgress(NULL,NULL)>=0)
+			|| ((gpSet->nCloseConfirmFlags & Settings::cc_Running) && GetRunningPID()))
+			? 1 : 0;
 		Parm.nUnsavedEditors = GetModifiedEditors();
 		Parm.asSingleConsole = asConfirmation ? asConfirmation : m_ChildGui.isGuiWnd() ? gsCloseGui : gsCloseCon;
 		Parm.asSingleTitle = Title;
