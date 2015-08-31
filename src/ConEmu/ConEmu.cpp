@@ -10417,7 +10417,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	// MouseWheel event must get SCREEN coordinates
 	if (messg == WM_MOUSEWHEEL || messg == WM_MOUSEHWHEEL)
 	{
-		POINT ptRealScreen; GetCursorPos(&ptRealScreen);
+		POINT ptRealScreen = {}; GetCursorPos(&ptRealScreen);
 
 		wchar_t szKeys[100] = L"";
 		if (wParam & MK_CONTROL)  wcscat_c(szKeys, L" Ctrl");
