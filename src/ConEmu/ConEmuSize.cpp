@@ -2137,19 +2137,6 @@ LRESULT CConEmuSize::OnWindowPosChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 	}
 	#endif
 
-	//if (WindowPosStackCount == 1)
-	//{
-	//	#ifdef _DEBUG
-	//	bool bNoMove = (p->flags & SWP_NOMOVE);
-	//	bool bNoSize = (p->flags & SWP_NOSIZE);
-	//	#endif
-
-	//	if (mp_ConEmu->CorrectWindowPos(p))
-	//	{
-	//		MoveWindow(ghWnd, p->x, p->y, p->cx, p->cy, TRUE);
-	//	}
-	//}
-
 	DEBUGTEST(WINDOWPOS ps1 = *p);
 
 	// If monitor jump was triggered by OS but not ConEmu internals
@@ -3090,7 +3077,6 @@ bool CConEmuSize::SetQuakeMode(BYTE NewQuakeMode, ConEmuWindowMode nNewWindowMod
 	// Иначе оно уедет за границы экрана при вызове OnHideCaption
 	if (!gpSet->isQuakeStyle && bPrevStyle)
 	{
-		//SetWindowPos(ghWnd, NULL, rcWnd.left, rcWnd.top, rcWnd.right-rcWnd.left, rcWnd.bottom-rcWnd.top, SWP_NOZORDER);
 		m_QuakePrevSize.bWaitReposition = true;
 		this->UpdateIdealRect(rcWnd);
 		mrc_StoredNormalRect = rcWnd;
@@ -4402,11 +4388,6 @@ void CConEmuSize::ReSize(bool abCorrect2Ideal /*= false*/)
 
 			CVConGroup::PreReSize(WindowMode, rcCompWnd, CER_MAIN, true);
 
-			//#ifdef _DEBUG
-			//DebugStep(L"...Sleeping");
-			//Sleep(300);
-			//DebugStep(NULL);
-			//#endif
 			MoveWindow(ghWnd, rcWnd.left, rcWnd.top,
 			           (rcCompWnd.right - rcCompWnd.left), (rcCompWnd.bottom - rcCompWnd.top), 1);
 		}
@@ -6075,34 +6056,8 @@ void CConEmuSize::DoMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 		{
 			if (gpSet->isQuakeStyle)
 			{
-				// No need. All magic was done with SW_SHOWNOACTIVATE and SW_HIDE
-
-				//// Найти окно "под" нами
-				//HWND hNext = NULL;
-				//if (hCurForeground && !bIsForeground)
-				//{
-				//	// Вернуть фокус туда где он был до наших ексерсизов
-				//	hNext = hCurForeground;
-				//}
-				//else
-				//{
-				//	while ((hNext = FindWindowEx(NULL, hNext, NULL, NULL)) != NULL)
-				//	{
-				//		if (::IsWindowVisible(hNext))
-				//		{
-				//			// Доп условия, аналог Alt-Tab?
-				//			DWORD nStylesEx = GetWindowLong(hNext, GWL_EXSTYLE);
-				//			DEBUGTEST(DWORD nStyles = GetWindowLong(hNext, GWL_STYLE));
-				//			if (!(nStylesEx & WS_EX_TOOLWINDOW))
-				//			{
-				//				break;
-				//			}
-				//		}
-				//	}
-				//}
-				//// И задвинуть в зад
-				//SetWindowPos(ghWnd, NULL, -32000, -32000, 0,0, SWP_NOZORDER|SWP_NOSIZE|SWP_NOACTIVATE);
-				//apiSetForegroundWindow(hNext ? hNext : GetDesktopWindow());
+				// No need to trying put focus into next Z-order window.
+				// All magic was done with SW_SHOWNOACTIVATE and SW_HIDE
 			}
 			else
 			{
