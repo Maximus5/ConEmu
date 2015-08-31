@@ -1178,6 +1178,8 @@ LRESULT CFrameHolder::OnNcCalcSize(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 			//OffsetRect(&rcClient, r[0].left + nDX, r[0].top + nDY + nCaption);
 		}
 
+		if (!gpSet->isTabsInCaption)
+		{
 		// pParm->rgrc[0] contains the coordinates of the new client rectangle resulting from the move or resize
 		// pParm->rgrc[1] rectangle contains the valid destination rectangle
 		// pParm->rgrc[2] rectangle contains the valid source rectangle
@@ -1194,6 +1196,7 @@ LRESULT CFrameHolder::OnNcCalcSize(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 		{
 			pParm->rgrc[1] = rcClient; // Mark as valid - only client area. Let system to redraw the frame and caption.
 			pParm->rgrc[2] = r[2];
+		}
 		}
 
 		if (bAllowPreserveClient)
