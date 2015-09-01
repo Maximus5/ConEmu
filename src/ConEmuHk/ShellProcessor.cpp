@@ -588,7 +588,11 @@ void CShellProc::CheckHooksDisabled()
 	}
 	else
 	{
-		bHooksSkipNewConsole = (m_SrvMapping.cbSize && !(m_SrvMapping.Flags & CECF_ProcessNewCon));
+		// When application is DefTerm host, it must be able to process "-new_console" switches.
+		// Especially the "-new_console:z" switch. But the m_SrvMapping is not filled in most cases.
+		bHooksSkipNewConsole = !gbPrepareDefaultTerminal
+			&& (m_SrvMapping.cbSize && !(m_SrvMapping.Flags & CECF_ProcessNewCon));
+		// "start /?" is a "cmd.exe" feature mainly. User may want to disable "start" processing
 		bHooksSkipCmdStart = (m_SrvMapping.cbSize && !(m_SrvMapping.Flags & CECF_ProcessCmdStart));
 	}
 
