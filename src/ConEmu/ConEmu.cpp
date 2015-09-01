@@ -2879,9 +2879,7 @@ void CConEmuMain::OnTabbarActivated(bool bTabbarVisible, bool bInAutoShowHide)
 				}
 
 				MSetter lSet(&mn_IgnoreSizeChange);
-				SetWindowPos(ghWnd, NULL,
-					0, 0, iNewWidth, iNewHeight,
-					SWP_NOZORDER|SWP_NOMOVE);
+				setWindowPos(NULL, 0, 0, iNewWidth, iNewHeight, SWP_NOZORDER|SWP_NOMOVE);
 			}
 		}
 	}
@@ -7336,7 +7334,7 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 		{
 			if ((hCurForeground == ghWnd) || (hCurForeground != mp_Inside->mh_InsideParentRoot))
 				apiSetForegroundWindow(mp_Inside->mh_InsideParentRoot);
-			SetWindowPos(ghWnd, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE|SWP_NOSIZE);
+			setWindowPos(HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE|SWP_NOSIZE);
 		}
 		else if ((hCurForeground == ghWnd) && !WindowStartMinimized)
 		{
