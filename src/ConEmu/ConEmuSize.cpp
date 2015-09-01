@@ -2930,14 +2930,14 @@ LRESULT CConEmuSize::OnMoving(LPRECT prcWnd /*= NULL*/, bool bWmMove /*= false*/
 	{
 		TODO("Desktop mode?");
 		MoveWindow(ghWnd, rcWnd.left, rcWnd.right, nWidth+1, nHeight+1, TRUE);
-
-		if (gpSetCls->isAdvLogging)
-			mp_ConEmu->LogWindowPos(L"OnMoving.end");
 	}
 	else
 	{
 		*prcWnd = rcWnd;
 	}
+
+	if (gpSetCls->isAdvLogging)
+		mp_ConEmu->LogWindowPos(L"OnMoving.end");
 
 	return TRUE;
 }
@@ -3970,10 +3970,7 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 					DWORD_PTR dwStyle = GetWindowLongPtr(ghWnd, GWL_STYLE);
 					if (dwStyle & WS_MAXIMIZE)
 						mp_ConEmu->SetWindowStyle(dwStyle&~WS_MAXIMIZE);
-					SetWindowPos(ghWnd, HWND_TOP,
-						rcNormal.left, rcNormal.top,
-						rcNormal.right-rcNormal.left, rcNormal.bottom-rcNormal.top,
-						SWP_NOCOPYBITS|SWP_SHOWWINDOW);
+					setWindowPos(HWND_TOP, rcNormal.left, rcNormal.top, rcNormal.right-rcNormal.left, rcNormal.bottom-rcNormal.top, SWP_NOCOPYBITS|SWP_SHOWWINDOW);
 				}
 				else if (IsWindowVisible(ghWnd))
 				{
@@ -4032,12 +4029,6 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 			#ifdef _DEBUG
 			WINDOWPLACEMENT wpl = {sizeof(wpl)}; GetWindowPlacement(ghWnd, &wpl);
 			#endif
-
-			if (gpSetCls->isAdvLogging)
-			{
-				wchar_t szInfo[128]; wsprintf(szInfo, L"SetWindowPos(X=%i, Y=%i, W=%i, H=%i)", rcNew.left, rcNew.top, rcNew.right-rcNew.left, rcNew.bottom-rcNew.top);
-				LogString(szInfo);
-			}
 
 			setWindowPos(NULL, rcNew.left, rcNew.top, rcNew.right-rcNew.left, rcNew.bottom-rcNew.top, SWP_NOZORDER);
 
@@ -4132,10 +4123,7 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 					SetWindowPlacement(ghWnd, &wpl);*/
 					DWORD_PTR dwStyle = GetWindowLongPtr(ghWnd, GWL_STYLE);
 					mp_ConEmu->SetWindowStyle(dwStyle|WS_MAXIMIZE);
-					SetWindowPos(ghWnd, HWND_TOP,
-						rcMax.left, rcMax.top,
-						rcMax.right-rcMax.left, rcMax.bottom-rcMax.top,
-						SWP_NOCOPYBITS|SWP_SHOWWINDOW);
+					setWindowPos(HWND_TOP, rcMax.left, rcMax.top, rcMax.right-rcMax.left, rcMax.bottom-rcMax.top, SWP_NOCOPYBITS|SWP_SHOWWINDOW);
 				}
 				lSet.Unlock();
 				_ASSERTE(mn_IgnoreSizeChange>=0);
@@ -4235,12 +4223,6 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 			}
 
 			// for virtual screens mi.rcMonitor. may contains negative values...
-
-			if (gpSetCls->isAdvLogging)
-			{
-				wchar_t szInfo[128]; wsprintf(szInfo, L"SetWindowPos(X=%i, Y=%i, W=%i, H=%i)", -rcShift.left+mi.rcMonitor.left,-rcShift.top+mi.rcMonitor.top, ptFullScreenSize.x,ptFullScreenSize.y);
-				LogString(szInfo);
-			}
 
 			// Already restored, need to clear the flag to avoid incorrect sizing
 			mp_ConEmu->mp_Menu->SetRestoreFromMinimized(false);
@@ -4905,7 +4887,18 @@ bool CConEmuSize::setWindowPos(HWND hWndInsertAfter, int X, int Y, int cx, int c
 		}
 	}
 
-	lbRc = SetWindowPos(ghWnd, hWndInsertAfter, X, Y, cx, cy, uFlags);
+	wchar_t szInfo[128]; _wsprintf(szInfo, SKIPCOUNT(szInfo) L"setWindowPos: {%i,%i} (%ix%i) Flags=x%X After=x%X", X, Y, cx, cy, uFlags, LODWORD(hWndInsertAfter));
+	if (gpSetCls->isAdvLogging)
+	{
+		LogString(szInfo);
+	}
+	else
+	{
+		DEBUGSTRSIZE(szInfo);
+	}
+
+	// Call API function, we are ready
+	lbRc = ::SetWindowPos(ghWnd, hWndInsertAfter, X, Y, cx, cy, uFlags);
 
 	if (bInCreate && bQuake)
 	{
