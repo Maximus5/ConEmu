@@ -111,6 +111,7 @@ protected:
 	bool mb_LockWindowRgn;
 	bool mb_LockShowWindow;
 	LONG mn_IgnoreSizeChange;
+	LONG mn_InSetWindowPos;
 
 	HMONITOR mh_MinFromMonitor;
 

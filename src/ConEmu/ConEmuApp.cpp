@@ -2454,7 +2454,14 @@ RECT CenterInParent(RECT rcDlg, HWND hParent)
 
 BOOL MoveWindowRect(HWND hWnd, const RECT& rcWnd, BOOL bRepaint)
 {
-	return MoveWindow(hWnd, rcWnd.left, rcWnd.top, rcWnd.right - rcWnd.left, rcWnd.bottom - rcWnd.top, bRepaint);
+	BOOL lbRc;
+
+	if (gpConEmu && (ghWnd == hWnd))
+		lbRc = gpConEmu->setWindowPos(NULL, rcWnd.left, rcWnd.top, rcWnd.right - rcWnd.left, rcWnd.bottom - rcWnd.top, SWP_NOZORDER|(bRepaint?0:SWP_NOREDRAW));
+	else
+		lbRc = MoveWindow(hWnd, rcWnd.left, rcWnd.top, rcWnd.right - rcWnd.left, rcWnd.bottom - rcWnd.top, bRepaint);
+
+	return lbRc;
 }
 
 HICON CreateNullIcon()

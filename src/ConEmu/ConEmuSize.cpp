@@ -71,6 +71,7 @@ CConEmuSize::CConEmuSize(CConEmuMain* pOwner)
 	m_ForceShowFrame = fsf_Hide;
 	m_TileMode = cwc_Current;
 	mn_IgnoreSizeChange = 0;
+	mn_InSetWindowPos = 0;
 	mb_InSetQuakeMode = false;
 	mb_InShowMinimized = false;
 	mb_LastRgnWasNull = true;
@@ -1224,7 +1225,7 @@ bool CConEmuSize::SetWindowPosSize(LPCWSTR asX, LPCWSTR asY, LPCWSTR asW, LPCWST
 			SetFocus(GetDlgItem(hDlg, tWndWidth));
 		RECT rcQuake = gpConEmu->GetDefaultRect();
 		// And size/move!
-		SetWindowPos(ghWnd, NULL, rcQuake.left, rcQuake.top, rcQuake.right-rcQuake.left, rcQuake.bottom-rcQuake.top, SWP_NOZORDER);
+		setWindowPos(NULL, rcQuake.left, rcQuake.top, rcQuake.right-rcQuake.left, rcQuake.bottom-rcQuake.top, SWP_NOZORDER);
 	}
 	else
 	{
@@ -1234,12 +1235,12 @@ bool CConEmuSize::SetWindowPosSize(LPCWSTR asX, LPCWSTR asY, LPCWSTR asW, LPCWST
 		if (gpConEmu->isZoomed() || gpConEmu->isIconic() || gpConEmu->isFullScreen())
 			gpConEmu->SetWindowMode(wmNormal);
 
-		SetWindowPos(ghWnd, NULL, newX, newY, 0,0, SWP_NOSIZE|SWP_NOZORDER);
+		setWindowPos(NULL, newX, newY, 0,0, SWP_NOSIZE|SWP_NOZORDER);
 
 		// Установить размер
 		gpConEmu->SizeWindow(newW, newH);
 
-		SetWindowPos(ghWnd, NULL, newX, newY, 0,0, SWP_NOSIZE|SWP_NOZORDER);
+		setWindowPos(NULL, newX, newY, 0,0, SWP_NOSIZE|SWP_NOZORDER);
 	}
 
 	// Запомнить "идеальный" размер окна, выбранный пользователем
@@ -1575,7 +1576,7 @@ void CConEmuSize::UpdateInsideRect(RECT rcNewPos)
 	UpdateIdealRect(rcWnd);
 
 	// Подвинуть
-	SetWindowPos(ghWnd, HWND_TOP, rcWnd.left, rcWnd.top, rcWnd.right-rcWnd.left, rcWnd.bottom-rcWnd.top, 0);
+	setWindowPos(HWND_TOP, rcWnd.left, rcWnd.top, rcWnd.right-rcWnd.left, rcWnd.bottom-rcWnd.top, 0);
 }
 
 // Return true, when rect was changed
@@ -2928,8 +2929,8 @@ LRESULT CConEmuSize::OnMoving(LPRECT prcWnd /*= NULL*/, bool bWmMove /*= false*/
 
 	if (prcWnd == NULL)
 	{
-		TODO("Desktop mode?");
-		MoveWindow(ghWnd, rcWnd.left, rcWnd.right, nWidth+1, nHeight+1, TRUE);
+		// May get here from OnBtn_SnapToDesktopEdges if gpSet->isSnapToDesktopEdges
+		setWindowPos(NULL, rcWnd.left, rcWnd.top, nWidth, nHeight, SWP_NOZORDER);
 	}
 	else
 	{
@@ -2971,7 +2972,7 @@ bool CConEmuSize::SizeWindow(const CESize sizeW, const CESize sizeH)
 	WndWidth.Set(true, sizeW.Style, sizeW.Value);
 	WndHeight.Set(false, sizeH.Style, sizeH.Value);
 
-	if (SetWindowPos(ghWnd, NULL, 0,0, szPixelSize.cx, szPixelSize.cy, SWP_NOMOVE|SWP_NOZORDER))
+	if (setWindowPos(NULL, 0,0, szPixelSize.cx, szPixelSize.cy, SWP_NOMOVE|SWP_NOZORDER))
 	{
 		bSizeOK = true;
 	}
@@ -3182,7 +3183,7 @@ RECT CConEmuSize::SetNormalWindowSize()
 	if (!hMon)
 	{
 		_ASSERTE(hMon!=NULL);
-		SetWindowPos(ghWnd, NULL, rcNewWnd.left, rcNewWnd.top, rcNewWnd.right-rcNewWnd.left, rcNewWnd.bottom-rcNewWnd.top, SWP_NOZORDER);
+		setWindowPos(NULL, rcNewWnd.left, rcNewWnd.top, rcNewWnd.right-rcNewWnd.left, rcNewWnd.bottom-rcNewWnd.top, SWP_NOZORDER);
 	}
 	else
 	{
@@ -3325,7 +3326,7 @@ bool CConEmuSize::SetTileMode(ConEmuWindowCommand Tile)
 				}
 			}
 
-			SetWindowPos(ghWnd, NULL, rcNewWnd.left, rcNewWnd.top, rcNewWnd.right-rcNewWnd.left, rcNewWnd.bottom-rcNewWnd.top, SWP_NOZORDER);
+			setWindowPos(NULL, rcNewWnd.left, rcNewWnd.top, rcNewWnd.right-rcNewWnd.left, rcNewWnd.bottom-rcNewWnd.top, SWP_NOZORDER);
 		}
 
 		changeFromWindowMode = wmNotChanging;
@@ -3803,16 +3804,18 @@ bool CConEmuSize::JumpNextMonitor(HWND hJumpWnd, HMONITOR hJumpMon, bool Next, c
 		*prcNewPos = rcNewMain;
 	}
 
-	// И перемещение
-	SetWindowPos(hJumpWnd, NULL, rcNewMain.left, rcNewMain.top, rcNewMain.right-rcNewMain.left, rcNewMain.bottom-rcNewMain.top, SWP_NOZORDER/*|SWP_DRAWFRAME*/|SWP_NOCOPYBITS);
-	//MoveWindow(hJumpWnd, rcNewMain.left, rcNewMain.top, rcNewMain.right-rcNewMain.left, rcNewMain.bottom-rcNewMain.top, FALSE);
+	// Move it
+	if (hJumpWnd == ghWnd)
+		setWindowPos(NULL, rcNewMain.left, rcNewMain.top, rcNewMain.right-rcNewMain.left, rcNewMain.bottom-rcNewMain.top, SWP_NOZORDER|SWP_NOCOPYBITS);
+	else
+		SetWindowPos(hJumpWnd, NULL, rcNewMain.left, rcNewMain.top, rcNewMain.right-rcNewMain.left, rcNewMain.bottom-rcNewMain.top, SWP_NOZORDER|SWP_NOCOPYBITS);
 
-
+	// Almost done
 	if (hJumpWnd == ghWnd)
 	{
 		if (bFullScreen)
 		{
-			// вернуть
+			// Restore styles
 			mp_ConEmu->SetWindowStyle(ghWnd, nStyles);
 			// Check it
 			_ASSERTE(WindowMode == wmFullScreen);
@@ -4374,14 +4377,11 @@ void CConEmuSize::ReSize(bool abCorrect2Ideal /*= false*/)
 			}
 			#endif
 
-			#if 1
-			// Выполняем всегда, даже если размер уже соответствует...
-			// Без учета DoubleView/SplitScreen
+			// Do it always, because of abCorrect2Ideal, even if the size already match
 			RECT rcIdeal = GetIdealRect();
 			AutoSizeFont(rcIdeal, CER_MAIN);
 			RECT rcConsole = CalcRect(CER_CONSOLE_ALL, rcIdeal, CER_MAIN);
 			RECT rcCompWnd = CalcRect(CER_MAIN, rcConsole, CER_CONSOLE_ALL);
-			#endif
 
 			// При показе/скрытии табов высота консоли может "прыгать"
 			// Ее нужно скорректировать. Поскольку идет реальный ресайз
@@ -4390,8 +4390,8 @@ void CConEmuSize::ReSize(bool abCorrect2Ideal /*= false*/)
 
 			CVConGroup::PreReSize(WindowMode, rcCompWnd, CER_MAIN, true);
 
-			MoveWindow(ghWnd, rcWnd.left, rcWnd.top,
-			           (rcCompWnd.right - rcCompWnd.left), (rcCompWnd.bottom - rcCompWnd.top), 1);
+			int iCompWidth = (rcCompWnd.right - rcCompWnd.left), iCompHeight = (rcCompWnd.bottom - rcCompWnd.top);
+			setWindowPos(NULL, rcWnd.left, rcWnd.top, iCompWidth, iCompHeight, SWP_NOZORDER);
 		}
 		else
 		{
@@ -4402,9 +4402,8 @@ void CConEmuSize::ReSize(bool abCorrect2Ideal /*= false*/)
 		client = GetGuiClientRect();
 	}
 
-#ifdef _DEBUG
-	dwStyle = GetWindowLongPtr(ghWnd, GWL_STYLE);
-#endif
+	DEBUGTEST(dwStyle = GetWindowLongPtr(ghWnd, GWL_STYLE));
+
 	OnSize(true, isZoomed() ? SIZE_MAXIMIZED : SIZE_RESTORED,
 	       client.right, client.bottom);
 
@@ -4872,6 +4871,9 @@ bool CConEmuSize::setWindowPos(HWND hWndInsertAfter, int X, int Y, int cx, int c
 
 	bool bInCreate = mp_ConEmu->InCreateWindow();
 	bool bQuake = gpSet->isQuakeStyle && !(gpSet->isDesktopMode || mp_ConEmu->mp_Inside);
+
+	MSetter inSetWindowPos(&mn_InSetWindowPos);
+	_ASSERTE(mn_InSetWindowPos<3);
 
 	if (bInCreate)
 	{
@@ -5892,7 +5894,7 @@ void CConEmuSize::DoMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 				}
 			}
 
-			SetWindowPos(ghWnd, NULL, rcWnd.left, rcWnd.top, 0,0, SWP_NOZORDER|SWP_NOSIZE);
+			setWindowPos(NULL, rcWnd.left, rcWnd.top, 0,0, SWP_NOZORDER|SWP_NOSIZE);
 		}
 
 		isQuakeMinimized = false; // теперь можно сбросить
@@ -5921,7 +5923,7 @@ void CConEmuSize::DoMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 					}
 					// and place it "in place"
 					int nWidth = rcPlace.right-rcPlace.left, nHeight = rcPlace.bottom-rcPlace.top;
-					SetWindowPos(ghWnd, NULL, rcPlace.left, rcPlace.top, nWidth, nHeight, SWP_NOZORDER);
+					setWindowPos(NULL, rcPlace.left, rcPlace.top, nWidth, nHeight, SWP_NOZORDER);
 
 					mn_QuakePercent = 100;
 					UpdateWindowRgn();
@@ -6209,7 +6211,7 @@ void CConEmuSize::DoAlwaysOnTopSwitch()
 
 	CheckMenuItem(gpConEmu->mp_Menu->GetSysMenu(), ID_ALWAYSONTOP, MF_BYCOMMAND |
 	              (gpSet->isAlwaysOnTop ? MF_CHECKED : MF_UNCHECKED));
-	SetWindowPos(ghWnd, hwndAfter, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
+	setWindowPos(hwndAfter, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
 
 	if (ghOpWnd && gpSet->isAlwaysOnTop)
 	{
@@ -6332,15 +6334,15 @@ void CConEmuSize::DoDesktopModeSwitch()
 			GetWindowThreadProcessId(mh_ShellWindow, &mn_ShellWindowPID);
 			RECT rcWnd; GetWindowRect(ghWnd, &rcWnd);
 			MapWindowPoints(NULL, mh_ShellWindow, (LPPOINT)&rcWnd, 2);
-			//ShowWindow(SW_HIDE);
-			//SetWindowPos(ghWnd, NULL, rcWnd.left,rcWnd.top,0,0, SWP_NOSIZE|SWP_NOZORDER);
 			SetParent(mh_ShellWindow);
-			SetWindowPos(ghWnd, NULL, rcWnd.left,rcWnd.top,0,0, SWP_NOSIZE|SWP_NOZORDER);
-			SetWindowPos(ghWnd, HWND_TOPMOST, 0,0,0,0, SWP_NOSIZE|SWP_NOMOVE);
-			//ShowWindow(SW_SHOW);
-#ifdef _DEBUG
+
+			setWindowPos(NULL, rcWnd.left,rcWnd.top,0,0, SWP_NOSIZE|SWP_NOZORDER);
+			setWindowPos(HWND_TOPMOST, 0,0,0,0, SWP_NOSIZE|SWP_NOMOVE);
+
+			#ifdef _DEBUG
 			RECT rcNow; GetWindowRect(ghWnd, &rcNow);
-#endif
+			UNREFERENCED_PARAMETER(rcNow.left);
+			#endif
 		}
 	}
 
@@ -6349,9 +6351,9 @@ void CConEmuSize::DoDesktopModeSwitch()
 		//dwStyle |= WS_POPUP;
 		RECT rcWnd; GetWindowRect(ghWnd, &rcWnd);
 		RECT rcVirtual = GetVirtualScreenRect(TRUE);
-		SetWindowPos(ghWnd, NULL, max(rcWnd.left,rcVirtual.left),max(rcWnd.top,rcVirtual.top),0,0, SWP_NOSIZE|SWP_NOZORDER);
+		setWindowPos(NULL, max(rcWnd.left,rcVirtual.left),max(rcWnd.top,rcVirtual.top),0,0, SWP_NOSIZE|SWP_NOZORDER);
 		SetParent(hDesktop);
-		SetWindowPos(ghWnd, NULL, max(rcWnd.left,rcVirtual.left),max(rcWnd.top,rcVirtual.top),0,0, SWP_NOSIZE|SWP_NOZORDER);
+		setWindowPos(NULL, max(rcWnd.left,rcVirtual.left),max(rcWnd.top,rcVirtual.top),0,0, SWP_NOSIZE|SWP_NOZORDER);
 		OnAlwaysOnTop();
 
 		if (ghOpWnd && !gpSet->isAlwaysOnTop)
