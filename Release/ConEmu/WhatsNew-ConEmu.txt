@@ -19,6 +19,18 @@ http://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2015.8.13c
+* gh#279: Unchecked ‘Align ConEmu window size to cells’ was ignored on startup.
+* Win2k: Restore compatibility with Windows 2000.
+* Win2k: Adapt ‘Pause’ feature to lack of GetConsoleSelectionInfo.
+* gh#216: Mouse wheel only works on first console in split window.
+* Fix unexpected resize to integral size on startup.
+* Don't create two default tasks {Bash::Git bash} for `git-cmd.exe` and `bin/sh.exe`.
+* Don't count `git-cmd.exe` and `git-bash.exe` while checking for ‘Incomplete operations’ during tab/window close.
+* Correct close tab/window confirmation message (‘incomplete operations’ was not shown).
+* DefTerm. The switch `-new_console:z` was ignored by host application in some cases.
+
+
 2015.8.13b
 * gh#279: ConEmu window grew in size after relaunch if size was defined in pixels or percents.
 
