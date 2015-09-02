@@ -777,7 +777,7 @@ private:
 
 			if (nErrCode == ERROR_ACCESS_DENIED)
 			{
-				TODO("Попытаться запустить ConEmuC64 под админом");
+				TODO("Let's try to run ConEmuC[64] as admin");
 			}
 			goto wrap;
 		}
