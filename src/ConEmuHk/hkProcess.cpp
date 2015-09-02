@@ -1,0 +1,672 @@
+﻿
+/*
+Copyright (c) 2015 Maximus5
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+1. Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in the
+   documentation and/or other materials provided with the distribution.
+3. The name of the authors may not be used to endorse or promote products
+   derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE AUTHOR ''AS IS'' AND ANY EXPRESS OR
+IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
+#ifdef _DEBUG
+	#define DebugString(x) //OutputDebugString(x)
+#else
+	#define DebugString(x) //OutputDebugString(x)
+#endif
+
+#include "../common/common.hpp"
+#include "../common/MMap.h"
+
+#define DEFINE_HOOK_MACROS
+#include "ConEmuHooks.h"
+#include "hkProcess.h"
+#include "MainThread.h"
+#include "SetHook.h"
+#include "ShellProcessor.h"
+
+/* **************** */
+
+extern bool gbCurDirChanged;
+extern HANDLE ghSkipSetThreadContextForThread; // Injects.cpp
+extern MMap<DWORD,BOOL> gStartedThreads;
+extern HRESULT OurShellExecCmdLine(HWND hwnd, LPCWSTR pwszCommand, LPCWSTR pwszStartDir, bool bRunAsAdmin, bool bForce);
+
+/* **************** */
+
+
+/* **************** */
+
+// May be called from "C" programs
+VOID WINAPI OnExitProcess(UINT uExitCode)
+{
+	//typedef BOOL (WINAPI* OnExitProcess_t)(UINT uExitCode);
+	ORIGINALFAST(ExitProcess);
+
+	#if 0
+	if (gbIsLessProcess)
+	{
+		_ASSERTE(FALSE && "Continue to ExitProcess");
+	}
+	#endif
+
+	// And terminate our threads
+	DoDllStop(false, true);
+
+	// Issue 1865: Due to possible dead locks in LdrpAcquireLoaderLock() call TerminateProcess
+	if (gbHookServerForcedTermination)
+	{
+		TerminateProcess(GetCurrentProcess(), uExitCode);
+		return; // Assume not to get here
+	}
+
+	F(ExitProcess)(uExitCode);
+}
+
+
+// For example, mintty is terminated ‘abnormally’. It calls TerminateProcess instead of ExitProcess.
+BOOL WINAPI OnTerminateProcess(HANDLE hProcess, UINT uExitCode)
+{
+	//typedef BOOL (WINAPI* OnTerminateProcess_t)(HANDLE hProcess, UINT uExitCode);
+	ORIGINALFAST(TerminateProcess);
+	BOOL lbRc;
+
+	if (hProcess == GetCurrentProcess())
+	{
+		// We need not to unset hooks (due to process will be force-killed below)
+		// And terminate our threads
+		DoDllStop(false, true);
+	}
+
+	lbRc = F(TerminateProcess)(hProcess, uExitCode);
+
+	return lbRc;
+}
+
+
+BOOL WINAPI OnTerminateThread(HANDLE hThread, DWORD dwExitCode)
+{
+	//typedef BOOL (WINAPI* OnTerminateThread_t)(HANDLE hThread, UINT dwExitCode);
+	ORIGINALFAST(TerminateThread);
+	BOOL lbRc;
+
+	#if 0
+	if (gbIsLessProcess)
+	{
+		_ASSERTE(FALSE && "Continue to terminate thread");
+	}
+	#endif
+
+	if (hThread == GetCurrentThread())
+	{
+		// And terminate our service threads
+		DoDllStop(false);
+	}
+
+	lbRc = F(TerminateThread)(hThread, dwExitCode);
+
+	return lbRc;
+}
+
+
+BOOL WINAPI OnCreateProcessA(LPCSTR lpApplicationName,  LPSTR lpCommandLine,  LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment, LPCSTR lpCurrentDirectory,  LPSTARTUPINFOA lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation)
+{
+	//typedef BOOL (WINAPI* OnCreateProcessA_t)(LPCSTR lpApplicationName,  LPSTR lpCommandLine,  LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment, LPCSTR lpCurrentDirectory,  LPSTARTUPINFOA lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation);
+	ORIGINALFAST(CreateProcessA);
+	BOOL bMainThread = FALSE; // поток не важен
+	BOOL lbRc = FALSE;
+	DWORD dwErr = 0;
+
+
+	if (ph && ph->PreCallBack)
+	{
+		SETARGS10(&lbRc, lpApplicationName, lpCommandLine, lpProcessAttributes, lpThreadAttributes, bInheritHandles, dwCreationFlags, lpEnvironment, lpCurrentDirectory, lpStartupInfo, lpProcessInformation);
+
+		// Если функция возвращает FALSE - реальное чтение не будет вызвано
+		if (!ph->PreCallBack(&args))
+			return lbRc;
+	}
+
+	CShellProc* sp = new CShellProc();
+	if (!sp || !sp->OnCreateProcessA(&lpApplicationName, (LPCSTR*)&lpCommandLine, &lpCurrentDirectory, &dwCreationFlags, lpStartupInfo))
+	{
+		delete sp;
+		SetLastError(ERROR_FILE_NOT_FOUND);
+		return FALSE;
+	}
+	if ((dwCreationFlags & CREATE_SUSPENDED) == 0)
+	{
+		DebugString(L"CreateProcessA without CREATE_SUSPENDED Flag!\n");
+	}
+
+	lbRc = F(CreateProcessA)(lpApplicationName, lpCommandLine, lpProcessAttributes, lpThreadAttributes, bInheritHandles, dwCreationFlags, lpEnvironment, lpCurrentDirectory, lpStartupInfo, lpProcessInformation);
+	dwErr = GetLastError();
+
+
+	// Если lbParamsChanged == TRUE - об инжектах позаботится ConEmuC.exe
+	sp->OnCreateProcessFinished(lbRc, lpProcessInformation);
+	delete sp;
+
+
+	if (ph && ph->PostCallBack)
+	{
+		SETARGS10(&lbRc, lpApplicationName, lpCommandLine, lpProcessAttributes, lpThreadAttributes, bInheritHandles, dwCreationFlags, lpEnvironment, lpCurrentDirectory, lpStartupInfo, lpProcessInformation);
+		ph->PostCallBack(&args);
+	}
+
+	SetLastError(dwErr);
+	return lbRc;
+}
+
+
+BOOL WINAPI OnCreateProcessW(LPCWSTR lpApplicationName, LPWSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment, LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation)
+{
+	//typedef BOOL (WINAPI* OnCreateProcessW_t)(LPCWSTR lpApplicationName, LPWSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment, LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation);
+	ORIGINALFAST(CreateProcessW);
+	BOOL bMainThread = FALSE; // поток не важен
+	BOOL lbRc = FALSE;
+	DWORD dwErr = 0;
+	DWORD ldwCreationFlags = dwCreationFlags;
+
+	if (ph && ph->PreCallBack)
+	{
+		SETARGS10(&lbRc, lpApplicationName, lpCommandLine, lpProcessAttributes, lpThreadAttributes, bInheritHandles, ldwCreationFlags, lpEnvironment, lpCurrentDirectory, lpStartupInfo, lpProcessInformation);
+
+		// Если функция возвращает FALSE - реальное чтение не будет вызвано
+		if (!ph->PreCallBack(&args))
+			return lbRc;
+	}
+
+	CShellProc* sp = new CShellProc();
+	if (!sp || !sp->OnCreateProcessW(&lpApplicationName, (LPCWSTR*)&lpCommandLine, &lpCurrentDirectory, &ldwCreationFlags, lpStartupInfo))
+	{
+		delete sp;
+		SetLastError(ERROR_FILE_NOT_FOUND);
+		return FALSE;
+	}
+
+	if ((ldwCreationFlags & CREATE_SUSPENDED) == 0)
+	{
+		DebugString(L"CreateProcessW without CREATE_SUSPENDED Flag!\n");
+	}
+
+	#ifdef _DEBUG
+	SetLastError(0);
+	#endif
+
+	#ifdef SHOWCREATEPROCESSTICK
+	wchar_t szTimingMsg[512]; HANDLE hTimingHandle = GetStdHandle(STD_OUTPUT_HANDLE);
+	force_print_timings(L"CreateProcessW");
+	#endif
+
+	#if 0
+	// This is disabled for now. Command will create new visible console window,
+	// but excpected behavior will be "reuse" of existing console window
+	if (!sp->GetArgs()->bNewConsole && sp->GetArgs()->pszUserName)
+	{
+		LPCWSTR pszName = sp->GetArgs()->pszUserName;
+		LPCWSTR pszDomain = sp->GetArgs()->pszDomain;
+		LPCWSTR pszPassword = sp->GetArgs()->szUserPassword;
+		STARTUPINFOW si = {sizeof(si)};
+		PROCESS_INFORMATION pi = {};
+		DWORD dwOurFlags = (ldwCreationFlags & ~EXTENDED_STARTUPINFO_PRESENT);
+		lbRc = CreateProcessWithLogonW(pszName, pszDomain, (pszPassword && *pszPassword) ? pszPassword : NULL, LOGON_WITH_PROFILE,
+			lpApplicationName, lpCommandLine, dwOurFlags, lpEnvironment, lpCurrentDirectory,
+			&si, &pi);
+		if (lbRc)
+			*lpProcessInformation = pi;
+	}
+	else
+	#endif
+	{
+		lbRc = F(CreateProcessW)(lpApplicationName, lpCommandLine, lpProcessAttributes, lpThreadAttributes, bInheritHandles, ldwCreationFlags, lpEnvironment, lpCurrentDirectory, lpStartupInfo, lpProcessInformation);
+	}
+	dwErr = GetLastError();
+
+	#ifdef SHOWCREATEPROCESSTICK
+	force_print_timings(L"CreateProcessW - done");
+	#endif
+
+	// Если lbParamsChanged == TRUE - об инжектах позаботится ConEmuC.exe
+	sp->OnCreateProcessFinished(lbRc, lpProcessInformation);
+	delete sp;
+
+	#ifdef SHOWCREATEPROCESSTICK
+	force_print_timings(L"OnCreateProcessFinished - done");
+	#endif
+
+
+	if (ph && ph->PostCallBack)
+	{
+		SETARGS10(&lbRc, lpApplicationName, lpCommandLine, lpProcessAttributes, lpThreadAttributes, bInheritHandles, ldwCreationFlags, lpEnvironment, lpCurrentDirectory, lpStartupInfo, lpProcessInformation);
+		ph->PostCallBack(&args);
+	}
+
+	SetLastError(dwErr);
+	return lbRc;
+}
+
+
+UINT WINAPI OnWinExec(LPCSTR lpCmdLine, UINT uCmdShow)
+{
+	//typedef BOOL (WINAPI* OnWinExec_t)(LPCSTR lpCmdLine, UINT uCmdShow);
+
+	if (!lpCmdLine || !*lpCmdLine)
+	{
+		_ASSERTEX(lpCmdLine && *lpCmdLine);
+		return 0;
+	}
+
+	STARTUPINFOA si = {sizeof(si)};
+	si.dwFlags = STARTF_USESHOWWINDOW;
+	si.wShowWindow = uCmdShow;
+	DWORD nCreateFlags = NORMAL_PRIORITY_CLASS;
+	PROCESS_INFORMATION pi = {};
+
+	int nLen = lstrlenA(lpCmdLine);
+	LPSTR pszCmd = (char*)malloc(nLen+1);
+	if (!pszCmd)
+	{
+		return 0; // out of memory
+	}
+	lstrcpynA(pszCmd, lpCmdLine, nLen+1);
+
+	UINT nRc = 0;
+	BOOL bRc = OnCreateProcessA(NULL, pszCmd, NULL, NULL, FALSE, nCreateFlags, NULL, NULL, &si, &pi);
+
+	free(pszCmd);
+
+	if (bRc)
+	{
+		// If the function succeeds, the return value is greater than 31.
+		nRc = 32;
+	}
+	else
+	{
+		nRc = GetLastError();
+		if (nRc != ERROR_BAD_FORMAT && nRc != ERROR_FILE_NOT_FOUND && nRc != ERROR_PATH_NOT_FOUND)
+			nRc = 0;
+	}
+
+	return nRc;
+
+#if 0
+	typedef BOOL (WINAPI* OnWinExec_t)(LPCSTR lpCmdLine, UINT uCmdShow);
+	ORIGINALFAST(CreateProcessA);
+	BOOL bMainThread = FALSE; // поток не важен
+	BOOL lbRc = FALSE;
+	DWORD dwErr = 0;
+
+	CShellProc* sp = new CShellProc();
+	if (!sp || !sp->OnCreateProcessA(NULL, &lpCmdLine, NULL, &nCreateFlags, sa))
+	{
+		delete sp;
+		SetLastError(ERROR_FILE_NOT_FOUND);
+		return ERROR_FILE_NOT_FOUND;
+	}
+
+	if ((nCreateFlags & CREATE_SUSPENDED) == 0)
+	{
+		DebugString(L"CreateProcessA without CREATE_SUSPENDED Flag!\n");
+	}
+
+	lbRc = F(CreateProcessA)(lpApplicationName, lpCommandLine, lpProcessAttributes, lpThreadAttributes, bInheritHandles, dwCreationFlags, lpEnvironment, lpCurrentDirectory, lpStartupInfo, lpProcessInformation);
+	dwErr = GetLastError();
+
+
+	// Если lbParamsChanged == TRUE - об инжектах позаботится ConEmuC.exe
+	sp->OnCreateProcessFinished(lbRc, lpProcessInformation);
+	delete sp;
+
+
+	if (ph && ph->PostCallBack)
+	{
+		SETARGS10(&lbRc, lpApplicationName, lpCommandLine, lpProcessAttributes, lpThreadAttributes, bInheritHandles, dwCreationFlags, lpEnvironment, lpCurrentDirectory, lpStartupInfo, lpProcessInformation);
+		ph->PostCallBack(&args);
+	}
+
+	SetLastError(dwErr);
+	return lbRc;
+#endif
+}
+
+
+BOOL WINAPI OnSetCurrentDirectoryA(LPCSTR lpPathName)
+{
+	//typedef BOOL (WINAPI* OnSetCurrentDirectoryA_t)(LPCSTR lpPathName);
+	ORIGINALFAST(SetCurrentDirectoryA);
+	BOOL bMainThread = FALSE; // поток не важен
+	BOOL lbRc = FALSE;
+
+	lbRc = F(SetCurrentDirectoryA)(lpPathName);
+
+	gbCurDirChanged |= (lbRc != FALSE);
+
+	return lbRc;
+}
+
+
+BOOL WINAPI OnSetCurrentDirectoryW(LPCWSTR lpPathName)
+{
+	//typedef BOOL (WINAPI* OnSetCurrentDirectoryW_t)(LPCWSTR lpPathName);
+	ORIGINALFAST(SetCurrentDirectoryW);
+	BOOL bMainThread = FALSE; // поток не важен
+	BOOL lbRc = FALSE;
+
+	lbRc = F(SetCurrentDirectoryW)(lpPathName);
+
+	gbCurDirChanged |= (lbRc != FALSE);
+
+	return lbRc;
+}
+
+
+BOOL WINAPI OnSetThreadContext(HANDLE hThread, CONST CONTEXT *lpContext)
+{
+	//typedef BOOL (WINAPI* OnSetThreadContext_t)(HANDLE hThread, CONST CONTEXT *lpContext);
+	ORIGINALFAST(SetThreadContext);
+	//BOOL bMainThread = FALSE; // поток не важен
+	BOOL lbRc = FALSE;
+
+	if (ghSkipSetThreadContextForThread && (hThread == ghSkipSetThreadContextForThread))
+	{
+		lbRc = FALSE;
+		SetLastError(ERROR_INVALID_HANDLE);
+	}
+	else
+	{
+		lbRc = F(SetThreadContext)(hThread, lpContext);
+	}
+
+	return lbRc;
+}
+
+
+BOOL WINAPI OnShellExecuteExA(LPSHELLEXECUTEINFOA lpExecInfo)
+{
+	//typedef BOOL (WINAPI* OnShellExecuteExA_t)(LPSHELLEXECUTEINFOA lpExecInfo);
+	ORIGINALFASTEX(ShellExecuteExA,NULL);
+	if (!F(ShellExecuteExA))
+	{
+		SetLastError(ERROR_INVALID_FUNCTION);
+		return FALSE;
+	}
+
+	//LPSHELLEXECUTEINFOA lpNew = NULL;
+	//DWORD dwProcessID = 0;
+	//wchar_t* pszTempParm = NULL;
+	//wchar_t szComSpec[MAX_PATH+1], szConEmuC[MAX_PATH+1]; szComSpec[0] = szConEmuC[0] = 0;
+	//LPSTR pszTempApp = NULL, pszTempArg = NULL;
+	//lpNew = (LPSHELLEXECUTEINFOA)malloc(lpExecInfo->cbSize);
+	//memmove(lpNew, lpExecInfo, lpExecInfo->cbSize);
+
+	CShellProc* sp = new CShellProc();
+	if (!sp || !sp->OnShellExecuteExA(&lpExecInfo))
+	{
+		delete sp;
+		SetLastError(ERROR_FILE_NOT_FOUND);
+		return FALSE;
+	}
+
+	//// Under ConEmu only!
+	//if (ghConEmuWndDC)
+	//{
+	//	if (!lpNew->hwnd || lpNew->hwnd == GetRealConsoleWindow())
+	//		lpNew->hwnd = ghConEmuWnd;
+
+	//	HANDLE hDummy = NULL;
+	//	DWORD nImageSubsystem = 0, nImageBits = 0;
+	//	if (PrepareExecuteParmsA(eShellExecute, lpNew->lpVerb, lpNew->fMask,
+	//			lpNew->lpFile, lpNew->lpParameters,
+	//			hDummy, hDummy, hDummy,
+	//			&pszTempApp, &pszTempArg, nImageSubsystem, nImageBits))
+	//	{
+	//		// Меняем
+	//		lpNew->lpFile = pszTempApp;
+	//		lpNew->lpParameters = pszTempArg;
+	//	}
+	//}
+
+	BOOL lbRc;
+
+	//if (gFarMode.bFarHookMode && gFarMode.bShellNoZoneCheck)
+	//	lpExecInfo->fMask |= SEE_MASK_NOZONECHECKS;
+
+	//gbInShellExecuteEx = TRUE;
+
+	lbRc = F(ShellExecuteExA)(lpExecInfo);
+	DWORD dwErr = GetLastError();
+
+	//if (lbRc && gfGetProcessId && lpNew->hProcess)
+	//{
+	//	dwProcessID = gfGetProcessId(lpNew->hProcess);
+	//}
+
+	//#ifdef _DEBUG
+	//
+	//	if (lpNew->lpParameters)
+	//	{
+	//		DebugStringW(L"After ShellExecuteEx\n");
+	//		DebugStringA(lpNew->lpParameters);
+	//		DebugStringW(L"\n");
+	//	}
+	//
+	//	if (lbRc && dwProcessID)
+	//	{
+	//		wchar_t szDbgMsg[128]; msprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"Process created: %u\n", dwProcessID);
+	//		DebugStringW(szDbgMsg);
+	//	}
+	//
+	//#endif
+	//lpExecInfo->hProcess = lpNew->hProcess;
+	//lpExecInfo->hInstApp = lpNew->hInstApp;
+	sp->OnShellFinished(lbRc, lpExecInfo->hInstApp, lpExecInfo->hProcess);
+	delete sp;
+
+	//if (pszTempParm)
+	//	free(pszTempParm);
+	//if (pszTempApp)
+	//	free(pszTempApp);
+	//if (pszTempArg)
+	//	free(pszTempArg);
+
+	//free(lpNew);
+	//gbInShellExecuteEx = FALSE;
+	SetLastError(dwErr);
+	return lbRc;
+}
+
+
+BOOL WINAPI OnShellExecuteExW(LPSHELLEXECUTEINFOW lpExecInfo)
+{
+	//typedef BOOL (WINAPI* OnShellExecuteExW_t)(LPSHELLEXECUTEINFOW lpExecInfo);
+	ORIGINALFASTEX(ShellExecuteExW,NULL);
+	if (!F(ShellExecuteExW))
+	{
+		SetLastError(ERROR_INVALID_FUNCTION);
+		return FALSE;
+	}
+	#ifdef _DEBUG
+	BOOL bMainThread = (GetCurrentThreadId() == gnHookMainThreadId);
+	#endif
+
+	CShellProc* sp = new CShellProc();
+	if (!sp || !sp->OnShellExecuteExW(&lpExecInfo))
+	{
+		delete sp;
+		SetLastError(ERROR_FILE_NOT_FOUND);
+		return FALSE;
+	}
+
+	BOOL lbRc = FALSE;
+
+	lbRc = F(ShellExecuteExW)(lpExecInfo);
+	DWORD dwErr = GetLastError();
+
+	sp->OnShellFinished(lbRc, lpExecInfo->hInstApp, lpExecInfo->hProcess);
+	delete sp;
+
+	SetLastError(dwErr);
+	return lbRc;
+}
+
+
+// Issue 1125: Hook undocumented function used for running commands typed in Windows 7 Win-menu search string.
+HRESULT WINAPI OnShellExecCmdLine(HWND hwnd, LPCWSTR pwszCommand, LPCWSTR pwszStartDir, int nShow, LPVOID pUnused, DWORD dwSeclFlags)
+{
+	//typedef HRESULT (WINAPI* OnShellExecCmdLine_t)(HWND hwnd, LPCWSTR pwszCommand, LPCWSTR pwszStartDir, int nShow, LPVOID pUnused, DWORD dwSeclFlags);
+	ORIGINALFASTEX(ShellExecCmdLine,NULL);
+	HRESULT hr = S_OK;
+
+	// This is used from "Run" dialog too. We need to process command internally, because
+	// otherwise Win can pass CREATE_SUSPENDED into CreateProcessW, so console will flickers.
+	// From Win7 start menu: "cmd" and Ctrl+Shift+Enter - dwSeclFlags==0x79
+	if (nShow && pwszCommand && pwszStartDir)
+	{
+		if (!IsBadStringPtrW(pwszCommand, MAX_PATH) && !IsBadStringPtrW(pwszStartDir, MAX_PATH))
+		{
+			hr = OurShellExecCmdLine(hwnd, pwszCommand, pwszStartDir, (dwSeclFlags & 0x40)==0x40, false);
+			if (hr == (HRESULT)-1)
+				goto ApiCall;
+			else
+				goto wrap;
+		}
+	}
+
+ApiCall:
+	if (!F(ShellExecCmdLine))
+	{
+		hr = HRESULT_FROM_WIN32(ERROR_INVALID_FUNCTION);
+	}
+	else
+	{
+		hr = F(ShellExecCmdLine)(hwnd, pwszCommand, pwszStartDir, nShow, pUnused, dwSeclFlags);
+	}
+
+wrap:
+	return hr;
+}
+
+
+HINSTANCE WINAPI OnShellExecuteA(HWND hwnd, LPCSTR lpOperation, LPCSTR lpFile, LPCSTR lpParameters, LPCSTR lpDirectory, INT nShowCmd)
+{
+	//typedef HINSTANCE(WINAPI* OnShellExecuteA_t)(HWND hwnd, LPCSTR lpOperation, LPCSTR lpFile, LPCSTR lpParameters, LPCSTR lpDirectory, INT nShowCmd);
+	ORIGINALFASTEX(ShellExecuteA,NULL);
+	if (!F(ShellExecuteA))
+	{
+		SetLastError(ERROR_INVALID_FUNCTION);
+		return FALSE;
+	}
+
+	if (ghConEmuWndDC)
+	{
+		if (!hwnd || hwnd == GetRealConsoleWindow())
+			hwnd = ghConEmuWnd;
+	}
+
+	//gbInShellExecuteEx = TRUE;
+	CShellProc* sp = new CShellProc();
+	if (!sp || !sp->OnShellExecuteA(&lpOperation, &lpFile, &lpParameters, &lpDirectory, NULL, (DWORD*)&nShowCmd))
+	{
+		delete sp;
+		SetLastError(ERROR_FILE_NOT_FOUND);
+		return (HINSTANCE)ERROR_FILE_NOT_FOUND;
+	}
+
+	HINSTANCE lhRc;
+	lhRc = F(ShellExecuteA)(hwnd, lpOperation, lpFile, lpParameters, lpDirectory, nShowCmd);
+	DWORD dwErr = GetLastError();
+
+	sp->OnShellFinished(((INT_PTR)lhRc > 32), lhRc, NULL); //-V112
+	delete sp;
+
+	//gbInShellExecuteEx = FALSE;
+	SetLastError(dwErr);
+	return lhRc;
+}
+
+
+HINSTANCE WINAPI OnShellExecuteW(HWND hwnd, LPCWSTR lpOperation, LPCWSTR lpFile, LPCWSTR lpParameters, LPCWSTR lpDirectory, INT nShowCmd)
+{
+	//typedef HINSTANCE(WINAPI* OnShellExecuteW_t)(HWND hwnd, LPCWSTR lpOperation, LPCWSTR lpFile, LPCWSTR lpParameters, LPCWSTR lpDirectory, INT nShowCmd);
+	ORIGINALFASTEX(ShellExecuteW,NULL);
+	if (!F(ShellExecuteW))
+	{
+		SetLastError(ERROR_INVALID_FUNCTION);
+		return FALSE;
+	}
+
+	if (ghConEmuWndDC)
+	{
+		if (!hwnd || hwnd == GetRealConsoleWindow())
+			hwnd = ghConEmuWnd;
+	}
+
+	//gbInShellExecuteEx = TRUE;
+	CShellProc* sp = new CShellProc();
+	if (!sp || !sp->OnShellExecuteW(&lpOperation, &lpFile, &lpParameters, &lpDirectory, NULL, (DWORD*)&nShowCmd))
+	{
+		delete sp;
+		SetLastError(ERROR_FILE_NOT_FOUND);
+		return (HINSTANCE)ERROR_FILE_NOT_FOUND;
+	}
+
+	HINSTANCE lhRc;
+	lhRc = F(ShellExecuteW)(hwnd, lpOperation, lpFile, lpParameters, lpDirectory, nShowCmd);
+	DWORD dwErr = GetLastError();
+
+	sp->OnShellFinished(((INT_PTR)lhRc > 32), lhRc, NULL); //-V112
+	delete sp;
+
+	//gbInShellExecuteEx = FALSE;
+	SetLastError(dwErr);
+	return lhRc;
+}
+
+
+// ssh (msysgit) crash issue. Need to know if thread was started by application but not remotely.
+HANDLE WINAPI OnCreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize, LPTHREAD_START_ROUTINE lpStartAddress, LPVOID lpParameter, DWORD dwCreationFlags, LPDWORD lpThreadId)
+{
+	//typedef HANDLE(WINAPI* OnCreateThread_t)(LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize, LPTHREAD_START_ROUTINE lpStartAddress, LPVOID lpParameter, DWORD dwCreationFlags, LPDWORD lpThreadId);
+	ORIGINALFAST(CreateThread);
+	DWORD nTemp = 0;
+	LPDWORD pThreadID = lpThreadId ? lpThreadId : &nTemp;
+
+	HANDLE hThread = F(CreateThread)(lpThreadAttributes, dwStackSize, lpStartAddress, lpParameter, dwCreationFlags, pThreadID);
+
+	if (hThread)
+		gStartedThreads.Set(*pThreadID,true);
+
+	return hThread;
+}
+
+
+// Required in VisualStudio and CodeBlocks (gdb) for DefTerm support while debugging
+DWORD WINAPI OnResumeThread(HANDLE hThread)
+{
+	//typedef DWORD (WINAPI* OnResumeThread_t)(HANDLE);
+	ORIGINALFAST(ResumeThread);
+
+	CShellProc::OnResumeDebugeeThreadCalled(hThread);
+
+	DWORD nRc = F(ResumeThread)(hThread);
+
+	return nRc;
+}

@@ -82,14 +82,6 @@ static bool gbVimTermWasChangedBuffer = false;
 //void StopVimTerm();
 /* ************ Globals for ViM ************ */
 
-#ifdef _DEBUG
-	// Forward (external in Entry.cpp)
-	void FIRST_ANSI_CALL(const BYTE* lpBuf, DWORD nNumberOfBytes);
-#else
-	// Dummy macro
-	#define FIRST_ANSI_CALL(lpBuf,nNumberOfBytes)
-#endif
-
 BOOL WINAPI OnCreateProcessW(LPCWSTR lpApplicationName, LPWSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment, LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation);
 
 // These handles must be registered and released in OnCloseHandle.
@@ -305,14 +297,6 @@ bool CEAnsi::IsOutputHandle(HANDLE hFile, DWORD* pMode /*= NULL*/)
 
 
 
-//BOOL WINAPI OnWriteFile(HANDLE hFile, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite, LPDWORD lpNumberOfBytesWritten, LPOVERLAPPED lpOverlapped);
-//BOOL WINAPI OnWriteConsoleA(HANDLE hConsoleOutput, const VOID *lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, LPVOID lpReserved);
-//BOOL WINAPI OnWriteConsoleW(HANDLE hConsoleOutput, const VOID *lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, LPVOID lpReserved);
-//BOOL WINAPI OnWriteConsoleOutputCharacterA(HANDLE hConsoleOutput, LPCSTR lpCharacter, DWORD nLength, COORD dwWriteCoord, LPDWORD lpNumberOfCharsWritten);
-//BOOL WINAPI OnWriteConsoleOutputCharacterW(HANDLE hConsoleOutput, LPCWSTR lpCharacter, DWORD nLength, COORD dwWriteCoord, LPDWORD lpNumberOfCharsWritten);
-
-//typedef BOOL (WINAPI* OnWriteConsoleW_t)(HANDLE hConsoleOutput, const VOID *lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, LPVOID lpReserved);
-//BOOL WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, LPCWSTR lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten);
 
 //struct DisplayParm
 //{
@@ -590,13 +574,13 @@ void CEAnsi::DumpEscape(LPCWSTR buf, size_t cchLen, int iUnknown)
 			}
 		}
 	}
-	else if (gszClinkCmdLine)
+	else
 	{
 		pszDst -= 2;
-		const wchar_t* psEmptyClink = L" - <empty sequence, clink?>";
-		size_t nClinkLen = lstrlenW(psEmptyClink);
-		wmemcpy(pszDst, psEmptyClink, nClinkLen);
-		pszDst += nClinkLen;
+		const wchar_t* psEmptyMessage = L" - <empty sequence>";
+		size_t nMsgLen = lstrlenW(psEmptyMessage);
+		wmemcpy(pszDst, psEmptyMessage, nMsgLen);
+		pszDst += nMsgLen;
 	}
 	*(pszDst++) = L'\n'; *pszDst = 0;
 
@@ -707,237 +691,6 @@ wrap:
 }
 
 
-BOOL WINAPI CEAnsi::OnScrollConsoleScreenBufferA(HANDLE hConsoleOutput, const SMALL_RECT *lpScrollRectangle, const SMALL_RECT *lpClipRectangle, COORD dwDestinationOrigin, const CHAR_INFO *lpFill)
-{
-	typedef BOOL (WINAPI* OnScrollConsoleScreenBufferA_t)(HANDLE hConsoleOutput, const SMALL_RECT *lpScrollRectangle, const SMALL_RECT *lpClipRectangle, COORD dwDestinationOrigin, const CHAR_INFO *lpFill);
-	ORIGINALFAST(ScrollConsoleScreenBufferA);
-	//BOOL bMainThread = FALSE; // поток не важен
-	BOOL lbRc = FALSE;
-
-	if (IsOutputHandle(hConsoleOutput))
-	{
-		WARNING("Проверка аргументов! Скролл может быть частичным");
-		ExtScrollScreenParm scrl = {sizeof(scrl), essf_ExtOnly, hConsoleOutput, dwDestinationOrigin.Y - lpScrollRectangle->Top};
-		ExtScrollScreen(&scrl);
-	}
-
-	lbRc = F(ScrollConsoleScreenBufferA)(hConsoleOutput, lpScrollRectangle, lpClipRectangle, dwDestinationOrigin, lpFill);
-
-	return lbRc;
-}
-
-BOOL WINAPI CEAnsi::OnScrollConsoleScreenBufferW(HANDLE hConsoleOutput, const SMALL_RECT *lpScrollRectangle, const SMALL_RECT *lpClipRectangle, COORD dwDestinationOrigin, const CHAR_INFO *lpFill)
-{
-	typedef BOOL (WINAPI* OnScrollConsoleScreenBufferW_t)(HANDLE hConsoleOutput, const SMALL_RECT *lpScrollRectangle, const SMALL_RECT *lpClipRectangle, COORD dwDestinationOrigin, const CHAR_INFO *lpFill);
-	ORIGINALFAST(ScrollConsoleScreenBufferW);
-	//BOOL bMainThread = FALSE; // поток не важен
-	BOOL lbRc = FALSE;
-
-	if (IsOutputHandle(hConsoleOutput))
-	{
-		WARNING("Проверка аргументов! Скролл может быть частичным");
-		ExtScrollScreenParm scrl = {sizeof(scrl), essf_ExtOnly, hConsoleOutput, dwDestinationOrigin.Y - lpScrollRectangle->Top};
-		ExtScrollScreen(&scrl);
-	}
-
-	//Warning: This function called from "cmd.exe /c cls" whith arguments:
-	//lpScrollRectangle - full scroll buffer
-	//lpClipRectangle - NULL
-	//dwDestinationOrigin = {0, -9999}
-
-	lbRc = F(ScrollConsoleScreenBufferW)(hConsoleOutput, lpScrollRectangle, lpClipRectangle, dwDestinationOrigin, lpFill);
-
-	return lbRc;
-}
-
-HANDLE WINAPI CEAnsi::OnCreateFileW(LPCWSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile)
-{
-	typedef HANDLE (WINAPI* OnCreateFileW_t)(LPCWSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile);
-	ORIGINALFAST(CreateFileW);
-	//BOOL bMainThread = FALSE; // поток не важен
-	HANDLE h;
-
-	h = F(CreateFileW)(lpFileName, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
-	DWORD nLastErr = GetLastError();
-
-	DebugString(L"CEAnsi::OnCreateFileW executed\n");
-
-	// Just a check for "string" validity
-	if (lpFileName && (((DWORD_PTR)lpFileName) & ~0xFFFF)
-		// CON output is opening with following flags
-		&& (dwDesiredAccess & GENERIC_WRITE)
-		&& ((dwShareMode & (FILE_SHARE_READ|FILE_SHARE_WRITE)) == (FILE_SHARE_READ|FILE_SHARE_WRITE))
-		)
-	{
-		DEBUGTEST(HANDLE hStd = GetStdHandle(STD_OUTPUT_HANDLE));
-		if (lstrcmpi(lpFileName, L"CON") == 0)
-		{
-			ghLastConOut = h;
-		}
-		DebugString(L"CEAnsi::OnCreateFileW checked\n");
-	}
-
-	SetLastError(nLastErr);
-	return h;
-}
-
-BOOL WINAPI CEAnsi::OnWriteFile(HANDLE hFile, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite, LPDWORD lpNumberOfBytesWritten, LPOVERLAPPED lpOverlapped)
-{
-	typedef BOOL (WINAPI* OnWriteFile_t)(HANDLE hFile, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite, LPDWORD lpNumberOfBytesWritten, LPOVERLAPPED lpOverlapped);
-	ORIGINALFAST(WriteFile);
-	//BOOL bMainThread = FALSE; // поток не важен
-	BOOL lbRc = FALSE;
-	//DWORD nDBCSCP = 0;
-
-	FIRST_ANSI_CALL((const BYTE*)lpBuffer, nNumberOfBytesToWrite);
-
-	//if (gpStartEnv->bIsDbcs)
-	//{
-	//	nDBCSCP = GetConsoleOutputCP();
-	//}
-
-	if (lpBuffer && nNumberOfBytesToWrite && hFile && IsAnsiCapable(hFile))
-		lbRc = OnWriteConsoleA(hFile, lpBuffer, nNumberOfBytesToWrite, lpNumberOfBytesWritten, NULL);
-	else
-		lbRc = F(WriteFile)(hFile, lpBuffer, nNumberOfBytesToWrite, lpNumberOfBytesWritten, lpOverlapped);
-
-	return lbRc;
-}
-
-BOOL WINAPI CEAnsi::OnWriteConsoleA(HANDLE hConsoleOutput, const VOID *lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, LPVOID lpReserved)
-{
-	typedef BOOL (WINAPI* OnWriteConsoleA_t)(HANDLE hConsoleOutput, const VOID *lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, LPVOID lpReserved);
-	ORIGINALFAST(WriteConsoleA);
-	//BOOL bMainThread = FALSE; // поток не важен
-	BOOL lbRc = FALSE;
-	wchar_t* buf = NULL;
-	DWORD len, cp;
-	static bool badUnicode = false;
-	DEBUGTEST(bool curBadUnicode = badUnicode);
-	DEBUGTEST(wchar_t szTmp[2] = L"");
-
-	FIRST_ANSI_CALL((const BYTE*)lpBuffer, nNumberOfCharsToWrite);
-
-	if (badUnicode)
-	{
-		badUnicode = false;
-		#ifdef _DEBUG
-		if (lpBuffer && nNumberOfCharsToWrite)
-		{
-			szTmp[0] = ((char*)lpBuffer)[0];
-			DumpEscape(szTmp, 1, 2);
-		}
-		#endif
-		goto badchar;
-	}
-
-	if (lpBuffer && nNumberOfCharsToWrite && hConsoleOutput && IsAnsiCapable(hConsoleOutput))
-	{
-		cp = gCpConv.nDefaultCP ? gCpConv.nDefaultCP : GetConsoleOutputCP();
-
-		DWORD nLastErr = 0;
-		DWORD nFlags = 0; //MB_ERR_INVALID_CHARS;
-
-		if (! ((cp == 42) || (cp == 65000) || (cp >= 57002 && cp <= 57011) || (cp >= 50220 && cp <= 50229)) )
-		{
-			nFlags = MB_ERR_INVALID_CHARS;
-			nLastErr = GetLastError();
-		}
-
-		len = MultiByteToWideChar(cp, nFlags, (LPCSTR)lpBuffer, nNumberOfCharsToWrite, 0, 0);
-
-		if (nFlags /*gpStartEnv->bIsDbcs*/ && (GetLastError() == ERROR_NO_UNICODE_TRANSLATION))
-		{
-			badUnicode = true;
-			#ifdef _DEBUG
-			szTmp[0] = ((char*)lpBuffer)[0];
-			DumpEscape(szTmp, 1, 2);
-			#endif
-			SetLastError(nLastErr);
-			goto badchar;
-		}
-
-		buf = (wchar_t*)malloc((len+1)*sizeof(wchar_t));
-		if (buf == NULL)
-		{
-			if (lpNumberOfCharsWritten != NULL)
-				*lpNumberOfCharsWritten = 0;
-		}
-		else
-		{
-			DWORD newLen = MultiByteToWideChar(cp, nFlags, (LPCSTR)lpBuffer, nNumberOfCharsToWrite, buf, len);
-			_ASSERTEX(newLen==len);
-			buf[newLen] = 0; // ASCII-Z, хотя, если функцию WriteConsoleW зовет приложение - "\0" может и не быть...
-
-			HANDLE hWrite;
-			MConHandle hConOut(L"CONOUT$");
-			if (hConsoleOutput == ghLastConOut)
-				hWrite = hConOut;
-			else
-				hWrite = hConsoleOutput;
-
-			DWORD nWideWritten = 0;
-			lbRc = OurWriteConsoleW(hWrite, buf, len, &nWideWritten, NULL);
-
-			// Issue 1291:	Python fails to print string sequence with ASCII character followed by Chinese character.
-			if (lpNumberOfCharsWritten)
-			{
-				*lpNumberOfCharsWritten = (nWideWritten == len) ? nNumberOfCharsToWrite : nWideWritten;
-			}
-		}
-		goto fin;
-	}
-
-badchar:
-	// По идее, сюда попадать не должны. Ошибка в параметрах?
-	_ASSERTEX((lpBuffer && nNumberOfCharsToWrite && hConsoleOutput && IsAnsiCapable(hConsoleOutput)) || (curBadUnicode||badUnicode));
-	lbRc = F(WriteConsoleA)(hConsoleOutput, lpBuffer, nNumberOfCharsToWrite, lpNumberOfCharsWritten, lpReserved);
-
-fin:
-	SafeFree(buf);
-	return lbRc;
-}
-
-TODO("По хорошему, после WriteConsoleOutputAttributes тоже нужно делать efof_ResetExt");
-// Но пока можно это проигнорировать, большинство (?) программ, использует ее в связке
-// WriteConsoleOutputAttributes/WriteConsoleOutputCharacter
-
-BOOL WINAPI CEAnsi::OnWriteConsoleOutputCharacterA(HANDLE hConsoleOutput, LPCSTR lpCharacter, DWORD nLength, COORD dwWriteCoord, LPDWORD lpNumberOfCharsWritten)
-{
-	typedef BOOL (WINAPI* OnWriteConsoleOutputCharacterA_t)(HANDLE hConsoleOutput, LPCSTR lpCharacter, DWORD nLength, COORD dwWriteCoord, LPDWORD lpNumberOfCharsWritten);
-	ORIGINALFAST(WriteConsoleOutputCharacterA);
-	//BOOL bMainThread = FALSE; // поток не важен
-
-	FIRST_ANSI_CALL((const BYTE*)lpCharacter, nLength);
-
-	ExtFillOutputParm fll = {sizeof(fll),
-		efof_Attribute|(gDisplayParm.WasSet ? efof_Current : efof_ResetExt),
-		hConsoleOutput, {}, 0, dwWriteCoord, nLength};
-	ExtFillOutput(&fll);
-
-	BOOL lbRc = F(WriteConsoleOutputCharacterA)(hConsoleOutput, lpCharacter, nLength, dwWriteCoord, lpNumberOfCharsWritten);
-
-	return lbRc;
-}
-
-BOOL WINAPI CEAnsi::OnWriteConsoleOutputCharacterW(HANDLE hConsoleOutput, LPCWSTR lpCharacter, DWORD nLength, COORD dwWriteCoord, LPDWORD lpNumberOfCharsWritten)
-{
-	typedef BOOL (WINAPI* OnWriteConsoleOutputCharacterW_t)(HANDLE hConsoleOutput, LPCWSTR lpCharacter, DWORD nLength, COORD dwWriteCoord, LPDWORD lpNumberOfCharsWritten);
-	ORIGINALFAST(WriteConsoleOutputCharacterW);
-	//BOOL bMainThread = FALSE; // поток не важен
-
-	FIRST_ANSI_CALL((const BYTE*)lpCharacter, nLength);
-
-	ExtFillOutputParm fll = {sizeof(fll),
-		efof_Attribute|(gDisplayParm.WasSet ? efof_Current : efof_ResetExt),
-		hConsoleOutput, {}, 0, dwWriteCoord, nLength};
-	ExtFillOutput(&fll);
-
-	BOOL lbRc = F(WriteConsoleOutputCharacterW)(hConsoleOutput, lpCharacter, nLength, dwWriteCoord, lpNumberOfCharsWritten);
-
-	return lbRc;
-}
-
 BOOL CEAnsi::WriteText(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, LPCWSTR lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, BOOL abCommit /*= FALSE*/)
 {
 	BOOL lbRc = FALSE;
@@ -982,12 +735,7 @@ BOOL CEAnsi::WriteText(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, 
 	return lbRc;
 }
 
-BOOL WINAPI CEAnsi::OnWriteConsoleW(HANDLE hConsoleOutput, const VOID *lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, LPVOID lpReserved)
-{
-	return OurWriteConsoleW(hConsoleOutput, lpBuffer, nNumberOfCharsToWrite, lpNumberOfCharsWritten, lpReserved, false);
-}
-
-BOOL WINAPI CEAnsi::OurWriteConsoleW(HANDLE hConsoleOutput, const VOID *lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, LPVOID lpReserved, bool bInternal /*= false*/)
+BOOL CEAnsi::OurWriteConsoleW(HANDLE hConsoleOutput, const VOID *lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, LPVOID lpReserved, bool bInternal /*= false*/)
 {
 	ORIGINALFAST(WriteConsoleW);
 	//BOOL bMainThread = FALSE; // поток не важен
@@ -2896,41 +2644,6 @@ void CEAnsi::WriteAnsiCode_VIM(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsole
 		}
 		break; // "|...m"
 	}
-}
-
-BOOL WINAPI CEAnsi::OnSetConsoleMode(HANDLE hConsoleHandle, DWORD dwMode)
-{
-	typedef BOOL (WINAPI* OnSetConsoleMode_t)(HANDLE hConsoleHandle, DWORD dwMode);
-	ORIGINALFAST(SetConsoleMode);
-	//BOOL bMainThread = FALSE; // поток не важен
-	BOOL lbRc = FALSE;
-
-	#if 0
-	if (!(dwMode & ENABLE_PROCESSED_OUTPUT))
-	{
-		_ASSERTEX((dwMode & ENABLE_PROCESSED_OUTPUT)==ENABLE_PROCESSED_OUTPUT);
-	}
-	#endif
-
-	if (gbIsVimProcess)
-	{
-		if ((dwMode & (ENABLE_WRAP_AT_EOL_OUTPUT|ENABLE_PROCESSED_OUTPUT)) != (ENABLE_WRAP_AT_EOL_OUTPUT|ENABLE_PROCESSED_OUTPUT))
-		{
-			if (IsOutputHandle(hConsoleHandle))
-			{
-				dwMode |= ENABLE_WRAP_AT_EOL_OUTPUT|ENABLE_PROCESSED_OUTPUT;
-			}
-			else
-			{
-				dwMode |= ENABLE_WINDOW_INPUT;
-			}
-		}
-	}
-
-
-	lbRc = F(SetConsoleMode)(hConsoleHandle, dwMode);
-
-	return lbRc;
 }
 
 

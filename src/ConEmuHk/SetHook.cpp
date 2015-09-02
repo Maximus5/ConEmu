@@ -64,6 +64,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ShellProcessor.h"
 #include "SetHook.h"
 #include "ConEmuHooks.h"
+#include "hkDialog.h"
 #include "Ansi.h"
 #include "MainThread.h"
 #include "../modules/minhook/include/MinHook.h"
@@ -166,11 +167,6 @@ RegCloseKey_t RegCloseKey_f = NULL;
 RegOpenKeyEx_t RegOpenKeyEx_f = NULL;
 //typedef LONG (WINAPI* RegCreateKeyEx_t(HKEY hKey, LPCWSTR lpSubKey, DWORD Reserved, LPWSTR lpClass, DWORD dwOptions, REGSAM samDesired, LPSECURITY_ATTRIBUTES lpSecurityAttributes, PHKEY phkResult, LPDWORD lpdwDisposition);
 RegCreateKeyEx_t RegCreateKeyEx_f = NULL;
-
-//typedef BOOL (WINAPI* OnChooseColorA_t)(LPCHOOSECOLORA lpcc);
-OnChooseColorA_t ChooseColorA_f = NULL;
-//typedef BOOL (WINAPI* OnChooseColorW_t)(LPCHOOSECOLORW lpcc);
-OnChooseColorW_t ChooseColorW_f = NULL;
 
 struct PreloadFuncs {
 	LPCSTR	sFuncName;
@@ -594,7 +590,7 @@ FARPROC WINAPI GetLoadLibraryW()
 
 FARPROC WINAPI GetWriteConsoleW()
 {
-	return (FARPROC)GetOriginalAddress((LPVOID)CEAnsi::OnWriteConsoleW, NULL);
+	return (FARPROC)GetOriginalAddress((LPVOID)OnWriteConsoleW, NULL);
 }
 
 FARPROC WINAPI GetVirtualAlloc()

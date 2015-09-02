@@ -90,11 +90,6 @@ extern RegOpenKeyEx_t RegOpenKeyEx_f;
 typedef LONG (WINAPI* RegCreateKeyEx_t)(HKEY hKey, LPCWSTR lpSubKey, DWORD Reserved, LPWSTR lpClass, DWORD dwOptions, REGSAM samDesired, LPSECURITY_ATTRIBUTES lpSecurityAttributes, PHKEY phkResult, LPDWORD lpdwDisposition);
 extern RegCreateKeyEx_t RegCreateKeyEx_f;
 
-typedef BOOL (WINAPI* OnChooseColorA_t)(LPCHOOSECOLORA lpcc);
-extern OnChooseColorA_t ChooseColorA_f;
-typedef BOOL (WINAPI* OnChooseColorW_t)(LPCHOOSECOLORW lpcc);
-extern OnChooseColorW_t ChooseColorW_f;
-
 typedef struct HookCallbackArg
 {
 	BOOL         bMainThread;

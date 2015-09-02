@@ -62,7 +62,16 @@ $(INTDIR)\Entry.obj \
 $(INTDIR)\Execute.obj \
 $(INTDIR)\ExtConsole.obj \
 $(INTDIR)\GuiAttach.obj \
+$(INTDIR)\hkCmdExe.obj \
+$(INTDIR)\hkConsole.obj \
+$(INTDIR)\hkConsoleInput.obj \
+$(INTDIR)\hkConsoleOutput.obj \
+$(INTDIR)\hkDialog.obj \
 $(INTDIR)\HkFunc.obj \
+$(INTDIR)\hkGDI.obj \
+$(INTDIR)\hkProcess.obj \
+$(INTDIR)\hkStdIO.obj \
+$(INTDIR)\hkWindow.obj \
 $(INTDIR)\Injects.obj \
 $(INTDIR)\InQueue.obj \
 $(INTDIR)\MainThread.obj \
@@ -343,7 +352,25 @@ $(INTDIR)\ExtConsole.obj: ExtConsole.cpp ExtConsole.h
 
 $(INTDIR)\GuiAttach.obj: GuiAttach.cpp GuiAttach.h
 
+$(INTDIR)\hkCmdExe.obj: hkCmdExe.cpp hkCmdExe.h
+
+$(INTDIR)\hkConsole.obj: hkConsole.cpp hkConsole.h
+
+$(INTDIR)\hkConsoleInput.obj: hkConsoleInput.cpp hkConsoleInput.h
+
+$(INTDIR)\hkConsoleOutput.obj: hkConsoleOutput.cpp hkConsoleOutput.h
+
+$(INTDIR)\hkDialog.obj: hkDialog.cpp hkDialog.h
+
 $(INTDIR)\HkFunc.obj: ../common/HkFunc.cpp ../common/HkFunc.h
+
+$(INTDIR)\hkGDI.obj: hkGDI.cpp hkGDI.h
+
+$(INTDIR)\hkProcess.obj: hkProcess.cpp hkProcess.h
+
+$(INTDIR)\hkStdIO.obj: hkStdIO.cpp hkStdIO.h
+
+$(INTDIR)\hkWindow.obj: hkWindow.cpp hkWindow.h
 
 $(INTDIR)\Injects.obj: Injects.cpp Console2.h
 

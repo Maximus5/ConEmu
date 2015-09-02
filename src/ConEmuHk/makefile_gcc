@@ -59,6 +59,15 @@ SRCS = \
 		ExtConsole.cpp     \
 		GuiAttach.cpp      \
 		hde.c              \
+		hkCmdExe.cpp       \
+		hkConsole.cpp      \
+		hkConsoleInput.cpp \
+		hkConsoleOutput.cpp\
+		hkDialog.cpp       \
+		hkGDI.cpp          \
+		hkProcess.cpp      \
+		hkStdIO.cpp        \
+		hkWindow.cpp       \
 		Injects.cpp        \
 		MainThread.cpp     \
 		RegHooks.cpp       \

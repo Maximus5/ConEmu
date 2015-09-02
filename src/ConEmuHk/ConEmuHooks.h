@@ -135,8 +135,6 @@ extern bool     gbIsCmdProcess;
 extern int      gnCmdInitialized; // 0 - Not already, 1 - OK, -1 - Fail
 extern bool     gbAllowClinkUsage;
 extern bool     gbAllowUncPaths;
-extern wchar_t* gszClinkCmdLine;
-//extern bool     InitializeClink();
 /* ************ Globals for cmd.exe/clink ************ */
 
 /* ************ Globals for powershell ************ */

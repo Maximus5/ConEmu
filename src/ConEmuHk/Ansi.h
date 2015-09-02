@@ -38,7 +38,7 @@ extern DWORD AnsiTlsIndex;
 
 #include "../common/ConsoleMixAttr.h"
 
-typedef BOOL (WINAPI* OnWriteConsoleW_t)(HANDLE hConsoleOutput, const VOID *lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, LPVOID lpReserved);
+#include "hkConsoleOutput.h"
 
 #define CEAnsi_MaxPrevPart 160
 #define CEAnsi_MaxPrevAnsiPart 80
@@ -54,6 +54,14 @@ extern "C" {
 #endif
 
 extern FARPROC CallWriteConsoleW;
+
+// In debug build if SHOW_FIRST_ANSI_CALL is defined,
+// MsgBox may be shown on first ANSI sequence printout
+#ifdef _DEBUG
+	extern void FIRST_ANSI_CALL(const BYTE* lpBuf, DWORD nNumberOfBytes); // Entry.cpp
+#else
+	#define FIRST_ANSI_CALL(lpBuf,nNumberOfBytes)
+#endif
 
 struct CEAnsi
 {
@@ -110,20 +118,6 @@ public:
 		}
 	};
 
-public:
-	/* ************************************* */
-	/*          Hook routines                */
-	/* ************************************* */
-	static HANDLE WINAPI OnCreateFileW(LPCWSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile );
-	static BOOL WINAPI OnWriteFile(HANDLE hFile, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite, LPDWORD lpNumberOfBytesWritten, LPOVERLAPPED lpOverlapped);
-	static BOOL WINAPI OnWriteConsoleA(HANDLE hConsoleOutput, const VOID *lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, LPVOID lpReserved);
-	static BOOL WINAPI OnWriteConsoleW(HANDLE hConsoleOutput, const VOID *lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, LPVOID lpReserved);
-	static BOOL WINAPI OurWriteConsoleW(HANDLE hConsoleOutput, const VOID *lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, LPVOID lpReserved, bool bInternal = true);
-	static BOOL WINAPI OnWriteConsoleOutputCharacterA(HANDLE hConsoleOutput, LPCSTR lpCharacter, DWORD nLength, COORD dwWriteCoord, LPDWORD lpNumberOfCharsWritten);
-	static BOOL WINAPI OnWriteConsoleOutputCharacterW(HANDLE hConsoleOutput, LPCWSTR lpCharacter, DWORD nLength, COORD dwWriteCoord, LPDWORD lpNumberOfCharsWritten);
-	static BOOL WINAPI OnScrollConsoleScreenBufferA(HANDLE hConsoleOutput, const SMALL_RECT *lpScrollRectangle, const SMALL_RECT *lpClipRectangle, COORD dwDestinationOrigin, const CHAR_INFO *lpFill);
-	static BOOL WINAPI OnScrollConsoleScreenBufferW(HANDLE hConsoleOutput, const SMALL_RECT *lpScrollRectangle, const SMALL_RECT *lpClipRectangle, COORD dwDestinationOrigin, const CHAR_INFO *lpFill);
-	static BOOL WINAPI OnSetConsoleMode(HANDLE hConsoleHandle, DWORD dwMode);
 
 public:
 	/* ************************************* */
@@ -131,6 +125,8 @@ public:
 	/* ************************************* */
 	static void StartVimTerm(bool bFromDllStart);
 	static void StopVimTerm();
+
+	static BOOL OurWriteConsoleW(HANDLE hConsoleOutput, const VOID *lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, LPVOID lpReserved, bool bInternal = true);
 
 	static void OnReadConsoleBefore(HANDLE hConOut, const CONSOLE_SCREEN_BUFFER_INFO& csbi);
 	static void OnReadConsoleAfter(bool bFinal, bool bNoLineFeed);
@@ -235,6 +231,9 @@ protected:
 	}; // gDisplayParm = {};
 	// Bad thing... Thought, it must be synced between thread, but when?
 	static DisplayParm gDisplayParm;
+
+	friend BOOL WINAPI OnWriteConsoleOutputCharacterA(HANDLE hConsoleOutput, LPCSTR lpCharacter, DWORD nLength, COORD dwWriteCoord, LPDWORD lpNumberOfCharsWritten);
+	friend BOOL WINAPI OnWriteConsoleOutputCharacterW(HANDLE hConsoleOutput, LPCWSTR lpCharacter, DWORD nLength, COORD dwWriteCoord, LPDWORD lpNumberOfCharsWritten);
 
 	struct DisplayCursorPos
 	{

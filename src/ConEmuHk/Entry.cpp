@@ -100,6 +100,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #undef MCHKHEAP
 #include "../common/MArray.h"
 
+#include "hkConsoleInput.h"
+
 
 #if defined(_DEBUG) || defined(SHOW_EXE_TIMINGS)
 DWORD gnLastShowExeTick = 0;
@@ -200,7 +202,6 @@ BOOL    gbSelfIsRootConsoleProcess = FALSE;
 BOOL    gbForceStartPipeServer = FALSE;
 DWORD   gnServerPID = 0;
 DWORD   gnPrevAltServerPID = 0;
-BOOL    gbWasSucceededInRead = FALSE;
 DWORD   gnGuiPID = 0;
 HWND    ghConWnd = NULL; // Console window
 HWND    ghConEmuWnd = NULL; // Root! window
