@@ -243,7 +243,6 @@
 #define bDropSettings                   1609
 #define bSaveSettings                   1610
 #define cbHandleFarDetach               1619
-#define cbPortableRegistry              1621
 #define tCursorPos                      1622
 #define tFadeLow                        1624
 #define tFadeHigh                       1625
@@ -364,7 +363,6 @@
 #define ebDosBoxDrives                  1758
 #define ebDosBoxAutoexec                1759
 #define tsRConFlags                     1760
-#define bPortableRegistrySettings       1761
 #define rbActivityInput                 1762
 #define cbUseWinTab                     1764
 #define cbFarGotoEditor                 1765

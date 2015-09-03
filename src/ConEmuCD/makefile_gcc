@@ -61,7 +61,6 @@ SRCS = \
 		Infiltrate.cpp     \
 		InjectRemote.cpp   \
 		Queue.cpp          \
-		RegPrepare.cpp     \
 		SrvPipes.cpp
 
 include ../makefile_gcc_target

@@ -62,7 +62,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/WFiles.h"
 #include "../common/WUser.h"
 #include "../ConEmuCD/GuiHooks.h"
-#include "../ConEmuCD/RegPrepare.h"
 #include "Attach.h"
 #include "ConEmu.h"
 #include "ConEmuApp.h"
@@ -704,14 +703,6 @@ CConEmuMain::CConEmuMain()
 
 	// DosBox (единственный способ запуска Dos-приложений в 64-битных OS)
 	mb_DosBoxExists = CheckDosBoxExists();
-
-	// Портабельный реестр для фара?
-	mb_PortableRegExist = FALSE;
-	ms_PortableReg[0] = ms_PortableRegHive[0] = ms_PortableRegHiveOrg[0] = ms_PortableMountKey[0] = 0;
-	mb_PortableKeyMounted = FALSE;
-	ms_PortableTempDir[0] = 0;
-	mh_PortableMountRoot = mh_PortableRoot = NULL;
-	CheckPortableReg();
 
 	//mh_Psapi = NULL;
 	//GetModuleFileNameEx = (FGetModuleFileNameEx)GetProcAddress(GetModuleHandle(L"Kernel32.dll"), "GetModuleFileNameExW");
@@ -1967,347 +1958,6 @@ BOOL CConEmuMain::CheckDosBoxExists()
 	return lbExists;
 }
 
-void CConEmuMain::CheckPortableReg()
-{
-#ifdef USEPORTABLEREGISTRY
-	BOOL lbExists = FALSE;
-	wchar_t szPath[MAX_PATH*2], szName[MAX_PATH];
-
-	wcscpy_c(szPath, ms_ConEmuBaseDir);
-	wcscat_c(szPath, L"\\Portable\\Portable.reg");
-	if (_tcslen(szPath) >= countof(ms_PortableReg))
-	{
-		MBoxAssert(_tcslen(szPath) < countof(ms_PortableReg))
-		return; // превышение длины
-	}
-	if (FileExists(szPath))
-	{
-		wcscpy_c(ms_PortableReg, szPath);
-		mb_PortableRegExist = TRUE;
-	}
-	else
-	{
-		// Раз "Portable.reg" отсутствует - то и hive создавать/проверять не нужно
-		return;
-	}
-
-	wchar_t* pszSID = NULL;
-	wcscpy_c(szPath, ms_ConEmuBaseDir);
-	wcscat_c(szPath, L"\\Portable\\");
-	wcscpy_c(szName, L"Portable.");
-	LPCWSTR pszSIDPtr = szName+_tcslen(szName);
-	if (GetLogonSID (NULL, &pszSID))
-	{
-		if (_tcslen(pszSID) > 128)
-			pszSID[127] = 0;
-		wcscat_c(szName, pszSID);
-		LocalFree(pszSID); pszSID = NULL;
-	}
-	else
-	{
-		wcscat_c(szName, L"S-Unknown");
-	}
-
-	if (gOSVer.dwMajorVersion <= 5)
-	{
-		_wsprintf(ms_PortableMountKey, SKIPLEN(countof(ms_PortableMountKey))
-			L"%s.%s.%u", VIRTUAL_REGISTRY_GUID, pszSIDPtr, GetCurrentProcessId());
-		mh_PortableMountRoot = HKEY_USERS;
-	}
-	else
-	{
-		ms_PortableMountKey[0] = 0;
-		mh_PortableMountRoot = NULL;
-	}
-
-	wcscat_c(szPath, szName);
-	wcscpy_c(ms_PortableRegHiveOrg, szPath);
-
-	BOOL lbNeedTemp = FALSE;
-	if ((_tcslen(szPath)+_tcslen(szName)) >= countof(ms_PortableRegHive))
-		lbNeedTemp = TRUE;
-	BOOL lbHiveExist = FileExists(szPath);
-
-	// С сетевых и removable дисков монтировать не будем
-	if (szPath[0] == L'\\' && szPath[1] == L'\\')
-	{
-		lbNeedTemp = TRUE;
-	}
-	else
-	{
-		wchar_t szDrive[MAX_PATH] = {0}, *pszSlash = wcschr(szPath, L'\\');
-		if (pszSlash == NULL)
-		{
-			_ASSERTE(pszSlash!=NULL);
-			lbNeedTemp = TRUE;
-		}
-		else
-		{
-			_wcscpyn_c(szDrive, MAX_PATH-1, szPath, (pszSlash-szPath)+1);
-			DWORD nType = GetDriveType(szDrive);
-			if (!nType || (nType & (DRIVE_CDROM|DRIVE_REMOTE|DRIVE_REMOVABLE)))
-				lbNeedTemp = TRUE;
-		}
-	}
-
-	// Если к файлу нельзя получить доступ на запись - тоже temp
-	if (!lbNeedTemp)
-	{
-		HANDLE hFile = CreateFile(szPath, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ, 0, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
-		if (hFile == INVALID_HANDLE_VALUE)
-		{
-			lbNeedTemp = TRUE;
-		}
-		else
-		{
-			CloseHandle(hFile);
-			if (lbHiveExist && !lbNeedTemp)
-				wcscpy_c(ms_PortableRegHive, szPath);
-		}
-	}
-	else
-	{
-		wcscpy_c(ms_PortableRegHive, szPath);
-	}
-	if (lbNeedTemp)
-	{
-		wchar_t szTemp[MAX_PATH], szTempFile[MAX_PATH+1];
-		int nLen = _tcslen(szName)+16;
-		if (!GetTempPath(MAX_PATH-nLen, szTemp))
-		{
-			mb_PortableRegExist = FALSE;
-			DisplayLastError(L"GetTempPath failed");
-			return;
-		}
-		if (!GetTempFileName(szTemp, L"CEH", 0, szTempFile))
-		{
-			mb_PortableRegExist = FALSE;
-			DisplayLastError(L"GetTempFileName failed");
-			return;
-		}
-		// System create temp file, we needs directory
-		DeleteFile(szTempFile);
-		if (!CreateDirectory(szTempFile, NULL))
-		{
-			mb_PortableRegExist = FALSE;
-			DisplayLastError(L"Create temp hive directory failed");
-			return;
-		}
-		wcscat_c(szTempFile, L"\\");
-		wcscpy_c(ms_PortableTempDir, szTempFile);
-		wcscat_c(szTempFile, szName);
-		if (lbHiveExist)
-		{
-			if (!CopyFile(szPath, szTempFile, FALSE))
-			{
-				mb_PortableRegExist = FALSE;
-				DisplayLastError(L"Copy temp hive file failed");
-				return;
-			}
-		}
-		else
-		{
-			HANDLE hFile = CreateFile(szTempFile, GENERIC_WRITE, FILE_SHARE_READ, 0, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
-			if (hFile == INVALID_HANDLE_VALUE)
-			{
-				mb_PortableRegExist = FALSE;
-				DisplayLastError(L"Create temp hive file failed");
-				return;
-			}
-			else
-			{
-				CloseHandle(hFile);
-			}
-		}
-
-		wcscpy_c(ms_PortableRegHive, szTempFile);
-	}
-#endif
-}
-
-bool CConEmuMain::PreparePortableReg()
-{
-#ifdef USEPORTABLEREGISTRY
-	if (!mb_PortableRegExist)
-		return false;
-	if (mh_PortableRoot)
-		return true; // уже
-
-	bool lbRc = false;
-	wchar_t szFullInfo[512];
-	//typedef int (WINAPI* MountVirtualHive_t)(LPCWSTR asHive, PHKEY phKey, LPCWSTR asXPMountName, wchar_t* pszErrInfo, int cchErrInfoMax);
-	MountVirtualHive_t MountVirtualHive = NULL;
-	HMODULE hDll = LoadConEmuCD();
-	if (!hDll)
-	{
-		DWORD dwErrCode = GetLastError();
-		_wsprintf(szFullInfo, SKIPLEN(countof(szFullInfo))
-			L"Portable registry will be NOT available\n\nLoadLibrary('%s') failed, ErrCode=0x%08X",
-			#ifdef _WIN64
-				L"ConEmuCD64.dll",
-			#else
-				L"ConEmuCD.dll",
-			#endif
-			dwErrCode);
-	}
-	else
-	{
-		MountVirtualHive = (MountVirtualHive_t)GetProcAddress(hDll, "MountVirtualHive");
-		if (!MountVirtualHive)
-		{
-			_wsprintf(szFullInfo, SKIPLEN(countof(szFullInfo))
-				L"Portable registry will be NOT available\n\nMountVirtualHive not found in '%s'",
-				#ifdef _WIN64
-					L"ConEmuCD64.dll"
-				#else
-					L"ConEmuCD.dll"
-				#endif
-				);
-		}
-		else
-		{
-			szFullInfo[0] = 0;
-			_ASSERTE(ms_PortableMountKey[0]!=0 || (gOSVer.dwMajorVersion>=6));
-			wchar_t szErrInfo[255]; szErrInfo[0] = 0;
-			int lRc = MountVirtualHive(ms_PortableRegHive, &mh_PortableRoot,
-					ms_PortableMountKey, szErrInfo, countof(szErrInfo), &mb_PortableKeyMounted);
-			if (lRc != 0)
-			{
-				_wsprintf(szFullInfo, SKIPLEN(countof(szFullInfo))
-					L"Portable registry will be NOT available\n\n%s\nMountVirtualHive result=%i",
-					szErrInfo, lRc);
-				ms_PortableMountKey[0] = 0;
-			}
-			else
-			{
-				lbRc = true;
-			}
-		}
-	}
-
-	if (!lbRc)
-	{
-		mb_PortableRegExist = FALSE;
-	}
-
-	// Обновить мэппинг
-	OnGlobalSettingsChanged();
-
-	if (!lbRc)
-	{
-		mb_PortableRegExist = FALSE; // сразу сбросим, раз не доступно
-
-		wchar_t szFullMsg[1024];
-		wcscpy_c(szFullMsg, szFullInfo);
-		wcscat_c(szFullMsg, L"\n\nDo You want to continue without portable registry?");
-		int nBtn = MessageBox(NULL, szFullMsg, GetDefaultTitle(),
-			MB_ICONSTOP|MB_YESNO|MB_DEFBUTTON2);
-		if (nBtn != IDYES)
-			return false;
-	}
-
-	return true;
-#else
-	_ASSERTE(mb_PortableRegExist==FALSE);
-	return true;
-#endif
-}
-
-void CConEmuMain::FinalizePortableReg()
-{
-#ifdef USEPORTABLEREGISTRY
-	TODO("Скопировать измененный куст - в папку Portable");
-	// Portable.reg не трогаем - это как бы "шаблон" для куста
-
-	// Сначала - закрыть хэндл, а то не получится демонтировать
-	if (mh_PortableRoot)
-	{
-		RegCloseKey(mh_PortableRoot);
-		mh_PortableRoot = NULL;
-	}
-
-	if (ms_PortableMountKey[0] && mb_PortableKeyMounted)
-	{
-		wchar_t szErrInfo[255];
-		typedef int (WINAPI* UnMountVirtualHive_t)(LPCWSTR asXPMountName, wchar_t* pszErrInfo, int cchErrInfoMax);
-		UnMountVirtualHive_t UnMountVirtualHive = NULL;
-		HMODULE hDll = LoadConEmuCD();
-		if (!hDll)
-		{
-			DWORD dwErrCode = GetLastError();
-			_wsprintf(szErrInfo, SKIPLEN(countof(szErrInfo))
-				L"Can't release portable key: 'HKU\\%s'\n\nLoadLibrary('%s') failed, ErrCode=0x%08X",
-					ms_PortableMountKey,
-				#ifdef _WIN64
-					L"ConEmuCD64.dll",
-				#else
-					L"ConEmuCD.dll",
-				#endif
-				dwErrCode);
-			MBoxA(szErrInfo);
-		}
-		else
-		{
-			UnMountVirtualHive = (UnMountVirtualHive_t)GetProcAddress(hDll, "UnMountVirtualHive");
-			if (!UnMountVirtualHive)
-			{
-				_wsprintf(szErrInfo, SKIPLEN(countof(szErrInfo))
-					L"Can't release portable key: 'HKU\\%s'\n\nUnMountVirtualHive not found in '%s'",
-						ms_PortableMountKey,
-					#ifdef _WIN64
-						L"ConEmuCD64.dll"
-					#else
-						L"ConEmuCD.dll"
-					#endif
-					);
-				MessageBox(NULL, szErrInfo, GetDefaultTitle(), MB_ICONSTOP|MB_SYSTEMMODAL);
-			}
-			else
-			{
-				szErrInfo[0] = 0;
-				int lRc = UnMountVirtualHive(ms_PortableMountKey, szErrInfo, countof(szErrInfo));
-				if (lRc != 0)
-				{
-					wchar_t szFullInfo[512];
-					_wsprintf(szFullInfo, SKIPLEN(countof(szFullInfo))
-						L"Can't release portable key: 'HKU\\%s'\n\n%s\nRc=%i",
-						ms_PortableMountKey, szErrInfo, lRc);
-					ms_PortableMountKey[0] = 0; // не пытаться повторно
-					MessageBox(NULL, szFullInfo, GetDefaultTitle(), MB_ICONSTOP|MB_SYSTEMMODAL);
-				}
-			}
-		}
-	}
-	ms_PortableMountKey[0] = 0; mb_PortableKeyMounted = FALSE; // или успешно, или не пытаться повторно
-
-	if (ms_PortableTempDir[0])
-	{
-		wchar_t szTemp[MAX_PATH*2], *pszSlash;
-		wcscpy_c(szTemp, ms_PortableTempDir);
-		pszSlash = szTemp + _tcslen(szTemp) - 1;
-		_ASSERTE(*pszSlash == L'\\');
-		_wcscpy_c(pszSlash+1, MAX_PATH, _T("*.*"));
-		WIN32_FIND_DATA fnd;
-		HANDLE hFind = FindFirstFile(szTemp, &fnd);
-		if (hFind && hFind != INVALID_HANDLE_VALUE)
-		{
-			do {
-				if (!(fnd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
-				{
-					_wcscpy_c(pszSlash+1, MAX_PATH, fnd.cFileName);
-					DeleteFile(szTemp);
-				}
-			} while (FindNextFile(hFind, &fnd));
-
-			FindClose(hFind);
-		}
-		*pszSlash = 0;
-		RemoveDirectory(szTemp);
-		ms_PortableTempDir[0] = 0; // один раз
-	}
-#endif
-}
-
 void CConEmuMain::GetComSpecCopy(ConEmuComspec& ComSpec)
 {
 	_ASSERTE(m_GuiInfo.ComSpec.csType==gpSet->ComSpec.csType);
@@ -2390,11 +2040,6 @@ void CConEmuMain::UpdateGuiInfoMapping()
 
 	mb_DosBoxExists = CheckDosBoxExists();
 	SetConEmuFlags(m_GuiInfo.Flags,CECF_DosBox,(mb_DosBoxExists ? CECF_DosBox : 0));
-
-	m_GuiInfo.isHookRegistry = (mb_PortableRegExist ? (gpSet->isPortableReg ? 3 : 1) : 0);
-	wcscpy_c(m_GuiInfo.sHiveFileName, ms_PortableRegHive);
-	m_GuiInfo.hMountRoot = mh_PortableMountRoot;
-	wcscpy_c(m_GuiInfo.sMountKey, ms_PortableMountKey);
 
 	wcscpy_c(m_GuiInfo.sConEmuExe, ms_ConEmuExe);
 	//-- переехали в m_GuiInfo.ComSpec
@@ -2704,9 +2349,6 @@ CConEmuMain::~CConEmuMain()
 	CVConGroup::Deinitialize();
 
 	//Delete Critical Section(&mcs_ShellExecuteEx);
-
-	// По идее, уже должен был быть вызван в OnDestroy
-	FinalizePortableReg();
 
 	LoadImageFinalize();
 
@@ -7161,18 +6803,6 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 
 		if (!isVConExists(0) || (m_StartDetached != crb_On))  // Консоль уже может быть создана, если пришел Attach из ConEmuC
 		{
-			// Если надо - подготовить портабельный реестр
-			if (mb_PortableRegExist)
-			{
-				// Если реестр обломался, или юзер сказал "не продолжать"
-				if (!PreparePortableReg())
-				{
-					Destroy();
-					return;
-				}
-			}
-
-
 			BOOL lbCreated = FALSE;
 			bool isScript = false;
 			LPCWSTR pszCmd = GetCmd(&isScript);
@@ -7441,8 +7071,6 @@ LRESULT CConEmuMain::OnDestroy(HWND hWnd)
 	// Делать обязательно перед ResetEvent(mh_ConEmuAliveEvent), чтобы у другого
 	// экземпляра не возникло проблем с регистрацией hotkey
 	RegisterMinRestore(false);
-
-	FinalizePortableReg();
 
 	if (mb_ConEmuAliveOwned && mh_ConEmuAliveEvent)
 	{

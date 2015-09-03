@@ -974,7 +974,6 @@
     <ClInclude Include="hlpConsole.h" />
     <ClInclude Include="Injects.h" />
     <ClInclude Include="MainThread.h" />
-    <ClInclude Include="RegHooks.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="SetHook.h" />
     <ClInclude Include="ShellProcessor.h" />
@@ -1031,7 +1030,6 @@
     <ClCompile Include="hlpConsole.cpp" />
     <ClCompile Include="Injects.cpp" />
     <ClCompile Include="MainThread.cpp" />
-    <ClCompile Include="RegHooks.cpp" />
     <ClCompile Include="SetHook.cpp" />
     <ClCompile Include="ShellProcessor.cpp" />
   </ItemGroup>

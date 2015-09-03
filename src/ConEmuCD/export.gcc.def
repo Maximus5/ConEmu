@@ -3,8 +3,6 @@ EXPORTS
 	LLKeybHook=LLKeybHook@12
 	ConsoleMain2=ConsoleMain2@4
 	HandlerRoutine=HandlerRoutine@4
-	MountVirtualHive=MountVirtualHive@24
-	UnMountVirtualHive=UnMountVirtualHive@12
 	PrivateEntry=RequestLocalServer@4
 	DownloadCommand=DownloadCommand@12
 

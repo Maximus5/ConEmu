@@ -684,8 +684,6 @@ BEGIN
     PUSHBUTTON      "...",cbClinkWebPage,306,79,13,11
     CONTROL         "ANSI X3.64 / xterm 256 colors",cbProcessAnsi,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,97,110,8
     CONTROL         "Disable all flashing",cbDisableAllFlashing,"Button",BS_AUTO3STATE | WS_TABSTOP,128,97,99,8
-    CONTROL         "Portable registry",cbPortableRegistry,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,231,97,71,8
-    PUSHBUTTON      "...",bPortableRegistrySettings,306,96,13,11,WS_DISABLED
     CONTROL         "Log console output (*)",cbAnsiLog,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,111,110,8
     EDITTEXT        tAnsiLogPath,128,109,191,12,ES_AUTOHSCROLL
     CONTROL         "Process '-new_console' and '-cur_console' switches",cbProcessNewConArg,

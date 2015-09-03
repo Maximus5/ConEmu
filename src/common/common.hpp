@@ -1150,12 +1150,6 @@ struct ConEmuGuiMapping
 	/* Основной шрифт в GUI */
 	struct ConEmuMainFont MainFont;
 	
-	// Перехват реестра
-	DWORD   isHookRegistry; // bitmask. 1 - supported, 2 - current
-	wchar_t sHiveFileName[MAX_PATH];
-	HKEY2   hMountRoot;  // NULL для Vista+, для Win2k&XP здесь хранится корневой ключ (HKEY_USERS), в который загружен hive
-	wchar_t sMountKey[MAX_PATH]; // Для Win2k&XP здесь хранится имя ключа, в который загружен hive
-	
 	// DosBox
 	//BOOL     bDosBox; // наличие DosBox
 	//wchar_t  sDosBoxExe[MAX_PATH+1]; // полный путь к DosBox.exe
@@ -1445,12 +1439,6 @@ struct CESERVER_CONSOLE_MAPPING_HDR
 	// Limited logging of console contents (same output as processed by CECF_ProcessAnsi)
 	ConEmuAnsiLog AnsiLog;
 	
-	// Перехват реестра
-	DWORD   isHookRegistry; // bitmask. 1 - supported, 2 - current
-	wchar_t sHiveFileName[MAX_PATH];
-	HKEY2   hMountRoot;  // NULL для Vista+, для Win2k&XP здесь хранится корневой ключ (HKEY_USERS), в который загружен hive
-	wchar_t sMountKey[MAX_PATH]; // Для Win2k&XP здесь хранится имя ключа, в который загружен hive
-
 	// Разрешенный размер видимой области
 	BOOL  bLockVisibleArea;
 	COORD crLockedVisible;

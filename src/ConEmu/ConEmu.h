@@ -164,17 +164,6 @@ class CConEmuMain
 		bool isMingwMode();
 		bool isMSysStartup();
 		bool isUpdateAllowed();
-		// Portable Far Registry
-		BOOL mb_PortableRegExist;
-		wchar_t ms_PortableRegHive[MAX_PATH]; // полный путь к "Portable.S-x-x-..."
-		wchar_t ms_PortableRegHiveOrg[MAX_PATH]; // путь к "Portable.S-x-x-..." (в ConEmu). этот файл мог быть скопирован в ms_PortableRegHive
-		wchar_t ms_PortableReg[MAX_PATH]; // "Portable.reg"
-		HKEY mh_PortableMountRoot; // Это HKEY_CURRENT_USER или HKEY_USERS
-		wchar_t ms_PortableMountKey[MAX_PATH];
-		BOOL mb_PortableKeyMounted;
-		wchar_t ms_PortableTempDir[MAX_PATH];
-		HKEY mh_PortableRoot; // Это открытый ключ
-		bool PreparePortableReg();
 		bool mb_UpdateJumpListOnStartup;
 		bool mb_FindBugMode;
 		UINT mn_LastTransparentValue;
@@ -186,7 +175,6 @@ class CConEmuMain
 	private:
 		bool CheckBaseDir();
 		BOOL CheckDosBoxExists();
-		void CheckPortableReg();
 		void FinalizePortableReg();
 		bool mb_ForceUseRegistry;
 		bool mb_SpecialConfigPath;

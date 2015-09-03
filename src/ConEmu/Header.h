@@ -36,9 +36,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define APPDISTINCTBACKGROUND
 
-//#define USEPORTABLEREGISTRY
-#undef USEPORTABLEREGISTRY
-
 #include "../common/defines.h"
 #include <windows.h>
 #include <Shlwapi.h>

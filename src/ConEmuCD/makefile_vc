@@ -62,7 +62,6 @@ $(INTDIR)\MStrSafe.obj \
 $(INTDIR)\ProcessSetEnv.obj \
 $(INTDIR)\Queue.obj \
 $(INTDIR)\RConStartArgs.obj \
-$(INTDIR)\RegPrepare.obj \
 $(INTDIR)\SetEnvVar.obj \
 $(INTDIR)\SrvPipes.obj \
 $(INTDIR)\WConsole.obj \
@@ -348,8 +347,6 @@ $(INTDIR)\ProcessSetEnv.obj: ../common/ProcessSetEnv.cpp ../common/ProcessSetEnv
 $(INTDIR)\Queue.obj: Queue.cpp ../common/PipeServer.h ../common/InQueue.h
 
 $(INTDIR)\RConStartArgs.obj: ../common/RConStartArgs.cpp ../common/RConStartArgs.h
-
-$(INTDIR)\RegPrepare.obj: RegPrepare.cpp
 
 $(INTDIR)\SetEnvVar.obj: ../common/SetEnvVar.cpp
 

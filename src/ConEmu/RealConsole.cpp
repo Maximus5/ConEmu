@@ -591,17 +591,6 @@ bool CRealConsole::PreCreate(RConStartArgs *args)
 
 	mb_NeedStartProcess = FALSE;
 
-	// Если надо - подготовить портабельный реестр
-	if (mp_ConEmu->mb_PortableRegExist)
-	{
-		// Если реестр обломался, или юзер сказал "не продолжать"
-		if (!mp_ConEmu->PreparePortableReg())
-		{
-			return false;
-		}
-	}
-
-
 	// Go
 	if (m_Args.BufHeight == crb_On)
 	{

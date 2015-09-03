@@ -682,11 +682,6 @@ void Settings::InitSettings()
 	isSuppressBells = false; // пока не доделано - false
 	isConsoleExceptionHandler = false; // по умолчанию - false
 	mb_UseClink = true;
-	#ifdef USEPORTABLEREGISTRY
-	isPortableReg = true; // включено по умолчанию, DEBUG
-	#else
-	isPortableReg = false;
-	#endif
 
 	isDisableMouse = false;
 
@@ -2458,10 +2453,6 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 
 		reg->Load(L"UseClink", mb_UseClink);
 
-		#ifdef USEPORTABLEREGISTRY
-		reg->Load(L"PortableReg", isPortableReg);
-		#endif
-
 		// Don't move invisible real console. This affects GUI eMenu.
 		//reg->Load(L"LockRealConsolePos", isLockRealConsolePos);
 		//reg->Load(L"DumpPackets", szDumpPackets);
@@ -3440,10 +3431,6 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		reg->Save(L"ConsoleExceptionHandler", isConsoleExceptionHandler);
 
 		reg->Save(L"UseClink", mb_UseClink);
-
-		#ifdef USEPORTABLEREGISTRY
-		reg->Save(L"PortableReg", isPortableReg);
-		#endif
 
 		//reg->Save(L"LockRealConsolePos", isLockRealConsolePos);
 

@@ -3019,12 +3019,6 @@ void CopySrvMapFromGuiMap()
 	_ASSERTE(gpSrv->guiSettings.sConEmuExe[0]!=0);
 	wcscpy_c(gpSrv->pConsole->hdr.sConEmuExe, gpSrv->guiSettings.sConEmuExe);
 	//wcscpy_c(gpSrv->pConsole->hdr.sConEmuBaseDir, gpSrv->guiSettings.sConEmuBaseDir);
-
-	// Проверить, нужно ли реестр хукать
-	gpSrv->pConsole->hdr.isHookRegistry = gpSrv->guiSettings.isHookRegistry;
-	wcscpy_c(gpSrv->pConsole->hdr.sHiveFileName, gpSrv->guiSettings.sHiveFileName);
-	gpSrv->pConsole->hdr.hMountRoot = gpSrv->guiSettings.hMountRoot;
-	wcscpy_c(gpSrv->pConsole->hdr.sMountKey, gpSrv->guiSettings.sMountKey);
 }
 
 

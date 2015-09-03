@@ -442,7 +442,6 @@
       <File RelativePath="GuiAttach.h" />
       <File RelativePath="Injects.h" />
       <File RelativePath="MainThread.h" />
-      <File RelativePath="RegHooks.h" />
       <File RelativePath="resource.h" />
       <File RelativePath="SetHook.h" />
       <File RelativePath="ShellProcessor.h" />
@@ -497,7 +496,6 @@
       <File RelativePath="GuiAttach.cpp" />
       <File RelativePath="Injects.cpp" />
       <File RelativePath="MainThread.cpp" />
-      <File RelativePath="RegHooks.cpp" />
       <File RelativePath="SetHook.cpp" />
       <File RelativePath="ShellProcessor.cpp" />
     </Filter>

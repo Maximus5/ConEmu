@@ -516,9 +516,6 @@ bool CSetDlgButtons::ProcessButtonClick(HWND hDlg, WORD CB, BYTE uCheck)
 		case cbClinkWebPage:
 			OnBtn_ClinkWebPage(hDlg, CB, uCheck);
 			break;
-		case cbPortableRegistry:
-			OnBtn_PortableRegistry(hDlg, CB, uCheck);
-			break;
 		case bRealConsoleSettings:
 			OnBtn_RealConsoleSettings(hDlg, CB, uCheck);
 			break;
@@ -2880,28 +2877,6 @@ void CSetDlgButtons::OnBtn_ClinkWebPage(HWND hDlg, WORD CB, BYTE uCheck)
 	ShellExecute(NULL, L"open", L"http://mridgers.github.io/clink/", NULL, NULL, SW_SHOWNORMAL);
 
 } // cbClinkWebPage
-
-
-// cbPortableRegistry
-void CSetDlgButtons::OnBtn_PortableRegistry(HWND hDlg, WORD CB, BYTE uCheck)
-{
-	_ASSERTE(CB==cbPortableRegistry);
-
-	#ifdef USEPORTABLEREGISTRY
-	gpSet->isPortableReg = uCheck;
-	// Проверить, готов ли к использованию
-	if (!gpConEmu->PreparePortableReg())
-	{
-		gpSet->isPortableReg = false;
-		checkDlgButton(hDlg, cbPortableRegistry, BST_UNCHECKED);
-	}
-	else
-	{
-		gpConEmu->OnGlobalSettingsChanged();
-	}
-	#endif
-
-} // cbPortableRegistry
 
 
 // bRealConsoleSettings

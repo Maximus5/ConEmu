@@ -2293,19 +2293,6 @@ LRESULT CSettings::OnInitDialog_Ext(HWND hWnd2, bool abInitial)
 
 	checkDlgButton(hWnd2, cbFocusInChildWindows, gpSet->isFocusInChildWindows);
 
-	#ifdef USEPORTABLEREGISTRY
-	if (gpConEmu->mb_PortableRegExist)
-	{
-		checkDlgButton(hWnd2, cbPortableRegistry, gpSet->isPortableReg);
-		EnableWindow(GetDlgItem(hWnd2, bPortableRegistrySettings), FALSE); // изменение пока запрещено
-	}
-	else
-	#endif
-	{
-		EnableWindow(GetDlgItem(hWnd2, cbPortableRegistry), FALSE); // изменение пока запрещено
-		EnableWindow(GetDlgItem(hWnd2, bPortableRegistrySettings), FALSE); // изменение пока запрещено
-	}
-
 	return 0;
 }
 

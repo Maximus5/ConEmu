@@ -100,7 +100,6 @@ BEGIN
 	cbNewConfirm            "Confirm new console creation.\r\nYou may change cmd line for it, or turn on ""Run as..."" feature.\r\nEven if unchecked, You may hold ""Shift"" to display dialog."
 	cbNumberInCaption       "Show [ActiveCon/TotalCon] in window caption"
 	cbOneTabPerGroup        "Show only one tab for all splits in the group"
-	cbPortableRegistry      "Enable portable mode for Far manager"
 	cbProcessAnsi           "Enable processing of ANSI escape sequences, ‘Inject ConEmuHk’ must be checked if you want to work with second level processes (e.g. cmd.exe -> app.exe)"
 	cbProcessCmdStart       "Hook 'start' command in your cmd's prompt and batches started in ConEmu tabs to run console applications in new ConEmu tabs"
 	cbProcessNewConArg      "Enable processing of '-new_console' and '-cur_console' switches in your shell prompt, scripts etc. started in ConEmu tabs"

@@ -80,7 +80,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ConEmuHooks.h"
 #include "hlpProcess.h"
-#include "RegHooks.h"
 #include "ShellProcessor.h"
 #include "GuiAttach.h"
 #include "Injects.h"
@@ -1574,8 +1573,6 @@ void DoDllStop(bool bFinal, bool bFromTerminate)
 		DLOG0("ShutdownHooks",0);
 		print_timings(L"ShutdownHooks");
 		gbHooksWasSet = FALSE;
-		// Завершить работу с реестром
-		DoneHooksReg();
 		// "Закрыть" хуки
 		ShutdownHooks();
 		DLOGEND();
@@ -1905,8 +1902,6 @@ BOOL DllMain_ThreadAttach(HANDLE hModule, DWORD  ul_reason_for_call)
 {
 	DLOG0("DllMain.DLL_THREAD_ATTACH",ul_reason_for_call);
 	gnDllThreadCount++;
-	if (gbHooksWasSet)
-		InitHooksRegThread();
 	if (gbIsSshProcess && !gnFixSshThreadsResumeOk && gStartedThreads.Get(GetCurrentThreadId(), NULL))
 		FixSshThreads(1);
 	DLOGEND();
@@ -1924,9 +1919,6 @@ BOOL DllMain_ThreadDetach(HANDLE hModule, DWORD  ul_reason_for_call)
 	gnDbgPresent = 0;
 	ShutdownStep(L"DLL_THREAD_DETACH");
 	#endif
-
-	if (gbHooksWasSet)
-		DoneHooksRegThread();
 
 	// DLL_PROCESS_DETACH зовется как выяснилось не всегда
 	if (gnHookMainThreadId && (nTID == gnHookMainThreadId) && !gbDllDeinitialized)

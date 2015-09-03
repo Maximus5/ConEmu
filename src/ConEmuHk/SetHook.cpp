@@ -64,7 +64,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "MainThread.h"
 #include "SetHook.h"
 #include "ShellProcessor.h"
-#include "RegHooks.h"
 #include "../modules/minhook/include/MinHook.h"
 #include "../common/HkFunc.h"
 
@@ -1007,11 +1006,6 @@ BOOL StartupHooks()
 			InitHooksClink();
 			HLOGEND1();
 		}
-
-		// Реестр
-		HLOG1_("StartupHooks.InitHooks",4);
-		InitHooksReg();
-		HLOGEND1();
 	}
 
 #if 0

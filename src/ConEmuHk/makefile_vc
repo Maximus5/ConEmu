@@ -90,7 +90,6 @@ $(INTDIR)\MSection.obj \
 $(INTDIR)\MSecurity.obj \
 $(INTDIR)\MStrSafe.obj \
 $(INTDIR)\RConStartArgs.obj \
-$(INTDIR)\RegHooks.obj \
 $(INTDIR)\SetHook.obj \
 $(INTDIR)\ShellProcessor.obj \
 $(INTDIR)\WConsole.obj \
@@ -413,8 +412,6 @@ $(INTDIR)\MSecurity.obj: ../common/MSecurity.cpp
 $(INTDIR)\MStrSafe.obj: ../common/MStrSafe.cpp
 
 $(INTDIR)\RConStartArgs.obj: ../common/RConStartArgs.cpp ../common/RConStartArgs.h
-
-$(INTDIR)\RegHooks.obj: RegHooks.cpp
 
 $(INTDIR)\SetHook.obj: SetHook.cpp SetHook.h
 
