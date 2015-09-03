@@ -85,13 +85,6 @@ extern const wchar_t *advapi32;// = L"Advapi32.dll";
 extern const wchar_t *comdlg32;// = L"comdlg32.dll";
 extern HMODULE ghKernel32, ghUser32, ghGdi32, ghShell32, ghAdvapi32, ghComdlg32;
 
-typedef LONG (WINAPI* RegCloseKey_t)(HKEY hKey);
-extern RegCloseKey_t RegCloseKey_f;
-typedef LONG (WINAPI* RegOpenKeyEx_t)(HKEY hKey, LPCWSTR lpSubKey, DWORD ulOptions, REGSAM samDesired, PHKEY phkResult);
-extern RegOpenKeyEx_t RegOpenKeyEx_f;
-typedef LONG (WINAPI* RegCreateKeyEx_t)(HKEY hKey, LPCWSTR lpSubKey, DWORD Reserved, LPWSTR lpClass, DWORD dwOptions, REGSAM samDesired, LPSECURITY_ATTRIBUTES lpSecurityAttributes, PHKEY phkResult, LPDWORD lpdwDisposition);
-extern RegCreateKeyEx_t RegCreateKeyEx_f;
-
 #include "ConEmuHooks.h"
 #include "hlpProcess.h"
 

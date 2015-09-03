@@ -116,18 +116,8 @@ HMODULE* ghSysDll[] = {&ghKernelBase, &ghKernel32, &ghUser32, &ghGdi32, &ghShell
 
 bool InitHooksCommon();
 bool InitHooksDefTerm();
-bool InitHooksUser32();
-bool InitHooksFar();
-bool InitHooksClink();
 
 
-
-//typedef LONG (WINAPI* RegCloseKey_t)(HKEY hKey);
-RegCloseKey_t RegCloseKey_f = NULL;
-//typedef LONG (WINAPI* RegOpenKeyEx_t)(HKEY hKey, LPCWSTR lpSubKey, DWORD ulOptions, REGSAM samDesired, PHKEY phkResult);
-RegOpenKeyEx_t RegOpenKeyEx_f = NULL;
-//typedef LONG (WINAPI* RegCreateKeyEx_t(HKEY hKey, LPCWSTR lpSubKey, DWORD Reserved, LPWSTR lpClass, DWORD dwOptions, REGSAM samDesired, LPSECURITY_ATTRIBUTES lpSecurityAttributes, PHKEY phkResult, LPDWORD lpdwDisposition);
-RegCreateKeyEx_t RegCreateKeyEx_f = NULL;
 
 struct PreloadFuncs {
 	LPCSTR	sFuncName;
@@ -145,11 +135,7 @@ size_t GetPreloadModules(PreloadModules** ppModules)
 	{
 		{gdi32,		gdi32_noext,	&ghGdi32},
 		{shell32,	shell32_noext,	&ghShell32},
-		{advapi32,	advapi32_noext,	&ghAdvapi32,
-			{{"RegOpenKeyExW", (void**)&RegOpenKeyEx_f},
-			 {"RegCreateKeyExW", (void**)&RegCreateKeyEx_f},
-			 {"RegCloseKey", (void**)&RegCloseKey_f}}
-		},
+		{advapi32,	advapi32_noext,	&ghAdvapi32},
 		{comdlg32,	comdlg32_noext,	&ghComdlg32,
 			{{"ChooseColorA", (void**)&ChooseColorA_f},
 			 {"ChooseColorW", (void**)&ChooseColorW_f}}
@@ -454,69 +440,6 @@ HookItem *gpHooks = NULL;
 size_t gnHookedFuncs = 0;
 
 
-const char *szGetProcAddress = "GetProcAddress";
-const char *szLoadLibraryA = "LoadLibraryA";
-const char *szLoadLibraryW = "LoadLibraryW";
-const char *szLoadLibraryExA = "LoadLibraryExA";
-const char *szLoadLibraryExW = "LoadLibraryExW";
-const char *szFreeLibrary = "FreeLibrary";
-const char *szWriteConsoleW = "WriteConsoleW";
-#ifdef HOOK_ERROR_PROC
-const char *szGetLastError = "GetLastError";
-const char *szSetLastError = "SetLastError";
-#endif
-
-bool InitHooksLibrary()
-{
-#ifndef HOOKS_SKIP_LIBRARY
-	if (!gpHooks)
-	{
-		_ASSERTE(gpHooks!=NULL);
-		return false;
-	}
-	if (gpHooks[0].NewAddress != NULL)
-	{
-		_ASSERTE(gpHooks[0].NewAddress==NULL);
-		return false;
-	}
-
-	gnHookedFuncs = 0;
-	#define ADDFUNC(pProc,szName,szDll) \
-		gpHooks[gnHookedFuncs].NewAddress = pProc; \
-		gpHooks[gnHookedFuncs].Name = szName; \
-		gpHooks[gnHookedFuncs].DllName = szDll; \
-		if (pProc/*need to be, ignore GCC warn*/) gnHookedFuncs++;
-	/* ************************ */
-
-	// No need to hook these functions in Vista+
-	if (!gbLdrDllNotificationUsed)
-	{
-		ADDFUNC((void*)OnLoadLibraryA,		szLoadLibraryA,			kernel32); // ...
-		ADDFUNC((void*)OnLoadLibraryExA,	szLoadLibraryExA,		kernel32);
-		ADDFUNC((void*)OnLoadLibraryExW,	szLoadLibraryExW,		kernel32);
-		ADDFUNC((void*)OnFreeLibrary,		szFreeLibrary,			kernel32); // OnFreeLibrary тоже нужен!
-	}
-	// With only exception of LoadLibraryW - it handles "ExtendedConsole.dll" loading in Far 64
-	if (gbIsFarProcess || !gbLdrDllNotificationUsed)
-	{
-		ADDFUNC((void*)OnLoadLibraryW,			szLoadLibraryW,			kernel32);
-	}
-
-	#ifdef HOOK_ERROR_PROC
-	// Для отладки появления системных ошибок
-	ADDFUNC((void*)OnGetLastError,			szGetLastError,			kernel32);
-	ADDFUNC((void*)OnSetLastError,			szSetLastError,			kernel32); // eSetLastError
-	#endif
-
-	ADDFUNC(NULL,NULL,NULL);
-	#undef ADDFUNC
-	/* ************************ */
-
-#endif
-	return true;
-}
-
-
 BOOL gbLogLibraries = FALSE;
 DWORD gnLastLogSetChange = 0;
 
@@ -729,12 +652,6 @@ int InitHooks(HookItem* apHooks)
 			{
 				ghKernelBase = LoadLibrary(kernelbase);
 			}
-		}
-
-		if (!InitHooksLibrary())
-		{
-			SafeFree(gpHooks);
-			return -3;
 		}
 	}
 
@@ -975,44 +892,26 @@ BOOL StartupHooks()
 	if (ghKernel32)
 		gfGetProcessId = (GetProcessId_t)GetProcAddress(ghKernel32, "GetProcessId");
 
-	if (gbPrepareDefaultTerminal)
+	// Prepare array and check basic requirements (LdrNotification, LoadLibrary, etc.)
+	InitHooks(NULL);
+
+
+	// Populate hooked function list
+	if (!gbPrepareDefaultTerminal)
 	{
+		// General (console & ChildGui)
 		HLOG1("StartupHooks.InitHooks",0);
-		InitHooksDefTerm();
+		InitHooksCommon();
 		HLOGEND1();
 	}
 	else
 	{
-		// Общие
+		// Default Terminal?
 		HLOG1("StartupHooks.InitHooks",0);
-		InitHooksCommon();
+		InitHooksDefTerm();
 		HLOGEND1();
-
-		// user32 & gdi32
-		HLOG1_("StartupHooks.InitHooks",1);
-		InitHooksUser32();
-		HLOGEND1();
-
-		// Far only functions
-		HLOG1_("StartupHooks.InitHooks",2);
-		InitHooksFar();
-		HLOGEND1();
-
-		// Cmd.exe only functions
-		//if (gnAllowClinkUsage)
-		if (gbIsCmdProcess)
-		{
-			HLOG1_("StartupHooks.InitHooks",3);
-			InitHooksClink();
-			HLOGEND1();
-		}
 	}
 
-#if 0
-	HLOG1_("InitHooksSort",0);
-	InitHooksSort();
-	HLOGEND1();
-#endif
 
 	print_timings(L"SetAllHooks");
 
@@ -1207,6 +1106,9 @@ bool SetAllHooks()
 {
 	if (!gpHooks)
 	{
+		// Functions were not defined?
+		_ASSERTE(gpHooks!=NULL);
+
 		HLOG1("SetAllHooks.InitHooks",0);
 		InitHooks(NULL);
 		if (!gpHooks)

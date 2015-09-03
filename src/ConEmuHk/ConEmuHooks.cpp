@@ -103,14 +103,17 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "hkConsoleInput.h"
 #include "hkConsoleOutput.h"
 #include "hkDialog.h"
-#include "hkFarExe.h"
-#include "hkMessages.h"
 #include "hkEnvironment.h"
-#include "hkKernel.h"
+#include "hkFarExe.h"
 #include "hkGDI.h"
+#include "hkKernel.h"
+#include "hkLibrary.h"
+#include "hkMessages.h"
 #include "hkProcess.h"
 #include "hkStdIO.h"
 #include "hkWindow.h"
+
+#include "hlpProcess.h"
 
 
 #ifdef _DEBUG
@@ -238,41 +241,234 @@ struct ReadConsoleInfo gReadConsoleInfo = {};
 GetProcessId_t gfGetProcessId = NULL;
 
 
-
-
-
-
-bool InitHooksCommon()
+void __stdcall SetFarHookMode(struct HookModeFar *apFarMode)
 {
-#ifndef HOOKS_SKIP_COMMON
-	// Основные хуки
-	HookItem HooksCommon[] =
+	if (!apFarMode)
 	{
-		/* ***** MOST CALLED ***** */
-		#ifndef HOOKS_COMMON_PROCESS_ONLY
+		gFarMode.bFarHookMode = FALSE;
+	}
+	else if (apFarMode->cbSize != sizeof(HookModeFar))
+	{
+		_ASSERTE(apFarMode->cbSize == sizeof(HookModeFar));
+		/*
+		gFarMode.bFarHookMode = FALSE;
+		wchar_t szTitle[64], szText[255];
+		msprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuHk, PID=%u", GetCurrentProcessId());
+		msprintf(szText, SKIPLEN(countof(szText)) L"SetFarHookMode recieved invalid sizeof = %u\nRequired = %u", apFarMode->cbSize, (DWORD)sizeof(HookModeFar));
+		Message BoxW(NULL, szText, szTitle, MB_ICONSTOP|MB_SYSTEMMODAL);
+		*/
+	}
+	else
+	{
+		// При запуске Ctrl+Shift+W - фар как-то криво инитится... Ctrl+O не работает
+		#ifdef _DEBUG
+		char szInfo[100]; msprintf(szInfo, countof(szInfo), "SetFarHookMode. FarHookMode=%u, LongConsoleOutput=%u\n", apFarMode->bFarHookMode, apFarMode->bLongConsoleOutput);
+		OutputDebugStringA(szInfo);
+		#endif
+		memmove(&gFarMode, apFarMode, sizeof(gFarMode));
+	}
+}
+
+
+
+bool InitHooksLibrary()
+{
+	#ifdef _DEBUG
+	extern HookItem *gpHooks;
+	extern size_t gnHookedFuncs;
+	// Must be placed on top
+	_ASSERTE(gpHooks && gnHookedFuncs==0 && gpHooks[0].NewAddress==NULL);
+	#endif
+
+	HLOG1("InitHooksLibrary",0);
+	bool lbRc = false;
+
+	HookItem HooksLib1[] =
+	{
+		/* ************************ */
+		{(void*)OnLoadLibraryA,		"LoadLibraryA",			kernel32},
+		{(void*)OnLoadLibraryExA,	"LoadLibraryExA",		kernel32},
+		{(void*)OnLoadLibraryExW,	"LoadLibraryExW",		kernel32},
+		{(void*)OnFreeLibrary,		"FreeLibrary",			kernel32},
+		/* ************************ */
+		{0}
+	};
+
+	HookItem HooksLib2[] =
+	{
+		/* ************************ */
+		{(void*)OnLoadLibraryW,		"LoadLibraryW",			kernel32},
+		/* ************************ */
+		{0}
+	};
+
+
+	// No need to hook these functions in Vista+
+	if (!gbLdrDllNotificationUsed)
+	{
+		if (InitHooks(HooksLib1) < 0)
+			goto wrap;
+	}
+
+	// With only exception of LoadLibraryW - it handles "ExtendedConsole.dll" loading in Far 64
+	if (gbIsFarProcess || !gbLdrDllNotificationUsed)
+	{
+		if (InitHooks(HooksLib2) < 0)
+			goto wrap;
+	}
+
+	lbRc = true;
+wrap:
+	HLOGEND1();
+
+	return lbRc;
+}
+
+
+bool InitHooksKernel()
+{
+	HLOG1("InitHooksKernel",0);
+	bool lbRc = false;
+
+	HookItem HooksKernel[] =
+	{
+		/* ************************ */
+		{(void*)OnOpenFileMappingW,			"OpenFileMappingW",		kernel32},
+		{(void*)OnMapViewOfFile,			"MapViewOfFile",		kernel32},
+		{(void*)OnUnmapViewOfFile,			"UnmapViewOfFile",		kernel32},
+		/* ************************ */
+		{(void*)OnSetEnvironmentVariableA,	"SetEnvironmentVariableA",	kernel32},
+		{(void*)OnSetEnvironmentVariableW,	"SetEnvironmentVariableW",	kernel32},
+		{(void*)OnGetEnvironmentVariableA,	"GetEnvironmentVariableA",	kernel32},
+		{(void*)OnGetEnvironmentVariableW,	"GetEnvironmentVariableW",	kernel32},
+		#if 0
+		{(void*)OnGetEnvironmentStringsA,	"GetEnvironmentStringsA",	kernel32},
+		#endif
+		{(void*)OnGetEnvironmentStringsW,	"GetEnvironmentStringsW",	kernel32},
+		/* ************************ */
+		{(void*)OnGetSystemTime,			"GetSystemTime",			kernel32},
+		{(void*)OnGetLocalTime,				"GetLocalTime",				kernel32},
+		{(void*)OnGetSystemTimeAsFileTime,	"GetSystemTimeAsFileTime",	kernel32},
+		/* ************************ */
+		{0}
+	};
+
+	if (InitHooks(HooksKernel) < 0)
+		goto wrap;
+
+	#if 0
+	// Проверка, как реагирует на дубли
+	HooksCommon[1].NewAddress = NULL;
+	_ASSERTEX(FALSE && "Testing");
+	InitHooks(HooksCommon);
+	#endif
+
+	lbRc = true;
+wrap:
+	HLOGEND1();
+
+	return lbRc;
+}
+
+bool InitHooksDebugging()
+{
+	HLOG1("InitHooksDebugging",0);
+	bool lbRc = false;
+
+	#ifdef _DEBUG
+	HookItem HooksDbg[] =
+	{
+		/* ************************ */
+
+		{(void*)OnCreateNamedPipeW,			"CreateNamedPipeW",		kernel32},
+
+		{(void*)OnVirtualAlloc,				"VirtualAlloc",			kernel32},
+		{(void*)OnVirtualProtect,			"VirtualProtect",		kernel32},
+		{(void*)OnSetUnhandledExceptionFilter,
+											"SetUnhandledExceptionFilter",
+																kernel32},
+
+		/* ************************ */
+
+		#ifdef HOOK_ERROR_PROC
+		{(void*)OnGetLastError,			"GetLastError",			kernel32},
+		{(void*)OnSetLastError,			"SetLastError",			kernel32}, // eSetLastError
+		#endif
+
+		/* ************************ */
+		{0}
+	};
+
+	if (InitHooks(HooksDbg) < 0)
+		goto wrap;
+	#endif // _DEBUG
+
+	lbRc = true;
+wrap:
+	HLOGEND1();
+
+	return lbRc;
+}
+
+bool InitHooksComDlg()
+{
+	HLOG1("InitHooksComDlg",0);
+	bool lbRc = false;
+
+	HookItem HooksComDlg[] =
+	{
+		/* ************************ */
+		{(void*)OnChooseColorA,			"ChooseColorA",			comdlg32},
+		{(void*)OnChooseColorW,			"ChooseColorW",			comdlg32},
+		/* ************************ */
+		{0}
+	};
+
+	if (InitHooks(HooksComDlg) < 0)
+		goto wrap;
+
+	lbRc = true;
+wrap:
+	HLOGEND1();
+
+	return lbRc;
+}
+
+// Console, ANSI, Read/Write, etc.
+bool InitHooksConsole()
+{
+	HLOG1("InitHooksConsole",0);
+	bool lbRc = false;
+
+	HookItem HooksConsole[] =
+	{
+		/* ************************ */
+		{(void*)OnCreateFileW,			"CreateFileW",  		kernel32},
+		{(void*)OnWriteFile,			"WriteFile",  			kernel32},
+		{(void*)OnReadFile,				"ReadFile",				kernel32},
+		{(void*)OnCloseHandle,			"CloseHandle",			kernel32},
+		/* ************************ */
 		{(void*)OnGetConsoleWindow,     "GetConsoleWindow",     kernel32},
 		{(void*)OnGetConsoleMode,		"GetConsoleMode",		kernel32},
-		//{(void*)OnWriteConsoleOutputWx,	"WriteConsoleOutputW",  kernel32},
-		//{(void*)OnWriteConsoleOutputAx,	"WriteConsoleOutputA",  kernel32},
+		{(void*)OnSetConsoleMode,		"SetConsoleMode",  		kernel32},
+		{(void*)OnSetConsoleTitleA,		"SetConsoleTitleA",		kernel32},
+		{(void*)OnSetConsoleTitleW,		"SetConsoleTitleW",		kernel32},
+		{(void*)OnGetConsoleAliasesW,	"GetConsoleAliasesW",	kernel32},
+		{(void*)OnAllocConsole,			"AllocConsole",			kernel32},
+		{(void*)OnFreeConsole,			"FreeConsole",			kernel32},
+		{(void*)OnSetConsoleKeyShortcuts, "SetConsoleKeyShortcuts", kernel32},
+		/* ************************ */
+		{(void*)OnSetConsoleTextAttribute, "SetConsoleTextAttribute", kernel32},
 		{(void*)OnWriteConsoleOutputW,	"WriteConsoleOutputW",  kernel32},
 		{(void*)OnWriteConsoleOutputA,	"WriteConsoleOutputA",  kernel32},
-		//{(void*)OnPeekConsoleInputWx,	"PeekConsoleInputW",	kernel32},
-		//{(void*)OnPeekConsoleInputAx,	"PeekConsoleInputA",	kernel32},
-		//{(void*)OnReadConsoleInputWx,	"ReadConsoleInputW",	kernel32},
-		//{(void*)OnReadConsoleInputAx,	"ReadConsoleInputA",	kernel32},
 		{(void*)OnReadConsoleW,			"ReadConsoleW",			kernel32},
 		{(void*)OnReadConsoleA,			"ReadConsoleA",			kernel32},
-		{(void*)OnReadFile,				"ReadFile",				kernel32},
 		{(void*)OnPeekConsoleInputW,	"PeekConsoleInputW",	kernel32},
 		{(void*)OnPeekConsoleInputA,	"PeekConsoleInputA",	kernel32},
 		{(void*)OnReadConsoleInputW,	"ReadConsoleInputW",	kernel32},
 		{(void*)OnReadConsoleInputA,	"ReadConsoleInputA",	kernel32},
 		{(void*)OnWriteConsoleInputA,	"WriteConsoleInputA",	kernel32},
 		{(void*)OnWriteConsoleInputW,	"WriteConsoleInputW",	kernel32},
-		/* ANSI Escape Sequences SUPPORT */
-		//#ifdef HOOK_ANSI_SEQUENCES
-		{(void*)OnCreateFileW,			"CreateFileW",  		kernel32},
-		{(void*)OnWriteFile,			"WriteFile",  			kernel32},
 		{(void*)OnWriteConsoleA,		"WriteConsoleA",  		kernel32},
 		{(void*)OnWriteConsoleW,		"WriteConsoleW",  		kernel32},
 		{(void*)OnScrollConsoleScreenBufferA,
@@ -287,33 +483,7 @@ bool InitHooksCommon()
 		{(void*)OnWriteConsoleOutputCharacterW,
 										"WriteConsoleOutputCharacterW",
 																kernel32},
-		{(void*)OnSetConsoleMode,		"SetConsoleMode",  		kernel32},
-		{(void*)OnSetConsoleTitleA,		"SetConsoleTitleA",		kernel32},
-		{(void*)OnSetConsoleTitleW,		"SetConsoleTitleW",		kernel32},
-		//#endif
 		/* Others console functions */
-		{(void*)OnSetConsoleTextAttribute, "SetConsoleTextAttribute", kernel32},
-		{(void*)OnSetConsoleKeyShortcuts, "SetConsoleKeyShortcuts", kernel32},
-		#endif
-		/* ************************ */
-		{(void*)OnExitProcess,			"ExitProcess",			kernel32},
-		{(void*)OnTerminateProcess,		"TerminateProcess",		kernel32},
-		{(void*)OnTerminateThread,		"TerminateThread",		kernel32},
-		/* ************************ */
-		{(void*)OnCreateProcessA,		"CreateProcessA",		kernel32},
-		{(void*)OnCreateProcessW,		"CreateProcessW",		kernel32},
-		{(void*)OnOpenFileMappingW,		"OpenFileMappingW",		kernel32},
-		{(void*)OnMapViewOfFile,		"MapViewOfFile",		kernel32},
-		{(void*)OnUnmapViewOfFile,		"UnmapViewOfFile",		kernel32},
-		{(void*)OnCloseHandle,			"CloseHandle",			kernel32},
-		{(void*)OnSetThreadContext,		"SetThreadContext",		kernel32},
-		{(void*)OnSetCurrentDirectoryA, "SetCurrentDirectoryA", kernel32},
-		{(void*)OnSetCurrentDirectoryW, "SetCurrentDirectoryW", kernel32},
-		/* ************************ */
-		#ifndef HOOKS_COMMON_PROCESS_ONLY
-		{(void*)OnGetConsoleAliasesW,	"GetConsoleAliasesW",	kernel32},
-		{(void*)OnAllocConsole,			"AllocConsole",			kernel32},
-		{(void*)OnFreeConsole,			"FreeConsole",			kernel32},
 		{
 			(void*)OnGetNumberOfConsoleInputEvents,
 			"GetNumberOfConsoleInputEvents",
@@ -369,144 +539,78 @@ bool InitHooksCommon()
 			"SetConsoleCursorInfo",
 			kernel32
 		},
-		#endif
-		{(void*)OnSetEnvironmentVariableA,	"SetEnvironmentVariableA",	kernel32},
-		{(void*)OnSetEnvironmentVariableW,	"SetEnvironmentVariableW",	kernel32},
-		{(void*)OnGetEnvironmentVariableA,	"GetEnvironmentVariableA",	kernel32},
-		{(void*)OnGetEnvironmentVariableW,	"GetEnvironmentVariableW",	kernel32},
-		#if 0
-		{(void*)OnGetEnvironmentStringsA,  "GetEnvironmentStringsA",	kernel32},
-		#endif
-		{(void*)OnGetEnvironmentStringsW,	"GetEnvironmentStringsW",	kernel32},
-		/* ************************ */
-		{(void*)OnGetSystemTime,			"GetSystemTime",			kernel32},
-		{(void*)OnGetLocalTime,				"GetLocalTime",				kernel32},
-		{(void*)OnGetSystemTimeAsFileTime,	"GetSystemTimeAsFileTime",	kernel32},
 		/* ************************ */
 		{(void*)OnGetCurrentConsoleFont, "GetCurrentConsoleFont",		kernel32},
 		{(void*)OnGetConsoleFontSize,    "GetConsoleFontSize",			kernel32},
 		/* ************************ */
 
-		#ifdef _DEBUG
-		#ifndef HOOKS_COMMON_PROCESS_ONLY
-		{(void*)OnCreateNamedPipeW,		"CreateNamedPipeW",		kernel32},
-		#endif
-		#endif
-
-		#ifdef _DEBUG
-		//#ifdef HOOKS_VIRTUAL_ALLOC
-		{(void*)OnVirtualAlloc,			"VirtualAlloc",			kernel32},
-		{(void*)OnVirtualProtect,		"VirtualProtect",		kernel32},
-		{(void*)OnSetUnhandledExceptionFilter,
-										"SetUnhandledExceptionFilter",
-																kernel32},
-		//#endif
-		#endif
-		{(void*)OnCreateThread,			"CreateThread",			kernel32},
-
-		// Microsoft bug?
-		// http://code.google.com/p/conemu-maximus5/issues/detail?id=60
-		#ifndef HOOKS_COMMON_PROCESS_ONLY
+		// https://conemu.github.io/en/MicrosoftBugs.html#chcp_hung
 		{(void*)OnSetConsoleCP,			"SetConsoleCP",			kernel32},
 		{(void*)OnSetConsoleOutputCP,	"SetConsoleOutputCP",	kernel32},
-		#endif
+		/* ************************ */
+		{0}
+	};
+
+	if (InitHooks(HooksConsole) < 0)
+		goto wrap;
+
+	lbRc = true;
+wrap:
+	HLOGEND1();
+
+	return lbRc;
+}
+
+bool InitHooksExecutor()
+{
+	HLOG1("InitHooksExecutor",0);
+	bool lbRc = false;
+
+	HookItem HooksCommon[] =
+	{
+		/* ************************ */
+		{(void*)OnExitProcess,			"ExitProcess",			kernel32},
+		{(void*)OnTerminateProcess,		"TerminateProcess",		kernel32},
+		/* ************************ */
+		{(void*)OnCreateThread,			"CreateThread",			kernel32},
+		{(void*)OnSetThreadContext,		"SetThreadContext",		kernel32},
+		{(void*)OnTerminateThread,		"TerminateThread",		kernel32},
+		/* ************************ */
+		{(void*)OnCreateProcessA,		"CreateProcessA",		kernel32},
+		{(void*)OnCreateProcessW,		"CreateProcessW",		kernel32},
+		/* ************************ */
+		{(void*)OnSetCurrentDirectoryA, "SetCurrentDirectoryA", kernel32},
+		{(void*)OnSetCurrentDirectoryW, "SetCurrentDirectoryW", kernel32},
 		/* ************************ */
 		{(void*)OnShellExecuteExA,		"ShellExecuteExA",		shell32},
 		{(void*)OnShellExecuteExW,		"ShellExecuteExW",		shell32},
 		{(void*)OnShellExecuteA,		"ShellExecuteA",		shell32},
 		{(void*)OnShellExecuteW,		"ShellExecuteW",		shell32},
 		/* ************************ */
-		{(void*)OnChooseColorA,			"ChooseColorA",			comdlg32},
-		{(void*)OnChooseColorW,			"ChooseColorW",			comdlg32},
-		/* ************************ */
-		{0}
-	};
-	InitHooks(HooksCommon);
-
-	#if 0
-	// Проверка, как реагирует на дубли
-	HooksCommon[1].NewAddress = NULL;
-	_ASSERTEX(FALSE && "Testing");
-	InitHooks(HooksCommon);
-	#endif
-
-#endif
-	return true;
-}
-
-bool InitHooksDefTerm()
-{
-	// Хуки требующиеся для установки ConEmu как терминала по умолчанию
-	HookItem HooksCommon[] =
-	{
-		{(void*)OnCreateProcessW,		"CreateProcessW",		kernel32},
-		// Need to "hook" OnCreateProcessA because it is used in "OnWinExec"
-		{(void*)OnCreateProcessA,		"CreateProcessA",		kernel32},
-		// Used in some programs, Issue 853
-		{(void*)OnWinExec,				"WinExec",				kernel32},
-		// Need for hook "Run as administrator"
-		{(void*)OnShellExecuteExW,		"ShellExecuteExW",		shell32},
-		{0}
-	};
-	HookItem HooksCmdLine[] =
-	{
-		// Issue 1125: "Run as administrator" too. Must be last export
-		{(void*)OnShellExecCmdLine,		"ShellExecCmdLine",		shell32,   265},
-		{0}
-	};
-	HookItem HooksVshost[] =
-	{
-		// Issue 1312: .Net applications runs in "*.vshost.exe" helper GUI apllication when debugging
-		{(void*)OnAllocConsole,			"AllocConsole",			kernel32}, // Only for "*.vshost.exe"?
-		{(void*)OnShowWindow,			"ShowWindow",			user32},
-		/* ************************ */
-		{0}
-	};
-	// Required in VisualStudio and CodeBlocks (gdb) debuggers
-	// Don't restrict to them, other Dev Envs may behave in similar way
-	HookItem HooksDevStudio[] =
-	{
-		{(void*)OnResumeThread,			"ResumeThread",			kernel32},
+		// OnWinExec/WinExec is used in DefTerm only
 		/* ************************ */
 		{0}
 	};
 
-	InitHooks(HooksCommon);
+	if (InitHooks(HooksCommon) < 0)
+		goto wrap;
 
-	// Windows 7. There is new undocumented function "ShellExecCmdLine" used by Explorer
-	_ASSERTE(_WIN32_WINNT_WIN7==0x601);
-	OSVERSIONINFOEXW osvi = {sizeof(osvi), HIBYTE(_WIN32_WINNT_WIN7), LOBYTE(_WIN32_WINNT_WIN7)};
-	DWORDLONG const dwlConditionMask = VerSetConditionMask(VerSetConditionMask(0, VER_MAJORVERSION, VER_GREATER_EQUAL), VER_MINORVERSION, VER_GREATER_EQUAL);
-	BOOL isWindows7 = VerifyVersionInfoW(&osvi, VER_MAJORVERSION | VER_MINORVERSION, dwlConditionMask);
-	if (isWindows7)
-	{
-		InitHooks(HooksCmdLine);
-	}
+	lbRc = true;
+wrap:
+	HLOGEND1();
 
-	// "*.vshost.exe" uses special helper
-	if (gbIsNetVsHost)
-	{
-		InitHooks(HooksVshost);
-	}
-
-	// Required in VisualStudio and CodeBlocks (gdb) debuggers
-	// Don't restrict to them, other Dev Envs may behave in similar way
-	{
-		InitHooks(HooksDevStudio);
-	}
-
-	return true;
+	return lbRc;
 }
 
 // user32 & gdi32
 bool InitHooksUser32()
 {
-#ifndef HOOKS_SKIP_COMMON
-	// Основные хуки
-	HookItem HooksCommon[] =
+	HLOG1("InitHooksUser32",0);
+	bool lbRc = false;
+
+	HookItem HooksUserGdi[] =
 	{
 		/* ************************ */
-		#ifndef HOOKS_COMMON_PROCESS_ONLY
 		{(void*)OnTrackPopupMenu,		"TrackPopupMenu",		user32},
 		{(void*)OnTrackPopupMenuEx,		"TrackPopupMenuEx",		user32},
 		{(void*)OnFlashWindow,			"FlashWindow",			user32},
@@ -515,10 +619,9 @@ bool InitHooksUser32()
 		{(void*)OnGetForegroundWindow,	"GetForegroundWindow",	user32},
 		{(void*)OnGetWindowRect,		"GetWindowRect",		user32},
 		{(void*)OnScreenToClient,		"ScreenToClient",		user32},
-		#endif
 		/* ************************ */
-		//{(void*)OnCreateWindowA,		"CreateWindowA",		user32}, -- таких экспортов нет
-		//{(void*)OnCreateWindowW,		"CreateWindowW",		user32}, -- таких экспортов нет
+		//{(void*)OnCreateWindowA,		"CreateWindowA",		user32}, -- there is not such export
+		//{(void*)OnCreateWindowW,		"CreateWindowW",		user32}, -- there is not such export
 		{(void*)OnCreateWindowExA,		"CreateWindowExA",		user32},
 		{(void*)OnCreateWindowExW,		"CreateWindowExW",		user32},
 		{(void*)OnShowCursor,			"ShowCursor",			user32},
@@ -574,14 +677,22 @@ bool InitHooksUser32()
 		/* ************************ */
 		{0}
 	};
-	InitHooks(HooksCommon);
-#endif
-	return true;
+
+	if (InitHooks(HooksUserGdi) < 0)
+		goto wrap;
+
+	lbRc = true;
+wrap:
+	HLOGEND1();
+
+	return lbRc;
 }
 
-bool InitHooksFar()
+bool InitHooksFarExe()
 {
-#ifndef HOOKS_SKIP_COMMON
+	HLOG1("InitHooksFarExe",0);
+	bool lbRc = false;
+
 	// Проверить, фар ли это? Если нет - можно не ставить HooksFarOnly
 	bool lbIsFar = false;
 	wchar_t* pszExe = (wchar_t*)calloc(MAX_PATH+1,sizeof(wchar_t));
@@ -595,72 +706,171 @@ bool InitHooksFar()
 		free(pszExe);
 	}
 
-	if (!lbIsFar)
-		return true; // Don't hook
-
 	HookItem HooksFarOnly[] =
 	{
+		/* ************************ */
 		{(void*)OnCompareStringW, "CompareStringW", kernel32},
 		/* ************************ */
-		{0, 0, 0}
+		{0}
 	};
-	InitHooks(HooksFarOnly);
-#endif
-	return true;
+
+	if (lbIsFar)
+	{
+		if (InitHooks(HooksFarOnly) < 0)
+			goto wrap;
+	}
+
+	lbRc = true;
+wrap:
+	HLOGEND1();
+
+	return lbRc;
 }
 
-bool InitHooksClink()
+bool InitHooksCmdExe()
 {
-	//if (!gnAllowClinkUsage)
 	if (!gbIsCmdProcess)
 		return true;
 
+	HLOG1("InitHooksCmdExe",0);
+	bool lbRc = false;
+
 	HookItem HooksCmdOnly[] =
 	{
-		{(void*)OnRegQueryValueExW, "RegQueryValueExW", kernel32},
+		// Vista and below: AdvApi32.dll
+		// **NB** In WinXP this module is not linked statically
+		{(void*)OnRegQueryValueExW, "RegQueryValueExW", IsWin7() ? kernel32 : advapi32},
 		{0, 0, 0}
 	};
 
-	// Для Vista и ниже - AdvApi32.dll
-	// Причем, в WinXP этот модуль не прилинкован статически
-	_ASSERTE(_WIN32_WINNT_VISTA==0x600);
-	OSVERSIONINFOEXW osvi = {sizeof(osvi), HIBYTE(_WIN32_WINNT_VISTA), LOBYTE(_WIN32_WINNT_VISTA)};
-	DWORDLONG const dwlConditionMask = VerSetConditionMask(VerSetConditionMask(0, VER_MAJORVERSION, VER_GREATER_EQUAL), VER_MINORVERSION, VER_GREATER_EQUAL);
-	if (!VerifyVersionInfoW(&osvi, VER_MAJORVERSION | VER_MINORVERSION, dwlConditionMask))
-	{
-		HooksCmdOnly[0].DllName = advapi32;
-	}
+	if (InitHooks(HooksCmdOnly) < 0)
+		goto wrap;
 
-	InitHooks(HooksCmdOnly);
+	lbRc = true;
+wrap:
+	HLOGEND1();
 
-	return true;
+	return lbRc;
 }
 
 
-void __stdcall SetFarHookMode(struct HookModeFar *apFarMode)
+
+
+/* ************************ */
+/* Default Terminal support */
+/* ************************ */
+bool InitHooksDefTerm()
 {
-	if (!apFarMode)
+	HLOG1("InitHooksDefTerm",0);
+	bool lbRc = false;
+
+	// These functions are required for seizing console and behave as Default Terminal
+
+	HookItem HooksCommon[] =
 	{
-		gFarMode.bFarHookMode = FALSE;
-	}
-	else if (apFarMode->cbSize != sizeof(HookModeFar))
+		{(void*)OnCreateProcessW,		"CreateProcessW",		kernel32},
+		// Need to "hook" OnCreateProcessA because it is used in "OnWinExec"
+		{(void*)OnCreateProcessA,		"CreateProcessA",		kernel32},
+		// Used in some programs, Issue 853
+		{(void*)OnWinExec,				"WinExec",				kernel32},
+		// Need for hook "Run as administrator"
+		{(void*)OnShellExecuteExW,		"ShellExecuteExW",		shell32},
+		{0}
+	};
+	HookItem HooksCmdLine[] =
 	{
-		_ASSERTE(apFarMode->cbSize == sizeof(HookModeFar));
-		/*
-		gFarMode.bFarHookMode = FALSE;
-		wchar_t szTitle[64], szText[255];
-		msprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuHk, PID=%u", GetCurrentProcessId());
-		msprintf(szText, SKIPLEN(countof(szText)) L"SetFarHookMode recieved invalid sizeof = %u\nRequired = %u", apFarMode->cbSize, (DWORD)sizeof(HookModeFar));
-		Message BoxW(NULL, szText, szTitle, MB_ICONSTOP|MB_SYSTEMMODAL);
-		*/
-	}
-	else
+		// Issue 1125: "Run as administrator" too. Must be last export
+		{(void*)OnShellExecCmdLine,		"ShellExecCmdLine",		shell32,   265},
+		{0}
+	};
+	HookItem HooksVshost[] =
 	{
-		// При запуске Ctrl+Shift+W - фар как-то криво инитится... Ctrl+O не работает
-		#ifdef _DEBUG
-		char szInfo[100]; msprintf(szInfo, countof(szInfo), "SetFarHookMode. FarHookMode=%u, LongConsoleOutput=%u\n", apFarMode->bFarHookMode, apFarMode->bLongConsoleOutput);
-		OutputDebugStringA(szInfo);
-		#endif
-		memmove(&gFarMode, apFarMode, sizeof(gFarMode));
+		// Issue 1312: .Net applications runs in "*.vshost.exe" helper GUI apllication when debugging
+		{(void*)OnAllocConsole,			"AllocConsole",			kernel32}, // Only for "*.vshost.exe"?
+		{(void*)OnShowWindow,			"ShowWindow",			user32},
+		/* ************************ */
+		{0}
+	};
+	// Required in VisualStudio and CodeBlocks (gdb) debuggers
+	// Don't restrict to them, other Dev Envs may behave in similar way
+	HookItem HooksDevStudio[] =
+	{
+		{(void*)OnResumeThread,			"ResumeThread",			kernel32},
+		/* ************************ */
+		{0}
+	};
+
+	// Required for hooking in OS
+	// bool check
+	if (!InitHooksLibrary())
+		goto wrap;
+
+	// Start our functions
+	if (InitHooks(HooksCommon) < 0)
+		goto wrap;
+
+	// Windows 7. There is new undocumented function "ShellExecCmdLine" used by Explorer
+	if (IsWin7())
+	{
+		if (InitHooks(HooksCmdLine) < 0)
+			goto wrap;
 	}
+
+	// "*.vshost.exe" uses special helper
+	if (gbIsNetVsHost)
+	{
+		if (InitHooks(HooksVshost) < 0)
+			goto wrap;
+	}
+
+	// Required in VisualStudio and CodeBlocks (gdb) debuggers
+	// Don't restrict to them, other Dev Envs may behave in similar way
+	{
+		if (InitHooks(HooksDevStudio) < 0)
+			goto wrap;
+	}
+
+	lbRc = true;
+wrap:
+	HLOGEND1();
+
+	return lbRc;
+}
+
+
+
+/* ******************* */
+/* Console or ChildGui */
+/* ******************* */
+
+bool InitHooksCommon()
+{
+	if (!InitHooksLibrary())
+		return false;
+
+	if (!InitHooksKernel())
+		return false;
+
+	if (!InitHooksExecutor())
+		return false;
+
+	if (!InitHooksDebugging())
+		return false;
+
+	if (!InitHooksComDlg())
+		return false;
+
+	if (!InitHooksConsole())
+		return false;
+
+	if (!InitHooksUser32())
+		return false;
+
+	if (!InitHooksFarExe())
+		return false;
+
+	if (!InitHooksCmdExe())
+		return false;
+
+	return true;
 }
