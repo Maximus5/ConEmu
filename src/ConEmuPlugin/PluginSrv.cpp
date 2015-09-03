@@ -371,7 +371,7 @@ BOOL WINAPI PlugServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &pp
 		#ifdef _DEBUG
 		const wchar_t *pszUserMacro = (wchar_t*)(crMouse+1);
 		#endif
-		DWORD ClickArg[2] = {TRUE, MAKELONG(crMouse->X, crMouse->Y)};
+		DWORD ClickArg[2] = {(DWORD)TRUE, (DWORD)MAKELONG(crMouse->X, crMouse->Y)};
 
 		// Выделить файл под курсором
 		DEBUGSTRMENU(L"\n*** ServerThreadCommand->ProcessCommand(CMD_LEFTCLKSYNC) begin\n");
