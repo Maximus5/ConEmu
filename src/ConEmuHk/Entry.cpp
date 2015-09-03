@@ -169,13 +169,12 @@ struct CpConv gCpConv = {};
 #define isPressed(inp) ((GetKeyState(inp) & 0x8000) == 0x8000)
 
 extern HANDLE ghHeap;
-//extern HMODULE ghKernel32, ghUser32, ghShell32, ghAdvapi32, ghComdlg32;
+//extern HMODULE ghKernel32, ghUser32, ghShell32, ghAdvapi32;
 extern HMODULE ghUser32;
 //extern const wchar_t *kernel32;// = L"kernel32.dll";
 extern const wchar_t *user32  ;// = L"user32.dll";
 //extern const wchar_t *shell32 ;// = L"shell32.dll";
 //extern const wchar_t *advapi32;// = L"Advapi32.dll";
-//extern const wchar_t *comdlg32;// = L"comdlg32.dll";
 extern bool gbHookExecutableOnly;
 //extern DWORD gnAllowClinkUsage;
 

@@ -51,21 +51,5 @@ typedef HWND (WINAPI* OnCreateDialogParamW_t)(HINSTANCE hInstance, LPCWSTR lpTem
 HWND WINAPI OnCreateDialogParamW(HINSTANCE hInstance, LPCWSTR lpTemplateName, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM dwInitParam);
 
 // DialogBoxParamW
-typedef INT_PTR (WINAPI* OnDialogBoxParamW_t)(HINSTANCE hInstance, LPCWSTR lpTemplateName, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM dwInitParam);
-INT_PTR WINAPI OnDialogBoxParamW(HINSTANCE hInstance, LPCWSTR lpTemplateName, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM dwInitParam);
-
-
-/* *************************** */
-/*       FOR DELETION          */
-/* *************************** */
-// ChooseColorA
-typedef BOOL (WINAPI* OnChooseColorA_t)(LPCHOOSECOLORA lpcc);
-extern OnChooseColorA_t ChooseColorA_f;
-BOOL WINAPI OnChooseColorA(LPCHOOSECOLORA lpcc);
-// ChooseColorW
-typedef BOOL (WINAPI* OnChooseColorW_t)(LPCHOOSECOLORW lpcc);
-extern OnChooseColorW_t ChooseColorW_f;
-BOOL WINAPI OnChooseColorW(LPCHOOSECOLORW lpcc);
-/* *************************** */
-/*       FOR DELETION          */
-/* *************************** */
+typedef INT_PTR (WINAPI* OnDialogBoxIndirectParamAorW_t)(HINSTANCE hInstance, LPCDLGTEMPLATE hDialogTemplate, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM dwInitParam, DWORD Flags);
+INT_PTR WINAPI OnDialogBoxIndirectParamAorW(HINSTANCE hInstance, LPCDLGTEMPLATE hDialogTemplate, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM dwInitParam, DWORD Flags);

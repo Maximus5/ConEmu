@@ -82,8 +82,7 @@ extern const wchar_t *user32  ;// = L"user32.dll";
 extern const wchar_t *gdi32  ;// = L"gdi32.dll";
 extern const wchar_t *shell32 ;// = L"shell32.dll";
 extern const wchar_t *advapi32;// = L"Advapi32.dll";
-extern const wchar_t *comdlg32;// = L"comdlg32.dll";
-extern HMODULE ghKernel32, ghUser32, ghGdi32, ghShell32, ghAdvapi32, ghComdlg32;
+extern HMODULE ghKernel32, ghUser32, ghGdi32, ghShell32, ghAdvapi32;
 
 #include "ConEmuHooks.h"
 #include "hlpProcess.h"

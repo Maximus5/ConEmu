@@ -105,10 +105,9 @@ const wchar_t *user32   = L"user32.dll",	*user32_noext   = L"user32";
 const wchar_t *gdi32    = L"gdi32.dll",		*gdi32_noext    = L"gdi32";
 const wchar_t *shell32  = L"shell32.dll",	*shell32_noext  = L"shell32";
 const wchar_t *advapi32 = L"advapi32.dll",	*advapi32_noext = L"advapi32";
-const wchar_t *comdlg32 = L"comdlg32.dll",	*comdlg32_noext = L"comdlg32";
 //!!!WARNING!!! Добавляя в этот список - не забыть добавить и в GetPreloadModules() !!!
-HMODULE ghKernelBase = NULL, ghKernel32 = NULL, ghUser32 = NULL, ghGdi32 = NULL, ghShell32 = NULL, ghAdvapi32 = NULL, ghComdlg32 = NULL;
-HMODULE* ghSysDll[] = {&ghKernelBase, &ghKernel32, &ghUser32, &ghGdi32, &ghShell32, &ghAdvapi32, &ghComdlg32};
+HMODULE ghKernelBase = NULL, ghKernel32 = NULL, ghUser32 = NULL, ghGdi32 = NULL, ghShell32 = NULL, ghAdvapi32 = NULL;
+HMODULE* ghSysDll[] = {&ghKernelBase, &ghKernel32, &ghUser32, &ghGdi32, &ghShell32, &ghAdvapi32};
 //!!!WARNING!!! Добавляя в этот список - не забыть добавить и в GetPreloadModules() !!!
 
 
@@ -136,10 +135,6 @@ size_t GetPreloadModules(PreloadModules** ppModules)
 		{gdi32,		gdi32_noext,	&ghGdi32},
 		{shell32,	shell32_noext,	&ghShell32},
 		{advapi32,	advapi32_noext,	&ghAdvapi32},
-		{comdlg32,	comdlg32_noext,	&ghComdlg32,
-			{{"ChooseColorA", (void**)&ChooseColorA_f},
-			 {"ChooseColorW", (void**)&ChooseColorW_f}}
-		},
 	};
 	*ppModules = Checks;
 	return countof(Checks);
@@ -743,7 +738,6 @@ int InitHooks(HookItem* apHooks)
 						|| gpHooks[i].DllName == user32 
 						|| gpHooks[i].DllName == gdi32 
 						|| gpHooks[i].DllName == advapi32
-						|| gpHooks[i].DllName == comdlg32 
 						));
 			}
 			else
@@ -886,8 +880,6 @@ BOOL StartupHooks()
 	if (ghShell32) ghShell32 = LoadLibrary(shell32); // если подлинкован - увеличить счетчик
 	ghAdvapi32 = GetModuleHandle(advapi32);
 	if (ghAdvapi32) ghAdvapi32 = LoadLibrary(advapi32); // если подлинкован - увеличить счетчик
-	ghComdlg32 = GetModuleHandle(comdlg32);
-	if (ghComdlg32) ghComdlg32 = LoadLibrary(comdlg32); // если подлинкован - увеличить счетчик
 
 	if (ghKernel32)
 		gfGetProcessId = (GetProcessId_t)GetProcAddress(ghKernel32, "GetProcessId");
@@ -1464,7 +1456,7 @@ void UnprepareModule(HMODULE hModule, LPCWSTR pszModule, int iStep)
 				gfOnLibraryUnLoaded(hModule);
 			}
 
-			// Если выгружена библиотека ghUser32/ghAdvapi32/ghComdlg32...
+			// Если выгружена библиотека ghUser32/ghAdvapi32...
 			// проверить, может какие наши импорты стали невалидными
 			FreeLoadedModule(hModule);
 		}

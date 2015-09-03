@@ -43,11 +43,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 /* **************** */
 
-OnChooseColorA_t ChooseColorA_f = NULL; // For Del
-OnChooseColorW_t ChooseColorW_f = NULL; // For Del
-
-/* **************** */
-
 extern HMODULE ghOurModule;
 extern BOOL GuiSetForeground(HWND hWnd);
 
@@ -245,11 +240,15 @@ HWND WINAPI OnCreateDialogParamW(HINSTANCE hInstance, LPCWSTR lpTemplateName, HW
 }
 
 
-// Нужна для "поднятия" консольного окна при вызове Shell операций
-INT_PTR WINAPI OnDialogBoxParamW(HINSTANCE hInstance, LPCWSTR lpTemplateName, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM dwInitParam)
+// !!! UNDOCUMENTED !!!
+// Old note: Required for bring create dialog on top (Z-order) during shell operations
+//           Does this mention "Run as" (pre-UAC)
+//           or Explorer's choose application (start using) - can't remember.
+// New note: It's required for proper function of ChooseColor functions
+INT_PTR WINAPI OnDialogBoxIndirectParamAorW(HINSTANCE hInstance, LPCDLGTEMPLATE hDialogTemplate, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM dwInitParam, DWORD Flags)
 {
-	//typedef INT_PTR (WINAPI* OnDialogBoxParamW_t)(HINSTANCE hInstance, LPCWSTR lpTemplateName, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM dwInitParam);
-	ORIGINALFASTEX(DialogBoxParamW,NULL);
+	//typedef INT_PTR (WINAPI* OnDialogBoxIndirectParamAorW_t)(HINSTANCE hInstance, LPCDLGTEMPLATE hDialogTemplate, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM dwInitParam, DWORD Flags);
+	ORIGINALFASTEX(DialogBoxIndirectParamAorW,NULL);
 	INT_PTR iRc = 0;
 
 	if (ghConEmuWndDC)
@@ -260,162 +259,8 @@ INT_PTR WINAPI OnDialogBoxParamW(HINSTANCE hInstance, LPCWSTR lpTemplateName, HW
 		PatchDialogParentWnd(hWndParent);
 	}
 
-	if (F(DialogBoxParamW))
-		iRc = F(DialogBoxParamW)(hInstance, lpTemplateName, hWndParent, lpDialogFunc, dwInitParam);
+	if (F(DialogBoxIndirectParamAorW))
+		iRc = F(DialogBoxIndirectParamAorW)(hInstance, hDialogTemplate, hWndParent, lpDialogFunc, dwInitParam, Flags);
 
 	return iRc;
 }
-
-
-
-
-
-/* *************************** */
-/*       FOR DELETION          */
-/* *************************** */
-
-typedef BOOL (WINAPI* SimpleApiFunction_t)(void*);
-struct SimpleApiFunctionArg
-{
-	enum SimpleApiFunctionType
-	{
-		sft_ChooseColorA = 1,
-		sft_ChooseColorW = 2,
-	} funcType;
-	SimpleApiFunction_t funcPtr;
-	void  *pArg;
-	BOOL   bResult;
-	DWORD  nLastError;
-};
-
-INT_PTR CALLBACK SimpleApiDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
-	SimpleApiFunctionArg* P = NULL;
-
-	if (uMsg == WM_INITDIALOG)
-	{
-		P = (SimpleApiFunctionArg*)lParam;
-		SetWindowLongPtr(hwndDlg, GWLP_USERDATA, lParam);
-
-		int x = 0, y = 0;
-		RECT rcDC = {};
-		if (!GetWindowRect(ghConEmuWndDC, &rcDC))
-			SystemParametersInfoW(SPI_GETWORKAREA, 0, &rcDC, 0);
-		if (rcDC.right > rcDC.left && rcDC.bottom > rcDC.top)
-		{
-			x = max(rcDC.left, ((rcDC.right+rcDC.left-300)>>1));
-			y = max(rcDC.top, ((rcDC.bottom+rcDC.top-200)>>1));
-		}
-
-		//typedef BOOL (WINAPI* SetWindowText_t)(HWND,LPCWSTR);
-		//SetWindowText_t SetWindowText_f = (SetWindowText_t)GetProcAddress(ghUser32, "SetWindowTextW");
-
-
-		switch (P->funcType)
-		{
-			case SimpleApiFunctionArg::sft_ChooseColorA:
-				((LPCHOOSECOLORA)P->pArg)->hwndOwner = hwndDlg;
-				SetWindowTextW(hwndDlg, L"ConEmu ColorPicker");
-				break;
-			case SimpleApiFunctionArg::sft_ChooseColorW:
-				((LPCHOOSECOLORW)P->pArg)->hwndOwner = hwndDlg;
-				SetWindowTextW(hwndDlg, L"ConEmu ColorPicker");
-				break;
-		}
-
-		SetWindowPos(hwndDlg, HWND_TOP, x, y, 0, 0, SWP_SHOWWINDOW);
-
-		P->bResult = P->funcPtr(P->pArg);
-		P->nLastError = GetLastError();
-
-		//typedef BOOL (WINAPI* EndDialog_t)(HWND,INT_PTR);
-		//EndDialog_t EndDialog_f = (EndDialog_t)GetProcAddress(ghUser32, "EndDialog");
-		EndDialog(hwndDlg, 1);
-
-		return FALSE;
-	}
-
-	switch (uMsg)
-	{
-	case WM_GETMINMAXINFO:
-		{
-			MINMAXINFO* p = (MINMAXINFO*)lParam;
-			p->ptMinTrackSize.x = p->ptMinTrackSize.y = 0;
-			SetWindowLongPtr(hwndDlg, DWLP_MSGRESULT, 0);
-		}
-		return TRUE;
-	}
-
-	return FALSE;
-}
-
-BOOL MyChooseColor(SimpleApiFunction_t funcPtr, void* lpcc, BOOL abUnicode)
-{
-	BOOL lbRc = FALSE;
-
-	SimpleApiFunctionArg Arg =
-	{
-		abUnicode?SimpleApiFunctionArg::sft_ChooseColorW:SimpleApiFunctionArg::sft_ChooseColorA,
-		funcPtr, lpcc
-	};
-
-	DLGTEMPLATE* pTempl = (DLGTEMPLATE*)GlobalAlloc(GPTR, sizeof(DLGTEMPLATE)+3*sizeof(WORD)); //-V119
-	if (!pTempl)
-	{
-		_ASSERTE(pTempl!=NULL);
-		Arg.bResult = Arg.funcPtr(Arg.pArg);
-		Arg.nLastError = GetLastError();
-		return Arg.bResult;
-	}
-	pTempl->style = WS_POPUP|/*DS_MODALFRAME|DS_CENTER|*/DS_SETFOREGROUND;
-
-	INT_PTR iRc = DialogBoxIndirectParam(ghOurModule, pTempl, NULL, SimpleApiDialogProc, (LPARAM)&Arg);
-	if (iRc == 1)
-	{
-		lbRc = Arg.bResult;
-		SetLastError(Arg.nLastError);
-	}
-
-	return lbRc;
-}
-
-/*
-Replace them with hooking of 
-
-INT_PTR WINAPI DialogBoxIndirectParamAorW(
-  _In_opt_  HINSTANCE hInstance,
-  _In_      LPCDLGTEMPLATE hDialogTemplate,
-  _In_opt_  HWND hWndParent,
-  _In_opt_  DLGPROC lpDialogFunc,
-  _In_      LPARAM dwInitParam,
-  _In_      DWORD Flags
-);
-
-These hooks were created for maintain Far's "Color picker" plugin
-*/
-
-BOOL WINAPI OnChooseColorA(LPCHOOSECOLORA lpcc)
-{
-	ORIGINALFASTEX(ChooseColorA,ChooseColorA_f);
-	BOOL lbRc;
-	if (lpcc->hwndOwner == NULL || lpcc->hwndOwner == GetRealConsoleWindow())
-		lbRc = MyChooseColor((SimpleApiFunction_t)F(ChooseColorA), lpcc, FALSE);
-	else
-		lbRc = F(ChooseColorA)(lpcc);
-	return lbRc;
-}
-
-BOOL WINAPI OnChooseColorW(LPCHOOSECOLORW lpcc)
-{
-	ORIGINALFASTEX(ChooseColorW,ChooseColorW_f);
-	BOOL lbRc;
-	if (lpcc->hwndOwner == NULL || lpcc->hwndOwner == GetRealConsoleWindow())
-		lbRc = MyChooseColor((SimpleApiFunction_t)F(ChooseColorW), lpcc, TRUE);
-	else
-		lbRc = F(ChooseColorW)(lpcc);
-	return lbRc;
-}
-
-/* *************************** */
-/*       FOR DELETION          */
-/* *************************** */

@@ -410,30 +410,6 @@ wrap:
 	return lbRc;
 }
 
-bool InitHooksComDlg()
-{
-	HLOG1("InitHooksComDlg",0);
-	bool lbRc = false;
-
-	HookItem HooksComDlg[] =
-	{
-		/* ************************ */
-		{(void*)OnChooseColorA,			"ChooseColorA",			comdlg32},
-		{(void*)OnChooseColorW,			"ChooseColorW",			comdlg32},
-		/* ************************ */
-		{0}
-	};
-
-	if (InitHooks(HooksComDlg) < 0)
-		goto wrap;
-
-	lbRc = true;
-wrap:
-	HLOGEND1();
-
-	return lbRc;
-}
-
 // Console, ANSI, Read/Write, etc.
 bool InitHooksConsole()
 {
@@ -663,7 +639,9 @@ bool InitHooksUser32()
 		{(void*)OnCreateDialogParamW,	"CreateDialogParamW",	user32},
 		{(void*)OnCreateDialogIndirectParamA, "CreateDialogIndirectParamA", user32},
 		{(void*)OnCreateDialogIndirectParamW, "CreateDialogIndirectParamW", user32},
-		{(void*)OnDialogBoxParamW,		"DialogBoxParamW",		user32},
+		{(void*)OnDialogBoxIndirectParamAorW,
+										"DialogBoxIndirectParamAorW",
+																user32},
 		{(void*)OnSetMenu,				"SetMenu",				user32},
 		{(void*)OnGetDC,				"GetDC",				user32},
 		{(void*)OnGetDCEx,				"GetDCEx",				user32},
@@ -855,9 +833,6 @@ bool InitHooksCommon()
 		return false;
 
 	if (!InitHooksDebugging())
-		return false;
-
-	if (!InitHooksComDlg())
 		return false;
 
 	if (!InitHooksConsole())
