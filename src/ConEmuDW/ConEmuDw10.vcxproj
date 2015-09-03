@@ -966,6 +966,7 @@
     <ClInclude Include="..\common\WThreads.h" />
     <ClInclude Include="..\ConEmu\version.h" />
     <ClInclude Include="..\ConEmuCD\ExitCodes.h" />
+    <ClInclude Include="..\ConEmuHk\ConEmuHooks.h" />
     <ClInclude Include="ConEmuDw.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>

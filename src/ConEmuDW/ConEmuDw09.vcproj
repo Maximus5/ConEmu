@@ -407,6 +407,7 @@
       <File RelativePath="..\common\WObjects.h" />
       <File RelativePath="..\common\WThreads.h" />
       <File RelativePath="..\ConEmuCD\ExitCodes.h" />
+      <File RelativePath="..\ConEmuHk\ConEmuHooks.h" />
       <File RelativePath=".\ConEmuDw.h" />
       <File RelativePath=".\resource.h" />
     </Filter>

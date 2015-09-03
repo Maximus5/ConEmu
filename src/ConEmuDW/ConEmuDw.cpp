@@ -58,7 +58,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/WThreads.h"
 #include "../ConEmu/version.h"
 #include "../ConEmuCD/ExitCodes.h"
-#include "../ConEmuHk/SetHook.h"
+#include "../ConEmuHk/ConEmuHooks.h"
 #include "ConEmuDw.h"
 #include "resource.h"
 #ifdef _DEBUG
