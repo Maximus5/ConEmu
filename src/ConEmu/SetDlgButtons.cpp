@@ -520,7 +520,7 @@ bool CSetDlgButtons::ProcessButtonClick(HWND hDlg, WORD CB, BYTE uCheck)
 			OnBtn_PortableRegistry(hDlg, CB, uCheck);
 			break;
 		case bRealConsoleSettings:
-			OnBtn_ealConsoleSettings(hDlg, CB, uCheck);
+			OnBtn_RealConsoleSettings(hDlg, CB, uCheck);
 			break;
 		case cbDesktopMode:
 			OnBtn_DesktopMode(hDlg, CB, uCheck);
@@ -2905,7 +2905,7 @@ void CSetDlgButtons::OnBtn_PortableRegistry(HWND hDlg, WORD CB, BYTE uCheck)
 
 
 // bRealConsoleSettings
-void CSetDlgButtons::OnBtn_ealConsoleSettings(HWND hDlg, WORD CB, BYTE uCheck)
+void CSetDlgButtons::OnBtn_RealConsoleSettings(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==bRealConsoleSettings);
 
