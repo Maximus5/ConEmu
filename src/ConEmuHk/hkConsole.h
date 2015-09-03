@@ -32,6 +32,16 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 /* *************************** */
 
+#if __GNUC__
+extern "C" {
+#ifndef GetConsoleAliases
+	DWORD WINAPI GetConsoleAliasesA(LPSTR AliasBuffer, DWORD AliasBufferLength, LPSTR ExeName);
+	DWORD WINAPI GetConsoleAliasesW(LPWSTR AliasBuffer, DWORD AliasBufferLength, LPWSTR ExeName);
+#define GetConsoleAliases  GetConsoleAliasesW
+#endif
+}
+#endif
+
 /* *************************** */
 
 // SetConsoleTitleA

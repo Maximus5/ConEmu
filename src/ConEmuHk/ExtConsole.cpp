@@ -38,6 +38,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define DEFINE_HOOK_MACROS
 #include "SetHook.h"
+#include "hlpConsole.h"
 
 #define MSG_TITLE "ConEmu writer"
 #define MSG_INVALID_CONEMU_VER "Unsupported ConEmu version detected!\nRequired version: " CONEMUVERS "\nConsole writer'll works in 4bit mode"
@@ -53,9 +54,6 @@ HWND ghExtConEmuWndDC = NULL; // VirtualCon. инициализируется в
 extern HWND ghConWnd;      // Console window
 extern HWND ghConEmuWnd;   // Root! window
 extern HWND ghConEmuWndDC; // ConEmu DC window
-
-BOOL GetConsoleScreenBufferInfoCached(HANDLE hConsoleOutput, PCONSOLE_SCREEN_BUFFER_INFO lpConsoleScreenBufferInfo, BOOL bForced = FALSE);
-BOOL GetConsoleModeCached(HANDLE hConsoleHandle, LPDWORD lpMode, BOOL bForced = FALSE);
 
 CESERVER_CONSOLE_MAPPING_HDR SrvMapping = {};
 

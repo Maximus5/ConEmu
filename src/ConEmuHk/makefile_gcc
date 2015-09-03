@@ -64,10 +64,16 @@ SRCS = \
 		hkConsoleInput.cpp \
 		hkConsoleOutput.cpp\
 		hkDialog.cpp       \
+		hkEnvironment.cpp  \
+		hkFarExe.cpp       \
 		hkGDI.cpp          \
+		hkKernel.cpp       \
+		hkLibrary.cpp      \
+		hkMessages.cpp     \
 		hkProcess.cpp      \
 		hkStdIO.cpp        \
 		hkWindow.cpp       \
+		hlpConsole.cpp     \
 		Injects.cpp        \
 		MainThread.cpp     \
 		RegHooks.cpp       \

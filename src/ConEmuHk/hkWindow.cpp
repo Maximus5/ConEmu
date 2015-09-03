@@ -42,15 +42,68 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "hkWindow.h"
 #include "MainThread.h"
 #include "SetHook.h"
+#include "hlpConsole.h"
 
 /* **************** */
 
 extern struct HookModeFar gFarMode;
-extern bool CanSendMessage(HWND& hWnd, UINT Msg, WPARAM wParam, LPARAM lParam, LRESULT& lRc);
-extern void FixHwnd4ConText(HWND& hWnd);
-extern void PatchGuiMessage(bool bReceived, HWND& hWnd, UINT& Msg, WPARAM& wParam, LPARAM& lParam);
-extern BOOL GuiSetForeground(HWND hWnd);
-extern void GuiFlashWindow(BOOL bSimple, HWND hWnd, BOOL bInvert, DWORD dwFlags, UINT uCount, DWORD dwTimeout);
+
+/* **************** */
+
+BOOL GuiSetForeground(HWND hWnd)
+{
+	BOOL lbRc = FALSE;
+
+	if (ghConEmuWndDC)
+	{
+		CESERVER_REQ *pIn = (CESERVER_REQ*)malloc(sizeof(*pIn)), *pOut;
+		if (pIn)
+		{
+			ExecutePrepareCmd(pIn, CECMD_SETFOREGROUND, sizeof(CESERVER_REQ_HDR)+sizeof(u64)); //-V119
+
+			DWORD nConEmuPID = ASFW_ANY;
+			GetWindowThreadProcessId(ghConEmuWndDC, &nConEmuPID);
+			AllowSetForegroundWindow(nConEmuPID);
+
+			pIn->qwData[0] = (u64)hWnd;
+			HWND hConWnd = GetRealConsoleWindow();
+			pOut = ExecuteGuiCmd(hConWnd, pIn, hConWnd);
+
+			if (pOut)
+			{
+				if (pOut->hdr.cbSize == (sizeof(CESERVER_REQ_HDR)+sizeof(DWORD)))
+					lbRc = pOut->dwData[0];
+				ExecuteFreeResult(pOut);
+			}
+			free(pIn);
+		}
+	}
+
+	return lbRc;
+}
+
+void GuiFlashWindow(BOOL bSimple, HWND hWnd, BOOL bInvert, DWORD dwFlags, UINT uCount, DWORD dwTimeout)
+{
+	if (ghConEmuWndDC)
+	{
+		CESERVER_REQ *pIn = (CESERVER_REQ*)malloc(sizeof(*pIn)), *pOut;
+		if (pIn)
+		{
+			ExecutePrepareCmd(pIn, CECMD_FLASHWINDOW, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_FLASHWINFO)); //-V119
+			pIn->Flash.bSimple = bSimple;
+			pIn->Flash.hWnd = hWnd;
+			pIn->Flash.bInvert = bInvert;
+			pIn->Flash.dwFlags = dwFlags;
+			pIn->Flash.uCount = uCount;
+			pIn->Flash.dwTimeout = dwTimeout;
+			HWND hConWnd = GetRealConsoleWindow();
+			pOut = ExecuteGuiCmd(hConWnd, pIn, hConWnd);
+
+			if (pOut) ExecuteFreeResult(pOut);
+			free(pIn);
+		}
+	}
+}
 
 /* **************** */
 
@@ -886,170 +939,6 @@ BOOL WINAPI OnSetWindowPlacement(HWND hWnd, WINDOWPLACEMENT *lpwndpl)
 		lbRc = F(SetWindowPlacement)(hWnd, lpwndpl);
 
 	return lbRc;
-}
-
-
-VOID WINAPI Onmouse_event(DWORD dwFlags, DWORD dx, DWORD dy, DWORD dwData, ULONG_PTR dwExtraInfo)
-{
-	//typedef VOID (WINAPI* Onmouse_event_t)(DWORD dwFlags, DWORD dx, DWORD dy, DWORD dwData, ULONG_PTR dwExtraInfo);
-	ORIGINALFASTEX(mouse_event,NULL);
-
-	F(mouse_event)(dwFlags, dx, dy, dwData, dwExtraInfo);
-}
-
-
-UINT WINAPI OnSendInput(UINT nInputs, LPINPUT pInputs, int cbSize)
-{
-	//typedef UINT (WINAPI* OnSendInput_t)(UINT nInputs, LPINPUT pInputs, int cbSize);
-	ORIGINALFASTEX(SendInput,NULL);
-	UINT nRc;
-
-	nRc = F(SendInput)(nInputs, pInputs, cbSize);
-
-	return nRc;
-}
-
-
-BOOL WINAPI OnPostMessageA(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
-{
-	//typedef BOOL (WINAPI* OnPostMessageA_t)(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
-	ORIGINALFASTEX(PostMessageA,NULL);
-	BOOL lRc = 0;
-	LRESULT ll = 0;
-
-	if (!CanSendMessage(hWnd, Msg, wParam, lParam, ll))
-		return TRUE; // Обманем, это сообщение запрещено посылать в ConEmuDC
-
-	if (ghAttachGuiClient)
-		PatchGuiMessage(false, hWnd, Msg, wParam, lParam);
-
-	if (F(PostMessageA))
-		lRc = F(PostMessageA)(hWnd, Msg, wParam, lParam);
-
-	return lRc;
-}
-
-
-BOOL WINAPI OnPostMessageW(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
-{
-	//typedef BOOL (WINAPI* OnPostMessageW_t)(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
-	ORIGINALFASTEX(PostMessageW,NULL);
-	BOOL lRc = 0;
-	LRESULT ll = 0;
-
-	if (!CanSendMessage(hWnd, Msg, wParam, lParam, ll))
-		return TRUE; // Обманем, это сообщение запрещено посылать в ConEmuDC
-
-	if (ghAttachGuiClient)
-		PatchGuiMessage(false, hWnd, Msg, wParam, lParam);
-
-	if (F(PostMessageW))
-		lRc = F(PostMessageW)(hWnd, Msg, wParam, lParam);
-
-	return lRc;
-}
-
-
-LRESULT WINAPI OnSendMessageA(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
-{
-	//typedef LRESULT (WINAPI* OnSendMessageA_t)(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
-	ORIGINALFASTEX(SendMessageA,NULL);
-	LRESULT lRc = 0;
-
-	if (!CanSendMessage(hWnd, Msg, wParam, lParam, lRc))
-		return lRc; // Обманем, это сообщение запрещено посылать в ConEmuDC
-
-	if (ghAttachGuiClient)
-		PatchGuiMessage(false, hWnd, Msg, wParam, lParam);
-
-	if (F(SendMessageA))
-		lRc = F(SendMessageA)(hWnd, Msg, wParam, lParam);
-
-	return lRc;
-}
-
-
-LRESULT WINAPI OnSendMessageW(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
-{
-	//typedef LRESULT (WINAPI* OnSendMessageW_t)(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
-	ORIGINALFASTEX(SendMessageW,NULL);
-	LRESULT lRc = 0;
-
-	if (!CanSendMessage(hWnd, Msg, wParam, lParam, lRc))
-		return lRc; // Обманем, это сообщение запрещено посылать в ConEmuDC
-
-	if (ghAttachGuiClient)
-		PatchGuiMessage(false, hWnd, Msg, wParam, lParam);
-
-	if (F(SendMessageW))
-		lRc = F(SendMessageW)(hWnd, Msg, wParam, lParam);
-
-	return lRc;
-}
-
-
-BOOL WINAPI OnGetMessageA(LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin, UINT wMsgFilterMax)
-{
-	//typedef BOOL (WINAPI* OnGetMessageA_t)(LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin, UINT wMsgFilterMax);
-	ORIGINALFASTEX(GetMessageA,NULL);
-	BOOL lRc = 0;
-
-	if (F(GetMessageA))
-		lRc = F(GetMessageA)(lpMsg, hWnd, wMsgFilterMin, wMsgFilterMax);
-
-	if (lRc && ghAttachGuiClient)
-		PatchGuiMessage(true, lpMsg->hwnd, lpMsg->message, lpMsg->wParam, lpMsg->lParam);
-
-	return lRc;
-}
-
-
-BOOL WINAPI OnGetMessageW(LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin, UINT wMsgFilterMax)
-{
-	//typedef BOOL (WINAPI* OnGetMessageW_t)(LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin, UINT wMsgFilterMax);
-	ORIGINALFASTEX(GetMessageW,NULL);
-	BOOL lRc = 0;
-
-	if (F(GetMessageW))
-		lRc = F(GetMessageW)(lpMsg, hWnd, wMsgFilterMin, wMsgFilterMax);
-
-	if (lRc && ghAttachGuiClient)
-		PatchGuiMessage(true, lpMsg->hwnd, lpMsg->message, lpMsg->wParam, lpMsg->lParam);
-
-	_ASSERTRESULT(TRUE);
-	return lRc;
-}
-
-
-BOOL WINAPI OnPeekMessageA(LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin, UINT wMsgFilterMax, UINT wRemoveMsg)
-{
-	//typedef BOOL (WINAPI* OnPeekMessageA_t)(LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin, UINT wMsgFilterMax, UINT wRemoveMsg);
-	ORIGINALFASTEX(PeekMessageA,NULL);
-	BOOL lRc = 0;
-
-	if (F(PeekMessageA))
-		lRc = F(PeekMessageA)(lpMsg, hWnd, wMsgFilterMin, wMsgFilterMax, wRemoveMsg);
-
-	if (lRc && ghAttachGuiClient)
-		PatchGuiMessage(true, lpMsg->hwnd, lpMsg->message, lpMsg->wParam, lpMsg->lParam);
-
-	return lRc;
-}
-
-
-BOOL WINAPI OnPeekMessageW(LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin, UINT wMsgFilterMax, UINT wRemoveMsg)
-{
-	//typedef BOOL (WINAPI* OnPeekMessageW_t)(LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin, UINT wMsgFilterMax, UINT wRemoveMsg);
-	ORIGINALFASTEX(PeekMessageW,NULL);
-	BOOL lRc = 0;
-
-	if (F(PeekMessageW))
-		lRc = F(PeekMessageW)(lpMsg, hWnd, wMsgFilterMin, wMsgFilterMax, wRemoveMsg);
-
-	if (lRc && ghAttachGuiClient)
-		PatchGuiMessage(true, lpMsg->hwnd, lpMsg->message, lpMsg->wParam, lpMsg->lParam);
-
-	return lRc;
 }
 
 

@@ -79,6 +79,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 #include "ConEmuHooks.h"
+#include "hlpProcess.h"
 #include "RegHooks.h"
 #include "ShellProcessor.h"
 #include "GuiAttach.h"
@@ -101,21 +102,27 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/MArray.h"
 
 #include "hkConsoleInput.h"
+#include "hkConsoleOutput.h"
 
 
-#if defined(_DEBUG) || defined(SHOW_EXE_TIMINGS)
+#if defined(_DEBUG) || defined(SHOW_EXE_TIMINGS) || defined(SHOWCREATEPROCESSTICK)
 DWORD gnLastShowExeTick = 0;
-#endif
 
-#ifdef SHOW_EXE_TIMINGS
-#define print_timings(s) if (gbShowExeMsgBox) { \
-	DWORD w, nCurTick = GetTickCount(); \
-	msprintf(szTimingMsg, countof(szTimingMsg), L">>> %s >>> %u >>> %s\n", SHOW_EXE_MSGBOX_NAME, gnLastShowExeTick?(nCurTick - gnLastShowExeTick):0, s); \
-	CEAnsi::OnWriteConsoleW(hTimingHandle, szTimingMsg, lstrlen(szTimingMsg), &w, NULL); \
-	gnLastShowExeTick = nCurTick; \
-	}
-#else
-#define print_timings(s)
+void force_print_timings(LPCWSTR s, HANDLE hTimingHandle, wchar_t (&szTimingMsg)[512])
+{
+	DWORD w, nCurTick = GetTickCount();
+
+	#ifdef SHOW_EXE_TIMINGS
+	msprintf(szTimingMsg, countof(szTimingMsg), L">>> %s PID=%u >>> %u >>> %s\n", SHOW_EXE_MSGBOX_NAME, GetCurrentProcessId(), gnLastShowExeTick?(nCurTick - gnLastShowExeTick):0, s);
+	#else
+	msprintf(szTimingMsg, countof(szTimingMsg), L">>> PID=%u >>> %u >>> %s\n", GetCurrentProcessId(), (nCurTick - gnLastShowExeTick), s);
+	#endif
+
+	OnWriteConsoleW(hTimingHandle, szTimingMsg, lstrlen(szTimingMsg), &w, NULL);
+
+	gnLastShowExeTick = nCurTick;
+	UNREFERENCED_PARAMETER(w);
+}
 #endif
 
 
@@ -759,10 +766,7 @@ void FixSshThreads(int iStep)
 DWORD WINAPI DllStart(LPVOID /*apParm*/)
 {
 	//DLOG0("DllStart",0);
-	#if defined(SHOW_EXE_TIMINGS) || defined(SHOW_EXE_MSGBOX)
-		wchar_t szTimingMsg[512]; UNREFERENCED_PARAMETER(szTimingMsg[0]);
-		HANDLE hTimingHandle = GetStdHandle(STD_OUTPUT_HANDLE);
-	#endif
+	prepare_timings;
 
 	// *******************  begin  *********************
 

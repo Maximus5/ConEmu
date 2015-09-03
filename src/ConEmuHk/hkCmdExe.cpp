@@ -37,6 +37,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEFINE_HOOK_MACROS
 #include "ConEmuHooks.h"
 #include "hkCmdExe.h"
+#include "hlpProcess.h"
 #include "SetHook.h"
 
 /* **************** */

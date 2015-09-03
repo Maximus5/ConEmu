@@ -49,8 +49,21 @@ OnChooseColorW_t ChooseColorW_f = NULL; // For Del
 /* **************** */
 
 extern HMODULE ghOurModule;
-extern void PatchDialogParentWnd(HWND& hWndParent);
 extern BOOL GuiSetForeground(HWND hWnd);
+
+/* **************** */
+
+void PatchDialogParentWnd(HWND& hWndParent)
+{
+	WARNING("Проверить все перехваты диалогов (A/W). По идее, надо менять hWndParent, а то диалоги прячутся");
+	// Re: conemu + emenu/{Run Sandboxed} замораживает фар
+
+	if (ghConEmuWndDC)
+	{
+		if (!hWndParent || !IsWindowVisible(hWndParent))
+			hWndParent = ghConEmuWnd;
+	}
+}
 
 /* **************** */
 

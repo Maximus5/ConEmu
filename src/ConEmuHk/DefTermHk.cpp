@@ -30,6 +30,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/MFileLog.h"
 #include "../common/HkFunc.h"
 #include "ConEmuHooks.h"
+#include "hlpConsole.h"
+#include "hlpProcess.h"
 #include "DefTermHk.h"
 #include "../ConEmu/version.h"
 
@@ -397,7 +399,7 @@ void CDefTermHk::ShowTrayIconError(LPCWSTR asErrText)
 
 HWND CDefTermHk::AllocHiddenConsole(bool bTempForVS)
 {
-	// функция AttachConsole есть только в WinXP и выше
+	// Function AttachConsole exists in WinXP and above, need dynamic link
 	AttachConsole_t _AttachConsole = GetAttachConsoleProc();
 	if (!_AttachConsole)
 	{

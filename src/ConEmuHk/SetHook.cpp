@@ -38,13 +38,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define DEFINE_HOOK_MACROS
 
-#ifdef _DEBUG
-	#define HOOK_ERROR_PROC
-	//#undef HOOK_ERROR_PROC
-	#define HOOK_ERROR_NO ERROR_INVALID_DATA
-#else
-	#undef HOOK_ERROR_PROC
-#endif
 
 //#define USECHECKPROCESSMODULES
 #define ASSERT_ON_PROCNOTFOUND
@@ -61,12 +54,17 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/MSection.h"
 #include "../common/WObjects.h"
 //#include "../common/MArray.h"
-#include "ShellProcessor.h"
-#include "SetHook.h"
-#include "ConEmuHooks.h"
-#include "hkDialog.h"
 #include "Ansi.h"
+#include "ConEmuHooks.h"
+#include "DefTermHk.h"
+#include "GuiAttach.h"
+#include "hkConsole.h"
+#include "hkDialog.h"
+#include "hkLibrary.h"
 #include "MainThread.h"
+#include "SetHook.h"
+#include "ShellProcessor.h"
+#include "RegHooks.h"
 #include "../modules/minhook/include/MinHook.h"
 #include "../common/HkFunc.h"
 
@@ -114,51 +112,15 @@ HMODULE ghKernelBase = NULL, ghKernel32 = NULL, ghUser32 = NULL, ghGdi32 = NULL,
 HMODULE* ghSysDll[] = {&ghKernelBase, &ghKernel32, &ghUser32, &ghGdi32, &ghShell32, &ghAdvapi32, &ghComdlg32};
 //!!!WARNING!!! Добавляя в этот список - не забыть добавить и в GetPreloadModules() !!!
 
-struct UNICODE_STRING
-{
-  USHORT Length;
-  USHORT MaximumLength;
-  PWSTR  Buffer;
-};
-enum LDR_DLL_NOTIFICATION_REASON
-{
-	LDR_DLL_NOTIFICATION_REASON_LOADED = 1,
-	LDR_DLL_NOTIFICATION_REASON_UNLOADED = 2,
-};
-struct LDR_DLL_LOADED_NOTIFICATION_DATA
-{
-    ULONG Flags;                    //Reserved.
-    const UNICODE_STRING* FullDllName;   //The full path name of the DLL module.
-    const UNICODE_STRING* BaseDllName;   //The base file name of the DLL module.
-    PVOID DllBase;                  //A pointer to the base address for the DLL in memory.
-    ULONG SizeOfImage;              //The size of the DLL image, in bytes.
-};
-struct LDR_DLL_UNLOADED_NOTIFICATION_DATA
-{
-    ULONG Flags;                    //Reserved.
-    const UNICODE_STRING* FullDllName;   //The full path name of the DLL module.
-    const UNICODE_STRING* BaseDllName;   //The base file name of the DLL module.
-    PVOID DllBase;                  //A pointer to the base address for the DLL in memory.
-    ULONG SizeOfImage;              //The size of the DLL image, in bytes.
-};
-union LDR_DLL_NOTIFICATION_DATA
-{
-    LDR_DLL_LOADED_NOTIFICATION_DATA Loaded;
-    LDR_DLL_UNLOADED_NOTIFICATION_DATA Unloaded;
-};
-typedef VOID (CALLBACK* PLDR_DLL_NOTIFICATION_FUNCTION)(ULONG NotificationReason, const LDR_DLL_NOTIFICATION_DATA* NotificationData, PVOID Context);
-VOID CALLBACK LdrDllNotification(ULONG NotificationReason, const LDR_DLL_NOTIFICATION_DATA* NotificationData, PVOID Context);
-typedef NTSTATUS (NTAPI* LdrRegisterDllNotification_t)(ULONG Flags, PLDR_DLL_NOTIFICATION_FUNCTION NotificationFunction, PVOID Context, PVOID *Cookie);
-typedef NTSTATUS (NTAPI* LdrUnregisterDllNotification_t)(PVOID Cookie);
-static LdrRegisterDllNotification_t LdrRegisterDllNotification = NULL;
-static LdrUnregisterDllNotification_t LdrUnregisterDllNotification = NULL;
-static PVOID gpLdrDllNotificationCookie = NULL;
-static NTSTATUS gnLdrDllNotificationState = (NTSTATUS)-1;
-static bool gbLdrDllNotificationUsed = false;
 
 // Forwards
-bool PrepareNewModule(HMODULE module, LPCSTR asModuleA, LPCWSTR asModuleW, BOOL abNoSnapshoot = FALSE, BOOL abForceHooks = FALSE);
-void UnprepareModule(HMODULE hModule, LPCWSTR pszModule, int iStep);
+
+bool InitHooksCommon();
+bool InitHooksDefTerm();
+bool InitHooksUser32();
+bool InitHooksFar();
+bool InitHooksClink();
+
 
 
 //typedef LONG (WINAPI* RegCloseKey_t)(HKEY hKey);
@@ -584,6 +546,7 @@ void* __cdecl GetOriginalAddress(void* OurFunction, HookItem** ph, bool abAllowN
 // Used in GetLoadLibraryAddress, however it may be obsolete with minhook
 FARPROC WINAPI GetLoadLibraryW()
 {
+	// KERNEL ADDRESS
 	LPVOID fnLoadLibraryW = (LPVOID)&LoadLibraryW;
 	return (FARPROC)fnLoadLibraryW;
 }
@@ -730,38 +693,10 @@ int InitHooks(HookItem* apHooks)
 	size_t i, j;
 	bool skip;
 
-	static bool bLdrWasChecked = false;
-	if (!bLdrWasChecked)
+	// Init gbLdrDllNotificationUsed. Supported only in Win8 and higher.
+	if (!gbLdrDllNotificationUsed)
 	{
-		#ifndef _WIN32_WINNT_WIN8
-		#define _WIN32_WINNT_WIN8 0x602
-		#endif
-		_ASSERTE(_WIN32_WINNT_WIN8==0x602);
-		OSVERSIONINFOEXW osvi = {sizeof(osvi), HIBYTE(_WIN32_WINNT_WIN8), LOBYTE(_WIN32_WINNT_WIN8)};
-		DWORDLONG const dwlConditionMask = VerSetConditionMask(VerSetConditionMask(0, VER_MAJORVERSION, VER_GREATER_EQUAL), VER_MINORVERSION, VER_GREATER_EQUAL);
-		BOOL isAllowed = VerifyVersionInfoW(&osvi, VER_MAJORVERSION | VER_MINORVERSION, dwlConditionMask);
-
-		// LdrDllNotification работает так как нам надо начиная с Windows 8
-		// В предыдущих версиях Windows нотификатор вызывается из LdrpFindOrMapDll
-		// ДО того, как были обработаны импорты функцией LdrpProcessStaticImports (а точнее LdrpSnapThunk)
-
-		if (isAllowed)
-		{
-			HMODULE hNtDll = GetModuleHandle(L"ntdll.dll");
-			if (hNtDll)
-			{
-				LdrRegisterDllNotification = (LdrRegisterDllNotification_t)GetProcAddress(hNtDll, "LdrRegisterDllNotification");
-				LdrUnregisterDllNotification = (LdrUnregisterDllNotification_t)GetProcAddress(hNtDll, "LdrUnregisterDllNotification");
-
-				if (LdrRegisterDllNotification && LdrUnregisterDllNotification)
-				{
-					gnLdrDllNotificationState = LdrRegisterDllNotification(0, LdrDllNotification, NULL, &gpLdrDllNotificationCookie);
-					gbLdrDllNotificationUsed = (gnLdrDllNotificationState == 0/*STATUS_SUCCESS*/);
-				}
-			}
-		}
-
-		bLdrWasChecked = true;
+		CheckLdrNotificationAvailable();
 	}
 
 	if (!gpHookCS)
@@ -965,6 +900,146 @@ HookItem* FindFunction(const char* pszFuncName)
 	return NULL;
 }
 
+//void InitializeConsoleInputSemaphore()
+//{
+//#ifdef USE_INPUT_SEMAPHORE
+//	if (ghConInSemaphore != NULL)
+//	{
+//		ReleaseConsoleInputSemaphore();
+//	}
+//	wchar_t szName[128];
+//	HWND hConWnd = GetConEmuHWND(2);
+//	if (hConWnd != ghConWnd)
+//	{
+//		_ASSERTE(ghConWnd == hConWnd);
+//	}
+//	if (hConWnd != NULL)
+//	{
+//		msprintf(szName, SKIPLEN(countof(szName)) CEINPUTSEMAPHORE, (DWORD)hConWnd);
+//		ghConInSemaphore = CreateSemaphore(LocalSecurity(), 1, 1, szName);
+//		_ASSERTE(ghConInSemaphore != NULL);
+//	}
+//#endif
+//}
+//
+//void ReleaseConsoleInputSemaphore()
+//{
+//#ifdef USE_INPUT_SEMAPHORE
+//	if (ghConInSemaphore != NULL)
+//	{
+//		CloseHandle(ghConInSemaphore);
+//		ghConInSemaphore = NULL;
+//	}
+//#endif
+//}
+
+// Эту функцию нужно позвать из DllMain
+BOOL StartupHooks()
+{
+	//HLOG0("StartupHooks",0);
+#ifdef _DEBUG
+	// Консольное окно уже должно быть инициализировано в DllMain
+	_ASSERTE(gbAttachGuiClient || gbDosBoxProcess || gbPrepareDefaultTerminal || (ghConWnd != NULL && ghConWnd == GetRealConsoleWindow()));
+	wchar_t sClass[128];
+	if (ghConWnd)
+	{
+		GetClassName(ghConWnd, sClass, countof(sClass));
+		_ASSERTE(isConsoleClass(sClass));
+	}
+
+	prepare_timings;
+#endif
+
+	// -- ghConEmuWnd уже должен быть установлен в DllMain!!!
+	//gbInShellExecuteEx = FALSE;
+
+	WARNING("Получить из мэппинга gdwServerPID");
+
+	//TODO: Change GetModuleHandle to GetModuleHandleEx? Does it exist in Win2k?
+
+	// Зовем LoadLibrary. Kernel-то должен был сразу загрузиться (static link) в любой
+	// windows приложении, но вот shell32 - не обязательно, а нам нужно хуки проинициализировать
+	ghKernel32 = LoadLibrary(kernel32);
+	// user32/shell32/advapi32 тянут за собой много других библиотек, НЕ загружаем, если они еще не подлинкованы
+	if (!ghUser32)
+	{
+		ghUser32 = GetModuleHandle(user32);
+		if (ghUser32) ghUser32 = LoadLibrary(user32); // если подлинкован - увеличить счетчик
+	}
+	ghShell32 = GetModuleHandle(shell32);
+	if (ghShell32) ghShell32 = LoadLibrary(shell32); // если подлинкован - увеличить счетчик
+	ghAdvapi32 = GetModuleHandle(advapi32);
+	if (ghAdvapi32) ghAdvapi32 = LoadLibrary(advapi32); // если подлинкован - увеличить счетчик
+	ghComdlg32 = GetModuleHandle(comdlg32);
+	if (ghComdlg32) ghComdlg32 = LoadLibrary(comdlg32); // если подлинкован - увеличить счетчик
+
+	if (ghKernel32)
+		gfGetProcessId = (GetProcessId_t)GetProcAddress(ghKernel32, "GetProcessId");
+
+	if (gbPrepareDefaultTerminal)
+	{
+		HLOG1("StartupHooks.InitHooks",0);
+		InitHooksDefTerm();
+		HLOGEND1();
+	}
+	else
+	{
+		// Общие
+		HLOG1("StartupHooks.InitHooks",0);
+		InitHooksCommon();
+		HLOGEND1();
+
+		// user32 & gdi32
+		HLOG1_("StartupHooks.InitHooks",1);
+		InitHooksUser32();
+		HLOGEND1();
+
+		// Far only functions
+		HLOG1_("StartupHooks.InitHooks",2);
+		InitHooksFar();
+		HLOGEND1();
+
+		// Cmd.exe only functions
+		//if (gnAllowClinkUsage)
+		if (gbIsCmdProcess)
+		{
+			HLOG1_("StartupHooks.InitHooks",3);
+			InitHooksClink();
+			HLOGEND1();
+		}
+
+		// Реестр
+		HLOG1_("StartupHooks.InitHooks",4);
+		InitHooksReg();
+		HLOGEND1();
+	}
+
+#if 0
+	HLOG1_("InitHooksSort",0);
+	InitHooksSort();
+	HLOGEND1();
+#endif
+
+	print_timings(L"SetAllHooks");
+
+	// Теперь можно обработать модули
+	HLOG1("SetAllHooks",0);
+	bool lbRc = SetAllHooks();
+	HLOGEND1();
+
+	extern FARPROC CallWriteConsoleW;
+	CallWriteConsoleW = (FARPROC)GetOriginalAddress((LPVOID)OnWriteConsoleW, NULL);
+
+	extern GetConsoleWindow_T gfGetRealConsoleWindow; // from ConEmuCheck.cpp
+	gfGetRealConsoleWindow = (GetConsoleWindow_T)GetOriginalAddress((LPVOID)OnGetConsoleWindow, NULL);
+
+	print_timings(L"SetAllHooks - done");
+
+	//HLOGEND(); // StartupHooks - done
+
+	return lbRc;
+}
+
 void ShutdownHooks()
 {
 	HLOG1("ShutdownHooks.UnsetAllHooks",0);
@@ -1132,121 +1207,6 @@ bool LockHooks(HMODULE Module, LPCWSTR asAction, MSectionLock* apCS)
 	return true;
 }
 
-bool isBadModulePtr(const void *lp, UINT_PTR ucb, HMODULE Module, const IMAGE_NT_HEADERS* nt_header)
-{
-	bool bTestValid = (((LPBYTE)lp) >= ((LPBYTE)Module))
-		&& ((((LPBYTE)lp) + ucb) <= (((LPBYTE)Module) + nt_header->OptionalHeader.SizeOfImage));
-
-#ifdef USE_ONLY_INT_CHECK_PTR
-	bool bApiValid = bTestValid;
-#else
-	bool bApiValid = !IsBadReadPtr(lp, ucb);
-
-	#ifdef _DEBUG
-	static bool bFirstAssert = false;
-	if (bTestValid != bApiValid)
-	{
-		if (!bFirstAssert)
-		{
-			bFirstAssert = true;
-			_ASSERTE(bTestValid != bApiValid);
-		}
-	}
-	#endif
-#endif
-
-	return !bApiValid;
-}
-
-bool isBadModuleStringA(LPCSTR lpsz, UINT_PTR ucchMax, HMODULE Module, IMAGE_NT_HEADERS* nt_header)
-{
-	bool bTestStrValid = (((LPBYTE)lpsz) >= ((LPBYTE)Module))
-		&& ((((LPBYTE)lpsz) + ucchMax) <= (((LPBYTE)Module) + nt_header->OptionalHeader.SizeOfImage));
-
-#ifdef USE_ONLY_INT_CHECK_PTR
-	bool bApiStrValid = bTestStrValid;
-#else
-	bool bApiStrValid = !IsBadStringPtrA(lpsz, ucchMax);
-
-	#ifdef _DEBUG
-	static bool bFirstAssert = false;
-	if (bTestStrValid != bApiStrValid)
-	{
-		if (!bFirstAssert)
-		{
-			bFirstAssert = true;
-			_ASSERTE(bTestStrValid != bApiStrValid);
-		}
-	}
-	#endif
-#endif
-
-	return !bApiStrValid;
-}
-
-VOID CALLBACK LdrDllNotification(ULONG NotificationReason, const LDR_DLL_NOTIFICATION_DATA* NotificationData, PVOID Context)
-{
-	DWORD   dwSaveErrCode = GetLastError();
-	wchar_t szModule[MAX_PATH*2] = L"";
-	HMODULE hModule;
-	BOOL    bMainThread = (GetCurrentThreadId() == gnHookMainThreadId);
-
-    const UNICODE_STRING* FullDllName;   //The full path name of the DLL module.
-    const UNICODE_STRING* BaseDllName;   //The base file name of the DLL module.
-
-	switch (NotificationReason)
-	{
-	case LDR_DLL_NOTIFICATION_REASON_LOADED:
-		FullDllName = NotificationData->Loaded.FullDllName;
-		BaseDllName = NotificationData->Loaded.BaseDllName;
-		hModule = (HMODULE)NotificationData->Loaded.DllBase;
-		break;
-	case LDR_DLL_NOTIFICATION_REASON_UNLOADED:
-		FullDllName = NotificationData->Unloaded.FullDllName;
-		BaseDllName = NotificationData->Unloaded.BaseDllName;
-		hModule = (HMODULE)NotificationData->Unloaded.DllBase;
-		break;
-	default:
-		return;
-	}
-
-	if (FullDllName && FullDllName->Buffer)
-		memmove(szModule, FullDllName->Buffer, min(sizeof(szModule)-2,FullDllName->Length));
-	else if (BaseDllName && BaseDllName->Buffer)
-		memmove(szModule, BaseDllName->Buffer, min(sizeof(szModule)-2,BaseDllName->Length));
-
-	#ifdef _DEBUG
-	wchar_t szDbgInfo[MAX_PATH*3];
-	_wsprintf(szDbgInfo, SKIPLEN(countof(szDbgInfo)) L"ConEmuHk: Ldr(%s) " WIN3264TEST(L"0x%08X",L"0x%08X%08X") L" '%s'\n",
-		(NotificationReason==LDR_DLL_NOTIFICATION_REASON_LOADED) ? L"Loaded" : L"Unload",
-		WIN3264WSPRINT(hModule),
-		szModule);
-	DebugString(szDbgInfo);
-	#endif
-
-	switch (NotificationReason)
-	{
-	case LDR_DLL_NOTIFICATION_REASON_LOADED:
-		if (PrepareNewModule(hModule, NULL, szModule, TRUE, TRUE))
-		{
-			HookItem* ph = NULL;
-			GetOriginalAddress((LPVOID)OnLoadLibraryW, &ph, true);
-			if (ph && ph->PostCallBack)
-			{
-				SETARGS1(&hModule,szModule);
-				ph->PostCallBack(&args);
-			}
-		}
-		break;
-	case LDR_DLL_NOTIFICATION_REASON_UNLOADED:
-		UnprepareModule(hModule, szModule, 0);
-		UnprepareModule(hModule, szModule, 2);
-		break;
-	}
-
-	SetLastError(dwSaveErrCode);
-}
-
 // Подменить Импортируемые функции во всех модулях процесса, загруженных ДО conemuhk.dll
 // *aszExcludedModules - должны указывать на константные значения (program lifetime)
 bool SetAllHooks()
@@ -1311,8 +1271,7 @@ void UnsetAllHooks()
 
 	if (gbLdrDllNotificationUsed)
 	{
-		_ASSERTEX(LdrUnregisterDllNotification!=NULL);
-		LdrUnregisterDllNotification(gpLdrDllNotificationCookie);
+		UnregisterLdrNotification();
 	}
 
 	// Set all "original" function calls to NULL
@@ -1509,175 +1468,6 @@ bool PrepareNewModule(HMODULE module, LPCSTR asModuleA, LPCWSTR asModuleW, BOOL 
 	return lbModuleOk;
 }
 
-#ifdef _DEBUG
-void OnLoadLibraryLog(LPCSTR lpLibraryA, LPCWSTR lpLibraryW)
-{
-	#if 0
-	if ((lpLibraryA && strncmp(lpLibraryA, "advapi32", 8)==0)
-		|| (lpLibraryW && wcsncmp(lpLibraryW, L"advapi32", 8)==0))
-	{
-		extern HANDLE ghDebugSshLibs, ghDebugSshLibsRc;
-		if (ghDebugSshLibs)
-		{
-			SetEvent(ghDebugSshLibs);
-			WaitForSingleObject(ghDebugSshLibsRc, 1000);
-		}
-	}
-	#endif
-}
-#else
-#define OnLoadLibraryLog(lpLibraryA,lpLibraryW)
-#endif
-
-/* ************** */
-HMODULE WINAPI OnLoadLibraryAWork(FARPROC lpfn, HookItem *ph, BOOL bMainThread, const char* lpFileName)
-{
-	typedef HMODULE(WINAPI* OnLoadLibraryA_t)(const char* lpFileName);
-	OnLoadLibraryLog(lpFileName,NULL);
-	HMODULE module = ((OnLoadLibraryA_t)lpfn)(lpFileName);
-	DWORD dwLoadErrCode = GetLastError();
-
-	// Issue 1079: Almost hangs with PHP
-	if (lstrcmpiA(lpFileName, "kernel32.dll") == 0)
-		return module;
-
-	if (PrepareNewModule(module, lpFileName, NULL))
-	{
-		if (ph && ph->PostCallBack)
-		{
-			SETARGS1(&module,lpFileName);
-			ph->PostCallBack(&args);
-		}
-	}
-
-	SetLastError(dwLoadErrCode);
-	return module;
-}
-
-HMODULE WINAPI OnLoadLibraryA(const char* lpFileName)
-{
-	typedef HMODULE(WINAPI* OnLoadLibraryA_t)(const char* lpFileName);
-	ORIGINAL(LoadLibraryA);
-	return OnLoadLibraryAWork((FARPROC)F(LoadLibraryA), ph, bMainThread, lpFileName);
-}
-
-/* ************** */
-HMODULE WINAPI OnLoadLibraryWWork(FARPROC lpfn, HookItem *ph, BOOL bMainThread, const wchar_t* lpFileName)
-{
-	typedef HMODULE(WINAPI* OnLoadLibraryW_t)(const wchar_t* lpFileName);
-	HMODULE module = NULL;
-
-	OnLoadLibraryLog(NULL,lpFileName);
-
-	// Спрятать ExtendedConsole.dll с глаз долой, в сервисную папку "ConEmu"
-	if (lpFileName 
-		&& ((lstrcmpiW(lpFileName, L"ExtendedConsole.dll") == 0)
-			|| lstrcmpiW(lpFileName, L"ExtendedConsole64.dll") == 0))
-	{
-		CESERVER_CONSOLE_MAPPING_HDR *Info = (CESERVER_CONSOLE_MAPPING_HDR*)calloc(1,sizeof(*Info));
-		if (Info && ::LoadSrvMapping(ghConWnd, *Info))
-		{
-			size_t cchMax = countof(Info->ComSpec.ConEmuBaseDir)+64;
-			wchar_t* pszFullPath = (wchar_t*)calloc(cchMax,sizeof(*pszFullPath));
-			if (pszFullPath)
-			{
-				_wcscpy_c(pszFullPath, cchMax, Info->ComSpec.ConEmuBaseDir);
-				_wcscat_c(pszFullPath, cchMax, WIN3264TEST(L"\\ExtendedConsole.dll",L"\\ExtendedConsole64.dll"));
-
-				module = ((OnLoadLibraryW_t)lpfn)(pszFullPath);
-
-				SafeFree(pszFullPath);
-			}
-		}
-		SafeFree(Info);
-	}
-
-	if (!module)
-		module = ((OnLoadLibraryW_t)lpfn)(lpFileName);
-	DWORD dwLoadErrCode = GetLastError();
-
-	if (gbLdrDllNotificationUsed)
-		return module;
-
-	// Issue 1079: Almost hangs with PHP
-	if (lstrcmpi(lpFileName, L"kernel32.dll") == 0)
-		return module;
-
-	if (PrepareNewModule(module, NULL, lpFileName))
-	{
-		if (ph && ph->PostCallBack)
-		{
-			SETARGS1(&module,lpFileName);
-			ph->PostCallBack(&args);
-		}
-	}
-
-	SetLastError(dwLoadErrCode);
-	return module;
-}
-
-HMODULE WINAPI OnLoadLibraryW(const wchar_t* lpFileName)
-{
-	typedef HMODULE(WINAPI* OnLoadLibraryW_t)(const wchar_t* lpFileName);
-	ORIGINAL(LoadLibraryW);
-	return OnLoadLibraryWWork((FARPROC)F(LoadLibraryW), ph, bMainThread, lpFileName);
-}
-
-/* ************** */
-HMODULE WINAPI OnLoadLibraryExAWork(FARPROC lpfn, HookItem *ph, BOOL bMainThread, const char* lpFileName, HANDLE hFile, DWORD dwFlags)
-{
-	typedef HMODULE(WINAPI* OnLoadLibraryExA_t)(const char* lpFileName, HANDLE hFile, DWORD dwFlags);
-	OnLoadLibraryLog(lpFileName,NULL);
-	HMODULE module = ((OnLoadLibraryExA_t)lpfn)(lpFileName, hFile, dwFlags);
-	DWORD dwLoadErrCode = GetLastError();
-
-	if (PrepareNewModule(module, lpFileName, NULL))
-	{
-		if (ph && ph->PostCallBack)
-		{
-			SETARGS3(&module,lpFileName,hFile,dwFlags);
-			ph->PostCallBack(&args);
-		}
-	}
-
-	SetLastError(dwLoadErrCode);
-	return module;
-}
-
-HMODULE WINAPI OnLoadLibraryExA(const char* lpFileName, HANDLE hFile, DWORD dwFlags)
-{
-	typedef HMODULE(WINAPI* OnLoadLibraryExA_t)(const char* lpFileName, HANDLE hFile, DWORD dwFlags);
-	ORIGINAL(LoadLibraryExA);
-	return OnLoadLibraryExAWork((FARPROC)F(LoadLibraryExA), ph, bMainThread, lpFileName, hFile, dwFlags);
-}
-
-/* ************** */
-HMODULE WINAPI OnLoadLibraryExWWork(FARPROC lpfn, HookItem *ph, BOOL bMainThread, const wchar_t* lpFileName, HANDLE hFile, DWORD dwFlags)
-{
-	typedef HMODULE(WINAPI* OnLoadLibraryExW_t)(const wchar_t* lpFileName, HANDLE hFile, DWORD dwFlags);
-	OnLoadLibraryLog(NULL,lpFileName);
-	HMODULE module = ((OnLoadLibraryExW_t)lpfn)(lpFileName, hFile, dwFlags);
-	DWORD dwLoadErrCode = GetLastError();
-
-	if (PrepareNewModule(module, NULL, lpFileName))
-	{
-		if (ph && ph->PostCallBack)
-		{
-			SETARGS3(&module,lpFileName,hFile,dwFlags);
-			ph->PostCallBack(&args);
-		}
-	}
-
-	SetLastError(dwLoadErrCode);
-	return module;
-}
-
-HMODULE WINAPI OnLoadLibraryExW(const wchar_t* lpFileName, HANDLE hFile, DWORD dwFlags)
-{
-	typedef HMODULE(WINAPI* OnLoadLibraryExW_t)(const wchar_t* lpFileName, HANDLE hFile, DWORD dwFlags);
-	ORIGINAL(LoadLibraryExW);
-	return OnLoadLibraryExWWork((FARPROC)F(LoadLibraryExW), ph, bMainThread, lpFileName, hFile, dwFlags);
-}
 
 /* ************** */
 void UnprepareModule(HMODULE hModule, LPCWSTR pszModule, int iStep)
@@ -1785,70 +1575,8 @@ void UnprepareModule(HMODULE hModule, LPCWSTR pszModule, int iStep)
 	}
 }
 
-BOOL WINAPI OnFreeLibraryWork(FARPROC lpfn, HookItem *ph, BOOL bMainThread, HMODULE hModule)
-{
-	typedef BOOL (WINAPI* OnFreeLibrary_t)(HMODULE hModule);
-	BOOL lbRc = FALSE;
-	BOOL lbResource = LDR_IS_RESOURCE(hModule);
-	// lbResource получается TRUE например при вызовах из version.dll
 
-	UnprepareModule(hModule, NULL, 0);
 
-#ifdef _DEBUG
-	BOOL lbModulePre = IsModuleValid(hModule); // GetModuleFileName(hModule, szModule, countof(szModule));
-#endif
-
-	// Section locking is inadmissible. One FreeLibrary may cause another FreeLibrary in _different_ thread.
-	lbRc = ((OnFreeLibrary_t)lpfn)(hModule);
-	DWORD dwFreeErrCode = GetLastError();
-
-	// Далее только если !LDR_IS_RESOURCE
-	if (lbRc && !lbResource)
-		UnprepareModule(hModule, NULL, 1);
-
-	SetLastError(dwFreeErrCode);
-	return lbRc;
-}
-
-BOOL WINAPI OnFreeLibrary(HMODULE hModule)
-{
-	typedef BOOL (WINAPI* OnFreeLibrary_t)(HMODULE hModule);
-	ORIGINALFAST(FreeLibrary);
-	return OnFreeLibraryWork((FARPROC)F(FreeLibrary), ph, FALSE, hModule);
-}
-
-#ifdef HOOK_ERROR_PROC
-DWORD WINAPI OnGetLastError()
-{
-	typedef DWORD (WINAPI* OnGetLastError_t)();
-	SUPPRESSORIGINALSHOWCALL;
-	ORIGINALFAST(GetLastError);
-	DWORD nErr = 0;
-
-	if (F(GetLastError))
-		nErr = F(GetLastError)();
-
-	if (nErr == HOOK_ERROR_NO)
-	{
-		nErr = HOOK_ERROR_NO;
-	}
-	return nErr;
-}
-VOID WINAPI OnSetLastError(DWORD dwErrCode)
-{
-	typedef DWORD (WINAPI* OnSetLastError_t)(DWORD dwErrCode);
-	SUPPRESSORIGINALSHOWCALL;
-	ORIGINALFAST(SetLastError);
-
-	if (dwErrCode == HOOK_ERROR_NO)
-	{
-		dwErrCode = HOOK_ERROR_NO;
-	}
-
-	if (F(SetLastError))
-		F(SetLastError)(dwErrCode);
-}
-#endif
 
 
 

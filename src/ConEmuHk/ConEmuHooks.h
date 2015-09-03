@@ -26,301 +26,65 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-
 #pragma once
 
-//#define DEBUGLOG(s) //DEBUGSTR(s)
-//#define DEBUGLOGSIZE(s) DEBUGSTR(s)
-//#define DEBUGLOGLANG(s) //DEBUGSTR(s) //; Sleep(2000)
-//
-//#ifdef _DEBUG
-////CRITICAL_ SECTION gcsHeap;
-////#define MCHKHEAP { Enter CriticalSection(&gcsHeap); int MDEBUG_CHK=_CrtCheckMemory(); _ASSERTE(MDEBUG_CHK); Leave Critical Section(&gcsHeap); }
-////#define MCHKHEAP HeapValidate(ghHeap, 0, NULL);
-////#define MCHKHEAP { int MDEBUG_CHK=_CrtCheckMemory(); _ASSERTE(MDEBUG_CHK); }
-////#define HEAP_LOGGING
-//#else
-////#define MCHKHEAP
-//#endif
-
-
-
-
-#define CSECTION_NON_RAISE
+// This file is used in ConEmuPlugin and ExtendedConsole modules
 
 #include <Windows.h>
-#include <WinCon.h>
 
-
-/*  Global  */
-extern DWORD   gnSelfPID;
-extern HWND    ghConWnd;
-extern HWND    ghConEmuWnd; // Root! window
-extern HWND    ghConEmuWndDC; // ConEmu DC window
-extern DWORD   gnServerPID; // PID сервера (инициализируется на старте, при загрузке Dll)
-
-#include "../common/common.hpp"
-#include "../common/ConEmuCheck.h"
-#include "../common/WObjects.h"
-#include "../common/InQueue.h"
-#include "../common/MMap.h"
-#include "../common/MFileMapping.h"
-
-void SetServerPID(DWORD anMainSrvPID);
-
-extern MFileMapping<CESERVER_CONSOLE_APP_MAPPING> *gpAppMap;
-CESERVER_CONSOLE_MAPPING_HDR* GetConMap(BOOL abForceRecreate=FALSE);
-void OnConWndChanged(HWND ahNewConWnd);
-bool AttachServerConsole();
-typedef BOOL (WINAPI* AttachConsole_t)(DWORD dwProcessId);
-AttachConsole_t GetAttachConsoleProc();
-void CheckAnsiConVar(LPCWSTR asName);
-
-enum ConEmuHkDllState
+// Options are set when the process is Far Manager
+struct HookModeFar
 {
-	ds_Undefined = 0,
-	ds_DllProcessAttach = 1,
-	ds_DllMainThreadDetach = 2,
-	ds_DllStop = 3,
-	ds_DllProcessDetach = 4,
+	DWORD cbSize;               // size of the struct
+	BOOL  bFarHookMode;         // set to TRUE from ConEmu.dll Far plugin !!! MUST BE FIRST BOOL !!!
+	BOOL  bFARuseASCIIsort;     // have to hook: OnCompareStringW
+	BOOL  bShellNoZoneCheck;    // -> OnShellExecuteXXX
+	BOOL  bMonitorConsoleInput; // on (Read/Peek)ConsoleInput(A/W) послать инфу в GUI/Settings/Debug
+	BOOL  bPopupMenuPos;        // on EMenu call показать меню в позиции мышиного курсора
+	BOOL  bLongConsoleOutput;   // increase buffer height during console applications execution (ignored in "far.exe /w")
+	void  (WINAPI* OnCurDirChanged)();
 };
-extern ConEmuHkDllState gnDllState;
-extern int gnDllThreadCount;
-extern BOOL gbDllStopCalled;
 
-//int WINAPI RequestLocalServer(/*[IN/OUT]*/RequestLocalServerParm* Parm);
-struct AnnotationHeader;
-extern AnnotationHeader* gpAnnotationHeader;
-extern HANDLE ghCurrentOutBuffer;
-
-struct ReadConsoleInfo
+typedef struct HookCallbackArg
 {
-	HANDLE hConsoleInput;
-	DWORD InReadConsoleTID;
-	DWORD LastReadConsoleTID;
-	HANDLE hConsoleInput2;
-	DWORD LastReadConsoleInputTID;
-	BOOL  bIsUnicode;
-	COORD crStartCursorPos;
-	DWORD nConInMode;
-	DWORD nConOutMode;
-};
-extern struct ReadConsoleInfo gReadConsoleInfo;
-BOOL OnReadConsoleClick(SHORT xPos, SHORT yPos, bool bForce, bool bBashMargin);
-BOOL OnPromptBsDeleteWord(bool bForce, bool bBashMargin);
-BOOL OnExecutePromptCmd(LPCWSTR asCmd);
+	BOOL         bMainThread;
+	// pointer to variable with result of original function
+	LPVOID       lpResult;
+	// arguments (or pointers to them) of original funciton, casted to DWORD_PTR
+	DWORD_PTR    lArguments[10];
+} HookCallbackArg;
 
-void CheckHookServer();
-extern bool gbHookServerForcedTermination;
+// PreCallBack may returns (FALSE) to skip original function calling,
+//		in that case, caller got pArgs->lResult
+typedef BOOL (WINAPI* HookItemPreCallback_t)(HookCallbackArg* pArgs);
+// PostCallBack can modify pArgs->lResult only
+typedef VOID (WINAPI* HookItemPostCallback_t)(HookCallbackArg* pArgs);
+// ExceptCallBack can modify pArgs->lResult only
+typedef VOID (WINAPI* HookItemExceptCallback_t)(HookCallbackArg* pArgs);
 
-struct CpConv
-{
-	// for example, "git add -p" uses codepage 1252 while printing thunks to be staged
-	// that forces the printed text to be converted to nToCP before printing (OnWriteConsoleW)
-	DWORD nFromCP, nToCP;
-	// that parm may be used for overriding default console CP
-	DWORD nDefaultCP;
-};
-extern struct CpConv gCpConv;
+typedef VOID (WINAPI* OnLibraryLoaded_t)(HMODULE ahModule);
 
-/* ************ Globals for Far ************ */
-extern bool    gbIsFarProcess;
-extern InQueue gInQueue;
-/* ************ Globals for Far ************ */
+typedef bool (__stdcall* SetHookCallbacks_t)(const char* ProcName, const wchar_t* DllName, HMODULE hCallbackModule,
+        HookItemPreCallback_t PreCallBack, HookItemPostCallback_t PostCallBack,
+        HookItemExceptCallback_t ExceptCallBack);
+//extern SetHookCallbacks_t SetHookCallbacks; // = NULL;
 
-/* ************ Globals for cmd.exe/clink ************ */
-extern bool     gbIsCmdProcess;
-//extern size_t   gcchLastWriteConsoleMax;
-//extern wchar_t *gpszLastWriteConsole;
-extern int      gnCmdInitialized; // 0 - Not already, 1 - OK, -1 - Fail
-extern bool     gbAllowClinkUsage;
-extern bool     gbAllowUncPaths;
-/* ************ Globals for cmd.exe/clink ************ */
+typedef void (__stdcall* SetLoadLibraryCallback_t)(HMODULE ahCallbackModule,
+        OnLibraryLoaded_t afOnLibraryLoaded, OnLibraryLoaded_t afOnLibraryUnLoaded);
+//extern SetLoadLibraryCallback_t SetLoadLibraryCallback; // = NULL;
 
-/* ************ Globals for powershell ************ */
-extern bool gbPowerShellMonitorProgress;
-extern WORD gnConsolePopupColors;
-extern int  gnPowerShellProgressValue;
-/* ************ Globals for powershell ************ */
+typedef void (__stdcall* SetFarHookMode_t)(struct HookModeFar *apFarMode);
+//extern SetFarHookMode_t SetFarHookMode;
 
-/* ************ Globals for Node.JS ************ */
-extern bool gbIsNodeJSProcess;
-/* ************ Globals for Node.JS ************ */
-
-/* ************ Globals for cygwin/msys ************ */
-extern bool gbIsBashProcess;
-extern bool gbIsSshProcess;
-extern bool gbIsLessProcess;
-/* ************ Globals for cygwin/msys ************ */
-
-/* ************ Globals for ViM ************ */
-extern bool gbIsVimProcess;
-extern bool gbIsVimAnsi;
-/* ************ Globals for ViM ************ */
-
-/* ************ Globals for MinTTY ************ */
-extern bool gbIsMinTtyProcess;
-/* ************ Globals for ViM ************ */
-
-/* ************ Globals for HIEW32.EXE ************ */
-extern bool gbIsHiewProcess;
-/* ************ Globals for HIEW32.EXE ************ */
-
-/* ************ Globals for DosBox.EXE ************ */
-extern bool gbDosBoxProcess;
-/* ************ Globals for DosBox.EXE ************ */
-
-/* ************ Don't show VirtualAlloc errors ************ */
-extern bool gbSkipVirtualAllocErr;
-/* ************ Don't show VirtualAlloc errors ************ */
-
-/* ************ Globals for "Default terminal ************ */
-extern bool gbPrepareDefaultTerminal;
-extern bool gbIsNetVsHost;
-extern bool gbIsVStudio;
-extern int  gnVsHostStartConsole;
-extern bool gbIsGdbHost;
-/* ************ Globals for "Default terminal ************ */
-
-void GuiSetProgress(WORD st, WORD pr, LPCWSTR pszName = NULL);
-BOOL GetConsoleScreenBufferInfoCached(HANDLE hConsoleOutput, PCONSOLE_SCREEN_BUFFER_INFO lpConsoleScreenBufferInfo, BOOL bForced = FALSE);
-BOOL GetConsoleModeCached(HANDLE hConsoleHandle, LPDWORD lpMode, BOOL bForced = FALSE);
-
-#if defined(__GNUC__)
-extern "C" {
-#endif
-	HWND WINAPI GetRealConsoleWindow();
-	FARPROC WINAPI GetWriteConsoleW();
-	int WINAPI RequestLocalServer(/*[IN/OUT]*/RequestLocalServerParm* Parm);
-	FARPROC WINAPI GetLoadLibraryW();
-	FARPROC WINAPI GetVirtualAlloc();
-	FARPROC WINAPI GetTrampoline(LPCSTR pszName);
-#if defined(__GNUC__)
-};
-#endif
-
-void DoDllStop(bool bFinal, bool bFromTerminate = false);
-
-#ifdef _DEBUG
-	//#define USEHOOKLOG
-	#undef USEHOOKLOG
-	#ifdef USEHOOKLOG
-		#define USEHOOKLOGANALYZE
-	#else
-		#undef USEHOOKLOGANALYZE
-	#endif
-#else
-	#undef USEHOOKLOG
-	#undef USEHOOKLOGANALYZE
-#endif
-
-#ifdef USEHOOKLOG
-	#if !defined(__GNUC__) || defined(__MINGW64_VERSION_MAJOR)
-	#include <intrin.h>
-	#else
-	#define _InterlockedIncrement InterlockedIncrement
-	#endif
-
-	#define getThreadId() WIN3264TEST(((DWORD*) __readfsdword(24))[9],GetCurrentThreadId())
-
-	#define getTime GetTickCount
-
-	// Originally from http://preshing.com/20120522/lightweight-in-memory-logging
-	namespace HookLogger
-	{
-		struct Event
-		{
-			#ifdef _DEBUG
-			DWORD tid;       // Thread ID
-			DWORD dur;       // Step duration
-			#endif
-			const char* msg; // Info
-			DWORD param;
-			#ifdef _DEBUG
-			LARGE_INTEGER cntr, cntr1; // PerformanceCounters
-			#endif
-		};
-	 
-		static const int BUFFER_SIZE = RELEASEDEBUGTEST(256,1024);   // Must be a power of 2
-		extern Event g_events[BUFFER_SIZE];
-		extern LONG g_pos;
-		extern LARGE_INTEGER g_freq;
-
-		static const int CRITICAL_BUFFER_SIZE = 256;
-		struct CritInfo
-		{
-			u64 total;
-			DWORD count;
-			
-			#ifdef _WIN64
-			DWORD pad;
-			#endif
-
-			const char* msg;
-		};
-		extern CritInfo g_crit[CRITICAL_BUFFER_SIZE];
-	 
-		inline Event* Log(const char* msg, DWORD param)
-		{
-			// Get next event index
-			LONG i = _InterlockedIncrement(&g_pos);
-			// Write an event at this index
-			Event* e = g_events + (i & (BUFFER_SIZE - 1));  // Wrap to buffer size
-			#ifdef _DEBUG
-			e->tid = getThreadId();
-			//e->tick = getTime();
-			QueryPerformanceCounter(&e->cntr);
-			//e->tick = e->cntr.LowPart;
-			//Event* ep = g_events + ((i-1) & (BUFFER_SIZE - 1));  // Wrap to buffer size
-			//ep->dur = (DWORD)(e->cntr.QuadPart - ep->cntr.QuadPart);
-			e->cntr1.QuadPart = 0;
-			#endif
-			e->msg = msg;
-			e->param = param;
-			return e;
-		}
-
-		extern void RunAnalyzer();
-	}
-
-	#undef getThreadId
-	#undef getTime
-#endif
-
-#if defined(USEHOOKLOG) && !defined(SKIPHOOKLOG)
-	#define HLOG0(m,p) HookLogger::Event* es = HookLogger::Log(m,p);
-	#define HLOG(m,p) es = HookLogger::Log(m,p);
-	#define HLOGEND() QueryPerformanceCounter(&es->cntr1);
-	#define HLOG1(m,p) HookLogger::Event* es1 = HookLogger::Log(m,p);
-	#define HLOG1_(m,p) es1 = HookLogger::Log(m,p);
-	#define HLOGEND1() QueryPerformanceCounter(&es1->cntr1);
-	#define HLOG2(m,p) HookLogger::Event* es2 = HookLogger::Log(m,p);
-	#define HLOG2_(m,p) es2 = HookLogger::Log(m,p);
-	#define HLOGEND2() QueryPerformanceCounter(&es2->cntr1);
-#else
-	#define HLOG0(m,p)
-	#define HLOG(m,p)
-	#define HLOGEND()
-	#define HLOG1(m,p)
-	#define HLOG1_(m,p)
-	#define HLOGEND1()
-	#define HLOG2(m,p)
-	#define HLOG2_(m,p)
-	#define HLOGEND2()
-#endif
-
-#if defined(USEHOOKLOG) && !defined(SKIPDLLLOG)
-	#define DLOG0(m,p) HookLogger::Event* es = HookLogger::Log(m,p);
-	#define DLOG(m,p) es = HookLogger::Log(m,p);
-	#define DLOGEND() QueryPerformanceCounter(&es->cntr1);
-	#define DLOG1(m,p) HookLogger::Event* es1 = HookLogger::Log(m,p);
-	#define DLOG1_(m,p) es1 = HookLogger::Log(m,p);
-	#define DLOGEND1() QueryPerformanceCounter(&es1->cntr1);
-#else
-	#define DLOG0(m,p)
-	#define DLOG(m,p)
-	#define DLOGEND()
-	#define DLOG1(m,p)
-	#define DLOG1_(m,p)
-	#define DLOGEND1()
-#endif
+#define SETARGS(r) HookCallbackArg args = {bMainThread}; args.lpResult = (LPVOID)(r)
+#define SETARGS1(r,a1) SETARGS(r); args.lArguments[0] = (DWORD_PTR)(a1)
+#define SETARGS2(r,a1,a2) SETARGS1(r,a1); args.lArguments[1] = (DWORD_PTR)(a2)
+#define SETARGS3(r,a1,a2,a3) SETARGS2(r,a1,a2); args.lArguments[2] = (DWORD_PTR)(a3)
+#define SETARGS4(r,a1,a2,a3,a4) SETARGS3(r,a1,a2,a3); args.lArguments[3] = (DWORD_PTR)(a4)
+#define SETARGS5(r,a1,a2,a3,a4,a5) SETARGS4(r,a1,a2,a3,a4); args.lArguments[4] = (DWORD_PTR)(a5)
+#define SETARGS6(r,a1,a2,a3,a4,a5,a6) SETARGS5(r,a1,a2,a3,a4,a5); args.lArguments[5] = (DWORD_PTR)(a6)
+#define SETARGS7(r,a1,a2,a3,a4,a5,a6,a7) SETARGS6(r,a1,a2,a3,a4,a5,a6); args.lArguments[6] = (DWORD_PTR)(a7)
+#define SETARGS8(r,a1,a2,a3,a4,a5,a6,a7,a8) SETARGS7(r,a1,a2,a3,a4,a5,a6,a7); args.lArguments[7] = (DWORD_PTR)(a8)
+#define SETARGS9(r,a1,a2,a3,a4,a5,a6,a7,a8,a9) SETARGS8(r,a1,a2,a3,a4,a5,a6,a7,a8); args.lArguments[8] = (DWORD_PTR)(a9)
+#define SETARGS10(r,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10) SETARGS9(r,a1,a2,a3,a4,a5,a6,a7,a8,a9); args.lArguments[9] = (DWORD_PTR)(a10)
+// !!! WARNING !!! DWORD_PTR lArguments[10]; - maximum - 10 arguments

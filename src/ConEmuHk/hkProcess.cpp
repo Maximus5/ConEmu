@@ -33,10 +33,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 #include "../common/common.hpp"
+#include "../common/execute.h"
 #include "../common/MMap.h"
 
 #define DEFINE_HOOK_MACROS
 #include "ConEmuHooks.h"
+#include "DefTermHk.h"
 #include "hkProcess.h"
 #include "MainThread.h"
 #include "SetHook.h"
@@ -51,6 +53,70 @@ extern HRESULT OurShellExecCmdLine(HWND hwnd, LPCWSTR pwszCommand, LPCWSTR pwszS
 
 /* **************** */
 
+// Called from OnShellExecCmdLine
+HRESULT OurShellExecCmdLine(HWND hwnd, LPCWSTR pwszCommand, LPCWSTR pwszStartDir, bool bRunAsAdmin, bool bForce)
+{
+	HRESULT hr = E_UNEXPECTED;
+	BOOL bShell = FALSE;
+
+	CEStr lsLog = lstrmerge(L"OnShellExecCmdLine", bRunAsAdmin ? L"(RunAs): " : L": ", pwszCommand);
+	DefTermLogString(lsLog);
+
+	// Bad thing, ShellExecuteEx needs File&Parm, but we get both in pwszCommand
+	CmdArg szExe;
+	LPCWSTR pszFile = pwszCommand;
+	LPCWSTR pszParm = pwszCommand;
+	if (NextArg(&pszParm, szExe) == 0)
+	{
+		pszFile = szExe; pszParm = SkipNonPrintable(pszParm);
+	}
+	else
+	{
+		// Failed
+		pszFile = pwszCommand; pszParm = NULL;
+	}
+
+	if (!bForce)
+	{
+		DWORD nCheckSybsystem1 = 0, nCheckBits1 = 0;
+		if (!FindImageSubsystem(pszFile, nCheckSybsystem1, nCheckBits1))
+		{
+			hr = (HRESULT)-1;
+			DefTermLogString(L"OnShellExecCmdLine: FindImageSubsystem failed");
+			goto wrap;
+		}
+		if (nCheckSybsystem1 != IMAGE_SUBSYSTEM_WINDOWS_CUI)
+		{
+			hr = (HRESULT)-1;
+			DefTermLogString(L"OnShellExecCmdLine: !=IMAGE_SUBSYSTEM_WINDOWS_CUI");
+			goto wrap;
+		}
+	}
+
+	// "Run as admin" was requested?
+	if (bRunAsAdmin)
+	{
+		SHELLEXECUTEINFO sei = {sizeof(sei), 0, hwnd, L"runas", pszFile, pszParm, pwszStartDir, SW_SHOWNORMAL};
+		bShell = OnShellExecuteExW(&sei);
+	}
+	else
+	{
+		wchar_t* pwCommand = lstrdup(pwszCommand);
+		DWORD nCreateFlags = CREATE_NEW_CONSOLE|CREATE_UNICODE_ENVIRONMENT|CREATE_DEFAULT_ERROR_MODE;
+		STARTUPINFO si = {sizeof(si)};
+		PROCESS_INFORMATION pi = {};
+		bShell = OnCreateProcessW(NULL, pwCommand, NULL, NULL, FALSE, nCreateFlags, NULL, pwszStartDir, &si, &pi);
+		if (bShell)
+		{
+			CloseHandle(pi.hProcess);
+			CloseHandle(pi.hThread);
+		}
+	}
+
+	hr = bShell ? S_OK : HRESULT_FROM_WIN32(GetLastError());
+wrap:
+	return hr;
+}
 
 /* **************** */
 
@@ -212,7 +278,7 @@ BOOL WINAPI OnCreateProcessW(LPCWSTR lpApplicationName, LPWSTR lpCommandLine, LP
 	#endif
 
 	#ifdef SHOWCREATEPROCESSTICK
-	wchar_t szTimingMsg[512]; HANDLE hTimingHandle = GetStdHandle(STD_OUTPUT_HANDLE);
+	prepare_timings;
 	force_print_timings(L"CreateProcessW");
 	#endif
 

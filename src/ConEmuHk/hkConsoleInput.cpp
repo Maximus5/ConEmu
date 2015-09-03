@@ -49,6 +49,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "hkConsoleInput.h"
 #include "MainThread.h"
 #include "SetHook.h"
+#include "hlpConsole.h"
 
 /* **************** */
 

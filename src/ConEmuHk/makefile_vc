@@ -67,11 +67,17 @@ $(INTDIR)\hkConsole.obj \
 $(INTDIR)\hkConsoleInput.obj \
 $(INTDIR)\hkConsoleOutput.obj \
 $(INTDIR)\hkDialog.obj \
+$(INTDIR)\hkEnvironment.obj \
+$(INTDIR)\hkFarExe.obj \
 $(INTDIR)\HkFunc.obj \
 $(INTDIR)\hkGDI.obj \
+$(INTDIR)\hkKernel.obj \
+$(INTDIR)\hkLibrary.obj \
+$(INTDIR)\hkMessages.obj \
 $(INTDIR)\hkProcess.obj \
 $(INTDIR)\hkStdIO.obj \
 $(INTDIR)\hkWindow.obj \
+$(INTDIR)\hlpConsole.obj \
 $(INTDIR)\Injects.obj \
 $(INTDIR)\InQueue.obj \
 $(INTDIR)\MainThread.obj \
@@ -362,15 +368,27 @@ $(INTDIR)\hkConsoleOutput.obj: hkConsoleOutput.cpp hkConsoleOutput.h
 
 $(INTDIR)\hkDialog.obj: hkDialog.cpp hkDialog.h
 
+$(INTDIR)\hkEnvironment.obj: hkEnvironment.cpp hkEnvironment.h
+
+$(INTDIR)\hkFarExe.obj: hkFarExe.cpp hkFarExe.h
+
 $(INTDIR)\HkFunc.obj: ../common/HkFunc.cpp ../common/HkFunc.h
 
 $(INTDIR)\hkGDI.obj: hkGDI.cpp hkGDI.h
+
+$(INTDIR)\hkKernel.obj: hkKernel.cpp hkKernel.h
+
+$(INTDIR)\hkLibrary.obj: hkLibrary.cpp hkLibrary.h
+
+$(INTDIR)\hkMessages.obj: hkMessages.cpp hkMessages.h
 
 $(INTDIR)\hkProcess.obj: hkProcess.cpp hkProcess.h
 
 $(INTDIR)\hkStdIO.obj: hkStdIO.cpp hkStdIO.h
 
 $(INTDIR)\hkWindow.obj: hkWindow.cpp hkWindow.h
+
+$(INTDIR)\hlpConsole.obj: hlpConsole.cpp hlpConsole.h
 
 $(INTDIR)\Injects.obj: Injects.cpp Console2.h
 

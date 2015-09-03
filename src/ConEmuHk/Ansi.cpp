@@ -44,6 +44,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/MSectionSimple.h"
 #include "../common/WConsole.h"
 #include "../ConEmu/version.h"
+#include "hlpConsole.h"
 
 ///* ***************** */
 #include "Ansi.h"
