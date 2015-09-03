@@ -42,7 +42,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/ConEmuColors3.h"
 #include "../common/MArray.h"
 #include "../common/WThreads.h"
-#include "../ConEmuHk/SetHook.h"
+#include "../ConEmuHk/ConEmuHooks.h"
 
 #include "ConEmuPlugin2800.h"
 

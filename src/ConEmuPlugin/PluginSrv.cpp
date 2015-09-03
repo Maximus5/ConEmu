@@ -37,7 +37,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <windows.h>
 #include "../common/common.hpp"
-#include "../ConEmuHk/SetHook.h"
+#include "../ConEmuHk/ConEmuHooks.h"
 #ifdef _DEBUG
 #pragma warning( disable : 4995 )
 #endif
@@ -91,6 +91,7 @@ HANDLE ghServerTerminateEvent = NULL;
 bool gbForcedServerTermination = false;
 //
 extern struct HookModeFar gFarMode;
+extern SetFarHookMode_t SetFarHookMode;
 
 BOOL WINAPI PlugServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &ppReply, DWORD &pcbReplySize, DWORD &pcbMaxReplySize, LPARAM lParam);
 void WINAPI PlugServerFree(CESERVER_REQ* pReply, LPARAM lParam);

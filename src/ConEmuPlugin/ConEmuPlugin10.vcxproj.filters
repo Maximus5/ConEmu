@@ -112,7 +112,7 @@
     <ClInclude Include="PluginSrv.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\ConEmuHk\SetHook.h">
+    <ClInclude Include="..\ConEmuHk\ConEmuHooks.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\common\WObjects.h">

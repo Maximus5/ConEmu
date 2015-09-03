@@ -41,7 +41,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/farcolor3.hpp"
 #include "../common/ConEmuColors3.h"
 #include "../common/WThreads.h"
-#include "../ConEmuHk/SetHook.h"
+#include "../ConEmuHk/ConEmuHooks.h"
 
 #include "ConEmuPlugin1900.h"
 

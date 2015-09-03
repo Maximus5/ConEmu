@@ -1089,7 +1089,7 @@
     <ClInclude Include="..\common\WUser.h" />
     <ClInclude Include="..\ConEmu\DragDrop.h" />
     <ClInclude Include="..\ConEmu\version.h" />
-    <ClInclude Include="..\ConEmuHk\SetHook.h" />
+    <ClInclude Include="..\ConEmuHk\ConEmuHooks.h" />
     <ClInclude Include="ConEmu_Lang.h" />
     <ClInclude Include="ConEmuPlugin1900.h" />
     <ClInclude Include="ConEmuPlugin2800.h" />

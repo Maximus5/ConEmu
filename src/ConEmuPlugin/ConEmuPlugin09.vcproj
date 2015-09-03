@@ -465,7 +465,7 @@
       <File RelativePath="..\common\WThreads.h" />
       <File RelativePath="..\common\WUser.h" />
       <File RelativePath="..\ConEmu\DragDrop.h" />
-      <File RelativePath="..\ConEmuHk\SetHook.h" />
+      <File RelativePath="..\ConEmuHk\ConEmuHooks.h" />
       <File RelativePath=".\ConEmu_Lang.h" />
       <File RelativePath=".\ConEmuPlugin1900.h" />
       <File RelativePath=".\ConEmuPlugin2800.h" />

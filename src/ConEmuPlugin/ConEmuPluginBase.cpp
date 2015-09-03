@@ -61,7 +61,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/WConsole.h"
 #include "../common/WThreads.h"
 #include "../common/SetEnvVar.h"
-#include "../ConEmuHk/SetHook.h"
+#include "../ConEmuHk/ConEmuHooks.h"
 #include "../ConEmu/version.h"
 
 #include <TlHelp32.h>
