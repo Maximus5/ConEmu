@@ -672,7 +672,7 @@ void FixSshThreads(int iStep)
 	#ifdef _DEBUG
 	char szInfo[120]; DWORD nErr;
 	msprintf(szInfo, countof(szInfo), "FixSshThreads(%u) started\n", iStep);
-	if (gnDllState != ds_DllProcessDetach) OutputDebugStringA(szInfo);
+	if (!(gnDllState & ds_DllProcessDetach)) OutputDebugStringA(szInfo);
 	#endif
 
 	switch (iStep)
@@ -703,7 +703,7 @@ void FixSshThreads(int iStep)
 				#ifdef _DEBUG
 				nErr = GetLastError();
 				msprintf(szInfo, countof(szInfo), "CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD) failed in FixSshThreads, code=%u\n", nErr);
-				if (gnDllState != ds_DllProcessDetach) OutputDebugStringA(szInfo);
+				if (!(gnDllState & ds_DllProcessDetach)) OutputDebugStringA(szInfo);
 				#endif
 			}
 			else
@@ -714,7 +714,7 @@ void FixSshThreads(int iStep)
 					#ifdef _DEBUG
 					nErr = GetLastError();
 					msprintf(szInfo, countof(szInfo), "Thread32First failed in FixSshThreads, code=%u\n", nErr);
-					if (gnDllState != ds_DllProcessDetach) OutputDebugStringA(szInfo);
+					if (!(gnDllState & ds_DllProcessDetach)) OutputDebugStringA(szInfo);
 					#endif
 				}
 				else do
@@ -733,7 +733,7 @@ void FixSshThreads(int iStep)
 							#ifdef _DEBUG
 							nErr = GetLastError();
 							msprintf(szInfo, countof(szInfo), "OpenThread(%u) failed in FixSshThreads, code=%u\n", module.th32ThreadID, nErr);
-							if (gnDllState != ds_DllProcessDetach) OutputDebugStringA(szInfo);
+							if (!(gnDllState & ds_DllProcessDetach)) OutputDebugStringA(szInfo);
 							#endif
 						}
 						else
@@ -745,7 +745,7 @@ void FixSshThreads(int iStep)
 								#ifdef _DEBUG
 								nErr = GetLastError();
 								msprintf(szInfo, countof(szInfo), "SuspendThread(%u) failed in FixSshThreads, code=%u\n", module.th32ThreadID, nErr);
-								if (gnDllState != ds_DllProcessDetach) OutputDebugStringA(szInfo);
+								if (!(gnDllState & ds_DllProcessDetach)) OutputDebugStringA(szInfo);
 								#endif
 							}
 							else
@@ -754,7 +754,7 @@ void FixSshThreads(int iStep)
 								pThInfo->push_back(th);
 								#ifdef _DEBUG
 								msprintf(szInfo, countof(szInfo), "Thread %u was suspended\n", module.th32ThreadID);
-								if (gnDllState != ds_DllProcessDetach) OutputDebugStringA(szInfo);
+								if (!(gnDllState & ds_DllProcessDetach)) OutputDebugStringA(szInfo);
 								#endif
 							}
 						}
@@ -769,7 +769,7 @@ void FixSshThreads(int iStep)
 
 	#ifdef _DEBUG
 	msprintf(szInfo, countof(szInfo), "FixSshThreads(%u) finished\n", iStep);
-	if (gnDllState != ds_DllProcessDetach) OutputDebugStringA(szInfo);
+	if (!(gnDllState & ds_DllProcessDetach)) OutputDebugStringA(szInfo);
 	#endif
 }
 
@@ -1492,8 +1492,8 @@ void DoDllStop(bool bFinal, bool bFromTerminate)
 	print_timings(L"DllStop");
 	bool bUnload = (bFinal && !gbHooksWasSet);
 
-	if (gnDllState < ds_DllStop)
-		gnDllState = ds_DllStop;
+	if (!(gnDllState & ds_DllStop))
+		gnDllState |= ds_DllStop;
 
 	static bool bVimStopped = false;
 	if (gbIsVimProcess && !bVimStopped)
@@ -1657,6 +1657,7 @@ void DoDllStop(bool bFinal, bool bFromTerminate)
 
 	if (bUnload)
 	{
+		gnDllState |= ds_HeapDeinitialized;
 		HeapDeinitialize();
 	}
 
@@ -1710,11 +1711,12 @@ BOOL DllMain_ProcessAttach(HANDLE hModule, DWORD  ul_reason_for_call)
 	QueryPerformanceFrequency(&HookLogger::g_freq);
 	#endif
 
-	gnDllState = ds_DllProcessAttach;
+	gnDllState |= ds_DllProcessAttach;
 	#ifdef _DEBUG
 	HANDLE hProcHeap = GetProcessHeap();
 	#endif
 	HeapInitialize();
+	gnDllState |= ds_HeapInitialized;
 
 	hkFunc.SetInternalMode((HMODULE)hModule, (FARPROC)GetTrampoline);
 
@@ -1938,7 +1940,7 @@ BOOL DllMain_ThreadDetach(HANDLE hModule, DWORD  ul_reason_for_call)
 	// DLL_PROCESS_DETACH зовется как выяснилось не всегда
 	if (gnHookMainThreadId && (nTID == gnHookMainThreadId) && !gbDllDeinitialized)
 	{
-		gnDllState = ds_DllMainThreadDetach;
+		gnDllState |= ds_DllMainThreadDetach;
 		gbDllDeinitialized = bNeedDllStop = true;
 	}
 
@@ -1974,7 +1976,7 @@ BOOL DllMain_ProcessDetach(HANDLE hModule, DWORD  ul_reason_for_call)
 	gDllMainCallInfo[DLL_PROCESS_DETACH].OnCall();
 
 	ShutdownStep(L"DLL_PROCESS_DETACH");
-	gnDllState = ds_DllProcessDetach;
+	gnDllState |= ds_DllProcessDetach;
 
 	// Уже могли дернуть в DLL_THREAD_DETACH, OnExitProcess и т.п.
 	gbDllDeinitialized = true;

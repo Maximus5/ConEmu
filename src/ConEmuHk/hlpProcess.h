@@ -57,14 +57,21 @@ void OnConWndChanged(HWND ahNewConWnd);
 bool AttachServerConsole();
 void CheckAnsiConVar(LPCWSTR asName);
 
-enum ConEmuHkDllState
-{
-	ds_Undefined = 0,
-	ds_DllProcessAttach = 1,
-	ds_DllMainThreadDetach = 2,
-	ds_DllStop = 3,
-	ds_DllProcessDetach = 4,
-};
+typedef DWORD ConEmuHkDllState;
+const ConEmuHkDllState
+	ds_DllProcessAttach    = 0x00000001,
+	ds_DllMainThreadDetach = 0x00000010,
+	ds_DllStop             = 0x00000100,
+	ds_DllProcessDetach    = 0x00001000,
+	ds_HeapInitialized     = 0x00010000,
+	ds_HeapDeinitialized   = 0x00020000,
+	ds_HooksStarting       = 0x00040000,
+	ds_HooksStopping       = 0x00080000,
+	ds_HooksStarted        = 0x00100000,
+	ds_HooksStartFailed    = 0x00200000,
+	ds_HooksStopped        = 0x00400000,
+	ds_Undefined = 0
+;
 extern ConEmuHkDllState gnDllState;
 extern BOOL gbDllStopCalled;
 

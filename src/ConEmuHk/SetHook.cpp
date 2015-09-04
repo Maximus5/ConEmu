@@ -847,7 +847,9 @@ HookItem* FindFunction(const char* pszFuncName)
 BOOL StartupHooks()
 {
 	//HLOG0("StartupHooks",0);
-#ifdef _DEBUG
+	gnDllState |= ds_HooksStarting;
+
+	#ifdef _DEBUG
 	// Консольное окно уже должно быть инициализировано в DllMain
 	_ASSERTE(gbAttachGuiClient || gbDosBoxProcess || gbPrepareDefaultTerminal || (ghConWnd != NULL && ghConWnd == GetRealConsoleWindow()));
 	wchar_t sClass[128];
@@ -858,7 +860,7 @@ BOOL StartupHooks()
 	}
 
 	prepare_timings;
-#endif
+	#endif
 
 	// -- ghConEmuWnd уже должен быть установлен в DllMain!!!
 	//gbInShellExecuteEx = FALSE;
@@ -918,6 +920,8 @@ BOOL StartupHooks()
 	extern GetConsoleWindow_T gfGetRealConsoleWindow; // from ConEmuCheck.cpp
 	gfGetRealConsoleWindow = (GetConsoleWindow_T)GetOriginalAddress((LPVOID)OnGetConsoleWindow, NULL);
 
+	gnDllState |= (lbRc ? ds_HooksStarted : ds_HooksStartFailed);
+
 	print_timings(L"SetAllHooks - done");
 
 	//HLOGEND(); // StartupHooks - done
@@ -927,6 +931,8 @@ BOOL StartupHooks()
 
 void ShutdownHooks()
 {
+	gnDllState |= ds_HooksStopping;
+
 	HLOG1("ShutdownHooks.UnsetAllHooks",0);
 	UnsetAllHooks();
 	HLOGEND1();
@@ -960,6 +966,8 @@ void ShutdownHooks()
 	//}
 
 	FinalizeHookedModules();
+
+	gnDllState |= ds_HooksStopped;
 }
 
 void __stdcall SetLoadLibraryCallback(HMODULE ahCallbackModule, OnLibraryLoaded_t afOnLibraryLoaded, OnLibraryLoaded_t afOnLibraryUnLoaded)
