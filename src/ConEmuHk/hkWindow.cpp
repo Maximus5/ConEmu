@@ -112,8 +112,8 @@ BOOL WINAPI OnTrackPopupMenu(HMENU hMenu, UINT uFlags, int x, int y, int nReserv
 	//typedef BOOL (WINAPI* OnTrackPopupMenu_t)(HMENU hMenu, UINT uFlags, int x, int y, int nReserved, HWND hWnd, CONST RECT * prcRect);
 	ORIGINALFASTEX(TrackPopupMenu,NULL);
 
-	#ifndef _DEBUG
-	WCHAR szMsg[128]; msprintf(szMsg, SKIPLEN(countof(szMsg)) L"TrackPopupMenu(hwnd=0x%08X)\n", (DWORD)hWnd);
+	#if defined(_DEBUG)
+	wchar_t szMsg[128]; msprintf(szMsg, countof(szMsg), L"TrackPopupMenu(hwnd=0x%08X)\n", (DWORD)hWnd);
 	DebugString(szMsg);
 	#endif
 
@@ -145,8 +145,8 @@ BOOL WINAPI OnTrackPopupMenuEx(HMENU hmenu, UINT fuFlags, int x, int y, HWND hWn
 	//typedef BOOL (WINAPI* OnTrackPopupMenuEx_t)(HMENU hmenu, UINT fuFlags, int x, int y, HWND hWnd, LPTPMPARAMS lptpm);
 	ORIGINALFASTEX(TrackPopupMenuEx,NULL);
 
-	#ifndef _DEBUG
-	WCHAR szMsg[128]; msprintf(szMsg, SKIPLEN(countof(szMsg)) L"TrackPopupMenuEx(hwnd=0x%08X)\n", (DWORD)hWnd);
+	#if defined(_DEBUG)
+	wchar_t szMsg[128]; msprintf(szMsg, countof(szMsg), L"TrackPopupMenuEx(hwnd=0x%08X)\n", (DWORD)hWnd);
 	DebugString(szMsg);
 	#endif
 
