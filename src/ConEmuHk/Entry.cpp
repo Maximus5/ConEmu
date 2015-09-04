@@ -179,8 +179,20 @@ extern bool gbHookExecutableOnly;
 //extern DWORD gnAllowClinkUsage;
 
 ConEmuHkDllState gnDllState = ds_Undefined;
-int gnDllThreadCount = 0;
 BOOL gbDllStopCalled = FALSE;
+struct DllMainCallInfo
+{
+	LONG  nCallCount;
+	DWORD nLastCallTick;
+	DWORD nLastCallTID;
+
+	void OnCall()
+	{
+		InterlockedIncrement(&nCallCount);
+		nLastCallTick = GetTickCount();
+		nLastCallTID = GetCurrentThreadId();
+	};
+} gDllMainCallInfo[4] = {};
 
 //BOOL gbSkipInjects = FALSE;
 BOOL gbHooksWasSet = false;
@@ -1689,6 +1701,7 @@ BOOL DllMain_ProcessAttach(HANDLE hModule, DWORD  ul_reason_for_call)
 {
 	BOOL lbAllow = TRUE;
 	DLOG0("DllMain.DLL_PROCESS_ATTACH",ul_reason_for_call);
+	gDllMainCallInfo[DLL_PROCESS_ATTACH].OnCall();
 
 	ghOurModule = (HMODULE)hModule;
 	ghWorkingModule = (u64)hModule;
@@ -1900,9 +1913,11 @@ wrap:
 BOOL DllMain_ThreadAttach(HANDLE hModule, DWORD  ul_reason_for_call)
 {
 	DLOG0("DllMain.DLL_THREAD_ATTACH",ul_reason_for_call);
-	gnDllThreadCount++;
+	gDllMainCallInfo[DLL_THREAD_ATTACH].OnCall();
+
 	if (gbIsSshProcess && !gnFixSshThreadsResumeOk && gStartedThreads.Get(GetCurrentThreadId(), NULL))
 		FixSshThreads(1);
+
 	DLOGEND();
 	return true;
 }
@@ -1910,6 +1925,7 @@ BOOL DllMain_ThreadAttach(HANDLE hModule, DWORD  ul_reason_for_call)
 BOOL DllMain_ThreadDetach(HANDLE hModule, DWORD  ul_reason_for_call)
 {
 	DLOG0("DllMain.DLL_THREAD_DETACH",ul_reason_for_call);
+	gDllMainCallInfo[DLL_THREAD_DETACH].OnCall();
 
 	DWORD nTID = GetCurrentThreadId();
 	bool bNeedDllStop = false;
@@ -1939,8 +1955,8 @@ BOOL DllMain_ThreadDetach(HANDLE hModule, DWORD  ul_reason_for_call)
 		DLOGEND1();
 	}
 
-	gnDllThreadCount--;
-	ShutdownStep(L"DLL_THREAD_DETACH done, left=%i", gnDllThreadCount);
+	LONG nThreadCount = gDllMainCallInfo[DLL_THREAD_ATTACH].nCallCount - gDllMainCallInfo[DLL_THREAD_DETACH].nCallCount;
+	ShutdownStep(L"DLL_THREAD_DETACH done, left=%i", nThreadCount);
 
 	#if 0
 	if (ghDebugSshLibsCan) SetEvent(ghDebugSshLibsCan);
@@ -1955,6 +1971,7 @@ BOOL DllMain_ProcessDetach(HANDLE hModule, DWORD  ul_reason_for_call)
 	BOOL lbAllow = !gbHooksWasSet; // Иначе свалимся, т.к. FreeLibrary перехвачена
 
 	DLOG0("DllMain.DLL_PROCESS_DETACH",ul_reason_for_call);
+	gDllMainCallInfo[DLL_PROCESS_DETACH].OnCall();
 
 	ShutdownStep(L"DLL_PROCESS_DETACH");
 	gnDllState = ds_DllProcessDetach;

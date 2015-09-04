@@ -66,7 +66,6 @@ enum ConEmuHkDllState
 	ds_DllProcessDetach = 4,
 };
 extern ConEmuHkDllState gnDllState;
-extern int gnDllThreadCount;
 extern BOOL gbDllStopCalled;
 
 //int WINAPI RequestLocalServer(/*[IN/OUT]*/RequestLocalServerParm* Parm);
