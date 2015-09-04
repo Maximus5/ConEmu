@@ -59,21 +59,25 @@ void CheckAnsiConVar(LPCWSTR asName);
 
 typedef DWORD ConEmuHkDllState;
 const ConEmuHkDllState
-	ds_DllProcessAttach    = 0x00000001,
-	ds_DllMainThreadDetach = 0x00000010,
-	ds_DllStop             = 0x00000100,
-	ds_DllProcessDetach    = 0x00001000,
-	ds_HeapInitialized     = 0x00010000,
-	ds_HeapDeinitialized   = 0x00020000,
-	ds_HooksStarting       = 0x00040000,
-	ds_HooksStopping       = 0x00080000,
-	ds_HooksStarted        = 0x00100000,
-	ds_HooksStartFailed    = 0x00200000,
-	ds_HooksStopped        = 0x00400000,
+	ds_DllProcessAttach        = 0x00000001,
+	ds_DllMainThreadDetach     = 0x00000010,
+	ds_DllStop                 = 0x00000100,
+	ds_DllProcessDetach        = 0x00001000,
+	ds_DllProcessDetachBlocked = 0x00002000,
+	ds_DllDeinitialized        = 0x00004000,
+	ds_HeapInitialized         = 0x00010000,
+	ds_HeapDeinitialized       = 0x00020000,
+	ds_HooksStarting           = 0x00040000,
+	ds_HooksStopping           = 0x00080000,
+	ds_HooksStarted            = 0x00100000,
+	ds_HooksStartFailed        = 0x00200000,
+	ds_HooksStopped            = 0x00400000,
+	ds_DllStopCalled           = 0x00800000,
 	ds_Undefined = 0
 ;
 extern ConEmuHkDllState gnDllState;
-extern BOOL gbDllStopCalled;
+
+#define HooksWereSet ((gnDllState & ds_HooksStarted) && !(gnDllState & (ds_HooksStopping|ds_HooksStopped)))
 
 //int WINAPI RequestLocalServer(/*[IN/OUT]*/RequestLocalServerParm* Parm);
 struct AnnotationHeader;

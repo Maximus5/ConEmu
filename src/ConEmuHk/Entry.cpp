@@ -179,7 +179,7 @@ extern bool gbHookExecutableOnly;
 //extern DWORD gnAllowClinkUsage;
 
 ConEmuHkDllState gnDllState = ds_Undefined;
-BOOL gbDllStopCalled = FALSE;
+
 struct DllMainCallInfo
 {
 	LONG  nCallCount;
@@ -193,10 +193,6 @@ struct DllMainCallInfo
 		nLastCallTID = GetCurrentThreadId();
 	};
 } gDllMainCallInfo[4] = {};
-
-//BOOL gbSkipInjects = FALSE;
-BOOL gbHooksWasSet = false;
-BOOL gbDllDeinitialized = false;
 
 extern BOOL StartupHooks();
 extern void ShutdownHooks();
@@ -1131,7 +1127,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 
 		DLOG0("StartupHooks",0);
 		print_timings(L"StartupHooks");
-		gbHooksWasSet = StartupHooks();
+		StartupHooks();
 		print_timings(L"StartupHooks - done");
 		DLOGEND();
 
@@ -1161,10 +1157,6 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 			//#endif
 		}
 	}
-	//else
-	//{
-	//	gbHooksWasSet = FALSE;
-	//}
 
 	//delete sp;
 
@@ -1490,7 +1482,7 @@ void DoDllStop(bool bFinal, bool bFromTerminate)
 
 	//DLOG0("DllStop",0);
 	print_timings(L"DllStop");
-	bool bUnload = (bFinal && !gbHooksWasSet);
+	bool bUnload = (bFinal && !HooksWereSet);
 
 	if (!(gnDllState & ds_DllStop))
 		gnDllState |= ds_DllStop;
@@ -1579,12 +1571,11 @@ void DoDllStop(bool bFinal, bool bFromTerminate)
 	}
 	#endif
 
-	if (gbHooksWasSet && bFinal)
+	if (HooksWereSet && bFinal)
 	{
 		DLOG0("ShutdownHooks",0);
 		print_timings(L"ShutdownHooks");
-		gbHooksWasSet = FALSE;
-		// "Закрыть" хуки
+		// Unset all hooks
 		ShutdownHooks();
 		DLOGEND();
 	}
@@ -1669,7 +1660,8 @@ void DoDllStop(bool bFinal, bool bFromTerminate)
 		#endif
 	#endif
 
-	gbDllStopCalled = TRUE;
+	gnDllState |= ds_DllStopCalled;
+
 	wchar_t szDoneInfo[128];
 	{
 	FILETIME ftStart = {}, ft1 = {}, ft2 = {}, ft3 = {}, ftCur = {};
@@ -1937,11 +1929,12 @@ BOOL DllMain_ThreadDetach(HANDLE hModule, DWORD  ul_reason_for_call)
 	ShutdownStep(L"DLL_THREAD_DETACH");
 	#endif
 
-	// DLL_PROCESS_DETACH зовется как выяснилось не всегда
-	if (gnHookMainThreadId && (nTID == gnHookMainThreadId) && !gbDllDeinitialized)
+	// DLL_PROCESS_DETACH is not called in some cases
+	if (gnHookMainThreadId && (nTID == gnHookMainThreadId) && !(gnDllState & ds_DllDeinitialized))
 	{
 		gnDllState |= ds_DllMainThreadDetach;
-		gbDllDeinitialized = bNeedDllStop = true;
+		bNeedDllStop = true;
+		gnDllState |= ds_DllDeinitialized;
 	}
 
 	if (ghHeap)
@@ -1970,7 +1963,10 @@ BOOL DllMain_ThreadDetach(HANDLE hModule, DWORD  ul_reason_for_call)
 
 BOOL DllMain_ProcessDetach(HANDLE hModule, DWORD  ul_reason_for_call)
 {
-	BOOL lbAllow = !gbHooksWasSet; // Иначе свалимся, т.к. FreeLibrary перехвачена
+	// MinHook note: this is not required anymore?
+	// If critical API functions are still set (FreeLibrary for example),
+	// we may crash, therefore unload will be disabled in that case
+	BOOL lbAllow = !HooksWereSet;
 
 	DLOG0("DllMain.DLL_PROCESS_DETACH",ul_reason_for_call);
 	gDllMainCallInfo[DLL_PROCESS_DETACH].OnCall();
@@ -1978,15 +1974,16 @@ BOOL DllMain_ProcessDetach(HANDLE hModule, DWORD  ul_reason_for_call)
 	ShutdownStep(L"DLL_PROCESS_DETACH");
 	gnDllState |= ds_DllProcessDetach;
 
-	// Уже могли дернуть в DLL_THREAD_DETACH, OnExitProcess и т.п.
-	gbDllDeinitialized = true;
+	// May be already called from DLL_THREAD_DETACH, OnExitProcess and so on...
+	gnDllState |= ds_DllDeinitialized;
 	DLOG1("DllMain.DllStop",ul_reason_for_call);
-	//WARNING!!! OutputDebugString must NOT be used from ConEmuHk::DllMain(DLL_PROCESS_DETACH). See Issue 465
+	//WARNING!!! OutputDebugString must NOT be used from ConEmuHk::DllMain(DLL_PROCESS_DETACH). See Old-Issue 465
 	DoDllStop(true);
 	DLOGEND1();
 
-	// -- free не нужен, т.к. уже может быть вызван HeapDeinitialize()
-	//free(user);
+	if (!lbAllow)
+		gnDllState |= ds_DllProcessDetachBlocked;
+
 	ShutdownStep(L"DLL_PROCESS_DETACH done");
 
 	return lbAllow;

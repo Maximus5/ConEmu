@@ -83,9 +83,6 @@ MMap<DWORD,BOOL> gStartedThreads;
 
 extern HWND    ghConWnd;      // RealConsole
 
-extern BOOL gbDllStopCalled;
-extern BOOL gbHooksWasSet;
-
 extern bool gbPrepareDefaultTerminal;
 
 #ifdef _DEBUG
@@ -456,7 +453,7 @@ void* __cdecl GetOriginalAddress(void* OurFunction, HookItem** ph, bool abAllowN
 		}
 	}
 
-	_ASSERT(!gbHooksWasSet || abAllowNulls);
+	_ASSERT(!HooksWereSet || abAllowNulls);
 	return NULL;
 }
 
@@ -498,7 +495,7 @@ FARPROC WINAPI GetTrampoline(LPCSTR pszName)
 			}
 		}
 	}
-	//_ASSERT(!gbHooksWasSet); -- DON'T CALL ANY VISUAL FUNCTIONS HERE !!!
+	//_ASSERT(!HooksWereSet); -- DON'T CALL ANY VISUAL FUNCTIONS HERE !!!
 	return NULL;
 }
 
@@ -1372,7 +1369,7 @@ void UnprepareModule(HMODULE hModule, LPCWSTR pszModule, int iStep)
 	// lbResource получается TRUE например при вызовах из version.dll
 	wchar_t szModule[MAX_PATH*2]; szModule[0] = 0;
 
-	if ((iStep == 0) && gbLogLibraries && !gbDllStopCalled)
+	if ((iStep == 0) && gbLogLibraries && !(gnDllState & ds_DllStopCalled))
 	{
 		CShellProc* sp = new CShellProc();
 		if (sp->LoadSrvMapping())
@@ -1421,7 +1418,7 @@ void UnprepareModule(HMODULE hModule, LPCWSTR pszModule, int iStep)
 
 
 	// Далее только если !LDR_IS_RESOURCE
-	if ((iStep > 0) && !lbResource && !gbDllStopCalled)
+	if ((iStep > 0) && !lbResource && !(gnDllState & ds_DllStopCalled))
 	{
 		// Попробуем определить, действительно ли модуль выгружен, или только счетчик уменьшился
 		// iStep == 2 comes from LdrDllNotification(Unload)
