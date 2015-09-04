@@ -372,10 +372,15 @@ wrap:
 
 bool InitHooksDebugging()
 {
+#if !defined(_DEBUG)
+
+	return true;
+
+#else
+
 	HLOG1("InitHooksDebugging",0);
 	bool lbRc = false;
 
-	#ifdef _DEBUG
 	HookItem HooksDbg[] =
 	{
 		/* ************************ */
@@ -401,13 +406,13 @@ bool InitHooksDebugging()
 
 	if (InitHooks(HooksDbg) < 0)
 		goto wrap;
-	#endif // _DEBUG
 
 	lbRc = true;
 wrap:
 	HLOGEND1();
 
 	return lbRc;
+#endif // _DEBUG
 }
 
 // Console, ANSI, Read/Write, etc.
