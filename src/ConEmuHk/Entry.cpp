@@ -74,11 +74,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "../ConEmuCD/ExitCodes.h"
 
-#ifdef _DEBUG
-#include "DbgHooks.h"
-#endif
 
-#include "ConEmuHooks.h"
+#include "SetHook.h"
 #include "hlpProcess.h"
 #include "ShellProcessor.h"
 #include "GuiAttach.h"
@@ -555,12 +552,13 @@ void OnConWndChanged(HWND ahNewConWnd)
 	GetConMap(TRUE);
 }
 
+LONG   gnPromptReported = 0;
+
 #ifdef USE_PIPE_SERVER
 BOOL WINAPI HookServerCommand(LPVOID pInst, CESERVER_REQ* pCmd, CESERVER_REQ* &ppReply, DWORD &pcbReplySize, DWORD &pcbMaxReplySize, LPARAM lParam);
 BOOL WINAPI HookServerReady(LPVOID pInst, LPARAM lParam);
 void WINAPI HookServerFree(CESERVER_REQ* pReply, LPARAM lParam);
 
-LONG   gnPromptReported = 0;
 LONG   gnHookServerNeedStart = 0;
 HANDLE ghHookServerStarted = NULL;
 void   StartHookServer();
