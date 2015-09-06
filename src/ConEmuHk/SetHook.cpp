@@ -412,19 +412,6 @@ HMODULE ghOnLoadLibModule = NULL;
 OnLibraryLoaded_t gfOnLibraryLoaded = NULL;
 OnLibraryLoaded_t gfOnLibraryUnLoaded = NULL;
 
-// Forward declarations of the hooks
-
-HMODULE WINAPI OnLoadLibraryA(const char* lpFileName);
-HMODULE WINAPI OnLoadLibraryW(const WCHAR* lpFileName);
-HMODULE WINAPI OnLoadLibraryExA(const char* lpFileName, HANDLE hFile, DWORD dwFlags);
-HMODULE WINAPI OnLoadLibraryExW(const WCHAR* lpFileName, HANDLE hFile, DWORD dwFlags);
-BOOL WINAPI OnFreeLibrary(HMODULE hModule);
-
-
-#ifdef HOOK_ERROR_PROC
-DWORD WINAPI OnGetLastError();
-VOID WINAPI OnSetLastError(DWORD dwErrCode);
-#endif
 
 HookItem *gpHooks = NULL;
 size_t gnHookedFuncs = 0;

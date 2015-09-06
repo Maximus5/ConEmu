@@ -28,6 +28,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include "DbgHooks.h"
+
 //#ifdef _DEBUG
 //#define HOOK_ANSI_SEQUENCES
 //#else
@@ -72,10 +74,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#define user32   L"user32.dll"
 //#define shell32  L"shell32.dll"
 //extern HMODULE ghKernel32, ghUser32, ghShell32;
-
-#ifdef _DEBUG
-#include "DbgHooks.h"
-#endif
 
 extern const wchar_t *kernel32;// = L"kernel32.dll";
 extern const wchar_t *user32  ;// = L"user32.dll";
@@ -198,3 +196,11 @@ void* __cdecl GetOriginalAddress(void* OurFunction, HookItem** ph, bool abAllowN
 	ORIGINALFAST(n)
 
 #define F(n) ((On##n##_t)f##n)
+
+#define HOOK_FN_TYPE(n) On##n##_t
+#define HOOK_FN_NAME(n) On##n
+
+// For example: HOOK_PROTOTYPE(BOOL,WINAPI,FlashWindow,(HWND hWnd, BOOL bInvert))
+#define HOOK_PROTOTYPE(fn,ret,call,args) \
+	typedef ret (call* HOOK_FN_TYPE(fn)) args; \
+	ret call HOOK_FN_NAME(fn) args

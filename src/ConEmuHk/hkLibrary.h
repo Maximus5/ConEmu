@@ -29,6 +29,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <windows.h>
+#include "SetHook.h"
 
 /* *************************** */
 
@@ -38,23 +39,8 @@ void UnregisterLdrNotification();
 
 /* *************************** */
 
-// LoadLibraryA
-typedef HMODULE(WINAPI* OnLoadLibraryA_t)(const char* lpFileName);
-HMODULE WINAPI OnLoadLibraryA(const char* lpFileName);
-
-// LoadLibraryW
-typedef HMODULE(WINAPI* OnLoadLibraryW_t)(const wchar_t* lpFileName);
-HMODULE WINAPI OnLoadLibraryW(const wchar_t* lpFileName);
-
-// LoadLibraryExA
-typedef HMODULE(WINAPI* OnLoadLibraryExA_t)(const char* lpFileName, HANDLE hFile, DWORD dwFlags);
-HMODULE WINAPI OnLoadLibraryExA(const char* lpFileName, HANDLE hFile, DWORD dwFlags);
-
-// LoadLibraryExW
-typedef HMODULE(WINAPI* OnLoadLibraryExW_t)(const wchar_t* lpFileName, HANDLE hFile, DWORD dwFlags);
-HMODULE WINAPI OnLoadLibraryExW(const wchar_t* lpFileName, HANDLE hFile, DWORD dwFlags);
-
-// FreeLibrary
-typedef BOOL (WINAPI* OnFreeLibrary_t)(HMODULE hModule);
-BOOL WINAPI OnFreeLibrary(HMODULE hModule);
-
+HOOK_PROTOTYPE(FreeLibrary,BOOL,WINAPI,(HMODULE hModule));
+HOOK_PROTOTYPE(LoadLibraryA,HMODULE,WINAPI,(const char* lpFileName));
+HOOK_PROTOTYPE(LoadLibraryExA,HMODULE,WINAPI,(const char* lpFileName, HANDLE hFile, DWORD dwFlags));
+HOOK_PROTOTYPE(LoadLibraryExW,HMODULE,WINAPI,(const wchar_t* lpFileName, HANDLE hFile, DWORD dwFlags));
+HOOK_PROTOTYPE(LoadLibraryW,HMODULE,WINAPI,(const wchar_t* lpFileName));

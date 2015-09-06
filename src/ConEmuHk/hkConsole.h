@@ -29,6 +29,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <windows.h>
+#include "SetHook.h"
 
 /* *************************** */
 
@@ -44,83 +45,23 @@ extern "C" {
 
 /* *************************** */
 
-// SetConsoleTitleA
-typedef BOOL (WINAPI* OnSetConsoleTitleA_t)(LPCSTR lpConsoleTitle);
-BOOL WINAPI OnSetConsoleTitleA(LPCSTR lpConsoleTitle);
-
-// SetConsoleTitleW
-typedef BOOL (WINAPI* OnSetConsoleTitleW_t)(LPCWSTR lpConsoleTitle);
-BOOL WINAPI OnSetConsoleTitleW(LPCWSTR lpConsoleTitle);
-
-// GetConsoleAliasesW
-typedef DWORD (WINAPI* OnGetConsoleAliasesW_t)(LPWSTR AliasBuffer, DWORD AliasBufferLength, LPWSTR ExeName);
-DWORD WINAPI OnGetConsoleAliasesW(LPWSTR AliasBuffer, DWORD AliasBufferLength, LPWSTR ExeName);
-
-// SetConsoleCP
-typedef BOOL (WINAPI* OnSetConsoleCP_t)(UINT wCodePageID);
-BOOL WINAPI OnSetConsoleCP(UINT wCodePageID);
-
-// SetConsoleOutputCP
-typedef BOOL (WINAPI* OnSetConsoleOutputCP_t)(UINT wCodePageID);
-BOOL WINAPI OnSetConsoleOutputCP(UINT wCodePageID);
-
-// AllocConsole
-typedef BOOL (WINAPI* OnAllocConsole_t)(void);
-BOOL WINAPI OnAllocConsole(void);
-
-// FreeConsole
-typedef BOOL (WINAPI* OnFreeConsole_t)(void);
-BOOL WINAPI OnFreeConsole(void);
-
-// GetConsoleWindow
-typedef HWND (WINAPI* OnGetConsoleWindow_t)(void);
-HWND WINAPI OnGetConsoleWindow(void);
-
-// SetConsoleKeyShortcuts
-typedef BOOL (WINAPI* OnSetConsoleKeyShortcuts_t)(BOOL,BYTE,LPVOID,DWORD);
-BOOL WINAPI OnSetConsoleKeyShortcuts(BOOL bSet, BYTE bReserveKeys, LPVOID p1, DWORD n1);
-
-// GetCurrentConsoleFont
-typedef BOOL (WINAPI* OnGetCurrentConsoleFont_t)(HANDLE hConsoleOutput, BOOL bMaximumWindow, PCONSOLE_FONT_INFO lpConsoleCurrentFont);
-BOOL WINAPI OnGetCurrentConsoleFont(HANDLE hConsoleOutput, BOOL bMaximumWindow, PCONSOLE_FONT_INFO lpConsoleCurrentFont);
-
-// GetConsoleFontSize
-typedef COORD (WINAPI* OnGetConsoleFontSize_t)(HANDLE hConsoleOutput, DWORD nFont);
-COORD WINAPI OnGetConsoleFontSize(HANDLE hConsoleOutput, DWORD nFont);
-
-// CreateConsoleScreenBuffer
-typedef HANDLE(WINAPI* OnCreateConsoleScreenBuffer_t)(DWORD dwDesiredAccess, DWORD dwShareMode, const SECURITY_ATTRIBUTES *lpSecurityAttributes, DWORD dwFlags, LPVOID lpScreenBufferData);
-HANDLE WINAPI OnCreateConsoleScreenBuffer(DWORD dwDesiredAccess, DWORD dwShareMode, const SECURITY_ATTRIBUTES *lpSecurityAttributes, DWORD dwFlags, LPVOID lpScreenBufferData);
-
-// SetConsoleActiveScreenBuffer
-typedef BOOL (WINAPI* OnSetConsoleActiveScreenBuffer_t)(HANDLE hConsoleOutput);
-BOOL WINAPI OnSetConsoleActiveScreenBuffer(HANDLE hConsoleOutput);
-
-// SetConsoleWindowInfo
-typedef BOOL (WINAPI* OnSetConsoleWindowInfo_t)(HANDLE hConsoleOutput, BOOL bAbsolute, const SMALL_RECT *lpConsoleWindow);
-BOOL WINAPI OnSetConsoleWindowInfo(HANDLE hConsoleOutput, BOOL bAbsolute, const SMALL_RECT *lpConsoleWindow);
-
-// SetConsoleScreenBufferSize
-typedef BOOL (WINAPI* OnSetConsoleScreenBufferSize_t)(HANDLE hConsoleOutput, COORD dwSize);
-BOOL WINAPI OnSetConsoleScreenBufferSize(HANDLE hConsoleOutput, COORD dwSize);
-
-// SetCurrentConsoleFontEx
-typedef BOOL (WINAPI* OnSetCurrentConsoleFontEx_t)(HANDLE hConsoleOutput, BOOL bMaximumWindow, MY_CONSOLE_FONT_INFOEX* lpConsoleCurrentFontEx);
-BOOL WINAPI OnSetCurrentConsoleFontEx(HANDLE hConsoleOutput, BOOL bMaximumWindow, MY_CONSOLE_FONT_INFOEX* lpConsoleCurrentFontEx);
-
-// SetConsoleScreenBufferInfoEx
-typedef BOOL (WINAPI* OnSetConsoleScreenBufferInfoEx_t)(HANDLE hConsoleOutput, MY_CONSOLE_SCREEN_BUFFER_INFOEX* lpConsoleScreenBufferInfoEx);
-BOOL WINAPI OnSetConsoleScreenBufferInfoEx(HANDLE hConsoleOutput, MY_CONSOLE_SCREEN_BUFFER_INFOEX* lpConsoleScreenBufferInfoEx);
-
-// GetLargestConsoleWindowSize
-typedef COORD (WINAPI* OnGetLargestConsoleWindowSize_t)(HANDLE hConsoleOutput);
-COORD WINAPI OnGetLargestConsoleWindowSize(HANDLE hConsoleOutput);
-
-// SetConsoleCursorPosition
-typedef BOOL (WINAPI* OnSetConsoleCursorPosition_t)(HANDLE,COORD);
-BOOL WINAPI OnSetConsoleCursorPosition(HANDLE hConsoleOutput, COORD dwCursorPosition);
-
-// SetConsoleCursorInfo
-typedef BOOL (WINAPI* OnSetConsoleCursorInfo_t)(HANDLE,const CONSOLE_CURSOR_INFO *);
-BOOL WINAPI OnSetConsoleCursorInfo(HANDLE hConsoleOutput, const CONSOLE_CURSOR_INFO *lpConsoleCursorInfo);
-
+HOOK_PROTOTYPE(AllocConsole,BOOL,WINAPI,(void));
+HOOK_PROTOTYPE(CreateConsoleScreenBuffer,HANDLE,WINAPI,(DWORD dwDesiredAccess, DWORD dwShareMode, const SECURITY_ATTRIBUTES *lpSecurityAttributes, DWORD dwFlags, LPVOID lpScreenBufferData));
+HOOK_PROTOTYPE(FreeConsole,BOOL,WINAPI,(void));
+HOOK_PROTOTYPE(GetConsoleAliasesW,DWORD,WINAPI,(LPWSTR AliasBuffer, DWORD AliasBufferLength, LPWSTR ExeName));
+HOOK_PROTOTYPE(GetConsoleFontSize,COORD,WINAPI,(HANDLE hConsoleOutput, DWORD nFont));
+HOOK_PROTOTYPE(GetConsoleWindow,HWND,WINAPI,(void));
+HOOK_PROTOTYPE(GetCurrentConsoleFont,BOOL,WINAPI,(HANDLE hConsoleOutput, BOOL bMaximumWindow, PCONSOLE_FONT_INFO lpConsoleCurrentFont));
+HOOK_PROTOTYPE(GetLargestConsoleWindowSize,COORD,WINAPI,(HANDLE hConsoleOutput));
+HOOK_PROTOTYPE(SetConsoleActiveScreenBuffer,BOOL,WINAPI,(HANDLE hConsoleOutput));
+HOOK_PROTOTYPE(SetConsoleCP,BOOL,WINAPI,(UINT wCodePageID));
+HOOK_PROTOTYPE(SetConsoleCursorInfo,BOOL,WINAPI,(HANDLE hConsoleOutput, const CONSOLE_CURSOR_INFO *lpConsoleCursorInfo));
+HOOK_PROTOTYPE(SetConsoleCursorPosition,BOOL,WINAPI,(HANDLE hConsoleOutput, COORD dwCursorPosition));
+HOOK_PROTOTYPE(SetConsoleKeyShortcuts,BOOL,WINAPI,(BOOL bSet, BYTE bReserveKeys, LPVOID p1, DWORD n1));
+HOOK_PROTOTYPE(SetConsoleOutputCP,BOOL,WINAPI,(UINT wCodePageID));
+HOOK_PROTOTYPE(SetConsoleScreenBufferInfoEx,BOOL,WINAPI,(HANDLE hConsoleOutput, MY_CONSOLE_SCREEN_BUFFER_INFOEX* lpConsoleScreenBufferInfoEx));
+HOOK_PROTOTYPE(SetConsoleScreenBufferSize,BOOL,WINAPI,(HANDLE hConsoleOutput, COORD dwSize));
+HOOK_PROTOTYPE(SetConsoleTitleA,BOOL,WINAPI,(LPCSTR lpConsoleTitle));
+HOOK_PROTOTYPE(SetConsoleTitleW,BOOL,WINAPI,(LPCWSTR lpConsoleTitle));
+HOOK_PROTOTYPE(SetConsoleWindowInfo,BOOL,WINAPI,(HANDLE hConsoleOutput, BOOL bAbsolute, const SMALL_RECT *lpConsoleWindow));
+HOOK_PROTOTYPE(SetCurrentConsoleFontEx,BOOL,WINAPI,(HANDLE hConsoleOutput, BOOL bMaximumWindow, MY_CONSOLE_FONT_INFOEX* lpConsoleCurrentFontEx));

@@ -44,10 +44,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/CmdLine.h"
 
 #include "Ansi.h"
-#include "ConEmuHooks.h"
 #include "hkConsoleInput.h"
 #include "MainThread.h"
-#include "SetHook.h"
 #include "hlpConsole.h"
 
 /* **************** */

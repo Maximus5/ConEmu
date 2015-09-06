@@ -36,16 +36,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/MConHandle.h"
 
 #include "Ansi.h"
-#include "ConEmuHooks.h"
 #include "ExtConsole.h"
 #include "GuiAttach.h"
 #include "hkConsoleOutput.h"
 #include "MainThread.h"
-#include "SetHook.h"
-
-/* **************** */
-
-/* **************** */
 
 /* **************** */
 

@@ -29,33 +29,16 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <windows.h>
+#include "SetHook.h"
 
 /* *************************** */
 
-/* *************************** */
-
-// SetEnvironmentVariableA
-typedef BOOL (WINAPI* OnSetEnvironmentVariableA_t)(LPCSTR lpName, LPCSTR lpValue);
-BOOL WINAPI OnSetEnvironmentVariableA(LPCSTR lpName, LPCSTR lpValue);
-
-// SetEnvironmentVariableW
-typedef BOOL (WINAPI* OnSetEnvironmentVariableW_t)(LPCWSTR lpName, LPCWSTR lpValue);
-BOOL WINAPI OnSetEnvironmentVariableW(LPCWSTR lpName, LPCWSTR lpValue);
-
-// GetEnvironmentVariableA
-typedef DWORD (WINAPI* OnGetEnvironmentVariableA_t)(LPCSTR lpName, LPSTR lpBuffer, DWORD nSize);
-DWORD WINAPI OnGetEnvironmentVariableA(LPCSTR lpName, LPSTR lpBuffer, DWORD nSize);
-
-// GetEnvironmentVariableW
-typedef DWORD (WINAPI* OnGetEnvironmentVariableW_t)(LPCWSTR lpName, LPWSTR lpBuffer, DWORD nSize);
-DWORD WINAPI OnGetEnvironmentVariableW(LPCWSTR lpName, LPWSTR lpBuffer, DWORD nSize);
+HOOK_PROTOTYPE(GetEnvironmentStringsW,LPWCH,WINAPI,(void));
+HOOK_PROTOTYPE(GetEnvironmentVariableA,DWORD,WINAPI,(LPCSTR lpName, LPSTR lpBuffer, DWORD nSize));
+HOOK_PROTOTYPE(GetEnvironmentVariableW,DWORD,WINAPI,(LPCWSTR lpName, LPWSTR lpBuffer, DWORD nSize));
+HOOK_PROTOTYPE(SetEnvironmentVariableA,BOOL,WINAPI,(LPCSTR lpName, LPCSTR lpValue));
+HOOK_PROTOTYPE(SetEnvironmentVariableW,BOOL,WINAPI,(LPCWSTR lpName, LPCWSTR lpValue));
 
 #if 0
-// GetEnvironmentStringsA
-typedef LPCH (WINAPI* OnGetEnvironmentStringsA_t)();
-LPCH WINAPI OnGetEnvironmentStringsA();
+HOOK_PROTOTYPE(GetEnvironmentStringsA,LPCH,WINAPI,(void));
 #endif
-
-// GetEnvironmentStringsW
-typedef LPWCH (WINAPI* OnGetEnvironmentStringsW_t)();
-LPWCH WINAPI OnGetEnvironmentStringsW();

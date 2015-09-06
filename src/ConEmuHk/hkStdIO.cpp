@@ -36,12 +36,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/ConsoleAnnotation.h"
 
 #include "Ansi.h"
-#include "ConEmuHooks.h"
 #include "hkConsoleInput.h"
 #include "hkConsoleOutput.h"
 #include "hkStdIO.h"
 #include "MainThread.h"
-#include "SetHook.h"
 
 /* **************** */
 

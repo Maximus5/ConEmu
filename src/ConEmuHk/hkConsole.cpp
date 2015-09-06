@@ -39,12 +39,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/common.hpp"
 #include "../common/WConsole.h"
 
-#include "ConEmuHooks.h"
 #include "DefTermHk.h"
 #include "GuiAttach.h"
 #include "hkConsole.h"
 #include "MainThread.h"
-#include "SetHook.h"
 
 #define SETCONCP_READYTIMEOUT 5000
 #define SETCONCP_TIMEOUT 1000

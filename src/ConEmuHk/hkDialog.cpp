@@ -34,11 +34,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "../common/common.hpp"
 
-#include "ConEmuHooks.h"
 #include "hkDialog.h"
 #include "GuiAttach.h"
 #include "MainThread.h"
-#include "SetHook.h"
 
 /* **************** */
 

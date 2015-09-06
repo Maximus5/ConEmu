@@ -29,32 +29,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <windows.h>
+#include "SetHook.h"
 
 /* *************************** */
 
-/* *************************** */
-
-// GetDC
-typedef HDC (WINAPI* OnGetDC_t)(HWND hWnd);
-HDC WINAPI OnGetDC(HWND hWnd);
-
-// GetDCEx
-typedef HDC (WINAPI* OnGetDCEx_t)(HWND hWnd, HRGN hrgnClip, DWORD flags);
-HDC WINAPI OnGetDCEx(HWND hWnd, HRGN hrgnClip, DWORD flags);
-
-// ReleaseDC
-typedef int (WINAPI* OnReleaseDC_t)(HWND hWnd, HDC hDC);
-int WINAPI OnReleaseDC(HWND hWnd, HDC hDC);
-
-// StretchDIBits
-typedef int (WINAPI* OnStretchDIBits_t)(HDC hdc, int XDest, int YDest, int nDestWidth, int nDestHeight, int XSrc, int YSrc, int nSrcWidth, int nSrcHeight, const VOID *lpBits, const BITMAPINFO *lpBitsInfo, UINT iUsage, DWORD dwRop);
-int WINAPI OnStretchDIBits(HDC hdc, int XDest, int YDest, int nDestWidth, int nDestHeight, int XSrc, int YSrc, int nSrcWidth, int nSrcHeight, const VOID *lpBits, const BITMAPINFO *lpBitsInfo, UINT iUsage, DWORD dwRop);
-
-// BitBlt
-typedef int (WINAPI* OnBitBlt_t)(HDC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight, HDC hdcSrc, int nXSrc, int nYSrc, DWORD dwRop);
-BOOL WINAPI OnBitBlt(HDC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight, HDC hdcSrc, int nXSrc, int nYSrc, DWORD dwRop);
-
-// StretchBlt
-typedef int (WINAPI* OnStretchBlt_t)(HDC hdcDest, int nXOriginDest, int nYOriginDest, int nWidthDest, int nHeightDest, HDC hdcSrc, int nXOriginSrc, int nYOriginSrc, int nWidthSrc, int nHeightSrc, DWORD dwRop);
-BOOL WINAPI OnStretchBlt(HDC hdcDest, int nXOriginDest, int nYOriginDest, int nWidthDest, int nHeightDest, HDC hdcSrc, int nXOriginSrc, int nYOriginSrc, int nWidthSrc, int nHeightSrc, DWORD dwRop);
-
+HOOK_PROTOTYPE(BitBlt,BOOL,WINAPI,(HDC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight, HDC hdcSrc, int nXSrc, int nYSrc, DWORD dwRop));
+HOOK_PROTOTYPE(GetDC,HDC,WINAPI,(HWND hWnd));
+HOOK_PROTOTYPE(GetDCEx,HDC,WINAPI,(HWND hWnd, HRGN hrgnClip, DWORD flags));
+HOOK_PROTOTYPE(ReleaseDC,int,WINAPI,(HWND hWnd, HDC hDC));
+HOOK_PROTOTYPE(StretchBlt,BOOL,WINAPI,(HDC hdcDest, int nXOriginDest, int nYOriginDest, int nWidthDest, int nHeightDest, HDC hdcSrc, int nXOriginSrc, int nYOriginSrc, int nWidthSrc, int nHeightSrc, DWORD dwRop));
+HOOK_PROTOTYPE(StretchDIBits,int,WINAPI,(HDC hdc, int XDest, int YDest, int nDestWidth, int nDestHeight, int XSrc, int YSrc, int nSrcWidth, int nSrcHeight, const VOID *lpBits, const BITMAPINFO *lpBitsInfo, UINT iUsage, DWORD dwRop));

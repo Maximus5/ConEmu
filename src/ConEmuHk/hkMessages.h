@@ -29,47 +29,17 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <windows.h>
+#include "SetHook.h"
 
 /* *************************** */
 
-/* *************************** */
-
-// mouse_event
-typedef VOID (WINAPI* Onmouse_event_t)(DWORD dwFlags, DWORD dx, DWORD dy, DWORD dwData, ULONG_PTR dwExtraInfo);
-VOID WINAPI Onmouse_event(DWORD dwFlags, DWORD dx, DWORD dy, DWORD dwData, ULONG_PTR dwExtraInfo);
-
-// SendInput
-typedef UINT (WINAPI* OnSendInput_t)(UINT nInputs, LPINPUT pInputs, int cbSize);
-UINT WINAPI OnSendInput(UINT nInputs, LPINPUT pInputs, int cbSize);
-
-// PostMessageA
-typedef BOOL (WINAPI* OnPostMessageA_t)(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
-BOOL WINAPI OnPostMessageA(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
-
-// PostMessageW
-typedef BOOL (WINAPI* OnPostMessageW_t)(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
-BOOL WINAPI OnPostMessageW(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
-
-// SendMessageA
-typedef LRESULT (WINAPI* OnSendMessageA_t)(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
-LRESULT WINAPI OnSendMessageA(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
-
-// SendMessageW
-typedef LRESULT (WINAPI* OnSendMessageW_t)(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
-LRESULT WINAPI OnSendMessageW(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
-
-// GetMessageA
-typedef BOOL (WINAPI* OnGetMessageA_t)(LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin, UINT wMsgFilterMax);
-BOOL WINAPI OnGetMessageA(LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin, UINT wMsgFilterMax);
-
-// GetMessageW
-typedef BOOL (WINAPI* OnGetMessageW_t)(LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin, UINT wMsgFilterMax);
-BOOL WINAPI OnGetMessageW(LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin, UINT wMsgFilterMax);
-
-// PeekMessageA
-typedef BOOL (WINAPI* OnPeekMessageA_t)(LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin, UINT wMsgFilterMax, UINT wRemoveMsg);
-BOOL WINAPI OnPeekMessageA(LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin, UINT wMsgFilterMax, UINT wRemoveMsg);
-
-// PeekMessageW
-typedef BOOL (WINAPI* OnPeekMessageW_t)(LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin, UINT wMsgFilterMax, UINT wRemoveMsg);
-BOOL WINAPI OnPeekMessageW(LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin, UINT wMsgFilterMax, UINT wRemoveMsg);
+HOOK_PROTOTYPE(GetMessageA,BOOL,WINAPI,(LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin, UINT wMsgFilterMax));
+HOOK_PROTOTYPE(GetMessageW,BOOL,WINAPI,(LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin, UINT wMsgFilterMax));
+HOOK_PROTOTYPE(mouse_event,VOID,WINAPI,(DWORD dwFlags, DWORD dx, DWORD dy, DWORD dwData, ULONG_PTR dwExtraInfo));
+HOOK_PROTOTYPE(PeekMessageA,BOOL,WINAPI,(LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin, UINT wMsgFilterMax, UINT wRemoveMsg));
+HOOK_PROTOTYPE(PeekMessageW,BOOL,WINAPI,(LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin, UINT wMsgFilterMax, UINT wRemoveMsg));
+HOOK_PROTOTYPE(PostMessageA,BOOL,WINAPI,(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam));
+HOOK_PROTOTYPE(PostMessageW,BOOL,WINAPI,(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam));
+HOOK_PROTOTYPE(SendInput,UINT,WINAPI,(UINT nInputs, LPINPUT pInputs, int cbSize));
+HOOK_PROTOTYPE(SendMessageA,LRESULT,WINAPI,(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam));
+HOOK_PROTOTYPE(SendMessageW,LRESULT,WINAPI,(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam));

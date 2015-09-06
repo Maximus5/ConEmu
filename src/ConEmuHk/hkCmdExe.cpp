@@ -34,10 +34,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "../common/common.hpp"
 
-#include "ConEmuHooks.h"
 #include "hkCmdExe.h"
 #include "hlpProcess.h"
-#include "SetHook.h"
 
 /* **************** */
 

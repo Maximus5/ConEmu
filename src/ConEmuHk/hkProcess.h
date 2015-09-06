@@ -29,6 +29,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <windows.h>
+#include "SetHook.h"
 
 /* *************************** */
 
@@ -38,67 +39,19 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 /* *************************** */
 
-// ExitProcess
-typedef BOOL (WINAPI* OnExitProcess_t)(UINT uExitCode);
-VOID WINAPI OnExitProcess(UINT uExitCode);
-
-// TerminateProcess
-typedef BOOL (WINAPI* OnTerminateProcess_t)(HANDLE hProcess, UINT uExitCode);
-BOOL WINAPI OnTerminateProcess(HANDLE hProcess, UINT uExitCode);
-
-// TerminateThread
-typedef BOOL (WINAPI* OnTerminateThread_t)(HANDLE hThread, UINT dwExitCode);
-BOOL WINAPI OnTerminateThread(HANDLE hThread, DWORD dwExitCode);
-
-// CreateProcessA
-typedef BOOL (WINAPI* OnCreateProcessA_t)(LPCSTR lpApplicationName,  LPSTR lpCommandLine,  LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment, LPCSTR lpCurrentDirectory,  LPSTARTUPINFOA lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation);
-BOOL WINAPI OnCreateProcessA(LPCSTR lpApplicationName,  LPSTR lpCommandLine,  LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment, LPCSTR lpCurrentDirectory,  LPSTARTUPINFOA lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation);
-
-// CreateProcessW
-typedef BOOL (WINAPI* OnCreateProcessW_t)(LPCWSTR lpApplicationName, LPWSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment, LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation);
-BOOL WINAPI OnCreateProcessW(LPCWSTR lpApplicationName, LPWSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment, LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation);
-
-// WinExec
-typedef BOOL (WINAPI* OnWinExec_t)(LPCSTR lpCmdLine, UINT uCmdShow);
-UINT WINAPI OnWinExec(LPCSTR lpCmdLine, UINT uCmdShow);
-
-// SetCurrentDirectoryA
-typedef BOOL (WINAPI* OnSetCurrentDirectoryA_t)(LPCSTR lpPathName);
-BOOL WINAPI OnSetCurrentDirectoryA(LPCSTR lpPathName);
-
-// SetCurrentDirectoryW
-typedef BOOL (WINAPI* OnSetCurrentDirectoryW_t)(LPCWSTR lpPathName);
-BOOL WINAPI OnSetCurrentDirectoryW(LPCWSTR lpPathName);
-
-// SetThreadContext
-typedef BOOL (WINAPI* OnSetThreadContext_t)(HANDLE hThread, CONST CONTEXT *lpContext);
-BOOL WINAPI OnSetThreadContext(HANDLE hThread, CONST CONTEXT *lpContext);
-
-// ShellExecuteExA
-typedef BOOL (WINAPI* OnShellExecuteExA_t)(LPSHELLEXECUTEINFOA lpExecInfo);
-BOOL WINAPI OnShellExecuteExA(LPSHELLEXECUTEINFOA lpExecInfo);
-
-// ShellExecuteExW
-typedef BOOL (WINAPI* OnShellExecuteExW_t)(LPSHELLEXECUTEINFOW lpExecInfo);
-BOOL WINAPI OnShellExecuteExW(LPSHELLEXECUTEINFOW lpExecInfo);
-
-// ShellExecCmdLine
-typedef HRESULT (WINAPI* OnShellExecCmdLine_t)(HWND hwnd, LPCWSTR pwszCommand, LPCWSTR pwszStartDir, int nShow, LPVOID pUnused, DWORD dwSeclFlags);
-HRESULT WINAPI OnShellExecCmdLine(HWND hwnd, LPCWSTR pwszCommand, LPCWSTR pwszStartDir, int nShow, LPVOID pUnused, DWORD dwSeclFlags);
-
-// ShellExecuteA
-typedef HINSTANCE(WINAPI* OnShellExecuteA_t)(HWND hwnd, LPCSTR lpOperation, LPCSTR lpFile, LPCSTR lpParameters, LPCSTR lpDirectory, INT nShowCmd);
-HINSTANCE WINAPI OnShellExecuteA(HWND hwnd, LPCSTR lpOperation, LPCSTR lpFile, LPCSTR lpParameters, LPCSTR lpDirectory, INT nShowCmd);
-
-// ShellExecuteW
-typedef HINSTANCE(WINAPI* OnShellExecuteW_t)(HWND hwnd, LPCWSTR lpOperation, LPCWSTR lpFile, LPCWSTR lpParameters, LPCWSTR lpDirectory, INT nShowCmd);
-HINSTANCE WINAPI OnShellExecuteW(HWND hwnd, LPCWSTR lpOperation, LPCWSTR lpFile, LPCWSTR lpParameters, LPCWSTR lpDirectory, INT nShowCmd);
-
-// CreateThread
-typedef HANDLE(WINAPI* OnCreateThread_t)(LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize, LPTHREAD_START_ROUTINE lpStartAddress, LPVOID lpParameter, DWORD dwCreationFlags, LPDWORD lpThreadId);
-HANDLE WINAPI OnCreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize, LPTHREAD_START_ROUTINE lpStartAddress, LPVOID lpParameter, DWORD dwCreationFlags, LPDWORD lpThreadId);
-
-// ResumeThread
-typedef DWORD (WINAPI* OnResumeThread_t)(HANDLE);
-DWORD WINAPI OnResumeThread(HANDLE hThread);
-
+HOOK_PROTOTYPE(CreateProcessA,BOOL,WINAPI,(LPCSTR lpApplicationName,  LPSTR lpCommandLine,  LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment, LPCSTR lpCurrentDirectory,  LPSTARTUPINFOA lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation));
+HOOK_PROTOTYPE(CreateProcessW,BOOL,WINAPI,(LPCWSTR lpApplicationName, LPWSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment, LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation));
+HOOK_PROTOTYPE(CreateThread,HANDLE,WINAPI,(LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize, LPTHREAD_START_ROUTINE lpStartAddress, LPVOID lpParameter, DWORD dwCreationFlags, LPDWORD lpThreadId));
+HOOK_PROTOTYPE(ExitProcess,VOID,WINAPI,(UINT uExitCode));
+HOOK_PROTOTYPE(ResumeThread,DWORD,WINAPI,(HANDLE hThread));
+HOOK_PROTOTYPE(SetCurrentDirectoryA,BOOL,WINAPI,(LPCSTR lpPathName));
+HOOK_PROTOTYPE(SetCurrentDirectoryW,BOOL,WINAPI,(LPCWSTR lpPathName));
+HOOK_PROTOTYPE(SetThreadContext,BOOL,WINAPI,(HANDLE hThread, CONST CONTEXT *lpContext));
+HOOK_PROTOTYPE(ShellExecCmdLine,HRESULT,WINAPI,(HWND hwnd, LPCWSTR pwszCommand, LPCWSTR pwszStartDir, int nShow, LPVOID pUnused, DWORD dwSeclFlags));
+HOOK_PROTOTYPE(ShellExecuteA,HINSTANCE,WINAPI,(HWND hwnd, LPCSTR lpOperation, LPCSTR lpFile, LPCSTR lpParameters, LPCSTR lpDirectory, INT nShowCmd));
+HOOK_PROTOTYPE(ShellExecuteExA,BOOL,WINAPI,(LPSHELLEXECUTEINFOA lpExecInfo));
+HOOK_PROTOTYPE(ShellExecuteExW,BOOL,WINAPI,(LPSHELLEXECUTEINFOW lpExecInfo));
+HOOK_PROTOTYPE(ShellExecuteW,HINSTANCE,WINAPI,(HWND hwnd, LPCWSTR lpOperation, LPCWSTR lpFile, LPCWSTR lpParameters, LPCWSTR lpDirectory, INT nShowCmd));
+HOOK_PROTOTYPE(TerminateProcess,BOOL,WINAPI,(HANDLE hProcess, UINT uExitCode));
+HOOK_PROTOTYPE(TerminateThread,BOOL,WINAPI,(HANDLE hThread, DWORD dwExitCode));
+HOOK_PROTOTYPE(WinExec,UINT,WINAPI,(LPCSTR lpCmdLine, UINT uCmdShow)); // Kernel32.dll

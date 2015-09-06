@@ -29,46 +29,21 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <windows.h>
+#include "SetHook.h"
 
 /* *************************** */
 
-/* *************************** */
+HOOK_PROTOTYPE(GetLocalTime,void,WINAPI,(LPSYSTEMTIME lpSystemTime));
+HOOK_PROTOTYPE(GetSystemTime,void,WINAPI,(LPSYSTEMTIME lpSystemTime));
+HOOK_PROTOTYPE(GetSystemTimeAsFileTime,void,WINAPI,(LPFILETIME lpSystemTimeAsFileTime));
 
 #ifdef _DEBUG
-// VirtualAlloc
-typedef LPVOID(WINAPI* OnVirtualAlloc_t)(LPVOID lpAddress, SIZE_T dwSize, DWORD flAllocationType, DWORD flProtect);
-LPVOID WINAPI OnVirtualAlloc(LPVOID lpAddress, SIZE_T dwSize, DWORD flAllocationType, DWORD flProtect);
+HOOK_PROTOTYPE(SetUnhandledExceptionFilter,LPTOP_LEVEL_EXCEPTION_FILTER,WINAPI,(LPTOP_LEVEL_EXCEPTION_FILTER lpTopLevelExceptionFilter));
+HOOK_PROTOTYPE(VirtualAlloc,LPVOID,WINAPI,(LPVOID lpAddress, SIZE_T dwSize, DWORD flAllocationType, DWORD flProtect));
+HOOK_PROTOTYPE(VirtualProtect,BOOL,WINAPI,(LPVOID lpAddress, SIZE_T dwSize, DWORD flNewProtect, PDWORD lpflOldProtect));
 #endif
 
-#ifdef _DEBUG
-// VirtualProtect
-typedef BOOL(WINAPI* OnVirtualProtect_t)(LPVOID lpAddress, SIZE_T dwSize, DWORD flNewProtect, PDWORD lpflOldProtect);
-BOOL WINAPI OnVirtualProtect(LPVOID lpAddress, SIZE_T dwSize, DWORD flNewProtect, PDWORD lpflOldProtect);
+#ifdef HOOK_ERROR_PROC
+HOOK_PROTOTYPE(GetLastError,DWORD,WINAPI,(void));
+HOOK_PROTOTYPE(SetLastError,VOID,WINAPI,(DWORD dwErrCode));
 #endif
-
-#ifdef _DEBUG
-// SetUnhandledExceptionFilter
-typedef LPTOP_LEVEL_EXCEPTION_FILTER(WINAPI* OnSetUnhandledExceptionFilter_t)(LPTOP_LEVEL_EXCEPTION_FILTER lpTopLevelExceptionFilter);
-LPTOP_LEVEL_EXCEPTION_FILTER WINAPI OnSetUnhandledExceptionFilter(LPTOP_LEVEL_EXCEPTION_FILTER lpTopLevelExceptionFilter);
-#endif
-
-// GetSystemTime
-typedef void (WINAPI* OnGetSystemTime_t)(LPSYSTEMTIME);
-void WINAPI OnGetSystemTime(LPSYSTEMTIME lpSystemTime);
-
-// GetLocalTime
-typedef void (WINAPI* OnGetLocalTime_t)(LPSYSTEMTIME);
-void WINAPI OnGetLocalTime(LPSYSTEMTIME lpSystemTime);
-
-// GetSystemTimeAsFileTime
-typedef void (WINAPI* OnGetSystemTimeAsFileTime_t)(LPFILETIME);
-void WINAPI OnGetSystemTimeAsFileTime(LPFILETIME lpSystemTimeAsFileTime);
-
-// GetLastError
-typedef DWORD (WINAPI* OnGetLastError_t)();
-DWORD WINAPI OnGetLastError();
-
-// SetLastError
-typedef DWORD (WINAPI* OnSetLastError_t)(DWORD dwErrCode);
-VOID WINAPI OnSetLastError(DWORD dwErrCode);
-
