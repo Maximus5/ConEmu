@@ -38,9 +38,9 @@ struct ConEmuThreadStartArg;
 #define THREAD_MAX_NAME_LEN 40
 static struct ConEmuThreadInfo
 {
-	ConEmuThreadStartArg* p;
+	DWORD  nThreadID; // Let TID be first member to simplify debug watch
 	BOOL   bActive;
-	DWORD  nThreadID;
+	ConEmuThreadStartArg* p;
 	HANDLE hThread;
 	LPTHREAD_START_ROUTINE pStartAddress;
 	DWORD  nParentThreadID;
@@ -92,9 +92,9 @@ DWORD WINAPI apiThreadHelper(LPVOID lpParameter)
 	#endif
 
 	ConEmuThreadInfo Info = {
-		p,
-		TRUE,
 		GetCurrentThreadId(),
+		TRUE,
+		p,
 		p->hThread,
 		p->lpStartAddress,
 		p->nParentTID,
