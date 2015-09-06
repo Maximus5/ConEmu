@@ -30,11 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "common.hpp"
 #include "WThreads.h"
 
-#if !defined(__GNUC__) || defined(__MINGW64_VERSION_MAJOR)
 #include <intrin.h>
-#else
-#define _InterlockedIncrement InterlockedIncrement
-#endif
 
 struct ConEmuThreadStartArg;
 

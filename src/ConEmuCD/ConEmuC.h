@@ -678,11 +678,7 @@ extern BOOL gbInRecreateRoot;
 #include "ExitCodes.h"
 
 
-#if !defined(__GNUC__) || defined(__MINGW64_VERSION_MAJOR)
 #include <intrin.h>
-#else
-#define _InterlockedIncrement InterlockedIncrement
-#endif
 
 
 // Message Logger

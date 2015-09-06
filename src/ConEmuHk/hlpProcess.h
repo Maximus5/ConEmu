@@ -208,13 +208,9 @@ void DoDllStop(bool bFinal, bool bFromTerminate = false);
 	#undef USEHOOKLOGANALYZE
 #endif
 
-#ifdef USEHOOKLOG
-	#if !defined(__GNUC__) || defined(__MINGW64_VERSION_MAJOR)
-	#include <intrin.h>
-	#else
-	#define _InterlockedIncrement InterlockedIncrement
-	#endif
+#include <intrin.h>
 
+#ifdef USEHOOKLOG
 	#define getThreadId() WIN3264TEST(((DWORD*) __readfsdword(24))[9],GetCurrentThreadId())
 
 	#define getTime GetTickCount
