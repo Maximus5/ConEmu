@@ -34,7 +34,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "../common/common.hpp"
 
-#define DEFINE_HOOK_MACROS
 #include "Ansi.h"
 #include "ConEmuHooks.h"
 #include "hkEnvironment.h"

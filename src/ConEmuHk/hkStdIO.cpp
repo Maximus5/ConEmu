@@ -35,7 +35,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/common.hpp"
 #include "../common/ConsoleAnnotation.h"
 
-#define DEFINE_HOOK_MACROS
 #include "Ansi.h"
 #include "ConEmuHooks.h"
 #include "hkConsoleInput.h"

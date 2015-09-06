@@ -39,7 +39,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/common.hpp"
 #include "../common/WConsole.h"
 
-#define DEFINE_HOOK_MACROS
 #include "ConEmuHooks.h"
 #include "DefTermHk.h"
 #include "GuiAttach.h"

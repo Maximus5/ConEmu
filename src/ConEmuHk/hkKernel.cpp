@@ -45,7 +45,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <Tlhelp32.h>
 
-#define DEFINE_HOOK_MACROS
 #include "ConEmuHooks.h"
 #include "hkKernel.h"
 #include "SetHook.h"

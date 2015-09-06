@@ -72,8 +72,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #undef _WIN32_WINNT
 #define _WIN32_WINNT 0x0501
 
-#define DEFINE_HOOK_MACROS
-
 #include <windows.h>
 #include <WinError.h>
 #include <WinNT.h>

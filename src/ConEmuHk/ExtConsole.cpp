@@ -36,7 +36,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/ConEmuColors3.h"
 #include "../common/WObjects.h"
 
-#define DEFINE_HOOK_MACROS
 #include "SetHook.h"
 #include "hlpConsole.h"
 
