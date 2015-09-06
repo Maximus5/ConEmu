@@ -128,7 +128,7 @@ protected:
 		mn_LastError = 0;
 		ms_Error[0] = 0;
 		_ASSERTE(mh_Mapping==NULL && mp_Data==NULL);
-		_ASSERTE(nSize==-1 || nSize>=sizeof(T));
+		_ASSERTE(nSize==-1 || nSize>=(INT_PTR)sizeof(T));
 
 		if (ms_MapName[0] == 0)
 		{
@@ -184,7 +184,7 @@ public:
 	#endif
 	T* Open(BOOL abReadWrite=FALSE/*FALSE - только Read*/,int nSize=-1)
 	{
-		_ASSERTE(nSize==-1 || nSize>=sizeof(T));
+		_ASSERTE(nSize==-1 || nSize>=(INT_PTR)sizeof(T));
 		return InternalOpenCreate(FALSE/*abCreate*/,abReadWrite,nSize);
 	};
 	const T* ReopenForRead()
