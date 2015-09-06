@@ -1983,9 +1983,14 @@ wrap:
 					{
 						PrintExecuteError(gpszRunCmd, 0, L"\n");
 					}
+					wchar_t szExitCode[40];
+					if (gnExitCode > 255)
+						_wsprintf(szExitCode, SKIPLEN(countof(szExitCode)) L"x%08X(%u)", gnExitCode, gnExitCode);
+					else
+						_wsprintf(szExitCode, SKIPLEN(countof(szExitCode)) L"%u", gnExitCode);
 					_wsprintf(szMsg, SKIPLEN(countof(szMsg))
-						L"\n\nConEmuC: Root process was alive less than 10 sec, ExitCode=%u.\nPress Enter or Esc to close console...",
-						gnExitCode);
+						L"\n\nConEmuC: Root process was alive less than 10 sec, ExitCode=%s.\nPress Enter or Esc to close console...",
+						szExitCode);
 					pszMsg = szMsg;
 				}
 				else
