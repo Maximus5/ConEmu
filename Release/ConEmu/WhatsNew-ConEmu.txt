@@ -19,6 +19,22 @@ http://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2015.9.8
+* ConEmuHk. Some internal changes (store function index, fix init/deinit steps).
+* gh#279: ConEmu window grew in size after relaunch if size was defined in pixels or percents.
+* gh#279: Unchecked ‘Align ConEmu window size to cells’ was ignored on startup.
+* Fix unexpected resize to integral size on startup.
+* Don't create two default tasks {Bash::Git bash} for `git-cmd.exe` and `bin/sh.exe`.
+* Win2k: Remove static link to GetConsoleSelectionInfo.
+* Win2k: Adapt ‘Pause’ feature to lack of GetConsoleSelectionInfo.
+* gh#216: Mouse wheel only works on first console in split window.
+* Don't count `git-cmd.exe` and `git-bash.exe` while checking for ‘Incomplete operations’ during tab/window close.
+* Correct close tab/window confirmation message (‘incomplete operations’ was not shown).
+* DefTerm. The switch `-new_console:z` was ignored by host application in some cases.
+* Print Hex and Dec ExitCode on shell exit errors larger than 255.
+* Fix handle leak (GetProcessBits, handle is not freed).
+
+
 2015.8.21
 * Article in wikipedia [was proposed for deletion](https://github.com/Maximus5/ConEmu/issues/289).
 * Support `/dir %CD%` in Task parameters.
