@@ -5889,7 +5889,7 @@ void CRealConsole::StopThread(BOOL abRecreating)
 		StopSignal(); //SetEvent(mh_TermEvent);
 
 		// А теперь можно ждать завершения
-		if (WaitForSingleObject(mh_MonitorThread, 300) != WAIT_OBJECT_0)
+		if (WaitForSingleObject(mh_MonitorThread, 30000) != WAIT_OBJECT_0)
 		{
 			// А это чтобы не осталось висеть окно ConEmu, раз всё уже закрыто
 			mp_ConEmu->OnRConStartedSuccess(NULL);
