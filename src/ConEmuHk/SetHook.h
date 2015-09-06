@@ -126,7 +126,7 @@ struct HookItem
 	// but only by ordinal, e.g. "ShellExecCmdLine"
 	DWORD           NameOrdinal;
 	// Pointer to function ID in our gpHooks
-	int*            pnFnID;
+	LPDWORD         pnFnID;
 
 	// *** following members are not initialized on InitHooks call ***
 
@@ -180,23 +180,6 @@ class CInFuncCall
 		~CInFuncCall();
 };
 
-
-void* __cdecl GetOriginalAddress(void* OurFunction, HookItem** ph, bool abAllowNulls = false);
-
-#define ORIGINALFASTEX(n,o) \
-	static HookItem *ph = NULL; \
-	static void* f##n = NULL; \
-	ORIGINALSHOWCALL(n); \
-	if ((f##n)==NULL) f##n = (void*)GetOriginalAddress((void*)(On##n), &ph); \
-	_ASSERTE((void*)(On##n)!=(void*)(f##n) && (void*)(f##n)!=NULL);
-
-#define ORIGINALFAST(n) \
-	ORIGINALFASTEX(n,n)
-
-#define ORIGINAL(n) \
-	BOOL bMainThread = (GetCurrentThreadId() == gnHookMainThreadId); \
-	ORIGINALFAST(n)
-
 #define F(n) ((On##n##_t)f##n)
 
 #define HOOK_FN_TYPE(n) On##n##_t
@@ -205,9 +188,9 @@ void* __cdecl GetOriginalAddress(void* OurFunction, HookItem** ph, bool abAllowN
 #define HOOK_FN_ID(n) g_##n##_ID
 
 #ifdef DECLARE_CONEMU_HOOK_FUNCTION_ID
-	#define HOOK_FUNCTION_ID(n) int HOOK_FN_ID(n) = 0
+	#define HOOK_FUNCTION_ID(n) DWORD HOOK_FN_ID(n) = (DWORD)-1
 #else
-	#define HOOK_FUNCTION_ID(n) extern int HOOK_FN_ID(n)
+	#define HOOK_FUNCTION_ID(n) extern DWORD HOOK_FN_ID(n)
 #endif
 
 // For example: HOOK_PROTOTYPE(BOOL,WINAPI,FlashWindow,(HWND hWnd, BOOL bInvert))
@@ -220,3 +203,20 @@ void* __cdecl GetOriginalAddress(void* OurFunction, HookItem** ph, bool abAllowN
 	{(void*)HOOK_FN_NAME(fn), HOOK_FN_STR(fn), dll, ord, &HOOK_FN_ID(fn)}
 
 #define HOOK_ITEM_BY_NAME(fn,dll) HOOK_ITEM_BY_ORDN(fn,dll,0)
+
+void* __cdecl GetOriginalAddress(void* OurFunction, DWORD nFnID = (DWORD)-1, void* ApiFunction = NULL, HookItem** ph = NULL, bool abAllowNulls = false);
+
+#define ORIGINALFASTEX(n,o) \
+	HookItem *ph = NULL; \
+	void* f##n = NULL; \
+	extern DWORD HOOK_FN_ID(n); \
+	ORIGINALSHOWCALL(n); \
+	if ((f##n)==NULL) f##n = GetOriginalAddress((void*)(On##n), HOOK_FN_ID(n), (void*)(o), &ph, false); \
+	_ASSERTE((void*)(On##n)!=(void*)(f##n) && (void*)(f##n)!=NULL);
+
+#define ORIGINALFAST(n) \
+	ORIGINALFASTEX(n,n)
+
+#define ORIGINAL(n) \
+	BOOL bMainThread = (GetCurrentThreadId() == gnHookMainThreadId); \
+	ORIGINALFAST(n)

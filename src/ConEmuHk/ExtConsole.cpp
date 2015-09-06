@@ -865,15 +865,12 @@ BOOL WINAPI apiWriteConsoleW(HANDLE hConsoleOutput, const VOID *lpBuffer, DWORD 
 {
 	BOOL lbRc = FALSE;
 
-	static WriteConsoleW_t fnWriteConsoleW = NULL;
+	// Don't use static var, it may be changed in runtime
+	WriteConsoleW_t fnWriteConsoleW = lpfn;
 
 	if (!fnWriteConsoleW)
 	{
-		if (lpfn)
-		{
-			fnWriteConsoleW = lpfn;
-		}
-		else
+		_ASSERTE(FALSE && "Is not supposed to be used out of ConEmuHk itself, therefore lpfn must be passed into");
 		{
 			HMODULE hHooks = GetModuleHandle(WIN3264TEST(L"ConEmuHk.dll",L"ConEmuHk64.dll"));
 			if (hHooks && (hHooks != ghOurModule))
@@ -958,7 +955,8 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 
 	#ifdef _DEBUG
 	extern FARPROC CallWriteConsoleW;
-	_ASSERTE((CallWriteConsoleW!=NULL) && ((Info->Private==NULL) || (Info->Private==(void*)CallWriteConsoleW)));
+	_ASSERTE((CallWriteConsoleW!=NULL) || !HooksWereSet);
+	_ASSERTE((Info->Private==NULL) || (Info->Private==(void*)CallWriteConsoleW) || (!HooksWereSet && (Info->Private==(void*)WriteConsoleW)));
 	#endif
 
 	// Проверка аргументов

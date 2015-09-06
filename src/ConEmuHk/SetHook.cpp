@@ -53,6 +53,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "GuiAttach.h"
 #include "hkConsole.h"
 #include "hkDialog.h"
+#include "hkKernel.h"
 #include "hkLibrary.h"
 #include "MainThread.h"
 #include "SetHook.h"
@@ -418,23 +419,54 @@ DWORD gnLastLogSetChange = 0;
 
 // Используется в том случае, если требуется выполнить оригинальную функцию, без нашей обертки
 // пример в OnPeekConsoleInputW
-void* __cdecl GetOriginalAddress(void* OurFunction, HookItem** ph, bool abAllowNulls /*= false*/)
+void* __cdecl GetOriginalAddress(void* OurFunction, DWORD nFnID /*= (DWORD)-1*/, void* ApiFunction/*= NULL*/, HookItem** ph/*= NULL*/, bool abAllowNulls /*= false*/)
 {
-	if (gpHooks)
+	void* lpfn = NULL;
+
+	if (gpHooks && HooksWereSetRaw)
 	{
+		// We must know function index in the gpHooks
+		if ((nFnID != (DWORD)-1)
+			&& (nFnID < gnHookedFuncs)
+			&& (gpHooks[nFnID].NewAddress == OurFunction)
+			)
+		{
+			if (ph) *ph = &(gpHooks[nFnID]);
+			// Return address where we may call "original" function
+			lpfn = gpHooks[nFnID].CallAddress;
+			goto wrap;
+		}
+		// That is strange. Try to find via pointer
+		_ASSERTE(abAllowNulls && "Function index was not detected");
 		for (int i = 0; gpHooks[i].NewAddress; i++)
 		{
 			if (gpHooks[i].NewAddress == OurFunction)
 			{
 				if (ph) *ph = &(gpHooks[i]);
 				// Return address where we may call "original" function
-				return gpHooks[i].CallAddress;
+				lpfn = gpHooks[i].CallAddress;
+				goto wrap;
 			}
 		}
 	}
 
-	_ASSERT(!HooksWereSet || abAllowNulls);
-	return NULL;
+wrap:
+	// Not yet hooked?
+	if (!lpfn && !abAllowNulls && ApiFunction)
+	{
+		if (!HooksWereSet)
+		{
+			if (ph) *ph = NULL;
+			lpfn = ApiFunction;
+		}
+		else
+		{
+			_ASSERT(!HooksWereSet);
+		}
+	}
+
+	_ASSERT(lpfn || (!HooksWereSet || abAllowNulls));
+	return lpfn;
 }
 
 // Used in GetLoadLibraryAddress, however it may be obsolete with minhook
@@ -447,7 +479,7 @@ FARPROC WINAPI GetLoadLibraryW()
 
 FARPROC WINAPI GetWriteConsoleW()
 {
-	return (FARPROC)GetOriginalAddress((LPVOID)OnWriteConsoleW, NULL);
+	return (FARPROC)GetOriginalAddress((LPVOID)OnWriteConsoleW, HOOK_FN_ID(WriteConsoleW));
 }
 
 FARPROC WINAPI GetVirtualAlloc()
@@ -455,7 +487,7 @@ FARPROC WINAPI GetVirtualAlloc()
 	LPVOID fnVirtualAlloc = NULL;
 	#ifdef _DEBUG
 	extern LPVOID WINAPI OnVirtualAlloc(LPVOID lpAddress, SIZE_T dwSize, DWORD flAllocationType, DWORD flProtect);
-	fnVirtualAlloc = GetOriginalAddress((LPVOID)OnVirtualAlloc, NULL);
+	fnVirtualAlloc = GetOriginalAddress((LPVOID)OnVirtualAlloc, HOOK_FN_ID(VirtualAlloc));
 	#endif
 	if (!fnVirtualAlloc)
 		fnVirtualAlloc = (LPVOID)&VirtualAlloc;
@@ -685,6 +717,9 @@ int InitHooks(HookItem* apHooks)
 			gpHooks[j].NameOrdinal = apHooks[i].NameOrdinal;
 			gpHooks[j].DllName = apHooks[i].DllName;
 			gpHooks[j].NewAddress = apHooks[i].NewAddress;
+			gpHooks[j].pnFnID = apHooks[i].pnFnID;
+			if (apHooks[i].pnFnID)
+				*apHooks[i].pnFnID = j;
 			gpHooks[j].NameCRC = NameCRC;
 			_ASSERTEX(j >= gnHookedFuncs);
 			gnHookedFuncs = j+1;
@@ -889,15 +924,22 @@ BOOL StartupHooks()
 	// Теперь можно обработать модули
 	HLOG1("SetAllHooks",0);
 	bool lbRc = SetAllHooks();
+	if (lbRc)
+	{
+		gnDllState |= ds_HooksStarted;
+	}
+	else
+	{
+		gnDllState &= ~ds_HooksStarted;
+		gnDllState |= ds_HooksStartFailed;
+	}
 	HLOGEND1();
 
 	extern FARPROC CallWriteConsoleW;
-	CallWriteConsoleW = (FARPROC)GetOriginalAddress((LPVOID)OnWriteConsoleW, NULL);
+	CallWriteConsoleW = (FARPROC)GetOriginalAddress((LPVOID)OnWriteConsoleW, HOOK_FN_ID(WriteConsoleW));
 
 	extern GetConsoleWindow_T gfGetRealConsoleWindow; // from ConEmuCheck.cpp
-	gfGetRealConsoleWindow = (GetConsoleWindow_T)GetOriginalAddress((LPVOID)OnGetConsoleWindow, NULL);
-
-	gnDllState |= (lbRc ? ds_HooksStarted : ds_HooksStartFailed);
+	gfGetRealConsoleWindow = (GetConsoleWindow_T)GetOriginalAddress((LPVOID)OnGetConsoleWindow, HOOK_FN_ID(GetConsoleWindow));
 
 	print_timings(L"SetAllHooks - done");
 
@@ -1127,6 +1169,9 @@ bool SetAllHooks()
 			_ASSERTE(status == MH_OK);
 		}
 	}
+
+	// Let GetOriginalAddress return trampolines
+	gnDllState |= ds_HooksStarted;
 
 	status = MH_EnableHook(MH_ALL_HOOKS);
 	_ASSERTE(status == MH_OK);

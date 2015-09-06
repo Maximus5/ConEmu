@@ -389,7 +389,9 @@ bool InitHooksDebugging()
 		HOOK_ITEM_BY_NAME(CreateNamedPipeW,		kernel32),
 
 		HOOK_ITEM_BY_NAME(VirtualAlloc,			kernel32),
+		#if 0
 		HOOK_ITEM_BY_NAME(VirtualProtect,		kernel32),
+		#endif
 		HOOK_ITEM_BY_NAME(SetUnhandledExceptionFilter, kernel32),
 
 		/* ************************ */

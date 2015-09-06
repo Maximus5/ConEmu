@@ -77,7 +77,8 @@ const ConEmuHkDllState
 ;
 extern ConEmuHkDllState gnDllState;
 
-#define HooksWereSet ((gnDllState & ds_HooksStarted) && !(gnDllState & (ds_HooksStopping|ds_HooksStopped)))
+#define HooksWereSetRaw ((gnDllState & ds_HooksStarted) && !(gnDllState & ds_HooksStopped))
+#define HooksWereSet (HooksWereSetRaw && !(gnDllState & ds_HooksStopping))
 
 //int WINAPI RequestLocalServer(/*[IN/OUT]*/RequestLocalServerParm* Parm);
 struct AnnotationHeader;

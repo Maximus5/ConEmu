@@ -237,7 +237,7 @@ LPVOID WINAPI OnVirtualAlloc(LPVOID lpAddress, SIZE_T dwSize, DWORD flAllocation
 	#endif
 	}
 	msprintf(szText, countof(szText),
-		L"VirtualProtect(" WIN3264TEST(L"0x%08X",L"0x%08X%08X") L"," WIN3264TEST(L"0x%08X",L"0x%08X%08X") L",%u,%u)=" WIN3264TEST(L"0x%08X",L"0x%08X%08X") L"\n",
+		L"VirtualAlloc(" WIN3264TEST(L"0x%08X",L"0x%08X%08X") L"," WIN3264TEST(L"0x%08X",L"0x%08X%08X") L",%u,%u)=" WIN3264TEST(L"0x%08X",L"0x%08X%08X") L"\n",
 		WIN3264WSPRINT(lpAddress), WIN3264WSPRINT(dwSize), flAllocationType, flProtect, WIN3264WSPRINT(lpResult));
 	DebugString(szText);
 
@@ -247,7 +247,7 @@ LPVOID WINAPI OnVirtualAlloc(LPVOID lpAddress, SIZE_T dwSize, DWORD flAllocation
 #endif
 
 
-#ifdef _DEBUG
+#if 0
 BOOL WINAPI OnVirtualProtect(LPVOID lpAddress, SIZE_T dwSize, DWORD flNewProtect, PDWORD lpflOldProtect)
 {
 	//typedef BOOL(WINAPI* OnVirtualProtect_t)(LPVOID lpAddress, SIZE_T dwSize, DWORD flNewProtect, PDWORD lpflOldProtect);

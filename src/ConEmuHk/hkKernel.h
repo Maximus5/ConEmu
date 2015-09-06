@@ -40,7 +40,9 @@ HOOK_PROTOTYPE(GetSystemTimeAsFileTime,void,WINAPI,(LPFILETIME lpSystemTimeAsFil
 #ifdef _DEBUG
 HOOK_PROTOTYPE(SetUnhandledExceptionFilter,LPTOP_LEVEL_EXCEPTION_FILTER,WINAPI,(LPTOP_LEVEL_EXCEPTION_FILTER lpTopLevelExceptionFilter));
 HOOK_PROTOTYPE(VirtualAlloc,LPVOID,WINAPI,(LPVOID lpAddress, SIZE_T dwSize, DWORD flAllocationType, DWORD flProtect));
+#if 0
 HOOK_PROTOTYPE(VirtualProtect,BOOL,WINAPI,(LPVOID lpAddress, SIZE_T dwSize, DWORD flNewProtect, PDWORD lpflOldProtect));
+#endif
 #endif
 
 #ifdef HOOK_ERROR_PROC
