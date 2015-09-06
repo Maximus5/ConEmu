@@ -96,7 +96,7 @@ LRESULT CALLBACK GuiClientCallHook(int nCode, WPARAM wParam, LPARAM lParam)
 			case WM_DESTROY:
 			{
 				GetClassName(p->hwnd, szClass, countof(szClass));
-				msprintf(szDbg, countof(szDbg), L"WM_DESTROY on 0x%08X (%s)\n", (DWORD)p->hwnd, szClass);
+				msprintf(szDbg, countof(szDbg), L"WM_DESTROY on 0x%08X (%s)\n", LODWORD(p->hwnd), szClass);
 				break;
 			}
 			case WM_CREATE:
@@ -152,7 +152,7 @@ LRESULT CALLBACK GuiClientRetHook(int nCode, WPARAM wParam, LPARAM lParam)
 			case WM_DESTROY:
 			{
 				GetClassName(p->hwnd, szClass, countof(szClass));
-				msprintf(szDbg, countof(szDbg), L"WM_DESTROY on 0x%08X (%s)\n", (DWORD)p->hwnd, szClass);
+				msprintf(szDbg, countof(szDbg), L"WM_DESTROY on 0x%08X (%s)\n", LODWORD(p->hwnd), szClass);
 				break;
 			}
 			case WM_CREATE:

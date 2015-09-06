@@ -424,7 +424,7 @@ BOOL WINAPI OnAllocConsole(void)
 	wchar_t szAlloc[500], szFile[MAX_PATH];
 	GetModuleFileName(NULL, szFile, countof(szFile));
 	msprintf(szAlloc, countof(szAlloc), L"OnAllocConsole\nOld=x%08X, New=x%08X, ghConWnd=x%08X\ngbPrepareDefaultTerminal=%i, gbIsNetVsHost=%i\n%s",
-		(DWORD)hOldConWnd, (DWORD)hNewConWnd, (DWORD)ghConWnd, gbPrepareDefaultTerminal, gbIsNetVsHost, szFile);
+		LODWORD(hOldConWnd), LODWORD(hNewConWnd), LODWORD(ghConWnd), gbPrepareDefaultTerminal, gbIsNetVsHost, szFile);
 	// VisualStudio host file calls AllocConsole TWICE(!)
 	// Second call is totally spare (console already created)
 	//MessageBox(NULL, szAlloc, L"OnAllocConsole called", MB_SYSTEMMODAL);
@@ -667,7 +667,7 @@ BOOL WINAPI OnSetConsoleWindowInfo(HANDLE hConsoleOutput, BOOL bAbsolute, const 
 
 	wchar_t szDbgSize[512];
 	msprintf(szDbgSize, countof(szDbgSize), L"SetConsoleWindowInfo(%08X, %s, {%ix%i}-{%ix%i}), Current={%ix%i}, Wnd={%ix%i}-{%ix%i}\n",
-		(DWORD)hConsoleOutput, bAbsolute ? L"ABS" : L"REL",
+		LODWORD(hConsoleOutput), bAbsolute ? L"ABS" : L"REL",
 		lpConsoleWindow->Left, lpConsoleWindow->Top, lpConsoleWindow->Right, lpConsoleWindow->Bottom,
 		sbi.dwSize.X, sbi.dwSize.Y,
 		sbi.srWindow.Left, sbi.srWindow.Top, sbi.srWindow.Right, sbi.srWindow.Bottom);
@@ -747,7 +747,7 @@ BOOL WINAPI OnSetConsoleScreenBufferSize(HANDLE hConsoleOutput, COORD dwSize)
 	#ifdef _DEBUG
 	wchar_t szDbgSize[512];
 	msprintf(szDbgSize, countof(szDbgSize), L"SetConsoleScreenBufferSize(%08X, {%ix%i}), Current={%ix%i}, Wnd={%ix%i}\n",
-		(DWORD)hConsoleOutput, dwSize.X, dwSize.Y, sbi.dwSize.X, sbi.dwSize.Y,
+		LODWORD(hConsoleOutput), dwSize.X, dwSize.Y, sbi.dwSize.X, sbi.dwSize.Y,
 		sbi.srWindow.Right-sbi.srWindow.Left+1, sbi.srWindow.Bottom-sbi.srWindow.Top+1);
 	DebugStringConSize(szDbgSize);
 	#endif
@@ -863,12 +863,12 @@ BOOL WINAPI OnSetConsoleScreenBufferInfoEx(HANDLE hConsoleOutput, MY_CONSOLE_SCR
 	if (lpConsoleScreenBufferInfoEx)
 	{
 		msprintf(szDbgSize, countof(szDbgSize), L"SetConsoleScreenBufferInfoEx(%08X, {%ix%i}), Current={%ix%i}, Wnd={%ix%i}\n",
-			(DWORD)hConsoleOutput, lpConsoleScreenBufferInfoEx->dwSize.X, lpConsoleScreenBufferInfoEx->dwSize.Y, sbi.dwSize.X, sbi.dwSize.Y,
+			LODWORD(hConsoleOutput), lpConsoleScreenBufferInfoEx->dwSize.X, lpConsoleScreenBufferInfoEx->dwSize.Y, sbi.dwSize.X, sbi.dwSize.Y,
 			sbi.srWindow.Right-sbi.srWindow.Left+1, sbi.srWindow.Bottom-sbi.srWindow.Top+1);
 	}
 	else
 	{
-		lstrcpyn(szDbgSize, L"SetConsoleScreenBufferInfoEx(%08X, NULL)\n", (DWORD)hConsoleOutput);
+		lstrcpyn(szDbgSize, L"SetConsoleScreenBufferInfoEx(%08X, NULL)\n", LODWORD(hConsoleOutput));
 	}
 	DebugStringConSize(szDbgSize);
 	#endif

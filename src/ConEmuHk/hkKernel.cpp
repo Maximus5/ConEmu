@@ -195,14 +195,14 @@ LPVOID WINAPI OnVirtualAlloc(LPVOID lpAddress, SIZE_T dwSize, DWORD flAllocation
 		FindModuleByAddress((const BYTE*)lpAddress, szOwnedModule, countof(szOwnedModule));
 
 		msprintf(szText, countof(szText)-MAX_PATH,
-			L"VirtualAlloc " WIN3264TEST(L"%u",L"x%X%08X") L" bytes failed (0x%08X..0x%08X)\n"
+			L"VirtualAlloc " WIN3264TEST(L"%u",L"x%X%08X") L" bytes failed (%08X..%08X)\n"
 			L"ErrorCode=%u %s\n\n"
 			L"Allocated information (" WIN3264TEST(L"x%08X",L"x%X%08X") L".." WIN3264TEST(L"x%08X",L"x%X%08X") L")\n"
 			L"Size " WIN3264TEST(L"%u",L"x%X%08X") L" bytes State x%X Type x%X Protect x%X\n"
 			L"Module: %s\n\n"
 			L"Warning! This may cause an errors in Release!\n"
 			L"Press <OK> to VirtualAlloc at the default address\n\n",
-			WIN3264WSPRINT(dwSize), (DWORD)lpAddress, (DWORD)((LPBYTE)lpAddress+dwSize),
+			WIN3264WSPRINT(dwSize), LODWORD(lpAddress), LODWORD((LPBYTE)lpAddress+dwSize),
 			dwErr, (dwErr == 487) ? L"(ERROR_INVALID_ADDRESS)" : L"",
 			WIN3264WSPRINT(mbi.BaseAddress), WIN3264WSPRINT(((LPBYTE)mbi.BaseAddress+mbi.RegionSize)),
 			WIN3264WSPRINT(mbi.RegionSize), mbi.State, mbi.Type, mbi.Protect,
