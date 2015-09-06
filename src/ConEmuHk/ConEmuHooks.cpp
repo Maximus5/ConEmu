@@ -72,6 +72,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #undef _WIN32_WINNT
 #define _WIN32_WINNT 0x0501
 
+// Declare function ID variables
+#define DECLARE_CONEMU_HOOK_FUNCTION_ID
+
 #include <windows.h>
 #include <WinError.h>
 #include <WinNT.h>
@@ -284,10 +287,10 @@ bool InitHooksLibrary()
 	HookItem HooksLib1[] =
 	{
 		/* ************************ */
-		{(void*)OnLoadLibraryA,		"LoadLibraryA",			kernel32},
-		{(void*)OnLoadLibraryExA,	"LoadLibraryExA",		kernel32},
-		{(void*)OnLoadLibraryExW,	"LoadLibraryExW",		kernel32},
-		{(void*)OnFreeLibrary,		"FreeLibrary",			kernel32},
+		HOOK_ITEM_BY_NAME(LoadLibraryA,			kernel32),
+		HOOK_ITEM_BY_NAME(LoadLibraryExA,		kernel32),
+		HOOK_ITEM_BY_NAME(LoadLibraryExW,		kernel32),
+		HOOK_ITEM_BY_NAME(FreeLibrary,			kernel32),
 		/* ************************ */
 		{0}
 	};
@@ -295,7 +298,7 @@ bool InitHooksLibrary()
 	HookItem HooksLib2[] =
 	{
 		/* ************************ */
-		{(void*)OnLoadLibraryW,		"LoadLibraryW",			kernel32},
+		HOOK_ITEM_BY_NAME(LoadLibraryW,			kernel32),
 		/* ************************ */
 		{0}
 	};
@@ -331,22 +334,22 @@ bool InitHooksKernel()
 	HookItem HooksKernel[] =
 	{
 		/* ************************ */
-		{(void*)OnOpenFileMappingW,			"OpenFileMappingW",		kernel32},
-		{(void*)OnMapViewOfFile,			"MapViewOfFile",		kernel32},
-		{(void*)OnUnmapViewOfFile,			"UnmapViewOfFile",		kernel32},
+		HOOK_ITEM_BY_NAME(OpenFileMappingW,		kernel32),
+		HOOK_ITEM_BY_NAME(MapViewOfFile,		kernel32),
+		HOOK_ITEM_BY_NAME(UnmapViewOfFile,		kernel32),
 		/* ************************ */
-		{(void*)OnSetEnvironmentVariableA,	"SetEnvironmentVariableA",	kernel32},
-		{(void*)OnSetEnvironmentVariableW,	"SetEnvironmentVariableW",	kernel32},
-		{(void*)OnGetEnvironmentVariableA,	"GetEnvironmentVariableA",	kernel32},
-		{(void*)OnGetEnvironmentVariableW,	"GetEnvironmentVariableW",	kernel32},
+		HOOK_ITEM_BY_NAME(SetEnvironmentVariableA,	kernel32),
+		HOOK_ITEM_BY_NAME(SetEnvironmentVariableW,	kernel32),
+		HOOK_ITEM_BY_NAME(GetEnvironmentVariableA,	kernel32),
+		HOOK_ITEM_BY_NAME(GetEnvironmentVariableW,	kernel32),
 		#if 0
-		{(void*)OnGetEnvironmentStringsA,	"GetEnvironmentStringsA",	kernel32},
+		HOOK_ITEM_BY_NAME(GetEnvironmentStringsA,	kernel32),
 		#endif
-		{(void*)OnGetEnvironmentStringsW,	"GetEnvironmentStringsW",	kernel32},
+		HOOK_ITEM_BY_NAME(GetEnvironmentStringsW,	kernel32),
 		/* ************************ */
-		{(void*)OnGetSystemTime,			"GetSystemTime",			kernel32},
-		{(void*)OnGetLocalTime,				"GetLocalTime",				kernel32},
-		{(void*)OnGetSystemTimeAsFileTime,	"GetSystemTimeAsFileTime",	kernel32},
+		HOOK_ITEM_BY_NAME(GetSystemTime,			kernel32),
+		HOOK_ITEM_BY_NAME(GetLocalTime,				kernel32),
+		HOOK_ITEM_BY_NAME(GetSystemTimeAsFileTime,	kernel32),
 		/* ************************ */
 		{0}
 	};
@@ -383,19 +386,17 @@ bool InitHooksDebugging()
 	{
 		/* ************************ */
 
-		{(void*)OnCreateNamedPipeW,			"CreateNamedPipeW",		kernel32},
+		HOOK_ITEM_BY_NAME(CreateNamedPipeW,		kernel32),
 
-		{(void*)OnVirtualAlloc,				"VirtualAlloc",			kernel32},
-		{(void*)OnVirtualProtect,			"VirtualProtect",		kernel32},
-		{(void*)OnSetUnhandledExceptionFilter,
-											"SetUnhandledExceptionFilter",
-																kernel32},
+		HOOK_ITEM_BY_NAME(VirtualAlloc,			kernel32),
+		HOOK_ITEM_BY_NAME(VirtualProtect,		kernel32),
+		HOOK_ITEM_BY_NAME(SetUnhandledExceptionFilter, kernel32),
 
 		/* ************************ */
 
 		#ifdef HOOK_ERROR_PROC
-		{(void*)OnGetLastError,			"GetLastError",			kernel32},
-		{(void*)OnSetLastError,			"SetLastError",			kernel32}, // eSetLastError
+		HOOK_ITEM_BY_NAME(GetLastError,			kernel32),
+		HOOK_ITEM_BY_NAME(SetLastError,			kernel32), // eSetLastError
 		#endif
 
 		/* ************************ */
@@ -422,110 +423,58 @@ bool InitHooksConsole()
 	HookItem HooksConsole[] =
 	{
 		/* ************************ */
-		{(void*)OnCreateFileW,			"CreateFileW",  		kernel32},
-		{(void*)OnWriteFile,			"WriteFile",  			kernel32},
-		{(void*)OnReadFile,				"ReadFile",				kernel32},
-		{(void*)OnCloseHandle,			"CloseHandle",			kernel32},
+		HOOK_ITEM_BY_NAME(CreateFileW,  		kernel32),
+		HOOK_ITEM_BY_NAME(WriteFile,  			kernel32),
+		HOOK_ITEM_BY_NAME(ReadFile,				kernel32),
+		HOOK_ITEM_BY_NAME(CloseHandle,			kernel32),
 		/* ************************ */
-		{(void*)OnGetConsoleWindow,     "GetConsoleWindow",     kernel32},
-		{(void*)OnGetConsoleMode,		"GetConsoleMode",		kernel32},
-		{(void*)OnSetConsoleMode,		"SetConsoleMode",  		kernel32},
-		{(void*)OnSetConsoleTitleA,		"SetConsoleTitleA",		kernel32},
-		{(void*)OnSetConsoleTitleW,		"SetConsoleTitleW",		kernel32},
-		{(void*)OnGetConsoleAliasesW,	"GetConsoleAliasesW",	kernel32},
-		{(void*)OnAllocConsole,			"AllocConsole",			kernel32},
-		{(void*)OnFreeConsole,			"FreeConsole",			kernel32},
-		{(void*)OnSetConsoleKeyShortcuts, "SetConsoleKeyShortcuts", kernel32},
+		HOOK_ITEM_BY_NAME(GetConsoleWindow,     kernel32),
+		HOOK_ITEM_BY_NAME(GetConsoleMode,		kernel32),
+		HOOK_ITEM_BY_NAME(SetConsoleMode,  		kernel32),
+		HOOK_ITEM_BY_NAME(SetConsoleTitleA,		kernel32),
+		HOOK_ITEM_BY_NAME(SetConsoleTitleW,		kernel32),
+		HOOK_ITEM_BY_NAME(GetConsoleAliasesW,	kernel32),
+		HOOK_ITEM_BY_NAME(AllocConsole,			kernel32),
+		HOOK_ITEM_BY_NAME(FreeConsole,			kernel32),
+		HOOK_ITEM_BY_NAME(SetConsoleKeyShortcuts, kernel32),
 		/* ************************ */
-		{(void*)OnSetConsoleTextAttribute, "SetConsoleTextAttribute", kernel32},
-		{(void*)OnWriteConsoleOutputW,	"WriteConsoleOutputW",  kernel32},
-		{(void*)OnWriteConsoleOutputA,	"WriteConsoleOutputA",  kernel32},
-		{(void*)OnReadConsoleW,			"ReadConsoleW",			kernel32},
-		{(void*)OnReadConsoleA,			"ReadConsoleA",			kernel32},
-		{(void*)OnPeekConsoleInputW,	"PeekConsoleInputW",	kernel32},
-		{(void*)OnPeekConsoleInputA,	"PeekConsoleInputA",	kernel32},
-		{(void*)OnReadConsoleInputW,	"ReadConsoleInputW",	kernel32},
-		{(void*)OnReadConsoleInputA,	"ReadConsoleInputA",	kernel32},
-		{(void*)OnWriteConsoleInputA,	"WriteConsoleInputA",	kernel32},
-		{(void*)OnWriteConsoleInputW,	"WriteConsoleInputW",	kernel32},
-		{(void*)OnWriteConsoleA,		"WriteConsoleA",  		kernel32},
-		{(void*)OnWriteConsoleW,		"WriteConsoleW",  		kernel32},
-		{(void*)OnScrollConsoleScreenBufferA,
-										"ScrollConsoleScreenBufferA",
-																kernel32},
-		{(void*)OnScrollConsoleScreenBufferW,
-										"ScrollConsoleScreenBufferW",
-																kernel32},
-		{(void*)OnWriteConsoleOutputCharacterA,
-										"WriteConsoleOutputCharacterA",
-																kernel32},
-		{(void*)OnWriteConsoleOutputCharacterW,
-										"WriteConsoleOutputCharacterW",
-																kernel32},
+		HOOK_ITEM_BY_NAME(SetConsoleTextAttribute, kernel32),
+		HOOK_ITEM_BY_NAME(WriteConsoleOutputW,  kernel32),
+		HOOK_ITEM_BY_NAME(WriteConsoleOutputA,  kernel32),
+		HOOK_ITEM_BY_NAME(ReadConsoleW,			kernel32),
+		HOOK_ITEM_BY_NAME(ReadConsoleA,			kernel32),
+		HOOK_ITEM_BY_NAME(PeekConsoleInputW,	kernel32),
+		HOOK_ITEM_BY_NAME(PeekConsoleInputA,	kernel32),
+		HOOK_ITEM_BY_NAME(ReadConsoleInputW,	kernel32),
+		HOOK_ITEM_BY_NAME(ReadConsoleInputA,	kernel32),
+		HOOK_ITEM_BY_NAME(WriteConsoleInputA,	kernel32),
+		HOOK_ITEM_BY_NAME(WriteConsoleInputW,	kernel32),
+		HOOK_ITEM_BY_NAME(WriteConsoleA,  		kernel32),
+		HOOK_ITEM_BY_NAME(WriteConsoleW,  		kernel32),
+		HOOK_ITEM_BY_NAME(ScrollConsoleScreenBufferA, kernel32),
+		HOOK_ITEM_BY_NAME(ScrollConsoleScreenBufferW, kernel32),
+		HOOK_ITEM_BY_NAME(WriteConsoleOutputCharacterA, kernel32),
+		HOOK_ITEM_BY_NAME(WriteConsoleOutputCharacterW, kernel32),
 		/* Others console functions */
-		{
-			(void*)OnGetNumberOfConsoleInputEvents,
-			"GetNumberOfConsoleInputEvents",
-			kernel32
-		},
-		{
-			(void*)OnFlushConsoleInputBuffer,
-			"FlushConsoleInputBuffer",
-			kernel32
-		},
-		{
-			(void*)OnCreateConsoleScreenBuffer,
-			"CreateConsoleScreenBuffer",
-			kernel32
-		},
-		{
-			(void*)OnSetConsoleActiveScreenBuffer,
-			"SetConsoleActiveScreenBuffer",
-			kernel32
-		},
-		{
-			(void*)OnSetConsoleWindowInfo,
-			"SetConsoleWindowInfo",
-			kernel32
-		},
-		{
-			(void*)OnSetConsoleScreenBufferSize,
-			"SetConsoleScreenBufferSize",
-			kernel32
-		},
-		{
-			(void*)OnSetCurrentConsoleFontEx,
-			"SetCurrentConsoleFontEx",
-			kernel32
-		},
-		{
-			(void*)OnSetConsoleScreenBufferInfoEx,
-			"SetConsoleScreenBufferInfoEx",
-			kernel32
-		},
-		{
-			(void*)OnGetLargestConsoleWindowSize,
-			"GetLargestConsoleWindowSize",
-			kernel32
-		},
-		{
-			(void*)OnSetConsoleCursorPosition,
-			"SetConsoleCursorPosition",
-			kernel32
-		},
-		{
-			(void*)OnSetConsoleCursorInfo,
-			"SetConsoleCursorInfo",
-			kernel32
-		},
+		HOOK_ITEM_BY_NAME(GetNumberOfConsoleInputEvents, kernel32),
+		HOOK_ITEM_BY_NAME(FlushConsoleInputBuffer, kernel32),
+		HOOK_ITEM_BY_NAME(CreateConsoleScreenBuffer, kernel32),
+		HOOK_ITEM_BY_NAME(SetConsoleActiveScreenBuffer, kernel32),
+		HOOK_ITEM_BY_NAME(SetConsoleWindowInfo, kernel32),
+		HOOK_ITEM_BY_NAME(SetConsoleScreenBufferSize, kernel32),
+		HOOK_ITEM_BY_NAME(SetCurrentConsoleFontEx, kernel32),
+		HOOK_ITEM_BY_NAME(SetConsoleScreenBufferInfoEx, kernel32),
+		HOOK_ITEM_BY_NAME(GetLargestConsoleWindowSize, kernel32),
+		HOOK_ITEM_BY_NAME(SetConsoleCursorPosition, kernel32),
+		HOOK_ITEM_BY_NAME(SetConsoleCursorInfo, kernel32),
 		/* ************************ */
-		{(void*)OnGetCurrentConsoleFont, "GetCurrentConsoleFont",		kernel32},
-		{(void*)OnGetConsoleFontSize,    "GetConsoleFontSize",			kernel32},
+		HOOK_ITEM_BY_NAME(GetCurrentConsoleFont,		kernel32),
+		HOOK_ITEM_BY_NAME(GetConsoleFontSize,			kernel32),
 		/* ************************ */
 
 		// https://conemu.github.io/en/MicrosoftBugs.html#chcp_hung
-		{(void*)OnSetConsoleCP,			"SetConsoleCP",			kernel32},
-		{(void*)OnSetConsoleOutputCP,	"SetConsoleOutputCP",	kernel32},
+		HOOK_ITEM_BY_NAME(SetConsoleCP,			kernel32),
+		HOOK_ITEM_BY_NAME(SetConsoleOutputCP,	kernel32),
 		/* ************************ */
 		{0}
 	};
@@ -548,23 +497,23 @@ bool InitHooksExecutor()
 	HookItem HooksCommon[] =
 	{
 		/* ************************ */
-		{(void*)OnExitProcess,			"ExitProcess",			kernel32},
-		{(void*)OnTerminateProcess,		"TerminateProcess",		kernel32},
+		HOOK_ITEM_BY_NAME(ExitProcess,			kernel32),
+		HOOK_ITEM_BY_NAME(TerminateProcess,		kernel32),
 		/* ************************ */
-		{(void*)OnCreateThread,			"CreateThread",			kernel32},
-		{(void*)OnSetThreadContext,		"SetThreadContext",		kernel32},
-		{(void*)OnTerminateThread,		"TerminateThread",		kernel32},
+		HOOK_ITEM_BY_NAME(CreateThread,			kernel32),
+		HOOK_ITEM_BY_NAME(SetThreadContext,		kernel32),
+		HOOK_ITEM_BY_NAME(TerminateThread,		kernel32),
 		/* ************************ */
-		{(void*)OnCreateProcessA,		"CreateProcessA",		kernel32},
-		{(void*)OnCreateProcessW,		"CreateProcessW",		kernel32},
+		HOOK_ITEM_BY_NAME(CreateProcessA,		kernel32),
+		HOOK_ITEM_BY_NAME(CreateProcessW,		kernel32),
 		/* ************************ */
-		{(void*)OnSetCurrentDirectoryA, "SetCurrentDirectoryA", kernel32},
-		{(void*)OnSetCurrentDirectoryW, "SetCurrentDirectoryW", kernel32},
+		HOOK_ITEM_BY_NAME(SetCurrentDirectoryA, kernel32),
+		HOOK_ITEM_BY_NAME(SetCurrentDirectoryW, kernel32),
 		/* ************************ */
-		{(void*)OnShellExecuteExA,		"ShellExecuteExA",		shell32},
-		{(void*)OnShellExecuteExW,		"ShellExecuteExW",		shell32},
-		{(void*)OnShellExecuteA,		"ShellExecuteA",		shell32},
-		{(void*)OnShellExecuteW,		"ShellExecuteW",		shell32},
+		HOOK_ITEM_BY_NAME(ShellExecuteExA,		shell32),
+		HOOK_ITEM_BY_NAME(ShellExecuteExW,		shell32),
+		HOOK_ITEM_BY_NAME(ShellExecuteA,		shell32),
+		HOOK_ITEM_BY_NAME(ShellExecuteW,		shell32),
 		/* ************************ */
 		// OnWinExec/WinExec is used in DefTerm only
 		/* ************************ */
@@ -590,71 +539,69 @@ bool InitHooksUser32()
 	HookItem HooksUserGdi[] =
 	{
 		/* ************************ */
-		{(void*)OnTrackPopupMenu,		"TrackPopupMenu",		user32},
-		{(void*)OnTrackPopupMenuEx,		"TrackPopupMenuEx",		user32},
-		{(void*)OnFlashWindow,			"FlashWindow",			user32},
-		{(void*)OnFlashWindowEx,		"FlashWindowEx",		user32},
-		{(void*)OnSetForegroundWindow,	"SetForegroundWindow",	user32},
-		{(void*)OnGetForegroundWindow,	"GetForegroundWindow",	user32},
-		{(void*)OnGetWindowRect,		"GetWindowRect",		user32},
-		{(void*)OnScreenToClient,		"ScreenToClient",		user32},
+		HOOK_ITEM_BY_NAME(TrackPopupMenu,		user32),
+		HOOK_ITEM_BY_NAME(TrackPopupMenuEx,		user32),
+		HOOK_ITEM_BY_NAME(FlashWindow,			user32),
+		HOOK_ITEM_BY_NAME(FlashWindowEx,		user32),
+		HOOK_ITEM_BY_NAME(SetForegroundWindow,	user32),
+		HOOK_ITEM_BY_NAME(GetForegroundWindow,	user32),
+		HOOK_ITEM_BY_NAME(GetWindowRect,		user32),
+		HOOK_ITEM_BY_NAME(ScreenToClient,		user32),
 		/* ************************ */
-		//{(void*)OnCreateWindowA,		"CreateWindowA",		user32}, -- there is not such export
-		//{(void*)OnCreateWindowW,		"CreateWindowW",		user32}, -- there is not such export
-		{(void*)OnCreateWindowExA,		"CreateWindowExA",		user32},
-		{(void*)OnCreateWindowExW,		"CreateWindowExW",		user32},
-		{(void*)OnShowCursor,			"ShowCursor",			user32},
-		{(void*)OnShowWindow,			"ShowWindow",			user32},
-		{(void*)OnSetFocus,				"SetFocus",				user32},
-		{(void*)OnSetParent,			"SetParent",			user32},
-		{(void*)OnGetParent,			"GetParent",			user32},
-		{(void*)OnGetWindow,			"GetWindow",			user32},
-		{(void*)OnGetAncestor,			"GetAncestor",			user32},
-		{(void*)OnGetClassNameA,		"GetClassNameA",		user32},
-		{(void*)OnGetClassNameW,		"GetClassNameW",		user32},
-		{(void*)OnGetActiveWindow,		"GetActiveWindow",		user32},
-		{(void*)OnMoveWindow,			"MoveWindow",			user32},
-		{(void*)OnSetWindowPos,			"SetWindowPos",			user32},
-		{(void*)OnSetWindowLongA,		"SetWindowLongA",		user32},
-		{(void*)OnSetWindowLongW,		"SetWindowLongW",		user32},
+		//HOOK_ITEM_BY_NAME(CreateWindowA,		user32), -- there is not such export
+		//HOOK_ITEM_BY_NAME(CreateWindowW,		user32), -- there is not such export
+		HOOK_ITEM_BY_NAME(CreateWindowExA,		user32),
+		HOOK_ITEM_BY_NAME(CreateWindowExW,		user32),
+		HOOK_ITEM_BY_NAME(ShowCursor,			user32),
+		HOOK_ITEM_BY_NAME(ShowWindow,			user32),
+		HOOK_ITEM_BY_NAME(SetFocus,				user32),
+		HOOK_ITEM_BY_NAME(SetParent,			user32),
+		HOOK_ITEM_BY_NAME(GetParent,			user32),
+		HOOK_ITEM_BY_NAME(GetWindow,			user32),
+		HOOK_ITEM_BY_NAME(GetAncestor,			user32),
+		HOOK_ITEM_BY_NAME(GetClassNameA,		user32),
+		HOOK_ITEM_BY_NAME(GetClassNameW,		user32),
+		HOOK_ITEM_BY_NAME(GetActiveWindow,		user32),
+		HOOK_ITEM_BY_NAME(MoveWindow,			user32),
+		HOOK_ITEM_BY_NAME(SetWindowPos,			user32),
+		HOOK_ITEM_BY_NAME(SetWindowLongA,		user32),
+		HOOK_ITEM_BY_NAME(SetWindowLongW,		user32),
 		#ifdef WIN64
-		{(void*)OnSetWindowLongPtrA,	"SetWindowLongPtrA",	user32},
-		{(void*)OnSetWindowLongPtrW,	"SetWindowLongPtrW",	user32},
+		HOOK_ITEM_BY_NAME(SetWindowLongPtrA,	user32),
+		HOOK_ITEM_BY_NAME(SetWindowLongPtrW,	user32),
 		#endif
-		{(void*)OnGetWindowTextLengthA,	"GetWindowTextLengthA",	user32},
-		{(void*)OnGetWindowTextLengthW,	"GetWindowTextLengthW",	user32},
-		{(void*)OnGetWindowTextA,		"GetWindowTextA",		user32},
-		{(void*)OnGetWindowTextW,		"GetWindowTextW",		user32},
+		HOOK_ITEM_BY_NAME(GetWindowTextLengthA,	user32),
+		HOOK_ITEM_BY_NAME(GetWindowTextLengthW,	user32),
+		HOOK_ITEM_BY_NAME(GetWindowTextA,		user32),
+		HOOK_ITEM_BY_NAME(GetWindowTextW,		user32),
 		//
-		{(void*)OnGetWindowPlacement,	"GetWindowPlacement",	user32},
-		{(void*)OnSetWindowPlacement,	"SetWindowPlacement",	user32},
-		{(void*)Onmouse_event,			"mouse_event",			user32},
-		{(void*)OnSendInput,			"SendInput",			user32},
-		{(void*)OnPostMessageA,			"PostMessageA",			user32},
-		{(void*)OnPostMessageW,			"PostMessageW",			user32},
-		{(void*)OnSendMessageA,			"SendMessageA",			user32},
-		{(void*)OnSendMessageW,			"SendMessageW",			user32},
-		{(void*)OnGetMessageA,			"GetMessageA",			user32},
-		{(void*)OnGetMessageW,			"GetMessageW",			user32},
-		{(void*)OnPeekMessageA,			"PeekMessageA",			user32},
-		{(void*)OnPeekMessageW,			"PeekMessageW",			user32},
-		{(void*)OnCreateDialogParamA,	"CreateDialogParamA",	user32},
-		{(void*)OnCreateDialogParamW,	"CreateDialogParamW",	user32},
-		{(void*)OnCreateDialogIndirectParamA, "CreateDialogIndirectParamA", user32},
-		{(void*)OnCreateDialogIndirectParamW, "CreateDialogIndirectParamW", user32},
-		{(void*)OnDialogBoxIndirectParamAorW,
-										"DialogBoxIndirectParamAorW",
-																user32},
-		{(void*)OnSetMenu,				"SetMenu",				user32},
-		{(void*)OnGetDC,				"GetDC",				user32},
-		{(void*)OnGetDCEx,				"GetDCEx",				user32},
-		{(void*)OnReleaseDC,			"ReleaseDC",			user32},
+		HOOK_ITEM_BY_NAME(GetWindowPlacement,	user32),
+		HOOK_ITEM_BY_NAME(SetWindowPlacement,	user32),
+		HOOK_ITEM_BY_NAME(mouse_event,			user32),
+		HOOK_ITEM_BY_NAME(SendInput,			user32),
+		HOOK_ITEM_BY_NAME(PostMessageA,			user32),
+		HOOK_ITEM_BY_NAME(PostMessageW,			user32),
+		HOOK_ITEM_BY_NAME(SendMessageA,			user32),
+		HOOK_ITEM_BY_NAME(SendMessageW,			user32),
+		HOOK_ITEM_BY_NAME(GetMessageA,			user32),
+		HOOK_ITEM_BY_NAME(GetMessageW,			user32),
+		HOOK_ITEM_BY_NAME(PeekMessageA,			user32),
+		HOOK_ITEM_BY_NAME(PeekMessageW,			user32),
+		HOOK_ITEM_BY_NAME(CreateDialogParamA,	user32),
+		HOOK_ITEM_BY_NAME(CreateDialogParamW,	user32),
+		HOOK_ITEM_BY_NAME(CreateDialogIndirectParamA, user32),
+		HOOK_ITEM_BY_NAME(CreateDialogIndirectParamW, user32),
+		HOOK_ITEM_BY_NAME(DialogBoxIndirectParamAorW, user32),
+		HOOK_ITEM_BY_NAME(SetMenu,				user32),
+		HOOK_ITEM_BY_NAME(GetDC,				user32),
+		HOOK_ITEM_BY_NAME(GetDCEx,				user32),
+		HOOK_ITEM_BY_NAME(ReleaseDC,			user32),
 		/* ************************ */
 
 		/* ************************ */
-		{(void*)OnStretchDIBits,		"StretchDIBits",		gdi32},
-		{(void*)OnBitBlt,				"BitBlt",				gdi32},
-		{(void*)OnStretchBlt,			"StretchBlt",			gdi32},
+		HOOK_ITEM_BY_NAME(StretchDIBits,		gdi32),
+		HOOK_ITEM_BY_NAME(BitBlt,				gdi32),
+		HOOK_ITEM_BY_NAME(StretchBlt,			gdi32),
 		/* ************************ */
 		{0}
 	};
@@ -690,7 +637,7 @@ bool InitHooksFarExe()
 	HookItem HooksFarOnly[] =
 	{
 		/* ************************ */
-		{(void*)OnCompareStringW, "CompareStringW", kernel32},
+		HOOK_ITEM_BY_NAME(CompareStringW, kernel32),
 		/* ************************ */
 		{0}
 	};
@@ -720,7 +667,7 @@ bool InitHooksCmdExe()
 	{
 		// Vista and below: AdvApi32.dll
 		// **NB** In WinXP this module is not linked statically
-		{(void*)OnRegQueryValueExW, "RegQueryValueExW", IsWin7() ? kernel32 : advapi32},
+		HOOK_ITEM_BY_NAME(RegQueryValueExW, IsWin7() ? kernel32 : advapi32),
 		{0, 0, 0}
 	};
 
@@ -749,26 +696,26 @@ bool InitHooksDefTerm()
 
 	HookItem HooksCommon[] =
 	{
-		{(void*)OnCreateProcessW,		"CreateProcessW",		kernel32},
+		HOOK_ITEM_BY_NAME(CreateProcessW,		kernel32),
 		// Need to "hook" OnCreateProcessA because it is used in "OnWinExec"
-		{(void*)OnCreateProcessA,		"CreateProcessA",		kernel32},
+		HOOK_ITEM_BY_NAME(CreateProcessA,		kernel32),
 		// Used in some programs, Issue 853
-		{(void*)OnWinExec,				"WinExec",				kernel32},
+		HOOK_ITEM_BY_NAME(WinExec,				kernel32),
 		// Need for hook "Run as administrator"
-		{(void*)OnShellExecuteExW,		"ShellExecuteExW",		shell32},
+		HOOK_ITEM_BY_NAME(ShellExecuteExW,		shell32),
 		{0}
 	};
 	HookItem HooksCmdLine[] =
 	{
 		// Issue 1125: "Run as administrator" too. Must be last export
-		{(void*)OnShellExecCmdLine,		"ShellExecCmdLine",		shell32,   265},
+		HOOK_ITEM_BY_ORDN(ShellExecCmdLine,		shell32,   265),
 		{0}
 	};
 	HookItem HooksVshost[] =
 	{
 		// Issue 1312: .Net applications runs in "*.vshost.exe" helper GUI apllication when debugging
-		{(void*)OnAllocConsole,			"AllocConsole",			kernel32}, // Only for "*.vshost.exe"?
-		{(void*)OnShowWindow,			"ShowWindow",			user32},
+		HOOK_ITEM_BY_NAME(AllocConsole,			kernel32), // Only for "*.vshost.exe"?
+		HOOK_ITEM_BY_NAME(ShowWindow,			user32),
 		/* ************************ */
 		{0}
 	};
@@ -776,7 +723,7 @@ bool InitHooksDefTerm()
 	// Don't restrict to them, other Dev Envs may behave in similar way
 	HookItem HooksDevStudio[] =
 	{
-		{(void*)OnResumeThread,			"ResumeThread",			kernel32},
+		HOOK_ITEM_BY_NAME(ResumeThread,			kernel32),
 		/* ************************ */
 		{0}
 	};

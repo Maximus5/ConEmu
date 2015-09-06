@@ -125,6 +125,8 @@ struct HookItem
 	// Some functions are not exported by name,
 	// but only by ordinal, e.g. "ShellExecCmdLine"
 	DWORD           NameOrdinal;
+	// Pointer to function ID in our gpHooks
+	int*            pnFnID;
 
 	// *** following members are not initialized on InitHooks call ***
 
@@ -199,8 +201,22 @@ void* __cdecl GetOriginalAddress(void* OurFunction, HookItem** ph, bool abAllowN
 
 #define HOOK_FN_TYPE(n) On##n##_t
 #define HOOK_FN_NAME(n) On##n
+#define HOOK_FN_STR(n) #n
+#define HOOK_FN_ID(n) g_##n##_ID
+
+#ifdef DECLARE_CONEMU_HOOK_FUNCTION_ID
+	#define HOOK_FUNCTION_ID(n) int HOOK_FN_ID(n) = 0
+#else
+	#define HOOK_FUNCTION_ID(n) extern int HOOK_FN_ID(n)
+#endif
 
 // For example: HOOK_PROTOTYPE(BOOL,WINAPI,FlashWindow,(HWND hWnd, BOOL bInvert))
 #define HOOK_PROTOTYPE(fn,ret,call,args) \
+	HOOK_FUNCTION_ID(fn); \
 	typedef ret (call* HOOK_FN_TYPE(fn)) args; \
 	ret call HOOK_FN_NAME(fn) args
+
+#define HOOK_ITEM_BY_ORDN(fn,dll,ord) \
+	{(void*)HOOK_FN_NAME(fn), HOOK_FN_STR(fn), dll, ord, &HOOK_FN_ID(fn)}
+
+#define HOOK_ITEM_BY_NAME(fn,dll) HOOK_ITEM_BY_ORDN(fn,dll,0)
