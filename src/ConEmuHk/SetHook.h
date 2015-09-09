@@ -170,15 +170,6 @@ extern "C" {
 
 
 
-class CInFuncCall
-{
-	public:
-		int *mpn_Counter;
-	public:
-		CInFuncCall();
-		BOOL Inc(int* pnCounter);
-		~CInFuncCall();
-};
 
 #define F(n) ((On##n##_t)f##n)
 

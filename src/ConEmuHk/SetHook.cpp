@@ -511,27 +511,6 @@ FARPROC WINAPI GetTrampoline(LPCSTR pszName)
 	return NULL;
 }
 
-CInFuncCall::CInFuncCall()
-{
-	mpn_Counter = NULL;
-}
-BOOL CInFuncCall::Inc(int* pnCounter)
-{
-	BOOL lbFirstCall = FALSE;
-	mpn_Counter = pnCounter;
-
-	if (mpn_Counter)
-	{
-		lbFirstCall = (*mpn_Counter) == 0;
-		(*mpn_Counter)++;
-	}
-
-	return lbFirstCall;
-}
-CInFuncCall::~CInFuncCall()
-{
-	if (mpn_Counter && (*mpn_Counter)>0)(*mpn_Counter)--;
-}
 
 
 MSection* gpHookCS = NULL;
