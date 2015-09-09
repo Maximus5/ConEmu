@@ -770,7 +770,7 @@ int InitHooks(HookItem* apHooks)
 			}
 			else
 			{
-				WARNING("Тут часто возвращается XXXStub вместо самой функции!");
+				// NB, we often get XXXStub instead of the function itself
 				const char* ExportName = gpHooks[i].NameOrdinal ? ((const char*)gpHooks[i].NameOrdinal) : gpHooks[i].Name;
 
 				// Some kernel function must be hooked in the kernel32.dll itself (ExitProcess)
