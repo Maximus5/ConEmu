@@ -120,6 +120,10 @@ extern "C" {
 
 struct HookItem
 {
+	HMODULE hDll;          // handle of DllName
+	void*   HookedAddress; // Original exported function
+	void*   CallAddress;   // Address to call original function
+
 	// Calling function must set only this 3 fields
 	// These fields must be valid for lifetime
 	const void*     NewAddress;
@@ -141,10 +145,6 @@ struct HookItem
 #ifdef _WIN64
 	DWORD Pad1;
 #endif
-	
-	HMODULE hDll;          // handle of DllName
-	void*   HookedAddress; // Original exported function
-	void*   CallAddress;   // Address to call original function
 
 	// 'll be called before and after 'real' function
 	HMODULE                  hCallbackModule;
@@ -167,16 +167,24 @@ struct HookItem
 	#define HOOK_FUNCTION_ID(n) extern DWORD HOOK_FN_ID(n)
 #endif
 
+// Some kernel function must be hooked in the kernel32.dll itself (ExitProcess)
+#define HOOK_ITEM_BY_LIBR(fn,dll,ord,hlib) \
+	{hlib, NULL, NULL, (void*)HOOK_FN_NAME(fn), HOOK_FN_STR(fn), dll, ord, &HOOK_FN_ID(fn)}
+
+// Some function may be hooked by ordinal only, there are no named exports (ShellExecCmdLine)
+#define HOOK_ITEM_BY_ORDN(fn,dll,ord) \
+	HOOK_ITEM_BY_LIBR(fn,dll,ord,NULL)
+
+// Standard hook declaration for HookItem
+#define HOOK_ITEM_BY_NAME(fn,dll) HOOK_ITEM_BY_ORDN(fn,dll,0)
+
+
 // For example: HOOK_PROTOTYPE(BOOL,WINAPI,FlashWindow,(HWND hWnd, BOOL bInvert))
 #define HOOK_PROTOTYPE(fn,ret,call,args) \
 	HOOK_FUNCTION_ID(fn); \
 	typedef ret (call* HOOK_FN_TYPE(fn)) args; \
 	ret call HOOK_FN_NAME(fn) args
 
-#define HOOK_ITEM_BY_ORDN(fn,dll,ord) \
-	{(void*)HOOK_FN_NAME(fn), HOOK_FN_STR(fn), dll, ord, &HOOK_FN_ID(fn)}
-
-#define HOOK_ITEM_BY_NAME(fn,dll) HOOK_ITEM_BY_ORDN(fn,dll,0)
 
 void* __cdecl GetOriginalAddress(void* OurFunction, DWORD nFnID = 0, void* ApiFunction = NULL, HookItem** ph = NULL, bool abAllowNulls = false);
 
