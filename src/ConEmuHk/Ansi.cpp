@@ -99,7 +99,9 @@ BOOL WINAPI WriteProcessed(LPCWSTR lpBuffer, DWORD nNumberOfCharsToWrite, LPDWOR
 {
 	HANDLE hConsoleOutput = GetStdHandle(STD_OUTPUT_HANDLE);
 	InterlockedIncrement(&gnWriteProcessed);
-	BOOL bRc = CEAnsi::OurWriteConsoleW(hConsoleOutput, lpBuffer, nNumberOfCharsToWrite, lpNumberOfCharsWritten, NULL);
+	DWORD nNumberOfCharsWritten = 0;
+	BOOL bRc = CEAnsi::OurWriteConsoleW(hConsoleOutput, lpBuffer, nNumberOfCharsToWrite, &nNumberOfCharsWritten, NULL);
+	if (lpNumberOfCharsWritten) *lpNumberOfCharsWritten = nNumberOfCharsWritten;
 	InterlockedDecrement(&gnWriteProcessed);
 	return bRc;
 }
