@@ -658,29 +658,21 @@ int InitHooks(HookItem* apHooks)
 
 			skip = false;
 
-			for (j = 0; gpHooks[j].NewAddress; j++)
-			{
-				if (gpHooks[j].NewAddress == apHooks[i].NewAddress)
-				{
-					skip = true; break;
-				}
-			}
-
-			if (skip) continue;
-
 			j = 0; // using while, because of j
 
 			while (gpHooks[j].NewAddress)
 			{
+				if (gpHooks[j].NewAddress == apHooks[i].NewAddress)
+				{
+					_ASSERTEX(FALSE && "Function NewAddress is not unique! Skipped!");
+					skip = true; break;
+				}
+
 				if (gpHooks[j].NameCRC == NameCRC
 					&& strcmp(gpHooks[j].Name, apHooks[i].Name) == 0
 					&& wcscmp(gpHooks[j].DllName, apHooks[i].DllName) == 0)
 				{
-					// Не должно быть такого - функции должны только добавляться
-					_ASSERTEX(lstrcmpiA(gpHooks[j].Name, apHooks[i].Name) && lstrcmpiW(gpHooks[j].DllName, apHooks[i].DllName));
-					gpHooks[j].NewAddress = apHooks[i].NewAddress;
-					if (j >= gnHookedFuncs)
-						gnHookedFuncs = j+1;
+					_ASSERTEX(FALSE && "Function name/library is not unique! Skipped!");
 					skip = true;
 					break;
 				}
@@ -693,9 +685,9 @@ int InitHooks(HookItem* apHooks)
 
 			if ((j+1) >= MAX_HOOKED_PROCS)
 			{
-				// Превышено допустимое количество
+				// Maximum possible hooked function count was reached
 				_ASSERTE((j+1) < MAX_HOOKED_PROCS);
-				continue; // может какие другие хуки удастся обновить, а не добавить
+				break;
 			}
 
 			gpHooks[j].Name = apHooks[i].Name;
