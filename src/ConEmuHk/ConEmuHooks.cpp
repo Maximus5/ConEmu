@@ -49,7 +49,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define DROP_SETCP_ON_WIN2K3R2
 //#define SHOWDEBUGSTR -- специально отключено, CONEMU_MINIMAL, OutputDebugString могут нарушать работу процессов
-//#define SKIPHOOKLOG
 
 #undef SHOWCREATEPROCESSTICK
 #undef SHOWCREATEBUFFERINFO

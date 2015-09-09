@@ -4,3 +4,22 @@
 /* Hook GetLastError/SetLastError procedures */
 //#define HOOK_ERROR_PROC
 #undef HOOK_ERROR_PROC
+
+
+/* Define macros HLOGx and DLOGx */
+/* SKIPHOOKLOG is not defined or undefined here, by it    */
+/* may be used to disable logging in the exact *.cpp file */
+#ifdef _DEBUG
+	//#define USEHOOKLOG
+	#undef USEHOOKLOG
+#else
+	#undef USEHOOKLOG
+	#undef USEHOOKLOGANALYZE
+#endif
+/* USEHOOKLOGANALYZE used to determine voracious steps on exit */
+#ifdef USEHOOKLOG
+	#define USEHOOKLOGANALYZE
+#else
+	#undef USEHOOKLOGANALYZE
+#endif
+

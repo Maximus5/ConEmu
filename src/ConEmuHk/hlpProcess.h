@@ -200,21 +200,9 @@ extern "C" {
 
 void DoDllStop(bool bFinal, bool bFromTerminate = false);
 
-#ifdef _DEBUG
-	//#define USEHOOKLOG
-	#undef USEHOOKLOG
-	#ifdef USEHOOKLOG
-		#define USEHOOKLOGANALYZE
-	#else
-		#undef USEHOOKLOGANALYZE
-	#endif
-#else
-	#undef USEHOOKLOG
-	#undef USEHOOKLOGANALYZE
-#endif
-
 #include <intrin.h>
 
+// Defined in "DbgHooks.h"
 #ifdef USEHOOKLOG
 	#define getThreadId() WIN3264TEST(((DWORD*) __readfsdword(24))[9],GetCurrentThreadId())
 
@@ -282,6 +270,8 @@ void DoDllStop(bool bFinal, bool bFromTerminate = false);
 	#undef getTime
 #endif
 
+// USEHOOKLOG may be defined in DbgHooks.h
+// SKIPHOOKLOG may be used to disable logging in the exact *.cpp file
 #if defined(USEHOOKLOG) && !defined(SKIPHOOKLOG)
 	#define HLOG0(m,p) HookLogger::Event* es = HookLogger::Log(m,p);
 	#define HLOG(m,p) es = HookLogger::Log(m,p);
