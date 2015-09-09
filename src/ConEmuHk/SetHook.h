@@ -154,27 +154,6 @@ struct HookItem
 };
 
 
-int  InitHooks(HookItem* apHooks);
-bool SetAllHooks();
-void UnsetAllHooks();
-
-bool PrepareNewModule(HMODULE module, LPCSTR asModuleA, LPCWSTR asModuleW, BOOL abNoSnapshoot = FALSE, BOOL abForceHooks = FALSE);
-void UnprepareModule(HMODULE hModule, LPCWSTR pszModule, int iStep);
-
-//typedef VOID (WINAPI* OnLibraryLoaded_t)(HMODULE ahModule);
-//extern OnLibraryLoaded_t gfOnLibraryLoaded;
-#if defined(__GNUC__)
-extern "C" {
-#endif
-	void __stdcall SetLoadLibraryCallback(HMODULE ahCallbackModule, OnLibraryLoaded_t afOnLibraryLoaded, OnLibraryLoaded_t afOnLibraryUnLoaded);
-#if defined(__GNUC__)
-};
-#endif
-
-
-
-
-
 #define F(n) ((On##n##_t)f##n)
 
 #define HOOK_FN_TYPE(n) On##n##_t
@@ -200,6 +179,24 @@ extern "C" {
 #define HOOK_ITEM_BY_NAME(fn,dll) HOOK_ITEM_BY_ORDN(fn,dll,0)
 
 void* __cdecl GetOriginalAddress(void* OurFunction, DWORD nFnID = 0, void* ApiFunction = NULL, HookItem** ph = NULL, bool abAllowNulls = false);
+
+int  InitHooks(HookItem* apHooks);
+bool SetAllHooks();
+void UnsetAllHooks();
+
+bool PrepareNewModule(HMODULE module, LPCSTR asModuleA, LPCWSTR asModuleW, BOOL abNoSnapshoot = FALSE, BOOL abForceHooks = FALSE);
+void UnprepareModule(HMODULE hModule, LPCWSTR pszModule, int iStep);
+
+//typedef VOID (WINAPI* OnLibraryLoaded_t)(HMODULE ahModule);
+//extern OnLibraryLoaded_t gfOnLibraryLoaded;
+#if defined(__GNUC__)
+extern "C" {
+#endif
+	void __stdcall SetLoadLibraryCallback(HMODULE ahCallbackModule, OnLibraryLoaded_t afOnLibraryLoaded, OnLibraryLoaded_t afOnLibraryUnLoaded);
+#if defined(__GNUC__)
+};
+#endif
+
 
 #define ORIGINALFASTEX(n,o) \
 	HookItem *ph = NULL; \
