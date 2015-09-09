@@ -87,6 +87,12 @@ bool gbSkipCheckProcessModules = false;
 
 bool gbHookExecutableOnly = false;
 
+MH_STATUS g_mhInit = MH_UNKNOWN;
+MH_STATUS g_mhCreate = MH_UNKNOWN;
+MH_STATUS g_mhEnable = MH_UNKNOWN;
+MH_STATUS g_mhCritical = MH_UNKNOWN;
+MH_STATUS g_mhDeinit = MH_UNKNOWN;
+
 
 //!!!All dll names MUST BE LOWER CASE!!!
 //!!!WARNING!!! Добавляя в этот список - не забыть добавить и в GetPreloadModules() !!!
@@ -611,10 +617,10 @@ int InitHooks(HookItem* apHooks)
 
 	if (gpHooks == NULL)
 	{
-		MH_STATUS status = MH_Initialize();
-		if (status != MH_OK)
+		g_mhInit = MH_Initialize();
+		if (g_mhInit != MH_OK)
 		{
-			_ASSERTE(status == MH_OK);
+			_ASSERTE(g_mhInit == MH_OK);
 			return -1;
 		}
 
@@ -1144,7 +1150,7 @@ bool SetAllHooks()
 	{
 		if (gpHooks[i].HookedAddress && !gpHooks[i].CallAddress)
 		{
-			status = MH_CreateHook((LPVOID)gpHooks[i].HookedAddress, (LPVOID)gpHooks[i].NewAddress, &gpHooks[i].CallAddress);
+			g_mhCreate = status = MH_CreateHook((LPVOID)gpHooks[i].HookedAddress, (LPVOID)gpHooks[i].NewAddress, &gpHooks[i].CallAddress);
 			_ASSERTE(status == MH_OK);
 		}
 	}
@@ -1152,7 +1158,7 @@ bool SetAllHooks()
 	// Let GetOriginalAddress return trampolines
 	gnDllState |= ds_HooksStarted;
 
-	status = MH_EnableHook(MH_ALL_HOOKS);
+	g_mhEnable = status = MH_EnableHook(MH_ALL_HOOKS);
 	_ASSERTE(status == MH_OK);
 
 	DebugString(L"SetAllHooks finished\n");
@@ -1181,13 +1187,11 @@ void UnsetAllHooks()
 	hkFunc.OnHooksUnloaded();
 	}
 
-	MH_STATUS status = MH_Uninitialize();
+	g_mhDeinit = MH_Uninitialize();
 
 	#ifdef _DEBUG
 	DebugStringA("UnsetAllHooks finished\n");
 	#endif
-
-	UNREFERENCED_PARAMETER(status);
 }
 
 
