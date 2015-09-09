@@ -1292,7 +1292,7 @@ struct CESERVER_CONSAVE_MAP
 	int   CurrentIndex;
 	BOOL  Succeeded;
 
-	TODO("Store TrueColor buffer?");
+	//TODO: Store TrueColor buffer?
 
 	CHAR_INFO Data[1];
 };
@@ -1347,7 +1347,7 @@ static const CEFAR_MACRO_AREA
 	;
 
 
-WARNING("CEFAR_INFO_MAPPING.nFarColors - subject to change!!!");
+//TODO: CEFAR_INFO_MAPPING.nFarColors - subject to change!!!
 struct CEFAR_INFO_MAPPING
 {
 	DWORD cbSize;
