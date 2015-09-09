@@ -146,6 +146,24 @@ VOID WINAPI OnExitProcess(UINT uExitCode)
 	// Issue 1865: Due to possible dead locks in LdrpAcquireLoaderLock() call TerminateProcess
 	bUseForceTerminate = gbHookServerForcedTermination;
 
+	#ifdef USE_GH_272_WORKAROUND
+	// gh#272: For unknown yet reason existance of nvd3d9wrap.dll (or nvd3d9wrapx.dll on 64-bit)
+	//		caused stack overflow with following calls
+	//
+	//		nvd3d9wrap!GetNVDisplayW+0x174f
+	//		nvd3d9wrap!GetNVDisplayW+0x174f
+	//		user32!_UserClientDllInitialize+0x2ca
+	//		ntdll!LdrpCallInitRoutine+0x14
+	//		ntdll!LdrShutdownProcess+0x1aa
+	//		ntdll!RtlExitUserProcess+0x74
+	//		kernel32!ExitProcessStub+0x12
+	//		CallExit!main+0x47
+	if (!bUseForceTerminate && GetModuleHandle(WIN3264TEST(L"nvd3d9wrap.dll",L"nvd3d9wrapx.dll")))
+	{
+		bUseForceTerminate = true;
+	}
+	#endif // USE_GH_272_WORKAROUND
+
 	if (bUseForceTerminate)
 	{
 		TerminateProcess(GetCurrentProcess(), uExitCode);

@@ -28,3 +28,7 @@
 //#define PRINT_ON_EXITPROCESS_CALLS
 #undef PRINT_ON_EXITPROCESS_CALLS
 
+
+/* gh#272: Crash if NVIDIA CoProcManager dlls are loaded */
+#define USE_GH_272_WORKAROUND
+
