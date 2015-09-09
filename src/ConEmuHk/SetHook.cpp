@@ -765,20 +765,11 @@ int InitHooks(HookItem* apHooks)
 				{
 					iFunc++;
 				}
-				// WinXP does not have many hooked functions, will not show dozens of asserts
 				#ifdef _DEBUG
 				else
 				{
-					static int isWin7 = 0;
-					if (isWin7 == 0)
-					{
-						OSVERSIONINFOEXW osvi = {sizeof(osvi), HIBYTE(_WIN32_WINNT_WIN7), LOBYTE(_WIN32_WINNT_WIN7)};
-						DWORDLONG const dwlConditionMask = VerSetConditionMask(VerSetConditionMask(0, VER_MAJORVERSION, VER_GREATER_EQUAL), VER_MINORVERSION, VER_GREATER_EQUAL);
-						BOOL isGrEq = VerifyVersionInfoW(&osvi, VER_MAJORVERSION | VER_MINORVERSION, dwlConditionMask);
-						isWin7 = isGrEq ? 1 : -1;
-					}
-
-					_ASSERTE((isWin7 == -1) || (gpHooks[i].HookedAddress != NULL));
+					// WinXP does not have many hooked functions, don't show dozens of asserts
+					_ASSERTE(!IsWin7() || (gpHooks[i].HookedAddress != NULL));
 				}
 				#endif
 
