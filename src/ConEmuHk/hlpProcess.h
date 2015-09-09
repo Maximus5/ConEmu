@@ -79,7 +79,9 @@ const ConEmuHkDllState
 ;
 extern ConEmuHkDllState gnDllState;
 
+// xxxRaw is used internally, during hooks initialization and shutdown
 #define HooksWereSetRaw ((gnDllState & ds_HooksStarted) && !(gnDllState & ds_HooksStopped))
+// To be sure that hooks are active at the moment
 #define HooksWereSet (HooksWereSetRaw && !(gnDllState & ds_HooksStopping))
 
 //int WINAPI RequestLocalServer(/*[IN/OUT]*/RequestLocalServerParm* Parm);
