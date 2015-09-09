@@ -539,6 +539,7 @@
     <ClInclude Include="Ansi.h" />
     <ClInclude Include="ConEmuHooks.h" />
     <ClInclude Include="Console2.h" />
+    <ClInclude Include="DbgHooks.h" />
     <ClInclude Include="ExtConsole.h" />
     <ClInclude Include="GuiAttach.h" />
     <ClInclude Include="hkCmdExe.h" />
@@ -556,6 +557,7 @@
     <ClInclude Include="hkStdIO.h" />
     <ClInclude Include="hkWindow.h" />
     <ClInclude Include="hlpConsole.h" />
+    <ClInclude Include="hlpProcess.h" />
     <ClInclude Include="Injects.h" />
     <ClInclude Include="MainThread.h" />
     <ClInclude Include="resource.h" />

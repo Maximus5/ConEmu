@@ -420,6 +420,7 @@
       <File RelativePath="..\common\WObjects.h" />
       <File RelativePath="..\common\WThreads.h" />
       <File RelativePath="..\ConEmuCD\ExitCodes.h" />
+      <File RelativePath=".\DbgHooks.h" />
       <File RelativePath=".\hkCmdExe.h" />
       <File RelativePath=".\hkConsole.h" />
       <File RelativePath=".\hkConsoleInput.h" />
@@ -435,6 +436,7 @@
       <File RelativePath=".\hkStdIO.h" />
       <File RelativePath=".\hkWindow.h" />
       <File RelativePath=".\hlpConsole.h" />
+      <File RelativePath=".\hlpProcess.h" />
       <File RelativePath="Ansi.h" />
       <File RelativePath="ConEmuHooks.h" />
       <File RelativePath="Console2.h" />
