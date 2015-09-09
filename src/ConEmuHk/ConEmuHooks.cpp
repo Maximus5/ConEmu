@@ -85,7 +85,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/ConEmuCheck.h"
 #include "SetHook.h"
 #include "../common/execute.h"
-#include "ConEmuHooks.h"
 #include "DefTermHk.h"
 #include "ShellProcessor.h"
 #include "GuiAttach.h"

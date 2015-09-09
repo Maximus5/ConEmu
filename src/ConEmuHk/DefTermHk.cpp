@@ -29,10 +29,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/common.hpp"
 #include "../common/MFileLog.h"
 #include "../common/HkFunc.h"
-#include "ConEmuHooks.h"
 #include "hlpConsole.h"
 #include "hlpProcess.h"
 #include "DefTermHk.h"
+#include "SetHook.h"
 #include "../ConEmu/version.h"
 
 #define FOREGROUND_CHECK_DELAY  1000

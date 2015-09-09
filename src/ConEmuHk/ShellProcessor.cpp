@@ -52,7 +52,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 #include "../ConEmuCD/ExitCodes.h"
 #include "Ansi.h"
-#include "ConEmuHooks.h"
 #include "DefTermHk.h"
 #include "GuiAttach.h"
 #include "Injects.h"

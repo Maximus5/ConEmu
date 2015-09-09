@@ -36,6 +36,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/execute.h"
 #include "../common/MMap.h"
 
+#include "Ansi.h"
 #include "DefTermHk.h"
 #include "hkProcess.h"
 #include "MainThread.h"

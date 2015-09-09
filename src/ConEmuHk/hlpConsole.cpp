@@ -46,7 +46,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "hlpConsole.h"
 #include "hlpProcess.h"
 
-//#include "ConEmuHooks.h"
 //#include "DefTermHk.h"
 //#include "GuiAttach.h"
 //#include "hkConsole.h"

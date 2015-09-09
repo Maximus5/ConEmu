@@ -33,7 +33,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/HkFunc.h"
 #include "../ConEmuCD/ExitCodes.h"
 #include "../common/WObjects.h"
-//#include "ConEmuHooks.h"
 #include "Console2.h"
 
 extern HMODULE ghOurModule;

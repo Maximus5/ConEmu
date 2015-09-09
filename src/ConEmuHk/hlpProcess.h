@@ -49,6 +49,8 @@ extern DWORD   gnServerPID; // PID сервера (инициализирует�
 #include "../common/MMap.h"
 #include "../common/MFileMapping.h"
 
+#include "DbgHooks.h"
+
 void SetServerPID(DWORD anMainSrvPID);
 
 extern MFileMapping<CESERVER_CONSOLE_APP_MAPPING> *gpAppMap;
