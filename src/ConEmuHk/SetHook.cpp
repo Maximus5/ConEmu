@@ -772,7 +772,9 @@ int InitHooks(HookItem* apHooks)
 			{
 				WARNING("Тут часто возвращается XXXStub вместо самой функции!");
 				const char* ExportName = gpHooks[i].NameOrdinal ? ((const char*)gpHooks[i].NameOrdinal) : gpHooks[i].Name;
-				if (mod == ghKernel32)
+
+				// Some kernel function must be hooked in the kernel32.dll itself (ExitProcess)
+				if ((mod == ghKernel32) && !hRequiredMod)
 				{
 					if (!(gpHooks[i].HookedAddress = (void*)GetProcAddress(ghKernelBase, ExportName)))
 					{

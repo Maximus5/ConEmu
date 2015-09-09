@@ -497,7 +497,7 @@ bool InitHooksExecutor()
 	HookItem HooksCommon[] =
 	{
 		/* ************************ */
-		HOOK_ITEM_BY_NAME(ExitProcess,			kernel32),
+		HOOK_ITEM_BY_LIBR(ExitProcess,			kernel32, 0, ghKernel32), // Hook the kernel32.dll, not kernelbase.dll
 		HOOK_ITEM_BY_NAME(TerminateProcess,		kernel32),
 		/* ************************ */
 		HOOK_ITEM_BY_NAME(CreateThread,			kernel32),
