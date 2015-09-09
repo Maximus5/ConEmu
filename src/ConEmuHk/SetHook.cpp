@@ -1391,7 +1391,7 @@ void UnprepareModule(HMODULE hModule, LPCWSTR pszModule, int iStep)
 	// lbResource получается TRUE например при вызовах из version.dll
 	wchar_t szModule[MAX_PATH*2]; szModule[0] = 0;
 
-	if ((iStep == 0) && gbLogLibraries && !(gnDllState & ds_DllStopCalled))
+	if ((iStep == 0) && gbLogLibraries && !(gnDllState & ds_DllStoping))
 	{
 		CShellProc* sp = new CShellProc();
 		if (sp->LoadSrvMapping())
@@ -1440,7 +1440,7 @@ void UnprepareModule(HMODULE hModule, LPCWSTR pszModule, int iStep)
 
 
 	// Далее только если !LDR_IS_RESOURCE
-	if ((iStep > 0) && !lbResource && !(gnDllState & ds_DllStopCalled))
+	if ((iStep > 0) && !lbResource && !(gnDllState & ds_DllStoping))
 	{
 		// Попробуем определить, действительно ли модуль выгружен, или только счетчик уменьшился
 		// iStep == 2 comes from LdrDllNotification(Unload)

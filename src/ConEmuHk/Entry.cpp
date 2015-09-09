@@ -1448,7 +1448,7 @@ void FlushMouseEvents()
 	}
 }
 
-void DoDllStop(bool bFinal, bool bFromTerminate)
+void DoDllStop(bool bFinal, ConEmuHkDllState bFromTerminate)
 {
 	DLOG0("DoDllStop",bFinal);
 
@@ -1461,8 +1461,8 @@ void DoDllStop(bool bFinal, bool bFromTerminate)
 	print_timings(L"DllStop");
 	bool bUnload = (bFinal && !HooksWereSet);
 
-	if (!(gnDllState & ds_DllStop))
-		gnDllState |= ds_DllStop;
+	gnDllState |= ds_DllStoping
+		| (bFinal ? ds_DllStopFinal : ds_DllStopNonFinal);
 
 	static bool bVimStopped = false;
 	if (gbIsVimProcess && !bVimStopped)
@@ -1471,7 +1471,11 @@ void DoDllStop(bool bFinal, bool bFromTerminate)
 		CEAnsi::StopVimTerm();
 	}
 
+	DLL_STOP_STEP(1);
+
 	CEAnsi::DoneAnsiLog(bUnload);
+
+	DLL_STOP_STEP(2);
 
 	TODO("Stop redirection of ConIn/ConOut to our pipes to achieve PTTY in bash");
 	#ifdef _DEBUG
@@ -1481,10 +1485,14 @@ void DoDllStop(bool bFinal, bool bFromTerminate)
 	}
 	#endif
 
+	DLL_STOP_STEP(3);
+
 	if (gpDefTerm)
 	{
 		gpDefTerm->StopHookers();
 	}
+
+	DLL_STOP_STEP(4);
 
 	// Issue 689: Progress stuck at 100%
 	if (gbPowerShellMonitorProgress && (gnPowerShellProgressValue != -1))
@@ -1495,6 +1503,7 @@ void DoDllStop(bool bFinal, bool bFromTerminate)
 		DLOGEND();
 	}
 
+	DLL_STOP_STEP(5);
 
 	#ifdef _DEBUG
 	wchar_t *szModule = (wchar_t*)calloc((MAX_PATH+1),sizeof(wchar_t));
@@ -1517,6 +1526,7 @@ void DoDllStop(bool bFinal, bool bFromTerminate)
 		DLOGEND();
 	}
 
+	DLL_STOP_STEP(6);
 
 	#ifdef USE_PIPE_SERVER
 	if (gpHookServer)
@@ -1532,6 +1542,8 @@ void DoDllStop(bool bFinal, bool bFromTerminate)
 	}
 	#endif
 
+	DLL_STOP_STEP(7);
+
 	#ifdef _DEBUG
 	if (ghGuiClientRetHook)
 	{
@@ -1544,6 +1556,8 @@ void DoDllStop(bool bFinal, bool bFromTerminate)
 	}
 	#endif
 
+	DLL_STOP_STEP(8);
+
 	if (HooksWereSet && bFinal)
 	{
 		DLOG0("ShutdownHooks",0);
@@ -1552,6 +1566,8 @@ void DoDllStop(bool bFinal, bool bFromTerminate)
 		ShutdownHooks();
 		DLOGEND();
 	}
+
+	DLL_STOP_STEP(9);
 
 	// Do not send CECMD_CMDSTARTSTOP(sst_AppStop) to server
 	// when that is 'DefTerm' process - avoid termination lagging
@@ -1566,6 +1582,8 @@ void DoDllStop(bool bFinal, bool bFromTerminate)
 		DLOGEND();
 	}
 
+	DLL_STOP_STEP(10);
+
 	if (gpConMap && bUnload)
 	{
 		DLOG0("gpConMap->CloseMap",0);
@@ -1576,6 +1594,8 @@ void DoDllStop(bool bFinal, bool bFromTerminate)
 		gpConMap = NULL;
 		DLOGEND();
 	}
+
+	DLL_STOP_STEP(11);
 
 	if (gpAppMap && gpAppMap->IsValid())
 	{
@@ -1589,6 +1609,8 @@ void DoDllStop(bool bFinal, bool bFromTerminate)
 			pAppMap->nLastReadConsoleInputPID = 0;
 	}
 
+	DLL_STOP_STEP(12);
+
 	if (gpAppMap && bUnload)
 	{
 		DLOG0("gpAppMap->CloseMap",0);
@@ -1598,6 +1620,8 @@ void DoDllStop(bool bFinal, bool bFromTerminate)
 		gpAppMap = NULL;
 		DLOGEND();
 	}
+
+	DLL_STOP_STEP(13);
 
 	// CommonShutdown
 	if (bUnload)
@@ -1609,6 +1633,7 @@ void DoDllStop(bool bFinal, bool bFromTerminate)
 		DLOGEND();
 	}
 
+	DLL_STOP_STEP(14);
 
 	// FinalizeHookedModules
 	if (bUnload)
@@ -1618,6 +1643,8 @@ void DoDllStop(bool bFinal, bool bFromTerminate)
 		FinalizeHookedModules();
 		DLOGEND();
 	}
+
+	DLL_STOP_STEP(15);
 
 	if (bUnload)
 	{
@@ -1632,8 +1659,6 @@ void DoDllStop(bool bFinal, bool bFromTerminate)
 			SetUnhandledExceptionFilter(NULL);
 		#endif
 	#endif
-
-	gnDllState |= ds_DllStopCalled;
 
 	wchar_t szDoneInfo[128];
 	{
@@ -1659,6 +1684,8 @@ void DoDllStop(bool bFinal, bool bFromTerminate)
 		print_timings(L"HookLogger::RunAnalyzer - Done");
 	}
 	#endif
+
+	gnDllState |= ds_DllStopped;
 
 	//DLOGEND();
 }
@@ -1879,11 +1906,11 @@ BOOL DllMain_ThreadDetach(HANDLE hModule, DWORD  ul_reason_for_call)
 	#endif
 
 	// DLL_PROCESS_DETACH is not called in some cases
-	if (gnHookMainThreadId && (nTID == gnHookMainThreadId) && !(gnDllState & ds_DllDeinitialized))
+	if (gnHookMainThreadId && (nTID == gnHookMainThreadId) && !(gnDllState & ds_DllDeinitializing))
 	{
 		gnDllState |= ds_DllMainThreadDetach;
 		bNeedDllStop = true;
-		gnDllState |= ds_DllDeinitialized;
+		gnDllState |= ds_DllDeinitializing;
 	}
 
 	if (ghHeap)
@@ -1924,7 +1951,7 @@ BOOL DllMain_ProcessDetach(HANDLE hModule, DWORD  ul_reason_for_call)
 	gnDllState |= ds_DllProcessDetach;
 
 	// May be already called from DLL_THREAD_DETACH, OnExitProcess and so on...
-	gnDllState |= ds_DllDeinitialized;
+	gnDllState |= ds_DllDeinitializing;
 	DLOG1("DllMain.DllStop",ul_reason_for_call);
 	//WARNING!!! OutputDebugString must NOT be used from ConEmuHk::DllMain(DLL_PROCESS_DETACH). See Old-Issue 465
 	DoDllStop(true);
