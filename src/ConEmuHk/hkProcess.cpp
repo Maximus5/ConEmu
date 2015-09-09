@@ -141,8 +141,12 @@ VOID WINAPI OnExitProcess(UINT uExitCode)
 	// And terminate our threads
 	DoDllStop(false, ds_OnExitProcess);
 
+	bool bUseForceTerminate;
+
 	// Issue 1865: Due to possible dead locks in LdrpAcquireLoaderLock() call TerminateProcess
-	if (gbHookServerForcedTermination)
+	bUseForceTerminate = gbHookServerForcedTermination;
+
+	if (bUseForceTerminate)
 	{
 		TerminateProcess(GetCurrentProcess(), uExitCode);
 		return; // Assume not to get here
