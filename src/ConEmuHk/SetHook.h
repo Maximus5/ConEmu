@@ -130,6 +130,7 @@ struct HookItem
 	DWORD           NameOrdinal;
 	// Pointer to function ID in our gpHooks
 	LPDWORD         pnFnID;
+	LONG            Counter;
 
 	// *** following members are not initialized on InitHooks call ***
 
@@ -182,7 +183,7 @@ extern "C" {
 #define HOOK_FN_ID(n) g_##n##_ID
 
 #ifdef DECLARE_CONEMU_HOOK_FUNCTION_ID
-	#define HOOK_FUNCTION_ID(n) DWORD HOOK_FN_ID(n) = (DWORD)-1
+	#define HOOK_FUNCTION_ID(n) DWORD HOOK_FN_ID(n) = 0
 #else
 	#define HOOK_FUNCTION_ID(n) extern DWORD HOOK_FN_ID(n)
 #endif
@@ -198,7 +199,7 @@ extern "C" {
 
 #define HOOK_ITEM_BY_NAME(fn,dll) HOOK_ITEM_BY_ORDN(fn,dll,0)
 
-void* __cdecl GetOriginalAddress(void* OurFunction, DWORD nFnID = (DWORD)-1, void* ApiFunction = NULL, HookItem** ph = NULL, bool abAllowNulls = false);
+void* __cdecl GetOriginalAddress(void* OurFunction, DWORD nFnID = 0, void* ApiFunction = NULL, HookItem** ph = NULL, bool abAllowNulls = false);
 
 #define ORIGINALFASTEX(n,o) \
 	HookItem *ph = NULL; \

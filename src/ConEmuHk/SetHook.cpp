@@ -424,34 +424,43 @@ DWORD gnLastLogSetChange = 0;
 
 // Используется в том случае, если требуется выполнить оригинальную функцию, без нашей обертки
 // пример в OnPeekConsoleInputW
-void* __cdecl GetOriginalAddress(void* OurFunction, DWORD nFnID /*= (DWORD)-1*/, void* ApiFunction/*= NULL*/, HookItem** ph/*= NULL*/, bool abAllowNulls /*= false*/)
+void* __cdecl GetOriginalAddress(void* OurFunction, DWORD nFnID /*= 0*/, void* ApiFunction/*= NULL*/, HookItem** ph/*= NULL*/, bool abAllowNulls /*= false*/)
 {
 	void* lpfn = NULL;
 
-	if (gpHooks && HooksWereSetRaw)
+	// Initialized?
+	if (!gpHooks || !HooksWereSetRaw)
 	{
-		// We must know function index in the gpHooks
-		if ((nFnID != (DWORD)-1)
-			&& (nFnID < gnHookedFuncs)
-			&& (gpHooks[nFnID].NewAddress == OurFunction)
-			)
+		goto wrap;
+	}
+
+	// We must know function index in the gpHooks
+	if (nFnID && (nFnID <= gnHookedFuncs))
+	{
+		size_t nIdx = nFnID-1;
+		if (gpHooks[nIdx].NewAddress == OurFunction)
 		{
-			if (ph) *ph = &(gpHooks[nFnID]);
+			if (ph) *ph = &(gpHooks[nIdx]);
 			// Return address where we may call "original" function
-			lpfn = gpHooks[nFnID].CallAddress;
+			lpfn = gpHooks[nIdx].CallAddress;
+			HookLogger::Log(nFnID);
+			InterlockedIncrement(&gpHooks[nIdx].Counter);
 			goto wrap;
 		}
-		// That is strange. Try to find via pointer
-		_ASSERTE(abAllowNulls && "Function index was not detected");
-		for (int i = 0; gpHooks[i].NewAddress; i++)
+	}
+
+	// That is strange. Try to find via pointer
+	_ASSERTE(abAllowNulls && "Function index was not detected");
+	for (int i = 0; gpHooks[i].NewAddress; i++)
+	{
+		if (gpHooks[i].NewAddress == OurFunction)
 		{
-			if (gpHooks[i].NewAddress == OurFunction)
-			{
-				if (ph) *ph = &(gpHooks[i]);
-				// Return address where we may call "original" function
-				lpfn = gpHooks[i].CallAddress;
-				goto wrap;
-			}
+			if (ph) *ph = &(gpHooks[i]);
+			// Return address where we may call "original" function
+			lpfn = gpHooks[i].CallAddress;
+			HookLogger::Log(i+1); // Function ID
+			InterlockedIncrement(&gpHooks[i].Counter);
+			goto wrap;
 		}
 	}
 
@@ -693,8 +702,9 @@ int InitHooks(HookItem* apHooks)
 			gpHooks[j] = apHooks[i];
 			// Set function ID and NameCRC
 			if (apHooks[i].pnFnID)
-				*apHooks[i].pnFnID = j;
+				*apHooks[i].pnFnID = j+1; // 1-based ID
 			gpHooks[j].NameCRC = NameCRC;
+			_ASSERTEX(gpHooks[j].Counter == 0);
 
 			// Increase total hooked count
 			_ASSERTEX(j >= gnHookedFuncs);
