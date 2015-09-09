@@ -716,7 +716,11 @@ int InitHooks(HookItem* apHooks)
 		}
 	}
 
-	// Для добавленных в gpHooks функций определить "оригинальный" адрес экспорта
+	// Local variables to speed up GetModuleHandle calls
+	HMODULE hLastModule = NULL;
+	LPCWSTR pszLastModule = NULL;
+
+	// Determine original function addresses
 	for (i = 0; gpHooks[i].NewAddress; i++)
 	{
 		if (gpHooks[i].DllNameA[0] == 0)
@@ -727,8 +731,24 @@ int InitHooks(HookItem* apHooks)
 
 		if (!gpHooks[i].HookedAddress)
 		{
-			// Сейчас - не загружаем
-			HMODULE mod = GetModuleHandle(gpHooks[i].DllName);
+			// If we need to hook exact library (kernel32) instead of KernelBase
+			HMODULE hRequiredMod = gpHooks[i].hDll;
+
+			// Don't load them now with LoadLibrary, process only already loaded modules
+			HMODULE mod = hRequiredMod;
+			if (!hRequiredMod)
+			{
+				// Speed up GetModuleHandle calls
+				if (pszLastModule == gpHooks[i].DllName)
+				{
+					mod = hLastModule;
+				}
+				else
+				{
+					pszLastModule = gpHooks[i].DllName;
+					hLastModule = mod = GetModuleHandle(pszLastModule);
+				}
+			}
 
 			if (mod == NULL)
 			{
