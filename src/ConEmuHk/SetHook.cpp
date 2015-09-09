@@ -690,18 +690,20 @@ int InitHooks(HookItem* apHooks)
 				break;
 			}
 
-			gpHooks[j].Name = apHooks[i].Name;
-			gpHooks[j].NameOrdinal = apHooks[i].NameOrdinal;
-			gpHooks[j].DllName = apHooks[i].DllName;
-			gpHooks[j].NewAddress = apHooks[i].NewAddress;
-			gpHooks[j].pnFnID = apHooks[i].pnFnID;
+			// Store new function
+			gpHooks[j] = apHooks[i];
+			// Set function ID and NameCRC
 			if (apHooks[i].pnFnID)
 				*apHooks[i].pnFnID = j;
 			gpHooks[j].NameCRC = NameCRC;
+
+			// Increase total hooked count
 			_ASSERTEX(j >= gnHookedFuncs);
 			gnHookedFuncs = j+1;
-			gpHooks[j+1].Name = NULL; // на всякий
-			gpHooks[j+1].NewAddress = NULL; // на всякий
+
+			// Clear next item just in case
+			gpHooks[j+1].Name = NULL;
+			gpHooks[j+1].NewAddress = NULL;
 		}
 	}
 
