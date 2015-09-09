@@ -133,6 +133,11 @@ VOID WINAPI OnExitProcess(UINT uExitCode)
 
 	gnDllState |= ds_OnExitProcess;
 
+	#ifdef PRINT_ON_EXITPROCESS_CALLS
+	wchar_t szInfo[80]; _wsprintf(szInfo, SKIPCOUNT(szInfo) L"\n::ExitProcess(%u) called\n", uExitCode);
+	WriteProcessed(szInfo, lstrlen(szInfo), NULL);
+	#endif
+
 	// And terminate our threads
 	DoDllStop(false, ds_OnExitProcess);
 
@@ -156,6 +161,11 @@ BOOL WINAPI OnTerminateProcess(HANDLE hProcess, UINT uExitCode)
 
 	if (hProcess == GetCurrentProcess())
 	{
+		#ifdef PRINT_ON_EXITPROCESS_CALLS
+		wchar_t szInfo[80]; _wsprintf(szInfo, SKIPCOUNT(szInfo) L"\n::TerminateProcess(%u) called\n", uExitCode);
+		WriteProcessed(szInfo, lstrlen(szInfo), NULL);
+		#endif
+
 		gnDllState |= ds_OnTerminateProcess;
 		// We need not to unset hooks (due to process will be force-killed below)
 		// And terminate our threads

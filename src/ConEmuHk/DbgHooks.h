@@ -23,3 +23,8 @@
 	#undef USEHOOKLOGANALYZE
 #endif
 
+
+/* Print to console on ExitProcess/TerminateProcess */
+//#define PRINT_ON_EXITPROCESS_CALLS
+#undef PRINT_ON_EXITPROCESS_CALLS
+
