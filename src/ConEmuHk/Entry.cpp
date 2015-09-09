@@ -351,11 +351,6 @@ void ShutdownStep(LPCWSTR asInfo, int nParm1 = 0, int nParm2 = 0, int nParm3 = 0
 #endif
 
 
-#ifdef HOOK_USE_DLLTHREAD
-HANDLE ghStartThread = NULL;
-DWORD  gnStartThreadID = 0;
-#endif
-
 
 void ShowStartedMsgBox(LPCWSTR asLabel, LPCWSTR pszName = NULL)
 {
@@ -1407,22 +1402,6 @@ void InitExeName()
 	}
 }
 
-#ifdef HOOK_USE_DLLTHREAD
-void DllThreadClose()
-{
-	if (ghStartThread)
-	{
-		DWORD nWait = WaitForSingleObject(ghStartThread, 5000);
-		if (nWait == WAIT_TIMEOUT)
-		{
-			// Нехорошо, но хуже, если заблокируется консольное приложение
-			apiTerminateThread(ghStartThread, 100);
-		}
-		CloseHandle(ghStartThread);
-		ghStartThread = NULL;
-	}
-}
-#endif
 
 void FlushMouseEvents()
 {
@@ -1516,10 +1495,6 @@ void DoDllStop(bool bFinal, bool bFromTerminate)
 		DLOGEND();
 	}
 
-
-	#ifdef HOOK_USE_DLLTHREAD
-	DllThreadClose();
-	#endif
 
 	#ifdef _DEBUG
 	wchar_t *szModule = (wchar_t*)calloc((MAX_PATH+1),sizeof(wchar_t));
@@ -1850,29 +1825,6 @@ BOOL DllMain_ProcessAttach(HANDLE hModule, DWORD  ul_reason_for_call)
 
 
 	DLOG1_("DllMain.DllStart",ul_reason_for_call);
-	#ifdef HOOK_USE_DLLTHREAD
-	_ASSERTEX(FALSE && "Hooks starting in background thread?");
-	//HANDLE hEvents[2];
-	//hEvents[0] = CreateEvent(NULL, FALSE, FALSE, NULL);
-	//hEvents[1] =
-	ghStartThread = apiCreateThread(DllStart, NULL/*(LPVOID)(hEvents[0])*/, &gnStartThreadID, "ConEmuHk::DllStart");
-	if (ghStartThread == NULL)
-	{
-		//_ASSERTE(ghStartThread!=NULL);
-		wchar_t szMsg[128]; DWORD nErrCode = GetLastError();
-		msprintf(szMsg, countof(szMsg),
-			L"Failed to start DllStart thread!\nErrCode=0x%08X\nPID=%u",
-			nErrCode, GetCurrentProcessId());
-		GuiMessageBox(ghConEmuWnd, szMsg, L"ConEmu hooks", 0);
-	}
-	else
-	{
-		DWORD nThreadWait = WaitForSingleObject(ghStartThread, 5000);
-		DllThreadClose();
-	}
-	//DWORD nThreadWait = WaitForMultipleObjects(hEvents, countof(hEvents), FALSE, INFINITE);
-	//CloseHandle(hEvents[0]);
-	#else
 	if (DllStart(NULL) != 0)
 	{
 		if (gbPrepareDefaultTerminal)
@@ -1882,7 +1834,6 @@ BOOL DllMain_ProcessAttach(HANDLE hModule, DWORD  ul_reason_for_call)
 			goto wrap;
 		}
 	}
-	#endif
 	DLOGEND1();
 
 	if (gbIsSshProcess && bCurrentThreadIsMain && (GetCurrentThreadId() == gnHookMainThreadId))
