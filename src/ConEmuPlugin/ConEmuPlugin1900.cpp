@@ -1303,7 +1303,7 @@ if 0
 	HANDLE hConsoleInput = GetStdHandle(STD_INPUT_HANDLE);
 	const INPUT_RECORD* lpBuffer = Info->Rec;
 	DWORD nLength = 1; LPDWORD lpNumberOfEventsRead = &nLength;
-	SETARGS4(&lbRc,hConsoleInput,lpBuffer,nLength,lpNumberOfEventsRead);
+	_SETARGS4(&lbRc,hConsoleInput,lpBuffer,nLength,lpNumberOfEventsRead);
 
 	if (!OnConsoleReadInputWork(&args) || (nLength == 0))
 		return 1;
