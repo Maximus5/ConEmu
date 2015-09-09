@@ -47,6 +47,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define MASSERT_HEADER_DEFINED
 //#define MEMORY_HEADER_DEFINED
 
+// Used in ConEmuHooks.h
+#define hkIsMainThread true // don't care if it's main or not
+
 #include "../common/defines.h"
 #include "../common/pluginW1900.hpp"
 #include "../common/ConsoleAnnotation.h"
@@ -1249,7 +1252,6 @@ BOOL WINAPI WriteOutput(const FAR_CHAR_INFO* Buffer, COORD BufferSize, COORD Buf
 		
 		if (PreWriteCallBack)
 		{
-			bool bMainThread = true;
 			SETARGS5(&lbRc, h, pcWriteBuf, &MyBufferSize, &MyBufferCoord, &rcWrite);
 			PreWriteCallBack(&args);
 		}

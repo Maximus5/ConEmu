@@ -335,7 +335,6 @@ BOOL WINAPI OnAllocConsole(void)
 {
 	//typedef BOOL (WINAPI* OnAllocConsole_t)(void);
 	ORIGINALFAST(AllocConsole);
-	BOOL bMainThread = (GetCurrentThreadId() == gnHookMainThreadId);
 	BOOL lbRc = FALSE, lbAllocated = FALSE;
 	COORD crLocked;
 	HMODULE hKernel = NULL;
@@ -455,7 +454,6 @@ BOOL WINAPI OnFreeConsole(void)
 {
 	//typedef BOOL (WINAPI* OnFreeConsole_t)(void);
 	ORIGINALFAST(FreeConsole);
-	BOOL bMainThread = (GetCurrentThreadId() == gnHookMainThreadId);
 	BOOL lbRc = FALSE;
 
 	if (ph && ph->PreCallBack)

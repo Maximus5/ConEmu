@@ -194,7 +194,6 @@ BOOL WINAPI OnCreateProcessA(LPCSTR lpApplicationName,  LPSTR lpCommandLine,  LP
 {
 	//typedef BOOL (WINAPI* OnCreateProcessA_t)(LPCSTR lpApplicationName,  LPSTR lpCommandLine,  LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment, LPCSTR lpCurrentDirectory,  LPSTARTUPINFOA lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation);
 	ORIGINALFAST(CreateProcessA);
-	BOOL bMainThread = FALSE; // поток не важен
 	BOOL lbRc = FALSE;
 	DWORD dwErr = 0;
 
@@ -244,7 +243,6 @@ BOOL WINAPI OnCreateProcessW(LPCWSTR lpApplicationName, LPWSTR lpCommandLine, LP
 {
 	//typedef BOOL (WINAPI* OnCreateProcessW_t)(LPCWSTR lpApplicationName, LPWSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment, LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation);
 	ORIGINALFAST(CreateProcessW);
-	BOOL bMainThread = FALSE; // поток не важен
 	BOOL lbRc = FALSE;
 	DWORD dwErr = 0;
 	DWORD ldwCreationFlags = dwCreationFlags;
@@ -374,7 +372,6 @@ UINT WINAPI OnWinExec(LPCSTR lpCmdLine, UINT uCmdShow)
 #if 0
 	typedef BOOL (WINAPI* OnWinExec_t)(LPCSTR lpCmdLine, UINT uCmdShow);
 	ORIGINALFAST(CreateProcessA);
-	BOOL bMainThread = FALSE; // поток не важен
 	BOOL lbRc = FALSE;
 	DWORD dwErr = 0;
 
@@ -416,7 +413,6 @@ BOOL WINAPI OnSetCurrentDirectoryA(LPCSTR lpPathName)
 {
 	//typedef BOOL (WINAPI* OnSetCurrentDirectoryA_t)(LPCSTR lpPathName);
 	ORIGINALFAST(SetCurrentDirectoryA);
-	BOOL bMainThread = FALSE; // поток не важен
 	BOOL lbRc = FALSE;
 
 	lbRc = F(SetCurrentDirectoryA)(lpPathName);
@@ -431,7 +427,6 @@ BOOL WINAPI OnSetCurrentDirectoryW(LPCWSTR lpPathName)
 {
 	//typedef BOOL (WINAPI* OnSetCurrentDirectoryW_t)(LPCWSTR lpPathName);
 	ORIGINALFAST(SetCurrentDirectoryW);
-	BOOL bMainThread = FALSE; // поток не важен
 	BOOL lbRc = FALSE;
 
 	lbRc = F(SetCurrentDirectoryW)(lpPathName);
@@ -446,7 +441,6 @@ BOOL WINAPI OnSetThreadContext(HANDLE hThread, CONST CONTEXT *lpContext)
 {
 	//typedef BOOL (WINAPI* OnSetThreadContext_t)(HANDLE hThread, CONST CONTEXT *lpContext);
 	ORIGINALFAST(SetThreadContext);
-	//BOOL bMainThread = FALSE; // поток не важен
 	BOOL lbRc = FALSE;
 
 	if (ghSkipSetThreadContextForThread && (hThread == ghSkipSetThreadContextForThread))
@@ -567,9 +561,6 @@ BOOL WINAPI OnShellExecuteExW(LPSHELLEXECUTEINFOW lpExecInfo)
 		SetLastError(ERROR_INVALID_FUNCTION);
 		return FALSE;
 	}
-	#ifdef _DEBUG
-	BOOL bMainThread = (GetCurrentThreadId() == gnHookMainThreadId);
-	#endif
 
 	CShellProc* sp = new CShellProc();
 	if (!sp || !sp->OnShellExecuteExW(&lpExecInfo))

@@ -137,7 +137,6 @@ VOID CALLBACK LdrDllNotification(ULONG NotificationReason, const LDR_DLL_NOTIFIC
 	DWORD   dwSaveErrCode = GetLastError();
 	wchar_t szModule[MAX_PATH*2] = L"";
 	HMODULE hModule;
-	BOOL    bMainThread = (GetCurrentThreadId() == gnHookMainThreadId);
 
     const UNICODE_STRING* FullDllName;   //The full path name of the DLL module.
     const UNICODE_STRING* BaseDllName;   //The base file name of the DLL module.
@@ -218,7 +217,7 @@ void OnLoadLibraryLog(LPCSTR lpLibraryA, LPCWSTR lpLibraryW)
 #endif
 
 /* ************** */
-HMODULE WINAPI OnLoadLibraryAWork(FARPROC lpfn, HookItem *ph, BOOL bMainThread, const char* lpFileName)
+HMODULE WINAPI OnLoadLibraryAWork(FARPROC lpfn, HookItem *ph, const char* lpFileName)
 {
 	typedef HMODULE(WINAPI* OnLoadLibraryA_t)(const char* lpFileName);
 	OnLoadLibraryLog(lpFileName,NULL);
@@ -246,11 +245,11 @@ HMODULE WINAPI OnLoadLibraryA(const char* lpFileName)
 {
 	//typedef HMODULE(WINAPI* OnLoadLibraryA_t)(const char* lpFileName);
 	ORIGINAL(LoadLibraryA);
-	return OnLoadLibraryAWork((FARPROC)F(LoadLibraryA), ph, bMainThread, lpFileName);
+	return OnLoadLibraryAWork((FARPROC)F(LoadLibraryA), ph, lpFileName);
 }
 
 /* ************** */
-HMODULE WINAPI OnLoadLibraryWWork(FARPROC lpfn, HookItem *ph, BOOL bMainThread, const wchar_t* lpFileName)
+HMODULE WINAPI OnLoadLibraryWWork(FARPROC lpfn, HookItem *ph, const wchar_t* lpFileName)
 {
 	typedef HMODULE(WINAPI* OnLoadLibraryW_t)(const wchar_t* lpFileName);
 	HMODULE module = NULL;
@@ -308,11 +307,11 @@ HMODULE WINAPI OnLoadLibraryW(const wchar_t* lpFileName)
 {
 	//typedef HMODULE(WINAPI* OnLoadLibraryW_t)(const wchar_t* lpFileName);
 	ORIGINAL(LoadLibraryW);
-	return OnLoadLibraryWWork((FARPROC)F(LoadLibraryW), ph, bMainThread, lpFileName);
+	return OnLoadLibraryWWork((FARPROC)F(LoadLibraryW), ph, lpFileName);
 }
 
 /* ************** */
-HMODULE WINAPI OnLoadLibraryExAWork(FARPROC lpfn, HookItem *ph, BOOL bMainThread, const char* lpFileName, HANDLE hFile, DWORD dwFlags)
+HMODULE WINAPI OnLoadLibraryExAWork(FARPROC lpfn, HookItem *ph, const char* lpFileName, HANDLE hFile, DWORD dwFlags)
 {
 	typedef HMODULE(WINAPI* OnLoadLibraryExA_t)(const char* lpFileName, HANDLE hFile, DWORD dwFlags);
 	OnLoadLibraryLog(lpFileName,NULL);
@@ -336,11 +335,11 @@ HMODULE WINAPI OnLoadLibraryExA(const char* lpFileName, HANDLE hFile, DWORD dwFl
 {
 	//typedef HMODULE(WINAPI* OnLoadLibraryExA_t)(const char* lpFileName, HANDLE hFile, DWORD dwFlags);
 	ORIGINAL(LoadLibraryExA);
-	return OnLoadLibraryExAWork((FARPROC)F(LoadLibraryExA), ph, bMainThread, lpFileName, hFile, dwFlags);
+	return OnLoadLibraryExAWork((FARPROC)F(LoadLibraryExA), ph, lpFileName, hFile, dwFlags);
 }
 
 /* ************** */
-HMODULE WINAPI OnLoadLibraryExWWork(FARPROC lpfn, HookItem *ph, BOOL bMainThread, const wchar_t* lpFileName, HANDLE hFile, DWORD dwFlags)
+HMODULE WINAPI OnLoadLibraryExWWork(FARPROC lpfn, HookItem *ph, const wchar_t* lpFileName, HANDLE hFile, DWORD dwFlags)
 {
 	typedef HMODULE(WINAPI* OnLoadLibraryExW_t)(const wchar_t* lpFileName, HANDLE hFile, DWORD dwFlags);
 	OnLoadLibraryLog(NULL,lpFileName);
@@ -364,10 +363,10 @@ HMODULE WINAPI OnLoadLibraryExW(const wchar_t* lpFileName, HANDLE hFile, DWORD d
 {
 	//typedef HMODULE(WINAPI* OnLoadLibraryExW_t)(const wchar_t* lpFileName, HANDLE hFile, DWORD dwFlags);
 	ORIGINAL(LoadLibraryExW);
-	return OnLoadLibraryExWWork((FARPROC)F(LoadLibraryExW), ph, bMainThread, lpFileName, hFile, dwFlags);
+	return OnLoadLibraryExWWork((FARPROC)F(LoadLibraryExW), ph, lpFileName, hFile, dwFlags);
 }
 
-BOOL WINAPI OnFreeLibraryWork(FARPROC lpfn, HookItem *ph, BOOL bMainThread, HMODULE hModule)
+BOOL WINAPI OnFreeLibraryWork(FARPROC lpfn, HookItem *ph, HMODULE hModule)
 {
 	typedef BOOL (WINAPI* OnFreeLibrary_t)(HMODULE hModule);
 	BOOL lbRc = FALSE;
@@ -396,5 +395,5 @@ BOOL WINAPI OnFreeLibrary(HMODULE hModule)
 {
 	//typedef BOOL (WINAPI* OnFreeLibrary_t)(HMODULE hModule);
 	ORIGINALFAST(FreeLibrary);
-	return OnFreeLibraryWork((FARPROC)F(FreeLibrary), ph, FALSE, hModule);
+	return OnFreeLibraryWork((FARPROC)F(FreeLibrary), ph, hModule);
 }

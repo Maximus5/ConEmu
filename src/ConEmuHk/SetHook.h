@@ -82,6 +82,9 @@ extern const wchar_t *shell32 ;// = L"shell32.dll";
 extern const wchar_t *advapi32;// = L"Advapi32.dll";
 extern HMODULE ghKernel32, ghUser32, ghGdi32, ghShell32, ghAdvapi32;
 
+// Used by SETARGSx macros in ConEmuHooks.h
+#define hkIsMainThread (GetCurrentThreadId() == gnHookMainThreadId)
+
 #include "ConEmuHooks.h"
 #include "hlpProcess.h"
 
@@ -209,5 +212,4 @@ void* __cdecl GetOriginalAddress(void* OurFunction, DWORD nFnID = (DWORD)-1, voi
 	ORIGINALFASTEX(n,n)
 
 #define ORIGINAL(n) \
-	BOOL bMainThread = (GetCurrentThreadId() == gnHookMainThreadId); \
 	ORIGINALFAST(n)

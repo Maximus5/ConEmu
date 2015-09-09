@@ -106,7 +106,6 @@ BOOL WINAPI OnSetConsoleTextAttribute(HANDLE hConsoleOutput, WORD wAttributes)
 
 	if (ph && ph->PreCallBack)
 	{
-		BOOL bMainThread = (GetCurrentThreadId() == gnHookMainThreadId);
 		SETARGS2(&lbRc, hConsoleOutput, wAttributes);
 		ph->PreCallBack(&args);
 	}
@@ -126,7 +125,6 @@ BOOL WINAPI OnSetConsoleTextAttribute(HANDLE hConsoleOutput, WORD wAttributes)
 
 	if (ph && ph->PostCallBack)
 	{
-		BOOL bMainThread = (GetCurrentThreadId() == gnHookMainThreadId);
 		SETARGS2(&lbRc, hConsoleOutput, wAttributes);
 		ph->PostCallBack(&args);
 	}

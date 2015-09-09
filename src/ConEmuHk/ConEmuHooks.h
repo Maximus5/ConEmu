@@ -76,7 +76,7 @@ typedef void (__stdcall* SetLoadLibraryCallback_t)(HMODULE ahCallbackModule,
 typedef void (__stdcall* SetFarHookMode_t)(struct HookModeFar *apFarMode);
 //extern SetFarHookMode_t SetFarHookMode;
 
-#define SETARGS(r) HookCallbackArg args = {bMainThread}; args.lpResult = (LPVOID)(r)
+#define SETARGS(r) HookCallbackArg args = {(hkIsMainThread)}; args.lpResult = (LPVOID)(r)
 #define SETARGS1(r,a1) SETARGS(r); args.lArguments[0] = (DWORD_PTR)(a1)
 #define SETARGS2(r,a1,a2) SETARGS1(r,a1); args.lArguments[1] = (DWORD_PTR)(a2)
 #define SETARGS3(r,a1,a2,a3) SETARGS2(r,a1,a2); args.lArguments[2] = (DWORD_PTR)(a3)
