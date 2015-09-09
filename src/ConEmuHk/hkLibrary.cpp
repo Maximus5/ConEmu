@@ -53,24 +53,24 @@ enum LDR_DLL_NOTIFICATION_REASON
 };
 struct LDR_DLL_LOADED_NOTIFICATION_DATA
 {
-    ULONG Flags;                    //Reserved.
-    const UNICODE_STRING* FullDllName;   //The full path name of the DLL module.
-    const UNICODE_STRING* BaseDllName;   //The base file name of the DLL module.
-    PVOID DllBase;                  //A pointer to the base address for the DLL in memory.
-    ULONG SizeOfImage;              //The size of the DLL image, in bytes.
+	ULONG Flags;                    //Reserved.
+	const UNICODE_STRING* FullDllName;   //The full path name of the DLL module.
+	const UNICODE_STRING* BaseDllName;   //The base file name of the DLL module.
+	PVOID DllBase;                  //A pointer to the base address for the DLL in memory.
+	ULONG SizeOfImage;              //The size of the DLL image, in bytes.
 };
 struct LDR_DLL_UNLOADED_NOTIFICATION_DATA
 {
-    ULONG Flags;                    //Reserved.
-    const UNICODE_STRING* FullDllName;   //The full path name of the DLL module.
-    const UNICODE_STRING* BaseDllName;   //The base file name of the DLL module.
-    PVOID DllBase;                  //A pointer to the base address for the DLL in memory.
-    ULONG SizeOfImage;              //The size of the DLL image, in bytes.
+	ULONG Flags;                    //Reserved.
+	const UNICODE_STRING* FullDllName;   //The full path name of the DLL module.
+	const UNICODE_STRING* BaseDllName;   //The base file name of the DLL module.
+	PVOID DllBase;                  //A pointer to the base address for the DLL in memory.
+	ULONG SizeOfImage;              //The size of the DLL image, in bytes.
 };
 union LDR_DLL_NOTIFICATION_DATA
 {
-    LDR_DLL_LOADED_NOTIFICATION_DATA Loaded;
-    LDR_DLL_UNLOADED_NOTIFICATION_DATA Unloaded;
+	LDR_DLL_LOADED_NOTIFICATION_DATA Loaded;
+	LDR_DLL_UNLOADED_NOTIFICATION_DATA Unloaded;
 };
 typedef VOID (CALLBACK* PLDR_DLL_NOTIFICATION_FUNCTION)(ULONG NotificationReason, const LDR_DLL_NOTIFICATION_DATA* NotificationData, PVOID Context);
 VOID CALLBACK LdrDllNotification(ULONG NotificationReason, const LDR_DLL_NOTIFICATION_DATA* NotificationData, PVOID Context);
@@ -138,8 +138,8 @@ VOID CALLBACK LdrDllNotification(ULONG NotificationReason, const LDR_DLL_NOTIFIC
 	wchar_t szModule[MAX_PATH*2] = L"";
 	HMODULE hModule;
 
-    const UNICODE_STRING* FullDllName;   //The full path name of the DLL module.
-    const UNICODE_STRING* BaseDllName;   //The base file name of the DLL module.
+	const UNICODE_STRING* FullDllName;   //The full path name of the DLL module.
+	const UNICODE_STRING* BaseDllName;   //The base file name of the DLL module.
 
 	switch (NotificationReason)
 	{
