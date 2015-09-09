@@ -134,7 +134,7 @@ VOID WINAPI OnExitProcess(UINT uExitCode)
 	gnDllState |= ds_OnExitProcess;
 
 	#ifdef PRINT_ON_EXITPROCESS_CALLS
-	wchar_t szInfo[80]; _wsprintf(szInfo, SKIPCOUNT(szInfo) L"\n::ExitProcess(%u) called\n", uExitCode);
+	wchar_t szInfo[80]; _wsprintf(szInfo, SKIPCOUNT(szInfo) L"\n\x1B[1;31;40m::ExitProcess(%u) called\x1B[m\n", uExitCode);
 	WriteProcessed(szInfo, lstrlen(szInfo), NULL);
 	#endif
 
@@ -162,7 +162,7 @@ BOOL WINAPI OnTerminateProcess(HANDLE hProcess, UINT uExitCode)
 	if (hProcess == GetCurrentProcess())
 	{
 		#ifdef PRINT_ON_EXITPROCESS_CALLS
-		wchar_t szInfo[80]; _wsprintf(szInfo, SKIPCOUNT(szInfo) L"\n::TerminateProcess(%u) called\n", uExitCode);
+		wchar_t szInfo[80]; _wsprintf(szInfo, SKIPCOUNT(szInfo) L"\n\x1B[1;31;40m::TerminateProcess(%u) called\x1B[m\n", uExitCode);
 		WriteProcessed(szInfo, lstrlen(szInfo), NULL);
 		#endif
 
