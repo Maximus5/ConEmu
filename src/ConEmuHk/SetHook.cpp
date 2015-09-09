@@ -1209,6 +1209,28 @@ void UnsetAllHooks()
 	hkFunc.OnHooksUnloaded();
 	}
 
+	// Some functions must be unhooked first
+	MH_STATUS status;
+	if (gpHooks)
+	{
+		DWORD nSpecialID[] = {
+			HOOK_FN_ID(CloseHandle),
+			0};
+		for (size_t i = 0; i < countof(nSpecialID); i++)
+		{
+			size_t nFuncID = nSpecialID[i];
+			if (nFuncID && (nFuncID <= gnHookedFuncs))
+			{
+				nFuncID--;
+				g_mhCritical = status = MH_DisableHook(gpHooks[nFuncID].HookedAddress);
+				if (status == MH_OK)
+				{
+					gpHooks[nFuncID].CallAddress = NULL;
+				}
+			}
+		}
+	}
+
 	g_mhDeinit = MH_Uninitialize();
 
 	#ifdef _DEBUG
