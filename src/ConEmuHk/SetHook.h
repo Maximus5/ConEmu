@@ -206,6 +206,31 @@ extern "C" {
 #endif
 
 
+
+// Originally from http://preshing.com/20120522/lightweight-in-memory-logging
+namespace HookLogger
+{
+	#define HOOK_LOG_MAX 1024 // Must be a power of 2
+	struct FnCall
+	{
+		DWORD nFnID;
+		DWORD nTID;
+	};
+	extern FnCall g_calls[HOOK_LOG_MAX];
+	extern LONG   g_callsidx;
+
+	inline void Log(DWORD index)
+	{
+		// Get next index
+		LONG i = _InterlockedIncrement(&g_callsidx);
+		// Prepare values
+		FnCall FN = {index, GetCurrentThreadId()};
+		// Write at this index, Wrap to buffer size
+		g_calls[i & (HOOK_LOG_MAX - 1)] = FN;
+	}
+}
+
+
 #define ORIGINALFASTEX(n,o) \
 	HookItem *ph = NULL; \
 	void* f##n = NULL; \

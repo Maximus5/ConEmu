@@ -86,6 +86,14 @@ bool gbSkipCheckProcessModules = false;
 
 bool gbHookExecutableOnly = false;
 
+// Called function indexes logging
+namespace HookLogger
+{
+	// #define HOOK_LOG_MAX 1024 // Must be a power of 2
+	FnCall g_calls[HOOK_LOG_MAX];
+	LONG   g_callsidx = -1;
+};
+
 MH_STATUS g_mhInit = MH_UNKNOWN;
 MH_STATUS g_mhCreate = MH_UNKNOWN;
 MH_STATUS g_mhEnable = MH_UNKNOWN;
