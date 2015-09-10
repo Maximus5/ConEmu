@@ -1289,6 +1289,7 @@ void InitExeName()
 	}
 	else if (lstrcmpi(gsExeName, L"powershell.exe") == 0)
 	{
+		gbIsPowerShellProcess = true;
 		HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
 		if (CEAnsi::IsOutputHandle(hStdOut))
 		{

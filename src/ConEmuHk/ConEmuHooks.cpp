@@ -189,6 +189,7 @@ bool     gbCurDirChanged = false;
 /* ************ Globals for cmd.exe/clink ************ */
 
 /* ************ Globals for powershell ************ */
+bool gbIsPowerShellProcess = false;
 bool gbPowerShellMonitorProgress = false;
 WORD gnConsolePopupColors = 0x003E;
 int  gnPowerShellProgressValue = -1;

@@ -143,6 +143,7 @@ extern bool     gbAllowUncPaths;
 /* ************ Globals for cmd.exe/clink ************ */
 
 /* ************ Globals for powershell ************ */
+extern bool gbIsPowerShellProcess;
 extern bool gbPowerShellMonitorProgress;
 extern WORD gnConsolePopupColors;
 extern int  gnPowerShellProgressValue;
