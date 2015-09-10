@@ -358,41 +358,31 @@ void ShowStartedMsgBox(LPCWSTR asLabel, LPCWSTR pszName = NULL)
 	STARTUPINFO si = {sizeof(si)};
 	GetStartupInfo(&si);
 	LPCWSTR pszCmd = GetCommandLineW();
-	// GuiMessageBox еще не прокатит, ничего не инициализировано
-	HMODULE hUser = LoadLibrary(user32);
-	typedef int (WINAPI* MessageBoxW_t)(HWND hWnd,LPCTSTR lpText,LPCTSTR lpCaption,UINT uType);
-	if (hUser)
+	// GuiMessageBox is not accepted here, ConEmu is not initialized yet, use MessageBoxW instead
+	if (!pszName || !*pszName)
 	{
-		MessageBoxW_t MsgBox = (MessageBoxW_t)GetProcAddress(hUser, "MessageBoxW");
-		if (MsgBox)
+		if (!GetModuleFileName(NULL, szMsg, countof(szMsg)))
 		{
-			if (!pszName || !*pszName)
-			{
-				if (!GetModuleFileName(NULL, szMsg, countof(szMsg)))
-				{
-					wcscpy_c(szMsg, L"GetModuleFileName failed");
-				}
-				else
-				{
-					// Show name only
-					pszName = PointToName(szMsg);
-					if (pszName != szMsg)
-						wmemmove(szMsg, pszName, lstrlen(pszName)+1);
-					szMsg[96] = 0; // trim if longer
-				}
-			}
-			else
-			{
-				lstrcpyn(szMsg, pszName, 96);
-			}
-
-			lstrcat(szMsg, asLabel/*L" loaded!"*/);
-
-			wchar_t szTitle[64]; msprintf(szTitle, countof(szTitle), L"ConEmuHk, PID=%u, TID=%u", GetCurrentProcessId(), GetCurrentThreadId());
-			MsgBox(NULL, szMsg, szTitle, MB_SYSTEMMODAL);
+			wcscpy_c(szMsg, L"GetModuleFileName failed");
 		}
-		FreeLibrary(hUser);
+		else
+		{
+			// Show name only
+			pszName = PointToName(szMsg);
+			if (pszName != szMsg)
+				wmemmove(szMsg, pszName, lstrlen(pszName)+1);
+			szMsg[96] = 0; // trim if longer
+		}
 	}
+	else
+	{
+		lstrcpyn(szMsg, pszName, 96);
+	}
+
+	lstrcat(szMsg, asLabel/*L" loaded!"*/);
+
+	wchar_t szTitle[64]; msprintf(szTitle, countof(szTitle), L"ConEmuHk, PID=%u, TID=%u", GetCurrentProcessId(), GetCurrentThreadId());
+	MessageBoxW(NULL, szMsg, szTitle, MB_SYSTEMMODAL);
 }
 
 
