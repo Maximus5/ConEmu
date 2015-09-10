@@ -539,8 +539,6 @@ FARPROC WINAPI GetTrampoline(LPCSTR pszName)
 
 MSection* gpHookCS = NULL;
 
-bool SetExports(HMODULE Module);
-
 DWORD CalculateNameCRC32(const char *apszName)
 {
 #if 1
