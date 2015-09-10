@@ -3818,6 +3818,14 @@ BOOL OnReadConsoleClick(SHORT xPos, SHORT yPos, bool bForce, bool bBashMargin)
 		bool bHomeEnd = false;
 		lbRc = TRUE;
 
+		// When we are outside of standard ReadConsole[A|W]
+		// it's almost impossible to detect where readline was started.
+		// So, it's more safe do not try to go upper lines at all.
+		if (!gReadConsoleInfo.InReadConsoleTID && (yPos < csbi.dwCursorPosition.Y))
+		{
+			yPos = csbi.dwCursorPosition.Y;
+		}
+
 		nChars = (csbi.dwSize.X * (yPos - csbi.dwCursorPosition.Y))
 			+ (xPos - csbi.dwCursorPosition.X);
 
