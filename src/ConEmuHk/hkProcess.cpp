@@ -166,7 +166,8 @@ VOID WINAPI OnExitProcess(UINT uExitCode)
 
 	if (bUseForceTerminate)
 	{
-		TerminateProcess(GetCurrentProcess(), uExitCode);
+		ORIGINALFAST(TerminateProcess);
+		F(TerminateProcess)(GetCurrentProcess(), uExitCode);
 		return; // Assume not to get here
 	}
 
