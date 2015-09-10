@@ -1290,8 +1290,24 @@ bool PrepareNewModule(HMODULE module, LPCSTR asModuleA, LPCWSTR asModuleW, BOOL 
 		return false;
 	}
 
+	// Ensure we have unicode module name
+	LPCWSTR pszModuleW = asModuleW;
+	wchar_t szModule[MAX_PATH+1]; szModule[0] = 0;
+	if (!asModuleA && !asModuleW)
+	{
+		wcscpy_c(szModule, L"<NULL>");
+		pszModuleW = szModule;
+	}
+	else if (asModuleA)
+	{
+		MultiByteToWideChar(AreFileApisANSI() ? CP_ACP : CP_OEMCP, 0, asModuleA, -1, szModule, countof(szModule));
+		szModule[countof(szModule)-1] = 0;
+		pszModuleW = szModule;
+	}
+
 	// Проверить по gpHookedModules а не был ли модуль уже обработан?
-	if (IsHookedModule(module))
+	HkModuleInfo* p = IsHookedModule(module);
+	if (p)
 	{
 		// Этот модуль уже обработан!
 		return false;
@@ -1313,19 +1329,6 @@ bool PrepareNewModule(HMODULE module, LPCSTR asModuleA, LPCWSTR asModuleW, BOOL 
 		if (gbLogLibraries)
 		{
 			CESERVER_REQ* pIn = NULL;
-			LPCWSTR pszModuleW = asModuleW;
-			wchar_t szModule[MAX_PATH+1]; szModule[0] = 0;
-			if (!asModuleA && !asModuleW)
-			{
-				wcscpy_c(szModule, L"<NULL>");
-				pszModuleW = szModule;
-			}
-			else if (asModuleA)
-			{
-				MultiByteToWideChar(AreFileApisANSI() ? CP_ACP : CP_OEMCP, 0, asModuleA, -1, szModule, countof(szModule));
-				szModule[countof(szModule)-1] = 0;
-				pszModuleW = szModule;
-			}
 			wchar_t szInfo[64]; szInfo[0] = 0;
 			#ifdef _WIN64
 			if ((DWORD)((DWORD_PTR)module >> 32))
@@ -1355,6 +1358,14 @@ bool PrepareNewModule(HMODULE module, LPCSTR asModuleA, LPCWSTR asModuleW, BOOL 
 
 		delete sp;
 		sp = NULL;
+	}
+
+	// Remember, it is processed already
+	p = AddHookedModule(module, pszModuleW);
+	if (!p)
+	{
+		// Exit on critical failures
+		return false;
 	}
 
 	// Refresh hooked exports in the loaded library
