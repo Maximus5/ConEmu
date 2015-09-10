@@ -831,40 +831,8 @@ HookItem* FindFunction(const char* pszFuncName)
 	return NULL;
 }
 
-//void InitializeConsoleInputSemaphore()
-//{
-//#ifdef USE_INPUT_SEMAPHORE
-//	if (ghConInSemaphore != NULL)
-//	{
-//		ReleaseConsoleInputSemaphore();
-//	}
-//	wchar_t szName[128];
-//	HWND hConWnd = GetConEmuHWND(2);
-//	if (hConWnd != ghConWnd)
-//	{
-//		_ASSERTE(ghConWnd == hConWnd);
-//	}
-//	if (hConWnd != NULL)
-//	{
-//		msprintf(szName, SKIPLEN(countof(szName)) CEINPUTSEMAPHORE, (DWORD)hConWnd);
-//		ghConInSemaphore = CreateSemaphore(LocalSecurity(), 1, 1, szName);
-//		_ASSERTE(ghConInSemaphore != NULL);
-//	}
-//#endif
-//}
-//
-//void ReleaseConsoleInputSemaphore()
-//{
-//#ifdef USE_INPUT_SEMAPHORE
-//	if (ghConInSemaphore != NULL)
-//	{
-//		CloseHandle(ghConInSemaphore);
-//		ghConInSemaphore = NULL;
-//	}
-//#endif
-//}
 
-// Эту функцию нужно позвать из DllMain
+// Main initialization routine
 BOOL StartupHooks()
 {
 	//HLOG0("StartupHooks",0);
@@ -927,10 +895,10 @@ BOOL StartupHooks()
 		HLOGEND1();
 	}
 
+	// List of functions is prepared
 
+	// Now we call minhook engine to ‘detour’ the API
 	print_timings(L"SetAllHooks");
-
-	// Теперь можно обработать модули
 	HLOG1("SetAllHooks",0);
 	bool lbRc = SetAllHooks();
 	if (lbRc)
@@ -951,8 +919,6 @@ BOOL StartupHooks()
 	gfGetRealConsoleWindow = (GetConsoleWindow_T)GetOriginalAddress((LPVOID)OnGetConsoleWindow, HOOK_FN_ID(GetConsoleWindow));
 
 	print_timings(L"SetAllHooks - done");
-
-	//HLOGEND(); // StartupHooks - done
 
 	return lbRc;
 }
@@ -1128,8 +1094,7 @@ bool LockHooks(HMODULE Module, LPCWSTR asAction, MSectionLock* apCS)
 	return true;
 }
 
-// Подменить Импортируемые функции во всех модулях процесса, загруженных ДО conemuhk.dll
-// *aszExcludedModules - должны указывать на константные значения (program lifetime)
+
 bool SetAllHooks()
 {
 	if (!gpHooks)
@@ -1242,15 +1207,6 @@ void UnsetAllHooks()
 
 
 
-
-
-
-/* **************************** *
- *                              *
- *  Далее идут собственно хуки  *
- *                              *
- * **************************** */
-
 void LoadModuleFailed(LPCSTR asModuleA, LPCWSTR asModuleW)
 {
 	DWORD dwErrCode = GetLastError();
@@ -1303,10 +1259,7 @@ void LoadModuleFailed(LPCSTR asModuleA, LPCWSTR asModuleW)
 	SetLastError(dwErrCode);
 }
 
-// Заменить в модуле Module ЭКСпортируемые функции на подменяемые плагином нихрена
-// НЕ получится, т.к. в Win32 библиотека shell32 может быть загружена ПОСЛЕ conemu.dll
-//   что вызовет некорректные смещения функций,
-// а в Win64 смещения вообще должны быть 64битными, а структура модуля хранит только 32битные смещения
+
 
 bool PrepareNewModule(HMODULE module, LPCSTR asModuleA, LPCWSTR asModuleW, BOOL abNoSnapshoot /*= FALSE*/, BOOL abForceHooks /*= FALSE*/)
 {
