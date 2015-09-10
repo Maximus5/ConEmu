@@ -33,6 +33,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 /* *************************** */
 
+#define CLINK_DLL_NAME WIN3264TEST(L"clink_dll_x86.dll", L"clink_dll_x64.dll")
+bool IsClinkLoaded();
+
+/* *************************** */
+
 // Function from advapi32.dll or kernel32.dll
 // Used to hook DisableUNCCheck and AutoRun values
 HOOK_PROTOTYPE(RegQueryValueExW,LONG,WINAPI,(HKEY hKey, LPCWSTR lpValueName, LPDWORD lpReserved, LPDWORD lpType, LPBYTE lpData, LPDWORD lpcbData));

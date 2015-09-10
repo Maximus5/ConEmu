@@ -173,6 +173,15 @@ static bool IsInteractive()
 	return true;
 }
 
+bool IsClinkLoaded()
+{
+	// Check processes supported
+	if (!gbIsCmdProcess && !gbIsPowerShellProcess)
+		return false;
+	// Check, if clink library is loaded
+	HMODULE hClink = GetModuleHandle(WIN3264TEST(L"clink_dll_x86.dll", L"clink_dll_x64.dll"));
+	return (hClink != NULL);
+}
 
 
 /* **************** */
@@ -210,8 +219,7 @@ LONG WINAPI OnRegQueryValueExW(HKEY hKey, LPCWSTR lpValueName, LPDWORD lpReserve
 				&& IsInteractive())
 			{
 				// Is already loaded?
-				HMODULE hClink = GetModuleHandle(WIN3264TEST(L"clink_dll_x86.dll",L"clink_dll_x64.dll"));
-				if (hClink == NULL)
+				if (!IsClinkLoaded())
 				{
 					// May be it is set up itself?
 					typedef LONG (WINAPI* RegOpenKeyEx_t)(HKEY hKey, LPCWSTR lpSubKey, DWORD ulOptions, REGSAM samDesired, PHKEY phkResult);
