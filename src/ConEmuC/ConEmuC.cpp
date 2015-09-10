@@ -328,6 +328,7 @@ int main(int argc, char** argv)
 	gfHandlerRoutine = NULL;
 	//FreeLibrary(hConEmu); -- Shutdown Server/Comspec уже выполнен
 wrap:
+	//-- bottle neck: relatively long deinitialization
 	ExitProcess(iRc);
 	return iRc;
 }
