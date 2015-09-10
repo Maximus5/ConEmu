@@ -377,6 +377,12 @@ const RConStartArgs* CShellProc::GetArgs()
 
 BOOL CShellProc::LoadSrvMapping(BOOL bLightCheck /*= FALSE*/)
 {
+	if (!this)
+	{
+		_ASSERTEX(FALSE && "Object was not created!");
+		return FALSE;
+	}
+
 	if (gbPrepareDefaultTerminal)
 	{
 		// ghConWnd may be NULL (if was started for devenv.exe) or NOT NULL (after AllocConsole in *.vshost.exe)
