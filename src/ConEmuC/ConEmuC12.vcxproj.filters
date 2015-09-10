@@ -42,6 +42,12 @@
     <ClCompile Include="Downloader.cpp">
       <Filter>0 -Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\common\HkFunc.cpp">
+      <Filter>0 -Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\WThreads.cpp">
+      <Filter>0 -Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\common\MStrSafe.h">
@@ -72,6 +78,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Downloader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\HkFunc.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\WThreads.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
