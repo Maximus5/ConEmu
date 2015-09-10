@@ -1410,6 +1410,15 @@ bool PrepareNewModule(HMODULE module, LPCSTR asModuleA, LPCWSTR asModuleW, BOOL 
 		SetAllHooks();
 	}
 
+	// Far Manager ConEmu plugin may do some additional operations:
+	// such as initialization of background plugins...
+	if (gfOnLibraryLoaded)
+	{
+		HLOG("PrepareNewModule.gfOnLibraryLoaded",(DWORD)Module);
+		gfOnLibraryLoaded(module);
+		HLOGEND();
+	}
+
 	lbModuleOk = true;
 
 	return lbModuleOk;
