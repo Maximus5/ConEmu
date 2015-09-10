@@ -97,6 +97,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #undef MCHKHEAP
 #include "../common/MArray.h"
 
+#include "hkCmdExe.h"
 #include "hkConsoleInput.h"
 #include "hkConsoleOutput.h"
 
@@ -2650,7 +2651,7 @@ BOOL WINAPI HookServerCommand(LPVOID pInst, CESERVER_REQ* pCmd, CESERVER_REQ* &p
 				switch (pCmd->hdr.nCmd)
 				{
 				case CECMD_MOUSECLICK:
-					if (!gReadConsoleInfo.InReadConsoleTID && !pCmd->Prompt.Force)
+					if (!gReadConsoleInfo.InReadConsoleTID && !pCmd->Prompt.Force && !IsClinkLoaded())
 						break;
 					bProcessed = OnReadConsoleClick(pCmd->Prompt.xPos, pCmd->Prompt.yPos, (pCmd->Prompt.Force != 0), (pCmd->Prompt.BashMargin != 0));
 					break;
