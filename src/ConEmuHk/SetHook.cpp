@@ -1276,11 +1276,13 @@ bool PrepareNewModule(HMODULE module, LPCSTR asModuleA, LPCWSTR asModuleW, BOOL 
 	int iFunc = 0;
 	if (!lbAllSysLoaded)
 	{
+		HLOG1("PrepareNewModule.InitHooks",0);
 		// Некоторые перехватываемые библиотеки могли быть
 		// не загружены во время первичной инициализации
 		// Соответственно для них (если они появились) нужно
 		// получить "оригинальные" адреса процедур
 		iFunc = InitHooks(NULL);
+		HLOGEND1();
 	}
 
 
@@ -1306,7 +1308,9 @@ bool PrepareNewModule(HMODULE module, LPCSTR asModuleA, LPCWSTR asModuleW, BOOL 
 	}
 
 	// Проверить по gpHookedModules а не был ли модуль уже обработан?
+	HLOG1("PrepareNewModule.IsHookedModule",LODWORD(module));
 	HkModuleInfo* p = IsHookedModule(module);
+	HLOGEND1();
 	if (p)
 	{
 		// Этот модуль уже обработан!
@@ -1317,6 +1321,7 @@ bool PrepareNewModule(HMODULE module, LPCSTR asModuleA, LPCWSTR asModuleW, BOOL 
 
 	BOOL lbResource = LDR_IS_RESOURCE(module);
 
+	HLOG1_("PrepareNewModule.CShellProc",0);
 	CShellProc* sp = new CShellProc();
 	if (sp != NULL)
 	{
@@ -1359,9 +1364,12 @@ bool PrepareNewModule(HMODULE module, LPCSTR asModuleA, LPCWSTR asModuleW, BOOL 
 		delete sp;
 		sp = NULL;
 	}
+	HLOGEND1();
 
 	// Remember, it is processed already
+	HLOG1_("AddHookedModule",LODWORD(module));
 	p = AddHookedModule(module, pszModuleW);
+	HLOGEND1();
 	if (!p)
 	{
 		// Exit on critical failures
@@ -1371,20 +1379,22 @@ bool PrepareNewModule(HMODULE module, LPCSTR asModuleA, LPCWSTR asModuleW, BOOL 
 	// Refresh hooked exports in the loaded library
 	if (iFunc > 0)
 	{
+		HLOG1_("PrepareNewModule.SetAllHooks",iFunc);
 		SetAllHooks();
+		HLOGEND1();
 	}
 
 	// Far Manager ConEmu plugin may do some additional operations:
 	// such as initialization of background plugins...
 	if (gfOnLibraryLoaded)
 	{
-		HLOG("PrepareNewModule.gfOnLibraryLoaded",(DWORD)Module);
+		HLOG1_("PrepareNewModule.gfOnLibraryLoaded",LODWORD(module));
 		gfOnLibraryLoaded(module);
-		HLOGEND();
+		HLOGEND1();
 	}
 
 	lbModuleOk = true;
-
+	UNREFERENCED_PARAMETER(p);
 	return lbModuleOk;
 }
 
