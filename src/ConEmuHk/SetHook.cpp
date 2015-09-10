@@ -120,6 +120,8 @@ HMODULE* ghSysDll[] = {&ghKernelBase, &ghKernel32, &ghUser32, &ghGdi32, &ghShell
 bool InitHooksCommon();
 bool InitHooksDefTerm();
 
+void LogModuleLoaded(LPCWSTR pwszModule, HMODULE hModule);
+void LogModuleUnloaded(LPCWSTR pwszModule, HMODULE hModule);
 
 
 struct PreloadFuncs {
@@ -1322,48 +1324,7 @@ bool PrepareNewModule(HMODULE module, LPCSTR asModuleA, LPCWSTR asModuleW, BOOL 
 	BOOL lbResource = LDR_IS_RESOURCE(module);
 
 	HLOG1_("PrepareNewModule.CShellProc",0);
-	CShellProc* sp = new CShellProc();
-	if (sp != NULL)
-	{
-		if (!gnLastLogSetChange || ((GetTickCount() - gnLastLogSetChange) > 2000))
-		{
-			gnLastLogSetChange = GetTickCount();
-			gbLogLibraries = sp->LoadSrvMapping(TRUE) && sp->GetLogLibraries();
-		}
-
-		if (gbLogLibraries)
-		{
-			CESERVER_REQ* pIn = NULL;
-			wchar_t szInfo[64]; szInfo[0] = 0;
-			#ifdef _WIN64
-			if ((DWORD)((DWORD_PTR)module >> 32))
-				msprintf(szInfo, countof(szInfo), L"Module=0x%08X%08X",
-					(DWORD)((DWORD_PTR)module >> 32), (DWORD)((DWORD_PTR)module & 0xFFFFFFFF)); //-V112
-			else
-				msprintf(szInfo, countof(szInfo), L"Module=0x%08X",
-					(DWORD)((DWORD_PTR)module & 0xFFFFFFFF)); //-V112
-			#else
-			msprintf(szInfo, countof(szInfo), L"Module=0x%08X", (DWORD)module);
-			#endif
-			pIn = sp->NewCmdOnCreate(eLoadLibrary, NULL, pszModuleW, szInfo, NULL, NULL, NULL, NULL,
-				#ifdef _WIN64
-				64
-				#else
-				32
-				#endif
-				, 0, NULL, NULL, NULL);
-			if (pIn)
-			{
-				HWND hConWnd = GetRealConsoleWindow();
-				CESERVER_REQ* pOut = ExecuteGuiCmd(hConWnd, pIn, hConWnd);
-				ExecuteFreeResult(pIn);
-				if (pOut) ExecuteFreeResult(pOut);
-			}
-		}
-
-		delete sp;
-		sp = NULL;
-	}
+	LogModuleLoaded(pszModuleW, module);
 	HLOGEND1();
 
 	// Remember, it is processed already
@@ -1404,57 +1365,14 @@ void UnprepareModule(HMODULE hModule, LPCWSTR pszModule, int iStep)
 {
 	BOOL lbResource = LDR_IS_RESOURCE(hModule);
 	// lbResource получается TRUE например при вызовах из version.dll
-	wchar_t szModule[MAX_PATH*2]; szModule[0] = 0;
 
 	if ((iStep == 0) && gbLogLibraries && !(gnDllState & ds_DllStoping))
 	{
-		CShellProc* sp = new CShellProc();
-		if (sp->LoadSrvMapping())
-		{
-			CESERVER_REQ* pIn = NULL;
-			if (pszModule && *pszModule)
-			{
-				lstrcpyn(szModule, pszModule, countof(szModule));
-			}
-			else
-			{
-				wchar_t szHandle[32] = {};
-				#ifdef _WIN64
-					msprintf(szHandle, countof(szModule), L", <HMODULE=0x%08X%08X>",
-						(DWORD)((((u64)hModule) & 0xFFFFFFFF00000000) >> 32), //-V112
-						(DWORD)(((u64)hModule) & 0xFFFFFFFF)); //-V112
-				#else
-					msprintf(szHandle, countof(szModule), L", <HMODULE=0x%08X>", (DWORD)hModule);
-				#endif
-
-				// GetModuleFileName в некоторых случаях зависает O_O. Поэтому, запоминаем в локальном массиве имя загруженного ранее модуля
-				if (FindModuleFileName(hModule, szModule, countof(szModule)-lstrlen(szModule)-1))
-					wcscat_c(szModule, szHandle);
-				else
-					wcscpy_c(szModule, szHandle+2);
-			}
-
-			pIn = sp->NewCmdOnCreate(eFreeLibrary, NULL, szModule, NULL, NULL, NULL, NULL, NULL,
-				#ifdef _WIN64
-				64
-				#else
-				32
-				#endif
-				, 0, NULL, NULL, NULL);
-			if (pIn)
-			{
-				HWND hConWnd = GetRealConsoleWindow();
-				CESERVER_REQ* pOut = ExecuteGuiCmd(hConWnd, pIn, hConWnd);
-				ExecuteFreeResult(pIn);
-				if (pOut) ExecuteFreeResult(pOut);
-			}
-		}
-		delete sp;
+		LogModuleUnloaded(pszModule, hModule);
 	}
 
 
-
-	// Далее только если !LDR_IS_RESOURCE
+	// Than only real dlls (!LDR_IS_RESOURCE)
 	if ((iStep > 0) && !lbResource && !(gnDllState & ds_DllStoping))
 	{
 		// Попробуем определить, действительно ли модуль выгружен, или только счетчик уменьшился
@@ -1528,3 +1446,101 @@ void LogFunctionCall(LPCSTR asFunc, LPCSTR asFile, int anLine)
 	}
 }
 #endif
+
+
+void LogModuleLoaded(LPCWSTR pwszModule, HMODULE hModule)
+{
+	CShellProc* sp = NULL;
+
+	if (!gnLastLogSetChange || ((GetTickCount() - gnLastLogSetChange) > 2000))
+	{
+		sp = new CShellProc();
+		if (sp)
+		{
+			gnLastLogSetChange = GetTickCount();
+			gbLogLibraries = sp->LoadSrvMapping(TRUE) && sp->GetLogLibraries();
+		}
+	}
+	else if (gbLogLibraries)
+	{
+		sp = new CShellProc();
+		if (!sp)
+		{
+			gbLogLibraries = FALSE;
+		}
+	}
+
+	if (gbLogLibraries)
+	{
+		CESERVER_REQ* pIn = NULL;
+
+		wchar_t szInfo[64] = L"";
+		#ifdef _WIN64
+		if (((DWORD_PTR)hModule) > 0xFFFFFFFF)
+		{
+			msprintf(szInfo, countof(szInfo), L"Module=0x%08X%08X", WIN3264WSPRINT(hModule));
+		}
+		else
+		#endif
+		{
+			msprintf(szInfo, countof(szInfo), L"Module=0x%08X", LODWORD(hModule));
+		}
+
+		pIn = sp->NewCmdOnCreate(eLoadLibrary, NULL, pwszModule, szInfo, NULL, NULL, NULL, NULL, WIN3264TEST(32,64), 0, NULL, NULL, NULL);
+		if (pIn)
+		{
+			HWND hConWnd = GetRealConsoleWindow();
+			CESERVER_REQ* pOut = ExecuteGuiCmd(hConWnd, pIn, hConWnd);
+			ExecuteFreeResult(pIn);
+			if (pOut) ExecuteFreeResult(pOut);
+		}
+	}
+
+	SafeDelete(sp);
+}
+
+void LogModuleUnloaded(LPCWSTR pwszModule, HMODULE hModule)
+{
+	CShellProc* sp = new CShellProc();
+	if (sp->LoadSrvMapping())
+	{
+		wchar_t szModule[MAX_PATH*2]; szModule[0] = 0;
+
+		CESERVER_REQ* pIn = NULL;
+		if (pwszModule && *pwszModule)
+		{
+			lstrcpyn(szModule, pwszModule, countof(szModule));
+		}
+		else
+		{
+			wchar_t szHandle[32] = L"";
+			#ifdef _WIN64
+				msprintf(szHandle, countof(szModule), L", <HMODULE=0x%08X%08X>", WIN3264WSPRINT(hModule));
+			#else
+				msprintf(szHandle, countof(szModule), L", <HMODULE=0x%08X>", LODWORD(hModule));
+			#endif
+
+			// GetModuleFileName may hang in some cases, so we use our internal modules array
+			if (FindModuleFileName(hModule, szModule, countof(szModule)-lstrlen(szModule)-1))
+				wcscat_c(szModule, szHandle);
+			else
+				wcscpy_c(szModule, szHandle+2);
+		}
+
+		pIn = sp->NewCmdOnCreate(eFreeLibrary, NULL, szModule, NULL, NULL, NULL, NULL, NULL,
+			#ifdef _WIN64
+			64
+			#else
+			32
+			#endif
+			, 0, NULL, NULL, NULL);
+		if (pIn)
+		{
+			HWND hConWnd = GetRealConsoleWindow();
+			CESERVER_REQ* pOut = ExecuteGuiCmd(hConWnd, pIn, hConWnd);
+			ExecuteFreeResult(pIn);
+			if (pOut) ExecuteFreeResult(pOut);
+		}
+	}
+	delete sp;
+}
