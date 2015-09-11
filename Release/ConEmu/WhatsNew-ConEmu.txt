@@ -19,6 +19,14 @@ http://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2015.9.10
+* gh#272: Fix crash on exit when NVIDIA CoProcManager dlls are loaded (workaround). Thanks to @kraml for testing.
+* gh#290: Far Manager Background plugins were broken (minhook regression).
+* Feature ‘Change prompt position with LClick’ was not working with clink.
+* Don't try to position cursor on higher line to avoid numerous beeps (bash, clink, etc.)
+* Don't hook Kernelbase.dll in Windows 7 (MultiRunX64 was printed unprocessed ANSI).
+
+
 2015.9.8
 * ConEmuHk. Some internal changes (store function index, fix init/deinit steps).
 * gh#279: ConEmu window grew in size after relaunch if size was defined in pixels or percents.
