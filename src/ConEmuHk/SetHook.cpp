@@ -110,8 +110,20 @@ const wchar_t *gdi32    = L"gdi32.dll",		*gdi32_noext    = L"gdi32";
 const wchar_t *shell32  = L"shell32.dll",	*shell32_noext  = L"shell32";
 const wchar_t *advapi32 = L"advapi32.dll",	*advapi32_noext = L"advapi32";
 //!!!WARNING!!! Добавляя в этот список - не забыть добавить и в GetPreloadModules() !!!
-HMODULE ghKernelBase = NULL, ghKernel32 = NULL, ghUser32 = NULL, ghGdi32 = NULL, ghShell32 = NULL, ghAdvapi32 = NULL;
-HMODULE* ghSysDll[] = {&ghKernelBase, &ghKernel32, &ghUser32, &ghGdi32, &ghShell32, &ghAdvapi32};
+HMODULE
+	ghKernelBase = NULL,
+	ghKernel32 = NULL,
+	ghUser32 = NULL,
+	ghGdi32 = NULL,
+	ghShell32 = NULL,
+	ghAdvapi32 = NULL;
+HMODULE* ghSysDll[] = {
+	&ghKernelBase,
+	&ghKernel32,
+	&ghUser32,
+	&ghGdi32,
+	&ghShell32,
+	&ghAdvapi32};
 //!!!WARNING!!! Добавляя в этот список - не забыть добавить и в GetPreloadModules() !!!
 
 
@@ -647,13 +659,18 @@ int InitHooks(HookItem* apHooks)
 		}
 
 		// Load kernelbase
+		// cmd.exe calls functions from KernelBase.dll but not from kernel32.dll
+		// Actually, cmd.exe links to set of api-ms-win-core-*.dll libraries
+		// But that is the behavior from Windows 8.0 and higher only!
 		static bool KernelHooked = false;
 		if (!KernelHooked)
 		{
 			KernelHooked = true;
 
 			_ASSERTEX(ghKernel32 != NULL);
-			if (IsWin7())
+			// Windows 7 still uses kernel32.dll,
+			// 64-bit version of MultiRun was printed unprocessed ANSI
+			if (IsWin8())
 			{
 				ghKernelBase = LoadLibrary(kernelbase);
 			}
@@ -773,8 +790,14 @@ int InitHooks(HookItem* apHooks)
 				// NB, we often get XXXStub instead of the function itself
 				const char* ExportName = gpHooks[i].NameOrdinal ? ((const char*)gpHooks[i].NameOrdinal) : gpHooks[i].Name;
 
-				// Some kernel function must be hooked in the kernel32.dll itself (ExitProcess)
-				if ((mod == ghKernel32) && !hRequiredMod)
+				//TODO: In fact, we need to hook BOTH kernel32.dll and Kernelbase.dll   *
+				//TODO: But that is subject to change our code... otherwise we may get  *
+				//TODO: problems with double hooked calls                               *
+
+				if (ghKernelBase           // If Kernelbase.dll is loaded
+					&& (mod == ghKernel32) // Than, for kernel32.dll we'll try to hook them in Kernelbase.dll
+					&& !hRequiredMod       // But, some kernel function must be hooked in the kernel32.dll itself (ExitProcess)
+					)
 				{
 					if (!(gpHooks[i].HookedAddress = (void*)GetProcAddress(ghKernelBase, ExportName)))
 					{
