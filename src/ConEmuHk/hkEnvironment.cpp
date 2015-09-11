@@ -80,7 +80,7 @@ void CheckAnsiConVar(LPCWSTR asName)
 BOOL WINAPI OnSetEnvironmentVariableA(LPCSTR lpName, LPCSTR lpValue)
 {
 	//typedef BOOL (WINAPI* OnSetEnvironmentVariableA_t)(LPCSTR lpName, LPCSTR lpValue);
-	ORIGINALFAST(SetEnvironmentVariableA);
+	ORIGINAL_KRNL(SetEnvironmentVariableA);
 
 	if (lpName && *lpName)
 	{
@@ -99,7 +99,7 @@ BOOL WINAPI OnSetEnvironmentVariableA(LPCSTR lpName, LPCSTR lpValue)
 BOOL WINAPI OnSetEnvironmentVariableW(LPCWSTR lpName, LPCWSTR lpValue)
 {
 	//typedef BOOL (WINAPI* OnSetEnvironmentVariableW_t)(LPCWSTR lpName, LPCWSTR lpValue);
-	ORIGINALFAST(SetEnvironmentVariableW);
+	ORIGINAL_KRNL(SetEnvironmentVariableW);
 
 	if (lpName && *lpName)
 	{
@@ -118,7 +118,7 @@ BOOL WINAPI OnSetEnvironmentVariableW(LPCWSTR lpName, LPCWSTR lpValue)
 DWORD WINAPI OnGetEnvironmentVariableA(LPCSTR lpName, LPSTR lpBuffer, DWORD nSize)
 {
 	//typedef DWORD (WINAPI* OnGetEnvironmentVariableA_t)(LPCSTR lpName, LPSTR lpBuffer, DWORD nSize);
-	ORIGINALFAST(GetEnvironmentVariableA);
+	ORIGINAL_KRNL(GetEnvironmentVariableA);
 	DWORD lRc = 0;
 
 	if (lpName)
@@ -159,7 +159,7 @@ wrap:
 DWORD WINAPI OnGetEnvironmentVariableW(LPCWSTR lpName, LPWSTR lpBuffer, DWORD nSize)
 {
 	//typedef DWORD (WINAPI* OnGetEnvironmentVariableW_t)(LPCWSTR lpName, LPWSTR lpBuffer, DWORD nSize);
-	ORIGINALFAST(GetEnvironmentVariableW);
+	ORIGINAL_KRNL(GetEnvironmentVariableW);
 	DWORD lRc = 0;
 
 	if (lpName)
@@ -197,7 +197,7 @@ wrap:
 LPCH WINAPI OnGetEnvironmentStringsA()
 {
 	//typedef LPCH (WINAPI* OnGetEnvironmentStringsA_t)();
-	ORIGINALFAST(GetEnvironmentStringsA);
+	ORIGINAL_KRNL(GetEnvironmentStringsA);
 
 	CheckVariables();
 
@@ -210,7 +210,7 @@ LPCH WINAPI OnGetEnvironmentStringsA()
 LPWCH WINAPI OnGetEnvironmentStringsW()
 {
 	//typedef LPWCH (WINAPI* OnGetEnvironmentStringsW_t)();
-	ORIGINALFAST(GetEnvironmentStringsW);
+	ORIGINAL_KRNL(GetEnvironmentStringsW);
 
 	CheckVariables();
 

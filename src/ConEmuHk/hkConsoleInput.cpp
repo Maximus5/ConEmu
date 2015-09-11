@@ -334,7 +334,7 @@ BOOL WINAPI OnReadConsoleA(HANDLE hConsoleInput, LPVOID lpBuffer, DWORD nNumberO
 {
 	// typedef BOOL (WINAPI* OnReadConsoleA_t)(HANDLE hConsoleInput, LPVOID lpBuffer, DWORD nNumberOfCharsToRead, LPDWORD lpNumberOfCharsRead, LPVOID pInputControl);
 	SUPPRESSORIGINALSHOWCALL;
-	ORIGINAL(ReadConsoleA);
+	ORIGINAL_KRNL(ReadConsoleA);
 	BOOL lbRc = FALSE;
 
 	OnReadConsoleStart(false, hConsoleInput, lpBuffer, nNumberOfCharsToRead, lpNumberOfCharsRead, pInputControl);
@@ -353,7 +353,7 @@ BOOL WINAPI OnReadConsoleW(HANDLE hConsoleInput, LPVOID lpBuffer, DWORD nNumberO
 {
 	//typedef BOOL (WINAPI* OnReadConsoleW_t)(HANDLE hConsoleInput, LPVOID lpBuffer, DWORD nNumberOfCharsToRead, LPDWORD lpNumberOfCharsRead, MY_CONSOLE_READCONSOLE_CONTROL* pInputControl);
 	SUPPRESSORIGINALSHOWCALL;
-	ORIGINAL(ReadConsoleW);
+	ORIGINAL_KRNL(ReadConsoleW);
 	BOOL lbRc = FALSE;
 	DWORD nErr = GetLastError();
 	DWORD nStartTick = GetTickCount(), nEndTick = 0;
@@ -431,7 +431,7 @@ BOOL WINAPI OnGetNumberOfConsoleInputEvents(HANDLE hConsoleInput, LPDWORD lpcNum
 {
 	//typedef BOOL (WINAPI* OnGetNumberOfConsoleInputEvents_t)(HANDLE hConsoleInput, LPDWORD lpcNumberOfEvents);
 	SUPPRESSORIGINALSHOWCALL;
-	ORIGINAL(GetNumberOfConsoleInputEvents);
+	ORIGINAL_KRNL(GetNumberOfConsoleInputEvents);
 	BOOL lbRc = FALSE;
 
 	//if (gpFarInfo && bMainThread)
@@ -468,7 +468,7 @@ BOOL WINAPI OnFlushConsoleInputBuffer(HANDLE hConsoleInput)
 {
 	//typedef BOOL (WINAPI* OnFlushConsoleInputBuffer_t)(HANDLE hConsoleInput);
 	SUPPRESSORIGINALSHOWCALL;
-	ORIGINALFAST(FlushConsoleInputBuffer);
+	ORIGINAL_KRNL(FlushConsoleInputBuffer);
 	BOOL lbRc = FALSE;
 
 	//_ASSERTEX(FALSE && "calling FlushConsoleInputBuffer");
@@ -484,7 +484,7 @@ BOOL WINAPI OnPeekConsoleInputA(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DW
 {
 	//typedef BOOL (WINAPI* OnPeekConsoleInputA_t)(HANDLE,PINPUT_RECORD,DWORD,LPDWORD);
 	SUPPRESSORIGINALSHOWCALL;
-	ORIGINAL(PeekConsoleInputA);
+	ORIGINAL_KRNL(PeekConsoleInputA);
 	//if (gpFarInfo && bMainThread)
 	//	TouchReadPeekConsoleInputs(1);
 	BOOL lbRc = FALSE;
@@ -534,7 +534,7 @@ BOOL WINAPI OnPeekConsoleInputW(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DW
 {
 	//typedef BOOL (WINAPI* OnPeekConsoleInputW_t)(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DWORD nLength, LPDWORD lpNumberOfEventsRead);
 	SUPPRESSORIGINALSHOWCALL;
-	ORIGINAL(PeekConsoleInputW);
+	ORIGINAL_KRNL(PeekConsoleInputW);
 	//if (gpFarInfo && bMainThread)
 	//	TouchReadPeekConsoleInputs(1);
 	BOOL lbRc = FALSE;
@@ -615,7 +615,7 @@ BOOL WINAPI OnReadConsoleInputA(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DW
 {
 	//typedef BOOL (WINAPI* OnReadConsoleInputA_t)(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DWORD nLength, LPDWORD lpNumberOfEventsRead);
 	SUPPRESSORIGINALSHOWCALL;
-	ORIGINAL(ReadConsoleInputA);
+	ORIGINAL_KRNL(ReadConsoleInputA);
 	//if (gpFarInfo && bMainThread)
 	//	TouchReadPeekConsoleInputs(0);
 	BOOL lbRc = FALSE;
@@ -677,7 +677,7 @@ BOOL WINAPI OnReadConsoleInputW(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DW
 {
 	//typedef BOOL (WINAPI* OnReadConsoleInputW_t)(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DWORD nLength, LPDWORD lpNumberOfEventsRead);
 	SUPPRESSORIGINALSHOWCALL;
-	ORIGINAL(ReadConsoleInputW);
+	ORIGINAL_KRNL(ReadConsoleInputW);
 	//if (gpFarInfo && bMainThread)
 	//	TouchReadPeekConsoleInputs(0);
 	BOOL lbRc = FALSE;
@@ -771,7 +771,7 @@ BOOL WINAPI OnReadConsoleInputW(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DW
 BOOL WINAPI OnWriteConsoleInputA(HANDLE hConsoleInput, const INPUT_RECORD *lpBuffer, DWORD nLength, LPDWORD lpNumberOfEventsWritten)
 {
 	//typedef BOOL (WINAPI* OnWriteConsoleInputA_t)(HANDLE hConsoleInput, const INPUT_RECORD *lpBuffer, DWORD nLength, LPDWORD lpNumberOfEventsWritten);
-	ORIGINAL(WriteConsoleInputA);
+	ORIGINAL_KRNL(WriteConsoleInputA);
 	BOOL lbRc = FALSE;
 
 	#ifdef _DEBUG
@@ -802,7 +802,7 @@ BOOL WINAPI OnWriteConsoleInputA(HANDLE hConsoleInput, const INPUT_RECORD *lpBuf
 BOOL WINAPI OnWriteConsoleInputW(HANDLE hConsoleInput, const INPUT_RECORD *lpBuffer, DWORD nLength, LPDWORD lpNumberOfEventsWritten)
 {
 	//typedef BOOL (WINAPI* OnWriteConsoleInputW_t)(HANDLE hConsoleInput, const INPUT_RECORD *lpBuffer, DWORD nLength, LPDWORD lpNumberOfEventsWritten);
-	ORIGINAL(WriteConsoleInputW);
+	ORIGINAL_KRNL(WriteConsoleInputW);
 	BOOL lbRc = FALSE;
 
 	#ifdef _DEBUG

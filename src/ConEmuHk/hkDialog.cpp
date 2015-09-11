@@ -62,7 +62,7 @@ void PatchDialogParentWnd(HWND& hWndParent)
 HWND WINAPI OnCreateDialogIndirectParamA(HINSTANCE hInstance, LPCDLGTEMPLATE lpTemplate, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM lParamInit)
 {
 	//typedef HWND (WINAPI* OnCreateDialogIndirectParamA_t)(HINSTANCE hInstance, LPCDLGTEMPLATE lpTemplate, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM lParamInit);
-	ORIGINALFASTEX(CreateDialogIndirectParamA,NULL);
+	ORIGINAL_EX(CreateDialogIndirectParamA);
 	HWND hWnd = NULL;
 	BOOL bAttachGui = (hWndParent == NULL), bStyleHidden = FALSE;
 	// Со стилями - полная фигня сюда попадает
@@ -101,7 +101,7 @@ HWND WINAPI OnCreateDialogIndirectParamA(HINSTANCE hInstance, LPCDLGTEMPLATE lpT
 HWND WINAPI OnCreateDialogIndirectParamW(HINSTANCE hInstance, LPCDLGTEMPLATE lpTemplate, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM lParamInit)
 {
 	//typedef HWND (WINAPI* OnCreateDialogIndirectParamW_t)(HINSTANCE hInstance, LPCDLGTEMPLATE lpTemplate, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM lParamInit);
-	ORIGINALFASTEX(CreateDialogIndirectParamW,NULL);
+	ORIGINAL_EX(CreateDialogIndirectParamW);
 	HWND hWnd = NULL;
 	BOOL bAttachGui = (hWndParent == NULL), bStyleHidden = FALSE;
 	// Со стилями - полная фигня сюда попадает
@@ -140,7 +140,7 @@ HWND WINAPI OnCreateDialogIndirectParamW(HINSTANCE hInstance, LPCDLGTEMPLATE lpT
 HWND WINAPI OnCreateDialogParamA(HINSTANCE hInstance, LPCSTR lpTemplateName, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM dwInitParam)
 {
 	//typedef HWND (WINAPI* OnCreateDialogParamA_t)(HINSTANCE hInstance, LPCSTR lpTemplateName, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM dwInitParam);
-	ORIGINALFASTEX(CreateDialogParamA,NULL);
+	ORIGINAL_EX(CreateDialogParamA);
 	HWND hWnd = NULL;
 	BOOL bAttachGui = FALSE, bStyleHidden = FALSE;
 	LPCDLGTEMPLATE lpTemplate = NULL;
@@ -190,7 +190,7 @@ HWND WINAPI OnCreateDialogParamA(HINSTANCE hInstance, LPCSTR lpTemplateName, HWN
 HWND WINAPI OnCreateDialogParamW(HINSTANCE hInstance, LPCWSTR lpTemplateName, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM dwInitParam)
 {
 	//typedef HWND (WINAPI* OnCreateDialogParamW_t)(HINSTANCE hInstance, LPCWSTR lpTemplateName, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM dwInitParam);
-	ORIGINALFASTEX(CreateDialogParamW,NULL);
+	ORIGINAL_EX(CreateDialogParamW);
 	HWND hWnd = NULL;
 	BOOL bAttachGui = FALSE, bStyleHidden = FALSE;
 	LPCDLGTEMPLATE lpTemplate = NULL;
@@ -245,7 +245,7 @@ HWND WINAPI OnCreateDialogParamW(HINSTANCE hInstance, LPCWSTR lpTemplateName, HW
 INT_PTR WINAPI OnDialogBoxIndirectParamAorW(HINSTANCE hInstance, LPCDLGTEMPLATE hDialogTemplate, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM dwInitParam, DWORD Flags)
 {
 	//typedef INT_PTR (WINAPI* OnDialogBoxIndirectParamAorW_t)(HINSTANCE hInstance, LPCDLGTEMPLATE hDialogTemplate, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM dwInitParam, DWORD Flags);
-	ORIGINALFASTEX(DialogBoxIndirectParamAorW,NULL);
+	ORIGINAL_EX(DialogBoxIndirectParamAorW);
 	INT_PTR iRc = 0;
 
 	if (ghConEmuWndDC)

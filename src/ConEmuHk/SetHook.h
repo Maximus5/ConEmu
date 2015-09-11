@@ -231,7 +231,7 @@ namespace HookLogger
 }
 
 
-#define ORIGINALFASTEX(n,o) \
+#define ORIGINAL(n,o) \
 	HookItem *ph = NULL; \
 	void* f##n = NULL; \
 	extern DWORD HOOK_FN_ID(n); \
@@ -239,8 +239,13 @@ namespace HookLogger
 	if ((f##n)==NULL) f##n = GetOriginalAddress((void*)(On##n), HOOK_FN_ID(n), (void*)(o), &ph, false); \
 	_ASSERTE((void*)(On##n)!=(void*)(f##n) && (void*)(f##n)!=NULL);
 
-#define ORIGINALFAST(n) \
-	ORIGINALFASTEX(n,n)
+#define ORIGINAL_KRNL(n) \
+	ORIGINAL(n,n)
 
-#define ORIGINAL(n) \
-	ORIGINALFAST(n)
+// Some functions were not present in Win2k, WinXP, ...
+#define ORIGINAL_KRNL_EX(n) \
+	ORIGINAL(n,NULL)
+
+// Use this to avoid static link to functions
+#define ORIGINAL_EX(n) \
+	ORIGINAL(n,NULL)

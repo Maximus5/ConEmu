@@ -47,7 +47,7 @@ static RECT StretchBltBatch = {}; // Support batches from GdipDrawImageRectRectI
 HDC WINAPI OnGetDC(HWND hWnd)
 {
 	//typedef HDC (WINAPI* OnGetDC_t)(HWND hWnd);
-	ORIGINALFASTEX(GetDC,NULL);
+	ORIGINAL_EX(GetDC);
 	HDC hDC = NULL;
 
 	if (F(GetDC))
@@ -63,7 +63,7 @@ HDC WINAPI OnGetDC(HWND hWnd)
 HDC WINAPI OnGetDCEx(HWND hWnd, HRGN hrgnClip, DWORD flags)
 {
 	//typedef HDC (WINAPI* OnGetDCEx_t)(HWND hWnd, HRGN hrgnClip, DWORD flags);
-	ORIGINALFASTEX(GetDCEx,NULL);
+	ORIGINAL_EX(GetDCEx);
 	HDC hDC = NULL;
 
 	if (F(GetDCEx))
@@ -79,7 +79,7 @@ HDC WINAPI OnGetDCEx(HWND hWnd, HRGN hrgnClip, DWORD flags)
 int WINAPI OnReleaseDC(HWND hWnd, HDC hDC)
 {
 	//typedef int (WINAPI* OnReleaseDC_t)(HWND hWnd, HDC hDC);
-	ORIGINALFASTEX(ReleaseDC,NULL);
+	ORIGINAL_EX(ReleaseDC);
 	int iRc = 0;
 
 	if (F(ReleaseDC))
@@ -95,7 +95,7 @@ int WINAPI OnReleaseDC(HWND hWnd, HDC hDC)
 int WINAPI OnStretchDIBits(HDC hdc, int XDest, int YDest, int nDestWidth, int nDestHeight, int XSrc, int YSrc, int nSrcWidth, int nSrcHeight, const VOID *lpBits, const BITMAPINFO *lpBitsInfo, UINT iUsage, DWORD dwRop)
 {
 	//typedef int (WINAPI* OnStretchDIBits_t)(HDC hdc, int XDest, int YDest, int nDestWidth, int nDestHeight, int XSrc, int YSrc, int nSrcWidth, int nSrcHeight, const VOID *lpBits, const BITMAPINFO *lpBitsInfo, UINT iUsage, DWORD dwRop);
-	ORIGINALFASTEX(StretchDIBits,NULL);
+	ORIGINAL_EX(StretchDIBits);
 	int iRc = 0;
 
 	if (F(StretchDIBits))
@@ -130,7 +130,7 @@ int WINAPI OnStretchDIBits(HDC hdc, int XDest, int YDest, int nDestWidth, int nD
 BOOL WINAPI OnBitBlt(HDC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight, HDC hdcSrc, int nXSrc, int nYSrc, DWORD dwRop)
 {
 	//typedef int (WINAPI* OnBitBlt_t)(HDC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight, HDC hdcSrc, int nXSrc, int nYSrc, DWORD dwRop);
-	ORIGINALFASTEX(BitBlt,NULL);
+	ORIGINAL_EX(BitBlt);
 	BOOL bRc = FALSE;
 
 	if (F(BitBlt))
@@ -165,7 +165,7 @@ BOOL WINAPI OnBitBlt(HDC hdcDest, int nXDest, int nYDest, int nWidth, int nHeigh
 BOOL WINAPI OnStretchBlt(HDC hdcDest, int nXOriginDest, int nYOriginDest, int nWidthDest, int nHeightDest, HDC hdcSrc, int nXOriginSrc, int nYOriginSrc, int nWidthSrc, int nHeightSrc, DWORD dwRop)
 {
 	//typedef int (WINAPI* OnStretchBlt_t)(HDC hdcDest, int nXOriginDest, int nYOriginDest, int nWidthDest, int nHeightDest, HDC hdcSrc, int nXOriginSrc, int nYOriginSrc, int nWidthSrc, int nHeightSrc, DWORD dwRop);
-	ORIGINALFASTEX(StretchBlt,NULL);
+	ORIGINAL_EX(StretchBlt);
 	BOOL bRc = FALSE;
 
 	//#ifdef _DEBUG

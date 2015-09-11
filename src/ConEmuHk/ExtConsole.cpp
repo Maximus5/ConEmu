@@ -175,7 +175,7 @@ static BOOL ExtCheckBuffers(HANDLE h)
 
 		typedef HANDLE(WINAPI* OnOpenFileMappingW_t)(DWORD dwDesiredAccess, BOOL bInheritHandle, LPCWSTR lpName);
 		extern HANDLE WINAPI OnOpenFileMappingW(DWORD dwDesiredAccess, BOOL bInheritHandle, LPCWSTR lpName);
-		ORIGINALFAST(OpenFileMappingW);
+		ORIGINAL_KRNL(OpenFileMappingW);
 
 		//TODO: Пока работаем "по-старому", через буфер TrueColor. Переделать, он не оптимален
 		wchar_t szMapName[128];

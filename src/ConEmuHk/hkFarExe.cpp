@@ -51,7 +51,7 @@ int WINAPI OnCompareStringW(LCID Locale, DWORD dwCmpFlags, LPCWSTR lpString1, in
 {
 	//typedef int (WINAPI* OnCompareStringW_t)(LCID Locale, DWORD dwCmpFlags, LPCWSTR lpString1, int cchCount1, LPCWSTR lpString2, int cchCount2);
 	SUPPRESSORIGINALSHOWCALL;
-	ORIGINALFAST(CompareStringW);
+	ORIGINAL_KRNL_EX(CompareStringW);
 	int nCmp = -1;
 
 	if (gFarMode.bFarHookMode && gFarMode.bFARuseASCIIsort)

@@ -178,7 +178,7 @@ bool FindModuleByAddress(const BYTE* lpAddress, LPWSTR pszModule, int cchMax)
 LPVOID WINAPI OnVirtualAlloc(LPVOID lpAddress, SIZE_T dwSize, DWORD flAllocationType, DWORD flProtect)
 {
 	//typedef LPVOID(WINAPI* OnVirtualAlloc_t)(LPVOID lpAddress, SIZE_T dwSize, DWORD flAllocationType, DWORD flProtect);
-	ORIGINALFAST(VirtualAlloc);
+	ORIGINAL_KRNL(VirtualAlloc);
 
 	LPVOID lpResult = F(VirtualAlloc)(lpAddress, dwSize, flAllocationType, flProtect);
 	DWORD dwErr = GetLastError();
@@ -251,7 +251,7 @@ LPVOID WINAPI OnVirtualAlloc(LPVOID lpAddress, SIZE_T dwSize, DWORD flAllocation
 BOOL WINAPI OnVirtualProtect(LPVOID lpAddress, SIZE_T dwSize, DWORD flNewProtect, PDWORD lpflOldProtect)
 {
 	//typedef BOOL(WINAPI* OnVirtualProtect_t)(LPVOID lpAddress, SIZE_T dwSize, DWORD flNewProtect, PDWORD lpflOldProtect);
-	ORIGINALFAST(VirtualProtect);
+	ORIGINAL_KRNL(VirtualProtect);
 	BOOL bResult = FALSE;
 
 	if (F(VirtualProtect))
@@ -276,7 +276,7 @@ BOOL WINAPI OnVirtualProtect(LPVOID lpAddress, SIZE_T dwSize, DWORD flNewProtect
 LPTOP_LEVEL_EXCEPTION_FILTER WINAPI OnSetUnhandledExceptionFilter(LPTOP_LEVEL_EXCEPTION_FILTER lpTopLevelExceptionFilter)
 {
 	//typedef LPTOP_LEVEL_EXCEPTION_FILTER(WINAPI* OnSetUnhandledExceptionFilter_t)(LPTOP_LEVEL_EXCEPTION_FILTER lpTopLevelExceptionFilter);
-	ORIGINALFAST(SetUnhandledExceptionFilter);
+	ORIGINAL_KRNL(SetUnhandledExceptionFilter);
 
 	LPTOP_LEVEL_EXCEPTION_FILTER lpRc = F(SetUnhandledExceptionFilter)(lpTopLevelExceptionFilter);
 
@@ -299,7 +299,7 @@ LPTOP_LEVEL_EXCEPTION_FILTER WINAPI OnSetUnhandledExceptionFilter(LPTOP_LEVEL_EX
 void WINAPI OnGetSystemTime(LPSYSTEMTIME lpSystemTime)
 {
 	//typedef void (WINAPI* OnGetSystemTime_t)(LPSYSTEMTIME);
-	ORIGINALFAST(GetSystemTime);
+	ORIGINAL_KRNL(GetSystemTime);
 
 	if (!GetTime(true, lpSystemTime))
 		F(GetSystemTime)(lpSystemTime);
@@ -309,7 +309,7 @@ void WINAPI OnGetSystemTime(LPSYSTEMTIME lpSystemTime)
 void WINAPI OnGetLocalTime(LPSYSTEMTIME lpSystemTime)
 {
 	//typedef void (WINAPI* OnGetLocalTime_t)(LPSYSTEMTIME);
-	ORIGINALFAST(GetLocalTime);
+	ORIGINAL_KRNL(GetLocalTime);
 
 	if (!GetTime(false, lpSystemTime))
 		F(GetLocalTime)(lpSystemTime);
@@ -319,7 +319,7 @@ void WINAPI OnGetLocalTime(LPSYSTEMTIME lpSystemTime)
 void WINAPI OnGetSystemTimeAsFileTime(LPFILETIME lpSystemTimeAsFileTime)
 {
 	//typedef void (WINAPI* OnGetSystemTimeAsFileTime_t)(LPFILETIME);
-	ORIGINALFAST(GetSystemTimeAsFileTime);
+	ORIGINAL_KRNL(GetSystemTimeAsFileTime);
 
 	SYSTEMTIME st;
 	if (GetTime(true, &st))
@@ -338,7 +338,7 @@ DWORD WINAPI OnGetLastError()
 {
 	//typedef DWORD (WINAPI* OnGetLastError_t)();
 	SUPPRESSORIGINALSHOWCALL;
-	ORIGINALFAST(GetLastError);
+	ORIGINAL_KRNL(GetLastError);
 	DWORD nErr = 0;
 
 	if (F(GetLastError))
@@ -358,7 +358,7 @@ VOID WINAPI OnSetLastError(DWORD dwErrCode)
 {
 	//typedef DWORD (WINAPI* OnSetLastError_t)(DWORD dwErrCode);
 	SUPPRESSORIGINALSHOWCALL;
-	ORIGINALFAST(SetLastError);
+	ORIGINAL_KRNL(SetLastError);
 
 	if (dwErrCode == HOOK_ERROR_NO)
 	{

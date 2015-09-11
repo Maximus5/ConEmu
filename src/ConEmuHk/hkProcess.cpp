@@ -122,7 +122,7 @@ wrap:
 VOID WINAPI OnExitProcess(UINT uExitCode)
 {
 	//typedef BOOL (WINAPI* OnExitProcess_t)(UINT uExitCode);
-	ORIGINALFAST(ExitProcess);
+	ORIGINAL_KRNL(ExitProcess);
 
 	#if 0
 	if (gbIsLessProcess)
@@ -166,7 +166,7 @@ VOID WINAPI OnExitProcess(UINT uExitCode)
 
 	if (bUseForceTerminate)
 	{
-		ORIGINALFAST(TerminateProcess);
+		ORIGINAL_KRNL(TerminateProcess);
 		F(TerminateProcess)(GetCurrentProcess(), uExitCode);
 		return; // Assume not to get here
 	}
@@ -179,7 +179,7 @@ VOID WINAPI OnExitProcess(UINT uExitCode)
 BOOL WINAPI OnTerminateProcess(HANDLE hProcess, UINT uExitCode)
 {
 	//typedef BOOL (WINAPI* OnTerminateProcess_t)(HANDLE hProcess, UINT uExitCode);
-	ORIGINALFAST(TerminateProcess);
+	ORIGINAL_KRNL(TerminateProcess);
 	BOOL lbRc;
 
 	if (hProcess == GetCurrentProcess())
@@ -204,7 +204,7 @@ BOOL WINAPI OnTerminateProcess(HANDLE hProcess, UINT uExitCode)
 BOOL WINAPI OnTerminateThread(HANDLE hThread, DWORD dwExitCode)
 {
 	//typedef BOOL (WINAPI* OnTerminateThread_t)(HANDLE hThread, UINT dwExitCode);
-	ORIGINALFAST(TerminateThread);
+	ORIGINAL_KRNL(TerminateThread);
 	BOOL lbRc;
 
 	#if 0
@@ -230,7 +230,7 @@ BOOL WINAPI OnTerminateThread(HANDLE hThread, DWORD dwExitCode)
 BOOL WINAPI OnCreateProcessA(LPCSTR lpApplicationName,  LPSTR lpCommandLine,  LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment, LPCSTR lpCurrentDirectory,  LPSTARTUPINFOA lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation)
 {
 	//typedef BOOL (WINAPI* OnCreateProcessA_t)(LPCSTR lpApplicationName,  LPSTR lpCommandLine,  LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment, LPCSTR lpCurrentDirectory,  LPSTARTUPINFOA lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation);
-	ORIGINALFAST(CreateProcessA);
+	ORIGINAL_KRNL(CreateProcessA);
 	BOOL lbRc = FALSE;
 	DWORD dwErr = 0;
 
@@ -279,7 +279,7 @@ BOOL WINAPI OnCreateProcessA(LPCSTR lpApplicationName,  LPSTR lpCommandLine,  LP
 BOOL WINAPI OnCreateProcessW(LPCWSTR lpApplicationName, LPWSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment, LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation)
 {
 	//typedef BOOL (WINAPI* OnCreateProcessW_t)(LPCWSTR lpApplicationName, LPWSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment, LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation);
-	ORIGINALFAST(CreateProcessW);
+	ORIGINAL_KRNL(CreateProcessW);
 	BOOL lbRc = FALSE;
 	DWORD dwErr = 0;
 	DWORD ldwCreationFlags = dwCreationFlags;
@@ -408,7 +408,7 @@ UINT WINAPI OnWinExec(LPCSTR lpCmdLine, UINT uCmdShow)
 
 #if 0
 	typedef BOOL (WINAPI* OnWinExec_t)(LPCSTR lpCmdLine, UINT uCmdShow);
-	ORIGINALFAST(CreateProcessA);
+	ORIGINAL_KRNL(CreateProcessA);
 	BOOL lbRc = FALSE;
 	DWORD dwErr = 0;
 
@@ -449,7 +449,7 @@ UINT WINAPI OnWinExec(LPCSTR lpCmdLine, UINT uCmdShow)
 BOOL WINAPI OnSetCurrentDirectoryA(LPCSTR lpPathName)
 {
 	//typedef BOOL (WINAPI* OnSetCurrentDirectoryA_t)(LPCSTR lpPathName);
-	ORIGINALFAST(SetCurrentDirectoryA);
+	ORIGINAL_KRNL(SetCurrentDirectoryA);
 	BOOL lbRc = FALSE;
 
 	lbRc = F(SetCurrentDirectoryA)(lpPathName);
@@ -463,7 +463,7 @@ BOOL WINAPI OnSetCurrentDirectoryA(LPCSTR lpPathName)
 BOOL WINAPI OnSetCurrentDirectoryW(LPCWSTR lpPathName)
 {
 	//typedef BOOL (WINAPI* OnSetCurrentDirectoryW_t)(LPCWSTR lpPathName);
-	ORIGINALFAST(SetCurrentDirectoryW);
+	ORIGINAL_KRNL(SetCurrentDirectoryW);
 	BOOL lbRc = FALSE;
 
 	lbRc = F(SetCurrentDirectoryW)(lpPathName);
@@ -477,7 +477,7 @@ BOOL WINAPI OnSetCurrentDirectoryW(LPCWSTR lpPathName)
 BOOL WINAPI OnSetThreadContext(HANDLE hThread, CONST CONTEXT *lpContext)
 {
 	//typedef BOOL (WINAPI* OnSetThreadContext_t)(HANDLE hThread, CONST CONTEXT *lpContext);
-	ORIGINALFAST(SetThreadContext);
+	ORIGINAL_KRNL(SetThreadContext);
 	BOOL lbRc = FALSE;
 
 	if (ghSkipSetThreadContextForThread && (hThread == ghSkipSetThreadContextForThread))
@@ -497,7 +497,7 @@ BOOL WINAPI OnSetThreadContext(HANDLE hThread, CONST CONTEXT *lpContext)
 BOOL WINAPI OnShellExecuteExA(LPSHELLEXECUTEINFOA lpExecInfo)
 {
 	//typedef BOOL (WINAPI* OnShellExecuteExA_t)(LPSHELLEXECUTEINFOA lpExecInfo);
-	ORIGINALFASTEX(ShellExecuteExA,NULL);
+	ORIGINAL_EX(ShellExecuteExA);
 	if (!F(ShellExecuteExA))
 	{
 		SetLastError(ERROR_INVALID_FUNCTION);
@@ -592,7 +592,7 @@ BOOL WINAPI OnShellExecuteExA(LPSHELLEXECUTEINFOA lpExecInfo)
 BOOL WINAPI OnShellExecuteExW(LPSHELLEXECUTEINFOW lpExecInfo)
 {
 	//typedef BOOL (WINAPI* OnShellExecuteExW_t)(LPSHELLEXECUTEINFOW lpExecInfo);
-	ORIGINALFASTEX(ShellExecuteExW,NULL);
+	ORIGINAL_EX(ShellExecuteExW);
 	if (!F(ShellExecuteExW))
 	{
 		SetLastError(ERROR_INVALID_FUNCTION);
@@ -624,7 +624,7 @@ BOOL WINAPI OnShellExecuteExW(LPSHELLEXECUTEINFOW lpExecInfo)
 HRESULT WINAPI OnShellExecCmdLine(HWND hwnd, LPCWSTR pwszCommand, LPCWSTR pwszStartDir, int nShow, LPVOID pUnused, DWORD dwSeclFlags)
 {
 	//typedef HRESULT (WINAPI* OnShellExecCmdLine_t)(HWND hwnd, LPCWSTR pwszCommand, LPCWSTR pwszStartDir, int nShow, LPVOID pUnused, DWORD dwSeclFlags);
-	ORIGINALFASTEX(ShellExecCmdLine,NULL);
+	ORIGINAL_EX(ShellExecCmdLine);
 	HRESULT hr = S_OK;
 
 	// This is used from "Run" dialog too. We need to process command internally, because
@@ -660,7 +660,7 @@ wrap:
 HINSTANCE WINAPI OnShellExecuteA(HWND hwnd, LPCSTR lpOperation, LPCSTR lpFile, LPCSTR lpParameters, LPCSTR lpDirectory, INT nShowCmd)
 {
 	//typedef HINSTANCE(WINAPI* OnShellExecuteA_t)(HWND hwnd, LPCSTR lpOperation, LPCSTR lpFile, LPCSTR lpParameters, LPCSTR lpDirectory, INT nShowCmd);
-	ORIGINALFASTEX(ShellExecuteA,NULL);
+	ORIGINAL_EX(ShellExecuteA);
 	if (!F(ShellExecuteA))
 	{
 		SetLastError(ERROR_INVALID_FUNCTION);
@@ -698,7 +698,7 @@ HINSTANCE WINAPI OnShellExecuteA(HWND hwnd, LPCSTR lpOperation, LPCSTR lpFile, L
 HINSTANCE WINAPI OnShellExecuteW(HWND hwnd, LPCWSTR lpOperation, LPCWSTR lpFile, LPCWSTR lpParameters, LPCWSTR lpDirectory, INT nShowCmd)
 {
 	//typedef HINSTANCE(WINAPI* OnShellExecuteW_t)(HWND hwnd, LPCWSTR lpOperation, LPCWSTR lpFile, LPCWSTR lpParameters, LPCWSTR lpDirectory, INT nShowCmd);
-	ORIGINALFASTEX(ShellExecuteW,NULL);
+	ORIGINAL_EX(ShellExecuteW);
 	if (!F(ShellExecuteW))
 	{
 		SetLastError(ERROR_INVALID_FUNCTION);
@@ -737,7 +737,7 @@ HINSTANCE WINAPI OnShellExecuteW(HWND hwnd, LPCWSTR lpOperation, LPCWSTR lpFile,
 HANDLE WINAPI OnCreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize, LPTHREAD_START_ROUTINE lpStartAddress, LPVOID lpParameter, DWORD dwCreationFlags, LPDWORD lpThreadId)
 {
 	//typedef HANDLE(WINAPI* OnCreateThread_t)(LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize, LPTHREAD_START_ROUTINE lpStartAddress, LPVOID lpParameter, DWORD dwCreationFlags, LPDWORD lpThreadId);
-	ORIGINALFAST(CreateThread);
+	ORIGINAL_KRNL(CreateThread);
 	DWORD nTemp = 0;
 	LPDWORD pThreadID = lpThreadId ? lpThreadId : &nTemp;
 
@@ -754,7 +754,7 @@ HANDLE WINAPI OnCreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dw
 DWORD WINAPI OnResumeThread(HANDLE hThread)
 {
 	//typedef DWORD (WINAPI* OnResumeThread_t)(HANDLE);
-	ORIGINALFAST(ResumeThread);
+	ORIGINAL_KRNL(ResumeThread);
 
 	CShellProc::OnResumeDebugeeThreadCalled(hThread);
 

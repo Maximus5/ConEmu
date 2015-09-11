@@ -51,7 +51,7 @@ extern void CheckPowerShellProgress(HANDLE hConsoleOutput,const CHAR_INFO *lpBuf
 BOOL WINAPI OnGetConsoleMode(HANDLE hConsoleHandle,LPDWORD lpMode)
 {
 	//typedef BOOL (WINAPI* OnGetConsoleMode_t)(HANDLE,LPDWORD);
-	ORIGINALFAST(GetConsoleMode);
+	ORIGINAL_KRNL(GetConsoleMode);
 	BOOL b;
 
 	b = F(GetConsoleMode)(hConsoleHandle,lpMode);
@@ -63,7 +63,7 @@ BOOL WINAPI OnGetConsoleMode(HANDLE hConsoleHandle,LPDWORD lpMode)
 BOOL WINAPI OnSetConsoleMode(HANDLE hConsoleHandle, DWORD dwMode)
 {
 	//typedef BOOL (WINAPI* OnSetConsoleMode_t)(HANDLE hConsoleHandle, DWORD dwMode);
-	ORIGINALFAST(SetConsoleMode);
+	ORIGINAL_KRNL(SetConsoleMode);
 	BOOL lbRc = FALSE;
 
 	#if 0
@@ -100,7 +100,7 @@ BOOL WINAPI OnSetConsoleMode(HANDLE hConsoleHandle, DWORD dwMode)
 BOOL WINAPI OnSetConsoleTextAttribute(HANDLE hConsoleOutput, WORD wAttributes)
 {
 	//typedef BOOL (WINAPI* OnSetConsoleTextAttribute_t)(HANDLE hConsoleOutput, WORD wAttributes);
-	ORIGINALFAST(SetConsoleTextAttribute);
+	ORIGINAL_KRNL(SetConsoleTextAttribute);
 
 	BOOL lbRc = FALSE;
 
@@ -136,7 +136,7 @@ BOOL WINAPI OnSetConsoleTextAttribute(HANDLE hConsoleOutput, WORD wAttributes)
 BOOL WINAPI OnWriteConsoleOutputA(HANDLE hConsoleOutput,const CHAR_INFO *lpBuffer,COORD dwBufferSize,COORD dwBufferCoord,PSMALL_RECT lpWriteRegion)
 {
 	//typedef BOOL (WINAPI* OnWriteConsoleOutputA_t)(HANDLE hConsoleOutput,const CHAR_INFO *lpBuffer,COORD dwBufferSize,COORD dwBufferCoord,PSMALL_RECT lpWriteRegion);
-	ORIGINAL(WriteConsoleOutputA);
+	ORIGINAL_KRNL(WriteConsoleOutputA);
 	BOOL lbRc = FALSE;
 
 	#ifdef _DEBUG
@@ -167,7 +167,7 @@ BOOL WINAPI OnWriteConsoleOutputA(HANDLE hConsoleOutput,const CHAR_INFO *lpBuffe
 BOOL WINAPI OnWriteConsoleOutputW(HANDLE hConsoleOutput,const CHAR_INFO *lpBuffer,COORD dwBufferSize,COORD dwBufferCoord,PSMALL_RECT lpWriteRegion)
 {
 	//typedef BOOL (WINAPI* OnWriteConsoleOutputW_t)(HANDLE hConsoleOutput,const CHAR_INFO *lpBuffer,COORD dwBufferSize,COORD dwBufferCoord,PSMALL_RECT lpWriteRegion);
-	ORIGINAL(WriteConsoleOutputW);
+	ORIGINAL_KRNL(WriteConsoleOutputW);
 	BOOL lbRc = FALSE;
 
 	if (ph && ph->PreCallBack)
@@ -212,7 +212,7 @@ BOOL WINAPI OnWriteConsoleOutputW(HANDLE hConsoleOutput,const CHAR_INFO *lpBuffe
 BOOL WINAPI OnWriteConsoleA(HANDLE hConsoleOutput, const VOID *lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, LPVOID lpReserved)
 {
 	//typedef BOOL (WINAPI* OnWriteConsoleA_t)(HANDLE hConsoleOutput, const VOID *lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, LPVOID lpReserved);
-	ORIGINALFAST(WriteConsoleA);
+	ORIGINAL_KRNL(WriteConsoleA);
 	BOOL lbRc = FALSE;
 	wchar_t* buf = NULL;
 	DWORD len, cp;
@@ -317,7 +317,7 @@ TODO("По хорошему, после WriteConsoleOutputAttributes тоже н
 BOOL WINAPI OnWriteConsoleOutputCharacterA(HANDLE hConsoleOutput, LPCSTR lpCharacter, DWORD nLength, COORD dwWriteCoord, LPDWORD lpNumberOfCharsWritten)
 {
 	//typedef BOOL (WINAPI* OnWriteConsoleOutputCharacterA_t)(HANDLE hConsoleOutput, LPCSTR lpCharacter, DWORD nLength, COORD dwWriteCoord, LPDWORD lpNumberOfCharsWritten);
-	ORIGINALFAST(WriteConsoleOutputCharacterA);
+	ORIGINAL_KRNL(WriteConsoleOutputCharacterA);
 
 	FIRST_ANSI_CALL((const BYTE*)lpCharacter, nLength);
 
@@ -335,7 +335,7 @@ BOOL WINAPI OnWriteConsoleOutputCharacterA(HANDLE hConsoleOutput, LPCSTR lpChara
 BOOL WINAPI OnWriteConsoleOutputCharacterW(HANDLE hConsoleOutput, LPCWSTR lpCharacter, DWORD nLength, COORD dwWriteCoord, LPDWORD lpNumberOfCharsWritten)
 {
 	//typedef BOOL (WINAPI* OnWriteConsoleOutputCharacterW_t)(HANDLE hConsoleOutput, LPCWSTR lpCharacter, DWORD nLength, COORD dwWriteCoord, LPDWORD lpNumberOfCharsWritten);
-	ORIGINALFAST(WriteConsoleOutputCharacterW);
+	ORIGINAL_KRNL(WriteConsoleOutputCharacterW);
 
 	FIRST_ANSI_CALL((const BYTE*)lpCharacter, nLength);
 
@@ -353,7 +353,7 @@ BOOL WINAPI OnWriteConsoleOutputCharacterW(HANDLE hConsoleOutput, LPCWSTR lpChar
 BOOL WINAPI OnScrollConsoleScreenBufferA(HANDLE hConsoleOutput, const SMALL_RECT *lpScrollRectangle, const SMALL_RECT *lpClipRectangle, COORD dwDestinationOrigin, const CHAR_INFO *lpFill)
 {
 	//typedef BOOL (WINAPI* OnScrollConsoleScreenBufferA_t)(HANDLE hConsoleOutput, const SMALL_RECT *lpScrollRectangle, const SMALL_RECT *lpClipRectangle, COORD dwDestinationOrigin, const CHAR_INFO *lpFill);
-	ORIGINALFAST(ScrollConsoleScreenBufferA);
+	ORIGINAL_KRNL(ScrollConsoleScreenBufferA);
 	BOOL lbRc = FALSE;
 
 	if (CEAnsi::IsOutputHandle(hConsoleOutput))
@@ -372,7 +372,7 @@ BOOL WINAPI OnScrollConsoleScreenBufferA(HANDLE hConsoleOutput, const SMALL_RECT
 BOOL WINAPI OnScrollConsoleScreenBufferW(HANDLE hConsoleOutput, const SMALL_RECT *lpScrollRectangle, const SMALL_RECT *lpClipRectangle, COORD dwDestinationOrigin, const CHAR_INFO *lpFill)
 {
 	typedef BOOL (WINAPI* OnScrollConsoleScreenBufferW_t)(HANDLE hConsoleOutput, const SMALL_RECT *lpScrollRectangle, const SMALL_RECT *lpClipRectangle, COORD dwDestinationOrigin, const CHAR_INFO *lpFill);
-	ORIGINALFAST(ScrollConsoleScreenBufferW);
+	ORIGINAL_KRNL(ScrollConsoleScreenBufferW);
 	BOOL lbRc = FALSE;
 
 	if (CEAnsi::IsOutputHandle(hConsoleOutput))

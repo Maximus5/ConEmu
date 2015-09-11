@@ -63,7 +63,7 @@ extern BOOL MyGetConsoleFontSize(COORD& crFontSize);
 BOOL WINAPI OnSetConsoleTitleA(LPCSTR lpConsoleTitle)
 {
 	//typedef BOOL (WINAPI* OnSetConsoleTitleA_t)(LPCSTR lpConsoleTitle);
-	ORIGINALFASTEX(SetConsoleTitleA,NULL);
+	ORIGINAL_KRNL(SetConsoleTitleA);
 	BOOL bRc = FALSE;
 	if (F(SetConsoleTitleA))
 		bRc = F(SetConsoleTitleA)(lpConsoleTitle);
@@ -74,7 +74,7 @@ BOOL WINAPI OnSetConsoleTitleA(LPCSTR lpConsoleTitle)
 BOOL WINAPI OnSetConsoleTitleW(LPCWSTR lpConsoleTitle)
 {
 	//typedef BOOL (WINAPI* OnSetConsoleTitleW_t)(LPCWSTR lpConsoleTitle);
-	ORIGINALFASTEX(SetConsoleTitleW,NULL);
+	ORIGINAL_KRNL(SetConsoleTitleW);
 
 	#ifdef DEBUG_CON_TITLE
 	if (!gpLastSetConTitle)
@@ -95,7 +95,7 @@ BOOL WINAPI OnSetConsoleTitleW(LPCWSTR lpConsoleTitle)
 DWORD WINAPI OnGetConsoleAliasesW(LPWSTR AliasBuffer, DWORD AliasBufferLength, LPWSTR ExeName)
 {
 	//typedef DWORD (WINAPI* OnGetConsoleAliasesW_t)(LPWSTR AliasBuffer, DWORD AliasBufferLength, LPWSTR ExeName);
-	ORIGINALFAST(GetConsoleAliasesW);
+	ORIGINAL_KRNL(GetConsoleAliasesW);
 	DWORD nError = 0;
 	DWORD nRc = F(GetConsoleAliasesW)(AliasBuffer,AliasBufferLength,ExeName);
 
@@ -176,7 +176,7 @@ DWORD WINAPI SetConsoleCPThread(LPVOID lpParameter)
 BOOL WINAPI OnSetConsoleCP(UINT wCodePageID)
 {
 	//typedef BOOL (WINAPI* OnSetConsoleCP_t)(UINT wCodePageID);
-	ORIGINALFAST(SetConsoleCP);
+	ORIGINAL_KRNL(SetConsoleCP);
 	_ASSERTE(OnSetConsoleCP!=SetConsoleCP);
 	BOOL lbRc = FALSE;
 	SCOCP sco = {wCodePageID, (OnSetConsoleCP_t)F(SetConsoleCP), CreateEvent(NULL,FALSE,FALSE,NULL)};
@@ -255,7 +255,7 @@ BOOL WINAPI OnSetConsoleCP(UINT wCodePageID)
 BOOL WINAPI OnSetConsoleOutputCP(UINT wCodePageID)
 {
 	//typedef BOOL (WINAPI* OnSetConsoleOutputCP_t)(UINT wCodePageID);
-	ORIGINALFAST(SetConsoleOutputCP);
+	ORIGINAL_KRNL(SetConsoleOutputCP);
 	_ASSERTE(OnSetConsoleOutputCP!=SetConsoleOutputCP);
 	BOOL lbRc = FALSE;
 	SCOCP sco = {wCodePageID, (OnSetConsoleCP_t)F(SetConsoleOutputCP), CreateEvent(NULL,FALSE,FALSE,NULL)};
@@ -334,7 +334,7 @@ BOOL WINAPI OnSetConsoleOutputCP(UINT wCodePageID)
 BOOL WINAPI OnAllocConsole(void)
 {
 	//typedef BOOL (WINAPI* OnAllocConsole_t)(void);
-	ORIGINALFAST(AllocConsole);
+	ORIGINAL_KRNL(AllocConsole);
 	BOOL lbRc = FALSE, lbAllocated = FALSE;
 	COORD crLocked;
 	HMODULE hKernel = NULL;
@@ -453,7 +453,7 @@ BOOL WINAPI OnAllocConsole(void)
 BOOL WINAPI OnFreeConsole(void)
 {
 	//typedef BOOL (WINAPI* OnFreeConsole_t)(void);
-	ORIGINALFAST(FreeConsole);
+	ORIGINAL_KRNL(FreeConsole);
 	BOOL lbRc = FALSE;
 
 	if (ph && ph->PreCallBack)
@@ -481,7 +481,7 @@ BOOL WINAPI OnFreeConsole(void)
 HWND WINAPI OnGetConsoleWindow(void)
 {
 	//typedef HWND (WINAPI* OnGetConsoleWindow_t)(void);
-	ORIGINALFAST(GetConsoleWindow);
+	ORIGINAL_KRNL(GetConsoleWindow);
 
 	_ASSERTE(F(GetConsoleWindow) != GetRealConsoleWindow);
 	// && F(GetConsoleWindow) != GetConsoleWindow - for minhook generation
@@ -512,7 +512,7 @@ HWND WINAPI OnGetConsoleWindow(void)
 BOOL WINAPI OnSetConsoleKeyShortcuts(BOOL bSet, BYTE bReserveKeys, LPVOID p1, DWORD n1)
 {
 	//typedef BOOL (WINAPI* OnSetConsoleKeyShortcuts_t)(BOOL,BYTE,LPVOID,DWORD);
-	ORIGINALFASTEX(SetConsoleKeyShortcuts,NULL);
+	ORIGINAL_KRNL_EX(SetConsoleKeyShortcuts);
 	BOOL lbRc = FALSE;
 
 	if (F(SetConsoleKeyShortcuts))
@@ -547,7 +547,7 @@ BOOL WINAPI OnSetConsoleKeyShortcuts(BOOL bSet, BYTE bReserveKeys, LPVOID p1, DW
 BOOL WINAPI OnGetCurrentConsoleFont(HANDLE hConsoleOutput, BOOL bMaximumWindow, PCONSOLE_FONT_INFO lpConsoleCurrentFont)
 {
 	//typedef BOOL (WINAPI* OnGetCurrentConsoleFont_t)(HANDLE hConsoleOutput, BOOL bMaximumWindow, PCONSOLE_FONT_INFO lpConsoleCurrentFont);
-	ORIGINALFASTEX(GetCurrentConsoleFont,NULL);
+	ORIGINAL_KRNL(GetCurrentConsoleFont);
 	BOOL lbRc = FALSE;
 	COORD crSize = {};
 
@@ -567,7 +567,7 @@ BOOL WINAPI OnGetCurrentConsoleFont(HANDLE hConsoleOutput, BOOL bMaximumWindow, 
 COORD WINAPI OnGetConsoleFontSize(HANDLE hConsoleOutput, DWORD nFont)
 {
 	//typedef COORD (WINAPI* OnGetConsoleFontSize_t)(HANDLE hConsoleOutput, DWORD nFont);
-	ORIGINALFASTEX(GetConsoleFontSize,NULL);
+	ORIGINAL_KRNL(GetConsoleFontSize);
 	COORD cr = {};
 
 	if (!MyGetConsoleFontSize(cr))
@@ -583,7 +583,7 @@ COORD WINAPI OnGetConsoleFontSize(HANDLE hConsoleOutput, DWORD nFont)
 HANDLE WINAPI OnCreateConsoleScreenBuffer(DWORD dwDesiredAccess, DWORD dwShareMode, const SECURITY_ATTRIBUTES *lpSecurityAttributes, DWORD dwFlags, LPVOID lpScreenBufferData)
 {
 	//typedef HANDLE(WINAPI* OnCreateConsoleScreenBuffer_t)(DWORD dwDesiredAccess, DWORD dwShareMode, const SECURITY_ATTRIBUTES *lpSecurityAttributes, DWORD dwFlags, LPVOID lpScreenBufferData);
-	ORIGINALFAST(CreateConsoleScreenBuffer);
+	ORIGINAL_KRNL(CreateConsoleScreenBuffer);
 
 	#ifdef SHOWCREATEBUFFERINFO
 	wchar_t szDebugInfo[255];
@@ -617,7 +617,7 @@ HANDLE WINAPI OnCreateConsoleScreenBuffer(DWORD dwDesiredAccess, DWORD dwShareMo
 BOOL WINAPI OnSetConsoleActiveScreenBuffer(HANDLE hConsoleOutput)
 {
 	//typedef BOOL (WINAPI* OnSetConsoleActiveScreenBuffer_t)(HANDLE hConsoleOutput);
-	ORIGINALFAST(SetConsoleActiveScreenBuffer);
+	ORIGINAL_KRNL(SetConsoleActiveScreenBuffer);
 
 	if (!ghStdOutHandle)
 		ghStdOutHandle = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -653,7 +653,7 @@ BOOL WINAPI OnSetConsoleActiveScreenBuffer(HANDLE hConsoleOutput)
 BOOL WINAPI OnSetConsoleWindowInfo(HANDLE hConsoleOutput, BOOL bAbsolute, const SMALL_RECT *lpConsoleWindow)
 {
 	//typedef BOOL (WINAPI* OnSetConsoleWindowInfo_t)(HANDLE hConsoleOutput, BOOL bAbsolute, const SMALL_RECT *lpConsoleWindow);
-	ORIGINALFAST(SetConsoleWindowInfo);
+	ORIGINAL_KRNL(SetConsoleWindowInfo);
 	BOOL lbRc = FALSE;
 	SMALL_RECT tmp;
 	COORD crLocked;
@@ -733,7 +733,7 @@ BOOL WINAPI OnSetConsoleWindowInfo(HANDLE hConsoleOutput, BOOL bAbsolute, const 
 BOOL WINAPI OnSetConsoleScreenBufferSize(HANDLE hConsoleOutput, COORD dwSize)
 {
 	//typedef BOOL (WINAPI* OnSetConsoleScreenBufferSize_t)(HANDLE hConsoleOutput, COORD dwSize);
-	ORIGINALFAST(SetConsoleScreenBufferSize);
+	ORIGINAL_KRNL(SetConsoleScreenBufferSize);
 	BOOL lbRc = FALSE, lbRetry = FALSE;
 	COORD crLocked;
 	DWORD dwErr = -1;
@@ -821,7 +821,7 @@ wrap:
 BOOL WINAPI OnSetCurrentConsoleFontEx(HANDLE hConsoleOutput, BOOL bMaximumWindow, MY_CONSOLE_FONT_INFOEX* lpConsoleCurrentFontEx)
 {
 	//typedef BOOL (WINAPI* OnSetCurrentConsoleFontEx_t)(HANDLE hConsoleOutput, BOOL bMaximumWindow, MY_CONSOLE_FONT_INFOEX* lpConsoleCurrentFontEx);
-	ORIGINALFASTEX(SetCurrentConsoleFontEx,NULL);
+	ORIGINAL_KRNL_EX(SetCurrentConsoleFontEx);
 	BOOL lbRc = FALSE;
 
 	if (ghConEmuWndDC)
@@ -846,7 +846,7 @@ wrap:
 BOOL WINAPI OnSetConsoleScreenBufferInfoEx(HANDLE hConsoleOutput, MY_CONSOLE_SCREEN_BUFFER_INFOEX* lpConsoleScreenBufferInfoEx)
 {
 	//typedef BOOL (WINAPI* OnSetConsoleScreenBufferInfoEx_t)(HANDLE hConsoleOutput, MY_CONSOLE_SCREEN_BUFFER_INFOEX* lpConsoleScreenBufferInfoEx);
-	ORIGINALFASTEX(SetConsoleScreenBufferInfoEx,NULL);
+	ORIGINAL_KRNL_EX(SetConsoleScreenBufferInfoEx);
 	BOOL lbRc = FALSE;
 
 	COORD crLocked;
@@ -911,7 +911,7 @@ BOOL WINAPI OnSetConsoleScreenBufferInfoEx(HANDLE hConsoleOutput, MY_CONSOLE_SCR
 COORD WINAPI OnGetLargestConsoleWindowSize(HANDLE hConsoleOutput)
 {
 	//typedef COORD (WINAPI* OnGetLargestConsoleWindowSize_t)(HANDLE hConsoleOutput);
-	ORIGINALFAST(GetLargestConsoleWindowSize);
+	ORIGINAL_KRNL(GetLargestConsoleWindowSize);
 	COORD cr = {80,25}, crLocked = {0,0};
 
 	if (ghConEmuWndDC && IsVisibleRectLocked(crLocked))
@@ -941,7 +941,7 @@ COORD WINAPI OnGetLargestConsoleWindowSize(HANDLE hConsoleOutput)
 BOOL WINAPI OnSetConsoleCursorPosition(HANDLE hConsoleOutput, COORD dwCursorPosition)
 {
 	//typedef BOOL (WINAPI* OnSetConsoleCursorPosition_t)(HANDLE,COORD);
-	ORIGINALFAST(SetConsoleCursorPosition);
+	ORIGINAL_KRNL(SetConsoleCursorPosition);
 
 	BOOL lbRc;
 
@@ -968,7 +968,7 @@ BOOL WINAPI OnSetConsoleCursorPosition(HANDLE hConsoleOutput, COORD dwCursorPosi
 BOOL WINAPI OnSetConsoleCursorInfo(HANDLE hConsoleOutput, const CONSOLE_CURSOR_INFO *lpConsoleCursorInfo)
 {
 	//typedef BOOL (WINAPI* OnSetConsoleCursorInfo_t)(HANDLE,const CONSOLE_CURSOR_INFO *);
-	ORIGINALFAST(SetConsoleCursorInfo);
+	ORIGINAL_KRNL(SetConsoleCursorInfo);
 
 	BOOL lbRc = F(SetConsoleCursorInfo)(hConsoleOutput, lpConsoleCursorInfo);
 

@@ -244,7 +244,7 @@ HMODULE WINAPI OnLoadLibraryAWork(FARPROC lpfn, HookItem *ph, const char* lpFile
 HMODULE WINAPI OnLoadLibraryA(const char* lpFileName)
 {
 	//typedef HMODULE(WINAPI* OnLoadLibraryA_t)(const char* lpFileName);
-	ORIGINAL(LoadLibraryA);
+	ORIGINAL_KRNL(LoadLibraryA);
 	return OnLoadLibraryAWork((FARPROC)F(LoadLibraryA), ph, lpFileName);
 }
 
@@ -306,7 +306,7 @@ HMODULE WINAPI OnLoadLibraryWWork(FARPROC lpfn, HookItem *ph, const wchar_t* lpF
 HMODULE WINAPI OnLoadLibraryW(const wchar_t* lpFileName)
 {
 	//typedef HMODULE(WINAPI* OnLoadLibraryW_t)(const wchar_t* lpFileName);
-	ORIGINAL(LoadLibraryW);
+	ORIGINAL_KRNL(LoadLibraryW);
 	return OnLoadLibraryWWork((FARPROC)F(LoadLibraryW), ph, lpFileName);
 }
 
@@ -334,7 +334,7 @@ HMODULE WINAPI OnLoadLibraryExAWork(FARPROC lpfn, HookItem *ph, const char* lpFi
 HMODULE WINAPI OnLoadLibraryExA(const char* lpFileName, HANDLE hFile, DWORD dwFlags)
 {
 	//typedef HMODULE(WINAPI* OnLoadLibraryExA_t)(const char* lpFileName, HANDLE hFile, DWORD dwFlags);
-	ORIGINAL(LoadLibraryExA);
+	ORIGINAL_KRNL(LoadLibraryExA);
 	return OnLoadLibraryExAWork((FARPROC)F(LoadLibraryExA), ph, lpFileName, hFile, dwFlags);
 }
 
@@ -362,7 +362,7 @@ HMODULE WINAPI OnLoadLibraryExWWork(FARPROC lpfn, HookItem *ph, const wchar_t* l
 HMODULE WINAPI OnLoadLibraryExW(const wchar_t* lpFileName, HANDLE hFile, DWORD dwFlags)
 {
 	//typedef HMODULE(WINAPI* OnLoadLibraryExW_t)(const wchar_t* lpFileName, HANDLE hFile, DWORD dwFlags);
-	ORIGINAL(LoadLibraryExW);
+	ORIGINAL_KRNL(LoadLibraryExW);
 	return OnLoadLibraryExWWork((FARPROC)F(LoadLibraryExW), ph, lpFileName, hFile, dwFlags);
 }
 
@@ -394,6 +394,6 @@ BOOL WINAPI OnFreeLibraryWork(FARPROC lpfn, HookItem *ph, HMODULE hModule)
 BOOL WINAPI OnFreeLibrary(HMODULE hModule)
 {
 	//typedef BOOL (WINAPI* OnFreeLibrary_t)(HMODULE hModule);
-	ORIGINALFAST(FreeLibrary);
+	ORIGINAL_KRNL(FreeLibrary);
 	return OnFreeLibraryWork((FARPROC)F(FreeLibrary), ph, hModule);
 }

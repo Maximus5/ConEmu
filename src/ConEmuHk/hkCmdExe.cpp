@@ -190,7 +190,7 @@ bool IsClinkLoaded()
 LONG WINAPI OnRegQueryValueExW(HKEY hKey, LPCWSTR lpValueName, LPDWORD lpReserved, LPDWORD lpType, LPBYTE lpData, LPDWORD lpcbData)
 {
 	//typedef LONG (WINAPI* OnRegQueryValueExW_t)(HKEY hKey, LPCWSTR lpValueName, LPDWORD lpReserved, LPDWORD lpType, LPBYTE lpData, LPDWORD lpcbData);
-	ORIGINALFASTEX(RegQueryValueExW,NULL);
+	ORIGINAL_EX(RegQueryValueExW);
 	LONG lRc = -1;
 
 	if (gbIsCmdProcess && hKey && lpValueName)

@@ -63,7 +63,7 @@ HANDLE ghLastNotConInHandle = NULL;
 HANDLE WINAPI OnCreateFileW(LPCWSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile)
 {
 	//typedef HANDLE (WINAPI* OnCreateFileW_t)(LPCWSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile);
-	ORIGINALFAST(CreateFileW);
+	ORIGINAL_KRNL(CreateFileW);
 	HANDLE h;
 
 	h = F(CreateFileW)(lpFileName, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
@@ -94,7 +94,7 @@ HANDLE WINAPI OnCreateFileW(LPCWSTR lpFileName, DWORD dwDesiredAccess, DWORD dwS
 BOOL WINAPI OnCloseHandle(HANDLE hObject)
 {
 	//typedef BOOL (WINAPI* OnCloseHandle_t)(HANDLE hObject);
-	ORIGINALFAST(CloseHandle);
+	ORIGINAL_KRNL(CloseHandle);
 	BOOL lbRc = FALSE;
 
 	LPHANDLE hh[] = {
@@ -137,7 +137,7 @@ BOOL WINAPI OnCloseHandle(HANDLE hObject)
 HANDLE WINAPI OnCreateNamedPipeW(LPCWSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD nMaxInstances,DWORD nOutBufferSize, DWORD nInBufferSize, DWORD nDefaultTimeOut,LPSECURITY_ATTRIBUTES lpSecurityAttributes)
 {
 	//typedef HANDLE(WINAPI* OnCreateNamedPipeW_t)(LPCWSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD nMaxInstances,DWORD nOutBufferSize, DWORD nInBufferSize, DWORD nDefaultTimeOut,LPSECURITY_ATTRIBUTES lpSecurityAttributes);
-	ORIGINALFAST(CreateNamedPipeW);
+	ORIGINAL_KRNL(CreateNamedPipeW);
 
 	#ifdef _DEBUG
 	if (!lpName || !*lpName)
@@ -167,7 +167,7 @@ BOOL WINAPI OnReadFile(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead
 {
 	//typedef BOOL (WINAPI* OnReadFile_t)(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead, LPDWORD lpNumberOfBytesRead, LPOVERLAPPED lpOverlapped);
 	SUPPRESSORIGINALSHOWCALL;
-	ORIGINAL(ReadFile);
+	ORIGINAL_KRNL(ReadFile);
 	BOOL lbRc = FALSE;
 
 	bool bConIn = false;
@@ -231,7 +231,7 @@ BOOL WINAPI OnReadFile(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead
 BOOL WINAPI OnWriteFile(HANDLE hFile, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite, LPDWORD lpNumberOfBytesWritten, LPOVERLAPPED lpOverlapped)
 {
 	//typedef BOOL (WINAPI* OnWriteFile_t)(HANDLE hFile, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite, LPDWORD lpNumberOfBytesWritten, LPOVERLAPPED lpOverlapped);
-	ORIGINALFAST(WriteFile);
+	ORIGINAL_KRNL(WriteFile);
 	BOOL lbRc = FALSE;
 	//DWORD nDBCSCP = 0;
 
@@ -254,7 +254,7 @@ BOOL WINAPI OnWriteFile(HANDLE hFile, LPCVOID lpBuffer, DWORD nNumberOfBytesToWr
 HANDLE WINAPI OnOpenFileMappingW(DWORD dwDesiredAccess, BOOL bInheritHandle, LPCWSTR lpName)
 {
 	//typedef HANDLE (WINAPI* OnOpenFileMappingW_t)(DWORD dwDesiredAccess, BOOL bInheritHandle, LPCWSTR lpName);
-	ORIGINALFAST(OpenFileMappingW);
+	ORIGINAL_KRNL(OpenFileMappingW);
 	HANDLE hRc = FALSE;
 
 	extern BOOL gbTrueColorServerRequested;
@@ -304,7 +304,7 @@ wrap:
 LPVOID WINAPI OnMapViewOfFile(HANDLE hFileMappingObject, DWORD dwDesiredAccess, DWORD dwFileOffsetHigh, DWORD dwFileOffsetLow, SIZE_T dwNumberOfBytesToMap)
 {
 	//typedef LPVOID (WINAPI* OnMapViewOfFile_t)(HANDLE hFileMappingObject, DWORD dwDesiredAccess, DWORD dwFileOffsetHigh, DWORD dwFileOffsetLow, SIZE_T dwNumberOfBytesToMap);
-	ORIGINALFAST(MapViewOfFile);
+	ORIGINAL_KRNL(MapViewOfFile);
 	LPVOID ptr = NULL;
 
 	if (gpAnnotationHeader && (hFileMappingObject == (HANDLE)gpAnnotationHeader))
@@ -324,7 +324,7 @@ LPVOID WINAPI OnMapViewOfFile(HANDLE hFileMappingObject, DWORD dwDesiredAccess, 
 BOOL WINAPI OnUnmapViewOfFile(LPCVOID lpBaseAddress)
 {
 	//typedef BOOL (WINAPI* OnUnmapViewOfFile_t)(LPCVOID lpBaseAddress);
-	ORIGINALFAST(UnmapViewOfFile);
+	ORIGINAL_KRNL(UnmapViewOfFile);
     BOOL lbRc = FALSE;
 
 	if (gpAnnotationHeader && (lpBaseAddress == gpAnnotationHeader))

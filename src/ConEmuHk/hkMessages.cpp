@@ -138,7 +138,7 @@ void PatchGuiMessage(bool bReceived, HWND& hWnd, UINT& Msg, WPARAM& wParam, LPAR
 VOID WINAPI Onmouse_event(DWORD dwFlags, DWORD dx, DWORD dy, DWORD dwData, ULONG_PTR dwExtraInfo)
 {
 	//typedef VOID (WINAPI* Onmouse_event_t)(DWORD dwFlags, DWORD dx, DWORD dy, DWORD dwData, ULONG_PTR dwExtraInfo);
-	ORIGINALFASTEX(mouse_event,NULL);
+	ORIGINAL_EX(mouse_event);
 
 	F(mouse_event)(dwFlags, dx, dy, dwData, dwExtraInfo);
 }
@@ -147,7 +147,7 @@ VOID WINAPI Onmouse_event(DWORD dwFlags, DWORD dx, DWORD dy, DWORD dwData, ULONG
 UINT WINAPI OnSendInput(UINT nInputs, LPINPUT pInputs, int cbSize)
 {
 	//typedef UINT (WINAPI* OnSendInput_t)(UINT nInputs, LPINPUT pInputs, int cbSize);
-	ORIGINALFASTEX(SendInput,NULL);
+	ORIGINAL_EX(SendInput);
 	UINT nRc;
 
 	nRc = F(SendInput)(nInputs, pInputs, cbSize);
@@ -159,7 +159,7 @@ UINT WINAPI OnSendInput(UINT nInputs, LPINPUT pInputs, int cbSize)
 BOOL WINAPI OnPostMessageA(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 {
 	//typedef BOOL (WINAPI* OnPostMessageA_t)(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
-	ORIGINALFASTEX(PostMessageA,NULL);
+	ORIGINAL_EX(PostMessageA);
 	BOOL lRc = 0;
 	LRESULT ll = 0;
 
@@ -179,7 +179,7 @@ BOOL WINAPI OnPostMessageA(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 BOOL WINAPI OnPostMessageW(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 {
 	//typedef BOOL (WINAPI* OnPostMessageW_t)(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
-	ORIGINALFASTEX(PostMessageW,NULL);
+	ORIGINAL_EX(PostMessageW);
 	BOOL lRc = 0;
 	LRESULT ll = 0;
 
@@ -199,7 +199,7 @@ BOOL WINAPI OnPostMessageW(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 LRESULT WINAPI OnSendMessageA(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 {
 	//typedef LRESULT (WINAPI* OnSendMessageA_t)(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
-	ORIGINALFASTEX(SendMessageA,NULL);
+	ORIGINAL_EX(SendMessageA);
 	LRESULT lRc = 0;
 
 	if (!CanSendMessage(hWnd, Msg, wParam, lParam, lRc))
@@ -218,7 +218,7 @@ LRESULT WINAPI OnSendMessageA(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 LRESULT WINAPI OnSendMessageW(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 {
 	//typedef LRESULT (WINAPI* OnSendMessageW_t)(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
-	ORIGINALFASTEX(SendMessageW,NULL);
+	ORIGINAL_EX(SendMessageW);
 	LRESULT lRc = 0;
 
 	if (!CanSendMessage(hWnd, Msg, wParam, lParam, lRc))
@@ -237,7 +237,7 @@ LRESULT WINAPI OnSendMessageW(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 BOOL WINAPI OnGetMessageA(LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin, UINT wMsgFilterMax)
 {
 	//typedef BOOL (WINAPI* OnGetMessageA_t)(LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin, UINT wMsgFilterMax);
-	ORIGINALFASTEX(GetMessageA,NULL);
+	ORIGINAL_EX(GetMessageA);
 	BOOL lRc = 0;
 
 	if (F(GetMessageA))
@@ -253,7 +253,7 @@ BOOL WINAPI OnGetMessageA(LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin, UINT wMsgF
 BOOL WINAPI OnGetMessageW(LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin, UINT wMsgFilterMax)
 {
 	//typedef BOOL (WINAPI* OnGetMessageW_t)(LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin, UINT wMsgFilterMax);
-	ORIGINALFASTEX(GetMessageW,NULL);
+	ORIGINAL_EX(GetMessageW);
 	BOOL lRc = 0;
 
 	if (F(GetMessageW))
@@ -270,7 +270,7 @@ BOOL WINAPI OnGetMessageW(LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin, UINT wMsgF
 BOOL WINAPI OnPeekMessageA(LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin, UINT wMsgFilterMax, UINT wRemoveMsg)
 {
 	//typedef BOOL (WINAPI* OnPeekMessageA_t)(LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin, UINT wMsgFilterMax, UINT wRemoveMsg);
-	ORIGINALFASTEX(PeekMessageA,NULL);
+	ORIGINAL_EX(PeekMessageA);
 	BOOL lRc = 0;
 
 	if (F(PeekMessageA))
@@ -286,7 +286,7 @@ BOOL WINAPI OnPeekMessageA(LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin, UINT wMsg
 BOOL WINAPI OnPeekMessageW(LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin, UINT wMsgFilterMax, UINT wRemoveMsg)
 {
 	//typedef BOOL (WINAPI* OnPeekMessageW_t)(LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin, UINT wMsgFilterMax, UINT wRemoveMsg);
-	ORIGINALFASTEX(PeekMessageW,NULL);
+	ORIGINAL_EX(PeekMessageW);
 	BOOL lRc = 0;
 
 	if (F(PeekMessageW))

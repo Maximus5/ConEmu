@@ -107,7 +107,7 @@ void GuiFlashWindow(BOOL bSimple, HWND hWnd, BOOL bInvert, DWORD dwFlags, UINT u
 BOOL WINAPI OnTrackPopupMenu(HMENU hMenu, UINT uFlags, int x, int y, int nReserved, HWND hWnd, CONST RECT * prcRect)
 {
 	//typedef BOOL (WINAPI* OnTrackPopupMenu_t)(HMENU hMenu, UINT uFlags, int x, int y, int nReserved, HWND hWnd, CONST RECT * prcRect);
-	ORIGINALFASTEX(TrackPopupMenu,NULL);
+	ORIGINAL_EX(TrackPopupMenu);
 
 	#if defined(_DEBUG)
 	wchar_t szMsg[128]; msprintf(szMsg, countof(szMsg), L"TrackPopupMenu(hwnd=0x%08X)\n", LODWORD(hWnd));
@@ -140,7 +140,7 @@ BOOL WINAPI OnTrackPopupMenu(HMENU hMenu, UINT uFlags, int x, int y, int nReserv
 BOOL WINAPI OnTrackPopupMenuEx(HMENU hmenu, UINT fuFlags, int x, int y, HWND hWnd, LPTPMPARAMS lptpm)
 {
 	//typedef BOOL (WINAPI* OnTrackPopupMenuEx_t)(HMENU hmenu, UINT fuFlags, int x, int y, HWND hWnd, LPTPMPARAMS lptpm);
-	ORIGINALFASTEX(TrackPopupMenuEx,NULL);
+	ORIGINAL_EX(TrackPopupMenuEx);
 
 	#if defined(_DEBUG)
 	wchar_t szMsg[128]; msprintf(szMsg, countof(szMsg), L"TrackPopupMenuEx(hwnd=0x%08X)\n", LODWORD(hWnd));
@@ -170,7 +170,7 @@ BOOL WINAPI OnTrackPopupMenuEx(HMENU hmenu, UINT fuFlags, int x, int y, HWND hWn
 BOOL WINAPI OnFlashWindow(HWND hWnd, BOOL bInvert)
 {
 	//typedef BOOL (WINAPI* OnFlashWindow_t)(HWND hWnd, BOOL bInvert);
-	ORIGINALFASTEX(FlashWindow,NULL);
+	ORIGINAL_EX(FlashWindow);
 
 	if (ghConEmuWndDC)
 	{
@@ -188,7 +188,7 @@ BOOL WINAPI OnFlashWindow(HWND hWnd, BOOL bInvert)
 BOOL WINAPI OnFlashWindowEx(PFLASHWINFO pfwi)
 {
 	//typedef BOOL (WINAPI* OnFlashWindowEx_t)(PFLASHWINFO pfwi);
-	ORIGINALFASTEX(FlashWindowEx,NULL);
+	ORIGINAL_EX(FlashWindowEx);
 
 	if (ghConEmuWndDC)
 	{
@@ -206,7 +206,7 @@ BOOL WINAPI OnFlashWindowEx(PFLASHWINFO pfwi)
 BOOL WINAPI OnGetWindowRect(HWND hWnd, LPRECT lpRect)
 {
 	//typedef BOOL (WINAPI* OnGetWindowRect_t)(HWND hWnd, LPRECT lpRect);
-	ORIGINALFASTEX(GetWindowRect,NULL);
+	ORIGINAL_EX(GetWindowRect);
 	BOOL lbRc = FALSE;
 
 	if ((hWnd == ghConWnd) && ghConEmuWndDC)
@@ -236,7 +236,7 @@ BOOL WINAPI OnGetWindowRect(HWND hWnd, LPRECT lpRect)
 BOOL WINAPI OnScreenToClient(HWND hWnd, LPPOINT lpPoint)
 {
 	//typedef BOOL (WINAPI* OnScreenToClient_t)(HWND hWnd, LPPOINT lpPoint);
-	ORIGINALFASTEX(ScreenToClient,NULL);
+	ORIGINAL_EX(ScreenToClient);
 	BOOL lbRc = FALSE;
 
 	if (F(ScreenToClient) != NULL)
@@ -255,7 +255,7 @@ BOOL WINAPI OnScreenToClient(HWND hWnd, LPPOINT lpPoint)
 BOOL WINAPI OnShowCursor(BOOL bShow)
 {
 	//typedef BOOL (WINAPI* OnShowCursor_t)(BOOL bShow);
-	ORIGINALFASTEX(ShowCursor,NULL);
+	ORIGINAL_EX(ShowCursor);
 	BOOL bRc = FALSE;
 
 	if (gbIsMinTtyProcess)
@@ -280,7 +280,7 @@ BOOL WINAPI OnShowCursor(BOOL bShow)
 HWND WINAPI OnSetFocus(HWND hWnd)
 {
 	//typedef HWND (WINAPI* OnSetFocus_t)(HWND hWnd);
-	ORIGINALFASTEX(SetFocus,NULL);
+	ORIGINAL_EX(SetFocus);
 	HWND hRet = NULL;
 	DWORD nPID = 0, nTID = 0;
 
@@ -299,7 +299,7 @@ HWND WINAPI OnSetFocus(HWND hWnd)
 BOOL WINAPI OnShowWindow(HWND hWnd, int nCmdShow)
 {
 	//typedef BOOL (WINAPI* OnShowWindow_t)(HWND hWnd, int nCmdShow);
-	ORIGINALFASTEX(ShowWindow,NULL);
+	ORIGINAL_EX(ShowWindow);
 	BOOL lbRc = FALSE, lbGuiAttach = FALSE, lbInactiveTab = FALSE;
 	static bool bShowWndCalled = false;
 
@@ -363,7 +363,7 @@ BOOL WINAPI OnShowWindow(HWND hWnd, int nCmdShow)
 HWND WINAPI OnSetParent(HWND hWndChild, HWND hWndNewParent)
 {
 	//typedef HWND (WINAPI* OnSetParent_t)(HWND hWndChild, HWND hWndNewParent);
-	ORIGINALFASTEX(SetParent,NULL);
+	ORIGINAL_EX(SetParent);
 	HWND lhRc = NULL;
 
 	if (ghConEmuWndDC && hWndChild == ghConEmuWndDC)
@@ -390,7 +390,7 @@ HWND WINAPI OnSetParent(HWND hWndChild, HWND hWndNewParent)
 HWND WINAPI OnGetParent(HWND hWnd)
 {
 	//typedef HWND (WINAPI* OnGetParent_t)(HWND hWnd);
-	ORIGINALFASTEX(GetParent,NULL);
+	ORIGINAL_EX(GetParent);
 	HWND lhRc = NULL;
 
 	//if (ghConEmuWndDC && hWnd == ghConEmuWndDC)
@@ -425,7 +425,7 @@ HWND WINAPI OnGetParent(HWND hWnd)
 HWND WINAPI OnGetWindow(HWND hWnd, UINT uCmd)
 {
 	//typedef HWND (WINAPI* OnGetWindow_t)(HWND hWnd, UINT uCmd);
-	ORIGINALFASTEX(GetWindow,NULL);
+	ORIGINAL_EX(GetWindow);
 	HWND lhRc = NULL;
 
 	if (ghConEmuWndDC)
@@ -462,7 +462,7 @@ HWND WINAPI OnGetWindow(HWND hWnd, UINT uCmd)
 HWND WINAPI OnGetAncestor(HWND hWnd, UINT gaFlags)
 {
 	//typedef HWND (WINAPI* OnGetAncestor_t)(HWND hWnd, UINT gaFlags);
-	ORIGINALFASTEX(GetAncestor,NULL);
+	ORIGINAL_EX(GetAncestor);
 	HWND lhRc = NULL;
 
 	#ifdef LOG_GETANCESTOR
@@ -536,7 +536,7 @@ HWND WINAPI OnGetAncestor(HWND hWnd, UINT gaFlags)
 int WINAPI OnGetClassNameA(HWND hWnd, LPSTR lpClassName, int nMaxCount)
 {
 	//typedef int (WINAPI *OnGetClassNameA_t)(HWND hWnd, LPSTR lpClassName, int nMaxCount);
-	ORIGINALFASTEX(GetClassNameA,NULL);
+	ORIGINAL_EX(GetClassNameA);
 	int iRc = 0;
 	if (ghConEmuWndDC && hWnd == ghConEmuWndDC && lpClassName)
 	{
@@ -555,7 +555,7 @@ int WINAPI OnGetClassNameA(HWND hWnd, LPSTR lpClassName, int nMaxCount)
 int WINAPI OnGetClassNameW(HWND hWnd, LPWSTR lpClassName, int nMaxCount)
 {
 	//typedef int (WINAPI *OnGetClassNameW_t)(HWND hWnd, LPWSTR lpClassName, int nMaxCount);
-	ORIGINALFASTEX(GetClassNameW,NULL);
+	ORIGINAL_EX(GetClassNameW);
 	int iRc = 0;
 	if (ghConEmuWndDC && hWnd == ghConEmuWndDC && lpClassName)
 	{
@@ -573,7 +573,7 @@ int WINAPI OnGetClassNameW(HWND hWnd, LPWSTR lpClassName, int nMaxCount)
 HWND WINAPI OnGetActiveWindow()
 {
 	//typedef HWND (WINAPI* OnGetActiveWindow_t)();
-	ORIGINALFASTEX(GetActiveWindow,NULL);
+	ORIGINAL_EX(GetActiveWindow);
 	HWND hWnd = NULL;
 
 	if (F(GetActiveWindow))
@@ -596,7 +596,7 @@ HWND WINAPI OnGetActiveWindow()
 HWND WINAPI OnGetForegroundWindow()
 {
 	//typedef HWND (WINAPI* OnGetForegroundWindow_t)();
-	ORIGINALFASTEX(GetForegroundWindow,NULL);
+	ORIGINAL_EX(GetForegroundWindow);
 
 	HWND hFore = NULL;
 	if (F(GetForegroundWindow))
@@ -622,7 +622,7 @@ HWND WINAPI OnGetForegroundWindow()
 BOOL WINAPI OnSetForegroundWindow(HWND hWnd)
 {
 	//typedef BOOL (WINAPI* OnSetForegroundWindow_t)(HWND hWnd);
-	ORIGINALFASTEX(SetForegroundWindow,NULL);
+	ORIGINAL_EX(SetForegroundWindow);
 
 	BOOL lbRc = FALSE;
 
@@ -652,7 +652,7 @@ BOOL WINAPI OnSetForegroundWindow(HWND hWnd)
 BOOL WINAPI OnSetMenu(HWND hWnd, HMENU hMenu)
 {
 	//typedef BOOL (WINAPI* OnSetMenu_t)(HWND hWnd, HMENU hMenu);
-	ORIGINALFASTEX(SetMenu,NULL);
+	ORIGINAL_EX(SetMenu);
 
 	BOOL lbRc = FALSE;
 
@@ -682,7 +682,7 @@ BOOL WINAPI OnSetMenu(HWND hWnd, HMENU hMenu)
 BOOL WINAPI OnMoveWindow(HWND hWnd, int X, int Y, int nWidth, int nHeight, BOOL bRepaint)
 {
 	//typedef BOOL (WINAPI* OnMoveWindow_t)(HWND hWnd, int X, int Y, int nWidth, int nHeight, BOOL bRepaint);
-	ORIGINALFASTEX(MoveWindow,NULL);
+	ORIGINAL_EX(MoveWindow);
 	BOOL lbRc = FALSE;
 
 	if (ghConEmuWndDC && (hWnd == ghConEmuWndDC || hWnd == ghConEmuWnd))
@@ -704,7 +704,7 @@ BOOL WINAPI OnMoveWindow(HWND hWnd, int X, int Y, int nWidth, int nHeight, BOOL 
 LONG WINAPI OnSetWindowLongA(HWND hWnd, int nIndex, LONG dwNewLong)
 {
 	//typedef LONG (WINAPI* OnSetWindowLongA_t)(HWND hWnd, int nIndex, LONG dwNewLong);
-	ORIGINALFASTEX(SetWindowLongA,NULL);
+	ORIGINAL_EX(SetWindowLongA);
 	LONG lRc = 0;
 
 	if (ghConEmuWndDC && (hWnd == ghConEmuWndDC || hWnd == ghConEmuWnd))
@@ -725,7 +725,7 @@ LONG WINAPI OnSetWindowLongA(HWND hWnd, int nIndex, LONG dwNewLong)
 LONG WINAPI OnSetWindowLongW(HWND hWnd, int nIndex, LONG dwNewLong)
 {
 	//typedef LONG (WINAPI* OnSetWindowLongW_t)(HWND hWnd, int nIndex, LONG dwNewLong);
-	ORIGINALFASTEX(SetWindowLongW,NULL);
+	ORIGINAL_EX(SetWindowLongW);
 	LONG lRc = 0;
 
 	if (ghConEmuWndDC && (hWnd == ghConEmuWndDC || hWnd == ghConEmuWnd))
@@ -747,7 +747,7 @@ LONG WINAPI OnSetWindowLongW(HWND hWnd, int nIndex, LONG dwNewLong)
 LONG_PTR WINAPI OnSetWindowLongPtrA(HWND hWnd, int nIndex, LONG_PTR dwNewLong)
 {
 	//typedef LONG_PTR (WINAPI* OnSetWindowLongPtrA_t)(HWND hWnd, int nIndex, LONG_PTR dwNewLong);
-	ORIGINALFASTEX(SetWindowLongPtrA,NULL);
+	ORIGINAL_EX(SetWindowLongPtrA);
 	LONG_PTR lRc = 0;
 
 	if (ghConEmuWndDC && (hWnd == ghConEmuWndDC || hWnd == ghConEmuWnd))
@@ -770,7 +770,7 @@ LONG_PTR WINAPI OnSetWindowLongPtrA(HWND hWnd, int nIndex, LONG_PTR dwNewLong)
 LONG_PTR WINAPI OnSetWindowLongPtrW(HWND hWnd, int nIndex, LONG_PTR dwNewLong)
 {
 	//typedef LONG_PTR (WINAPI* OnSetWindowLongPtrW_t)(HWND hWnd, int nIndex, LONG_PTR dwNewLong);
-	ORIGINALFASTEX(SetWindowLongPtrW,NULL);
+	ORIGINAL_EX(SetWindowLongPtrW);
 	LONG_PTR lRc = 0;
 
 	if (ghConEmuWndDC && (hWnd == ghConEmuWndDC || hWnd == ghConEmuWnd))
@@ -792,7 +792,7 @@ LONG_PTR WINAPI OnSetWindowLongPtrW(HWND hWnd, int nIndex, LONG_PTR dwNewLong)
 int WINAPI OnGetWindowTextLengthA(HWND hWnd)
 {
 	//typedef int (WINAPI* OnGetWindowTextLengthA_t)(HWND hWnd);
-	ORIGINALFASTEX(GetWindowTextLengthA,NULL);
+	ORIGINAL_EX(GetWindowTextLengthA);
 	int iRc = 0;
 
 	FixHwnd4ConText(hWnd);
@@ -807,7 +807,7 @@ int WINAPI OnGetWindowTextLengthA(HWND hWnd)
 int WINAPI OnGetWindowTextLengthW(HWND hWnd)
 {
 	//typedef int (WINAPI* OnGetWindowTextLengthW_t)(HWND hWnd);
-	ORIGINALFASTEX(GetWindowTextLengthW,NULL);
+	ORIGINAL_EX(GetWindowTextLengthW);
 	int iRc = 0;
 
 	FixHwnd4ConText(hWnd);
@@ -822,7 +822,7 @@ int WINAPI OnGetWindowTextLengthW(HWND hWnd)
 int WINAPI OnGetWindowTextA(HWND hWnd, LPSTR lpString, int nMaxCount)
 {
 	//typedef int (WINAPI* OnGetWindowTextA_t)(HWND hWnd, LPSTR lpString, int nMaxCount);
-	ORIGINALFASTEX(GetWindowTextA,NULL);
+	ORIGINAL_EX(GetWindowTextA);
 	int iRc = 0;
 
 	FixHwnd4ConText(hWnd);
@@ -837,7 +837,7 @@ int WINAPI OnGetWindowTextA(HWND hWnd, LPSTR lpString, int nMaxCount)
 int WINAPI OnGetWindowTextW(HWND hWnd, LPWSTR lpString, int nMaxCount)
 {
 	//typedef int (WINAPI* OnGetWindowTextW_t)(HWND hWnd, LPWSTR lpString, int nMaxCount);
-	ORIGINALFASTEX(GetWindowTextW,NULL);
+	ORIGINAL_EX(GetWindowTextW);
 	int iRc = 0;
 
 	FixHwnd4ConText(hWnd);
@@ -863,7 +863,7 @@ int WINAPI OnGetWindowTextW(HWND hWnd, LPWSTR lpString, int nMaxCount)
 BOOL WINAPI OnSetWindowPos(HWND hWnd, HWND hWndInsertAfter, int X, int Y, int cx, int cy, UINT uFlags)
 {
 	//typedef BOOL (WINAPI* OnSetWindowPos_t)(HWND hWnd, HWND hWndInsertAfter, int X, int Y, int cx, int cy, UINT uFlags);
-	ORIGINALFASTEX(SetWindowPos,NULL);
+	ORIGINAL_EX(SetWindowPos);
 	BOOL lbRc = FALSE;
 
 	if (ghConEmuWndDC && (hWnd == ghConEmuWndDC || hWnd == ghConEmuWnd))
@@ -889,7 +889,7 @@ BOOL WINAPI OnSetWindowPos(HWND hWnd, HWND hWndInsertAfter, int X, int Y, int cx
 BOOL WINAPI OnGetWindowPlacement(HWND hWnd, WINDOWPLACEMENT *lpwndpl)
 {
 	//typedef BOOL (WINAPI* OnGetWindowPlacement_t)(HWND hWnd, WINDOWPLACEMENT *lpwndpl);
-	ORIGINALFASTEX(GetWindowPlacement,NULL);
+	ORIGINAL_EX(GetWindowPlacement);
 	BOOL lbRc = FALSE;
 
 	if (F(GetWindowPlacement))
@@ -908,7 +908,7 @@ BOOL WINAPI OnGetWindowPlacement(HWND hWnd, WINDOWPLACEMENT *lpwndpl)
 BOOL WINAPI OnSetWindowPlacement(HWND hWnd, WINDOWPLACEMENT *lpwndpl)
 {
 	//typedef BOOL (WINAPI* OnSetWindowPlacement_t)(HWND hWnd, WINDOWPLACEMENT *lpwndpl);
-	ORIGINALFASTEX(SetWindowPlacement,NULL);
+	ORIGINAL_EX(SetWindowPlacement);
 	BOOL lbRc = FALSE;
 	WINDOWPLACEMENT wpl = {sizeof(wpl)};
 
@@ -942,7 +942,7 @@ BOOL WINAPI OnSetWindowPlacement(HWND hWnd, WINDOWPLACEMENT *lpwndpl)
 HWND WINAPI OnCreateWindowExA(DWORD dwExStyle, LPCSTR lpClassName, LPCSTR lpWindowName, DWORD dwStyle, int x, int y, int nWidth, int nHeight, HWND hWndParent, HMENU hMenu, HINSTANCE hInstance, LPVOID lpParam)
 {
 	//typedef HWND (WINAPI* OnCreateWindowExA_t)(DWORD dwExStyle, LPCSTR lpClassName, LPCSTR lpWindowName, DWORD dwStyle, int x, int y, int nWidth, int nHeight, HWND hWndParent, HMENU hMenu, HINSTANCE hInstance, LPVOID lpParam);
-	ORIGINALFASTEX(CreateWindowExA,NULL);
+	ORIGINAL_EX(CreateWindowExA);
 	HWND hWnd = NULL;
 	BOOL bAttachGui = FALSE, bStyleHidden = FALSE;
 	DWORD lStyle = dwStyle, lStyleEx = dwExStyle;
@@ -981,7 +981,7 @@ HWND WINAPI OnCreateWindowExA(DWORD dwExStyle, LPCSTR lpClassName, LPCSTR lpWind
 HWND WINAPI OnCreateWindowExW(DWORD dwExStyle, LPCWSTR lpClassName, LPCWSTR lpWindowName, DWORD dwStyle, int x, int y, int nWidth, int nHeight, HWND hWndParent, HMENU hMenu, HINSTANCE hInstance, LPVOID lpParam)
 {
 	//typedef HWND (WINAPI* OnCreateWindowExW_t)(DWORD dwExStyle, LPCWSTR lpClassName, LPCWSTR lpWindowName, DWORD dwStyle, int x, int y, int nWidth, int nHeight, HWND hWndParent, HMENU hMenu, HINSTANCE hInstance, LPVOID lpParam);
-	ORIGINALFASTEX(CreateWindowExW,NULL);
+	ORIGINAL_EX(CreateWindowExW);
 	HWND hWnd = NULL;
 	BOOL bAttachGui = FALSE, bStyleHidden = FALSE;
 	DWORD lStyle = dwStyle, lStyleEx = dwExStyle;
