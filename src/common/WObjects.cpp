@@ -634,6 +634,21 @@ bool IsWin7()
 	return (ibIsWin7 == 1);
 }
 
+// Windows 8 and higher
+bool IsWin8()
+{
+	static int ibIsWin8 = 0;
+	if (!ibIsWin8)
+	{
+		#ifndef _WIN32_WINNT_WIN8
+		#define _WIN32_WINNT_WIN8 0x602
+		#endif
+		_ASSERTE(_WIN32_WINNT_WIN8 == 0x602);
+		ibIsWin8 = IsWinVerOrHigher(_WIN32_WINNT_WIN8) ? 1 : -1;
+	}
+	return (ibIsWin8 == 1);
+}
+
 // Windows 10 and higher
 bool IsWin10()
 {

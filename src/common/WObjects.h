@@ -73,6 +73,7 @@ bool IsWin5family();
 bool IsWinXPSP1();
 bool IsWin6();
 bool IsWin7();
+bool IsWin8();
 bool IsWin10();
 bool IsWindows64();
 bool IsWine();
