@@ -213,7 +213,7 @@ void DefTermLogString(LPCWSTR asMessage, LPCWSTR asLabel /*= NULL*/)
 
 	LPCWSTR pszReady = asMessage;
 	CEStr lsBuf;
-	if (asLabel && !asLabel)
+	if (asLabel && *asLabel)
 	{
 		lsBuf = lstrmerge(asLabel, asMessage);
 		if (lsBuf.ms_Arg)
