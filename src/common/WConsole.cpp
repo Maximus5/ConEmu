@@ -710,7 +710,7 @@ BOOL apiGetConsoleSelectionInfo(PCONSOLE_SELECTION_INFO lpConsoleSelectionInfo)
 			}
 		}
 
-		memset(lpConsoleSelectionInfo, sizeof(*lpConsoleSelectionInfo), 0);
+		memset(lpConsoleSelectionInfo, 0, sizeof(*lpConsoleSelectionInfo));
 		if (bProbableSelection)
 		{
 			lpConsoleSelectionInfo->dwFlags = CONSOLE_SELECTION_IN_PROGRESS;
