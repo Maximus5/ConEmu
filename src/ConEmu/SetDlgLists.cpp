@@ -446,7 +446,7 @@ int CSetDlgLists::SelectStringExact(HWND hParent, WORD nCtrlId, LPCWSTR asText)
 		int nCount = SendMessage(hList, CB_GETCOUNT, 0, 0);
 		wchar_t* pszNumEnd = NULL;
 		int nNewVal = wcstol(asText, &pszNumEnd, 10), nCurVal;
-		bool bUseNumCmp = (pszNumEnd && !pszNumEnd) && ((nNewVal != 0) || (lstrcmp(pszNumEnd, L"0") == 0));
+		bool bUseNumCmp = (pszNumEnd && *pszNumEnd) && ((nNewVal != 0) || (lstrcmp(pszNumEnd, L"0") == 0));
 
 		// For `Font Sizes` generally
 		if (bUseNumCmp)
