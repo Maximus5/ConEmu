@@ -2561,7 +2561,7 @@ void CConEmuMain::UpdateGuiInfoMappingActive(bool bActive, bool bUpdatePtr /*= t
 	{
 		if ((((pData->Flags & CECF_SleepInBackg)!=0) != (gpSet->isSleepInBackground != FALSE))
 			|| ((pData->bGuiActive!=FALSE) != (bActive!=FALSE))
-			|| (memcmp(pData->hActiveCons, m_GuiInfo.hActiveCons, sizeof(m_GuiInfo.hActiveCons) != 0)))
+			|| (memcmp(pData->hActiveCons, m_GuiInfo.hActiveCons, sizeof(m_GuiInfo.hActiveCons)) != 0))
 		{
 			SetConEmuFlags(pData->Flags,CECF_SleepInBackg,(gpSet->isSleepInBackground ? CECF_SleepInBackg : 0));
 			pData->bGuiActive = bActive;
