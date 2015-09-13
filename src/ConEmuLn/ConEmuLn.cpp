@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2010-2011 Maximus5
+Copyright (c) 2010-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -65,9 +65,15 @@ FarVersion gFarVersion = {};
 static RegisterBackground_t gfRegisterBackground = NULL;
 bool gbInStartPlugin = false;
 bool gbSetStartupInfoOk = false;
+
 ConEmuLnSettings gSettings[] = {
 	{L"PluginEnabled", (LPBYTE)&gbBackgroundEnabled, REG_BINARY, 1},
-	{L"LinesColor", (LPBYTE)&gcrLinesColor, REG_DWORD, 4},
+	{L"LinesPanel", (LPBYTE)&gbLinesColorPanel, REG_BINARY, 1},
+	{L"LinesColor", (LPBYTE)&gcrLinesColorPanel, REG_DWORD, 4},
+	{L"LinesEditor", (LPBYTE)&gbLinesColorEditor, REG_BINARY, 1},
+	{L"LinesEditorColor", (LPBYTE)&gcrLinesColorEditor, REG_DWORD, 4},
+	{L"LinesViewer", (LPBYTE)&gbLinesColorViewer, REG_BINARY, 1},
+	{L"LinesViewerColor", (LPBYTE)&gcrLinesColorViewer, REG_DWORD, 4},
 	{L"HilightType", (LPBYTE)&giHilightType, REG_DWORD, 4},
 	{L"HilightPlugins", (LPBYTE)&gbHilightPlugins, REG_BINARY, 1},
 	{L"HilightPlugBack", (LPBYTE)&gcrHilightPlugBack, REG_DWORD, 4},
@@ -75,7 +81,13 @@ ConEmuLnSettings gSettings[] = {
 };
 
 BOOL gbBackgroundEnabled = FALSE;
-COLORREF gcrLinesColor = RGB(0,0,0xA8); // чуть светлее синего
+BOOL gbLinesColorPanel = TRUE;
+COLORREF gcrLinesColorPanel = RGB(0,0,0xA8); // чуть светлее синего
+BOOL gbLinesColorEditor = FALSE;
+COLORREF gcrLinesColorEditor = RGB(0,0,0xA8);
+BOOL gbLinesColorViewer = FALSE;
+COLORREF gcrLinesColorViewer = RGB(0,0,0xA8);
+
 int giHilightType = 0; // 0 - линии, 1 - полосы
 BOOL gbHilightPlugins = FALSE;
 COLORREF gcrHilightPlugBack = RGB(0xA8,0,0); // чуть светлее красного
@@ -201,42 +213,86 @@ void WINAPI SetStartupInfoW(void *aInfo)
 	StartPlugin(FALSE);
 }
 
-int WINAPI PaintConEmuBackground(struct PaintBackgroundArg* pBk)
+void PaintLines(HDC hDC, COLORREF crColor, int nCellHeight, int nX1, int nY1, int nX2, int nY2)
 {
-	DWORD nPanelBackIdx = (pBk->nFarColors[col_PanelText] & 0xF0) >> 4;
+	HPEN hPen = CreatePen(PS_SOLID, 1, crColor);
+	HPEN hOldPen = (HPEN)SelectObject(hDC, hPen);
+	HBRUSH hBrush = CreateSolidBrush(crColor);
 
-	if (pBk->dwLevel == 0)
+	bool bDrawStipe = true; // used for (giHilightType == 1)
+	
+	for(int Y = nY1; Y < nY2; Y += nCellHeight)
 	{
-		if (pBk->LeftPanel.bVisible)
+		if (giHilightType == 0)
 		{
-			COLORREF crPanel = pBk->crPalette[nPanelBackIdx];
-
-			if (pBk->LeftPanel.bPlugin && gbHilightPlugins)
-				crPanel = gcrHilightPlugBack;
-
-			HBRUSH hBr = CreateSolidBrush(crPanel);
-			FillRect(pBk->hdc, &pBk->rcDcLeft, hBr);
-			DeleteObject(hBr);
+			MoveToEx(hDC, nX1, Y, NULL);
+			LineTo(hDC, nX2, Y);
 		}
-
-		if (pBk->RightPanel.bVisible)
+		else if (giHilightType == 1)
 		{
-			COLORREF crPanel = pBk->crPalette[nPanelBackIdx];
-
-			if (pBk->RightPanel.bPlugin && gbHilightPlugins)
-				crPanel = gcrHilightPlugBack;
-
-			HBRUSH hBr = CreateSolidBrush(crPanel);
-			FillRect(pBk->hdc, &pBk->rcDcRight, hBr);
-			DeleteObject(hBr);
+			if (bDrawStipe)
+			{
+				bDrawStipe = false;
+				RECT rc = {nX1, Y - nCellHeight + 1, nX2, Y};
+				FillRect(hDC, &rc, hBrush);
+			}
+			else
+			{
+				bDrawStipe = true;
+			}
 		}
 	}
 
-	if ((pBk->LeftPanel.bVisible || pBk->RightPanel.bVisible) /*&& pBk->MainFont.nFontHeight>0*/)
+	SelectObject(hDC, hOldPen);
+	DeleteObject(hPen);
+	DeleteObject(hBrush);
+}
+
+void PaintBack(HDC hDC, COLORREF crColor, RECT rcFill)
+{
+	HBRUSH hBr = CreateSolidBrush(crColor);
+	FillRect(hDC, &rcFill, hBr);
+	DeleteObject(hBr);
+}
+
+int WINAPI PaintConEmuBackground(struct PaintBackgroundArg* pBk)
+{
+	DWORD nPanelBackIdx = (pBk->nFarColors[col_PanelText] & 0xF0) >> 4;
+	DWORD nEditorBackIdx = (pBk->nFarColors[col_EditorText] & 0xF0) >> 4;
+	DWORD nViewerBackIdx = (pBk->nFarColors[col_ViewerText] & 0xF0) >> 4;
+
+	if (pBk->dwLevel == 0)
 	{
-		HPEN hPen = CreatePen(PS_SOLID, 1, gcrLinesColor);
-		HPEN hOldPen = (HPEN)SelectObject(pBk->hdc, hPen);
-		HBRUSH hBrush = CreateSolidBrush(gcrLinesColor);
+		if ((pBk->Place & pbp_Panels) && gbLinesColorPanel)
+		{
+			if (pBk->LeftPanel.bVisible)
+			{
+				PaintBack(pBk->hdc,
+					(pBk->LeftPanel.bPlugin && gbHilightPlugins) ? gcrHilightPlugBack : pBk->crPalette[nPanelBackIdx],
+					pBk->rcDcLeft);
+			}
+			if (pBk->RightPanel.bVisible)
+			{
+				PaintBack(pBk->hdc,
+					(pBk->RightPanel.bPlugin && gbHilightPlugins) ? gcrHilightPlugBack : pBk->crPalette[nPanelBackIdx],
+					pBk->rcDcRight);
+			}
+		}
+		else if (((pBk->Place & pbp_Viewer) && gbLinesColorViewer)
+			|| ((pBk->Place & pbp_Editor) && gbLinesColorEditor)
+			)
+		{
+			int nCellHeight = pBk->dcSizeY / (pBk->rcConWorkspace.bottom - pBk->rcConWorkspace.top + 1);
+			RECT rcWork = {0, nCellHeight, pBk->dcSizeX, pBk->dcSizeY - nCellHeight};
+			PaintBack(pBk->hdc,
+				pBk->crPalette[(pBk->Place & pbp_Editor) ? nEditorBackIdx : nViewerBackIdx],
+				rcWork);
+		}
+	}
+
+	if ((pBk->Place & pbp_Panels) && gbLinesColorPanel
+		&& (pBk->LeftPanel.bVisible || pBk->RightPanel.bVisible))
+	{
 		int nCellHeight = 12;
 
 		if (pBk->LeftPanel.bVisible)
@@ -249,33 +305,17 @@ int WINAPI PaintConEmuBackground(struct PaintBackgroundArg* pBk)
 		int nX1 = (pBk->LeftPanel.bVisible) ? 0 : pBk->rcDcRight.left;
 		int nX2 = (pBk->RightPanel.bVisible) ? pBk->rcDcRight.right : pBk->rcDcLeft.right;
 
-		bool bDrawStipe = true;
-		
-		for(int Y = nY1; Y < nY2; Y += nCellHeight)
-		{
-			if (giHilightType == 0)
-			{
-				MoveToEx(pBk->hdc, nX1, Y, NULL);
-				LineTo(pBk->hdc, nX2, Y);
-			}
-			else if (giHilightType == 1)
-			{
-				if (bDrawStipe)
-				{
-					bDrawStipe = false;
-					RECT rc = {nX1, Y - nCellHeight + 1, nX2, Y};
-					FillRect(pBk->hdc, &rc, hBrush);
-				}
-				else
-				{
-					bDrawStipe = true;
-				}
-			}
-		}
+		PaintLines(pBk->hdc, gcrLinesColorPanel, nCellHeight, nX1, nY1, nX2, nY2);
+	}
+	else if (((pBk->Place & pbp_Viewer) && gbLinesColorViewer)
+		|| ((pBk->Place & pbp_Editor) && gbLinesColorEditor)
+		)
+	{
+		int nCellHeight = pBk->dcSizeY / (pBk->rcConWorkspace.bottom - pBk->rcConWorkspace.top + 1);
 
-		SelectObject(pBk->hdc, hOldPen);
-		DeleteObject(hPen);
-		DeleteObject(hBrush);
+		PaintLines(pBk->hdc,
+			(pBk->Place & pbp_Editor) ? gcrLinesColorEditor : gcrLinesColorViewer,
+			nCellHeight, 0, 0, pBk->dcSizeX, pBk->dcSizeY);
 	}
 
 	return TRUE;
@@ -421,18 +461,28 @@ void StartPlugin(BOOL bConfigure)
 
 	if (gfRegisterBackground)
 	{
-		if (gbBackgroundEnabled)
+		if (gbBackgroundEnabled
+			&& (gbLinesColorPanel
+				|| gbLinesColorEditor
+				|| gbLinesColorViewer))
 		{
 			if (bConfigure && bWasRegistered)
 			{
-				RegisterBackgroundArg upd = {sizeof(RegisterBackgroundArg), rbc_Redraw};
+				RegisterBackgroundArg upd = {sizeof(RegisterBackgroundArg), rbc_Redraw, ghPluginModule};
+				upd.dwPlaces =
+					(gbLinesColorPanel ? pbp_Panels : pbp_None)
+					| (gbLinesColorEditor ? pbp_Editor : pbp_None)
+					| (gbLinesColorViewer ? pbp_Viewer : pbp_None);
 				gfRegisterBackground(&upd);
 			}
 			else
 			{
 				RegisterBackgroundArg reg = {sizeof(RegisterBackgroundArg), rbc_Register, ghPluginModule};
 				reg.PaintConEmuBackground = ::PaintConEmuBackground;
-				reg.dwPlaces = pbp_Panels;
+				reg.dwPlaces =
+					(gbLinesColorPanel ? pbp_Panels : pbp_None)
+					| (gbLinesColorEditor ? pbp_Editor : pbp_None)
+					| (gbLinesColorViewer ? pbp_Viewer : pbp_None);
 				reg.dwSuggestedLevel = 100;
 				gfRegisterBackground(&reg);
 				bWasRegistered = true;

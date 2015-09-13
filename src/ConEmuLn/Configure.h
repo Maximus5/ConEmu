@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2010-2011 Maximus5
+Copyright (c) 2010-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -79,20 +79,25 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 
+
 enum
 {
 	cfgTitle       = 0,
-	cfgShowLines   = 1,
-	cfgColorLabel  = 2,
-	cfgColor       = 3,
-	cfgTypeLines   = 4,
-	cfgTypeStripes = 5,
-	cfgHilight     = 6,
-	cfgPlugLabel   = 7,
-	cfgPlugBack    = 8,
-	cfgSeparator   = 9,
-	cfgOk          = 10,
-	cfgCancel      = 11,
+	cfgShowLines,
+	cfgTypeLines,
+	cfgTypeStripes,
+	cfgPanel,
+	cfgColorPanel,
+	cfgEditor,
+	cfgColorEditor,
+	cfgViewer,
+	cfgColorViewer,
+	cfgHilight,
+	cfgPlugLabel,
+	cfgPlugBack,
+	cfgSeparator,
+	cfgOk,
+	cfgCancel,
 };
 
 #if FAR_UNICODE>=1867
@@ -103,16 +108,30 @@ static LONG_PTR WINAPI ConfigDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR 
 {
 	if (Msg == DN_BTNCLICK)
 	{
-		if ((Param1 == cfgShowLines) || (Param1 == cfgTypeLines) || (Param1 == cfgTypeStripes) || (Param1 == cfgHilight))
+		if ((Param1 == cfgShowLines)
+			|| (Param1 == cfgPanel)
+			|| (Param1 == cfgEditor)
+			|| (Param1 == cfgViewer)
+			|| (Param1 == cfgTypeLines) || (Param1 == cfgTypeStripes)
+			|| (Param1 == cfgHilight))
 		{
-			if (Param1 == cfgShowLines)
-				gbBackgroundEnabled = (int)Param2; //-V205
-			else if (Param1 == cfgTypeLines)
-				giHilightType = 0;
-			else if (Param1 == cfgTypeStripes)
-				giHilightType = 1;
-			else if (Param1 == cfgHilight)
-				gbHilightPlugins = (int)Param2; //-V205
+			switch (LODWORD(Param1))
+			{
+			case cfgShowLines:
+				gbBackgroundEnabled = LODWORD(Param2); break;
+			case cfgPanel:
+				gbLinesColorPanel = LODWORD(Param2); break;
+			case cfgEditor:
+				gbLinesColorEditor = LODWORD(Param2); break;
+			case cfgViewer:
+				gbLinesColorViewer = LODWORD(Param2); break;
+			case cfgTypeLines:
+				giHilightType = 0; break;
+			case cfgTypeStripes:
+				giHilightType = 1; break;
+			case cfgHilight:
+				gbHilightPlugins = LODWORD(Param2); break;
+			}
 
 			// Обновить или отключить
 			StartPlugin(TRUE /*НЕ считывать параметры из реестра*/);
@@ -120,7 +139,10 @@ static LONG_PTR WINAPI ConfigDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR 
 	}
 	else if (Msg == DN_EDITCHANGE)
 	{
-		if ((Param1 == cfgColor) || (Param1 == cfgPlugBack))
+		if ((Param1 == cfgColorPanel)
+			|| (Param1 == cfgColorEditor)
+			|| (Param1 == cfgColorViewer)
+			|| (Param1 == cfgPlugBack))
 		{
 			FarDialogItem* pItem = (FarDialogItem*)Param2;
 			FAR_CHAR* endptr = NULL;
@@ -135,10 +157,17 @@ static LONG_PTR WINAPI ConfigDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR 
 			clr = strtoul(pItem->Data, &endptr, 16);
 #endif
 
-			if (Param1 == cfgColor)
-				gcrLinesColor = clr;
-			else if (Param1 == cfgPlugBack)
-				gcrHilightPlugBack = clr;
+			switch (LODWORD(Param1))
+			{
+			case cfgColorPanel:
+				gcrLinesColorPanel = clr; break;
+			case cfgColorEditor:
+				gcrLinesColorEditor = clr; break;
+			case cfgColorViewer:
+				gcrLinesColorViewer = clr; break;
+			case cfgPlugBack:
+				gcrHilightPlugBack = clr; break;
+			}
 
 			// Обновить или отключить
 			StartPlugin(TRUE /*НЕ считывать параметры из реестра*/);
@@ -153,9 +182,9 @@ static int ConfigureProc(int ItemNumber)
 	if (!InfoT)
 		return false;
 
-	int height = 15;
+	int height = 18;
 	FAR_CHAR szColorMask[16]; strcpyT(szColorMask, FAR_T("0xXXXXXX"));
-	FAR_CHAR szColor[16], szBack[16];
+	FAR_CHAR szColorP[16], szColorE[16], szColorV[16], szBack[16];
 	FarDialogItem items[] =
 	{
 		{DI_DOUBLEBOX, 3,  1,  38, height - 2}, //cfgTitle
@@ -166,44 +195,73 @@ static int ConfigureProc(int ItemNumber)
 		{DI_CHECKBOX,  5,  3,  0,  0, true},    //cfgShowLines
 		#endif
 
-		{DI_TEXT,      5,  5,  0,  0},   //cfgColorLabel, cfgColor
 		#if FAR_UNICODE>=1867
-		{DI_FIXEDIT,  29,  5,  36, 0, {(DWORD_PTR)0}, NULL, szColorMask, DIF_MASKEDIT},
+		{DI_RADIOBUTTON,  5,  5,  0,  0, {(DWORD_PTR)0}, NULL, NULL, DIF_GROUP},    //cfgTypeLines
 		#else
-		{DI_FIXEDIT,  29,  5,  36, 0, false, {(DWORD_PTR)szColorMask}, DIF_MASKEDIT},
+		{DI_RADIOBUTTON,  5,  5,  0,  0, 0, {(DWORD_PTR)0}, DIF_GROUP},    //cfgTypeLines
 		#endif
-		
-		#if FAR_UNICODE>=1867
-		{DI_RADIOBUTTON,  5,  6,  0,  0, {(DWORD_PTR)0}, NULL, NULL, DIF_GROUP},    //cfgTypeLines
-		#else
-		{DI_RADIOBUTTON,  5,  6,  0,  0, 0, {(DWORD_PTR)0}, DIF_GROUP},    //cfgTypeLines
-		#endif
-		{DI_RADIOBUTTON,  5,  6,  0,  0},    //cfgTypeStripes
+		{DI_RADIOBUTTON,  5,  5,  0,  0},    //cfgTypeStripes
 
-		{DI_CHECKBOX,  5,  8,  0,  0},    //cfgHilight
-		{DI_TEXT,      5,  9,  0,  0},   //cfgPlugLabel, cfgPlugBack
+
+		{DI_CHECKBOX,  5,  7,  0,  0},   //cfgPanel
 		#if FAR_UNICODE>=1867
-		{DI_FIXEDIT,  29,  9,  36, 0, {0}, NULL, szColorMask, DIF_MASKEDIT},
-		{DI_TEXT,      0, 11,  0,  0, {(DWORD_PTR)0}, NULL, NULL, DIF_SEPARATOR},
+		{DI_FIXEDIT,  29,  7,  36, 0, {(DWORD_PTR)0}, NULL, szColorMask, DIF_MASKEDIT}, // cfgColorPanel
 		#else
-		{DI_FIXEDIT,  29,  9,  36, 0, false, {(DWORD_PTR)szColorMask}, DIF_MASKEDIT},
-		{DI_TEXT,      0, 11,  0,  0, false, {(DWORD_PTR)0}, DIF_SEPARATOR},
+		{DI_FIXEDIT,  29,  7,  36, 0, false, {(DWORD_PTR)szColorMask}, DIF_MASKEDIT}, // cfgColorPanel
 		#endif
 
+		{DI_CHECKBOX,  5,  8,  0,  0},   //cfgEditor
 		#if FAR_UNICODE>=1867
-		{DI_BUTTON,    0, 12,  0,  0, {(DWORD_PTR)0}, NULL, NULL, DIF_CENTERGROUP|DIF_DEFAULTBUTTON},  //cfgOk
-		{DI_BUTTON,    0, 12,  0,  0, {(DWORD_PTR)0}, NULL, NULL, DIF_CENTERGROUP}, //cfgCancel
+		{DI_FIXEDIT,  29,  8,  36, 0, {(DWORD_PTR)0}, NULL, szColorMask, DIF_MASKEDIT}, // cfgColorEditor
 		#else
-		{DI_BUTTON,    0, 12,  0,  0, false,  {(DWORD_PTR)true},        DIF_CENTERGROUP, true},  //cfgOk
-		{DI_BUTTON,    0, 12,  0,  0, false,  {(DWORD_PTR)false},       DIF_CENTERGROUP, false}, //cfgCancel
+		{DI_FIXEDIT,  29,  8,  36, 0, false, {(DWORD_PTR)szColorMask}, DIF_MASKEDIT}, // cfgColorEditor
+		#endif
+
+		{DI_CHECKBOX,  5,  9,  0,  0},   //cfgViewer
+		#if FAR_UNICODE>=1867
+		{DI_FIXEDIT,  29,  9,  36, 0, {(DWORD_PTR)0}, NULL, szColorMask, DIF_MASKEDIT}, // cfgColorViewer
+		#else
+		{DI_FIXEDIT,  29,  9,  36, 0, false, {(DWORD_PTR)szColorMask}, DIF_MASKEDIT}, // cfgColorViewer
+		#endif
+
+
+		{DI_CHECKBOX,  5, 11,  0,  0},    //cfgHilight
+		{DI_TEXT,      5, 12,  0,  0},   //cfgPlugLabel, cfgPlugBack
+		#if FAR_UNICODE>=1867
+		{DI_FIXEDIT,  29, 12,  36, 0, {0}, NULL, szColorMask, DIF_MASKEDIT},
+		{DI_TEXT,      0, 14,  0,  0, {(DWORD_PTR)0}, NULL, NULL, DIF_SEPARATOR},
+		#else
+		{DI_FIXEDIT,  29, 12,  36, 0, false, {(DWORD_PTR)szColorMask}, DIF_MASKEDIT},
+		{DI_TEXT,      0, 14,  0,  0, false, {(DWORD_PTR)0}, DIF_SEPARATOR},
+		#endif
+
+		#if FAR_UNICODE>=1867
+		{DI_BUTTON,    0, 15,  0,  0, {(DWORD_PTR)0}, NULL, NULL, DIF_CENTERGROUP|DIF_DEFAULTBUTTON},  //cfgOk
+		{DI_BUTTON,    0, 15,  0,  0, {(DWORD_PTR)0}, NULL, NULL, DIF_CENTERGROUP}, //cfgCancel
+		#else
+		{DI_BUTTON,    0, 15,  0,  0, false,  {(DWORD_PTR)true},        DIF_CENTERGROUP, true},  //cfgOk
+		{DI_BUTTON,    0, 15,  0,  0, false,  {(DWORD_PTR)false},       DIF_CENTERGROUP, false}, //cfgCancel
 		#endif
 	};
 	SETTEXT(items[cfgTitle], GetMsgT(CEPluginName));
 	SETTEXT(items[cfgShowLines], GetMsgT(CEPluginEnable));
 	items[cfgShowLines].Selected = gbBackgroundEnabled;
-	SETTEXT(items[cfgColorLabel], GetMsgT(CEColorLabel));
-	wsprintfT(szColor, FAR_T("%06X"), (0xFFFFFF & gcrLinesColor));
-	SETTEXT(items[cfgColor], szColor);
+
+	SETTEXT(items[cfgPanel], GetMsgT(CEColorPanelLabel));
+	items[cfgPanel].Selected = gbLinesColorPanel;
+	wsprintfT(szColorP, FAR_T("%06X"), (0xFFFFFF & gcrLinesColorPanel));
+	SETTEXT(items[cfgColorPanel], szColorP);
+
+	SETTEXT(items[cfgEditor], GetMsgT(CEColorEditorLabel));
+	items[cfgEditor].Selected = gbLinesColorEditor;
+	wsprintfT(szColorE, FAR_T("%06X"), (0xFFFFFF & gcrLinesColorEditor));
+	SETTEXT(items[cfgColorEditor], szColorE);
+
+	SETTEXT(items[cfgViewer], GetMsgT(CEColorViewerLabel));
+	items[cfgViewer].Selected = gbLinesColorViewer;
+	wsprintfT(szColorV, FAR_T("%06X"), (0xFFFFFF & gcrLinesColorViewer));
+	SETTEXT(items[cfgColorViewer], szColorV);
+
 	SETTEXT(items[cfgTypeLines], GetMsgT(CEColorTypeLines));
 	items[cfgTypeStripes].X1 += strlenT(GetMsgT(CEColorTypeLines)) + 4;
 	SETTEXT(items[cfgTypeStripes], GetMsgT(CEColorTypeStripes));
@@ -218,7 +276,12 @@ static int ConfigureProc(int ItemNumber)
 	FAR_INT dialog_res = 0;
 	// Запомнить текущие значения, чтобы восстановить их если Esc нажат
 	BOOL bCurBackgroundEnabled = gbBackgroundEnabled;
-	COLORREF crCurLinesColor = gcrLinesColor;
+	BOOL bLinesColorPanel = gbLinesColorPanel;
+	COLORREF crLinesColorPanel = gcrLinesColorPanel;
+	BOOL bLinesColorEditor = gbLinesColorEditor;
+	COLORREF crLinesColorEditor = gcrLinesColorEditor;
+	BOOL bLinesColorViewer = gbLinesColorViewer;
+	COLORREF crLinesColorViewer = gcrLinesColorViewer;
 	BOOL bCurHilightPlugins = gbHilightPlugins;
 	COLORREF crCurHilightPlugBack = gcrHilightPlugBack;
 #ifdef FAR_UNICODE
@@ -240,42 +303,45 @@ static int ConfigureProc(int ItemNumber)
 
 	if (dialog_res != -1 && dialog_res != cfgCancel)
 	{
-		//HKEY hkey = NULL;
+		#ifdef FAR_UNICODE
+			#define GET_COLOR(id,v) \
+				psz = GetDataPtr(id); \
+				endptr = NULL; \
+				v = nVal = wcstoul(psz, &endptr, 16);
+		#else
+			#define GET_COLOR(id,v) \
+				psz = GetDataPtr(id); \
+				endptr = NULL; \
+				v = nVal = strtoul(psz, &endptr, 16);
+		#endif
 
-		//if (!RegCreateKeyExW(HKEY_CURRENT_USER, gszRootKey, 0, 0, 0, KEY_ALL_ACCESS, 0, &hkey, NULL))
-		//{
-		BYTE cVal; DWORD nVal = gcrLinesColor;
-		gbBackgroundEnabled = cVal = _GetCheck(cfgShowLines);
-		//RegSetValueExW(hkey, L"PluginEnabled", 0, REG_BINARY, &cVal, sizeof(cVal));
 		const FAR_CHAR* psz;
-		FAR_CHAR* endptr = NULL;
-#ifdef FAR_UNICODE
-		psz = GetDataPtr(cfgColor);
-		gcrLinesColor = nVal = wcstoul(psz, &endptr, 16);
-#else
-		psz = GetDataPtr(cfgColor);
-		gcrLinesColor = nVal = strtoul(psz, &endptr, 16);
-#endif
-		//RegSetValueExW(hkey, L"LinesColor", 0, REG_DWORD, (LPBYTE)&nVal, sizeof(nVal));
+		FAR_CHAR* endptr;
+		BYTE cVal; DWORD nVal;
+
+		gbBackgroundEnabled = cVal = _GetCheck(cfgShowLines);
+
+		gbLinesColorPanel = cVal = _GetCheck(cfgPanel);
+		GET_COLOR(cfgColorPanel, gcrLinesColorPanel);
+		gbLinesColorEditor = cVal = _GetCheck(cfgEditor);
+		GET_COLOR(cfgColorEditor, gcrLinesColorEditor);
+		gbLinesColorViewer = cVal = _GetCheck(cfgViewer);
+		GET_COLOR(cfgColorViewer, gcrLinesColorViewer);
+
 		gbHilightPlugins = cVal = _GetCheck(cfgHilight);
-		//RegSetValueExW(hkey, L"HilightPlugins", 0, REG_BINARY, &cVal, sizeof(cVal));
-		endptr = NULL;
-#ifdef FAR_UNICODE
-		psz = GetDataPtr(cfgPlugBack);
-		gcrHilightPlugBack = nVal = wcstoul(psz, &endptr, 16);
-#else
-		psz = GetDataPtr(cfgPlugBack);
-		gcrHilightPlugBack = nVal = strtoul(psz, &endptr, 16);
-#endif
-		//RegSetValueExW(hkey, L"HilightPlugBack", 0, REG_DWORD, (LPBYTE)&nVal, sizeof(nVal));
-		//RegCloseKey(hkey);
-		//}
+		GET_COLOR(cfgPlugBack, gcrHilightPlugBack);
+
 		SettingsSave();
 	}
 	else
 	{
 		gbBackgroundEnabled = bCurBackgroundEnabled;
-		gcrLinesColor = crCurLinesColor;
+		gbLinesColorPanel = bLinesColorPanel;
+		gcrLinesColorPanel = crLinesColorPanel;
+		gbLinesColorEditor = bLinesColorEditor;
+		gcrLinesColorEditor = crLinesColorEditor;
+		gbLinesColorViewer = bLinesColorViewer;
+		gcrLinesColorViewer = crLinesColorViewer;
 		gbHilightPlugins = bCurHilightPlugins;
 		gcrHilightPlugBack = crCurHilightPlugBack;
 	}

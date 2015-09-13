@@ -1,10 +1,12 @@
-﻿
+
 #pragma once
 
 enum {
 	CEPluginName=0,
 	CEPluginEnable,
-	CEColorLabel,
+	CEColorPanelLabel,
+	CEColorEditorLabel,
+	CEColorViewerLabel,
 	CEColorType,
 	CEColorTypeLines,
 	CEColorTypeStripes,

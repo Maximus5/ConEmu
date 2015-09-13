@@ -3,7 +3,9 @@
 // Plugin title
 "ConEmu Underlines"
 "Плагин &включен"
-"&Цвет (0xBBGGRR):"
+"&Панели (0xBBGGRR):"
+"&Редактор (0xBBGGRR):"
+"&Вьювер (0xBBGGRR):"
 "Вид отрисовки:"
 "&Линии"
 "&Полосы"

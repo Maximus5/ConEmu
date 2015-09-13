@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2010-2011 Maximus5
+Copyright (c) 2010-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -48,7 +48,12 @@ extern FarVersion gFarVersion;
 
 //Settings
 extern BOOL gbBackgroundEnabled;
-extern COLORREF gcrLinesColor;
+extern BOOL gbLinesColorPanel;
+extern COLORREF gcrLinesColorPanel;
+extern BOOL gbLinesColorEditor;
+extern COLORREF gcrLinesColorEditor;
+extern BOOL gbLinesColorViewer;
+extern COLORREF gcrLinesColorViewer;
 extern int giHilightType; // 0 - линии, 1 - полосы
 extern BOOL gbHilightPlugins;
 extern COLORREF gcrHilightPlugBack;
