@@ -2948,17 +2948,18 @@ bool CVirtualConsole::UpdatePrepare(HDC *ahDc, MSectionLock *pSDC, MSectionLock 
 	DWORD nIndexes = gpSet->nBgImageColors;
 	if (nIndexes == (DWORD)-1 && mp_RCon)
 	{
-		// Получить из фара
+		// Retrieve palette from Far Manager
 		const CEFAR_INFO_MAPPING* pFar = mp_RCon->GetFarInfo();
 		if (pFar)
 		{
-			// Цвет фона панелей
-			BYTE bgIndex = (pFar->nFarColors[col_PanelText] & 0xF0) >> 4;
+			// Get background color of panels/editors/viewers
+			UINT nDefIdx = isEditor ? col_EditorText : isViewer ? col_ViewerText : col_PanelText;
+			BYTE bgIndex = (pFar->nFarColors[nDefIdx] & 0xF0) >> 4;
 			nIndexes = 1 << (DWORD)bgIndex;
 		}
 	}
 	if (nIndexes == (DWORD)-1)
-		nIndexes = BgImageColorsDefaults; // Умолчания
+		nIndexes = BgImageColorsDefaults; // Defaults
 	nBgImageColors = nIndexes;
 
 	if (drawImage)
