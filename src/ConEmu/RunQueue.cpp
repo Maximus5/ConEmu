@@ -40,7 +40,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "VirtualConsole.h"
 
 #define RUNQUEUE_TIMER_DELAY 100
-#define RUNQUEUE_CREATE_LAG  gpSet->nStartCreateDelay /*100*/
 #define RUNQUEUE_WAIT_TERMINATION 1000
 
 CRunQueue::CRunQueue()
@@ -202,9 +201,9 @@ void CRunQueue::ProcessRunQueue()
 		if (mn_LastExecutionTick)
 		{
 			nCurDelay = (GetTickCount() - mn_LastExecutionTick);
-			if (nCurDelay < RUNQUEUE_CREATE_LAG)
+			if (nCurDelay < gpSet->nStartCreateDelay)
 			{
-				nWaitExtra = (RUNQUEUE_CREATE_LAG - nCurDelay);
+				nWaitExtra = (gpSet->nStartCreateDelay - nCurDelay);
 				Sleep(nWaitExtra);
 			}
 		}
