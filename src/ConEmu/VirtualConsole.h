@@ -328,6 +328,7 @@ class CVirtualConsole :
 		bool ChangePalette(int aNewPaletteIdx);
 		void PaintVCon(HDC hPaintDc);
 		bool PrintClient(HDC hPrintDc, bool bAllowRepaint, const LPRECT PaintRect);
+		bool Blit(HDC hPaintDC, int anX, int anY, int anShowWidth, int anShowHeight);
 		bool StretchPaint(HDC hPaintDC, int anX, int anY, int anShowWidth, int anShowHeight);
 		void UpdateInfo();
 		//void GetConsoleCursorInfo(CONSOLE_CURSOR_INFO *ci) { mp_RCon->GetConsoleCursorInfo(ci); };

@@ -4794,6 +4794,31 @@ void CVirtualConsole::Free(LPVOID ptr)
 	}
 }
 
+bool CVirtualConsole::Blit(HDC hPaintDC, int anX, int anY, int anShowWidth, int anShowHeight)
+{
+	bool lbRc;
+
+	/* TODO: BitBlt has large speed problems when size of picture exceeds some limits */
+
+	//if ((anShowWidth * anShowHeight) <= 450000)
+	{
+		lbRc = (::BitBlt(hPaintDC, anX, anY, anShowWidth, anShowHeight, (HDC)m_DC, 0, 0, SRCCOPY) != FALSE);
+	}
+	//else
+	//{
+	//	int nPartHeight = min((450000 / anShowWidth),200);
+	//	for (int Y = anY, Ysrc = 0;
+	//			Y < anShowHeight;
+	//			Y += nPartHeight, Ysrc += nPartHeight)
+	//	{
+	//		int nHeight = min(nPartHeight, (anShowHeight - Y));
+	//		lbRc = (::BitBlt(hPaintDC, anX, Y, anShowWidth, nHeight, (HDC)m_DC, 0, Ysrc, SRCCOPY) != FALSE);
+	//	}
+	//}
+
+	return lbRc;
+}
+
 bool CVirtualConsole::StretchPaint(HDC hPaintDC, int anX, int anY, int anShowWidth, int anShowHeight)
 {
 	if (!this)
@@ -4894,10 +4919,7 @@ bool CVirtualConsole::PrintClient(HDC hPrintDc, bool bAllowRepaint, const LPRECT
 				Update(mb_RequiredForceUpdate);
 			}
 
-			lbBltRc = BitBlt(
-				hPrintDc, nPrintX, nPrintY, rcClient.right-rcClient.left, rcClient.bottom-rcClient.top,
-				(HDC)m_DC, 0, 0,
-				SRCCOPY);
+			lbBltRc = Blit(hPrintDc, nPrintX, nPrintY, rcClient.right-rcClient.left, rcClient.bottom-rcClient.top);
 		}
 	}
 
@@ -5184,10 +5206,9 @@ void CVirtualConsole::PaintVConNormal(HDC hPaintDc, RECT rcClient)
 		BOOL lbBltRc;
 		if (!m_LockDc.bLocked)
 		{
-			lbBltRc = BitBlt(
-				hPaintDc, client.left, client.top, client.right-client.left, client.bottom-client.top,
-				(HDC)m_DC, 0, 0,
-				SRCCOPY);
+			lbBltRc = Blit(
+				hPaintDc, client.left, client.top, client.right-client.left, client.bottom-client.top
+				);
 		}
 		else
 		{
