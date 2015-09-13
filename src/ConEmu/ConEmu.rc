@@ -437,7 +437,7 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "Startup options (may be overriden with ""/cmd"" or ""/cmdlist"" argument of ConEmu.exe)",IDC_STATIC,4,1,319,115
+    GROUPBOX        "Startup options (may be overriden with ""/cmd"" or ""/cmdlist"" argument of ConEmu.exe)",gbStartupOptions,4,1,319,126
     CONTROL         "Command line",rbStartSingleApp,"Button",BS_AUTORADIOBUTTON,9,15,290,8
     EDITTEXT        tCmdLine,21,25,278,12,ES_AUTOHSCROLL | WS_DISABLED
     CONTROL         "Tasks file",rbStartTasksFile,"Button",BS_AUTORADIOBUTTON,9,40,290,8
@@ -445,13 +445,16 @@ BEGIN
     CONTROL         "Specified named task",rbStartNamedTask,"Button",BS_AUTORADIOBUTTON,9,65,290,8
     COMBOBOX        lbStartNamedTask,21,75,296,59,CBS_DROPDOWNLIST | WS_DISABLED | WS_VSCROLL | WS_TABSTOP
     CONTROL         "Auto save/restore opened tabs",rbStartLastTabs,"Button",BS_AUTORADIOBUTTON,9,90,290,8
-    CONTROL         "Far folders also",cbStartFarRestoreFolders,"Button",BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,21,101,90,8
+    CONTROL         "Far folders also",cbStartFarRestoreFolders,"Button",BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,147,90,70,8
     CONTROL         "Far editors/viewers also",cbStartFarRestoreEditors,
-                    "Button",BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,111,101,100,8
+                    "Button",BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,221,90,97,8
     PUSHBUTTON      "...",cbCmdLine,303,25,15,13,WS_DISABLED
     PUSHBUTTON      "...",cbStartTasksFile,303,49,15,13,WS_DISABLED
-    GROUPBOX        "Selected task contents (view only, change on Tasks page)",gbSTartGroupCommands,4,120,319,110,WS_DISABLED
-    EDITTEXT        tStartGroupCommands,8,132,309,94,ES_MULTILINE | ES_AUTOVSCROLL | ES_READONLY | ES_WANTRETURN | WS_DISABLED | WS_VSCROLL
+    GROUPBOX        "Selected task contents (view only, change on Tasks page)",gbStartGroupCommands,4,133,319,97,WS_DISABLED
+    EDITTEXT        tStartGroupCommands,8,144,309,82,ES_MULTILINE | ES_AUTOVSCROLL | ES_READONLY | ES_WANTRETURN | WS_DISABLED | WS_VSCROLL
+    GROUPBOX        "",gbTaskStartDelay,4,100,319,27
+    RTEXT           "Delay between consoles initialization (ms):",stStartCreateDelay,9,111,263,8
+    EDITTEXT        tStartCreateDelay,277,109,40,12,ES_AUTOHSCROLL | ES_NUMBER
 END
 
 IDD_SPG_COLORS DIALOGEX 0, 0, 328, 235

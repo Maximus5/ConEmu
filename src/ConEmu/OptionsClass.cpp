@@ -2091,6 +2091,8 @@ INT_PTR CSettings::pageOpProc_Start(HWND hWnd2, UINT messg, WPARAM wParam, LPARA
 				}
 			}
 
+			SetDlgItemInt(hWnd2, tStartCreateDelay, gpSet->nStartCreateDelay, FALSE);
+
 			pageOpProc_Start(hWnd2, WM_COMMAND, rbStartSingleApp+gpSet->nStartType, 0);
 		}
 		break;
@@ -2180,6 +2182,16 @@ INT_PTR CSettings::pageOpProc_Start(HWND hWnd2, UINT messg, WPARAM wParam, LPARA
 								_wcscpy_c(gpSet->psStartTasksFile+1, nLen+1, pszName);
 							}
 							SafeFree(psz);
+						} // tStartTasksFile
+						break;
+					case tStartCreateDelay:
+						{
+							BOOL bDelayOk = FALSE;
+							UINT nNewDelay = GetDlgItemInt(hWnd2, tStartCreateDelay, &bDelayOk, FALSE);
+							if (bDelayOk)
+								gpSet->nStartCreateDelay = GetMinMax(nNewDelay, RUNQUEUE_CREATE_LAG_MIN, RUNQUEUE_CREATE_LAG_MAX);
+							else
+								gpSet->nStartCreateDelay = RUNQUEUE_CREATE_LAG_DEF;
 						}
 						break;
 					}

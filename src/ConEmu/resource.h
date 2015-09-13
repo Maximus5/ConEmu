@@ -1070,7 +1070,7 @@
 #define cbCmdGrpDefaultCmd              2751
 #define cbCmdGrpTaskbar                 2752
 #define cbCmdGrpToolbar                 2753
-#define gbSTartGroupCommands            2754
+#define gbStartGroupCommands            2754
 #define tStartGroupCommands             2755
 #define gbConfirmClose                  2756
 #define cbCloseWindowConfirm            2757
@@ -1183,15 +1183,19 @@
 #define gbUpdate                        2864
 #define cbApplyDefTerm                  2865
 #define cbDefaultTerminalDebugLog       2866
+#define gbStartupOptions                2868
+#define gbTaskStartDelay                2869
+#define stStartCreateDelay              2870
+#define tStartCreateDelay               2871
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        228
+#define _APS_NEXT_RESOURCE_VALUE        229
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2867
+#define _APS_NEXT_CONTROL_VALUE         2872
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif

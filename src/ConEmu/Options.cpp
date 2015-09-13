@@ -110,8 +110,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEF_TABFONTY_U    13
 #define DEF_STATUSFONTY_U 12
 
-#define RUNQUEUE_CREATE_LAG 100
-
 struct CONEMUDEFCOLORS
 {
 	const wchar_t* pszTitle;
@@ -387,7 +385,7 @@ void Settings::InitSettings()
 	// Сброс переменных
 	ResetSettings();
 
-	nStartCreateDelay = RUNQUEUE_CREATE_LAG;
+	nStartCreateDelay = RUNQUEUE_CREATE_LAG_DEF;
 	isAutoRegisterFonts = true;
 	nHostkeyNumberModifier = VK_LWIN; //TestHostkeyModifiers(nHostkeyNumberModifier);
 	nHostkeyArrowModifier = VK_LWIN; //TestHostkeyModifiers(nHostkeyArrowModifier);
@@ -2385,9 +2383,9 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 		reg->Load(L"StartFarFolders", isStartFarFolders);
 		reg->Load(L"StartFarEditors", isStartFarEditors);
 		if (!reg->Load(L"StartCreateDelay", nStartCreateDelay))
-			nStartCreateDelay = RUNQUEUE_CREATE_LAG;
+			nStartCreateDelay = RUNQUEUE_CREATE_LAG_DEF;
 		else
-			MinMax(nStartCreateDelay, 10, 10*1000);
+			MinMax(nStartCreateDelay, RUNQUEUE_CREATE_LAG_MIN, RUNQUEUE_CREATE_LAG_MAX);
 		if (!reg->Load(L"StartType", nStartType))
 		{
 			if (!bCmdLine)
@@ -3394,6 +3392,9 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		}
 
 		SaveStartCommands(reg);
+
+		/* Saved outside of SaveStartCommands because it's not required in ‘Vanilla’ xml */
+		reg->Save(L"StartCreateDelay", nStartCreateDelay);
 
 		SaveAppSettings(reg, &AppStd/*, Colors*/);
 
