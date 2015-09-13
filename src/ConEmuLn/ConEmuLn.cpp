@@ -220,7 +220,7 @@ void PaintLines(HDC hDC, COLORREF crColor, int nCellHeight, int nX1, int nY1, in
 	HBRUSH hBrush = CreateSolidBrush(crColor);
 
 	bool bDrawStipe = true; // used for (giHilightType == 1)
-	
+
 	for(int Y = nY1; Y < nY2; Y += nCellHeight)
 	{
 		if (giHilightType == 0)
@@ -374,18 +374,6 @@ void SettingsLoadReg(LPCWSTR pszRegKey)
 			}
 		}
 
-		//if (!RegQueryValueExW(hkey, L"PluginEnabled", 0, &(nType = REG_BINARY), &cVal, &(nSize = sizeof(cVal))))
-		//	gbBackgroundEnabled = (cVal != 0);
-
-		//if (!RegQueryValueExW(hkey, L"LinesColor", 0, &(nType = REG_DWORD), (LPBYTE)&nVal, &(nSize = sizeof(nVal))))
-		//	gcrLinesColor = nVal;
-
-		//if (!RegQueryValueExW(hkey, L"HilightPlugins", 0, &(nType = REG_BINARY), &cVal, &(nSize = sizeof(cVal))))
-		//	gbHilightPlugins = (cVal != 0);
-
-		//if (!RegQueryValueExW(hkey, L"HilightPlugBack", 0, &(nType = REG_DWORD), (LPBYTE)&nVal, &(nSize = sizeof(nVal))))
-		//	gcrHilightPlugBack = nVal;
-
 		RegCloseKey(hkey);
 	}
 }
@@ -424,18 +412,6 @@ void SettingsSaveReg(LPCWSTR pszRegKey)
 				RegSetValueExW(hkey, p->pszValueName, 0, REG_DWORD, p->pValue, p->nValueSize);
 			}
 		}
-
-		//if (!RegQueryValueExW(hkey, L"PluginEnabled", 0, &(nType = REG_BINARY), &cVal, &(nSize = sizeof(cVal))))
-		//	gbBackgroundEnabled = (cVal != 0);
-
-		//if (!RegQueryValueExW(hkey, L"LinesColor", 0, &(nType = REG_DWORD), (LPBYTE)&nVal, &(nSize = sizeof(nVal))))
-		//	gcrLinesColor = nVal;
-
-		//if (!RegQueryValueExW(hkey, L"HilightPlugins", 0, &(nType = REG_BINARY), &cVal, &(nSize = sizeof(cVal))))
-		//	gbHilightPlugins = (cVal != 0);
-
-		//if (!RegQueryValueExW(hkey, L"HilightPlugBack", 0, &(nType = REG_DWORD), (LPBYTE)&nVal, &(nSize = sizeof(nVal))))
-		//	gcrHilightPlugBack = nVal;
 
 		RegCloseKey(hkey);
 	}
