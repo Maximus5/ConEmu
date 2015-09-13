@@ -42,6 +42,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../ConEmu/version.h"
 #include "hlpConsole.h"
 
+#include "hkConsole.h"
+#include "SetHook.h"
+
 ///* ***************** */
 #include "Ansi.h"
 DWORD AnsiTlsIndex = 0;
@@ -1818,7 +1821,8 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 			else if (crNewPos.X >= csbi.dwSize.X)
 				crNewPos.X = csbi.dwSize.X - 1;
 			// Goto
-            SetConsoleCursorPosition(hConsoleOutput, crNewPos);
+			ORIGINAL_KRNL(SetConsoleCursorPosition);
+			F(SetConsoleCursorPosition)(hConsoleOutput, crNewPos);
 
 			if (gbIsVimProcess)
 				gbIsVimAnsi = true;
