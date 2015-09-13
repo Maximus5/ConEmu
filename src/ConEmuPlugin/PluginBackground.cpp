@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2014 Maximus5
+Copyright (c) 2009-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -230,7 +230,22 @@ int CPluginBackground::RegisterSubplugin(RegisterBackgroundArg *pbk)
 	}
 	else if (pbk->Cmd == rbc_Redraw)
 	{
-		// просто выставить gbNeedBgActivate
+		// Refresh dwPlaces
+		if (pbk->dwPlaces != pbp_None)
+		{
+			for (int i = 0; i < mn_BgPluginsCount; i++)
+			{
+				if (mp_BgPlugins[i].Cmd == rbc_Register &&
+					mp_BgPlugins[i].hPlugin == pbk->hPlugin &&
+					((pbk->PaintConEmuBackground == NULL) ||
+						(mp_BgPlugins[i].PaintConEmuBackground == pbk->PaintConEmuBackground
+							&& mp_BgPlugins[i].lParam == pbk->lParam)))
+				{
+					mp_BgPlugins[i].dwPlaces = pbk->dwPlaces;
+				}
+			}
+		}
+		// and just set gbNeedBgActivate
 	}
 
 	////TODO: Сортировка

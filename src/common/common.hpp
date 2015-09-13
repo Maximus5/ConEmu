@@ -857,6 +857,8 @@ enum PaintBackgroundPlaces
 	pbp_StatusLine  = 128, // Статусная строка - редактор/вьювер
 	// Этот код используется для завершения нити отрисовки
 	pbp_Finalize    = 0x80000000,
+	// Undefined
+	pbp_None = 0,
 };
 
 #define BkPanelInfo_CurDirMax 32768
