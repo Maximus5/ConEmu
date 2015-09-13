@@ -12,7 +12,7 @@ set ConEmu
 cd /d "%~dp0"
 rem start ConEmu /loadcfgfile "%~dp0UnitTests\UnitTests.xml" /cmd cmd /k "%~0" in_gui
 rem start "ConEmu32" "%~dp0ConEmu.exe" -basic -nocascade -wndX 240 -wndY 100 -wndW 115 -wndH 30 -cmd cmd /k "%~0" in_gui
-start "ConEmu64" "%~dp0ConEmu64.exe" -log -basic -nocascade -wndX 340 -wndY 200 -wndW 115 -wndH 30 -cmd cmd /k "%~0" in_gui
+start "ConEmu64" "%~dp0ConEmu64.exe" -log -basic -nocascade -wndX 340 -wndY 200 -wndW 135 -wndH 30 -cmd cmd /k "%~0" in_gui
 goto :EOF
 
 :clear_env
@@ -34,6 +34,7 @@ c:\windows\syswow64\cmd.exe -new_console:b /k "%~0" tab3
 c:\windows\syswow64\cmd.exe -new_console:ba /k "%~0" tab4
 c:\windows\syswow64\cmd.exe -new_console:bnt:"Far":C:"%ConEmuDrive%\Far30.Latest\far-bis\Far.exe" /c "%~0" tab5
 c:\windows\syswow64\cmd.exe -new_console:abP:"<Monokai>":t:Tab6 /k "%~0" tab6
+c:\windows\syswow64\cmd.exe -new_console:b:t:Tab7 /k "%~0" tab7
 goto fin
 
 :tab1
@@ -79,6 +80,11 @@ conemuc /async /c %ConEmuDrive%\Far30.Latest\far-bis\Far.exe /w /x /p%ConEmuDir%
 goto :EOF
 
 :tab6
+goto :EOF
+
+:tab7
+cd /d %~d0\Utils\Alternative\ViM74
+call vx.cmd
 goto :EOF
 
 :fin
