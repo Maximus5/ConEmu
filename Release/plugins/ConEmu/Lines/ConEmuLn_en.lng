@@ -3,7 +3,9 @@
 // Plugin title
 "ConEmu Underlines"
 "&Enable plugin"
-"&Color (0xBBGGRR):"
+"&Panels (0xBBGGRR):"
+"&Editor (0xBBGGRR):"
+"&Viewer (0xBBGGRR):"
 "Drawing style:"
 "&Underlines"
 "&Stripes"
