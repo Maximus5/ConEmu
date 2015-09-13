@@ -800,6 +800,8 @@ void CPluginW995::LoadFarColors(BYTE (&nFarColors)[col_LastIndex])
 	nFarColors[col_CommandLineUserScreen] = FarConsoleColors[COL_COMMANDLINEUSERSCREEN];
 	nFarColors[col_PanelScreensNumber] = FarConsoleColors[COL_PANELSCREENSNUMBER];
 	nFarColors[col_KeyBarNum] = FarConsoleColors[COL_KEYBARNUM];
+	nFarColors[col_EditorText] = FarConsoleColors[COL_EDITORTEXT];
+	nFarColors[col_ViewerText] = FarConsoleColors[COL_VIEWERTEXT];
 }
 
 void CPluginW995::LoadFarSettings(CEFarInterfaceSettings* pInterface, CEFarPanelSettings* pPanel)
