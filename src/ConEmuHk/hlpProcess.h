@@ -320,14 +320,21 @@ void DoDllStop(bool bFinal, ConEmuHkDllState bFromTerminate = ds_Undefined);
 	#define DLOGEND1()
 #endif
 
+enum ShowExeMsgBox
+{
+	smb_None = 0,
+	smb_HardCoded,
+	smb_Environment,
+};
+extern ShowExeMsgBox gbShowExeMsgBox;
+
 #if defined(SHOW_EXE_TIMINGS) || defined(SHOW_EXE_MSGBOX) || defined(SHOWCREATEPROCESSTICK)
-	extern bool gbShowExeMsgBox;
 	extern DWORD gnLastShowExeTick;
 
 	void force_print_timings(LPCWSTR s, HANDLE hTimingHandle, wchar_t (&szTimingMsg)[512]);
 
 	#define prepare_timings  wchar_t szTimingMsg[512]; HANDLE hTimingHandle = GetStdHandle(STD_OUTPUT_HANDLE)
-	#define print_timings(s) if (gbShowExeMsgBox) { force_print_timings(s,hTimingHandle,szTimingMsg); }
+	#define print_timings(s) if (gbShowExeMsgBox == smb_HardCoded) { force_print_timings(s,hTimingHandle,szTimingMsg); }
 #else
 	#define prepare_timings
 	#define print_timings(s)

@@ -555,7 +555,7 @@ bool gbHookServerForcedTermination = false;
 
 void CheckHookServer();
 
-bool gbShowExeMsgBox = false;
+ShowExeMsgBox gbShowExeMsgBox = smb_None;
 
 #if 0
 
@@ -1215,7 +1215,7 @@ void InitExeName()
 	{
 		if (lstrcmpi(szMsg, pszName) == 0)
 		{
-			gbShowExeMsgBox = true;
+			gbShowExeMsgBox = smb_Environment;
 		}
 	}
 
@@ -1225,7 +1225,7 @@ void InitExeName()
 		if (!lstrcmpi(pszName, SHOW_EXE_MSGBOX_NAME))
 		{
 			#ifndef SLEEP_EXE_UNTIL_DEBUGGER
-			gbShowExeMsgBox = true;
+			gbShowExeMsgBox = smb_HardCoded;
 			#else
 			while (!IsDebuggerPresent())
 			{
