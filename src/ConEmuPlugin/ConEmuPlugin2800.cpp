@@ -1122,6 +1122,8 @@ void CPluginW2800::LoadFarColors(BYTE (&nFarColors)[col_LastIndex])
 		nFarColors[col_CommandLineUserScreen] = FarColor_3_2(pColors[COL_COMMANDLINEUSERSCREEN]);
 		nFarColors[col_PanelScreensNumber] = FarColor_3_2(pColors[COL_PANELSCREENSNUMBER]);
 		nFarColors[col_KeyBarNum] = FarColor_3_2(pColors[COL_KEYBARNUM]);
+		nFarColors[col_EditorText] = FarColor_3_2(pColors[COL_EDITORTEXT]);
+		nFarColors[col_ViewerText] = FarColor_3_2(pColors[COL_VIEWERTEXT]);
 	}
 	else
 	{

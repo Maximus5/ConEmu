@@ -16,5 +16,7 @@ enum FarColorExtras
 	col_CommandLineUserScreen = 9,
 	col_PanelScreensNumber = 10,
 	col_KeyBarNum = 11,
+	col_EditorText = 12,
+	col_ViewerText = 13,
 	col_LastIndex = 0x100 // must be last. 0x100 - reserved for compatibility and future use
 };
