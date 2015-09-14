@@ -11,3 +11,4 @@ EXPORTS
 	GetWriteConsoleW
 	RequestLocalServer
 	WriteProcessed
+	RequestDefTermShutdown

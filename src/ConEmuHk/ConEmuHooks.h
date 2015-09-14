@@ -76,6 +76,8 @@ typedef BOOL (WINAPI* AttachConsole_t)(DWORD dwProcessId);
 AttachConsole_t GetAttachConsoleProc();
 void CheckAnsiConVar(LPCWSTR asName);
 
+DWORD DllStart_Continue();
+
 enum ConEmuHkDllState
 {
 	ds_Undefined = 0,

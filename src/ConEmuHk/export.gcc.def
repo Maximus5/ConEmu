@@ -8,3 +8,4 @@ EXPORTS
 	GetWriteConsoleW=GetWriteConsoleW@0
 	RequestLocalServer=RequestLocalServer@4
 	WriteProcessed=WriteProcessed@12
+	RequestDefTermShutdown=RequestDefTermShutdown@0
