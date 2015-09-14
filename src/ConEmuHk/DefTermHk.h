@@ -50,6 +50,10 @@ public:
 
 	void StartDefTerm();
 
+	static DWORD WINAPI InitDefTermContinue(LPVOID ahPrevHooks);
+	DWORD mn_InitDefTermContinueTID;
+	HANDLE mh_InitDefTermContinueFrom;
+
 	// Запустить сервер, и подцепиться к его консоли
 	HWND AllocHiddenConsole(bool bTempForVS);
 	// Вызывается из хуков после успешного AllocConsole (Win2k only? а смысл?)

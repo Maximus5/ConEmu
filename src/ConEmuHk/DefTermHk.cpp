@@ -74,6 +74,20 @@ bool isDefTermEnabled()
 	return true;
 }
 
+#if defined(__GNUC__)
+extern "C"
+#endif
+void WINAPI RequestDefTermShutdown()
+{
+	if (!gbPrepareDefaultTerminal)
+	{
+		_ASSERTEX(FALSE && "Expected in DefTerm only!");
+		return;
+	}
+	gnDllState |= ds_OnDefTermShutdown;
+	DoDllStop(true, ds_OnDefTermShutdown);
+}
+
 bool InitDefTerm()
 {
 	bool lbRc = true;
@@ -138,14 +152,69 @@ bool InitDefTerm()
 		CloseHandle(hSnap);
 	}
 
-	// Old library was found, unload it before continue
 	if (hPrevHooks)
 	{
 		DefTermLogString(L"Trying to unload previous ConEmuHk module");
-		if (!FreeLibrary(hPrevHooks))
+
+		// To avoid possible problems with CloseHandle in "unhooking" state
+		gpDefTerm->mh_InitDefTermContinueFrom = OpenThread(SYNCHRONIZE, FALSE, GetCurrentThreadId());
+
+		// gh#322: We must not call MH_Uninitialize because it deinitializes HEAP
+		//	but when we are in DefTerm mode, this OPCODE addresses are used ATM...
+		HANDLE hThread = apiCreateThread(CDefTermHk::InitDefTermContinue, (LPVOID)hPrevHooks, &gpDefTerm->mn_InitDefTermContinueTID, "InitDefTermContinue");
+		if (hThread)
+		{
+			CloseHandle(hThread);
+		}
+		else
 		{
 			lbRc = false;
-			gpDefTerm->DisplayLastError(L"Unloading failed", GetLastError());
+		}
+	}
+	else
+	{
+		CDefTermHk::InitDefTermContinue(NULL);
+	}
+
+	return lbRc;
+}
+
+DWORD CDefTermHk::InitDefTermContinue(LPVOID ahPrevHooks)
+{
+	HMODULE hPrevHooks = (HMODULE)ahPrevHooks;
+	DWORD nFromWait = 1;
+
+	// Old library was found, unload it before continue
+	if (hPrevHooks)
+	{
+		DefTermLogString(L"Trying to unload previous ConEmuHk module (thread)");
+
+		// To avoid possible problems with CloseHandle in "unhooking" state
+		nFromWait = WaitForSingleObject(gpDefTerm->mh_InitDefTermContinueFrom, 30000);
+		if (!gpDefTerm)
+		{
+			DefTermLogString(L"Unloading failed, gpDefTerm destroyed");
+			return 1;
+		}
+		_ASSERTEX(nFromWait == WAIT_OBJECT_0);
+		// Wait a little more
+		Sleep(100);
+		SafeCloseHandle(gpDefTerm->mh_InitDefTermContinueFrom);
+
+		typedef void (WINAPI* RequestDefTermShutdown_t)();
+		RequestDefTermShutdown_t fnShutdown = (RequestDefTermShutdown_t)GetProcAddress(hPrevHooks, "RequestDefTermShutdown");
+		if (fnShutdown)
+		{
+			fnShutdown();
+		}
+
+		SetLastError(0);
+		BOOL bFree = FreeLibrary(hPrevHooks);
+		DWORD nFreeRc = GetLastError();
+		if (!bFree)
+		{
+			gpDefTerm->DisplayLastError(L"Unloading failed", nFreeRc);
+			return 2;
 		}
 		else
 		{
@@ -182,7 +251,10 @@ bool InitDefTerm()
 
 	gpDefTerm->StartDefTerm();
 
-	return lbRc;
+	// Continue to hooks
+	DllStart_Continue();
+
+	return 0;
 }
 
 void DefTermLogString(LPCSTR asMessage, LPCWSTR asLabel /*= NULL*/)
@@ -243,6 +315,9 @@ CDefTermHk::CDefTermHk()
 
 	mn_LastCheck = 0;
 	ReloadSettings();
+
+	mn_InitDefTermContinueTID = 0;
+	mh_InitDefTermContinueFrom = NULL;
 }
 
 CDefTermHk::~CDefTermHk()

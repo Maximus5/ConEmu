@@ -59,6 +59,8 @@ void OnConWndChanged(HWND ahNewConWnd);
 bool AttachServerConsole();
 void CheckAnsiConVar(LPCWSTR asName);
 
+DWORD DllStart_Continue();
+
 typedef DWORD ConEmuHkDllState;
 const ConEmuHkDllState
 	ds_DllProcessAttach        = 0x00000001,
@@ -80,6 +82,7 @@ const ConEmuHkDllState
 	ds_OnTerminateThread       = 0x00400000,
 	ds_OnTerminateProcess      = 0x00800000,
 	ds_OnExitProcess           = 0x01000000,
+	ds_OnDefTermShutdown       = 0x02000000,
 	ds_DllStopSteps            = 0xF0000000,
 	ds_Undefined = 0
 ;

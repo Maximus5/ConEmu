@@ -1078,6 +1078,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 		if (!InitDefTerm())
 		{
 			TODO("Show error message?");
+			return 1; // FAILED!
 		}
 		#if 0
 		else
@@ -1087,7 +1088,20 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 			MessageBox(NULL, szPath, szText, MB_ICONINFORMATION|MB_SYSTEMMODAL);
 		}
 		#endif
+
+		// DllStart_Continue will be called by CDefTermHk at appropriate moment
+		return 0;
 	}
+
+	DllStart_Continue();
+
+	return 0;
+}
+
+// Splitted from DllStart() because DefTerm initialization may be splitted by threads...
+DWORD DllStart_Continue()
+{
+	prepare_timings;
 
 	//if (!gbSkipInjects)
 	{
