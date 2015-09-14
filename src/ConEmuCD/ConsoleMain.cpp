@@ -154,6 +154,7 @@ CEStartupEnv* gpStartEnv = NULL;
 HMODULE ghOurModule = NULL; // ConEmuCD.dll
 DWORD   gnSelfPID = 0;
 wchar_t gsModuleName[32] = L"";
+wchar_t gsVersion[20] = L"";
 BOOL    gbTerminateOnExit = FALSE;
 bool    gbPrefereSilentMode = false;
 //HANDLE  ghConIn = NULL, ghConOut = NULL;
@@ -289,6 +290,12 @@ void ShutdownSrvStep(LPCWSTR asInfo, int nParm1 /*= 0*/, int nParm2 /*= 0*/, int
 #endif
 }
 
+void InitVersion()
+{
+	wchar_t szMinor[8] = L""; lstrcpyn(szMinor, _T(MVV_4a), countof(szMinor));
+	//msprintf не умеет "%02u"
+	_wsprintf(gsVersion, SKIPLEN(countof(gsVersion)) L"%02u%02u%02u%s", MVV_1, MVV_2, MVV_3, szMinor);
+}
 
 //extern UINT_PTR gfnLoadLibrary;
 //UINT gnMsgActivateCon = 0;
@@ -325,6 +332,8 @@ BOOL WINAPI DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 				wcscpy_c(gsModuleName, WIN3264TEST(L"ConEmuC",L"ConEmuC64"));
 			else
 				wcscpy_c(gsModuleName, WIN3264TEST(L"ConEmuCD",L"ConEmuCD64"));
+
+			InitVersion();
 
 			#ifdef _DEBUG
 			HANDLE hProcHeap = GetProcessHeap();
@@ -2993,6 +3002,12 @@ int DoInjectRemote(LPWSTR asCmdArg, bool abDefTermOnly)
 		}
 		#endif
 
+		CEStr lsName, lsPath;
+		{
+		CProcessData processes;
+		processes.GetProcessName(nRemotePID, lsName.GetBuffer(MAX_PATH), MAX_PATH, lsPath.GetBuffer(MAX_PATH*2), MAX_PATH*2, NULL);
+		}
+
 		// Go to hook
 		// InjectRemote waits for thread termination
 		DWORD nErrCode = 0;
@@ -3003,10 +3018,6 @@ int DoInjectRemote(LPWSTR asCmdArg, bool abDefTermOnly)
 			return iHookRc ? CERR_HOOKS_WAS_ALREADY_SET : CERR_HOOKS_WAS_SET;
 		}
 
-		CProcessData processes;
-		CEStr lsName, lsPath;
-		processes.GetProcessName(nRemotePID, lsName.GetBuffer(MAX_PATH), MAX_PATH, lsPath.GetBuffer(MAX_PATH*2), MAX_PATH*2, NULL);
-
 		DWORD nSelfPID = GetCurrentProcessId();
 		PROCESSENTRY32 self = {sizeof(self)}, parent = {sizeof(parent)};
 		// Not optimal, needs refactoring
@@ -3015,20 +3026,28 @@ int DoInjectRemote(LPWSTR asCmdArg, bool abDefTermOnly)
 
 		// Ошибку (пока во всяком случае) лучше показать, для отлова возможных проблем
 		//_ASSERTE(iHookRc == 0); -- ассерт не нужен, есть MsgBox
-		wchar_t szDbgMsg[255], szTitle[128];
+		wchar_t szTitle[128];
 		_wsprintf(szTitle, SKIPLEN(countof(szTitle))
-			L"%s, PID=%u", gsModuleName, nSelfPID);
-		_wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg))
-			L"%s.X, PID=%u\n"
-			L"Injecting remote into PID=%u from ParentPID=%u\n"
-			L"FAILED, code=%i:0x%08X\r\n",
-			gsModuleName, nSelfPID,
-			nRemotePID, self.th32ParentProcessID, iHookRc, nErrCode);
+			L"%s %s, PID=%u", gsModuleName, gsVersion, nSelfPID);
 
-		CEStr lsError(lstrmerge(szDbgMsg,
-			L"Process: ",
+		wchar_t szInfo[120];
+		_wsprintf(szInfo, SKIPCOUNT(szInfo)
+			L"Injecting remote FAILED, code=%i:0x%08X\n"
+			L"%s %s, PID=%u\n"
+			L"RemotePID=%u ",
+			iHookRc, nErrCode, gsModuleName, gsVersion, nSelfPID, nRemotePID);
+
+		wchar_t szParentPID[32];
+		_wsprintf(szParentPID, SKIPCOUNT(szParentPID)
+			L"\n"
+			L"ParentPID=%u ",
+			self.th32ParentProcessID);
+
+		CEStr lsError(lstrmerge(
+			szInfo,
 			lsPath.IsEmpty() ? lsName.IsEmpty() ? L"<Unknown>" : lsName.ms_Arg : lsPath.ms_Arg,
-			L"\n" L"Parent: ", parent.szExeFile));
+			szParentPID,
+			parent.szExeFile));
 
 		MessageBoxW(NULL, lsError, szTitle, MB_SYSTEMMODAL);
 	}
