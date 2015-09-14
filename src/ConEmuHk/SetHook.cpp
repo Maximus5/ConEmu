@@ -98,6 +98,7 @@ MH_STATUS g_mhInit = MH_UNKNOWN;
 MH_STATUS g_mhCreate = MH_UNKNOWN;
 MH_STATUS g_mhEnable = MH_UNKNOWN;
 MH_STATUS g_mhCritical = MH_UNKNOWN;
+MH_STATUS g_mhDisableAll = MH_UNKNOWN;
 MH_STATUS g_mhDeinit = MH_UNKNOWN;
 
 
@@ -1221,7 +1222,12 @@ void UnsetAllHooks()
 		}
 	}
 
-	g_mhDeinit = MH_Uninitialize();
+	// Don't release minhook buffers in DefTerm mode,
+	// keep these instructions just in case...
+	if (gbPrepareDefaultTerminal)
+		g_mhDisableAll = MH_DisableHook(MH_ALL_HOOKS);
+	else
+		g_mhDeinit = MH_Uninitialize();
 
 	#ifdef _DEBUG
 	DebugStringA("UnsetAllHooks finished\n");
