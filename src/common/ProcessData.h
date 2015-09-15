@@ -1,5 +1,7 @@
 ﻿// This is extraction of Far Process List plugin.
 
+#include "WObjects.h"
+
 class CProcessData
 {
 protected:
@@ -518,7 +520,7 @@ public:
 
 						// Last chance for Vista+
 						// We can't get full path by this handle, but IsWow64Process may be succeeded
-						if (gOSVer.dwMajorVersion >= 6)
+						if (IsWin6())
 						{
 							// PROCESS_QUERY_LIMITED_INFORMATION not defined in GCC
 							h = OpenProcess(0x1000/*PROCESS_QUERY_LIMITED_INFORMATION*/, FALSE, anPID);
