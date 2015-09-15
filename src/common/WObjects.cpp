@@ -674,13 +674,11 @@ bool IsWindows64()
 	if (isOsChecked)
 		return is64bitOs;
 
-	bool isWow64process = false;
-
 #ifdef WIN64
-	is64bitOs = true; isWow64process = true;
+	is64bitOs = true;
 #else
 	// Проверяем, где мы запущены
-	isWow64process = FALSE;
+	bool isWow64process = false;
 	HMODULE hKernel = GetModuleHandleW(L"kernel32.dll");
 
 	if (hKernel)
