@@ -100,6 +100,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "hkCmdExe.h"
 #include "hkConsoleInput.h"
 #include "hkConsoleOutput.h"
+#include "hkEnvironment.h"
 
 
 #if defined(_DEBUG) || defined(SHOW_EXE_TIMINGS) || defined(SHOWCREATEPROCESSTICK)
@@ -495,7 +496,9 @@ wrap:
 	{
 		// Это может случиться при запуске нового "чистого" cmd - "start cmd" из ConEmu\cmd
 		#ifdef _DEBUG
-		wchar_t szCurAnsiVar[32] = L""; GetEnvironmentVariableW(ENV_CONEMUANSI_VAR_W, szCurAnsiVar, countof(szCurAnsiVar));
+		wchar_t szCurAnsiVar[32] = L"";
+		ORIGINAL_KRNL(GetEnvironmentVariableW);
+		F(GetEnvironmentVariableW)(ENV_CONEMUANSI_VAR_W, szCurAnsiVar, countof(szCurAnsiVar));
 		// Или при аттаче свободно-запущенной-ранее консоли в ConEmu
 		_ASSERTEX((bAnsi || (!*szCurAnsiVar || lstrcmp(szCurAnsiVar,L"OFF")==0) || !gpConMap) && "ANSI was disabled?");
 		#endif
