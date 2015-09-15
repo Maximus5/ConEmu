@@ -208,18 +208,6 @@
     <ClCompile Include="..\common\WObjects.cpp">
       <Filter>0 - Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="RE_Config.cpp">
-      <Filter>1 - Registry</Filter>
-    </ClCompile>
-    <ClCompile Include="RE_Helper.cpp">
-      <Filter>1 - Registry</Filter>
-    </ClCompile>
-    <ClCompile Include="RE_Malloc.cpp">
-      <Filter>1 - Registry</Filter>
-    </ClCompile>
-    <ClCompile Include="RE_Progress.cpp">
-      <Filter>1 - Registry</Filter>
-    </ClCompile>
     <ClCompile Include="..\common\InQueue.cpp">
       <Filter>0 - Source Files</Filter>
     </ClCompile>
@@ -292,21 +280,6 @@
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="header.h">
-      <Filter>Header Files</Filter>
-    </CustomBuild>
-    <CustomBuild Include="RE_Config.h">
-      <Filter>Header Files</Filter>
-    </CustomBuild>
-    <CustomBuild Include="RE_Helper.h">
-      <Filter>Header Files</Filter>
-    </CustomBuild>
-    <CustomBuild Include="RE_Malloc.h">
-      <Filter>Header Files</Filter>
-    </CustomBuild>
-    <CustomBuild Include="RE_Plugin.h">
-      <Filter>Header Files</Filter>
-    </CustomBuild>
-    <CustomBuild Include="RE_Progress.h">
       <Filter>Header Files</Filter>
     </CustomBuild>
   </ItemGroup>
