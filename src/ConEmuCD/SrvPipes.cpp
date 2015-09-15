@@ -73,7 +73,7 @@ bool CmdServerStart()
 	//gpSrv->CmdServer.SetPriority(THREAD_PRIORITY_ABOVE_NORMAL);
 	gpSrv->CmdServer.SetDummyAnswerSize(sizeof(CESERVER_REQ_HDR));
 
-	if (!gpSrv->CmdServer.StartPipeServer(false, gpSrv->szPipename, NULL, LocalSecurity(), CmdServerCommand, CmdServerFree))
+	if (!gpSrv->CmdServer.StartPipeServer(false, gpSrv->szPipename, 0, LocalSecurity(), CmdServerCommand, CmdServerFree))
 		return false;
 
 	return true;
