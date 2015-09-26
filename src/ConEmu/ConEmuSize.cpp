@@ -1816,7 +1816,7 @@ void CConEmuSize::CascadedPosFix()
 		int nShift = (GetSystemMetrics(SM_CYSIZEFRAME)+GetSystemMetrics(SM_CYCAPTION))*1.5;
 		// Monitor information
 		MONITORINFO mi;
-		// Prefered window size
+		// Preferred window size
 		int nDefWidth = 0, nDefHeight = 0;
 
 		HWND hPrev = gpSetCls->isDontCascade ? NULL : FindWindow(VirtualConsoleClassMain, NULL);
@@ -2553,7 +2553,7 @@ LRESULT CConEmuSize::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 	DwmExtendFrameIntoClientArea(hwnd, &dwmm);
 	-- DWM, Glass --
 	*/
-	// Иначе не вызвутся события WM_SIZE/WM_MOVE
+	// Иначе не вызовутся события WM_SIZE/WM_MOVE
 	result = DefWindowProc(hWnd, uMsg, wParam, lParam);
 	p = (WINDOWPOS*)lParam;
 
@@ -3795,7 +3795,7 @@ bool CConEmuSize::JumpNextMonitor(HWND hJumpWnd, HMONITOR hJumpMon, bool Next, c
 		}
 
 		AutoSizeFont(rcNewMain, CER_MAIN);
-		// Расчитать размер консоли по оптимальному WindowRect
+		// Рассчитать размер консоли по оптимальному WindowRect
 		CVConGroup::PreReSize(WindowMode, rcNewMain);
 	}
 
@@ -3909,7 +3909,7 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 	bool bIconic = isIconic();
 
 	// When changing more to smth else than wmNormal, and current mode is wmNormal
-	// save current window rect for futher usage (when restoring from wmMaximized for example)
+	// save current window rect for further usage (when restoring from wmMaximized for example)
 	if ((inMode != wmNormal) && isWindowNormal() && !bIconic)
 		StoreNormalRect(&rcWnd);
 
@@ -3952,7 +3952,7 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 			bool bTiled = (m_TileMode == cwc_TileLeft || m_TileMode == cwc_TileRight || m_TileMode == cwc_TileHeight || m_TileMode == cwc_TileWidth);
 			RECT rcIdeal = (gpSet->isQuakeStyle) ? GetDefaultRect() : GetIdealRect();
 			AutoSizeFont(rcIdeal, CER_MAIN);
-			// Расчитать размер по оптимальному WindowRect
+			// Рассчитать размер по оптимальному WindowRect
 			if (!CVConGroup::PreReSize(inMode, rcIdeal))
 			{
 				mp_ConEmu->mp_Menu->SetPassSysCommand(false);
@@ -4060,7 +4060,7 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 				//SetWindowRgn(ghWnd, hRgn, TRUE);
 			}
 
-			// Already resored, need to clear the flag to avoid incorrect sizing
+			// Already restored, need to clear the flag to avoid incorrect sizing
 			mp_ConEmu->mp_Menu->SetRestoreFromMinimized(false);
 
 			UpdateWindowRgn();
@@ -4153,7 +4153,7 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 
 			_ASSERTE(mn_IgnoreSizeChange>=0);
 
-			// Already resored, need to clear the flag to avoid incorrect sizing
+			// Already restored, need to clear the flag to avoid incorrect sizing
 			mp_ConEmu->mp_Menu->SetRestoreFromMinimized(false);
 
 			OnSize(false); // консоль уже изменила свой размер

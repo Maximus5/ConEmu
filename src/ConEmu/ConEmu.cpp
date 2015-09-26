@@ -507,7 +507,7 @@ CConEmuMain::CConEmuMain()
 	if (pszSlash) *pszSlash = 0;
 
 	// Запомнить текущую папку (на момент запуска)
-	mb_ConEmuWorkDirArg = false; // May be overrided with app "/dir" switch
+	mb_ConEmuWorkDirArg = false; // May be overridden with app "/dir" switch
 	StoreWorkDir();
 
 	bool lbBaseFound = false;
@@ -1742,7 +1742,7 @@ BOOL CConEmuMain::CreateMainWindow()
 	}
 
 	// 2009-06-11 Возможно, что CS_SAVEBITS приводит к глюкам отрисовки
-	// банально непрорисовываются некоторые части экрана (драйвер видюхи глючит?)
+	// банально не прорисовываются некоторые части экрана (драйвер видюхи глючит?)
 	WNDCLASSEX wc = {sizeof(WNDCLASSEX), CS_DBLCLKS|CS_OWNDC/*|CS_SAVEBITS*/, CConEmuMain::MainWndProc, 0, 16,
 	                 g_hInstance, hClassIcon, LoadCursor(NULL, IDC_ARROW),
 	                 NULL /*(HBRUSH)COLOR_BACKGROUND*/,
@@ -2493,7 +2493,7 @@ void CConEmuMain::OnTabbarActivated(bool bTabbarVisible, bool bInAutoShowHide)
 	{
 		if (!isIconic())
 		{
-			// Try to set new window size accomodating (dis)appearing tab bar height
+			// Try to set new window size accommodating (dis)appearing tab bar height
 			RECT rcCur = CalcRect(CER_MAIN, NULL);
 			MONITORINFO mi = {};
 			GetNearestMonitorInfo(&mi, NULL, &rcCur);
@@ -5352,7 +5352,7 @@ void CConEmuMain::RightClickingPaint(HDC hdcIntVCon, CVirtualConsole* apVCon)
 							                 NULL, NULL, szRightClickingClass, NULL};
 							if (!RegisterClassEx(&wc))
 							{
-								DisplayLastError(L"Regitser class failed");
+								DisplayLastError(L"Register class failed");
 							}
 							else
 							{
@@ -6188,7 +6188,7 @@ bool CConEmuMain::isCloseConfirmed()
 
 LRESULT CConEmuMain::OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate)
 {
-	// Must be set laready from CConEmuMain::MainWndProc, but just to be sure
+	// Must be set already from CConEmuMain::MainWndProc, but just to be sure
 	_ASSERTE(ghWnd == hWnd);
 	ghWnd = hWnd;
 
@@ -6941,7 +6941,7 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 		//	}
 		//}
 
-		//TODO terst
+		//TODO test
 		WARNING("Если консоль не создана - handler не установится!")
 		//SetConsoleCtrlHandler((PHANDLER_ROUTINE)CConEmuMain::HandlerRoutine, true);
 
@@ -8370,7 +8370,7 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 				DEBUGSTRCHAR(szDbg);
 				#endif
 
-				// After these messages we certanly must stop trying to process keypress
+				// After these messages we certainly must stop trying to process keypress
 				break;
 			}
 
@@ -8436,7 +8436,7 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 			// Remove from buffer
 			if (bNeedGet && !GetMessage(&msg1, 0,0,0))
 			{
-				_ASSERTE(FALSE && "GetMessage was failed while PeekMessage was succeded");
+				_ASSERTE(FALSE && "GetMessage was failed while PeekMessage was succeeded");
 				break;
 			}
 
@@ -8698,7 +8698,7 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 	}
 	else
 	{
-		// Если вдруг активной консоли нету (вообще?) но клавиши обработать все-равно нада
+		// Если вдруг активной консоли нету (вообще?) но клавиши обработать все-равно надо
 		// true - хоткей обработан
 		if (!ProcessHotKeyMsg(messg, wParam, lParam, szTranslatedChars, NULL))
 		{
@@ -9101,7 +9101,7 @@ LRESULT CConEmuMain::OnLangChange(UINT messg, WPARAM wParam, LPARAM lParam)
 	19:17:21.043(gui.4720) ConEmu: GetKeyboardLayout(0) after DefWindowProc(WM_INPUTLANGCHANGEREQUEST) = 0x04190419)
 	19:17:23.043(gui.4720) CRealConsole::SwitchKeyboardLayout(CP:1, HKL:0x04190419)
 	19:17:25.044(gui.4720) RealConsole: WM_INPUTLANGCHANGEREQUEST, CP:1, HKL:0x04190419 via CmdExecute
-	19:17:27.044(gui.3072) GUI recieved CECMD_LANGCHANGE
+	19:17:27.044(gui.3072) GUI received CECMD_LANGCHANGE
 	19:17:29.044(gui.4720) ConEmu: GetKeyboardLayout(0) in OnLangChangeConsole after GetKeyboardLayout(0) = 0x04190419
 	19:17:31.044(gui.4720) ConEmu: GetKeyboardLayout(0) in OnLangChangeConsole after GetKeyboardLayout(0) = 0x04190419
 	--> Слетает после этого!
@@ -9122,7 +9122,7 @@ LRESULT CConEmuMain::OnLangChange(UINT messg, WPARAM wParam, LPARAM lParam)
 	ConEmuC: PostMessage(WM_INPUTLANGCHANGEREQUEST, CP:1, HKL:0x04090409)
 	The thread 'Win32 Thread' (0x3f0) has exited with code 1 (0x1).
 	ConEmuC: InputLayoutChanged (GetConsoleKeyboardLayoutName returns) '00000409'
-	17:23:38.013(gui.4460) GUI recieved CECMD_LANGCHANGE
+	17:23:38.013(gui.4460) GUI received CECMD_LANGCHANGE
 	17:23:40.028(gui.4460) ConEmu: GetKeyboardLayout(0) on CECMD_LANGCHANGE after GetKeyboardLayout(0) = 0x04090409
 	--> Слетает после этого!
 	'ConEmu.exe': Loaded 'C:\WINDOWS\system32\kbdus.dll'
@@ -9297,7 +9297,7 @@ LRESULT CConEmuMain::OnLangChangeConsole(CVirtualConsole *apVCon, const DWORD ad
 
 	if (!isMainThread())
 	{
-		// --> не "нравится" руслату обращение к раскладкам из фоновых потоков. Поэтому выполяется в основном потоке
+		// --> не "нравится" руслату обращение к раскладкам из фоновых потоков. Поэтому выполняется в основном потоке
 		if (gpSetCls->isAdvLogging > 1)
 		{
 			_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"CConEmuMain::OnLangChangeConsole (0x%08X), Posting to main thread", dwLayoutName);
@@ -9927,7 +9927,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	}
 
 
-	TODO("DoubleView. Хорошо бы колесико мышки перенаправлять в консоль под мышиным курором, а не в активную");
+	TODO("DoubleView. Хорошо бы колесико мышки перенаправлять в консоль под мышиным курсором, а не в активную");
 	RECT /*conRect = {0},*/ dcRect = {0};
 	//GetWindowRect('ghWnd DC', &dcRect);
 	CVirtualConsole* pVCon = NULL;
@@ -11785,7 +11785,7 @@ void CConEmuMain::OnTimer_Main(CVirtualConsole* pVCon)
 	}
 	#endif
 
-	//Maximus5. Hack - если какая-то зараза задизеблила окно
+	//Maximus5. Hack - если какая-то зараза задизейблила окно
 	if (!DontEnable::isDontEnable())
 	{
 		DWORD dwStyle = GetWindowLong(ghWnd, GWL_STYLE);
@@ -11902,7 +11902,7 @@ void CConEmuMain::OnTimer_Main(CVirtualConsole* pVCon)
 		//BOOL lbSizingToDo  = (mouse.state & MOUSE_SIZING_TODO) == MOUSE_SIZING_TODO;
 
 		//if (isSizing() && !isPressed(VK_LBUTTON)) {
-		//    // Сборс всех флагов ресайза мышкой
+		//    // Сброс всех флагов ресайза мышкой
 		//    ResetSizingFlags(MOUSE_SIZING_BEGIN|MOUSE_SIZING_TODO);
 		//}
 
@@ -12625,7 +12625,7 @@ BOOL CConEmuMain::isDialogMessage(MSG &Msg)
 bool CConEmuMain::isSkipNcMessage(const MSG& Msg)
 {
 	// When some GuiChild applications has focus (e.g. PuTTY)
-	// Pressing Alt+F4 enexpectedly close all ConEmu's tabs instead of active (PuTTY) only
+	// Pressing Alt+F4 unexpectedly close all ConEmu's tabs instead of active (PuTTY) only
 	if ((Msg.message == WM_SYSCOMMAND) && (Msg.wParam == SC_CLOSE))
 	{
 		// Message was posted by system?

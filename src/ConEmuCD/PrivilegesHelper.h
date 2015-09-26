@@ -25,7 +25,7 @@ public:
 		}
 	};
 public:
-	BOOL BackupPrivilegesAcuire(BOOL abRequireRestore)
+	BOOL BackupPrivilegesAquire(BOOL abRequireRestore)
 	{
 		if (mp_Token && abRequireRestore && !mb_RestoreAquired)
 		{

@@ -4126,7 +4126,7 @@ bool CVConGroup::ConActivate(CVConGuard& VCon, int nCon)
 		lbSizeOK = pRCon->SetConsoleSize(nNewConWidth, nNewConHeight, 0/*don't change buffer size*/, nCmdID);
 	}
 
-	// Currect sizes of VCon/Back
+	// Correct sizes of VCon/Back
 	RECT rcWork = {};
 	rcWork = gpConEmu->CalcRect(CER_WORKSPACE, pVCon);
 	CVConGroup::MoveAllVCon(pVCon, rcWork);
@@ -5836,7 +5836,7 @@ bool CVConGroup::isInGroup(CVirtualConsole* apVCon, CVConGroup* apGroup)
 	return false;
 }
 
-// rpActiveVCon <<== recieves active VCon in group (it may NOT be active in ConEmu)
+// rpActiveVCon <<== receives active VCon in group (it may NOT be active in ConEmu)
 bool CVConGroup::isGroup(CVirtualConsole* apVCon, CVConGroup** rpRoot /*= NULL*/, CVConGuard* rpActiveVCon /*= NULL*/)
 {
 	if (rpRoot)

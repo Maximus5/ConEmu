@@ -1972,7 +1972,7 @@ wrap:
 		L"OtherExitCode",
 		iRc);
 	DownloadLog(dc_LogCallback, szResult);
-	// Finilize internet service
+	// Finalize internet service
 	DownloadCommand(dc_Deinit, 0, NULL);
 	SafeFree(pszExpanded);
 	for (size_t i = 0; KnownArgs[i].pszArgName; i++)

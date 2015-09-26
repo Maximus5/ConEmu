@@ -8862,7 +8862,7 @@ void CSettings::UpdateSize(const CESize w, const CESize h)
 }
 
 // Пожалуй, не будем автоматически менять флажок "Monospace"
-// Был вроде Issue, да и не всегда моноширность правильно определяется (DejaVu Sans Mono)
+// Был вроде Issue, да и не всегда моноширинность правильно определяется (DejaVu Sans Mono)
 void CSettings::UpdateTTF(BOOL bNewTTF)
 {
 	if (mb_IgnoreTtfChange)
@@ -9629,7 +9629,7 @@ bool CSettings::MacroFontSetSize(int nRelative/*0/1/2/3*/, int nValue/*+-1,+-2,.
 	}
 	else
 	{
-		_ASSERTE(FALSE && "Invalie nRelative value");
+		_ASSERTE(FALSE && "Invalid nRelative value");
 		gpConEmu->LogString(L"-- Skipped! Unsupported nRelative value");
 		return false;
 	}
@@ -9797,7 +9797,7 @@ bool CSettings::FindCustomFont(LPCWSTR lfFaceName, int iSize, BOOL bBold, BOOL b
 				MBoxAssert(*ppFont != NULL);
 			}
 
-			return true; // [bdf] шрифт. ошибка опрделяется по (*ppFont==NULL)
+			return true; // [bdf] шрифт. ошибка определяется по (*ppFont==NULL)
 		}
 	}
 
@@ -9916,7 +9916,7 @@ void CSettings::RecreateBorderFont(const LOGFONT *inFont)
 						}
 					}
 				}
-				// Font not istalled or available?
+				// Font not installed or available?
 				if (!bCreated)
 				{
 					wcscat_c(szFontError, szAltNames[0]);
@@ -10147,7 +10147,7 @@ CEFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
 		//if (m_tm->tmMaxCharWidth && m_tm->tmAveCharWidth && m_tm->tmHeight)
 		//{
 		//	int nRelativeDelta = (m_tm->tmMaxCharWidth - m_tm->tmAveCharWidth) * 100 / m_tm->tmHeight;
-		//	// Если расхождение менее 15% высоты - считаем шрифт моноширным
+		//	// Если расхождение менее 15% высоты - считаем шрифт моноширинным
 		//	if (nRelativeDelta < 15)
 		//		bAlmostMonospace = true;
 
@@ -10174,7 +10174,7 @@ CEFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
 		if (m_tm->tmMaxCharWidth > (m_tm->tmHeight * 15 / 10))
 			m_tm->tmMaxCharWidth = m_tm->tmHeight; // иначе зашкалит - текст очень сильно разъедется
 
-		// Лучше поставим AveCharWidth. MaxCharWidth для "условно моноширного" Consolas почти равен высоте.
+		// Лучше поставим AveCharWidth. MaxCharWidth для "условно моноширинного" Consolas почти равен высоте.
 		if (gpSet->FontSizeX3 && ((int)gpSet->FontSizeX3 > FontDefWidthMin) && ((int)gpSet->FontSizeX3 <= FontDefWidthMax))
 			inFont->lfWidth = EvalCellWidth();
 		else
@@ -10999,7 +10999,7 @@ void CSettings::RegisterFonts()
 		}
 	}
 
-	// Теперь можно смотреть, зарегистрились ли какие-то шрифты... И выбрать из них подходящие
+	// Теперь можно смотреть, зарегистрировались ли какие-то шрифты... И выбрать из них подходящие
 	// Это делается в InitFont
 }
 
@@ -12626,9 +12626,9 @@ int CSettings::EnumConFamCallBack(LPLOGFONT lplf, LPNEWTEXTMETRIC lpntm, DWORD F
 		}
 	}
 
-	// PAN_PROP_MONOSPACED - не дает правильного результата. Например 'MS Mincho' заявлен как моноширный,
+	// PAN_PROP_MONOSPACED - не дает правильного результата. Например 'MS Mincho' заявлен как моноширинный,
 	// но совсем таковым не является. Кириллица у него дофига какая...
-	// И только моноширные!
+	// И только моноширинные!
 	DWORD bAlmostMonospace = IsAlmostMonospace(lplf->lfFaceName, lpntm->tmMaxCharWidth, lpntm->tmAveCharWidth, lpntm->tmHeight) ? 1 : 0;
 
 	if (!bAlmostMonospace)
@@ -12649,11 +12649,11 @@ int CSettings::EnumConFamCallBack(LPLOGFONT lplf, LPNEWTEXTMETRIC lpntm, DWORD F
 
 	if (!lpOutl) return TRUE;  // Ошибка получения параметров шрифта
 
-	if (lpOutl->otmPanoseNumber.bProportion != PAN_PROP_MONOSPACED  // шрифт не заявлен как моноширный
+	if (lpOutl->otmPanoseNumber.bProportion != PAN_PROP_MONOSPACED  // шрифт не заявлен как моноширинный
 	        || lstrcmpi((wchar_t*)lpOutl->otmpFamilyName, LF.lfFaceName)) // или алиас
 	{
 		free(lpOutl);
-		return TRUE; // следущий шрифт
+		return TRUE; // следующий шрифт
 	}
 
 	free(lpOutl); lpOutl = NULL;

@@ -3025,7 +3025,7 @@ DWORD CRealConsole::MonitorThreadWorker(bool bDetached, bool& rbChildProcessCrea
 				//if ((HWND)mp_ConsoleInfo->hConWnd && mp_ConsoleInfo->nCurDataMapIdx
 				//	&& mp_ConsoleInfo->nPacketId
 				//	&& mn_LastConsolePacketIdx != mp_ConsoleInfo->nPacketId)
-				WARNING("!!! Если ожидание m_ConDataChanged будет перенесно выше - то тут нужно пользовать полученное выше значение !!!");
+				WARNING("!!! Если ожидание m_ConDataChanged будет перенесено выше - то тут нужно пользовать полученное выше значение !!!");
 
 				if (!m_ConDataChanged.Wait(0,TRUE))
 				{
@@ -3423,7 +3423,7 @@ void CRealConsole::PrepareDefaultColors(BYTE& nTextColorIdx, BYTE& nBackColorIdx
 
 	// May be palette was inherited from RealConsole (Win+G attach)
 	const ColorPalette* pPal = mp_VCon->m_SelfPalette.bPredefined ? &mp_VCon->m_SelfPalette : NULL;
-	// User's choosed special palette for this console?
+	// User's chosen special palette for this console?
 	if (!pPal)
 	{
 		_ASSERTE(countof(pApp->szPaletteName)>0); // must be array, not pointer
@@ -5893,8 +5893,8 @@ void CRealConsole::StopThread(BOOL abRecreating)
 		{
 			// А это чтобы не осталось висеть окно ConEmu, раз всё уже закрыто
 			mp_ConEmu->OnRConStartedSuccess(NULL);
-			LogString(L"### Main Thread wating timeout, terminating...\n");
-			DEBUGSTRPROC(L"### Main Thread wating timeout, terminating...\n");
+			LogString(L"### Main Thread waiting timeout, terminating...\n");
+			DEBUGSTRPROC(L"### Main Thread waiting timeout, terminating...\n");
 			_ASSERTE(FALSE && "Terminating mh_MonitorThread");
 			mb_WasForceTerminated = TRUE;
 			apiTerminateThread(mh_MonitorThread, 1);
@@ -7256,7 +7256,7 @@ bool CRealConsole::InitAltServer(DWORD nAltServerPID/*, HANDLE hAltServer*/)
 			#ifdef _DEBUG
 			if ((nWait == WAIT_TIMEOUT) && nStartWait && ((GetTickCount() - nStartWait) > 2000))
 			{
-				_ASSERTE((nWait == WAIT_OBJECT_0) && "Switching Monitor thread to altarnative server takes more than 2000ms");
+				_ASSERTE((nWait == WAIT_OBJECT_0) && "Switching Monitor thread to alternative server takes more than 2000ms");
 			}
 			#endif
 		}
@@ -8274,7 +8274,7 @@ BOOL CRealConsole::ProcessUpdate(const DWORD *apPID, UINT anCount)
 						//++iter;
 					}
 
-					// Следущий процесс
+					// Следующий процесс
 				}
 				while(Process32Next(h, &p));
 
@@ -8286,7 +8286,7 @@ BOOL CRealConsole::ProcessUpdate(const DWORD *apPID, UINT anCount)
 				}
 			}
 
-			// Закрыть shapshoot
+			// Закрыть shapshot
 			SafeCloseHandle(h);
 		}
 	}
@@ -9405,7 +9405,7 @@ BOOL CRealConsole::RecreateProcessStart()
 
 		if (bWasNTVDM)
 		{
-			// При пересоздании сбрасывается 16битный режим, нужно отресайзится
+			// При пересоздании сбрасывается 16битный режим, нужно отресайзиться
 			if (!PreInit())
 				return FALSE;
 		}
@@ -11832,7 +11832,7 @@ void CRealConsole::Paste(CEPasteMode PasteMode /*= pm_Standard*/, LPCWSTR asText
 		const AppSettings* pApp = gpSet->GetAppSettings(GetActiveAppSettingsId());
 		bool bTrimTailing = pApp ? (pApp->CTSTrimTrailing() != 0) : false;
 
-		//PRAGMA_ERROR("Неправильно вставляется, если в превой строке нет trailing space");
+		//PRAGMA_ERROR("Неправильно вставляется, если в первой строке нет trailing space");
 
 		wchar_t *pszDst = pszBuf, *pszSrc = pszBuf, *pszEOL;
 		while (pszSrc < pszEnd)
@@ -11871,7 +11871,7 @@ void CRealConsole::Paste(CEPasteMode PasteMode /*= pm_Standard*/, LPCWSTR asText
 		*pszDst = 0;
 		// Done, it is ready to pasting
 		pszEnd = pszDst;
-		// Bufer must not contain any line-feeds now! Safe for paste in command line!
+		// Buffer must not contain any line-feeds now! Safe for paste in command line!
 		_ASSERTE(wcspbrk(pszBuf, L"\r\n") == NULL);
 	}
 	else if (pszRN)

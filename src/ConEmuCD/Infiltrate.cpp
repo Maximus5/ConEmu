@@ -28,7 +28,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 /*
 This module contains static machine codes for calling LoadLibrary
-These codes was produced by cl.exe with special complier switches
+These codes was produced by cl.exe with special compiler switches
 Look at InfiltrateProc for source
 */
 

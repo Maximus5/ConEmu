@@ -29,7 +29,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmuC.h"
 #include "Queue.h"
 
-#define DEBUGSTRINPUTPIPE(s) //DEBUGSTR(s) // ConEmuC: Recieved key... / ConEmuC: Recieved input
+#define DEBUGSTRINPUTPIPE(s) //DEBUGSTR(s) // ConEmuC: Received key... / ConEmuC: Received input
 
 // Forwards
 BOOL WINAPI InputServerCommand(LPVOID pInst, MSG64* pCmd, MSG64* &ppReply, DWORD &pcbReplySize, DWORD &pcbMaxReplySize, LPARAM lParam);
@@ -132,8 +132,8 @@ BOOL WINAPI InputServerCommand(LPVOID pInst, MSG64* pCmd, MSG64* &ppReply, DWORD
 			#ifdef _DEBUG
 			switch (pCmd->msg[i].message)
 			{
-			case WM_KEYDOWN: case WM_SYSKEYDOWN: DEBUGSTRINPUTPIPE(L"ConEmuC: Recieved key down\n"); break;
-			case WM_KEYUP: case WM_SYSKEYUP: DEBUGSTRINPUTPIPE(L"ConEmuC: Recieved key up\n"); break;
+			case WM_KEYDOWN: case WM_SYSKEYDOWN: DEBUGSTRINPUTPIPE(L"ConEmuC: Received key down\n"); break;
+			case WM_KEYUP: case WM_SYSKEYUP: DEBUGSTRINPUTPIPE(L"ConEmuC: Received key up\n"); break;
 			default: DEBUGSTRINPUTPIPE(L"ConEmuC: Recieved input\n");
 			}
 			#endif
@@ -162,7 +162,7 @@ BOOL WINAPI InputServerCommand(LPVOID pInst, MSG64* pCmd, MSG64* &ppReply, DWORD
 					gpSrv->InputQueue.WriteInputQueue(NULL, TRUE);
 
 					// Подождем чуть-чуть
-					InputLogger::Log(InputLogger::Event::evt_WaitIntputReady, gpSrv->InputQueue.nUsedLen);
+					InputLogger::Log(InputLogger::Event::evt_WaitInputReady, gpSrv->InputQueue.nUsedLen);
 					DWORD nReadyWait = WaitForSingleObject(gpSrv->hInputWasRead, 250);
 					if (nReadyWait == WAIT_OBJECT_0)
 					{
