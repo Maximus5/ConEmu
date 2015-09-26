@@ -2580,7 +2580,9 @@ int CheckUnicodeFont()
 {
 	int iRc = CERR_UNICODE_CHK_FAILED;
 
+	HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE);
 	HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+	HANDLE hErr = GetStdHandle(STD_ERROR_HANDLE);
 
 
 	wchar_t szText[80] = UnicodeTestString;
@@ -2647,6 +2649,14 @@ int CheckUnicodeFont()
 				info.FaceName);
 		}
 	}
+	WriteConsoleW(hOut, szInfo, lstrlen(szInfo), &nTmp, NULL);
+
+	DWORD nInMode = 0, nOutMode = 0, nErrMode = 0;
+	GetConsoleMode(hIn, &nInMode);
+	GetConsoleMode(hOut, &nOutMode);
+	GetConsoleMode(hErr, &nErrMode);
+	msprintf(szInfo, countof(szInfo), L"Handles: In=x%X (Mode=x%X) Out=x%X (x%X) Err=x%X (x%X)\r\n",
+		LODWORD(hIn), nInMode, LODWORD(hOut), nOutMode, LODWORD(hErr), nErrMode);
 	WriteConsoleW(hOut, szInfo, lstrlen(szInfo), &nTmp, NULL);
 
 	DWORD nCP = GetConsoleCP();
