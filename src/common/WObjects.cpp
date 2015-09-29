@@ -765,6 +765,13 @@ int GetProcessBits(DWORD nPID, HANDLE hProcess /*= NULL*/)
 		BOOL bWow64 = FALSE;
 		HANDLE h = hProcess ? hProcess : OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, nPID);
 
+		// IsWow64Process would be succeessfull for PROCESS_QUERY_LIMITED_INFORMATION (Vista+)
+		if ((h == NULL) && IsWin6())
+		{
+			// PROCESS_QUERY_LIMITED_INFORMATION not defined in GCC
+			h = OpenProcess(0x1000/*PROCESS_QUERY_LIMITED_INFORMATION*/, FALSE, nPID);
+		}
+
 		if (h == NULL)
 		{
 			// If it is blocked due to access rights - try to find alternative ways (by path or PERF COUNTER)
