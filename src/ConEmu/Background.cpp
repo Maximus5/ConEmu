@@ -997,6 +997,20 @@ bool CBackground::PrepareBackground(CVirtualConsole* pVCon, HDC&/*OUT*/ phBgDc, 
 				bSucceeded = false;
 			}
 		}
+
+		// Check if the bitmap was prepared for the current Far state
+		if ((mp_BkImgData && pVCon)
+			// Don't use isFilePanel here because it is `false` when any dialog is active in Panels
+			&& ((!(pVCon->isEditor || pVCon->isViewer) && !(mp_BkImgData->dwDrawnPlaces & pbp_Panels))
+				|| (pVCon->isEditor && !(mp_BkImgData->dwDrawnPlaces & pbp_Editor))
+				|| (pVCon->isViewer && !(mp_BkImgData->dwDrawnPlaces & pbp_Viewer))
+			))
+		{
+			lbForceUpdate = false;
+			phBgDc = NULL;
+			pbgBmpSize = MakeCoord(0, 0);
+			goto wrap;
+		}
 	}
 
 	if (bSucceeded)
@@ -1010,6 +1024,7 @@ bool CBackground::PrepareBackground(CVirtualConsole* pVCon, HDC&/*OUT*/ phBgDc, 
 		pbgBmpSize = MakeCoord(0,0);
 	}
 
+wrap:
 	return lbForceUpdate;
 }
 
