@@ -2318,7 +2318,7 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 	// Поддержка старого стиля хранения (настройки БЕЗ имени конфига - лежали в корне ключа Software\ConEmu)
 	if (!lbOpened && (*gpSetCls->GetConfigName() == 0))
 	{
-		lbOpened = reg->OpenKey(CONEMU_ROOT_KEY, KEY_READ);
+		lbOpened = reg->OpenKey(CONEMU_ROOT_KEY, KEY_READ, TRUE);
 		// rbNeedCreateVanilla means we need to convert old xml format (re-save all settings after loading)
 		if (lbOpened)
 		{
