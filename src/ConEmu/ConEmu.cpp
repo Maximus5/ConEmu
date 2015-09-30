@@ -2847,7 +2847,7 @@ void CConEmuMain::SyncNtvdm()
 // Нужно ее запомнить, иначе при Minimize/Restore установится некорректная высота!
 void CConEmuMain::OnTabbarActivated(bool bTabbarVisible, bool bInAutoShowHide)
 {
-	if (bInAutoShowHide/*(gpSet->isTabs == 2)*/ && IsSizeFree(GetWindowMode()))
+	if (bInAutoShowHide && isWindowNormal())
 	{
 		if (!isIconic())
 		{
