@@ -225,11 +225,16 @@ void OnLoadLibraryLog(LPCSTR lpLibraryA, LPCWSTR lpLibraryW)
 #endif
 
 /* ************** */
-HMODULE WINAPI OnLoadLibraryAWork(FARPROC lpfn, HookItem *ph, const char* lpFileName)
+HMODULE WINAPI OnLoadLibraryA(const char* lpFileName)
 {
-	typedef HMODULE(WINAPI* OnLoadLibraryA_t)(const char* lpFileName);
+	//typedef HMODULE(WINAPI* OnLoadLibraryA_t)(const char* lpFileName);
+	ORIGINAL_KRNL(LoadLibraryA);
+
 	OnLoadLibraryLog(lpFileName,NULL);
-	HMODULE module = ((OnLoadLibraryA_t)lpfn)(lpFileName);
+
+	HMODULE module = NULL;
+	if (F(LoadLibraryA))
+		module = F(LoadLibraryA)(lpFileName);
 	DWORD dwLoadErrCode = GetLastError();
 
 	// Issue 1079: Almost hangs with PHP
@@ -249,24 +254,20 @@ HMODULE WINAPI OnLoadLibraryAWork(FARPROC lpfn, HookItem *ph, const char* lpFile
 	return module;
 }
 
-HMODULE WINAPI OnLoadLibraryA(const char* lpFileName)
-{
-	//typedef HMODULE(WINAPI* OnLoadLibraryA_t)(const char* lpFileName);
-	ORIGINAL_KRNL(LoadLibraryA);
-	return OnLoadLibraryAWork((FARPROC)F(LoadLibraryA), ph, lpFileName);
-}
-
 /* ************** */
-HMODULE WINAPI OnLoadLibraryWWork(FARPROC lpfn, HookItem *ph, const wchar_t* lpFileName)
+HMODULE WINAPI OnLoadLibraryW(const wchar_t* lpFileName)
 {
-	typedef HMODULE(WINAPI* OnLoadLibraryW_t)(const wchar_t* lpFileName);
+	//typedef HMODULE(WINAPI* OnLoadLibraryW_t)(const wchar_t* lpFileName);
+	ORIGINAL_KRNL(LoadLibraryW);
 	HMODULE module = NULL;
 
 	OnLoadLibraryLog(NULL,lpFileName);
 
-	// Спрятать ExtendedConsole.dll с глаз долой, в сервисную папку "ConEmu"
+	// ExtendedConsole.dll was moved to %ConEmuBaseDir%
+	// Also, there are two versions, ExtendedConsole64.dll for 64-bit Far
+	// So we need to patch Far load attempt, because it tries to load "%FARHOME%\ExtendedConsole.dll"
 	// Don't rely here on isFar or Far mappings - they may be not initialized yet...
-	if (lpFileName 
+	if (lpFileName && F(LoadLibraryW)
 		&& ((lstrcmpiW(lpFileName, L"ExtendedConsole.dll") == 0)
 			|| lstrcmpiW(lpFileName, L"ExtendedConsole64.dll") == 0))
 	{
@@ -280,7 +281,7 @@ HMODULE WINAPI OnLoadLibraryWWork(FARPROC lpfn, HookItem *ph, const wchar_t* lpF
 				_wcscpy_c(pszFullPath, cchMax, Info->ComSpec.ConEmuBaseDir);
 				_wcscat_c(pszFullPath, cchMax, WIN3264TEST(L"\\ExtendedConsole.dll",L"\\ExtendedConsole64.dll"));
 
-				module = ((OnLoadLibraryW_t)lpfn)(pszFullPath);
+				module = F(LoadLibraryW)(pszFullPath);
 
 				SafeFree(pszFullPath);
 			}
@@ -288,8 +289,8 @@ HMODULE WINAPI OnLoadLibraryWWork(FARPROC lpfn, HookItem *ph, const wchar_t* lpF
 		SafeFree(Info);
 	}
 
-	if (!module)
-		module = ((OnLoadLibraryW_t)lpfn)(lpFileName);
+	if (!module && F(LoadLibraryW))
+		module = F(LoadLibraryW)(lpFileName);
 	DWORD dwLoadErrCode = GetLastError();
 
 	if ((gnLdrDllNotificationUsed == ldr_PartialSupport) || (gnLdrDllNotificationUsed == ldr_FullSupport))
@@ -312,19 +313,17 @@ HMODULE WINAPI OnLoadLibraryWWork(FARPROC lpfn, HookItem *ph, const wchar_t* lpF
 	return module;
 }
 
-HMODULE WINAPI OnLoadLibraryW(const wchar_t* lpFileName)
-{
-	//typedef HMODULE(WINAPI* OnLoadLibraryW_t)(const wchar_t* lpFileName);
-	ORIGINAL_KRNL(LoadLibraryW);
-	return OnLoadLibraryWWork((FARPROC)F(LoadLibraryW), ph, lpFileName);
-}
-
 /* ************** */
-HMODULE WINAPI OnLoadLibraryExAWork(FARPROC lpfn, HookItem *ph, const char* lpFileName, HANDLE hFile, DWORD dwFlags)
+HMODULE WINAPI OnLoadLibraryExA(const char* lpFileName, HANDLE hFile, DWORD dwFlags)
 {
-	typedef HMODULE(WINAPI* OnLoadLibraryExA_t)(const char* lpFileName, HANDLE hFile, DWORD dwFlags);
+	//typedef HMODULE(WINAPI* OnLoadLibraryExA_t)(const char* lpFileName, HANDLE hFile, DWORD dwFlags);
+	ORIGINAL_KRNL(LoadLibraryExA);
+
 	OnLoadLibraryLog(lpFileName,NULL);
-	HMODULE module = ((OnLoadLibraryExA_t)lpfn)(lpFileName, hFile, dwFlags);
+
+	HMODULE module = NULL;
+	if (F(LoadLibraryExA))
+		module = F(LoadLibraryExA)(lpFileName, hFile, dwFlags);
 	DWORD dwLoadErrCode = GetLastError();
 
 	if (PrepareNewModule(module, lpFileName, NULL))
@@ -340,19 +339,17 @@ HMODULE WINAPI OnLoadLibraryExAWork(FARPROC lpfn, HookItem *ph, const char* lpFi
 	return module;
 }
 
-HMODULE WINAPI OnLoadLibraryExA(const char* lpFileName, HANDLE hFile, DWORD dwFlags)
-{
-	//typedef HMODULE(WINAPI* OnLoadLibraryExA_t)(const char* lpFileName, HANDLE hFile, DWORD dwFlags);
-	ORIGINAL_KRNL(LoadLibraryExA);
-	return OnLoadLibraryExAWork((FARPROC)F(LoadLibraryExA), ph, lpFileName, hFile, dwFlags);
-}
-
 /* ************** */
-HMODULE WINAPI OnLoadLibraryExWWork(FARPROC lpfn, HookItem *ph, const wchar_t* lpFileName, HANDLE hFile, DWORD dwFlags)
+HMODULE WINAPI OnLoadLibraryExW(const wchar_t* lpFileName, HANDLE hFile, DWORD dwFlags)
 {
-	typedef HMODULE(WINAPI* OnLoadLibraryExW_t)(const wchar_t* lpFileName, HANDLE hFile, DWORD dwFlags);
+	//typedef HMODULE(WINAPI* OnLoadLibraryExW_t)(const wchar_t* lpFileName, HANDLE hFile, DWORD dwFlags);
+	ORIGINAL_KRNL(LoadLibraryExW);
+
 	OnLoadLibraryLog(NULL,lpFileName);
-	HMODULE module = ((OnLoadLibraryExW_t)lpfn)(lpFileName, hFile, dwFlags);
+
+	HMODULE module = NULL;
+	if (F(LoadLibraryExW))
+		module = F(LoadLibraryExW)(lpFileName, hFile, dwFlags);
 	DWORD dwLoadErrCode = GetLastError();
 
 	if (PrepareNewModule(module, NULL, lpFileName))
@@ -368,16 +365,11 @@ HMODULE WINAPI OnLoadLibraryExWWork(FARPROC lpfn, HookItem *ph, const wchar_t* l
 	return module;
 }
 
-HMODULE WINAPI OnLoadLibraryExW(const wchar_t* lpFileName, HANDLE hFile, DWORD dwFlags)
+/* ************** */
+BOOL WINAPI OnFreeLibrary(HMODULE hModule)
 {
-	//typedef HMODULE(WINAPI* OnLoadLibraryExW_t)(const wchar_t* lpFileName, HANDLE hFile, DWORD dwFlags);
-	ORIGINAL_KRNL(LoadLibraryExW);
-	return OnLoadLibraryExWWork((FARPROC)F(LoadLibraryExW), ph, lpFileName, hFile, dwFlags);
-}
-
-BOOL WINAPI OnFreeLibraryWork(FARPROC lpfn, HookItem *ph, HMODULE hModule)
-{
-	typedef BOOL (WINAPI* OnFreeLibrary_t)(HMODULE hModule);
+	//typedef BOOL (WINAPI* OnFreeLibrary_t)(HMODULE hModule);
+	ORIGINAL_KRNL(FreeLibrary);
 	BOOL lbRc = FALSE;
 	BOOL lbResource = LDR_IS_RESOURCE(hModule);
 	// lbResource получается TRUE например при вызовах из version.dll
@@ -389,7 +381,8 @@ BOOL WINAPI OnFreeLibraryWork(FARPROC lpfn, HookItem *ph, HMODULE hModule)
 #endif
 
 	// Section locking is inadmissible. One FreeLibrary may cause another FreeLibrary in _different_ thread.
-	lbRc = ((OnFreeLibrary_t)lpfn)(hModule);
+	if (F(FreeLibrary))
+		lbRc = F(FreeLibrary)(hModule);
 	DWORD dwFreeErrCode = GetLastError();
 
 	// Далее только если !LDR_IS_RESOURCE
@@ -398,11 +391,4 @@ BOOL WINAPI OnFreeLibraryWork(FARPROC lpfn, HookItem *ph, HMODULE hModule)
 
 	SetLastError(dwFreeErrCode);
 	return lbRc;
-}
-
-BOOL WINAPI OnFreeLibrary(HMODULE hModule)
-{
-	//typedef BOOL (WINAPI* OnFreeLibrary_t)(HMODULE hModule);
-	ORIGINAL_KRNL(FreeLibrary);
-	return OnFreeLibraryWork((FARPROC)F(FreeLibrary), ph, hModule);
 }
