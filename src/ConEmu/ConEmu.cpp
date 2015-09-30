@@ -11819,8 +11819,10 @@ void CConEmuMain::OnTimer_Main(CVirtualConsole* pVCon)
 
 	if (m_ProcCount == 0)
 	{
-		// При ошибках запуска консольного приложения хотя бы можно будет увидеть, что оно написало...
-		if (mb_ProcessCreated)
+		// mb_ProcessCreated: Don't close ConEmu if console application exists abnormally,
+		//		let user examine its possible console output
+		// gnInMsgBox: Don't close ConEmu if there is any MsgBox (config save errors for example)
+		if (mb_ProcessCreated && (gnInMsgBox <= 0))
 		{
 			OnAllVConClosed();
 			// Once. Otherwise window we can't show window when "Auto hide" is on...

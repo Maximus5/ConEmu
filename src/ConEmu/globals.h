@@ -129,6 +129,7 @@ extern HWND ghLastForegroundWindow;
 HWND getForegroundWindow();
 
 extern HWND ghDlgPendingFrom;
+extern LONG gnInMsgBox;
 int MsgBox(LPCTSTR lpText, UINT uType, LPCTSTR lpCaption = NULL, HWND ahParent = (HWND)-1, bool abModal = true);
 void AssertBox(LPCTSTR szText, LPCTSTR szFile, UINT nLine, LPEXCEPTION_POINTERS ExceptionInfo = NULL);
 void PatchMsgBoxIcon(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);

@@ -2254,6 +2254,7 @@ void PatchMsgBoxIcon(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 	}
 }
 
+LONG gnInMsgBox = 0;
 int MsgBox(LPCTSTR lpText, UINT uType, LPCTSTR lpCaption /*= NULL*/, HWND ahParent /*= (HWND)-1*/, bool abModal /*= true*/)
 {
 	DontEnable de(abModal);
@@ -2265,6 +2266,7 @@ int MsgBox(LPCTSTR lpText, UINT uType, LPCTSTR lpCaption /*= NULL*/, HWND ahPare
 		: NULL;
 
 	HooksUnlocker;
+	MSetter lInCall(&gnInMsgBox);
 
 	int nBtn = MessageBox(hParent, lpText ? lpText : L"<NULL>", lpCaption ? lpCaption : gpConEmu->GetLastTitle(), uType);
 
