@@ -372,7 +372,7 @@ SettingsXML::~SettingsXML()
 	CloseStorage();
 }
 
-IXMLDOMDocument* SettingsXML::CreateDomDocument(wchar_t* pszErr /*= NULL*/, size_t cchErrMax /*= 0*/)
+IXMLDOMDocument* SettingsXML::CreateDomDocument(wchar_t*& pszErr)
 {
 	HRESULT hr;
 	IXMLDOMDocument* pFile = NULL;
@@ -380,6 +380,8 @@ IXMLDOMDocument* SettingsXML::CreateDomDocument(wchar_t* pszErr /*= NULL*/, size
 	typedef HRESULT (__stdcall* DllGetClassObject_t)(REFCLSID rclsid, REFIID riid, LPVOID *ppv);
 	static DllGetClassObject_t lpfnGetClassObject = NULL;
 	wchar_t szDllErr[128] = {};
+
+	_ASSERTE(pszErr==NULL);
 
 	hr = CoInitialize(NULL);
 
@@ -470,28 +472,12 @@ IXMLDOMDocument* SettingsXML::CreateDomDocument(wchar_t* pszErr /*= NULL*/, size
 	if (FAILED(hr) || !pFile)
 	{
 		wchar_t szErr[512];
-		bool bShowError = (pszErr == NULL);
-		if (pszErr == NULL)
-		{
-			pszErr = szErr; cchErrMax = countof(szErr);
-		}
-		_wsprintf(pszErr, SKIPLEN(cchErrMax)
-				  L"XML setting file can not be used!\n"
-				  L"Dynamic libraries 'msxml3.dll'/'msxml3r.dll' were not found!\n\n"
-				  L"Can't create IID_IXMLDOMDocument!\n"
+		_wsprintf(szErr, SKIPCOUNT(szErr)
+				  L"XML setting file can not be used!\r\n"
+				  L"Dynamic libraries 'msxml3.dll'/'msxml3r.dll' were not found!\r\n\r\n"
+				  L"Can't create IID_IXMLDOMDocument!\r\n"
 				  L"ErrCode=0x%08X %s", (DWORD)hr, szDllErr);
-
-		if (bShowError)
-		{
-			static bool bWarned = false;
-			if (!bWarned)
-			{
-				// Не задалбывать пользователя ошибками. Один раз - и хватит
-				bWarned = true;
-				MBoxError(szErr);
-			}
-		}
-
+	  	pszErr = lstrdup(szErr);
 		return NULL;
 	}
 
@@ -500,13 +486,32 @@ IXMLDOMDocument* SettingsXML::CreateDomDocument(wchar_t* pszErr /*= NULL*/, size
 
 bool SettingsXML::IsXmlAllowed()
 {
-	IXMLDOMDocument* pFile = CreateDomDocument();
+	bool bAllowed = false;
+	wchar_t* pszErr = NULL;
+	IXMLDOMDocument* pFile = CreateDomDocument(pszErr);
+
 	if (pFile)
+	{
+		bAllowed = true;
 		pFile->Release();
-	return (pFile != NULL);
+	}
+	else if (pszErr)
+	{
+		static bool bWarned = false;
+		if (!bWarned)
+		{
+			// Don't buzz more than one time
+			bWarned = true;
+			MBoxError(pszErr);
+		}
+
+	}
+
+	SafeFree(pszErr);
+	return bAllowed;
 }
 
-bool SettingsXML::OpenStorage(uint access, wchar_t (&szErr)[512])
+bool SettingsXML::OpenStorage(uint access, wchar_t*& pszErr)
 {
 	bool bRc = false;
 	bool bNeedReopen = (mp_File == NULL);
@@ -517,7 +522,7 @@ bool SettingsXML::OpenStorage(uint access, wchar_t (&szErr)[512])
 	VARIANT vt; VariantInit(&vt);
 	bool bAllowCreate = (access & KEY_WRITE) == KEY_WRITE;
 
-	szErr[0] = 0;
+	_ASSERTE(pszErr == NULL);
 
 	if (m_Storage.pszFile && *m_Storage.pszFile)
 	{
@@ -614,12 +619,10 @@ bool SettingsXML::OpenStorage(uint access, wchar_t (&szErr)[512])
 	SAFETRY
 	{
 		_ASSERTE(mp_File == NULL);
-		mp_File = CreateDomDocument(szErr, countof(szErr));
+		mp_File = CreateDomDocument(pszErr);
 
 		if (FAILED(hr) || !mp_File)
 		{
-			//Ошибка уже в szErr
-			//_wsprintf(szErr, SKIPLEN(countof(szErr)) L"Can't create IID_IXMLDOMDocument!\nErrCode=0x%08X", (DWORD)hr);
 			goto wrap;
 		}
 
@@ -632,25 +635,51 @@ bool SettingsXML::OpenStorage(uint access, wchar_t (&szErr)[512])
 		hr = mp_File->load(vt, &bSuccess);
 		VariantClear(&vt);
 
-		if (hr == S_FALSE)
+		if ((hr != S_OK) || !bSuccess)
 		{
-			mb_Empty = true; // Файл пуст (может только заголовок?)
-		}
-		else if (FAILED(hr) || !bSuccess)
-		{
-			_wsprintf(szErr, SKIPLEN(countof(szErr)) L"Failed to load ConEmu.xml!\nHR=0x%08X\n", (DWORD)hr);
+			BSTR bsXmlDescr = NULL;
+			wchar_t* pszOurDescr = NULL;
+			wchar_t szErr[100] = L"";
+			long errorCode = 0; // Contains the error code of the last parse error. Read-only.
+			long line = 0; // Specifies the line number that contains the error. Read-only.
+			long linepos  = 0; // Contains the character position within the line where the error occurred. Read-only.
+
 			hr = mp_File->get_parseError(&pErr);
 
 			if (pErr)
 			{
-				long errorCode = 0; // Contains the error code of the last parse error. Read-only.
-				long line = 0; // Specifies the line number that contains the error. Read-only.
-				long linepos  = 0; // Contains the character position within the line where the error occurred. Read-only.
-				hr = pErr->get_errorCode(&errorCode);
-				hr = pErr->get_line(&line);
-				hr = pErr->get_linepos(&linepos);
-				wsprintf(szErr+_tcslen(szErr), L"XmlErrCode=%i, Line=%i, Pos=%i", errorCode, line, linepos);
+				DEBUGTEST(HRESULT hrd=)
+				pErr->get_errorCode(&errorCode);
+
+				DEBUGTEST(hrd=)
+				pErr->get_line(&line);
+
+				DEBUGTEST(hrd=)
+				pErr->get_linepos(&linepos);
+
+				_wsprintf(szErr, SKIPCOUNT(szErr) L"\r\n\r\n"
+					L"Line=%i, Pos=%i, XmlCode=0x%08X, HR=0x%08X\r\n", line, linepos, (DWORD)errorCode, (DWORD)hr);
+
+				// For some errors service returns weird error descriptions
+				if (errorCode == 0xC00CE558)
+				{
+					pszOurDescr = lstrdup(L"Root node doesn't exists");
+				}
+				else
+				{
+					pErr->get_reason(&bsXmlDescr);
+				}
 			}
+
+			pszErr = lstrmerge(
+				((access & KEY_WRITE) != KEY_WRITE)
+					? L"Failed to load configuration file!\r\n"
+					: L"Failed to open configuration file for writing!\r\n",
+				pszXmlFile, szErr, bsXmlDescr, pszOurDescr);
+
+			if (bsXmlDescr)
+				SysFreeString(bsXmlDescr);
+			SafeFree(pszOurDescr);
 
 			goto wrap;
 		}
@@ -660,7 +689,7 @@ bool SettingsXML::OpenStorage(uint access, wchar_t (&szErr)[512])
 
 	} SAFECATCH
 	{
-		lstrcpy(szErr, L"Exception in SettingsXML::OpenStorage");
+		pszErr = lstrmerge(L"Exception in SettingsXML::OpenStorage\r\n", pszXmlFile);
 		bRc = false;
 	}
 
@@ -678,7 +707,7 @@ bool SettingsXML::OpenKey(const wchar_t *regPath, uint access, BOOL abSilent /*=
 
 	bool lbRc = false;
 	HRESULT hr = S_OK;
-	wchar_t szErr[512]; szErr[0] = 0;
+	wchar_t* pszErr = NULL;
 	wchar_t szName[MAX_PATH];
 	const wchar_t* psz = NULL;
 	IXMLDOMNode* pKey = NULL;
@@ -692,7 +721,7 @@ bool SettingsXML::OpenKey(const wchar_t *regPath, uint access, BOOL abSilent /*=
 		return false;
 	}
 
-	if (!OpenStorage(access, szErr))
+	if (!OpenStorage(access, pszErr))
 	{
 		goto wrap;
 	}
@@ -705,7 +734,10 @@ bool SettingsXML::OpenKey(const wchar_t *regPath, uint access, BOOL abSilent /*=
 
 		if (FAILED(hr))
 		{
-			_wsprintf(szErr, SKIPLEN(countof(szErr)) L"XML: Root node not found!\nErrCode=0x%08X", (DWORD)hr);
+			wchar_t szRootError[80];
+			_wsprintf(szRootError, SKIPLEN(countof(szRootError))
+				L"XML: Root node not found! ErrCode=0x%08X\r\n", (DWORD)hr);
+			pszErr = lstrmerge(szRootError, m_Storage.pszFile, L"\r\n", regPath);
 			goto wrap;
 		}
 
@@ -729,12 +761,13 @@ bool SettingsXML::OpenKey(const wchar_t *regPath, uint access, BOOL abSilent /*=
 			{
 				if (bAllowCreate)
 				{
-					_wsprintf(szErr, SKIPLEN(countof(szErr)) L"XML: Can't create key <%s>!", szName);
+					pszErr = lstrmerge(L"XML: Can't create key <", szName, L">!");
 				}
 				else
 				{
 					//_wsprintf(szErr, SKIPLEN(countof(szErr)) L"XML: key <%s> not found!", szName);
-					szErr[0] = 0; // ошибку не показывать - настройки по умолчанию
+					// Don't show error - use default settings
+					SafeFree(pszErr);
 				}
 
 				goto wrap;
@@ -769,17 +802,20 @@ bool SettingsXML::OpenKey(const wchar_t *regPath, uint access, BOOL abSilent /*=
 
 	} SAFECATCH
 	{
-		lstrcpy(szErr, L"Exception in SettingsXML::OpenKey");
+		pszErr = lstrmerge(L"Exception in SettingsXML::OpenKey\r\n", m_Storage.pszFile, L"\r\n", regPath);
 		lbRc = false;
 	}
 wrap:
 	SafeRelease(pChild);
 	SafeRelease(pKey);
 
-	if (!lbRc && szErr[0] && !abSilent)
+	if (!lbRc && (pszErr && *pszErr) && !abSilent)
 	{
-		MBoxA(szErr);
+		// Don't show error message box as a child of ghWnd
+		// otherwise it may be closed unexpectedly on exit
+		MsgBox(pszErr, MB_ICONSTOP, NULL, NULL);
 	}
+	SafeFree(pszErr);
 
 	return lbRc;
 }
