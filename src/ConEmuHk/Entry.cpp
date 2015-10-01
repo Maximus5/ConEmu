@@ -55,11 +55,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	#undef UseDebugExceptionFilter
 #endif
 
-//#ifdef _DEBUG
-#define USE_PIPE_SERVER
-//#else
-//	#undef USE_PIPE_SERVER
-//#endif
 
 #include <windows.h>
 #include <Tlhelp32.h>
@@ -543,7 +538,6 @@ void OnConWndChanged(HWND ahNewConWnd)
 
 LONG   gnPromptReported = 0;
 
-#ifdef USE_PIPE_SERVER
 BOOL WINAPI HookServerCommand(LPVOID pInst, CESERVER_REQ* pCmd, CESERVER_REQ* &ppReply, DWORD &pcbReplySize, DWORD &pcbMaxReplySize, LPARAM lParam);
 BOOL WINAPI HookServerReady(LPVOID pInst, LPARAM lParam);
 void WINAPI HookServerFree(CESERVER_REQ* pReply, LPARAM lParam);
@@ -554,7 +548,6 @@ void   StartHookServer();
 
 PipeServer<CESERVER_REQ> *gpHookServer = NULL;
 bool gbHookServerForcedTermination = false;
-#endif
 
 void CheckHookServer();
 
@@ -704,11 +697,9 @@ void FixSshThreads(int iStep)
 				{
 					if ((module.th32OwnerProcessID == dwPID) && (gnHookMainThreadId != module.th32ThreadID))
 					{
-						// Наши потоки - не морозить
-						#ifdef USE_PIPE_SERVER
+						// Don't freeze our own threads
 						if (gpHookServer && gpHookServer->IsPipeThread(module.th32ThreadID))
 							continue;
-						#endif
 
 						hThread = OpenThread(THREAD_SUSPEND_RESUME, FALSE, module.th32ThreadID);
 						if (!hThread)
@@ -886,7 +877,6 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 	//BOOL lbGuiWindowAttach = FALSE; // Прицепить к ConEmu гуевую программу (notepad, putty, ...)
 
 
-#ifdef USE_PIPE_SERVER
 	_ASSERTEX(gpHookServer==NULL);
 	// gbPrepareDefaultTerminal turned on in DllMain
 	if (!gbPrepareDefaultTerminal)
@@ -922,7 +912,6 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 			_ASSERTEX(gpHookServer!=NULL);
 		}
 	}
-#endif
 
 
 	// gbPrepareDefaultTerminal turned on in DllMain
@@ -1546,7 +1535,6 @@ void DoDllStop(bool bFinal, ConEmuHkDllState bFromTerminate)
 
 	DLL_STOP_STEP(6);
 
-	#ifdef USE_PIPE_SERVER
 	if (gpHookServer)
 	{
 		//TODO: Skip when (bFromTerminate == true)?
@@ -1558,7 +1546,6 @@ void DoDllStop(bool bFinal, ConEmuHkDllState bFromTerminate)
 		gpHookServer = NULL;
 		DLOGEND1();
 	}
-	#endif
 
 	DLL_STOP_STEP(7);
 
@@ -2588,7 +2575,6 @@ HWND WINAPI GetRealConsoleWindow()
 }
 
 
-#ifdef USE_PIPE_SERVER
 // Для облегчения жизни - сервер кеширует данные, калбэк может использовать ту же память (*pcbMaxReplySize)
 BOOL WINAPI HookServerCommand(LPVOID pInst, CESERVER_REQ* pCmd, CESERVER_REQ* &ppReply, DWORD &pcbReplySize, DWORD &pcbMaxReplySize, LPARAM lParam)
 {
@@ -2847,7 +2833,6 @@ void StartHookServer()
 
 	SetLastError(nSaveErr);
 }
-#endif
 
 void ReportPromptStarted()
 {
@@ -2876,12 +2861,10 @@ void CheckHookServer()
 		ReportPromptStarted();
 	}
 
-	#ifdef USE_PIPE_SERVER
 	if (gnHookServerNeedStart == 1)
 	{
 		StartHookServer();
 	}
-	#endif
 }
 
 
