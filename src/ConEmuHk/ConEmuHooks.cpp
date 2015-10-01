@@ -303,15 +303,15 @@ bool InitHooksLibrary()
 	};
 
 
-	// No need to hook these functions in Vista+
-	if (!gbLdrDllNotificationUsed)
+	// Need to hook All LoadLibrary### if the work isn't done by LdrRegisterDllNotification
+	if (gnLdrDllNotificationUsed != ldr_FullSupport)
 	{
 		if (InitHooks(HooksLib1) < 0)
 			goto wrap;
 	}
 
-	// With only exception of LoadLibraryW - it handles "ExtendedConsole.dll" loading in Far 64
-	if (gbIsFarProcess || !gbLdrDllNotificationUsed)
+	// Also LoadLibraryW, it handles "ExtendedConsole.dll" loading in Far 32/64
+	if (gbIsFarProcess || (gnLdrDllNotificationUsed != ldr_FullSupport))
 	{
 		if (InitHooks(HooksLib2) < 0)
 			goto wrap;

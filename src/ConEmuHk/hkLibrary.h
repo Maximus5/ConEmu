@@ -33,8 +33,16 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 /* *************************** */
 
-extern bool gbLdrDllNotificationUsed;
-bool CheckLdrNotificationAvailable();
+enum LdrDllNotificationMode
+{
+	ldr_Unchecked = 0,
+	ldr_Unavailable,
+	ldr_PartialSupport,
+	ldr_FullSupport,
+	ldr_Unregistered,
+};
+extern LdrDllNotificationMode gnLdrDllNotificationUsed;
+void CheckLdrNotificationAvailable();
 void UnregisterLdrNotification();
 
 /* *************************** */

@@ -80,22 +80,16 @@ static LdrRegisterDllNotification_t LdrRegisterDllNotification = NULL;
 static LdrUnregisterDllNotification_t LdrUnregisterDllNotification = NULL;
 static PVOID gpLdrDllNotificationCookie = NULL;
 static NTSTATUS gnLdrDllNotificationState = (NTSTATUS)-1;
-bool gbLdrDllNotificationUsed = false;
+LdrDllNotificationMode gnLdrDllNotificationUsed = ldr_Unchecked;
 
 
-bool CheckLdrNotificationAvailable()
+void CheckLdrNotificationAvailable()
 {
 	static bool bLdrWasChecked = false;
 	if (bLdrWasChecked)
-		return gbLdrDllNotificationUsed;
+		return;
 
-	#ifndef _WIN32_WINNT_WIN8
-	#define _WIN32_WINNT_WIN8 0x602
-	#endif
-	_ASSERTE(_WIN32_WINNT_WIN8==0x602);
-	OSVERSIONINFOEXW osvi = {sizeof(osvi), HIBYTE(_WIN32_WINNT_WIN8), LOBYTE(_WIN32_WINNT_WIN8)};
-	DWORDLONG const dwlConditionMask = VerSetConditionMask(VerSetConditionMask(0, VER_MAJORVERSION, VER_GREATER_EQUAL), VER_MINORVERSION, VER_GREATER_EQUAL);
-	BOOL isAllowed = VerifyVersionInfoW(&osvi, VER_MAJORVERSION | VER_MINORVERSION, dwlConditionMask);
+	bool isAllowed = IsWin6();
 
 	// LdrDllNotification работает так как нам надо начиная с Windows 8
 	// В предыдущих версиях Windows нотификатор вызывается из LdrpFindOrMapDll
@@ -106,26 +100,27 @@ bool CheckLdrNotificationAvailable()
 		HMODULE hNtDll = GetModuleHandle(L"ntdll.dll");
 		if (hNtDll)
 		{
+			// Functions are available since Vista
 			LdrRegisterDllNotification = (LdrRegisterDllNotification_t)GetProcAddress(hNtDll, "LdrRegisterDllNotification");
 			LdrUnregisterDllNotification = (LdrUnregisterDllNotification_t)GetProcAddress(hNtDll, "LdrUnregisterDllNotification");
 
 			if (LdrRegisterDllNotification && LdrUnregisterDllNotification)
 			{
 				gnLdrDllNotificationState = LdrRegisterDllNotification(0, LdrDllNotification, NULL, &gpLdrDllNotificationCookie);
-				gbLdrDllNotificationUsed = (gnLdrDllNotificationState == 0/*STATUS_SUCCESS*/);
+				gnLdrDllNotificationUsed = (gnLdrDllNotificationState != 0/*STATUS_SUCCESS*/) ? ldr_Unavailable
+					: IsWin8() ? ldr_FullSupport : ldr_PartialSupport;
 			}
 		}
 	}
 
 	bLdrWasChecked = true;
-
-	return gbLdrDllNotificationUsed;
 }
 
 void UnregisterLdrNotification()
 {
-	if (gbLdrDllNotificationUsed)
+	if ((gnLdrDllNotificationUsed == ldr_PartialSupport) || (gnLdrDllNotificationUsed == ldr_FullSupport))
 	{
+		gnLdrDllNotificationUsed = ldr_Unregistered;
 		_ASSERTEX(LdrUnregisterDllNotification!=NULL);
 		LdrUnregisterDllNotification(gpLdrDllNotificationCookie);
 	}
@@ -174,6 +169,12 @@ VOID CALLBACK LdrDllNotification(ULONG NotificationReason, const LDR_DLL_NOTIFIC
 	switch (NotificationReason)
 	{
 	case LDR_DLL_NOTIFICATION_REASON_LOADED:
+		if (gnLdrDllNotificationUsed != ldr_FullSupport)
+		{
+			//TODO: Dll logging?
+			break;
+		}
+
 		if (PrepareNewModule(hModule, NULL, szModule, TRUE, TRUE))
 		{
 			HookItem* ph = NULL;
@@ -185,7 +186,14 @@ VOID CALLBACK LdrDllNotification(ULONG NotificationReason, const LDR_DLL_NOTIFIC
 			}
 		}
 		break;
+
 	case LDR_DLL_NOTIFICATION_REASON_UNLOADED:
+		if (gnLdrDllNotificationUsed != ldr_FullSupport)
+		{
+			//TODO: Dll logging?
+			break;
+		}
+
 		UnprepareModule(hModule, szModule, 0);
 		UnprepareModule(hModule, szModule, 2);
 		break;
@@ -283,7 +291,7 @@ HMODULE WINAPI OnLoadLibraryWWork(FARPROC lpfn, HookItem *ph, const wchar_t* lpF
 		module = ((OnLoadLibraryW_t)lpfn)(lpFileName);
 	DWORD dwLoadErrCode = GetLastError();
 
-	if (gbLdrDllNotificationUsed)
+	if ((gnLdrDllNotificationUsed == ldr_PartialSupport) || (gnLdrDllNotificationUsed == ldr_FullSupport))
 		return module;
 
 	// Issue 1079: Almost hangs with PHP

@@ -633,8 +633,8 @@ int InitHooks(HookItem* apHooks)
 	size_t i, j;
 	bool skip;
 
-	// Init gbLdrDllNotificationUsed. Supported only in Win8 and higher.
-	if (!gbLdrDllNotificationUsed)
+	// Init gnLdrDllNotificationUsed. Supported only in Win8 and higher.
+	if (!gnLdrDllNotificationUsed)
 	{
 		CheckLdrNotificationAvailable();
 	}
@@ -1185,7 +1185,7 @@ void UnsetAllHooks()
 
 	wchar_t szInfo[MAX_PATH+2] = {};
 
-	if (gbLdrDllNotificationUsed)
+	if (gnLdrDllNotificationUsed)
 	{
 		UnregisterLdrNotification();
 	}
