@@ -164,8 +164,18 @@ VOID WINAPI OnExitProcess(UINT uExitCode)
 	}
 	#endif // USE_GH_272_WORKAROUND
 
+	#ifdef FORCE_GH_272_WORKAROUND
+	bUseForceTerminate = true;
+	#endif
+
 	if (bUseForceTerminate)
 	{
+		//CancelSynchronousIo(GetCurrentThread()); // -- VISTA
+
+		//HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+		//FlushFileBuffers(hOut);
+		//CloseHandle(hOut);
+
 		ORIGINAL_KRNL(TerminateProcess);
 		F(TerminateProcess)(GetCurrentProcess(), uExitCode);
 		return; // Assume not to get here
