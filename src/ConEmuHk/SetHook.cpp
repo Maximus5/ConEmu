@@ -84,8 +84,6 @@ bool gbSkipSuppressShowCall = false;
 bool gbSkipCheckProcessModules = false;
 #endif
 
-bool gbHookExecutableOnly = false;
-
 // Called function indexes logging
 namespace HookLogger
 {
@@ -1149,8 +1147,10 @@ bool SetAllHooks()
 	}
 	#endif
 
+	#if 0
 	// Для исполняемого файла могут быть заданы дополнительные inject-ы (сравнение в FAR)
 	HMODULE hExecutable = GetModuleHandle(0);
+	#endif
 
 	HLOG0("SetAllHooks.GetMainThreadId",0);
 	// Найти ID основной нити

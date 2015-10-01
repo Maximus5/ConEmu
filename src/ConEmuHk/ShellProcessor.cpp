@@ -356,13 +356,6 @@ char* CShellProc::wcs2str(const wchar_t* pwsz, UINT anCP)
 	return psz;
 }
 
-DWORD CShellProc::GetUseInjects()
-{
-	if (m_SrvMapping.cbSize)
-		return m_SrvMapping.bUseInjects;
-	return 0;
-}
-
 BOOL CShellProc::GetLogLibraries()
 {
 	if (m_SrvMapping.cbSize)

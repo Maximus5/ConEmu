@@ -117,7 +117,6 @@ public:
 				HANDLE hStdIn, HANDLE hStdOut, HANDLE hStdErr
 				/*wchar_t (&szBaseDir)[MAX_PATH+2], BOOL& bDosBoxAllowed*/);
 	BOOL LoadSrvMapping(BOOL bLightCheck = FALSE);
-	DWORD GetUseInjects();
 	BOOL GetLogLibraries();
 	const RConStartArgs* GetArgs();
 public:

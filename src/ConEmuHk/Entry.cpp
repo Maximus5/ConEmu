@@ -169,7 +169,6 @@ extern HMODULE ghUser32;
 extern const wchar_t *user32  ;// = L"user32.dll";
 //extern const wchar_t *shell32 ;// = L"shell32.dll";
 //extern const wchar_t *advapi32;// = L"Advapi32.dll";
-extern bool gbHookExecutableOnly;
 //extern DWORD gnAllowClinkUsage;
 
 ConEmuHkDllState gnDllState = ds_Undefined;
@@ -933,15 +932,6 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 				wchar_t *szExeName = (wchar_t*)calloc((MAX_PATH+1),sizeof(wchar_t));
 				//BOOL lbDosBoxAllowed = FALSE;
 				if (!GetModuleFileName(NULL, szExeName, MAX_PATH+1)) szExeName[0] = 0;
-
-				if (sp->GetUseInjects() == 2)
-				{
-					// Можно ли использовать облегченную версию хуков (только для exe-шника)?
-					if (!gbSelfIsRootConsoleProcess && !IsFarExe(szExeName))
-					{
-						gbHookExecutableOnly = true;
-					}
-				}
 
 				CESERVER_REQ* pIn = sp->NewCmdOnCreate(eInjectingHooks, L"",
 					szExeName, GetCommandLineW(),
