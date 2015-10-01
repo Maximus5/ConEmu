@@ -1466,7 +1466,6 @@ void DoDllStop(bool bFinal, ConEmuHkDllState bFromTerminate)
 		HANDLE hTimingHandle = GetStdHandle(STD_OUTPUT_HANDLE);
 	#endif
 
-	//DLOG0("DllStop",0);
 	print_timings(L"DllStop");
 	bool bUnload = (bFinal && !HooksWereSet);
 
@@ -1476,13 +1475,19 @@ void DoDllStop(bool bFinal, ConEmuHkDllState bFromTerminate)
 	static bool bVimStopped = false;
 	if (gbIsVimProcess && !bVimStopped)
 	{
+		DLOG1("StopVimTerm",0);
 		bVimStopped = true;
 		CEAnsi::StopVimTerm();
+		DLOGEND1();
 	}
 
 	DLL_STOP_STEP(1);
 
-	CEAnsi::DoneAnsiLog(bUnload);
+	{
+		DLOG1("DoneAnsiLog",0);
+		CEAnsi::DoneAnsiLog(bUnload);
+		DLOGEND1();
+	}
 
 	DLL_STOP_STEP(2);
 
@@ -1490,7 +1495,9 @@ void DoDllStop(bool bFinal, ConEmuHkDllState bFromTerminate)
 	#ifdef _DEBUG
 	if (bUnload)
 	{
+		DLOG1("StopPTY",0);
 		StopPTY();
+		DLOGEND1();
 	}
 	#endif
 
@@ -1498,7 +1505,9 @@ void DoDllStop(bool bFinal, ConEmuHkDllState bFromTerminate)
 
 	if (gpDefTerm)
 	{
+		DLOG1("DefTerm::StopHookers",0);
 		gpDefTerm->StopHookers();
+		DLOGEND1();
 	}
 
 	DLL_STOP_STEP(4);
@@ -1506,10 +1515,10 @@ void DoDllStop(bool bFinal, ConEmuHkDllState bFromTerminate)
 	// Issue 689: Progress stuck at 100%
 	if (gbPowerShellMonitorProgress && (gnPowerShellProgressValue != -1))
 	{
-		DLOG0("GuiSetProgress(0,0)",0);
+		DLOG1("GuiSetProgress(0,0)",0);
 		gnPowerShellProgressValue = -1;
 		GuiSetProgress(0,0);
-		DLOGEND();
+		DLOGEND1();
 	}
 
 	DLL_STOP_STEP(5);
@@ -1529,10 +1538,10 @@ void DoDllStop(bool bFinal, ConEmuHkDllState bFromTerminate)
 	// успеть дернуть мышкой - то при возврате в ФАР сразу пойдет фаровский драг
 	if (ghConWnd)
 	{
-		DLOG0("FlushMouseEvents",0);
+		DLOG1("FlushMouseEvents",0);
 		print_timings(L"FlushMouseEvents");
 		FlushMouseEvents();
-		DLOGEND();
+		DLOGEND1();
 	}
 
 	DLL_STOP_STEP(6);
@@ -1541,13 +1550,13 @@ void DoDllStop(bool bFinal, ConEmuHkDllState bFromTerminate)
 	if (gpHookServer)
 	{
 		//TODO: Skip when (bFromTerminate == true)?
-		DLOG0("StopPipeServer",0);
+		DLOG1("StopPipeServer",0);
 		print_timings(L"StopPipeServer");
 		gpHookServer->StopPipeServer(true, gbHookServerForcedTermination);
 		SafeCloseHandle(ghHookServerStarted);
 		free(gpHookServer);
 		gpHookServer = NULL;
-		DLOGEND();
+		DLOGEND1();
 	}
 	#endif
 
@@ -1556,12 +1565,12 @@ void DoDllStop(bool bFinal, ConEmuHkDllState bFromTerminate)
 	#ifdef _DEBUG
 	if (ghGuiClientRetHook)
 	{
-		DLOG0("unhookWindowsHookEx",0);
+		DLOG1("unhookWindowsHookEx",0);
 		print_timings(L"unhookWindowsHookEx");
 		HHOOK hh = ghGuiClientRetHook;
 		ghGuiClientRetHook = NULL;
 		UnhookWindowsHookEx(hh);
-		DLOGEND();
+		DLOGEND1();
 	}
 	#endif
 
@@ -1569,11 +1578,11 @@ void DoDllStop(bool bFinal, ConEmuHkDllState bFromTerminate)
 
 	if (HooksWereSet && bFinal)
 	{
-		DLOG0("ShutdownHooks",0);
+		DLOG1("ShutdownHooks",0);
 		print_timings(L"ShutdownHooks");
 		// Unset all hooks
 		ShutdownHooks();
-		DLOGEND();
+		DLOGEND1();
 	}
 
 	DLL_STOP_STEP(9);
@@ -1584,24 +1593,24 @@ void DoDllStop(bool bFinal, ConEmuHkDllState bFromTerminate)
 	if (gbSelfIsRootConsoleProcess && !gpDefTerm && !bSentStopped)
 	{
 		// To avoid cmd-execute lagging - send Start/Stop info only for root(!) process
-		DLOG0("SendStopped",0);
+		DLOG1("SendStopped",0);
 		print_timings(L"SendStopped");
 		bSentStopped = true;
 		SendStopped();
-		DLOGEND();
+		DLOGEND1();
 	}
 
 	DLL_STOP_STEP(10);
 
 	if (gpConMap && bUnload)
 	{
-		DLOG0("gpConMap->CloseMap",0);
+		DLOG1("gpConMap->CloseMap",0);
 		print_timings(L"gpConMap->CloseMap");
 		gpConMap->CloseMap();
 		gpConInfo = NULL;
 		delete gpConMap;
 		gpConMap = NULL;
-		DLOGEND();
+		DLOGEND1();
 	}
 
 	DLL_STOP_STEP(11);
@@ -1622,12 +1631,12 @@ void DoDllStop(bool bFinal, ConEmuHkDllState bFromTerminate)
 
 	if (gpAppMap && bUnload)
 	{
-		DLOG0("gpAppMap->CloseMap",0);
+		DLOG1("gpAppMap->CloseMap",0);
 		print_timings(L"gpAppMap->CloseMap");
 		gpAppMap->CloseMap();
 		delete gpAppMap;
 		gpAppMap = NULL;
-		DLOGEND();
+		DLOGEND1();
 	}
 
 	DLL_STOP_STEP(13);
@@ -1635,11 +1644,11 @@ void DoDllStop(bool bFinal, ConEmuHkDllState bFromTerminate)
 	// CommonShutdown
 	if (bUnload)
 	{
-		DLOG0("CommonShutdown",0);
+		DLOG1("CommonShutdown",0);
 		//#ifndef TESTLINK
 		print_timings(L"CommonShutdown");
 		CommonShutdown();
-		DLOGEND();
+		DLOGEND1();
 	}
 
 	DLL_STOP_STEP(14);
@@ -1647,10 +1656,10 @@ void DoDllStop(bool bFinal, ConEmuHkDllState bFromTerminate)
 	// FinalizeHookedModules
 	if (bUnload)
 	{
-		DLOG0("FinalizeHookedModules",0);
+		DLOG1("FinalizeHookedModules",0);
 		print_timings(L"FinalizeHookedModules");
 		FinalizeHookedModules();
-		DLOGEND();
+		DLOGEND1();
 	}
 
 	DLL_STOP_STEP(15);
@@ -1683,12 +1692,15 @@ void DoDllStop(bool bFinal, ConEmuHkDllState bFromTerminate)
 	}
 
 	#ifdef USEHOOKLOG
-	if ((bFinal || bFromTerminate) && (lstrcmpi(gsExeName,L"ls.exe") == 0))
+	if ((bFinal || bFromTerminate)
+		//&& (lstrcmpi(gsExeName,L"ls.exe") == 0)
+		)
 	{
 		DLOGEND();
 		#ifdef USEHOOKLOGANALYZE
 		HookLogger::RunAnalyzer();
 		//_ASSERTEX(FALSE && "Hooks terminated");
+		DWORD nDbg; nDbg = 0; // << line for breakpoint
 		#endif
 		print_timings(L"HookLogger::RunAnalyzer - Done");
 	}
