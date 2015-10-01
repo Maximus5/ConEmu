@@ -265,6 +265,7 @@ HMODULE WINAPI OnLoadLibraryWWork(FARPROC lpfn, HookItem *ph, const wchar_t* lpF
 	OnLoadLibraryLog(NULL,lpFileName);
 
 	// Спрятать ExtendedConsole.dll с глаз долой, в сервисную папку "ConEmu"
+	// Don't rely here on isFar or Far mappings - they may be not initialized yet...
 	if (lpFileName 
 		&& ((lstrcmpiW(lpFileName, L"ExtendedConsole.dll") == 0)
 			|| lstrcmpiW(lpFileName, L"ExtendedConsole64.dll") == 0))
