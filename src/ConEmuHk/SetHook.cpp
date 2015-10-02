@@ -644,7 +644,18 @@ int InitHooks(HookItem* apHooks)
 
 	if (gpHooks == NULL)
 	{
-		g_mhInit = MH_Initialize();
+		// gh#250: Fight with CreateToolhelp32Snapshot lags
+		MH_INITIALIZE mhInit = {sizeof(mhInit)};
+		mhInit.Flags = MH_FLAGS_SKIP_EXEC_CHECK;
+		{
+			// Let use ‘standard’ enumerations
+			mhInit.ThreadListCreate = CreateToolhelp32Snapshot;
+			mhInit.ThreadListFirst = Thread32First;
+			mhInit.ThreadListNext = Thread32Next;
+			mhInit.ThreadListClose = CloseHandle;
+		}
+
+		g_mhInit = MH_InitializeEx(&mhInit);
 		if (g_mhInit != MH_OK)
 		{
 			_ASSERTE(g_mhInit == MH_OK);
