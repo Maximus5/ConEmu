@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2012 Maximus5
+Copyright (c) 2012-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -28,25 +28,79 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-// This template is NOT THREAD SAFE
+#include "MSectionSimple.h"
 
 template<class KEY_T,class VAL_T>
 struct MMap
 {
 protected:
-	struct MapItems
+	struct MapItem
 	{
 		bool  used;
 		KEY_T key;
 		VAL_T val;
 	};
-	MapItems *mp_Items;
-	size_t mn_MaxCount;
+	struct MapItems
+	{
+		MapItem  *pItems;
+		size_t    nCount;
+		MapItems *pNextBlock;
+	};
+	MapItems *mp_FirstBlock;
+	MapItems *mp_LastBlock;
+	size_t mn_ItemsInBlock; // max number of items in one block
+	size_t mn_MaxCount;     // informational
+
+	MSectionSimple *mp_Section;
+
+	MapItems* AllocateBlock()
+	{
+		_ASSERTE(mn_ItemsInBlock!=0);
+		size_t cbBlockSize = sizeof(MapItems) + mn_ItemsInBlock*sizeof(MapItem);
+		MapItems* pItems = (MapItems*)calloc(cbBlockSize,1);
+		if (!pItems)
+		{
+			return NULL;
+		}
+		pItems->pItems = (MapItem*)(pItems+1);
+		pItems->nCount = mn_ItemsInBlock;
+		return pItems;
+	};
+
+	bool FindBlockItem(const KEY_T& key, MapItems*& pBlock, MapItem*& pItem)
+	{
+		if (!mp_FirstBlock)
+		{
+			_ASSERTE(mp_FirstBlock && "MMap::Get - Storage must be allocated first");
+			return false;
+		}
+
+		pBlock = mp_FirstBlock;
+		while (pBlock)
+		{
+			pItem = pBlock->pItems;
+			size_t nMaxCount = pBlock->nCount;
+
+			for (; nMaxCount--; pItem++)
+			{
+				if (pItem->used && (key == pItem->key))
+				{
+					return true;
+				}
+			}
+
+			pBlock = pBlock->pNextBlock;
+		}
+
+		return false;
+	};
 
 public:
 	MMap()
 	{
-		mp_Items = NULL; mn_MaxCount = 0;
+		mp_FirstBlock = NULL;
+		mn_MaxCount = 0;
+		mp_Section = NULL;
 	};
 	~MMap()
 	{
@@ -63,198 +117,323 @@ public:
 	{
 		if (bOnCreate)
 			memset(this, 0, sizeof(*this));
-		_ASSERTE(mp_Items == NULL);
-		mp_Items = (MapItems*)calloc(nMaxCount,sizeof(*mp_Items));
-		if (!mp_Items)
+		_ASSERTE(mp_FirstBlock == NULL);
+
+		mn_ItemsInBlock = nMaxCount;
+
+		mp_LastBlock = mp_FirstBlock = AllocateBlock();
+		if (!mp_FirstBlock)
 		{
-			_ASSERTE(mp_Items!=NULL && "Failed to allocate MMap storage");
+			_ASSERTE(mp_FirstBlock!=NULL && "Failed to allocate MMap storage");
 			return false;
 		}
 		mn_MaxCount = nMaxCount;
+
+		mp_Section = new MSectionSimple(true);
 		return true;
 	};
 
 	bool Initialized()
 	{
-		return (mp_Items && mn_MaxCount);
+		return (mp_FirstBlock != NULL);
 	};
 
 	void Release()
 	{
 		mn_MaxCount = 0;
-		if (mp_Items)
+		if (mp_FirstBlock)
 		{
-			free(mp_Items);
-			mp_Items = NULL;
+			MapItems* pBlock = mp_FirstBlock;
+			while (pBlock)
+			{
+				MapItems* p = pBlock;
+				pBlock = pBlock->pNextBlock;
+				free(p);
+			}
+			mp_FirstBlock = NULL;
+		}
+		if (mp_Section)
+		{
+			delete mp_Section;
+			mp_Section = NULL;
 		}
 	};
 
 	void Reset()
 	{
-		if (mp_Items && mn_MaxCount)
+		if (mp_FirstBlock)
 		{
-			memset(mp_Items, 0, mn_MaxCount*sizeof(*mp_Items));
+			MapItems* pBlock = mp_FirstBlock;
+			while (pBlock)
+			{
+				memset(pBlock->pItems, 0, pBlock->nCount * sizeof(*pBlock->pItems));
+				pBlock = pBlock->pNextBlock;
+			}
 		}
-	}
-
-	void CheckKey(const KEY_T& key)
-	{
-	#ifdef _DEBUG
-		KEY_T NullKey;
-		memset(&NullKey, 0, sizeof(NullKey));
-		int iCmp = memcmp(&NullKey, &key, sizeof(KEY_T));
-		_ASSERTE(iCmp != 0 && "NULL keys are not allowed");
-	#endif
-	}
+	};
 
 	bool Get(const KEY_T& key, VAL_T* val, bool Remove = false)
 	{
-		if (!mp_Items || !mn_MaxCount)
+		if (!mp_FirstBlock)
 		{
-			_ASSERTE(mp_Items && mn_MaxCount && "MMap::Get - Storage must be allocated first");
+			_ASSERTE(mp_FirstBlock && "MMap::Get - Storage must be allocated first");
 			return false;
 		}
 
-		for (size_t i = 0; i < mn_MaxCount; i++)
+		MapItems* pBlock;
+		MapItem* pItem;
+
+		if (FindBlockItem(key, pBlock, pItem))
 		{
-			if (mp_Items[i].used && (key == mp_Items[i].key))
+			if (val)
 			{
-				if (val)
-				{
-					*val = mp_Items[i].val;
-				}
-
-				if (Remove)
-				{
-					memset(&(mp_Items[i].key), 0, sizeof(mp_Items[i].key));
-					memset(&(mp_Items[i].val), 0, sizeof(mp_Items[i].val));
-					mp_Items[i].used = false;
-				}
-
-				return true;
+				*val = pItem->val;
 			}
+
+			if (Remove)
+			{
+				memset(&(pItem->key), 0, sizeof(pItem->key));
+				memset(&(pItem->val), 0, sizeof(pItem->val));
+				pItem->used = false;
+			}
+
+			return true;
 		}
 
 		return false;
 	};
 
-	bool GetNext(const KEY_T* prev/*pass NULL to get first key*/, KEY_T* next_key, VAL_T* next_val)
+	/// Returns copy of all keys/values in map
+	/// @param  pKeys - [in] pointer to (KEY_T*), may be NULL
+	///         [out] caller is responsible to release allocated
+	///         memory via ReleasePointer call
+	/// @param  pValues - [in] pointer to (VAL_T*), may be NULL
+	///         [out] caller is responsible to release allocated
+	///         memory via ReleasePointer call
+	/// @result count of elements in pList or -1 on errors
+	INT_PTR GetKeysValues(KEY_T** pKeys, VAL_T** pValues)
 	{
-		if (!mp_Items || !mn_MaxCount)
+		if (!mp_FirstBlock || !mn_MaxCount)
 		{
-			_ASSERTE(mp_Items && mn_MaxCount && "MMap::Get - Storage must be allocated first");
+			_ASSERTE(mp_FirstBlock && "MMap::Get - Storage must be allocated first");
+			return -1;
+		}
+
+		INT_PTR nAllCount = 0;
+		INT_PTR nMaxCount = mn_MaxCount;
+
+		if (pKeys)
+		{
+			*pKeys = (KEY_T*)calloc(sizeof(KEY_T), nMaxCount);
+			if (!*pKeys)
+			{
+				_ASSERTE(FALSE && "Allocation failure");
+				return -1;
+			}
+		}
+		if (pValues)
+		{
+			*pValues = (VAL_T*)calloc(sizeof(VAL_T), nMaxCount);
+			if (!*pValues)
+			{
+				free(pKeys);
+				_ASSERTE(FALSE && "Allocation failure");
+				return -1;
+			}
+		}
+
+		MapItems* pBlock = mp_FirstBlock;
+		while (pBlock)
+		{
+			MapItem* pItem = pBlock->pItems;
+			size_t nMaxCount = pBlock->nCount;
+
+			for (; nMaxCount--; pItem++)
+			{
+				if (pItem->used)
+				{
+					if (pKeys)
+						(*pKeys)[nAllCount] = pItem->key;
+					if (pValues)
+						(*pValues)[nAllCount] = pItem->val;
+					nAllCount++;
+
+					// It's possible that due to multithreading
+					// new block appears during GetValues cycle
+					if (nAllCount == nMaxCount)
+					{
+						break;
+					}
+				}
+			}
+
+			pBlock = pBlock->pNextBlock;
+		}
+
+		return nAllCount;
+	};
+
+	/// Call this function to release memory, allocated by GetValues or GetKeys
+	void ReleasePointer(void* ptr)
+	{
+		free(ptr);
+	};
+
+	/// Simple one-by-one enumerator
+	/// @param  prev     - [IN]  pass NULL to get first element,
+	///                          or pointer to variable with previous key
+	/// @param  next_key - [IN]  pointer to KEY_T variable, or NULL
+	///                    [OUT] set to found key on success
+	/// @param  next_val - [IN]  pointer to VAL_T variable, or NULL
+	///                    [OUT] set to found key on success
+	/// @result Returns true if element found
+	bool GetNext(const KEY_T* prev, KEY_T* next_key, VAL_T* next_val)
+	{
+		if (!mp_FirstBlock)
+		{
+			_ASSERTE(mp_FirstBlock && "MMap::Get - Storage must be allocated first");
 			return false;
 		}
 
-		INT_PTR iFrom = -1;
+		MapItems* pBlock;
+		MapItem* pItem;
 
 		if (prev != NULL)
 		{
-			while ((size_t)(++iFrom) < mn_MaxCount)
+			// Find previous key
+			if (!FindBlockItem(*prev, pBlock, pItem))
 			{
-				if (mp_Items[iFrom].used && (mp_Items[iFrom].key == *prev))
-					break;
+				_ASSERTE(FALSE && "Multithreading? Item was removed during iteration");
+				return false;
+			}
+
+			// Key found, goto next
+			if ((++pItem) >= (pBlock->pItems + pBlock->nCount))
+			{
+				pBlock = pBlock->pNextBlock;
+				pItem = pBlock ? pBlock->pItems : NULL;
 			}
 		}
-
-		for (size_t i = iFrom+1; i < mn_MaxCount; i++)
+		else
 		{
-			if (mp_Items[i].used)
-			{
-				if (next_key)
-					*next_key = mp_Items[i].key;
-
-				if (next_val)
-					*next_val = mp_Items[i].val;
-
-				return true;
-			}
+			// First item was requested
+			pBlock = mp_FirstBlock;
+			pItem = mp_FirstBlock->pItems;
 		}
 
+		// Loop while non-empty element found
+		while (pBlock)
+		{
+			size_t nMaxCount = pBlock->nCount;
+
+			for (; nMaxCount--; pItem++)
+			{
+				if (pItem->used)
+				{
+					if (next_key)
+						*next_key = pItem->key;
+
+					if (next_val)
+						*next_val = pItem->val;
+
+					// Found
+					return true;
+				}
+			}
+
+			pBlock = pBlock->pNextBlock;
+			pItem = pBlock ? pBlock->pItems : NULL;
+		}
+
+		// No more elements
 		return false;
-	}
+	};
 
 	bool Set(const KEY_T& key, const VAL_T& val)
 	{
-		if (!mp_Items || !mn_MaxCount)
+		if (!mp_FirstBlock)
 		{
-			// Ругнемся, для четкости
-			_ASSERTE(mp_Items && mn_MaxCount && "MMap::Set - Storage must be allocated first");
+			_ASSERTE(mp_FirstBlock && "MMap::Set - Storage must be allocated first");
 
-			// Но разрешим автоинит
+			// Allow automatic initialization
 			if (!Init())
 			{
 				return false;
 			}
 		}
 
-		for (size_t i = 0; i < mn_MaxCount; i++)
+		MapItems* pBlock;
+		MapItem* pItem;
+
+		if (FindBlockItem(key, pBlock, pItem))
 		{
-			if (mp_Items[i].used && (key == mp_Items[i].key))
-			{
-				mp_Items[i].val = val;
-				// Multithread?
-				_ASSERTE(mp_Items[i].used && (mp_Items[i].key == key) && !memcmp(&mp_Items[i].val, &val, sizeof(val)));
-				return true;
-			}
+			pItem->val = val;
+
+			// Multithreading issues?
+			_ASSERTE(pItem->used && (pItem->key == key) && (0 == memcmp(&pItem->val, &val, sizeof(val))));
+
+			return true;
 		}
 
-		bool bFirst = true;
-		while (true)
+		// Add new
+		pBlock = mp_FirstBlock;
+		while (pBlock)
 		{
-			for (size_t i = 0; i < mn_MaxCount; i++)
+			pItem = pBlock->pItems;
+			size_t nMaxCount = pBlock->nCount;
+
+			for (; nMaxCount--; pItem++)
 			{
-				if (!mp_Items[i].used)
+				if (!pItem->used)
 				{
-					mp_Items[i].used = true;
-					mp_Items[i].key = key;
-					mp_Items[i].val = val;
-					// Multithread?
-					_ASSERTE(mp_Items[i].used && (mp_Items[i].key == key) && !memcmp(&mp_Items[i].val, &val, sizeof(val)));
+					pItem->used = true;
+					pItem->key = key;
+					pItem->val = val;
+
+					// Multithreading issues?
+					_ASSERTE(pItem->used && (pItem->key == key) && !memcmp(&pItem->val, &val, sizeof(val)));
+
 					return true;
 				}
 			}
 
-			if (!bFirst)
-			{
-				_ASSERTE(FALSE && "Can't add item to MMap, not enough storage");
-				break;
-			}
-			bFirst = false;
-
-			size_t nNewMaxCount = mn_MaxCount + 256;
-			MapItems* pNew = (MapItems*)realloc(mp_Items,nNewMaxCount*sizeof(*pNew));
-			if (!pNew)
-			{
-				_ASSERTE(pNew!=NULL);
-				return false;
-			}
-			memset(pNew+mn_MaxCount, 0, (nNewMaxCount - mn_MaxCount)*sizeof(*pNew));
-			mp_Items = pNew;
+			pBlock = pBlock->pNextBlock;
 		}
 
-		_ASSERTE(FALSE && "Must not get here");
-		return false;
+		// Lock blocks
+		MSectionLockSimple CS; CS.Lock(mp_Section);
+		_ASSERTE(mp_LastBlock && !mp_LastBlock->pNextBlock);
+
+		pBlock = AllocateBlock();
+		if (!pBlock)
+		{
+			CS.Unlock();
+			_ASSERTE(pBlock!=NULL);
+			return false;
+		}
+
+		pItem = pBlock->pItems;
+		pItem->used = true;
+		pItem->key = key;
+		pItem->val = val;
+
+		mp_LastBlock->pNextBlock = pBlock;
+		mp_LastBlock = pBlock;
+
+		mn_MaxCount += pBlock->nCount;
+		CS.Unlock();
+
+		return true;
 	};
 
 	bool Del(const KEY_T& key)
 	{
-		if (!mp_Items || !mn_MaxCount)
+		// If empty or not initialized yed - do nothing
+		if (!mp_FirstBlock)
 		{
-			// -- если еще пустой - не важно
-			//_ASSERTE(mp_Items && mn_MaxCount && "MMap::Set - Storage must be allocated first");
 			return false;
 		}
-		for (size_t i = 0; i < mn_MaxCount; i++)
-		{
-			if (mp_Items[i].used && (key == mp_Items[i].key))
-			{
-				memset(&(mp_Items[i].key), 0, sizeof(mp_Items[i].key));
-				memset(&(mp_Items[i].val), 0, sizeof(mp_Items[i].val));
-				mp_Items[i].used = false;
-				return true;
-			}
-		}
-		return false;
+
+		return Get(key, NULL, true);
 	};
 };
