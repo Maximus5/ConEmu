@@ -202,10 +202,15 @@ BOOL WINAPI OnTerminateProcess(HANDLE hProcess, UINT uExitCode)
 		gnDllState |= ds_OnTerminateProcess;
 		// We need not to unset hooks (due to process will be force-killed below)
 		// And terminate our threads
-		DoDllStop(false, ds_OnTerminateProcess);
-	}
+		DoDllStop(true, ds_OnTerminateProcess);
 
-	lbRc = F(TerminateProcess)(hProcess, uExitCode);
+		// Function must be released already
+		lbRc = TerminateProcess(hProcess, uExitCode);
+	}
+	else
+	{
+		lbRc = F(TerminateProcess)(hProcess, uExitCode);
+	}
 
 	return lbRc;
 }
@@ -228,7 +233,12 @@ BOOL WINAPI OnTerminateThread(HANDLE hThread, DWORD dwExitCode)
 	{
 		// And terminate our service threads
 		gnDllState |= ds_OnTerminateThread;
-		DoDllStop(false);
+
+		// Main thread is abnormally terminating?
+		if (GetCurrentThreadId() == gnHookMainThreadId)
+		{
+			DoDllStop(false, ds_OnTerminateThread);
+		}
 	}
 
 	lbRc = F(TerminateThread)(hThread, dwExitCode);

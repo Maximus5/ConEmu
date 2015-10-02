@@ -1446,13 +1446,12 @@ void DoDllStop(bool bFinal, ConEmuHkDllState bFromTerminate)
 	#endif
 
 	print_timings(L"DllStop");
-	bool bUnload = (bFinal && !HooksWereSet);
 
 	gnDllState |= ds_DllStoping
 		| (bFinal ? ds_DllStopFinal : ds_DllStopNonFinal);
 
 	static bool bVimStopped = false;
-	if (gbIsVimProcess && !bVimStopped)
+	if (bFinal && gbIsVimProcess && !bVimStopped)
 	{
 		DLOG1("StopVimTerm",0);
 		bVimStopped = true;
@@ -1462,9 +1461,10 @@ void DoDllStop(bool bFinal, ConEmuHkDllState bFromTerminate)
 
 	DLL_STOP_STEP(1);
 
+	// Doesn't matter if bFinal or not, CEAnsi will take care of it
 	{
 		DLOG1("DoneAnsiLog",0);
-		CEAnsi::DoneAnsiLog(bUnload);
+		CEAnsi::DoneAnsiLog(bFinal);
 		DLOGEND1();
 	}
 
@@ -1472,7 +1472,7 @@ void DoDllStop(bool bFinal, ConEmuHkDllState bFromTerminate)
 
 	TODO("Stop redirection of ConIn/ConOut to our pipes to achieve PTTY in bash");
 	#ifdef _DEBUG
-	if (bUnload)
+	if (bFinal)
 	{
 		DLOG1("StopPTY",0);
 		StopPTY();
@@ -1482,7 +1482,7 @@ void DoDllStop(bool bFinal, ConEmuHkDllState bFromTerminate)
 
 	DLL_STOP_STEP(3);
 
-	if (gpDefTerm)
+	if (bFinal && gpDefTerm)
 	{
 		DLOG1("DefTerm::StopHookers",0);
 		gpDefTerm->StopHookers();
@@ -1503,19 +1503,15 @@ void DoDllStop(bool bFinal, ConEmuHkDllState bFromTerminate)
 	DLL_STOP_STEP(5);
 
 	#ifdef _DEBUG
-	wchar_t *szModule = (wchar_t*)calloc((MAX_PATH+1),sizeof(wchar_t));
-	if (!GetModuleFileName(NULL, szModule, MAX_PATH+1))
-		_wcscpy_c(szModule, MAX_PATH+1, L"GetModuleFileName failed");
-	const wchar_t* pszName = PointToName(szModule);
+	const wchar_t* pszName = gsExeName;
 	//if (!lstrcmpi(pszName, L"mingw32-make.exe"))
 	//	GuiMessageBox(ghConEmuWnd, L"mingw32-make.exe terminating", L"ConEmuHk", MB_SYSTEMMODAL);
-	free(szModule);
 	#endif
 
 	// 120528 - Очистить буфер от мышиных событий, иначе получаются казусы.
 	// Если во время выполнения команды (например "dir c: /s")
 	// успеть дернуть мышкой - то при возврате в ФАР сразу пойдет фаровский драг
-	if (ghConWnd)
+	if (bFinal && ghConWnd)
 	{
 		DLOG1("FlushMouseEvents",0);
 		print_timings(L"FlushMouseEvents");
@@ -1525,7 +1521,7 @@ void DoDllStop(bool bFinal, ConEmuHkDllState bFromTerminate)
 
 	DLL_STOP_STEP(6);
 
-	if (gpHookServer)
+	if (bFinal && gpHookServer)
 	{
 		//TODO: Skip when (bFromTerminate == true)?
 		DLOG1("StopPipeServer",0);
@@ -1540,7 +1536,7 @@ void DoDllStop(bool bFinal, ConEmuHkDllState bFromTerminate)
 	DLL_STOP_STEP(7);
 
 	#ifdef _DEBUG
-	if (ghGuiClientRetHook)
+	if (bFinal && ghGuiClientRetHook)
 	{
 		DLOG1("unhookWindowsHookEx",0);
 		print_timings(L"unhookWindowsHookEx");
@@ -1553,7 +1549,7 @@ void DoDllStop(bool bFinal, ConEmuHkDllState bFromTerminate)
 
 	DLL_STOP_STEP(8);
 
-	if (HooksWereSet && bFinal)
+	if (bFinal && HooksWereSet)
 	{
 		DLOG1("ShutdownHooks",0);
 		print_timings(L"ShutdownHooks");
@@ -1567,7 +1563,7 @@ void DoDllStop(bool bFinal, ConEmuHkDllState bFromTerminate)
 	// Do not send CECMD_CMDSTARTSTOP(sst_AppStop) to server
 	// when that is 'DefTerm' process - avoid termination lagging
 	static bool bSentStopped = false;
-	if (gbSelfIsRootConsoleProcess && !gpDefTerm && !bSentStopped)
+	if (bFinal && gbSelfIsRootConsoleProcess && !gpDefTerm && !bSentStopped)
 	{
 		// To avoid cmd-execute lagging - send Start/Stop info only for root(!) process
 		DLOG1("SendStopped",0);
@@ -1579,7 +1575,7 @@ void DoDllStop(bool bFinal, ConEmuHkDllState bFromTerminate)
 
 	DLL_STOP_STEP(10);
 
-	if (gpConMap && bUnload)
+	if (bFinal && gpConMap)
 	{
 		DLOG1("gpConMap->CloseMap",0);
 		print_timings(L"gpConMap->CloseMap");
@@ -1592,7 +1588,7 @@ void DoDllStop(bool bFinal, ConEmuHkDllState bFromTerminate)
 
 	DLL_STOP_STEP(11);
 
-	if (gpAppMap && gpAppMap->IsValid())
+	if (bFinal && gpAppMap && gpAppMap->IsValid())
 	{
 		CESERVER_CONSOLE_APP_MAPPING* pAppMap = gpAppMap->Ptr();
 		DWORD nSelfPID = GetCurrentProcessId();
@@ -1606,7 +1602,7 @@ void DoDllStop(bool bFinal, ConEmuHkDllState bFromTerminate)
 
 	DLL_STOP_STEP(12);
 
-	if (gpAppMap && bUnload)
+	if (bFinal && gpAppMap)
 	{
 		DLOG1("gpAppMap->CloseMap",0);
 		print_timings(L"gpAppMap->CloseMap");
@@ -1619,7 +1615,7 @@ void DoDllStop(bool bFinal, ConEmuHkDllState bFromTerminate)
 	DLL_STOP_STEP(13);
 
 	// CommonShutdown
-	if (bUnload)
+	if (bFinal)
 	{
 		DLOG1("CommonShutdown",0);
 		//#ifndef TESTLINK
@@ -1631,7 +1627,7 @@ void DoDllStop(bool bFinal, ConEmuHkDllState bFromTerminate)
 	DLL_STOP_STEP(14);
 
 	// FinalizeHookedModules
-	if (bUnload)
+	if (bFinal)
 	{
 		DLOG1("FinalizeHookedModules",0);
 		print_timings(L"FinalizeHookedModules");
@@ -1641,7 +1637,7 @@ void DoDllStop(bool bFinal, ConEmuHkDllState bFromTerminate)
 
 	DLL_STOP_STEP(15);
 
-	if (bUnload)
+	if (bFinal)
 	{
 		gnDllState |= ds_HeapDeinitialized;
 		HeapDeinitialize();
@@ -1670,7 +1666,7 @@ void DoDllStop(bool bFinal, ConEmuHkDllState bFromTerminate)
 
 	#ifdef USEHOOKLOG
 	if ((bFinal || bFromTerminate)
-		//&& (lstrcmpi(gsExeName,L"ls.exe") == 0)
+		&& (lstrcmpi(gsExeName,L"HkLoader.exe") == 0)
 		)
 	{
 		DLOGEND();
