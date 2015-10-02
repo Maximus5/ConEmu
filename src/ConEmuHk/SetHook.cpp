@@ -1159,6 +1159,7 @@ bool SetAllHooks()
 	HLOGEND();
 
 	MH_STATUS status;
+	HLOG("SetAllHooks.MH_CreateHook", LODWORD(gnHookedFuncs));
 	for (int i = 0; gpHooks[i].NewAddress; i++)
 	{
 		if (gpHooks[i].HookedAddress && !gpHooks[i].CallAddress)
@@ -1167,11 +1168,14 @@ bool SetAllHooks()
 			_ASSERTE(status == MH_OK);
 		}
 	}
+	HLOGEND();
 
 	// Let GetOriginalAddress return trampolines
 	gnDllState |= ds_HooksStarted;
 
+	HLOG("SetAllHooks.MH_EnableHook", 0);
 	g_mhEnable = status = MH_EnableHook(MH_ALL_HOOKS);
+	HLOGEND();
 	_ASSERTE(status == MH_OK);
 
 	DebugString(L"SetAllHooks finished\n");
@@ -1187,7 +1191,9 @@ void UnsetAllHooks()
 
 	if (gnLdrDllNotificationUsed)
 	{
+		HLOG1("UnregisterLdrNotification", 0);
 		UnregisterLdrNotification();
+		HLOGEND1();
 	}
 
 	// Set all "original" function calls to NULL
@@ -1197,13 +1203,16 @@ void UnsetAllHooks()
 	extern GetConsoleWindow_T gfGetRealConsoleWindow; // from ConEmuCheck.cpp
 	gfGetRealConsoleWindow = NULL;
 
+	HLOG1("hkFunc.OnHooksUnloaded", 0);
 	hkFunc.OnHooksUnloaded();
+	HLOGEND1();
 	}
 
 	// Some functions must be unhooked first
 	MH_STATUS status;
 	if (gpHooks)
 	{
+		HLOG1("MH_DisableHook(Specials)", 0);
 		DWORD nSpecialID[] = {
 			HOOK_FN_ID(CloseHandle),
 			0};
@@ -1220,14 +1229,23 @@ void UnsetAllHooks()
 				}
 			}
 		}
+		HLOGEND1();
 	}
 
 	// Don't release minhook buffers in DefTerm mode,
 	// keep these instructions just in case...
 	if (gbPrepareDefaultTerminal)
+	{
+		HLOG1("MH_DisableHook(MH_ALL_HOOKS)", 0);
 		g_mhDisableAll = MH_DisableHook(MH_ALL_HOOKS);
+		HLOGEND1();
+	}
 	else
+	{
+		HLOG1("MH_Uninitialize", 0);
 		g_mhDeinit = MH_Uninitialize();
+		HLOGEND1();
+	}
 
 	#ifdef _DEBUG
 	DebugStringA("UnsetAllHooks finished\n");

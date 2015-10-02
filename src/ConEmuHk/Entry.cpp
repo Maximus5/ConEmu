@@ -1639,8 +1639,10 @@ void DoDllStop(bool bFinal, ConEmuHkDllState bFromTerminate)
 
 	if (bFinal)
 	{
+		DLOG1("HeapDeinitialize",0);
 		gnDllState |= ds_HeapDeinitialized;
 		HeapDeinitialize();
+		DLOGEND1();
 	}
 
 	#ifdef _DEBUG
