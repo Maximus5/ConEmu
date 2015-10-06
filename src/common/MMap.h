@@ -362,9 +362,9 @@ public:
 		// Loop while non-empty element found
 		while (pBlock)
 		{
-			size_t nMaxCount = pBlock->nCount;
+			MapItem* pEnd = pBlock->pItems + pBlock->nCount;
 
-			for (; nMaxCount--; pItem++)
+			for (; pItem < pEnd; pItem++)
 			{
 				if (pItem->used)
 				{
