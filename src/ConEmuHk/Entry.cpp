@@ -1689,8 +1689,10 @@ BOOL DllMain_ProcessAttach(HANDLE hModule, DWORD  ul_reason_for_call)
 			}
 		}
 		else
+		{
 			gEvtDefTerm.nErrCode = GetLastError();
-		//SafeCloseHandle(gEvtDefTerm.hProcessFlag);
+			// Event has not been created or is inaccessible
+		}
 	}
 	DLOGEND1();
 
