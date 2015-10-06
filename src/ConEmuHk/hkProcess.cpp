@@ -201,12 +201,11 @@ BOOL WINAPI OnTerminateProcess(HANDLE hProcess, UINT uExitCode)
 		#endif
 
 		gnDllState |= ds_OnTerminateProcess;
-		// We need not to unset hooks (due to process will be force-killed below)
-		// And terminate our threads
-		DoDllStop(true, ds_OnTerminateProcess);
+		// We don't need to do proper/full deinitialization,
+		// because the process is to be terminated abnormally
+		DoDllStop(false, ds_OnTerminateProcess);
 
-		// Function must be released already
-		lbRc = TerminateProcess(hProcess, uExitCode);
+		lbRc = F(TerminateProcess)(hProcess, uExitCode);
 	}
 	else
 	{
