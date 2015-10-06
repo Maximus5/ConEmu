@@ -26,6 +26,8 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#define HIDE_USE_EXCEPTION_INFO
+
 #ifdef _DEBUG
 //  Раскомментировать, чтобы сразу после загрузки модуля показать MessageBox, чтобы прицепиться дебаггером
 //	#define SHOW_STARTED_MSGBOX

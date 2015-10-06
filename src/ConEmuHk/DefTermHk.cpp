@@ -26,6 +26,8 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#define HIDE_USE_EXCEPTION_INFO
+
 #include "../common/common.hpp"
 #include "../common/MFileLog.h"
 #include "../common/HkFunc.h"
