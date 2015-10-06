@@ -97,15 +97,33 @@ bool CEAnsi::gbWasXTermOutput = false;
 /* ************ Export ANSI printings ************ */
 LONG gnWriteProcessed = 0;
 FARPROC CallWriteConsoleW = NULL;
-BOOL WINAPI WriteProcessed(LPCWSTR lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten)
+BOOL WINAPI WriteProcessed3(LPCWSTR lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, HANDLE hConsoleOutput)
 {
-	HANDLE hConsoleOutput = GetStdHandle(STD_OUTPUT_HANDLE);
 	InterlockedIncrement(&gnWriteProcessed);
 	DWORD nNumberOfCharsWritten = 0;
 	BOOL bRc = CEAnsi::OurWriteConsoleW(hConsoleOutput, lpBuffer, nNumberOfCharsToWrite, &nNumberOfCharsWritten, NULL);
 	if (lpNumberOfCharsWritten) *lpNumberOfCharsWritten = nNumberOfCharsWritten;
 	InterlockedDecrement(&gnWriteProcessed);
 	return bRc;
+}
+BOOL WINAPI WriteProcessed2(LPCWSTR lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, WriteProcessedStream Stream)
+{
+	HANDLE hConsoleOutput;
+	switch (Stream)
+	{
+	case wps_Output:
+		hConsoleOutput = GetStdHandle(STD_OUTPUT_HANDLE); break;
+	case wps_Error:
+		hConsoleOutput = GetStdHandle(STD_ERROR_HANDLE); break;
+	default:
+		SetLastError(ERROR_INVALID_PARAMETER);
+		return FALSE;
+	}
+	return WriteProcessed3(lpBuffer, nNumberOfCharsToWrite, lpNumberOfCharsWritten, hConsoleOutput);
+}
+BOOL WINAPI WriteProcessed(LPCWSTR lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten)
+{
+	return WriteProcessed2(lpBuffer, nNumberOfCharsToWrite, lpNumberOfCharsWritten, wps_Output);
 }
 /* ************ Export ANSI printings ************ */
 

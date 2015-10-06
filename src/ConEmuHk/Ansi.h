@@ -45,10 +45,18 @@ extern DWORD AnsiTlsIndex;
 
 struct MSectionSimple;
 
+enum WriteProcessedStream
+{
+	wps_Output = 1,
+	wps_Error  = 2,
+};
+
 #if defined(__GNUC__)
 extern "C" {
 #endif
 	BOOL WINAPI WriteProcessed(LPCWSTR lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten);
+	BOOL WINAPI WriteProcessed2(LPCWSTR lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, WriteProcessedStream Stream);
+	BOOL WINAPI WriteProcessed3(LPCWSTR lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, HANDLE hConsoleOutput);
 #if defined(__GNUC__)
 };
 #endif
