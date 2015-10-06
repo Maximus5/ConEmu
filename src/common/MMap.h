@@ -28,8 +28,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include "MSectionSimple.h"
-
 template<class KEY_T,class VAL_T>
 struct MMap
 {
@@ -50,8 +48,6 @@ protected:
 	MapItems *mp_LastBlock;
 	size_t mn_ItemsInBlock; // max number of items in one block
 	size_t mn_MaxCount;     // informational
-
-	MSectionSimple *mp_Section;
 
 	MapItems* AllocateBlock()
 	{
@@ -109,7 +105,6 @@ public:
 	{
 		mp_FirstBlock = NULL;
 		mn_MaxCount = 0;
-		mp_Section = NULL;
 	};
 	~MMap()
 	{
@@ -136,9 +131,9 @@ public:
 			_ASSERTE(mp_FirstBlock!=NULL && "Failed to allocate MMap storage");
 			return false;
 		}
+		// Informational
 		mn_MaxCount = nMaxCount;
 
-		mp_Section = new MSectionSimple(true);
 		return true;
 	};
 
@@ -160,11 +155,6 @@ public:
 				free(p);
 			}
 			mp_FirstBlock = NULL;
-		}
-		if (mp_Section)
-		{
-			delete mp_Section;
-			mp_Section = NULL;
 		}
 	};
 
@@ -450,14 +440,11 @@ public:
 			pBlock = pBlock->pNextBlock;
 		}
 
-		// Lock blocks
-		MSectionLockSimple CS; CS.Lock(mp_Section);
-		_ASSERTE(mp_LastBlock && !mp_LastBlock->pNextBlock);
+		// Allocate and append new block in lock-free style
 
 		pBlock = AllocateBlock();
 		if (!pBlock)
 		{
-			CS.Unlock();
 			_ASSERTE(pBlock!=NULL);
 			return false;
 		}
@@ -467,11 +454,12 @@ public:
 		pItem->key = key;
 		pItem->val = val;
 
-		mp_LastBlock->pNextBlock = pBlock;
-		mp_LastBlock = pBlock;
+		MapItems* pPrevLastBlock = (MapItems*)InterlockedExchangePointer((PVOID*)&mp_LastBlock, pBlock);
+		_ASSERTE(pPrevLastBlock->pNextBlock == NULL);
+		pPrevLastBlock->pNextBlock = pBlock;
 
+		// Informational
 		mn_MaxCount += pBlock->nCount;
-		CS.Unlock();
 
 		return true;
 	};
