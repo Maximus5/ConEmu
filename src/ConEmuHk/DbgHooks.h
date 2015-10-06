@@ -30,7 +30,8 @@
 
 
 /* gh#272: Crash if NVIDIA CoProcManager dlls are loaded */
-#define USE_GH_272_WORKAROUND
+//#define USE_GH_272_WORKAROUND
+#undef USE_GH_272_WORKAROUND
 #ifdef _DEBUG
 //#define FORCE_GH_272_WORKAROUND
 #endif
