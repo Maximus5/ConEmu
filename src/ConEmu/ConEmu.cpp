@@ -12726,17 +12726,27 @@ UINT CConEmuMain::RegisterMessage(LPCSTR asLocal, LPCWSTR asGlobal)
 
 UINT CConEmuMain::GetRegisteredMessage(LPCSTR asLocal, LPCWSTR asGlobal)
 {
-	UINT nMsg = 0; LPCSTR pszMsg = NULL;
-	if (m__AppMsgs.GetNext(NULL, &nMsg, &pszMsg))
+	struct impl
 	{
-		while (nMsg)
-		{
-			if (pszMsg && lstrcmpA(pszMsg, asLocal) == 0)
-				return nMsg;
+		LPCSTR pszFind;
+		UINT   nMsg;
 
-			if (!m__AppMsgs.GetNext(&nMsg, &nMsg, &pszMsg))
-				break;
-		}
+		static bool EnumMsg(const UINT& anMsg, const LPCSTR& asMsg, LPARAM lParam)
+		{
+			impl* p = (impl*)lParam;
+			if (asMsg && *asMsg && lstrcmpA(asMsg, p->pszFind) == 0)
+			{
+				p->nMsg = anMsg;
+				return true;
+			}
+			return false; // continue iterations
+		};
+	} Impl = { asLocal };
+
+	if (m__AppMsgs.EnumKeysValues(impl::EnumMsg, (LPARAM)&Impl))
+	{
+		_ASSERTE(Impl.nMsg!=0);
+		return Impl.nMsg;
 	}
 	return RegisterMessage(asLocal, asGlobal);
 }
