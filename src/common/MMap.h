@@ -279,6 +279,44 @@ public:
 		free(ptr);
 	};
 
+	typedef bool(*MMapEnumCallback)(const KEY_T& next_key, const VAL_T& next_val, LPARAM lParam);
+
+	/// Simple one-by-one enumerator
+	/// Loop through elements while EnumCallback return true
+	/// @result true if EnumCallback was returned true
+	bool EnumKeysValues(MMapEnumCallback EnumCallback, LPARAM lParam)
+	{
+		if (!mp_FirstBlock)
+		{
+			_ASSERTE(mp_FirstBlock && "MMap::Get - Storage must be allocated first");
+			return false;
+		}
+		if (!EnumCallback)
+		{
+			return false;
+		}
+
+		MapItems* pBlock = mp_FirstBlock;
+		while (pBlock)
+		{
+			MapItem* pItem = pBlock->pItems;
+			size_t nMaxCount = pBlock->nCount;
+
+			for (; nMaxCount--; pItem++)
+			{
+				if (pItem->used)
+				{
+					if (EnumCallback(pItem->key, pItem->val, lParam))
+						return true;
+				}
+			}
+
+			pBlock = pBlock->pNextBlock;
+		}
+
+		return false;
+	};
+
 	/// Simple one-by-one enumerator
 	/// @param  prev     - [IN]  pass NULL to get first element,
 	///                          or pointer to variable with previous key
