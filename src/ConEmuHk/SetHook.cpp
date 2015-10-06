@@ -648,12 +648,21 @@ int InitHooks(HookItem* apHooks)
 		// gh#250: Fight with CreateToolhelp32Snapshot lags
 		MH_INITIALIZE mhInit = {sizeof(mhInit)};
 		mhInit.Flags = MH_FLAGS_SKIP_EXEC_CHECK;
+		if (gbPrepareDefaultTerminal)
 		{
-			// Let use ‘standard’ enumerations
+			// Let use ‘standard’ enumerations in DefTerm mode
 			mhInit.ThreadListCreate = CreateToolhelp32Snapshot;
 			mhInit.ThreadListFirst = Thread32First;
 			mhInit.ThreadListNext = Thread32Next;
 			mhInit.ThreadListClose = CloseHandle;
+		}
+		else
+		{
+			// Use our internal enumerator
+			mhInit.ThreadListCreate = HookThreadListCreate;
+			mhInit.ThreadListFirst = HookThreadListNext;
+			mhInit.ThreadListNext = HookThreadListNext;
+			mhInit.ThreadListClose = HookThreadListClose;
 		}
 
 		g_mhInit = MH_InitializeEx(&mhInit);

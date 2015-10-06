@@ -29,8 +29,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include "../common/MMap.h"
+#include <Tlhelp32.h>
 
 extern MMap<DWORD,BOOL> gStartedThreads;
 
 extern DWORD gnHookMainThreadId;
 DWORD GetMainThreadId(bool bUseCurrentAsMain);
+
+HANDLE WINAPI HookThreadListCreate(DWORD dwFlags, DWORD th32ProcessID);
+BOOL WINAPI HookThreadListNext(HANDLE hSnapshot, THREADENTRY32* lpte);
+BOOL WINAPI HookThreadListClose(HANDLE hSnapshot);

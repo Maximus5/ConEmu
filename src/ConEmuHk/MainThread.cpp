@@ -102,3 +102,58 @@ DWORD GetMainThreadId(bool bUseCurrentAsMain)
 	_ASSERTE(gnHookMainThreadId!=0);
 	return gnHookMainThreadId;
 }
+
+
+/// Structure for internal thread enumerator
+struct HookThreadList
+{
+	INT_PTR iCount, iCurrent;
+	LPDWORD pThreadIDs;
+};
+
+/// Creates internal thread enumerator handle
+/// @param  dwFlags must be TH32CS_SNAPTHREAD
+/// @param  th32ProcessID ignored, 0 is expected
+/// @result INVALID_HANDLE_VALUE on errors, or pointer to HookThreadList
+HANDLE WINAPI HookThreadListCreate(DWORD dwFlags, DWORD th32ProcessID)
+{
+	HookThreadList* p = (HookThreadList*)calloc(sizeof(HookThreadList),1);
+
+	p->iCount = gStartedThreads.GetKeysValues(&p->pThreadIDs, NULL);
+
+	if ((p->iCount <= 0) || (!p->pThreadIDs))
+	{
+		_ASSERTE(FALSE && "gStartedThreads.GetKeysValues fails");
+		free(p);
+		return INVALID_HANDLE_VALUE;
+	}
+	return (HANDLE)p;
+}
+
+BOOL WINAPI HookThreadListNext(HANDLE hSnapshot, LPTHREADENTRY32 lpte)
+{
+	if (hSnapshot && (hSnapshot != INVALID_HANDLE_VALUE))
+	{
+		HookThreadList* p = (HookThreadList*)hSnapshot;
+		if (p->iCurrent < p->iCount)
+		{
+			// minhook requires only two fields
+			lpte->th32ThreadID = p->pThreadIDs[p->iCurrent++];
+			lpte->th32OwnerProcessID = GetCurrentProcessId();
+			return TRUE;
+		}
+	}
+	return FALSE;
+}
+
+BOOL WINAPI HookThreadListClose(HANDLE hSnapshot)
+{
+	if (hSnapshot && (hSnapshot != INVALID_HANDLE_VALUE))
+	{
+		HookThreadList* p = (HookThreadList*)hSnapshot;
+		gStartedThreads.ReleasePointer(p->pThreadIDs);
+		free(p);
+		return TRUE;
+	}
+	return FALSE;
+}
