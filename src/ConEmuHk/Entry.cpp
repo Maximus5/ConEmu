@@ -1457,7 +1457,7 @@ void DoDllStop(bool bFinal, ConEmuHkDllState bFromTerminate)
 	// Do not send CECMD_CMDSTARTSTOP(sst_AppStop) to server
 	// when that is 'DefTerm' process - avoid termination lagging
 	static bool bSentStopped = false;
-	if (bFinal && gbSelfIsRootConsoleProcess && !gpDefTerm && !bSentStopped)
+	if (gbSelfIsRootConsoleProcess && !gpDefTerm && !bSentStopped)
 	{
 		// To avoid cmd-execute lagging - send Start/Stop info only for root(!) process
 		DLOG1("SendStopped",0);
