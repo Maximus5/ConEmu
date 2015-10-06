@@ -31,8 +31,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/common.hpp"
 #include "../common/MArray.h"
 #include "../common/PipeServer.h"
+#include "DbgHooks.h"
 #include "hlpProcess.h"
 #include "MainThread.h"
+
+#ifdef FORCE_GETMAINTHREAD_PRINTF
+#include "Ansi.h"
+#endif
 
 extern PipeServer<CESERVER_REQ> *gpHookServer;
 
@@ -69,6 +74,14 @@ DWORD GetMainThreadId(bool bUseCurrentAsMain)
 		else
 		{
 			DWORD dwPID = GetCurrentProcessId();
+
+			#ifdef FORCE_GETMAINTHREAD_PRINTF
+			wchar_t szInfo[160];
+			msprintf(szInfo, countof(szInfo), L"\x1B[1;31;40m" L"*** [PID=%u %s] GetMainThreadId is using CreateToolhelp32Snapshot ***" L"\x1B[0m" L"\n", dwPID, gsExeName);
+			WriteProcessed2(szInfo, wcslen(szInfo), NULL, wps_Error);
+			#endif
+
+			// Unfortunately, dwPID is ignored in TH32CS_SNAPTHREAD
 			HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, dwPID);
 
 			if (snapshot != INVALID_HANDLE_VALUE)

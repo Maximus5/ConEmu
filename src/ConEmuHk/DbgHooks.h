@@ -35,3 +35,10 @@
 #ifdef _DEBUG
 //#define FORCE_GH_272_WORKAROUND
 #endif
+
+/* Print to console, if GetMainThreadId is forced to CreateToolhelp32Snapshot */
+#ifdef _DEBUG
+	#define FORCE_GETMAINTHREAD_PRINTF
+#else
+	#undef FORCE_GETMAINTHREAD_PRINTF
+#endif
