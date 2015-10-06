@@ -48,7 +48,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 extern bool gbCurDirChanged;
 extern HANDLE ghSkipSetThreadContextForThread; // Injects.cpp
-extern MMap<DWORD,BOOL> gStartedThreads;
 extern HRESULT OurShellExecCmdLine(HWND hwnd, LPCWSTR pwszCommand, LPCWSTR pwszStartDir, bool bRunAsAdmin, bool bForce);
 
 /* **************** */
@@ -766,7 +765,10 @@ HANDLE WINAPI OnCreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dw
 	HANDLE hThread = F(CreateThread)(lpThreadAttributes, dwStackSize, lpStartAddress, lpParameter, dwCreationFlags, pThreadID);
 
 	if (hThread)
-		gStartedThreads.Set(*pThreadID,true);
+	{
+		// TRUE shows that thread was started by CreateThread functions
+		gStartedThreads.Set(*pThreadID, TRUE);
+	}
 
 	return hThread;
 }

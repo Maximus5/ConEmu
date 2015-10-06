@@ -74,7 +74,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 HMODULE ghOurModule = NULL; // Our dll library
-MMap<DWORD,BOOL> gStartedThreads;
 
 extern HWND    ghConWnd;      // RealConsole
 

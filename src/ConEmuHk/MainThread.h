@@ -28,6 +28,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-extern DWORD gnHookMainThreadId;
+#include "../common/MMap.h"
 
+extern MMap<DWORD,BOOL> gStartedThreads;
+
+extern DWORD gnHookMainThreadId;
 DWORD GetMainThreadId(bool bUseCurrentAsMain);

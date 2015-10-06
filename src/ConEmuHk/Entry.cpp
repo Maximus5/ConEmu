@@ -193,7 +193,6 @@ extern BOOL StartupHooks();
 extern void ShutdownHooks();
 extern void InitializeHookedModules();
 extern void FinalizeHookedModules();
-extern MMap<DWORD,BOOL> gStartedThreads;
 extern HRESULT OurShellExecCmdLine(HWND hwnd, LPCWSTR pwszCommand, LPCWSTR pwszStartDir, bool bRunAsAdmin, bool bForce);
 //HMODULE ghPsApi = NULL;
 #ifdef _DEBUG
@@ -1808,12 +1807,15 @@ BOOL DllMain_ProcessAttach(HANDLE hModule, DWORD  ul_reason_for_call)
 
 
 	DLOG1_("DllMain.MainThreadId",ul_reason_for_call);
-	GetMainThreadId(bCurrentThreadIsMain); // Инициализировать gnHookMainThreadId
+	// Init our thread list helper
+	gStartedThreads.Init(128, true);
+	// Init gnHookMainThreadId
+	GetMainThreadId(bCurrentThreadIsMain);
 	// In some cases we need to know thread IDs was started 'normally'
-	gStartedThreads.Init(128,true);
-	gStartedThreads.Set(gnHookMainThreadId,true);
+	// Set TRUE for both threads to show they are ‘our’ threads.
+	gStartedThreads.Set(gnHookMainThreadId, TRUE);
 	if (!bCurrentThreadIsMain)
-		gStartedThreads.Set(GetCurrentThreadId(),true);
+		gStartedThreads.Set(GetCurrentThreadId(), TRUE);
 	DLOGEND1();
 
 	DLOG1_("DllMain.InQueue",ul_reason_for_call);
@@ -1883,8 +1885,17 @@ BOOL DllMain_ThreadAttach(HANDLE hModule, DWORD  ul_reason_for_call)
 	DLOG0("DllMain.DLL_THREAD_ATTACH",ul_reason_for_call);
 	gDllMainCallInfo[DLL_THREAD_ATTACH].OnCall();
 
-	if (gbIsSshProcess && !gnFixSshThreadsResumeOk && gStartedThreads.Get(GetCurrentThreadId(), NULL))
+	bool bAlreadyExists = gStartedThreads.Get(GetCurrentThreadId(), NULL);
+	if (!bAlreadyExists)
+	{
+		gStartedThreads.Set(GetCurrentThreadId(), FALSE);
+	}
+
+	// Resume all suspended third-party threads
+	if (gbIsSshProcess && !gnFixSshThreadsResumeOk && bAlreadyExists)
+	{
 		FixSshThreads(1);
+	}
 
 	DLOGEND();
 	return true;

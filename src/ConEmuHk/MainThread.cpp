@@ -29,10 +29,27 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define HIDE_USE_EXCEPTION_INFO
 
 #include "../common/common.hpp"
-#include <Tlhelp32.h>
+#include "MainThread.h"
 
+/// gStartedThreads stores all thread IDs of current process
+/// BOOL value is TRUE if thread was started by `CreateThread` function,
+/// otherwise it is FALSE if thread was found from DLL_THREAD_DETACH,
+/// or Thread32First/Next
+MMap<DWORD,BOOL> gStartedThreads;
+
+
+/// Main thread ID in the current process
 DWORD gnHookMainThreadId = 0;
 
+/// Returns ThreadID of main thread
+///
+/// If the process was started by standard ConEmuC/ConEmuHk functions,
+/// this function is called with (bUseCurrentAsMain==true) from DllMain.
+/// Otherwise we must enumerate **all** processes in system, there is no
+/// way to enumerate only current process threads unfortunately.
+/// Also, enumerating threads may cause noticeable lags, but we can't
+/// do anything with that... However, this is rare situation, and in most
+/// cases main thread ID is initialized with (bUseCurrentAsMain==true).
 DWORD GetMainThreadId(bool bUseCurrentAsMain)
 {
 	// Найти ID основной нити
@@ -40,6 +57,7 @@ DWORD GetMainThreadId(bool bUseCurrentAsMain)
 	{
 		if (bUseCurrentAsMain)
 		{
+			// Only one thread is expected at the moment
 			gnHookMainThreadId = GetCurrentThreadId();
 		}
 		else
@@ -53,17 +71,21 @@ DWORD GetMainThreadId(bool bUseCurrentAsMain)
 
 				if (Thread32First(snapshot, &module))
 				{
-					while (!gnHookMainThreadId)
+					// Don't stop enumeration on first thread, populate gStartedThreads
+					do
 					{
 						if (module.th32OwnerProcessID == dwPID)
 						{
-							gnHookMainThreadId = module.th32ThreadID;
-							break;
+							DWORD nTID = module.th32ThreadID;
+
+							if (!gnHookMainThreadId)
+								gnHookMainThreadId = nTID;
+
+							if (!gStartedThreads.Get(nTID, NULL))
+								gStartedThreads.Set(nTID, FALSE);
 						}
 
-						if (!Thread32Next(snapshot, &module))
-							break;
-					}
+					} while (Thread32Next(snapshot, &module));
 				}
 
 				CloseHandle(snapshot);

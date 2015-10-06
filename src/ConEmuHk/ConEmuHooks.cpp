@@ -143,23 +143,6 @@ BOOL IsVisibleRectLocked(COORD& crLocked);
 #endif
 
 
-//#ifdef _DEBUG
-//	#include <crtdbg.h>
-//#else
-//	#ifndef _ASSERTE
-//		#define _ASSERTE(x)
-//	#endif
-//#endif
-
-extern HMODULE ghOurModule; // Хэндл нашей dll'ки (здесь хуки не ставятся)
-extern MMap<DWORD,BOOL> gStartedThreads;
-//__declspec( thread )
-//static BOOL    gbInShellExecuteEx = FALSE;
-
-//#ifdef USE_INPUT_SEMAPHORE
-//HANDLE ghConInSemaphore = NULL;
-//#endif
-
 /* ************ Globals for SetHook ************ */
 extern HWND    ghConWnd;      // RealConsole
 extern HWND    ghConEmuWnd;   // Root! ConEmu window
