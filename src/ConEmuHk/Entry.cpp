@@ -1658,12 +1658,9 @@ BOOL DllMain_ProcessAttach(HANDLE hModule, DWORD  ul_reason_for_call)
 			bCurrentThreadIsMain = (gEvtThreadRoot.nWait == WAIT_OBJECT_0);
 		}
 		else
-			gEvtThreadRoot.nErrCode = GetLastError();
-		//SafeCloseHandle(gEvtThreadRoot.hProcessFlag);
-		// Event has not created or is inaccessible
-		if (!bCurrentThreadIsMain && (GetMainThreadId(false) == GetCurrentThreadId()))
 		{
-			bCurrentThreadIsMain = true;
+			gEvtThreadRoot.nErrCode = GetLastError();
+			// Event has not been created or is inaccessible
 		}
 	}
 
@@ -1703,10 +1700,15 @@ BOOL DllMain_ProcessAttach(HANDLE hModule, DWORD  ul_reason_for_call)
 	// Init our thread list helper
 	gStartedThreads.Init(128, true);
 	// Init gnHookMainThreadId
-	GetMainThreadId(bCurrentThreadIsMain);
+	if (!bCurrentThreadIsMain && (GetMainThreadId(false) == GetCurrentThreadId()))
+		bCurrentThreadIsMain = true;
+	else
+		GetMainThreadId(bCurrentThreadIsMain);
+	_ASSERTE(gnHookMainThreadId!=0);
 	// In some cases we need to know thread IDs was started 'normally'
 	// Set TRUE for both threads to show they are ‘our’ threads.
-	gStartedThreads.Set(gnHookMainThreadId, TRUE);
+	if (gnHookMainThreadId)
+		gStartedThreads.Set(gnHookMainThreadId, TRUE);
 	if (!bCurrentThreadIsMain)
 		gStartedThreads.Set(GetCurrentThreadId(), TRUE);
 	DLOGEND1();
