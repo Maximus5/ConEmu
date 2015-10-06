@@ -36,7 +36,7 @@ struct MMap
 protected:
 	struct MapItem
 	{
-		bool  used;
+		LONG  used;
 		KEY_T key;
 		VAL_T val;
 	};
@@ -67,6 +67,12 @@ protected:
 		return pItems;
 	};
 
+	LONG UsedHash(const KEY_T& key)
+	{
+		LONG hash = (DWORD)key;
+		return hash ? hash : -1;
+	}
+
 	bool FindBlockItem(const KEY_T& key, MapItems*& pBlock, MapItem*& pItem)
 	{
 		if (!mp_FirstBlock)
@@ -74,6 +80,8 @@ protected:
 			_ASSERTE(mp_FirstBlock && "MMap::Get - Storage must be allocated first");
 			return false;
 		}
+
+		DWORD hash = UsedHash(key);
 
 		pBlock = mp_FirstBlock;
 		while (pBlock)
@@ -83,7 +91,8 @@ protected:
 
 			for (; nMaxCount--; pItem++)
 			{
-				if (pItem->used && (key == pItem->key))
+				// In case of KEY_T may contain zero value, we compare "key" too
+				if ((pItem->used == hash) && (key == pItem->key))
 				{
 					return true;
 				}
@@ -183,6 +192,8 @@ public:
 		MapItems* pBlock;
 		MapItem* pItem;
 
+		LONG hash = UsedHash(key);
+
 		if (FindBlockItem(key, pBlock, pItem))
 		{
 			if (val)
@@ -194,7 +205,7 @@ public:
 			{
 				memset(&(pItem->key), 0, sizeof(pItem->key));
 				memset(&(pItem->val), 0, sizeof(pItem->val));
-				pItem->used = false;
+				InterlockedCompareExchange(&pItem->used, 0, hash);
 			}
 
 			return true;
@@ -413,6 +424,8 @@ public:
 			return true;
 		}
 
+		LONG hash = UsedHash(key);
+
 		// Add new
 		pBlock = mp_FirstBlock;
 		while (pBlock)
@@ -422,9 +435,8 @@ public:
 
 			for (; nMaxCount--; pItem++)
 			{
-				if (!pItem->used)
+				if (!InterlockedCompareExchange(&pItem->used, hash, 0))
 				{
-					pItem->used = true;
 					pItem->key = key;
 					pItem->val = val;
 
@@ -451,7 +463,7 @@ public:
 		}
 
 		pItem = pBlock->pItems;
-		pItem->used = true;
+		pItem->used = hash;
 		pItem->key = key;
 		pItem->val = val;
 
