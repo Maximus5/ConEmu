@@ -36,6 +36,9 @@ extern MMap<DWORD,BOOL> gStartedThreads;
 extern DWORD gnHookMainThreadId;
 DWORD GetMainThreadId(bool bUseCurrentAsMain);
 
+extern long gnFixSshThreadsResumeOk;
+void FixSshThreads(int iStep);
+
 HANDLE WINAPI HookThreadListCreate(DWORD dwFlags, DWORD th32ProcessID);
 BOOL WINAPI HookThreadListNext(HANDLE hSnapshot, THREADENTRY32* lpte);
 BOOL WINAPI HookThreadListClose(HANDLE hSnapshot);

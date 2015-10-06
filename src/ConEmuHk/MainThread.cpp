@@ -29,7 +29,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define HIDE_USE_EXCEPTION_INFO
 
 #include "../common/common.hpp"
+#include "../common/MArray.h"
+#include "../common/PipeServer.h"
+#include "hlpProcess.h"
 #include "MainThread.h"
+
+extern PipeServer<CESERVER_REQ> *gpHookServer;
+
 
 /// gStartedThreads stores all thread IDs of current process
 /// BOOL value is TRUE if thread was started by `CreateThread` function,
@@ -101,6 +107,138 @@ DWORD GetMainThreadId(bool bUseCurrentAsMain)
 
 	_ASSERTE(gnHookMainThreadId!=0);
 	return gnHookMainThreadId;
+}
+
+
+// The problem was in third-party hooking application on cygwin ssh.
+// It does its injects with CreateRemoteThread when ConEmu is present,
+// and when this thread finishes before ssh init is done, the crash occurres.
+// FixSshThreads was created in commit 2a78d93
+
+/// Defines the structure for pThInfo, used to Suspend/Resume
+struct ThInfoStr { DWORD_PTR nTID; HANDLE hThread; };
+/// Stores suspended threads IDs and handles
+static MArray<ThInfoStr> *pThInfo = NULL;
+
+/// Stores count of FixSshThreads(1) calls
+long gnFixSshThreadsResumeOk = 0;
+
+/// Workaround for cygwin's ssh crash when third-party hooking application exists
+void FixSshThreads(int iStep)
+{
+	DLOG0("FixSshThreads",iStep);
+
+	#ifdef _DEBUG
+	char szInfo[120]; DWORD nErr;
+	msprintf(szInfo, countof(szInfo), "FixSshThreads(%u) started\n", iStep);
+	if (!(gnDllState & ds_DllProcessDetach)) OutputDebugStringA(szInfo);
+	#endif
+
+	switch (iStep)
+	{
+		// Resume suspended threads
+		case 1:
+		{
+			// Was initialized?
+			if (!pThInfo)
+				break;
+			// May occures in several threads simultaneously
+			long n = InterlockedIncrement(&gnFixSshThreadsResumeOk);
+			if (n > 1)
+				break;
+			// Resume all suspended...
+			for (INT_PTR i = 0; i < pThInfo->size(); i++)
+				ResumeThread((*pThInfo)[i].hThread);
+			break;
+		}
+
+		// Suspend all third-party threads
+		case 0:
+		{
+			_ASSERTEX(gnHookMainThreadId!=0);
+			pThInfo = new MArray<ThInfoStr>;
+			HANDLE hThread = NULL, hSnap = NULL;
+			DWORD nTID = 0, dwPID = GetCurrentProcessId();
+			HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, dwPID);
+			if (snapshot == INVALID_HANDLE_VALUE)
+			{
+				#ifdef _DEBUG
+				nErr = GetLastError();
+				msprintf(szInfo, countof(szInfo), "CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD) failed in FixSshThreads, code=%u\n", nErr);
+				if (!(gnDllState & ds_DllProcessDetach)) OutputDebugStringA(szInfo);
+				#endif
+			}
+			else
+			{
+				THREADENTRY32 module = {sizeof(THREADENTRY32)};
+				if (!Thread32First(snapshot, &module))
+				{
+					#ifdef _DEBUG
+					nErr = GetLastError();
+					msprintf(szInfo, countof(szInfo), "Thread32First failed in FixSshThreads, code=%u\n", nErr);
+					if (!(gnDllState & ds_DllProcessDetach)) OutputDebugStringA(szInfo);
+					#endif
+				}
+				else do
+				{
+					if ((module.th32OwnerProcessID == dwPID) && (gnHookMainThreadId != module.th32ThreadID))
+					{
+						// JIC, add thread ID to our list.
+						// In theory, all thread must be already initialized
+						// either from DLL_THREAD_ATTACH, or from GetMainThreadId.
+						if (!gStartedThreads.Get(module.th32ThreadID, NULL))
+							gStartedThreads.Set(module.th32ThreadID, FALSE);
+
+						// Don't freeze our own threads
+						if (gpHookServer && gpHookServer->IsPipeThread(module.th32ThreadID))
+							continue;
+
+						hThread = OpenThread(THREAD_SUSPEND_RESUME, FALSE, module.th32ThreadID);
+						if (!hThread)
+						{
+							#ifdef _DEBUG
+							nErr = GetLastError();
+							msprintf(szInfo, countof(szInfo), "OpenThread(%u) failed in FixSshThreads, code=%u\n", module.th32ThreadID, nErr);
+							if (!(gnDllState & ds_DllProcessDetach)) OutputDebugStringA(szInfo);
+							#endif
+						}
+						else
+						{
+							DWORD nSC = SuspendThread(hThread);
+							if (nSC == (DWORD)-1)
+							{
+								// Error!
+								#ifdef _DEBUG
+								nErr = GetLastError();
+								msprintf(szInfo, countof(szInfo), "SuspendThread(%u) failed in FixSshThreads, code=%u\n", module.th32ThreadID, nErr);
+								if (!(gnDllState & ds_DllProcessDetach)) OutputDebugStringA(szInfo);
+								#endif
+							}
+							else
+							{
+								ThInfoStr th = {module.th32ThreadID, hThread};
+								pThInfo->push_back(th);
+								#ifdef _DEBUG
+								msprintf(szInfo, countof(szInfo), "Thread %u was suspended\n", module.th32ThreadID);
+								if (!(gnDllState & ds_DllProcessDetach)) OutputDebugStringA(szInfo);
+								#endif
+							}
+						}
+					}
+				} while (Thread32Next(snapshot, &module));
+
+				CloseHandle(snapshot);
+			}
+			break;
+		}
+	}
+
+	#ifdef _DEBUG
+	msprintf(szInfo, countof(szInfo), "FixSshThreads(%u) finished\n", iStep);
+	if (!(gnDllState & ds_DllProcessDetach)) OutputDebugStringA(szInfo);
+	#endif
+
+	DLOGEND();
 }
 
 

@@ -639,113 +639,6 @@ DWORD WINAPI DummyLibLoaderCmdThread(LPVOID /*apParm*/)
 }
 #endif
 
-static long gnFixSshThreadsResumeOk = 0;
-struct ThInfoStr { DWORD_PTR nTID; HANDLE hThread; };
-void FixSshThreads(int iStep)
-{
-	static MArray<ThInfoStr> *pThInfo = NULL;
-
-	#ifdef _DEBUG
-	char szInfo[120]; DWORD nErr;
-	msprintf(szInfo, countof(szInfo), "FixSshThreads(%u) started\n", iStep);
-	if (!(gnDllState & ds_DllProcessDetach)) OutputDebugStringA(szInfo);
-	#endif
-
-	switch (iStep)
-	{
-		case 1:
-		{
-			// Was initialized?
-			if (!pThInfo)
-				break;
-			// May occures in several threads simultaneously
-			long n = InterlockedIncrement(&gnFixSshThreadsResumeOk);
-			if (n > 1)
-				break;
-			// Resume all suspended...
-			for (INT_PTR i = 0; i < pThInfo->size(); i++)
-				ResumeThread((*pThInfo)[i].hThread);
-			break;
-		}
-		case 0:
-		{
-			_ASSERTEX(gnHookMainThreadId!=0);
-			pThInfo = new MArray<ThInfoStr>;
-			HANDLE hThread = NULL, hSnap = NULL;
-			DWORD nTID = 0, dwPID = GetCurrentProcessId();
-			HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, dwPID);
-			if (snapshot == INVALID_HANDLE_VALUE)
-			{
-				#ifdef _DEBUG
-				nErr = GetLastError();
-				msprintf(szInfo, countof(szInfo), "CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD) failed in FixSshThreads, code=%u\n", nErr);
-				if (!(gnDllState & ds_DllProcessDetach)) OutputDebugStringA(szInfo);
-				#endif
-			}
-			else
-			{
-				THREADENTRY32 module = {sizeof(THREADENTRY32)};
-				if (!Thread32First(snapshot, &module))
-				{
-					#ifdef _DEBUG
-					nErr = GetLastError();
-					msprintf(szInfo, countof(szInfo), "Thread32First failed in FixSshThreads, code=%u\n", nErr);
-					if (!(gnDllState & ds_DllProcessDetach)) OutputDebugStringA(szInfo);
-					#endif
-				}
-				else do
-				{
-					if ((module.th32OwnerProcessID == dwPID) && (gnHookMainThreadId != module.th32ThreadID))
-					{
-						// Don't freeze our own threads
-						if (gpHookServer && gpHookServer->IsPipeThread(module.th32ThreadID))
-							continue;
-
-						hThread = OpenThread(THREAD_SUSPEND_RESUME, FALSE, module.th32ThreadID);
-						if (!hThread)
-						{
-							#ifdef _DEBUG
-							nErr = GetLastError();
-							msprintf(szInfo, countof(szInfo), "OpenThread(%u) failed in FixSshThreads, code=%u\n", module.th32ThreadID, nErr);
-							if (!(gnDllState & ds_DllProcessDetach)) OutputDebugStringA(szInfo);
-							#endif
-						}
-						else
-						{
-							DWORD nSC = SuspendThread(hThread);
-							if (nSC == (DWORD)-1)
-							{
-								// Error!
-								#ifdef _DEBUG
-								nErr = GetLastError();
-								msprintf(szInfo, countof(szInfo), "SuspendThread(%u) failed in FixSshThreads, code=%u\n", module.th32ThreadID, nErr);
-								if (!(gnDllState & ds_DllProcessDetach)) OutputDebugStringA(szInfo);
-								#endif
-							}
-							else
-							{
-								ThInfoStr th = {module.th32ThreadID, hThread};
-								pThInfo->push_back(th);
-								#ifdef _DEBUG
-								msprintf(szInfo, countof(szInfo), "Thread %u was suspended\n", module.th32ThreadID);
-								if (!(gnDllState & ds_DllProcessDetach)) OutputDebugStringA(szInfo);
-								#endif
-							}
-						}
-					}
-				} while (Thread32Next(snapshot, &module));
-
-				CloseHandle(snapshot);
-			}
-			break;
-		}
-	}
-
-	#ifdef _DEBUG
-	msprintf(szInfo, countof(szInfo), "FixSshThreads(%u) finished\n", iStep);
-	if (!(gnDllState & ds_DllProcessDetach)) OutputDebugStringA(szInfo);
-	#endif
-}
 
 DWORD WINAPI DllStart(LPVOID /*apParm*/)
 {
@@ -1871,6 +1764,7 @@ BOOL DllMain_ProcessAttach(HANDLE hModule, DWORD  ul_reason_for_call)
 		HMODULE hMsys = GetModuleHandle(L"msys-1.0.dll");
 		if (hMsys != NULL)
 		{
+			// Suspend all third-party threads to avoid cygwin's ssh crashes
 			FixSshThreads(0);
 		}
 	}
