@@ -264,7 +264,7 @@ struct PipeServer
 		// Вызывается после подключения клиента к серверному пайпу, но перед PipeServerRead и PipeServerCommand_t
 		// (которых может быть много на одном подключении)
 		PipeServerConnected_t mfn_PipeServerConnected;
-		// Уведомление, что клиент отвалился (или его отавалили). Вызывается только если был mfn_PipeServerConnected
+		// Уведомление, что клиент отвалился (или его отвалили). Вызывается только если был mfn_PipeServerConnected
 		PipeServerConnected_t mfn_PipeServerDisconnected;
 		
 		// Вызывается после того, как создан Pipe Instance (CreateNamedPipeW)
@@ -953,7 +953,7 @@ struct PipeServer
 			//hWait[0] = mh_TermEvent;
 			//hWait[1] = mh_ServerSemaphore;
 
-			// debuging purposes
+			// debugging purposes
 			pPipe->dwState = STARTED_STATE;
 			pPipe->nTerminateDelay = pPipe->nTerminateDelay1 = pPipe->nTerminateDelay2 = pPipe->nTerminateDelay3 = 0;
 			
@@ -1079,7 +1079,7 @@ struct PipeServer
 									&& (ph->nVersion == CESERVER_REQ_VER)
 									&& (ph->bAsync))
 								{
-									_ASSERTEX(pPipe->bBreakConnection && "Break connection on anysc!");
+									_ASSERTEX(pPipe->bBreakConnection && "Break connection on async!");
 								}
 							}
 							#endif
@@ -1360,7 +1360,7 @@ struct PipeServer
 			    bool abForceTerminate,
 			    LPCWSTR asPipeName,
 			    LPARAM alParam,
-			    LPSECURITY_ATTRIBUTES alpSec /*= LocalSecurity()*/, // MUST! be alive for life cicle
+			    LPSECURITY_ATTRIBUTES alpSec /*= LocalSecurity()*/, // MUST! be alive for life cycle
 			    PipeServerCommand_t apfnPipeServerCommand,
 			    PipeServerFree_t apfnPipeServerFree = NULL,
 			    PipeServerConnected_t apfnPipeServerConnected = NULL,

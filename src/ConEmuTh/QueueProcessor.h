@@ -642,7 +642,7 @@ class CQueueProcessor
 		};
 
 	protected:
-		/* *** Эти функции не переопредяются *** */
+		/* *** Эти функции не переопределяются *** */
 		HRESULT ProcessItem(ProcessingItem* p)
 		{
 			HRESULT hr = E_FAIL;
@@ -721,7 +721,7 @@ class CQueueProcessor
 				mp_SynchRequest = NULL; // сразу сбросить, больше не нужен
 			}
 
-			if (p)  // Сразу установим статус, до вызода из секции
+			if (p)  // Сразу установим статус, до выхода из секции
 			{
 				p->Status = eItemProcessing;
 			}

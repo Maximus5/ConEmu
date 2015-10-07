@@ -826,7 +826,7 @@ bool AltServerWasStarted(DWORD nPID, HANDLE hAltServer, bool ForceThaw)
 			ExecuteFreeResult(pFreezeOut);
 		}
 
-		// Если для nPID не было назначно "предыдущего" альт.сервера
+		// Если для nPID не было назначено "предыдущего" альт.сервера
 		if (!gpSrv->AltServers.Get(nPID, NULL))
 		{
 			// нужно сохранить параметры этого предыдущего (пусть даже и пустые)
@@ -2350,7 +2350,7 @@ void CheckConEmuHwnd()
 	}
 	else
 	{
-		// да и фиг сним. нас могли просто так, без gui запустить
+		// да и фиг с ним. нас могли просто так, без gui запустить
 		//_ASSERTE(ghConEmuWnd!=NULL);
 	}
 }
@@ -2496,7 +2496,7 @@ bool TryConnect2Gui(HWND hGui, DWORD anGuiPID, CESERVER_REQ* pIn)
 		}
 	}
 
-	// Этот блок if-else нужно вынести в отдельную функцию инициализции сервера (для аттача и обычный)
+	// Этот блок if-else нужно вынести в отдельную функцию инициализации сервера (для аттача и обычный)
 	pStartStopRet = (pOut->DataSize() >= sizeof(CESERVER_REQ_SRVSTARTSTOPRET)) ? &pOut->SrvStartStopRet : NULL;
 
 	if (!pStartStopRet || !pStartStopRet->Info.hWnd || !pStartStopRet->Info.hWndDc || !pStartStopRet->Info.hWndBack)
@@ -4448,7 +4448,7 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 			HANDLE hFreeze[2] = {gpSrv->hFreezeRefreshThread, ghQuitEvent};
 			nFreezeWait = WaitForMultipleObjects(countof(hFreeze), hFreeze, FALSE, INFINITE);
 			if (nFreezeWait == (WAIT_OBJECT_0+1))
-				break; // затребовано заверешение потока
+				break; // затребовано завершение потока
 		}
 
 		if (gpSrv->hWaitForSetConBufThread)
@@ -4475,7 +4475,7 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 			SafeCloseHandle(hOutEvent);
 			UNREFERENCED_PARAMETER(nThreadWait);
 			if (nThreadWait == WAIT_OBJECT_0)
-				break; // затребовано заверешение потока
+				break; // затребовано завершение потока
 		}
 
 		// проверка альтернативного сервера
@@ -4555,7 +4555,7 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 			}
 			else if (nAltWait == (WAIT_OBJECT_0+2))
 			{
-				// затребовано заверешение потока
+				// затребовано завершение потока
 				break;
 			}
 			#ifdef _DEBUG

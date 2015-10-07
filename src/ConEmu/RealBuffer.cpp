@@ -2631,7 +2631,7 @@ void CRealBuffer::ApplyConsoleInfo(const CESERVER_REQ_CONINFO_INFO* pInfo, bool&
 		TODO("Во время ресайза консоль может подглючивать - отдает не то что нужно...");
 		//_ASSERTE(*con.pConChar!=ucBoxDblVert);
 
-		// пока выполяется SetConsoleSizeSrv в другой нити Нельзя сбрасывать эти переменные!
+		// пока выполняется SetConsoleSizeSrv в другой нити Нельзя сбрасывать эти переменные!
 		if (!con.bLockChange2Text
 			&& ((con.nChange2TextWidth >= 0) || (con.nChange2TextHeight >= 0)))
 		{
@@ -2985,7 +2985,7 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom, bool bUpdateScre
 					CVConGuard VCon;
 
 					//// Сброс подчерка, а то при возврате в консоль,
-					//// когда модификатор уже отпущен, остает артефакт...
+					//// когда модификатор уже отпущен, остается артефакт...
 					//StoreLastTextRange(etr_None);
 					//UpdateSelection();
 
@@ -5379,7 +5379,7 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 
 			if (lbAllowHilightFileLine)
 			{
-				// Если мышь сместиласть - нужно посчитать
+				// Если мышь сместилась - нужно посчитать
 				// Даже если мышь не двигалась - текст мог измениться.
 				/*if ((con.etr.mcr_FileLineStart.X == con.etr.mcr_FileLineEnd.X)
 					|| (con.etr.mcr_FileLineStart.Y != mcr_LastMousePos.Y)
@@ -5545,7 +5545,7 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 					#endif
 					for (nX = 0; nX < (int)cnSrcLineLen; nX++, pnSrc++, pcolSrc++)
 					{
-						atr = (*pnSrc) & 0xFF; // интересут только нижний байт - там индексы цветов
+						atr = (*pnSrc) & 0xFF; // интересует только нижний байт - там индексы цветов
 						TODO("OPTIMIZE: lca = lcaTable[atr];");
 						lca = lcaTable[atr];
 						TODO("OPTIMIZE: вынести проверку bExtendColors за циклы");
@@ -5642,7 +5642,7 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 					pcaDst[nX] = lcaDef;
 				}
 
-				// Far2 показывате красный 'A' в правом нижнем углу консоли
+				// Far2 показывает красный 'A' в правом нижнем углу консоли
 				// Этот ярко красный цвет фона может попасть в Extend Font Colors
 				if (bExtendFonts && ((nY+1) == nYMax) && mp_RCon->isFar()
 						&& (pszDst[nWidth-1] == L'A') && (atr == 0xCF))
@@ -6294,7 +6294,7 @@ bool CRealBuffer::isSelectionAllowed()
 		return false;
 
 	#ifdef _DEBUG
-	// Зачем звать эту функц из фоновых потоков?
+	// Зачем звать эту функцию из фоновых потоков?
 	if (!isMainThread())
 	{
 		int nDbg = -1;
