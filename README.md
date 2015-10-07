@@ -74,7 +74,7 @@ about release stages, distro packets, some warnings and much more...
 
 
 ## Building from sources
-https://github.com/Maximus5/ConEmu/blob/master/src/HowToBuild.txt
+https://github.com/Maximus5/ConEmu/blob/master/src/HowToBuild.md
 
  
 ## Screenshots

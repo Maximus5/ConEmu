@@ -27,7 +27,7 @@ originally forked from here:
    CE10.sln  Visual C++ 2010
    CE11.sln  Visual C++ 2012
    CE12.sln  Visual C++ 2013
-   CE14.sln  Visual C++ 2014
+   CE14.sln  Visual C++ 2015 (also requires C++ 2013 installed)
 
 2. Visual C++ makefiles (current releases are build with Windows SDK 7.0)
    Example: nmake /F makefile_all_vc
