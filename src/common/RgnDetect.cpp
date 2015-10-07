@@ -274,7 +274,7 @@ bool CRgnDetect::FindFrameRight_ByTop(wchar_t* pChar, CharAttr* pAttr, int nWidt
 	return (nMostRight > nFromX);
 }
 
-// Найти левуу границу
+// Найти левую границу
 bool CRgnDetect::FindFrameLeft_ByTop(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostLeft)
 {
 	wchar_t wcMostLeft;

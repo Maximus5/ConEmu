@@ -560,7 +560,7 @@ void CDynDialog::FixupDialogSize()
 		ItemInfo& ii = m_Items[i];
 		if (ii.ItemType == CDynDialog::Button)
 		{
-			// Just use bitfieds to check for Radio/Check
+			// Just use bitfields to check for Radio/Check
 			if ((ii.Style & (BS_CHECKBOX|BS_RADIOBUTTON|BS_USERBUTTON)))
 			{
 				*ii.pStyle = ((ii.Style & ~BS_TYPEMASK) | BS_OWNERDRAW);
