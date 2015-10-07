@@ -1115,7 +1115,7 @@ LRESULT CFrameHolder::OnNcCalcSize(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 
 	LRESULT lRc = 0, lRcDef = 0;
 
-	// В Aero (Glass) важно, чтобы клиенская область начиналась с верхнего края окна,
+	// В Aero (Glass) важно, чтобы клиентская область начиналась с верхнего края окна,
 	// иначе не получится "рисовать по стеклу"
 	FrameDrawStyle fdt = gpConEmu->DrawType();
 
@@ -1272,7 +1272,7 @@ LRESULT CFrameHolder::OnNcCalcSize(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 	//
 	//		if (fdt == fdt_Aero)
 	//		{
-	//			// В Aero (Glass) важно, чтобы клиенская область начиналась с верхнего края окна,
+	//			// В Aero (Glass) важно, чтобы клиентская область начиналась с верхнего края окна,
 	//			// иначе не получится "рисовать по стеклу"
 	//			nccr->top = r->top; // нада !!!
 	//			nccr->left = r->left + GetFrameWidth();
