@@ -19,6 +19,25 @@ http://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2015.10.6
+* Disable old workaround for gh#272 (revert eaaf96b).
+  There were reports of broken redirections: gh#341, gh#323.
+* Add `<Cobalt2>` default color scheme.
+* gh#345: ‘Run as Administrator’ was crashed in some cases.
+* gh#350: Fix slowdowns when running commands in ConEmu.
+* gh#322: Fix crash in hooked applications while updating DefTerm module.
+* gh#344: Fix abnormal resize of maximized window if TabBar is auto-shown.
+* DefTerm. Improve error message, version, process name.
+* Temp fix for GetEnvironmentVariable stack overflow.
+* Print handles information in `ConEmuC /checkunicode`.
+* Fix wrong background from ‘ConEmu Underlines’ in some cases.
+  If "Far /e ..." was started from Panels,
+  and only ‘Editor’ coloring was enabled in ‘ConEmu Underlines’,
+  than wrong background was painted after exit Editor Far.exe process.
+* Don't autoclose ConEmu window while error message box is waiting user interaction.
+* ConEmuHk termination refactoring.
+
+
 2015.9.13
 * ConEmuLn. Add separate settings for Editor and Viewer underline colors.
 * gh#321: Temp fix for Vim display issues.
