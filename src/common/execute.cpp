@@ -130,7 +130,7 @@ bool GetImageSubsystem(const wchar_t *FileName,DWORD& ImageSubsystem,DWORD& Imag
 		if (GetFileInformationByHandle(hModuleFile, &bfi))
 			FileAttrs = bfi.dwFileAttributes;
 
-		// Это это батник - сразу вернуть IMAGE_SUBSYSTEM_BATCH_FILE
+		// Это батник - сразу вернуть IMAGE_SUBSYSTEM_BATCH_FILE
 		LPCWSTR pszExt = PointToExt(FileName);
 		if (pszExt && IsFileBatch(pszExt))
 		{
