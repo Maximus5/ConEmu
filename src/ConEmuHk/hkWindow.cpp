@@ -49,6 +49,35 @@ extern struct HookModeFar gFarMode;
 
 /* **************** */
 
+static HWND hInTrackPopupMenu = NULL;
+
+bool FixPopupMenuHWnd(HWND hWnd, int& x, int& y)
+{
+	bool bProcessed = false;
+
+	// Seems like that is required(?) for Far's EMenu only
+	// and can harm other applications: gh#112, gh#357
+	if (ghConEmuWndDC
+		&& (hWnd != hInTrackPopupMenu)
+		&& (gFarMode.cbSize == sizeof(gFarMode)) && gFarMode.bFarHookMode)
+	{
+		// We have to ensure that hWnd is on top (has focus) because menu expects that
+		GuiSetForeground(hWnd);
+
+		// Far Manager related (EMenu especially)
+		if (gFarMode.bPopupMenuPos)
+		{
+			gFarMode.bPopupMenuPos = FALSE; // one time
+			POINT pt; GetCursorPos(&pt);
+			x = pt.x; y = pt.y;
+		}
+
+		bProcessed = true;
+	}
+
+	return bProcessed;
+}
+
 BOOL GuiSetForeground(HWND hWnd)
 {
 	BOOL lbRc = FALSE;
@@ -116,25 +145,17 @@ BOOL WINAPI OnTrackPopupMenu(HMENU hMenu, UINT uFlags, int x, int y, int nReserv
 	DebugString(szMsg);
 	#endif
 
-	// Seems like that is required(?) for Far's EMenu only
-	// and can harm other applications: gh#112
-	if (ghConEmuWndDC && (gFarMode.cbSize == sizeof(gFarMode)) && gFarMode.bFarHookMode)
-	{
-		// We have to ensure that hWnd is on top (has focus) because menu expects that
-		GuiSetForeground(hWnd);
-
-		// Far Manager related (EMenu especially)
-		if (gFarMode.cbSize == sizeof(gFarMode) && gFarMode.bPopupMenuPos)
-		{
-			gFarMode.bPopupMenuPos = FALSE; // one time
-			POINT pt; GetCursorPos(&pt);
-			x = pt.x; y = pt.y;
-		}
-	}
+	// Far's EMenu popup fix
+	FixPopupMenuHWnd(hWnd, x, y);
 
 	BOOL lbRc = FALSE;
 	if (F(TrackPopupMenu) != NULL)
+	{
+		hInTrackPopupMenu = hWnd;
 		lbRc = F(TrackPopupMenu)(hMenu, uFlags, x, y, nReserved, hWnd, prcRect);
+		hInTrackPopupMenu = NULL;
+	}
+
 	return lbRc;
 }
 
@@ -149,18 +170,8 @@ BOOL WINAPI OnTrackPopupMenuEx(HMENU hmenu, UINT fuFlags, int x, int y, HWND hWn
 	DebugString(szMsg);
 	#endif
 
-	if (ghConEmuWndDC)
-	{
-		// Необходимо "поднять" наверх консольное окно, т.к. от него идет меню
-		GuiSetForeground(hWnd);
-
-		if (gFarMode.cbSize == sizeof(gFarMode) && gFarMode.bPopupMenuPos)
-		{
-			gFarMode.bPopupMenuPos = FALSE; // однократно
-			POINT pt; GetCursorPos(&pt);
-			x = pt.x; y = pt.y;
-		}
-	}
+	// Far's EMenu popup fix
+	FixPopupMenuHWnd(hWnd, x, y);
 
 	BOOL lbRc = FALSE;
 	if (F(TrackPopupMenuEx) != NULL)
