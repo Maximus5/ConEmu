@@ -144,7 +144,7 @@ const CONEMUDEFCOLORS DefColors[] =
 		}, {}, {true, 0x00240A30}
 	},
 	{
-		L"<Gamma 1 (for use with dark monitors)>", {
+		L"<Gamma 1>", {
 			0x00000000, 0x00960000, 0x0000aa00, 0x00aaaa00, 0x000000aa, 0x00800080, 0x0000aaaa, 0x00c0c0c0,
 			0x00808080, 0x00ff0000, 0x0000ff00, 0x00ffff00, 0x000000ff, 0x00ff00ff, 0x0000ffff, 0x00ffffff
 		}
