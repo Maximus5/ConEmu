@@ -227,9 +227,9 @@ protected:
 	struct DisplayParm
 	{
 		BOOL WasSet;
-		BOOL BrightOrBold;     // 1
+		UINT BrightOrBold;     // 1
 		BOOL ItalicOrInverse;  // 3
-		BOOL BackOrUnderline;  // 4
+		UINT BackOrUnderline;  // 4
 		int  TextColor;        // 30-37,38,39
 		BOOL Text256;          // 38
 	    int  BackColor;        // 40-47,48,49
