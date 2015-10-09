@@ -2478,6 +2478,10 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 					break;
 				case 30: case 31: case 32: case 33: case 34: case 35: case 36: case 37:
 					gDisplayParm.TextColor = (Code.ArgV[i] - 30);
+					if (gDisplayParm.BrightOrBold == 2)
+						gDisplayParm.BrightOrBold = FALSE;
+					else
+						gDisplayParm.BrightOrBold &= ~2;
 					gDisplayParm.Text256 = FALSE;
 					gDisplayParm.WasSet = TRUE;
 					break;
@@ -2509,6 +2513,10 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 					break;
 				case 40: case 41: case 42: case 43: case 44: case 45: case 46: case 47:
 					gDisplayParm.BackColor = (Code.ArgV[i] - 40);
+					if (gDisplayParm.BackOrUnderline == 2)
+						gDisplayParm.BackOrUnderline = FALSE;
+					else
+						gDisplayParm.BackOrUnderline &= ~2;
 					gDisplayParm.Back256 = FALSE;
 					gDisplayParm.WasSet = TRUE;
 					break;
@@ -2541,13 +2549,13 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 				case 90: case 91: case 92: case 93: case 94: case 95: case 96: case 97:
 					gDisplayParm.TextColor = (Code.ArgV[i] - 90);
 					gDisplayParm.Text256 = FALSE;
-					gDisplayParm.BrightOrBold = TRUE;
+					gDisplayParm.BrightOrBold |= 2;
 					gDisplayParm.WasSet = TRUE;
 					break;
 				case 100: case 101: case 102: case 103: case 104: case 105: case 106: case 107:
 					gDisplayParm.BackColor = (Code.ArgV[i] - 100);
 					gDisplayParm.Back256 = FALSE;
-					gDisplayParm.BackOrUnderline = TRUE;
+					gDisplayParm.BackOrUnderline |= 2;
 					gDisplayParm.WasSet = TRUE;
 					break;
 				default:
