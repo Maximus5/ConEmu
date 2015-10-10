@@ -1,24 +1,21 @@
 ﻿== Sources location ==
 
-If you are reading this file, you already have them.
-But here are the official sources location list.
+If you are reading this file, probably you already have sources.
+
+https://conemu.github.io/en/Source.html
+
+
+== Checkout sources from GitHub ==
 
 https://github.com/Maximus5/ConEmu
-  Use this command to check out the project source code:
-    git clone git@github.com:Maximus5/ConEmu.git
-
-http://conemu-maximus5.googlecode.com/svn/trunk/
-  Use this command to check out the latest project source code:
-    svn co http://conemu-maximus5.googlecode.com/svn/trunk/ConEmu-alpha/ ConEmu-alpha
-  Preview branch:
-    svn co http://conemu-maximus5.googlecode.com/svn/trunk/ConEmu-preview/ ConEmu-preview
-  And stable version (may be old and obsolete):
-    svn co http://conemu-maximus5.googlecode.com/svn/trunk/ConEmu-stable/ ConEmu-stable
+  Use following command to checkout the project sources:
+    git clone --recursive https://github.com/Maximus5/ConEmu.git
 
 Submodule ‘minhook’ is available here:
   git@github.com:Maximus5/minhook.git
 originally forked from here:
   git@github.com:RaMMicHaeL/minhook.git
+
 
 == How to build ==
 
@@ -27,7 +24,7 @@ originally forked from here:
    CE10.sln  Visual C++ 2010
    CE11.sln  Visual C++ 2012
    CE12.sln  Visual C++ 2013
-   CE14.sln  Visual C++ 2014
+   CE14.sln  Visual C++ 2015
 
 2. Visual C++ makefiles (current releases are build with Windows SDK 7.0)
    Example: nmake /F makefile_all_vc
