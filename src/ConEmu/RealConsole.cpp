@@ -8855,11 +8855,11 @@ void CRealConsole::OnFocus(BOOL abFocused)
 		#ifdef _DEBUG
 		if (abFocused)
 		{
-			DEBUGSTRINPUT(L"--Get focus\n")
+			DEBUGSTRINPUT(L"--Gets focus\n")
 		}
 		else
 		{
-			DEBUGSTRINPUT(L"--Loose focus\n")
+			DEBUGSTRINPUT(L"--Loses focus\n")
 		}
 		#endif
 

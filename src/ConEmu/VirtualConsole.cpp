@@ -2095,7 +2095,7 @@ wrap:
 bool CVirtualConsole::CalcHighlightRowCol(COORD* pcrPos)
 {
 	if (!(isHighlightMouseRow() || isHighlightMouseCol())
-		//|| !mp_ConEmu->isMeForeground() // show highlights even if ConEmu loose focus
+		//|| !mp_ConEmu->isMeForeground() // show highlights even if ConEmu loses focus
 		|| !isVisible())
 	{
 		m_HighlightInfo.mb_Exists = false;

@@ -8165,12 +8165,12 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	switch (messg) {
 		case WM_SETFOCUS:
 		{
-			DEBUGSTR(L"--Get focus\n");
+			DEBUGSTR(L"--Gets focus\n");
 			//return 0;
 		} break;
 		case WM_KILLFOCUS:
 		{
-			DEBUGSTR(L"--Loose focus\n");
+			DEBUGSTR(L"--Loses focus\n");
 		} break;
 	}*/
 #endif
