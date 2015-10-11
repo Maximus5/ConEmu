@@ -493,6 +493,7 @@
     <ClInclude Include="..\common\HkFunc.h" />
     <ClInclude Include="..\common\InQueue.h" />
     <ClInclude Include="..\common\MArray.h" />
+    <ClInclude Include="..\common\MCircular.h" />
     <ClInclude Include="..\common\MConHandle.h" />
     <ClInclude Include="..\common\Memory.h" />
     <ClInclude Include="..\common\MFileLog.h" />

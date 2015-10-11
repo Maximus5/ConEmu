@@ -36,6 +36,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../ConEmuCD/ExitCodes.h"
 #include "../common/WObjects.h"
 #include "Console2.h"
+#include "hlpProcess.h"
 
 extern HMODULE ghOurModule;
 extern HWND ghConWnd;
@@ -515,6 +516,13 @@ wrap:
 		else
 		{
 			_ASSERTEX(ghInjectsInMainThread!=NULL);
+		}
+
+		extern CESERVER_CONSOLE_APP_MAPPING* GetAppMapPtr();
+		CESERVER_CONSOLE_APP_MAPPING* pAppMap = GetAppMapPtr();
+		if (pAppMap)
+		{
+			pAppMap->HookedPids.AddValue(pi.dwProcessId);
 		}
 	}
 	return iRc;

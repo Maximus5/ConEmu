@@ -1076,6 +1076,7 @@ copy "$(TargetPath)" Z:\</Command>
     <ClInclude Include="..\common\HkFunc.h" />
     <ClInclude Include="..\common\MArray.h" />
     <ClInclude Include="..\common\MAssert.h" />
+    <ClInclude Include="..\common\MCircular.h" />
     <ClInclude Include="..\common\Memory.h" />
     <ClInclude Include="..\common\MEvent.h" />
     <ClInclude Include="..\common\MFileLog.h" />

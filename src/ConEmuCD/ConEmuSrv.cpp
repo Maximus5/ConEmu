@@ -3240,6 +3240,13 @@ wrap:
 	return iRc;
 }
 
+CESERVER_CONSOLE_APP_MAPPING* GetAppMapPtr()
+{
+	if (!gpSrv || !gpSrv->pAppMap)
+		return NULL;
+	return gpSrv->pAppMap->Ptr();
+}
+
 int Compare(const CESERVER_CONSOLE_MAPPING_HDR* p1, const CESERVER_CONSOLE_MAPPING_HDR* p2)
 {
 	if (!p1 || !p2)

@@ -509,6 +509,7 @@
       <File RelativePath="..\common\execute.h" />
       <File RelativePath="..\common\HkFunc.h" />
       <File RelativePath="..\common\MArray.h" />
+      <File RelativePath="..\common\MCircular.h" />
       <File RelativePath="..\common\Memory.h" />
       <File RelativePath="..\common\MEvent.h" />
       <File RelativePath="..\common\MFileLog.h" />

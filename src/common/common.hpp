@@ -37,6 +37,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "defines.h"
 #include "ConEmuColors.h"
+#include "MCircular.h"
 
 #ifndef _DEBUG
 //PRAGMA_ERROR("MIN_CON_WIDTH & MIN_CON_HEIGHT - remake for Far Panels")
@@ -1469,6 +1470,12 @@ struct CESERVER_CONSOLE_APP_MAPPING
 
 	// Reserved for in-console states
 	DWORD nConsoleFlags;
+
+	// CECONEMUROOTTHREAD often fails on cygwin/msys fork
+	// This will be more proper way to detect if ConEmuHk
+	// is loaded in main thread and snapshooting in the
+	// GetMainThreadId is not required
+	MCircular<DWORD,256> HookedPids;
 };
 
 struct TOPLEFTCOORD
