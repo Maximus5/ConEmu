@@ -3378,6 +3378,7 @@ void CSettings::ChangeCurrentPalette(const ColorPalette* pPal, bool bChangeDropD
 
 	if (ghWnd)
 	{
+		gpConEmu->InvalidateAll();
 		gpConEmu->Update(true);
 	}
 }
