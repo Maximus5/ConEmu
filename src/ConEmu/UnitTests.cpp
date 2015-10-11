@@ -370,6 +370,25 @@ void DebugTestSetParser()
 	CEStr lsTemp = cmd.Allocate(NULL);
 }
 
+void DebugMapsTests()
+{
+	MCircular<LONG,16> circ = {};
+	circ.AddValue(1);
+	circ.AddValue(2);
+	_ASSERTE(circ.HasValue(1));
+	_ASSERTE(circ.HasValue(2));
+	_ASSERTE(!circ.HasValue(3));
+	circ.DelValue(1);
+	_ASSERTE(!circ.HasValue(1));
+	_ASSERTE(circ.HasValue(2));
+	for (int i = 100; i <= 116; i++)
+		circ.AddValue(i);
+	_ASSERTE(!circ.HasValue(2));
+	_ASSERTE(!circ.HasValue(100));
+	_ASSERTE(circ.HasValue(115));
+	_ASSERTE(circ.HasValue(116));
+}
+
 void DebugUnitTests()
 {
 	RConStartArgs::RunArgTests();
@@ -391,6 +410,7 @@ void DebugUnitTests()
 	CDynDialog::UnitTests();
 	DebugProcessNameTest();
 	DebugTestSetParser();
+	DebugMapsTests();
 }
 #endif
 
