@@ -76,8 +76,9 @@ DWORD GetMainThreadId(bool bUseCurrentAsMain)
 			DWORD dwPID = GetCurrentProcessId();
 
 			#ifdef FORCE_GETMAINTHREAD_PRINTF
-			wchar_t szInfo[160];
-			msprintf(szInfo, countof(szInfo), L"\x1B[1;31;40m" L"*** [PID=%u %s] GetMainThreadId is using CreateToolhelp32Snapshot ***" L"\x1B[0m" L"\n", dwPID, gsExeName);
+			wchar_t szInfo[160], szTail[32];
+			msprintf(szInfo, countof(szInfo), L"\x1B[1;31;40m" L"*** [PID=%u %s] GetMainThreadId is using CreateToolhelp32Snapshot", dwPID, gsExeName);
+			wcscpy_c(szTail, L"\x1B[1;31;40m" L" ***" L"\x1B[0m" L"\n");
 			WriteProcessed2(szInfo, wcslen(szInfo), NULL, wps_Error);
 			#endif
 
@@ -109,6 +110,10 @@ DWORD GetMainThreadId(bool bUseCurrentAsMain)
 
 				CloseHandle(snapshot);
 			}
+
+			#ifdef FORCE_GETMAINTHREAD_PRINTF
+			WriteProcessed2(szTail, wcslen(szTail), NULL, wps_Error);
+			#endif
 		}
 	}
 
