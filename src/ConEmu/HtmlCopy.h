@@ -49,25 +49,181 @@ Text
 
 #pragma once
 
-class CHtmlCopy
+class CFormatCopy
 {
 protected:
-	bool bPlainHtml;
+	bool bCopyRawCodes;
 	struct txt {
 		INT_PTR nLen;
 		union
 		{
-			char* pasz;
-			wchar_t* pwsz;
+			char* pasz;    // UTF-8: Used if (bCopyRawCodes == false)
+			wchar_t* pwsz; // Used if (bCopyRawCodes == true)
 			void* ptr;
 		};
 	};
-	MArray<txt> m_Items; // UTF-8
-	size_t mn_AllItemsLen, mn_TextStart, mn_TextEnd;
+	MArray<txt> m_Items;
+	size_t mn_AllItemsLen;
+	char szUTF8[6001]; // (szTemp*3 + \0)
+public:
+	CFormatCopy()
+	{
+		mn_AllItemsLen = 0;
+		bCopyRawCodes = false;
+	};
+	virtual ~CFormatCopy()
+	{
+		for (int i = 0; i < m_Items.size(); i++)
+			free(m_Items[i].ptr);
+		m_Items.clear();
+	};
+public:
+	virtual HGLOBAL CreateResult() = 0;
+
+	virtual void LineAdd(LPCWSTR asText, const WORD* apAttr, const COLORREF* pPal, INT_PTR nLen)
+	{
+		WORD a = *apAttr;
+		LPCWSTR ps = asText;
+		const WORD* pa = apAttr;
+		ParBegin();
+		while ((nLen--) > 0)
+		{
+			pa++; ps++;
+			if (!nLen || (*pa != a))
+			{
+				TextAdd(asText, ps - asText, pPal[a & 0xF], pPal[(a & 0xF0)>>4]);
+				asText = ps; apAttr = pa;
+				a = *apAttr;
+			}
+		}
+		ParEnd();
+	};
+
+	virtual void LineAdd(LPCWSTR asText, const CharAttr* apAttr, INT_PTR nLen)
+	{
+		CharAttr a = *apAttr;
+		LPCWSTR ps = asText;
+		const CharAttr* pa = apAttr;
+		ParBegin();
+		while ((nLen--) > 0)
+		{
+			pa++; ps++;
+			if (!nLen || (pa->All != a.All))
+			{
+				TextAdd(asText, ps - asText, a.crForeColor, a.crBackColor, (a.nFontIndex&1)==1, (a.nFontIndex&2)==2, (a.nFontIndex&4)==4);
+				asText = ps; apAttr = pa;
+				a = *apAttr;
+			}
+		}
+		ParEnd();
+	};
+
+protected:
+	virtual void ParBegin() = 0;
+	virtual void ParEnd() = 0;
+	virtual void TextAdd(LPCWSTR asText, INT_PTR cchLen, COLORREF crFore, COLORREF crBack, bool Bold = false, bool Italic = false, bool Underline = false) = 0;
+protected:
+	void RawAdd(LPCWSTR asText, INT_PTR cchLen)
+	{
+		if (bCopyRawCodes)
+		{
+			// We store data "as is" to copy RAW sequences/html to clipboard
+			txt t = {cchLen};
+			t.pwsz = (wchar_t*)malloc((cchLen+1)*sizeof(wchar_t));
+			wmemmove(t.pwsz, asText, cchLen);
+			t.pwsz[cchLen] = 0;
+			m_Items.push_back(t);
+			mn_AllItemsLen += cchLen;
+		}
+		else
+		{
+			// We need to convert data to UTF-8 (HTML clipboard format)
+			int nUtfLen = WideCharToMultiByte(CP_UTF8, 0, asText, cchLen, szUTF8, countof(szUTF8)-1, 0, 0);
+			if (nUtfLen > 0)
+			{
+				txt t = {nUtfLen};
+				t.pasz = (char*)malloc(nUtfLen+1);
+				memmove(t.pasz, szUTF8, nUtfLen);
+				t.pasz[nUtfLen] = 0;
+				m_Items.push_back(t);
+				mn_AllItemsLen += nUtfLen;
+			}
+		}
+	};
+
+	HGLOBAL CreateResultInternal(const char* pszHdr = NULL, INT_PTR nHdrLen = 0)
+	{
+		INT_PTR nCharCount = (nHdrLen/*Header*/ + mn_AllItemsLen + 3);
+		HGLOBAL hCopy = GlobalAlloc(GMEM_MOVEABLE|GMEM_ZEROINIT, (nCharCount+1)*(bCopyRawCodes ? sizeof(wchar_t) : sizeof(char)));
+
+		if (!hCopy)
+		{
+			Assert(hCopy != NULL);
+		}
+		else if (bCopyRawCodes)
+		{
+			wchar_t *pch = (wchar_t*)GlobalLock(hCopy);
+			if (!pch)
+			{
+				Assert(pch != NULL);
+				GlobalFree(hCopy);
+				hCopy = NULL;
+			}
+			else
+			{
+				for (int i = 0; i < m_Items.size(); i++)
+				{
+					txt t = m_Items[i];
+					wmemmove(pch, t.pwsz, t.nLen);
+					pch += t.nLen;
+				}
+
+				*pch = 0;
+
+				GlobalUnlock(hCopy);
+			}
+		}
+		else
+		{
+			char *pch = (char*)GlobalLock(hCopy);
+			if (!pch)
+			{
+				Assert(pch != NULL);
+				GlobalFree(hCopy);
+				hCopy = NULL;
+			}
+			else
+			{
+				if (pszHdr && (nHdrLen > 0))
+				{
+					memmove(pch, pszHdr, nHdrLen);
+					pch += nHdrLen;
+				}
+
+				for (int i = 0; i < m_Items.size(); i++)
+				{
+					txt t = m_Items[i];
+					memmove(pch, t.pasz, t.nLen);
+					pch += t.nLen;
+				}
+
+				*pch = 0;
+
+				GlobalUnlock(hCopy);
+			}
+		}
+
+		return hCopy;
+	};
+};
+
+class CHtmlCopy : public CFormatCopy
+{
+protected:
+	size_t mn_TextStart, mn_TextEnd;
 	bool mb_Finalized, mb_ParOpened;
 	wchar_t szTemp[2000], szBack[64], szFore[64], szId[8];
 	wchar_t szBold[20], szItalic[20], szUnderline[20];
-	char szUTF8[6001]; // (szTemp*3 + \0)
 protected:
 	LPCWSTR FormatColor(COLORREF clr, wchar_t* rsBuf)
 	{
@@ -76,16 +232,14 @@ protected:
 		return rsBuf;
 	};
 public:
-	CHtmlCopy()
+	CHtmlCopy(bool abPlainHtml, LPCWSTR asBuild, LPCWSTR asFont, int anFontHeight, COLORREF crFore, COLORREF crBack)
+		: CFormatCopy()
 	{
-		mn_AllItemsLen = 0; mb_Finalized = mb_ParOpened = false;
+		mb_Finalized = mb_ParOpened = false;
 		mn_TextStart = 0; mn_TextEnd = 0;
-		bPlainHtml = false;
-	}
 
-	void Init(bool abPlainHtml, LPCWSTR asBuild, LPCWSTR asFont, int anFontHeight, COLORREF crFore, COLORREF crBack)
-	{
-		bPlainHtml = abPlainHtml;
+		bCopyRawCodes = abPlainHtml;
+
 		LPCWSTR pszHtml = L"<!DOCTYPE>\r\n"
 			L"<HTML>\r\n"
 			L"<HEAD>\r\n"
@@ -103,28 +257,26 @@ public:
 		RawAdd(szTemp, _tcslen(szTemp));
 	};
 
-	~CHtmlCopy()
+	virtual ~CHtmlCopy()
 	{
-		for (int i = 0; i < m_Items.size(); i++)
-			free(m_Items[i].ptr);
-		m_Items.clear();
 	};
 
-	void ParBegin()
+protected:
+	virtual void ParBegin() override
 	{
 		if (mb_ParOpened)
 			ParEnd();
 		mb_ParOpened = true;
-	}
-	void ParEnd()
+	};
+	virtual void ParEnd() override
 	{
 		if (!mb_ParOpened)
 			return;
 		mb_ParOpened = false;
 		RawAdd(L"<br>\r\n", 6);
-	}
+	};
 
-	void TextAdd(LPCWSTR asText, INT_PTR cchLen, COLORREF crFore, COLORREF crBack, bool Bold = false, bool Italic = false, bool Underline = false)
+	virtual void TextAdd(LPCWSTR asText, INT_PTR cchLen, COLORREF crFore, COLORREF crBack, bool Bold = false, bool Italic = false, bool Underline = false) override
 	{
 		// Open (special colors, fonts, outline?)
 		_wsprintf(szFore, SKIPLEN(countof(szFore)) L"color: %s; ", FormatColor(crFore, szId));
@@ -196,74 +348,10 @@ public:
 
 		// Fin
 		RawAdd(L"</span>", 7);
-	}
-
-	void LineAdd(LPCWSTR asText, const WORD* apAttr, const COLORREF* pPal, INT_PTR nLen)
-	{
-		WORD a = *apAttr;
-		LPCWSTR ps = asText;
-		const WORD* pa = apAttr;
-		ParBegin();
-		while ((nLen--) > 0)
-		{
-			pa++; ps++;
-			if (!nLen || (*pa != a))
-			{
-				TextAdd(asText, ps - asText, pPal[a & 0xF], pPal[(a & 0xF0)>>4]);
-				asText = ps; apAttr = pa;
-				a = *apAttr;
-			}
-		}
-		ParEnd();
 	};
 
-	void LineAdd(LPCWSTR asText, const CharAttr* apAttr, INT_PTR nLen)
-	{
-		CharAttr a = *apAttr;
-		LPCWSTR ps = asText;
-		const CharAttr* pa = apAttr;
-		ParBegin();
-		while ((nLen--) > 0)
-		{
-			pa++; ps++;
-			if (!nLen || (pa->All != a.All))
-			{
-				TextAdd(asText, ps - asText, a.crForeColor, a.crBackColor, (a.nFontIndex&1)==1, (a.nFontIndex&2)==2, (a.nFontIndex&4)==4);
-				asText = ps; apAttr = pa;
-				a = *apAttr;
-			}
-		}
-		ParEnd();
-	};
-
-	void RawAdd(LPCWSTR asText, INT_PTR cchLen)
-	{
-		//TODO("Optimization?");
-		if (bPlainHtml)
-		{
-			txt t = {cchLen};
-			t.pwsz = (wchar_t*)malloc((cchLen+1)*sizeof(wchar_t));
-			wmemmove(t.pwsz, asText, cchLen);
-			t.pwsz[cchLen] = 0;
-			m_Items.push_back(t);
-			mn_AllItemsLen += cchLen;
-		}
-		else
-		{
-			int nUtfLen = WideCharToMultiByte(CP_UTF8, 0, asText, cchLen, szUTF8, countof(szUTF8)-1, 0, 0);
-			if (nUtfLen > 0)
-			{
-				txt t = {nUtfLen};
-				t.pasz = (char*)malloc(nUtfLen+1);
-				memmove(t.pasz, szUTF8, nUtfLen);
-				t.pasz[nUtfLen] = 0;
-				m_Items.push_back(t);
-				mn_AllItemsLen += nUtfLen;
-			}
-		}
-	};
-
-	HGLOBAL CreateResult()
+public:
+	virtual HGLOBAL CreateResult() override
 	{
 		if (!mb_Finalized)
 		{
@@ -279,7 +367,7 @@ public:
 
 		char szHdr[255];
 		INT_PTR nHdrLen = 0;
-		if (!bPlainHtml)
+		if (!bCopyRawCodes)
 		{
 			// First, we need to calculate header len
 			LPCSTR pszURL = CEHOMEPAGE_A;
@@ -302,63 +390,8 @@ public:
 			_ASSERTE(nHdrLen == strlen(szHdr));
 		}
 
-		INT_PTR nCharCount = (nHdrLen/*Header*/ + mn_AllItemsLen + 3);
-		HGLOBAL hCopy = GlobalAlloc(GMEM_MOVEABLE|GMEM_ZEROINIT, (nCharCount+1)*(bPlainHtml ? sizeof(wchar_t) : sizeof(char)));
-
-		if (!hCopy)
-		{
-			Assert(hCopy != NULL);
-		}
-		else if (bPlainHtml)
-		{
-			wchar_t *pch = (wchar_t*)GlobalLock(hCopy);
-			if (!pch)
-			{
-				Assert(pch != NULL);
-				GlobalFree(hCopy);
-				hCopy = NULL;
-			}
-			else
-			{
-				for (int i = 0; i < m_Items.size(); i++)
-				{
-					txt t = m_Items[i];
-					wmemmove(pch, t.pwsz, t.nLen);
-					pch += t.nLen;
-				}
-
-				*pch = 0;
-
-				GlobalUnlock(hCopy);
-			}
-		}
-		else
-		{
-			char *pch = (char*)GlobalLock(hCopy);
-			if (!pch)
-			{
-				Assert(pch != NULL);
-				GlobalFree(hCopy);
-				hCopy = NULL;
-			}
-			else
-			{
-				memmove(pch, szHdr, nHdrLen);
-				pch += nHdrLen;
-
-				for (int i = 0; i < m_Items.size(); i++)
-				{
-					txt t = m_Items[i];
-					memmove(pch, t.pasz, t.nLen);
-					pch += t.nLen;
-				}
-
-				*pch = 0;
-
-				GlobalUnlock(hCopy);
-			}
-		}
-
+		// Just compile all string to one block
+		HGLOBAL hCopy = CreateResultInternal(bCopyRawCodes ? NULL : szHdr, nHdrLen);
 		return hCopy;
-	}
+	};
 };

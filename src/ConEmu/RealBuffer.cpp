@@ -4526,7 +4526,7 @@ bool CRealBuffer::DoSelectionCopyInt(CECopyMode CopyMode, bool bStreamMode, int 
 
 	bool bUseHtml = (nFormat != 0);
 
-	CHtmlCopy html;
+	CFormatCopy* html = NULL;
 
 	if (bUseHtml)
 	{
@@ -4542,8 +4542,10 @@ bool CRealBuffer::DoSelectionCopyInt(CECopyMode CopyMode, bool bStreamMode, int 
 			crFore = pAttr->crForeColor; crBack = pAttr->crBackColor;
 		}
 
-		//wchar_t szClass[64]; _wsprintf(szClass, SKIPLEN(countof(szClass)) L"ConEmu%s%s", gpConEmu->ms_ConEmuBuild, WIN3264TEST(L"x32",L"x64"));
-		html.Init((nFormat == 2), gpConEmu->ms_ConEmuBuild, gpSetCls->FontFaceName(), gpSetCls->FontHeightHtml(), crFore, crBack);
+		{
+			//wchar_t szClass[64]; _wsprintf(szClass, SKIPLEN(countof(szClass)) L"ConEmu%s%s", gpConEmu->ms_ConEmuBuild, WIN3264TEST(L"x32",L"x64"));
+			html = new CHtmlCopy((nFormat == 2), gpConEmu->ms_ConEmuBuild, gpSetCls->FontFaceName(), gpSetCls->FontHeightHtml(), crFore, crBack);
+		}
 	}
 
 
@@ -4591,9 +4593,9 @@ bool CRealBuffer::DoSelectionCopyInt(CECopyMode CopyMode, bool bStreamMode, int 
 				{
 					INT_PTR nLineStart = pszSrcStart - pszDataStart;
 					if ((m_Type == rbt_Primary) && pAttrStart)
-						html.LineAdd(pszSrcStart, pAttrStart+nLineStart, pPal, nSelWidth);
+						html->LineAdd(pszSrcStart, pAttrStart+nLineStart, pPal, nSelWidth);
 					else if (pAttrStartEx)
-						html.LineAdd(pszSrcStart, pAttrStartEx+nLineStart, nSelWidth);
+						html->LineAdd(pszSrcStart, pAttrStartEx+nLineStart, nSelWidth);
 				}
 
 			}
@@ -4659,9 +4661,9 @@ bool CRealBuffer::DoSelectionCopyInt(CECopyMode CopyMode, bool bStreamMode, int 
 					INT_PTR nLineStart = pszSrcStart - pszDataStart;
 					INT_PTR nLineLen = pch - pszDstStart;
 					if ((m_Type == rbt_Primary) && pAttrStart)
-						html.LineAdd(pszSrcStart, pAttrStart+nLineStart, pPal, nLineLen);
+						html->LineAdd(pszSrcStart, pAttrStart+nLineStart, pPal, nLineLen);
 					else if (pAttrStartEx)
-						html.LineAdd(pszSrcStart, pAttrStartEx+nLineStart, nLineLen);
+						html->LineAdd(pszSrcStart, pAttrStartEx+nLineStart, nLineLen);
 				}
 
 			}
@@ -4739,6 +4741,7 @@ bool CRealBuffer::DoSelectionCopyInt(CECopyMode CopyMode, bool bStreamMode, int 
 	{
 		// Был выделен текст для того чтобы сразу его вставить, не трогая Clipboard
 		*phUnicode = hUnicode;
+		SafeDelete(html);
 		return true;
 	}
 
@@ -4746,12 +4749,13 @@ bool CRealBuffer::DoSelectionCopyInt(CECopyMode CopyMode, bool bStreamMode, int 
 	HGLOBAL hHtml = NULL;
 	if (bUseHtml)
 	{
-		hHtml = html.CreateResult();
+		hHtml = html->CreateResult();
 		if (!hHtml)
 		{
 			dwErr = GetLastError();
 			DisplayLastError(L"Creating HTML format failed!", dwErr, MB_ICONSTOP);
 			GlobalFree(hUnicode);
+			SafeDelete(html);
 			return false;
 		}
 	}
@@ -4765,6 +4769,8 @@ bool CRealBuffer::DoSelectionCopyInt(CECopyMode CopyMode, bool bStreamMode, int 
 		hHtml = NULL;
 		bUseHtml = false;
 	}
+
+	SafeDelete(html);
 
 	// Asked to save it to file instead of clipboard?
 	if (pszDstFile)
