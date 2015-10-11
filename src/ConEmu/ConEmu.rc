@@ -895,7 +895,7 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "Text selection",IDC_STATIC,4,1,319,47
+    GROUPBOX        "Text selection",IDC_STATIC,4,1,319,61
     CONTROL         "Freeze console contents before selection (may cause small lag)",cbCTSFreezeBeforeSelect,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,14,249,8
     CONTROL         "Detect line ends",cbCTSDetectLineEnd,"Button",BS_AUTO3STATE | WS_TABSTOP,11,30,66,8
@@ -903,33 +903,33 @@ BEGIN
     CONTROL         "Trim trailing spaces",cbCTSTrimTrailing,"Button",BS_AUTO3STATE | WS_TABSTOP,150,30,77,8
     RTEXT           "EOL:",stCTSEOL,232,31,32,8
     COMBOBOX        lbCTSEOL,270,28,47,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    RTEXT           "Copying format:",stCopyFormat,11,40,32,8
-    COMBOBOX        lbCopyFormat,86,37,120,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    GROUPBOX        "Color indexes",IDC_STATIC,4,54,319,30
-    RTEXT           "Text:",IDC_STATIC,11,68,22,8
-    COMBOBOX        lbCTSForeIdx,35,65,27,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
-    RTEXT           "Back:",IDC_STATIC,81,68,22,8
-    COMBOBOX        lbCTSBackIdx,105,65,27,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
-    RTEXT           "Find:",IDC_STATIC,148,67,22,8,NOT WS_VISIBLE | WS_DISABLED
-    COMBOBOX        lbCTSFindIdx,172,65,27,30,CBS_DROPDOWNLIST | CBS_SORT | NOT WS_VISIBLE | WS_DISABLED | WS_VSCROLL | WS_TABSTOP
-    GROUPBOX        "Select text with mouse (LeftClick+Drag)",IDC_STATIC,4,89,319,57
-    CONTROL         "Intelligent mode",cbCTSIntelligent,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,102,80,8
-    RTEXT           "Exceptions (""|""-separated):",stCTSIntelligentExceptions,90,102,103,8
-    EDITTEXT        tCTSIntelligentExceptions,196,100,121,12,ES_AUTOHSCROLL
-    CONTROL         "Text selection",cbCTSTextSelection,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,118,59,8
-    COMBOBOX        lbCTSTextSelection,82,116,55,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    RTEXT           "Copying format:",stCopyFormat,10,47,71,8
+    COMBOBOX        lbCopyFormat,86,44,120,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    GROUPBOX        "Color indexes",IDC_STATIC,4,67,319,30
+    RTEXT           "Text:",IDC_STATIC,11,81,22,8
+    COMBOBOX        lbCTSForeIdx,35,78,27,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    RTEXT           "Back:",IDC_STATIC,81,81,22,8
+    COMBOBOX        lbCTSBackIdx,105,78,27,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    RTEXT           "Find:",IDC_STATIC,148,80,22,8,NOT WS_VISIBLE | WS_DISABLED
+    COMBOBOX        lbCTSFindIdx,172,78,27,30,CBS_DROPDOWNLIST | CBS_SORT | NOT WS_VISIBLE | WS_DISABLED | WS_VSCROLL | WS_TABSTOP
+    GROUPBOX        "Select text with mouse (LeftClick+Drag)",IDC_STATIC,4,102,319,57
+    CONTROL         "Intelligent mode",cbCTSIntelligent,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,115,80,8
+    RTEXT           "Exceptions (""|""-separated):",stCTSIntelligentExceptions,90,115,103,8
+    EDITTEXT        tCTSIntelligentExceptions,196,113,121,12,ES_AUTOHSCROLL
+    CONTROL         "Text selection",cbCTSTextSelection,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,131,59,8
+    COMBOBOX        lbCTSTextSelection,82,129,55,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     CONTROL         "Block (rectangular) selection",cbCTSBlockSelection,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,150,118,109,8
-    COMBOBOX        lbCTSBlockSelection,262,116,55,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    CONTROL         "Copy on Left Button release",cbCTSAutoCopy,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,132,125,8
-    CONTROL         "Show IBeam cursor",cbCTSIBeam,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,150,132,125,8
-    GROUPBOX        "Select text with keyboard (Also there are two hotkeys on Keys&Macro page)",IDC_STATIC,4,151,319,42
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,150,131,109,8
+    COMBOBOX        lbCTSBlockSelection,262,129,55,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "Copy on Left Button release",cbCTSAutoCopy,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,145,125,8
+    CONTROL         "Show IBeam cursor",cbCTSIBeam,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,150,145,125,8
+    GROUPBOX        "Select text with keyboard (Also there are two hotkeys on Keys&Macro page)",IDC_STATIC,4,164,319,42
     CONTROL         "Start selection with Shift+Arrow (Text = Left/Right/Home/End, Block = Up/Down)",cbCTSShiftArrowStartSel,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,164,308,8
-    CONTROL         "Reset selection on input",cbCTSEndOnTyping,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,178,100,8
-    CONTROL         "any key",cbCTSEndOnKeyPress,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,114,178,45,8
-    CONTROL         "copy before reset",cbCTSEndCopyBefore,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,163,178,73,8
-    CTEXT           "",stCTSPreview,206,63,112,17,WS_BORDER
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,177,308,8
+    CONTROL         "Reset selection on input",cbCTSEndOnTyping,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,191,100,8
+    CONTROL         "any key",cbCTSEndOnKeyPress,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,114,191,45,8
+    CONTROL         "copy before reset",cbCTSEndCopyBefore,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,163,191,73,8
+    CTEXT           "",stCTSPreview,206,76,112,17,WS_BORDER
 END
 
 IDD_SPG_TABS DIALOGEX 0, 0, 328, 235
