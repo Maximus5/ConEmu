@@ -6327,6 +6327,8 @@ void CSettings::OnSettingsClosed()
 
 	UnregisterTabs();
 
+	gColorBoxMap.Reset();
+
 	if (hwndTip)
 	{
 		DestroyWindow(hwndTip);

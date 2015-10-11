@@ -46,6 +46,7 @@ ColorPalette CSetDlgColors::gLastColors = {};
 
 HBRUSH CSetDlgColors::mh_CtlColorBrush = NULL;
 COLORREF CSetDlgColors::acrCustClr[16] = {}; // array of custom colors, используется в ChooseColor(...)
+MMap<HWND, WNDPROC> CSetDlgColors::gColorBoxMap;
 
 bool CSetDlgColors::GetColorById(WORD nID, COLORREF* color)
 {
@@ -129,9 +130,103 @@ bool CSetDlgColors::SetColorById(WORD nID, COLORREF color)
 	return true;
 }
 
+LRESULT CSetDlgColors::ColorBoxProc(HWND hCtrl, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	LRESULT lRc = 0;
+	WNDPROC pfnOldProc = NULL;
+	gColorBoxMap.Get(hCtrl, &pfnOldProc);
+
+	UINT CB = GetWindowLong(hCtrl, GWL_ID);
+
+	static bool bHooked = false, bClicked = false;
+	static COLORREF clrPrevValue = 0;
+
+	switch (uMsg)
+	{
+	case WM_LBUTTONDOWN:
+		SetCapture(hCtrl);
+		GetColorById(CB, &clrPrevValue);
+		bHooked = bClicked = true;
+		goto wrap;
+	case WM_LBUTTONUP:
+		if (bHooked)
+		{
+			bHooked = false;
+			SetCapture(NULL);
+		}
+		if (bClicked)
+		{
+			CSettings::OnBtn_ColorField(hCtrl, CB, 0);
+		}
+		goto wrap;
+	case WM_RBUTTONDOWN:
+		if (bHooked)
+		{
+			SetColorById(CB, clrPrevValue);
+			ColorSetEdit(GetParent(hCtrl), CB);
+			CSettings::InvalidateCtrl(hCtrl, TRUE);
+			gpConEmu->InvalidateAll();
+			gpConEmu->Update(true);
+		}
+		goto wrap;
+	case WM_RBUTTONUP:
+		goto wrap;
+	case WM_MOUSEMOVE:
+		if (bHooked)
+		{
+			POINT ptCur = {}; GetCursorPos(&ptCur);
+			RECT rcSelf = {}; GetWindowRect(hCtrl, &rcSelf);
+			if (!PtInRect(&rcSelf, ptCur))
+			{
+				bClicked = false;
+				HDC hdc = GetDC(NULL);
+				if (hdc)
+				{
+					COLORREF clr = GetPixel(hdc, ptCur.x, ptCur.y);
+					if (clr != CLR_INVALID)
+					{
+						SetColorById(CB, clr);
+						ColorSetEdit(GetParent(hCtrl), CB);
+						CSettings::InvalidateCtrl(hCtrl, TRUE);
+						gpConEmu->InvalidateAll();
+						gpConEmu->Update(true);
+					}
+					ReleaseDC(NULL, hdc);
+				}
+			}
+		}
+		goto wrap;
+	case WM_DESTROY:
+		if (bHooked)
+		{
+			bHooked = false;
+			SetCapture(NULL);
+		}
+		gColorBoxMap.Get(hCtrl, NULL, true);
+		break;
+	}
+
+	if (pfnOldProc)
+		lRc = ::CallWindowProc(pfnOldProc, hCtrl, uMsg, wParam, lParam);
+	else
+		lRc = ::DefWindowProc(hCtrl, uMsg, wParam, lParam);
+wrap:
+	return lRc;
+}
+
 void CSetDlgColors::ColorSetEdit(HWND hWnd2, WORD c)
 {
 	_ASSERTE(hWnd2!=NULL);
+	// Hook ctrl procedure
+	if (!gColorBoxMap.Initialized())
+		gColorBoxMap.Init(128);
+	HWND hBox = GetDlgItem(hWnd2, c);
+	if (!gColorBoxMap.Get(hBox, NULL))
+	{
+		WNDPROC pfnOld = (WNDPROC)SetWindowLongPtr(hBox, GWLP_WNDPROC, (LONG_PTR)ColorBoxProc);
+		gColorBoxMap.Set(hBox, pfnOld);
+	}
+	// text box ID
 	WORD tc = (tc0-c0) + c;
 	// Well, 11 chars are enough for "255 255 255"
 	// But sometimes it is interesting to copy/paste/cut when editing palettes, so x2

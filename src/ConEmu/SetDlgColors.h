@@ -52,4 +52,8 @@ protected:
 	static void FillBgImageColors(HWND hWnd2);
 	static INT_PTR ColorCtlStatic(HWND hWnd2, WORD c, HWND hItem);
 	static bool ShowColorDialog(HWND HWndOwner, COLORREF *inColor);
+
+protected:
+	static MMap<HWND,WNDPROC> gColorBoxMap;
+	static LRESULT CALLBACK ColorBoxProc(HWND hCtrl, UINT uMsg, WPARAM wParam, LPARAM lParam);
 };
