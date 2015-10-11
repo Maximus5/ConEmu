@@ -1677,10 +1677,6 @@ BOOL DllMain_ProcessAttach(HANDLE hModule, DWORD  ul_reason_for_call)
 		}
 	}
 
-	// When calling Attach (Win+G) from ConEmu GUI
-	gbForceStartPipeServer = (!bCurrentThreadIsMain);
-	_ASSERTE(!gbForceStartPipeServer || (lstrcmpi(gsExeName,L"ls.exe") != 0))
-
 	if (!gbSelfIsRootConsoleProcess && !gbConEmuCProcess)
 	{
 		msprintf(szEvtName, countof(szEvtName), CEDEFAULTTERMHOOK, gnSelfPID);
@@ -1727,6 +1723,10 @@ BOOL DllMain_ProcessAttach(HANDLE hModule, DWORD  ul_reason_for_call)
 	if (!bCurrentThreadIsMain)
 		gStartedThreads.Set(GetCurrentThreadId(), TRUE);
 	DLOGEND1();
+
+	// When calling Attach (Win+G) from ConEmu GUI
+	gbForceStartPipeServer = (!bCurrentThreadIsMain);
+	_ASSERTE(!gbForceStartPipeServer || (lstrcmpi(gsExeName, L"ls.exe") != 0))
 
 	DLOG1_("DllMain.InQueue",ul_reason_for_call);
 	//gcchLastWriteConsoleMax = 4096;
