@@ -165,8 +165,9 @@ bool CSetDlgColors::ColorEditDialog(HWND hWnd2, WORD c)
 	if (ShowColorDialog(ghOpWnd, &colornew) && colornew != color)
 	{
 		SetColorById(c, colornew);
-		_wsprintf(temp, SKIPLEN(countof(temp)) L"%i %i %i", getR(colornew), getG(colornew), getB(colornew));
-		SetDlgItemText(hWnd2, c + (tc0-c0), temp);
+		//_wsprintf(temp, SKIPLEN(countof(temp)) L"%i %i %i", getR(colornew), getG(colornew), getB(colornew));
+		//SetDlgItemText(hWnd2, c + (tc0-c0), temp);
+		ColorSetEdit(hWnd2, c);
 		CSettings::InvalidateCtrl(GetDlgItem(hWnd2, c), TRUE);
 		bChanged = true;
 	}
