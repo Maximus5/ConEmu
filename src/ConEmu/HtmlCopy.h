@@ -395,3 +395,199 @@ public:
 		return hCopy;
 	};
 };
+
+class CAnsiCopy : public CFormatCopy
+{
+protected:
+	bool mb_ParOpened;
+	wchar_t szSeq[80], szTemp[256];
+	bool mb_Palette;
+	COLORREF clrPalette[16];
+	bool mb_Bold, mb_Italic, mb_Underline;
+protected:
+	LPCWSTR FormatColor(COLORREF crFore, COLORREF crBack, bool Bold, bool Italic, bool Underline, wchar_t (&rsBuf)[80])
+	{
+		wchar_t szBk[80], szBIU[16] = L"";
+		UINT Ansi[8] = {0, 4, 2, 6, 1, 5, 3, 7};
+
+		// Prepare styles first
+		if (Bold != mb_Bold)
+		{
+			mb_Bold = Bold;
+			wcscat_c(szBIU, Bold ? L";1" : L";22");
+		}
+		if (Italic != mb_Italic)
+		{
+			mb_Italic = Italic;
+			wcscat_c(szBIU, Italic ? L";3" : L";23");
+		}
+		if (Underline != mb_Underline)
+		{
+			mb_Underline = Underline;
+			wcscat_c(szBIU, Underline ? L";3" : L";24");
+		}
+
+		// 0..15 indexed colors
+		if (mb_Palette)
+		{
+			for (int i = 0; i < 8; i++)
+			{
+				if (clrPalette[i] == crFore)
+				{
+					_wsprintf(rsBuf, SKIPCOUNT(rsBuf) L"\x1B[%um", 30+Ansi[i]);
+					goto do_bk;
+				}
+			}
+			for (int i = 8; i < 16; i++)
+			{
+				if (clrPalette[i] == crFore)
+				{
+					_wsprintf(rsBuf, SKIPCOUNT(rsBuf) L"\x1B[%um", 90+Ansi[i-8]);
+					goto do_bk;
+				}
+			}
+		}
+
+		//TODO: xterm-256 palette?
+
+		// xterm 24-bit colors
+		_wsprintf(rsBuf, SKIPCOUNT(rsBuf) L"\x1B[38;2;%u;%u;%um",
+			(UINT)(crFore & 0xFF), (UINT)((crFore & 0xFF00)>>8), (UINT)((crFore & 0xFF0000)>>16));
+
+	do_bk:
+		// 0..15 indexed colors
+		if (mb_Palette)
+		{
+			for (int i = 0; i < 8; i++)
+			{
+				if (clrPalette[i] == crBack)
+				{
+					_wsprintf(szBk, SKIPCOUNT(szBk) L"\x1B[%um", 40+Ansi[i]);
+					goto add_bk;
+				}
+			}
+			for (int i = 8; i < 16; i++)
+			{
+				if (clrPalette[i] == crBack)
+				{
+					_wsprintf(szBk, SKIPCOUNT(szBk) L"\x1B[%um", 100+Ansi[i-8]);
+					goto add_bk;
+				}
+			}
+		}
+
+		//TODO: xterm-256 palette?
+
+		// xterm 24-bit colors
+		_wsprintf(szBk, SKIPCOUNT(szBk) L"\x1B[48;2;%u;%u;%um",
+			(UINT)(crBack & 0xFF), (UINT)((crBack & 0xFF00)>>8), (UINT)((crBack & 0xFF0000)>>16));
+	add_bk:
+		wcscat_c(rsBuf, szBk);
+		if (szBIU[0])
+		{
+			wcscat_c(szBIU, L"m");
+			wcscat_c(rsBuf, L"\x1B[");
+			wcscat_c(rsBuf, szBIU + 1);
+		}
+		return rsBuf;
+	};
+public:
+	CAnsiCopy(COLORREF* pclrPalette/*[16]*/, COLORREF crFore, COLORREF crBack)
+		: CFormatCopy()
+	{
+		mb_ParOpened = false;
+		mb_Bold = mb_Italic = mb_Underline = false;
+
+		bCopyRawCodes = true;
+
+		mb_Palette = (pclrPalette != NULL);
+		if (mb_Palette)
+			memmove(clrPalette, pclrPalette, sizeof(clrPalette));
+
+		#if 0
+		// Init format
+		FormatColor(crFore, crBack, szSeq);
+		// Unset Bold/Italic/Underline
+		RawAdd(szTemp, _tcslen(szTemp));
+		#endif
+	};
+
+	virtual ~CAnsiCopy()
+	{
+	};
+
+protected:
+	virtual void ParBegin() override
+	{
+		if (mb_ParOpened)
+			ParEnd();
+		mb_ParOpened = true;
+	};
+	virtual void ParEnd() override
+	{
+		if (!mb_ParOpened)
+			return;
+		mb_ParOpened = false;
+		RawAdd(L"\x1B[m\r\n", 5);
+	};
+
+	virtual void TextAdd(LPCWSTR asText, INT_PTR cchLen, COLORREF crFore, COLORREF crBack, bool Bold = false, bool Italic = false, bool Underline = false) override
+	{
+		// Set colors
+		wcscpy_c(szTemp, FormatColor(crFore, crBack, Bold, Italic, Underline, szSeq));
+		// Set/Unset Bold/Italic/Underline
+		RawAdd(szTemp, _tcslen(szTemp));
+
+		// Text
+		LPCWSTR pszEnd = asText + cchLen;
+		wchar_t* pszDst = szTemp;
+		wchar_t* pszDstEnd = szTemp + countof(szTemp);
+		const INT_PTR minTagLen = 10; // ~~
+
+		while (asText < pszEnd)
+		{
+			if ((pszDst + minTagLen) >= pszDstEnd)
+			{
+				RawAdd(szTemp, pszDst - szTemp);
+				pszDst = szTemp;
+			}
+
+			switch (*asText)
+			{
+				case 0:
+					*(pszDst++) = L' ';
+					break;
+				//case L'\\':
+				//	_wcscpy_c(pszDst, minTagLen, L"\\\\");
+				//	pszDst += 2;
+				//	break;
+				default:
+					*(pszDst++) = *asText;
+			}
+
+			asText++;
+		}
+
+		if (pszDst > szTemp)
+		{
+			RawAdd(szTemp, pszDst - szTemp);
+		}
+
+		// Fin
+	};
+
+public:
+	virtual HGLOBAL CreateResult() override
+	{
+		// Reset coloring
+		if (mb_ParOpened)
+		{
+			wcscpy_c(szTemp, L"\x1B[m");
+			RawAdd(szTemp, _tcslen(szTemp));
+		}
+
+		// Just compile all string to one block
+		HGLOBAL hCopy = CreateResultInternal(NULL, 0);
+		return hCopy;
+	};
+};

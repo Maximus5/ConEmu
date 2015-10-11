@@ -2389,7 +2389,7 @@ LRESULT CSettings::OnInitDialog_MarkCopy(HWND hWnd2, bool abInitial)
 
 	checkDlgButton(hWnd2, cbCTSShiftArrowStartSel, gpSet->AppStd.isCTSShiftArrowStart);
 
-	checkRadioButton(hWnd2, rbCopyFmtHtml0, rbCopyFmtHtml2, (rbCopyFmtHtml0+gpSet->isCTSHtmlFormat));
+	CSetDlgLists::FillListBoxItems(GetDlgItem(hWnd2, lbCopyFormat), CSetDlgLists::eCopyFormat, gpSet->isCTSHtmlFormat, false);
 
 	CheckSelectionModifiers(hWnd2);
 
@@ -6027,6 +6027,13 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 						CSetDlgLists::GetListBoxItem(hWnd2, lbCTSEOL, CSetDlgLists::eCRLF, eol);
 						gpSet->AppStd.isCTSEOL = eol;
 					} // lbCTSEOL
+					break;
+				case lbCopyFormat:
+					{
+						BYTE CopyFormat = 0;
+						CSetDlgLists::GetListBoxItem(hWnd2, lbCopyFormat, CSetDlgLists::eCopyFormat, CopyFormat);
+						gpSet->isCTSHtmlFormat = CopyFormat;
+					} // lbCopyFormat
 					break;
 				case lbCTSForeIdx:
 					{

@@ -58,6 +58,7 @@ const ListBoxItem  CSetDlgLists::ColorIdxTh[] = {{0,L"# 0"}, {1,L"# 1"}, {2,L"# 
 const ListBoxItem  CSetDlgLists::ThumbMaxZoom[] = {{100,L"100%"},{200,L"200%"},{300,L"300%"},{400,L"400%"},{500,L"500%"},{600,L"600%"}};
 
 const ListBoxItem  CSetDlgLists::CRLF[] = {{0,L"CR+LF"}, {1,L"LF"}, {2,L"CR"}};
+const ListBoxItem  CSetDlgLists::CopyFormat[] = {{0,L"Copy plain text only"}, {1,L"Copy HTML format"}, {2,L"Copy as (RAW) HTML"}, {3,L"Copy ANSI sequences"}};
 
 const DWORD CSetDlgLists::SizeCtrlId[] = {tWndWidth, stWndWidth, tWndHeight, stWndHeight};
 const DWORD CSetDlgLists::TaskCtrlId[] = {tCmdGroupName, tCmdGroupKey, cbCmdGroupKey, tCmdGroupGuiArg, tCmdGroupCommands, stCmdTaskAdd, cbCmdGroupApp, cbCmdTasksDir, cbCmdTasksParm, cbCmdTasksActive, cbCmdGrpDefaultNew, cbCmdGrpDefaultCmd, cbCmdGrpTaskbar, cbCmdGrpToolbar};
@@ -105,6 +106,7 @@ uint CSetDlgLists::GetListItems(eFillListBoxItems eWhat, const ListBoxItem*& pIt
 	LST_ENUM(ColorIdxTh);
 	LST_ENUM(ThumbMaxZoom);
 	LST_ENUM(CRLF);
+	LST_ENUM(CopyFormat);
 	LST_ENUM(TabBtnDblClickActions);
 	LST_ENUM(TabBarDblClickActions);
 	default:

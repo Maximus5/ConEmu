@@ -903,6 +903,8 @@ BEGIN
     CONTROL         "Trim trailing spaces",cbCTSTrimTrailing,"Button",BS_AUTO3STATE | WS_TABSTOP,150,30,77,8
     RTEXT           "EOL:",stCTSEOL,232,31,32,8
     COMBOBOX        lbCTSEOL,270,28,47,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    RTEXT           "Copying format:",stCopyFormat,11,40,32,8
+    COMBOBOX        lbCopyFormat,86,37,120,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     GROUPBOX        "Color indexes",IDC_STATIC,4,54,319,30
     RTEXT           "Text:",IDC_STATIC,11,68,22,8
     COMBOBOX        lbCTSForeIdx,35,65,27,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
@@ -927,10 +929,6 @@ BEGIN
     CONTROL         "Reset selection on input",cbCTSEndOnTyping,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,178,100,8
     CONTROL         "any key",cbCTSEndOnKeyPress,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,114,178,45,8
     CONTROL         "copy before reset",cbCTSEndCopyBefore,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,163,178,73,8
-    GROUPBOX        "Copying format",IDC_STATIC,4,199,319,29
-    CONTROL         "Copy plain text only",rbCopyFmtHtml0,"Button",BS_AUTORADIOBUTTON,11,212,98,8
-    CONTROL         "Copy HTML format",rbCopyFmtHtml1,"Button",BS_AUTORADIOBUTTON,114,212,98,8
-    CONTROL         "Copy as (RAW) HTML",rbCopyFmtHtml2,"Button",BS_AUTORADIOBUTTON,218,212,98,8
     CTEXT           "",stCTSPreview,206,63,112,17,WS_BORDER
 END
 

@@ -486,7 +486,7 @@ struct Settings
 		//reg->Load(L"CTS.SelectText", isCTSSelectText);
 		bool isCTSSelectText;
 		//reg->Load(L"CTS.HtmlFormat", isCTSHtmlFormat);
-		BYTE isCTSHtmlFormat; // 0 - Plain text only, 1 - HTML formatting, 2 - Copy as HTML
+		BYTE isCTSHtmlFormat; // 0 - Plain text only, 1 - HTML formatting, 2 - Copy as HTML, 3 - ANSI sequences
 		//reg->Load(L"CTS.ForceLocale", isCTSForceLocale);
 		DWORD isCTSForceLocale; // Try to bypass clipboard locale problems (pasting to old non-unicode apps)
 

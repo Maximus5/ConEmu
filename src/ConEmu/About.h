@@ -237,6 +237,7 @@ _DBGHLP(L"/ZoneId - Try to drop :Zone.Identifier without confirmation.\r\n") \
 	L"    Format==0: plain text, not formatting\r\n" \
 	L"    Format==1: copy HTML format\r\n" \
 	L"    Format==2: copy as HTML\r\n" \
+	L"    Format==3: copy ANSI sequences\r\n" \
 	L"    File: if specified - save to file instead of clipboard\r\n" \
 	L"Detach\r\n" \
 	L"  - Detach active RealConsole from ConEmu\r\n" \

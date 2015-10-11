@@ -41,7 +41,7 @@ public:
 	{
 		eBgOper, eModifiers, eKeysHot, eKeys, eKeysAct, eCharSets,
 		eClipAct, eColorIdx, eColorIdx16, eColorIdxSh, eColorIdxTh,
-		eThumbMaxZoom, eCRLF,
+		eThumbMaxZoom, eCRLF, eCopyFormat,
 		eTabBtnDblClickActions, eTabBarDblClickActions,
 	};
 	enum eWordItems
@@ -75,6 +75,7 @@ protected:
 	static const ListBoxItem  ThumbMaxZoom[]; // {{100,L"100%"},{200,L"200%"},{300,L"300%"},{400,L"400%"},{500,L"500%"},{600,L"600%"}};
 
 	static const ListBoxItem  CRLF[]; // {{0,L"CR+LF"}, {1,L"LF"}, {2,L"CR"}};
+	static const ListBoxItem  CopyFormat[]; // {{0,L"Copy plain text only"}, {1,L"Copy HTML format"}, {2,L"Copy as (RAW) HTML"}, {3,L"Copy ANSI sequences"}};
 
 	static const DWORD SizeCtrlId[]; // {tWndWidth, stWndWidth, tWndHeight, stWndHeight};
 	static const DWORD TaskCtrlId[]; // {tCmdGroupName, tCmdGroupKey, cbCmdGroupKey, tCmdGroupGuiArg, tCmdGroupCommands, stCmdTaskAdd, cbCmdGroupApp, cbCmdTasksDir, cbCmdTasksParm, cbCmdTasksActive};

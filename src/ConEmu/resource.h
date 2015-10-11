@@ -968,9 +968,6 @@
 #define cbProcessNewConArg              2640
 #define cbHighlightMouseRow             2641
 #define cbHighlightMouseCol             2642
-#define rbCopyFmtHtml0                  2643
-#define rbCopyFmtHtml1                  2644
-#define rbCopyFmtHtml2                  2645
 #define vkHighlightMouse                2646
 #define vkTransparencyInc               2647
 #define vkTransparencyDec               2648
@@ -1186,6 +1183,8 @@
 #define gbTaskStartDelay                2869
 #define stStartCreateDelay              2870
 #define tStartCreateDelay               2871
+#define stCopyFormat                    2672
+#define lbCopyFormat                    2673
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
@@ -1194,7 +1193,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        229
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2872
+#define _APS_NEXT_CONTROL_VALUE         2874
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif

@@ -731,9 +731,6 @@ bool CSetDlgButtons::ProcessButtonClick(HWND hDlg, WORD CB, BYTE uCheck)
 		case rbCTSActAlways: case rbCTSActBufferOnly:
 			OnBtn_CTSActConditionRadio(hDlg, CB, uCheck);
 			break;
-		case rbCopyFmtHtml0: case rbCopyFmtHtml1: case rbCopyFmtHtml2:
-			OnBtn_CopyFmtHtmlX(hDlg, CB, uCheck);
-			break;
 		case cbCTSFreezeBeforeSelect:
 			OnBtn_CTSFreezeBeforeSelect(hDlg, CB, uCheck);
 			break;
@@ -912,7 +909,7 @@ bool CSetDlgButtons::ProcessButtonClick(HWND hDlg, WORD CB, BYTE uCheck)
 		case c16: case c17: case c18: case c19: case c20: case c21: case c22: case c23:
 		case c24: case c25: case c26: case c27: case c28: case c29: case c30: case c31:
 		case c32: case c33: case c34: case c35: case c36: case c37: case c38:
-			OnBtn_ColorField(hDlg, CB, uCheck);
+			//OnBtn_ColorField(hDlg, CB, uCheck);
 			break;
 
 		/* *** Status bar options *** */
@@ -3830,16 +3827,6 @@ void CSetDlgButtons::OnBtn_CTSActConditionRadio(HWND hDlg, WORD CB, BYTE uCheck)
 } // rbCTSActAlways || rbCTSActBufferOnly
 
 
-// rbCopyFmtHtml0 || rbCopyFmtHtml1 || rbCopyFmtHtml2
-void CSetDlgButtons::OnBtn_CopyFmtHtmlX(HWND hDlg, WORD CB, BYTE uCheck)
-{
-	_ASSERTE(CB==rbCopyFmtHtml0 || CB==rbCopyFmtHtml1 || CB==rbCopyFmtHtml2);
-
-	gpSet->isCTSHtmlFormat = (CB - rbCopyFmtHtml0);
-
-} // rbCopyFmtHtml0 || rbCopyFmtHtml1 || rbCopyFmtHtml2
-
-
 // cbCTSFreezeBeforeSelect
 void CSetDlgButtons::OnBtn_CTSFreezeBeforeSelect(HWND hDlg, WORD CB, BYTE uCheck)
 {
@@ -4446,7 +4433,7 @@ void CSetDlgButtons::OnBtn_ColorField(HWND hDlg, WORD CB, BYTE uCheck)
 	{
 		if (gpSetCls->ColorEditDialog(hDlg, CB))
 		{
-			//gpConEmu->m_Back->Refresh();
+			gpConEmu->InvalidateAll();
 			gpConEmu->Update(true);
 		}
 	} // else if (CB >= c0 && CB <= MAX_COLOR_EDT_ID)

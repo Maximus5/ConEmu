@@ -4542,6 +4542,11 @@ bool CRealBuffer::DoSelectionCopyInt(CECopyMode CopyMode, bool bStreamMode, int 
 			crFore = pAttr->crForeColor; crBack = pAttr->crBackColor;
 		}
 
+		if (nFormat == 3)
+		{
+			html = new CAnsiCopy(pPal, crFore, crBack);
+		}
+		else
 		{
 			//wchar_t szClass[64]; _wsprintf(szClass, SKIPLEN(countof(szClass)) L"ConEmu%s%s", gpConEmu->ms_ConEmuBuild, WIN3264TEST(L"x32",L"x64"));
 			html = new CHtmlCopy((nFormat == 2), gpConEmu->ms_ConEmuBuild, gpSetCls->FontFaceName(), gpSetCls->FontHeightHtml(), crFore, crBack);
@@ -4761,7 +4766,7 @@ bool CRealBuffer::DoSelectionCopyInt(CECopyMode CopyMode, bool bStreamMode, int 
 	}
 
 	// User asked to copy HTML instead of HTML formatted (put HTML in CF_UNICODE)
-	if ((nFormat == 2) && hHtml)
+	if ((nFormat == 2 || nFormat == 3) && hHtml)
 	{
 		WARNING("hUnicode Overhead...");
 		GlobalFree(hUnicode);

@@ -2045,6 +2045,7 @@ HMENU CConEmuMenu::CreateEditMenuPopup(CVirtualConsole* apVCon, HMENU ahExist /*
 		AppendMenu(hMenu, MF_STRING|((gpSet->isCTSHtmlFormat == 0)?MF_CHECKED:MF_UNCHECKED), ID_CON_COPY_HTML0, L"Plain &text only");
 		AppendMenu(hMenu, MF_STRING|((gpSet->isCTSHtmlFormat == 1)?MF_CHECKED:MF_UNCHECKED), ID_CON_COPY_HTML1, L"Copy &HTML format");
 		AppendMenu(hMenu, MF_STRING|((gpSet->isCTSHtmlFormat == 2)?MF_CHECKED:MF_UNCHECKED), ID_CON_COPY_HTML2, L"Copy a&s HTML");
+		AppendMenu(hMenu, MF_STRING|((gpSet->isCTSHtmlFormat == 3)?MF_CHECKED:MF_UNCHECKED), ID_CON_COPY_HTML3, L"A&NSI sequences");
 		AppendMenu(hMenu, MF_SEPARATOR, 0, NULL);
 		AppendMenu(hMenu, MF_STRING|(lbEnabled?MF_ENABLED:MF_GRAYED),         ID_CON_FIND,     MenuAccel(vkFindTextDlg,L"&Find text..."));
 	}
@@ -2059,6 +2060,7 @@ HMENU CConEmuMenu::CreateEditMenuPopup(CVirtualConsole* apVCon, HMENU ahExist /*
 		CheckMenuItem(hMenu,  ID_CON_COPY_HTML0, MF_BYCOMMAND|((gpSet->isCTSHtmlFormat == 0)?MF_CHECKED:MF_UNCHECKED));
 		CheckMenuItem(hMenu,  ID_CON_COPY_HTML1, MF_BYCOMMAND|((gpSet->isCTSHtmlFormat == 1)?MF_CHECKED:MF_UNCHECKED));
 		CheckMenuItem(hMenu,  ID_CON_COPY_HTML2, MF_BYCOMMAND|((gpSet->isCTSHtmlFormat == 2)?MF_CHECKED:MF_UNCHECKED));
+		CheckMenuItem(hMenu,  ID_CON_COPY_HTML3, MF_BYCOMMAND|((gpSet->isCTSHtmlFormat == 3)?MF_CHECKED:MF_UNCHECKED));
 	}
 
 	return hMenu;
@@ -2267,6 +2269,9 @@ LRESULT CConEmuMenu::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam, UINT 
 			return 0;
 		case ID_CON_COPY_HTML2:
 			gpSet->isCTSHtmlFormat = 2;
+			return 0;
+		case ID_CON_COPY_HTML3:
+			gpSet->isCTSHtmlFormat = 3;
 			return 0;
 
 		#ifdef SHOW_AUTOSCROLL

@@ -225,7 +225,6 @@ protected:
 	static void OnBtn_ColorKeyTransparent(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_CTSIntelligent(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_CTSActConditionRadio(HWND hDlg, WORD CB, BYTE uCheck);
-	static void OnBtn_CopyFmtHtmlX(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_CTSFreezeBeforeSelect(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_CTSAutoCopy(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_CTSIBeam(HWND hDlg, WORD CB, BYTE uCheck);
