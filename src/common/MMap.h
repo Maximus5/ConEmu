@@ -65,7 +65,8 @@ protected:
 
 	LONG UsedHash(const KEY_T& key)
 	{
-		LONG hash = (DWORD)key;
+		_ASSERTE(sizeof(KEY_T) >= sizeof(LONG));
+		LONG hash = *(LONG*)&key;
 		return hash ? hash : -1;
 	}
 
@@ -119,6 +120,9 @@ public:
 public:
 	bool Init(size_t nMaxCount = 256, bool bOnCreate = false)
 	{
+		// Required for proper UsedHash result
+		_ASSERTE(sizeof(KEY_T) >= sizeof(LONG));
+
 		if (bOnCreate)
 			memset(this, 0, sizeof(*this));
 		_ASSERTE(mp_FirstBlock == NULL);
