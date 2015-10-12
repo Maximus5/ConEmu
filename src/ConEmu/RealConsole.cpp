@@ -11798,16 +11798,6 @@ void CRealConsole::Paste(CEPasteMode PasteMode /*= pm_Standard*/, LPCWSTR asText
 		}
 	}
 
-	if (abCygWin && pszBuf && *pszBuf)
-	{
-		wchar_t* pszCygWin = DupCygwinPath(pszBuf, false);
-		if (pszCygWin)
-		{
-			SafeFree(pszBuf);
-			pszBuf = pszCygWin;
-		}
-	}
-
 	if (!pszBuf)
 	{
 		gpConEmu->LogString(L"pszBuf is NULL, nothing to paste");
@@ -11890,6 +11880,19 @@ void CRealConsole::Paste(CEPasteMode PasteMode /*= pm_Standard*/, LPCWSTR asText
 			{
 				goto wrap;
 			}
+		}
+	}
+
+	// Convert Windows style path from clipboard to cygwin style?
+	if (pszBuf && *pszBuf
+		&& (abCygWin
+		))
+	{
+		wchar_t* pszCygWin = DupCygwinPath(pszBuf, false);
+		if (pszCygWin)
+		{
+			SafeFree(pszBuf);
+			pszBuf = pszCygWin;
 		}
 	}
 
