@@ -14126,6 +14126,26 @@ BOOL CRealConsole::GetPanelRect(BOOL abRight, RECT* prc, BOOL abFull /*= FALSE*/
 	return mp_RBuf->GetPanelRect(abRight, prc, abFull, abIncludeEdges);
 }
 
+bool CRealConsole::isCygwinMsys()
+{
+	if (!hConWnd)
+		return false;
+
+	#ifdef _DEBUG
+	DWORD nPID = GetActivePID();
+	#endif
+
+	MFileMapping<CESERVER_CONSOLE_APP_MAPPING> AppMap;
+	AppMap.InitName(CECONAPPMAPNAME, LODWORD(ghConWnd));
+	if (!AppMap.Open(FALSE))
+		return false;
+	CEActiveAppFlags nActiveAppFlags = AppMap.Ptr()->nActiveAppFlags;
+	if (!(nActiveAppFlags && (caf_Cygwin1|caf_Msys1|caf_Msys2)))
+		return false;
+
+	return true;
+}
+
 bool CRealConsole::isFar(bool abPluginRequired/*=false*/)
 {
 	if (!this) return false;

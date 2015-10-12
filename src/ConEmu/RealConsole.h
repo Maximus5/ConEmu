@@ -501,6 +501,7 @@ class CRealConsole
 		LRESULT DoScroll(int nDirection, UINT nCount = 1);
 		bool GetConsoleSelectionInfo(CONSOLE_SELECTION_INFO *sel);
 		bool isConSelectMode();
+		bool isCygwinMsys();
 		bool isFar(bool abPluginRequired=false);
 		bool isFarBufferSupported();
 		bool isSendMouseAllowed();
