@@ -14137,7 +14137,7 @@ bool CRealConsole::isCygwinMsys()
 	#endif
 
 	MFileMapping<CESERVER_CONSOLE_APP_MAPPING> AppMap;
-	AppMap.InitName(CECONAPPMAPNAME, LODWORD(ghConWnd));
+	AppMap.InitName(CECONAPPMAPNAME, LODWORD(hConWnd));
 	if (!AppMap.Open(FALSE))
 		return false;
 	CEActiveAppFlags nActiveAppFlags = AppMap.Ptr()->nActiveAppFlags;
