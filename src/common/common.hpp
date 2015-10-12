@@ -1451,6 +1451,15 @@ struct CESERVER_CONSOLE_MAPPING_HDR
 	ConEmuComspec ComSpec;
 };
 
+typedef DWORD CEActiveAppFlags;
+const CEActiveAppFlags
+	caf_Cygwin1      = 0x00000001,
+	caf_Msys1        = 0x00000004,
+	caf_Msys2        = 0x00000008,
+	caf_Clink        = 0x00000010,
+	caf_Standard     = 0;
+
+
 // CECONAPPMAPNAME
 struct CESERVER_CONSOLE_APP_MAPPING
 {
@@ -1468,8 +1477,8 @@ struct CESERVER_CONSOLE_APP_MAPPING
 	DWORD nReadConsolePID;
 	COORD crReadConsoleStart;
 
-	// Reserved for in-console states
-	DWORD nConsoleFlags;
+	// Active application flags (shell or other current interactive process)
+	CEActiveAppFlags nActiveAppFlags;
 
 	// CECONEMUROOTTHREAD often fails on cygwin/msys fork
 	// This will be more proper way to detect if ConEmuHk

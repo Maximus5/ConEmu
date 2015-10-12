@@ -137,6 +137,7 @@ void PreReadConsoleInput(HANDLE hConIn, DWORD nFlags/*enum CEReadConsoleInputFla
 			DWORD nSelfPID = GetCurrentProcessId();
 			pAppMap->nReadConsoleInputPID = nSelfPID;
 			pAppMap->nLastReadConsoleInputPID = nSelfPID;
+			pAppMap->nActiveAppFlags = gnExeFlags;
 			if (ppAppMap) *ppAppMap = pAppMap;
 		}
 	}

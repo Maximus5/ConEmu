@@ -163,6 +163,7 @@ extern HMODULE ghOurModule;
 
 /* ************ Executable name ************ */
 wchar_t gsExeName[80] = L"";
+CEActiveAppFlags gnExeFlags = caf_Standard; // cygwin/msys/clink and so on...
 /* ************ Executable name ************ */
 
 //struct CpConv
@@ -1099,6 +1100,21 @@ DWORD DllStart_Continue()
 	return 0;
 }
 
+void InitExeFlags()
+{
+	// Mutually exclusive
+	if (GetModuleHandle(L"cygwin1.dll") != NULL)
+		gnExeFlags |= caf_Cygwin1;
+	else if (GetModuleHandle(L"msys-1.0.dll") != NULL)
+		gnExeFlags |= caf_Msys1;
+	else if (GetModuleHandle(L"msys-2.0.dll") != NULL)
+		gnExeFlags |= caf_Msys2;
+
+	// Most probably, clink is not loaded yet, but we'll check
+	if (GetModuleHandle(WIN3264TEST(L"clink_dll_x86.dll", L"clink_dll_x64.dll")) != NULL)
+		gnExeFlags |= caf_Clink;
+}
+
 void InitExeName()
 {
 	wchar_t szMsg[MAX_PATH+1];
@@ -1117,6 +1133,8 @@ void InitExeName()
 		wcscat_c(gsExeName, L".exe");
 	}
 	pszName = gsExeName;
+
+	InitExeFlags();
 
 	// For reporting purposes. Users may define env.var and run program.
 	// When ConEmuHk.dll loaded in that process - it'll show msg box

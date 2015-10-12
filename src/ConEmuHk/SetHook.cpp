@@ -1531,6 +1531,14 @@ void LogFunctionCall(LPCSTR asFunc, LPCSTR asFile, int anLine)
 
 void LogModuleLoaded(LPCWSTR pwszModule, HMODULE hModule)
 {
+	// Update gnExeFlags
+	// For cmd.exe
+	if (gbIsCmdProcess || gbIsPowerShellProcess)
+	{
+		if (lstrcmpi(PointToName(pwszModule), WIN3264TEST(L"clink_dll_x86.dll", L"clink_dll_x64.dll")) == 0)
+			gnExeFlags |= caf_Clink;
+	}
+
 	CShellProc* sp = NULL;
 
 	if (!gnLastLogSetChange || ((GetTickCount() - gnLastLogSetChange) > 2000))
