@@ -36,12 +36,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 /*  Global  */
 extern DWORD   gnSelfPID;
-extern wchar_t gsExeName[80]; // Only exe name of current process
+extern wchar_t gsExeName[80];       // Only exe name of current process
+/*  ConEmu/Console */
 extern HWND    ghConWnd;
-extern HWND    ghConEmuWnd; // Root! window
+extern HWND    ghConEmuWnd;   // Root! window
 extern HWND    ghConEmuWndDC; // ConEmu DC window
 extern DWORD   gnGuiPID;
-extern DWORD   gnServerPID; // PID сервера (инициализируется на старте, при загрузке Dll)
+extern DWORD   gnServerPID;   // ConEmuC server PID (initialized on startup, during Dll loading)
 
 #include "../common/common.hpp"
 #include "../common/ConEmuCheck.h"
