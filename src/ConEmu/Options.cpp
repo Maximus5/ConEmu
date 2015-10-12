@@ -493,9 +493,10 @@ void Settings::InitSettings()
 
 	const COLORREF* pcrColors;
 	const COLORREF* pcrStd = DefColors[0].dwDefColors;
-	// To get git's proper colored output for <Solarized> scheme
-	// run: git config --global color.diff.new "green bold"
-	if ((pcrColors = GetDefColors(L"<Solarized>")) != NULL)
+	// Standard <Solarized> has too many monotones
+	// which made it unpleasant with a lot of tools, especially
+	// those which were designed for 8-color consoles (cygwin)
+	if ((pcrColors = GetDefColors(L"<ConEmu>")) != NULL)
 	{
 		for (uint i = 0x10; i--;)
 		{
