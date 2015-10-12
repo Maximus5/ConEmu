@@ -363,7 +363,7 @@ BEGIN
 	vkPasteCygwin           "Paste path from clipboard in unix format"
 	vkPasteDirectory        "Choose and paste folder path"
 	vkPasteFilePath         "Choose and paste file pathname"
-	vkPasteFirstLine        "Paste first line of clipboard contents (ignored in Far)"
+	vkPasteFirstLine        "Paste first line of clipboard contents, autoconvert paths for cygwin's appllications (ignored in Far)"
 	vkPasteText             "Paste clipboard contents (ignored in Far)"
 	vkPicViewFaster         "PicView Far plugin: Slideshow faster"
 	vkPicViewSlide          "PicView Far plugin: Slideshow start"
