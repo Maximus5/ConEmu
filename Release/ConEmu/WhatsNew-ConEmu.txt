@@ -19,6 +19,27 @@ http://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2015.10.11
+* gh#337: Convert pasted paths to cygwin's style if dropping files/folders from Explorer and others.
+* On paste filepath by Ctrl+V (Paste first line of clipboard) convert path
+  to cygwin style, if active application is cygwin/msys.
+* Add `<ConEmu>` color scheme and use it by default (for new configs).
+* gh#357: Fix ConEmuHk conflict with python's TKinter dropdown control.
+* ANSI: Brightness (back/fore) was not reset in some cases.
+  For example: `\e[96mA\e[36mB` - `B` and `A` had same color.
+* Implement copying colored text using ANSI sequences.
+  The feature works like ‘Copy as HTML’ implemented before.
+  Option on the ‘Mark/Copy’ settings page,
+  menu item ‘Edit’ -> ‘ANSI sequences’, and GuiMacro(3).
+  ConEmu puts to clipboard **real** ESC codes, so only
+  certain editors (or shells) are able to **paste**
+  these sequences. Far Manager is working nice.
+* Only active split was updated after choosing palette from DDCB.
+* Improve bCurrentThreadIsMain detection in ConEmuHk (especially for cygwin/msys forks).
+* Support ‘Drag&Drop’ from Settings/Colors page onto any place on screen (drag colored square).
+* Use v140 toolset for ConEmuHk in ConEmuHk14.vcxproj.
+
+
 2015.10.6
 * Disable old workaround for gh#272 (revert eaaf96b).
   There were reports of broken redirections: gh#341, gh#323.
