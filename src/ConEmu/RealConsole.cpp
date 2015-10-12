@@ -11823,12 +11823,13 @@ void CRealConsole::Paste(CEPasteMode PasteMode /*= pm_Standard*/, LPCWSTR asText
 
 	// Теперь сформируем пакет
 	wchar_t szMsg[128];
-	LPCWSTR pszEnd = pszBuf + _tcslen(pszBuf);
+	size_t nBufLen = _tcslen(pszBuf);
 
 	// Смотрим первую строку / наличие второй
 	wchar_t* pszRN = wcspbrk(pszBuf, L"\r\n");
 	if (PasteMode == pm_OneLine)
 	{
+		LPCWSTR pszEnd = pszBuf + nBufLen;
 		const AppSettings* pApp = gpSet->GetAppSettings(GetActiveAppSettingsId());
 		bool bTrimTailing = pApp ? (pApp->CTSTrimTrailing() != 0) : false;
 
@@ -11870,7 +11871,7 @@ void CRealConsole::Paste(CEPasteMode PasteMode /*= pm_Standard*/, LPCWSTR asText
 		// Z-terminate our string
 		*pszDst = 0;
 		// Done, it is ready to pasting
-		pszEnd = pszDst;
+		nBufLen = pszDst - pszBuf;
 		// Buffer must not contain any line-feeds now! Safe for paste in command line!
 		_ASSERTE(wcspbrk(pszBuf, L"\r\n") == NULL);
 	}
@@ -11878,8 +11879,8 @@ void CRealConsole::Paste(CEPasteMode PasteMode /*= pm_Standard*/, LPCWSTR asText
 	{
 		if (PasteMode == pm_FirstLine)
 		{
-			*pszRN = 0; // буфер наш, что хотим - то и делаем )
-			pszEnd = pszRN;
+			*pszRN = 0; // this is our own memory block
+			nBufLen = pszRN - pszBuf;
 		}
 		else if (gpSet->isPasteConfirmEnter && !abNoConfirm)
 		{
@@ -11892,9 +11893,9 @@ void CRealConsole::Paste(CEPasteMode PasteMode /*= pm_Standard*/, LPCWSTR asText
 		}
 	}
 
-	if (gpSet->nPasteConfirmLonger && !abNoConfirm && ((size_t)(pszEnd - pszBuf) > (size_t)gpSet->nPasteConfirmLonger))
+	if (gpSet->nPasteConfirmLonger && !abNoConfirm && (nBufLen > (size_t)gpSet->nPasteConfirmLonger))
 	{
-		_wsprintf(szMsg, SKIPLEN(countof(szMsg)) L"Pasting text length is %u chars!\nContinue?", (DWORD)(pszEnd - pszBuf));
+		_wsprintf(szMsg, SKIPLEN(countof(szMsg)) L"Pasting text length is %u chars!\nContinue?", LODWORD(nBufLen));
 
 		if (MsgBox(szMsg, MB_OKCANCEL|MB_ICONQUESTION, GetTitle()) != IDOK)
 		{
@@ -11905,13 +11906,13 @@ void CRealConsole::Paste(CEPasteMode PasteMode /*= pm_Standard*/, LPCWSTR asText
 	//INPUT_RECORD r = {KEY_EVENT};
 
 	// Отправить в консоль все символы из: pszBuf
-	if (pszEnd > pszBuf)
+	if (nBufLen)
 	{
-		PostString(pszBuf, pszEnd-pszBuf);
+		PostString(pszBuf, nBufLen);
 	}
 	else
 	{
-		_ASSERTE(pszEnd > pszBuf);
+		_ASSERTE(nBufLen);
 		gpConEmu->LogString(L"Paste fails, pszEnd <= pszBuf");
 	}
 
