@@ -3185,6 +3185,7 @@ int CreateMapHeader()
 	else if (gnRunMode == RM_SERVER)
 	{
 		CESERVER_CONSOLE_APP_MAPPING init = {sizeof(CESERVER_CONSOLE_APP_MAPPING), CESERVER_REQ_VER};
+		init.HookedPids.Init();
 		gpSrv->pAppMap->SetFrom(&init);
 	}
 
