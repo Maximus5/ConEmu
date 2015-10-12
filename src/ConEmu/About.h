@@ -421,6 +421,8 @@ _DBGHLP(L"/ZoneId - Try to drop :Zone.Identifier without confirmation.\r\n") \
 	L"     Cmd==11: activates tab by name, title or process name\r\n" \
 	L"Task(Index[,\"Dir\"])\r\n" \
 	L"  - start task with 1-based index\r\n" \
+	L"Task(\"Name\"[,\"Dir\"])\r\n" \
+	L"  - start task with specified name\r\n" \
 	L"Transparency(<Cmd>,<Value>)\r\n" \
 	L"  - change ConEmu transparency level absolutely or relatively\r\n" \
 	L"    Cmd==0, Value=40..255 (255==Opaque)\r\n" \
@@ -428,8 +430,6 @@ _DBGHLP(L"/ZoneId - Try to drop :Zone.Identifier without confirmation.\r\n") \
 	L"    Cmd==2, Value=0..255 (255==Opaque) - for inactive window\r\n" \
 	L"    Cmd==3, Value=<relative inc/dec> - for inactive window\r\n" \
 	L"    Cmd==4, Value=<0/1> - AlphaValueSeparate\r\n" \
-	L"Task(\"Name\"[,\"Dir\"])\r\n" \
-	L"  - start task with specified name\r\n" \
 	L"Unfasten\r\n" \
 	L"  - Unfasten active RealConsole from active ConEmu window\r\n" \
 	L"Wiki([\"PageName\"])\r\n" \
