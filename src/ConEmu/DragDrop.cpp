@@ -947,6 +947,7 @@ HRESULT CDragDrop::DropNames(HDROP hDrop, int iQuantity, BOOL abActive)
 	BOOL bNoFarConsole = m_pfpi->NoFarConsole;
 	BOOL bDontAddSpace = FALSE;
 	bool bIsFarLua = false;
+	bool bCygwinPaths = false;
 
 	if (!bNoFarConsole && gpSet->isDropUseMenu && pRCon->isFar(true))
 	{
@@ -1019,6 +1020,10 @@ HRESULT CDragDrop::DropNames(HDROP hDrop, int iQuantity, BOOL abActive)
 	{
 		bIsFarLua = pRCon->IsFarLua();
 	}
+	else
+	{
+		bCygwinPaths = pRCon->isCygwinMsys();
+	}
 
 	size_t cchMacro = MAX_DROP_PATH*2+80;
 	wchar_t *szMacro = (wchar_t*)malloc(cchMacro*sizeof(*szMacro));
@@ -1074,9 +1079,13 @@ HRESULT CDragDrop::DropNames(HDROP hDrop, int iQuantity, BOOL abActive)
 				psz++; nLen--;
 			}
 		}
-		else
+		else if (bCygwinPaths)
 		{
-			_ASSERTE(bNoFarConsole);
+			wchar_t* pszCygwin = DupCygwinPath(pszText, false);
+			if (pszCygwin)
+			{
+				_wcscpy_c(pszText, MAX_DROP_PATH, pszCygwin);
+			}
 		}
 
 		if ((psz = wcschr(pszText, L' ')) != NULL)
