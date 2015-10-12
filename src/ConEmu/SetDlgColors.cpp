@@ -254,7 +254,7 @@ bool CSetDlgColors::ColorEditDialog(HWND hWnd2, WORD c)
 	bool bChanged = false;
 	COLORREF color = 0;
 	GetColorById(c, &color);
-	wchar_t temp[16];
+	//wchar_t temp[16];
 	COLORREF colornew = color;
 
 	if (ShowColorDialog(ghOpWnd, &colornew) && colornew != color)
