@@ -33,14 +33,24 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 template<typename VAL_T, LONG VAL_C>
 struct MCircular
 {
+	// Max elements count [Informational]
+	LONG  nCount;
 	// InterlockedIncrement'ed index
 	LONG  nIndex;
 	// Zero values are not accepted
 	VAL_T Values[VAL_C];
 	// Helpers
+	void Init()
+	{
+		_ASSERTE(sizeof(VAL_T) >= sizeof(LONG));
+		if (!nCount)
+			nCount = VAL_C;
+	};
 	void AddValue(const VAL_T& val)
 	{
-		_ASSERTE(sizeof(val) >= sizeof(LONG));
+		// Init nCount [Informational]
+		Init();
+		// Get next circular index
 		LONG lIdx = (InterlockedIncrement(&nIndex) - 1) & (VAL_C - 1);
 		// ‘Old’ values are expected to be overwritten
 		Values[lIdx] = val;
