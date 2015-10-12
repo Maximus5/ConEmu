@@ -148,14 +148,29 @@ struct PreloadModules {
 
 size_t GetPreloadModules(PreloadModules** ppModules)
 {
-	static PreloadModules Checks[] =
+	static size_t snModulesCount = 0;
+	static PreloadModules* spModules = NULL;
+	if (spModules)
+	{
+		if (ppModules)
+			*ppModules = spModules;
+		return snModulesCount;
+	}
+
+	PreloadModules Modules[] =
 	{
 		{gdi32,		gdi32_noext,	&ghGdi32},
 		{shell32,	shell32_noext,	&ghShell32},
 		{advapi32,	advapi32_noext,	&ghAdvapi32},
 	};
-	*ppModules = Checks;
-	return countof(Checks);
+	snModulesCount = countof(Modules);
+	spModules = new PreloadModules[snModulesCount];
+	if (!spModules)
+		return 0;
+	memmove(spModules, Modules, sizeof(Modules));
+	if (ppModules)
+		*ppModules = spModules;
+	return snModulesCount;
 }
 
 void CheckLoadedModule(LPCWSTR asModule)

@@ -820,8 +820,16 @@ BOOL OnExecutePromptCmd(LPCWSTR asCmd)
 
 AttachConsole_t GetAttachConsoleProc()
 {
-	static HMODULE hKernel = GetModuleHandle(L"kernel32.dll");
-	static AttachConsole_t _AttachConsole = hKernel ? (AttachConsole_t)GetProcAddress(hKernel, "AttachConsole") : NULL;
+	static HMODULE hKernel = NULL;
+	static AttachConsole_t _AttachConsole = NULL;
+	if (!hKernel)
+	{
+		hKernel = GetModuleHandle(L"kernel32.dll");
+		if (hKernel)
+		{
+			_AttachConsole = (AttachConsole_t)GetProcAddress(hKernel, "AttachConsole");
+		}
+	}
 	return _AttachConsole;
 }
 

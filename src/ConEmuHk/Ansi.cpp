@@ -614,6 +614,7 @@ void CEAnsi::DumpEscape(LPCWSTR buf, size_t cchLen, int iUnknown)
 #define DumpUnknownEscape(buf,cchLen)
 #endif
 
+static LONG nLastReadId = 0;
 
 // When user type smth in the prompt, screen buffer may be scrolled
 void CEAnsi::OnReadConsoleBefore(HANDLE hConOut, const CONSOLE_SCREEN_BUFFER_INFO& csbi)
@@ -622,7 +623,8 @@ void CEAnsi::OnReadConsoleBefore(HANDLE hConOut, const CONSOLE_SCREEN_BUFFER_INF
 	if (!pObj)
 		return;
 
-	static LONG nLastReadId = GetCurrentProcessId();
+	if (!nLastReadId)
+		nLastReadId = GetCurrentProcessId();
 
 	WORD NewRowId;
 	CEConsoleMark Test = {};
