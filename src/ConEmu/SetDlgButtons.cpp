@@ -1216,6 +1216,8 @@ void CSetDlgButtons::OnBtn_CmdTasksAdd(HWND hDlg, WORD CB, BYTE uCheck)
 	_ASSERTE(CB==cbCmdTasksAdd);
 
 	int iCount = (int)SendDlgItemMessage(hDlg, lbCmdTasks, LB_GETCOUNT, 0,0);
+	if (iCount < 0)
+		return;
 	if (!gpSet->CmdTaskGet(iCount))
 		gpSet->CmdTaskSet(iCount, L"", L"", L"");
 
