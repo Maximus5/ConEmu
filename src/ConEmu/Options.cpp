@@ -5076,42 +5076,51 @@ void Settings::CmdTaskSetVkMod(int anIndex, DWORD VkMod)
 	CmdTasks[anIndex]->HotKey.SetVkMod(VkMod);
 }
 
-// anIndex - 0-based, index of CmdTasks
-// asName - имя, или NULL, если эту группу нужно удалить (хвост сдвигается вверх)
-// asCommands - список команд (скрипт)
-void Settings::CmdTaskSet(int anIndex, LPCWSTR asName, LPCWSTR asGuiArgs, LPCWSTR asCommands, CETASKFLAGS aFlags /*= CETF_DONT_CHANGE*/)
+/// Add new or change Task contents
+/// @param  anIndex - 0-based, index of CmdTasks
+/// @param  asName  - Task name, or NULL to delete this task (tail will be shifted upward)
+/// @param  asCommands - Task's commands
+/// @param  aFlags  - CETASKFLAGS
+/// @result -1 if error occurred, or 0-based index of the Task
+int Settings::CmdTaskSet(int anIndex, LPCWSTR asName, LPCWSTR asGuiArgs, LPCWSTR asCommands, CETASKFLAGS aFlags /*= CETF_DONT_CHANGE*/)
 {
 	if (anIndex < 0)
 	{
 		_ASSERTE(anIndex>=0);
-		return;
+		return -1;
 	}
 
-	if (CmdTasks && (asName == NULL))
+	// Kill existing task
+	if (asName == NULL)
 	{
-		// Грохнуть ту, что просили
-		CmdTasks[anIndex]->FreePtr();
-		// Сдвинуть хвост
+		if (!CmdTasks || (CmdTaskCount < 1))
+			return -1;
+		// Release pointers
+		if (anIndex < CmdTaskCount)
+		{
+			CmdTasks[anIndex]->FreePtr();
+		}
+		// Shift the tail
 		for (int i = (anIndex+1); i < CmdTaskCount; i++)
 		{
 			CmdTasks[i-1] = CmdTasks[i];
 		}
-		// Уменьшить количество
+		// Decrease overall count
 		if (CmdTaskCount > 0)
 		{
-			CmdTasks[CmdTaskCount-1] = NULL;
-			CmdTaskCount--;
+			CmdTasks[--CmdTaskCount] = NULL;
 		}
-		return;
+		return -1;
 	}
 
+	// Allocate more space?
 	if (anIndex >= CmdTaskCount)
 	{
 		CommandTasks** ppNew = (CommandTasks**)calloc(anIndex+1,sizeof(CommandTasks*));
 		if (!ppNew)
 		{
 			_ASSERTE(ppNew!=NULL);
-			return;
+			return -1;
 		}
 		if ((CmdTaskCount > 0) && CmdTasks)
 		{
@@ -5120,22 +5129,23 @@ void Settings::CmdTaskSet(int anIndex, LPCWSTR asName, LPCWSTR asGuiArgs, LPCWST
 		SafeFree(CmdTasks);
 		CmdTasks = ppNew;
 
-		// CmdTaskCount накручивается в конце функции
+		// CmdTaskCount will be incremented below
 	}
 
 	if (!CmdTasks)
 	{
 		_ASSERTE(CmdTasks);
-		return;
+		return -1;
 	}
 
+	// New task?
 	if (CmdTasks[anIndex] == NULL)
 	{
 		CmdTasks[anIndex] = (CommandTasks*)calloc(1, sizeof(CommandTasks));
 		if (!CmdTasks[anIndex])
 		{
 			_ASSERTE(CmdTasks[anIndex]);
-			return;
+			return -1;
 		}
 	}
 
@@ -5148,6 +5158,8 @@ void Settings::CmdTaskSet(int anIndex, LPCWSTR asName, LPCWSTR asGuiArgs, LPCWST
 
 	if (anIndex >= CmdTaskCount)
 		CmdTaskCount = anIndex+1;
+
+	return anIndex;
 }
 
 bool Settings::CmdTaskXch(int anIndex1, int anIndex2)
