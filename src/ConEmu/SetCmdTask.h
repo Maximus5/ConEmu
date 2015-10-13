@@ -36,6 +36,7 @@ const CETASKFLAGS
 	CETF_CMD_DEFAULT    = 0x0002,
 	CETF_NO_TASKBAR     = 0x0004,
 	CETF_ADD_TOOLBAR    = 0x0008,
+	CETF_FLAGS_MASK     = 0xFFFF, // Supported flags mask
 	CETF_DONT_CHANGE    = 0xF0000000,
 	CETF_NONE           = 0;
 

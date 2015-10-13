@@ -5160,7 +5160,7 @@ int Settings::CmdTaskSet(int anIndex, LPCWSTR asName, LPCWSTR asGuiArgs, LPCWSTR
 	CmdTasks[anIndex]->SetCommands(asCommands);
 
 	if (aFlags != CETF_DONT_CHANGE)
-		CmdTasks[anIndex]->Flags = aFlags;
+		CmdTasks[anIndex]->Flags = (aFlags & CETF_FLAGS_MASK);
 
 	if (anIndex >= CmdTaskCount)
 		CmdTaskCount = anIndex+1;
