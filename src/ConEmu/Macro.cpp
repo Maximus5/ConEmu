@@ -218,6 +218,8 @@ namespace ConEmuMacro
 	LPWSTR Tab(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Task
 	LPWSTR Task(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
+	// TaskAdd("Name","Commands"[,"GuiArgs"[,Flags]])
+	LPWSTR TaskAdd(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Transparency
 	LPWSTR Transparency(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 		LPWSTR TransparencyHelper(int nCmd, int nValue); // helper, это не макро-фукнция
@@ -297,6 +299,7 @@ namespace ConEmuMacro
 		{Status, {L"Status", L"StatusBar", L"StatusControl"}, gmf_MainThread},
 		{Tab, {L"Tab", L"Tabs", L"TabControl"}, gmf_MainThread},
 		{Task, {L"Task"}, gmf_MainThread},
+		{TaskAdd, {L"TaskAdd"}, gmf_MainThread},
 		{Transparency, {L"Transparency"}},
 		{Unfasten, {L"Unfasten"}, gmf_MainThread},
 		{Wiki, {L"Wiki"}},
@@ -3558,6 +3561,47 @@ LPWSTR ConEmuMacro::Task(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 	}
 
 	return pszResult ? lstrdup(pszResult) : lstrdup(L"InvalidArg");
+}
+
+// TaskAdd("Name","Commands"[,"GuiArgs"[,Flags]])
+LPWSTR ConEmuMacro::TaskAdd(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
+{
+	LPCWSTR pszResult = NULL;
+	LPWSTR pszName = NULL;
+	LPWSTR pszCommands = NULL;
+	LPWSTR pszGuiArgs = NULL;
+	CETASKFLAGS aFlags = CETF_DONT_CHANGE;
+	int iVal;
+
+	if (p->GetStrArg(0, pszName) && p->GetStrArg(1, pszCommands))
+	{
+		p->GetStrArg(2, pszGuiArgs);
+		if (p->GetIntArg(3, iVal))
+			aFlags = (CETASKFLAGS)(iVal & CETF_FLAGS_MASK);
+	}
+	else
+	{
+		return lstrdup(L"InvalidArg");
+	}
+
+	// Append new task
+	int nTaskIdx = gpSet->CmdTaskSet(-1, pszName, pszGuiArgs, pszCommands, aFlags|CETF_MAKE_UNIQUE);
+	const CommandTasks* pGrp = gpSet->CmdTaskGet(nTaskIdx);
+	if (pGrp && pGrp->pszName && *pGrp->pszName)
+	{
+		// Save tasks, if it's not a `-basic` mode
+		if (!gpConEmu->IsResetBasicSettings())
+		{
+			gpSet->SaveCmdTasks(NULL);
+		}
+
+		// Return created task name
+		wchar_t szIndex[16] = L"";
+		_wsprintf(szIndex, SKIPCOUNT(szIndex) L"%i: ", nTaskIdx+1); // 1-based index
+		return lstrmerge(szIndex, pGrp->pszName);
+	}
+
+	return lstrdup(L"Failed");
 }
 
 // Change 'Highlight row/col' under mouse. Locally in current VCon.

@@ -423,6 +423,8 @@ _DBGHLP(L"/ZoneId - Try to drop :Zone.Identifier without confirmation.\r\n") \
 	L"  - start task with 1-based index\r\n" \
 	L"Task(\"Name\"[,\"Dir\"])\r\n" \
 	L"  - start task with specified name\r\n" \
+	L"TaskAdd(\"Name\",\"Commands\"[,\"GuiArgs\"[,Flags]])\r\n" \
+	L"  - create new task and save it to settings\r\n" \
 	L"Transparency(<Cmd>,<Value>)\r\n" \
 	L"  - change ConEmu transparency level absolutely or relatively\r\n" \
 	L"    Cmd==0, Value=40..255 (255==Opaque)\r\n" \
