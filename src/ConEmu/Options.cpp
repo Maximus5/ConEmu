@@ -5145,6 +5145,7 @@ int Settings::CmdTaskSet(int anIndex, LPCWSTR asName, LPCWSTR asGuiArgs, LPCWSTR
 	}
 
 	// New task?
+	CEStr lsName;
 	if (CmdTasks[anIndex] == NULL)
 	{
 		CmdTasks[anIndex] = (CommandTasks*)calloc(1, sizeof(CommandTasks));
@@ -5152,6 +5153,37 @@ int Settings::CmdTaskSet(int anIndex, LPCWSTR asName, LPCWSTR asGuiArgs, LPCWSTR
 		{
 			_ASSERTE(CmdTasks[anIndex]);
 			return -1;
+		}
+		// Make unique name?
+		if (aFlags & CETF_MAKE_UNIQUE)
+		{
+			// If task with same name exists - append suffix " (1)" ... " (999)"
+			CEStr lsNaked = lstrdup((asName[0] == TaskBracketLeft) ? (asName+1) : asName);
+			INT_PTR iLen = wcslen(lsNaked);
+			if ((iLen > 0) && (lsNaked.ms_Arg[iLen-1] == TaskBracketRight))
+				lsNaked.ms_Arg[iLen-1] = 0;
+
+			for (UINT s = 0; s < 1000; s++)
+			{
+				bool bDuplicate = false;
+				wchar_t szIndex[16] = L"";
+				if (s) _wsprintf(szIndex, SKIPCOUNT(szIndex) L" (%u)", s);
+				lsName.Attach(lstrmerge(TaskBracketLeftS, lsNaked.ms_Arg, szIndex, TaskBracketRightS));
+
+				for (INT_PTR i = 0; (i < CmdTaskCount) && !bDuplicate; i++)
+				{
+					if ((i == anIndex) || (CmdTasks[i] == NULL) || (CmdTasks[i]->pszName == NULL))
+						continue;
+					bDuplicate = (lstrcmpi(CmdTasks[i]->pszName, lsName.ms_Arg) == 0);
+				}
+
+				if (!bDuplicate)
+				{
+					if (s)
+						asName = lsName;
+					break;
+				}
+			}
 		}
 	}
 
