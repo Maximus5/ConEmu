@@ -5077,13 +5077,19 @@ void Settings::CmdTaskSetVkMod(int anIndex, DWORD VkMod)
 }
 
 /// Add new or change Task contents
-/// @param  anIndex - 0-based, index of CmdTasks
+/// @param  anIndex - 0-based, index of CmdTasks, or `-1` to append new one
 /// @param  asName  - Task name, or NULL to delete this task (tail will be shifted upward)
 /// @param  asCommands - Task's commands
 /// @param  aFlags  - CETASKFLAGS
 /// @result -1 if error occurred, or 0-based index of the Task
 int Settings::CmdTaskSet(int anIndex, LPCWSTR asName, LPCWSTR asGuiArgs, LPCWSTR asCommands, CETASKFLAGS aFlags /*= CETF_DONT_CHANGE*/)
 {
+	if (anIndex == -1)
+	{
+		// Append new task at the end
+		anIndex = CmdTaskCount;
+	}
+
 	if (anIndex < 0)
 	{
 		_ASSERTE(anIndex>=0);
