@@ -323,17 +323,18 @@ BOOL apiSetConsoleScreenBufferInfoEx(HANDLE hConsoleOutput, MY_CONSOLE_SCREEN_BU
 	}
 
 	BOOL lbRc = FALSE;
-	DEBUGTEST(BOOL lbWnd = FALSE);
+	BOOL lbWnd = FALSE;
 
 	if (SetConsoleScreenBufferInfoEx_f)
 	{
 		lbRc = SetConsoleScreenBufferInfoEx_f(hConsoleOutput, lpConsoleScreenBufferInfoEx);
 
-		// Win7 x64 - глюк. после вызова этой функции идет срыв размеров видимой области.
-		DEBUGTEST(lbWnd =)
-		SetConsoleWindowInfo(hConsoleOutput, TRUE, &lpConsoleScreenBufferInfoEx->srWindow);
+		// Win7 x64 BUGBUG? dimension and location of visible area is broken after call
+
+		lbWnd = SetConsoleWindowInfo(hConsoleOutput, TRUE, &lpConsoleScreenBufferInfoEx->srWindow);
 	}
 
+	UNREFERENCED_PARAMETER(lbWnd);
 	return lbRc;
 }
 
