@@ -368,7 +368,8 @@ public:
 		dumpEnvStr(szSI, true);
 
 		POINT ptCur = {0}; GetCursorPos(&ptCur);
-		_wsprintf(szSI, SKIPLEN(countof(szSI)) L"Cursor: {%i,%i}", ptCur.x, ptCur.y);
+		HMONITOR hMonFromMouse = MonitorFromPoint(ptCur, MONITOR_DEFAULTTONULL);
+		_wsprintf(szSI, SKIPLEN(countof(szSI)) L"MouseCursor: {%i,%i} Monitor: %08X", ptCur.x, ptCur.y, LODWORD(hMonFromMouse));
 		dumpEnvStr(szSI, true);
 
 		HDC hdcScreen = GetDC(NULL);
