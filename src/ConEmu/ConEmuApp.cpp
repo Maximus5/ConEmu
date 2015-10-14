@@ -2669,13 +2669,14 @@ static HRESULT _CreateShellLink(PCWSTR pszArguments, PCWSTR pszPrefix, PCWSTR ps
 			return E_UNEXPECTED;
 
 		pszBuf[0] = 0;
-		if (pszPrefix)
+		if (pszPrefix && *pszPrefix)
 		{
 			_wcscat_c(pszBuf, cchMax, pszPrefix);
 			_wcscat_c(pszBuf, cchMax, L" ");
 		}
-		if (pszConEmuStartArgs)
+		if (pszConEmuStartArgs && pszConEmuStartArgs)
 		{
+			_ASSERTE(pszConEmuStartArgs[_tcslen(pszConEmuStartArgs)-1]==L' ');
 			_wcscat_c(pszBuf, cchMax, pszConEmuStartArgs);
 		}
 		_wcscat_c(pszBuf, cchMax, L"/cmd ");
