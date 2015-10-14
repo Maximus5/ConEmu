@@ -3426,6 +3426,9 @@ HKEY CRealConsole::PrepareConsoleRegistryKey()
 			// Issue 700: Default history buffers count too small.
 			{ L"HistoryBufferSize", REG_DWORD, {(DWORD_PTR)50}, 16, 999 },
 			{ L"NumberOfHistoryBuffers", REG_DWORD, {(DWORD_PTR)32}, 16, 999 },
+			// Restrict windows from creating console using undesired font
+			{ L"FaceName", REG_SZ, {(DWORD_PTR)gpSet->ConsoleFont.lfFaceName} },
+			{ L"FontSize", REG_DWORD, {(DWORD_PTR)(LOWORD(gpSet->ConsoleFont.lfHeight) << 16)} },
 		};
 		for (size_t i = 0; i < countof(BufferValues); ++i)
 		{
@@ -3452,6 +3455,14 @@ HKEY CRealConsole::PrepareConsoleRegistryKey()
 					lRegRc = RegSetValueEx(hkConsole, BufferValues[i].pszName, 0, REG_DWORD, (LPBYTE)&nNewValue, sizeof(nNewValue));
 				}
 				break; // REG_DWORD
+
+			case REG_SZ:
+				if (BufferValues[i].pszDef)
+				{
+					nNewValue = (wcslen(BufferValues[i].pszDef) + 1) * sizeof(BufferValues[i].pszDef[0]);
+					lRegRc = RegSetValueEx(hkConsole, BufferValues[i].pszName, 0, REG_SZ, (LPBYTE)BufferValues[i].pszDef, nNewValue);
+				}
+				break; // REG_SZ
 
 			} // switch (BufferValues[i].nType)
 		}
@@ -4153,7 +4164,7 @@ BOOL CRealConsole::StartProcess()
 	wchar_t* psCurCmd = NULL;
 	_ASSERTE((m_Args.pszStartupDir == NULL) || (*m_Args.pszStartupDir != 0));
 
-	// HistoryBufferSize, NumberOfHistoryBuffers
+	// HistoryBufferSize, NumberOfHistoryBuffers, FaceName, FontSize, ...
 	HKEY hkConsole = PrepareConsoleRegistryKey();
 
 	BYTE nTextColorIdx /*= 7*/, nBackColorIdx /*= 0*/, nPopTextColorIdx /*= 5*/, nPopBackColorIdx /*= 15*/;
