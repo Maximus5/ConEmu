@@ -565,17 +565,21 @@ bool IsWinVerOrHigher(WORD OsVer)
 	return (ibIsWinOrHigher != FALSE);
 }
 
+bool IsWinVerEqual(WORD OsVer)
+{
+	OSVERSIONINFOEXW osvi = {sizeof(osvi), HIBYTE(OsVer), LOBYTE(OsVer)};
+	DWORDLONG const dwlConditionMask = VerSetConditionMask(VerSetConditionMask(0, VER_MAJORVERSION, VER_EQUAL), VER_MINORVERSION, VER_EQUAL);
+	BOOL ibIsWinOrHigher = VerifyVersionInfoW(&osvi, VER_MAJORVERSION | VER_MINORVERSION, dwlConditionMask);
+	return (ibIsWinOrHigher != FALSE);
+}
+
 // Only Windows 2000
 bool IsWin2kEql()
 {
 	static int ibIsWin2K = 0;
 	if (!ibIsWin2K)
 	{
-		OSVERSIONINFOEXW osvi = {sizeof(osvi), HIBYTE(_WIN32_WINNT_WIN2K), LOBYTE(_WIN32_WINNT_WIN2K)};
-		DWORDLONG const dwlConditionMask = VerSetConditionMask(VerSetConditionMask(0,
-			VER_MAJORVERSION, VER_EQUAL),
-			VER_MINORVERSION, VER_EQUAL);
-		ibIsWin2K = VerifyVersionInfoW(&osvi, VER_MAJORVERSION | VER_MINORVERSION, dwlConditionMask) ? 1 : -1;;
+		ibIsWin2K = IsWinVerEqual(_WIN32_WINNT_WIN2K) ? 1 : -1;;
 	}
 	return (ibIsWin2K == 1);
 }
@@ -586,6 +590,7 @@ bool IsWin5family()
 	static int ibIsWin5fam = 0;
 	if (!ibIsWin5fam)
 	{
+		// Don't use IsWinVerEqual here - we need to compare only major version!
 		OSVERSIONINFOEXW osvi = {sizeof(osvi), 5, 0};
 		DWORDLONG const dwlConditionMask = VerSetConditionMask(0, VER_MAJORVERSION, VER_EQUAL);
 		ibIsWin5fam = VerifyVersionInfoW(&osvi, VER_MAJORVERSION, dwlConditionMask) ? 1 : -1;
