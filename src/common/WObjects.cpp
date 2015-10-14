@@ -675,8 +675,43 @@ bool IsWin10()
 	static int ibIsWin10 = 0;
 	if (!ibIsWin10)
 	{
-		#define _WIN32_WINNT_WIN10 0x604
-		ibIsWin10 = IsWinVerOrHigher(_WIN32_WINNT_WIN10) ? 1 : -1;
+		// First insider builds of Win10 were numbered as 6.4
+		// Now it's a 10.0, but we still compare with ‘old’ number
+		#ifndef _WIN32_WINNT_WIN10_PREVIEW
+		#define _WIN32_WINNT_WIN10_PREVIEW 0x604
+		#endif
+		_ASSERTE(_WIN32_WINNT_WIN10_PREVIEW == 0x604);
+		ibIsWin10 = IsWinVerOrHigher(_WIN32_WINNT_WIN10_PREVIEW) ? 1 : -1;
+
+		//BUGBUG: It return FALSE on Win10 when our dll is loaded into some app (Far.exe) without new manifest/OSGUID
+
+		if ((ibIsWin10 == -1) && IsWin8_1())
+		{
+			HMODULE hKernel32 = GetModuleHandle(L"kernel32.dll");
+			if (hKernel32)
+			{
+				FARPROC pfnCheck = hKernel32 ? (FARPROC)GetProcAddress(hKernel32, "FreeMemoryJobObject") : NULL;
+				// Seems like it's a Win10
+				if (pfnCheck)
+				{
+					ibIsWin10 = 1;
+				}
+				/*
+				VS_FIXEDFILEINFO OsVer = {};
+				wchar_t szKernelPath[MAX_PATH] = L"";
+				if (!GetModuleFileName(hKernel32, szKernelPath, countof(szKernelPath)))
+					wcscpy_c(szKernelPath, L"kernel32.dll");
+				// Is returns 6.3 too!
+				if (LoadModuleVersion(szKernelPath, OsVer))
+				{
+					if (HIWORD(OsVer.dwFileVersionMS) >= 10)
+					{
+						ibIsWin10 = 1;
+					}
+				}
+				*/
+			}
+		}
 	}
 	return (ibIsWin10 == 1);
 }
