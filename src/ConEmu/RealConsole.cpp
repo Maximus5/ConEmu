@@ -3406,6 +3406,65 @@ BOOL CRealConsole::StartMonitorThread()
 	return lbRc;
 }
 
+HKEY CRealConsole::PrepareConsoleRegistryKey()
+{
+	HKEY hkConsole = NULL;
+	LONG lRegRc;
+
+	if (0 == (lRegRc = RegCreateKeyEx(HKEY_CURRENT_USER, L"Console\\ConEmu", 0, NULL, 0, KEY_ALL_ACCESS, NULL, &hkConsole, NULL)))
+	{
+		DWORD nSize = sizeof(DWORD), nValue, nType, nNewValue;
+		struct {
+			LPCWSTR pszName;
+			DWORD nType;
+			union {
+				DWORD_PTR nDef;
+				LPCWSTR pszDef;
+			};
+			DWORD nMin, nMax;
+		} BufferValues[] = {
+			// Issue 700: Default history buffers count too small.
+			{ L"HistoryBufferSize", REG_DWORD, {(DWORD_PTR)50}, 16, 999 },
+			{ L"NumberOfHistoryBuffers", REG_DWORD, {(DWORD_PTR)32}, 16, 999 },
+		};
+		for (size_t i = 0; i < countof(BufferValues); ++i)
+		{
+			bool bHasMinMax = (BufferValues[i].nType == REG_DWORD) && (BufferValues[i].nMin || BufferValues[i].nMax);
+
+			switch (BufferValues[i].nType)
+			{
+			case REG_DWORD:
+				lRegRc = RegQueryValueEx(hkConsole, BufferValues[i].pszName, NULL, &nType, (LPBYTE)&nValue, &nSize);
+				if ((lRegRc != 0) || (nType != REG_DWORD) || (nSize != sizeof(DWORD))
+					|| (bHasMinMax && (nValue < BufferValues[i].nMin) || (nValue > BufferValues[i].nMax))
+					|| (!bHasMinMax && (nValue != BufferValues[i].nDef))
+					)
+				{
+					nNewValue = LODWORD(BufferValues[i].nDef);
+					if (BufferValues[i].nMin || BufferValues[i].nMax)
+					{
+						if (!lRegRc && (nValue < BufferValues[i].nMin))
+							nNewValue = BufferValues[i].nMin;
+						else if (!lRegRc && (nValue > BufferValues[i].nMax))
+							nNewValue = BufferValues[i].nMax;
+					}
+
+					lRegRc = RegSetValueEx(hkConsole, BufferValues[i].pszName, 0, REG_DWORD, (LPBYTE)&nNewValue, sizeof(nNewValue));
+				}
+				break; // REG_DWORD
+
+			} // switch (BufferValues[i].nType)
+		}
+	}
+	else
+	{
+		DisplayLastError(L"Failed to create/open registry key 'HKCU\\Console\\ConEmu'", lRegRc);
+		hkConsole = NULL;
+	}
+
+	return hkConsole;
+}
+
 void CRealConsole::PrepareDefaultColors()
 {
 	BYTE nTextColorIdx /*= 7*/, nBackColorIdx /*= 0*/, nPopTextColorIdx /*= 5*/, nPopBackColorIdx /*= 15*/;
@@ -4094,40 +4153,8 @@ BOOL CRealConsole::StartProcess()
 	wchar_t* psCurCmd = NULL;
 	_ASSERTE((m_Args.pszStartupDir == NULL) || (*m_Args.pszStartupDir != 0));
 
-	HKEY hkConsole = NULL;
-	LONG lRegRc;
-	if (0 == (lRegRc = RegCreateKeyEx(HKEY_CURRENT_USER, L"Console\\ConEmu", 0, NULL, 0, KEY_ALL_ACCESS, NULL, &hkConsole, NULL)))
-	{
-		DWORD nSize = sizeof(DWORD), nValue, nType;
-		struct {
-			LPCWSTR pszName;
-			DWORD nMin, nMax, nDef;
-		} BufferValues[] = {
-			{L"HistoryBufferSize", 16, 999, 50},
-			{L"NumberOfHistoryBuffers", 16, 999, 32}
-		};
-		for (size_t i = 0; i < countof(BufferValues); ++i)
-		{
-			lRegRc = RegQueryValueEx(hkConsole, BufferValues[i].pszName, NULL, &nType, (LPBYTE)&nValue, &nSize);
-			if ((lRegRc != 0) || (nType != REG_DWORD) || (nSize != sizeof(DWORD)) || (nValue < BufferValues[i].nMin) || (nValue > BufferValues[i].nMax))
-			{
-				if (!lRegRc && (nValue < BufferValues[i].nMin))
-					nValue = BufferValues[i].nMin;
-				else if (!lRegRc && (nValue > BufferValues[i].nMax))
-					nValue = BufferValues[i].nMax;
-				else
-					nValue = BufferValues[i].nDef;
-
-				// Issue 700: Default history buffers count too small.
-				lRegRc = RegSetValueEx(hkConsole, BufferValues[i].pszName, 0, REG_DWORD, (LPBYTE)&nValue, sizeof(nValue));
-			}
-		}
-	}
-	else
-	{
-		DisplayLastError(L"Failed to create/open registry key 'HKCU\\Console\\ConEmu'", lRegRc);
-		hkConsole = NULL;
-	}
+	// HistoryBufferSize, NumberOfHistoryBuffers
+	HKEY hkConsole = PrepareConsoleRegistryKey();
 
 	BYTE nTextColorIdx /*= 7*/, nBackColorIdx /*= 0*/, nPopTextColorIdx /*= 5*/, nPopBackColorIdx /*= 15*/;
 	PrepareDefaultColors(nTextColorIdx, nBackColorIdx, nPopTextColorIdx, nPopBackColorIdx, true, hkConsole);

@@ -286,6 +286,7 @@ class CRealConsole
 		HWND    hConWnd;
 		BYTE    m_ConsoleKeyShortcuts;
 		BYTE    mn_TextColorIdx, mn_BackColorIdx, mn_PopTextColorIdx, mn_PopBackColorIdx;
+		HKEY    PrepareConsoleRegistryKey();
 		void    PrepareDefaultColors(BYTE& nTextColorIdx, BYTE& nBackColorIdx, BYTE& nPopTextColorIdx, BYTE& nPopBackColorIdx, bool bUpdateRegistry = false, HKEY hkConsole = NULL);
 	public:
 		void    PrepareDefaultColors();
