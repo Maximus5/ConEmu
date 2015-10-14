@@ -1567,9 +1567,6 @@ struct PipeServer
 							PLOG3(i,"TerminateThread/Timeout done",m_Pipes[i].dwState);
 						}
 					}
-					PLOG3(i,"CloseThreadHandle",m_Pipes[i].dwState);
-					SafeCloseHandle(m_Pipes[i].hThread);
-					PLOG3(i,"CloseThreadHandle done",m_Pipes[i].dwState);
 				}
 			}
 
@@ -1591,6 +1588,13 @@ struct PipeServer
 					SafeCloseHandle(m_Pipes[i].hEvent);
 				}
 				
+				if (m_Pipes[i].hThread)
+				{
+					PLOG3(i,"CloseThreadHandle",m_Pipes[i].dwState);
+					SafeCloseHandle(m_Pipes[i].hThread);
+					PLOG3(i,"CloseThreadHandle done",m_Pipes[i].dwState);
+				}
+
 				// Release buffers memory
 				if (m_Pipes[i].ptrRequest)
 				{
