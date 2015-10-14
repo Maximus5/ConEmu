@@ -955,7 +955,7 @@ LPCWSTR CConEmuMain::MakeConEmuStartArgs(CEStr& rsArgs)
 	size_t cchMax =
 		+ (pszConfig ? (_tcslen(pszConfig) + 16) : 0)
 		+ (pszXmlFile ? (_tcslen(pszXmlFile) + 32) : 0)
-		+ (pszAddArgs ? _tcslen(pszAddArgs) : 0);
+		+ (pszAddArgs ? (_tcslen(pszAddArgs) + 1) : 0);
 	if (!cchMax)
 	{
 		rsArgs.Empty();
@@ -968,21 +968,23 @@ LPCWSTR CConEmuMain::MakeConEmuStartArgs(CEStr& rsArgs)
 
 	pszBuf[0] = 0;
 
-	if (pszXmlFile)
+	if (pszXmlFile && *pszXmlFile)
 	{
 		_wcscat_c(pszBuf, cchMax, L"/LoadCfgFile \"");
 		_wcscat_c(pszBuf, cchMax, pszXmlFile);
 		_wcscat_c(pszBuf, cchMax, L"\" ");
 	}
-	if (pszConfig)
+	if (pszConfig && *pszConfig)
 	{
 		_wcscat_c(pszBuf, cchMax, L"/config \"");
 		_wcscat_c(pszBuf, cchMax, pszConfig);
 		_wcscat_c(pszBuf, cchMax, L"\" ");
 	}
-	if (pszAddArgs)
+	if (pszAddArgs && *pszAddArgs)
 	{
 		_wcscat_c(pszBuf, cchMax, pszAddArgs);
+		if (pszAddArgs[_tcslen(pszAddArgs)-1] != L' ')
+			_wcscat_c(pszBuf, cchMax, L" ");
 	}
 
 	return rsArgs.ms_Arg;
