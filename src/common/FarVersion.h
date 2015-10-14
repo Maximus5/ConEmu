@@ -37,17 +37,17 @@ static void SetDefaultFarVersion(FarVersion& gFarVersion)
 	gFarVersion.dwBits = WIN3264TEST(32,64);
 }
 
-static bool LoadAppVersion(LPCWSTR FarPath, VS_FIXEDFILEINFO& Version, wchar_t (&ErrText)[512])
+static bool LoadModuleVersion(LPCWSTR asModulePath, VS_FIXEDFILEINFO& Version, wchar_t* ErrText, size_t cchErrMax)
 {
 	bool lbRc = false;
 	DWORD dwErr = 0;
 
-	ErrText[0] = 0;
+	if (ErrText) ErrText[0] = 0;
 
-	if (FarPath && *FarPath)
+	if (asModulePath && *asModulePath)
 	{
 		DWORD dwRsrvd = 0;
-		DWORD dwSize = GetFileVersionInfoSize(FarPath, &dwRsrvd);
+		DWORD dwSize = GetFileVersionInfoSize(asModulePath, &dwRsrvd);
 
 		if (dwSize>0)
 		{
@@ -58,7 +58,7 @@ static bool LoadAppVersion(LPCWSTR FarPath, VS_FIXEDFILEINFO& Version, wchar_t (
 				VS_FIXEDFILEINFO *lvs = NULL;
 				UINT nLen = 0;
 
-				if (GetFileVersionInfo(FarPath, 0, dwSize, pVerData))
+				if (GetFileVersionInfo(asModulePath, 0, dwSize, pVerData))
 				{
 					wchar_t szSlash[3]; lstrcpyW(szSlash, L"\\");
 
@@ -70,39 +70,43 @@ static bool LoadAppVersion(LPCWSTR FarPath, VS_FIXEDFILEINFO& Version, wchar_t (
 					}
 					else
 					{
-						dwErr = GetLastError(); lstrcpyW(ErrText, L"LoadAppVersion.VerQueryValue(\"\\\") failed!\n");
+						dwErr = GetLastError();
+						if (ErrText) _wcscpy_c(ErrText, cchErrMax, L"LoadAppVersion.VerQueryValue(\"\\\") failed!\n");
 					}
 				}
 				else
 				{
-					dwErr = GetLastError(); lstrcpyW(ErrText, L"LoadAppVersion.GetFileVersionInfo() failed!\n");
+					dwErr = GetLastError();
+					if (ErrText) _wcscpy_c(ErrText, cchErrMax, L"LoadAppVersion.GetFileVersionInfo() failed!\n");
 				}
 
 				free(pVerData);
 			}
 			else
 			{
-				_wsprintf(ErrText, SKIPLEN(countof(ErrText)) L"LoadAppVersion failed! Can't allocate %n bytes!\n", dwSize);
+				if (ErrText) _wsprintf(ErrText, SKIPLEN(cchErrMax) L"LoadAppVersion failed! Can't allocate %n bytes!\n", dwSize);
 			}
 		}
 		else
 		{
-			dwErr = GetLastError(); lstrcpyW(ErrText, L"LoadAppVersion.GetFileVersionInfoSize() failed!\n");
+			dwErr = GetLastError();
+			if (ErrText) _wcscpy_c(ErrText, cchErrMax, L"LoadAppVersion.GetFileVersionInfoSize() failed!\n");
 		}
 
-		if (ErrText[0]) lstrcatW(ErrText, FarPath);
+		if (ErrText && *ErrText) _wcscat_c(ErrText, cchErrMax, asModulePath);
 	}
 	else
 	{
-		dwErr = 0; lstrcpyW(ErrText, L"Invalid AppPath was specified");
+		dwErr = 0;
+		if (ErrText) _wcscpy_c(ErrText, cchErrMax, L"Invalid asModulePath was specified");
 	}
 
-	if (ErrText[0])
+	if (ErrText && *ErrText)
 	{
 		if (dwErr)
 		{
 			int nCurLen = lstrlen(ErrText);
-			_wsprintf(ErrText+nCurLen, SKIPLEN(countof(ErrText)-nCurLen) L"\nErrCode=0x%08X", dwErr);
+			_wsprintf(ErrText+nCurLen, SKIPLEN(cchErrMax-nCurLen) L"\nErrCode=0x%08X", dwErr);
 		}
 	}
 
@@ -112,6 +116,11 @@ static bool LoadAppVersion(LPCWSTR FarPath, VS_FIXEDFILEINFO& Version, wchar_t (
 	}
 
 	return lbRc;
+}
+
+static bool LoadAppVersion(LPCWSTR FarPath, VS_FIXEDFILEINFO& Version, wchar_t (&ErrText)[512])
+{
+	return LoadModuleVersion(FarPath, Version, ErrText, countof(ErrText));
 }
 
 static void ConvertVersionToFarVersion(const VS_FIXEDFILEINFO& lvs, FarVersion& gFarVersion)
