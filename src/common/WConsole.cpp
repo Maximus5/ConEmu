@@ -338,8 +338,85 @@ BOOL apiSetConsoleScreenBufferInfoEx(HANDLE hConsoleOutput, MY_CONSOLE_SCREEN_BU
 	return lbRc;
 }
 
-typedef BOOL (WINAPI *PSetCurrentConsoleFontEx)(HANDLE /*hConsoleOutput*/, BOOL /*bMaximumWindow*/, MY_CONSOLE_FONT_INFOEX* /*lpConsoleCurrentFontEx*/);
-typedef BOOL (WINAPI *PGetCurrentConsoleFontEx)(HANDLE /*hConsoleOutput*/, BOOL /*bMaximumWindow*/, MY_CONSOLE_FONT_INFOEX* /*lpConsoleCurrentFontEx*/);
+
+
+// Vista+ Kernel32::GetCurrentConsoleFontEx
+BOOL apiGetCurrentConsoleFontEx(HANDLE hConsoleOutput, BOOL bMaximumWindow, MY_CONSOLE_FONT_INFOEX* lpConsoleCurrentFontEx)
+{
+	typedef BOOL (WINAPI *PGetCurrentConsoleFontEx)(HANDLE /*hConsoleOutput*/, BOOL /*bMaximumWindow*/, MY_CONSOLE_FONT_INFOEX* /*lpConsoleCurrentFontEx*/);
+	static PGetCurrentConsoleFontEx GetCurrentConsoleFontEx = NULL;
+	static bool bFuncChecked = false;
+
+	if (!bFuncChecked)
+	{
+		HMODULE hKernel = GetModuleHandle(L"kernel32.dll");
+		if (!hKernel)
+			return FALSE;
+		GetCurrentConsoleFontEx = (PGetCurrentConsoleFontEx)
+			GetProcAddress(hKernel, "GetCurrentConsoleFontEx");
+		bFuncChecked = true;
+	}
+	if (!GetCurrentConsoleFontEx)
+	{
+		return FALSE;
+	}
+
+	BOOL lbRc = GetCurrentConsoleFontEx(hConsoleOutput, bMaximumWindow, lpConsoleCurrentFontEx);
+
+	#ifdef _DEBUG
+	if (lbRc && (lpConsoleCurrentFontEx->dwFontSize.Y > 10))
+	{
+		static bool bWarned = false;
+		if (!bWarned)
+		{
+			_ASSERTE(FALSE && "GetCurrentConsoleFontEx detects large RealConsole font");
+			bWarned = TRUE;
+		}
+	}
+	#endif
+
+	return lbRc;
+}
+
+// Vista+ Kernel32::SetCurrentConsoleFontEx
+BOOL apiSetCurrentConsoleFontEx(HANDLE hConsoleOutput, BOOL bMaximumWindow, MY_CONSOLE_FONT_INFOEX* lpConsoleCurrentFontEx)
+{
+	typedef BOOL (WINAPI *PSetCurrentConsoleFontEx)(HANDLE /*hConsoleOutput*/, BOOL /*bMaximumWindow*/, MY_CONSOLE_FONT_INFOEX* /*lpConsoleCurrentFontEx*/);
+	static PSetCurrentConsoleFontEx SetCurrentConsoleFontEx = NULL;
+	static bool bFuncChecked = false;
+
+	if (!bFuncChecked)
+	{
+		HMODULE hKernel = GetModuleHandle(L"kernel32.dll");
+		if (!hKernel)
+			return FALSE;
+		SetCurrentConsoleFontEx = (PSetCurrentConsoleFontEx)
+			GetProcAddress(hKernel, "SetCurrentConsoleFontEx");
+		bFuncChecked = true;
+	}
+	if (!SetCurrentConsoleFontEx)
+	{
+		return FALSE;
+	}
+
+	#ifdef _DEBUG
+	if (lpConsoleCurrentFontEx->dwFontSize.Y > 10)
+	{
+		static bool bWarned = false;
+		if (!bWarned)
+		{
+			_ASSERTE(FALSE && "Going to set large RealConsole font");
+			bWarned = TRUE;
+		}
+	}
+	#endif
+
+	BOOL lbRc = SetCurrentConsoleFontEx(hConsoleOutput, bMaximumWindow, lpConsoleCurrentFontEx);
+	return lbRc;
+}
+
+
+
 
 // Vista+ only
 BOOL apiGetConsoleFontSize(HANDLE hOutput, int &SizeY, int &SizeX, wchar_t (&rsFontName)[LF_FACESIZE])
@@ -354,14 +431,10 @@ BOOL apiGetConsoleFontSize(HANDLE hOutput, int &SizeY, int &SizeX, wchar_t (&rsF
 
 	BOOL lbRc = FALSE;
 
-	//typedef BOOL (WINAPI *PGetCurrentConsoleFontEx)(HANDLE /*hConsoleOutput*/, BOOL /*bMaximumWindow*/, MY_CONSOLE_FONT_INFOEX* /*lpConsoleCurrentFontEx*/);
-	PGetCurrentConsoleFontEx GetCurrentConsoleFontEx = (PGetCurrentConsoleFontEx)
-	        GetProcAddress(hKernel, "GetCurrentConsoleFontEx");
-
-	if (GetCurrentConsoleFontEx)  // We have Vista
+	if (IsWin6())  // We have Vista
 	{
 		MY_CONSOLE_FONT_INFOEX cfi = {sizeof(cfi)};
-		lbRc = GetCurrentConsoleFontEx(GetStdHandle(STD_OUTPUT_HANDLE), FALSE, &cfi);
+		lbRc = apiGetCurrentConsoleFontEx(GetStdHandle(STD_OUTPUT_HANDLE), FALSE, &cfi);
 		if (lbRc)
 		{
 			SizeX = cfi.dwFontSize.X;
@@ -386,30 +459,22 @@ BOOL apiSetConsoleFontSize(HANDLE hOutput, int inSizeY, int inSizeX, const wchar
 
 	BOOL lbRc = FALSE;
 
-	//typedef BOOL (WINAPI *PSetCurrentConsoleFontEx)(HANDLE /*hConsoleOutput*/, BOOL /*bMaximumWindow*/, MY_CONSOLE_FONT_INFOEX* /*lpConsoleCurrentFontEx*/);
-	PSetCurrentConsoleFontEx SetCurrentConsoleFontEx = (PSetCurrentConsoleFontEx)
-	        GetProcAddress(hKernel, "SetCurrentConsoleFontEx");
-
-	//typedef BOOL (WINAPI *PGetCurrentConsoleFontEx)(HANDLE /*hConsoleOutput*/, BOOL /*bMaximumWindow*/, MY_CONSOLE_FONT_INFOEX* /*lpConsoleCurrentFontEx*/);
-	PGetCurrentConsoleFontEx GetCurrentConsoleFontEx = (PGetCurrentConsoleFontEx)
-	        GetProcAddress(hKernel, "GetCurrentConsoleFontEx");
-
-	if (SetCurrentConsoleFontEx)  // We have Vista
+	if (IsWin6())  // We have Vista
 	{
 		MY_CONSOLE_FONT_INFOEX cfi = {sizeof(cfi)};
-		//GetCurrentConsoleFontEx(GetStdHandle(STD_OUTPUT_HANDLE), FALSE, &cfi);
+		//apiGetCurrentConsoleFontEx(GetStdHandle(STD_OUTPUT_HANDLE), FALSE, &cfi);
 		cfi.dwFontSize.X = inSizeX;
 		cfi.dwFontSize.Y = inSizeY;
 		lstrcpynW(cfi.FaceName, asFontName ? asFontName : L"Lucida Console", countof(cfi.FaceName));
 
 		HANDLE hConOut = GetStdHandle(STD_OUTPUT_HANDLE);
-		lbRc = SetCurrentConsoleFontEx(hConOut, FALSE, &cfi);
+		lbRc = apiSetCurrentConsoleFontEx(hConOut, FALSE, &cfi);
 
 		// Store for further comparison
 		if (lbRc)
 		{
 			MY_CONSOLE_FONT_INFOEX cfiSet = {sizeof(cfiSet)};
-			if (GetCurrentConsoleFontEx && GetCurrentConsoleFontEx(hConOut, FALSE, &cfiSet))
+			if (apiGetCurrentConsoleFontEx(hConOut, FALSE, &cfiSet))
 			{
 				// Win10 can't set "Lucida Console 3x5" and we get "4x6"
 				_ASSERTE(_abs(cfiSet.dwFontSize.X-cfi.dwFontSize.X)<=1 && _abs(cfiSet.dwFontSize.Y-cfi.dwFontSize.Y)<=1);
