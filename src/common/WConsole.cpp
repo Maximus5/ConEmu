@@ -417,6 +417,27 @@ BOOL apiSetCurrentConsoleFontEx(HANDLE hConsoleOutput, BOOL bMaximumWindow, MY_C
 
 
 
+//Used in RM_ALTSERVER
+BOOL apiInitConsoleFontSize(HANDLE hOutput)
+{
+	BOOL lbRc = FALSE;
+
+	HMODULE hKernel = GetModuleHandle(L"kernel32.dll");
+	if (!hKernel)
+		return FALSE;
+
+	if (IsWin6())  // We have Vista
+	{
+		MY_CONSOLE_FONT_INFOEX cfi = { sizeof(cfi) };
+		if (apiGetCurrentConsoleFontEx(hOutput, FALSE, &cfi))
+		{
+			g_LastSetConsoleFont = cfi;
+			lbRc = TRUE;
+		}
+	}
+
+	return lbRc;
+}
 
 // Vista+ only
 BOOL apiGetConsoleFontSize(HANDLE hOutput, int &SizeY, int &SizeX, wchar_t (&rsFontName)[LF_FACESIZE])

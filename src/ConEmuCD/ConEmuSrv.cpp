@@ -1026,6 +1026,17 @@ int ServerInit(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/)
 		gbAutoDisableConfirmExit = FALSE; gbAlwaysConfirmExit = FALSE;
 	}
 
+	// Remember RealConsole font at the startup moment
+	if (anWorkMode)
+	{
+		_ASSERTE(gnRunMode==RM_ALTSERVER);
+		apiInitConsoleFontSize(ghConOut);
+	}
+	else
+	{
+		_ASSERTE(gnRunMode!=RM_ALTSERVER);
+	}
+
 	// Шрифт в консоли нужно менять в самом начале, иначе могут быть проблемы с установкой размера консоли
 	if ((anWorkMode == 0) && !gpSrv->DbgInfo.bDebuggerActive && !gbNoCreateProcess)
 		//&& (!gbNoCreateProcess || (gbAttachMode && gbNoCreateProcess && gpSrv->dwRootProcess))
