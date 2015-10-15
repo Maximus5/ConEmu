@@ -141,8 +141,10 @@ WARNING("WIN64 was not defined");
 #define HIDWORD(ull) ((DWORD)((ULONGLONG)(ull)>>32))
 #define LOSHORT(ll)  ((SHORT)LOWORD(ll))
 
+#define RectWidth(rc) ((rc).right-(rc).left)
+#define RectHeight(rc) ((rc).bottom-(rc).top)
 #define LOGRECTCOORDS(rc) (rc).left, (rc).top, (rc).right, (rc).bottom
-#define LOGRECTSIZE(rc) (rc).right-(rc).left, (rc).bottom-(rc).top
+#define LOGRECTSIZE(rc) RectWidth(rc), RectHeight(rc)
 
 #define _abs(n) (((n)>=0) ? (n) : -(n))
 
