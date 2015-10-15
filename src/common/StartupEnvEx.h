@@ -381,7 +381,13 @@ public:
 
 		POINT ptCur = {0}; GetCursorPos(&ptCur);
 		HMONITOR hMonFromMouse = MonitorFromPoint(ptCur, MONITOR_DEFAULTTONULL);
-		_wsprintf(szSI, SKIPLEN(countof(szSI)) L"MouseCursor: {%i,%i} Monitor: %08X", ptCur.x, ptCur.y, LODWORD(hMonFromMouse));
+		MONITORINFOEX mon; ZeroStruct(mon); mon.cbSize = sizeof(mon);
+		HMONITOR hMonFromStart = (apStartEnv->si.dwFlags & STARTF_USESTDHANDLES) ? NULL : (HMONITOR)apStartEnv->si.hStdOutput;
+		if (!hMonFromStart || !GetMonitorInfo(hMonFromStart, &mon))
+			hMonFromStart = NULL;
+		_wsprintf(szSI, SKIPLEN(countof(szSI))
+			L"MouseCursor: {%i,%i} MouseMonitor: %08X StartMonitor: %08X",
+			ptCur.x, ptCur.y, LODWORD(hMonFromMouse), LODWORD(hMonFromStart));
 		dumpEnvStr(szSI, true);
 
 		HDC hdcScreen = GetDC(NULL);
