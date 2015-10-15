@@ -251,8 +251,6 @@ public:
 
 		// Пишем инфу
 		wchar_t szSI[MAX_PATH*4], szDesktop[128] = L"", szTitle[128] = L"";
-		lstrcpyn(szDesktop, apStartEnv->si.lpDesktop ? apStartEnv->si.lpDesktop : L"", countof(szDesktop));
-		lstrcpyn(szTitle, apStartEnv->si.lpTitle ? apStartEnv->si.lpTitle : L"", countof(szTitle));
 
 		BOOL bWin64 = IsWindows64();
 
@@ -267,27 +265,36 @@ public:
 
 		HWND hConWnd = GetConsoleWindow();
 
+		_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"%u.%u.%u.x%u", osv.dwMajorVersion, osv.dwMinorVersion, osv.dwBuildNumber, bWin64 ? 64 : 32);
+
 		_wsprintf(szSI, SKIPLEN(countof(szSI)) L"Startup info\r\n"
-			L"  OsVer: %u.%u.%u.x%u, Product: %u, SP: %u.%u, Suite: 0x%X, SM_SERVERR2: %u\r\n"
+			L"  OsVer: %s, Product: %u, SP: %u.%u, Suite: 0x%X, SM_SERVERR2: %u\r\n"
 			L"  CSDVersion: %s, ReactOS: %u (%s), Rsrv: %u\r\n"
 			L"  DBCS: %u, WINE: %u, PE: %u, Remote: %u, ACP: %u, OEMCP: %u, Admin: %u\r\n"
-			L"  Desktop: %s; BPP: %u\r\n  Title: %s\r\n  Size: {%u,%u},{%u,%u}\r\n"
-			L"  Flags: 0x%08X, ShowWindow: %u, ConHWnd: 0x%08X\r\n"
-			L"  char: %u, short: %u, int: %u, long: %u, u64: %u\r\n"
-			L"  Handles: 0x%08X, 0x%08X, 0x%08X"
 			,
-			osv.dwMajorVersion, osv.dwMinorVersion, osv.dwBuildNumber, bWin64 ? 64 : 32,
+			szTitle,
 			osv.wProductType, osv.wServicePackMajor, osv.wServicePackMinor, osv.wSuiteMask, GetSystemMetrics(89/*SM_SERVERR2*/),
 			osv.szCSDVersion, apStartEnv->bIsReactOS, pszReactOS, osv.wReserved,
 			apStartEnv->bIsDbcs, apStartEnv->bIsWine, apStartEnv->bIsWinPE, apStartEnv->bIsRemote,
-			apStartEnv->nAnsiCP, apStartEnv->nOEMCP, apStartEnv->bIsAdmin,
+			apStartEnv->nAnsiCP, apStartEnv->nOEMCP, apStartEnv->bIsAdmin);
+		DumpEnvStr(szSI, lParam, true, false);
+
+		lstrcpyn(szDesktop, apStartEnv->si.lpDesktop ? apStartEnv->si.lpDesktop : L"", countof(szDesktop));
+		lstrcpyn(szTitle, apStartEnv->si.lpTitle ? apStartEnv->si.lpTitle : L"", countof(szTitle));
+
+		_wsprintf(szSI, SKIPLEN(countof(szSI))
+			L"  Desktop: %s; BPP: %u\r\n  Title: %s\r\n  Size: {%u,%u},{%u,%u}\r\n"
+			L"  Flags: 0x%08X, ShowWindow: %u, ConHWnd: 0x%08X\r\n"
+			L"  char: %u, short: %u, int: %u, long: %u, u64: %u\r\n"
+			L"  Handles: 0x%08X, 0x%08X, 0x%08X\r\n"
+			,
 			szDesktop, apStartEnv->nPixels, szTitle,
 			apStartEnv->si.dwX, apStartEnv->si.dwY, apStartEnv->si.dwXSize, apStartEnv->si.dwYSize,
 			apStartEnv->si.dwFlags, (DWORD)apStartEnv->si.wShowWindow, LODWORD(hConWnd),
 			LODWORD(sizeof(CHAR)), LODWORD(sizeof(short)), LODWORD(sizeof(int)), LODWORD(sizeof(long)), LODWORD(sizeof(u64)),
 			LODWORD(apStartEnv->si.hStdInput), LODWORD(apStartEnv->si.hStdOutput), LODWORD(apStartEnv->si.hStdError)
 			);
-		DumpEnvStr(szSI, lParam, true, true);
+		dumpEnvStr(szSI, false);
 
 		if (hConWnd)
 		{
