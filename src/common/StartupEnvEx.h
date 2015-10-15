@@ -266,6 +266,11 @@ public:
 		HWND hConWnd = GetConsoleWindow();
 
 		_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"%u.%u.%u.x%u", osv.dwMajorVersion, osv.dwMinorVersion, osv.dwBuildNumber, bWin64 ? 64 : 32);
+		if ((osv.dwMajorVersion == 6) && (osv.dwMinorVersion == 3))
+		{
+			if (IsWin10())
+				wcscat_c(szTitle, L" !Win10!");
+		}
 
 		_wsprintf(szSI, SKIPLEN(countof(szSI)) L"Startup info\r\n"
 			L"  OsVer: %s, Product: %u, SP: %u.%u, Suite: 0x%X, SM_SERVERR2: %u\r\n"
