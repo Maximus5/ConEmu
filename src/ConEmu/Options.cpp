@@ -2531,9 +2531,8 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 		reg->Load(L"ConsoleFontWidth", ConsoleFont.lfWidth);
 		reg->Load(L"ConsoleFontHeight", ConsoleFont.lfHeight);
 
-		reg->Load(L"UseCurrentSizePos", isUseCurrentSizePos);
-		reg->Load(L"WindowMode", _WindowMode); if (_WindowMode!=rFullScreen && _WindowMode!=rMaximized && _WindowMode!=rNormal) _WindowMode = rNormal;
-		reg->Load(L"IntegralSize", mb_IntegralSize);
+		LoadSizeSettings(reg);
+
 		reg->Load(L"QuakeStyle", isQuakeStyle);
 		reg->Load(L"Restore2ActiveMon", isRestore2ActiveMon);
 		reg->Load(L"QuakeAnimation", nQuakeAnimation); MinMax(nQuakeAnimation, QUAKEANIMATION_MAX);
@@ -2554,28 +2553,6 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 
 		reg->Load(L"DownShowHiddenMessage", isDownShowHiddenMessage);
 		reg->Load(L"DownShowExOnTopMessage", isDownShowExOnTopMessage);
-
-		reg->Load(L"ConWnd X", _wndX); /*if (wndX<-10) wndX = 0;*/
-		reg->Load(L"ConWnd Y", _wndY); /*if (wndY<-10) wndY = 0;*/
-		reg->Load(L"AutoSaveSizePos", isAutoSaveSizePos);
-		// ЭТО не влияет на szDefCmd. Только прямое указание флажка "/BufferHeight N"
-		// может сменить (умолчательную) команду запуска на "cmd" или "far"
-		reg->Load(L"Cascaded", wndCascade);
-		DWORD sizeRaw = wndWidth.Raw;
-		reg->Load(L"ConWnd Width", sizeRaw); wndWidth.SetFromRaw(true, sizeRaw);
-		sizeRaw = wndHeight.Raw;
-		reg->Load(L"ConWnd Height", sizeRaw); wndHeight.SetFromRaw(false, sizeRaw);
-
-		if (gpSetCls->isAdvLogging)
-		{
-			wchar_t szInfo[120]; _wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"Loaded pos: {%i,%i}, size: {%s,%s}", _wndX, _wndY, wndWidth.AsString(), wndHeight.AsString());
-			gpConEmu->LogString(szInfo);
-		}
-
-		//TODO: Эти два параметра не сохраняются
-		reg->Load(L"16bit Height", ntvdmHeight);
-
-		if (ntvdmHeight!=0 && ntvdmHeight!=25 && ntvdmHeight!=28 && ntvdmHeight!=43 && ntvdmHeight!=50) ntvdmHeight = 25;
 
 		reg->Load(L"DefaultBufferHeight", DefaultBufferHeight);
 
@@ -3008,6 +2985,58 @@ wrap:
 	}
 }
 
+void Settings::LoadSizeSettings(SettingsBase* reg)
+{
+	reg->Load(L"UseCurrentSizePos", isUseCurrentSizePos);
+	reg->Load(L"AutoSaveSizePos", isAutoSaveSizePos);
+	reg->Load(L"Cascaded", wndCascade);
+	reg->Load(L"IntegralSize", mb_IntegralSize);
+
+	reg->Load(L"WindowMode", _WindowMode); if (_WindowMode != rFullScreen && _WindowMode != rMaximized && _WindowMode != rNormal) _WindowMode = rNormal;
+
+	reg->Load(L"ConWnd X", _wndX);
+	reg->Load(L"ConWnd Y", _wndY);
+
+	// ЭТО не влияет на szDefCmd. Только прямое указание флажка "/BufferHeight N"
+	// может сменить (умолчательную) команду запуска на "cmd" или "far"
+	DWORD sizeRaw = wndWidth.Raw;
+	reg->Load(L"ConWnd Width", sizeRaw); wndWidth.SetFromRaw(true, sizeRaw);
+	sizeRaw = wndHeight.Raw;
+	reg->Load(L"ConWnd Height", sizeRaw); wndHeight.SetFromRaw(false, sizeRaw);
+
+	if (gpSetCls->isAdvLogging)
+	{
+		wchar_t szInfo[120]; _wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"Loaded pos: {%i,%i}, size: {%s,%s}", _wndX, _wndY, wndWidth.AsString(), wndHeight.AsString());
+		gpConEmu->LogString(szInfo);
+	}
+
+	reg->Load(L"16bit Height", ntvdmHeight);
+	if (ntvdmHeight != 0 && ntvdmHeight != 25 && ntvdmHeight != 28 && ntvdmHeight != 43 && ntvdmHeight != 50) ntvdmHeight = 25;
+}
+
+void Settings::SaveSizeSettings(SettingsBase* reg)
+{
+	wchar_t szPosition[80];
+	DWORD saveMode = (isUseCurrentSizePos == false) ? _WindowMode // save what user's specified explicitly
+		: ((ghWnd == NULL)  // otherwise - save current state
+			? gpConEmu->WindowMode
+			: (gpConEmu->isFullScreen() ? rFullScreen : gpConEmu->isZoomed() ? rMaximized : rNormal));
+
+	reg->Save(L"UseCurrentSizePos", isUseCurrentSizePos);
+	reg->Save(L"AutoSaveSizePos", isAutoSaveSizePos);
+	reg->Save(L"Cascaded", wndCascade);
+	reg->Save(L"IntegralSize", mb_IntegralSize);
+
+	reg->Save(L"WindowMode", saveMode);
+
+	reg->Save(L"ConWnd X", isUseCurrentSizePos ? gpConEmu->wndX : _wndX);
+	reg->Save(L"ConWnd Y", isUseCurrentSizePos ? gpConEmu->wndY : _wndY);
+
+	reg->Save(L"ConWnd Width", isUseCurrentSizePos ? gpConEmu->WndWidth.Raw : wndWidth.Raw);
+	reg->Save(L"ConWnd Height", isUseCurrentSizePos ? gpConEmu->WndHeight.Raw : wndHeight.Raw);
+	reg->Save(L"16bit Height", ntvdmHeight);
+}
+
 void Settings::SaveSettingsOnExit()
 {
 	if (!this)
@@ -3043,20 +3072,7 @@ void Settings::SaveSettingsOnExit()
 	{
 		if (isAutoSaveSizePos)
 		{
-			reg->Save(L"UseCurrentSizePos", isUseCurrentSizePos);
-			DWORD saveMode = (isUseCurrentSizePos==false) ? _WindowMode // сохранять будем то, что задано пользователем явно
-					: ( (ghWnd == NULL)  // иначе - текущее состояние
-							? gpConEmu->WindowMode
-							: (gpConEmu->isFullScreen() ? rFullScreen : gpConEmu->isZoomed() ? rMaximized : rNormal));
-			reg->Save(L"WindowMode", saveMode);
-			reg->Save(L"ConWnd Width", isUseCurrentSizePos ? gpConEmu->WndWidth.Raw : wndWidth.Raw);
-			reg->Save(L"ConWnd Height", isUseCurrentSizePos ? gpConEmu->WndHeight.Raw : wndHeight.Raw);
-			reg->Save(L"Cascaded", wndCascade);
-			reg->Save(L"IntegralSize", mb_IntegralSize);
-			reg->Save(L"ConWnd X", isUseCurrentSizePos ? gpConEmu->wndX : _wndX);
-			reg->Save(L"ConWnd Y", isUseCurrentSizePos ? gpConEmu->wndY : _wndY);
-			reg->Save(L"16bit Height", ntvdmHeight);
-			reg->Save(L"AutoSaveSizePos", isAutoSaveSizePos);
+			SaveSizeSettings(reg);
 		}
 
 		if (mb_StatusSettingsWasChanged)
@@ -3500,21 +3516,8 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		reg->Save(L"UserScreenTransparent", isUserScreenTransparent);
 		reg->Save(L"ColorKeyTransparent", isColorKeyTransparent);
 		reg->Save(L"ColorKeyValue", nColorKeyValue);
-		reg->Save(L"UseCurrentSizePos", isUseCurrentSizePos);
-		DWORD saveMode = (isUseCurrentSizePos==false) ? _WindowMode // сохранять будем то, что задано пользователем явно
-				: ( (ghWnd == NULL)  // иначе - текущее состояние
-						? gpConEmu->WindowMode
-						: (gpConEmu->isFullScreen() ? rFullScreen : gpConEmu->isZoomed() ? rMaximized : rNormal));
-		reg->Save(L"WindowMode", saveMode);
-		reg->Save(L"ConWnd Width", isUseCurrentSizePos ? gpConEmu->WndWidth.Raw : wndWidth.Raw);
-		reg->Save(L"ConWnd Height", isUseCurrentSizePos ? gpConEmu->WndHeight.Raw : wndHeight.Raw);
-		reg->Save(L"Cascaded", wndCascade);
-		reg->Save(L"ConWnd X", isUseCurrentSizePos ? gpConEmu->wndX : _wndX);
-		reg->Save(L"ConWnd Y", isUseCurrentSizePos ? gpConEmu->wndY : _wndY);
-		reg->Save(L"16bit Height", ntvdmHeight);
-		reg->Save(L"AutoSaveSizePos", isAutoSaveSizePos);
+		SaveSizeSettings(reg);
 		ResetSavedOnExit(); // Раз было инициированное пользователем сохранение настроек - сбросим флажок (mb_ExitSettingsAutoSaved)
-		reg->Save(L"IntegralSize", mb_IntegralSize);
 		reg->Save(L"QuakeStyle", isQuakeStyle);
 		reg->Save(L"Restore2ActiveMon", isRestore2ActiveMon);
 		reg->Save(L"QuakeAnimation", nQuakeAnimation);

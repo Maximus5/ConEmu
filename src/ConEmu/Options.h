@@ -247,6 +247,9 @@ struct Settings
 
 		void SaveStatusSettings(SettingsBase* reg);
 
+		void LoadSizeSettings(SettingsBase* reg);
+		void SaveSizeSettings(SettingsBase* reg);
+
 	private:
 		// reg->Load(L"ColorTableNN", Colors[i]);
 		COLORREF Colors[0x20];
