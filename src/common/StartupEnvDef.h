@@ -50,8 +50,8 @@ struct CEStartupEnv
 	size_t cbSize;
 	STARTUPINFOW si;
 	DWORD OsBits;
-	HWND  hConWnd;
 	DWORD nConVisible;
+	HWND  hConWnd;
 	OSVERSIONINFOEXW os;
 	CE_CONSOLE_HISTORY_INFO hi;
 	CE_HANDLE_INFO hIn, hOut, hErr;
