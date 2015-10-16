@@ -19,7 +19,18 @@ http://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
-2015.10.11
+2015.10.15
+* gh#21: Multi-monitor support improvements.
+  * ConEmu takes into account monitor working coordinates when
+    using same xml between different PCs.
+  * ConEmu tries to guess the monitor where user want to open the window.
+  * New `ConEmu.exe` switch `-Monitor <1 | x10001 | "\\.\DISPLAY1">`.
+    Where may be specified either monitor 1-based index,
+    or HMONITOR (hex descriptor), or monitor name.
+    User may check these values in the ‘ConEmu About dialog’
+    on then ‘SysInfo’ tab (Win+Alt+A).
+* gh#368: Fix thread handles leaks.
+* gh#353: Jump lists were created improperly if ConEmu was started with `-single` switch.
 * gh#337: Convert pasted paths to cygwin's style if dropping files/folders from Explorer and others.
 * On paste filepath by Ctrl+V (Paste first line of clipboard) convert path
   to cygwin style, if active application is cygwin/msys.
@@ -38,6 +49,9 @@ http://conemu.github.io/en/Whats_New.html
 * Improve bCurrentThreadIsMain detection in ConEmuHk (especially for cygwin/msys forks).
 * Support ‘Drag&Drop’ from Settings/Colors page onto any place on screen (drag colored square).
 * Use v140 toolset for ConEmuHk in ConEmuHk14.vcxproj.
+* GuiMacro: `TaskAdd("Name","Commands"[,"GuiArgs"[,Flags]])`.
+  Create new task and save it to settings. Example command for
+  PowerShell> ConEmuC --% -GuiMacro TaskAdd "Far" @"set ""FARHOME="" & ""%ConEmuDir%\Far\far.exe"" /w /p""%ConEmuDir%\Plugins\ConEmu;%FARHOME%\Plugins"""
 
 
 2015.10.6
