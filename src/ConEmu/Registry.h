@@ -44,30 +44,71 @@ struct SettingsBase
 
 		virtual bool Load(const wchar_t *regName, wchar_t **value) = 0;
 		virtual bool Load(const wchar_t *regName, LPBYTE value, DWORD nSize) = 0;
-		virtual bool Load(const wchar_t *regName, wchar_t *value, int maxLen) = 0; // нада, для проверки валидности типа реестра
-		/*template <class T> bool Load(const wchar_t *regName, T &value)
-		{
-			DWORD len = sizeof(T);
-			bool lbRc = Load(regName, (LPBYTE)&(value), len);
-			return lbRc;
-		}*/
-		bool Load(const wchar_t *regName, char &value) { return Load(regName, (LPBYTE)&value, 1); }
-		bool Load(const wchar_t *regName, bool &value) { BYTE bval = 0; bool bRc = Load(regName, &bval, sizeof(bval)); if (bRc) value = (bval!=0); return bRc; }
-		bool Load(const wchar_t *regName, BYTE &value) { return Load(regName, (LPBYTE)&value, 1); }
-		bool Load(const wchar_t *regName, DWORD &value) { return Load(regName, (LPBYTE)&value, sizeof(DWORD)); }
-		bool Load(const wchar_t *regName, LONG &value) { return Load(regName, (LPBYTE)&value, sizeof(DWORD)); }
-		bool Load(const wchar_t *regName, int &value) { return Load(regName, (LPBYTE)&value, sizeof(DWORD)); }
-		bool Load(const wchar_t *regName, RECT &value) { return Load(regName, (LPBYTE)&value, sizeof(value)); }
+		virtual bool Load(const wchar_t *regName, wchar_t *value, int maxLen) = 0; // required for registry type validarion (string)
 
 		virtual void Delete(const wchar_t *regName) = 0;
 
 		virtual void Save(const wchar_t *regName, LPCBYTE value, DWORD nType, DWORD nSize) = 0;
 
+		// Helpers: Don't change &value if it was not loaded
+		bool Load(const wchar_t *regName, char  &value) { return Load(regName, (LPBYTE)&value, 1); }
+		bool Load(const wchar_t *regName, BYTE  &value) { return Load(regName, (LPBYTE)&value, 1); }
+		bool Load(const wchar_t *regName, DWORD &value) { return Load(regName, (LPBYTE)&value, sizeof(DWORD)); }
+		bool Load(const wchar_t *regName, LONG  &value) { return Load(regName, (LPBYTE)&value, sizeof(DWORD)); }
+		bool Load(const wchar_t *regName, int   &value) { return Load(regName, (LPBYTE)&value, sizeof(DWORD)); }
+		// Don't change &value if it was not loaded
+		bool Load(const wchar_t *regName, bool  &value)
+		{
+			BYTE bval = 0;
+			bool bRc = Load(regName, &bval, sizeof(bval));
+			if (bRc) value = (bval!=0);
+			return bRc;
+		}
+		// Don't change &value if it was not loaded
+		bool Load(const wchar_t *regName, RECT &value)
+		{
+			wchar_t szRect[80] = L"";
+			// Example: "100,200,500,400" (Left,Top,Right,Bottom)
+			if (!Load(regName, szRect, countof(szRect)-1))
+				return false;
+			RECT rc = {};
+			wchar_t *psz = szRect, *pszEnd;
+			for (int i = 0; i < 4; i++)
+			{
+				if (!isDigit(psz[0]))
+					return false;
+				((LONG*)&rc)[i] = wcstol(psz, &pszEnd, 10);
+				if (i < 3)
+				{
+					if (!pszEnd || !wcschr(L",;", *pszEnd))
+						return false;
+					psz = pszEnd+1;
+				}
+			}
+			if (IsRectEmpty(&rc))
+				return false;
+			value = rc;
+			return true;
+		}
+
 		void Save(const wchar_t *regName, const wchar_t *value)
 		{
 			if (!value) value = L"";  // protect against NULL values
-
 			Save(regName, (LPCBYTE)value, REG_SZ, (_tcslen(value)+1)*sizeof(wchar_t));
+		};
+
+		// Use strict types to prohibit unexpected template usage
+		void Save(const wchar_t *regName, const char&  value) { _Save(regName, value); }
+		void Save(const wchar_t *regName, const bool&  value) { _Save(regName, value); }
+		void Save(const wchar_t *regName, const BYTE&  value) { _Save(regName, value); }
+		void Save(const wchar_t *regName, const DWORD& value) { _Save(regName, value); }
+		void Save(const wchar_t *regName, const LONG&  value) { _Save(regName, value); }
+		void Save(const wchar_t *regName, const int&   value) { _Save(regName, value); }
+		void Save(const wchar_t *regName, const RECT&  value)
+		{
+			wchar_t szRect[80];
+			_wsprintf(szRect, SKIPCOUNT(szRect) L"%i,%i,%i,%i", value.left, value.top, value.right, value.bottom);
+			_Save(regName, szRect);
 		}
 
 		// nSize in BYTES!!!
@@ -77,16 +118,11 @@ struct SettingsBase
 				Delete(regName);
 			else
 				Save(regName, (LPBYTE)value, REG_MULTI_SZ, nSize);
-		}
+		};
 
-		// ensure that following template will not be used
-		void Save(const wchar_t *regName, wchar_t *value)
-		{
-			Save(regName, (const wchar_t*)value);
-		}
-
+	protected:
 		// bool, dword, rect, etc.
-		template <class T> void Save(const wchar_t *regName, T value)
+		template <class T> void _Save(const wchar_t *regName, T value)
 		{
 			DWORD len = sizeof(T);
 			Save(regName, (LPBYTE)(&value), (len == sizeof(DWORD)) ? REG_DWORD : REG_BINARY, len);
