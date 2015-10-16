@@ -49,6 +49,7 @@ struct CEStartupEnv
 {
 	size_t cbSize;
 	STARTUPINFOW si;
+	HMONITOR hStartMon;
 	DWORD OsBits;
 	DWORD nConVisible;
 	HWND  hConWnd;

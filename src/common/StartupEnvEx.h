@@ -382,7 +382,7 @@ public:
 		POINT ptCur = {0}; GetCursorPos(&ptCur);
 		HMONITOR hMonFromMouse = MonitorFromPoint(ptCur, MONITOR_DEFAULTTONULL);
 		MONITORINFOEX mon; ZeroStruct(mon); mon.cbSize = sizeof(mon);
-		HMONITOR hMonFromStart = (apStartEnv->si.dwFlags & STARTF_USESTDHANDLES) ? NULL : (HMONITOR)apStartEnv->si.hStdOutput;
+		HMONITOR hMonFromStart = apStartEnv->hStartMon;
 		if (!hMonFromStart || !GetMonitorInfo(hMonFromStart, &mon))
 			hMonFromStart = NULL;
 		_wsprintf(szSI, SKIPLEN(countof(szSI))

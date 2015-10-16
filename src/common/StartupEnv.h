@@ -117,6 +117,8 @@ protected:
 			pEnv->si = si;
 			pEnv->os = os;
 
+			pEnv->hStartMon = (si.dwFlags & STARTF_USESTDHANDLES) ? NULL : (HMONITOR)si.hStdOutput;
+
 			// Информационно. К физической консоли потом могут и через RDP подключиться...
 			pEnv->bIsRemote = GetSystemMetrics(0x1000/*SM_REMOTESESSION*/);
 
