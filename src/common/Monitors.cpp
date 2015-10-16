@@ -33,6 +33,100 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "MArray.h"
 #include "Monitors.h"
 
+// If possible, open our windows on the monitor where user
+// have clicked our icon (shortcut on the desktop or TaskBar)
+HMONITOR GetStartupMonitor()
+{
+	STARTUPINFO si = {sizeof(si)};
+	MONITORINFO mi = {sizeof(mi)};
+	POINT ptCur = {}, ptOut = {-32000,-32000};
+	HMONITOR hStartupMonitor = NULL, hMouseMonitor, hPrimaryMonitor;
+
+	GetStartupInfo(&si);
+	GetCursorPos(&ptCur);
+
+	// Get primary monitor, it's expected to be started at 0x0, but we can't be sure
+	hPrimaryMonitor = MonitorFromPoint(ptOut, MONITOR_DEFAULTTOPRIMARY);
+
+	// Get the monitor where mouse cursor is located
+	hMouseMonitor = MonitorFromPoint(ptCur, MONITOR_DEFAULTTONEAREST);
+
+	// si.hStdOutput may have a handle of monitor with shortcut or used taskbar
+	if (si.hStdOutput && GetMonitorInfo((HMONITOR)si.hStdOutput, &mi))
+	{
+		hStartupMonitor = (HMONITOR)si.hStdOutput;
+	}
+
+	// Now, due to MS Windows bugs or just an inconsistence,
+	// hStartupMonitor has hPrimaryMonitor, if program was started
+	// from shortcut, even if it is located on secondary monitor,
+	// if it was started by keyboard.
+	// So we can trust hStartupMonitor value only when it contains
+	// non-primary monitor value (when user clicks shortcut with mouse)
+	if (hStartupMonitor && ((hStartupMonitor != hPrimaryMonitor) || (hStartupMonitor == hMouseMonitor)))
+		return hStartupMonitor;
+
+	// Otherwise - return monitor where mouse cursor is located
+	return hMouseMonitor ? hMouseMonitor : hPrimaryMonitor;
+}
+
+// Startup monitor ay be specified from command line
+// Example: ConEmu.exe -Monitor <1 | x10001 | "\\.\DISPLAY1">
+HMONITOR MonitorFromParam(LPCWSTR asMonitor)
+{
+	if (!asMonitor || !*asMonitor)
+		return NULL;
+
+	wchar_t* pszEnd;
+	HMONITOR hMon = NULL;
+	MONITORINFO mi = {sizeof(mi)};
+
+	if (asMonitor[0] == L'x' || asMonitor[0] == L'X')
+		hMon = (HMONITOR)(DWORD_PTR)wcstoul(asMonitor+1, &pszEnd, 16);
+	else if (asMonitor[0] == L'0' && (asMonitor[1] == L'x' || asMonitor[1] == L'X'))
+		hMon = (HMONITOR)(DWORD_PTR)wcstoul(asMonitor+2, &pszEnd, 16);
+	// HMONITOR was already specified?
+	if (GetMonitorInfo(hMon, &mi))
+		return hMon;
+
+	// Monitor name or index?
+	struct impl {
+		HMONITOR hMon;
+		LPCWSTR pszName;
+		LONG nIndex;
+
+		static BOOL CALLBACK FindMonitor(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData)
+		{
+			impl* p = (impl*)dwData;
+			MONITORINFOEX mi; ZeroStruct(mi); mi.cbSize = sizeof(mi);
+			if (GetMonitorInfo(hMonitor, &mi))
+			{
+				// Get monitor by name?
+				if (p->pszName && (0 == lstrcmpi(p->pszName, mi.szDevice)))
+				{
+					p->hMon = hMonitor;
+					return FALSE; // Stop
+				}
+				// Get monitor by index
+				if ((--p->nIndex) <= 0)
+				{
+					p->hMon = hMonitor;
+					return FALSE; // Stop
+				}
+			}
+			return TRUE; // Continue enum
+		};
+	} Impl = {};
+
+	if (isDigit(asMonitor[0]))
+		Impl.nIndex = wcstoul(asMonitor, &pszEnd, 10);
+	else
+		Impl.pszName = asMonitor;
+	EnumDisplayMonitors(NULL, NULL, impl::FindMonitor, (LPARAM)&Impl);
+
+	// Return what found or not
+	return Impl.hMon;
+}
 
 BOOL CALLBACK FindMonitorsWorkspace(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData)
 {
