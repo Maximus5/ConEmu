@@ -40,6 +40,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "OptionsClass.h"
 #include "SetCmdTask.h"
 
+#include "../common/Monitors.h"
+#include "../common/StartupEnvDef.h"
 #include "../common/WFiles.h"
 
 #define DEBUGSTRSTARTUP(s) DEBUGSTR(WIN3264TEST(L"ConEmu.exe: ",L"ConEmu64.exe: ") s L"\n")
@@ -1164,6 +1166,21 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 					case _T('Y'): gpConEmu->opt.sWndY.SetStr(psz.Str, sw_Str); break;
 					case _T('W'): gpConEmu->opt.sWndW.SetStr(psz.Str, sw_Str); break;
 					case _T('H'): gpConEmu->opt.sWndH.SetStr(psz.Str, sw_Str); break;
+					}
+				}
+				else if (!klstricmp(curCommand, _T("/Monitor")))
+				{
+					CESwitch psz(sw_Str); bool bParm = false;
+					if (!GetCfgParm(cmdLineRest, bParm, psz, 64))
+					{
+						goto wrap;
+					}
+
+					if ((gpConEmu->opt.Monitor.Mon = MonitorFromParam(psz.Str)) != NULL)
+					{
+						gpConEmu->opt.Monitor.Exists = true;
+						gpConEmu->opt.Monitor.Type = sw_Int;
+						gpStartEnv->hStartMon = gpConEmu->opt.Monitor.Mon;
 					}
 				}
 				else if (!klstricmp(curCommand, _T("/Buffer")) || !klstricmp(curCommand, _T("/BufferHeight")))

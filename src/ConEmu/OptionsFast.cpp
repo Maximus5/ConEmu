@@ -45,6 +45,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/CmdArg.h"
 #include "../common/execute.h"
 #include "../common/FarVersion.h"
+#include "../common/StartupEnvDef.h"
 #include "../common/WFiles.h"
 #include "../common/WRegistry.h"
 #include "../common/WUser.h"

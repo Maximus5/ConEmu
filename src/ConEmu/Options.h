@@ -249,6 +249,7 @@ struct Settings
 
 		void LoadSizeSettings(SettingsBase* reg);
 		void SaveSizeSettings(SettingsBase* reg);
+		void PatchSizeSettings();
 
 	private:
 		// reg->Load(L"ColorTableNN", Colors[i]);
@@ -753,6 +754,8 @@ struct Settings
 		int _wndX; // в пикселях
 		//reg->Load(L"ConWnd Y", wndY);
 		int _wndY; // в пикселях
+		// Monitor information
+		RECT LastMonRect;
 		//reg->Load(L"WindowMode", WindowMode); if (WindowMode!=rFullScreen && WindowMode!=rMaximized && WindowMode!=rNormal) WindowMode = rNormal;
 		DWORD _WindowMode;
 		//reg->Load(L"Cascaded", wndCascade);

@@ -3649,6 +3649,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	#endif
 
 
+	// If possible, open our windows on the monitor where user have clicked
+	// our icon (shortcut on the desktop or TaskBar)
+	gpStartEnv->hStartMon = GetStartupMonitor();
+
 //#ifdef _DEBUG
 //	wchar_t* pszShort = GetShortFileNameEx(L"T:\\VCProject\\FarPlugin\\ConEmu\\Maximus5\\Debug\\Far2x86\\ConEmu\\ConEmu.exe");
 //	if (pszShort) free(pszShort);

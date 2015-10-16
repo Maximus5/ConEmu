@@ -55,6 +55,7 @@ public:
 		bool        Bool;
 		int         Int;
 		wchar_t*    Str;
+		HMONITOR    Mon; // Treated as sw_Int
 	};
 
 	// Type
@@ -183,6 +184,7 @@ public:
 		CESwitch QuakeMode; // sw_Int
 		bool SizePosPrm; // -WndX -WndY -WndW[idth] -WndH[eight]
 		CESwitch sWndX, sWndY, sWndW, sWndH; // sw_Str
+		CESwitch Monitor; // -Monitor <1 | x10001 | "\\.\DISPLAY1">
 		CESwitch SetUpDefaultTerminal; // sw_Simple
 		CESwitch FixZoneId; // sw_Simple
 		CESwitch ExitAfterActionPrm; // sw_Simple

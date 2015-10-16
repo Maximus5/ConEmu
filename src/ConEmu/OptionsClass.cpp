@@ -727,6 +727,8 @@ bool CSettings::SetOption(LPCWSTR asName, LPCWSTR asValue)
 
 void CSettings::SettingsLoaded(SettingsLoadedFlags slfFlags, LPCWSTR pszCmdLine /*= NULL*/)
 {
+	gpSet->PatchSizeSettings();
+
 	if ((ghWnd == NULL) || (slfFlags & slf_OnResetReload))
 	{
 		gpConEmu->wndX = gpSet->_wndX;

@@ -40,6 +40,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifdef _DEBUG
 #include <TlHelp32.h>
 #endif
+#include "../common/Monitors.h"
+#include "../common/StartupEnvDef.h"
 #include "../common/WRegistry.h"
 #include "../ConEmuCD/GuiHooks.h"
 #include "../ConEmuPlugin/FarDefaultMacros.h"
@@ -2985,6 +2987,82 @@ wrap:
 	}
 }
 
+void Settings::PatchSizeSettings()
+{
+	#define PSS_SKIP_PREFIX L"PatchSizeSettings skipping: "
+	wchar_t szInfo[128];
+
+	// If we haven't to change anything
+	if (!gpStartEnv->hStartMon)
+	{
+		LogString(PSS_SKIP_PREFIX L"hStartMon is NULL");
+		return;
+	}
+
+	// Perhaps, we shall not care of DPI in per-monitor-dpi systems
+	// That is because we evaluate changed X/Y coordinates proportionally
+
+	// NB. _wndX and _wndY may slightly exceed monitor rect.
+	RECT rcWnd = {_wndX, _wndY, _wndX+500, _wndY+300};
+	RECT rcInter = {};
+
+	// Find HMONITOR where our window is supposed to be (due to settings)
+	HMONITOR hCurMon = MonitorFromRect(&rcWnd, MONITOR_DEFAULTTONULL);
+
+	// For new config (or old versions) LastMonRect would be empty
+	// So, evaluate it by rcWnd
+	if (IsRectEmpty(&LastMonRect) && hCurMon)
+	{
+		MONITORINFO miLast = {sizeof(miLast)};
+		if (GetMonitorInfo(hCurMon, &miLast))
+		{
+			LastMonRect = (_WindowMode == rFullScreen) ? miLast.rcMonitor : miLast.rcWork;
+		}
+	}
+
+	// If rcWnd lays completely out of rcLastMon,
+	// that would be an error in saved settings
+	// We can't move window "properly"
+	if (!IntersectRect(&rcInter, &rcWnd, &LastMonRect))
+	{
+		_wsprintf(szInfo, SKIPCOUNT(szInfo) PSS_SKIP_PREFIX L"Bad rects were stored: LastMon={%i,%i}-{%i,%i} Pos={%i,%i}", LOGRECTCOORDS(LastMonRect), _wndX, _wndY);
+		LogString(szInfo);
+		return;
+	}
+
+
+	// So, user asked to place our window to exact monitor?
+	if (gpStartEnv->hStartMon == hCurMon)
+	{
+		LogString(PSS_SKIP_PREFIX L"Same monitor");
+		return; // already there
+	}
+
+	#ifdef _DEBUG
+	// Find stored HMONITOR, if it exists. If NOT - move our window to the nearest
+	HMONITOR hLastMon = MonitorFromRect(&LastMonRect, MONITOR_DEFAULTTONEAREST);
+	#endif
+
+	// Retrieve information about monitor where use want to get our window
+	MONITORINFO mi = {sizeof(mi)};
+	if (!GetMonitorInfo(gpStartEnv->hStartMon, &mi))
+	{
+		LogString(PSS_SKIP_PREFIX L"GetMonitorInfo failed");
+		return;
+	}
+	RECT rcNewMon = (_WindowMode == rFullScreen) ? mi.rcMonitor : mi.rcWork;
+	if (IsRectEmpty(&rcNewMon))
+	{
+		LogString(PSS_SKIP_PREFIX L"GetMonitorInfo failed (NULL RECT)");
+	}
+
+	// Now, we are ready to reposition our window
+	_wndX = rcNewMon.left + ((rcWnd.left - LastMonRect.left) * RectWidth(rcNewMon) / RectWidth(LastMonRect));
+	_wndY = rcNewMon.top + ((rcWnd.top - LastMonRect.top) * RectHeight(rcNewMon) / RectHeight(LastMonRect));
+	// And update monitor rect
+	LastMonRect = rcNewMon;
+}
+
 void Settings::LoadSizeSettings(SettingsBase* reg)
 {
 	reg->Load(L"UseCurrentSizePos", isUseCurrentSizePos);
@@ -2996,6 +3074,26 @@ void Settings::LoadSizeSettings(SettingsBase* reg)
 
 	reg->Load(L"ConWnd X", _wndX);
 	reg->Load(L"ConWnd Y", _wndY);
+
+	// Load monitor information: "0,0,1280,960"
+	bool bMonitorOk = reg->Load(L"LastMonitor", LastMonRect);
+
+	// Fill monitor information with defaults
+	if (!bMonitorOk)
+	{
+		MONITORINFO mi = {sizeof(mi)}; HMONITOR hLastMon;
+		// Avoid to call our evaluation function (they rely on monitor information)
+		RECT rcDef = {_wndX, _wndY, _wndX+500, _wndY+300};
+		if (((hLastMon = MonitorFromRect(&rcDef, MONITOR_DEFAULTTONULL)) != NULL)
+			&& GetMonitorInfo(hLastMon, &mi))
+		{
+			if (_WindowMode == rFullScreen)
+				LastMonRect = mi.rcMonitor;
+			else
+				LastMonRect = mi.rcWork;
+		}
+	}
+
 
 	// ЭТО не влияет на szDefCmd. Только прямое указание флажка "/BufferHeight N"
 	// может сменить (умолчательную) команду запуска на "cmd" или "far"
@@ -3016,7 +3114,6 @@ void Settings::LoadSizeSettings(SettingsBase* reg)
 
 void Settings::SaveSizeSettings(SettingsBase* reg)
 {
-	wchar_t szPosition[80];
 	DWORD saveMode = (isUseCurrentSizePos == false) ? _WindowMode // save what user's specified explicitly
 		: ((ghWnd == NULL)  // otherwise - save current state
 			? gpConEmu->WindowMode
@@ -3029,8 +3126,23 @@ void Settings::SaveSizeSettings(SettingsBase* reg)
 
 	reg->Save(L"WindowMode", saveMode);
 
-	reg->Save(L"ConWnd X", isUseCurrentSizePos ? gpConEmu->wndX : _wndX);
-	reg->Save(L"ConWnd Y", isUseCurrentSizePos ? gpConEmu->wndY : _wndY);
+	// Avoid to call our evaluation function (they rely on monitor information)
+	RECT rcWnd = {isUseCurrentSizePos ? gpConEmu->wndX : _wndX, isUseCurrentSizePos ? gpConEmu->wndY : _wndY};
+	rcWnd.right = rcWnd.left + 500; rcWnd.bottom = rcWnd.top + 300;
+	HMONITOR hMon = MonitorFromRect(&rcWnd, MONITOR_DEFAULTTONULL);
+	MONITORINFO mi = {sizeof(mi)};
+	if (!hMon || !GetMonitorInfoSafe(hMon, mi))
+		ZeroStruct(mi);
+	if (saveMode == rFullScreen)
+		LastMonRect = mi.rcMonitor;
+	else
+		LastMonRect = mi.rcWork;
+
+	reg->Save(L"ConWnd X", rcWnd.left);
+	reg->Save(L"ConWnd Y", rcWnd.top);
+
+	// "LastMonitor" = "0,0,1280,960"
+	reg->Save(L"LastMonitor", LastMonRect);
 
 	reg->Save(L"ConWnd Width", isUseCurrentSizePos ? gpConEmu->WndWidth.Raw : wndWidth.Raw);
 	reg->Save(L"ConWnd Height", isUseCurrentSizePos ? gpConEmu->WndHeight.Raw : wndHeight.Raw);

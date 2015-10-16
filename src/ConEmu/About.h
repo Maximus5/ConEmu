@@ -71,6 +71,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"/FontDir <fontfolder> - Loads all fonts from folder (multiple pairs allowed).\r\n" \
 	L"/BufferHeight <lines> - Set console buffer height.\r\n" \
 	L"/Wnd{X|Y|W|H} <value> - Set window position and size.\r\n" \
+	L"/Monitor <1 | x10001 | \"\\\\.\\DISPLAY1\"> - Place window on the specified monitor.\r\n" \
 	L"/Palette <name> - Choose named color palette.\r\n" \
 	L"/Log[1|2] - Used to create debug log files.\r\n" \
 	L"/Demote /cmd <command> - Run command de-elevated.\r\n" \
