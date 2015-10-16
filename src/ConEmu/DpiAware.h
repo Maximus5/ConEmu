@@ -94,6 +94,7 @@ public:
 
 	// Dialog helper
 	static void GetCenteredRect(HWND hWnd, RECT& rcCentered, HMONITOR hDefault = NULL);
+	static void CenterDialog(HWND hDialog);
 };
 
 class CDynDialog;

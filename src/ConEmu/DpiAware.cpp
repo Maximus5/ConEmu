@@ -332,12 +332,14 @@ int CDpiAware::QueryDpiForMonitor(HMONITOR hmon, DpiValue* pDpi /*= NULL*/, Moni
 void CDpiAware::GetCenteredRect(HWND hWnd, RECT& rcCentered, HMONITOR hDefault /*= NULL*/)
 {
 	bool lbCentered = false;
-	HMONITOR hMon;
 
+	#ifdef _DEBUG
+	HMONITOR hMon;
 	if (hWnd)
 		hMon = MonitorFromWindow(hWnd, MONITOR_DEFAULTTONEAREST);
 	else
 		hMon = MonitorFromRect(&rcCentered, MONITOR_DEFAULTTONEAREST);
+	#endif
 
 	MONITORINFO mi = {};
 	GetNearestMonitorInfo(&mi, hDefault, hWnd ? NULL : &rcCentered, hWnd);
@@ -353,6 +355,30 @@ void CDpiAware::GetCenteredRect(HWND hWnd, RECT& rcCentered, HMONITOR hDefault /
 	rcNew.bottom = rcNew.top + iHeight;
 
 	rcCentered = rcNew;
+}
+
+void CDpiAware::CenterDialog(HWND hDialog)
+{
+	RECT rect = {}, rectAfter = {};
+	if (!hDialog || !GetWindowRect(hDialog, &rect))
+		return;
+
+	// If possible, open our startup dialogs on the monitor,
+	// where user have clicked our icon (shortcut on the desktop or TaskBar)
+	HMONITOR hDefault = ghWnd ? NULL : gpStartEnv->hStartMon;
+
+	// Position dialog in the workarea center
+	CDpiAware::GetCenteredRect(NULL, rect, hDefault);
+	MoveWindowRect(hDialog, rect);
+
+	if (IsPerMonitorDpi() && GetWindowRect(hDialog, &rectAfter))
+	{
+		if ((RectWidth(rect) != RectWidth(rectAfter)) || (RectHeight(rect) != RectHeight(rectAfter)))
+		{
+			CDpiAware::GetCenteredRect(NULL, rectAfter, NULL);
+			MoveWindowRect(hDialog, rectAfter);
+		}
+	}
 }
 
 
