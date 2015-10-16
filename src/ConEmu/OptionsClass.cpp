@@ -11198,7 +11198,6 @@ BOOL CSettings::GetFontNameFromFile_TTF(LPCTSTR lpszFilePath, wchar_t (&rsFontNa
 
 				for (int i = 0; i < ttNTHeader.uNRCount; i++)
 				{
-					//f.Read(&ttRecord, sizeof(TT_NAME_RECORD));
 					if (ReadFile(f, &ttRecord, sizeof(TT_NAME_RECORD), &(dwRead=0), NULL) && dwRead)
 					{
 						ttRecord.uNameID = SWAPWORD(ttRecord.uNameID);
@@ -11207,34 +11206,25 @@ BOOL CSettings::GetFontNameFromFile_TTF(LPCTSTR lpszFilePath, wchar_t (&rsFontNa
 						{
 							ttRecord.uStringLength = SWAPWORD(ttRecord.uStringLength);
 							ttRecord.uStringOffset = SWAPWORD(ttRecord.uStringOffset);
-							//int nPos = f.GetPosition();
 							DWORD nPos = SetFilePointer(f, 0, 0, FILE_CURRENT);
 
-							//f.Seek(tblDir.uOffset + ttRecord.uStringOffset + ttNTHeader.uStorageOffset, CFile::begin);
 							if (SetFilePointer(f, tblDir.uOffset + ttRecord.uStringOffset + ttNTHeader.uStorageOffset, 0, FILE_BEGIN)!=INVALID_SET_FILE_POINTER)
 							{
-								if ((ttRecord.uStringLength + 1) < 33)
+
+								if ((ttRecord.uStringLength + sizeof(wchar_t)) < ((LF_FACESIZE+1)*sizeof(wchar_t)))
 								{
-									//f.Read(csTemp.GetBuffer(ttRecord.uStringLength + 1), ttRecord.uStringLength);
-									//csTemp.ReleaseBuffer();
-									char szName[MAX_PATH]; szName[ttRecord.uStringLength + 1] = 0;
+									wchar_t *p = &szRetVal[0];
+									 *(p + (ttRecord.uStringLength + sizeof(wchar_t))) = 0;
 
-									if (ReadFile(f, szName, ttRecord.uStringLength + 1, &(dwRead=0), NULL) && dwRead)
+									if (ReadFile(f, szRetVal, ttRecord.uStringLength + sizeof(wchar_t), &(dwRead=0), NULL) && dwRead)
 									{
-										//if (csTemp.GetLength() > 0){
-										if (szName[0])
+										if (szRetVal[0])
 										{
-											for (int j = ttRecord.uStringLength; j >= 0 && szName[j] == ' '; j--)
-												szName[j] = 0;
-											szName[ttRecord.uStringLength] = 0;
+											for (int j = (ttRecord.uStringLength/sizeof(wchar_t)); j >= 0 && szRetVal[j] == L' '; j--)
+												szRetVal[j] = 0;
 
-											if (szName[0])
-											{
-												MultiByteToWideChar(CP_ACP, 0, szName, -1, szRetVal, LF_FACESIZE); //-V112
-												szRetVal[31] = 0;
-												lbRc = TRUE;
-											}
-
+											szRetVal[ttRecord.uStringLength*sizeof(wchar_t)] = 0;
+											lbRc = TRUE;
 											break;
 										}
 									}
