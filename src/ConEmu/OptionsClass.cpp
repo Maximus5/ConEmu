@@ -1684,12 +1684,7 @@ LRESULT CSettings::OnInitDialog()
 	}
 	MCHKHEAP
 	{
-		RECT rect = {};
-		if (GetWindowRect(ghOpWnd, &rect))
-		{
-			CDpiAware::GetCenteredRect(ghWnd, rect);
-			MoveWindowRect(ghOpWnd, rect);
-		}
+		CDpiAware::CenterDialog(ghOpWnd);
 	}
 	return 0;
 }

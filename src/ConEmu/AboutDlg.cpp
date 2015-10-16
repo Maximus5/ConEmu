@@ -132,12 +132,7 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 				mp_DpiAware->Attach(hDlg, ghWnd, CDynDialog::GetDlgClass(hDlg));
 			}
 
-			RECT rect = {};
-			if (GetWindowRect(hDlg, &rect))
-			{
-				CDpiAware::GetCenteredRect(ghWnd, rect);
-				MoveWindowRect(hDlg, rect);
-			}
+			CDpiAware::CenterDialog(hDlg);
 
 			if ((ghOpWnd && IsWindow(ghOpWnd)) || (WS_EX_TOPMOST & GetWindowLongPtr(ghWnd, GWL_EXSTYLE)))
 			{

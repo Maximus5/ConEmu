@@ -136,12 +136,8 @@ static INT_PTR Fast_OnInitDialog(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lP
 		gp_DpiAware->Attach(hDlg, NULL, CDynDialog::GetDlgClass(hDlg));
 	}
 
-	RECT rect = {};
-	if (GetWindowRect(hDlg, &rect))
-	{
-		CDpiAware::GetCenteredRect(NULL, rect);
-		MoveWindowRect(hDlg, rect);
-	}
+	// Position dialog in the workarea center
+	CDpiAware::CenterDialog(hDlg);
 
 	if (lParam)
 	{
