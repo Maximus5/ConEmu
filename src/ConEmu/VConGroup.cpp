@@ -4206,7 +4206,7 @@ void CVConGroup::OnCreateGroupEnd()
 	gn_CreateGroupStartVConIdx = 0;
 	gb_InCreateGroup = false;
 
-	// А вот теперь можно начинать запускать процессы
+	// Now it's time to start processes
 	gpConEmu->mp_RunQueue->AdvanceQueue();
 }
 

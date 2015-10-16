@@ -350,7 +350,6 @@ CConEmuMain::CConEmuMain()
 	WindowStartTsa = false;
 	WindowStartNoClose = false;
 	ForceMinimizeToTray = false;
-	mb_InCreateWindow = true;
 	mb_LastTransparentFocused = false;
 
 	DisableKeybHooks = false;
@@ -6664,6 +6663,182 @@ wchar_t* CConEmuMain::LoadConsoleBatch_Task(LPCWSTR asSource, RConStartArgs* pAr
 	return pszDataW;
 }
 
+bool CConEmuMain::CreateStartupConsoles()
+{
+	BOOL lbCreated = FALSE;
+	bool isScript = false;
+	LPCWSTR pszCmd = GetCmd(&isScript);
+	_ASSERTE(pszCmd != NULL && *pszCmd != 0); // Must be!
+
+	if (isScript)
+	{
+		CEStr szDataW = lstrdup(pszCmd);
+
+		// "Script" is a Task represented as one string with "|||" as command delimiter
+		// Replace "|||" to "\r\n" as standard Task expects
+		wchar_t* pszNext = szDataW.ms_Arg;
+		while ((pszNext = wcsstr(pszNext, L"|||")) != NULL)
+		{
+			*(pszNext++) = L' ';
+			*(pszNext++) = L'\r';
+			*(pszNext++) = L'\n';
+		}
+
+		LogString(L"Creating console group using `|||` script");
+
+		// GO
+		if (!CreateConGroup(szDataW, FALSE, NULL/*pszStartupDir*/))
+		{
+			Destroy();
+			return false;
+		}
+
+		// reset command, came from `-cmdlist` and load settings
+		ResetCmdArg();
+
+		lbCreated = TRUE;
+	}
+	else if ((*pszCmd == CmdFilePrefix || *pszCmd == TaskBracketLeft || lstrcmpi(pszCmd, AutoStartTaskName) == 0) && (m_StartDetached != crb_On))
+	{
+		RConStartArgs args;
+		// Was "/dir" specified in the app switches?
+		if (mb_ConEmuWorkDirArg)
+			args.pszStartupDir = lstrdup(ms_ConEmuWorkDir);
+		CEStr lsLog(lstrmerge(L"Creating console group using task ", pszCmd));
+		LogString(lsLog);
+		// Here are either text file with Task contents, or just a Task name
+		CEStr szDataW = LoadConsoleBatch(pszCmd, &args);
+		if (szDataW.IsEmpty())
+		{
+			Destroy();
+			return false;
+		}
+
+		// GO
+		if (!CreateConGroup(szDataW, FALSE, NULL/*ignored when 'args' specified*/, &args))
+		{
+			Destroy();
+			return false;
+		}
+
+		lbCreated = TRUE;
+	}
+
+	if (!lbCreated && (m_StartDetached != crb_On))
+	{
+		RConStartArgs args;
+		args.Detached = crb_Off;
+
+		if (args.Detached != crb_On)
+		{
+			SafeFree(args.pszSpecialCmd);
+			args.pszSpecialCmd = lstrdup(GetCmd());
+
+			CEStr lsLog(lstrmerge(L"Creating console using command ", args.pszSpecialCmd));
+			LogString(lsLog);
+
+			if (!CreateCon(&args, TRUE))
+			{
+				DisplayLastError(L"Can't create new virtual console!");
+				Destroy();
+				return false;
+			}
+		}
+	}
+
+	return true;
+}
+
+void CConEmuMain::OnMainCreateFinished()
+{
+	if (mn_StartupFinished < ss_VConAreCreated)
+	{
+		mn_StartupFinished = ss_VConAreCreated;
+	}
+
+	// This flags has only "startup" effect
+	if (m_StartDetached == crb_On)
+	{
+		m_StartDetached = crb_Off;  // действует только на первую консоль
+	}
+
+	// Useless. RealConsoles are created from RunQueue, and here
+	// ConEmu can't lose focus in in favour of RealConsole
+	#if 0
+	// Если фокус был у нас - вернуть его (на всякий случай, вдруг RealConsole какая забрала
+	if (mp_Inside)
+	{
+		if ((hCurForeground == ghWnd) || (hCurForeground != mp_Inside->mh_InsideParentRoot))
+			apiSetForegroundWindow(mp_Inside->mh_InsideParentRoot);
+		setWindowPos(HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+	}
+	else if ((hCurForeground == ghWnd) && !WindowStartMinimized)
+	{
+		apiSetForegroundWindow(ghWnd);
+	}
+	#endif
+
+	if (WindowStartMinimized)
+	{
+		_ASSERTE(!WindowStartNoClose || (WindowStartTsa && WindowStartNoClose));
+
+		if (WindowStartTsa || ForceMinimizeToTray)
+		{
+			Icon.HideWindowToTray();
+
+			if (WindowStartNoClose)
+			{
+				LogString(L"Set up {isMultiLeaveOnClose=1 && isMultiHideOnClose=1} due to WindowStartTsa & WindowStartNoClose");
+				//_ASSERTE(FALSE && "Set up {isMultiLeaveOnClose=1 && isMultiHideOnClose=1}");
+				gpSet->isMultiLeaveOnClose = 1;
+				gpSet->isMultiHideOnClose = 1;
+			}
+		}
+		else if (IsWindowVisible(ghWnd) && !isIconic())
+		{
+			PostMessage(ghWnd, WM_SYSCOMMAND, SC_MINIMIZE, 0);
+		}
+
+		WindowStartMinimized = false;
+	}
+
+	UpdateWin7TaskList(mb_UpdateJumpListOnStartup);
+	mb_UpdateJumpListOnStartup = false;
+
+	UINT n = SetKillTimer(true, TIMER_MAIN_ID, TIMER_MAIN_ELAPSE/*gpSet->nMainTimerElapse*/);
+	DEBUGTEST(DWORD dw = GetLastError());
+	n = SetKillTimer(true, TIMER_CONREDRAW_ID, CON_REDRAW_TIMOUT * 2);
+	UNREFERENCED_PARAMETER(n);
+	OnActivateSplitChanged();
+
+	if (gpSet->isTaskbarShield && gpSet->isWindowOnTaskBar())
+	{
+		// Bug in Win7? Sometimes after startup "As Admin" shield was not appeared.
+		mn_AdmShieldTimerCounter = 0;
+		SetKillTimer(true, TIMER_ADMSHIELD_ID, TIMER_ADMSHIELD_ELAPSE);
+	}
+
+	// Start RCon Queue
+	mp_RunQueue->StartQueue();
+
+	// Check if DefTerm is enabled
+	mp_DefTrm->StartGuiDefTerm(false);
+
+	if (!ms_PostGuiMacro.IsEmpty())
+	{
+		CVConGuard VCon;
+		GetActiveVCon(&VCon);
+		LPWSTR pszRc = ConEmuMacro::ExecuteMacro(ms_PostGuiMacro.ms_Arg, VCon.VCon() ? VCon->RCon() : NULL);
+		SafeFree(pszRc);
+	}
+
+	mp_PushInfo = new CPushInfo();
+	if (mp_PushInfo && !mp_PushInfo->ShowNotification())
+	{
+		SafeDelete(mp_PushInfo);
+	}
+}
+
 void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 {
 	if (gpSetCls->isAdvLogging)
@@ -6703,8 +6878,6 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 
 		SetWindowMode((ConEmuWindowMode)gpSet->_WindowMode, FALSE, TRUE);
 
-		mb_InCreateWindow = false;
-
 		PostMessage(ghWnd, mn_MsgPostCreate, 0, 0);
 
 		if (!mh_RightClickingBmp)
@@ -6737,12 +6910,6 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 	{
 		HWND hCurForeground = GetForegroundWindow();
 
-		//-- Перенесено в Taskbar_Init();
-		//HRESULT hr = S_OK;
-		//hr = OleInitialize(NULL);  // как бы попробовать включать Ole только во время драга. кажется что из-за него глючит переключалка языка
-		//CoInitializeEx(NULL, COINIT_MULTITHREADED);
-
-		// Может быть уже вызван в SkipOneShowWindow, а может и нет
 		Taskbar_Init();
 
 		RegisterMinRestore(true);
@@ -6767,8 +6934,6 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 		{
 			CheckUpdates(FALSE); // Не показывать сообщение "You are using latest available version"
 		}
-
-		//SetWindowRgn(ghWnd, CreateWindowRgn(), TRUE);
 
 		if (gpSetCls->szFontError[0] && !(gpStartEnv && ((gpStartEnv->bIsWinPE == 1) || (gpStartEnv->bIsWine == 1))))
 		{
@@ -6816,219 +6981,14 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 
 		if (!isVConExists(0) || (m_StartDetached != crb_On))  // Консоль уже может быть создана, если пришел Attach из ConEmuC
 		{
-			BOOL lbCreated = FALSE;
-			bool isScript = false;
-			LPCWSTR pszCmd = GetCmd(&isScript);
-			_ASSERTE(pszCmd!=NULL && *pszCmd!=0); // Must be!
-
-			if (isScript)
+			if (!CreateStartupConsoles())
 			{
-				wchar_t* pszDataW = lstrdup(pszCmd);
-
-				// Если передали "скрипт" (как бы содержимое Task вытянутое в строку)
-				// Обработать - заменить "|||" на " \r\n"
-				// Раньше здесь было '|' но заменил на "|||" во избежание неоднозначностей
-				wchar_t* pszNext = pszDataW;
-				while ((pszNext = wcsstr(pszNext, L"|||")) != NULL)
-				{
-					*(pszNext++) = L' ';
-					*(pszNext++) = L'\r';
-					*(pszNext++) = L'\n';
-				}
-
-				LogString(L"Creating console group using `|||` script");
-
-				// GO
-				if (!CreateConGroup(pszDataW, FALSE, NULL/*pszStartupDir*/))
-				{
-					Destroy();
-					return;
-				}
-
-				SafeFree(pszDataW);
-
-				// сбросить команду, которая пришла из "/cmdlist" - загрузить настройку
-				ResetCmdArg();
-
-				lbCreated = TRUE;
-			}
-			else if ((*pszCmd == CmdFilePrefix || *pszCmd == TaskBracketLeft || lstrcmpi(pszCmd,AutoStartTaskName) == 0) && (m_StartDetached != crb_On))
-			{
-				RConStartArgs args;
-				// Was "/dir" specified in the app switches?
-				if (mb_ConEmuWorkDirArg)
-					args.pszStartupDir = lstrdup(ms_ConEmuWorkDir);
-				CEStr lsLog(lstrmerge(L"Creating console group using task ", pszCmd));
-				LogString(lsLog);
-				// В качестве "команды" указан "пакетный файл" или "группа команд" одновременного запуска нескольких консолей
-				wchar_t* pszDataW = LoadConsoleBatch(pszCmd, &args);
-				if (!pszDataW)
-				{
-					Destroy();
-					return;
-				}
-
-				// GO
-				if (!CreateConGroup(pszDataW, FALSE, NULL/*ignored when 'args' specified*/, &args))
-				{
-					Destroy();
-					SafeFree(pszDataW);
-					return;
-				}
-
-				SafeFree(pszDataW);
-
-				//// Если ConEmu был запущен с ключом "/single /cmd xxx" то после окончания
-				//// загрузки - сбросить команду, которая пришла из "/cmd" - загрузить настройку
-				//if (gpSetCls->SingleInstanceArg)
-				//{
-				//	gpSetCls->ResetCmdArg();
-				//}
-
-				lbCreated = TRUE;
-			}
-
-			if (!lbCreated && (m_StartDetached != crb_On))
-			{
-				RConStartArgs args;
-				args.Detached = crb_Off;
-
-				if (args.Detached != crb_On)
-				{
-					SafeFree(args.pszSpecialCmd);
-					args.pszSpecialCmd = lstrdup(GetCmd());
-
-					CEStr lsLog(lstrmerge(L"Creating console using command ", args.pszSpecialCmd));
-					LogString(lsLog);
-
-					if (!CreateCon(&args, TRUE))
-					{
-						DisplayLastError(L"Can't create new virtual console!");
-						Destroy();
-						return;
-					}
-				}
+				return;
 			}
 		}
 
-		if (m_StartDetached == crb_On)
-			m_StartDetached = crb_Off;  // действует только на первую консоль
-
-		//// Может быть в настройке указано - всегда показывать иконку в TSA
-		//Icon.SettingsChanged();
-
-		//if (!mp_TaskBar2)
-		//{
-		//	// В PostCreate это выполняется дольше всего. По идее мешать не должно,
-		//	// т.к. серверная нить уже запущена.
-		//	hr = CoCreateInstance(CLSID_TaskbarList,NULL,CLSCTX_INPROC_SERVER,IID_ITaskbarList2,(void**)&mp_TaskBar2);
-		//
-		//	if (hr == S_OK && mp_TaskBar2)
-		//	{
-		//		hr = mp_TaskBar2->HrInit();
-		//	}
-		//
-		//	if (hr != S_OK && mp_TaskBar2)
-		//	{
-		//		if (mp_TaskBar2) mp_TaskBar2->Release();
-		//
-		//		mp_TaskBar2 = NULL;
-		//	}
-		//}
-		//
-		//if (!mp_TaskBar3 && mp_TaskBar2)
-		//{
-		//	hr = mp_TaskBar2->QueryInterface(IID_ITaskbarList3, (void**)&mp_TaskBar3);
-		//}
-
-		//if (!mp_DragDrop)
-		//{
-		//	// было 'ghWnd DC'. Попробуем на главное окно, было бы удобно
-		//	// "бросать" на таб (с автоматической активацией консоли)
-		//	mp_DragDrop = new CDragDrop();
-
-		//	if (!mp_DragDrop->Register())
-		//	{
-		//		CDragDrop *p = mp_DragDrop; mp_DragDrop = NULL;
-		//		delete p;
-		//	}
-		//}
-
-		//TODO test
-		WARNING("Если консоль не создана - handler не установится!")
-		//SetConsoleCtrlHandler((PHANDLER_ROUTINE)CConEmuMain::HandlerRoutine, true);
-
-		// Если фокус был у нас - вернуть его (на всякий случай, вдруг RealConsole какая забрала
-		if (mp_Inside)
-		{
-			if ((hCurForeground == ghWnd) || (hCurForeground != mp_Inside->mh_InsideParentRoot))
-				apiSetForegroundWindow(mp_Inside->mh_InsideParentRoot);
-			setWindowPos(HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE|SWP_NOSIZE);
-		}
-		else if ((hCurForeground == ghWnd) && !WindowStartMinimized)
-		{
-			apiSetForegroundWindow(ghWnd);
-		}
-
-		if (WindowStartMinimized)
-		{
-			_ASSERTE(!WindowStartNoClose || (WindowStartTsa && WindowStartNoClose));
-
-			if (WindowStartTsa || ForceMinimizeToTray)
-			{
-				Icon.HideWindowToTray();
-
-				if (WindowStartNoClose)
-				{
-					LogString(L"Set up {isMultiLeaveOnClose=1 && isMultiHideOnClose=1} due to WindowStartTsa & WindowStartNoClose");
-					//_ASSERTE(FALSE && "Set up {isMultiLeaveOnClose=1 && isMultiHideOnClose=1}");
-					gpSet->isMultiLeaveOnClose = 1;
-					gpSet->isMultiHideOnClose = 1;
-				}
-			}
-			else if (IsWindowVisible(ghWnd) && !isIconic())
-			{
-				PostMessage(ghWnd, WM_SYSCOMMAND, SC_MINIMIZE, 0);
-			}
-
-			WindowStartMinimized = false;
-		}
-
-		UpdateWin7TaskList(mb_UpdateJumpListOnStartup);
-		mb_UpdateJumpListOnStartup = false;
-
-		//RegisterHotKeys();
-		//SetParent(GetParent(GetShellWindow()));
-		UINT n = SetKillTimer(true, TIMER_MAIN_ID, TIMER_MAIN_ELAPSE/*gpSet->nMainTimerElapse*/);
-		#ifdef _DEBUG
-		DWORD dw = GetLastError();
-		#endif
-		n = SetKillTimer(true, TIMER_CONREDRAW_ID, CON_REDRAW_TIMOUT*2);
-		UNREFERENCED_PARAMETER(n);
-		OnActivateSplitChanged();
-
-		if (gpSet->isTaskbarShield && gpSet->isWindowOnTaskBar())
-		{
-			// Bug in Win7? Sometimes after startup "As Admin" shield was not appeared.
-			mn_AdmShieldTimerCounter = 0;
-			SetKillTimer(true, TIMER_ADMSHIELD_ID, TIMER_ADMSHIELD_ELAPSE);
-		}
-
-		mp_DefTrm->StartGuiDefTerm(false);
-
-		if (!ms_PostGuiMacro.IsEmpty())
-		{
-			CVConGuard VCon;
-			GetActiveVCon(&VCon);
-			LPWSTR pszRc = ConEmuMacro::ExecuteMacro(ms_PostGuiMacro.ms_Arg, VCon.VCon() ? VCon->RCon() : NULL);
-			SafeFree(pszRc);
-		}
-
-		mp_PushInfo = new CPushInfo();
-		if (mp_PushInfo && !mp_PushInfo->ShowNotification())
-		{
-			SafeDelete(mp_PushInfo);
-		}
+		// Finalize window creation
+		OnMainCreateFinished();
 	}
 
 	mn_StartupFinished = abReceived ? ss_PostCreate2Finished : ss_PostCreate1Finished;
@@ -8060,7 +8020,7 @@ void CConEmuMain::OnTaskbarSettingsChanged()
 
 bool CConEmuMain::InCreateWindow()
 {
-	return mb_InCreateWindow;
+	return (mn_StartupFinished < ss_VConAreCreated);
 }
 
 bool CConEmuMain::InQuakeAnimation()

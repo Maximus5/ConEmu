@@ -204,7 +204,6 @@ class CConEmuMain
 		void UpdateGuiInfoMapping();
 		static bool UpdateGuiInfoMappingFill(CVirtualConsole* pVCon, LPARAM lParam);
 		void UpdateGuiInfoMappingActive(bool bActive, bool bUpdatePtr = true);
-		bool mb_InCreateWindow;
 		bool mb_LastTransparentFocused; // нужно для проверки gpSet->isTransparentSeparate
 	public:
 		bool InCreateWindow();
@@ -259,6 +258,7 @@ class CConEmuMain
 			ss_PostCreate1Called,
 			ss_PostCreate1Finished,
 			ss_PostCreate2Called,
+			ss_VConAreCreated,
 			ss_PostCreate2Finished,
 			ss_Started = ss_PostCreate2Finished
 		} mn_StartupFinished;
@@ -660,6 +660,10 @@ class CConEmuMain
 		void InvalidateGaps();
 		void PostDragCopy(BOOL abMove, BOOL abReceived=FALSE);
 		void PostCreate(BOOL abReceived=FALSE);
+	protected:
+		void OnMainCreateFinished();
+		bool CreateStartupConsoles();
+	public:
 		void PostCreateCon(RConStartArgs *pArgs);
 		HWND PostCreateView(CConEmuChild* pChild);
 		void PostFontSetSize(int nRelative/*0/1/2*/, int nValue/*для nRelative==0 - высота, для ==1 - +-1, +-2,... | 100%*/);

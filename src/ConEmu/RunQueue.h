@@ -37,6 +37,7 @@ public:
 	CRunQueue();
 	~CRunQueue();
 	void Terminate();
+	void StartQueue();
 
 public:
 	void RequestRConStartup(CRealConsole* pRCon);

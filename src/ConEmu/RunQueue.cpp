@@ -51,8 +51,8 @@ CRunQueue::CRunQueue()
 	mn_ThreadId = 0;
 	mb_Terminate = false;
 	mh_AdvanceEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
-	mh_Thread = apiCreateThread(RunQueueThreadHelper, this, &mn_ThreadId, "RunQueueThreadHelper");
-	_ASSERTE(mh_Thread!=NULL);
+	// Don't start Queue processor now, wait until MainWindow is created
+	mh_Thread = NULL; mn_ThreadId = 0;
 }
 
 CRunQueue::~CRunQueue()
@@ -65,6 +65,21 @@ CRunQueue::~CRunQueue()
 
 	SafeCloseHandle(mh_AdvanceEvent);
 	SafeDelete(mpcs_QueueLock);
+}
+
+void CRunQueue::StartQueue()
+{
+	if (mh_Thread)
+	{
+		_ASSERTE(mh_Thread == NULL);
+		return;
+	}
+
+	mh_Thread = apiCreateThread(RunQueueThreadHelper, this, &mn_ThreadId, "RunQueueThreadHelper");
+	_ASSERTE(mh_Thread != NULL);
+
+	// Don't wait, start first RCon immediately
+	AdvanceQueue();
 }
 
 void CRunQueue::Terminate()
@@ -223,6 +238,10 @@ void CRunQueue::ProcessRunQueue()
 
 void CRunQueue::AdvanceQueue()
 {
+	// If Startup was not completed yet - just do nothing
+	if (gpConEmu->mn_StartupFinished < CConEmuMain::ss_VConAreCreated)
+		return;
+
 	// Nothing to do?
 	if (m_RunQueue.empty())
 		return;
