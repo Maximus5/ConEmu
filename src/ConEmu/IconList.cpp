@@ -223,22 +223,28 @@ int CIconList::CreateTabIconInt(LPCWSTR asIconDescr, bool bAdmin, LPCWSTR asWork
 	int iIconIdx = -1;
 	HICON hFileIcon = NULL;
 	wchar_t szTemp[MAX_PATH];
-	LPCWSTR pszLoadFile = pszExpanded ? pszExpanded : asIconDescr;
-	LPWSTR pszFileName = new wchar_t[lstrlen(pszLoadFile) + 1];
-	LPCWSTR lpszIndex = wcsrchr(pszExpanded, L',');
+	CEStr szLoadFile;
+	LPCWSTR lpszExt = NULL;
+	LPCWSTR lpszIndex = NULL;
 	int nIndex = 0;
+
+	if (!szLoadFile.Set(pszExpanded ? pszExpanded : asIconDescr))
+	{
+		goto wrap;
+	}
+
+	lpszExt = PointToExt(szLoadFile);
+	lpszIndex = wcsrchr(lpszExt ? lpszExt : szLoadFile, L',');
 	if (lpszIndex)
 	{
-		wcsncpy(pszFileName, pszLoadFile, lpszIndex - pszLoadFile);
-		pszFileName[lpszIndex - pszLoadFile] = L'\0';
-		pszLoadFile = pszFileName;
+		szLoadFile.ms_Arg[lpszIndex - szLoadFile.ms_Arg] = 0;
+
 		nIndex = wcstol(lpszIndex + 1, NULL, 10);
 		if (nIndex == LONG_MAX || nIndex == LONG_MIN)
 		{
 			nIndex = 0;
 		}
 	}
-	LPCWSTR lpszExt = PointToExt(pszLoadFile);
 
 	bool bDirChanged = false;
 	if (asWorkDir && *asWorkDir)
@@ -250,10 +256,10 @@ int CIconList::CreateTabIconInt(LPCWSTR asIconDescr, bool bAdmin, LPCWSTR asWork
 	if (!lpszExt)
 	{
 		LPWSTR pszFile = NULL;
-		if (SearchPath(NULL, pszLoadFile, L".exe", countof(szTemp), szTemp, &pszFile))
+		if (SearchPath(NULL, szLoadFile, L".exe", countof(szTemp), szTemp, &pszFile))
 		{
-			pszLoadFile = szTemp;
-			lpszExt = (wchar_t*)PointToExt(pszLoadFile);
+			szLoadFile.Set(szTemp);
+			lpszExt = PointToExt(szLoadFile);
 		}
 
 		if (!lpszExt)
@@ -262,12 +268,12 @@ int CIconList::CreateTabIconInt(LPCWSTR asIconDescr, bool bAdmin, LPCWSTR asWork
 
 	if (lstrcmpi(lpszExt, L".ico") == 0)
 	{
-		hFileIcon = (HICON)LoadImage(0, pszLoadFile, IMAGE_ICON, mn_CxIcon, mn_CyIcon, LR_DEFAULTCOLOR|LR_LOADFROMFILE);
+		hFileIcon = (HICON)LoadImage(0, szLoadFile, IMAGE_ICON, mn_CxIcon, mn_CyIcon, LR_DEFAULTCOLOR|LR_LOADFROMFILE);
 	}
 	else if ((lstrcmpi(lpszExt, L".exe") == 0) || (lstrcmpi(lpszExt, L".dll") == 0))
 	{
 		HICON hIconLarge = NULL, hIconSmall = NULL;
-		ExtractIconEx(pszLoadFile, nIndex, &hIconLarge, &hIconSmall, 1);
+		ExtractIconEx(szLoadFile, nIndex, &hIconLarge, &hIconSmall, 1);
 		bool bUseLargeIcon = ((mn_CxIcon > 16) && (hIconLarge != NULL)) || (hIconSmall == NULL);
 		HICON hDestroyIcon = bUseLargeIcon ? hIconSmall : hIconLarge;
 		if (hDestroyIcon) DestroyIcon(hDestroyIcon);
@@ -333,8 +339,6 @@ int CIconList::CreateTabIconInt(LPCWSTR asIconDescr, bool bAdmin, LPCWSTR asWork
 	}
 
 wrap:
-	delete [] pszFileName;
-	pszFileName = NULL;
 	if (bDirChanged)
 	{
 		gpConEmu->ChangeWorkDir(NULL);
