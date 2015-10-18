@@ -903,6 +903,8 @@ static bool WINAPI CreateVCTasks(HKEY hkVer, LPCWSTR pszVer, LPARAM lParam)
 	CEStr pszDir;
 	if (wcschr(pszVer, L'.'))
 	{
+		int iVer = wcstol(pszVer, NULL, 10);
+
 		if (RegGetStringValue(hkVer, L"Setup\\VC", L"ProductDir", pszDir) > 0)
 		{
 			CEStr pszVcVarsBat = JoinPath(pszDir, L"vcvarsall.bat");
@@ -910,6 +912,37 @@ static bool WINAPI CreateVCTasks(HKEY hkVer, LPCWSTR pszVer, LPARAM lParam)
 			{
 				CEStr pszName = lstrmerge(L"SDK::VS ", pszVer, L" x86 tools prompt");
 				CEStr pszFull = lstrmerge(L"cmd /k \"\"", pszVcVarsBat, L"\"\" x86 -new_console:t:\"VS ", pszVer, L"\"");
+
+				CEStr lsIcon; LPCWSTR pszIconSource = NULL;
+				LPCWSTR pszIconSources[] = {
+					L"%CommonProgramFiles(x86)%\\microsoft shared\\MSEnv\\VSFileHandler.dll",
+					L"%CommonProgramFiles%\\microsoft shared\\MSEnv\\VSFileHandler.dll",
+					NULL};
+				for (int i = 0; pszIconSources[i]; i++)
+				{
+					if (lsIcon.Attach(ExpandEnvStr(pszIconSources[i]))
+						&& FileExists(lsIcon))
+					{
+						pszIconSource = pszIconSources[i];
+						break;
+					}
+				}
+
+				if (iVer && pszIconSource)
+				{
+					LPCWSTR pszIconSfx;
+					switch (iVer)
+					{
+					case 14: pszIconSfx = L",33\""; break;
+					case 12: pszIconSfx = L",28\""; break;
+					case 11: pszIconSfx = L",23\""; break;
+					case 10: pszIconSfx = L",16\""; break;
+					case 9:  pszIconSfx = L",10\""; break;
+					default: pszIconSfx = L"\"";
+					}
+					lstrmerge(&pszFull.ms_Arg, L" -new_console:C:\"", pszIconSource, pszIconSfx);
+				}
+
 				CreateDefaultTask(pszName, L"", pszFull);
 			}
 		}
