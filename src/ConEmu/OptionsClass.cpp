@@ -10697,7 +10697,7 @@ BOOL CSettings::RegisterFont(LPCWSTR asFontFile, BOOL abDefault)
 	}
 
 	RegFont rf = {abDefault};
-	wchar_t szFullFontName[LF_FACESIZE];
+	wchar_t szFullFontName[LF_FACESIZE] = L"";
 
 	if (!GetFontNameFromFile(asFontFile, rf.szFontName, szFullFontName))
 	{
@@ -11144,11 +11144,17 @@ BOOL CSettings::GetFontNameFromFile_TTF(LPCTSTR lpszFilePath, wchar_t (&rsFontNa
 
 	BOOL lbRc = FALSE;
 	HANDLE f = NULL;
-	wchar_t szRetVal[MAX_PATH];
+	wchar_t szRetValA[MAX_PATH];
+	wchar_t szRetValU[MAX_PATH];
 	DWORD dwRead;
 	TT_OFFSET_TABLE ttOffsetTable;
 	TT_TABLE_DIRECTORY tblDir;
 	BOOL bFound = FALSE;
+
+	// Dump found table item
+	LogString(lpszFilePath);
+	bool bDumpTable = RELEASEDEBUGTEST((gpSetCls->isAdvLogging !=0),true);
+	wchar_t szDumpInfo[200];
 
 	//if (f.Open(lpszFilePath, CFile::modeRead|CFile::shareDenyWrite)){
 	if ((f = CreateFile(lpszFilePath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL)) == INVALID_HANDLE_VALUE)
@@ -11213,16 +11219,55 @@ BOOL CSettings::GetFontNameFromFile_TTF(LPCTSTR lpszFilePath, wchar_t (&rsFontNa
 							//f.Seek(tblDir.uOffset + ttRecord.uStringOffset + ttNTHeader.uStorageOffset, CFile::begin);
 							if (SetFilePointer(f, tblDir.uOffset + ttRecord.uStringOffset + ttNTHeader.uStorageOffset, 0, FILE_BEGIN)!=INVALID_SET_FILE_POINTER)
 							{
-								if ((ttRecord.uStringLength + 1) < 33)
+								if (ttRecord.uStringLength <= (LF_FACESIZE * sizeof(wchar_t)))
 								{
 									//f.Read(csTemp.GetBuffer(ttRecord.uStringLength + 1), ttRecord.uStringLength);
 									//csTemp.ReleaseBuffer();
-									char szName[MAX_PATH]; szName[ttRecord.uStringLength + 1] = 0;
+									char szName[(LF_FACESIZE+3)*sizeof(wchar_t)] = "";
 
-									if (ReadFile(f, szName, ttRecord.uStringLength + 1, &(dwRead=0), NULL) && dwRead)
+									if (ReadFile(f, szName, ttRecord.uStringLength + sizeof(wchar_t), &(dwRead=0), NULL) && dwRead)
 									{
-										//if (csTemp.GetLength() > 0){
-										if (szName[0])
+										// Ensure even wchar_t would be Z-terminated
+										szName[ttRecord.uStringLength] = 0; szName[ttRecord.uStringLength+1] = 0; szName[ttRecord.uStringLength+2] = 0;
+										LPCWSTR pszFound = NULL;
+
+										// Dump found table item
+										if (bDumpTable)
+										{
+											_wsprintf(szDumpInfo, SKIPCOUNT(szDumpInfo) L"  Platf: %u Enc: %u Lang: %u Len: %u \"", ttRecord.uPlatformID, ttRecord.uEncodingID, ttRecord.uLanguageID, ttRecord.uStringLength);
+											int iLen = lstrlen(szDumpInfo);
+											for (DWORD i = 0; i < dwRead; i++)
+											{
+												szDumpInfo[iLen++] = (szName[i]) ? (wchar_t)szName[i] : L'.';
+											}
+											szDumpInfo[iLen++] = L'\"';
+											szDumpInfo[iLen] = 0;
+											//gpConEmu->LogString(szDumpInfo); -- below
+										}
+
+										// Process read item
+										if ((
+											((ttRecord.uPlatformID == 768) && (ttRecord.uEncodingID == 256))
+											|| ((ttRecord.uPlatformID == 0) && ((ttRecord.uEncodingID == 0) || (ttRecord.uEncodingID == 768)))
+											) && ((wchar_t*)szName)[0])
+										{
+											// Seems like it's a 1201 │ UTF-16 (Big endian)
+											int j = 0;
+											while (j < ttRecord.uStringLength)
+											{
+												szRetValU[j] = SWAPWORD(((wchar_t*)szName)[j]);
+												j++;
+											}
+											szRetValU[j] = 0;
+											if (szRetValU[0])
+											{
+												lbRc = TRUE;
+												pszFound = szRetValU;
+											}
+										}
+										else if ((
+											((ttRecord.uPlatformID == 256) && (ttRecord.uEncodingID == 0))
+											) && szName[0])
 										{
 											for (int j = ttRecord.uStringLength; j >= 0 && szName[j] == ' '; j--)
 												szName[j] = 0;
@@ -11230,12 +11275,27 @@ BOOL CSettings::GetFontNameFromFile_TTF(LPCTSTR lpszFilePath, wchar_t (&rsFontNa
 
 											if (szName[0])
 											{
-												MultiByteToWideChar(CP_ACP, 0, szName, -1, szRetVal, LF_FACESIZE); //-V112
-												szRetVal[31] = 0;
+												MultiByteToWideChar(CP_ACP, 0, szName, -1, szRetValA, LF_FACESIZE+1);
+												pszFound = szRetValA;
 												lbRc = TRUE;
 											}
 
-											break;
+											//break; -- continue, may be Unicode name may be found
+										}
+
+										if (bDumpTable)
+										{
+											if (pszFound)
+											{
+												wcscat_c(szDumpInfo, L" >> \"");
+												wcscat_c(szDumpInfo, pszFound);
+												wcscat_c(szDumpInfo, L"\"");
+											}
+											else
+											{
+												wcscat_c(szDumpInfo, L" - UNKNOWN FORMAT");
+											}
+											gpConEmu->LogString(szDumpInfo);
 										}
 									}
 								}
@@ -11245,15 +11305,15 @@ BOOL CSettings::GetFontNameFromFile_TTF(LPCTSTR lpszFilePath, wchar_t (&rsFontNa
 							SetFilePointer(f, nPos, 0, FILE_BEGIN);
 						}
 					}
-				}
+				} // for (int i = 0; i < ttNTHeader.uNRCount; i++)
 			}
 		}
 	}
 
 	if (lbRc)
 	{
-		wcscpy_c(rsFontName, szRetVal);
-		wcscpy_c(rsFullFontName, szRetVal);
+		wcscpy_c(rsFontName, *szRetValA ? szRetValA : szRetValU);
+		wcscpy_c(rsFullFontName, *szRetValU ? szRetValU : szRetValA);
 	}
 
 wrap:
