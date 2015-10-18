@@ -1727,7 +1727,18 @@ void CConEmuMain::LogString(LPCWSTR asInfo, bool abWriteTime /*= true*/, bool ab
 void CConEmuMain::LogString(LPCSTR asInfo, bool abWriteTime /*= true*/, bool abWriteLine /*= true*/)
 {
 	if (!this || !mp_Log)
+	{
+		#ifdef _DEBUG
+		if (asInfo && *asInfo)
+		{
+			CEStr lsDump;
+			int iLen = lstrlenA(asInfo);
+			MultiByteToWideChar(CP_ACP, 0, asInfo, -1, lsDump.GetBuffer(iLen), iLen+1);
+			DEBUGSTRNOLOG(lsDump.ms_Arg);
+		}
+		#endif
 		return;
+	}
 
 	mp_Log->LogString(asInfo, abWriteTime, NULL, abWriteLine);
 }
