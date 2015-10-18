@@ -787,68 +787,6 @@ CESERVER_REQ* CRealServer::cmdTabsChanged(LPVOID pInst, CESERVER_REQ* pIn, UINT 
 			}
 		}
 
-		// Если включены автотабы - попытаться изменить размер консоли СРАЗУ (в самом FAR)
-		// Но только если вызов SendTabs был сделан из основной нити фара (чтобы небыло потребности в Synchro)
-		if (pIn->Tabs.bMainThread && lbCanUpdate && (gpSet->isTabs == 2 && gpSet->bShowFarWindows))
-		{
-			TODO("расчитать новый размер, если сменилась видимость табов");
-			bool lbCurrentActive = gpConEmu->mp_TabBar->IsTabsActive();
-			bool lbNewActive = lbCurrentActive;
-
-			// Если консолей более одной - видимость табов не изменится
-			if (CVConGroup::isVConExists(1))
-			{
-				lbNewActive = (pIn->Tabs.nTabCount > 1);
-			}
-
-			if (lbCurrentActive != lbNewActive)
-			{
-				enum ConEmuMargins tTabAction = lbNewActive ? CEM_TABACTIVATE : CEM_TABDEACTIVATE;
-				RECT rcConsole = gpConEmu->CalcRect(CER_CONSOLE_CUR, gpConEmu->GetIdealRect(), CER_MAIN, NULL, tTabAction);
-
-				_ASSERTE(FALSE && "Must change size of all active group consoles");
-
-				mp_RCon->mp_RBuf->SetChange2Size(rcConsole.right, rcConsole.bottom);
-
-				TODO("DoubleView: все видимые");
-				//gpConEmu->ActiveCon()->SetRedraw(FALSE);
-				CVConGroup::SetRedraw(FALSE);
-
-				gpConEmu->mp_TabBar->SetRedraw(FALSE);
-				fSuccess = FALSE;
-				// Нужно вернуть в плагин информацию, что нужно размер консоли
-				CESERVER_REQ *pTmp = ExecuteNewCmd(CECMD_TABSCHANGED, sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_CONEMUTAB_RET));
-
-				if (pTmp)
-				{
-					pTmp->TabsRet.bNeedResize = TRUE;
-					pTmp->TabsRet.crNewSize.X = rcConsole.right;
-					pTmp->TabsRet.crNewSize.Y = rcConsole.bottom;
-					// Отправляем (сразу, чтобы клиент не ждал, пока ГУЙ закончит свои процессы)
-					fSuccess = mp_RConServer->DelayedWrite(pInst, pTmp, pTmp->hdr.cbSize);
-					//fSuccess = WriteFile(
-					//               hPipe,        // handle to pipe
-					//               pTmp,         // buffer to write from
-					//               pTmp->hdr.cbSize,  // number of bytes to write
-					//               &cbWritten,   // number of bytes written
-					//               NULL);        // not overlapped I/O
-					ExecuteFreeResult(pTmp);
-
-					// Чтобы в конце метода не дергаться
-					pOut = (CESERVER_REQ*)INVALID_HANDLE_VALUE;
-				}
-
-				if (fSuccess)    // Дождаться, пока из сервера придут изменения консоли
-				{
-					mp_RCon->WaitConsoleSize(rcConsole.bottom, 500);
-				}
-
-				TODO("DoubleView: все видимые");
-				//gpConEmu->ActiveCon()->SetRedraw(TRUE);
-				CVConGroup::SetRedraw(TRUE);
-			}
-		}
-
 		if (lbCanUpdate)
 		{
 			TODO("DoubleView: все видимые");

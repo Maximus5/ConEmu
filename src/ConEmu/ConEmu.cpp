@@ -2496,23 +2496,31 @@ void CConEmuMain::SyncNtvdm()
 	OnSize();
 }
 
-// Если табов не было, создается новая консоль, появляются табы
-// Размер окна ConEmu пытаемся НЕ менять, но размер КОНСОЛИ меняется
-// Нужно ее запомнить, иначе при Minimize/Restore установится некорректная высота!
+// Don't change RealConsole height on tabs auto-show/hide,
+// resize ConEmu window height instead (Issue 1977, gh#373)
 void CConEmuMain::OnTabbarActivated(bool bTabbarVisible, bool bInAutoShowHide)
 {
+	// If creation was not finished - nothing to do
+	if (InCreateWindow())
+	{
+		return;
+	}
+
 	int iNewWidth, iNewHeight;
 
 	if (bInAutoShowHide && isWindowNormal())
 	{
 		if (!isIconic())
 		{
-			// Try to set new window size accommodating (dis)appearing tab bar height
 			RECT rcCur = CalcRect(CER_MAIN, NULL);
 			MONITORINFO mi = {};
 			GetNearestMonitorInfo(&mi, NULL, &rcCur);
-			RECT rcCon = CalcRect(CER_CONSOLE_ALL, rcCur, CER_MAIN, NULL, bTabbarVisible ? CEM_TABDEACTIVATE : CEM_TABACTIVATE);
-			RECT rcWnd = CalcRect(CER_MAIN, rcCon, CER_CONSOLE_ALL, NULL, bTabbarVisible ? CEM_TABACTIVATE : CEM_TABDEACTIVATE);
+
+			SIZE szCon = GetDefaultSize(true);
+			_ASSERTE(szCon.cy!=26);
+			RECT rcCon = MakeRect(szCon.cx, szCon.cy);
+			ConEmuMargins tMainTabAct = bTabbarVisible ? CEM_TABACTIVATE : CEM_TABDEACTIVATE;
+			RECT rcWnd = CalcRect(CER_MAIN, rcCon, CER_CONSOLE_ALL, NULL, tMainTabAct);
 
 			iNewWidth = rcWnd.right-rcWnd.left; iNewHeight = rcWnd.bottom-rcWnd.top;
 
@@ -2536,8 +2544,16 @@ void CConEmuMain::OnTabbarActivated(bool bTabbarVisible, bool bInAutoShowHide)
 					StoreNormalRect(&rcWnd3);
 				}
 
-				MSetter lSet(&mn_IgnoreSizeChange);
-				setWindowPos(NULL, 0, 0, iNewWidth, iNewHeight, SWP_NOZORDER|SWP_NOMOVE);
+				// Now, change the size of our window, but restrict responding
+				// to size changes, until window resize finishes
+				if (iNewHeight != (rcCur.bottom - rcCur.top))
+				{
+					MSetter lSet(&mn_IgnoreSizeChange);
+					setWindowPos(NULL, 0, 0, iNewWidth, iNewHeight, SWP_NOZORDER|SWP_NOMOVE);
+				}
+
+				// Now we may correct our children layout
+				OnSize();
 			}
 		}
 	}
@@ -6764,6 +6780,16 @@ void CConEmuMain::OnMainCreateFinished()
 	if (m_StartDetached == crb_On)
 	{
 		m_StartDetached = crb_Off;  // действует только на первую консоль
+	}
+
+	if (isWindowNormal() && (gpSet->isTabs == 2) && mp_TabBar->IsTabsShown())
+	{
+		#ifdef _DEBUG
+		RECT rcCur = {}; ::GetWindowRect(ghWnd, &rcCur);
+		#endif
+		RECT rcDef = GetDefaultRect();
+
+		setWindowPos(NULL, rcDef.left, rcDef.top, RectWidth(rcDef), RectHeight(rcDef), SWP_NOZORDER);
 	}
 
 	// Useless. RealConsoles are created from RunQueue, and here

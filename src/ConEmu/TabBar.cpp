@@ -481,10 +481,11 @@ bool CTabBarClass::IsTabsShown()
 		return false;
 	}
 
-	// Было "IsWindowVisible(mh_Tabbar)", что некорректно, т.к. оно учитывает состояние ghWnd
+	// We have to use our internal status instead of IsWindowVisible
+	// Otherwise we'll get size calculation errors
+	// And don't add `_visible` to condition list - it will break autotabs
 
-	// Надо использовать внутренние статусы!
-	return _active && mp_Rebar->IsTabbarCreated() && _visible;
+	return _active && mp_Rebar->IsTabbarCreated();
 }
 
 bool CTabBarClass::IsSearchShown(bool bFilled)

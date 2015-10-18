@@ -596,7 +596,7 @@ RECT CConEmuSize::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 			AddMargins(rc, rcScroll, TRUE);
 
 			if (tWhat != CER_DC)
-				rc = CalcRect(tWhat, rc, CER_DC);
+				rc = CalcRect(tWhat, rc, CER_DC, pVCon, tTabAction);
 
 			// -- tFromNow = CER_BACK; -- менять не требуется, т.к. мы сразу на выход
 		}
