@@ -2501,6 +2501,8 @@ void CConEmuMain::SyncNtvdm()
 // Нужно ее запомнить, иначе при Minimize/Restore установится некорректная высота!
 void CConEmuMain::OnTabbarActivated(bool bTabbarVisible, bool bInAutoShowHide)
 {
+	int iNewWidth, iNewHeight;
+
 	if (bInAutoShowHide && isWindowNormal())
 	{
 		if (!isIconic())
@@ -2511,7 +2513,9 @@ void CConEmuMain::OnTabbarActivated(bool bTabbarVisible, bool bInAutoShowHide)
 			GetNearestMonitorInfo(&mi, NULL, &rcCur);
 			RECT rcCon = CalcRect(CER_CONSOLE_ALL, rcCur, CER_MAIN, NULL, bTabbarVisible ? CEM_TABDEACTIVATE : CEM_TABACTIVATE);
 			RECT rcWnd = CalcRect(CER_MAIN, rcCon, CER_CONSOLE_ALL, NULL, bTabbarVisible ? CEM_TABACTIVATE : CEM_TABDEACTIVATE);
-			int iNewWidth = rcWnd.right-rcWnd.left, iNewHeight = rcWnd.bottom-rcWnd.top;
+
+			iNewWidth = rcWnd.right-rcWnd.left; iNewHeight = rcWnd.bottom-rcWnd.top;
+
 			if ((iNewWidth != (rcCur.right - rcCur.left)) || (iNewHeight != (rcCur.bottom - rcCur.top)))
 			{
 				_ASSERTE(iNewWidth == (rcCur.right - rcCur.left)); // Width change is not expected
