@@ -209,6 +209,7 @@ public:
 			int Type, LPCWSTR Name, LPCWSTR FileName,
 			int Current, int Modified, int Modal,
 			int EditViewId);
+	void AddTabFinish(int tabCount);
 	static void SendTabs(int tabCount, bool abForceSend=false);
 	static void CloseTabs();
 	static LPWSTR ToUnicode(LPCSTR asOemStr);

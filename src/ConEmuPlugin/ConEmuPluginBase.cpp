@@ -2009,6 +2009,11 @@ bool CPluginBase::AddTab(int &tabCount, int WindowPos, bool losingFocus, bool ed
 	return lbCh;
 }
 
+void CPluginBase::AddTabFinish(int tabCount)
+{
+	gpTabs->Tabs.nTabCount = tabCount;
+}
+
 void CPluginBase::SendTabs(int tabCount, bool abForceSend/*=false*/)
 {
 	MSectionLock SC; SC.Lock(csTabs);

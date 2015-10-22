@@ -386,7 +386,7 @@ bool CPluginAnsi::UpdateConEmuTabsApi(int windowCount)
 	}
 
 	// 101224 - сразу запомнить количество!
-	gpTabs->Tabs.nTabCount = tabCount;
+	AddTabFinish(tabCount);
 
 	return lbCh;
 }
