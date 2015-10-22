@@ -2689,6 +2689,11 @@ This is because
 
 void CEAnsi::StartVimTerm(bool bFromDllStart)
 {
+	// Only certain versions of Vim able to use xterm-256 in ConEmu
+	if (gnExeFlags & (caf_Cygwin1|caf_Msys1|caf_Msys2))
+		return;
+
+	// Once!
 	if (/*bFromDllStart ||*/ gbVimTermWasChangedBuffer)
 		return;
 
