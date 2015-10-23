@@ -3879,9 +3879,9 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 				}
 				else
 				{
-					if (gpSetCls->isAdvLogging) LogString(L"ShowWindow(SW_SHOWNORMAL)");
+					if (gpSetCls->isAdvLogging) LogString(L"ShowMainWindow(SW_SHOWNORMAL)");
 
-					ShowWindow(SW_SHOWNORMAL, ANIMATION_MS_DEFAULT, abFirstShow);
+					ShowMainWindow(SW_SHOWNORMAL, ANIMATION_MS_DEFAULT, abFirstShow);
 				}
 
 				//RePaint();
@@ -3939,7 +3939,7 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 
 			if (!IsWindowVisible(ghWnd))
 			{
-				ShowWindow((abFirstShow && mp_ConEmu->WindowStartMinimized) ? SW_SHOWMINNOACTIVE : SW_SHOWNORMAL, ANIMATION_MS_DEFAULT, abFirstShow);
+				ShowMainWindow((abFirstShow && mp_ConEmu->WindowStartMinimized) ? SW_SHOWMINNOACTIVE : SW_SHOWNORMAL, ANIMATION_MS_DEFAULT, abFirstShow);
 			}
 
 			#ifdef _DEBUG
@@ -3950,7 +3950,7 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 			// Нужен реальный IsZoomed (FullScreen теперь тоже Zoomed)
 			if (!(abFirstShow && mp_ConEmu->WindowStartMinimized) && (isIconic() || ::IsZoomed(ghWnd)))
 			{
-				ShowWindow(SW_SHOWNORMAL, ANIMATION_MS_DEFAULT, abFirstShow); // WM_SYSCOMMAND использовать не хочется...
+				ShowMainWindow(SW_SHOWNORMAL, ANIMATION_MS_DEFAULT, abFirstShow); // WM_SYSCOMMAND использовать не хочется...
 				// что-то после AltF9, AltF9 уголки остаются не срезанными...
 				//hRgn = CreateWindowRgn();
 				//SetWindowRgn(ghWnd, hRgn, TRUE);
@@ -4001,7 +4001,7 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 				if (!gpConEmu->opt.DesktopMode)
 				{
 					DEBUGTEST(WINDOWPLACEMENT wpl1 = {sizeof(wpl1)}; GetWindowPlacement(ghWnd, &wpl1););
-					ShowWindow(SW_SHOWMAXIMIZED, ANIMATION_MS_DEFAULT, abFirstShow);
+					ShowMainWindow(SW_SHOWMAXIMIZED, ANIMATION_MS_DEFAULT, abFirstShow);
 					DEBUGTEST(WINDOWPLACEMENT wpl2 = {sizeof(wpl2)}; GetWindowPlacement(ghWnd, &wpl2););
 					if (changeFromWindowMode == wmFullScreen)
 					{
@@ -4042,7 +4042,7 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 			if (!IsWindowVisible(ghWnd))
 			{
 				MSetter lSet(&mn_IgnoreSizeChange);
-				ShowWindow((abFirstShow && mp_ConEmu->WindowStartMinimized) ? SW_SHOWMINNOACTIVE : SW_SHOWMAXIMIZED, ANIMATION_MS_DEFAULT, abFirstShow);
+				ShowMainWindow((abFirstShow && mp_ConEmu->WindowStartMinimized) ? SW_SHOWMINNOACTIVE : SW_SHOWMAXIMIZED, ANIMATION_MS_DEFAULT, abFirstShow);
 
 				if (gpSetCls->isAdvLogging) LogString(L"OnSize(false).3");
 			}
@@ -4101,7 +4101,7 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 			{
 				MSetter lSet(&mn_IgnoreSizeChange);
 				//120820 для четкости, в FullScreen тоже ставим Maximized, а не Normal
-				ShowWindow((abFirstShow && mp_ConEmu->WindowStartMinimized) ? SW_SHOWMINNOACTIVE : SW_SHOWMAXIMIZED, ANIMATION_MS_DEFAULT, abFirstShow);
+				ShowMainWindow((abFirstShow && mp_ConEmu->WindowStartMinimized) ? SW_SHOWMINNOACTIVE : SW_SHOWMAXIMIZED, ANIMATION_MS_DEFAULT, abFirstShow);
 
 				//// Сбросить
 				//if (mb_MaximizedHideCaption)
@@ -4142,7 +4142,7 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 			if (!IsWindowVisible(ghWnd))
 			{
 				MSetter lSet(&mn_IgnoreSizeChange);
-				ShowWindow((abFirstShow && mp_ConEmu->WindowStartMinimized) ? SW_SHOWMINNOACTIVE : SW_SHOWNORMAL, ANIMATION_MS_DEFAULT, abFirstShow);
+				ShowMainWindow((abFirstShow && mp_ConEmu->WindowStartMinimized) ? SW_SHOWMINNOACTIVE : SW_SHOWNORMAL, ANIMATION_MS_DEFAULT, abFirstShow);
 				lSet.Unlock();
 				//WindowMode = inMode; // Запомним!
 
@@ -4859,7 +4859,7 @@ void CConEmuSize::UpdateWindowRgn(int anX/*=-1*/, int anY/*=-1*/, int anWndWidth
 	UNREFERENCED_PARAMETER(bRc);
 }
 
-bool CConEmuSize::ShowWindow(int anCmdShow, DWORD nAnimationMS /*= ANIMATION_MS_DEFAULT*/, bool abFirstShow /*= false*/)
+bool CConEmuSize::ShowMainWindow(int anCmdShow, DWORD nAnimationMS /*= ANIMATION_MS_DEFAULT*/, bool abFirstShow /*= false*/)
 {
 	if (mb_LockShowWindow)
 	{

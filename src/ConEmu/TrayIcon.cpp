@@ -172,7 +172,7 @@ void TrayIcon::HideWindowToTray(LPCTSTR asInfoTip /* = NULL */)
 
 	if (IsWindowVisible(ghWnd))
 	{
-		gpConEmu->ShowWindow(SW_HIDE);
+		gpConEmu->ShowMainWindow(SW_HIDE);
 	}
 	HMENU hMenu = gpConEmu->mp_Menu->GetSysMenu(/*ghWnd, false*/);
 	SetMenuItemText(hMenu, ID_TOTRAY, TRAY_ITEM_RESTORE_NAME);
@@ -195,7 +195,7 @@ void TrayIcon::RestoreWindowFromTray(bool abIconOnly /*= false*/, bool abDontCal
 
 		if (!abDontCallShowWindow && !IsWindowVisible(ghWnd))
 		{
-			gpConEmu->ShowWindow(SW_SHOW);
+			gpConEmu->ShowMainWindow(SW_SHOW);
 		}
 
 		apiSetForegroundWindow(ghWnd);
