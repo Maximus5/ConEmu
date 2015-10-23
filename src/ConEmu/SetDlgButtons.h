@@ -173,7 +173,6 @@ protected:
 	static void OnBtn_UseClink(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_ClinkWebPage(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_RealConsoleSettings(HWND hDlg, WORD CB, BYTE uCheck);
-	static void OnBtn_DesktopMode(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_SnapToDesktopEdges(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_AlwaysOnTop(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_SleepInBackground(HWND hDlg, WORD CB, BYTE uCheck);

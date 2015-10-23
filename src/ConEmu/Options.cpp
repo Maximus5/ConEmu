@@ -630,7 +630,6 @@ void Settings::InitSettings()
 	isHideChildCaption = true;
 	isFocusInChildWindows = true;
 	nHideCaptionAlwaysFrame = HIDECAPTIONALWAYSFRAME_DEF; nHideCaptionAlwaysDelay = 2000; nHideCaptionAlwaysDisappear = 2000;
-	isDesktopMode = false;
 	isSnapToDesktopEdges = false;
 	isAlwaysOnTop = false;
 	isSleepInBackground = false; // по умолчанию - не включать "засыпание в фоне".
@@ -934,7 +933,7 @@ void Settings::ResetSavedOnExit()
 bool Settings::isTransparentAllowed()
 {
 	// If the window is "Child" - transparency is not allowed
-	if (isDesktopMode || gpConEmu->mp_Inside)
+	if (gpConEmu->opt.DesktopMode || gpConEmu->mp_Inside)
 		return false;
 
 	// Чтобы не рушилось отображение картинки плагинами
@@ -2897,7 +2896,6 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 
 		//reg->Load(L"LangChangeWsPlugin", isLangChangeWsPlugin);
 		reg->Load(L"MonitorConsoleLang", isMonitorConsoleLang);
-		reg->Load(L"DesktopMode", isDesktopMode);
 		reg->Load(L"SnapToDesktopEdges", isSnapToDesktopEdges);
 		reg->Load(L"AlwaysOnTop", isAlwaysOnTop);
 		reg->Load(L"SleepInBackground", isSleepInBackground);
@@ -3798,7 +3796,6 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		reg->Save(L"AffinityMask", nAffinity);
 		reg->Save(L"SkipFocusEvents", isSkipFocusEvents);
 		reg->Save(L"MonitorConsoleLang", isMonitorConsoleLang);
-		reg->Save(L"DesktopMode", isDesktopMode);
 		reg->Save(L"SnapToDesktopEdges", isSnapToDesktopEdges);
 		reg->Save(L"AlwaysOnTop", isAlwaysOnTop);
 		reg->Save(L"SleepInBackground", isSleepInBackground);
@@ -4506,7 +4503,7 @@ bool Settings::isForcedHideCaptionAlways()
 bool Settings::isAlwaysShowTrayIcon()
 {
 	// Issue 1431
-	return (mb_AlwaysShowTrayIcon || isDesktopMode || (isQuakeStyle && !isTabsOnTaskBar()));
+	return (mb_AlwaysShowTrayIcon || gpConEmu->opt.DesktopMode || (isQuakeStyle && !isTabsOnTaskBar()));
 }
 
 bool Settings::isMinimizeOnLoseFocus()
@@ -4995,7 +4992,7 @@ bool Settings::NeedCreateAppWindow()
 // Показывать табы на таскбаре? (для каждой консоли - своя кнопка)
 bool Settings::isTabsOnTaskBar()
 {
-	if (isDesktopMode || (m_isTabsOnTaskBar == 3) || gpConEmu->mp_Inside)
+	if (gpConEmu->opt.DesktopMode || (m_isTabsOnTaskBar == 3) || gpConEmu->mp_Inside)
 		return false;
 	if ((m_isTabsOnTaskBar == 1) || ((m_isTabsOnTaskBar == 2) && IsWindows7))
 		return true;
@@ -5007,7 +5004,7 @@ bool Settings::isWindowOnTaskBar(bool bStrictOnly /*= false*/)
 {
 	// m_isTabsOnTaskBar: 0 - ConEmu only, 1 - all tabs & all OS, 2 - all tabs & Win 7, 3 - DON'T SHOW
 
-	if (isDesktopMode || (m_isTabsOnTaskBar == 3) || gpConEmu->mp_Inside)
+	if (gpConEmu->opt.DesktopMode || (m_isTabsOnTaskBar == 3) || gpConEmu->mp_Inside)
 		return false;
 
 	if (bStrictOnly)

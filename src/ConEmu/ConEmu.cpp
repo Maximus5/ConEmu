@@ -1553,7 +1553,7 @@ DWORD CConEmuMain::GetWindowStyle()
 		//}
 
 		#ifndef CHILD_DESK_MODE
-		if (gpSet->isDesktopMode)
+		if (opt.DesktopMode)
 			style |= WS_POPUP;
 		#endif
 
@@ -1650,7 +1650,7 @@ DWORD CConEmuMain::GetWindowStyleEx()
 			styleEx |= WS_EX_APPWINDOW;
 
 		#ifndef CHILD_DESK_MODE
-		if (gpSet->isDesktopMode)
+		if (opt.DesktopMode)
 			styleEx |= WS_EX_TOOLWINDOW;
 		#endif
 	}
@@ -1845,7 +1845,7 @@ BOOL CConEmuMain::CreateMainWindow()
 		_wsprintf(szCreate, SKIPLEN(countof(szCreate)) L"Creating main window.%s%s%s Parent=x%08X X=%i Y=%i W=%i H=%i style=x%08X exStyle=x%08X Mode=%s",
 			gpSet->isQuakeStyle ? L" Quake" : L"",
 			this->mp_Inside ? L" Inside" : L"",
-			gpSet->isDesktopMode ? L" Desktop" : L"",
+			opt.DesktopMode ? L" Desktop" : L"",
 			LODWORD(hParent),
 			this->wndX, this->wndY, nWidth, nHeight, style, styleEx,
 			GetWindowModeName(gpSet->isQuakeStyle ? (ConEmuWindowMode)gpSet->_WindowMode : WindowMode));
@@ -6878,7 +6878,7 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 			OnHideCaption();
 		}
 
-		if (gpSet->isDesktopMode)
+		if (opt.DesktopMode)
 			DoDesktopModeSwitch();
 
 		SetWindowMode((ConEmuWindowMode)gpSet->_WindowMode, FALSE, TRUE);
@@ -7337,7 +7337,7 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			}
 		}
 
-		if (!lbSetFocus && gpSet->isDesktopMode && mh_ShellWindow)
+		if (!lbSetFocus && opt.DesktopMode && mh_ShellWindow)
 		{
 			if (isPressed(VK_LBUTTON) || isPressed(VK_RBUTTON))
 			{
@@ -7478,12 +7478,12 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		if (asMsgFrom)
 			pszMsgName = asMsgFrom;
 
-		if (gpSet->isDesktopMode)
+		if (opt.DesktopMode)
 		{
 			CheckFocus(pszMsgName);
 		}
 
-		if (gpSet->isDesktopMode || mp_Inside)
+		if (opt.DesktopMode || mp_Inside)
 		{
 			// В этих режимах игнорировать
 			return 0;
@@ -11056,7 +11056,7 @@ void CConEmuMain::CheckFocus(LPCWSTR asFrom)
 
 			// mh_ShellWindow чисто для информации. Хоть родитель ConEmu и меняется на mh_ShellWindow
 			// но проводник может перекинуть наше окно в другое (WorkerW или Progman)
-			if (gpSet->isDesktopMode && mh_ShellWindow)
+			if (opt.DesktopMode && mh_ShellWindow)
 			{
 				//HWND hShell = GetShellWindow(); // Progman
 				bool lbDesktopActive = false;

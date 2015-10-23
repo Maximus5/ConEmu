@@ -1858,8 +1858,6 @@ LRESULT CSettings::OnInitDialog_Show(HWND hWnd2, bool abInitial)
 	SetDlgItemInt(hWnd2, tScrollAppearDelay, gpSet->nScrollBarAppearDelay, FALSE);
 	SetDlgItemInt(hWnd2, tScrollDisappearDelay, gpSet->nScrollBarDisappearDelay, FALSE);
 
-	checkDlgButton(hWnd2, cbDesktopMode, gpSet->isDesktopMode);
-
 	checkDlgButton(hWnd2, cbAlwaysOnTop, gpSet->isAlwaysOnTop);
 
 	#ifdef _DEBUG

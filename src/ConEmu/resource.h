@@ -211,7 +211,6 @@
 #define cbDragPanel                     1568
 #define cbHideCaptionAlways             1569
 #define cbTryToCenter                   1570
-#define cbDesktopMode                   1571
 #define cbAlwaysOnTop                   1572
 #define cbUserScreenTransparent         1573
 #define cbTransparent                   1574
