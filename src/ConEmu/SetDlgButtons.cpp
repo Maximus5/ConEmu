@@ -519,9 +519,6 @@ bool CSetDlgButtons::ProcessButtonClick(HWND hDlg, WORD CB, BYTE uCheck)
 		case bRealConsoleSettings:
 			OnBtn_ealConsoleSettings(hDlg, CB, uCheck);
 			break;
-		case cbDesktopMode:
-			OnBtn_DesktopMode(hDlg, CB, uCheck);
-			break;
 		case cbSnapToDesktopEdges:
 			OnBtn_SnapToDesktopEdges(hDlg, CB, uCheck);
 			break;
@@ -2899,17 +2896,6 @@ void CSetDlgButtons::OnBtn_ealConsoleSettings(HWND hDlg, WORD CB, BYTE uCheck)
 	gpSetCls->EditConsoleFont(ghOpWnd);
 
 } // bRealConsoleSettings
-
-
-// cbDesktopMode
-void CSetDlgButtons::OnBtn_DesktopMode(HWND hDlg, WORD CB, BYTE uCheck)
-{
-	_ASSERTE(CB==cbDesktopMode);
-
-	gpSet->isDesktopMode = uCheck;
-	gpConEmu->DoDesktopModeSwitch();
-
-} // cbDesktopMode
 
 
 // cbSnapToDesktopEdges

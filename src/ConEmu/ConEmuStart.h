@@ -181,6 +181,7 @@ public:
 		CESwitch AnsiLogPath; // sw_Str
 		CESwitch ExecGuiMacro; // sw_Str
 		CESwitch QuakeMode; // sw_Int
+		CESwitch DesktopMode; // sw_Simple
 		bool SizePosPrm; // -WndX -WndY -WndW[idth] -WndH[eight]
 		CESwitch sWndX, sWndY, sWndW, sWndH; // sw_Str
 		CESwitch SetUpDefaultTerminal; // sw_Simple

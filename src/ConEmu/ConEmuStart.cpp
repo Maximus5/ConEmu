@@ -1095,6 +1095,10 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 					gpConEmu->AppendExtraArgs(curCommand);
 					gpSetCls->SingleInstanceArg = sgl_Disabled;
 				}
+				else if (!klstricmp(curCommand, _T("/DesktopMode")))
+				{
+					gpConEmu->opt.DesktopMode = true;
+				}
 				else if (!klstricmp(curCommand, _T("/quake"))
 					|| !klstricmp(curCommand, _T("/quakeauto"))
 					|| !klstricmp(curCommand, _T("/noquake")))

@@ -670,7 +670,7 @@ CESERVER_REQ* CRealServer::cmdStartStop(LPVOID pInst, CESERVER_REQ* pIn, UINT nD
 				RECT rcNew = gpConEmu->CalcRect(CER_MAIN, rcCon, CER_CONSOLE);
 				RECT rcWnd; GetWindowRect(ghWnd, &rcWnd);
 
-				if (gpSet->isDesktopMode)
+				if (gpSet->gpConEmu->opt.DesktopMode)
 				{
 					MapWindowPoints(NULL, gpConEmu->mh_ShellWindow, (LPPOINT)&rcWnd, 2);
 				}

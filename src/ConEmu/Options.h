@@ -436,8 +436,6 @@ struct Settings
 		bool isDownShowExOnTopMessage;
 		//reg->Load(L"AlwaysOnTop", isAlwaysOnTop);
 		bool isAlwaysOnTop;
-		//reg->Load(L"DesktopMode", isDesktopMode);
-		bool isDesktopMode;
 		//reg->Load(L"SnapToDesktopEdges", isSnapToDesktopEdges);
 		bool isSnapToDesktopEdges;
 		//reg->Load(L"FixFarBorders", isFixFarBorders)
