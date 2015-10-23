@@ -1384,13 +1384,16 @@ void DoDllStop(bool bFinal, ConEmuHkDllState bFromTerminate)
 	gnDllState |= ds_DllStoping
 		| (bFinal ? ds_DllStopFinal : ds_DllStopNonFinal);
 
-	static bool bVimStopped = false;
-	if (bFinal && gbIsVimProcess && !bVimStopped)
+	static bool bTermStopped = false;
+	if ((bFinal || (bFromTerminate & (ds_OnTerminateProcess|ds_OnExitProcess))) && !bTermStopped)
 	{
-		DLOG1("StopVimTerm",0);
-		bVimStopped = true;
-		CEAnsi::StopVimTerm();
-		DLOGEND1();
+		bTermStopped = true;
+		if (gbIsVimProcess)
+		{
+			DLOG1("StopVimTerm",0);
+			CEAnsi::StopVimTerm();
+			DLOGEND1();
+		}
 	}
 
 	DLL_STOP_STEP(1);
