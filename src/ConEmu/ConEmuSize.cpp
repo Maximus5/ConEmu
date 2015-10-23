@@ -762,110 +762,7 @@ RECT CConEmuSize::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 					}
 				}
 			}
-			//else
-			//{
-			//	switch(tFrom)
-			//	{
-			//		case CER_MONITOR:
-			//		{
-			//			SystemParametersInfo(SPI_GETWORKAREA, 0, &rc, 0);
-			//		} break;
-			//		case CER_FULLSCREEN:
-			//		{
-			//			rc = MakeRect(GetSystemMetrics(SM_CXFULLSCREEN),GetSystemMetrics(SM_CYFULLSCREEN));
-			//		} break;
-			//		case CER_MAXIMIZED:
-			//		{
-			//			rc = MakeRect(GetSystemMetrics(SM_CXMAXIMIZED),GetSystemMetrics(SM_CYMAXIMIZED));
 
-			//			//120814 - ~WS_CAPTION
-			//			//if (gpSet->isHideCaption && mp_ConEmu->mb_MaximizedHideCaption && !gpSet->isHideCaptionAlways())
-			//			//	rc.top -= GetSystemMetrics(SM_CYCAPTION);
-
-			//		} break;
-			//		case CER_RESTORE:
-			//		{
-			//			RECT work;
-			//			SystemParametersInfo(SPI_GETWORKAREA, 0, &work, 0);
-			//			RECT rcNormal = {0};
-			//			if (mp_ConEmu)
-			//				rcNormal = mp_ConEmu->mrc_StoredNormalRect;
-			//			int w = rcNormal.right - rcNormal.left;
-			//			int h = rcNormal.bottom - rcNormal.top;
-			//			if ((w > 0) && (h > 0))
-			//			{
-			//				rc = rcNormal;
-
-			//				// Если после последней максимизации была изменена
-			//				// конфигурация мониторов - нужно поправить видимую область
-			//				if (((rc.right + 30) <= work.left)
-			//					|| ((rc.left + 30) >= work.right))
-			//				{
-			//					rc.left = work.left; rc.right = rc.left + w;
-			//				}
-			//				if (((rc.bottom + 30) <= work.top)
-			//					|| ((rc.top + 30) >= work.bottom))
-			//				{
-			//					rc.top = work.top; rc.bottom = rc.top + h;
-			//				}
-			//			}
-			//			else
-			//			{
-			//				WINDOWPLACEMENT wpl = {sizeof(WINDOWPLACEMENT)};
-			//				if (ghWnd && GetWindowPlacement(ghWnd, &wpl))
-			//					rc = wpl.rcNormalPosition;
-			//				else
-			//					rc = work;
-			//			}
-			//		} break;
-			//		default:
-			//			_ASSERTE(tFrom==CER_FULLSCREEN || tFrom==CER_MAXIMIZED);
-			//	}
-			//}
-
-			//if (tWhat == CER_CORRECTED)
-			//{
-			//    RECT rcMon = rc;
-			//    rc = rFrom;
-			//    int nX = GetSystemMetrics(SM_CXSIZEFRAME), nY = GetSystemMetrics(SM_CYSIZEFRAME);
-			//    int nWidth = rc.right-rc.left;
-			//    int nHeight = rc.bottom-rc.top;
-			//    static bool bFirstCall = true;
-			//    if (bFirstCall) {
-			//        if (gpSet->wndCascade && !gpSet->isDesktopMode) {
-			//            BOOL lbX = ((rc.left+nWidth)>(rcMon.right+nX));
-			//            BOOL lbY = ((rc.top+nHeight)>(rcMon.bottom+nY));
-			//            {
-			//                if (lbX && lbY) {
-			//                    rc = MakeRect(rcMon.left,rcMon.top,rcMon.left+nWidth,rcMon.top+nHeight);
-			//                } else if (lbX) {
-			//                    rc.left = rcMon.right - nWidth; rc.right = rcMon.right;
-			//                } else if (lbY) {
-			//                    rc.top = rcMon.bottom - nHeight; rc.bottom = rcMon.bottom;
-			//                }
-			//            }
-			//        }
-			//        bFirstCall = false;
-			//    }
-			//	//2010-02-14 На многомониторных конфигурациях эти проверки нарушают
-			//	//           требуемое положение (когда окно на обоих мониторах).
-			//	//if (rc.left<(rcMon.left-nX)) {
-			//	//	rc.left=rcMon.left-nX; rc.right=rc.left+nWidth;
-			//	//}
-			//	//if (rc.top<(rcMon.top-nX)) {
-			//	//	rc.top=rcMon.top-nX; rc.bottom=rc.top+nHeight;
-			//	//}
-			//	//if ((rc.left+nWidth)>(rcMon.right+nX)) {
-			//	//    rc.left = max((rcMon.left-nX),(rcMon.right-nWidth));
-			//	//    nWidth = min(nWidth, (rcMon.right-rc.left+2*nX));
-			//	//    rc.right = rc.left + nWidth;
-			//	//}
-			//	//if ((rc.top+nHeight)>(rcMon.bottom+nY)) {
-			//	//    rc.top = max((rcMon.top-nY),(rcMon.bottom-nHeight));
-			//	//    nHeight = min(nHeight, (rcMon.bottom-rc.top+2*nY));
-			//	//    rc.bottom = rc.top + nHeight;
-			//	//}
-			//}
 			_ASSERTE(rc.right>rc.left && rc.bottom>rc.top);
 			return rc;
 		} break;
@@ -3032,7 +2929,8 @@ bool CConEmuSize::SetQuakeMode(BYTE NewQuakeMode, ConEmuWindowMode nNewWindowMod
 		gpSet->SetMinToTray(true);
 	}
 
-	if (NewQuakeMode && gpSet->isDesktopMode)  // этот режим с Desktop несовместим
+	// Quake is incompatible with "Desktop mode", drop last one
+	if (NewQuakeMode && gpSet->isDesktopMode)
 	{
 		gpSet->isDesktopMode = false;
 		DoDesktopModeSwitch();
@@ -3548,7 +3446,7 @@ bool CConEmuSize::IsSizeFree(ConEmuWindowMode CheckMode /*= wmFullScreen*/)
 	if (mp_ConEmu->mp_Inside)
 		return false;
 
-	// В режиме "Desktop" переходить в FullScreen - нельзя
+	// FullScreen is not supported in "Desktop" mode
 	if (gpSet->isDesktopMode && (CheckMode == wmFullScreen))
 		return false;
 
@@ -3565,7 +3463,7 @@ bool CConEmuSize::IsSizePosFree(ConEmuWindowMode CheckMode /*= wmFullScreen*/)
 	if (gpSet->isQuakeStyle || mp_ConEmu->mp_Inside)
 		return false;
 
-	// В режиме "Desktop" переходить в FullScreen - нельзя
+	// FullScreen is not supported in "Desktop" mode
 	if (gpSet->isDesktopMode && (CheckMode == wmFullScreen))
 		return false;
 

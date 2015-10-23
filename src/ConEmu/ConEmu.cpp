@@ -1640,7 +1640,7 @@ DWORD CConEmuMain::GetWindowStyleEx()
 	}
 	else
 	{
-		if (gpSet->nTransparent < 255 /*&& !gpSet->isDesktopMode*/)
+		if (gpSet->nTransparent < 255)
 			styleEx |= WS_EX_LAYERED;
 
 		if (gpSet->isAlwaysOnTop)
@@ -1803,44 +1803,19 @@ BOOL CConEmuMain::CreateMainWindow()
 
 	DWORD styleEx = GetWindowStyleEx();
 	DWORD style = GetWindowStyle();
-	//	WS_CLIPCHILDREN | WS_CLIPSIBLINGS;
-	////if (gpSet->isShowOnTaskBar) // ghWndApp
-	////	style |= WS_POPUPWINDOW | WS_CAPTION | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX;
-	////else
-	//style |= WS_OVERLAPPEDWINDOW;
-	//if (gpSet->nTransparent < 255 /*&& !gpSet->isDesktopMode*/)
-	//	styleEx |= WS_EX_LAYERED;
-	//if (gpSet->isAlwaysOnTop)
-	//	styleEx |= WS_EX_TOPMOST;
-	////if (gpSet->isHideCaptionAlways) // сразу создать так почему-то не получается
-	////	style &= ~(WS_CAPTION);
 	int nWidth=CW_USEDEFAULT, nHeight=CW_USEDEFAULT;
 
-	//WindowMode may be changed in SettingsLoaded
-	//// In principle, this MUST be wmNormal on startup, even if started in Maximized/FullScreen/Iconic
-	//_ASSERTE(WindowMode==wmNormal);
+	// WindowMode may be changed in SettingsLoaded
 
-	// Расчет размеров окна в Normal режиме
+	// Evaluate window sized for Normal mode
 	if ((this->WndWidth.Value && this->WndHeight.Value) || mp_Inside)
 	{
 		MBoxAssert(gpSetCls->FontWidth() && gpSetCls->FontHeight());
-		//COORD conSize; conSize.X=gpSet->wndWidth; conSize.Y=gpSet->wndHeight;
-		////int nShiftX = GetSystemMetrics(SM_CXSIZEFRAME)*2;
-		////int nShiftY = GetSystemMetrics(SM_CYSIZEFRAME)*2 + (gpSet->isHideCaptionAlways ? 0 : GetSystemMetrics(SM_CYCAPTION));
-		//RECT rcFrameMargin = CalcMargins(CEM_FRAME);
-		//int nShiftX = rcFrameMargin.left + rcFrameMargin.right;
-		//int nShiftY = rcFrameMargin.top + rcFrameMargin.bottom;
-		//// Если табы показываются всегда - сразу добавим их размер, чтобы размер консоли был заказанным
-		//nWidth  = conSize.X * gpSetCls->FontWidth() + nShiftX
-		//	+ (this->isTabsShown() ? (gpSet->rcTabMargins.left+gpSet->rcTabMargins.right) : 0);
-		//nHeight = conSize.Y * gpSetCls->FontHeight() + nShiftY
-		//	+ (this->isTabsShown() ? (gpSet->rcTabMargins.top+gpSet->rcTabMargins.bottom) : 0);
-		//mrc_Ideal = MakeRect(gpSet->wndX, gpSet->wndY, gpSet->wndX+nWidth, gpSet->wndY+nHeight);
 		RECT rcWnd = GetDefaultRect();
 		if (gpSet->IsConfigNew)
 		{
-			// Сюда мы попадаем при запуске на "чистой настройке"
-			// Скорректируем положение окна, чтобы оно не вылезло за монитор
+			// We get here on "clean configuration"
+			// Correct position to be inside working area
 			if (FixWindowRect(rcWnd, CEB_ALL))
 			{
 				this->wndX = rcWnd.left;

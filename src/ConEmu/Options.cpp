@@ -933,7 +933,7 @@ void Settings::ResetSavedOnExit()
 // В Desktop, Inside (и еще может быть когда) Transparent включать нельзя
 bool Settings::isTransparentAllowed()
 {
-	// Окно работает в "Child" режиме, прозрачность не допускается
+	// If the window is "Child" - transparency is not allowed
 	if (isDesktopMode || gpConEmu->mp_Inside)
 		return false;
 
