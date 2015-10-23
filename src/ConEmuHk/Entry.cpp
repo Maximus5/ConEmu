@@ -1294,6 +1294,10 @@ void InitExeName()
 		gbIsVimProcess = true;
 		//CEAnsi::StartVimTerm(true);
 	}
+	else if (lstrcmpi(gsExeName, L"plink.exe") == 0)
+	{
+		gbIsPlinkProcess = true;
+	}
 	else if (lstrcmpni(gsExeName, L"mintty", 6) == 0) // Without extension? Or may be "minttyXXX.exe"?
 	{
 		gbIsMinTtyProcess = true;

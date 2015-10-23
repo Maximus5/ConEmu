@@ -170,6 +170,10 @@ extern bool gbIsVimProcess;
 extern bool gbIsVimAnsi;
 /* ************ Globals for ViM ************ */
 
+/* ************ Globals for Plink ************ */
+extern bool gbIsPlinkProcess;
+/* ************ Globals for ViM ************ */
+
 /* ************ Globals for MinTTY ************ */
 extern bool gbIsMinTtyProcess;
 /* ************ Globals for ViM ************ */

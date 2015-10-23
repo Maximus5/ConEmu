@@ -196,6 +196,10 @@ bool gbIsVimProcess = false;
 bool gbIsVimAnsi = false;
 /* ************ Globals for ViM ************ */
 
+/* ************ Globals for Plink ************ */
+bool gbIsPlinkProcess = false;
+/* ************ Globals for ViM ************ */
+
 /* ************ Globals for MinTTY ************ */
 bool gbIsMinTtyProcess;
 /* ************ Globals for ViM ************ */
