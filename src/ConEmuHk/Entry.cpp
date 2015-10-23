@@ -1571,14 +1571,6 @@ void DoDllStop(bool bFinal, ConEmuHkDllState bFromTerminate)
 
 	DLL_STOP_STEP(15);
 
-	if (bFinal)
-	{
-		DLOG1("HeapDeinitialize",0);
-		gnDllState |= ds_HeapDeinitialized;
-		HeapDeinitialize();
-		DLOGEND1();
-	}
-
 	#ifdef _DEBUG
 		#ifdef UseDebugExceptionFilter
 			// ?gfnPrevFilter?
@@ -1614,6 +1606,14 @@ void DoDllStop(bool bFinal, ConEmuHkDllState bFromTerminate)
 		print_timings(L"HookLogger::RunAnalyzer - Done");
 	}
 	#endif
+
+	if (bFinal)
+	{
+		DLOG1("HeapDeinitialize",0);
+		gnDllState |= ds_HeapDeinitialized;
+		HeapDeinitialize();
+		DLOGEND1();
+	}
 
 	gnDllState |= ds_DllStopped;
 
