@@ -3881,7 +3881,7 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 				{
 					if (gpSetCls->isAdvLogging) LogString(L"ShowMainWindow(SW_SHOWNORMAL)");
 
-					ShowMainWindow(SW_SHOWNORMAL, ANIMATION_MS_DEFAULT, abFirstShow);
+					ShowMainWindow(SW_SHOWNORMAL, abFirstShow);
 				}
 
 				//RePaint();
@@ -3939,21 +3939,18 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 
 			if (!IsWindowVisible(ghWnd))
 			{
-				ShowMainWindow((abFirstShow && mp_ConEmu->WindowStartMinimized) ? SW_SHOWMINNOACTIVE : SW_SHOWNORMAL, ANIMATION_MS_DEFAULT, abFirstShow);
+				ShowMainWindow((abFirstShow && mp_ConEmu->WindowStartMinimized) ? SW_SHOWMINNOACTIVE : SW_SHOWNORMAL, abFirstShow);
 			}
 
 			#ifdef _DEBUG
 			GetWindowPlacement(ghWnd, &wpl);
 			#endif
 
-			// Если это во время загрузки - то до первого ShowWindow - isIconic возвращает FALSE
-			// Нужен реальный IsZoomed (FullScreen теперь тоже Zoomed)
+			// On startup, before first ::ShowWindow, isIconic returns FALSE
+			// And we need real IsZoomed (FullScreen is Zoomed too)
 			if (!(abFirstShow && mp_ConEmu->WindowStartMinimized) && (isIconic() || ::IsZoomed(ghWnd)))
 			{
-				ShowMainWindow(SW_SHOWNORMAL, ANIMATION_MS_DEFAULT, abFirstShow); // WM_SYSCOMMAND использовать не хочется...
-				// что-то после AltF9, AltF9 уголки остаются не срезанными...
-				//hRgn = CreateWindowRgn();
-				//SetWindowRgn(ghWnd, hRgn, TRUE);
+				ShowMainWindow(SW_SHOWNORMAL, abFirstShow);
 			}
 
 			// Already restored, need to clear the flag to avoid incorrect sizing
@@ -4001,7 +3998,7 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 				if (!gpConEmu->opt.DesktopMode)
 				{
 					DEBUGTEST(WINDOWPLACEMENT wpl1 = {sizeof(wpl1)}; GetWindowPlacement(ghWnd, &wpl1););
-					ShowMainWindow(SW_SHOWMAXIMIZED, ANIMATION_MS_DEFAULT, abFirstShow);
+					ShowMainWindow(SW_SHOWMAXIMIZED, abFirstShow);
 					DEBUGTEST(WINDOWPLACEMENT wpl2 = {sizeof(wpl2)}; GetWindowPlacement(ghWnd, &wpl2););
 					if (changeFromWindowMode == wmFullScreen)
 					{
@@ -4042,7 +4039,7 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 			if (!IsWindowVisible(ghWnd))
 			{
 				MSetter lSet(&mn_IgnoreSizeChange);
-				ShowMainWindow((abFirstShow && mp_ConEmu->WindowStartMinimized) ? SW_SHOWMINNOACTIVE : SW_SHOWMAXIMIZED, ANIMATION_MS_DEFAULT, abFirstShow);
+				ShowMainWindow((abFirstShow && mp_ConEmu->WindowStartMinimized) ? SW_SHOWMINNOACTIVE : SW_SHOWMAXIMIZED, abFirstShow);
 
 				if (gpSetCls->isAdvLogging) LogString(L"OnSize(false).3");
 			}
@@ -4101,7 +4098,7 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 			{
 				MSetter lSet(&mn_IgnoreSizeChange);
 				//120820 для четкости, в FullScreen тоже ставим Maximized, а не Normal
-				ShowMainWindow((abFirstShow && mp_ConEmu->WindowStartMinimized) ? SW_SHOWMINNOACTIVE : SW_SHOWMAXIMIZED, ANIMATION_MS_DEFAULT, abFirstShow);
+				ShowMainWindow((abFirstShow && mp_ConEmu->WindowStartMinimized) ? SW_SHOWMINNOACTIVE : SW_SHOWMAXIMIZED, abFirstShow);
 
 				//// Сбросить
 				//if (mb_MaximizedHideCaption)
@@ -4142,7 +4139,7 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 			if (!IsWindowVisible(ghWnd))
 			{
 				MSetter lSet(&mn_IgnoreSizeChange);
-				ShowMainWindow((abFirstShow && mp_ConEmu->WindowStartMinimized) ? SW_SHOWMINNOACTIVE : SW_SHOWNORMAL, ANIMATION_MS_DEFAULT, abFirstShow);
+				ShowMainWindow((abFirstShow && mp_ConEmu->WindowStartMinimized) ? SW_SHOWMINNOACTIVE : SW_SHOWNORMAL, abFirstShow);
 				lSet.Unlock();
 				//WindowMode = inMode; // Запомним!
 
@@ -4859,17 +4856,14 @@ void CConEmuSize::UpdateWindowRgn(int anX/*=-1*/, int anY/*=-1*/, int anWndWidth
 	UNREFERENCED_PARAMETER(bRc);
 }
 
-bool CConEmuSize::ShowMainWindow(int anCmdShow, DWORD nAnimationMS /*= ANIMATION_MS_DEFAULT*/, bool abFirstShow /*= false*/)
+bool CConEmuSize::ShowMainWindow(int anCmdShow, bool abFirstShow /*= false*/)
 {
 	if (mb_LockShowWindow)
 	{
 		return false;
 	}
 
-	if (nAnimationMS == ANIMATION_MS_DEFAULT)
-	{
-		nAnimationMS = (((int)gpSet->nQuakeAnimation) >= 0) ? gpSet->nQuakeAnimation : QUAKEANIMATION_DEF;
-	}
+	DWORD nAnimationMS = (((int)gpSet->nQuakeAnimation) >= 0) ? gpSet->nQuakeAnimation : QUAKEANIMATION_DEF;
 
 	BOOL lbRc = FALSE;
 	bool bUseApi = true;

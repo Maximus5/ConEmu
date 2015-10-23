@@ -40,8 +40,6 @@ enum DpiChangeSource
 	dcs_Internal,
 };
 
-#define ANIMATION_MS_DEFAULT (DWORD)-1
-
 class CConEmuSize
 {
 private:
@@ -195,7 +193,7 @@ public:
 	bool isZoomed();
 
 	void UpdateWindowRgn(int anX = -1, int anY = -1, int anWndWidth = -1, int anWndHeight = -1);
-	bool ShowMainWindow(int anCmdShow, DWORD nAnimationMS = ANIMATION_MS_DEFAULT, bool abFirstShow = false);
+	bool ShowMainWindow(int anCmdShow, bool abFirstShow = false);
 	void CheckTopMostState();
 	bool SizeWindow(const CESize sizeW, const CESize sizeH);
 
