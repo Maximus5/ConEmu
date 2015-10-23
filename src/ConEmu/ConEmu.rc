@@ -215,15 +215,15 @@ BEGIN
     CONTROL         "Single instance mode (use existing window instead of running new instance)",cbSingleInstance,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,14,310,8
     CONTROL         "Multiple consoles in one ConEmu window",cbMultiCon,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,27,310,8
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,27,170,8
+    CONTROL         "Always on top",cbAlwaysOnTop,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,183,27,128,8
     CONTROL         "Show buttons (toolbar) in tab bar",cbMultiShowButtons,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,40,148,8
-    CONTROL         "Show search field in tab bar",cbMultiShowSearch,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,158,40,148,8
-    GROUPBOX        "Appearance",gbFeatureAppear,4,60,319,40
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,40,170,8
+    CONTROL         "Show search field in tab bar",cbMultiShowSearch,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,183,40,128,8
+    GROUPBOX        "Appearance",gbFeatureAppear,4,60,319,28
     CONTROL         "Enhance progressbars and scrollbars",cbEnhanceGraphics,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,73,140,8
-    CONTROL         "Always on top",cbAlwaysOnTop,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,234,73,78,8
-    CONTROL         "Show balloon help tooltips",cbShowHelpTooltips,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,85,142,8
+    CONTROL         "Show balloon help tooltips",cbShowHelpTooltips,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,183,73,128,8
     GROUPBOX        "Scrollbar",IDC_STATIC,4,104,319,29
     CONTROL         "Hide",rbScrollbarHide,"Button",BS_AUTORADIOBUTTON | WS_GROUP,10,117,30,8
     CONTROL         "Show",rbScrollbarShow,"Button",BS_AUTORADIOBUTTON,48,117,35,8
