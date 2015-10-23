@@ -42,6 +42,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define CURSORSIZEPIX_MIN 1
 #define CURSORSIZEPIX_MAX 99
 
+// Animation delay used not only in Quake mode,
+// but also when hiding/restoring window to/from TSA
 #define QUAKEANIMATION_DEF 300
 #define QUAKEANIMATION_MAX 2000
 #define QUAKEVISIBLELIMIT 80 // Если "Видимая область" окна стала менее (%) - считаем что окно стало "не видимым"

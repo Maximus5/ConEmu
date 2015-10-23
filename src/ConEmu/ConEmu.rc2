@@ -221,7 +221,7 @@ BEGIN
 	tOptionSearch           "This allows to search all setup pages controls for specified text\r\nClick ‘zoom’ icon or press ‘Enter’ to continue search"
 	tPadSize                "Create pad between ConEmu frame and console field"
 	tPerfCounters           "FPS: Frames per second\r\nData: Average duration of transferring data from Real to Virtual console\r\nRender: Average duration of rendering text to memory DC\r\nBlt: Average duration of blit operation from memory DC to screen DC\r\nRPS: Average counts of reads real console data per second"
-	tQuakeAnimation         "Duration of Quake slide down/up (0..2000ms) or window show/hide"
+	tQuakeAnimation         "Duration of window animation (0..2000ms): Quake slide down/up and restoring/hiding window to TSA.\r\nAnimation is working only when window caption is hidden."
 	tRClickMacro            "Far Manager macro for EMenu of file panel selected items\r\nClear field to reset to defaults"
 	tRealFontBorders        "Real sizes of ""Change pseudographics font"":\r\nHeight x Width"
 	tRealFontMain           "Real sizes of main font:\r\nHeight x Width x AveWidth"
