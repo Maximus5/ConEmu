@@ -1175,6 +1175,13 @@ int CPluginBase::ProcessEditorViewerEvent(int EditorEvent, int ViewerEvent)
 	return 0;
 }
 
+bool CPluginBase::isEditorViewer()
+{
+	if (!gpTabs)
+		return false;
+	return ((gnCurrentWindowType == wt_Editor) || (gnCurrentWindowType == wt_Viewer));
+}
+
 bool CPluginBase::isModalEditorViewer()
 {
 	if (!gpTabs || !gpTabs->Tabs.nTabCount)

@@ -121,6 +121,7 @@ public:
 	void ShowPluginMenu(PluginCallCommands nCallID = pcc_None);
 	int ProcessSynchroEvent(int Event, void *Param);
 	int ProcessEditorViewerEvent(int EditorEvent, int ViewerEvent);
+	bool isEditorViewer();
 	bool isModalEditorViewer();
 	void ShowConsoleInfo();
 	bool StartDebugger();
