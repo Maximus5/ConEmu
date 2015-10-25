@@ -2170,7 +2170,7 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 			switch (nCmd)
 			{
 			case 0: // clear from cursor to the end of the line
-				nChars = csbi.dwSize.X - csbi.dwCursorPosition.X - 1;
+				nChars = csbi.dwSize.X - csbi.dwCursorPosition.X;
 				break;
 			case 1: // clear from cursor to beginning of the line
 				cr0.X = cr0.Y = 0;
