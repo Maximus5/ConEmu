@@ -1336,6 +1336,7 @@ BOOL ExtFillOutput(ExtFillOutputParm* Info)
 
 BOOL ExtScrollScreen(ExtScrollScreenParm* Info)
 {
+	ORIGINALCALLCOUNT(ExtScrollScreen);
 	TODO("!!!scrolling region!!!");
 
 	BOOL lbTrueColor = ExtCheckBuffers(Info->ConsoleOutput);

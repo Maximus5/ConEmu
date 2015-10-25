@@ -230,11 +230,56 @@ namespace HookLogger
 	}
 }
 
+#ifdef _DEBUG
+class COriginalCallCount
+{
+protected:
+	LONG* mp_ThreadId;
+	LONG* mp_Count;
+public:
+	COriginalCallCount(LONG* pThreadId, LONG* pCount, LPCWSTR asFnName)
+		: mp_ThreadId(pThreadId)
+		, mp_Count(pCount)
+	{
+		LONG nTid = GetCurrentThreadId();
+		LONG lOldTid = InterlockedExchange(mp_ThreadId, nTid);
+		LONG nNewCount = 1;
+		if (lOldTid != nTid)
+			InterlockedExchange(mp_Count, nNewCount);
+		else
+			nNewCount = InterlockedIncrement(mp_Count);
+		if (nNewCount > 1)
+		{
+			// Don't use ASSERT or any GUI function here to avoid infinite recursion!
+			wchar_t szMsg[120];
+			msprintf(szMsg, countof(szMsg), L"!!! Hook !!! %s Count=%u\n", asFnName, nNewCount);
+			OutputDebugStringW(szMsg);
+			int iDbg = 0;
+		}
+	};
+	~COriginalCallCount()
+	{
+		LONG nLeft, nTid = GetCurrentThreadId();
+		if (*mp_ThreadId == nTid)
+		{
+			nLeft = InterlockedDecrement(mp_Count);
+			if (nLeft <= 0)
+				InterlockedExchange(mp_ThreadId, 0);
+		}
+	};
+};
+#define ORIGINALCALLCOUNT(n) \
+	static LONG cnt_thread_##n, cnt_##n; \
+	COriginalCallCount cnt##n(&cnt_thread_##n, &cnt_##n, _CRT_WIDE(#n))
+#else
+#define ORIGINALCALLCOUNT(n)
+#endif
 
 #define ORIGINAL(n,o) \
 	HookItem *ph = NULL; \
 	void* f##n = NULL; \
 	extern DWORD HOOK_FN_ID(n); \
+	ORIGINALCALLCOUNT(n); \
 	ORIGINALSHOWCALL(n); \
 	if ((f##n)==NULL) f##n = GetOriginalAddress((void*)(On##n), HOOK_FN_ID(n), (void*)(o), &ph, false); \
 	_ASSERTE((void*)(On##n)!=(void*)(f##n) && (void*)(f##n)!=NULL);
