@@ -1297,6 +1297,7 @@ void InitExeName()
 	else if (lstrcmpi(gsExeName, L"plink.exe") == 0)
 	{
 		gbIsPlinkProcess = true;
+		//CEAnsi::StartXTermMode(true);
 	}
 	else if (lstrcmpni(gsExeName, L"mintty", 6) == 0) // Without extension? Or may be "minttyXXX.exe"?
 	{
@@ -1396,6 +1397,12 @@ void DoDllStop(bool bFinal, ConEmuHkDllState bFromTerminate)
 		{
 			DLOG1("StopVimTerm",0);
 			CEAnsi::StopVimTerm();
+			DLOGEND1();
+		}
+		else if (gbIsPlinkProcess)
+		{
+			DLOG1("StartXTermMode(false)",0);
+			//CEAnsi::StartXTermMode(false);
 			DLOGEND1();
 		}
 	}

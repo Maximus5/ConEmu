@@ -160,6 +160,7 @@ public:
 protected:
 	static int NextNumber(LPCWSTR& asMS);
 
+public:
 	static void StartXTermMode(bool bStart);
 
 public:
