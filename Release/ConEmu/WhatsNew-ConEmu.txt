@@ -19,6 +19,18 @@ http://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2015.10.25
+* gh#373: Don't decrease window height with AutoTabs (show/hide/show/hide/...)
+* gh#388 (gh#295?): Don't change buffer height for cygwin/msys versions of vim.
+* gh#359, gh#84: Fix vim color issues on scrolling.
+* Don't change buffer height when starting `vim` with `--help` or `--version`.
+* Vim terminal mode was not finished properly on exit.
+* ANSI `\e[K` has not cleared rightmost cell.
+* Checkbox ‘Desktop mode’ was removed from settings.
+* gh#336: Don't poll Far 2.x current directories while Editor/Viewer is active.
+* gh#17: Send WM_ENTERSIZEMOVE/WM_EXITSIZEMOVE to ChildGui during resize.
+
+
 2015.10.15
 * gh#21: Multi-monitor support improvements.
   * ConEmu takes into account monitor working coordinates when
