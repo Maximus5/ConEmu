@@ -7614,10 +7614,16 @@ BOOL cmd_SetWindowPos(CESERVER_REQ& in, CESERVER_REQ** out)
 	if ((in.SetWndPos.hWnd == ghConWnd) && gpLogSize)
 		LogSize(NULL, 0, ":SetWindowPos.before");
 
+	if (!(in.SetWndPos.uFlags & (SWP_NOMOVE|SWP_NOSIZE)))
+		SendMessage(in.SetWndPos.hWnd, WM_ENTERSIZEMOVE, 0, 0);
+
 	lbWndRc = SetWindowPos(in.SetWndPos.hWnd, in.SetWndPos.hWndInsertAfter,
 	             in.SetWndPos.X, in.SetWndPos.Y, in.SetWndPos.cx, in.SetWndPos.cy,
 	             in.SetWndPos.uFlags);
 	nErrCode[0] = lbWndRc ? 0 : GetLastError();
+
+	if (!(in.SetWndPos.uFlags & (SWP_NOMOVE | SWP_NOSIZE)))
+		SendMessage(in.SetWndPos.hWnd, WM_EXITSIZEMOVE, 0, 0);
 
 	if ((in.SetWndPos.uFlags & SWP_SHOWWINDOW) && !IsWindowVisible(in.SetWndPos.hWnd))
 	{
