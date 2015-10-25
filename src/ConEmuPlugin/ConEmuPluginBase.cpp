@@ -735,9 +735,16 @@ void CPluginBase::UpdatePanelDirs()
 		wchar_t szMacro[200] = L"";
 		if (gFarVersion.dwVerMajor == 2)
 		{
+			if (isEditorViewer())
+			{
+				// Don't ping Far when Editor/Viewer are active
+				return;
+			}
 			_wsprintf(szMacro, SKIPCOUNT(szMacro)
-				L"$if (!APanel.Plugin) callplugin(0x%08X,%i) $end"
-				L" $if (!PPanel.Plugin) callplugin(0x%08X,%i) $end",
+				L"$if (!Editor && !Viewer)"
+				L" $if (!APanel.Plugin) callplugin(0x%08X,%i) $end "
+				L" $if (!PPanel.Plugin) callplugin(0x%08X,%i) $end "
+				L"$end",
 				ConEmu_SysID, CE_CALLPLUGIN_REQ_DIRA, ConEmu_SysID, CE_CALLPLUGIN_REQ_DIRP);
 		}
 		else if (!gFarVersion.IsFarLua())
