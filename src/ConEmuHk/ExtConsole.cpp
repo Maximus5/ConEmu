@@ -39,6 +39,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/WObjects.h"
 
 #include "SetHook.h"
+#include "hkConsoleOutput.h"
 #include "hlpConsole.h"
 
 #define MSG_TITLE "ConEmu writer"
@@ -1340,6 +1341,8 @@ BOOL ExtScrollScreen(ExtScrollScreenParm* Info)
 	BOOL lbTrueColor = ExtCheckBuffers(Info->ConsoleOutput);
 	UNREFERENCED_PARAMETER(lbTrueColor);
 
+	ORIGINAL_KRNL(ScrollConsoleScreenBufferW);
+
 	HANDLE h = Info->ConsoleOutput;
 	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
 	SMALL_RECT srWork = {};
@@ -1516,7 +1519,7 @@ BOOL ExtScrollScreen(ExtScrollScreenParm* Info)
 			CHAR_INFO cFill = {{Info->FillChar}};
 			ExtPrepareColor(Info->FillAttr, t, cFill.Attributes);
 			
-			ScrollConsoleScreenBuffer(Info->ConsoleOutput, &rcSrc, NULL, crDst, &cFill);
+			F(ScrollConsoleScreenBufferW)(Info->ConsoleOutput, &rcSrc, NULL, crDst, &cFill);
 
 			if (nDir < 0)
 			{
@@ -1578,7 +1581,7 @@ BOOL ExtScrollScreen(ExtScrollScreenParm* Info)
 			CHAR_INFO cFill = {{Info->FillChar}};
 			ExtPrepareColor(Info->FillAttr, t, cFill.Attributes);
 			
-			ScrollConsoleScreenBuffer(Info->ConsoleOutput, &rcSrc, NULL, crDst, &cFill);
+			F(ScrollConsoleScreenBufferW)(Info->ConsoleOutput, &rcSrc, NULL, crDst, &cFill);
 
 			if (nDir > 0)
 			{
