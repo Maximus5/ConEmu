@@ -14993,6 +14993,11 @@ void CRealConsole::SetConStatus(LPCWSTR asStatus, DWORD/*enum ConStatusOption*/ 
 			// Перерисовать сразу
 			mp_ConEmu->mp_Status->UpdateStatusBar(true, true);
 		}
+		else if (isGuiOverCon())
+		{
+			// No status bar, ChildGui is over our VCon window, nothing to update
+			return;
+		}
 		else if (!(Options & cso_DontUpdate) && mp_VCon->GetView())
 		{
 			mp_VCon->Update(true);
