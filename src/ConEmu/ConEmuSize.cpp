@@ -5513,6 +5513,13 @@ void CConEmuSize::DoMaximizeRestore()
 	gpConEmu->SetWindowMode((wm != wmMaximized) ? wmMaximized : wmNormal);
 }
 
+void CConEmuSize::LogMinimizeRestoreSkip(LPCWSTR asMsgFormat, DWORD nParm1, DWORD nParm2, DWORD nParm3)
+{
+	wchar_t szInfo[200];
+	_wsprintf(szInfo, SKIPLEN(countof(szInfo)) asMsgFormat, nParm1, nParm2, nParm3);
+	LogFocusInfo(szInfo);
+}
+
 void CConEmuSize::DoMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= sih_None*/)
 {
 	if (mp_ConEmu->mp_Inside)

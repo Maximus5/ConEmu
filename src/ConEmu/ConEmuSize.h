@@ -174,6 +174,7 @@ public:
 	bool IsSizePosFree(ConEmuWindowMode CheckMode = wmFullScreen);
 	bool IsCantExceedMonitor();
 	bool IsPosLocked();
+	void LogMinimizeRestoreSkip(LPCWSTR asMsgFormat, DWORD nParm1 = 0, DWORD nParm2 = 0, DWORD nParm3 = 0);
 	bool JumpNextMonitor(bool Next);
 	bool JumpNextMonitor(HWND hJumpWnd, HMONITOR hJumpMon, bool Next, const RECT rcJumpWnd, LPRECT prcNewPos = NULL);
 	void DoFullScreen();
