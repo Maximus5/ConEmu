@@ -4831,6 +4831,27 @@ bool CRealBuffer::DoSelectionCopyInt(CECopyMode CopyMode, bool bStreamMode, int 
 
 	if (Result)
 	{
+		if (!bStreamMode)
+		{
+			UINT i_CF_BORLAND_IDE = RegisterClipboardFormat(L"Borland IDE Block Type");
+			UINT i_CF_MICROSOFT_IDE = RegisterClipboardFormat(L"MSDEVColumnSelect");
+
+			if (i_CF_BORLAND_IDE)
+			{
+				MGlobal borland(GMEM_MOVEABLE,1);
+				if (borland.Lock())
+				{
+					*(LPBYTE)borland.Lock() = 2;
+					if (MySetClipboardData(i_CF_BORLAND_IDE, borland))
+						borland.Detach();
+				}
+			}
+			if (i_CF_MICROSOFT_IDE)
+			{
+				MySetClipboardData(i_CF_MICROSOFT_IDE, NULL);
+			}
+		}
+
 		if (gpSet->isCTSForceLocale)
 		{
 			MGlobal Lcl;
