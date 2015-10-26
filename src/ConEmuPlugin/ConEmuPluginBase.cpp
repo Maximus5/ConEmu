@@ -2237,25 +2237,29 @@ void CPluginBase::CheckResources(bool abFromStartup)
 	// Теперь он отвязан от gpConMapInfo
 	ReloadFarInfo(true);
 
-	wchar_t szLang[64];
-	if (gpConMapInfo)  //2010-12-13 Имеет смысл только при запуске из-под ConEmu
+	// CECMD_FARLOADED has no sense outside of ConEmu,
+	// or if ConEmu PROTOCOL version differs (CESERVER_REQ_VER)
+	if (!gpConMapInfo)
 	{
-		GetEnvironmentVariable(L"FARLANG", szLang, 63);
-
-		if (abFromStartup || lstrcmpW(szLang, gsFarLang) || !gdwServerPID)
-		{
-			wchar_t szTitle[1024] = {0};
-			GetConsoleTitleW(szTitle, 1024);
-			SetConsoleTitleW(L"ConEmuC: CheckResources started");
-			InitResources();
-			DWORD dwServerPID = 0;
-			FindServerCmd(CECMD_FARLOADED, dwServerPID);
-			_ASSERTE(dwServerPID!=0);
-			gdwServerPID = dwServerPID;
-			SetConsoleTitleW(szTitle);
-		}
-		_ASSERTE(gdwServerPID!=0);
+		return;
 	}
+
+	wchar_t szLang[64];
+	GetEnvironmentVariable(L"FARLANG", szLang, 63);
+
+	if (abFromStartup || lstrcmpW(szLang, gsFarLang) || !gdwServerPID)
+	{
+		wchar_t szTitle[1024] = {0};
+		GetConsoleTitleW(szTitle, 1024);
+		SetConsoleTitleW(L"ConEmuC: CheckResources started");
+		InitResources();
+		DWORD dwServerPID = 0;
+		FindServerCmd(CECMD_FARLOADED, dwServerPID);
+		_ASSERTE(dwServerPID!=0);
+		gdwServerPID = dwServerPID;
+		SetConsoleTitleW(szTitle);
+	}
+	_ASSERTE(gdwServerPID!=0);
 }
 
 // Передать в ConEmu строки с ресурсами
