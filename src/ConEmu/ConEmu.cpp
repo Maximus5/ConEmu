@@ -4156,36 +4156,41 @@ void CConEmuMain::UnRegisterHooks(bool abFinal/*=false*/)
 // Обработка WM_HOTKEY
 void CConEmuMain::OnWmHotkey(WPARAM wParam)
 {
+	switch (LODWORD(wParam))
+	{
+
 	// Ctrl+Win+Alt+Space
-	if (wParam == HOTKEY_CTRLWINALTSPACE_ID)
+	case HOTKEY_CTRLWINALTSPACE_ID:
 	{
 		CtrlWinAltSpace();
+		break;
 	}
+
 	// Win+Esc by default
-	else if ((wParam == HOTKEY_SETFOCUSSWITCH_ID) || (wParam == HOTKEY_SETFOCUSGUI_ID) || (wParam == HOTKEY_SETFOCUSCHILD_ID))
+	case HOTKEY_SETFOCUSSWITCH_ID:
+	case HOTKEY_SETFOCUSGUI_ID:
+	case HOTKEY_SETFOCUSCHILD_ID:
 	{
 		SwitchGuiFocusOp FocusOp =
 			(wParam == HOTKEY_SETFOCUSSWITCH_ID) ? sgf_FocusSwitch :
 			(wParam == HOTKEY_SETFOCUSGUI_ID) ? sgf_FocusGui :
 			(wParam == HOTKEY_SETFOCUSCHILD_ID) ? sgf_FocusChild : sgf_None;
 		OnSwitchGuiFocus(FocusOp);
+		break;
 	}
-	else if (wParam == HOTKEY_CHILDSYSMENU_ID)
+
+	case HOTKEY_CHILDSYSMENU_ID:
 	{
 		CVConGuard VCon;
 		if (GetActiveVCon(&VCon) >= 0)
 		{
 			VCon->RCon()->ChildSystemMenu();
 		}
+		break;
 	}
-	else
-	{
-		//// vmMinimizeRestore -> Win+C
-		//else if (mn_MinRestoreRegistered && (int)wParam == mn_MinRestoreRegistered)
-		//{
-		//	DoMinimizeRestore();
-		//}
 
+	default:
+	{
 		for (size_t i = 0; i < countof(gRegisteredHotKeys); i++)
 		{
 			if (gRegisteredHotKeys[i].RegisteredID && ((int)wParam == gRegisteredHotKeys[i].RegisteredID))
@@ -4215,7 +4220,9 @@ void CConEmuMain::OnWmHotkey(WPARAM wParam)
 				break;
 			}
 		}
-	}
+	} // default:
+
+	} //switch (LODWORD(wParam))
 }
 
 void CConEmuMain::CtrlWinAltSpace()

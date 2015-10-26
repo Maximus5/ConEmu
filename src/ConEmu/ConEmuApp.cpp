@@ -2528,8 +2528,14 @@ bool ProcessMessage(MSG& Msg)
 	{
 		if (gpConEmu->isDialogMessage(Msg))
 			goto wrap;
-		if ((Msg.message == WM_SYSCOMMAND) && gpConEmu->isSkipNcMessage(Msg))
-			goto wrap;
+
+		switch (Msg.message)
+		{
+		case WM_SYSCOMMAND:
+			if (gpConEmu->isSkipNcMessage(Msg))
+				goto wrap;
+			break;
+		}
 	}
 
 	TranslateMessage(&Msg);
