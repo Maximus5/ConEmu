@@ -2535,6 +2535,9 @@ bool ProcessMessage(MSG& Msg)
 			if (gpConEmu->isSkipNcMessage(Msg))
 				goto wrap;
 			break;
+		case WM_HOTKEY:
+			gpConEmu->OnWmHotkey(Msg.wParam, Msg.time);
+			goto wrap;
 		}
 	}
 

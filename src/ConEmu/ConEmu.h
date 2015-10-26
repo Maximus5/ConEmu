@@ -475,7 +475,7 @@ class CConEmuMain
 		bool IsKeyboardHookRegistered();
 		void RegisterHooks();
 		void UnRegisterHooks(bool abFinal=false);
-		void OnWmHotkey(WPARAM wParam);
+		void OnWmHotkey(WPARAM wParam, DWORD nTime = 0);
 		void UpdateWinHookSettings();
 		void CtrlWinAltSpace();
 		void DeleteVConMainThread(CVirtualConsole* apVCon);

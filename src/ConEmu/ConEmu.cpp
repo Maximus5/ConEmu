@@ -4153,8 +4153,10 @@ void CConEmuMain::UnRegisterHooks(bool abFinal/*=false*/)
 	}
 }
 
-// Обработка WM_HOTKEY
-void CConEmuMain::OnWmHotkey(WPARAM wParam)
+// Process WM_HOTKEY message
+// Called from ProcessMessage to obtain nTime
+// (nTime is GetTickCount() where msg was generated)
+void CConEmuMain::OnWmHotkey(WPARAM wParam, DWORD nTime /*= 0*/)
 {
 	switch (LODWORD(wParam))
 	{
@@ -4199,10 +4201,24 @@ void CConEmuMain::OnWmHotkey(WPARAM wParam)
 				{
 				case vkMinimizeRestore:
 				case vkMinimizeRestor2:
-					DoMinimizeRestore();
+					if (nTime && mn_LastQuakeShowHide && ((int)(nTime - mn_LastQuakeShowHide) >= 0))
+					{
+						DoMinimizeRestore();
+					}
+					else
+					{
+						LogMinimizeRestoreSkip(L"DoMinimizeRestore skipped, vk=%u time=%u delay=%i", gRegisteredHotKeys[i].DescrID, nTime, (int)(nTime - mn_LastQuakeShowHide));
+					}
 					break;
 				case vkGlobalRestore:
-					DoMinimizeRestore(sih_Show);
+					if (nTime && mn_LastQuakeShowHide && ((int)(nTime - mn_LastQuakeShowHide) >= 0))
+					{
+						DoMinimizeRestore(sih_Show);
+					}
+					else
+					{
+						LogMinimizeRestoreSkip(L"DoMinimizeRestore skipped, vk=%u time=%u delay=%i", gRegisteredHotKeys[i].DescrID, nTime, (int)(nTime - mn_LastQuakeShowHide));
+					}
 					break;
 				case vkForceFullScreen:
 					DoForcedFullScreen(true);
@@ -13256,6 +13272,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			break;
 
 		case WM_HOTKEY:
+			_ASSERTE(messg!=WM_HOTKEY && "Must be processed from ProcessMessage function");
 			this->OnWmHotkey(wParam);
 			return 0;
 
