@@ -77,6 +77,8 @@ CPluginBase* gpPlugin = NULL;
 bool CPluginBase::gb_DllUniqueWarned = false;
 // true - if gb_DllUniqueWarned or DllCheckUnique was called from PluginMenu
 bool CPluginBase::gb_DllUniqueChecked = false;
+// true - if plugin was loaded inside ConEmu tab with different CESERVER_REQ_VER
+bool CPluginBase::gb_ProtocolWarned = false;
 
 static BOOL gbTryOpenMapHeader = FALSE;
 static BOOL gbStartupHooksAfterMap = FALSE;
@@ -2102,6 +2104,12 @@ void CPluginBase::AddTabFinish(int tabCount)
 
 void CPluginBase::SendTabs(int tabCount, bool abForceSend/*=false*/)
 {
+	if (gb_ProtocolWarned)
+	{
+		DEBUGSTR(L"!!! CPluginBase::SendTabs skipped due to gb_ProtocolWarned !!!\n");
+		return;
+	}
+
 	MSectionLock SC; SC.Lock(csTabs);
 
 	if (!gpTabs)
@@ -2163,7 +2171,8 @@ void CPluginBase::SendTabs(int tabCount, bool abForceSend/*=false*/)
 
 void CPluginBase::CloseTabs()
 {
-	if (ghConEmuWndDC && IsWindow(ghConEmuWndDC) && FarHwnd)
+	if (!gb_ProtocolWarned
+		&& ghConEmuWndDC && IsWindow(ghConEmuWndDC) && FarHwnd)
 	{
 		CESERVER_REQ in; // Пустая команда - значит FAR закрывается
 		ExecutePrepareCmd(&in, CECMD_TABSCHANGED, sizeof(CESERVER_REQ_HDR));
@@ -2268,6 +2277,36 @@ bool CPluginBase::UpdateConEmuTabs(bool abSendChanges)
 	return lbCh;
 }
 
+void CPluginBase::ShowProtocolWarning()
+{
+	if (gb_ProtocolWarned)
+		return;
+
+	gb_ProtocolWarned = true;
+
+	wchar_t szExePath[MAX_PATH + 1] = L"\n";
+	GetModuleFileName(NULL, szExePath + 1, countof(szExePath) - 1);
+	wchar_t szSelfPath[MAX_PATH + 1] = L"\n";
+	GetModuleFileName(ghPluginModule, szSelfPath + 1, countof(szSelfPath) - 1);
+
+	wchar_t szProtocolWarning[255];
+	msprintf(szProtocolWarning, countof(szProtocolWarning),
+		L"Wrong plugin version was loaded in ConEmu/Far tab!\n"
+		L"Protocol versions: Plugin=%u, ConEmu=%u\n"
+		L"Please, either install proper version,\n"
+		L"or change Far.exe arguments (/p switch)\n\n",
+		CESERVER_REQ_VER, gpConMapInfo->nProtocolVersion);
+
+	LPCWSTR pszConEmuExe = ((gpConMapInfo->cbSize >= (size_t)((LPBYTE)&gpConMapInfo->hConEmuRoot - (LPBYTE)gpConMapInfo))
+		&& IsFilePath(gpConMapInfo->sConEmuExe)) ? gpConMapInfo->sConEmuExe : NULL;
+	CEStr lsMsg = lstrmerge(
+		szProtocolWarning,
+		pszConEmuExe,
+		szExePath,
+		szSelfPath);
+	ShowMessageBox(lsMsg, MB_OK | MB_ICONSTOP | MB_SETFOREGROUND | MB_SYSTEMMODAL);
+}
+
 // Вызывается при инициализации из SetStartupInfo[W] и при обновлении табов UpdateConEmuTabs[???]
 // То есть по идее, это происходит только когда фар явно вызывает плагин (legal api calls)
 void CPluginBase::CheckResources(bool abFromStartup)
@@ -2304,6 +2343,19 @@ void CPluginBase::CheckResources(bool abFromStartup)
 	{
 		return;
 	}
+	if ((gpConMapInfo->cbSize < sizeof(*gpConMapInfo))
+		|| (gpConMapInfo->nProtocolVersion != CESERVER_REQ_VER))
+	{
+		if (!gb_ProtocolWarned)
+		{
+			ShowProtocolWarning();
+		}
+		return;
+	}
+
+	// We may be reattached into proper ConEmu window...
+	if (gb_ProtocolWarned)
+		gb_ProtocolWarned = false;
 
 	wchar_t szLang[64];
 	GetEnvironmentVariable(L"FARLANG", szLang, 63);
