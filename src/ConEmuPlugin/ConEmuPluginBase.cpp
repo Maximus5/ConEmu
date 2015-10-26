@@ -345,6 +345,18 @@ bool CPluginBase::LoadFarVersion()
 	return lbRc;
 }
 
+int CPluginBase::ShowMessageBox(LPCWSTR asMessage, UINT uType)
+{
+	wchar_t szTitle[128], szVer4[8] = L""; lstrcpyn(szVer4, _T(MVV_4a), countof(szVer4));
+	_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmu plugin %02u%02u%02u%s%s[%u%s] PID=%u",
+		(MVV_1 % 100), MVV_2, MVV_3, szVer4[0] && szVer4[1] ? L"-" : L"", szVer4,
+		WIN3264TEST(32,64), RELEASEDEBUGTEST(L"",L"D"),
+		GetCurrentProcessId());
+
+	int nRc = ::MessageBoxW(NULL, asMessage, szTitle, uType);
+	return nRc;
+}
+
 int CPluginBase::ShowMessageGui(int aiMsg, int aiButtons)
 {
 	wchar_t wszBuf[MAX_PATH];
