@@ -73,6 +73,11 @@ extern SetFarHookMode_t SetFarHookMode;
 
 CPluginBase* gpPlugin = NULL;
 
+// true - if several versions of ConEmu.dll were detected
+bool CPluginBase::gb_DllUniqueWarned = false;
+// true - if gb_DllUniqueWarned or DllCheckUnique was called from PluginMenu
+bool CPluginBase::gb_DllUniqueChecked = false;
+
 static BOOL gbTryOpenMapHeader = FALSE;
 static BOOL gbStartupHooksAfterMap = FALSE;
 
@@ -259,7 +264,8 @@ void CPluginBase::DllMain_ProcessAttach(HMODULE hModule)
 	TerminalMode = isTerminalMode();
 
 	// Check if we can continue initialization for ConEmu cooperation
-	if (!TerminalMode)
+	if (!TerminalMode
+		&& DllCheckUnique())
 	{
 		PlugServerInit();
 
@@ -323,6 +329,56 @@ void CPluginBase::DllMain_ProcessDetach()
 	HeapDeinitialize();
 
 	ShutdownPluginStep(L"DLL_PROCESS_DETACH - done");
+}
+
+bool CPluginBase::DllCheckUnique(bool bFromMenu)
+{
+	if (gb_DllUniqueWarned)
+		return false;
+
+	int iCount = 0;
+	CEStr lsFiles;
+	HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, 0);
+	if (snapshot != INVALID_HANDLE_VALUE)
+	{
+		MODULEENTRY32 module = {sizeof(MODULEENTRY32)};
+
+		for (BOOL res = Module32First(snapshot, &module); res; res = Module32Next(snapshot, &module))
+		{
+			LPCWSTR pszName = PointToName(module.szModule);
+			if (!lstrcmpi(pszName, L"ConEmu.dll")
+				|| !lstrcmpi(pszName, L"ConEmu.x64.dll"))
+			{
+				iCount++;
+				lstrmerge(&lsFiles.ms_Arg, module.szExePath[0] ? module.szExePath : module.szModule, L"\n");
+			}
+		}
+
+		CloseHandle(snapshot);
+	}
+
+	if (iCount <= 1)
+	{
+		if (bFromMenu)
+			gb_DllUniqueChecked = true;
+		return true;
+	}
+
+	gb_DllUniqueWarned = gb_DllUniqueChecked = true;
+
+	wchar_t szExePath[MAX_PATH] = L"";
+	GetModuleFileName(NULL, szExePath, countof(szExePath));
+
+	CEStr lsMsg = lstrmerge(
+		L"Several instances of ConEmu plugin were loaded!\n"
+		L"Please, either remove old versions,\n"
+		L"or change Far.exe arguments (/p switch)!\n\n",
+		szExePath, L"\n",
+		lsFiles.ms_Arg);
+
+	ShowMessageBox(lsMsg, MB_OK | MB_ICONSTOP | MB_SETFOREGROUND | MB_SYSTEMMODAL);
+
+	return false;
 }
 
 
@@ -796,6 +852,10 @@ void CPluginBase::ShowPluginMenu(PluginCallCommands nCallID /*= pcc_None*/)
 		ShowMessage(CEUnavailableInTerminal,0); // "ConEmu plugin\nConEmu is not available in terminal mode\nCheck TERM environment variable"
 		return;
 	}
+
+	// If our module was loaded before some other old version,
+	// we have not warned user about duplicate modules
+	DllCheckUnique(true);
 
 	CheckConEmuDetached();
 

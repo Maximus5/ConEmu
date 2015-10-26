@@ -107,6 +107,9 @@ protected:
 	static void DllMain_ProcessAttach(HMODULE hModule);
 	static void DllMain_ProcessDetach();
 
+	static bool gb_DllUniqueWarned, gb_DllUniqueChecked;
+	static bool DllCheckUnique(bool bFromMenu = false);
+
 	static int ShowMessageBox(LPCWSTR asMessage, UINT uType);
 
 public:
