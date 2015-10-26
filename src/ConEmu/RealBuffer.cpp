@@ -85,9 +85,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define SELMOUSEAUTOSCROLLDELTA 25
 #define SELMOUSEAUTOSCROLLPIX   2
 
-#define Free SafeFree
-#define Alloc calloc
-
 #ifdef _DEBUG
 #define HEAPVAL MCHKHEAP
 #else
@@ -149,14 +146,11 @@ CRealBuffer::~CRealBuffer()
 {
 	Assert(con.bInGetConsoleData==FALSE);
 
-	if (con.pConChar)
-		{ Free(con.pConChar); con.pConChar = NULL; }
+	SafeFree(con.pConChar);
 
-	if (con.pConAttr)
-		{ Free(con.pConAttr); con.pConAttr = NULL; }
+	SafeFree(con.pConAttr);
 
-	if (con.pDataCmp)
-		{ Free(con.pDataCmp); con.pDataCmp = NULL; }
+	SafeFree(con.pDataCmp);
 
 	dump.Close();
 
@@ -1494,23 +1488,20 @@ BOOL CRealBuffer::InitBuffers(DWORD anCellCount, int anWidth, int anHeight)
 		// Сначала - сброс
 		con.nConBufCells = 0;
 
-		if (con.pConChar)
-			{ Free(con.pConChar); con.pConChar = NULL; }
+		SafeFree(con.pConChar);
 
-		if (con.pConAttr)
-			{ Free(con.pConAttr); con.pConAttr = NULL; }
+		SafeFree(con.pConAttr);
 
-		if (con.pDataCmp)
-			{ Free(con.pDataCmp); con.pDataCmp = NULL; }
+		SafeFree(con.pDataCmp);
 
 		HEAPVAL;
 		// Выделяем памяти чуть больше, чтобы не вызывать лишние Realloc при небольших изменениях размера консоли
 		size_t cchNewCharMaxPlus = nCellCount * 3 / 2;
 		_ASSERTE(cchNewCharMaxPlus > (size_t)(nNewWidth * nNewHeight));
 
-		con.pConChar = (TCHAR*)Alloc(cchNewCharMaxPlus, sizeof(*con.pConChar));
-		con.pConAttr = (WORD*)Alloc(cchNewCharMaxPlus, sizeof(*con.pConAttr));
-		con.pDataCmp = (CHAR_INFO*)Alloc(cchNewCharMaxPlus, sizeof(CHAR_INFO));
+		con.pConChar = (TCHAR*)calloc(cchNewCharMaxPlus, sizeof(*con.pConChar));
+		con.pConAttr = (WORD*)calloc(cchNewCharMaxPlus, sizeof(*con.pConAttr));
+		con.pDataCmp = (CHAR_INFO*)calloc(cchNewCharMaxPlus, sizeof(CHAR_INFO));
 
 		if (con.pConChar && con.pConAttr && con.pDataCmp)
 		{
