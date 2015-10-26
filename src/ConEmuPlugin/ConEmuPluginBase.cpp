@@ -294,7 +294,7 @@ void CPluginBase::DllMain_ProcessDetach()
 			lbSynchroSafe = TRUE;
 		if (!lbSynchroSafe)
 		{
-			MessageBox(NULL, L"Syncho events are pending!\nFar may crash after unloading plugin", L"ConEmu plugin", MB_OK|MB_ICONEXCLAMATION|MB_SETFOREGROUND|MB_SYSTEMMODAL);
+			ShowMessageBox(L"Syncho events are pending!\nFar may crash after unloading plugin", MB_OK|MB_ICONEXCLAMATION|MB_SETFOREGROUND|MB_SYSTEMMODAL);
 		}
 	}
 
@@ -331,7 +331,7 @@ bool CPluginBase::LoadFarVersion()
 
 	if (ErrText[0])
 	{
-		MessageBox(0, ErrText, L"ConEmu plugin", MB_OK|MB_ICONSTOP|MB_SETFOREGROUND);
+		ShowMessageBox(ErrText, MB_OK|MB_ICONSTOP|MB_SETFOREGROUND);
 	}
 
 	if (!lbRc)
@@ -362,8 +362,6 @@ int CPluginBase::ShowMessageGui(int aiMsg, int aiButtons)
 	wchar_t wszBuf[MAX_PATH];
 	LPCWSTR pwszMsg = GetMsg(aiMsg, wszBuf, countof(wszBuf));
 
-	wchar_t szTitle[128];
-	_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmu plugin (PID=%u)", GetCurrentProcessId());
 
 	if (!pwszMsg || !*pwszMsg)
 	{
@@ -371,7 +369,7 @@ int CPluginBase::ShowMessageGui(int aiMsg, int aiButtons)
 		pwszMsg = wszBuf;
 	}
 
-	int nRc = MessageBoxW(NULL, pwszMsg, szTitle, aiButtons);
+	int nRc = ShowMessageBox(pwszMsg, aiButtons);
 	return nRc;
 }
 
@@ -380,7 +378,7 @@ DWORD CPluginBase::BackgroundMacroError(LPVOID lpParameter)
 {
 	wchar_t* pszMacroError = (wchar_t*)lpParameter;
 
-	MessageBox(NULL, pszMacroError, L"ConEmu plugin", MB_ICONSTOP|MB_SYSTEMMODAL);
+	ShowMessageBox(pszMacroError, MB_ICONSTOP|MB_SYSTEMMODAL);
 
 	SafeFree(pszMacroError);
 
@@ -2671,7 +2669,7 @@ DWORD CPluginBase::MonitorThreadProcW(LPVOID lpParameter)
 					// hConWnd не валидно
 					wchar_t szWarning[255];
 					_wsprintf(szWarning, SKIPLEN(countof(szWarning)) L"Console was abnormally termintated!\r\nExiting from FAR (PID=%u)", GetCurrentProcessId());
-					MessageBox(0, szWarning, L"ConEmu plugin", MB_OK|MB_ICONSTOP|MB_SETFOREGROUND);
+					ShowMessageBox(szWarning, MB_OK|MB_ICONSTOP|MB_SETFOREGROUND);
 					TerminateProcess(GetCurrentProcess(), 100);
 					return 0;
 				}
