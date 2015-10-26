@@ -249,8 +249,6 @@ void CPluginBase::DllMain_ProcessAttach(HMODULE hModule)
 	csTabs = new MSection();
 	csData = new MSection();
 
-	PlugServerInit();
-
 	// It's possible that our module is loaded from background thread,
 	// therefore we have to find Main process thread ID
 	gnMainThreadId = gnMainThreadIdInitial = GetMainThreadId();
@@ -260,8 +258,11 @@ void CPluginBase::DllMain_ProcessAttach(HMODULE hModule)
 	// Check Terminal mode
 	TerminalMode = isTerminalMode();
 
+	// Check if we can continue initialization for ConEmu cooperation
 	if (!TerminalMode)
 	{
+		PlugServerInit();
+
 		if (!StartupHooks(ghPluginModule))
 		{
 			if (ghConEmuWndDC)
