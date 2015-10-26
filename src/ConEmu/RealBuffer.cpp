@@ -4829,21 +4829,24 @@ bool CRealBuffer::DoSelectionCopyInt(CECopyMode CopyMode, bool bStreamMode, int 
 			&& (!i_CF_HTML || MySetClipboardData(i_CF_HTML, hHtml));
 	}
 
-	if (gpSet->isCTSForceLocale)
+	if (Result)
 	{
-		HGLOBAL hLcl = GlobalAlloc(GMEM_MOVEABLE, sizeof(DWORD));
-		if (hLcl)
+		if (gpSet->isCTSForceLocale)
 		{
-			LPDWORD pLcl = (LPDWORD)GlobalLock(hLcl);
-			if (!pLcl)
+			HGLOBAL hLcl = GlobalAlloc(GMEM_MOVEABLE, sizeof(DWORD));
+			if (hLcl)
 			{
-				GlobalFree(hLcl);
-			}
-			else
-			{
-				*pLcl = gpSet->isCTSForceLocale;
-				GlobalUnlock(hLcl);
-				MySetClipboardData(CF_LOCALE, hLcl);
+				LPDWORD pLcl = (LPDWORD)GlobalLock(hLcl);
+				if (!pLcl)
+				{
+					GlobalFree(hLcl);
+				}
+				else
+				{
+					*pLcl = gpSet->isCTSForceLocale;
+					GlobalUnlock(hLcl);
+					MySetClipboardData(CF_LOCALE, hLcl);
+				}
 			}
 		}
 	}
