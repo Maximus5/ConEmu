@@ -4833,20 +4833,13 @@ bool CRealBuffer::DoSelectionCopyInt(CECopyMode CopyMode, bool bStreamMode, int 
 	{
 		if (gpSet->isCTSForceLocale)
 		{
-			HGLOBAL hLcl = GlobalAlloc(GMEM_MOVEABLE, sizeof(DWORD));
-			if (hLcl)
+			MGlobal Lcl;
+			if (Lcl.Alloc(GMEM_MOVEABLE, sizeof(DWORD))
+				&& Lcl.Lock())
 			{
-				LPDWORD pLcl = (LPDWORD)GlobalLock(hLcl);
-				if (!pLcl)
-				{
-					GlobalFree(hLcl);
-				}
-				else
-				{
-					*pLcl = gpSet->isCTSForceLocale;
-					GlobalUnlock(hLcl);
-					MySetClipboardData(CF_LOCALE, hLcl);
-				}
+				*(LPDWORD)Lcl.Lock() = gpSet->isCTSForceLocale;
+				if (MySetClipboardData(CF_LOCALE, Lcl))
+					Lcl.Detach();
 			}
 		}
 	}
