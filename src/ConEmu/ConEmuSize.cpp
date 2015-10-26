@@ -5548,8 +5548,7 @@ void CConEmuSize::DoMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 				DWORD nDelay = GetTickCount() - mn_LastQuakeShowHide;
 				if (nDelay < QUAKE_FOCUS_CHECK_TIMER_DELAY)
 				{
-					_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"DoMinimizeRestore skipped, delay was %u ms", nDelay);
-					LogFocusInfo(szInfo);
+					LogMinimizeRestoreSkip(L"DoMinimizeRestore skipped, delay was %u ms", nDelay);
 					return;
 				}
 			}
