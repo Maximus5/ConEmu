@@ -41,6 +41,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "../common/ConEmuCheck.h"
 #include "../common/Execute.h"
+#include "../common/MGlobal.h"
 #include "../common/MSetter.h"
 #include "../common/RgnDetect.h"
 #include "../common/WConsoleInfo.h"

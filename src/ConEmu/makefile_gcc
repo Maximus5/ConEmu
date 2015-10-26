@@ -34,6 +34,7 @@ SRCS = \
 		../common/Memory.cpp         \
 		../common/MEvent.cpp         \
 		../common/MFileLog.cpp       \
+		../common/MGlobal.cpp        \
 		../common/Monitors.cpp       \
 		../common/MSectionSimple.cpp \
 		../common/MSection.cpp       \

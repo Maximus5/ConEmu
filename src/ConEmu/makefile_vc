@@ -75,6 +75,7 @@ $(INTDIR)\Memory.obj \
 $(INTDIR)\Menu.obj \
 $(INTDIR)\MEvent.obj \
 $(INTDIR)\MFileLog.obj \
+$(INTDIR)\MGlobal.obj \
 $(INTDIR)\Monitors.obj \
 $(INTDIR)\MSectionSimple.obj \
 $(INTDIR)\MSection.obj \
@@ -376,6 +377,8 @@ $(INTDIR)\Menu.obj: Menu.cpp Menu.h MenuIds.h FindDlg.h
 $(INTDIR)\MEvent.obj: ../common/MEvent.cpp ../common/MEvent.h
 
 $(INTDIR)\MFileLog.obj: ../common/MFileLog.cpp ../common/MFileLog.h
+
+$(INTDIR)\MGlobal.obj: ../common/MGlobal.cpp ../common/MGlobal.h
 
 $(INTDIR)\Monitors.obj: ../common/Monitors.cpp
 
