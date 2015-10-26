@@ -107,6 +107,8 @@ protected:
 	static void DllMain_ProcessAttach(HMODULE hModule);
 	static void DllMain_ProcessDetach();
 
+	static int ShowMessageBox(LPCWSTR asMessage, UINT uType);
+
 public:
 	CPluginBase();
 	virtual ~CPluginBase();
