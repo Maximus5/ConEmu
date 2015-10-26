@@ -251,7 +251,8 @@ void CPluginBase::DllMain_ProcessAttach(HMODULE hModule)
 
 	PlugServerInit();
 
-	// Текущая нить не обязана быть главной! Поэтому ищем первую нить процесса!
+	// It's possible that our module is loaded from background thread,
+	// therefore we have to find Main process thread ID
 	gnMainThreadId = gnMainThreadIdInitial = GetMainThreadId();
 
 	InitHWND(/*hConWnd*/);
