@@ -1416,19 +1416,21 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 
 		#ifdef _DEBUG
 		LPCWSTR pszRunCmpApp = NULL;
+		#endif
 		CEStr szExeName;
 		{
 			LPCWSTR pszStart = gpszRunCmd;
 			if (NextArg(&pszStart, szExeName) == 0)
 			{
+				#ifdef _DEBUG
 				if (FileExists(szExeName))
 				{
 					pszRunCmpApp = szExeName;
 					pszRunCmpApp = NULL;
 				}
+				#endif
 			}
 		}
-		#endif
 
 		LPSECURITY_ATTRIBUTES lpSec = LocalSecurity();
 		//#ifdef _DEBUG
@@ -1485,7 +1487,8 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 			szDbgMsg[0] = 0;
 			#endif
 
-			if (gbDontInjectConEmuHk)
+			if (gbDontInjectConEmuHk
+				|| (!szExeName.IsEmpty() && IsConsoleServer(szExeName)))
 			{
 				#ifdef SHOW_INJECT_MSGBOX
 				_wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"%s PID=%u\nConEmuHk injects skipped, PID=%u", gsModuleName, GetCurrentProcessId(), pi.dwProcessId);
