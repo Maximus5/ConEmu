@@ -1486,7 +1486,8 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 			szDbgMsg[0] = 0;
 			#endif
 
-			if (gbDontInjectConEmuHk)
+			if (gbDontInjectConEmuHk
+				|| IsConsoleServer(PointToName(szExeName)))
 			{
 				#ifdef SHOW_INJECT_MSGBOX
 				_wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"%s PID=%u\nConEmuHk injects skipped, PID=%u", gsModuleName, GetCurrentProcessId(), pi.dwProcessId);
