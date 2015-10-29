@@ -19,6 +19,29 @@ http://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2015.10.29
+* Add `vertical block` marker to clipboard while copying rectangular selection.
+  Borland and Microsoft IDE-s are supported.
+* Warn if two instances of ConEmu plugin were loaded in Far Manager.
+  If due to installation or configuration errors two dll libraries were
+  loaded, they both will fail to work properly. So, warn user about the
+  problem in detail, show suggestion, and stop plugin initialization.
+* Warn user if wrong version of ConEmu plugin was loaded in Far Manager.
+* gh#364: Ignore Minimize/Restore hotkeys pressed while Quake animation is not finished.
+* Don't try to inject hooks into ConEmuC processes.
+* Menu item ‘Active process memory dump’ did not suggested to create dump automatically.
+* Add note about maximum length of backscroll buffer (32766 lines).
+* Improve configuration detection while reusing running ConEmu instance.
+  For example, running `ConEmu -quake` must not create new tab
+  in the existing ConEmu ‘non-quake’ instance.
+* Some corrections in Single-instance logic.
+* Source file codepage was ignored in `ConEmuC -t` switch.
+  NB. `ConEmuC /TYPE ...` or its alias `ConEmuC -t ...`
+  may be used to type any text file with ANSI sequences.
+  Check out full syntax and examples in docs:
+  https://conemu.github.io/en/ConEmuC.html#EchoAndType
+
+
 2015.10.25
 * gh#373: Don't decrease window height with AutoTabs (show/hide/show/hide/...)
 * gh#388 (gh#295?): Don't change buffer height for cygwin/msys versions of vim.
