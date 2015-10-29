@@ -3892,8 +3892,11 @@ int DoOutput(ConEmuExecAction eExecAction, LPCWSTR asCmdArg)
 		else if (lstrcmpi(szArg, L"-b") == 0)
 			bToBottom = true;
 		// Forced codepage of typed text file
-		else if (isDigit(szArg.ms_Arg[1]))
-			DefaultCP = wcstoul(szArg, &psz, 10);
+		else // `-65001`, `-utf8`, `-oemcp`, etc.
+		{
+			UINT nCP = GetCpFromString(szArg.ms_Arg+1);
+			if (nCP) DefaultCP = nCP;
+		}
 	}
 
 	_ASSERTE(asCmdArg && (*asCmdArg != L' '));
