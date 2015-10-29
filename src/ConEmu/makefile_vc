@@ -71,6 +71,7 @@ $(INTDIR)\LoadImg.obj \
 $(INTDIR)\Macro.obj \
 $(INTDIR)\MAssert.obj \
 $(INTDIR)\Match.obj \
+$(INTDIR)\md5.obj \
 $(INTDIR)\Memory.obj \
 $(INTDIR)\Menu.obj \
 $(INTDIR)\MEvent.obj \
@@ -369,6 +370,8 @@ $(INTDIR)\Macro.obj: Macro.cpp Macro.h
 $(INTDIR)\MAssert.obj: ../common/MAssert.cpp
 
 $(INTDIR)\Match.obj: Match.cpp Match.h
+
+$(INTDIR)\md5.obj: ../common/md5.cpp ../common/md5.h
 
 $(INTDIR)\Memory.obj: ../common/Memory.cpp
 

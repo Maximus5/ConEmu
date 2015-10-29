@@ -31,6 +31,7 @@ SRCS = \
 		../common/execute.cpp        \
 		../common/HkFunc.cpp         \
 		../common/MAssert.cpp        \
+		../common/md5.cpp            \
 		../common/Memory.cpp         \
 		../common/MEvent.cpp         \
 		../common/MFileLog.cpp       \
