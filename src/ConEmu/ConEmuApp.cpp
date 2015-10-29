@@ -3784,10 +3784,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		gpSetCls->SetConfigName(gpConEmu->opt.ConfigVal.GetStr());
 	}
 
-	// Сразу инициализировать событие для SingleInstance. Кто первый схватит.
-	DEBUGSTRSTARTUP(L"Checking for first instance");
-	gpConEmu->isFirstInstance();
-
 	// xml-using disabled? Forced to registry?
 	if (gpConEmu->opt.ForceUseRegistryPrm)
 	{
@@ -3808,6 +3804,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	{
 		UpdateAppUserModelID();
 	}
+
+	//------------------------------------------------------------------------
+	///| Set up ‘First instance’ event |//////////////////////////////////////
+	//------------------------------------------------------------------------
+	DEBUGSTRSTARTUP(L"Checking for first instance");
+	gpConEmu->isFirstInstance();
 
 	// preparing settings
 	bool bNeedCreateVanilla = false;
