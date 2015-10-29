@@ -52,7 +52,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 		L"               [-debug] \"full_url_to_file\" [\"local_path_name\" | - ]\r\n" \
 _DBGHLP(L"   or: ConEmuC /REGCONFONT=<FontName> -> RegisterConsoleFontHKLM\r\n") \
 		L"   or: ConEmuC /?\r\n" \
-		L"Switches:\r\n" \
+		L"Switches and commands:\r\n" \
 		L"     /[NO]CONFIRM    - [don't] confirm closing console on program termination\r\n" \
 		L"     /AUTOATTACH     - asynchronous attach to ConEmu GUI (for batches)\r\n" \
 		L"                       always returns 0 as errorlevel on exit (Issue 1003)\r\n" \
