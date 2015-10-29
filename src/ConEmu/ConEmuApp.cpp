@@ -4172,10 +4172,16 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		{
 			DEBUGSTRSTARTUPLOG(L"Waiting for RunSingleInstance");
 
-			if (gpConEmu->RunSingleInstance())
+			int iRunRC = gpConEmu->RunSingleInstance();
+			if (iRunRC > 0)
 			{
 				gpConEmu->LogString(L"Passed to first instance, exiting");
-				return 0; // командная строка успешно запущена в существующем экземпляре
+				return 0;
+			}
+			else if (iRunRC < 0)
+			{
+				gpConEmu->LogString(L"Reusing running instance is not allowed here");
+				break;
 			}
 
 			// Если передать не удалось (может первый экземпляр еще в процессе инициализации?)

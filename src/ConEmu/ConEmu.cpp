@@ -4466,13 +4466,21 @@ int CConEmuMain::RecreateDlg(RConStartArgs* apArg)
 
 
 
-BOOL CConEmuMain::RunSingleInstance(HWND hConEmuWnd /*= NULL*/, LPCWSTR apszCmd /*= NULL*/)
+int CConEmuMain::RunSingleInstance(HWND hConEmuWnd /*= NULL*/, LPCWSTR apszCmd /*= NULL*/)
 {
-	BOOL lbAccepted = FALSE;
-	LPCWSTR lpszCmd = apszCmd ? apszCmd : GetCmd();
+	int liAccepted = 0;
+	LPCWSTR lpszCmd = apszCmd ? apszCmd
+		: (m_StartDetached == crb_On) ? NULL
+		: GetCmd();
 	wchar_t szLogPrefix[100] = L"";
 
-	if ((lpszCmd && *lpszCmd) || (gpSetCls->SingleInstanceShowHide != sih_None))
+	if ((!lpszCmd || !*lpszCmd) && (gpSetCls->SingleInstanceShowHide == sih_None))
+	{
+		// It's not possible to pass anything to existing instance
+		liAccepted = -1;
+		goto wrap;
+	}
+	else
 	{
 		HWND ConEmuHwnd = hConEmuWnd ? hConEmuWnd : FindWindowExW(NULL, NULL, VirtualConsoleClassMain, NULL);
 		MArray<HWND> hConEmuS;
@@ -4587,14 +4595,14 @@ BOOL CConEmuMain::RunSingleInstance(HWND hConEmuWnd /*= NULL*/, LPCWSTR apszCmd 
 				pOut = ExecuteGuiCmd(ConEmuHwnd, pIn, NULL);
 
 				if (pOut && pOut->Data[0])
-					lbAccepted = TRUE;
+					liAccepted = 1;
 			}
 
 			if (pIn) ExecuteFreeResult(pIn);
 
 			if (pOut) ExecuteFreeResult(pOut);
 
-			if (lbAccepted)
+			if (liAccepted)
 				break;
 
 			UNREFERENCED_PARAMETER(dwPidError);
@@ -4602,7 +4610,8 @@ BOOL CConEmuMain::RunSingleInstance(HWND hConEmuWnd /*= NULL*/, LPCWSTR apszCmd 
 		}
 	}
 
-	return lbAccepted;
+wrap:
+	return liAccepted;
 }
 
 void CConEmuMain::ReportOldCmdVersion(DWORD nCmd, DWORD nVersion, int bFromServer, DWORD nFromProcess, u64 hFromModule, DWORD nBits)

@@ -678,7 +678,7 @@ class CConEmuMain
 		bool RecreateAction(RecreateActionParm aRecreate, BOOL abConfirm, RConBoolArg bRunAs = crb_Undefined);
 		int RecreateDlg(RConStartArgs* apArg);
 		void RequestPostUpdateTabs();
-		BOOL RunSingleInstance(HWND hConEmuWnd = NULL, LPCWSTR apszCmd = NULL);
+		int RunSingleInstance(HWND hConEmuWnd = NULL, LPCWSTR apszCmd = NULL);
 		void SetDragCursor(HCURSOR hCur);
 		bool SetSkipOnFocus(bool abSkipOnFocus);
 		void SetWaitCursor(BOOL abWait);
