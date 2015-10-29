@@ -2071,6 +2071,10 @@ void CConEmuMain::UpdateGuiInfoMapping()
 	//wcscpy_c(m_GuiInfo.sConEmuBaseDir, ms_ConEmuBaseDir);
 	_wcscpyn_c(m_GuiInfo.sConEmuArgs, countof(m_GuiInfo.sConEmuArgs), mpsz_ConEmuArgs ? mpsz_ConEmuArgs : L"", countof(m_GuiInfo.sConEmuArgs));
 
+	// AppID. It's formed of some critical parameters
+	_ASSERTE(lstrcmp(ms_AppID, ms_ConEmuBuild)!=0); // must be populated properly
+	lstrcpyn(m_GuiInfo.AppID, ms_AppID, countof(m_GuiInfo.AppID));
+
 	// *********************
 	// *** ComSpec begin ***
 	// *********************
@@ -4466,6 +4470,7 @@ BOOL CConEmuMain::RunSingleInstance(HWND hConEmuWnd /*= NULL*/, LPCWSTR apszCmd 
 {
 	BOOL lbAccepted = FALSE;
 	LPCWSTR lpszCmd = apszCmd ? apszCmd : GetCmd();
+	wchar_t szLogPrefix[100] = L"";
 
 	if ((lpszCmd && *lpszCmd) || (gpSetCls->SingleInstanceShowHide != sih_None))
 	{
@@ -4493,6 +4498,43 @@ BOOL CConEmuMain::RunSingleInstance(HWND hConEmuWnd /*= NULL*/, LPCWSTR apszCmd 
 		for (INT_PTR i = 0; i < hConEmuS.size(); i++)
 		{
 			ConEmuHwnd = hConEmuS[i];
+
+			DWORD dwPID = 0, dwPidError = 0;
+			if (!GetWindowThreadProcessId(ConEmuHwnd, &dwPID))
+			{
+				dwPidError = GetLastError();
+				_ASSERTE(FALSE && "GetWindowThreadProcessId failed, Access denied?");
+			}
+
+			// If we search for ConEmu window (!hConEmuWnd), than check AppID.
+			// It's formed of some critical parameters, to ensure that
+			// on ‘single instance’ we would not pass new tab into
+			// wrong application instance.
+			// For example, running "ConEmu -quake" must not create new tab
+			// in the existing ConEmu ‘non-quake’ instance.
+			if (!hConEmuWnd && dwPID)
+			{
+				MFileMapping<ConEmuGuiMapping> GuiTestMapping;
+				GuiTestMapping.InitName(CEGUIINFOMAPNAME, dwPID);
+				// Try to open it
+				const ConEmuGuiMapping* ptrMap = GuiTestMapping.Open();
+				if (!ptrMap)
+				{
+					_wsprintf(szLogPrefix, SKIPCOUNT(szLogPrefix) L"GuiTestMapping failed for PID=%u HWND=x%08X: ", dwPID, LODWORD(ConEmuHwnd));
+					CEStr lsLog = lstrmerge(szLogPrefix, GuiTestMapping.GetErrorText());
+					LogString(lsLog);
+					continue;
+				}
+				// Compare protocol and AppID
+				if ((ptrMap->nProtocolVersion != CESERVER_REQ_VER)
+					|| (lstrcmpi(ptrMap->AppID, this->ms_AppID) != 0))
+				{
+					_wsprintf(szLogPrefix, SKIPCOUNT(szLogPrefix) L"Skipped due to diffierent AppID; PID=%u HWND=x%08X: \"", dwPID, LODWORD(ConEmuHwnd));
+					CEStr lsSkip = lstrmerge(szLogPrefix, ptrMap->AppID, L"\"; Our: \"", this->ms_AppID, L"\"");
+					LogString(lsSkip);
+					continue;
+				}
+			}
 
 			CESERVER_REQ *pIn = NULL, *pOut = NULL;
 			int nCmdLen = lpszCmd ? lstrlenW(lpszCmd) : 1;
@@ -4539,8 +4581,7 @@ BOOL CConEmuMain::RunSingleInstance(HWND hConEmuWnd /*= NULL*/, LPCWSTR apszCmd 
 					}
 				}
 
-				DWORD dwPID = 0;
-				if (GetWindowThreadProcessId(ConEmuHwnd, &dwPID))
+				if (dwPID)
 					AllowSetForegroundWindow(dwPID);
 
 				pOut = ExecuteGuiCmd(ConEmuHwnd, pIn, NULL);
@@ -4556,6 +4597,7 @@ BOOL CConEmuMain::RunSingleInstance(HWND hConEmuWnd /*= NULL*/, LPCWSTR apszCmd 
 			if (lbAccepted)
 				break;
 
+			UNREFERENCED_PARAMETER(dwPidError);
 			// Попытаться со следующим окном (может быть запущено несколько экземпляров из разных путей
 		}
 	}
@@ -5749,48 +5791,17 @@ bool CConEmuMain::isDragging()
 
 bool CConEmuMain::isFirstInstance(bool bFolderIgnore /*= false*/)
 {
+	// ms_AppID must be initalized already!
+	_ASSERTE(ms_AppID[0] != 0);
+
 	if (!mb_AliveInitialized)
 	{
 		//создадим событие, чтобы не было проблем с ключем /SINGLE
 		mb_AliveInitialized = TRUE;
 
-		wchar_t* pszSlash;
-		wchar_t szConfig[64]; _ASSERTE(gpSetCls->GetConfigName()!=NULL);
-		// Trim config name to max 63 chars
-		lstrcpyn(szConfig, gpSetCls->GetConfigName(), countof(szConfig));
-
-		wchar_t szPath[MAX_PATH+1];
-		DWORD cchMaxSize = MAX_PATH/*max event name len*/ - 2 - _tcslen(CEGUI_ALIVE_EVENT);
-		if (*szConfig)
-		{
-			// When config name exists - append it (trimmed to 63 chars) + one separator-char
-			cchMaxSize -= _tcslen(szConfig)+1;
-			// Event name can contain any character except the backslash character (\).
-			pszSlash = szConfig;
-			while ((pszSlash = wcschr(pszSlash, L'\\')) != NULL)
-			{
-				*pszSlash = L'/';
-			}
-		}
-
-		// Trim program folder path to available length
-		lstrcpyn(szPath, ms_ConEmuBaseDir, cchMaxSize);
-		CharLowerBuff(szPath, lstrlen(szPath));
-		// Event name can contain any character except the backslash character (\).
-		pszSlash = szPath;
-		while ((pszSlash = wcschr(pszSlash, L'\\')) != NULL)
-		{
-			*pszSlash = L'/';
-		}
-
 		wcscpy_c(ms_ConEmuAliveEvent, CEGUI_ALIVE_EVENT);
 		wcscat_c(ms_ConEmuAliveEvent, L"_");
-		if (*szConfig)
-		{
-			wcscat_c(ms_ConEmuAliveEvent, L"_");
-			wcscat_c(ms_ConEmuAliveEvent, szConfig);
-		}
-		wcscat_c(ms_ConEmuAliveEvent, szPath);
+		wcscat_c(ms_ConEmuAliveEvent, ms_AppID);
 
 		//Events by default are created in "Local\\" kernel namespace.
 		//GetUserName(ms_ConEmuAliveEvent+_tcslen(ms_ConEmuAliveEvent), &nSize);
