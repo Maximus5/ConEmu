@@ -3811,7 +3811,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	DEBUGSTRSTARTUP(L"Checking for first instance");
 	gpConEmu->isFirstInstance();
 
-	// preparing settings
+	//------------------------------------------------------------------------
+	///| Preparing settings |/////////////////////////////////////////////////
+	//------------------------------------------------------------------------
 	bool bNeedCreateVanilla = false;
 	SettingsLoadedFlags slfFlags = slf_None;
 	if (gpConEmu->opt.ResetSettings)
