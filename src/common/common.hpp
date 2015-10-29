@@ -30,7 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _COMMON_HEADER_HPP_
 
 // Interface version
-#define CESERVER_REQ_VER    157
+#define CESERVER_REQ_VER    158
 
 // Max tabs/panes count
 #define MAX_CONSOLE_COUNT 30
@@ -1159,6 +1159,13 @@ struct ConEmuGuiMapping
 	//wchar_t  sDosBoxEnv[8192]; // команды загрузки (mount, и пр.)
 
 	ConEmuComspec ComSpec;
+
+	// AppID. It's formed of some critical parameters, to ensure
+	// that on ‘single instance’ we would not pass new tab into
+	// wrong application instance.
+	// For example, running "ConEmu -quake" must not create new tab
+	// in the existing ConEmu ‘non-quake’ instance.
+	wchar_t AppID[40];
 };
 
 typedef unsigned int CEFarWindowType;
