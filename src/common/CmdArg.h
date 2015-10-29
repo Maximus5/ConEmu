@@ -69,7 +69,8 @@ private:
 	LPCWSTR AttachInt(wchar_t*& asPtr);
 
 public:
-	operator LPCWSTR() const { return ms_Arg; };
+	operator LPCWSTR() const;
+	LPCWSTR Right(INT_PTR cchMaxCount) const;
 	CmdArg& operator=(wchar_t* RVAL_REF asPtr);
 	CmdArg& operator=(const wchar_t* asPtr);
 

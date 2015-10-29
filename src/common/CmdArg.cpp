@@ -48,6 +48,29 @@ CmdArg::CmdArg(wchar_t* RVAL_REF asPtr)
 	AttachInt(asPtr);
 }
 
+CmdArg::operator LPCWSTR() const
+{
+	return ms_Arg;
+}
+
+// cchMaxCount - including terminating \0
+LPCWSTR CmdArg::Right(INT_PTR cchMaxCount) const
+{
+	if (cchMaxCount <= 0)
+	{
+		_ASSERTE(cchMaxCount > 0);
+		return NULL;
+	}
+
+	if (!ms_Arg || !*ms_Arg)
+		return ms_Arg;
+
+	INT_PTR iLen = lstrlen(ms_Arg);
+	if (iLen >= cchMaxCount)
+		return (ms_Arg + (iLen - cchMaxCount + 1));
+	return ms_Arg;
+}
+
 CmdArg& CmdArg::operator=(wchar_t* RVAL_REF asPtr)
 {
 	AttachInt(asPtr);
