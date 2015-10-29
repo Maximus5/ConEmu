@@ -3157,21 +3157,28 @@ bool UpdateWin7TaskList(bool bForce, bool bNoSuccMsg /*= false*/)
 }
 
 // Set our unique application-defined Application User Model ID for Windows 7 TaskBar
+// The function also fills the gpConEmu->AppID variable, so it's called regardless of OS ver
 HRESULT UpdateAppUserModelID()
 {
 	bool bSpecialXmlFile = false;
 	LPCWSTR pszConfigFile = gpConEmu->ConEmuXml(&bSpecialXmlFile);
 	LPCWSTR pszConfigName = gpSetCls->GetConfigName();
 
+	wchar_t szSuffix[64] = L"";
+	_wsprintf(szSuffix, SKIPCOUNT(szSuffix) L"::%u", (UINT)CESERVER_REQ_VER);
+
 	// Don't change the ID if application was started without arguments changing:
-	// ‘config-name’, ‘config-file’, ‘registry-use’ or ‘basic-settings’.
+	// ‘config-name’, ‘config-file’, ‘registry-use’, ‘basic-settings’, ‘quake/noquake’
 	if (!gpSetCls->isResetBasicSettings
 		&& !gpConEmu->opt.ForceUseRegistryPrm
 		&& !bSpecialXmlFile
 		&& !(pszConfigName && *pszConfigName)
+		&& !gpConEmu->opt.QuakeMode.Exists
 		)
 	{
-		LogString(L"AppUserModelID was not changed due to special switches absence");
+		if (IsWindows7)
+			LogString(L"AppUserModelID was not changed due to special switches absence");
+		gpConEmu->SetAppID(szSuffix);
 		return S_FALSE;
 	}
 
@@ -3180,45 +3187,55 @@ HRESULT UpdateAppUserModelID()
 	//    CompanyName.ProductName.SubProduct.VersionInformation
 	// CompanyName and ProductName should always be used, while the SubProduct and VersionInformation portions are optional
 
-	CEStr Config;
 	CEStr lsTempBuf;
+
+	if (gpConEmu->opt.QuakeMode.Exists)
+	{
+		switch (gpConEmu->opt.QuakeMode.GetInt())
+		{
+		case 1: case 2:
+			wcscat_c(szSuffix, L"::Quake"); break;
+		default:
+			wcscat_c(szSuffix, L"::NoQuake");
+		}
+	}
+
+	// Config type/file + [.[No]Quake]
 	if (gpSetCls->isResetBasicSettings)
 	{
-		Config.Set(L".Basic");
+		lstrmerge(&lsTempBuf.ms_Arg, L"::Basic", szSuffix);
 	}
 	else if (gpConEmu->opt.ForceUseRegistryPrm)
 	{
-		Config.Set(L".Registry");
+		lstrmerge(&lsTempBuf.ms_Arg, L"::Registry", szSuffix);
+	}
+	if (bSpecialXmlFile && pszConfigFile && *pszConfigFile)
+	{
+		lstrmerge(&lsTempBuf.ms_Arg, L"::", pszConfigFile, szSuffix);
 	}
 	else
 	{
-		if (bSpecialXmlFile && pszConfigFile && *pszConfigFile)
-		{
-			lstrmerge(&lsTempBuf.ms_Arg, L".", pszConfigFile);
-		}
-		else
-		{
-			lsTempBuf.Set(L".Xml");
-		}
-		// Named configuration?
-		if (pszConfigName && *pszConfigName)
-		{
-			lstrmerge(&lsTempBuf.ms_Arg, L".", pszConfigName);
-		}
-		// Prepare the string
-		if (lsTempBuf.ms_Arg)
-		{
-			// Must not contain spaces (and may be some others? not mentioned but...)
-			wchar_t* pch = lsTempBuf.ms_Arg;
-			while ((pch = wcspbrk(pch+1, L".,\\/ :()")) != NULL)
-				*pch = L'$';
-			// lsTempBuf must not be longer than 110 chars
-			int iLen = lstrlen(lsTempBuf.ms_Arg);
-			LPCWSTR pszReady = (iLen <= 110) ? lsTempBuf.ms_Arg : (lsTempBuf.ms_Arg + iLen - 110);
-			Config.Set(pszReady);
-		}
+		lstrmerge(&lsTempBuf.ms_Arg, L"::Xml", szSuffix);
 	}
-	CEStr AppID = lstrmerge(L"Maximus5.ConEmu", Config.ms_Arg);
+
+	// Named configuration?
+	if (!gpSetCls->isResetBasicSettings
+		&& (pszConfigName && *pszConfigName))
+	{
+		lstrmerge(&lsTempBuf.ms_Arg, L"::", pszConfigName);
+	}
+
+	// Create hash - AppID (will go to mapping)
+	gpConEmu->SetAppID(lsTempBuf);
+
+	// Further steps are required in Windows7+ only
+	if (!IsWindows7)
+	{
+		return S_FALSE;
+	}
+
+	// Prepare the string
+	CEStr AppID = lstrmerge(L"Maximus5.ConEmu.", gpConEmu->ms_AppID);
 
 	// And update it
 	HRESULT hr = E_NOTIMPL;
@@ -3234,13 +3251,9 @@ HRESULT UpdateAppUserModelID()
 	}
 
 	// Log the change
-	INT_PTR cchMax = lstrlen(AppID)+128;
-	wchar_t* pszLog = lsTempBuf.GetBuffer(cchMax);
-	if (pszLog)
-	{
-		_wsprintf(pszLog, SKIPLEN(cchMax) L"AppUserModelID was changed to `%s` Result=x%08X", AppID.ms_Arg, (DWORD)hr);
-		LogString(pszLog);
-	}
+	wchar_t szLog[200];
+	_wsprintf(szLog, SKIPCOUNT(szLog) L"AppUserModelID was changed to `%s` Result=x%08X", AppID.ms_Arg, (DWORD)hr);
+	LogString(szLog);
 
 	return hr;
 }
@@ -3799,11 +3812,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	//------------------------------------------------------------------------
 	///| Set our own AppUserModelID for Win7 TaskBar |////////////////////////
+	///| Call it always to store in gpConEmu->AppID  |////////////////////////
 	//------------------------------------------------------------------------
-	if (IsWindows7)
-	{
-		UpdateAppUserModelID();
-	}
+	DEBUGSTRSTARTUP(L"UpdateAppUserModelID");
+	UpdateAppUserModelID();
 
 	//------------------------------------------------------------------------
 	///| Set up ‘First instance’ event |//////////////////////////////////////

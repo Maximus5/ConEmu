@@ -51,6 +51,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#include "../common/ConEmuCheck.h"
 
 #include "../common/execute.h"
+#include "../common/md5.h"
 #include "../common/MArray.h"
 #include "../common/MFileLog.h"
 #include "../common/Monitors.h"
@@ -484,6 +485,7 @@ CConEmuMain::CConEmuMain()
 	_ASSERTE(*ms_ComSpecInitial);
 
 	mpsz_ConEmuArgs = NULL;
+	ms_AppID[0] = 0;
 	ms_ConEmuExe[0] = ms_ConEmuExeDir[0] = ms_ConEmuBaseDir[0] = ms_ConEmuWorkDir[0] = 0;
 	ms_ConEmuC32Full[0] = ms_ConEmuC64Full[0] = 0;
 	ms_ConEmuXml[0] = ms_ConEmuIni[0] = ms_ConEmuChm[0] = 0;
@@ -805,6 +807,41 @@ void LogFocusInfo(LPCWSTR asInfo, int Level/*=1*/)
 		DEBUGSTRFOCUS(szFull);
 	}
 	#endif
+}
+
+void CConEmuMain::SetAppID(LPCWSTR asExtraArgs)
+{
+	BYTE md5ok = 0;
+	wchar_t szID[40] = L"";
+	CEStr lsFull = lstrmerge(ms_ConEmuExeDir, asExtraArgs);
+
+	if (!lsFull.IsEmpty())
+	{
+		wchar_t* pszData = lsFull.ms_Arg;
+		UINT iLen = wcslen(pszData);
+		CharUpperBuff(pszData, iLen);
+
+		unsigned char data[16] = {};
+		MD5_CTX ctx = {};
+		MD5_Init(&ctx);
+		MD5_Update(&ctx, pszData, iLen*sizeof(pszData[0]));
+		MD5_Final(data, &ctx);
+
+		for (int i = 0; i < 16; i++)
+		{
+			BYTE bt = (BYTE)data[i];
+			md5ok |= bt;
+			msprintf(szID+i*2, 3, L"%02x", (UINT)bt);
+		}
+	}
+
+	if (!md5ok || (szID[0] == 0))
+	{
+		_ASSERTE(md5ok && (szID[0] != 0)); // Must be filled already
+		lstrcpyn(szID, ms_ConEmuBuild, countof(szID));
+	}
+
+	wcscpy_c(ms_AppID, szID);
 }
 
 void CConEmuMain::StoreWorkDir(LPCWSTR asNewCurDir /*= NULL*/)

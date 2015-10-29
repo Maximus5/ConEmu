@@ -142,6 +142,8 @@ class CConEmuMain
 		wchar_t ms_ConEmuExeDir[MAX_PATH+1];    // БЕЗ завершающего слеша. Папка содержит ConEmu.exe
 		wchar_t ms_ConEmuBaseDir[MAX_PATH+1];   // БЕЗ завершающего слеша. Папка содержит ConEmuC.exe, ConEmuHk.dll, ConEmu.xml
 		wchar_t ms_ConEmuWorkDir[MAX_PATH+1];   // БЕЗ завершающего слеша. Папка запуска ConEmu.exe (GetCurrentDirectory)
+		wchar_t ms_AppID[40];                   // Generated in ::UpdateAppUserModelID
+		void SetAppID(LPCWSTR asExtraArgs);
 		bool mb_ConEmuWorkDirArg;               // Was started as "ConEmu /Dir C:\abc ..." this must override "/dir" switch in task parameter
 		void StoreWorkDir(LPCWSTR asNewCurDir = NULL);
 		LPCWSTR WorkDir(LPCWSTR asOverrideCurDir = NULL);
