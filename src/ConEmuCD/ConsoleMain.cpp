@@ -3878,8 +3878,6 @@ int DoOutput(ConEmuExecAction eExecAction, LPCWSTR asCmdArg)
 
 	while ((*asCmdArg == L'-' || *asCmdArg == L'/') && (NextArg(&asCmdArg, szArg) == 0))
 	{
-		wchar_t* psz;
-
 		// Make uniform
 		if (szArg.ms_Arg[0] == L'/')
 			szArg.ms_Arg[0] = L'-';
