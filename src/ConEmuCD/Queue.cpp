@@ -110,7 +110,7 @@ BOOL ProcessInputMessage(MSG64::MsgStr &msg, INPUT_RECORD &r)
 				//&& (gpSrv->dwConsoleMode & ENABLE_PROCESSED_INPUT)
 
 				#if 1
-				// Issue 590: GenerateConsoleCtrlEvent нифига не прерывает функцию ReadConsoleW
+				// Issue 590: GenerateConsoleCtrlEvent does not break ReadConsole[A|W] function!
 				SetLastError(0);
 				LRESULT lSendRc =
 				SendMessage(ghConWnd, WM_KEYDOWN, r.Event.KeyEvent.wVirtualKeyCode, 0);

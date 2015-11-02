@@ -343,6 +343,7 @@ BOOL ProcessAdd(DWORD nPID, MSectionLock *pCS /*= NULL*/)
 		{
 			pCS->RelockExclusive(200);
 			gpSrv->pnProcesses[gpSrv->nProcessCount++] = nPID;
+			gpSrv->nLastFoundPID = nPID;
 			lbChanged = TRUE;
 		}
 		else
@@ -374,6 +375,8 @@ BOOL ProcessRemove(DWORD nPID, UINT nPrevCount, MSectionLock *pCS /*= NULL*/)
 		{
 			pCS->RelockExclusive(200);
 			lbChanged = TRUE;
+			if (gpSrv->nLastFoundPID == nPID)
+				gpSrv->nLastFoundPID = 0;
 			gpSrv->nProcessCount--;
 			continue;
 		}
@@ -466,14 +469,21 @@ BOOL CheckProcessCount(BOOL abForce/*=FALSE*/)
 	if (pfnGetConsoleProcessList && (bConsoleOnly || bMayBeConsolePaf))
 	{
 		WARNING("Переделать, как-то слишком сложно получается");
-		DWORD nCurCount = 0;
+		DWORD nCurCount;
 		nCurCount = pfnGetConsoleProcessList(gpSrv->pnProcessesGet, gpSrv->nMaxProcesses);
+
 		#ifdef _DEBUG
 		SetLastError(0);
 		int nCurCountDbg = pfnGetConsoleProcessList(nCurProcessesDbg, countof(nCurProcessesDbg));
 		DUMP_PROC_INFO(L"WinXP mode", nCurCountDbg, nCurProcessesDbg);
 		#endif
+
 		lbChanged = (gpSrv->nProcessCount != nCurCount);
+
+		if (nCurCount && (gpSrv->nLastFoundPID != gpSrv->pnProcessesGet[0]))
+			gpSrv->nLastFoundPID = gpSrv->pnProcessesGet[0];
+		else if (!nCurCount)
+			gpSrv->nLastFoundPID = 0;
 
 		bProcFound = bConsoleOnly && (nCurCount > 0);
 
