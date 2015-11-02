@@ -4242,19 +4242,10 @@ void CConEmuMain::OnWmHotkey(WPARAM wParam, DWORD nTime /*= 0*/)
 				{
 				case vkMinimizeRestore:
 				case vkMinimizeRestor2:
-					if (nTime && mn_LastQuakeShowHide && ((int)(nTime - mn_LastQuakeShowHide) >= 0))
-					{
-						DoMinimizeRestore();
-					}
-					else
-					{
-						LogMinimizeRestoreSkip(L"DoMinimizeRestore skipped, vk=%u time=%u delay=%i", gRegisteredHotKeys[i].DescrID, nTime, (int)(nTime - mn_LastQuakeShowHide));
-					}
-					break;
 				case vkGlobalRestore:
-					if (nTime && mn_LastQuakeShowHide && ((int)(nTime - mn_LastQuakeShowHide) >= 0))
+					if (!nTime || !mn_LastQuakeShowHide || ((int)(nTime - mn_LastQuakeShowHide) >= 0))
 					{
-						DoMinimizeRestore(sih_Show);
+						DoMinimizeRestore((gRegisteredHotKeys[i].DescrID == vkGlobalRestore) ? sih_Show : sih_None);
 					}
 					else
 					{
