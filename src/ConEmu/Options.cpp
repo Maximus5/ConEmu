@@ -693,7 +693,7 @@ void Settings::InitSettings()
 	isSafeFarClose = true;
 	sSafeFarCloseMacro = NULL; // если NULL - то используется макрос по умолчанию
 	isCTSIntelligent = true;
-	pszCTSIntelligentExceptions = LineDelimited2MSZ(L"far|vim.exe");
+	pszCTSIntelligentExceptions = LineDelimited2MSZ(L"far|vim");
 	isCTSAutoCopy = true;
 	isCTSIBeam = true;
 	isCTSEndOnTyping = false;
