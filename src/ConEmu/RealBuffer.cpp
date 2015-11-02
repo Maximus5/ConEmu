@@ -6322,7 +6322,15 @@ bool CRealBuffer::isSelectionAllowed()
 	{
 		while (*pszExcl)
 		{
-			if (lstrcmpi(pszExcl, L"far") == 0)
+			LPCWSTR pszCompare = pszExcl;
+			pszExcl += _tcslen(pszExcl)+1;
+
+			if (!CompareProcessNames(pszCompare, pszPrcName))
+			{
+				continue;
+			}
+
+			if (CompareProcessNames(pszCompare, L"far"))
 			{
 				// Tricky a little
 				// Editor and panels - send mouse to console
@@ -6347,13 +6355,10 @@ bool CRealBuffer::isSelectionAllowed()
 					}
 				}
 			}
-			else if (lstrcmpi(pszExcl, pszPrcName) == 0)
-			{
-				// This app in the restricted list
-				// Seems like it uses mouse for internal selection, dragging and so on...
-				return false;
-			}
-			pszExcl += _tcslen(pszExcl)+1;
+
+			// This app in the restricted list
+			// Seems like it uses mouse for internal selection, dragging and so on...
+			return false;
 		}
 	}
 
