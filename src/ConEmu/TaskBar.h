@@ -28,6 +28,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include "../common/MArray.h"
+
 #ifndef __ITaskbarList4_FWD_DEFINED__
 #define __ITaskbarList4_FWD_DEFINED__
 typedef interface ITaskbarList4 ITaskbarList4;
@@ -68,6 +70,13 @@ protected:
 	ITaskbarList  *mp_TaskBar1; // Win2k
 	HICON mh_Shield;
 	bool  mb_OleInitalized;
+protected:
+	// We need ordered array, so MMap is not suitable here
+	MArray<LPVOID> m_Ghosts;
+	void Taskbar_GhostAppend(LPVOID pVCon);
+	void Taskbar_GhostRemove(LPVOID pVCon);
+public:
+	void Taskbar_GhostReorder();
 public:
 	CTaskBar();
 	virtual ~CTaskBar();
@@ -76,8 +85,8 @@ public:
 	void Taskbar_Release();
 
 	HRESULT Taskbar_SetActiveTab(HWND hBtn);
-	HRESULT Taskbar_RegisterTab(HWND hBtn, BOOL abSetActive = FALSE);
-	HRESULT Taskbar_UnregisterTab(HWND hBtn);
+	HRESULT Taskbar_RegisterTab(HWND hBtn, LPVOID pVCon, BOOL abSetActive = FALSE);
+	HRESULT Taskbar_UnregisterTab(HWND hBtn, LPVOID pVCon);
 	HRESULT Taskbar_AddTabXP(HWND hBtn);
 	HRESULT Taskbar_DeleteTabXP(HWND hBtn);
 	HRESULT Taskbar_SetProgressValue(int nProgress);

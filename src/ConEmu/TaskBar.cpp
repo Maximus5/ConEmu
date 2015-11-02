@@ -31,6 +31,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "TaskBar.h"
 #include "ConEmu.h"
 #include "Options.h"
+#include "VConGroup.h"
+#include "VirtualConsole.h"
 
 // COM TaskBarList interface support
 #if defined(__GNUC__) && !defined(__MINGW64_VERSION_MAJOR)
@@ -84,6 +86,8 @@ CTaskBar::~CTaskBar()
 void CTaskBar::Taskbar_Init()
 {
 	HRESULT hr = S_OK;
+
+	m_Ghosts.alloc(MAX_CONSOLE_COUNT);
 
 	if (!mb_OleInitalized)
 	{
@@ -182,12 +186,77 @@ bool CTaskBar::Taskbar_GhostSnapshootRequired()
 	return gpConEmu->IsDwm();
 }
 
-HRESULT CTaskBar::Taskbar_RegisterTab(HWND hBtn, BOOL abSetActive)
+void CTaskBar::Taskbar_GhostAppend(LPVOID pVCon)
+{
+	for (INT_PTR i = m_Ghosts.size()-1; i >= 0; i--)
+	{
+		if (m_Ghosts[i] == pVCon)
+		{
+			return;
+		}
+	}
+	m_Ghosts.push_back(pVCon);
+}
+
+void CTaskBar::Taskbar_GhostRemove(LPVOID pVCon)
+{
+	for (INT_PTR i = m_Ghosts.size()-1; i >= 0; i--)
+	{
+		if (m_Ghosts[i] == pVCon)
+		{
+			m_Ghosts.erase(i);
+			return;
+		}
+	}
+}
+
+// gh#398: Win7+ TaskBar previews didn't match reordered tabs.
+void CTaskBar::Taskbar_GhostReorder()
+{
+	// No interface? Nothing to do.
+	if (mp_TaskBar3 == NULL)
+	{
+		return;
+	}
+
+	CVConGuard VCon, VNext;
+	for (int i = 0;; i++)
+	{
+		// Do while VCon[i] exists
+		if (!CVConGroup::GetVCon(i, &VCon, true))
+		{
+			if (m_Ghosts.size() > i)
+			{
+				_ASSERTE(FALSE && "Ghost was not removed properly?");
+			}
+			break;
+		}
+
+		// if m_Ghosts[i] matches VCon[i] - just continue
+		if ((m_Ghosts.size() > i) && (m_Ghosts[i] == VCon.VCon()))
+		{
+			continue;
+		}
+
+		// Otherwise we need to reorder ghosts
+		for (int j = i+1; CVConGroup::GetVCon(j, &VNext, true); j++)
+		{
+			mp_TaskBar3->SetTabOrder(VCon.VCon()->GhostWnd(), VNext.VCon()->GhostWnd());
+			VCon = VNext.VCon();
+		}
+		// All done
+		break;
+	}
+}
+
+HRESULT CTaskBar::Taskbar_RegisterTab(HWND hBtn, LPVOID pVCon, BOOL abSetActive /*= FALSE*/)
 {
 	HRESULT hr, hr1;
 
 	// mp_TaskBar1 may be NULL if NO task bar is created (e.g. 'explorer.exe' is closed)
 	_ASSERTE(mp_TaskBar1!=NULL || FindWindowEx(NULL, NULL, L"Shell_TrayWnd", NULL)==NULL);
+
+	Taskbar_GhostAppend(pVCon);
 
 	// Tell the taskbar about this tab window
 	if (mp_TaskBar3)
@@ -215,12 +284,16 @@ HRESULT CTaskBar::Taskbar_RegisterTab(HWND hBtn, BOOL abSetActive)
 		hr1 = mp_TaskBar4->SetTabProperties(hBtn, STPF_NONE/*STPF_USEAPPTHUMBNAILWHENACTIVE|STPF_USEAPPPEEKWHENACTIVE*/);
 	}
 
+	Taskbar_GhostReorder();
+
 	return hr;
 }
 
-HRESULT CTaskBar::Taskbar_UnregisterTab(HWND hBtn)
+HRESULT CTaskBar::Taskbar_UnregisterTab(HWND hBtn, LPVOID pVCon)
 {
 	HRESULT hr;
+
+	Taskbar_GhostRemove(pVCon);
 
 	if (mp_TaskBar3)
 	{
