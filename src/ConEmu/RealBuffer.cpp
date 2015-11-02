@@ -6355,6 +6355,13 @@ bool CRealBuffer::isSelectionAllowed()
 					}
 				}
 			}
+			else if (CompareProcessNames(pszCompare, L"vim"))
+			{
+				// gh#399: Only official builds support our xterm mode
+				TermEmulationType term = mp_RCon->GetTermType();
+				// So, use mouse for our self selection, if vim did not request xterm
+				return (term == te_win32);
+			}
 
 			// This app in the restricted list
 			// Seems like it uses mouse for internal selection, dragging and so on...
