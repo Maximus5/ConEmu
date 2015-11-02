@@ -32,6 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmuC.h"
 #include "ConProcess.h"
 #include "../common/MSection.h"
+#include "../common/ProcessData.h"
 
 BOOL   gbUseDosBox = FALSE;
 HANDLE ghDosBoxProcess = NULL;
@@ -42,14 +43,37 @@ void ProcessCountChanged(BOOL abChanged, UINT anPrevCount, MSectionLock *pCS)
 	int nExitPlaceAdd = 2; // 2,3,4,5,6,7,8,9 +(nExitPlaceStep)
 	bool bPrevCount2 = (anPrevCount>1);
 
-	#ifdef _DEBUG
-	wchar_t szCountInfo[80];
-	if (abChanged)
+	wchar_t szCountInfo[256];
+	if (abChanged && RELEASEDEBUGTEST((gpLogSize!=NULL),true))
 	{
-		_wsprintf(szCountInfo, SKIPCOUNT(szCountInfo) L"Process list was changed: %i", gpSrv ? gpSrv->nProcessCount : -1);
-		DEBUGSTRPROC(szCountInfo);
+		DWORD nPID, nLastPID = 0, nFoundPID = 0;
+		_wsprintf(szCountInfo, SKIPCOUNT(szCountInfo) L"Process list was changed: %u -> %i", anPrevCount, gpSrv ? gpSrv->nProcessCount : -1);
+
+		wcscat_c(szCountInfo, L"\r\n                        Processes:");
+		INT_PTR iLen = lstrlen(szCountInfo);
+		wchar_t *psz = (szCountInfo + iLen), *pszEnd = szCountInfo + (countof(szCountInfo) - iLen - 64);
+		for (size_t i = 0; (i < gpSrv->nProcessCount) && (psz < pszEnd); i++)
+		{
+			nPID = gpSrv->pnProcesses[i];
+			if (!nPID) continue;
+			_wsprintf(psz, SKIPLEN(12) L" %u", nPID);
+			psz += lstrlen(psz);
+			nLastPID = nPID;
+			if (nPID == gpSrv->nLastFoundPID)
+				nFoundPID = nPID;
+		}
+
+		if (nFoundPID || nLastPID)
+		{
+			nPID = nFoundPID ? nFoundPID : nLastPID;
+			msprintf(psz, (psz - szCountInfo), L"\r\n                        ActivePID: %u, Name: ", nPID);
+			psz += lstrlen(psz);
+			CProcessData procName;
+			procName.GetProcessName(nPID, psz, (psz - szCountInfo), NULL, 0, NULL);
+		}
+
+		LogString(szCountInfo);
 	}
-	#endif
 
 
 	// Use section, if was not locked before
