@@ -6550,10 +6550,28 @@ void CRealConsole::OnKeyboardInt(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lP
 	return;
 }
 
+TermEmulationType CRealConsole::GetTermType()
+{
+	_ASSERTE(te_win32 == (TermEmulationType)0);
+
+	// xterm emulation?
+	if (!m_Term.Term)
+	{
+		return te_win32;
+	}
+
+	if (!isProcessExist(m_Term.nCallTermPID))
+	{
+		StartStopXTerm(0, false/*te_win32*/);
+	}
+
+	return m_Term.Term;
+}
+
 bool CRealConsole::ProcessXtermSubst(const INPUT_RECORD& r)
 {
-	// Эмуляция терминала?
-	if (!m_Term.Term)
+	// xterm emulation?
+	if (!GetTermType())
 		return false;
 
 	bool bProcessed = false;
@@ -6563,12 +6581,7 @@ bool CRealConsole::ProcessXtermSubst(const INPUT_RECORD& r)
 	// Till now, this may be ‘te_xterm’ or ‘te_win32’ only
 	_ASSERTE(m_Term.Term == te_xterm);
 
-	if (!isProcessExist(m_Term.nCallTermPID))
-	{
-		StartStopXTerm(0, false/*te_win32*/);
-	}
 	// Processed xterm keys?
-	else
 	{
 		switch (r.EventType)
 		{
