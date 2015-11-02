@@ -134,12 +134,11 @@ BOOL ProcessInputMessage(MSG64::MsgStr &msg, INPUT_RECORD &r)
 			if (lbIngoreKey)
 				return FALSE;
 
-			// CtrlBreak отсылаем СРАЗУ, мимо очереди, иначе макросы FAR нельзя стопнуть
+			// In the real console, when CtrlBreak is received, input buffer is cleared.
+			// Otherwise, in Far Manager for example, it's impossible to stop some operation,
+			// it will try to peek old data and CtrlBreak may be left unread
 			if (r.Event.KeyEvent.wVirtualKeyCode == VK_CANCEL)
 			{
-				// При получении CtrlBreak в реальной консоли - буфер ввода очищается
-				// иначе фар, при попытке считать ввод получит старые,
-				// еще не обработанные нажатия, и CtrlBreak проигнорирует
 				FlushConsoleInputBuffer(GetStdHandle(STD_INPUT_HANDLE));
 				SendConsoleEvent(&r, 1);
 				return FALSE;

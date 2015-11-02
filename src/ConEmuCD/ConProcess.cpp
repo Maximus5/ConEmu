@@ -51,7 +51,8 @@ void ProcessCountChanged(BOOL abChanged, UINT anPrevCount, MSectionLock *pCS)
 	}
 	#endif
 
-	// Заблокировать, если этого еще не сделали
+
+	// Use section, if was not locked before
 	MSectionLock CS;
 	if (!pCS)
 		CS.Lock(gpSrv->csProc);
