@@ -19,6 +19,13 @@ http://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2015.11.1
+* gh#401: Fix: `Ctrl+~` doesn't work on build 151029.
+* gh#399: Use mouse for ConEmu's selection instead of passing to cygwin's vim.
+* gh#398: Fix: Taskbar previews don't match tabs order.
+* Fix: Win7 taskbar aero peeks appeared in wrong position if pad size was not null.
+
+
 2015.10.29
 * Add `vertical block` marker to clipboard while copying rectangular selection.
   Borland and Microsoft IDE-s are supported.
