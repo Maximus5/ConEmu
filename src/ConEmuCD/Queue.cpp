@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2014 Maximus5
+Copyright (c) 2009-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -75,8 +75,9 @@ BOOL ProcessInputMessage(MSG64::MsgStr &msg, INPUT_RECORD &r)
 		        )
 		  )
 		{
+			wchar_t szLog[100];
 			lbProcessEvent = true;
-			DEBUGSTR(L"  ---  CtrlC/CtrlBreak recieved\n");
+			LogString(L"  ---  CtrlC/CtrlBreak recieved");
 			DWORD dwMode = 0;
 			GetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), &dwMode);
 
@@ -86,22 +87,29 @@ BOOL ProcessInputMessage(MSG64::MsgStr &msg, INPUT_RECORD &r)
 			else
 				lbProcessEvent = false;
 
-			#ifdef _DEBUG
+			if (RELEASEDEBUGTEST((gpLogSize!=NULL),true))
+			{
 			bool bAlt = isPressed(VK_MENU), bShift = isPressed(VK_SHIFT), bCtrl = isPressed(VK_CONTROL);
 			if (bAlt || bShift || !bCtrl)
 			{
-				DEBUGSTR(L"  ---  CtrlC/CtrlBreak may fails because of bad Alt/Shift/Ctrl state!\n");
+				msprintf(szLog, countof(szLog), L"  ---  CtrlC/CtrlBreak may fails because of bad Alt/Shift/Ctrl state (%u,%u,%u)!", (UINT)bAlt, (UINT)bShift, (UINT)bCtrl);
+				LogString(szLog);
 			}
 			if (!lbProcessEvent)
 			{
-				DEBUGSTR(L"  ---  CtrlC/CtrlBreak may fails because of disabled ENABLE_PROCESSED_INPUT!\n");
+				LogString(L"  ---  CtrlC/CtrlBreak may fails because of disabled ENABLE_PROCESSED_INPUT!");
 			}
-			#endif
+			}
 
 			if (lbProcessEvent)
 			{
 				// Issue 590: GenerateConsoleCtrlEvent does not break ReadConsole[A|W] function!
+				SetLastError(0);
+				LRESULT lSendRc =
 				SendMessage(ghConWnd, WM_KEYDOWN, r.Event.KeyEvent.wVirtualKeyCode, 0);
+				DWORD nErrCode = GetLastError();
+				msprintf(szLog, countof(szLog), L"  ---  CtrlC/CtrlBreak sent (%u,%u)", LODWORD(lSendRc), nErrCode);
+				LogString(szLog);
 			}
 
 			if (lbIngoreKey)
@@ -112,6 +120,7 @@ BOOL ProcessInputMessage(MSG64::MsgStr &msg, INPUT_RECORD &r)
 			// it will try to peek old data and CtrlBreak may be left unread
 			if (r.Event.KeyEvent.wVirtualKeyCode == VK_CANCEL)
 			{
+				LogString(L"  ---  VK_CANCEL received, flushing, sending...");
 				FlushConsoleInputBuffer(GetStdHandle(STD_INPUT_HANDLE));
 				SendConsoleEvent(&r, 1);
 				return FALSE;
@@ -122,7 +131,7 @@ BOOL ProcessInputMessage(MSG64::MsgStr &msg, INPUT_RECORD &r)
 		if (r.EventType == KEY_EVENT && r.Event.KeyEvent.bKeyDown &&
 		        r.Event.KeyEvent.wVirtualKeyCode == VK_F11)
 		{
-			DEBUGSTR(L"  ---  F11 recieved\n");
+			LogString(L"  ---  F11 recieved\n");
 		}
 		#endif
 
