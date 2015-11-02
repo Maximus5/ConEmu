@@ -6706,7 +6706,21 @@ void CreateLogSizeFile(int nLevel, const CESERVER_CONSOLE_MAPPING_HDR* pConsoleI
 
 void LogString(LPCSTR asText)
 {
-	if (!gpLogSize) return;
+	if (!gpLogSize)
+	{
+		#ifdef _DEBUG
+		if (asText && *asText)
+		{
+			wchar_t* pszWide = lstrdupW(asText);
+			if (pszWide)
+			{
+				DEBUGSTR(pszWide);
+				free(pszWide);
+			}
+		}
+		#endif
+		return;
+	}
 
 	char szInfo[255]; szInfo[0] = 0;
 	LPCSTR pszThread = " <unknown thread>";
@@ -6732,7 +6746,11 @@ void LogString(LPCSTR asText)
 
 void LogString(LPCWSTR asText)
 {
-	if (!gpLogSize) return;
+	if (!gpLogSize)
+	{
+		DEBUGSTR(asText);
+		return;
+	}
 
 	wchar_t szInfo[255]; szInfo[0] = 0;
 	LPCWSTR pszThread = L" <unknown thread>";
