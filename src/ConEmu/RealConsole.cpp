@@ -13118,7 +13118,7 @@ void CRealConsole::setProgress(short value)
 
 void CRealConsole::setLastShownProgress(short value)
 {
-	DEBUGTEST(if (m_Progress.LastShownProgress != value))
+	if (m_Progress.LastShownProgress != value)
 	{
 		logProgress(L"RCon::setLastShownProgress(%i)", value);
 		m_Progress.LastShownProgress = value;
@@ -13127,7 +13127,7 @@ void CRealConsole::setLastShownProgress(short value)
 
 void CRealConsole::setPreWarningProgress(short value)
 {
-	DEBUGTEST(if (m_Progress.PreWarningProgress != value))
+	if (m_Progress.PreWarningProgress != value)
 	{
 		logProgress(L"RCon::setPreWarningProgress(%i)", value);
 		m_Progress.PreWarningProgress = value;
@@ -13136,7 +13136,7 @@ void CRealConsole::setPreWarningProgress(short value)
 
 void CRealConsole::setConsoleProgress(short value)
 {
-	DEBUGTEST(if (m_Progress.ConsoleProgress != value))
+	if (m_Progress.ConsoleProgress != value)
 	{
 		logProgress(L"RCon::setConsoleProgress(%i)", value);
 		m_Progress.ConsoleProgress = value;
@@ -13145,23 +13145,25 @@ void CRealConsole::setConsoleProgress(short value)
 
 void CRealConsole::setLastConsoleProgress(short value, bool UpdateTick)
 {
-	DEBUGTEST(if (m_Progress.LastConsoleProgress != value))
+	if (m_Progress.LastConsoleProgress != value)
 	{
 		logProgress(L"RCon::setLastConsoleProgress(%i,%u)", value, UpdateTick);
 		m_Progress.LastConsoleProgress = value;
 	}
 
 	if (UpdateTick)
+	{
 		m_Progress.LastConProgrTick = (value >= 0) ? GetTickCount() : 0;
+	}
 }
 
 void CRealConsole::setAppProgress(short AppProgressState, short AppProgress)
 {
 	logProgress(L"RCon::setAppProgress(%i,%i)", AppProgressState, AppProgress);
 
-	DEBUGTEST(if (m_Progress.AppProgressState != AppProgressState))
+	if (m_Progress.AppProgressState != AppProgressState)
 		m_Progress.AppProgressState = AppProgressState;
-	DEBUGTEST(if (m_Progress.AppProgress != AppProgress))
+	if (m_Progress.AppProgress != AppProgress)
 		m_Progress.AppProgress = AppProgress;
 }
 
