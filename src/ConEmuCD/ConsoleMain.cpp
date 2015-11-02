@@ -9001,15 +9001,20 @@ BOOL cmd_CtrlBreakEvent(CESERVER_REQ& in, CESERVER_REQ** out)
 {
 	BOOL lbRc = TRUE;
 	BOOL lbGenRc = FALSE;
+	wchar_t szLogData[80];
 
 	if (in.DataSize() == (2 * sizeof(DWORD)))
 	{
 		lbGenRc = GenerateConsoleCtrlEvent(in.dwData[0], in.dwData[1]);
+		msprintf(szLogData, countof(szLogData), L"GenerateConsoleCtrlEvent(%u,%u)=%u", in.dwData[0], in.dwData[1], lbGenRc);
 	}
 	else
 	{
-		_ASSERTE(FALSE && "Invalid CtrlBreakEvent data");
+		msprintf(szLogData, countof(szLogData), L"Invalid CtrlBreakEvent data size=%u", in.DataSize());
+		_ASSERTE(FALSE && "Invalid CtrlBreakEvent data size");
 	}
+
+	if (gpLogSize) gpLogSize->LogString(szLogData);
 
 	size_t cbReplySize = sizeof(CESERVER_REQ_HDR) + sizeof(DWORD);
 	*out = ExecuteNewCmd(CECMD_CTRLBREAK, cbReplySize);
@@ -10377,6 +10382,28 @@ extern "C"
 #endif
 BOOL WINAPI HandlerRoutine(DWORD dwCtrlType)
 {
+	// Log it first
+	wchar_t szLog[80], szType[20];
+	switch (dwCtrlType)
+	{
+	case CTRL_C_EVENT:
+		wcscpy_c(szType, L"CTRL_C_EVENT"); break;
+	case CTRL_BREAK_EVENT:
+		wcscpy_c(szType, L"CTRL_BREAK_EVENT"); break;
+	case CTRL_CLOSE_EVENT:
+		wcscpy_c(szType, L"CTRL_CLOSE_EVENT"); break;
+	case CTRL_LOGOFF_EVENT:
+		wcscpy_c(szType, L"CTRL_LOGOFF_EVENT"); break;
+	case CTRL_SHUTDOWN_EVENT:
+		wcscpy_c(szType, L"CTRL_SHUTDOWN_EVENT"); break;
+	default:
+		msprintf(szType, countof(szType), L"ID=%u", dwCtrlType);
+	}
+	wcscpy_c(szLog, L"  ---  ConsoleCtrlHandler triggered: ");
+	wcscat_c(szLog, szType);
+	LogString(szLog);
+
+	// Continue processing
 	if (gbIsDownloading
 		&& ((dwCtrlType == CTRL_CLOSE_EVENT) || (dwCtrlType == CTRL_LOGOFF_EVENT) || (dwCtrlType == CTRL_SHUTDOWN_EVENT)
 			|| (dwCtrlType == CTRL_C_EVENT) || (dwCtrlType == CTRL_BREAK_EVENT)))
