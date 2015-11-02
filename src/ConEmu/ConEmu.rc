@@ -1172,40 +1172,40 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "Intercept keys",IDC_STATIC,4,31,319,38
-    CONTROL         "Install keyboard hooks",cbInstallKeybHooks,"Button",BS_AUTO3STATE | WS_TABSTOP,10,42,97,8
-    CONTROL         "Win+Numbers - activate console",cbUseWinNumber,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,55,152,8
-    CONTROL         "Win+Tab - switch consoles (Tabs)",cbUseWinTab,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,167,42,152,8
-    CONTROL         "Win+Arrows - resize window",cbUseWinArrows,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,167,55,152,8
-    GROUPBOX        "Seize keys / Send to console",IDC_STATIC,4,70,319,26
-    CONTROL         "Alt+Tab",cbSendAltTab,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,82,42,8
-    CONTROL         "Alt+Esc",cbSendAltEsc,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,59,82,39,8
-    CONTROL         "PrntScrn",cbSendPrintScrn,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,167,82,42,8
-    CONTROL         "Ctrl+Esc",cbSendCtrlEsc,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,114,82,42,8
-    CONTROL         "Alt+PrScrn",cbSendAltPrintScrn,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,221,82,47,8
-    GROUPBOX        "Mouse options",IDC_STATIC,4,1,319,28
-    CONTROL         "Send mouse events to console",cbEnableMouse,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,14,119,8
-    CONTROL         "Skip click on activation",cbSkipActivation,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,132,14,97,8
-    CONTROL         "Skip in background",cbSkipMove,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,231,14,87,8
+    GROUPBOX        "Mouse options",IDC_STATIC,4,1,319,41
+    CONTROL         "Send mouse events to console",cbEnableMouse,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,14,152,8
+    CONTROL         "Skip click on activation",cbSkipActivation,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,167,14,152,8
+    CONTROL         "Skip mouse events in background",cbSkipMove,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,28,152,8
+    GROUPBOX        "Intercept keys",IDC_STATIC,4,45,319,38
+    CONTROL         "Install keyboard hooks",cbInstallKeybHooks,"Button",BS_AUTO3STATE | WS_TABSTOP,10,56,152,8
+    CONTROL         "Win+Tab - switch consoles (Tabs)",cbUseWinTab,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,167,56,152,8
+    CONTROL         "Win+Numbers - activate console",cbUseWinNumber,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,69,152,8
+    CONTROL         "Win+Arrows - resize window",cbUseWinArrows,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,167,69,152,8
+    GROUPBOX        "Seize keys / Send to console",IDC_STATIC,4,84,319,26
+    CONTROL         "Alt+Tab",cbSendAltTab,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,96,42,8
+    CONTROL         "Alt+Esc",cbSendAltEsc,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,59,96,39,8
+    CONTROL         "PrntScrn",cbSendPrintScrn,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,167,96,42,8
+    CONTROL         "Ctrl+Esc",cbSendCtrlEsc,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,114,96,42,8
+    CONTROL         "Alt+PrScrn",cbSendAltPrintScrn,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,221,96,47,8
     CONTROL         "Fix Alt on AltTab/AltF9 (to avoid execution of Far Manager macro, linked to Alt-release)",cbFixAltOnAltTab,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,110,308,8
-    GROUPBOX        "Miscellaneous",IDC_STATIC,4,97,319,43
-    CONTROL         "Skip focus events (don't send to console FOCUS_EVENT, useful with Far Manager)",cbSkipFocusEvents,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,124,308,8
-    GROUPBOX        "Read line enhancements (command prompt, ReadConsoleW)",IDC_STATIC,4,142,319,43
+    GROUPBOX        "Miscellaneous",IDC_STATIC,4,111,319,43
+    CONTROL         "Skip focus events (don't send to console FOCUS_EVENT, useful with Far Manager)",cbSkipFocusEvents,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,138,308,8
+    GROUPBOX        "Read line enhancements (command prompt, ReadConsoleW)",IDC_STATIC,4,156,319,43
     CONTROL         "Change prompt (cmd, powershell) text cursor position with Left Click",cbCTSClickPromptPosition,
-                    "Button",BS_AUTO3STATE | WS_TABSTOP,11,156,237,8
-    COMBOBOX        lbCTSClickPromptPosition,250,154,67,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+                    "Button",BS_AUTO3STATE | WS_TABSTOP,11,170,237,8
+    COMBOBOX        lbCTSClickPromptPosition,250,168,67,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     CONTROL         "Ctrl+BackSpace - delete word leftward to the text cursor",cbCTSDeleteLeftWord,
-                    "Button",BS_AUTO3STATE | WS_TABSTOP,11,169,306,8
-    GROUPBOX        "Mouse button actions",IDC_STATIC,4,188,319,30
-    CONTROL         "",rbCTSActAlways,"Button",BS_AUTORADIOBUTTON,11,202,10,8
-    COMBOBOX        lbCTSActAlways,22,199,49,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    CONTROL         "Buffer only (e.g. cmd.exe)",rbCTSActBufferOnly,"Button",BS_AUTORADIOBUTTON,76,202,100,8
-    RTEXT           "Right:",IDC_STATIC,176,202,24,8
-    COMBOBOX        lbCTSRBtnAction,201,199,44,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    RTEXT           "Middle:",IDC_STATIC,245,202,27,8
-    COMBOBOX        lbCTSMBtnAction,273,199,44,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+                    "Button",BS_AUTO3STATE | WS_TABSTOP,11,183,306,8
+    GROUPBOX        "Mouse button actions",IDC_STATIC,4,202,319,30
+    CONTROL         "",rbCTSActAlways,"Button",BS_AUTORADIOBUTTON,11,216,10,8
+    COMBOBOX        lbCTSActAlways,22,213,49,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "Buffer only (e.g. cmd.exe)",rbCTSActBufferOnly,"Button",BS_AUTORADIOBUTTON,76,216,100,8
+    RTEXT           "Right:",IDC_STATIC,176,216,24,8
+    COMBOBOX        lbCTSRBtnAction,201,213,44,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    RTEXT           "Middle:",IDC_STATIC,245,216,27,8
+    COMBOBOX        lbCTSMBtnAction,273,213,44,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 END
 
 IDD_SPG_UPDATE DIALOGEX 0, 0, 328, 235
