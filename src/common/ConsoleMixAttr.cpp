@@ -133,7 +133,9 @@ WORD GetRowIdFromAttrs(const WORD* pnAttrs4)
 		case CON_ATTR_PART_15:
 			RowId |= 15; break;
 		default:
-			_ASSERTE(FALSE && "Unknown mark!");
+			// That may happen after tab completion, if cursor was at position 2-4,
+			// than only part of our mark was erased
+			_ASSERTE((i > 0) && ((pnAttrs4[i] & CHANGED_CONATTR) == 0) && "Unknown mark!");
 			return 0;
 		}
 	}
