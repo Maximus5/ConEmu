@@ -17,7 +17,7 @@ BEGIN
 	bReloadSettings         "Reload all settings from registry/xml"
 	bResetSettings          "Reset all settings to defaults"
 	bSaveSettings           "Save settings to registry/xml\r\nDon't close dialog if Shift pressed"
-	cbActivateSplitMouseOver "When several panes (splits) are visible simultaneously activate console with mouse over,\r\n3rd-state - match ‘Active window tracking’ system settings"
+	cbActivateSplitMouseOver "When several panes (splits) are visible simultaneously activate (put focus in) console with mouse hover,\r\n3rd-state - match ‘Active window tracking’ system settings"
 	cbAdminShield           "When this is checked - ‘Shield’ icon will be shown in tabs, started ‘As administrator’"
 	cbAdminSuffix           "When this is checked - specified suffix will be appended in tabs titles, started ‘As administrator’.\r\nYou may choose insertion place with ‘%a’ var, otherwise suffix will be at the tab end."
 	cbAlwaysOnTop           "Places the ConEmu window above all non-topmost windows. The window maintains its topmost position even when it is deactivated"
