@@ -51,6 +51,7 @@ protected:
 	HANDLE mh_SkipActivateEvent;
 	bool mb_WasSkipActivate;
 	wchar_t ms_LastTitle[1024];
+	POINT mpt_Offset, mpt_ViewOffset, mpt_Size, mpt_ViewSize;
 protected:
 	static LRESULT CALLBACK GhostStatic(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 	LRESULT GhostProc(UINT message, WPARAM wParam, LPARAM lParam);

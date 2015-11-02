@@ -63,6 +63,10 @@ CTaskBarGhost::CTaskBarGhost(CVirtualConsole* apVCon)
 	mh_SkipActivateEvent = NULL;
 	mb_WasSkipActivate = false;
 	ms_LastTitle[0] = 0;
+	ZeroStruct(mpt_Offset);
+	ZeroStruct(mpt_ViewOffset);
+	ZeroStruct(mpt_Size);
+	ZeroStruct(mpt_ViewSize);
 	ZeroMemory(&mbmi_Snap, sizeof(mbmi_Snap));
 	mpb_DS = NULL;
 }
@@ -215,19 +219,18 @@ BOOL CTaskBarGhost::CreateTabSnapshoot()
 	if (!gpConEmu->isValid(mp_VCon))
 		return FALSE;
 
-	POINT PtOffset = {}, PtViewOffset = {}, PtSize = {}, PtViewSize = {};
-	GetPreviewPosSize(&PtOffset, &PtViewOffset, &PtSize, &PtViewSize);
-	if (PtSize.x<=0 || PtSize.y<=0 || PtViewSize.x<=0 || PtViewSize.y<=0)
+	GetPreviewPosSize(&mpt_Offset, &mpt_ViewOffset, &mpt_Size, &mpt_ViewSize);
+	if (mpt_Size.x<=0 || mpt_Size.y<=0 || mpt_ViewSize.x<=0 || mpt_ViewSize.y<=0)
 	{
-		_ASSERTE(!(PtSize.x<=0 || PtSize.y<=0 || PtViewSize.x<=0 || PtViewSize.y<=0));
+		_ASSERTE(!(mpt_Size.x<=0 || mpt_Size.y<=0 || mpt_ViewSize.x<=0 || mpt_ViewSize.y<=0));
 		return FALSE;
 	}
 
 	if (mh_Snap)
 	{
 		bool lbChanged = false;
-		if ((m_TabSize.BitmapSize.x != PtSize.x || m_TabSize.BitmapSize.y != PtSize.y)
-			|| (m_TabSize.VConSize.x != PtViewSize.x || m_TabSize.VConSize.y != PtViewSize.y))
+		if ((m_TabSize.BitmapSize.x != mpt_Size.x || m_TabSize.BitmapSize.y != mpt_Size.y)
+			|| (m_TabSize.VConSize.x != mpt_ViewSize.x || m_TabSize.VConSize.y != mpt_ViewSize.y))
 		{
 			lbChanged = true;
 		}
@@ -235,7 +238,7 @@ BOOL CTaskBarGhost::CreateTabSnapshoot()
 		{
 			BITMAP bi = {};
 			GetObject(mh_Snap, sizeof(bi), &bi);
-			if ((bi.bmWidth != PtSize.x) || (bi.bmHeight != PtSize.y))
+			if ((bi.bmWidth != mpt_Size.x) || (bi.bmHeight != mpt_Size.y))
 				lbChanged = true;
 		}
 
@@ -253,9 +256,12 @@ BOOL CTaskBarGhost::CreateTabSnapshoot()
 	//		return FALSE;
 	//}
 
-	m_TabSize.VConSize = PtViewSize;
-	m_TabSize.BitmapSize = PtSize;
-	m_TabSize.UsedRect = MakeRect(PtViewOffset.x, PtViewOffset.y, min(PtSize.x,(PtViewOffset.x+PtViewSize.x)), min(PtSize.y,(PtViewOffset.y+PtViewSize.y)));
+	m_TabSize.VConSize = mpt_ViewSize;
+	m_TabSize.BitmapSize = mpt_Size;
+
+	RECT rcNewUsedRect = MakeRect(mpt_ViewOffset.x, mpt_ViewOffset.y, min(mpt_Size.x, (mpt_ViewOffset.x + mpt_ViewSize.x)), min(mpt_Size.y, (mpt_ViewOffset.y + mpt_ViewSize.y)));
+	bool bUsedRectChanged = (memcmp(&rcNewUsedRect, &m_TabSize.UsedRect, sizeof(m_TabSize.UsedRect)) != 0);
+	m_TabSize.UsedRect = rcNewUsedRect;
 
 	HDC hdcMem = CreateCompatibleDC(NULL);
 	if (hdcMem != NULL)
@@ -264,23 +270,25 @@ BOOL CTaskBarGhost::CreateTabSnapshoot()
 		{
 			ZeroMemory(&mbmi_Snap.bmiHeader, sizeof(BITMAPINFOHEADER));
 			mbmi_Snap.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-			mbmi_Snap.bmiHeader.biWidth = PtSize.x;
-			mbmi_Snap.bmiHeader.biHeight = -PtSize.y;  // Use a top-down DIB
+			mbmi_Snap.bmiHeader.biWidth = mpt_Size.x;
+			mbmi_Snap.bmiHeader.biHeight = -mpt_Size.y;  // Use a top-down DIB
 			mbmi_Snap.bmiHeader.biPlanes = 1;
 			mbmi_Snap.bmiHeader.biBitCount = 32;
 
 			mh_Snap = CreateDIBSection(hdcMem, &mbmi_Snap, DIB_RGB_COLORS, (VOID**)&mpb_DS, NULL, 0);
 
-			// Чтобы в созданном mh_Snap гарантировано не было "мусора"
-			if (mh_Snap && mpb_DS)
-			{
-				_ASSERTE(sizeof(COLORREF)==4);
-				memset(mpb_DS, 0, PtSize.x*PtSize.y*sizeof(COLORREF));
-			}
+			bUsedRectChanged = true;
 		}
 
 		if (mh_Snap != NULL)
 		{
+			// Ensure that there would be no garbage on screen
+			if (bUsedRectChanged && mpb_DS)
+			{
+				_ASSERTE(sizeof(COLORREF) == 4);
+				memset(mpb_DS, 0, mpt_Size.x*mpt_Size.y*sizeof(COLORREF));
+			}
+
 			HBITMAP hOld = (HBITMAP)SelectObject(hdcMem, mh_Snap);
 
 			// Если в "консоли" есть графические окна (GUI Application, PicView, MMView, PanelViews, и т.п.)
@@ -313,14 +321,14 @@ BOOL CTaskBarGhost::CreateTabSnapshoot()
 					// - если снапшот запрашивается в момент отображения DWM-иконок
 					//   то он (снапшот) захватит и само плавающее окно DWM для иконок
 					HDC hdcScrn = GetDC(NULL);
-					BitBlt(hdcMem, PtViewOffset.x,PtViewOffset.y, PtViewSize.x,PtViewSize.y, hdcScrn, rcSnap.left,rcSnap.top, SRCCOPY);
+					BitBlt(hdcMem, mpt_ViewOffset.x,mpt_ViewOffset.y, mpt_ViewSize.x,mpt_ViewSize.y, hdcScrn, rcSnap.left,rcSnap.top, SRCCOPY);
 					ReleaseDC(NULL, hdcScrn);
 					#else
 					HDC hdcScrn;
 					// -- Этот метод не захватывает содержимое других окон (PicView, GUI-apps, и т.п.)
 					hdcScrn = GetDC(hView);
 					//hdcScrn = GetDCEx(hView, NULL, 0);
-					BitBlt(hdcMem, PtViewOffset.x,PtViewOffset.y, PtViewSize.x,PtViewSize.y, hdcScrn, 0,0, SRCCOPY);
+					BitBlt(hdcMem, mpt_ViewOffset.x,mpt_ViewOffset.y, mpt_ViewSize.x,mpt_ViewSize.y, hdcScrn, 0,0, SRCCOPY);
 					ReleaseDC(hView, hdcScrn);
 					#endif
 				}
@@ -845,22 +853,7 @@ LRESULT CTaskBarGhost::OnDwmSendIconicLivePreviewBitmap()
 	//_SendLivePreviewBitmap();
 	if (CreateTabSnapshoot())
 	{
-		POINT ptOffset = {};
-		GetPreviewPosSize(&ptOffset, NULL, NULL, NULL);
-		//HWND hView = mp_VCon->GetView();
-		//if (hView)
-		//{
-		//	RECT rcMain = {0}; GetWindowRect(ghWnd, &rcMain);
-		//	RECT rcView = {0}; GetWindowRect(hView, &rcView);
-		//	TODO("Проверить, учитывается ли DWM и прочая фигня с шириной рамок");
-		//	ptOffset.x = rcView.left - rcMain.left;
-		//	ptOffset.y = rcView.top - rcMain.top;
-		//	if (!gpConEmu->isIconic())
-		//	{
-		//		ptOffset.x -= GetSystemMetrics(SM_CXFRAME);
-		//		ptOffset.y -= GetSystemMetrics(SM_CYCAPTION) + GetSystemMetrics(SM_CYFRAME);
-		//	}
-		//}
+		POINT ptOffset = mpt_Offset;
 
 		BITMAP bi = {};
 		GetObject(mh_Snap, sizeof(bi), &bi);
