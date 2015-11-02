@@ -3083,6 +3083,7 @@ LRESULT CSettings::OnInitDialog_Control(HWND hWnd2, bool abInitial)
 	checkDlgButton(hWnd2, cbEnableMouse, !gpSet->isDisableMouse);
 	checkDlgButton(hWnd2, cbSkipActivation, gpSet->isMouseSkipActivation);
 	checkDlgButton(hWnd2, cbSkipMove, gpSet->isMouseSkipMoving);
+	checkDlgButton(hWnd2, cbActivateSplitMouseOver, gpSet->bActivateSplitMouseOver);
 
 	checkDlgButton(hWnd2, cbInstallKeybHooks,
 	               (gpSet->m_isKeyboardHooks == 1) ? BST_CHECKED :
@@ -3186,8 +3187,6 @@ LRESULT CSettings::OnInitDialog_Tabs(HWND hWnd2, bool abInitial)
 	checkDlgButton(hWnd2, cbTabsLocationBottom, (gpSet->nTabsLocation == 1) ? BST_CHECKED : BST_UNCHECKED);
 
 	checkDlgButton(hWnd2, cbOneTabPerGroup, gpSet->isOneTabPerGroup);
-
-	checkDlgButton(hWnd2, cbActivateSplitMouseOver, gpSet->bActivateSplitMouseOver);
 
 	checkDlgButton(hWnd2, cbTabSelf, gpSet->isTabSelf);
 

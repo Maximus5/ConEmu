@@ -969,8 +969,6 @@ BEGIN
     RTEXT           "Tab bar:",stTabBarDblClickAction,176,215,52,8
     COMBOBOX        tTabBarDblClickAction,232,213,84,67,CBS_DROPDOWNLIST | CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
     CONTROL         "One tab per group",cbOneTabPerGroup,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,97,57,82,8
-    CONTROL         "Activate split on mouse hover",cbActivateSplitMouseOver,
-                    "Button",BS_AUTO3STATE | WS_TABSTOP,193,57,123,8
     LTEXT           "Tab templates (Far Manager ones are located on 'Far Manager' page)",stTabTemplateGroup,10,100,304,8
     RTEXT           "Invisible tab activity flash count:",IDC_STATIC,9,148,223,8
     LTEXT           "Tab font:",stTabFontFace,10,79,40,8
@@ -1176,6 +1174,8 @@ BEGIN
     CONTROL         "Send mouse events to console",cbEnableMouse,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,14,152,8
     CONTROL         "Skip click on activation",cbSkipActivation,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,167,14,152,8
     CONTROL         "Skip mouse events in background",cbSkipMove,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,28,152,8
+    CONTROL         "Activate split/pane on mouse hover",cbActivateSplitMouseOver,
+                    "Button",BS_AUTO3STATE | WS_TABSTOP,167,28,152,8
     GROUPBOX        "Intercept keys",IDC_STATIC,4,45,319,38
     CONTROL         "Install keyboard hooks",cbInstallKeybHooks,"Button",BS_AUTO3STATE | WS_TABSTOP,10,56,152,8
     CONTROL         "Win+Tab - switch consoles (Tabs)",cbUseWinTab,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,167,56,152,8
