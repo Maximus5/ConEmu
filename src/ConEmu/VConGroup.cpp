@@ -3431,7 +3431,10 @@ void CVConGroup::MoveActiveTab(CVirtualConsole* apVCon, bool bLeftward)
 		}
 	}
 
-	UNREFERENCED_PARAMETER(lbChanged);
+	if (lbChanged)
+	{
+		gpConEmu->Taskbar_GhostReorder();
+	}
 }
 
 // 0 - based

@@ -79,7 +79,7 @@ CTaskBarGhost::~CTaskBarGhost()
 		if (mb_TaskbarRegistered)
 		{
 			mb_TaskbarRegistered = false;
-			gpConEmu->Taskbar_UnregisterTab(mh_Ghost);
+			gpConEmu->Taskbar_UnregisterTab(mh_Ghost, mp_VCon);
 		}
 		DestroyWindow(mh_Ghost);
 	}
@@ -602,7 +602,7 @@ LRESULT CTaskBarGhost::OnCreate()
 	if (IsWindows7)
 	{
 		// Tell the taskbar about this tab window
-		HRESULT hr = gpConEmu->Taskbar_RegisterTab(mh_Ghost, mp_VCon->isActive(false));
+		HRESULT hr = gpConEmu->Taskbar_RegisterTab(mh_Ghost, mp_VCon, mp_VCon->isActive(false));
 		mb_TaskbarRegistered = SUCCEEDED(hr);
 	}
 
@@ -912,7 +912,7 @@ LRESULT CTaskBarGhost::OnDestroy()
 	if (mb_TaskbarRegistered)
 	{
 		mb_TaskbarRegistered = false;
-		gpConEmu->Taskbar_UnregisterTab(mh_Ghost);
+		gpConEmu->Taskbar_UnregisterTab(mh_Ghost, mp_VCon);
 	}
 
 	return 0;
