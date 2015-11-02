@@ -100,35 +100,8 @@ BOOL ProcessInputMessage(MSG64::MsgStr &msg, INPUT_RECORD &r)
 
 			if (lbProcessEvent)
 			{
-				//BOOL lbRc = FALSE;
-				#if 0
-				DWORD dwEvent = (r.Event.KeyEvent.wVirtualKeyCode == 'C') ? CTRL_C_EVENT : CTRL_BREAK_EVENT;
-				#endif
-				//&& (gpSrv->dwConsoleMode & ENABLE_PROCESSED_INPUT)
-
-				#if 1
 				// Issue 590: GenerateConsoleCtrlEvent does not break ReadConsole[A|W] function!
 				SendMessage(ghConWnd, WM_KEYDOWN, r.Event.KeyEvent.wVirtualKeyCode, 0);
-				//lbRc = TRUE;
-				#endif
-
-				#if 0
-				//The SetConsoleMode function can disable the ENABLE_PROCESSED_INPUT mode for a console's input buffer,
-				//so CTRL+C is reported as keyboard input rather than as a signal.
-				// CTRL+BREAK is always treated as a signal
-				if (  // Удерживается ТОЛЬКО Ctrl
-				    (r.Event.KeyEvent.dwControlKeyState & CTRL_MODIFIERS) &&
-				    ((r.Event.KeyEvent.dwControlKeyState & ALL_MODIFIERS)
-				     == (r.Event.KeyEvent.dwControlKeyState & CTRL_MODIFIERS))
-				)
-				{
-					// Вроде работает, Главное не запускать процесс с флагом CREATE_NEW_PROCESS_GROUP
-					// иначе у микрософтовской консоли (WinXP SP3) сносит крышу, и она реагирует
-					// на Ctrl-Break, но напрочь игнорирует Ctrl-C
-					lbRc = GenerateConsoleCtrlEvent(dwEvent, 0);
-					// Это событие (Ctrl+C) в буфер помещается(!) иначе до фара не дойдет собственно клавиша C с нажатым Ctrl
-				}
-				#endif
 			}
 
 			if (lbIngoreKey)
