@@ -880,6 +880,36 @@ bool IsExecutable(LPCWSTR aszFilePathName, wchar_t** rsExpandedVars /*= NULL*/)
 #pragma warning( pop )
 #endif
 
+bool CompareProcessNames(LPCWSTR pszProcess1, LPCWSTR pszProcess2)
+{
+	LPCWSTR pszName1 = PointToName(pszProcess1);
+	LPCWSTR pszName2 = PointToName(pszProcess2);
+	if (!pszName1 || !*pszName1 || !pszName2 || !*pszName2)
+		return false;
+
+	LPCWSTR pszExt1 = wcsrchr(pszName1, L'.');
+	LPCWSTR pszExt2 = wcsrchr(pszName2, L'.');
+
+	CEStr lsName1, lsName2;
+	if (!pszExt1)
+	{
+		lsName1 = lstrmerge(pszName1, L".exe");
+		pszName1 = lsName1;
+		if (!pszName1)
+			return false;
+	}
+	if (!pszExt2)
+	{
+		lsName2 = lstrmerge(pszName1, L".exe");
+		pszName2 = lsName1;
+		if (!pszName2)
+			return false;
+	}
+
+	int iCmp = lstrcmpi(pszName1, pszName2);
+	return (iCmp == 0);
+}
+
 bool CheckProcessName(LPCWSTR pszProcessName, LPCWSTR* lsNameExt, LPCWSTR* lsName)
 {
 	//LPCWSTR lsNameExt[] = {L"ConEmuC.exe", L"ConEmuC64.exe", L"csrss.exe", L"conhost.exe", NULL};

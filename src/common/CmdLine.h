@@ -46,6 +46,7 @@ bool CompareFileMask(const wchar_t* asFileName, const wchar_t* asMask);
 LPCWSTR GetDrive(LPCWSTR pszPath, wchar_t* szDrive, int/*countof(szDrive)*/ cchDriveMax);
 int GetDirectory(CmdArg& szDir);
 
+bool CompareProcessNames(LPCWSTR pszProcess1, LPCWSTR pszProcess2);
 bool CheckProcessName(LPCWSTR pszProcessName, LPCWSTR* lsNameExt, LPCWSTR* lsName);
 
 bool IsExecutable(LPCWSTR aszFilePathName, wchar_t** rsExpandedVars = NULL);
