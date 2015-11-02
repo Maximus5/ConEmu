@@ -499,6 +499,7 @@ struct SrvInfo
 	UINT nProcessCount, nMaxProcesses;
 	UINT nConhostPID; // Windows 7 and higher: "conhost.exe"
 	DWORD *pnProcesses, *pnProcessesGet, *pnProcessesCopy, nProcessStartTick;
+	DWORD nLastFoundPID; // Informational! Retrieved by CheckProcessCount/pfnGetConsoleProcessList
 	DWORD dwProcessLastCheckTick;
 #ifndef WIN64
 	BOOL bNtvdmActive; DWORD nNtvdmPID;
