@@ -809,7 +809,7 @@ void CTaskBarGhost::GetPreviewPosSize(POINT* pPtOffset, POINT* pPtViewOffset, PO
 	WARNING("'+1'?")
 	POINT szSize = MakePoint(rcWork.right-rcWork.left, rcWork.bottom-rcWork.top);
 	//POINT ptViewOffset = MakePoint(szSize.x - (rcView.right-rcView.left), szSize.y - (rcView.bottom-rcView.top));
-	POINT ptViewOffset = MakePoint(max(0,(szSize.x - ptViewSize.x)), max(0,(szSize.y - ptViewSize.y)));
+	POINT ptViewOffset = MakePoint(max(0,(szSize.x - ptViewSize.x)>>1), max(0,(szSize.y - ptViewSize.y)>>1));
 
 	ptOffset = MakePoint(rcWork.left, rcWork.top);
 	ConEmuWindowMode wm = gpConEmu->GetWindowMode();

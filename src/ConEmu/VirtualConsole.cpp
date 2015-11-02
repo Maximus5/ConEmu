@@ -4875,6 +4875,8 @@ bool CVirtualConsole::PrintClient(HDC hPrintDc, bool bAllowRepaint, const LPRECT
 		{
 			bNeedStretch = (((rcClient.right-rcClient.left) != (PaintRect->right-PaintRect->left))
 				|| ((rcClient.bottom-rcClient.top) != (PaintRect->bottom-PaintRect->top)));
+			nPrintX = PaintRect->left;
+			nPrintY = PaintRect->top;
 		}
 
 		if (bNeedStretch)
