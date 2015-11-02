@@ -193,7 +193,7 @@ HRESULT CTaskBar::Taskbar_RegisterTab(HWND hBtn, BOOL abSetActive)
 	if (mp_TaskBar3)
 	{
 		hr = mp_TaskBar3->RegisterTab(hBtn, ghWnd);
-		hr1 = mp_TaskBar3->SetTabOrder(hBtn, 0);
+		hr1 = mp_TaskBar3->SetTabOrder(hBtn, NULL);
 	}
 	else if (mp_TaskBar1)
 	{
