@@ -13,7 +13,7 @@ $url = "https://github.com/Maximus5/ConEmu/releases/download/v$version/ConEmuSet
 $params = @{
   PackageName = $package;
   FileType = 'exe';
-  SilentArgs = "/p:$os /passive";
+  SilentArgs = "/p:$os /quiet /norestart";
   Url = $url;
   Url64bit = $url;
 }
