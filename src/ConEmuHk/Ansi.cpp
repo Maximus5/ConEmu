@@ -2321,10 +2321,13 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 					break;
 				case 7:
 					// Reverse video
-					TODO("Check standard");
+					gDisplayParm.Inverse = TRUE;
+					gDisplayParm.WasSet = TRUE;
 					break;
 				case 27:
 					// Positive (not inverse)
+					gDisplayParm.Inverse = FALSE;
+					gDisplayParm.WasSet = TRUE;
 					break;
 				case 25:
 					// Steady (not blinking)
