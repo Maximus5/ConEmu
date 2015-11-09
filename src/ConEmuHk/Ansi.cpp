@@ -2178,6 +2178,19 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 					}
 				}
 				break;
+			case 12:   /* SRM: set echo mode */
+			case 1000: /* VT200_MOUSE */
+			case 1002: /* BTN_EVENT_MOUSE */
+			case 1003: /* ANY_EVENT_MOUSE */
+			case 1004: /* FOCUS_EVENT_MOUSE */
+			case 1005: /* Xterm's UTF8 encoding for mouse positions */
+			case 1006: /* Xterm's CSI-style mouse encoding */
+				// xmux/screen?
+				if ((Code.PvtLen == 1) && (Code.Pvt[0] == L'?'))
+					DumpKnownEscape(Code.pszEscStart, Code.nTotalLen, de_Ignored); // ignored for now
+				else
+					DumpUnknownEscape(Code.pszEscStart, Code.nTotalLen);
+				break;
 			default:
 				DumpUnknownEscape(Code.pszEscStart,Code.nTotalLen);
 			}
