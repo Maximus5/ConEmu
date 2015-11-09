@@ -76,12 +76,18 @@ extern HANDLE  ghStdOutHandle;
 extern wchar_t gsInitConTitle[512];
 /* ************ Globals for SetHook ************ */
 
-/* ************ Globals for ViM ************ */
-static int  gnVimTermWasChangedBuffer = 0;
-static bool gbVimTermWasChangedBuffer = false;
-//void StartVimTerm(bool bFromDllStart);
-//void StopVimTerm();
-/* ************ Globals for ViM ************ */
+/* ************ Globals for xTerm/ViM ************ */
+TODO("BufferWidth")
+typedef DWORD XTermAltBufferFlags;
+const XTermAltBufferFlags
+	xtb_AltBuffer          = 0x0001,
+	xtb_None               = 0;
+static struct XTermAltBuffer
+{
+	XTermAltBufferFlags Flags;
+	int    BufferSize;
+} gXTermAltBuffer = {};
+/* ************ Globals for xTerm/ViM ************ */
 
 BOOL WINAPI OnCreateProcessW(LPCWSTR lpApplicationName, LPWSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment, LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation);
 
@@ -2750,6 +2756,93 @@ void CEAnsi::XTermSaveRestoreCursor(bool bSaveCursor, HANDLE hConsoleOutput /*= 
 	}
 }
 
+/// Change current buffer
+/// Alternative buffer in XTerm is used to "fullscreen"
+/// applications like Vim. There is no scrolling and this
+/// mode is used to save current backscroll contents and
+/// restore it when application exits
+void CEAnsi::XTermAltBuffer(bool bSetAltBuffer)
+{
+	if (bSetAltBuffer)
+	{
+		// Once!
+		if ((gXTermAltBuffer.Flags & xtb_AltBuffer))
+			return;
+
+		CONSOLE_SCREEN_BUFFER_INFO csbi = {};
+		HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+		if (GetConsoleScreenBufferInfoCached(hOut, &csbi, TRUE))
+		{
+			// -- Turn on "alternative" buffer even if not scrolling exist now
+			//if (csbi.dwSize.Y > (csbi.srWindow.Bottom - csbi.srWindow.Top + 1))
+			{
+				CESERVER_REQ *pIn = NULL, *pOut = NULL;
+				pIn = ExecuteNewCmd(CECMD_ALTBUFFER,sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_ALTBUFFER));
+				if (pIn)
+				{
+					pIn->AltBuf.AbFlags = abf_BufferOff|abf_SaveContents;
+					pOut = ExecuteSrvCmd(gnServerPID, pIn, ghConWnd);
+					if (pOut)
+					{
+						TODO("BufferWidth");
+						if (!(gXTermAltBuffer.Flags & xtb_AltBuffer))
+						{
+							// Backscroll length
+							gXTermAltBuffer.BufferSize = (csbi.dwSize.Y > (csbi.srWindow.Bottom - csbi.srWindow.Top + 1))
+								? csbi.dwSize.Y : 0;
+							gXTermAltBuffer.Flags = xtb_AltBuffer;
+						}
+					}
+					ExecuteFreeResult(pIn);
+					ExecuteFreeResult(pOut);
+				}
+			}
+		}
+	}
+	else
+	{
+		if (!(gXTermAltBuffer.Flags & xtb_AltBuffer))
+			return;
+
+		// Однократно
+		gXTermAltBuffer.Flags &= ~xtb_AltBuffer;
+
+		// Сброс расширенных атрибутов!
+		CONSOLE_SCREEN_BUFFER_INFO csbi = {};
+		HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+		if (GetConsoleScreenBufferInfoCached(hOut, &csbi, TRUE))
+		{
+			WORD nDefAttr = GetDefaultTextAttr();
+			// Сброс только расширенных атрибутов
+			ExtFillOutputParm fill = {sizeof(fill), /*efof_ResetExt|*/efof_Attribute/*|efof_Character*/, hOut,
+				{CECF_NONE,(COLORREF)(nDefAttr&0xF),COLORREF((nDefAttr&0xF0)>>4)},
+				L' ', {0,0}, (DWORD)(csbi.dwSize.X * csbi.dwSize.Y)};
+			ExtFillOutput(&fill);
+			CEAnsi* pObj = CEAnsi::Object();
+			if (pObj)
+				pObj->ReSetDisplayParm(hOut, TRUE, TRUE);
+			else
+				SetConsoleTextAttribute(hOut, nDefAttr);
+		}
+
+		// Восстановление прокрутки и данных
+		CESERVER_REQ *pIn = NULL, *pOut = NULL;
+		pIn = ExecuteNewCmd(CECMD_ALTBUFFER,sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_ALTBUFFER));
+		if (pIn)
+		{
+			TODO("BufferWidth");
+			pIn->AltBuf.AbFlags = abf_BufferOn|abf_RestoreContents;
+			if (!gXTermAltBuffer.BufferSize)
+				pIn->AltBuf.AbFlags |= abf_BufferOff;
+			pIn->AltBuf.BufferHeight = gXTermAltBuffer.BufferSize;
+			// Async - is not allowed. Otherwise current application (cmd.exe for example)
+			// may start printing before server finishes buffer restoration
+			pOut = ExecuteSrvCmd(gnServerPID, pIn, ghConWnd);
+			ExecuteFreeResult(pIn);
+			ExecuteFreeResult(pOut);
+		}
+	}
+}
 
 /*
 ViM need some hacks in current ConEmu versions
@@ -2757,9 +2850,6 @@ This is because
 1) 256 colors mode requires NO scroll buffer
 2) can't find ATM legal way to switch Alternative/Primary buffer by request from ViM
 */
-
-//static int  gnVimTermWasChangedBuffer = 0;
-//static bool gbVimTermWasChangedBuffer = false;
 
 void CEAnsi::StartVimTerm(bool bFromDllStart)
 {
@@ -2781,48 +2871,7 @@ void CEAnsi::StartVimTerm(bool bFromDllStart)
 		}
 	}
 
-	// Once!
-	if (/*bFromDllStart ||*/ gbVimTermWasChangedBuffer)
-		return;
-
-	TODO("Переделать на команду сервера?");
-
-	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
-	HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
-	if (GetConsoleScreenBufferInfoCached(hOut, &csbi, TRUE))
-	{
-		// -- Turn on "alternative" buffer even if not scrolling exist now
-		//if (csbi.dwSize.Y > (csbi.srWindow.Bottom - csbi.srWindow.Top + 1))
-		{
-			CESERVER_REQ *pIn = NULL, *pOut = NULL;
-			pIn = ExecuteNewCmd(CECMD_ALTBUFFER,sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_ALTBUFFER));
-			if (pIn)
-			{
-				pIn->AltBuf.AbFlags = abf_BufferOff|abf_SaveContents;
-				pOut = ExecuteSrvCmd(gnServerPID, pIn, ghConWnd);
-				if (pOut)
-				{
-					TODO("BufferWidth");
-					gnVimTermWasChangedBuffer = csbi.dwSize.Y;
-					gbVimTermWasChangedBuffer = true;
-				}
-				ExecuteFreeResult(pIn);
-				ExecuteFreeResult(pOut);
-			}
-
-			//COORD crNoScroll = {csbi.srWindow.Right-csbi.srWindow.Left+1, csbi.srWindow.Bottom-csbi.srWindow.Top+1};
-			//BOOL bRc = SetConsoleScreenBufferSize(hOut, crNoScroll);
-			//if (bRc)
-			//{
-			//	gnVimTermWasChangedBuffer = csbi.dwSize.Y;
-			//	gbVimTermWasChangedBuffer = true;
-			//}
-			//else
-			//{
-			//	_ASSERTEX(FALSE && "Failed to reset buffer height to ViM");
-			//}
-		}
-	}
+	XTermAltBuffer(true);
 }
 
 void CEAnsi::StopVimTerm()
@@ -2833,67 +2882,12 @@ void CEAnsi::StopVimTerm()
 		CEAnsi::StartXTermMode(false);
 	}
 
-	if (!gbVimTermWasChangedBuffer)
-		return;
-
-	// Однократно
-	gbVimTermWasChangedBuffer = false;
-
-	// Сброс расширенных атрибутов!
-	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
-	HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
-	if (GetConsoleScreenBufferInfoCached(hOut, &csbi, TRUE))
-	{
-		WORD nDefAttr = GetDefaultTextAttr();
-		// Сброс только расширенных атрибутов
-		ExtFillOutputParm fill = {sizeof(fill), /*efof_ResetExt|*/efof_Attribute/*|efof_Character*/, hOut,
-			{CECF_NONE,(COLORREF)(nDefAttr&0xF),COLORREF((nDefAttr&0xF0)>>4)},
-			L' ', {0,0}, (DWORD)(csbi.dwSize.X * csbi.dwSize.Y)};
-		ExtFillOutput(&fill);
-		CEAnsi* pObj = CEAnsi::Object();
-		if (pObj)
-			pObj->ReSetDisplayParm(hOut, TRUE, TRUE);
-		else
-			SetConsoleTextAttribute(hOut, nDefAttr);
-	}
-
-	// Восстановление прокрутки и данных
-	CESERVER_REQ *pIn = NULL, *pOut = NULL;
-	pIn = ExecuteNewCmd(CECMD_ALTBUFFER,sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_ALTBUFFER));
-	if (pIn)
-	{
-		TODO("BufferWidth");
-		pIn->AltBuf.AbFlags = abf_BufferOn|abf_RestoreContents;
-		pIn->AltBuf.BufferHeight = gnVimTermWasChangedBuffer;
-		// Async - нельзя. Иначе cmd может отрисовать prompt раньше чем управится сервер.
-		pOut = ExecuteSrvCmd(gnServerPID, pIn, ghConWnd);
-		ExecuteFreeResult(pIn);
-		ExecuteFreeResult(pOut);
-	}
-
-	/*
-	TODO("Переделать на команду сервера?");
-
-	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
-	HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
-	if (GetConsoleScreenBufferInfoCached(hOut, &csbi, TRUE))
-	{
-		if (csbi.dwSize.Y < gnVimTermWasChangedBuffer)
-		{
-			COORD crScroll = {csbi.dwSize.X, gnVimTermWasChangedBuffer};
-			BOOL bRc = SetConsoleScreenBufferSize(hOut, crScroll);
-			if (!bRc)
-			{
-				_ASSERTEX(FALSE && "Failed to return scroll!");
-			}
-		}
-	}
-	*/
+	XTermAltBuffer(false);
 }
 
 void CEAnsi::StartXTermMode(bool bStart)
 {
-	_ASSERTEX(gbVimTermWasChangedBuffer && (gbWasXTermOutput==bStart));
+	_ASSERTEX((gXTermAltBuffer.Flags & xtb_AltBuffer) && (gbWasXTermOutput==bStart));
 
 	CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_STARTXTERM, sizeof(CESERVER_REQ_HDR)+sizeof(DWORD));
 	if (pIn)

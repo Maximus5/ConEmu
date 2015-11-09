@@ -210,6 +210,7 @@ protected:
 	static void WriteAnsiLog(LPCWSTR lpBuffer, DWORD nChars);
 protected:
 	static void XTermSaveRestoreCursor(bool bSaveCursor, HANDLE hConsoleOutput = NULL);
+	static void XTermAltBuffer(bool bSetAltBuffer);
 public:
 
 	void ReSetDisplayParm(HANDLE hConsoleOutput, BOOL bReset, BOOL bApply);
