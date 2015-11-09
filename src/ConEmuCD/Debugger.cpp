@@ -1205,8 +1205,13 @@ void ProcessDebugEvent()
 				//8 Reports an output-debugging-string debugging event. The value of u.DebugString specifies an OUTPUT_DEBUG_STRING_INFO structure.
 			{
 				wszDbgText[0] = 0;
+				msprintf(wszDbgText, countof(wszDbgText), L"{PID=%i.TID=%i} ", evt.dwProcessId, evt.dwThreadId);
+				int iPidTidLen = lstrlen(wszDbgText);
+				DWORD_PTR iReadMax = countof(wszDbgText) - iPidTidLen - 2;
+				wchar_t* pwszDbg = wszDbgText + iPidTidLen;
 
-				if (evt.u.DebugString.nDebugStringLength >= 1024) evt.u.DebugString.nDebugStringLength = 1023;
+				if (evt.u.DebugString.nDebugStringLength > iReadMax)
+					evt.u.DebugString.nDebugStringLength = iReadMax;
 
 				DWORD_PTR nRead = 0;
 
@@ -1214,20 +1219,20 @@ void ProcessDebugEvent()
 
 				if (evt.u.DebugString.fUnicode)
 				{
-					if (!ReadProcessMemory(hProcess, evt.u.DebugString.lpDebugStringData, wszDbgText, 2*evt.u.DebugString.nDebugStringLength, &nRead))
+					if (!ReadProcessMemory(hProcess, evt.u.DebugString.lpDebugStringData, pwszDbg, 2*evt.u.DebugString.nDebugStringLength, &nRead))
 					{
-						wcscpy_c(wszDbgText, L"???");
+						_wcscpy_c(pwszDbg, iReadMax, L"???");
 					}
 					else
 					{
-						wszDbgText[min(1023,nRead+1)] = 0;
+						pwszDbg[min(iReadMax,nRead+1)] = 0;
 					}
 
 					static int nPrefixLen = lstrlen(CONEMU_CONHOST_CREATED_MSG);
-					if (memcmp(wszDbgText, CONEMU_CONHOST_CREATED_MSG, nPrefixLen*sizeof(wszDbgText[0])) == 0)
+					if (memcmp(pwszDbg, CONEMU_CONHOST_CREATED_MSG, nPrefixLen*sizeof(pwszDbg[0])) == 0)
 					{
 						LPWSTR pszEnd = NULL;
-						DWORD nConHostPID = wcstoul(wszDbgText+nPrefixLen, &pszEnd, 10);
+						DWORD nConHostPID = wcstoul(pwszDbg+nPrefixLen, &pszEnd, 10);
 						if (nConHostPID && !gpSrv->DbgInfo.pDebugTreeProcesses->Get(nConHostPID, NULL))
 						{
 							AttachConHost(nConHostPID);
@@ -1238,19 +1243,22 @@ void ProcessDebugEvent()
 				{
 					if (!ReadProcessMemory(hProcess, evt.u.DebugString.lpDebugStringData, szDbgText, evt.u.DebugString.nDebugStringLength, &nRead))
 					{
-						wcscpy_c(wszDbgText, L"???");
+						_wcscpy_c(pwszDbg, iReadMax, L"???");
 					}
 					else
 					{
-						szDbgText[min(1023,nRead+1)] = 0;
-						// CP_ACP differs from CP_OEMCP, thats why we need some overhead...
-						MultiByteToWideChar(CP_ACP, 0, szDbgText, -1, wszDbgText, 1024);
+						szDbgText[min(iReadMax,nRead+1)] = 0;
+						MultiByteToWideChar(CP_ACP, 0, szDbgText, -1, pwszDbg, iReadMax+1);
 					}
 				}
 
-				WideCharToMultiByte(CP_OEMCP, 0, wszDbgText, -1, szDbgText, 1024, 0, 0);
+				int iWrite = lstrlen(pwszDbg);
+				if ((iWrite > 0) && (pwszDbg[iWrite-1] != L'\n'))
+				{
+					pwszDbg[iWrite - 1] = L'\n'; pwszDbg[iWrite] = 0;
+				}
 
-				_printf("{PID=%i.TID=%i} ", evt.dwProcessId,evt.dwThreadId, wszDbgText);
+				_wprintf(wszDbgText);
 
 				dwContinueStatus = DBG_CONTINUE;
 
