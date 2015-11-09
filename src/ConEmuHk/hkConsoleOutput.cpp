@@ -231,7 +231,7 @@ BOOL WINAPI OnWriteConsoleA(HANDLE hConsoleOutput, const VOID *lpBuffer, DWORD n
 		if (lpBuffer && nNumberOfCharsToWrite)
 		{
 			szTmp[0] = ((char*)lpBuffer)[0];
-			CEAnsi::DumpEscape(szTmp, 1, 2);
+			CEAnsi::DumpEscape(szTmp, 1, de_BadUnicode);
 		}
 		#endif
 		goto badchar;
@@ -257,7 +257,7 @@ BOOL WINAPI OnWriteConsoleA(HANDLE hConsoleOutput, const VOID *lpBuffer, DWORD n
 			badUnicode = true;
 			#ifdef _DEBUG
 			szTmp[0] = ((char*)lpBuffer)[0];
-			CEAnsi::DumpEscape(szTmp, 1, 2);
+			CEAnsi::DumpEscape(szTmp, 1, de_BadUnicode);
 			#endif
 			SetLastError(nLastErr);
 			goto badchar;

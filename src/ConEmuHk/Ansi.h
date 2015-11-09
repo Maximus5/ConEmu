@@ -71,6 +71,17 @@ extern FARPROC CallWriteConsoleW;
 	#define FIRST_ANSI_CALL(lpBuf,nNumberOfBytes)
 #endif
 
+enum DumpEscapeCodes
+{
+	de_Normal = 0,
+	de_Unknown = 1,
+	de_BadUnicode = 2,
+	de_Ignored = 3,
+	de_UnkControl = 4,
+	de_Report = 5,
+	de_ScrollRegion = 6,
+};
+
 struct CEAnsi
 {
 //private:
@@ -200,9 +211,7 @@ public:
 
 	void ReSetDisplayParm(HANDLE hConsoleOutput, BOOL bReset, BOOL bApply);
 
-	#if defined(DUMP_UNKNOWN_ESCAPES) || defined(DUMP_WRITECONSOLE_LINES)
-	static void DumpEscape(LPCWSTR buf, size_t cchLen, int iUnknown);
-	#endif
+	static void DumpEscape(LPCWSTR buf, size_t cchLen, DumpEscapeCodes iUnknown);
 
 	BOOL WriteText(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, LPCWSTR lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, BOOL abCommit = FALSE);
 	BOOL ScrollScreen(HANDLE hConsoleOutput, int nDir);

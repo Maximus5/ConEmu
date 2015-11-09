@@ -517,9 +517,9 @@ void CEAnsi::ReSetDisplayParm(HANDLE hConsoleOutput, BOOL bReset, BOOL bApply)
 }
 
 
-#if defined(DUMP_UNKNOWN_ESCAPES) || defined(DUMP_WRITECONSOLE_LINES)
-void CEAnsi::DumpEscape(LPCWSTR buf, size_t cchLen, int iUnknown)
+void CEAnsi::DumpEscape(LPCWSTR buf, size_t cchLen, DumpEscapeCodes iUnknown)
 {
+#if defined(DUMP_UNKNOWN_ESCAPES) || defined(DUMP_WRITECONSOLE_LINES)
 	if (!buf || !cchLen)
 	{
 		// В общем, много кто грешит попытками записи "пустых строк"
@@ -537,12 +537,23 @@ void CEAnsi::DumpEscape(LPCWSTR buf, size_t cchLen, int iUnknown)
 
 	switch (iUnknown)
 	{
-	case 1:
-		//wcscpy_c(szDbg, L"###Unknown Esc Sequence: ");
+	case de_Unknown/*1*/:
 		msprintf(szDbg, countof(szDbg), L"[%u] ###Unknown Esc Sequence: ", GetCurrentThreadId());
 		break;
-	case 2:
+	case de_BadUnicode/*2*/:
 		msprintf(szDbg, countof(szDbg), L"[%u] ###Bad Unicode Translation: ", GetCurrentThreadId());
+		break;
+	case de_Ignored/*3*/:
+		msprintf(szDbg, countof(szDbg), L"[%u] ###Ignored Esc Sequence: ", GetCurrentThreadId());
+		break;
+	case de_UnkControl/*4*/:
+		msprintf(szDbg, countof(szDbg), L"[%u] ###Unknown Esc Control: ", GetCurrentThreadId());
+		break;
+	case de_Report/*5*/:
+		msprintf(szDbg, countof(szDbg), L"[%u] ###Back Report: ", GetCurrentThreadId());
+		break;
+	case de_ScrollRegion/*6*/:
+		msprintf(szDbg, countof(szDbg), L"[%u] ###Scroll region: ", GetCurrentThreadId());
 		break;
 	default:
 		msprintf(szDbg, countof(szDbg), L"[%u] AnsiDump #%u: ", GetCurrentThreadId(), ++nWriteCallNo);
@@ -550,6 +561,7 @@ void CEAnsi::DumpEscape(LPCWSTR buf, size_t cchLen, int iUnknown)
 
 	size_t nStart = lstrlenW(szDbg);
 	wchar_t* pszDst = szDbg + nStart;
+	wchar_t* pszFrom = szDbg;
 
 	if (buf && cchLen)
 	{
@@ -574,6 +586,15 @@ void CEAnsi::DumpEscape(LPCWSTR buf, size_t cchLen, int iUnknown)
 			case 0:
 				*(pszDst++) = L'\\'; *(pszDst++) = L'0';
 				break;
+			case 7:
+				*(pszDst++) = L'\\'; *(pszDst++) = L'a';
+				break;
+			case 8:
+				*(pszDst++) = L'\\'; *(pszDst++) = L'b';
+				break;
+			case 0x7F:
+				*(pszDst++) = '\\'; *(pszDst++) = 'x'; *(pszDst++) = '7'; *(pszDst++) = 'F';
+				break;
 			case L'\\':
 				*(pszDst++) = L'\\'; *(pszDst++) = L'\\';
 				break;
@@ -586,11 +607,14 @@ void CEAnsi::DumpEscape(LPCWSTR buf, size_t cchLen, int iUnknown)
 
 			if (nCur >= 80)
 			{
-				*(pszDst++) = L'\n'; *pszDst = 0;
+				*(pszDst++) = L'¶';
+				*(pszDst++) = L'\n';
+				*pszDst = 0;
+				// No much sense to use wchar_t, because OS converts it and passed to OutputDebugStringA
 				DebugString(szDbg);
 				wmemset(szDbg, L' ', nStart);
 				nCur = 0;
-				pszDst = szDbg + nStart;
+				pszFrom = pszDst = szDbg + nStart;
 			}
 		}
 	}
@@ -602,16 +626,24 @@ void CEAnsi::DumpEscape(LPCWSTR buf, size_t cchLen, int iUnknown)
 		wmemcpy(pszDst, psEmptyMessage, nMsgLen);
 		pszDst += nMsgLen;
 	}
-	*(pszDst++) = L'\n'; *pszDst = 0;
 
-	DebugString(szDbg);
-}
+	if (pszDst > pszFrom)
+	{
+		*(pszDst++) = L'¶';
+		*(pszDst++) = L'\n';
+		*pszDst = 0;
+		// No much sense to use wchar_t, because OS converts it and passed to OutputDebugStringA
+		DebugString(szDbg);
+	}
 #endif
+}
 
 #ifdef DUMP_UNKNOWN_ESCAPES
-#define DumpUnknownEscape(buf, cchLen) DumpEscape(buf, cchLen, true)
+#define DumpUnknownEscape(buf, cchLen) DumpEscape(buf, cchLen, de_Unknown)
+#define DumpKnownEscape(buf, cchLen, eType) DumpEscape(buf, cchLen, eType)
 #else
 #define DumpUnknownEscape(buf,cchLen)
+#define DumpKnownEscape(buf, cchLen, eType)
 #endif
 
 static LONG nLastReadId = 0;
@@ -776,10 +808,8 @@ BOOL CEAnsi::OurWriteConsoleW(HANDLE hConsoleOutput, const VOID *lpBuffer, DWORD
 	}
 #endif
 
-	#ifdef DUMP_WRITECONSOLE_LINES
-	// Логирование в отладчик ВСЕГО, что пишется в консольный Output
-	DumpEscape((wchar_t*)lpBuffer, nNumberOfCharsToWrite, false);
-	#endif
+	// In debug builds: Write to debug console all console Output
+	DumpKnownEscape((wchar_t*)lpBuffer, nNumberOfCharsToWrite, de_Normal);
 
 	CEAnsi* pObj = NULL;
 	CEStr CpCvt;
@@ -1041,7 +1071,11 @@ int CEAnsi::NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, wchar_t (&szPreDump)[CE
 						// Don't assert on rawdump of KeyEvents.exe Esc key presses
 						// 10:00:00 KEY_EVENT_RECORD: Dn, 1, Vk="VK_ESCAPE" [27/0x001B], Scan=0x0001 uChar=[U='\x1b' (0x001B): A='\x1b' (0x1B)]
 						bool bStandaloneEscChar = (lpStart < lpSaveStart) && ((*(lpSaveStart-1) == L'\'' && Code.Second == L'\'') || (*(lpSaveStart-1) == L' ' && Code.Second == L' '));
-						_ASSERTEX(bStandaloneEscChar && "Unsupported control sequence?");
+						//_ASSERTEX(bStandaloneEscChar && "Unsupported control sequence?");
+						if (!bStandaloneEscChar)
+						{
+							DumpKnownEscape(Code.pszEscStart, min(Code.nTotalLen,32), de_UnkControl);
+						}
 						continue; // invalid code
 					}
 
@@ -1541,6 +1575,8 @@ BOOL CEAnsi::ReportString(LPCWSTR asRet)
 		p->Event.KeyEvent.uChar.UnicodeChar = *pc;
 	}
 
+	DumpKnownEscape(asRet, nLen, de_Report);
+
 	DWORD nWritten = 0;
 	HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE);
 	BOOL bSuccess = WriteConsoleInput(hIn, pir, nLen, &nWritten) && (nWritten == nLen);
@@ -1675,6 +1711,9 @@ BOOL CEAnsi::WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOut
 					case L'=':
 					case L'>':
 						// xterm "ESC ="
+					case L'(':
+						// xterm G0..G3?
+						DumpKnownEscape(Code.pszEscStart, Code.nTotalLen, de_Ignored);
 						break;
 
 					default:
@@ -2108,6 +2147,7 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 			case 20:
 				// Ignored for now
 				gDisplayOpt.AutoLfNl = (Code.Action == L'h');
+				DumpKnownEscape(Code.pszEscStart, Code.nTotalLen, de_Ignored);
 				break;
 			case 25:
 				{
@@ -2193,8 +2233,12 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 		break;
 
 	case L'm':
+		if (Code.PvtLen > 0)
+		{
+			DumpKnownEscape(Code.pszEscStart, Code.nTotalLen, de_Ignored);
+		}
 		// Set display mode (colors, fonts, etc.)
-		if (!Code.ArgC)
+		else if (!Code.ArgC)
 		{
 			ReSetDisplayParm(hConsoleOutput, TRUE, FALSE);
 		}
@@ -2247,6 +2291,7 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 					break;
 				case 25:
 					// Steady (not blinking)
+					DumpKnownEscape(Code.pszEscStart,Code.nTotalLen,de_Ignored);
 					break;
 				case 30: case 31: case 32: case 33: case 34: case 35: case 36: case 37:
 					gDisplayParm.TextColor = (Code.ArgV[i] - 30);
