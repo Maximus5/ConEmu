@@ -747,14 +747,14 @@ wrap:
 }
 
 
-BOOL CEAnsi::WriteText(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, LPCWSTR lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, BOOL abCommit /*= FALSE*/)
+BOOL CEAnsi::WriteText(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, LPCWSTR lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, BOOL abCommit /*= FALSE*/, EXTREADWRITEFLAGS AddFlags /*= ewtf_None*/)
 {
 	BOOL lbRc = FALSE;
 	DWORD /*nWritten = 0,*/ nTotalWritten = 0;
 
 	_ASSERTE(((_WriteConsoleW != &WriteConsoleW) || !HooksWereSet) && "It must point to CallPointer for 'unhooked' call");
 
-	ExtWriteTextParm write = {sizeof(write), ewtf_Current, hConsoleOutput};
+	ExtWriteTextParm write = {sizeof(write), ewtf_Current|AddFlags, hConsoleOutput};
 	write.Private = (void*)(FARPROC)_WriteConsoleW;
 
 	if (gDisplayOpt.WrapWasSet && (gDisplayOpt.WrapAt > 0))
