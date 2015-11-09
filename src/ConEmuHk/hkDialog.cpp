@@ -263,3 +263,47 @@ INT_PTR WINAPI OnDialogBoxIndirectParamAorW(HINSTANCE hInstance, LPCDLGTEMPLATE 
 
 	return iRc;
 }
+
+BOOL WINAPI OnBeep(DWORD dwFreq, DWORD dwDuration)
+{
+	//typedef BOOL (WINAPI* OnBeep_t)(DWORD dwFreq, DWORD dwDuration);
+	ORIGINAL_EX(Beep);
+	BOOL lbRc = FALSE;
+
+	if (IS_BEEP_SKIPPED)
+	{
+		wchar_t szBeep[64]; msprintf(szBeep, countof(szBeep), L"--- Skipped Beep(Freq=%u,Dur=%u)\n", dwFreq, dwDuration);
+		LogBeepSkip(szBeep);
+		goto wrap;
+	}
+
+	if (F(Beep))
+	{
+		lbRc = F(Beep)(dwFreq, dwDuration);
+	}
+
+wrap:
+	return lbRc;
+}
+
+BOOL WINAPI OnMessageBeep(UINT uType)
+{
+	//typedef BOOL (WINAPI* OnMessageBeep_t)(UINT uType);
+	ORIGINAL_EX(MessageBeep);
+	BOOL lbRc = FALSE;
+
+	if (IS_BEEP_SKIPPED)
+	{
+		wchar_t szBeep[48]; msprintf(szBeep, countof(szBeep), L"--- Skipped MessageBeep(ID=0x%X)\n", uType);
+		LogBeepSkip(szBeep);
+		goto wrap;
+	}
+
+	if (F(MessageBeep))
+	{
+		lbRc = F(MessageBeep)(uType);
+	}
+
+wrap:
+	return lbRc;
+}

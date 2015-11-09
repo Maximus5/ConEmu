@@ -1104,6 +1104,7 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 			break;
 		case 7:
 			//Beep (no spacing)
+			LogBeepSkip(L"--ExtWriteText(7)\n");
 			break;
 		case 8:
 			//BS

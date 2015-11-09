@@ -33,8 +33,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 /* *************************** */
 
+HOOK_PROTOTYPE(Beep,BOOL,WINAPI,(DWORD dwFreq,DWORD dwDuration));
 HOOK_PROTOTYPE(CreateDialogIndirectParamA,HWND,WINAPI,(HINSTANCE hInstance, LPCDLGTEMPLATE lpTemplate, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM lParamInit));
 HOOK_PROTOTYPE(CreateDialogIndirectParamW,HWND,WINAPI,(HINSTANCE hInstance, LPCDLGTEMPLATE lpTemplate, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM lParamInit));
 HOOK_PROTOTYPE(CreateDialogParamA,HWND,WINAPI,(HINSTANCE hInstance, LPCSTR lpTemplateName, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM dwInitParam));
 HOOK_PROTOTYPE(CreateDialogParamW,HWND,WINAPI,(HINSTANCE hInstance, LPCWSTR lpTemplateName, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM dwInitParam));
 HOOK_PROTOTYPE(DialogBoxIndirectParamAorW,INT_PTR,WINAPI,(HINSTANCE hInstance, LPCDLGTEMPLATE hDialogTemplate, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM dwInitParam, DWORD Flags));
+HOOK_PROTOTYPE(MessageBeep,BOOL,WINAPI,(UINT uType));

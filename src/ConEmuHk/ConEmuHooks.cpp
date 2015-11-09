@@ -338,6 +338,8 @@ bool InitHooksKernel()
 		HOOK_ITEM_BY_NAME(GetLocalTime,				kernel32),
 		HOOK_ITEM_BY_NAME(GetSystemTimeAsFileTime,	kernel32),
 		/* ************************ */
+		HOOK_ITEM_BY_NAME(Beep,						kernel32),
+		/* ************************ */
 		{0}
 	};
 
@@ -576,6 +578,7 @@ bool InitHooksUser32()
 		HOOK_ITEM_BY_NAME(GetMessageW,			user32),
 		HOOK_ITEM_BY_NAME(PeekMessageA,			user32),
 		HOOK_ITEM_BY_NAME(PeekMessageW,			user32),
+		HOOK_ITEM_BY_NAME(MessageBeep,			user32),
 		HOOK_ITEM_BY_NAME(CreateDialogParamA,	user32),
 		HOOK_ITEM_BY_NAME(CreateDialogParamW,	user32),
 		HOOK_ITEM_BY_NAME(CreateDialogIndirectParamA, user32),
