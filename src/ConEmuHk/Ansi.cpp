@@ -81,11 +81,15 @@ TODO("BufferWidth")
 typedef DWORD XTermAltBufferFlags;
 const XTermAltBufferFlags
 	xtb_AltBuffer          = 0x0001,
+	xtb_StoredCursor       = 0x0002,
+	xtb_StoredScrollRegion = 0x0004,
 	xtb_None               = 0;
 static struct XTermAltBuffer
 {
 	XTermAltBufferFlags Flags;
 	int    BufferSize;
+	COORD  CursorPos;
+	SHORT  ScrollStart, ScrollEnd;
 } gXTermAltBuffer = {};
 /* ************ Globals for xTerm/ViM ************ */
 
@@ -2791,6 +2795,19 @@ void CEAnsi::XTermAltBuffer(bool bSetAltBuffer)
 							gXTermAltBuffer.BufferSize = (csbi.dwSize.Y > (csbi.srWindow.Bottom - csbi.srWindow.Top + 1))
 								? csbi.dwSize.Y : 0;
 							gXTermAltBuffer.Flags = xtb_AltBuffer;
+							// Stored cursor pos
+							if (gDisplayCursor.bCursorPosStored)
+							{
+								gXTermAltBuffer.CursorPos = gDisplayCursor.StoredCursorPos;
+								gXTermAltBuffer.Flags |= xtb_StoredCursor;
+							}
+							// Stored scroll region
+							if (gDisplayOpt.ScrollRegion)
+							{
+								gXTermAltBuffer.ScrollStart = gDisplayOpt.ScrollStart;
+								gXTermAltBuffer.ScrollEnd = gDisplayOpt.ScrollEnd;
+								gXTermAltBuffer.Flags |= xtb_StoredScrollRegion;
+							}
 						}
 					}
 					ExecuteFreeResult(pIn);
@@ -2840,6 +2857,16 @@ void CEAnsi::XTermAltBuffer(bool bSetAltBuffer)
 			pOut = ExecuteSrvCmd(gnServerPID, pIn, ghConWnd);
 			ExecuteFreeResult(pIn);
 			ExecuteFreeResult(pOut);
+			// Restore saved states
+			if ((gDisplayCursor.bCursorPosStored = !!(gXTermAltBuffer.Flags & xtb_StoredCursor)))
+			{
+				gDisplayCursor.StoredCursorPos = gXTermAltBuffer.CursorPos;
+			}
+			if ((gDisplayOpt.ScrollRegion = !!(gXTermAltBuffer.Flags & xtb_StoredScrollRegion)))
+			{
+				gDisplayOpt.ScrollStart = gXTermAltBuffer.ScrollStart;
+				gDisplayOpt.ScrollEnd = gXTermAltBuffer.ScrollEnd;
+			}
 		}
 	}
 }
