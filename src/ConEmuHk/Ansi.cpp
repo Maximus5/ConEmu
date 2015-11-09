@@ -33,17 +33,17 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/common.hpp"
 #include "../common/ConEmuCheck.h"
 #include "../common/CmdLine.h"
-#include "SetHook.h"
 #include "../common/ConsoleAnnotation.h"
-#include "ExtConsole.h"
 #include "../common/MConHandle.h"
 #include "../common/MSectionSimple.h"
 #include "../common/WConsole.h"
 #include "../ConEmu/version.h"
+
+#include "ExtConsole.h"
 #include "hlpConsole.h"
+#include "SetHook.h"
 
 #include "hkConsole.h"
-#include "SetHook.h"
 
 ///* ***************** */
 #include "Ansi.h"
