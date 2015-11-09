@@ -89,7 +89,7 @@ struct ExtCurrentAttr
 static bool isCharSpace(wchar_t inChar)
 {
 	// Сюда пихаем все символы, которые можно отрисовать пустым фоном (как обычный пробел)
-	bool isSpace = (inChar == ucSpace || inChar == ucNoBreakSpace || inChar == 0 
+	bool isSpace = (inChar == ucSpace || inChar == ucNoBreakSpace || inChar == 0
 		/*|| (inChar>=0x2000 && inChar<=0x200F)
 		|| inChar == 0x2060 || inChar == 0x3000 || inChar == 0xFEFF*/);
 	return isSpace;
@@ -100,7 +100,7 @@ static bool isCharSpace(wchar_t inChar)
 static BOOL ExtGetBufferInfo(HANDLE &h, CONSOLE_SCREEN_BUFFER_INFO &csbi, SMALL_RECT &srWork)
 {
 	_ASSERTE(gbInitialized);
-	
+
 	if (!h)
 	{
 		_ASSERTE(h!=NULL);
@@ -109,7 +109,7 @@ static BOOL ExtGetBufferInfo(HANDLE &h, CONSOLE_SCREEN_BUFFER_INFO &csbi, SMALL_
 
 	if (!GetConsoleScreenBufferInfoCached(h, &csbi))
 		return FALSE;
-	
+
 	//if (gbFarBufferMode)
 	{
 		// Фар занимает нижнюю часть консоли. Прилеплен к левому краю
@@ -127,13 +127,13 @@ static BOOL ExtGetBufferInfo(HANDLE &h, CONSOLE_SCREEN_BUFFER_INFO &csbi, SMALL_
 		srWork.Right = csbi.dwSize.X - 1;
 		srWork.Bottom = csbi.dwSize.Y - 1;
 	}*/
-	
+
 	if (srWork.Left < 0 || srWork.Top < 0 || srWork.Left > srWork.Right || srWork.Top > srWork.Bottom)
 	{
 		_ASSERTE(srWork.Left >= 0 && srWork.Top >= 0 && srWork.Left <= srWork.Right && srWork.Top <= srWork.Bottom);
 		return FALSE;
 	}
-	
+
 	return TRUE;
 }
 
@@ -204,7 +204,7 @@ static BOOL ExtCheckBuffers(HANDLE h)
 			gpTrueColor->locked = TRUE;
 		}
 	}
-	
+
 	return (gpTrueColor!=NULL);
 }
 
@@ -225,7 +225,7 @@ void ExtCloseBuffers()
 // Это это "цвет по умолчанию".
 // То, что соответствует "Screen Text" и "Screen Background" в свойствах консоли.
 // То, что задаётся командой color в cmd.exe.
-// То, что будет использовано если в консоль просто писать 
+// То, что будет использовано если в консоль просто писать
 // по printf/std::cout/WriteConsole, без явного указания цвета.
 BOOL ExtGetAttributes(ExtAttributesParm* Info)
 {
@@ -238,7 +238,7 @@ BOOL ExtGetAttributes(ExtAttributesParm* Info)
 
 	BOOL lbTrueColor = ExtCheckBuffers(Info->ConsoleOutput);
 	UNREFERENCED_PARAMETER(lbTrueColor);
-	
+
 	HANDLE h = Info->ConsoleOutput;
 	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
 	SMALL_RECT srWork = {};
@@ -324,7 +324,7 @@ static void ExtPrepareColor(const ConEmuColor& Attributes, AnnotationInfo& t, WO
 // Это это "цвет по умолчанию".
 // То, что соответствует "Screen Text" и "Screen Background" в свойствах консоли.
 // То, что задаётся командой color в cmd.exe.
-// То, что будет использовано если в консоль просто писать 
+// То, что будет использовано если в консоль просто писать
 // по printf/std::cout/WriteConsole, без явного указания цвета.
 BOOL ExtSetAttributes(const ExtAttributesParm* Info)
 {
@@ -343,16 +343,16 @@ BOOL ExtSetAttributes(const ExtAttributesParm* Info)
 	SMALL_RECT srWork = {};
 	if (!ExtGetBufferInfo(h, csbi, srWork))
 		return FALSE;
-	
+
 	BOOL lbRc = TRUE;
-	
+
 	// <G|S>etTextAttributes должны ожидать указатель на ОДИН ConEmuColor.
 	AnnotationInfo t = {};
 	WORD n = 0;
 	ExtPrepareColor(Info->Attributes, t, n);
-	
+
 	SetConsoleTextAttribute(h, n);
-	
+
 	TODO("По хорошему, gExtCurrentAttr нада ветвить по разным h");
 	// запомнить, что WriteConsole должен писать атрибутом "t"
 	gExtCurrentAttr.WasSet = true;
@@ -361,7 +361,7 @@ BOOL ExtSetAttributes(const ExtAttributesParm* Info)
 	gExtCurrentAttr.CONBackIdx = CONBACKCOLOR(n);
 	gExtCurrentAttr.CEColor = Info->Attributes;
 	gExtCurrentAttr.AIColor = t;
-	
+
 	return lbRc;
 }
 
@@ -447,7 +447,7 @@ BOOL WINAPI ExtReadOutput(ExtReadWriteOutputParm* Info)
 		SetLastError(E_INVALIDARG);
 		return FALSE;
 	};
-	
+
 
 	SMALL_RECT rcRead = Info->Region;
 	COORD MyBufferSize = {Info->BufferSize.X, 1};
@@ -473,7 +473,7 @@ BOOL WINAPI ExtReadOutput(ExtReadWriteOutputParm* Info)
 			Y1 = 0;
 		lbRc = FALSE;
 	}
-	
+
 	for (rcRead.Top = Y1; rcRead.Top <= Y2; rcRead.Top++)
 	{
 		rcRead.Bottom = rcRead.Top;
@@ -515,7 +515,7 @@ BOOL WINAPI ExtReadOutput(ExtReadWriteOutputParm* Info)
 						if (Style & AI_STYLE_UNDERLINE)
 							chr.Attributes.Flags |= FCF_FG_UNDERLINE;
 					}
-					
+
 					if (pTrueColor && pTrueColor->fg_valid)
 					{
 						chr.Attributes.ForegroundColor = pTrueColor->fg_color;
@@ -557,7 +557,7 @@ BOOL WINAPI ExtReadOutput(ExtReadWriteOutputParm* Info)
 						if (Style & AI_STYLE_UNDERLINE)
 							clr.Flags |= CECF_FG_UNDERLINE;
 					}
-					
+
 					if (pTrueColor && pTrueColor->fg_valid)
 					{
 						clr.Flags |= CECF_FG_24BIT;
@@ -676,7 +676,7 @@ BOOL WINAPI ExtWriteOutput(const ExtReadWriteOutputParm* Info)
 			Y1 = 0;
 		lbRc = FALSE;
 	}
-	
+
 	for (rcWrite.Top = Y1; rcWrite.Top <= Y2; rcWrite.Top++)
 	{
 		rcWrite.Bottom = rcWrite.Top;
@@ -715,7 +715,7 @@ BOOL WINAPI ExtWriteOutput(const ExtReadWriteOutputParm* Info)
 					pc->Char.UnicodeChar = BufPtr.FARBuffer->Char;
 
 					unsigned __int64 Flags = BufPtr.FARBuffer->Attributes.Flags;
-					
+
 					Bold = (Flags & FCF_FG_BOLD) != 0;
 					Italic = (Flags & FCF_FG_ITALIC) != 0;
 					Underline = (Flags & FCF_FG_UNDERLINE) != 0;
@@ -733,7 +733,7 @@ BOOL WINAPI ExtWriteOutput(const ExtReadWriteOutputParm* Info)
 					pc->Char.UnicodeChar = BufPtr.CEBuffer->Char.UnicodeChar;
 
 					unsigned __int64 Flags = BufPtr.CEColor->Flags;
-					
+
 					Bold = (Flags & CECF_FG_BOLD) != 0;
 					Italic = (Flags & CECF_FG_ITALIC) != 0;
 					Underline = (Flags & CECF_FG_UNDERLINE) != 0;
@@ -766,7 +766,7 @@ BOOL WINAPI ExtWriteOutput(const ExtReadWriteOutputParm* Info)
 			}
 
 			WORD n = 0, f = 0;
-			
+
 			if (pTrueColor)
 			{
 				if (Bold)
@@ -800,7 +800,7 @@ BOOL WINAPI ExtWriteOutput(const ExtReadWriteOutputParm* Info)
 					pTrueColor->fg_valid = TRUE;
 				}
 			}
-			
+
 			if (!Back24bit)
 			{
 				nBackColor = -1;
@@ -839,7 +839,7 @@ BOOL WINAPI ExtWriteOutput(const ExtReadWriteOutputParm* Info)
 			if (pTrueColor)
 				pTrueColor++;
 		}
-		
+
 		if (!WriteConsoleOutputW(h, pcWriteBuf, MyBufferSize, MyBufferCoord, &rcWrite))
 		{
 			lbRc = FALSE;
@@ -901,9 +901,9 @@ BOOL WINAPI apiWriteConsoleW(HANDLE hConsoleOutput, const VOID *lpBuffer, DWORD 
 			}
 		}
 	}
-	
+
 	lbRc = fnWriteConsoleW(hConsoleOutput, lpBuffer, nNumberOfCharsToWrite, lpNumberOfCharsWritten, lpReserved);
-	
+
 	return lbRc;
 }
 
@@ -934,7 +934,7 @@ static BOOL IntWriteText(HANDLE h, SHORT x, SHORT ForceDumpX,
 				pTrueColor = NULL; // Выделенный буфер оказался недостаточным
 				break;
 			}
-			
+
 			*(pTrueColor++) = AIColor;
 		}
 	}
@@ -1150,7 +1150,7 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 			if (y2 >= ScrollBottom/*csbi.dwSize.Y*/)
 			{
 				// Экран прокрутился на одну строку вверх
-				
+
 				// расширенный буфер - прокрутить
 				_ASSERTE((y-y2) == -1); // Должен быть сдвиг на одну строку
 				ExtScrollScreenParm Shift = {sizeof(Shift), essf_None, h, y-y2, DefClr.Attributes, L' '};
@@ -1175,10 +1175,10 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 				{
 					y2 = LOSHORT(ScrollBottom) - 1;
 					_ASSERTEX((int)y2 == (int)(ScrollBottom - 1));
-					
+
 					crScrollCursor.X = x2;
 					crScrollCursor.Y = y2;
-					
+
 					SetConsoleCursorPosition(Info->ConsoleOutput, crScrollCursor);
 				}
 				else
@@ -1625,7 +1625,7 @@ BOOL ExtScrollScreen(ExtScrollScreenParm* Info)
 			AnnotationInfo t = {};
 			CHAR_INFO cFill = {{Info->FillChar}};
 			ExtPrepareColor(Info->FillAttr, t, cFill.Attributes);
-			
+
 			F(ScrollConsoleScreenBufferW)(Info->ConsoleOutput, &rcSrc, NULL, crDst, &cFill);
 
 			if (nDir < 0)
@@ -1687,7 +1687,7 @@ BOOL ExtScrollScreen(ExtScrollScreenParm* Info)
 			AnnotationInfo t = {};
 			CHAR_INFO cFill = {{Info->FillChar}};
 			ExtPrepareColor(Info->FillAttr, t, cFill.Attributes);
-			
+
 			F(ScrollConsoleScreenBufferW)(Info->ConsoleOutput, &rcSrc, NULL, crDst, &cFill);
 
 			if (nDir > 0)
