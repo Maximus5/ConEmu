@@ -231,7 +231,7 @@ class MPipe
 			int nTermWait = mh_TermEvent ? WaitForSingleObject(mh_TermEvent, 0) : -1;
 			if (nDelta >= TRANSACT_WARN_TIMEOUT && !IsDebuggerPresent())
 			{
-				_ASSERTE(nDelta <= TRANSACT_WARN_TIMEOUT);
+				//_ASSERTE(nDelta <= TRANSACT_WARN_TIMEOUT);
 			}
 			#endif
 

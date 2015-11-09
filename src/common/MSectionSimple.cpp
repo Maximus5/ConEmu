@@ -180,7 +180,7 @@ BOOL MSectionLockSimple::Lock(MSectionSimple* apS, DWORD anTimeout/*=-1*/)
 		{
 			if (nDelta >= anTimeout)
 			{
-				_ASSERTEX(FALSE && "Failed to lock CriticalSection, timeout");
+				_ASSERTEX(IsDebuggerPresent() && "Failed to lock CriticalSection, timeout");
 				break;
 			}
 		}
