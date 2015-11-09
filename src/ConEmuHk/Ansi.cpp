@@ -2201,6 +2201,33 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 				else
 					DumpUnknownEscape(Code.pszEscStart, Code.nTotalLen);
 				break;
+			case 47:   /* alternate screen */
+			case 1047: /* alternate screen */
+			case 1049: /* cursor & alternate screen */
+				// xmux/screen: Alternate screen
+				if ((Code.PvtLen == 1) && (Code.Pvt[0] == L'?'))
+				{
+					// \e[?1049h: save cursor pos
+					if ((Code.ArgV[0] == 1049) && (Code.Action == L'h'))
+						XTermSaveRestoreCursor(true, hConsoleOutput);
+					// h: switch to alternative buffer without backscroll
+					// l: restore saved scrollback buffer
+					XTermAltBuffer((Code.Action == L'h'));
+					// \e[?1049l - restore cursor pos
+					if ((Code.ArgV[0] == 1049) && (Code.Action == L'l'))
+						XTermSaveRestoreCursor(false, hConsoleOutput);
+				}
+				else
+				{
+					DumpUnknownEscape(Code.pszEscStart, Code.nTotalLen);
+				}
+				break;
+			case 1048: /* save/restore cursor */
+				if ((Code.PvtLen == 1) && (Code.Pvt[0] == L'?'))
+					XTermSaveRestoreCursor((Code.Action == L'h'), hConsoleOutput);
+				else
+					DumpUnknownEscape(Code.pszEscStart, Code.nTotalLen);
+				break;
 			default:
 				DumpUnknownEscape(Code.pszEscStart,Code.nTotalLen);
 			}
