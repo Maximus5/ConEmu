@@ -217,6 +217,7 @@ struct ExtScrollScreenParm
 	RECT Region;
 };
 
+BOOL ExtScrollLine(ExtScrollScreenParm* Info);
 BOOL ExtScrollScreen(ExtScrollScreenParm* Info);
 
 

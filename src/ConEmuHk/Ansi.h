@@ -217,6 +217,7 @@ public:
 	static void DumpEscape(LPCWSTR buf, size_t cchLen, DumpEscapeCodes iUnknown);
 
 	BOOL WriteText(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, LPCWSTR lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, BOOL abCommit = FALSE, EXTREADWRITEFLAGS AddFlags = ewtf_None);
+	BOOL ScrollLine(HANDLE hConsoleOutput, int nDir);
 	BOOL ScrollScreen(HANDLE hConsoleOutput, int nDir);
 	BOOL PadAndScroll(HANDLE hConsoleOutput, CONSOLE_SCREEN_BUFFER_INFO& csbi);
 	BOOL LinesInsert(HANDLE hConsoleOutput, const int LinesCount);

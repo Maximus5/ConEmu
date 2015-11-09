@@ -1289,6 +1289,13 @@ wrap2:
 	return iRc;
 }
 
+BOOL CEAnsi::ScrollLine(HANDLE hConsoleOutput, int nDir)
+{
+	ExtScrollScreenParm scrl = {sizeof(scrl), essf_Current|essf_Commit, hConsoleOutput, nDir, {}, L' '};
+	BOOL lbRc = ExtScrollLine(&scrl);
+	return lbRc;
+}
+
 BOOL CEAnsi::ScrollScreen(HANDLE hConsoleOutput, int nDir)
 {
 	ExtScrollScreenParm scrl = {sizeof(scrl), essf_Current|essf_Commit, hConsoleOutput, nDir, {}, L' '};
@@ -2045,11 +2052,11 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 
 	case L'@':
 		// Insert P s (Blank) Character(s) (default = 1) (ICH).
-		DumpUnknownEscape(Code.pszEscStart,Code.nTotalLen);
+		ScrollLine(hConsoleOutput, ((Code.ArgC > 0 && Code.ArgV[0] > 0) ? Code.ArgV[0] : 1));
 		break;
 	case L'P':
 		// Delete P s Character(s) (default = 1) (DCH).
-		DumpUnknownEscape(Code.pszEscStart,Code.nTotalLen);
+		ScrollLine(hConsoleOutput, -((Code.ArgC > 0 && Code.ArgV[0] > 0) ? Code.ArgV[0] : 1));
 		break;
 
 	case L'T':
