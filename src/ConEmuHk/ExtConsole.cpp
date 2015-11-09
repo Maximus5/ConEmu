@@ -984,6 +984,7 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 
 	bool  bWrap = true;
 	bool  bVirtualWrap = false;
+	bool  bRevertMode = false;
 	SHORT WrapAtCol = csbi.dwSize.X; // 1-based
 	DWORD Mode = 0;
 
@@ -1046,6 +1047,30 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 	const wchar_t *pFrom = Info->Buffer;
 	const wchar_t *pEnd = pFrom + Info->NumberOfCharsToWrite;
 
+	// tmux, status line
+	if ((Info->Flags & ewtf_DontWrap))
+	{
+		// Rather optimistic, but status line is written mostly separately
+		if (bWrap
+			&& (csbi.dwCursorPosition.Y == csbi.srWindow.Bottom)
+			&& ((csbi.dwCursorPosition.X + Info->NumberOfCharsToWrite) == csbi.dwSize.X))
+		{
+			bRevertMode = true;
+			// If app was asked to write carriage return - don't enable non-wrap mode
+			for (const wchar_t* p = pFrom; p < pEnd; p++)
+			{
+				if ((*p == L'\n') || (*p == L'\r'))
+				{
+					bRevertMode = false; break;
+				}
+			}
+			// Don't let windows console to move cursor to the next line and **scroll** contents
+			if (bRevertMode)
+			{
+				SetConsoleMode(h, Mode & ~ENABLE_WRAP_AT_EOL_OUTPUT);
+			}
+		}
+	}
 
 	const wchar_t *pCur = pFrom;
 	SHORT x = csbi.dwCursorPosition.X, y = csbi.dwCursorPosition.Y; // 0-based
@@ -1206,6 +1231,10 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 					 (pTrueColorEnd), AIColor, (WriteConsoleW_t)Info->Private);
 	}
 
+	if (bRevertMode)
+	{
+		SetConsoleMode(h, Mode);
+	}
 
 	// накрутить индекс в AnnotationInfo
 	if (gpTrueColor)

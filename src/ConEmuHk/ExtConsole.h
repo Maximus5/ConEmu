@@ -85,6 +85,8 @@ static const EXTREADWRITEFLAGS
 
 	ewtf_Region  = 0x0000000000000040ULL, // Top/Bottom lines are defined, take into account when "\r\n"
 
+	ewtf_DontWrap= 0x0000000000000080ULL, // tmux, status line
+
 	ewtf_Commit  = 0x0000000000000100ULL, // Only for Write functions
 	ewtf_None    = 0x0000000000000000ULL;
 

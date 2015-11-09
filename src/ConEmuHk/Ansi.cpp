@@ -1675,9 +1675,17 @@ BOOL CEAnsi::WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOut
 					lbApply = FALSE;
 				}
 
+				EXTREADWRITEFLAGS AddFlags = ewtf_None;
+				if (iEsc == 1)
+				{
+					// tmux, status line?
+					// ExtWriteText will check (AI) if it must not wrap&scroll
+					AddFlags = ewtf_DontWrap;
+				}
+
 				DWORD nWrite = (DWORD)(lpStart - lpBuffer);
 				//lbRc = WriteText(_WriteConsoleW, hConsoleOutput, lpBuffer, nWrite, lpNumberOfCharsWritten);
-				lbRc = WriteText(_WriteConsoleW, hConsoleOutput, lpBuffer, nWrite, lpNumberOfCharsWritten);
+				lbRc = WriteText(_WriteConsoleW, hConsoleOutput, lpBuffer, nWrite, lpNumberOfCharsWritten, FALSE, AddFlags);
 				if (!lbRc)
 					goto wrap;
 				//write.Buffer = lpBuffer;
