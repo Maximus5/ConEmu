@@ -982,7 +982,8 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 		return FALSE;
 	}
 
-	bool  bWrap = true, bVirtualWrap = false;;
+	bool  bWrap = true;
+	bool  bVirtualWrap = false;
 	SHORT WrapAtCol = csbi.dwSize.X; // 1-based
 	DWORD Mode = 0;
 
