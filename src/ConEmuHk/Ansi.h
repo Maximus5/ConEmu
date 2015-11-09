@@ -245,8 +245,8 @@ protected:
 		UINT BackOrUnderline;  // 4
 		int  TextColor;        // 30-37,38,39
 		BOOL Text256;          // 38
-	    int  BackColor;        // 40-47,48,49
-	    BOOL Back256;          // 48
+		int  BackColor;        // 40-47,48,49
+		BOOL Back256;          // 48
 		// xterm
 		BOOL Inverse;
 	}; // gDisplayParm = {};
