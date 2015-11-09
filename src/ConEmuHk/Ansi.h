@@ -278,12 +278,14 @@ protected:
 		BOOL  AutoLfNl; // LF/NL (default off): Automatically follow echo of LF, VT or FF with CR.
 		//
 		BOOL  ScrollRegion;
-		SHORT ScrollStart, ScrollEnd; // 1-based line indexes (relative to VISIBLE area, these are not absolute buffer coords)
+		SHORT ScrollStart, ScrollEnd; // 0-based absolute line indexes
 		//
 		BOOL  ShowRawAnsi; // \e[3h display ANSI control characters (TRUE), \e[3l process ANSI (FALSE, normal mode)
 	}; // gDisplayOpt;
 	// Bad thing again...
 	static DisplayOpt gDisplayOpt;
+	// Store absolute coords by relative ANSI values
+	void SetScrollRegion(bool bRegion, bool bRelative = true, int nStart = 0, int nEnd = 0, HANDLE hConsoleOutput = NULL);
 
 	wchar_t gsPrevAnsiPart[CEAnsi_MaxPrevPart]; // = {};
 	INT_PTR gnPrevAnsiPart; // = 0;

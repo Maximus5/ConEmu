@@ -365,7 +365,7 @@ CEAnsi::DisplayCursorPos CEAnsi::gDisplayCursor = {};
 //	BOOL  AutoLfNl; // LF/NL (default off): Automatically follow echo of LF, VT or FF with CR.
 //	//
 //	BOOL  ScrollRegion;
-//	SHORT ScrollStart, ScrollEnd; // 1-based line indexes
+//	SHORT ScrollStart, ScrollEnd; // 0-based absolute line indexes
 //	//
 //	BOOL  ShowRawAnsi; // \e[3h display ANSI control characters (TRUE), \e[3l process ANSI (FALSE, normal mode)
 //} gDisplayOpt;
@@ -776,9 +776,9 @@ BOOL CEAnsi::WriteText(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, 
 	if (gDisplayOpt.ScrollRegion)
 	{
 		write.Flags |= ewtf_Region;
-		_ASSERTEX(gDisplayOpt.ScrollStart>=1 && gDisplayOpt.ScrollEnd>=gDisplayOpt.ScrollStart);
-		write.Region.top = gDisplayOpt.ScrollStart-1;
-		write.Region.bottom = gDisplayOpt.ScrollEnd-1;
+		_ASSERTEX(gDisplayOpt.ScrollStart>=0 && gDisplayOpt.ScrollEnd>=gDisplayOpt.ScrollStart);
+		write.Region.top = gDisplayOpt.ScrollStart;
+		write.Region.bottom = gDisplayOpt.ScrollEnd;
 		write.Region.left = write.Region.right = 0; // not used yet
 	}
 
@@ -1312,9 +1312,9 @@ BOOL CEAnsi::ScrollScreen(HANDLE hConsoleOutput, int nDir)
 	ExtScrollScreenParm scrl = {sizeof(scrl), essf_Current|essf_Commit, hConsoleOutput, nDir, {}, L' '};
 	if (gDisplayOpt.ScrollRegion)
 	{
-		_ASSERTEX(gDisplayOpt.ScrollStart>=1 && gDisplayOpt.ScrollEnd>=gDisplayOpt.ScrollStart);
-		scrl.Region.top = gDisplayOpt.ScrollStart-1;
-		scrl.Region.bottom = gDisplayOpt.ScrollEnd-1;
+		_ASSERTEX(gDisplayOpt.ScrollStart>=0 && gDisplayOpt.ScrollEnd>=gDisplayOpt.ScrollStart);
+		scrl.Region.top = gDisplayOpt.ScrollStart;
+		scrl.Region.bottom = gDisplayOpt.ScrollEnd;
 		scrl.Flags |= essf_Region;
 	}
 
@@ -1363,9 +1363,9 @@ BOOL CEAnsi::LinesInsert(HANDLE hConsoleOutput, const int LinesCount)
 	int TopLine, BottomLine;
 	if (gDisplayOpt.ScrollRegion)
 	{
-		_ASSERTEX(gDisplayOpt.ScrollStart>=1 && gDisplayOpt.ScrollEnd>=gDisplayOpt.ScrollStart);
-		TopLine = max(gDisplayOpt.ScrollStart-1,0);
-		BottomLine = max(gDisplayOpt.ScrollEnd-1,0);
+		_ASSERTEX(gDisplayOpt.ScrollStart>=0 && gDisplayOpt.ScrollEnd>=gDisplayOpt.ScrollStart);
+		TopLine = max(gDisplayOpt.ScrollStart,0);
+		BottomLine = max(gDisplayOpt.ScrollEnd,0);
 	}
 	else
 	{
@@ -1396,11 +1396,11 @@ BOOL CEAnsi::LinesDelete(HANDLE hConsoleOutput, const int LinesCount)
 	int TopLine, BottomLine;
 	if (gDisplayOpt.ScrollRegion)
 	{
-		_ASSERTEX(gDisplayOpt.ScrollStart>=1 && gDisplayOpt.ScrollEnd>gDisplayOpt.ScrollStart);
-		// ScrollStart & ScrollEnd are 1-based line indexes
+		_ASSERTEX(gDisplayOpt.ScrollStart>=0 && gDisplayOpt.ScrollEnd>gDisplayOpt.ScrollStart);
+		// ScrollStart & ScrollEnd are 0-based absolute line indexes
 		// relative to VISIBLE area, these are not absolute buffer coords
-		TopLine = gDisplayOpt.ScrollStart-1+csbi.srWindow.Top;
-		BottomLine = gDisplayOpt.ScrollEnd-1+csbi.srWindow.Top;
+		TopLine = gDisplayOpt.ScrollStart;
+		BottomLine = gDisplayOpt.ScrollEnd;
 	}
 	else
 	{
@@ -2033,15 +2033,12 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 		//
 		if ((Code.ArgC >= 2) && (Code.ArgV[0] >= 1) && (Code.ArgV[1] >= Code.ArgV[0]))
 		{
-			gDisplayOpt.ScrollRegion = TRUE;
-			// Lines are 1-based
-			gDisplayOpt.ScrollStart = Code.ArgV[0];
-			gDisplayOpt.ScrollEnd = Code.ArgV[1];
-			_ASSERTEX(gDisplayOpt.ScrollStart>=1 && gDisplayOpt.ScrollEnd>=gDisplayOpt.ScrollStart);
+			// Values are 1-based
+			SetScrollRegion(true, true, Code.ArgV[0], Code.ArgV[1], hConsoleOutput);
 		}
 		else
 		{
-			gDisplayOpt.ScrollRegion = FALSE;
+			SetScrollRegion(false);
 		}
 		break;
 
@@ -2760,6 +2757,38 @@ void CEAnsi::WriteAnsiCode_VIM(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsole
 			}
 		}
 		break; // "|...m"
+	}
+}
+
+void CEAnsi::SetScrollRegion(bool bRegion, bool bRelative, int nStart, int nEnd, HANDLE hConsoleOutput)
+{
+	if (bRegion)
+	{
+		if (bRelative)
+		{
+			HANDLE hConOut = hConsoleOutput ? hConsoleOutput : GetStdHandle(STD_OUTPUT_HANDLE);
+			CONSOLE_SCREEN_BUFFER_INFO csbi = {};
+			TODO("Determine the lowest dirty line of console?");
+			if (GetConsoleScreenBufferInfoCached(hConOut, &csbi, TRUE))
+			{
+				nStart += csbi.srWindow.Top;
+				nEnd += csbi.srWindow.Top;
+			}
+		}
+		// We need 0-based absolute values
+		gDisplayOpt.ScrollStart = nStart - 1;
+		gDisplayOpt.ScrollEnd = nEnd - 1;
+		// Validate
+		if (!(gDisplayOpt.ScrollRegion = (gDisplayOpt.ScrollStart>=0 && gDisplayOpt.ScrollEnd>=gDisplayOpt.ScrollStart)))
+		{
+			_ASSERTEX(gDisplayOpt.ScrollStart>=0 && gDisplayOpt.ScrollEnd>=gDisplayOpt.ScrollStart);
+		}
+		wchar_t szLog[40]; msprintf(szLog, countof(szLog), L"{%i,%i}", gDisplayOpt.ScrollStart, gDisplayOpt.ScrollEnd);
+	}
+	else
+	{
+		gDisplayOpt.ScrollRegion = FALSE;
+		DumpKnownEscape(L"<Disabled>", 10, de_ScrollRegion);
 	}
 }
 
