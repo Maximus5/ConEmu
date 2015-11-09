@@ -1458,8 +1458,6 @@ BOOL ExtScrollScreen(ExtScrollScreenParm* Info)
 		return FALSE;
 
 	BOOL lbRc = TRUE;
-	CHAR_INFO Buf[200];
-	CHAR_INFO* pBuf = (csbi.dwSize.X <= (int)countof(Buf)) ? Buf : (CHAR_INFO*)malloc(csbi.dwSize.X*sizeof(*pBuf));
 	COORD crSize = {csbi.dwSize.X,1};
 	COORD cr0 = {};
 	//RECT rcRgn = Info->Region;
@@ -1505,11 +1503,6 @@ BOOL ExtScrollScreen(ExtScrollScreenParm* Info)
 			SrcLineTop = srWork.Top;
 			SrcLineBottom = (csbi.dwSize.Y - 1) - nDir;
 		}
-	}
-
-	if (!pBuf)
-	{
-		return FALSE;
 	}
 
 	if (SrcLineBottom < SrcLineTop)
@@ -1713,9 +1706,6 @@ BOOL ExtScrollScreen(ExtScrollScreenParm* Info)
 		ExtCommitParm c = {sizeof(c), Info->ConsoleOutput};
 		ExtCommit(&c);
 	}
-
-	if (pBuf != Buf)
-		free(pBuf);
 
 	return lbRc;
 }
