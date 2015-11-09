@@ -1097,6 +1097,7 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 
 		SHORT ForceDumpX = 0;
 		bool BSRN = false;
+		bool bForceDumpScroll = false;
 
 		// Обработка символов, которые двигают курсор
 		switch (*pCur)
@@ -1125,6 +1126,8 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 			if (x2 > 0)
 				ForceDumpX = x2-1;
 			x2 = 0; y2++;
+			if (y2 >= ScrollBottom)
+				bForceDumpScroll = true;
 			_ASSERTE(bWrap);
 			BSRN = true;
 			break;
@@ -1152,8 +1155,8 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 			}
 		}
 
-		
-		if (ForceDumpX)
+
+		if (ForceDumpX || bForceDumpScroll)
 		{
 			// Вывод расширенных атрибутов (если нужно и можно) и собственно текста
 			// Включая символ pCur
