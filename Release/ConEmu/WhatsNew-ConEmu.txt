@@ -19,6 +19,43 @@ http://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2015.11.9
+* Move checkbox `Activate split/pane on mouse hover` to the `Controls` settings page.
+* Write process list changes and active process name to log (ConEmu -log).
+* Write CtrlC/CtrlBreak and other console events to log (ConEmu -log).
+* Don't restart PC without confirmation after `CUP ALL` (chocolatey update).
+  https://groups.google.com/d/topic/chocolatey/UvVVLpoBnCg/discussion
+* Improve ConEmuC debugger output.
+
+* A lot of ANSI fixes generally for [plink fork](https://github.com/Maximus5/plink#readme).
+* ANSI. Primary buffer was not restored properly if there was no backscroll.
+* ANSI. Support tmux status line.
+* ANSI. Fix some scrolling issues.
+* ANSI. Sequence `ESC [ *a* ; *b* r` addresses working area coordinates.
+  ANSI aware applications don't know about backscroll (upper invisible area)
+  buffer, they intend to work within ‘working area’ instead.
+* ANSI. New sequences are supported.
+
+| ESC [ *n* @ | Insert *n* (default 1) blank characters. |
+| ESC [ *n* P | Delete *n* (default 1) characters. |
+| ESC [ *row* d | Moves the cursor to line *row* (absolute, 1-based). |
+| ESC [ 7 m | Use inverse colors |
+| ESC [ 27 m | Use normal colors |
+| ESC [ ? 47 h | Same as ‘ESC \[ ? 1047 h’ |
+| ESC [ ? 47 l | Same as ‘ESC \[ ? 1047 l’ |
+| ESC [ ? 1047 h | Activate xterm alternative buffer (no backscroll) |
+| ESC [ ? 1047 l | Restore xterm working buffer (with backscroll) |
+| ESC [ ? 1048 h | Save cursor position |
+| ESC [ ? 1048 l | Restore cursor position |
+| ESC [ ? 1049 h | Save cursor position and activate xterm alternative buffer (no backscroll) |
+| ESC [ ? 1049 l | Restore cursor position and restore xterm working buffer (with backscroll) |
+
+* ANSI. Report ‘xterm version 136’ on request to avoid problems in Vim,
+  accessed by ssh on Unix machines, just let it think it's an xterm terminal.
+
+| ESC [ *>* c | Reports `ESC > 0 ; 136 ; 0 c` |
+
+
 2015.11.1
 * gh#401: Fix: `Ctrl+~` doesn't work on build 151029.
 * gh#399: Use mouse for ConEmu's selection instead of passing to cygwin's vim.
