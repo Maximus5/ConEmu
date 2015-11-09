@@ -109,17 +109,19 @@ struct AnnotationInfo
 			 */
 			unsigned int style :16;
 
-#define AI_STYLE_BOLD          1
-#define AI_STYLE_ITALIC        2
-#define AI_STYLE_UNDERLINE     4
-#define AI_STYLE_STRIKEOUT     8
-#define AI_STYLE_SUPERSCRIPT   16
-#define AI_STYLE_SUBSCRIPT     32
-#define AI_STYLE_SHADOW        64
-#define AI_STYLE_SMALL_CAPS    128
-#define AI_STYLE_ALL_CAPS      256
+			#define AI_STYLE_BOLD          0x0001
+			#define AI_STYLE_ITALIC        0x0002
+			#define AI_STYLE_UNDERLINE     0x0004
+			#define AI_STYLE_STRIKEOUT     0x0008
+			#define AI_STYLE_SUPERSCRIPT   0x0010
+			#define AI_STYLE_SUBSCRIPT     0x0020
+			#define AI_STYLE_SHADOW        0x0040
+			#define AI_STYLE_SMALL_CAPS    0x0080
+			#define AI_STYLE_ALL_CAPS      0x0100
 
 		};
+
+		// AnnotationInfo size is 8*DWORD
 		int raw[8];
 	};
 };
