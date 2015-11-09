@@ -2484,7 +2484,9 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 			// this will be "ESC > 67 ; build ; 0 c"
 			// 67 is ASCII code of 'C' (ConEmu, yeah)
 			// Other terminals report examples: MinTTY -> 77, rxvt -> 82, screen -> 83
-			msprintf(szVerInfo, countof(szVerInfo), L"\x1B>%u;%u;0c", (int)'C', MVV_1*10000+MVV_2*100+MVV_3);
+			// msprintf(szVerInfo, countof(szVerInfo), L"\x1B>%u;%u;0c", (int)'C', MVV_1*10000+MVV_2*100+MVV_3);
+			// Emulate xterm version 136?
+			wcscpy_c(szVerInfo, L"\x1B[>0;136;0c");
 			ReportString(szVerInfo);
 		}
 		// echo -e "\e[c"
