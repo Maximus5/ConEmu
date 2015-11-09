@@ -44,6 +44,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "SetHook.h"
 
 #include "hkConsole.h"
+#include "hkStdIO.h"
 
 ///* ***************** */
 #include "Ansi.h"
@@ -184,7 +185,8 @@ void CEAnsi::WriteAnsiLog(LPCWSTR lpBuffer, DWORD nChars)
 		// But multi-process writers can't be handled correctly
 		MSectionLockSimple lock; lock.Lock(gcsAnsiLogFile, 500);
 		SetFilePointer(ghAnsiLogFile, 0, NULL, FILE_END);
-		bWrite = WriteFile(ghAnsiLogFile, pszBuf, nLen, &nWritten, NULL);
+		ORIGINAL_KRNL(WriteFile);
+		bWrite = F(WriteFile)(ghAnsiLogFile, pszBuf, nLen, &nWritten, NULL);
 	}
 	if (pszBuf != sBuf)
 		free(pszBuf);
