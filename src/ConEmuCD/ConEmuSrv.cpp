@@ -2018,12 +2018,15 @@ void CmdOutputRestore(bool abSimpleMode)
 		return;
 	}
 
+#if 0
+	// Event if there were no backscroll - we may restore saved content!
 	if (lsbi.dwSize.Y <= (lsbi.srWindow.Bottom - lsbi.srWindow.Top + 1))
 	{
 		// There is no scroller in window
 		// Nothing to do
 		return;
 	}
+#endif
 
 	CHAR_INFO chrFill = {};
 	chrFill.Attributes = lsbi.wAttributes;
