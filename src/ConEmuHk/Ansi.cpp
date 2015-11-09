@@ -1839,6 +1839,7 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 	case L'E': // Moves cursor to beginning of the line n (default 1) lines down.
 	case L'F': // Moves cursor to beginning of the line n (default 1) lines up.
 	case L'G': // Moves the cursor to column n.
+	case L'd': // Moves the cursor to line n.
 		// Change cursor position
 		if (GetConsoleScreenBufferInfoCached(hConsoleOutput, &csbi))
 		{
@@ -1881,6 +1882,10 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 			case L'G':
 				// Moves the cursor to column n.
 				crNewPos.X = (Code.ArgC > 0) ? (Code.ArgV[0] - 1) : 0;
+				break;
+			case L'd':
+				// Moves the cursor to line n.
+				crNewPos.Y = (Code.ArgC > 0) ? (Code.ArgV[0] - 1) : 0;
 				break;
 			#ifdef _DEBUG
 			default:
