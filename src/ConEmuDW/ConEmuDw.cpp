@@ -385,6 +385,7 @@ BOOL CheckBuffers(bool abWrite /*= false*/)
 		if (!gpTrueColor)
 		{
 			wchar_t szMapName[128];
+			_ASSERTE(sizeof(AnnotationInfo) == sizeof(AnnotationInfo::raw));
 			wsprintf(szMapName, AnnotationShareName, (DWORD)sizeof(AnnotationInfo), (DWORD)hCon); //-V205
 			// AnnotationShareName is CREATED in ConEmu.exe
 			// May be it would be better, to avoid hooking and cycling (minhook),
