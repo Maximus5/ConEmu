@@ -208,6 +208,8 @@ protected:
 	BOOL ReportString(LPCWSTR asRet);
 	void ReportConsoleTitle();
 	static void WriteAnsiLog(LPCWSTR lpBuffer, DWORD nChars);
+protected:
+	static void XTermSaveRestoreCursor(bool bSaveCursor, HANDLE hConsoleOutput = NULL);
 public:
 
 	void ReSetDisplayParm(HANDLE hConsoleOutput, BOOL bReset, BOOL bApply);
@@ -256,8 +258,9 @@ protected:
 
 	struct DisplayCursorPos
 	{
-	    // Internal
-	    COORD StoredCursorPos;
+		// Internal
+		BOOL  bCursorPosStored;
+		COORD StoredCursorPos;
 		// Esc[?1h 	Set cursor key to application 	DECCKM
 		// Esc[?1l 	Set cursor key to cursor 	DECCKM
 		BOOL CursorKeysApp; // "1h"

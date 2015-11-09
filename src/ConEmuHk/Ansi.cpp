@@ -1804,13 +1804,12 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 	{
 	case L's':
 		// Save cursor position (can not be nested)
-		if (GetConsoleScreenBufferInfoCached(hConsoleOutput, &csbi))
-			gDisplayCursor.StoredCursorPos = csbi.dwCursorPosition;
+		XTermSaveRestoreCursor(true, hConsoleOutput);
 		break;
 
 	case L'u':
 		// Restore cursor position
-		SetConsoleCursorPosition(hConsoleOutput, gDisplayCursor.StoredCursorPos);
+		XTermSaveRestoreCursor(false, hConsoleOutput);
 		break;
 
 	case L'H': // Set cursor position (1-based)
@@ -2720,6 +2719,27 @@ void CEAnsi::WriteAnsiCode_VIM(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsole
 			}
 		}
 		break; // "|...m"
+	}
+}
+
+void CEAnsi::XTermSaveRestoreCursor(bool bSaveCursor, HANDLE hConsoleOutput /*= NULL*/)
+{
+	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
+	HANDLE hConOut = hConsoleOutput ? hConsoleOutput : GetStdHandle(STD_OUTPUT_HANDLE);
+
+	if (bSaveCursor)
+	{
+		// Save cursor position (can not be nested)
+		if (GetConsoleScreenBufferInfoCached(hConOut, &csbi))
+		{
+			gDisplayCursor.StoredCursorPos = csbi.dwCursorPosition;
+			gDisplayCursor.bCursorPosStored = TRUE;
+		}
+	}
+	else
+	{
+		// Restore cursor position
+		SetConsoleCursorPosition(hConOut, gDisplayCursor.StoredCursorPos);
 	}
 }
 
