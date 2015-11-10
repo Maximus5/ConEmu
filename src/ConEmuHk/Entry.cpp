@@ -118,7 +118,7 @@ DWORD gnLastShowExeTick = 0;
 
 void force_print_timings(LPCWSTR s, HANDLE hTimingHandle, wchar_t (&szTimingMsg)[512])
 {
-	DWORD w, nCurTick = GetTickCount();
+	DWORD nCurTick = GetTickCount();
 
 	#ifdef SHOW_EXE_TIMINGS
 	msprintf(szTimingMsg, countof(szTimingMsg), L">>> %s PID=%u >>> %u >>> %s\n", SHOW_EXE_MSGBOX_NAME, GetCurrentProcessId(), gnLastShowExeTick?(nCurTick - gnLastShowExeTick):0, s);
@@ -126,10 +126,9 @@ void force_print_timings(LPCWSTR s, HANDLE hTimingHandle, wchar_t (&szTimingMsg)
 	msprintf(szTimingMsg, countof(szTimingMsg), L">>> PID=%u >>> %u >>> %s\n", GetCurrentProcessId(), (nCurTick - gnLastShowExeTick), s);
 	#endif
 
-	OnWriteConsoleW(hTimingHandle, szTimingMsg, lstrlen(szTimingMsg), &w, NULL);
+	WriteProcessed3(szTimingMsg, lstrlen(szTimingMsg), NULL, hTimingHandle);
 
 	gnLastShowExeTick = nCurTick;
-	UNREFERENCED_PARAMETER(w);
 }
 #endif
 
@@ -2111,6 +2110,8 @@ WARNING("Попробовать SendStarted пыполнять не из DllMain
 
 void SendStarted()
 {
+	prepare_timings;
+
 	// Don't do anything while loading into ConEmuC.exe/ConEmuC64.exe
 	if (gbConEmuCProcess)
 	{
@@ -2131,6 +2132,7 @@ void SendStarted()
 	_ASSERTEX(gbSelfIsRootConsoleProcess);
 
 	//_ASSERTE(FALSE && "Continue to SendStarted");
+	print_timings(L"SendStarted.1");
 
 	CESERVER_REQ *pIn = NULL, *pOut = NULL;
 	size_t nSize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_STARTSTOP); //-V119
@@ -2138,6 +2140,7 @@ void SendStarted()
 
 	if (pIn)
 	{
+		print_timings(L"SendStarted.2");
 		if (!GetModuleFileName(NULL, pIn->StartStop.sModuleName, countof(pIn->StartStop.sModuleName)))
 			pIn->StartStop.sModuleName[0] = 0;
 		#ifdef _DEBUG
@@ -2154,15 +2157,26 @@ void SendStarted()
 		// НЕ MyGet..., а то можем заблокироваться...
 		HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
 
+		print_timings(L"SendStarted.3");
 		GetConsoleScreenBufferInfo(hOut, &pIn->StartStop.sbi);
 		gbWasBufferHeight = (pIn->StartStop.sbi.dwSize.Y > (pIn->StartStop.sbi.srWindow.Bottom - pIn->StartStop.sbi.srWindow.Top + 100));
 
+		print_timings(L"SendStarted.4");
 		pIn->StartStop.crMaxSize = MyGetLargestConsoleWindowSize(hOut);
 
 
 		BOOL bAsync = FALSE;
 		if (ghConWnd && (gnGuiPID != 0) && (gnImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI))
 			bAsync = TRUE;
+
+		print_timings(bAsync ? L"SendStarted.Async" : L"SendStarted.Sync");
+		#if 0 //defined(_DEBUG)
+		int iSteps = 10000;
+		while (!IsDebuggerPresent() && (--iSteps > 0))
+		{
+			Sleep(100);
+		}
+		#endif
 
 		pOut = ExecuteSrvCmd(gnServerPID, pIn, ghConWnd, bAsync);
 
@@ -2171,6 +2185,7 @@ void SendStarted()
 		{
 			if (pOut)
 			{
+				print_timings(L"SendStarted.6");
 				gbWasBufferHeight = pOut->StartStopRet.bWasBufferHeight;
 				gnGuiPID = pOut->StartStopRet.dwPID;
 				ghConEmuWnd = pOut->StartStopRet.hWnd;
@@ -2179,6 +2194,7 @@ void SendStarted()
 				_ASSERTE(ghConEmuWndDC && IsWindow(ghConEmuWndDC));
 				_ASSERTE(ghConEmuWndBack && IsWindow(ghConEmuWndBack));
 
+				print_timings(L"SendStarted.7");
 				SetServerPID(pOut->StartStopRet.dwMainSrvPID);
 				ExecuteFreeResult(pOut); pOut = NULL;
 			}
@@ -2188,8 +2204,10 @@ void SendStarted()
 			gbNonGuiMode = TRUE; // Не посылать ExecuteGuiCmd при выходе. Это не наша консоль
 		}
 
+		print_timings(L"SendStarted.8");
 		ExecuteFreeResult(pIn); pIn = NULL;
 	}
+	print_timings(L"SendStarted.done");
 }
 
 void SendStopped()
