@@ -1068,7 +1068,7 @@ void ProcessDebugEvent()
 						}
 
 						_printf(szDbgText);
-					}
+					} // EXCEPTION_ACCESS_VIOLATION
 					break;
 					default:
 					{
