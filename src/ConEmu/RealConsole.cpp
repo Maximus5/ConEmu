@@ -3964,9 +3964,10 @@ bool CRealConsole::StartDebugger(StartDebugType sdt)
 		return false;
 	}
 
-	#ifdef _DEBUG
-	// Для дампа - сразу, чтобы не тормозить процесс
-	if ((sdt != sdt_DumpMemory) && (sdt != sdt_DumpMemoryTree))
+	#if 0 //defined(_DEBUG)
+	// For mini-dump - immediately, to not to introduce lags
+	// If Shift key is pressed - check it below
+	if ((sdt != sdt_DumpMemory) && (sdt != sdt_DumpMemoryTree) && !isPressed(VK_SHIFT))
 	{
 		if (MsgBox(szExe, MB_OKCANCEL|MB_SYSTEMMODAL, L"StartDebugLogConsole") != IDOK)
 			return false;
@@ -3980,8 +3981,12 @@ bool CRealConsole::StartDebugger(StartDebugType sdt)
 
 	// If process was started under different credentials, most probably
 	// we need to ask user for password (we don't store passwords in memory for security reason)
-	if (((m_Args.RunAsAdministrator != crb_On) || mp_ConEmu->mb_IsUacAdmin)
-		&& (m_Args.pszUserName != NULL) && (m_Args.UseEmptyPassword != crb_On))
+	if ((((m_Args.RunAsAdministrator != crb_On) || mp_ConEmu->mb_IsUacAdmin)
+			&& (m_Args.pszUserName != NULL) && (m_Args.UseEmptyPassword != crb_On)
+		)
+		// If it's not a dump request, and user is pressing Shift key, open NewConsole dialog
+		|| (((sdt != sdt_DumpMemory) && (sdt != sdt_DumpMemoryTree)) && isPressed(VK_SHIFT))
+		)
 	{
 		Args.pszSpecialCmd = lstrdup(szExe); // Informational
 
@@ -3989,8 +3994,15 @@ bool CRealConsole::StartDebugger(StartDebugType sdt)
 
 		if (nRc != IDC_START)
 			return false;
-	}
 
+		if (Args.eSplit)
+		{
+			// Allow to run debugger in a split
+			Args.Detached = crb_On;
+			CVirtualConsole* pDbgVCon = CVConGroup::CreateCon(&Args, false, false);
+			Args.Detached = crb_Undefined;
+		}
+	}
 
 	LPCWSTR pszWordDir = NULL;
 	DWORD dwLastErr = 0;
