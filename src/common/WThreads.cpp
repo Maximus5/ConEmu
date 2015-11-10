@@ -233,7 +233,7 @@ BOOL apiTerminateThreadEx(HANDLE hThread, DWORD dwExitCode, LPCSTR asFile, int a
 
 
 #if defined(_MSC_VER) && !defined(CONEMU_MINIMAL)
-const DWORD MS_VC_EXCEPTION = 0x406D1388;
+const DWORD MS_VC_EXCEPTION = MS_VC_THREADNAME_EXCEPTION/*0x406D1388*/;
 
 #pragma pack(push,8)
 struct THREADNAME_INFO

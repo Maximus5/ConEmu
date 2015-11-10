@@ -32,6 +32,8 @@ HANDLE apiCreateThread(LPTHREAD_START_ROUTINE lpStartAddress, LPVOID lpParameter
 BOOL apiTerminateThreadEx(HANDLE hThread, DWORD dwExitCode, LPCSTR asFile, int anLine);
 #define apiTerminateThread(hThread,dwExitCode) apiTerminateThreadEx(hThread,dwExitCode,__FILE__,__LINE__)
 
+#define MS_VC_THREADNAME_EXCEPTION 0x406D1388
+
 #if defined(_MSC_VER) && !defined(CONEMU_MINIMAL)
 void SetThreadName(DWORD dwThreadID, char* threadName);
 #else
