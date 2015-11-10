@@ -4481,7 +4481,9 @@ BOOL CRealConsole::StartProcessInt(LPCWSTR& lpszCmd, wchar_t*& psCurCmd, LPCWSTR
 
 	_ASSERTE(mn_RunTime==0 && mn_StartTick==0); // еще не должно быть установлено или должно быть сброшено
 
+	bool bDirChanged = gpConEmu->ChangeWorkDir(gpConEmu->WorkDir(lpszWorkDir));
 	LPCWSTR lpszConEmuC = mp_ConEmu->ConEmuCExeFull(lpszCmd);
+	if (bDirChanged) gpConEmu->ChangeWorkDir(NULL);
 
 	GetLocalTime(&mst_ServerStartingTime);
 	LPSYSTEMTIME lpst = (lstrcmpi(PointToName(lpszConEmuC), L"ConEmuC64.exe") == 0) ? &mp_ConEmu->mst_LastConsole64StartTime : &mp_ConEmu->mst_LastConsole32StartTime;
