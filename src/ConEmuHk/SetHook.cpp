@@ -1633,3 +1633,44 @@ void LogModuleUnloaded(LPCWSTR pwszModule, HMODULE hModule)
 	}
 	delete sp;
 }
+
+#ifdef _DEBUG
+LONG COriginalCallCount::mn_LastTID = 0;
+LONG COriginalCallCount::mn_LastFnID = 0;
+
+COriginalCallCount::COriginalCallCount(LONG* pThreadId, LONG* pCount, LONG nFnID, LPCSTR asFnName)
+	: mp_ThreadId(pThreadId)
+	, mp_Count(pCount)
+{
+	LONG nTID = GetCurrentThreadId();
+	LONG lOldTid = InterlockedExchange(mp_ThreadId, nTID);
+	LONG nNewCount = 1;
+	if (lOldTid != nTID)
+		InterlockedExchange(mp_Count, nNewCount);
+	else
+		nNewCount = InterlockedIncrement(mp_Count);
+
+	InterlockedExchange(&mn_LastTID, nTID);
+	InterlockedExchange(&mn_LastFnID, nFnID);
+
+	if (nNewCount == 2)
+	{
+		// Don't use ASSERT or any GUI function here to avoid infinite recursion!
+		char szMsg[120];
+		msprintf(szMsg, countof(szMsg), "!!! Hook !!! %s Count=%u\n", asFnName, nNewCount);
+		OutputDebugStringA(szMsg);
+		int iDbg = 0;
+	}
+};
+
+COriginalCallCount::~COriginalCallCount()
+{
+	LONG nLeft, nTID = GetCurrentThreadId();
+	if (*mp_ThreadId == nTID)
+	{
+		nLeft = InterlockedDecrement(mp_Count);
+		if (nLeft <= 0)
+			InterlockedExchange(mp_ThreadId, 0);
+	}
+}
+#endif // #ifdef _DEBUG

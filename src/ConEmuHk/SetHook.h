@@ -236,41 +236,18 @@ class COriginalCallCount
 protected:
 	LONG* mp_ThreadId;
 	LONG* mp_Count;
+protected:
+	static LONG mn_LastTID;
+	static LONG mn_LastFnID;
 public:
-	COriginalCallCount(LONG* pThreadId, LONG* pCount, LPCWSTR asFnName)
-		: mp_ThreadId(pThreadId)
-		, mp_Count(pCount)
-	{
-		LONG nTid = GetCurrentThreadId();
-		LONG lOldTid = InterlockedExchange(mp_ThreadId, nTid);
-		LONG nNewCount = 1;
-		if (lOldTid != nTid)
-			InterlockedExchange(mp_Count, nNewCount);
-		else
-			nNewCount = InterlockedIncrement(mp_Count);
-		if (nNewCount > 1)
-		{
-			// Don't use ASSERT or any GUI function here to avoid infinite recursion!
-			wchar_t szMsg[120];
-			msprintf(szMsg, countof(szMsg), L"!!! Hook !!! %s Count=%u\n", asFnName, nNewCount);
-			OutputDebugStringW(szMsg);
-			int iDbg = 0;
-		}
-	};
-	~COriginalCallCount()
-	{
-		LONG nLeft, nTid = GetCurrentThreadId();
-		if (*mp_ThreadId == nTid)
-		{
-			nLeft = InterlockedDecrement(mp_Count);
-			if (nLeft <= 0)
-				InterlockedExchange(mp_ThreadId, 0);
-		}
-	};
+	COriginalCallCount(LONG* pThreadId, LONG* pCount, LONG nFnID, LPCSTR asFnName);
+	~COriginalCallCount();
 };
-#define ORIGINALCALLCOUNT(n) \
+#define ORIGINALCALLCOUNT_(n,id) \
 	static LONG cnt_thread_##n, cnt_##n; \
-	COriginalCallCount cnt##n(&cnt_thread_##n, &cnt_##n, _CRT_WIDE(#n))
+	COriginalCallCount cnt##n(&cnt_thread_##n, &cnt_##n, id, #n)
+#define ORIGINALCALLCOUNT(n) \
+	ORIGINALCALLCOUNT_(n, HOOK_FN_ID(n))
 #else
 #define ORIGINALCALLCOUNT(n)
 #endif
