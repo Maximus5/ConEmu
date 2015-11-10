@@ -37,6 +37,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/MConHandle.h"
 #include "../common/MSectionSimple.h"
 #include "../common/WConsole.h"
+#include "../common/WErrGuard.h"
 #include "../ConEmu/version.h"
 
 #include "ExtConsole.h"
@@ -144,6 +145,8 @@ void CEAnsi::InitAnsiLog(LPCWSTR asFilePath)
 	if (ghAnsiLogFile)
 		return;
 
+	ScopedObject(CLastErrorGuard);
+
 	gcsAnsiLogFile = new MSectionSimple(true);
 	HANDLE hLog = CreateFile(asFilePath, GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 	if (hLog && (hLog != INVALID_HANDLE_VALUE))
@@ -178,6 +181,9 @@ void CEAnsi::WriteAnsiLog(LPCWSTR lpBuffer, DWORD nChars)
 {
 	if (!ghAnsiLogFile)
 		return;
+
+	ScopedObject(CLastErrorGuard);
+
 	char sBuf[80*3]; // Will be enough for most cases
 	BOOL bWrite = FALSE;
 	DWORD nWritten = 0;
@@ -240,6 +246,8 @@ bool CEAnsi::IsAnsiCapable(HANDLE hFile, bool* bIsConsoleOutput /*= NULL*/)
 	DWORD Mode = 0;
 	bool bIsOut = false;
 
+	ScopedObject(CLastErrorGuard);
+
 	if (hFile == NULL)
 	{
 		// Проверка настроек на старте?
@@ -295,6 +303,8 @@ bool CEAnsi::IsOutputHandle(HANDLE hFile, DWORD* pMode /*= NULL*/)
 
 	if (hFile == ghLastAnsiNotCapable)
 		return false;
+
+	ScopedObject(CLastErrorGuard);
 
 	bool  bOk = false;
 	DWORD Mode = 0, nErrCode = 0;
