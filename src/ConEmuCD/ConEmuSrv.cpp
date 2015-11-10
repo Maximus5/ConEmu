@@ -3459,7 +3459,7 @@ int CreateColorerHeader(bool bForceRecreate /*= false*/)
 	//COORD crMaxSize = MyGetLargestConsoleWindowSize(GetStdHandle(STD_OUTPUT_HANDLE));
 	//nMapCells = max(crMaxSize.X,200) * max(crMaxSize.Y,200) * 2;
 	//nMapSize = nMapCells * sizeof(AnnotationInfo) + sizeof(AnnotationHeader);
-	_ASSERTE(sizeof(AnnotationInfo) == sizeof(AnnotationInfo::raw));
+	_ASSERTE(sizeof(AnnotationInfo) == 8*sizeof(int)/*sizeof(AnnotationInfo::raw)*/);
 
 	if (gpSrv->pColorerMapping == NULL)
 	{

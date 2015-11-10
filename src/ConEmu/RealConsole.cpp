@@ -14690,7 +14690,7 @@ void CRealConsole::CreateColorMapping()
 	wchar_t szErr[512]; szErr[0] = 0;
 	//wchar_t szMapName[512]; szErr[0] = 0;
 	AnnotationHeader *pHdr = NULL;
-	_ASSERTE(sizeof(AnnotationInfo) == sizeof(AnnotationInfo::raw));
+	_ASSERTE(sizeof(AnnotationInfo) == 8*sizeof(int)/*sizeof(AnnotationInfo::raw)*/);
 	_ASSERTE(mp_VCon->GetView()!=NULL);
 	// 111101 - было "hConWnd", но GetConsoleWindow теперь перехватывается.
 	m_TrueColorerMap.InitName(AnnotationShareName, (DWORD)sizeof(AnnotationInfo), LODWORD(mp_VCon->GetView())); //-V205
