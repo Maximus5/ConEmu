@@ -1070,6 +1070,20 @@ void ProcessDebugEvent()
 						_printf(szDbgText);
 					} // EXCEPTION_ACCESS_VIOLATION
 					break;
+					case MS_VC_THREADNAME_EXCEPTION:
+					{
+						_wsprintfA(szDbgText, SKIPLEN(countof(szDbgText))
+							"{%i.%i} %s at " WIN3264TEST("0x%08X", "0x%08X%08X") " flags 0x%08X%s FC=%u\n",
+							evt.dwProcessId, evt.dwThreadId,
+							"MS_VC_THREADNAME_EXCEPTION",
+							WIN3264WSPRINT((DWORD_PTR)evt.u.Exception.ExceptionRecord.ExceptionAddress),
+							evt.u.Exception.ExceptionRecord.ExceptionFlags,
+							(evt.u.Exception.ExceptionRecord.ExceptionFlags&EXCEPTION_NONCONTINUABLE)
+							? "(EXCEPTION_NONCONTINUABLE)" : "",
+							evt.u.Exception.dwFirstChance);
+						_printf(szDbgText);
+					} // MS_VC_THREADNAME_EXCEPTION
+					break;
 					default:
 					{
 						char szName[32]; LPCSTR pszName; pszName = szName;
@@ -1142,6 +1156,7 @@ void ProcessDebugEvent()
 
 				if (gpSrv->DbgInfo.bDebuggerRequestDump
 					|| (!lbNonContinuable && !gpSrv->DbgInfo.bDebugProcessTree
+						&& (evt.u.Exception.ExceptionRecord.ExceptionCode != MS_VC_THREADNAME_EXCEPTION)
 						&& (evt.u.Exception.ExceptionRecord.ExceptionCode != EXCEPTION_BREAKPOINT))
 					|| (IsDumpMulti()
 						&& ((evt.u.Exception.ExceptionRecord.ExceptionCode>=0xC0000000)
