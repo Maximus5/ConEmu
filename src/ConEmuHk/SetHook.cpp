@@ -233,49 +233,17 @@ void FreeLoadedModule(HMODULE hModule)
 }
 
 
-// Использовать GetModuleFileName или CreateToolhelp32Snapshot во время загрузки библиотек нельзя
-// Однако, хранить список модулей нужно
-// 1. для того, чтобы знать, в каких модулях хуки уже ставились
-// 2. для информации, чтобы передать в ConEmu если пользователь включил "Shell and processes log"
-struct HkModuleInfo
-{
-	BOOL    bUsed;   // ячейка занята
-	int     Hooked;  // 1-модуль обрабатывался (хуки установлены), 2-хуки сняты
-	HMODULE hModule; // хэндл
-	wchar_t sModuleName[128]; // Только информационно, в обработке не участвует
-	HkModuleInfo* pNext;
-	HkModuleInfo* pPrev;
-	size_t nAdrUsed;
-	struct StrAddresses
-	{
-		DWORD_PTR* ppAdr;
-		#ifdef _DEBUG
-		DWORD_PTR ppAdrCopy1, ppAdrCopy2;
-		DWORD_PTR pModulePtr, nModuleSize;
-		#endif
-		DWORD_PTR  pOld;
-		DWORD_PTR  pOur;
-		union {
-			BOOL bHooked;
-			LPVOID Dummy;
-		};
-		#ifdef _DEBUG
-		char sName[32];
-		#endif
-	} Addresses[MAX_HOOKED_PROCS];
-};
-WARNING("Хорошо бы выделять память под gpHookedModules через VirtualProtect, чтобы защитить ее от изменений дурными программами");
-HkModuleInfo *gpHookedModules = NULL, *gpHookedModulesLast = NULL;
-size_t gnHookedModules = 0;
-MSectionSimple *gpHookedModulesSection = NULL;
+///
+/// Let's know all processed modules
+///
+
+HkModuleMap* gpHookedModules = NULL;
+
 bool InitializeHookedModules()
 {
-	_ASSERTE(gpHookedModules==NULL && gpHookedModulesSection==NULL);
-	if (!gpHookedModulesSection)
+	if (!gpHookedModules)
 	{
 		//MessageBox(NULL, L"InitializeHookedModules", L"Hooks", MB_SYSTEMMODAL);
-
-		gpHookedModulesSection = new MSectionSimple(true);
 
 		//WARNING: "new" вызывать из DllStart нельзя! DllStart вызывается НЕ из главной нити,
 		//WARNING: причем, когда главная нить еще не была запущена. В итоге, если это 
@@ -283,17 +251,19 @@ bool InitializeHookedModules()
 		//WARNING: runtime error R6030  - CRT not initialized
 		// -- gpHookedModules = new MArray<HkModuleInfo>;
 		// -- поэтому тупо через массив
-		//#ifdef _DEBUG
-		//gnHookedModules = 16;
-		//#else
-		//gnHookedModules = 256;
-		//#endif
-		gpHookedModules = (HkModuleInfo*)calloc(sizeof(HkModuleInfo),1);
-		if (!gpHookedModules)
+		HkModuleMap* pMap = (HkModuleMap*)calloc(sizeof(HkModuleMap),1);
+		if (!pMap)
 		{
-			_ASSERTE(gpHookedModules!=NULL);
+			_ASSERTE(pMap!=NULL);
 		}
-		gpHookedModulesLast = gpHookedModules;
+		else if (!pMap->Init())
+		{
+			free(pMap);
+		}
+		else
+		{
+			gpHookedModules = pMap;
+		}
 	}
 
 	return (gpHookedModules != NULL);
@@ -304,26 +274,24 @@ void FinalizeHookedModules()
 	HLOG1("FinalizeHookedModules",0);
 	if (gpHookedModules)
 	{
-		MSectionLockSimple CS;
-		if (gpHookedModulesSection)
-			CS.Lock(gpHookedModulesSection);
-
-		HkModuleInfo *p = gpHookedModules;
-		gpHookedModules = NULL;
-		while (p)
+		HkModuleInfo** pp = NULL;
+		INT_PTR iCount = gpHookedModules->GetKeysValues(NULL, &pp);
+		if (iCount > 0)
 		{
-			HkModuleInfo *pNext = p->pNext;
-			free(p);
-			p = pNext;
+			for (INT_PTR i = 0; i < iCount; i++)
+				free(pp[i]);
+			gpHookedModules->ReleasePointer(pp);
 		}
+		gpHookedModules->Release();
+		SafeFree(gpHookedModules);
 	}
-	SafeDelete(gpHookedModulesSection);
 	HLOGEND1();
 }
 
 HkModuleInfo* IsHookedModule(HMODULE hModule, LPWSTR pszName = NULL, size_t cchNameMax = 0)
 {
-	if (!gpHookedModulesSection)
+	// Must be initialized already, but JIC
+	if (!gpHookedModules)
 		InitializeHookedModules();
 
 	if (!gpHookedModules)
@@ -334,20 +302,17 @@ HkModuleInfo* IsHookedModule(HMODULE hModule, LPWSTR pszName = NULL, size_t cchN
 
 	//bool lbHooked = false;
 
-	HkModuleInfo* p = gpHookedModules;
-	while (p)
+	HkModuleInfo* p = NULL;
+	if (gpHookedModules->Get(hModule, &p))
 	{
-		if (p->bUsed && (p->hModule == hModule))
-		{
-			_ASSERTE(p->Hooked == 1 || p->Hooked == 2);
-			//lbHooked = true;
+		//_ASSERTE(p->Hooked == 1 || p->Hooked == 2);
+		//lbHooked = true;
 
-			// Если хотят узнать имя модуля (по hModule)
-			if (pszName && (cchNameMax > 0))
-				lstrcpyn(pszName, p->sModuleName, (int)cchNameMax);
-			break;
+		// If we need to retrieve module name by its handle
+		if (pszName && cchNameMax)
+		{
+			lstrcpyn(pszName, p->sModuleName, (int)cchNameMax);
 		}
-		p = p->pNext;
 	}
 
 	return p;
@@ -355,10 +320,11 @@ HkModuleInfo* IsHookedModule(HMODULE hModule, LPWSTR pszName = NULL, size_t cchN
 
 HkModuleInfo* AddHookedModule(HMODULE hModule, LPCWSTR sModuleName)
 {
-	if (!gpHookedModulesSection)
+	// Must be initialized already, but JIC
+	if (!gpHookedModules)
 		InitializeHookedModules();
 
-	_ASSERTE(gpHookedModules && gpHookedModulesSection);
+	_ASSERTE(gpHookedModules);
 	if (!gpHookedModules)
 	{
 		_ASSERTE(gpHookedModules!=NULL);
@@ -369,27 +335,6 @@ HkModuleInfo* AddHookedModule(HMODULE hModule, LPCWSTR sModuleName)
 
 	if (!p)
 	{
-		MSectionLockSimple CS;
-		CS.Lock(gpHookedModulesSection);
-
-		p = gpHookedModules;
-		while (p)
-		{
-			if (!p->bUsed)
-			{
-				p->bUsed = TRUE; // сразу зарезервируем
-				gnHookedModules++;
-				memset(p->Addresses, 0, sizeof(p->Addresses));
-				p->nAdrUsed = 0;
-				p->Hooked = 1;
-				lstrcpyn(p->sModuleName, sModuleName?sModuleName:L"", countof(p->sModuleName));
-				// hModule - последним, чтобы не было проблем с другими потоками
-				p->hModule = hModule;
-				goto wrap;
-			}
-			p = p->pNext;
-		}
-
 		p = (HkModuleInfo*)calloc(sizeof(HkModuleInfo),1);
 		if (!p)
 		{
@@ -397,16 +342,12 @@ HkModuleInfo* AddHookedModule(HMODULE hModule, LPCWSTR sModuleName)
 		}
 		else
 		{
-			gnHookedModules++;
-			p->bUsed = TRUE;   // ячейка занята. тут можно первой, т.к. в цепочку еще не добавили
-			p->Hooked = 1; // модуль обрабатывался (хуки установлены)
-			p->hModule = hModule; // хэндл
+			p->hModule = hModule;
+
 			lstrcpyn(p->sModuleName, sModuleName?sModuleName:L"", countof(p->sModuleName));
 			//_ASSERTEX(lstrcmpi(p->sModuleName,L"dsound.dll"));
-			p->pNext = NULL;
-			p->pPrev = gpHookedModulesLast;
-			gpHookedModulesLast->pNext = p;
-			gpHookedModulesLast = p;
+
+			gpHookedModules->Set(hModule, p);
 		}
 	}
 
@@ -416,28 +357,21 @@ wrap:
 
 void RemoveHookedModule(HMODULE hModule)
 {
-	if (!gpHookedModulesSection)
+	// Must be initialized already, but JIC
+	if (!gpHookedModules)
 		InitializeHookedModules();
 
-	_ASSERTE(gpHookedModules && gpHookedModulesSection);
+	_ASSERTE(gpHookedModules);
 	if (!gpHookedModules)
 	{
 		_ASSERTE(gpHookedModules!=NULL);
 		return;
 	}
 
-	HkModuleInfo* p = gpHookedModules;
-	while (p)
+	HkModuleInfo* p = NULL;
+	if (gpHookedModules->Get(hModule, &p, true/*Remove*/))
 	{
-		if (p->bUsed && (p->hModule == hModule))
-		{
-			gnHookedModules--;
-			// Именно в такой последовательности, чтобы с другими потоками не драться
-			p->Hooked = 0;
-			p->bUsed = FALSE;
-			break;
-		}
-		p = p->pNext;
+		SafeFree(p);
 	}
 }
 
@@ -647,6 +581,11 @@ int InitHooks(HookItem* apHooks)
 	if (!gnLdrDllNotificationUsed)
 	{
 		CheckLdrNotificationAvailable();
+	}
+
+	if (!InitializeHookedModules())
+	{
+		return -3;
 	}
 
 	if (gpHooks == NULL)

@@ -28,6 +28,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include "../common/MMap.h"
 #include "DbgHooks.h"
 
 //#ifdef _DEBUG
@@ -146,6 +147,17 @@ struct HookItem
 	HookItemExceptCallback_t ExceptCallBack;
 };
 
+
+// We can't use GetModuleFileName or CreateToolhelp32Snapshot during dll loading
+// Also, we need to know which dll-s were processed already
+struct HkModuleInfo
+{
+	HMODULE hModule;
+	wchar_t sModuleName[128]; // If we need to know the name of module
+};
+
+typedef MMap<HMODULE,HkModuleInfo*,16> HkModuleMap;
+extern HkModuleMap* gpHookedModules;
 
 bool InitializeHookedModules();
 void FinalizeHookedModules();
