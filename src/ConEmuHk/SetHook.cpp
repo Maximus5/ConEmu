@@ -1048,22 +1048,6 @@ bool __stdcall SetHookCallbacks(const char* ProcName, const wchar_t* DllName, HM
 bool FindModuleFileName(HMODULE ahModule, LPWSTR pszName, size_t cchNameMax)
 {
 	bool lbFound = false;
-	if (pszName && cchNameMax)
-	{
-		//*pszName = 0;
-#ifdef _WIN64
-		msprintf(pszName, cchNameMax, L"<HMODULE=0x%08X%08X> ",
-			(DWORD)((((u64)ahModule) & 0xFFFFFFFF00000000) >> 32), //-V112
-			(DWORD)(((u64)ahModule) & 0xFFFFFFFF)); //-V112
-#else
-		msprintf(pszName, cchNameMax, L"<HMODULE=0x%08X> ", (DWORD)ahModule);
-#endif
-
-		INT_PTR nLen = lstrlen(pszName);
-		pszName += nLen;
-		cchNameMax -= nLen;
-		_ASSERTE(cchNameMax>0);
-	}
 
 	//TH32CS_SNAPMODULE - may hang during LoadLibrary/FreeLibrary.
 	lbFound = (IsHookedModule(ahModule, pszName, cchNameMax) != NULL);
@@ -1071,6 +1055,20 @@ bool FindModuleFileName(HMODULE ahModule, LPWSTR pszName, size_t cchNameMax)
 	return lbFound;
 }
 
+LPCWSTR FormatModuleHandle(HMODULE ahModule, LPCWSTR asFmt32, LPCWSTR asFmt64, LPWSTR pszName, size_t cchNameMax)
+{
+	#ifdef _WIN64
+	if (((DWORD_PTR)ahModule) > 0xFFFFFFFF)
+	{
+		msprintf(pszName, cchNameMax, asFmt64 ? asFmt64 : L"Module=0x%08X%08X", WIN3264WSPRINT(ahModule));
+	}
+	else
+	#endif
+	{
+		msprintf(pszName, cchNameMax, asFmt32 ? asFmt32 : L"Module=0x%08X", LODWORD(ahModule));
+	}
+	return pszName;
+}
 
 
 
@@ -1485,16 +1483,7 @@ void LogModuleLoaded(LPCWSTR pwszModule, HMODULE hModule)
 		CESERVER_REQ* pIn = NULL;
 
 		wchar_t szInfo[64] = L"";
-		#ifdef _WIN64
-		if (((DWORD_PTR)hModule) > 0xFFFFFFFF)
-		{
-			msprintf(szInfo, countof(szInfo), L"Module=0x%08X%08X", WIN3264WSPRINT(hModule));
-		}
-		else
-		#endif
-		{
-			msprintf(szInfo, countof(szInfo), L"Module=0x%08X", LODWORD(hModule));
-		}
+		FormatModuleHandle(hModule, L"Module=0x%08X", L"Module=0x%08X%08X", szInfo, countof(szInfo));
 
 		pIn = sp->NewCmdOnCreate(eLoadLibrary, NULL, pwszModule, szInfo, NULL, NULL, NULL, NULL, WIN3264TEST(32,64), 0, NULL, NULL, NULL);
 		if (pIn)
@@ -1523,15 +1512,11 @@ void LogModuleUnloaded(LPCWSTR pwszModule, HMODULE hModule)
 		}
 		else
 		{
-			wchar_t szHandle[32] = L"";
-			#ifdef _WIN64
-				msprintf(szHandle, countof(szModule), L", <HMODULE=0x%08X%08X>", WIN3264WSPRINT(hModule));
-			#else
-				msprintf(szHandle, countof(szModule), L", <HMODULE=0x%08X>", LODWORD(hModule));
-			#endif
+			wchar_t szHandle[64] = L"";
+			FormatModuleHandle(hModule, L", <HMODULE=0x%08X>",L", <HMODULE=0x%08X%08X>", szHandle, countof(szHandle));
 
 			// GetModuleFileName may hang in some cases, so we use our internal modules array
-			if (FindModuleFileName(hModule, szModule, countof(szModule)-lstrlen(szModule)-1))
+			if (FindModuleFileName(hModule, szModule, countof(szModule)-lstrlen(szHandle)-1))
 				wcscat_c(szModule, szHandle);
 			else
 				wcscpy_c(szModule, szHandle+2);
