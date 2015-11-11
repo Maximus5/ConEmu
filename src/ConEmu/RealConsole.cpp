@@ -14216,7 +14216,7 @@ bool CRealConsole::isCygwinMsys()
 	if (!AppMap.Open(FALSE))
 		return false;
 	CEActiveAppFlags nActiveAppFlags = AppMap.Ptr()->nActiveAppFlags;
-	if (!(nActiveAppFlags && (caf_Cygwin1|caf_Msys1|caf_Msys2)))
+	if (!(nActiveAppFlags & (caf_Cygwin1|caf_Msys1|caf_Msys2)))
 		return false;
 
 	return true;
