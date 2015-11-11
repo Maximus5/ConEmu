@@ -5917,7 +5917,7 @@ void CRealConsole::PortableStarted(CESERVER_REQ_PORTABLESTARTED* pStarted)
 	{
 		if (!m_ChildGui.hGuiWnd || !IsWindow(m_ChildGui.hGuiWnd))
 		{
-			m_ChildGui.bGuiForceConView = true;
+			m_ChildGui.bChildConAttached = true;
 			ShowWindow(GetView(), SW_SHOW);
 			mp_VCon->Invalidate();
 		}
@@ -13702,7 +13702,12 @@ DWORD CRealConsole::GuiWndPID()
 }
 bool CRealConsole::isGuiForceConView()
 {
-	return m_ChildGui.bGuiForceConView;
+	// user asked to hide ChildGui and show our VirtualConsole (with current console contents)
+	if (m_ChildGui.bGuiForceConView
+		// gh#94: Putty/plink-proxy. hGuiWnd!=NULL, but plink was "attached" into our console
+		|| (m_ChildGui.bChildConAttached && !m_ChildGui.hGuiWnd))
+		return true;
+	return false;
 }
 bool CRealConsole::isGuiExternMode()
 {
