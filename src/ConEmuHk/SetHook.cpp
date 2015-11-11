@@ -232,7 +232,6 @@ void FreeLoadedModule(HMODULE hModule)
 	}
 }
 
-#define MAX_HOOKED_PROCS 255
 
 // Использовать GetModuleFileName или CreateToolhelp32Snapshot во время загрузки библиотек нельзя
 // Однако, хранить список модулей нужно
@@ -269,7 +268,7 @@ WARNING("Хорошо бы выделять память под gpHookedModules 
 HkModuleInfo *gpHookedModules = NULL, *gpHookedModulesLast = NULL;
 size_t gnHookedModules = 0;
 MSectionSimple *gpHookedModulesSection = NULL;
-void InitializeHookedModules()
+bool InitializeHookedModules()
 {
 	_ASSERTE(gpHookedModules==NULL && gpHookedModulesSection==NULL);
 	if (!gpHookedModulesSection)
@@ -296,7 +295,10 @@ void InitializeHookedModules()
 		}
 		gpHookedModulesLast = gpHookedModules;
 	}
+
+	return (gpHookedModules != NULL);
 }
+
 void FinalizeHookedModules()
 {
 	HLOG1("FinalizeHookedModules",0);
@@ -318,6 +320,7 @@ void FinalizeHookedModules()
 	SafeDelete(gpHookedModulesSection);
 	HLOGEND1();
 }
+
 HkModuleInfo* IsHookedModule(HMODULE hModule, LPWSTR pszName = NULL, size_t cchNameMax = 0)
 {
 	if (!gpHookedModulesSection)
@@ -330,10 +333,6 @@ HkModuleInfo* IsHookedModule(HMODULE hModule, LPWSTR pszName = NULL, size_t cchN
 	}
 
 	//bool lbHooked = false;
-
-	//_ASSERTE(gpHookedModules && gpHookedModulesSection);
-	//if (bSection)
-	//	Enter Critical Section(gpHookedModulesSection);
 
 	HkModuleInfo* p = gpHookedModules;
 	while (p)
@@ -351,11 +350,9 @@ HkModuleInfo* IsHookedModule(HMODULE hModule, LPWSTR pszName = NULL, size_t cchN
 		p = p->pNext;
 	}
 
-	//if (bSection)
-	//	Leave Critical Section(gpHookedModulesSection);
-
 	return p;
 }
+
 HkModuleInfo* AddHookedModule(HMODULE hModule, LPCWSTR sModuleName)
 {
 	if (!gpHookedModulesSection)
@@ -416,6 +413,7 @@ HkModuleInfo* AddHookedModule(HMODULE hModule, LPCWSTR sModuleName)
 wrap:
 	return p;
 }
+
 void RemoveHookedModule(HMODULE hModule)
 {
 	if (!gpHookedModulesSection)
@@ -451,7 +449,7 @@ OnLibraryLoaded_t gfOnLibraryLoaded = NULL;
 OnLibraryLoaded_t gfOnLibraryUnLoaded = NULL;
 
 
-HookItem *gpHooks = NULL;
+HookItem *gpHooks = NULL; // [MAX_HOOKED_PROCS]
 size_t gnHookedFuncs = 0;
 
 
@@ -1067,15 +1065,11 @@ bool FindModuleFileName(HMODULE ahModule, LPWSTR pszName, size_t cchNameMax)
 		_ASSERTE(cchNameMax>0);
 	}
 
-	//TH32CS_SNAPMODULE - может зависать при вызовах из LoadLibrary/FreeLibrary.
+	//TH32CS_SNAPMODULE - may hang during LoadLibrary/FreeLibrary.
 	lbFound = (IsHookedModule(ahModule, pszName, cchNameMax) != NULL);
 
 	return lbFound;
 }
-
-#define GetPtrFromRVA(rva,pNTHeader,imageBase) (PVOID)((imageBase)+(rva))
-
-extern BOOL gbInCommonShutdown;
 
 
 

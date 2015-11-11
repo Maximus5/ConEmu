@@ -202,18 +202,12 @@ struct DllMainCallInfo
 	};
 } gDllMainCallInfo[4] = {};
 
-extern BOOL StartupHooks();
-extern void ShutdownHooks();
-extern void InitializeHookedModules();
-extern void FinalizeHookedModules();
-extern HRESULT OurShellExecCmdLine(HWND hwnd, LPCWSTR pwszCommand, LPCWSTR pwszStartDir, bool bRunAsAdmin, bool bForce);
-//HMODULE ghPsApi = NULL;
+
 #ifdef _DEBUG
 extern HHOOK ghGuiClientRetHook;
 //extern bool gbAllowAssertThread;
 #endif
-//extern void StartVimTerm(bool bFromDllStart);
-//extern void StopVimTerm();
+
 
 CEStartupEnv* gpStartEnv = NULL;
 BOOL    gbConEmuCProcess = FALSE;

@@ -109,14 +109,7 @@ extern "C" {
 #endif
 
 
-//struct HookItemLt
-//{
-//	// Calling function must set only this 3 fields
-//	// These fields must be valid for lifetime
-//	const void*     NewAddress;
-//	const char*     Name;
-//	const wchar_t*  DllName;
-//};
+#define MAX_HOOKED_PROCS 255
 
 struct HookItem
 {
@@ -154,6 +147,10 @@ struct HookItem
 };
 
 
+bool InitializeHookedModules();
+void FinalizeHookedModules();
+
+
 #define F(n) ((On##n##_t)f##n)
 
 #define HOOK_FN_TYPE(n) On##n##_t
@@ -185,8 +182,10 @@ struct HookItem
 	typedef ret (call* HOOK_FN_TYPE(fn)) args; \
 	ret call HOOK_FN_NAME(fn) args
 
-
 void* __cdecl GetOriginalAddress(void* OurFunction, DWORD nFnID = 0, void* ApiFunction = NULL, HookItem** ph = NULL, bool abAllowNulls = false);
+
+BOOL StartupHooks();
+void ShutdownHooks();
 
 int  InitHooks(HookItem* apHooks);
 bool SetAllHooks();
