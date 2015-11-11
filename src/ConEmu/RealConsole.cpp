@@ -8533,6 +8533,7 @@ void CRealConsole::ShowConsoleOrGuiClient(int nMode) // -1 Toggle 0 - Hide 1 - S
 	}
 }
 
+// It's called now from AskChangeBufferHeight and AskChangeAlternative
 void CRealConsole::ShowGuiClientInt(bool bShow)
 {
 	if (bShow && m_ChildGui.hGuiWnd && IsWindow(m_ChildGui.hGuiWnd))
@@ -8551,6 +8552,8 @@ void CRealConsole::ShowGuiClientInt(bool bShow)
 	}
 }
 
+// The only way to show ChildGui's window system menu,
+// if used's chosen to hide children window caption
 void CRealConsole::ChildSystemMenu()
 {
 	if (!this || !m_ChildGui.hGuiWnd)

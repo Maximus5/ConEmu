@@ -293,14 +293,14 @@ class CRealConsole
 	private:
 		// ChildGui related
 		struct {
-			HWND    hGuiWnd; // Если работаем в Gui-режиме (Notepad, Putty, ...)
-			RECT    rcLastGuiWnd; // Screen coordinates!
+			HWND    hGuiWnd;            // ChildGui mode (Notepad, Putty, ...)
+			RECT    rcLastGuiWnd;       // Screen coordinates!
 			HWND    hGuiWndFocusStore;
 			DWORD   nGuiAttachInputTID;
-			DWORD   nGuiAttachFlags; // запоминается в SetGuiMode
-			RECT    rcPreGuiWndRect; // Положение окна ДО аттача
-			bool    bGuiExternMode; // FALSE если захотели показать GUI приложение вне вкладки ConEmu (Ctrl-Win-Alt-Space)
-			bool    bGuiForceConView; // TRUE если просили спрятать GUI и показать VirtualConsole
+			DWORD   nGuiAttachFlags;    // Stored in SetGuiMode
+			RECT    rcPreGuiWndRect;    // Window coordinates before attach into ConEmu
+			bool    bGuiExternMode;     // FALSE user asked to show ChildGui outside of ConEmu, temporarily detached (Ctrl-Win-Alt-Space).
+			bool    bGuiForceConView;   // TRUE if user asked to hide ChildGui and show our VirtualConsole (with current console contents).
 			bool    bInGuiAttaching;
 			bool    bInSetFocus;
 			DWORD   nGuiWndStyle, nGuiWndStylEx; // Исходные стили окна ДО подцепления в ConEmu
