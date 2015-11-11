@@ -777,6 +777,12 @@ BOOL CEAnsi::WriteText(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, 
 	ExtWriteTextParm write = {sizeof(write), ewtf_Current|AddFlags, hConsoleOutput};
 	write.Private = (void*)(FARPROC)_WriteConsoleW;
 
+	GetFeatures(NULL, &mb_SuppressBells);
+	if (mb_SuppressBells)
+	{
+		write.Flags |= ewtf_NoBells;
+	}
+
 	if (gDisplayOpt.WrapWasSet && (gDisplayOpt.WrapAt > 0))
 	{
 		write.Flags |= ewtf_WrapAt;

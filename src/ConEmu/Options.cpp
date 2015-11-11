@@ -665,7 +665,7 @@ void Settings::InitSettings()
 	pszAnsiLog = lstrdup(L"%ConEmuDir%\\Logs\\");
 	isProcessNewConArg = true;
 	isProcessCmdStart = true;
-	isSuppressBells = false; // пока не доделано - false
+	isSuppressBells = true;
 	isConsoleExceptionHandler = false; // по умолчанию - false
 	mb_UseClink = true;
 
@@ -3539,8 +3539,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		reg->Save(L"ProcessNewConArg", isProcessNewConArg);
 		reg->Save(L"ProcessCmdStart", isProcessCmdStart);
 
-		_ASSERTE(isSuppressBells==false); // пока не доделано - не сохраняем
-		//reg->Save(L"SuppressBells", isSuppressBells);
+		reg->Save(L"SuppressBells", isSuppressBells);
 
 		reg->Save(L"ConsoleExceptionHandler", isConsoleExceptionHandler);
 

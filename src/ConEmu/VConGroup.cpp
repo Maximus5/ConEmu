@@ -2613,6 +2613,7 @@ bool CVConGroup::OnFlashWindow(DWORD nOpt, DWORD nFlags, DWORD nCount, HWND hCon
 	const bool abSimple = (nOpt & 1) != 0;
 	const bool abInvert = (nOpt & 2) != 0;
 	const bool abFromMacro = (nOpt & 4) != 0;
+	const bool abFromApi = (nOpt & 8) != 0;
 
 	bool lbFlashSimple = abSimple;
 
@@ -2648,7 +2649,7 @@ bool CVConGroup::OnFlashWindow(DWORD nOpt, DWORD nFlags, DWORD nCount, HWND hCon
 
 			FLASHWINFO fl = {sizeof(FLASHWINFO)};
 
-			if (abFromMacro)
+			if (abFromMacro || abFromApi)
 			{
 				// Через макросы - все разрешено
 				if (abSimple)

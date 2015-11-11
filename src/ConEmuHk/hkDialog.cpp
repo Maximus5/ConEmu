@@ -270,7 +270,7 @@ BOOL WINAPI OnBeep(DWORD dwFreq, DWORD dwDuration)
 	ORIGINAL_EX(Beep);
 	BOOL lbRc = FALSE;
 
-	if (IS_BEEP_SKIPPED)
+	if (isSuppressBells())
 	{
 		wchar_t szBeep[64]; msprintf(szBeep, countof(szBeep), L"--- Skipped Beep(Freq=%u,Dur=%u)\n", dwFreq, dwDuration);
 		LogBeepSkip(szBeep);
@@ -292,7 +292,7 @@ BOOL WINAPI OnMessageBeep(UINT uType)
 	ORIGINAL_EX(MessageBeep);
 	BOOL lbRc = FALSE;
 
-	if (IS_BEEP_SKIPPED)
+	if (isSuppressBells())
 	{
 		wchar_t szBeep[48]; msprintf(szBeep, countof(szBeep), L"--- Skipped MessageBeep(ID=0x%X)\n", uType);
 		LogBeepSkip(szBeep);

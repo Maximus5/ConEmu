@@ -1842,6 +1842,7 @@ enum CEFlashType
 {
 	eFlashNormal = 0,
 	eFlashSimple = 1,
+	eFlashBeep   = 2,
 };
 
 struct CESERVER_REQ_FLASHWINFO

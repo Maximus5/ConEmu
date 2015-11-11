@@ -40,6 +40,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "SetHook.h"
 #include "hkConsoleOutput.h"
+#include "hkWindow.h"
 #include "hlpConsole.h"
 
 #define MSG_TITLE "ConEmu writer"
@@ -1098,6 +1099,7 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 		SHORT ForceDumpX = 0;
 		bool BSRN = false;
 		bool bForceDumpScroll = false;
+		bool bSkipBELL = false;
 
 		// Обработка символов, которые двигают курсор
 		switch (*pCur)
@@ -1133,7 +1135,16 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 			break;
 		case 7:
 			//Beep (no spacing)
-			LogBeepSkip(L"--ExtWriteText(7)\n");
+			if ((Info->Flags & ewtf_NoBells))
+			{
+				LogBeepSkip(L"--- Skipped ExtWriteText(7)\n");
+				bForceDumpScroll = bSkipBELL = true;
+				pCur--;
+			}
+			else
+			{
+				LogBeepSkip(L"--- ExtWriteText(7)\n");
+			}
 			break;
 		case 8:
 			//BS
@@ -1164,8 +1175,19 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 						(pTrueColorStart && (nLinePosition >= 0)) ? (pTrueColorStart + nLinePosition) : NULL,
 						(pTrueColorEnd), AIColor, (WriteConsoleW_t)Info->Private);
 
+			if (bSkipBELL)
+			{
+				pCur++;
+				// User may disable flashing in ConEmu settings
+				GuiFlashWindow(eFlashBeep, ghConWnd, FALSE, FLASHW_ALL, 1, 0);
+			}
+
 			// Update processed pos
 			pFrom = pCur + 1;
+		}
+		else
+		{
+			_ASSERTE(!bSkipBELL);
 		}
 
 		// После BS - сменить "начальную" координату

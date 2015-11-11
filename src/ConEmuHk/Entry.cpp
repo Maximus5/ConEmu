@@ -418,6 +418,12 @@ void SetServerPID(DWORD anMainSrvPID)
 	gnServerPID = anMainSrvPID;
 }
 
+bool isSuppressBells()
+{
+	bool bSuppressBells = false;
+	CEAnsi::GetFeatures(NULL, &bSuppressBells);
+	return bSuppressBells;
+}
 
 MFileMapping<CESERVER_CONSOLE_MAPPING_HDR> *gpConMap = NULL;
 CESERVER_CONSOLE_MAPPING_HDR* gpConInfo = NULL;

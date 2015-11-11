@@ -126,7 +126,7 @@ BEGIN
 	cbSnapToDesktopEdges    "Lock ConEmu window inside desktop work area"
 	cbStartFarRestoreEditors "When ‘Auto save/restore opened tabs’ save/restore Far Manager editors/viewers too"
 	cbStartFarRestoreFolders "When ‘Auto save/restore opened tabs’ save/restore Far Manager panels folders too"
-	cbSuppressBells         "Stop annoying bells produced by echoing char(7) to console, Inject ConEmuHk is required"
+	cbSuppressBells         "Suppress annoying bells produced by echoing char(7), Beep and MessageBeep functions.\r\nInject ConEmuHk is required."
 	cbTabLazy               "When checked - real window switching\r\nwill be performed on Ctrl depress"
 	cbTabRecent             "Switch first between recent tabs.\r\nYou may still switch between tabs in\r\nstandard manner using Left/Right\r\n(after CtrlTab), while Ctrl is still presses."
 	cbTabs                  "Show tabs (all opened panels, editors and viewers)\r\non the top of ConEmu window"

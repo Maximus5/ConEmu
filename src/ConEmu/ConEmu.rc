@@ -684,6 +684,7 @@ BEGIN
     PUSHBUTTON      "...",bDosBoxSettings,212,79,13,11
     CONTROL         "Use Clink in prompt",cbUseClink,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,231,81,75,8
     PUSHBUTTON      "...",cbClinkWebPage,306,79,13,11
+    CONTROL         "Suppress bells",cbSuppressBells,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,231,97,87,8
     CONTROL         "ANSI X3.64 / xterm 256 colors",cbProcessAnsi,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,97,110,8
     CONTROL         "Disable all flashing",cbDisableAllFlashing,"Button",BS_AUTO3STATE | WS_TABSTOP,128,97,99,8
     CONTROL         "Log console output (*)",cbAnsiLog,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,111,110,8
@@ -697,7 +698,6 @@ BEGIN
     CONTROL         "Debug steps in caption",cbDebugSteps,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,128,157,99,8
     CONTROL         "Show real console",cbVisible,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,231,157,74,8
     PUSHBUTTON      "...",bRealConsoleSettings,306,156,13,11
-    CONTROL         "Suppress bells",cbSuppressBells,"Button",BS_AUTOCHECKBOX | NOT WS_VISIBLE | WS_DISABLED | WS_TABSTOP,231,213,87,8
 END
 
 IDD_SPG_COMSPEC DIALOGEX 0, 0, 328, 235

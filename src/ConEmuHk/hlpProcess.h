@@ -54,7 +54,7 @@ extern DWORD   gnServerPID;   // ConEmuC server PID (initialized on startup, dur
 
 #include "DbgHooks.h"
 
-#define IS_BEEP_SKIPPED RELEASEDEBUGTEST(false,true)
+bool isSuppressBells();
 #define LogBeepSkip(x) OutputDebugString(x)
 
 void SetServerPID(DWORD anMainSrvPID);

@@ -7218,6 +7218,7 @@ void CConEmuMain::DoFlashWindow(CESERVER_REQ_FLASHWINFO* pFlash, bool bFromMacro
 	else
 	{
 		wParam = ((pFlash->dwFlags & 0xFF) << 24) | (pFlash->uCount & 0xFFFFF)
+			| ((pFlash->fType == eFlashBeep) ? 0x00800000 : 0)
 			| (bFromMacro ? 0x00400000 : 0);
 	}
 
