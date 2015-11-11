@@ -110,7 +110,7 @@ BOOL GuiSetForeground(HWND hWnd)
 	return lbRc;
 }
 
-void GuiFlashWindow(BOOL bSimple, HWND hWnd, BOOL bInvert, DWORD dwFlags, UINT uCount, DWORD dwTimeout)
+void GuiFlashWindow(CEFlashType fType, HWND hWnd, BOOL bInvert, DWORD dwFlags, UINT uCount, DWORD dwTimeout)
 {
 	if (ghConEmuWndDC)
 	{
@@ -118,7 +118,7 @@ void GuiFlashWindow(BOOL bSimple, HWND hWnd, BOOL bInvert, DWORD dwFlags, UINT u
 		if (pIn)
 		{
 			ExecutePrepareCmd(pIn, CECMD_FLASHWINDOW, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_FLASHWINFO)); //-V119
-			pIn->Flash.bSimple = bSimple;
+			pIn->Flash.fType = fType;
 			pIn->Flash.hWnd = hWnd;
 			pIn->Flash.bInvert = bInvert;
 			pIn->Flash.dwFlags = dwFlags;
@@ -187,7 +187,7 @@ BOOL WINAPI OnFlashWindow(HWND hWnd, BOOL bInvert)
 
 	if (ghConEmuWndDC)
 	{
-		GuiFlashWindow(TRUE, hWnd, bInvert, 0,0,0);
+		GuiFlashWindow(eFlashSimple, hWnd, bInvert, 0,0,0);
 		return TRUE;
 	}
 
@@ -205,7 +205,7 @@ BOOL WINAPI OnFlashWindowEx(PFLASHWINFO pfwi)
 
 	if (ghConEmuWndDC)
 	{
-		GuiFlashWindow(FALSE, pfwi->hwnd, 0, pfwi->dwFlags, pfwi->uCount, pfwi->dwTimeout);
+		GuiFlashWindow(eFlashNormal, pfwi->hwnd, 0, pfwi->dwFlags, pfwi->uCount, pfwi->dwTimeout);
 		return TRUE;
 	}
 

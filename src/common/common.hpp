@@ -1838,12 +1838,20 @@ struct CESERVER_REQ_POSTMSG
 	u64     wParam, lParam;
 };
 
+enum CEFlashType
+{
+	eFlashNormal = 0,
+	eFlashSimple = 1,
+};
+
 struct CESERVER_REQ_FLASHWINFO
 {
-	BOOL  bSimple;
+	CEFlashType fType;
 	HWND2 hWnd;
-	BOOL  bInvert; // только если bSimple == TRUE
-	DWORD dwFlags; // а это и далее, если bSimple == FALSE
+	// for (fType == eFlashSimple)
+	BOOL  bInvert;
+	// this and further for (fType != eFlashSimple)
+	DWORD dwFlags;
 	UINT  uCount;
 	DWORD dwTimeout;
 };

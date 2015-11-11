@@ -1889,7 +1889,7 @@ LPWSTR ConEmuMacro::Flash(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 
 	if (iMode == 0)
 	{
-		flash.bSimple = TRUE;
+		flash.fType = eFlashSimple;
 		flash.bInvert = (p->GetIntArg(1, iFlags)) && (iFlags != 0);
 	}
 	else

@@ -7211,13 +7211,14 @@ void CConEmuMain::DoFlashWindow(CESERVER_REQ_FLASHWINFO* pFlash, bool bFromMacro
 {
 	WPARAM wParam = 0;
 
-	if (pFlash->bSimple)
+	if (pFlash->fType == eFlashSimple)
 	{
 		wParam = 0x00100000 | (pFlash->bInvert ? 0x00200000 : 0) | (bFromMacro ? 0x00400000 : 0);
 	}
 	else
 	{
-		wParam = ((pFlash->dwFlags & 0xFF) << 24) | (pFlash->uCount & 0xFFFFF) | (bFromMacro ? 0x00400000 : 0);
+		wParam = ((pFlash->dwFlags & 0xFF) << 24) | (pFlash->uCount & 0xFFFFF)
+			| (bFromMacro ? 0x00400000 : 0);
 	}
 
 	PostMessage(ghWnd, mn_MsgFlashWindow, wParam, (LPARAM)pFlash->hWnd.u);
