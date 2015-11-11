@@ -564,8 +564,6 @@ FARPROC WINAPI GetTrampoline(LPCSTR pszName)
 
 
 
-MSection* gpHookCS = NULL;
-
 DWORD CalculateNameCRC32(const char *apszName)
 {
 #if 1
@@ -651,11 +649,6 @@ int InitHooks(HookItem* apHooks)
 	if (!gnLdrDllNotificationUsed)
 	{
 		CheckLdrNotificationAvailable();
-	}
-
-	if (!gpHookCS)
-	{
-		gpHookCS = new MSection;
 	}
 
 	if (gpHooks == NULL)
@@ -1004,13 +997,6 @@ void ShutdownHooks()
 	}
 	HLOGEND1();
 
-	if (gpHookCS)
-	{
-		MSection *p = gpHookCS;
-		gpHookCS = NULL;
-		delete p;
-	}
-
 	//if (gpcsHooksRootPtr)
 	//{
 	//	Delete Critical Section(gpcsHooksRootPtr);
@@ -1091,66 +1077,7 @@ bool FindModuleFileName(HMODULE ahModule, LPWSTR pszName, size_t cchNameMax)
 
 extern BOOL gbInCommonShutdown;
 
-bool LockHooks(HMODULE Module, LPCWSTR asAction, MSectionLock* apCS)
-{
-	#ifdef _DEBUG
-	DWORD nCurTID = GetCurrentThreadId();
-	#endif
 
-	//while (nHookMutexWait != WAIT_OBJECT_0)
-	BOOL lbLockHooksSection = FALSE;
-	while (!(lbLockHooksSection = apCS->Lock(gpHookCS, TRUE, 10000)))
-	{
-		#ifdef _DEBUG
-		if (!IsDebuggerPresent())
-		{
-			_ASSERTE(lbLockHooksSection);
-		}
-		#endif
-
-		if (gbInCommonShutdown)
-			return false;
-
-		wchar_t* szTrapMsg = (wchar_t*)calloc(1024,2);
-		wchar_t* szName = (wchar_t*)calloc((MAX_PATH+1),2);
-
-		if (!FindModuleFileName(Module, szName, MAX_PATH+1)) szName[0] = 0;
-
-		DWORD nTID = GetCurrentThreadId(); DWORD nPID = GetCurrentProcessId();
-		msprintf(szTrapMsg, 1024, 
-			L"Can't %s hooks in module '%s'\nCurrent PID=%u, TID=%i\nCan't lock hook section\nPress 'Retry' to repeat locking",
-			asAction, szName, nPID, nTID);
-
-		int nBtn = 
-			#ifdef CONEMU_MINIMAL
-			GuiMessageBox
-			#else
-			MessageBoxW
-			#endif
-			(GetConEmuHWND(TRUE), szTrapMsg, L"ConEmu", MB_RETRYCANCEL|MB_ICONSTOP|MB_SYSTEMMODAL);
-
-		free(szTrapMsg);
-		free(szName);
-
-		if (nBtn != IDRETRY)
-			return false;
-
-		//nHookMutexWait = WaitForSingleObject(ghHookMutex, 10000);
-		//continue;
-	}
-
-	#ifdef _DEBUG
-	wchar_t szDbg[80];
-	msprintf(szDbg, countof(szDbg), L"ConEmuHk: LockHooks, TID=%u\n", nCurTID);
-	if (nCurTID != gnHookMainThreadId)
-	{
-		int nDbg = 0;
-	}
-	DebugString(szDbg);
-	#endif
-
-	return true;
-}
 
 
 bool SetAllHooks()

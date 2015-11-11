@@ -78,7 +78,7 @@ protected:
 			return false;
 		}
 
-		DWORD hash = UsedHash(key);
+		LONG hash = UsedHash(key);
 
 		pBlock = mp_FirstBlock;
 		while (pBlock)
