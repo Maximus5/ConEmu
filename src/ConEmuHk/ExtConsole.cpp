@@ -1158,9 +1158,9 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 
 		if (ForceDumpX || bForceDumpScroll)
 		{
-			// Вывод расширенных атрибутов (если нужно и можно) и собственно текста
-			// Включая символ pCur
-			lbRc = IntWriteText(h, x, ForceDumpX, pFrom, (DWORD)(pCur - pFrom + 1),
+			// Printing (including pCur) using extended attributes
+			if (pCur >= pFrom)
+				lbRc = IntWriteText(h, x, ForceDumpX, pFrom, (DWORD)(pCur - pFrom + 1),
 						(pTrueColorStart && (nLinePosition >= 0)) ? (pTrueColorStart + nLinePosition) : NULL,
 						(pTrueColorEnd), AIColor, (WriteConsoleW_t)Info->Private);
 
@@ -1227,7 +1227,7 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 
 	if (pCur > pFrom)
 	{
-		// НЕ включая символ pCur
+		// Printing (NOT including pCur) using extended attributes
 		SHORT ForceDumpX = (x2 > x) ? (min(x2, WrapAtCol)-1) : -1;
 		lbRc = IntWriteText(h, x, ForceDumpX, pFrom, (DWORD)(pCur - pFrom),
 					 (pTrueColorStart && (nLinePosition >= 0)) ? (pTrueColorStart + nLinePosition) : NULL,
