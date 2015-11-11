@@ -28,7 +28,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-template<class KEY_T,class VAL_T>
+template<class KEY_T,class VAL_T,UINT HASH_SHIFT=0>
 struct MMap
 {
 protected:
@@ -66,7 +66,13 @@ protected:
 	LONG UsedHash(const KEY_T& key)
 	{
 		_ASSERTE(sizeof(KEY_T) >= sizeof(LONG));
-		LONG hash = *(LONG*)&key;
+		LONG hash;
+		if (!HASH_SHIFT)
+			hash = *(LONG*)&key;
+		else if (sizeof(KEY_T) >= sizeof(unsigned __int64))
+			hash = (LONG)(((*(unsigned __int64*)&key) >> HASH_SHIFT) & 0xFFFFFFFF);
+		else
+			hash = (LONG)((*(DWORD*)&key) >> HASH_SHIFT);
 		return hash ? hash : -1;
 	}
 
