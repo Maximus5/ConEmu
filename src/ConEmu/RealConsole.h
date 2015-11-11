@@ -300,6 +300,7 @@ class CRealConsole
 			RECT    rcPreGuiWndRect; // Положение окна ДО аттача
 			bool    bGuiExternMode; // FALSE если захотели показать GUI приложение вне вкладки ConEmu (Ctrl-Win-Alt-Space)
 			bool    bGuiForceConView; // TRUE если просили спрятать GUI и показать VirtualConsole
+			bool    bChildConAttached;  // TRUE if ChildGui started CONSOLE application (CommandPromptPortable.exe). Don't confuse with Putty/plink-proxy.
 			bool    bInGuiAttaching;
 			bool    bInSetFocus;
 			DWORD   nGuiWndStyle, nGuiWndStylEx; // Исходные стили окна ДО подцепления в ConEmu
