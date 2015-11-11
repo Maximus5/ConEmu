@@ -1992,7 +1992,10 @@ int CShellProc::PrepareExecuteParms(
 	{
 		// 1. Цеплять во вкладку нужно только если консоль запускается ВИДИМОЙ
 		// 2. Если запускается, например, CommandPromptPortable.exe (GUI) то подцепить запускаемый CUI в уже существующую вкладку!
-		if (gbAttachGuiClient && !ghAttachGuiClient && (aCmd == eCreateProcess))
+		// 3. Putty with plink as proxy, plink must not get into ConEmu tab. Putty sets only CREATE_NO_WINDOW, DETACHED_PROCESS JIC.
+		if (gbAttachGuiClient && !ghAttachGuiClient
+			&& (anCreateFlags && !((*anCreateFlags) & (CREATE_NO_WINDOW|DETACHED_PROCESS)))
+			&& (aCmd == eCreateProcess))
 		{
 			if (AttachServerConsole())
 			{
