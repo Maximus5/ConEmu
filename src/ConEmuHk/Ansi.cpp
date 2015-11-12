@@ -782,7 +782,11 @@ BOOL CEAnsi::WriteText(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, 
 	BOOL lbRc = FALSE;
 	DWORD /*nWritten = 0,*/ nTotalWritten = 0;
 
-	_ASSERTE(((_WriteConsoleW != &WriteConsoleW) || !HooksWereSet) && "It must point to CallPointer for 'unhooked' call");
+	#ifdef _DEBUG
+	ORIGINAL_KRNL(WriteConsoleW);
+	OnWriteConsoleW_t pfnDbgWriteConsoleW = F(WriteConsoleW);
+	_ASSERTE(((_WriteConsoleW == pfnDbgWriteConsoleW) || !HooksWereSet) && "It must point to CallPointer for 'unhooked' call");
+	#endif
 
 	ExtWriteTextParm write = {sizeof(write), ewtf_Current|AddFlags, hConsoleOutput};
 	write.Private = (void*)(FARPROC)_WriteConsoleW;
