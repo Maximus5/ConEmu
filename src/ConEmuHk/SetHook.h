@@ -154,6 +154,28 @@ struct HkModuleInfo
 {
 	HMODULE hModule;
 	wchar_t sModuleName[128]; // If we need to know the name of module
+
+	// For our modules we change imports to ease use of trampolines
+	// 0-not yet, 1-imports were changed, 2-imports were reverted
+	int     Hooked;
+	UINT    nAdrUsed;
+	// And the changed pointers
+	struct ChangedFunctions {
+		DWORD_PTR* ppAdr;
+		#ifdef _DEBUG
+		DWORD_PTR ppAdrCopy1, ppAdrCopy2;
+		DWORD_PTR pModulePtr, nModuleSize;
+		#endif
+		DWORD_PTR  pOld;
+		DWORD_PTR  pOur;
+		union {
+			BOOL bHooked;
+			LPVOID Dummy;
+		};
+		#ifdef _DEBUG
+		char sName[32];
+		#endif
+	} Addresses[MAX_HOOKED_PROCS];
 };
 
 typedef MMap<HMODULE,HkModuleInfo*,16> HkModuleMap;
@@ -202,6 +224,9 @@ void ShutdownHooks();
 int  InitHooks(HookItem* apHooks);
 bool SetAllHooks();
 void UnsetAllHooks();
+
+bool SetImports(LPCWSTR asModule, HMODULE Module, BOOL abForceHooks);
+bool UnsetImports(HMODULE Module);
 
 bool PrepareNewModule(HMODULE module, LPCSTR asModuleA, LPCWSTR asModuleW, BOOL abNoSnapshoot = FALSE, BOOL abForceHooks = FALSE);
 void UnprepareModule(HMODULE hModule, LPCWSTR pszModule, int iStep);

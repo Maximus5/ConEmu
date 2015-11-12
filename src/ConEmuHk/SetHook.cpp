@@ -892,6 +892,10 @@ BOOL StartupHooks()
 	if (lbRc)
 	{
 		gnDllState |= ds_HooksStarted;
+
+		//_ASSERTE(FALSE); -- it must TRIGGER OnCreateFileW
+		SetImports(WIN3264TEST(L"ConEmuHk",L"ConEmuHk64"), ghOurModule, TRUE);
+		//_ASSERTE(FALSE); -- it must BYPASS OnCreateFileW and call trampolined function
 	}
 	else
 	{
@@ -915,7 +919,11 @@ void ShutdownHooks()
 {
 	gnDllState |= ds_HooksStopping;
 
-	HLOG1("ShutdownHooks.UnsetAllHooks",0);
+	HLOG1("ShutdownHooks.UnsetImports", 0);
+	UnsetImports(ghOurModule);
+	HLOGEND1();
+
+	HLOG1_("ShutdownHooks.UnsetAllHooks",0);
 	UnsetAllHooks();
 	HLOGEND1();
 
@@ -1011,6 +1019,597 @@ LPCWSTR FormatModuleHandle(HMODULE ahModule, LPCWSTR asFmt32, LPCWSTR asFmt64, L
 
 
 
+
+// Let our modules use trampolined (original) versions without supefluous steps
+bool SetImportsPrep(LPCWSTR asModule, HMODULE Module, IMAGE_NT_HEADERS* nt_header, BOOL abForceHooks, IMAGE_IMPORT_DESCRIPTOR* Import, size_t ImportCount, bool (&bFnNeedHook)[MAX_HOOKED_PROCS], HkModuleInfo* p);
+bool SetImportsChange(LPCWSTR asModule, HMODULE Module, BOOL abForceHooks, bool (&bFnNeedHook)[MAX_HOOKED_PROCS], HkModuleInfo* p);
+// Подменить Импортируемые функции в модуле (Module)
+//	если (abForceHooks == FALSE) то хуки не ставятся, если
+//  будет обнаружен импорт, не совпадающий с оригиналом
+//  Это для того, чтобы не выполнять множественные хуки при множественных LoadLibrary
+bool SetImports(LPCWSTR asModule, HMODULE Module, BOOL abForceHooks)
+{
+	IMAGE_IMPORT_DESCRIPTOR* Import = NULL;
+	DWORD Size = 0;
+	HMODULE hExecutable = GetModuleHandle(0);
+
+	if (!gpHooks)
+		return false;
+
+	if (!Module)
+		return false;
+
+	// If our module is already processed - there's nothing to do
+	HkModuleInfo* p = IsHookedModule(Module);
+	/// TODO: On startup only imports from kernel32 and user32 modules are processed
+	/// TODO: Other imports (gdi32?) may be left unprocessed and our modules will use hooked variants
+	/// TODO: Not a big problem though
+	if (p && p->Hooked)
+		return true;
+
+	/* No need to do superfluous checks on our modules
+	if (!IsModuleValid(Module))
+		return false;
+	*/
+
+	IMAGE_DOS_HEADER* dos_header = (IMAGE_DOS_HEADER*)Module;
+	IMAGE_NT_HEADERS* nt_header = NULL;
+
+	HLOG0("SetImports.Init",(DWORD)Module);
+
+	if (dos_header->e_magic == IMAGE_DOS_SIGNATURE /*'ZM'*/)
+	{
+		nt_header = (IMAGE_NT_HEADERS*)((char*)Module + dos_header->e_lfanew);
+		if (IsBadReadPtr(nt_header, sizeof(IMAGE_NT_HEADERS)))
+			return false;
+
+		if (nt_header->Signature != 0x004550)
+			return false;
+		else
+		{
+			Import = (IMAGE_IMPORT_DESCRIPTOR*)((char*)Module +
+			                                    (DWORD)(nt_header->OptionalHeader.
+			                                            DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].
+			                                            VirtualAddress));
+			Size = nt_header->OptionalHeader.
+			       DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].Size;
+		}
+		HLOGEND();
+	}
+	else
+		return false;
+
+	// if wrong module or no import table
+	if (!Import)
+		return false;
+
+
+	DEBUGTEST(PIMAGE_SECTION_HEADER section = IMAGE_FIRST_SECTION(nt_header)); //-V220
+	_ASSERTE(sizeof(DWORD_PTR)==WIN3264TEST(4,8));
+
+	// Module is valid, but was not processed yet
+	if (!p)
+	{
+		HLOG("SetImports.Add",(DWORD)Module);
+		p = AddHookedModule(Module, asModule);
+		HLOGEND();
+		if (!p)
+			return false;
+	}
+	// Set it now, to be sure
+	p->Hooked = 1;
+
+	HLOG("SetImports.Prepare",(DWORD)Module);
+	bool res = false, bHooked = false;
+	INT_PTR nCount = Size / sizeof(IMAGE_IMPORT_DESCRIPTOR);
+	bool bFnNeedHook[MAX_HOOKED_PROCS] = {};
+	// Separate function to allow exception handlers
+	res = SetImportsPrep(asModule, Module, nt_header, abForceHooks, Import, nCount, bFnNeedHook, p);
+	HLOGEND();
+
+	HLOG("SetImports.Change",(DWORD)Module);
+	// Separate function to allow exception handlers
+	bHooked = SetImportsChange(asModule, Module, abForceHooks, bFnNeedHook, p);
+	HLOGEND();
+
+	#ifdef _DEBUG
+	if (bHooked)
+	{
+		HLOG("SetImports.FindModuleFileName",(DWORD)Module);
+		wchar_t* szDbg = (wchar_t*)calloc(MAX_PATH*3, 2);
+		wchar_t* szModPath = (wchar_t*)calloc(MAX_PATH*2, 2);
+		FindModuleFileName(Module, szModPath, MAX_PATH*2);
+		_wcscpy_c(szDbg, MAX_PATH*3, L"  ## Imports were changed by conemu: ");
+		_wcscat_c(szDbg, MAX_PATH*3, szModPath);
+		_wcscat_c(szDbg, MAX_PATH*3, L"\n");
+		DebugString(szDbg);
+		free(szDbg);
+		free(szModPath);
+		HLOGEND();
+	}
+	#endif
+
+	return (res && bHooked);
+}
+
+bool isBadModulePtr(const void *lp, UINT_PTR ucb, HMODULE Module, const IMAGE_NT_HEADERS* nt_header)
+{
+	bool bTestValid = (((LPBYTE)lp) >= ((LPBYTE)Module))
+		&& ((((LPBYTE)lp) + ucb) <= (((LPBYTE)Module) + nt_header->OptionalHeader.SizeOfImage));
+
+#ifdef USE_ONLY_INT_CHECK_PTR
+	bool bApiValid = bTestValid;
+#else
+	bool bApiValid = !IsBadReadPtr(lp, ucb);
+
+	#ifdef _DEBUG
+	static bool bFirstAssert = false;
+	if (bTestValid != bApiValid)
+	{
+		if (!bFirstAssert)
+		{
+			bFirstAssert = true;
+			_ASSERTE(bTestValid != bApiValid);
+		}
+	}
+	#endif
+#endif
+
+	return !bApiValid;
+}
+
+bool isBadModuleStringA(LPCSTR lpsz, UINT_PTR ucchMax, HMODULE Module, IMAGE_NT_HEADERS* nt_header)
+{
+	bool bTestStrValid = (((LPBYTE)lpsz) >= ((LPBYTE)Module))
+		&& ((((LPBYTE)lpsz) + ucchMax) <= (((LPBYTE)Module) + nt_header->OptionalHeader.SizeOfImage));
+
+#ifdef USE_ONLY_INT_CHECK_PTR
+	bool bApiStrValid = bTestStrValid;
+#else
+	bool bApiStrValid = !IsBadStringPtrA(lpsz, ucchMax);
+
+	#ifdef _DEBUG
+	static bool bFirstAssert = false;
+	if (bTestStrValid != bApiStrValid)
+	{
+		if (!bFirstAssert)
+		{
+			bFirstAssert = true;
+			_ASSERTE(bTestStrValid != bApiStrValid);
+		}
+	}
+	#endif
+#endif
+
+	return !bApiStrValid;
+}
+
+bool SetImportsPrep(LPCWSTR asModule, HMODULE Module, IMAGE_NT_HEADERS* nt_header, BOOL abForceHooks, IMAGE_IMPORT_DESCRIPTOR* Import, size_t ImportCount, bool (&bFnNeedHook)[MAX_HOOKED_PROCS], HkModuleInfo* p)
+{
+	bool res = false;
+	size_t i;
+
+	#define GetPtrFromRVA(rva,pNTHeader,imageBase) (PVOID)((imageBase)+(rva))
+
+	//api-ms-win-core-libraryloader-l1-1-1.dll
+	//api-ms-win-core-console-l1-1-0.dll
+	//...
+	char szCore[18];
+	const char szCorePrefix[] = "api-ms-win-core-"; // MUST BE LOWER CASE!
+	const int nCorePrefLen = lstrlenA(szCorePrefix);
+	_ASSERTE((nCorePrefLen+1)<countof(szCore));
+	bool lbIsCoreModule = false;
+	char mod_name[MAX_PATH];
+
+	//_ASSERTEX(lstrcmpi(asModule, L"dsound.dll"));
+
+	SAFETRY
+	{
+		HLOG0("SetImportsPrep.Begin",ImportCount);
+
+		//_ASSERTE(Size == (nCount * sizeof(IMAGE_IMPORT_DESCRIPTOR))); -- may not be
+
+		for (i = 0; i < ImportCount; i++)
+		{
+			if (Import[i].Name == 0)
+				break;
+
+			HLOG0("SetImportsPrep.Import",i);
+
+			HLOG1("SetImportsPrep.CheckModuleName",i);
+			//DebugString( ToTchar( (char*)Module + Import[i].Name ) );
+			char* mod_name_ptr = (char*)Module + Import[i].Name;
+			DWORD_PTR rvaINT = Import[i].OriginalFirstThunk;
+			DWORD_PTR rvaIAT = Import[i].FirstThunk; //-V101
+			lstrcpynA(mod_name, mod_name_ptr, countof(mod_name));
+			CharLowerBuffA(mod_name, lstrlenA(mod_name)); // MUST BE LOWER CASE!
+			lstrcpynA(szCore, mod_name, nCorePrefLen+1);
+			lbIsCoreModule = (strcmp(szCore, szCorePrefix) == 0);
+
+			// Process only imports from hooked modules
+			bool bHookExists = false;
+			for (size_t j = 0; gpHooks[j].Name; j++)
+			{
+				if ((strcmp(mod_name, gpHooks[j].DllNameA) != 0)
+					&& !(lbIsCoreModule && (gpHooks[j].DllName == kernel32)))
+					continue;
+				bHookExists = true;
+				break;
+			}
+			// That imported module is not hooked (strange)
+			if (!bHookExists)
+			{
+				HLOGEND1();
+				HLOGEND();
+				continue;
+			}
+
+			if (rvaINT == 0)      // No Characteristics field?
+			{
+				// Yes! Gotta have a non-zero FirstThunk field then.
+				rvaINT = rvaIAT;
+
+				if (rvaINT == 0)       // No FirstThunk field?  Ooops!!!
+				{
+					_ASSERTE(rvaINT!=0);
+					HLOGEND1();
+					HLOGEND();
+					break;
+				}
+			}
+
+			PIMAGE_IMPORT_BY_NAME pOrdinalNameO = NULL;
+			IMAGE_THUNK_DATA* thunk = (IMAGE_THUNK_DATA*)GetPtrFromRVA(rvaIAT, nt_header, (PBYTE)Module);
+			IMAGE_THUNK_DATA* thunkO = (IMAGE_THUNK_DATA*)GetPtrFromRVA(rvaINT, nt_header, (PBYTE)Module);
+
+			if (!thunk ||  !thunkO)
+			{
+				_ASSERTE(thunk && thunkO);
+				HLOGEND1();
+				HLOGEND();
+				continue;
+			}
+			HLOGEND1();
+
+			// ***** >>>>>> go
+
+			HLOG1_("SetImportsPrep.ImportThunksSteps",i);
+			size_t f, s;
+			for (s = 0; s <= 1; s++)
+			{
+				if (s)
+				{
+					thunk = (IMAGE_THUNK_DATA*)GetPtrFromRVA(rvaIAT, nt_header, (PBYTE)Module);
+					thunkO = (IMAGE_THUNK_DATA*)GetPtrFromRVA(rvaINT, nt_header, (PBYTE)Module);
+				}
+
+				for (f = 0;; thunk++, thunkO++, f++)
+				{
+					//111127 - ..\GIT\lib\perl5\site_perl\5.8.8\msys\auto\SVN\_Core\_Core.dll
+					//         some dlls have bad import tables
+					#ifndef USE_SEH
+					HLOG("SetImportsPrep.lbBadThunk",f);
+					bool lbBadThunk = isBadModulePtr(thunk, sizeof(*thunk), Module, nt_header);
+					if (lbBadThunk)
+					{
+						_ASSERTEX(!lbBadThunk);
+						break;
+					}
+					#endif
+
+					if (!thunk->u1.Function)
+						break;
+
+					#ifndef USE_SEH
+					HLOG("SetImportsPrep.lbBadThunkO",f);
+					bool lbBadThunkO = isBadModulePtr(thunkO, sizeof(*thunkO), Module, nt_header);
+					if (lbBadThunkO)
+					{
+						_ASSERTEX(!lbBadThunkO);
+						break;
+					}
+					#endif
+
+					const char* pszFuncName = NULL;
+
+
+					// We get function address and (if s==1) function name
+					// Now we need to find trampoline address
+					HookItem* ph = gpHooks;
+					INT_PTR jj = -1;
+
+					if (!s)
+					{
+						HLOG1("SetImportsPrep.ImportThunks0",s);
+
+						for (size_t j = 0; ph->Name; ++j, ++ph)
+						{
+							_ASSERTEX(j<gnHookedFuncs && gnHookedFuncs<=MAX_HOOKED_PROCS);
+
+							// If we failed to determine original address of the procedure (kernel32/WriteConsoleOutputW, etc.)
+							if (ph->HookedAddress == NULL)
+							{
+								continue;
+							}
+
+							// Если адрес импорта в модуле уже совпадает с адресом одной из наших функций
+							if (ph->NewAddress == (void*)thunk->u1.Function)
+							{
+								res = true; // это уже захучено
+								break;
+							}
+
+							// Check the address of hooked function
+							if ((void*)thunk->u1.Function == ph->HookedAddress)
+							{
+								jj = j;
+								break; // OK, Hook it!
+							}
+						} // for (size_t j = 0; ph->Name; ++j, ++ph), (s==0)
+
+						HLOGEND1();
+					}
+					else
+					{
+						HLOG1("SetImportsPrep.ImportThunks1",s);
+
+						// If changes are restricted if addresses do not match
+						if (!abForceHooks)
+						{
+							//_ASSERTEX(abForceHooks);
+							HLOG2("!!!Function skipped of (!abForceHooks)",f);
+							continue;
+						}
+
+						// Find function name
+						if ((thunk->u1.Function != thunkO->u1.Function)
+							&& !IMAGE_SNAP_BY_ORDINAL(thunkO->u1.Ordinal))
+						{
+							pOrdinalNameO = (PIMAGE_IMPORT_BY_NAME)GetPtrFromRVA(thunkO->u1.AddressOfData, nt_header, (PBYTE)Module);
+
+							#ifdef USE_SEH
+								pszFuncName = (LPCSTR)pOrdinalNameO->Name;
+							#else
+								HLOG("SetImportsPrep.pOrdinalNameO",f);
+								// WARNING: Numerous IsBad???Ptr calls may introduce lags and bugs
+								bool lbValidPtr = !isBadModulePtr(pOrdinalNameO, sizeof(IMAGE_IMPORT_BY_NAME), Module, nt_header);
+								_ASSERTE(lbValidPtr);
+
+								if (lbValidPtr)
+								{
+									lbValidPtr = !isBadModuleStringA((LPCSTR)pOrdinalNameO->Name, 10, Module, nt_header);
+									_ASSERTE(lbValidPtr);
+
+									if (lbValidPtr)
+										pszFuncName = (LPCSTR)pOrdinalNameO->Name;
+								}
+							#endif
+						}
+
+						if (!pszFuncName || !*pszFuncName)
+						{
+							continue; // This import does not have "Function name"
+						}
+
+						HLOG2("SetImportsPrep.FindFunction",f);
+						ph = FindFunction(pszFuncName);
+						HLOGEND2();
+						if (!ph)
+						{
+							HLOGEND1();
+							continue;
+						}
+
+						// Module name
+						HLOG2_("SetImportsPrep.Module",f);
+						if ((strcmp(mod_name, ph->DllNameA) != 0)
+							&& !(lbIsCoreModule && (ph->DllName == kernel32)))
+						{
+							HLOGEND2();
+							HLOGEND1();
+							// Names are different and no duplicates are allowed
+							continue;
+						}
+						HLOGEND2();
+
+						jj = (ph - gpHooks);
+
+						HLOGEND1();
+					}
+
+
+					if (jj >= 0)
+					{
+						HLOG1("SetImportsPrep.WorkExport",f);
+
+						// When we get here - jj matches pszFuncName or FuncPtr
+						if (p->Addresses[jj].ppAdr != NULL)
+						{
+							HLOGEND1();
+							continue; // уже обработали, следующий импорт
+						}
+
+						//#ifdef _DEBUG
+						//// Это НЕ ORDINAL, это Hint!!!
+						//if (ph->nOrdinal == 0 && ordinalO != (ULONGLONG)-1)
+						//	ph->nOrdinal = (DWORD)ordinalO;
+						//#endif
+
+
+						_ASSERTE(sizeof(thunk->u1.Function)==sizeof(DWORD_PTR));
+
+						if (thunk->u1.Function == (DWORD_PTR)ph->NewAddress)
+						{
+							// оказалось захучено в другой нити? такого быть не должно, блокируется секцией
+							// Но может быть захучено в прошлый раз, если не все модули были загружены при старте
+							_ASSERTE(thunk->u1.Function != (DWORD_PTR)ph->NewAddress);
+						}
+						else
+						{
+							bFnNeedHook[jj] = true;
+							p->Addresses[jj].ppAdr = &thunk->u1.Function;
+							#ifdef _DEBUG
+							p->Addresses[jj].ppAdrCopy1 = (DWORD_PTR)p->Addresses[jj].ppAdr;
+							p->Addresses[jj].ppAdrCopy2 = (DWORD_PTR)*p->Addresses[jj].ppAdr;
+							p->Addresses[jj].pModulePtr = (DWORD_PTR)p->hModule;
+							IMAGE_NT_HEADERS* nt_header = (IMAGE_NT_HEADERS*)((char*)p->hModule + ((IMAGE_DOS_HEADER*)p->hModule)->e_lfanew);
+							p->Addresses[jj].nModuleSize = nt_header->OptionalHeader.SizeOfImage;
+							#endif
+							//Для проверки, а то при UnsetHook("cscapi.dll") почему-то возникла ошибка ERROR_INVALID_PARAMETER в VirtualProtect
+							_ASSERTEX(p->hModule==Module);
+							HLOG2("SetImportsPrep.CheckCallbackPtr.1",f);
+							_ASSERTEX(CheckCallbackPtr(p->hModule, 1, (FARPROC*)&p->Addresses[jj].ppAdr, TRUE));
+							HLOGEND2();
+							p->Addresses[jj].pOld = thunk->u1.Function;
+							p->Addresses[jj].pOur = (DWORD_PTR)ph->CallAddress;
+							#ifdef _DEBUG
+							lstrcpynA(p->Addresses[jj].sName, ph->Name, countof(p->Addresses[jj].sName));
+							#endif
+
+							_ASSERTEX(p->nAdrUsed < countof(p->Addresses));
+							p->nAdrUsed++; //информационно
+						}
+
+						//DebugString( ToTchar( ph->Name ) );
+						res = true;
+						HLOGEND1();
+					} // if (jj >= 0)
+					HLOGEND1();
+
+				} // for (f = 0;; thunk++, thunkO++, f++)
+
+			} // for (s = 0; s <= 1; s++)
+			HLOGEND1();
+
+			HLOGEND();
+		} // for (i = 0; i < nCount; i++)
+		HLOGEND();
+	} SAFECATCH {
+	}
+
+	return res;
+}
+
+bool SetImportsChange(LPCWSTR asModule, HMODULE Module, BOOL abForceHooks, bool (&bFnNeedHook)[MAX_HOOKED_PROCS], HkModuleInfo* p)
+{
+	bool bHooked = false;
+	size_t j = 0;
+	DWORD dwErr = (DWORD)-1;
+	_ASSERTEX(j<gnHookedFuncs && gnHookedFuncs<=MAX_HOOKED_PROCS);
+
+	SAFETRY
+	{
+		while (j < gnHookedFuncs)
+		{
+			// Может быть NULL, если импортируются не все функции
+			if (p->Addresses[j].ppAdr && bFnNeedHook[j])
+			{
+				if (*p->Addresses[j].ppAdr == p->Addresses[j].pOur)
+				{
+					// оказалось захучено в другой нити или раньше
+					_ASSERTEX(*p->Addresses[j].ppAdr != p->Addresses[j].pOur);
+				}
+				else
+				{
+					DWORD old_protect = 0xCDCDCDCD;
+					if (!VirtualProtect(p->Addresses[j].ppAdr, sizeof(*p->Addresses[j].ppAdr),
+					                   PAGE_READWRITE, &old_protect))
+					{
+						dwErr = GetLastError();
+						_ASSERTEX(FALSE);
+					}
+					else
+					{
+						bHooked = true;
+
+						*p->Addresses[j].ppAdr = p->Addresses[j].pOur;
+						p->Addresses[j].bHooked = TRUE;
+
+						VirtualProtect(p->Addresses[j].ppAdr, sizeof(*p->Addresses[j].ppAdr), old_protect, &old_protect);
+					}
+
+				}
+			}
+
+			j++;
+		}
+	} SAFECATCH {
+		// Ошибка назначения
+		p->Addresses[j].pOur = 0;
+	}
+
+	return bHooked;
+}
+
+// Return original imports to our modules, changed by SetImports
+bool UnsetImports(HMODULE Module)
+{
+	if (!gpHooks)
+		return false;
+
+	HkModuleInfo* p = IsHookedModule(Module);
+	bool bUnhooked = false;
+	DWORD dwErr = (DWORD)-1;
+
+	if (p && (p->Hooked == 1))
+	{
+		HLOG1("UnsetHook.Var",0);
+		for (size_t i = 0; i < MAX_HOOKED_PROCS; i++)
+		{
+			if (p->Addresses[i].pOur == 0)
+				continue; // Этот адрес поменять не смогли
+
+			#ifdef _DEBUG
+			//Для проверки, а то при UnsetHook("cscapi.dll") почему-то возникла ошибка ERROR_INVALID_PARAMETER в VirtualProtect
+			CheckCallbackPtr(p->hModule, 1, (FARPROC*)&p->Addresses[i].ppAdr, TRUE);
+			#endif
+
+			DWORD old_protect = 0xCDCDCDCD;
+			if (!VirtualProtect(p->Addresses[i].ppAdr, sizeof(*p->Addresses[i].ppAdr),
+							   PAGE_READWRITE, &old_protect))
+			{
+				dwErr = GetLastError();
+				//Один раз выскочило ERROR_INVALID_PARAMETER
+				// При этом, (p->Addresses[i].ppAdr==0x04cde0e0), (p->Addresses[i].ppAdr==0x912edebf)
+				// что было полной пургой. Ни одного модуля в этих адресах не было
+				_ASSERTEX(dwErr==ERROR_INVALID_ADDRESS);
+			}
+			else
+			{
+				bUnhooked = true;
+				// BugBug: ExeOldAddress может отличаться от оригинального, если функция была перехвачена без нас
+				//if (abExecutable && gpHooks[j].ExeOldAddress)
+				//	thunk->u1.Function = (DWORD_PTR)gpHooks[j].ExeOldAddress;
+				//else
+				*p->Addresses[i].ppAdr = p->Addresses[i].pOld;
+				p->Addresses[i].bHooked = FALSE;
+				VirtualProtect(p->Addresses[i].ppAdr, sizeof(*p->Addresses[i].ppAdr), old_protect, &old_protect);
+			}
+		}
+		// Хуки сняты
+		p->Hooked = 2;
+		HLOGEND1();
+	}
+
+
+	#ifdef _DEBUG
+	if (bUnhooked && p)
+	{
+		wchar_t* szDbg = (wchar_t*)calloc(MAX_PATH*3, 2);
+		lstrcpy(szDbg, L"  ## Hooks was UNset by conemu: ");
+		lstrcat(szDbg, p->sModuleName);
+		lstrcat(szDbg, L"\n");
+		DebugString(szDbg);
+		free(szDbg);
+	}
+	#endif
+
+	return bUnhooked;
+}
+
+
+
+/// Set hooks using trampolines
 bool SetAllHooks()
 {
 	if (!gpHooks)
