@@ -183,9 +183,6 @@
     <ClCompile Include="..\common\Monitors.cpp">
       <Filter>0 - Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\common\WConsole.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="IconList.cpp">
       <Filter>0 - Source Files</Filter>
     </ClCompile>
@@ -316,6 +313,21 @@
       <Filter>0 - Source Files</Filter>
     </ClCompile>
     <ClCompile Include="PushInfo.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\HkFunc.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\md5.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\MGlobal.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\WConsoleInfo.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="WinObjBase.cpp">
       <Filter>0 - Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -516,9 +528,6 @@
     <ClInclude Include="..\common\Monitors.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\common\WConsole.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\ConEmuCD\ConsoleHelp.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -697,6 +706,24 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="PushInfo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\HkFunc.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\MCircular.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\md5.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\MGlobal.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\WConsoleInfo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="WinObjBase.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
