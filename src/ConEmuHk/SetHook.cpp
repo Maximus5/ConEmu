@@ -456,7 +456,21 @@ wrap:
 FARPROC WINAPI GetLoadLibraryW()
 {
 	// KERNEL ADDRESS
-	LPVOID fnLoadLibraryW = (LPVOID)&LoadLibraryW;
+	LPVOID fnLoadLibraryW = NULL; // Can't use (LPVOID)&LoadLibraryW anymore, our imports are changed
+	HookItem* p = NULL;
+	if (GetOriginalAddress((LPVOID)OnLoadLibraryW, HOOK_FN_ID(LoadLibraryW), NULL, &p, true))
+	{
+		fnLoadLibraryW = p->HookedAddress;
+		if (!fnLoadLibraryW)
+		{
+			_ASSERTEX(p->HookedAddress && "LoadLibraryW was not hooked?");
+			fnLoadLibraryW = (LPVOID)&LoadLibraryW;
+		}
+	}
+	else
+	{
+		_ASSERTEX(fnLoadLibraryW && "Failed to find function address in Kernel32");
+	}
 	return (FARPROC)fnLoadLibraryW;
 }
 
