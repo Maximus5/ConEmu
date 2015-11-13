@@ -8150,7 +8150,21 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 	} // switch (messg)
 
 	if (bRedraw)
-		gpConEmu->Update(true); // в принципе, обновлять нужно если только настройки видимой консоли поменялись, но...
+	{
+		// Tell all RCon-s that application settings were changed
+		struct impl
+		{
+			static bool ResetAppId(CVirtualConsole* pVCon, LPARAM lParam)
+			{
+				pVCon->RCon()->ResetActiveAppSettingsId();
+				return true;
+			};
+		};
+		CVConGroup::EnumVCon(evf_All, impl::ResetAppId, 0);
+
+		// And update VCon-s. We need to update consoles if only visible settings were changes...
+		gpConEmu->Update(true);
+	}
 
 	if (bRefill)
 	{
