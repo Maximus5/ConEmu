@@ -30,7 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _COMMON_HEADER_HPP_
 
 // Interface version
-#define CESERVER_REQ_VER    158
+#define CESERVER_REQ_VER    159
 
 // Max tabs/panes count
 #define MAX_CONSOLE_COUNT 30
@@ -1475,14 +1475,22 @@ struct CESERVER_CONSOLE_APP_MAPPING
 
 	// Under construction, some fields may be void
 
-	// Updated before and after ReadConsoleInput (powershell especially)
+	// Updated *before* and *after* ReadConsoleInput (powershell especially)
 	DWORD nReadConsoleInputPID;
-	DWORD nLastReadConsoleInputPID;
-	COORD crReadConsoleInputStart;
 
-	// Updated before and after ReadConsole/ReadFile
+	// Updated *before* and *after* ReadConsole/ReadFile
 	DWORD nReadConsolePID;
-	COORD crReadConsoleStart;
+
+	// Updated *before* ReadConsoleInput/ReadConsole/ReadFile
+	// It may be zeroed only on normal process exit
+	DWORD nLastReadInputPID;
+
+	// It's rather problematic to find where input prompt is started
+	// Especially because console contents may be scrolled on typing long commands
+	// So, we set RowID (ConsoleMixAttr.h) for cursor row and its predecessor
+	WORD  nPreReadRowID[2];
+	// Where cursor was located when we set RowID marks
+	CONSOLE_SCREEN_BUFFER_INFO csbiPreRead;
 
 	// Active application flags (shell or other current interactive process)
 	CEActiveAppFlags nActiveAppFlags;

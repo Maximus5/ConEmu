@@ -487,13 +487,13 @@ BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount)
 					// The application may use Read only for getting the event when it is ready
 					// So the application is not waiting for and simple nReadConsoleInputPID
 					// will be zero most of time...
-					nLastPID = gpSrv->pAppMap->Ptr()->nLastReadConsoleInputPID;
+					nLastPID = gpSrv->pAppMap->Ptr()->nLastReadInputPID;
 					nLastVK = nLastPID ? vk : 0;
 					bBypass = true;
 				}
 				else
 				{
-					if ((nLastPID != gpSrv->pAppMap->Ptr()->nLastReadConsoleInputPID)
+					if ((nLastPID != gpSrv->pAppMap->Ptr()->nLastReadInputPID)
 						|| (nLastVK != vk))
 					{
 						// Skip this event

@@ -1539,12 +1539,9 @@ void DoDllStop(bool bFinal, ConEmuHkDllState bFromTerminate)
 	{
 		CESERVER_CONSOLE_APP_MAPPING* pAppMap = gpAppMap->Ptr();
 		DWORD nSelfPID = GetCurrentProcessId();
-		if (pAppMap->nReadConsolePID == nSelfPID)
-			pAppMap->nReadConsolePID = 0;
-		if (pAppMap->nReadConsoleInputPID == nSelfPID)
-			pAppMap->nReadConsoleInputPID = 0;
-		if (pAppMap->nLastReadConsoleInputPID == nSelfPID)
-			pAppMap->nLastReadConsoleInputPID = 0;
+		InterlockedCompareZero(&pAppMap->nReadConsolePID, nSelfPID);
+		InterlockedCompareZero(&pAppMap->nReadConsoleInputPID, nSelfPID);
+		InterlockedCompareZero(&pAppMap->nLastReadInputPID, nSelfPID);
 	}
 
 	DLL_STOP_STEP(12);

@@ -124,7 +124,7 @@ void PreReadConsoleInput(HANDLE hConIn, DWORD nFlags/*enum CEReadConsoleInputFla
 		}
 	}
 
-	if ((nFlags & rcif_LLInput) && !(nFlags & rcif_Peek))
+	if (!(nFlags & rcif_Peek))
 	{
 		// On the one hand - there is a problem with unexpected Enter/Space keypress
 		// github#19: After executing php.exe from command prompt (it runs by Enter KeyDown)
@@ -135,8 +135,11 @@ void PreReadConsoleInput(HANDLE hConIn, DWORD nFlags/*enum CEReadConsoleInputFla
 		if (pAppMap)
 		{
 			DWORD nSelfPID = GetCurrentProcessId();
-			pAppMap->nReadConsoleInputPID = nSelfPID;
-			pAppMap->nLastReadConsoleInputPID = nSelfPID;
+			if (nFlags & rcif_LLInput)
+				pAppMap->nReadConsoleInputPID = nSelfPID;
+			else
+				pAppMap->nReadConsolePID = nSelfPID;
+			pAppMap->nLastReadInputPID = nSelfPID;
 			pAppMap->nActiveAppFlags = gnExeFlags;
 			if (ppAppMap) *ppAppMap = pAppMap;
 		}
@@ -148,9 +151,9 @@ void PostReadConsoleInput(HANDLE hConIn, DWORD nFlags/*enum CEReadConsoleInputFl
 {
 	if ((nFlags & rcif_LLInput) && !(nFlags & rcif_Peek))
 	{
-		if (pAppMap && (pAppMap->nReadConsoleInputPID == GetCurrentProcessId()))
+		if (pAppMap)
 		{
-			pAppMap->nReadConsoleInputPID = 0;
+			InterlockedCompareZero(&pAppMap->nReadConsoleInputPID, GetCurrentProcessId());
 		}
 	}
 }

@@ -716,6 +716,15 @@ void CEAnsi::OnReadConsoleBefore(HANDLE hConOut, const CONSOLE_SCREEN_BUFFER_INF
 
 	// Succeesfull mark?
 	_ASSERTEX(((pObj->m_RowMarks.RowId[0] || pObj->m_RowMarks.RowId[1]) && (pObj->m_RowMarks.RowId[0] != pObj->m_RowMarks.RowId[1])) || (!csbi.dwCursorPosition.X && !csbi.dwCursorPosition.Y));
+
+	// Store info in MAPPING
+	CESERVER_CONSOLE_APP_MAPPING* pAppMap = gpAppMap ? gpAppMap->Ptr() : NULL;
+	if (pAppMap)
+	{
+		pAppMap->csbiPreRead = csbi;
+		pAppMap->nPreReadRowID[0] = pObj->m_RowMarks.RowId[0];
+		pAppMap->nPreReadRowID[1] = pObj->m_RowMarks.RowId[2];
+	}
 }
 void CEAnsi::OnReadConsoleAfter(bool bFinal, bool bNoLineFeed)
 {
