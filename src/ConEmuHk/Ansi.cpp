@@ -671,6 +671,7 @@ void CEAnsi::DumpEscape(LPCWSTR buf, size_t cchLen, DumpEscapeCodes iUnknown)
 static LONG nLastReadId = 0;
 
 // When user type smth in the prompt, screen buffer may be scrolled
+// It would be nice to do the same in "ConEmuC -StoreCWD"
 void CEAnsi::OnReadConsoleBefore(HANDLE hConOut, const CONSOLE_SCREEN_BUFFER_INFO& csbi)
 {
 	CEAnsi* pObj = CEAnsi::Object();
