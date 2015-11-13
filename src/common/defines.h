@@ -217,3 +217,9 @@ extern void _DEBUGSTR(LPCWSTR s);
 
 #include "MStrSafe.h"
 #include "Memory.h"
+
+// Compares the *pv value with the cmp value. If the *pv value is equal to the cmp value,
+// the 0 value is stored in the address specified by Destination.
+// Otherwise, no operation is performed.
+// pv MUST be either DWORD* or LONG*
+#define InterlockedCompareZero(pv,cmp) InterlockedCompareExchange((LONG*)pv,0,cmp)
