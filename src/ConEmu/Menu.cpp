@@ -2080,6 +2080,7 @@ HMENU CConEmuMenu::CreateViewMenuPopup(CVirtualConsole* apVCon, HMENU ahExist /*
 	int iActiveIndex = apVCon->GetPaletteIndex();
 
 	int i = 0;
+	int iBreak = 0;
 	while ((i < (ID_CON_SETPALETTE_LAST-ID_CON_SETPALETTE_FIRST)) && (pPal = gpSet->PaletteGet(i)))
 	{
 		if (!pPal->pszName)
@@ -2090,12 +2091,17 @@ HMENU CConEmuMenu::CreateViewMenuPopup(CVirtualConsole* apVCon, HMENU ahExist /*
 		wchar_t szItem[128] = L"";
 		CmdTaskPopupItem::SetMenuName(szItem, countof(szItem), pPal->pszName, true);
 
+		if (!iBreak && i && (pPal->pszName[0] != L'<'))
+			iBreak = i;
+
 		MENUITEMINFO mi = {sizeof(mi)};
 		mi.fMask = MIIM_STRING|MIIM_STATE;
 		mi.dwTypeData = szItem; mi.cch = countof(szItem);
 		mi.fState =
 			// Add 'CheckMark' to the current palette (if it differs from ConEmu global one)
 			((i==iActiveIndex) ? MF_CHECKED : MF_UNCHECKED)
+			// Ensure palettes list will not be too long, ATM there are 25 predefined palettes
+			| ((iBreak && !(i % iBreak)) ? MF_MENUBREAK : 0)
 			;
 		if (bNew || !SetMenuItemInfo(hMenu, ID_CON_SETPALETTE_FIRST+i, FALSE, &mi))
 		{
