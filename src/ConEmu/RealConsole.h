@@ -903,14 +903,17 @@ class CRealConsole
 		MEvent m_FarAliveEvent;
 		MPipe<CESERVER_REQ_HDR,CESERVER_REQ_HDR> m_GetDataPipe;
 		MEvent m_ConDataChanged;
-		//wchar_t ms_HeaderMapName[64], ms_DataMapName[64];
-		//const CESERVER_CONSOLE_MAPPING_HDR *mp_ConsoleInfo;
-		//const CESERVER_REQ_CONINFO_DATA *mp_ConsoleData; // Mapping
+		// CECONMAPNAME
 		MFileMapping<CESERVER_CONSOLE_MAPPING_HDR> m_ConsoleMap;
-		//const CEFAR_INFO_MAPPING *mp_FarInfo;
-		CEFAR_INFO_MAPPING m_FarInfo; // FarVer и прочее
-		MFileMapping<const CEFAR_INFO_MAPPING> m__FarInfo; // в коде напрямую не использовать, только через секцию!
+		// CECONAPPMAPNAME
+		MFileMapping<CESERVER_CONSOLE_APP_MAPPING> m_AppMap;
+		// CEFARMAPNAME: FarVer and others
+		CEFAR_INFO_MAPPING m_FarInfo;
+		// Don't use directly, but via ms_FarInfoCS only!
+		MFileMapping<const CEFAR_INFO_MAPPING> m__FarInfo;
+		// CS Lock for m__FarInfo
 		MSection ms_FarInfoCS;
+
 		// Colorer Mapping
 		//HANDLE mh_ColorMapping;
 		//AnnotationHeader *mp_ColorHdr;

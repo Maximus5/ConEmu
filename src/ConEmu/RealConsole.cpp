@@ -14204,18 +14204,14 @@ BOOL CRealConsole::GetPanelRect(BOOL abRight, RECT* prc, BOOL abFull /*= FALSE*/
 
 bool CRealConsole::isCygwinMsys()
 {
-	if (!hConWnd)
+	if (!this || !hConWnd || !m_AppMap.IsValid())
 		return false;
 
 	#ifdef _DEBUG
 	DWORD nPID = GetActivePID();
 	#endif
 
-	MFileMapping<CESERVER_CONSOLE_APP_MAPPING> AppMap;
-	AppMap.InitName(CECONAPPMAPNAME, LODWORD(hConWnd));
-	if (!AppMap.Open(FALSE))
-		return false;
-	CEActiveAppFlags nActiveAppFlags = AppMap.Ptr()->nActiveAppFlags;
+	CEActiveAppFlags nActiveAppFlags = m_AppMap.Ptr()->nActiveAppFlags;
 	if (!(nActiveAppFlags & (caf_Cygwin1|caf_Msys1|caf_Msys2)))
 		return false;
 
@@ -14839,7 +14835,7 @@ BOOL CRealConsole::OpenMapHeader(BOOL abFromAttach)
 	wchar_t szErr[512]; szErr[0] = 0;
 	//int nConInfoSize = sizeof(CESERVER_CONSOLE_MAPPING_HDR);
 
-	if (m_ConsoleMap.IsValid())
+	if (m_ConsoleMap.IsValid() && m_AppMap.IsValid())
 	{
 		if (hConWnd == (HWND)(m_ConsoleMap.Ptr()->hConWnd))
 		{
@@ -14848,32 +14844,20 @@ BOOL CRealConsole::OpenMapHeader(BOOL abFromAttach)
 		}
 	}
 
-	//_ASSERTE(mh_FileMapping == NULL);
-	//CloseMapData();
-	m_ConsoleMap.InitName(CECONMAPNAME, LODWORD(hConWnd)); //-V205
-
+	m_ConsoleMap.InitName(CECONMAPNAME, LODWORD(hConWnd));
 	if (!m_ConsoleMap.Open())
 	{
 		lstrcpyn(szErr, m_ConsoleMap.GetErrorText(), countof(szErr));
-		//swprintf_c (szErr, L"ConEmu: Can't open console data file mapping. ErrCode=0x%08X. %s", dwErr, ms_HeaderMapName);
 		goto wrap;
 	}
 
-	//swprintf_c(ms_HeaderMapName, CECONMAPNAME, (DWORD)hConWnd);
-	//mh_FileMapping = OpenFileMapping(FILE_MAP_READ/*|FILE_MAP_WRITE*/, FALSE, ms_HeaderMapName);
-	//if (!mh_FileMapping) {
-	//	DWORD dwErr = GetLastError();
-	//	swprintf_c (szErr, L"ConEmu: Can't open console data file mapping. ErrCode=0x%08X. %s", dwErr, ms_HeaderMapName);
-	//	goto wrap;
-	//}
-	//
-	//mp_ConsoleInfo = (CESERVER_CONSOLE_MAPPING_HDR*)MapViewOfFile(mh_FileMapping, FILE_MAP_READ/*|FILE_MAP_WRITE*/,0,0,0);
-	//if (!mp_ConsoleInfo) {
-	//	DWORD dwErr = GetLastError();
-	//	wchar_t szErr[512];
-	//	swprintf_c (szErr, L"ConEmu: Can't map console info. ErrCode=0x%08X. %s", dwErr, ms_HeaderMapName);
-	//	goto wrap;
-	//}
+	m_AppMap.InitName(CECONAPPMAPNAME, LODWORD(hConWnd));
+	if (!m_AppMap.Open())
+	{
+		lstrcpyn(szErr, m_AppMap.GetErrorText(), countof(szErr));
+		goto wrap;
+	}
+
 
 	if (!abFromAttach)
 	{
@@ -14921,17 +14905,11 @@ void CRealConsole::CloseFarMapData(MSectionLock* pCS)
 void CRealConsole::CloseMapHeader()
 {
 	CloseFarMapData();
-	//CloseMapData();
+
 	m_GetDataPipe.Close();
+
 	m_ConsoleMap.CloseMap();
-	//if (mp_ConsoleInfo) {
-	//	UnmapViewOfFile(mp_ConsoleInfo);
-	//	mp_ConsoleInfo = NULL;
-	//}
-	//if (mh_FileMapping) {
-	//	CloseHandle(mh_FileMapping);
-	//	mh_FileMapping = NULL;
-	//}
+	m_AppMap.CloseMap();
 
 	if (mp_RBuf) mp_RBuf->ResetBuffer();
 	if (mp_EBuf) mp_EBuf->ResetBuffer();
@@ -15143,7 +15121,6 @@ bool CRealConsole::GetMaxConSize(COORD* pcrMaxConSize)
 {
 	bool bOk = false;
 
-	//if (mp_ConsoleInfo)
 	if (m_ConsoleMap.IsValid())
 	{
 		if (pcrMaxConSize)
@@ -15161,14 +15138,6 @@ int CRealConsole::GetDetectedDialogs(int anMaxCount, SMALL_RECT* rc, DWORD* rf)
 		return 0;
 
 	return mp_ABuf->GetDetector()->GetDetectedDialogs(anMaxCount, rc, rf);
-	//int nCount = min(anMaxCount,m_DetectedDialogs.Count);
-	//if (nCount>0) {
-	//	if (rc)
-	//		memmove(rc, m_DetectedDialogs.Rects, nCount*sizeof(SMALL_RECT));
-	//	if (rb)
-	//		memmove(rb, m_DetectedDialogs.bWasFrame, nCount*sizeof(bool));
-	//}
-	//return nCount;
 }
 
 const CRgnDetect* CRealConsole::GetDetector()
@@ -15818,76 +15787,6 @@ void CRealConsole::ShowPropertiesDialog()
 
 	POSTMESSAGE(hConWnd, WM_SYSCOMMAND, SC_PROPERTIES_SECRET/*65527*/, 0, TRUE);
 }
-
-//void CRealConsole::LogShellStartStop()
-//{
-//	// Пока - только при наличии Far-плагина
-//	DWORD nFarPID = GetFarPID(TRUE);
-//
-//	if (!nFarPID)
-//		return;
-//
-//	if (!mb_ShellActivityLogged)
-//	{
-//		OPENFILENAME ofn; memset(&ofn,0,sizeof(ofn));
-//		ofn.lStructSize=sizeof(ofn);
-//		ofn.hwndOwner = ghWnd;
-//		ofn.lpstrFilter = _T("Log files (*.log)\0*.log\0\0");
-//		ofn.nFilterIndex = 1;
-//
-//		if (ms_LogShellActivity[0] == 0)
-//		{
-//			lstrcpyn(ms_LogShellActivity, mp_ConEmu->WorkDir(), MAX_PATH-32);
-//			int nCurLen = _tcslen(ms_LogShellActivity);
-//			_wsprintf(ms_LogShellActivity+nCurLen, SKIPLEN(countof(ms_LogShellActivity)-nCurLen)
-//			          L"\\ShellLog-%u.log", nFarPID);
-//		}
-//
-//		ofn.lpstrFile = ms_LogShellActivity;
-//		ofn.nMaxFile = countof(ms_LogShellActivity);
-//		ofn.lpstrTitle = L"Log CreateProcess...";
-//		ofn.lpstrDefExt = L"log";
-//		ofn.Flags = OFN_ENABLESIZING|OFN_NOCHANGEDIR
-//		            | OFN_PATHMUSTEXIST|OFN_EXPLORER|OFN_HIDEREADONLY|OFN_OVERWRITEPROMPT;
-//
-//		if (!GetSaveFileName(&ofn))
-//			return;
-//
-//		mb_ShellActivityLogged = true;
-//	}
-//	else
-//	{
-//		mb_ShellActivityLogged = false;
-//	}
-//
-//	//TODO: Обновить бы поле m_ConsoleMap<CESERVER_CONSOLE_MAPPING_HDR>.sLogCreateProcess
-//	// Выполнить в плагине
-//	CConEmuPipe pipe(nFarPID, 300);
-//
-//	if (pipe.Init(L"LogShell", TRUE))
-//	{
-//		LPCVOID pData; wchar_t wch = 0;
-//		UINT nDataSize;
-//
-//		if (mb_ShellActivityLogged && ms_LogShellActivity[0])
-//		{
-//			pData = ms_LogShellActivity;
-//			nDataSize = (_tcslen(ms_LogShellActivity)+1)*2;
-//		}
-//		else
-//		{
-//			pData = &wch;
-//			nDataSize = 2;
-//		}
-//
-//		pipe.Execute(CMD_LOG_SHELL, pData, nDataSize);
-//	}
-//}
-
-//bool CRealConsole::IsLogShellStarted()
-//{
-//	return mb_ShellActivityLogged && ms_LogShellActivity[0];
-//}
 
 DWORD CRealConsole::GetConsoleCP()
 {
