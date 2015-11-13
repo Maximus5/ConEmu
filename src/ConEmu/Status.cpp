@@ -378,6 +378,12 @@ bool CStatus::LoadActiveProcess(CRealConsole* pRCon, wchar_t* pszText, int cchMa
 		wchar_t szNameTrim[64];
 		lstrcpyn(szNameTrim, *Process.Name ? Process.Name : L"???", countof(szNameTrim));
 
+		DWORD nInteractivePID = pRCon->GetInteractivePID();
+		DWORD nFarPluginPID = pRCon->GetFarPID(true);
+		LPCWSTR pszInteractive = (nPID == nFarPluginPID) ? L"#"
+			: (nPID == nInteractivePID) ? L"*"
+			: L"";
+
 		bool isAdmin = pRCon->isAdministrator();
 		LPCWSTR pszAdmin = isAdmin ? L"*" : L"";
 
@@ -387,11 +393,11 @@ bool CStatus::LoadActiveProcess(CRealConsole* pRCon, wchar_t* pszText, int cchMa
 			wchar_t szBits[8] = L"";
 			if (Process.Bits > 0) _wsprintf(szBits, SKIPLEN(countof(szBits)) L"%i", Process.Bits);
 
-			_wsprintf(pszText, SKIPLEN(cchMax) _T("%s[%s%s]:%u"), szNameTrim, pszAdmin, szBits, nPID);
+			_wsprintf(pszText, SKIPLEN(cchMax) _T("%s%s[%s%s]:%u"), szNameTrim, pszInteractive, pszAdmin, szBits, nPID);
 		}
 		else
 		{
-			_wsprintf(pszText, SKIPLEN(cchMax) _T("%s%s:%u"), szNameTrim, pszAdmin, nPID);
+			_wsprintf(pszText, SKIPLEN(cchMax) _T("%s%s%s:%u"), szNameTrim, pszInteractive, pszAdmin, nPID);
 		}
 
 		lbRc = true;
