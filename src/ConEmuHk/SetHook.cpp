@@ -351,7 +351,6 @@ HkModuleInfo* AddHookedModule(HMODULE hModule, LPCWSTR sModuleName)
 		}
 	}
 
-wrap:
 	return p;
 }
 
