@@ -1687,9 +1687,6 @@ bool CVirtualConsole::Update(bool abForce, HDC *ahDc)
 	if (!this || !mp_RCon || !mp_RCon->ConWnd())
 		return false;
 
-	if (abForce)
-		mp_RCon->ResetActiveAppSettingsId();
-
 	isForce = abForce;
 
 	if (!isMainThread())

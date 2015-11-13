@@ -312,12 +312,14 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 	//mb_ConsoleSelectMode = false;
 	mn_SelectModeSkipVk = 0;
 	mn_ProcessCount = mn_ProcessClientCount = 0;
-	mn_FarPID = mn_ActivePID = 0; //mn_FarInputTID = 0;
+	mn_FarPID = 0;
+	ZeroStruct(m_ActiveProcess);
+	ZeroStruct(m_AppDistinctProcess);
+	mb_ForceRefreshAppId = false;
 	mn_FarNoPanelsCheck = 0;
-	mn_LastProcessNamePID = 0;
-	mn_LastProcessBits = 0;
-	ms_LastProcessName[0] = 0;
-	mn_LastAppSettingsId = -1;
+	mb_ForceRefreshAppId = false;
+	ms_LastActiveProcess[0] = 0;
+	mn_LastAppSettingsId = -2;
 	memset(m_FarPlugPIDs, 0, sizeof(m_FarPlugPIDs)); mn_FarPlugPIDsCount = 0;
 	memset(m_TerminatedPIDs, 0, sizeof(m_TerminatedPIDs)); mn_TerminatedIdx = 0;
 	mb_SkipFarPidChange = FALSE;
@@ -1083,7 +1085,7 @@ void CRealConsole::SyncGui2Window(const RECT rcVConBack)
 		HRGN hrgn = CreateRectRgn(0,0,0,0);
 		int RgnType = GetWindowRgn(m_ChildGui.hGuiWnd, hrgn);
 		#endif
-		CorrectGuiChildRect(dwStyle, dwExStyle, rcGui, m_ChildGui.szGuiWndProcess);
+		CorrectGuiChildRect(dwStyle, dwExStyle, rcGui, m_ChildGui.Process.Name);
 		#if 0
 		if (hrgn) DeleteObject(hrgn);
 		#endif
@@ -4069,7 +4071,7 @@ void CRealConsole::ResetVarsOnStart()
 	mn_FarNoPanelsCheck = 0;
 
 	// setXXX для удобства
-	setGuiWndPID(NULL, 0, 0, NULL); // set m_ChildGui.nGuiWndPID to 0
+	setGuiWndPID(NULL, 0, 0, NULL); // set m_ChildGui.Process.ProcessID to 0
 	// ZeroStruct для четкости
 	ZeroStruct(m_ChildGui);
 
@@ -6025,9 +6027,10 @@ void CRealConsole::StopThread(BOOL abRecreating)
 
 		SetFarPID(0);
 		SetFarPluginPID(0);
-		SetActivePID(0);
+		SetActivePID(NULL);
+		SetAppDistinctPID(NULL);
 
-		//mn_FarPID = mn_ActivePID = mn_FarPID_PluginDetected = 0;
+		//mn_FarPID = mn_FarPID_PluginDetected = 0;
 		mn_LastSetForegroundPID = 0;
 		//mn_ConEmuC_Input_TID = 0;
 		SafeCloseHandle(mh_ConInputPipe);
@@ -7541,23 +7544,90 @@ void CRealConsole::SetFarPluginPID(DWORD nFarPluginPID)
 }
 
 // Вернуть PID "условно активного" процесса в консоли
-DWORD CRealConsole::GetActivePID()
+DWORD CRealConsole::GetActivePID(ConProcess* rpProcess /*= NULL*/)
 {
 	if (!this)
 		return 0;
 
-	if (m_ChildGui.hGuiWnd)
+	DWORD nPID = 0;
+
+	if (!nPID && m_ChildGui.hGuiWnd)
+		nPID = m_ChildGui.Process.ProcessID;
+	if (!nPID)
+		nPID = GetFarPID();
+	if (!nPID)
+		nPID = m_ActiveProcess.ProcessID;
+
+	if (nPID && rpProcess)
+		GetProcessInformation(nPID, rpProcess);
+
+	return nPID;
+}
+
+bool CRealConsole::GetProcessInformation(DWORD nPID, ConProcess* rpProcess /*= NULL*/)
+{
+	if (!this || !nPID)
+		return false;
+
+	bool bFound = false;
+
+	if (m_ChildGui.hGuiWnd && (nPID == m_ChildGui.Process.ProcessID))
 	{
-		return m_ChildGui.nGuiWndPID;
+		if (rpProcess)
+			*rpProcess = m_ChildGui.Process;
+		bFound = true;
+	}
+	else if (nPID == m_ActiveProcess.ProcessID)
+	{
+		if (rpProcess)
+			*rpProcess = m_ActiveProcess;
+		bFound = true;
+	}
+	else if (nPID == m_AppDistinctProcess.ProcessID)
+	{
+		if (rpProcess)
+			*rpProcess = m_AppDistinctProcess;
+		bFound = true;
+	}
+	else
+	{
+		ConProcess* pPrcList = NULL;
+		ConProcess* pFound = NULL;
+		int nCount = GetProcesses(&pPrcList, false/*ClientOnly*/);
+		if (pPrcList && (nCount > 0))
+		{
+			for (int i = 0; i < nCount; i++)
+			{
+				if (pPrcList[i].ProcessID == nPID)
+				{
+					if (rpProcess)
+						*rpProcess = pPrcList[i];
+					bFound = true;
+					break;
+				}
+			}
+		}
+		SafeFree(pPrcList);
 	}
 
-	DWORD nPID = GetFarPID();
-	if (nPID)
-	{
-		return nPID;
-	}
+	return bFound;
+}
 
-	return mn_ActivePID;
+DWORD CRealConsole::GetInteractivePID()
+{
+	if (!this)
+		return 0;
+
+	DWORD nPID = 0;
+
+	if (!nPID && m_ChildGui.hGuiWnd)
+		nPID = m_ChildGui.Process.ProcessID;
+	if (!nPID && m_AppMap.IsValid())
+		nPID = m_AppMap.Ptr()->nLastReadInputPID;
+	if (!nPID)
+		nPID = GetFarPID(true);
+
+	return nPID;
 }
 
 DWORD CRealConsole::GetLoadedPID()
@@ -7668,16 +7738,14 @@ DWORD CRealConsole::GetRunningPID()
 
 LPCWSTR CRealConsole::GetActiveProcessName()
 {
-	LPCWSTR pszName = NULL;
-	GetActiveAppSettingsId(&pszName);
-	return pszName;
+	if (!this || !m_ActiveProcess.ProcessID)
+		return NULL;
+	return m_ActiveProcess.Name;
 }
 
 void CRealConsole::ResetActiveAppSettingsId()
 {
-	mn_LastProcessNamePID = 0;
-	mn_LastProcessBits = 0;
-	ms_LastProcessName[0] = 0;
+	mb_ForceRefreshAppId = true;
 }
 
 // Вызывается перед запуском процесса
@@ -7782,96 +7850,103 @@ wrap:
 	return iAppId;
 }
 
-// ppProcessName используется в функции GetActiveProcessName()
-// возвращать должен реальное имя процесса, вне зависимости от того
-// была подмена на корневой ИД или нет.
-int CRealConsole::GetActiveAppSettingsId(LPCWSTR* ppProcessName /*= NULL*/, bool* pbIsAdmin /*= NULL*/, int* pnBits /*= NULL*/, DWORD* pnPID /*= NULL*/)
+int CRealConsole::GetActiveAppSettingsId(bool bReload /*= false*/)
 {
 	if (!this)
 		return -1;
 
-	int   iAppId = -1;
 	int   iLastId = mn_LastAppSettingsId;
-	DWORD nPID = GetActivePID();
 	bool  isAdmin = isAdministrator();
 
-	if (!nPID)
+	if (!m_AppDistinctProcess.ProcessID)
 	{
-		iAppId = GetDefaultAppSettingsId();
+		if ((mn_LastAppSettingsId == -2) || bReload || mb_ForceRefreshAppId)
+			mn_LastAppSettingsId = GetDefaultAppSettingsId();
 		goto wrap;
 	}
 
-	if (nPID == mn_LastProcessNamePID)
+	if (bReload || mb_ForceRefreshAppId)
 	{
-		iAppId = mn_LastAppSettingsId;
-	}
-	else
-	{
-		int nBits = 0;
+		mb_ForceRefreshAppId = false;
 
-		if (nPID == m_ChildGui.nGuiWndPID)
-		{
-			lstrcpyn(ms_LastProcessName, m_ChildGui.szGuiWndProcess, countof(ms_LastProcessName));
-			nBits = m_ChildGui.nBits;
-		}
-		else
-		{
-			MSectionLock SC; SC.Lock(&csPRC);
+		int iAppId = gpSet->GetAppSettingsId(m_AppDistinctProcess.Name, isAdmin);
 
-			//std::vector<ConProcess>::iterator i;
-			//for (i = m_Processes.begin(); i != m_Processes.end(); ++i)
-			for (INT_PTR ii = 0; ii < m_Processes.size(); ii++)
-			{
-				ConProcess* i = &(m_Processes[ii]);
-				if (i->ProcessID == nPID)
-				{
-					lstrcpyn(ms_LastProcessName, i->Name, countof(ms_LastProcessName));
-					nBits = i->Bits;
-					break;
-				}
-			}
-		}
-
-		mn_LastProcessNamePID = nPID;
-		mn_LastProcessBits = nBits;
-
-		int nSetggingsId = gpSet->GetAppSettingsId(ms_LastProcessName, isAdmin);
-
-		_ASSERTE((nSetggingsId != -1) || (*ms_RootProcessName));
 		// When explicit AppDistinct not found - take settings for the root process
 		// ms_RootProcessName must be processed in prev. GetDefaultAppSettingsId/PrepareDefaultColors
-		if ((nSetggingsId == -1) && (*ms_RootProcessName))
-			mn_LastAppSettingsId = gpSet->GetAppSettingsId(ms_RootProcessName, isAdmin);
-		else
-			mn_LastAppSettingsId = nSetggingsId;
+		if ((iAppId == -1) && (*ms_RootProcessName))
+		{
+			// m_AppDistinctProcess must contain only processes which have AppDistinct,
+			// but JIC try with root process
+			iAppId = gpSet->GetAppSettingsId(ms_RootProcessName, isAdmin);
+		}
 
-		iAppId = mn_LastAppSettingsId;
+		// Cache it
+		mn_LastAppSettingsId = iAppId;
 	}
 
 wrap:
-	if (ppProcessName)
-		*ppProcessName = ms_LastProcessName;
-	if (pbIsAdmin)
-		*pbIsAdmin = isAdmin;
-	if (pnBits)
-		*pnBits = mn_LastProcessBits;
-	if (pnPID)
-		*pnPID = mn_LastProcessNamePID;
+	// If changed - refresh VCon
 	if (iLastId != mn_LastAppSettingsId)
 		mp_VCon->OnAppSettingsChanged(mn_LastAppSettingsId);
 	return mn_LastAppSettingsId;
 }
 
-void CRealConsole::SetActivePID(DWORD anNewPID)
+void CRealConsole::SetActivePID(const ConProcess* apProcess)
 {
-	if (mn_ActivePID != anNewPID)
-	{
-		mn_ActivePID = anNewPID;
+	bool bChanged = false;
 
-		if (isActive(false))
+	if (!apProcess || !apProcess->ProcessID)
+	{
+		if (m_ActiveProcess.ProcessID)
 		{
-			mp_ConEmu->mp_Status->UpdateStatusBar(true);
+			ZeroStruct(m_ActiveProcess);
+			bChanged = true;
 		}
+	}
+	else if (m_ActiveProcess.ProcessID != apProcess->ProcessID)
+	{
+		m_ActiveProcess = *apProcess;
+		bChanged = true;
+	}
+
+	if (bChanged && isActive(false))
+	{
+		mp_ConEmu->mp_Status->UpdateStatusBar(true);
+	}
+}
+
+void CRealConsole::SetAppDistinctPID(const ConProcess* apProcess)
+{
+	bool bChanged = false;
+
+	if (!apProcess || !apProcess->ProcessID)
+	{
+		// Supposed to be during startup only
+		bChanged = (m_AppDistinctProcess.ProcessID != 0);
+		ZeroStruct(m_AppDistinctProcess);
+	}
+	else if (m_AppDistinctProcess.ProcessID != apProcess->ProcessID)
+	{
+		_ASSERTE(apProcess!=NULL);
+		m_AppDistinctProcess = *apProcess;
+		bChanged = true;
+	}
+
+	if (bChanged)
+	{
+		// Refresh settings
+		int iLastId = mn_LastAppSettingsId;
+		int iAppId = GetActiveAppSettingsId(true);
+
+		// Update is called by GetActiveAppSettingsId >> CVirtualConsole::OnAppSettingsChanged
+		// mp_VCon->Invalidate();
+
+		wchar_t szLog[80];
+		if (iLastId != iAppId)
+			_wsprintf(szLog, SKIPCOUNT(szLog) L"AppSettingsID changed %i >> %i for PID=%u", iLastId, iAppId, (apProcess ? apProcess->ProcessID : 0));
+		else
+			_wsprintf(szLog, SKIPCOUNT(szLog) L"AppSettingsID %i for PID=%u", iAppId, (apProcess ? apProcess->ProcessID : 0));
+		LogString(szLog, true);
 	}
 }
 
@@ -7882,7 +7957,8 @@ BOOL CRealConsole::ProcessUpdateFlags(BOOL abProcessChanged)
 	BOOL lbChanged = FALSE;
 	//Warning: Должен вызываться ТОЛЬКО из ProcessAdd/ProcessDelete, т.к. сам секцию не блокирует
 	bool bIsFar = false, bIsTelnet = false, bIsCmd = false;
-	DWORD dwFarPID = 0, dwActivePID = 0;
+	DWORD dwFarPID = 0;
+	ConProcess ActivePID = {};
 	// Наличие 16bit определяем ТОЛЬКО по WinEvent. Иначе не получится отсечь его завершение,
 	// т.к. процесс ntvdm.exe не выгружается, а остается в памяти.
 	bool bIsNtvdm = (mn_ProgramStatus & CES_NTVDM) == CES_NTVDM;
@@ -7892,6 +7968,10 @@ BOOL CRealConsole::ProcessUpdateFlags(BOOL abProcessChanged)
 
 	int nClientCount = 0;
 
+	DWORD nInteractivePID = m_AppMap.IsValid() ? m_AppMap.Ptr()->nLastReadInputPID : 0;
+	ConProcess AppDistinctPID = {};
+	bool bAppIdProcessExists = false;
+
 	//std::vector<ConProcess>::reverse_iterator iter = m_Processes.rbegin();
 	//std::vector<ConProcess>::reverse_iterator rend = m_Processes.rend();
 	//
@@ -7899,57 +7979,64 @@ BOOL CRealConsole::ProcessUpdateFlags(BOOL abProcessChanged)
 	for (INT_PTR ii = (m_Processes.size() - 1); ii >= 0; ii--)
 	{
 		ConProcess* iter = &(m_Processes[ii]);
-		//ConProcess cp = *iter;
 
-		// Корневой процесс ConEmuC не учитываем!
-		if (iter->ProcessID != mn_MainSrv_PID)
+		// Skip ConEmuC Server process
+		if (iter->ProcessID == mn_MainSrv_PID)
+			continue;
+		_ASSERTE(iter->IsMainSrv==false);
+		_ASSERTE(iter->ProcessID!=0);
+
+		// Skip Windows console sybsystem process `conhost.exe`
+		if (iter->IsConHost || !iter->ProcessID)
+			continue;
+
+		nClientCount++;
+
+		// Far Manager?
+		if (!bIsFar)
 		{
-			_ASSERTE(iter->IsMainSrv==false);
-
-			if (!bIsFar)
+			// Process ID with ConEmu.dll Far Manager plugin loaded
+			if (iter->ProcessID == mn_FarPID_PluginDetected)
 			{
-				if (iter->IsFar)
-				{
-					bIsFar = true;
-				}
-				else if (iter->ProcessID == mn_FarPID_PluginDetected)
-				{
-					bIsFar = true;
-					iter->IsFar = iter->IsFarPlugin = true;
-				}
+				iter->IsFar = true; // In case of the specific name (not a `far.exe`)
+				iter->IsFarPlugin = true;
 			}
 
-			if (!bIsTelnet && iter->IsTelnet)
-				bIsTelnet = true;
-
-			//if (!bIsNtvdm && iter->IsNtvdm) bIsNtvdm = true;
-			if (!bIsFar && !bIsCmd && iter->IsCmd)
-				bIsCmd = true;
-
-			//if (!bIsCmd && mn_Comspec4Ntvdm && iter->ProcessID == mn_Comspec4Ntvdm)
-			//	bIsCmd = bIsNtvdm = true;
-
-			//
-			if (!dwFarPID && iter->IsFar)
+			// It's a Far Manager
+			if (iter->IsFar)
 			{
-				dwFarPID = iter->ProcessID;
-				//dwInputTID = iter->InputTID;
-			}
-
-			// Считаем "клиентские" процессы
-			if (!iter->IsConHost)
-			{
-				// "условно активный процесс"
-				if (!dwActivePID)
-					dwActivePID = iter->ProcessID;
-				else if (dwActivePID == iter->ParentPID)
-					dwActivePID = iter->ProcessID;
-
-				nClientCount++;
+				if (!dwFarPID)
+					dwFarPID = iter->ProcessID;
+				bIsFar = true;
 			}
 		}
 
-		//++iter;
+		if (!bIsTelnet && iter->IsTelnet)
+			bIsTelnet = true;
+
+		if (!bIsFar && !bIsCmd && iter->IsCmd)
+			bIsCmd = true;
+
+		// Look for roughly active process
+		if (!ActivePID.ProcessID)
+			ActivePID = *iter;
+		else if (ActivePID.ProcessID == iter->ParentPID)
+			ActivePID = *iter;
+
+		// Check for interactive process, if it is noted in AppDistinct
+		if (nInteractivePID && (iter->ProcessID == nInteractivePID))
+		{
+			int iAppId = gpSet->GetAppSettingsId(iter->Name, isAdministrator());
+			if (iAppId >= 0)
+			{
+				AppDistinctPID = *iter;
+			}
+		}
+		// Last detected process for AppID is alive?
+		if (m_AppDistinctProcess.ProcessID && (m_AppDistinctProcess.ProcessID == iter->ProcessID))
+		{
+			bAppIdProcessExists = true;
+		}
 	}
 
 	TODO("Однако, наверное cmd.exe/tcc.exe может быть запущен и в 'фоне'? Например из Update");
@@ -8014,18 +8101,19 @@ BOOL CRealConsole::ProcessUpdateFlags(BOOL abProcessChanged)
 		// не мелькали цветные артефакты (пример - вызов ActiveHelp из редактора)
 		lbChanged = TRUE;
 	}
-	//mn_FarPID = dwFarPID;
+
 	SetFarPID(dwFarPID);
 
-	if (mn_ActivePID != dwActivePID)
-		SetActivePID(dwActivePID);
+	if (m_ActiveProcess.ProcessID != ActivePID.ProcessID)
+		SetActivePID(&ActivePID);
 
-	//if (!dwFarPID)
-	//	mn_FarPID_PluginDetected = 0;
+	// if it *found*, *exists*, and *changed*
+	if (AppDistinctPID.ProcessID && (AppDistinctPID.ProcessID != m_AppDistinctProcess.ProcessID))
+		SetAppDistinctPID(&AppDistinctPID);
+	else if (m_AppDistinctProcess.ProcessID && !bAppIdProcessExists)
+		SetAppDistinctPID(NULL);
 
-	//TODO("Если сменился FAR - переоткрыть данные для Colorer - CheckColorMapping();");
-	//mn_FarInputTID = dwInputTID;
-
+	// Nothing was found?
 	if (mn_ProcessCount == 0)
 	{
 		if (mn_InRecreate == 0)
@@ -8038,7 +8126,7 @@ BOOL CRealConsole::ProcessUpdateFlags(BOOL abProcessChanged)
 		}
 	}
 
-	// Обновить список процессов в окне настроек и закладки
+	// Refresh list on the Settings/Info page, and tab titles
 	if (abProcessChanged)
 	{
 		mp_ConEmu->UpdateProcessDisplay(abProcessChanged);
@@ -8596,13 +8684,13 @@ void CRealConsole::ShowGuiClientExt(int nMode, BOOL bDetach /*= FALSE*/) // -1 T
 	CESERVER_REQ *pIn = ExecuteNewCmd(CECMD_SETGUIEXTERN, sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_SETGUIEXTERN));
 	if (pIn)
 	{
-		AllowSetForegroundWindow(m_ChildGui.nGuiWndPID);
+		AllowSetForegroundWindow(m_ChildGui.Process.ProcessID);
 
 		//pIn->dwData[0] = (nMode == 0) ? FALSE : TRUE;
 		pIn->SetGuiExtern.bExtern = (nMode == 0) ? FALSE : TRUE;
 		pIn->SetGuiExtern.bDetach = bDetach;
 
-		CESERVER_REQ *pOut = ExecuteHkCmd(m_ChildGui.nGuiWndPID, pIn, ghWnd);
+		CESERVER_REQ *pOut = ExecuteHkCmd(m_ChildGui.Process.ProcessID, pIn, ghWnd);
 		if (pOut && (pOut->DataSize() >= sizeof(DWORD)))
 		{
 			m_ChildGui.bGuiExternMode = (pOut->dwData[0] != 0);
@@ -8614,7 +8702,7 @@ void CRealConsole::ShowGuiClientExt(int nMode, BOOL bDetach /*= FALSE*/) // -1 T
 		{
 			wchar_t sInfo[200];
 			_wsprintf(sInfo, SKIPLEN(countof(sInfo)) L"ShowGuiClientExtern: PID=%u, hGuiWnd=x%08X, bExtern=%i, bDetach=%u",
-				m_ChildGui.nGuiWndPID, LODWORD(m_ChildGui.hGuiWnd), nMode, bDetach);
+				m_ChildGui.Process.ProcessID, LODWORD(m_ChildGui.hGuiWnd), nMode, bDetach);
 			mp_ConEmu->LogString(sInfo);
 		}
 
@@ -10063,7 +10151,7 @@ void CRealConsole::OnGuiFocused(BOOL abFocus, BOOL abForceChild /*= FALSE*/)
 				HWND hFore = getForegroundWindow();
 				DWORD nForePID = 0;
 				if (hFore) GetWindowThreadProcessId(hFore, &nForePID);
-				// if (m_ChildGui.nGuiWndPID != nForePID) { }
+				// if (m_ChildGui.Process.ProcessID != nForePID) { }
 				#endif
 
 				GuiNotifyChildWindow();
@@ -11774,7 +11862,7 @@ void CRealConsole::SwitchKeyboardLayout(WPARAM wParam, DWORD_PTR dwNewKeyboardLa
 
 			DWORD dwTickStart = timeGetTime();
 
-			CESERVER_REQ *pOut = ExecuteHkCmd(m_ChildGui.nGuiWndPID, pIn, ghWnd);
+			CESERVER_REQ *pOut = ExecuteHkCmd(m_ChildGui.Process.ProcessID, pIn, ghWnd);
 
 			gpSetCls->debugLogCommand(pIn, FALSE, dwTickStart, timeGetTime()-dwTickStart, L"ExecuteHkCmd", pOut);
 
@@ -13552,13 +13640,13 @@ HWND CRealConsole::isPictureView(BOOL abIgnoreNonModal/*=FALSE*/)
 {
 	if (!this) return NULL;
 
-	if (m_ChildGui.nGuiWndPID && !m_ChildGui.hGuiWnd)
+	if (m_ChildGui.Process.ProcessID && !m_ChildGui.hGuiWnd)
 	{
 		// Если GUI приложение запущено во вкладке, и аттач выполняется НЕ из ConEmuHk.dll
 		HWND hBack = mp_VCon->GetBack();
 		HWND hChild = NULL;
 		DEBUGTEST(DWORD nSelf = GetCurrentProcessId());
-		_ASSERTE(nSelf != m_ChildGui.nGuiWndPID);
+		_ASSERTE(nSelf != m_ChildGui.Process.ProcessID);
 
 		while ((hChild = FindWindowEx(hBack, hChild, NULL, NULL)) != NULL)
 		{
@@ -13570,7 +13658,7 @@ HWND CRealConsole::isPictureView(BOOL abIgnoreNonModal/*=FALSE*/)
 
 			if (GetWindowThreadProcessId(hChild, &nChild))
 			{
-				if (nChild == m_ChildGui.nGuiWndPID)
+				if (nChild == m_ChildGui.Process.ProcessID)
 				{
 					break;
 				}
@@ -13582,7 +13670,7 @@ HWND CRealConsole::isPictureView(BOOL abIgnoreNonModal/*=FALSE*/)
 			// Если создается диалог (подключение PuTTY например)
 			// то он тоже должен быть OnTop, иначе вообще виден не будет
 			struct FindChildGuiWindowArg arg = {};
-			arg.nPID = m_ChildGui.nGuiWndPID;
+			arg.nPID = m_ChildGui.Process.ProcessID;
 			EnumWindows(FindChildGuiWindowProc, (LPARAM)&arg);
 			if (arg.hDlg)
 			{
@@ -13599,7 +13687,7 @@ HWND CRealConsole::isPictureView(BOOL abIgnoreNonModal/*=FALSE*/)
 		{
 			DWORD nStyle = ::GetWindowLong(hChild, GWL_STYLE), nStyleEx = ::GetWindowLong(hChild, GWL_EXSTYLE);
 			RECT rcChild; GetWindowRect(hChild, &rcChild);
-			SetGuiMode(m_ChildGui.nGuiAttachFlags|agaf_Self, hChild, nStyle, nStyleEx, m_ChildGui.szGuiWndProcess, m_ChildGui.nGuiWndPID, m_ChildGui.nBits, rcChild);
+			SetGuiMode(m_ChildGui.nGuiAttachFlags|agaf_Self, hChild, nStyle, nStyleEx, m_ChildGui.Process.Name, m_ChildGui.Process.ProcessID, m_ChildGui.Process.Bits, rcChild);
 		}
 	}
 
@@ -13698,7 +13786,7 @@ DWORD CRealConsole::GuiWndPID()
 {
 	if (!this || !m_ChildGui.hGuiWnd)
 		return 0;
-	return m_ChildGui.nGuiWndPID;
+	return m_ChildGui.Process.ProcessID;
 }
 bool CRealConsole::isGuiForceConView()
 {
@@ -14029,7 +14117,7 @@ void CRealConsole::SetGuiMode(DWORD anFlags, HWND ahGuiWnd, DWORD anStyle, DWORD
 	In.AttachGuiApp.Styles.nStyle = anStyle;
 	In.AttachGuiApp.Styles.nStyleEx = anStyleEx;
 	ZeroStruct(In.AttachGuiApp.Styles.Shifts);
-	CorrectGuiChildRect(In.AttachGuiApp.Styles.nStyle, In.AttachGuiApp.Styles.nStyleEx, In.AttachGuiApp.Styles.Shifts, m_ChildGui.szGuiWndProcess);
+	CorrectGuiChildRect(In.AttachGuiApp.Styles.nStyle, In.AttachGuiApp.Styles.nStyleEx, In.AttachGuiApp.Styles.Shifts, m_ChildGui.Process.Name);
 	In.AttachGuiApp.nPID = anAppPID;
 	if (asAppFileName)
 		wcscpy_c(In.AttachGuiApp.sAppFilePathName, asAppFileName);
@@ -14231,7 +14319,8 @@ bool CRealConsole::isFarInStack()
 {
 	if (mn_FarPID || mn_FarPID_PluginDetected || (mn_ProgramStatus & CES_FARINSTACK))
 	{
-		if (mn_ActivePID && (mn_ActivePID == mn_FarPID || mn_ActivePID == mn_FarPID_PluginDetected))
+		if (m_ActiveProcess.ProcessID
+			&& ((m_ActiveProcess.ProcessID == mn_FarPID) || (m_ActiveProcess.ProcessID == mn_FarPID_PluginDetected)))
 		{
 			return false;
 		}
@@ -15607,7 +15696,7 @@ void CRealConsole::Unfasten()
 		return;
 	}
 
-	DWORD nAttachPID = m_ChildGui.hGuiWnd ? m_ChildGui.nGuiWndPID : GetServerPID(true);
+	DWORD nAttachPID = m_ChildGui.hGuiWnd ? m_ChildGui.Process.ProcessID : GetServerPID(true);
 	if (!nAttachPID)
 	{
 		_ASSERTE(nAttachPID);
@@ -15829,7 +15918,7 @@ void CRealConsole::setGuiWnd(HWND ahGuiWnd)
 
 		#ifdef _DEBUG
 		GetWindowThreadProcessId(ahGuiWnd, &nPID);
-		_ASSERTE(nPID == m_ChildGui.nGuiWndPID);
+		_ASSERTE(nPID == m_ChildGui.Process.ProcessID);
 		#endif
 
 		//Useless, because ahGuiWnd is invisible yet and scrolling will be revealed in TrackMouse
@@ -15843,12 +15932,12 @@ void CRealConsole::setGuiWnd(HWND ahGuiWnd)
 
 void CRealConsole::setGuiWndPID(HWND ahGuiWnd, DWORD anPID, int anBits, LPCWSTR asProcessName)
 {
-	m_ChildGui.nGuiWndPID = anPID;
-	m_ChildGui.nBits = anBits;
+	m_ChildGui.Process.ProcessID = anPID;
+	m_ChildGui.Process.Bits = anBits;
 
-	if (asProcessName != m_ChildGui.szGuiWndProcess)
+	if (asProcessName != m_ChildGui.Process.Name)
 	{
-		lstrcpyn(m_ChildGui.szGuiWndProcess, asProcessName ? asProcessName : L"", countof(m_ChildGui.szGuiWndProcess));
+		lstrcpyn(m_ChildGui.Process.Name, asProcessName ? asProcessName : L"", countof(m_ChildGui.Process.Name));
 	}
 
 	setGuiWnd(ahGuiWnd);
@@ -15858,7 +15947,7 @@ void CRealConsole::setGuiWndPID(HWND ahGuiWnd, DWORD anPID, int anBits, LPCWSTR 
 		wchar_t szInfo[MAX_PATH+100];
 		DWORD dwExStyle = ahGuiWnd ? GetWindowLong(ahGuiWnd, GWL_EXSTYLE) : 0;
 		DWORD dwStyle = ahGuiWnd ? GetWindowLong(ahGuiWnd, GWL_STYLE) : 0;
-		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"setGuiWndPID: PID=%u, HWND=x%08X, Style=x%08X, ExStyle=x%08X, '%s'", anPID, (DWORD)(DWORD_PTR)ahGuiWnd, dwStyle, dwExStyle, m_ChildGui.szGuiWndProcess);
+		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"setGuiWndPID: PID=%u, HWND=x%08X, Style=x%08X, ExStyle=x%08X, '%s'", anPID, (DWORD)(DWORD_PTR)ahGuiWnd, dwStyle, dwExStyle, m_ChildGui.Process.Name);
 		mp_ConEmu->LogString(szInfo);
 	}
 }

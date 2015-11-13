@@ -305,9 +305,7 @@ class CRealConsole
 			bool    bInGuiAttaching;
 			bool    bInSetFocus;
 			DWORD   nGuiWndStyle, nGuiWndStylEx; // Исходные стили окна ДО подцепления в ConEmu
-			DWORD   nGuiWndPID;
-			int     nBits;
-			wchar_t szGuiWndProcess[MAX_PATH];
+			ConProcess Process;
 			CESERVER_REQ_PORTABLESTARTED paf;
 			// some helpers
 			bool    isGuiWnd() { return (hGuiWnd && (hGuiWnd != (HWND)INVALID_HANDLE_VALUE)); };
@@ -483,11 +481,13 @@ class CRealConsole
 		void SetFarPluginPID(DWORD nFarPluginPID);
 		void SetProgramStatus(DWORD nDrop, DWORD nSet);
 		void SetFarStatus(DWORD nNewFarStatus);
-		DWORD GetActivePID();
+		bool GetProcessInformation(DWORD nPID, ConProcess* rpProcess = NULL);
+		DWORD GetActivePID(ConProcess* rpProcess = NULL);
+		DWORD GetInteractivePID();
 		DWORD GetLoadedPID();
 		DWORD GetRunningPID();
 		LPCWSTR GetActiveProcessName();
-		int GetActiveAppSettingsId(LPCWSTR* ppProcessName = NULL, bool* pbIsAdmin = NULL, int* pnBits = NULL, DWORD* pnPID = NULL);
+		int GetActiveAppSettingsId(bool bReload = false);
 	private:
 		int GetDefaultAppSettingsId();
 	public:
@@ -818,12 +818,14 @@ class CRealConsole
 		//
 		DWORD mn_FarPID;
 		int   mn_FarNoPanelsCheck; // "Far /e ..."
-		DWORD mn_ActivePID;
-		void SetActivePID(DWORD anNewPID);
+		ConProcess m_ActiveProcess;
+		ConProcess m_AppDistinctProcess;
+		bool mb_ForceRefreshAppId;
+		wchar_t ms_LastActiveProcess[64]; // Used internally by GetProcessInformation
+		void SetActivePID(const ConProcess* apProcess);
+		void SetAppDistinctPID(const ConProcess* apProcess);
 		DWORD mn_LastSetForegroundPID; // PID процесса, которому в последний раз было разрешено AllowSetForegroundWindow
 		DWORD mn_LastProcessNamePID;
-		int   mn_LastProcessBits;
-		wchar_t ms_LastProcessName[MAX_PATH];
 		int mn_LastAppSettingsId;
 		//
 		struct _TabsInfo
