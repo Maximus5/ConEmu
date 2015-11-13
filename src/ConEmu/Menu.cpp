@@ -2091,7 +2091,12 @@ HMENU CConEmuMenu::CreateViewMenuPopup(CVirtualConsole* apVCon, HMENU ahExist /*
 		CmdTaskPopupItem::SetMenuName(szItem, countof(szItem), pPal->pszName, true);
 
 		MENUITEMINFO mi = {sizeof(mi)};
-		mi.fMask = MIIM_STRING|MIIM_STATE; mi.dwTypeData = szItem; mi.cch = countof(szItem); mi.fState = ((i==iActiveIndex)?MF_CHECKED:MF_UNCHECKED);
+		mi.fMask = MIIM_STRING|MIIM_STATE;
+		mi.dwTypeData = szItem; mi.cch = countof(szItem);
+		mi.fState =
+			// Add 'CheckMark' to the current palette (if it differs from ConEmu global one)
+			((i==iActiveIndex) ? MF_CHECKED : MF_UNCHECKED)
+			;
 		if (bNew || !SetMenuItemInfo(hMenu, ID_CON_SETPALETTE_FIRST+i, FALSE, &mi))
 		{
 			AppendMenu(hMenu, MF_STRING | mi.fState, ID_CON_SETPALETTE_FIRST+i, szItem);
