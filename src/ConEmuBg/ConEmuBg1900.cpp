@@ -87,10 +87,10 @@ void GetPluginInfoW1900(void *piv)
 	szMenu[0] = szMenu1;
 	lstrcpynW(szMenu1, GetMsgW(CEPluginName), 240);
 
-	pi->Flags = gbBackgroundEnabled?PF_PRELOAD:0;
-	//pi->PluginMenu.Guids = &guid_ConEmuBgPluginMenu;
-	//pi->PluginMenu.Strings = szMenu;
-	//pi->PluginMenu.Count = 1;
+	pi->Flags = (gbBackgroundEnabled?PF_PRELOAD:0) | PF_EDITOR | PF_VIEWER;
+	pi->PluginMenu.Guids = &guid_ConEmuBgPluginMenu;
+	pi->PluginMenu.Strings = szMenu;
+	pi->PluginMenu.Count = 1;
 	pi->PluginConfig.Guids = &guid_ConEmuBgPluginConfig;
 	pi->PluginConfig.Strings = szMenu;
 	pi->PluginConfig.Count = 1;
