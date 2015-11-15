@@ -118,11 +118,11 @@ void WINAPI _export GetPluginInfo(struct PluginInfo *pi)
 	szMenu[0]=szMenu1;
 	lstrcpynA(szMenu1, InfoA->GetMsg(InfoA->ModuleNumber,CEPluginName), 240);
 	_ASSERTE(pi->StructSize == sizeof(struct PluginInfo));
-	pi->Flags = gbBackgroundEnabled?PF_PRELOAD:0;
+	pi->Flags = (gbBackgroundEnabled?PF_PRELOAD:0) | PF_EDITOR | PF_VIEWER;
 	//pi->DiskMenuStrings = NULL;
 	//pi->DiskMenuNumbers = 0;
-	//pi->PluginMenuStrings = szMenu;
-	//pi->PluginMenuStringsNumber = 1;
+	pi->PluginMenuStrings = szMenu;
+	pi->PluginMenuStringsNumber = 1;
 	pi->PluginConfigStrings = szMenu;
 	pi->PluginConfigStringsNumber = 1;
 	pi->CommandPrefix = NULL;
