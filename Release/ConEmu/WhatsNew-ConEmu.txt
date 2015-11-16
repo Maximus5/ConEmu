@@ -19,6 +19,38 @@ http://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2015.11.15
+* gh#415: GetLastError returned `6` after WriteFile even on success.
+* `Shift`+`Debug active process` allows to run debugger in a split.
+  If menu item `Debug active process` is called with `Shift` key pressed,
+  NewConsole dialog is opened (allowing to run debugger in a split).
+* ConEmuC Debugger. Don't suggest to create MiniDump on MS_VC_THREADNAME_EXCEPTION.
+* In some cases ConEmuC64 was started as server for 32-bit root process.
+* gh#94: Gray window on PuTTY when connected via local proxy command.
+* Correct condition for attaching console app started from ChildGui (from gh#94).
+* gh#419: Cygwin-friendly paths were pasted into Clink's prompt.
+* Option ‘Suppress bells’ added to ‘Features’ settings page.
+  It suppresses annoying bells produced by echoing char(7), Beep
+  and MessageBeep functions. ‘Inject ConEmuHk’ is required.
+  Instead, ConEmu window (Frame/Title and TaskBar button)
+  will flash one time if ‘Disable all flashing’ is not checked.
+* Let palettes list (TabMenu) will not be too long.
+  There are 25 predefined palettes now, and if user creates
+  user-defined palettes, the menu had unhandy scrolling.
+* Detection of ‘Active process’ is almost rewritten.
+  * Since now, ‘Active process’ is the last process started in console (same as before);
+  * But process used to select AppDistinct options must be interactive. For example, you
+    have defined AppDistinct settings, with palette `<PowerShell>` for `powershell.exe`
+    and palette `<ConEmu>` for `bash.exe` and `git-bash.exe`. Than, palette will not be
+    changed anymore when you just run `git status` from powershell's prompt, it will be
+    changed if only `bash.exe` is started directly from powershell's prompt.
+    That was impelemented to suppress colors flashing during non-interactive command.
+* StatusBar column ‘Active process’ shows ‘Interactive’ and ‘Plugin is loaded’.
+  * Asterisk `*` after process name: process is reading keyboard input.
+  * Sharp `#` after process name: ConEmu plugin is loaded in Far Manager.
+* Add ‘ConEmu Underlines’ and ‘ConEmu Background’ items to Far's F11 menu (panels, editor, viewer).
+
+
 2015.11.9
 * Move checkbox `Activate split/pane on mouse hover` to the `Controls` settings page.
 * Write process list changes and active process name to log (ConEmu -log).
