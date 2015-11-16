@@ -206,6 +206,8 @@ void UnsetAllHooks();
 bool PrepareNewModule(HMODULE module, LPCSTR asModuleA, LPCWSTR asModuleW, BOOL abNoSnapshoot = FALSE, BOOL abForceHooks = FALSE);
 void UnprepareModule(HMODULE hModule, LPCWSTR pszModule, int iStep);
 
+void ProcessOnLibraryLoadedW(HMODULE module);
+
 //typedef VOID (WINAPI* OnLibraryLoaded_t)(HMODULE ahModule);
 //extern OnLibraryLoaded_t gfOnLibraryLoaded;
 #if defined(__GNUC__)

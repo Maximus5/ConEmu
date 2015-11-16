@@ -45,6 +45,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <intrin.h>
 #include "../common/common.hpp"
 #include "../common/ConEmuCheck.h"
+#include "../common/WErrGuard.h"
 #include "../common/MSection.h"
 #include "../common/WObjects.h"
 //#include "../common/MArray.h"
@@ -1200,6 +1201,19 @@ void LoadModuleFailed(LPCSTR asModuleA, LPCWSTR asModuleW)
 }
 
 
+void ProcessOnLibraryLoadedW(HMODULE module)
+{
+	// Far Manager ConEmu plugin may do some additional operations:
+	// such as initialization of background plugins...
+	if (gfOnLibraryLoaded && module)
+	{
+		ScopedObject(CLastErrorGuard)();
+		HLOG1_("PrepareNewModule.gfOnLibraryLoaded", LODWORD(module));
+		gfOnLibraryLoaded(module);
+		HLOGEND1();
+	}
+}
+
 
 bool PrepareNewModule(HMODULE module, LPCSTR asModuleA, LPCWSTR asModuleW, BOOL abNoSnapshoot /*= FALSE*/, BOOL abForceHooks /*= FALSE*/)
 {
@@ -1285,12 +1299,7 @@ bool PrepareNewModule(HMODULE module, LPCSTR asModuleA, LPCWSTR asModuleW, BOOL 
 
 	// Far Manager ConEmu plugin may do some additional operations:
 	// such as initialization of background plugins...
-	if (gfOnLibraryLoaded)
-	{
-		HLOG1_("PrepareNewModule.gfOnLibraryLoaded",LODWORD(module));
-		gfOnLibraryLoaded(module);
-		HLOGEND1();
-	}
+	ProcessOnLibraryLoadedW(module);
 
 	lbModuleOk = true;
 	UNREFERENCED_PARAMETER(p);

@@ -296,7 +296,12 @@ HMODULE WINAPI OnLoadLibraryW(const wchar_t* lpFileName)
 	DWORD dwLoadErrCode = GetLastError();
 
 	if ((gnLdrDllNotificationUsed == ldr_PartialSupport) || (gnLdrDllNotificationUsed == ldr_FullSupport))
+	{
+		// Far Manager ConEmu plugin may do some additional operations:
+		// such as initialization of background plugins...
+		ProcessOnLibraryLoadedW(module);
 		return module;
+	}
 
 	// Issue 1079: Almost hangs with PHP
 	if (lstrcmpi(lpFileName, L"kernel32.dll") == 0)
