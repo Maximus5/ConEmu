@@ -261,6 +261,7 @@ public:
 	ORIGINALCALLCOUNT_(n, HOOK_FN_ID(n))
 #else
 #define ORIGINALCALLCOUNT(n)
+#define ORIGINALCALLCOUNT_(n)
 #endif
 
 #define ORIGINAL(n,o) \
