@@ -93,7 +93,8 @@ enum PipeState
 #ifdef USEPIPELOG
 	#include <intrin.h>
 
-	#define getThreadId() WIN3264TEST(((DWORD*) __readfsdword(24))[9],GetCurrentThreadId())
+	//#define getThreadId() WIN3264TEST(((DWORD*) __readfsdword(24))[9],GetCurrentThreadId())
+	#define getThreadId() GetCurrentThreadId()
 
 	// Originally from http://preshing.com/20120522/lightweight-in-memory-logging
 	namespace PipeServerLogger
