@@ -3955,21 +3955,25 @@ bool CRealConsole::StartDebugger(StartDebugType sdt)
 			TODO("Может лучше переделать на CreateCon?");
 			si.dwFlags |= STARTF_USESHOWWINDOW;
 			si.wShowWindow = SW_HIDE;
-			DWORD dwSelfPID = GetCurrentProcessId();
-			int W = TextWidth();
-			int H = TextHeight();
-			_wsprintf(szExe, SKIPLEN(countof(szExe)) L"\"%s\" /ATTACH /GID=%i /GHWND=%08X /BW=%i /BH=%i /BZ=%u /ROOT \"%s\" /DEBUGPID=%i ",
-				pszServer, dwSelfPID, LODWORD(ghWnd), W, H, LONGOUTPUTHEIGHT_MAX, pszServer, dwPID);
+			//No need to ‘Attach’ it's better to show ‘New console’ dialog and allow user to change options (splitting for example)
+			//DWORD dwSelfPID = GetCurrentProcessId();
+			//int W = TextWidth();
+			//int H = TextHeight();
+			//_wsprintf(szExe, SKIPLEN(countof(szExe)) L"\"%s\" /ATTACH /GID=%i /GHWND=%08X /BW=%i /BH=%i /BZ=%u /ROOT \"%s\" /DEBUGPID=%i ",
+			//	pszServer, dwSelfPID, LODWORD(ghWnd), W, H, LONGOUTPUTHEIGHT_MAX, pszServer, dwPID);
+			_wsprintf(szExe, SKIPLEN(countof(szExe)) L"\"%s\" /DEBUGPID=%i ", pszServer, dwPID);
 		} break;
 	default:
 		_ASSERTE(FALSE && "Unsupported debugger mode");
 		return false;
 	}
 
+	bool bShowStartDlg = true; // isPressed(VK_SHIFT)
+
 	#if 0 //defined(_DEBUG)
 	// For mini-dump - immediately, to not to introduce lags
 	// If Shift key is pressed - check it below
-	if ((sdt != sdt_DumpMemory) && (sdt != sdt_DumpMemoryTree) && !isPressed(VK_SHIFT))
+	if ((sdt != sdt_DumpMemory) && (sdt != sdt_DumpMemoryTree) && !bShowStartDlg)
 	{
 		if (MsgBox(szExe, MB_OKCANCEL|MB_SYSTEMMODAL, L"StartDebugLogConsole") != IDOK)
 			return false;
@@ -3987,40 +3991,39 @@ bool CRealConsole::StartDebugger(StartDebugType sdt)
 			&& (m_Args.pszUserName != NULL) && (m_Args.UseEmptyPassword != crb_On)
 		)
 		// If it's not a dump request, and user is pressing Shift key, open NewConsole dialog
-		|| (((sdt != sdt_DumpMemory) && (sdt != sdt_DumpMemoryTree)) && isPressed(VK_SHIFT))
+		|| (((sdt != sdt_DumpMemory) && (sdt != sdt_DumpMemoryTree)) && bShowStartDlg)
 		)
 	{
-		Args.pszSpecialCmd = lstrdup(szExe); // Informational
+		Args.pszSpecialCmd = lstrdup(szExe);
 
 		int nRc = mp_ConEmu->RecreateDlg(&Args);
 
 		if (nRc != IDC_START)
 			return false;
 
-		if (Args.eSplit)
-		{
-			// Allow to run debugger in a split
-			Args.Detached = crb_On;
-			CVirtualConsole* pDbgVCon = CVConGroup::CreateCon(&Args, false, false);
-			Args.Detached = crb_Undefined;
-		}
-	}
-
-	LPCWSTR pszWordDir = NULL;
-	DWORD dwLastErr = 0;
-
-	if (!CreateOrRunAs(this, Args, szExe, pszWordDir, si, pi, mp_sei_dbg, dwLastErr))
-	{
-		// Хорошо бы ошибку показать?
-		DWORD dwErr = GetLastError();
-		wchar_t szErr[128]; _wsprintf(szErr, SKIPLEN(countof(szErr)) L"Can't create debugger console! ErrCode=0x%08X", dwErr);
-		MBoxA(szErr);
+		if (gpSetCls->IsMulti() && (Args.aRecreate != cra_CreateWindow))
+			lbRc = (gpConEmu->CreateCon(&Args) != NULL);
+		else
+			lbRc = gpConEmu->CreateWnd(&Args);
 	}
 	else
 	{
-		SafeCloseHandle(pi.hProcess);
-		SafeCloseHandle(pi.hThread);
-		lbRc = true;
+		LPCWSTR pszWordDir = NULL;
+		DWORD dwLastErr = 0;
+
+		if (!CreateOrRunAs(this, Args, szExe, pszWordDir, si, pi, mp_sei_dbg, dwLastErr))
+		{
+			// Хорошо бы ошибку показать?
+			DWORD dwErr = GetLastError();
+			wchar_t szErr[128]; _wsprintf(szErr, SKIPLEN(countof(szErr)) L"Can't create debugger console! ErrCode=0x%08X", dwErr);
+			MBoxA(szErr);
+		}
+		else
+		{
+			SafeCloseHandle(pi.hProcess);
+			SafeCloseHandle(pi.hThread);
+			lbRc = true;
+		}
 	}
 
 	return lbRc;
