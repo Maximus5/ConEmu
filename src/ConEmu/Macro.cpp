@@ -145,6 +145,8 @@ namespace ConEmuMacro
 	LPWSTR Context(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Copy (<What>)
 	LPWSTR Copy(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
+	// Debug (<Action>)
+	LPWSTR Debug(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Detach
 	LPWSTR Detach(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Найти окно и активировать его. // int nWindowType/*Panels=1, Viewer=2, Editor=3*/, LPWSTR asName
@@ -262,6 +264,7 @@ namespace ConEmuMacro
 		{Close, {L"Close"}, gmf_MainThread},
 		{Context, {L"Context"}},
 		{Copy, {L"Copy"}},
+		{Debug, {L"Debug"}, gmf_MainThread},
 		{Detach, {L"Detach"}, gmf_MainThread},
 		{FindEditor, {L"FindEditor"}},
 		{FindFarWindow, {L"FindFarWindow"}},
@@ -1502,6 +1505,35 @@ LPWSTR ConEmuMacro::Close(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 	}
 
 	return pszResult ? pszResult : lstrdup(L"Failed");
+}
+
+LPWSTR ConEmuMacro::Debug(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
+{
+	int iAction = 0;
+	LPWSTR pszResult = NULL;
+	if (apRCon)
+	{
+		p->GetIntArg(0, iAction);
+		switch (iAction)
+		{
+		case 0:
+			gpConEmu->StartDebugActiveProcess();
+			break;
+		case 1:
+			gpConEmu->MemoryDumpActiveProcess(false/*abProcessTree*/);
+			break;
+		case 2:
+			gpConEmu->MemoryDumpActiveProcess(true/*abProcessTree*/);
+			break;
+		default:
+			pszResult = lstrdup(L"BadAction");
+		}
+	}
+	else
+	{
+		pszResult = lstrdup(L"NoConsole");
+	}
+	return pszResult ? pszResult : lstrdup(L"OK");
 }
 
 LPWSTR ConEmuMacro::Detach(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
