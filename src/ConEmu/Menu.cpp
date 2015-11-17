@@ -2095,17 +2095,20 @@ HMENU CConEmuMenu::CreateViewMenuPopup(CVirtualConsole* apVCon, HMENU ahExist /*
 			iBreak = i;
 
 		MENUITEMINFO mi = {sizeof(mi)};
-		mi.fMask = MIIM_STRING|MIIM_STATE;
+		mi.fMask = MIIM_STRING|MIIM_STATE|MIIM_FTYPE;
 		mi.dwTypeData = szItem; mi.cch = countof(szItem);
 		mi.fState =
 			// Add 'CheckMark' to the current palette (if it differs from ConEmu global one)
-			((i==iActiveIndex) ? MF_CHECKED : MF_UNCHECKED)
+			((i==iActiveIndex) ? MFS_CHECKED : MFS_UNCHECKED)
+			;
+		mi.fType = MFT_STRING
 			// Ensure palettes list will not be too long, ATM there are 25 predefined palettes
-			| ((iBreak && !(i % iBreak)) ? MF_MENUBREAK : 0)
+			| ((iBreak && !(i % iBreak)) ? MFT_MENUBREAK : 0)
 			;
 		if (bNew || !SetMenuItemInfo(hMenu, ID_CON_SETPALETTE_FIRST+i, FALSE, &mi))
 		{
-			AppendMenu(hMenu, MF_STRING | mi.fState, ID_CON_SETPALETTE_FIRST+i, szItem);
+			_ASSERTE(MFS_CHECKED == MF_CHECKED && MFT_MENUBREAK == MF_MENUBREAK && MFT_STRING == 0);
+			AppendMenu(hMenu, MF_STRING | mi.fState | mi.fType, ID_CON_SETPALETTE_FIRST+i, szItem);
 		}
 
 		i++;
