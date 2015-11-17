@@ -1182,8 +1182,8 @@
 #define gbTaskStartDelay                2869
 #define stStartCreateDelay              2870
 #define tStartCreateDelay               2871
-#define stCopyFormat                    2672
-#define lbCopyFormat                    2673
+#define stCopyFormat                    2872
+#define lbCopyFormat                    2873
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
