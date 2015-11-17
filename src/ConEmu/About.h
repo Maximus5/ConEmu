@@ -268,12 +268,12 @@ _DBGHLP(L"/ZoneId - Try to drop :Zone.Identifier without confirmation.\r\n") \
 	L"     Relative==1: N (+-1, +-2) - increase/decrease font height\r\n" \
 	L"     Relative==2: N (per cents) - alias for Zoom(N)\r\n" \
 	L"     returns - \"OK\", or \"InvalidArg\"\r\n" \
-	L"GetOption(\"<Name>\")\r\n" \
-	L"  - Returns value of some ConEmu options (the set is limited)\r\n" \
 	L"GetInfo(\"PID\"[,\"HWND\"[,...]])\r\n" \
 	L"  - Returns values of some ConEmu environment variables\r\n" \
 	L"    GetInfo(\"PID\") returns %ConEmuPID% and so on\r\n" \
 	L"    It's processed in GUI so the result may differs from RealConsole\r\n" \
+	L"GetOption(\"<Name>\")\r\n" \
+	L"  - Returns value of some ConEmu options (the set is limited)\r\n" \
 	L"GroupInput([<Cmd>])\r\n" \
 	L"  - Group keyboard input for visible splits\r\n" \
 	L"     Cmd==0: switch mode (default)\r\n" \
