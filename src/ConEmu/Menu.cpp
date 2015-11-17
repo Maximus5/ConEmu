@@ -1774,9 +1774,9 @@ HMENU CConEmuMenu::CreateDebugMenuPopup()
 	AppendMenu(hDebug, MF_STRING|MF_ENABLED, ID_DUMP_MEM_BLK, _T("Dump used memory blocks"));
 	#endif
 	AppendMenu(hDebug, MF_SEPARATOR, 0, NULL);
-	AppendMenu(hDebug, MF_STRING|MF_ENABLED, ID_DEBUGCON, _T("Debug &active process"));
-	AppendMenu(hDebug, MF_STRING|MF_ENABLED, ID_MINIDUMP, _T("Active process &memory dump..."));
-	AppendMenu(hDebug, MF_STRING|MF_ENABLED, ID_MINIDUMPTREE, _T("Active &tree memory dump..."));
+	AppendMenu(hDebug, MF_STRING|MF_ENABLED, ID_DEBUGCON, MenuAccel(vkDebugProcess,L"Debug &active process..."));
+	AppendMenu(hDebug, MF_STRING|MF_ENABLED, ID_MINIDUMP, MenuAccel(vkDumpProcess,L"Active process &memory dump..."));
+	AppendMenu(hDebug, MF_STRING|MF_ENABLED, ID_MINIDUMPTREE, MenuAccel(vkDumpTree,L"Active &tree memory dump..."));
 	return hDebug;
 }
 

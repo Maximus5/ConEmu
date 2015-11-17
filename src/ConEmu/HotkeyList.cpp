@@ -283,6 +283,12 @@ int ConEmuHotKeyList::AllocateHotkeys()
 		->SetHotKey(VK_SPACE,VK_MENU);
 	Add(vkSystemMenu2,    chk_User,  NULL,    L"Key.SysMenu2",          CConEmuCtrl::key_SystemMenu, true/*OnKeyUp*/) // System menu
 		->SetHotKey(VK_RBUTTON,VK_CONTROL);
+	Add(vkDebugProcess,   chk_User,  NULL,    L"Key.DebugProcess",      CConEmuCtrl::key_GuiMacro, true/*OnKeyUp*/, L"Debug(0)")
+		->SetHotKey('D',VK_LWIN,VK_SHIFT);
+	Add(vkDumpProcess,    chk_User,  NULL,    L"Key.DumpProcess",       CConEmuCtrl::key_GuiMacro, true/*OnKeyUp*/, L"Debug(1)")
+		;
+	Add(vkDumpTree,       chk_User,  NULL,    L"Key.DumpTree",          CConEmuCtrl::key_GuiMacro, true/*OnKeyUp*/, L"Debug(2)")
+		;
 	/*
 			Scrolling
 	*/

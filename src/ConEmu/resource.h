@@ -1184,6 +1184,9 @@
 #define tStartCreateDelay               2871
 #define stCopyFormat                    2872
 #define lbCopyFormat                    2873
+#define vkDebugProcess                  2874
+#define vkDumpProcess                   2875
+#define vkDumpTree                      2876
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
@@ -1192,7 +1195,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        229
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2874
+#define _APS_NEXT_CONTROL_VALUE         2877
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif
