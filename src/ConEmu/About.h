@@ -240,6 +240,11 @@ _DBGHLP(L"/ZoneId - Try to drop :Zone.Identifier without confirmation.\r\n") \
 	L"    Format==2: copy as HTML\r\n" \
 	L"    Format==3: copy ANSI sequences\r\n" \
 	L"    File: if specified - save to file instead of clipboard\r\n" \
+	L"Debug(<Action>)\r\n" \
+	L"  - Create debugger console or memory dumps\r\n" \
+	L"    Action==0: Debug active process\r\n" \
+	L"    Action==1: Active process memory dump\r\n" \
+	L"    Action==2: Active process tree memory dump\r\n" \
 	L"Detach\r\n" \
 	L"  - Detach active RealConsole from ConEmu\r\n" \
 	L"FindEditor(\"<FullEditFileName>\")\r\n" \
