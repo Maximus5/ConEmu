@@ -731,7 +731,7 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 					lstrcpy(szDbg, L"gn_MsgVConTerminated");
 
 					i = CVConGroup::GetVConIndex(pVCon);
-					if (i >= 1)
+					if (i >= 0)
 					{
 						CTab tab(__FILE__,__LINE__);
 						if (pVCon->RCon()->GetTab(0, tab))
