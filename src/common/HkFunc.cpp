@@ -33,130 +33,55 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 HkFunc hkFunc;
 
+void WINAPI OnHooksUnloaded()
+{
+	hkFunc.State = HkFunc::sUnloaded;
+}
+
 HkFunc::HkFunc()
 	: State(sNotChecked)
-	, hConEmuHk(NULL)
-	, fnGetTrampoline(NULL)
-	, fnGetLargestConsoleWindowSize(NULL)
-	, fnSetConsoleScreenBufferSize(NULL)
-	, fnGetConsoleWindow(NULL)
-	, fnVirtualAlloc(NULL)
-	, fnCreateProcess(NULL)
 {
 }
 
-WARNING("DANGER zone. If ConEmuHk unloads calling saved pointers may cause crashes");
-
-bool HkFunc::Init()
+bool HkFunc::Init(LPCWSTR asModule, HMODULE hModule)
 {
-	if (State == sNotChecked)
-	{
-		hConEmuHk = GetModuleHandle(WIN3264TEST(L"ConEmuHk.dll",L"ConEmuHk64.dll"));
-		if (hConEmuHk != NULL)
-		{
-			fnGetTrampoline = (GetTrampoline_t)GetProcAddress(hConEmuHk, "GetTrampoline");
-			if (!fnGetTrampoline)
-			{
-				// Old build?
-				_ASSERTE(fnGetTrampoline!=NULL);
-				hConEmuHk = NULL;
-			}
-		}
+	if ((State != sNotChecked) && (State != sUnloaded) && (State != sConEmuHk))
+		return (State == sHooked || State == sConEmuHk);
 
-		State = (hConEmuHk != NULL) ? sHooked : sNotHooked;
+	BOOL bTrampolined = FALSE;
+	typedef BOOL (WINAPI* RequestTrampolines_t)(LPCWSTR asModule, HMODULE hModule);
+	RequestTrampolines_t fnRequestTrampolines;
+
+	// WARNING! Heap may be not initialized in this step!
+
+	HMODULE hConEmuHk = GetModuleHandle(WIN3264TEST(L"ConEmuHk.dll",L"ConEmuHk64.dll"));
+	if (hConEmuHk != NULL)
+	{
+		fnRequestTrampolines = (RequestTrampolines_t)GetProcAddress(hConEmuHk, "RequestTrampolines");
+		if (!fnRequestTrampolines)
+		{
+			// Old build?
+			_ASSERTE(fnRequestTrampolines!=NULL);
+		}
+		else
+		{
+			bTrampolined = fnRequestTrampolines(asModule, hModule);
+		}
 	}
 
-	return ((State == sHooked || State == sConEmuHk) && (fnGetTrampoline != NULL));
+	State = bTrampolined ? sHooked : sNotHooked;
+	return (State == sHooked || State == sConEmuHk);
 }
 
 // We are working in the ConEmuHk.dll itself
-void HkFunc::SetInternalMode(HMODULE hSelf, FARPROC pfnGetTrampoline)
+void HkFunc::SetInternalMode()
 {
-	_ASSERTEX(State == sNotChecked && pfnGetTrampoline);
-
-	hConEmuHk = hSelf;
-	fnGetTrampoline = (GetTrampoline_t)pfnGetTrampoline;
+	_ASSERTEX(State == sNotChecked);
 
 	State = sConEmuHk;
-}
-
-void HkFunc::OnHooksUnloaded()
-{
-	State = sUnloaded;
-	fnGetTrampoline = NULL;
-	fnGetLargestConsoleWindowSize = NULL;
-	fnSetConsoleScreenBufferSize = NULL;
-	fnGetConsoleWindow = NULL;
-	fnVirtualAlloc = NULL;
-	fnCreateProcess = NULL;
 }
 
 bool HkFunc::isConEmuHk()
 {
 	return (State == sConEmuHk);
-}
-
-COORD HkFunc::getLargestConsoleWindowSize(HANDLE hConsoleOutput)
-{
-	if (Init())
-	{
-		if (!fnGetLargestConsoleWindowSize)
-			fnGetLargestConsoleWindowSize = (GetLargestConsoleWindowSize_t)fnGetTrampoline("GetLargestConsoleWindowSize");
-		if (fnGetLargestConsoleWindowSize)
-			return fnGetLargestConsoleWindowSize(hConsoleOutput);
-	}
-
-	return GetLargestConsoleWindowSize(hConsoleOutput);
-}
-
-BOOL HkFunc::setConsoleScreenBufferSize(HANDLE hConsoleOutput, COORD dwSize)
-{
-	if (Init())
-	{
-		if (!fnSetConsoleScreenBufferSize)
-			fnSetConsoleScreenBufferSize = (SetConsoleScreenBufferSize_t)fnGetTrampoline("SetConsoleScreenBufferSize");
-		if (fnSetConsoleScreenBufferSize)
-			return fnSetConsoleScreenBufferSize(hConsoleOutput, dwSize);
-	}
-
-	return SetConsoleScreenBufferSize(hConsoleOutput, dwSize);
-}
-
-HWND HkFunc::getConsoleWindow()
-{
-	if (Init())
-	{
-		if (!fnGetConsoleWindow)
-			fnGetConsoleWindow = (GetConsoleWindow_t)fnGetTrampoline("GetConsoleWindow");
-		if (fnGetConsoleWindow)
-			return fnGetConsoleWindow();
-	}
-
-	return GetConsoleWindow();
-}
-
-LPVOID HkFunc::virtualAlloc(LPVOID lpAddress, SIZE_T dwSize, DWORD flAllocationType, DWORD flProtect)
-{
-	if (Init())
-	{
-		if (!fnVirtualAlloc)
-			fnVirtualAlloc = (VirtualAlloc_t)fnGetTrampoline("VirtualAlloc");
-		if (fnVirtualAlloc)
-			return fnVirtualAlloc(lpAddress, dwSize, flAllocationType, flProtect);
-	}
-
-	return VirtualAlloc(lpAddress, dwSize, flAllocationType, flProtect);
-}
-
-BOOL HkFunc::createProcess(LPCWSTR lpApplicationName, LPWSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment, LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation)
-{
-	if (Init())
-	{
-		if (!fnCreateProcess)
-			fnCreateProcess = (CreateProcessW_t)fnGetTrampoline("CreateProcessW");
-		if (fnCreateProcess)
-			return fnCreateProcess(lpApplicationName, lpCommandLine, lpProcessAttributes, lpThreadAttributes, bInheritHandles, dwCreationFlags, lpEnvironment, lpCurrentDirectory, lpStartupInfo, lpProcessInformation);
-	}
-
-	return CreateProcessW(lpApplicationName, lpCommandLine, lpProcessAttributes, lpThreadAttributes, bInheritHandles, dwCreationFlags, lpEnvironment, lpCurrentDirectory, lpStartupInfo, lpProcessInformation);
 }

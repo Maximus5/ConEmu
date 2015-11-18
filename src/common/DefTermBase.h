@@ -41,7 +41,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "MArray.h"
 #include "MSectionSimple.h"
 #include "ConEmuCheck.h"
-#include "HkFunc.h"
 #include "WObjects.h"
 #include "WThreads.h"
 #include "../ConEmuCD/ExitCodes.h"
@@ -820,7 +819,7 @@ private:
 		// Run hooker
 		si.dwFlags = STARTF_USESHOWWINDOW;
 		LogHookingStatus(szCmdLine);
-		bStarted = hkFunc.createProcess(NULL, szCmdLine, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
+		bStarted = CreateProcess(NULL, szCmdLine, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
 		if (!bStarted)
 		{
 			//DisplayLastError(L"Failed to start hooking application!\nDefault terminal feature will not be available!");

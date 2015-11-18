@@ -34,7 +34,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <windows.h>
 #include <TlHelp32.h>
 #include "CmdLine.h"
-#include "HkFunc.h"
 #include "WObjects.h"
 
 #if !defined(CONEMU_MINIMAL)
@@ -992,7 +991,7 @@ bool IsModuleValid(HMODULE module, BOOL abTestVirtual /*= TRUE*/)
 	if (abTestVirtual)
 	{
 		// Issue 881
-		lpTest = (LPBYTE)hkFunc.virtualAlloc((LPVOID)module, cbCommitSize, MEM_RESERVE|MEM_COMMIT, PAGE_READWRITE);
+		lpTest = (LPBYTE)VirtualAlloc((LPVOID)module, cbCommitSize, MEM_RESERVE|MEM_COMMIT, PAGE_READWRITE);
 		if (lpTest)
 		{
 			// If we can lock mem region with (IMAGE_DOS_HEADER) of checking module

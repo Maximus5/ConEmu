@@ -53,6 +53,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/ConEmuCheckEx.h"
 #include "../common/EmergencyShow.h"
 #include "../common/FarVersion.h"
+#include "../common/HkFunc.h"
 #include "../common/MFileMapping.h"
 #include "../common/MSection.h"
 #include "../common/MSetter.h"
@@ -245,6 +246,8 @@ void CPluginBase::DllMain_ProcessAttach(HMODULE hModule)
 	gnSelfPID = GetCurrentProcessId();
 	HeapInitialize();
 	gfnSearchAppPaths = SearchAppPaths;
+
+	hkFunc.Init(WIN3264TEST(L"ConEmu.dll",L"ConEmu.x64.dll"), ghPluginModule);
 
 	#ifdef SHOW_STARTED_MSGBOX
 	if (!IsDebuggerPresent())

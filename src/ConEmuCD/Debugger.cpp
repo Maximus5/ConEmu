@@ -37,7 +37,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma warning(default: 4091)
 #include "../ConEmu/version.h"
 #include "../common/CmdArg.h"
-#include "../common/HkFunc.h"
 #include "../common/MMap.h"
 #include "../common/TokenHelper.h"
 #include "../common/WFiles.h"
@@ -136,7 +135,7 @@ int RunDebugger()
 		if (csbi.dwSize.X < 260)
 		{
 			COORD crNewSize = {260, 9999};
-			hkFunc.setConsoleScreenBufferSize(ghConOut, crNewSize);
+			SetConsoleScreenBufferSize(ghConOut, crNewSize);
 		}
 		//if ((csbi.srWindow.Right - csbi.srWindow.Left + 1) < 120)
 		//{

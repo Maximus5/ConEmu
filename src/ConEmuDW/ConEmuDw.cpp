@@ -57,6 +57,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/ConEmuColors3.h"
 #include "../common/common.hpp"
 #include "../common/ConEmuCheck.h"
+#include "../common/HkFunc.h"
 #include "../common/UnicodeChars.h"
 #include "../common/WThreads.h"
 #include "../ConEmu/version.h"
@@ -171,11 +172,13 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 				ghOurModule = (HMODULE)hModule;
 				ghWorkingModule = (u64)hModule;
 				HeapInitialize();
-				
+
 				#ifdef SHOW_STARTED_MSGBOX
 				char szMsg[128]; wsprintfA(szMsg, "ExtendedConsole, FAR Pid=%u", GetCurrentProcessId());
 				if (!IsDebuggerPresent()) MessageBoxA(NULL, "ExtendedConsole*.dll loaded", szMsg, 0);
 				#endif
+
+				hkFunc.Init(WIN3264TEST(L"ExtendedConsole.dll",L"ExtendedConsole64.dll"), ghOurModule);
 
 				bool lbExportsChanged = false;
 				if (LoadFarVersion())
@@ -360,11 +363,11 @@ BOOL CheckBuffers(bool abWrite /*= false*/)
 	if (hCon != ghVConWnd)
 	{
 		#ifdef _DEBUG
-		// After minhook implementation GetConsoleWindow will return VCon HWND
+		// Even with minhook GetConsoleWindow must be set to trampolined function
 		HWND hApiCon = GetConsoleWindow();
 		HWND hRealCon = GetConEmuHWND(2);
 		HWND hRootWnd = GetConEmuHWND(1);
-		_ASSERTE(hApiCon == hCon && hApiCon != hRealCon);
+		_ASSERTE(hApiCon == hRealCon);
 		#endif
 
 		ghRConWnd = GetConEmuHWND(2);

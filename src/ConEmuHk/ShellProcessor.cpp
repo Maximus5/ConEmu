@@ -46,7 +46,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/common.hpp"
 #include "../common/ConEmuCheck.h"
 #include "../common/execute.h"
-#include "../common/HkFunc.h"
 #include "../common/WErrGuard.h"
 #include "../common/WObjects.h"
 #if defined(__GNUC__) && !defined(__MINGW32__)
@@ -2333,7 +2332,7 @@ wrap:
 
 					if (bNeedChange)
 					{
-						bBufChanged = hkFunc.setConsoleScreenBufferSize(hConOut, csbi.dwSize);
+						bBufChanged = SetConsoleScreenBufferSize(hConOut, csbi.dwSize);
 					}
 					UNREFERENCED_PARAMETER(bBufChanged);
 				}
@@ -2896,7 +2895,7 @@ void CShellProc::OnCreateProcessFinished(BOOL abSucceeded, PROCESS_INFORMATION *
 						(LPCWSTR)szSrvArgs);
 					STARTUPINFO si = {sizeof(si)};
 					PROCESS_INFORMATION pi = {};
-					bAttachCreated = hkFunc.createProcess(NULL, pszCmdLine, NULL, NULL, FALSE, CREATE_NO_WINDOW, NULL, m_SrvMapping.ComSpec.ConEmuBaseDir, &si, &pi);
+					bAttachCreated = CreateProcess(NULL, pszCmdLine, NULL, NULL, FALSE, CREATE_NO_WINDOW, NULL, m_SrvMapping.ComSpec.ConEmuBaseDir, &si, &pi);
 					if (bAttachCreated)
 					{
 						CloseHandle(pi.hProcess);

@@ -32,7 +32,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/common.hpp"
 #include "../common/ConEmuCheck.h"
 #include "../common/execute.h"
-#include "../common/HkFunc.h"
 #include "../ConEmuCD/ExitCodes.h"
 #include "../common/WObjects.h"
 #include "Console2.h"
@@ -304,7 +303,7 @@ CINJECTHK_EXIT_CODES InjectHooks(PROCESS_INFORMATION pi, BOOL abLogProcess)
 
 		// Добавил DETACHED_PROCESS, чтобы helper не появлялся в списке процессов консоли,
 		// а то у сервера может крышу сорвать, когда helper исчезнет, а приложение еще не появится.
-		BOOL lbHelper = hkFunc.createProcess(NULL, sz64helper, &SecInh, &SecInh, TRUE, HIGH_PRIORITY_CLASS|DETACHED_PROCESS, NULL, NULL, &si, &pi64);
+		BOOL lbHelper = CreateProcess(NULL, sz64helper, &SecInh, &SecInh, TRUE, HIGH_PRIORITY_CLASS|DETACHED_PROCESS, NULL, NULL, &si, &pi64);
 
 		if (!lbHelper)
 		{

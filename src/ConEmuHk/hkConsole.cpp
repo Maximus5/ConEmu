@@ -402,7 +402,7 @@ BOOL WINAPI OnAllocConsole(void)
 				#ifdef _DEBUG
 				COORD crNewSize = {crLocked.X, max(crLocked.Y, csbi.dwSize.Y)};
 				#endif
-				hkFunc.setConsoleScreenBufferSize(hStdOut, crLocked);
+				SetConsoleScreenBufferSize(hStdOut, crLocked);
 			}
 		}
 	}

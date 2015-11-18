@@ -93,7 +93,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/CmdLine.h"
 #include "../common/ConsoleAnnotation.h"
 #include "../common/ConsoleRead.h"
-#include "../common/HkFunc.h"
 #include "../common/UnicodeChars.h"
 #include "../common/WConsole.h"
 #include "../common/WThreads.h"

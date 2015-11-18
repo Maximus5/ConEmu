@@ -33,7 +33,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Monitors.h"
 #include "WConsole.h"
 #include "WObjects.h"
-#include "HkFunc.h"
 
 #ifndef CONEMU_MINIMAL
 #include "WUser.h"
@@ -810,7 +809,7 @@ BOOL apiGetConsoleSelectionInfo(PCONSOLE_SELECTION_INFO lpConsoleSelectionInfo)
 COORD MyGetLargestConsoleWindowSize(HANDLE hConsoleOutput)
 {
 	// Fails in Wine
-	COORD crMax = hkFunc.getLargestConsoleWindowSize(hConsoleOutput);
+	COORD crMax = GetLargestConsoleWindowSize(hConsoleOutput);
 	DWORD dwErr = (crMax.X && crMax.Y) ? 0 : GetLastError();
 	UNREFERENCED_PARAMETER(dwErr);
 

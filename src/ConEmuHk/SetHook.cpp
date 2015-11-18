@@ -479,33 +479,14 @@ FARPROC WINAPI GetWriteConsoleW()
 	return (FARPROC)GetOriginalAddress((LPVOID)OnWriteConsoleW, HOOK_FN_ID(WriteConsoleW));
 }
 
-FARPROC WINAPI GetVirtualAlloc()
+// Our modules (ConEmuCD.dll, ConEmuDW.dll, ConEmu.dll and so on)
+// need and ready to call unhooked functions (trampolines)
+BOOL WINAPI RequestTrampolines(LPCWSTR asModule, HMODULE hModule)
 {
-	LPVOID fnVirtualAlloc = NULL;
-	#ifdef _DEBUG
-	extern LPVOID WINAPI OnVirtualAlloc(LPVOID lpAddress, SIZE_T dwSize, DWORD flAllocationType, DWORD flProtect);
-	fnVirtualAlloc = GetOriginalAddress((LPVOID)OnVirtualAlloc, HOOK_FN_ID(VirtualAlloc));
-	#endif
-	if (!fnVirtualAlloc)
-		fnVirtualAlloc = (LPVOID)&VirtualAlloc;
-	return (FARPROC)fnVirtualAlloc;
-}
-
-FARPROC WINAPI GetTrampoline(LPCSTR pszName)
-{
-	if (gpHooks)
-	{
-		for (int i = 0; gpHooks[i].NewAddress; i++)
-		{
-			if (strcmp(gpHooks[i].Name, pszName) == 0)
-			{
-				// Return address where we may call "original" function
-				return (FARPROC)gpHooks[i].CallAddress;
-			}
-		}
-	}
-	//_ASSERT(!HooksWereSet); -- DON'T CALL ANY VISUAL FUNCTIONS HERE !!!
-	return NULL;
+	if (!gpHooks)
+		return FALSE;
+	bool bRc = SetImports(asModule, hModule, TRUE);
+	return bRc;
 }
 
 
@@ -934,7 +915,7 @@ void ShutdownHooks()
 	gnDllState |= ds_HooksStopping;
 
 	HLOG1("ShutdownHooks.UnsetImports", 0);
-	UnsetImports(ghOurModule);
+	UnsetImports();
 	HLOGEND1();
 
 	HLOG1_("ShutdownHooks.UnsetAllHooks",0);
@@ -1556,18 +1537,19 @@ bool SetImportsChange(LPCWSTR asModule, HMODULE Module, BOOL abForceHooks, bool 
 }
 
 // Return original imports to our modules, changed by SetImports
-bool UnsetImports(HMODULE Module)
+bool UnsetImports(HkModuleInfo* p)
 {
 	if (!gpHooks)
 		return false;
 
-	HkModuleInfo* p = IsHookedModule(Module);
 	bool bUnhooked = false;
 	DWORD dwErr = (DWORD)-1;
 
 	if (p && (p->Hooked == 1))
 	{
 		HLOG1("UnsetHook.Var",0);
+		// Change state immediately
+		p->Hooked = 2;
 		for (size_t i = 0; i < MAX_HOOKED_PROCS; i++)
 		{
 			if (p->Addresses[i].pOur == 0)
@@ -1621,6 +1603,22 @@ bool UnsetImports(HMODULE Module)
 	return bUnhooked;
 }
 
+void UnsetImports()
+{
+	if (!gpHooks || !gpHookedModules)
+		return;
+
+	HkModuleInfo** pp = NULL;
+	INT_PTR iCount = gpHookedModules->GetKeysValues(NULL, &pp);
+	if (iCount > 0)
+	{
+		for (INT_PTR i = 0; i < iCount; i++)
+		{
+			UnsetImports(pp[i]);
+		}
+		gpHookedModules->ReleasePointer(pp);
+	}
+}
 
 
 /// Set hooks using trampolines
@@ -1711,7 +1709,7 @@ void UnsetAllHooks()
 	gfGetRealConsoleWindow = NULL;
 
 	HLOG1("hkFunc.OnHooksUnloaded", 0);
-	hkFunc.OnHooksUnloaded();
+	OnHooksUnloaded();
 	HLOGEND1();
 	}
 

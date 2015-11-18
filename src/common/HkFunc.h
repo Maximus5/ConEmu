@@ -31,22 +31,25 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <windows.h>
 
+#if defined(__GNUC__)
+extern "C" {
+#endif
+	void WINAPI OnHooksUnloaded();
+#if defined(__GNUC__)
+};
+#endif
+
 struct HkFunc
 {
 public:
 	HkFunc();
 
 public:
-	COORD  getLargestConsoleWindowSize(HANDLE hConsoleOutput);
-	BOOL   setConsoleScreenBufferSize(HANDLE hConsoleOutput, COORD dwSize);
-	HWND   getConsoleWindow();
-	LPVOID virtualAlloc(LPVOID lpAddress, SIZE_T dwSize, DWORD flAllocationType, DWORD flProtect);
-	BOOL   createProcess(LPCWSTR lpApplicationName, LPWSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment, LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation);
+	bool Init(LPCWSTR asModule, HMODULE hModule);
+	void SetInternalMode();
+	bool isConEmuHk();
 
-public:
-	void  SetInternalMode(HMODULE hSelf, FARPROC pfnGetTrampoline);
-	void  OnHooksUnloaded();
-	bool  isConEmuHk();
+	friend void WINAPI OnHooksUnloaded();
 
 protected:
 	enum {
@@ -56,22 +59,6 @@ protected:
 		sConEmuHk,
 		sUnloaded,
 	} State;
-	HMODULE hConEmuHk;
-	typedef FARPROC (WINAPI* GetTrampoline_t)(LPCSTR pszName);
-	GetTrampoline_t fnGetTrampoline;
-
-	bool Init();
-
-	typedef COORD(WINAPI* GetLargestConsoleWindowSize_t)(HANDLE hConsoleOutput);
-	GetLargestConsoleWindowSize_t fnGetLargestConsoleWindowSize;
-	typedef BOOL(WINAPI* SetConsoleScreenBufferSize_t)(HANDLE hConsoleOutput, COORD dwSize);
-	SetConsoleScreenBufferSize_t fnSetConsoleScreenBufferSize;
-	typedef HWND (WINAPI* GetConsoleWindow_t)();
-	GetConsoleWindow_t fnGetConsoleWindow;
-	typedef LPVOID(WINAPI* VirtualAlloc_t)(LPVOID lpAddress, SIZE_T dwSize, DWORD flAllocationType, DWORD flProtect);
-	VirtualAlloc_t fnVirtualAlloc;
-	typedef BOOL (WINAPI* CreateProcessW_t)(LPCWSTR lpApplicationName, LPWSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment, LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation);
-	CreateProcessW_t fnCreateProcess;
 };
 
 extern HkFunc hkFunc;

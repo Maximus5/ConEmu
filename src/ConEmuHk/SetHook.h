@@ -96,8 +96,6 @@ extern "C" {
 	FARPROC WINAPI GetWriteConsoleW();
 	int WINAPI RequestLocalServer(/*[IN/OUT]*/RequestLocalServerParm* Parm);
 	FARPROC WINAPI GetLoadLibraryW();
-	FARPROC WINAPI GetVirtualAlloc();
-	FARPROC WINAPI GetTrampoline(LPCSTR pszName);
 
 	extern void __stdcall SetFarHookMode(struct HookModeFar *apFarMode);
 
@@ -226,7 +224,7 @@ bool SetAllHooks();
 void UnsetAllHooks();
 
 bool SetImports(LPCWSTR asModule, HMODULE Module, BOOL abForceHooks);
-bool UnsetImports(HMODULE Module);
+void UnsetImports();
 
 bool PrepareNewModule(HMODULE module, LPCSTR asModuleA, LPCWSTR asModuleW, BOOL abNoSnapshoot = FALSE, BOOL abForceHooks = FALSE);
 void UnprepareModule(HMODULE hModule, LPCWSTR pszModule, int iStep);

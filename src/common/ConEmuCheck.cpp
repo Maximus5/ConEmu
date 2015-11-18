@@ -47,6 +47,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // !!! Использовать только через функцию: LocalSecurity() !!!
 SECURITY_ATTRIBUTES* gpLocalSecurity = NULL;
+
+// Informational. Will be set in pHdr->hModule on calls
 u64 ghWorkingModule = 0;
 
 #ifdef _DEBUG
@@ -1093,23 +1095,17 @@ HWND myGetConsoleWindow()
 		return hConWnd;
 	}
 
-	// To avoid infinite loops (GetModuleHandleEx is not available in Win2k)
 	_ASSERTE(ghWorkingModule != 0);
-	DEBUGTEST(HMODULE hOurModule = (HMODULE)(DWORD_PTR)ghWorkingModule);
-	WARNING("DANGER zone. If ConEmuHk unloads following may cause crashes");
-	if (!hkFunc.isConEmuHk())
-	{
-		#ifdef _DEBUG
-		static HMODULE hHookLib = NULL;
-		if (!hHookLib) hHookLib = GetModuleHandle(WIN3264TEST(L"ConEmuHk.dll",L"ConEmuHk64.dll"));
-		_ASSERTEX(hHookLib != hOurModule);
-		#endif
-
-		hConWnd = hkFunc.getConsoleWindow();
-	}
+	HMODULE hOurModule = (HMODULE)(DWORD_PTR)ghWorkingModule;
 
 	if (!hConWnd)
 	{
+		if (!hkFunc.isConEmuHk())
+		{
+			// Must be already called, but JIC
+			hkFunc.Init(L"Unknown", hOurModule);
+		}
+
 		hConWnd = GetConsoleWindow();
 		// Current process may be GUI and have no console at all
 		if (!hConWnd)

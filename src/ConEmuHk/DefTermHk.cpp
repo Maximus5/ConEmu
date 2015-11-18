@@ -30,7 +30,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "../common/common.hpp"
 #include "../common/MFileLog.h"
-#include "../common/HkFunc.h"
 #include "hlpConsole.h"
 #include "hlpProcess.h"
 #include "DefTermHk.h"
@@ -589,7 +588,7 @@ DWORD CDefTermHk::StartConsoleServer(DWORD nAttachPID, bool bNewConWnd, PHANDLE 
 
 		LogHookingStatus(pszCmdLine);
 
-		if (hkFunc.createProcess(NULL, pszCmdLine, NULL, NULL, FALSE, nCreateFlags, NULL, pOpt->pszConEmuBaseDir, &si, &pi))
+		if (CreateProcess(NULL, pszCmdLine, NULL, NULL, FALSE, nCreateFlags, NULL, pOpt->pszConEmuBaseDir, &si, &pi))
 		{
 			LogHookingStatus(L"Console server was successfully created");
 			bAttachCreated = true;

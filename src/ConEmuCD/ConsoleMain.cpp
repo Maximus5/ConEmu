@@ -315,6 +315,8 @@ BOOL WINAPI DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 			ghOurModule = (HMODULE)hModule;
 			ghWorkingModule = (u64)hModule;
 
+			hkFunc.Init(WIN3264TEST(L"ConEmuCD.dll",L"ConEmuCD64.dll"), ghOurModule);
+
 			DWORD nImageBits = WIN3264TEST(32,64), nImageSubsystem = IMAGE_SUBSYSTEM_WINDOWS_CUI;
 			GetImageSubsystem(nImageSubsystem,nImageBits);
 			if (nImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_GUI)
@@ -9521,14 +9523,14 @@ static void UndoConsoleWindowZoom()
 		if (gnBufferHeight == 0)
 		{
 			//specified width and height cannot be less than the width and height of the console screen buffer's window
-			lbRc = hkFunc.setConsoleScreenBufferSize(ghConOut, gcrVisibleSize);
+			lbRc = SetConsoleScreenBufferSize(ghConOut, gcrVisibleSize);
 		}
 		else
 		{
 			// ресайз для BufferHeight
 			COORD crHeight = {gcrVisibleSize.X, gnBufferHeight};
 			MoveWindow(ghConWnd, rcConPos.left, rcConPos.top, 1, 1, 1);
-			lbRc = hkFunc.setConsoleScreenBufferSize(ghConOut, crHeight); // а не crNewSize - там "оконные" размеры
+			lbRc = SetConsoleScreenBufferSize(ghConOut, crHeight); // а не crNewSize - там "оконные" размеры
 		}
 
 		// И вернуть тот видимый прямоугольник, который был получен в последний раз (успешный раз)
@@ -9897,7 +9899,7 @@ static bool ApplyConsoleSizeSimple(const COORD& crNewSize, const CONSOLE_SCREEN_
 		}
 
 		//specified width and height cannot be less than the width and height of the console screen buffer's window
-		if (!hkFunc.setConsoleScreenBufferSize(ghConOut, crNewSize))
+		if (!SetConsoleScreenBufferSize(ghConOut, crNewSize))
 		{
 			lbRc = false;
 			dwErr = GetLastError();
@@ -10168,7 +10170,7 @@ static bool ApplyConsoleSizeBuffer(const USHORT BufferHeight, const COORD& crNew
 	}
 
 	// crHeight, а не crNewSize - там "оконные" размеры
-	if (!hkFunc.setConsoleScreenBufferSize(ghConOut, crHeight))
+	if (!SetConsoleScreenBufferSize(ghConOut, crHeight))
 	{
 		lbRc = false;
 		dwErr = GetLastError();

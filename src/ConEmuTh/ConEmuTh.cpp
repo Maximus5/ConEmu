@@ -47,6 +47,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/RgnDetect.h"
 #include "../common/TerminalMode.h"
 #include "../common/FarVersion.h"
+#include "../common/HkFunc.h"
 #include "../common/MFileMapping.h"
 #include "../common/MSection.h"
 #include "../common/WFiles.h"
@@ -358,14 +359,17 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 			gnSelfPID = GetCurrentProcessId();
 			gnMainThreadId = gnMainThreadIdInitial = GetMainThreadId();
 			HeapInitialize();
+
+			hkFunc.Init(WIN3264TEST(L"ConEmuTh.dll",L"ConEmuTh.x64.dll"), ghPluginModule);
+
 			gfnSearchAppPaths = SearchAppPaths;
 			gpLocalSecurity = LocalSecurity();
+
 			_ASSERTE(FAR_X_VER<FAR_Y1_VER && FAR_Y1_VER<FAR_Y2_VER);
-#ifdef SHOW_STARTED_MSGBOX
-
+			#ifdef SHOW_STARTED_MSGBOX
 			if (!IsDebuggerPresent()) MessageBoxA(NULL, "ConEmuTh*.dll loaded", "ConEmu Thumbnails", 0);
+			#endif
 
-#endif
 			// Check Terminal mode
 			TerminalMode = isTerminalMode();
 			//TCHAR szVarValue[MAX_PATH];
