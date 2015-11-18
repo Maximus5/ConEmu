@@ -197,11 +197,13 @@ int RunDebugger()
 
 	// Run DebugThread
 	gpSrv->DbgInfo.hDebugReady = CreateEvent(NULL, FALSE, FALSE, NULL);
-	// Перенес обработку отладочных событий в отдельную нить, чтобы случайно не заблокироваться с главной
+
+	// All debugger events are processed in special thread
 	gpSrv->DbgInfo.hDebugThread = apiCreateThread(DebugThread, NULL, &gpSrv->DbgInfo.dwDebugThreadId, "DebugThread");
 	HANDLE hEvents[2] = {gpSrv->DbgInfo.hDebugReady, gpSrv->DbgInfo.hDebugThread};
-	DWORD nReady = WaitForMultipleObjects(countof(hEvents), hEvents, FALSE, INFINITE);
 
+	// First we must wait for debugger thread initialization finish
+	DWORD nReady = WaitForMultipleObjects(countof(hEvents), hEvents, FALSE, INFINITE);
 	if (nReady != WAIT_OBJECT_0)
 	{
 		DWORD nExit = 0;
