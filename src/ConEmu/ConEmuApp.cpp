@@ -3583,6 +3583,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	gn_MainThreadId = GetCurrentThreadId();
 	gfnSearchAppPaths = SearchAppPaths;
 
+	#ifdef _DEBUG
+	HMODULE hConEmuHk = GetModuleHandle(WIN3264TEST(L"ConEmuHk.dll",L"ConEmuHk64.dll"));
+	_ASSERTE(hConEmuHk==NULL && "Hooks must not be loaded into ConEmu[64].exe!");
+	#endif
+
 	// On Vista and higher ensure our process will be
 	// marked as fully dpi-aware, regardless of manifest
 	if (gnOsVer >= 0x600)
