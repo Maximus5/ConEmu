@@ -37,6 +37,7 @@ protected:
 	int    mn_DlgRc;
 	RConStartArgs* mp_Args;
 	HWND   mh_Parent;
+	bool   mb_DontAutoSelCmd;
 	// Defaults
 	wchar_t* mpsz_DefCmd;
 	wchar_t* mpsz_CurCmd;
@@ -62,11 +63,12 @@ protected:
 	INT_PTR OnSysCommand(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam);
 	INT_PTR OnButtonClicked(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam);
 	INT_PTR OnEditSetFocus(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam);
+	INT_PTR OnComboSetFocus(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam);
 public:
 	CRecreateDlg();
 	~CRecreateDlg();
 
-	int RecreateDlg(RConStartArgs* apArgs);
+	int RecreateDlg(RConStartArgs* apArgs, bool abDontAutoSelCmd = false);
 	HWND GetHWND();
 	void Close();
 

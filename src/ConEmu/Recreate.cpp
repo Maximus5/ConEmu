@@ -48,6 +48,7 @@ CRecreateDlg::CRecreateDlg()
 	, mn_DlgRc(0)
 	, mp_Args(NULL)
 	, mh_Parent(NULL)
+	, mb_DontAutoSelCmd(false)
 	, mpsz_DefCmd(NULL)
 	, mpsz_CurCmd(NULL)
 	, mpsz_SysCmd(NULL)
@@ -74,13 +75,15 @@ HWND CRecreateDlg::GetHWND()
 }
 
 // Открыть диалог с подтверждением параметров создания/закрытия/пересоздания консоли
-int CRecreateDlg::RecreateDlg(RConStartArgs* apArgs)
+int CRecreateDlg::RecreateDlg(RConStartArgs* apArgs, bool abDontAutoSelCmd /*= false*/)
 {
 	if (!this)
 	{
 		_ASSERTE(this);
 		return IDCANCEL;
 	}
+
+	mb_DontAutoSelCmd = abDontAutoSelCmd;
 
 	if (mh_Dlg && IsWindow(mh_Dlg))
 	{
@@ -757,6 +760,22 @@ INT_PTR CRecreateDlg::OnEditSetFocus(HWND hDlg, UINT messg, WPARAM wParam, LPARA
 	return FALSE;
 }
 
+INT_PTR CRecreateDlg::OnComboSetFocus(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam)
+{
+	switch (LOWORD(wParam))
+	{
+	case IDC_RESTART_CMD:
+		if (mb_DontAutoSelCmd)
+		{
+			PostMessage((HWND)lParam, CB_SETEDITSEL, 0, MAKELPARAM(-1,0));
+			return TRUE;
+		}
+		break;
+	}
+
+	return FALSE;
+}
+
 INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam)
 {
 	CRecreateDlg* pDlg = NULL;
@@ -808,6 +827,11 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 			case EN_SETFOCUS:
 				if (lParam)
 					return pDlg->OnEditSetFocus(hDlg, messg, wParam, lParam);
+				break;
+
+			case CBN_SETFOCUS:
+				if (lParam)
+					return pDlg->OnComboSetFocus(hDlg, messg, wParam, lParam);
 				break;
 
 			} // switch (HIWORD(wParam))

@@ -676,7 +676,7 @@ class CConEmuMain
 		LRESULT SyncExecMacro(WPARAM wParam, LPARAM lParam);
 		bool PtDiffTest(POINT C, int aX, int aY, UINT D); //(((abs(C.x-LOWORD(lParam)))<D) && ((abs(C.y-HIWORD(lParam)))<D))
 		bool RecreateAction(RecreateActionParm aRecreate, BOOL abConfirm, RConBoolArg bRunAs = crb_Undefined);
-		int RecreateDlg(RConStartArgs* apArg);
+		int RecreateDlg(RConStartArgs* apArg, bool abDontAutoSelCmd = false);
 		void RequestPostUpdateTabs();
 		int RunSingleInstance(HWND hConEmuWnd = NULL, LPCWSTR apszCmd = NULL);
 		void SetDragCursor(HCURSOR hCur);

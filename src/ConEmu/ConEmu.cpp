@@ -4437,7 +4437,7 @@ bool CConEmuMain::RecreateAction(RecreateActionParm aRecreate, BOOL abConfirm, R
 	return bExecRc;
 }
 
-int CConEmuMain::RecreateDlg(RConStartArgs* apArg)
+int CConEmuMain::RecreateDlg(RConStartArgs* apArg, bool abDontAutoSelCmd /*= false*/)
 {
 	static LONG lnInCall = 0;
 	if (lnInCall > 0)
@@ -4450,7 +4450,7 @@ int CConEmuMain::RecreateDlg(RConStartArgs* apArg)
 	if (!mp_RecreateDlg)
 		mp_RecreateDlg = new CRecreateDlg();
 
-	int nRc = mp_RecreateDlg->RecreateDlg(apArg);
+	int nRc = mp_RecreateDlg->RecreateDlg(apArg, abDontAutoSelCmd);
 
 	return nRc;
 }
