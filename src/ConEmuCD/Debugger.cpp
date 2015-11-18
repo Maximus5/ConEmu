@@ -94,6 +94,9 @@ void UpdateDebuggerTitle()
 
 int ConfirmDumpType(DWORD dwProcessId, LPCSTR asConfirmText /*= NULL*/)
 {
+	if (gpSrv->DbgInfo.bAutoDump)
+		return 2; // Automatic MINI-dumps
+
 	if (gpSrv->DbgInfo.nDebugDumpProcess == 2 || gpSrv->DbgInfo.nDebugDumpProcess == 3)
 		return gpSrv->DbgInfo.nDebugDumpProcess;
 
@@ -195,6 +198,9 @@ int RunDebugger()
 
 	// gpSrv->DbgInfo.bDebuggerActive must be set in DebugThread
 
+	if (gpSrv->DbgInfo.bAutoDump)
+		gpSrv->DbgInfo.bDebuggerRequestDump = TRUE;
+
 	// Run DebugThread
 	gpSrv->DbgInfo.hDebugReady = CreateEvent(NULL, FALSE, FALSE, NULL);
 
@@ -215,7 +221,32 @@ int RunDebugger()
 
 	// And wait for debugger thread completion
 	_ASSERTE(gnRunMode == RM_UNDEFINED);
-	DWORD nDebugThread = WaitForSingleObject(gpSrv->DbgInfo.hDebugThread, INFINITE);
+	DWORD nDebugThread; // = WaitForSingleObject(gpSrv->DbgInfo.hDebugThread, INFINITE);
+	DWORD nDbgTimeout = min(max(25, gpSrv->DbgInfo.nAutoInterval), 100);
+
+	LONG nLastCounter = gpSrv->DbgInfo.nDumpsCounter - 1; // First dump create always
+	DWORD nLastTick = GetTickCount();
+	while ((nDebugThread = WaitForSingleObject(gpSrv->DbgInfo.hDebugThread, nDbgTimeout)) == WAIT_TIMEOUT)
+	{
+		TODO("Add console input reader");
+
+		DWORD nDelta = GetTickCount() - nLastTick;
+		if (gpSrv->DbgInfo.bAutoDump)
+		{
+			if ((nDelta + 10) >= gpSrv->DbgInfo.nAutoInterval)
+			{
+				// Don't request next dump until previous was finished
+				if (nLastCounter != gpSrv->DbgInfo.nDumpsCounter)
+				{
+					nLastCounter = gpSrv->DbgInfo.nDumpsCounter;
+					// Request mini-dump
+					GenerateMiniDumpFromCtrlBreak();
+				}
+				// Next step
+				nLastTick = GetTickCount();
+			}
+		}
+	}
 	_ASSERTE(nDebugThread == WAIT_OBJECT_0); UNREFERENCED_PARAMETER(nDebugThread);
 
 	gbInShutdown = TRUE;
@@ -633,10 +664,10 @@ wchar_t* FormatDumpName(wchar_t* DmpFile, size_t cchDmpMax, DWORD dwProcessId, b
 	//TODO: Добавить в DmpFile имя без пути? <exename>-<ver>-<pid>-<yymmddhhmmss>.[m]dmp
 	wchar_t szMinor[8] = L""; lstrcpyn(szMinor, _T(MVV_4a), countof(szMinor));
 	SYSTEMTIME lt = {}; GetLocalTime(&lt);
-	_wsprintf(DmpFile, SKIPLEN(cchDmpMax) L"%s-%02u%02u%02u%s-%u-%02u%02u%02u%02u%02u%02u.%s",
+	_wsprintf(DmpFile, SKIPLEN(cchDmpMax) L"%s-%02u%02u%02u%s-%u-%02u%02u%02u%02u%02u%02u%03u.%s",
 		bTrap ? L"Trap" : L"CEDump",
 		MVV_1, MVV_2, MVV_3, szMinor, dwProcessId,
-		lt.wYear%100, lt.wMonth, lt.wDay, lt.wHour, lt.wMinute, lt.wSecond,
+		lt.wYear%100, lt.wMonth, lt.wDay, lt.wHour, lt.wMinute, lt.wSecond, lt.wMilliseconds,
 		bFull ? L"dmp" : L"mdmp");
 	return DmpFile;
 }
@@ -648,7 +679,7 @@ bool GetSaveDumpName(DWORD dwProcessId, bool bFull, wchar_t* dmpfile, DWORD cchM
 	HMODULE hCOMDLG32 = NULL;
 	typedef BOOL (WINAPI* GetSaveFileName_t)(LPOPENFILENAMEW lpofn);
 	GetSaveFileName_t _GetSaveFileName = NULL;
-	bool bDumpMulti = IsDumpMulti();
+	bool bDumpMulti = IsDumpMulti() || gpSrv->DbgInfo.bAutoDump;
 
 	if (!bDumpMulti)
 	{
@@ -1185,7 +1216,7 @@ void ProcessDebugEvent()
 
 					if (evt.u.Exception.ExceptionRecord.ExceptionCode == EXCEPTION_BREAKPOINT)
 					{
-						if (gpSrv->DbgInfo.nDebugDumpProcess)
+						if (gpSrv->DbgInfo.nDebugDumpProcess || gpSrv->DbgInfo.bAutoDump)
 							szConfirm[0] = 0;
 						else
 							lstrcpynA(szConfirm, szDbgText, countof(szConfirm));
@@ -1208,6 +1239,8 @@ void ProcessDebugEvent()
 						if (gpSrv->DbgInfo.nWaitTreeBreaks > 0)
 							gpSrv->DbgInfo.nWaitTreeBreaks--;
 					}
+
+					gpSrv->DbgInfo.nDumpsCounter++;
 				}
 
 				if (!lbNonContinuable /*|| (evt.u.Exception.ExceptionRecord.ExceptionCode==EXCEPTION_BREAKPOINT)*/)

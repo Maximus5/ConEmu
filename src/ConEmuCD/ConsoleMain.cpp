@@ -5277,6 +5277,41 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 		{
 			gpSrv->DbgInfo.nDebugDumpProcess = 3;
 		}
+		else if (lstrcmpi(szArg, L"/AUTOMINI")==0)
+		{
+			//_ASSERTE(FALSE && "Continue to /AUTOMINI");
+			gpSrv->DbgInfo.nDebugDumpProcess = 0;
+			gpSrv->DbgInfo.bAutoDump = TRUE;
+			gpSrv->DbgInfo.nAutoInterval = 1000;
+			if (lsCmdLine && *lsCmdLine && isDigit(lsCmdLine[0])
+				&& (NextArg(&lsCmdLine, szArg, &pszArgStarts) == 0))
+			{
+				wchar_t* pszEnd;
+				DWORD nVal = wcstol(szArg, &pszEnd, 10);
+				if (nVal)
+				{
+					if (pszEnd && *pszEnd)
+					{
+						if (lstrcmpni(pszEnd, L"ms", 2) == 0)
+						{
+							// Already milliseconds
+							pszEnd += 2;
+						}
+						else if (lstrcmpni(pszEnd, L"s", 1) == 0)
+						{
+							nVal *= 60; // seconds
+							pszEnd++;
+						}
+						else if (lstrcmpni(pszEnd, L"m", 2) == 0)
+						{
+							nVal *= 60*60; // minutes
+							pszEnd++;
+						}
+					}
+					gpSrv->DbgInfo.nAutoInterval = nVal;
+				}
+			}
+		}
 		else if (lstrcmpi(szArg, L"/PROFILECD")==0)
 		{
 			lbNeedCdToProfileDir = true;

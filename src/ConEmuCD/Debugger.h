@@ -57,6 +57,9 @@ struct DebuggerInfo
 	BOOL  bDebugMultiProcess; // Debugger was asked for multiple processes simultaneously
 	int   nProcessCount;
 	int   nWaitTreeBreaks;
+	BOOL  bAutoDump; // For creating series of mini-dumps, useful for "snapshooting" running application
+	DWORD nAutoInterval;
+	LONG  nDumpsCounter;
 
 	HMODULE hDbghelp;
 	FARPROC MiniDumpWriteDump_f;
