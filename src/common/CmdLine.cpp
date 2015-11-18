@@ -1016,7 +1016,7 @@ wchar_t* JoinPath(LPCWSTR asPath, LPCWSTR asPart1, LPCWSTR asPart2 /*= NULL*/)
 
 		if (bDirSlash1 && bFileSlash1)
 			psz3++;
-		else if (!bDirSlash1 && !bFileSlash1)
+		else if (!bDirSlash1 && !bFileSlash1 && asPath && *asPath)
 			psz2 = L"\\";
 
 		if (asPart2)
