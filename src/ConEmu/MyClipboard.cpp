@@ -48,9 +48,10 @@ bool MyOpenClipboard(LPCWSTR asAction)
 	}
 
 	BOOL lbRc;
+	int iMaxTries = 100;
 
-	// Открыть буфер обмена
-	while (!(lbRc = OpenClipboard(ghWnd)))
+	// Open Windows' clipboard
+	while (!(lbRc = OpenClipboard((ghWnd && IsWindow(ghWnd)) ? ghWnd : NULL)) && (iMaxTries-- > 0))
 	{
 		DWORD dwErr = GetLastError();
 

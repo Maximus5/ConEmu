@@ -2268,10 +2268,15 @@ int MsgBox(LPCTSTR lpText, UINT uType, LPCTSTR lpCaption /*= NULL*/, HWND ahPare
 	HooksUnlocker;
 	MSetter lInCall(&gnInMsgBox);
 
+	// If there were problems with displaying error box, MessageBox will return default button
+	// This may cause infinite loops in some cases
+	SetLastError(0);
 	int nBtn = MessageBox(hParent, lpText ? lpText : L"<NULL>", lpCaption ? lpCaption : gpConEmu->GetLastTitle(), uType);
+	DWORD nErr = GetLastError();
 
 	ghDlgPendingFrom = NULL;
 
+	UNREFERENCED_PARAMETER(nErr);
 	return nBtn;
 }
 
