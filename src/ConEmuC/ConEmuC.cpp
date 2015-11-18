@@ -264,6 +264,11 @@ int main(int argc, char** argv)
 	typedef int (__stdcall* ConsoleMain2_t)(BOOL abAlternative);
 	ConsoleMain2_t lfConsoleMain2;
 
+	#ifdef _DEBUG
+	HMODULE hConEmuHk = GetModuleHandle(WIN3264TEST(L"ConEmuHk.dll",L"ConEmuHk64.dll"));
+	_ASSERTE(hConEmuHk==NULL && "Hooks must not be loaded into ConEmuC[64].exe!");
+	#endif
+
 	#if defined(SHOW_STARTED_MSGBOX)
 	if (!IsDebuggerPresent())
 	{
