@@ -3995,8 +3995,9 @@ bool CRealConsole::StartDebugger(StartDebugType sdt)
 		)
 	{
 		Args.pszSpecialCmd = lstrdup(szExe);
+		Args.nSplitValue = 700;
 
-		int nRc = mp_ConEmu->RecreateDlg(&Args);
+		int nRc = mp_ConEmu->RecreateDlg(&Args, true);
 
 		if (nRc != IDC_START)
 			return false;
