@@ -800,14 +800,17 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 			return pDlg->OnSysCommand(hDlg, messg, wParam, lParam);
 
 		case WM_COMMAND:
-			if (HIWORD(wParam) == BN_CLICKED)
+			switch (HIWORD(wParam))
 			{
+			case BN_CLICKED:
 				return pDlg->OnButtonClicked(hDlg, messg, wParam, lParam);
-			}
-			else if ((HIWORD(wParam) == EN_SETFOCUS) && lParam)
-			{
-				return pDlg->OnEditSetFocus(hDlg, messg, wParam, lParam);
-			}
+
+			case EN_SETFOCUS:
+				if (lParam)
+					return pDlg->OnEditSetFocus(hDlg, messg, wParam, lParam);
+				break;
+
+			} // switch (HIWORD(wParam))
 			break;
 
 		case WM_CLOSE:
