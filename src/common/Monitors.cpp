@@ -66,8 +66,13 @@ HMONITOR GetStartupMonitor()
 	if (hStartupMonitor && ((hStartupMonitor != hPrimaryMonitor) || (hStartupMonitor == hMouseMonitor)))
 		return hStartupMonitor;
 
+	// gh#412: Don't force our window to primary monitor at all,
+	//         otherwise we fail to restore ConEmu on secondary
+	#if 0
 	// Otherwise - return monitor where mouse cursor is located
 	return hMouseMonitor ? hMouseMonitor : hPrimaryMonitor;
+	#endif
+	return NULL;
 }
 
 // Startup monitor ay be specified from command line
