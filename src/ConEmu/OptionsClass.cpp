@@ -4080,7 +4080,7 @@ void CSettings::RegisterShell(LPCWSTR asName, LPCWSTR asOpt, LPCWSTR asConfig, L
 		_wsprintf(pszCmd, SKIPLEN(cchMax) L"\"%s\" ", gpConEmu->ms_ConEmuExe);
 		if (asOpt && *asOpt)
 		{
-			bool bQ = (wcschr(pszCmd, L' ') != NULL);
+			bool bQ = (wcschr(asOpt, L' ') != NULL);
 			if (bQ) _wcscat_c(pszCmd, cchMax, L"\"");
 			_wcscat_c(pszCmd, cchMax, asOpt);
 			_wcscat_c(pszCmd, cchMax, bQ ? L"\" " : L" ");
