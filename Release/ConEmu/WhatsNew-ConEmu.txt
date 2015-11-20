@@ -19,6 +19,34 @@ http://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2015.11.19
+* gh#412: Failed to restore window position on secondary monitor (d3da351 regression).
+* Far Manager plugins ‘ConEmu Background’ and ‘ConEmu Underlines’ were not working on Windows 7.
+* First user palette was multiplied on sequental TabMenu calls ‘View (palettes)’.
+* On ‘Debug active process...’ always show ‘New console’ dialog.
+  So user may run debugger in a split or even change debugger comand line.
+* Allow to set hotkeys for debugging menu items.
+  * Debug active process (default is `Win+Shift+D`);
+  * Active process memory dump;
+  * Active process tree memory dump.
+* For debugger NewConsole dialog suggest '30%' for split and don't autoselect command.
+* Debugger. Switch `/AUTOMINI` will create sequential mini-dumps.
+  * So, it may be useful for creating ‘mini snapshots’ of running
+  application with specified time intervals.
+  After `/AUTOMINI` switch user may specify interval.
+  Milliseconds: `/AUTOMINI 500` or `/AUTOMINI 500ms`;
+  seconds: `/AUTOMINI 5s`; and minutes: `/AUTOMINI 1m`.
+  * Create sequental dumps of 64bit PID=1234 with 500ms interval:
+  `ConEmuC64.exe /DEBUGPID=1234 /AUTOMINI 500`
+  * Note. Press `Win+Shift+D` (default hotkey) to open NewConsole
+  dialog with prefilled command to start debugger on the active
+  process in the active console.
+* GuiMacro: `Debug(<Action>)` allows to create debugger console or memory dumps.
+    Action=0: Debug active process (confirmation dialog with options)
+    Action=1: Active process memory dump...
+    Action=2: Active process tree memory dump...
+
+
 2015.11.15
 * gh#415: GetLastError returned `6` after WriteFile even on success.
 * `Shift`+`Debug active process` allows to run debugger in a split.
