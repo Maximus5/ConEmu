@@ -6647,9 +6647,12 @@ wchar_t* CConEmuMain::LoadConsoleBatch_Task(LPCWSTR asSource, RConStartArgs* pAr
 
 	if (asSource && ((*asSource == TaskBracketLeft) || (lstrcmp(asSource, AutoStartTaskName) == 0)))
 	{
-		wchar_t szName[MAX_PATH]; lstrcpyn(szName, asSource, countof(szName));
-		wchar_t* psz = wcschr(szName, TaskBracketRight);
-		if (psz) psz[1] = 0;
+		CEStr szName; // Name of the task, we need copy because we trim asSource tail
+		szName.Set(asSource);
+		// Search for task name end
+		wchar_t* psz = wcschr(szName.ms_Arg, TaskBracketRight);
+		if (psz)
+			psz[1] = 0;
 
 		const CommandTasks* pGrp = gpSet->CmdTaskGetByName(szName);
 
