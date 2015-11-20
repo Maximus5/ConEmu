@@ -75,7 +75,7 @@ struct SettingsBase
 			wchar_t *psz = szRect, *pszEnd;
 			for (int i = 0; i < 4; i++)
 			{
-				if (!isDigit(psz[0]))
+				if (!isDigit(psz[0]) && (psz[0] != L'-'))
 					return false;
 				((LONG*)&rc)[i] = wcstol(psz, &pszEnd, 10);
 				if (i < 3)
@@ -108,7 +108,7 @@ struct SettingsBase
 		{
 			wchar_t szRect[80];
 			_wsprintf(szRect, SKIPCOUNT(szRect) L"%i,%i,%i,%i", value.left, value.top, value.right, value.bottom);
-			_Save(regName, szRect);
+			Save(regName, szRect);
 		}
 
 		// nSize in BYTES!!!
