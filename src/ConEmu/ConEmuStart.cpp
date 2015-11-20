@@ -1211,7 +1211,7 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 					gpConEmu->AppendExtraArgs(curCommand);
 					gpConEmu->opt.ForceUseRegistryPrm = true;
 				}
-				else if (!klstricmp(curCommand, _T("/LoadCfgFile")))
+				else if (!klstricmp(curCommand, _T("/LoadCfgFile")) || !klstricmp(curCommand, _T("/LoadXmlFile")))
 				{
 					// -- используем последний из параметров, если их несколько
 					if (!GetCfgParm(cmdLineRest, gpConEmu->opt.LoadCfgFile, MAX_PATH, true))
@@ -1219,7 +1219,7 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 						goto wrap;
 					}
 				}
-				else if (!klstricmp(curCommand, _T("/SaveCfgFile")))
+				else if (!klstricmp(curCommand, _T("/SaveCfgFile")) || !klstricmp(curCommand, _T("/SaveXmlFile")))
 				{
 					// -- используем последний из параметров, если их несколько
 					if (!GetCfgParm(cmdLineRest, gpConEmu->opt.SaveCfgFile, MAX_PATH, true))
