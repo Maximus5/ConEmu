@@ -6648,17 +6648,27 @@ wchar_t* CConEmuMain::LoadConsoleBatch_Task(LPCWSTR asSource, RConStartArgs* pAr
 	if (asSource && ((*asSource == TaskBracketLeft) || (lstrcmp(asSource, AutoStartTaskName) == 0)))
 	{
 		CEStr szName; // Name of the task, we need copy because we trim asSource tail
+		CEStr lsTail; // Additional arguments supposed to be appended to each task's command
 		szName.Set(asSource);
 		// Search for task name end
 		wchar_t* psz = wcschr(szName.ms_Arg, TaskBracketRight);
 		if (psz)
+		{
+			lsTail.Set(SkipNonPrintable(psz+1));
 			psz[1] = 0;
+		}
 
 		const CommandTasks* pGrp = gpSet->CmdTaskGetByName(szName);
 
 		if (pGrp)
 		{
-			pszDataW = lstrdup(pGrp->pszCommands);
+			// TODO: Supposed to be appended to EACH command (task line),
+			// TODO: but now lsTail may be appended to single-command tasks only
+			if (pGrp->pszCommands && !wcschr(pGrp->pszCommands, L'\n'))
+				pszDataW = lstrmerge(pGrp->pszCommands, lsTail.IsEmpty() ? NULL : L" ", lsTail.ms_Arg);
+			else
+				pszDataW = lstrdup(pGrp->pszCommands);
+
 			if (pArgs && pGrp->pszGuiArgs)
 			{
 				RConStartArgs parsedArgs;
