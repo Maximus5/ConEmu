@@ -43,6 +43,124 @@ const CLSID CLSID_DOMDocument30 = {0xf5078f32, 0xc551, 0x11d3, {0x89, 0xb9, 0x00
 #endif
 
 
+SettingsBase::SettingsBase(const SettingsStorage& Storage)
+{
+	m_Storage = Storage;
+}
+
+SettingsBase::SettingsBase()
+{
+	memset(&m_Storage,0,sizeof(m_Storage));
+}
+
+SettingsBase::~SettingsBase()
+{
+}
+
+// Helpers: Don't change &value if it was not loaded
+bool SettingsBase::Load(const wchar_t *regName, char  &value)
+{
+	return Load(regName, (LPBYTE)&value, 1);
+}
+bool SettingsBase::Load(const wchar_t *regName, BYTE  &value)
+{
+	return Load(regName, (LPBYTE)&value, 1);
+}
+bool SettingsBase::Load(const wchar_t *regName, DWORD &value)
+{
+	return Load(regName, (LPBYTE)&value, sizeof(DWORD));
+}
+bool SettingsBase::Load(const wchar_t *regName, LONG  &value)
+{
+	return Load(regName, (LPBYTE)&value, sizeof(DWORD));
+}
+bool SettingsBase::Load(const wchar_t *regName, int   &value)
+{
+	return Load(regName, (LPBYTE)&value, sizeof(DWORD));
+}
+// Don't change &value if it was not loaded
+bool SettingsBase::Load(const wchar_t *regName, bool  &value)
+{
+	BYTE bval = 0;
+	bool bRc = Load(regName, &bval, sizeof(bval));
+	if (bRc) value = (bval!=0);
+	return bRc;
+}
+// Don't change &value if it was not loaded
+bool SettingsBase::Load(const wchar_t *regName, RECT &value)
+{
+	wchar_t szRect[80] = L"";
+	// Example: "100,200,500,400" (Left,Top,Right,Bottom)
+	if (!Load(regName, szRect, countof(szRect)-1))
+		return false;
+	RECT rc = {};
+	wchar_t *psz = szRect, *pszEnd;
+	for (int i = 0; i < 4; i++)
+	{
+		if (!isDigit(psz[0]) && (psz[0] != L'-'))
+			return false;
+		((LONG*)&rc)[i] = wcstol(psz, &pszEnd, 10);
+		if (i < 3)
+		{
+			if (!pszEnd || !wcschr(L",;", *pszEnd))
+				return false;
+			psz = pszEnd+1;
+		}
+	}
+	if (IsRectEmpty(&rc))
+		return false;
+	value = rc;
+	return true;
+}
+
+void SettingsBase::Save(const wchar_t *regName, const wchar_t *value)
+{
+	if (!value) value = L"";  // protect against NULL values
+	Save(regName, (LPCBYTE)value, REG_SZ, (_tcslen(value)+1)*sizeof(wchar_t));
+}
+
+// Use strict types to prohibit unexpected template usage
+void SettingsBase::Save(const wchar_t *regName, const char&  value)
+{
+	_Save(regName, value);
+}
+void SettingsBase::Save(const wchar_t *regName, const bool&  value)
+{
+	_Save(regName, value);
+}
+void SettingsBase::Save(const wchar_t *regName, const BYTE&  value)
+{
+	_Save(regName, value);
+}
+void SettingsBase::Save(const wchar_t *regName, const DWORD& value)
+{
+	_Save(regName, value);
+}
+void SettingsBase::Save(const wchar_t *regName, const LONG&  value)
+{
+	_Save(regName, value);
+}
+void SettingsBase::Save(const wchar_t *regName, const int&   value)
+{
+	_Save(regName, value);
+}
+void SettingsBase::Save(const wchar_t *regName, const RECT&  value)
+{
+	wchar_t szRect[80];
+	_wsprintf(szRect, SKIPCOUNT(szRect) L"%i,%i,%i,%i", value.left, value.top, value.right, value.bottom);
+	Save(regName, szRect);
+}
+
+// nSize in BYTES!!!
+void SettingsBase::SaveMSZ(const wchar_t *regName, const wchar_t *value, DWORD nSize)
+{
+	if (!value || !*value)
+		Delete(regName);
+	else
+		Save(regName, (LPBYTE)value, REG_MULTI_SZ, nSize);
+}
+
+
 
 SettingsRegistry::SettingsRegistry()
 	: SettingsBase()
