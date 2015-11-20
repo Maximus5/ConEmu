@@ -80,6 +80,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 //#define CONEMU_ROOT_KEY L"Software\\ConEmu"
 
+#define CONEMU_HERE_CMD  L"{cmd} -cur_console:n"
+#define CONEMU_HERE_POSH L"{powershell} -cur_console:n"
+
 #define DEBUGSTRFONT(s) DEBUGSTR(s)
 #define DEBUGSTRDPI(s) DEBUGSTR(s)
 
@@ -3751,7 +3754,7 @@ INT_PTR CSettings::pageOpProc_Integr(HWND hWnd2, UINT messg, WPARAM wParam, LPAR
 			{
 				SetDlgItemText(hWnd2, cbInsideName, L"ConEmu Inside");
 				SetDlgItemText(hWnd2, tInsideConfig, L"shell");
-				SetDlgItemText(hWnd2, tInsideShell, L"powershell -cur_console:n");
+				SetDlgItemText(hWnd2, tInsideShell, CONEMU_HERE_POSH);
 				//SetDlgItemText(hWnd2, tInsideIcon, szIcon);
 				SetDlgItemText(hWnd2, tInsideIcon, L"powershell.exe");
 				checkDlgButton(hWnd2, cbInsideSyncDir, gpConEmu->mp_Inside && gpConEmu->mp_Inside->mb_InsideSynchronizeCurDir);
@@ -3768,7 +3771,7 @@ INT_PTR CSettings::pageOpProc_Integr(HWND hWnd2, UINT messg, WPARAM wParam, LPAR
 			{
 				SetDlgItemText(hWnd2, cbHereName, L"ConEmu Here");
 				SetDlgItemText(hWnd2, tHereConfig, L"");
-				SetDlgItemText(hWnd2, tHereShell, L"cmd -cur_console:n");
+				SetDlgItemText(hWnd2, tHereShell, CONEMU_HERE_CMD);
 				SetDlgItemText(hWnd2, tHereIcon, szIcon);
 			}
 
@@ -4053,7 +4056,7 @@ void CSettings::RegisterShell(LPCWSTR asName, LPCWSTR asOpt, LPCWSTR asConfig, L
 		asName = L"ConEmu";
 
 	if (!asCmd || !*asCmd)
-		asCmd = L"cmd -cur_console:n";
+		asCmd = CONEMU_HERE_CMD;
 
 	asCmd = SkipNonPrintable(asCmd);
 
@@ -4069,25 +4072,25 @@ void CSettings::RegisterShell(LPCWSTR asName, LPCWSTR asOpt, LPCWSTR asConfig, L
 	//"Icon"="C:\\Program Files\\ConEmu\\ConEmu.exe,1"
 
 	//[HKEY_CURRENT_USER\Software\Classes\*\shell\ConEmu inside\command]
-	//@="C:\\Program Files\\ConEmu\\ConEmu.exe /inside /config shell /cmd powershell -cur_console:n"
+	//@="C:\\Program Files\\ConEmu\\ConEmu.exe /inside /config shell /cmd {powershell} -cur_console:n"
 
 	//[HKEY_CURRENT_USER\Software\Classes\Directory\Background\shell\ConEmu inside]
 	//"Icon"="C:\\Program Files\\ConEmu\\ConEmu.exe,1"
 
 	//[HKEY_CURRENT_USER\Software\Classes\Directory\Background\shell\ConEmu inside\command]
-	//@="C:\\Program Files\\ConEmu\\ConEmu.exe /inside /config shell /cmd powershell -cur_console:n"
+	//@="C:\\Program Files\\ConEmu\\ConEmu.exe /inside /config shell /cmd {powershell} -cur_console:n"
 
 	//[HKEY_CURRENT_USER\Software\Classes\Directory\shell\ConEmu inside]
 	//"Icon"="C:\\Program Files\\ConEmu\\ConEmu.exe,1"
 
 	//[HKEY_CURRENT_USER\Software\Classes\Directory\shell\ConEmu inside\command]
-	//@="C:\\Program Files\\ConEmu\\ConEmu.exe /inside /config shell /dir \"%1\" /cmd powershell -cur_console:n"
+	//@="C:\\Program Files\\ConEmu\\ConEmu.exe /inside /config shell /dir \"%1\" /cmd {powershell} -cur_console:n"
 
 	//[HKEY_CURRENT_USER\Software\Classes\Drive\shell\ConEmu inside]
 	//"Icon"="C:\\Program Files\\ConEmu\\ConEmu.exe,1"
 
 	//[HKEY_CURRENT_USER\Software\Classes\Drive\shell\ConEmu inside\command]
-	//@="C:\\Program Files\\ConEmu\\ConEmu.exe /inside /config shell /dir \"%1\" /cmd powershell -cur_console:n"
+	//@="C:\\Program Files\\ConEmu\\ConEmu.exe /inside /config shell /dir \"%1\" /cmd {powershell} -cur_console:n"
 
 	int iSucceeded = 0;
 	bool bHasLibraries = IsWindows7;
