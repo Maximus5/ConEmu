@@ -1647,7 +1647,53 @@ int CShellProc::PrepareExecuteParms(
 
 	// We need the get executable name before some other checks
 	mn_ImageSubsystem = mn_ImageBits = 0;
-	GetStartingExeName(asFile, asParam, ms_ExeTmp);
+	// In some cases we need to pre-replace command line,
+	// for example, in cmd prompt: start -new_console:z
+	ms_ExeTmp.Empty();
+	bool bForceCutNewConsole = false;
+	CEStr lsReplaceFile, lsReplaceParm;
+	if (asFile && *asFile && (wcsstr(asFile, L"-new_console") || wcsstr(asFile, L"-cur_console")))
+	{
+		// To be sure, it's our "-new_console" or "-cur_console" switch,
+		// but not a something else...
+		RConStartArgs lTestArg;
+		lTestArg.pszSpecialCmd = lstrdup(asFile);
+		if (lTestArg.ProcessNewConArg() > 0)
+		{
+			// pszSpecialCmd is supposed to be empty now, because asFile can contain only one "token"
+			_ASSERTE(lTestArg.pszSpecialCmd == NULL || *lTestArg.pszSpecialCmd == 0);
+			lsReplaceParm = lstrmerge(asFile, (asFile && *asFile && asParam && *asParam) ? L" " : NULL, asParam);
+			_ASSERTE(!lsReplaceParm.IsEmpty());
+			if (gbIsCmdProcess
+				&& !GetStartingExeName(NULL, lsReplaceParm, ms_ExeTmp)
+				)
+			{
+				// when just "start" is executed from "cmd.exe" - it starts itself in the new console
+				CEStr lsTempCmd;
+				if (GetModulePathName(NULL, lsTempCmd))
+				{
+					ms_ExeTmp.Set(PointToName(lsTempCmd));
+					// It's supposed to be "cmd.exe", so there must not be spaces in file name
+					_ASSERTE(!wcschr(ms_ExeTmp, L' '));
+					// Insert "cmd.exe " before "-new_console" switches for clearness
+					if (aCmd == eCreateProcess)
+					{
+						lsReplaceParm = lstrmerge(ms_ExeTmp, L" ", lsReplaceParm);
+					}
+				}
+			}
+			if (!ms_ExeTmp.IsEmpty())
+			{
+				lsReplaceFile.Set(ms_ExeTmp.ms_Arg);
+				asFile = lsReplaceFile.ms_Arg;
+			}
+			bForceCutNewConsole = true;
+			asParam = lsReplaceParm.ms_Arg;
+		}
+	}
+	if (ms_ExeTmp.IsEmpty())
+		GetStartingExeName(asFile, asParam, ms_ExeTmp);
+
 	bool lbGnuDebugger = false;
 
 	// Some additional checks for "Default terminal" mode
@@ -1959,7 +2005,12 @@ int CShellProc::PrepareExecuteParms(
 		m_Args.pszSpecialCmd = lstrdup(asParam);
 		if (m_Args.ProcessNewConArg() > 0)
 		{
-			if (m_Args.NewConsole == crb_On)
+			if (m_Args.NoDefaultTerm == crb_On)
+			{
+				bForceCutNewConsole = true;
+				goto wrap;
+			}
+			else if (m_Args.NewConsole == crb_On)
 			{
 				NewConsoleFlags |= CEF_NEWCON_SWITCH;
 			}
@@ -2283,7 +2334,9 @@ int CShellProc::PrepareExecuteParms(
 	}
 
 wrap:
-	if (bCurConsoleArg && (aCmd != eShellExecute))
+	if ((bCurConsoleArg && (aCmd != eShellExecute))
+		|| (bForceCutNewConsole && !lbChanged) // For example, -new_console:z (don't start new console by `start` in ConEmu)
+		)
 	{
 		if (lbChanged)
 		{
@@ -2298,9 +2351,21 @@ wrap:
 				m_Args.pszStartupDir = NULL;
 			}
 
-			// Подмена параметров (вырезаны -cur_console, -new_console)
-			*psParam = m_Args.pszSpecialCmd;
-			m_Args.pszSpecialCmd = NULL;
+			if (bForceCutNewConsole && lsReplaceFile)
+			{
+				*psFile = lsReplaceFile.Detach();
+			}
+
+			if (bForceCutNewConsole && lsReplaceParm && (aCmd == eShellExecute))
+			{
+				*psParam = lsReplaceParm.Detach();
+			}
+			else
+			{
+				// Parameters substitution (cut -cur_console, -new_console)
+				*psParam = m_Args.pszSpecialCmd;
+				m_Args.pszSpecialCmd = NULL;
+			}
 
 			// Высота буфера!
 			if ((m_Args.BufHeight == crb_On) && gnServerPID)
@@ -2387,7 +2452,11 @@ bool CShellProc::GetStartingExeName(LPCWSTR asFile, LPCWSTR asParam, CmdArg& rsE
 			lTempArgs.pszSpecialCmd = lstrdup(SkipNonPrintable(asParam));
 			if (lTempArgs.ProcessNewConArg())
 			{
-				asParam = lTempArgs.pszSpecialCmd;
+				asParam = SkipNonPrintable(lTempArgs.pszSpecialCmd);
+				if (!asParam || !*asParam)
+				{
+					return false;
+				}
 			}
 		}
 
