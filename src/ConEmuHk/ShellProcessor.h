@@ -79,7 +79,7 @@ private:
 	bool mb_Opt_SkipNewConsole; // ConEmuHooks=NOARG
 	bool mb_Opt_SkipCmdStart; // ConEmuHooks=NOSTART
 	void CheckHooksDisabled();
-	void GetStartingExeName(LPCWSTR asFile, LPCWSTR asParam, CmdArg& rsExeTmp);
+	bool GetStartingExeName(LPCWSTR asFile, LPCWSTR asParam, CmdArg& rsExeTmp);
 
 	BOOL mb_isCurrentGuiClient;
 	void CheckIsCurrentGuiClient();

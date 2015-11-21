@@ -2354,8 +2354,10 @@ wrap:
 	return lbChanged ? 1 : 0;
 } // PrepareExecuteParms
 
-void CShellProc::GetStartingExeName(LPCWSTR asFile, LPCWSTR asParam, CmdArg& rsExeTmp)
+bool CShellProc::GetStartingExeName(LPCWSTR asFile, LPCWSTR asParam, CmdArg& rsExeTmp)
 {
+	rsExeTmp.Empty();
+
 	if (asFile && *asFile)
 	{
 		if (*asFile == L'"')
@@ -2378,9 +2380,10 @@ void CShellProc::GetStartingExeName(LPCWSTR asFile, LPCWSTR asParam, CmdArg& rsE
 	}
 	else if (asParam)
 	{
-		BOOL lbRootIsCmdExe = FALSE, lbAlwaysConfirmExit = FALSE, lbAutoDisableConfirmExit = FALSE, lbNeedCutStartEndQuot = FALSE;
-		IsNeedCmd(false, SkipNonPrintable(asParam), rsExeTmp, NULL, &lbNeedCutStartEndQuot, &lbRootIsCmdExe, &lbAlwaysConfirmExit, &lbAutoDisableConfirmExit);
+		IsNeedCmd(false, SkipNonPrintable(asParam), rsExeTmp, NULL, NULL, NULL, NULL, NULL);
 	}
+
+	return (!rsExeTmp.IsEmpty());
 }
 
 // returns FALSE if need to block execution
