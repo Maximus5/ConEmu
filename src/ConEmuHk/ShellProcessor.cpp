@@ -2414,17 +2414,14 @@ BOOL CShellProc::OnShellExecuteA(LPCSTR* asAction, LPCSTR* asFile, LPCSTR* asPar
 
 	BOOL lbRc = (liRc != 0);
 
-	if (lbRc)
+	if (mpwsz_TempRetFile && *mpwsz_TempRetFile)
 	{
-		if (mpwsz_TempRetFile && *mpwsz_TempRetFile)
-		{
-			mpsz_TempRetFile = wcs2str(mpwsz_TempRetFile, mn_CP);
-			*asFile = mpsz_TempRetFile;
-		}
-		else
-		{
-			*asFile = NULL;
-		}
+		mpsz_TempRetFile = wcs2str(mpwsz_TempRetFile, mn_CP);
+		*asFile = mpsz_TempRetFile;
+	}
+	else if (lbRc)
+	{
+		*asFile = NULL;
 	}
 
 	if (lbRc || mpwsz_TempRetParam)
@@ -2468,7 +2465,7 @@ BOOL CShellProc::OnShellExecuteW(LPCWSTR* asAction, LPCWSTR* asFile, LPCWSTR* as
 
 	BOOL lbRc = (liRc != 0);
 
-	if (lbRc)
+	if (lbRc || mpwsz_TempRetFile)
 	{
 		*asFile = mpwsz_TempRetFile;
 	}
@@ -2602,20 +2599,20 @@ BOOL CShellProc::OnCreateProcessA(LPCSTR* asFile, LPCSTR* asCmdLine, LPCSTR* asD
 	// а если выставлен mb_NeedInjects - строго включить _Suspended
 	if (mb_NeedInjects)
 		(*anCreationFlags) |= CREATE_SUSPENDED;
-	if (lbRc)
+
+	if (lbRc && (lpSI->wShowWindow != nShowCmd))
+		lpSI->wShowWindow = (WORD)nShowCmd;
+
+	if (mpwsz_TempRetFile && *mpwsz_TempRetFile)
 	{
-		if (lpSI->wShowWindow != nShowCmd)
-			lpSI->wShowWindow = (WORD)nShowCmd;
-		if (mpwsz_TempRetFile)
-		{
-			mpsz_TempRetFile = wcs2str(mpwsz_TempRetFile, mn_CP);
-			*asFile = mpsz_TempRetFile;
-		}
-		else
-		{
-			*asFile = NULL;
-		}
+		mpsz_TempRetFile = wcs2str(mpwsz_TempRetFile, mn_CP);
+		*asFile = mpsz_TempRetFile;
 	}
+	else if (lbRc)
+	{
+		*asFile = NULL;
+	}
+
 	if (lbRc || mpwsz_TempRetParam)
 	{
 		if (mpwsz_TempRetParam)
@@ -2783,6 +2780,11 @@ BOOL CShellProc::OnCreateProcessW(LPCWSTR* asFile, LPCWSTR* asCmdLine, LPCWSTR* 
 			}
 			break; // IMAGE_SUBSYSTEM_WINDOWS_GUI
 		}
+	}
+
+	if (lbRc || mpwsz_TempRetFile)
+	{
+		*asFile = mpwsz_TempRetFile;
 	}
 
 	if (lbRc || mpwsz_TempRetParam)
