@@ -35,40 +35,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "common.hpp"
 #include "ConsoleMixAttr.h"
 
-// GCC headers fix
-#ifndef COMMON_LVB_UNDERSCORE
-#define COMMON_LVB_GRID_HORIZONTAL 0x0400 // DBCS: Grid attribute: top horizontal.
-#define COMMON_LVB_GRID_LVERTICAL  0x0800 // DBCS: Grid attribute: left vertical.
-#define COMMON_LVB_GRID_RVERTICAL  0x1000 // DBCS: Grid attribute: right vertical.
-#define COMMON_LVB_REVERSE_VIDEO   0x4000 // DBCS: Reverse fore/back ground attribute.
-#define COMMON_LVB_UNDERSCORE      0x8000 // DBCS: Underscore.
-#endif
-
-#define CON_ATTR_0 COMMON_LVB_REVERSE_VIDEO   // 0x4000 // DBCS: Reverse fore/back ground attribute.
-#define CON_ATTR_1 COMMON_LVB_GRID_HORIZONTAL // 0x0400 // DBCS: Grid attribute: top horizontal.
-#define CON_ATTR_2 COMMON_LVB_GRID_LVERTICAL  // 0x0800 // DBCS: Grid attribute: left vertical.
-#define CON_ATTR_4 COMMON_LVB_GRID_RVERTICAL  // 0x1000 // DBCS: Grid attribute: right vertical.
-#define CON_ATTR_8 COMMON_LVB_UNDERSCORE      // 0x8000 // DBCS: Underscore.
-
-#define CHANGED_CONATTR (CON_ATTR_0|CON_ATTR_1|CON_ATTR_2|CON_ATTR_4|CON_ATTR_8)
-
-#define CON_ATTR_PART_0  (CON_ATTR_0|CON_ATTR_8|CON_ATTR_4)
-#define CON_ATTR_PART_1  (CON_ATTR_1)
-#define CON_ATTR_PART_2  (CON_ATTR_2)
-#define CON_ATTR_PART_3  (CON_ATTR_2|CON_ATTR_1)
-#define CON_ATTR_PART_4  (CON_ATTR_4)
-#define CON_ATTR_PART_5  (CON_ATTR_4|CON_ATTR_1)
-#define CON_ATTR_PART_6  (CON_ATTR_4|CON_ATTR_2)
-#define CON_ATTR_PART_7  (CON_ATTR_4|CON_ATTR_2|CON_ATTR_1)
-#define CON_ATTR_PART_8  (CON_ATTR_0|CON_ATTR_8|CON_ATTR_2)
-#define CON_ATTR_PART_9  (CON_ATTR_8|CON_ATTR_1)
-#define CON_ATTR_PART_10 (CON_ATTR_8|CON_ATTR_2)
-#define CON_ATTR_PART_11 (CON_ATTR_8|CON_ATTR_2|CON_ATTR_1)
-#define CON_ATTR_PART_12 (CON_ATTR_8|CON_ATTR_4)
-#define CON_ATTR_PART_13 (CON_ATTR_8|CON_ATTR_4|CON_ATTR_1)
-#define CON_ATTR_PART_14 (CON_ATTR_8|CON_ATTR_4|CON_ATTR_2)
-#define CON_ATTR_PART_15 (CON_ATTR_8|CON_ATTR_4|CON_ATTR_2|CON_ATTR_1)
-
 WORD AddConAttr[16] =
 {
 	CON_ATTR_PART_0,
