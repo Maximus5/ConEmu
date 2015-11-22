@@ -2380,6 +2380,19 @@ bool CShellProc::GetStartingExeName(LPCWSTR asFile, LPCWSTR asParam, CmdArg& rsE
 	}
 	else if (asParam)
 	{
+		// Strip "-new_console" and "-cur_console" (they may prepend executable)
+		RConStartArgs lTempArgs;
+		if (wcsstr(asParam, L"-new_console") || wcsstr(asParam, L"-cur_console"))
+		{
+			lTempArgs.pszSpecialCmd = lstrdup(SkipNonPrintable(asParam));
+			if (lTempArgs.ProcessNewConArg())
+			{
+				asParam = lTempArgs.pszSpecialCmd;
+			}
+		}
+
+		// If path to executable contains specials (spaces, etc.) it may be quoted, or not...
+		// So, we can't just call NextArg, logic is more complicated.
 		IsNeedCmd(false, SkipNonPrintable(asParam), rsExeTmp, NULL, NULL, NULL, NULL, NULL);
 	}
 
