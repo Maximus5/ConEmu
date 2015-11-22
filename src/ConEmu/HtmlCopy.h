@@ -497,6 +497,8 @@ public:
 	{
 		mb_ParOpened = false;
 		mb_Bold = mb_Italic = mb_Underline = false;
+		memset(szSeq, 0, sizeof(szSeq));
+		memset(szTemp, 0, sizeof(szTemp));
 
 		bCopyRawCodes = true;
 
