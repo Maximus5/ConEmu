@@ -99,7 +99,10 @@ HWND FindMinTTY()
 		CloseHandle(hSnap);
 
 		if (!nCount)
+		{
 			return NULL;
+			free(pi);
+		}
 
 		bool bMinTTY = false;
 		for (int n = (int)(nCount - 1); n >= 0; n--)
@@ -135,6 +138,7 @@ HWND FindMinTTY()
 
 		EnumWindows(EnumMinTTY, (LPARAM)dwMinTTY);
 	}
+	free(pi);
 	return hMinTTY;
 }
 
