@@ -1146,6 +1146,7 @@ LRESULT CFrameHolder::OnNcCalcSize(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 		//      that is, it is the proposed new window coordinates
 		// r[1] contains the coordinates of the window before it was moved or resized
 		// r[2] contains the coordinates of the window's client area before the window was moved or resized
+		_ASSERTE(pParm);
 		RECT r[3] = {pParm->rgrc[0], pParm->rgrc[1], pParm->rgrc[2]};
 		bool bAllowPreserveClient = mb_AllowPreserveClient && (memcmp(r, r+1, sizeof(*r)) == 0);
 
