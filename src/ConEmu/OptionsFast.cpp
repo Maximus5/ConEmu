@@ -1421,7 +1421,7 @@ public:
 	{
 	};
 
-	~AppFoundList()
+	virtual ~AppFoundList()
 	{
 		Clean();
 	};
