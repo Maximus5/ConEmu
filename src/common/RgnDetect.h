@@ -269,7 +269,7 @@ class CRgnRects
 		// Скопировать ИЗ pRgn, вернуть true - если были отличия
 		bool LoadFrom(CRgnRects* pRgn);
 
-		/*	Service variables for nRgnState tesgins */
+		/*	Service variables for nRgnState testing */
 		int nFieldMaxCells, nFieldWidth, nFieldHeight;
 		bool* pFieldCells;
 };
