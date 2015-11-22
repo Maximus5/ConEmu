@@ -89,6 +89,7 @@ CConEmuUpdate::CConEmuUpdate()
 	mb_InetMode = false;
 	mb_DroppedMode = false;
 	mn_InternetContentReady = mn_PackageSize = 0;
+	mpsz_DeleteIniFile = NULL;
 	mpsz_DeletePackageFile = mpsz_DeleteBatchFile = NULL;
 	mpsz_PendingPackageFile = mpsz_PendingBatchFile = NULL;
 	m_UpdateStep = us_NotStarted;
