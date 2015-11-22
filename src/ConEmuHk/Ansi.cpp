@@ -724,7 +724,7 @@ void CEAnsi::OnReadConsoleBefore(HANDLE hConOut, const CONSOLE_SCREEN_BUFFER_INF
 	{
 		pAppMap->csbiPreRead = csbi;
 		pAppMap->nPreReadRowID[0] = pObj->m_RowMarks.RowId[0];
-		pAppMap->nPreReadRowID[1] = pObj->m_RowMarks.RowId[2];
+		pAppMap->nPreReadRowID[1] = pObj->m_RowMarks.RowId[1];
 	}
 }
 void CEAnsi::OnReadConsoleAfter(bool bFinal, bool bNoLineFeed)
