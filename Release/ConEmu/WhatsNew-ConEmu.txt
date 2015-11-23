@@ -19,6 +19,27 @@ http://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2015.11.22
+* Minhook related: Try to change our imports to ease use of trampolines.
+* Append optional switches to single-command tasks.
+  For example, there is default task `{cmd}` which has single command:
+  `cmd /k "%ConEmuBaseDir%\CmdInit.cmd"`.
+  Now you may to run `{cmd} /git` from NewConsole dialog or via `-cmd`
+  switch of ConEmu.exe. So, the result will be:
+  `cmd /k "%ConEmuBaseDir%\CmdInit.cmd" /git`.
+* ConEmu here: Suggest to start `{cmd}` task instead of bare `cmd` by default.
+  * So the default command for ‘ConEmu Here’ will be `{cmd} -cur_console:n`.
+    * **Note**. Prepend `/reuse /cmd ` before task name, if you want to reuse
+      running ConEmu window: `/reuse /cmd {cmd} -cur_console:n`.
+  * Default command for ‘ConEmu Inside will be `{powershell} -cur_console:n`.
+* DefTerm. Workaround for some weird command lines (CodeBlocks).
+  For example, in CodeBlocks:
+  `C:\Program Files\CodeBlocks/cb_console_runner.exe "C:\sources\app.exe"`
+  MSDN recommends to quotate paths containing spaces and specials,
+  but CB ignores this guideline.
+* Try to bypass `start` if `-new_console:z` specified (in `cmd.exe` prompt).
+
+
 2015.11.19
 * gh#412: Failed to restore window position on secondary monitor (d3da351 regression).
 * Far Manager plugins ‘ConEmu Background’ and ‘ConEmu Underlines’ were not working on Windows 7.
