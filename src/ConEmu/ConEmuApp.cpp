@@ -2754,7 +2754,7 @@ static HRESULT _CreateShellLink(PCWSTR pszArguments, PCWSTR pszPrefix, PCWSTR ps
 
 					if (pszBatch)
 					{
-						pszTemp = pszBatch;
+						pszTemp = gpConEmu->ParseScriptLineOptions(pszBatch, NULL, NULL);
 					}
 
 					szTmp.Empty();
