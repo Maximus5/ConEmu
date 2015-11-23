@@ -12,7 +12,7 @@ set ConEmu
 cd /d "%~dp0"
 rem start ConEmu /loadcfgfile "%~dp0UnitTests\UnitTests.xml" /cmd cmd /k "%~0" in_gui
 rem start "ConEmu32" "%~dp0ConEmu.exe" -basic -nocascade -wndX 240 -wndY 100 -wndW 115 -wndH 30 -cmd cmd /k "%~0" in_gui
-start "ConEmu64" "%~dp0ConEmu64.exe" -log -basic -nocascade -wndX 340 -wndY 200 -wndW 135 -wndH 30 -cmd cmd /k "%~0" in_gui
+start "ConEmu64" "%~dp0ConEmu64.exe" -log -basic -nocascade -wndX 340 -wndY 200 -wndW 135 -wndH 30 -FontDir "%~dp0UnitTests" -cmd cmd /k "%~0" in_gui
 goto :EOF
 
 :clear_env
