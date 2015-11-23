@@ -454,8 +454,6 @@ bool IsNeedCmd(BOOL bRootCmd, LPCWSTR asCmdLine, CmdArg &szExe,
 			   LPCWSTR* rsArguments /*= NULL*/, BOOL* rpbNeedCutStartEndQuot /*= NULL*/,
 			   BOOL* rpbRootIsCmdExe /*= NULL*/, BOOL* rpbAlwaysConfirmExit /*= NULL*/, BOOL* rpbAutoDisableConfirmExit /*= NULL*/)
 {
-	_ASSERTE(asCmdLine && *asCmdLine);
-
 	bool rbNeedCutStartEndQuot = false;
 	bool rbRootIsCmdExe = true;
 	bool rbAlwaysConfirmExit = false;
@@ -470,10 +468,18 @@ bool IsNeedCmd(BOOL bRootCmd, LPCWSTR asCmdLine, CmdArg &szExe,
 	BOOL lbFirstWasGot = FALSE;
 	LPCWSTR pwszCopy;
 	int nLastChar;
+	#ifdef _DEBUG
+	CmdArg szDbgFirst;
+	#endif
+
+	if (!asCmdLine || !*asCmdLine)
+	{
+		_ASSERTE(asCmdLine && *asCmdLine);
+		goto wrap;
+	}
 
 	#ifdef _DEBUG
 	// Это минимальные проверки, собственно к коду - не относятся
-	CmdArg szDbgFirst;
 	bool bIsBatch = false;
 	{
 		LPCWSTR psz = asCmdLine;
