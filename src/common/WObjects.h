@@ -64,6 +64,8 @@ bool FileExistsSearch(LPCWSTR asFilePath, CmdArg& rsFound, bool abSetPath = true
 bool GetShortFileName(LPCWSTR asFullPath, int cchShortNameMax, wchar_t* rsShortName/*[MAX_PATH+1]-name only*/, BOOL abFavorLength=FALSE);
 wchar_t* GetShortFileNameEx(LPCWSTR asLong, BOOL abFavorLength=TRUE);
 
+DWORD GetModulePathName(HMODULE hModule, CEStr& lsPathName);
+
 bool IsDbcs();
 bool IsHwFullScreenAvailable();
 bool GetOsVersionInformational(OSVERSIONINFO* pOsVer);

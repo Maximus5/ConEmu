@@ -430,6 +430,32 @@ wrap:
 	return pszResult;
 }
 
+DWORD GetModulePathName(HMODULE hModule, CEStr& lsPathName)
+{
+	size_t cchMax = MAX_PATH;
+	wchar_t* pszData = lsPathName.GetBuffer(cchMax);
+	if (!pszData)
+		return 0; // Memory allocation error
+
+	DWORD nRc = GetModuleFileName(hModule, pszData, cchMax);
+	if (!nRc)
+		return 0;
+
+	// Not enough space?
+	if (nRc == cchMax)
+	{
+		cchMax = 32767;
+		wchar_t* pszData = lsPathName.GetBuffer(cchMax);
+		if (!pszData)
+			return 0; // Memory allocation error
+		nRc = GetModuleFileName(hModule, pszData, cchMax);
+		if (!nRc || (nRc == cchMax))
+			return 0;
+	}
+
+	return nRc;
+}
+
 //wchar_t* GetShortFileNameEx(LPCWSTR asLong, BOOL abFavorLength=FALSE)
 //{
 //	TODO("хорошо бы и сетевые диски обрабатывать");
