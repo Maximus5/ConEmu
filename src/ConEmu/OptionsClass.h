@@ -73,7 +73,7 @@ const EvalSizeFlags
 	esf_CanUseDpi    = 0x0010, // Take into account _dpi
 	esf_CanUseZoom   = 0x0020, // Take into account mn_FontZoomValue
 	esf_CanUseUnits  = 0x0040, // Make the result negative IF gpSet->FontUseUnits is ON
-	// Must not be used togather
+	// Must not be used together
 	esf_Vertical     = 0x0001, // Used to get lfHeight
 	esf_Horizontal   = 0x0000  // Used to get lfWidth
 ;

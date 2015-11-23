@@ -860,7 +860,7 @@ SIZE CConEmuSize::GetDefaultSize(bool bCells, const CESize* pSizeW /*= NULL*/, c
 	}
 	_ASSERTE((gpSet->isTabs != 1) || (nTabsY > 0));
 
-	// Consoles spliters, pads and scrolling
+	// Consoles splitters, pads and scrolling
 	RECT rcVConPad = CalcMargins(CEM_SCROLL|CEM_PAD);
 	if (CVConGroup::isVConExists(0))
 	{

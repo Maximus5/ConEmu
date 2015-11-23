@@ -217,7 +217,7 @@ BOOL WINAPI OnSetConsoleCP(UINT wCodePageID)
 		}
 		else
 		{
-			//BUGBUG: На некоторых системых (Win2k3, WinXP) SetConsoleCP (и иже с ними) просто зависают
+			//BUGBUG: На некоторых системах (Win2k3, WinXP) SetConsoleCP (и иже с ними) просто зависают
 			apiTerminateThread(hThread,100);
 			nCurCP = GetConsoleCP();
 			if (nCurCP == wCodePageID)
@@ -296,7 +296,7 @@ BOOL WINAPI OnSetConsoleOutputCP(UINT wCodePageID)
 		}
 		else
 		{
-			//BUGBUG: На некоторых системых (Win2k3, WinXP) SetConsoleCP (и иже с ними) просто зависают
+			//BUGBUG: На некоторых системах (Win2k3, WinXP) SetConsoleCP (и иже с ними) просто зависают
 			apiTerminateThread(hThread,100);
 			nCurCP = GetConsoleOutputCP();
 			if (nCurCP == wCodePageID)
