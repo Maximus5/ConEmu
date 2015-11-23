@@ -586,36 +586,59 @@ bool IsNeedCmd(BOOL bRootCmd, LPCWSTR asCmdLine, CmdArg &szExe,
 	if (!lbFirstWasGot)
 	{
 		szExe.Empty();
-		// 17.10.2010 - поддержка переданного исполняемого файла без параметров, но с пробелами в пути
-		LPCWSTR pchEnd = pwszCopy + lstrlenW(pwszCopy);
 
-		while (pchEnd > pwszCopy && *(pchEnd-1) == L' ') pchEnd--;
-
-		if ((pchEnd - pwszCopy) < MAX_PATH)
+		// `start` command must be processed by processor itself
+		if ((lstrcmpni(pwszCopy, L"start", 5) == 0)
+			&& (!pwszCopy[5] || isSpace(pwszCopy[5])))
 		{
+			#ifdef WARN_NEED_CMD
+			_ASSERTE(FALSE);
+			#endif
+			lbRc = true; goto wrap;
+		}
 
-			szExe.Set(pwszCopy, (pchEnd - pwszCopy));
-			_ASSERTE(szExe[(pchEnd - pwszCopy)] == 0);
+		// 17.10.2010 - support executable file path without parameters, but with spaces in its path
+		// 22.11.2015 - or some weirdness, like `C:\Program Files\CB/cb_console_runner.exe "C:\sources\app.exe"`
+		LPCWSTR pchEnd = wcschr(pwszCopy, L' ');
+		if (!pchEnd)
+			pchEnd = pwszCopy + lstrlenW(pwszCopy);
 
-			if (lstrcmpiW(szExe, L"start") == 0)
+		CEStr szTemp;
+		DWORD nTempSize;
+		while (pchEnd)
+		{
+			szTemp.Set(pwszCopy, (pchEnd - pwszCopy));
+			_ASSERTE(szTemp[(pchEnd - pwszCopy)] == 0);
+
+			// If this is a full path without environment variables
+			if (((IsFilePath(szTemp, true) && !wcschr(szTemp, L'%'))
+				// or file/dir may be found via env.var. substitution or searching in %PATH%
+				|| FileExistsSearch((LPCWSTR)szTemp, szTemp))
+				// Than check if it is a FILE (not a directory)
+				&& FileExists(szTemp, &nTempSize) && nTempSize)
 			{
-				// Команду start обрабатывает только процессор
-				#ifdef WARN_NEED_CMD
-				_ASSERTE(FALSE);
-				#endif
-				lbRc = true; goto wrap;
-			}
-
-			// Обработка переменных окружения и поиск в PATH
-			if (FileExistsSearch((LPCWSTR)szExe, szExe))
-			{
+				// OK, it an our executable?
 				if (rsArguments)
 					*rsArguments = pchEnd;
+				szExe.Set(szTemp);
+				break;
 			}
-			else
+
+			_ASSERTE(*pchEnd == 0 || *pchEnd == L' ');
+			if (!*pchEnd)
+				break;
+			// Find next space after nonspace
+			while (*(pchEnd) == L' ') pchEnd++;
+			// If quoted string starts from here - it's supposed to be an argument
+			if (*pchEnd == L'"')
 			{
-				szExe.Empty();
+				// And we must not get here, because the executable must be already processed above
+				// _ASSERTE(*pchEnd != L'"');
+				break;
 			}
+			pchEnd = wcschr(pchEnd, L' ');
+			if (!pchEnd)
+				pchEnd = pwszCopy + lstrlenW(pwszCopy);
 		}
 
 		if (szExe[0] == 0)
@@ -629,14 +652,7 @@ bool IsNeedCmd(BOOL bRootCmd, LPCWSTR asCmdLine, CmdArg &szExe,
 				lbRc = true; goto wrap;
 			}
 
-			if (lstrcmpiW(szExe, L"start") == 0)
-			{
-				// Команду start обрабатывает только процессор
-				#ifdef WARN_NEED_CMD
-				_ASSERTE(FALSE);
-				#endif
-				lbRc = true; goto wrap;
-			}
+			_ASSERTE(lstrcmpiW(szExe, L"start") != 0);
 
 			// Обработка переменных окружения и поиск в PATH
 			if (FileExistsSearch((LPCWSTR)szExe, szExe))
