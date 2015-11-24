@@ -2821,7 +2821,6 @@ void CEAnsi::WriteAnsiCode_VIM(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsole
 {
 	if (!gbWasXTermOutput && !gnWriteProcessed)
 	{
-		gbWasXTermOutput = true;
 		CEAnsi::StartXTermMode(true);
 	}
 
@@ -3065,7 +3064,6 @@ void CEAnsi::StopVimTerm()
 {
 	if (gbWasXTermOutput)
 	{
-		gbWasXTermOutput = false;
 		CEAnsi::StartXTermMode(false);
 	}
 
@@ -3074,11 +3072,15 @@ void CEAnsi::StopVimTerm()
 
 void CEAnsi::StartXTermMode(bool bStart)
 {
-	_ASSERTEX((gXTermAltBuffer.Flags & xtb_AltBuffer) && (gbWasXTermOutput==bStart));
+	// May be triggered by ConEmuT, official Vim builds and in some other cases
+	//_ASSERTEX((gXTermAltBuffer.Flags & xtb_AltBuffer) && (gbWasXTermOutput!=bStart));
+	_ASSERTEX(gbWasXTermOutput!=bStart);
 
 	CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_STARTXTERM, sizeof(CESERVER_REQ_HDR)+sizeof(DWORD));
 	if (pIn)
 	{
+		// Remember last mode
+		gbWasXTermOutput = bStart;
 		pIn->dwData[0] = bStart ? te_xterm : te_win32;
 		CESERVER_REQ* pOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd);
 		ExecuteFreeResult(pIn);

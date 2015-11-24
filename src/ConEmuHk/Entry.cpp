@@ -1398,10 +1398,10 @@ void DoDllStop(bool bFinal, ConEmuHkDllState bFromTerminate)
 			CEAnsi::StopVimTerm();
 			DLOGEND1();
 		}
-		else if (gbIsPlinkProcess)
+		else if (CEAnsi::gbWasXTermOutput)
 		{
 			DLOG1("StartXTermMode(false)",0);
-			//CEAnsi::StartXTermMode(false);
+			CEAnsi::StartXTermMode(false);
 			DLOGEND1();
 		}
 	}
