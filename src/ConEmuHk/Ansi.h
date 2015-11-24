@@ -48,8 +48,11 @@ struct MSectionSimple;
 
 enum WriteProcessedStream
 {
+	wps_None   = 0,
 	wps_Output = 1,
 	wps_Error  = 2,
+	wps_Input  = 4, // Reserved for StdInput
+	wps_Ansi   = 8, // Reserved as a Flag for IsAnsiCapable
 };
 
 #if defined(__GNUC__)
