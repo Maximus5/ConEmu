@@ -2033,13 +2033,6 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 				DumpUnknownEscape(Code.pszEscStart,Code.nTotalLen);
 			}
 
-			if (lbApply)
-			{
-				// ViM: need to fill whole screen with selected background color, so Apply attributes
-				ReSetDisplayParm(hConsoleOutput, FALSE, TRUE);
-				lbApply = FALSE;
-			}
-
 			if (nChars > 0)
 			{
 				ExtFillOutputParm fill = {sizeof(fill), efof_Current|efof_Attribute|efof_Character,
