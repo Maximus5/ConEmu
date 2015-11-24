@@ -216,91 +216,19 @@ BOOL WINAPI OnWriteConsoleA(HANDLE hConsoleOutput, const VOID *lpBuffer, DWORD n
 	//typedef BOOL (WINAPI* OnWriteConsoleA_t)(HANDLE hConsoleOutput, const VOID *lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, LPVOID lpReserved);
 	ORIGINAL_KRNL(WriteConsoleA);
 	BOOL lbRc = FALSE;
-	wchar_t* buf = NULL;
-	DWORD len, cp;
-	static bool badUnicode = false;
-	DEBUGTEST(bool curBadUnicode = badUnicode);
-	DEBUGTEST(wchar_t szTmp[2] = L"");
+	CEAnsi* pObj = NULL;
 
-	FIRST_ANSI_CALL((const BYTE*)lpBuffer, nNumberOfCharsToWrite);
-
-	if (badUnicode)
+	if (lpBuffer && nNumberOfCharsToWrite && hConsoleOutput && CEAnsi::IsAnsiCapable(hConsoleOutput) && ((pObj = CEAnsi::Object()) != NULL))
 	{
-		badUnicode = false;
-		#ifdef _DEBUG
-		if (lpBuffer && nNumberOfCharsToWrite)
-		{
-			szTmp[0] = ((char*)lpBuffer)[0];
-			CEAnsi::DumpEscape(szTmp, 1, de_BadUnicode);
-		}
-		#endif
-		goto badchar;
+		lbRc = pObj->OurWriteConsoleA(hConsoleOutput, (LPCSTR)lpBuffer, nNumberOfCharsToWrite, lpNumberOfCharsWritten);
+	}
+	else
+	{
+		// WriteConsoleA must be executed on "real console" handles only
+		_ASSERTEX(lpBuffer && nNumberOfCharsToWrite && hConsoleOutput && CEAnsi::IsAnsiCapable(hConsoleOutput));
+		lbRc = F(WriteConsoleA)(hConsoleOutput, lpBuffer, nNumberOfCharsToWrite, lpNumberOfCharsWritten, lpReserved);
 	}
 
-	if (lpBuffer && nNumberOfCharsToWrite && hConsoleOutput && CEAnsi::IsAnsiCapable(hConsoleOutput))
-	{
-		cp = gCpConv.nDefaultCP ? gCpConv.nDefaultCP : GetConsoleOutputCP();
-
-		DWORD nLastErr = 0;
-		DWORD nFlags = 0; //MB_ERR_INVALID_CHARS;
-
-		if (! ((cp == 42) || (cp == 65000) || (cp >= 57002 && cp <= 57011) || (cp >= 50220 && cp <= 50229)) )
-		{
-			nFlags = MB_ERR_INVALID_CHARS;
-			nLastErr = GetLastError();
-		}
-
-		len = MultiByteToWideChar(cp, nFlags, (LPCSTR)lpBuffer, nNumberOfCharsToWrite, 0, 0);
-
-		if (nFlags /*gpStartEnv->bIsDbcs*/ && (GetLastError() == ERROR_NO_UNICODE_TRANSLATION))
-		{
-			badUnicode = true;
-			#ifdef _DEBUG
-			szTmp[0] = ((char*)lpBuffer)[0];
-			CEAnsi::DumpEscape(szTmp, 1, de_BadUnicode);
-			#endif
-			SetLastError(nLastErr);
-			goto badchar;
-		}
-
-		buf = (wchar_t*)malloc((len+1)*sizeof(wchar_t));
-		if (buf == NULL)
-		{
-			if (lpNumberOfCharsWritten != NULL)
-				*lpNumberOfCharsWritten = 0;
-		}
-		else
-		{
-			DWORD newLen = MultiByteToWideChar(cp, nFlags, (LPCSTR)lpBuffer, nNumberOfCharsToWrite, buf, len);
-			_ASSERTEX(newLen==len);
-			buf[newLen] = 0; // ASCII-Z, хотя, если функцию WriteConsoleW зовет приложение - "\0" может и не быть...
-
-			HANDLE hWrite;
-			MConHandle hConOut(L"CONOUT$");
-			if (hConsoleOutput == CEAnsi::ghLastConOut)
-				hWrite = hConOut;
-			else
-				hWrite = hConsoleOutput;
-
-			DWORD nWideWritten = 0;
-			lbRc = CEAnsi::OurWriteConsoleW(hWrite, buf, len, &nWideWritten, NULL);
-
-			// Issue 1291:	Python fails to print string sequence with ASCII character followed by Chinese character.
-			if (lpNumberOfCharsWritten)
-			{
-				*lpNumberOfCharsWritten = (nWideWritten == len) ? nNumberOfCharsToWrite : nWideWritten;
-			}
-		}
-		goto fin;
-	}
-
-badchar:
-	// По идее, сюда попадать не должны. Ошибка в параметрах?
-	_ASSERTEX((lpBuffer && nNumberOfCharsToWrite && hConsoleOutput && CEAnsi::IsAnsiCapable(hConsoleOutput)) || (curBadUnicode||badUnicode));
-	lbRc = F(WriteConsoleA)(hConsoleOutput, lpBuffer, nNumberOfCharsToWrite, lpNumberOfCharsWritten, lpReserved);
-
-fin:
-	SafeFree(buf);
 	return lbRc;
 }
 

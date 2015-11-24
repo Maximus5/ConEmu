@@ -235,17 +235,10 @@ BOOL WINAPI OnWriteFile(HANDLE hFile, LPCVOID lpBuffer, DWORD nNumberOfBytesToWr
 	//typedef BOOL (WINAPI* OnWriteFile_t)(HANDLE hFile, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite, LPDWORD lpNumberOfBytesWritten, LPOVERLAPPED lpOverlapped);
 	ORIGINAL_KRNL(WriteFile);
 	BOOL lbRc = FALSE;
-	//DWORD nDBCSCP = 0;
+	CEAnsi* pObj = NULL;
 
-	FIRST_ANSI_CALL((const BYTE*)lpBuffer, nNumberOfBytesToWrite);
-
-	//if (gpStartEnv->bIsDbcs)
-	//{
-	//	nDBCSCP = GetConsoleOutputCP();
-	//}
-
-	if (lpBuffer && nNumberOfBytesToWrite && hFile && CEAnsi::IsAnsiCapable(hFile))
-		lbRc = OnWriteConsoleA(hFile, lpBuffer, nNumberOfBytesToWrite, lpNumberOfBytesWritten, NULL);
+	if (lpBuffer && nNumberOfBytesToWrite && hFile && CEAnsi::IsAnsiCapable(hFile) && ((pObj = CEAnsi::Object()) != NULL))
+		lbRc = pObj->OurWriteConsoleA(hFile, (LPCSTR)lpBuffer, nNumberOfBytesToWrite, lpNumberOfBytesWritten);
 	else
 		lbRc = F(WriteFile)(hFile, lpBuffer, nNumberOfBytesToWrite, lpNumberOfBytesWritten, lpOverlapped);
 

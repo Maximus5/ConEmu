@@ -863,6 +863,98 @@ BOOL CEAnsi::WriteText(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, 
 	return lbRc;
 }
 
+// NON-static, because we need to ‘cache’ parts of non-translated MBCS chars (one UTF-8 symbol may be transmitted by up to *three* parts)
+BOOL CEAnsi::OurWriteConsoleA(HANDLE hConsoleOutput, const char *lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten)
+{
+	_ASSERTE(this!=NULL);
+	BOOL lbRc = FALSE;
+	wchar_t* buf = NULL;
+	DWORD len, cp;
+	static bool badUnicode = false;
+	DEBUGTEST(bool curBadUnicode = badUnicode);
+	DEBUGTEST(wchar_t szTmp[2] = L"");
+
+	ORIGINAL_KRNL(WriteConsoleA);
+
+	// Nothing to write? Or flush buffer?
+	if (!lpBuffer || !nNumberOfCharsToWrite || !hConsoleOutput || (hConsoleOutput == INVALID_HANDLE_VALUE))
+	{
+		if (lpNumberOfCharsWritten)
+			*lpNumberOfCharsWritten = 0;
+		lbRc = TRUE;
+		goto fin;
+	}
+
+	if (badUnicode)
+	{
+		badUnicode = false;
+		#ifdef _DEBUG
+		if (lpBuffer && nNumberOfCharsToWrite)
+		{
+			szTmp[0] = ((char*)lpBuffer)[0];
+			CEAnsi::DumpEscape(szTmp, 1, de_BadUnicode);
+		}
+		#endif
+		goto badchar;
+	}
+
+	cp = gCpConv.nDefaultCP ? gCpConv.nDefaultCP : GetConsoleOutputCP();
+
+	DWORD nLastErr = 0;
+	DWORD nFlags = 0; //MB_ERR_INVALID_CHARS;
+
+	if (! ((cp == 42) || (cp == 65000) || (cp >= 57002 && cp <= 57011) || (cp >= 50220 && cp <= 50229)) )
+	{
+		nFlags = MB_ERR_INVALID_CHARS;
+		nLastErr = GetLastError();
+	}
+
+	len = MultiByteToWideChar(cp, nFlags, (LPCSTR)lpBuffer, nNumberOfCharsToWrite, 0, 0);
+
+	if (nFlags /*gpStartEnv->bIsDbcs*/ && (GetLastError() == ERROR_NO_UNICODE_TRANSLATION))
+	{
+		badUnicode = true;
+		#ifdef _DEBUG
+		szTmp[0] = ((char*)lpBuffer)[0];
+		CEAnsi::DumpEscape(szTmp, 1, de_BadUnicode);
+		#endif
+		SetLastError(nLastErr);
+		goto badchar;
+	}
+
+	buf = (wchar_t*)malloc((len+1)*sizeof(wchar_t));
+	if (buf == NULL)
+	{
+		if (lpNumberOfCharsWritten != NULL)
+			*lpNumberOfCharsWritten = 0;
+	}
+	else
+	{
+		DWORD newLen = MultiByteToWideChar(cp, nFlags, (LPCSTR)lpBuffer, nNumberOfCharsToWrite, buf, len);
+		_ASSERTEX(newLen==len);
+		buf[newLen] = 0; // ASCII-Z, хотя, если функцию WriteConsoleW зовет приложение - "\0" может и не быть...
+
+		DWORD nWideWritten = 0;
+		lbRc = OurWriteConsoleW(hConsoleOutput, buf, len, &nWideWritten, NULL);
+
+		// Issue 1291:	Python fails to print string sequence with ASCII character followed by Chinese character.
+		if (lpNumberOfCharsWritten)
+		{
+			*lpNumberOfCharsWritten = (nWideWritten == len) ? nNumberOfCharsToWrite : nWideWritten;
+		}
+	}
+	goto fin;
+
+badchar:
+	// We must not get here, wrong arguments?
+	_ASSERTEX((lpBuffer && nNumberOfCharsToWrite && hConsoleOutput) || (curBadUnicode||badUnicode));
+	lbRc = F(WriteConsoleA)(hConsoleOutput, lpBuffer, nNumberOfCharsToWrite, lpNumberOfCharsWritten, NULL);
+
+fin:
+	SafeFree(buf);
+	return lbRc;
+}
+
 BOOL CEAnsi::OurWriteConsoleW(HANDLE hConsoleOutput, const VOID *lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, LPVOID lpReserved, bool bInternal /*= false*/)
 {
 	ORIGINAL_KRNL(WriteConsoleW);
