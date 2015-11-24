@@ -1221,7 +1221,7 @@ int CEAnsi::NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, wchar_t (&szPreDump)[CE
 						break;
 
 					case L']':
-						// Finalizing with "\x1B\\" or "\x07"
+						// Finalizing (ST) with "\x1B\\" or "\x07"
 						// "%]4;16;rgb:00/00/00%\" - "%" is ESC
 						// "%]0;this is the window titleBEL"
 						// ESC ] 0 ; txt ST        Set icon name and window title to txt.
@@ -1246,6 +1246,7 @@ int CEAnsi::NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, wchar_t (&szPreDump)[CE
 						// ESC ] 9 ; 4 ; st ; pr ST      When _st_ is 0: remove progress. When _st_ is 1: set progress value to _pr_ (number, 0-100). When _st_ is 2: set error state in progress on Windows 7 taskbar
 						// ESC ] 9 ; 5 ST                Wait for ENTER/SPACE/ESC. Set EnvVar "ConEmuWaitKey" to ENTER/SPACE/ESC on exit.
 						// ESC ] 9 ; 6 ; "txt" ST        Execute GuiMacro. Set EnvVar "ConEmuMacroResult" on exit.
+						// and others... look at CEAnsi::WriteAnsiCode_OSC
 
 						Code.ArgSZ = lpBuffer;
 						Code.cchArgSZ = 0;
@@ -1989,6 +1990,7 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 			if (lbApply)
 			{
 				// Apply default color before scrolling!
+				// ViM: need to fill whole screen with selected background color, so Apply attributes
 				ReSetDisplayParm(hConsoleOutput, FALSE, TRUE);
 				lbApply = FALSE;
 			}
@@ -2030,9 +2032,6 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 				ExtFillOutputParm fill = {sizeof(fill), efof_Current|efof_Attribute|efof_Character,
 					hConsoleOutput, {}, L' ', cr0, (DWORD)nChars};
 				ExtFillOutput(&fill);
-				//DWORD nWritten = 0;
-				//FillConsoleOutputAttribute(hConsoleOutput, GetDefaultTextAttr(), nChars, cr0, &nWritten);
-				//FillConsoleOutputCharacter(hConsoleOutput, L' ', nChars, cr0, &nWritten);
 			}
 
 			if (nCmd == 2)
@@ -2040,8 +2039,6 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 				SetConsoleCursorPosition(hConsoleOutput, cr0);
 			}
 
-			//TODO("Need to clear attributes?");
-			//ReSetDisplayParm(hConsoleOutput, TRUE/*bReset*/, TRUE/*bApply*/);
 		} // case L'J':
 		break;
 
@@ -2632,10 +2629,13 @@ void CEAnsi::WriteAnsiCode_OSC(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsole
 		DumpUnknownEscape(Code.pszEscStart,Code.nTotalLen);
 		return;
 	}
+
+	// Finalizing (ST) with "\x1B\\" or "\x07"
 	//ESC ] 0 ; txt ST        Set icon name and window title to txt.
 	//ESC ] 1 ; txt ST        Set icon name to txt.
 	//ESC ] 2 ; txt ST        Set window title to txt.
 	//ESC ] 4 ; num; txt ST   Set ANSI color num to txt.
+	//ESC ] 9 ... ST          ConEmu specific
 	//ESC ] 10 ; txt ST       Set dynamic text color to txt.
 	//ESC ] 4 6 ; name ST     Change log file to name (normally disabled
 	//					      by a compile-time option)
@@ -2659,8 +2659,8 @@ void CEAnsi::WriteAnsiCode_OSC(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsole
 		break;
 
 	case L'4':
-		// the following is suggestion for exact palette colors
-		// bug we are using standard xterm palette or truecolor 24bit palette
+		// TODO: the following is suggestion for exact palette colors
+		// TODO: but we are using standard xterm palette or truecolor 24bit palette
 		_ASSERTEX(Code.ArgSZ[1] == L';');
 		break;
 
@@ -2675,7 +2675,6 @@ void CEAnsi::WriteAnsiCode_OSC(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsole
 		// ESC ] 9 ; 7 ; "cmd" ST        Run some process with arguments
 		// ESC ] 9 ; 8 ; "env" ST        Output value of environment variable
 		// ESC ] 9 ; 9 ; "cwd" ST        Inform ConEmu about shell current working directory
-		// -- You may specify timeout _s_ in seconds. - �� ��������
 		if (Code.ArgSZ[1] == L';')
 		{
 			if (Code.ArgSZ[2] == L'1' && Code.ArgSZ[3] == L';')
