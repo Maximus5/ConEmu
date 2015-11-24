@@ -1999,6 +1999,7 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 			bool resetCursor = false;
 			COORD cr0 = {};
 			int nChars = 0;
+			int nScroll = 0;
 
 			switch (nCmd)
 			{
@@ -2017,6 +2018,16 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 				// clear entire screen and moves cursor to upper left
 				nChars = csbi.dwSize.X * csbi.dwSize.Y;
 				resetCursor = true;
+				break;
+			case 3:
+				// xterm: clear scrollback buffer entirely
+				if (csbi.srWindow.Top > 0)
+				{
+					nScroll = -csbi.srWindow.Top;
+					cr0.X = csbi.dwCursorPosition.X;
+					cr0.Y = max(0,(csbi.dwCursorPosition.Y-csbi.srWindow.Top));
+					resetCursor = true;
+				}
 				break;
 			default:
 				DumpUnknownEscape(Code.pszEscStart,Code.nTotalLen);
@@ -2039,6 +2050,11 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 			if (resetCursor)
 			{
 				SetConsoleCursorPosition(hConsoleOutput, cr0);
+			}
+
+			if (nScroll)
+			{
+				ScrollScreen(hConsoleOutput, nScroll);
 			}
 
 		} // case L'J':
