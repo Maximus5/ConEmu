@@ -1996,6 +1996,7 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 			}
 
 			int nCmd = (Code.ArgC > 0) ? Code.ArgV[0] : 0;
+			bool resetCursor = false;
 			COORD cr0 = {};
 			int nChars = 0;
 
@@ -2015,6 +2016,7 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 			case 2:
 				// clear entire screen and moves cursor to upper left
 				nChars = csbi.dwSize.X * csbi.dwSize.Y;
+				resetCursor = true;
 				break;
 			default:
 				DumpUnknownEscape(Code.pszEscStart,Code.nTotalLen);
@@ -2034,7 +2036,7 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 				ExtFillOutput(&fill);
 			}
 
-			if (nCmd == 2)
+			if (resetCursor)
 			{
 				SetConsoleCursorPosition(hConsoleOutput, cr0);
 			}
