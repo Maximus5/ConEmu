@@ -985,6 +985,16 @@ bool IsConsoleServer(LPCWSTR pszProcessName)
 	return CheckProcessName(pszProcessName, lsNameExt);
 }
 
+bool IsTerminalServer(LPCWSTR pszProcessName)
+{
+	LPCWSTR lsNames[] = {
+		L"conemu-cyg-32.exe", L"conemu-cyg-64.exe",
+		L"conemu-msys-32.exe",
+		L"conemu-msys2-32.exe", L"conemu-msys2-64.exe",
+		NULL};
+	return CheckProcessName(pszProcessName, lsNames);
+}
+
 bool IsGitBashHelper(LPCWSTR pszProcessName)
 {
 	LPCWSTR lsNameExt[] = { L"git-bash.exe", L"git-cmd.exe", NULL };

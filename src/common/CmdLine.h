@@ -54,6 +54,7 @@ bool IsFarExe(LPCWSTR asModuleName);
 bool IsCmdProcessor(LPCWSTR asModuleName);
 bool IsConsoleService(LPCWSTR pszProcessName);
 bool IsConsoleServer(LPCWSTR pszProcessName);
+bool IsTerminalServer(LPCWSTR pszProcessName);
 bool IsGitBashHelper(LPCWSTR pszProcessName);
 bool IsNeedCmd(BOOL bRootCmd, LPCWSTR asCmdLine, CmdArg &szExe,
 			   LPCWSTR* rsArguments = NULL, BOOL* rpbNeedCutStartEndQuot = NULL,
