@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2014 Maximus5
+Copyright (c) 2009-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -81,7 +81,7 @@ void SetUserFriendlyFont(HWND hConWnd, int newFontY = 0, int newFontX = 0)
 		crVisibleSize.Y = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
 	}
 
-	if ((crVisibleSize.X <= 0) && (crVisibleSize.Y <= 0))
+	if ((crVisibleSize.X <= 0) || (crVisibleSize.Y <= 0))
 	{
 		_ASSERTE((crVisibleSize.X > 0) && (crVisibleSize.Y > 0));
 		return;
