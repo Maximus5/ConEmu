@@ -932,33 +932,42 @@ bool CompareProcessNames(LPCWSTR pszProcess1, LPCWSTR pszProcess2)
 	return (iCmp == 0);
 }
 
-bool CheckProcessName(LPCWSTR pszProcessName, LPCWSTR* lsNameExt, LPCWSTR* lsName)
+bool CheckProcessName(LPCWSTR pszProcessName, LPCWSTR* lsNames)
 {
-	//LPCWSTR lsNameExt[] = {L"ConEmuC.exe", L"ConEmuC64.exe", L"csrss.exe", L"conhost.exe", NULL};
-	//LPCWSTR lsName[] = {L"ConEmuC", L"ConEmuC64", L"csrss", L"conhost", NULL};
-
-	LPCWSTR pszName = PointToName(pszProcessName);
-	if (!pszName || !*pszName)
-	{
-		_ASSERTE(pszName && *pszName);
+	LPCWSTR pszName1 = PointToName(pszProcessName);
+	if (!pszName1 || !*pszName1 || !lsNames)
 		return false;
+
+	LPCWSTR pszExt1 = wcsrchr(pszName1, L'.');
+
+	CEStr lsName1;
+	if (!pszExt1)
+	{
+		lsName1 = lstrmerge(pszName1, L".exe");
+		pszName1 = lsName1;
+		if (!pszName1)
+			return false;
 	}
 
-	if (wcschr(pszName, L'.'))
+	for (size_t i = 0; lsNames[i]; i++)
 	{
-		for (size_t i = 0; lsNameExt[i]; i++)
+		LPCWSTR pszName2 = lsNames[i];
+
+		_ASSERTE(wcsrchr(pszName2, L'.') != NULL);
+		#if 0
+		CEStr lsName2;
+		LPCWSTR pszExt2 = wcsrchr(pszName2, L'.');
+		if (!pszExt2)
 		{
-			if (lstrcmpi(pszName, lsNameExt[i]) == 0)
-				return true;
+			lsName2 = lstrmerge(pszName2, L".exe");
+			pszName2 = lsName2;
+			if (!pszName2)
+				return false;
 		}
-	}
-	else
-	{
-		for (size_t i = 0; lsName[i]; i++)
-		{
-			if (lstrcmpi(pszName, lsName[i]) == 0)
-				return true;
-		}
+		#endif
+
+		if (lstrcmpi(pszName1, pszName2) == 0)
+			return true;
 	}
 
 	return false;
@@ -967,36 +976,31 @@ bool CheckProcessName(LPCWSTR pszProcessName, LPCWSTR* lsNameExt, LPCWSTR* lsNam
 bool IsConsoleService(LPCWSTR pszProcessName)
 {
 	LPCWSTR lsNameExt[] = {L"csrss.exe", L"conhost.exe", NULL};
-	LPCWSTR lsName[] = {L"csrss", L"conhost", NULL};
-	return CheckProcessName(pszProcessName, lsNameExt, lsName);
+	return CheckProcessName(pszProcessName, lsNameExt);
 }
 
 bool IsConsoleServer(LPCWSTR pszProcessName)
 {
 	LPCWSTR lsNameExt[] = {L"ConEmuC.exe", L"ConEmuC64.exe", NULL};
-	LPCWSTR lsName[] = {L"ConEmuC", L"ConEmuC64", NULL};
-	return CheckProcessName(pszProcessName, lsNameExt, lsName);
+	return CheckProcessName(pszProcessName, lsNameExt);
 }
 
 bool IsGitBashHelper(LPCWSTR pszProcessName)
 {
 	LPCWSTR lsNameExt[] = { L"git-bash.exe", L"git-cmd.exe", NULL };
-	LPCWSTR lsName[] = { L"git-bash", L"git-cmd", NULL };
-	return CheckProcessName(pszProcessName, lsNameExt, lsName);
+	return CheckProcessName(pszProcessName, lsNameExt);
 }
 
 bool IsFarExe(LPCWSTR asModuleName)
 {
 	LPCWSTR lsNameExt[] = {L"far.exe", L"far64.exe", NULL};
-	LPCWSTR lsName[] = {L"far", L"far64", NULL};
-	return CheckProcessName(asModuleName, lsNameExt, lsName);
+	return CheckProcessName(asModuleName, lsNameExt);
 }
 
 bool IsCmdProcessor(LPCWSTR asModuleName)
 {
 	LPCWSTR lsNameExt[] = {L"cmd.exe", L"tcc.exe", NULL};
-	LPCWSTR lsName[] = {L"cmd", L"tcc", NULL};
-	return CheckProcessName(asModuleName, lsNameExt, lsName);
+	return CheckProcessName(asModuleName, lsNameExt);
 }
 
 bool IsQuotationNeeded(LPCWSTR pszPath)

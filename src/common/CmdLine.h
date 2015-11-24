@@ -47,7 +47,7 @@ LPCWSTR GetDrive(LPCWSTR pszPath, wchar_t* szDrive, int/*countof(szDrive)*/ cchD
 int GetDirectory(CmdArg& szDir);
 
 bool CompareProcessNames(LPCWSTR pszProcess1, LPCWSTR pszProcess2);
-bool CheckProcessName(LPCWSTR pszProcessName, LPCWSTR* lsNameExt, LPCWSTR* lsName);
+bool CheckProcessName(LPCWSTR pszProcessName, LPCWSTR* lsNames);
 
 bool IsExecutable(LPCWSTR aszFilePathName, wchar_t** rsExpandedVars = NULL);
 bool IsFarExe(LPCWSTR asModuleName);
