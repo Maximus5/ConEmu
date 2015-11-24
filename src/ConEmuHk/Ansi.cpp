@@ -59,8 +59,10 @@ DWORD AnsiTlsIndex = 0;
 
 #ifdef _DEBUG
 #define DebugString(x) OutputDebugString(x)
+#define DebugStringA(x) OutputDebugStringA(x)
 #else
 #define DebugString(x) //OutputDebugString(x)
+#define DebugStringA(x) //OutputDebugStringA(x)
 #endif
 
 /* ************ Globals ************ */
@@ -138,6 +140,29 @@ BOOL WINAPI WriteProcessed(LPCWSTR lpBuffer, DWORD nNumberOfCharsToWrite, LPDWOR
 	return WriteProcessed2(lpBuffer, nNumberOfCharsToWrite, lpNumberOfCharsWritten, wps_Output);
 }
 /* ************ Export ANSI printings ************ */
+
+void DebugStringUtf8(LPCWSTR asMessage)
+{
+	#ifdef _DEBUG
+	if (!asMessage || !*asMessage)
+		return;
+	int iLen = lstrlen(asMessage);
+	char szUtf8[200];
+	char* pszUtf8 = ((iLen*3+5) < countof(szUtf8)) ? szUtf8 : (char*)malloc(iLen*3+5);
+	if (!pszUtf8)
+		return;
+	pszUtf8[0] = 0xEF; pszUtf8[1] = 0xBB; pszUtf8[2] = 0xBF;
+	int iCvt = WideCharToMultiByte(CP_UTF8, 0, asMessage, iLen, pszUtf8+3, iLen*3+1, NULL, NULL);
+	if (iCvt > 0)
+	{
+		_ASSERTE(iCvt < (iLen*3+2));
+		pszUtf8[iCvt+3] = 0;
+		DebugStringA(pszUtf8);
+	}
+	if (pszUtf8 != szUtf8)
+		free(pszUtf8);
+	#endif
+}
 
 void CEAnsi::InitAnsiLog(LPCWSTR asFilePath)
 {
@@ -629,11 +654,11 @@ void CEAnsi::DumpEscape(LPCWSTR buf, size_t cchLen, DumpEscapeCodes iUnknown)
 
 			if (nCur >= 80)
 			{
-				*(pszDst++) = L'¶';
+				*(pszDst++) = 0xB6; // L'¶';
 				*(pszDst++) = L'\n';
 				*pszDst = 0;
-				// No much sense to use wchar_t, because OS converts it and passed to OutputDebugStringA
-				DebugString(szDbg);
+				// Try to pass UTF-8 encoded strings to debugger
+				DebugStringUtf8(szDbg);
 				wmemset(szDbg, L' ', nStart);
 				nCur = 0;
 				pszFrom = pszDst = szDbg + nStart;
@@ -651,11 +676,11 @@ void CEAnsi::DumpEscape(LPCWSTR buf, size_t cchLen, DumpEscapeCodes iUnknown)
 
 	if (pszDst > pszFrom)
 	{
-		*(pszDst++) = L'¶';
+		*(pszDst++) = 0xB6; // L'¶';
 		*(pszDst++) = L'\n';
 		*pszDst = 0;
-		// No much sense to use wchar_t, because OS converts it and passed to OutputDebugStringA
-		DebugString(szDbg);
+		// Try to pass UTF-8 encoded strings to debugger
+		DebugStringUtf8(szDbg);
 	}
 #endif
 }

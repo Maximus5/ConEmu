@@ -1297,6 +1297,8 @@ void ProcessDebugEvent()
 					else
 					{
 						szDbgText[min(iReadMax,nRead+1)] = 0;
+						if ((memcmp(szDbgText, "\xEF\xBB\xBF", 3) != 0)
+							|| !MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, szDbgText+3, -1, pwszDbg, iReadMax+1))
 						MultiByteToWideChar(CP_ACP, 0, szDbgText, -1, pwszDbg, iReadMax+1);
 					}
 				}
