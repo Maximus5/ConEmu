@@ -206,7 +206,7 @@ int WINAPI RegisterPanelView(PanelViewInit *ppvi)
 {
 	if (!ppvi)
 	{
-		_ASSERTE(ppvi->cbSize == sizeof(PanelViewInit));
+		//_ASSERTE(ppvi->cbSize == sizeof(PanelViewInit));
 		return -2;
 	}
 

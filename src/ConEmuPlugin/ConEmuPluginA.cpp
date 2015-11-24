@@ -51,6 +51,7 @@ struct FarStandardFunctions *FSFA=NULL;
 
 CPluginAnsi::CPluginAnsi()
 {
+	memset(ms_TempMsgBuf, 0, sizeof(ms_TempMsgBuf));
 	ee_Read = EE_READ;
 	ee_Save = EE_SAVE;
 	ee_Redraw = EE_REDRAW;
