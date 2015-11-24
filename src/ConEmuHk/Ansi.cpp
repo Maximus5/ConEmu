@@ -120,7 +120,7 @@ BOOL WINAPI WriteProcessed3(LPCWSTR lpBuffer, DWORD nNumberOfCharsToWrite, LPDWO
 	InterlockedDecrement(&gnWriteProcessed);
 	return bRc;
 }
-BOOL WINAPI WriteProcessed2(LPCWSTR lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, WriteProcessedStream Stream)
+HANDLE GetStreamHandle(WriteProcessedStream Stream)
 {
 	HANDLE hConsoleOutput;
 	switch (Stream)
@@ -131,8 +131,15 @@ BOOL WINAPI WriteProcessed2(LPCWSTR lpBuffer, DWORD nNumberOfCharsToWrite, LPDWO
 		hConsoleOutput = GetStdHandle(STD_ERROR_HANDLE); break;
 	default:
 		SetLastError(ERROR_INVALID_PARAMETER);
-		return FALSE;
+		return NULL;
 	}
+	return hConsoleOutput;
+}
+BOOL WINAPI WriteProcessed2(LPCWSTR lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, WriteProcessedStream Stream)
+{
+	HANDLE hConsoleOutput = GetStreamHandle(Stream);
+	if (!hConsoleOutput || (hConsoleOutput == INVALID_HANDLE_VALUE))
+		return FALSE;
 	return WriteProcessed3(lpBuffer, nNumberOfCharsToWrite, lpNumberOfCharsWritten, hConsoleOutput);
 }
 BOOL WINAPI WriteProcessed(LPCWSTR lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten)
