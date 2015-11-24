@@ -2686,6 +2686,7 @@ void CEAnsi::WriteAnsiCode_OSC(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsole
 		// ESC ] 9 ; 7 ; "cmd" ST        Run some process with arguments
 		// ESC ] 9 ; 8 ; "env" ST        Output value of environment variable
 		// ESC ] 9 ; 9 ; "cwd" ST        Inform ConEmu about shell current working directory
+		// ESC ] 9 ; 10 ST               Request xterm keyboard emulation
 		if (Code.ArgSZ[1] == L';')
 		{
 			if (Code.ArgSZ[2] == L'1' && Code.ArgSZ[3] == L';')
@@ -2808,6 +2809,11 @@ void CEAnsi::WriteAnsiCode_OSC(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsole
 			else if (Code.ArgSZ[2] == L'9' && Code.ArgSZ[3] == L';')
 			{
 				DoSendCWD(Code.ArgSZ+4, Code.cchArgSZ - 4);
+			}
+			else if (Code.ArgSZ[2] == L'1' && Code.ArgSZ[3] == L'0')
+			{
+				if (!gbWasXTermOutput)
+					CEAnsi::StartXTermMode(true);
 			}
 		}
 		break;
