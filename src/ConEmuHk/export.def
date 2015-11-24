@@ -13,4 +13,5 @@ EXPORTS
 	WriteProcessed
 	WriteProcessed2
 	WriteProcessed3
+	WriteProcessedA
 	RequestDefTermShutdown

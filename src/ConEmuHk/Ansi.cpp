@@ -146,6 +146,32 @@ BOOL WINAPI WriteProcessed(LPCWSTR lpBuffer, DWORD nNumberOfCharsToWrite, LPDWOR
 {
 	return WriteProcessed2(lpBuffer, nNumberOfCharsToWrite, lpNumberOfCharsWritten, wps_Output);
 }
+BOOL WINAPI WriteProcessedA(LPCSTR lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, WriteProcessedStream Stream)
+{
+	BOOL lbRc = FALSE;
+	CEAnsi* pObj = NULL;
+
+	ORIGINAL_KRNL(WriteConsoleA);
+
+	// Nothing to write? Or flush buffer?
+	if (!lpBuffer || !nNumberOfCharsToWrite || !(int)Stream)
+	{
+		if (lpNumberOfCharsWritten)
+			*lpNumberOfCharsWritten = 0;
+		lbRc = TRUE;
+		goto fin;
+	}
+
+	pObj = CEAnsi::Object();
+
+	if (pObj)
+		lbRc = pObj->OurWriteConsoleA(GetStreamHandle(Stream), lpBuffer, nNumberOfCharsToWrite, lpNumberOfCharsWritten);
+	else
+		lbRc = F(WriteConsoleA)(GetStreamHandle(Stream), lpBuffer, nNumberOfCharsToWrite, lpNumberOfCharsWritten, NULL);
+
+fin:
+	return lbRc;
+}
 /* ************ Export ANSI printings ************ */
 
 void DebugStringUtf8(LPCWSTR asMessage)

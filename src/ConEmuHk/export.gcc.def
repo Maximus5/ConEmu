@@ -10,4 +10,5 @@ EXPORTS
 	WriteProcessed=WriteProcessed@12
 	WriteProcessed2=WriteProcessed2@16
 	WriteProcessed3=WriteProcessed3@16
+	WriteProcessedA=WriteProcessedA@16
 	RequestDefTermShutdown=RequestDefTermShutdown@0
