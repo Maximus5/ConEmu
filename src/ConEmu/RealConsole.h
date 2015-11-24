@@ -148,6 +148,7 @@ struct ConProcess
 {
 	DWORD ProcessID, ParentPID; //, InputTID;
 	bool  IsMainSrv; // Root ConEmuC
+	bool  IsTermSrv; // cygwin/msys connector
 	bool  IsConHost; // conhost.exe (Win7 и выше)
 	bool  IsFar, IsFarPlugin;
 	bool  IsTelnet;  // может быть включен ВМЕСТЕ с IsFar, если удалось подцепиться к фару через сетевой пайп
@@ -496,6 +497,7 @@ class CRealConsole
 		DWORD GetFarStatus();
 		bool isServerAlive();
 		DWORD GetServerPID(bool bMainOnly = false);
+		DWORD GetTerminalPID();
 		DWORD GetMonitorThreadID();
 		bool isServerCreated(bool bFullRequired = false);
 		bool isServerAvailable();
@@ -666,6 +668,7 @@ class CRealConsole
 	protected:
 		void SetMainSrvPID(DWORD anMainSrvPID, HANDLE ahMainSrv);
 		void SetAltSrvPID(DWORD anAltSrvPID/*, HANDLE ahAltSrv*/);
+		void SetTerminalPID(DWORD anTerminalPID);
 		// Сервер и альтернативный сервер
 		DWORD mn_MainSrv_PID; HANDLE mh_MainSrv;
 		u64 mn_ProcessAffinity; DWORD mn_ProcessPriority;
@@ -681,6 +684,7 @@ class CRealConsole
 		bool  mb_MainSrv_Ready; // Сервер готов принимать команды?
 		DWORD mn_ActiveLayout;
 		DWORD mn_AltSrv_PID;  //HANDLE mh_AltSrv;
+		DWORD mn_Terminal_PID; // cygwin/msys connector
 		HANDLE mh_SwitchActiveServer, mh_ActiveServerSwitched;
 		bool mb_SwitchActiveServer;
 		enum SwitchActiveServerEvt { eDontChange, eSetEvent, eResetEvent };

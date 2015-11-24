@@ -272,6 +272,7 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 	mp_ConHostSearch = NULL;
 	mn_ActiveLayout = 0;
 	mn_AltSrv_PID = 0;  //mh_AltSrv = NULL;
+	mn_Terminal_PID = 0;
 	mb_SwitchActiveServer = false;
 	mh_SwitchActiveServer = CreateEvent(NULL,FALSE,FALSE,NULL);
 	mh_ActiveServerSwitched = CreateEvent(NULL,FALSE,FALSE,NULL);
@@ -477,6 +478,7 @@ CRealConsole::~CRealConsole()
 
 	SafeCloseHandle(mh_MainSrv); mn_MainSrv_PID = mn_ConHost_PID = 0; mb_MainSrv_Ready = false;
 	/*SafeCloseHandle(mh_AltSrv);*/  mn_AltSrv_PID = 0;
+	mn_Terminal_PID = 0;
 	SafeCloseHandle(mh_SwitchActiveServer); mb_SwitchActiveServer = false;
 	SafeCloseHandle(mh_ActiveServerSwitched);
 	SafeCloseHandle(mh_ConInputPipe);
@@ -7243,6 +7245,13 @@ DWORD CRealConsole::GetServerPID(bool bMainOnly /*= false*/)
 	return (mn_AltSrv_PID && !bMainOnly) ? mn_AltSrv_PID : mn_MainSrv_PID;
 }
 
+DWORD CRealConsole::GetTerminalPID()
+{
+	if (!this)
+		return 0;
+	return mn_Terminal_PID;
+}
+
 void CRealConsole::SetMainSrvPID(DWORD anMainSrvPID, HANDLE ahMainSrv)
 {
 	_ASSERTE((mh_MainSrv==NULL || mh_MainSrv==ahMainSrv) && "mh_MainSrv must be closed before!");
@@ -7266,6 +7275,8 @@ void CRealConsole::SetMainSrvPID(DWORD anMainSrvPID, HANDLE ahMainSrv)
 		mn_ActiveLayout = 0;
 		// Сброс
 		ConHostSetPID(0);
+		// cygwin/msys connector
+		SetTerminalPID(0);
 	}
 	else if (gpSetCls->isAdvLogging)
 	{
@@ -7279,9 +7290,20 @@ void CRealConsole::SetMainSrvPID(DWORD anMainSrvPID, HANDLE ahMainSrv)
 	DEBUGTEST(isServerAlive());
 
 	if (isActive(false))
-		mp_ConEmu->mp_Status->OnServerChanged(mn_MainSrv_PID, mn_AltSrv_PID);
+		mp_ConEmu->mp_Status->OnServerChanged(mn_MainSrv_PID, mn_AltSrv_PID ? mn_AltSrv_PID : mn_Terminal_PID);
 
 	DEBUGTEST(isServerAlive());
+}
+
+void CRealConsole::SetTerminalPID(DWORD anTerminalPID)
+{
+	if (mn_Terminal_PID != anTerminalPID)
+	{
+		mn_Terminal_PID = anTerminalPID;
+
+		if (isActive(false))
+			mp_ConEmu->mp_Status->OnServerChanged(mn_MainSrv_PID, mn_AltSrv_PID ? mn_AltSrv_PID : mn_Terminal_PID);
+	}
 }
 
 void CRealConsole::SetAltSrvPID(DWORD anAltSrvPID/*, HANDLE ahAltSrv*/)
@@ -7348,7 +7370,7 @@ bool CRealConsole::InitAltServer(DWORD nAltServerPID/*, HANDLE hAltServer*/)
 	}
 
 	if (isActive(false))
-		mp_ConEmu->mp_Status->OnServerChanged(mn_MainSrv_PID, mn_AltSrv_PID);
+		mp_ConEmu->mp_Status->OnServerChanged(mn_MainSrv_PID, mn_AltSrv_PID ? mn_AltSrv_PID : mn_Terminal_PID);
 
 	return bOk;
 }
@@ -7387,7 +7409,7 @@ bool CRealConsole::ReopenServerPipes()
 	bool bActive = isActive(false);
 
 	if (bActive)
-		mp_ConEmu->mp_Status->OnServerChanged(mn_MainSrv_PID, mn_AltSrv_PID);
+		mp_ConEmu->mp_Status->OnServerChanged(mn_MainSrv_PID, mn_AltSrv_PID ? mn_AltSrv_PID : mn_Terminal_PID);
 
 	UpdateServerActive(TRUE);
 
@@ -7963,6 +7985,7 @@ BOOL CRealConsole::ProcessUpdateFlags(BOOL abProcessChanged)
 	//Warning: Должен вызываться ТОЛЬКО из ProcessAdd/ProcessDelete, т.к. сам секцию не блокирует
 	bool bIsFar = false, bIsTelnet = false, bIsCmd = false;
 	DWORD dwFarPID = 0;
+	DWORD dwTerminalPID = 0;
 	ConProcess ActivePID = {};
 	// Наличие 16bit определяем ТОЛЬКО по WinEvent. Иначе не получится отсечь его завершение,
 	// т.к. процесс ntvdm.exe не выгружается, а остается в памяти.
@@ -8021,6 +8044,9 @@ BOOL CRealConsole::ProcessUpdateFlags(BOOL abProcessChanged)
 
 		if (!bIsFar && !bIsCmd && iter->IsCmd)
 			bIsCmd = true;
+
+		if (iter->IsTermSrv)
+			dwTerminalPID = iter->ProcessID;
 
 		// Look for roughly active process
 		if (!ActivePID.ProcessID)
@@ -8108,6 +8134,9 @@ BOOL CRealConsole::ProcessUpdateFlags(BOOL abProcessChanged)
 	}
 
 	SetFarPID(dwFarPID);
+
+	if (mn_Terminal_PID != dwTerminalPID)
+		SetTerminalPID(dwTerminalPID);
 
 	if (m_ActiveProcess.ProcessID != ActivePID.ProcessID)
 		SetActivePID(&ActivePID);
@@ -8528,6 +8557,7 @@ void CRealConsole::ProcessCheckName(struct ConProcess &ConPrc, LPWSTR asFullFile
 
 	ConPrc.IsConHost = lstrcmpi(ConPrc.Name, _T("conhost.exe"))==0
 				|| lstrcmpi(ConPrc.Name, _T("csrss.exe"))==0;
+	ConPrc.IsTermSrv = IsTerminalServer(ConPrc.Name);
 
 	ConPrc.IsFar = IsFarExe(ConPrc.Name);
 	ConPrc.IsNtvdm = lstrcmpi(ConPrc.Name, _T("ntvdm.exe"))==0;

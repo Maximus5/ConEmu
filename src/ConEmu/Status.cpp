@@ -1862,7 +1862,8 @@ void CStatus::OnActiveVConChanged(int nIndex/*0-based*/, CRealConsole* pRCon)
 	{
 		DWORD nMainServerPID = pRCon->isServerCreated() ? pRCon->GetServerPID(true) : 0;
 		DWORD nAltServerPID = nMainServerPID ? pRCon->GetServerPID(false) : 0;
-		OnServerChanged(nMainServerPID, nAltServerPID);
+		DWORD nTerminalPID = nMainServerPID ? pRCon->GetTerminalPID() : 0;
+		OnServerChanged(nMainServerPID, nAltServerPID ? nAltServerPID : nTerminalPID);
 
 		ConsoleInfoArg ci = {};
 		pRCon->GetConsoleInfo(&ci);
