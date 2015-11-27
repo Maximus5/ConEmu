@@ -134,6 +134,7 @@ protected:
 	static int NextNumber(LPCWSTR& asMS);
 
 public:
+	static void ChangeTermMode(TermModeCommand mode, DWORD value);
 	static void StartXTermMode(bool bStart);
 
 public:

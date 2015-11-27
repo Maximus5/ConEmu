@@ -1408,16 +1408,23 @@ CESERVER_REQ* CRealServer::cmdExportEnvVarAll(LPVOID pInst, CESERVER_REQ* pIn, U
 
 CESERVER_REQ* CRealServer::cmdStartXTerm(LPVOID pInst, CESERVER_REQ* pIn, UINT nDataSize)
 {
+	BOOL  bProcessed = TRUE;
 	DWORD nCmd = pIn->hdr.nCmd;
 	DEBUGSTRCMD(L"GUI recieved CECMD_STARTXTERM\n");
 
-	// В свой процесс тоже засосать переменные, чтобы для новых табов применялись
-	mp_RCon->StartStopXTerm(pIn->hdr.nSrcPID, (pIn->dwData[0] != 0));
+	switch (pIn->dwData[0])
+	{
+	case tmc_Keyboard:
+		_ASSERTE(pIn->dwData[1] == te_win32 || pIn->dwData[1] == te_xterm);
+		mp_RCon->StartStopXTerm(pIn->hdr.nSrcPID, (pIn->dwData[1] != te_win32));
+		break;
+	default:
+		bProcessed = FALSE;
+	}
 
-	// pIn->hdr.nCmd перебивается на CECMD_EXPORTVARS, поэтому возвращаем сохраненный ID
 	CESERVER_REQ* pOut = ExecuteNewCmd(nCmd, sizeof(CESERVER_REQ_HDR)+sizeof(DWORD));
 	if (pOut)
-		pOut->dwData[0] = TRUE;
+		pOut->dwData[0] = bProcessed;
 	return pOut;
 }
 

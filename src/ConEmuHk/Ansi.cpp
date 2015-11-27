@@ -3203,23 +3203,30 @@ void CEAnsi::StopVimTerm()
 	XTermAltBuffer(false);
 }
 
+void CEAnsi::ChangeTermMode(TermModeCommand mode, DWORD value)
+{
+	CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_STARTXTERM, sizeof(CESERVER_REQ_HDR)+2*sizeof(DWORD));
+	if (pIn)
+	{
+		pIn->dwData[0] = mode;
+		pIn->dwData[1] = value;
+		CESERVER_REQ* pOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd);
+		ExecuteFreeResult(pIn);
+		ExecuteFreeResult(pOut);
+	}
+}
+
 void CEAnsi::StartXTermMode(bool bStart)
 {
 	// May be triggered by ConEmuT, official Vim builds and in some other cases
 	//_ASSERTEX((gXTermAltBuffer.Flags & xtb_AltBuffer) && (gbWasXTermOutput!=bStart));
 	_ASSERTEX(gbWasXTermOutput!=bStart);
 
-	CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_STARTXTERM, sizeof(CESERVER_REQ_HDR)+sizeof(DWORD));
-	if (pIn)
-	{
-		// Remember last mode
-		gbWasXTermOutput = bStart;
-		pIn->dwData[0] = bStart ? te_xterm : te_win32;
-		CESERVER_REQ* pOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd);
-		ExecuteFreeResult(pIn);
-		ExecuteFreeResult(pOut);
-	}
+	// Remember last mode
+	gbWasXTermOutput = bStart;
+	ChangeTermMode(tmc_Keyboard, bStart ? te_xterm : te_win32);
 }
+
 
 //static
 CEAnsi* CEAnsi::Object(bool bForceCreate /*= false*/)

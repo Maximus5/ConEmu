@@ -30,7 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _COMMON_HEADER_HPP_
 
 // Interface version
-#define CESERVER_REQ_VER    159
+#define CESERVER_REQ_VER    160
 
 // Max tabs/panes count
 #define MAX_CONSOLE_COUNT 30
@@ -338,7 +338,13 @@ enum RealBufferScroll
 	rbs_Any  = 3,
 };
 
-// Generally used for control keys (arrows e.g.) translation
+// CECMD_STARTXTERM: what we want to change
+enum TermModeCommand
+{
+	tmc_Keyboard = 0,
+};
+
+// tmc_Keyboard: used for control keys (arrows e.g.) translation
 enum TermEmulationType
 {
 	te_win32 = 0,
@@ -442,7 +448,7 @@ const CECMD
 	CECMD_GUICLIENTSHIFT = 71, // GuiStylesAndShifts
 	CECMD_ALTBUFFER      = 72, // CESERVER_REQ_ALTBUFFER: CmdOutputStore/Restore
 	CECMD_ALTBUFFERSTATE = 73, // Проверить, разрешен ли Alt.Buffer?
-	CECMD_STARTXTERM     = 74, // dwData[0]=bool, start/stop xterm input
+	CECMD_STARTXTERM     = 74, // dwData[0]=TermModeCommand, dwData[1]=value (TermEmulationType for tmc_Keyboard, and so on)
 	//CECMD_DEFTERMSTARTED = 75, // Уведомить GUI, что инициализация хуков для Default Terminal была завершена -- не требуется, ConEmuC ждет успеха
 	CECMD_UPDCONMAPHDR   = 76, // AltServer не может менять CESERVER_CONSOLE_MAPPING_HDR во избежание конфликтов. Это делает только RM_MAINSERVER (req.ConInfo)
 	CECMD_SETCONSCRBUF   = 77, // CESERVER_REQ_SETCONSCRBUF - temporarily block active server reading thread to change console buffer size
