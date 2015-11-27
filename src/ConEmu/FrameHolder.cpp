@@ -1141,7 +1141,12 @@ LRESULT CFrameHolder::OnNcCalcSize(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 		// lParam points to an NCCALCSIZE_PARAMS structure that contains information
 		// an application can use to calculate the new size and position of the client rectangle.
 		// The application should indicate which part of the client area contains valid information!
-		NCCALCSIZE_PARAMS* pParm = wParam ? ((NCCALCSIZE_PARAMS*)lParam) : NULL;
+		NCCALCSIZE_PARAMS* pParm = (NCCALCSIZE_PARAMS*)lParam;
+		if (!pParm)
+		{
+			_ASSERTE(pParm!=NULL);
+			return 0;
+		}
 		// r[0] contains the new coordinates of a window that has been moved or resized,
 		//      that is, it is the proposed new window coordinates
 		// r[1] contains the coordinates of the window before it was moved or resized
@@ -1216,6 +1221,11 @@ LRESULT CFrameHolder::OnNcCalcSize(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 		// rectangle for the window. On exit, the structure should contain the screen coordinates
 		// of the corresponding window client area.
 		LPRECT nccr = (LPRECT)lParam;
+		if (!nccr)
+		{
+			_ASSERTE(nccr!=NULL);
+			return 0;
+		}
 		RECT rc = *nccr;
 		//RECT rcWnd = {0,0, rc.right-rc.left, rc.bottom-rc.top};
 		RECT rcClient; // = gpConEmu->CalcRect(CER_MAINCLIENT, rcWnd, CER_MAIN);
