@@ -100,8 +100,8 @@ HWND FindMinTTY()
 
 		if (!nCount)
 		{
-			return NULL;
 			free(pi);
+			return NULL;
 		}
 
 		bool bMinTTY = false;
