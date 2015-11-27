@@ -3924,6 +3924,7 @@ int DoOutput(ConEmuExecAction eExecAction, LPCWSTR asCmdArg)
 	CmdArg   szArg;
 	HANDLE   hFile = NULL;
 	DWORD    DefaultCP = 0;
+	BOOL     bRc = FALSE;
 
 	_ASSERTE(asCmdArg && (*asCmdArg != L' '));
 	asCmdArg = SkipNonPrintable(asCmdArg);
@@ -4093,7 +4094,6 @@ int DoOutput(ConEmuExecAction eExecAction, LPCWSTR asCmdArg)
 
 	if (!IsOutputRedirected())
 	{
-		BOOL bRc;
 		typedef BOOL (WINAPI* WriteProcessed_t)(LPCWSTR lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten);
 		WriteProcessed_t WriteProcessed = NULL;
 		HMODULE hHooks = NULL;
@@ -4115,9 +4115,6 @@ int DoOutput(ConEmuExecAction eExecAction, LPCWSTR asCmdArg)
 		{
 			bRc = WriteConsoleW(hOut, pszText, cchLen, &dwWritten, 0);
 		}
-
-		if (!bRc)
-			iRc = 3;
 	}
 	else
 	{
@@ -4137,10 +4134,13 @@ int DoOutput(ConEmuExecAction eExecAction, LPCWSTR asCmdArg)
 			int nWrite = WideCharToMultiByte(cp, 0, pszText, cchLen, pszOem, nDstLen, NULL, NULL);
 			if (nWrite > 1)
 			{
-				WriteFile(hOut, pszOem, nWrite, &dwWritten, 0);
+				bRc = WriteFile(hOut, pszOem, nWrite, &dwWritten, 0);
 			}
 		}
 	}
+
+	if (!bRc && !iRc)
+		iRc = 3;
 
 wrap:
 	SafeFree(pszLine);
