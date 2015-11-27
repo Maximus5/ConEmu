@@ -416,6 +416,7 @@
       <File RelativePath="..\common\RConStartArgs.h" />
       <File RelativePath="..\common\StartupEnv.h" />
       <File RelativePath="..\common\StartupEnvDef.h" />
+      <File RelativePath="..\common\WCodePage.h" />
       <File RelativePath="..\common\WConsole.h" />
       <File RelativePath="..\common\WErrGuard.h" />
       <File RelativePath="..\common\WObjects.h" />
@@ -472,6 +473,7 @@
       <File RelativePath="..\common\MSecurity.cpp" />
       <File RelativePath="..\common\MStrSafe.cpp" />
       <File RelativePath="..\common\RConStartArgs.cpp" />
+      <File RelativePath="..\common\WCodePage.cpp" />
       <File RelativePath="..\common\WConsole.cpp" />
       <File RelativePath="..\common\WObjects.cpp" />
       <File RelativePath="..\common\WThreads.cpp" />

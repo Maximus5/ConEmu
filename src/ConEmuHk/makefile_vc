@@ -92,6 +92,7 @@ $(INTDIR)\MStrSafe.obj \
 $(INTDIR)\RConStartArgs.obj \
 $(INTDIR)\SetHook.obj \
 $(INTDIR)\ShellProcessor.obj \
+$(INTDIR)\WCodePage.obj \
 $(INTDIR)\WConsole.obj \
 $(INTDIR)\WObjects.obj \
 $(INTDIR)\WThreads.obj
@@ -418,6 +419,8 @@ $(INTDIR)\SetHook.obj: SetHook.cpp SetHook.h
 $(INTDIR)\ShellProcessor.obj: ShellProcessor.cpp ShellProcessor.h
 
 $(INTDIR)\UserImp.obj: UserImp.cpp UserImp.h
+
+$(INTDIR)\WCodePage.obj: ../common/WCodePage.cpp ../common/WCodePage.h
 
 $(INTDIR)\WConsole.obj: ../common/WConsole.cpp ../common/WConsole.h
 

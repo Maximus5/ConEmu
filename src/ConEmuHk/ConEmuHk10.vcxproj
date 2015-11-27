@@ -858,6 +858,7 @@
     <ClInclude Include="..\common\RConStartArgs.h" />
     <ClInclude Include="..\common\StartupEnv.h" />
     <ClInclude Include="..\common\StartupEnvDef.h" />
+    <ClInclude Include="..\common\WCodePage.h" />
     <ClInclude Include="..\common\WConsole.h" />
     <ClInclude Include="..\common\WErrGuard.h" />
     <ClInclude Include="..\common\WObjects.h" />
@@ -914,6 +915,7 @@
     <ClCompile Include="..\common\MSecurity.cpp" />
     <ClCompile Include="..\common\MStrSafe.cpp" />
     <ClCompile Include="..\common\RConStartArgs.cpp" />
+    <ClCompile Include="..\common\WCodePage.cpp" />
     <ClCompile Include="..\common\WConsole.cpp" />
     <ClCompile Include="..\common\WObjects.cpp" />
     <ClCompile Include="..\common\WThreads.cpp" />

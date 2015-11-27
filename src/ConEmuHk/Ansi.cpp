@@ -36,6 +36,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/ConsoleAnnotation.h"
 #include "../common/MConHandle.h"
 #include "../common/MSectionSimple.h"
+#include "../common/WCodePage.h"
 #include "../common/WConsole.h"
 #include "../common/WErrGuard.h"
 #include "../ConEmu/version.h"
@@ -895,10 +896,13 @@ BOOL CEAnsi::OurWriteConsoleA(HANDLE hConsoleOutput, const char *lpBuffer, DWORD
 	_ASSERTE(this!=NULL);
 	BOOL lbRc = FALSE;
 	wchar_t* buf = NULL;
+	wchar_t szTemp[280]; // would be enough in most cases
+	INT_PTR bufMax;
 	DWORD len, cp;
-	static bool badUnicode = false;
-	DEBUGTEST(bool curBadUnicode = badUnicode);
-	DEBUGTEST(wchar_t szTmp[2] = L"");
+	CpCvtResult cvt;
+	const char *pSrc, *pTokenStart;
+	wchar_t *pDst, *pDstEnd;
+	DWORD nWritten = 0, nTotalWritten = 0;
 
 	ORIGINAL_KRNL(WriteConsoleA);
 
@@ -911,73 +915,78 @@ BOOL CEAnsi::OurWriteConsoleA(HANDLE hConsoleOutput, const char *lpBuffer, DWORD
 		goto fin;
 	}
 
-	if (badUnicode)
+	if (!mp_Cvt
+		&& !(mp_Cvt = (CpCvt*)calloc(sizeof(*mp_Cvt),1)))
 	{
-		badUnicode = false;
-		#ifdef _DEBUG
-		if (lpBuffer && nNumberOfCharsToWrite)
-		{
-			szTmp[0] = ((char*)lpBuffer)[0];
-			CEAnsi::DumpEscape(szTmp, 1, de_BadUnicode);
-		}
-		#endif
-		goto badchar;
+		SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+		goto fin;
 	}
 
-	cp = gCpConv.nDefaultCP ? gCpConv.nDefaultCP : GetConsoleOutputCP();
-
-	DWORD nLastErr = 0;
-	DWORD nFlags = 0; //MB_ERR_INVALID_CHARS;
-
-	if (! ((cp == 42) || (cp == 65000) || (cp >= 57002 && cp <= 57011) || (cp >= 50220 && cp <= 50229)) )
+	if ((nNumberOfCharsToWrite + 3) >= countof(szTemp))
 	{
-		nFlags = MB_ERR_INVALID_CHARS;
-		nLastErr = GetLastError();
-	}
-
-	len = MultiByteToWideChar(cp, nFlags, (LPCSTR)lpBuffer, nNumberOfCharsToWrite, 0, 0);
-
-	if (nFlags /*gpStartEnv->bIsDbcs*/ && (GetLastError() == ERROR_NO_UNICODE_TRANSLATION))
-	{
-		badUnicode = true;
-		#ifdef _DEBUG
-		szTmp[0] = ((char*)lpBuffer)[0];
-		CEAnsi::DumpEscape(szTmp, 1, de_BadUnicode);
-		#endif
-		SetLastError(nLastErr);
-		goto badchar;
-	}
-
-	buf = (wchar_t*)malloc((len+1)*sizeof(wchar_t));
-	if (buf == NULL)
-	{
-		if (lpNumberOfCharsWritten != NULL)
-			*lpNumberOfCharsWritten = 0;
+		bufMax = nNumberOfCharsToWrite + 3;
+		buf = (wchar_t*)malloc(bufMax*sizeof(&buf));
 	}
 	else
 	{
-		DWORD newLen = MultiByteToWideChar(cp, nFlags, (LPCSTR)lpBuffer, nNumberOfCharsToWrite, buf, len);
-		_ASSERTEX(newLen==len);
-		buf[newLen] = 0; // ASCII-Z, хотя, если функцию WriteConsoleW зовет приложение - "\0" может и не быть...
+		buf = szTemp;
+		bufMax = countof(szTemp);
+	}
+	if (!buf)
+	{
+		SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+		goto fin;
+	}
 
-		DWORD nWideWritten = 0;
-		lbRc = OurWriteConsoleW(hConsoleOutput, buf, len, &nWideWritten, NULL);
+	cp = gCpConv.nDefaultCP ? gCpConv.nDefaultCP : GetConsoleOutputCP();
+	mp_Cvt->SetCP(cp);
 
-		// Issue 1291:	Python fails to print string sequence with ASCII character followed by Chinese character.
-		if (lpNumberOfCharsWritten)
+	lbRc = TRUE;
+	pSrc = pTokenStart = lpBuffer;
+	pDst = buf; pDstEnd = buf + bufMax - 3;
+	for (DWORD n = 0; n < nNumberOfCharsToWrite; n++, pSrc++)
+	{
+		if (pDst >= pDstEnd)
 		{
-			*lpNumberOfCharsWritten = (nWideWritten == len) ? nNumberOfCharsToWrite : nWideWritten;
+			_ASSERTE((pDst < (buf+bufMax)) && "wchar_t buffer overflow while converting");
+			buf[(pDst - buf)] = 0; // It's not required, just to easify debugging
+			lbRc = OurWriteConsoleW(hConsoleOutput, buf, (pDst - buf), &nWritten, NULL);
+			if (lbRc) nTotalWritten += nWritten;
+			pDst = buf;
+		}
+		cvt = mp_Cvt->Convert(*pSrc, *pDst);
+		switch (cvt)
+		{
+		case ccr_OK:
+		case ccr_BadUnicode:
+			pDst++;
+			break;
+		case ccr_Surrogate:
+		case ccr_BadTail:
+		case ccr_DoubleBad:
+			mp_Cvt->GetTail(*(++pDst));
+			pDst++;
+			break;
 		}
 	}
-	goto fin;
 
-badchar:
-	// We must not get here, wrong arguments?
-	_ASSERTEX((lpBuffer && nNumberOfCharsToWrite && hConsoleOutput) || (curBadUnicode||badUnicode));
-	lbRc = F(WriteConsoleA)(hConsoleOutput, lpBuffer, nNumberOfCharsToWrite, lpNumberOfCharsWritten, NULL);
+	if (pDst > buf)
+	{
+		_ASSERTE((pDst < (buf+bufMax)) && "wchar_t buffer overflow while converting");
+		buf[(pDst - buf)] = 0; // It's not required, just to easify debugging
+		lbRc = OurWriteConsoleW(hConsoleOutput, buf, (pDst - buf), &nWritten, NULL);
+		if (lbRc) nTotalWritten += nWritten;
+	}
+
+	// Issue 1291:	Python fails to print string sequence with ASCII character followed by Chinese character.
+	if (lpNumberOfCharsWritten && lbRc)
+	{
+		*lpNumberOfCharsWritten = nNumberOfCharsToWrite;
+	}
 
 fin:
-	SafeFree(buf);
+	if (buf != szTemp)
+		SafeFree(buf);
 	return lbRc;
 }
 
