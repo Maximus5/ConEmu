@@ -5917,6 +5917,18 @@ void CRealConsole::StartStopXTerm(DWORD nPID, bool xTerm)
 	}
 }
 
+void CRealConsole::StartStopBracketedPaste(DWORD nPID, bool bUseBracketedPaste)
+{
+	if (gpSetCls->isAdvLogging)
+	{
+		wchar_t szInfo[100];
+		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"StartStopBracketedPaste(nPID=%u, Enabled=%s)", nPID, bUseBracketedPaste ? L"YES" : L"NO");
+		LogString(szInfo);
+	}
+
+	m_Term.bBracketedPaste = bUseBracketedPaste;
+}
+
 void CRealConsole::PortableStarted(CESERVER_REQ_PORTABLESTARTED* pStarted)
 {
 	_ASSERTE(pStarted->hProcess == NULL && pStarted->nPID);
@@ -12107,7 +12119,21 @@ void CRealConsole::Paste(CEPasteMode PasteMode /*= pm_Standard*/, LPCWSTR asText
 		}
 	}
 
-	//INPUT_RECORD r = {KEY_EVENT};
+	if (nBufLen && m_Term.bBracketedPaste)
+	{
+		wchar_t* pszTemp = lstrmerge(L"\x1B[200~", pszBuf, L"\x1B[201~");
+		if (!pszTemp)
+		{
+			_ASSERTE(pszTemp!=NULL);
+		}
+		else
+		{
+			ExchangePtr(pszTemp, pszBuf);
+			free(pszTemp);
+			_ASSERTE(_tcslen(pszBuf) == (nBufLen+12));
+			nBufLen += 12;
+		}
+	}
 
 	// Отправить в консоль все символы из: pszBuf
 	if (nBufLen)

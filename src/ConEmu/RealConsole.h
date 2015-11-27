@@ -454,6 +454,7 @@ class CRealConsole
 		void StopSignal();
 		void StopThread(BOOL abRecreating=FALSE);
 		void StartStopXTerm(DWORD nPID, bool xTerm);
+		void StartStopBracketedPaste(DWORD nPID, bool bUseBracketedPaste);
 		void PortableStarted(CESERVER_REQ_PORTABLESTARTED* pStarted);
 		bool InScroll();
 		BOOL isBufferHeight();
@@ -950,6 +951,7 @@ class CRealConsole
 		{
 			DWORD nCallTermPID; // PID процесса запросившего эмуляцию терминала
 			TermEmulationType Term;
+			BOOL  bBracketedPaste; // All "pasted" text will be wrapped in `\e[200~ ... \e[201~`
 		} m_Term;
 		//
 		BOOL PrepareOutputFile(BOOL abUnicodeText, wchar_t* pszFilePathName);

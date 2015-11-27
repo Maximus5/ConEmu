@@ -2425,6 +2425,13 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 				else
 					DumpUnknownEscape(Code.pszEscStart, Code.nTotalLen);
 				break;
+			case 2004: /* bracketed paste */
+				/* All "pasted" text will be wrapped in `\e[200~ ... \e[201~` */
+				if ((Code.PvtLen == 1) && (Code.Pvt[0] == L'?'))
+					ChangeTermMode(tmc_BracketedPaste, (Code.Action == L'h'));
+				else
+					DumpUnknownEscape(Code.pszEscStart, Code.nTotalLen);
+				break;
 			default:
 				DumpUnknownEscape(Code.pszEscStart,Code.nTotalLen);
 			}

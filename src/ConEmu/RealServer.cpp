@@ -1418,6 +1418,9 @@ CESERVER_REQ* CRealServer::cmdStartXTerm(LPVOID pInst, CESERVER_REQ* pIn, UINT n
 		_ASSERTE(pIn->dwData[1] == te_win32 || pIn->dwData[1] == te_xterm);
 		mp_RCon->StartStopXTerm(pIn->hdr.nSrcPID, (pIn->dwData[1] != te_win32));
 		break;
+	case tmc_BracketedPaste:
+		mp_RCon->StartStopBracketedPaste(pIn->hdr.nSrcPID, (pIn->dwData[1] != 0));
+		break;
 	default:
 		bProcessed = FALSE;
 	}

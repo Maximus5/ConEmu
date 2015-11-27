@@ -342,6 +342,7 @@ enum RealBufferScroll
 enum TermModeCommand
 {
 	tmc_Keyboard = 0,
+	tmc_BracketedPaste = 1,
 };
 
 // tmc_Keyboard: used for control keys (arrows e.g.) translation
