@@ -358,7 +358,15 @@ int ReadTextFile(LPCWSTR asPath, DWORD cchMax, wchar_t*& rsBuffer, DWORD& rnChar
 		return -4;
 	}
 
-	// Определить код.страницу файла
+	// If caller requested RAW data
+	if (DefaultCP == (DWORD)-1)
+	{
+		rsBuffer = (wchar_t*)pszDataA;
+		rnChars = nRead;
+		return 0;
+	}
+
+	// Detect codepage
 	if ((DefaultCP == CP_UTF8) || (pszDataA[0] == '\xEF' && pszDataA[1] == '\xBB' && pszDataA[2] == '\xBF'))
 	{
 		bool BOM = (pszDataA[0] == '\xEF' && pszDataA[1] == '\xBB' && pszDataA[2] == '\xBF');
