@@ -840,6 +840,7 @@
     <ClInclude Include="..\common\StartupEnv.h" />
     <ClInclude Include="..\common\StartupEnvDef.h" />
     <ClInclude Include="..\common\StartupEnvEx.h" />
+    <ClInclude Include="..\common\WCodePage.h" />
     <ClInclude Include="..\common\WConsole.h" />
     <ClInclude Include="..\common\WConsoleInfo.h" />
     <ClInclude Include="..\common\WFiles.h" />
@@ -904,6 +905,7 @@
     <ClCompile Include="..\common\ProcessSetEnv.cpp" />
     <ClCompile Include="..\common\RConStartArgs.cpp" />
     <ClCompile Include="..\common\SetEnvVar.cpp" />
+    <ClCompile Include="..\common\WCodePage.cpp" />
     <ClCompile Include="..\common\WConsole.cpp" />
     <ClCompile Include="..\common\WConsoleInfo.cpp" />
     <ClCompile Include="..\common\WFiles.cpp" />

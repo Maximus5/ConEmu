@@ -422,6 +422,7 @@
       <File RelativePath="..\common\StartupEnv.h" />
       <File RelativePath="..\common\StartupEnvDef.h" />
       <File RelativePath="..\common\StartupEnvEx.h" />
+      <File RelativePath="..\common\WCodePage.h" />
       <File RelativePath="..\common\WConsole.h" />
       <File RelativePath="..\common\WConsoleInfo.h" />
       <File RelativePath="..\common\WFiles.h" />
@@ -467,6 +468,7 @@
       <File RelativePath="..\common\ProcessSetEnv.cpp" />
       <File RelativePath="..\common\RConStartArgs.cpp" />
       <File RelativePath="..\common\SetEnvVar.cpp" />
+      <File RelativePath="..\common\WCodePage.cpp" />
       <File RelativePath="..\common\WConsole.cpp" />
       <File RelativePath="..\common\WConsoleInfo.cpp" />
       <File RelativePath="..\common\WFiles.cpp" />

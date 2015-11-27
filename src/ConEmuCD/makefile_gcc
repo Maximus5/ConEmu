@@ -44,6 +44,7 @@ SRCS = \
 		../common/ProcessSetEnv.cpp  \
 		../common/RConStartArgs.cpp  \
 		../common/SetEnvVar.cpp      \
+		../common/WCodePage.cpp      \
 		../common/WConsole.cpp       \
 		../common/WConsoleInfo.cpp   \
 		../common/WFiles.cpp         \

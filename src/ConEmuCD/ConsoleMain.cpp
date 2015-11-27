@@ -86,6 +86,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/RConStartArgs.h"
 #include "../common/SetEnvVar.h"
 #include "../common/StartupEnvEx.h"
+#include "../common/WCodePage.h"
 #include "../common/WConsole.h"
 #include "../common/WFiles.h"
 #include "../common/WThreads.h"
@@ -2793,6 +2794,54 @@ int CheckUnicodeFont()
 	return iRc;
 }
 
+int TestUnicodeCvt()
+{
+	wchar_t szInfo[140]; DWORD nWrite;
+	HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+
+	// Some translations check
+	{
+		char chUtf8[] =
+			"## "
+			"\x41\xF0\x9D\x94\xB8\x41" // 'A', double-struck capital A as surrogate pair, 'A'
+			" # "
+			"\xE9\xE9\xE9"             // Invalid unicode translations
+			" # "
+			"\xE6\x96\x87\xE6\x9C\xAC" // Chinese '文' and '本'
+			"\xEF\xBC\x8E"             // Fullwidth Full Stop
+			" ##\r\n"
+			;
+		CpCvt cvt = {}; wchar_t wc; char* pch = chUtf8;
+		cvt.SetCP(65001);
+
+		msprintf(szInfo, countof(szInfo),
+			L"CVT test: CP=%u Max=%u Def=%c: ",
+			cvt.CP.CodePage, cvt.CP.MaxCharSize, cvt.CP.UnicodeDefaultChar
+			);
+		WriteConsoleW(hOut, szInfo, lstrlen(szInfo), &nWrite, NULL);
+
+		while (*pch)
+		{
+			switch (cvt.Convert(*(pch++), wc))
+			{
+			case ccr_OK:
+			case ccr_BadUnicode:
+				WriteConsoleW(hOut, &wc, 1, &nWrite, NULL);
+				break;
+			case ccr_Surrogate:
+			case ccr_BadTail:
+			case ccr_DoubleBad:
+				WriteConsoleW(hOut, &wc, 1, &nWrite, NULL);
+				cvt.GetTail(wc);
+				WriteConsoleW(hOut, &wc, 1, &nWrite, NULL);
+				break;
+			}
+		}
+	}
+
+	return 0;
+}
+
 // ConEmuC -OsVerInfo
 int OsVerInfo()
 {
@@ -2892,6 +2941,7 @@ enum ConEmuExecAction
 	ea_InjectDefTrm,
 	ea_GuiMacro,
 	ea_CheckUnicodeFont,
+	ea_TestUnicodeCvt,
 	ea_OsVerInfo,
 	ea_ExportCon,  // export env.vars to processes of active console
 	ea_ExportTab,  // ea_ExportCon + ConEmu window
@@ -4150,6 +4200,11 @@ int DoExecAction(ConEmuExecAction eExecAction, LPCWSTR asCmdArg /* rest of cmdli
 			iRc = CheckUnicodeFont();
 			break;
 		}
+	case ea_TestUnicodeCvt:
+		{
+			iRc = TestUnicodeCvt();
+			break;
+		}
 	case ea_OsVerInfo:
 		{
 			iRc = OsVerInfo();
@@ -4606,6 +4661,11 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 		else if (lstrcmpi(szArg, L"/CheckUnicode")==0)
 		{
 			eExecAction = ea_CheckUnicodeFont;
+			break;
+		}
+		else if (lstrcmpi(szArg, L"/TestUnicode")==0)
+		{
+			eExecAction = ea_TestUnicodeCvt;
 			break;
 		}
 		else if (lstrcmpi(szArg, L"/OsVerInfo")==0)

@@ -64,6 +64,7 @@ $(INTDIR)\Queue.obj \
 $(INTDIR)\RConStartArgs.obj \
 $(INTDIR)\SetEnvVar.obj \
 $(INTDIR)\SrvPipes.obj \
+$(INTDIR)\WCodePage.obj \
 $(INTDIR)\WConsole.obj \
 $(INTDIR)\WConsoleInfo.obj \
 $(INTDIR)\WFiles.obj \
@@ -351,6 +352,8 @@ $(INTDIR)\RConStartArgs.obj: ../common/RConStartArgs.cpp ../common/RConStartArgs
 $(INTDIR)\SetEnvVar.obj: ../common/SetEnvVar.cpp
 
 $(INTDIR)\SrvPipes.obj: SrvPipes.cpp ../common/PipeServer.h
+
+$(INTDIR)\WCodePage.obj: ../common/WCodePage.cpp ../common/WCodePage.h
 
 $(INTDIR)\WConsole.obj: ../common/WConsole.cpp ../common/WConsole.h
 
