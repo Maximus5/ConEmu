@@ -1,3 +1,6 @@
 [submodule "src/modules/minhook"]
 	path = src/modules/minhook
 	url = https://github.com/Maximus5/minhook.git
+[submodule "src/modules/terminals"]
+	path = src/modules/terminals
+	url = https://github.com/Maximus5/cygwin-connector.git
