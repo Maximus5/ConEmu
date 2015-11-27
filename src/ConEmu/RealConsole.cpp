@@ -4082,6 +4082,8 @@ void CRealConsole::ResetVarsOnStart()
 	// ZeroStruct для четкости
 	ZeroStruct(m_ChildGui);
 
+	StartStopXTerm(0, false/*te_win32*/);
+
 	mb_WasForceTerminated = FALSE;
 
 	// Обновить закладки
@@ -5904,8 +5906,15 @@ void CRealConsole::StartStopXTerm(DWORD nPID, bool xTerm)
 		LogString(szInfo);
 	}
 
-	m_Term.nCallTermPID = nPID;
-	m_Term.Term = xTerm ? te_xterm : te_win32;
+	if (!nPID && !xTerm)
+	{
+		ZeroStruct(m_Term);
+	}
+	else
+	{
+		m_Term.nCallTermPID = nPID;
+		m_Term.Term = xTerm ? te_xterm : te_win32;
+	}
 }
 
 void CRealConsole::PortableStarted(CESERVER_REQ_PORTABLESTARTED* pStarted)
