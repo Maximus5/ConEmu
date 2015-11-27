@@ -3922,6 +3922,7 @@ int DoOutput(ConEmuExecAction eExecAction, LPCWSTR asCmdArg)
 	bool     bProcessed = true;
 	bool     bToBottom = false;
 	bool     bAsciiPrint = false;
+	bool     bStreamBy1 = false;
 	CmdArg   szArg;
 	HANDLE   hFile = NULL;
 	DWORD    DefaultCP = 0;
@@ -3949,6 +3950,11 @@ int DoOutput(ConEmuExecAction eExecAction, LPCWSTR asCmdArg)
 		else if (lstrcmpi(szArg, L"-a") == 0)
 		{
 			if (eExecAction == ea_OutType) bAsciiPrint = true;
+		}
+		// For testing purposes, stream characters one-by-one
+		else if (lstrcmpi(szArg, L"-s") == 0)
+		{
+			if (eExecAction == ea_OutType) bStreamBy1 = true;
 		}
 		// Forced codepage of typed text file
 		else // `-65001`, `-utf8`, `-oemcp`, etc.
@@ -4121,11 +4127,26 @@ int DoOutput(ConEmuExecAction eExecAction, LPCWSTR asCmdArg)
 
 		if (bAsciiPrint)
 		{
+			_ASSERTE(eExecAction == ea_OutType);
+			if (!bStreamBy1)
 			{
 				if (WriteProcessedA)
 					bRc = WriteProcessedA((char*)pszText, cchLen, &dwWritten, 1);
 				else
 					bRc = WriteConsoleA(hOut, (char*)pszText, cchLen, &dwWritten, 0);
+			}
+			else
+			{
+				if (WriteProcessedA)
+				{
+					for (DWORD i = 0; i < cchLen; i++)
+						bRc = WriteProcessedA(((char*)pszText)+i, 1, &dwWritten, 1);
+				}
+				else
+				{
+					for (DWORD i = 0; i < cchLen; i++)
+						bRc = WriteConsoleA(hOut, ((char*)pszText)+i, 1, &dwWritten, 0);
+				}
 			}
 		}
 		else
