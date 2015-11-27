@@ -7748,7 +7748,8 @@ DWORD CRealConsole::GetRunningPID()
 	for (int i = 0; i < mn_ProcessCount; i++)
 	{
 		const ConProcess& prc = m_Processes[i];
-		if (prc.IsConHost || prc.IsMainSrv || (prc.ProcessID == mn_MainSrv_PID))
+		if (prc.IsConHost || prc.IsMainSrv || prc.IsTermSrv
+			|| (prc.ProcessID == mn_MainSrv_PID))
 		{
 			continue;
 		}
