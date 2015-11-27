@@ -19,6 +19,34 @@ http://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2015.11.26
+* First try to create cygwin/msys terminal connector:
+  https://github.com/Maximus5/cygwin-connector/releases/tag/v0.3
+* JumpList icon was not created properly for Task in some cases.
+  If `/icon` switch was not specified for Task parameters,
+  and first line of Task commands started with specials `*` or `>`,
+  JumpList icon was not created properly.
+* gh#431: Fix crash in EmergencyShow (Win10, closing ConEmu).
+* Show in the StatusBar cygwin/msys connector's PID as AltServer.
+* Pass UTF-8 encoded strings to debugger (ANSI debug logging).
+* ANSI: Implement `ESC [ 3 J`: dispose all backscroll lines (from xterm).
+* ANSI: Implement `ESC ] 9 ; 10 ST` - Request xterm keyboard emulation.
+* Testing purposes: Options `-a` and `-s` in `ConEmuC -type`.
+  `-a` writes text to console using MBCS functions.
+  `-s` writes text to console byte-by-byte (streaming).
+  Example: `ConEmuC -t -a -s UTF-8-broken.txt`.
+* Improve UTF-8 support. In some cases, console output was broken.
+* Internal. Reset m_Term on tab restart
+* ANSI: Support xterm bracketed paste mode.
+  Console application should write `\e[?2004h` to enable and `\e[?2004l`
+  to disable bracketed paste mode.
+  When mode is enabled, ConEmu sends pasted text to console input buffer
+  framed into `\s[200~` ... `\e[201~`.
+* ANSI: Long OSC sequences written splitted by writes were processed improperly.
+* Don't treat cygwin/msys connector as ‘Incomplete operation’.
+* Warnings fixes (from Michael Lukashov).
+
+
 2015.11.22
 * Minhook related: Try to change our imports to ease use of trampolines.
 * Append optional switches to single-command tasks.
