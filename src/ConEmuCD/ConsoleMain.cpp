@@ -3921,6 +3921,7 @@ int DoOutput(ConEmuExecAction eExecAction, LPCWSTR asCmdArg)
 	bool     bAddNewLine = true;
 	bool     bProcessed = true;
 	bool     bToBottom = false;
+	bool     bAsciiPrint = false;
 	CmdArg   szArg;
 	HANDLE   hFile = NULL;
 	DWORD    DefaultCP = 0;
@@ -3944,6 +3945,11 @@ int DoOutput(ConEmuExecAction eExecAction, LPCWSTR asCmdArg)
 		// Scroll to bottom of screen buffer (ConEmu TrueColor buffer compatible)
 		else if (lstrcmpi(szArg, L"-b") == 0)
 			bToBottom = true;
+		// Use Ascii functions to print text (RAW data, don't convert to unicode)
+		else if (lstrcmpi(szArg, L"-a") == 0)
+		{
+			if (eExecAction == ea_OutType) bAsciiPrint = true;
+		}
 		// Forced codepage of typed text file
 		else // `-65001`, `-utf8`, `-oemcp`, etc.
 		{
@@ -3959,14 +3965,16 @@ int DoOutput(ConEmuExecAction eExecAction, LPCWSTR asCmdArg)
 	{
 		if (NextArg(&asCmdArg, szArg) == 0)
 		{
+			_ASSERTE(!bAsciiPrint || !DefaultCP);
 			DWORD nSize = 0, nErrCode = 0;
-			int iRead = ReadTextFile(szArg, (1<<24), pszTemp, cchLen, nErrCode, DefaultCP);
+			int iRead = ReadTextFile(szArg, (1<<24), pszTemp, cchLen, nErrCode, bAsciiPrint ? (DWORD)-1 : DefaultCP);
 			if (iRead < 0)
 			{
 				wchar_t szInfo[100];
 				_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"\r\nCode=%i, Error=%u\r\n", iRead, nErrCode);
 				pszTemp = lstrmerge(L"Reading source file failed!\r\n", szArg, szInfo);
 				cchLen = pszTemp ? lstrlen(pszTemp) : 0;
+				bAsciiPrint = false;
 				iRc = 4;
 			}
 			pszText = pszTemp;
@@ -4095,7 +4103,9 @@ int DoOutput(ConEmuExecAction eExecAction, LPCWSTR asCmdArg)
 	if (!IsOutputRedirected())
 	{
 		typedef BOOL (WINAPI* WriteProcessed_t)(LPCWSTR lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten);
+		typedef BOOL (WINAPI* WriteProcessedA_t)(LPCSTR lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, UINT Stream);
 		WriteProcessed_t WriteProcessed = NULL;
+		WriteProcessedA_t WriteProcessedA = NULL;
 		HMODULE hHooks = NULL;
 		if (bProcessed)
 		{
@@ -4103,18 +4113,32 @@ int DoOutput(ConEmuExecAction eExecAction, LPCWSTR asCmdArg)
 			if ((hHooks = LoadConEmuHk()) != NULL)
 			{
 				WriteProcessed = (WriteProcessed_t)GetProcAddress(hHooks, "WriteProcessed");
+				WriteProcessedA = (WriteProcessedA_t)GetProcAddress(hHooks, "WriteProcessedA");
 			}
 		}
 
-		// If possible - use processed (with ANSI support) output
-		if (WriteProcessed)
+		// If possible - use processed (with ANSI support) output via WriteProcessed[A] function
+
+		if (bAsciiPrint)
 		{
-			bRc = WriteProcessed(pszText, cchLen, &dwWritten);
+			{
+				if (WriteProcessedA)
+					bRc = WriteProcessedA((char*)pszText, cchLen, &dwWritten, 1);
+				else
+					bRc = WriteConsoleA(hOut, (char*)pszText, cchLen, &dwWritten, 0);
+			}
 		}
 		else
 		{
-			bRc = WriteConsoleW(hOut, pszText, cchLen, &dwWritten, 0);
+			if (WriteProcessed)
+				bRc = WriteProcessed(pszText, cchLen, &dwWritten);
+			else
+				bRc = WriteConsoleW(hOut, pszText, cchLen, &dwWritten, 0);
 		}
+	}
+	else if (bAsciiPrint)
+	{
+		bRc = WriteFile(hOut, pszText, cchLen, &dwWritten, 0);
 	}
 	else
 	{
