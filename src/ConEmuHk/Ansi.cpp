@@ -1208,7 +1208,7 @@ int CEAnsi::NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, wchar_t (&szPreDump)[CE
 				gnPrevAnsiPart = nCurPrevLen+nAdd;
 				_ASSERTEX(gsPrevAnsiPart[nCurPrevLen+nAdd] == 0);
 				iRc = 2;
-				goto wrap2;
+				goto wrap;
 			}
 
 			_ASSERTEX((iCall == 1) && "Invalid esc sequence, need dump to screen?");

@@ -41,8 +41,8 @@ extern DWORD AnsiTlsIndex;
 #include "ExtConsole.h"
 #include "hkConsoleOutput.h"
 
-#define CEAnsi_MaxPrevPart 160
-#define CEAnsi_MaxPrevAnsiPart 80
+#define CEAnsi_MaxPrevPart 512
+#define CEAnsi_MaxPrevAnsiPart 256
 
 struct MSectionSimple;
 
