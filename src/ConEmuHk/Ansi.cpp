@@ -3220,3 +3220,54 @@ void CEAnsi::StartXTermMode(bool bStart)
 		ExecuteFreeResult(pOut);
 	}
 }
+
+//static
+CEAnsi* CEAnsi::Object(bool bForceCreate /*= false*/)
+{
+	if (!AnsiTlsIndex)
+	{
+		AnsiTlsIndex = TlsAlloc();
+	}
+
+	if ((!AnsiTlsIndex) || (AnsiTlsIndex == TLS_OUT_OF_INDEXES))
+	{
+		_ASSERTEX(AnsiTlsIndex && AnsiTlsIndex!=TLS_OUT_OF_INDEXES);
+		return NULL;
+	}
+
+	//if (!AnsiTls.Initialized())
+	//{
+	//	AnsiTls.Init(
+	//}
+
+	CEAnsi* p = NULL;
+
+	if (!bForceCreate)
+	{
+		p = (CEAnsi*)TlsGetValue(AnsiTlsIndex);
+	}
+
+	if (!p)
+	{
+		p = (CEAnsi*)calloc(1,sizeof(*p));
+		if (p) p->GetDefaultTextAttr(); // Initialize "default attributes"
+		TlsSetValue(AnsiTlsIndex, p);
+	}
+
+	return p;
+}
+
+//static
+void CEAnsi::Release()
+{
+	if (AnsiTlsIndex && (AnsiTlsIndex != TLS_OUT_OF_INDEXES))
+	{
+		CEAnsi* p = (CEAnsi*)TlsGetValue(AnsiTlsIndex);
+		if (p)
+		{
+			SafeFree(p->mp_Cvt);
+			free(p);
+		}
+		TlsSetValue(AnsiTlsIndex, NULL);
+	}
+}
