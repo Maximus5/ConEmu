@@ -82,6 +82,10 @@ CTabPanelWin::~CTabPanelWin()
 {
 	SafeDelete(mp_ToolImg);
 	SafeDelete(mp_Find);
+
+	_ASSERTE(!mh_Toolbar || !IsWindow(mh_Toolbar));
+	_ASSERTE(!mh_Tabbar || !IsWindow(mh_Tabbar));
+	_ASSERTE(!mh_Rebar || !IsWindow(mh_Rebar));
 }
 
 
@@ -104,6 +108,12 @@ LRESULT CTabPanelWin::ReBarProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 
 	switch (uMsg)
 	{
+		case WM_DESTROY:
+		{
+			_ASSERTE(mh_Rebar == hwnd);
+			mh_Rebar = NULL;
+			break;
+		}
 		case WM_WINDOWPOSCHANGING:
 		{
 			LPWINDOWPOS pos = (LPWINDOWPOS)lParam;
@@ -180,6 +190,12 @@ LRESULT CTabPanelWin::TabProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam
 {
 	switch (uMsg)
 	{
+		case WM_DESTROY:
+		{
+			_ASSERTE(mh_Tabbar == hwnd);
+			mh_Tabbar = NULL;
+			break;
+		}
 		case WM_WINDOWPOSCHANGING:
 		{
 			if (mh_Rebar)
@@ -251,6 +267,12 @@ LRESULT CTabPanelWin::ToolProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 {
 	switch (uMsg)
 	{
+		case WM_DESTROY:
+		{
+			_ASSERTE(mh_Toolbar == hwnd);
+			mh_Toolbar = NULL;
+			break;
+		}
 		case WM_WINDOWPOSCHANGING:
 		{
 			LPWINDOWPOS pos = (LPWINDOWPOS)lParam;
