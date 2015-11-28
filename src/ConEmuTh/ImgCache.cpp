@@ -535,7 +535,7 @@ BOOL CImgCache::FindInCache(CePluginPanelItem* pItem, int* pnIndex, ImgLoadType 
 			continue;
 		}
 
-		// Некторые плагины по ShiftF7 переключают режим папка-файл (Reg, Torrent,...)
+		// Некоторые плагины по ShiftF7 переключают режим папка-файл (Reg, Torrent,...)
 		if ((pItem->FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
 		        == (CacheInfo[i].dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
 		        && lstrcmpi(CacheInfo[i].lpwszFileName, pszName) == 0)

@@ -1088,7 +1088,7 @@ void CStatus::OnTimer()
 		mb_DataChanged = true; // Изменения в клавиатуре
 
 	if (!mb_DataChanged && IsWindowChanged())
-		mb_DataChanged = true; // измения в стилях или текущем фокусе
+		mb_DataChanged = true; // изменения в стилях или текущем фокусе
 
 	if (!mb_DataChanged && IsTimeChanged())
 		mb_DataChanged = true; // Обновить время на статусе
