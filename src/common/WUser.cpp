@@ -175,7 +175,7 @@ void RemoveOldComSpecC()
 {
 	wchar_t szComSpec[MAX_PATH], szComSpecC[MAX_PATH], szRealComSpec[MAX_PATH];
 	//110202 - comspec более не переопределяется, поэтому вернем "cmd",
-	// если был переопреден и унаследован от старой версии conemu
+	// если был переопределен и унаследован от старой версии conemu
 	if (GetEnvironmentVariable(L"ComSpecC", szComSpecC, countof(szComSpecC)) && szComSpecC[0] != 0)
 	{
 		szRealComSpec[0] = 0;

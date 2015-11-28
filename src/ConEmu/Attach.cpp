@@ -771,7 +771,7 @@ bool CAttachDlg::StartAttach(HWND ahAttachWnd, DWORD anPID, DWORD anBits, Attach
 		if (pOut && (pOut->hdr.cbSize >= (sizeof(CESERVER_REQ_HDR)+sizeof(DWORD))) && (pOut->dwData[0] != 0))
 		{
 			// Our console server had been already started
-			// and we sucessfully have completed the attach
+			// and we successfully have completed the attach
 			lbRc = true;
 			goto wrap;
 		}

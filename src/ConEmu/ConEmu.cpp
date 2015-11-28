@@ -4528,7 +4528,7 @@ int CConEmuMain::RunSingleInstance(HWND hConEmuWnd /*= NULL*/, LPCWSTR apszCmd /
 				if ((ptrMap->nProtocolVersion != CESERVER_REQ_VER)
 					|| (lstrcmpi(ptrMap->AppID, this->ms_AppID) != 0))
 				{
-					_wsprintf(szLogPrefix, SKIPCOUNT(szLogPrefix) L"Skipped due to diffierent AppID; PID=%u HWND=x%08X: \"", dwPID, LODWORD(ConEmuHwnd));
+					_wsprintf(szLogPrefix, SKIPCOUNT(szLogPrefix) L"Skipped due to different AppID; PID=%u HWND=x%08X: \"", dwPID, LODWORD(ConEmuHwnd));
 					CEStr lsSkip = lstrmerge(szLogPrefix, ptrMap->AppID, L"\"; Our: \"", this->ms_AppID, L"\"");
 					LogString(lsSkip);
 					continue;
@@ -5791,12 +5791,12 @@ bool CConEmuMain::isDragging()
 
 bool CConEmuMain::isFirstInstance(bool bFolderIgnore /*= false*/)
 {
-	// ms_AppID must be initalized already!
+	// ms_AppID must be initialized already!
 	_ASSERTE(ms_AppID[0] != 0);
 
 	if (!mb_AliveInitialized)
 	{
-		//создадим событие, чтобы не было проблем с ключем /SINGLE
+		//создадим событие, чтобы не было проблем с ключом /SINGLE
 		mb_AliveInitialized = TRUE;
 
 		wcscpy_c(ms_ConEmuAliveEvent, CEGUI_ALIVE_EVENT);

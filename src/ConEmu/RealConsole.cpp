@@ -8495,7 +8495,7 @@ BOOL CRealConsole::ProcessUpdate(const DWORD *apPID, UINT anCount)
 				}
 			}
 
-			// Закрыть shapshot
+			// Закрыть snapshot
 			SafeCloseHandle(h);
 		}
 	}
@@ -8567,7 +8567,7 @@ void CRealConsole::ProcessCheckName(struct ConProcess &ConPrc, LPWSTR asFullFile
 	}
 	else if (lstrcmpi(ConPrc.Name, _T("conemuc.exe"))==0 || lstrcmpi(ConPrc.Name, _T("conemuc64.exe"))==0)
 	{
-		_ASSERTE(mn_MainSrv_PID!=0 && "Main server PID was not detemined?");
+		_ASSERTE(mn_MainSrv_PID!=0 && "Main server PID was not determined?");
 	}
 
 	// Тут главное не промахнуться, и не посчитать корневой conemuc, из которого запущен сам FAR, или который запустил плагин, чтобы GUI прицепился к этой консоли

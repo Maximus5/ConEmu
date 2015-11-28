@@ -850,7 +850,7 @@ int CeFullPanelInfo::DrawItemText(HDC hdc, LPRECT prcText, LPRECT prcMaxText, Ce
 				if ((gThSet.nPreviewFrame == 0)
 				        && ((rcExt.right-rcExt.left)+(rcName.right-rcName.left)) <= (rcClip.right-rcClip.left))
 				{
-					lbCorrected = FALSE; // ниже - выронять по центру
+					lbCorrected = FALSE; // ниже - выровнять по центру
 				}
 				else if ((rcExt.right-rcExt.left) <= ((rcClip.right-rcClip.left)/2 /*-(rcName.right-rcName.left)*/))
 				{
@@ -1096,8 +1096,8 @@ void CeFullPanelInfo::LoadItemColors(INT_PTR nIndex, CePluginPanelItem* pItem, C
 			//if (gpRgnDetect->GetCharAttr(WorkRect.left, WorkRect.top+nCol0Index, c, a)) {
 			WARNING("Если в этой позиции - диалог, то получение цвета будет некорректным!");
 
-			// Перым может идти "Optional marking character", его цвет нас не интересует
-			// Если перым идет символ пометки (NM в настройках панелей) - это не страшно
+			// Первым может идти "Optional marking character", его цвет нас не интересует
+			// Если первым идет символ пометки (NM в настройках панелей) - это не страшно
 			if (gpRgnDetect->GetCharAttr(crItem.X+1, crItem.Y, c, a))
 			{
 				pItemColor->crBack = gcrCurColors[a.nBackIdx];
@@ -1155,7 +1155,7 @@ void CeFullPanelInfo::LoadItemColors(INT_PTR nIndex, CePluginPanelItem* pItem, C
 
 		if (!bFound)
 		{
-			// Если не удалось - берем по умолчанию (без расцетки групп)
+			// Если не удалось - берем по умолчанию (без расцветки групп)
 			int nIdx = ((pItem->Flags & (0x40000000/*PPIF_SELECTED*/)) ?
 			            ((abCurrentItem/*nItem==nCurrentItem*/) ? col_PanelSelectedCursor : col_PanelSelectedText) :
 				            ((abCurrentItem/*nItem==nCurrentItem*/) ? col_PanelCursor : col_PanelText));
@@ -1196,7 +1196,7 @@ HBRUSH CeFullPanelInfo::GetItemColors(INT_PTR nIndex, CePluginPanelItem* pItem, 
 	crFore = pItemColor->crFore;
 
 	//} else {
-	//	// Если не удалось - берем по умолчанию (без расцетки групп)
+	//	// Если не удалось - берем по умолчанию (без расцветки групп)
 	//	int nIdx = ((pItem->Flags & (0x40000000/*PPIF_SELECTED*/)) ?
 	//		((abCurrentItem/*nItem==nCurrentItem*/) ? col_PanelSelectedCursor : col_PanelSelectedText) :
 	//		((abCurrentItem/*nItem==nCurrentItem*/) ? col_PanelCursor : col_PanelText));
@@ -1793,7 +1793,7 @@ void CeFullPanelInfo::DisplayReloadPanel()
 
 	for(INT_PTR nItem = 0; nItem < this->ItemsNumber; nItem++)
 	{
-		// Обновить информацию об элементе (имя, веделенность, и т.п.)
+		// Обновить информацию об элементе (имя, выделенность, и т.п.)
 		LoadPanelItemInfo(this, nItem);
 	}
 }
@@ -2160,7 +2160,7 @@ BOOL CeFullPanelInfo::ReallocItems(INT_PTR anCount)
 		if (!CS.Lock(pSection, TRUE, 5000))
 			return FALSE;
 
-		INT_PTR nNewMax = anCount+255; // + немножно про запас
+		INT_PTR nNewMax = anCount+255; // + немножко про запас
 		ppNew = (CePluginPanelItem**)calloc(nNewMax, sizeof(LPVOID));
 		pNewColors = (CePluginPanelItemColor*)calloc(nNewMax, sizeof(CePluginPanelItemColor));
 
@@ -2269,7 +2269,7 @@ BOOL CeFullPanelInfo::FarItem2CeItem(INT_PTR anIndex,
 	        ppItems[anIndex]->FindData.nFileSize != anFileSize ||
 	        lstrcmp(psz, asName))
 	{
-		// Лучше сбросить, чтобы мусор не оставался, да и поля в стуктуру могут добавляться, чтобы не забылось...
+		// Лучше сбросить, чтобы мусор не оставался, да и поля в структуру могут добавляться, чтобы не забылось...
 		memset(((LPBYTE)ppItems[anIndex])+sizeof(ppItems[anIndex]->cbSize), 0, ppItems[anIndex]->cbSize-sizeof(ppItems[anIndex]->cbSize));
 		// Сброс флага "установленности" цвета
 		pItemColors[anIndex].bItemColorLoaded = FALSE;

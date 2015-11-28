@@ -416,7 +416,7 @@ void LoadPanelItemInfoW1900(CeFullPanelInfo* pi, INT_PTR nItem)
 	//	pi->ppItems[nItem]->cbSize = (int)nSize;
 	//}
 	//
-	//// Лучше сбросить, чтобы мусор не оставался, да и поля в стуктуру могут добавляться, чтобы не забылось...
+	//// Лучше сбросить, чтобы мусор не оставался, да и поля в структуру могут добавляться, чтобы не забылось...
 	//Если содержимое полей не менялось (атрибуты размеры и пр.), то не обнулять структуру!
 	//// Иначе сбрасываются цвета элементов...
 	//memset(((LPBYTE)pi->ppItems[nItem])+sizeof(pi->ppItems[nItem]->cbSize), 0, pi->ppItems[nItem]->cbSize-sizeof(pi->ppItems[nItem]->cbSize));
@@ -639,7 +639,7 @@ BOOL LoadPanelInfoW1900(BOOL abActive)
 	//if ((pcefpi->ppItems == NULL) || (pcefpi->nMaxItemsNumber < pcefpi->ItemsNumber))
 	//{
 	//	if (pcefpi->ppItems) free(pcefpi->ppItems);
-	//	pcefpi->nMaxItemsNumber = pcefpi->ItemsNumber+32; // + немножно про запас
+	//	pcefpi->nMaxItemsNumber = pcefpi->ItemsNumber+32; // + немножко про запас
 	//	pcefpi->ppItems = (CePluginPanelItem**)calloc(pcefpi->nMaxItemsNumber, sizeof(LPVOID));
 	//}
 	// и буфер для загрузки элемента из FAR

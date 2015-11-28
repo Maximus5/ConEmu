@@ -1003,7 +1003,7 @@ LPWSTR ConEmuMacro::ExecuteMacro(LPWSTR asMacro, CRealConsole* apRCon, bool abFr
 		LPWSTR pszResult = NULL;
 		LPCWSTR pszFunction = p->szFunc;
 		_ASSERTE(pszFunction && !wcschr(pszFunction,L';'));
-		// To force execution of that function when RCon sucessfully starts
+		// To force execution of that function when RCon successfully starts
 		bool bPostpone = false;
 		if (*pszFunction == L'@')
 		{
