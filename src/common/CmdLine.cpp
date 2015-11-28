@@ -922,7 +922,7 @@ bool CompareProcessNames(LPCWSTR pszProcess1, LPCWSTR pszProcess2)
 	}
 	if (!pszExt2)
 	{
-		lsName2 = lstrmerge(pszName1, L".exe");
+		lsName2 = lstrmerge(pszName2, L".exe");
 		pszName2 = lsName2;
 		if (!pszName2)
 			return false;
