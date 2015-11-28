@@ -499,6 +499,7 @@ public:
 		szSubKey[0] = 0;
 		mp_ProcPerfData = NULL;
 		mn_ProcPerfDataSize = 0;
+    	dwProcessIdTitle = 0;
 
 		mh_Psapi = NULL;
 

@@ -306,7 +306,7 @@ BOOL apiGetConsoleScreenBufferInfoEx(HANDLE hConsoleOutput, MY_CONSOLE_SCREEN_BU
 // Vista+ only
 // Функция глюкавая. По крайней мере в Win7.
 // 1. После ее вызова слетает видимая область в окне консоли
-// 2. После ее вызова окно консоли безусловно показыватся
+// 2. После ее вызова окно консоли безусловно показывается
 // 1 - поправлено здесь, 2 - озаботиться должен вызывающий
 BOOL apiSetConsoleScreenBufferInfoEx(HANDLE hConsoleOutput, MY_CONSOLE_SCREEN_BUFFER_INFOEX* lpConsoleScreenBufferInfoEx)
 {

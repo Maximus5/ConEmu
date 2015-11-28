@@ -82,6 +82,7 @@ CTabPanelWin::~CTabPanelWin()
 {
 	SafeDelete(mp_ToolImg);
 	SafeDelete(mp_Find);
+	DestroyRebar();
 }
 
 
@@ -405,7 +406,7 @@ void CTabPanelWin::CreateRebar()
 void CTabPanelWin::DestroyRebar()
 {
 	SafeDelete(mp_Find);
-	HWND* pWnd[] = {&mh_Toolbar, &mh_Tabbar, &mh_Rebar};
+	HWND* pWnd[3] = {&mh_Toolbar, &mh_Tabbar, &mh_Rebar};
 	for (INT_PTR i = 0; i < countof(pWnd); i++)
 	{
 		HWND h = *(pWnd[i]);
