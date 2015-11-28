@@ -61,7 +61,7 @@ public:
 
     UINT Flags;             // Palette flags
     UINT Count;             // Number of color entries
-    ARGB Entries[1];        // Palette color entries
+    ARGB Entries[2];        // Palette color entries
 };
 
 enum PaletteFlags
