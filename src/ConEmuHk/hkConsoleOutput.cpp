@@ -90,6 +90,19 @@ BOOL WINAPI OnSetConsoleMode(HANDLE hConsoleHandle, DWORD dwMode)
 		}
 	}
 
+	#ifdef _DEBUG
+	if ((gnExeFlags & (caf_Cygwin1|caf_Msys1|caf_Msys2))
+		&& (dwMode & ENABLE_PROCESSED_INPUT)
+		&& !CEAnsi::IsOutputHandle(hConsoleHandle))
+	{
+		//_ASSERTE(!(dwMode & ENABLE_PROCESSED_INPUT));
+		wchar_t szLog[120];
+		msprintf(szLog, countof(szLog), L"\r\n\033[31;40m{PID:%u} Process is enabling ENABLE_PROCESSED_INPUT\033[m\r\n", GetCurrentProcessId());
+		//WriteProcessed2(szLog, lstrlen(szLog), NULL, wps_Error);
+		szLog[0] = 0;
+	}
+	#endif
+
 	lbRc = F(SetConsoleMode)(hConsoleHandle, dwMode);
 
 	return lbRc;
