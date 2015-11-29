@@ -5915,6 +5915,9 @@ void CRealConsole::StartStopXTerm(DWORD nPID, bool xTerm)
 		m_Term.nCallTermPID = nPID;
 		m_Term.Term = xTerm ? te_xterm : te_win32;
 	}
+
+	if (ghOpWnd && isActive(false))
+		gpSetCls->UpdateConsoleMode(this);
 }
 
 void CRealConsole::StartStopBracketedPaste(DWORD nPID, bool bUseBracketedPaste)
@@ -5927,6 +5930,9 @@ void CRealConsole::StartStopBracketedPaste(DWORD nPID, bool bUseBracketedPaste)
 	}
 
 	m_Term.bBracketedPaste = bUseBracketedPaste;
+
+	if (ghOpWnd && isActive(false))
+		gpSetCls->UpdateConsoleMode(this);
 }
 
 BOOL CRealConsole::GetBracketedPaste()
@@ -10130,7 +10136,7 @@ void CRealConsole::OnActivate(int nNewNum, int nOldNum)
 	//mb_PicViewWasHidden = FALSE;
 
 	if (ghOpWnd && isActive(false))
-		gpSetCls->UpdateConsoleMode(mp_RBuf->GetConInMode(), mp_RBuf->GetConOutMode(), GetTermType(), GetBracketedPaste());
+		gpSetCls->UpdateConsoleMode(this);
 
 	if (isActive(false))
 	{

@@ -4652,11 +4652,7 @@ LRESULT CSettings::OnInitDialog_Info(HWND hWnd2)
 	UpdateFontInfo();
 	if (pVCon)
 	{
-		WORD nConInMode, nConOutMode;
-		TermEmulationType Term;
-		BOOL bBracketedPaste;
-		pVCon->RCon()->GetConsoleModes(nConInMode, nConOutMode, Term, bBracketedPaste);
-		UpdateConsoleMode(nConInMode, nConOutMode, Term, bBracketedPaste);
+		UpdateConsoleMode(pVCon->RCon());
 	}
 
 	return 0;
@@ -11561,13 +11557,33 @@ BOOL CSettings::GetFontNameFromFile_BDF(LPCTSTR lpszFilePath, wchar_t (&rsFontNa
 }
 
 // Показать в "Инфо" текущий режим консоли
-void CSettings::UpdateConsoleMode(WORD nInMode, WORD nOutMode, TermEmulationType Term, BOOL bBracketedPaste)
+void CSettings::UpdateConsoleMode(CRealConsole* pRCon)
 {
 	HWND hInfoPg = GetPage(thi_Info);
 	if (hInfoPg && IsWindow(hInfoPg))
 	{
+		WORD nConInMode = 0, nConOutMode = 0;
+		TermEmulationType Term = te_win32;
+		BOOL bBracketedPaste = FALSE;
+		pRCon->GetConsoleModes(nConInMode, nConOutMode, Term, bBracketedPaste);
+
+		wchar_t szFlags[128] = L"";
+		switch (Term)
+		{
+		case te_win32:
+			wcscpy_c(szFlags, L"win32"); break;
+		case te_xterm:
+			wcscpy_c(szFlags, L"xterm"); break;
+		default:
+			msprintf(szFlags, countof(szFlags), L"term=%u", Term);
+		}
+		if (bBracketedPaste)
+			wcscat_c(szFlags, L"|BrPaste");
+
 		wchar_t szInfo[255];
-		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"Console states (In=x%02X, Out=x%02X, Term=%u, BrPaste=%u)", nInMode, nOutMode, Term, bBracketedPaste);
+		_wsprintf(szInfo, SKIPLEN(countof(szInfo))
+			L"Console states (In=x%02X, Out=x%02X, %s)",
+			nConInMode, nConOutMode, szFlags);
 		SetDlgItemText(hInfoPg, IDC_CONSOLE_STATES, szInfo);
 	}
 }
