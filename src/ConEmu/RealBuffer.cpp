@@ -2400,7 +2400,7 @@ void CRealBuffer::ApplyConsoleInfo(const CESERVER_REQ_CONINFO_INFO* pInfo, bool&
 			&& mp_RCon->isActive(false))
 		{
 			if (bConMode)
-				gpSetCls->UpdateConsoleMode(pInfo->dwConsoleInMode, pInfo->dwConsoleOutMode);
+				gpSetCls->UpdateConsoleMode(pInfo->dwConsoleInMode, pInfo->dwConsoleOutMode, mp_RCon->GetTermType(), mp_RCon->GetBracketedPaste());
 			if (bConCP || bConOutCP)
 				gpConEmu->UpdateProcessDisplay(false);
 		}

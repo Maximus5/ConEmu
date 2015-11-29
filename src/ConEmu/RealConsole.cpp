@@ -5929,6 +5929,11 @@ void CRealConsole::StartStopBracketedPaste(DWORD nPID, bool bUseBracketedPaste)
 	m_Term.bBracketedPaste = bUseBracketedPaste;
 }
 
+BOOL CRealConsole::GetBracketedPaste()
+{
+	return m_Term.bBracketedPaste;
+}
+
 void CRealConsole::PortableStarted(CESERVER_REQ_PORTABLESTARTED* pStarted)
 {
 	_ASSERTE(pStarted->hProcess == NULL && pStarted->nPID);
@@ -10125,7 +10130,7 @@ void CRealConsole::OnActivate(int nNewNum, int nOldNum)
 	//mb_PicViewWasHidden = FALSE;
 
 	if (ghOpWnd && isActive(false))
-		gpSetCls->UpdateConsoleMode(mp_RBuf->GetConInMode(), mp_RBuf->GetConOutMode());
+		gpSetCls->UpdateConsoleMode(mp_RBuf->GetConInMode(), mp_RBuf->GetConOutMode(), GetTermType(), GetBracketedPaste());
 
 	if (isActive(false))
 	{
@@ -15958,16 +15963,20 @@ DWORD CRealConsole::GetConsoleOutputCP()
 	return mp_RBuf->GetConsoleOutputCP();
 }
 
-void CRealConsole::GetConsoleModes(WORD& nConInMode, WORD& nConOutMode)
+void CRealConsole::GetConsoleModes(WORD& nConInMode, WORD& nConOutMode, TermEmulationType& Term, BOOL& bBracketedPaste)
 {
 	if (this && mp_RBuf)
 	{
 		nConInMode = mp_RBuf->GetConInMode();
 		nConOutMode = mp_RBuf->GetConOutMode();
+		Term = m_Term.Term;
+		bBracketedPaste = m_Term.bBracketedPaste;
 	}
 	else
 	{
 		nConInMode = nConOutMode = 0;
+		Term = te_win32;
+		bBracketedPaste = FALSE;
 	}
 }
 
