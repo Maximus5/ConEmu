@@ -1248,6 +1248,8 @@ int CEAnsi::NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, wchar_t (&szPreDump)[CE
 					// But it may be some "special" codes
 					switch (lpBuffer[1])
 					{
+					case L'7': // Save xterm cursor
+					case L'8': // Restore xterm cursor
 					case L'=':
 					case L'>':
 						// xterm?
@@ -1930,6 +1932,12 @@ BOOL CEAnsi::WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOut
 						} // case L'|':
 						break;
 
+					case L'7':
+					case L'8':
+						//TODO: 7 - Save Cursor and _Attributes_
+						//TODO: 8 - Restore Cursor and _Attributes_
+						XTermSaveRestoreCursor((Code.Second == L'7'), hConsoleOutput);
+						break;
 					case L'=':
 					case L'>':
 						// xterm "ESC ="
