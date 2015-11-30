@@ -1242,8 +1242,8 @@ int CEAnsi::NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, wchar_t (&szPreDump)[CE
 				Code.nTotalLen = 0;
 				#endif
 
-				// minimal length failed?
-				if ((lpBuffer + 2) >= lpEnd)
+				// Special one char codes? Like "ESC 7" and so on...
+				if ((lpBuffer + 1) < lpEnd)
 				{
 					// But it may be some "special" codes
 					switch (lpBuffer[1])
@@ -1261,7 +1261,9 @@ int CEAnsi::NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, wchar_t (&szPreDump)[CE
 						goto wrap;
 					}
 				}
-				else
+
+				// If tail is larger than 2 chars, continue
+				if ((lpBuffer + 2) < lpEnd)
 				{
 					// Set lpSaveStart to current start of Esc sequence, it was set to beginning of buffer
 					_ASSERTEX(lpSaveStart <= lpBuffer);
@@ -1275,7 +1277,7 @@ int CEAnsi::NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, wchar_t (&szPreDump)[CE
 
 					TODO("Bypass unrecognized ESC sequences to screen? Don't try to eliminate 'Possible' sequences?");
 					//if (((Code.Second < 64) || (Code.Second > 95)) && (Code.Second != 124/* '|' - vim-xterm-emulation */))
-					if (!wcschr(L"[](|=>", Code.Second))
+					if (!wcschr(L"[](|", Code.Second))
 					{
 						// Don't assert on rawdump of KeyEvents.exe Esc key presses
 						// 10:00:00 KEY_EVENT_RECORD: Dn, 1, Vk="VK_ESCAPE" [27/0x001B], Scan=0x0001 uChar=[U='\x1b' (0x001B): A='\x1b' (0x1B)]
@@ -1424,20 +1426,14 @@ int CEAnsi::NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, wchar_t (&szPreDump)[CE
 						// Ниже
 						break;
 
-					case L'=':
-					case L'>':
-						// xterm?
-						lpEnd = lpBuffer;
-						iRc = 1;
-						goto wrap;
-
 					default:
-						// Неизвестный код, обрабатываем по общим правилам
+						// Unknown sequence, use common termination rules
 						Code.Skip = Code.Second;
 						Code.ArgSZ = lpBuffer;
 						Code.cchArgSZ = 0;
 						while (lpBuffer < lpEnd)
 						{
+							// Terminator ASCII symbol: from `@` to `~`
 							if (((wc = *lpBuffer) >= 64) && (wc <= 126))
 							{
 								Code.Action = wc;
