@@ -19,6 +19,13 @@ http://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2015.11.29
+* ANSI: Implement (xterm) codes to save `ESC 7` and restore `ESC 8` cursor position.
+* ANSI: Sequences `ESC ] ... ESC \` were not processed properly in some cases.
+* cygwin/msys connector v0.4
+* Warning fixes (from Michael Lukashov)
+
+
 2015.11.26
 * First try to create cygwin/msys terminal connector:
   https://github.com/Maximus5/cygwin-connector/releases/tag/v0.3
