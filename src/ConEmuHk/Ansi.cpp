@@ -1401,7 +1401,12 @@ int CEAnsi::NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, wchar_t (&szPreDump)[CE
 								lpStart = lpSaveStart;
 								if (lpBuffer[0] == 27)
 								{
-									if (((lpBuffer + 1) < lpEnd) && (lpBuffer[1] == L'\\'))
+									if ((lpBuffer + 1) >= lpEnd)
+									{
+										// Sequence is not complete yet!
+										break;
+									}
+									else if (lpBuffer[1] == L'\\')
 									{
 										lpEnd = lpBuffer + 2;
 									}
@@ -1423,9 +1428,8 @@ int CEAnsi::NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, wchar_t (&szPreDump)[CE
 							}
 							++lpBuffer;
 						}
-						// В данном запросе (на запись) конца последовательности нет,
-						// оставшийся хвост нужно сохранить в буфере, для следующего запроса
-						// Ниже
+						// Sequence is not complete, we have to store it to concatenate
+						// and check on future write call. Below.
 						break;
 
 					default:
