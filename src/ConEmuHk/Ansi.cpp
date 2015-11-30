@@ -180,6 +180,14 @@ void DebugStringUtf8(LPCWSTR asMessage)
 	#ifdef _DEBUG
 	if (!asMessage || !*asMessage)
 		return;
+	// Only ConEmuC debugger is able to show Utf-8 encoded debug strings
+	// So, set bUseUtf8 to false if VS debugger is required
+	static bool bUseUtf8 = true;
+	if (!bUseUtf8)
+	{
+		DebugString(asMessage);
+		return;
+	}
 	int iLen = lstrlen(asMessage);
 	char szUtf8[200];
 	char* pszUtf8 = ((iLen*3+5) < countof(szUtf8)) ? szUtf8 : (char*)malloc(iLen*3+5);
