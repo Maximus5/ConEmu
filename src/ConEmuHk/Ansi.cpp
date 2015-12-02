@@ -615,10 +615,6 @@ void CEAnsi::DumpEscape(LPCWSTR buf, size_t cchLen, DumpEscapeCodes iUnknown)
 		// Например, clink, perl, ...
 		//_ASSERTEX((buf && cchLen) || (gszClinkCmdLine && buf));
 	}
-	else if (iUnknown == 1)
-	{
-		_ASSERTEX(FALSE && "Unknown Esc Sequence!");
-	}
 
 	wchar_t szDbg[200];
 	size_t nLen = cchLen;
@@ -723,6 +719,11 @@ void CEAnsi::DumpEscape(LPCWSTR buf, size_t cchLen, DumpEscapeCodes iUnknown)
 		*pszDst = 0;
 		// Try to pass UTF-8 encoded strings to debugger
 		DebugStringUtf8(szDbg);
+	}
+
+	if (iUnknown == 1)
+	{
+		_ASSERTEX(FALSE && "Unknown Esc Sequence!");
 	}
 #endif
 }
