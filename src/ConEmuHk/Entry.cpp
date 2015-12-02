@@ -1850,6 +1850,9 @@ BOOL DllMain_ThreadAttach(HANDLE hModule, DWORD  ul_reason_for_call)
 		FixSshThreads(1);
 	}
 
+	LONG nThreadCount = gDllMainCallInfo[DLL_THREAD_ATTACH].nCallCount - gDllMainCallInfo[DLL_THREAD_DETACH].nCallCount;
+	ShutdownStep(L"DLL_THREAD_ATTACH done, count=%i", nThreadCount);
+
 	DLOGEND();
 	return true;
 }
