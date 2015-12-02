@@ -1899,9 +1899,9 @@ BOOL CEAnsi::WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOut
 				}
 
 				EXTREADWRITEFLAGS AddFlags = ewtf_None;
-				if (iEsc == 1)
+				if (gbWasXTermOutput)
 				{
-					// tmux, status line?
+					// tmux/screen, status line?
 					// ExtWriteText will check (AI) if it must not wrap&scroll
 					AddFlags = ewtf_DontWrap;
 				}
