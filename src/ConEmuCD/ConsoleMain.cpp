@@ -3765,7 +3765,31 @@ void ArgGuiMacro(CmdArg& szArg, MacroInstance& Inst)
 				// а) макро может выполниться в другом окне ConEmu (если наше свернуто)
 				// б) макро может выполниться в другой вкладке (если наша не активна)
 				Inst.nPID = wcstoul(pszID, &pszEnd, 10);
-				EnumWindows(FindTopGuiOrConsole, (LPARAM)&Inst);
+
+				// Using mapping information may be preferable due to speed
+				// and more, ConEmu may be started as Child window
+				{
+					// EnumThreadWindows will not find child window
+					MFileMapping<ConEmuGuiMapping> guiMap;
+					guiMap.InitName(CEGUIINFOMAPNAME, Inst.nPID);
+					const ConEmuGuiMapping* pMap = guiMap.Open(FALSE);
+					if (pMap)
+					{
+						if ((pMap->cbSize >= (5*sizeof(DWORD)))
+							&& (pMap->nGuiPID == Inst.nPID)
+							&& IsWindow(pMap->hGuiWnd))
+						{
+							Inst.hConEmuWnd = pMap->hGuiWnd;
+						}
+					}
+				}
+
+				// If mapping with GUI PID does not exist - try to enum all Top level windows
+				// We are searching for RealConsole or ConEmu window
+				if (!Inst.hConEmuWnd)
+				{
+					EnumWindows(FindTopGuiOrConsole, (LPARAM)&Inst);
+				}
 
 				if (gpLogSize)
 				{
