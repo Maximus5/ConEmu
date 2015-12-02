@@ -1983,6 +1983,13 @@ bool CRealConsole::PostKeyUp(WORD vkKey, DWORD dwControlState, wchar_t wch, int 
 
 bool CRealConsole::DeleteWordKeyPress(bool bTestOnly /*= false*/)
 {
+	// cygwin/msys connector - they are configured through .inputrc
+	DWORD nTermPID = (GetTermType() == te_xterm) ? GetTerminalPID() : 0;
+	if (nTermPID)
+	{
+		return false;
+	}
+
 	DWORD nActivePID = GetActivePID();
 	if (!nActivePID || (mp_ABuf->m_Type != rbt_Primary) || isFar() || isNtvdm())
 	{
