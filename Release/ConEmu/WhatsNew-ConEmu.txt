@@ -19,6 +19,28 @@ http://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2015.12.2
+* When ConEmu was started as a child window (InsideParent) it behaves as it has no focus.
+* Ensure that all child windows are closed properly on termination (InsideParent).
+* Option ‘Activate split/pane on mouse hover’ was not working in InsideParent mode.
+* Execution of ‘-GuiMacro:PID’ was failed if ConEmu.exe was in InsideParent.
+* Don't allow to execute ‘-GuiMacro:...’ on wrong instance.
+* Increase debugger backscroll even if it was started in ConEmu tab.
+* XTerm keys fixup (F1..F4, BackSpace, Alt+Char).
+* Disable ‘Ctrl+Backspace - delete word leftward to the text cursor’ in cygwin/msys connector.
+  Ctrl+BS is posted as "\x1F" and it may be configured in the `.inputrc` as following:
+    # Ctrl-BS - kill word on the left
+    "\x1F": "\C-w"
+* ANSI: Implement `ESC c` - Full reset (clear screen, backscroll, move cursor to the upper-left corner).
+* ANSI: Fix errors in `ESC [ *n* @` and `ESC [ *n* P` sequences (insert/delete characters).
+* ANSI: Support byobu status line.
+* ANSI: Fix extended attributes errors on automatic line scrolling.
+* ANSI: Implement `ESC E`, `ESC D`, `ESC M` sequences.
+  | ESC E | Same as `\r\n` |
+  | ESC D | Same as `\n` but preserves X coord |
+  | ESC M | Reverse `\n` |
+
+
 2015.11.29
 * ANSI: Implement (xterm) codes to save `ESC 7` and restore `ESC 8` cursor position.
 * ANSI: Sequences `ESC ] ... ESC \` were not processed properly in some cases.
