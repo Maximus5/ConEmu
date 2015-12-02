@@ -514,6 +514,39 @@ wchar_t* lstrdupW(const char* asText, UINT cp /*= CP_ACP*/)
 	return psz;
 }
 
+char* lstrdupA(const wchar_t* asText, UINT cp /*= CP_ACP*/, int* pnLen /*= NULL*/)
+{
+	if (!asText)
+		return NULL;
+
+	if (!*asText)
+	{
+		if (pnLen) *pnLen = 1;
+		return lstrdup("");
+	}
+
+	int nLen = WideCharToMultiByte(cp, 0, asText, -1, NULL, 0, NULL, NULL);
+	char* psz = NULL;
+
+	if (nLen > 0)
+	{
+		psz = (char*)malloc(nLen);
+		if (!psz)
+			return NULL; // memory allocation failure
+		nLen = WideCharToMultiByte(cp, 0, asText, -1, psz, nLen, NULL, NULL);
+		if (nLen <= 1)
+		{
+			SafeFree(psz);
+		}
+		else
+		{
+			if (pnLen) *pnLen = nLen - 1; // Do not include termination zero
+		}
+	}
+
+	return psz;
+}
+
 wchar_t* lstrmerge(const wchar_t* asStr1, const wchar_t* asStr2, const wchar_t* asStr3 /*= NULL*/, const wchar_t* asStr4 /*= NULL*/, const wchar_t* asStr5 /*= NULL*/)
 {
 	size_t cchMax = 1;

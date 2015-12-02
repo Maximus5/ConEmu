@@ -142,6 +142,7 @@ void SafeDelete(T*& p)
 char* lstrdup(const char* asText);
 wchar_t* lstrdup(const wchar_t* asText, size_t cchExtraSizeAdd = 0);
 wchar_t* lstrdupW(const char* asText, UINT cp = CP_ACP);
+char* lstrdupA(const wchar_t* asText, UINT cp = CP_ACP, int* pnLen = NULL);
 wchar_t* lstrmerge(const wchar_t* asStr1, const wchar_t* asStr2, const wchar_t* asStr3 = NULL, const wchar_t* asStr4 = NULL, const wchar_t* asStr5 = NULL);
 bool lstrmerge(wchar_t** apsStr1, const wchar_t* asStr2, const wchar_t* asStr3 = NULL, const wchar_t* asStr4 = NULL, const wchar_t* asStr5 = NULL);
 
