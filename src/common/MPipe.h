@@ -60,6 +60,31 @@ class MPipe
 		{
 			mn_ErrCode = nCode;
 		};
+		T_OUT* AllocateBuffer(DWORD nAllSize, T_OUT* pPart, DWORD cbPart)
+		{
+			if (!mp_Out || (int)mn_MaxOutSize < nAllSize)
+			{
+				T_OUT* ptrNew = (T_OUT*)HeapAlloc(mh_Heap, 0, nAllSize); //-V106
+
+				if (!ptrNew)
+				{
+					_ASSERTE(ptrNew!=NULL);
+					msprintf(ms_Error, countof(ms_Error), L"%s: Can't allocate %u bytes!", ms_Module, nAllSize);
+					return FALSE;
+				}
+
+				if (pPart && cbPart)
+				{
+					memmove(ptrNew, pPart, cbPart); //-V106
+				}
+
+				if (mp_Out) HeapFree(mh_Heap, 0, mp_Out);
+
+				mn_MaxOutSize = nAllSize;
+				mp_Out = ptrNew;
+			}
+			return mp_Out;
+		}
 	public:
 		MPipe()
 		{
@@ -87,7 +112,12 @@ class MPipe
 		{
 			mh_TermEvent = hTermEvent;
 		};
-		~MPipe()
+		virtual ~MPipe()
+		{
+			ReleaseBuffer();
+			_ASSERTE(mn_CloseCount==mn_OpenCount);
+		};
+		void ReleaseBuffer()
 		{
 			if (mp_Out && mp_Out != &m_Tmp)
 			{
@@ -97,7 +127,6 @@ class MPipe
 					_ASSERTE(mh_Heap!=NULL);
 			}
 			mp_Out = NULL;
-			_ASSERTE(mn_CloseCount==mn_OpenCount);
 		};
 		void Close()
 		{
@@ -304,21 +333,10 @@ class MPipe
 
 				if (!mp_Out || (int)mn_MaxOutSize < nAllSize)
 				{
-					T_OUT* ptrNew = (T_OUT*)HeapAlloc(mh_Heap, 0, nAllSize); //-V106
-
-					if (!ptrNew)
+					if (!AllocateBuffer(nAllSize, ptrOut, cbRead))
 					{
-						_ASSERTE(ptrNew!=NULL);
-						msprintf(ms_Error, countof(ms_Error), L"%s: Can't allocate %u bytes!", ms_Module, nAllSize);
 						return FALSE;
 					}
-
-					memmove(ptrNew, ptrOut, cbRead); //-V106
-
-					if (mp_Out) HeapFree(mh_Heap, 0, mp_Out);
-
-					mn_MaxOutSize = nAllSize;
-					mp_Out = ptrNew;
 				}
 				else if (ptrOut == &m_Tmp)
 				{
@@ -412,6 +430,7 @@ class MPipe
 
 			return TRUE;
 		};
+		// Informational
 		LPCWSTR GetErrorText()
 		{
 			return ms_Error;
