@@ -79,7 +79,7 @@ bool CConEmuInside::InitInside(bool bRunAsAdmin, bool bSyncDir, LPCWSTR pszSyncD
 	}
 
 	pInside->mn_InsideParentPID = nParentPID;
-	pInside->mh_InsideParentWND = hParentWnd;
+	pInside->SetInsideParentWND(hParentWnd);
 
 	pInside->m_InsideIntegration = (hParentWnd == NULL) ? ii_Auto : ii_Simple;
 
@@ -184,7 +184,7 @@ bool CConEmuInside::InsideFindShellView(HWND hFrom)
 					GetClassName(hParent, szRoot, countof(szRoot));
 					_ASSERTE(lstrcmp(szRoot, L"DirectUIHWND") == 0);
 
-					mh_InsideParentWND = hParent;
+					SetInsideParentWND(hParent);
 					mh_InsideParentRel = hFrom;
 					m_InsideIntegration = ii_Explorer;
 
@@ -250,7 +250,7 @@ bool CConEmuInside::InsideFindShellView(HWND hFrom)
 				_ASSERTE(mh_InsideParentRel && L"ReBar must be found on XP & 2k3");
 				return true; // закончить поиск
 			}
-			mh_InsideParentWND = hXpPlace;
+			SetInsideParentWND(hXpPlace);
 			mh_InsideParentPath = mh_InsideParentRoot;
 			m_InsideIntegration = ii_Explorer;
 			return true;
@@ -258,6 +258,28 @@ bool CConEmuInside::InsideFindShellView(HWND hFrom)
 	}
 
 	return false;
+}
+
+void CConEmuInside::SetInsideParentWND(HWND hParent)
+{
+	mh_InsideParentWND = hParent;
+	if (!hParent || (hParent == INSIDE_PARENT_NOT_FOUND))
+	{
+		mh_InsideParentRoot = NULL;
+		mh_InsideParentRel = NULL;
+	}
+	else
+	{
+		HWND hRootParent = hParent;
+		while ((GetWindowLong(hRootParent, GWL_STYLE) & WS_CHILD) != 0)
+		{
+			HWND hNext = GetParent(hRootParent);
+			if (!hNext)
+				break;
+			hRootParent = hNext;
+		}
+		mh_InsideParentRoot = hRootParent;
+	}
 }
 
 // Вызывается для инициализации из Settings::LoadSettings()
@@ -300,11 +322,11 @@ HWND CConEmuInside::InsideFindParent()
 			if (m_InsideIntegration == ii_Simple)
 			{
 				DisplayLastError(L"Specified window not found");
-				mh_InsideParentWND = NULL;
+				SetInsideParentWND(NULL);
 				goto wrap;
 			}
 			_ASSERTE(IsWindow(mh_InsideParentWND));
-			mh_InsideParentRoot = mh_InsideParentWND = mh_InsideParentRel = NULL;
+			SetInsideParentWND(mh_InsideParentRel = NULL);
 		}
 	}
 
@@ -318,7 +340,7 @@ HWND CConEmuInside::InsideFindParent()
 		{
 			DisplayLastError(L"Invalid parent process specified");
 			m_InsideIntegration = ii_None;
-			mh_InsideParentWND = NULL;
+			SetInsideParentWND(NULL);
 			goto wrap;
 		}
 		nParentPID = mn_InsideParentPID;
@@ -330,7 +352,7 @@ HWND CConEmuInside::InsideFindParent()
 		{
 			DisplayLastError(L"GetProcessInfo(GetCurrentProcessId()) failed");
 			m_InsideIntegration = ii_None;
-			mh_InsideParentWND = NULL;
+			SetInsideParentWND(NULL);
 			goto wrap;
 		}
 		nParentPID = pi.th32ParentProcessID;
@@ -342,12 +364,12 @@ HWND CConEmuInside::InsideFindParent()
 		int nBtn = MsgBox(L"Can't find appropriate parent window!\n\nContinue in normal mode?", MB_ICONSTOP|MB_YESNO|MB_DEFBUTTON2);
 		if (nBtn != IDYES)
 		{
-			mh_InsideParentWND = INSIDE_PARENT_NOT_FOUND;
+			SetInsideParentWND(INSIDE_PARENT_NOT_FOUND);
 			return mh_InsideParentWND; // Закрыться!
 		}
 		// Продолжить в обычном режиме
 		m_InsideIntegration = ii_None;
-		mh_InsideParentWND = NULL;
+		SetInsideParentWND(NULL);
 		goto wrap;
 	}
 
@@ -362,7 +384,7 @@ HWND CConEmuInside::InsideFindParent()
 		LPCWSTR pszCmd = StrStrI(pszCmdLine, L" /cmd ");
 		gpConEmu->RunSingleInstance(hExistConEmu, pszCmd ? (pszCmd + 6) : NULL);
 
-		mh_InsideParentWND = INSIDE_PARENT_NOT_FOUND;
+		SetInsideParentWND(INSIDE_PARENT_NOT_FOUND);
 		return mh_InsideParentWND; // Закрыться!
 	}
 
@@ -392,12 +414,11 @@ RepeatCheck:
 
 		if (nBtn != IDYES)
 		{
-			mh_InsideParentWND = INSIDE_PARENT_NOT_FOUND;
+			SetInsideParentWND(INSIDE_PARENT_NOT_FOUND);
 			return mh_InsideParentWND; // Закрыться!
 		}
 		m_InsideIntegration = ii_None;
-		mh_InsideParentRoot = NULL;
-		mh_InsideParentWND = NULL;
+		SetInsideParentWND(NULL);
 		goto wrap;
 	}
 
@@ -506,7 +527,7 @@ bool CConEmuInside::TurnExplorerTipPane(wchar_t (&szAddMsg)[128])
 	if (nBtn == IDYES)
 	{
 		// Первая проверка
-		mh_InsideParentWND = mh_InsideParentRel = NULL;
+		SetInsideParentWND(NULL);
 		m_InsideIntegration = ii_Auto;
 		InsideFindShellView(mh_InsideParentRoot);
 		if (mh_InsideParentWND && mh_InsideParentRel)
@@ -516,7 +537,7 @@ bool CConEmuInside::TurnExplorerTipPane(wchar_t (&szAddMsg)[128])
 		}
 		// Если не нашли - задержка и повторная проверка
 		Sleep(500);
-		mh_InsideParentWND = mh_InsideParentRel = NULL;
+		SetInsideParentWND(NULL);
 		m_InsideIntegration = ii_Auto;
 		InsideFindShellView(mh_InsideParentRoot);
 		if (mh_InsideParentWND && mh_InsideParentRel)
@@ -537,7 +558,7 @@ bool CConEmuInside::TurnExplorerTipPane(wchar_t (&szAddMsg)[128])
 			lSendRc = SendMessageTimeout(mh_InsideParentRoot, WM_COMMAND, EMID_TIPOFDAY/*41536*/, 0, SMTO_NOTIMEOUTIFNOTHUNG, 5000, &nRc);
 			// Wait and check again
 			Sleep(500);
-			mh_InsideParentWND = mh_InsideParentRel = NULL;
+			SetInsideParentWND(NULL);
 			m_InsideIntegration = ii_Auto;
 			InsideFindShellView(mh_InsideParentRoot);
 			if (mh_InsideParentWND && mh_InsideParentRel)
