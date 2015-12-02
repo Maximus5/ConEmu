@@ -1254,6 +1254,9 @@ int CEAnsi::NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, wchar_t (&szPreDump)[CE
 					case L'c': // Full reset
 					case L'=':
 					case L'>':
+					case L'M': // Reverse LF
+					case L'E': // CR-LF
+					case L'D': // LF
 						// xterm?
 						Code.First = 27;
 						Code.Second = *(++lpBuffer);
@@ -1570,6 +1573,73 @@ BOOL CEAnsi::FullReset(HANDLE hConsoleOutput)
 	SetConsoleCursorPosition(hConsoleOutput, cr0);
 
 	//TODO? Saved cursor position?
+
+	return TRUE;
+}
+
+BOOL CEAnsi::ForwardLF(HANDLE hConsoleOutput, BOOL& bApply)
+{
+	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
+	if (!GetConsoleScreenBufferInfoCached(hConsoleOutput, &csbi))
+		return FALSE;
+
+	if (bApply)
+	{
+		ReSetDisplayParm(hConsoleOutput, FALSE, TRUE);
+		bApply = FALSE;
+	}
+
+	if (csbi.dwCursorPosition.Y == (csbi.dwSize.Y - 1))
+	{
+		WriteText(pfnWriteConsoleW, hConsoleOutput, L"\n", 1, NULL);
+		SetConsoleCursorPosition(hConsoleOutput, csbi.dwCursorPosition);
+	}
+	else if (csbi.dwCursorPosition.Y < (csbi.dwSize.Y - 1))
+	{
+		COORD cr = {csbi.dwCursorPosition.X, csbi.dwCursorPosition.Y + 1};
+		SetConsoleCursorPosition(hConsoleOutput, cr);
+		if (cr.Y > csbi.srWindow.Bottom)
+		{
+			SMALL_RECT rcNew = csbi.srWindow;
+			rcNew.Bottom = cr.Y;
+			rcNew.Top = cr.Y - (csbi.srWindow.Bottom - csbi.srWindow.Top);
+			_ASSERTE(rcNew.Top >= 0);
+			SetConsoleWindowInfo(hConsoleOutput, TRUE, &rcNew);
+		}
+	}
+	else
+	{
+		_ASSERTE(csbi.dwCursorPosition.Y > 0);
+	}
+
+	return TRUE;
+}
+
+BOOL CEAnsi::ReverseLF(HANDLE hConsoleOutput, BOOL& bApply)
+{
+	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
+	if (!GetConsoleScreenBufferInfoCached(hConsoleOutput, &csbi))
+		return FALSE;
+
+	if (bApply)
+	{
+		ReSetDisplayParm(hConsoleOutput, FALSE, TRUE);
+		bApply = FALSE;
+	}
+
+	if (csbi.dwCursorPosition.Y == csbi.srWindow.Top)
+	{
+		LinesInsert(hConsoleOutput, 1);
+	}
+	else if (csbi.dwCursorPosition.Y > 0)
+	{
+		COORD cr = {csbi.dwCursorPosition.X, csbi.dwCursorPosition.Y - 1};
+		SetConsoleCursorPosition(hConsoleOutput, cr);
+	}
+	else
+	{
+		_ASSERTE(csbi.dwCursorPosition.Y > 0);
+	}
 
 	return TRUE;
 }
@@ -1969,6 +2039,15 @@ BOOL CEAnsi::WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOut
 						// Full reset
 						FullReset(hConsoleOutput);
 						lbApply = FALSE;
+						break;
+					case L'M':
+						ReverseLF(hConsoleOutput, lbApply);
+						break;
+					case L'E':
+						WriteText(_WriteConsoleW, hConsoleOutput, L"\r\n", 2, NULL);
+						break;
+					case L'D':
+						ForwardLF(hConsoleOutput, lbApply);
 						break;
 					case L'=':
 					case L'>':

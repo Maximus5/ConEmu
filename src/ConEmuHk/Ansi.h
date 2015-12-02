@@ -189,6 +189,8 @@ public:
 	BOOL ScrollScreen(HANDLE hConsoleOutput, int nDir);
 	BOOL PadAndScroll(HANDLE hConsoleOutput, CONSOLE_SCREEN_BUFFER_INFO& csbi);
 	BOOL FullReset(HANDLE hConsoleOutput);
+	BOOL ForwardLF(HANDLE hConsoleOutput, BOOL& bApply);
+	BOOL ReverseLF(HANDLE hConsoleOutput, BOOL& bApply);
 	BOOL LinesInsert(HANDLE hConsoleOutput, const int LinesCount);
 	BOOL LinesDelete(HANDLE hConsoleOutput, const int LinesCount);
 	void DoSleep(LPCWSTR asMS);
