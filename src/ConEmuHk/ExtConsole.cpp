@@ -913,15 +913,39 @@ static BOOL IntWriteText(HANDLE h, SHORT x, SHORT ForceDumpX,
 						 const wchar_t *pFrom, DWORD cchWrite,
 						 AnnotationInfo* pTrueColorLine, AnnotationInfo* pTrueColorEnd,
 						 const AnnotationInfo& AIColor,
+						 const CONSOLE_SCREEN_BUFFER_INFO& csbi,
 						 WriteConsoleW_t lpfn = NULL)
 {
-	// Вывод расширенных атрибутов (если нужно и можно)
-	if (pTrueColorLine)
+	SHORT nWindowWidth = csbi.srWindow.Right - csbi.srWindow.Left + 1;
+	_ASSERTEX(nWindowWidth > 0);
+
+	// Write extended attributes if required
+	if (pTrueColorLine && (nWindowWidth > 0))
 	{
 		AnnotationInfo* pTrueColor = pTrueColorLine + x;
+		const wchar_t *pch = pFrom;
 
-		for (SHORT x1 = x; x1 <= ForceDumpX; x1++)
+		for (SHORT x1 = x; x1 <= ForceDumpX; x1++, pch++)
 		{
+			// This control chars do not have glyphs unless ENABLE_PROCESSED_OUTPUT is cleared!
+			switch (*pch)
+			{
+			case L'\r':
+				pTrueColor = pTrueColorLine;
+				continue;
+			case L'\n':
+				pTrueColor = pTrueColorLine = (pTrueColorLine + nWindowWidth);
+				continue;
+			case 7: // bell
+				continue; // non-spacing
+			case 8: // bs
+				pTrueColor = max(pTrueColorLine, pTrueColor-1);
+				continue;
+			case 9: // tab
+				TODO("Fill and mark affected console cells?");
+				break;
+			}
+
 			if (pTrueColor >= pTrueColorEnd)
 			{
 				#ifdef _DEBUG
@@ -1018,6 +1042,7 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 	{
 		GetConsoleModeCached(h, &Mode);
 		bWrap = (Mode & ENABLE_WRAP_AT_EOL_OUTPUT) != 0;
+		_ASSERTE((Mode & ENABLE_PROCESSED_OUTPUT) != 0);
 	}
 
 	_ASSERTE(srWork.Bottom == (csbi.dwSize.Y - 1));
@@ -1159,7 +1184,8 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 			// В real-консоли вроде бы не может быть non-spacing символов, кроме выше-обработанных
 			x2++;
 			// like '\t'
-			if (x2 >= WrapAtCol)
+			if ((x2 >= WrapAtCol)
+				&& (!bRevertMode || ((pCur+1) < pEnd)))
 			{
 				ForceDumpX = min(x2, WrapAtCol)-1;
 				x2 = 0; y2++;
@@ -1173,7 +1199,7 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 			if (pCur >= pFrom)
 				lbRc = IntWriteText(h, x, ForceDumpX, pFrom, (DWORD)(pCur - pFrom + 1),
 						(pTrueColorStart && (nLinePosition >= 0)) ? (pTrueColorStart + nLinePosition) : NULL,
-						(pTrueColorEnd), AIColor, (WriteConsoleW_t)Info->Private);
+						(pTrueColorEnd), AIColor, csbi, (WriteConsoleW_t)Info->Private);
 
 			if (bSkipBELL)
 			{
@@ -1253,7 +1279,7 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 		SHORT ForceDumpX = (x2 > x) ? (min(x2, WrapAtCol)-1) : -1;
 		lbRc = IntWriteText(h, x, ForceDumpX, pFrom, (DWORD)(pCur - pFrom),
 					 (pTrueColorStart && (nLinePosition >= 0)) ? (pTrueColorStart + nLinePosition) : NULL,
-					 (pTrueColorEnd), AIColor, (WriteConsoleW_t)Info->Private);
+					 (pTrueColorEnd), AIColor, csbi, (WriteConsoleW_t)Info->Private);
 	}
 
 	if (bRevertMode)
