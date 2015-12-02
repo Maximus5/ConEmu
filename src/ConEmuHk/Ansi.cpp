@@ -2429,6 +2429,21 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 					}
 				}
 				break;
+			case 4:
+				if (Code.PvtLen == 0)
+				{
+					/* h=Insert Mode (IRM), l=Replace Mode (IRM) */
+					// Nano posts the `ESC [ 4 l` on start, but do not post `ESC [ 4 h` on exit, that is strange...
+					DumpKnownEscape(Code.pszEscStart, Code.nTotalLen, de_Ignored); // ignored for now
+				}
+				else if ((Code.PvtLen == 1) && (Code.Pvt[0] == L'?'))
+				{
+					/* h=Smooth (slow) scroll, l=Jump (fast) scroll */
+					DumpKnownEscape(Code.pszEscStart, Code.nTotalLen, de_Ignored); // ignored for now
+				}
+				else
+					DumpUnknownEscape(Code.pszEscStart, Code.nTotalLen);
+				break;
 			case 12:   /* SRM: set echo mode */
 			case 1000: /* VT200_MOUSE */
 			case 1002: /* BTN_EVENT_MOUSE */
@@ -2694,6 +2709,10 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 					gDisplayParm.Back256 = FALSE;
 					gDisplayParm.BackOrUnderline |= 2;
 					gDisplayParm.WasSet = TRUE;
+					break;
+				case 10:
+					// Something strange and unknown... (received from ssh)
+					DumpKnownEscape(Code.pszEscStart, Code.nTotalLen, de_Ignored);
 					break;
 				default:
 					DumpUnknownEscape(Code.pszEscStart,Code.nTotalLen);
