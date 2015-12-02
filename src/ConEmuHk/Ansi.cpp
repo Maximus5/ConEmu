@@ -1251,6 +1251,7 @@ int CEAnsi::NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, wchar_t (&szPreDump)[CE
 					{
 					case L'7': // Save xterm cursor
 					case L'8': // Restore xterm cursor
+					case L'c': // Full reset
 					case L'=':
 					case L'>':
 						// xterm?
@@ -1550,6 +1551,26 @@ BOOL CEAnsi::PadAndScroll(HANDLE hConsoleOutput, CONSOLE_SCREEN_BUFFER_INFO& csb
 	SetConsoleCursorPosition(hConsoleOutput, crFrom);
 
 	return lbRc;
+}
+
+BOOL CEAnsi::FullReset(HANDLE hConsoleOutput)
+{
+	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
+	if (!GetConsoleScreenBufferInfoCached(hConsoleOutput, &csbi))
+		return FALSE;
+
+	ReSetDisplayParm(hConsoleOutput, TRUE, TRUE);
+
+	// Easy way to drop all lines
+	ScrollScreen(hConsoleOutput, -csbi.dwSize.Y);
+
+	// Reset cursor
+	COORD cr0 = {};
+	SetConsoleCursorPosition(hConsoleOutput, cr0);
+
+	//TODO? Saved cursor position?
+
+	return TRUE;
 }
 
 BOOL CEAnsi::LinesInsert(HANDLE hConsoleOutput, const int LinesCount)
@@ -1942,6 +1963,11 @@ BOOL CEAnsi::WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOut
 						//TODO: 7 - Save Cursor and _Attributes_
 						//TODO: 8 - Restore Cursor and _Attributes_
 						XTermSaveRestoreCursor((Code.Second == L'7'), hConsoleOutput);
+						break;
+					case L'c':
+						// Full reset
+						FullReset(hConsoleOutput);
+						lbApply = FALSE;
 						break;
 					case L'=':
 					case L'>':
