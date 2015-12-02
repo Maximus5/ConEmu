@@ -3864,6 +3864,21 @@ int DoGuiMacro(LPCWSTR asCmdArg, MacroInstance& Inst)
 	// If neither hMacroInstance nor ghConEmuWnd was set - Macro will fails most likely
 	_ASSERTE(Inst.hConEmuWnd!=NULL || ghConEmuWnd!=NULL);
 
+	// Don't allow to execute on wrong instance
+	if ((Inst.nPID && !Inst.hConEmuWnd)
+		|| (Inst.hConEmuWnd && !IsWindow(Inst.hConEmuWnd))
+		)
+	{
+		bool bRedirect = IsOutputRedirected();
+		if (!gbPrefereSilentMode || bRedirect)
+		{
+			wchar_t szErr[120] = L"FAILED:Specified ConEmu instance is not found";
+			if (bRedirect) wcscat_c(szErr, L"\n"); // PowerShell... it does not insert linefeed
+			_wprintf(szErr);
+		}
+		return CERR_GUIMACRO_FAILED;
+	}
+
 	HWND hCallWnd = Inst.hConEmuWnd ? Inst.hConEmuWnd : ghConWnd;
 
 	// Все что в asCmdArg - выполнить в Gui
