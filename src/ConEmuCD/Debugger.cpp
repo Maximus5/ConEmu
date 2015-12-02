@@ -126,31 +126,23 @@ int RunDebugger()
 
 	UpdateDebuggerTitle();
 
-	// Если это новая консоль - увеличить ее размер, для удобства
-	if (IsWindowVisible(ghConWnd))
+	// Increase console buffer size
 	{
 		HANDLE hCon = ghConOut;
 		CONSOLE_SCREEN_BUFFER_INFO csbi = {};
 		GetConsoleScreenBufferInfo(hCon, &csbi);
-		if (csbi.dwSize.X < 260)
+		if (IsWindowVisible(ghConWnd) && (csbi.dwSize.X < 260))
 		{
-			COORD crNewSize = {260, 9999};
+			// Enlarge both width and height
+			COORD crNewSize = {260, 32000};
 			SetConsoleScreenBufferSize(ghConOut, crNewSize);
 		}
-		//if ((csbi.srWindow.Right - csbi.srWindow.Left + 1) < 120)
-		//{
-		//	COORD crMax = MyGetLargestConsoleWindowSize(hCon);
-		//	if ((crMax.X - 10) > (csbi.srWindow.Right - csbi.srWindow.Left + 1))
-		//	{
-		//		COORD crSize = {((int)((crMax.X - 15)/10))*10, min(crMax.Y, (csbi.srWindow.Bottom - csbi.srWindow.Top + 1))};
-		//		SMALL_RECT srWnd = {0, csbi.srWindow.Top, crSize.X - 1, csbi.srWindow.Bottom};
-		//		MONITORINFO mi = {sizeof(mi)};
-		//		GetMonitorInfo(MonitorFromWindow(ghConWnd, MONITOR_DEFAULTTONEAREST), &mi);
-		//		RECT rcWnd = {}; GetWindowRect(ghConWnd, &rcWnd);
-		//		SetWindowPos(ghConWnd, NULL, min(rcWnd.left,(mi.rcWork.left+50)), rcWnd.top, 0,0, SWP_NOSIZE|SWP_NOZORDER);
-		//		SetConsoleSize(9999, crSize, srWnd, "StartDebugger");
-		//	}
-		//}
+		else if (csbi.dwSize.Y < 1000)
+		{
+			// ConEmu do not support horizontal scrolling yet
+			COORD crNewSize = {csbi.dwSize.X, 32000};
+			SetConsoleScreenBufferSize(ghConOut, crNewSize);
+		}
 	}
 
 	// Вывести в консоль информацию о версии.
