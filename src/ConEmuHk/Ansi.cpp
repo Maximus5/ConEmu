@@ -1502,6 +1502,7 @@ wrap2:
 	return iRc;
 }
 
+// From the cursor position!
 BOOL CEAnsi::ScrollLine(HANDLE hConsoleOutput, int nDir)
 {
 	ExtScrollScreenParm scrl = {sizeof(scrl), essf_Current|essf_Commit, hConsoleOutput, nDir, {}, L' '};
@@ -2246,11 +2247,11 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 				nChars = csbi.dwSize.X - csbi.dwCursorPosition.X;
 				break;
 			case 1: // clear from cursor to beginning of the line
-				cr0.X = cr0.Y = 0;
+				cr0.X = 0;
 				nChars = csbi.dwCursorPosition.X + 1;
 				break;
 			case 2: // clear entire line
-				cr0.X = cr0.Y = 0;
+				cr0.X = 0;
 				nChars = csbi.dwSize.X;
 				break;
 			default:
