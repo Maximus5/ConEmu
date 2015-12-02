@@ -290,6 +290,7 @@ CConEmuMain::CConEmuMain()
 	mn_LastTransparentValue = 255;
 
 	DEBUGTEST(mb_DestroySkippedInAssert=false);
+	mn_InOurDestroy = 0;
 
 	CVConGroup::Initialize();
 
@@ -7115,8 +7116,12 @@ LRESULT CConEmuMain::OnDestroy(HWND hWnd)
 	// Ensure "RCon starting queue" is terminated
 	mp_RunQueue->Terminate();
 
-	// Нужно проверить, вдруг окно закрылось без нашего ведома (InsideIntegration)
+	// If the window was closed as part of children termination (InsideIntegration)
+	// Than, close all spawned consoles
 	CVConGroup::OnDestroyConEmu();
+	// and destroy all child windows
+	if (mn_InOurDestroy == 0)
+		DestroyAllChildWindows();
 
 	if (mp_AttachDlg)
 	{
@@ -7207,7 +7212,36 @@ LRESULT CConEmuMain::OnDestroy(HWND hWnd)
 	SetKillTimer(false, TIMER_QUAKE_AUTOHIDE_ID, 0);
 	SetKillTimer(false, TIMER_ACTIVATESPLIT_ID, 0);
 	PostQuitMessage(0);
+
+	// After WM_DESTROY (especially with InsideParent mode)
+	// ghWnd changes into invalid state
+	if (mn_InOurDestroy == 0)
+		ghWnd = NULL;
 	return 0;
+}
+
+void CConEmuMain::DestroyAllChildWindows()
+{
+	if (!ghWnd)
+		return;
+	_ASSERTE(mn_InOurDestroy==0);
+
+	struct Impl {
+		MArray<HWND> lhChildren;
+		static BOOL CALLBACK EnumChildProc(HWND hwnd, LPARAM lParam)
+		{
+			Impl* p = (Impl*)lParam;
+			p->lhChildren.push_back(hwnd);
+			return TRUE;
+		}
+	} impl;
+	EnumChildWindows(ghWnd, Impl::EnumChildProc, (LPARAM)&impl);
+
+	HWND hChild = NULL;
+	while (impl.lhChildren.pop_back(hChild))
+	{
+		DestroyWindow(hChild);
+	}
 }
 
 LRESULT CConEmuMain::OnFlashWindow(WPARAM wParam, LPARAM lParam)
@@ -13419,7 +13453,9 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 				session.SetSessionNotification(false);
 				//this->OnDestroy(hWnd);
 				_ASSERTE(hWnd == ghWnd);
+				mn_InOurDestroy++;
 				DestroyWindow(hWnd);
+				mn_InOurDestroy--;
 				return 0;
 			}
 			else if (messg == this->mn_MsgUpdateSizes)

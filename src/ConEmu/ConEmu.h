@@ -603,6 +603,8 @@ class CConEmuMain
 		#ifdef _DEBUG
 		bool mb_DestroySkippedInAssert;
 		#endif
+		int mn_InOurDestroy;
+		void DestroyAllChildWindows();
 
 	public:
 		enum {
