@@ -12168,7 +12168,11 @@ void CConEmuMain::OnTimer_ActivateSplit()
 	if (!PTDIFFTEST(mouse.ptLastSplitOverCheck, SPLITOVERCHECK_DELTA))
 	{
 		mouse.ptLastSplitOverCheck = ptCur;
-		if (!isIconic() && (hForeWnd == ghWnd || CVConGroup::isOurGuiChildWindow(hForeWnd)))
+		if (!isIconic()
+			&& (hForeWnd == ghWnd
+				|| (mp_Inside && (hForeWnd == mp_Inside->mh_InsideParentRoot))
+				|| CVConGroup::isOurGuiChildWindow(hForeWnd)
+			))
 		{
 			// Курсор над ConEmu?
 			RECT rcClient = CalcRect(CER_MAIN);
