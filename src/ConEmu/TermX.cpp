@@ -41,6 +41,7 @@ bool TermX::GetSubstitute(const KEY_EVENT_RECORD& k, wchar_t (&szSubst)[16])
 		11, 12, 13, 14, 15, 17, 18, 19, 20, 21, 23, 24,
 		25, 26, 28, 29, 31, 32, 33, 34, 42, 43, 44, 45
 	};
+	static wchar_t F1F4Codes[] = {L'P', L'Q', L'R', L'S'};
 
 	typedef DWORD XTermCtrls;
 	const XTermCtrls
@@ -106,7 +107,10 @@ bool TermX::GetSubstitute(const KEY_EVENT_RECORD& k, wchar_t (&szSubst)[16])
 		Processor.SetKey(szSubst, L'F');
 		return true;
 
-	case VK_F1: case VK_F2: case VK_F3: case VK_F4: case VK_F5: case VK_F6: case VK_F7: case VK_F8:
+	case VK_F1: case VK_F2: case VK_F3: case VK_F4:
+		Processor.SetKey(szSubst, F1F4Codes[(k.wVirtualKeyCode-VK_F1)]);
+		return true;
+	case VK_F5: case VK_F6: case VK_F7: case VK_F8:
 	case VK_F9: case VK_F10: case VK_F11: case VK_F12: case VK_F13: case VK_F14: case VK_F15: case VK_F16:
 	case VK_F17: case VK_F18: case VK_F19: case VK_F20: case VK_F21: case VK_F22: case VK_F23: case VK_F24:
 		// "\033[11;*~" .. L"\033[15;*~", and so on: F1Codes[]
@@ -124,6 +128,12 @@ bool TermX::GetSubstitute(const KEY_EVENT_RECORD& k, wchar_t (&szSubst)[16])
 		return true;
 	case VK_DELETE:
 		Processor.SetTilde(szSubst, L'3');
+		return true;
+	case VK_BACK:
+		if ((Processor.Mods & xtc_Alt)) szSubst[0] = 0x1B;
+		szSubst[(Processor.Mods == xtc_Alt) ? 1 : 0] = ((Processor.Mods & (xtc_Ctrl|xtc_Alt)) == (xtc_Ctrl|xtc_Alt)) ? 0x9F
+			: (Processor.Mods & xtc_Ctrl) ? 0x1F : 0x7F;
+		szSubst[(Processor.Mods == xtc_Alt) ? 2 : 1] = 0;
 		return true;
 
 	case VK_TAB:
@@ -154,6 +164,13 @@ bool TermX::GetSubstitute(const KEY_EVENT_RECORD& k, wchar_t (&szSubst)[16])
 			// Just a digits '0'..'9' and symbols +-/*.
 			szSubst[0] = k.uChar.UnicodeChar; szSubst[1] = 0;
 		}
+		return true;
+	}
+
+	// Alt+Char
+	if ((Processor.Mods & xtc_Alt) && k.uChar.UnicodeChar)
+	{
+		szSubst[0] = L'\033'; szSubst[1] = k.uChar.UnicodeChar; szSubst[2] = 0;
 		return true;
 	}
 
