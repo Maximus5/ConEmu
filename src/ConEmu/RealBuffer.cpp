@@ -474,13 +474,13 @@ bool CRealBuffer::LoadDataFromDump(const CONSOLE_SCREEN_BUFFER_INFO& storedSbi, 
 		con.m_sbi.srWindow.Right = klMin((NewTopLeft.x + (int)nX - 1),((int)storedSbi.dwSize.X - 1));
 	else
 		con.m_sbi.srWindow.Right = klMin(((int)nX - 1),((int)storedSbi.dwSize.X - 1));
-	con.m_sbi.srWindow.Left = max(0,con.m_sbi.srWindow.Right - nX + 1);
+	con.m_sbi.srWindow.Left = max(0,con.m_sbi.srWindow.Right - (int)nX + 1);
 
 	if (NewTopLeft.isLocked() && NewTopLeft.y >= 0)
 		con.m_sbi.srWindow.Bottom = min((NewTopLeft.y + (int)nY - 1),(storedSbi.dwSize.Y - 1));
 	else
 		con.m_sbi.srWindow.Bottom = min((storedSbi.srWindow.Top + (int)nY - 1),(storedSbi.dwSize.Y - 1));
-	con.m_sbi.srWindow.Top = max(0,con.m_sbi.srWindow.Bottom - nY + 1);
+	con.m_sbi.srWindow.Top = max(0,con.m_sbi.srWindow.Bottom - (int)nY + 1);
 
 	con.crMaxSize = mp_RCon->mp_RBuf->con.crMaxSize; //MakeCoord(max(dump.crSize.X,nX),max(dump.crSize.Y,nY));
 	con.m_sbi.dwMaximumWindowSize = con.crMaxSize; //dump.crSize;
