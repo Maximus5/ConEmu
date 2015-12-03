@@ -62,7 +62,7 @@
 
 === space ===
 	description:
-		drive used/free space bar, wich located in status area
+		drive used/free space bar, which located in status area
 		see also: rgb_light, bgr_light, rgb_dark, bgr_dark
 	attributes:
 		type

@@ -1504,7 +1504,7 @@ struct CESERVER_CONSOLE_APP_MAPPING
 
 	// CECONEMUROOTTHREAD often fails on cygwin/msys fork
 	// This will be more proper way to detect if ConEmuHk
-	// is loaded in main thread and snapshooting in the
+	// is loaded in main thread and snapshotting in the
 	// GetMainThreadId is not required
 	MCircular<DWORD,256> HookedPids;
 };

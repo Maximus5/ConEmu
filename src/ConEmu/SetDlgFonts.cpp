@@ -190,7 +190,7 @@ DWORD CSetDlgFonts::EnumFontsThread(LPVOID apArg)
 
 	mb_EnumThreadFinished = true;
 
-	// Если шустрый юзер успел переключиться на вкладку "Views" до оконачания
+	// Если шустрый юзер успел переключиться на вкладку "Views" до окончания
 	// загрузки шрифтов - послать в диалог сообщение "Считать список из [thi_Main]"
 	HWND hViewsPg = gpSetCls->GetPage(CSettings::thi_Views);
 	if (hViewsPg)
@@ -220,8 +220,8 @@ bool CSetDlgFonts::EnumFontsFinished()
 
 bool CSetDlgFonts::IsAlmostMonospace(LPCWSTR asFaceName, int tmMaxCharWidth, int tmAveCharWidth, int tmHeight)
 {
-	// Некоторые шрифты (Consolas) достаточно странные. Заявлены как моноширные (PAN_PROP_MONOSPACED),
-	// похожи на моноширные, но tmMaxCharWidth у них очень широкий (иероглифы что-ли?)
+	// Некоторые шрифты (Consolas) достаточно странные. Заявлены как моноширинные (PAN_PROP_MONOSPACED),
+	// похожи на моноширинные, но tmMaxCharWidth у них очень широкий (иероглифы что-ли?)
 	if (lstrcmp(asFaceName, L"Consolas") == 0)
 		return true;
 
@@ -232,7 +232,7 @@ bool CSetDlgFonts::IsAlmostMonospace(LPCWSTR asFaceName, int tmMaxCharWidth, int
 	{
 		int nRelativeDelta = (tmMaxCharWidth - tmAveCharWidth) * 100 / tmHeight;
 
-		// Если расхождение менее 16% высоты - считаем шрифт моноширным
+		// Если расхождение менее 16% высоты - считаем шрифт моноширинным
 		// Увеличил до 16%. Win7, Courier New, 6x4
 		if (nRelativeDelta <= 16)
 			bAlmostMonospace = true;

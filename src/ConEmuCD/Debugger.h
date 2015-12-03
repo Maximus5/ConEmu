@@ -57,7 +57,7 @@ struct DebuggerInfo
 	BOOL  bDebugMultiProcess; // Debugger was asked for multiple processes simultaneously
 	int   nProcessCount;
 	int   nWaitTreeBreaks;
-	BOOL  bAutoDump; // For creating series of mini-dumps, useful for "snapshooting" running application
+	BOOL  bAutoDump; // For creating series of mini-dumps, useful for "snapshotting" running application
 	DWORD nAutoInterval;
 	LONG  nDumpsCounter;
 

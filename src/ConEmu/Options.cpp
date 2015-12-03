@@ -482,7 +482,7 @@ void Settings::InitSettings()
 	nScrollBarAppearDelay = 100;
 	nScrollBarDisappearDelay = 1000;
 
-	//Issue 577: Для иероглифов - по умолчанию отключим моноширность
+	//Issue 577: Для иероглифов - по умолчанию отключим моноширинность
 	//150311 - proportial is not required for DBCS anymore
 	isMonospace = 1; // bIsDbcs ? 0 : 1;
 
@@ -2950,7 +2950,7 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 		reg->Load(L"Update.ProxyUser", &UpdSet.szUpdateProxyUser);
 		reg->Load(L"Update.ProxyPassword", &UpdSet.szUpdateProxyPassword);
 		//It is not saved to settings, so must not be loaded from
-		//reg->Load(L"Update.DownloadMode", UpdSet.isUpdateDownloadSetup); // 1-Installer (ConEmuSetup.exe), 2-7z archieve (ConEmu.7z), WinRar or 7z required
+		//reg->Load(L"Update.DownloadMode", UpdSet.isUpdateDownloadSetup); // 1-Installer (ConEmuSetup.exe), 2-7z archive (ConEmu.7z), WinRar or 7z required
 		UpdSet.isUpdateDownloadSetup = 0; // Use 'Auto' detection
 		reg->Load(L"Update.ExeCmdLine", &UpdSet.szUpdateExeCmdLine);
 		reg->Load(L"Update.ArcCmdLine", &UpdSet.szUpdateArcCmdLine);
@@ -2980,7 +2980,7 @@ wrap:
 	if (bInitVanillaFontSizes)
 	{
 		// For example, user had pressed ‘Esc’ in the ‘Fast settings’ dialog
-		// So, config will be not totally ‘new’ but font settins are ‘new’ actually
+		// So, config will be not totally ‘new’ but font settings are ‘new’ actually
 		InitVanillaFontSettings();
 	}
 }

@@ -3529,7 +3529,7 @@ DWORD CPluginBase::WaitPluginActivation(DWORD nCount, HANDLE *lpHandles, BOOL bW
 			if (((nWait >= WAIT_OBJECT_0) && (nWait < (WAIT_OBJECT_0+nCount))) || (nWait != WAIT_TIMEOUT))
 			{
 				_ASSERTE((nWait >= WAIT_OBJECT_0) && (nWait < (WAIT_OBJECT_0+nCount)));
-				break; // Succeded
+				break; // Succeeded
 			}
 
 			nCurrentTick = GetTickCount();
@@ -4453,11 +4453,11 @@ bool CPluginBase::ReloadFarInfo(bool abForce)
 		LoadPanelTabsFromRegistry();
 	}
 
-	bool lbChanged = false, lbSucceded = false;
+	bool lbChanged = false, lbSucceeded = false;
 
-	lbSucceded = ReloadFarInfoApi();
+	lbSucceeded = ReloadFarInfoApi();
 
-	if (lbSucceded)
+	if (lbSucceeded)
 	{
 		// Don't compare sActiveDir/sPassiveDir, only nPanelDirIdx take into account
 		INT_PTR iCmpLen = ((LPBYTE)gpFarInfoMapping->sActiveDir) - ((LPBYTE)gpFarInfoMapping);
@@ -4883,7 +4883,7 @@ void CPluginBase::FillLoadedParm(struct ConEmuLoadedArg* pArg, HMODULE hSubPlugi
 void CPluginBase::NotifyConEmuUnloaded()
 {
 	OnConEmuLoaded_t fnOnConEmuLoaded = NULL;
-	BOOL lbSucceded = FALSE;
+	BOOL lbSucceeded = FALSE;
 	HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, 0);
 
 	if (snapshot != INVALID_HANDLE_VALUE)
@@ -4903,15 +4903,15 @@ void CPluginBase::NotifyConEmuUnloaded()
 					//arg.nBuildNo = ((MVV_1 % 100)*10000) + (MVV_2*100) + (MVV_3);
 					//arg.hConEmu = ghPluginModule;
 					//arg.bLoaded = FALSE;
-					lbSucceded = FALSE;
+					lbSucceeded = FALSE;
 					SAFETRY
 					{
 						fnOnConEmuLoaded(&arg);
-						lbSucceded = TRUE;
+						lbSucceeded = TRUE;
 					} SAFECATCH
 					{
 						// Failed
-						_ASSERTE(lbSucceded == TRUE);
+						_ASSERTE(lbSucceeded == TRUE);
 					}
 				}
 			}

@@ -116,7 +116,7 @@ class CConEmuChild
 		long mn_MsgVConTerminated; // == 0, Registered when post destroing
 		UINT mn_MsgTabChanged;
 		UINT mn_MsgPostFullPaint;
-		UINT mn_MsgSavePaneSnapshoot;
+		UINT mn_MsgSavePaneSnapshot;
 		UINT mn_MsgDetachPosted;
 		UINT mn_MsgRestoreChildFocus;
 		BOOL mb_PostFullPaint;

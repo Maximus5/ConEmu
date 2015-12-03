@@ -226,7 +226,7 @@ void UnsetAllHooks();
 bool SetImports(LPCWSTR asModule, HMODULE Module, BOOL abForceHooks);
 void UnsetImports();
 
-bool PrepareNewModule(HMODULE module, LPCSTR asModuleA, LPCWSTR asModuleW, BOOL abNoSnapshoot = FALSE, BOOL abForceHooks = FALSE);
+bool PrepareNewModule(HMODULE module, LPCSTR asModuleA, LPCWSTR asModuleW, BOOL abNoSnapshot = FALSE, BOOL abForceHooks = FALSE);
 void UnprepareModule(HMODULE hModule, LPCWSTR pszModule, int iStep);
 
 void ProcessOnLibraryLoadedW(HMODULE module);

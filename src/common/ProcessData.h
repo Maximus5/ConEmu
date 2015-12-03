@@ -539,7 +539,7 @@ public:
 				DEBUGTEST(nErr = GetLastError());
 
 				// Last chance for Vista+
-				// May be we can get full path by this handle, but IsWow64Process would be succeessfull
+				// May be we can get full path by this handle, but IsWow64Process would be successful
 				if (IsWin6())
 				{
 					// PROCESS_QUERY_LIMITED_INFORMATION not defined in GCC

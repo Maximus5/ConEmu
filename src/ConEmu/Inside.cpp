@@ -657,7 +657,7 @@ bool CConEmuInside::SendVkKeySequence(HWND hWnd, WORD* pvkKeys)
 		}
 		else
 		{
-			// Sequental keys send to "menu" control
+			// Sequential keys send to "menu" control
 			lSendRc = PostMessage(hSend, nMsg1, pvkKeys[k], lParam1);
 			if (lSendRc)
 			{
@@ -799,7 +799,7 @@ void CConEmuInside::InsideUpdatePlacement()
 		if (memcmp(&mrc_InsideParent, &rcParent, sizeof(rcParent))
 			|| ((m_InsideIntegration != ii_Simple) && memcmp(&mrc_InsideParentRel, &rcRelative, sizeof(rcRelative))))
 		{
-			// Расчитать
+			// Рассчитать
 			RECT rcWnd = {}; // GetDefaultRect();
 			if (GetInsideRect(&rcWnd))
 			{

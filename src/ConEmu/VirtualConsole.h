@@ -309,7 +309,7 @@ class CVirtualConsole :
 		bool Update(bool abForce = false, HDC *ahDc=NULL);
 		void UpdateCursor(bool& lRes);
 		static bool UpdateCursorGroup(CVirtualConsole* pVCon, LPARAM lParam);
-		void UpdateThumbnail(bool abNoSnapshoot = FALSE);
+		void UpdateThumbnail(bool abNoSnapshot = FALSE);
 		void SelectFont(CEFONT hNew);
 		void SelectBrush(HBRUSH hNew);
 		inline bool isCharBorder(wchar_t inChar);
@@ -353,7 +353,7 @@ class CVirtualConsole :
 		bool IsPanelViews();
 		bool CheckTransparent();
 		void OnTitleChanged();
-		void SavePaneSnapshoot();
+		void SavePaneSnapshot();
 		void OnTaskbarSettingsChanged();
 		void OnTaskbarFocus();
 
