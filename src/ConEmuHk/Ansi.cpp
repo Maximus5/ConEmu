@@ -1074,7 +1074,7 @@ BOOL CEAnsi::OurWriteConsoleA(HANDLE hConsoleOutput, const char *lpBuffer, DWORD
 	if ((nNumberOfCharsToWrite + 3) >= countof(szTemp))
 	{
 		bufMax = nNumberOfCharsToWrite + 3;
-		buf = (wchar_t*)malloc(bufMax*sizeof(&buf));
+		buf = (wchar_t*)malloc(bufMax*sizeof(wchar_t));
 	}
 	else
 	{
