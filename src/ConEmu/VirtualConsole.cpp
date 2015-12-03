@@ -1670,16 +1670,16 @@ bool CVirtualConsole::CheckChangedTextAttr()
 //	return textChanged || attrChanged;
 }
 
-void CVirtualConsole::UpdateThumbnail(bool abNoSnapshoot /*= FALSE*/)
+void CVirtualConsole::UpdateThumbnail(bool abNoSnapshot /*= FALSE*/)
 {
 	if (!this)
 		return;
 
-	if (!mp_Ghost || !mp_ConEmu->Taskbar_GhostSnapshootRequired())
+	if (!mp_Ghost || !mp_ConEmu->Taskbar_GhostSnapshotRequired())
 		return;
 
 	// Скорее всего мы не в главной нити, но оно само разберется
-	mp_Ghost->UpdateTabSnapshoot(FALSE, abNoSnapshoot);
+	mp_Ghost->UpdateTabSnapshot(FALSE, abNoSnapshot);
 }
 
 bool CVirtualConsole::Update(bool abForce, HDC *ahDc)
@@ -4982,7 +4982,7 @@ void CVirtualConsole::PaintVCon(HDC hPaintDc)
 		guard.VCon()->PaintVConSimple(hPaintDc, rcClient, lbGuiVisible);
 
 		if (guard.VCon() && mp_Ghost)
-			mp_Ghost->UpdateTabSnapshoot(); //CreateTabSnapshoot(hPaintDc, rcClient.right-rcClient.left, rcClient.bottom-rcClient.top);
+			mp_Ghost->UpdateTabSnapshot(); //CreateTabSnapshoot(hPaintDc, rcClient.right-rcClient.left, rcClient.bottom-rcClient.top);
 	}
 	else if (gpConEmu->IsWindowModeChanging())
 	{
@@ -5000,7 +5000,7 @@ void CVirtualConsole::PaintVCon(HDC hPaintDc)
 		PaintVConNormal(hPaintDc, rcClient);
 
 		if (mp_Ghost)
-			mp_Ghost->UpdateTabSnapshoot(); //CreateTabSnapshoot(hPaintDc, rcClient.right-rcClient.left, rcClient.bottom-rcClient.top);
+			mp_Ghost->UpdateTabSnapshot(); //CreateTabSnapshoot(hPaintDc, rcClient.right-rcClient.left, rcClient.bottom-rcClient.top);
 
 		// Debug rects and (scrolllock)counter
 		PaintVConDebug(hPaintDc, rcClient);
@@ -5061,7 +5061,7 @@ void CVirtualConsole::PaintVConSimple(HDC hPaintDc, RECT rcClient, BOOL bGuiVisi
 		DeleteObject(hBr);
 
 	if (mp_Ghost)
-		mp_Ghost->UpdateTabSnapshoot(TRUE); //CreateTabSnapshoot(hPaintDc, rcClient.right-rcClient.left, rcClient.bottom-rcClient.top);
+		mp_Ghost->UpdateTabSnapshot(TRUE); //CreateTabSnapshoot(hPaintDc, rcClient.right-rcClient.left, rcClient.bottom-rcClient.top);
 }
 
 void CVirtualConsole::PaintVConNormal(HDC hPaintDc, RECT rcClient)
@@ -6538,17 +6538,17 @@ void CVirtualConsole::OnTitleChanged()
 		mp_ConEmu->UpdateTitle();
 }
 
-void CVirtualConsole::SavePaneSnapshoot()
+void CVirtualConsole::SavePaneSnapshot()
 {
 	if (!isMainThread())
 	{
-		PostMessage(GetView(), mn_MsgSavePaneSnapshoot, 0, 0);
+		PostMessage(GetView(), mn_MsgSavePaneSnapshot, 0, 0);
 		return;
 	}
 
 	if (mp_Ghost /*&& !gbNoDblBuffer*/)
 	{
-		mp_Ghost->UpdateTabSnapshoot(); //CreateTabSnapshoot((HDC)m_DC, Width, Height, TRUE);
+		mp_Ghost->UpdateTabSnapshot(); //CreateTabSnapshoot((HDC)m_DC, Width, Height, TRUE);
 	}
 }
 

@@ -181,7 +181,7 @@ HRESULT CTaskBar::Taskbar_SetActiveTab(HWND hBtn)
 	return hr;
 }
 
-bool CTaskBar::Taskbar_GhostSnapshootRequired()
+bool CTaskBar::Taskbar_GhostSnapshotRequired()
 {
 	_ASSERTE(mp_TaskBar1!=NULL);
 	return gpConEmu->IsDwm();

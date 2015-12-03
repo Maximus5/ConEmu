@@ -10162,7 +10162,7 @@ void CRealConsole::OnDeactivate(int nNewNum)
 	if (hGui)
 		GuiWndFocusStore();
 
-	mp_VCon->SavePaneSnapshoot();
+	mp_VCon->SavePaneSnapshot();
 
 	ShowHideViews(FALSE);
 	//HWND hPic = isPictureView();

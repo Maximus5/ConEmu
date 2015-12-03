@@ -114,7 +114,7 @@ CTaskBarGhost* CTaskBarGhost::Create(CVirtualConsole* apVCon)
 
 	CTaskBarGhost* pGhost = new CTaskBarGhost(apVCon);
 
-	pGhost->UpdateTabSnapshoot(TRUE);
+	pGhost->UpdateTabSnapshot(TRUE);
 
 #if 0
 	if (!pGhost->CreateTabSnapshoot(...))
@@ -185,11 +185,11 @@ void CTaskBarGhost::UpdateGhostSize()
 	}
 }
 
-BOOL CTaskBarGhost::UpdateTabSnapshoot(BOOL abSimpleBlack, BOOL abNoSnapshoot)
+BOOL CTaskBarGhost::UpdateTabSnapshot(BOOL abSimpleBlack, BOOL abNoSnapshot)
 {
 	if (!isMainThread())
 	{
-		PostMessage(mh_Ghost, mn_MsgUpdateThumbnail, abSimpleBlack, abNoSnapshoot);
+		PostMessage(mh_Ghost, mn_MsgUpdateThumbnail, abSimpleBlack, abNoSnapshot);
 		return FALSE;
 	}
 
@@ -199,21 +199,21 @@ BOOL CTaskBarGhost::UpdateTabSnapshoot(BOOL abSimpleBlack, BOOL abNoSnapshoot)
 
 	UpdateGhostSize();
 
-	if (!abNoSnapshoot && NeedSnapshootCache())
+	if (!abNoSnapshot && NeedSnapshotCache())
 	{
 		if (mp_VCon->isVisible())
-			CreateTabSnapshoot();
+			CreateTabSnapshot();
 	}
 
 	gpConEmu->DwmInvalidateIconicBitmaps(mh_Ghost);
 	return TRUE;
 }
 
-BOOL CTaskBarGhost::CreateTabSnapshoot()
+BOOL CTaskBarGhost::CreateTabSnapshot()
 {
 	CheckTitle();
 
-	if (!gpConEmu->Taskbar_GhostSnapshootRequired())
+	if (!gpConEmu->Taskbar_GhostSnapshotRequired())
 		return FALSE; // Сразу выйдем.
 
 	if (!gpConEmu->isValid(mp_VCon))
@@ -292,13 +292,13 @@ BOOL CTaskBarGhost::CreateTabSnapshoot()
 			HBITMAP hOld = (HBITMAP)SelectObject(hdcMem, mh_Snap);
 
 			// Если в "консоли" есть графические окна (GUI Application, PicView, MMView, PanelViews, и т.п.)
-			// то делать snapshoot по тексту консоли некорректно - нужно "фотографировать" содержимое окна
-			if (NeedSnapshootCache())
+			// то делать snapshot по тексту консоли некорректно - нужно "фотографировать" содержимое окна
+			if (NeedSnapshotCache())
 			{
 				HWND hView = mp_VCon->GetView();
 				RECT rcSnap = {}; GetWindowRect(hView, &rcSnap);
 
-				bool bLockSnapshoot = false;
+				bool bLockSnapshot = false;
 				if (gpConEmu->IsDwm())
 				{
 					// Если уже всплыл "DWM-ное" окошко с иконками...
@@ -308,11 +308,11 @@ BOOL CTaskBarGhost::CreateTabSnapshoot()
 						RECT rcDwm = {}; GetWindowRect(hFind, &rcDwm);
 						RECT rcInter = {};
 						if (IntersectRect(&rcInter, &rcSnap, &rcDwm))
-							bLockSnapshoot = true;
+							bLockSnapshot = true;
 					}
 				}
 
-				if (!bLockSnapshoot)
+				if (!bLockSnapshot)
 				{
 					WARNING("TODO: Use WM_PRINT & WM_PRINTCLIENT?");
 					// Нужно фото экрана
@@ -370,8 +370,8 @@ bool CTaskBarGhost::CalcThumbnailSize(int nWidth, int nHeight, int &nShowWidth, 
 }
 
 // Если в "консоли" есть графические окна (GUI Application, PicView, MMView, PanelViews, и т.п.)
-// то делать snapshoot по тексту консоли некорректно - нужно "фотографировать" содержимое окна
-bool CTaskBarGhost::NeedSnapshootCache()
+// то делать snapshot по тексту консоли некорректно - нужно "фотографировать" содержимое окна
+bool CTaskBarGhost::NeedSnapshotCache()
 {
 	if (!gpConEmu->IsDwm())
 	{
@@ -435,11 +435,11 @@ HBITMAP CTaskBarGhost::CreateThumbnail(int nWidth, int nHeight)
 
 				if (!mb_SimpleBlack)
 				{
-					if (NeedSnapshootCache())
+					if (NeedSnapshotCache())
 					{
-						// При наличии дочерних GUI окон - вероятно, snapshoot-ы имеют смысл только когда окна видимы
+						// При наличии дочерних GUI окон - вероятно, snapshot-ы имеют смысл только когда окна видимы
 						if (mp_VCon->isVisible())
-							CreateTabSnapshoot();
+							CreateTabSnapshot();
 
 						if (mh_Snap)
 						{
@@ -639,9 +639,9 @@ LRESULT CTaskBarGhost::OnTimer(WPARAM TimerID)
 	}
 	else
 	{
-		if (mp_VCon->isVisible() && NeedSnapshootCache())
+		if (mp_VCon->isVisible() && NeedSnapshotCache())
 		{
-			UpdateTabSnapshoot(FALSE, FALSE);
+			UpdateTabSnapshot(FALSE, FALSE);
 		}
 	}
 	return 0;
@@ -830,7 +830,7 @@ LRESULT CTaskBarGhost::OnDwmSendIconicLivePreviewBitmap()
 	// This tab window is being asked to provide a bitmap to show in live preview.
 	// This indicates the tab's thumbnail in the taskbar is being previewed.
 	//_SendLivePreviewBitmap();
-	if (CreateTabSnapshoot())
+	if (CreateTabSnapshot())
 	{
 		POINT ptOffset = mpt_Offset;
 
@@ -968,7 +968,7 @@ LRESULT CTaskBarGhost::GhostProc(UINT message, WPARAM wParam, LPARAM lParam)
 		default:
 			if (message == mn_MsgUpdateThumbnail)
 			{
-				lResult = UpdateTabSnapshoot(wParam!=0, lParam!=0);
+				lResult = UpdateTabSnapshot(wParam!=0, lParam!=0);
 			}
 			else
 			{
