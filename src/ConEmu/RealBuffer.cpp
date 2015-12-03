@@ -6873,7 +6873,7 @@ short CRealBuffer::CheckProgressInConsole(const wchar_t* pszCurLine)
 					j--;
 
 				// Может быть что-то типа "Progress 25.15%"
-				if (((i - j) <= 2) && (j >= 2) && ((i - j) <= 2) && (pszCurLine[j-1] == L'.'))
+				if (((i - j) <= 2) && (j >= 2) && (pszCurLine[j-1] == L'.'))
 				{
 					k = j - 1;
 					while (k > 0 && isDigit(pszCurLine[k-1]))
