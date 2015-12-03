@@ -388,7 +388,7 @@ REGEDIT4
 ;; Open Far editor and position on error line by clicking compiler error message, like:
 ;; 1>realconsole.cpp(8104) : error C2065: 'qqq' : undeclared identifier
 ;"FarGotoEditor"=hex:01    ; 01-enable, 00-disable
-;"FarGotoEditorVk"=hex:a2  ; VK modifier, wich must be depressed when click. LCtrl by default.
+;"FarGotoEditorVk"=hex:a2  ; VK modifier, which must be depressed when click. LCtrl by default.
 ;; Panel View settings (ConEmuTh.dll Far Manager plugin)
 ;"PanView.BackColor"=dword:10ffffff
 ;"PanView.LoadFolders"=hex:01

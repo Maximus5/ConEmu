@@ -102,7 +102,7 @@ WARNING("Глюк с частичной отрисовкой экрана час
 WARNING("В каждой VCon создать буфер BYTE[256] для хранения распознанных клавиш (Ctrl,...,Up,PgDn,Add,и пр.");
 WARNING("Нераспознанные можно помещать в буфер {VKEY,wchar_t=0}, в котором заполнять последний wchar_t по WM_CHAR/WM_SYSCHAR");
 WARNING("При WM_(SYS)CHAR помещать wchar_t в начало, в первый незанятый VKEY");
-WARNING("При нераспознаном WM_KEYUP - брать(и убрать) wchar_t из этого буфера, послав в консоль UP");
+WARNING("При нераспознанном WM_KEYUP - брать(и убрать) wchar_t из этого буфера, послав в консоль UP");
 TODO("А периодически - проводить проверку isKeyDown, и чистить буфер");
 WARNING("при переключении на другую консоль (да наверное и в процессе просто нажатий - модификатор может быть изменен в самой программе) требуется проверка caps, scroll, num");
 WARNING("а перед пересылкой символа/клавиши проверять нажат ли на клавиатуре Ctrl/Shift/Alt");
@@ -1441,7 +1441,7 @@ class DcDebug
 //	// Нас интересует только нижний байт
 //    atr &= 0xFF;
 //
-//    // быстрее будет создать заранее массив с цветами, и получять нужное по индексу
+//    // быстрее будет создать заранее массив с цветами, и получать нужное по индексу
 //    foreColorNum = m_ForegroundColors[atr];
 //    backColorNum = m_BackgroundColors[atr];
 //    if (pFont) *pFont = mh_FontByIndex[atr];
@@ -1466,7 +1466,7 @@ void CVirtualConsole::CharABC(wchar_t ch, ABC *abc)
 	{
 		if (isCharRTL(ch))
 		{
-			WARNING("Поскольку с RTL все достаточно сложно, пока считаем шрифт моноширным");
+			WARNING("Поскольку с RTL все достаточно сложно, пока считаем шрифт моноширинным");
 			gpSetCls->CharABC[ch].abcA = gpSetCls->CharABC[ch].abcC = 0;
 			gpSetCls->CharABC[ch].abcB = nFontWidth;
 		}
@@ -1773,7 +1773,7 @@ bool CVirtualConsole::Update(bool abForce, HDC *ahDc)
 	//------------------------------------------------------------------------
 	bool updateText, updateCursor;
 
-	// Do we have to update changed text? isForce taked into account
+	// Do we have to update changed text? take isForce into account
 	updateText = CheckChangedTextAttr();
 
 	if (isForce)
@@ -1792,7 +1792,7 @@ bool CVirtualConsole::Update(bool abForce, HDC *ahDc)
 
 	mb_DialogsChanged = CheckDialogsChanged();
 	// Если на панелях открыт ConEmuTh - причесать заголовки и
-	// строку разделителя инф.части (там не должно оставаться уголовых элементов)
+	// строку разделителя инф.части (там не должно оставаться угловых элементов)
 	// И обновить видимые регионы (скрыть части, которые находятся "под" диалогами)
 	PolishPanelViews();
 
@@ -2880,7 +2880,7 @@ bool CVirtualConsole::UpdatePrepare(HDC *ahDc, MSectionLock *pSDC, MSectionLock 
 
 		if (lbSizeChanged)
 		{
-			// Вобщем здесь, если размер RConSrv совпадает с размером RCon
+			// В общем здесь, если размер RConSrv совпадает с размером RCon
 			// то нужно просто подровнять наше окошко...
 			// Это происходит при выходе из NTVDM
 			bool bSizeProcessed = false;
@@ -5748,7 +5748,7 @@ bool CVirtualConsole::FindChanges(int row, int &j, int &end, const wchar_t* ConC
 	if (gpSetCls->FontItalic() || gpSetCls->FontClearType())
 		return TRUE;
 
-	// *) Skip not changed tail symbols. но только если шрифт моноширный
+	// *) Skip not changed tail symbols. но только если шрифт моноширинный
 	if (gpSet->isMonospace)
 	{
 		TODO("OPTIMIZE:");
@@ -5756,7 +5756,7 @@ bool CVirtualConsole::FindChanges(int row, int &j, int &end, const wchar_t* ConC
 		while (--end >= 0 && ConCharLine[end] == ConCharLine2[end] && ConAttrLine[end] == ConAttrLine2[end])
 		{
 			// Если есть стили шрифта (курсив/жирный), то
-			// во избежение обрезания правой части буквы нужно рисовать строку целиком
+			// во избежание обрезания правой части буквы нужно рисовать строку целиком
 			if (ConAttrLine[end].nFontIndex)
 			{
 				end = TextWidth;
@@ -5767,7 +5767,7 @@ bool CVirtualConsole::FindChanges(int row, int &j, int &end, const wchar_t* ConC
 		// [%] ClearType, TTF fonts (isProportional может быть и отключен)
 		if (end >= 0   // Если есть хоть какие-то изменения
 		        && end < (int)(TextWidth - 1) // до конца строки
-		        && (ConCharLine[end+1] == ucSpace || ConCharLine[end+1] == ucNoBreakSpace || isCharProgress(ConCharLine[end+1])) // будем отрисовывать все проблеы
+		        && (ConCharLine[end+1] == ucSpace || ConCharLine[end+1] == ucNoBreakSpace || isCharProgress(ConCharLine[end+1])) // будем отрисовывать все пробелы
 		  )
 		{
 			int n = TextWidth - 1;

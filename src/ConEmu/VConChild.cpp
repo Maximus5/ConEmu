@@ -83,7 +83,7 @@ CConEmuChild::CConEmuChild(CVirtualConsole* pOwner)
 
 	mn_AlreadyDestroyed = 0;
 
-	mn_MsgVConTerminated = 0; // Set when destroing pended
+	mn_MsgVConTerminated = 0; // Set when destroying pended
 	if (!gn_MsgVConTerminated)
 		gn_MsgVConTerminated = gpConEmu->GetRegisteredMessage("VConTerminated");
 	mn_MsgTabChanged = gpConEmu->GetRegisteredMessage("CONEMUTABCHANGED",CONEMUTABCHANGED);
