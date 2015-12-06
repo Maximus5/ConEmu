@@ -61,9 +61,19 @@ void SetServerPID(DWORD anMainSrvPID);
 
 extern MFileMapping<CESERVER_CONSOLE_APP_MAPPING> *gpAppMap;
 CESERVER_CONSOLE_MAPPING_HDR* GetConMap(BOOL abForceRecreate=FALSE);
+CESERVER_CONSOLE_APP_MAPPING* GetAppMapPtr();
+CESERVER_CONSOLE_APP_MAPPING* UpdateAppMapFlags(DWORD nFlags/*enum CEReadConsoleInputFlags*/);
 void OnConWndChanged(HWND ahNewConWnd);
 bool AttachServerConsole();
 void CheckAnsiConVar(LPCWSTR asName);
+
+enum CEReadConsoleInputFlags
+{
+	rcif_Ansi      = 1,
+	rcif_Unicode   = 2,
+	rcif_Peek      = 4,
+	rcif_LLInput   = 8, // [Read|Peek]ConsoleInput[A|W]
+};
 
 DWORD DllStart_Continue();
 

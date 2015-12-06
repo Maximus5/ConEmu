@@ -533,6 +533,22 @@ CESERVER_CONSOLE_APP_MAPPING* GetAppMapPtr()
 	return gpAppMap->Ptr();
 }
 
+CESERVER_CONSOLE_APP_MAPPING* UpdateAppMapFlags(DWORD nFlags/*enum CEReadConsoleInputFlags*/)
+{
+	CESERVER_CONSOLE_APP_MAPPING* pAppMap = gpAppMap ? gpAppMap->Ptr() : NULL;
+	if (pAppMap)
+	{
+		DWORD nSelfPID = GetCurrentProcessId();
+		if (nFlags & rcif_LLInput)
+			pAppMap->nReadConsoleInputPID = nSelfPID;
+		else
+			pAppMap->nReadConsolePID = nSelfPID;
+		pAppMap->nLastReadInputPID = nSelfPID;
+		pAppMap->nActiveAppFlags = gnExeFlags;
+	}
+	return pAppMap;
+}
+
 void OnConWndChanged(HWND ahNewConWnd)
 {
 	//BOOL lbForceReopen = FALSE;

@@ -70,16 +70,6 @@ static INPUT_RECORD gir_Virtual[16] = {};
 
 /* **************** */
 
-enum CEReadConsoleInputFlags
-{
-	rcif_Ansi      = 1,
-	rcif_Unicode   = 2,
-	rcif_Peek      = 4,
-	rcif_LLInput   = 8, // [Read|Peek]ConsoleInput[A|W]
-};
-
-/* **************** */
-
 extern bool gbCurDirChanged;
 extern struct HookModeFar gFarMode;
 extern void CheckPowershellProgressPresence();
@@ -131,18 +121,8 @@ void PreReadConsoleInput(HANDLE hConIn, DWORD nFlags/*enum CEReadConsoleInputFla
 		//            the app gets in its input queue unexpected Enter KeyUp
 		// On the other hand - application must be able to understand if the key was released
 		// Powershell's 'get-help Get-ChildItem -full | out-host -paging' or Issue 1927 (jilrun.exe)
-		CESERVER_CONSOLE_APP_MAPPING* pAppMap = gpAppMap ? gpAppMap->Ptr() : NULL;
-		if (pAppMap)
-		{
-			DWORD nSelfPID = GetCurrentProcessId();
-			if (nFlags & rcif_LLInput)
-				pAppMap->nReadConsoleInputPID = nSelfPID;
-			else
-				pAppMap->nReadConsolePID = nSelfPID;
-			pAppMap->nLastReadInputPID = nSelfPID;
-			pAppMap->nActiveAppFlags = gnExeFlags;
-			if (ppAppMap) *ppAppMap = pAppMap;
-		}
+		CESERVER_CONSOLE_APP_MAPPING* pAppMap = UpdateAppMapFlags(nFlags);
+		if (pAppMap && ppAppMap) *ppAppMap = pAppMap;
 	}
 }
 
