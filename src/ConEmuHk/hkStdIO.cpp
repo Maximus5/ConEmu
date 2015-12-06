@@ -67,25 +67,37 @@ HANDLE WINAPI OnCreateFileW(LPCWSTR lpFileName, DWORD dwDesiredAccess, DWORD dwS
 	//typedef HANDLE (WINAPI* OnCreateFileW_t)(LPCWSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile);
 	ORIGINAL_KRNL(CreateFileW);
 	HANDLE h;
+	DEBUGTEST(HANDLE hStd);
+	bool bUseConOut = false;
+
+	// Just a simple check for "string" validity
+	if (lpFileName && (((DWORD_PTR)lpFileName) & ~0xFFFF)
+		// CON output is opening with following flags
+		&& ((dwDesiredAccess & GENERIC_WRITE) == GENERIC_WRITE)
+		&& ((dwShareMode & (FILE_SHARE_READ|FILE_SHARE_WRITE)) == (FILE_SHARE_READ|FILE_SHARE_WRITE))
+		)
+	{
+		DebugString(L"OnCreateFileW checking for CON name\n");
+		if ((bUseConOut = (lstrcmpi(lpFileName, L"CON") == 0)))
+		{
+			DEBUGTEST(hStd = GetStdHandle(STD_OUTPUT_HANDLE));
+			//lpFileName = L"CONOUT$"; -- doesn't matter, after redirection in .cmd to >CON we can't use console API
+			DebugString(L"OnCreateFileW name changed to CONOUT$\n");
+		}
+		else
+		{
+			DebugString(L"OnCreateFileW check finished\n");
+		}
+	}
 
 	h = F(CreateFileW)(lpFileName, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
 	DWORD nLastErr = GetLastError();
 
 	DebugString(L"OnCreateFileW executed\n");
 
-	// Just a check for "string" validity
-	if (lpFileName && (((DWORD_PTR)lpFileName) & ~0xFFFF)
-		// CON output is opening with following flags
-		&& (dwDesiredAccess & GENERIC_WRITE)
-		&& ((dwShareMode & (FILE_SHARE_READ|FILE_SHARE_WRITE)) == (FILE_SHARE_READ|FILE_SHARE_WRITE))
-		)
+	if (bUseConOut)
 	{
-		DEBUGTEST(HANDLE hStd = GetStdHandle(STD_OUTPUT_HANDLE));
-		if (lstrcmpi(lpFileName, L"CON") == 0)
-		{
-			CEAnsi::ghLastConOut = h;
-		}
-		DebugString(L"OnCreateFileW checked\n");
+		CEAnsi::ghLastConOut = h;
 	}
 
 	SetLastError(nLastErr);
