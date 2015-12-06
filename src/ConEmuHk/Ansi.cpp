@@ -253,6 +253,12 @@ void CEAnsi::DoneAnsiLog(bool bFinal)
 	}
 }
 
+UINT CEAnsi::GetCodePage()
+{
+	UINT cp = gCpConv.nDefaultCP ? gCpConv.nDefaultCP : GetConsoleOutputCP();
+	return cp;
+}
+
 void CEAnsi::WriteAnsiLog(LPCWSTR lpBuffer, DWORD nChars)
 {
 	if (!ghAnsiLogFile)
@@ -956,7 +962,7 @@ BOOL CEAnsi::OurWriteConsoleA(HANDLE hConsoleOutput, const char *lpBuffer, DWORD
 		goto fin;
 	}
 
-	cp = gCpConv.nDefaultCP ? gCpConv.nDefaultCP : GetConsoleOutputCP();
+	cp = GetCodePage();
 	mp_Cvt->SetCP(cp);
 
 	lbRc = TRUE;

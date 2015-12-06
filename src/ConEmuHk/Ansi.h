@@ -175,6 +175,8 @@ protected:
 	BOOL ReportString(LPCWSTR asRet);
 	void ReportConsoleTitle();
 	static void WriteAnsiLog(LPCWSTR lpBuffer, DWORD nChars);
+public:
+	static UINT GetCodePage();
 protected:
 	static void XTermSaveRestoreCursor(bool bSaveCursor, HANDLE hConsoleOutput = NULL);
 	static void XTermAltBuffer(bool bSetAltBuffer);
