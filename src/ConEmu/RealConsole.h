@@ -490,6 +490,7 @@ class CRealConsole
 		DWORD GetLoadedPID();
 		DWORD GetRunningPID();
 		LPCWSTR GetActiveProcessName();
+		CEActiveAppFlags GetActiveAppFlags();
 		int GetActiveAppSettingsId(bool bReload = false);
 	private:
 		int GetDefaultAppSettingsId();

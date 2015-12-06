@@ -14379,19 +14379,24 @@ BOOL CRealConsole::GetPanelRect(BOOL abRight, RECT* prc, BOOL abFull /*= FALSE*/
 	return mp_RBuf->GetPanelRect(abRight, prc, abFull, abIncludeEdges);
 }
 
-bool CRealConsole::isCygwinMsys()
+CEActiveAppFlags CRealConsole::GetActiveAppFlags()
 {
 	if (!this || !hConWnd || !m_AppMap.IsValid())
-		return false;
+		return caf_Standard;
 
 	#ifdef _DEBUG
 	DWORD nPID = GetActivePID();
 	#endif
 
 	CEActiveAppFlags nActiveAppFlags = m_AppMap.Ptr()->nActiveAppFlags;
+	return nActiveAppFlags;
+}
+
+bool CRealConsole::isCygwinMsys()
+{
+	CEActiveAppFlags nActiveAppFlags = GetActiveAppFlags();
 	if (!(nActiveAppFlags & (caf_Cygwin1|caf_Msys1|caf_Msys2)))
 		return false;
-
 	return true;
 }
 
