@@ -916,7 +916,7 @@ BOOL CEAnsi::OurWriteConsoleA(HANDLE hConsoleOutput, const char *lpBuffer, DWORD
 	wchar_t* buf = NULL;
 	wchar_t szTemp[280]; // would be enough in most cases
 	INT_PTR bufMax;
-	DWORD len, cp;
+	DWORD cp;
 	CpCvtResult cvt;
 	const char *pSrc, *pTokenStart;
 	wchar_t *pDst, *pDstEnd;
