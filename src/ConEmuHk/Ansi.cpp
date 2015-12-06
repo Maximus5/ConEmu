@@ -261,6 +261,8 @@ UINT CEAnsi::GetCodePage()
 
 BOOL CEAnsi::WriteAnsiLogUtf8(const char* lpBuffer, DWORD nChars)
 {
+	if (!lpBuffer || !nChars)
+		return FALSE;
 	BOOL bWrite; DWORD nWritten;
 	// Handle multi-thread writers
 	// But multi-process writers can't be handled correctly
@@ -336,6 +338,7 @@ void CEAnsi::WriteAnsiLogW(LPCWSTR lpBuffer, DWORD nChars)
 
 void CEAnsi::WriteAnsiLogFarPrompt()
 {
+	_ASSERTE(ghAnsiLogFile!=NULL && "Caller must check this");
 	HANDLE hCon = GetStdHandle(STD_OUTPUT_HANDLE);
 	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
 	if (!GetConsoleScreenBufferInfo(hCon, &csbi))
