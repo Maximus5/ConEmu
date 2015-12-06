@@ -109,7 +109,10 @@ static BOOL ExtGetBufferInfo(HANDLE &h, CONSOLE_SCREEN_BUFFER_INFO &csbi, SMALL_
 	}
 
 	if (!GetConsoleScreenBufferInfoCached(h, &csbi))
+	{
+		_ASSERTE(FALSE && "handle is not supported by ConAPI");
 		return FALSE;
+	}
 
 	//if (gbFarBufferMode)
 	{
@@ -152,6 +155,7 @@ static BOOL ExtCheckBuffers(HANDLE h)
 		if (!GetConsoleScreenBufferInfoCached(h, &csbi, TRUE))
 		{
 			gnInitializeErrCode = GetLastError();
+			_ASSERTE(FALSE && "handle is not supported by ConAPI");
 		}
 		else
 		{
