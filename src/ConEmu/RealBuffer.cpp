@@ -6594,19 +6594,19 @@ ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In/Out]*/, COOR
 {
 	ExpandTextRangeType result = etr_None;
 
-	WARNING("Тут пока работаем в экранных координатах, а приходят - абсолютные буферные");
+	// crFrom/crTo must be absolute coordinates
 	_ASSERTE(crFrom.Y>=con.m_sbi.srWindow.Top && crFrom.Y<GetBufferHeight());
 
 	COORD lcrFrom = BufferToScreen(crFrom);
 	COORD lcrTo = lcrFrom;
 
-	//COORD crMouse = lcrFrom; // Save
-
-	// Нужно получить строку
+	// Lock buffer to acquire line from screen
+	{
 	MSectionLock csData; csData.Lock(&csCON);
 	wchar_t* pChar = NULL;
 	int nLen = 0;
 
+	// GetConsoleLine requires visual-screen-buffer coordinates (but not absolute ones, coming from crFrom/crTo)
 	if (mp_RCon->mp_VCon && GetConsoleLine(lcrFrom.Y, &pChar, /*NULL,*/ &nLen, &csData) && pChar)
 	{
 		_ASSERTE(lcrFrom.Y>=0 && lcrFrom.Y<GetTextHeight());
@@ -6623,6 +6623,8 @@ ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In/Out]*/, COOR
 				psText->Set(mp_Match->ms_Match.ms_Arg);
 			result = mp_Match->m_Type;
 		}
+	}
+	// We do not need line pointer anymore
 	}
 
 	// Fail?
