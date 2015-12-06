@@ -5046,14 +5046,17 @@ bool CRealBuffer::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 				}
 			}
 
-			if (!bShift)
+			// What shall we do?
+			bool bResetSel = !isPressed(VK_SHIFT);
+			if (bResetSel)
 			{
-				BOOL lbStreamSelection = (con.m_sel.dwFlags & (CONSOLE_TEXT_SELECTION)) == CONSOLE_TEXT_SELECTION;
-				// Выделение уже было начато. Просто выделяем с нового начала.
+				// If `Shift` key was released, we reset selection to new position
+				bool lbStreamSelection = (con.m_sel.dwFlags & (CONSOLE_TEXT_SELECTION)) == CONSOLE_TEXT_SELECTION;
 				StartSelection(lbStreamSelection, cr.X,cr.Y);
 			}
 			else
 			{
+				// `Shift` is holded, extend selection range
 				ExpandSelection(cr.X,cr.Y, true);
 			}
 		}
