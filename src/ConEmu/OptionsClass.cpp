@@ -11566,6 +11566,7 @@ void CSettings::UpdateConsoleMode(CRealConsole* pRCon)
 		TermEmulationType Term = te_win32;
 		BOOL bBracketedPaste = FALSE;
 		pRCon->GetConsoleModes(nConInMode, nConOutMode, Term, bBracketedPaste);
+		CEActiveAppFlags appFlags = pRCon->GetActiveAppFlags();
 
 		wchar_t szFlags[128] = L"";
 		switch (Term)
@@ -11579,6 +11580,14 @@ void CSettings::UpdateConsoleMode(CRealConsole* pRCon)
 		}
 		if (bBracketedPaste)
 			wcscat_c(szFlags, L"|BrPaste");
+		if (appFlags & caf_Cygwin1)
+			wcscat_c(szFlags, L"|cygwin");
+		if (appFlags & caf_Msys1)
+			wcscat_c(szFlags, L"|msys");
+		if (appFlags & caf_Msys2)
+			wcscat_c(szFlags, L"|msys2");
+		if (appFlags & caf_Clink)
+			wcscat_c(szFlags, L"|clink");
 
 		wchar_t szInfo[255];
 		_wsprintf(szInfo, SKIPLEN(countof(szInfo))
