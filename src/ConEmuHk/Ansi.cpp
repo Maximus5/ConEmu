@@ -202,7 +202,7 @@ void DebugStringUtf8(LPCWSTR asMessage)
 	char* pszUtf8 = ((iLen*3+5) < countof(szUtf8)) ? szUtf8 : (char*)malloc(iLen*3+5);
 	if (!pszUtf8)
 		return;
-	pszUtf8[0] = 0xEF; pszUtf8[1] = 0xBB; pszUtf8[2] = 0xBF;
+	pszUtf8[0] = (BYTE)0xEF; pszUtf8[1] = (BYTE)0xBB; pszUtf8[2] = (BYTE)0xBF;
 	int iCvt = WideCharToMultiByte(CP_UTF8, 0, asMessage, iLen, pszUtf8+3, iLen*3+1, NULL, NULL);
 	if (iCvt > 0)
 	{
