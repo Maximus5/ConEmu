@@ -126,6 +126,9 @@ public:
 	static HANDLE ghLastAnsiNotCapable /*= NULL*/;
 	static HANDLE ghLastConOut /*= NULL*/;
 	static HANDLE ghAnsiLogFile /*= NULL*/;
+	static LONG   gnEnterPressed /*= 0*/;
+	static bool   gbAnsiLogNewLine /*= false*/;
+	static bool   gbAnsiWasNewLine /*= false*/;
 	static MSectionSimple* gcsAnsiLogFile;
 
 	static bool gbWasXTermOutput;
@@ -180,6 +183,7 @@ public:
 	static void WriteAnsiLogA(LPCSTR lpBuffer, DWORD nChars);
 	static void WriteAnsiLogW(LPCWSTR lpBuffer, DWORD nChars);
 	static void WriteAnsiLogFarPrompt();
+	static void AnsiLogEnterPressed();
 protected:
 	static void XTermSaveRestoreCursor(bool bSaveCursor, HANDLE hConsoleOutput = NULL);
 	static void XTermAltBuffer(bool bSetAltBuffer);

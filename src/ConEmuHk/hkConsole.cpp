@@ -41,6 +41,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/common.hpp"
 #include "../common/WConsole.h"
 
+#include "Ansi.h"
 #include "DefTermHk.h"
 #include "GuiAttach.h"
 #include "hkConsole.h"
@@ -958,6 +959,13 @@ BOOL WINAPI OnSetConsoleCursorPosition(HANDLE hConsoleOutput, COORD dwCursorPosi
 	else
 	{
 		lbRc = F(SetConsoleCursorPosition)(hConsoleOutput, dwCursorPosition);
+	}
+
+	if (lbRc && CEAnsi::ghAnsiLogFile
+		&& !CEAnsi::gbAnsiWasNewLine
+		&& (dwCursorPosition.X == 0))
+	{
+		CEAnsi::gbAnsiLogNewLine = true;
 	}
 
 	if (ghConsoleCursorChanged)

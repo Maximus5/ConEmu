@@ -104,6 +104,9 @@ HANDLE CEAnsi::ghLastAnsiCapable = NULL;
 HANDLE CEAnsi::ghLastAnsiNotCapable = NULL;
 HANDLE CEAnsi::ghLastConOut = NULL;
 HANDLE CEAnsi::ghAnsiLogFile = NULL;
+LONG CEAnsi::gnEnterPressed = 0;
+bool CEAnsi::gbAnsiLogNewLine = false;
+bool CEAnsi::gbAnsiWasNewLine = false;
 MSectionSimple* CEAnsi::gcsAnsiLogFile = NULL;
 
 // VIM, etc. Some programs waiting control keys as xterm sequences. Need to inform ConEmu GUI.
@@ -240,6 +243,12 @@ void CEAnsi::DoneAnsiLog(bool bFinal)
 {
 	if (!ghAnsiLogFile)
 		return;
+
+	if (gbAnsiLogNewLine || (gnEnterPressed > 0))
+	{
+		CEAnsi::WriteAnsiLogUtf8("\n", 1);
+	}
+
 	if (!bFinal)
 	{
 		FlushFileBuffers(ghAnsiLogFile);
@@ -271,6 +280,8 @@ BOOL CEAnsi::WriteAnsiLogUtf8(const char* lpBuffer, DWORD nChars)
 	ORIGINAL_KRNL(WriteFile);
 	bWrite = F(WriteFile)(ghAnsiLogFile, lpBuffer, nChars, &nWritten, NULL);
 	UNREFERENCED_PARAMETER(nWritten);
+	gnEnterPressed = 0; gbAnsiLogNewLine = false;
+	gbAnsiWasNewLine = (lpBuffer[nChars-1] == '\n');
 	return bWrite;
 }
 
@@ -285,10 +296,27 @@ void CEAnsi::WriteAnsiLogA(LPCSTR lpBuffer, DWORD nChars)
 	UINT cp = GetCodePage();
 	if (cp == CP_UTF8)
 	{
+		char* pszBuf = NULL;
+		int iEnterShift = 0;
+		if (gbAnsiLogNewLine)
+		{
+			if ((lpBuffer[0] == '\n') || ((nChars > 1) && (lpBuffer[0] == '\r') && (lpBuffer[0] == '\n')))
+				gbAnsiLogNewLine = false;
+			else if ((pszBuf = (char*)malloc(nChars+1)) != NULL)
+			{
+				pszBuf[0] = '\n';
+				memmove(pszBuf+1, lpBuffer, nChars);
+				lpBuffer = pszBuf;
+			}
+		}
+
 		WriteAnsiLogUtf8(lpBuffer, nChars);
+
+		SafeFree(pszBuf);
 	}
 	else
 	{
+		// We don't check here for gbAnsiLogNewLine, because some codepages may even has different codes for CR+LF
 		wchar_t sBuf[80*3];
 		BOOL bWrite = FALSE;
 		DWORD nWritten = 0;
@@ -316,20 +344,33 @@ void CEAnsi::WriteAnsiLogW(LPCWSTR lpBuffer, DWORD nChars)
 
 	ScopedObject(CLastErrorGuard);
 
+	// Cygwin (in RealConsole mode, not connector) don't write CR+LF to screen,
+	// it uses SetConsoleCursorPosition instead after receiving '\n' from readline
+	int iEnterShift = 0;
+	if (gbAnsiLogNewLine)
+	{
+		if ((lpBuffer[0] == '\n') || ((nChars > 1) && (lpBuffer[0] == '\r') && (lpBuffer[0] == '\n')))
+			gbAnsiLogNewLine = false;
+		else
+			iEnterShift = 1;
+	}
+
 	char sBuf[80*3]; // Will be enough for most cases
 	BOOL bWrite = FALSE;
 	DWORD nWritten = 0;
 	int nNeed = WideCharToMultiByte(CP_UTF8, 0, lpBuffer, nChars, NULL, 0, NULL, NULL);
 	if (nNeed < 1)
 		return;
-	char* pszBuf = (nNeed <= countof(sBuf)) ? sBuf : (char*)malloc(nNeed);
+	char* pszBuf = ((nNeed + iEnterShift) <= countof(sBuf)) ? sBuf : (char*)malloc(nNeed+iEnterShift);
 	if (!pszBuf)
 		return;
-	int nLen = WideCharToMultiByte(CP_UTF8, 0, lpBuffer, nChars, pszBuf, nNeed, NULL, NULL);
+	if (iEnterShift)
+		pszBuf[0] = '\n';
+	int nLen = WideCharToMultiByte(CP_UTF8, 0, lpBuffer, nChars, pszBuf+iEnterShift, nNeed, NULL, NULL);
 	// Must be OK, but check it
 	if (nLen > 0 && nLen <= nNeed)
 	{
-		bWrite = WriteAnsiLogUtf8(pszBuf, nLen);
+		bWrite = WriteAnsiLogUtf8(pszBuf, nLen+iEnterShift);
 	}
 	if (pszBuf != sBuf)
 		free(pszBuf);
@@ -361,6 +402,14 @@ void CEAnsi::WriteAnsiLogFarPrompt()
 		WriteAnsiLogW(pszBuf, nChars);
 	}
 	free(pszBuf);
+}
+
+void CEAnsi::AnsiLogEnterPressed()
+{
+	if (!ghAnsiLogFile)
+		return;
+	InterlockedIncrement(&gnEnterPressed);
+	gbAnsiLogNewLine = true;
 }
 
 void CEAnsi::GetFeatures(bool* pbAnsiAllowed, bool* pbSuppressBells)

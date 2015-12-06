@@ -1456,6 +1456,11 @@ int CShellProc::PrepareExecuteParms(
 			CEAnsi::WriteAnsiLogFarPrompt();
 		}
 	}
+	// cygwin/ansi prompt?
+	if (CEAnsi::gnEnterPressed > 0)
+	{
+		CEAnsi::WriteAnsiLogW(L"\n", 1);
+	}
 
 
 	bool bAnsiCon = false;

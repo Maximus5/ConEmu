@@ -644,6 +644,15 @@ BOOL WINAPI OnReadConsoleInputA(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DW
 
 	lbRc = F(ReadConsoleInputA)(hConsoleInput, lpBuffer, nLength, lpNumberOfEventsRead);
 
+	// cygwin/msys shells prompt? seems like they use [W] version now, but JIC
+	if (lbRc && CEAnsi::ghAnsiLogFile
+		&& (nLength == 1) && (*lpNumberOfEventsRead == 1) && (lpBuffer->EventType == KEY_EVENT)
+		&& lpBuffer->Event.KeyEvent.bKeyDown && (lpBuffer->Event.KeyEvent.wVirtualKeyCode == VK_RETURN)
+		)
+	{
+		CEAnsi::AnsiLogEnterPressed();
+	}
+
 	PostReadConsoleInput(hConsoleInput, rcif_Ansi|rcif_LLInput, pAppMap);
 
 	//#ifdef USE_INPUT_SEMAPHORE
@@ -737,6 +746,15 @@ BOOL WINAPI OnReadConsoleInputW(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DW
 	else
 	{
 		lbRc = F(ReadConsoleInputW)(hConsoleInput, lpBuffer, nLength, lpNumberOfEventsRead);
+	}
+
+	// cygwin/msys shells prompt
+	if (lbRc && CEAnsi::ghAnsiLogFile
+		&& (nLength == 1) && (*lpNumberOfEventsRead == 1) && (lpBuffer->EventType == KEY_EVENT)
+		&& lpBuffer->Event.KeyEvent.bKeyDown && (lpBuffer->Event.KeyEvent.wVirtualKeyCode == VK_RETURN)
+		)
+	{
+		CEAnsi::AnsiLogEnterPressed();
 	}
 
 	PostReadConsoleInput(hConsoleInput, rcif_Unicode|rcif_LLInput, pAppMap);
