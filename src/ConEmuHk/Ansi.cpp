@@ -116,6 +116,10 @@ BOOL WINAPI WriteProcessed3(LPCWSTR lpBuffer, DWORD nNumberOfCharsToWrite, LPDWO
 {
 	InterlockedIncrement(&gnWriteProcessed);
 	DWORD nNumberOfCharsWritten = 0;
+	if ((nNumberOfCharsToWrite == (DWORD)-1) && lpBuffer)
+	{
+		nNumberOfCharsToWrite = lstrlen(lpBuffer);
+	}
 	BOOL bRc = CEAnsi::OurWriteConsoleW(hConsoleOutput, lpBuffer, nNumberOfCharsToWrite, &nNumberOfCharsWritten, NULL);
 	if (lpNumberOfCharsWritten) *lpNumberOfCharsWritten = nNumberOfCharsWritten;
 	InterlockedDecrement(&gnWriteProcessed);
@@ -153,6 +157,11 @@ BOOL WINAPI WriteProcessedA(LPCSTR lpBuffer, DWORD nNumberOfCharsToWrite, LPDWOR
 	CEAnsi* pObj = NULL;
 
 	ORIGINAL_KRNL(WriteConsoleA);
+
+	if ((nNumberOfCharsToWrite == (DWORD)-1) && lpBuffer)
+	{
+		nNumberOfCharsToWrite = lstrlenA(lpBuffer);
+	}
 
 	// Nothing to write? Or flush buffer?
 	if (!lpBuffer || !nNumberOfCharsToWrite || !(int)Stream)
