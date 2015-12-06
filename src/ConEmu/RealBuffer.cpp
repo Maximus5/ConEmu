@@ -4187,19 +4187,19 @@ void CRealBuffer::StartSelection(BOOL abTextMode, SHORT anX/*=-1*/, SHORT anY/*=
 void CRealBuffer::ExpandSelection(SHORT anX, SHORT anY, bool bWasSelection)
 {
 	_ASSERTE(con.m_sel.dwFlags!=0);
-	// -- // Добавил "-3" чтобы на прокрутку не ругалась
-	_ASSERTE(anY==-1 || anY>=GetBufferPosY()/*(con.nTopVisibleLine-3)*/);
+	int iCurTop = GetBufferPosY();
+	_ASSERTE(anY>=0 && anY<con.m_sbi.dwSize.Y);
 
 	CONSOLE_SELECTION_INFO cur_sel = con.m_sel;
 
 	// 131017 Scroll content if selection cursor goes out of visible screen
-	if (anY < GetBufferPosY())
+	if (anY < iCurTop)
 	{
-		DoScrollBuffer(SB_LINEUP);
+		DoScrollBuffer(SB_LINEUP, -1, (iCurTop - anY));
 	}
-	else if (anY >= (GetBufferPosY() + con.nTextHeight))
+	else if (anY >= (iCurTop + con.nTextHeight))
 	{
-		DoScrollBuffer(SB_LINEDOWN);
+		DoScrollBuffer(SB_LINEDOWN, -1, (anY - iCurTop - con.nTextHeight + 1));
 	}
 
 	COORD cr = {anX,anY};
