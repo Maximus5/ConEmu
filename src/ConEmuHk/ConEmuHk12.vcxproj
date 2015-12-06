@@ -956,6 +956,7 @@
     <ClInclude Include="..\modules\minhook\include\MinHook.h" />
     <ClInclude Include="Ansi.h" />
     <ClInclude Include="ConEmuHooks.h" />
+    <ClInclude Include="Connector.h" />
     <ClInclude Include="Console2.h" />
     <ClInclude Include="DbgHooks.h" />
     <ClInclude Include="ExtConsole.h" />
@@ -1013,6 +1014,7 @@
     <ClCompile Include="..\modules\minhook\src\trampoline.c" />
     <ClCompile Include="Ansi.cpp" />
     <ClCompile Include="ConEmuHooks.cpp" />
+    <ClCompile Include="Connector.cpp" />
     <ClCompile Include="DefTermHk.cpp" />
     <ClCompile Include="Entry.cpp" />
     <ClCompile Include="ExtConsole.cpp" />

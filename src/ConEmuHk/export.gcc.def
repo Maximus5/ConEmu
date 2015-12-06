@@ -12,3 +12,4 @@ EXPORTS
 	WriteProcessed3=WriteProcessed3@16
 	WriteProcessedA=WriteProcessedA@16
 	RequestDefTermShutdown=RequestDefTermShutdown@0
+	RequestTermConnector=RequestTermConnector@4

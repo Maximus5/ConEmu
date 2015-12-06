@@ -55,6 +55,7 @@ $(INTDIR)\CmdLine.obj \
 $(INTDIR)\Common.obj \
 $(INTDIR)\ConEmuCheck.obj \
 $(INTDIR)\ConEmuHooks.obj \
+$(INTDIR)\Connector.obj \
 $(INTDIR)\ConsoleMixAttr.obj \
 $(INTDIR)\ConsoleRead.obj \
 $(INTDIR)\DefTermHk.obj \
@@ -343,6 +344,8 @@ $(INTDIR)\ConEmuCmd.obj: ConEmuCmd.cpp
 $(INTDIR)\ConEmuHk.obj: ConEmuHk.cpp
 
 $(INTDIR)\ConEmuHooks.obj: ConEmuHooks.cpp
+
+$(INTDIR)\Connector.obj: Connector.cpp Connector.h
 
 $(INTDIR)\ConsoleMixAttr.obj: ../common/ConsoleMixAttr.cpp ../common/ConsoleMixAttr.h
 

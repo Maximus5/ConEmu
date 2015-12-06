@@ -422,6 +422,7 @@
       <File RelativePath="..\common\WObjects.h" />
       <File RelativePath="..\common\WThreads.h" />
       <File RelativePath="..\ConEmuCD\ExitCodes.h" />
+      <File RelativePath=".\Connector.h" />
       <File RelativePath=".\DbgHooks.h" />
       <File RelativePath=".\hkCmdExe.h" />
       <File RelativePath=".\hkConsole.h" />
@@ -477,6 +478,7 @@
       <File RelativePath="..\common\WConsole.cpp" />
       <File RelativePath="..\common\WObjects.cpp" />
       <File RelativePath="..\common\WThreads.cpp" />
+      <File RelativePath=".\Connector.cpp" />
       <File RelativePath=".\hkCmdExe.cpp" />
       <File RelativePath=".\hkConsole.cpp" />
       <File RelativePath=".\hkConsoleInput.cpp" />

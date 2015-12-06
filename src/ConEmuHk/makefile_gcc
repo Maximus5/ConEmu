@@ -55,6 +55,7 @@ SRCS = \
 		../modules/minhook/src/trampoline.c \
 		Ansi.cpp           \
 		ConEmuHooks.cpp    \
+		Connector.cpp      \
 		DefTermHk.cpp      \
 		Entry.cpp          \
 		ExtConsole.cpp     \
