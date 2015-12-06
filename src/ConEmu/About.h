@@ -60,7 +60,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"/ShowHide | /ShowHideTSA - Works like \"Minimize/Restore\" global hotkey.\r\n" \
 	L"/NoCascade - Disable ‘Cascade’ option may be set in the Settings.\r\n" \
 	L"/NoDefTerm - Don't start initialization procedure for setting up ConEmu as default terminal.\r\n" \
-	L"/NoKeyHooks - Disable !SetWindowsHookEx and global hotkeys.\r\n" \
+	L"/NoKeyHooks - Disable SetWindowsHookEx and global hotkeys.\r\n" \
+	L"/NoMacro - Disable GuiMacro hotkeys.\r\n" \
+	L"/NoHotkey - Disable all hotkeys.\r\n" \
 	L"/NoRegFonts - Disable auto register fonts (font files from ConEmu folder).\r\n" \
 	L"/NoUpdate - Disable automatic checking for updates on startup\r\n" \
 	L"/NoCloseConfirm - Disable confirmation of ConEmu's window closing\r\n" \
