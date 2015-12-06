@@ -968,6 +968,8 @@ static BOOL IntWriteText(HANDLE h, SHORT x, SHORT ForceDumpX,
 	DWORD nWritten = 0;
 	BOOL lbRc = apiWriteConsoleW(h, pFrom, cchWrite, &nWritten, NULL, lpfn);
 
+	DEBUGTEST(DWORD nWriteErr = GetLastError());
+
 	return lbRc;
 }
 

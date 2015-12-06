@@ -252,8 +252,13 @@ BOOL GetConsoleScreenBufferInfoCached(HANDLE hConsoleOutput, PCONSOLE_SCREEN_BUF
 	{
 		CONSOLE_SCREEN_BUFFER_INFO csbi = {};
 		lbRc = GetConsoleScreenBufferInfo(hConsoleOutput, &csbi);
+		DEBUGTEST(DWORD nBufErr = GetLastError());
 		*lpConsoleScreenBufferInfo = csbi;
-		if (lbRc)
+		if (!lbRc)
+		{
+			_ASSERTE(FALSE && "hConsoleOutput is not supported by ConAPI");
+		}
+		else
 		{
 			s_csbi = csbi;
 			s_LastCheckTick = GetTickCount();
