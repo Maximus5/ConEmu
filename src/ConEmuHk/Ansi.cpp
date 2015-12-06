@@ -372,7 +372,7 @@ bool CEAnsi::IsOutputHandle(HANDLE hFile, DWORD* pMode /*= NULL*/)
 		return false;
 
 	if (hFile == ghLastConOut)
-		return true;
+		return false;
 
 	if (hFile == ghLastAnsiCapable)
 		return true;
