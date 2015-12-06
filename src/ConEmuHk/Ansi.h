@@ -179,6 +179,7 @@ public:
 	static UINT GetCodePage();
 	static void WriteAnsiLogA(LPCSTR lpBuffer, DWORD nChars);
 	static void WriteAnsiLogW(LPCWSTR lpBuffer, DWORD nChars);
+	static void WriteAnsiLogFarPrompt();
 protected:
 	static void XTermSaveRestoreCursor(bool bSaveCursor, HANDLE hConsoleOutput = NULL);
 	static void XTermAltBuffer(bool bSetAltBuffer);

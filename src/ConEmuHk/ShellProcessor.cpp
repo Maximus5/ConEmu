@@ -1445,6 +1445,19 @@ int CShellProc::PrepareExecuteParms(
 		}
 	}
 
+	// Write Far prompt into ANSI Log File
+	if (gFarMode.cbSize && CEAnsi::ghAnsiLogFile)
+	{
+		if ((aCmd == eShellExecute)
+			&& (!lphStdOut && !lphStdErr)
+			&& (anShellFlags && ((*anShellFlags) & SEE_MASK_NO_CONSOLE))
+			)
+		{
+			CEAnsi::WriteAnsiLogFarPrompt();
+		}
+	}
+
+
 	bool bAnsiCon = false;
 	for (int i = 0; (i <= 1); i++)
 	{

@@ -334,6 +334,32 @@ void CEAnsi::WriteAnsiLogW(LPCWSTR lpBuffer, DWORD nChars)
 	UNREFERENCED_PARAMETER(bWrite);
 }
 
+void CEAnsi::WriteAnsiLogFarPrompt()
+{
+	HANDLE hCon = GetStdHandle(STD_OUTPUT_HANDLE);
+	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
+	if (!GetConsoleScreenBufferInfo(hCon, &csbi))
+		return;
+	wchar_t* pszBuf = (wchar_t*)calloc(csbi.dwSize.X+2,sizeof(*pszBuf));
+	DWORD nChars = csbi.dwSize.X;
+	// We expect Far has already put "black user screen" and do CR/LF
+	_ASSERTE(csbi.dwCursorPosition.Y == (csbi.dwSize.Y-2));
+	COORD crFrom = {0, csbi.dwCursorPosition.Y-1};
+	if (pszBuf
+		&& ReadConsoleOutputCharacterW(hCon, pszBuf, nChars, crFrom, &nChars)
+		&& nChars)
+	{
+		// Do RTrim first
+		while (nChars && (pszBuf[nChars-1] == L' '))
+			nChars--;
+		// Add CR+LF
+		pszBuf[nChars++] = L'\r'; pszBuf[nChars++] = L'\n';
+		// And do the logging
+		WriteAnsiLogW(pszBuf, nChars);
+	}
+	free(pszBuf);
+}
+
 void CEAnsi::GetFeatures(bool* pbAnsiAllowed, bool* pbSuppressBells)
 {
 	static DWORD nLastCheck = 0;
