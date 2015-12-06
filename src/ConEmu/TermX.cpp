@@ -66,6 +66,18 @@ bool TermX::GetSubstitute(const KEY_EVENT_RECORD& k, wchar_t (&szSubst)[16])
 			}
 		}
 
+		void SetFKey(wchar_t (&szSubst)[16], UINT fn)
+		{
+			if (!Mods)
+			{
+				msprintf(szSubst, countof(szSubst), L"\033[%u~", fn);
+			}
+			else
+			{
+				msprintf(szSubst, countof(szSubst), L"\033[%u;%c~", fn, Mods+L'1');
+			}
+		}
+
 		void SetTilde(wchar_t (&szSubst)[16], wchar_t c)
 		{
 			if (!Mods)
@@ -114,7 +126,7 @@ bool TermX::GetSubstitute(const KEY_EVENT_RECORD& k, wchar_t (&szSubst)[16])
 	case VK_F9: case VK_F10: case VK_F11: case VK_F12: case VK_F13: case VK_F14: case VK_F15: case VK_F16:
 	case VK_F17: case VK_F18: case VK_F19: case VK_F20: case VK_F21: case VK_F22: case VK_F23: case VK_F24:
 		// "\033[11;*~" .. L"\033[15;*~", and so on: F1Codes[]
-		_wsprintf(szSubst, SKIPCOUNT(szSubst) L"\033[%u;*~", F1Codes[(k.wVirtualKeyCode-VK_F1)]);
+		Processor.SetFKey(szSubst, F1Codes[(k.wVirtualKeyCode-VK_F1)]);
 		return true;
 
 	case VK_INSERT:
