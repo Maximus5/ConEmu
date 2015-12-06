@@ -45,6 +45,7 @@ HOOK_PROTOTYPE(CreateFileW,HANDLE,WINAPI,(LPCWSTR lpFileName, DWORD dwDesiredAcc
 HOOK_PROTOTYPE(MapViewOfFile,LPVOID,WINAPI,(HANDLE hFileMappingObject, DWORD dwDesiredAccess, DWORD dwFileOffsetHigh, DWORD dwFileOffsetLow, SIZE_T dwNumberOfBytesToMap));
 HOOK_PROTOTYPE(OpenFileMappingW,HANDLE,WINAPI,(DWORD dwDesiredAccess, BOOL bInheritHandle, LPCWSTR lpName));
 HOOK_PROTOTYPE(ReadFile,BOOL,WINAPI,(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead, LPDWORD lpNumberOfBytesRead, LPOVERLAPPED lpOverlapped));
+HOOK_PROTOTYPE(SetStdHandle,BOOL,WINAPI,(DWORD nStdHandle, HANDLE hHandle));
 HOOK_PROTOTYPE(UnmapViewOfFile,BOOL,WINAPI,(LPCVOID lpBaseAddress));
 HOOK_PROTOTYPE(WriteFile,BOOL,WINAPI,(HANDLE hFile, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite, LPDWORD lpNumberOfBytesWritten, LPOVERLAPPED lpOverlapped));
 

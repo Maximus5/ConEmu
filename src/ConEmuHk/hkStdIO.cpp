@@ -135,6 +135,18 @@ BOOL WINAPI OnCloseHandle(HANDLE hObject)
 }
 
 
+BOOL WINAPI OnSetStdHandle(DWORD nStdHandle, HANDLE hHandle)
+{
+	//typedef BOOL (WINAPI* OnSetStdHandle_t)(DWORD  nStdHandle, HANDLE hHandle);
+	ORIGINAL_KRNL(SetStdHandle);
+	BOOL bRc;
+
+	bRc = F(SetStdHandle)(nStdHandle, hHandle);
+
+	return bRc;
+}
+
+
 #ifdef _DEBUG
 HANDLE WINAPI OnCreateNamedPipeW(LPCWSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD nMaxInstances,DWORD nOutBufferSize, DWORD nInBufferSize, DWORD nDefaultTimeOut,LPSECURITY_ATTRIBUTES lpSecurityAttributes)
 {
