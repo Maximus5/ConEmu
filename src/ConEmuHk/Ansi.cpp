@@ -259,9 +259,57 @@ UINT CEAnsi::GetCodePage()
 	return cp;
 }
 
-void CEAnsi::WriteAnsiLog(LPCWSTR lpBuffer, DWORD nChars)
+BOOL CEAnsi::WriteAnsiLogUtf8(const char* lpBuffer, DWORD nChars)
 {
-	if (!ghAnsiLogFile)
+	BOOL bWrite; DWORD nWritten;
+	// Handle multi-thread writers
+	// But multi-process writers can't be handled correctly
+	MSectionLockSimple lock; lock.Lock(gcsAnsiLogFile, 500);
+	SetFilePointer(ghAnsiLogFile, 0, NULL, FILE_END);
+	ORIGINAL_KRNL(WriteFile);
+	bWrite = F(WriteFile)(ghAnsiLogFile, lpBuffer, nChars, &nWritten, NULL);
+	UNREFERENCED_PARAMETER(nWritten);
+	return bWrite;
+}
+
+// This may be called to log ReadConsoleA result
+void CEAnsi::WriteAnsiLogA(LPCSTR lpBuffer, DWORD nChars)
+{
+	if (!ghAnsiLogFile || !lpBuffer || !nChars)
+		return;
+
+	ScopedObject(CLastErrorGuard);
+
+	UINT cp = GetCodePage();
+	if (cp == CP_UTF8)
+	{
+		WriteAnsiLogUtf8(lpBuffer, nChars);
+	}
+	else
+	{
+		wchar_t sBuf[80*3];
+		BOOL bWrite = FALSE;
+		DWORD nWritten = 0;
+		int nNeed = MultiByteToWideChar(cp, 0, lpBuffer, nChars, NULL, 0);
+		if (nNeed < 1)
+			return;
+		wchar_t* pszBuf = (nNeed <= countof(sBuf)) ? sBuf : (wchar_t*)malloc(nNeed*sizeof(*pszBuf));
+		if (!pszBuf)
+			return;
+		int nLen = MultiByteToWideChar(cp, 0, lpBuffer, nChars, NULL, 0);
+		// Must be OK, but check it
+		if (nLen > 0 && nLen <= nNeed)
+		{
+			WriteAnsiLogW(pszBuf, nLen);
+		}
+		if (pszBuf != sBuf)
+			free(pszBuf);
+	}
+}
+
+void CEAnsi::WriteAnsiLogW(LPCWSTR lpBuffer, DWORD nChars)
+{
+	if (!ghAnsiLogFile || !lpBuffer || !nChars)
 		return;
 
 	ScopedObject(CLastErrorGuard);
@@ -279,12 +327,7 @@ void CEAnsi::WriteAnsiLog(LPCWSTR lpBuffer, DWORD nChars)
 	// Must be OK, but check it
 	if (nLen > 0 && nLen <= nNeed)
 	{
-		// Handle multi-thread writers
-		// But multi-process writers can't be handled correctly
-		MSectionLockSimple lock; lock.Lock(gcsAnsiLogFile, 500);
-		SetFilePointer(ghAnsiLogFile, 0, NULL, FILE_END);
-		ORIGINAL_KRNL(WriteFile);
-		bWrite = F(WriteFile)(ghAnsiLogFile, pszBuf, nLen, &nWritten, NULL);
+		bWrite = WriteAnsiLogUtf8(pszBuf, nLen);
 	}
 	if (pszBuf != sBuf)
 		free(pszBuf);
@@ -1042,7 +1085,7 @@ BOOL CEAnsi::OurWriteConsoleW(HANDLE hConsoleOutput, const VOID *lpBuffer, DWORD
 	if (lpBuffer && nNumberOfCharsToWrite && hConsoleOutput && IsAnsiCapable(hConsoleOutput, &bIsConOut))
 	{
 		if (ghAnsiLogFile)
-			CEAnsi::WriteAnsiLog((LPCWSTR)lpBuffer, nNumberOfCharsToWrite);
+			CEAnsi::WriteAnsiLogW((LPCWSTR)lpBuffer, nNumberOfCharsToWrite);
 
 		// if that was API call of WriteConsoleW
 		if (!bInternal && gCpConv.nFromCP && gCpConv.nToCP)
