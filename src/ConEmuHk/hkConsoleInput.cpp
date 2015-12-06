@@ -211,6 +211,12 @@ void OnReadConsoleEnd(BOOL bSucceeded, bool bUnicode, HANDLE hConsoleInput, LPVO
 				bNoLineFeed = true; // completion was requested
 			else if (!bUnicode && (((char*)lpBuffer)[*lpNumberOfCharsRead] == '\t'))
 				bNoLineFeed = true; // completion was requested
+
+			// ANSI logging
+			if (bUnicode)
+				CEAnsi::WriteAnsiLogW((wchar_t*)lpBuffer, *lpNumberOfCharsRead);
+			else
+				CEAnsi::WriteAnsiLogA((char*)lpBuffer, *lpNumberOfCharsRead);
 		}
 	}
 
