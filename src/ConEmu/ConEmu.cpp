@@ -793,19 +793,21 @@ void LogFocusInfo(LPCWSTR asInfo, int Level/*=1*/)
 	if (!asInfo)
 		return;
 
+	DWORD nStyle = GetWindowLong(ghWnd, GWL_STYLE);
+	DWORD nStyleEx = GetWindowLong(ghWnd, GWL_EXSTYLE);
+	wchar_t szStyles[64]; _wsprintf(szStyles, SKIPCOUNT(szStyles) L" Style=x%08X ExStyle=x%08X", nStyle, nStyleEx);
+
 	if (Level <= gpSetCls->isAdvLogging)
 	{
-		gpConEmu->LogString(asInfo, TRUE);
-
+		CEStr lsMsg = lstrmerge(asInfo, szStyles);
+		gpConEmu->LogString(lsMsg, TRUE);
 	}
 
 	#ifdef _DEBUG
 	if ((Level == 1) || (Level <= gpSetCls->isAdvLogging))
 	{
-		wchar_t szFull[255];
-		lstrcpyn(szFull, asInfo, countof(szFull)-3);
-		wcscat_c(szFull, L"\n");
-		DEBUGSTRFOCUS(szFull);
+		CEStr lsMsg = lstrmerge(asInfo, szStyles);
+		DEBUGSTRFOCUS(lsMsg);
 	}
 	#endif
 }
