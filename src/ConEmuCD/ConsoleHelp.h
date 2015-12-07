@@ -46,6 +46,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 		L"   or: ConEmuC /DEBUGEXE | /DEBUGTREE <CommandLine>\r\n" \
 		L"   or: ConEmuC [/SILENT] /EXPORT[=CON|GUI|ALL] [Var1 [Var2 [...]]]\r\n" \
 		L"   or: ConEmuC /ECHO | /TYPE [...]\r\n" \
+		L"   or: ConEmuC /StoreCWD [\"dir\"]\r\n" \
 		L"   or: ConEmuC /download [-login <name> -password <pwd>]\r\n" \
 		L"               [-proxy <address:port> [-proxylogin <name> -proxypassword <pwd>]]\r\n" \
 		L"               [-async Y|N] [-otimeout <ms>] [-timeout <ms>] [-agent <name>]\r\n" \
@@ -73,6 +74,7 @@ _DBGHLP(L"   or: ConEmuC /REGCONFONT=<FontName> -> RegisterConsoleFontHKLM\r\n")
 		L"     /IsTerm         - returns 1 as errorlevel if running in telnet, 2 if not\r\n" \
 		L"     /Log[N]         - create (debug) log file, N is number from 0 to 3\r\n" \
 		L"     /Echo | /Type   - http://conemu.github.io/en/ConEmuC.html#EchoAndType\r\n" \
+		L"     /StoreCWD       - inform ConEmu about current working directory\r\n" \
 _DBGHLP(L"     -- following switches are visible in debug builds only but available in release too--\r\n") \
 _DBGHLP(L"     /CINMODE==<hex:gnConsoleModeFlags>\r\n") \
 _DBGHLP(L"     /CREATECON -> used internally for hidden console creation\r\n") \
