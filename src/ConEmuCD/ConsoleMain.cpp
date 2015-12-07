@@ -8995,6 +8995,7 @@ BOOL cmd_AltBuffer(CESERVER_REQ& in, CESERVER_REQ** out)
 				else
 				{
 					gpSrv->bAltBufferEnabled = ((in.AltBuf.AbFlags & (abf_BufferOff|abf_SaveContents)) == (abf_BufferOff|abf_SaveContents));
+					WARNING("Caller must clear active screen contents");
 				}
 
 				ExecuteFreeResult(pSizeIn);

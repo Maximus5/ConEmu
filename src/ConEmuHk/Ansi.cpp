@@ -2678,6 +2678,12 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 				// xmux/screen: Alternate screen
 				if ((Code.PvtLen == 1) && (Code.Pvt[0] == L'?'))
 				{
+					if (lbApply)
+					{
+						ReSetDisplayParm(hConsoleOutput, FALSE, TRUE);
+						lbApply = FALSE;
+					}
+
 					// \e[?1049h: save cursor pos
 					if ((Code.ArgV[0] == 1049) && (Code.Action == L'h'))
 						XTermSaveRestoreCursor(true, hConsoleOutput);
@@ -3365,6 +3371,16 @@ void CEAnsi::XTermAltBuffer(bool bSetAltBuffer)
 					pOut = ExecuteSrvCmd(gnServerPID, pIn, ghConWnd);
 					if (pOut)
 					{
+						// Ensure we have fresh information (size was changed)
+						GetConsoleScreenBufferInfoCached(hOut, &csbi, TRUE);
+
+						// Clear current screen contents, don't move cursor position
+						COORD cr0 = {};
+						DWORD nChars = csbi.dwSize.X * csbi.dwSize.Y;
+						ExtFillOutputParm fill = {sizeof(fill), efof_Current|efof_Attribute|efof_Character,
+							hOut, {}, L' ', cr0, (DWORD)nChars};
+						ExtFillOutput(&fill);
+
 						TODO("BufferWidth");
 						if (!(gXTermAltBuffer.Flags & xtb_AltBuffer))
 						{
