@@ -170,9 +170,27 @@ void SendAnsi(HANDLE hPipe, HANDLE hOut, LPCSTR asSeq)
 void SendFile(HANDLE hPipe, HANDLE hOut, LPCTSTR asFileName)
 {
 	TCHAR szPath[MAX_PATH] = _T("");
-	GetModuleFileName(NULL, szPath, MAX_PATH);
-	TCHAR* pszSlash = _tcsrchr(szPath, _T('\\'));
-	lstrcpy(pszSlash ? pszSlash+1 : szPath, asFileName);
+
+	if (asFileName)
+	{
+		GetModuleFileName(NULL, szPath, MAX_PATH);
+		TCHAR* pszSlash = _tcsrchr(szPath, _T('\\'));
+		lstrcpy(pszSlash ? pszSlash+1 : szPath, asFileName);
+	}
+	else
+	{
+		OPENFILENAME ofn = {sizeof(ofn)};
+		ofn.hwndOwner = NULL;
+		ofn.lpstrFilter = _T("All files (*.*)\0*.*\0\0");
+		ofn.lpstrFile = szPath;
+		ofn.nMaxFile = ARRAYSIZE(szPath);
+		ofn.lpstrTitle = _T("Choose file to send");
+		ofn.Flags = OFN_ENABLESIZING|OFN_NOCHANGEDIR
+			| OFN_PATHMUSTEXIST|OFN_EXPLORER|OFN_HIDEREADONLY|OFN_FILEMUSTEXIST;
+		if (!GetOpenFileName(&ofn))
+			return;
+	}
+
 	HANDLE hFile = CreateFile(szPath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
 	if (hFile == INVALID_HANDLE_VALUE)
 	{
@@ -457,6 +475,8 @@ int ProcessInput(LPCTSTR asName)
 						SendFile(hPipe, hOut, _T("AnsiColors16t.ans")); continue;
 					case '3':
 						SendFile(hPipe, hOut, _T("AnsiColors256.ans")); continue;
+					case 'F': case 'f':
+						SendFile(hPipe, hOut, NULL); continue;
 					}
 				}
 				if (r.Event.KeyEvent.uChar.AsciiChar)
