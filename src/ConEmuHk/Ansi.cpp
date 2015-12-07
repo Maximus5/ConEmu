@@ -3109,6 +3109,7 @@ void CEAnsi::WriteAnsiCode_OSC(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsole
 		// ESC ] 9 ; 9 ; "cwd" ST        Inform ConEmu about shell current working directory
 		// ESC ] 9 ; 10 ST               Request xterm keyboard emulation
 		// ESC ] 9 ; 11; "*txt*" ST      Just a ‘comment’, skip it.
+		// ESC ] 9 ; 12 ST               Let ConEmu treat current cursor position as prompt start. Useful with `PS1`.
 		if (Code.ArgSZ[1] == L';')
 		{
 			if (Code.ArgSZ[2] == L'1')
@@ -3128,6 +3129,11 @@ void CEAnsi::WriteAnsiCode_OSC(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsole
 				{
 					// ESC ] 9 ; 11; "*txt*" ST - Just a ‘comment’, skip it.
 					DumpKnownEscape(Code.ArgSZ+5, lstrlen(Code.ArgSZ+5), de_Comment);
+				}
+				else if (Code.ArgSZ[3] == L'3')
+				{
+					// ESC ] 9 ; 13 ST
+					//TODO: !!!
 				}
 			}
 			else if (Code.ArgSZ[2] == L'2' && Code.ArgSZ[3] == L';')
