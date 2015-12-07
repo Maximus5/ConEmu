@@ -1245,8 +1245,9 @@ BEGIN
     PUSHBUTTON      "...",cbUpdateArcCmdLine,301,153,15,13
     LTEXT           "Post-update command, don't forget ‘call’ for batches",stUpdatePostCommand,12,173,310,8
     EDITTEXT        tUpdatePostUpdateCmd,21,185,295,13,ES_AUTOHSCROLL
-    LTEXT           "ConEmu latest version location info",stUpdateVerLocation,12,201,310,8
-    EDITTEXT        tUpdateVerLocation,21,212,295,13,ES_AUTOHSCROLL | ES_READONLY
+    LTEXT           "ConEmu latest version location info",stUpdateVerLocation,12,201,199,8
+    EDITTEXT        tUpdateVerLocation,21,212,190,13,ES_AUTOHSCROLL
+    PUSHBUTTON      "Apply && Check",cbUpdateCheck,219,211,98,15
 END
 
 IDD_FAST_CONFIG DIALOGEX 0, 0, 323, 305

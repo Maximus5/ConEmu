@@ -254,6 +254,7 @@ protected:
 	static void OnBtn_UpdateLeavePackages(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_UpdateArcCmdLine(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_UpdateDownloadPath(HWND hDlg, WORD CB, BYTE uCheck);
+	static void OnBtn_UpdateApplyAndCheck(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_DefTerm(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_GotoEditorCmd(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_ColorField(HWND hDlg, WORD CB, BYTE uCheck);

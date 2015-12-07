@@ -260,6 +260,7 @@ BEGIN
 	tTilesX2                "Spacing in pixels from the right side of preview to the right side of cell (text label is placed here)"
 	tTilesY1                "Spacing in pixels from the top side of cell to the top side of preview"
 	tTilesY2                "Spacing in pixels from the bottom side of preview to the bottom side of cell"
+	tUpdateVerLocation      "URL to retrieve latest version information,\r\ndefault is: https://conemu.github.io/version.ini\r\nErase text box to revert to default URL."
 	tWndHeight              "Height of console window\r\nUse numbers for size in cells\r\nUse percent sign (e.g. ‘40%’) for monitor-relative size\r\nUse ‘px’ suffix (e.g. ‘800px’) for strict pixel size"
 	tWndWidth               "Width of console window\r\nUse numbers for size in cells\r\nUse percent sign (e.g. ‘40%’) for monitor-relative size\r\nUse ‘px’ suffix (e.g. ‘800px’) for strict pixel size"
 	tWndX                   "Upper left corner of ConEmu in Normal mode\r\nThis is in pixels"
