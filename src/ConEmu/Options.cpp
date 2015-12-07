@@ -3718,7 +3718,9 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		reg->Save(L"PanView.RestoreOnStartup", ThSet.bRestoreOnStartup);
 
 		/* *** AutoUpdate *** */
-		reg->Save(L"Update.VerLocation", UpdSet.szUpdateVerLocation);
+		const wchar_t* pszVerLocation = (UpdSet.szUpdateVerLocation && (0 != lstrcmp(UpdSet.szUpdateVerLocation, UpdSet.UpdateVerLocationDefault())))
+			? UpdSet.szUpdateVerLocation : NULL;
+		reg->Save(L"Update.VerLocation", pszVerLocation);
 		reg->Save(L"Update.CheckOnStartup", UpdSet.isUpdateCheckOnStartup);
 		reg->Save(L"Update.CheckHourly", UpdSet.isUpdateCheckHourly);
 		reg->Save(L"Update.ConfirmDownload", UpdSet.isUpdateConfirmDownload);
