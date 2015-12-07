@@ -3107,9 +3107,19 @@ void CEAnsi::WriteAnsiCode_OSC(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsole
 		// ESC ] 9 ; 10 ST               Request xterm keyboard emulation
 		if (Code.ArgSZ[1] == L';')
 		{
-			if (Code.ArgSZ[2] == L'1' && Code.ArgSZ[3] == L';')
+			if (Code.ArgSZ[2] == L'1')
 			{
-				DoSleep(Code.ArgSZ+4);
+				if (Code.ArgSZ[3] == L';')
+				{
+					// ESC ] 9 ; 1 ; ms ST
+					DoSleep(Code.ArgSZ+4);
+				}
+				else if (Code.ArgSZ[3] == L'0')
+				{
+					// ESC ] 9 ; 10 ST
+					if (!gbWasXTermOutput)
+						CEAnsi::StartXTermMode(true);
+				}
 			}
 			else if (Code.ArgSZ[2] == L'2' && Code.ArgSZ[3] == L';')
 			{
@@ -3227,11 +3237,6 @@ void CEAnsi::WriteAnsiCode_OSC(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsole
 			else if (Code.ArgSZ[2] == L'9' && Code.ArgSZ[3] == L';')
 			{
 				DoSendCWD(Code.ArgSZ+4, Code.cchArgSZ - 4);
-			}
-			else if (Code.ArgSZ[2] == L'1' && Code.ArgSZ[3] == L'0')
-			{
-				if (!gbWasXTermOutput)
-					CEAnsi::StartXTermMode(true);
 			}
 		}
 		break;
