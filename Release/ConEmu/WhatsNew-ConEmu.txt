@@ -19,6 +19,22 @@ http://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2015.12.7
+* gh#438: No newlines in log files after prompts (cygwin/msys).
+  Cygwin/msys shells do not write LF to screen unless they
+  were started from ConEmu's cygwin/msys connector.
+  Therefore we have to do some magic to ‘detect’ line feeds...
+* Update terminals module to v0.7
+* In some cases PID of terminal-connector was not shown in the StatusBar.
+* Xterm's alternative screen was not cleared on activating.
+* gh#351: Allow changing URL for retrieving version location on Settings/Update.
+* gh#351: Use `https://conemu.github.io/version.ini` by default.
+* Changes in processing of default hotkey `Win+X`.
+  * It runs whole task contents, but not only first ‘tab’ from task;
+  * If no one task was marked as ‘Default shell’, run default `COMSPEC`
+    with arguments ` /k "%ConEmuBaseDir%\CmdInit.cmd"`.
+
+
 2015.12.5
 * Show cygwin/msys/clink flags on Settings/Info.
 * Post Fxx keys ncurses-friendly in the xterm mode emulation.
