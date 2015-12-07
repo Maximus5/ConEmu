@@ -4600,7 +4600,6 @@ LRESULT CSettings::OnInitDialog_Update(HWND hWnd2, bool abInitial)
 {
 	ConEmuUpdateSettings* p = &gpSet->UpdSet;
 
-	// Через интерфейс - не редактируется
 	SetDlgItemText(hWnd2, tUpdateVerLocation, p->UpdateVerLocation());
 
 	checkDlgButton(hWnd2, cbUpdateCheckOnStartup, p->isUpdateCheckOnStartup);

@@ -829,6 +829,9 @@ bool CSetDlgButtons::ProcessButtonClick(HWND hDlg, WORD CB, BYTE uCheck)
 		case cbUpdateDownloadPath:
 			OnBtn_UpdateDownloadPath(hDlg, CB, uCheck);
 			break;
+		case cbUpdateCheck:
+			OnBtn_UpdateApplyAndCheck(hDlg, CB, uCheck);
+			break;
 		/* *** Update settings *** */
 
 		/* *** Command groups *** */
@@ -4255,6 +4258,26 @@ void CSetDlgButtons::OnBtn_UpdateDownloadPath(HWND hDlg, WORD CB, BYTE uCheck)
 		}
 	}
 } // cbUpdateDownloadPath
+
+// cbUpdateCheck
+void CSetDlgButtons::OnBtn_UpdateApplyAndCheck(HWND hDlg, WORD CB, BYTE uCheck)
+{
+	_ASSERTE(CB==cbUpdateCheck);
+
+	if (hDlg && gpSetCls)
+	{
+		wchar_t* pszVerIniLocation = NULL;
+		gpSetCls->GetString(hDlg, tUpdateVerLocation, &pszVerIniLocation);
+		if (pszVerIniLocation && (0 == lstrcmp(pszVerIniLocation, gpSet->UpdSet.UpdateVerLocationDefault())))
+			SafeFree(pszVerIniLocation);
+		gpSet->UpdSet.SetUpdateVerLocation(pszVerIniLocation);
+		SafeFree(pszVerIniLocation);
+	}
+
+	gpConEmu->CheckUpdates(TRUE);
+
+} // cbUpdateCheck
+
 /* *** Update settings *** */
 
 

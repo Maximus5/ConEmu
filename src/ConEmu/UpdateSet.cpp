@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2011-2014 Maximus5
+Copyright (c) 2011-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -30,6 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "header.h"
 #include "UpdateSet.h"
 #include "ConEmu.h"
+#include "OptionsClass.h"
 
 ConEmuUpdateSettings::ConEmuUpdateSettings()
 {
@@ -60,6 +61,13 @@ void ConEmuUpdateSettings::SetUpdateVerLocation(LPCWSTR asNewIniLocation)
 	SafeFree(szUpdateVerLocation);
 	if (asNewIniLocation && *asNewIniLocation && (lstrcmp(asNewIniLocation, L"-") != 0))
 		szUpdateVerLocation = lstrdup(asNewIniLocation);
+
+	if (gpSetCls && ghOpWnd)
+	{
+		HWND hUpdate = gpSetCls->GetPage(CSettings::thi_Update);
+		if (hUpdate)
+			SetDlgItemText(hUpdate, tUpdateVerLocation, gpSet->UpdSet.UpdateVerLocation());
+	}
 }
 
 void ConEmuUpdateSettings::ResetToDefaults()
