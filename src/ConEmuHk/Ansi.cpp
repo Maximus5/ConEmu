@@ -776,6 +776,9 @@ void CEAnsi::DumpEscape(LPCWSTR buf, size_t cchLen, DumpEscapeCodes iUnknown)
 	case de_ScrollRegion/*6*/:
 		msprintf(szDbg, countof(szDbg), L"[%u] ###Scroll region: ", GetCurrentThreadId());
 		break;
+	case de_Comment/*7*/:
+		msprintf(szDbg, countof(szDbg), L"[%u] ###Internal comment: ", GetCurrentThreadId());
+		break;
 	default:
 		msprintf(szDbg, countof(szDbg), L"[%u] AnsiDump #%u: ", GetCurrentThreadId(), ++nWriteCallNo);
 	}
@@ -3105,6 +3108,7 @@ void CEAnsi::WriteAnsiCode_OSC(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsole
 		// ESC ] 9 ; 8 ; "env" ST        Output value of environment variable
 		// ESC ] 9 ; 9 ; "cwd" ST        Inform ConEmu about shell current working directory
 		// ESC ] 9 ; 10 ST               Request xterm keyboard emulation
+		// ESC ] 9 ; 11; "*txt*" ST      Just a ‘comment’, skip it.
 		if (Code.ArgSZ[1] == L';')
 		{
 			if (Code.ArgSZ[2] == L'1')
@@ -3119,6 +3123,11 @@ void CEAnsi::WriteAnsiCode_OSC(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsole
 					// ESC ] 9 ; 10 ST
 					if (!gbWasXTermOutput)
 						CEAnsi::StartXTermMode(true);
+				}
+				else if (Code.ArgSZ[3] == L'1' && Code.ArgSZ[4] == L';')
+				{
+					// ESC ] 9 ; 11; "*txt*" ST - Just a ‘comment’, skip it.
+					DumpKnownEscape(Code.ArgSZ+5, lstrlen(Code.ArgSZ+5), de_Comment);
 				}
 			}
 			else if (Code.ArgSZ[2] == L'2' && Code.ArgSZ[3] == L';')

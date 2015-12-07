@@ -85,6 +85,7 @@ enum DumpEscapeCodes
 	de_UnkControl = 4,
 	de_Report = 5,
 	de_ScrollRegion = 6,
+	de_Comment = 7,
 };
 
 struct CpCvt;
