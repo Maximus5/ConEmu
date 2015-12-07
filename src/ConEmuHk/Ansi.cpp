@@ -88,7 +88,7 @@ const XTermAltBufferFlags
 	xtb_StoredCursor       = 0x0002,
 	xtb_StoredScrollRegion = 0x0004,
 	xtb_None               = 0;
-static struct XTermAltBuffer
+static struct XTermAltBufferData
 {
 	XTermAltBufferFlags Flags;
 	int    BufferSize;
