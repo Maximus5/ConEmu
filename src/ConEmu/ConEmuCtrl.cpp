@@ -614,22 +614,29 @@ bool CConEmuCtrl::key_MultiCmd(const ConEmuChord& VkState, bool TestOnly, const 
 			pGrp->ParseGuiArgs(&args);
 			SafeFree(args.pszSpecialCmd);
 
-			// Scripts are not supported in that case
-			args.pszSpecialCmd = lstrdup(pGrp->pszCommands);
-			if (args.pszSpecialCmd)
-			{
-				// Run only first command of the task
-				wchar_t* pszLine = wcspbrk(args.pszSpecialCmd, L"\r\n");
-				if (pszLine) *pszLine = 0;
-			}
+			// Run all tabs of the task, if they were specified
+			args.pszSpecialCmd = lstrdup(pGrp->pszName);
 			break;
 		}
 	}
 
 	if (!args.pszSpecialCmd)
+	{
 		args.pszSpecialCmd = GetComspec(&gpSet->ComSpec); //lstrdup(L"cmd");
+		if (!args.pszSpecialCmd)
+		{
+			_ASSERTE(FALSE && "Memory allocation failure");
+			return true;
+		}
+		lstrmerge(&args.pszSpecialCmd, L" /k \"%ConEmuBaseDir%\\CmdInit.cmd\"");
+	}
 
-	gpConEmu->CreateCon(&args);
+	if (!args.pszStartupDir)
+	{
+		args.pszStartupDir = lstrdup(L"%CD%");
+	}
+
+	gpConEmu->CreateCon(&args, true);
 	return true;
 }
 
