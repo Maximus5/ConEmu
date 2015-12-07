@@ -51,7 +51,7 @@ LPCWSTR ConEmuUpdateSettings::UpdateVerLocationDefault()
 		//L"file://C:\\ConEmu-Update\\version.ini"
 		//L"http://conemu.ru/version.ini"
 		//L"http://conemu-maximus5.googlecode.com/svn/trunk/ConEmu/version.ini"
-		L"http://conemu.github.io/version.ini"
+		L"https://conemu.github.io/version.ini"
 		;
 	return pszDefault;
 }
