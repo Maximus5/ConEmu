@@ -61,6 +61,9 @@ public:
 	HWND  mh_InsideParentRoot; // Корневое окно режима интеграции (для проверки isMeForeground)
 	void  SetInsideParentWND(HWND hParent);
 
+	bool  inMinimizing(WINDOWPOS *p /*= NULL*/);
+	bool  isParentIconic();
+	bool  isSelfIconic();
 	HWND  InsideFindParent();
 	void  InsideParentMonitor();
 	bool  GetInsideRect(RECT* prWnd);

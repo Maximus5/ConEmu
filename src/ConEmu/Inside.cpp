@@ -786,7 +786,7 @@ void CConEmuInside::InsideUpdatePlacement()
 			return;
 	}
 
-	//if ((m_InsideIntegration == ii_Simple) || IsWindow(mh_InsideParentRel))
+	if (!isParentIconic())
 	{
 		RECT rcParent = {}, rcRelative = {};
 		GetClientRect(mh_InsideParentWND, &rcParent);
@@ -817,6 +817,11 @@ bool CConEmuInside::GetInsideRect(RECT* prWnd)
 	if (m_InsideIntegration == ii_None)
 	{
 		_ASSERTE(m_InsideIntegration != ii_None);
+		return false;
+	}
+
+	if (isParentIconic())
+	{
 		return false;
 	}
 
@@ -871,6 +876,39 @@ bool CConEmuInside::GetInsideRect(RECT* prWnd)
 		*prWnd = rcWnd;
 
 	return true;
+}
+
+bool CConEmuInside::isParentIconic()
+{
+	BOOL bIconic;
+	if (mh_InsideParentRoot)
+		bIconic = ::IsIconic(mh_InsideParentRoot);
+	else if (mh_InsideParentWND)
+		bIconic = ::IsIconic(mh_InsideParentWND);
+	else
+		bIconic = FALSE;
+	return (bIconic != FALSE);
+}
+
+// When parent is minimized, it may force our window to be shrinked
+// due to auto-resize its contents...
+bool CConEmuInside::isSelfIconic()
+{
+	RECT rcOur = {};
+	WINDOWPLACEMENT wpl = {sizeof(wpl)};
+	GetWindowRect(ghWnd, &rcOur);
+	GetWindowPlacement(ghWnd, &wpl);
+	int nMinWidth = 32, nMinHeight = 32;
+	if ((RectWidth(rcOur) < nMinWidth) || (RectHeight(rcOur) < nMinHeight))
+		return true;
+	return false;
+}
+
+bool CConEmuInside::inMinimizing(WINDOWPOS *p /*= NULL*/)
+{
+	if (isParentIconic())
+		return true;
+	return false;
 }
 
 HWND CConEmuInside::CheckInsideFocus()

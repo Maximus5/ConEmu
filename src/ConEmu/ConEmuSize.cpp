@@ -370,6 +370,16 @@ RECT CConEmuSize::CalcRect(enum ConEmuRect tWhat, CVirtualConsole* pVCon /*= NUL
 		}
 	}
 
+	if (mp_ConEmu->mp_Inside)
+	{
+		if (!mp_ConEmu->mp_Inside->GetInsideRect(&rcMain))
+		{
+			_ASSERTE(FALSE && "GetInsideRect failed");
+			ZeroStruct(rcMain);
+			return rcMain;
+		}
+	}
+	else
 	if (bNeedCalc)
 	{
 		nGetStyle = 1;
@@ -1781,6 +1791,8 @@ HMONITOR CConEmuSize::GetNearestMonitor(MONITORINFO* pmi /*= NULL*/, LPCRECT prc
 	HMONITOR hMon = NULL;
 	MONITORINFO mi = {sizeof(mi)};
 
+	HWND hWndFrom = mp_ConEmu->mp_Inside ? mp_ConEmu->mp_Inside->mh_InsideParentRoot : ghWnd;
+
 	if (prcWnd)
 	{
 		hMon = GetNearestMonitorInfo(&mi, NULL, prcWnd);
@@ -1793,16 +1805,14 @@ HMONITOR CConEmuSize::GetNearestMonitor(MONITORINFO* pmi /*= NULL*/, LPCRECT prc
 	}
 	else if (!mp_ConEmu->mp_Menu->GetRestoreFromMinimized() && !isIconic())
 	{
-		hMon = GetNearestMonitorInfo(&mi, NULL, NULL, ghWnd);
+		hMon = GetNearestMonitorInfo(&mi, NULL, NULL, hWndFrom);
 	}
 	else
 	{
-		_ASSERTE(!mp_ConEmu->mp_Inside); // По идее, для "Inside" вызываться не должен
-
-		//-- CalcRect использовать нельзя, он может ссылаться на GetNearestMonitor
+		// !! We can't use CalcRect, it may call GetNearestMonitor in turn !!
 		//RECT rcDefault = CalcRect(CER_MAIN);
 		WINDOWPLACEMENT wpl = {sizeof(wpl)};
-		GetWindowPlacement(ghWnd, &wpl);
+		GetWindowPlacement(hWndFrom, &wpl);
 		RECT rcDefault = wpl.rcNormalPosition;
 		hMon = GetNearestMonitorInfo(&mi, mh_MinFromMonitor, &rcDefault);
 	}
@@ -4684,6 +4694,10 @@ void CConEmuSize::RecreateControls(bool bRecreateTabbar, bool bRecreateStatus, b
 bool CConEmuSize::isIconic(bool abRaw /*= false*/)
 {
 	bool bIconic = ::IsIconic(ghWnd);
+
+	if (!bIconic && mp_ConEmu->mp_Inside)
+		bIconic = mp_ConEmu->mp_Inside->isParentIconic();
+
 	if (!abRaw && !bIconic)
 	{
 		bIconic = (gpSet->isQuakeStyle && isQuakeMinimized)
@@ -4808,12 +4822,11 @@ void CConEmuSize::UpdateWindowRgn(int anX/*=-1*/, int anY/*=-1*/, int anWndWidth
 	if (mb_LockWindowRgn)
 		return;
 
-	HRGN hRgn = NULL;
+	// No sense to change WndRgn in Child mode
+	if (mp_ConEmu->mp_Inside)
+		return;
 
-	//if (gpSet->isHideCaptionAlways) {
-	//	SetKillTimer(false, TIMER_CAPTION_APPEAR_ID, 0);
-	//	SetKillTimer(false, TIMER_CAPTION_DISAPPEAR_ID, 0);
-	//}
+	HRGN hRgn = NULL;
 
 	if (m_ForceShowFrame == fsf_Show)
 		hRgn = NULL; // Иначе при ресайзе получаются некрасивые (без XP Theme) кнопки в заголовке
@@ -5179,6 +5192,9 @@ bool CConEmuSize::InMinimizing(WINDOWPOS *p /*= NULL*/)
 
 	// Last chance to check (come from OnWindowPosChanging)
 	if (p && ((p->x <= -32000) || (p->y <= -32000)))
+		return true;
+
+	if (mp_ConEmu->mp_Inside && mp_ConEmu->mp_Inside->inMinimizing(p))
 		return true;
 
 	#ifdef _DEBUG
