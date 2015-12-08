@@ -2838,6 +2838,8 @@ LPWSTR ConEmuMacro::GetInfo(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin
 			pszVal = apRCon ? apRCon->GetConsoleStartDir(szDir) : L"";
 		else if (lstrcmpi(pszName, L"CurDir") == 0)
 			pszVal = apRCon ? apRCon->GetConsoleCurDir(szDir) : L"";
+		else if (lstrcmpi(pszName, L"ActivePID") == 0)
+			msprintf(szTemp, countof(szTemp), L"%u", (apRCon ? apRCon->GetActivePID() : 0));
 		else if (lstrcmpi(pszName, L"AnsiLog") == 0)
 		{
 			DWORD nSrvPID = apRCon->GetServerPID(true);
