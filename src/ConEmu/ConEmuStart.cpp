@@ -1298,7 +1298,9 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 				{
 					gpConEmu->mb_FindBugMode = true;
 				}
-				else if (!klstricmp(curCommand, _T("/debug")) || !klstricmp(curCommand, _T("/debugi")))
+				else if (!klstricmp(curCommand, _T("/debug"))
+					|| !klstricmp(curCommand, _T("/debugw"))
+					|| !klstricmp(curCommand, _T("/debugi")))
 				{
 					// These switches were already processed
 				}

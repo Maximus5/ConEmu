@@ -3555,6 +3555,77 @@ int ProcessCmdArg(LPCWSTR cmdNew, bool isScript, bool isBare, CEStr& szReady, bo
 	return 0;
 }
 
+// -debug, -debugi, -debugw
+int CheckForDebugArgs(LPCWSTR asCmdLine)
+{
+	if (IsDebuggerPresent())
+		return 0;
+
+	BOOL nDbg = FALSE;
+	bool debug = false;  // Just show a MessageBox with command line and PID
+	bool debugw = false; // Silently wait until debugger is connected
+	bool debugi = false; // _ASSERT(FALSE)
+	UINT iSleep = 0;
+
+	#if defined(SHOW_STARTED_MSGBOX)
+	debugm = true;
+	#elif defined(WAIT_STARTED_DEBUGGER)
+	debugw = true;
+	#endif
+
+	LPCWSTR pszCmd = asCmdLine;
+	CEStr lsArg;
+	// First argument (actually, first would be our executable in most cases)
+	for (int i = 0; i <= 1; i++)
+	{
+		if (NextArg(&pszCmd, lsArg) != 0)
+			break;
+		// Support both notations
+		if (lsArg.ms_Arg[0] == L'/') lsArg.ms_Arg[0] = L'-';
+
+		if (lstrcmpi(lsArg, L"-debug") == 0)
+		{
+			debug = true; break;
+		}
+		if (lstrcmpi(lsArg, L"-debugi") == 0)
+		{
+			debugi = true; break;
+		}
+		if (lstrcmpi(lsArg, L"-debugw") == 0)
+		{
+			debugw = true; break;
+		}
+	}
+
+	if (debug)
+	{
+		wchar_t szTitle[128]; _wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"Conemu started, PID=%i", GetCurrentProcessId());
+		CEStr lsText = lstrmerge(L"GetCommandLineW()\n", GetCommandLineW(), L"\n\n\n" L"lpCmdLine\n", asCmdLine);
+		MessageBox(NULL, lsText, szTitle, MB_OK|MB_ICONINFORMATION|MB_SETFOREGROUND|MB_SYSTEMMODAL);
+		nDbg = IsDebuggerPresent();
+	}
+	else if (debugw)
+	{
+		while (!IsDebuggerPresent())
+			Sleep(250);
+		nDbg = IsDebuggerPresent();
+	}
+	else if (debugi)
+	{
+		if (!IsDebuggerPresent()) _ASSERT(FALSE);
+		nDbg = IsDebuggerPresent();
+	}
+
+	// To be able to do some actions (focus window?) before continue
+	if (nDbg)
+	{
+		iSleep = 5000;
+		Sleep(iSleep);
+	}
+
+	return nDbg;
+}
+
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
 	DEBUGSTRSTARTUP(L"WinMain entered");
@@ -3726,28 +3797,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		lsCommandLine.Set(L"");
 	}
 
-#if defined(SHOW_STARTED_MSGBOX)
-	wchar_t szTitle[128]; _wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"Conemu started, PID=%i", GetCurrentProcessId());
-	CEStr lsText = lstrmerge(L"GetCommandLineW()\n", GetCommandLineW(), L"\n\n\n" L"lpCmdLine\n", lsCvtCmdLine.ms_Arg);
-	MessageBox(NULL, lsText, szTitle, MB_OK|MB_ICONINFORMATION|MB_SETFOREGROUND|MB_SYSTEMMODAL);
-#elif defined(WAIT_STARTED_DEBUGGER)
-	while (!IsDebuggerPresent())
-		Sleep(250);
-	int nDbg = IsDebuggerPresent();
-#else
-
-#ifdef _DEBUG
-	if (_tcsstr(lsCommandLine, L"/debugi"))
-	{
-		if (!IsDebuggerPresent()) _ASSERT(FALSE);
-	}
-	else
-#endif
-		if (_tcsstr(lsCommandLine, L"/debug"))
-		{
-			if (!IsDebuggerPresent()) MBoxA(L"Conemu started");
-		}
-#endif
+	// -debug, -debugi, -debugw
+	CheckForDebugArgs(lsCommandLine);
 
 #ifdef DEBUG_MSG_HOOKS
 	ghDbgHook = SetWindowsHookEx(WH_CALLWNDPROC, DbgCallWndProc, NULL, GetCurrentThreadId());
