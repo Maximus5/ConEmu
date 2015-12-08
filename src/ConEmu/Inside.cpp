@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2012 Maximus5
+Copyright (c) 2012-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -871,4 +871,38 @@ bool CConEmuInside::GetInsideRect(RECT* prWnd)
 		*prWnd = rcWnd;
 
 	return true;
+}
+
+HWND CConEmuInside::CheckInsideFocus()
+{
+	if (!this || !mh_InsideParentRoot)
+	{
+		//_ASSERTE(FALSE && "Inside was not initialized");
+		return NULL;
+	}
+
+	wchar_t szInfo[512];
+	GUITHREADINFO tif = { sizeof(tif) };
+	DWORD nTID = GetWindowThreadProcessId(mh_InsideParentRoot, NULL);
+
+	if (!GetGUIThreadInfo(nTID, &tif))
+	{
+		_wsprintf(szInfo, SKIPCOUNT(szInfo) L"GetGUIThreadInfo(%u) failed, code=%u", nTID, GetLastError());
+		LogString(szInfo);
+		return NULL;
+	}
+
+	static GUITHREADINFO last_tif = {};
+	if (memcmp(&last_tif, &tif, sizeof(tif)) != 0)
+	{
+		last_tif = tif;
+
+		_wsprintf(szInfo, SKIPCOUNT(szInfo)
+			L"ParentInputInfo: flags=x%X Active=x%X Focus=x%X Capture=x%X Menu=x%X MoveSize=x%X Caret=x%X (%i,%i)-(%i,%i)",
+			tif.flags, LODWORD(tif.hwndActive), LODWORD(tif.hwndFocus), LODWORD(tif.hwndCapture), LODWORD(tif.hwndMenuOwner),
+			LODWORD(tif.hwndMoveSize), LODWORD(tif.hwndCaret), LOGRECTCOORDS(tif.rcCaret));
+		LogString(szInfo);
+	}
+
+	return tif.hwndFocus;
 }

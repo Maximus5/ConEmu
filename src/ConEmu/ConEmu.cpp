@@ -5868,7 +5868,20 @@ bool CConEmuMain::RecheckForegroundWindow(LPCWSTR asFrom, HWND* phFore/*=NULL*/)
 
 	// Call this function only
 	HWND hForeWnd = getForegroundWindow();
+	HWND hInsideFocus = NULL;
 	DWORD nForePID = 0;
+
+	if (mp_Inside && (hForeWnd == mp_Inside->mh_InsideParentRoot))
+	{
+		if ((hInsideFocus = mp_Inside->CheckInsideFocus()))
+		{
+			DWORD nInsideFocusPID = 0; GetWindowThreadProcessId(hInsideFocus, &nInsideFocusPID);
+			if (nInsideFocusPID == GetCurrentProcessId())
+			{
+				NewState |= fgf_InsideParent;
+			}
+		}
+	}
 
 	if (hForeWnd != m_Foreground.hLastFore)
 	{
@@ -5890,7 +5903,7 @@ bool CConEmuMain::RecheckForegroundWindow(LPCWSTR asFrom, HWND* phFore/*=NULL*/)
 				}
 				else if (mp_Inside && (hForeWnd == mp_Inside->mh_InsideParentRoot))
 				{
-					NewState |= fgf_InsideParent;
+					// Already processed
 				}
 				else if (CVConGroup::isOurWindow(hForeWnd))
 				{
@@ -5931,17 +5944,22 @@ bool CConEmuMain::RecheckForegroundWindow(LPCWSTR asFrom, HWND* phFore/*=NULL*/)
 			asFrom, NewState, (DWORD)(DWORD_PTR)hForeWnd, nForePID, (DWORD)(DWORD_PTR)m_Foreground.hLastFore, m_Foreground.ForegroundState);
 		LogString(szLog);
 
-		// Save new state
-		if (m_Foreground.ForegroundState != NewState)
-			m_Foreground.ForegroundState = NewState;
-		m_Foreground.hLastFore = hForeWnd;
-
 		// And remember 'non-responsive' state to be able recheck DefTerm
 		if ((m_Foreground.nDefTermNonResponsive && !bNonResponsive) || (m_Foreground.nDefTermNonResponsive != nForePID))
 		{
 			m_Foreground.nDefTermNonResponsive = bNonResponsive ? nForePID : 0;
 			m_Foreground.nDefTermTick = bNonResponsive ? GetTickCount() : 0;
 		}
+	}
+
+	if ((hForeWnd != m_Foreground.hLastFore)
+		|| (m_Foreground.hLastInsideFocus != hInsideFocus))
+	{
+		// Save new state
+		if (m_Foreground.ForegroundState != NewState)
+			m_Foreground.ForegroundState = NewState;
+		m_Foreground.hLastFore = hForeWnd;
+		m_Foreground.hLastInsideFocus = hInsideFocus;
 	}
 
 	// DefTerm, Recheck?

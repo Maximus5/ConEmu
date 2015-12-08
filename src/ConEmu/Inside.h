@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2012 Maximus5
+Copyright (c) 2012-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -64,6 +64,7 @@ public:
 	HWND  InsideFindParent();
 	void  InsideParentMonitor();
 	bool  GetInsideRect(RECT* prWnd);
+	HWND  CheckInsideFocus();
 
 private:
 	HWND  mh_InsideParentRel;  // Может быть NULL (ii_Simple). HWND относительно которого нужно позиционироваться

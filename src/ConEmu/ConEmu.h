@@ -619,6 +619,7 @@ class CConEmuMain
 	protected:
 		struct {
 			HWND  hLastFore;
+			HWND  hLastInsideFocus;
 			DWORD ForegroundState;
 			DWORD nDefTermNonResponsive;
 			DWORD nDefTermTick;
