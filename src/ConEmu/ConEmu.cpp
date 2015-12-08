@@ -7130,6 +7130,8 @@ LRESULT CConEmuMain::OnDestroy(HWND hWnd)
 {
 	if (this && mp_Log) { LogString(L"WM_DESTROY: CConEmuMain"); } else { DEBUGSTRDESTROY(L"WM_DESTROY: CConEmuMain"); }
 
+	mn_StartupFinished = ss_Destroying;
+
 	WARNING("Подозрение на зависание в некоторых случаях");
 	session.SetSessionNotification(false);
 
@@ -7235,6 +7237,7 @@ LRESULT CConEmuMain::OnDestroy(HWND hWnd)
 
 	// After WM_DESTROY (especially with InsideParent mode)
 	// ghWnd changes into invalid state
+	mn_StartupFinished = ss_Destroyed;
 	if (mn_InOurDestroy == 0)
 		ghWnd = NULL;
 	return 0;
@@ -12703,13 +12706,8 @@ LRESULT CConEmuMain::MainWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lP
 	if (gpConEmu)
 		gpConEmu->PreWndProc(messg);
 
-	//if (messg == WM_CREATE)
-	//{
-	if (ghWnd == NULL)
-		ghWnd = hWnd; // ставим сразу, чтобы функции могли пользоваться
-	//else if ('ghWnd DC' == NULL)
-	//	'ghWnd DC' = hWnd; // ставим сразу, чтобы функции могли пользоваться
-	//}
+	if ((ghWnd == NULL) && gpConEmu && (gpConEmu->mn_StartupFinished < CConEmuMain::ss_Destroying))
+		ghWnd = hWnd; // Set it immediately, let functions use it
 
 	if (hWnd == ghWnd)
 		result = gpConEmu->WndProc(hWnd, messg, wParam, lParam);
