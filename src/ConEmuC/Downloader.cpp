@@ -170,6 +170,7 @@ public:
 	typedef INTERNET_STATUS_CALLBACK (WINAPI* InternetSetStatusCallbackW_t)(HINTERNET hInternet, INTERNET_STATUS_CALLBACK lpfnInternetCallback);
 	typedef BOOL (WINAPI* FtpSetCurrentDirectoryW_t)(HINTERNET hConnect, LPCWSTR lpszDirectory);
 	typedef HINTERNET (WINAPI* FtpOpenFileW_t)(HINTERNET hConnect, LPCWSTR lpszFileName, DWORD dwAccess, DWORD dwFlags, DWORD_PTR dwContext);
+	//typedef BOOL (WINAPI* DeleteUrlCacheEntryW_t)(LPCWSTR lpszUrlName);
 
 
 
@@ -185,6 +186,7 @@ public:
 	InternetSetStatusCallbackW_t _InternetSetStatusCallbackW;
 	FtpSetCurrentDirectoryW_t _FtpSetCurrentDirectoryW;
 	FtpOpenFileW_t _FtpOpenFileW;
+	//DeleteUrlCacheEntryW_t _DeleteUrlCacheEntryW;
 protected:
 	HMODULE _hWinInet;
 	bool LoadFuncInt(CDownloader* pUpd, FARPROC* pfn, LPCSTR n)
@@ -221,6 +223,7 @@ public:
 		_InternetSetStatusCallbackW = NULL;
 		_FtpSetCurrentDirectoryW = NULL;
 		_FtpOpenFileW = NULL;
+		//_DeleteUrlCacheEntryW = NULL;
 	};
 	~CWinInet()
 	{
@@ -259,6 +262,7 @@ public:
 		LoadFunc(InternetSetStatusCallbackW, "nIetnrteeSStatutCslablcaWk");
 		LoadFunc(FtpSetCurrentDirectoryW, "tFSpteuCrrneDtriceotyrW");
 		LoadFunc(FtpOpenFileW,         "tFOpepFnliWe");
+		//LoadFunc(DeleteUrlCacheEntryW, "eDeletrUClcaehnErtWy");
 
 		return true;
 	}
@@ -991,6 +995,16 @@ BOOL CDownloader::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, DWORD& crc, D
 					L"HttpVersion failed, code=%u", at_Uint, GetLastError(), at_None);
 				goto wrap;
 			}
+
+			// Force Online
+			ReportMessage(dc_LogCallback, L"Set IGNORE_OFFLINE option", at_None);
+			nFlags = TRUE; _ASSERTE(sizeof(nFlags)==4);
+			if (!wi->_InternetSetOptionW(mh_Internet, INTERNET_OPTION_IGNORE_OFFLINE, &nFlags, sizeof(nFlags)))
+			{
+				ReportMessage(dc_ErrCallback,
+					L"Set IGNORE_OFFLINE option, code=%u", at_Uint, GetLastError(), at_None);
+				//goto wrap;
+			}
 		}
 
 		// Timeout
@@ -1002,6 +1016,10 @@ BOOL CDownloader::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, DWORD& crc, D
 
 		//
 		_ASSERTE(mh_Connect == NULL);
+
+		// Try to force reload
+		//if (wi->_DeleteUrlCacheEntryW)
+		//	wi->_DeleteUrlCacheEntryW(asSource);
 
 		//TODO после включения ноута вылезла ошибка ERROR_INTERNET_NAME_NOT_RESOLVED==12007
 
@@ -1110,7 +1128,9 @@ BOOL CDownloader::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, DWORD& crc, D
 				|(bSecureHTTPS?(INTERNET_FLAG_SECURE|INTERNET_FLAG_IGNORE_CERT_CN_INVALID|INTERNET_FLAG_IGNORE_CERT_DATE_INVALID):0)
 				//|INTERNET_FLAG_HYPERLINK
 				//|INTERNET_FLAG_IGNORE_REDIRECT_TO_HTTP
+				|INTERNET_FLAG_DONT_CACHE
 				|INTERNET_FLAG_NO_CACHE_WRITE
+				|INTERNET_FLAG_PRAGMA_NOCACHE
 				//|INTERNET_FLAG_PRAGMA_NOCACHE
 				|INTERNET_FLAG_RELOAD;
 			ReportMessage(dc_LogCallback, L"Opening request with flags x%08X", at_Uint, nFlags, at_None);
