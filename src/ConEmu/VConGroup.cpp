@@ -2617,11 +2617,14 @@ bool CVConGroup::OnFlashWindow(DWORD nOpt, DWORD nFlags, DWORD nCount, HWND hCon
 
 	bool lbFlashSimple = abSimple;
 
+	HWND hWndFlash = (gpConEmu->mp_Inside && gpConEmu->mp_Inside->mh_InsideParentRoot)
+		? gpConEmu->mp_Inside->mh_InsideParentRoot : ghWnd;
+
 	if (abFromMacro)
 	{
-		// Через макросы - все разрешено
+		// From GuiMacro - anything is allowed
 	}
-	// Достало. Настройка полного отключения флэшинга
+	// Option to disable it completely
 	else if (gpSet->isDisableFarFlashing && gp_VActive->RCon()->GetFarPID(FALSE))
 	{
 		if (gpSet->isDisableFarFlashing == 1)
@@ -2651,26 +2654,26 @@ bool CVConGroup::OnFlashWindow(DWORD nOpt, DWORD nFlags, DWORD nCount, HWND hCon
 
 			if (abFromMacro || abFromApi)
 			{
-				// Через макросы - все разрешено
+				// From GuiMacro - anything is allowed
 				if (abSimple)
 				{
-					FlashWindow(ghWnd, abInvert);
+					FlashWindow(hWndFlash, abInvert);
 				}
 				else
 				{
-					fl.dwFlags = FLASHW_STOP; fl.hwnd = ghWnd;
-					FlashWindowEx(&fl); // Чтобы мигание не накапливалось
-					fl.uCount = nCount; fl.dwFlags = nFlags; fl.hwnd = ghWnd;
+					fl.dwFlags = FLASHW_STOP; fl.hwnd = hWndFlash;
+					FlashWindowEx(&fl); // Don't accumulate flashing
+					fl.uCount = nCount; fl.dwFlags = nFlags; fl.hwnd = hWndFlash;
 					FlashWindowEx(&fl);
 				}
 			}
 			else if (gpConEmu->isMeForeground())
 			{
-				if (gp_VCon[i] != gp_VActive)    // Только для неактивной консоли
+				if (gp_VCon[i] != gp_VActive)    // For inactive VCon-s only
 				{
-					fl.dwFlags = FLASHW_STOP; fl.hwnd = ghWnd;
-					FlashWindowEx(&fl); // Чтобы мигание не накапливалось
-					fl.uCount = 3; fl.dwFlags = lbFlashSimple ? FLASHW_ALL : FLASHW_TRAY; fl.hwnd = ghWnd;
+					fl.dwFlags = FLASHW_STOP; fl.hwnd = hWndFlash;
+					FlashWindowEx(&fl); // Don't accumulate flashing
+					fl.uCount = 3; fl.dwFlags = lbFlashSimple ? FLASHW_ALL : FLASHW_TRAY; fl.hwnd = hWndFlash;
 					FlashWindowEx(&fl);
 				}
 			}
@@ -2685,12 +2688,10 @@ bool CVConGroup::OnFlashWindow(DWORD nOpt, DWORD nFlags, DWORD nCount, HWND hCon
 					fl.dwFlags = FLASHW_ALL|FLASHW_TIMERNOFG;
 				}
 
-				fl.hwnd = ghWnd;
+				fl.hwnd = hWndFlash;
 				FlashWindowEx(&fl); // Помигать в GUI
 			}
 
-			//fl.dwFlags = FLASHW_STOP; fl.hwnd = hCon; -- не требуется, т.к. это хучится
-			//FlashWindowEx(&fl);
 			break;
 		}
 	}
