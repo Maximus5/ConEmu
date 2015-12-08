@@ -1098,9 +1098,15 @@ bool CRealBuffer::isInResize()
 	return (this && con.bLockChange2Text);
 }
 
-BOOL CRealBuffer::SetConsoleSize(USHORT sizeX, USHORT sizeY, USHORT sizeBuffer, DWORD anCmdID/*=CECMD_SETSIZESYNC*/)
+BOOL CRealBuffer::SetConsoleSize(SHORT sizeX, SHORT sizeY, USHORT sizeBuffer, DWORD anCmdID/*=CECMD_SETSIZESYNC*/)
 {
 	if (!this) return FALSE;
+
+	if ((sizeX <= 0) || (sizeY <= 0))
+	{
+		_ASSERTE((sizeX > 0) && (sizeY > 0));
+		return FALSE;
+	}
 
 	// Если была блокировка DC - сбросим ее
 	mp_RCon->mp_VCon->LockDcRect(FALSE, NULL);
@@ -1247,8 +1253,13 @@ wrap:
 	return lbRc;
 }
 
-void CRealBuffer::SyncConsole2Window(USHORT wndSizeX, USHORT wndSizeY)
+void CRealBuffer::SyncConsole2Window(SHORT wndSizeX, SHORT wndSizeY)
 {
+	if ((wndSizeX <= 0) || (wndSizeY <= 0))
+	{
+		_ASSERTE((wndSizeX > 0) && (wndSizeY > 0));
+	}
+
 	// Во избежание лишних движений да и зацикливания...
 	if (con.nTextWidth != wndSizeX || con.nTextHeight != wndSizeY)
 	{
