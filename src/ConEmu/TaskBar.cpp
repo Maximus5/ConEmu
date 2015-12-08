@@ -30,6 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "header.h"
 #include "TaskBar.h"
 #include "ConEmu.h"
+#include "Inside.h"
 #include "Options.h"
 #include "VConGroup.h"
 #include "VirtualConsole.h"
@@ -347,6 +348,13 @@ HRESULT CTaskBar::Taskbar_DeleteTabXP(HWND hBtn)
 	return hr;
 }
 
+HWND CTaskBar::GetProgressHWND()
+{
+	if (gpConEmu->mp_Inside && gpConEmu->mp_Inside->mh_InsideParentRoot)
+		return gpConEmu->mp_Inside->mh_InsideParentRoot;
+	return ghWnd;
+}
+
 HRESULT CTaskBar::Taskbar_SetProgressValue(int nProgress)
 {
 	HRESULT hr = S_FALSE;
@@ -355,11 +363,11 @@ HRESULT CTaskBar::Taskbar_SetProgressValue(int nProgress)
 	{
 		if (nProgress >= 0)
 		{
-			hr = mp_TaskBar3->SetProgressValue(ghWnd, nProgress, 100);
+			hr = mp_TaskBar3->SetProgressValue(GetProgressHWND(), nProgress, 100);
 		}
 		else
 		{
-			hr = mp_TaskBar3->SetProgressState(ghWnd, TBPF_NOPROGRESS);
+			hr = mp_TaskBar3->SetProgressState(GetProgressHWND(), TBPF_NOPROGRESS);
 		}
 	}
 
@@ -372,7 +380,7 @@ HRESULT CTaskBar::Taskbar_SetProgressState(UINT/*TBPFLAG*/ nState)
 
 	if (mp_TaskBar3)
 	{
-		hr = mp_TaskBar3->SetProgressState(ghWnd, (TBPFLAG)nState);
+		hr = mp_TaskBar3->SetProgressState(GetProgressHWND(), (TBPFLAG)nState);
 	}
 
 	return hr;
