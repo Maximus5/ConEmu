@@ -1483,6 +1483,8 @@ BOOL ExtScrollLine(ExtScrollScreenParm* Info)
 		INT_PTR ccCellsMove = ccCellsTotal - _abs(nDir);
 		INT_PTR ccCellsClear = _abs(nDir);
 		COORD crf = csbi.dwCursorPosition;
+		if (nDir < 0)
+			crf.X = csbi.dwSize.X + nDir;
 
 		if ((nY1 >= 0) && (nY1 < nMaxRows))
 		{
@@ -1494,7 +1496,6 @@ BOOL ExtScrollLine(ExtScrollScreenParm* Info)
 			{
 				pTrueColorDest = pTrueColorFrom;
 				pTrueColorFrom += -nDir;
-				crf.X = csbi.dwSize.X + nDir;
 			}
 			else // (nDir > 0)
 			{
