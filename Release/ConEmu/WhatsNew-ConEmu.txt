@@ -19,6 +19,17 @@ http://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2015.12.8
+* gh#459: Characters disappear after readline `Ctrl+R`, ..., `Enter`.
+* ConEmu Inside: Fix detection of ‘ConEmu has focus’.
+* ConEmu Inside: Don't resize VCon or RCon if parent is minimized.
+* ConEmu Inside: Show TaskBar progress on parent window.
+* ConEmu Inside: Show flashing on parent window.
+* Updater. Fight against wininet cache before downloading.
+* In some cases ConEmu tried to set abnormally large console size.
+* GuiMacro: `GetInfo("ActivePID")` returns PID of active console process or 0.
+
+
 2015.12.7
 * gh#438: No newlines in log files after prompts (cygwin/msys).
   Cygwin/msys shells do not write LF to screen unless they
