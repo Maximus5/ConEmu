@@ -104,7 +104,7 @@ namespace ConEmuMacro
 	/* ****************************** */
 	/* ****** Helper functions ****** */
 	/* ****************************** */
-	LPWSTR GetNextString(LPWSTR& rsArguments, LPWSTR& rsString, bool bColonDelim = false);
+	LPWSTR GetNextString(LPWSTR& rsArguments, LPWSTR& rsString, bool bColonDelim, bool& bEndBracket);
 	LPWSTR GetNextInt(LPWSTR& rsArguments, GuiMacroArg& rnValue);
 	void SkipWhiteSpaces(LPWSTR& rsString);
 	GuiMacro* GetNextMacro(LPWSTR& asString, bool abConvert, wchar_t** rsErrMsg);
@@ -760,7 +760,7 @@ GuiMacro* ConEmuMacro::GetNextMacro(LPWSTR& asString, bool abConvert, wchar_t** 
 
 
 
-			if (!GetNextString(asString, a.Str, (chTerm == L':')))
+			if (!GetNextString(asString, a.Str, (chTerm == L':'), bEndBracket))
 			{
 				_wsprintf(szArgErr, SKIPLEN(countof(szArgErr)) L"Argument #%u failed (string)", Args.size()+1);
 				if (rsErrMsg)
@@ -941,7 +941,7 @@ void ConEmuMacro::UnitTests()
 
 	p = GetNextMacro(pszString, false, NULL);
 	// InvalidArg(9q)
-	_ASSERTE(p && p->argc==1 && lstrcmp(p->argv[0].Str, L"9q)")==0);
+	_ASSERTE(p && p->argc==1 && lstrcmp(p->argv[0].Str, L"9q")==0);
 	SafeFree(p);
 
 	// Test some invalid declarations
@@ -964,6 +964,24 @@ void ConEmuMacro::UnitTests()
 	p = GetNextMacro(pszString, false, NULL);
 	_ASSERTE(p && lstrcmp(p->szFunc,L"InvalidArg")==0);
 	_ASSERTE(p && p->argc==1 && lstrcmp(p->argv[0].Str,L"abc\";\"")==0);
+	SafeFree(p);
+
+	wchar_t szMacro2[] = L"Print(abc)";
+	pszString = szMacro2;
+	p = GetNextMacro(pszString, false, NULL);
+	_ASSERTE(p && lstrcmp(p->szFunc,L"Print")==0);
+	_ASSERTE(p && p->argc==1 && lstrcmp(p->argv[0].Str,L"abc")==0);
+	SafeFree(p);
+
+	wchar_t szMacro3[] = L"Print(abc);Print(\"def\")";
+	pszString = szMacro3;
+	p = GetNextMacro(pszString, false, NULL);
+	_ASSERTE(p && lstrcmp(p->szFunc,L"Print")==0);
+	_ASSERTE(p && p->argc==1 && lstrcmp(p->argv[0].Str,L"abc")==0);
+	SafeFree(p);
+	p = GetNextMacro(pszString, false, NULL);
+	_ASSERTE(p && lstrcmp(p->szFunc,L"Print")==0);
+	_ASSERTE(p && p->argc==1 && lstrcmp(p->argv[0].Str,L"def")==0);
 	SafeFree(p);
 
 	gbUnitTest = false;
@@ -1180,7 +1198,7 @@ LPWSTR ConEmuMacro::GetNextInt(LPWSTR& rsArguments, GuiMacroArg& rnValue)
 	return pszArg;
 }
 // Получить следующий строковый параметр
-LPWSTR ConEmuMacro::GetNextString(LPWSTR& rsArguments, LPWSTR& rsString, bool bColonDelim /*= false*/)
+LPWSTR ConEmuMacro::GetNextString(LPWSTR& rsArguments, LPWSTR& rsString, bool bColonDelim, bool& bEndBracket)
 {
 	rsString = NULL; // Сброс
 
@@ -1285,12 +1303,22 @@ LPWSTR ConEmuMacro::GetNextString(LPWSTR& rsArguments, LPWSTR& rsString, bool bC
 	else if (!bColonDelim)
 	{
 		// Powershell style (one word == one string arg)
-		_ASSERTE(*rsArguments != L' ');
+		_ASSERTE(*rsArguments != L' ' && *rsArguments != L' ');
 		rsString = rsArguments;
-		rsArguments = wcschr(rsString+1, L' ');
+		rsArguments = wcspbrk(rsString+1, bEndBracket ? L" )" : L" ");
 		if (rsArguments)
 		{
-			if (*(rsArguments-1) == L';')
+			if (*rsArguments == L')')
+			{
+				// Print(abc);Print("def")
+				*rsArguments = 0;
+				if (*(rsArguments+1))
+				{
+					rsArguments++;
+					bEndBracket = false;
+				}
+			}
+			else if (*(rsArguments-1) == L';')
 			{
 				*(rsArguments-1) = 0;
 				*rsArguments = L';'; // replace space with function-delimiter
