@@ -725,6 +725,7 @@ size_t MyGetDlgItemText(HWND hDlg, WORD nID, size_t& cchMax, wchar_t*& pszText/*
 
 const wchar_t* gsEscaped = L"\\\r\n\t\a\x1B";
 
+// TODO: Optimize: Now pszDst must be (4x len in maximum for "\xFF" form) for bSet==true
 void EscapeChar(bool bSet, LPCWSTR& pszSrc, LPWSTR& pszDst)
 {
 	_ASSERTE(pszSrc && pszDst);
