@@ -812,6 +812,14 @@ void CTaskBarGhost::GetPreviewPosSize(POINT* pPtOffset, POINT* pPtViewOffset, PO
 	POINT ptViewOffset = MakePoint(max(0,(szSize.x - ptViewSize.x)>>1), max(0,(szSize.y - ptViewSize.y)>>1));
 
 	ptOffset = MakePoint(rcWork.left, rcWork.top);
+	if (gpConEmu->GetWindowMode() == rFullScreen || gpSet->isHideCaptionAlways() || gpSet->isHideCaption)
+	{
+		RECT rcMain = gpConEmu->CalcRect(CER_MAIN, mp_VCon);
+		RECT rcMainClient = gpConEmu->CalcRect(CER_MAINCLIENT, mp_VCon);
+
+		ptOffset.x += ((rcMain.right - rcMain.left) - (rcMainClient.right - rcMainClient.left)) / 2;
+		ptOffset.y += ((rcMain.bottom - rcMain.top) - (rcMainClient.bottom - rcMainClient.top)) / 2;
+	}
 
 	if (pPtOffset)
 		*pPtOffset = ptOffset;
