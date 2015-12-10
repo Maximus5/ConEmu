@@ -387,7 +387,8 @@ void CEAnsi::WriteAnsiLogFarPrompt()
 	wchar_t* pszBuf = (wchar_t*)calloc(csbi.dwSize.X+2,sizeof(*pszBuf));
 	DWORD nChars = csbi.dwSize.X;
 	// We expect Far has already put "black user screen" and do CR/LF
-	_ASSERTE(csbi.dwCursorPosition.Y == (csbi.dwSize.Y-2));
+	// if Far's keybar is hidden, we are on (csbi.dwSize.Y-1), otherwise - (csbi.dwSize.Y-2)
+	_ASSERTE(csbi.dwCursorPosition.Y >= (csbi.dwSize.Y-2) && csbi.dwCursorPosition.Y <= (csbi.dwSize.Y-1));
 	COORD crFrom = {0, csbi.dwCursorPosition.Y-1};
 	if (pszBuf
 		&& ReadConsoleOutputCharacterW(hCon, pszBuf, nChars, crFrom, &nChars)
