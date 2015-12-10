@@ -3171,7 +3171,6 @@ HRESULT UpdateAppUserModelID()
 	LPCWSTR pszConfigName = gpSetCls->GetConfigName();
 
 	wchar_t szSuffix[64] = L"";
-	_wsprintf(szSuffix, SKIPCOUNT(szSuffix) L"::%u", (UINT)CESERVER_REQ_VER);
 
 	// Don't change the ID if application was started without arguments changing:
 	// ‘config-name’, ‘config-file’, ‘registry-use’, ‘basic-settings’, ‘quake/noquake’
@@ -3241,7 +3240,18 @@ HRESULT UpdateAppUserModelID()
 	}
 
 	// Prepare the string
-	CEStr AppID = lstrmerge(APP_MODEL_ID_PREFIX/*L"Maximus5.ConEmu."*/, gpConEmu->ms_AppID);
+	lsTempBuf.Set(gpConEmu->ms_AppID);
+	wchar_t* pszColon = wcschr(lsTempBuf.ms_Arg, L':');
+	if (pszColon)
+	{
+		_ASSERTE(pszColon[0]==L':' && pszColon[1]==L':' && isDigit(pszColon[2]) && "::<CESERVER_REQ_VER> is expected at the tail!");
+		*pszColon = 0;
+	}
+	else
+	{
+		_ASSERTE(pszColon!=NULL && "::<CESERVER_REQ_VER> is expected at the tail!");
+	}
+	CEStr AppID = lstrmerge(APP_MODEL_ID_PREFIX/*L"Maximus5.ConEmu."*/, lsTempBuf.ms_Arg);
 
 	// And update it
 	HRESULT hr = E_NOTIMPL;

@@ -852,6 +852,15 @@ void CConEmuMain::SetAppID(LPCWSTR asExtraArgs)
 
 	wcscpy_c(ms_AppID, szID);
 
+	// This suffix isn't passed to Win7+ TaskBar AppModelID, but we need to stored it,
+	// because it's used in Mappings when ConEmu tries to find existing instance for
+	// passing command line in single-instance mode for example...
+	wchar_t szSuffix[64] = L"";
+	_wsprintf(szSuffix, SKIPCOUNT(szSuffix) L"::%u", (UINT)CESERVER_REQ_VER);
+	// hash - 32char, + 5..6 for Protocol ID, quite be enough
+	_ASSERTE((lstrlen(ms_AppID) + lstrlen(szSuffix)) < countof(ms_AppID));
+	wcscat_c(ms_AppID, szSuffix);
+
 	if (gpSetCls->isAdvLogging)
 	{
 		CEStr lsLog = lstrmerge(L"New AppID: ", ms_AppID);
