@@ -11,9 +11,7 @@ DEF_NAME = export
 
 NEEDENTRY=1
 
-!ifndef DEBUG
-!undef NEEDDEFLIB
-!else
+!ifdef DEBUG
 NEEDDEFLIB = 1
 !endif
 
@@ -139,10 +137,6 @@ CPP_DEBUG=
 !else
 LINK_DEBUG=/map:"$(MAP)" /debug /pdb:$(PDBNAME)
 CPP_DEBUG=/Zi
-!endif
-
-!ifndef NEEDDEFLIB
-NODEFLIB = /nodefaultlib
 !endif
 
 #/merge:.rdata=.text /SUBSYSTEM:WINDOWS
