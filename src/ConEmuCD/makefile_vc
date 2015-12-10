@@ -68,6 +68,7 @@ $(INTDIR)\WCodePage.obj \
 $(INTDIR)\WConsole.obj \
 $(INTDIR)\WConsoleInfo.obj \
 $(INTDIR)\WFiles.obj \
+$(INTDIR)\WModuleCheck.obj \
 $(INTDIR)\WObjects.obj \
 $(INTDIR)\WThreads.obj \
 $(INTDIR)\WUser.obj
@@ -360,6 +361,8 @@ $(INTDIR)\WConsole.obj: ../common/WConsole.cpp ../common/WConsole.h
 $(INTDIR)\WConsoleInfo.obj: ../common/WConsoleInfo.cpp ../common/WConsoleInfo.h
 
 $(INTDIR)\WFiles.obj: ../common/WFiles.cpp ../common/WFiles.h
+
+$(INTDIR)\WModuleCheck.obj: ../common/WModuleCheck.cpp ../common/WModuleCheck.h
 
 $(INTDIR)\WObjects.obj: ../common/WObjects.cpp ../common/WObjects.h
 

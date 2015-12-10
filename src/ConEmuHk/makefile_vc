@@ -95,6 +95,7 @@ $(INTDIR)\SetHook.obj \
 $(INTDIR)\ShellProcessor.obj \
 $(INTDIR)\WCodePage.obj \
 $(INTDIR)\WConsole.obj \
+$(INTDIR)\WModuleCheck.obj \
 $(INTDIR)\WObjects.obj \
 $(INTDIR)\WThreads.obj
 
@@ -426,6 +427,8 @@ $(INTDIR)\UserImp.obj: UserImp.cpp UserImp.h
 $(INTDIR)\WCodePage.obj: ../common/WCodePage.cpp ../common/WCodePage.h
 
 $(INTDIR)\WConsole.obj: ../common/WConsole.cpp ../common/WConsole.h
+
+$(INTDIR)\WModuleCheck.obj: ../common/WModuleCheck.cpp ../common/WModuleCheck.h
 
 $(INTDIR)\WObjects.obj: ../common/WObjects.cpp ../common/WObjects.h
 
