@@ -812,27 +812,6 @@ void CTaskBarGhost::GetPreviewPosSize(POINT* pPtOffset, POINT* pPtViewOffset, PO
 	POINT ptViewOffset = MakePoint(max(0,(szSize.x - ptViewSize.x)>>1), max(0,(szSize.y - ptViewSize.y)>>1));
 
 	ptOffset = MakePoint(rcWork.left, rcWork.top);
-	ConEmuWindowMode wm = gpConEmu->GetWindowMode();
-	if ((wm == rFullScreen)
-		|| ((wm == rMaximized) && (gpSet->isHideCaptionAlways() || gpSet->isHideCaption)))
-	{
-		// Финт ушами, т.к. в этих режимах идет принудительный сдвиг
-		ptOffset.x += GetSystemMetrics(SM_CXFRAME);
-		ptOffset.y += GetSystemMetrics(SM_CYCAPTION) + GetSystemMetrics(SM_CYFRAME);
-	}
-	//if (!gpConEmu->isIconic())
-	//{
-	//	//	ptOffset.x += GetSystemMetrics(SM_CXFRAME);
-	//	//	ptOffset.y += GetSystemMetrics(SM_CYCAPTION) + GetSystemMetrics(SM_CYFRAME);
-	//}
-	////TODO("Проверить, учитывается ли DWM и прочая фигня с шириной рамок");
-	//ptOffset.x = rcWork.left - rcMain.left;
-	//ptOffset.y = rcWork.top - rcMain.top;
-	//if (!gpConEmu->isIconic())
-	//{
-	//	ptOffset.x -= GetSystemMetrics(SM_CXFRAME);
-	//	ptOffset.y -= GetSystemMetrics(SM_CYCAPTION) + GetSystemMetrics(SM_CYFRAME);
-	//}
 
 	if (pPtOffset)
 		*pPtOffset = ptOffset;
