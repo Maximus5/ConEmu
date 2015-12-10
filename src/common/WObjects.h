@@ -88,9 +88,6 @@ typedef struct tagPROCESSENTRY32W PROCESSENTRY32W;
 int  GetProcessBits(DWORD nPID, HANDLE hProcess = NULL);
 bool GetProcessInfo(DWORD nPID, PROCESSENTRY32W* Info);
 
-bool CheckCallbackPtr(HMODULE hModule, size_t ProcCount, FARPROC* CallBack, BOOL abCheckModuleInfo, BOOL abAllowNTDLL = FALSE, BOOL abTestVirtual = TRUE);
-bool IsModuleValid(HMODULE module, BOOL abTestVirtual = TRUE);
-
 wchar_t* ExpandMacroValues(LPCWSTR pszFormat, LPCWSTR* pszValues, size_t nValCount);
 wchar_t* ExpandEnvStr(LPCWSTR pszCommand);
 
