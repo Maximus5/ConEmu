@@ -303,7 +303,7 @@ $(INTDIR)\CmdHistory.obj: CmdHistory.cpp CmdHistory.h
 
 $(INTDIR)\CmdLine.obj: ../common/CmdLine.cpp ../common/CmdLine.h
 
-$(INTDIR)\Common.obj: ../common/Common.cpp ../common/Common.hpp
+$(INTDIR)\Common.obj: ../common/Common.cpp ../common/Common.h
 
 $(INTDIR)\ConEmu.obj: ConEmu.cpp Version.h GuiServer.h GestureEngine.h ../common/PipeServer.h
 
@@ -417,11 +417,11 @@ $(INTDIR)\RConFiles.obj: RConFiles.cpp RConFiles.h
 
 $(INTDIR)\RConStartArgs.obj: ../common/RConStartArgs.cpp ../common/RConStartArgs.h
 
-$(INTDIR)\RealBuffer.obj: RealBuffer.cpp RealBuffer.h RealConsole.h  ../common/Common.hpp
+$(INTDIR)\RealBuffer.obj: RealBuffer.cpp RealBuffer.h RealConsole.h  ../common/Common.h
 
-$(INTDIR)\RealConsole.obj: RealConsole.cpp RealConsole.h RealServer.h ../common/RConStartArgs.h ../common/Common.hpp ../common/PipeServer.h
+$(INTDIR)\RealConsole.obj: RealConsole.cpp RealConsole.h RealServer.h ../common/RConStartArgs.h ../common/Common.h ../common/PipeServer.h
 
-$(INTDIR)\RealServer.obj: RealServer.cpp RealConsole.h RealServer.h ../common/Common.hpp ../common/PipeServer.h
+$(INTDIR)\RealServer.obj: RealServer.cpp RealConsole.h RealServer.h ../common/Common.h ../common/PipeServer.h
 
 $(INTDIR)\Recreate.obj: Recreate.cpp Recreate.h
 

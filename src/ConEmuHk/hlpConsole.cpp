@@ -40,7 +40,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	#define BsDelWordMsg(s) //MessageBox(NULL, s, L"OnPromptBsDeleteWord called", MB_SYSTEMMODAL);
 #endif
 
-#include "../common/common.hpp"
+#include "../common/Common.h"
 #include "../common/ConsoleRead.h"
 #include "../common/UnicodeChars.h"
 #include "../common/WConsole.h"

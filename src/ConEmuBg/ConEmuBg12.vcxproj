@@ -982,7 +982,7 @@
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\common\common.hpp" />
+    <ClInclude Include="..\common\Common.h" />
     <ClInclude Include="..\common\MSectionSimple.h" />
     <ClInclude Include="..\common\WThreads.h" />
     <ClInclude Include="ConEmuBg.h" />

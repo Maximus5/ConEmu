@@ -482,7 +482,7 @@
   <ItemGroup>
     <ClInclude Include="..\common\CmdArg.h" />
     <ClInclude Include="..\common\CmdLine.h" />
-    <ClInclude Include="..\common\common.hpp" />
+    <ClInclude Include="..\common\Common.h" />
     <ClInclude Include="..\common\ConEmuCheck.h" />
     <ClInclude Include="..\common\ConsoleMixAttr.h" />
     <ClInclude Include="..\common\ConsoleRead.h" />

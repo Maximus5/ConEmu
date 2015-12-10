@@ -205,15 +205,15 @@ clean:
 	@move $(MAP) $(RELEASEDIR)
 
 
-$(OBJDIR)\ConEmuLn.obj: ConEmuLn.cpp ../common/common.hpp ConEmuLn.h ConEmuLn_Lang.h
+$(OBJDIR)\ConEmuLn.obj: ConEmuLn.cpp ../common/Common.h ConEmuLn.h ConEmuLn_Lang.h
 
-$(OBJDIR)\ConEmuLn995.obj: ConEmuLn995.cpp ../common/common.hpp ConEmuLn.h ConEmuLn_Lang.h
+$(OBJDIR)\ConEmuLn995.obj: ConEmuLn995.cpp ../common/Common.h ConEmuLn.h ConEmuLn_Lang.h
 
-$(OBJDIR)\ConEmuLn1900.obj: ConEmuLn1900.cpp ../common/common.hpp ConEmuLn.h ConEmuLn_Lang.h
+$(OBJDIR)\ConEmuLn1900.obj: ConEmuLn1900.cpp ../common/Common.h ConEmuLn.h ConEmuLn_Lang.h
 
-$(OBJDIR)\ConEmuLn2800.obj: ConEmuLn2800.cpp ../common/common.hpp ConEmuLn.h ConEmuLn_Lang.h
+$(OBJDIR)\ConEmuLn2800.obj: ConEmuLn2800.cpp ../common/Common.h ConEmuLn.h ConEmuLn_Lang.h
 
-$(OBJDIR)\ConEmuLnA.obj: ConEmuLnA.cpp ../common/common.hpp ConEmuLn.h ConEmuLn_Lang.h
+$(OBJDIR)\ConEmuLnA.obj: ConEmuLnA.cpp ../common/Common.h ConEmuLn.h ConEmuLn_Lang.h
 
 $(OBJDIR)\MAssert.obj: ../common/MAssert.cpp
 

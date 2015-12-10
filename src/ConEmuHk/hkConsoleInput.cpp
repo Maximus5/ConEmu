@@ -42,7 +42,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 
-#include "../common/common.hpp"
+#include "../common/Common.h"
 #include "../common/CmdLine.h"
 
 #include "Ansi.h"

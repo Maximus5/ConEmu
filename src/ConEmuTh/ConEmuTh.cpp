@@ -39,7 +39,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRCTRL(s) DEBUGSTR(s)
 
 
-#include "../common/common.hpp"
+#include "../common/Common.h"
 #pragma warning( disable : 4995 )
 #include "../common/pluginW1761.hpp" // Отличается от 995 наличием SynchoApi
 #pragma warning( default : 4995 )

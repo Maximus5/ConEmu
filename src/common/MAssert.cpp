@@ -35,7 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "defines.h"
 #include "MAssert.h"
 #include "MStrSafe.h"
-#include "common.hpp"
+#include "Common.h"
 #include "ConEmuCheck.h"
 #ifdef ASSERT_PIPE_ALLOWED
 #include "ConEmuCheck.h"

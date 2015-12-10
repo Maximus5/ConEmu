@@ -29,7 +29,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include "common.hpp"
+#include "Common.h"
 
 // Use it as:
 // ScopedObject(CLastErrorGuard)();

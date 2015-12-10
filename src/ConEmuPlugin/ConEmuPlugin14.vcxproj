@@ -586,7 +586,7 @@
   <ItemGroup>
     <ClInclude Include="..\common\CmdArg.h" />
     <ClInclude Include="..\common\CmdLine.h" />
-    <ClInclude Include="..\common\common.hpp" />
+    <ClInclude Include="..\common\Common.h" />
     <ClInclude Include="..\common\ConEmuCheck.h" />
     <ClInclude Include="..\common\ConEmuCheckEx.h" />
     <ClInclude Include="..\common\ConEmuColors.h" />

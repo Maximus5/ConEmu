@@ -30,7 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <windows.h>
 #include "../common/defines.h"
-#include "../common/common.hpp"
+#include "../common/Common.h"
 #include "../ConEmuCD/ExitCodes.h"
 #include "Connector.h"
 #include "hkConsole.h"

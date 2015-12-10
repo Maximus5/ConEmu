@@ -45,7 +45,7 @@ extern HWND    ghConEmuWndDC; // ConEmu DC window
 extern DWORD   gnGuiPID;
 extern DWORD   gnServerPID;   // ConEmuC server PID (initialized on startup, during Dll loading)
 
-#include "../common/common.hpp"
+#include "../common/Common.h"
 #include "../common/ConEmuCheck.h"
 #include "../common/WObjects.h"
 #include "../common/InQueue.h"

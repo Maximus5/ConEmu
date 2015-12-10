@@ -35,7 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Memory.h"
 #include "MStrSafe.h"
 #include "RConStartArgs.h"
-#include "common.hpp"
+#include "Common.h"
 #include "WObjects.h"
 #include "CmdLine.h"
 

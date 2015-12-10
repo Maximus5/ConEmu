@@ -44,7 +44,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #undef USE_DEBUG_LOGS
 //#define USE_DEBUG_LOGS
 
-#include "../common/common.hpp"
+#include "../common/Common.h"
 #include "../common/MSection.h"
 #include "../common/RgnDetect.h"
 #include "../common/WThreads.h"

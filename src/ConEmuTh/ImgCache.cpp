@@ -1,7 +1,7 @@
 ﻿
 #define SHOWDEBUGSTR
 
-#include "../common/common.hpp"
+#include "../common/Common.h"
 #include "../common/CmdLine.h"
 #include "ConEmuTh.h"
 #include "resource.h"

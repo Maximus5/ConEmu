@@ -894,7 +894,7 @@ if exist C:\Utils\FAR170\Plugins\ConEmu\Lines\ConEmuLn.dll copy "$(TargetDir)Con
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\common\common.hpp" />
+    <ClInclude Include="..\common\Common.h" />
     <ClInclude Include="..\common\Memory.h" />
     <ClInclude Include="..\common\MStrSafe.h" />
     <ClInclude Include="..\common\plugin_helper.h" />

@@ -38,7 +38,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	#define DefTermMsg(s) //MessageBox(NULL, s, L"ConEmuHk", MB_SYSTEMMODAL)
 #endif
 
-#include "../common/common.hpp"
+#include "../common/Common.h"
 #include "../common/WConsole.h"
 
 #include "Ansi.h"

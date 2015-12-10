@@ -34,7 +34,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifdef _DEBUG
 	#define USEPIPELOG
 	//#undef USEPIPELOG
-	#include "common.hpp"
+	#include "Common.h"
 	#define DEBUGSTRPPCMD(s) //OutputDebugStringW(s)
 #else
 	#undef USEPIPELOG

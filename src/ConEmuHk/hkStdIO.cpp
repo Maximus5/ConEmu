@@ -34,7 +34,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	#define DebugString(x) //OutputDebugString(x)
 #endif
 
-#include "../common/common.hpp"
+#include "../common/Common.h"
 #include "../common/ConsoleAnnotation.h"
 
 #include "Ansi.h"

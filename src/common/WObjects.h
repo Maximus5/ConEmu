@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <windows.h>
 //#include <wchar.h>
-#include "common.hpp"
+#include "Common.h"
 //#include "MSecurity.h"
 //#include "ConEmuCheck.h"
 #include "CmdArg.h"

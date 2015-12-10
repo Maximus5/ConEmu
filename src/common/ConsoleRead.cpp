@@ -29,7 +29,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define HIDE_USE_EXCEPTION_INFO
 
 #include <windows.h>
-#include "common.hpp"
+#include "Common.h"
 #include "ConsoleRead.h"
 
 //#define DUMP_TEST_READS

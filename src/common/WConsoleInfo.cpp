@@ -27,7 +27,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #define HIDE_USE_EXCEPTION_INFO
-#include "common.hpp"
+#include "Common.h"
 #include "WConsoleInfo.h"
 
 // !!! Only functions which do NOT call Console API !!!

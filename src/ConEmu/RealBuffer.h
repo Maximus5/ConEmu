@@ -32,7 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/MSection.h"
 #include "RealConsole.h"
 
-// >> common.hpp
+// >> Common.h
 //enum RealBufferScroll
 //{
 //	rbs_None = 0,

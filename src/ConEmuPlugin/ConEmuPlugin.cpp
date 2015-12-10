@@ -44,7 +44,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #include <windows.h>
-#include "../common/common.hpp"
+#include "../common/Common.h"
 #include "../ConEmuHk/ConEmuHooks.h"
 #ifdef _DEBUG
 #pragma warning( disable : 4995 )
