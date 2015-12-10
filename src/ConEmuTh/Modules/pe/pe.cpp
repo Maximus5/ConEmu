@@ -69,7 +69,9 @@ typedef unsigned __int8 u8;
 typedef unsigned __int16 u16;
 typedef DWORD u32;
 
+#undef _T
 #define _T(x)      L ## x
+#undef _tcscpy
 #define _tcscpy lstrcpyW
 
 HMODULE ghModule;
