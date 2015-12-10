@@ -38,14 +38,16 @@ DIRSUFF=
 ## Visual C version
 !if !defined(VC) && defined(_NMAKE_VER)
 
-!if "$(_NMAKE_VER)">="14"
+!if "$(_NMAKE_VER)">="9"
+VC=9
+!elseif "$(_NMAKE_VER)">="14"
 VC=14
 NEEDDEFLIB=1
 !elseif "$(_NMAKE_VER)">="12"
 VC=12
-!elseif "$(_NMAKE_VER)">"11"
+!elseif "$(_NMAKE_VER)">="11"
 VC=11
-!elseif "$(_NMAKE_VER)">"10"
+!elseif "$(_NMAKE_VER)">="10"
 VC=10
 !else
 #default
