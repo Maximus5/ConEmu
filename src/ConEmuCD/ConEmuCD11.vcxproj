@@ -834,6 +834,7 @@
     <ClInclude Include="..\common\WConsole.h" />
     <ClInclude Include="..\common\WConsoleInfo.h" />
     <ClInclude Include="..\common\WFiles.h" />
+    <ClInclude Include="..\common\WModuleCheck.h" />
     <ClInclude Include="..\common\WObjects.h" />
     <ClInclude Include="..\common\WThreads.h" />
     <ClInclude Include="..\common\WUser.h" />
@@ -899,6 +900,7 @@
     <ClCompile Include="..\common\WConsole.cpp" />
     <ClCompile Include="..\common\WConsoleInfo.cpp" />
     <ClCompile Include="..\common\WFiles.cpp" />
+    <ClCompile Include="..\common\WModuleCheck.cpp" />
     <ClCompile Include="..\common\WObjects.cpp" />
     <ClCompile Include="..\common\WThreads.cpp" />
     <ClCompile Include="..\common\WUser.cpp" />

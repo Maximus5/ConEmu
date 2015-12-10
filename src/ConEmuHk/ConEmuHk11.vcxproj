@@ -849,6 +849,7 @@
     <ClInclude Include="..\common\WCodePage.h" />
     <ClInclude Include="..\common\WConsole.h" />
     <ClInclude Include="..\common\WErrGuard.h" />
+    <ClInclude Include="..\common\WModuleCheck.h" />
     <ClInclude Include="..\common\WObjects.h" />
     <ClInclude Include="..\common\WThreads.h" />
     <ClInclude Include="..\ConEmuCD\ExitCodes.h" />
@@ -906,6 +907,7 @@
     <ClCompile Include="..\common\RConStartArgs.cpp" />
     <ClCompile Include="..\common\WCodePage.cpp" />
     <ClCompile Include="..\common\WConsole.cpp" />
+    <ClCompile Include="..\common\WModuleCheck.cpp" />
     <ClCompile Include="..\common\WObjects.cpp" />
     <ClCompile Include="..\common\WThreads.cpp" />
     <ClCompile Include="..\modules\minhook\src\buffer.c" />
