@@ -19,6 +19,94 @@ http://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2015.8.13d
+* Don't try to position cursor on higher line to avoid numerous beeps (bash, clink, etc.)
+* gh#297: Show option ‘Delay between consoles initialization’ on the ‘Startup’ page.
+* fix cppcheck warning: memset() called to fill 0 bytes of 'lpConsoleSelectionInfo'
+* fix cppcheck warning: Logical conjunction always evaluates to false: asLabel && !asLabel
+* fix cppcheck warning: Logical conjunction always evaluates to false: pszNumEnd && !pszNumEnd
+* fix cppcheck warning: Invalid memcmp() argument #3. A non-boolean value is required
+* DefTerm. Improve error message, version, process name.
+* gh#322: Fix crash in hooked applications while updating DefTerm module.
+* Print handles information in `ConEmuC /checkunicode`.
+* Add new color schemes: `<ConEmu>`, `<Cobalt2>`.
+* Use `<ConEmu>` color scheme by default.
+* gh#345: ‘Run as Administrator’ was crashed in some cases.
+* Only active split was updated after choosing palette from DDCB.
+* Misprint: Looses -> Loses.
+* ANSI: Brightness (back/fore) was not reset in some cases.
+  For example: `"\e[96mA\e[36mB"` - "B" and "A" had same color.
+* Fix handle leak (GetProcessBits, handle is not freed)
+* gh#368: Fix thread handles leaks.
+* Append optional switches to single-command tasks.
+  For example, there is default task `{cmd}` which has single command:
+  `cmd /k "%ConEmuBaseDir%\CmdInit.cmd"`.
+  Now you may to run `{cmd} /git` from NewConsole dialog or via `-cmd`
+  switch of ConEmu.exe. So, the result will be:
+  `cmd /k "%ConEmuBaseDir%\CmdInit.cmd" /git`.
+* ConEmu here: Suggest to start `{cmd}` task instead of bare `cmd` by default.
+  * So the default command for ‘ConEmu Here’ will be `{cmd} -cur_console:n`.
+    * **Note**. Prepend `/reuse /cmd ` before task name, if you want to reuse
+      running ConEmu window: `/reuse /cmd {cmd} -cur_console:n`.
+  * Default command for ‘ConEmu Inside will be `{powershell} -cur_console:n`.
+* Add ‘ConEmu Underlines’ item to Far's F11 menu (panels, editor, viewer).
+* Add ‘ConEmu Background’ item to Far's F11 menu (panels, editor, viewer).
+* gh#94: Gray window on PuTTY when connected via local proxy command.
+* In some cases ConEmuC64 was started as server for 32-bit root process.
+* gh#415: GetLastError returned `6` after WriteFile even on success.
+* Don't restart PC without confirmation after `CUP ALL` (chocolatey update).
+  https://groups.google.com/d/topic/chocolatey/UvVVLpoBnCg/discussion
+* Write process list changes and active process name to log (ConEmu -log).
+* Write CtrlC/CtrlBreak and other console events to log (ConEmu -log).
+* Move checkbox `Activate split/pane on mouse hover` to the `Controls` settings page.
+* gh#399: Use mouse for ConEmu's selection instead of passing to cygwin's vim.
+* gh#398: Fix: Taskbar previews don't match tabs order.
+* Fix: Win7 taskbar aero peeks appeared in wrong position if pad size was not null.
+* Warn if two instances of ConEmu plugin were loaded in Far Manager.
+  If due to installation or configuration errors two dll libraries were
+  loaded, they both will fail to work properly. So, warn user about the
+  problem in detail, show suggestion, and stop plugin initialization.
+* Warn user if wrong version of ConEmu plugin was loaded in Far Manager.
+* gh#336: Don't poll Far 2.x current directories while Editor/Viewer is active.
+* gh#17: Send WM_ENTERSIZEMOVE/WM_EXITSIZEMOVE to ChildGui during resize.
+* ANSI `\e[K` has not cleared rightmost cell.
+* Checkbox ‘Desktop mode’ was removed from settings.
+  Most of users misunderstand its purpose, and seems like it's broken
+  in the past builds and windows can't inject itself into Desktop.
+* ConEmuLn. Add separate settings for Editor and Viewer underline colors.
+* Improve XML parser error messages.
+* Don't autoclose ConEmu window while error message box is waiting user interaction.
+* gh#344: Fix abnormal resize of maximized window if TabBar is auto-shown.
+* gh#353: Jump lists were created improperly if ConEmu was started with `-single` switch.
+* May specify index of an icon in the file
+* gh#378, gh#376: Support retrieving icon from `*.dll` and `*.exe` files by index or ResID.
+  One may specify the icon either by number (decimal, 0-based),
+  or by resource id (negative, decimal).
+  Example for Task parameters:
+  /icon "%CommonProgramFiles(x86)%\microsoft shared\MSEnv\VSFileHandler.dll,33"
+  Example for `-new_console` switch (may be specified in the Task commands):
+  -new_console:C:"%CommonProgramFiles(x86)%\microsoft shared\MSEnv\VSFileHandler.dll,33"
+* gh#442: In text selection pressing `Ctrl+Shift+Arrow` increases selection faster.
+  `Ctrl+Shift+Left/Right` jumps by words if possible, or by 10 chars.
+  `Ctrl+Shift+Up/Down` jumps by screen halfs.
+* gh#455: Redirected output from batch files to `CON` device was not working.
+  Windows' console API is not working on handles opened that way.
+  test.bat
+  ~~~
+  ECHO/ Test Redirect Output 1>CON
+  ~~~
+* gh#351: Allow changing URL for retrieving version location on Settings/Update.
+* gh#351: Use `https://conemu.github.io/version.ini` by default.
+* In some cases ConEmu tried to set abnormally large console size.
+* Updater. Fight against wininet cache before downloading.
+* Fix wrong background from ‘ConEmu Underlines’ in some cases.
+  If "Far /e ..." was started from Panels,
+  and only ‘Editor’ coloring was enabled in ‘ConEmu Underlines’,
+  than wrong background was painted after exit Editor Far.exe process.
+* Add batch to build all binaries
+* gh#461: Fix AeroPeek VCon offset when using captionless mode.
+
+
 2015.8.13c
 * gh#279: Unchecked ‘Align ConEmu window size to cells’ was ignored on startup.
 * Win2k: Restore compatibility with Windows 2000.
