@@ -42,6 +42,20 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 HANDLE ghHeap = NULL;
 
+
+// Visual Studio 2015 Universal CRT
+// http://blogs.msdn.com/b/vcblog/archive/2015/03/03/introducing-the-universal-crt.aspx
+#if defined(_MSC_VER) && (_MSC_VER >= 1900)
+	#if defined(_DEBUG)
+		#pragma comment(lib, "libvcruntimed.lib")
+		#pragma comment(lib, "libucrtd.lib")
+	#else
+		#pragma comment(lib, "libvcruntime.lib")
+		#pragma comment(lib, "libucrt.lib")
+	#endif
+#endif
+
+
 #ifdef TRACK_MEMORY_ALLOCATIONS
 static const char* _PointToName(const char* asFileOrPath)
 {
