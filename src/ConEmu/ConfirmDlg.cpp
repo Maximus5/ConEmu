@@ -159,7 +159,20 @@ int ConfirmCloseConsoles(const ConfirmCloseParam& Parm)
 		{
 			wcscpy_c(szCloseAll, L"Yes\n");
 			pszText = szCloseAll + _tcslen(szCloseAll);
-			lstrcpyn(pszText, Parm.asSingleTitle, min(MAX_PATH,(countof(szCloseAll)-(pszText-szCloseAll))));
+			int iLen = lstrlen(Parm.asSingleTitle);
+			const int iCozyLen = 40;
+			int cchMax = (countof(szCloseAll) - (pszText - szCloseAll));
+			if (iLen <= min(iCozyLen, cchMax))
+			{
+				lstrcpyn(pszText, Parm.asSingleTitle, cchMax);
+			}
+			else
+			{
+				int iMax = min(iCozyLen, cchMax)-3;
+				lstrcpyn(pszText, Parm.asSingleTitle, iMax);
+				if ((iMax + 4) < cchMax)
+					_wcscat_c(pszText, cchMax, L"...");
+			}
 			pszText += _tcslen(pszText);
 		}
 		else
