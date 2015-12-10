@@ -3613,7 +3613,9 @@ int CheckForDebugArgs(LPCWSTR asCmdLine)
 	}
 	else if (debugi)
 	{
+		#ifdef _DEBUG
 		if (!IsDebuggerPresent()) _ASSERT(FALSE);
+		#endif
 		nDbg = IsDebuggerPresent();
 	}
 
