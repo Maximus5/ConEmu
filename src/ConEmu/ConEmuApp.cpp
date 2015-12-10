@@ -3241,7 +3241,7 @@ HRESULT UpdateAppUserModelID()
 	}
 
 	// Prepare the string
-	CEStr AppID = lstrmerge(L"Maximus5.ConEmu.", gpConEmu->ms_AppID);
+	CEStr AppID = lstrmerge(APP_MODEL_ID_PREFIX/*L"Maximus5.ConEmu."*/, gpConEmu->ms_AppID);
 
 	// And update it
 	HRESULT hr = E_NOTIMPL;

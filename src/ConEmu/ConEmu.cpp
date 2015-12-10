@@ -824,6 +824,12 @@ void CConEmuMain::SetAppID(LPCWSTR asExtraArgs)
 		UINT iLen = wcslen(pszData);
 		CharUpperBuff(pszData, iLen);
 
+		if (gpSetCls->isAdvLogging)
+		{
+			CEStr lsLog = lstrmerge(L"Creating AppID from data: `", pszData, L"`");
+			LogString(lsLog);
+		}
+
 		unsigned char data[16] = {};
 		MD5_CTX ctx = {};
 		MD5_Init(&ctx);
@@ -845,6 +851,12 @@ void CConEmuMain::SetAppID(LPCWSTR asExtraArgs)
 	}
 
 	wcscpy_c(ms_AppID, szID);
+
+	if (gpSetCls->isAdvLogging)
+	{
+		CEStr lsLog = lstrmerge(L"New AppID: ", ms_AppID);
+		LogString(lsLog);
+	}
 }
 
 void CConEmuMain::StoreWorkDir(LPCWSTR asNewCurDir /*= NULL*/)

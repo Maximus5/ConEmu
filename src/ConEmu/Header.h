@@ -326,6 +326,8 @@ struct SettingsStorage
 #define CONEMU_CONFIGTYPE_XML L"[xml]"
 #define CONEMU_CONFIGTYPE_INI L"[ini]"
 
+#define APP_MODEL_ID_PREFIX L"Maximus5.ConEmu."
+
 #include "Registry.h"
 
 #include "../common/UnicodeChars.h"

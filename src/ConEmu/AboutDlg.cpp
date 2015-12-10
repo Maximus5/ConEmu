@@ -486,6 +486,11 @@ void ConEmuAbout::TabSelected(HWND hDlg, int idx)
 void ConEmuAbout::LogStartEnvInt(LPCWSTR asText, LPARAM lParam, bool bFirst, bool bNewLine)
 {
 	lstrmerge(&gsSysInfo, asText, bNewLine ? L"\r\n" : NULL);
+
+	if (bFirst && gpConEmu)
+	{
+		lstrmerge(&gsSysInfo, L"  AppID: ", gpConEmu->ms_AppID, L"\r\n");
+	}
 }
 
 void ConEmuAbout::ReloadSysInfo()
