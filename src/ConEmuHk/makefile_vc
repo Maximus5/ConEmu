@@ -78,6 +78,7 @@ $(INTDIR)\RegHooks.obj \
 $(INTDIR)\SetHook.obj \
 $(INTDIR)\ShellProcessor.obj \
 $(INTDIR)\WConsole.obj \
+$(INTDIR)\WModuleCheck.obj \
 $(INTDIR)\WObjects.obj \
 $(INTDIR)\WThreads.obj
 
@@ -343,6 +344,8 @@ $(INTDIR)\ShellProcessor.obj: ShellProcessor.cpp ShellProcessor.h
 $(INTDIR)\UserImp.obj: UserImp.cpp UserImp.h
 
 $(INTDIR)\WConsole.obj: ../common/WConsole.cpp ../common/WConsole.h
+
+$(INTDIR)\WModuleCheck.obj: ../common/WModuleCheck.cpp ../common/WModuleCheck.h
 
 $(INTDIR)\WObjects.obj: ../common/WObjects.cpp ../common/WObjects.h
 

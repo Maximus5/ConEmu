@@ -45,6 +45,7 @@ SRCS = \
 		../common/SetEnvVar.cpp      \
 		../common/WConsole.cpp       \
 		../common/WFiles.cpp         \
+		../common/WModuleCheck.cpp   \
 		../common/WObjects.cpp       \
 		../common/WThreads.cpp       \
 		../common/WUser.cpp          \

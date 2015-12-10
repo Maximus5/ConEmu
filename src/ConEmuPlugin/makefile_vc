@@ -47,6 +47,7 @@ $(INTDIR)\PluginSrv.obj \
 $(INTDIR)\SetEnvVar.obj \
 $(INTDIR)\WConsole.obj \
 $(INTDIR)\WFiles.obj \
+$(INTDIR)\WModuleCheck.obj \
 $(INTDIR)\WObjects.obj \
 $(INTDIR)\WThreads.obj \
 $(INTDIR)\WUser.obj
@@ -294,6 +295,8 @@ $(INTDIR)\SetEnvVar.obj: ../common/SetEnvVar.cpp
 $(INTDIR)\WConsole.obj: ../common/WConsole.cpp
 
 $(INTDIR)\WFiles.obj: ../common/WFiles.cpp ../common/WFiles.h
+
+$(INTDIR)\WModuleCheck.obj: ../common/WModuleCheck.cpp ../common/WModuleCheck.h
 
 $(INTDIR)\WObjects.obj: ../common/WObjects.cpp
 
