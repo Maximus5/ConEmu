@@ -29,7 +29,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmuC.h"
 #include "../common/MAssert.h"
 #include "../common/WFiles.h"
-#include "../common/WObjects.h"
+#include "../common/WModuleCheck.h"
 #include "Infiltrate.h"
 #include "../ConEmuHk/Injects.h"
 #include "../ConEmu/version.h"

@@ -32,8 +32,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/common.hpp"
 #include "../common/ConEmuCheck.h"
 #include "../common/execute.h"
+#include "../common/WModuleCheck.h"
 #include "../ConEmuCD/ExitCodes.h"
-#include "../common/WObjects.h"
 #include "Console2.h"
 #include "hlpProcess.h"
 
