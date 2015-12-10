@@ -56,13 +56,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "PluginBackground.h"
 #include <Tlhelp32.h>
 
-#ifndef __GNUC__
-	#pragma warning(push)
-	#pragma warning(disable : 4091)
-	#include <Dbghelp.h>
-	#pragma warning(pop)
-#endif
-
 #include "../common/ConEmuCheck.h"
 #include "../common/PipeServer.h"
 
