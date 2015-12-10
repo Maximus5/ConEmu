@@ -813,7 +813,7 @@ bool CheckAndWarnHookers()
 {
 	if (gbSkipHookersCheck)
 	{
-		if (gpLogSize) gpLogSize->LogString(L"CheckAndWarnHookers skipped due to /SKIPHOOKERS switch");
+		if (gpLogSize) gpLogSize->LogString(L"CheckAndWarnHookers skipped due to /OMITHOOKSWARN switch");
 		return false;
 	}
 
@@ -4711,7 +4711,7 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 			gnConfirmExitParm = 2;
 			gbAlwaysConfirmExit = FALSE; gbAutoDisableConfirmExit = FALSE;
 		}
-		else if (wcscmp(szArg, L"/SKIPHOOKERS")==0)
+		else if (wcscmp(szArg, L"/OMITHOOKSWARN")==0)
 		{
 			gbSkipHookersCheck = true;
 		}

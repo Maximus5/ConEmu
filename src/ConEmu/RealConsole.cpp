@@ -4490,7 +4490,7 @@ BOOL CRealConsole::StartProcessInt(LPCWSTR& lpszCmd, wchar_t*& psCurCmd, LPCWSTR
 
 	if (!bIsFirstConsole)
 	{
-		_wcscat_c(psCurCmd, nLen, L"/SKIPHOOKERS ");
+		_wcscat_c(psCurCmd, nLen, L"/OMITHOOKSWARN");
 	}
 
 	// Console modes (insert/overwrite)
