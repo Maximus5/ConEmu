@@ -19,6 +19,16 @@ http://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2015.12.10
+* Add batch to build all binaries
+* Trim too long console titles in ‘Close confirmation’ dialog.
+* Backscroll buffer was not restored after exiting man, vim (608fe12 regression).
+* Show internal AppID in the About dialog, log AppID source.
+  This ID is used for Win7+ TaskBar (pinned apps).
+* In some cases Win7+ pinned TaskBar icon was not reused.
+* gh#461: Fix AeroPeek VCon offset when using captionless mode.
+
+
 2015.12.8
 * gh#459: Characters disappear after readline `Ctrl+R`, ..., `Enter`.
 * ConEmu Inside: Fix detection of ‘ConEmu has focus’.
