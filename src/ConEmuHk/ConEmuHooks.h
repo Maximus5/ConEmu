@@ -59,7 +59,7 @@ extern HWND    ghConEmuWnd; // Root! window
 extern HWND    ghConEmuWndDC; // ConEmu DC window
 extern DWORD   gnServerPID; // PID сервера (инициализируется на старте, при загрузке Dll)
 
-#include "../common/common.hpp"
+#include "../common/Common.h"
 #include "../common/ConEmuCheck.h"
 #include "../common/WObjects.h"
 #include "../common/InQueue.h"

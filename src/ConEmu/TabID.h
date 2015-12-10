@@ -28,7 +28,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include "../common/common.hpp"
+#include "../common/Common.h"
 #include "RefRelease.h"
 
 #ifdef _DEBUG

@@ -50,7 +50,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#define CES_CONALTERNATIVE 0x08
 //#define CES_PROGRAMS (0x0F)
 
-//#define CES_NTVDM 0x10 -- common.hpp
+//#define CES_NTVDM 0x10 -- Common.h
 //#define CES_PROGRAMS2 0xFF
 
 #define CES_FILEPANEL      0x0001

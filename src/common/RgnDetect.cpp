@@ -28,7 +28,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define HIDE_USE_EXCEPTION_INFO
 #include <windows.h>
-#include "common.hpp"
+#include "Common.h"
 #include "RgnDetect.h"
 #include "UnicodeChars.h"
 

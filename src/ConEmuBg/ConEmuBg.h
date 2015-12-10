@@ -29,7 +29,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include "../common/common.hpp"
+#include "../common/Common.h"
 #include "ConEmuBg_Lang.h"
 
 // X - меньшая, Y - большая

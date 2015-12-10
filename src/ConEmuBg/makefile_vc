@@ -210,15 +210,15 @@ clean:
 ################
 #LINK_OBJS begin
 
-$(INTDIR)\ConEmuBg.obj: ConEmuBg.cpp ../common/common.hpp ConEmuBg.h ConEmuBg_Lang.h
+$(INTDIR)\ConEmuBg.obj: ConEmuBg.cpp ../common/Common.h ConEmuBg.h ConEmuBg_Lang.h
 
-$(INTDIR)\ConEmuBg1900.obj: ConEmuBg1900.cpp ../common/common.hpp ConEmuBg.h ConEmuBg_Lang.h
+$(INTDIR)\ConEmuBg1900.obj: ConEmuBg1900.cpp ../common/Common.h ConEmuBg.h ConEmuBg_Lang.h
 
-$(INTDIR)\ConEmuBg2800.obj: ConEmuBg2800.cpp ../common/common.hpp ConEmuBg.h ConEmuBg_Lang.h
+$(INTDIR)\ConEmuBg2800.obj: ConEmuBg2800.cpp ../common/Common.h ConEmuBg.h ConEmuBg_Lang.h
 
-$(INTDIR)\ConEmuBg995.obj: ConEmuBg995.cpp ../common/common.hpp ConEmuBg.h ConEmuBg_Lang.h
+$(INTDIR)\ConEmuBg995.obj: ConEmuBg995.cpp ../common/Common.h ConEmuBg.h ConEmuBg_Lang.h
 
-$(INTDIR)\ConEmuBgA.obj: ConEmuBgA.cpp ../common/common.hpp ConEmuBg.h ConEmuBg_Lang.h
+$(INTDIR)\ConEmuBgA.obj: ConEmuBgA.cpp ../common/Common.h ConEmuBg.h ConEmuBg_Lang.h
 
 $(INTDIR)\MAssert.obj: ../common/MAssert.cpp
 

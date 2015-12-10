@@ -30,7 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEFINE_ADDCONATTR
 
 #include <windows.h>
-#include "common.hpp"
+#include "Common.h"
 #include "ConsoleMixAttr.h"
 
 // GCC headers fix

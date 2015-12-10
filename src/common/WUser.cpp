@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#endif
 
 #define HIDE_USE_EXCEPTION_INFO
-#include "common.hpp"
+#include "Common.h"
 #include <Sddl.h> // ConvertSidToStringSid
 #include "CmdLine.h"
 #include "WObjects.h"

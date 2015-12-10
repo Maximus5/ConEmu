@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifdef _DEBUG
 #include <stdio.h>
 #endif
-#include "../common/common.hpp"
+#include "../common/Common.h"
 #include "../common/ConEmuCheck.h"
 #include "../common/WObjects.h"
 #include "InQueue.h"

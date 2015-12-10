@@ -26,7 +26,7 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "../common/common.hpp"
+#include "../common/Common.h"
 #include "../common/MFileLog.h"
 #include "ConEmuHooks.h"
 #include "DefTermHk.h"

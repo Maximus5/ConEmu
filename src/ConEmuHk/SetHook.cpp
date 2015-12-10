@@ -56,7 +56,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #else
 #define _InterlockedIncrement InterlockedIncrement
 #endif
-#include "../common/common.hpp"
+#include "../common/Common.h"
 #include "../common/ConEmuCheck.h"
 #include "../common/MSection.h"
 #include "../common/WModuleCheck.h"

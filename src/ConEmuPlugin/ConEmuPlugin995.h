@@ -29,7 +29,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <windows.h>
-#include "../common/common.hpp"
+#include "../common/Common.h"
 #include "ConEmuPluginBase.h"
 
 class CPluginW995 : public CPluginBase

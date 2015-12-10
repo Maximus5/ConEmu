@@ -27,7 +27,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 
-#include "../common/common.hpp"
+#include "../common/Common.h"
 #include <Tlhelp32.h>
 
 DWORD gnHookMainThreadId = 0;

@@ -40,7 +40,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <windows.h>
 
 //#pragma warning( disable : 4995 )
-#include "../common/common.hpp"
+#include "../common/Common.h"
 #include "../common/CmdLine.h"
 
 #include "../ConEmu/version.h"

@@ -37,7 +37,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 #include <Windows.h>
-#include "common.hpp"
+#include "Common.h"
 #include "MArray.h"
 #include "MSectionSimple.h"
 #include "ConEmuCheck.h"

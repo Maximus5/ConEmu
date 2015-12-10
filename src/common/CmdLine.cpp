@@ -27,7 +27,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #define HIDE_USE_EXCEPTION_INFO
-#include "common.hpp"
+#include "Common.h"
 #include "CmdArg.h"
 #include "CmdLine.h"
 #include "WObjects.h"

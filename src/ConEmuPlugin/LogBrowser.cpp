@@ -28,7 +28,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <windows.h>
 #include <wchar.h>
-#include "../common/common.hpp"
+#include "../common/Common.h"
 #include "../common/RgnDetect.h"
 #ifdef _DEBUG
 #pragma warning( disable : 4995 )

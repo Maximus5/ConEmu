@@ -169,7 +169,7 @@ extern size_t gnHeapUsed, gnHeapMax;
 extern HANDLE ghFarInExecuteEvent;
 #endif
 
-#include "../common/common.hpp"
+#include "../common/Common.h"
 #include "../common/ConEmuCheck.h"
 #include "../common/MConHandle.h"
 #include "../common/MFileMapping.h"
