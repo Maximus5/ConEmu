@@ -3376,9 +3376,9 @@ void CEAnsi::XTermAltBuffer(bool bSetAltBuffer)
 		if ((gXTermAltBuffer.Flags & xtb_AltBuffer))
 			return;
 
-		CONSOLE_SCREEN_BUFFER_INFO csbi = {};
+		CONSOLE_SCREEN_BUFFER_INFO csbi1 = {}, csbi2 = {};
 		HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
-		if (GetConsoleScreenBufferInfoCached(hOut, &csbi, TRUE))
+		if (GetConsoleScreenBufferInfoCached(hOut, &csbi1, TRUE))
 		{
 			// -- Turn on "alternative" buffer even if not scrolling exist now
 			//if (csbi.dwSize.Y > (csbi.srWindow.Bottom - csbi.srWindow.Top + 1))
@@ -3392,11 +3392,11 @@ void CEAnsi::XTermAltBuffer(bool bSetAltBuffer)
 					if (pOut)
 					{
 						// Ensure we have fresh information (size was changed)
-						GetConsoleScreenBufferInfoCached(hOut, &csbi, TRUE);
+						GetConsoleScreenBufferInfoCached(hOut, &csbi2, TRUE);
 
 						// Clear current screen contents, don't move cursor position
 						COORD cr0 = {};
-						DWORD nChars = csbi.dwSize.X * csbi.dwSize.Y;
+						DWORD nChars = csbi2.dwSize.X * csbi2.dwSize.Y;
 						ExtFillOutputParm fill = {sizeof(fill), efof_Current|efof_Attribute|efof_Character,
 							hOut, {}, L' ', cr0, (DWORD)nChars};
 						ExtFillOutput(&fill);
@@ -3405,8 +3405,8 @@ void CEAnsi::XTermAltBuffer(bool bSetAltBuffer)
 						if (!(gXTermAltBuffer.Flags & xtb_AltBuffer))
 						{
 							// Backscroll length
-							gXTermAltBuffer.BufferSize = (csbi.dwSize.Y > (csbi.srWindow.Bottom - csbi.srWindow.Top + 1))
-								? csbi.dwSize.Y : 0;
+							gXTermAltBuffer.BufferSize = (csbi1.dwSize.Y > (csbi1.srWindow.Bottom - csbi1.srWindow.Top + 1))
+								? csbi1.dwSize.Y : 0;
 							gXTermAltBuffer.Flags = xtb_AltBuffer;
 							// Stored cursor pos
 							if (gDisplayCursor.bCursorPosStored)
