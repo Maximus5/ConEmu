@@ -59,6 +59,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/MWow64Disable.h"
 #include "../common/WFiles.h"
 #include "../common/WConsole.h"
+#include "../common/WModuleCheck.h"
 #include "../common/WThreads.h"
 #include "../common/SetEnvVar.h"
 #include "../ConEmuHk/SetHook.h"

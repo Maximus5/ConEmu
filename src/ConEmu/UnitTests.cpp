@@ -51,6 +51,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 #ifdef _DEBUG
+#include "../common/WModuleCheck.cpp"
+#endif
+
+#ifdef _DEBUG
 void UnitMaskTests()
 {
 	struct {

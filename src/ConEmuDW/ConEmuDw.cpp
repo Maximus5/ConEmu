@@ -61,8 +61,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../ConEmuHk/SetHook.h"
 #include "ConEmuDw.h"
 #include "resource.h"
+
 #ifdef _DEBUG
-#include "../common/WObjects.h"
+#include "../common/WModuleCheck.cpp"
 #endif
 
 #define DEBUGSTRCALL(s) //DEBUGSTR(s)

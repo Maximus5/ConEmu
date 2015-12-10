@@ -57,7 +57,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma warning( default : 4995 )
 #endif
 #include "../common/ConsoleAnnotation.h"
-#include "../common/WObjects.h"
+#include "../common/WModuleCheck.h"
 #include "PluginHeader.h"
 #include "PluginBackground.h"
 #include "ConEmuPluginBase.h"

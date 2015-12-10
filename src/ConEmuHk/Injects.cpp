@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2014 Maximus5
+Copyright (c) 2009-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -30,9 +30,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/common.hpp"
 #include "../common/ConEmuCheck.h"
 #include "../common/execute.h"
+#include "../common/WModuleCheck.h"
 #include "../ConEmuCD/ExitCodes.h"
-#include "../common/WObjects.h"
-//#include "ConEmuHooks.h"
 #include "Console2.h"
 
 extern HMODULE ghOurModule;

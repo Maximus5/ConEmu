@@ -59,7 +59,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/common.hpp"
 #include "../common/ConEmuCheck.h"
 #include "../common/MSection.h"
-#include "../common/WObjects.h"
+#include "../common/WModuleCheck.h"
 //#include "../common/MArray.h"
 #include "ShellProcessor.h"
 #include "SetHook.h"
