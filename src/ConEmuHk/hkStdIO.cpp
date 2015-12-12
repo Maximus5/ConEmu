@@ -61,6 +61,20 @@ HANDLE ghLastNotConInHandle = NULL;
 
 /* **************** */
 
+HANDLE WINAPI OnCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile)
+{
+	//typedef HANDLE (WINAPI* OnCreateFileA_t)(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile);
+	ORIGINAL_KRNL(CreateFileA);
+	HANDLE h;
+
+	h = F(CreateFileA)(lpFileName, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
+	DWORD nLastErr = GetLastError();
+
+	DebugString(L"OnCreateFileA executed\n");
+
+	SetLastError(nLastErr);
+	return h;
+}
 
 HANDLE WINAPI OnCreateFileW(LPCWSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile)
 {

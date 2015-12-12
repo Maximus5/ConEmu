@@ -413,6 +413,7 @@ bool InitHooksConsole()
 	{
 		/* ************************ */
 		HOOK_ITEM_BY_NAME(CreateFileW,  		kernel32),
+		HOOK_ITEM_BY_NAME(CreateFileA,  		kernel32),
 		HOOK_ITEM_BY_NAME(WriteFile,  			kernel32),
 		HOOK_ITEM_BY_NAME(ReadFile,				kernel32),
 		HOOK_ITEM_BY_NAME(CloseHandle,			kernel32),

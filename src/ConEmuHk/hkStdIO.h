@@ -41,6 +41,7 @@ extern HANDLE ghSkipSetThreadContextForThread; // Injects.cpp
 /* *************************** */
 
 HOOK_PROTOTYPE(CloseHandle,BOOL,WINAPI,(HANDLE hObject));
+HOOK_PROTOTYPE(CreateFileA,HANDLE,WINAPI,(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile));
 HOOK_PROTOTYPE(CreateFileW,HANDLE,WINAPI,(LPCWSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile));
 HOOK_PROTOTYPE(MapViewOfFile,LPVOID,WINAPI,(HANDLE hFileMappingObject, DWORD dwDesiredAccess, DWORD dwFileOffsetHigh, DWORD dwFileOffsetLow, SIZE_T dwNumberOfBytesToMap));
 HOOK_PROTOTYPE(OpenFileMappingW,HANDLE,WINAPI,(DWORD dwDesiredAccess, BOOL bInheritHandle, LPCWSTR lpName));
