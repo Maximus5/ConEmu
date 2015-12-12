@@ -63,6 +63,7 @@ $(INTDIR)\Entry.obj \
 $(INTDIR)\Execute.obj \
 $(INTDIR)\ExtConsole.obj \
 $(INTDIR)\GuiAttach.obj \
+$(INTDIR)\HandleKeeper.obj \
 $(INTDIR)\hkCmdExe.obj \
 $(INTDIR)\hkConsole.obj \
 $(INTDIR)\hkConsoleInput.obj \
@@ -361,6 +362,8 @@ $(INTDIR)\Execute.obj: ../common/Execute.cpp ../common/Execute.h
 $(INTDIR)\ExtConsole.obj: ExtConsole.cpp ExtConsole.h
 
 $(INTDIR)\GuiAttach.obj: GuiAttach.cpp GuiAttach.h
+
+$(INTDIR)\HandleKeeper.obj: ../common/HandleKeeper.cpp ../common/HandleKeeper.h
 
 $(INTDIR)\hkCmdExe.obj: hkCmdExe.cpp hkCmdExe.h
 
