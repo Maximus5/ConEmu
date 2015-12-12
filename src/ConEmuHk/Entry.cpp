@@ -244,7 +244,6 @@ HMODULE ghSrvDll = NULL;
 RequestLocalServer_t gfRequestLocalServer = NULL;
 TODO("AnnotationHeader* gpAnnotationHeader");
 AnnotationHeader* gpAnnotationHeader = NULL;
-HANDLE ghCurrentOutBuffer = NULL; // Устанавливается при SetConsoleActiveScreenBuffer
 
 
 #ifdef USEPIPELOG
@@ -2947,7 +2946,6 @@ int WINAPI RequestLocalServer(/*[IN/OUT]*/RequestLocalServerParm* Parm)
 	if (Parm->Flags & slsf_RequestTrueColor)
 		gbTrueColorServerRequested = TRUE;
 
-	//iRc = gfRequestLocalServer(&gpAnnotationHeader, &ghCurrentOutBuffer);
 	iRc = gfRequestLocalServer(Parm);
 
 	if  ((iRc == 0) && (Parm->Flags & slsf_PrevAltServerPID))

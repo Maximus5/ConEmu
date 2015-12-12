@@ -48,49 +48,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "hlpConsole.h"
 #include "hlpProcess.h"
 
-//#include "DefTermHk.h"
-//#include "GuiAttach.h"
-//#include "hkConsole.h"
-//#include "MainThread.h"
-//#include "SetHook.h"
-
 /* **************** */
-
-//HANDLE ghStdOutHandle = NULL;
-
-/* **************** */
-
-//extern HANDLE ghConsoleCursorChanged;
-//extern void LockServerReadingThread(bool bLock, COORD dwSize, CESERVER_REQ*& pIn, CESERVER_REQ*& pOut);
-//extern BOOL IsVisibleRectLocked(COORD& crLocked);
-//extern BOOL MyGetConsoleFontSize(COORD& crFontSize);
-
-/* **************** */
-
-#if 0
-// IsConsoleHandle
-bool IsHandleConsole(HANDLE handle, bool output = true)
-{
-	// MSDN рекомендует пользовать GetConsoleMode (оно и Input и Output умеет)
-
-	// Консоль?
-	if (((DWORD)handle & 0x10000003) != 3)
-		return false;
-
-	// Проверка типа консольного буфера (In/Out)
-	DWORD num;
-
-	if (!output)
-		if (GetNumberOfConsoleInputEvents(handle, &num))
-			return true;
-		else
-			return false;
-	else if (GetNumberOfConsoleInputEvents(handle, &num))
-		return false;
-	else
-		return true;
-}
-#endif
 
 BOOL MyGetConsoleFontSize(COORD& crFontSize)
 {

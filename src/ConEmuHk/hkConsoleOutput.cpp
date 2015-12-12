@@ -231,14 +231,13 @@ BOOL WINAPI OnWriteConsoleA(HANDLE hConsoleOutput, const VOID *lpBuffer, DWORD n
 	BOOL lbRc = FALSE;
 	CEAnsi* pObj = NULL;
 
-	if (lpBuffer && nNumberOfCharsToWrite && hConsoleOutput && CEAnsi::IsAnsiCapable(hConsoleOutput) && ((pObj = CEAnsi::Object()) != NULL))
+	if (lpBuffer && nNumberOfCharsToWrite && hConsoleOutput && HandleKeeper::IsOutputHandle(hConsoleOutput) && ((pObj = CEAnsi::Object()) != NULL))
 	{
 		lbRc = pObj->OurWriteConsoleA(hConsoleOutput, (LPCSTR)lpBuffer, nNumberOfCharsToWrite, lpNumberOfCharsWritten);
 	}
 	else
 	{
-		// WriteConsoleA must be executed on "real console" handles only
-		_ASSERTEX(lpBuffer && nNumberOfCharsToWrite && hConsoleOutput && CEAnsi::IsAnsiCapable(hConsoleOutput));
+		// WriteConsoleA must be executed on "real console" handles only, we don't care if caller admitted an error
 		lbRc = F(WriteConsoleA)(hConsoleOutput, lpBuffer, nNumberOfCharsToWrite, lpNumberOfCharsWritten, lpReserved);
 	}
 

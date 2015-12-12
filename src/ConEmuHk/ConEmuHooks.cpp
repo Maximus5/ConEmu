@@ -147,7 +147,6 @@ extern HWND    ghConWnd;      // RealConsole
 extern HWND    ghConEmuWnd;   // Root! ConEmu window
 extern HWND    ghConEmuWndDC; // ConEmu DC window
 extern DWORD   gnGuiPID;
-extern HANDLE ghCurrentOutBuffer;
 /* ************ Globals for SetHook ************ */
 
 
