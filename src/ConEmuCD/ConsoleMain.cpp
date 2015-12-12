@@ -4489,7 +4489,7 @@ void ApplyEnvironmentCommands(wchar_t* pszCommand)
 				*(pszValue++) = 0;
 			// NULL will remove alias
 			// We set aliases for "cmd.exe" executable, as Far Manager supports too
-			AddConsoleAlias(pszName, *pszValue ? pszValue : NULL, L"cmd.exe");
+			AddConsoleAlias(pszName, pszValue && *pszValue ? pszValue : NULL, L"cmd.exe");
 		}
 		else if (lstrcmpi(pszCommand, L"chcp") == 0)
 		{
