@@ -2689,7 +2689,7 @@ static HRESULT _CreateShellLink(PCWSTR pszArguments, PCWSTR pszPrefix, PCWSTR ps
 			_wcscat_c(pszBuf, cchMax, pszPrefix);
 			_wcscat_c(pszBuf, cchMax, L" ");
 		}
-		if (pszConEmuStartArgs && pszConEmuStartArgs)
+		if (pszConEmuStartArgs && *pszConEmuStartArgs)
 		{
 			_ASSERTE(pszConEmuStartArgs[_tcslen(pszConEmuStartArgs)-1]==L' ');
 			_wcscat_c(pszBuf, cchMax, pszConEmuStartArgs);

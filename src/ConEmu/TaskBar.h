@@ -95,7 +95,7 @@ public:
 	HRESULT Taskbar_SetProgressState(UINT/*TBPFLAG*/ nState);
 	HRESULT Taskbar_MarkFullscreenWindow(HWND hwnd, BOOL fFullscreen);
 
-	bool Taskbar_GhostSnapshootRequired();
+	bool Taskbar_GhostSnapshotRequired();
 
 	void Taskbar_SetShield(bool abShield);
 	void Taskbar_SetOverlay(HICON ahIcon);

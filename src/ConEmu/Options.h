@@ -400,7 +400,7 @@ struct Settings
 		//reg->Load(L"FontSizeX2", FontSizeX2);
 		DWORD FontSizeX2; // ширина для FixFarBorders (ширина создаваемого шрифта для отрисовки рамок, не путать со знакоместом)
 		//reg->Load(L"FontSizeX3", FontSizeX3);
-		DWORD FontSizeX3; // ширина знакоместа при моноширном режиме (не путать с FontSizeX2)
+		DWORD FontSizeX3; // ширина знакоместа при моноширинном режиме (не путать с FontSizeX2)
 		//reg->Load(L"FontUseDpi", FontUseDpi);
 		bool FontUseDpi;
 		//reg->Load(L"FontUseUnits", FontUseUnits);

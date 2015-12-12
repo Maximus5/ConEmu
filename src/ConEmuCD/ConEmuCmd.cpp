@@ -295,7 +295,7 @@ void ComspecDone(int aiRc)
 						pszNewTarget++;
 					}
 
-					if (*pszNewTarget == 0) pszNewTarget = NULL;
+					if (pszNewTarget && (*pszNewTarget == 0)) pszNewTarget = NULL;
 
 					AddConsoleAlias(pszNewName, pszNewTarget, gpSrv->szSelfName);
 					pszNewName = pszNewLine+1;

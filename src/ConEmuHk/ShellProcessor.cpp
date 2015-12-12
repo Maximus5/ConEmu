@@ -2968,7 +2968,7 @@ void CShellProc::OnCreateProcessFinished(BOOL abSucceeded, PROCESS_INFORMATION *
 			// Starting .Net debugging session from VS or CodeBlocks console app (gdb)
 			if (mb_PostInjectWasRequested)
 			{
-				// This is "*.vshost.exe", it is GUI wich can be used for debugging .Net console applications
+				// This is "*.vshost.exe", it is GUI which can be used for debugging .Net console applications
 				// Also in CodeBlocks' gdb debugger
 				if (mb_WasSuspended)
 				{

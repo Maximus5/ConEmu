@@ -76,10 +76,10 @@ public:
 	virtual ~CTaskBarGhost();
 public:
 	static CTaskBarGhost* Create(CVirtualConsole* apVCon);
-	BOOL CreateTabSnapshoot();
-	BOOL UpdateTabSnapshoot(BOOL abSimpleBlack = FALSE, BOOL abNoSnapshoot = FALSE);
+	BOOL CreateTabSnapshot();
+	BOOL UpdateTabSnapshot(BOOL abSimpleBlack = FALSE, BOOL abNoSnapshot = FALSE);
 	LPCWSTR CheckTitle(BOOL abSkipValidation = FALSE);
 	void ActivateTaskbar();
-	bool NeedSnapshootCache();
+	bool NeedSnapshotCache();
 	HWND GhostWnd();
 };

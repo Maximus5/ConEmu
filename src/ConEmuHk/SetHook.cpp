@@ -1826,7 +1826,7 @@ void ProcessOnLibraryLoadedW(HMODULE module)
 }
 
 
-bool PrepareNewModule(HMODULE module, LPCSTR asModuleA, LPCWSTR asModuleW, BOOL abNoSnapshoot /*= FALSE*/, BOOL abForceHooks /*= FALSE*/)
+bool PrepareNewModule(HMODULE module, LPCSTR asModuleA, LPCWSTR asModuleW, BOOL abNoSnapshot /*= FALSE*/, BOOL abForceHooks /*= FALSE*/)
 {
 	bool lbAllSysLoaded = true;
 	for (size_t s = 0; s < countof(ghSysDll); s++)

@@ -706,7 +706,7 @@ bool InitHooksDefTerm()
 	};
 	HookItem HooksVshost[] =
 	{
-		// Issue 1312: .Net applications runs in "*.vshost.exe" helper GUI apllication when debugging
+		// Issue 1312: .Net applications runs in "*.vshost.exe" helper GUI application when debugging
 		HOOK_ITEM_BY_NAME(AllocConsole,			kernel32), // Only for "*.vshost.exe"?
 		HOOK_ITEM_BY_NAME(ShowWindow,			user32),
 		/* ************************ */
