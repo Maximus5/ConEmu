@@ -650,24 +650,24 @@ void CToolBarClass::PaintTool(const PaintDC& dc, const RECT& rcTB, PaneInfo* p, 
 	// Отрисовка собственно картинки-кнопки
 	if (t->nFlags & TIS_DRAWCALLBACK)
 	{
-		RECT rcPaint = {x+(((lbClicked&!mb_ArrowClicked)||lbChecked)?1:0), y};
+		RECT rcPaint = {x+(((lbClicked&&!mb_ArrowClicked)||lbChecked)?1:0), y};
 		rcPaint.right = rcPaint.left + t->rcBmp.right-t->rcBmp.left;
 		rcPaint.bottom = rcPaint.top + t->rcBmp.bottom-t->rcBmp.top;
 		if (p && p->OnToolBarDraw)
 		{
 			p->OnToolBarDraw(p->lParam, dc, rcPaint, t->ID.nPane, t->ID.nCmd,
-				t->nFlags|((lbClicked&!mb_ArrowClicked)?TIS_PRESSED:0));
+				t->nFlags|((lbClicked&&!mb_ArrowClicked)?TIS_PRESSED:0));
 		}
 	}
 	else if (mh_PaneDC)
 	{
-		BitBlt(dc.hDC, x+((lbClicked&!mb_ArrowClicked)?1:0), y,
+		BitBlt(dc.hDC, x+((lbClicked&&!mb_ArrowClicked)?1:0), y,
 			t->rcBmp.right-t->rcBmp.left+1, t->rcBmp.bottom-t->rcBmp.top+1,
 			mh_PaneDC, t->rcBmp.left, t->rcBmp.top, SRCCOPY);
 
 		if (mb_Aero)
 		{
-			RECT rc = {x+((lbClicked&!mb_ArrowClicked)?1:0), y};
+			RECT rc = {x+((lbClicked&&!mb_ArrowClicked)?1:0), y};
 			rc.right = rc.left + t->rcBmp.right-t->rcBmp.left+1;
 			rc.bottom = rc.top + t->rcBmp.bottom-t->rcBmp.top+1;
 			gpConEmu->BufferedPaintSetAlpha(dc, &rc, 255);
