@@ -324,7 +324,7 @@ void CEAnsi::WriteAnsiLogA(LPCSTR lpBuffer, DWORD nChars)
 		wchar_t* pszBuf = (nNeed <= countof(sBuf)) ? sBuf : (wchar_t*)malloc(nNeed*sizeof(*pszBuf));
 		if (!pszBuf)
 			return;
-		int nLen = MultiByteToWideChar(cp, 0, lpBuffer, nChars, NULL, 0);
+		int nLen = MultiByteToWideChar(cp, 0, lpBuffer, nChars, pszBuf, nNeed);
 		// Must be OK, but check it
 		if (nLen > 0 && nLen <= nNeed)
 		{
@@ -359,7 +359,7 @@ void CEAnsi::WriteAnsiLogW(LPCWSTR lpBuffer, DWORD nChars)
 	int nNeed = WideCharToMultiByte(CP_UTF8, 0, lpBuffer, nChars, NULL, 0, NULL, NULL);
 	if (nNeed < 1)
 		return;
-	char* pszBuf = ((nNeed + iEnterShift) <= countof(sBuf)) ? sBuf : (char*)malloc(nNeed+iEnterShift);
+	char* pszBuf = ((nNeed + iEnterShift + 1) <= countof(sBuf)) ? sBuf : (char*)malloc(nNeed+iEnterShift+1);
 	if (!pszBuf)
 		return;
 	if (iEnterShift)
@@ -368,6 +368,7 @@ void CEAnsi::WriteAnsiLogW(LPCWSTR lpBuffer, DWORD nChars)
 	// Must be OK, but check it
 	if (nLen > 0 && nLen <= nNeed)
 	{
+		pszBuf[iEnterShift+nNeed] = 0;
 		bWrite = WriteAnsiLogUtf8(pszBuf, nLen+iEnterShift);
 	}
 	if (pszBuf != sBuf)
