@@ -88,6 +88,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/WConsole.h"
 #include "../common/WObjects.h"
 
+#ifdef _DEBUG
+#include "../common/WModuleCheck.h"
+#endif
+
 #include "../common/StartupEnv.h"
 
 // _CrtCheckMemory can't be used in DLL_PROCESS_ATTACH

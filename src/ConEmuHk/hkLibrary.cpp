@@ -36,6 +36,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "../common/Common.h"
 
+#ifdef _DEBUG
+#include "../common/WModuleCheck.h"
+#endif
+
 #include "hkLibrary.h"
 #include "hlpProcess.h"
 #include "MainThread.h"
