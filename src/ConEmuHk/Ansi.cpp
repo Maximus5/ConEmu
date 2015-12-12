@@ -34,6 +34,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/ConEmuCheck.h"
 #include "../common/CmdLine.h"
 #include "../common/ConsoleAnnotation.h"
+#include "../common/HandleKeeper.h"
 #include "../common/MConHandle.h"
 #include "../common/MSectionSimple.h"
 #include "../common/WCodePage.h"
@@ -98,9 +99,6 @@ static struct XTermAltBufferData
 BOOL WINAPI OnCreateProcessW(LPCWSTR lpApplicationName, LPWSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment, LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation);
 
 // These handles must be registered and released in OnCloseHandle.
-HANDLE CEAnsi::ghLastAnsiCapable = NULL;
-HANDLE CEAnsi::ghLastAnsiNotCapable = NULL;
-HANDLE CEAnsi::ghLastConOut = NULL;
 HANDLE CEAnsi::ghAnsiLogFile = NULL;
 LONG CEAnsi::gnEnterPressed = 0;
 bool CEAnsi::gbAnsiLogNewLine = false;
@@ -441,103 +439,6 @@ void CEAnsi::GetFeatures(bool* pbAnsiAllowed, bool* pbSuppressBells)
 		*pbAnsiAllowed = bAnsiAllowed;
 	if (pbSuppressBells)
 		*pbSuppressBells = bSuppressBells;
-}
-
-bool CEAnsi::IsAnsiCapable(HANDLE hFile, bool* bIsConsoleOutput /*= NULL*/)
-{
-	bool bAnsi = false;
-	DWORD Mode = 0;
-	bool bIsOut = false;
-
-	ScopedObject(CLastErrorGuard);
-
-	if (hFile == NULL)
-	{
-		// Проверка настроек на старте?
-		bIsOut = true;
-		Mode = ENABLE_PROCESSED_OUTPUT;
-	}
-	else
-	{
-		bIsOut = IsOutputHandle(hFile, &Mode);
-	}
-
-	if (bIsOut)
-	{
-		bAnsi = ((Mode & ENABLE_PROCESSED_OUTPUT) == ENABLE_PROCESSED_OUTPUT);
-		if (!bAnsi)
-		{
-			#ifdef _DEBUG
-			HANDLE hIn  = GetStdHandle(STD_INPUT_HANDLE);
-			HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
-			HANDLE hErr = GetStdHandle(STD_ERROR_HANDLE);
-			#endif
-			// Где-то по дороге между "cmd /c test.cmd", "pause" в нем и "WriteConsole"
-			// слетает ENABLE_PROCESSED_OUTPUT, поэтому пока обрабатываем всегда.
-			bAnsi = true;
-		}
-
-
-		if (bAnsi)
-		{
-			bool bAnsiAllowed; GetFeatures(&bAnsiAllowed, NULL);
-
-			if (!bAnsiAllowed)
-				bAnsi = false;
-		}
-	}
-
-	if (bIsConsoleOutput)
-		*bIsConsoleOutput = bIsOut;
-
-	return bAnsi;
-}
-
-bool CEAnsi::IsOutputHandle(HANDLE hFile, DWORD* pMode /*= NULL*/)
-{
-	if (!hFile)
-		return false;
-
-	if (hFile == ghLastConOut)
-		return false;
-
-	if (hFile == ghLastAnsiCapable)
-		return true;
-
-	if (hFile == ghLastAnsiNotCapable)
-		return false;
-
-	ScopedObject(CLastErrorGuard);
-
-	bool  bOk = false;
-	DWORD Mode = 0, nErrCode = 0;
-	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
-
-	// GetConsoleMode не совсем подходит, т.к. он проверяет и ConIn & ConOut
-	// Поэтому, добавляем
-	if (GetConsoleMode(hFile, &Mode))
-	{
-		if (!GetConsoleScreenBufferInfoCached(hFile, &csbi, TRUE))
-		{
-			nErrCode = GetLastError();
-			_ASSERTEX(nErrCode == ERROR_INVALID_HANDLE);
-			ghLastAnsiNotCapable = hFile;
-		}
-		else
-		{
-			if (pMode)
-				*pMode = Mode;
-			//Processed = (Mode & ENABLE_PROCESSED_OUTPUT);
-			ghLastAnsiCapable = hFile;
-			bOk = true;
-		}
-	}
-	else
-	{
-		ghLastAnsiNotCapable = hFile;
-	}
-
-	return bOk;
 }
 
 
@@ -1144,6 +1045,7 @@ BOOL CEAnsi::OurWriteConsoleW(HANDLE hConsoleOutput, const VOID *lpBuffer, DWORD
 	BOOL lbRc = FALSE;
 	//ExtWriteTextParm wrt = {sizeof(wrt), ewtf_None, hConsoleOutput};
 	bool bIsConOut = false;
+	bool bIsAnsi = false;
 
 	FIRST_ANSI_CALL((const BYTE*)lpBuffer, nNumberOfCharsToWrite);
 
@@ -1163,11 +1065,18 @@ BOOL CEAnsi::OurWriteConsoleW(HANDLE hConsoleOutput, const VOID *lpBuffer, DWORD
 	CEAnsi* pObj = NULL;
 	CEStr CpCvt;
 
-	if (lpBuffer && nNumberOfCharsToWrite && hConsoleOutput && IsAnsiCapable(hConsoleOutput, &bIsConOut))
+	if (lpBuffer && nNumberOfCharsToWrite && hConsoleOutput)
 	{
-		if (ghAnsiLogFile)
-			CEAnsi::WriteAnsiLogW((LPCWSTR)lpBuffer, nNumberOfCharsToWrite);
+		bIsAnsi = HandleKeeper::IsAnsiCapable(hConsoleOutput, &bIsConOut);
 
+		if (ghAnsiLogFile && bIsConOut)
+		{
+			CEAnsi::WriteAnsiLogW((LPCWSTR)lpBuffer, nNumberOfCharsToWrite);
+		}
+	}
+
+	if (lpBuffer && nNumberOfCharsToWrite && hConsoleOutput && bIsAnsi)
+	{
 		// if that was API call of WriteConsoleW
 		if (!bInternal && gCpConv.nFromCP && gCpConv.nToCP)
 		{
@@ -1226,7 +1135,7 @@ BOOL CEAnsi::OurWriteConsoleW(HANDLE hConsoleOutput, const VOID *lpBuffer, DWORD
 		}
 	}
 
-	if (!bIsConOut || ((pObj = CEAnsi::Object()) == NULL))
+	if (!bIsAnsi || ((pObj = CEAnsi::Object()) == NULL))
 	{
 		lbRc = F(WriteConsoleW)(hConsoleOutput, lpBuffer, nNumberOfCharsToWrite, lpNumberOfCharsWritten, lpReserved);
 	}

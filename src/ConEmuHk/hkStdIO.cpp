@@ -36,6 +36,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "../common/Common.h"
 #include "../common/ConsoleAnnotation.h"
+#include "../common/HandleKeeper.h"
 
 #include "Ansi.h"
 #include "hkConsoleInput.h"
@@ -67,10 +68,14 @@ HANDLE WINAPI OnCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwSh
 	ORIGINAL_KRNL(CreateFileA);
 	HANDLE h;
 
+	HandleKeeper::PreCreateHandle(hs_CreateFileA, dwDesiredAccess, dwShareMode, (const void**)&lpFileName);
+
 	h = F(CreateFileA)(lpFileName, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
 	DWORD nLastErr = GetLastError();
 
 	DebugString(L"OnCreateFileA executed\n");
+
+	HandleKeeper::AllocHandleInfo(h, hs_CreateFileA, dwDesiredAccess, lpFileName);
 
 	SetLastError(nLastErr);
 	return h;
@@ -81,38 +86,15 @@ HANDLE WINAPI OnCreateFileW(LPCWSTR lpFileName, DWORD dwDesiredAccess, DWORD dwS
 	//typedef HANDLE (WINAPI* OnCreateFileW_t)(LPCWSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile);
 	ORIGINAL_KRNL(CreateFileW);
 	HANDLE h;
-	DEBUGTEST(HANDLE hStd);
-	bool bUseConOut = false;
 
-	// Just a simple check for "string" validity
-	if (lpFileName && (((DWORD_PTR)lpFileName) & ~0xFFFF)
-		// CON output is opening with following flags
-		&& ((dwDesiredAccess & GENERIC_WRITE) == GENERIC_WRITE)
-		&& ((dwShareMode & (FILE_SHARE_READ|FILE_SHARE_WRITE)) == (FILE_SHARE_READ|FILE_SHARE_WRITE))
-		)
-	{
-		DebugString(L"OnCreateFileW checking for CON name\n");
-		if ((bUseConOut = (lstrcmpi(lpFileName, L"CON") == 0)))
-		{
-			DEBUGTEST(hStd = GetStdHandle(STD_OUTPUT_HANDLE));
-			//lpFileName = L"CONOUT$"; -- doesn't matter, after redirection in .cmd to >CON we can't use console API
-			DebugString(L"OnCreateFileW name changed to CONOUT$\n");
-		}
-		else
-		{
-			DebugString(L"OnCreateFileW check finished\n");
-		}
-	}
+	HandleKeeper::PreCreateHandle(hs_CreateFileW, dwDesiredAccess, dwShareMode, (const void**)&lpFileName);
 
 	h = F(CreateFileW)(lpFileName, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
 	DWORD nLastErr = GetLastError();
 
 	DebugString(L"OnCreateFileW executed\n");
 
-	if (bUseConOut)
-	{
-		CEAnsi::ghLastConOut = h;
-	}
+	HandleKeeper::AllocHandleInfo(h, hs_CreateFileW, dwDesiredAccess, lpFileName);
 
 	SetLastError(nLastErr);
 	return h;
@@ -125,25 +107,7 @@ BOOL WINAPI OnCloseHandle(HANDLE hObject)
 	ORIGINAL_KRNL(CloseHandle);
 	BOOL lbRc = FALSE;
 
-	LPHANDLE hh[] = {
-		&CEAnsi::ghLastAnsiCapable,
-		&CEAnsi::ghLastAnsiNotCapable,
-		&CEAnsi::ghLastConOut,
-		&ghLastConInHandle,
-		&ghLastNotConInHandle,
-		NULL
-	};
-
-	if (hObject)
-	{
-		for (INT_PTR i = 0; hh[i]; i++)
-		{
-			if (hh[i] && (*(hh[i]) == hObject))
-			{
-				*(hh[i]) = NULL;
-			}
-		}
-	}
+	HandleKeeper::CloseHandleInfo(hObject);
 
 	if (gpAnnotationHeader && (hObject == (HANDLE)gpAnnotationHeader))
 	{
@@ -275,11 +239,22 @@ BOOL WINAPI OnWriteFile(HANDLE hFile, LPCVOID lpBuffer, DWORD nNumberOfBytesToWr
 	BOOL lbRc = FALSE;
 	CEAnsi* pObj = NULL;
 
-	if (lpBuffer && nNumberOfBytesToWrite && hFile && CEAnsi::IsAnsiCapable(hFile) && ((pObj = CEAnsi::Object()) != NULL))
-		lbRc = pObj->OurWriteConsoleA(hFile, (LPCSTR)lpBuffer, nNumberOfBytesToWrite, lpNumberOfBytesWritten);
-	else
-		lbRc = F(WriteFile)(hFile, lpBuffer, nNumberOfBytesToWrite, lpNumberOfBytesWritten, lpOverlapped);
+	if (lpBuffer && nNumberOfBytesToWrite && hFile)
+	{
+		bool bConOut = false;
+		if (HandleKeeper::IsAnsiCapable(hFile, &bConOut) && ((pObj = CEAnsi::Object()) != NULL))
+		{
+			lbRc = pObj->OurWriteConsoleA(hFile, (LPCSTR)lpBuffer, nNumberOfBytesToWrite, lpNumberOfBytesWritten);
+			goto wrap;
+		}
+		else if (bConOut && CEAnsi::ghAnsiLogFile)
+		{
+			CEAnsi::WriteAnsiLogA((LPCSTR)lpBuffer, nNumberOfBytesToWrite);
+		}
+	}
 
+	lbRc = F(WriteFile)(hFile, lpBuffer, nNumberOfBytesToWrite, lpNumberOfBytesWritten, lpOverlapped);
+wrap:
 	return lbRc;
 }
 

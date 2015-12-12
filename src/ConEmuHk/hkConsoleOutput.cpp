@@ -36,6 +36,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "../common/Common.h"
 #include "../common/MConHandle.h"
+#include "../common/HandleKeeper.h"
 
 #include "Ansi.h"
 #include "ExtConsole.h"
@@ -79,7 +80,7 @@ BOOL WINAPI OnSetConsoleMode(HANDLE hConsoleHandle, DWORD dwMode)
 	{
 		if ((dwMode & (ENABLE_WRAP_AT_EOL_OUTPUT|ENABLE_PROCESSED_OUTPUT)) != (ENABLE_WRAP_AT_EOL_OUTPUT|ENABLE_PROCESSED_OUTPUT))
 		{
-			if (CEAnsi::IsOutputHandle(hConsoleHandle))
+			if (HandleKeeper::IsOutputHandle(hConsoleHandle))
 			{
 				dwMode |= ENABLE_WRAP_AT_EOL_OUTPUT|ENABLE_PROCESSED_OUTPUT;
 			}
@@ -93,7 +94,7 @@ BOOL WINAPI OnSetConsoleMode(HANDLE hConsoleHandle, DWORD dwMode)
 	#ifdef _DEBUG
 	if ((gnExeFlags & (caf_Cygwin1|caf_Msys1|caf_Msys2))
 		&& (dwMode & ENABLE_PROCESSED_INPUT)
-		&& !CEAnsi::IsOutputHandle(hConsoleHandle))
+		&& !HandleKeeper::IsOutputHandle(hConsoleHandle))
 	{
 		//_ASSERTE(!(dwMode & ENABLE_PROCESSED_INPUT));
 		wchar_t szLog[120];
@@ -298,7 +299,7 @@ BOOL WINAPI OnScrollConsoleScreenBufferA(HANDLE hConsoleOutput, const SMALL_RECT
 	ORIGINAL_KRNL(ScrollConsoleScreenBufferA);
 	BOOL lbRc = FALSE;
 
-	if (CEAnsi::IsOutputHandle(hConsoleOutput))
+	if (HandleKeeper::IsOutputHandle(hConsoleOutput))
 	{
 		WARNING("Проверка аргументов! Скролл может быть частичным");
 		ExtScrollScreenParm scrl = {sizeof(scrl), essf_ExtOnly, hConsoleOutput, dwDestinationOrigin.Y - lpScrollRectangle->Top};
@@ -317,7 +318,7 @@ BOOL WINAPI OnScrollConsoleScreenBufferW(HANDLE hConsoleOutput, const SMALL_RECT
 	ORIGINAL_KRNL(ScrollConsoleScreenBufferW);
 	BOOL lbRc = FALSE;
 
-	if (CEAnsi::IsOutputHandle(hConsoleOutput))
+	if (HandleKeeper::IsOutputHandle(hConsoleOutput))
 	{
 		WARNING("Проверка аргументов! Скролл может быть частичным");
 		ExtScrollScreenParm scrl = {sizeof(scrl), essf_ExtOnly, hConsoleOutput, dwDestinationOrigin.Y - lpScrollRectangle->Top};

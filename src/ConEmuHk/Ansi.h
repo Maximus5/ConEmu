@@ -113,9 +113,6 @@ public:
 	static void OnReadConsoleBefore(HANDLE hConOut, const CONSOLE_SCREEN_BUFFER_INFO& csbi);
 	static void OnReadConsoleAfter(bool bFinal, bool bNoLineFeed);
 
-	static bool IsAnsiCapable(HANDLE hFile, bool* bIsConsoleOutput = NULL);
-	static bool IsOutputHandle(HANDLE hFile, DWORD* pMode = NULL);
-
 	static void InitAnsiLog(LPCWSTR asFilePath);
 	static void DoneAnsiLog(bool bFinal);
 
@@ -123,9 +120,6 @@ public:
 
 	static SHORT GetDefaultTextAttr();
 
-	static HANDLE ghLastAnsiCapable /*= NULL*/;
-	static HANDLE ghLastAnsiNotCapable /*= NULL*/;
-	static HANDLE ghLastConOut /*= NULL*/;
 	static HANDLE ghAnsiLogFile /*= NULL*/;
 	static LONG   gnEnterPressed /*= 0*/;
 	static bool   gbAnsiLogNewLine /*= false*/;

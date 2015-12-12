@@ -46,6 +46,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/Common.h"
 #include "../common/ConEmuCheck.h"
 #include "../common/execute.h"
+#include "../common/HandleKeeper.h"
 #include "../common/WErrGuard.h"
 #include "../common/WObjects.h"
 #if defined(__GNUC__) && !defined(__MINGW32__)
@@ -1590,12 +1591,12 @@ int CShellProc::PrepareExecuteParms(
 		{
 			if (lphStdOut && *lphStdOut)
 			{
-				if (!CEAnsi::IsOutputHandle(*lphStdOut))
+				if (!HandleKeeper::IsOutputHandle(*lphStdOut))
 					bDetachedOrHidden = true;
 			}
 			else if (lphStdErr && *lphStdErr)
 			{
-				if (!CEAnsi::IsOutputHandle(*lphStdErr))
+				if (!HandleKeeper::IsOutputHandle(*lphStdErr))
 					bDetachedOrHidden = true;
 			}
 			#if 0
@@ -1604,7 +1605,7 @@ int CShellProc::PrepareExecuteParms(
 				// Issue 1763: Multiarc очень странно делает вызовы архиваторов
 				// в первый раз указывая хэндлы, а во второй - меняя STD_OUTPUT_HANDLE?
 				HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
-				//if (!CEAnsi::IsOutputHandle(hStdOut))
+				//if (!HandleKeeper::IsOutputHandle(hStdOut))
 				//	bDetachedOrHidden = true;
 			}
 			#endif

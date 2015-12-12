@@ -66,6 +66,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/ConEmuCheck.h"
 #include "../common/execute.h"
 #endif
+#include "../common/HandleKeeper.h"
 #include "../common/PipeServer.h"
 #include "../common/ConEmuInOut.h"
 
@@ -1240,7 +1241,7 @@ void InitExeName()
 	{
 		gbIsPowerShellProcess = true;
 		HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
-		if (CEAnsi::IsOutputHandle(hStdOut))
+		if (HandleKeeper::IsOutputHandle(hStdOut))
 		{
 			gbPowerShellMonitorProgress = true;
 			MY_CONSOLE_SCREEN_BUFFER_INFOEX csbi = {sizeof(csbi)};
@@ -1584,6 +1585,7 @@ void DoDllStop(bool bFinal, ConEmuHkDllState bFromTerminate)
 		//#ifndef TESTLINK
 		print_timings(L"CommonShutdown");
 		CommonShutdown();
+		HandleKeeper::ReleaseHandleStorage();
 		DLOGEND1();
 	}
 
@@ -1694,6 +1696,13 @@ BOOL DllMain_ProcessAttach(HANDLE hModule, DWORD  ul_reason_for_call)
 
 
 	InitExeName();
+
+	if (ghConWnd)
+	{
+		HandleKeeper::AllocHandleInfo(GetStdHandle(STD_INPUT_HANDLE), hs_StdIn);
+		HandleKeeper::AllocHandleInfo(GetStdHandle(STD_OUTPUT_HANDLE), hs_StdOut);
+		HandleKeeper::AllocHandleInfo(GetStdHandle(STD_ERROR_HANDLE), hs_StdErr);
+	}
 
 
 	DLOG1_("DllMain.RootEvents",ul_reason_for_call);

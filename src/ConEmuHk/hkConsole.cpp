@@ -39,6 +39,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 #include "../common/Common.h"
+#include "../common/HandleKeeper.h"
 #include "../common/WConsole.h"
 
 #include "Ansi.h"
@@ -608,6 +609,9 @@ HANDLE WINAPI OnCreateConsoleScreenBuffer(DWORD dwDesiredAccess, DWORD dwShareMo
 	HANDLE h = INVALID_HANDLE_VALUE;
 	if (F(CreateConsoleScreenBuffer))
 		h = F(CreateConsoleScreenBuffer)(dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwFlags, lpScreenBufferData);
+
+	if (h && (h != INVALID_HANDLE_VALUE))
+		HandleKeeper::AllocHandleInfo(h, hs_CreateConsoleScreenBuffer);
 
 #ifdef SHOWCREATEBUFFERINFO
 	msprintf(szDebugInfo+lstrlen(szDebugInfo), 32, L"=0x%X", (DWORD)(DWORD_PTR)h);
