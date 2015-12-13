@@ -39,21 +39,25 @@ typedef struct tag_CharAttr
 		// Собственно цвета/шрифты
 		struct
 		{
+			// *** Begin of All comparison
 			unsigned int crForeColor : 24; // чтобы в ui64 поместился и nFontIndex
 			unsigned int nFontIndex : 8; // 0=normal, or combination {1=bold,2=italic,4=underline}, or 8=UCharMap
 			unsigned int crBackColor : 24; // чтобы в ui64 поместился и Flags
-			unsigned int Flags : 8; // вспомогательные флаги CharAttr_XXX
-			unsigned int nForeIdx : 8;
-			unsigned int nBackIdx : 8; // может понадобиться для ExtendColors
-			unsigned int crOrigForeColor : 32;
-			unsigned int crOrigBackColor : 32; // Реальные цвета в консоли, crForeColor и crBackColor могут быть изменены колорером
-			// вспомогательные флаги
 			#define CharAttr_Dialog         1
 			#define CharAttr_DialogVBorder  2
 			#define CharAttr_DialogCorner   4
 			#define CharAttr_SomeFilled     8
 			#define CharAttr_Transparent   16
 			#define CharAttr_DoubleSpaced  32 // DBCS glyphs used full (double) space
+			unsigned int Flags : 8; // Warning! These flags are used in "All" comparison
+			// *** End of All comparison
+			#define CharAttr2_NonSpacing    1 // low-surrogate pair
+			#define CharAttr2_Combining     2 // combining characters, drawn over previous one
+			unsigned int Flags2 : 8; // вспомогательные флаги CharAttr_XXX
+			unsigned int nForeIdx : 8; // Only 5 bits are used at the moment (0..15 base colors + 15..31 extended colors)
+			unsigned int nBackIdx : 8; // Used to ExtendColors and ExtendFonts
+			unsigned int crOrigForeColor : 24;
+			unsigned int crOrigBackColor : 24; // Реальные цвета в консоли, crForeColor и crBackColor могут быть изменены колорером
 			//bool bDialog;
 			//bool bDialogVBorder;
 			//bool bDialogCorner;
