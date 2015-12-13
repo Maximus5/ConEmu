@@ -5345,7 +5345,7 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 	//	&& !(mb_LeftPanel && mb_RightPanel) // и хотя бы одна панель погашена
 	//	&& (!con.m_ci.bVisible || con.m_ci.dwSize<30) // и сейчас НЕ включен режим граббера
 	//	;
-	CharAttr lca, lcaTableExt[0x100], lcaTableOrg[0x100], *lcaTable; // crForeColor, crBackColor, nFontIndex, nForeIdx, nBackIdx, crOrigForeColor, crOrigBackColor
+	CharAttr lcaTableExt[0x100], lcaTableOrg[0x100], *lcaTable; // crForeColor, crBackColor, nFontIndex, nForeIdx, nBackIdx, crOrigForeColor, crOrigBackColor
 	//COLORREF lcrForegroundColors[0x100], lcrBackgroundColors[0x100];
 	//BYTE lnForegroundColors[0x100], lnBackgroundColors[0x100], lnFontByIndex[0x100];
 
@@ -5589,30 +5589,10 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 				// Атрибуты
 				DWORD atr = 0;
 
-				if (mp_RCon->mn_InRecreate)
-				{
-					lca = lcaTable[7];
+				// While console is in recreate (shutdown console, startup new root)
+				// it's shown using monochrome (gray on black)
+				bool bForceMono = (mp_RCon->mn_InRecreate != 0);
 
-					if (!gbIsDBCS)
-					{
-						for (nX = 0; nX < (int)cnSrcLineLen; nX++, pnSrc++, pcolSrc++)
-						{
-							pcaDst[nX] = lca;
-						}
-					}
-					else
-					{
-						for (nX = 0; nX < (int)cnSrcLineLen; nX++, pnSrc++, pcolSrc++)
-						{
-							pcaDst[nX] = lca;
-							if ((*pnSrc & (COMMON_LVB_LEADING_BYTE|COMMON_LVB_TRAILING_BYTE)) == (COMMON_LVB_LEADING_BYTE|COMMON_LVB_TRAILING_BYTE))
-							{
-								pcaDst[nX].Flags |= CharAttr_DoubleSpaced;
-							}
-						}
-					}
-				}
-				else
 				{
 					#if 0
 					bool lbHilightFileLine = lbAllowHilightFileLine
@@ -5622,7 +5602,11 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 					#endif
 					for (nX = 0; nX < (int)cnSrcLineLen; nX++, pnSrc++, pcolSrc++)
 					{
-						atr = (*pnSrc) & 0xFF; // интересует только нижний байт - там индексы цветов
+						CharAttr& lca = pcaDst[nX];
+						bool hasTrueColor = false;
+
+						// If not "mono" we need only lower byte with color indexes
+						atr = bForceMono ? 7 : ((*pnSrc) & 0xFF);
 						TODO("OPTIMIZE: lca = lcaTable[atr];");
 						lca = lcaTable[atr];
 						TODO("OPTIMIZE: вынести проверку bExtendColors за циклы");
@@ -5630,21 +5614,6 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 						if (gbIsDBCS && ((*pnSrc & (COMMON_LVB_LEADING_BYTE|COMMON_LVB_TRAILING_BYTE)) == (COMMON_LVB_LEADING_BYTE|COMMON_LVB_TRAILING_BYTE)))
 						{
 							lca.Flags |= CharAttr_DoubleSpaced;
-						}
-
-						if (bExtendColors && (nY >= nExtendStartsY))
-						{
-							if (lca.nBackIdx == nExtendColorIdx)
-							{
-								lca.nBackIdx = attrBackLast; // фон нужно заменить на обычный цвет из соседней ячейки
-								lca.nForeIdx += 0x10;
-								lca.crForeColor = lca.crOrigForeColor = mp_RCon->mp_VCon->mp_Colors[lca.nForeIdx];
-								lca.crBackColor = lca.crOrigBackColor = mp_RCon->mp_VCon->mp_Colors[lca.nBackIdx];
-							}
-							else if (lbStoreBackLast)
-							{
-								attrBackLast = lca.nBackIdx; // запомним обычный цвет предыдущей ячейки
-							}
 						}
 
 						// Colorer & Far - TrueMod
@@ -5674,6 +5643,7 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 
 								if (pcolSrc->fg_valid)
 								{
+									hasTrueColor = true;
 									lca.nFontIndex = 0; //bold/italic/underline, выставляется ниже
 									lca.crForeColor = lbFade ? gpSet->GetFadeColor(pcolSrc->fg_color) : pcolSrc->fg_color;
 
@@ -5682,6 +5652,7 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 								}
 								else if (pcolSrc->bk_valid)
 								{
+									hasTrueColor = true;
 									lca.nFontIndex = 0; //bold/italic/underline, выставляется ниже
 									lca.crBackColor = lbFade ? gpSet->GetFadeColor(pcolSrc->bk_color) : pcolSrc->bk_color;
 								}
@@ -5692,12 +5663,22 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 							}
 						}
 
-						//if (lbHilightFileLine && (nX >= con.etr.mcr_FileLineStart.X) && (nX <= con.etr.mcr_FileLineEnd.X))
-						//	lca.nFontIndex |= 4; // Отрисовать его как Underline
-
-						TODO("OPTIMIZE: lca = lcaTable[atr];");
-						pcaDst[nX] = lca;
-						//memmove(pcaDst, pnSrc, cbLineSize);
+						if (!hasTrueColor && bExtendColors && (nY >= nExtendStartsY))
+						{
+							if (lca.nBackIdx == nExtendColorIdx)
+							{
+								// Have to change the color to adjacent(?) cell
+								lca.nBackIdx = attrBackLast;
+								lca.nForeIdx += 0x10;
+								lca.crForeColor = lca.crOrigForeColor = mp_RCon->mp_VCon->mp_Colors[lca.nForeIdx];
+								lca.crBackColor = lca.crOrigBackColor = mp_RCon->mp_VCon->mp_Colors[lca.nBackIdx];
+							}
+							else if (lbStoreBackLast)
+							{
+								// Remember last "normal" background
+								attrBackLast = lca.nBackIdx;
+							}
+						}
 					}
 
 					#if 0
@@ -5877,7 +5858,7 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 			wmemset(pChar+nLen, L' ', nWidth-nLen);
 
 		//wmemset((wchar_t*)pAttr, 0x47, nWidth);
-		lca = lcaTableExt[7];
+		CharAttr lca = lcaTableExt[7];
 
 		for(int i = 0; i < nWidth; i++)
 			pAttr[i] = lca;
