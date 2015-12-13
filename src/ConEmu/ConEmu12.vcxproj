@@ -982,6 +982,7 @@ copy "$(TargetPath)" Z:\</Command>
     <ClCompile Include="..\common\RConStartArgs.cpp" />
     <ClCompile Include="..\common\RgnDetect.cpp" />
     <ClCompile Include="..\common\SetEnvVar.cpp" />
+    <ClCompile Include="..\common\wcchars.cpp" />
     <ClCompile Include="..\common\WConsoleInfo.cpp" />
     <ClCompile Include="..\common\wcwidth.cpp" />
     <ClCompile Include="..\common\WFiles.cpp" />
@@ -1104,6 +1105,7 @@ copy "$(TargetPath)" Z:\</Command>
     <ClInclude Include="..\common\StartupEnvDef.h" />
     <ClInclude Include="..\common\StartupEnvEx.h" />
     <ClInclude Include="..\common\UnicodeChars.h" />
+    <ClInclude Include="..\common\wcchars.h" />
     <ClInclude Include="..\common\WConsoleInfo.h" />
     <ClInclude Include="..\common\wcwidth.h" />
     <ClInclude Include="..\common\WFiles.h" />

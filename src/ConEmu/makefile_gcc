@@ -48,6 +48,7 @@ SRCS = \
 		../common/RConStartArgs.cpp  \
 		../common/RgnDetect.cpp      \
 		../common/SetEnvVar.cpp      \
+		../common/wcchars.cpp        \
 		../common/WConsoleInfo.cpp       \
 		../common/wcwidth.cpp        \
 		../common/WFiles.cpp         \

@@ -128,6 +128,7 @@ $(INTDIR)\VConChild.obj \
 $(INTDIR)\VConGroup.obj \
 $(INTDIR)\VConRelease.obj \
 $(INTDIR)\VirtualConsole.obj \
+$(INTDIR)\wcchars.obj \
 $(INTDIR)\WConsoleInfo.obj \
 $(INTDIR)\wcwidth.obj \
 $(INTDIR)\WFiles.obj \
@@ -485,6 +486,8 @@ $(INTDIR)\VConGroup.obj: VConGroup.cpp VConRelease.h VirtualConsole.h VConChild.
 $(INTDIR)\VConRelease.obj: VConRelease.cpp VConRelease.h VirtualConsole.h VConChild.h
 
 $(INTDIR)\VirtualConsole.obj: VirtualConsole.cpp VConRelease.h VirtualConsole.h VConChild.h VConGroup.h
+
+$(INTDIR)\wcchars.obj: ../common/wcchars.cpp ../common/wcchars.h
 
 $(INTDIR)\WConsoleInfo.obj: ../common/WConsoleInfo.cpp
 
