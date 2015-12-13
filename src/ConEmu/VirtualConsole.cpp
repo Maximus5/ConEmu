@@ -2989,128 +2989,6 @@ bool CVirtualConsole::UpdatePrepare(HDC *ahDc, MSectionLock *pSDC, MSectionLock 
 	return true;
 }
 
-//enum CVirtualConsole::_PartType CVirtualConsole::GetCharType(wchar_t ch)
-//{
-//    enum _PartType cType = pNull;
-//
-//    if (ch == L' ')
-//        cType = pSpace;
-//    //else if (ch == L'_')
-//    //  cType = pUnderscore;
-//    else if (isCharBorder(ch)) {
-//        if (isCharBorderVertical(ch))
-//            cType = pVBorder;
-//        else
-//            cType = pBorder;
-//    }
-//    else if (isFilePanel && ch == L'}')
-//        cType = pRBracket;
-//    else
-//        cType = pText;
-//
-//    return cType;
-//}
-
-
-
-// row - 0-based
-//void CVirtualConsole::ParseLine(int row, wchar_t *ConCharLine, WORD *ConAttrLine)
-//{
-//    //UINT idx = 0;
-//    struct _TextParts *pStart=TextParts, *pEnd=TextParts;
-//    enum _PartType cType1, cType2;
-//    UINT i1=0, i2=0;
-//
-//    pEnd->partType = pNull; // сразу ограничим строку
-//
-//    wchar_t ch1, ch2;
-//    BYTE af1, ab1, af2, ab2;
-//    DWORD pixels;
-//    while (i1<TextWidth)
-//    {
-//        //GetCharAttr(ConCharLine[i1], ConAttrLine[i1], ch1, af1, ab1);
-//		ch1 = ConCharLine[i1];
-//		GetCharAttr(ConAttrLine[i1], af1, ab1, NULL);
-//        cType1 = GetCharType(ch1);
-//        if (cType1 == pRBracket) {
-//            if (!(row>=2 && isCharBorderVertical(mpsz_ConChar[TextWidth+i1]))
-//                && (((UINT)row)<=(TextHeight-4)))
-//                cType1 = pText;
-//        }
-//        pixels = CharWidth(ch1);
-//
-//        i2 = i1+1;
-//        // в режиме Force Monospace отрисовка идет по одному символу
-//        if (!gpSet->isForceMonospace && i2 < TextWidth &&
-//            (cType1 != pVBorder && cType1 != pRBracket))
-//        {
-//            //GetCharAttr(ConCharLine[i2], ConAttrLine[i2], ch2, af2, ab2);
-//			ch2 = ConCharLine[i2];
-//			GetCharAttr(ConAttrLine[i2], af2, ab2, NULL);
-//            // Получить блок символов с аналогичными цветами
-//            while (i2 < TextWidth && af2 == af1 && ab2 == ab1) {
-//                // если символ отличается от первого
-//
-//                cType2 = GetCharType(ch2);
-//                if ((ch2 = ConCharLine[i2]) != ch1) {
-//                    if (cType2 == pRBracket) {
-//                        if (!(row>=2 && isCharBorderVertical(mpsz_ConChar[TextWidth+i2]))
-//                            && (((UINT)row)<=(TextHeight-4)))
-//                            cType2 = pText;
-//                    }
-//
-//                    // и он вообще из другой группы
-//                    if (cType2 != cType1)
-//                        break; // то завершаем поиск
-//                }
-//                pixels += CharWidth(ch2); // добавить ширину символа в пикселях
-//                i2++; // следующий символ
-//                //GetCharAttr(ConCharLine[i2], ConAttrLine[i2], ch2, af2, ab2);
-//				ch2 = ConCharLine[i2];
-//				GetCharAttr(ConAttrLine[i2], af2, ab2, NULL);
-//                if (cType2 == pRBracket) {
-//                    if (!(row>=2 && isCharBorderVertical(mpsz_ConChar[TextWidth+i2]))
-//                        && (((UINT)row)<=(TextHeight-4)))
-//                        cType2 = pText;
-//                }
-//            }
-//        }
-//
-//        // при разборе строки будем смотреть, если нашли pText,pSpace,pText то pSpace,pText добавить в первый pText
-//        if (cType1 == pText && (pEnd - pStart) >= 2) {
-//            if (pEnd[-1].partType == pSpace && pEnd[-2].partType == pText &&
-//                pEnd[-1].attrBack == ab1 && pEnd[-1].attrFore == af1 &&
-//                pEnd[-2].attrBack == ab1 && pEnd[-2].attrFore == af1
-//                )
-//            {
-//                pEnd -= 2;
-//                pEnd->i2 = i2 - 1;
-//                pEnd->iwidth = i2 - pEnd->i1;
-//                pEnd->width += pEnd[1].width + pixels;
-//                pEnd ++;
-//                i1 = i2;
-//                continue;
-//            }
-//        }
-//        pEnd->i1 = i1; pEnd->i2 = i2 - 1; // конец "включая"
-//        pEnd->partType = cType1;
-//        pEnd->attrBack = ab1; pEnd->attrFore = af1;
-//        pEnd->iwidth = i2 - i1;
-//        pEnd->width = pixels;
-//        if (gpSet->isForceMonospace ||
-//            (gpSet->isProportional && (cType1 == pVBorder || cType1 == pRBracket)))
-//        {
-//            pEnd->x1 = i1 * gpSetCls->FontWidth();
-//        } else {
-//            pEnd->x1 = -1;
-//        }
-//
-//        pEnd ++; // блоков не может быть больше количества символов в строке, так что с размерностью все ОК
-//        i1 = i2;
-//    }
-//    // пока поставим конец блоков, потом, если ширины не хватит - добавим pDummy
-//    pEnd->partType = pNull;
-//}
 
 void CVirtualConsole::Update_CheckAndFill()
 {
@@ -3738,118 +3616,6 @@ void CVirtualConsole::UpdateText()
 			HEAPVAL
 			DEBUGTEST(nCurCharWidth=nCurCharWidth);
 
-			#if 0
-			if (bForceMonospace)
-			{
-				HEAPVAL
-				//m_DC.SetBkColor(pColors[attrBack]);
-				m_DC.SetBkColor(attr.crBackColor);
-				j2 = j + 1;
-
-				if (bFixFarBorders && isUnicode)
-					SelectFont(hFont2);
-				else
-					SelectFont(hFont);
-
-				RECT rect;
-
-				rect = MakeRect(j * nFontWidth, pos, j2 * nFontWidth, pos + nFontHeight);
-
-				UINT nFlags = /*ETO_CLIPPED |*/ ((drawImage && ISBGIMGCOLOR(attr.nBackIdx)) ? 0 : ETO_OPAQUE);
-				int nShift = 0;
-				HEAPVAL
-
-				if (!isSpace && !isUnicodeOrProgress)
-				{
-					ABC abc;
-					//Для НЕ TrueType вызывается wrapper (CharWidth)
-					CharABC(c, &abc);
-
-					if (abc.abcA<0)
-					{
-						// иначе символ наверное налезет на предыдущий?
-						nShift = -abc.abcA;
-					}
-					else if (abc.abcB < (UINT)nFontWidth)
-					{
-						int nEdge = (nFontWidth - abc.abcB - 1) >> 1;
-
-						if (abc.abcA < nEdge)
-						{
-							// символ I, i, и др. очень тонкие - рисуем посередине
-							nShift = nEdge - abc.abcA;
-						}
-					}
-				}
-
-				HEAPVAL
-				BOOL lbImgDrawn = FALSE;
-
-				if (!(drawImage && ISBGIMGCOLOR(attr.nBackIdx)))
-				{
-					//m_DC.SetBkColor(pColors[attrBack]);
-					m_DC.SetBkColor(attr.crBackColor);
-
-					// В режиме ForceMonospace символы пытаемся рисовать по центру (если они уже знакоместа)
-					// чтобы не оставалось мусора от предыдущей отрисовки - нужно залить знакоместо фоном
-					if (nShift>0 && !isSpace && !isProgress)
-					{
-						HBRUSH hbr = PartBrush(L' ', attr.crBackColor, attr.crForeColor);
-						FillRect(m_DC, &rect, hbr);
-					}
-				}
-				else if (drawImage)
-				{
-					BlitPictureTo(rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, attr.crBackColor);
-					lbImgDrawn = TRUE;
-				}
-
-				if (nShift>0)
-				{
-					rect.left += nShift;
-					// если сделать так - фон вылезает за правую границу (nShift > 0)
-					//rect.right += nShift;
-				}
-
-				if (gbNoDblBuffer) GdiFlush();
-
-				if (/*isSpace ||*/ (isProgress && bEnhanceGraphics))
-				{
-					HBRUSH hbr = PartBrush(c, attr.crBackColor, attr.crForeColor);
-					FillRect(m_DC, &rect, hbr);
-				}
-				else if (/*gpSet->isProportional &&*/ isSpace/*c == ' '*/)
-				{
-					//int nCnt = ((rect.right - rect.left) / CharWidth(L' '))+1;
-					//Ext Text Out(m_DC, rect.left, rect.top, nFlags, &rect, Spaces, nCnt, 0);
-					TODO("Проверить, что будет если картинка МЕНЬШЕ по ширине чем область отрисовки");
-
-					if (!lbImgDrawn)
-					{
-						HBRUSH hbr = PartBrush(L' ', attr.crBackColor, attr.crForeColor);
-						FillRect(m_DC, &rect, hbr);
-					}
-				}
-				else
-				{
-					// Это режим Force monospace
-					if (nFontCharSet == OEM_CHARSET && !isUnicode)
-					{
-						char cOem = Uni2Oem(c);
-						m_DC.ExtTextOutA(rect.left, rect.top, nFlags, &rect, &cOem, 1, 0);
-					}
-					else
-					{
-						m_DC.ExtTextOut(rect.left, rect.top, nFlags, &rect, &c, 1, 0);
-					}
-				}
-
-				if (gbNoDblBuffer) GdiFlush();
-
-				HEAPVAL
-			} // end  - if (gpSet->isForceMonospace)
-			else
-			#endif
 			{
 				wchar_t* pszDraw = NULL;
 				CharAttr* pDrawAttr = NULL;
@@ -3992,12 +3758,6 @@ void CVirtualConsole::UpdateText()
 							#endif
 						}
 
-						//while (j2 < end && ConAttrLine[j2] == attr &&
-						//    isCharBorder(ch = ConCharLine[j2]) && ch == ConCharLine[j2+1])
-						//{
-						//    ConCharXLine[j2] = (j2 ? ConCharXLine[j2-1] : 0)+CharWidth(ch);
-						//    j2++;
-						//}
 					}
 
 					SelectFont(bFixFarBorders ? hFont2 : hFont);
@@ -4085,8 +3845,6 @@ void CVirtualConsole::UpdateText()
 				}
 				else if (/*gpSet->isProportional &&*/ isSpace/*c == ' '*/)
 				{
-					//int nCnt = ((rect.right - rect.left) / CharWidth(L' '))+1;
-					//Ext Text Out(m_DC, rect.left, rect.top, nFlags, &rect, Spaces, nCnt, 0);
 					TODO("Проверить, что будет если картинка МЕНЬШЕ по ширине чем область отрисовки");
 
 					if (!lbImgDrawn)
@@ -4097,29 +3855,6 @@ void CVirtualConsole::UpdateText()
 				}
 				else
 				{
-					// В целях оптимизации вынесем проверку bProportional за пределы цикла
-					/*if (bProportional) {
-
-						if (!isSpace && !isUnicodeOrProgress) {
-							ABC abc;
-							//Для НЕ TrueType вызывается wrapper (CharWidth)
-							CharABC(c, &abc);
-
-							if (abc.abcA<0) {
-								// иначе символ наверное налезет на предыдущий?
-								nShift = -abc.abcA;
-
-							} else if (abc.abcB < (UINT)nFontWidth)  {
-								int nEdge = (nFontWidth - abc.abcB - 1) >> 1;
-								if (abc.abcA < nEdge) {
-									// символ I, i, и др. очень тонкие - рисуем посередине
-									nShift = nEdge - abc.abcA;
-								}
-							}
-						}
-
-					} else {
-					}*/
 					if (nFontCharSet == OEM_CHARSET && !(bFixFarBorders && isUnicode))
 					{
 						if (nDrawLen > (int)TextWidth)
