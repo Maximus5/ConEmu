@@ -1505,28 +1505,27 @@ void CVirtualConsole::CharABC(wchar_t ch, ABC *abc)
 // Возвращает ширину символа, учитывает FixBorders
 WORD CVirtualConsole::CharWidth(wchar_t ch, const CharAttr& attr)
 {
-	// Проверяем сразу, чтобы по условиям не бегать
-	WORD nWidth = gpSetCls->m_CharWidth[ch];
-
-	if (nWidth)
-		return nWidth;
-
-	if (gbIsDBCS && (attr.Flags & CharAttr_DoubleSpaced))
+	if (attr.Flags2 & (CharAttr2_NonSpacing|CharAttr2_Combining))
 	{
-		// We need to check its real width - below
-		DEBUGTEST(int CJK = 2*nFontWidth);
-		//-- gpSetCls->m_CharWidth[ch] = 2*nFontWidth;
+		return 0;
+	}
+	else if (attr.Flags & CharAttr_DoubleSpaced)
+	{
+		return 2*nFontWidth;
 	}
 	else if (gpSet->isMonospace
 	        || (gpSet->isFixFarBorders && isCharBorder(ch))
 	        || (gpSet->isEnhanceGraphics && isCharProgress(ch))
 			)
 	{
-		//2009-09-09 Это некорректно. Ширина шрифта рамки может быть больше знакоместа
-		//return gpSet->BorderFontWidth();
-		gpSetCls->m_CharWidth[ch] = nFontWidth;
 		return nFontWidth;
 	}
+
+	// Проверяем сразу, чтобы по условиям не бегать
+	WORD& nWidth = gpSetCls->m_CharWidth[ch];
+
+	if (nWidth)
+		return nWidth;
 
 	//nWidth = nFontWidth;
 	//bool isBorder = false; //, isVBorder = false;
@@ -1558,7 +1557,6 @@ WORD CVirtualConsole::CharWidth(wchar_t ch, const CharAttr& attr)
 	if (!nWidth)
 		nWidth = 1; // на всякий случай, чтобы деления на 0 не возникло
 
-	gpSetCls->m_CharWidth[ch] = nWidth;
 	return nWidth;
 }
 
@@ -3663,7 +3661,7 @@ void CVirtualConsole::UpdateText()
 							&& !isCharNonSpacing(ch)
 							&& (!bProportional || !isFilePanel || (ch != L'}' && ch!=L' '))) // корректировка имен в колонках
 					{
-						WORD nCurCharWidth2 = CharWidth(ch, attr);
+						WORD nCurCharWidth2 = CharWidth(ch, ConAttrLine[j2]);
 						ConCharXLine[j2] = (j2 ? ConCharXLine[j2-1] : 0)+nCurCharWidth2;
 						j2++;
 					}
@@ -3704,7 +3702,7 @@ void CVirtualConsole::UpdateText()
 
 						while (j2 < end && ConAttrLine[j2] == attr && isCharBorder(ch = ConCharLine[j2]))
 						{
-							WORD nCurCharWidth2 = CharWidth(ch, attr);
+							WORD nCurCharWidth2 = CharWidth(ch, ConAttrLine[j2]);
 							ConCharXLine[j2] = (j2 ? ConCharXLine[j2-1] : 0)+nCurCharWidth2;
 							j2++;
 						}
@@ -3896,7 +3894,7 @@ void CVirtualConsole::UpdateText()
 							{
 								// В этом режиме символ отрисовывается в начале своей ячейки
 								// Информация для GDI. Ширина отрисовки, т.е. сдвиг между текущим и следующим символом.
-								if (!gbIsDBCS || !pDrawAttr)
+								if (!pDrawAttr)
 								{
 									for (int idx = 0, n = nDrawLen; n; idx++, n--)
 										nDX[idx] = nFontWidth;
@@ -3905,9 +3903,7 @@ void CVirtualConsole::UpdateText()
 								else
 								{
 									for (int idx = 0, n = nDrawLen; n; idx++, n--)
-										nDX[idx] = (pDrawAttr[idx].Flags & CharAttr_DoubleSpaced)
-											? CharWidth(pszDraw[idx], attr)
-											: nFontWidth;
+										nDX[idx] = CharWidth(pszDraw[idx], pDrawAttr[idx]);
 									HEAPVALPTR(nDX);
 								}
 							}
@@ -3921,7 +3917,7 @@ void CVirtualConsole::UpdateText()
 									// брать кусок RTL и считать nDX для pszDraw в обратном порядке
 
 									wchar_t ch = pszDraw[idx];
-									LONG nCharWidth = CharWidth(ch, attr);
+									LONG nCharWidth = CharWidth(ch, pDrawAttr ? pDrawAttr[idx] : attr);
 
 									if (isCharSpace(ch)
 										|| (attr.Flags & CharAttr_DoubleSpaced)
