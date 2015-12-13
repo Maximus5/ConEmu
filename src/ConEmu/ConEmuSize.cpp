@@ -5955,13 +5955,16 @@ void CConEmuSize::DoMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 				StopForceShowFrame();
 				mn_QuakePercent = 1;
 				UpdateWindowRgn();
-				apiShowWindow(ghWnd, SW_SHOWNOACTIVATE);
-				apiShowWindow(ghWnd, SW_HIDE);
 
 				if (!bMinToTray && (cmd != sih_ShowHideTSA))
 				{
 					// Если в трей не скрываем - то окошко нужно "вернуть на таскбар"
+					apiShowWindow(ghWnd, SW_SHOWMINNOACTIVE);
+				}
+				else
+				{
 					apiShowWindow(ghWnd, SW_SHOWNOACTIVATE);
+					apiShowWindow(ghWnd, SW_HIDE);
 				}
 
 			}
