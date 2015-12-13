@@ -417,6 +417,7 @@
       <File RelativePath="..\common\RgnDetect.cpp" />
       <File RelativePath="..\common\SetEnvVar.cpp" />
       <File RelativePath="..\common\WConsoleInfo.cpp" />
+      <File RelativePath="..\common\wcwidth.cpp" />
       <File RelativePath="..\common\WFiles.cpp" />
       <File RelativePath="..\common\WObjects.cpp" />
       <File RelativePath="..\common\WRegistry.cpp" />
@@ -537,6 +538,7 @@
       <File RelativePath="..\common\StartupEnvEx.h" />
       <File RelativePath="..\common\UnicodeChars.h" />
       <File RelativePath="..\common\WConsoleInfo.h" />
+      <File RelativePath="..\common\wcwidth.h" />
       <File RelativePath="..\common\WFiles.h" />
       <File RelativePath="..\common\WObjects.h" />
       <File RelativePath="..\common\WRegistry.h" />

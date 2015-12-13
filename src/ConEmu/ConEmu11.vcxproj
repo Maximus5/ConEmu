@@ -916,6 +916,7 @@
     <ClCompile Include="..\common\RgnDetect.cpp" />
     <ClCompile Include="..\common\SetEnvVar.cpp" />
     <ClCompile Include="..\common\WConsoleInfo.cpp" />
+    <ClCompile Include="..\common\wcwidth.cpp" />
     <ClCompile Include="..\common\WFiles.cpp" />
     <ClCompile Include="..\common\WObjects.cpp" />
     <ClCompile Include="..\common\WRegistry.cpp" />
@@ -1037,6 +1038,7 @@
     <ClInclude Include="..\common\StartupEnvEx.h" />
     <ClInclude Include="..\common\UnicodeChars.h" />
     <ClInclude Include="..\common\WConsoleInfo.h" />
+    <ClInclude Include="..\common\wcwidth.h" />
     <ClInclude Include="..\common\WFiles.h" />
     <ClInclude Include="..\common\WObjects.h" />
     <ClInclude Include="..\common\WRegistry.h" />
