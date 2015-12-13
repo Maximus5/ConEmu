@@ -87,7 +87,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * Latest version: http://www.cl.cam.ac.uk/~mgk25/ucs/wcwidth.c
  */
 
-#include <wchar.h>
+#include "defines.h"
 #include "wcwidth.h"
 
 struct interval
@@ -104,7 +104,9 @@ static int bisearch(wchar_t ucs, const struct interval *table, int max)
 
 	if (ucs < table[0].first || ucs > table[max].last)
 		return 0;
-	while (max >= min) {
+
+	while (max >= min)
+	{
 		mid = (min + max) / 2;
 		if (ucs > table[mid].last)
 			min = mid + 1;
@@ -213,8 +215,7 @@ int mk_wcwidth(wchar_t ucs)
 		return -1;
 
 	/* binary search in table of non-spacing characters */
-	if (bisearch(ucs, combining,
-		sizeof(combining) / sizeof(struct interval) - 1))
+	if (bisearch(ucs, combining, countof(combining) - 1))
 		return 0;
 
 	/* if we arrive here, ucs is not a combining or C0/C1 control character */
@@ -241,10 +242,12 @@ int mk_wcswidth(const wchar_t *pwcs, size_t n)
 	int w, width = 0;
 
 	for (; *pwcs && n-- > 0; pwcs++)
+	{
 		if ((w = mk_wcwidth(*pwcs)) < 0)
 			return -1;
 		else
 			width += w;
+	}
 
 	return width;
 }
@@ -320,8 +323,7 @@ int mk_wcwidth_cjk(wchar_t ucs)
 	};
 
 	/* binary search in table of non-spacing characters */
-	if (bisearch(ucs, ambiguous,
-		sizeof(ambiguous) / sizeof(struct interval) - 1))
+	if (bisearch(ucs, ambiguous, countof(ambiguous) - 1))
 		return 2;
 
 	return mk_wcwidth(ucs);
@@ -333,10 +335,12 @@ int mk_wcswidth_cjk(const wchar_t *pwcs, size_t n)
 	int w, width = 0;
 
 	for (; *pwcs && n-- > 0; pwcs++)
+	{
 		if ((w = mk_wcwidth_cjk(*pwcs)) < 0)
 			return -1;
 		else
 			width += w;
+	}
 
 	return width;
 }
