@@ -11726,8 +11726,8 @@ void CSettings::UpdateConsoleMode(CRealConsole* pRCon)
 
 void CSettings::ResetFontWidth()
 {
-	memset(CharWidth, 0, sizeof(*CharWidth)*0x10000);
-	memset(CharABC, 0, sizeof(*CharABC)*0x10000);
+	memset(m_CharWidth, 0, sizeof(m_CharWidth));
+	memset(m_CharABC, 0, sizeof(m_CharABC));
 }
 
 

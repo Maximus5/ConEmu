@@ -1462,13 +1462,13 @@ void CVirtualConsole::CharABC(wchar_t ch, ABC *abc)
 
 	WARNING("Не работает с *.bdf?");
 
-	if (!gpSetCls->CharABC[ch].abcB)
+	if (!gpSetCls->m_CharABC[ch].abcB)
 	{
 		if (isCharRTL(ch))
 		{
 			WARNING("Поскольку с RTL все достаточно сложно, пока считаем шрифт моноширинным");
-			gpSetCls->CharABC[ch].abcA = gpSetCls->CharABC[ch].abcC = 0;
-			gpSetCls->CharABC[ch].abcB = nFontWidth;
+			gpSetCls->m_CharABC[ch].abcA = gpSetCls->m_CharABC[ch].abcC = 0;
+			gpSetCls->m_CharABC[ch].abcB = nFontWidth;
 		}
 		else
 		{
@@ -1483,30 +1483,30 @@ void CVirtualConsole::CharABC(wchar_t ch, ABC *abc)
 			}
 
 			//This function succeeds only with TrueType fonts
-			lbCharABCOk = GetCharABCWidths((HDC)m_DC, ch, ch, &gpSetCls->CharABC[ch]);
+			lbCharABCOk = GetCharABCWidths((HDC)m_DC, ch, ch, &gpSetCls->m_CharABC[ch]);
 
 			if (!lbCharABCOk)
 			{
 				// Значит шрифт не TTF/OTF
 				CharAttr nilAttr = {};
-				gpSetCls->CharABC[ch].abcB = CharWidth(ch, nilAttr);
-				_ASSERTE(gpSetCls->CharABC[ch].abcB);
+				gpSetCls->m_CharABC[ch].abcB = CharWidth(ch, nilAttr);
+				_ASSERTE(gpSetCls->m_CharABC[ch].abcB);
 
-				if (!gpSetCls->CharABC[ch].abcB) gpSetCls->CharABC[ch].abcB = 1;
+				if (!gpSetCls->m_CharABC[ch].abcB) gpSetCls->m_CharABC[ch].abcB = 1;
 
-				gpSetCls->CharABC[ch].abcA = gpSetCls->CharABC[ch].abcC = 0;
+				gpSetCls->m_CharABC[ch].abcA = gpSetCls->m_CharABC[ch].abcC = 0;
 			}
 		}
 	}
 
-	*abc = gpSetCls->CharABC[ch];
+	*abc = gpSetCls->m_CharABC[ch];
 }
 
 // Возвращает ширину символа, учитывает FixBorders
 WORD CVirtualConsole::CharWidth(wchar_t ch, const CharAttr& attr)
 {
 	// Проверяем сразу, чтобы по условиям не бегать
-	WORD nWidth = gpSetCls->CharWidth[ch];
+	WORD nWidth = gpSetCls->m_CharWidth[ch];
 
 	if (nWidth)
 		return nWidth;
@@ -1515,8 +1515,7 @@ WORD CVirtualConsole::CharWidth(wchar_t ch, const CharAttr& attr)
 	{
 		// We need to check its real width - below
 		DEBUGTEST(int CJK = 2*nFontWidth);
-		//-- gpSetCls->CharWidth[ch] = 2*nFontWidth;
-		//-- return 2*nFontWidth;
+		//-- gpSetCls->m_CharWidth[ch] = 2*nFontWidth;
 	}
 	else if (gpSet->isMonospace
 	        || (gpSet->isFixFarBorders && isCharBorder(ch))
@@ -1525,7 +1524,7 @@ WORD CVirtualConsole::CharWidth(wchar_t ch, const CharAttr& attr)
 	{
 		//2009-09-09 Это некорректно. Ширина шрифта рамки может быть больше знакоместа
 		//return gpSet->BorderFontWidth();
-		gpSetCls->CharWidth[ch] = nFontWidth;
+		gpSetCls->m_CharWidth[ch] = nFontWidth;
 		return nFontWidth;
 	}
 
@@ -1559,7 +1558,7 @@ WORD CVirtualConsole::CharWidth(wchar_t ch, const CharAttr& attr)
 	if (!nWidth)
 		nWidth = 1; // на всякий случай, чтобы деления на 0 не возникло
 
-	gpSetCls->CharWidth[ch] = nWidth;
+	gpSetCls->m_CharWidth[ch] = nWidth;
 	return nWidth;
 }
 

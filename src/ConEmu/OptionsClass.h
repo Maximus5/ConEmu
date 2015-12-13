@@ -230,8 +230,8 @@ class CSettings
 	public:
 		CEFONT  mh_Font[MAX_FONT_STYLES], mh_Font2;
 		TODO("По хорошему, CharWidth & CharABC нужно разделять по шрифтам - у Bold ширина может быть больше");
-		WORD    CharWidth[0x10000]; //, Font2Width[0x10000];
-		ABC     CharABC[0x10000];
+		WORD    m_CharWidth[0x10000]; //, Font2Width[0x10000];
+		ABC     m_CharABC[0x10000];
 
 		//HWND hMain, hExt, hFar, hKeys, hTabs, hColors, hCmdTasks, hViews, hInfo, hDebug, hUpdate, hSelection;
 		enum TabHwndIndex {
