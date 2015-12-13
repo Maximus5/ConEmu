@@ -45,6 +45,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/MSetter.h"
 #include "../common/RgnDetect.h"
 #include "../common/WConsoleInfo.h"
+#include "../common/wcchars.h"
+#include "../common/wcwidth.h"
 #include "../common/WFiles.h"
 #include "ConEmu.h"
 #include "ConEmuApp.h"
@@ -5600,7 +5602,11 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 							&& (nY == con.etr.mcr_FileLineStart.Y)
 							&& (con.etr.mcr_FileLineStart.X < con.etr.mcr_FileLineEnd.X);
 					#endif
-					for (nX = 0; nX < (int)cnSrcLineLen; nX++, pnSrc++, pcolSrc++)
+					int iTail = cnSrcLineLen;
+					wchar_t* pch = pszDst;
+					for (nX = 0;
+							// Don't forget to advance same pointers at the and if bPair
+							iTail-- > 0; nX++, pnSrc++, pcolSrc++, pch++)
 					{
 						CharAttr& lca = pcaDst[nX];
 						bool hasTrueColor = false;
@@ -5611,10 +5617,9 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 						lca = lcaTable[atr];
 						TODO("OPTIMIZE: вынести проверку bExtendColors за циклы");
 
-						if (gbIsDBCS && ((*pnSrc & (COMMON_LVB_LEADING_BYTE|COMMON_LVB_TRAILING_BYTE)) == (COMMON_LVB_LEADING_BYTE|COMMON_LVB_TRAILING_BYTE)))
-						{
-							lca.Flags |= CharAttr_DoubleSpaced;
-						}
+						bool bPair = (iTail > 0);
+						int wwch = ucs32_from_wchar(pch, bPair);
+						_ASSERTE(wwch >= 0);
 
 						// Colorer & Far - TrueMod
 						TODO("OPTIMIZE: вынести проверку bUseColorData за циклы");
@@ -5678,6 +5683,25 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 								// Remember last "normal" background
 								attrBackLast = lca.nBackIdx;
 							}
+						}
+
+						switch (mk_wcwidth_cjk(wwch))
+						{
+						case 0:
+							lca.Flags2 |= CharAttr2_Combining;
+							break;
+						case 2:
+							lca.Flags |= CharAttr_DoubleSpaced;
+							break;
+						}
+
+						if (bPair)
+						{
+							CharAttr& lca2 = pcaDst[nX+1];
+							lca2 = lca;
+							lca2.Flags2 = (lca.Flags2 & ~(CharAttr2_Combining)) | CharAttr2_NonSpacing;
+							// advance +1 character
+							nX++; pnSrc++; pcolSrc++; pch++; iTail--;
 						}
 					}
 
