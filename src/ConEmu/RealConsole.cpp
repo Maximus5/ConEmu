@@ -5009,7 +5009,7 @@ void CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y, bool abForce
 		return;
 
 	// Если MouseWheel таки посылается в консоль - сбросить TopLeft чтобы избежать коллизий
-	if ((messg == WM_MOUSEWHEEL || messg == WM_MOUSEWHEEL) && (mp_ABuf->m_Type == rbt_Primary))
+	if ((messg == WM_MOUSEWHEEL || messg == WM_MOUSEHWHEEL) && (mp_ABuf->m_Type == rbt_Primary))
 	{
 		mp_ABuf->ResetTopLeft();
 	}
