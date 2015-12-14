@@ -2821,7 +2821,7 @@ bool CVirtualConsole::UpdatePrepare(HDC *ahDc, MSectionLock *pSDC, MSectionLock 
 	attrBackLast = 0;
 	isEditor = mp_RCon->isEditor();
 	isViewer = mp_RCon->isViewer();
-	isFilePanel = mp_RCon->isFilePanel(true);
+	isFilePanel = mp_RCon->isFilePanel(true, false, true);
 	isFade = !isForeground && gpSet->isFadeInactive;
 
 	// Retrieve palette colors
