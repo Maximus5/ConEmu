@@ -3728,7 +3728,7 @@ void CVirtualConsole::UpdateText()
 						// Why that was called? It breaks evaluated previously hieroglyphs positions on DBCS
 						//DistributeSpaces(ConCharLine, ConAttrLine, ConCharXLine, j, j2, end);
 
-						int nBorderWidth = CharWidth(c, attr);
+						int nBorderWidth = nFontWidth;
 						rect.left = j ? ConCharXLine[j-1] : 0;
 						rect.right = (TextWidth>(UINT)j2) ? ConCharXLine[j2-1] : Width;
 						int nCnt = klMin((long)TextWidth,(rect.right - rect.left + (nBorderWidth>>1)) / nBorderWidth);
