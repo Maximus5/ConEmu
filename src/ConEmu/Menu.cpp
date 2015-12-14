@@ -894,8 +894,11 @@ void CConEmuMenu::ShowPopupMenu(CVirtualConsole* apVCon, POINT ptCur, DWORD Alig
 	CVConGuard guard(apVCon);
 	BOOL lbNeedCreate = (mh_PopupMenu == NULL);
 
+	#if 0
+	// -- dummy code, TPM_LEFTALIGN==0
 	if (!Align)
 		Align = TPM_LEFTALIGN;
+	#endif
 
 	// Создать или обновить enable/disable
 	mh_PopupMenu = CreateVConPopupMenu(apVCon, mh_PopupMenu, TRUE);
