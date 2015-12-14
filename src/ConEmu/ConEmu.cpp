@@ -10116,6 +10116,12 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 
 		UpdateControlKeyState();
 
+		// Selection, copy/pase
+		if (pRCon && pRCon->OnMouseSelection(messg, wParam, ptCurClient.x - dcRect.left, ptCurClient.y - dcRect.top))
+		{
+			return 0;
+		}
+
 		bool bDn = (messg == WM_LBUTTONDOWN || messg == WM_RBUTTONDOWN || messg == WM_MBUTTONDOWN);
 		bool bUp = (messg == WM_LBUTTONUP || messg == WM_RBUTTONUP || messg == WM_MBUTTONUP);
 
@@ -10197,11 +10203,9 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		return 0;
 	}
 
-	if (pRCon && pRCon->isSelectionPresent()
-	        && ((wParam & MK_LBUTTON) || messg == WM_LBUTTONUP))
+	// Selection, copy/pase
+	if (pRCon && pRCon->OnMouseSelection(messg, wParam, ptCurClient.x - dcRect.left, ptCurClient.y - dcRect.top))
 	{
-		ptCurClient.x -= dcRect.left; ptCurClient.y -= dcRect.top;
-		pRCon->OnMouse(messg, wParam, ptCurClient.x, ptCurClient.y);
 		return 0;
 	}
 
