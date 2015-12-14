@@ -4867,9 +4867,23 @@ void CRealConsole::OnScroll(UINT messg, WPARAM wParam, int x, int y, bool abFrom
 	} // switch (messg)
 }
 
+bool CRealConsole::OnMouseSelection(UINT messg, WPARAM wParam, int x, int y)
+{
+	if (!this || !hConWnd)
+		return false;
+
+	if (isSelectionPresent()
+		&& ((wParam & MK_LBUTTON) || messg == WM_LBUTTONUP))
+	{
+		return OnMouse(messg, wParam, x, y);
+	}
+
+	return false;
+}
+
 // x,y - экранные координаты
 // Если abForceSend==true - не проверять на "повторность" события, и не проверять "isPressed(VK_?BUTTON)"
-void CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y, bool abForceSend /*= false*/)
+bool CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y, bool abForceSend /*= false*/)
 {
 #ifndef WM_MOUSEHWHEEL
 #define WM_MOUSEHWHEEL                  0x020E
@@ -4880,7 +4894,9 @@ void CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y, bool abForce
 #endif
 
 	if (!this || !hConWnd)
-		return;
+	{
+		return false;
+	}
 
 	if (messg != WM_MOUSEMOVE)
 	{
@@ -4898,8 +4914,11 @@ void CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y, bool abForce
 	if (messg == WM_LBUTTONDOWN)
 		mb_WasMouseSelection = false;
 
+	// Buffer may process mouse events by itself (selections/copy/paste, scroll, ...)
 	if (mp_ABuf->OnMouse(messg, wParam, x, y, crMouse))
-		return; // В консоль не пересылать, событие обработал "сам буфер"
+	{
+		return true;
+	}
 
 	#ifdef _DEBUG
 	if (mp_ABuf->isSelectionPresent())
@@ -4984,18 +5003,23 @@ void CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y, bool abForce
 			}
 
 			if (bWasSendClickToReadCon)
-				return; // уже клик обработали (перемещение текстового курсора в ReadConsoleW)
+			{
+				// Click was processes (moving text cursor by LClick in the ReadConsoleW)
+				return true;
+			}
 		}
 	}
 
-	// Если юзер запретил посылку мышиных событий в консоль
+	// If user has disabled posting mouse events to console
 	if (gpSet->isDisableMouse)
-		return;
+	{
+		return false;
+	}
 
 	// Issue 1165: Don't send "Mouse events" into console input buffer if ENABLE_QUICK_EDIT_MODE
 	if (!abForceSend && !isSendMouseAllowed())
 	{
-		return;
+		return false;
 	}
 
 	DEBUGTEST(bool lbFarBufferSupported = isFarBufferSupported());
@@ -5006,7 +5030,7 @@ void CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y, bool abForce
 	// -- if (isBufferHeight() && !lbFarBufferSupported)
 	// -- заменено на сброс мышиных событий в ConEmuHk при завершении консольного приложения
 	if (isFarInStack() && !gpSet->isUseInjects)
-		return;
+		return false;
 
 	// Если MouseWheel таки посылается в консоль - сбросить TopLeft чтобы избежать коллизий
 	if ((messg == WM_MOUSEWHEEL || messg == WM_MOUSEHWHEEL) && (mp_ABuf->m_Type == rbt_Primary))
@@ -5020,6 +5044,8 @@ void CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y, bool abForce
 	{
 		m_LastMouseGuiPos.x = x; m_LastMouseGuiPos.y = y;
 	}
+
+	return true;
 }
 
 void CRealConsole::PostMouseEvent(UINT messg, WPARAM wParam, COORD crMouse, bool abForceSend /*= false*/)
