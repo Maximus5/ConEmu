@@ -78,6 +78,7 @@ CConEmuMenu::CConEmuMenu()
 	mb_InRestoreFromMinimized = false;
 	mn_SysMenuOpenTick = mn_SysMenuCloseTick = 0;
 	mn_TrackMenuPlace = tmp_None;
+	mb_FromConsoleMenu = false;
 
 	mn_MsgOurSysCommand = gpConEmu->GetRegisteredMessage("UM_SYSCOMMAND");
 
@@ -889,7 +890,7 @@ void CConEmuMenu::OnMenuRClick(HMENU hMenu, UINT nItemPos)
 
 // Показать контекстное меню для ТЕКУЩЕЙ закладки консоли
 // ptCur - экранные координаты
-void CConEmuMenu::ShowPopupMenu(CVirtualConsole* apVCon, POINT ptCur, DWORD Align /* = TPM_LEFTALIGN */)
+void CConEmuMenu::ShowPopupMenu(CVirtualConsole* apVCon, POINT ptCur, DWORD Align /* = TPM_LEFTALIGN */, bool abFromConsole /*= false*/)
 {
 	CVConGuard guard(apVCon);
 	BOOL lbNeedCreate = (mh_PopupMenu == NULL);
@@ -901,7 +902,7 @@ void CConEmuMenu::ShowPopupMenu(CVirtualConsole* apVCon, POINT ptCur, DWORD Alig
 	#endif
 
 	// Создать или обновить enable/disable
-	mh_PopupMenu = CreateVConPopupMenu(apVCon, mh_PopupMenu, TRUE);
+	mh_PopupMenu = CreateVConPopupMenu(apVCon, mh_PopupMenu, true, abFromConsole);
 	if (!mh_PopupMenu)
 	{
 		MBoxAssert(mh_PopupMenu!=NULL);
@@ -935,6 +936,8 @@ void CConEmuMenu::ShowPopupMenu(CVirtualConsole* apVCon, POINT ptCur, DWORD Alig
 	// Некузяво. Может вслыть тултип под меню
 	//ptCur.x++; ptCur.y++; // чтобы меню можно было сразу закрыть левым кликом.
 
+	mb_FromConsoleMenu = abFromConsole;
+
 	int nCmd = trackPopupMenu(tmp_VCon, mh_PopupMenu,
 	                          Align | TPM_RIGHTBUTTON | TPM_NONOTIFY | TPM_RETURNCMD,
 	                          ptCur.x, ptCur.y, ghWnd);
@@ -943,6 +946,8 @@ void CConEmuMenu::ShowPopupMenu(CVirtualConsole* apVCon, POINT ptCur, DWORD Alig
 		return; // отмена
 
 	ExecPopupMenuCmd(tmp_VCon, apVCon, nCmd);
+
+	mb_FromConsoleMenu = false;
 }
 
 void CConEmuMenu::ExecPopupMenuCmd(TrackMenuPlace place, CVirtualConsole* apVCon, int nCmd)
@@ -954,7 +959,7 @@ void CConEmuMenu::ExecPopupMenuCmd(TrackMenuPlace place, CVirtualConsole* apVCon
 	switch (nCmd)
 	{
 		case IDM_CLOSE:
-			if (gpSet->isOneTabPerGroup && CVConGroup::isGroup(apVCon))
+			if (!mb_FromConsoleMenu && gpSet->isOneTabPerGroup && CVConGroup::isGroup(apVCon))
 				CVConGroup::CloseGroup(apVCon);
 			else
 				apVCon->RCon()->CloseTab();
@@ -1158,7 +1163,7 @@ void CConEmuMenu::UpdateSysMenu(HMENU hSysMenu)
 
 		if (mh_ActiveVConPopup) DestroyMenu(mh_ActiveVConPopup);
 		if (mh_TerminateVConPopup) { DestroyMenu(mh_TerminateVConPopup); mh_TerminateVConPopup = NULL; }
-		mh_ActiveVConPopup = CreateVConPopupMenu(NULL, NULL, FALSE);
+		mh_ActiveVConPopup = CreateVConPopupMenu(NULL, NULL, false, false);
 		InsertMenu(hSysMenu, 0, MF_BYPOSITION|MF_POPUP|MF_ENABLED, (UINT_PTR)mh_ActiveVConPopup, _T("Acti&ve console"));
 
 		// --------------------
@@ -1345,7 +1350,7 @@ LRESULT CConEmuMenu::OnInitMenuPopup(HWND hWnd, HMENU hMenu, LPARAM lParam)
 
 			if (mh_ActiveVConPopup)
 			{
-				CreateVConPopupMenu(NULL, mh_ActiveVConPopup, FALSE);
+				CreateVConPopupMenu(NULL, mh_ActiveVConPopup, false, false);
 			}
 			else
 			{
@@ -1877,7 +1882,8 @@ HMENU CConEmuMenu::CreateVConListPopupMenu(HMENU ahExist, BOOL abFirstTabOnly)
 	return h;
 }
 
-HMENU CConEmuMenu::CreateVConPopupMenu(CVirtualConsole* apVCon, HMENU ahExist, BOOL abAddNew)
+// abFromConsole - menu was triggered by either mouse click on the *console surface*, or hotkey presses in the console
+HMENU CConEmuMenu::CreateVConPopupMenu(CVirtualConsole* apVCon, HMENU ahExist, bool abAddNew, bool abFromConsole)
 {
 	//BOOL lbEnabled = TRUE;
 	HMENU hMenu = ahExist;
@@ -1922,13 +1928,20 @@ HMENU CConEmuMenu::CreateVConPopupMenu(CVirtualConsole* apVCon, HMENU ahExist, B
 		AppendMenu(hRestart, MF_STRING|MF_ENABLED, IDM_RESTARTAS,        L"Restart as Admin");
 	}
 
-	#define szRootCloseName MenuAccel(vkCloseTab,gpSet->isOneTabPerGroup ? L"&Close tab or group" : L"&Close tab")
+	CEStr lsCloseText;
+	if (abFromConsole)
+		lsCloseText.Set(L"&Close console");
+	else if (gpSet->isOneTabPerGroup && CVConGroup::isGroup(apVCon))
+		lsCloseText.Set(L"&Close tab group");
+	else
+		lsCloseText.Set(L"&Close tab");
+	lsCloseText.Set(MenuAccel(vkCloseTab, lsCloseText.ms_Arg));
 
 	if (!hMenu)
 	{
 		hMenu = CreatePopupMenu();
 
-		AppendMenu(hMenu,      MF_STRING|MF_ENABLED, IDM_CLOSE,            szRootCloseName);
+		AppendMenu(hMenu,      MF_STRING|MF_ENABLED, IDM_CLOSE,            lsCloseText);
 		AppendMenu(hMenu,      MF_STRING|MF_ENABLED, IDM_RENAMETAB,        MenuAccel(vkRenameTab,L"Rena&me tab..."));
 		AppendMenu(hMenu,      MF_STRING|MF_ENABLED, IDM_CHANGEAFFINITY,   MenuAccel(vkAffinity,L"A&ffinity/priority..."));
 		AppendMenu(hMenu,      MF_POPUP|MF_ENABLED, (UINT_PTR)hRestart,    L"&Restart or duplicate");
@@ -1951,7 +1964,7 @@ HMENU CConEmuMenu::CreateVConPopupMenu(CVirtualConsole* apVCon, HMENU ahExist, B
 	else
 	{
 		MENUITEMINFO mi = {sizeof(mi)};
-		wchar_t szText[255]; wcscpy_c(szText, szRootCloseName);
+		wchar_t szText[255]; wcscpy_c(szText, lsCloseText);
 		mi.fMask = MIIM_STRING; mi.dwTypeData = szText;
 		SetMenuItemInfo(hMenu, IDM_CLOSE, FALSE, &mi);
 	}

@@ -710,7 +710,7 @@ bool CConEmuCtrl::key_TabMenu(const ConEmuChord& VkState, bool TestOnly, const C
 		ptCur = gpConEmu->mp_Menu->CalcTabMenuPos(pRCon->VCon());
 
 	//Win-Apps
-	gpConEmu->mp_Menu->ShowPopupMenu(pRCon->VCon(), ptCur);
+	gpConEmu->mp_Menu->ShowPopupMenu(pRCon->VCon(), ptCur, TPM_LEFTALIGN, true);
 	return true;
 }
 

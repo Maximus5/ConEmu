@@ -55,12 +55,11 @@ public:
 	HMENU CreateViewMenuPopup(CVirtualConsole* apVCon, HMENU ahExist = NULL);
 	HMENU CreateHelpMenuPopup();
 	HMENU CreateVConListPopupMenu(HMENU ahExist, BOOL abFirstTabOnly);
-	HMENU CreateVConPopupMenu(CVirtualConsole* apVCon, HMENU ahExist, BOOL abAddNew);
+	HMENU CreateVConPopupMenu(CVirtualConsole* apVCon, HMENU ahExist, bool abAddNew, bool abFromConsole);
 
 	int trackPopupMenu(TrackMenuPlace place, HMENU hMenu, UINT uFlags, int x, int y, HWND hWnd, RECT *prcRect = NULL);
 
-
-	void ShowPopupMenu(CVirtualConsole* apVCon, POINT ptCur, DWORD Align = TPM_LEFTALIGN);
+	void ShowPopupMenu(CVirtualConsole* apVCon, POINT ptCur, DWORD Align = TPM_LEFTALIGN, bool abFromConsole = false);
 	void ExecPopupMenuCmd(TrackMenuPlace place, CVirtualConsole* apVCon, int nCmd);
 
 	LRESULT OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam, UINT Msg = 0);
@@ -99,6 +98,7 @@ private:
 	bool  mb_InScMinimize;
 	bool  mb_InRestoreFromMinimized;
 	UINT  mn_MsgOurSysCommand;
+	bool  mb_FromConsoleMenu;
 
 	TrackMenuPlace mn_TrackMenuPlace;
 
