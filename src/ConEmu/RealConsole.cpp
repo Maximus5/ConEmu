@@ -13112,7 +13112,7 @@ bool CRealConsole::isFarPanelAllowed()
 	return true;
 }
 
-bool CRealConsole::isFilePanel(bool abPluginAllowed/*=false*/, bool abSkipEditViewCheck /*= false*/)
+bool CRealConsole::isFilePanel(bool abPluginAllowed/*=false*/, bool abSkipEditViewCheck /*= false*/, bool abSkipDialogCheck /*= false*/)
 {
 	if (!this) return false;
 
@@ -13128,7 +13128,8 @@ bool CRealConsole::isFilePanel(bool abPluginAllowed/*=false*/, bool abSkipEditVi
 	// Если висят какие-либо диалоги - считаем что это НЕ панель
 	DWORD dwFlags = mp_ABuf ? mp_ABuf->GetDetector()->GetFlags() : FR_FREEDLG_MASK;
 
-	if ((dwFlags & FR_FREEDLG_MASK) != 0)
+	// We need to polish panel frames even if there are F2/F11/anything
+	if (!abSkipDialogCheck & ((dwFlags & FR_FREEDLG_MASK) != 0))
 		return false;
 
 	// нужно для DragDrop

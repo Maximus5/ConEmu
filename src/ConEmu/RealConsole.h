@@ -598,7 +598,7 @@ class CRealConsole
 		bool isActive(bool abAllowGroup);
 		bool isInFocus();
 		bool isFarPanelAllowed();
-		bool isFilePanel(bool abPluginAllowed = false, bool abSkipEditViewCheck = false);
+		bool isFilePanel(bool abPluginAllowed = false, bool abSkipEditViewCheck = false, bool abSkipDialogCheck = false);
 		bool isEditor();
 		bool isEditorModified();
 		bool isHighlighted();
