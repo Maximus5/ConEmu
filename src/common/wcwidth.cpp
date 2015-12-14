@@ -1,32 +1,5 @@
 ﻿
 /*
-Copyright (c) 2015 Maximus5
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions
-are met:
-1. Redistributions of source code must retain the above copyright
-   notice, this list of conditions and the following disclaimer.
-2. Redistributions in binary form must reproduce the above copyright
-   notice, this list of conditions and the following disclaimer in the
-   documentation and/or other materials provided with the distribution.
-3. The name of the authors may not be used to endorse or promote products
-   derived from this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE AUTHOR ''AS IS'' AND ANY EXPRESS OR
-IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
-OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
-INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
-NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
-THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
-
-/*
  * This is an implementation of wcwidth() and wcswidth() (defined in
  * IEEE Std 1002.1-2001) for Unicode.
  *
@@ -87,52 +60,64 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * Latest version: http://www.cl.cam.ac.uk/~mgk25/ucs/wcwidth.c
  */
 
+/*
+Copyright (c) 2015 Maximus5
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+1. Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in the
+   documentation and/or other materials provided with the distribution.
+3. The name of the authors may not be used to endorse or promote products
+   derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE AUTHOR ''AS IS'' AND ANY EXPRESS OR
+IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
 #include "defines.h"
 #include "wcwidth.h"
 
-struct interval
-{
-	int first;
-	int last;
-};
-
 /* auxiliary function for binary search in interval table */
-static int bisearch(int ucs, const struct interval *table, int max)
+bool bisearch(ucs32 ucs, const struct interval *table, int intervals)
 {
-	int min = 0;
-	int mid;
+	int imin = 0, imax = (intervals - 1);
+	int imid;
 
-	if (ucs < table[0].first || ucs > table[max].last)
-		return 0;
+	if (ucs < table[0].first || ucs > table[imax].last)
+		return false;
 
-	while (max >= min)
+	while (imax >= imin)
 	{
-		mid = (min + max) / 2;
-		if (ucs > table[mid].last)
-			min = mid + 1;
-		else if (ucs < table[mid].first)
-			max = mid - 1;
+		imid = (imin + imax) / 2;
+		if (ucs > table[imid].last)
+			imin = imid + 1;
+		else if (ucs < table[imid].first)
+			imax = imid - 1;
 		else
-			return 1;
+			return true;
 	}
 
-	return 0;
+	return false;
 }
 
 
-/* The following two functions define the column width of an ISO 10646
- * character as follows:
- *
- *    - The null character (U+0000) has a column width of 0.
- *
- *    - Other C0/C1 control characters and DEL will lead to a return
- *      value of -1.
- *
+/*
  *    - Non-spacing and enclosing combining characters (general
  *      category code Mn or Me in the Unicode database) have a
  *      column width of 0.
- *
- *    - SOFT HYPHEN (U+00AD) has a column width of 1.
  *
  *    - Other format characters (general category code Cf in the Unicode
  *      database) and ZERO WIDTH SPACE (U+200B) have a column width of 0.
@@ -140,19 +125,8 @@ static int bisearch(int ucs, const struct interval *table, int max)
  *    - Hangul Jamo medial vowels and final consonants (U+1160-U+11FF)
  *      have a column width of 0.
  *
- *    - Spacing characters in the East Asian Wide (W) or East Asian
- *      Full-width (F) category as defined in Unicode Technical
- *      Report #11 have a column width of 2.
- *
- *    - All remaining characters (including all printable
- *      ISO 8859-1 and WGL4 characters, Unicode control characters,
- *      etc.) have a column width of 1.
- *
- * This implementation assumes that wchar_t characters are encoded
- * in ISO 10646.
  */
-
-int mk_wcwidth(int ucs)
+bool is_char_combining(ucs32 ucs)
 {
 	/* sorted list of non-overlapping intervals of non-spacing characters */
 	/* generated by "uniset +cat=Me +cat=Mn +cat=Cf -00AD +1160-11FF +200B c" */
@@ -208,51 +182,49 @@ int mk_wcwidth(int ucs)
 		{ 0xE0100, 0xE01EF }
 	};
 
-	/* test for 8-bit control characters */
-	/* if they are already on console surface, we'll show their unicode surrogates */
-	if (!ucs || ucs < 32 || (ucs >= 0x7f && ucs < 0xa0))
-		return 1;
-
 	/* binary search in table of non-spacing characters */
-	if (bisearch(ucs, combining, countof(combining) - 1))
-		return 0;
-
-	/* if we arrive here, ucs is not a combining or C0/C1 control character */
-
-	return 1 +
-		(ucs >= 0x1100 &&
-			(ucs <= 0x115f ||                    /* Hangul Jamo init. consonants */
-				ucs == 0x2329 || ucs == 0x232a ||
-				(ucs >= 0x2e80 && ucs <= 0xa4cf &&
-					ucs != 0x303f) ||                  /* CJK ... Yi */
-				(ucs >= 0xac00 && ucs <= 0xd7a3) || /* Hangul Syllables */
-				(ucs >= 0xf900 && ucs <= 0xfaff) || /* CJK Compatibility Ideographs */
-				(ucs >= 0xfe10 && ucs <= 0xfe19) || /* Vertical forms */
-				(ucs >= 0xfe30 && ucs <= 0xfe6f) || /* CJK Compatibility Forms */
-				(ucs >= 0xff00 && ucs <= 0xff60) || /* Fullwidth Forms */
-				(ucs >= 0xffe0 && ucs <= 0xffe6) ||
-				(ucs >= 0x20000 && ucs <= 0x2fffd) ||
-				(ucs >= 0x30000 && ucs <= 0x3fffd)));
+	return bisearch(ucs, combining, countof(combining));
 }
 
 
 /*
- * The following functions are the same as mk_wcwidth() and
- * mk_wcswidth(), except that spacing characters in the East Asian
- * Ambiguous (A) category as defined in Unicode Technical Report #11
- * have a column width of 2. This variant might be useful for users of
- * CJK legacy encodings who want to migrate to UCS without changing
- * the traditional terminal character-width behaviour. It is not
- * otherwise recommended for general use.
+ *    - Spacing characters in the East Asian Wide (W) or East Asian
+ *      Full-width (F) category as defined in Unicode Technical
+ *      Report #11 have a column width of 2.
+ *
  */
-int mk_wcwidth_cjk(int ucs)
+bool is_char_cjk(ucs32 ucs)
 {
-	/* don't process ambiguous characters, */
-	/* for example Far Borders must be 1-char width! */
+	return (ucs >= 0x1100
+		&& (
+			(ucs <= 0x115f ||                   /* Hangul Jamo init. consonants */
+				ucs == 0x2329 || ucs == 0x232a) ||
+			(ucs >= 0x2e80 && ucs <= 0xa4cf &&
+				ucs != 0x303f) ||               /* CJK ... Yi */
+			(ucs >= 0xac00 && ucs <= 0xd7a3) || /* Hangul Syllables */
+			(ucs >= 0xf900 && ucs <= 0xfaff) || /* CJK Compatibility Ideographs */
+			(ucs >= 0xfe10 && ucs <= 0xfe19) || /* Vertical forms */
+			(ucs >= 0xfe30 && ucs <= 0xfe6f) || /* CJK Compatibility Forms */
+			(ucs >= 0xff00 && ucs <= 0xff60) || /* Fullwidth Forms */
+			(ucs >= 0xffe0 && ucs <= 0xffe6) ||
+			(ucs >= 0x20000 && ucs <= 0x2fffd) ||
+			(ucs >= 0x30000 && ucs <= 0x3fffd))
+			);
+}
 
+
+/*
+ * Spacing characters in the East Asian Ambiguous (A) category
+ * as defined in Unicode Technical Report #11.
+ * This variant might be useful for users of CJK legacy encodings
+ * who want to migrate to UCS without changing the traditional
+ * terminal character-width behaviour.
+ * It is not otherwise recommended for general use.
+ */
+bool is_char_ambiguous(ucs32 ucs)
+{
 	/* sorted list of non-overlapping intervals of East Asian Ambiguous
-	* characters, generated by "uniset +WIDTH-A -cat=Me -cat=Mn -cat=Cf c" */
-	/*
+	 * characters, generated by "uniset +WIDTH-A -cat=Me -cat=Mn -cat=Cf c" */
 	static const struct interval ambiguous[] =
 	{
 		{ 0x00A1, 0x00A1 }, { 0x00A4, 0x00A4 }, { 0x00A7, 0x00A8 },
@@ -308,13 +280,57 @@ int mk_wcwidth_cjk(int ucs)
 		{ 0x273D, 0x273D }, { 0x2776, 0x277F }, { 0xE000, 0xF8FF },
 		{ 0xFFFD, 0xFFFD }, { 0xF0000, 0xFFFFD }, { 0x100000, 0x10FFFD }
 	};
-	*/
 
 	/* binary search in table of non-spacing characters */
-	/*
-	if (bisearch(ucs, ambiguous, countof(ambiguous) - 1))
-		return 2;
-	*/
+	return bisearch(ucs, ambiguous, countof(ambiguous));
+}
 
-	return mk_wcwidth(ucs);
+
+/* The following function checks if character width:
+ *
+ *    - The null character (U+0000), C0/C1 control characters and DEL
+ *      have a column width of 1 (displayed as substitutions).
+ *
+ *    - Non-spacing and enclosing combining characters (general
+ *      category code Mn or Me in the Unicode database) have a
+ *      column width of 0.
+ *
+ *    - SOFT HYPHEN (U+00AD) has a column width of 1.
+ *
+ *    - Other format characters (general category code Cf in the Unicode
+ *      database) and ZERO WIDTH SPACE (U+200B) have a column width of 0.
+ *
+ *    - Hangul Jamo medial vowels and final consonants (U+1160-U+11FF)
+ *      have a column width of 0.
+ *
+ *    - Spacing characters in the East Asian Wide (W) or East Asian
+ *      Full-width (F) category as defined in Unicode Technical
+ *      Report #11 have a column width of 2.
+ *
+ *    - All remaining characters (including all printable
+ *      ISO 8859-1 and WGL4 characters, Unicode control characters,
+ *      etc.) have a column width of 1.
+ *
+ * This implementation assumes that wchar_t characters are encoded
+ * in ISO 10646.
+ */
+int get_wcwidth(ucs32 ucs)
+{
+	/* test for 8-bit control characters */
+	/* if they are already on console surface, we'll show their unicode surrogates */
+	if (!ucs || ucs < 32 || (ucs >= 0x7f && ucs < 0xa0))
+		return 1;
+
+	/* combinings, zero-width, and others */
+	if (is_char_combining(ucs))
+		return 0;
+
+	/* don't process ambiguous characters, */
+	/* for example Far Borders must be 1-cell width! */
+
+	/* if we arrive here, ucs is not a combining or C0/C1 control character */
+	if (is_char_cjk(ucs))
+		return 2;
+
+	return 1;
 }

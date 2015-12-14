@@ -28,4 +28,19 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-int mk_wcwidth_cjk(int ucs);
+// 32-bit character unicode code
+typedef int ucs32;
+
+struct interval
+{
+	ucs32 first;
+	ucs32 last;
+};
+
+bool bisearch(ucs32 ucs, const struct interval *table, int intervals);
+
+bool is_char_combining(ucs32 ucs);
+bool is_char_cjk(ucs32 ucs);
+bool is_char_ambiguous(ucs32 ucs);
+
+int get_wcwidth(ucs32 ucs);

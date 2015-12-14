@@ -28,4 +28,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-int ucs32_from_wchar(wchar_t* pch, bool& has_trail);
+#include "wcwidth.h"
+
+ucs32 ucs32_from_wchar(wchar_t* pch, bool& has_trail);

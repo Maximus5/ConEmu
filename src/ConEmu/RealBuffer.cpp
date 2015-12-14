@@ -5685,7 +5685,7 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 							}
 						}
 
-						switch (mk_wcwidth_cjk(wwch))
+						switch (get_wcwidth(wwch))
 						{
 						case 0:
 							lca.Flags2 |= CharAttr2_Combining;
