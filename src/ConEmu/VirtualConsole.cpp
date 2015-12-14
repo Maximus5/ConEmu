@@ -2561,6 +2561,10 @@ bool CVirtualConsole::LoadConsoleData()
 	mn_DialogsCount = pRgn ? pRgn->GetDetectedDialogs(countof(mrc_Dialogs), mrc_Dialogs, mn_DialogFlags) : 0;
 	mn_DialogAllFlags = pRgn ? pRgn->GetFlags() : 0;
 
+	// Even mp_RCon->isFilePanel(true, false, true) may be not suitable
+	// because there may be some lags in detection or window switching
+	isFilePanel = (mn_DialogAllFlags & (FR_LEFTPANEL|FR_RIGHTPANEL|FR_FULLPANEL)) != 0;
+
 #if 0
 	if (mn_DialogsCount == 7 && mn_LastDialogsCount == 6)
 	{
@@ -2821,7 +2825,10 @@ bool CVirtualConsole::UpdatePrepare(HDC *ahDc, MSectionLock *pSDC, MSectionLock 
 	attrBackLast = 0;
 	isEditor = mp_RCon->isEditor();
 	isViewer = mp_RCon->isViewer();
-	isFilePanel = mp_RCon->isFilePanel(true, false, true);
+	// Even mp_RCon->isFilePanel(true, false, true) may be not suitable
+	// because there may be some lags in detection or window switching
+	// It would be repeated in LoadConsoleData
+	isFilePanel = (mn_DialogAllFlags & (FR_LEFTPANEL|FR_RIGHTPANEL|FR_FULLPANEL)) != 0;
 	isFade = !isForeground && gpSet->isFadeInactive;
 
 	// Retrieve palette colors
