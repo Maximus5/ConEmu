@@ -1009,6 +1009,7 @@ bool CVirtualConsole::isCharNonSpacing(wchar_t inChar)
 	// знакоместо в консоли!
 	switch (inChar)
 	{
+		// TODO: Leave only ‘breaking’ glyphs here!
 		case 0x135F:
 		case 0x2060:
 		case 0x3000:
@@ -1022,7 +1023,9 @@ bool CVirtualConsole::isCharNonSpacing(wchar_t inChar)
 		case 0xA67D:
 		case 0xFEFF:
 			return true;
-
+		// We must draw ‘combining’ characters with previous ‘letter’
+		// Otherwise it will not combine or even may stay invisibe
+			/*
 		default:
 			if (inChar>=0x0300)
 			{
@@ -1046,6 +1049,7 @@ bool CVirtualConsole::isCharNonSpacing(wchar_t inChar)
 					return true;
 				}
 			}
+			*/
 	}
 	return false;
 
