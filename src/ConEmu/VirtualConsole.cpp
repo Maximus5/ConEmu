@@ -3275,8 +3275,7 @@ void CVirtualConsole::UpdateText()
 	CEFONT hFont = gpSetCls->mh_Font[0];
 	CEFONT hFont2 = gpSetCls->mh_Font2;
 
-	// 120616 - Chinese - off?
-	bool bFixFrameCoord = !gbIsDBCS || mp_RCon->isFar();
+	bool bFixFrameCoord = mp_RCon->isFar();
 
 	_ASSERTE(((TextWidth * nFontWidth) >= Width));
 #if 0
@@ -3479,11 +3478,12 @@ void CVirtualConsole::UpdateText()
 			//(HDC)m_DC.SetTextColor(pColors[attrFore]);
 			m_DC.SetTextColor(attr.crForeColor);
 
+			DWORD nPrevX = j ? ConCharXLine[j-1] : 0;
+
 			// корректировка положения вертикальной рамки (Coord.X>0)
-			if (bProportional && j && bFixFrameCoord)
+			if (j && bFixFrameCoord)
 			{
 				HEAPVAL;
-				DWORD nPrevX = ConCharXLine[j-1];
 				// Рамки (их вертикальные части) и полосы прокрутки;
 				// Символом } фар помечает имена файлов вылезшие за пределы колонки...
 				// Если сверху или снизу на той же позиции рамки (или тот же '}')
@@ -3536,7 +3536,19 @@ void CVirtualConsole::UpdateText()
 				//    //row = TextHeight - 1;
 				//}
 				HEAPVAL;
+			}
 
+			/*
+			// Other alignments? For non-Far-Manager applications?
+			if (j && (ConCharXLine[j-1] < (j * nFontWidth))
+				&& (isCharBorderVertical(c) || (isFilePanel && c == L'}')))
+			{
+				ConCharXLine[j-1] = (j * nFontWidth);
+			}
+			*/
+
+			if (j)
+			{
 				if (nPrevX < ConCharXLine[j-1])
 				{
 					// Требуется зарисовать пропущенную область. пробелами что-ли?
@@ -3655,19 +3667,37 @@ void CVirtualConsole::UpdateText()
 					j2 = j + 1; HEAPVAL
 
 					// Если этого не делать - в пропорциональных шрифтах буквы будут наезжать одна на другую
-					wchar_t ch;
+					wchar_t ch = 0;
 					//int nLastNonSpace = -1;
 					WARNING("*** сомнение в следующей строчке: (!gpSet->isProportional || !isFilePanel || (ch != L'}' && ch!=L' '))");
 					TODO("при поиске по строке - обновлять nLastNonSpace");
 
+					// We need to aligh Far Frames (Panels) after non-spacings, acutes, CJK and others...
+					int j3 = 0;
+					// Far Manager shows '}' instead of '│' or '║' when file/dir name is too long for column
+					bool bAlignCurledFrames = bFixFrameCoord && isFilePanel;
+
 					while (j2 < end && ConAttrLine[j2] == attr
 							&& (ch = ConCharLine[j2], bFixFarBorders ? !isCharBorder(ch) : (!bEnhanceGraphics || !isCharProgress(ch)))
 							&& !isCharNonSpacing(ch)
-							&& (!bProportional || !isFilePanel || (ch != L'}' && ch!=L' '))) // корректировка имен в колонках
+							&& (!bAlignCurledFrames || (ch != L'}')))
 					{
+						if (isSpace(ch))
+						{
+							if (!j3) j3 = j2;
+						}
+						else if (j3)
+						{
+							j3 = 0;
+						}
 						WORD nCurCharWidth2 = CharWidth(ch, ConAttrLine[j2]);
 						ConCharXLine[j2] = (j2 ? ConCharXLine[j2-1] : 0)+nCurCharWidth2;
 						j2++;
+					}
+
+					if (j3 && (isCharBorderVertical(ch) || ((j2 < end) && (isCharBorderVertical(ConCharLine[j2])))))
+					{
+						j2 = j3;
 					}
 
 					TODO("От хвоста - отбросить пробелы (если если есть nLastNonSpace)");
