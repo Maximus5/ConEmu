@@ -158,6 +158,12 @@ void TrayIcon::ShowTrayIcon(LPCTSTR asInfoTip /*= NULL*/, TrayIconMsgSource aMsg
 
 void TrayIcon::HideWindowToTray(LPCTSTR asInfoTip /* = NULL */)
 {
+	if (gpConEmu->mp_Inside)
+	{
+		// No sense to try...
+		return;
+	}
+
 	if (gpConEmu->InQuakeAnimation())
 	{
 		_ASSERTE(FALSE && "Calling TrayIcon::HideWindowToTray from QuakeAnimation");
