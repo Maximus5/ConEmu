@@ -1171,17 +1171,15 @@ bool CConEmuMain::SetConfigFile(LPCWSTR asFilePath, bool abWriteReq /*= false*/,
 		return false;
 	}
 
-	wchar_t szPath[MAX_PATH+1] = L"";
+	CEStr szPath;
 	int nFileType = 0;
 
 	if (lstrcmpi(pszExt, L".ini") == 0)
 	{
-		_ASSERTE(countof(ms_ConEmuIni)==countof(szPath));
 		nFileType = 1;
 	}
 	else if (lstrcmpi(pszExt, L".xml") == 0)
 	{
-		_ASSERTE(countof(ms_ConEmuXml)==countof(szPath));
 		nFileType = 0;
 	}
 	else
@@ -1191,19 +1189,17 @@ bool CConEmuMain::SetConfigFile(LPCWSTR asFilePath, bool abWriteReq /*= false*/,
 	}
 
 
-	//The path must be already in full form, call GetFullPathName just for ensure (but it may return wrong path)
+	//The path must be already in full form, call apiGetFullPathName just for ensure (but it may return wrong path)
 	_ASSERTE((asFilePath[1]==L':' && asFilePath[2]==L'\\') || (asFilePath[0]==L'\\' && asFilePath[1]==L'\\'));
-	wchar_t* pszFilePart;
-	nLen = GetFullPathName(asFilePath, countof(szPath), szPath, &pszFilePart);
-	if ((nLen <= 0) || (nLen >= (INT_PTR)countof(szPath)))
+	nLen = apiGetFullPathName(asFilePath, szPath);
+	if (!nLen || (nLen >= MAX_PATH))
 	{
 		DisplayLastError(L"Failed to expand specified file path in CConEmuMain::SetConfigFile");
 		return false;
 	}
 
-	wchar_t* pszDirEnd = wcsrchr(szPath, L'\\');
-
-	if (!pszDirEnd || (nLen > MAX_PATH))
+	LPCWSTR pszFilePath = PointToName(szPath);
+	if (!pszFilePath || (pszFilePath == szPath.ms_Arg))
 	{
 		DisplayLastError(L"Invalid file path specified in CConEmuMain::SetConfigFile (backslash not found)", -1);
 		return false;
@@ -1212,7 +1208,7 @@ bool CConEmuMain::SetConfigFile(LPCWSTR asFilePath, bool abWriteReq /*= false*/,
 
 	// Create the folder if it's absent
 	// Function accepts paths with trailing file names
-	MyCreateDirectory(szPath);
+	MyCreateDirectory(szPath.ms_Arg);
 
 
 	// Нужно создать файл, если его нету.
@@ -1411,11 +1407,11 @@ LPCWSTR CConEmuMain::ConEmuCExeFull(LPCWSTR asCmdLine/*=NULL*/)
 			}
 			else
 			{
-				wchar_t szFind[MAX_PATH+1];
-				wcscpy_c(szFind, asCmdLine);
-				CharUpperBuff(szFind, lstrlen(szFind));
+				CEStr szFind;
+				if (szFind.Set(asCmdLine))
+					CharUpperBuff(szFind.ms_Arg, lstrlen(szFind));
 				// По хорошему, нужно бы проверить еще и начало на соответствие в "%WinDir%". Но это не критично.
-				if (wcsstr(szFind, L"\\SYSNATIVE\\") || wcsstr(szFind, L"\\SYSWOW64\\"))
+				if (!szFind.IsEmpty() && (wcsstr(szFind, L"\\SYSNATIVE\\") || wcsstr(szFind, L"\\SYSWOW64\\")))
 				{
 					// Если "SysNative" - считаем что 32-bit, иначе, 64-битный сервер просто "не увидит" эту папку
 					// С "SysWow64" все понятно, там только 32-битное
@@ -1431,30 +1427,30 @@ LPCWSTR CConEmuMain::ConEmuCExeFull(LPCWSTR asCmdLine/*=NULL*/)
 					if (!lbFound /*&& !wcschr(asCmdLine, L'\\')*/)
 					{
 						LPCWSTR pszSearchFile = asCmdLine;
-						LPCWSTR pszSlash = wcsrchr(asCmdLine, L'\\');
+						LPCWSTR pszSlash = PointToName(asCmdLine);
 						wchar_t* pszSearchPath = NULL;
-						if (pszSlash)
+						if (pszSlash && (pszSlash > asCmdLine))
 						{
 							if ((pszSearchPath = lstrdup(asCmdLine)) != NULL)
 							{
-								pszSearchFile = pszSlash + 1;
+								pszSearchFile = pszSlash;
 								pszSearchPath[pszSearchFile - asCmdLine] = 0;
 							}
 						}
 
 						// попытаемся найти
-						wchar_t *pszFilePart;
-						DWORD nLen = SearchPath(pszSearchPath, pszSearchFile, pszExt ? NULL : L".exe", countof(szFind), szFind, &pszFilePart);
-						if (!nLen && !pszSearchPath)
+						bool bSearchRc = apiSearchPath(pszSearchPath, pszSearchFile, pszExt ? NULL : L".exe", szFind);
+						if (!bSearchRc && !pszSearchPath)
 						{
 							wchar_t szRoot[MAX_PATH+1];
 							wcscpy_c(szRoot, ms_ConEmuExeDir);
+							// One folder above ConEmu's directory
 							wchar_t* pszRootSlash = wcsrchr(szRoot, L'\\');
 							if (pszRootSlash)
 								*pszRootSlash = 0;
-							nLen = SearchPath(szRoot, pszSearchFile, pszExt ? NULL : L".exe", countof(szFind), szFind, &pszFilePart);
+							bSearchRc = apiSearchPath(szRoot, pszSearchFile, pszExt ? NULL : L".exe", szFind);
 						}
-						if (nLen && (nLen < countof(szFind)))
+						if (bSearchRc)
 						{
 							lbFound = GetImageSubsystem(szFind, ImageSubsystem, ImageBits, FileAttrs);
 						}
@@ -2118,44 +2114,41 @@ void CConEmuMain::UpdateGuiInfoMapping()
 		ComSpecBits csBits = m_DbgInfo.bBlockChildrenDebuggers ? csb_SameApp : gpSet->ComSpec.csBits;
 		//m_GuiInfo.ComSpec.csType = gpSet->ComSpec.csType;
 		//m_GuiInfo.ComSpec.csBits = gpSet->ComSpec.csBits;
-		wchar_t szExpand[MAX_PATH] = {}, szFull[MAX_PATH] = {}, *pszFile;
+		CEStr szExpand, szFull;
 		if (csType == cst_Explicit)
 		{
-			DWORD nLen;
 			// Expand env.vars
 			if (wcschr(gpSet->ComSpec.ComspecExplicit, L'%'))
 			{
-				nLen = ExpandEnvironmentStrings(gpSet->ComSpec.ComspecExplicit, szExpand, countof(szExpand));
-				if (!nLen || (nLen>=countof(szExpand)))
+				szExpand = ExpandEnvStr(gpSet->ComSpec.ComspecExplicit);
+				if (szExpand.IsEmpty())
 				{
-					MBoxAssert((nLen>0) && (nLen<countof(szExpand)) && "ExpandEnvironmentStrings(ComSpec)");
-					szExpand[0] = 0;
+					_ASSERTE(FALSE && "ExpandEnvStr(ComSpec)");
+					szExpand.Empty();
 				}
 			}
 			else
 			{
-				wcscpy_c(szExpand, gpSet->ComSpec.ComspecExplicit);
-				nLen = lstrlen(szExpand);
+				szExpand.Set(gpSet->ComSpec.ComspecExplicit);
 			}
 			// Expand relative paths. Note. Path MUST be specified with root
 			// NOT recommended: "..\tcc\tcc.exe" this may lead to unpredictable results cause of CurrentDirectory
 			// Allowed: "%ConEmuDir%\..\tcc\tcc.exe"
-			if (*szExpand)
+			if (!szExpand.IsEmpty())
 			{
-				nLen = GetFullPathName(szExpand, countof(szFull), szFull, &pszFile);
-				if (!nLen || (nLen>=countof(szExpand)))
+				if (!apiGetFullPathName(szExpand, szFull))
 				{
-					MBoxAssert((nLen>0) && (nLen<countof(szExpand)) && "GetFullPathName(ComSpec)");
-					szFull[0] = 0;
+					_ASSERTE(FALSE && "apiGetFullPathName(ComSpec)");
+					szFull.Empty();
 				}
-				else if (!FileExists(szExpand))
+				else if (!FileExists(szFull))
 				{
-					szFull[0] = 0;
+					szFull.Empty();
 				}
 			}
 			else
 			{
-				szFull[0] = 0;
+				szFull.Empty();
 			}
 			wcscpy_c(m_GuiInfo.ComSpec.ComspecExplicit, szFull);
 			if (!*szFull && (csType == cst_Explicit))
@@ -3554,23 +3547,21 @@ void CConEmuMain::LoadIcons()
 		return; // Уже загружены
 
 	wchar_t *lpszExt = NULL;
-	wchar_t szIconPath[MAX_PATH+16] = {};
+	CEStr szIconPath;
 	CEStr lsLog;
 
 	if (mps_IconPath)
 	{
 		if (FileExists(mps_IconPath))
 		{
-			wcscpy_c(szIconPath, mps_IconPath);
+			szIconPath.Set(mps_IconPath);
 			lsLog.Attach(lstrmerge(L"Loading icon from '/icon' switch `", mps_IconPath, L"`"));
 		}
 		else
 		{
-			wchar_t* pszFilePart;
-			DWORD n = SearchPath(NULL, mps_IconPath, NULL, countof(szIconPath), szIconPath, &pszFilePart);
-			if (!n || (n >= countof(szIconPath)))
+			if (!apiSearchPath(NULL, mps_IconPath, NULL, szIconPath))
 			{
-				szIconPath[0] = 0;
+				szIconPath.Empty();
 				lsLog.Attach(lstrmerge(L"Icon specified with '/icon' switch `", mps_IconPath, L"` was not found"));
 			}
 			else
@@ -3581,11 +3572,10 @@ void CConEmuMain::LoadIcons()
 	}
 	else
 	{
-		wcscpy_c(szIconPath, ms_ConEmuExeDir);
-		wcscat_c(szIconPath, L"\\ConEmu.ico");
+		szIconPath = JoinPath(ms_ConEmuExeDir, L"ConEmu.ico");
 		if (!FileExists(szIconPath))
 		{
-			szIconPath[0] = 0;
+			szIconPath.Empty();
 		}
 		else
 		{
@@ -3595,7 +3585,7 @@ void CConEmuMain::LoadIcons()
 
 	if (!lsLog.IsEmpty()) LogString(lsLog);
 
-	if (szIconPath[0])
+	if (!szIconPath.IsEmpty())
 	{
 		lpszExt = (wchar_t*)PointToExt(szIconPath);
 
@@ -3619,7 +3609,8 @@ void CConEmuMain::LoadIcons()
 	}
 	else
 	{
-		szIconPath[0]=0;
+		szIconPath.Empty();
+
 		hClassIcon = (HICON)LoadImage(GetModuleHandle(0),
 		                              MAKEINTRESOURCE(gpSet->nIconID), IMAGE_ICON,
 		                              GetSystemMetrics(SM_CXICON), GetSystemMetrics(SM_CYICON), LR_DEFAULTCOLOR);
