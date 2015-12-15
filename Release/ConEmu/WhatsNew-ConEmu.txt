@@ -19,6 +19,11 @@ http://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2015.8.13f
+* gh#467: Startup crash if startup task was renamed.
+* Arbitrary shells (not a Task) were not accepted in FastConfiguration dialog.
+
+
 2015.8.13e
 * gh#461: Fix AeroPeek VCon offset when frame is non-resizable.
 * gh#210: Minimizing other windows causes ConEmu to be restored (Quake).
