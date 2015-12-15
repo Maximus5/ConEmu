@@ -1818,7 +1818,7 @@ void ProcessOnLibraryLoadedW(HMODULE module)
 	// such as initialization of background plugins...
 	if (gfOnLibraryLoaded && module)
 	{
-		ScopedObject(CLastErrorGuard)();
+		ScopedObject(CLastErrorGuard);
 		HLOG1_("PrepareNewModule.gfOnLibraryLoaded", LODWORD(module));
 		gfOnLibraryLoaded(module);
 		HLOGEND1();
