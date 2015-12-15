@@ -236,7 +236,7 @@ int CIconList::CreateTabIconInt(LPCWSTR asIconDescr, bool bAdmin, LPCWSTR asWork
 	lpszIndex = wcsrchr(lpszExt ? lpszExt : szLoadFile, L',');
 	if (lpszIndex)
 	{
-		szLoadFile.ms_Arg[lpszIndex - szLoadFile.ms_Arg] = 0;
+		szLoadFile.ms_Val[lpszIndex - szLoadFile.ms_Val] = 0;
 
 		nIndex = wcstol(lpszIndex + 1, NULL, 10);
 		if (nIndex == LONG_MAX || nIndex == LONG_MIN)

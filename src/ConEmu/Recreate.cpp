@@ -199,7 +199,7 @@ INT_PTR CRecreateDlg::OnInitDialog(HWND hDlg, UINT messg, WPARAM wParam, LPARAM 
 	}
 
 	// Current directory, startup directory, ConEmu startup directory, and may be startup directory history in the future
-	AddDirectoryList(mpsz_DefDir ? mpsz_DefDir : lsStartDir.ms_Arg);
+	AddDirectoryList(mpsz_DefDir ? mpsz_DefDir : lsStartDir.ms_Val);
 	AddDirectoryList(ms_RConCurDir);
 	AddDirectoryList(ms_RConStartDir);
 	AddDirectoryList(gpConEmu->WorkDir());
@@ -207,7 +207,7 @@ INT_PTR CRecreateDlg::OnInitDialog(HWND hDlg, UINT messg, WPARAM wParam, LPARAM 
 	if ((pArgs->aRecreate == cra_RecreateTab) && !ms_RConCurDir.IsEmpty())
 		pszShowDir = ms_RConCurDir;
 	else
-		pszShowDir = mpsz_DefDir ? mpsz_DefDir : lsStartDir.ms_Arg;
+		pszShowDir = mpsz_DefDir ? mpsz_DefDir : lsStartDir.ms_Val;
 	SetDlgItemText(hDlg, IDC_STARTUP_DIR, pszShowDir);
 
 	// Split controls

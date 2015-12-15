@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <windows.h>
 #include "../common/MArray.h"
-#include "../common/CmdArg.h"
+#include "../common/CEStr.h"
 
 class CRealConsole;
 
@@ -45,6 +45,6 @@ public:
 	~CRConFiles();
 
 public:
-	LPCWSTR GetFileFromConsole(LPCWSTR asSrc, CmdArg& szFull);
+	LPCWSTR GetFileFromConsole(LPCWSTR asSrc, CEStr& szFull);
 	void ResetCache();
 };

@@ -478,7 +478,7 @@ void ConEmuAbout::TabSelected(HWND hDlg, int idx)
 	{
 		// EDIT control requires \r\n as line endings
 		lsTemp = lstrmerge(gpConEmu->mp_PushInfo->mp_Active->pszFullMessage, L"\r\n\r\n\r\n", pszNewText);
-		pszNewText = lsTemp.ms_Arg;
+		pszNewText = lsTemp.ms_Val;
 	}
 	SetDlgItemText(hDlg, tAboutText, pszNewText);
 }
@@ -545,7 +545,7 @@ void ConEmuAbout::OnInfo_About(LPCWSTR asPageName /*= NULL*/)
 		DontEnable de;
 		MSGBOXPARAMS mb = {sizeof(MSGBOXPARAMS), ghWnd, g_hInstance,
 			pAbout,
-			szTitle.ms_Arg,
+			szTitle.ms_Val,
 			MB_USERICON, MAKEINTRESOURCE(IMAGE_ICON), 0, NULL, LANG_NEUTRAL
 		};
 		// Use MessageBoxIndirect instead of MessageBox to show our icon instead of std ICONINFORMATION

@@ -41,7 +41,7 @@ public:
 	// What was found
 	ExpandTextRangeType m_Type;
 	// That may be converted, cleared or expanded...
-	CmdArg ms_Match;
+	CEStr ms_Match;
 	// Compiler errors - row, col
 	int mn_Row, mn_Col;
 	// When that was URL, this contains the protocol
@@ -53,7 +53,7 @@ public:
 	int mn_Start, mn_End;
 
 	// What was the source
-	CmdArg m_SrcLine/*Copy of the source buffer (one line)*/;
+	CEStr m_SrcLine/*Copy of the source buffer (one line)*/;
 	int mn_SrcLength/*Current length*/;
 	int mn_SrcFrom/*Cursor pos*/;
 
@@ -78,7 +78,7 @@ protected:
 	bool MatchWord(LPCWSTR asLine/*This may be NOT 0-terminated*/, int anLineLen/*Length of buffer*/, int anFrom/*Cursor pos*/, int& rnStart, int& rnEnd);
 	void StoreMatchText(LPCWSTR asPrefix, LPCWSTR pszTrimRight);
 protected:
-	CmdArg ms_FileCheck;
+	CEStr ms_FileCheck;
 	bool IsValidFile(LPCWSTR asFrom, int anLen, LPCWSTR pszInvalidChars, LPCWSTR pszSpacing, int& rnLen);
 
 public:

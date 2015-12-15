@@ -1368,7 +1368,7 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 
 				// Имеет смысл, только если окно хотят изначально спрятать
 				const wchar_t *psz = gpszRunCmd, *pszStart;
-				CmdArg szExe;
+				CEStr szExe;
 				if (NextArg(&psz, szExe, &pszStart) == 0)
 				{
 					MWow64Disable wow;
@@ -1419,7 +1419,7 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 		#ifdef _DEBUG
 		LPCWSTR pszRunCmpApp = NULL;
 		#endif
-		CmdArg szExeName;
+		CEStr szExeName;
 		{
 			LPCWSTR pszStart = gpszRunCmd;
 			if (NextArg(&pszStart, szExeName) == 0)
@@ -1576,7 +1576,7 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 			// Vista: The requested operation requires elevation.
 			LPCWSTR pszCmd = gpszRunCmd;
 			wchar_t szVerb[10];
-			CmdArg szExec;
+			CEStr szExec;
 
 			if (NextArg(&pszCmd, szExec) == 0)
 			{
@@ -1584,7 +1584,7 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 				sei.hwnd = ghConEmuWnd;
 				sei.fMask = SEE_MASK_NO_CONSOLE; //SEE_MASK_NOCLOSEPROCESS; -- смысла ждать завершения нет - процесс запускается в новой консоли
 				wcscpy_c(szVerb, L"open"); sei.lpVerb = szVerb;
-				sei.lpFile = szExec.ms_Arg;
+				sei.lpFile = szExec.ms_Val;
 				sei.lpParameters = pszCmd;
 				sei.lpDirectory = pszCurDir;
 				sei.nShow = SW_SHOWNORMAL;
@@ -3108,7 +3108,7 @@ int DoInjectRemote(LPWSTR asCmdArg, bool abDefTermOnly)
 
 		CEStr lsError(lstrmerge(
 			szInfo,
-			lsPath.IsEmpty() ? lsName.IsEmpty() ? L"<Unknown>" : lsName.ms_Arg : lsPath.ms_Arg,
+			lsPath.IsEmpty() ? lsName.IsEmpty() ? L"<Unknown>" : lsName.ms_Val : lsPath.ms_Val,
 			szParentPID,
 			parent.szExeFile));
 
@@ -3242,14 +3242,14 @@ int DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent = f
 			// replace commas with spaces, this allows more intuitive
 			// way to run something like this:
 			// ConEmuC -export=ALL SSH_AGENT_PID,SSH_AUTH_SOCK
-			wchar_t* pszComma = szTmpPart.ms_Arg;
+			wchar_t* pszComma = szTmpPart.ms_Val;
 			while ((pszComma = (wchar_t*)wcspbrk(pszComma, L",;")) != NULL)
 			{
 				*pszComma = L' ';
 			}
 		}
 		LPCWSTR pszPart = szTmpPart;
-		CmdArg szTest;
+		CEStr szTest;
 		while (0==NextArg(&pszPart, szTest))
 		{
 			if (!*szTest || *szTest == L'*')
@@ -3519,7 +3519,7 @@ int DoDownload(LPCWSTR asCmdLine)
 {
 	int iRc = CERR_CARGUMENT;
 	DWORD_PTR drc;
-	CmdArg szArg;
+	CEStr szArg;
 	wchar_t* pszUrl = NULL;
 	size_t iFiles = 0;
 	CEDownloadErrorArg args[4];
@@ -3673,7 +3673,7 @@ int DoParseArgs(LPCWSTR asCmdLine)
 	LPWSTR* ppszShl = CommandLineToArgvW(asCmdLine, &iShellCount);
 
 	int i = 0;
-	CmdArg szArg;
+	CEStr szArg;
 	_printf("ConEmu `NextArg` splitter\n");
 	while (NextArg(&asCmdLine, szArg) == 0)
 	{
@@ -3730,7 +3730,7 @@ BOOL CALLBACK FindTopGuiOrConsole(HWND hWnd, LPARAM lParam)
 	return TRUE; // continue search
 }
 
-void ArgGuiMacro(CmdArg& szArg, MacroInstance& Inst)
+void ArgGuiMacro(CEStr& szArg, MacroInstance& Inst)
 {
 	wchar_t szLog[200];
 	if (gpLogSize) gpLogSize->LogString(szArg);
@@ -3739,7 +3739,7 @@ void ArgGuiMacro(CmdArg& szArg, MacroInstance& Inst)
 	if (szArg[9] == L':' || szArg[9] == L'=')
 	{
 		wchar_t* pszEnd = NULL;
-		wchar_t* pszID = szArg.ms_Arg+10;
+		wchar_t* pszID = szArg.ms_Val+10;
 		// Loop through GuiMacro options
 		while (pszID && *pszID)
 		{
@@ -3831,7 +3831,7 @@ void ArgGuiMacro(CmdArg& szArg, MacroInstance& Inst)
 				_ASSERTE(FALSE && "Unsupported GuiMacro option");
 				if (gpLogSize)
 				{
-					CEStr strErr(lstrmerge(L"Unsupported GuiMacro option: ", szArg.ms_Arg));
+					CEStr strErr(lstrmerge(L"Unsupported GuiMacro option: ", szArg.ms_Val));
 					gpLogSize->LogString(strErr);
 				}
 				break;
@@ -3960,7 +3960,7 @@ int DoOutput(ConEmuExecAction eExecAction, LPCWSTR asCmdArg)
 	bool     bToBottom = false;
 	bool     bAsciiPrint = false;
 	bool     bStreamBy1 = false;
-	CmdArg   szArg;
+	CEStr   szArg;
 	HANDLE   hFile = NULL;
 	DWORD    DefaultCP = 0;
 	BOOL     bRc = FALSE;
@@ -3971,8 +3971,8 @@ int DoOutput(ConEmuExecAction eExecAction, LPCWSTR asCmdArg)
 	while ((*asCmdArg == L'-' || *asCmdArg == L'/') && (NextArg(&asCmdArg, szArg) == 0))
 	{
 		// Make uniform
-		if (szArg.ms_Arg[0] == L'/')
-			szArg.ms_Arg[0] = L'-';
+		if (szArg.ms_Val[0] == L'/')
+			szArg.ms_Val[0] = L'-';
 
 		// Do not CRLF after printing
 		if (lstrcmpi(szArg, L"-n") == 0)
@@ -3996,7 +3996,7 @@ int DoOutput(ConEmuExecAction eExecAction, LPCWSTR asCmdArg)
 		// Forced codepage of typed text file
 		else // `-65001`, `-utf8`, `-oemcp`, etc.
 		{
-			UINT nCP = GetCpFromString(szArg.ms_Arg+1);
+			UINT nCP = GetCpFromString(szArg.ms_Val+1);
 			if (nCP) DefaultCP = nCP;
 		}
 	}
@@ -4234,7 +4234,7 @@ wrap:
 int DoStoreCWD(LPCWSTR asCmdArg)
 {
 	int iRc = 1;
-	CmdArg szDir;
+	CEStr szDir;
 
 	if ((NextArg(&asCmdArg, szDir) != 0) || szDir.IsEmpty())
 	{
@@ -4439,7 +4439,7 @@ void UpdateConsoleTitle()
 {
 	LogFunction(L"UpdateConsoleTitle");
 
-	CmdArg   szTemp;
+	CEStr   szTemp;
 	wchar_t *pszBuffer = NULL;
 	LPCWSTR  pszSetTitle = NULL, pszCopy;
 	LPCWSTR  pszReq = gpszForcedTitle ? gpszForcedTitle : gpszRunCmd;
@@ -4463,7 +4463,7 @@ void UpdateConsoleTitle()
 
 	if (!gpszForcedTitle && (NextArg(&pszCopy, szTemp) == 0))
 	{
-		wchar_t* pszName = (wchar_t*)PointToName(szTemp.ms_Arg);
+		wchar_t* pszName = (wchar_t*)PointToName(szTemp.ms_Val);
 		wchar_t* pszExt = (wchar_t*)PointToExt(pszName);
 		if (pszExt)
 			*pszExt = 0;
@@ -4518,7 +4518,7 @@ void CheckNeedSkipWowChange(LPCWSTR asCmdLine)
 	if (IsWindows64())
 	{
 		LPCWSTR pszTest = asCmdLine;
-		CmdArg szApp;
+		CEStr szApp;
 
 		if (NextArg(&pszTest, szApp) == 0)
 		{
@@ -4534,7 +4534,7 @@ void CheckNeedSkipWowChange(LPCWSTR asCmdLine)
 
 				if (nAppLen > nLen)
 				{
-					szApp.ms_Arg[nLen] = 0;
+					szApp.ms_Val[nLen] = 0;
 
 					if (lstrcmpiW(szApp, szSysnative) == 0)
 					{
@@ -4671,8 +4671,8 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 	//}
 
 	int iRc = 0;
-	CmdArg szArg;
-	CmdArg szExeTest;
+	CEStr szArg;
+	CEStr szExeTest;
 	LPCWSTR pszArgStarts = NULL;
 	//wchar_t szComSpec[MAX_PATH+1] = {0};
 	//LPCWSTR pwszCopy = NULL;
@@ -4903,7 +4903,7 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 			#if defined(SHOW_ATTACH_MSGBOX)
 			if (!IsDebuggerPresent())
 			{
-				wchar_t szTitle[100]; _wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"%s PID=%u %s", gsModuleName, gnSelfPID, szArg.ms_Arg);
+				wchar_t szTitle[100]; _wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"%s PID=%u %s", gsModuleName, gnSelfPID, szArg.ms_Val);
 				const wchar_t* pszCmdLine = GetCommandLineW();
 				MessageBox(NULL,pszCmdLine,szTitle,MB_SYSTEMMODAL);
 			}
@@ -4964,7 +4964,7 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 		{
 			// Для режима RM_COMSPEC нужно будет сохранить "длинный вывод"
 			wchar_t* pszEnd = NULL, *pszStart;
-			pszStart = szArg.ms_Arg+14;
+			pszStart = szArg.ms_Val+14;
 			gpSrv->dwParentFarPID = wcstoul(pszStart, &pszEnd, 10);
 		}
 		else if (wcscmp(szArg, L"/CREATECON")==0)
@@ -4990,24 +4990,24 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 				// This is called from *.vshost.exe when "AllocConsole" just created
 				gbDefTermCall = TRUE;
 				gbDontInjectConEmuHk = TRUE;
-				pszStart = szArg.ms_Arg+8;
+				pszStart = szArg.ms_Val+8;
 			}
 			else if (wcsncmp(szArg, L"/FARPID=", 8)==0)
 			{
 				gbAttachFromFar = TRUE;
 				gbRootIsCmdExe = FALSE;
-				pszStart = szArg.ms_Arg+8;
+				pszStart = szArg.ms_Val+8;
 			}
 			else if (wcsncmp(szArg, L"/CONPID=", 8)==0)
 			{
 				//_ASSERTE(FALSE && "Continue to alternative attach mode");
 				gbAlternativeAttach = TRUE;
 				gbRootIsCmdExe = FALSE;
-				pszStart = szArg.ms_Arg+8;
+				pszStart = szArg.ms_Val+8;
 			}
 			else
 			{
-				pszStart = szArg.ms_Arg+5;
+				pszStart = szArg.ms_Val+5;
 			}
 
 			gpSrv->dwRootProcess = wcstoul(pszStart, &pszEnd, 10);
@@ -5151,7 +5151,7 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 		}
 		else if (wcsncmp(szArg, L"/CINMODE=", 9)==0)
 		{
-			wchar_t* pszEnd = NULL, *pszStart = szArg.ms_Arg+9;
+			wchar_t* pszEnd = NULL, *pszStart = szArg.ms_Val+9;
 			gnConsoleModeFlags = wcstoul(pszStart, &pszEnd, 16);
 			// если передан 0 - включится (ENABLE_QUICK_EDIT_MODE|ENABLE_EXTENDED_FLAGS|ENABLE_INSERT_MODE)
 			gbConsoleModeFlags = (gnConsoleModeFlags != 0);
@@ -5871,7 +5871,7 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 			//  "set PATH=C:\Program Files;%PATH%"
 			//  chcp [utf8|ansi|oem|<cp_no>]
 			//  title "Console init title"
-			CmdArg lsForcedTitle;
+			CEStr lsForcedTitle;
 			if (!gpSetEnv)
 				gpSetEnv = new CProcessEnvCmd();
 			ProcessSetEnvCmd(lsCmdLine, true, &lsForcedTitle, gpSetEnv);
@@ -6359,7 +6359,7 @@ void SendStarted()
 		// Перед запуском 16бит приложений нужно подресайзить консоль...
 		gnImageSubsystem = 0;
 		LPCWSTR pszTemp = gpszRunCmd;
-		CmdArg lsRoot;
+		CEStr lsRoot;
 
 		if (gnRunMode == RM_SERVER && gpSrv->DbgInfo.bDebuggerActive)
 		{

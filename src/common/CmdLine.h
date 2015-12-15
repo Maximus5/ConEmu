@@ -28,12 +28,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include "CmdArg.h"
+#include "CEStr.h"
 
 #define CmdEscapeNeededChars  L"<>()&|^\""
 #define QuotationNeededChars  (L" " CmdEscapeNeededChars)
 
-int NextArg(const wchar_t** asCmdLine, CmdArg &rsArg, const wchar_t** rsArgStart=NULL);
+int NextArg(const wchar_t** asCmdLine, CEStr &rsArg, const wchar_t** rsArgStart=NULL);
 
 typedef DWORD NEXTLINEFLAGS;
 const NEXTLINEFLAGS
@@ -44,7 +44,7 @@ int NextLine(const wchar_t** asLines, CEStr &rsLine, NEXTLINEFLAGS Flags = NLF_T
 
 bool CompareFileMask(const wchar_t* asFileName, const wchar_t* asMask);
 LPCWSTR GetDrive(LPCWSTR pszPath, wchar_t* szDrive, int/*countof(szDrive)*/ cchDriveMax);
-int GetDirectory(CmdArg& szDir);
+int GetDirectory(CEStr& szDir);
 
 bool CompareProcessNames(LPCWSTR pszProcess1, LPCWSTR pszProcess2);
 bool CheckProcessName(LPCWSTR pszProcessName, LPCWSTR* lsNames);
@@ -56,7 +56,7 @@ bool IsConsoleService(LPCWSTR pszProcessName);
 bool IsConsoleServer(LPCWSTR pszProcessName);
 bool IsTerminalServer(LPCWSTR pszProcessName);
 bool IsGitBashHelper(LPCWSTR pszProcessName);
-bool IsNeedCmd(BOOL bRootCmd, LPCWSTR asCmdLine, CmdArg &szExe,
+bool IsNeedCmd(BOOL bRootCmd, LPCWSTR asCmdLine, CEStr &szExe,
 			   LPCWSTR* rsArguments = NULL, BOOL* rpbNeedCutStartEndQuot = NULL,
 			   BOOL* rpbRootIsCmdExe = NULL, BOOL* rpbAlwaysConfirmExit = NULL, BOOL* rpbAutoDisableConfirmExit = NULL);
 

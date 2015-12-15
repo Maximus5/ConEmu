@@ -2034,7 +2034,7 @@ LPWSTR ConEmuMacro::Copy(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 
 	bool bCopy = false;
 	CECopyMode CopyMode;
-	CmdArg szDstBuf;
+	CEStr szDstBuf;
 	LPWSTR pszDstFile = NULL;
 
 	if (p->GetIntArg(0, nWhat))
@@ -2051,7 +2051,7 @@ LPWSTR ConEmuMacro::Copy(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 			if (wcschr(pszTemp, L'/'))
 			{
 				if (szDstBuf.Attach(MakeWinPath(pszTemp)))
-					pszDstFile = szDstBuf.ms_Arg;
+					pszDstFile = szDstBuf.ms_Val;
 			}
 		}
 
@@ -2116,7 +2116,7 @@ LPWSTR ConEmuMacro::Paste(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 
 		if ((nCommand >= 4) && (nCommand <= 7))
 		{
-			CmdArg szDir;
+			CEStr szDir;
 			LPCWSTR pszDefPath = apRCon->GetConsoleCurDir(szDir);
 
 			if ((nCommand == 4) || (nCommand == 6))
@@ -2824,7 +2824,7 @@ LPWSTR ConEmuMacro::GetInfo(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin
 {
 	LPWSTR pszResult = NULL;
 	LPWSTR pszName = NULL;
-	CmdArg szDir;
+	CEStr szDir;
 	int idx = 0;
 
 	while (p->GetStrArg(idx++, pszName))
@@ -3064,7 +3064,7 @@ LPWSTR ConEmuMacro::Shell(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 	wchar_t* pszRc = NULL;
 	LPWSTR pszOper = NULL, pszFile = NULL, pszParm = NULL, pszDir = NULL;
 	LPWSTR pszBuf = NULL;
-	CmdArg szRConCD;
+	CEStr szRConCD;
 	bool bDontQuote = false;
 	int nShowCmd = SW_SHOWNORMAL;
 
@@ -3229,7 +3229,7 @@ LPWSTR ConEmuMacro::Shell(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 						apRCon->GetConsoleCurDir(szRConCD);
 					else
 						szRConCD.Set(gpConEmu->WorkDir());
-					pszDir = szRConCD.ms_Arg;
+					pszDir = szRConCD.ms_Val;
 				}
 				if (pszDir)
 					pArgs->pszStartupDir = lstrdup(pszDir);

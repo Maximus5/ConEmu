@@ -2230,7 +2230,7 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 	}
 	// Log xml/reg + file + config
 	CEStr lsDesc = GetStoragePlaceDescr(apStorage, L"Settings::LoadSettings");
-	gpConEmu->LogString(lsDesc.ms_Arg);
+	gpConEmu->LogString(lsDesc.ms_Val);
 
 	// Settings service
 	SettingsBase* reg = NULL;
@@ -2324,7 +2324,7 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 			// but not an installer values (like a ConEmuStartShortcutInstalled).
 			CEStr cmd;  BYTE KeybHook = 0xFF;
 			if (reg->Load(L"KeyboardHooks", KeybHook)
-				|| reg->Load(L"CmdLine", &cmd.ms_Arg))
+				|| reg->Load(L"CmdLine", &cmd.ms_Val))
 			{
 				rbNeedCreateVanilla = true;
 			}
@@ -5273,21 +5273,21 @@ int Settings::CmdTaskSet(int anIndex, LPCWSTR asName, LPCWSTR asGuiArgs, LPCWSTR
 			// If task with same name exists - append suffix " (1)" ... " (999)"
 			CEStr lsNaked = lstrdup((asName[0] == TaskBracketLeft) ? (asName+1) : asName);
 			INT_PTR iLen = wcslen(lsNaked);
-			if ((iLen > 0) && (lsNaked.ms_Arg[iLen-1] == TaskBracketRight))
-				lsNaked.ms_Arg[iLen-1] = 0;
+			if ((iLen > 0) && (lsNaked.ms_Val[iLen-1] == TaskBracketRight))
+				lsNaked.ms_Val[iLen-1] = 0;
 
 			for (UINT s = 0; s < 1000; s++)
 			{
 				bool bDuplicate = false;
 				wchar_t szIndex[16] = L"";
 				if (s) _wsprintf(szIndex, SKIPCOUNT(szIndex) L" (%u)", s);
-				lsName.Attach(lstrmerge(TaskBracketLeftS, lsNaked.ms_Arg, szIndex, TaskBracketRightS));
+				lsName.Attach(lstrmerge(TaskBracketLeftS, lsNaked.ms_Val, szIndex, TaskBracketRightS));
 
 				for (INT_PTR i = 0; (i < CmdTaskCount) && !bDuplicate; i++)
 				{
 					if ((i == anIndex) || (CmdTasks[i] == NULL) || (CmdTasks[i]->pszName == NULL))
 						continue;
-					bDuplicate = (lstrcmpi(CmdTasks[i]->pszName, lsName.ms_Arg) == 0);
+					bDuplicate = (lstrcmpi(CmdTasks[i]->pszName, lsName.ms_Val) == 0);
 				}
 
 				if (!bDuplicate)
@@ -5485,7 +5485,7 @@ wchar_t* Settings::MultiLine2MSZ(const wchar_t* apszLines, DWORD* pcbSize/*in by
 				// That is a registry limitation
 				if (lsLine.IsEmpty())
 					lsLine.Set(L" ");
-				int iLineLen = lstrlen(lsLine.ms_Arg) + 1;
+				int iLineLen = lstrlen(lsLine.ms_Val) + 1;
 				if ((psz - pszDst + 1 + iLineLen) >= nLenMax)
 				{
 					INT_PTR nNewLenMax = max((psz - pszDst + 1 + iLineLen), nLenMax) + 1024;
@@ -5501,7 +5501,7 @@ wchar_t* Settings::MultiLine2MSZ(const wchar_t* apszLines, DWORD* pcbSize/*in by
 				}
 				_ASSERTE((psz - pszDst + 1 + iLineLen) <= nLenMax);
 
-				wmemmove(psz, lsLine.ms_Arg, iLineLen);
+				wmemmove(psz, lsLine.ms_Val, iLineLen);
 				psz += iLineLen;
 			}
 

@@ -3952,11 +3952,11 @@ bool CRealConsole::StartDebugger(StartDebugType sdt)
 				}
 				for (int i = 0; i < nCount; i++)
 				{
-					lstrmerge(&lsPID.ms_Arg, lsPID.ms_Arg ? L"," : NULL, _itow(pPrc[i].ProcessID, szExe, 10));
-					if (lstrlen(lsPID.ms_Arg) > MAX_PATH)
+					lstrmerge(&lsPID.ms_Val, lsPID.ms_Val ? L"," : NULL, _itow(pPrc[i].ProcessID, szExe, 10));
+					if (lstrlen(lsPID.ms_Val) > MAX_PATH)
 						break;
 				}
-				_wsprintf(szExe, SKIPLEN(countof(szExe)) L"\"%s\" /DEBUGPID=%s /DUMP", pszServer, lsPID.ms_Arg);
+				_wsprintf(szExe, SKIPLEN(countof(szExe)) L"\"%s\" /DEBUGPID=%s /DUMP", pszServer, lsPID.ms_Val);
 				free(pPrc);
 			}
 		} break;
@@ -4230,7 +4230,7 @@ BOOL CRealConsole::StartProcess()
 	}
 
 	if (!ms_DefTitle.IsEmpty())
-		si.lpTitle = ms_DefTitle.ms_Arg;
+		si.lpTitle = ms_DefTitle.ms_Val;
 
 	// Prepare cmd line
 	LPCWSTR lpszRawCmd = (m_Args.pszSpecialCmd && *m_Args.pszSpecialCmd) ? m_Args.pszSpecialCmd : gpConEmu->GetCmd(NULL, true);
@@ -4695,7 +4695,7 @@ BOOL CRealConsole::CreateOrRunAs(CRealConsole* pRCon, RConStartArgs& Args,
 	// Function may be used for starting GUI applications (errors & hyperlinks)
 	bool bConsoleProcess = true;
 	{
-		CmdArg szExe;
+		CEStr szExe;
 		DWORD nSubSys = 0, nBits = 0, nAttrs = 0;
 		if (!IsNeedCmd(TRUE, psCurCmd, szExe))
 		{
@@ -4731,7 +4731,7 @@ BOOL CRealConsole::CreateOrRunAs(CRealConsole* pRCon, RConStartArgs& Args,
 					wcscpy_c(szUserDir, L"C:\\");
 				lpszWorkDir = szUserDir;
 				// Force SetCurrentDirectory("%USERPROFILE%") in the server
-				CmdArg exe;
+				CEStr exe;
 				LPCWSTR pszTemp = psCurCmd;
 				if (NextArg(&pszTemp, exe) == 0)
 					pszChangedCmd = lstrmerge(exe, L" /PROFILECD ", pszTemp);
@@ -4781,7 +4781,7 @@ BOOL CRealConsole::CreateOrRunAs(CRealConsole* pRCon, RConStartArgs& Args,
 	else // Args.bRunAsAdministrator
 	{
 		LPCWSTR pszCmd = psCurCmd;
-		CmdArg szExec;
+		CEStr szExec;
 
 		if (NextArg(&pszCmd, szExec) != 0)
 		{
@@ -7851,7 +7851,7 @@ int CRealConsole::GetDefaultAppSettingsId()
 	LPCWSTR lpszCmd = NULL;
 	//wchar_t* pszBuffer = NULL;
 	LPCWSTR pszName = NULL;
-	CmdArg szExe;
+	CEStr szExe;
 	wchar_t szName[MAX_PATH+1];
 	LPCWSTR pszTemp = NULL;
 	LPCWSTR pszIconFile = (m_Args.pszIconFile && *m_Args.pszIconFile) ? m_Args.pszIconFile : NULL;
@@ -10567,7 +10567,7 @@ void CRealConsole::SetTabs(ConEmuTab* apTabs, int anTabsCount, DWORD anFarPID)
 		bRenameByArgs = (m_Args.pszRenameTab && *m_Args.pszRenameTab);
 		if (!ms_DefTitle.IsEmpty())
 		{
-			lstrcpyn(apTabs->Name, ms_DefTitle.ms_Arg, countof(apTabs->Name));
+			lstrcpyn(apTabs->Name, ms_DefTitle.ms_Val, countof(apTabs->Name));
 		}
 		else if (ms_RootProcessName[0])
 		{
@@ -13119,11 +13119,11 @@ bool CRealConsole::isFarPanelAllowed()
 	{
 		if (mn_FarNoPanelsCheck)
 			return (mn_FarNoPanelsCheck == 1);
-		CmdArg szArg;
+		CEStr szArg;
 		LPCWSTR pszCmdLine = GetCmd();
 		while (NextArg(&pszCmdLine, szArg) == 0)
 		{
-			LPCWSTR ps = szArg.ms_Arg;
+			LPCWSTR ps = szArg.ms_Val;
 			if ((ps[0] == L'-' || ps[0] == L'/')
 				&& (ps[1] == L'e' || ps[1] == L'E' || ps[1] == L'v' || ps[1] == L'V')
 				&& (ps[2] == 0))
@@ -13293,8 +13293,8 @@ wchar_t* CRealConsole::CreateCommandLine(bool abForTasks /*= false*/)
 	// m_Args.pszStartupDir is used in GetStartupDir()
 	// thats why we save the value before showing the current one
 	wchar_t* pszDirSave = m_Args.pszStartupDir;
-	CmdArg szCurDir;
-	m_Args.pszStartupDir = GetConsoleCurDir(szCurDir) ? szCurDir.ms_Arg : NULL;
+	CEStr szCurDir;
+	m_Args.pszStartupDir = GetConsoleCurDir(szCurDir) ? szCurDir.ms_Val : NULL;
 
 	SafeFree(m_Args.pszRenameTab);
 	CTab tab(__FILE__,__LINE__);
@@ -14573,7 +14573,7 @@ void CRealConsole::GetConsoleScreenBufferInfo(CONSOLE_SCREEN_BUFFER_INFO* sbi)
 // допускаются как прямые так и обратные слеши
 // путь может быть указан в cygwin формате
 // также, функция может выполнить автопоиск в 1-м уровне подпапок "текущей" директории
-LPCWSTR CRealConsole::GetFileFromConsole(LPCWSTR asSrc, CmdArg& szFull)
+LPCWSTR CRealConsole::GetFileFromConsole(LPCWSTR asSrc, CEStr& szFull)
 {
 	szFull.Empty();
 
@@ -14624,7 +14624,7 @@ void CRealConsole::GetStartTime(SYSTEMTIME& st)
 		st = m_StartTime;
 }
 
-LPCWSTR CRealConsole::GetConsoleStartDir(CmdArg& szDir)
+LPCWSTR CRealConsole::GetConsoleStartDir(CEStr& szDir)
 {
 	if (!this)
 	{
@@ -14636,7 +14636,7 @@ LPCWSTR CRealConsole::GetConsoleStartDir(CmdArg& szDir)
 	return szDir.IsEmpty() ? NULL : (LPCWSTR)szDir;
 }
 
-LPCWSTR CRealConsole::GetConsoleCurDir(CmdArg& szDir)
+LPCWSTR CRealConsole::GetConsoleCurDir(CEStr& szDir)
 {
 	if (!this)
 	{
@@ -14672,7 +14672,7 @@ wrap:
 	return szDir.IsEmpty() ? NULL : (LPCWSTR)szDir;
 }
 
-void CRealConsole::GetPanelDirs(CmdArg& szActiveDir, CmdArg& szPassive)
+void CRealConsole::GetPanelDirs(CEStr& szActiveDir, CEStr& szPassive)
 {
 	szActiveDir.Set(ms_CurWorkDir);
 	szPassive.Set(isFar() ? ms_CurPassiveDir : L"");
@@ -15795,10 +15795,10 @@ void CRealConsole::Unfasten()
 
 	STARTUPINFO si = {sizeof(si)};
 	PROCESS_INFORMATION pi = {};
-	BOOL bStarted = CreateProcess(NULL, lsRunArgs.ms_Arg, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL, NULL, &si, &pi);
+	BOOL bStarted = CreateProcess(NULL, lsRunArgs.ms_Val, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL, NULL, &si, &pi);
 	if (!bStarted)
 	{
-		DisplayLastError(lsRunArgs.ms_Arg, GetLastError(), MB_ICONSTOP, L"Failed to start new ConEmu instance", ghWnd);
+		DisplayLastError(lsRunArgs.ms_Val, GetLastError(), MB_ICONSTOP, L"Failed to start new ConEmu instance", ghWnd);
 		return;
 	}
 
@@ -15880,7 +15880,7 @@ BOOL CRealConsole::GuiAppAttachAllowed(DWORD anServerPID, LPCWSTR asAppFileName,
 	if (pszCmd && *pszCmd && asAppFileName && *asAppFileName)
 	{
 		wchar_t szApp[MAX_PATH+1];
-		CmdArg  szArg;
+		CEStr  szArg;
 		LPCWSTR pszArg = NULL, pszApp = NULL, pszOnly = NULL;
 
 		while (pszCmd[0] == L'"' && pszCmd[1] == L'"')
@@ -15897,7 +15897,7 @@ BOOL CRealConsole::GuiAppAttachAllowed(DWORD anServerPID, LPCWSTR asAppFileName,
 		if (NextArg(&pszCmd, szArg, &pszApp) == 0)
 		{
 			// Что пытаемся запустить в консоли
-			CharUpperBuff(szArg.ms_Arg, lstrlen(szArg));
+			CharUpperBuff(szArg.ms_Val, lstrlen(szArg));
 			pszArg = PointToName(szArg);
 			if (lstrcmp(pszArg, szApp) == 0)
 				return true;
@@ -15912,7 +15912,7 @@ BOOL CRealConsole::GuiAppAttachAllowed(DWORD anServerPID, LPCWSTR asAppFileName,
 
 		// Может там кавычек нет, а путь с пробелом
 		szArg.Set(pszOnly);
-		CharUpperBuff(szArg.ms_Arg, lstrlen(szArg));
+		CharUpperBuff(szArg.ms_Val, lstrlen(szArg));
 		if (lstrcmp(szArg, szApp) == 0)
 			return true;
 		if (pszArg && !wcschr(pszArg, L'.') && pszDot)

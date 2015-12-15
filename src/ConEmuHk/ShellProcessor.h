@@ -68,7 +68,7 @@ private:
 
 	// Информация о запускаемом процессе
 	DWORD mn_ImageSubsystem, mn_ImageBits;
-	CmdArg ms_ExeTmp;
+	CEStr ms_ExeTmp;
 	BOOL mb_WasSuspended; // Если TRUE - значит при вызове CreateProcessXXX уже был флаг CREATE_SUSPENDED
 	BOOL mb_NeedInjects;
 	BOOL mb_DebugWasRequested;
@@ -79,7 +79,7 @@ private:
 	bool mb_Opt_SkipNewConsole; // ConEmuHooks=NOARG
 	bool mb_Opt_SkipCmdStart; // ConEmuHooks=NOSTART
 	void CheckHooksDisabled();
-	bool GetStartingExeName(LPCWSTR asFile, LPCWSTR asParam, CmdArg& rsExeTmp);
+	bool GetStartingExeName(LPCWSTR asFile, LPCWSTR asParam, CEStr& rsExeTmp);
 
 	BOOL mb_isCurrentGuiClient;
 	void CheckIsCurrentGuiClient();
@@ -139,7 +139,7 @@ protected:
 	static PROCESS_INFORMATION m_WaitDebugVsThread;
 public:
 	// Helper
-	bool GetLinkProperties(LPCWSTR asLnkFile, CmdArg& rsExe, CmdArg& rsArgs, CmdArg& rsWorkDir);
+	bool GetLinkProperties(LPCWSTR asLnkFile, CEStr& rsExe, CEStr& rsArgs, CEStr& rsWorkDir);
 	bool InitOle32();
 protected:
 	HMODULE hOle32;

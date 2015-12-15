@@ -1648,12 +1648,12 @@ static void PrintDownloadLog(LPCWSTR pszLabel, LPCWSTR pszInfo)
 	CEStr lsAll(lstrmerge(szTime, pszLabel, (pszInfo && *pszInfo) ? pszInfo : L"<NULL>\n"));
 
 	DWORD nWritten;
-	int iLen = lstrlen(lsAll.ms_Arg);
+	int iLen = lstrlen(lsAll.ms_Val);
 	if (iLen <= 0)
 		return;
 
 	#if defined(_DEBUG)
-	OutputDebugString(lsAll.ms_Arg);
+	OutputDebugString(lsAll.ms_Val);
 	#endif
 
 	// Log downloader events to StdError
@@ -1682,24 +1682,24 @@ static void PrintDownloadLog(LPCWSTR pszLabel, LPCWSTR pszInfo)
 	{
 		if (gbVerbose)
 		{
-			PrintToConsole(NULL, lsAll.ms_Arg, iLen);
+			PrintToConsole(NULL, lsAll.ms_Val, iLen);
 		}
 		return;
 	}
 
 	if (!bRedirected)
 	{
-		PrintToConsole(hStdErr, lsAll.ms_Arg, iLen);
+		PrintToConsole(hStdErr, lsAll.ms_Val, iLen);
 	}
 	else
 	{
 		if (gbVerbose)
 		{
-			PrintToConsole(NULL, lsAll.ms_Arg, iLen);
+			PrintToConsole(NULL, lsAll.ms_Val, iLen);
 		}
 
 		DWORD cp = GetConsoleCP();
-		DWORD nMax = WideCharToMultiByte(cp, 0, lsAll.ms_Arg, iLen, NULL, 0, NULL, NULL);
+		DWORD nMax = WideCharToMultiByte(cp, 0, lsAll.ms_Val, iLen, NULL, 0, NULL, NULL);
 
 		char szOem[200], *pszOem = NULL;
 
@@ -1716,7 +1716,7 @@ static void PrintDownloadLog(LPCWSTR pszLabel, LPCWSTR pszInfo)
 		{
 			pszOem[nMax] = 0; // just for debugging purposes, not requried
 
-			if (WideCharToMultiByte(cp, 0, lsAll.ms_Arg, iLen, pszOem, nMax+1, NULL, NULL) > 0)
+			if (WideCharToMultiByte(cp, 0, lsAll.ms_Val, iLen, pszOem, nMax+1, NULL, NULL) > 0)
 			{
 				WriteFile(hStdErr, pszOem, nMax, &nWritten, NULL);
 			}
@@ -1788,7 +1788,7 @@ int DoDownload(LPCWSTR asCmdLine)
 {
 	int iRc = CERR_CARGUMENT;
 	DWORD_PTR drc;
-	CmdArg szArg;
+	CEStr szArg;
 	wchar_t* pszUrl = NULL;
 	size_t iFiles = 0;
 	CEDownloadErrorArg args[4];

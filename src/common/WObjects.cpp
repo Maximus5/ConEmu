@@ -219,7 +219,7 @@ int apiGetFullPathName(LPCWSTR lpFileName, CEStr& rsPath)
 	return bFound ? rsPath.GetLen() : 0;
 }
 
-bool FileSearchInDir(LPCWSTR asFilePath, CmdArg& rsFound)
+bool FileSearchInDir(LPCWSTR asFilePath, CEStr& rsFound)
 {
 	// Possibilities
 	// a) asFilePath does not contain path, only: "far"
@@ -280,7 +280,7 @@ bool FileSearchInDir(LPCWSTR asFilePath, CmdArg& rsFound)
 
 SearchAppPaths_t gfnSearchAppPaths = NULL;
 
-bool FileExistsSearch(LPCWSTR asFilePath, CmdArg& rsFound, bool abSetPath/*= true*/, bool abRegSearch /*= true*/)
+bool FileExistsSearch(LPCWSTR asFilePath, CEStr& rsFound, bool abSetPath/*= true*/, bool abRegSearch /*= true*/)
 {
 	if (!asFilePath || !*asFilePath)
 	{

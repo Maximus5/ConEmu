@@ -1935,7 +1935,7 @@ HMENU CConEmuMenu::CreateVConPopupMenu(CVirtualConsole* apVCon, HMENU ahExist, b
 		lsCloseText.Set(L"&Close tab group");
 	else
 		lsCloseText.Set(L"&Close tab");
-	lsCloseText.Set(MenuAccel(vkCloseTab, lsCloseText.ms_Arg));
+	lsCloseText.Set(MenuAccel(vkCloseTab, lsCloseText.ms_Val));
 
 	if (!hMenu)
 	{

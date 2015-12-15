@@ -38,7 +38,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "OptionsClass.h"
 #include "SearchCtrl.h"
 #include "VConGroup.h"
-#include "../common/CmdArg.h"
+#include "../common/CEStr.h"
 #include "../common/MMap.h"
 
 ATOM CFindPanel::mh_Class = NULL;
@@ -61,7 +61,7 @@ CFindPanel::CFindPanel(CConEmuMain* apConEmu)
 {
 	if (!g_FindMap.Initialized())
 		g_FindMap.Init(16);
-	ms_PrevSearch = new CmdArg();
+	ms_PrevSearch = new CEStr();
 }
 
 CFindPanel::~CFindPanel()
@@ -352,7 +352,7 @@ void CFindPanel::OnSearch()
 	if (gpSet->FindOptions.pszText && *gpSet->FindOptions.pszText)
 	{
 		int nDirection = 0;
-		if (ms_PrevSearch->ms_Arg && (lstrcmp(ms_PrevSearch->ms_Arg, gpSet->FindOptions.pszText) == 0))
+		if (ms_PrevSearch->ms_Val && (lstrcmp(ms_PrevSearch->ms_Val, gpSet->FindOptions.pszText) == 0))
 			nDirection = isPressed(VK_SHIFT) ? -1 : 1;
 		gpConEmu->DoFindText(nDirection);
 		ms_PrevSearch->Set(gpSet->FindOptions.pszText);

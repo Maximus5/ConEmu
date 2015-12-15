@@ -34,7 +34,7 @@ $(INTDIR)\AboutDlg.obj \
 $(INTDIR)\Attach.obj \
 $(INTDIR)\Background.obj \
 $(INTDIR)\BaseDragDrops.obj \
-$(INTDIR)\CmdArg.obj \
+$(INTDIR)\CEStr.obj \
 $(INTDIR)\CmdHistory.obj \
 $(INTDIR)\CmdLine.obj \
 $(INTDIR)\Common.obj \
@@ -299,7 +299,7 @@ $(INTDIR)\Background.obj: Background.cpp Background.h
 
 $(INTDIR)\BaseDragDrops.obj: BaseDragDrops.cpp BaseDragDrops.h DragDrop.h DragDropData.h
 
-$(INTDIR)\CmdArg.obj: ../common/CmdArg.cpp ../common/CmdArg.h ../common/WUser.h
+$(INTDIR)\CEStr.obj: ../common/CEStr.cpp ../common/CEStr.h ../common/WUser.h
 
 $(INTDIR)\CmdHistory.obj: CmdHistory.cpp CmdHistory.h
 

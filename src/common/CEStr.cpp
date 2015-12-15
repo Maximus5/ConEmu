@@ -28,33 +28,33 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define HIDE_USE_EXCEPTION_INFO
 #include "Common.h"
-#include "CmdArg.h"
+#include "CEStr.h"
 #include "WObjects.h"
 
-CmdArg::CmdArg()
+CEStr::CEStr()
 {
-	mn_MaxCount = 0; ms_Arg = NULL;
+	mn_MaxCount = 0; ms_Val = NULL;
 	mb_RestoreEnvVar = false;
 	ms_RestoreVarName[0] = 0;
 	Empty();
 }
 
-CmdArg::CmdArg(wchar_t* RVAL_REF asPtr)
+CEStr::CEStr(wchar_t* RVAL_REF asPtr)
 {
-	mn_MaxCount = 0; ms_Arg = NULL;
+	mn_MaxCount = 0; ms_Val = NULL;
 	mpsz_Dequoted = NULL;
 	mb_RestoreEnvVar = false;
 	ms_RestoreVarName[0] = 0;
 	AttachInt(asPtr);
 }
 
-CmdArg::operator LPCWSTR() const
+CEStr::operator LPCWSTR() const
 {
-	return ms_Arg;
+	return ms_Val;
 }
 
 // cchMaxCount - including terminating \0
-LPCWSTR CmdArg::Right(INT_PTR cchMaxCount) const
+LPCWSTR CEStr::Right(INT_PTR cchMaxCount) const
 {
 	if (cchMaxCount <= 0)
 	{
@@ -62,50 +62,50 @@ LPCWSTR CmdArg::Right(INT_PTR cchMaxCount) const
 		return NULL;
 	}
 
-	if (!ms_Arg || !*ms_Arg)
-		return ms_Arg;
+	if (!ms_Val || !*ms_Val)
+		return ms_Val;
 
-	INT_PTR iLen = lstrlen(ms_Arg);
+	INT_PTR iLen = lstrlen(ms_Val);
 	if (iLen >= cchMaxCount)
-		return (ms_Arg + (iLen - cchMaxCount + 1));
-	return ms_Arg;
+		return (ms_Val + (iLen - cchMaxCount + 1));
+	return ms_Val;
 }
 
-CmdArg& CmdArg::operator=(wchar_t* RVAL_REF asPtr)
+CEStr& CEStr::operator=(wchar_t* RVAL_REF asPtr)
 {
 	AttachInt(asPtr);
 	return *this;
 }
 
-CmdArg& CmdArg::operator=(const wchar_t* asPtr)
+CEStr& CEStr::operator=(const wchar_t* asPtr)
 {
 	Set(asPtr);
 	return *this;
 }
 
-CmdArg::~CmdArg()
+CEStr::~CEStr()
 {
 	if (mb_RestoreEnvVar && *ms_RestoreVarName && !IsEmpty())
 	{
-		SetEnvironmentVariable(ms_RestoreVarName, ms_Arg);
+		SetEnvironmentVariable(ms_RestoreVarName, ms_Val);
 	}
 
-	SafeFree(ms_Arg);
+	SafeFree(ms_Val);
 }
 
-INT_PTR CmdArg::GetLen()
+INT_PTR CEStr::GetLen()
 {
-	return (ms_Arg && *ms_Arg) ? lstrlen(ms_Arg) : 0;
+	return (ms_Val && *ms_Val) ? lstrlen(ms_Val) : 0;
 }
 
-INT_PTR CmdArg::GetMaxCount()
+INT_PTR CEStr::GetMaxCount()
 {
-	if (ms_Arg && (mn_MaxCount <= 0))
-		mn_MaxCount = lstrlen(ms_Arg) + 1;
+	if (ms_Val && (mn_MaxCount <= 0))
+		mn_MaxCount = lstrlen(ms_Val) + 1;
 	return mn_MaxCount;
 }
 
-wchar_t* CmdArg::GetBuffer(INT_PTR cchMaxLen)
+wchar_t* CEStr::GetBuffer(INT_PTR cchMaxLen)
 {
 	if (cchMaxLen <= 0)
 	{
@@ -113,70 +113,70 @@ wchar_t* CmdArg::GetBuffer(INT_PTR cchMaxLen)
 		return NULL;
 	}
 
-	// if ms_Arg was used externally (by lstrmerge for example),
+	// if ms_Val was used externally (by lstrmerge for example),
 	// than GetMaxCount() will update mn_MaxCount
-	INT_PTR nOldLen = (ms_Arg && (GetMaxCount() > 0)) ? (mn_MaxCount-1) : 0;
+	INT_PTR nOldLen = (ms_Val && (GetMaxCount() > 0)) ? (mn_MaxCount-1) : 0;
 
-	if (!ms_Arg || (cchMaxLen >= mn_MaxCount))
+	if (!ms_Val || (cchMaxLen >= mn_MaxCount))
 	{
 		INT_PTR nNewMaxLen = max(mn_MaxCount,cchMaxLen+1);
-		if (ms_Arg)
+		if (ms_Val)
 		{
-			ms_Arg = (wchar_t*)realloc(ms_Arg, nNewMaxLen*sizeof(*ms_Arg));
+			ms_Val = (wchar_t*)realloc(ms_Val, nNewMaxLen*sizeof(*ms_Val));
 		}
 		else
 		{
-			ms_Arg = (wchar_t*)malloc(nNewMaxLen*sizeof(*ms_Arg));
+			ms_Val = (wchar_t*)malloc(nNewMaxLen*sizeof(*ms_Val));
 		}
 		mn_MaxCount = nNewMaxLen;
 	}
 
-	if (ms_Arg)
+	if (ms_Val)
 	{
 		_ASSERTE(cchMaxLen>0 && nOldLen>=0);
-		ms_Arg[min(cchMaxLen,nOldLen)] = 0;
+		ms_Val[min(cchMaxLen,nOldLen)] = 0;
 	}
 
-	return ms_Arg;
+	return ms_Val;
 }
 
-wchar_t* CmdArg::Detach()
+wchar_t* CEStr::Detach()
 {
-	wchar_t* psz = ms_Arg;
-	ms_Arg = NULL;
+	wchar_t* psz = ms_Val;
+	ms_Val = NULL;
 	mn_MaxCount = 0;
 
 	return psz;
 }
 
-LPCWSTR CmdArg::Attach(wchar_t* RVAL_REF asPtr)
+LPCWSTR CEStr::Attach(wchar_t* RVAL_REF asPtr)
 {
 	return AttachInt(asPtr);
 }
 
-LPCWSTR CmdArg::AttachInt(wchar_t*& asPtr)
+LPCWSTR CEStr::AttachInt(wchar_t*& asPtr)
 {
-	if (ms_Arg == asPtr)
+	if (ms_Val == asPtr)
 	{
-		return ms_Arg; // Already
+		return ms_Val; // Already
 	}
 
 	Empty();
-	SafeFree(ms_Arg);
+	SafeFree(ms_Val);
 	if (asPtr)
 	{
-		ms_Arg = asPtr;
+		ms_Val = asPtr;
 		mn_MaxCount = lstrlen(asPtr)+1;
 	}
 
-	return ms_Arg;
+	return ms_Val;
 }
 
-void CmdArg::Empty()
+void CEStr::Empty()
 {
-	if (ms_Arg)
+	if (ms_Val)
 	{
-		*ms_Arg = 0;
+		*ms_Val = 0;
 	}
 
 	mn_TokenNo = 0;
@@ -190,12 +190,12 @@ void CmdArg::Empty()
 	ms_RestoreVarName[0] = 0;
 }
 
-bool CmdArg::IsEmpty()
+bool CEStr::IsEmpty()
 {
-	return (!ms_Arg || !*ms_Arg);
+	return (!ms_Val || !*ms_Val);
 }
 
-LPCWSTR CmdArg::Set(LPCWSTR asNewValue, INT_PTR anChars /*= -1*/)
+LPCWSTR CEStr::Set(LPCWSTR asNewValue, INT_PTR anChars /*= -1*/)
 {
 	if (asNewValue)
 	{
@@ -204,12 +204,12 @@ LPCWSTR CmdArg::Set(LPCWSTR asNewValue, INT_PTR anChars /*= -1*/)
 		{
 			//_ASSERTE(FALSE && "Check, if caller really need to set empty string???");
 			if (GetBuffer(1))
-				ms_Arg[0] = 0;
+				ms_Val[0] = 0;
 		}
 		else if (GetBuffer(nNewLen))
 		{
 			_ASSERTE(mn_MaxCount > nNewLen); // Must be set in GetBuffer
-			_wcscpyn_c(ms_Arg, mn_MaxCount, asNewValue, nNewLen);
+			_wcscpyn_c(ms_Val, mn_MaxCount, asNewValue, nNewLen);
 		}
 	}
 	else
@@ -217,10 +217,10 @@ LPCWSTR CmdArg::Set(LPCWSTR asNewValue, INT_PTR anChars /*= -1*/)
 		Empty();
 	}
 
-	return ms_Arg;
+	return ms_Val;
 }
 
-void CmdArg::SavePathVar(LPCWSTR asCurPath)
+void CEStr::SavePathVar(LPCWSTR asCurPath)
 {
 	// Will restore environment variable "PATH" in destructor
 	if (Set(asCurPath))
@@ -230,14 +230,14 @@ void CmdArg::SavePathVar(LPCWSTR asCurPath)
 	}
 }
 
-void CmdArg::SaveEnvVar(LPCWSTR asVarName, LPCWSTR asNewValue)
+void CEStr::SaveEnvVar(LPCWSTR asVarName, LPCWSTR asNewValue)
 {
 	if (!asVarName || !*asVarName)
 		return;
 
 	_ASSERTE(!mb_RestoreEnvVar);
 	Empty();
-	SafeFree(ms_Arg);
+	SafeFree(ms_Val);
 	Attach(GetEnvVar(asVarName));
 
 	mb_RestoreEnvVar = true;
@@ -245,15 +245,15 @@ void CmdArg::SaveEnvVar(LPCWSTR asVarName, LPCWSTR asNewValue)
 	SetEnvironmentVariable(asVarName, asNewValue);
 }
 
-void CmdArg::SetAt(INT_PTR nIdx, wchar_t wc)
+void CEStr::SetAt(INT_PTR nIdx, wchar_t wc)
 {
-	if (ms_Arg && (nIdx < mn_MaxCount))
+	if (ms_Val && (nIdx < mn_MaxCount))
 	{
-		ms_Arg[nIdx] = wc;
+		ms_Val[nIdx] = wc;
 	}
 }
 
-void CmdArg::GetPosFrom(const CmdArg& arg)
+void CEStr::GetPosFrom(const CEStr& arg)
 {
 	mpsz_Dequoted = arg.mpsz_Dequoted;
 	mn_TokenNo = arg.mn_TokenNo;

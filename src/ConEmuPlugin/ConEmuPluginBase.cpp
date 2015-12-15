@@ -356,7 +356,7 @@ bool CPluginBase::DllCheckUnique(bool bFromMenu)
 				|| !lstrcmpi(pszName, L"ConEmu.x64.dll"))
 			{
 				iCount++;
-				lstrmerge(&lsFiles.ms_Arg, module.szExePath[0] ? module.szExePath : module.szModule, L"\n");
+				lstrmerge(&lsFiles.ms_Val, module.szExePath[0] ? module.szExePath : module.szModule, L"\n");
 			}
 		}
 
@@ -380,7 +380,7 @@ bool CPluginBase::DllCheckUnique(bool bFromMenu)
 		L"Please, either remove old versions,\n"
 		L"or change Far.exe arguments (/p switch)!\n\n",
 		szExePath, L"\n",
-		lsFiles.ms_Arg);
+		lsFiles.ms_Val);
 
 	ShowMessageBox(lsMsg, MB_OK | MB_ICONSTOP | MB_SETFOREGROUND | MB_SYSTEMMODAL);
 
@@ -799,25 +799,25 @@ void CPluginBase::UpdatePanelDirs()
 bool CPluginBase::RunExternalProgram(wchar_t* pszCommand)
 {
 	wchar_t *pszExpand = NULL;
-	CmdArg szTemp, szExpand, szCurDir;
+	CEStr szTemp, szExpand, szCurDir;
 
 	if (!pszCommand || !*pszCommand)
 	{
-		if (!InputBox(L"ConEmu", L"Start console program", L"ConEmu.CreateProcess", L"cmd", szTemp.ms_Arg))
+		if (!InputBox(L"ConEmu", L"Start console program", L"ConEmu.CreateProcess", L"cmd", szTemp.ms_Val))
 			return false;
 
-		pszCommand = szTemp.ms_Arg;
+		pszCommand = szTemp.ms_Val;
 	}
 
 	if (wcschr(pszCommand, L'%'))
 	{
-		szExpand.ms_Arg = ExpandEnvStr(pszCommand);
-		if (szExpand.ms_Arg)
-			pszCommand = szExpand.ms_Arg;
+		szExpand.ms_Val = ExpandEnvStr(pszCommand);
+		if (szExpand.ms_Val)
+			pszCommand = szExpand.ms_Val;
 	}
 
-	szCurDir.ms_Arg = GetPanelDir(gpdf_Active|gpdf_NoPlugin);
-	if (!szCurDir.ms_Arg || !*szCurDir.ms_Arg)
+	szCurDir.ms_Val = GetPanelDir(gpdf_Active|gpdf_NoPlugin);
+	if (!szCurDir.ms_Val || !*szCurDir.ms_Val)
 	{
 		szCurDir.Set(L"C:\\");
 	}
@@ -827,7 +827,7 @@ bool CPluginBase::RunExternalProgram(wchar_t* pszCommand)
 	if (!bSilent)
 		ShowUserScreen(true);
 
-	RunExternalProgramW(pszCommand, szCurDir.ms_Arg, bSilent);
+	RunExternalProgramW(pszCommand, szCurDir.ms_Val, bSilent);
 
 	if (!bSilent)
 		ShowUserScreen(false);

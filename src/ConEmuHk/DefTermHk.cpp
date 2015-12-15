@@ -265,7 +265,7 @@ void DefTermLogString(LPCSTR asMessage, LPCWSTR asLabel /*= NULL*/)
 	INT_PTR iLen = lstrlenA(asMessage);
 	CEStr lsMsg;
 	MultiByteToWideChar(CP_ACP, 0, asMessage, iLen, lsMsg.GetBuffer(iLen), iLen);
-	DefTermLogString(lsMsg.ms_Arg, asLabel);
+	DefTermLogString(lsMsg.ms_Val, asLabel);
 }
 
 void DefTermLogString(LPCWSTR asMessage, LPCWSTR asLabel /*= NULL*/)
@@ -292,8 +292,8 @@ void DefTermLogString(LPCWSTR asMessage, LPCWSTR asLabel /*= NULL*/)
 	if (asLabel && *asLabel)
 	{
 		lsBuf = lstrmerge(asLabel, asMessage);
-		if (lsBuf.ms_Arg)
-			pszReady = lsBuf.ms_Arg;
+		if (lsBuf.ms_Val)
+			pszReady = lsBuf.ms_Val;
 	}
 
 	gpDefTerm->LogHookingStatus(pszReady);
@@ -541,7 +541,7 @@ DWORD CDefTermHk::StartConsoleServer(DWORD nAttachPID, bool bNewConWnd, PHANDLE 
 
 	bool bAttachCreated = false;
 
-	CmdArg szAddArgs, szAddArgs2;
+	CEStr szAddArgs, szAddArgs2;
 	size_t cchAddArgLen;
 	size_t cchMax;
 	wchar_t* pszCmdLine;
@@ -663,7 +663,7 @@ void CDefTermHk::OnAllocConsoleFinished()
 	}
 }
 
-size_t CDefTermHk::GetSrvAddArgs(bool bGuiArgs, CmdArg& rsArgs, CmdArg& rsNewCon)
+size_t CDefTermHk::GetSrvAddArgs(bool bGuiArgs, CEStr& rsArgs, CEStr& rsNewCon)
 {
 	rsArgs.Empty();
 	rsNewCon.Empty();

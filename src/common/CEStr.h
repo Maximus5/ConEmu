@@ -38,10 +38,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 // CEStr
-typedef struct CmdArg
+struct CEStr
 {
 public:
-	wchar_t *ms_Arg;
+	wchar_t *ms_Val;
 private:
 	INT_PTR mn_MaxCount; // Including termination \0
 public:
@@ -66,7 +66,7 @@ public:
 
 private:
 	// Not copyable, not implemented, use explicit Set method
-	CmdArg& operator=(const CmdArg &);
+	CEStr& operator=(const CEStr &);
 
 private:
 	LPCWSTR AttachInt(wchar_t*& asPtr);
@@ -74,8 +74,8 @@ private:
 public:
 	operator LPCWSTR() const;
 	LPCWSTR Right(INT_PTR cchMaxCount) const;
-	CmdArg& operator=(wchar_t* RVAL_REF asPtr);
-	CmdArg& operator=(const wchar_t* asPtr);
+	CEStr& operator=(wchar_t* RVAL_REF asPtr);
+	CEStr& operator=(const wchar_t* asPtr);
 
 	INT_PTR GetLen();
 	INT_PTR GetMaxCount();
@@ -90,9 +90,9 @@ public:
 	void SaveEnvVar(LPCWSTR asVarName, LPCWSTR asNewValue);
 	void SetAt(INT_PTR nIdx, wchar_t wc);
 
-	void GetPosFrom(const CmdArg& arg);
+	void GetPosFrom(const CEStr& arg);
 
-	CmdArg();
-	CmdArg(wchar_t* RVAL_REF asPtr);
-	~CmdArg();
-} CEStr;
+	CEStr();
+	CEStr(wchar_t* RVAL_REF asPtr);
+	~CEStr();
+};

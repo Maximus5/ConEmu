@@ -237,7 +237,7 @@ bool CShellProc::InitOle32()
 	return true;
 }
 
-bool CShellProc::GetLinkProperties(LPCWSTR asLnkFile, CmdArg& rsExe, CmdArg& rsArgs, CmdArg& rsWorkDir)
+bool CShellProc::GetLinkProperties(LPCWSTR asLnkFile, CEStr& rsExe, CEStr& rsArgs, CEStr& rsWorkDir)
 {
 	bool bRc = false;
 	IPersistFile* pFile = NULL;
@@ -624,7 +624,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd,
 	#endif
 	bool lbNewConsoleFromGui = false;
 	BOOL lbComSpecK = FALSE; // TRUE - если нужно запустить /K, а не /C
-	CmdArg szDefTermArg, szDefTermArg2;
+	CEStr szDefTermArg, szDefTermArg2;
 
 	_ASSERTEX(m_SrvMapping.sConEmuExe[0]!=0 && m_SrvMapping.ComSpec.ConEmuBaseDir[0]!=0);
 	if (gbPrepareDefaultTerminal)
@@ -693,7 +693,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd,
 						if (pszFileOnly)
 						{
 							LPCWSTR pszCopy = pszParam;
-							CmdArg  szFirst;
+							CEStr  szFirst;
 							if (NextArg(&pszCopy, szFirst) != 0)
 							{
 								_ASSERTE(FALSE && "NextArg failed?");
@@ -1302,7 +1302,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd,
 			if (!(asFile && *asFile) && asParam && *asParam)
 			{
 				LPCWSTR pszTest = asParam;
-				CmdArg szTest;
+				CEStr szTest;
 				if (NextArg(&pszTest, szTest) == 0)
 				{
 					pszTest = SkipNonPrintable(pszTest);
@@ -1431,7 +1431,7 @@ int CShellProc::PrepareExecuteParms(
 	// Just in case of unexpected LastError changes
 	ScopedObject(CLastErrorGuard);
 
-	CmdArg szLnkExe, szLnkArg, szLnkDir;
+	CEStr szLnkExe, szLnkArg, szLnkDir;
 	if (asFile && (aCmd == eShellExecute))
 	{
 		LPCWSTR pszExt = PointToExt(asFile);
@@ -1440,8 +1440,8 @@ int CShellProc::PrepareExecuteParms(
 			if (GetLinkProperties(asFile, szLnkExe, szLnkArg, szLnkDir))
 			{
 				_ASSERTE(asParam == NULL);
-				asFile = szLnkExe.ms_Arg;
-				asParam = szLnkArg.ms_Arg;
+				asFile = szLnkExe.ms_Val;
+				asParam = szLnkArg.ms_Val;
 			}
 		}
 	}
@@ -1477,7 +1477,7 @@ int CShellProc::PrepareExecuteParms(
 		ms_ExeTmp.Empty();
 		if (NextArg(&pszDbg, ms_ExeTmp) == 0)
 		{
-			CharUpperBuff(ms_ExeTmp.ms_Arg, lstrlen(ms_ExeTmp));
+			CharUpperBuff(ms_ExeTmp.ms_Val, lstrlen(ms_ExeTmp));
 			if ((pszDbg = wcsstr(ms_ExeTmp, L"ANSI-LLW")) && (pszDbg[lstrlen(L"ANSI-LLW")] != L'\\'))
 				bAnsiConFound = true;
 			else if ((pszDbg = wcsstr(ms_ExeTmp, L"ANSICON")) && (pszDbg[lstrlen(L"ANSICON")] != L'\\'))
@@ -1493,7 +1493,7 @@ int CShellProc::PrepareExecuteParms(
 			continue;
 		}
 
-		CharUpperBuff(ms_ExeTmp.ms_Arg, lstrlen(ms_ExeTmp));
+		CharUpperBuff(ms_ExeTmp.ms_Val, lstrlen(ms_ExeTmp));
 		psz = PointToName(ms_ExeTmp);
 		if ((lstrcmp(psz, L"ANSI-LLW.EXE") == 0) || (lstrcmp(psz, L"ANSI-LLW") == 0)
 			|| (lstrcmp(psz, L"ANSICON.EXE") == 0) || (lstrcmp(psz, L"ANSICON") == 0))
@@ -1703,11 +1703,11 @@ int CShellProc::PrepareExecuteParms(
 			}
 			if (!ms_ExeTmp.IsEmpty())
 			{
-				lsReplaceFile.Set(ms_ExeTmp.ms_Arg);
-				asFile = lsReplaceFile.ms_Arg;
+				lsReplaceFile.Set(ms_ExeTmp.ms_Val);
+				asFile = lsReplaceFile.ms_Val;
 			}
 			bForceCutNewConsole = true;
-			asParam = lsReplaceParm.ms_Arg;
+			asParam = lsReplaceParm.ms_Val;
 		}
 	}
 	if (ms_ExeTmp.IsEmpty())
@@ -1826,7 +1826,7 @@ int CShellProc::PrepareExecuteParms(
 #else
 		// Считаем, что один файл (*.exe, *.cmd, ...) или ярлык (*.lnk)
 		// это одна запускаемая консоль в ConEmu.
-		CmdArg szPart[MAX_PATH+1]
+		CEStr szPart[MAX_PATH+1]
 		wchar_t szExe[MAX_PATH+1], szArguments[32768], szDir[MAX_PATH+1];
 		HRESULT hr = S_OK;
 		IShellLinkW* pShellLink = NULL;
@@ -2438,7 +2438,7 @@ wrap:
 	return lbChanged ? 1 : 0;
 } // PrepareExecuteParms
 
-bool CShellProc::GetStartingExeName(LPCWSTR asFile, LPCWSTR asParam, CmdArg& rsExeTmp)
+bool CShellProc::GetStartingExeName(LPCWSTR asFile, LPCWSTR asParam, CEStr& rsExeTmp)
 {
 	rsExeTmp.Empty();
 
@@ -2987,7 +2987,7 @@ void CShellProc::OnCreateProcessFinished(BOOL abSucceeded, PROCESS_INFORMATION *
 				// We need to start console app directly, but it will be nice
 				// to attach it to the existing or new ConEmu window.
 				size_t cchMax = MAX_PATH+80;
-				CmdArg szSrvArgs, szNewCon;
+				CEStr szSrvArgs, szNewCon;
 				cchMax += gpDefTerm->GetSrvAddArgs(false, szSrvArgs, szNewCon);
 				_ASSERTE(szNewCon.IsEmpty());
 

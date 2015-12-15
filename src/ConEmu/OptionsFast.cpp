@@ -42,7 +42,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmuApp.h"
 #include "Update.h"
 #include "../ConEmuCD/ExitCodes.h"
-#include "../common/CmdArg.h"
+#include "../common/CEStr.h"
 #include "../common/execute.h"
 #include "../common/FarVersion.h"
 #include "../common/StartupEnvDef.h"
@@ -106,9 +106,9 @@ static LRESULT CALLBACK Fast_ColorBoxProc(HWND hwnd, UINT uMsg, WPARAM wParam, L
 		case UM_PALETTE_FAST_CHG:
 		{
 			CEStr lsValue;
-			if (CSetDlgLists::GetSelectedString(GetParent(hwnd), lbColorSchemeFast, &lsValue.ms_Arg) > 0)
+			if (CSetDlgLists::GetSelectedString(GetParent(hwnd), lbColorSchemeFast, &lsValue.ms_Val) > 0)
 			{
-				const ColorPalette* pPal = gpSet->PaletteGetByName(lsValue.ms_Arg);
+				const ColorPalette* pPal = gpSet->PaletteGetByName(lsValue.ms_Val);
 				if (pPal)
 				{
 					gp_DefaultPalette = pPal;
@@ -392,11 +392,11 @@ static INT_PTR Fast_OnButtonClicked(HWND hDlg, UINT messg, WPARAM wParam, LPARAM
 			}
 
 			/* Startup task */
-			if (CSetDlgLists::GetSelectedString(hDlg, lbStartupShellFast, &lsValue.ms_Arg) > 0)
+			if (CSetDlgLists::GetSelectedString(hDlg, lbStartupShellFast, &lsValue.ms_Val) > 0)
 			{
-				if (*lsValue.ms_Arg == TaskBracketLeft)
+				if (*lsValue.ms_Val == TaskBracketLeft)
 				{
-					if (lsValue.ms_Arg[lstrlen(lsValue.ms_Arg)-1] != TaskBracketRight)
+					if (lsValue.ms_Val[lstrlen(lsValue.ms_Val)-1] != TaskBracketRight)
 					{
 						_ASSERTE(FALSE && "Doesn't match '{...}'");
 					}
@@ -404,32 +404,32 @@ static INT_PTR Fast_OnButtonClicked(HWND hDlg, UINT messg, WPARAM wParam, LPARAM
 					{
 						gpSet->nStartType = 2;
 						SafeFree(gpSet->psStartTasksName);
-						gpSet->psStartTasksName = lstrdup(lsValue.ms_Arg);
+						gpSet->psStartTasksName = lstrdup(lsValue.ms_Val);
 					}
 				}
-				else if (lstrcmp(lsValue.ms_Arg, AutoStartTaskName) == 0)
+				else if (lstrcmp(lsValue.ms_Val, AutoStartTaskName) == 0)
 				{
 					// Not shown yet in list
 					gpSet->nStartType = 3;
 				}
-				else if (*lsValue.ms_Arg == CmdFilePrefix)
+				else if (*lsValue.ms_Val == CmdFilePrefix)
 				{
 					gpSet->nStartType = 1;
 					SafeFree(gpSet->psStartTasksFile);
-					gpSet->psStartTasksFile = lstrdup(lsValue.ms_Arg);
+					gpSet->psStartTasksFile = lstrdup(lsValue.ms_Val);
 				}
 				else
 				{
 					gpSet->nStartType = 0;
 					SafeFree(gpSet->psStartSingleApp);
-					gpSet->psStartSingleApp = lstrdup(lsValue.ms_Arg);
+					gpSet->psStartSingleApp = lstrdup(lsValue.ms_Val);
 				}
 			}
 
 			/* Default pallette changed? */
-			if (CSetDlgLists::GetSelectedString(hDlg, lbColorSchemeFast, &lsValue.ms_Arg) > 0)
+			if (CSetDlgLists::GetSelectedString(hDlg, lbColorSchemeFast, &lsValue.ms_Val) > 0)
 			{
-				const ColorPalette* pPal = gpSet->PaletteGetByName(lsValue.ms_Arg);
+				const ColorPalette* pPal = gpSet->PaletteGetByName(lsValue.ms_Val);
 				if (pPal)
 				{
 					gpSetCls->ChangeCurrentPalette(pPal, false);
@@ -764,13 +764,13 @@ static bool FindOnDrives(LPCWSTR asFirstDrive, LPCWSTR asSearchPath, CEStr& rsFo
 		//   "InstallLocation"="C:\\Utils\\Lans\\GIT\\"
 		CEStr lsBuf, lsVal;
 		lsBuf.Set(asSearchPath+1);
-		wchar_t *pszFile = wcschr(lsBuf.ms_Arg, L']');
+		wchar_t *pszFile = wcschr(lsBuf.ms_Val, L']');
 		if (pszFile)
 		{
 			*(pszFile++) = 0;
-			wchar_t* pszValName = wcsrchr(lsBuf.ms_Arg, L':');
+			wchar_t* pszValName = wcsrchr(lsBuf.ms_Val, L':');
 			if (pszValName) *(pszValName++) = 0;
-			if (RegGetStringValue(NULL, lsBuf.ms_Arg, pszValName, lsVal) > 0)
+			if (RegGetStringValue(NULL, lsBuf.ms_Val, pszValName, lsVal) > 0)
 			{
 				rsFound.Attach(JoinPath(lsVal, pszFile));
 				if (FileExists(rsFound))
@@ -939,7 +939,7 @@ static bool WINAPI CreateVCTasks(HKEY hkVer, LPCWSTR pszVer, LPARAM lParam)
 					case 9:  pszIconSfx = L",10\""; break;
 					default: pszIconSfx = L"\"";
 					}
-					lstrmerge(&pszFull.ms_Arg, L" -new_console:C:\"", pszIconSource, pszIconSfx);
+					lstrmerge(&pszFull.ms_Val, L" -new_console:C:\"", pszIconSource, pszIconSfx);
 				}
 
 				CreateDefaultTask(pszName, L"", pszFull);
@@ -1036,7 +1036,7 @@ static bool UnExpandEnvStrings(LPCWSTR asSource, wchar_t* rsUnExpanded, INT_PTR 
 		return false;
 
 	CEStr szTemp(lstrdup(asSource));
-	wchar_t* ptrSrc = szTemp.ms_Arg;
+	wchar_t* ptrSrc = szTemp.ms_Val;
 	if (!ptrSrc)
 		return false;
 	int iCmpLen, iCmp, iLen = lstrlen(ptrSrc);
@@ -1366,19 +1366,19 @@ public:
 				{
 					CEStr szPath;
 					wchar_t *ptrFound, *ptrAdd;
-					while ((ptrAdd = wcschr(szArgs.ms_Arg, FOUND_APP_PATH_CHR)) != NULL)
+					while ((ptrAdd = wcschr(szArgs.ms_Val, FOUND_APP_PATH_CHR)) != NULL)
 					{
 						*ptrAdd = 0;
 						LPCWSTR pszTail = ptrAdd+1;
 
 						szPath.Set(ai.szFullPath);
-						ptrFound = wcsrchr(szPath.ms_Arg, L'\\');
+						ptrFound = wcsrchr(szPath.ms_Val, L'\\');
 						if (ptrFound) *ptrFound = 0;
 
 						if (*pszTail == L'\\') pszTail ++;
 						while (wcsncmp(pszTail, L"..\\", 3) == 0)
 						{
-							ptrAdd = wcsrchr(szPath.ms_Arg, L'\\');
+							ptrAdd = wcsrchr(szPath.ms_Val, L'\\');
 							if (!ptrAdd)
 								break;
 							// szPath is a local copy, safe to change it
@@ -1387,13 +1387,13 @@ public:
 						}
 
 						CEStr szTemp(JoinPath(szPath, pszTail));
-						szArgs.Attach(lstrmerge(szArgs.ms_Arg, szTemp));
+						szArgs.Attach(lstrmerge(szArgs.ms_Val, szTemp));
 					}
 				}
 				// Succeeded?
 				if (!szArgs.IsEmpty())
 				{
-					pszArgs = szArgs.ms_Arg;
+					pszArgs = szArgs.ms_Val;
 				}
 			}
 
@@ -1507,7 +1507,7 @@ public:
 		for (i = 0; FarExe[i]; i++)
 		{
 			if (FindOnDrives(szConEmuDrive, FarExe[i], szFound, bNeedQuot, szOptFull))
-				AddAppPath(L"Far", szFound, szOptFull.IsEmpty() ? NULL : szOptFull.ms_Arg, true);
+				AddAppPath(L"Far", szFound, szOptFull.IsEmpty() ? NULL : szOptFull.ms_Val, true);
 		}
 
 		// [HKCU|HKLM]\Software\Microsoft\Windows\CurrentVersion\App Paths
@@ -1875,7 +1875,7 @@ void CreateDefaultTasks(SettingsLoadedFlags slfFlags)
 	// Visual Studio prompt: HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\VisualStudio
 	RegEnumKeys(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\VisualStudio", CreateVCTasks, 0);
 
-	SafeFree(szConEmuDrive.ms_Arg);
+	SafeFree(szConEmuDrive.ms_Val);
 
 	// Choose default startup command
 	if (slfFlags & (slf_DefaultSettings|slf_DefaultTasks))

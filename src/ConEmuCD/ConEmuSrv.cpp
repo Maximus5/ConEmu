@@ -2904,7 +2904,7 @@ HWND Attach2Gui(DWORD nTimeout)
 
 	if (pIn->StartStop.sCmdLine[0])
 	{
-		CmdArg lsExe;
+		CEStr lsExe;
 		IsNeedCmd(true, pIn->StartStop.sCmdLine, lsExe);
 		lstrcpyn(pIn->StartStop.sModuleName, lsExe, countof(pIn->StartStop.sModuleName));
 	}

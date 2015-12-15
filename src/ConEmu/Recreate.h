@@ -44,8 +44,8 @@ protected:
 	wchar_t* mpsz_SysCmd;
 	wchar_t* mpsz_DefDir;
 	// Work dirs
-	CmdArg ms_RConStartDir;
-	CmdArg ms_RConCurDir;
+	CEStr ms_RConStartDir;
+	CEStr ms_RConCurDir;
 	// dpi support
 	CDpiForDialog* mp_DpiAware;
 	// Buffer

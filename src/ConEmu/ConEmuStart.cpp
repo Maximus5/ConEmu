@@ -216,7 +216,7 @@ void CConEmuStart::SetDefaultCmd(LPCWSTR asCmd)
 
 void CConEmuStart::SetCurCmd(LPCWSTR pszNewCmd, bool bIsCmdList)
 {
-	_ASSERTE((pszNewCmd || isCurCmdList) && szCurCmd.ms_Arg != pszNewCmd);
+	_ASSERTE((pszNewCmd || isCurCmdList) && szCurCmd.ms_Val != pszNewCmd);
 
 	szCurCmd.Set(pszNewCmd);
 	isCurCmdList = bIsCmdList;
@@ -380,7 +380,7 @@ LPCTSTR CConEmuStart::GetDefaultTask()
 			&& (pGrp->Flags & CETF_NEW_DEFAULT))
 		{
 			ms_DefNewTaskName.Attach(lstrdup(pGrp->pszName));
-			return ms_DefNewTaskName.ms_Arg;
+			return ms_DefNewTaskName.ms_Val;
 		}
 	}
 
@@ -490,7 +490,7 @@ bool CConEmuStart::GetCfgParm(LPCWSTR& cmdLineRest, CESwitch& Val, int nMaxLen, 
 		return false;
 	}
 
-	LPCWSTR curCommand = szGetCfgParmTemp.ms_Arg;
+	LPCWSTR curCommand = szGetCfgParmTemp.ms_Val;
 	int nLen = _tcslen(curCommand);
 
 	if (nLen >= nMaxLen)
@@ -583,7 +583,7 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 	// Have to get our exectuable name and name without extension
 	szExeName.Set(PointToName(gpConEmu->ms_ConEmuExe));
 	szExeNameOnly.Set(szExeName);
-	wchar_t* pszDot = (wchar_t*)PointToExt(szExeNameOnly.ms_Arg);
+	wchar_t* pszDot = (wchar_t*)PointToExt(szExeNameOnly.ms_Val);
 	_ASSERTE(pszDot);
 	if (pszDot) *pszDot = 0;
 
@@ -622,9 +622,9 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 		pszTemp = cmdLineRest;
 		if (NextArg(&pszTemp, szArg) == 0)
 		{
-			if ((*szArg.ms_Arg != L'/')
-				&& (*szArg.ms_Arg != L'-')
-				/*&& !wcschr(szArg.ms_Arg, L'/')*/
+			if ((*szArg.ms_Val != L'/')
+				&& (*szArg.ms_Val != L'-')
+				/*&& !wcschr(szArg.ms_Val, L'/')*/
 				)
 			{
 				// Save it for further use
@@ -660,26 +660,26 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 
 			// ':' removed from checks because otherwise it will not warn
 			// on invalid usage of "-new_console:a" for example
-			if (szArg.ms_Arg[0] == L'-' && szArg.ms_Arg[1] && !wcspbrk(szArg.ms_Arg+1, L"\\//|.&<>^"))
+			if (szArg.ms_Val[0] == L'-' && szArg.ms_Val[1] && !wcspbrk(szArg.ms_Val+1, L"\\//|.&<>^"))
 			{
 				// Seems this is to be the "switch" too
 				// Use both notations ('-' and '/')
-				*szArg.ms_Arg = L'/';
+				*szArg.ms_Val = L'/';
 			}
 
-			LPCWSTR curCommand = szArg.ms_Arg;
+			LPCWSTR curCommand = szArg.ms_Val;
 
 			#define NeedNextArg() \
 				if (NextArg(&cmdLineRest, szNext) != 0) { iResult = 101; goto wrap; } \
-				curCommand = szNext.ms_Arg;
+				curCommand = szNext.ms_Val;
 
 
 			#define AcquireCmdNew() \
 				_ASSERTE(opt.cmdNew.IsEmpty()); \
 				pszTemp = cmdLineRest; \
 				if ((NextArg(&pszTemp, szNext) == 0) \
-					&& (szNext.ms_Arg[0] == L'-' || szNext.ms_Arg[0] == L'/') \
-					&& (lstrcmpi(szNext.ms_Arg+1, L"cmd") == 0)) { \
+					&& (szNext.ms_Val[0] == L'-' || szNext.ms_Val[0] == L'/') \
+					&& (lstrcmpi(szNext.ms_Val+1, L"cmd") == 0)) { \
 					opt.cmdNew.Set(pszTemp); \
 				} else { \
 					opt.cmdNew.Set(cmdLineRest); \
@@ -789,7 +789,7 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 
 					PROCESS_INFORMATION pi = {};
 
-					BOOL b = CreateProcess(NULL, opt.cmdNew.ms_Arg, NULL, NULL, TRUE, NORMAL_PRIORITY_CLASS, NULL, NULL, &si, &pi);
+					BOOL b = CreateProcess(NULL, opt.cmdNew.ms_Val, NULL, NULL, TRUE, NORMAL_PRIORITY_CLASS, NULL, NULL, &si, &pi);
 					if (b)
 					{
 						CloseHandle(pi.hProcess);
@@ -835,7 +835,7 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 					DWORD nErr = 0;
 
 
-					b = CreateProcessDemoted(opt.cmdNew.ms_Arg, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL,
+					b = CreateProcessDemoted(opt.cmdNew.ms_Val, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL,
 							szCurDir, &si, &pi, &nErr);
 
 

@@ -34,7 +34,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // Returns true, if application was found in registry:
 // [HKCU|HKLM]\Software\Microsoft\Windows\CurrentVersion\App Paths
 // Also, function may change local process %PATH% variable
-bool SearchAppPaths(LPCWSTR asFilePath, CmdArg& rsFound, bool abSetPath, CmdArg* rpsPathRestore /*= NULL*/)
+bool SearchAppPaths(LPCWSTR asFilePath, CEStr& rsFound, bool abSetPath, CEStr* rpsPathRestore /*= NULL*/)
 {
 	#if defined(CONEMU_MINIMAL)
 	PRAGMA_ERROR("Must not be included in ConEmuHk");
@@ -54,7 +54,7 @@ bool SearchAppPaths(LPCWSTR asFilePath, CmdArg& rsFound, bool abSetPath, CmdArg*
 	// "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\"
 	LPCWSTR pszRoot = L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\App Paths\\";
 	HKEY hk; LONG lRc;
-	CmdArg lsName; lsName.Attach(lstrmerge(pszRoot, pszSearchFile, pszExt ? NULL : L".exe"));
+	CEStr lsName; lsName.Attach(lstrmerge(pszRoot, pszSearchFile, pszExt ? NULL : L".exe"));
 	// Seems like 32-bit and 64-bit registry branches are the same now, but just in case - will check both
 	DWORD nWOW[2] = {WIN3264TEST(KEY_WOW64_32KEY,KEY_WOW64_64KEY), WIN3264TEST(KEY_WOW64_64KEY,KEY_WOW64_32KEY)};
 	for (int i = 0; i < 3; i++)
@@ -249,7 +249,7 @@ bool MakePathProperCase(CEStr& rsPath)
 	_ASSERTE(wcschr(rsPath,L'/')==NULL && wcschr(rsPath,L'\\')!=NULL);
 
 	// Let loop through folders
-	wchar_t* psz = rsPath.ms_Arg;
+	wchar_t* psz = rsPath.ms_Val;
 	if (psz[0] == L'\\' && psz[1] == L'\\')
 	{
 		// Network or UNC
@@ -294,7 +294,7 @@ bool MakePathProperCase(CEStr& rsPath)
 		if (pszSlash)
 			*pszSlash = 0;
 
-		bFound = FindFileName(rsPath.ms_Arg, lsName);
+		bFound = FindFileName(rsPath.ms_Val, lsName);
 		if (bFound)
 		{
 			iName = lstrlen(psz);
@@ -302,7 +302,7 @@ bool MakePathProperCase(CEStr& rsPath)
 			// If length matches but case differs (do not touch short names like as "PROGRA~1")
 			if ((iName == iFound) && lstrcmp(psz, lsName))
 			{
-				memmove(psz, lsName.ms_Arg, sizeof(*psz)*iName);
+				memmove(psz, lsName.ms_Val, sizeof(*psz)*iName);
 			}
 		}
 

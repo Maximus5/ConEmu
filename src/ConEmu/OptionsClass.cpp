@@ -1767,7 +1767,7 @@ LRESULT CSettings::OnInitDialog_Main(HWND hWnd2, bool abInitial)
 			NULL
 		};
 		CEStr szCharRanges(gpSet->CreateCharRanges(gpSet->mpc_FixFarBorderValues));
-		LPCWSTR pszCurrentRange = szCharRanges.ms_Arg;
+		LPCWSTR pszCurrentRange = szCharRanges.ms_Val;
 		bool bExist = false;
 
 		HWND hCombo = GetDlgItem(hWnd2, tUnicodeRanges);
@@ -3856,7 +3856,7 @@ INT_PTR CSettings::pageOpProc_Integr(HWND hWnd2, UINT messg, WPARAM wParam, LPAR
 										{
 											LPCWSTR psz = pszFull;
 											LPCWSTR pszPrev = pszFull;
-											CmdArg szArg;
+											CEStr szArg;
 											while (0 == NextArg(&psz, szArg, &pszPrev))
 											{
 												if (*szArg != L'/')
@@ -4613,14 +4613,14 @@ LRESULT CSettings::OnInitDialog_Update(HWND hWnd2, bool abInitial)
 	EnableDlgItem(hWnd2, (nPackage==1) ? tUpdateArcCmdLine : tUpdateExeCmdLine, FALSE);
 	// Show used or preferred installer bitness
 	CEStr szFormat, szTitle; INT_PTR iLen;
-	if ((iLen = GetString(hWnd2, rbUpdateUseExe, &szFormat.ms_Arg)) > 0)
+	if ((iLen = GetString(hWnd2, rbUpdateUseExe, &szFormat.ms_Val)) > 0)
 	{
-		if (wcsstr(szFormat.ms_Arg, L"%s") != NULL)
+		if (wcsstr(szFormat.ms_Val, L"%s") != NULL)
 		{
 			wchar_t* psz = szTitle.GetBuffer(iLen+4);
 			if (psz)
 			{
-				_wsprintf(psz, SKIPLEN(iLen+4) szFormat.ms_Arg, (nPackage == 1) ? szCPU : WIN3264TEST(L"x86",L"x64"));
+				_wsprintf(psz, SKIPLEN(iLen+4) szFormat.ms_Val, (nPackage == 1) ? szCPU : WIN3264TEST(L"x86",L"x64"));
 				SetDlgItemText(hWnd2, rbUpdateUseExe, szTitle);
 			}
 		}
@@ -8291,7 +8291,7 @@ void CSettings::debugLogShell(HWND hWnd2, DebugLogShellActivity *pShl)
 	if (pShl->pszParam && *pShl->pszParam)
 	{
 		LPCWSTR pszNext = pShl->pszParam;
-		CmdArg szArg;
+		CEStr szArg;
 		while (0 == NextArg(&pszNext, szArg))
 		{
 			if (!*szArg || (*szArg == L'-') || (*szArg == L'/'))

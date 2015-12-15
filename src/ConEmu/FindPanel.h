@@ -32,7 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <windows.h>
 
 class CConEmuMain;
-struct CmdArg;
+struct CEStr;
 
 class CFindPanel
 {
@@ -45,7 +45,7 @@ protected:
 	WNDPROC mfn_EditProc;
 	UINT mn_KeyDown;
 	int mn_RebarHeight;
-	CmdArg* ms_PrevSearch;
+	CEStr* ms_PrevSearch;
 
 public:
 	CFindPanel(CConEmuMain* apConEmu);

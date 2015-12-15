@@ -378,7 +378,7 @@ protected:
 						CEDownloadInfo Error = {
 							sizeof(Error),
 							pObj->m_CallbackLParam[dc_ErrCallback],
-							szLine.ms_Arg
+							szLine.ms_Val
 						};
 						pObj->mfn_Callback[dc_ErrCallback](&Error);
 					}
@@ -390,7 +390,7 @@ protected:
 						CEDownloadInfo Info = {
 							sizeof(Info),
 							pObj->m_CallbackLParam[dc_LogCallback],
-							szLine.ms_Arg
+							szLine.ms_Val
 						};
 						pObj->mfn_Callback[dc_LogCallback](&Info);
 					}

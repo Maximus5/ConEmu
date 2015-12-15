@@ -153,7 +153,7 @@ BOOL LoadFarVersion()
 
 // Dummy external requirement for FileExistsSearch.
 // But it's better to splite FileExistsSearch code...
-bool SearchAppPaths(wchar_t const *,struct CmdArg &,bool,struct CmdArg *)
+bool SearchAppPaths(wchar_t const *,struct CEStr &,bool,struct CEStr *)
 {
 	return false;
 }

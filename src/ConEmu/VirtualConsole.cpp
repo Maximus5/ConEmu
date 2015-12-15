@@ -2648,7 +2648,7 @@ void CVirtualConsole::SetSelfPalette(WORD wAttributes, WORD wPopupAttributes, co
 			if (!pszExt || (pszExt > pszRootProcessName))
 			{
 				lsPrefix = lstrmerge(L"#Attached:", pszRootProcessName);
-				wchar_t* pszDot = lsPrefix.ms_Arg ? wcsrchr(lsPrefix.ms_Arg, L'.') : NULL;
+				wchar_t* pszDot = lsPrefix.ms_Val ? wcsrchr(lsPrefix.ms_Val, L'.') : NULL;
 				if (pszDot)
 				{
 					*pszDot = 0;
@@ -2669,7 +2669,7 @@ void CVirtualConsole::SetSelfPalette(WORD wAttributes, WORD wPopupAttributes, co
 			else
 			{
 				_wsprintf(szSuffix, SKIPCOUNT(szSuffix) L":%02i", i);
-				szAutoName = lstrmerge(lsPrefix.IsEmpty() ? L"#Attached" : lsPrefix.ms_Arg, szSuffix);
+				szAutoName = lstrmerge(lsPrefix.IsEmpty() ? L"#Attached" : lsPrefix.ms_Val, szSuffix);
 			}
 
 			if (gpSet->PaletteGetIndex(szAutoName) != -1)
