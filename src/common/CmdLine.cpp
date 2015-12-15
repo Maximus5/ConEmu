@@ -721,22 +721,12 @@ bool IsNeedCmd(BOOL bRootCmd, LPCWSTR asCmdLine, CmdArg &szExe,
 				}
 			}
 
-			// Пробуем найти "по путям" соответствующий exe-шник.
-			INT_PTR nCchMax = szExe.mn_MaxCount; // выделить память, длинее чем szExe вернуть не сможем
-			wchar_t* pszSearch = (wchar_t*)malloc(nCchMax*sizeof(wchar_t));
-			if (pszSearch)
+			// Try to find executable in %PATH%
 			{
 				#ifndef CONEMU_MINIMAL
-				MWow64Disable wow; wow.Disable(); // Отключить редиректор!
+				MWow64Disable wow; wow.Disable(); // Disable Wow64 file redirector
 				#endif
-				wchar_t *pszName = NULL;
-				INT_PTR nRc = SearchPath(NULL, szExe, bHasExt ? NULL : L".exe", (DWORD)nCchMax, pszSearch, &pszName);
-				if (nRc && (nRc < nCchMax))
-				{
-					// Нашли, возвращаем что нашли
-					szExe.Set(pszSearch);
-				}
-				free(pszSearch);
+				apiSearchPath(NULL, szExe, bHasExt ? NULL : L".exe", szExe);
 			}
 		} // end: if (wcschr(szExe, L'\\') == NULL)
 	}
@@ -804,11 +794,10 @@ bool IsNeedCmd(BOOL bRootCmd, LPCWSTR asCmdLine, CmdArg &szExe,
 		// Если указали при запуске просто "far" - это может быть батник, расположенный в %PATH%
 		if (!bFound)
 		{
-			wchar_t szSearch[MAX_PATH+1], *pszPart = NULL;
-			DWORD n = SearchPath(NULL, pwszCopy, L".exe", countof(szSearch), szSearch, &pszPart);
-			if (n && (n < countof(szSearch)))
+			CEStr szSearch;
+			if (apiSearchPath(NULL, pwszCopy, L".exe", szSearch))
 			{
-				if (lstrcmpi(PointToExt(pszPart), L".exe") == 0)
+				if (lstrcmpi(PointToExt(szSearch), L".exe") == 0)
 					bFound = true;
 			}
 		}

@@ -168,18 +168,16 @@ wchar_t* GetFullPathNameEx(LPCWSTR asPath)
 		}
 	}
 
-	DWORD cchMax = MAX_PATH+1;
-	pszResult = (wchar_t*)calloc(cchMax,sizeof(*pszResult));
-	if (pszResult)
+	CEStr lsFull;
+	if (!apiGetFullPathName(asPath, lsFull))
 	{
-		wchar_t* pszFilePart;
-		DWORD nLen = GetFullPathName(asPath, cchMax, pszResult, &pszFilePart);
-		if (!nLen  || (nLen >= cchMax))
-		{
-			_ASSERTEX(FALSE && "GetFullPathName failed");
-			SafeFree(pszResult);
-		}
+		_ASSERTEX(FALSE && "GetFullPathName failed");
 	}
+	else
+	{
+		pszResult = lsFull.Detach();
+	}
+
 
 	if (!pszResult)
 	{
