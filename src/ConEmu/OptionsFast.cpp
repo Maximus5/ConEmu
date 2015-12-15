@@ -748,7 +748,7 @@ static bool FindOnDrives(LPCWSTR asFirstDrive, LPCWSTR asSearchPath, CEStr& rsFo
 	bool bFound = false;
 	wchar_t* pszExpanded = NULL;
 	wchar_t szDrive[4]; // L"C:"
-	wchar_t szTemp[MAX_PATH+1];
+	CEStr szTemp;
 
 	bNeedQuot = false;
 
@@ -800,11 +800,10 @@ static bool FindOnDrives(LPCWSTR asFirstDrive, LPCWSTR asSearchPath, CEStr& rsFo
 	// Only executable name was specified?
 	if (!wcschr(asSearchPath, L'\\'))
 	{
-		DWORD nFind = SearchPath(NULL, asSearchPath, NULL, countof(szTemp), szTemp, NULL);
-		if (nFind && (nFind < countof(szTemp)))
+		if (apiSearchPath(NULL, asSearchPath, NULL, szTemp))
 		{
 			// OK, create task with just a name of exe file
-			bNeedQuot = IsQuotationNeeded(asSearchPath);
+			bNeedQuot = IsQuotationNeeded(szTemp);
 			rsOptionalFull.Set(szTemp);
 			rsFound.Set(asSearchPath);
 			bFound = true;
