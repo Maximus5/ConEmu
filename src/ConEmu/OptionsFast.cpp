@@ -392,7 +392,8 @@ static INT_PTR Fast_OnButtonClicked(HWND hDlg, UINT messg, WPARAM wParam, LPARAM
 			}
 
 			/* Startup task */
-			if (CSetDlgLists::GetSelectedString(hDlg, lbStartupShellFast, &lsValue.ms_Val) > 0)
+			lsValue.Attach(GetDlgItemTextPtr(hDlg, lbStartupShellFast));
+			if (!lsValue.IsEmpty())
 			{
 				if (*lsValue.ms_Val == TaskBracketLeft)
 				{
