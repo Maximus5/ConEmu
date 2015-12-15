@@ -89,6 +89,9 @@ void CRunQueue::Terminate()
 		mb_Terminate = true;
 		SetEvent(mh_AdvanceEvent);
 
+		if (GetCurrentThreadId() == mn_ThreadId)
+			return; // Don't block
+
 		DWORD nWait = WaitForSingleObject(mh_Thread, RUNQUEUE_WAIT_TERMINATION);
 		if (nWait == WAIT_TIMEOUT)
 		{
@@ -154,6 +157,9 @@ DWORD CRunQueue::RunQueueThread()
 	while (!mb_Terminate)
 	{
 		nWait = WaitForSingleObject(mh_AdvanceEvent, RUNQUEUE_TIMER_DELAY);
+
+		gpConEmu->OnTimer_Background();
+
 		if (nWait == WAIT_TIMEOUT)
 		{
 			if (m_RunQueue.empty())

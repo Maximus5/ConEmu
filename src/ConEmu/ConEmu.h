@@ -746,6 +746,7 @@ class CConEmuMain
 		LRESULT OnShellHook(WPARAM wParam, LPARAM lParam);
 		UINT_PTR SetKillTimer(bool bEnable, UINT nTimerID, UINT nTimerElapse);
 		LRESULT OnTimer(WPARAM wParam, LPARAM lParam);
+		void OnTimer_Background();
 		void OnTimer_Main(CVirtualConsole* pVCon);
 		void OnTimer_ActivateSplit();
 		void OnTimer_ConRedraw(CVirtualConsole* pVCon);

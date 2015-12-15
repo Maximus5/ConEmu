@@ -11910,6 +11910,10 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
 	return result;
 }
 
+void CConEmuMain::OnTimer_Background()
+{
+}
+
 void CConEmuMain::OnTimer_Main(CVirtualConsole* pVCon)
 {
 	#ifdef _DEBUG
