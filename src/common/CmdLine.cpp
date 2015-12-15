@@ -700,7 +700,7 @@ bool IsNeedCmd(BOOL bRootCmd, LPCWSTR asCmdLine, CmdArg &szExe,
 			}
 
 			// Пробуем найти "по путям" соответствующий exe-шник.
-			INT_PTR nCchMax = szExe.mn_MaxLen; // выделить память, длинее чем szExe вернуть не сможем
+			INT_PTR nCchMax = MAX_PATH+1;
 			wchar_t* pszSearch = (wchar_t*)malloc(nCchMax*sizeof(wchar_t));
 			if (pszSearch)
 			{
