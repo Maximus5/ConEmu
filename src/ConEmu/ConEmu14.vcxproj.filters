@@ -330,6 +330,12 @@
     <ClCompile Include="WinObjBase.cpp">
       <Filter>0 - Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\common\wcchars.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\wcwidth.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Attach.h">
@@ -339,9 +345,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="BaseDragDrops.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\common\common.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ConEmu.h">
@@ -724,6 +727,15 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="WinObjBase.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\Common.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\wcchars.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\wcwidth.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
