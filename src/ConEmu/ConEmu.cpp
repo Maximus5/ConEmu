@@ -1210,11 +1210,10 @@ bool CConEmuMain::SetConfigFile(LPCWSTR asFilePath, bool abWriteReq /*= false*/,
 	}
 
 
-	// Папки может не быть
-	*pszDirEnd = 0;
-	// Создадим, если нету
+	// Create the folder if it's absent
+	// Function accepts paths with trailing file names
 	MyCreateDirectory(szPath);
-	*pszDirEnd = L'\\';
+
 
 	// Нужно создать файл, если его нету.
 	// Если просили доступ на запись - то однозначно CreateFile
