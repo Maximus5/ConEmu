@@ -214,7 +214,9 @@ bool HandleKeeper::PreCreateHandle(HandleSource source, DWORD& dwDesiredAccess, 
 		}
 	}
 
+	#ifdef _DEBUG
 	SafeFree(Info.file_name_ptr);
+	#endif
 
 	return false;
 }
