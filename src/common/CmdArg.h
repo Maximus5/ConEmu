@@ -74,6 +74,9 @@ public:
 	CmdArg& operator=(wchar_t* RVAL_REF asPtr);
 	CmdArg& operator=(const wchar_t* asPtr);
 
+	INT_PTR GetLen();
+	INT_PTR GetMaxCount();
+
 	wchar_t* GetBuffer(INT_PTR cchMaxLen);
 	wchar_t* Detach();
 	LPCWSTR  Attach(wchar_t* RVAL_REF asPtr);

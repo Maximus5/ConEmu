@@ -93,6 +93,18 @@ CmdArg::~CmdArg()
 	SafeFree(ms_Arg);
 }
 
+INT_PTR CmdArg::GetLen()
+{
+	return (ms_Arg && *ms_Arg) ? lstrlen(ms_Arg) : 0;
+}
+
+INT_PTR CmdArg::GetMaxCount()
+{
+	if (ms_Arg && (mn_MaxCount <= 0))
+		mn_MaxCount = lstrlen(ms_Arg) + 1;
+	return mn_MaxCount;
+}
+
 wchar_t* CmdArg::GetBuffer(INT_PTR cchMaxLen)
 {
 	if (cchMaxLen <= 0)
@@ -101,11 +113,9 @@ wchar_t* CmdArg::GetBuffer(INT_PTR cchMaxLen)
 		return NULL;
 	}
 
-	// if ms_Arg was used externally (by lstrmerge for example)
-	if (ms_Arg && !mn_MaxCount)
-		mn_MaxCount = lstrlen(ms_Arg) + 1;
-
-	INT_PTR nOldLen = (ms_Arg && (mn_MaxCount > 0)) ? (mn_MaxCount-1) : 0;
+	// if ms_Arg was used externally (by lstrmerge for example),
+	// than GetMaxCount() will update mn_MaxCount
+	INT_PTR nOldLen = (ms_Arg && (GetMaxCount() > 0)) ? (mn_MaxCount-1) : 0;
 
 	if (!ms_Arg || (cchMaxLen >= mn_MaxCount))
 	{
