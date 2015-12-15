@@ -42,8 +42,9 @@ typedef struct CmdArg
 {
 public:
 	wchar_t *ms_Arg;
+private:
 	INT_PTR mn_MaxCount; // Including termination \0
-
+public:
 	// Point to the end dblquot
 	LPCWSTR mpsz_Dequoted;
 	// if 0 - this is must be first call (first token of command line)
@@ -66,6 +67,8 @@ public:
 private:
 	// Not copyable, not implemented, use explicit Set method
 	CmdArg& operator=(const CmdArg &);
+
+private:
 	LPCWSTR AttachInt(wchar_t*& asPtr);
 
 public:
