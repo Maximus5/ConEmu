@@ -205,7 +205,7 @@ void CSetDlgLists::FillListBox(HWND hList, WORD nCtrlId, eFillListBoxItems eWhat
 	}
 }
 
-void CSetDlgLists::FillListBoxItems(HWND hList, eFillListBoxItems eWhat, DWORD& nValue, bool abExact)
+void CSetDlgLists::FillListBoxItems(HWND hList, eFillListBoxItems eWhat, UINT& nValue, bool abExact)
 {
 	const ListBoxItem* Items;
 	uint nItems = GetListItems(eWhat, Items);
@@ -242,7 +242,7 @@ void CSetDlgLists::FillListBoxItems(HWND hList, eFillListBoxItems eWhat, DWORD& 
 
 void CSetDlgLists::FillListBoxItems(HWND hList, eFillListBoxItems eWhat, BYTE& nValue, bool abExact)
 {
-	DWORD dwValue = nValue;
+	UINT dwValue = nValue;
 	FillListBoxItems(hList, eWhat, dwValue, abExact);
 
 	if (abExact && (dwValue != nValue))
@@ -254,17 +254,17 @@ void CSetDlgLists::FillListBoxItems(HWND hList, eFillListBoxItems eWhat, BYTE& n
 
 void CSetDlgLists::FillListBoxItems(HWND hList, eFillListBoxItems eWhat, const BYTE& nValue)
 {
-	DWORD dwValue = nValue;
+	UINT dwValue = nValue;
 	FillListBoxItems(hList, eWhat, dwValue, true);
 }
 
-void CSetDlgLists::FillListBoxItems(HWND hList, eFillListBoxItems eWhat, const DWORD& nValue)
+void CSetDlgLists::FillListBoxItems(HWND hList, eFillListBoxItems eWhat, const UINT& nValue)
 {
-	DWORD dwValue = nValue;
+	UINT dwValue = nValue;
 	FillListBoxItems(hList, eWhat, dwValue, true);
 }
 
-void CSetDlgLists::FillListBoxItems(HWND hList, eWordItems eWhat, DWORD& nValue, bool abExact)
+void CSetDlgLists::FillListBoxItems(HWND hList, eWordItems eWhat, UINT& nValue, bool abExact)
 {
 	const DWORD* pnValues;
 	uint nItems = GetListItems(eWhat, pnValues);
@@ -297,7 +297,7 @@ void CSetDlgLists::FillListBoxItems(HWND hList, eWordItems eWhat, DWORD& nValue,
 	}
 }
 
-bool CSetDlgLists::GetListBoxItem(HWND hWnd, WORD nCtrlId, eFillListBoxItems eWhat, DWORD& nValue)
+bool CSetDlgLists::GetListBoxItem(HWND hWnd, WORD nCtrlId, eFillListBoxItems eWhat, UINT& nValue)
 {
 	bool bFound = false;
 	const ListBoxItem* Items;
@@ -327,14 +327,14 @@ bool CSetDlgLists::GetListBoxItem(HWND hWnd, WORD nCtrlId, eFillListBoxItems eWh
 
 bool CSetDlgLists::GetListBoxItem(HWND hWnd, WORD nCtrlId, eFillListBoxItems eWhat, BYTE& nValue)
 {
-	DWORD dwValue = nValue;
+	UINT dwValue = nValue;
 	bool bFound = GetListBoxItem(hWnd, nCtrlId, eWhat, dwValue);
 	_ASSERTE(dwValue==LOBYTE(dwValue));
 	nValue = LOBYTE(dwValue);
 	return bFound;
 }
 
-bool CSetDlgLists::GetListBoxItem(HWND hWnd, WORD nCtrlId, eWordItems eWhat, DWORD& nValue)
+bool CSetDlgLists::GetListBoxItem(HWND hWnd, WORD nCtrlId, eWordItems eWhat, UINT& nValue)
 {
 	bool bFound = false;
 	const DWORD* pnValues;
@@ -364,7 +364,7 @@ bool CSetDlgLists::GetListBoxItem(HWND hWnd, WORD nCtrlId, eWordItems eWhat, DWO
 
 bool CSetDlgLists::GetListBoxItem(HWND hWnd, WORD nCtrlId, eWordItems eWhat, BYTE& nValue)
 {
-	DWORD dwValue = nValue;
+	UINT dwValue = nValue;
 	bool bFound = GetListBoxItem(hWnd, nCtrlId, eWhat, dwValue);
 	_ASSERTE(dwValue==LOBYTE(dwValue));
 	nValue = LOBYTE(dwValue);

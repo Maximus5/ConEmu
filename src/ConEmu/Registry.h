@@ -56,6 +56,7 @@ struct SettingsBase
 		bool Load(const wchar_t *regName, DWORD &value);
 		bool Load(const wchar_t *regName, LONG  &value);
 		bool Load(const wchar_t *regName, int   &value);
+		bool Load(const wchar_t *regName, UINT  &value);
 		// Don't change &value if it was not loaded
 		bool Load(const wchar_t *regName, bool  &value);
 		// Don't change &value if it was not loaded
@@ -70,6 +71,7 @@ struct SettingsBase
 		void Save(const wchar_t *regName, const DWORD& value);
 		void Save(const wchar_t *regName, const LONG&  value);
 		void Save(const wchar_t *regName, const int&   value);
+		void Save(const wchar_t *regName, const UINT&  value);
 		void Save(const wchar_t *regName, const RECT&  value);
 
 		// nSize in BYTES!!!

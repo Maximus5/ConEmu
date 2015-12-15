@@ -2363,15 +2363,15 @@ LRESULT CSettings::OnInitDialog_MarkCopy(HWND hWnd2, bool abInitial)
 	EnableWindow(GetDlgItem(hWnd2, cbCTSEndOnKeyPress), gpSet->isCTSEndOnTyping!=0);
 	checkDlgButton(hWnd2, cbCTSFreezeBeforeSelect, gpSet->isCTSFreezeBeforeSelect);
 	checkDlgButton(hWnd2, cbCTSBlockSelection, gpSet->isCTSSelectBlock);
-	DWORD VkMod = gpSet->GetHotkeyById(vkCTSVkBlock);
+	UINT VkMod = gpSet->GetHotkeyById(vkCTSVkBlock);
 	CSetDlgLists::FillListBoxItems(GetDlgItem(hWnd2, lbCTSBlockSelection), CSetDlgLists::eKeysAct, VkMod, true);
 	checkDlgButton(hWnd2, cbCTSTextSelection, gpSet->isCTSSelectText);
 	VkMod = gpSet->GetHotkeyById(vkCTSVkText);
 	CSetDlgLists::FillListBoxItems(GetDlgItem(hWnd2, lbCTSTextSelection), CSetDlgLists::eKeysAct, VkMod, true);
 	VkMod = gpSet->GetHotkeyById(vkCTSVkAct);
 
-	DWORD idxBack = (gpSet->isCTSColorIndex & 0xF0) >> 4;
-	DWORD idxFore = (gpSet->isCTSColorIndex & 0xF);
+	UINT idxBack = (gpSet->isCTSColorIndex & 0xF0) >> 4;
+	UINT idxFore = (gpSet->isCTSColorIndex & 0xF);
 	CSetDlgLists::FillListBoxItems(GetDlgItem(hWnd2, lbCTSForeIdx), CSetDlgLists::eColorIdx16, idxFore, false);
 	CSetDlgLists::FillListBoxItems(GetDlgItem(hWnd2, lbCTSBackIdx), CSetDlgLists::eColorIdx16, idxBack, false);
 
@@ -2409,7 +2409,7 @@ LRESULT CSettings::OnInitDialog_Hilight(HWND hWnd2, bool abInitial)
 {
 	// Hyperlinks & compiler errors
 	checkDlgButton(hWnd2, cbFarGotoEditor, gpSet->isFarGotoEditor);
-	DWORD VkMod = gpSet->GetHotkeyById(vkFarGotoEditorVk);
+	UINT VkMod = gpSet->GetHotkeyById(vkFarGotoEditorVk);
 	CSetDlgLists::FillListBoxItems(GetDlgItem(hWnd2, lbFarGotoEditorVk), CSetDlgLists::eKeysAct, VkMod, false);
 
 	LPCWSTR ppszDefEditors[] = {
@@ -2511,7 +2511,7 @@ LRESULT CSettings::OnInitDialog_Far(HWND hWnd2, bool abInitial)
 	// Сначала - то что обновляется при активации вкладки
 
 	// Списки
-	DWORD VkMod = gpSet->GetHotkeyById(vkLDragKey);
+	UINT VkMod = gpSet->GetHotkeyById(vkLDragKey);
 	CSetDlgLists::FillListBoxItems(GetDlgItem(hWnd2, lbLDragKey), CSetDlgLists::eKeys, VkMod, false);
 	VkMod = gpSet->GetHotkeyById(vkRDragKey);
 	CSetDlgLists::FillListBoxItems(GetDlgItem(hWnd2, lbRDragKey), CSetDlgLists::eKeys, VkMod, false);
@@ -3109,7 +3109,7 @@ LRESULT CSettings::OnInitDialog_Control(HWND hWnd2, bool abInitial)
 
 	// Prompt click
 	checkDlgButton(hWnd2, cbCTSClickPromptPosition, gpSet->AppStd.isCTSClickPromptPosition);
-	DWORD VkMod = gpSet->GetHotkeyById(vkCTSVkPromptClk);
+	UINT VkMod = gpSet->GetHotkeyById(vkCTSVkPromptClk);
 	CSetDlgLists::FillListBoxItems(GetDlgItem(hWnd2, lbCTSClickPromptPosition), CSetDlgLists::eKeysAct, VkMod, false);
 
 	// Ctrl+BS - del left word
@@ -3209,7 +3209,7 @@ LRESULT CSettings::OnInitDialog_Tabs(HWND hWnd2, bool abInitial)
 			OnInitDialog_CopyFonts(hWnd2, tTabFontFace, 0); // можно скопировать список с вкладки [thi_Main]
 	}
 
-	DWORD nVal = gpSet->nTabFontHeight;
+	UINT nVal = gpSet->nTabFontHeight;
 	CSetDlgLists::FillListBoxItems(GetDlgItem(hWnd2, tTabFontHeight), CSetDlgLists::eFSizesSmall, nVal, true);
 
 	CSetDlgLists::FillListBoxItems(GetDlgItem(hWnd2, tTabFontCharset), CSetDlgLists::eCharSets, gpSet->nTabFontCharSet, false);
@@ -3240,7 +3240,7 @@ LRESULT CSettings::OnInitDialog_Status(HWND hWnd2, bool abInitial)
 	if (CSetDlgFonts::EnumFontsFinished())  // Если шрифты уже считаны
 		OnInitDialog_CopyFonts(hWnd2, tStatusFontFace, 0); // можно скопировать список с вкладки [thi_Main]
 
-	DWORD nVal = gpSet->nStatusFontHeight;
+	UINT nVal = gpSet->nStatusFontHeight;
 	CSetDlgLists::FillListBoxItems(GetDlgItem(hWnd2, tStatusFontHeight), CSetDlgLists::eFSizesSmall, nVal, true);
 
 	CSetDlgLists::FillListBoxItems(GetDlgItem(hWnd2, tStatusFontCharset), CSetDlgLists::eCharSets, gpSet->nStatusFontCharSet, false);
@@ -4412,7 +4412,7 @@ LRESULT CSettings::OnInitDialog_Views(HWND hWnd2)
 	if (CSetDlgFonts::EnumFontsFinished())  // Если шрифты уже считаны
 		OnInitDialog_CopyFonts(hWnd2, tThumbsFontName, tTilesFontName, 0); // можно скопировать список с вкладки [thi_Main]
 
-	DWORD nVal;
+	UINT nVal;
 
 	nVal = gpSet->ThSet.Thumbs.nFontHeight;
 	CSetDlgLists::FillListBoxItems(GetDlgItem(hWnd2, tThumbsFontSize), CSetDlgLists::eFSizesSmall, nVal, false);
@@ -5650,7 +5650,7 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		}
 		else if (HIWORD(wParam) == CBN_SELCHANGE)
 		{
-			DWORD val;
+			UINT val;
 			INT_PTR nSel = SendDlgItemMessage(hWnd2, wId, CB_GETCURSEL, 0, 0);
 
 			switch (wId)
@@ -5678,7 +5678,7 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 	{
 		if (HIWORD(wParam) == CBN_SELCHANGE)
 		{
-			DWORD val;
+			UINT val;
 			INT_PTR nSel = SendDlgItemMessage(hWnd2, wId, CB_GETCURSEL, 0, 0);
 
 			switch(wId)
@@ -5716,7 +5716,7 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		}
 		else if (HIWORD(wParam) == CBN_SELCHANGE)
 		{
-			DWORD val;
+			UINT val;
 			INT_PTR nSel = SendDlgItemMessage(hWnd2, wId, CB_GETCURSEL, 0, 0);
 
 			switch (wId)
@@ -5864,7 +5864,7 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			}
 			else if (HIWORD(wParam) == CBN_SELCHANGE)
 			{
-				DWORD val;
+				UINT val;
 				INT_PTR nSel = SendDlgItemMessage(hWnd2, wId, CB_GETCURSEL, 0, 0);
 
 				switch (wId)
@@ -6031,7 +6031,7 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 					break;
 				case lbCTSForeIdx:
 					{
-						DWORD nFore = 0;
+						UINT nFore = 0;
 						CSetDlgLists::GetListBoxItem(hWnd2, lbCTSForeIdx, CSetDlgLists::eColorIdx16, nFore);
 						gpSet->isCTSColorIndex = (gpSet->isCTSColorIndex & 0xF0) | (nFore & 0xF);
 						InvalidateRect(GetDlgItem(hWnd2, stCTSPreview), NULL, FALSE);
@@ -6039,7 +6039,7 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 					} break;
 				case lbCTSBackIdx:
 					{
-						DWORD nBack = 0;
+						UINT nBack = 0;
 						CSetDlgLists::GetListBoxItem(hWnd2, lbCTSBackIdx, CSetDlgLists::eColorIdx16, nBack);
 						gpSet->isCTSColorIndex = (gpSet->isCTSColorIndex & 0xF) | ((nBack & 0xF) << 4);
 						InvalidateRect(GetDlgItem(hWnd2, stCTSPreview), NULL, FALSE);
@@ -9392,7 +9392,7 @@ void CSettings::RecreateFont(WORD wFromID)
 
 		if (gpSet->mb_CharSetWasSet)
 		{
-			DWORD lfCharSet = DEFAULT_CHARSET;
+			UINT lfCharSet = DEFAULT_CHARSET;
 			if (CSetDlgLists::GetListBoxItem(hMainPg, tFontCharset, CSetDlgLists::eCharSets, lfCharSet))
 				LF.lfCharSet = LOBYTE(lfCharSet);
 			else

@@ -360,7 +360,7 @@ struct Settings
 		//reg->Load(L"StartFarEditors", isStartFarEditors);
 		bool isStartFarEditors;
 		//reg->Load(L"StartCreateDelay", nStartCreateDelay);
-		DWORD nStartCreateDelay; // RUNQUEUE_CREATE_LAG
+		UINT nStartCreateDelay; // RUNQUEUE_CREATE_LAG
 
 		//reg->Load(L"StoreTaskbarkTasks", isStoreTaskbarkTasks);
 		bool isStoreTaskbarkTasks;
@@ -388,19 +388,19 @@ struct Settings
 		//reg->Load(L"FontItalic", isItalic);
 		bool isItalic;
 		//reg->Load(L"Anti-aliasing", Quality);
-		DWORD mn_AntiAlias; //загружался как Quality
+		UINT mn_AntiAlias; //загружался как Quality
 		//reg->Load(L"FontCharSet", mn_LoadFontCharSet); mb_CharSetWasSet = FALSE;
 		BYTE mn_LoadFontCharSet; // То что загружено изначально (или уже сохранено в реестр)
 		//reg->Load(L"FontCharSet", mn_LoadFontCharSet); mb_CharSetWasSet = FALSE;
 		BOOL mb_CharSetWasSet;
 		//reg->Load(L"FontSize", FontSizeY);
-		DWORD FontSizeY;  // высота основного шрифта (загруженная из настроек!)
+		UINT FontSizeY;  // высота основного шрифта (загруженная из настроек!)
 		//reg->Load(L"FontSizeX", FontSizeX);
-		DWORD FontSizeX;  // ширина основного шрифта
+		UINT FontSizeX;  // ширина основного шрифта
 		//reg->Load(L"FontSizeX2", FontSizeX2);
-		DWORD FontSizeX2; // ширина для FixFarBorders (ширина создаваемого шрифта для отрисовки рамок, не путать со знакоместом)
+		UINT FontSizeX2; // ширина для FixFarBorders (ширина создаваемого шрифта для отрисовки рамок, не путать со знакоместом)
 		//reg->Load(L"FontSizeX3", FontSizeX3);
-		DWORD FontSizeX3; // ширина знакоместа при моноширинном режиме (не путать с FontSizeX2)
+		UINT FontSizeX3; // ширина знакоместа при моноширинном режиме (не путать с FontSizeX2)
 		//reg->Load(L"FontUseDpi", FontUseDpi);
 		bool FontUseDpi;
 		//reg->Load(L"FontUseUnits", FontUseUnits);
@@ -417,7 +417,7 @@ struct Settings
 		bool mb_IntegralSize;
 		//reg->Load(L"QuakeStyle", isQuakeStyle);
 		BYTE isQuakeStyle; // 0 - NoQuake, 1 - Quake, 2 - Quake+HideOnLoseFocus
-		DWORD nQuakeAnimation;
+		UINT nQuakeAnimation;
 		//reg->Load(L"Restore2ActiveMon", isRestore2ActiveMon);
 		bool isRestore2ActiveMon;
 		protected:
@@ -435,9 +435,9 @@ struct Settings
 		BYTE nHideCaptionAlwaysFrame;
 		int HideCaptionAlwaysFrame();
 		//reg->Load(L"HideCaptionAlwaysDelay", nHideCaptionAlwaysDelay);
-		DWORD nHideCaptionAlwaysDelay;
+		UINT nHideCaptionAlwaysDelay;
 		//reg->Load(L"HideCaptionAlwaysDisappear", nHideCaptionAlwaysDisappear);
-		DWORD nHideCaptionAlwaysDisappear;
+		UINT nHideCaptionAlwaysDisappear;
 		//reg->Load(L"DownShowHiddenMessage", isDownShowHiddenMessage);
 		bool isDownShowHiddenMessage;
 		//reg->Load(L"DownShowExOnTopMessage", isDownShowExOnTopMessage);
@@ -459,7 +459,7 @@ struct Settings
 		//reg->Load(L"FarHourglass", isFarHourglass);
 		bool isFarHourglass;
 		//reg->Load(L"FarHourglassDelay", nFarHourglassDelay);
-		DWORD nFarHourglassDelay;
+		UINT nFarHourglassDelay;
 		//reg->Load(L"DisableFarFlashing", isDisableFarFlashing); if (isDisableFarFlashing>2) isDisableFarFlashing = 2;
 		BYTE isDisableFarFlashing;
 		//reg->Load(L"DisableAllFlashing", isDisableAllFlashing); if (isDisableAllFlashing>2) isDisableAllFlashing = 2;
@@ -517,7 +517,7 @@ struct Settings
 		//reg->Load(L"ClipboardConfirmEnter", isPasteConfirmEnter);
 		bool isPasteConfirmEnter;
 		//reg->Load(L"ClipboardConfirmLonger", nPasteConfirmLonger);
-		DWORD nPasteConfirmLonger;
+		UINT nPasteConfirmLonger;
 		//reg->Load(L"FarGotoEditorOpt", isFarGotoEditor);
 		bool isFarGotoEditor; // Подсвечивать и переходить на файл/строку (ошибки компилятора)
 		//reg->Load(L"FarGotoEditorVk", isFarGotoEditorVk);
@@ -669,7 +669,7 @@ struct Settings
 		//reg->Load(L"StatusFontFace", sStatusFontFace, countof(sStatusFontFace));
 		wchar_t sStatusFontFace[LF_FACESIZE];
 		//reg->Load(L"StatusFontCharSet", nStatusFontCharSet);
-		DWORD nStatusFontCharSet;
+		UINT nStatusFontCharSet;
 		//reg->Load(L"StatusFontHeight", nStatusFontHeight);
 		int nStatusFontHeight;
 		int StatusBarFontHeight(); // { return max(4,nStatusFontHeight); };
@@ -706,8 +706,8 @@ struct Settings
 		int nTabFlashChanged;
 
 		//reg->Load(L"TabDblClick", nTabDblClickAction);
-		DWORD nTabBarDblClickAction; // 0-None, 1-Auto, 2-Maximize/Restore, 3-NewTab (SettingsNS::tabBarDefaultClickActions)
-		DWORD nTabBtnDblClickAction; // 0-None, 1-Maximize/Restore, 2-Close, 3-Restart, 4-Duplicate (SettingsNS::tabBtnDefaultClickActions)
+		UINT nTabBarDblClickAction; // 0-None, 1-Auto, 2-Maximize/Restore, 3-NewTab (SettingsNS::tabBarDefaultClickActions)
+		UINT nTabBtnDblClickAction; // 0-None, 1-Maximize/Restore, 2-Close, 3-Restart, 4-Duplicate (SettingsNS::tabBtnDefaultClickActions)
 
 		//TODO:
 		bool isTabsInCaption;
@@ -728,7 +728,7 @@ struct Settings
 		//reg->Load(L"TabFontFace", sTabFontFace, countof(sTabFontFace));
 		wchar_t sTabFontFace[LF_FACESIZE];
 		//reg->Load(L"TabFontCharSet", nTabFontCharSet);
-		DWORD nTabFontCharSet;
+		UINT nTabFontCharSet;
 		//reg->Load(L"TabFontHeight", nTabFontHeight);
 		int nTabFontHeight;
 
@@ -749,7 +749,7 @@ struct Settings
 		//reg->Load(L"ConWnd Height", wndHeight);
 		CESize wndHeight;
 		//reg->Load(L"16bit Height", ntvdmHeight);
-		DWORD ntvdmHeight; // в символах
+		UINT ntvdmHeight; // в символах
 		//reg->Load(L"ConWnd X", wndX);
 		int _wndX; // в пикселях
 		//reg->Load(L"ConWnd Y", wndY);
@@ -773,19 +773,19 @@ struct Settings
 		bool mb_ExitSettingsAutoSaved;
 	public:
 		//reg->Load(L"SlideShowElapse", nSlideShowElapse);
-		DWORD nSlideShowElapse;
+		UINT nSlideShowElapse;
 		//reg->Load(L"IconID", nIconID);
-		DWORD nIconID;
+		UINT nIconID;
 		//reg->Load(L"TryToCenter", isTryToCenter);
 		bool isTryToCenter;
 		//reg->Load(L"CenterConsolePad", nCenterConsolePad);
-		DWORD nCenterConsolePad;
+		UINT nCenterConsolePad;
 		//reg->Load(L"ShowScrollbar", isAlwaysShowScrollbar); if (isAlwaysShowScrollbar > 2) isAlwaysShowScrollbar = 2;
 		BYTE isAlwaysShowScrollbar; // 0-не показывать, 1-всегда, 2-автоматически (на откусывает место от консоли)
 		//reg->Load(L"ScrollBarAppearDelay", nScrollBarAppearDelay);
-		DWORD nScrollBarAppearDelay;
+		UINT nScrollBarAppearDelay;
 		//reg->Load(L"ScrollBarDisappearDelay", nScrollBarDisappearDelay);
-		DWORD nScrollBarDisappearDelay;
+		UINT nScrollBarDisappearDelay;
 
 		////reg->Load(L"TabMargins", rcTabMargins);
 		//RECT rcTabMargins;
@@ -930,9 +930,9 @@ struct Settings
 		//reg->Load(L"TabViewer", szTabViewer, countof(szTabViewer));
 		WCHAR szTabViewer[32];
 		//reg->Load(L"TabLenMax", nTabLenMax); if (nTabLenMax < 10 || nTabLenMax >= CONEMUTABMAX) nTabLenMax = 20;
-		DWORD nTabLenMax;
+		UINT nTabLenMax;
 		//todo
-		DWORD nTabWidthMax;
+		UINT nTabWidthMax;
 		TabStyle nTabStyle; // enum
 
 		//reg->Load(L"AdminTitleSuffix", szAdminTitleSuffix, countof(szAdminTitleSuffix)); szAdminTitleSuffix[countof(szAdminTitleSuffix)-1] = 0;
@@ -962,9 +962,9 @@ struct Settings
 		bool NeedCreateAppWindow();
 
 		//reg->Load(L"MainTimerElapse", nMainTimerElapse); if (nMainTimerElapse>1000) nMainTimerElapse = 1000;
-		DWORD nMainTimerElapse; // периодичность, с которой из консоли считывается текст
+		UINT nMainTimerElapse; // периодичность, с которой из консоли считывается текст
 		//reg->Load(L"MainTimerInactiveElapse", nMainTimerInactiveElapse); if (nMainTimerInactiveElapse>10000) nMainTimerInactiveElapse = 10000;
-		DWORD nMainTimerInactiveElapse; // периодичность при неактивности
+		UINT nMainTimerInactiveElapse; // периодичность при неактивности
 
 		//bool isAdvLangChange; // в Висте без ConIme в самой консоли не меняется язык, пока не послать WM_SETFOCUS. Но при этом исчезает диалог быстрого поиска
 

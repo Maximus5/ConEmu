@@ -42,6 +42,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 const CLSID CLSID_DOMDocument30 = {0xf5078f32, 0xc551, 0x11d3, {0x89, 0xb9, 0x00, 0x00, 0xf8, 0x1f, 0xe2, 0x21}};
 #endif
 
+// Let save integers as 10-based numbers
+#define REG__LONG  254
+#define REG__ULONG 255
 
 SettingsBase::SettingsBase(const SettingsStorage& Storage)
 {
@@ -75,6 +78,10 @@ bool SettingsBase::Load(const wchar_t *regName, LONG  &value)
 	return Load(regName, (LPBYTE)&value, sizeof(DWORD));
 }
 bool SettingsBase::Load(const wchar_t *regName, int   &value)
+{
+	return Load(regName, (LPBYTE)&value, sizeof(DWORD));
+}
+bool SettingsBase::Load(const wchar_t *regName, UINT  &value)
 {
 	return Load(regName, (LPBYTE)&value, sizeof(DWORD));
 }
@@ -134,15 +141,21 @@ void SettingsBase::Save(const wchar_t *regName, const BYTE&  value)
 }
 void SettingsBase::Save(const wchar_t *regName, const DWORD& value)
 {
-	_Save(regName, value);
+	Save(regName, (LPBYTE)(&value), REG_DWORD, sizeof(DWORD));
 }
 void SettingsBase::Save(const wchar_t *regName, const LONG&  value)
 {
-	_Save(regName, value);
+	Save(regName, (LPBYTE)(&value), REG__LONG, sizeof(int));
 }
 void SettingsBase::Save(const wchar_t *regName, const int&   value)
 {
-	_Save(regName, value);
+	_ASSERTE(sizeof(int) == 4);
+	Save(regName, (LPBYTE)(&value), REG__LONG, sizeof(int));
+}
+void SettingsBase::Save(const wchar_t *regName, const UINT&   value)
+{
+	_ASSERTE(sizeof(int) == 4);
+	Save(regName, (LPBYTE)(&value), REG__ULONG, sizeof(int));
 }
 void SettingsBase::Save(const wchar_t *regName, const RECT&  value)
 {
@@ -288,6 +301,7 @@ void SettingsRegistry::Delete(const wchar_t *regName)
 void SettingsRegistry::Save(const wchar_t *regName, LPCBYTE value, DWORD nType, DWORD nSize)
 {
 	_ASSERTE(value && nSize);
+	if (nType == REG__LONG || nType == REG__ULONG) nType = REG_DWORD;
 	RegSetValueEx(regMy, regName, 0, nType, (LPBYTE)value, nSize);
 }
 //void SettingsRegistry::Save(const wchar_t *regName, const wchar_t *value)
@@ -1886,6 +1900,8 @@ void SettingsXML::Save(const wchar_t *regName, LPCBYTE value, DWORD nType, DWORD
 
 	switch (nType)
 	{
+		case REG__LONG:
+		case REG__ULONG:
 		case REG_DWORD:
 		{
 			wchar_t szValue[32];
@@ -1900,12 +1916,30 @@ void SettingsXML::Save(const wchar_t *regName, LPCBYTE value, DWORD nType, DWORD
 			}
 			else
 			{
-				_wsprintf(szValue, SKIPLEN(countof(szValue)) L"%08x", *(LPDWORD)value);
+				LPCWSTR pszTypeName;
+				if (nType == REG_DWORD)
+				{
+					_wsprintf(szValue, SKIPLEN(countof(szValue)) L"%08x", *(LPDWORD)value);
+					pszTypeName = L"dword";
+				}
+				else if (nType == REG__ULONG)
+				{
+					_wsprintf(szValue, SKIPLEN(countof(szValue)) L"%u", *(UINT*)value);
+					pszTypeName = L"ulong";
+				}
+				else
+				{
+					_wsprintf(szValue, SKIPLEN(countof(szValue)) L"%i", *(int*)value);
+					pszTypeName = L"long";
+				}
 
-				if (bsType) ::SysFreeString(bsType);
-
-				// нужно добавить/установить тип
-				bsType = ::SysAllocString(L"dword"); bNeedSetType = true;
+				if (!bsType || lstrcmp(bsType, pszTypeName))
+				{
+					// add or refresh the type
+					::SysFreeString(bsType);
+					bsType = ::SysAllocString(pszTypeName);
+					bNeedSetType = true;
+				}
 			}
 
 			bsValue = ::SysAllocString(szValue);

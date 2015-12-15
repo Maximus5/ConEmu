@@ -104,15 +104,15 @@ public:
 	static uint GetListItems(eWordItems eWhat, const DWORD*& pItems);
 
 	static void FillListBox(HWND hList, WORD nCtrlId, eFillListBoxItems eWhat);
-	static void FillListBoxItems(HWND hList, eFillListBoxItems eWhat, DWORD& nValue, bool abExact);
+	static void FillListBoxItems(HWND hList, eFillListBoxItems eWhat, UINT& nValue, bool abExact);
 	static void FillListBoxItems(HWND hList, eFillListBoxItems eWhat, BYTE& nValue, bool abExact);
-	static void FillListBoxItems(HWND hList, eFillListBoxItems eWhat, const DWORD& nValue);
+	static void FillListBoxItems(HWND hList, eFillListBoxItems eWhat, const UINT& nValue);
 	static void FillListBoxItems(HWND hList, eFillListBoxItems eWhat, const BYTE& nValue);
-	static void FillListBoxItems(HWND hList, eWordItems eWhat, DWORD& nValue, bool abExact);
+	static void FillListBoxItems(HWND hList, eWordItems eWhat, UINT& nValue, bool abExact);
 
-	static bool GetListBoxItem(HWND hWnd, WORD nCtrlId, eFillListBoxItems eWhat, DWORD& nValue);
+	static bool GetListBoxItem(HWND hWnd, WORD nCtrlId, eFillListBoxItems eWhat, UINT& nValue);
 	static bool GetListBoxItem(HWND hWnd, WORD nCtrlId, eFillListBoxItems eWhat, BYTE& nValue);
-	static bool GetListBoxItem(HWND hWnd, WORD nCtrlId, eWordItems eWhat, DWORD& nValue);
+	static bool GetListBoxItem(HWND hWnd, WORD nCtrlId, eWordItems eWhat, UINT& nValue);
 	static bool GetListBoxItem(HWND hWnd, WORD nCtrlId, eWordItems eWhat, BYTE& nValue);
 
 	static INT_PTR GetSelectedString(HWND hParent, WORD nListCtrlId, wchar_t** ppszStr);

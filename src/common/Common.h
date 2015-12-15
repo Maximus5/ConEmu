@@ -748,7 +748,7 @@ struct PanelViewSetMapping
 	ThumbColor crSelectFrame; // RGB или Index
 
 	/* антиалиасинг */
-	DWORD nFontQuality;
+	UINT nFontQuality;
 
 	/* Теперь разнообразные размеры */
 	ThumbSizes Thumbs;
@@ -760,9 +760,9 @@ struct PanelViewSetMapping
 	// Прочие параметры загрузки
 	BYTE  bLoadPreviews; // bitmask of PanelViewMode {1=Thumbs, 2=Tiles}
 	bool  bLoadFolders;  // true - load infolder previews (only for Thumbs)
-	DWORD nLoadTimeout;  // 15 sec
+	UINT  nLoadTimeout;  // 15 sec
 
-	DWORD nMaxZoom; // 600%
+	UINT  nMaxZoom; // 600%
 	bool  bUsePicView2; // true
 	bool  bRestoreOnStartup;
 
