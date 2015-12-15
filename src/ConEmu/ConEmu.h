@@ -600,7 +600,7 @@ class CConEmuMain
 		bool isTabsShown();
 
 	public:
-		void Destroy();
+		void Destroy(bool abForce = false);
 	private:
 		#ifdef _DEBUG
 		bool mb_DestroySkippedInAssert;

@@ -2268,7 +2268,7 @@ void CConEmuMain::UpdateGuiInfoMappingActive(bool bActive, bool bUpdatePtr /*= t
 	}
 }
 
-void CConEmuMain::Destroy()
+void CConEmuMain::Destroy(bool abForce)
 {
 	LogString(L"CConEmuMain::Destroy()");
 
@@ -2295,7 +2295,19 @@ void CConEmuMain::Destroy()
 	}
 	#endif
 
-	if (ghWnd)
+	if (abForce)
+	{
+		// Expected only in Inside mode if parent was abnormally terminated
+		_ASSERTE(mp_Inside!=NULL);
+		int iBtn = MsgBox(L"ConEmu's parent window was terminated abnormally.\n"
+			L"Continue to kill ConEmu process?",
+			MB_OKCANCEL|MB_ICONEXCLAMATION, GetDefaultTitle(), NULL, false);
+		if (iBtn == IDOK)
+		{
+			ExitProcess(1);
+		}
+	}
+	else if (ghWnd)
 	{
 		//HWND hWnd = ghWnd;
 		//ghWnd = NULL;
@@ -11912,6 +11924,19 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
 
 void CConEmuMain::OnTimer_Background()
 {
+	// If we run in "Inside" mode, and parent was abnormally terminated, our main thread
+	// almost hangs and ConEmu and consoles can't shutdown properly...
+	if (!mp_Inside)
+		return; // Don't care otherwise
+
+	if (!IsWindow(mp_Inside->mh_InsideParentWND))
+	{
+		// Don't kill consoles? Let RealConsoles appear to user?
+		// CVConGroup::DoCloseAllVCon(true);
+
+		// We can't do or show anything?
+		Destroy(true);
+	}
 }
 
 void CConEmuMain::OnTimer_Main(CVirtualConsole* pVCon)
