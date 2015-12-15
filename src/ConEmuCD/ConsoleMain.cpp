@@ -1380,12 +1380,10 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 					if (!bSubSystem)
 					{
 						// szExe may be simple "notepad", we must seek for executable...
-						wchar_t szFound[MAX_PATH+1];
-						LPWSTR pszFile = NULL;
+						CEStr szFound;
 						// We are interesting only on ".exe" files,
 						// supposing that other executable extensions can't be GUI applications
-						DWORD n = SearchPath(NULL, szExe, L".exe", countof(szFound), szFound, &pszFile);
-						if (n && (n < countof(szFound)))
+						if (apiSearchPath(NULL, szExe, L".exe", szFound))
 							bSubSystem = GetImageSubsystem(szFound, RunImageSubsystem, RunImageBits, RunFileAttrs);
 					}
 
@@ -5927,9 +5925,6 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 		// ComSpec/ComSpecC не определен, используем cmd.exe
 		if (gszComSpec[0] == 0)
 		{
-			//WARNING("TCC/ComSpec");
-			//if (!SearchPathW(NULL, L"cmd.exe", NULL, MAX_PATH, gszComSpec, &psFilePart))
-
 			LPCWSTR pszFind = GetComspecFromEnvVar(gszComSpec, countof(gszComSpec));
 			if (!pszFind || !wcschr(pszFind, L'\\') || !FileExists(pszFind))
 			{
