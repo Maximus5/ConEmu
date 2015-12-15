@@ -52,6 +52,8 @@ void getWindowInfo(HWND ahWnd, wchar_t (&rsInfo)[1024], bool bProcessName = fals
 typedef BOOL (WINAPI* AttachConsole_t)(DWORD dwProcessId);
 
 // Some WinAPI related functions
+int apiSearchPath(LPCWSTR lpPath, LPCWSTR lpFileName, LPCWSTR lpExtension, CEStr& rsPath);
+int apiGetFullPathName(LPCWSTR lpFileName, CEStr& rsPath);
 bool FileExists(LPCWSTR asFilePath, DWORD* pnSize = NULL);
 bool FileSearchInDir(LPCWSTR asFilePath, CmdArg& rsFound);
 bool IsVsNetHostExe(LPCWSTR asFilePatName);

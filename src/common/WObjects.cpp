@@ -151,6 +151,74 @@ bool FileExists(LPCWSTR asFilePath, DWORD* pnSize /*= NULL*/)
 	return lbFound;
 }
 
+int apiSearchPath(LPCWSTR lpPath, LPCWSTR lpFileName, LPCWSTR lpExtension, CEStr& rsPath)
+{
+	bool bFound = false;
+	wchar_t *pszFilePart, *pszBuffer = NULL;
+	wchar_t szFind[MAX_PATH+1];
+
+	DWORD nLen = SearchPath(lpPath, lpFileName, lpExtension, countof(szFind), szFind, &pszFilePart);
+	if (nLen)
+	{
+		if (nLen < countof(szFind))
+		{
+			bFound = true;
+			rsPath.Set(szFind);
+		}
+		else
+		{
+			// Too long path, allocate more space
+			pszBuffer = (wchar_t*)malloc((++nLen)*sizeof(*pszBuffer));
+			if (pszBuffer)
+			{
+				DWORD nLen2 = SearchPath(lpPath, lpFileName, lpExtension, nLen, pszBuffer, &pszFilePart);
+				if (nLen2 && (nLen2 < nLen))
+				{
+					bFound = true;
+					rsPath.Set(pszBuffer);
+				}
+				free(pszBuffer);
+			}
+		}
+	}
+
+	return bFound ? rsPath.GetLen() : 0;
+}
+
+int apiGetFullPathName(LPCWSTR lpFileName, CEStr& rsPath)
+{
+	bool bFound = false;
+	wchar_t *pszFilePart, *pszBuffer = NULL;
+	wchar_t szFind[MAX_PATH+1];
+
+	DWORD nLen = GetFullPathName(lpFileName, countof(szFind), szFind, &pszFilePart);
+	if (nLen)
+	{
+		if (nLen < countof(szFind))
+		{
+			bFound = true;
+			rsPath.Set(szFind);
+		}
+		else
+		{
+			// Too long path, allocate more space
+			pszBuffer = (wchar_t*)malloc((++nLen)*sizeof(*pszBuffer));
+			if (pszBuffer)
+			{
+				DWORD nLen2 = GetFullPathName(lpFileName, nLen, pszBuffer, &pszFilePart);
+				if (nLen2 && (nLen2 < nLen))
+				{
+					bFound = true;
+					rsPath.Set(pszBuffer);
+				}
+				free(pszBuffer);
+			}
+		}
+	}
+
+	return bFound ? rsPath.GetLen() : 0;
+}
+
 bool FileSearchInDir(LPCWSTR asFilePath, CmdArg& rsFound)
 {
 	// Possibilities
