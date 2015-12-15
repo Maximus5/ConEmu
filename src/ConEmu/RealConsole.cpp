@@ -9085,7 +9085,8 @@ void CRealConsole::CheckVConRConPointer(bool bForceSet)
 			return; // OK, was not changed externally
 		if (isServerClosing())
 			return; // Skip - server is already in the shutdown state
-		_ASSERTE(FALSE && "WindowLongPtr was changed externally?");
+		// Don't warn in "Inside" mode
+		_ASSERTE(mp_ConEmu->mp_Inside && "WindowLongPtr was changed externally?");
 	}
 
 	SetWindowLongPtr(hVCon, 0, (LONG_PTR)hConWnd);
