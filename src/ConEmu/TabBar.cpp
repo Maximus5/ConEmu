@@ -1476,8 +1476,8 @@ int CTabBarClass::PrepareTab(CTab& pTab, CVirtualConsole *apVCon)
 	else
 	{
 
-		LPTSTR tFileName = NULL;
-		if (GetFullPathName(pszTabName, countof(dummy), dummy, &tFileName) && tFileName && *tFileName)
+		CEStr tFileName;
+		if (apiGetFullPathName(pszTabName, tFileName))
 			lstrcpyn(fileName, tFileName, countof(fileName));
 		else
 			lstrcpyn(fileName, pszTabName, countof(fileName));
