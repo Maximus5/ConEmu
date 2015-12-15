@@ -19,6 +19,13 @@ http://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2015.8.13e
+* gh#461: Fix AeroPeek VCon offset when frame is non-resizable.
+* gh#210: Minimizing other windows causes ConEmu to be restored (Quake).
+* Don't try to pop up console menu by Shift+RClick while LBtn selection is present.
+* Bug and warning fixes (from Michael Lukashov).
+
+
 2015.8.13d
 * Don't try to position cursor on higher line to avoid numerous beeps (bash, clink, etc.)
 * gh#297: Show option ‘Delay between consoles initialization’ on the ‘Startup’ page.

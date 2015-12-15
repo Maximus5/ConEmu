@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
   <metadata>
     <id>ConEmu</id>
-    <version>15.8.13.4</version>
+    <version>15.8.13.5</version>
     <authors>Maximus5</authors>
     <owners>Maximus5, Xavier Decoster, Ethan J. Brown</owners>
     <licenseUrl>http://opensource.org/licenses/BSD-3-Clause</licenseUrl>
