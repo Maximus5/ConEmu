@@ -672,10 +672,10 @@ int MyGetDlgItemText(HWND hDlg, WORD nID, wchar_t (&rszText)[size])
 {
 	CEStr szText;
 	size_t cchMax = 0;
-	int nLen = MyGetDlgItemText(hDlg, nID, cchMax, szText.ms_Arg);
-	if (lstrcmp(rszText, szText.ms_Arg) == 0)
+	int nLen = MyGetDlgItemText(hDlg, nID, cchMax, szText.ms_Val);
+	if (lstrcmp(rszText, szText.ms_Val) == 0)
 		return false;
-	lstrcpyn(rszText, szText.ms_Arg, size);
+	lstrcpyn(rszText, szText.ms_Val, size);
 	return true;
 }
 
@@ -2718,7 +2718,7 @@ static HRESULT _CreateShellLink(PCWSTR pszArguments, PCWSTR pszPrefix, PCWSTR ps
 			hr = psl->SetPath(szAppPath);
 
 			// Иконка
-			CmdArg szTmp;
+			CEStr szTmp;
 			wchar_t szIcon[MAX_PATH+1] = L"";
 			LPCWSTR pszTemp = pszArguments, pszIcon = NULL;
 			wchar_t* pszBatch = NULL;
@@ -3185,7 +3185,7 @@ HRESULT UpdateAppUserModelID()
 	{
 		if (bSpecialXmlFile && pszConfigFile && *pszConfigFile)
 		{
-			lstrmerge(&lsTempBuf.ms_Arg, L".", pszConfigFile);
+			lstrmerge(&lsTempBuf.ms_Val, L".", pszConfigFile);
 		}
 		else
 		{
@@ -3194,22 +3194,22 @@ HRESULT UpdateAppUserModelID()
 		// Named configuration?
 		if (pszConfigName && *pszConfigName)
 		{
-			lstrmerge(&lsTempBuf.ms_Arg, L".", pszConfigName);
+			lstrmerge(&lsTempBuf.ms_Val, L".", pszConfigName);
 		}
 		// Prepare the string
-		if (lsTempBuf.ms_Arg)
+		if (lsTempBuf.ms_Val)
 		{
 			// Must not contain spaces (and may be some others? not mentioned but...)
-			wchar_t* pch = lsTempBuf.ms_Arg;
+			wchar_t* pch = lsTempBuf.ms_Val;
 			while ((pch = wcspbrk(pch+1, L".,\\/ :()")) != NULL)
 				*pch = L'$';
 			// lsTempBuf must not be longer than 110 chars
-			int iLen = lstrlen(lsTempBuf.ms_Arg);
-			LPCWSTR pszReady = (iLen <= 110) ? lsTempBuf.ms_Arg : (lsTempBuf.ms_Arg + iLen - 110);
+			int iLen = lstrlen(lsTempBuf.ms_Val);
+			LPCWSTR pszReady = (iLen <= 110) ? lsTempBuf.ms_Val : (lsTempBuf.ms_Val + iLen - 110);
 			Config.Set(pszReady);
 		}
 	}
-	CEStr AppID = lstrmerge(L"Maximus5.ConEmu", Config.ms_Arg);
+	CEStr AppID = lstrmerge(L"Maximus5.ConEmu", Config.ms_Val);
 
 	// And update it
 	HRESULT hr = E_NOTIMPL;
@@ -3229,7 +3229,7 @@ HRESULT UpdateAppUserModelID()
 	wchar_t* pszLog = lsTempBuf.GetBuffer(cchMax);
 	if (pszLog)
 	{
-		_wsprintf(pszLog, SKIPLEN(cchMax) L"AppUserModelID was changed to `%s` Result=x%08X", AppID.ms_Arg, (DWORD)hr);
+		_wsprintf(pszLog, SKIPLEN(cchMax) L"AppUserModelID was changed to `%s` Result=x%08X", AppID.ms_Val, (DWORD)hr);
 		LogString(pszLog);
 	}
 
@@ -3323,19 +3323,19 @@ int CheckZoneIdentifiers(bool abAutoUnblock)
 			if (HasZoneIdentifier(lsFile, nZone)
 				&& (nZone != 0 /*LocalComputer*/))
 			{
-				lstrmerge(&szZonedFiles.ms_Arg, szZonedFiles.ms_Arg ? L"\r\n" : NULL, lsFile.ms_Arg);
+				lstrmerge(&szZonedFiles.ms_Val, szZonedFiles.ms_Val ? L"\r\n" : NULL, lsFile.ms_Val);
 			}
 		}
 	}
 
-	if (!szZonedFiles.ms_Arg)
+	if (!szZonedFiles.ms_Val)
 	{
 		return 0; // All files are OK
 	}
 
 	CEStr lsMsg = lstrmerge(
 		L"ConEmu binaries were marked as ‘Downloaded from internet’:\r\n",
-		szZonedFiles.ms_Arg, L"\r\n\r\n"
+		szZonedFiles.ms_Val, L"\r\n\r\n"
 		L"This may cause blocking or access denied errors!");
 
 	int iBtn = abAutoUnblock ? IDYES
@@ -3358,7 +3358,7 @@ int CheckZoneIdentifiers(bool abAutoUnblock)
 	}
 
 	DWORD nErrCode;
-	LPCWSTR pszFrom = szZonedFiles.ms_Arg;
+	LPCWSTR pszFrom = szZonedFiles.ms_Val;
 	CEStr lsFile;
 	bool bFirstRunAs = true;
 	while (0 == NextLine(&pszFrom, lsFile))
@@ -3456,7 +3456,7 @@ int ProcessCmdArg(LPCWSTR cmdNew, bool isScript, bool isBare, CEStr& szReady, bo
 			// Then if user drops, for example, txt file on the ConEmu's icon,
 			// we may concatenate this argument with Far command line.
 			pszDefCmd = gpSet->psStartSingleApp;
-			CmdArg szExe;
+			CEStr szExe;
 			if (0 != NextArg(&pszDefCmd, szExe))
 			{
 				_ASSERTE(FALSE && "NextArg failed");
@@ -3683,7 +3683,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	#if !defined(__CYGWIN__)
 	lsCommandLine.Set(GetCommandLineW());
 	#else
-	lsCommandLine.Set(lsCvtCmdLine.ms_Arg);
+	lsCommandLine.Set(lsCvtCmdLine.ms_Val);
 	#endif
 	if (lsCommandLine.IsEmpty())
 	{
@@ -3692,7 +3692,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 #if defined(SHOW_STARTED_MSGBOX)
 	wchar_t szTitle[128]; _wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"Conemu started, PID=%i", GetCurrentProcessId());
-	CEStr lsText = lstrmerge(L"GetCommandLineW()\n", GetCommandLineW(), L"\n\n\n" L"lpCmdLine\n", lsCvtCmdLine.ms_Arg);
+	CEStr lsText = lstrmerge(L"GetCommandLineW()\n", GetCommandLineW(), L"\n\n\n" L"lpCmdLine\n", lsCvtCmdLine.ms_Val);
 	MessageBox(NULL, lsText, szTitle, MB_OK|MB_ICONINFORMATION|MB_SETFOREGROUND|MB_SYSTEMMODAL);
 #elif defined(WAIT_STARTED_DEBUGGER)
 	while (!IsDebuggerPresent())
@@ -3823,7 +3823,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	// params == (uint)-1, если первый аргумент не начинается с '/'
 	if (gpConEmu->opt.cmdNew && *gpConEmu->opt.cmdNew && (gpConEmu->opt.params == -1))
 	{
-		CmdArg szPath;
+		CEStr szPath;
 		LPCWSTR pszCmdLine = gpConEmu->opt.cmdNew;
 		if (0 == NextArg(&pszCmdLine, szPath))
 		{

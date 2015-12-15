@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "MArray.h"
 #include "WObjects.h"
 
-struct CmdArg;
+struct CEStr;
 
 struct ProcessInfoBase
 {
@@ -54,8 +54,8 @@ struct ProcessInfoLite : public ProcessInfoBase
 	bool    NameChecked, RetryName;
 	bool    Alive, inConsole;
 	wchar_t Name[64]; // чтобы полная инфа об ошибке влезала
-	CmdArg* pActiveDir;
-	CmdArg* pPassiveDir;
+	CEStr* pActiveDir;
+	CEStr* pPassiveDir;
 };
 
 template<class T>

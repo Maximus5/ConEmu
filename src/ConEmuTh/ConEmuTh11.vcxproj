@@ -846,7 +846,7 @@ if exist C:\Utils\FAR170\Plugins\ConEmu\Thumbs\ConEmuTh.dll copy "$(TargetDir)Co
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\common\CmdArg.cpp" />
+    <ClCompile Include="..\common\CEStr.cpp" />
     <ClCompile Include="..\common\CmdLine.cpp" />
     <ClCompile Include="..\common\Common.cpp" />
     <ClCompile Include="..\common\ConEmuCheck.cpp" />
@@ -907,7 +907,7 @@ if exist C:\Utils\FAR170\Plugins\ConEmu\Thumbs\ConEmuTh.dll copy "$(TargetDir)Co
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\common\CmdArg.h" />
+    <ClInclude Include="..\common\CEStr.h" />
     <ClInclude Include="..\common\CmdLine.h" />
     <ClInclude Include="..\common\Common.h" />
     <ClInclude Include="..\common\ConEmuCheck.h" />

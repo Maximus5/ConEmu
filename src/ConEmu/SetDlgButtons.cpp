@@ -4168,7 +4168,7 @@ void CSetDlgButtons::OnBtn_UpdateInetToolCmd(HWND hDlg, WORD CB, BYTE uCheck)
 			lsCmd = lstrmerge(L"\"", szInetExe, L"\" -L %1 -o %2");
 		else
 			lsCmd = lstrmerge(L"\"", szInetExe, L"\" %1 %2");
-		SetDlgItemText(hDlg, tUpdateInetTool, lsCmd.ms_Arg);
+		SetDlgItemText(hDlg, tUpdateInetTool, lsCmd.ms_Val);
 	}
 } // cbUpdateInetToolPath
 
@@ -4390,7 +4390,7 @@ void CSetDlgButtons::OnBtn_GotoEditorCmd(HWND hDlg, WORD CB, BYTE uCheck)
 	wchar_t szInitialDir[MAX_PATH+1]; GetCurrentDirectory(countof(szInitialDir), szInitialDir);
 
 	LPCWSTR pszTemp = gpSet->sFarGotoEditor;
-	CmdArg szExe;
+	CEStr szExe;
 	if (NextArg(&pszTemp, szExe) == 0)
 	{
 		lstrcpyn(szPath, szExe, countof(szPath));

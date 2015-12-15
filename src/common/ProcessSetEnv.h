@@ -28,12 +28,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include "CmdArg.h"
+#include "CEStr.h"
 #include "MArray.h"
 
 class CProcessEnvCmd;
 
-bool ProcessSetEnvCmd(LPCWSTR& asCmdLine, bool bDoSet, CmdArg* rpsTitle = NULL, CProcessEnvCmd* pSetEnv = NULL);
+bool ProcessSetEnvCmd(LPCWSTR& asCmdLine, bool bDoSet, CEStr* rpsTitle = NULL, CProcessEnvCmd* pSetEnv = NULL);
 bool SetConsoleCpHelper(UINT nCP);
 
 class CProcessEnvCmd

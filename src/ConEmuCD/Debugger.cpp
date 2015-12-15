@@ -36,7 +36,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ShlObj.h>
 #pragma warning(default: 4091)
 #include "../ConEmu/version.h"
-#include "../common/CmdArg.h"
+#include "../common/CEStr.h"
 #include "../common/MMap.h"
 #include "../common/TokenHelper.h"
 #include "../common/WFiles.h"
@@ -477,7 +477,7 @@ DWORD WINAPI DebugThread(LPVOID lpvParam)
 
 				// Добавить процесс в список для запуска альтернативного дебаггера соотвествующей битности
 				// Force trailing "," even if only one PID specified ( --> bDebugMultiProcess = TRUE)
-				lstrmerge(&szOtherBitPids.ms_Arg, _itow(nDbgProcessID, szPID, 10), L",");
+				lstrmerge(&szOtherBitPids.ms_Val, _itow(nDbgProcessID, szPID, 10), L",");
 
 				// Может там еще процессы в списке на дамп?
 				continue;
@@ -520,7 +520,7 @@ DWORD WINAPI DebugThread(LPVOID lpvParam)
 	}
 
 	// Different bitness, need to start appropriate debugger
-	if (szOtherBitPids.ms_Arg && *szOtherBitPids.ms_Arg)
+	if (szOtherBitPids.ms_Val && *szOtherBitPids.ms_Val)
 	{
 		wchar_t szExe[MAX_PATH+5], *pszName;
 		if (!GetModuleFileName(NULL, szExe, MAX_PATH))
@@ -540,14 +540,14 @@ DWORD WINAPI DebugThread(LPVOID lpvParam)
 			wcscat_c(szExe, WIN3264TEST(L"ConEmuC64.exe", L"ConEmuC.exe"));
 
 			szOtherDebugCmd.Attach(lstrmerge(L"\"", szExe, L"\" "
-				L"/DEBUGPID=", szOtherBitPids.ms_Arg,
+				L"/DEBUGPID=", szOtherBitPids.ms_Val,
 				(gpSrv->DbgInfo.nDebugDumpProcess == 1) ? L" /DUMP" :
 				(gpSrv->DbgInfo.nDebugDumpProcess == 2) ? L" /MINIDUMP" :
 				(gpSrv->DbgInfo.nDebugDumpProcess == 3) ? L" /FULLDUMP" : L""));
 
 			STARTUPINFO si = {sizeof(si)};
 			PROCESS_INFORMATION pi = {};
-			if (CreateProcess(NULL, szOtherDebugCmd.ms_Arg, NULL, NULL, TRUE, NORMAL_PRIORITY_CLASS, NULL, NULL, &si, &pi))
+			if (CreateProcess(NULL, szOtherDebugCmd.ms_Val, NULL, NULL, TRUE, NORMAL_PRIORITY_CLASS, NULL, NULL, &si, &pi))
 			{
 				// Ждать не будем
 			}

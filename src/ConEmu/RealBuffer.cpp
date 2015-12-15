@@ -2909,7 +2909,7 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom, bool bUpdateScre
 	HooksUnlocker;
 
 	COORD crEnd = crStart;
-	CmdArg szText;
+	CEStr szText;
 	ExpandTextRangeType rc = CanProcessHyperlink(crStart)
 		? ExpandTextRange(crStart, crEnd, etr_AnyClickable, &szText)
 		: etr_None;
@@ -2941,7 +2941,7 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom, bool bUpdateScre
 			{
 				// Найти номер строки
 				CESERVER_REQ_FAREDITOR cmd = {sizeof(cmd)};
-				wchar_t* pszText = szText.ms_Arg;
+				wchar_t* pszText = szText.ms_Val;
 				int nLen = lstrlen(pszText)-1;
 
 				if (rc & etr_Row)
@@ -2976,7 +2976,7 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom, bool bUpdateScre
 					while ((pszEnd = wcschr(pszText, L'/')) != NULL)
 						*pszEnd = L'\\'; // заменить прямые слеши на обратные
 
-					CmdArg szWinPath;
+					CEStr szWinPath;
 					LPCWSTR pszWinPath = mp_RCon->GetFileFromConsole(pszText, szWinPath);
 					if (pszWinPath)
 					{
@@ -3045,7 +3045,7 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom, bool bUpdateScre
 							// Если явно указан другой внешний редактор - всегда использовать его
 							bool bUseExtEditor = false;
 							LPCWSTR pszTemp = gpSet->sFarGotoEditor;
-							CmdArg szExe;
+							CEStr szExe;
 							if (NextArg(&pszTemp, szExe) == 0)
 							{
 								if (!IsFarExe(PointToName(szExe)))
@@ -3057,7 +3057,7 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom, bool bUpdateScre
 							{
 								//_ASSERTE(pszWinPath!=NULL); // must not be here!
 								//pszWinPath = cmd.szFile; -- file not found, do not open absent files!
-								CmdArg szDir;
+								CEStr szDir;
 								wchar_t* pszErrMsg = lstrmerge(L"File '", cmd.szFile, L"' not found!\nDirectory: ", mp_RCon->GetConsoleCurDir(szDir));
 								if (pszErrMsg)
 								{
@@ -3075,8 +3075,8 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom, bool bUpdateScre
 									//LPCWSTR pszVar[] = {L"%1", L"%2", L"%3", ...};
 									//%3’ - C:\\Path\\File, ‘%4’ - C:/Path/File, ‘%5’ - /C/Path/File
 
-									CmdArg szSlashed; szSlashed.Attach(MakeStraightSlashPath(pszWinPath));
-									CmdArg szCygwin;  szCygwin.Attach(DupCygwinPath(pszWinPath, false));
+									CEStr szSlashed; szSlashed.Attach(MakeStraightSlashPath(pszWinPath));
+									CEStr szCygwin;  szCygwin.Attach(DupCygwinPath(pszWinPath, false));
 									LPCWSTR pszVal[] = {szRow, szCol, pszWinPath, (LPCWSTR)szSlashed, (LPCWSTR)szCygwin};
 									//_ASSERTE(countof(pszVar)==countof(pszVal));
 									wchar_t* pszCmd = ExpandMacroValues(gpSet->sFarGotoEditor, pszVal, countof(pszVal));
@@ -3113,7 +3113,7 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom, bool bUpdateScre
 										{
 											// Need to check registry for 'App Paths' and set up '%PATH%'
 											LPCWSTR pszTemp = args.pszSpecialCmd;
-											CmdArg szExe, szPrevPath;
+											CEStr szExe, szPrevPath;
 											wchar_t* pszPrevPath = NULL;
 											if (NextArg(&pszTemp, szExe) == 0)
 											{
@@ -6644,7 +6644,7 @@ WORD CRealBuffer::GetConOutMode()
 	return con.m_dwConsoleOutMode;
 }
 
-ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In/Out]*/, COORD& crTo/*[Out]*/, ExpandTextRangeType etr, CmdArg* psText /*= NULL*/)
+ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In/Out]*/, COORD& crTo/*[Out]*/, ExpandTextRangeType etr, CEStr* psText /*= NULL*/)
 {
 	ExpandTextRangeType result = etr_None;
 
@@ -6674,7 +6674,7 @@ ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In/Out]*/, COOR
 			lcrFrom.X = mp_Match->mn_MatchLeft;
 			lcrTo.X = mp_Match->mn_MatchRight;
 			if (psText)
-				psText->Set(mp_Match->ms_Match.ms_Arg);
+				psText->Set(mp_Match->ms_Match.ms_Val);
 			result = mp_Match->m_Type;
 		}
 	}

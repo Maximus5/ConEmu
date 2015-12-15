@@ -184,24 +184,24 @@ bool ProcessCommandLine(int& iRc, HMODULE& hConEmu)
 		bool bFirst = true;
 		while (NextArg(&pszCmdLine, lsArg) == 0)
 		{
-			if ((lsArg.ms_Arg[0] == L'-') && lsArg.ms_Arg[1] && !wcspbrk(lsArg.ms_Arg+1, L"\\//|.&<>^"))
+			if ((lsArg.ms_Val[0] == L'-') && lsArg.ms_Val[1] && !wcspbrk(lsArg.ms_Val+1, L"\\//|.&<>^"))
 			{
 				// Seems this is to be the "switch" too
-				lsArg.ms_Arg[0] = L'/';
+				lsArg.ms_Val[0] = L'/';
 			}
 
 			bool bWasFirst = bFirst; bFirst = false;
 
-			if ((lsArg.ms_Arg[0] != L'/') && bWasFirst)
+			if ((lsArg.ms_Val[0] != L'/') && bWasFirst)
 			{
-				LPCWSTR pszName = PointToName(lsArg.ms_Arg);
+				LPCWSTR pszName = PointToName(lsArg.ms_Val);
 				if (pszName && (lstrcmpi(pszName, WIN3264TEST(L"ConEmuC.exe",L"ConEmuC64.exe")) == 0))
 					continue;
 			}
 
 			iCount++;
 
-			if ((lsArg.ms_Arg[0] != L'/') && (iCount > 1))
+			if ((lsArg.ms_Val[0] != L'/') && (iCount > 1))
 			{
 				// Some unknown (here) switch, goto full version
 				break;

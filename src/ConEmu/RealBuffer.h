@@ -210,7 +210,7 @@ private:
 
 	void PrepareTransparent(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight);
 
-	ExpandTextRangeType ExpandTextRange(COORD& crFrom/*[In/Out]*/, COORD& crTo/*[Out]*/, ExpandTextRangeType etr, CmdArg* psText = NULL);
+	ExpandTextRangeType ExpandTextRange(COORD& crFrom/*[In/Out]*/, COORD& crTo/*[Out]*/, ExpandTextRangeType etr, CEStr* psText = NULL);
 	void StoreLastTextRange(ExpandTextRangeType etr);
 
 	short CheckProgressInConsole(const wchar_t* pszCurLine);

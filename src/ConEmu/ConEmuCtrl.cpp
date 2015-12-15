@@ -1522,7 +1522,7 @@ size_t CConEmuCtrl::GetOpenedTabs(CESERVER_REQ_GETALLTABS::TabInfo*& pTabs)
 
 size_t CConEmuCtrl::GetOpenedPanels(wchar_t*& pszDirs, int& iCount, int& iCurrent)
 {
-	CmdArg szActiveDir, szPassive;
+	CEStr szActiveDir, szPassive;
 	CVConGuard VCon;
 	MArray<wchar_t*> Dirs;
 	size_t cchAllLen = 1;
@@ -1533,7 +1533,7 @@ size_t CConEmuCtrl::GetOpenedPanels(wchar_t*& pszDirs, int& iCount, int& iCurren
 		VCon->RCon()->GetPanelDirs(szActiveDir, szPassive);
 		if (VCon->isActive(false))
 			iCurrent = iCount;
-		LPCWSTR psz[] = {szActiveDir.ms_Arg, szPassive.ms_Arg};
+		LPCWSTR psz[] = {szActiveDir.ms_Val, szPassive.ms_Val};
 		for (int i = 0; i <= 1; i++)
 		{
 			if (psz[i] && psz[i][0])

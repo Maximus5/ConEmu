@@ -63,7 +63,7 @@ public:
 	virtual void StopHookers();
 	virtual void ReloadSettings(); // Copy from gpSet or load from [HKCU]
 
-	size_t GetSrvAddArgs(bool bGuiArgs, CmdArg& rsArgs, CmdArg& rsNewCon);
+	size_t GetSrvAddArgs(bool bGuiArgs, CEStr& rsArgs, CEStr& rsNewCon);
 
 protected:
 	HANDLE  mh_StopEvent;

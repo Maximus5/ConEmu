@@ -150,11 +150,11 @@ void CommandTasks::ParseGuiArgs(RConStartArgs* pArgs) const
 	}
 
 	LPCWSTR pszArgs = pszGuiArgs, pszOk = pszGuiArgs;
-	CmdArg szArg;
+	CEStr szArg;
 	while (0 == NextArg(&pszArgs, szArg))
 	{
-		if (szArg.ms_Arg[0] == L'-')
-			szArg.ms_Arg[0] = L'/';
+		if (szArg.ms_Val[0] == L'-')
+			szArg.ms_Val[0] = L'/';
 
 		if (lstrcmpi(szArg, L"/dir") == 0)
 		{

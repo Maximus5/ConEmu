@@ -996,7 +996,7 @@ LPCWSTR CConEmuMain::MakeConEmuStartArgs(CEStr& rsArgs)
 			_wcscat_c(pszBuf, cchMax, L" ");
 	}
 
-	return rsArgs.ms_Arg;
+	return rsArgs.ms_Val;
 }
 
 bool CConEmuMain::CheckRequiredFiles()
@@ -1326,7 +1326,7 @@ LPCWSTR CConEmuMain::ConEmuCExeFull(LPCWSTR asCmdLine/*=NULL*/)
 
 		// Проверить битность asCmdLine во избежание лишних запусков серверов для Inject
 		// и корректной битности запускаемого процессора по настройке
-		CmdArg szTemp;
+		CEStr szTemp;
 		wchar_t* pszExpand = NULL;
 		if (!FileExists(asCmdLine))
 		{
@@ -3431,14 +3431,14 @@ CVirtualConsole* CConEmuMain::CreateConGroup(LPCWSTR apszScript, bool abForceAsA
 				SafeFree(args.pszStartupDir);
 
 			LPCWSTR pcszCmd = pszLine;
-			CmdArg szArg;
+			CEStr szArg;
 			const int iNewConLen = lstrlen(L"-new_console");
 			while (NextArg(&pcszCmd, szArg) == 0)
 			{
 				if (wcsncmp(szArg, L"-new_console", iNewConLen) == 0 || wcsncmp(szArg, L"-cur_console", iNewConLen) == 0)
 					break;
 
-				if (szArg.ms_Arg[0] != L'/')
+				if (szArg.ms_Val[0] != L'/')
 					break;
 
 				if (lstrcmpi(szArg, L"/bufferheight") == 0)
@@ -6679,7 +6679,7 @@ wchar_t CConEmuMain::IsConsoleBatchOrTask(LPCWSTR asSource)
 		LPCWSTR pszTemp = asSource;
 		if (NextArg(&pszTemp, lsTemp) == 0)
 		{
-			asSource = lsTemp.ms_Arg;
+			asSource = lsTemp.ms_Val;
 		}
 	}
 
@@ -6716,7 +6716,7 @@ wchar_t* CConEmuMain::LoadConsoleBatch(LPCWSTR asSource, RConStartArgs* pArgs /*
 		LPCWSTR pszTemp = asSource;
 		if (NextArg(&pszTemp, lsTemp) == 0)
 		{
-			asSource = lsTemp.ms_Arg;
+			asSource = lsTemp.ms_Val;
 
 			#ifdef _DEBUG
 			pszTemp = SkipNonPrintable(pszTemp);
@@ -6825,7 +6825,7 @@ wchar_t* CConEmuMain::LoadConsoleBatch_Drops(LPCWSTR asSource)
 
 		// Считаем, что один файл (*.exe, *.cmd, ...) или ярлык (*.lnk)
 		// это одна запускаемая консоль в ConEmu.
-		CmdArg szPart;
+		CEStr szPart;
 		wchar_t szExe[MAX_PATH+1], szDir[MAX_PATH+1];
 		HRESULT hr = S_OK;
 		IShellLinkW* pShellLink = NULL;
@@ -6947,7 +6947,7 @@ wchar_t* CConEmuMain::LoadConsoleBatch_Task(LPCWSTR asSource, RConStartArgs* pAr
 		CEStr lsTail; // Additional arguments supposed to be appended to each task's command
 		szName.Set(asSource);
 		// Search for task name end
-		wchar_t* psz = wcschr(szName.ms_Arg, TaskBracketRight);
+		wchar_t* psz = wcschr(szName.ms_Val, TaskBracketRight);
 		if (psz)
 		{
 			lsTail.Set(SkipNonPrintable(psz+1));
@@ -6961,7 +6961,7 @@ wchar_t* CConEmuMain::LoadConsoleBatch_Task(LPCWSTR asSource, RConStartArgs* pAr
 			// TODO: Supposed to be appended to EACH command (task line),
 			// TODO: but now lsTail may be appended to single-command tasks only
 			if (pGrp->pszCommands && !wcschr(pGrp->pszCommands, L'\n'))
-				pszDataW = lstrmerge(pGrp->pszCommands, lsTail.IsEmpty() ? NULL : L" ", lsTail.ms_Arg);
+				pszDataW = lstrmerge(pGrp->pszCommands, lsTail.IsEmpty() ? NULL : L" ", lsTail.ms_Val);
 			else
 				pszDataW = lstrdup(pGrp->pszCommands);
 
@@ -7406,7 +7406,7 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 		{
 			CVConGuard VCon;
 			GetActiveVCon(&VCon);
-			LPWSTR pszRc = ConEmuMacro::ExecuteMacro(ms_PostGuiMacro.ms_Arg, VCon.VCon() ? VCon->RCon() : NULL);
+			LPWSTR pszRc = ConEmuMacro::ExecuteMacro(ms_PostGuiMacro.ms_Val, VCon.VCon() ? VCon->RCon() : NULL);
 			SafeFree(pszRc);
 		}
 

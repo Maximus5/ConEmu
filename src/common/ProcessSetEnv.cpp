@@ -28,7 +28,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define HIDE_USE_EXCEPTION_INFO
 #include "Common.h"
-#include "CmdArg.h"
+#include "CEStr.h"
 #include "CmdLine.h"
 #include "ProcessSetEnv.h"
 #include "WObjects.h"
@@ -81,7 +81,7 @@ bool SetConsoleCpHelper(UINT nCP)
 //  "set PATH=C:\Program Files;%PATH%"
 //  chcp [utf8|ansi|oem|<cp_no>]
 //  title "Console init title"
-bool ProcessSetEnvCmd(LPCWSTR& asCmdLine, bool bDoSet, CmdArg* rpsTitle /*= NULL*/, CProcessEnvCmd* pSetEnv /*= NULL*/)
+bool ProcessSetEnvCmd(LPCWSTR& asCmdLine, bool bDoSet, CEStr* rpsTitle /*= NULL*/, CProcessEnvCmd* pSetEnv /*= NULL*/)
 {
 	LPCWSTR lsCmdLine = asCmdLine;
 
@@ -134,7 +134,7 @@ CProcessEnvCmd::~CProcessEnvCmd()
 void CProcessEnvCmd::AddCommands(LPCWSTR asCommands, LPCWSTR* ppszEnd/*= NULL*/, bool bAlone /*= false*/)
 {
 	LPCWSTR lsCmdLine = asCommands;
-	CmdArg lsSet, lsAmp, lsCmd;
+	CEStr lsSet, lsAmp, lsCmd;
 
 	if (ppszEnd)
 		*ppszEnd = asCommands;
@@ -190,16 +190,16 @@ void CProcessEnvCmd::AddCommands(LPCWSTR asCommands, LPCWSTR* ppszEnd/*= NULL*/,
 			{
 				bProcessed = (NextArg(&lsCmdLine, lsSet) == 0);
 			}
-			if (bProcessed && (wcschr(lsSet, L'=') > lsSet.ms_Arg))
+			if (bProcessed && (wcschr(lsSet, L'=') > lsSet.ms_Val))
 			{
-				lsNameVal = lsSet.ms_Arg;
+				lsNameVal = lsSet.ms_Val;
 			}
 		}
 		// Or full "set PATH=C:\Program Files;%PATH%" command (without quotes ATM)
 		else if (lstrcmpni(lsSet, L"set ", 4) == 0)
 		{
 			lsCmd = L"set";
-			LPCWSTR psz = SkipNonPrintable(lsSet.ms_Arg+4);
+			LPCWSTR psz = SkipNonPrintable(lsSet.ms_Val+4);
 			if (wcschr(psz, L'=') > psz)
 			{
 				lsNameVal = (wchar_t*)psz;
@@ -209,7 +209,7 @@ void CProcessEnvCmd::AddCommands(LPCWSTR asCommands, LPCWSTR* ppszEnd/*= NULL*/,
 		else if (lstrcmpni(lsSet, L"alias ", 6) == 0)
 		{
 			lsCmd = L"alias";
-			LPCWSTR psz = SkipNonPrintable(lsSet.ms_Arg+6);
+			LPCWSTR psz = SkipNonPrintable(lsSet.ms_Val+6);
 			if (wcschr(psz, L'=') > psz)
 			{
 				lsNameVal = (wchar_t*)psz;

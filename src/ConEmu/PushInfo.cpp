@@ -35,7 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Options.h"
 #include "PushInfo.h"
 #include "TrayIcon.h"
-#include "../common/CmdArg.h"
+#include "../common/CEStr.h"
 
 static CPushInfo::PushInfo gPushInfo[] = {
 	{

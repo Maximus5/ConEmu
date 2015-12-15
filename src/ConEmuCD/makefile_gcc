@@ -22,7 +22,7 @@ include ../makefile_gcc_inc
 USERLIBS += -lAdvapi32 -lGdi32 -lShell32 -lShlwapi
 
 SRCS = \
-		../common/CmdArg.cpp         \
+		../common/CEStr.cpp         \
 		../common/CmdLine.cpp        \
 		../common/Common.cpp         \
 		../common/ConEmuCheck.cpp    \

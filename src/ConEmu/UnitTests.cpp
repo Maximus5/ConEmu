@@ -140,7 +140,7 @@ void UnitFileNamesTest()
 
 void UnitExpandTest()
 {
-	CmdArg szExe;
+	CEStr szExe;
 	wchar_t szChoc[MAX_PATH] = L"powershell -NoProfile -ExecutionPolicy unrestricted -Command \"iex ((new-object net.webclient).DownloadString('https://chocolatey.org/install.ps1'))\" && SET PATH=%PATH%;%systemdrive%\\chocolatey\\bin";
 	wchar_t* pszExpanded = ExpandEnvStr(szChoc);
 	int nLen = pszExpanded ? lstrlen(pszExpanded) : 0;
@@ -251,7 +251,7 @@ void DebugNeedCmdUnitTests()
 	};
 	LPCWSTR psArgs;
 	BOOL bNeedCut, bRootIsCmd, bAlwaysConfirm, bAutoDisable;
-	CmdArg szExe;
+	CEStr szExe;
 	for (INT_PTR i = 0; i < countof(Tests); i++)
 	{
 		szExe.Empty();
@@ -294,7 +294,7 @@ void DebugStrUnitTest()
 		CEStr str2(lstrdup(pszTest));
 		wchar_t* pszDup = lstrdup(pszTest);
 		iCmp = lstrcmp(str2, pszTest);
-		_ASSERTE(iCmp == 0 && str2.ms_Arg && str2.ms_Arg != pszTest);
+		_ASSERTE(iCmp == 0 && str2.ms_Val && str2.ms_Val != pszTest);
 	}
 
 	// The following block must to be able to compile
@@ -308,14 +308,14 @@ void DebugStrUnitTest()
 		CEStr str4;
 		str4 = pszTest;
 		iCmp = lstrcmp(str4, pszTest);
-		_ASSERTE(iCmp == 0 && str4.ms_Arg && str4.ms_Arg != pszTest);
+		_ASSERTE(iCmp == 0 && str4.ms_Val && str4.ms_Val != pszTest);
 	}
 
 	{
 		CEStr str5;
 		str5 = str1;
 		iCmp = lstrcmp(str5, pszTest);
-		_ASSERTE(iCmp == 0 && str5.ms_Arg && str3.ms_Arg != str1.ms_Arg);
+		_ASSERTE(iCmp == 0 && str5.ms_Val && str3.ms_Val != str1.ms_Val);
 	}
 	#endif
 

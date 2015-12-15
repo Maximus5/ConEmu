@@ -2232,7 +2232,7 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 	}
 	// Log xml/reg + file + config
 	CEStr lsDesc = GetStoragePlaceDescr(apStorage, L"Settings::LoadSettings");
-	gpConEmu->LogString(lsDesc.ms_Arg);
+	gpConEmu->LogString(lsDesc.ms_Val);
 
 	// Settings service
 	SettingsBase* reg = NULL;
@@ -2326,7 +2326,7 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 			// but not an installer values (like a ConEmuStartShortcutInstalled).
 			CEStr cmd;  BYTE KeybHook = 0xFF;
 			if (reg->Load(L"KeyboardHooks", KeybHook)
-				|| reg->Load(L"CmdLine", &cmd.ms_Arg))
+				|| reg->Load(L"CmdLine", &cmd.ms_Val))
 			{
 				rbNeedCreateVanilla = true;
 			}
@@ -5331,7 +5331,7 @@ wchar_t* Settings::MultiLine2MSZ(const wchar_t* apszLines, DWORD* pcbSize/*in by
 				// That is a registry limitation
 				if (lsLine.IsEmpty())
 					lsLine.Set(L" ");
-				int iLineLen = lstrlen(lsLine.ms_Arg) + 1;
+				int iLineLen = lstrlen(lsLine.ms_Val) + 1;
 				if ((psz - pszDst + 1 + iLineLen) >= nLenMax)
 				{
 					INT_PTR nNewLenMax = max((psz - pszDst + 1 + iLineLen), nLenMax) + 1024;
@@ -5347,7 +5347,7 @@ wchar_t* Settings::MultiLine2MSZ(const wchar_t* apszLines, DWORD* pcbSize/*in by
 				}
 				_ASSERTE((psz - pszDst + 1 + iLineLen) <= nLenMax);
 
-				wmemmove(psz, lsLine.ms_Arg, iLineLen);
+				wmemmove(psz, lsLine.ms_Val, iLineLen);
 				psz += iLineLen;
 			}
 

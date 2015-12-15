@@ -401,17 +401,17 @@ int ConfirmDialog(LPCWSTR asMessage,
 		if (config.cButtons >= 1)
 		{
 			lsBtn1 = lstrmerge(asBtn1Name ? asBtn1Name : pszName1, asBtn1Hint ? L"\n" : NULL, asBtn1Hint);
-			buttons[0].pszButtonText = lsBtn1.ms_Arg;
+			buttons[0].pszButtonText = lsBtn1.ms_Val;
 		}
 		if (config.cButtons >= 2)
 		{
 			lsBtn2 = lstrmerge(asBtn2Name ? asBtn2Name : pszName2, asBtn2Hint ? L"\n" : NULL, asBtn2Hint);
-			buttons[1].pszButtonText = lsBtn2.ms_Arg;
+			buttons[1].pszButtonText = lsBtn2.ms_Val;
 		}
 		if (config.cButtons >= 3)
 		{
 			lsBtn3 = lstrmerge(asBtn3Name ? asBtn3Name : pszName3, asBtn3Hint ? L"\n" : NULL, asBtn3Hint);
-			buttons[2].pszButtonText = lsBtn3.ms_Arg;
+			buttons[2].pszButtonText = lsBtn3.ms_Val;
 		}
 
 		config.hwndParent                   = ghWnd;
@@ -465,19 +465,19 @@ int ConfirmDialog(LPCWSTR asMessage,
 	// URL hint?
 	if (asUrl)
 	{
-		lstrmerge(&szText.ms_Arg, L"\r\n\r\n", asUrl);
+		lstrmerge(&szText.ms_Val, L"\r\n\r\n", asUrl);
 	}
 
 	// Button hints?
 	if (asBtn1Hint || asBtn2Hint || asBtn3Hint)
 	{
-		lstrmerge(&szText.ms_Arg, L"\r\n\r\n");
+		lstrmerge(&szText.ms_Val, L"\r\n\r\n");
 		if (asBtn1Hint)
-			lstrmerge(&szText.ms_Arg, L"\r\n<", pszName1, L"> - ", asBtn1Hint);
+			lstrmerge(&szText.ms_Val, L"\r\n<", pszName1, L"> - ", asBtn1Hint);
 		if (asBtn2Hint)
-			lstrmerge(&szText.ms_Arg, L"\r\n<", pszName2, L"> - ", asBtn2Hint);
+			lstrmerge(&szText.ms_Val, L"\r\n<", pszName2, L"> - ", asBtn2Hint);
 		if (asBtn3Hint)
-			lstrmerge(&szText.ms_Arg, L"\r\n<", pszName3, L"> - ", asBtn3Hint);
+			lstrmerge(&szText.ms_Val, L"\r\n<", pszName3, L"> - ", asBtn3Hint);
 	}
 
 	// Show dialog

@@ -1570,7 +1570,7 @@ int CTabBarClass::PrepareTab(CTab& pTab, CVirtualConsole *apVCon)
 	}
 
 	TCHAR szTmp[64];
-	CmdArg szArg;
+	CEStr szArg;
 	bool  bAppendAdmin = gpSet->isAdminSuffix() && (pTab->Flags() & fwt_Elevated);
 
 	while (*pszFmt && pszDst < pszEnd)
@@ -1625,7 +1625,7 @@ int CTabBarClass::PrepareTab(CTab& pTab, CVirtualConsole *apVCon)
 						if (pszText && (*pszFmt == _T('f') || *pszFmt == _T('F')))
 						{
 							pszText = PointToName(pszText);
-							if (!pszText || !*pszText) pszText = szArg.ms_Arg;
+							if (!pszText || !*pszText) pszText = szArg.ms_Val;
 						}
 						if (!pszText || !*pszText)
 							pszText = L"?";

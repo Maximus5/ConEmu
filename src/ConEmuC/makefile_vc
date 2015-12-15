@@ -27,7 +27,7 @@ RES_FILE = "$(OBJDIR)\$(NAME).res"
 #PCH_FILE = "$(OBJDIR)\headers.pch"
 
 LINK_OBJS = \
-$(INTDIR)\CmdArg.obj \
+$(INTDIR)\CEStr.obj \
 $(INTDIR)\CmdLine.obj \
 $(INTDIR)\ConEmuC.obj \
 $(INTDIR)\Downloader.obj \
@@ -197,7 +197,7 @@ CLEAN:
 ################
 #LINK_OBJS begin
 
-$(INTDIR)\CmdArg.obj: ../common/CmdArg.cpp ../common/CmdArg.h
+$(INTDIR)\CEStr.obj: ../common/CEStr.cpp ../common/CEStr.h
 
 $(INTDIR)\CmdLine.obj: ../common/CmdLine.cpp ../common/CmdLine.h
 

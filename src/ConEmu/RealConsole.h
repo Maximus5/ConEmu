@@ -629,10 +629,10 @@ class CRealConsole
 		wchar_t ms_LogShellActivity[MAX_PATH]; bool mb_ShellActivityLogged;
 		int GetStatusLineCount(int nLeftPanelEdge);
 		void GetStartTime(SYSTEMTIME& st);
-		LPCWSTR GetConsoleStartDir(CmdArg& szDir);
-		LPCWSTR GetFileFromConsole(LPCWSTR asSrc, CmdArg& szFull);
-		LPCWSTR GetConsoleCurDir(CmdArg& szDir);
-		void GetPanelDirs(CmdArg& szActiveDir, CmdArg& szPassive);
+		LPCWSTR GetConsoleStartDir(CEStr& szDir);
+		LPCWSTR GetFileFromConsole(LPCWSTR asSrc, CEStr& szFull);
+		LPCWSTR GetConsoleCurDir(CEStr& szDir);
+		void GetPanelDirs(CEStr& szActiveDir, CEStr& szPassive);
 
 	public:
 		BOOL IsConsoleThread();
@@ -760,10 +760,10 @@ class CRealConsole
 		BOOL mb_FullRetrieveNeeded; //, mb_Detached;
 		RConStartArgs m_Args;
 		SYSTEMTIME m_StartTime;
-		CmdArg ms_DefTitle;
-		CmdArg ms_StartWorkDir;
-		CmdArg ms_CurWorkDir;
-		CmdArg ms_CurPassiveDir;
+		CEStr ms_DefTitle;
+		CEStr ms_StartWorkDir;
+		CEStr ms_CurWorkDir;
+		CEStr ms_CurPassiveDir;
 		MSectionSimple* mpcs_CurWorkDir;
 		void StoreCurWorkDir(CESERVER_REQ_STORECURDIR* pNewCurDir);
 		bool ReloadFarWorkDir();

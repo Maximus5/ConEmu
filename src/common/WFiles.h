@@ -37,7 +37,7 @@ bool MyCreateDirectory(wchar_t* asPath);
 
 bool IsDotsName(LPCWSTR asName);
 
-bool SearchAppPaths(LPCWSTR asFilePath, CmdArg& rsFound, bool abSetPath, CmdArg* rpsPathRestore = NULL);
+bool SearchAppPaths(LPCWSTR asFilePath, CEStr& rsFound, bool abSetPath, CEStr* rpsPathRestore = NULL);
 
 wchar_t* GetFullPathNameEx(LPCWSTR asPath);
 bool FindFileName(LPCWSTR asPath, CEStr& rsName);

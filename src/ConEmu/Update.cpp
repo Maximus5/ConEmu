@@ -770,7 +770,7 @@ DWORD CConEmuUpdate::CheckProcInt()
 		goto wrap;
 	}
 
-	pszSource = ms_SourceFull.ms_Arg;
+	pszSource = ms_SourceFull.ms_Val;
 	nSrcLen = wcstoul(pszSource, &pszEnd, 10);
 	if (!nSrcLen || !pszEnd || *pszEnd != L',' || *(pszEnd+1) != L'x')
 	{
@@ -1568,7 +1568,7 @@ void CConEmuUpdate::ReportErrorInt(wchar_t* asErrorInfo)
 	if (gpConEmu)
 	{
 		CEStr lsLog = lstrmerge(L"Update: ", asErrorInfo);
-		wchar_t* ptr = lsLog.ms_Arg;
+		wchar_t* ptr = lsLog.ms_Val;
 		while ((ptr = wcspbrk(ptr, L"\r\n")) != NULL) *ptr = L' ';
 		gpConEmu->LogString(lsLog);
 	}
@@ -1803,7 +1803,7 @@ bool CConEmuUpdate::Check7zipInstalled()
 		return true; // Инсталлер, архиватор не требуется!
 
 	LPCWSTR pszCmd = mp_Set->UpdateArcCmdLine();
-	CmdArg sz7zip; sz7zip.GetBuffer(MAX_PATH);
+	CEStr sz7zip; sz7zip.GetBuffer(MAX_PATH);
 	if (NextArg(&pszCmd, sz7zip) != 0)
 	{
 		ReportError(L"Invalid update command\nGoto 'Update' page and check 7-zip command", 0);
@@ -2096,7 +2096,7 @@ int CConEmuUpdate::QueryConfirmationNoNewVer()
 	szMsg = lstrmerge(
 		L"Your current ConEmu version is ", ms_CurVerInfo, L"\n\n",
 		(LPCWSTR)szInfo);
-	tsk.pszContent = szMsg.ms_Arg;
+	tsk.pszContent = szMsg.ms_Val;
 
 	btns[0].nButtonID  = IDOK;    btns[0].pszButtonText = L"OK";
 	pszBtn2 = lstrmerge(L"Visit download page\n", gsDownlPage);

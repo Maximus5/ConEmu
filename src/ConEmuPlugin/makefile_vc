@@ -20,7 +20,7 @@ OUTNAME = ConEmu
 
 
 LINK_OBJS = \
-$(INTDIR)\CmdArg.obj \
+$(INTDIR)\CEStr.obj \
 $(INTDIR)\CmdLine.obj \
 $(INTDIR)\Common.obj \
 $(INTDIR)\ConEmuCheck.obj \
@@ -244,7 +244,7 @@ clean:
 ################
 #LINK_OBJS begin
 
-$(INTDIR)\CmdArg.obj: ../common/CmdArg.cpp ../common/CmdArg.h
+$(INTDIR)\CEStr.obj: ../common/CEStr.cpp ../common/CEStr.h
 
 $(INTDIR)\CmdLine.obj: ../common/CmdLine.cpp
 

@@ -264,7 +264,7 @@ bool ConEmuUpdateSettings::UpdatesAllowed(wchar_t (&szReason)[128])
 				wcscpy_c(szReason, L"Update.ArcCmdLine is not specified");
 				return false; // Не указана строка запуска архиватора
 			}
-			CmdArg szExe;
+			CEStr szExe;
 			NextArg(&pszCmd, szExe);
 			pszCmd = PointToName(szExe);
 			if (!pszCmd || !*pszCmd)

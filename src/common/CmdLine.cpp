@@ -28,7 +28,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define HIDE_USE_EXCEPTION_INFO
 #include "Common.h"
-#include "CmdArg.h"
+#include "CEStr.h"
 #include "CmdLine.h"
 #include "WObjects.h"
 
@@ -69,7 +69,7 @@ bool IsNeedDequote(LPCWSTR asCmdLine, bool abFromCmdCK, LPCWSTR* rsEndQuote/*=NU
 				if (pszSP && pszQE && (pszSP < pszQE)
 					&& ((pszSP - asCmdLine) < MAX_PATH))
 				{
-					CmdArg lsTmp;
+					CEStr lsTmp;
 					lsTmp.Set(asCmdLine+1, pszSP-asCmdLine-1);
 					bDeQu = (IsFilePath(lsTmp, true) && IsExecutable(lsTmp));
 				}
@@ -114,7 +114,7 @@ bool IsNeedDequote(LPCWSTR asCmdLine, bool abFromCmdCK, LPCWSTR* rsEndQuote/*=NU
 }
 
 // Returns 0 if succeeded, other number on error
-int NextArg(const wchar_t** asCmdLine, CmdArg &rsArg, const wchar_t** rsArgStart/*=NULL*/)
+int NextArg(const wchar_t** asCmdLine, CEStr &rsArg, const wchar_t** rsArgStart/*=NULL*/)
 {
 	if (!asCmdLine || !*asCmdLine)
 		return CERR_CMDLINEEMPTY;
@@ -139,12 +139,12 @@ int NextArg(const wchar_t** asCmdLine, CmdArg &rsArg, const wchar_t** rsArgStart
 	// Remote surrounding quotes, in certain cases
 	// Example: ""7z.exe" /?"
 	// Example: "C:\Windows\system32\cmd.exe" /C ""C:\Python27\python.EXE""
-	if ((rsArg.mn_TokenNo == 0) || (rsArg.mn_CmdCall == CmdArg::cc_CmdCK))
+	if ((rsArg.mn_TokenNo == 0) || (rsArg.mn_CmdCall == CEStr::cc_CmdCK))
 	{
-		if (IsNeedDequote(psCmdLine, (rsArg.mn_CmdCall == CmdArg::cc_CmdCK), &rsArg.mpsz_Dequoted))
+		if (IsNeedDequote(psCmdLine, (rsArg.mn_CmdCall == CEStr::cc_CmdCK), &rsArg.mpsz_Dequoted))
 			psCmdLine++;
-		if (rsArg.mn_CmdCall == CmdArg::cc_CmdCK)
-			rsArg.mn_CmdCall = CmdArg::cc_CmdCommand;
+		if (rsArg.mn_CmdCall == CEStr::cc_CmdCK)
+			rsArg.mn_CmdCall = CEStr::cc_CmdCommand;
 	}
 
 	size_t nArgLen = 0;
@@ -242,33 +242,33 @@ int NextArg(const wchar_t** asCmdLine, CmdArg &rsArg, const wchar_t** rsArgStart
 
 	switch (rsArg.mn_CmdCall)
 	{
-	case CmdArg::cc_Undefined:
+	case CEStr::cc_Undefined:
 		// Если это однозначно "ключ" - то на имя файла не проверяем
-		if (*rsArg.ms_Arg == L'/' || *rsArg.ms_Arg == L'-')
+		if (*rsArg.ms_Val == L'/' || *rsArg.ms_Val == L'-')
 		{
 			// Это для парсинга (чтобы ассертов не было) параметров из ShellExecute (там cmd.exe указывается в другом аргументе)
-			if ((rsArg.mn_TokenNo == 1) && (lstrcmpi(rsArg.ms_Arg, L"/C") == 0 || lstrcmpi(rsArg.ms_Arg, L"/K") == 0))
-				rsArg.mn_CmdCall = CmdArg::cc_CmdCK;
+			if ((rsArg.mn_TokenNo == 1) && (lstrcmpi(rsArg.ms_Val, L"/C") == 0 || lstrcmpi(rsArg.ms_Val, L"/K") == 0))
+				rsArg.mn_CmdCall = CEStr::cc_CmdCK;
 		}
 		else
 		{
-			pch = PointToName(rsArg.ms_Arg);
+			pch = PointToName(rsArg.ms_Val);
 			if (pch)
 			{
 				if ((lstrcmpi(pch, L"cmd") == 0 || lstrcmpi(pch, L"cmd.exe") == 0)
 					|| (lstrcmpi(pch, L"ConEmuC") == 0 || lstrcmpi(pch, L"ConEmuC.exe") == 0)
 					|| (lstrcmpi(pch, L"ConEmuC64") == 0 || lstrcmpi(pch, L"ConEmuC64.exe") == 0))
 				{
-					rsArg.mn_CmdCall = CmdArg::cc_CmdExeFound;
+					rsArg.mn_CmdCall = CEStr::cc_CmdExeFound;
 				}
 			}
 		}
 		break;
-	case CmdArg::cc_CmdExeFound:
-		if (lstrcmpi(rsArg.ms_Arg, L"/C") == 0 || lstrcmpi(rsArg.ms_Arg, L"/K") == 0)
-			rsArg.mn_CmdCall = CmdArg::cc_CmdCK;
-		else if ((rsArg.ms_Arg[0] != L'/') && (rsArg.ms_Arg[0] != L'-'))
-			rsArg.mn_CmdCall = CmdArg::cc_Undefined;
+	case CEStr::cc_CmdExeFound:
+		if (lstrcmpi(rsArg.ms_Val, L"/C") == 0 || lstrcmpi(rsArg.ms_Val, L"/K") == 0)
+			rsArg.mn_CmdCall = CEStr::cc_CmdCK;
+		else if ((rsArg.ms_Val[0] != L'/') && (rsArg.ms_Val[0] != L'-'))
+			rsArg.mn_CmdCall = CEStr::cc_Undefined;
 		break;
 	}
 
@@ -422,7 +422,7 @@ LPCWSTR GetDrive(LPCWSTR pszPath, wchar_t* szDrive, int/*countof(szDrive)*/ cchD
 	return szDrive;
 }
 
-int GetDirectory(CmdArg& szDir)
+int GetDirectory(CEStr& szDir)
 {
 	int iRc = 0;
 	DWORD nLen, nMax;
@@ -450,7 +450,7 @@ wrap:
 // кроме того, если команда содержит "?" или "*" - тоже не пытаться.
 const wchar_t* gsInternalCommands = L"ACTIVATE\0ALIAS\0ASSOC\0ATTRIB\0BEEP\0BREAK\0CALL\0CDD\0CHCP\0COLOR\0COPY\0DATE\0DEFAULT\0DEL\0DELAY\0DESCRIBE\0DETACH\0DIR\0DIRHISTORY\0DIRS\0DRAWBOX\0DRAWHLINE\0DRAWVLINE\0ECHO\0ECHOERR\0ECHOS\0ECHOSERR\0ENDLOCAL\0ERASE\0ERRORLEVEL\0ESET\0EXCEPT\0EXIST\0EXIT\0FFIND\0FOR\0FREE\0FTYPE\0GLOBAL\0GOTO\0HELP\0HISTORY\0IF\0IFF\0INKEY\0INPUT\0KEYBD\0KEYS\0LABEL\0LIST\0LOG\0MD\0MEMORY\0MKDIR\0MOVE\0MSGBOX\0NOT\0ON\0OPTION\0PATH\0PAUSE\0POPD\0PROMPT\0PUSHD\0RD\0REBOOT\0REN\0RENAME\0RMDIR\0SCREEN\0SCRPUT\0SELECT\0SET\0SETDOS\0SETLOCAL\0SHIFT\0SHRALIAS\0START\0TEE\0TIME\0TIMER\0TITLE\0TOUCH\0TREE\0TRUENAME\0TYPE\0UNALIAS\0UNSET\0VER\0VERIFY\0VOL\0VSCRPUT\0WINDOW\0Y\0\0";
 
-bool IsNeedCmd(BOOL bRootCmd, LPCWSTR asCmdLine, CmdArg &szExe,
+bool IsNeedCmd(BOOL bRootCmd, LPCWSTR asCmdLine, CEStr &szExe,
 			   LPCWSTR* rsArguments /*= NULL*/, BOOL* rpbNeedCutStartEndQuot /*= NULL*/,
 			   BOOL* rpbRootIsCmdExe /*= NULL*/, BOOL* rpbAlwaysConfirmExit /*= NULL*/, BOOL* rpbAutoDisableConfirmExit /*= NULL*/)
 {
@@ -473,7 +473,7 @@ bool IsNeedCmd(BOOL bRootCmd, LPCWSTR asCmdLine, CmdArg &szExe,
 
 	#ifdef _DEBUG
 	// Это минимальные проверки, собственно к коду - не относятся
-	CmdArg szDbgFirst;
+	CEStr szDbgFirst;
 	bool bIsBatch = false;
 	{
 		LPCWSTR psz = asCmdLine;
@@ -733,7 +733,7 @@ bool IsNeedCmd(BOOL bRootCmd, LPCWSTR asCmdLine, CmdArg &szExe,
 	//pwszCopy = wcsrchr(szArg, L'\\'); if (!pwszCopy) pwszCopy = szArg; else pwszCopy ++;
 	pwszCopy = PointToName(szExe);
 	//2009-08-27
-	pwszEndSpace = szExe.ms_Arg + lstrlenW(szExe) - 1;
+	pwszEndSpace = szExe.ms_Val + lstrlenW(szExe) - 1;
 
 	while ((*pwszEndSpace == L' ') && (pwszEndSpace > szExe))
 	{

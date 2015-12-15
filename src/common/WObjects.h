@@ -34,7 +34,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Common.h"
 //#include "MSecurity.h"
 //#include "ConEmuCheck.h"
-#include "CmdArg.h"
+#include "CEStr.h"
 
 
 // GCC fixes
@@ -53,13 +53,13 @@ typedef BOOL (WINAPI* AttachConsole_t)(DWORD dwProcessId);
 
 // Some WinAPI related functions
 bool FileExists(LPCWSTR asFilePath, DWORD* pnSize = NULL);
-bool FileSearchInDir(LPCWSTR asFilePath, CmdArg& rsFound);
+bool FileSearchInDir(LPCWSTR asFilePath, CEStr& rsFound);
 bool IsVsNetHostExe(LPCWSTR asFilePatName);
 bool IsGDB(LPCWSTR asFilePatName);
 
-typedef bool (*SearchAppPaths_t)(LPCWSTR asFilePath, CmdArg& rsFound, bool abSetPath, CmdArg* rpsPathRestore /*= NULL*/);
+typedef bool (*SearchAppPaths_t)(LPCWSTR asFilePath, CEStr& rsFound, bool abSetPath, CEStr* rpsPathRestore /*= NULL*/);
 extern SearchAppPaths_t gfnSearchAppPaths /*= NULL*/;
-bool FileExistsSearch(LPCWSTR asFilePath, CmdArg& rsFound, bool abSetPath = true, bool abRegSearch = true);
+bool FileExistsSearch(LPCWSTR asFilePath, CEStr& rsFound, bool abSetPath = true, bool abRegSearch = true);
 
 bool GetShortFileName(LPCWSTR asFullPath, int cchShortNameMax, wchar_t* rsShortName/*[MAX_PATH+1]-name only*/, BOOL abFavorLength=FALSE);
 wchar_t* GetShortFileNameEx(LPCWSTR asLong, BOOL abFavorLength=TRUE);

@@ -1,6 +1,6 @@
 NAME = ConEmuDw
 SRCS = \
-		../common/CmdArg.cpp         \
+		../common/CEStr.cpp         \
 		../common/CmdLine.cpp        \
 		../common/ConsoleRead.cpp    \
 		../common/WThreads.cpp       \

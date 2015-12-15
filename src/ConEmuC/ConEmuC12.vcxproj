@@ -890,7 +890,7 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\common\CmdArg.cpp" />
+    <ClCompile Include="..\common\CEStr.cpp" />
     <ClCompile Include="..\common\CmdLine.cpp" />
     <ClCompile Include="..\common\MAssert.cpp" />
     <ClCompile Include="..\common\Memory.cpp" />
@@ -902,7 +902,7 @@
     <ClCompile Include="Downloader.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\common\CmdArg.h" />
+    <ClInclude Include="..\common\CEStr.h" />
     <ClInclude Include="..\common\CmdLine.h" />
     <ClInclude Include="..\common\Memory.h" />
     <ClInclude Include="..\common\MSectionSimple.h" />

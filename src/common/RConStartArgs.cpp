@@ -60,7 +60,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 void RConStartArgs::RunArgTests()
 {
-	CmdArg s;
+	CEStr s;
 	s.Set(L"Abcdef", 3);
 	int nDbg = lstrcmp(s, L"Abc");
 	_ASSERTE(nDbg==0);
@@ -69,7 +69,7 @@ void RConStartArgs::RunArgTests()
 	_ASSERTE(nDbg==0);
 	s.Empty();
 	//s.Set(L""); // !! Set("") must trigger ASSERT !!
-	nDbg = s.ms_Arg ? lstrcmp(s, L"") : -2;
+	nDbg = s.ms_Val ? lstrcmp(s, L"") : -2;
 	_ASSERTE(nDbg==0);
 
 	struct { LPCWSTR pszWhole; LPCWSTR pszCmp[10]; } lsArgTest[] = {
@@ -790,7 +790,7 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 		LPCWSTR pszTemp = pszSpecialCmd;
 		LPCWSTR pszSave = pszSpecialCmd;
 		LPCWSTR pszName;
-		CmdArg szExe;
+		CEStr szExe;
 		LPCWSTR pszWords[] = {
 			L"ConEmu", L"ConEmu.exe", L"ConEmu64", L"ConEmu64.exe",
 			L"ConEmuC", L"ConEmuC.exe", L"ConEmuC64", L"ConEmuC64.exe",
@@ -799,7 +799,7 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 			NULL};
 		while (!pszStopAt && (0 == NextArg(&pszTemp, szExe)))
 		{
-			if (szExe.ms_Arg[0] != L'-')
+			if (szExe.ms_Val[0] != L'-')
 			{
 				pszName = PointToName(szExe);
 				for (size_t i = 0; pszWords[i]; i++)

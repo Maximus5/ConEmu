@@ -22,7 +22,7 @@ include ../makefile_gcc_inc
 USERLIBS += -lShlwapi -lgdi32
 
 SRCS = \
-		../common/CmdArg.cpp         \
+		../common/CEStr.cpp         \
 		../common/CmdLine.cpp        \
 		../common/MAssert.cpp        \
 		../common/Memory.cpp         \

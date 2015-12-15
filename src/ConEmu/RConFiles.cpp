@@ -44,9 +44,9 @@ CRConFiles::~CRConFiles()
 {
 }
 
-LPCWSTR CRConFiles::GetFileFromConsole(LPCWSTR asSrc, CmdArg& szFull)
+LPCWSTR CRConFiles::GetFileFromConsole(LPCWSTR asSrc, CEStr& szFull)
 {
-	CmdArg szWinPath;
+	CEStr szWinPath;
 	LPCWSTR pszWinPath = szWinPath.Attach(MakeWinPath(asSrc));
 	if (!pszWinPath || !*pszWinPath)
 	{
