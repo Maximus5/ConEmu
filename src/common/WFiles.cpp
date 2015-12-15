@@ -670,6 +670,12 @@ bool DirectoryExists(LPCWSTR asPath)
 	return (lbFound != FALSE);
 }
 
+// MyCreateDirectory creates full chain of absent folders
+//
+// asPath must eigher have trailing slash:
+//   "C:\User\Documents\FolderName\"
+// or even be a full path to file:
+//   "C:\User\Documents\FolderName\file.txt"
 bool MyCreateDirectory(wchar_t* asPath)
 {
 	if (!asPath || !*asPath)
