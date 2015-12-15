@@ -13565,49 +13565,6 @@ void CRealConsole::UpdateFarSettings(DWORD anFarPID /*= 0*/, FAR_REQ_FARSETCHANG
 {
 	if (!this) return;
 
-	////int nLen = /*ComSpec\0*/ 8 + /*ComSpecC\0*/ 9 + 20 +  2*_tcslen(mp_ConEmu->ms_ConEmuExe);
-	//wchar_t szCMD[MAX_PATH+1];
-	////wchar_t szData[MAX_PATH*4+64];
-	//
-	//// Если определена ComSpecC - значит переопределен стандартный ComSpec
-	//if (!GetEnvironmentVariable(L"ComSpecC", szCMD, MAX_PATH) || szCMD[0] == 0)
-	//{
-	//	if (!GetEnvironmentVariable(L"ComSpec", szCMD, MAX_PATH) || szCMD[0] == 0)
-	//		szCMD[0] = 0;
-	//}
-	//
-	//if (szCMD[0] != 0)
-	//{
-	//	// Только если это (случайно) не conemuc.exe
-	//
-	//	wchar_t* pwszCopy = wcsrchr(szCMD, L'\\'); if (!pwszCopy) pwszCopy = szCMD;
-	//
-	//#if !defined(__GNUC__)
-	//#pragma warning( push )
-	//#pragma warning(disable : 6400)
-	//#endif
-	//
-	//	if (lstrcmpiW(pwszCopy, L"ConEmuC")==0 || lstrcmpiW(pwszCopy, L"ConEmuC.exe")==0
-	//	        || lstrcmpiW(pwszCopy, L"ConEmuC64")==0 || lstrcmpiW(pwszCopy, L"ConEmuC64.exe")==0)
-	//		szCMD[0] = 0;
-	//
-	//#if !defined(__GNUC__)
-	//#pragma warning( pop )
-	//#endif
-	//}
-	//
-	//// ComSpec/ComSpecC не определен, используем cmd.exe
-	//if (szCMD[0] == 0)
-	//{
-	//	wchar_t* psFilePart = NULL;
-	//
-	//	if (!SearchPathW(NULL, L"cmd.exe", NULL, MAX_PATH, szCMD, &psFilePart))
-	//	{
-	//		DisplayLastError(L"Can't find cmd.exe!\n", 0);
-	//		return;
-	//	}
-	//}
-
 	if (rpSetEnvVar)
 		memset(rpSetEnvVar, 0, sizeof(*rpSetEnvVar));
 
