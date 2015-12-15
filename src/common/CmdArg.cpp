@@ -101,6 +101,9 @@ wchar_t* CmdArg::GetBuffer(INT_PTR cchMaxLen)
 		return NULL;
 	}
 
+	// if ms_Arg was used externally (by lstrmerge for example)
+	if (ms_Arg && !mn_MaxCount)
+		mn_MaxCount = lstrlen(ms_Arg) + 1;
 
 	INT_PTR nOldLen = (ms_Arg && (mn_MaxCount > 0)) ? (mn_MaxCount-1) : 0;
 
