@@ -202,7 +202,8 @@ void* __cdecl xf_realloc
 	xf_mem_block* pOld = ((xf_mem_block*)_Memory)-1;
 
 	size_t _Size1 = HeapSize(ghHeap, 0, pOld);
-	_ASSERTE(_Size1 < (_Size+sizeof(xf_mem_block)+8));
+	//_ASSERTE(_Size1 < (_Size+sizeof(xf_mem_block)+8));
+	_ASSERTE(_Size1 > (sizeof(xf_mem_block)+8));
 	size_t _Size2 = 0;
 
 	if (pOld->bBlockUsed == TRUE)
