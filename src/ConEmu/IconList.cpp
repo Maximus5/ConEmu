@@ -222,7 +222,6 @@ int CIconList::CreateTabIconInt(LPCWSTR asIconDescr, bool bAdmin, LPCWSTR asWork
 	// Need to be created!
 	int iIconIdx = -1;
 	HICON hFileIcon = NULL;
-	wchar_t szTemp[MAX_PATH];
 	CEStr szLoadFile;
 	LPCWSTR lpszExt = NULL;
 	LPCWSTR lpszIndex = NULL;
@@ -255,10 +254,8 @@ int CIconList::CreateTabIconInt(LPCWSTR asIconDescr, bool bAdmin, LPCWSTR asWork
 
 	if (!lpszExt)
 	{
-		LPWSTR pszFile = NULL;
-		if (SearchPath(NULL, szLoadFile, L".exe", countof(szTemp), szTemp, &pszFile))
+		if (apiSearchPath(NULL, szLoadFile, L".exe", szLoadFile))
 		{
-			szLoadFile.Set(szTemp);
 			lpszExt = PointToExt(szLoadFile);
 		}
 
