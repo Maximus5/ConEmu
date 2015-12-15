@@ -33,7 +33,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 CmdArg::CmdArg()
 {
-	mn_MaxLen = 0; ms_Arg = NULL;
+	mn_MaxCount = 0; ms_Arg = NULL;
 	mb_RestoreEnvVar = false;
 	ms_RestoreVarName[0] = 0;
 	Empty();
@@ -41,7 +41,7 @@ CmdArg::CmdArg()
 
 CmdArg::CmdArg(wchar_t* RVAL_REF asPtr)
 {
-	mn_MaxLen = 0; ms_Arg = NULL;
+	mn_MaxCount = 0; ms_Arg = NULL;
 	mpsz_Dequoted = NULL;
 	mb_RestoreEnvVar = false;
 	ms_RestoreVarName[0] = 0;
@@ -78,11 +78,12 @@ wchar_t* CmdArg::GetBuffer(INT_PTR cchMaxLen)
 		return NULL;
 	}
 
-	INT_PTR nOldLen = (ms_Arg && (mn_MaxLen > 0)) ? (mn_MaxLen-1) : 0;
 
-	if (!ms_Arg || (cchMaxLen >= mn_MaxLen))
+	INT_PTR nOldLen = (ms_Arg && (mn_MaxCount > 0)) ? (mn_MaxCount-1) : 0;
+
+	if (!ms_Arg || (cchMaxLen >= mn_MaxCount))
 	{
-		INT_PTR nNewMaxLen = max(mn_MaxLen,cchMaxLen+1);
+		INT_PTR nNewMaxLen = max(mn_MaxCount,cchMaxLen+1);
 		if (ms_Arg)
 		{
 			ms_Arg = (wchar_t*)realloc(ms_Arg, nNewMaxLen*sizeof(*ms_Arg));
@@ -91,7 +92,7 @@ wchar_t* CmdArg::GetBuffer(INT_PTR cchMaxLen)
 		{
 			ms_Arg = (wchar_t*)malloc(nNewMaxLen*sizeof(*ms_Arg));
 		}
-		mn_MaxLen = nNewMaxLen;
+		mn_MaxCount = nNewMaxLen;
 	}
 
 	if (ms_Arg)
@@ -107,7 +108,7 @@ wchar_t* CmdArg::Detach()
 {
 	wchar_t* psz = ms_Arg;
 	ms_Arg = NULL;
-	mn_MaxLen = 0;
+	mn_MaxCount = 0;
 
 	return psz;
 }
@@ -129,7 +130,7 @@ LPCWSTR CmdArg::AttachInt(wchar_t*& asPtr)
 	if (asPtr)
 	{
 		ms_Arg = asPtr;
-		mn_MaxLen = lstrlen(asPtr)+1;
+		mn_MaxCount = lstrlen(asPtr)+1;
 	}
 
 	return ms_Arg;
@@ -171,8 +172,8 @@ LPCWSTR CmdArg::Set(LPCWSTR asNewValue, INT_PTR anChars /*= -1*/)
 		}
 		else if (GetBuffer(nNewLen))
 		{
-			_ASSERTE(mn_MaxLen > nNewLen); // Must be set in GetBuffer
-			_wcscpyn_c(ms_Arg, mn_MaxLen, asNewValue, nNewLen);
+			_ASSERTE(mn_MaxCount > nNewLen); // Must be set in GetBuffer
+			_wcscpyn_c(ms_Arg, mn_MaxCount, asNewValue, nNewLen);
 		}
 	}
 	else
@@ -210,7 +211,7 @@ void CmdArg::SaveEnvVar(LPCWSTR asVarName, LPCWSTR asNewValue)
 
 void CmdArg::SetAt(INT_PTR nIdx, wchar_t wc)
 {
-	if (ms_Arg && (nIdx < mn_MaxLen))
+	if (ms_Arg && (nIdx < mn_MaxCount))
 	{
 		ms_Arg[nIdx] = wc;
 	}
