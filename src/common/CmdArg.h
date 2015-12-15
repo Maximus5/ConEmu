@@ -42,7 +42,7 @@ typedef struct CmdArg
 {
 public:
 	wchar_t *ms_Arg;
-	INT_PTR mn_MaxLen; // Including termination \0
+	INT_PTR mn_MaxCount; // Including termination \0
 
 	// Point to the end dblquot
 	LPCWSTR mpsz_Dequoted;
