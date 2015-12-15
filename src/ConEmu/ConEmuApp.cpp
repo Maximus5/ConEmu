@@ -2734,7 +2734,7 @@ static HRESULT _CreateShellLink(PCWSTR pszArguments, PCWSTR pszPrefix, PCWSTR ps
 
 			// Иконка
 			CmdArg szTmp;
-			wchar_t szIcon[MAX_PATH+1] = L"";
+			CEStr szIcon;
 			LPCWSTR pszTemp = pszArguments, pszIcon = NULL;
 			wchar_t* pszBatch = NULL;
 			while (NextArg(&pszTemp, szTmp) == 0)
@@ -2768,21 +2768,17 @@ static HRESULT _CreateShellLink(PCWSTR pszArguments, PCWSTR pszPrefix, PCWSTR ps
 			{
 				wchar_t* pszIconEx = ExpandEnvStr(pszIcon);
 				if (pszIconEx) pszIcon = pszIconEx;
-				DWORD n;
-				wchar_t* pszFilePart;
-				n = GetFullPathName(pszIcon, countof(szIcon), szIcon, &pszFilePart);
-				if (!n || (n >= countof(szIcon)) || !FileExists(szIcon))
+				if ((!apiGetFullPathName(pszIcon, szIcon)
+						|| !FileExists(szIcon))
+					&& !apiSearchPath(NULL, pszIcon, NULL, szIcon)
+					&& !apiSearchPath(NULL, pszIcon, L".exe", szIcon))
 				{
-					n = SearchPath(NULL, pszIcon, NULL, countof(szIcon), szIcon, &pszFilePart);
-					if (!n || (n >= countof(szIcon)))
-						n = SearchPath(NULL, pszIcon, L".exe", countof(szIcon), szIcon, &pszFilePart);
-					if (!n || (n >= countof(szIcon)))
-						szIcon[0] = 0;
+					szIcon.Empty();
 				}
 				SafeFree(pszIconEx);
 			}
 			SafeFree(pszBatch);
-			psl->SetIconLocation(szIcon[0] ? szIcon : szAppPath, 0);
+			psl->SetIconLocation(!szIcon.IsEmpty() ? (LPCWSTR)szIcon : szAppPath, 0);
 
 			DWORD n = GetCurrentDirectory(countof(szAppPath), szAppPath);
 			if (n && (n < countof(szAppPath)))
