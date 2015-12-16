@@ -650,11 +650,13 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 		{
 			// Допустимо, если GuiMacro пытаются выполнить извне
 			CVConGuard VCon;
+			CRealConsole* pRCon = NULL;
 
-			CVConGroup::GetActiveVCon(&VCon);
+			if (CVConGroup::GetActiveVCon(&VCon) >= 0)
+				pRCon = VCon->RCon();
 
-			DWORD nFarPluginPID = VCon->RCon()->GetFarPID(true);
-			LPWSTR pszResult = ConEmuMacro::ExecuteMacro(pIn->GuiMacro.sMacro, VCon->RCon(), (nFarPluginPID==pIn->hdr.nSrcPID), &pIn->GuiMacro);
+			DWORD nFarPluginPID = pRCon ? pRCon->GetFarPID(true) : 0;
+			LPWSTR pszResult = ConEmuMacro::ExecuteMacro(pIn->GuiMacro.sMacro, pRCon, (nFarPluginPID==pIn->hdr.nSrcPID), &pIn->GuiMacro);
 
 			int nLen = pszResult ? _tcslen(pszResult) : 0;
 
