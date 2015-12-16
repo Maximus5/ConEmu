@@ -3508,7 +3508,24 @@ void CConEmuMain::ExecuteProcessFinished(bool bOpt)
 
 void CConEmuMain::SetPostGuiMacro(LPCWSTR asGuiMacro)
 {
-	ms_PostGuiMacro.Set(asGuiMacro);
+	ConEmuMacro::ConcatMacro(ms_PostGuiMacro.ms_Val, asGuiMacro);
+}
+
+void CConEmuMain::ExecPostGuiMacro()
+{
+	if (ms_PostGuiMacro.IsEmpty())
+		return;
+
+	CVConGuard VCon;
+	GetActiveVCon(&VCon);
+
+	if (!ms_PostGuiMacro.IsEmpty())
+	{
+		wchar_t* pszMacro = ms_PostGuiMacro.Detach();
+		LPWSTR pszRc = ConEmuMacro::ExecuteMacro(pszMacro, VCon.VCon() ? VCon->RCon() : NULL);
+		SafeFree(pszRc);
+		SafeFree(pszMacro);
+	}
 }
 
 void CConEmuMain::SetWindowIcon(LPCWSTR asNewIcon)
@@ -6957,13 +6974,7 @@ void CConEmuMain::OnMainCreateFinished()
 	// Check if DefTerm is enabled
 	mp_DefTrm->StartGuiDefTerm(false);
 
-	if (!ms_PostGuiMacro.IsEmpty())
-	{
-		CVConGuard VCon;
-		GetActiveVCon(&VCon);
-		LPWSTR pszRc = ConEmuMacro::ExecuteMacro(ms_PostGuiMacro.ms_Val, VCon.VCon() ? VCon->RCon() : NULL);
-		SafeFree(pszRc);
-	}
+	ExecPostGuiMacro();
 
 	mp_PushInfo = new CPushInfo();
 	if (mp_PushInfo && !mp_PushInfo->ShowNotification())
