@@ -154,6 +154,8 @@ class CConEmuMain
 		wchar_t ms_ComSpecInitial[MAX_PATH];
 		CEStr ms_PostGuiMacro;
 		void SetPostGuiMacro(LPCWSTR asGuiMacro);
+		CEStr ms_PostRConMacro;
+		void AddPostGuiRConMacro(LPCWSTR asGuiMacro);
 		void ExecPostGuiMacro();
 		wchar_t *mps_IconPath;
 		void SetWindowIcon(LPCWSTR asNewIcon);

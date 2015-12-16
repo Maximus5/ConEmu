@@ -1040,9 +1040,16 @@ LPWSTR ConEmuMacro::ExecuteMacro(LPWSTR asMacro, CRealConsole* apRCon, bool abFr
 					if ((bPostpone || (Functions[f].Flags & gmf_PostponeWhenActive)) && !pMacroRCon->isConsoleReady())
 					{
 						if (!pMacroRCon)
-							pszResult = lstrdup(L"VConRequired");
+						{
+							wchar_t* pszMacro = p->AsString();
+							gpConEmu->AddPostGuiRConMacro(pszMacro);
+							SafeFree(pszMacro);
+							pszResult = lstrdup(L"PostponedVCon");
+						}
 						else
+						{
 							pszResult = pMacroRCon->PostponeMacro(p->AsString());
+						}
 					}
 					else if ((Functions[f].Flags & gmf_MainThread) && !bIsMainThread)
 					{

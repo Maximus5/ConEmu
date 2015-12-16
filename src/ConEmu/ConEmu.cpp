@@ -3511,9 +3511,14 @@ void CConEmuMain::SetPostGuiMacro(LPCWSTR asGuiMacro)
 	ConEmuMacro::ConcatMacro(ms_PostGuiMacro.ms_Val, asGuiMacro);
 }
 
+void CConEmuMain::AddPostGuiRConMacro(LPCWSTR asGuiMacro)
+{
+	ConEmuMacro::ConcatMacro(ms_PostRConMacro.ms_Val, asGuiMacro);
+}
+
 void CConEmuMain::ExecPostGuiMacro()
 {
-	if (ms_PostGuiMacro.IsEmpty())
+	if (ms_PostGuiMacro.IsEmpty() && ms_PostRConMacro.IsEmpty())
 		return;
 
 	CVConGuard VCon;
@@ -3522,6 +3527,14 @@ void CConEmuMain::ExecPostGuiMacro()
 	if (!ms_PostGuiMacro.IsEmpty())
 	{
 		wchar_t* pszMacro = ms_PostGuiMacro.Detach();
+		LPWSTR pszRc = ConEmuMacro::ExecuteMacro(pszMacro, VCon.VCon() ? VCon->RCon() : NULL);
+		SafeFree(pszRc);
+		SafeFree(pszMacro);
+	}
+
+	if (!ms_PostRConMacro.IsEmpty() && VCon.VCon())
+	{
+		wchar_t* pszMacro = ms_PostRConMacro.Detach();
 		LPWSTR pszRc = ConEmuMacro::ExecuteMacro(pszMacro, VCon.VCon() ? VCon->RCon() : NULL);
 		SafeFree(pszRc);
 		SafeFree(pszMacro);
@@ -12536,6 +12549,8 @@ void CConEmuMain::OnVConCreated(CVirtualConsole* apVCon, const RConStartArgs *ar
 	gpSet->ResetSavedOnExit();
 
 	CVConGroup::OnVConCreated(apVCon, args);
+
+	ExecPostGuiMacro();
 }
 
 // Зависит от настроек и того, как закрывали
