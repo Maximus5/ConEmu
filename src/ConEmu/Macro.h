@@ -42,6 +42,10 @@ namespace ConEmuMacro
 	// Some functions must be executed in main thread
 	// but they may be called from console
 	LRESULT ExecuteMacroSync(WPARAM wParam, LPARAM lParam);
+	// Helper to concatenate macros.
+	// They must be ‘concatenatable’, example: Print("abc"); Print("Qqq")
+	// But following WILL NOT work: Print: Abd qqq
+	LPCWSTR ConcatMacro(LPWSTR& rsMacroList, LPCWSTR asAddMacro);
 
 	#ifdef _DEBUG
 	void UnitTests();

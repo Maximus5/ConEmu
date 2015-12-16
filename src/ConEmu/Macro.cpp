@@ -1128,6 +1128,31 @@ LRESULT ConEmuMacro::ExecuteMacroSync(WPARAM wParam, LPARAM lParam)
 	return (LRESULT)pszResult;
 }
 
+
+// Helper to concatenate macros.
+// They must be ‘concatenatable’, example: Print("abc"); Print("Qqq")
+// But following WILL NOT work: Print: Abd qqq
+LPCWSTR ConEmuMacro::ConcatMacro(LPWSTR& rsMacroList, LPCWSTR asAddMacro)
+{
+	if (!asAddMacro || !*asAddMacro)
+	{
+		return rsMacroList;
+	}
+
+	if (!rsMacroList || !*rsMacroList)
+	{
+		SafeFree(rsMacroList);
+		rsMacroList = lstrdup(asAddMacro);
+	}
+	else
+	{
+		lstrmerge(&rsMacroList, L"; ", asAddMacro);
+	}
+
+	return rsMacroList;
+}
+
+
 void ConEmuMacro::SkipWhiteSpaces(LPWSTR& rsString)
 {
 	if (!rsString)
