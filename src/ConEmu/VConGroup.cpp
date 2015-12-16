@@ -29,6 +29,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define HIDE_USE_EXCEPTION_INFO
 #define SHOWDEBUGSTR
 
+#define SLEEP_BEFORE_VCON_CREATE 0
+
 #include "Header.h"
 
 #include "../common/Common.h"
@@ -278,6 +280,10 @@ CVirtualConsole* CVConGroup::CreateVCon(RConStartArgs *args, CVirtualConsole*& p
 		if (!pGroup)
 			return NULL;
 	}
+
+	#if defined(_DEBUG) && (SLEEP_BEFORE_VCON_CREATE > 0)
+	Sleep(SLEEP_BEFORE_VCON_CREATE);
+	#endif
 
 	CVirtualConsole* pVCon = new CVirtualConsole(gpConEmu, index);
 	ppVConI = pVCon;
