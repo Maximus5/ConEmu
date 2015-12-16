@@ -15606,10 +15606,17 @@ wchar_t* CRealConsole::PostponeMacro(wchar_t* RVAL_REF asMacro)
 		return lstrdup(L"InvalidPointer");
 	}
 
-	lstrmerge(&mpsz_PostCreateMacro, mpsz_PostCreateMacro ? L"; " : NULL, asMacro);
-	free(asMacro);
+	if (!mpsz_PostCreateMacro)
+	{
+		mpsz_PostCreateMacro = asMacro;
+	}
+	else
+	{
+		ConEmuMacro::ConcatMacro(mpsz_PostCreateMacro, asMacro);
+		SafeFree(asMacro);
+	}
 
-	return lstrdup(L"Postponed");
+	return lstrdup(L"PostponedRCon");
 }
 
 void CRealConsole::ProcessPostponedMacro()
