@@ -486,6 +486,7 @@ class CRealConsole
 		void SetProgramStatus(DWORD nDrop, DWORD nSet);
 		void SetFarStatus(DWORD nNewFarStatus);
 		bool GetProcessInformation(DWORD nPID, ConProcess* rpProcess = NULL);
+		LPCWSTR GetConsoleInfo(LPCWSTR asWhat, CEStr& rsInfo);
 		DWORD GetActivePID(ConProcess* rpProcess = NULL);
 		DWORD GetInteractivePID();
 		DWORD GetLoadedPID();

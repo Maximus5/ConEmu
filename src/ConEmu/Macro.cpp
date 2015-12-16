@@ -2849,7 +2849,7 @@ LPWSTR ConEmuMacro::GetInfo(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin
 {
 	LPWSTR pszResult = NULL;
 	LPWSTR pszName = NULL;
-	CEStr szDir;
+	CEStr szBuf;
 	int idx = 0;
 
 	while (p->GetStrArg(idx++, pszName))
@@ -2881,33 +2881,8 @@ LPWSTR ConEmuMacro::GetInfo(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin
 		else if (lstrcmpi(pszName, L"ConfigPath") == 0)
 			pszVal = gpSetCls->GetConfigPath();
 		// RCon related
-		else if (lstrcmpi(pszName, L"ServerPID") == 0)
-			_itow(apRCon ? apRCon->GetServerPID(true) : 0, szTemp, 10);
-		else if (lstrcmpi(pszName, L"DrawHWND") == 0)
-			msprintf(szTemp, countof(szTemp), L"0x%08X", (apRCon ? LODWORD(apRCon->VCon()->GetView()) : 0));
-		else if (lstrcmpi(pszName, L"BackHWND") == 0)
-			msprintf(szTemp, countof(szTemp), L"0x%08X", (apRCon ? LODWORD(apRCon->VCon()->GetBack()) : 0));
-		else if (lstrcmpi(pszName, L"WorkDir") == 0)
-			pszVal = apRCon ? apRCon->GetConsoleStartDir(szDir) : L"";
-		else if (lstrcmpi(pszName, L"CurDir") == 0)
-			pszVal = apRCon ? apRCon->GetConsoleCurDir(szDir) : L"";
-		else if (lstrcmpi(pszName, L"ActivePID") == 0)
-			msprintf(szTemp, countof(szTemp), L"%u", (apRCon ? apRCon->GetActivePID() : 0));
-		else if (lstrcmpi(pszName, L"AnsiLog") == 0)
-		{
-			DWORD nSrvPID = apRCon->GetServerPID(true);
-			if (nSrvPID)
-			{
-				ConEmuAnsiLog AnsiLog = {}; gpConEmu->GetAnsiLogInfo(AnsiLog);
-				if (AnsiLog.Enabled)
-				{
-					SYSTEMTIME st = {}; apRCon->GetStartTime(st);
-					msprintf(szTemp, countof(szTemp), CEANSILOGNAMEFMT, st.wYear, st.wMonth, st.wDay, nSrvPID);
-					szDir = JoinPath(AnsiLog.Path, szTemp);
-					pszVal = szDir;
-				}
-			}
-		}
+		else if (apRCon)
+			pszVal = apRCon->GetConsoleInfo(pszName, szBuf);
 
 		// Concat the string
 		lstrmerge(&pszResult, pszResult ? L"\n" : NULL, pszVal);

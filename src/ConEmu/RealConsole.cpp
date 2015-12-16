@@ -7635,6 +7635,45 @@ void CRealConsole::SetFarPluginPID(DWORD nFarPluginPID)
 	}
 }
 
+LPCWSTR CRealConsole::GetConsoleInfo(LPCWSTR asWhat, CEStr& rsInfo)
+{
+	wchar_t szTemp[MAX_PATH*4] = L"";
+	LPCWSTR pszVal = szTemp;
+
+	if (lstrcmpi(asWhat, L"ServerPID") == 0)
+		_itow(GetServerPID(true), szTemp, 10);
+	else if (lstrcmpi(asWhat, L"DrawHWND") == 0)
+		msprintf(szTemp, countof(szTemp), L"0x%08X", LODWORD(VCon()->GetView()));
+	else if (lstrcmpi(asWhat, L"BackHWND") == 0)
+		msprintf(szTemp, countof(szTemp), L"0x%08X", LODWORD(VCon()->GetBack()));
+	else if (lstrcmpi(asWhat, L"WorkDir") == 0)
+		pszVal = GetConsoleStartDir(rsInfo);
+	else if (lstrcmpi(asWhat, L"CurDir") == 0)
+		pszVal = GetConsoleCurDir(rsInfo);
+	else if (lstrcmpi(asWhat, L"ActivePID") == 0)
+		msprintf(szTemp, countof(szTemp), L"%u", GetActivePID());
+	else if (lstrcmpi(asWhat, L"AnsiLog") == 0)
+	{
+		DWORD nSrvPID = GetServerPID(true);
+		if (nSrvPID)
+		{
+			ConEmuAnsiLog AnsiLog = {}; gpConEmu->GetAnsiLogInfo(AnsiLog);
+			if (AnsiLog.Enabled)
+			{
+				SYSTEMTIME st = {}; GetStartTime(st);
+				msprintf(szTemp, countof(szTemp), CEANSILOGNAMEFMT, st.wYear, st.wMonth, st.wDay, nSrvPID);
+				rsInfo = JoinPath(AnsiLog.Path, szTemp);
+				pszVal = rsInfo;
+			}
+		}
+	}
+
+	if (pszVal == szTemp)
+		pszVal = rsInfo.Set(szTemp);
+
+	return pszVal;
+}
+
 // Вернуть PID "условно активного" процесса в консоли
 DWORD CRealConsole::GetActivePID(ConProcess* rpProcess /*= NULL*/)
 {
