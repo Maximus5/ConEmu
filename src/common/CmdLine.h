@@ -52,6 +52,7 @@ bool CheckProcessName(LPCWSTR pszProcessName, LPCWSTR* lsNames);
 bool IsExecutable(LPCWSTR aszFilePathName, wchar_t** rsExpandedVars = NULL);
 bool IsFarExe(LPCWSTR asModuleName);
 bool IsCmdProcessor(LPCWSTR asModuleName);
+bool IsConEmuGui(LPCWSTR pszProcessName);
 bool IsConsoleService(LPCWSTR pszProcessName);
 bool IsConsoleServer(LPCWSTR pszProcessName);
 bool IsTerminalServer(LPCWSTR pszProcessName);

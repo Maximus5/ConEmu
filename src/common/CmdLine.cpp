@@ -968,6 +968,12 @@ bool IsConsoleService(LPCWSTR pszProcessName)
 	return CheckProcessName(pszProcessName, lsNameExt);
 }
 
+bool IsConEmuGui(LPCWSTR pszProcessName)
+{
+	LPCWSTR lsNameExt[] = {L"ConEmu.exe", L"ConEmu64.exe", NULL};
+	return CheckProcessName(pszProcessName, lsNameExt);
+}
+
 bool IsConsoleServer(LPCWSTR pszProcessName)
 {
 	LPCWSTR lsNameExt[] = {L"ConEmuC.exe", L"ConEmuC64.exe", NULL};
