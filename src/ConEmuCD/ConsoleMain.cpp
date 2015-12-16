@@ -3730,6 +3730,29 @@ BOOL CALLBACK FindTopGuiOrConsole(HWND hWnd, LPARAM lParam)
 	return TRUE; // continue search
 }
 
+HWND GetConEmuExeHWND(DWORD nConEmuPID)
+{
+	HWND hConEmu = NULL;
+
+	// EnumThreadWindows will not find child window,
+	// so we use map (but it may be not created yet)
+
+	MFileMapping<ConEmuGuiMapping> guiMap;
+	guiMap.InitName(CEGUIINFOMAPNAME, nConEmuPID);
+	const ConEmuGuiMapping* pMap = guiMap.Open(FALSE);
+	if (pMap)
+	{
+		if ((pMap->cbSize >= (5*sizeof(DWORD)))
+			&& (pMap->nGuiPID == nConEmuPID)
+			&& IsWindow(pMap->hGuiWnd))
+		{
+			hConEmu = pMap->hGuiWnd;
+		}
+	}
+
+	return hConEmu;
+}
+
 void ArgGuiMacro(CEStr& szArg, MacroInstance& Inst)
 {
 	wchar_t szLog[200];
@@ -3764,22 +3787,44 @@ void ArgGuiMacro(CEStr& szArg, MacroInstance& Inst)
 				// б) макро может выполниться в другой вкладке (если наша не активна)
 				Inst.nPID = wcstoul(pszID, &pszEnd, 10);
 
+				wchar_t szExe[MAX_PATH] = L"";
+				{
+					CProcessData proc;
+					if (!proc.GetProcessName(Inst.nPID, szExe, countof(szExe), NULL, 0, NULL))
+						szExe[0] = 0;
+				}
+
 				// Using mapping information may be preferable due to speed
 				// and more, ConEmu may be started as Child window
+				if (!(Inst.hConEmuWnd = GetConEmuExeHWND(Inst.nPID))
+					&& IsConEmuGui(szExe))
 				{
-					// EnumThreadWindows will not find child window
-					MFileMapping<ConEmuGuiMapping> guiMap;
-					guiMap.InitName(CEGUIINFOMAPNAME, Inst.nPID);
-					const ConEmuGuiMapping* pMap = guiMap.Open(FALSE);
-					if (pMap)
+					// If ConEmu.exe has just been started, mapping may be not ready yet
+					HANDLE hWaitProcess = OpenProcess(SYNCHRONIZE|PROCESS_QUERY_INFORMATION, FALSE, Inst.nPID);
+					if (!hWaitProcess && IsWin6())
+						hWaitProcess = OpenProcess(SYNCHRONIZE|0x1000/*PROCESS_QUERY_LIMITED_INFORMATION*/, FALSE, Inst.nPID);
+					DWORD nStartTick = GetTickCount();
+					DWORD nWait, nDelay = hWaitProcess ? 60000 : 10000;
+					// Until succeeded?
+					do
 					{
-						if ((pMap->cbSize >= (5*sizeof(DWORD)))
-							&& (pMap->nGuiPID == Inst.nPID)
-							&& IsWindow(pMap->hGuiWnd))
+						// Wait a little while ConEmu is initializing
+						if (hWaitProcess)
 						{
-							Inst.hConEmuWnd = pMap->hGuiWnd;
+							nWait = WaitForSingleObject(hWaitProcess, 100);
+							if (nWait == WAIT_OBJECT_0)
+								break; // ConEmu.exe was terminated
 						}
-					}
+						else
+						{
+							Sleep(100);
+						}
+						// Recheck
+						if (Inst.hConEmuWnd = GetConEmuExeHWND(Inst.nPID))
+							break; // Found
+					} while ((GetTickCount() - nStartTick) <= nDelay);
+					// Stop checking
+					SafeCloseHandle(hWaitProcess);
 				}
 
 				// If mapping with GUI PID does not exist - try to enum all Top level windows
