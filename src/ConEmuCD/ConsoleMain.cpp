@@ -9356,6 +9356,44 @@ BOOL cmd_UnlockStation(CESERVER_REQ& in, CESERVER_REQ** out, bool bProcessed)
 	return lbRc;
 }
 
+BOOL cmd_GetRootInfo(CESERVER_REQ& in, CESERVER_REQ** out)
+{
+	BOOL lbRc = TRUE;
+
+	gpSrv->bStationLocked = FALSE;
+
+	LogString("CECMD_GETROOTINFO");
+
+	*out = ExecuteNewCmd(CECMD_GETROOTINFO, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_ROOT_INFO));
+
+	if (*out)
+	{
+		if (!gpSrv || !gpSrv->dwRootProcess || gpSrv->hRootProcess)
+		{
+			DWORD nWait = WaitForSingleObject(gpSrv->hRootProcess, 0);
+			(*out)->RootInfo.bRunning = (nWait == WAIT_TIMEOUT);
+			(*out)->RootInfo.nPID = gpSrv->dwRootProcess;
+			(*out)->RootInfo.nExitCode = (nWait == WAIT_TIMEOUT) ? STILL_ACTIVE : 999;
+			GetExitCodeProcess(gpSrv->hRootProcess, &(*out)->RootInfo.nExitCode);
+			if (nWait == WAIT_TIMEOUT)
+			{
+				(*out)->RootInfo.nUpTime = (GetTickCount() - gpSrv->dwRootStartTime);
+			}
+			else
+			{
+				FILETIME ftCreation = {}, ftExit = {}, ftKernel = {}, ftUser = {};
+				GetProcessTimes(gpSrv->hRootProcess, &ftCreation, &ftExit, &ftKernel, &ftUser);
+				__int64 upTime = ((*(u64*)&ftExit) - (*(u64*)&ftCreation)) / 10000LL;
+				(*out)->RootInfo.nUpTime = (LODWORD(upTime) == upTime) ? LODWORD(upTime) : (DWORD)-1;
+			}
+		}
+	}
+
+	lbRc = ((*out) != NULL);
+
+	return lbRc;
+}
+
 bool ProcessAltSrvCommand(CESERVER_REQ& in, CESERVER_REQ** out, BOOL& lbRc)
 {
 	bool lbProcessed = false;
@@ -9617,6 +9655,10 @@ BOOL ProcessSrvCommand(CESERVER_REQ& in, CESERVER_REQ** out)
 			// Execute command in the alternative server too
 			bool lbProcessed = ProcessAltSrvCommand(in, out, lbRc);
 			lbRc = cmd_UnlockStation(in, out, lbProcessed);
+		} break;
+		case CECMD_GETROOTINFO:
+		{
+			lbRc = cmd_GetRootInfo(in, out);
 		} break;
 		default:
 		{

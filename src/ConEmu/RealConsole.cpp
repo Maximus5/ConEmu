@@ -7652,6 +7652,51 @@ LPCWSTR CRealConsole::GetConsoleInfo(LPCWSTR asWhat, CEStr& rsInfo)
 		pszVal = GetConsoleCurDir(rsInfo);
 	else if (lstrcmpi(asWhat, L"ActivePID") == 0)
 		msprintf(szTemp, countof(szTemp), L"%u", GetActivePID());
+	else if (lstrcmpi(asWhat, L"RootName") == 0)
+		pszVal = rsInfo.Set(GetRootProcessName());
+	else if (lstrcmpi(asWhat, L"Root") == 0 || lstrcmpi(asWhat, L"RootInfo") == 0)
+	{
+		DWORD dwServerPID = GetServerPID(true);
+		CESERVER_REQ *pOut = NULL, *pIn = ExecuteNewCmd(CECMD_GETROOTINFO, sizeof(CESERVER_REQ_HDR));
+		if (dwServerPID)
+			pOut = ExecuteSrvCmd(dwServerPID, pIn, ghWnd);
+
+		// Return JSON
+		rsInfo.Set(L"{\n");
+
+		if (pOut && (pOut->DataSize() >= sizeof(CESERVER_ROOT_INFO)) && pOut->RootInfo.nPID)
+		{
+			lstrmerge(&rsInfo.ms_Val, L"\"Running\": ", pOut->RootInfo.bRunning ? L"true" : L"false", L",\n");
+			{
+				LPCWSTR pszName = GetRootProcessName();
+				LPWSTR pszReady = NULL; szTemp[0] = 0;
+				if (pszName && *pszName)
+				{
+					pszReady = szTemp;
+					_ASSERTE(wcslen(pszName)*4 < countof(szTemp));
+					size_t cchMax = countof(szTemp) - 1;
+					while (*pszName && ((pszReady - szTemp) < cchMax))
+					{
+						EscapeChar(true, pszName, pszReady);
+					}
+					*pszReady = 0;
+				}
+				lstrmerge(&rsInfo.ms_Val, L"\"Name\": \"", *szTemp ? szTemp : L"<Unknown>", L"\",\n");
+			}
+			lstrmerge(&rsInfo.ms_Val, L"\"PID\": ", _itow(pOut->RootInfo.nPID, szTemp, 10), L",\n");
+			lstrmerge(&rsInfo.ms_Val, L"\"ExitCode\": ", _itow(pOut->RootInfo.nExitCode, szTemp, 10), L",\n");
+			lstrmerge(&rsInfo.ms_Val, L"\"UpTime\": ", _itow(pOut->RootInfo.nUpTime, szTemp, 10), L"\n"); // Final, no trailing ","
+		}
+		else
+		{
+			lstrmerge(&rsInfo.ms_Val, L"\"Status\": \"Unknown\"\n"); // Final, no trailing ","
+		}
+		ExecuteFreeResult(pOut);
+		ExecuteFreeResult(pIn);
+
+		lstrmerge(&rsInfo.ms_Val, L"}\n");
+		pszVal = rsInfo.ms_Val;
+	}
 	else if (lstrcmpi(asWhat, L"AnsiLog") == 0)
 	{
 		DWORD nSrvPID = GetServerPID(true);

@@ -465,6 +465,7 @@ const CECMD
 	CECMD_REDRAWHWND     = 87, // DWORD[0]: HWND
 	CECMD_LOCKSTATION    = 88, // When user press Win+L
 	CECMD_UNLOCKSTATION  = 89, // CESERVER_REQ_SETSIZE
+	CECMD_GETROOTINFO    = 90, // CESERVER_ROOT_INFO
 /** Команды FAR плагина **/
 	CMD_FIRST_FAR_CMD    = 200,
 	CMD_DRAGFROM         = 200,
@@ -2158,6 +2159,14 @@ struct CESERVER_PALETTE
 	COLORREF crFadePalette[16];
 };
 
+struct CESERVER_ROOT_INFO
+{
+	BOOL  bRunning;
+	DWORD nPID;
+	DWORD nExitCode;
+	DWORD nUpTime; // millisec
+};
+
 struct CESERVER_REQ
 {
 	CESERVER_REQ_HDR hdr;
@@ -2216,6 +2225,7 @@ struct CESERVER_REQ
 		CESERVER_REQ_GETALLPANELS Panels;
 		CESERVER_PROMPTSTARTED PromptStarted;
 		CESERVER_PALETTE Palette;
+		CESERVER_ROOT_INFO RootInfo;
 	};
 
 	DWORD DataSize() { return (this && (hdr.cbSize >= sizeof(hdr))) ? (hdr.cbSize - sizeof(hdr)) : 0; };
