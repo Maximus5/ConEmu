@@ -156,8 +156,8 @@ bool CGestures::IsGesturesEnabled()
 	CURSORINFO ci = {sizeof(ci)};
 	if (!GetCursorInfo(&ci))
 		return false;
-	// 0 - курсор скрыт, а 2 - похоже недокументировано (тачскрин)
-	if (ci.flags == 0 || ci.flags == 2)
+	// 0 - cursor is hidden, 2 - touchscreen is used
+	if (ci.flags == 0 || (ci.flags & 2/*CURSOR_SUPPRESSED*/))
 		return true;
 	_ASSERTE(ci.flags == CURSOR_SHOWING);
 	return false;
