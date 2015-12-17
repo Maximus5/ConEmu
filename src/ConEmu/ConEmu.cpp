@@ -55,6 +55,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/MArray.h"
 #include "../common/MFileLog.h"
 #include "../common/Monitors.h"
+#include "../common/MSetter.h"
 #include "../common/MToolTip.h"
 #include "../common/MWow64Disable.h"
 #include "../common/MSetter.h"
@@ -8565,6 +8566,14 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 						|| msg1.message == WM_SYSKEYUP || msg1.message == WM_SYSKEYDOWN
 						))
 				{
+					static LONG lCounter = 0;
+					MSetter lSetCounter(&lCounter);
+					if (lCounter > 5)
+					{
+						_ASSERTE(FALSE && "Too many nested calls");
+						break;
+					}
+
 					if (!ProcessMessage(msg1))
 						break;
 
