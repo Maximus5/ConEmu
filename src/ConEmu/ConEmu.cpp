@@ -8524,6 +8524,7 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 		      )
 		{
 			bool bNeedGet = true;
+			DEBUGTEST(MSG firstMsg = msg);
 
 			// Windows иногда умудряется вклинить "левые" сообщения между WM_KEYDOWN & WM_CHAR
 			// в результате некоторые буквы могут "проглатываться" или вообще перемешиваться...
@@ -8554,13 +8555,14 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 
 				#ifdef _DEBUG
 				wchar_t szDbg[160]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"  Recursion of WM_%04X(0x%02X, 0x%08X)",
-					msg.message, (DWORD)msg.wParam, (DWORD)msg.lParam);
+					msg1.message, (DWORD)msg1.wParam, (DWORD)msg1.lParam);
 				DEBUGSTRCHAR(szDbg);
 				#endif
 
-				if (!(msg.message == WM_CHAR || msg.message == WM_SYSCHAR
-						|| msg.message == WM_DEADCHAR || msg.message == WM_SYSDEADCHAR
-						|| msg.message == WM_KEYUP || msg.message == WM_KEYDOWN
+				if (!(msg1.message == WM_CHAR || msg1.message == WM_SYSCHAR
+						|| msg1.message == WM_DEADCHAR || msg1.message == WM_SYSDEADCHAR
+						|| msg1.message == WM_KEYUP || msg1.message == WM_KEYDOWN
+						|| msg1.message == WM_SYSKEYUP || msg1.message == WM_SYSKEYDOWN
 						))
 				{
 					if (!ProcessMessage(msg1))
@@ -8574,7 +8576,9 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 				else
 				{
 					// Unexpected message ID, keyboard input may be garbled?
-					_ASSERTE(msg.message == msg1.message);
+					// In msg we may peek WM_PAINT, but in msg1 get WM_SYSKEYDOWN...
+					// _ASSERTE(msg.message == msg1.message);
+					msg = msg1;
 				}
 			}
 
