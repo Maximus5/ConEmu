@@ -13403,8 +13403,8 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 				break;
 			}
 			wcscat_c(szLog, L" must be processed internally in CConEmuMain::OnKeyboard");
-			DebugStep(szDbg, FALSE);
-			DEBUGTEST(wcscat_c(szDbg, L"\n")); // for breakpoint
+			DebugStep(szLog, FALSE);
+			DEBUGTEST(wcscat_c(szLog, L"\n")); // for breakpoint
 		}
 		break;
 
