@@ -74,6 +74,7 @@ enum ConEmuWindowMode;
 struct CEFindDlg;
 union CESize;
 class CPushInfo;
+class CAltNumpad;
 
 struct ConsoleInfoArg
 {
@@ -433,6 +434,7 @@ class CConEmuMain
 		void AppendHKL(wchar_t* szInfo, size_t cchInfoMax, HKL* hKeyb, int nCount);
 		void AppendRegisteredLayouts(wchar_t* szInfo, size_t cchInfoMax);
 		void StoreLayoutName(int iIdx, DWORD dwLayout, HKL hkl);
+		CAltNumpad* mp_AltNumpad; // Alt+Numpad ==> wchar sequence
 		DWORD_PTR m_ActiveKeybLayout;
 		struct LayoutNames
 		{

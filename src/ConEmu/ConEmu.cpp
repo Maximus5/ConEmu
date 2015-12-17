@@ -64,6 +64,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/WFiles.h"
 #include "../common/WUser.h"
 #include "../ConEmuCD/GuiHooks.h"
+#include "AltNumpad.h"
 #include "Attach.h"
 #include "ConEmu.h"
 #include "ConEmuApp.h"
@@ -331,6 +332,7 @@ CConEmuMain::CConEmuMain()
 	mp_Inside = NULL;
 	mp_Find = new CEFindDlg;
 	mp_RunQueue = new CRunQueue;
+	mp_AltNumpad = new CAltNumpad(this);
 
 	ms_ConEmuAliveEvent[0] = 0;	mb_AliveInitialized = FALSE;
 	mh_ConEmuAliveEvent = NULL; mb_ConEmuAliveOwned = false; mn_ConEmuAliveEventErr = 0;
@@ -2376,6 +2378,8 @@ CConEmuMain::~CConEmuMain()
 	SafeDelete(mp_Find);
 
 	SafeDelete(mp_PushInfo);
+
+	SafeDelete(mp_AltNumpad);
 
 	//if (m_Child)
 	//{
@@ -8491,6 +8495,8 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 	if (gpSetCls->isAdvLogging)
 		CVConGroup::LogInput(messg, wParam, lParam);
 
+	if (mp_AltNumpad->OnKeyboard(hWnd, messg, wParam, lParam))
+		return 0;
 
 #if 1
 	// Works fine, but need to cache last pressed key, cause of need them in WM_KEYUP (send char to console)
@@ -13379,23 +13385,28 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			//if (messg == WM_SYSCHAR)
 			//    return TRUE;
 			break;
-#ifdef _DEBUG
+
 		case WM_CHAR:
 		case WM_SYSCHAR:
 		case WM_DEADCHAR:
 		case WM_SYSDEADCHAR:
 		{
-			wchar_t szDbg[160]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"%s(0x%02X='%c', Scan=%i, lParam=0x%08X) must be processed internally in CConEmuMain::OnKeyboard",
+			wchar_t szLog[160];
+			_wsprintf(szLog, SKIPLEN(countof(szLog))
+				L"%s(0x%02X='%c', Scan=%i, lParam=0x%08X)",
 				(messg == WM_CHAR) ? L"WM_CHAR" : (messg == WM_SYSCHAR) ? L"WM_SYSCHAR" : (messg == WM_SYSDEADCHAR) ? L"WM_SYSDEADCHAR" : L"WM_DEADCHAR",
 				(DWORD)wParam, wParam?(wchar_t)wParam:L' ', ((DWORD)lParam & 0xFF0000) >> 16, (DWORD)lParam);
-			//_ASSERTE(FALSE && "WM_CHAR, WM_SYSCHAR, WM_DEADCHAR, WM_SYSDEADCHAR must be processed internally in CConEmuMain::OnKeyboard");
-			//this->DebugStep(L"WM_CHAR, WM_SYSCHAR, WM_DEADCHAR, WM_SYSDEADCHAR must be processed internally in CConEmuMain::OnKeyboard", TRUE);
-			DEBUGSTRCHAR(szDbg);
-			this->DebugStep(szDbg, TRUE);
-			wcscat_c(szDbg, L"\n");
+			if (mp_AltNumpad->OnKeyboard(hWnd, messg, wParam, lParam))
+			{
+				wcscat_c(szLog, L" processed as AltNumpad");
+				LogString(szLog);
+				break;
+			}
+			wcscat_c(szLog, L" must be processed internally in CConEmuMain::OnKeyboard");
+			DebugStep(szDbg, FALSE);
+			DEBUGTEST(wcscat_c(szDbg, L"\n")); // for breakpoint
 		}
 		break;
-#endif
 
 		case WM_ACTIVATE:
 			LogString((wParam == WA_CLICKACTIVE) ? L"Window was activated by mouse click" : (wParam == WA_ACTIVE) ? L"Window was activated somehow" : (wParam == WA_INACTIVE) ? L"Window was deactivated" : L"Unknown state in WM_ACTIVATE");

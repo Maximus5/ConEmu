@@ -425,6 +425,7 @@
       <File RelativePath="..\common\WThreads.cpp" />
       <File RelativePath="..\common\WUser.cpp" />
       <File RelativePath=".\AboutDlg.cpp" />
+      <File RelativePath=".\AltNumpad.cpp" />
       <File RelativePath=".\Attach.cpp" />
       <File RelativePath=".\Background.cpp" />
       <File RelativePath=".\BaseDragDrops.cpp" />
@@ -551,6 +552,7 @@
       <File RelativePath="..\ConEmuCD\GuiHooks.h" />
       <File RelativePath=".\About.h" />
       <File RelativePath=".\AboutDlg.h" />
+      <File RelativePath=".\AltNumpad.h" />
       <File RelativePath=".\Attach.h" />
       <File RelativePath=".\Background.h" />
       <File RelativePath=".\BaseDragDrops.h" />

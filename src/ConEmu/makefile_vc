@@ -31,6 +31,7 @@ MINGW_RES_FILE = $(NAME)MinGW.res
 
 LINK_OBJS = \
 $(INTDIR)\AboutDlg.obj \
+$(INTDIR)\AltNumpad.obj \
 $(INTDIR)\Attach.obj \
 $(INTDIR)\Background.obj \
 $(INTDIR)\BaseDragDrops.obj \
@@ -292,6 +293,8 @@ MSG=echo generating $@
 #LINK_OBJS begin
 
 $(INTDIR)\AboutDlg.obj: AboutDlg.cpp AboutDlg.h About.h ../ConEmuCD/ConsoleHelp.h
+
+$(INTDIR)\AltNumpad.obj: AltNumpad.cpp AltNumpad.h
 
 $(INTDIR)\Attach.obj: Attach.cpp Attach.h ../common/ProcessData.h
 

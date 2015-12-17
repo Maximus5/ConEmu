@@ -230,6 +230,7 @@ class CDpiForDialog;
 class CDynDialog;
 class MFileLog;
 class CRConFiles;
+class CAltNumpad;
 struct AppSettings;
 
 enum RealBufferType
@@ -394,9 +395,10 @@ class CRealConsole
 		void ShowKeyBarHint(WORD nID);
 		bool PostPromptCmd(bool CD, LPCWSTR asCmd);
 		void OnKeysSending();
-	private:
+	protected:
+		friend class CAltNumpad;
 		bool PostString(wchar_t* pszChars, size_t cchCount);
-		//void TranslateKeyPress(WORD vkKey, DWORD dwControlState, wchar_t wch, int ScanCode, INPUT_RECORD& rDown, INPUT_RECORD& rUp);
+	private:
 		void PostMouseEvent(UINT messg, WPARAM wParam, COORD crMouse, bool abForceSend = false);
 	public:
 		BOOL OpenConsoleEventPipe();

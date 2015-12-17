@@ -57,6 +57,7 @@ SRCS = \
 		../common/WThreads.cpp       \
 		../common/WUser.cpp          \
 		AboutDlg.cpp       \
+		AltNumpad.cpp        \
 		Attach.cpp         \
 		Background.cpp     \
 		BaseDragDrops.cpp  \

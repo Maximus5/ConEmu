@@ -924,6 +924,7 @@
     <ClCompile Include="..\common\WThreads.cpp" />
     <ClCompile Include="..\common\WUser.cpp" />
     <ClCompile Include="AboutDlg.cpp" />
+    <ClCompile Include="AltNumpad.cpp" />
     <ClCompile Include="Attach.cpp" />
     <ClCompile Include="Background.cpp" />
     <ClCompile Include="BaseDragDrops.cpp" />
@@ -1051,6 +1052,7 @@
     <ClInclude Include="..\ConEmuCD\GuiHooks.h" />
     <ClInclude Include="About.h" />
     <ClInclude Include="AboutDlg.h" />
+    <ClInclude Include="AltNumpad.h" />
     <ClInclude Include="Attach.h" />
     <ClInclude Include="Background.h" />
     <ClInclude Include="BaseDragDrops.h" />
