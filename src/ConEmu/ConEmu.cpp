@@ -8544,9 +8544,17 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 				break;
 			}
 
+			if (!iProcessDeadChars && (msg.message == messg))
+			{
+				// User keeps pressing key
+				_ASSERTE(msg.message == WM_KEYDOWN || msg.message == WM_SYSKEYDOWN);
+				break;
+			}
+
 			if (!(msg.message == WM_CHAR || msg.message == WM_SYSCHAR
 						|| msg.message == WM_DEADCHAR || msg.message == WM_SYSDEADCHAR
 						|| msg.message == WM_KEYUP || msg.message == WM_KEYDOWN
+						|| msg.message == WM_SYSKEYUP || msg.message == WM_SYSKEYDOWN
 						))
 			{
 				// Remove from buffer and process
@@ -8589,6 +8597,14 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 					// _ASSERTE(msg.message == msg1.message);
 					msg = msg1;
 				}
+			}
+
+			// We may get different message than was peeked
+			if (!iProcessDeadChars && (msg.message == messg))
+			{
+				// User keeps pressing key
+				_ASSERTE(msg.message == WM_KEYDOWN || msg.message == WM_SYSKEYDOWN);
+				break;
 			}
 
 			if (!(msg.message == WM_CHAR || msg.message == WM_SYSCHAR
