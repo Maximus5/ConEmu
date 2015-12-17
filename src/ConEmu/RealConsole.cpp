@@ -105,6 +105,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRMOUSE(s) //DEBUGSTR(s)
 #define DEBUGSTRSEL(s) DEBUGSTR(s)
 #define DEBUGSTRTEXTSEL(s) DEBUGSTR(s)
+#define DEBUGSTRCLICKPOS(s) DEBUGSTR(s)
 
 // Иногда не отрисовывается диалог поиска полностью - только бежит текущая сканируемая директория.
 // Иногда диалог отрисовался, но часть до текста "..." отсутствует
@@ -5053,6 +5054,15 @@ bool CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y, bool abForce
 				pIn->Prompt.yPos = crMouse.Y;
 				pIn->Prompt.Force = (pApp->CTSClickPromptPosition() == 1);
 				pIn->Prompt.BashMargin = pApp->CTSBashMargin();
+
+				{
+				wchar_t szInfo[100];
+				_wsprintf(szInfo, SKIPCOUNT(szInfo) L"Changing prompt position by LClick: {%i,%i} Force=%u Margin=%u", pIn->Prompt.xPos, pIn->Prompt.yPos, pIn->Prompt.Force, pIn->Prompt.BashMargin);
+				if (mp_Log)
+					mp_Log->LogString(szInfo, true);
+				else
+					DEBUGSTRCLICKPOS(szInfo);
+				}
 
 				CESERVER_REQ* pOut = ExecuteHkCmd(nActivePID, pIn, ghWnd);
 				if (pOut && (pOut->DataSize() >= sizeof(DWORD)))
