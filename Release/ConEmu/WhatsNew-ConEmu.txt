@@ -19,6 +19,57 @@ http://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2015.12.17
+* AnsiLog was not written properly in some cases.
+* Reuse HandleKeeper to determine console handle properties properly
+  * ANSI coloring is supported while redirecting text to `CON` from batches.
+    Example for cmd prompt: `call cecho "Redirected output" > CON`.
+  * Output of msvcrt linked applications, like `PING` or `TRACERT`,
+    may be logged (Settings\Features\Log console output).
+* gh#461: Fix AeroPeek VCon offset when frame is non-resizable.
+* gh#210: Minimizing other windows causes ConEmu to be restored (Quake).
+* First try to draw non-spacings/combinings/surrogates/double-width in ‘proper’ size.
+  For example, combining accents/umlauts must be shown over preceding letter,
+  CJK double-width characters must use two cells to avoid overlapping.
+  But that raise some other problems if console application don't care about this.
+  For example: Far Manager frames may look corrupted after CJK file names.
+* Don't try to pop up console menu by Shift+RClick while LBtn selection is present.
+* Make IDM_CLOSE (Tab/Console menu item) behavior more conistent.
+  * If menu's opened by RClick on console or by hotkey:
+    do ‘Close console’.
+  * If menu's opened by TabBar's RClick and it's a group with several tabs:
+    do ‘Close tab group’.
+  * Otherwise: do ‘Close tab’.
+* ConEmu Inside: Terminate our process (ConEmu.exe) if parent window was killed.
+* Don't try to hide to TSA in Inside mode.
+* gh#467: Startup crash if startup task was renamed.
+* Arbitrary shells (not a Task) were not accepted in FastConfiguration dialog.
+* Let's save integers as user-friendly 10-based numbers (new xml configs).
+* Allow AutoUpdates to ‘Stable’ builds.
+* GuiMacro: GetInfo("Root") returns information of current console root process (JSON).
+  * If there's no console at all - macro returns either empty string,
+    or somthing like "FAILED:Specified ConEmu instance is not found".
+  * On errors you may receive `{"Status":"Unknown"}`.
+  * Normally, JSON object is expected. Example below, `//` for comments.
+
+~~~
+{
+"Running": false,  // true or false
+"Name": "cmd.exe", // name of root process executable
+"PID": 1234,       // PID of root process
+"ExitCode": 1,     // 259 if still running, or its exitcode
+"UpTime": 12418    // milliseconds
+}
+~~~
+
+* GuiMacro: Avoid `VConRequired` error macro was received before RCon created.
+* GuiMacro: If `ConEmuC -GuiMacro` was started before ConEmu GUI finishes initialization,
+  wait for ConEmu window appears or ConEmu.exe process terminates.
+* Option ‘Skip click on activation’ was not working on ‘touch’.
+* gh#310: Chars entered by Alt+Numpad were not working.
+* Warning fixes (from Michael Lukashov).
+
+
 2015.12.10
 * Add batch to build all binaries
 * Trim too long console titles in ‘Close confirmation’ dialog.
