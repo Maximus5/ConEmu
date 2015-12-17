@@ -1511,11 +1511,10 @@ bool CVConGroup::isValid(CRealConsole* apRCon)
 	if (!apRCon)
 		return false;
 
-	MSectionLockSimple lockGroups; lockGroups.Lock(gpcs_VGroups);
-
 	for (size_t i = 0; i < countof(gp_VCon); i++)
 	{
-		if (gp_VCon[i] && apRCon == gp_VCon[i]->RCon())
+		CVConGuard VCon(gp_VCon[i]);
+		if (VCon.VCon() && apRCon == VCon.VCon()->RCon())
 			return true;
 	}
 
@@ -1526,8 +1525,6 @@ bool CVConGroup::isValid(CVirtualConsole* apVCon)
 {
 	if (!apVCon)
 		return false;
-
-	MSectionLockSimple lockGroups; lockGroups.Lock(gpcs_VGroups);
 
 	for (size_t i = 0; i < countof(gp_VCon); i++)
 	{
@@ -1624,13 +1621,12 @@ bool CVConGroup::isVConHWND(HWND hChild, CVConGuard* rpVCon /*= NULL*/)
 
 	if (hChild)
 	{
-		MSectionLockSimple lockGroups; lockGroups.Lock(gpcs_VGroups);
-
 		for (size_t i = 0; i < countof(gp_VCon); i++)
 		{
-			if (gp_VCon[i] && (gp_VCon[i]->GetView() == hChild))
+			CVConGuard VConI(gp_VCon[i]);
+			if (VConI.VCon() && (VConI->GetView() == hChild))
 			{
-				VCon = gp_VCon[i];
+				VCon = VConI.VCon();
 				break;
 			}
 		}
@@ -1647,24 +1643,24 @@ bool CVConGroup::isEditor()
 {
 	if (!gp_VActive) return false;
 
-	MSectionLockSimple lockGroups; lockGroups.Lock(gpcs_VGroups);
-	return gp_VActive->RCon()->isEditor();
+	CVConGuard VCon(gp_VActive);
+	return VCon.VCon() && VCon->RCon()->isEditor();
 }
 
 bool CVConGroup::isViewer()
 {
 	if (!gp_VActive) return false;
 
-	MSectionLockSimple lockGroups; lockGroups.Lock(gpcs_VGroups);
-	return gp_VActive->RCon()->isViewer();
+	CVConGuard VCon(gp_VActive);
+	return VCon.VCon() && VCon->RCon()->isViewer();
 }
 
 bool CVConGroup::isFar(bool abPluginRequired/*=false*/)
 {
 	if (!gp_VActive) return false;
 
-	MSectionLockSimple lockGroups; lockGroups.Lock(gpcs_VGroups);
-	return gp_VActive->RCon()->isFar(abPluginRequired);
+	CVConGuard VCon(gp_VActive);
+	return VCon.VCon() && VCon->RCon()->isFar(abPluginRequired);
 }
 
 // Если ли фар где-то?
@@ -1680,12 +1676,10 @@ int CVConGroup::isFarExist(CEFarWindowType anWindowType/*=fwt_Any*/, LPWSTR asNa
 
 	for (INT_PTR i = -1; !iFound && (i < (INT_PTR)countof(gp_VCon)); i++)
 	{
-		MSectionLockSimple lockGroups; lockGroups.Lock(gpcs_VGroups);
 		if (i == -1)
 			VCon = gp_VActive;
 		else
 			VCon = gp_VCon[i];
-		lockGroups.Unlock();
 
 		if (VCon.VCon())
 		{
@@ -1838,7 +1832,6 @@ bool CVConGroup::EnumVCon(EnumVConFlags what, EnumVConProc pfn, LPARAM lParam)
 
 	for (size_t i = 0; i < countof(gp_VCon); i++)
 	{
-		MSectionLockSimple lockGroups; lockGroups.Lock(gpcs_VGroups);
 		CVConGuard VCon;
 		if (!VCon.Attach(gp_VCon[i]))
 			continue;
@@ -1855,9 +1848,6 @@ bool CVConGroup::EnumVCon(EnumVConFlags what, EnumVConProc pfn, LPARAM lParam)
 			break;
 		}
 
-		// Unlock before possible long operation
-		lockGroups.Unlock();
-
 		// And call the callback
 		bProcessed = true;
 		if (!pfn(VCon.VCon(), lParam))
@@ -1871,19 +1861,18 @@ bool CVConGroup::EnumVCon(EnumVConFlags what, EnumVConProc pfn, LPARAM lParam)
 int CVConGroup::GetActiveVCon(CVConGuard* pVCon /*= NULL*/, int* pAllCount /*= NULL*/)
 {
 	int nCount = 0, nFound = -1;
-
-	MSectionLockSimple lockGroups; lockGroups.Lock(gpcs_VGroups);
+	CVConGuard VCon;
 
 	for (size_t i = 0; i < countof(gp_VCon); i++)
 	{
-		if (gp_VCon[i])
+		if (VCon.Attach(gp_VCon[i]))
 		{
 			nCount++;
 
-			if (gp_VCon[i] == gp_VActive)
+			if (VCon.VCon() == gp_VActive)
 			{
 				if (pVCon)
-					*pVCon = gp_VCon[i];
+					*pVCon = VCon.VCon();
 				nFound = i;
 			}
 		}
@@ -1902,8 +1891,6 @@ int CVConGroup::GetVConIndex(CVirtualConsole* apVCon)
 {
 	if (!apVCon)
 		return -1;
-
-	MSectionLockSimple lockGroups; lockGroups.Lock(gpcs_VGroups);
 
 	for (size_t i = 0; i < countof(gp_VCon); i++)
 	{
@@ -1924,16 +1911,16 @@ bool CVConGroup::GetProgressInfo(short* pnProgress, BOOL* pbActiveHasProgress, B
 	BOOL bWasIndeterminate = FALSE;
 	int  nState = 0;
 
-	MSectionLockSimple lockGroups; lockGroups.Lock(gpcs_VGroups);
+	CVConGuard VCon;
 
-	if (gp_VActive)
+	if (VCon.Attach(gp_VActive))
 	{
 		BOOL lbNotFromTitle = FALSE;
-		if (!isValid(gp_VActive))
+		if (!isValid(VCon.VCon()))
 		{
-			_ASSERTE(isValid(gp_VActive));
+			_ASSERTE(isValid(VCon.VCon()));
 		}
-		else if ((nProgress = gp_VActive->RCon()->GetProgress(&nState, &lbNotFromTitle)) >= 0)
+		else if ((nProgress = VCon->RCon()->GetProgress(&nState, &lbNotFromTitle)) >= 0)
 		{
 			bWasError = (nState & 1) == 1;
 			bWasIndeterminate = (nState & 2) == 2;
@@ -1952,10 +1939,10 @@ bool CVConGroup::GetProgressInfo(short* pnProgress, BOOL* pbActiveHasProgress, B
 	// нас интересует возможное наличие ошибки во всех остальных консолях
 	for (size_t i = 0; i < countof(gp_VCon); i++)
 	{
-		if (gp_VCon[i])
+		if (VCon.Attach(gp_VCon[i]))
 		{
 			int nCurState = 0;
-			n = gp_VCon[i]->RCon()->GetProgress(&nCurState);
+			n = VCon->RCon()->GetProgress(&nCurState);
 
 			if ((nCurState & 1) == 1)
 				bWasError = TRUE;
@@ -1981,22 +1968,22 @@ bool CVConGroup::GetProgressInfo(short* pnProgress, BOOL* pbActiveHasProgress, B
 
 void CVConGroup::OnDosAppStartStop(HWND hwnd, StartStopType sst, DWORD idChild)
 {
-	MSectionLockSimple lockGroups; lockGroups.Lock(gpcs_VGroups);
+	CVConGuard VCon;
 
 	for (size_t i = 0; i < countof(gp_VCon); i++)
 	{
-		if (!gp_VCon[i]) continue;
+		if (!VCon.Attach(gp_VCon[i])) continue;
 
 		// Запускаемые через "-new_console" цепляются через CECMD_ATTACH2GUI, а не через WinEvent
 		// 111211 - "-new_console" теперь передается в GUI и исполняется в нем
-		if (gp_VCon[i]->RCon()->isDetached() || !gp_VCon[i]->RCon()->isServerCreated())
+		if (VCon->RCon()->isDetached() || !VCon->RCon()->isServerCreated())
 			continue;
 
-		HWND hRConWnd = gp_VCon[i]->RCon()->ConWnd();
+		HWND hRConWnd = VCon->RCon()->ConWnd();
 		if (hRConWnd == hwnd)
 		{
 			//StartStopType sst = (anEvent == EVENT_CONSOLE_START_APPLICATION) ? sst_App16Start : sst_App16Stop;
-			gp_VCon[i]->RCon()->OnDosAppStartStop(sst, idChild);
+			VCon->RCon()->OnDosAppStartStop(sst, idChild);
 			break;
 		}
 	}
@@ -2006,7 +1993,6 @@ void CVConGroup::InvalidateAll()
 {
 	for (size_t i = 0; i < countof(gp_VCon); i++)
 	{
-		MSectionLockSimple lockGroups; lockGroups.Lock(gpcs_VGroups);
 		CVConGuard VCon;
 		if (VCon.Attach(gp_VCon[i]) && VCon->isVisible())
 		{
@@ -2017,7 +2003,6 @@ void CVConGroup::InvalidateAll()
 
 void CVConGroup::UpdateWindowChild(CVirtualConsole* apVCon)
 {
-	MSectionLockSimple lockGroups; lockGroups.Lock(gpcs_VGroups);
 	CVConGuard VCon;
 	if (apVCon)
 	{
@@ -2058,22 +2043,22 @@ void CVConGroup::RePaint()
 
 void CVConGroup::Update(bool isForce /*= false*/)
 {
-	MSectionLockSimple lockGroups; lockGroups.Lock(gpcs_VGroups);
+	CVConGuard VCon;
 
 	if (isForce)
 	{
 		for (size_t i = 0; i < countof(gp_VCon); i++)
 		{
-			if (gp_VCon[i])
-				gp_VCon[i]->OnFontChanged();
+			if (VCon.Attach(gp_VCon[i]))
+				VCon->OnFontChanged();
 		}
 	}
 
 	CVirtualConsole::ClearPartBrushes();
 
-	if (gp_VActive)
+	if (VCon.Attach(gp_VActive))
 	{
-		gp_VActive->Update(isForce);
+		VCon->Update(isForce);
 		//InvalidateAll();
 	}
 }
@@ -2106,19 +2091,18 @@ bool CVConGroup::isActiveGroupVCon(CVirtualConsole* pVCon)
 
 bool CVConGroup::isConSelectMode()
 {
-	MSectionLockSimple lockGroups; lockGroups.Lock(gpcs_VGroups);
+	CVConGuard VCon;
 
 	//TODO: По курсору, что-ли попробовать определять?
 	//return gb_ConsoleSelectMode;
-	if (gp_VActive)
-		return gp_VActive->RCon()->isConSelectMode();
+	if (VCon.Attach(gp_VActive))
+		return VCon->RCon()->isConSelectMode();
 
 	return false;
 }
 
 bool CVConGroup::isInCreateRoot()
 {
-	MSectionLockSimple lockGroups; lockGroups.Lock(gpcs_VGroups);
 	CVConGuard VCon;
 	for (size_t i = 0; i < countof(gp_VCon); i++)
 	{
@@ -2133,7 +2117,6 @@ bool CVConGroup::isInCreateRoot()
 
 bool CVConGroup::isDetached()
 {
-	MSectionLockSimple lockGroups; lockGroups.Lock(gpcs_VGroups);
 	CVConGuard VCon;
 	for (size_t i = 0; i < countof(gp_VCon); i++)
 	{
@@ -2150,19 +2133,18 @@ bool CVConGroup::isFilePanel(bool abPluginAllowed/*=false*/)
 {
 	if (!gp_VActive) return false;
 
-	MSectionLockSimple lockGroups; lockGroups.Lock(gpcs_VGroups);
-	bool lbIsPanels = gp_VActive->RCon()->isFilePanel(abPluginAllowed);
+	CVConGuard VCon(gp_VActive);
+	bool lbIsPanels = VCon.VCon() && VCon->RCon()->isFilePanel(abPluginAllowed);
 	return lbIsPanels;
 }
 
 bool CVConGroup::isNtvdm(BOOL abCheckAllConsoles/*=FALSE*/)
 {
-	MSectionLockSimple lockGroups; lockGroups.Lock(gpcs_VGroups);
+	CVConGuard VCon;
 
-	if (gp_VActive)
+	if (VCon.Attach(gp_VActive))
 	{
-		CVConGuard VCon(gp_VActive);
-		CRealConsole* pRCon = VCon.VCon() ? VCon->RCon() : NULL;
+		CRealConsole* pRCon = VCon->RCon();
 
 		if (pRCon && pRCon->isNtvdm())
 			return true;
@@ -2170,10 +2152,10 @@ bool CVConGroup::isNtvdm(BOOL abCheckAllConsoles/*=FALSE*/)
 
 	for (size_t i = 0; i < countof(gp_VCon); i++)
 	{
-		CVConGuard VCon(gp_VCon[i]);
-		if (VCon.VCon() != gp_VActive)
+		// Let's check all console, even gp_VActive (it may be changed)
+		if (!VCon.Attach(gp_VCon[i]))
 			continue;
-		CRealConsole* pRCon = VCon.VCon() ? VCon->RCon() : NULL;
+		CRealConsole* pRCon = VCon->RCon();
 		if (!pRCon)
 			continue;
 
