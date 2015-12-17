@@ -7684,7 +7684,7 @@ LPCWSTR CRealConsole::GetConsoleInfo(LPCWSTR asWhat, CEStr& rsInfo)
 				{
 					pszReady = szTemp;
 					_ASSERTE(wcslen(pszName)*4 < countof(szTemp));
-					size_t cchMax = countof(szTemp) - 1;
+					INT_PTR cchMax = countof(szTemp) - 1;
 					while (*pszName && ((pszReady - szTemp) < cchMax))
 					{
 						EscapeChar(true, pszName, pszReady);
