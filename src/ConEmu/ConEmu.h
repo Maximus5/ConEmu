@@ -293,6 +293,8 @@ class CConEmuMain
 
 			// Пропустить клик мышкой (окно было неактивно)
 			UINT nSkipEvents[2]; UINT nReplaceDblClk;
+			// Activated by touch, skip next "activation" emulated by real mouse click
+			BOOL bTouchActivation;
 			// не пропускать следующий клик в консоль!
 			BOOL bForceSkipActivation;
 

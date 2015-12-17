@@ -12996,7 +12996,12 @@ void CConEmuMain::PreWndProc(UINT messg)
 LRESULT CConEmuMain::OnActivateByMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 {
 	LRESULT result = 0;
-	LogString(L"Activation by mouse");
+	wchar_t szLog[100];
+	_wsprintf(szLog, SKIPCOUNT(szLog) L"Activation by mouse: HWND=x%08X msg=x%X wParam=x%X lParam=x%X", LODWORD(hWnd), messg, LODWORD(wParam), LODWORD(lParam));
+	if (gpSetCls->isAdvLogging)
+		LogString(szLog);
+	else
+		DEBUGSTRFOCUS(szLog);
 
 	// просто так фокус в дочернее окно ставить нельзя
 	// если переключать фокус в дочернее приложение по любому чиху
@@ -13007,9 +13012,12 @@ LRESULT CConEmuMain::OnActivateByMouse(HWND hWnd, UINT messg, WPARAM wParam, LPA
 		CheckAllowAutoChildFocus((DWORD)lParam);
 	}
 
+	BOOL bTouchActivation = this->mouse.bTouchActivation;
+
 	//return MA_ACTIVATEANDEAT; -- ест все подряд, а LBUTTONUP пропускает :(
 	this->mouse.nSkipEvents[0] = 0;
 	this->mouse.nSkipEvents[1] = 0;
+	this->mouse.bTouchActivation = FALSE;
 
 	bool bSkipActivation = false;
 
@@ -13029,15 +13037,16 @@ LRESULT CConEmuMain::OnActivateByMouse(HWND hWnd, UINT messg, WPARAM wParam, LPA
 		|| bSkipActivation
 		|| (gpSet->isMouseSkipActivation
 			&& (LOWORD(lParam) == HTCLIENT)
-			&& !(m_Foreground.ForegroundState & fgf_ConEmuMain))
+			&& (bTouchActivation || !(m_Foreground.ForegroundState & fgf_ConEmuMain)))
 		)
 	{
 		this->mouse.bForceSkipActivation = FALSE; // Однократно
 		POINT ptMouse = {0}; GetCursorPos(&ptMouse);
 		//RECT  rcDC = {0}; GetWindowRect('ghWnd DC', &rcDC);
 		//if (PtInRect(&rcDC, ptMouse))
-		if (CVConGroup::GetVConFromPoint(ptMouse))
+		if (IsGesturesEnabled() || CVConGroup::GetVConFromPoint(ptMouse))
 		{
+			DEBUGSTRFOCUS(L"!Skipping mouse activation message!");
 			if (HIWORD(lParam) == WM_LBUTTONDOWN)
 			{
 				this->mouse.nSkipEvents[0] = WM_LBUTTONDOWN;
@@ -13056,7 +13065,25 @@ LRESULT CConEmuMain::OnActivateByMouse(HWND hWnd, UINT messg, WPARAM wParam, LPA
 				this->mouse.nSkipEvents[1] = WM_MBUTTONUP;
 				this->mouse.nReplaceDblClk = WM_MBUTTONDBLCLK;
 			}
+			else if (HIWORD(lParam) == 0x0246/*WM_POINTERDOWN*/)
+			{
+				// Following real WM_LBUTTONDOWN activation is expected
+				this->mouse.bTouchActivation = TRUE;
+			}
+			else
+			{
+				_ASSERTE(FALSE && "Unexpected mouse activation message");
+			}
 		}
+		else
+		{
+			DEBUGSTRFOCUS(L"!Bypassing ClickActivation to console (No Gesture, No VCon)!");
+		}
+	}
+	else
+	{
+		_wsprintf(szLog, SKIPCOUNT(szLog) L"!Bypassing ClickActivation to console (Condition, State=x%X)!", m_Foreground.ForegroundState);
+		DEBUGSTRFOCUS(szLog);
 	}
 
 	if (this->mp_Inside)
