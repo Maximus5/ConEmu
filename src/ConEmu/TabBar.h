@@ -84,7 +84,7 @@ class CTabBarClass
 	private:
 		CIconList      m_TabIcons;
 	public:
-		HIMAGELIST GetTabIcons();
+		HIMAGELIST GetTabIcons(int nTabItemHeight);
 		int GetTabIcon(bool bAdmin);
 		HICON GetTabIconByIndex(int IconIndex);
 
