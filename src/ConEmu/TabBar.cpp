@@ -242,7 +242,7 @@ HIMAGELIST CTabBarClass::GetTabIcons(int nTabItemHeight)
 		return NULL;
 	if (!m_TabIcons.IsInitialized())
 		return NULL;
-	return (HIMAGELIST)m_TabIcons;
+	return m_TabIcons.GetImageList(nTabItemHeight);
 }
 
 int CTabBarClass::GetTabIcon(bool bAdmin)

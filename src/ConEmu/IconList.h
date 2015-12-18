@@ -43,10 +43,19 @@ protected:
 	};
 	MSectionSimple* mpcs;
 	MArray<TabIconCache> m_Icons;
-	int mn_CxIcon, mn_CyIcon;
+	int mn_SysCxIcon, mn_SysCyIcon; // Ssystem size
+	void EvalDefaultTabIconSize(int& cx, int& cy);
+	void EvalNearestIconSize(int nQueryY, int& cx, int& cy);
 	int CreateTabIconInt(LPCWSTR asIconDescr, bool bAdmin, LPCWSTR asWorkDir);
+	struct Dimensions {
+		HIMAGELIST hTabIcons;
+		int cxIcon, cyIcon;
+		int nAdminIcon;
+	};
+	MArray<Dimensions> m_Dimensions;
+	bool CreateDimension(int cx, int cy, Dimensions* pd);
 public:
-	HIMAGELIST mh_TabIcons;
+
 	int mn_AdminIcon;
 public:
 	CIconList();
@@ -62,8 +71,5 @@ public:
 
 	static LPCWSTR GetIconInfoStr(HICON h, wchar_t (&szInfo)[80]);
 
-	operator HIMAGELIST() const
-	{
-		return (HIMAGELIST)mh_TabIcons;
-	};
+	HIMAGELIST GetImageList(int nMaxHeight = 0);
 };

@@ -56,109 +56,145 @@ CIconList::CIconList()
 
 CIconList::~CIconList()
 {
-	if (mh_TabIcons)
-	{
-		ImageList_Destroy(mh_TabIcons);
-		mh_TabIcons = NULL;
-	}
-
 	for (INT_PTR i = 0; i < m_Icons.size(); i++)
 	{
 		SafeFree(m_Icons[i].pszIconDescr);
 	}
 	m_Icons.clear();
 
+	for (INT_PTR i = 0; i < m_Dimensions.size(); i++)
+	{
+		HIMAGELIST h = m_Dimensions[i].hTabIcons;
+		if (h) ImageList_Destroy(h);
+	}
+	m_Dimensions.clear();
+
 	SafeDelete(mpcs);
 }
 
 bool CIconList::IsInitialized()
 {
-	return (mh_TabIcons != NULL);
+	return (m_Dimensions.size() != 0);
+}
+
+void CIconList::EvalDefaultTabIconSize(int& cx, int& cy)
+{
+	_ASSERTE((mn_SysCxIcon > 0) && (mn_SysCyIcon > 0));
+
+	int iFontY = gpSetCls->EvalSize(gpSet->nTabFontHeight, esf_Vertical|esf_CanUseUnits|esf_CanUseDpi|esf_CanUseZoom);
+	if (iFontY < 0)
+		iFontY = gpSetCls->EvalFontHeight(gpSet->sTabFontFace, iFontY, gpSet->nTabFontHeight);
+
+	cx = cy = 16;
+
+	if (iFontY > 16)
+	{
+		EvalNearestIconSize(iFontY+1, cx, cy);
+	}
+}
+
+void CIconList::EvalNearestIconSize(int nQueryY, int& cx, int& cy)
+{
+	_ASSERTE((mn_SysCxIcon > 0) && (mn_SysCyIcon > 0));
+
+	#ifdef _DEBUG
+	int iDpyY = gpSetCls->EvalSize(max(16,mn_SysCyIcon), esf_Vertical|esf_CanUseDpi);
+	#endif
+
+	cx = cy = 16;
+
+	int iSizes[] = {20, 24, 28, 32, 40, 48, 60, 64};
+
+	for (INT_PTR j = countof(iSizes)-1; j >= 0; j--)
+	{
+		if (nQueryY > iSizes[j])
+		{
+			cy = iSizes[j];
+			cx = (mn_SysCxIcon * iSizes[j]) / mn_SysCyIcon;
+			break;
+		}
+	}
 }
 
 bool CIconList::Initialize()
 {
 	bool lbOk = true;
 
-	if (!mh_TabIcons)
+	if (!IsInitialized())
 	{
-		int iSysX = GetSystemMetrics(SM_CXSMICON), iSysY = GetSystemMetrics(SM_CYSMICON);
-		int iFontY = gpSetCls->EvalSize(gpSet->nTabFontHeight, esf_Vertical|esf_CanUseUnits|esf_CanUseDpi|esf_CanUseZoom);
-		if (iFontY < 0)
-			iFontY = gpSetCls->EvalFontHeight(gpSet->sTabFontFace, iFontY, gpSet->nTabFontHeight);
-		int iDpyY = gpSetCls->EvalSize(max(16,iSysY), esf_Vertical|esf_CanUseDpi);
-		mn_CxIcon = iSysX; mn_CyIcon = iSysY;
-		if (iFontY > 16)
+		mn_AdminIcon = -1;
+
+		mn_SysCxIcon = GetSystemMetrics(SM_CXSMICON); mn_SysCyIcon = GetSystemMetrics(SM_CYSMICON);
+		if (mn_SysCxIcon < 16 || mn_SysCyIcon < 16)
 		{
-			if (iDpyY <= iFontY)
+			mn_SysCxIcon = mn_SysCyIcon = 16;
+		}
+
+		//EvalDefaultTabIconSize();
+
+		lbOk = CreateDimension(mn_SysCxIcon, mn_SysCyIcon);
+	}
+
+	return lbOk;
+}
+
+bool CIconList::CreateDimension(int cx, int cy)
+{
+	bool lbOk = false;
+	HIMAGELIST hTabIcons = NULL;
+
+	wchar_t szLog[100];
+	_wsprintf(szLog, SKIPCOUNT(szLog) L"Creating IconList for size {%ix%i} SysIcon size is {%ix%i}", mn_CxIcon, mn_CyIcon, mn_SysCxIcon, mn_SysCyIcon);
+	gpConEmu->LogString(szLog);
+
+	if ((hTabIcons = ImageList_Create(mn_CxIcon, mn_CyIcon, ILC_COLOR24|ILC_MASK, 0, 16)) != NULL)
+	{
+		CToolImg img;
+		int nFirstAdd = -1;
+		const int iShieldButtons = 4;
+		if (img.Create(mn_CxIcon, mn_CyIcon, iShieldButtons, GetSysColor(COLOR_BTNFACE)))
+		{
+			if (img.AddButtons(g_hInstance, IDB_SHIELD16, iShieldButtons))
 			{
-				mn_CxIcon = gpSetCls->EvalSize(max(16,iSysX), esf_Horizontal|esf_CanUseDpi);
-				mn_CyIcon = iDpyY;
-			}
-			else
-			{
-				// Issue 1939: Tab bar height too big since version 150307
-				int iSizes[] = {20, 24, 28, 32, 40, 48, 60, 64};
-				iFontY++; // Allow one pixes larger...
-				for (INT_PTR j = countof(iSizes)-1; j >= 0; j--)
-				{
-					if (iFontY >= iSizes[j])
-					{
-						mn_CyIcon = iSizes[j];
-						mn_CxIcon = (iSysX * iSizes[j]) / iSysY;
-						break;
-					}
-				}
+				HBITMAP hShieldUser = img.GetBitmap();
+				#ifdef _DEBUG
+				BITMAP bmi = {};
+				GetObject(hShieldUser, sizeof(bmi), &bmi);
+				#ifdef _DEBUG
+				//SaveImageEx(L"T:\\ShieldUser.png", hShieldUser);
+				#endif
+				#endif
+
+				nFirstAdd = ImageList_AddMasked(hTabIcons, hShieldUser, RGB(128,0,0));
 			}
 		}
 
-		wchar_t szLog[100];
-		_wsprintf(szLog, SKIPCOUNT(szLog) L"Creating IconList for size {%ix%i} SysIcon size is {%ix%i}", mn_CxIcon, mn_CyIcon, iSysX, iSysY);
-		gpConEmu->LogString(szLog);
+		#ifdef _DEBUG
+		int iCount = ImageList_GetImageCount(hTabIcons);
+		_ASSERTE(iCount==4);
+		IMAGEINFO ii = {}; BOOL b;
+		// An application should not call DeleteObject to destroy the bitmaps retrieved by ImageList_GetImageInfo
+		b = ImageList_GetImageInfo(hTabIcons, 0, &ii);
+		b = ImageList_GetImageInfo(hTabIcons, 1, &ii);
+		#endif
 
-		if ((mh_TabIcons = ImageList_Create(mn_CxIcon, mn_CyIcon, ILC_COLOR24|ILC_MASK, 0, 16)) != NULL)
+		if (nFirstAdd >= 0)
 		{
-			CToolImg img;
-			int nFirstAdd = -1;
-			const int iShieldButtons = 4;
-			if (img.Create(mn_CxIcon, mn_CyIcon, iShieldButtons, GetSysColor(COLOR_BTNFACE)))
+			lbOk = true;
+
+			int nAdminIcon = nFirstAdd + ((gOSVer.dwMajorVersion >= 6) ? 0 : 1);
+			if (mn_AdminIcon == -1)
 			{
-				if (img.AddButtons(g_hInstance, IDB_SHIELD16, iShieldButtons))
-				{
-					HBITMAP hShieldUser = img.GetBitmap();
-					#ifdef _DEBUG
-					BITMAP bmi = {};
-					GetObject(hShieldUser, sizeof(bmi), &bmi);
-					#ifdef _DEBUG
-					//SaveImageEx(L"T:\\ShieldUser.png", hShieldUser);
-					#endif
-					#endif
-
-					nFirstAdd = ImageList_AddMasked(mh_TabIcons, hShieldUser, RGB(128,0,0));
-				}
-			}
-
-			#ifdef _DEBUG
-			int iCount = ImageList_GetImageCount(mh_TabIcons);
-			_ASSERTE(iCount==4);
-			IMAGEINFO ii = {}; BOOL b;
-			// An application should not call DeleteObject to destroy the bitmaps retrieved by ImageList_GetImageInfo
-			b = ImageList_GetImageInfo(mh_TabIcons, 0, &ii);
-			b = ImageList_GetImageInfo(mh_TabIcons, 1, &ii);
-			#endif
-
-			if (nFirstAdd >= 0)
-			{
-				mn_AdminIcon = nFirstAdd + ((gOSVer.dwMajorVersion >= 6) ? 0 : 1);
+				mn_AdminIcon = nAdminIcon;
 			}
 			else
 			{
-				lbOk = false;
+				_ASSERTE(mn_AdminIcon == nAdminIcon);
 			}
-		}
-		else
-		{
-			lbOk = false;
+
+			Dimensions dim = {};
+			push_back;
+			if (pd) *pd = dim;
 		}
 	}
 
@@ -367,4 +403,43 @@ HICON CIconList::GetTabIconByIndex(int IconIndex)
 		return NULL;
 	HICON hIcon = ImageList_GetIcon(mh_TabIcons, IconIndex, ILD_TRANSPARENT);
 	return hIcon;
+}
+
+HIMAGELIST CIconList::GetImageList(int nMaxHeight)
+{
+	if (!this)
+		return NULL;
+
+	int cx = 16, cy = 16;
+	Dimensions dim = {};
+	wchar_t szLog[120];
+	bool bFound = false;
+
+	if ((nMaxHeight <= 0) && (m_Dimensions.size() > 0))
+	{
+		dim = m_Dimensions[0];
+	}
+
+	if (!bFound)
+	{
+		EvalNearestIconSize(nMaxHeight, cx, cy);
+		for (INT_PTR i = 0; i < m_Dimensions; i++)
+		{
+			const Dimensions& d = m_Dimensions[i];
+			if (d.cxIcon == cx && d.cyIcon == cy)
+			{
+				bFound = true;
+				dim = d;
+			}
+		}
+	}
+
+	if (!bFound)
+	{
+		bFound = CreateDimension(cx, cy, &dim);
+	}
+
+	_wsprintf(szLog, SKIPCOUNT(szLog) L"IconList for size %i requested, get (%ix%i)", nMaxHeight, dim.cx, dim.cy);
+	gpConEmu->LogString(szLog);
+	return dim.hTabIcons;
 }
