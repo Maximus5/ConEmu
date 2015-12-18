@@ -110,7 +110,7 @@ LRESULT CTabPanelWin::ReBarProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 	{
 		case WM_DESTROY:
 		{
-			_ASSERTE(mh_Rebar == hwnd);
+			_ASSERTE(!mh_Rebar || mh_Rebar == hwnd);
 			mh_Rebar = NULL;
 			break;
 		}
@@ -192,7 +192,7 @@ LRESULT CTabPanelWin::TabProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam
 	{
 		case WM_DESTROY:
 		{
-			_ASSERTE(mh_Tabbar == hwnd);
+			_ASSERTE(!mh_Tabbar || mh_Tabbar == hwnd);
 			mh_Tabbar = NULL;
 			break;
 		}
@@ -269,7 +269,7 @@ LRESULT CTabPanelWin::ToolProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 	{
 		case WM_DESTROY:
 		{
-			_ASSERTE(mh_Toolbar == hwnd);
+			_ASSERTE(!mh_Toolbar || mh_Toolbar == hwnd);
 			mh_Toolbar = NULL;
 			break;
 		}
