@@ -319,6 +319,16 @@ void PreWriteConsoleInput(BOOL abUnicode, const INPUT_RECORD *lpBuffer, DWORD nL
 }
 #endif
 
+bool isProcessCtrlZ()
+{
+	CESERVER_CONSOLE_MAPPING_HDR* pMap = GetConMap();
+	if (!pMap)
+		return false;
+	if (!pMap->cbSize || !(pMap->Flags & CECF_ProcessCtrlZ))
+		return false;
+	return true;
+}
+
 
 /* **************** */
 
@@ -333,6 +343,23 @@ BOOL WINAPI OnReadConsoleA(HANDLE hConsoleInput, LPVOID lpBuffer, DWORD nNumberO
 
 	lbRc = F(ReadConsoleA)(hConsoleInput, lpBuffer, nNumberOfCharsToRead, lpNumberOfCharsRead, pInputControl);
 	DWORD nErr = GetLastError();
+
+	// gh#465: For consistence with OnReadConsoleW
+	if (lbRc && lpBuffer && lpNumberOfCharsRead && *lpNumberOfCharsRead
+		// pInputControl has no evvect on ANSI version
+		&& (*lpNumberOfCharsRead <= 3))
+	{
+		// To avoid checking of the mapping, we check result first
+		const char* pchTest = (const char*)lpBuffer;
+		if ((pchTest[0] == 26 /* Ctrl-Z / ^Z / (char)('Z' - '@') */)
+			&& (((*lpNumberOfCharsRead == 3) && (pchTest[1] == '\r') && (pchTest[2] == '\n')) // Expected variant
+				|| ((*lpNumberOfCharsRead == 2) && (pchTest[1] == '\n')) // Possible variant?
+				))
+		{
+			if (isProcessCtrlZ())
+				*lpNumberOfCharsRead = 0;
+		}
+	}
 
 	OnReadConsoleEnd(lbRc, false, hConsoleInput, lpBuffer, nNumberOfCharsToRead, lpNumberOfCharsRead, pInputControl);
 	SetLastError(nErr);
@@ -356,6 +383,23 @@ BOOL WINAPI OnReadConsoleW(HANDLE hConsoleInput, LPVOID lpBuffer, DWORD nNumberO
 	nErr = GetLastError();
 	// Debug purposes
 	nEndTick = GetTickCount();
+
+	// gh#465: Terminate Go input with Ctrl-Z
+	if (lbRc && lpBuffer && lpNumberOfCharsRead && *lpNumberOfCharsRead
+		&& (!pInputControl) // Probably, if application pass this structure it really knows what it's doing
+		&& (*lpNumberOfCharsRead <= 3))
+	{
+		// To avoid checking of the mapping, we check result first
+		const wchar_t* pchTest = (const wchar_t*)lpBuffer;
+		if ((pchTest[0] == 26 /* Ctrl-Z / ^Z / (char)('Z' - '@') */)
+			&& (((*lpNumberOfCharsRead == 3) && (pchTest[1] == '\r') && (pchTest[2] == '\n')) // Expected variant
+				|| ((*lpNumberOfCharsRead == 2) && (pchTest[1] == '\n')) // Possible variant?
+				))
+		{
+			if (isProcessCtrlZ())
+				*lpNumberOfCharsRead = 0;
+		}
+	}
 
 	OnReadConsoleEnd(lbRc, true, hConsoleInput, lpBuffer, nNumberOfCharsToRead, lpNumberOfCharsRead, pInputControl);
 

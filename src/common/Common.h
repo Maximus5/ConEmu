@@ -1125,6 +1125,8 @@ const ConEmuConsoleFlags
 
 	CECF_RealConVisible  = 0x00000800, // Show real console
 
+	CECF_ProcessCtrlZ    = 0x00001000, // Return 0 bytes from ReadConsole if Ctrl-Z was only entered on the line
+
 	CECF_Empty = 0
 	;
 #define SetConEmuFlags(v,m,f) (v) = ((v) & ~(m)) | (f)

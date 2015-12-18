@@ -678,7 +678,7 @@ BEGIN
     GROUPBOX        "CPU consuming",gbFeatureRetard,4,34,319,29
     CONTROL         "Sleep in background",cbSleepInBackground,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,47,110,8
     CONTROL         "Retard inactive panes",cbRetardInactivePanes,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,128,47,99,8
-    GROUPBOX        "In-console options",gbFeatureInConsole,4,69,319,71
+    GROUPBOX        "In-console options",gbFeatureInConsole,4,69,319,86
     CONTROL         "Inject ConEmuHk",cbUseInjects,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,82,110,8
     CONTROL         "DosBox (DOS apps)",cbDosBox,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,128,81,76,8
     PUSHBUTTON      "...",bDosBoxSettings,212,79,13,11
@@ -692,12 +692,13 @@ BEGIN
     CONTROL         "Process '-new_console' and '-cur_console' switches",cbProcessNewConArg,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,125,187,8
     CONTROL         "Process 'start'",cbProcessCmdStart,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,231,125,88,8
-    GROUPBOX        "Debugging options",gbFeatureDebug,4,144,319,28
+    GROUPBOX        "Debugging options",gbFeatureDebug,4,161,319,28
     CONTROL         "Exception handler (debug)",cbConsoleExceptionHandler,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,157,110,8
-    CONTROL         "Debug steps in caption",cbDebugSteps,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,128,157,99,8
-    CONTROL         "Show real console",cbVisible,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,231,157,74,8
-    PUSHBUTTON      "...",bRealConsoleSettings,306,156,13,11
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,174,110,8
+    CONTROL         "Debug steps in caption",cbDebugSteps,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,128,174,99,8
+    CONTROL         "Show real console",cbVisible,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,231,174,74,8
+    PUSHBUTTON      "...",bRealConsoleSettings,306,173,13,11
+    CONTROL         "Process Ctrl-Z in ReadConsole",cbProcessCtrlZ,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,139,113,8
 END
 
 IDD_SPG_COMSPEC DIALOGEX 0, 0, 328, 235
@@ -1802,6 +1803,17 @@ BEGIN
     END
 END
 #endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// AFX_DIALOG_LAYOUT
+//
+
+IDD_SPG_FEATURE AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
 
 #endif    // English (United States) resources
 /////////////////////////////////////////////////////////////////////////////

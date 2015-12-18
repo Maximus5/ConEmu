@@ -2064,6 +2064,7 @@ void CConEmuMain::UpdateGuiInfoMapping()
 	SetConEmuFlags(m_GuiInfo.Flags,CECF_ConExcHandler,(gpSet->isConsoleExceptionHandler ? CECF_ConExcHandler : 0));
 	SetConEmuFlags(m_GuiInfo.Flags,CECF_ProcessNewCon,(gpSet->isProcessNewConArg ? CECF_ProcessNewCon : 0));
 	SetConEmuFlags(m_GuiInfo.Flags,CECF_ProcessCmdStart,(gpSet->isProcessCmdStart ? CECF_ProcessCmdStart : 0));
+	SetConEmuFlags(m_GuiInfo.Flags,CECF_ProcessCtrlZ,(gpSet->isProcessCtrlZ ? CECF_ProcessCtrlZ : 0));
 	SetConEmuFlags(m_GuiInfo.Flags,CECF_RealConVisible,(gpSet->isConVisible ? CECF_RealConVisible : 0));
 	// использовать расширение командной строки (ReadConsole). 0 - нет, 1 - старая версия (0.1.1), 2 - новая версия
 	switch (gpSet->isUseClink())
