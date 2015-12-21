@@ -1713,7 +1713,7 @@ void CConEmuMenu::ShowSysmenu(int x, int y, DWORD nFlags /*= 0*/)
 		if (bLbnPressed && ((mn_SysMenuCloseTick - mn_SysMenuOpenTick) < GetDoubleClickTime()))
 		{
 			POINT ptCur = {}; GetCursorPos(&ptCur);
-			if (gpConEmu->PtDiffTest(ptCur, ptCurBefore.x, ptCurBefore.y, 8))
+			if (PtDiffTest(ptCur, ptCurBefore.x, ptCurBefore.y, 8))
 			{
 				LRESULT lHitTest = SendMessage(ghWnd, WM_NCHITTEST, 0, MAKELONG(ptCur.x,ptCur.y));
 				if (lHitTest == HTSYSMENU)
