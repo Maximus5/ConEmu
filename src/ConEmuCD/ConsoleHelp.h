@@ -97,7 +97,7 @@ _DBGHLP(L"     /OsVerInfo -> Show OS information, returns OsVer as errorlevel\r\
 		L"  Switch: -new_console[:switches]\r\n" \
 		L"     a - RunAs shell verb (as Admin on Vista+, user/pwd in Win2k and WinXP)\r\n" \
 		L"     b - Create background tab\r\n" \
-		L"     c - force enable 'Press Enter or Esc to close console' confirmation (default)\r\n" \
+		L"     c[0] - force enable [silent] 'Press Enter or Esc to close console' confirmation\r\n" \
 		L"     C - see below\r\n" \
 		L"     d - see below\r\n" \
 		L"     f - force starting console active, useful when starting several consoles simultaneously\r\n" \
