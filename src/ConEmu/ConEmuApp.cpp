@@ -2596,7 +2596,7 @@ bool ProcessMessage(MSG& Msg)
 		goto wrap;
 	}
 
-	// Может быть некоторые дублирование с логированием в самих функциях
+	// Do minimal in-memory logging (small circular buffer)
 	ConEmuMsgLogger::Log(Msg, ConEmuMsgLogger::msgCommon);
 
 	if (gpConEmu)
