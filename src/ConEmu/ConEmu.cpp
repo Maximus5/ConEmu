@@ -4067,26 +4067,6 @@ void CConEmuMain::PostDisplayRConError(CRealConsole* apRCon, wchar_t* pszErrMsg)
 	PostMessage(ghWnd, mn_MsgDisplayRConError, (WPARAM)apRCon, (LPARAM)pszErrMsg);
 }
 
-bool CConEmuMain::PtDiffTest(POINT C, int aX, int aY, UINT D)
-{
-	//(((abs(C.x-(int)(short)LOWORD(lParam)))<D) && ((abs(C.y-(int)(short)HIWORD(lParam)))<D))
-	int nX = C.x - aX;
-
-	if (nX < 0) nX = -nX;
-
-	if (nX > (int)D)
-		return false;
-
-	int nY = C.y - aY;
-
-	if (nY < 0) nY = -nY;
-
-	if (nY > (int)D)
-		return false;
-
-	return true;
-}
-
 void CConEmuMain::RegisterMinRestore(bool abRegister)
 {
 	wchar_t szErr[512];

@@ -265,6 +265,9 @@ BOOL /*__forceinline*/ CoordInRect(const COORD& c, const RECT& r);
 
 BOOL IntersectSmallRect(RECT& rc1, SMALL_RECT& rc2);
 
+bool PtDiffTest(int x1, int y1, int x2, int y2, UINT maxDx, UINT maxDy);
+bool PtDiffTest(POINT C, int aX, int aY, UINT D);
+
 bool IntFromString(int& rnValue, LPCWSTR asValue, int anBase = 10, LPCWSTR* rsEnd = NULL);
 bool GetDlgItemSigned(HWND hDlg, WORD nID, int& nValue, int nMin = 0, int nMax = 0);
 bool GetDlgItemUnsigned(HWND hDlg, WORD nID, DWORD& nValue, DWORD nMin = 0, DWORD nMax = 0);

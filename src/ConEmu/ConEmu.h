@@ -684,7 +684,6 @@ class CConEmuMain
 		void PostDisplayRConError(CRealConsole* apRCon, wchar_t* pszErrMsg);
 		void PostChangeCurPalette(LPCWSTR pszPalette, bool bChangeDropDown, bool abPosted);
 		LRESULT SyncExecMacro(WPARAM wParam, LPARAM lParam);
-		bool PtDiffTest(POINT C, int aX, int aY, UINT D); //(((abs(C.x-LOWORD(lParam)))<D) && ((abs(C.y-HIWORD(lParam)))<D))
 		bool RecreateAction(RecreateActionParm aRecreate, BOOL abConfirm, RConBoolArg bRunAs = crb_Undefined);
 		int RecreateDlg(RConStartArgs* apArg);
 		void RequestPostUpdateTabs();

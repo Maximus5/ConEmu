@@ -2507,6 +2507,27 @@ void MessageLoop()
 	gbMessagingStarted = FALSE;
 }
 
+bool PtDiffTest(int x1, int y1, int x2, int y2, UINT maxDx, UINT maxDy)
+{
+	int nX = abs(x1 - x2);
+
+	if (nX > (int)maxDx)
+		return false;
+
+	int nY = abs(y1 - y2);
+
+	if (nY > (int)maxDy)
+		return false;
+
+	return true;
+}
+
+bool PtDiffTest(POINT C, int aX, int aY, UINT D)
+{
+	return PtDiffTest(C.x, C.y, aX, aY, D, D);
+}
+
+
 bool ProcessMessage(MSG& Msg)
 {
 	bool bRc = true;
