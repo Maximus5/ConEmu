@@ -70,7 +70,7 @@ bool CAltNumpad::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 	if (mb_WaitingForAltChar && (messg == WM_CHAR))
 	{
 		mb_WaitingForAltChar = false;
-		wchar_t wszChars[2] = {wParam, 0};
+		wchar_t wszChars[2] = {LOWORD(wParam), 0};
 		wchar_t szLog[80];
 		_wsprintf(szLog, SKIPCOUNT(szLog) L"Received by AltNumber: char=%s (%u) (internal=x%X)", wszChars, LODWORD(wParam), LODWORD(mn_AltNumber));
 		LogString(szLog);
