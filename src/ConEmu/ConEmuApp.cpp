@@ -2527,11 +2527,59 @@ bool PtDiffTest(POINT C, int aX, int aY, UINT D)
 	return PtDiffTest(C.x, C.y, aX, aY, D, D);
 }
 
+bool PtMouseDblClickTest(const MSG& msg1, const MSG msg2)
+{
+	if (msg1.message != msg2.message)
+		return false;
+
+	// Maximum DblClick time is 5 sec
+	UINT nCurTimeDiff = msg2.time - msg1.time;
+	if (nCurTimeDiff > 5000)
+	{
+		return false;
+	}
+	else if (nCurTimeDiff)
+	{
+		UINT nTimeDiff = GetDoubleClickTime();
+		if (nCurTimeDiff > nTimeDiff)
+			return false;
+	}
+
+	// Check coord diff
+	POINT pt1 = {(i16)LOWORD(msg1.lParam), (i16)HIWORD(msg1.lParam)};
+	POINT pt2 = {(i16)LOWORD(msg2.lParam), (i16)HIWORD(msg2.lParam)};
+	// Due to mouse captures hwnd may differ
+	if (msg1.hwnd != msg2.hwnd)
+	{
+		ClientToScreen(msg1.hwnd, &pt1);
+		ClientToScreen(msg2.hwnd, &pt2);
+	}
+
+	if ((pt1.x != pt2.x) || (pt1.y != pt2.y))
+	{
+		bool bDiffOk;
+		int dx1 = GetSystemMetrics(SM_CXDOUBLECLK), dx2 = GetSystemMetrics(SM_CYDOUBLECLK);
+		bDiffOk = PtDiffTest(pt1.x, pt1.y, pt2.x, pt2.y, dx1, dx2);
+		if (!bDiffOk)
+		{
+			// May be fin in dpi*multiplied?
+			int dpiDX = gpSetCls->EvalSize(dx1, esf_Horizontal|esf_CanUseDpi);
+			int dpiDY = gpSetCls->EvalSize(dx2, esf_Vertical|esf_CanUseDpi);
+			if (PtDiffTest(pt1.x, pt1.y, pt2.x, pt2.y, dpiDX, dpiDY))
+				bDiffOk = true;
+		}
+		if (!bDiffOk)
+			return false;
+	}
+
+	return true;
+}
 
 bool ProcessMessage(MSG& Msg)
 {
 	bool bRc = true;
 	static bool bQuitMsg = false;
+	static MSG MouseClickPatch = {};
 
 	MSetter nestedLevel(&gnMessageNestingLevel);
 
@@ -2549,8 +2597,39 @@ bool ProcessMessage(MSG& Msg)
 	{
 		if (gpConEmu->isDialogMessage(Msg))
 			goto wrap;
-		if ((Msg.message == WM_SYSCOMMAND) && gpConEmu->isSkipNcMessage(Msg))
-			goto wrap;
+
+		switch (Msg.message)
+		{
+		case WM_SYSCOMMAND:
+			if (gpConEmu->isSkipNcMessage(Msg))
+				goto wrap;
+			break;
+		case WM_LBUTTONDOWN:
+		case WM_RBUTTONDOWN:
+		case WM_MBUTTONDOWN:
+		case WM_XBUTTONDOWN:
+			// gh#470: If user holds Alt key, than we will not receive DblClick messages, only single clicks...
+			if (PtMouseDblClickTest(MouseClickPatch, Msg))
+			{
+				// Convert Click to DblClick message
+				_ASSERTE((WM_LBUTTONDBLCLK-WM_LBUTTONDOWN)==2 && (WM_RBUTTONDBLCLK-WM_RBUTTONDOWN)==2 && (WM_MBUTTONDBLCLK-WM_MBUTTONDOWN)==2);
+				_ASSERTE((WM_XBUTTONDBLCLK-WM_XBUTTONDOWN)==2);
+				Msg.message += (WM_LBUTTONDBLCLK - WM_LBUTTONDOWN);
+			}
+			else
+			{
+				// Diffent mouse button was pressed, or not saved yet
+				// Store mouse message
+				MouseClickPatch = Msg;
+			}
+			break;
+		case WM_LBUTTONDBLCLK:
+		case WM_RBUTTONDBLCLK:
+		case WM_MBUTTONDBLCLK:
+		case WM_XBUTTONDBLCLK:
+			ZeroStruct(MouseClickPatch);
+			break;
+		}
 	}
 
 	TranslateMessage(&Msg);
