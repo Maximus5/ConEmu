@@ -2042,13 +2042,13 @@ wrap:
 		UNREFERENCED_PARAMETER(nProcCount);
 		UNREFERENCED_PARAMETER(nProcesses[0]);
 
-		if (iRc == CERR_PROCESSTIMEOUT)
+		// During the wait, new process may be started in our console
 		{
 			int nCount = gpSrv->nProcessCount;
 
 			if (nCount > 1 || gpSrv->DbgInfo.bDebuggerActive)
 			{
-				// Процесс таки запустился!
+				// OK, new root found, wait for it
 				goto wait;
 			}
 		}
