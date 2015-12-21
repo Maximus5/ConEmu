@@ -1,7 +1,9 @@
 .*.cmd
 -*.cmd
 *.dat
-*.ps1
+
+github-release-downloads.ps1
+PortableApps_Sums.ps1
 
 ConEmuPortable*.exe
 ConEmuPortableRarInfo.txt
