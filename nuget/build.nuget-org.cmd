@@ -16,7 +16,7 @@ if errorlevel 1 (
 )
 call cecho /green "A package for Nuget.Org were created."
 
-move "%~dp0ConEmu.CommandLine\ConEmu.CommandLine.*.nupkg" "%~dp0"
+move "%~dp0ConEmu.CommandLine\ConEmu.Console.*.nupkg" "%~dp0"
 if errorlevel 1 (
   call cecho "Moving ConEmu.CommandLine package failed."
   exit /b 100
