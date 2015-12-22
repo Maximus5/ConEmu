@@ -4,44 +4,43 @@
     <id>ConEmu.Core</id>
     <version>15.12.17.0</version>
     <title>ConEmu, a Windows Console Emulator</title>
-    <authors>Maximus5, Xavier Decoster, Ethan J. Brown</authors>
+    <authors>Maximus5</authors>
     <owners>Maximus5</owners>
     <projectUrl>http://conemu.github.io/</projectUrl>
     <iconUrl>http://conemu.github.io/img/logo.png</iconUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    <description>
-      ConEmu-Maximus5 is a Windows console window enhancement (local terminal emulator), which presents multiple consoles and simple GUI applications as one customizable tabbed GUI window with various features:
 
-      * smooth and friendly window resizing;
-      * tabs for editors, viewers, panels and consoles;
-      * run simple GUI apps in tabs;
-      * Windows 7 Jump Lists and Progress on Taskbar buttons;
-      * easily run old DOS applications (games) in Windows 7 or 64-bit OS;
-      * thumbnails and tiles in Far Manager;
-      * normal, maximized and full screen graphical window modes;
-      * window font anti-aliasing: standard, ClearType, disabled;
-      * window fonts: family, height, width, bold, italic, etc.;
-      * using normal/bold/italic fonts for different parts of the console simultaneously;
-      * Chinese verions of Windows supported;
-      * using 24-bit colors in Far Manager 3.x;
-      * ANSI X3.64 and Xterm 256 colors;
-      * cursor: standard console (horizontal) or GUI (vertical);
-      * optional per-application settings (e.g. palette);
-      * vertical console buffer scrolling using the keyboard (BufferHeight mode);
-      * show full output (1K+ lines) of last command in Far Manager's editor/viewer;
-      * customizable Far Manager right click behaviour (long click opens context menu);
-      * drag and drop (explorer style) of files and folders in Far Manager;
-      * limited support of BDF fonts;
-      * user friendly text and block selection;
-      * transparency and desktop mode;
-      * customizable starting tabs;
-      * configurable and clickable status bar;
-      * and more, and more... take a look at the Settings dialog, What's New page and Settings.reg
-    </description>
-    <summary>ConEmu (also known as ConEmu-Maximus5) is an advanced console window (also known as local terminal emulator). You can run in ConEmu two types of applications (1) "console" such as cmd.exe, powershell.exe, Far Manager, bash, etc., and (2) "graphical" (GUI) like Notepad, PuTTY, KiTTY, GVim, Notepad, mintty and so on.</summary>
+<summary>
+ConEmu (short for Console Emulator) is a handy and full featured Windows console window (local terminal) with a lot of enhancements.
+</summary>
+
+<description>
+ConEmu-Maximus5 (short for Console Emulator) is a handy and full featured Windows console window (local terminal) with a lot of enhancements: panes, tabs, tasks, jump lists, quake style, handy text and block selection, handy paste of paths in either Unix or Windows notation, and much more.
+
+ConEmu.Core package contains only essential files - no extras, no Far Manager plugins, no documentation. Full distro and docs are available on the project site.
+
+ConEmu may work as either standalone window, or embeddable console control. And it may host two types of applications.
+* ‘console’: cmd, powershell, Far Manager, bash, and many others.
+* ‘graphical’ (GUI): Notepad, PuTTY, GVim, mintty and so on.
+
+Short list of features:
+* predefined and user-defined tasks for different shells;
+* user friendly text and block selection and paste;
+* smooth and friendly window resizing;
+* Windows 7 Jump Lists and Progress on Taskbar buttons;
+* DosBox integration: run old DOS applications (games) in modern OS;
+* quake-style and full screen window modes;
+* ANSI sequences and Xterm 256 colors;
+* cursor: standard console (horizontal) or GUI (vertical);
+* customizable starting tabs;
+* Far Manager integration: drag-n-drop, tabs, truecolor, thumbnails;
+* unicode and CJK support;
+* explore much more features on the project site.
+</description>
+
     <releaseNotes>http://conemu.github.io/en/Whats_New.html</releaseNotes>
     <licenseUrl>https://opensource.org/licenses/BSD-3-Clause</licenseUrl>
-    <tags>graphical console emulator tabs FAR farmanager powershell cmd bash</tags>
+    <tags>graphical console emulator tabs farmanager powershell cmd bash cygwin msys git</tags>
   </metadata>
   <files>
     <!-- Nuget will include this build file in the MSBuild project when referencing the Nuget. -->
