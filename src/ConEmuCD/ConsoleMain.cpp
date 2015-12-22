@@ -804,10 +804,10 @@ void SetupCreateDumpOnException()
 }
 
 #ifdef SHOW_SERVER_STARTED_MSGBOX
-void ShowServerStartedMsgBox()
+void ShowServerStartedMsgBox(LPCWSTR asCmdLine)
 {
 	wchar_t szTitle[100]; _wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuC [Server] started (PID=%i)", gnSelfPID);
-	const wchar_t* pszCmdLine = GetCommandLineW();
+	const wchar_t* pszCmdLine = asCmdLine;
 	MessageBox(NULL,pszCmdLine,szTitle,0);
 }
 #endif
@@ -897,7 +897,7 @@ bool CheckAndWarnHookers()
 #if defined(__GNUC__)
 extern "C"
 #endif
-int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserved*/)
+int __stdcall ConsoleMain3(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserved*/, LPCWSTR asCmdLine)
 {
 	TODO("можно при ошибках показать консоль, предварительно поставив 80x25 и установив крупный шрифт");
 
@@ -995,27 +995,28 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 
 #if defined(SHOW_STARTED_PRINT)
 	BOOL lbDbgWrite; DWORD nDbgWrite; HANDLE hDbg; char szDbgString[255], szHandles[128];
-	_wsprintfA(szDbgString, SKIPLEN(szDbgString) "ConEmuC: PID=%u", GetCurrentProcessId());
-	MessageBoxA(0, GetCommandLineA(), szDbgString, MB_SYSTEMMODAL);
+	wchar_t szTitle[255];
+	_wsprintf(szTitle, SKIPCOUNT(szTitle) L"ConEmuCD[%u]: PID=%u", WIN3264TEST(32,64), GetCurrentProcessId());
+	MessageBox(0, asCmdLine, szTitle, MB_SYSTEMMODAL);
 	hDbg = CreateFile(L"CONOUT$", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE,
 	                  0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
-	_wsprintfA(szHandles, SKIPLEN(szHandles) "STD_OUTPUT_HANDLE(0x%08X) STD_ERROR_HANDLE(0x%08X) CONOUT$(0x%08X)",
+	_wsprintfA(szHandles, SKIPCOUNT(szHandles) "STD_OUTPUT_HANDLE(0x%08X) STD_ERROR_HANDLE(0x%08X) CONOUT$(0x%08X)",
 	        (DWORD)GetStdHandle(STD_OUTPUT_HANDLE), (DWORD)GetStdHandle(STD_ERROR_HANDLE), (DWORD)hDbg);
 	printf("ConEmuC: Printf: %s\n", szHandles);
-	_wsprintfA(szDbgString, SKIPLEN(szDbgString) "ConEmuC: STD_OUTPUT_HANDLE: %s\n", szHandles);
+	_wsprintfA(szDbgString, SKIPCOUNT(szDbgString) "ConEmuC: STD_OUTPUT_HANDLE: %s\n", szHandles);
 	lbDbgWrite = WriteFile(GetStdHandle(STD_OUTPUT_HANDLE), szDbgString, lstrlenA(szDbgString), &nDbgWrite, NULL);
-	_wsprintfA(szDbgString, SKIPLEN(szDbgString) "ConEmuC: STD_ERROR_HANDLE:  %s\n", szHandles);
+	_wsprintfA(szDbgString, SKIPCOUNT(szDbgString) "ConEmuC: STD_ERROR_HANDLE:  %s\n", szHandles);
 	lbDbgWrite = WriteFile(GetStdHandle(STD_ERROR_HANDLE), szDbgString, lstrlenA(szDbgString), &nDbgWrite, NULL);
-	_wsprintfA(szDbgString, SKIPLEN(szDbgString) "ConEmuC: CONOUT$: %s", szHandles);
+	_wsprintfA(szDbgString, SKIPCOUNT(szDbgString) "ConEmuC: CONOUT$: %s", szHandles);
 	lbDbgWrite = WriteFile(hDbg, szDbgString, lstrlenA(szDbgString), &nDbgWrite, NULL);
 	CloseHandle(hDbg);
-	//_wsprintfA(szDbgString, SKIPLEN(szDbgString) "ConEmuC: PID=%u", GetCurrentProcessId());
+	//_wsprintfA(szDbgString, SKIPCOUNT(szDbgString) "ConEmuC: PID=%u", GetCurrentProcessId());
 	//MessageBoxA(0, "Press Ok to continue", szDbgString, MB_SYSTEMMODAL);
 #elif defined(SHOW_STARTED_PRINT_LITE)
 	{
 	wchar_t szPath[MAX_PATH]; GetModuleFileNameW(NULL, szPath, countof(szPath));
 	wchar_t szDbgMsg[MAX_PATH*2];
-	_wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"%s started, PID=%u\n", PointToName(szPath), GetCurrentProcessId());
+	_wsprintf(szDbgMsg, SKIPCOUNT(szDbgMsg) L"%s started, PID=%u\n", PointToName(szPath), GetCurrentProcessId());
 	_wprintf(szDbgMsg);
 	gbDumpServerInitStatus = TRUE;
 	}
@@ -1081,9 +1082,8 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 	#if defined(SHOW_STARTED_MSGBOX) || defined(SHOW_COMSPEC_STARTED_MSGBOX)
 	if (!IsDebuggerPresent())
 	{
-		wchar_t szTitle[100]; _wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuC Loaded (PID=%i)", gnSelfPID);
-		const wchar_t* pszCmdLine = GetCommandLineW();
-		MessageBox(NULL,pszCmdLine,szTitle,0);
+		wchar_t szTitle[100]; _wsprintf(szTitle, SKIPCOUNT(szTitle) L"ConEmuCD[%u]: PID=%u", WIN3264TEST(32,64) GetCurrentProcessId());
+		MessageBox(NULL, asCmdLine, szTitle, MB_SYSTEMMODAL);
 	}
 	#endif
 
@@ -1114,7 +1114,7 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 	}
 
 
-	PRINT_COMSPEC(L"ConEmuC started: %s\n", GetCommandLineW());
+	PRINT_COMSPEC(L"ConEmuC started: %s\n", asCmdLine);
 	nExitPlaceStep = 50;
 	xf_check();
 
@@ -1131,7 +1131,7 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 	// Событие используется для всех режимов
 	ghExitQueryEvent = CreateEvent(NULL, TRUE/*используется в нескольких нитях, manual*/, FALSE, NULL);
 
-	LPCWSTR pszFullCmdLine = GetCommandLineW();
+	LPCWSTR pszFullCmdLine = asCmdLine;
 	wchar_t szDebugCmdLine[MAX_PATH];
 	lstrcpyn(szDebugCmdLine, pszFullCmdLine ? pszFullCmdLine : L"", countof(szDebugCmdLine));
 
@@ -1184,7 +1184,7 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 			msprintf(szMsg, countof(szMsg), L"ConEmuC Started, Wine detected\r\nConHWND=x%08X(%u), PID=%u\r\nCmdLine: ",
 				(DWORD)ghConWnd, (DWORD)ghConWnd, gnSelfPID);
 			_wprintf(szMsg);
-			_wprintf(GetCommandLineW());
+			_wprintf(asCmdLine);
 			_wprintf(L"\r\n");
 		}
 		#endif
@@ -1205,7 +1205,7 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 	#ifdef SHOW_SERVER_STARTED_MSGBOX
 	if ((gnRunMode == RM_SERVER || gnRunMode == RM_ALTSERVER) && !IsDebuggerPresent() && gbNoCreateProcess)
 	{
-		ShowServerStartedMsgBox();
+		ShowServerStartedMsgBox(asCmdLine);
 	}
 	#endif
 
@@ -2181,6 +2181,14 @@ AltServerDone:
 	}
 #endif
 	return iRc;
+}
+
+#if defined(__GNUC__)
+extern "C"
+#endif
+int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserved*/)
+{
+	return ConsoleMain3(anWorkMode, GetCommandLineW());
 }
 
 int WINAPI RequestLocalServer(/*[IN/OUT]*/RequestLocalServerParm* Parm)

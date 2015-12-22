@@ -4,6 +4,7 @@ EXPORTS
 ; functions
 	LLKeybHook
 	ConsoleMain2
+	ConsoleMain3
 	HandlerRoutine
 	PrivateEntry=RequestLocalServer
 	DownloadCommand
