@@ -236,8 +236,10 @@ int CTabBarClass::CreateTabIcon(LPCWSTR asIconDescr, bool bAdmin, LPCWSTR asWork
 	return iIconIdx;
 }
 
-HIMAGELIST CTabBarClass::GetTabIcons()
+HIMAGELIST CTabBarClass::GetTabIcons(int nTabItemHeight)
 {
+	if (!gpSet->isTabIcons)
+		return NULL;
 	if (!m_TabIcons.IsInitialized())
 		return NULL;
 	return (HIMAGELIST)m_TabIcons;

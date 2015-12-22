@@ -63,8 +63,8 @@ const wchar_t gszBreak[] = {
 #define MATCH_SPACINGS L" \t\xB6\xB7\x2192\x25A1\x25D9\x266A"
 const wchar_t gszSpacing[] = MATCH_SPACINGS; // Пробел, таб, остальные для режима "Show white spaces" в редакторе фара
 // more quotation marks
-const wchar_t gszQuotStart[] = L"‘«`\'";
-const wchar_t gszQuotEnd[] = L"’»`\'";
+const wchar_t gszQuotStart[] = L"‘«`\'([<{";
+const wchar_t gszQuotEnd[] = L"’»`\')]>}";
 
 CMatch::CMatch(CRealConsole* apRCon)
 	:m_Type(etr_None)

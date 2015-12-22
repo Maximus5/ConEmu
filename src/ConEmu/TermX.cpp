@@ -180,7 +180,11 @@ bool TermX::GetSubstitute(const KEY_EVENT_RECORD& k, wchar_t (&szSubst)[16])
 	}
 
 	// Alt+Char
-	if ((Processor.Mods & xtc_Alt) && k.uChar.UnicodeChar)
+	if ((Processor.Mods & xtc_Alt) && k.uChar.UnicodeChar
+		// connector/gh#4: AltGr+Char
+		&& ((k.dwControlKeyState & (LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED|LEFT_ALT_PRESSED|RIGHT_ALT_PRESSED))
+				!= (LEFT_CTRL_PRESSED|RIGHT_ALT_PRESSED))
+		)
 	{
 		szSubst[0] = L'\033'; szSubst[1] = k.uChar.UnicodeChar; szSubst[2] = 0;
 		return true;

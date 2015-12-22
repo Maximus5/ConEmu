@@ -104,9 +104,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRMOUSE(s) //DEBUGSTR(s)
 #define DEBUGSTRMOUSEWHEEL(s) //DEBUGSTR(s)
 #define DEBUGSTRRCLICK(s) //DEBUGSTR(s)
-#define DEBUGSTRKEY(s) DEBUGSTR(s)
-#define DEBUGSTRIME(s) DEBUGSTR(s)
-#define DEBUGSTRCHAR(s) DEBUGSTR(s)
+#define DEBUGSTRKEY(s) //DEBUGSTR(s)
+#define DEBUGSTRIME(s) //DEBUGSTR(s)
+#define DEBUGSTRCHAR(s) //DEBUGSTR(s)
 #define DEBUGSTRSETCURSOR(s) //OutputDebugString(s)
 #define DEBUGSTRCONEVENT(s) //DEBUGSTR(s)
 #define DEBUGSTRMACRO(s) //DEBUGSTR(s)
@@ -2064,6 +2064,7 @@ void CConEmuMain::UpdateGuiInfoMapping()
 	SetConEmuFlags(m_GuiInfo.Flags,CECF_ConExcHandler,(gpSet->isConsoleExceptionHandler ? CECF_ConExcHandler : 0));
 	SetConEmuFlags(m_GuiInfo.Flags,CECF_ProcessNewCon,(gpSet->isProcessNewConArg ? CECF_ProcessNewCon : 0));
 	SetConEmuFlags(m_GuiInfo.Flags,CECF_ProcessCmdStart,(gpSet->isProcessCmdStart ? CECF_ProcessCmdStart : 0));
+	SetConEmuFlags(m_GuiInfo.Flags,CECF_ProcessCtrlZ,(gpSet->isProcessCtrlZ ? CECF_ProcessCtrlZ : 0));
 	SetConEmuFlags(m_GuiInfo.Flags,CECF_RealConVisible,(gpSet->isConVisible ? CECF_RealConVisible : 0));
 	// использовать расширение командной строки (ReadConsole). 0 - нет, 1 - старая версия (0.1.1), 2 - новая версия
 	switch (gpSet->isUseClink())
@@ -3814,26 +3815,6 @@ void CConEmuMain::PostDisplayRConError(CRealConsole* apRCon, wchar_t* pszErrMsg)
 	}
 
 	PostMessage(ghWnd, mn_MsgDisplayRConError, (WPARAM)apRCon, (LPARAM)pszErrMsg);
-}
-
-bool CConEmuMain::PtDiffTest(POINT C, int aX, int aY, UINT D)
-{
-	//(((abs(C.x-(int)(short)LOWORD(lParam)))<D) && ((abs(C.y-(int)(short)HIWORD(lParam)))<D))
-	int nX = C.x - aX;
-
-	if (nX < 0) nX = -nX;
-
-	if (nX > (int)D)
-		return false;
-
-	int nY = C.y - aY;
-
-	if (nY < 0) nY = -nY;
-
-	if (nY > (int)D)
-		return false;
-
-	return true;
 }
 
 void CConEmuMain::RegisterMinRestore(bool abRegister)

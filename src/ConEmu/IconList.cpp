@@ -87,7 +87,7 @@ bool CIconList::Initialize()
 		if (iFontY < 0)
 			iFontY = gpSetCls->EvalFontHeight(gpSet->sTabFontFace, iFontY, gpSet->nTabFontHeight);
 		int iDpyY = gpSetCls->EvalSize(max(16,iSysY), esf_Vertical|esf_CanUseDpi);
-		mn_CxIcon = iSysX; mn_CyIcon = iSysY;
+		mn_CxIcon = 16; mn_CyIcon = 16;
 		if (iFontY > 16)
 		{
 			if (iDpyY <= iFontY)

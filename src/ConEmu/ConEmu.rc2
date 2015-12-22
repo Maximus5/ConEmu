@@ -101,6 +101,7 @@ BEGIN
 	cbOneTabPerGroup        "Show only one tab for all splits in the group"
 	cbProcessAnsi           "Enable processing of ANSI escape sequences, ‘Inject ConEmuHk’ must be checked if you want to work with second level processes (e.g. cmd.exe -> app.exe)"
 	cbProcessCmdStart       "Hook 'start' command in your cmd's prompt and batches started in ConEmu tabs to run console applications in new ConEmu tabs"
+	cbProcessCtrlZ          "Treat Ctrl-Z as ‘EndOfStream’. On new line press Ctrl-Z and Enter.\r\nRefer to the gh#465 for details (Go input streams)."
 	cbProcessNewConArg      "Enable processing of '-new_console' and '-cur_console' switches in your shell prompt, scripts etc. started in ConEmu tabs"
 	cbQuakeStyle            "Slide console window from the top of the screen like gaming consoles\r\nChoose desired hotkey for ‘Minimize/Restore’ action on ‘Keys & Macro’ page"
 	cbRClick                "Off - all RClicks passed to console\r\nOn - EMenu called instead of RClick\r\n3rd-state - Short RClick passed, Long RClick -> EMenu\r\nWarning! This may conflict with RDrag"

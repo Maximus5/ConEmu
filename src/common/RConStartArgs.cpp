@@ -512,7 +512,7 @@ wchar_t* RConStartArgs::CreateCommandLine(bool abForTasks /*= false*/) const
 	if (InjectsDisable == crb_On) cchMaxLen++; // -new_console:i
 	if (ForceNewWindow == crb_On) cchMaxLen++; // -new_console:N
 	if (ForceHooksServer == crb_On) cchMaxLen++; // -new_console:R
-	if (eConfirmation) cchMaxLen++; // -new_console:c / -new_console:n
+	if (eConfirmation) cchMaxLen+=2; // -new_console:c[0] / -new_console:n
 	if (ForceDosBox == crb_On) cchMaxLen++; // -new_console:x
 	if (ForceInherit == crb_On) cchMaxLen++; // -new_console:I
 	if (eSplit) cchMaxLen += 64; // -new_console:s[<SplitTab>T][<Percents>](H|V)
@@ -555,10 +555,17 @@ wchar_t* RConStartArgs::CreateCommandLine(bool abForTasks /*= false*/) const
 	if (ForceInherit == crb_On)
 		wcscat_c(szAdd, L"I");
 
-	if (eConfirmation == eConfAlways)
-		wcscat_c(szAdd, L"c");
-	else if (eConfirmation == eConfNever)
-		wcscat_c(szAdd, L"n");
+	switch (eConfirmation)
+	{
+	case eConfAlways:
+		wcscat_c(szAdd, L"c"); break;
+	case eConfEmpty:
+		wcscat_c(szAdd, L"c0"); break;
+	case eConfNever:
+		wcscat_c(szAdd, L"n"); break;
+	case eConfDefault:
+		break; // Don't add anything
+	}
 
 	if (LongOutputDisable == crb_On)
 		wcscat_c(szAdd, L"o");
@@ -698,10 +705,17 @@ wchar_t* RConStartArgs::CreateCommandLine(bool abForTasks /*= false*/) const
 
 void RConStartArgs::AppendServerArgs(wchar_t* rsServerCmdLine, INT_PTR cchMax)
 {
-	if (eConfirmation == RConStartArgs::eConfAlways)
-		_wcscat_c(rsServerCmdLine, cchMax, L" /CONFIRM");
-	else if (eConfirmation == RConStartArgs::eConfNever)
-		_wcscat_c(rsServerCmdLine, cchMax, L" /NOCONFIRM");
+	switch (eConfirmation)
+	{
+	case eConfAlways:
+		_wcscat_c(rsServerCmdLine, cchMax, L" /CONFIRM"); break;
+	case eConfEmpty:
+		_wcscat_c(rsServerCmdLine, cchMax, L" /ECONFIRM"); break;
+	case eConfNever:
+		_wcscat_c(rsServerCmdLine, cchMax, L" /NOCONFIRM"); break;
+	case eConfDefault:
+		break; // Don't add anything
+	}
 
 	if (InjectsDisable == crb_On)
 		_wcscat_c(rsServerCmdLine, cchMax, L" /NOINJECT");
@@ -1114,13 +1128,22 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 						break;
 
 					case L'n':
-						// n - отключить "Press Enter or Esc to close console"
+						// n - disable 'Press Enter or Esc to close console' confirmation
 						eConfirmation = eConfNever;
 						break;
 
 					case L'c':
-						// c - принудительно включить "Press Enter or Esc to close console"
-						eConfirmation = eConfAlways;
+						if (*pszEnd != L'0')
+						{
+							// c - force enable 'Press Enter or Esc to close console' confirmation
+							eConfirmation = eConfAlways;
+						}
+						else
+						{
+							// c0 - force wait for Enter or Esc without print message
+							pszEnd++;
+							eConfirmation = eConfEmpty;
+						}
 						break;
 
 					case L'x':

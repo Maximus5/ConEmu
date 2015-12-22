@@ -110,7 +110,7 @@ LRESULT CTabPanelWin::ReBarProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 	{
 		case WM_DESTROY:
 		{
-			_ASSERTE(mh_Rebar == hwnd);
+			_ASSERTE(!mh_Rebar || mh_Rebar == hwnd);
 			mh_Rebar = NULL;
 			break;
 		}
@@ -192,7 +192,7 @@ LRESULT CTabPanelWin::TabProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam
 	{
 		case WM_DESTROY:
 		{
-			_ASSERTE(mh_Tabbar == hwnd);
+			_ASSERTE(!mh_Tabbar || mh_Tabbar == hwnd);
 			mh_Tabbar = NULL;
 			break;
 		}
@@ -269,7 +269,7 @@ LRESULT CTabPanelWin::ToolProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 	{
 		case WM_DESTROY:
 		{
-			_ASSERTE(mh_Toolbar == hwnd);
+			_ASSERTE(!mh_Toolbar || mh_Toolbar == hwnd);
 			mh_Toolbar = NULL;
 			break;
 		}
@@ -456,6 +456,8 @@ HWND CTabPanelWin::CreateTabbar()
 		_ASSERTE(ghWnd!=NULL && "ConEmu main window must be created already!");
 	}
 
+	int nHeightExpected = QueryTabbarHeight();
+
 	DWORD nPlacement = TCS_SINGLELINE|WS_VISIBLE|WS_CHILD;
 
 	mh_Tabbar = CreateWindow(WC_TABCONTROL, NULL, nPlacement | WS_CLIPSIBLINGS | TCS_FOCUSNEVER, 0, 0,
@@ -467,12 +469,12 @@ HWND CTabPanelWin::CreateTabbar()
 	}
 
 
-	// Надо
+	// Subclass it
 	WNDPROC defaultProc = (WNDPROC)SetWindowLongPtr(mh_Tabbar, GWLP_WNDPROC, (LONG_PTR)_TabProc);
 	SetObj(mh_Tabbar, this, defaultProc);
 
-
-	SendMessage(mh_Tabbar, TCM_SETIMAGELIST, 0, (LPARAM)mp_Owner->GetTabIcons());
+	// It may be NULL
+	SendMessage(mh_Tabbar, TCM_SETIMAGELIST, 0, (LPARAM)mp_Owner->GetTabIcons(nHeightExpected));
 
 	if (!mh_TabTip || !IsWindow(mh_TabTip))
 		InitTooltips(mh_Tabbar);
@@ -480,12 +482,15 @@ HWND CTabPanelWin::CreateTabbar()
 
 	UpdateTabFontInt();
 
+	// Force tab item heights?
+	TabCtrl_SetItemSize(mh_Tabbar, 80/*doesn't matter with variable width*/, nHeightExpected-3);
+
 	if (!mh_Balloon || !IsWindow(mh_Balloon))
 	{
 		InitTooltips(mh_Tabbar);
 	}
 
-	// Добавляет закладку, или меняет (при необходимости) заголовок существующей
+	// Add new of refresh existing tab label
 	AddTabInt(gpConEmu->GetDefaultTabLabel(), 0, gpConEmu->mb_IsUacAdmin ? fwt_Elevated : fwt_Any, -1);
 
 	// Retrieve created tabbar size (height)
@@ -759,7 +764,7 @@ void CTabPanelWin::AddTabInt(LPCWSTR text, int i, CEFarWindowType Flags, int iTa
 
 	TCITEM tie;
 	// иконку обновляем всегда. она может измениться для таба
-	tie.mask = TCIF_TEXT | (mp_Owner->GetTabIcons() ? TCIF_IMAGE : 0) | TCIF_STATE;
+	tie.mask = TCIF_TEXT | (gpSet->isTabIcons ? TCIF_IMAGE : 0) | TCIF_STATE;
 	tie.dwState = bHight ? TCIS_HIGHLIGHTED : 0;
 	tie.dwStateMask = TCIS_HIGHLIGHTED;
 	tie.pszText = (LPWSTR)text ;
@@ -1402,7 +1407,7 @@ int CTabPanelWin::QueryTabbarHeight()
 	//	hTabs = CreateTabbar(true);
 	//}
 
-	if (mh_Tabbar)
+	if (mh_Tabbar && IsWindow(mh_Tabbar))
 	{
 		// нас интересует смещение клиентской области. Т.е. начало - из 0. Остальное не важно
 		RECT rcClient = MakeRect(600, 400);

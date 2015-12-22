@@ -184,7 +184,7 @@ BOOL    gbCtrlBreakStopWaitingShown = FALSE;
 BOOL    gbTerminateOnCtrlBreak = FALSE;
 BOOL    gbPrintRetErrLevel = FALSE; // Вывести в StdOut код завершения процесса (RM_COMSPEC в основном)
 bool    gbSkipHookersCheck = false;
-int     gnConfirmExitParm = 0; // 1 - CONFIRM, 2 - NOCONFIRM
+int     gnConfirmExitParm = 0; // 1 - RConStartArgs::eConfAlways, 2 - RConStartArgs::eConfNever, 3 - RConStartArgs::eConfEmpty
 BOOL    gbAlwaysConfirmExit = FALSE;
 BOOL    gbAutoDisableConfirmExit = FALSE; // если корневой процесс проработал достаточно (10 сек) - будет сброшен gbAlwaysConfirmExit
 BOOL    gbRootAliveLess10sec = FALSE; // корневой процесс проработал менее CHECK_ROOTOK_TIMEOUT
@@ -1145,7 +1145,7 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 		_ASSERTE(gbAttachMode==am_None);
 		if (!(gbAttachMode & am_Modes))
 			gbAttachMode |= am_Simple;
-		gnConfirmExitParm = 2;
+		gnConfirmExitParm = RConStartArgs::eConfNever;
 		gbAlwaysConfirmExit = FALSE; gbAutoDisableConfirmExit = FALSE;
 		gbNoCreateProcess = TRUE;
 		gbAlienMode = TRUE;
@@ -1951,6 +1951,7 @@ wrap:
 		//#endif
 
 		BOOL lbProcessesLeft = FALSE, lbDontShowConsole = FALSE;
+		BOOL lbLineFeedAfter = TRUE;
 		DWORD nProcesses[10] = {};
 		DWORD nProcCount = -1;
 
@@ -1985,11 +1986,16 @@ wrap:
 			pszMsg = L"\n\nPress Enter or Esc to exit...";
 			lbDontShowConsole = gnRunMode != RM_SERVER;
 		}
+		else if (gnConfirmExitParm == RConStartArgs::eConfEmpty)
+		{
+			lbLineFeedAfter = FALSE; // Don't print anything to console
+		}
 		else
 		{
 			if (gbRootWasFoundInCon == 1)
 			{
-				if (gbRootAliveLess10sec && (gnConfirmExitParm != 1))  // корневой процесс проработал менее CHECK_ROOTOK_TIMEOUT
+				// If root process has been working less than CHECK_ROOTOK_TIMEOUT
+				if (gbRootAliveLess10sec && (gnConfirmExitParm != RConStartArgs::eConfAlways))
 				{
 					static wchar_t szMsg[255];
 					if (gnExitCode)
@@ -2007,12 +2013,15 @@ wrap:
 					pszMsg = szMsg;
 				}
 				else
+				{
 					pszMsg = L"\n\nPress Enter or Esc to close console...";
+				}
 			}
 		}
 
-		if (!pszMsg)  // Иначе - сообщение по умолчанию
+		if (!pszMsg && (gnConfirmExitParm != RConStartArgs::eConfEmpty))
 		{
+			// Let's show anything (default message)
 			pszMsg = L"\n\nPress Enter or Esc to close console, or wait...";
 
 			#ifdef _DEBUG
@@ -2028,18 +2037,18 @@ wrap:
 
 		gbInExitWaitForKey = TRUE;
 		WORD vkKeys[3]; vkKeys[0] = VK_RETURN; vkKeys[1] = VK_ESCAPE; vkKeys[2] = 0;
-		ExitWaitForKey(vkKeys, pszMsg, TRUE, lbDontShowConsole);
+		ExitWaitForKey(vkKeys, pszMsg, lbLineFeedAfter, lbDontShowConsole);
 
 		UNREFERENCED_PARAMETER(nProcCount);
 		UNREFERENCED_PARAMETER(nProcesses[0]);
 
-		if (iRc == CERR_PROCESSTIMEOUT)
+		// During the wait, new process may be started in our console
 		{
 			int nCount = gpSrv->nProcessCount;
 
 			if (nCount > 1 || gpSrv->DbgInfo.bDebuggerActive)
 			{
-				// Процесс таки запустился!
+				// OK, new root found, wait for it
 				goto wait;
 			}
 		}
@@ -4899,15 +4908,16 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 			eStateCheck = ec_IsAdmin;
 			break;
 		}
-		else if (wcscmp(szArg, L"/CONFIRM")==0)
+		else if ((wcscmp(szArg, L"/CONFIRM")==0)
+			|| (wcscmp(szArg, L"/ECONFIRM")==0))
 		{
 			TODO("уточнить, что нужно в gbAutoDisableConfirmExit");
-			gnConfirmExitParm = 1;
+			gnConfirmExitParm = (wcscmp(szArg, L"/CONFIRM")==0) ? RConStartArgs::eConfAlways : RConStartArgs::eConfEmpty;
 			gbAlwaysConfirmExit = TRUE; gbAutoDisableConfirmExit = FALSE;
 		}
 		else if (wcscmp(szArg, L"/NOCONFIRM")==0)
 		{
-			gnConfirmExitParm = 2;
+			gnConfirmExitParm = RConStartArgs::eConfNever;
 			gbAlwaysConfirmExit = FALSE; gbAutoDisableConfirmExit = FALSE;
 		}
 		else if (wcscmp(szArg, L"/OMITHOOKSWARN")==0)
@@ -6155,7 +6165,10 @@ int ExitWaitForKey(WORD* pvkKeys, LPCWSTR asConfirm, BOOL abNewLine, BOOL abDont
 	SetConsoleMode(hOut, ENABLE_PROCESSED_OUTPUT|ENABLE_WRAP_AT_EOL_OUTPUT);
 
 	//
-	_wprintf(asConfirm);
+	if (asConfirm && *asConfirm)
+	{
+		_wprintf(asConfirm);
+	}
 
 	//if (lbNeedVisible)
 	// Если окошко опять было скрыто - значит GUI часть жива, и опять отображаться не нужно

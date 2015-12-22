@@ -87,6 +87,7 @@ struct RConStartArgs
  		eConfDefault = 0,
  		eConfAlways  = 1,         // -new_console:c
  		eConfNever   = 2,         // -new_console:n
+		eConfEmpty   = 3,         // -new_console:c0
  	} eConfirmation;
 
 	RConBoolArg     ForceDosBox;        // -new_console:x (may be useful with .bat files)

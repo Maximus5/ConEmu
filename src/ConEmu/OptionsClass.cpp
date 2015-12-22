@@ -2285,6 +2285,7 @@ LRESULT CSettings::OnInitDialog_Ext(HWND hWnd2, bool abInitial)
 
 	checkDlgButton(hWnd2, cbProcessNewConArg, gpSet->isProcessNewConArg);
 	checkDlgButton(hWnd2, cbProcessCmdStart, gpSet->isProcessCmdStart);
+	checkDlgButton(hWnd2, cbProcessCtrlZ, gpSet->isProcessCtrlZ);
 
 	checkDlgButton(hWnd2, cbSuppressBells, gpSet->isSuppressBells);
 
