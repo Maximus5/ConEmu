@@ -48,8 +48,11 @@
     <!-- It allows the conemu stuff to be copied to the outdir of that project (or projects which reference it). -->
     <file src="Build\ConEmu.Console.Targets" target="Build" />
     <!-- Set of ConEmu files. -->
-    <file src="..\..\Release\ConEmu*.exe" target="Tools\ConEmu" />
-    <file src="..\..\Release\ConEmu\**" target="Tools\ConEmu\ConEmu" />
-    <file src="..\..\Release\plugins\**" target="Tools\ConEmu\plugins" />
+    <file src="..\..\Release\ConEmu*.exe" target="Tools\ConEmu"
+      />
+    <file src="..\..\Release\ConEmu\**" target="Tools\ConEmu\ConEmu"
+      exclude="**\*.map;**\*.pdb;**\*.bak;**\*-Portable.txt;**\!*.*" />
+    <file src="..\..\Release\plugins\**" target="Tools\ConEmu\plugins"
+      exclude="**\*.map;**\*.pdb;**\*.bak;**\*-Portable.txt;**\!*.*" />
   </files>
 </package>
