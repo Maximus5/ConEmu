@@ -19,6 +19,27 @@ http://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2015.12.22
+* gh#465: Treat Ctrl-Z as ‘EndOfStream’ in ReadConsole (Go input streams).
+  To use, on new line press Ctrl-Z and Enter. Option (Features page) disabled by default.
+* gh#469: TabBar/ToolBar is too large.
+* gh#473: Support Ctrl+LClick on paths surrounded by brackets.
+* connector/gh#4: AltGr+Char was not working with cygwin/msys connector.
+* gh#470: Double click word selection was broken.
+* conemu-inside/gh#3: New switch `-new_console:c0`.
+  It suppress writing to console confirmation messages
+  like "Press Enter or Esc to close console...", but let server
+  to wait for `Enter` or `Esc` nonetheless.
+* ConEmu.Core - Nuget package for Nuget.org, for referencing the stuff from Visual Studio projects.
+  Unlike Choco's, this one has to carry all of the payload files inside and not on an URL.
+  The nuget with conemu WinForms control references this nuget, so just adding a nuget to your project
+  sets it up for using the conemu control out of the box.
+* Internal. Fix package name
+* API: ConEmuCD exports function ConsoleMain3 to enable ‘in-process’ GuiMacro calls.
+  Prototype: int __stdcall ConsoleMain3(int anWorkMode, LPCWSTR asCmdLine)
+  Example: ConsoleMain3(0, L"-GuiMacro:1234 Print \"exit\\n\"");
+
+
 2015.12.17
 * AnsiLog was not written properly in some cases.
 * Reuse HandleKeeper to determine console handle properties properly
