@@ -7,7 +7,7 @@ $PortableApps = Join-Path $Script_File_path "..\PortableApps\App\AppInfo\appinfo
 $NuSpec = Join-Path $Script_File_path "..\nuget\chocolatey\ConEmu.nuspec"
 $NuInstall = Join-Path $Script_File_path "..\nuget\chocolatey\tools\chocolateyInstall.ps1"
 $NuUnInstall = Join-Path $Script_File_path "..\nuget\chocolatey\tools\chocolateyUninstall.ps1"
-$ConEmuConsoleNuget = Join-Path $Script_File_path "..\nuget\ConEmu.Console\ConEmu.Console.nuspec"
+$ConEmuCoreNuget = Join-Path $Script_File_path "..\nuget\ConEmu.Core\ConEmu.Core.nuspec"
 $wix = Join-Path $Script_File_path "..\src\Setup\Version.wxi"
 $setupper = Join-Path $Script_File_path "..\src\Setup\Setupper\VersionI.h"
 $WhatsNew = Join-Path $Script_File_path "..\Release\ConEmu\WhatsNew-ConEmu.txt"
@@ -118,9 +118,9 @@ Set-Content $NuSpec $xml -Encoding Ascii
 }
 
 #
-# Nuget.org ConEmu.Console
+# Nuget.org ConEmu.Core
 #
-$ThisFilePath = $ConEmuConsoleNuget
+$ThisFilePath = $ConEmuCoreNuget
 Write-Host -ForegroundColor Green $ThisFilePath
 $xml = New-Object ([xml])
 $xml.Load($ThisFilePath)

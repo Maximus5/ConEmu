@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <!-- This spell copies ConEmu.exe with all its stuff to the outdir of your project or whoever references it as a project. -->
+  <!-- Files are placed in the ConEmu subfolder. -->
+  <!-- To prevent this copying, set ConEmuCoreNoCopyOutput property to True. -->
+  <PropertyGroup Condition="'$(ConEmuCoreNoCopyOutput)' != 'True'">
+    <GetCopyToOutputDirectoryItemsDependsOn>$(GetCopyToOutputDirectoryItemsDependsOn);ConEmu_Core_AddTaskItems</GetCopyToOutputDirectoryItemsDependsOn>
+    <AssignTargetPathsDependsOn>$(AssignTargetPathsDependsOn);ConEmu_Core_AddTaskItems</AssignTargetPathsDependsOn>
+  </PropertyGroup>
+  <ItemGroup>
+    <ConEmu_Core_Inputs Include="$(MSBuildThisFileDirectory)..\Tools\ConEmu\*"/>
+  </ItemGroup>
+  <Target Name="ConEmu_Core_AddTaskItems">
+    <ItemGroup>
+      <None Include="@(ConEmu_Core_Inputs)">
+        <Link>ConEmu\%(Filename)%(Extension)</Link>
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+    </ItemGroup>
+  </Target>
+</Project>

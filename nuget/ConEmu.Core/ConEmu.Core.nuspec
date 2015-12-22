@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
   <metadata>
-    <id>ConEmu.Console</id>
+    <id>ConEmu.Core</id>
     <version>15.12.17.0</version>
     <title>ConEmu, a Windows Console Emulator</title>
     <authors>Maximus5, Xavier Decoster, Ethan J. Brown</authors>
@@ -46,13 +46,15 @@
   <files>
     <!-- Nuget will include this build file in the MSBuild project when referencing the Nuget. -->
     <!-- It allows the conemu stuff to be copied to the outdir of that project (or projects which reference it). -->
-    <file src="Build\ConEmu.Console.Targets" target="Build" />
+    <file src="Build\ConEmu.Core.Targets" target="Build" />
     <!-- Set of ConEmu files. -->
-    <file src="..\..\Release\ConEmu*.exe" target="Tools\ConEmu"
-      />
-    <file src="..\..\Release\ConEmu\**" target="Tools\ConEmu\ConEmu"
-      exclude="**\*.map;**\*.pdb;**\*.bak;**\*-Portable.txt;**\!*.*" />
-    <file src="..\..\Release\plugins\**" target="Tools\ConEmu\plugins"
-      exclude="**\*.map;**\*.pdb;**\*.bak;**\*-Portable.txt;**\!*.*" />
+    <file src="..\..\Release\ConEmu.exe" target="Tools\ConEmu" />
+    <file src="..\..\Release\ConEmu64.exe" target="Tools\ConEmu" />
+    <file src="..\..\Release\ConEmu\ConEmuC.exe" target="Tools\ConEmu" />
+    <file src="..\..\Release\ConEmu\ConEmuC64.exe" target="Tools\ConEmu" />
+    <file src="..\..\Release\ConEmu\ConEmuCD.dll" target="Tools\ConEmu" />
+    <file src="..\..\Release\ConEmu\ConEmuCD64.dll" target="Tools\ConEmu" />
+    <file src="..\..\Release\ConEmu\ConEmuHk.dll" target="Tools\ConEmu" />
+    <file src="..\..\Release\ConEmu\ConEmuHk64.dll" target="Tools\ConEmu" />
   </files>
 </package>
