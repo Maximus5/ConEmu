@@ -665,7 +665,7 @@ void Settings::InitSettings()
 	pszAnsiLog = lstrdup(L"%ConEmuDir%\\Logs\\");
 	isProcessNewConArg = true;
 	isProcessCmdStart = true;
-	isProcessCtrlZ = true;
+	isProcessCtrlZ = false; // gh#465, golang/go#6303
 	isSuppressBells = true;
 	isConsoleExceptionHandler = false; // по умолчанию - false
 	mb_UseClink = true;
