@@ -7,6 +7,7 @@ $PortableApps = Join-Path $Script_File_path "..\PortableApps\App\AppInfo\appinfo
 $NuSpec = Join-Path $Script_File_path "..\nuget\chocolatey\ConEmu.nuspec"
 $NuInstall = Join-Path $Script_File_path "..\nuget\chocolatey\tools\chocolateyInstall.ps1"
 $NuUnInstall = Join-Path $Script_File_path "..\nuget\chocolatey\tools\chocolateyUninstall.ps1"
+$ConEmuConsoleNuget = Join-Path $Script_File_path "..\nuget\ConEmu.Console\ConEmu.Console.nuspec"
 $wix = Join-Path $Script_File_path "..\src\Setup\Version.wxi"
 $setupper = Join-Path $Script_File_path "..\src\Setup\Setupper\VersionI.h"
 $WhatsNew = Join-Path $Script_File_path "..\Release\ConEmu\WhatsNew-ConEmu.txt"
@@ -116,7 +117,24 @@ Set-Content $NuSpec $xml -Encoding Ascii
   Set-Content $_ $txt -Encoding Ascii
 }
 
-
+#
+# Nuget.org ConEmu.Console
+#
+$ThisFilePath = $ConEmuConsoleNuget
+Write-Host -ForegroundColor Green $ThisFilePath
+$xml = New-Object ([xml])
+$xml.Load($ThisFilePath)
+$nt = New-Object ([System.Xml.XmlNamespaceManager]) ($xml.NameTable)
+$nt.AddNamespace("n", "http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd")
+$xmlVersion = $xml.SelectSingleNode("/n:package/n:metadata/n:version", $nt)
+if($xmlVersion -eq $null)
+{
+  Write-Host -ForegroundColor Red "Proper <version>...</version> element was not found in:`r`n$ThisFilePath"
+  $host.SetShouldExit(101)
+  exit 
+}
+$xmlVersion.InnerText = $build_dot4
+$xml.Save($ThisFilePath)
 
 #
 # Installer
