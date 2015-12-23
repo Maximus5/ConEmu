@@ -204,14 +204,11 @@ LINK_DEBUG=/map:"$(MAP)" /debug /pdb:$(PDBNAME)
 CPP_DEBUG=/Zi
 !endif
 
-!ifndef NEEDDEFLIB
-NODEFLIB = /nodefaultlib
-!endif
 
 #/merge:.rdata=.text /SUBSYSTEM:WINDOWS
 #/ENTRY:_DllMainCRTStartup
 #/ENTRY:DllMain
-LINK_FLAGS=/nologo /DLL /RELEASE $(BASEADDRESS) $(LINK_MACHINE) $(NOWIN98) $(NODEFLIB) $(ENV_LIB_OPT) /def:"$(DEF)" /out:"$(DLLFULLNAME)" $(LINK_DEBUG)
+LINK_FLAGS=/nologo /DLL /RELEASE $(BASEADDRESS) $(LINK_MACHINE) $(NOWIN98) $(ENV_LIB_OPT) /def:"$(DEF)" /out:"$(DLLFULLNAME)" $(LINK_DEBUG)
 
 
 CFLAGS_NO = $(MP) $(CPP_PROJ_NO) $(CPP_DEBUG) $(CPP_OPT)

@@ -119,23 +119,23 @@ COMMONLIB =
 !elseif defined(USEDDKCRT)
 # use msvcrt.dll (WinDDK LIB's are required)
 !if defined(AMD64)
-COMMONLIB = $(COMMONSRCDIR)/WinDDK/amd64/msvcrt.lib $(COMMONSRCDIR)/WinDDK/amd64/msvcrt_win2003.obj
+COMMONLIB = /NODEFAULTLIB $(COMMONSRCDIR)/WinDDK/amd64/msvcrt.lib $(COMMONSRCDIR)/WinDDK/amd64/msvcrt_win2003.obj
 !elseif defined(IA64)
-COMMONLIB = $(COMMONSRCDIR)/WinDDK/ia64/msvcrt.lib $(COMMONSRCDIR)/WinDDK/ia64/msvcrt_win2003.obj
+COMMONLIB = /NODEFAULTLIB $(COMMONSRCDIR)/WinDDK/ia64/msvcrt.lib $(COMMONSRCDIR)/WinDDK/ia64/msvcrt_win2003.obj
 !else
-COMMONLIB = $(COMMONSRCDIR)/WinDDK/i386/msvcrt.lib # $(COMMONSRCDIR)/WinDDK/i386/msvcrt_win2000.obj
+COMMONLIB = /NODEFAULTLIB $(COMMONSRCDIR)/WinDDK/i386/msvcrt.lib # $(COMMONSRCDIR)/WinDDK/i386/msvcrt_win2000.obj
 !endif
 !elseif defined(AMD64)
 # Use precompiled libCRT64.lib
-COMMONLIB = $(COMMONSRCDIR)/libCRT64.lib
+COMMONLIB = /NODEFAULTLIB $(COMMONSRCDIR)/libCRT64.lib
 #$(COMMONSRCDIR)chkstk64.obj
 !elseif defined(IA64)
 # Use precompiled libCRTIA64.lib
-COMMONLIB = $(COMMONSRCDIR)/libCRTIA64.lib
+COMMONLIB = /NODEFAULTLIB $(COMMONSRCDIR)/libCRTIA64.lib
 #$(COMMONSRCDIR)chkstkIA64.obj
 !else
 # Use precompiled libCRT.lib
-COMMONLIB = $(COMMONSRCDIR)/libCRT.lib
+COMMONLIB = /NODEFAULTLIB $(COMMONSRCDIR)/libCRT.lib
 #$(COMMONSRCDIR)chkstk.obj
 !endif
 
