@@ -175,7 +175,6 @@ clean:
 	@if not exist "$(RELEASEDIR)\$(NULL)" mkdir "$(RELEASEDIR)"
 	@echo moving `$(DLLFULLNAME)` to `$(RELEASEDIR)`
 	@move $(DLLFULLNAME) $(RELEASEDIR) > nul
-	@cd
 !ifdef DEBUG
 	@echo moving `$(PDB)` to `$(RELEASEDIR)`
 	@move $(PDB) $(RELEASEDIR) > nul

@@ -213,7 +213,6 @@ clean:
 	@if not exist "$(RELEASEDIR)\$(NULL)" mkdir "$(RELEASEDIR)"
 	@echo moving `$(DLLFULLNAME)` to `$(RELEASEDIR)`
 	@move $(DLLFULLNAME) $(RELEASEDIR) > nul
-	@cd
 !ifdef USE_PDB
 	@echo moving `$(PDB)` to `$(RELEASEDIR)`
 	@move $(PDB) $(RELEASEDIR) > nul

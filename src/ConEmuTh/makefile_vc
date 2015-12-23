@@ -187,8 +187,8 @@ dirs:
 clean:
 	@echo $(CLR_MOD)Copying release files$(CLR_STD)
 	@if not exist "$(RELEASEDIR)\$(NULL)" mkdir "$(RELEASEDIR)"
+	@echo moving `$(DLLFULLNAME)` to `$(RELEASEDIR)`
 	@move $(DLLFULLNAME) $(RELEASEDIR) > nul
-	@cd
 	@echo moving `$(PDB)` to `$(RELEASEDIR)`
 !ifdef DEBUG
 	move $(PDB) $(RELEASEDIR) > nul

@@ -47,8 +47,11 @@ dirs:
 clean:
 	@echo $(CLR_MOD)Copying release files$(CLR_STD)
 	@if not exist "$(RELEASEDIR)\$(NULL)" mkdir "$(RELEASEDIR)"
+	@echo moving `$(DLLFULLNAME)` to `$(RELEASEDIR)`
 	@move "$(DLLFULLNAME)" $(RELEASEDIR) > nul
+	@echo moving `$(PDBNAME)` to `$(RELEASEDIR)\$(DLLNAME).pdb`
 	@move "$(PDBNAME)" "$(RELEASEDIR)\$(DLLNAME).pdb" > nul
+	@echo moving `$(MAP)` to `$(RELEASEDIR)\$(DLLNAME).map`
 	@move "$(MAP)" "$(RELEASEDIR)\$(DLLNAME).map" > nul
 	@cmd /c del /Q $(OBJDIR)\*.* > nul
 	@cmd /c del /Q $(OUTDIR)\*.* > nul
