@@ -6141,7 +6141,13 @@ int ExitWaitForKey(WORD* pvkKeys, LPCWSTR asConfirm, BOOL abNewLine, BOOL abDont
 			{
 				BOOL lbGuiAlive = FALSE;
 
-				if (ghConEmuWnd && IsWindow(ghConEmuWnd))
+				if (ghConEmuWndDC && !isConEmuTerminated())
+				{
+					// ConEmu will deal the situation?
+					// EmergencyShow annoys user if parent window was killed (InsideMode)
+					lbGuiAlive = TRUE;
+				}
+				else if (ghConEmuWnd && IsWindow(ghConEmuWnd))
 				{
 					DWORD_PTR dwLRc = 0;
 
@@ -6309,6 +6315,37 @@ void SetTerminateEvent(SetTerminateEventPlace eFrom)
 	if (!gTerminateEventPlace)
 		gTerminateEventPlace = eFrom;
 	SetEvent(ghExitQueryEvent);
+}
+
+
+bool isConEmuTerminated()
+{
+	// HWND of our VirtualConsole
+	if (!ghConEmuWndDC)
+	{
+		_ASSERTE(FALSE && "ghConEmuWndDC is expected to be NOT NULL");
+		return false;
+	}
+
+	if (::IsWindow(ghConEmuWndDC))
+	{
+		// ConEmu is alive
+		return false;
+	}
+
+	//TODO: It would be better to check process presence via connected Pipe
+	//TODO: Same as in ConEmu, it must check server presence via pipe
+	// For now, don't annoy user with RealConsole if all processes were finished
+	if (gbInExitWaitForKey // We are waiting for Enter or Esc
+		&& (gpSrv->nProcessCount <= 1) // No active processes are found in console (except our SrvPID)
+		)
+	{
+		// Let RealConsole remain invisible, ConEmu will deal the situation
+		return false;
+	}
+
+	// ConEmu was killed?
+	return true;
 }
 
 

@@ -4898,8 +4898,8 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 		}
 		#endif
 
-		// GUI отвалился или был Detach
-		if (ghConEmuWndDC && !IsWindow(ghConEmuWndDC))
+		// GUI was crashed or was detached?
+		if (ghConEmuWndDC && isConEmuTerminated())
 		{
 			gpSrv->bWasDetached = TRUE;
 			SetConEmuWindows(NULL, NULL, NULL);

@@ -2354,6 +2354,14 @@ void CConEmuMain::Destroy(bool abForce)
 {
 	LogString(L"CConEmuMain::Destroy()");
 
+	// Warning! if (abForce) - we can't call MainThread,
+	// there is nobody to process messages (parent was killed)
+	if (abForce)
+	{
+		//TODO: Close all consoles, who've finished their processes
+		//TODO: EmergencyShow all consoles, who've running processes
+	}
+
 	DeinitOnDestroy(ghWnd, abForce);
 
 	if (gbInDisplayLastError)

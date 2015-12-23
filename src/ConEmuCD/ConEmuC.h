@@ -117,6 +117,8 @@ enum SetTerminateEventPlace
 extern SetTerminateEventPlace gTerminateEventPlace;
 void SetTerminateEvent(SetTerminateEventPlace eFrom);
 
+bool isConEmuTerminated();
+
 /*  Global  */
 extern DWORD   gnSelfPID;
 //HANDLE  ghConIn = NULL, ghConOut = NULL;
