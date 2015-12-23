@@ -194,12 +194,12 @@ ALL: dirs $(INSTALL) $(DLLFULLNAME) clean
 
 $(DLLFULLNAME) : $(LINK_OBJS) $(RES) $(LINK_DEP)
 !ifndef __MAKE__
-	@echo $(LINK_FLAGS) $(LIBS) $(LINK_OBJS) $(RES)
+	@echo (__LINK__) $(LINK_FLAGS) $(LIBS)
 	@$(LNK) @<<
 	$(LINK_FLAGS) $(LIBS) $(LINK_OBJS) $(RES)
 <<
 !else
-	@echo $(LINK_FLAGS) $(LIBS) $(LINK_OBJS) $(RES)
+	@echo (__MAKE__) $(LINK_FLAGS) $(LIBS)
 	@$(LNK) $(LINK_FLAGS) $(LIBS) $(LINK_OBJS) $(RES)
 !endif
 !ifdef DOCS

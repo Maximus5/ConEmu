@@ -147,10 +147,12 @@ ALL: dirs $(INSTALL) $(DLLFULLNAME) clean $(SUBMODULES)
 
 $(DLLFULLNAME) : $(LINK_OBJS) $(RES) $(LINK_DEP)
 !ifndef __MAKE__
+	@echo (__LINK__) $(LINK_FLAGS) $(LIBS)
 	@$(LNK) @<<
 	$(LINK_FLAGS) $(LIBS) $(LINK_OBJS) $(RES)
 <<
 !else
+	@echo (__MAKE__) $(LINK_FLAGS) $(LIBS)
 	@$(LNK) $(LINK_FLAGS) $(LIBS) $(LINK_OBJS) $(RES)
 !endif
 !ifdef DOCS
