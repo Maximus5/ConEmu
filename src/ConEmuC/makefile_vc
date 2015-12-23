@@ -7,6 +7,8 @@ RELEASEDIR=..\..\Release\ConEmu
 
 !include ../makefile_vc_defs
 
+USERLIBS = kernel32.lib user32.lib
+
 !if defined(AMD64)
 OUTNAME=ConEmuC64
 !elseif defined(IA64)
@@ -39,7 +41,7 @@ $(INTDIR)\WObjects.obj \
 $(INTDIR)\WThreads.obj
 
 
-LINK_LIBS=$(CRTLIB) kernel32.lib user32.lib
+LINK_LIBS=$(CRTLIB) $(USERLIBS)
 
 DEFINES=\
 	/DCONEMU_MINIMAL \

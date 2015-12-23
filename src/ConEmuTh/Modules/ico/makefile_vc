@@ -9,7 +9,7 @@ USERCPP=/D_NO_EXEPTION_=1
 
 LINK_OBJS = $(OBJDIR)\ico.obj
 
-USERLIBS = gdiplus.lib
+USERLIBS = gdiplus.lib ole32.lib
 
 !include ..\makefile_vc_def_inc
 

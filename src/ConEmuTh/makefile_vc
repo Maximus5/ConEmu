@@ -7,6 +7,8 @@ RELEASEDIR=..\..\Release\plugins\ConEmu\Thumbs
 
 !include ../makefile_vc_defs
 
+USERLIBS = kernel32.lib user32.lib gdi32.lib advapi32.lib shell32.lib ole32.lib version.lib
+
 DEF_NAME = export
 
 SUBMODULES = gdip pe ico
@@ -95,10 +97,7 @@ LINK_MACHINE = /MACHINE:X86
 !endif
 CPP_PROJ=$(CPP_PROJ_NO) /Fo"$(INTDIR)\\"
 
-#!ifdef EXCLUDECRT
-#!undef COMMONLIB
-#!endif
-LIBS = $(CRTLIB) version.lib libcmt.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib
+LIBS = $(CRTLIB) $(USERLIBS)
 
 !ifdef _BIN_PATH_
 !ifndef _CL_PATH_

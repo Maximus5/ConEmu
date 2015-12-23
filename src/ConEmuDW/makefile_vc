@@ -7,6 +7,8 @@ RELEASEDIR=..\..\Release\ConEmu
 
 !include ../makefile_vc_defs
 
+USERLIBS = kernel32.lib user32.lib gdi32.lib version.lib comdlg32.lib
+
 DEF_NAME = export
 
 NEEDENTRY=1
@@ -46,9 +48,6 @@ LINK_OBJS = \
 	$(INTDIR)\WObjects.obj \
 	$(INTDIR)\WThreads.obj
 	
-
-USERLIBS = 
-
 
 !ifndef RC_NAME
 RC_NAME=$(NAME)
@@ -108,12 +107,9 @@ LINK_MACHINE = /MACHINE:X86
 !endif
 CPP_PROJ=$(CPP_PROJ_NO) /Fo"$(INTDIR)\\"
 
-#!ifdef EXCLUDECRT
-#!undef COMMONLIB
-#!endif
-#Wininet.lib
-LIBS = $(CRTLIB) kernel32.lib user32.lib gdi32.lib advapi32.lib shell32.lib version.lib Comdlg32.lib $(USERLIBS)
-#LIBS = $(COMMONLIB) chkstk.obj $(LIBS)
+
+LIBS = $(CRTLIB) $(USERLIBS)
+
 
 !ifdef _BIN_PATH_
 !ifndef _CL_PATH_

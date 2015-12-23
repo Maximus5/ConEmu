@@ -8,6 +8,10 @@ NEEDDEFLIB = 1
 
 !include ../makefile_vc_defs
 
+USERLIBS = kernel32.lib user32.lib advapi32.lib shell32.lib gdi32.lib version.lib \
+           shlwapi.lib comctl32.lib comdlg32.lib winmm.lib ole32.lib oleaut32.lib \
+           netapi32.lib
+
 !if defined(AMD64)
 OUTNAME=ConEmu64
 !elseif defined(IA64)
@@ -139,7 +143,8 @@ $(INTDIR)\WThreads.obj \
 $(INTDIR)\WUser.obj
 
 
-LINK_LIBS=$(CRTLIB) kernel32.lib user32.lib winspool.lib advapi32.lib shell32.lib mpr.lib ole32.lib secur32.lib gdi32.lib version.lib shlwapi.lib comctl32.lib Comdlg32.lib Winmm.lib Oleaut32.lib Netapi32.lib
+LINK_LIBS = $(CRTLIB) $(USERLIBS)
+
 
 DEFINES=\
 	/DUNICODE \

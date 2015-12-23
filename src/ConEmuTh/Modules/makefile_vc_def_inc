@@ -66,7 +66,7 @@ CPP_PROJ=$(CPP_PROJ_NO) /Fo"$(OBJDIR)\\"
 #!ifdef EXCLUDECRT
 #!undef COMMONLIB
 #!endif
-LIBS = $(CRTLIB) kernel32.lib user32.lib gdi32.lib advapi32.lib shell32.lib ole32.lib uuid.lib mpr.lib version.lib oleaut32.lib wbemuuid.lib $(USERLIBS)
+LIBS = $(CRTLIB) kernel32.lib user32.lib $(USERLIBS)
 
 !ifdef _BIN_PATH_
 !ifndef _CL_PATH_

@@ -14,6 +14,12 @@ NEEDDEFLIB = 1
 
 !include ../makefile_vc_defs
 
+USERLIBS = kernel32.lib user32.lib
+!if "$(VC)" == "14"
+# SystemFunction036 ???
+USERLIBS = $(USERLIBS) advapi32.lib
+!endif
+
 DEF_NAME = export
 
 #!if defined(DONT_USE_SEH)
@@ -100,8 +106,6 @@ $(INTDIR)\WModuleCheck.obj \
 $(INTDIR)\WObjects.obj \
 $(INTDIR)\WThreads.obj
 
-USERLIBS = 
-
 
 # minhook begin
 LINK_OBJS = $(LINK_OBJS) \
@@ -170,12 +174,7 @@ LINK_MACHINE = /MACHINE:X86
 !endif
 CPP_PROJ=$(CPP_PROJ_NO) /Fo"$(INTDIR)\\"
 
-#!ifdef EXCLUDECRT
-#!undef COMMONLIB
-#!endif
-#Wininet.lib
-LIBS = $(CRTLIB) kernel32.lib user32.lib gdi32.lib advapi32.lib shell32.lib version.lib Uuid.Lib $(USERLIBS)
-#LIBS = $(COMMONLIB) chkstk.obj $(LIBS)
+LIBS = $(CRTLIB) $(USERLIBS)
 
 !ifdef _BIN_PATH_
 !ifndef _CL_PATH_

@@ -7,6 +7,8 @@ RELEASEDIR=..\..\Release\plugins\ConEmu\Lines
 
 !include ../makefile_vc_defs
 
+USERLIBS = kernel32.lib user32.lib gdi32.lib advapi32.lib version.lib
+
 DEF_NAME = export
 
 NEEDENTRY = 1
@@ -30,8 +32,6 @@ $(OBJDIR)\Memory.obj \
 $(OBJDIR)\MStrSafe.obj
 
 #$(OBJDIR)\LogBrowser.obj
-
-USERLIBS = version.lib gdi32.lib
 
 RC_NAME=$(NAME)
 
@@ -84,10 +84,7 @@ LINK_MACHINE = /MACHINE:X86
 !endif
 CPP_PROJ=$(CPP_PROJ_NO) /Fo"$(OBJDIR)\\"
 
-#!ifdef EXCLUDECRT
-#!undef COMMONLIB
-#!endif
-LIBS = $(CRTLIB) kernel32.lib user32.lib gdi32.lib advapi32.lib shell32.lib ole32.lib uuid.lib mpr.lib version.lib oleaut32.lib wbemuuid.lib $(USERLIBS)
+LIBS = $(CRTLIB) $(USERLIBS)
 
 !ifdef _BIN_PATH_
 !ifndef _CL_PATH_

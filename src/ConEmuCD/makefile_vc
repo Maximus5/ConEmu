@@ -13,6 +13,8 @@ NEEDDEFLIB = 1
 
 !include ../makefile_vc_defs
 
+USERLIBS = kernel32.lib user32.lib gdi32.lib advapi32.lib shell32.lib shlwapi.lib
+
 DEF_NAME = export
 
 !if defined(AMD64) || "$(CPU)" == "AMD64"
@@ -72,8 +74,6 @@ $(INTDIR)\WModuleCheck.obj \
 $(INTDIR)\WObjects.obj \
 $(INTDIR)\WThreads.obj \
 $(INTDIR)\WUser.obj
-
-USERLIBS = kernel32.lib user32.lib gdi32.lib advapi32.lib shell32.lib ole32.lib uuid.lib mpr.lib version.lib oleaut32.lib wbemuuid.lib Comdlg32.lib Shlwapi.lib
 
 
 !ifndef RC_NAME
