@@ -134,26 +134,10 @@ SRC_PATHS=.;..\common
 ALL: dirs $(INSTALL) $(DLLFULLNAME) clean
 
 $(DLLFULLNAME) : $(LINK_OBJS) $(RES) $(LINK_DEP)
-!ifndef __MAKE__
-	@echo (__LINK__) $(LINK_FLAGS) $(LIBS)
-	@$(LNK) @<<
+	@echo $(CLR_BRN)linking $@ :: $(LINK_FLAGS) $(LIBS)$(CLR_STD)
+	$(LNK) @<<
 	$(LINK_FLAGS) $(LIBS) $(LINK_OBJS) $(RES)
 <<
-!else
-	@echo (__MAKE__) $(LINK_FLAGS) $(LIBS)
-	@$(LNK) $(LINK_FLAGS) $(LIBS) $(LINK_OBJS) $(RES)
-!endif
-!ifdef DOCS
-!ifndef WIDE
-!ifndef __MAKE__
-	@for %%i in ($(DOCS)) do @copy /Y %%i $(OUTDIR)$(ADDOUTDIR) > nul 2> nul
-!else
-	@for %i in ($(DOCS)) do @copy /Y %i $(OUTDIR)$(ADDOUTDIR) > nul 2> nul
-!endif
-!else
-	@$(COMMON)\convert.exe $(DOCS) $(OUTDIR)$(ADDOUTDIR)
-!endif
-!endif
 
 !ifndef __MAKE__
 .cpp{$(OBJDIR)}.obj::
@@ -187,19 +171,19 @@ dirs:
 
 .PHONY: clean
 clean:
-	@echo Copying release files
+	@echo $(CLR_MOD)Copying release files$(CLR_STD)
 	@if not exist "$(RELEASEDIR)\$(NULL)" mkdir "$(RELEASEDIR)"
 	@echo moving `$(DLLFULLNAME)` to `$(RELEASEDIR)`
-	@move $(DLLFULLNAME) $(RELEASEDIR)
+	@move $(DLLFULLNAME) $(RELEASEDIR) > nul
 	@cd
 !ifdef DEBUG
 	@echo moving `$(PDB)` to `$(RELEASEDIR)`
-	@move $(PDB) $(RELEASEDIR)
+	@move $(PDB) $(RELEASEDIR) > nul
 !else
     @if exist $(PDB) del $(PDB)
 !endif
 	@echo moving `$(MAP)` to `$(RELEASEDIR)`
-	@move $(MAP) $(RELEASEDIR)
+	@move $(MAP) $(RELEASEDIR) > nul
 
 
 $(OBJDIR)\ConEmuLn.obj: ConEmuLn.cpp ../common/Common.h ConEmuLn.h ConEmuLn_Lang.h

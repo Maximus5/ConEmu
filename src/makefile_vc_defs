@@ -14,6 +14,16 @@ WIDE = 1
 COMMONSRCDIR = ../common
 !endif
 
+!if "$(CONEMUANSI)" == "ON"
+CLR_BRN=[33m
+CLR_MOD=[93m
+CLR_STD=[m
+!else
+!undef CLR_BRN
+!undef CLR_MOD
+!undef CLR_STD
+!endif
+
 #!if exists(make_vc_defs)
 #!include make_vc_defs
 #!endif

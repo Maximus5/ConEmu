@@ -193,26 +193,10 @@ SRC_PATHS=.;..\common
 ALL: dirs $(INSTALL) $(DLLFULLNAME) clean
 
 $(DLLFULLNAME) : $(LINK_OBJS) $(RES) $(LINK_DEP)
-!ifndef __MAKE__
-	@echo (__LINK__) $(LINK_FLAGS) $(LIBS)
-	@$(LNK) @<<
+	@echo $(CLR_BRN)linking $@ :: $(LINK_FLAGS) $(LIBS)$(CLR_STD)
+	$(LNK) @<<
 	$(LINK_FLAGS) $(LIBS) $(LINK_OBJS) $(RES)
 <<
-!else
-	@echo (__MAKE__) $(LINK_FLAGS) $(LIBS)
-	@$(LNK) $(LINK_FLAGS) $(LIBS) $(LINK_OBJS) $(RES)
-!endif
-!ifdef DOCS
-!ifndef WIDE
-!ifndef __MAKE__
-	@for %%i in ($(DOCS)) do @copy /Y %%i $(OUTDIR)$(ADDOUTDIR) > nul 2> nul
-!else
-	@for %i in ($(DOCS)) do @copy /Y %i $(OUTDIR)$(ADDOUTDIR) > nul 2> nul
-!endif
-!else
-	@$(COMMON)\convert.exe $(DOCS) $(OUTDIR)$(ADDOUTDIR)
-!endif
-!endif
 
 !ifndef __MAKE__
 .cpp{$(INTDIR)}.obj::
@@ -253,14 +237,14 @@ dirs:
 
 .PHONY: clean
 clean:
-	@echo Copying release files
-	if not exist "$(RELEASEDIR)\$(NULL)" mkdir "$(RELEASEDIR)"
-	echo moving `$(DLLFULLNAME)` to `$(RELEASEDIR)\$(OUTNAME).dll`
-	move $(DLLFULLNAME) $(RELEASEDIR)\$(OUTNAME).dll
+	@echo $(CLR_MOD)Copying release files$(CLR_STD)
+	@if not exist "$(RELEASEDIR)\$(NULL)" mkdir "$(RELEASEDIR)"
+	@echo moving `$(DLLFULLNAME)` to `$(RELEASEDIR)\$(OUTNAME).dll`
+	@move $(DLLFULLNAME) $(RELEASEDIR)\$(OUTNAME).dll > nul
 	@echo copying `$(PDBNAME)` to `$(RELEASEDIR)\$(OUTNAME).pdb`
-	@copy $(PDBNAME) $(RELEASEDIR)\$(OUTNAME).pdb
+	@copy $(PDBNAME) $(RELEASEDIR)\$(OUTNAME).pdb > nul
 	@echo moving `$(MAP)` to `$(RELEASEDIR)\$(OUTNAME).map`
-	@move $(MAP) $(RELEASEDIR)\$(OUTNAME).map
+	@move $(MAP) $(RELEASEDIR)\$(OUTNAME).map > nul
 
 
 ################

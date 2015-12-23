@@ -7,6 +7,14 @@ BUILD_SUFFUX=x64
 BUILD_SUFFUX=x86
 !endif
 
+!if "$(CONEMUANSI)" == "ON" || "$(ConEmuAnsi)" == "ON"
+CLR_MOD=[93m
+CLR_STD=[m
+!else
+!undef CLR_MOD
+!undef CLR_STD
+!endif
+
 all: PRECLEAN $(ALLDIRS) ALLCLEAN
 
 incremental: $(ALLDIRS)
@@ -15,7 +23,7 @@ FICTIVE=_fictive_
 $(FICTIVE):
 
 $(ALLDIRS): $(FICTIVE)
-	@echo ===========$@.$(BUILD_SUFFUX)
+	@echo $(CLR_MOD)===========$@.$(BUILD_SUFFUX)$(CLR_STD)
 	@cd $@
 	@$(MAKE) -s -f makefile_vc $(_MDEFS)
 	@cd ..

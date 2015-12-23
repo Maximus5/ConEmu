@@ -1,15 +1,13 @@
-@echo on
+@echo off
 
 echo Cleaning obj files ...
 
 if exist "%~dp0_VCBUILD" (
-echo rd /Q /S "%~dp0_VCBUILD"
+rem echo rd /Q /S "%~dp0_VCBUILD"
 rd /Q /S "%~dp0_VCBUILD"
 )
 
-del /S /Q "%~dp0..\Release\*.lib"
-del /S /Q "%~dp0..\Release\*.exp"
+del /S /Q "%~dp0..\Release\*.lib" > nul 2> nul
+del /S /Q "%~dp0..\Release\*.exp" > nul 2> nul
 
 echo Cleaning obj files done
-
-@echo off

@@ -214,8 +214,7 @@ AllDirs:
 	if not exist "$(CODDIR)" mkdir "$(CODDIR)"
 
 "$(OUTDIR)\$(OUTNAME).exe": $(DEF_FILE) $(LINK_OBJS) $(RES_FILE) $(MINGWRES) conemu.gcc.manifest
-	echo linking $@
-	@echo (__LINK__) $(LINKFLAGS) $(LINK_LIBS)
+	@echo $(CLR_BRN)linking $@ :: $(LINKFLAGS) $(LINK_LIBS)$(CLR_STD)
 	$(LINK) @<<
 	$(LINKFLAGS) $(LINK_OBJS) $(RES_FILE) $(LINK_LIBS)
 <<
@@ -501,13 +500,13 @@ $(INTDIR)\WUser.obj: ../common/WUser.cpp
 
 .PHONY: clean
 clean:
-	@echo Copying release files
+	@echo $(CLR_MOD)Copying release files$(CLR_STD)
 	@if not exist "$(RELEASEDIR)\$(NULL)" mkdir "$(RELEASEDIR)"
 	@echo moving `$(OUTDIR)\$(OUTNAME).exe` to `$(RELEASEDIR)`
-	@move "$(OUTDIR)\$(OUTNAME).exe" $(RELEASEDIR)
+	@move "$(OUTDIR)\$(OUTNAME).exe" $(RELEASEDIR) > nul
 	@echo moving `$(MAP)` to `$(RELEASEDIR)`
-	@move "$(MAP)" $(RELEASEDIR)
+	@move "$(MAP)" $(RELEASEDIR) > nul
 !ifndef NO_RELEASE_PDB
 	@echo copying `$(PDB)` to `$(RELEASEDIR)\$(PDB_NAME)`
-	@copy "$(PDB)" "$(RELEASEDIR)\$(PDB_NAME)"
+	@copy "$(PDB)" "$(RELEASEDIR)\$(PDB_NAME)" > nul
 !endif

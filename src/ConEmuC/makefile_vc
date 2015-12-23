@@ -108,13 +108,12 @@ build: "$(OUTDIR)\$(OUTNAME).exe"
 
 .PHONY: AllDirs
 AllDirs:
-	if not exist "$(OUTDIR)\" mkdir "$(OUTDIR)"
-	if not exist "$(OBJDIR)\" mkdir "$(OBJDIR)"
-	if not exist "$(CODDIR)\" mkdir "$(CODDIR)"
+	@if not exist "$(OUTDIR)\" mkdir "$(OUTDIR)"
+	@if not exist "$(OBJDIR)\" mkdir "$(OBJDIR)"
+	@if not exist "$(CODDIR)\" mkdir "$(CODDIR)"
 
 "$(OUTDIR)\$(OUTNAME).exe": $(DEF_FILE) $(LINK_OBJS) $(RES_FILE) $(NAME).exe.manifest $(NAME).rc
-	@echo linking $@
-	@echo (__LINK__) $(LINKFLAGS) $(LINK_LIBS)
+	@echo $(CLR_BRN)linking $@ :: $(LINKFLAGS) $(LINK_LIBS)$(CLR_STD)
 	$(LINK) @<<
 	$(LINKFLAGS) $(LINK_OBJS) $(RES_FILE) $(LINK_LIBS)
 <<
@@ -173,14 +172,14 @@ MSG=echo generating $@
 
 .PHONY: CLEAN
 CLEAN:
-	@echo Copying release files
+	@echo $(CLR_MOD)Copying release files$(CLR_STD)
 	@if not exist "$(RELEASEDIR)\$(NULL)" mkdir "$(RELEASEDIR)"
 	@echo moving `$(OUTDIR)\$(OUTNAME).exe` to `$(RELEASEDIR)`
-	@move "$(OUTDIR)\$(OUTNAME).exe" $(RELEASEDIR)
-	@echo copying `$(OUTDIR)\$(OUTNAME).pdb` to `$(RELEASEDIR)`
-	@copy "$(OUTDIR)\$(OUTNAME).pdb" $(RELEASEDIR)
+	@move "$(OUTDIR)\$(OUTNAME).exe" $(RELEASEDIR) > nul
+	@echo moving `$(OUTDIR)\$(OUTNAME).pdb` to `$(RELEASEDIR)`
+	@copy "$(OUTDIR)\$(OUTNAME).pdb" $(RELEASEDIR) > nul
 	@echo moving `$(OUTDIR)\$(OUTNAME).map` to `$(RELEASEDIR)`
-	@move "$(OUTDIR)\$(OUTNAME).map" $(RELEASEDIR)
+	@move "$(OUTDIR)\$(OUTNAME).map" $(RELEASEDIR) > nul
 
 ################
 #LINK_OBJS begin

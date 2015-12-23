@@ -3,24 +3,10 @@ ALL: dirs $(INSTALL) $(DLLFULLNAME) clean
 LINK_OBJS = $(LINK_OBJS) $(OBJDIR)\MAssert.obj $(OBJDIR)\Memory.obj $(OBJDIR)\WThreads.obj
 
 $(DLLFULLNAME) : $(LINK_OBJS) $(RES) $(LINK_DEP)
-!ifndef __MAKE__
-	@$(LNK) @<<
+	@echo $(CLR_BRN)linking $@ :: $(LINK_FLAGS) $(LIBS) $(CLR_STD)
+	$(LNK) @<<
 	$(LINK_FLAGS) $(LINK_DEBUG) $(LIBS) $(LINK_OBJS) $(RES)
 <<
-!else
-	@$(LNK) $(LINK_FLAGS) $(LINK_DEBUG) $(LIBS) $(LINK_OBJS) $(RES)
-!endif
-!ifdef DOCS
-!ifndef WIDE
-!ifndef __MAKE__
-	@for %%i in ($(DOCS)) do @copy /Y %%i $(OUTDIR) > nul 2> nul
-!else
-	@for %i in ($(DOCS)) do @copy /Y %i $(OUTDIR) > nul 2> nul
-!endif
-!else
-	@$(COMMON)\convert.exe $(DOCS) $(OUTDIR)
-!endif
-!endif
 
 !ifndef __MAKE__
 .cpp{$(OBJDIR)}.obj::
@@ -59,12 +45,12 @@ dirs:
 
 .PHONY: clean
 clean:
-	@echo copying release files
+	@echo $(CLR_MOD)Copying release files$(CLR_STD)
 	@if not exist "$(RELEASEDIR)\$(NULL)" mkdir "$(RELEASEDIR)"
-	@move "$(DLLFULLNAME)" $(RELEASEDIR)
-	@move "$(PDBNAME)" "$(RELEASEDIR)\$(DLLNAME).pdb"
-	@move "$(MAP)" "$(RELEASEDIR)\$(DLLNAME).map"
-	@cmd /c del /Q $(OBJDIR)\*.*
-	@cmd /c del /Q $(OUTDIR)\*.*
-	@rd $(OBJDIR)
-	@rd $(OUTDIR)
+	@move "$(DLLFULLNAME)" $(RELEASEDIR) > nul
+	@move "$(PDBNAME)" "$(RELEASEDIR)\$(DLLNAME).pdb" > nul
+	@move "$(MAP)" "$(RELEASEDIR)\$(DLLNAME).map" > nul
+	@cmd /c del /Q $(OBJDIR)\*.* > nul
+	@cmd /c del /Q $(OUTDIR)\*.* > nul
+	@rd $(OBJDIR) > nul
+	@rd $(OUTDIR) > nul

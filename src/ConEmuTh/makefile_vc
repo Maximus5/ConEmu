@@ -146,26 +146,10 @@ SRC_PATHS=.;..\common
 ALL: dirs $(INSTALL) $(DLLFULLNAME) clean $(SUBMODULES)
 
 $(DLLFULLNAME) : $(LINK_OBJS) $(RES) $(LINK_DEP)
-!ifndef __MAKE__
-	@echo (__LINK__) $(LINK_FLAGS) $(LIBS)
-	@$(LNK) @<<
+	@echo $(CLR_BRN)linking $@ :: $(LINK_FLAGS) $(LIBS)$(CLR_STD)
+	$(LNK) @<<
 	$(LINK_FLAGS) $(LIBS) $(LINK_OBJS) $(RES)
 <<
-!else
-	@echo (__MAKE__) $(LINK_FLAGS) $(LIBS)
-	@$(LNK) $(LINK_FLAGS) $(LIBS) $(LINK_OBJS) $(RES)
-!endif
-!ifdef DOCS
-!ifndef WIDE
-!ifndef __MAKE__
-	@for %%i in ($(DOCS)) do @copy /Y %%i $(OUTDIR)$(ADDOUTDIR) > nul 2> nul
-!else
-	@for %i in ($(DOCS)) do @copy /Y %i $(OUTDIR)$(ADDOUTDIR) > nul 2> nul
-!endif
-!else
-	@$(COMMON)\convert.exe $(DOCS) $(OUTDIR)$(ADDOUTDIR)
-!endif
-!endif
 
 !ifndef __MAKE__
 .cpp{$(INTDIR)}.obj::
@@ -196,22 +180,22 @@ dirs:
 	@if not exist "$(INTDIR)\$(NULL)" mkdir "$(INTDIR)"
 	@if not exist "$(OUTDIR)\$(NULL)" mkdir "$(OUTDIR)"
 	@if not exist "$(OUTDIR)$(ADDOUTDIR)\$(NULL)" mkdir "$(OUTDIR)$(ADDOUTDIR)"
-	@echo cl flags: $(CFLAGS)
-	@echo link flags: $(LINK_FLAGS) $(LIBS)
+#	@echo cl flags: $(CFLAGS)
+#	@echo link flags: $(LINK_FLAGS) $(LIBS)
 
 .PHONY: clean
 clean:
-	echo copying release files
+	@echo $(CLR_MOD)Copying release files$(CLR_STD)
 	@if not exist "$(RELEASEDIR)\$(NULL)" mkdir "$(RELEASEDIR)"
-	move $(DLLFULLNAME) $(RELEASEDIR)
+	@move $(DLLFULLNAME) $(RELEASEDIR) > nul
 	@cd
 	@echo moving `$(PDB)` to `$(RELEASEDIR)`
 !ifdef DEBUG
-	move $(PDB) $(RELEASEDIR)
+	move $(PDB) $(RELEASEDIR) > nul
 !else
 	@if exist $(PDB) del $(PDB)
 !endif
-	move $(MAP) $(RELEASEDIR)
+	move $(MAP) $(RELEASEDIR) > nul
 
 
 ################
@@ -271,7 +255,7 @@ FICTIVE=_fictive_
 $(FICTIVE):
 
 $(SUBMODULES): $(FICTIVE)
-	@echo ===========$@.$(BUILD_SUFFUX)
+	@echo $(CLR_MOD)===========$@.$(BUILD_SUFFUX)$(CLR_STD)
 	@cd Modules\$@
 	@$(MAKE) -s -f makefile_vc $(_MDEFS)
 	@cd ..\..
