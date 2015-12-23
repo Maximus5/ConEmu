@@ -35,8 +35,6 @@
 #
 #WIDE - set for a unicode build
 #
-#ULINK - set if you want to use ulink for linking
-#
 #NEEDENTRY - set if you want to disable the /noentry link flag
 #
 #NEEDDEFLIB - set if you want to disable the /nodefaultlib link flag
@@ -213,7 +211,6 @@ LINK_FLAGS=/nologo /dll /release /merge:.rdata=.text $(LINK_MACHINE) $(NOWIN98) 
 !else
 LINK_DEBUG=-v
 CPP_DEBUG=/Z7
-LNK=$(_ULINK_PATH_)ulink.exe +-
 !ifndef NEEDENTRY
 NOENTRY = -e-
 !endif

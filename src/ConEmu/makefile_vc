@@ -17,7 +17,6 @@ OUTNAME=ConEmu
 !endif
 
 LINK=link.exe
-ULINK=ulink.exe
 M4=tools\m4 -P -DFARBIT=$(DIRBIT)
 GAWK=tools\gawk
 
@@ -162,14 +161,12 @@ LINKFLAGS=/nologo /subsystem:WINDOWS /out:"$(OUTDIR)\$(OUTNAME).exe" /map:"$(MAP
 !ifndef NO_RELEASE_PDB
 LINKFLAGS=$(LINKFLAGS) /DEBUG /pdb:"$(PDB)"
 !endif
-ULINKFLAGS=-q -m- -ap -Gz -O- -o- -Gh -Gh-
 RFLAGS=$(RCWIN64) /DCERC_MANIFEST /l 0x409 /d $(USEDEBUG)
 
 # config-cpecific
 !ifdef DEBUG
 CPPFLAGS=$(CPPFLAGS) /Od /Zi
 LINKFLAGS=$(LINKFLAGS)
-ULINKFLAGS=$(ULINKFLAGS) -v
 !else
 CPPFLAGS=$(CPPFLAGS) /O2 /Oy-
 !ifndef NO_RELEASE_PDB
@@ -187,7 +184,6 @@ LINKFLAGS=$(LINKFLAGS) /machine:i386
 !elseifdef AMD64
 CPPFLAGS=$(CPPFLAGS) /Zp8 /D_WIN64 /DWIN64
 LINKFLAGS=$(LINKFLAGS) /machine:amd64
-ULINKFLAGS=$(ULINKFLAGS) -Tpe+
 !elseifdef IA64
 CPPFLAGS=$(CPPFLAGS) /Zp8 /D_WIN64 /DWIN64
 LINKFLAGS=$(LINKFLAGS) /machine:IA64
@@ -219,20 +215,10 @@ AllDirs:
 
 "$(OUTDIR)\$(OUTNAME).exe": $(DEF_FILE) $(LINK_OBJS) $(RES_FILE) $(MINGWRES) conemu.gcc.manifest
 	echo linking $@
-!ifndef LINK_ULINK
 	@echo (__LINK__) $(LINKFLAGS) $(LINK_LIBS)
 	$(LINK) @<<
 	$(LINKFLAGS) $(LINK_OBJS) $(RES_FILE) $(LINK_LIBS)
 <<
-!else
-	@echo (__ULINK__) $(ULINKFLAGS) $(LINK_LIBS)
-	$(ULINK) +- @+<<
-	$(ULINKFLAGS) $(LINK_OBJS)
-	,"$(OUTDIR)\$(OUTNAME).exe","$(MAP)"
-	,$(LINK_LIBS)
-	,"$(DEF_FILE)","$(RES_FILE)"
-<<
-!endif
 
 #$(PCH_FILE): headers.cpp headers.hpp
 #	echo making precompiled headers

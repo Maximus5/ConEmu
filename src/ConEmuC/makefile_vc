@@ -16,7 +16,6 @@ OUTNAME=ConEmuC
 !endif
 
 LINK=link.exe
-ULINK=ulink.exe
 M4=tools\m4 -P -DFARBIT=$(DIRBIT)
 GAWK=tools\gawk
 
@@ -56,14 +55,12 @@ DEFINES=\
 # common
 CPPFLAGS=/nologo $(MP) /W3 $(FARSYSLOG) /EHs-c- $(DEFINES) /GS- /GR- /Gy /GF /Fo"$(OBJDIR)\\" /Fd"$(OBJDIR)\\" /J /c /FAcs /Fa"$(CODDIR)\\"
 LINKFLAGS=/nologo /subsystem:console /def:"$(DEF_FILE)" /out:"$(OUTDIR)\$(OUTNAME).exe" /map:"$(OUTDIR)\$(OUTNAME).map" /RELEASE /nxcompat /ENTRY:main /DEBUG /pdb:"$(OUTDIR)\$(OUTNAME).pdb"
-ULINKFLAGS=-q -m- -ap -Gz -O- -o- -Gh -Gh-
 RFLAGS=$(RCWIN64) /l 0x409 /fo"$(RES_FILE)" /d "SELF_MANIFEST" /d $(USEDEBUG)
 
 # config-cpecific
 !ifdef DEBUG
 CPPFLAGS=$(CPPFLAGS) /Od /Zi
 LINKFLAGS=$(LINKFLAGS)
-ULINKFLAGS=$(ULINKFLAGS) -v
 !else
 CPPFLAGS=$(CPPFLAGS) /O2 /Oy-
 !ifndef NO_RELEASE_PDB
@@ -80,7 +77,6 @@ LINKFLAGS=$(LINKFLAGS) /machine:i386
 !elseifdef AMD64
 CPPFLAGS=$(CPPFLAGS) /Zp8 /D_WIN64 /DWIN64
 LINKFLAGS=$(LINKFLAGS) /machine:amd64
-ULINKFLAGS=$(ULINKFLAGS) -Tpe+
 !elseifdef IA64
 CPPFLAGS=$(CPPFLAGS) /Zp8 /D_WIN64 /DWIN64
 LINKFLAGS=$(LINKFLAGS) /machine:IA64
@@ -118,19 +114,10 @@ AllDirs:
 
 "$(OUTDIR)\$(OUTNAME).exe": $(DEF_FILE) $(LINK_OBJS) $(RES_FILE) $(NAME).exe.manifest $(NAME).rc
 	@echo linking $@
-!ifndef LINK_ULINK
 	@echo (__LINK__) $(LINKFLAGS) $(LINK_LIBS)
 	$(LINK) @<<
 	$(LINKFLAGS) $(LINK_OBJS) $(RES_FILE) $(LINK_LIBS)
 <<
-!else
-	$(ULINK) +- @+<<
-	$(ULINKFLAGS) $(LINK_OBJS)
-	,"$(OUTDIR)\$(OUTNAME).exe","$(OUTDIR)\$(OUTNAME).map"
-	,$(LINK_LIBS)
-	,"$(DEF_FILE)","$(RES_FILE)"
-<<
-!endif
 
 #$(PCH_FILE): headers.cpp headers.hpp
 #	echo making precompiled headers
