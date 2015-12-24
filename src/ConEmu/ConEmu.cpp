@@ -367,7 +367,6 @@ CConEmuMain::CConEmuMain()
 	//mb_PassSysCommand = false;
 	mb_ExternalHidden = FALSE;
 	ZeroStruct(mst_LastConsole32StartTime); ZeroStruct(mst_LastConsole64StartTime);
-	//mb_SkipSyncSize = false;
 	isPiewUpdate = false; //true; --Maximus5
 	hPictureView = NULL;  mrc_WndPosOnPicView = MakeRect(0,0);
 	bPicViewSlideShow = false;
@@ -5664,58 +5663,6 @@ void CConEmuMain::InvalidateGaps()
 	CVConGroup::InvalidateGaps();
 }
 
-//void CConEmuMain::PaintGaps(HDC hDC)
-//{
-//	CVConGroup::PaintGaps(hDC);
-//}
-
-//void CConEmuMain::PaintCon(HDC hPaintDC)
-//{
-//	//if (ProgressBars)
-//	//    ProgressBars->OnTimer();
-//
-//	// Если "завис" PostUpdate
-//	if (mp_TabBar->NeedPostUpdate())
-//		mp_TabBar->Update();
-//
-//	RECT rcClient = {0};
-//
-//	if ('ghWnd DC')
-//	{
-//		Get ClientRect('ghWnd DC', &rcClient);
-//		MapWindowPoints('ghWnd DC', ghWnd, (LPPOINT)&rcClient, 2);
-//	}
-//
-//	// если mp_ VActive==NULL - будет просто выполнена заливка фоном.
-//	mp_ VActive->PaintVCon(hPaintDC, rcClient);
-//
-//#ifdef _DEBUG
-//	if ((GetKeyState(VK_SCROLL) & 1) && (GetKeyState(VK_CAPITAL) & 1))
-//	{
-//		DebugStep(L"ConEmu: Sleeping in PaintCon for 1s");
-//		Sleep(1000);
-//		DebugStep(NULL);
-//	}
-//#endif
-//}
-
-//void CConEmuMain::RePaint()
-//{
-//	mb_SkipSyncSize = true;
-//
-//	mp_TabBar->RePaint();
-//	//m_Back->RePaint();
-//	HDC hDc = GetDC(ghWnd);
-//	//mp_ VActive->PaintVCon(hDc); // если mp_ VActive==NULL - будет просто выполнена заливка фоном.
-//	PaintGaps(hDc);
-//	//PaintCon(hDc);
-//	ReleaseDC(ghWnd, hDc);
-//
-//	CVConGroup::RePaint();
-//
-//	mb_SkipSyncSize = false;
-//}
-
 void CConEmuMain::Update(bool isForce /*= false*/)
 {
 	CVConGroup::Update(isForce);
@@ -7222,10 +7169,6 @@ LRESULT CConEmuMain::OnDestroy(HWND hWnd)
 	}
 	#endif
 
-	//if (mh_PopupHook) {
-	//	UnhookWinEvent(mh_PopupHook);
-	//	mh_PopupHook = NULL;
-	//}
 
 	if (mp_DragDrop)
 	{

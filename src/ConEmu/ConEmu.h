@@ -417,7 +417,6 @@ class CConEmuMain
 		#endif
 		CAttachDlg *mp_AttachDlg;
 		CRecreateDlg *mp_RecreateDlg;
-		bool mb_SkipSyncSize;
 		BOOL mb_WaitCursor;
 		typedef BOOL (WINAPI* FRegisterShellHookWindow)(HWND);
 		struct
