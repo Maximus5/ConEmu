@@ -7131,11 +7131,11 @@ LRESULT CConEmuMain::OnDestroy(HWND hWnd)
 		mp_RecreateDlg->Close();
 	}
 
-	// Выполняется однократно (само проверит)
+	// Function cares about single execution
 	gpSet->SaveSettingsOnExit();
 
-	// Делать обязательно перед ResetEvent(mh_ConEmuAliveEvent), чтобы у другого
-	// экземпляра не возникло проблем с регистрацией hotkey
+	// Required before ResetEvent(mh_ConEmuAliveEvent),
+	// to avoid problems in another instance with hotkey registering
 	RegisterMinRestore(false);
 
 	if (mb_ConEmuAliveOwned && mh_ConEmuAliveEvent)
@@ -7154,9 +7154,7 @@ LRESULT CConEmuMain::OnDestroy(HWND hWnd)
 	//120122 - Теперь через PipeServer
 	m_GuiServer.Stop(true);
 
-
 	CVConGroup::DestroyAllVCon();
-
 
 	#ifndef _WIN64
 	if (mh_WinHook)
@@ -7173,33 +7171,12 @@ LRESULT CConEmuMain::OnDestroy(HWND hWnd)
 		mp_DragDrop = NULL;
 	}
 
-	//if (ProgressBars) {
-	//    delete ProgressBars;
-	//    ProgressBars = NULL;
-	//}
 	Icon.RemoveTrayIcon(true);
 
 	Taskbar_Release();
-	//if (mp_TaskBar3)
-	//{
-	//	mp_TaskBar3->Release();
-	//	mp_TaskBar3 = NULL;
-	//}
-	//if (mp_TaskBar2)
-	//{
-	//	mp_TaskBar2->Release();
-	//	mp_TaskBar2 = NULL;
-	//}
-
-	//if (mh_InsideSysMenu)
-	//	DestroyMenu(mh_InsideSysMenu);
 
 	UnRegisterHotKeys(TRUE);
-	//if (mh_DwmApi && mh_DwmApi != INVALID_HANDLE_VALUE)
-	//{
-	//	FreeLibrary(mh_DwmApi); mh_DwmApi = NULL;
-	//	DwmIsCompositionEnabled = NULL;
-	//}
+
 	SetKillTimer(false, TIMER_MAIN_ID, 0);
 	SetKillTimer(false, TIMER_CONREDRAW_ID, 0);
 	SetKillTimer(false, TIMER_CAPTION_APPEAR_ID, 0);
