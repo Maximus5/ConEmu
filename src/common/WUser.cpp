@@ -171,48 +171,6 @@ Cleanup:
 	return bSuccess;
 }
 
-void RemoveOldComSpecC()
-{
-	wchar_t szComSpec[MAX_PATH], szComSpecC[MAX_PATH], szRealComSpec[MAX_PATH];
-	//110202 - comspec более не переопределяется, поэтому вернем "cmd",
-	// если был переопределен и унаследован от старой версии conemu
-	if (GetEnvironmentVariable(L"ComSpecC", szComSpecC, countof(szComSpecC)) && szComSpecC[0] != 0)
-	{
-		szRealComSpec[0] = 0;
-
-		if (!GetEnvironmentVariable(L"ComSpec", szComSpec, countof(szComSpec)))
-			szComSpec[0] = 0;
-
-		#ifndef __GNUC__
-		#pragma warning( push )
-		#pragma warning(disable : 6400)
-		#endif
-
-		LPCWSTR pwszName = PointToName(szComSpec);
-
-		if (lstrcmpiW(pwszName, L"ConEmuC.exe")==0 || lstrcmpiW(pwszName, L"ConEmuC64.exe")==0)
-		{
-			pwszName = PointToName(szComSpecC);
-			if (lstrcmpiW(pwszName, L"ConEmuC.exe")!=0 && lstrcmpiW(pwszName, L"ConEmuC64.exe")!=0)
-			{
-				wcscpy_c(szRealComSpec, szComSpecC);
-			}
-		}
-		#ifndef __GNUC__
-		#pragma warning( pop )
-		#endif
-
-		if (szRealComSpec[0] == 0)
-		{
-			//\system32\cmd.exe
-			GetComspecFromEnvVar(szRealComSpec, countof(szRealComSpec));
-		}
-
-		SetEnvironmentVariable(L"ComSpec", szRealComSpec);
-		SetEnvironmentVariable(L"ComSpecC", NULL);
-	}
-}
-
 HANDLE DuplicateProcessHandle(DWORD anTargetPID)
 {
 	HANDLE hDup = NULL;

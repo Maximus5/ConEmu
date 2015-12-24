@@ -37,7 +37,6 @@ bool apiShowWindowAsync(HWND ahWnd, int anCmdShow);
 
 bool IsUserAdmin();
 bool GetLogonSID (HANDLE hToken, wchar_t **ppszSID);
-void RemoveOldComSpecC();
 
 HANDLE DuplicateProcessHandle(DWORD anTargetPID);
 
