@@ -52,5 +52,7 @@ Short list of features:
     <file src="..\..\Release\ConEmu\ConEmuCD64.dll" target="Tools\ConEmu" />
     <file src="..\..\Release\ConEmu\ConEmuHk.dll" target="Tools\ConEmu" />
     <file src="..\..\Release\ConEmu\ConEmuHk64.dll" target="Tools\ConEmu" />
+    <!-- Additional files required to operate terminal features, like running “{cmd}”. -->
+    <file src="..\..\Release\ConEmu\CmdInit.cmd" target="Tools\ConEmu" />
   </files>
 </package>
