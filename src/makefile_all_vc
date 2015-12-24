@@ -16,7 +16,7 @@ BUILD_SUFFUX=x64
 BUILD_SUFFUX=x86
 !endif
 
-!if "$(CONEMUANSI)" == "ON" || "$(ConEmuAnsi)" == "ON"
+!if "$(CONEMUANSI)" == "ON" && "$(CONEMUHOOKS)" != "OFF"
 CLR_MOD=[93m
 CLR_STD=[m
 !else

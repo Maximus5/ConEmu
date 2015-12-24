@@ -14,7 +14,7 @@ WIDE = 1
 COMMONSRCDIR = ../common
 !endif
 
-!if "$(CONEMUANSI)" == "ON"
+!if "$(CONEMUANSI)" == "ON" && "$(CONEMUHOOKS)" != "OFF"
 CLR_BRN=[33m
 CLR_MOD=[93m
 CLR_STD=[m
