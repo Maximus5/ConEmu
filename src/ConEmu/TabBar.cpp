@@ -1620,7 +1620,7 @@ int CTabBarClass::PrepareTab(CTab& pTab, CVirtualConsole *apVCon)
 				case _T('f'): case _T('F'): // %f - current shell directory name (only)
 					{
 						// CTabBarClass::Update will be triggered from CRealConsole::StoreCurWorkDir
-						// http://conemu.github.io/en/ShellWorkDir.html
+						// https://conemu.github.io/en/ShellWorkDir.html
 						pszText = pRCon ? pRCon->GetConsoleCurDir(szArg) : NULL;
 						if (pszText && (*pszFmt == _T('f') || *pszFmt == _T('F')))
 						{

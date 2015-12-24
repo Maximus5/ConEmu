@@ -2849,7 +2849,7 @@ void CSetDlgButtons::OnBtn_UseClink(HWND hDlg, WORD CB, BYTE uCheck)
 		checkDlgButton(hDlg, cbUseClink, BST_UNCHECKED);
 		wchar_t szErrInfo[MAX_PATH+200];
 		_wsprintf(szErrInfo, SKIPLEN(countof(szErrInfo))
-			L"Clink was not found in '%s\\clink'. Download and unpack clink files\nhttp://mridgers.github.io/clink/\n\n"
+			L"Clink was not found in '%s\\clink'. Download and unpack clink files\nhttps://mridgers.github.io/clink/\n\n"
 			L"Note that you don't need to check 'Use clink'\nif you already have set up clink globally.",
 			gpConEmu->ms_ConEmuBaseDir);
 		MsgBox(szErrInfo, MB_ICONSTOP|MB_SYSTEMMODAL, NULL, ghOpWnd);
@@ -2864,7 +2864,7 @@ void CSetDlgButtons::OnBtn_ClinkWebPage(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbClinkWebPage);
 
-	ShellExecute(NULL, L"open", L"http://mridgers.github.io/clink/", NULL, NULL, SW_SHOWNORMAL);
+	ShellExecute(NULL, L"open", L"https://mridgers.github.io/clink/", NULL, NULL, SW_SHOWNORMAL);
 
 } // cbClinkWebPage
 

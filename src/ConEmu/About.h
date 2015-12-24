@@ -90,7 +90,7 @@ _DBGHLP(L"/ZoneId - Try to drop :Zone.Identifier without confirmation.\r\n") \
 	/* L"/Attach [PID] - intercept console of specified process\n" */ \
 	L"/cmd <commandline>|@<taskfile>|{taskname} - Command line to start. This must be the last used switch.\r\n" \
 	L"\r\n" \
-	L"Read more online: http://conemu.github.io/en/CommandLine.html\r\n"
+	L"Read more online: https://conemu.github.io/en/CommandLine.html\r\n"
 
 #define pAboutTasks \
 	L"You may set up most used shells as ConEmu's ‘Tasks’ (‘Settings’ dialog ‘Tasks’ page).\r\n" \
@@ -143,8 +143,6 @@ _DBGHLP(L"/ZoneId - Try to drop :Zone.Identifier without confirmation.\r\n") \
 
 #define pAboutTitle \
 	L"Console Emulation program (local terminal)"
-//#define pAboutUrl
-//	L"http://conemu.github.io"
 
 #define pAboutLicense \
 	L"\x00A9 2006-2008 Zoin (based on console emulator by SEt)\r\n" \
@@ -176,7 +174,7 @@ _DBGHLP(L"/ZoneId - Try to drop :Zone.Identifier without confirmation.\r\n") \
 	L"\x00A9 2006-2008 Zoin (based on console emulator by SEt)\r\n" \
 	CECOPYRIGHTSTRING_W /*\x00A9 2009-present ConEmu.Maximus5@gmail.com*/ L"\r\n" \
 	L"\r\n" \
-	L"Online documentation: http://conemu.github.io/en/TableOfContents.html\r\n" \
+	L"Online documentation: " CEWIKIBASE L"TableOfContents.html\r\n" \
 	L"\r\n" \
 	L"You can show your appreciation and support future development by donating. " \
 	L"Donate button located on project website " \
@@ -194,14 +192,14 @@ _DBGHLP(L"/ZoneId - Try to drop :Zone.Identifier without confirmation.\r\n") \
 
 #define pDosBoxHelpFull \
 	L"ConEmu supports DosBox, read more online:\r\n" \
-	L"http://conemu.github.io/en/DosBox.html\r\n" \
+	CEWIKIBASE L"DosBox.html\r\n" \
 	VCGCCTEST(L"––––––––––––––––––––––\r\n",L"----------------------\r\n") \
 	pDosBoxHelp
 
 #define pGuiMacro \
 	L"Sort of simple macro language, use them with hotkeys or from your shell CLI.\r\n" \
 	L"CLI example: ConEmuC -GuiMacro Rename 0 PoSh\r\n" \
-	L"Read more online: http://conemu.github.io/en/GuiMacro.html\r\n" \
+	L"Read more online: " CEWIKIBASE L"GuiMacro.html\r\n" \
 	VCGCCTEST(L"––––––––––––––––––––––\r\n",L"----------------------\r\n") \
 	L"About([\"<Page>\"])\r\n" \
 	L"  - Show ‘About’ dialog with page activated, e.g. ‘About(\"-new_console\")’\r\n" \

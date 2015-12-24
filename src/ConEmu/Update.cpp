@@ -951,7 +951,7 @@ bool CConEmuUpdate::LoadVersionInfoFromServer()
 {
 	bool bOk = false;
 
-	// E.g. http://conemu.github.io/version.ini
+	// E.g. https://conemu.github.io/version.ini
 	LPCWSTR pszUpdateVerLocationSet = mp_Set->UpdateVerLocation();
 	LPCWSTR pszUpdateVerLocation = NULL;
 	wchar_t szSection[64], szItem[64];

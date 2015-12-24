@@ -99,12 +99,12 @@ typedef struct _CONSOLE_SELECTION_INFO
 #define CECOPYRIGHTSTRING_W L"© 2009-2015 ConEmu.Maximus5@gmail.com"
 
 
-#define CEHOMEPAGE_A    "http://conemu.github.io/"
+#define CEHOMEPAGE_A    "https://conemu.github.io/"
 #define CEHOMEPAGE     _CRT_WIDE(CEHOMEPAGE_A)
 #define CEDOWNLPAGE    L"http://www.fosshub.com/ConEmu.html"
 #define CEFLATTRPAGE   L"http://flattr.com/thing/2002773/Maximus5ConEmu-on-GitHub"
-#define CEDONATEPAGE   L"http://conemu.github.io/donate.html"
-#define CEWIKIBASE     L"http://conemu.github.io/en/"
+#define CEDONATEPAGE   L"https://conemu.github.io/donate.html"
+#define CEWIKIBASE     L"https://conemu.github.io/en/"
 #define CEGUIARGSPAGE  CEWIKIBASE L"ConEmuArgs.html"
 #define CEHOOKSWIKI    CEWIKIBASE L"ConEmuHk.html"
 #define CEFIRSTSTART   CEWIKIBASE L"SettingsFast.html"

@@ -62,7 +62,7 @@ bool SetConsoleCpHelper(UINT nCP)
 		if (nWait == WAIT_TIMEOUT)
 		{
 			// That is dangerous operation, however there is no other workaround
-			// http://conemu.github.io/en/MicrosoftBugs.html#chcp_hung
+			// https://conemu.github.io/en/MicrosoftBugs.html#chcp_hung
 
 			apiTerminateThread(hThread, 100);
 
