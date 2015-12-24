@@ -156,6 +156,8 @@ HMODULE ghOurModule = NULL; // ConEmuCD.dll
 DWORD   gnSelfPID = 0;
 wchar_t gsModuleName[32] = L"";
 wchar_t gsVersion[20] = L"";
+wchar_t gsSelfExe[MAX_PATH] = L"";  // Full path+exe to our executable
+wchar_t gsSelfPath[MAX_PATH] = L""; // Directory of our executable
 BOOL    gbTerminateOnExit = FALSE;
 bool    gbPrefereSilentMode = false;
 //HANDLE  ghConIn = NULL, ghConOut = NULL;
@@ -813,6 +815,38 @@ void ShowServerStartedMsgBox(LPCWSTR asCmdLine)
 #endif
 
 
+void LoadExePath()
+{
+	// Already loaded?
+	if (gsSelfExe[0] && gsSelfPath[0])
+		return;
+
+	DWORD nSelfLen = GetModuleFileNameW(NULL, gsSelfExe, countof(gsSelfExe));
+	if (!nSelfLen || (nSelfLen >= countof(gsSelfExe)))
+	{
+		_ASSERTE(FALSE && "GetModuleFileNameW(NULL) failed");
+		gsSelfExe[0] = 0;
+	}
+	else
+	{
+		lstrcpyn(gsSelfPath, gsSelfExe, countof(gsSelfPath));
+		wchar_t* pszSlash = (wchar_t*)PointToName(gsSelfPath);
+		if (pszSlash && (pszSlash > gsSelfPath))
+			*pszSlash = 0;
+		else
+			gsSelfPath[0] = 0;
+	}
+}
+
+void UnlockCurrentDirectory()
+{
+	if ((gnRunMode == RM_SERVER) && gsSelfPath[0])
+	{
+		SetCurrentDirectory(gsSelfPath);
+	}
+}
+
+
 bool CheckAndWarnHookers()
 {
 	if (gbSkipHookersCheck)
@@ -1062,22 +1096,7 @@ int __stdcall ConsoleMain3(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 	#endif
 
 
-	wchar_t szSelfExe[MAX_PATH*2] = {}, szSelfDir[MAX_PATH+1] = {};
-	DWORD nSelfLen = GetModuleFileNameW(NULL, szSelfExe, countof(szSelfExe));
-	if (!nSelfLen || (nSelfLen >= countof(szSelfExe)))
-	{
-		_ASSERTE(FALSE && "GetModuleFileNameW(NULL) failed");
-		szSelfExe[0] = 0;
-	}
-	else
-	{
-		lstrcpyn(szSelfDir, szSelfExe, countof(szSelfDir));
-		wchar_t* pszSlash = wcsrchr(szSelfDir, L'\\');
-		if (pszSlash)
-			*pszSlash = 0;
-		else
-			szSelfDir[0] = 0;
-	}
+	LoadExePath();
 
 
 	PRINT_COMSPEC(L"ConEmuC started: %s\n", asCmdLine);
@@ -1391,10 +1410,10 @@ int __stdcall ConsoleMain3(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 		if (!lbRc && (gnRunMode == RM_SERVER) && dwErr == ERROR_FILE_NOT_FOUND)
 		{
 			// Фикс для перемещения ConEmu.exe в подпапку фара. т.е. far.exe находится на одну папку выше
-			if (szSelfExe[0] != 0)
+			if (gsSelfExe[0] != 0)
 			{
 				wchar_t szSelf[MAX_PATH*2];
-				wcscpy_c(szSelf, szSelfExe);
+				wcscpy_c(szSelf, gsSelfExe);
 
 				wchar_t* pszSlash = wcsrchr(szSelf, L'\\');
 
@@ -1585,9 +1604,8 @@ int __stdcall ConsoleMain3(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 	/* *** Waiting for startup *** */
 	/* *************************** */
 
-	// Чтобы не блокировать папку запуска
-	if (gnRunMode != RM_ALTSERVER && szSelfDir[0])
-		SetCurrentDirectory(szSelfDir);
+	// Don't "lock" startup folder
+	UnlockCurrentDirectory();
 
 	if (gnRunMode == RM_SERVER)
 	{
@@ -1713,9 +1731,8 @@ wait:
 #endif
 
 
-	// Чтобы не блокировать папку запуска (на всякий случай, если на метку goto был)
-	if (gnRunMode != RM_ALTSERVER && szSelfDir[0])
-		SetCurrentDirectory(szSelfDir);
+	// JIC, if there was "goto"
+	UnlockCurrentDirectory();
 
 
 	if (gnRunMode == RM_ALTSERVER)
@@ -1884,9 +1901,7 @@ wrap:
 				|| gbAlwaysConfirmExit)
 	  )
 	{
-		// Чтобы не блокировать папку запуска (если вдруг ошибка была, и папку не меняли)
-		if (szSelfDir[0])
-			SetCurrentDirectory(szSelfDir);
+		UnlockCurrentDirectory();
 
 		//#ifdef _DEBUG
 		//if (!gbInShutdown)

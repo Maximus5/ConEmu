@@ -340,6 +340,11 @@ void DosBoxHelp();
 int  ExitWaitForKey(WORD* pvkKeys, LPCWSTR asConfirm, BOOL abNewLine, BOOL abDontShowConsole);
 bool IsMainServerPID(DWORD nPID);
 
+extern wchar_t gsSelfExe[MAX_PATH];  // Full path+exe to our executable
+extern wchar_t gsSelfPath[MAX_PATH]; // Directory of our executable
+void LoadExePath();
+void UnlockCurrentDirectory();
+
 bool AltServerWasStarted(DWORD nPID, HANDLE hAltServer, bool ForceThaw = false);
 
 int CreateMapHeader();
