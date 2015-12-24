@@ -4,6 +4,7 @@
 NAME=ConEmuC
 DIRNAME=$(NAME)
 RELEASEDIR=..\..\Release\ConEmu
+USELIBCRT = 1
 
 !include ../makefile_vc_defs
 

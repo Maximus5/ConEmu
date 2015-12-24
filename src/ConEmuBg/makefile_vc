@@ -4,6 +4,8 @@
 NAME=ConEmuBg
 DIRNAME=$(NAME)
 RELEASEDIR=..\..\Release\plugins\ConEmu\Background
+#NEEDDEFLIB = 1
+USELIBCRT = 1
 
 !include ../makefile_vc_defs
 

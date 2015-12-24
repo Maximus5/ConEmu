@@ -4,6 +4,7 @@
 NAME=ConEmuTh
 DIRNAME=$(NAME)
 RELEASEDIR=..\..\Release\plugins\ConEmu\Thumbs
+NEEDDEFLIB = 1
 
 !include ../makefile_vc_defs
 

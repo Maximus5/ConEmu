@@ -24,6 +24,9 @@ CLR_STD=[m
 !undef CLR_STD
 !endif
 
+#googlecode Issue 1876
+!undef USEDDKCRT
+
 #!if exists(make_vc_defs)
 #!include make_vc_defs
 #!endif
@@ -126,27 +129,38 @@ CODDIR=$(OUTDIR)\cod$(ADDOBJDIR)
 !if defined(NEEDDEFLIB)
 # standard static multithreading libraries
 COMMONLIB =
+# still possible to use libCRT, so don't unset USELIBCRT
+!undef USEDDKCRT
 !elseif defined(USEDDKCRT)
+!undef USELIBCRT
+COMMONLIB = /NODEFAULTLIB
+!endif
+
+!if defined(USEDDKCRT)
 # use msvcrt.dll (WinDDK LIB's are required)
 !if defined(AMD64)
-COMMONLIB = /NODEFAULTLIB $(COMMONSRCDIR)/WinDDK/amd64/msvcrt.lib $(COMMONSRCDIR)/WinDDK/amd64/msvcrt_win2003.obj
+COMMONLIB = $(COMMONLIB) $(COMMONSRCDIR)/WinDDK/amd64/msvcrt.lib $(COMMONSRCDIR)/WinDDK/amd64/msvcrt_win2003.obj
 !elseif defined(IA64)
-COMMONLIB = /NODEFAULTLIB $(COMMONSRCDIR)/WinDDK/ia64/msvcrt.lib $(COMMONSRCDIR)/WinDDK/ia64/msvcrt_win2003.obj
+COMMONLIB = $(COMMONLIB) $(COMMONSRCDIR)/WinDDK/ia64/msvcrt.lib $(COMMONSRCDIR)/WinDDK/ia64/msvcrt_win2003.obj
 !else
-COMMONLIB = /NODEFAULTLIB $(COMMONSRCDIR)/WinDDK/i386/msvcrt.lib # $(COMMONSRCDIR)/WinDDK/i386/msvcrt_win2000.obj
+COMMONLIB = $(COMMONLIB) $(COMMONSRCDIR)/WinDDK/i386/msvcrt.lib # $(COMMONSRCDIR)/WinDDK/i386/msvcrt_win2000.obj
 !endif
-!elseif defined(AMD64)
+!endif
+
+!if defined(USELIBCRT)
+!if defined(AMD64)
 # Use precompiled libCRT64.lib
-COMMONLIB = /NODEFAULTLIB $(COMMONSRCDIR)/libCRT64.lib
+COMMONLIB = $(COMMONLIB) $(COMMONSRCDIR)/libCRT64.lib
 #$(COMMONSRCDIR)chkstk64.obj
 !elseif defined(IA64)
 # Use precompiled libCRTIA64.lib
-COMMONLIB = /NODEFAULTLIB $(COMMONSRCDIR)/libCRTIA64.lib
+COMMONLIB = $(COMMONLIB) $(COMMONSRCDIR)/libCRTIA64.lib
 #$(COMMONSRCDIR)chkstkIA64.obj
 !else
 # Use precompiled libCRT.lib
-COMMONLIB = /NODEFAULTLIB $(COMMONSRCDIR)/libCRT.lib
+COMMONLIB = $(COMMONLIB) $(COMMONSRCDIR)/libCRT.lib
 #$(COMMONSRCDIR)chkstk.obj
+!endif
 !endif
 
 CRTLIB = $(COMMONLIB)

@@ -7,6 +7,7 @@ RELEASEDIR=..\..\Release\plugins\ConEmu
 NEEDENTRY = 1
 USE_PDB = 1
 NO_OPTIMIZE = 1
+NEEDDEFLIB = 1
 
 !include ../makefile_vc_defs
 

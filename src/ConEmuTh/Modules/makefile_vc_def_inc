@@ -3,6 +3,9 @@ RELEASEDIR = ..\..\..\..\Release\plugins\ConEmu\Thumbs
 COMMONWORKDIR = ..\..\..\_VCBUILD
 COMMONSRCDIR = ../../../common
 
+#NEEDDEFLIB = 1
+USELIBCRT = 1
+
 !if defined(AMD64) || "$(CPU)" == "AMD64" || "$(PLATFORM)" == "x64"
 EXT = t64
 !elseif defined(IA64) || "$(CPU)" == "IA64" || "$(PLATFORM)" == "Itanium"

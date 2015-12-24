@@ -1,5 +1,14 @@
+# Usage
+#
+# Build all binaries (Core + Far Manager plugins)
+#   nmake /f makefile_all_vc
+#
+# Build only core binaries (no Far Manager plugins)
+#   nmake /f makefile_all_vc core
+#
 
 ALLDIRS=ConEmu ConEmuC ConEmuCD ConEmuHk ConEmuPlugin ConEmuTh ConEmuLn ConEmuBg ConEmuDW
+COREDIRS=ConEmu ConEmuC ConEmuCD ConEmuHk
 
 !if defined(AMD64) || "$(CPU)" == "AMD64" || "$(PLATFORM)" == "x64"
 BUILD_SUFFUX=x64
@@ -18,6 +27,10 @@ CLR_STD=[m
 all: PRECLEAN $(ALLDIRS) ALLCLEAN
 
 incremental: $(ALLDIRS)
+
+core: PRECLEAN $(COREDIRS) ALLCLEAN
+
+coreinc: $(COREDIRS)
 
 FICTIVE=_fictive_
 $(FICTIVE):

@@ -4,6 +4,8 @@
 NAME=ConEmuDw
 DIRNAME=$(NAME)
 RELEASEDIR=..\..\Release\ConEmu
+#NEEDDEFLIB = 1
+USELIBCRT = 1
 
 !include ../makefile_vc_defs
 

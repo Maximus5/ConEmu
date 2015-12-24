@@ -7,7 +7,7 @@ rem   10: Visual Studio 2010
 rem   11: Visual Studio 2012
 rem   12: Visual Studio 2013
 rem   14: Visual Studio 2015
-rem Script supports optional arguments: [VS_VERSION [nofull]]
+rem Script supports optional arguments: [VS_VERSION [nofull] [core]]
 rem Example: vc.build.release.cmd 14 nofull
 
 setlocal
@@ -18,9 +18,29 @@ set VS_VERSION=
 for %%i in (9,10,11,12,14) do (if "%%i" == "%~1" (set "VS_VERSION=%%i"))
 set VS_MAKE_SWITCH=/A /B /Y /F
 set VS_MAKE_TARGETS=
-if /I "%~2" == "nofull" (
-  set "VS_MAKE_SWITCH=/F"
-  set "VS_MAKE_TARGETS=incremental"
+set VS_MAKE_FULL=YES
+set VS_MAKE_CORE=NO
+
+:switches_loop
+if "%~2" == "" goto switches_done
+if /I "%~2" == "nofull" set VS_MAKE_FULL=NO
+if /I "%~2" == "core"   set VS_MAKE_CORE=YES
+shift /2
+goto switches_loop
+
+:switches_done
+if "%VS_MAKE_CORE%" == "YES" (
+  if "%VS_MAKE_FULL%" == "YES" (
+    set "VS_MAKE_TARGETS=core"
+  ) else (
+    set "VS_MAKE_TARGETS=coreinc"
+    set "VS_MAKE_SWITCH=/F"
+  )
+) else (
+  if NOT "%VS_MAKE_FULL%" == "YES" (
+    set "VS_MAKE_TARGETS=incremental"
+    set "VS_MAKE_SWITCH=/F"
+  )
 )
 
 if "%VS_VERSION%" NEQ "9" goto skip_sdk_check
