@@ -113,6 +113,9 @@ const IID IID_IShellWindows = {0x85CB6900, 0x4D95, 0x11CF, {0x96, 0x0C, 0x00, 0x
 //externs
 HINSTANCE g_hInstance=NULL;
 HWND ghWnd=NULL, ghWndWork=NULL, ghWndApp=NULL, ghWndDrag=NULL;
+#ifdef _DEBUG
+HWND gh__Wnd = NULL; // Informational, to be sure what handle had our window before been destroyd
+#endif
 // Если для ярлыка назначен shortcut - может случиться, что в главное окно он не дойдет
 WPARAM gnWndSetHotkey = 0, gnWndSetHotkeyOk = 0;
 #ifdef _DEBUG

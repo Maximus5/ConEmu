@@ -12716,6 +12716,12 @@ LRESULT CConEmuMain::MainWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lP
 	if ((ghWnd == NULL) && gpConEmu && (gpConEmu->mn_StartupFinished < CConEmuMain::ss_Destroying))
 		ghWnd = hWnd; // Set it immediately, let functions use it
 
+	#ifdef _DEBUG
+	extern HWND gh__Wnd;
+	if (!gh__Wnd && ghWnd)
+		gh__Wnd = ghWnd;
+	#endif
+
 	if (hWnd == ghWnd)
 		result = gpConEmu->WndProc(hWnd, messg, wParam, lParam);
 	else
