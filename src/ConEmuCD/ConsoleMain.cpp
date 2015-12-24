@@ -1121,7 +1121,7 @@ int __stdcall ConsoleMain3(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 		gpszRunCmd = (wchar_t*)calloc(1,2);
 		CreateColorerHeader();
 	}
-	else if ((iRc = ParseCommandLine(pszFullCmdLine/*, &gpszRunCmd, &gbRunInBackgroundTab*/)) != 0)
+	else if ((iRc = ParseCommandLine(pszFullCmdLine)) != 0)
 	{
 		goto wrap;
 	}
@@ -4666,15 +4666,10 @@ void ApplyEnvironmentCommands(wchar_t* pszCommand)
 	}
 }
 
-// Разбор параметров командной строки
-int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackgroundTab*/)
-{
-	//if (!psNewCmd || !pbRunInBackgroundTab)
-	//{
-	//	_ASSERTE(psNewCmd && pbRunInBackgroundTab);
-	//	return CERR_CARGUMENT;
-	//}
 
+// Parse ConEmuC command line switches
+int ParseCommandLine(LPCWSTR asCmdLine)
+{
 	int iRc = 0;
 	CEStr szArg;
 	CEStr szExeTest;
