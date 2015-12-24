@@ -7673,39 +7673,41 @@ LPCWSTR CRealConsole::GetConsoleInfo(LPCWSTR asWhat, CEStr& rsInfo)
 			pOut = ExecuteSrvCmd(dwServerPID, pIn, ghWnd);
 
 		// Return JSON
-		rsInfo.Set(L"{\n");
+		rsInfo.Set(L"<Root\n");
+
+		// Name="cmd.exe"
+		{
+			LPCWSTR pszName = GetRootProcessName();
+			LPWSTR pszReady = NULL; szTemp[0] = 0;
+			if (pszName && *pszName)
+			{
+				pszReady = szTemp;
+				_ASSERTE(wcslen(pszName)*4 < countof(szTemp));
+				INT_PTR cchMax = countof(szTemp) - 1;
+				while (*pszName && ((pszReady - szTemp) < cchMax))
+				{
+					EscapeChar(true, pszName, pszReady);
+				}
+				*pszReady = 0;
+			}
+			lstrmerge(&rsInfo.ms_Val, L"\t\"Name\"=\"", *szTemp ? szTemp : L"<Unknown>", L"\"\n");
+		}
 
 		if (pOut && (pOut->DataSize() >= sizeof(CESERVER_ROOT_INFO)) && pOut->RootInfo.nPID)
 		{
-			lstrmerge(&rsInfo.ms_Val, L"\"Running\": ", pOut->RootInfo.bRunning ? L"true" : L"false", L",\n");
-			{
-				LPCWSTR pszName = GetRootProcessName();
-				LPWSTR pszReady = NULL; szTemp[0] = 0;
-				if (pszName && *pszName)
-				{
-					pszReady = szTemp;
-					_ASSERTE(wcslen(pszName)*4 < countof(szTemp));
-					INT_PTR cchMax = countof(szTemp) - 1;
-					while (*pszName && ((pszReady - szTemp) < cchMax))
-					{
-						EscapeChar(true, pszName, pszReady);
-					}
-					*pszReady = 0;
-				}
-				lstrmerge(&rsInfo.ms_Val, L"\"Name\": \"", *szTemp ? szTemp : L"<Unknown>", L"\",\n");
-			}
-			lstrmerge(&rsInfo.ms_Val, L"\"PID\": ", _itow(pOut->RootInfo.nPID, szTemp, 10), L",\n");
-			lstrmerge(&rsInfo.ms_Val, L"\"ExitCode\": ", _itow(pOut->RootInfo.nExitCode, szTemp, 10), L",\n");
-			lstrmerge(&rsInfo.ms_Val, L"\"UpTime\": ", _itow(pOut->RootInfo.nUpTime, szTemp, 10), L"\n"); // Final, no trailing ","
+			lstrmerge(&rsInfo.ms_Val, L"\t\"Running\": ", pOut->RootInfo.bRunning ? L"true" : L"false", L"\n");
+			lstrmerge(&rsInfo.ms_Val, L"\t\"PID\"\"", _itow(pOut->RootInfo.nPID, szTemp, 10), L"\"\n");
+			lstrmerge(&rsInfo.ms_Val, L"\t\"ExitCode\"\"", _itow(pOut->RootInfo.nExitCode, szTemp, 10), L"\"\n");
+			lstrmerge(&rsInfo.ms_Val, L"\t\"UpTime\"=\"", _itow(pOut->RootInfo.nUpTime, szTemp, 10), L"\"\n"); // Final, no trailing ","
 		}
 		else
 		{
-			lstrmerge(&rsInfo.ms_Val, L"\"Status\": \"Unknown\"\n"); // Final, no trailing ","
+			//lstrmerge(&rsInfo.ms_Val, L"\t\"Status\"=\"Unknown\"\n"); // Final, no trailing ","
 		}
 		ExecuteFreeResult(pOut);
 		ExecuteFreeResult(pIn);
 
-		lstrmerge(&rsInfo.ms_Val, L"}\n");
+		lstrmerge(&rsInfo.ms_Val, L"/>\n");
 		pszVal = rsInfo.ms_Val;
 	}
 	else if (lstrcmpi(asWhat, L"AnsiLog") == 0)
