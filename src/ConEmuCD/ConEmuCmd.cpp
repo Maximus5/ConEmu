@@ -157,14 +157,16 @@ int ComspecInit()
 #endif
 
 	wchar_t szComSpec[MAX_PATH+1];
-	const wchar_t* pszComSpecName;
+	const wchar_t* pszComSpecName = NULL;
 
 	WARNING("TCC/ComSpec");
 	if (GetEnvironmentVariable(L"ComSpec", szComSpec, MAX_PATH) && szComSpec[0] != 0)
 	{
 		pszComSpecName = (wchar_t*)PointToName(szComSpec);
+		if (IsConsoleServer(pszComSpecName))
+			pszComSpecName = NULL;
 	}
-	else
+	if (!pszComSpecName || !*pszComSpecName)
 	{
 		WARNING("TCC/ComSpec");
 		pszComSpecName = L"cmd.exe";
