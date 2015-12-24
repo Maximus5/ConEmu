@@ -720,6 +720,7 @@ CConEmuMain::CConEmuMain()
 	#ifndef _WIN64
 	mh_WinHook = NULL;
 	#endif
+	mb_ShellHookRegistered = false;
 	//mh_PopupHook = NULL;
 	//mp_TaskBar2 = NULL;
 	//mp_TaskBar3 = NULL;
@@ -6317,12 +6318,8 @@ LRESULT CConEmuMain::OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate)
 	Icon.LoadIcon(hWnd, gpSet->nIconID/*IDI_ICON1*/);
 
 	// Support FlashWindow requests from Far Manager and application starting up
-	HMODULE hUser32 = GetModuleHandle(L"user32.dll");
-	FRegisterShellHookWindow fnRegisterShellHookWindow = NULL;
-
-	if (hUser32) fnRegisterShellHookWindow = (FRegisterShellHookWindow)GetProcAddress(hUser32, "RegisterShellHookWindow");
-
-	if (fnRegisterShellHookWindow) fnRegisterShellHookWindow(hWnd);
+	mb_ShellHookRegistered = mb_ShellHookRegistered
+		|| RegisterShellHookWindow(hWnd);
 
 	_ASSERTE(ghConWnd==NULL && "ConWnd must not be created yet");
 	OnActiveConWndStore(NULL); // Refresh window data

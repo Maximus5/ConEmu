@@ -415,10 +415,10 @@ class CConEmuMain
 		HWINEVENTHOOK mh_WinHook;
 		static VOID CALLBACK WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD anEvent, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime);
 		#endif
+		bool mb_ShellHookRegistered;
 		CAttachDlg *mp_AttachDlg;
 		CRecreateDlg *mp_RecreateDlg;
 		BOOL mb_WaitCursor;
-		typedef BOOL (WINAPI* FRegisterShellHookWindow)(HWND);
 		struct
 		{
 			BOOL  bChecked;
