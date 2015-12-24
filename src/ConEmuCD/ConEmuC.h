@@ -624,6 +624,7 @@ struct SrvInfo
 	{
 		csColorerMappingCreate.Close();
 		csReadConsoleInfo.Close();
+		AltServers.Release();
 	};
 };
 
