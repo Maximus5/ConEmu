@@ -1542,6 +1542,92 @@ BOOL CConEmuMain::Init()
 	return TRUE;
 }
 
+void CConEmuMain::DeinitOnDestroy(HWND hWnd, bool abForce /*= false*/)
+{
+	// May it hangs in some cases?
+	session.SetSessionNotification(false);
+
+	// Ensure "RCon starting queue" is terminated
+	mp_RunQueue->Terminate();
+
+	// If the window was closed as part of children termination (InsideIntegration)
+	// Than, close all spawned consoles
+	CVConGroup::OnDestroyConEmu();
+
+	// and destroy all child windows
+	if (mn_InOurDestroy == 0)
+		DestroyAllChildWindows();
+
+	if (mp_AttachDlg)
+	{
+		mp_AttachDlg->Close();
+	}
+	if (mp_RecreateDlg)
+	{
+		mp_RecreateDlg->Close();
+	}
+
+	// Function cares about single execution
+	gpSet->SaveSettingsOnExit();
+
+	// Required before ResetEvent(mh_ConEmuAliveEvent),
+	// to avoid problems in another instance with hotkey registering
+	RegisterMinRestore(false);
+
+	if (mb_ConEmuAliveOwned && mh_ConEmuAliveEvent)
+	{
+		ResetEvent(mh_ConEmuAliveEvent); // Дадим другим процессам "завладеть" первенством
+		SafeCloseHandle(mh_ConEmuAliveEvent);
+		mb_ConEmuAliveOwned = FALSE;
+	}
+
+	if (mb_MouseCaptured)
+	{
+		ReleaseCapture();
+		mb_MouseCaptured = FALSE;
+	}
+
+	//120122 - Теперь через PipeServer
+	m_GuiServer.Stop(true);
+
+	CVConGroup::DestroyAllVCon();
+
+	#ifndef _WIN64
+	if (mh_WinHook)
+	{
+		UnhookWinEvent(mh_WinHook);
+		mh_WinHook = NULL;
+	}
+	#endif
+
+	if (mb_ShellHookRegistered)
+	{
+		mb_ShellHookRegistered = false;
+		DeregisterShellHookWindow(hWnd);
+	}
+
+	if (mp_DragDrop)
+	{
+		delete mp_DragDrop;
+		mp_DragDrop = NULL;
+	}
+
+	Icon.RemoveTrayIcon(true);
+
+	Taskbar_Release();
+
+	UnRegisterHotKeys(TRUE);
+
+	SetKillTimer(false, TIMER_MAIN_ID, 0);
+	SetKillTimer(false, TIMER_CONREDRAW_ID, 0);
+	SetKillTimer(false, TIMER_CAPTION_APPEAR_ID, 0);
+	SetKillTimer(false, TIMER_CAPTION_DISAPPEAR_ID, 0);
+	SetKillTimer(false, TIMER_QUAKE_AUTOHIDE_ID, 0);
+	SetKillTimer(false, TIMER_ACTIVATESPLIT_ID, 0);
+
+	CVConGroup::StopSignalAll();
+}
+
 bool CConEmuMain::IsResetBasicSettings()
 {
 	return gpSetCls->isResetBasicSettings;
@@ -2268,13 +2354,7 @@ void CConEmuMain::Destroy(bool abForce)
 {
 	LogString(L"CConEmuMain::Destroy()");
 
-	WARNING("Подозрение на зависание в некоторых случаях");
-	session.SetSessionNotification(false);
-
-	// Ensure "RCon starting queue" is terminated
-	mp_RunQueue->Terminate();
-
-	CVConGroup::StopSignalAll();
+	DeinitOnDestroy(ghWnd, abForce);
 
 	if (gbInDisplayLastError)
 	{
@@ -7113,80 +7193,8 @@ LRESULT CConEmuMain::OnDestroy(HWND hWnd)
 
 	mn_StartupFinished = ss_Destroying;
 
-	WARNING("Подозрение на зависание в некоторых случаях");
-	session.SetSessionNotification(false);
+	DeinitOnDestroy(hWnd);
 
-	// Ensure "RCon starting queue" is terminated
-	mp_RunQueue->Terminate();
-
-	// If the window was closed as part of children termination (InsideIntegration)
-	// Than, close all spawned consoles
-	CVConGroup::OnDestroyConEmu();
-	// and destroy all child windows
-	if (mn_InOurDestroy == 0)
-		DestroyAllChildWindows();
-
-	if (mp_AttachDlg)
-	{
-		mp_AttachDlg->Close();
-	}
-	if (mp_RecreateDlg)
-	{
-		mp_RecreateDlg->Close();
-	}
-
-	// Function cares about single execution
-	gpSet->SaveSettingsOnExit();
-
-	// Required before ResetEvent(mh_ConEmuAliveEvent),
-	// to avoid problems in another instance with hotkey registering
-	RegisterMinRestore(false);
-
-	if (mb_ConEmuAliveOwned && mh_ConEmuAliveEvent)
-	{
-		ResetEvent(mh_ConEmuAliveEvent); // Дадим другим процессам "завладеть" первенством
-		SafeCloseHandle(mh_ConEmuAliveEvent);
-		mb_ConEmuAliveOwned = FALSE;
-	}
-
-	if (mb_MouseCaptured)
-	{
-		ReleaseCapture();
-		mb_MouseCaptured = FALSE;
-	}
-
-	//120122 - Теперь через PipeServer
-	m_GuiServer.Stop(true);
-
-	CVConGroup::DestroyAllVCon();
-
-	#ifndef _WIN64
-	if (mh_WinHook)
-	{
-		UnhookWinEvent(mh_WinHook);
-		mh_WinHook = NULL;
-	}
-	#endif
-
-
-	if (mp_DragDrop)
-	{
-		delete mp_DragDrop;
-		mp_DragDrop = NULL;
-	}
-
-	Icon.RemoveTrayIcon(true);
-
-	Taskbar_Release();
-
-	UnRegisterHotKeys(TRUE);
-
-	SetKillTimer(false, TIMER_MAIN_ID, 0);
-	SetKillTimer(false, TIMER_CONREDRAW_ID, 0);
-	SetKillTimer(false, TIMER_CAPTION_APPEAR_ID, 0);
-	SetKillTimer(false, TIMER_CAPTION_DISAPPEAR_ID, 0);
-	SetKillTimer(false, TIMER_QUAKE_AUTOHIDE_ID, 0);
-	SetKillTimer(false, TIMER_ACTIVATESPLIT_ID, 0);
 	PostQuitMessage(0);
 
 	// After WM_DESTROY (especially with InsideParent mode)
@@ -13516,9 +13524,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			else if (messg == this->mn_MsgMyDestroy)
 			{
 				ShutdownGuiStep(L"DestroyWindow");
-				WARNING("Подозрение на зависание в некоторых случаях");
-				session.SetSessionNotification(false);
-				//this->OnDestroy(hWnd);
+				DeinitOnDestroy(hWnd);
 				_ASSERTE(hWnd == ghWnd);
 				mn_InOurDestroy++;
 				DestroyWindow(hWnd);

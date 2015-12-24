@@ -613,6 +613,7 @@ class CConEmuMain
 		#endif
 		int mn_InOurDestroy;
 		void DestroyAllChildWindows();
+		void DeinitOnDestroy(HWND hWnd, bool abForce = false);
 
 	public:
 		enum {
