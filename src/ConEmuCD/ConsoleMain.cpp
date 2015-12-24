@@ -5991,15 +5991,6 @@ int ParseCommandLine(LPCWSTR asCmdLine)
 	{
 		gszComSpec[0] = 0;
 
-		#ifdef _DEBUG
-		// ComSpec больше не переопределяется.
-		// Для надежности и проверки уже был вызван RemoveOldComSpecC()
-		if (GetEnvironmentVariable(L"ComSpecC", gszComSpec, MAX_PATH))
-		{
-			_ASSERTE(gszComSpec[0] == 0);
-		}
-		#endif
-
 		if (!GetEnvironmentVariable(L"ComSpec", gszComSpec, MAX_PATH) || gszComSpec[0] == 0)
 			gszComSpec[0] = 0;
 
