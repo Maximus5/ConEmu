@@ -404,6 +404,7 @@ typedef enum tag_RunMode
 	RM_SETHOOK64,
 	RM_ALTSERVER,
 	RM_APPLICATION,
+	RM_GUIMACRO,
 } RunMode;
 
 extern RunMode gnRunMode;

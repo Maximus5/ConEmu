@@ -791,6 +791,13 @@ LONG WINAPI CreateDumpOnException(LPEXCEPTION_POINTERS ExceptionInfo)
 
 void SetupCreateDumpOnException()
 {
+	if (gnRunMode == RM_GUIMACRO)
+	{
+		// Must not be called in GuiMacro mode!
+		_ASSERTE(gnRunMode!=RM_GUIMACRO);
+		return;
+	}
+
 	// По умолчанию - фильтр в AltServer не включается, но в настройках ConEmu есть опция
 	// gpSet->isConsoleExceptionHandler --> CECF_ConExcHandler
 	_ASSERTE((gnRunMode == RM_ALTSERVER) && (gpSrv->pConsole && (gpSrv->pConsole->hdr.Flags & CECF_ConExcHandler)));
@@ -931,7 +938,7 @@ bool CheckAndWarnHookers()
 #if defined(__GNUC__)
 extern "C"
 #endif
-int __stdcall ConsoleMain3(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserved*/, LPCWSTR asCmdLine)
+int __stdcall ConsoleMain3(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserved,3-GuiMacro*/, LPCWSTR asCmdLine)
 {
 	#if defined(SHOW_MAIN_MSGBOX) || defined(SHOW_ADMIN_STARTED_MSGBOX)
 	bool bShowWarn = false;
@@ -969,8 +976,17 @@ int __stdcall ConsoleMain3(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 	}
 
 
-	// На всякий случай - сбросим
-	gnRunMode = RM_UNDEFINED;
+	switch (anWorkMode)
+	{
+	case 0:
+		gnRunMode = RM_SERVER; break;
+	case 1:
+		gnRunMode = RM_ALTSERVER; break;
+	case 3:
+		gnRunMode = RM_GUIMACRO; break;
+	default:
+		gnRunMode = RM_UNDEFINED;
+	}
 
 	// Check linker fails!
 	if (ghOurModule == NULL)
@@ -980,7 +996,8 @@ int __stdcall ConsoleMain3(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 		return CERR_DLLMAIN_SKIPPED;
 	}
 
-	gpSrv = (SrvInfo*)calloc(sizeof(SrvInfo),1);
+	if (!gpSrv && (gnRunMode != RM_GUIMACRO))
+		gpSrv = (SrvInfo*)calloc(sizeof(SrvInfo),1);
 	if (gpSrv)
 	{
 		gpSrv->InitFields();
@@ -1110,15 +1127,23 @@ int __stdcall ConsoleMain3(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 	}
 	#endif
 
-	// Перенес сверху, т.к. "дебаггер" активируется в ParseCommandLine
-	// Событие используется для всех режимов
-	ghExitQueryEvent = CreateEvent(NULL, TRUE/*используется в нескольких нитях, manual*/, FALSE, NULL);
+	// Event is used in almost all modes, even in "debugger"
+	if (!ghExitQueryEvent
+		&& (gnRunMode != RM_GUIMACRO)
+		)
+	{
+		ghExitQueryEvent = CreateEvent(NULL, TRUE/*используется в нескольких нитях, manual*/, FALSE, NULL);
+	}
 
 	LPCWSTR pszFullCmdLine = asCmdLine;
 	wchar_t szDebugCmdLine[MAX_PATH];
 	lstrcpyn(szDebugCmdLine, pszFullCmdLine ? pszFullCmdLine : L"", countof(szDebugCmdLine));
 
-	if (anWorkMode)
+	if (gnRunMode == RM_GUIMACRO)
+	{
+		goto wrap;
+	}
+	else if (anWorkMode)
 	{
 		// Alternative mode
 		_ASSERTE(anWorkMode==1); // может еще и 2 появится - для StandAloneGui
@@ -1206,7 +1231,9 @@ int __stdcall ConsoleMain3(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 	}
 
 	ResetEvent(ghExitQueryEvent);
-	ghQuitEvent = CreateEvent(NULL, TRUE/*используется в нескольких нитях, manual*/, FALSE, NULL);
+
+	if (!ghQuitEvent)
+		ghQuitEvent = CreateEvent(NULL, TRUE/*used in several threads, manual!*/, FALSE, NULL);
 
 	if (!ghQuitEvent)
 	{
