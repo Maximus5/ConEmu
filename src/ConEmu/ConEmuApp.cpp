@@ -3752,7 +3752,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	GetVersionEx(&gOSVer);
 	gnOsVer = ((gOSVer.dwMajorVersion & 0xFF) << 8) | (gOSVer.dwMinorVersion & 0xFF);
 	HeapInitialize();
-	RemoveOldComSpecC();
 	AssertMsgBox = MsgBox;
 	gn_MainThreadId = GetCurrentThreadId();
 	gfnSearchAppPaths = SearchAppPaths;
