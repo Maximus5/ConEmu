@@ -156,33 +156,12 @@ int ComspecInit()
 	}
 #endif
 
-	// Если определена ComSpecC - значит ConEmuC переопределил стандартный ComSpec
-	// Вернем его
 	wchar_t szComSpec[MAX_PATH+1];
 	const wchar_t* pszComSpecName;
 
-	//110202 - comspec более не переопределяется
-	//if (GetEnvironmentVariable(L"ComSpecC", szComSpec, MAX_PATH) && szComSpec[0] != 0)
 	WARNING("TCC/ComSpec");
 	if (GetEnvironmentVariable(L"ComSpec", szComSpec, MAX_PATH) && szComSpec[0] != 0)
 	{
-		//// Только если это (случайно) не conemuc.exe
-		//wchar_t* pwszCopy = (wchar_t*)PointToName(szComSpec); //wcsrchr(szComSpec, L'\\');
-		////if (!pwszCopy) pwszCopy = szComSpec;
-
-		//#pragma warning( push )
-		//#pragma warning(disable : 6400)
-		//if (lstrcmpiW(pwszCopy, L"ConEmuC")==0 || lstrcmpiW(pwszCopy, L"ConEmuC.exe")==0
-		//        /*|| lstrcmpiW(pwszCopy, L"ConEmuC64")==0 || lstrcmpiW(pwszCopy, L"ConEmuC64.exe")==0*/)
-		//	szComSpec[0] = 0;
-		//#pragma warning( pop )
-
-		//if (szComSpec[0])
-		//{
-		//	SetEnvironmentVariable(L"ComSpec", szComSpec);
-		//	SetEnvironmentVariable(L"ComSpecC", NULL);
-		//}
-
 		pszComSpecName = (wchar_t*)PointToName(szComSpec);
 	}
 	else

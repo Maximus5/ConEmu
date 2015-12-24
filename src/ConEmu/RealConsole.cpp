@@ -13673,40 +13673,6 @@ void CRealConsole::UpdateFarSettings(DWORD anFarPID /*= 0*/, FAR_REQ_FARSETCHANG
 
 	mp_ConEmu->GetComSpecCopy(pSetEnvVar->ComSpec);
 
-	//BOOL lbNeedQuot = (wcschr(mp_ConEmu->ms_ConEmuCExeFull, L' ') != NULL);
-	//wchar_t* pszName = szData;
-	//lstrcpy(pszName, L"ComSpec");
-	//wchar_t* pszValue = pszName + _tcslen(pszName) + 1;
-
-	//if (gpSet->AutoBufferHeight)
-	//{
-	//	if (lbNeedQuot) *(pszValue++) = L'"';
-
-	//	lstrcpy(pszValue, mp_ConEmu->ms_ConEmuCExeFull);
-
-	//	if (lbNeedQuot) lstrcat(pszValue, L"\"");
-
-	//	lbNeedQuot = (szCMD[0] != L'"') && (wcschr(szCMD, L' ') != NULL);
-	//	pszName = pszValue + _tcslen(pszValue) + 1;
-	//	lstrcpy(pszName, L"ComSpecC");
-	//	pszValue = pszName + _tcslen(pszName) + 1;
-	//}
-
-	//if (lbNeedQuot) *(pszValue++) = L'"';
-
-	//lstrcpy(pszValue, szCMD);
-
-	//if (lbNeedQuot) lstrcat(pszValue, L"\"");
-
-	//pszName = pszValue + _tcslen(pszValue) + 1;
-	//lstrcpy(pszName, L"ConEmuOutput");
-	//pszName = pszName + _tcslen(pszName) + 1;
-	//lstrcpy(pszName, !gpSet->nCmdOutputCP ? L"" : ((gpSet->nCmdOutputCP == 1) ? L"AUTO"
-	//        : (((gpSet->nCmdOutputCP == 2) ? L"UNICODE" : L"ANSI"))));
-	//pszName = pszName + _tcslen(pszName) + 1;
-	//*(pszName++) = 0;
-	//*(pszName++) = 0;
-
 	if (rpSetEnvVar == NULL)
 	{
 		// В консоли может быть активна и другая программа

@@ -899,8 +899,6 @@ extern "C"
 #endif
 int __stdcall ConsoleMain3(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserved*/, LPCWSTR asCmdLine)
 {
-	TODO("можно при ошибках показать консоль, предварительно поставив 80x25 и установив крупный шрифт");
-
 	#if defined(SHOW_MAIN_MSGBOX) || defined(SHOW_ADMIN_STARTED_MSGBOX)
 	bool bShowWarn = false;
 	#if defined(SHOW_MAIN_MSGBOX)
@@ -917,13 +915,6 @@ int __stdcall ConsoleMain3(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 		MessageBoxA(NULL, szMsg, "ConEmu server" WIN3264TEST(""," x64"), 0);
 	}
 	#endif
-
-	//WARNING("После создания AltServer - проверить в ConEmuCD все условия на RM_SERVER!!!");
-	//_ASSERTE(anWorkMode==FALSE);
-
-	//#ifdef _DEBUG
-	//InitializeCriticalSection(&gcsHeap);
-	//#endif
 
 	if (!anWorkMode)
 	{
@@ -942,20 +933,6 @@ int __stdcall ConsoleMain3(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 		SetConsoleTextAttribute(hOut, 7);
 		#endif
 	}
-	#if 0
-	// Issue 1183, 1188, 1189: Exception filter вызывается (некорректно?) при обработке EMenu или закрытии NetBox
-	else if (anWorkMode == 1)
-	{
-		// Far 3.x, telnet, Vim, etc.
-		// В этих программах ConEmuCD.dll может загружаться для работы с альтернативными буферами и TrueColor
-		if (!IsDebuggerPresent())
-		{
-			// Сохраним, если фильтр уже был установлен - будем звать его из нашей функции
-			gpfnPrevExFilter = SetUnhandledExceptionFilter(CreateDumpOnException);
-			gbCreateDumpOnExceptionInstalled = true;
-		}
-	}
-	#endif
 
 
 	// На всякий случай - сбросим
@@ -981,17 +958,6 @@ int __stdcall ConsoleMain3(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 	}
 
 	RemoveOldComSpecC();
-
-	//if (ghHeap == NULL)
-	//{
-	//	#ifdef _DEBUG
-	//	_ASSERTE(ghHeap != NULL);
-	//	#else
-	//	wchar_t szTitle[128]; swprintf_c(szTitle, L"ConEmuHk, PID=%u", GetCurrentProcessId());
-	//	MessageBox(NULL, L"ConsoleMain2. ghHeap is NULL", szTitle, MB_ICONSTOP|MB_SYSTEMMODAL);
-	//	#endif
-	//	return CERR_NOTENOUGHMEM1;
-	//}
 
 #if defined(SHOW_STARTED_PRINT)
 	BOOL lbDbgWrite; DWORD nDbgWrite; HANDLE hDbg; char szDbgString[255], szHandles[128];
@@ -1235,17 +1201,7 @@ int __stdcall ConsoleMain3(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 	ResetEvent(ghQuitEvent);
 	xf_check();
 
-	// Дескрипторы
-	//ghConIn  = CreateFile(L"CONIN$", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_READ,
-	//            0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
-	//if ((HANDLE)ghConIn == INVALID_HANDLE_VALUE) {
-	//    dwErr = GetLastError();
-	//    _printf("CreateFile(CONIN$) failed, ErrCode=0x%08X\n", dwErr);
-	//    iRc = CERR_CONINFAILED; goto wrap;
-	//}
-	// Дескрипторы
-	//ghConOut = CreateFile(L"CONOUT$", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_READ,
-	//            0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+
 	if (gnRunMode == RM_SERVER || gnRunMode == RM_ALTSERVER)
 	{
 		if ((HANDLE)ghConOut == INVALID_HANDLE_VALUE)
@@ -1274,24 +1230,9 @@ int __stdcall ConsoleMain3(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 	}
 
 	nExitPlaceStep = 200;
-	//2009-05-30 попробуем без этого ?
-	//SetHandleInformation(GetStdHandle(STD_INPUT_HANDLE), HANDLE_FLAG_INHERIT, HANDLE_FLAG_INHERIT);
-	//SetHandleInformation(GetStdHandle(STD_OUTPUT_HANDLE), HANDLE_FLAG_INHERIT, HANDLE_FLAG_INHERIT);
-	//SetHandleInformation(GetStdHandle(STD_ERROR_HANDLE), HANDLE_FLAG_INHERIT, HANDLE_FLAG_INHERIT);
-	//mode = 0;
-	/*lb = GetConsoleMode(ghConIn, &mode);
-	if (!(mode & ENABLE_MOUSE_INPUT)) {
-		mode |= ENABLE_MOUSE_INPUT;
-		lb = SetConsoleMode(ghConIn, mode);
-	}*/
-
-	//110131 - ставится в ConEmuC.exe, а это - dll-ка
-	//// Обязательно, иначе по CtrlC мы свалимся
-	//SetConsoleCtrlHandler((PHANDLER_ROUTINE)HandlerRoutine, true);
-	//SetConsoleMode(ghConIn, 0);
 
 	/* ******************************** */
-	/* *** "Режимная" инициализация *** */
+	/* ****** "Server-mode" init ****** */
 	/* ******************************** */
 	if (gnRunMode == RM_SERVER || gnRunMode == RM_ALTSERVER)
 	{
@@ -1314,22 +1255,24 @@ int __stdcall ConsoleMain3(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 	}
 
 	/* ********************************* */
-	/* *** Запуск дочернего процесса *** */
+	/* ****** Start child process ****** */
 	/* ********************************* */
 #ifdef SHOW_STARTED_PRINT
 	_wsprintfA(szDbgString, SKIPLEN(szDbgString) "ConEmuC: PID=%u", GetCurrentProcessId());
 	MessageBoxA(0, "Press Ok to continue", szDbgString, MB_SYSTEMMODAL);
 #endif
 
-	// CREATE_NEW_PROCESS_GROUP - низя, перестает работать Ctrl-C
-	// Перед CreateProcess нужно ставить 0, иначе из-за антивирусов может наступить
-	// timeout ожидания окончания процесса еще ДО выхода из CreateProcess
+	// Don't use CREATE_NEW_PROCESS_GROUP, or Ctrl-C stops working
+
+	// We need to set `0` before CreateProcess, otherwise we may get timeout,
+	// due to misc antivirus software, BEFORE CreateProcess finishes
 	if (!(gbAttachMode & am_Modes))
 		gpSrv->nProcessStartTick = 0;
 
 	if (gbNoCreateProcess)
 	{
-		lbRc = TRUE; // Процесс уже запущен, просто цепляемся к ConEmu (GUI)
+		// Process already started, just attach RealConsole to ConEmu (VirtualConsole)
+		lbRc = TRUE;
 		pi.hProcess = gpSrv->hRootProcess;
 		pi.dwProcessId = gpSrv->dwRootProcess;
 	}
@@ -1638,9 +1581,9 @@ int __stdcall ConsoleMain3(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 	xf_validate(NULL);
 #endif
 
-	/* ************************ */
-	/* *** Ожидание запуска *** */
-	/* ************************ */
+	/* *************************** */
+	/* *** Waiting for startup *** */
+	/* *************************** */
 
 	// Чтобы не блокировать папку запуска
 	if (gnRunMode != RM_ALTSERVER && szSelfDir[0])
@@ -1777,14 +1720,14 @@ wait:
 
 	if (gnRunMode == RM_ALTSERVER)
 	{
-		// Поскольку мы крутимся в этом же процессе - то завершения ждать глупо. Здесь другое поведение
+		// Alternative server, we can't wait for "self" termination
 		iRc = 0;
 		goto AltServerDone;
 	} // (gnRunMode == RM_ALTSERVER)
 	else if (gnRunMode == RM_SERVER)
 	{
 		nExitPlaceStep = EPS_WAITING4PROCESS/*550*/;
-		// По крайней мере один процесс в консоли запустился. Ждем пока в консоли не останется никого кроме нас
+		// There is at least one process in .onsole. Wait until there would be nobody except us.
 		nWait = WAIT_TIMEOUT; nWaitExitEvent = -2;
 
 		_ASSERTE(!gpSrv->DbgInfo.bDebuggerActive);
@@ -1793,7 +1736,7 @@ wait:
 		while (nWait == WAIT_TIMEOUT)
 		{
 			nWait = nWaitExitEvent = WaitForSingleObject(ghExitQueryEvent, 100);
-			// Что-то при загрузке компа иногда все-таки не дожидается, когда процесс в консоли появится
+			// Not actual? Что-то при загрузке компа иногда все-таки не дожидается, когда процесс в консоли появится
 			_ASSERTE(!(gbCtrlBreakStopWaitingShown && (nWait != WAIT_TIMEOUT)));
 		}
 		#else
@@ -1807,7 +1750,7 @@ wait:
 		#endif
 
 
-		// Получить ExitCode
+		// Root ExitCode
 		GetExitCodeProcess(gpSrv->hRootProcess, &gnExitCode);
 
 		nExitPlaceStep = EPS_ROOTPROCFINISHED/*560*/;
@@ -1846,7 +1789,7 @@ wait:
 		xf_validate(NULL);
 		#endif
 
-		// Сразу закрыть хэндлы
+		// Close all handles now
 		if (pi.hProcess)
 			SafeCloseHandle(pi.hProcess);
 
@@ -1858,9 +1801,9 @@ wait:
 		#endif
 	} // (gnRunMode == RM_COMSPEC)
 
-	/* ************************* */
-	/* *** Завершение работы *** */
-	/* ************************* */
+	/* *********************** */
+	/* *** Finalizing work *** */
+	/* *********************** */
 	iRc = 0;
 wrap:
 	ShutdownSrvStep(L"Finalizing.1");
@@ -3960,9 +3903,9 @@ int DoGuiMacro(LPCWSTR asCmdArg, MacroInstance& Inst)
 			// Только если текущая консоль запущена В ConEmu
 			if (ghConEmuWnd)
 			{
-				// Передать переменную в родительский процесс
-				// Сработает только если включены хуки (Inject ConEmuHk)
-				// И может игнорироваться некоторыми шеллами (если победить не удастся)
+				// Transfer EnvVar to parent console processes
+				// This would work only if ‘Inject ConEmuHk’ is enabled
+				// However, it's ignored by some shells
 				DoExportEnv(CEGUIMACRORETENVVAR, ea_ExportCon, true/*bSilent*/);
 			}
 
@@ -4736,10 +4679,6 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 	CEStr szArg;
 	CEStr szExeTest;
 	LPCWSTR pszArgStarts = NULL;
-	//wchar_t szComSpec[MAX_PATH+1] = {0};
-	//LPCWSTR pwszCopy = NULL;
-	//wchar_t* psFilePart = NULL;
-	//BOOL bViaCmdExe = TRUE;
 	gbRunViaCmdExe = TRUE;
 	gbRootIsCmdExe = TRUE;
 	gbRunInBackgroundTab = FALSE;
