@@ -1141,6 +1141,9 @@ int __stdcall ConsoleMain3(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 
 	if (gnRunMode == RM_GUIMACRO)
 	{
+		// Separate parser function
+		iRc = GuiMacroCommandLine(pszFullCmdLine);
+		_ASSERTE(iRc == CERR_GUIMACRO_SUCCEEDED || iRc == CERR_GUIMACRO_FAILED);
 		goto wrap;
 	}
 	else if (anWorkMode)
@@ -3940,7 +3943,14 @@ int DoGuiMacro(LPCWSTR asCmdArg, MacroInstance& Inst)
 	{
 		if (pOut->GuiMacro.nSucceeded)
 		{
-			// Только если текущая консоль запущена В ConEmu
+			LPCWSTR pszSet = (pOut->DataSize() >= sizeof(pOut->GuiMacro)) ? pOut->GuiMacro.sMacro : L"";
+			SetEnvironmentVariable(CEGUIMACRORETENVVAR, pszSet);
+			iRc = CERR_GUIMACRO_SUCCEEDED; // OK
+		}
+
+		if (pOut->GuiMacro.nSucceeded && (gnRunMode != RM_GUIMACRO))
+		{
+			// If current RealConsole was already started in ConEmu
 			if (ghConEmuWnd)
 			{
 				// Transfer EnvVar to parent console processes
@@ -3959,7 +3969,6 @@ int DoGuiMacro(LPCWSTR asCmdArg, MacroInstance& Inst)
 				if (!IsOutputRedirected())
 					_wprintf(L"\n");
 			}
-			iRc = CERR_GUIMACRO_SUCCEEDED; // OK
 		}
 		ExecuteFreeResult(pOut);
 	}
@@ -4706,6 +4715,41 @@ void ApplyEnvironmentCommands(wchar_t* pszCommand)
 	}
 }
 
+int GuiMacroCommandLine(LPCWSTR asCmdLine)
+{
+	int iRc = CERR_CMDLINEEMPTY;
+	CEStr szArg;
+	LPCWSTR pszArgStarts = NULL;
+	LPCWSTR lsCmdLine = asCmdLine;
+	MacroInstance MacroInst = {}; // Special ConEmu instance for GUIMACRO and other options
+
+	while ((iRc = NextArg(&lsCmdLine, szArg, &pszArgStarts)) == 0)
+	{
+		// Following code wants '/'style arguments
+		// Change '-'style to '/'style
+		if (szArg[0] == L'-')
+			szArg.SetAt(0, L'/');
+		else if (szArg[0] != L'/')
+			continue;
+
+		// -GUIMACRO[:PID|HWND] <Macro string>
+		if (lstrcmpni(szArg, L"/GUIMACRO", 9) == 0)
+		{
+			ArgGuiMacro(szArg, MacroInst);
+
+			// Return result via EnvVar only
+			gbPrefereSilentMode = true;
+
+			iRc = DoGuiMacro(lsCmdLine, MacroInst);
+
+			// We've done
+			gbInShutdown = TRUE;
+			break;
+		}
+	}
+
+	return iRc;
+}
 
 // Parse ConEmuC command line switches
 int ParseCommandLine(LPCWSTR asCmdLine)

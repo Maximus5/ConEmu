@@ -330,6 +330,7 @@ CINFILTRATE_EXIT_CODES InjectRemote(DWORD nRemotePID, bool abDefTermOnly = false
 CINFILTRATE_EXIT_CODES InfiltrateDll(HANDLE hProcess, LPCWSTR dll);
 
 int ParseCommandLine(LPCWSTR asCmdLine);
+int GuiMacroCommandLine(LPCWSTR asCmdLine);
 wchar_t* ParseConEmuSubst(LPCWSTR asCmd);
 void ApplyEnvironmentCommands(wchar_t* pszCommand);
 void ApplyProcessSetEnvCmd();
