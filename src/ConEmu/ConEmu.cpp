@@ -12717,9 +12717,15 @@ LRESULT CConEmuMain::MainWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lP
 
 	extern LONG gnMessageNestingLevel;
 	MSetter nestedLevel(&gnMessageNestingLevel);
+	bool bDestroyed = false;
 
 	if (gpConEmu)
+	{
 		gpConEmu->PreWndProc(messg);
+
+		if (gpConEmu->mn_StartupFinished >= CConEmuMain::ss_Destroyed)
+			bDestroyed = true;
+	}
 
 	if ((ghWnd == NULL) && gpConEmu && (gpConEmu->mn_StartupFinished < CConEmuMain::ss_Destroying))
 		ghWnd = hWnd; // Set it immediately, let functions use it
@@ -12732,6 +12738,9 @@ LRESULT CConEmuMain::MainWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lP
 
 	if (hWnd == ghWnd)
 		result = gpConEmu->WndProc(hWnd, messg, wParam, lParam);
+	else if (bDestroyed)
+		// During shutdown few message may pass here... "SHELLHOOK"
+		result = ::DefWindowProc(hWnd, messg, wParam, lParam);
 	else
 		result = CConEmuChild::ChildWndProc(hWnd, messg, wParam, lParam);
 
