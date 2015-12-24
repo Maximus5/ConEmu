@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
   <metadata>
     <id>ConEmu.Core</id>
-    <version>15.12.22.0</version>
+    <version>15.12.23.0</version>
     <title>ConEmu, a Windows Console Emulator</title>
     <authors>Maximus5</authors>
     <owners>Maximus5</owners>
