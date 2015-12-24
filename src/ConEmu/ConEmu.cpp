@@ -7103,9 +7103,13 @@ HWND CConEmuMain::PostCreateView(CConEmuChild* pChild)
 	return hChild;
 }
 
+// Processes WM_DESTROY message
 LRESULT CConEmuMain::OnDestroy(HWND hWnd)
 {
-	if (this && mp_Log) { LogString(L"WM_DESTROY: CConEmuMain"); } else { DEBUGSTRDESTROY(L"WM_DESTROY: CConEmuMain"); }
+	if (!this)
+		return 0;
+	wchar_t szLog[80]; _wsprintf(szLog, SKIPCOUNT(szLog) L"WM_DESTROY: CConEmuMain hWnd=x%08X OurDestroy=%i", LODWORD(hWnd), mn_InOurDestroy);
+	if (mp_Log) { LogString(szLog); } else { DEBUGSTRDESTROY(szLog); }
 
 	mn_StartupFinished = ss_Destroying;
 
