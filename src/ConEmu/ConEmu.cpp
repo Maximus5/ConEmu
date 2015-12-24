@@ -161,12 +161,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#define CONEMU_ANIMATE_DURATION 200
 //#define CONEMU_ANIMATE_DURATION_MAX 5000
 
-const wchar_t* gsHomePage    = CEHOMEPAGE;    //L"http://conemu.github.io";
+const wchar_t* gsHomePage    = CEHOMEPAGE;    //L"https://conemu.github.io";
 const wchar_t* gsDownlPage   = CEDOWNLPAGE;   //L"http://www.fosshub.com/ConEmu.html";
-const wchar_t* gsFirstStart  = CEFIRSTSTART;  //L"http://conemu.github.io/en/SettingsFast.html";
-const wchar_t* gsReportBug   = CEREPORTBUG;   //L"http://conemu.github.io/en/Issues.html";
-const wchar_t* gsReportCrash = CEREPORTCRASH; //L"http://conemu.github.io/en/Issues.html";
-const wchar_t* gsWhatsNew    = CEWHATSNEW;    //L"http://conemu.github.io/en/Whats_New.html";
+const wchar_t* gsFirstStart  = CEFIRSTSTART;  //L"https://conemu.github.io/en/SettingsFast.html";
+const wchar_t* gsReportBug   = CEREPORTBUG;   //L"https://conemu.github.io/en/Issues.html";
+const wchar_t* gsReportCrash = CEREPORTCRASH; //L"https://conemu.github.io/en/Issues.html";
+const wchar_t* gsWhatsNew    = CEWHATSNEW;    //L"https://conemu.github.io/en/Whats_New.html";
 
 #define gsPortableApps_LauncherIni  L"\\..\\AppInfo\\Launcher\\ConEmuPortable.ini"
 #define gsPortableApps_DefaultXml   L"\\..\\DefaultData\\settings\\ConEmu.xml"

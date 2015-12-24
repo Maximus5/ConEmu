@@ -427,7 +427,7 @@ BEGIN
     CONTROL         "Use existing ConEmu window if available",cbDefaultTerminalUseExisting,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,9,101,305,8
     LTEXT           "If you want to start some command in the Windows standard console window from hooked executable when 'Default terminal' is enabled, just use ""-new_console:z"" switch.\r\nExample: ""cmd.exe -new_console:z""",stDefaultTerminalSwitchInfo,10,168,306,26
-    LTEXT           "http://conemu.github.io/en/DefaultTerminal.html",tDefTermWikiLink,10,217,306,8
+    LTEXT           "https://conemu.github.io/en/DefaultTerminal.html",tDefTermWikiLink,10,217,306,8
     PUSHBUTTON      "Apply",cbApplyDefTerm,278,64,39,12
     CONTROL         "Enable logging of hooked processes (debug purposes)",cbDefaultTerminalDebugLog,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,9,115,305,8
@@ -1431,7 +1431,7 @@ BEGIN
     EDITTEXT        tAboutSearch,362,14,57,13,ES_AUTOHSCROLL | ES_WANTRETURN
     CTEXT           "Console Emulation program (local terminal)",stConEmuAbout,72,7,272,8
     CTEXT           "Version status:",stConEmuVersion,72,17,272,8
-    CTEXT           "http://conemu.github.io/",stConEmuUrl,117,189,182,8,SS_NOTIFY
+    CTEXT           "https://conemu.github.io/",stConEmuUrl,117,189,182,8,SS_NOTIFY
 END
 
 IDD_ACTION DIALOGEX 0, 0, 325, 157
@@ -1441,7 +1441,7 @@ FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
     ICON            IDI_ICON1,IDC_STATIC,7,7,21,20,WS_DISABLED
     LTEXT           "Description",stActionTitle,50,7,268,19
-    LTEXT           "http://conemu.github.io/",stConEmuUrl,7,145,268,8,SS_NOTIFY
+    LTEXT           "https://conemu.github.io/",stConEmuUrl,7,145,268,8,SS_NOTIFY
     PUSHBUTTON      "",cbActionBtn1,49,37,269,26,BS_LEFT | BS_MULTILINE
     PUSHBUTTON      "",cbActionBtn2,49,99,269,26,BS_LEFT | BS_MULTILINE
     PUSHBUTTON      "",cbActionBtn3,49,68,269,26,BS_LEFT | BS_MULTILINE

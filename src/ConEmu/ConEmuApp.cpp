@@ -2369,7 +2369,7 @@ void AssertBox(LPCTSTR szText, LPCTSTR szFile, UINT nLine, LPEXCEPTION_POINTERS 
 		{
 			wchar_t* pszFileMsg = szDmpFile[0] ? lstrmerge(L"\r\n\r\n" L"Memory dump was saved to\r\n", szDmpFile,
 				L"\r\n\r\n" L"Please Zip it and send to developer (via DropBox etc.)\r\n",
-				CEREPORTCRASH /* http://conemu.github.io/en/Issues.html... */) : NULL;
+				CEREPORTCRASH /* https://conemu.github.io/en/Issues.html... */) : NULL;
 			pszDumpMessage = lstrmerge(pszFull, L"\r\n\r\n", szFullInfo, pszFileMsg);
 			CopyToClipboard(pszDumpMessage ? pszDumpMessage : szFullInfo);
 			SafeFree(pszFileMsg);
@@ -3388,7 +3388,7 @@ LONG WINAPI CreateDumpOnException(LPEXCEPTION_POINTERS ExceptionInfo)
 		wcscat_c(szAdd, L"\r\n\r\n" L"Memory dump was saved to\r\n");
 		wcscat_c(szAdd, szDmpFile);
 		wcscat_c(szAdd, L"\r\n\r\n" L"Please Zip it and send to developer (via DropBox etc.)\r\n");
-		wcscat_c(szAdd, CEREPORTCRASH /* http://conemu.github.io/en/Issues.html... */);
+		wcscat_c(szAdd, CEREPORTCRASH /* https://conemu.github.io/en/Issues.html... */);
 	}
 	wcscat_c(szAdd, L"\r\n\r\nPress <Yes> to copy this text to clipboard\r\nand open project web page");
 
@@ -3469,7 +3469,7 @@ int CheckZoneIdentifiers(bool abAutoUnblock)
 	int iBtn = abAutoUnblock ? IDYES
 		: ConfirmDialog(lsMsg, L"Warning!", NULL, NULL, MB_YESNOCANCEL,
 			L"Unblock and Continue", L"Let ConEmu try to unblock these files" L"\r\n" L"You may see SmartScreen and UAC confirmations",
-			L"Visit home page and Exit", CEZONEID /* http://conemu.github.io/en/ZoneId.html */,
+			L"Visit home page and Exit", CEZONEID /* https://conemu.github.io/en/ZoneId.html */,
 			L"Ignore and Continue", L"You may face further warnings");
 
 	switch (iBtn)

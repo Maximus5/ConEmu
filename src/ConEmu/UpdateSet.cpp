@@ -50,7 +50,6 @@ LPCWSTR ConEmuUpdateSettings::UpdateVerLocationDefault()
 	static LPCWSTR pszDefault =
 		//L"file://C:\\ConEmu-Update\\version.ini"
 		//L"http://conemu.ru/version.ini"
-		//L"http://conemu-maximus5.googlecode.com/svn/trunk/ConEmu/version.ini"
 		L"https://conemu.github.io/version.ini"
 		;
 	return pszDefault;
