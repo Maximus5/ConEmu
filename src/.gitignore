@@ -25,6 +25,7 @@ Test/
 *.suo
 *.log
 *.sdf
+*.opendb
 *.opensdf
 *.ncb
 *.opt
