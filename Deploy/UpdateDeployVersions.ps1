@@ -88,21 +88,31 @@ Write-Host -ForegroundColor Green $PortableApps
 [profileapi]::WritePrivateProfileString('Version','DisplayVersion',$build,$PortableApps) | Out-Null
 
 
+#
+# Helper to update NuSpec-s
+#
+function NuSpec-SetBuild([string]$XmlFile) {
+  Write-Host -ForegroundColor Green $XmlFile
+  $xml = Get-Content -Raw $XmlFile -Encoding UTF8
+  $m = ([regex]'<version>\d+\.\d+\.\d+\..<\/version>').Matches($xml)
+  if (($m -eq $null) -Or ($m.Count -ne 1)) {
+    Write-Host -ForegroundColor Red "Proper <version>...</version> tag was not found in:`r`n$XmlFile"
+    $host.SetShouldExit(101)
+    return $FALSE
+  }
+  $xml = $xml.Replace($m[0].Value, "<version>$build_dot4</version>").Trim()
+  Set-Content $XmlFile $xml -Encoding UTF8
+  return $TRUE
+}
+
 
 
 #
 # Chocolatey.org
 #
-Write-Host -ForegroundColor Green $NuSpec
-$xml = Get-Content -Raw $NuSpec
-$m = ([regex]'<version>\d+\.\d+\.\d+\..<\/version>').Matches($xml)
-if (($m -eq $null) -Or ($m.Count -ne 1)) {
-  Write-Host -ForegroundColor Red "Proper <version>...</version> tag was not found in:`r`n$NuSpec"
-  $host.SetShouldExit(101)
+if (-Not (NuSpec-SetBuild $NuSpec)) {
   exit 
 }
-$xml = $xml.Replace($m[0].Value, "<version>$build_dot4</version>").Trim()
-Set-Content $NuSpec $xml -Encoding Ascii
 
 @($NuInstall, $NuUnInstall) | % {
   Write-Host -ForegroundColor Green $_
@@ -120,21 +130,10 @@ Set-Content $NuSpec $xml -Encoding Ascii
 #
 # Nuget.org ConEmu.Core
 #
-$ThisFilePath = $ConEmuCoreNuget
-Write-Host -ForegroundColor Green $ThisFilePath
-$xml = New-Object ([xml])
-$xml.Load($ThisFilePath)
-$nt = New-Object ([System.Xml.XmlNamespaceManager]) ($xml.NameTable)
-$nt.AddNamespace("n", "http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd")
-$xmlVersion = $xml.SelectSingleNode("/n:package/n:metadata/n:version", $nt)
-if($xmlVersion -eq $null)
-{
-  Write-Host -ForegroundColor Red "Proper <version>...</version> element was not found in:`r`n$ThisFilePath"
-  $host.SetShouldExit(101)
+if (-Not (NuSpec-SetBuild $ConEmuCoreNuget)) {
   exit 
 }
-$xmlVersion.InnerText = $build_dot4
-$xml.Save($ThisFilePath)
+
 
 #
 # Installer
