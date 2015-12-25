@@ -1150,7 +1150,7 @@ int __stdcall ConsoleMain3(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 	{
 		// Alternative mode
 		_ASSERTE(anWorkMode==1); // может еще и 2 появится - для StandAloneGui
-		_ASSERTE(gnRunMode == RM_UNDEFINED);
+		_ASSERTE(gnRunMode == RM_UNDEFINED || gnRunMode == RM_ALTSERVER);
 		gnRunMode = RM_ALTSERVER;
 		_ASSERTE(!gbCreateDumpOnExceptionInstalled);
 		_ASSERTE(gbAttachMode==am_None);
