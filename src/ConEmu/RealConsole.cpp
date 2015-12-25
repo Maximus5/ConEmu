@@ -7690,15 +7690,15 @@ LPCWSTR CRealConsole::GetConsoleInfo(LPCWSTR asWhat, CEStr& rsInfo)
 				}
 				*pszReady = 0;
 			}
-			lstrmerge(&rsInfo.ms_Val, L"\t\"Name\"=\"", *szTemp ? szTemp : L"<Unknown>", L"\"\n");
+			lstrmerge(&rsInfo.ms_Val, L"\tName=\"", *szTemp ? szTemp : L"<Unknown>", L"\"\n");
 		}
 
 		if (pOut && (pOut->DataSize() >= sizeof(CESERVER_ROOT_INFO)) && pOut->RootInfo.nPID)
 		{
-			lstrmerge(&rsInfo.ms_Val, L"\t\"Running\": ", pOut->RootInfo.bRunning ? L"true" : L"false", L"\n");
-			lstrmerge(&rsInfo.ms_Val, L"\t\"PID\"\"", _itow(pOut->RootInfo.nPID, szTemp, 10), L"\"\n");
-			lstrmerge(&rsInfo.ms_Val, L"\t\"ExitCode\"\"", _itow(pOut->RootInfo.nExitCode, szTemp, 10), L"\"\n");
-			lstrmerge(&rsInfo.ms_Val, L"\t\"UpTime\"=\"", _itow(pOut->RootInfo.nUpTime, szTemp, 10), L"\"\n"); // Final, no trailing ","
+			lstrmerge(&rsInfo.ms_Val, L"\tRunning=\"", pOut->RootInfo.bRunning ? L"true" : L"false", L"\"\n");
+			lstrmerge(&rsInfo.ms_Val, L"\tPID=\"", _itow(pOut->RootInfo.nPID, szTemp, 10), L"\"\n");
+			lstrmerge(&rsInfo.ms_Val, L"\tExitCode=\"", _itow(pOut->RootInfo.nExitCode, szTemp, 10), L"\"\n");
+			lstrmerge(&rsInfo.ms_Val, L"\tUpTime=\"", _itow(pOut->RootInfo.nUpTime, szTemp, 10), L"\"\n"); // Final, no trailing ","
 		}
 		else
 		{
