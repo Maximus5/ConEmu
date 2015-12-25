@@ -19,6 +19,18 @@ http://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2015.12.24
+* All 64-bit binaries are built with VS14.
+  32-bit binaries are still built with VS9 (WinSDK7) to be compatible with old systems.
+* gh#486: Use https for github links.
+* gh#488: Full paths were shown in Far's editor/viewer tabs (6ce49af regression).
+* GuiMacro: Return xml instead of json for `GetInfo Root`.
+* API GuiMacro: In-process GuiMacro execution improvements.
+  Prototype: int __stdcall ConsoleMain3(int anWorkMode, LPCWSTR asCmdLine)
+  Example: ConsoleMain3(3, L" -GuiMacro:1234 Print \"exit\\n\"");
+  Note: anWorkMode==3, asCmdLine must begin with space.
+
+
 2015.12.22
 * gh#465: Treat Ctrl-Z as ‘EndOfStream’ in ReadConsole (Go input streams).
   To use, on new line press Ctrl-Z and Enter. Option (Features page) disabled by default.
