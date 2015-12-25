@@ -1,24 +1,33 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
-  <metadata>
-    <id>ConEmu.Core</id>
-    <version>15.12.24.0</version>
-    <title>ConEmu, a Windows Console Emulator</title>
-    <authors>Maximus5</authors>
-    <owners>Maximus5</owners>
-    <projectUrl>http://conemu.github.io/</projectUrl>
-    <iconUrl>http://conemu.github.io/img/logo.png</iconUrl>
-    <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    <summary>
+<metadata>
+
+<id>ConEmu.Core</id>
+<version>15.12.24.0</version>
+<title>ConEmu.Core</title>
+<authors>Maximus5</authors>
+<owners>Maximus5</owners>
+<tags>graphical console emulator tabs farmanager powershell cmd bash cygwin msys git</tags>
+
+<projectUrl>http://conemu.github.io/</projectUrl>
+<iconUrl>http://conemu.github.io/img/logo.png</iconUrl>
+<releaseNotes>http://conemu.github.io/en/Whats_New.html</releaseNotes>
+
+<requireLicenseAcceptance>false</requireLicenseAcceptance>
+<licenseUrl>https://github.com/Maximus5/ConEmu/blob/master/Release/ConEmu/License.txt</licenseUrl>
+<copyright>© 2015, Maximus5</copyright>
+
+<summary>
 ConEmu (short for Console Emulator) is a handy and full featured Windows console window (local terminal) with a lot of enhancements.
 </summary>
-    <description>
+
+<description>
 ConEmu-Maximus5 (short for Console Emulator) is a handy and full featured Windows console window (local terminal) with a lot of enhancements: panes, tabs, tasks, jump lists, quake style, handy text and block selection, handy paste of paths in either Unix or Windows notation, and much more.
 
 ConEmu.Core package contains only essential files - no extras, no Far Manager plugins, no documentation. Full distro and docs are available on the project site.
 
-ConEmu may work as either standalone window, or embeddable console control. And it may host two types of applications.
-* ‘console’: cmd, powershell, Far Manager, bash, and many others.
+ConEmu may work as either standalone window, or embeddable console control. And it may host two types of applications:
+* ‘console’: cmd, powershell, Far Manager, bash, and many others;
 * ‘graphical’ (GUI): Notepad, PuTTY, GVim, mintty and so on.
 
 Short list of features:
@@ -35,10 +44,9 @@ Short list of features:
 * unicode and CJK support;
 * explore much more features on the project site.
 </description>
-    <releaseNotes>http://conemu.github.io/en/Whats_New.html</releaseNotes>
-    <licenseUrl>https://opensource.org/licenses/BSD-3-Clause</licenseUrl>
-    <tags>graphical console emulator tabs farmanager powershell cmd bash cygwin msys git</tags>
-  </metadata>
+
+</metadata>
+
   <files>
     <!-- Nuget will include this build file in the MSBuild project when referencing the Nuget. -->
     <!-- It allows the conemu stuff to be copied to the outdir of that project (or projects which reference it). -->
@@ -56,4 +64,5 @@ Short list of features:
     <file src="..\..\Release\ConEmu\CmdInit.cmd" target="Tools\ConEmu" />
     <file src="..\..\Release\ConEmu\GitShowBranch.cmd" target="Tools\ConEmu" />
   </files>
+
 </package>
