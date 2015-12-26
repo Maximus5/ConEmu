@@ -131,6 +131,7 @@ $(INTDIR)\UpdateSet.obj \
 $(INTDIR)\VConChild.obj \
 $(INTDIR)\VConGroup.obj \
 $(INTDIR)\VConRelease.obj \
+$(INTDIR)\VConText.obj \
 $(INTDIR)\VirtualConsole.obj \
 $(INTDIR)\wcchars.obj \
 $(INTDIR)\WConsoleInfo.obj \
@@ -479,6 +480,8 @@ $(INTDIR)\VConChild.obj: VConChild.cpp VConRelease.h VirtualConsole.h VConChild.
 $(INTDIR)\VConGroup.obj: VConGroup.cpp VConRelease.h VirtualConsole.h VConChild.h VConGroup.h
 
 $(INTDIR)\VConRelease.obj: VConRelease.cpp VConRelease.h VirtualConsole.h VConChild.h
+
+$(INTDIR)\VConText.obj: VConText.cpp VConText.h
 
 $(INTDIR)\VirtualConsole.obj: VirtualConsole.cpp VConRelease.h VirtualConsole.h VConChild.h VConGroup.h
 

@@ -76,6 +76,7 @@ FEFF    ZERO WIDTH NO-BREAK SPACE
 #include "TabBar.h"
 #include "TaskBarGhost.h"
 #include "VConGroup.h"
+#include "VConText.h"
 #include "../common/MSetter.h"
 
 
@@ -930,183 +931,6 @@ bool CVirtualConsole::LoadDumpConsole()
 	return true;
 }
 
-// Это символы рамок и др. спец. символы
-//#define isCharBorder(inChar) (inChar>=0x2013 && inChar<=0x266B)
-bool CVirtualConsole::isCharBorder(wchar_t inChar)
-{
-	// Низя - нужно учитывать gpSet->isFixFarBorders там где это требуется, иначе пролетает gpSet->isEnhanceGraphics
-	//if (!gpSet->isFixFarBorders)
-	//	return false;
-	return gpSet->isCharAltFont(inChar);
-	//Settings::CharRanges *pcr = gpSet->icFixFarBorderRanges;
-	//for (int i = 10; --i && pcr->bUsed; pcr++) {
-	//	Settings::CharRanges cr = *pcr;
-	//	if (inChar>=cr.cBegin && inChar<=cr.cEnd)
-	//		return true;
-	//}
-	//return false;
-	//if (inChar>=0x2013 && inChar<=0x266B)
-	//    return true;
-	//else
-	//    return false;
-	//if (gpSet->isFixFarBorders)
-	//{
-	//  //if (! (inChar > 0x2500 && inChar < 0x251F))
-	//  if ( !(inChar > 0x2013/*En dash*/ && inChar < 0x266B/*Beamed Eighth Notes*/) /*&& inChar!=L'}'*/ )
-	//      /*if (inChar != 0x2550 && inChar != 0x2502 && inChar != 0x2551 && inChar != 0x007D &&
-	//      inChar != 0x25BC && inChar != 0x2593 && inChar != 0x2591 && inChar != 0x25B2 &&
-	//      inChar != 0x2562 && inChar != 0x255F && inChar != 0x255A && inChar != 0x255D &&
-	//      inChar != 0x2554 && inChar != 0x2557 && inChar != 0x2500 && inChar != 0x2534 && inChar != 0x2564) // 0x2520*/
-	//      return false;
-	//  else
-	//      return true;
-	//}
-	//else
-	//{
-	//  if (inChar < 0x01F1 || inChar > 0x0400 && inChar < 0x045F || inChar > 0x2012 && inChar < 0x203D || /*? - not sure that optimal*/ inChar > 0x2019 && inChar < 0x2303 || inChar > 0x24FF && inChar < 0x266C)
-	//      return false;
-	//  else
-	//      return true;
-	//}
-}
-
-// А это только "рамочные" символы, в которых есть любая (хотя бы частичная) вертикальная черта + стрелки/штриховки
-bool CVirtualConsole::isCharBorderVertical(wchar_t inChar)
-{
-	//if (inChar>=0x2502 && inChar<=0x25C4 && inChar!=0x2550)
-	//2009-07-12 Для упрощения - зададим диапазон рамок за исключением горизонтальной линии
-	//if (inChar==ucBoxSinglVert || inChar==0x2503 || inChar==0x2506 || inChar==0x2507
-	//    || (inChar>=0x250A && inChar<=0x254B) || inChar==0x254E || inChar==0x254F
-	//    || (inChar>=0x2551 && inChar<=0x25C5)) // По набору символов Arial Unicode MS
-	TODO("ucBoxSinglHorz отсекать не нужно?");
-
-	if ((inChar != ucBoxDblHorz && (inChar >= ucBoxSinglVert && inChar <= ucBoxDblVertHorz))
-		|| (inChar == ucArrowUp || inChar == ucArrowDown))
-		return true;
-	else
-		return false;
-}
-
-bool CVirtualConsole::isCharProgress(wchar_t inChar)
-{
-	bool isProgress = (inChar == ucBox25 || inChar == ucBox50 || inChar == ucBox75 || inChar == ucBox100);
-	return isProgress;
-}
-
-bool CVirtualConsole::isCharScroll(wchar_t inChar)
-{
-	bool isScrollbar = (inChar == ucBox25 || inChar == ucBox50 || inChar == ucBox75 || inChar == ucBox100
-	                    || inChar == ucUpScroll || inChar == ucDnScroll);
-	return isScrollbar;
-}
-
-bool CVirtualConsole::isCharNonSpacing(wchar_t inChar)
-{
-	// Здесь возвращаем те символы, которые нельзя рисовать вместе с обычными буквами.
-	// Например, 0xFEFF на некоторых шрифтах вообще переключает GDI на какой-то левый шрифт O_O
-	// Да и то, что они "не занимают места" в консоли некорректно. Даже если апостроф, по идее,
-	// должен располагаться НАД буквой, рисовать его надо бы СЛЕВА от нее, т.к. он занимает
-	// знакоместо в консоли!
-	switch (inChar)
-	{
-		// TODO: Leave only ‘breaking’ glyphs here!
-		case 0x135F:
-		case 0x2060:
-		case 0x3000:
-		case 0x3099:
-		case 0x309A:
-		case 0xA66F:
-		case 0xA670:
-		case 0xA671:
-		case 0xA672:
-		case 0xA67C:
-		case 0xA67D:
-		case 0xFEFF:
-			return true;
-		// We must draw ‘combining’ characters with previous ‘letter’
-		// Otherwise it will not combine or even may stay invisibe
-			/*
-		default:
-			if (inChar>=0x0300)
-			{
-				if (inChar<=0x2DFF)
-				{
-					if ((inChar<=0x036F) // Combining/Accent/Acute/NonSpacing
-						|| (inChar>=0x2000 && inChar<=0x200F)
-						|| (inChar>=0x202A && inChar<=0x202E)
-						|| (inChar>=0x0483 && inChar<=0x0489)
-						|| (inChar>=0x07EB && inChar<=0x07F3)
-						|| (inChar>=0x1B6B && inChar<=0x1B73)
-						|| (inChar>=0x1DC0 && inChar<=0x1DFF)
-						|| (inChar>=0x20D0 && inChar<=0x20F0)
-						|| (inChar>=0x2DE0))
-					{
-						return true;
-					}
-				}
-				else if (inChar>=0xFE20 && inChar<=0xFE26)
-				{
-					return true;
-				}
-			}
-			*/
-	}
-	return false;
-
-	/*
-	wchar_t CharList[] = {0x135F, 0xFEFF, 0};
-	__asm {
-		MOV  ECX, ARRAYSIZE(CharList)
-		REPZ SCAS CharList
-	}
-	*/
-}
-
-bool CVirtualConsole::isCharSpace(wchar_t inChar)
-{
-	TODO("0x0020,0x00A0,0x1680,0x180E,0x2000,0x2001,0x2002,0x2003,0x2004,0x2005,0x2006,0x2007,0x2008,0x2009,0x200A,0x200b,0x200c,0x200d,0x205F,0x2060,0x3000,0xFEFF,0x00B7,0x237D,0x2420,0x2422,0x2423");
-	// Сюда пихаем все символы, которые можно отрисовать пустым фоном (как обычный пробел)
-	bool isSpace = (inChar == ucSpace || inChar == ucNoBreakSpace || inChar == 0
-		/*|| (inChar>=0x2000 && inChar<=0x200F)
-		|| inChar == 0x2060 || inChar == 0x3000 || inChar == 0xFEFF*/);
-	return isSpace;
-}
-
-bool CVirtualConsole::isCharRTL(wchar_t inChar)
-{
-	bool isRtl =
-	(inChar==0x05BE)||(inChar==0x05C0)||(inChar==0x05C3)||(inChar==0x05C6)||
-	((inChar>=0x05D0)&&(inChar<=0x05F4))||
-	(inChar==0x0608)||(inChar==0x060B)||(inChar==0x060D)||
-	((inChar>=0x061B)&&(inChar<=0x064A))||
-	((inChar>=0x066D)&&(inChar<=0x066F))||
-	((inChar>=0x0671)&&(inChar<=0x06D5))||
-	((inChar>=0x06E5)&&(inChar<=0x06E6))||
-	((inChar>=0x06EE)&&(inChar<=0x06EF))||
-	((inChar>=0x06FA)&&(inChar<=0x0710))||
-	((inChar>=0x0712)&&(inChar<=0x072F))||
-	((inChar>=0x074D)&&(inChar<=0x07A5))||
-	((inChar>=0x07B1)&&(inChar<=0x07EA))||
-	((inChar>=0x07F4)&&(inChar<=0x07F5))||
-	((inChar>=0x07FA)&&(inChar<=0x0815))||
-	(inChar==0x081A)||(inChar==0x0824)||(inChar==0x0828)||
-	((inChar>=0x0830)&&(inChar<=0x0858))||
-	((inChar>=0x085E)&&(inChar<=0x08AC))||
-	(inChar==0x200F)||(inChar==0xFB1D)||
-	((inChar>=0xFB1F)&&(inChar<=0xFB28))||
-	((inChar>=0xFB2A)&&(inChar<=0xFD3D))||
-	((inChar>=0xFD50)&&(inChar<=0xFDFC))||
-	((inChar>=0xFE70)&&(inChar<=0xFEFC))
-	//((inChar>=0x10800)&&(inChar<=0x1091B))||
-	//((inChar>=0x10920)&&(inChar<=0x10A00))||
-	//((inChar>=0x10A10)&&(inChar<=0x10A33))||
-	//((inChar>=0x10A40)&&(inChar<=0x10B35))||
-	//((inChar>=0x10B40)&&(inChar<=0x10C48))||
-	//((inChar>=0x1EE00)&&(inChar<=0x1EEBB))
-	;
-  return isRtl;
-}
-
 
 void CVirtualConsole::PaintBackgroundImage(const RECT& rcText, const COLORREF crBack)
 {
@@ -1476,7 +1300,7 @@ void CVirtualConsole::CharABC(wchar_t ch, ABC *abc)
 		}
 		else
 		{
-			if (gpSetCls->mh_Font2.IsSet() && gpSet->isFixFarBorders && isCharBorder(ch))
+			if (gpSetCls->mh_Font2.IsSet() && gpSet->isFixFarBorders && isCharAltFont(ch))
 			{
 				SelectFont(gpSetCls->mh_Font2);
 			}
@@ -1518,7 +1342,7 @@ WORD CVirtualConsole::CharWidth(wchar_t ch, const CharAttr& attr)
 		return 2*nFontWidth;
 	}
 	else if (gpSet->isMonospace
-	        || (gpSet->isFixFarBorders && isCharBorder(ch))
+	        || (gpSet->isFixFarBorders && isCharAltFont(ch))
 	        || (gpSet->isEnhanceGraphics && isCharProgress(ch))
 			)
 	{
@@ -1535,7 +1359,7 @@ WORD CVirtualConsole::CharWidth(wchar_t ch, const CharAttr& attr)
 	//bool isBorder = false; //, isVBorder = false;
 
 	// Наверное все же нужно считать именно в том шрифте, которым будет идти отображение
-	if (gpSetCls->mh_Font2.IsSet() && gpSet->isFixFarBorders && isCharBorder(ch))
+	if (gpSetCls->mh_Font2.IsSet() && gpSet->isFixFarBorders && isCharAltFont(ch))
 	{
 		SelectFont(gpSetCls->mh_Font2);
 	}
@@ -3124,7 +2948,7 @@ bool CVirtualConsole::Update_ParseTextParts(uint row, const wchar_t* ConCharLine
 		nForeFont = attr->ForeFont;
 		c = ConCharLine[j];
 		TODO("Учесть gpSet->isFixFarBorders && gpSet->isEnhanceGraphics");
-		isUnicode = isCharBorder(c);
+		isUnicode = isCharAltFont(c);
 		bool isProgress = false, isSpace = false, isUnicodeOrProgress = false;
 
 		if (isUnicode || bEnhanceGraphics)
@@ -3159,7 +2983,7 @@ bool CVirtualConsole::Update_ParseTextParts(uint row, const wchar_t* ConCharLine
 
 			while (++j < (int)TextWidth)
 			{
-				if (!isCharBorder(ConCharLine[j]) || crFore != ConAttrLine[j].crForeColor)
+				if (!isCharAltFont(ConCharLine[j]) || crFore != ConAttrLine[j].crForeColor)
 					break; // до первого нерамочного символа или смены цвета текста
 			}
 		}
@@ -3176,7 +3000,7 @@ bool CVirtualConsole::Update_ParseTextParts(uint row, const wchar_t* ConCharLine
 				if (nForeFont != nPrevForeFont)
 					break;
 
-				isUnicode = isCharBorder(c);
+				isUnicode = isCharAltFont(c);
 				bool isProgress = false, isSpace = false, isUnicodeOrProgress = false;
 
 				if (isUnicode || bEnhanceGraphics)
@@ -3410,7 +3234,7 @@ void CVirtualConsole::UpdateText()
 				if (CurDialogFlags)
 				{
 					// Координата попала в поле диалога. same as below (1)
-					isUnicode = (gpSet->isFixFarBorders && isCharBorder(c/*ConCharLine[j]*/));
+					isUnicode = (gpSet->isFixFarBorders && isCharAltFont(c/*ConCharLine[j]*/));
 					isDlgBorder = (j == CurDialogX1 || j == CurDialogX2); // чтобы правая грань пошла как рамка;
 				}
 				else
@@ -3421,7 +3245,7 @@ void CVirtualConsole::UpdateText()
 			else
 			{
 				// same as above (1)
-				isUnicode = (gpSet->isFixFarBorders && isCharBorder(c/*ConCharLine[j]*/));
+				isUnicode = (gpSet->isFixFarBorders && isCharAltFont(c/*ConCharLine[j]*/));
 			}
 			bool isProgress = false, isSpace = false, isUnicodeOrProgress = false, isNonSpacing = false;
 			bool lbS1 = false, lbS2 = false;
@@ -3462,7 +3286,7 @@ void CVirtualConsole::UpdateText()
 					nS21 = nS12+1; // Это должен быть НЕ c
 
 					// ищем первый "рамочный" символ
-					while ((nS21<end) && (ConCharLine[nS21] != c) && !isCharBorder(ConCharLine[nS21]))
+					while ((nS21<end) && (ConCharLine[nS21] != c) && !isCharAltFont(ConCharLine[nS21]))
 						nS21 ++;
 
 					if (nS21<end && ConCharLine[nS21]==c)
@@ -3582,7 +3406,7 @@ void CVirtualConsole::UpdateText()
 
 						// Если текущий символ - вертикальная рамка, а предыдущий символ - рамка
 						// нужно продлить рамку до текущего символа
-						if (isCharBorderVertical(c) && isCharBorder(PrevC))
+						if (isCharBorderVertical(c) && isCharAltFont(PrevC))
 						{
 							//m_DC.SetBkColor(pColors[attrBack]);
 							m_DC.SetBkColor(attr.crBackColor);
@@ -3685,7 +3509,7 @@ void CVirtualConsole::UpdateText()
 					bool bAlignCurledFrames = bFixFrameCoord && isFilePanel;
 
 					while (j2 < end && ConAttrLine[j2] == attr
-							&& (ch = ConCharLine[j2], bFixFarBorders ? !isCharBorder(ch) : (!bEnhanceGraphics || !isCharProgress(ch)))
+							&& (ch = ConCharLine[j2], bFixFarBorders ? !isCharAltFont(ch) : (!bEnhanceGraphics || !isCharProgress(ch)))
 							&& !isCharNonSpacing(ch)
 							&& (!bAlignCurledFrames || (ch != L'}')))
 					{
@@ -3741,7 +3565,7 @@ void CVirtualConsole::UpdateText()
 						// -- _ASSERTE(!isUnicodeOrProgress);
 						wchar_t ch;
 
-						while (j2 < end && ConAttrLine[j2] == attr && isCharBorder(ch = ConCharLine[j2]))
+						while (j2 < end && ConAttrLine[j2] == attr && isCharAltFont(ch = ConCharLine[j2]))
 						{
 							WORD nCurCharWidth2 = CharWidth(ch, ConAttrLine[j2]);
 							ConCharXLine[j2] = (j2 ? ConCharXLine[j2-1] : 0)+nCurCharWidth2;
@@ -3962,7 +3786,7 @@ void CVirtualConsole::UpdateText()
 
 									if (isCharSpace(ch)
 										|| (attr.Flags & CharAttr_DoubleSpaced)
-										|| isCharBorder(ch)
+										|| isCharAltFont(ch)
 										|| isCharProgress(ch))
 									{
 										abc.abcA = abc.abcC = 0;

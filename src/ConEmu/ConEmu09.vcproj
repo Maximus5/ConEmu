@@ -498,6 +498,7 @@
       <File RelativePath=".\VConChild.cpp" />
       <File RelativePath=".\VConGroup.cpp" />
       <File RelativePath=".\VConRelease.cpp" />
+      <File RelativePath=".\VConText.cpp" />
       <File RelativePath=".\VirtualConsole.cpp" />
       <File RelativePath=".\WinObjBase.cpp" />
     </Filter>
@@ -629,6 +630,7 @@
       <File RelativePath=".\UpdateSet.h" />
       <File RelativePath=".\VConChild.h" />
       <File RelativePath=".\VConRelease.h" />
+      <File RelativePath=".\VConText.h" />
       <File RelativePath=".\VirtualConsole.h" />
       <File RelativePath=".\WinObjBase.h" />
     </Filter>

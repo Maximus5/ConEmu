@@ -31,7 +31,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "Header.h"
 #include "Match.h"
-#include "VirtualConsole.h"
+#include "RealConsole.h"
+#include "VConText.h"
 
 #ifdef _DEBUG
 #include "ConEmu.h"
@@ -623,13 +624,13 @@ bool CMatch::MatchWord(LPCWSTR asLine/*This may be NOT 0-terminated*/, int anLin
 		return false;
 
 	while ((rnStart > 0)
-		&& !(CVirtualConsole::isCharSpace(asLine[rnStart-1]) || CVirtualConsole::isCharNonSpacing(asLine[rnStart-1])))
+		&& !(isCharSpace(asLine[rnStart-1]) || isCharNonSpacing(asLine[rnStart-1])))
 	{
 		rnStart--;
 	}
 
 	while (((rnEnd+1) < anLineLen)
-		&& !(CVirtualConsole::isCharSpace(asLine[rnEnd]) || CVirtualConsole::isCharNonSpacing(asLine[rnEnd])))
+		&& !(isCharSpace(asLine[rnEnd]) || isCharNonSpacing(asLine[rnEnd])))
 	{
 		rnEnd++;
 	}

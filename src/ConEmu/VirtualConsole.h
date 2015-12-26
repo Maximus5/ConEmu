@@ -312,13 +312,6 @@ class CVirtualConsole :
 		void UpdateThumbnail(bool abNoSnapshot = FALSE);
 		void SelectFont(CEFONT hNew);
 		void SelectBrush(HBRUSH hNew);
-		inline bool isCharBorder(wchar_t inChar);
-		static bool isCharBorderVertical(wchar_t inChar);
-		static bool isCharProgress(wchar_t inChar);
-		static bool isCharScroll(wchar_t inChar);
-		static bool isCharNonSpacing(wchar_t inChar);
-		static bool isCharSpace(wchar_t inChar);
-		static bool isCharRTL(wchar_t inChar);
 		void PaintBackgroundImage(const RECT& rcText, const COLORREF crBack);
 		bool CheckSelection(const CONSOLE_SELECTION_INFO& select, SHORT row, SHORT col);
 		//bool GetCharAttr(wchar_t ch, WORD atr, wchar_t& rch, BYTE& foreColorNum, BYTE& backColorNum, FONT* pFont);

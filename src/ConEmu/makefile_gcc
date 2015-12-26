@@ -130,6 +130,7 @@ SRCS = \
 		VConChild.cpp      \
 		VConGroup.cpp      \
 		VConRelease.cpp    \
+		VConText.cpp       \
 		VirtualConsole.cpp \
 		WinObjBase.cpp
 

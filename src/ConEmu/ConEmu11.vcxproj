@@ -997,6 +997,7 @@
     <ClCompile Include="VConChild.cpp" />
     <ClCompile Include="VConGroup.cpp" />
     <ClCompile Include="VConRelease.cpp" />
+    <ClCompile Include="VConText.cpp" />
     <ClCompile Include="VirtualConsole.cpp" />
     <ClCompile Include="WinObjBase.cpp" />
   </ItemGroup>
@@ -1133,6 +1134,7 @@
     <ClInclude Include="VConChild.h" />
     <ClInclude Include="VConGroup.h" />
     <ClInclude Include="VConRelease.h" />
+    <ClInclude Include="VConText.h" />
     <ClInclude Include="version.h" />
     <ClInclude Include="VirtualConsole.h" />
     <ClInclude Include="WinObjBase.h" />
