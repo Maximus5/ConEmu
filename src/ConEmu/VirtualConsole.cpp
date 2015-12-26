@@ -3069,7 +3069,6 @@ void CVirtualConsole::UpdateText()
 
 	int *nDX = (int*)malloc((TextWidth+1)*sizeof(int));
 
-	bool skipNotChanged = !isForce;
 	bool bEnhanceGraphics = gpSet->isEnhanceGraphics;
 	bool bProportional = gpSet->isMonospace == 0;
 	bool bForceMonospace = gpSet->isMonospace == 2;
@@ -3096,19 +3095,15 @@ void CVirtualConsole::UpdateText()
 		// the line
 		const CharAttr* const ConAttrLine2 = mpn_ConAttrExSave + (ConAttrLine - mpn_ConAttrEx);
 		const wchar_t* const ConCharLine2 = mpsz_ConCharSave + (ConCharLine - mpsz_ConChar);
+
+		// If there were no changes in this line
+		if (!isForce && !FindChanges(row, ConCharLine, ConAttrLine, ConCharLine2, ConAttrLine2))
+			continue;
+
 		// skip not changed symbols except the old cursor or selection
 		int j = 0, end = TextWidth;
 
-		// В режиме пропорциональных шрифтов или isForce==true - отрисовываем линию ЦЕЛИКОМ
-		// Для пропорциональных это обусловлено тем, что при перерисовке измененная часть
-		// может оказаться КОРОЧЕ предыдущего значения, в результате появятся артефакты
-		if (skipNotChanged)
-		{
-			// Skip not changed head and tail symbols
-			if (!FindChanges(row, j, end, ConCharLine, ConAttrLine, ConCharLine2, ConAttrLine2))
-				continue;
-		} // if (skipNotChanged)
-
+		// Was cursor visible on this line?
 		if (Cursor.isVisiblePrev && row == Cursor.y
 				&& (j <= Cursor.x && Cursor.x <= end))
 			Cursor.isVisiblePrev = false;
@@ -5200,7 +5195,7 @@ void CVirtualConsole::DistributeSpaces(wchar_t* ConCharLine, CharAttr* ConAttrLi
 	}
 }
 
-bool CVirtualConsole::FindChanges(int row, int &j, int &end, const wchar_t* ConCharLine, const CharAttr* ConAttrLine, const wchar_t* ConCharLine2, const CharAttr* ConAttrLine2)
+bool CVirtualConsole::FindChanges(int row, const wchar_t* ConCharLine, const CharAttr* ConAttrLine, const wchar_t* ConCharLine2, const CharAttr* ConAttrLine2)
 {
 	// UCharMap - перерисовать полностью, там может шрифт измениться
 	if (gpSet->isExtendUCharMap && mrc_UCharMap.Right > mrc_UCharMap.Left)
@@ -5210,95 +5205,9 @@ bool CVirtualConsole::FindChanges(int row, int &j, int &end, const wchar_t* ConC
 	}
 
 	// Если изменений в строке вообще нет
-	if (wmemcmp(ConCharLine, ConCharLine2, end) == 0
-	        && memcmp(ConAttrLine, ConAttrLine2, end*sizeof(*ConAttrLine)) == 0)
+	if (wmemcmp(ConCharLine, ConCharLine2, TextWidth) == 0
+	        && memcmp(ConAttrLine, ConAttrLine2, TextWidth*sizeof(*ConAttrLine)) == 0)
 		return FALSE;
-
-	// Default: j = 0, end = TextWidth;
-	return TRUE; // пока строку целиком будем рисовать
-	// Если основной шрифт в консоли курсивный, то
-	// во избежение обрезания правой части буквы нужно рисовать строку целиком
-	TODO("Возможно при включенном ClearType не нужно будет рисовать строку целиком, если переделаю на Transparent отрисовку текста");
-
-	if (gpSetCls->FontItalic() || gpSetCls->FontClearType())
-		return TRUE;
-
-	// *) Skip not changed tail symbols. но только если шрифт моноширинный
-	if (gpSet->isMonospace)
-	{
-		TODO("OPTIMIZE:");
-
-		while (--end >= 0 && ConCharLine[end] == ConCharLine2[end] && ConAttrLine[end] == ConAttrLine2[end])
-		{
-			// Если есть стили шрифта (курсив/жирный), то
-			// во избежание обрезания правой части буквы нужно рисовать строку целиком
-			if (ConAttrLine[end].nFontIndex)
-			{
-				end = TextWidth;
-				return TRUE;
-			}
-		}
-
-		// [%] ClearType, TTF fonts (isProportional может быть и отключен)
-		if (end >= 0   // Если есть хоть какие-то изменения
-		        && end < (int)(TextWidth - 1) // до конца строки
-		        && (ConCharLine[end+1] == ucSpace || ConCharLine[end+1] == ucNoBreakSpace || isCharProgress(ConCharLine[end+1])) // будем отрисовывать все пробелы
-		  )
-		{
-			int n = TextWidth - 1;
-
-			while ((end < n)
-			        && (ConCharLine[end+1] == ucSpace || ConCharLine[end+1] == ucNoBreakSpace || isCharProgress(ConCharLine[end+1])))
-				end++;
-		}
-
-		if (end < j)
-			return FALSE;
-
-		++end;
-	}
-
-	// *) Skip not changed head symbols.
-	while (j < end && ConCharLine[j] == ConCharLine2[j] && ConAttrLine[j] == ConAttrLine2[j])
-	{
-		// Если есть стили шрифта (курсив/жирный) то
-		// во избежание обрезания правой части буквы нужно рисовать строку целиком
-		if (ConAttrLine[j].nFontIndex)
-		{
-			j = 0;
-			end = TextWidth;
-			return TRUE;
-		}
-
-		++j;
-	}
-
-	// [%] ClearType, proportional fonts
-	if (j > 0  // если с начала строки
-	        && (ConCharLine[j-1] == ucSpace || ConCharLine[j-1] == ucNoBreakSpace || isCharProgress(ConCharLine[j-1]) // есть пробелы
-	            || (gpSetCls->FontItalic() || ConAttrLine[j-1].nFontIndex))  // Или сейчас курсив/жирный?
-	  )
-	{
-		if (gpSetCls->FontItalic() || ConAttrLine[j-1].nFontIndex)
-		{
-			j = 0; // с частичной отрисовкой заморачиваться не будем, а то еще ClearType вылезет...
-		}
-		else
-		{
-			while ((j > 0)
-			        && (ConCharLine[j-1] == ucSpace || ConCharLine[j-1] == ucNoBreakSpace || isCharProgress(ConCharLine[j-1])))
-			{
-				j--;
-			}
-		}
-	}
-
-	if (j >= end)
-	{
-		// Для пропорциональных шрифтов сравнение выполняется только с начала строки,
-		// поэтому сюда мы вполне можем попасть - значит строка не менялась
-		return FALSE;
-	}
 
 	return TRUE;
 }

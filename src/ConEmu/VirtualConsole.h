@@ -398,7 +398,7 @@ class CVirtualConsole :
 		bool mb_InPaintCall;
 		bool mb_InConsoleResize;
 		//
-		bool FindChanges(int row, int &j, int &end, const wchar_t* ConCharLine, const CharAttr* ConAttrLine, const wchar_t* ConCharLine2, const CharAttr* ConAttrLine2);
+		bool FindChanges(int row, const wchar_t* ConCharLine, const CharAttr* ConAttrLine, const wchar_t* ConCharLine2, const CharAttr* ConAttrLine2);
 		LONG nFontHeight, nFontWidth;
 		BYTE nFontCharSet;
 		BYTE nLastNormalBack;
