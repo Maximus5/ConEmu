@@ -547,7 +547,7 @@ struct Settings
 		int ParseCharRanges(LPCWSTR asRanges, BYTE (&Chars)[0x10000], BYTE abValue = TRUE); // например, L"2013-25C3,25C4"
 		wchar_t* CreateCharRanges(BYTE (&Chars)[0x10000]); // caller must free(result)
 		BYTE mpc_CharAltFontRanges[0x10000];
-		bool isCharAltFont(wchar_t inChar);
+		bool CheckCharAltFont(wchar_t inChar);
 
 		//reg->Load(L"KeyboardHooks", m_isKeyboardHooks); if (m_isKeyboardHooks>2) m_isKeyboardHooks = 0;
 		BYTE m_isKeyboardHooks;

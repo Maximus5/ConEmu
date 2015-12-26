@@ -4247,7 +4247,7 @@ wchar_t* Settings::CreateCharRanges(BYTE (&Chars)[0x10000])
 	return pszRanges;
 }
 
-bool Settings::isCharAltFont(wchar_t inChar)
+bool Settings::CheckCharAltFont(wchar_t inChar)
 {
 	return isFixFarBorders ? mpc_CharAltFontRanges[(WORD)inChar] : false;
 }
