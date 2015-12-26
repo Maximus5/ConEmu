@@ -937,7 +937,7 @@ bool CVirtualConsole::isCharBorder(wchar_t inChar)
 	// Низя - нужно учитывать gpSet->isFixFarBorders там где это требуется, иначе пролетает gpSet->isEnhanceGraphics
 	//if (!gpSet->isFixFarBorders)
 	//	return false;
-	return gpSet->isCharBorder(inChar);
+	return gpSet->isCharAltFont(inChar);
 	//Settings::CharRanges *pcr = gpSet->icFixFarBorderRanges;
 	//for (int i = 10; --i && pcr->bUsed; pcr++) {
 	//	Settings::CharRanges cr = *pcr;

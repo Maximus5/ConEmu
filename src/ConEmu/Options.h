@@ -446,8 +446,6 @@ struct Settings
 		bool isAlwaysOnTop;
 		//reg->Load(L"SnapToDesktopEdges", isSnapToDesktopEdges);
 		bool isSnapToDesktopEdges;
-		//reg->Load(L"FixFarBorders", isFixFarBorders)
-		BYTE isFixFarBorders;
 		//reg->Load(L"ExtendUCharMap", isExtendUCharMap);
 		bool isExtendUCharMap;
 		//reg->Load(L"DisableMouse", isDisableMouse);
@@ -539,10 +537,17 @@ struct Settings
 		//wchar_t mszCharRanges[120];
 		//CharRanges icFixFarBorderRanges[10];
 
+		// Previously, the option was used to define different font for Far Manager frames (pseudographics)
+		// Now user may use it for any range of characters (CJK, etc.)
+		// Used with settings: inFont2, FontSizeX2, mpc_CharAltFontRanges
+		//reg->Load(L"FixFarBorders", isFixFarBorders)
+		BYTE isFixFarBorders;
+
 		// !!! Зовется из настроек Init/Load... !!!
 		int ParseCharRanges(LPCWSTR asRanges, BYTE (&Chars)[0x10000], BYTE abValue = TRUE); // например, L"2013-25C3,25C4"
 		wchar_t* CreateCharRanges(BYTE (&Chars)[0x10000]); // caller must free(result)
-		BYTE mpc_FixFarBorderValues[0x10000];
+		BYTE mpc_CharAltFontRanges[0x10000];
+		bool isCharAltFont(wchar_t inChar);
 
 		//reg->Load(L"KeyboardHooks", m_isKeyboardHooks); if (m_isKeyboardHooks>2) m_isKeyboardHooks = 0;
 		BYTE m_isKeyboardHooks;
@@ -550,8 +555,6 @@ struct Settings
 		bool isKeyboardHooks(bool abNoDisable = false, bool abNoDbgCheck = false);
 
 		//bool CheckUpdatesWanted();
-
-		bool isCharBorder(wchar_t inChar);
 
 		//reg->Load(L"PartBrush75", isPartBrush75); if (isPartBrush75<5) isPartBrush75=5; else if (isPartBrush75>250) isPartBrush75=250;
 		BYTE isPartBrush75;

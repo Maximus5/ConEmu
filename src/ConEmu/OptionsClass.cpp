@@ -1766,7 +1766,7 @@ LRESULT CSettings::OnInitDialog_Main(HWND hWnd2, bool abInitial)
 			L"CJK: 2E80-9FC3;AC00-D7A3;F900-FAFF;FE30-FE4F;FF01-FF60;FFE0-FFE6;",
 			NULL
 		};
-		CEStr szCharRanges(gpSet->CreateCharRanges(gpSet->mpc_FixFarBorderValues));
+		CEStr szCharRanges(gpSet->CreateCharRanges(gpSet->mpc_CharAltFontRanges));
 		LPCWSTR pszCurrentRange = szCharRanges.ms_Val;
 		bool bExist = false;
 
@@ -11596,134 +11596,6 @@ void CSettings::UpdateConsoleMode(CRealConsole* pRCon)
 		SetDlgItemText(hInfoPg, IDC_CONSOLE_STATES, szInfo);
 	}
 }
-
-//// например, L"2013-25C3,25C4"
-//// Возвращает 0 - в случае успеха,
-//// при ошибке - индекс (1-based) ошибочного символа в asRanges
-//// -1 - ошибка выделения памяти
-//int CSettings::ParseCharRanges(LPCWSTR asRanges, BYTE (&Chars)[0x10000], BYTE abValue /*= TRUE*/)
-//{
-//	if (!asRanges)
-//	{
-//		_ASSERTE(asRanges!=NULL);
-//		return -1;
-//	}
-//
-//	int iRc = 0;
-//	int n = 0, nMax = _tcslen(asRanges);
-//	wchar_t *pszCopy = lstrdup(asRanges);
-//	if (!pszCopy)
-//	{
-//		_ASSERTE(pszCopy!=NULL);
-//		return -1;
-//	}
-//	wchar_t *pszRange = pszCopy;
-//	wchar_t *pszNext = NULL;
-//	UINT cBegin, cEnd;
-//
-//	memset(Chars, 0, sizeof(Chars));
-//
-//	while(*pszRange && n < nMax)
-//	{
-//		cBegin = (UINT)wcstol(pszRange, &pszNext, 16);
-//		if (!cBegin || (cBegin > 0xFFFF))
-//		{
-//			iRc = (int)(pszRange - asRanges);
-//			goto wrap;
-//		}
-//
-//		switch (*pszNext)
-//		{
-//		case L';':
-//		case 0:
-//			cEnd = cBegin;
-//			break;
-//		case L'-':
-//		case L' ':
-//			pszRange = pszNext + 1;
-//			cEnd = (UINT)wcstol(pszRange, &pszNext, 16);
-//			if ((cEnd < cBegin) || (cEnd > 0xFFFF))
-//			{
-//				iRc = (int)(pszRange - asRanges);
-//				goto wrap;
-//			}
-//			break;
-//		default:
-//			iRc = (int)(pszNext - asRanges);
-//			goto wrap;
-//		}
-//
-//		for (UINT i = cBegin; i <= cEnd; i++)
-//			Chars[i] = abValue;
-//
-//		if (*pszNext != L';') break;
-//		pszRange = pszNext + 1;
-//	}
-//
-//	iRc = 0; // ok
-//wrap:
-//	if (pszCopy)
-//		free(pszCopy);
-//	return iRc;
-//}
-//
-//// caller must free(result)
-//wchar_t* CSettings::CreateCharRanges(BYTE (&Chars)[0x10000])
-//{
-//	size_t nMax = 1024;
-//	wchar_t* pszRanges = (wchar_t*)calloc(nMax,sizeof(*pszRanges));
-//	if (!pszRanges)
-//	{
-//		_ASSERTE(pszRanges!=NULL);
-//		return NULL;
-//	}
-//
-//	wchar_t* psz = pszRanges;
-//	wchar_t* pszEnd = pszRanges + nMax;
-//	UINT c = 0;
-//	_ASSERTE((countof(Chars)-1) == 0xFFFF);
-//	while (c < countof(Chars))
-//	{
-//		if (Chars[c])
-//		{
-//			if ((psz + 10) >= pszEnd)
-//			{
-//				// Слишком длинный блок
-//				_ASSERTE((psz + 10) < pszEnd);
-//				break;
-//			}
-//
-//			UINT cBegin = (c++);
-//			UINT cEnd = cBegin;
-//
-//			while (c < countof(Chars) && Chars[c])
-//			{
-//				cEnd = (c++);
-//			}
-//
-//			if (cBegin == cEnd)
-//			{
-//				wsprintf(psz, L"%04X;", cBegin);
-//			}
-//			else
-//			{
-//				wsprintf(psz, L"%04X-%04X;", cBegin, cEnd);
-//			}
-//			psz += _tcslen(psz);
-//		}
-//		else
-//		{
-//			c++;
-//		}
-//	}
-//
-//	return pszRanges;
-//}
-
-//bool CSettings::isCharBorder(wchar_t inChar)
-//{
-//	return mpc_FixFarBorderValues[(WORD)inChar];
-//}
 
 void CSettings::ResetFontWidth()
 {

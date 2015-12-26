@@ -608,13 +608,14 @@ void Settings::InitSettings()
 	isUserScreenTransparent = false;
 	isColorKeyTransparent = false;
 	nColorKeyValue = RGB(1,1,1);
-	isFixFarBorders = 1; isEnhanceGraphics = true; isEnhanceButtons = false;
+	isEnhanceGraphics = true; isEnhanceButtons = false;
 	isPartBrush75 = 0xC8; isPartBrush50 = 0x96; isPartBrush25 = 0x5A;
 	isPartBrushBlack = 32; //-V112
 	isExtendUCharMap = true;
 	isDownShowHiddenMessage = false;
 	isDownShowExOnTopMessage = false;
-	ParseCharRanges(L"2013-25C4", mpc_FixFarBorderValues);
+	isFixFarBorders = 1;
+	ParseCharRanges(L"2013-25C4", mpc_CharAltFontRanges);
 
 	// [Debug] Максимальный видимый размер подкорректируется в CConEmuMain::CreateMainWindow()
 	wndWidth.Set(true, ss_Standard, DEF_CON_WIDTH);    // RELEASEDEBUGTEST(80,110)
@@ -2646,48 +2647,17 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 		reg->Load(L"HighlightMouseRow", isHighlightMouseRow);
 		reg->Load(L"HighlightMouseCol", isHighlightMouseCol);
 
-		if (!reg->Load(L"FixFarBorders", isFixFarBorders))
-			reg->Load(L"Experimental", isFixFarBorders); //очень старое имя настройки
+		// Previously, the option was used to define different font for Far Manager frames (pseudographics)
+		// Now user may use it for any range of characters (CJK, etc.)
+		// Used with settings: inFont2, FontSizeX2, mpc_CharAltFontRanges
+		reg->Load(L"FixFarBorders", isFixFarBorders);
 
-		//mszCharRanges[0] = 0;
-
-		TODO("Это вообще нужно будет расширить, определяя произвольное количество групп шрифтов");
-		// max 100 ranges x 10 chars + a little ;)
-		wchar_t szCharRanges[1024] = {};
-		if (!reg->Load(L"FixFarBordersRanges", szCharRanges, countof(szCharRanges)))
-		{
-			wcscpy_c(szCharRanges, L"2013-25C4"); // default
-		}
-		//{
-		//	int n = 0, nMax = countof(icFixFarBorderRanges);
-		//	wchar_t *pszRange = mszCharRanges, *pszNext = NULL;
-		//	wchar_t cBegin, cEnd;
-		//
-		//	while(*pszRange && n < nMax)
-		//	{
-		//		cBegin = (wchar_t)wcstol(pszRange, &pszNext, 16);
-		//
-		//		if (!cBegin || cBegin == 0xFFFF || *pszNext != L'-') break;
-		//
-		//		pszRange = pszNext + 1;
-		//		cEnd = (wchar_t)wcstol(pszRange, &pszNext, 16);
-		//
-		//		if (!cEnd || cEnd == 0xFFFF) break;
-		//
-		//		icFixFarBorderRanges[n].bUsed = true;
-		//		icFixFarBorderRanges[n].cBegin = cBegin;
-		//		icFixFarBorderRanges[n].cEnd = cEnd;
-		//		n ++;
-		//
-		//		if (*pszNext != L';') break;
-		//
-		//		pszRange = pszNext + 1;
-		//	}
-		//
-		//	for(; n < nMax; n++)
-		//		icFixFarBorderRanges[n].bUsed = false;
-		//}
-		ParseCharRanges(szCharRanges, mpc_FixFarBorderValues);
+		//TODO: Extend ranges for arbitrary font groups
+		wchar_t* pszCharRanges = NULL; wchar_t szDefaultRanges[] = L"2013-25C4";
+		if (!reg->Load(L"FixFarBordersRanges", &pszCharRanges))
+			pszCharRanges = szDefaultRanges;
+		ParseCharRanges(pszCharRanges, mpc_CharAltFontRanges);
+		SafeFree(pszCharRanges);
 
 		reg->Load(L"ExtendUCharMap", isExtendUCharMap);
 		reg->Load(L"PartBrush75", isPartBrush75); if (isPartBrush75<5) isPartBrush75=5; else if (isPartBrush75>250) isPartBrush75=250;
@@ -3695,7 +3665,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 
 		reg->Save(L"FixFarBorders", isFixFarBorders);
 		{
-		wchar_t* pszCharRanges = CreateCharRanges(mpc_FixFarBorderValues);
+		wchar_t* pszCharRanges = CreateCharRanges(mpc_CharAltFontRanges);
 		reg->Save(L"FixFarBordersRanges", pszCharRanges ? pszCharRanges : L"2013-25C4");
 		if (pszCharRanges) free(pszCharRanges);
 		}
@@ -4277,9 +4247,9 @@ wchar_t* Settings::CreateCharRanges(BYTE (&Chars)[0x10000])
 	return pszRanges;
 }
 
-bool Settings::isCharBorder(wchar_t inChar)
+bool Settings::isCharAltFont(wchar_t inChar)
 {
-	return isFixFarBorders ? mpc_FixFarBorderValues[(WORD)inChar] : false;
+	return isFixFarBorders ? mpc_CharAltFontRanges[(WORD)inChar] : false;
 }
 
 void Settings::CheckConsoleSettings()

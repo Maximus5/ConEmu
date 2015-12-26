@@ -1743,7 +1743,7 @@ void CSetDlgButtons::OnBtn_UnicodeRangesApply(HWND hDlg, WORD CB, BYTE uCheck)
 	wchar_t* pszNameAndRange = GetDlgItemTextPtr(hDlg, tUnicodeRanges);
 	LPCWSTR pszRanges = pszNameAndRange ? wcsstr(pszNameAndRange, L": ") : NULL;
 	if (pszRanges) pszRanges += 2; else pszRanges = L"";
-	gpSet->ParseCharRanges(pszRanges, gpSet->mpc_FixFarBorderValues);
+	gpSet->ParseCharRanges(pszRanges, gpSet->mpc_CharAltFontRanges);
 	SafeFree(pszNameAndRange);
 
 	if (gpSet->isFixFarBorders)
