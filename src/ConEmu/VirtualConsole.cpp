@@ -3034,34 +3034,6 @@ void CVirtualConsole::Update_DrawText(uint row, uint nY)
 
 void CVirtualConsole::UpdateText()
 {
-	//if (!updateText) {
-	//    _ASSERTE(updateText);
-	//    return;
-	//}
-#ifdef _DEBUG
-	if (mp_RCon->IsConsoleThread())
-	{
-		//_ASSERTE(!mp_RCon->IsConsoleThread());
-	}
-
-	//// Данные уже должны быть заполнены, и там не должно быть лажы
-	//BOOL lbDataValid = TRUE; uint n = 0;
-	//while (n<TextLen) {
-	//    if (mpsz_ConChar[n] == 0) {
-	//        lbDataValid = FALSE; //break;
-	//        mpsz_ConChar[n] = L'¤';
-	//        mpn_ConAttr[n] = 12;
-	//    } else if (mpsz_ConChar[n] != L' ') {
-	//        // 0 - может быть только для пробела. Иначе символ будет скрытым, чего по идее, быть не должно
-	//        if (mpn_ConAttr[n] == 0) {
-	//            lbDataValid = FALSE; //break;
-	//            mpn_ConAttr[n] = 12;
-	//        }
-	//    }
-	//    n++;
-	//}
-	////_ASSERTE(lbDataValid);
-#endif
 	_ASSERTE((HDC)m_DC!=NULL);
 	memmove(mh_FontByIndex, gpSetCls->mh_Font, MAX_FONT_STYLES*sizeof(mh_FontByIndex[0]));
 	mh_FontByIndex[MAX_FONT_STYLES] = mh_UCharMapFont ? mh_UCharMapFont : mh_FontByIndex[0];
@@ -3102,35 +3074,12 @@ void CVirtualConsole::UpdateText()
 	bool bProportional = gpSet->isMonospace == 0;
 	bool bForceMonospace = gpSet->isMonospace == 2;
 	bool bFixFarBorders = gpSet->isFixFarBorders;
-	//mh_FontByIndex[0] = gpSetCls->mh_Font; mh_FontByIndex[1] = gpSetCls->mh_FontB; mh_FontByIndex[2] = gpSetCls->mh_FontI; mh_FontByIndex[3] = gpSetCls->mh_FontBI;
 	CEFONT hFont = gpSetCls->mh_Font[0];
 	CEFONT hFont2 = gpSetCls->mh_Font2;
 
 	bool bFixFrameCoord = mp_RCon->isFar();
 
 	_ASSERTE(((TextWidth * nFontWidth) >= Width));
-#if 0
-	if (((TextHeight * nFontHeight) < Height) || ((TextWidth * nFontWidth) < Width))
-	{
-		bool lbDelBrush = false;
-		HBRUSH hBr = CreateBackBrush(false, lbDelBrush);
-
-		if (nFontHeight && (TextHeight * nFontHeight) < Height)
-		{
-			RECT rcFill = {0, TextHeight * nFontHeight, Width, Height};
-			FillRect((HDC)m_DC, &rcFill, hBr);
-		}
-
-		if (nFontWidth && ((TextWidth * nFontWidth) < Width))
-		{
-			RECT rcFill = {TextWidth * nFontWidth, 0, Width, Height};
-			FillRect((HDC)m_DC, &rcFill, hBr);
-		}
-
-		if (lbDelBrush)
-			DeleteObject(hBr);
-	}
-#endif
 
 	//BUGBUG: хорошо бы отрисовывать последнюю строку, даже если она чуть не влазит
 	for (; pos <= nMaxPos;
@@ -3143,14 +3092,7 @@ void CVirtualConsole::UpdateText()
 			DEBUGSTRFAIL(L"############ _ASSERTE(row < (int)TextHeight) #############\n");
 			break;
 		}
-		//2009-09-25. Некоторые (старые?) программы умудряются засунуть в консоль символы (ASC<32)
-		//            их нужно заменить на юникодные аналоги
-		//{
-		//	wchar_t* pszEnd = ConCharLine + TextWidth;
-		//	for (wchar_t* pch = ConCharLine; pch < pszEnd; pch++) {
-		//		if (((WORD)*pch) < 32) *pch = gszAnalogues[(WORD)*pch];
-		//	}
-		//}
+
 		// the line
 		const CharAttr* const ConAttrLine2 = mpn_ConAttrExSave + (ConAttrLine - mpn_ConAttrEx);
 		const wchar_t* const ConCharLine2 = mpsz_ConCharSave + (ConCharLine - mpsz_ConChar);
@@ -3299,14 +3241,6 @@ void CVirtualConsole::UpdateText()
 				}
 			} HEAPVAL
 
-			// а вот для пробелов - когда их более одного
-			/*else if (c==L' ' && j<end && ConCharLine[j+1]==L' ')
-			{
-				lbS1 = true; nS11 = nS12 = j;
-				while ((nS12 < end) && (ConCharLine[nS12+1] == c))
-					nS12 ++;
-			}*/
-			//(HDC)m_DC.SetTextColor(pColors[attrFore]);
 			m_DC.SetTextColor(attr.crForeColor);
 
 			DWORD nPrevX = j ? ConCharXLine[j-1] : 0;
@@ -3359,13 +3293,6 @@ void CVirtualConsole::UpdateText()
 						ConCharXLine[j-1] = j * nFontWidth;
 				}
 
-				//else if (isFilePanel && c==L'}') {
-				//    if ((row>=2 && isCharBorderVertical(mpsz_ConChar[TextWidth+j]))
-				//        && (((UINT)row)<=(TextHeight-4)))
-				//        //2009-04-21 было (j-1) * nFontWidth;
-				//        ConCharXLine[j-1] = j * nFontWidth;
-				//    //row = TextHeight - 1;
-				//}
 				HEAPVAL;
 			}
 
@@ -3396,13 +3323,7 @@ void CVirtualConsole::UpdateText()
 					// Если не отрисовка фона картинкой
 					if (!(drawImage && ISBGIMGCOLOR(attr.nBackIdx)))
 					{
-						//BYTE PrevAttrFore = attrFore, PrevAttrBack = attrBack;
 						wchar_t PrevC = ConCharLine[j-1];
-
-						//GetCharAttr(PrevC, PrevAttr, PrevC, PrevAttrFore, PrevAttrBack);
-						//GetCharAttr(PrevAttr, PrevAttrFore, PrevAttrBack, NULL);
-						//if (GetCharAttr(PrevC, PrevAttr, PrevC, PrevAttrFore, PrevAttrBack))
-						//	isUnicode = true;
 
 						// Если текущий символ - вертикальная рамка, а предыдущий символ - рамка
 						// нужно продлить рамку до текущего символа
@@ -3423,15 +3344,8 @@ void CVirtualConsole::UpdateText()
 								nCnt = MAX_SPACES;
 							}
 
-							//UINT nFlags = ETO_CLIPPED; // || ETO_OPAQUE;
-							//m_DC.ExtTextOut(rect.left, rect.top, nFlags, &rect, Spaces, min(nSpaceCount, nCnt), 0);
-							//if (! (drawImage && ISBGIMGCOLOR(attr.nBackIdx)))
-							//	m_DC.SetBkColor(pColors[attrBack]);
-							//else if (drawImage)
-							//	BlitPictureTo(rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top);
 							UINT nFlags = ETO_CLIPPED | ETO_OPAQUE;
 
-							//wmemset(Spaces, chBorder, nCnt);
 							if (bFixFarBorders)
 								SelectFont(hFont2);
 
@@ -3468,7 +3382,6 @@ void CVirtualConsole::UpdateText()
 				bool     bDrawReplaced = false;
 				RECT rect;
 
-				//else if (/*gpSet->isProportional &&*/ (c==ucSpace || c==ucNoBreakSpace || c==0))
 				if (isSpace)
 				{
 					j2 = j + 1; HEAPVAL;
@@ -3636,10 +3549,6 @@ void CVirtualConsole::UpdateText()
 				}
 				_ASSERTE(nDrawLen >= 0);
 
-				//if (!gpSet->isProportional) {
-				//	TODO("Что-то как-то... ведь положения уже вроде расчитали?");
-				//  rect = MakeRect(j * nFontWidth, pos, j2 * nFontWidth, pos + nFontHeight);
-				//} else {
 				if (j)
 				{
 					if (ConCharXLine[j-1])
@@ -3800,9 +3709,6 @@ void CVirtualConsole::UpdateText()
 
 									int nDrawWidth = abc.abcA + abc.abcB + 1;
 
-									//if (!idx)
-									//	nShift0 = abc.abcA;
-
 									#ifdef _DEBUG
 									if (abc.abcA!=0)
 									{
@@ -3815,13 +3721,6 @@ void CVirtualConsole::UpdateText()
 									}
 									#endif
 
-									//if (abc.abcA<0)
-									//{
-									//	// иначе символ наверное налезет на предыдущий?
-									//	//nShift = -abc.abcA;
-									//	nDX[idx] = abc.abcA + abc.abcB + abc.abcC;
-									//}
-									//else
 									if (nDrawWidth < nCharWidth)
 									{
 										int nEdge = ((nCharWidth - nDrawWidth) >> 1) - nPrevEdge;
@@ -3842,11 +3741,6 @@ void CVirtualConsole::UpdateText()
 										nDX[idx] = nCharWidth;
 										HEAPVALPTR(nDX);
 
-										//if (abc.abcA < nEdge)
-										//{
-										//	// символ I, i, и др. очень тонкие - рисуем посередине
-										//	nShift = nEdge - abc.abcA;
-										//}
 									}
 									else
 									{
@@ -3881,20 +3775,6 @@ void CVirtualConsole::UpdateText()
 			}
 
 			DUMPDC(L"F:\\vcon.png");
-			//-- во избежание проблем с пропорциональными шрифтами и ClearType
-			//-- рисуем измененные строки целиком
-			//// skip next not changed symbols again
-			//if (skipNotChanged)
-			//{
-			//    HEAPVAL
-			//	wchar_t ch;
-			//    // skip the same except spaces
-			//    while (j2 < end && (ch = ConCharLine[j2]) == ConCharLine2[j2] && ConAttrLine[j2] == ConAttrLine2[j2]
-			//		&& (ch != ucSpace && ch != ucNoBreakSpace && ch != 0))
-			//    {
-			//        ++j2;
-			//    }
-			//}
 		}
 
 		HEAPVALPTR(nDX);
