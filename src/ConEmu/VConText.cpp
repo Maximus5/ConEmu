@@ -167,13 +167,19 @@ bool isCharNonSpacing(wchar_t inChar)
 	*/
 }
 
+// All symbols, which may be displayed as "space"
+// And we don't care (here) about Zero-Width spaces!
 bool isCharSpace(wchar_t inChar)
 {
-	TODO("0x0020,0x00A0,0x1680,0x180E,0x2000,0x2001,0x2002,0x2003,0x2004,0x2005,0x2006,0x2007,0x2008,0x2009,0x200A,0x200b,0x200c,0x200d,0x205F,0x2060,0x3000,0xFEFF,0x00B7,0x237D,0x2420,0x2422,0x2423");
-	// Сюда пихаем все символы, которые можно отрисовать пустым фоном (как обычный пробел)
-	bool isSpace = (inChar == ucSpace || inChar == ucNoBreakSpace || inChar == 0
-		/*|| (inChar>=0x2000 && inChar<=0x200F)
-		|| inChar == 0x2060 || inChar == 0x3000 || inChar == 0xFEFF*/);
+	bool isSpace = (inChar == ucSpace || inChar == ucNoBreakSpace
+		|| (((inChar >= 0x2000) && (inChar <= 0x3000))
+			&& ((inChar <= 0x200A)      // 0x2000..0x200A - Different typographical non-zero spaces
+				|| (inChar == 0x205F)   // Medium Math Space
+				|| (inChar == 0x3000))  // CJK Wide Space
+			)
+		//|| (inChar == 0x00B7) // MIDDLE DOT - Far Manager shows spaces that way in some cases
+		//|| inChar == 0 // -- Zero is not intended to be here - only valid substitutes!
+		);
 	return isSpace;
 }
 
