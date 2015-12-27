@@ -105,13 +105,10 @@ bool isCharScroll(wchar_t inChar)
 	return isScrollbar;
 }
 
-bool isCharNonSpacing(wchar_t inChar)
+bool isCharSeparate(wchar_t inChar)
 {
 	// Здесь возвращаем те символы, которые нельзя рисовать вместе с обычными буквами.
 	// Например, 0xFEFF на некоторых шрифтах вообще переключает GDI на какой-то левый шрифт O_O
-	// Да и то, что они "не занимают места" в консоли некорректно. Даже если апостроф, по идее,
-	// должен располагаться НАД буквой, рисовать его надо бы СЛЕВА от нее, т.к. он занимает
-	// знакоместо в консоли!
 	switch (inChar)
 	{
 		// TODO: Leave only ‘breaking’ glyphs here!

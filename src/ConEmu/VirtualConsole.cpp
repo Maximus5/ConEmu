@@ -143,20 +143,6 @@ WARNING("Часто после разблокирования компьютер
 #define DUMPDC(f)
 #endif
 
-//#define isCharSpace(c) (c == ucSpace || c == ucNoBreakSpace || c == 0 || (c>=0x2000 && c<=0x200F) || c == 0x2060 || c == 0x3000 || c == 0xFEFF)
-//TODO("Всякие там acute и прочие композиты");
-//#define isCharNonSpacing(c) (c == 0xFEFF || (c>=0x2000 && c<=0x200F) || c == 0x2060 || c == 0x3000)
-//bool __inline isCharSpace(wchar_t c)
-//{
-//	switch (c)
-//	{
-//	case ucSpace:
-//	case ucNoBreakSpace:
-//	case 0x2000: case 0x2001: case 0x2002: case 0x2003: case 0x2004: case 0x2005:
-//	case 0x2006: case 0x2007: case 0x2008: case 0x2009: case 0x200A:
-//	200A
-//	}
-//}
 
 namespace VConCreateLogger
 {
@@ -3184,7 +3170,10 @@ void CVirtualConsole::UpdateText()
 				// same as above (1)
 				isUnicode = (gpSet->isFixFarBorders && isCharAltFont(c/*ConCharLine[j]*/));
 			}
-			bool isProgress = false, isSpace = false, isUnicodeOrProgress = false, isNonSpacing = false;
+			bool isProgress = false;
+			bool isSpace = false;
+			bool isUnicodeOrProgress = false;
+			bool isSeparate = false;
 			bool lbS1 = false, lbS2 = false;
 			int nS11 = 0, nS12 = 0, nS21 = 0, nS22 = 0;
 			//GetCharAttr(c, attr, c, attrFore, attrBack);
@@ -3200,7 +3189,7 @@ void CVirtualConsole::UpdateText()
 
 			if (!isUnicodeOrProgress)
 			{
-				isNonSpacing = isCharNonSpacing(c);
+				isSeparate = isCharSeparate(c);
 				isSpace = isCharSpace(c);
 			}
 
@@ -3386,13 +3375,13 @@ void CVirtualConsole::UpdateText()
 
 					DistributeSpaces(ConCharLine, ConAttrLine, ConCharXLine, j, j2, end);
 				}
-				else if (isNonSpacing)
+				else if (isSeparate)
 				{
 					j2 = j + 1; HEAPVAL
 					wchar_t ch;
 					//int nLastNonSpace = -1;
 					while (j2 < end && ConAttrLine[j2] == attr
-					        && isCharNonSpacing(ch = ConCharLine[j2]))
+					        && isCharSeparate(ch = ConCharLine[j2]))
 					{
 						WORD nCurCharWidth2 = CharWidth(ch, attr);
 						ConCharXLine[j2] = (j2 ? ConCharXLine[j2-1] : 0)+nCurCharWidth2;
@@ -3418,7 +3407,7 @@ void CVirtualConsole::UpdateText()
 
 					while (j2 < end && ConAttrLine[j2] == attr
 							&& (ch = ConCharLine[j2], bFixFarBorders ? !isCharAltFont(ch) : (!bEnhanceGraphics || !isCharProgress(ch)))
-							&& !isCharNonSpacing(ch)
+							&& !isCharSeparate(ch)
 							&& (!bAlignCurledFrames || (ch != L'}')))
 					{
 						if (isSpace(ch))

@@ -30,11 +30,48 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <windows.h>
+#include "../common/RgnDetect.h"
+
+//type
+
+class CVConLine
+{
+public:
+	CVConLine();
+	~CVConLine();
+
+public:
+	// Methods
+	void SetDialogs(int anDialogsCount, SMALL_RECT* apDialogs, DWORD* apnDialogFlags, DWORD anDialogAllFlags, const SMALL_RECT& arcUCharMap);
+	void ParseLine(bool abForce, uint anTextWidth, wchar_t* apConCharLine, CharAttr* apConAttrLine, const wchar_t* const ConCharLine2, const CharAttr* const ConAttrLine2);
+
+protected:
+	// Methods
+
+protected:
+	// Members
+	int mn_DialogsCount;
+	const SMALL_RECT* mrc_Dialogs/*[MAX_DETECTED_DIALOGS]*/;
+	const DWORD* mn_DialogFlags/*[MAX_DETECTED_DIALOGS]*/;
+	DWORD mn_DialogAllFlags;
+	// Far Manager's UnicodeCharMap plugin
+	SMALL_RECT mrc_UCharMap;
+	// Drawing parameters below
+	uint TextWidth;
+	// Full redraw was requested
+	bool isForce;
+	// What we are parsing now
+	const wchar_t* ConCharLine/*[TextWidth]*/;
+	const CharAttr* ConAttrLine/*[TextWidth]*/;
+	// Temp buffer to return parsed parts to draw
+	wchar_t* wcTempDraw/*[TextWidth]*/;
+	char* cTempDraw/*[TextWidth]*/;
+};
 
 bool isCharAltFont(wchar_t inChar);
 bool isCharBorderVertical(wchar_t inChar);
 bool isCharProgress(wchar_t inChar);
 bool isCharScroll(wchar_t inChar);
-bool isCharNonSpacing(wchar_t inChar);
+bool isCharSeparate(wchar_t inChar);
 bool isCharSpace(wchar_t inChar);
 bool isCharRTL(wchar_t inChar);

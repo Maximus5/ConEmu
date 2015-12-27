@@ -623,14 +623,16 @@ bool CMatch::MatchWord(LPCWSTR asLine/*This may be NOT 0-terminated*/, int anLin
 	if (!asLine || !*asLine || (anFrom < 0) || (anLineLen <= anFrom))
 		return false;
 
+	TODO("Setting to define word-break characters (was gh issue)");
+
 	while ((rnStart > 0)
-		&& !(isCharSpace(asLine[rnStart-1]) || isCharNonSpacing(asLine[rnStart-1])))
+		&& !(isCharSpace(asLine[rnStart-1]) || isCharSeparate(asLine[rnStart-1])))
 	{
 		rnStart--;
 	}
 
 	while (((rnEnd+1) < anLineLen)
-		&& !(isCharSpace(asLine[rnEnd]) || isCharNonSpacing(asLine[rnEnd])))
+		&& !(isCharSpace(asLine[rnEnd]) || isCharSeparate(asLine[rnEnd])))
 	{
 		rnEnd++;
 	}
