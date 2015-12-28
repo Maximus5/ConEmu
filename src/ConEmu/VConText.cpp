@@ -182,35 +182,42 @@ bool isCharSpace(wchar_t inChar)
 
 bool isCharRTL(wchar_t inChar)
 {
-	bool isRtl =
-		(inChar == 0x05BE) || (inChar == 0x05C0) || (inChar == 0x05C3) || (inChar == 0x05C6) ||
-		((inChar >= 0x05D0) && (inChar <= 0x05F4)) ||
-		(inChar == 0x0608) || (inChar == 0x060B) || (inChar == 0x060D) ||
-		((inChar >= 0x061B) && (inChar <= 0x064A)) ||
-		((inChar >= 0x066D) && (inChar <= 0x066F)) ||
-		((inChar >= 0x0671) && (inChar <= 0x06D5)) ||
-		((inChar >= 0x06E5) && (inChar <= 0x06E6)) ||
-		((inChar >= 0x06EE) && (inChar <= 0x06EF)) ||
-		((inChar >= 0x06FA) && (inChar <= 0x0710)) ||
-		((inChar >= 0x0712) && (inChar <= 0x072F)) ||
-		((inChar >= 0x074D) && (inChar <= 0x07A5)) ||
-		((inChar >= 0x07B1) && (inChar <= 0x07EA)) ||
-		((inChar >= 0x07F4) && (inChar <= 0x07F5)) ||
-		((inChar >= 0x07FA) && (inChar <= 0x0815)) ||
-		(inChar == 0x081A) || (inChar == 0x0824) || (inChar == 0x0828) ||
-		((inChar >= 0x0830) && (inChar <= 0x0858)) ||
-		((inChar >= 0x085E) && (inChar <= 0x08AC)) ||
-		(inChar == 0x200F) || (inChar == 0xFB1D) ||
-		((inChar >= 0xFB1F) && (inChar <= 0xFB28)) ||
-		((inChar >= 0xFB2A) && (inChar <= 0xFD3D)) ||
-		((inChar >= 0xFD50) && (inChar <= 0xFDFC)) ||
-		((inChar >= 0xFE70) && (inChar <= 0xFEFC))
+	bool isRtl = (inChar >= 0x05BE)
+		&& (((inChar <= 0x08AC)
+			&& ((inChar == 0x05BE)
+				|| (inChar == 0x05C0) || (inChar == 0x05C3) || (inChar == 0x05C6)
+				|| ((inChar >= 0x05D0) && (inChar <= 0x05F4))
+				|| (inChar == 0x0608) || (inChar == 0x060B) || (inChar == 0x060D)
+				|| ((inChar >= 0x061B) && (inChar <= 0x064A))
+				|| ((inChar >= 0x066D) && (inChar <= 0x066F))
+				|| ((inChar >= 0x0671) && (inChar <= 0x06D5))
+				|| ((inChar >= 0x06E5) && (inChar <= 0x06E6))
+				|| ((inChar >= 0x06EE) && (inChar <= 0x06EF))
+				|| ((inChar >= 0x06FA) && (inChar <= 0x0710))
+				|| ((inChar >= 0x0712) && (inChar <= 0x072F))
+				|| ((inChar >= 0x074D) && (inChar <= 0x07A5))
+				|| ((inChar >= 0x07B1) && (inChar <= 0x07EA))
+				|| ((inChar >= 0x07F4) && (inChar <= 0x07F5))
+				|| ((inChar >= 0x07FA) && (inChar <= 0x0815))
+				|| (inChar == 0x081A) || (inChar == 0x0824) || (inChar == 0x0828)
+				|| ((inChar >= 0x0830) && (inChar <= 0x0858))
+				|| ((inChar >= 0x085E) && (inChar <= 0x08AC))
+			)) // end of ((inChar <= 0x08AC) && (inChar <= 0x08AC))
+		|| (inChar == 0x200E)
+		|| (inChar == 0x200F)
+		|| ((inChar >= 0xFB1D) && (inChar <= 0xFEFC)
+			&& ((inChar == 0xFB1D)
+				|| ((inChar >= 0xFB1F) && (inChar <= 0xFB28))
+				|| ((inChar >= 0xFB2A) && (inChar <= 0xFD3D))
+				|| ((inChar >= 0xFD50) && (inChar <= 0xFDFC))
+				|| ((inChar >= 0xFE70) && (inChar <= 0xFEFC))
+			)) // end of ((inChar >= 0xFB1D) && (inChar <= 0xFEFC)
 		//((inChar>=0x10800)&&(inChar<=0x1091B))||
 		//((inChar>=0x10920)&&(inChar<=0x10A00))||
 		//((inChar>=0x10A10)&&(inChar<=0x10A33))||
 		//((inChar>=0x10A40)&&(inChar<=0x10B35))||
 		//((inChar>=0x10B40)&&(inChar<=0x10C48))||
 		//((inChar>=0x1EE00)&&(inChar<=0x1EEBB))
-		;
+		);
 	return isRtl;
 }
