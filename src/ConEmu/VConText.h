@@ -32,42 +32,127 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <windows.h>
 #include "../common/RgnDetect.h"
 
-//type
+typedef DWORD TextRangeFlags;
+const TextRangeFlags
+	// Position (fixed for Far Manager frames, pseudographics, etc.)
+	TRF_PosFixed         = 0x0001,
+	// Text properties
+	TRF_TextNormal       = 0x0010,
+	TRF_TextAlternative  = 0x0020, // Alternative font (frames or CJK)
+	TRF_TextPseudograph  = 0x0040, // frames, borders, lines, etc (Far Manager especially)
+	TRF_TextCJK          = 0x0080, // if not a VCTF_TextAlternative
+	TRF_TextRTL          = 0x0100, // As is
+	TRF_TextSpacing      = 0x0200, // Special part, it painted together with previous part, but(!)
+								   // 1) width is calculated separately
+								   // 2) it may NOT be combined with TRF_TextPseudograph
+	TRF_TextSeparate     = 0x0400, // May not be combined with other parts
+	TRF_TextProgress     = 0x0800, // Progress (boxes with 25%, 50%, etc)
+	TRF_TextScroll       = 0x1000, // Far Manager scroll bars (vertical especially)
+	// TODO: Ligatures
+	// End of flags
+	TRF_None = 0;
+
+typedef DWORD TextCharFlags;
+const TextCharFlags
+	// Recommended width type
+	TCF_WidthZero        = 0x0001, // combining characters: acutes, umlauts, etc.
+	TCF_WidthFree        = 0x0002, // spaces, horizontal lines (frames), etc. They may be shrinked freely
+	TCF_WidthNormal      = 0x0004, // letters, numbers, etc. They have exact width, lesser space may harm visual representation
+	TCF_WidthDouble      = 0x0008, // CJK. Double width hieroglyphs and other ideographics
+	// End of flags
+	TCF_None = 0;
+
+class CVConLine;
+class CRealConsole;
+
+struct VConRange
+{
+	TextRangeFlags Flags;
+	uint Length;
+	// Informational. Index in CVConLine.ConCharLine
+	uint Index;
+	// Helper, to ensure our text parts fit in the terminal window
+	uint TotalWidth, MinWidth, PositionX;
+	// Pointers
+	const wchar_t* Chars;
+	const CharAttr* Attrs;
+	// CharFlags is a pointer to buffer+idx from CVConLine
+	TextCharFlags* CharFlags;
+	// CharWidth is a pointer to buffer+idx from CVConLine
+	// If gpSet->isMonospace then CharWidth calculated according to TCF_WidthXXX
+	// But for proportional fonts we have to call GDI's TextExtentPoint
+	uint* CharWidth;
+
+
+	void Init(uint anIndex, CVConLine* pLine);
+	void Done(uint anLen, uint FontWidth);
+};
 
 class CVConLine
 {
 public:
-	CVConLine();
+	CVConLine(CRealConsole* apRCon);
 	~CVConLine();
 
 public:
 	// Methods
 	void SetDialogs(int anDialogsCount, SMALL_RECT* apDialogs, DWORD* apnDialogFlags, DWORD anDialogAllFlags, const SMALL_RECT& arcUCharMap);
-	void ParseLine(bool abForce, uint anTextWidth, wchar_t* apConCharLine, CharAttr* apConAttrLine, const wchar_t* const ConCharLine2, const CharAttr* const ConAttrLine2);
+	bool ParseLine(bool abForce, uint anTextWidth, uint anFontWidth, wchar_t* apConCharLine, CharAttr* apConAttrLine, const wchar_t* const ConCharLine2, const CharAttr* const ConAttrLine2);
+	void PolishParts(DWORD* pnXCoords);
+	bool GetNextPart(uint& partIndex, VConRange*& part, VConRange*& nextPart);
 
 protected:
 	// Methods
+	bool AllocateMemory();
+	void ReleaseMemory();
 
 protected:
+	friend struct VConRange;
 	// Members
+	CRealConsole* mp_RCon;
+
+	// This corresponds to "dialogs" - regions framed with preudographics
 	int mn_DialogsCount;
 	const SMALL_RECT* mrc_Dialogs/*[MAX_DETECTED_DIALOGS]*/;
 	const DWORD* mn_DialogFlags/*[MAX_DETECTED_DIALOGS]*/;
 	DWORD mn_DialogAllFlags;
 	// Far Manager's UnicodeCharMap plugin
 	SMALL_RECT mrc_UCharMap;
+
 	// Drawing parameters below
 	uint TextWidth;
+	uint FontWidth;
 	// Full redraw was requested
 	bool isForce;
+
 	// What we are parsing now
 	const wchar_t* ConCharLine/*[TextWidth]*/;
 	const CharAttr* ConAttrLine/*[TextWidth]*/;
+
+	// Size of buffers
+	uint MaxBufferSize;
+
 	// Temp buffer to return parsed parts to draw
-	wchar_t* wcTempDraw/*[TextWidth]*/;
-	char* cTempDraw/*[TextWidth]*/;
+	wchar_t* wcTempDraw/*[MaxBufferSize]*/;
+	char* cTempDraw/*[MaxBufferSize]*/;
+
+	// Buffer to parse our line
+	uint PartsCount;
+	VConRange* TextRanges/*[MaxBufferSize]*/;
+
+	// CharFlags is a pointer to buffer+idx from CVConLine
+	TextCharFlags* TempCharFlags/*[MaxBufferSize]*/;
+
+	// CharWidth is a pointer to buffer+idx from CVConLine
+	// If gpSet->isMonospace then CharWidth calculated according to TCF_WidthXXX
+	// But for proportional fonts we have to call GDI's TextExtentPoint
+	uint* TempCharWidth/*[MaxBufferSize]*/;
+
+	// Just for information
+	uint TotalWidth, MinWidth;
 };
 
+//TODO: all functions have to be converted to ucs32 instead of BMP
 bool isCharAltFont(wchar_t inChar);
 bool isCharPseudographics(wchar_t inChar);
 bool isCharPseudoFree(wchar_t inChar);

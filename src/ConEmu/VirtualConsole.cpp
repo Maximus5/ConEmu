@@ -3062,6 +3062,9 @@ void CVirtualConsole::UpdateText()
 	CEFONT hFont = gpSetCls->mh_Font[0];
 	CEFONT hFont2 = gpSetCls->mh_Font2;
 
+	CVConLine lp(mp_RCon); // Line parser
+	lp.SetDialogs(mn_DialogsCount, mrc_Dialogs, mn_DialogFlags, mn_DialogAllFlags, mrc_UCharMap);
+
 	bool bFixFrameCoord = mp_RCon->isFar();
 
 	_ASSERTE(((TextWidth * nFontWidth) >= Width));
@@ -3094,6 +3097,50 @@ void CVirtualConsole::UpdateText()
 				&& (j <= Cursor.x && Cursor.x <= end))
 			Cursor.isVisiblePrev = false;
 
+		// May return false on memory allocation errors only
+		if (!lp.ParseLine(isForce, TextWidth, nFontWidth, ConCharLine, ConAttrLine, ConCharLine2, ConAttrLine2))
+		{
+			// Fill with background?
+			continue;
+		}
+
+		WARNING("Calculate proper widths for proportional fonts");
+
+		// Final preparations
+		lp.PolishParts(ConCharXLine);
+
+		uint partIndex = 0;
+		VConRange *part, *nextPart;
+
+		//TODO: Do first run to paint only background (background image support)
+		//TODO: Second run - paint text
+
+		while (lp.GetNextPart(partIndex, part, nextPart))
+		{
+			const CharAttr& attr = part->Attrs[0];
+			m_DC.SetBkColor(attr.crBackColor);
+			m_DC.SetTextColor(attr.crForeColor);
+			if (part->Flags & TRF_TextAlternative)
+				SelectFont(hFont2);
+			else
+				SelectFont(mh_FontByIndex[attr.nFontIndex]);
+
+			RECT rect;
+			rect.left = part->PositionX;
+			rect.top = pos;
+			rect.right = part->PositionX + part->TotalWidth;
+			rect.bottom = rect.top + nFontHeight;
+
+			//TODO: if nextPart is VertBorder, then increase rect.right by ((FontWidth>>1)-1)
+			//TODO: to ensure, that our possible *italic* text will not be clipped
+
+			UINT nFlags = ETO_CLIPPED | ETO_OPAQUE;
+
+			m_DC.TextDraw(rect.left, rect.top, nFlags, &rect,
+				part->Chars, part->Length, (int*)part->CharWidth/*lpDX*/);
+		}
+
+	#if 0
 		// *) Now draw as much as possible in a row even if some symbols are not changed.
 		// More calls for the sake of fewer symbols is slower, e.g. in panel status lines.
 		int j2=j+1;
@@ -3760,6 +3807,7 @@ void CVirtualConsole::UpdateText()
 
 			DUMPDC(L"F:\\vcon.png");
 		}
+		#endif
 
 		HEAPVALPTR(nDX);
 	}
