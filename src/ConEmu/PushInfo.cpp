@@ -88,9 +88,9 @@ CPushInfo::CPushInfo()
 	int iCmp;
 	for (INT_PTR i = 0; i < countof(gPushInfo); i++)
 	{
-		SYSTEMTIME st1 = {gPushInfo[i].dtBegin.wYear, gPushInfo[i].dtBegin.wMonth, 0, gPushInfo[i].dtBegin.wDay};
+		SYSTEMTIME st1 = {(WORD)gPushInfo[i].dtBegin.wYear, (WORD)gPushInfo[i].dtBegin.wMonth, 0, (WORD)gPushInfo[i].dtBegin.wDay};
 		SystemTimeToFileTime(&st1, &ft1);
-		SYSTEMTIME st2 = {gPushInfo[i].dtEnd.wYear, gPushInfo[i].dtEnd.wMonth, 0, gPushInfo[i].dtEnd.wDay};
+		SYSTEMTIME st2 = {(WORD)gPushInfo[i].dtEnd.wYear, (WORD)gPushInfo[i].dtEnd.wMonth, 0, (WORD)gPushInfo[i].dtEnd.wDay};
 		SystemTimeToFileTime(&st2, &ft2);
 
 		iCmp = CompareFileTime(&ft1, &ft);
