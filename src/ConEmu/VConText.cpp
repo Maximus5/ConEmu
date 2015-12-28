@@ -34,6 +34,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "OptionsClass.h"
 #include "VConText.h"
 
+#include "../common/wcchars.h"
+#include "../common/wcwidth.h"
+
 
 // Это символы рамок и др. спец. символы
 //#define isCharBorder(inChar) (inChar>=0x2013 && inChar<=0x266B)
@@ -221,3 +224,14 @@ bool isCharRTL(wchar_t inChar)
 		);
 	return isRtl;
 }
+
+bool isCharCJK(wchar_t inChar)
+{
+	return is_char_cjk(inChar);
+}
+
+bool isCharComining(wchar_t inChar)
+{
+	return is_char_combining(inChar);
+}
+
