@@ -10,7 +10,7 @@ local ConEmu   = "4b675d80-1d4a-4ea9-8436-fdc23f2fc14b"
 Macro
 {
   area="";
-  key="CtrlO";
+  key="CtrlShiftT";
   flags="";
   description="ConEmu: Switch tabs visibility";
 action = function()
