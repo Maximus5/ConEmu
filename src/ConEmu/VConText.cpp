@@ -75,21 +75,15 @@ bool isCharAltFont(wchar_t inChar)
 	//}
 }
 
-// А это только "рамочные" символы, в которых есть любая (хотя бы частичная) вертикальная черта + стрелки/штриховки
+// These are "frame" characters, which has either
+// * any vertical (even partial) line
+// * or Up/Down arrows (scrollers)
 bool isCharBorderVertical(wchar_t inChar)
 {
-	//if (inChar>=0x2502 && inChar<=0x25C4 && inChar!=0x2550)
-	//2009-07-12 Для упрощения - зададим диапазон рамок за исключением горизонтальной линии
-	//if (inChar==ucBoxSinglVert || inChar==0x2503 || inChar==0x2506 || inChar==0x2507
-	//    || (inChar>=0x250A && inChar<=0x254B) || inChar==0x254E || inChar==0x254F
-	//    || (inChar>=0x2551 && inChar<=0x25C5)) // По набору символов Arial Unicode MS
-	TODO("ucBoxSinglHorz отсекать не нужно?");
-
-	if ((inChar != ucBoxDblHorz && (inChar >= ucBoxSinglVert && inChar <= ucBoxDblVertHorz))
-		|| (inChar == ucArrowUp || inChar == ucArrowDown))
-		return true;
-	else
-		return false;
+	bool isVert = ((inChar >= ucBoxSinglVert && inChar <= ucBoxSinglVertLeft)
+		|| (inChar == ucBoxDblVertHorz)
+		|| (inChar == ucArrowUp || inChar == ucArrowDown));
+	return isVert;
 }
 
 bool isCharProgress(wchar_t inChar)
