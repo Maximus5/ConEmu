@@ -3769,7 +3769,7 @@ void CVirtualConsole::UpdateText()
 		bool lbDelBrush = false;
 		HBRUSH hBr = CreateBackBrush(false, lbDelBrush);
 
-		RECT rcFill = {0, pos, Width, Height};
+		RECT rcFill = {0, pos, (int)Width, (int)Height};
 		FillRect((HDC)m_DC, &rcFill, hBr);
 
 		if (lbDelBrush)
