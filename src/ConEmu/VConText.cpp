@@ -75,6 +75,12 @@ bool isCharAltFont(wchar_t inChar)
 	//}
 }
 
+bool isCharPseudographics(wchar_t inChar)
+{
+	bool isPseudo = ((inChar >= 0x2013) && (inChar <= 0x25C4));
+	return isPseudo;
+}
+
 // These are "frame" characters, which has either
 // * any vertical (even partial) line
 // * or Up/Down arrows (scrollers)
