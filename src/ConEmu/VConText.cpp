@@ -84,6 +84,13 @@ bool isCharPseudographics(wchar_t inChar)
 	return isPseudo;
 }
 
+// Some pseudographics characters may be shrinked freely
+bool isCharPseudoFree(wchar_t inChar)
+{
+	bool isFree = (inChar == ucBoxSinglHorz) || (inChar == ucBoxDblHorz);
+	return isFree;
+}
+
 // These are "frame" characters, which has either
 // * any vertical (even partial) line
 // * or Up/Down arrows (scrollers)

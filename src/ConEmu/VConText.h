@@ -70,6 +70,7 @@ protected:
 
 bool isCharAltFont(wchar_t inChar);
 bool isCharPseudographics(wchar_t inChar);
+bool isCharPseudoFree(wchar_t inChar);
 bool isCharBorderVertical(wchar_t inChar);
 bool isCharProgress(wchar_t inChar);
 bool isCharScroll(wchar_t inChar);
