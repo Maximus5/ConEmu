@@ -5480,17 +5480,6 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 				WARNING("Если far/w - pcolSrc нужно поднять вверх, bStartUseColorData=TRUE, bUseColorData=FALSE");
 				if (con.bBufferHeight)
 				{
-					#if 0
-					// Useless? TrueMod can be used not only within Far.
-					// And this branch was causing flickering when executing smth like:
-					// edit:<git log
-					if (mp_RCon->isFar() && !mp_RCon->isFarBufferSupported())
-					{
-						DEBUGSTRTRUEMOD(L"TrueMod skipped due to !isFarBufferSupported()");
-						bUseColorData = FALSE;
-					}
-					else
-					#endif
 					{
 						int nShiftRows = (con.m_sbi.dwSize.Y - nHeight) - con.m_sbi.srWindow.Top;
 
