@@ -2476,6 +2476,8 @@ int DuplicateRoot(CESERVER_REQ_DUPLICATE* Duplicate)
 		return -4;
 	}
 
+	CESERVER_CONSOLE_MAPPING_HDR* pConMap = GetConMap();
+
 	RConStartArgs args; // Strip and process "-new_console" switches
 	args.pszSpecialCmd = lstrdup(pszCmdLine);
 	args.ProcessNewConArg();
@@ -2485,9 +2487,13 @@ int DuplicateRoot(CESERVER_REQ_DUPLICATE* Duplicate)
 	int iRc = -10;
 	// go
 	STARTUPINFO si = {sizeof(si)};
+	wchar_t szInitConTitle[] = CEC_INITTITLE;
+	si.lpTitle = szInitConTitle;
 	PROCESS_INFORMATION pi = {};
-	size_t cchCmdLine = 300 + lstrlen(GuiMapping->ComSpec.ConEmuBaseDir) + (lstrlen(pszCmdLine) + 128/*опции сервера*/);
+	size_t cchCmdLine = 300 + lstrlen(GuiMapping->ComSpec.ConEmuBaseDir) + (lstrlen(pszCmdLine) + 256/*server's options*/);
 	wchar_t *pszCmd, *pszName;
+	int FontSizeY = 8, FontSizeX = 5;
+	wchar_t szFontName[LF_FACESIZE] = L"", szFontInfo[80] = L"";
 	BOOL bSrvFound;
 
 	pszCmd = (wchar_t*)malloc(cchCmdLine*sizeof(*pszCmd));
@@ -2521,11 +2527,15 @@ int DuplicateRoot(CESERVER_REQ_DUPLICATE* Duplicate)
 	// /CONFIRM | /NOCONFIRM | /NOINJECT
 	args.AppendServerArgs(pszCmd, cchCmdLine);
 
+	if (apiGetConsoleFontSize(GetStdHandle(STD_OUTPUT_HANDLE), FontSizeY, FontSizeX, szFontName)) //Vista+ only!
+		msprintf(szFontInfo, countof(szFontInfo), L"\"/FN=%s\" /FW=%i /FH=%i ", szFontName, FontSizeX, FontSizeY);
+
 	pszName = pszCmd + lstrlen(pszCmd);
 	msprintf(pszName, cchCmdLine-(pszName-pszCmd),
-		L" /ATTACH /GID=%u /GHWND=%08X /AID=%u /TA=%08X /BW=%i /BH=%i /BZ=%i /HIDE /ROOT %s",
+		L" /ATTACH /GID=%u /GHWND=%08X /AID=%u /TA=%08X /BW=%i /BH=%i /BZ=%i %s%s/HIDE /ROOT %s",
 		Duplicate->nGuiPID, (DWORD)Duplicate->hGuiWnd, Duplicate->nAID,
 		Duplicate->nColors, Duplicate->nWidth, Duplicate->nHeight, Duplicate->nBufferHeight,
+		szFontInfo, (pConMap && pConMap->nLogLevel) ? L"/LOG " : L"",
 		pszCmdLine);
 
 	si.dwFlags |= STARTF_USESHOWWINDOW;
