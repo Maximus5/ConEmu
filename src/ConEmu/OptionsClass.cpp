@@ -1759,6 +1759,8 @@ LRESULT CSettings::OnInitDialog_Main(HWND hWnd2, bool abInitial)
 	{
 		checkDlgButton(hWnd2, cbFixFarBorders, BST(gpSet->isFixFarBorders));
 
+		checkDlgButton(hWnd2, cbFont2AA, gpSet->isAntiAlias2 ? BST_CHECKED : BST_UNCHECKED);
+
 		LPCWSTR cszFontRanges[] = {
 			L"Far Manager borders: 2500-25C4;",
 			L"Dashes and Borders: 2013-2015;2500-25C4;",
@@ -9877,8 +9879,15 @@ void CSettings::RecreateBorderFont(const LOGFONT *inFont)
 	}
 	mn_BorderFontWidth = LogFont2.lfWidth;
 
-	// Иначе рамки прерывистыми получаются... поставил NONANTIALIASED_QUALITY
-	DWORD fdwQuality = NONANTIALIASED_QUALITY/*ANTIALIASED_QUALITY*/;
+	// To avoid dashed frames, alternative font was created with NONANTIALIASED_QUALITY
+	// But now, due to user-defined ranges, the font may be used for arbitrary characters,
+	// so it's better to give user control over this
+	DWORD fdwQuality = (!gpSet->isAntiAlias2) ? NONANTIALIASED_QUALITY
+		// so, if clear-type or other anti-aliasing is ON for main font...
+		: (gpSet->mn_AntiAlias != NONANTIALIASED_QUALITY) ? gpSet->mn_AntiAlias
+		// otherwise - use clear-type
+		: CLEARTYPE_NATURAL_QUALITY;
+	// No control over alternative font charset, use default
 	DWORD fdwCharSet = DEFAULT_CHARSET;
 	mh_Font2 = CEFONT(CreateFont(LogFont2.lfHeight, LogFont2.lfWidth, 0, 0, FW_NORMAL,
 	                             0, 0, 0, fdwCharSet, OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS,

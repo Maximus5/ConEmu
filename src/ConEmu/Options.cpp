@@ -615,6 +615,7 @@ void Settings::InitSettings()
 	isDownShowHiddenMessage = false;
 	isDownShowExOnTopMessage = false;
 	isFixFarBorders = 1;
+	isAntiAlias2 = false; // disabled by default to avoid dashed framed
 	ParseCharRanges(L"2013-25C4", mpc_CharAltFontRanges);
 
 	// [Debug] Максимальный видимый размер подкорректируется в CConEmuMain::CreateMainWindow()
@@ -2651,6 +2652,8 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 		// Now user may use it for any range of characters (CJK, etc.)
 		// Used with settings: inFont2, FontSizeX2, mpc_CharAltFontRanges
 		reg->Load(L"FixFarBorders", isFixFarBorders);
+		// Alternative font antialiasing
+		reg->Load(L"Anti-aliasing2", isAntiAlias2);
 
 		//TODO: Extend ranges for arbitrary font groups
 		wchar_t* pszCharRanges = NULL; wchar_t szDefaultRanges[] = L"2013-25C4";
@@ -3664,6 +3667,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		reg->Save(L"HighlightMouseCol", isHighlightMouseCol);
 
 		reg->Save(L"FixFarBorders", isFixFarBorders);
+		reg->Save(L"Anti-aliasing2", isAntiAlias2);
 		{
 		wchar_t* pszCharRanges = CreateCharRanges(mpc_CharAltFontRanges);
 		reg->Save(L"FixFarBordersRanges", pszCharRanges ? pszCharRanges : L"2013-25C4");

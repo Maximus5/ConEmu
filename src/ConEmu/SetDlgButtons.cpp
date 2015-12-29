@@ -207,6 +207,9 @@ bool CSetDlgButtons::ProcessButtonClick(HWND hDlg, WORD CB, BYTE uCheck)
 		case cbFixFarBorders:
 			OnBtn_FixFarBorders(hDlg, CB, uCheck);
 			break;
+		case cbFont2AA:
+			OnBtn_AntiAliasing2(hDlg, CB, uCheck);
+			break;
 		case cbUnicodeRangesApply:
 			OnBtn_UnicodeRangesApply(hDlg, CB, uCheck);
 			break;
@@ -1733,6 +1736,18 @@ void CSetDlgButtons::OnBtn_FixFarBorders(HWND hDlg, WORD CB, BYTE uCheck)
 	gpConEmu->Update(true);
 
 } // cbFixFarBorders
+
+
+// cbFont2AA
+void CSetDlgButtons::OnBtn_AntiAliasing2(HWND hDlg, WORD CB, BYTE uCheck)
+{
+	_ASSERTE(CB==cbFont2AA);
+
+	gpSet->isAntiAlias2 = (uCheck != BST_UNCHECKED);
+
+	PostMessage(hDlg, gpSetCls->mn_MsgRecreateFont, CB, 0);
+
+} // cbFont2AA
 
 
 // cbUnicodeRangesApply

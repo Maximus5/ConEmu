@@ -406,6 +406,9 @@ struct Settings
 		//reg->Load(L"FontUseUnits", FontUseUnits);
 		bool FontUseUnits;
 
+		// "Anti-aliasing2"
+		bool isAntiAlias2;
+
 
 		//reg->Load(L"HideCaption", isHideCaption);
 		bool isHideCaption; // Hide caption when maximized
