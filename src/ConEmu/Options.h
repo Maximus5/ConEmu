@@ -381,8 +381,6 @@ struct Settings
 	public:
 		//reg->Load(L"FontName", inFont, countof(inFont))
 		wchar_t inFont[LF_FACESIZE];
-		//reg->Load(L"FontName2", inFont2, countof(inFont2))
-		wchar_t inFont2[LF_FACESIZE];
 		//reg->Load(L"FontBold", isBold);
 		bool isBold;
 		//reg->Load(L"FontItalic", isItalic);
@@ -397,8 +395,6 @@ struct Settings
 		UINT FontSizeY;  // высота основного шрифта (загруженная из настроек!)
 		//reg->Load(L"FontSizeX", FontSizeX);
 		UINT FontSizeX;  // ширина основного шрифта
-		//reg->Load(L"FontSizeX2", FontSizeX2);
-		UINT FontSizeX2; // ширина для FixFarBorders (ширина создаваемого шрифта для отрисовки рамок, не путать со знакоместом)
 		//reg->Load(L"FontSizeX3", FontSizeX3);
 		UINT FontSizeX3; // ширина знакоместа при моноширинном режиме (не путать с FontSizeX2)
 		//reg->Load(L"FontUseDpi", FontUseDpi);
@@ -406,8 +402,25 @@ struct Settings
 		//reg->Load(L"FontUseUnits", FontUseUnits);
 		bool FontUseUnits;
 
+		// Previously, the option was used to define different font
+		// generally for Far Manager frames (pseudographics)
+		// Now user may use it for any range of characters (CJK, etc.)
+		// Used with settings: inFont2, FontSizeX2, mpc_CharAltFontRanges
+		// "FixFarBorders"
+		BYTE isFixFarBorders;
+		// "FontName2"
+		wchar_t inFont2[LF_FACESIZE];
+		// "FontSizeX2" : width of *alternative* font (to avoid dashed frames this may be larger than main font width)
+		UINT FontSizeX2;
 		// "Anti-aliasing2"
 		bool isAntiAlias2;
+		// "FixFarBordersRanges" ==> ParseCharRanges(...)
+		// Default: "2013-25C4"; Example: "0410-044F;2013-25C4;"
+		TODO("Convert to binary ranges?");
+		BYTE mpc_CharAltFontRanges[0x10000];
+		int ParseCharRanges(LPCWSTR asRanges, BYTE (&Chars)[0x10000], BYTE abValue = TRUE);
+		wchar_t* CreateCharRanges(BYTE (&Chars)[0x10000]); // caller must free(result)
+		bool CheckCharAltFont(wchar_t inChar);
 
 
 		//reg->Load(L"HideCaption", isHideCaption);
@@ -532,25 +545,6 @@ struct Settings
 
 		bool IsModifierPressed(int nDescrID, bool bAllowEmpty);
 		void IsModifierPressed(int nDescrID, bool* pbNoEmpty, bool* pbAllowEmpty);
-		//typedef struct tag_CharRanges
-		//{
-		//	bool bUsed;
-		//	wchar_t cBegin, cEnd;
-		//} CharRanges;
-		//wchar_t mszCharRanges[120];
-		//CharRanges icFixFarBorderRanges[10];
-
-		// Previously, the option was used to define different font for Far Manager frames (pseudographics)
-		// Now user may use it for any range of characters (CJK, etc.)
-		// Used with settings: inFont2, FontSizeX2, mpc_CharAltFontRanges
-		//reg->Load(L"FixFarBorders", isFixFarBorders)
-		BYTE isFixFarBorders;
-
-		// !!! Зовется из настроек Init/Load... !!!
-		int ParseCharRanges(LPCWSTR asRanges, BYTE (&Chars)[0x10000], BYTE abValue = TRUE); // например, L"2013-25C3,25C4"
-		wchar_t* CreateCharRanges(BYTE (&Chars)[0x10000]); // caller must free(result)
-		BYTE mpc_CharAltFontRanges[0x10000];
-		bool CheckCharAltFont(wchar_t inChar);
 
 		//reg->Load(L"KeyboardHooks", m_isKeyboardHooks); if (m_isKeyboardHooks>2) m_isKeyboardHooks = 0;
 		BYTE m_isKeyboardHooks;
