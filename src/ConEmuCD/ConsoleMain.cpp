@@ -7237,6 +7237,32 @@ int CALLBACK FontEnumProc(ENUMLOGFONTEX *lpelfe, NEWTEXTMETRICEX *lpntme, DWORD 
 }
 
 
+// Far process console resizes only after any mouse event
+// (Probably, to avoid artifacts/problems in "far /w" mode?)
+void ForceFarResize()
+{
+	CONSOLE_SCREEN_BUFFER_INFO sc = {};
+	INPUT_RECORD r = { MOUSE_EVENT };
+	r.Event.MouseEvent.dwEventFlags = MOUSE_MOVED;
+	if (GetConsoleScreenBufferInfo(ghConOut, &sc))
+	{
+		r.Event.MouseEvent.dwMousePosition.X = sc.srWindow.Right - 1;
+		r.Event.MouseEvent.dwMousePosition.Y = sc.srWindow.Bottom - 1;
+	}
+
+	wchar_t szLog[120];
+	_wsprintf(szLog, SKIPCOUNT(szLog) L"ForceFarResize: Size={%i,%i} Buf={%i,%i} Mouse={%i,%i}",
+		sc.srWindow.Right-sc.srWindow.Left+1, sc.srWindow.Bottom-sc.srWindow.Top+1,
+		sc.dwSize.X, sc.dwSize.Y,
+		r.Event.MouseEvent.dwMousePosition.X, r.Event.MouseEvent.dwMousePosition.Y);
+	LogString(szLog);
+
+	HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE);
+	DWORD cbWritten = 0;
+	WriteConsoleInput(hIn, &r, 1, &cbWritten);
+}
+
+
 BOOL cmd_SetSizeXXX_CmdStartedFinished(CESERVER_REQ& in, CESERVER_REQ** out)
 {
 	BOOL lbRc = FALSE;
@@ -7360,6 +7386,13 @@ BOOL cmd_SetSizeXXX_CmdStartedFinished(CESERVER_REQ& in, CESERVER_REQ** out)
 		// вернуть блокировку
 		csRead.Lock(&gpSrv->csReadConsoleInfo, LOCK_READOUTPUT_TIMEOUT);
 
+		if (in.hdr.nCmd == CECMD_SETSIZENOSYNC)
+		{
+			if (gpSrv->nActiveFarPID)
+			{
+				ForceFarResize();
+			}
+		} else
 		if (in.hdr.nCmd == CECMD_SETSIZESYNC)
 		{
 			CESERVER_REQ *pPlgIn = NULL, *pPlgOut = NULL;
@@ -7373,15 +7406,7 @@ BOOL cmd_SetSizeXXX_CmdStartedFinished(CESERVER_REQ& in, CESERVER_REQ** out)
 				// Need to block all requests to output buffer in other threads
 				MSectionLockSimple csRead; csRead.Lock(&gpSrv->csReadConsoleInfo, LOCK_READOUTPUT_TIMEOUT);
 
-				CONSOLE_SCREEN_BUFFER_INFO sc = {{0,0}};
-				GetConsoleScreenBufferInfo(ghConOut, &sc);
-				HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE);
-				INPUT_RECORD r = {MOUSE_EVENT};
-				r.Event.MouseEvent.dwMousePosition.X = sc.srWindow.Right-1;
-				r.Event.MouseEvent.dwMousePosition.Y = sc.srWindow.Bottom-1;
-				r.Event.MouseEvent.dwEventFlags = MOUSE_MOVED;
-				DWORD cbWritten = 0;
-				WriteConsoleInput(hIn, &r, 1, &cbWritten);
+				ForceFarResize();
 
 				csRead.Unlock();
 
