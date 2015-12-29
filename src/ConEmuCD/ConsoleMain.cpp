@@ -7120,8 +7120,8 @@ void LogSize(const COORD* pcrSize, int newBufferHeight, LPCSTR pszLabel, bool bF
 	{
 		bWriteLog = true;
 
-		_wsprintfA(szInfo, SKIPCOUNT(szInfo) "CurSize={%ix%i} ChangeTo={%ix%ix%i} %s (skipped=%i) {%u:%u:x%X:%u} %s %s",
-		           lsbi.dwSize.X, lsbi.dwSize.Y, pcrSize->X, pcrSize->Y, newBufferHeight, (pszLabel ? pszLabel : ""), nSkipped,
+		_wsprintfA(szInfo, SKIPCOUNT(szInfo) "CurSize={%i,%i,%i} ChangeTo={%i,%i,%i} %s (skipped=%i) {%u:%u:x%X:%u} %s %s",
+		           lsbi.dwSize.X, lsbi.srWindow.Bottom-lsbi.srWindow.Top+1, lsbi.dwSize.Y, pcrSize->X, pcrSize->Y, newBufferHeight, (pszLabel ? pszLabel : ""), nSkipped,
 		           bConsoleOK, bHandleOK, (DWORD)(DWORD_PTR)hCon, nErrCode,
 				   szWindowInfo, szFontInfo);
 	}

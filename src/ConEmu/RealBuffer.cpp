@@ -1002,7 +1002,7 @@ BOOL CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 
 				if (gpSetCls->isAdvLogging)
 				{
-					char szInfo[128]; _wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "Current size: Cols=%i, Buf=%i", sbi.dwSize.X, sbi.dwSize.Y);
+					char szInfo[128]; _wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "Current size: {%i,%i} Buf={%i,%i}", sbi.srWindow.Right-sbi.srWindow.Left+1, sbi.srWindow.Bottom-sbi.srWindow.Top+1, sbi.dwSize.X, sbi.dwSize.Y);
 					mp_RCon->LogString(szInfo, TRUE);
 				}
 
@@ -5510,7 +5510,14 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 						#ifdef _DEBUG
 						else if (nShiftRows < 0)
 						{
-							_ASSERTE(nShiftRows>=0);
+							//_ASSERTE(nShiftRows>=0);
+							wchar_t szLog[200];
+							_wsprintf(szLog, SKIPCOUNT(szLog) L"!!! CRealBuffer::GetConsoleData !!! "
+								L"nShiftRows=%i nWidth=%i nHeight=%i Rect={%i,%i}-{%i,%i} Buf={%i,%i}",
+								nShiftRows, nWidth, nHeight,
+								con.m_sbi.srWindow.Left, con.m_sbi.srWindow.Top, con.m_sbi.srWindow.Right, con.m_sbi.srWindow.Bottom,
+								con.m_sbi.dwSize.X, con.m_sbi.dwSize.Y);
+							mp_RCon->LogString(szLog, TRUE);
 						}
 						#endif
 					}
