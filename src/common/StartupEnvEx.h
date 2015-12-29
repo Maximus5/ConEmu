@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2014 Maximus5
+Copyright (c) 2009-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -30,6 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "StartupEnv.h"
 #include "WUser.h"
+#include "../ConEmu/version.h"
 #include <TlHelp32.h>
 
 class LoadStartupEnvEx : public LoadStartupEnv
@@ -272,11 +273,17 @@ public:
 				wcscat_c(szTitle, L" !Win10!");
 		}
 
-		_wsprintf(szSI, SKIPLEN(countof(szSI)) L"Startup info\r\n"
+		wchar_t szBuild[24], szVer4[8] = L"";
+		lstrcpyn(szVer4, _T(MVV_4a), countof(szVer4));
+		// Same as ConsoleMain.cpp::SetWorkEnvVar()
+		_wsprintf(szBuild, SKIPCOUNT(szBuild) L"%02u%02u%02u%s%s",
+			(MVV_1%100), MVV_2, MVV_3, szVer4[0]&&szVer4[1]?L"-":L"", szVer4);
+
+		_wsprintf(szSI, SKIPCOUNT(szSI) L"ConEmu %s [%u] Startup Info\r\n"
 			L"  OsVer: %s, Product: %u, SP: %u.%u, Suite: 0x%X, SM_SERVERR2: %u\r\n"
 			L"  CSDVersion: %s, ReactOS: %u (%s), Rsrv: %u\r\n"
 			L"  DBCS: %u, WINE: %u, PE: %u, Remote: %u, ACP: %u, OEMCP: %u, Admin: %u\r\n"
-			,
+			, szBuild, WIN3264TEST(32,64),
 			szTitle,
 			osv.wProductType, osv.wServicePackMajor, osv.wServicePackMinor, osv.wSuiteMask, GetSystemMetrics(89/*SM_SERVERR2*/),
 			osv.szCSDVersion, apStartEnv->bIsReactOS, pszReactOS, osv.wReserved,
