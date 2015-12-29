@@ -36,12 +36,13 @@ typedef DWORD TextRangeFlags;
 const TextRangeFlags
 	// Position (fixed for Far Manager frames, pseudographics, etc.)
 	TRF_PosFixed         = 0x0001,
+	TRF_PosRecommended   = 0x0002,
 	// Text properties
 	TRF_TextNormal       = 0x0010,
 	TRF_TextAlternative  = 0x0020, // Alternative font (frames or CJK)
 	TRF_TextPseudograph  = 0x0040, // frames, borders, lines, etc (Far Manager especially)
 	TRF_TextCJK          = 0x0080, // if not a VCTF_TextAlternative
-	TRF_TextRTL          = 0x0100, // As is
+	TRF_TextRTL          = 0x0100, // As is -- TODO?
 	TRF_TextSpacing      = 0x0200, // Special part, it painted together with previous part, but(!)
 								   // 1) width is calculated separately
 								   // 2) it may NOT be combined with TRF_TextPseudograph
@@ -52,15 +53,16 @@ const TextRangeFlags
 	// End of flags
 	TRF_None = 0;
 
-typedef DWORD TextCharFlags;
-const TextCharFlags
+enum TextCharFlags
+{
 	// Recommended width type
 	TCF_WidthZero        = 0x0001, // combining characters: acutes, umlauts, etc.
 	TCF_WidthFree        = 0x0002, // spaces, horizontal lines (frames), etc. They may be shrinked freely
 	TCF_WidthNormal      = 0x0004, // letters, numbers, etc. They have exact width, lesser space may harm visual representation
 	TCF_WidthDouble      = 0x0008, // CJK. Double width hieroglyphs and other ideographics
 	// End of flags
-	TCF_None = 0;
+	TCF_None = 0
+};
 
 class CVConLine;
 class CRealConsole;
@@ -97,7 +99,7 @@ public:
 public:
 	// Methods
 	void SetDialogs(int anDialogsCount, SMALL_RECT* apDialogs, DWORD* apnDialogFlags, DWORD anDialogAllFlags, const SMALL_RECT& arcUCharMap);
-	bool ParseLine(bool abForce, uint anTextWidth, uint anFontWidth, wchar_t* apConCharLine, CharAttr* apConAttrLine, const wchar_t* const ConCharLine2, const CharAttr* const ConAttrLine2);
+	bool ParseLine(bool abForce, uint anTextWidth, uint anFontWidth, uint anRow, wchar_t* apConCharLine, CharAttr* apConAttrLine, const wchar_t* const ConCharLine2, const CharAttr* const ConAttrLine2);
 	void PolishParts(DWORD* pnXCoords);
 	bool GetNextPart(uint& partIndex, VConRange*& part, VConRange*& nextPart);
 
@@ -105,6 +107,11 @@ protected:
 	// Methods
 	bool AllocateMemory();
 	void ReleaseMemory();
+
+	TextRangeFlags isDialogBorderCoord(uint j);
+	void DistributeParts(uint part1, uint part2, uint right);
+	void DoShrink(uint& charWidth, int& ShrinkLeft, uint& NeedWidth, uint& TotalWidth);
+	void ExpandPart(VConRange& part, uint EndX);
 
 protected:
 	friend struct VConRange;
@@ -118,6 +125,8 @@ protected:
 	DWORD mn_DialogAllFlags;
 	// Far Manager's UnicodeCharMap plugin
 	SMALL_RECT mrc_UCharMap;
+	// Some other Far Manager's flags
+	bool isFilePanel;
 
 	// Drawing parameters below
 	uint TextWidth;
@@ -126,6 +135,7 @@ protected:
 	bool isForce;
 
 	// What we are parsing now
+	uint row;
 	const wchar_t* ConCharLine/*[TextWidth]*/;
 	const CharAttr* ConAttrLine/*[TextWidth]*/;
 
@@ -149,7 +159,13 @@ protected:
 	uint* TempCharWidth/*[MaxBufferSize]*/;
 
 	// Just for information
-	uint TotalWidth, MinWidth;
+	uint TotalLineWidth, MinLineWidth;
+
+	// Pseudographics alignments
+	bool isFixFrameCoord;
+	bool NextDialog;
+	int NextDialogX, CurDialogX1, CurDialogX2, CurDialogI; // !!! SIGNED !!!
+	DWORD CurDialogFlags;
 };
 
 //TODO: all functions have to be converted to ucs32 instead of BMP

@@ -263,7 +263,10 @@ void VConRange::Done(uint anLen, uint FontWidth)
 	_ASSERTE(anLen>0 && FontWidth>0);
 	Length = anLen;
 	TotalWidth = MinWidth = 0;
-	bool MinCharWidth = ((Flags & TRF_TextSpacing) != TRF_None);
+	// May this part be shrinked freely?
+	bool MinCharWidth = ((Flags & TRF_TextSpacing) != TRF_None)
+		|| ((Flags & TRF_TextPseudograph) && (Length == 1) && isCharPseudoFree(*Chars));
+	// Helper - double cell characters
 	uint FontWidth2 = 2*FontWidth;
 
 	const wchar_t* pch = Chars;
@@ -277,10 +280,12 @@ void VConRange::Done(uint anLen, uint FontWidth)
 		{
 			// zero-width
 			*pcw = 0;
+			*pcf = TCF_WidthZero;
 		}
 		else if (pca->Flags & CharAttr_DoubleSpaced)
 		{
 			*pcw = FontWidth2;
+			*pcf = TCF_WidthDouble;
 			TotalWidth += FontWidth2;
 			MinWidth += MinCharWidth ? 1 : FontWidth2;
 		}
@@ -291,6 +296,7 @@ void VConRange::Done(uint anLen, uint FontWidth)
 		{
 			// Caller must process fonts and set "real" character widths for proportinal fonts
 			*pcw = FontWidth;
+			*pcf = MinCharWidth ? TCF_WidthFree : TCF_WidthNormal;
 			TotalWidth += FontWidth;
 			MinWidth += MinCharWidth ? 1 : FontWidth;
 		}
@@ -305,6 +311,7 @@ CVConLine::CVConLine(CRealConsole* apRCon)
 	, mn_DialogFlags(NULL)
 	, mn_DialogAllFlags(0)
 	, mrc_UCharMap()
+	, isFilePanel(false)
 	, TextWidth(0)
 	, isForce(true)
 	, ConCharLine(NULL)
@@ -316,8 +323,10 @@ CVConLine::CVConLine(CRealConsole* apRCon)
 	, TextRanges(NULL)
 	, TempCharFlags(NULL)
 	, TempCharWidth(NULL)
-	, TotalWidth(0)
+	, TotalLineWidth(0)
+	, MinLineWidth(0)
 {
+	//TODO: Check all members are initialized
 }
 
 CVConLine::~CVConLine()
@@ -334,14 +343,25 @@ void CVConLine::SetDialogs(int anDialogsCount, SMALL_RECT* apDialogs, DWORD* apn
 	mrc_UCharMap = arcUCharMap;
 }
 
-bool CVConLine::ParseLine(bool abForce, uint anTextWidth, uint anFontWidth, wchar_t* apConCharLine, CharAttr* apConAttrLine, const wchar_t* const ConCharLine2, const CharAttr* const ConAttrLine2)
+bool CVConLine::ParseLine(bool abForce, uint anTextWidth, uint anFontWidth, uint anRow, wchar_t* apConCharLine, CharAttr* apConAttrLine, const wchar_t* const ConCharLine2, const CharAttr* const ConAttrLine2)
 {
 	const bool bNeedAlloc = (MaxBufferSize < anTextWidth);
 	TextWidth = anTextWidth;
 	FontWidth = anFontWidth;
+	row = anRow;
 	ConCharLine = apConCharLine;
 	ConAttrLine = apConAttrLine;
 	PartsCount = 0;
+
+	NextDialog = true;
+	NextDialogX = 0;
+	CurDialogX1 = CurDialogX2 = CurDialogI = 0;
+	CurDialogFlags = 0;
+
+	isFilePanel = (mn_DialogAllFlags & (FR_LEFTPANEL|FR_RIGHTPANEL|FR_FULLPANEL)) != 0;
+
+	//TODO: Extend to other old-scool managers?
+	isFixFrameCoord = mp_RCon->isFar();
 
 	if (bNeedAlloc && !AllocateMemory())
 		return false;
@@ -350,7 +370,6 @@ bool CVConLine::ParseLine(bool abForce, uint anTextWidth, uint anFontWidth, wcha
 	const bool bProportional = gpSet->isMonospace == 0;
 	const bool bForceMonospace = gpSet->isMonospace == 2;
 	const bool bUseAlternativeFont = gpSet->isFixFarBorders;
-	const bool bFixFrameCoord = mp_RCon->isFar();
 
 	for (uint j = 0; j < TextWidth;)
 	{
@@ -364,7 +383,8 @@ bool CVConLine::ParseLine(bool abForce, uint anTextWidth, uint anFontWidth, wcha
 
 		p->Init(j, this);
 
-		//TODO: Process Far Dialogs to justify rectangles and frames
+		// Process Far Dialogs to justify rectangles and frames
+		TextRangeFlags dlgBorder = isDialogBorderCoord(j);
 
 		/* *** Now we split our text line into parts with characters one "family" *** */
 
@@ -394,9 +414,12 @@ bool CVConLine::ParseLine(bool abForce, uint anTextWidth, uint anFontWidth, wcha
 			while ((j2 < TextWidth) && (ConAttrLine[j2] == attr) && isCharScroll(ConCharLine[j2]))
 				j2++;
 		}
-		else if (isCharBorderVertical(wc))
+		else if (dlgBorder)
 		{
-			p->Flags = TRF_PosFixed|TRF_TextPseudograph;
+			p->Flags = dlgBorder
+				| (isCharBorderVertical(wc) ? TRF_TextPseudograph : TRF_None)
+				| ((bUseAlternativeFont && isCharAltFont(wc)) ? TRF_TextAlternative : TRF_None)
+				;
 		}
 		else if (isCharPseudographics(wc))
 		{
@@ -420,7 +443,7 @@ bool CVConLine::ParseLine(bool abForce, uint anTextWidth, uint anFontWidth, wcha
 		else if (isCharCJK(wc)) // Double-width characters (CJK, etc.)
 		{
 			// Processed separately from isCharAltFont, because last may covert larger range
-			p->Flags = TRF_TextPseudograph;
+			p->Flags = TRF_TextCJK;
 			if (bUseAlternativeFont && isCharAltFont(wc))
 			{
 				p->Flags |= TRF_TextAlternative;
@@ -462,29 +485,99 @@ bool CVConLine::ParseLine(bool abForce, uint anTextWidth, uint anFontWidth, wcha
 
 		/* *** We shall prepare this token (default/initial widths must be set) *** */
 		p->Done(j2-j, FontWidth);
+		TotalLineWidth += p->TotalWidth;
+		MinLineWidth += p->MinWidth;
+
+		/* Next part */
 		j = j2;
 	}
 
 	return true;
 }
 
+// For proportional fonts, caller MUST already change widths of all chars
+// (this->TempCharWidth) from ‘default’ to exact values returned by GDI
 void CVConLine::PolishParts(DWORD* pnXCoords)
 {
-	_ASSERTE(TextRanges && PartsCount);
+	if (!TextRanges || !PartsCount)
+	{
+		_ASSERTE(TextRanges && PartsCount);
+		return;
+	}
+
+	#ifdef _DEBUG
+	// Validate structure
+	for (uint k = 0; k < PartsCount; k++)
+	{
+		_ASSERTE(TextRanges[k].Flags != TRF_None);
+		_ASSERTE(TextRanges[k].Length > 0);
+		_ASSERTE(TextRanges[k].Chars && TextRanges[k].Attrs && TextRanges[k].CharFlags);
+	}
+	#endif
+
+	uint PosX, CharIdx;
+	int prevFixedPart; // !SIGNED!
+
+	// First, we need to check if part do not overlap
+	// with *next* part, which may have *fixed* PosX
+	PosX = 0; prevFixedPart = -1;
+	for (uint k = 0; k < PartsCount; k++)
+	{
+		VConRange& part = TextRanges[k];
+
+		if (part.Flags & (TRF_PosFixed|TRF_PosRecommended))
+		{
+			WARNING("CJK!!! If some char takes double or four cells, we have to take that into account");
+			part.PositionX = part.Index * FontWidth;
+
+			// Overlaps?
+			if (part.PositionX < PosX)
+			{
+				_ASSERTE(k>0); // We can't get here for k==0
+				if (k)
+				{
+					DistributeParts(prevFixedPart + 1, k - 1, part.PositionX);
+				}
+			}
+			// Store updated coord
+			prevFixedPart = k;
+			PosX = part.PositionX + part.TotalWidth;
+		}
+		else
+		{
+			part.PositionX = PosX;
+			PosX += part.TotalWidth;
+		}
+	}
+	// If last part goes out of screen - redistribute
+	if (PosX > (TextWidth * FontWidth))
+	{
+		DistributeParts(prevFixedPart + 1, PartsCount - 1, (TextWidth * FontWidth));
+	}
 
 	//TODO: We may combine parts here
 	//TODO: Set part->Flags to TRF_None to skip it
 	//TODO: Distribute spaces, merge parts, shrink meaningless if required...
 
 	/* Fill all X coordinates */
-	uint PosX = 0, CharIdx = 0;
-	TotalWidth = MinWidth = 0;
+	PosX = CharIdx = 0;
+	TotalLineWidth = MinLineWidth = 0;
 	for (uint k = 0; k < PartsCount; k++)
 	{
 		VConRange& part = TextRanges[k];
-		part.PositionX = PosX;
-		TotalWidth += part.TotalWidth;
-		MinWidth += part.MinWidth;
+		if (part.Flags & (TRF_PosFixed|TRF_PosRecommended))
+		{
+			_ASSERTE(PosX <= part.PositionX);
+			if (k && PosX && PosX < part.PositionX)
+				ExpandPart(TextRanges[k-1], part.PositionX);
+			PosX = part.PositionX;
+		}
+		else
+		{
+			part.PositionX = PosX;
+		}
+		TotalLineWidth += part.TotalWidth;
+		MinLineWidth += part.MinWidth;
 
 		uint charPosX = PosX;
 		uint* ptrWidth = part.CharWidth;
@@ -498,14 +591,350 @@ void CVConLine::PolishParts(DWORD* pnXCoords)
 		_ASSERTE(PosX >= charPosX);
 	}
 
+	// Now we may combine all parts, which are displayed same style
+	for (uint k = 0; k < PartsCount; k++)
+	{
+		VConRange& part = TextRanges[k];
+		if (part.Flags & (TRF_PosFixed|TRF_PosRecommended))
+			continue;
+
+		const CharAttr attr = ConAttrLine[part.Index];
+
+		if (part.Flags & TRF_TextAlternative)
+		{
+			for (uint k2 = k+1; k2 < PartsCount; k2++)
+			{
+				VConRange& part2 = TextRanges[k2];
+				if ((part2.Flags & (TRF_PosFixed|TRF_PosRecommended))
+					|| !(part2.Flags & TRF_TextAlternative))
+					break;
+				if (!(attr == ConAttrLine[part2.Index]))
+					break;
+				part.Length += part2.Length;
+				part.TotalWidth += part2.TotalWidth;
+				part.MinWidth += part2.MinWidth;
+				// "Hide" this part from list
+				part2.Flags = TRF_None;
+				k = k2;
+			}
+		}
+		else if (!(part.Flags & TRF_TextSpacing))
+		{
+			for (uint k2 = k+1; k2 < PartsCount; k2++)
+			{
+				VConRange& part2 = TextRanges[k2];
+				if ((part2.Flags & (TRF_PosFixed|TRF_PosRecommended|TRF_TextAlternative)))
+					break;
+				if (!(attr == ConAttrLine[part2.Index]))
+					break;
+				part.Length += part2.Length;
+				part.TotalWidth += part2.TotalWidth;
+				part.MinWidth += part2.MinWidth;
+				// "Hide" this part from list
+				part2.Flags = TRF_None;
+				k = k2;
+			}
+		}
+	}
+
 	return;
+}
+
+// Shrink lengths of [part1..part2] (including)
+// They must not exceed `right` X coordinate
+void CVConLine::DistributeParts(uint part1, uint part2, uint right)
+{
+	if ((part1 > part2) || (part2 >= PartsCount))
+	{
+		_ASSERTE((part1 <= part2) && (part2 < PartsCount));
+		return;
+	}
+
+	// If possible - shrink only last part
+	if ((TextRanges[part2].Flags & TRF_TextSpacing) // TODO: horizontal frames!
+		// Spaces or horizontal frames. It does not matter, how many *real* characters we may write
+		&& ((TextRanges[part2].PositionX + TextRanges[part2].Length) < right)
+		)
+		part1 = part2;
+
+	if (right <= TextRanges[part1].PositionX)
+	{
+		_ASSERTE(right > TextRanges[part1].PositionX);
+		return;
+	}
+
+	const uint suggMul = 4, suggDiv = 5;
+	uint FontWidth2 = (FontWidth * 2);
+	uint FontWidth2m = (FontWidth2 * suggMul / suggDiv);
+	uint ReqWidth = (right - TextRanges[part1].PositionX);
+	uint FullWidth = (TextRanges[part2].PositionX + TextRanges[part2].TotalWidth - TextRanges[part1].PositionX);
+
+
+	// 1) shrink only TCF_WidthFree chars
+	// 2) also shrink TCF_WidthDouble (if exist) a little
+	// 3) shrink all possibilities
+
+	WARNING("Change the algorithm");
+	// a) count all TCF_WidthFree, TCF_WidthNormal, TCF_WidthDouble separatedly
+	// b) so we able to find most suitable way to shrink either part with its own factor (especially useful when both CJK and single-cell chars exists)
+
+	for (uint s = 1; s <= 3; s++)
+	{
+		uint nShrCount = 0;
+		uint nPreShrink = 0;
+		uint nPostShrink = 0;
+		uint nOtherWidth = 0;
+
+		for (uint k = part1; k <= part2; k++)
+		{
+			VConRange& part = TextRanges[k];
+			if (!part.Flags)
+			{
+				_ASSERTE(part.Flags); // Part must not be dropped yet!
+				continue;
+			}
+			TextCharFlags* pcf = part.CharFlags;
+			uint* pcw = part.CharWidth;
+			switch (s)
+			{
+			case 1:
+				// *Evaluate* first method
+				for (uint c = 0; c < part.Length; c++, pcf++, pcw++)
+				{
+					switch (*pcf)
+					{
+					case TCF_WidthFree:
+						nPreShrink += *pcw; nPostShrink += 1; nShrCount++;
+						break;
+					default:
+						nOtherWidth += *pcw;
+					}
+				}
+				break;
+			case 2:
+				// *Evaluate* second method
+				for (uint c = 0; c < part.Length; c++, pcf++, pcw++)
+				{
+					switch (*pcf)
+					{
+					case TCF_WidthFree:
+						nPreShrink += *pcw; nPostShrink += 1; nShrCount++;
+						break;
+					case TCF_WidthDouble:
+						nPreShrink += *pcw; nPostShrink += klMulDivU32(*pcw,suggMul,suggDiv); nShrCount++;
+						break;
+					default:
+						nOtherWidth += *pcw;
+					}
+				}
+				break;
+			case 3:
+				// *Evaluate* third method
+				for (uint c = 0; c < part.Length; c++, pcf++, pcw++)
+				{
+					switch (*pcf)
+					{
+					case TCF_WidthFree:
+						nPreShrink += *pcw; nPostShrink += 1; nShrCount++;
+						break;
+					case TCF_WidthNormal:
+					case TCF_WidthDouble:
+						nPreShrink += *pcw; nPostShrink += klMulDivU32(*pcw,suggMul,suggDiv); nShrCount++;
+						break;
+					default:
+						_ASSERTE(*pcw == 0);
+					}
+				}
+				break;
+			}
+		}
+
+		// *Process* the shrink, if method fits, or it's the last chance
+		if (((nOtherWidth + nPostShrink) <= ReqWidth) || (s >= 3))
+		{
+			if (!nShrCount)
+			{
+				_ASSERTE(FALSE && "Nothing to shrink!");
+				return;
+			}
+
+			if ((s == 2) && (nPostShrink > ReqWidth))
+				s++; // switch to the last method
+
+			// Leftmost char coord
+			uint PosX = TextRanges[part1].PositionX;
+
+			// How many pixels we may utilize for distributing our characters?
+			_ASSERTE((s == 3) || (nOtherWidth < ReqWidth));
+			uint NeedWidth = (ReqWidth - nOtherWidth);
+			_ASSERTE(NeedWidth && (NeedWidth <= ReqWidth));
+
+			// How many characters we may shrink with current method?
+			int ShrinkLeft = nPreShrink; // Signed, to avoid infinite-loops and div-by-zero
+
+			// New char width (for methods 2 and 3) will be
+			// oldWidth * NeedWidth / ShrinkLeft
+
+			for (uint k = part1; k <= part2; k++)
+			{
+				VConRange& part = TextRanges[k];
+				if (!part.Flags)
+				{
+					_ASSERTE(part.Flags); // Part must not be dropped yet!
+					continue;
+				}
+
+				// Update new leftmost coord for this part
+				part.PositionX = PosX;
+
+				// Prepare loops
+				TextCharFlags* pcf = part.CharFlags; // character flags (zero/free/normal/double)
+				uint* pcw = part.CharWidth; // pointer to character width
+
+				part.TotalWidth = 0;
+
+				// Run part shrink
+				switch (s)
+				{
+				case 1:
+					// *Process* first method
+					for (uint c = 0; c < part.Length; c++, pcf++, pcw++)
+					{
+						switch (*pcf)
+						{
+						case TCF_WidthFree:
+							DoShrink(*pcw, ShrinkLeft, NeedWidth, part.TotalWidth);
+							break;
+						case TCF_WidthNormal:
+							part.TotalWidth += *pcw;
+							break;
+						case TCF_WidthDouble:
+							part.TotalWidth += *pcw;
+							break;
+						}
+					}
+					break;
+				case 2:
+					// *Process* second method
+					for (uint c = 0; c < part.Length; c++, pcf++, pcw++)
+					{
+						switch (*pcf)
+						{
+						case TCF_WidthFree:
+						case TCF_WidthDouble:
+							DoShrink(*pcw, ShrinkLeft, NeedWidth, part.TotalWidth);
+							break;
+						case TCF_WidthNormal:
+							part.TotalWidth += *pcw;
+							break;
+						}
+					}
+					break;
+				case 3:
+					// *Process* third method
+					for (uint c = 0; c < part.Length; c++, pcf++, pcw++)
+					{
+						switch (*pcf)
+						{
+						case TCF_WidthFree:
+						case TCF_WidthDouble:
+						case TCF_WidthNormal:
+							DoShrink(*pcw, ShrinkLeft, NeedWidth, part.TotalWidth);
+							break;
+						}
+					}
+					break;
+				}
+				// End of part shrink (switch)
+
+				PosX += part.TotalWidth;
+			}
+
+			// End of shrink (no more parts, no more methods)
+			_ASSERTE(ShrinkLeft == 0);
+			_ASSERTE(PosX <= right);
+			return;
+		}
+	}
+}
+
+void CVConLine::DoShrink(uint& charWidth, int& ShrinkLeft, uint& NeedWidth, uint& TotalWidth)
+{
+	if (ShrinkLeft > 0)
+	{
+		_ASSERTE(ShrinkLeft >= NeedWidth);
+		uint nw = (uint)klMulDivU32(charWidth, NeedWidth, ShrinkLeft);
+		if (nw > NeedWidth)
+		{
+			_ASSERTE(nw <= NeedWidth);
+			NeedWidth = 0;
+		}
+		else
+		{
+			NeedWidth -= nw;
+		}
+		ShrinkLeft -= charWidth;
+		charWidth = nw;
+		TotalWidth += nw;
+	}
+	else
+	{
+		_ASSERTE(ShrinkLeft>0);
+		TotalWidth += charWidth;
+	}
+}
+
+void CVConLine::ExpandPart(VConRange& part, uint EndX)
+{
+	//TODO: Horizontal frames
+	if (part.Flags & TRF_TextSpacing)
+	{
+		uint NeedWidth = EndX - part.PositionX;
+		int WidthLeft = NeedWidth;
+		uint* pcw = part.CharWidth;
+		part.TotalWidth = 0;
+		for (int i = part.Length; i > 0; i--, pcw++)
+		{
+			uint nw = (uint)(WidthLeft - i);
+			*pcw = nw;
+			part.TotalWidth += nw;
+			WidthLeft -= nw;
+		}
+		// rounding problem?
+		if (WidthLeft > 0)
+		{
+			part.CharWidth[part.Length-1] += WidthLeft;
+			part.TotalWidth += WidthLeft;
+		}
+	}
+	else
+	{
+		//TODO: RTL?
+		// Don't break visual representation of string flow, just increase last symbol width
+		uint* pcw = part.CharWidth + (part.Length - 1);
+		int iDiff = EndX - part.PositionX - part.TotalWidth;
+		_ASSERTE(iDiff > 0);
+		*pcw += iDiff;
+		part.TotalWidth += iDiff;
+	}
 }
 
 bool CVConLine::GetNextPart(uint& partIndex, VConRange*& part, VConRange*& nextPart)
 {
-	_ASSERTE(TextRanges && PartsCount);
-	if (!TextRanges || (partIndex >= PartsCount))
+	if (!TextRanges || !PartsCount)
+	{
+		_ASSERTE(TextRanges && PartsCount);
 		return false;
+	}
+
+	// Skip all ‘combined’ parts
+	while ((partIndex < PartsCount) && (TextRanges[partIndex].Flags == TRF_None))
+		partIndex++;
+
+	// No more parts?
+	if (partIndex >= PartsCount)
+		return false;
+
 	part = TextRanges+partIndex;
 	nextPart = ((partIndex+1) < PartsCount) ? (part+1) : NULL;
 	partIndex++;
@@ -538,6 +967,127 @@ void CVConLine::ReleaseMemory()
 	SafeFree(TextRanges);
 	SafeFree(TempCharFlags);
 	SafeFree(TempCharWidth);
+}
+
+TextRangeFlags CVConLine::isDialogBorderCoord(uint j)
+{
+	//bool isDlgBorder = false, bMayBeFrame = false;
+	TextRangeFlags dlgBorder = TRF_None;
+
+	if (NextDialog || (j == NextDialogX))
+	{
+		NextDialog = false;
+		CurDialogX1 = -1;
+		NextDialogX = CurDialogX2 = TextWidth;
+		CurDialogI = -1; CurDialogFlags = 0;
+		int nMax = TextWidth-1;
+		// Идем "снизу вверх", чтобы верхние (по Z-order) диалоги обработались первыми
+		for (int i = mn_DialogsCount-1; i >= 0; i--)
+		{
+			if (mrc_Dialogs[i].Top <= row && row <= mrc_Dialogs[i].Bottom)
+			{
+				int border1 = mrc_Dialogs[i].Left;
+				int border2 = mrc_Dialogs[i].Right;
+
+				// Ищем грань диалога, лежащую на этой строке, ближайший к текущей X-координате.
+				if (border1 && j <= border1 && border1 < NextDialogX)
+					NextDialogX = border1;
+				else if (border2 < nMax && j <= border2 && border2 < NextDialogX)
+					NextDialogX = border2;
+
+				// Ищем диалог (не панели), лежащий на этой строке, содержащий текущую X-координату.
+				TODO("Разделители колонок тоже хорошо бы обработать, но как бы не пересечься");
+				if (!(mn_DialogFlags[i] & (FR_LEFTPANEL|FR_RIGHTPANEL|FR_FULLPANEL|FR_VIEWEREDITOR)))
+				{
+					if ((border1 <= j && j <= border2)
+						&& (CurDialogX1 <= border1 && border2 <= CurDialogX2))
+					{
+						CurDialogX1 = border1;
+						CurDialogX2 = border2;
+						CurDialogFlags = mn_DialogFlags[i];
+						_ASSERTE(CurDialogFlags!=0);
+						CurDialogI = i;
+					}
+				}
+			}
+		}
+	}
+
+	if (j == NextDialogX)
+	{
+		NextDialog = true;
+		// Проверяем что это, видимая грань, или поверх координаты другой диалог лежит?
+		if (CurDialogFlags)
+		{
+			// Координата попала в поле диалога. same as below (1)
+			if ((j == CurDialogX1 || j == CurDialogX2)) // чтобы правая грань пошла как рамка
+				dlgBorder |= TRF_PosFixed;
+		}
+		else
+		{
+			// ???
+			dlgBorder |= TRF_PosFixed;
+		}
+	}
+
+
+	// корректировка положения вертикальной рамки (Coord.X>0)
+	if (j && isFixFrameCoord)
+	{
+		// Рамки (их вертикальные части) и полосы прокрутки;
+		// Символом } фар помечает имена файлов вылезшие за пределы колонки...
+		// Если сверху или снизу на той же позиции рамки (или тот же '}')
+		// корректируем позицию
+		//bool bBord = isDlgBorder || isCharBorderVertical(c);
+		//TODO("Пока не будет учтено, что поверх рамок может быть другой диалог!");
+		//bool bFrame = false; // mpn_ConAttrEx[row*TextWidth+j].bDialogVBorder;
+
+		wchar_t c = ConCharLine[j];
+
+		if (!(dlgBorder & TRF_PosFixed)
+			&& (isCharBorderVertical(c)
+				|| isCharScroll(c)
+				|| (isFilePanel && c==L'}')
+				//TODO: vim/emacs/tmux/etc uses simple `|` as pane delimiter
+			))
+		{
+			dlgBorder |= TRF_PosRecommended;
+
+			#if 0
+			// Пройти вверх и вниз от текущей строки, проверив,
+			// есть ли в этой же X-координате вертикальная рамка (или угол)
+			TODO("Хорошо бы для панелей определять границы колонок более корректно, лучше всего - через API?");
+			//if (!bBord && !bFrame)
+			if (!isDlgBorder)
+			{
+				int R;
+				wchar_t prevC;
+				bool bBord = false;
+
+				for (R = (row-1); bMayBeFrame && !bBord && R>=0; R--)
+				{
+					prevC = mpsz_ConChar[R*TextWidth+j];
+					bBord = isCharBorderVertical(prevC);
+					bMayBeFrame = (bBord || isCharScroll(prevC) || (isFilePanel && prevC==L'}'));
+				}
+
+				for (R = (row+1); bMayBeFrame && !bBord && R < (int)TextHeight; R++)
+				{
+					prevC = mpsz_ConChar[R*TextWidth+j];
+					bBord = isCharBorderVertical(prevC);
+					bMayBeFrame = (bBord || isCharScroll(prevC) || (isFilePanel && prevC==L'}'));
+				}
+			}
+
+			// Это разделитель колонок панели, полоса прокрутки или явно найденная граница диалога
+			if (bMayBeFrame)
+				ConCharXLine[j-1] = j * nFontWidth;
+			#endif
+		}
+
+	}
+
+	return dlgBorder;
 }
 
 #if 0
@@ -588,7 +1138,7 @@ void CVirtualConsole::UpdateText()
 	CVConLine lp; // Line parser
 	lp.SetDialogs(mn_DialogsCount, mrc_Dialogs, mn_DialogFlags, mn_DialogAllFlags, mrc_UCharMap);
 
-	bool bFixFrameCoord = mp_RCon->isFar();
+	bool isFixFrameCoord = mp_RCon->isFar();
 
 	_ASSERTE(((TextWidth * nFontWidth) >= Width));
 
@@ -727,7 +1277,7 @@ void CVirtualConsole::UpdateText()
 
 			// корректировка лидирующих пробелов и рамок
 			// 120616 - Chinese - off
-			if (bProportional && bFixFrameCoord && (c==ucBoxDblHorz || c==ucBoxSinglHorz))
+			if (bProportional && isFixFrameCoord && (c==ucBoxDblHorz || c==ucBoxSinglHorz))
 			{
 				lbS1 = true; nS11 = nS12 = j;
 
@@ -758,9 +1308,8 @@ void CVirtualConsole::UpdateText()
 			DWORD nPrevX = j ? ConCharXLine[j-1] : 0;
 
 			// корректировка положения вертикальной рамки (Coord.X>0)
-			if (j && bFixFrameCoord)
+			if (j && isFixFrameCoord)
 			{
-				HEAPVAL;
 				// Рамки (их вертикальные части) и полосы прокрутки;
 				// Символом } фар помечает имена файлов вылезшие за пределы колонки...
 				// Если сверху или снизу на той же позиции рамки (или тот же '}')
@@ -805,7 +1354,6 @@ void CVirtualConsole::UpdateText()
 						ConCharXLine[j-1] = j * nFontWidth;
 				}
 
-				HEAPVAL;
 			}
 
 			/*
@@ -896,7 +1444,7 @@ void CVirtualConsole::UpdateText()
 
 				if (isSpace)
 				{
-					j2 = j + 1; HEAPVAL;
+					j2 = j + 1;
 
 					while (j2 < end && ConAttrLine[j2] == attr && isCharSpace(ConCharLine[j2]))
 						j2++;
@@ -931,7 +1479,7 @@ void CVirtualConsole::UpdateText()
 					// We need to aligh Far Frames (Panels) after non-spacings, acutes, CJK and others...
 					int j3 = 0;
 					// Far Manager shows '}' instead of '│' or '║' when file/dir name is too long for column
-					bool bAlignCurledFrames = bFixFrameCoord && isFilePanel;
+					bool bAlignCurledFrames = isFixFrameCoord && isFilePanel;
 
 					while (j2 < end && ConAttrLine[j2] == attr
 							&& (ch = ConCharLine[j2], bFixFarBorders ? !isCharAltFont(ch) : (!bEnhanceGraphics || !isCharProgress(ch)))
@@ -1306,7 +1854,6 @@ void CVirtualConsole::UpdateText()
 
 	free(nDX);
 
-	HEAPVAL;
 
 	// Screen updated, reset until next "UpdateHighlights()" call
 	m_HighlightInfo.m_Last.X = m_HighlightInfo.m_Last.Y = -1;
@@ -1315,5 +1862,92 @@ void CVirtualConsole::UpdateText()
 	ZeroStruct(m_HighlightInfo.mrc_LastHyperlink);
 
 	return;
+}
+
+// На самом деле не только пробелы, но и ucBoxSinglHorz/ucBoxDblVertHorz
+void CVirtualConsole::DistributeSpaces(wchar_t* ConCharLine, CharAttr* ConAttrLine, DWORD* ConCharXLine, const int j, const int j2, const int end)
+{
+	//WORD attr = ConAttrLine[j];
+	//wchar_t ch, c;
+	//
+	//if ((c=ConCharLine[j]) == ucSpace || c == ucNoBreakSpace || c == 0)
+	//{
+	//	while (j2 < end && ConAttrLine[j2] == attr
+	//		// также и для &nbsp; и 0x00
+	//		&& ((ch=ConCharLine[j2]) == ucSpace || ch == ucNoBreakSpace || ch == 0))
+	//		j2++;
+	//} else
+	//if ((c=ConCharLine[j]) == ucBoxSinglHorz || c == ucBoxDblVertHorz)
+	//{
+	//	while (j2 < end && ConAttrLine[j2] == attr
+	//		&& ((ch=ConCharLine[j2]) == ucBoxSinglHorz || ch == ucBoxDblVertHorz))
+	//		j2++;
+	//} else
+	//if (isCharProgress(c=ConCharLine[j]))
+	//{
+	//	while (j2 < end && ConAttrLine[j2] == attr && (ch=ConCharLine[j2]) == c)
+	//		j2++;
+	//}
+	_ASSERTE(j2 > j && j >= 0);
+
+	// Ширину каждого "пробела" (или символа рамки) будем считать пропорционально занимаемому ИМИ месту
+
+	if (j2>=(int)TextWidth)    // конец строки
+	{
+		ConCharXLine[j2-1] = Width;
+	}
+	else
+	{
+		//2009-09-09 Это некорректно. Ширина шрифта рамки может быть больше знакоместа
+		//int nBordWidth = gpSet->BorderFontWidth(); if (!nBordWidth) nBordWidth = nFontWidth;
+		int nBordWidth = nFontWidth;
+
+		// Определить координату конца последовательности
+		if (isCharBorderVertical(ConCharLine[j2]))
+		{
+			//2009-09-09 а это соответственно не нужно (пока nFontWidth == nBordWidth)
+			//ConCharXLine[j2-1] = (j2-1) * nFontWidth + nBordWidth; // или тут [j] должен быть?
+			ConCharXLine[j2-1] = j2 * nBordWidth;
+		}
+		else
+		{
+			TODO("Для пропорциональных шрифтов надо делать как-то по другому!");
+
+			//CJK hieroglyps may take double width so we need to check if it will cover previous char/hieroglyps
+			if ((j > 1) && (!gpSet->isMonospace || (gbIsDBCS && (ConCharXLine[j-1] > (DWORD)(j * nBordWidth)))))
+			{
+				//2009-12-31 нужно плясать от предыдущего символа!
+				ConCharXLine[j2-1] = ConCharXLine[j-1] + (j2 - j) * nBordWidth;
+			}
+			else
+			{
+				ConCharXLine[j2-1] = j2 * nBordWidth;
+			}
+		}
+	}
+
+	if (j2 > (j + 1))
+	{
+		HEAPVAL
+		DWORD n1 = (j ? ConCharXLine[j-1] : 0); // j? если j==0 то тут у нас 10 (правая граница 0го символа в строке)
+		DWORD n3 = j2-j; // кол-во символов
+		_ASSERTE(n3>0);
+		DWORD n2 = ConCharXLine[j2-1] - n1; // выделенная на пробелы ширина
+		HEAPVAL
+
+		for (int k = j, l = 1; k < (j2-1); k++, l++)
+		{
+			#ifdef _DEBUG
+			DWORD nn = n1 + (n3 ? klMulDivU32(l, n2, n3) : 0);
+
+			if (nn != ConCharXLine[k])
+				ConCharXLine[k] = nn;
+			#endif
+
+			ConCharXLine[k] = n1 + (n3 ? klMulDivU32(l, n2, n3) : 0);
+			//n1 + (n3 ? klMulDivU32(k-j, n2, n3) : 0);
+			HEAPVAL
+		}
+	}
 }
 #endif

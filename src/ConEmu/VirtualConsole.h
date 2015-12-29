@@ -210,20 +210,6 @@ class CVirtualConsole :
 		bool PointersAlloc();
 		void PointersZero();
 
-		// *** Анализ строк ***
-		// Заливка измененных строк основным фоном и заполнение pbLineChanged, pbBackIsPic, pnBackRGB
-		void Update_CheckAndFill();
-		// Разбор строки на составляющие (возвращает true, если есть ячейки с НЕ основным фоном)
-		// Функция также производит распределение (заполнение координат и DX)
-		bool Update_ParseTextParts(uint row, const wchar_t* ConCharLine, const CharAttr* ConAttrLine);
-		// Заливка ячеек с НЕ основным фоном, отрисовка прогрессов и рамок
-		void Update_FillAlternate(uint row, uint nY);
-		// Вывод собственно текста (при необходимости Clipped)
-		void Update_DrawText(uint row, uint nY);
-
-		// распределение ширин
-		void DistributeSpaces(wchar_t* ConCharLine, CharAttr* ConAttrLine, DWORD* ConCharXLine, const int j, const int j2, const int end);
-
 		// PanelViews
 		PanelViewInit m_LeftPanelView, m_RightPanelView;
 		bool mb_LeftPanelRedraw, mb_RightPanelRedraw;
