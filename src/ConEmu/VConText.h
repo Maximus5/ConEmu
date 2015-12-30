@@ -171,6 +171,7 @@ bool isCharProgress(wchar_t inChar);
 bool isCharScroll(wchar_t inChar);
 bool isCharSeparate(wchar_t inChar);
 bool isCharSpace(wchar_t inChar);
+bool isCharSpaceSingle(wchar_t inChar);
 bool isCharRTL(wchar_t inChar);
 bool isCharCJK(wchar_t inChar);
 bool isCharComining(wchar_t inChar);

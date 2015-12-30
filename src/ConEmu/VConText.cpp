@@ -192,6 +192,22 @@ bool isCharSpace(wchar_t inChar)
 	return isSpace;
 }
 
+// Same as isCharSpace, but without ‘CJK Wide Space’
+bool isCharSpaceSingle(wchar_t inChar)
+{
+	bool isSpace = (inChar == ucSpace || inChar == ucNoBreakSpace
+		|| (((inChar >= 0x2000) && (inChar <= 0x3000))
+			&& ((inChar <= 0x200A)      // 0x2000..0x200A - Different typographical non-zero spaces
+				|| (inChar == 0x205F)   // Medium Math Space
+		//		|| (inChar == 0x3000)  // CJK Wide Space
+				)
+			)
+		//|| (inChar == 0x00B7) // MIDDLE DOT - Far Manager shows spaces that way in some cases
+		//|| inChar == 0 // -- Zero is not intended to be here - only valid substitutes!
+		);
+	return isSpace;
+}
+
 bool isCharRTL(wchar_t inChar)
 {
 	bool isRtl = (inChar >= 0x05BE)
