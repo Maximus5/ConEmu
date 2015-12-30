@@ -37,6 +37,7 @@ const TextPartFlags
 	// Position (fixed for Far Manager frames, pseudographics, etc.)
 	TRF_PosFixed         = 0x0001,
 	TRF_PosRecommended   = 0x0002,
+	TRF_SizeFree         = 0x0004,
 	// Text properties
 	TRF_TextNormal       = 0x0010,
 	TRF_TextAlternative  = 0x0020, // Alternative font (frames or CJK)
@@ -54,37 +55,60 @@ const TextPartFlags
 	TRF_None = 0;
 
 // Recommended width type
-enum TextCharFlags
+enum TextCharType
 {
 	TCF_WidthZero = 0, // combining characters: acutes, umlauts, direction-marks, etc.
 	TCF_WidthFree,     // spaces, horizontal lines (frames), etc. They may be shrinked freely
 	TCF_WidthNormal,   // letters, numbers, etc. They have exact width, lesser space may harm visual representation
 	TCF_WidthDouble,   // CJK. Double width hieroglyphs and other ideographics
+	TCF_WidthLast,     // NOT A TYPE, ONLY FOR ARRAY INDEXING
 };
 
 class CVConLine;
 class CRealConsole;
 
+// Used as array[TextCharType::TCF_WidthLast]
+struct VConTextPartWidth
+{
+	uint Count;    // Count of this type of symbols
+	uint Width;    // Default width of unshrinked symbols
+	uint MinWidth; // Some parts (continuous spaces, horz frames) may be hard shrinked
+	uint ReqWidth; // For internal purposes
+};
+
 struct VConTextPart
 {
 	TextPartFlags Flags;
 	uint Length;
-	// Informational. Index in CVConLine.ConCharLine
-	uint Index;
-	// Helper, to ensure our text parts fit in the terminal window
-	uint TotalWidth, MinWidth, PositionX;
+
 	// Pointers
 	const wchar_t* Chars;
 	const CharAttr* Attrs;
+
+	// Index in CVConLine.ConCharLine
+	uint Index;
+	// Cell in the RealConsole. It may differs from Index on DBCS systems
+	uint Cell;
+	// Helper, to ensure our text parts fit in the terminal window
+	uint TotalWidth, MinWidth;
+	// Final position in VCon
+	uint PositionX;
+	// Preferred position calculated by Cell*FontWidth
+	uint CellPosX;
+
+	// Chars distribution
+	VConTextPartWidth AllWidths[TCF_WidthLast];
+
 	// CharFlags is a pointer to buffer+idx from CVConLine
-	TextCharFlags* CharFlags;
+	TextCharType* CharFlags;
+
 	// CharWidth is a pointer to buffer+idx from CVConLine
 	// If gpSet->isMonospace then CharWidth calculated according to TCF_WidthXXX
 	// But for proportional fonts we have to call GDI's TextExtentPoint
 	uint* CharWidth;
 
 
-	void Init(uint anIndex, CVConLine* pLine);
+	void Init(uint anIndex, uint anCell, CVConLine* pLine);
 	void Done(uint anLen, uint FontWidth);
 };
 
@@ -142,10 +166,10 @@ protected:
 
 	// Buffer to parse our line
 	uint PartsCount;
-	VConTextPart* TextRanges/*[MaxBufferSize]*/;
+	VConTextPart* TextParts/*[MaxBufferSize]*/;
 
 	// CharFlags is a pointer to buffer+idx from CVConLine
-	TextCharFlags* TempCharFlags/*[MaxBufferSize]*/;
+	TextCharType* TempCharFlags/*[MaxBufferSize]*/;
 
 	// CharWidth is a pointer to buffer+idx from CVConLine
 	// If gpSet->isMonospace then CharWidth calculated according to TCF_WidthXXX
