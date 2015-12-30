@@ -183,7 +183,8 @@ bool isCharSpace(wchar_t inChar)
 		|| (((inChar >= 0x2000) && (inChar <= 0x3000))
 			&& ((inChar <= 0x200A)      // 0x2000..0x200A - Different typographical non-zero spaces
 				|| (inChar == 0x205F)   // Medium Math Space
-				|| (inChar == 0x3000))  // CJK Wide Space
+				|| (inChar == 0x3000)   // CJK Wide Space
+				)
 			)
 		//|| (inChar == 0x00B7) // MIDDLE DOT - Far Manager shows spaces that way in some cases
 		//|| inChar == 0 // -- Zero is not intended to be here - only valid substitutes!
