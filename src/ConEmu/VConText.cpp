@@ -246,7 +246,7 @@ bool isCharComining(wchar_t inChar)
 
 
 
-void VConRange::Init(uint anIndex, CVConLine* pLine)
+void VConTextPart::Init(uint anIndex, CVConLine* pLine)
 {
 	Flags = TRF_None;
 	Length = 1; // initially, we'll enlarge it later
@@ -258,7 +258,7 @@ void VConRange::Init(uint anIndex, CVConLine* pLine)
 	CharWidth = pLine->TempCharWidth + anIndex;
 }
 
-void VConRange::Done(uint anLen, uint FontWidth)
+void VConTextPart::Done(uint anLen, uint FontWidth)
 {
 	_ASSERTE(anLen>0 && FontWidth>0);
 	Length = anLen;
@@ -317,8 +317,6 @@ CVConLine::CVConLine(CRealConsole* apRCon)
 	, ConCharLine(NULL)
 	, ConAttrLine(NULL)
 	, MaxBufferSize(0)
-	, wcTempDraw(NULL)
-	, cTempDraw(NULL)
 	, PartsCount(0)
 	, TextRanges(NULL)
 	, TempCharFlags(NULL)
@@ -377,14 +375,14 @@ bool CVConLine::ParseLine(bool abForce, uint anTextWidth, uint anFontWidth, uint
 		wchar_t wc = ConCharLine[j];
 		const CharAttr attr = ConAttrLine[j];
 
-		VConRange* p = TextRanges+(PartsCount++);
+		VConTextPart* p = TextRanges+(PartsCount++);
 
 		uint j2 = j+1;
 
 		p->Init(j, this);
 
 		// Process Far Dialogs to justify rectangles and frames
-		TextRangeFlags dlgBorder = isDialogBorderCoord(j);
+		TextPartFlags dlgBorder = isDialogBorderCoord(j);
 
 		/* *** Now we split our text line into parts with characters one "family" *** */
 
@@ -523,7 +521,7 @@ void CVConLine::PolishParts(DWORD* pnXCoords)
 	PosX = 0; prevFixedPart = -1;
 	for (uint k = 0; k < PartsCount; k++)
 	{
-		VConRange& part = TextRanges[k];
+		VConTextPart& part = TextRanges[k];
 
 		if (part.Flags & (TRF_PosFixed|TRF_PosRecommended))
 		{
@@ -564,7 +562,7 @@ void CVConLine::PolishParts(DWORD* pnXCoords)
 	TotalLineWidth = MinLineWidth = 0;
 	for (uint k = 0; k < PartsCount; k++)
 	{
-		VConRange& part = TextRanges[k];
+		VConTextPart& part = TextRanges[k];
 		if (part.Flags & (TRF_PosFixed|TRF_PosRecommended))
 		{
 			_ASSERTE(PosX <= part.PositionX);
@@ -594,7 +592,7 @@ void CVConLine::PolishParts(DWORD* pnXCoords)
 	// Now we may combine all parts, which are displayed same style
 	for (uint k = 0; k < PartsCount; k++)
 	{
-		VConRange& part = TextRanges[k];
+		VConTextPart& part = TextRanges[k];
 		if (part.Flags & (TRF_PosFixed|TRF_PosRecommended))
 			continue;
 
@@ -604,7 +602,7 @@ void CVConLine::PolishParts(DWORD* pnXCoords)
 		{
 			for (uint k2 = k+1; k2 < PartsCount; k2++)
 			{
-				VConRange& part2 = TextRanges[k2];
+				VConTextPart& part2 = TextRanges[k2];
 				if ((part2.Flags & (TRF_PosFixed|TRF_PosRecommended))
 					|| !(part2.Flags & TRF_TextAlternative))
 					break;
@@ -622,7 +620,7 @@ void CVConLine::PolishParts(DWORD* pnXCoords)
 		{
 			for (uint k2 = k+1; k2 < PartsCount; k2++)
 			{
-				VConRange& part2 = TextRanges[k2];
+				VConTextPart& part2 = TextRanges[k2];
 				if ((part2.Flags & (TRF_PosFixed|TRF_PosRecommended|TRF_TextAlternative)))
 					break;
 				if (!(attr == ConAttrLine[part2.Index]))
@@ -687,7 +685,7 @@ void CVConLine::DistributeParts(uint part1, uint part2, uint right)
 
 		for (uint k = part1; k <= part2; k++)
 		{
-			VConRange& part = TextRanges[k];
+			VConTextPart& part = TextRanges[k];
 			if (!part.Flags)
 			{
 				_ASSERTE(part.Flags); // Part must not be dropped yet!
@@ -777,7 +775,7 @@ void CVConLine::DistributeParts(uint part1, uint part2, uint right)
 
 			for (uint k = part1; k <= part2; k++)
 			{
-				VConRange& part = TextRanges[k];
+				VConTextPart& part = TextRanges[k];
 				if (!part.Flags)
 				{
 					_ASSERTE(part.Flags); // Part must not be dropped yet!
@@ -884,7 +882,7 @@ void CVConLine::DoShrink(uint& charWidth, int& ShrinkLeft, uint& NeedWidth, uint
 	}
 }
 
-void CVConLine::ExpandPart(VConRange& part, uint EndX)
+void CVConLine::ExpandPart(VConTextPart& part, uint EndX)
 {
 	//TODO: Horizontal frames
 	if (part.Flags & TRF_TextSpacing)
@@ -919,7 +917,7 @@ void CVConLine::ExpandPart(VConRange& part, uint EndX)
 	}
 }
 
-bool CVConLine::GetNextPart(uint& partIndex, VConRange*& part, VConRange*& nextPart)
+bool CVConLine::GetNextPart(uint& partIndex, VConTextPart*& part, VConTextPart*& nextPart)
 {
 	if (!TextRanges || !PartsCount)
 	{
@@ -945,11 +943,7 @@ bool CVConLine::AllocateMemory()
 {
 	ReleaseMemory();
 
-	if (!(wcTempDraw = (wchar_t*)malloc(TextWidth*sizeof(*wcTempDraw))))
-		return false;
-	if (!(cTempDraw = (char*)malloc(TextWidth*sizeof(*cTempDraw))))
-		return false;
-	if (!(TextRanges = (VConRange*)malloc(TextWidth*sizeof(*TextRanges))))
+	if (!(TextRanges = (VConTextPart*)malloc(TextWidth*sizeof(*TextRanges))))
 		return false;
 	if (!(TempCharFlags = (TextCharFlags*)malloc(TextWidth*sizeof(*TempCharFlags))))
 		return false;
@@ -962,17 +956,15 @@ bool CVConLine::AllocateMemory()
 void CVConLine::ReleaseMemory()
 {
 	MaxBufferSize = 0;
-	SafeFree(wcTempDraw);
-	SafeFree(cTempDraw);
 	SafeFree(TextRanges);
 	SafeFree(TempCharFlags);
 	SafeFree(TempCharWidth);
 }
 
-TextRangeFlags CVConLine::isDialogBorderCoord(uint j)
+TextPartFlags CVConLine::isDialogBorderCoord(uint j)
 {
 	//bool isDlgBorder = false, bMayBeFrame = false;
-	TextRangeFlags dlgBorder = TRF_None;
+	TextPartFlags dlgBorder = TRF_None;
 
 	if (NextDialog || (j == NextDialogX))
 	{

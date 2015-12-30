@@ -2901,7 +2901,7 @@ void CVirtualConsole::UpdateText()
 		lp.PolishParts(ConCharXLine);
 
 		uint partIndex = 0;
-		VConRange *part, *nextPart;
+		VConTextPart *part, *nextPart;
 
 		//TODO: Do first run to paint only background (background image support)
 		//TODO: Second run - paint text

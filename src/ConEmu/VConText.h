@@ -32,8 +32,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <windows.h>
 #include "../common/RgnDetect.h"
 
-typedef DWORD TextRangeFlags;
-const TextRangeFlags
+typedef DWORD TextPartFlags;
+const TextPartFlags
 	// Position (fixed for Far Manager frames, pseudographics, etc.)
 	TRF_PosFixed         = 0x0001,
 	TRF_PosRecommended   = 0x0002,
@@ -53,23 +53,21 @@ const TextRangeFlags
 	// End of flags
 	TRF_None = 0;
 
+// Recommended width type
 enum TextCharFlags
 {
-	// Recommended width type
-	TCF_WidthZero        = 0x0001, // combining characters: acutes, umlauts, etc.
-	TCF_WidthFree        = 0x0002, // spaces, horizontal lines (frames), etc. They may be shrinked freely
-	TCF_WidthNormal      = 0x0004, // letters, numbers, etc. They have exact width, lesser space may harm visual representation
-	TCF_WidthDouble      = 0x0008, // CJK. Double width hieroglyphs and other ideographics
-	// End of flags
-	TCF_None = 0
+	TCF_WidthZero = 0, // combining characters: acutes, umlauts, direction-marks, etc.
+	TCF_WidthFree,     // spaces, horizontal lines (frames), etc. They may be shrinked freely
+	TCF_WidthNormal,   // letters, numbers, etc. They have exact width, lesser space may harm visual representation
+	TCF_WidthDouble,   // CJK. Double width hieroglyphs and other ideographics
 };
 
 class CVConLine;
 class CRealConsole;
 
-struct VConRange
+struct VConTextPart
 {
-	TextRangeFlags Flags;
+	TextPartFlags Flags;
 	uint Length;
 	// Informational. Index in CVConLine.ConCharLine
 	uint Index;
@@ -101,20 +99,20 @@ public:
 	void SetDialogs(int anDialogsCount, SMALL_RECT* apDialogs, DWORD* apnDialogFlags, DWORD anDialogAllFlags, const SMALL_RECT& arcUCharMap);
 	bool ParseLine(bool abForce, uint anTextWidth, uint anFontWidth, uint anRow, wchar_t* apConCharLine, CharAttr* apConAttrLine, const wchar_t* const ConCharLine2, const CharAttr* const ConAttrLine2);
 	void PolishParts(DWORD* pnXCoords);
-	bool GetNextPart(uint& partIndex, VConRange*& part, VConRange*& nextPart);
+	bool GetNextPart(uint& partIndex, VConTextPart*& part, VConTextPart*& nextPart);
 
 protected:
 	// Methods
 	bool AllocateMemory();
 	void ReleaseMemory();
 
-	TextRangeFlags isDialogBorderCoord(uint j);
+	TextPartFlags isDialogBorderCoord(uint j);
 	void DistributeParts(uint part1, uint part2, uint right);
 	void DoShrink(uint& charWidth, int& ShrinkLeft, uint& NeedWidth, uint& TotalWidth);
-	void ExpandPart(VConRange& part, uint EndX);
+	void ExpandPart(VConTextPart& part, uint EndX);
 
 protected:
-	friend struct VConRange;
+	friend struct VConTextPart;
 	// Members
 	CRealConsole* mp_RCon;
 
@@ -142,13 +140,9 @@ protected:
 	// Size of buffers
 	uint MaxBufferSize;
 
-	// Temp buffer to return parsed parts to draw
-	wchar_t* wcTempDraw/*[MaxBufferSize]*/;
-	char* cTempDraw/*[MaxBufferSize]*/;
-
 	// Buffer to parse our line
 	uint PartsCount;
-	VConRange* TextRanges/*[MaxBufferSize]*/;
+	VConTextPart* TextRanges/*[MaxBufferSize]*/;
 
 	// CharFlags is a pointer to buffer+idx from CVConLine
 	TextCharFlags* TempCharFlags/*[MaxBufferSize]*/;
