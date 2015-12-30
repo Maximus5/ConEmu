@@ -2906,6 +2906,7 @@ void CVirtualConsole::UpdateText()
 		//TODO: Do first run to paint only background (background image support)
 		//TODO: Second run - paint text
 
+		RECT rect = {};
 		while (lp.GetNextPart(partIndex, part, nextPart))
 		{
 			const CharAttr& attr = part->Attrs[0];
@@ -2916,7 +2917,6 @@ void CVirtualConsole::UpdateText()
 			else
 				SelectFont(mh_FontByIndex[attr.nFontIndex]);
 
-			RECT rect;
 			rect.left = part->PositionX;
 			rect.top = pos;
 			rect.right = part->PositionX + part->TotalWidth;
@@ -2929,6 +2929,20 @@ void CVirtualConsole::UpdateText()
 
 			m_DC.TextDraw(rect.left, rect.top, nFlags, &rect,
 				part->Chars, part->Length, (int*)part->CharWidth/*lpDX*/);
+		}
+
+		if (rect.right < (int)Width)
+		{
+			bool lbDelBrush = false;
+			HBRUSH hBr = CreateBackBrush(false, lbDelBrush);
+
+			RECT rcFill = rect;
+			rcFill.left = rect.right;
+			rcFill.right = (int)Width;
+			FillRect((HDC)m_DC, &rcFill, hBr);
+
+			if (lbDelBrush)
+				DeleteObject(hBr);
 		}
 
 	#if 0
