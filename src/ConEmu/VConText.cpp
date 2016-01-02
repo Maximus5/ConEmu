@@ -322,7 +322,7 @@ void VConTextPart::Done(uint anLen, uint FontWidth)
 		for (uint left = anLen; left--; pch++, pca++, pcf++, pcw++)
 		{
 			_ASSERTE(!(pca->Flags2 & (CharAttr2_NonSpacing|CharAttr2_Combining|CharAttr_DoubleSpaced)));
-			*pcw = FontWidth; // if non-shinked
+			*pcw = FontWidth; // if non-shrinked
 			*pcf = TCF_WidthFree;
 			TotalWidth += FontWidth;
 			aw.Count++;
