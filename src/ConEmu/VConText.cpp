@@ -1075,7 +1075,7 @@ TextPartFlags CVConLine::isDialogBorderCoord(uint j)
 				int border2 = mrc_Dialogs[i].Right;
 
 				// Looking for a dialog edge, on the current row, nearest to the current X-coord (j)
-				if (border1 && j <= border1 && border1 < NextDialogX)
+				if (j <= border1 && border1 < NextDialogX)
 					NextDialogX = border1;
 				else if (border2 < nMax && j <= border2 && border2 < NextDialogX)
 					NextDialogX = border2;
@@ -1118,16 +1118,22 @@ TextPartFlags CVConLine::isDialogBorderCoord(uint j)
 
 
 	// Horizontal corrections of vertical frames: Far Manager Panels, etc. (Coord.X>0)
-	if (j && isFixFrameCoord)
+	if (!(dlgBorder & TRF_PosFixed) // if not marked as PosFixed yet...
+		&& j && isFixFrameCoord)
 	{
 		wchar_t c = ConCharLine[j];
 
-		if (!(dlgBorder & TRF_PosFixed)
-			&& (isCharBorderVertical(c)
-				|| isCharScroll(c)
-				|| (isFilePanel && c==L'}')
-				//TODO: vim/emacs/tmux/etc uses simple `|` as pane delimiter
-			))
+			// Frames (vertical parts, pseudographics)
+		if (isCharBorderVertical(c)
+			// Far Manager Panel scrollers
+			|| isCharScroll(c)
+			// Far marks with '}' symbols file names, gone out of column width (too long name)
+			// TODO: Take into account other rows? Or even Far Panels Mode?
+			// TODO: we can't just check upper and lower rows to compare for frame/}, because
+			// TODO: they may be covered with another dialog...
+			|| (isFilePanel && c==L'}')
+			//TODO: vim/emacs/tmux/etc uses simple `|` as pane delimiter
+			)
 		{
 			dlgBorder |= TRF_PosRecommended;
 
