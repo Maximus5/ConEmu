@@ -615,7 +615,7 @@ void CVConLine::PolishParts(DWORD* pnXCoords)
 		if (part.Flags & (TRF_PosFixed|TRF_PosRecommended))
 		{
 			// Overlaps?
-			if (part.PositionX < PosX)
+			if (k && (part.PositionX != PosX))
 			{
 				_ASSERTE(k>0); // We can't get here for k==0
 				if (k)
