@@ -758,7 +758,6 @@ void CVConLine::DistributeParts(uint part1, uint part2, uint right)
 	// unused?
 	uint FullWidth = (TextParts[part2].PositionX + TextParts[part2].TotalWidth - TextParts[part1].PositionX);
 
-
 	// 1) shrink only TCF_WidthFree chars
 	// 2) also shrink TCF_WidthDouble (if exist) a little
 	// 3) shrink all possibilities
@@ -1064,7 +1063,7 @@ TextPartFlags CVConLine::isDialogBorderCoord(uint j)
 		NextDialogX = CurDialogX2 = TextWidth;
 		CurDialogI = -1; CurDialogFlags = 0;
 		int nMax = TextWidth-1;
-		// Идем "снизу вверх", чтобы верхние (по Z-order) диалоги обработались первыми
+		// Process dialogs in reverse order, to ensure tops (Z-order) dialogs would be first
 		for (int i = mn_DialogsCount-1; i >= 0; i--)
 		{
 			if (mrc_Dialogs[i].Top <= row && row <= mrc_Dialogs[i].Bottom)
@@ -1072,14 +1071,14 @@ TextPartFlags CVConLine::isDialogBorderCoord(uint j)
 				int border1 = mrc_Dialogs[i].Left;
 				int border2 = mrc_Dialogs[i].Right;
 
-				// Ищем грань диалога, лежащую на этой строке, ближайший к текущей X-координате.
+				// Looking for a dialog edge, on the current row, nearest to the current X-coord (j)
 				if (border1 && j <= border1 && border1 < NextDialogX)
 					NextDialogX = border1;
 				else if (border2 < nMax && j <= border2 && border2 < NextDialogX)
 					NextDialogX = border2;
 
-				// Ищем диалог (не панели), лежащий на этой строке, содержащий текущую X-координату.
-				TODO("Разделители колонок тоже хорошо бы обработать, но как бы не пересечься");
+				// Looking for a dialog (not a Far Manager Panels), covering current coord
+				// TODO: It would be nice to process Far's column separators too, but there is no nice API
 				if (!(mn_DialogFlags[i] & (FR_LEFTPANEL|FR_RIGHTPANEL|FR_FULLPANEL|FR_VIEWEREDITOR)))
 				{
 					if ((border1 <= j && j <= border2)
@@ -1099,11 +1098,12 @@ TextPartFlags CVConLine::isDialogBorderCoord(uint j)
 	if (j == NextDialogX)
 	{
 		NextDialog = true;
-		// Проверяем что это, видимая грань, или поверх координаты другой диалог лежит?
+		// Is it visible dialog edge, or it's covered by other dialog?
 		if (CurDialogFlags)
 		{
-			// Координата попала в поле диалога. same as below (1)
-			if ((j == CurDialogX1 || j == CurDialogX2)) // чтобы правая грань пошла как рамка
+			// Coord hits inside dialog space
+			// treat right edge as frame too
+			if ((j == CurDialogX1 || j == CurDialogX2))
 				dlgBorder |= TRF_PosFixed;
 		}
 		else
@@ -1114,17 +1114,9 @@ TextPartFlags CVConLine::isDialogBorderCoord(uint j)
 	}
 
 
-	// корректировка положения вертикальной рамки (Coord.X>0)
+	// Horizontal corrections of vertical frames: Far Manager Panels, etc. (Coord.X>0)
 	if (j && isFixFrameCoord)
 	{
-		// Рамки (их вертикальные части) и полосы прокрутки;
-		// Символом } фар помечает имена файлов вылезшие за пределы колонки...
-		// Если сверху или снизу на той же позиции рамки (или тот же '}')
-		// корректируем позицию
-		//bool bBord = isDlgBorder || isCharBorderVertical(c);
-		//TODO("Пока не будет учтено, что поверх рамок может быть другой диалог!");
-		//bool bFrame = false; // mpn_ConAttrEx[row*TextWidth+j].bDialogVBorder;
-
 		wchar_t c = ConCharLine[j];
 
 		if (!(dlgBorder & TRF_PosFixed)
