@@ -70,7 +70,7 @@ class CRealConsole;
 // Used as array[TextCharType::TCF_WidthLast]
 struct VConTextPartWidth
 {
-	uint Count;    // Count of this type of symbols
+	int  Count;    // Count of this type of symbols
 	uint Width;    // Default width of unshrinked symbols
 	uint MinWidth; // Some parts (continuous spaces, horz frames) may be hard shrinked
 	uint ReqWidth; // For internal purposes

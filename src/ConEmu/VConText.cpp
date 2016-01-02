@@ -334,9 +334,7 @@ void VConTextPart::Done(uint anLen, uint FontWidth)
 			aw.Count++;
 			aw.Width += FontWidth;
 		}
-		// one pixel minimum per char for all continuous region
-		MinWidth += anLen;
-		aw.MinWidth += anLen;
+		aw.MinWidth += FontWidth;
 	}
 	else
 	{
@@ -635,6 +633,8 @@ void CVConLine::PolishParts(DWORD* pnXCoords)
 		}
 		else
 		{
+			//if (part.Flags & TRF_SizeFree)
+			//	TextParts[k-1].MinWidth = 1;
 			part.PositionX = PosX;
 			PosX += part.TotalWidth;
 		}
@@ -803,14 +803,19 @@ void CVConLine::DistributeParts(uint part1, uint part2, uint right)
 		return;
 	}
 
-	uint s, nShrCount, nOtherWidth, nPreShrink; // method and options
+	uint nAllMin = AllWidths[TCF_WidthFree].MinWidth + AllWidths[TCF_WidthNormal].MinWidth + AllWidths[TCF_WidthDouble].MinWidth;
+	if (!nAllMin)
+	{
+		_ASSERTE(nAllMin!=NULL); // Must not be zero!
+		return;
+	}
+
+	// method and options
+	uint nShrinkParts = (1 << TCF_WidthFree);
 
 	if ((AllWidths[TCF_WidthFree].MinWidth + AllWidths[TCF_WidthNormal].Width + AllWidths[TCF_WidthDouble].Width) <= ReqWidth)
 	{
-		s = 2;
-		nShrCount = AllWidths[TCF_WidthFree].Count;
-		nPreShrink = AllWidths[TCF_WidthFree].Width;
-		nOtherWidth = AllWidths[TCF_WidthNormal].Width + AllWidths[TCF_WidthDouble].Width;
+		AllWidths[TCF_WidthFree].ReqWidth = ReqWidth - (AllWidths[TCF_WidthNormal].Width + AllWidths[TCF_WidthDouble].Width);
 	}
 	else if ((AllWidths[TCF_WidthFree].MinWidth + AllWidths[TCF_WidthNormal].Width + AllWidths[TCF_WidthDouble].MinWidth) <= ReqWidth)
 	{
@@ -818,40 +823,52 @@ void CVConLine::DistributeParts(uint part1, uint part2, uint right)
 		// Actually, with monospaced fonts we would have fit problems,
 		// when double-space glyphs takes only one cell in console.
 		// That is non-DBCS systems or UTF-8(?) on DBCS system
-		s = 3;
-		nShrCount = AllWidths[TCF_WidthFree].Count + AllWidths[TCF_WidthDouble].Count;
-		nPreShrink = AllWidths[TCF_WidthFree].Width + AllWidths[TCF_WidthDouble].Width;
-		nOtherWidth = AllWidths[TCF_WidthNormal].Width;
+		nShrinkParts |= (1 << TCF_WidthDouble);
+		AllWidths[TCF_WidthFree].ReqWidth = AllWidths[TCF_WidthFree].MinWidth;
+		AllWidths[TCF_WidthDouble].ReqWidth = ReqWidth - (AllWidths[TCF_WidthNormal].Width + AllWidths[TCF_WidthFree].ReqWidth);
 	}
 	else
 	{
 		// Shrink all types
-		s = 4;
-		nShrCount = AllWidths[TCF_WidthFree].Count + AllWidths[TCF_WidthNormal].Count + AllWidths[TCF_WidthDouble].Count;
-		nPreShrink = AllWidths[TCF_WidthFree].Width + AllWidths[TCF_WidthNormal].Width + AllWidths[TCF_WidthDouble].Width;
-		nOtherWidth = 0;
+		nShrinkParts |= (1 << TCF_WidthNormal) | (1 << TCF_WidthDouble);
+		uint nWidthDiv = AllWidths[TCF_WidthDouble].Width + AllWidths[TCF_WidthNormal].Width + AllWidths[TCF_WidthFree].MinWidth;
+		_ASSERTE(nWidthDiv);
+		AllWidths[TCF_WidthDouble].ReqWidth = AllWidths[TCF_WidthDouble].Width * ReqWidth / nWidthDiv;
+		AllWidths[TCF_WidthNormal].ReqWidth = AllWidths[TCF_WidthNormal].Width * ReqWidth / nWidthDiv;
+		// Last part must fit
+		if ((AllWidths[TCF_WidthDouble].ReqWidth + AllWidths[TCF_WidthNormal].ReqWidth + AllWidths[TCF_WidthFree].MinWidth) <= ReqWidth)
+		{
+			_ASSERTE((AllWidths[TCF_WidthDouble].ReqWidth + AllWidths[TCF_WidthNormal].ReqWidth + AllWidths[TCF_WidthFree].MinWidth) <= ReqWidth);
+			// Enforce?
+			uint nMost = TCF_WidthFree;
+			if ((AllWidths[TCF_WidthDouble].Count >= AllWidths[TCF_WidthNormal].Count) && (AllWidths[TCF_WidthDouble].Count >= AllWidths[TCF_WidthFree].Count))
+				nMost = TCF_WidthDouble;
+			else if ((AllWidths[TCF_WidthNormal].Count >= AllWidths[TCF_WidthDouble].Count) && (AllWidths[TCF_WidthNormal].Count >= AllWidths[TCF_WidthFree].Count))
+				nMost = TCF_WidthNormal;
+			uint nOther1 = (nMost != TCF_WidthDouble) ? TCF_WidthDouble : TCF_WidthNormal;
+			uint nFlags = (1 << nMost) | (1 << nOther1);
+			uint nOther2 = (!(nFlags & (1 << TCF_WidthDouble))) ? TCF_WidthDouble
+				: (!(nFlags & (1 << TCF_WidthNormal))) ? TCF_WidthNormal
+				: TCF_WidthFree;
+			AllWidths[nOther1].ReqWidth = AllWidths[nOther1].Width * ReqWidth / nWidthDiv;
+			AllWidths[nOther2].ReqWidth = AllWidths[nOther2].Width * ReqWidth / nWidthDiv;
+			AllWidths[nMost].ReqWidth = ReqWidth - (AllWidths[nOther1].ReqWidth + AllWidths[nOther2].ReqWidth);
+		}
+		else
+		{
+			AllWidths[TCF_WidthFree].ReqWidth = ReqWidth - (AllWidths[TCF_WidthNormal].ReqWidth + AllWidths[TCF_WidthDouble].ReqWidth);
+		}
 	}
 
+	// Debug validations
+	_ASSERTE((int)AllWidths[TCF_WidthFree].ReqWidth >= 0);
+	_ASSERTE((int)AllWidths[TCF_WidthNormal].ReqWidth >= 0);
+	_ASSERTE((int)AllWidths[TCF_WidthDouble].ReqWidth >= 0);
+
 	// *Process* the shrink
-	if (!nShrCount)
-	{
-		_ASSERTE(FALSE && "No characters to shrink!");
-		return;
-	}
 
 	// Leftmost char coord
 	uint PosX = TextParts[part1].PositionX;
-
-	// How many pixels we may utilize for distributing our characters?
-	_ASSERTE((s == 3) || (nOtherWidth < ReqWidth));
-	uint NeedWidth = (ReqWidth - nOtherWidth);
-	_ASSERTE(NeedWidth && (NeedWidth <= ReqWidth));
-
-	// How many characters we may shrink with current method?
-	int ShrinkLeft = nPreShrink; // Signed, to avoid infinite-loops and div-by-zero
-
-	// New char width (for methods 2 and 3) will be
-	// oldWidth * NeedWidth / ShrinkLeft
 
 	for (uint k = part1; k <= part2; k++)
 	{
@@ -870,79 +887,55 @@ void CVConLine::DistributeParts(uint part1, uint part2, uint right)
 		uint* pcw = part.CharWidth; // pointer to character width
 
 		// Run part shrink
-		switch (s)
+		part.TotalWidth = 0;
+		if ((part.Flags & TRF_SizeFree) && (nShrinkParts & (1 << TCF_WidthFree)))
 		{
-		case 2:
-		{
-			part.TotalWidth = 0;
+			VConTextPartWidth& aw = AllWidths[TCF_WidthFree];
+			int iShrinkLeft = part.Length;
 			for (uint c = 0; c < part.Length; c++, pcf++, pcw++)
 			{
-				switch (*pcf)
-				{
-				case TCF_WidthFree:
-					DoShrink(*pcw, ShrinkLeft, NeedWidth, part.TotalWidth);
-					break;
-				case TCF_WidthNormal:
-					part.TotalWidth += *pcw;
-					break;
-				case TCF_WidthDouble:
-					part.TotalWidth += *pcw;
-					break;
-				}
+				_ASSERTE(*pcf == TCF_WidthFree);
+				DoShrink(*pcw, iShrinkLeft, aw.ReqWidth, part.TotalWidth);
 			}
-		} break; // case 2
-
-		case 3:
-		{
-			part.TotalWidth = 0;
-			for (uint c = 0; c < part.Length; c++, pcf++, pcw++)
-			{
-				switch (*pcf)
-				{
-				case TCF_WidthFree:
-				case TCF_WidthDouble:
-					DoShrink(*pcw, ShrinkLeft, NeedWidth, part.TotalWidth);
-					break;
-				case TCF_WidthNormal:
-					part.TotalWidth += *pcw;
-					break;
-				}
-			}
-		} break; // case 3
-
-		case 4:
-		{
-			part.TotalWidth = 0;
-			for (uint c = 0; c < part.Length; c++, pcf++, pcw++)
-			{
-				switch (*pcf)
-				{
-				case TCF_WidthFree:
-				case TCF_WidthDouble:
-				case TCF_WidthNormal:
-					DoShrink(*pcw, ShrinkLeft, NeedWidth, part.TotalWidth);
-					break;
-				}
-			}
-		} break; // case 4
 		}
-		// End of part shrink (switch)
+		else
+		{
+			for (uint c = 0; c < part.Length; c++, pcf++, pcw++)
+			{
+				if (nShrinkParts & (1 << *pcf))
+				{
+					VConTextPartWidth& aw = AllWidths[*pcf];
+					DoShrink(*pcw, aw.Count, aw.ReqWidth, part.TotalWidth);
+				}
+				else
+				{
+					part.TotalWidth += *pcw;
+				}
+			}
+		}
 
 		PosX += part.TotalWidth;
 	}
 
 	// End of shrink (no more parts, no more methods)
-	_ASSERTE(s==1 || ShrinkLeft==0);
 	_ASSERTE(PosX <= right);
 }
 
 //TODO: Refactor
 void CVConLine::DoShrink(uint& charWidth, int& ShrinkLeft, uint& NeedWidth, uint& TotalWidth)
 {
-	if (ShrinkLeft > 0)
+	if (!NeedWidth)
 	{
-		_ASSERTE(ShrinkLeft >= NeedWidth);
-		uint nw = (uint)klMulDivU32(charWidth, NeedWidth, ShrinkLeft);
+		// Only TRF_SizeFree is expected here...
+		charWidth = 0;
+		if (ShrinkLeft) ShrinkLeft--;
+	}
+	else if (ShrinkLeft > 0)
+	{
+		_ASSERTE(ShrinkLeft>0 && NeedWidth>0);
+		uint nw = NeedWidth / ShrinkLeft;
+		if (nw > charWidth)
+			nw = charWidth;
 		if (nw > NeedWidth)
 		{
 			_ASSERTE(nw <= NeedWidth);
@@ -952,7 +945,7 @@ void CVConLine::DoShrink(uint& charWidth, int& ShrinkLeft, uint& NeedWidth, uint
 		{
 			NeedWidth -= nw;
 		}
-		ShrinkLeft -= charWidth;
+		ShrinkLeft--;
 		charWidth = nw;
 		TotalWidth += nw;
 	}
@@ -1186,15 +1179,20 @@ bool CVConLine::HasFreeOverlaps(const uint part1, const uint part2, const uint r
 			_ASSERTE(part.Flags); // Part must not be dropped yet!
 			continue;
 		}
-		for (uint t = TCF_WidthFree; t < TCF_WidthLast; t++)
+		if (part.Flags & TRF_SizeFree)
+		{
+			// They are counted specially, series of spaces or horz.frames may be shrinked
+			// forcedly up to one cell almost without meaning loss
+			_ASSERTE(part.AllWidths[TCF_WidthFree].MinWidth && part.AllWidths[TCF_WidthFree].MinWidth <= FontWidth);
+			AllWidths[TCF_WidthFree].Count += 1;
+			AllWidths[TCF_WidthFree].Width += part.AllWidths[TCF_WidthFree].Width;
+			AllWidths[TCF_WidthFree].MinWidth += part.AllWidths[TCF_WidthFree].MinWidth;
+		}
+		else for (uint t = TCF_WidthFree; t < TCF_WidthLast; t++)
 		{
 			AllWidths[t].Count += part.AllWidths[t].Count;
 			AllWidths[t].Width += part.AllWidths[t].Width;
-			if ((k == part2) && (t == TCF_WidthFree))
-				// last free part may be shrinked forcedly
-				AllWidths[t].MinWidth += 1;
-			else
-				AllWidths[t].MinWidth += part.AllWidths[t].MinWidth;
+			AllWidths[t].MinWidth += part.AllWidths[t].MinWidth;
 		}
 		// If possible, shrink TCF_WidthFree in such a way that
 		// we'll get next part placed on its preferred CellPosX
