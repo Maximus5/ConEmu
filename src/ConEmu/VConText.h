@@ -132,6 +132,7 @@ protected:
 
 	TextPartFlags isDialogBorderCoord(uint j);
 	void DistributeParts(uint part1, uint part2, uint right);
+	void DistributePartsFree(uint part1, uint part2, uint right);
 	void DoShrink(uint& charWidth, int& ShrinkLeft, uint& NeedWidth, uint& TotalWidth);
 	void ExpandPart(VConTextPart& part, uint EndX);
 	bool HasFreeOverlaps(const uint part1, const uint part2, const uint right, VConTextPartWidth (&AllWidths)[TCF_WidthLast]);

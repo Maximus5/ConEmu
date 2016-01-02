@@ -634,7 +634,7 @@ void CVConLine::PolishParts(DWORD* pnXCoords)
 		}
 	}
 	// If last part goes out of screen - redistribute
-	if (PosX > (TextWidth * FontWidth))
+	if (PosX != (TextWidth * FontWidth))
 	{
 		DistributeParts(prevFixedPart + 1, PartsCount - 1, (TextWidth * FontWidth));
 	}
@@ -775,9 +775,25 @@ void CVConLine::DistributeParts(uint part1, uint part2, uint right)
 	_ASSERTE(nAllWidths == FullWidth); // At the moment, they must match
 
 	// What we may to shrink?
-	if ((AllWidths[TCF_WidthFree].Width + AllWidths[TCF_WidthNormal].Width + AllWidths[TCF_WidthDouble].Width) <= ReqWidth)
+	if (nAllWidths <= ReqWidth)
 	{
-		_ASSERTE(FALSE && "Already fit, nothing to shrink");
+		if ((nAllWidths != ReqWidth) && !bHasFreeOverlaps)
+		{
+			DistributePartsFree(part1, part2, right);
+		}
+		else
+		{
+			_ASSERTE(FALSE && "Already fit, nothing to shrink");
+		}
+		return;
+	}
+
+	// Only spaces and horizontal frames
+	if (!bHasFreeOverlaps
+		&& ((AllWidths[TCF_WidthFree].MinWidth + AllWidths[TCF_WidthNormal].Width + AllWidths[TCF_WidthDouble].Width) <= ReqWidth)
+		)
+	{
+		DistributePartsFree(part1, part2, right);
 		return;
 	}
 
@@ -785,8 +801,7 @@ void CVConLine::DistributeParts(uint part1, uint part2, uint right)
 
 	if ((AllWidths[TCF_WidthFree].MinWidth + AllWidths[TCF_WidthNormal].Width + AllWidths[TCF_WidthDouble].Width) <= ReqWidth)
 	{
-		// Only spaces and horizontal frames
-		s = bHasFreeOverlaps ? 2 : 1;
+		s = 2;
 		nShrCount = AllWidths[TCF_WidthFree].Count;
 		nPreShrink = AllWidths[TCF_WidthFree].Width;
 		nOtherWidth = AllWidths[TCF_WidthNormal].Count + AllWidths[TCF_WidthDouble].Count;
@@ -851,36 +866,6 @@ void CVConLine::DistributeParts(uint part1, uint part2, uint right)
 		// Run part shrink
 		switch (s)
 		{
-		case 1:
-		{
-			if (!(part.Flags & TRF_SizeFree))
-				break;
-			uint nPrevX = 0, X;
-			uint nextPartX = (k == part2) ? right : TextParts[k + 1].CellPosX;
-			if (part.PositionX >= nextPartX)
-			{
-				_ASSERTE(nextPartX > part.PositionX);
-				return;
-			}
-			part.TotalWidth = 0;
-			uint NeedPartWidth = nextPartX - part.PositionX;
-			for (uint c = 0; c < part.Length; c++, pcf++, pcw++)
-			{
-				switch (*pcf)
-				{
-				case TCF_WidthFree:
-					X = klMulDivU32(c+1, NeedPartWidth, part.Length);
-					*pcw = X - nPrevX;
-					nPrevX = X;
-					// Continue to increase part.TotalWidth
-				case TCF_WidthNormal:
-				case TCF_WidthDouble:
-					part.TotalWidth += *pcw;
-					break;
-				}
-			}
-		} break; // case 1
-
 		case 2:
 		{
 			part.TotalWidth = 0;
@@ -974,8 +959,14 @@ void CVConLine::DoShrink(uint& charWidth, int& ShrinkLeft, uint& NeedWidth, uint
 
 void CVConLine::ExpandPart(VConTextPart& part, uint EndX)
 {
-	//TODO: Horizontal frames
-	if (part.Flags & TRF_TextSpacing)
+	if (!part.Length || !part.Flags)
+	{
+		_ASSERTE(part.Length && part.Flags);
+		return;
+	}
+
+	// Spaces and Horizontal frames
+	if ((part.Flags & TRF_SizeFree) && (part.Length > 1))
 	{
 		uint NeedWidth = EndX - part.PositionX;
 		int WidthLeft = NeedWidth;
@@ -1224,6 +1215,61 @@ bool CVConLine::HasFreeOverlaps(const uint part1, const uint part2, const uint r
 	}
 
 	return bHasFreeOverlaps;
+}
+
+void CVConLine::DistributePartsFree(uint part1, uint part2, uint right)
+{
+	// Try to enlarge only "free" parts with (Length>=3)?
+
+	uint PosX = TextParts[part1].PositionX;
+
+	for (uint k = part1; k <= part2; k++)
+	{
+		VConTextPart& part = TextParts[k];
+		if (!part.Flags)
+		{
+			_ASSERTE(part.Flags); // Part must not be dropped yet!
+			continue;
+		}
+
+		// Update new leftmost coord for this part
+		part.PositionX = PosX;
+
+		if (!(part.Flags & TRF_SizeFree))
+		{
+			PosX += part.TotalWidth;
+			continue;
+		}
+
+		// Prepare loops
+		TextCharType* pcf = part.CharFlags; // character flags (zero/free/normal/double)
+		uint* pcw = part.CharWidth; // pointer to character width
+
+		// Run part shrink
+		uint X;
+		uint nextPartX = (k == part2) ? right : GetNextPartX(k);
+		if (part.PositionX >= nextPartX)
+		{
+			_ASSERTE(nextPartX > part.PositionX);
+			return;
+		}
+		part.TotalWidth = 0;
+		uint NeedPartWidth = nextPartX - part.PositionX;
+		for (uint c = 0; c < part.Length; c++, pcf++, pcw++)
+		{
+			switch (*pcf)
+			{
+			case TCF_WidthFree:
+				X = klMulDivU32(c+1, NeedPartWidth, part.Length);
+				*pcw = X - part.TotalWidth;
+			case TCF_WidthNormal:
+			case TCF_WidthDouble:
+				part.TotalWidth += *pcw;
+				break;
+			}
+		}
+		PosX = nextPartX;
+	}
 }
 
 uint CVConLine::GetNextPartX(const uint part)
