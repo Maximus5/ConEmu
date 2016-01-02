@@ -264,6 +264,10 @@ bool isCharComining(wchar_t inChar)
 
 //TODO: 1 pixel for all shrinkable characters? prefer some function of Length...
 #define MIN_SIZEFREE_WIDTH 1
+#define DEF_SINGLE_MUL 8
+#define DEF_SINGLE_DIV 10
+#define DEF_DOUBLE_MUL 7
+#define DEF_DOUBLE_DIV 10
 
 void VConTextPart::Init(uint anIndex, uint anCell, CVConLine* pLine)
 {
@@ -306,6 +310,8 @@ void VConTextPart::Done(uint anLen, uint FontWidth)
 
 	// Helper - double cell characters
 	uint FontWidth2 = 2*FontWidth;
+	uint FontWidth2M = FontWidth2 * DEF_DOUBLE_MUL / DEF_DOUBLE_DIV;
+	uint FontWidthM = FontWidth * DEF_SINGLE_MUL / DEF_SINGLE_DIV;
 
 	const wchar_t* pch = Chars;
 	const CharAttr* pca = Attrs;
@@ -350,11 +356,11 @@ void VConTextPart::Done(uint anLen, uint FontWidth)
 				*pcf = TCF_WidthDouble;
 				TotalWidth += FontWidth2;
 				// Even double-width space have to be same width as ‘normal’ CJK glyph
-				MinWidth += FontWidth2;
+				MinWidth += FontWidth2M;
 				VConTextPartWidth& aw = AllWidths[TCF_WidthDouble];
 				aw.Count++;
 				aw.Width += FontWidth2;
-				aw.MinWidth += FontWidth2;
+				aw.MinWidth += FontWidth2M;
 			}
 			else /*if (gpSet->isMonospace
 					|| (gpSet->isFixFarBorders && isCharAltFont(ch))
@@ -367,7 +373,7 @@ void VConTextPart::Done(uint anLen, uint FontWidth)
 				VConTextPartWidth& aw = AllWidths[TCF_WidthNormal];
 				aw.Count++;
 				aw.Width += FontWidth;
-				aw.MinWidth += FontWidth;
+				aw.MinWidth += FontWidthM;
 			}
 		}
 	}
@@ -804,7 +810,7 @@ void CVConLine::DistributeParts(uint part1, uint part2, uint right)
 		s = 2;
 		nShrCount = AllWidths[TCF_WidthFree].Count;
 		nPreShrink = AllWidths[TCF_WidthFree].Width;
-		nOtherWidth = AllWidths[TCF_WidthNormal].Count + AllWidths[TCF_WidthDouble].Count;
+		nOtherWidth = AllWidths[TCF_WidthNormal].Width + AllWidths[TCF_WidthDouble].Width;
 	}
 	else if ((AllWidths[TCF_WidthFree].MinWidth + AllWidths[TCF_WidthNormal].Width + AllWidths[TCF_WidthDouble].MinWidth) <= ReqWidth)
 	{
@@ -815,7 +821,7 @@ void CVConLine::DistributeParts(uint part1, uint part2, uint right)
 		s = 3;
 		nShrCount = AllWidths[TCF_WidthFree].Count + AllWidths[TCF_WidthDouble].Count;
 		nPreShrink = AllWidths[TCF_WidthFree].Width + AllWidths[TCF_WidthDouble].Width;
-		nOtherWidth = AllWidths[TCF_WidthNormal].Count;
+		nOtherWidth = AllWidths[TCF_WidthNormal].Width;
 	}
 	else
 	{
