@@ -647,7 +647,7 @@ void CVConLine::PolishParts(DWORD* pnXCoords)
 	{
 		VConTextPart& part = TextParts[k];
 		_ASSERTE(part.Flags != TRF_None);
-		_ASSERTE((int)part.TotalWidth > 0);
+		_ASSERTE(((int)part.TotalWidth > 0) || ((part.Length==1) && (part.CharFlags[0]==TCF_WidthZero)));
 
 		if (part.Flags & (TRF_PosFixed|TRF_PosRecommended))
 		{
