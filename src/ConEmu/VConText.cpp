@@ -997,9 +997,12 @@ void CVConLine::ExpandPart(VConTextPart& part, uint EndX)
 	}
 	else
 	{
-		//TODO: RTL?
 		// Don't break visual representation of string flow, just increase last symbol width
-		uint* pcw = part.CharWidth + (part.Length - 1);
+		size_t chrIdx = (part.Length - 1);
+		//TODO: RTL?
+		//if (isCharRTL(part.Chars[chrIdx]))
+		//	chrIdx = 0;
+		uint* pcw = part.CharWidth + chrIdx;
 		int iDiff = EndX - part.PositionX - part.TotalWidth;
 		_ASSERTE(iDiff > 0);
 		*pcw += iDiff;
