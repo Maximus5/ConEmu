@@ -328,9 +328,9 @@ void VConTextPart::Done(uint anLen, uint FontWidth)
 			aw.Count++;
 			aw.Width += FontWidth;
 		}
-		// one pixel minimum for all continuous region
-		MinWidth += 1;
-		aw.MinWidth += 1;
+		// one pixel minimum per char for all continuous region
+		MinWidth += anLen;
+		aw.MinWidth += anLen;
 	}
 	else
 	{
@@ -767,54 +767,13 @@ void CVConLine::DistributeParts(uint part1, uint part2, uint right)
 	// a) count all TCF_WidthFree, TCF_WidthNormal, TCF_WidthDouble separatedly
 	// b) so we able to find most suitable way to shrink either part with its own factor (especially useful when both CJK and single-cell chars exists)
 
-	struct {
-		uint Count;
-		uint Width;
-		uint MinWidth;
-		uint ReqWidth;
-	} AllWidths[TCF_WidthLast] = {};
+	VConTextPartWidth AllWidths[TCF_WidthLast] = {};
 
-	bool bHasFreeOverlaps = false;
+	// Count all widths for parts and check if we may do shrink with TCF_WidthFree chars only
+	bool bHasFreeOverlaps = HasFreeOverlaps(part1, part2, right, AllWidths);
 
-	// Count all widths for parts
-	uint checkOverlapX = TextParts[part1].PositionX;
-	for (uint k = part1; k <= part2; k++)
-	{
-		VConTextPart& part = TextParts[k];
-		if (!part.Flags)
-		{
-			_ASSERTE(part.Flags); // Part must not be dropped yet!
-			continue;
-		}
-		for (uint t = TCF_WidthFree; t < TCF_WidthLast; t++)
-		{
-			AllWidths[t].Count += part.AllWidths[t].Count;
-			AllWidths[t].Width += part.AllWidths[t].Width;
-			AllWidths[t].MinWidth += part.AllWidths[t].MinWidth;
-		}
-		// If possible, shrink TCF_WidthFree in such a way that
-		// we'll get next part placed on its preferred CellPosX
-		if (!bHasFreeOverlaps)
-		{
-			if (!(part.Flags & TRF_SizeFree))
-			{
-				checkOverlapX += part.TotalWidth;
-			}
-			else
-			{
-				uint nextX = (k == part2) ? right : TextParts[k + 1].CellPosX;
-				if ((checkOverlapX + MIN_SIZEFREE_WIDTH) > nextX)
-				{
-					// we can't shrink *only* free-size parts between fixed pos of others
-					bHasFreeOverlaps = true;
-				}
-				else
-				{
-					checkOverlapX = nextX;
-				}
-			}
-		}
-	}
+	uint nAllWidths = (AllWidths[TCF_WidthFree].Width + AllWidths[TCF_WidthNormal].Width + AllWidths[TCF_WidthDouble].Width);
+	_ASSERTE(nAllWidths == FullWidth); // At the moment, they must match
 
 	// What we may to shrink?
 	if ((AllWidths[TCF_WidthFree].Width + AllWidths[TCF_WidthNormal].Width + AllWidths[TCF_WidthDouble].Width) <= ReqWidth)
@@ -1212,6 +1171,65 @@ TextPartFlags CVConLine::isDialogBorderCoord(uint j)
 	}
 
 	return dlgBorder;
+}
+
+bool CVConLine::HasFreeOverlaps(const uint part1, const uint part2, const uint right, VConTextPartWidth (&AllWidths)[TCF_WidthLast])
+{
+	bool bHasFreeOverlaps = false;
+	ZeroStruct(AllWidths);
+
+	// Count all widths for parts
+	uint checkOverlapX = TextParts[part1].PositionX;
+	for (uint k = part1; k <= part2; k++)
+	{
+		VConTextPart& part = TextParts[k];
+		if (!part.Flags)
+		{
+			_ASSERTE(part.Flags); // Part must not be dropped yet!
+			continue;
+		}
+		for (uint t = TCF_WidthFree; t < TCF_WidthLast; t++)
+		{
+			AllWidths[t].Count += part.AllWidths[t].Count;
+			AllWidths[t].Width += part.AllWidths[t].Width;
+			if ((k == part2) && (t == TCF_WidthFree))
+				// last free part may be shrinked forcedly
+				AllWidths[t].MinWidth += 1;
+			else
+				AllWidths[t].MinWidth += part.AllWidths[t].MinWidth;
+		}
+		// If possible, shrink TCF_WidthFree in such a way that
+		// we'll get next part placed on its preferred CellPosX
+		if (!bHasFreeOverlaps)
+		{
+			if (!(part.Flags & TRF_SizeFree))
+			{
+				checkOverlapX += part.TotalWidth;
+			}
+			else
+			{
+				uint nextX = (k == part2) ? right : GetNextPartX(k);
+				if ((checkOverlapX + MIN_SIZEFREE_WIDTH) > nextX)
+				{
+					// we can't shrink *only* free-size parts between fixed pos of others
+					bHasFreeOverlaps = true;
+				}
+				else
+				{
+					checkOverlapX = nextX;
+				}
+			}
+		}
+	}
+
+	return bHasFreeOverlaps;
+}
+
+uint CVConLine::GetNextPartX(const uint part)
+{
+	uint nextPartX = ((part+1) < PartsCount) ? TextParts[part + 1].CellPosX
+		: (TextWidth * FontWidth);
+	return nextPartX;
 }
 
 #if 0
