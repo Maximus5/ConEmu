@@ -2830,6 +2830,16 @@ void CVirtualConsole::UpdateText()
 
 	_ASSERTE(((TextWidth * nFontWidth) >= Width));
 
+	wchar_t* tmpOemWide = NULL;
+	char* tmpOem = NULL;
+	INT_PTR cchOemMax = 0;
+	if (nFontCharSet == OEM_CHARSET)
+	{
+		cchOemMax = (TextWidth*3+1);
+		tmpOemWide = (wchar_t*)Alloc(cchOemMax, sizeof(*tmpOemWide));
+		tmpOem = (char*)Alloc(cchOemMax, sizeof(*tmpOem));
+	}
+
 	//BUGBUG: хорошо бы отрисовывать последнюю строку, даже если она чуть не влазит
 	for (; pos <= nMaxPos;
 			ConCharLine += TextWidth, ConAttrLine += TextWidth, ConCharXLine += TextWidth,
@@ -2858,8 +2868,25 @@ void CVirtualConsole::UpdateText()
 				&& (j <= Cursor.x && Cursor.x <= end))
 			Cursor.isVisiblePrev = false;
 
+		// To be able to draw OEM text properly, we have to convert
+		wchar_t* pszDrawLine = ConCharLine;
+		BYTE charSet;
+		if ((nFontCharSet == OEM_CHARSET) && tmpOem && tmpOemWide)
+		{
+			int iCvt = WideCharToMultiByte(CP_OEMCP, 0, ConCharLine, TextWidth, tmpOem, cchOemMax, NULL, NULL);
+			if (iCvt > 0 && iCvt <= cchOemMax)
+			{
+				int iWide = MultiByteToWideChar(CP_OEMCP, 0, tmpOem, iCvt, tmpOemWide, cchOemMax);
+				if ((iWide > 0) && (iWide <= cchOemMax))
+				{
+					_ASSERTE(iWide == (int)TextWidth); // Or we probably have problems with color mismatch
+					pszDrawLine = tmpOemWide;
+				}
+			}
+		}
+
 		// May return false on memory allocation errors only
-		if (!lp.ParseLine(isForce, TextWidth, nFontWidth, row, ConCharLine, ConAttrLine, ConCharLine2, ConAttrLine2))
+		if (!lp.ParseLine(isForce, TextWidth, nFontWidth, row, pszDrawLine, ConAttrLine, ConCharLine2, ConAttrLine2))
 		{
 			// Fill with background?
 			continue;
@@ -2883,9 +2910,15 @@ void CVirtualConsole::UpdateText()
 			m_DC.SetBkColor(attr.crBackColor);
 			m_DC.SetTextColor(attr.crForeColor);
 			if (part->Flags & TRF_TextAlternative)
+			{
 				SelectFont(hFont2);
+				charSet = gpSetCls->BorderFontCharSet();
+			}
 			else
+			{
 				SelectFont(mh_FontByIndex[attr.nFontIndex]);
+				charSet = nFontCharSet;
+			}
 
 			rect.left = part->PositionX;
 			rect.top = pos;
@@ -2897,8 +2930,17 @@ void CVirtualConsole::UpdateText()
 
 			UINT nFlags = ETO_CLIPPED | ETO_OPAQUE;
 
-			m_DC.TextDraw(rect.left, rect.top, nFlags, &rect,
-				part->Chars, part->Length, (int*)part->CharWidth/*lpDX*/);
+			if ((pszDrawLine == tmpOemWide) && (charSet == OEM_CHARSET))
+			{
+				LPCSTR pszDrawOem = tmpOem + (part->Chars - tmpOemWide);
+				m_DC.TextDrawOem(rect.left, rect.top, nFlags, &rect,
+					pszDrawOem, part->Length, (int*)part->CharWidth/*lpDX*/);
+			}
+			else
+			{
+				m_DC.TextDraw(rect.left, rect.top, nFlags, &rect,
+					part->Chars, part->Length, (int*)part->CharWidth/*lpDX*/);
+			}
 		}
 
 		if (rect.right < (int)Width)
@@ -3600,6 +3642,9 @@ void CVirtualConsole::UpdateText()
 	}
 
 	free(nDX);
+
+	SafeFree(tmpOemWide);
+	SafeFree(tmpOem);
 
 	HEAPVAL;
 
