@@ -831,33 +831,50 @@ void CVConLine::DistributeParts(uint part1, uint part2, uint right)
 	{
 		// Shrink all types
 		nShrinkParts |= (1 << TCF_WidthNormal) | (1 << TCF_WidthDouble);
-		uint nWidthDiv = AllWidths[TCF_WidthDouble].Width + AllWidths[TCF_WidthNormal].Width + AllWidths[TCF_WidthFree].MinWidth;
-		_ASSERTE(nWidthDiv);
-		AllWidths[TCF_WidthDouble].ReqWidth = AllWidths[TCF_WidthDouble].Width * ReqWidth / nWidthDiv;
-		AllWidths[TCF_WidthNormal].ReqWidth = AllWidths[TCF_WidthNormal].Width * ReqWidth / nWidthDiv;
-		// Last part must fit
-		if ((AllWidths[TCF_WidthDouble].ReqWidth + AllWidths[TCF_WidthNormal].ReqWidth + AllWidths[TCF_WidthFree].MinWidth) <= ReqWidth)
+
+		// And we may apply a larger coefficient to dominating type of chars
+
+		// Count each double-space glyph as 2 cells (preferred)
+		AllWidths[TCF_WidthDouble].Count *= 2;
+		// Count "all" cells
+		int nAllCells = AllWidths[TCF_WidthDouble].Count + AllWidths[TCF_WidthNormal].Count + AllWidths[TCF_WidthFree].Count;
+
+		// Sort types by cells used
+		uint nMost = TCF_WidthFree;
+		if ((AllWidths[TCF_WidthDouble].Count >= AllWidths[TCF_WidthNormal].Count) && (AllWidths[TCF_WidthDouble].Count >= AllWidths[TCF_WidthFree].Count))
+			nMost = TCF_WidthDouble;
+		else if ((AllWidths[TCF_WidthNormal].Count >= AllWidths[TCF_WidthDouble].Count) && (AllWidths[TCF_WidthNormal].Count >= AllWidths[TCF_WidthFree].Count))
+			nMost = TCF_WidthNormal;
+		uint nOther1 = (nMost != TCF_WidthDouble) ? TCF_WidthDouble : TCF_WidthNormal;
+		uint nFlags = (1 << nMost) | (1 << nOther1);
+		uint nOther2 = (!(nFlags & (1 << TCF_WidthDouble))) ? TCF_WidthDouble
+			: (!(nFlags & (1 << TCF_WidthNormal))) ? TCF_WidthNormal
+			: TCF_WidthFree;
+
+		// Apply denominators
+		AllWidths[nMost].ReqWidth = ReqWidth * AllWidths[nMost].Count / nAllCells;
+		// And prepare lesser types
+		if (AllWidths[nOther1].Count > 0 && AllWidths[nOther2].Count > 0)
 		{
-			_ASSERTE((AllWidths[TCF_WidthDouble].ReqWidth + AllWidths[TCF_WidthNormal].ReqWidth + AllWidths[TCF_WidthFree].MinWidth) <= ReqWidth);
-			// Enforce?
-			uint nMost = TCF_WidthFree;
-			if ((AllWidths[TCF_WidthDouble].Count >= AllWidths[TCF_WidthNormal].Count) && (AllWidths[TCF_WidthDouble].Count >= AllWidths[TCF_WidthFree].Count))
-				nMost = TCF_WidthDouble;
-			else if ((AllWidths[TCF_WidthNormal].Count >= AllWidths[TCF_WidthDouble].Count) && (AllWidths[TCF_WidthNormal].Count >= AllWidths[TCF_WidthFree].Count))
-				nMost = TCF_WidthNormal;
-			uint nOther1 = (nMost != TCF_WidthDouble) ? TCF_WidthDouble : TCF_WidthNormal;
-			uint nFlags = (1 << nMost) | (1 << nOther1);
-			uint nOther2 = (!(nFlags & (1 << TCF_WidthDouble))) ? TCF_WidthDouble
-				: (!(nFlags & (1 << TCF_WidthNormal))) ? TCF_WidthNormal
-				: TCF_WidthFree;
-			AllWidths[nOther1].ReqWidth = AllWidths[nOther1].Width * ReqWidth / nWidthDiv;
-			AllWidths[nOther2].ReqWidth = AllWidths[nOther2].Width * ReqWidth / nWidthDiv;
-			AllWidths[nMost].ReqWidth = ReqWidth - (AllWidths[nOther1].ReqWidth + AllWidths[nOther2].ReqWidth);
+			_ASSERTE(AllWidths[nMost].Count > 0);
+			AllWidths[nOther1].ReqWidth = ReqWidth * AllWidths[nOther1].Count / nAllCells;
+			AllWidths[nOther2].ReqWidth = ReqWidth - (AllWidths[nMost].ReqWidth + AllWidths[nOther1].ReqWidth);
+		}
+		else if (AllWidths[nOther1].Count > 0)
+		{
+			_ASSERTE(AllWidths[nMost].Count > 0 && AllWidths[nOther2].Count == 0);
+			AllWidths[nOther1].ReqWidth = ReqWidth - (AllWidths[nMost].ReqWidth);
+			_ASSERTE(AllWidths[nOther2].Width == 0);
+			AllWidths[nOther2].ReqWidth = 0;
 		}
 		else
 		{
-			AllWidths[TCF_WidthFree].ReqWidth = ReqWidth - (AllWidths[TCF_WidthNormal].ReqWidth + AllWidths[TCF_WidthDouble].ReqWidth);
+			_ASSERTE(AllWidths[nMost].Count > 0 && AllWidths[nOther1].Count == 0 && AllWidths[nOther2].Count == 0);
+			_ASSERTE(AllWidths[nOther1].Width == 0 && AllWidths[nOther2].Width == 0);
+			AllWidths[nOther1].ReqWidth = AllWidths[nOther2].ReqWidth = 0;
 		}
+		// Return *char* count
+		AllWidths[TCF_WidthDouble].Count /= 2;
 	}
 
 	// Debug validations
@@ -892,10 +909,12 @@ void CVConLine::DistributeParts(uint part1, uint part2, uint right)
 		{
 			VConTextPartWidth& aw = AllWidths[TCF_WidthFree];
 			int iShrinkLeft = part.Length;
+			_ASSERTE(AllWidths[TCF_WidthFree].Count>0);
+			uint partReqWidth = (AllWidths[TCF_WidthFree].Count > 0) ? (aw.ReqWidth / AllWidths[TCF_WidthFree].Count) : 0;
 			for (uint c = 0; c < part.Length; c++, pcf++, pcw++)
 			{
 				_ASSERTE(*pcf == TCF_WidthFree);
-				DoShrink(*pcw, iShrinkLeft, aw.ReqWidth, part.TotalWidth);
+				DoShrink(*pcw, iShrinkLeft, partReqWidth, part.TotalWidth);
 			}
 		}
 		else
