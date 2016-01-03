@@ -247,7 +247,7 @@ bool CVirtualConsole::Constructor(RConStartArgs *args)
 	mp_ConEmu->OnVConCreated(this, args);
 
 	WARNING("скорректировать размер кучи");
-	SIZE_T nMinHeapSize = (1000 + (200 * 90 * 2) * 6 + MAX_PATH*2)*2 + 210*sizeof(*TextParts);
+	SIZE_T nMinHeapSize = (1000 + (200 * 90 * 2) * 6 + MAX_PATH*2)*2;
 	mh_Heap = HeapCreate(HEAP_GENERATE_EXCEPTIONS, nMinHeapSize, 0);
 	cinf.dwSize = 15; cinf.bVisible = TRUE;
 	ZeroStruct(winSize); ZeroStruct(coord);
@@ -593,10 +593,6 @@ void CVirtualConsole::PointersInit()
 	mpsz_ConChar = mpsz_ConCharSave = NULL;
 	mpn_ConAttrEx = mpn_ConAttrExSave = NULL;
 	ConCharX = ConCharDX = NULL;
-	tmpOem = NULL;
-	TextParts = NULL;
-	BgParts = NULL;
-	PolyText = NULL;
 	pbLineChanged = pbBackIsPic = NULL;
 	pnBackRGB = NULL;
 	// Row/Col highlights & Hyperlink underlining
@@ -617,10 +613,6 @@ void CVirtualConsole::PointersFree()
 	SafeFree(mpn_ConAttrExSave);
 	SafeFree(ConCharX);
 	SafeFree(ConCharDX);
-	SafeFree(tmpOem);
-	SafeFree(TextParts);
-	SafeFree(BgParts);
-	SafeFree(PolyText);
 	SafeFree(pbLineChanged);
 	SafeFree(pbBackIsPic);
 	SafeFree(pnBackRGB);
@@ -646,10 +638,6 @@ bool CVirtualConsole::PointersAlloc()
 	AllocArray(mpn_ConAttrExSave, CharAttr, nWidthHeight);
 	AllocArray(ConCharX, DWORD, nWidthHeight);
 	AllocArray(ConCharDX, DWORD, nMaxTextWidth); // задел для TEXTPARTS
-	AllocArray(tmpOem, char, nMaxTextWidth);
-	AllocArray(TextParts, TEXTPARTS, (nMaxTextWidth + 1));
-	AllocArray(BgParts, BGPARTS, nMaxTextWidth);
-	AllocArray(PolyText, POLYTEXT, nMaxTextWidth);
 	AllocArray(pbLineChanged, bool, nMaxTextHeight);
 	AllocArray(pbBackIsPic, bool, nMaxTextHeight);
 	AllocArray(pnBackRGB, COLORREF, nMaxTextHeight);
@@ -672,12 +660,6 @@ void CVirtualConsole::PointersZero()
 	HEAPVAL;
 	//ZeroMemory(ConCharX, nWidthHeight*sizeof(*ConCharX));
 	ZeroMemory(ConCharDX, nMaxTextWidth*sizeof(*ConCharDX)); // задел для TEXTPARTS
-	HEAPVAL;
-	ZeroMemory(tmpOem, nMaxTextWidth*sizeof(*tmpOem));
-	HEAPVAL;
-	ZeroMemory(TextParts, (nMaxTextWidth + 1)*sizeof(*TextParts));
-	ZeroMemory(BgParts, nMaxTextWidth*sizeof(*BgParts));
-	ZeroMemory(PolyText, nMaxTextWidth*sizeof(*PolyText));
 	HEAPVAL;
 	ZeroMemory(pbLineChanged, nMaxTextHeight*sizeof(*pbLineChanged));
 	ZeroMemory(pbBackIsPic, nMaxTextHeight*sizeof(*pbBackIsPic));

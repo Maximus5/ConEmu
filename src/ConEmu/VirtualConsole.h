@@ -152,42 +152,6 @@ class CVirtualConsole :
 	public:
 		bool InitDC(bool abNoDc, bool abNoWndResize, MSectionLock *pSDC, MSectionLock *pSCON);
 	private:
-		enum _PartType
-		{
-			pNull=0,     // конец строки/последний, неотображаемый элемент
-			pSpace,      // при разборе строки будем смотреть, если нашли pText,pSpace,pText то pSpace,pText добавить в первый pText
-			pBorder,     // символы, которые нужно рисовать шрифтом hFont2
-			pFills,      // Progressbars & Scrollbars
-			pText,       // Если шрифт НЕ OEM  (вывод через TextOutW)
-			pOemText,    // Если шрифт OEM-ный (вывод нужно делать через TextOutA)
-			pDummy  // дополнительные "пробелы", которые нужно отрисовать после конца строки
-			//pUnderscore, // '_' прочерк. их тоже будем чикать в угоду тексту
-		};
-		enum _PartType GetCharType(wchar_t ch);
-		typedef struct _TextParts
-		{
-			enum _PartType partType;
-			int  nFontIdx;   // Индекс используемого шрифта
-			COLORREF crFore; // Цвет текста
-			COLORREF crBack; // !!! Используется только для отрисовки блочных симполов (прогрессов и пр.)
-			uint i;     // индекс в текущей строке (0-based)
-			uint n;     // количество символов в блоке
-			int  x;     // координата начала строки (may be >0)
-			uint width; // ширины символов блока в пикселях
-
-			DWORD *pDX; // сдвиги для отрисовки (как-бы ширины знакомест). Это указатель на часть ConCharDX
-		} TEXTPARTS;
-		typedef struct _BgParts
-		{
-			// индекс ячейки
-			uint i; // i строго больше 0 (0 - основной фон и он уже залит)
-			// и количество ячеек
-			uint n;
-			// Картинка или фон?
-			BOOL bBackIsPic;
-			COLORREF nBackRGB;
-		} BGPARTS;
-
 		// Working pointers
 		bool mb_PointersAllocated;
 		wchar_t  *mpsz_ConChar, *mpsz_ConCharSave;   // nMaxTextWidth * nMaxTextHeight
@@ -195,10 +159,6 @@ class CVirtualConsole :
 		CharAttr *mpn_ConAttrEx, *mpn_ConAttrExSave; // nMaxTextWidth * nMaxTextHeight
 		DWORD *ConCharX;      // nMaxTextWidth * nMaxTextHeight
 		DWORD *ConCharDX;     // nMaxTextWidth
-		char  *tmpOem;        // nMaxTextWidth
-		TEXTPARTS *TextParts; // nMaxTextWidth + 1
-		BGPARTS *BgParts;     // nMaxTextWidth
-		POLYTEXT  *PolyText;  // nMaxTextWidth
 		bool *pbLineChanged;  // nMaxTextHeight
 		bool *pbBackIsPic;    // nMaxTextHeight :: заполняется если *pbLineChanged
 		COLORREF* pnBackRGB;  // nMaxTextHeight :: заполняется если *pbLineChanged и НЕ *pbBackIsPic
