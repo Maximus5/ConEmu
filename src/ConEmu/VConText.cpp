@@ -851,10 +851,20 @@ void CVConLine::DistributeParts(uint part1, uint part2, uint right)
 			: (!(nFlags & (1 << TCF_WidthNormal))) ? TCF_WidthNormal
 			: TCF_WidthFree;
 
+		uint nMostMul = (nMost == TCF_WidthDouble) ? 9 : 10;
+		uint nMostDiv = 10;
+
 		// Apply denominators
-		AllWidths[nMost].ReqWidth = ReqWidth * AllWidths[nMost].Count / nAllCells;
+		AllWidths[nMost].ReqWidth = ReqWidth * AllWidths[nMost].Count * nMostMul / (nAllCells * nMostDiv);
+		_ASSERTE(AllWidths[nMost].ReqWidth <= ReqWidth);
+
 		// And prepare lesser types
-		if (AllWidths[nOther1].Count > 0 && AllWidths[nOther2].Count > 0)
+		if ((ReqWidth - AllWidths[nMost].ReqWidth) >= (AllWidths[nOther1].Width + AllWidths[nOther2].MinWidth))
+		{
+			AllWidths[nOther1].ReqWidth = AllWidths[nOther1].Width;
+			AllWidths[nOther2].ReqWidth = ReqWidth - (AllWidths[nMost].ReqWidth + AllWidths[nOther1].ReqWidth);
+		}
+		else if (AllWidths[nOther1].Count > 0 && AllWidths[nOther2].Count > 0)
 		{
 			_ASSERTE(AllWidths[nMost].Count > 0);
 			AllWidths[nOther1].ReqWidth = ReqWidth * AllWidths[nOther1].Count / nAllCells;
