@@ -177,7 +177,6 @@ namespace VConCreateLogger
 
 
 CVirtualConsole::PARTBRUSHES CVirtualConsole::m_PartBrushes[MAX_COUNT_PART_BRUSHES] = {{0}};
-char CVirtualConsole::mc_Uni2Oem[0x10000];
 // MAX_SPACES == 0x400
 wchar_t CVirtualConsole::ms_Spaces[MAX_SPACES];
 wchar_t CVirtualConsole::ms_HorzDbl[MAX_SPACES];
@@ -1372,17 +1371,6 @@ WORD CVirtualConsole::CharWidth(wchar_t ch, const CharAttr& attr)
 		nWidth = 1; // на всякий случай, чтобы деления на 0 не возникло
 
 	return nWidth;
-}
-
-char CVirtualConsole::Uni2Oem(wchar_t ch)
-{
-	if (mc_Uni2Oem[ch])
-		return mc_Uni2Oem[ch];
-
-	char c = '?';
-	WideCharToMultiByte(CP_OEMCP, 0, &ch, 1, &c, 1, 0, 0);
-	mc_Uni2Oem[ch] = c;
-	return c;
 }
 
 bool CVirtualConsole::CheckChangedTextAttr()
