@@ -9952,6 +9952,8 @@ void CSettings::RecreateBorderFont(const LOGFONT *inFont)
 			}
 		}
 
+		GetTextMetrics(hDC, m_tm+MAX_FONT_STYLES);
+
 		#ifdef _DEBUG
 		DumpFontMetrics(L"mh_Font2", hDC, mh_Font2.hFont);
 		#endif
@@ -10664,6 +10666,11 @@ LONG CSettings::BorderFontWidth()
 	_ASSERTE(LogFont2.lfWidth);
 	_ASSERTE(gpSetCls->mn_BorderFontWidth==LogFont2.lfWidth);
 	return gpSetCls->mn_BorderFontWidth;
+}
+
+BYTE CSettings::BorderFontCharSet()
+{
+	return m_tm[MAX_FONT_STYLES].tmCharSet;
 }
 
 BYTE CSettings::FontCharSet()

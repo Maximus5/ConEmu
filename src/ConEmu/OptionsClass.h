@@ -144,6 +144,7 @@ class CSettings
 		LONG FontHeightHtml();
 		LPCWSTR BorderFontFaceName();
 		LONG BorderFontWidth();
+		BYTE BorderFontCharSet();
 		BYTE FontCharSet();
 		BOOL FontBold();
 		BOOL FontItalic();
@@ -161,7 +162,7 @@ class CSettings
 		LONG mn_AutoFontWidth, mn_AutoFontHeight; // размеры шрифтов, которые были запрошены при авторесайзе шрифта
 		LONG mn_FontWidth, mn_FontHeight, mn_BorderFontWidth; // реальные размеры шрифтов
 		//BYTE mn_LoadFontCharSet; // То что загружено изначально (или уже сохранено в реестр)
-		TEXTMETRIC m_tm[MAX_FONT_STYLES];
+		TEXTMETRIC m_tm[MAX_FONT_STYLES+1];
 		LPOUTLINETEXTMETRIC m_otm[MAX_FONT_STYLES];
 		BOOL mb_Name1Ok, mb_Name2Ok;
 		void ResetFontWidth();
