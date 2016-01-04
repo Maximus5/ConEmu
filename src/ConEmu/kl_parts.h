@@ -27,6 +27,7 @@ typedef DWORD u32;
 #endif
 template <class T>__forceinline const T& klMin(const T &a, const T &b) {return a < b ? a : b;}
 template <class T>__forceinline const T& klMax(const T &a, const T &b) {return a > b ? a : b;}
+template <class T>__forceinline void klSwap(T &a, T &b) {T k = a; a = b; b = k;}
 
 #define klstricmp lstrcmpi
 #define klstricmpA lstrcmpiA
