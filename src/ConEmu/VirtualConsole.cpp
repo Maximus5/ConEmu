@@ -2897,13 +2897,37 @@ void CVirtualConsole::UpdateText()
 		// Final preparations
 		lp.PolishParts(ConCharXLine);
 
-		uint partIndex = 0;
+		uint partIndex;
 		VConTextPart *part, *nextPart;
 
-		//TODO: Do first run to paint only background (background image support)
-		//TODO: Second run - paint text
-
 		RECT rect = {};
+
+		// Do first run to paint only background (background image support)
+		partIndex = 0;
+		while (lp.GetNextPart(partIndex, part, nextPart))
+		{
+			const CharAttr& attr = part->Attrs[0];
+			//m_DC.SetBkColor(attr.crBackColor);
+
+			rect.left = part->PositionX;
+			rect.top = pos;
+			rect.right = part->PositionX + part->TotalWidth;
+			rect.bottom = rect.top + nFontHeight;
+
+			if (drawImage && ISBGIMGCOLOR(attr.nBackIdx))
+			{
+				PaintBackgroundImage(rect, attr.crBackColor);
+			}
+			else
+			{
+				HBRUSH hbr = PartBrush(L' ', attr.crBackColor, attr.crForeColor);
+				FillRect((HDC)m_DC, &rect, hbr);
+			}
+		}
+
+		// Second run - paint text
+		partIndex = 0;
+		m_DC.SetBkMode(TRANSPARENT);
 		while (lp.GetNextPart(partIndex, part, nextPart))
 		{
 			const CharAttr& attr = part->Attrs[0];
@@ -2933,7 +2957,9 @@ void CVirtualConsole::UpdateText()
 			//TODO: if nextPart is VertBorder, then increase rect.right by ((FontWidth>>1)-1)
 			//TODO: to ensure, that our possible *italic* text will not be clipped
 
-			UINT nFlags = ETO_CLIPPED | ETO_OPAQUE;
+			UINT nFlags = ETO_CLIPPED;
+
+			//TODO: ETO_GLYPH_INDEX, GetCharacterPlacement
 
 			if ((pszDrawLine == tmpOemWide) && (charSet == OEM_CHARSET))
 			{
