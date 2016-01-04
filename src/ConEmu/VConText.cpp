@@ -850,6 +850,8 @@ void CVConLine::DistributeParts(uint part1, uint part2, uint right)
 		uint nOther2 = (!(nFlags & (1 << TCF_WidthDouble))) ? TCF_WidthDouble
 			: (!(nFlags & (1 << TCF_WidthNormal))) ? TCF_WidthNormal
 			: TCF_WidthFree;
+		if (AllWidths[nOther1].Count < AllWidths[nOther2].Count)
+			klSwap(nOther1, nOther2);
 
 		uint nMostMul = (nMost == TCF_WidthDouble) ? 9 : 10;
 		uint nMostDiv = 10;
