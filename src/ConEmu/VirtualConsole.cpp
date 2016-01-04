@@ -2948,14 +2948,13 @@ void CVirtualConsole::UpdateText()
 			rect.left = part->PositionX;
 			rect.top = pos;
 			// For Bold and Italic we slightly extend drawing rect to avoid clipping
+			// Old note: if nextPart is VertBorder, then increase rect.right by ((FontWidth>>1)-1)
+			// Old note: to ensure, that our possible *italic* text will not be clipped
 			if (attr.nFontIndex & 3)
 				rect.right = klMin((uint)part->PositionX + part->TotalWidth + nRightEx, Width);
 			else
 				rect.right = part->PositionX + part->TotalWidth;
 			rect.bottom = rect.top + nFontHeight;
-
-			//TODO: if nextPart is VertBorder, then increase rect.right by ((FontWidth>>1)-1)
-			//TODO: to ensure, that our possible *italic* text will not be clipped
 
 			UINT nFlags = ETO_CLIPPED;
 
