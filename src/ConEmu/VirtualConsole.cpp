@@ -2913,13 +2913,27 @@ void CVirtualConsole::UpdateText()
 		partIndex = 0;
 		while (lp.GetNextPart(partIndex, part, nextPart))
 		{
-			const CharAttr& attr = part->Attrs[0];
+			const CharAttr attr = part->Attrs[0];
 			//m_DC.SetBkColor(attr.crBackColor);
 
 			rect.left = part->PositionX;
 			rect.top = pos;
-			rect.right = part->PositionX + part->TotalWidth;
 			rect.bottom = rect.top + nFontHeight;
+			rect.right = part->PositionX + part->TotalWidth;
+
+			while (nextPart && (nextPart->Attrs[0].crBackColor == attr.crBackColor))
+			{
+				if (!lp.GetNextPart(partIndex, part, nextPart))
+				{
+					_ASSERTE(FALSE && "Must not be here because nextPart!=NULL");
+					break;
+				}
+			}
+
+			if (part)
+			{
+				rect.right = part->PositionX + part->TotalWidth;
+			}
 
 			if (drawImage && ISBGIMGCOLOR(attr.nBackIdx))
 			{
@@ -2929,6 +2943,11 @@ void CVirtualConsole::UpdateText()
 			{
 				HBRUSH hbr = PartBrush(L' ', attr.crBackColor, attr.crForeColor);
 				FillRect((HDC)m_DC, &rect, hbr);
+			}
+
+			if (!nextPart)
+			{
+				break;
 			}
 		}
 
