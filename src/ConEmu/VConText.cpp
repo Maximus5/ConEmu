@@ -1061,11 +1061,18 @@ bool CVConLine::GetNextPart(uint& partIndex, VConTextPart*& part, VConTextPart*&
 
 	// No more parts?
 	if (partIndex >= PartsCount)
+	{
+		nextPart = NULL;
 		return false;
+	}
 
 	part = TextParts+partIndex;
-	nextPart = ((partIndex+1) < PartsCount) ? (part+1) : NULL;
 	partIndex++;
+
+	// Skip all next ‘combined’ parts
+	while ((partIndex < PartsCount) && (TextParts[partIndex].Flags == TRF_None))
+		partIndex++;
+	nextPart = (partIndex < PartsCount) ? (TextParts+partIndex) : NULL;
 	return true;
 }
 
