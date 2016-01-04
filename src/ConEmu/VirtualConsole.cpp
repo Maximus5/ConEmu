@@ -2881,6 +2881,13 @@ void CVirtualConsole::UpdateText()
 				{
 					_ASSERTE(iWide == (int)TextWidth); // Or we probably have problems with color mismatch
 					pszDrawLine = tmpOemWide;
+					for (int i = 0; i < iWide; i++)
+					{
+						if ((uint)(tmpOemWide[i]) <= 31)
+						{
+							tmpOemWide[i] = gszAnalogues[tmpOemWide[i]];
+						}
+					}
 				}
 			}
 		}
@@ -2960,7 +2967,27 @@ void CVirtualConsole::UpdateText()
 
 			//TODO: ETO_GLYPH_INDEX, GetCharacterPlacement
 
-			if ((pszDrawLine == tmpOemWide) && (charSet == OEM_CHARSET))
+			// блоки 25%, 50%, 75%, 100%
+			if (bEnhanceGraphics && (part->Flags & TRF_TextProgress))
+			{
+				// It may be done on first step, but if we do not do that here,
+				// some text may overlap scrollbars and progressbars...
+				wchar_t wc = part->Chars[0];
+				uint nFrom = 0;
+				while (nFrom < part->Length)
+				{
+					wc = part->Chars[nFrom];
+					uint nTo = nFrom + 1;
+					while (((nTo + 1) < part->Length) && (part->Chars[nTo] == wc))
+						nTo++;
+					HBRUSH hbr = PartBrush(wc, attr.crBackColor, attr.crForeColor);
+					rect.left = part->PositionX + nFrom * part->TotalWidth / part->Length;
+					rect.right = part->PositionX + nTo * part->TotalWidth / part->Length;
+					FillRect((HDC)m_DC, &rect, hbr);
+					nFrom = nTo;
+				}
+			}
+			else if ((pszDrawLine == tmpOemWide) && (charSet == OEM_CHARSET))
 			{
 				LPCSTR pszDrawOem = tmpOem + (part->Chars - tmpOemWide);
 				m_DC.TextDrawOem(rect.left, rect.top, nFlags, &rect,

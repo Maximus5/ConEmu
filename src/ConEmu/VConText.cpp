@@ -506,13 +506,17 @@ bool CVConLine::ParseLine(bool abForce, uint anTextWidth, uint anFontWidth, uint
 		}
 		else if (bEnhanceGraphics && isCharProgress(wc))
 		{
-			p->Flags = TRF_TextProgress;
+			p->Flags = TRF_TextProgress
+				| ((bUseAlternativeFont && isCharAltFont(wc)) ? TRF_TextAlternative : TRF_None)
+				;
 			while ((j2 < TextWidth) && (ConAttrLine[j2] == attr) && isCharProgress(ConCharLine[j2]))
 				j2++;
 		}
 		else if (bEnhanceGraphics && isCharScroll(wc))
 		{
-			p->Flags = TRF_TextScroll;
+			p->Flags = TRF_TextScroll
+				| ((bUseAlternativeFont && isCharAltFont(wc)) ? TRF_TextAlternative : TRF_None)
+				;
 			while ((j2 < TextWidth) && (ConAttrLine[j2] == attr) && isCharScroll(ConCharLine[j2]))
 				j2++;
 		}
