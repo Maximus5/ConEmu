@@ -2920,9 +2920,14 @@ void CVirtualConsole::UpdateText()
 				charSet = nFontCharSet;
 			}
 
+			const uint nRightEx = klMax((uint)1, (uint)nFontWidth / 4);
 			rect.left = part->PositionX;
 			rect.top = pos;
-			rect.right = part->PositionX + part->TotalWidth;
+			// For Bold and Italic we slightly extend drawing rect to avoid clipping
+			if (attr.nFontIndex & 3)
+				rect.right = klMin((uint)part->PositionX + part->TotalWidth + nRightEx, Width);
+			else
+				rect.right = part->PositionX + part->TotalWidth;
 			rect.bottom = rect.top + nFontHeight;
 
 			//TODO: if nextPart is VertBorder, then increase rect.right by ((FontWidth>>1)-1)
