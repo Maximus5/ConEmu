@@ -39,6 +39,18 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/wcwidth.h"
 
 
+// Character substitues (ASCII 0..31)
+const wchar_t gszAnalogues[32] =
+{
+	32, 9786, 9787, 9829, 9830, 9827, 9824, 8226, 9688, 9675, 9689, 9794, 9792, 9834, 9835, 9788,
+	9658, 9668, 8597, 8252,  182,  167, 9632, 8616, 8593, 8595, 8594, 8592, 8735, 8596, 9650, 9660
+};
+//wchar_t getUnicodeAnalogue(uint inChar)
+//{
+//	return (inChar <= 31) ? gszAnalogues[inChar] : (wchar_t)inChar;
+//}
+
+
 // Это символы рамок и др. спец. символы
 //#define isCharBorder(inChar) (inChar>=0x2013 && inChar<=0x266B)
 bool isCharAltFont(wchar_t inChar)

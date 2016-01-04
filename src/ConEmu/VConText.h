@@ -189,6 +189,9 @@ protected:
 	DWORD CurDialogFlags;
 };
 
+extern const wchar_t gszAnalogues[32];
+//wchar_t getUnicodeAnalogue(uint inChar);
+
 //TODO: all functions have to be converted to ucs32 instead of BMP
 bool isCharAltFont(wchar_t inChar);
 bool isCharPseudographics(wchar_t inChar);
