@@ -1000,7 +1000,7 @@ int ServerInit(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/)
 
 
 	gpSrv->osv.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
-	GetVersionEx(&gpSrv->osv);
+	GetOsVersionInformational(&gpSrv->osv);
 
 	// Смысла вроде не имеет, без ожидания "очистки" очереди винда "проглатывает мышиные события
 	// Межпроцессный семафор не помогает, оставил пока только в качестве заглушки

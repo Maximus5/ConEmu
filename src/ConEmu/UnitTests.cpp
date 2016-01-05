@@ -214,7 +214,7 @@ void DebugVersionTest()
 	bool bWin6 = VerifyVersionInfoW(&osvi6, VER_MAJORVERSION | VER_MINORVERSION, dwlConditionMask) != 0;
 
 	OSVERSIONINFOW osv = {sizeof(OSVERSIONINFOW)};
-	GetVersionExW(&osv);
+	GetOsVersionInformational(&osv);
 	bool bVerWin7 = ((osv.dwMajorVersion > 6) || ((osv.dwMajorVersion == 6) && (osv.dwMinorVersion >= 1)));
 	bool bVerWin6 = (osv.dwMajorVersion >= 6);
 
