@@ -339,6 +339,95 @@ void __cdecl xf_dump_chk()
 #endif
 
 
+#ifndef CONEMU_MINIMAL
+#include <stdlib.h>
+class CTrackBlocks
+{
+protected:
+	HANDLE hHeap;
+	size_t cchMaxCount, cchCount, cbUsedSize;
+	xf_mem_block* pBlocks;
+	bool ourBlocks;
+protected:
+	static int __cdecl CompareBlocks(const void* p1, const void* p2)
+	{
+		size_t s1 = ((xf_mem_block*)p1)->nBlockSize;
+		size_t s2 = ((xf_mem_block*)p2)->nBlockSize;
+		if (s1 < s2)
+			return -1;
+		else if (s1 > s2)
+			return 1;
+		else
+			return 0;
+	}
+public:
+	CTrackBlocks(bool abOurBlocks)
+	{
+		ourBlocks = abOurBlocks;
+		hHeap = HeapCreate(HEAP_GENERATE_EXCEPTIONS, 20000, 0);
+		cchCount = cbUsedSize = 0;
+		cchMaxCount = 2048;
+		pBlocks = (xf_mem_block*)HeapAlloc(hHeap, 0, cchMaxCount*sizeof(*pBlocks));
+	};
+	~CTrackBlocks()
+	{
+		// No need to free "pBlocks", we destroy heap completely
+		HeapDestroy(hHeap);
+	};
+	void DumpBlocks()
+	{
+		if (pBlocks && cchCount)
+		{
+			char sBlockInfo[255];
+			OutputDebugStringA(ourBlocks ? "\n============== OUR MEMORY BLOCKS BEGIN ==============\n" : "\n============== EXT MEMORY BLOCKS BEGIN ==============\n");
+			qsort(pBlocks, cchCount, sizeof(*pBlocks), CompareBlocks);
+			xf_mem_block* p = pBlocks;
+			for (size_t i = 0; i < cchCount; i++, p++)
+			{
+				msprintf(sBlockInfo, countof(sBlockInfo), "Used memory block at 0x" WIN3264TEST("%08X","%08X%08X") ", size %u\n    Allocated from: %s\n",
+					WIN3264WSPRINT(p->Padding), p->nBlockSize, p->sCreatedFrom);
+				OutputDebugStringA(sBlockInfo);
+			}
+			OutputDebugStringA(ourBlocks ? "\n============== END OF OUR MEMORY BLOCKS =============\n" : "\n============== END OF EXT MEMORY BLOCKS =============\n");
+		}
+	};
+	void AddBlock(const xf_mem_block* p)
+	{
+		xf_mem_block xm = *p;
+		xm.Padding = (void*)p;
+		PushBlock(xm);
+	};
+	void AddBlock(const PROCESS_HEAP_ENTRY& ent)
+	{
+		xf_mem_block xm = {};
+		xm.Padding = ent.lpData;
+		xm.nBlockSize = ent.cbData;
+		lstrcpynA(xm.sCreatedFrom, "<EXTERNAL>", countof(xm.sCreatedFrom));
+		PushBlock(xm);
+	};
+	size_t getUsedSize()
+	{
+		return cbUsedSize;
+	};
+protected:
+	void PushBlock(const xf_mem_block& blk)
+	{
+		cbUsedSize += blk.nBlockSize;
+		if (!pBlocks || (cchCount == cchMaxCount))
+		{
+			pBlocks = (xf_mem_block*)HeapReAlloc(hHeap, 0, pBlocks, cchMaxCount*2*sizeof(*pBlocks));
+			if (!pBlocks)
+			{
+				OutputDebugStringA("\n\n******************************\n******* HeapReAlloc FAILED *******\n******************************\n\n");
+				return;
+			}
+			cchMaxCount *= 2;
+		}
+		pBlocks[cchCount++] = blk;
+	};
+};
+#endif
+
 void __cdecl xf_dump()
 {
 #ifndef CONEMU_MINIMAL
@@ -347,8 +436,9 @@ void __cdecl xf_dump()
 	//HeapCompact(ghHeap,0);
 	char sBlockInfo[255];
 	PVOID pLast = NULL;
-	size_t cbUsedSize = 0, cbBrokenSize = 0;
 	DWORD cCount = 0;
+
+	CTrackBlocks ourBlocks(true), extBlocks(false);
 
 	while (HeapWalk(ghHeap, &ent))
 	{
@@ -374,30 +464,32 @@ void __cdecl xf_dump()
 
 			if (p->bBlockUsed==TRUE && (p->nBlockSize+sizeof(xf_mem_block)+8)==ent.cbData)
 			{
-				msprintf(sBlockInfo, countof(sBlockInfo), "Used memory block at 0x" WIN3264TEST("%08X","%08X%08X") ", size %u\n    Allocated from: %s\n", WIN3264WSPRINT(ent.lpData), ent.cbData,
-				          p->sCreatedFrom);
-
-				cbUsedSize += p->nBlockSize;
+				ourBlocks.AddBlock(p);
 			}
 			else
 			{
-				msprintf(sBlockInfo, countof(sBlockInfo), "Used memory block at 0x" WIN3264TEST("%08X","%08X%08X") ", size %u\n    Allocated from: %s\n", WIN3264WSPRINT(ent.lpData), ent.cbData,
-				          "<Header information broken!>");
-
-				cbBrokenSize += ent.cbData;
+				extBlocks.AddBlock(ent);
 			}
 
 			cCount++;
 
 			pLast = ent.lpData;
-			OutputDebugStringA(sBlockInfo);
 		}
 	}
 
 	HeapUnlock(ghHeap);
 
-	msprintf(sBlockInfo, countof(sBlockInfo), "Used size 0x" WIN3264TEST("%08X","%08X%08X") ", broken size 0x" WIN3264TEST("%08X","%08X%08X") ", total blocks %u\n",
-		WIN3264WSPRINT(cbUsedSize), WIN3264WSPRINT(cbBrokenSize), cCount);
+	extBlocks.DumpBlocks();
+	ourBlocks.DumpBlocks();
+
+	msprintf(sBlockInfo, countof(sBlockInfo),
+		"Used size:   %u (0x" WIN3264TEST("%08X","%08X%08X") ")\n"
+		"Broken size: %u (0x" WIN3264TEST("%08X","%08X%08X") ")\n"
+		"Block count: %u\n"
+		"=====================================================\n",
+		LODWORD(ourBlocks.getUsedSize()), WIN3264WSPRINT(ourBlocks.getUsedSize()),
+		LODWORD(extBlocks.getUsedSize()), WIN3264WSPRINT(extBlocks.getUsedSize()),
+		cCount);
 	OutputDebugStringA(sBlockInfo);
 #endif
 }
