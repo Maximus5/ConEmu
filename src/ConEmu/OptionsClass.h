@@ -150,6 +150,7 @@ class CSettings
 		BOOL FontItalic();
 		BOOL FontClearType();
 		BYTE FontQuality();
+		bool FontMonospaced();
 		HFONT CreateOtherFont(const wchar_t* asFontName);
 		void GetMainLogFont(LOGFONT& lf);
 		void EvalLogfontSizes(LOGFONT& LF, LONG lfHeight, LONG lfWidth);

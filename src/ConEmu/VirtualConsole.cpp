@@ -2820,8 +2820,11 @@ void CVirtualConsole::UpdateText()
 	bool bProportional = gpSet->isMonospace == 0;
 	bool bForceMonospace = gpSet->isMonospace == 2;
 	bool bFixFarBorders = gpSet->isFixFarBorders;
+	bool bFontProportional = !gpSetCls->FontMonospaced();
 	CEFONT hFont = gpSetCls->mh_Font[0];
 	CEFONT hFont2 = gpSetCls->mh_Font2;
+	uint partIndex;
+	VConTextPart *part, *nextPart;
 
 	CVConLine lp(mp_RCon); // Line parser
 	lp.SetDialogs(mn_DialogsCount, mrc_Dialogs, mn_DialogFlags, mn_DialogAllFlags, mrc_UCharMap);
@@ -2899,13 +2902,24 @@ void CVirtualConsole::UpdateText()
 			continue;
 		}
 
-		WARNING("Calculate proper widths for proportional fonts");
+		// Calculate proper widths for proportional fonts
+		if (bFontProportional)
+		{
+			partIndex = 0;
+			while (lp.GetNextPart(partIndex, part, nextPart))
+			{
+				for (uint i = 0; i < part->Length; i++)
+				{
+					if (part->CharFlags[i] >= TCF_WidthFree)
+					{
+						part->CharWidth[i] = CharWidth(part->Chars[i], part->Attrs[i]);
+					}
+				}
+			}
+		}
 
 		// Final preparations
 		lp.PolishParts(ConCharXLine);
-
-		uint partIndex;
-		VConTextPart *part, *nextPart;
 
 		RECT rect = {};
 

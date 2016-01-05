@@ -10574,6 +10574,11 @@ BYTE CSettings::FontQuality()
 	return LogFont.lfQuality;
 }
 
+bool CSettings::FontMonospaced()
+{
+	return IsAlmostMonospace(LogFont.lfFaceName, m_tm, m_otm[0]);
+}
+
 LPCWSTR CSettings::BorderFontFaceName()
 {
 	return LogFont2.lfFaceName;
