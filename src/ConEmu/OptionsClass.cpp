@@ -9870,6 +9870,22 @@ void CSettings::RecreateBorderFont(const LOGFONT *inFont)
 	// Force the same height in pixels as main font
 	EvalLogfontSizes(LogFont2, gpSet->FontSizeY, gpSet->FontSizeX2);
 
+	// Font for pseudographics may differs a lot in height,
+	// so, to avoid vertically-dashed frames...
+	if (gpSet->CheckCharAltFont(ucBoxDblVert))
+	{
+		if ((LogFont.lfHeight > 0)
+			|| ((LogFont2.lfHeight > 0) && (LogFont.lfHeight > LogFont2.lfHeight))
+			)
+		{
+			LogFont2.lfHeight = LogFont.lfHeight;
+		}
+		else
+		{
+			_ASSERTE(LogFont.lfHeight > 0);
+		}
+	}
+
 	// Font width was not defined?
 	if (gpSet->FontSizeX2 <= 0)
 	{
