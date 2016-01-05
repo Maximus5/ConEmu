@@ -49,7 +49,9 @@ protected:
 	static bool StartEnumFontsThread();
 	static bool EnumFontsFinished();
 
-	static bool IsAlmostMonospace(LPCWSTR asFaceName, int tmMaxCharWidth, int tmAveCharWidth, int tmHeight);
+	static bool IsAlmostMonospace(LPCWSTR asFaceName, LPTEXTMETRIC lptm, LPOUTLINETEXTMETRIC lpotm = NULL);
+	static LPOUTLINETEXTMETRIC LoadOutline(HDC hDC, HFONT hFont);
+	static void DumpFontMetrics(LPCWSTR szType, HDC hDC, HFONT hFont, LPOUTLINETEXTMETRIC lpOutl = NULL);
 
 private:
 	static HANDLE mh_EnumThread;

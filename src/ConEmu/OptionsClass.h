@@ -168,8 +168,6 @@ class CSettings
 		void ResetFontWidth();
 		LONG EvalCellWidth();
 		void SaveFontSizes(bool bAuto, bool bSendChanges);
-		LPOUTLINETEXTMETRIC LoadOutline(HDC hDC, HFONT hFont);
-		void DumpFontMetrics(LPCWSTR szType, HDC hDC, HFONT hFont, LPOUTLINETEXTMETRIC lpOutl = NULL);
 		// When font size is used as character size (negative LF.lfHeight)
 		// we need to evaluate real font size... Only for vector fonts!
 		struct FontHeightInfo

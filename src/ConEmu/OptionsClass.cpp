@@ -83,7 +83,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define CONEMU_HERE_CMD  L"{cmd} -cur_console:n"
 #define CONEMU_HERE_POSH L"{powershell} -cur_console:n"
 
-#define DEBUGSTRFONT(s) DEBUGSTR(s)
 #define DEBUGSTRDPI(s) DEBUGSTR(s)
 
 #define COUNTER_REFRESH 5000
@@ -10173,7 +10172,7 @@ CEFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
 		}
 
 		// у Arial'а например MaxWidth слишком большой (в два и более раз больше ВЫСОТЫ шрифта)
-		bool bAlmostMonospace = IsAlmostMonospace(inFont->lfFaceName, m_tm->tmMaxCharWidth, m_tm->tmAveCharWidth, m_tm->tmHeight);
+		bool bAlmostMonospace = IsAlmostMonospace(inFont->lfFaceName, m_tm, m_otm[0] /*m_tm->tmMaxCharWidth, m_tm->tmAveCharWidth, m_tm->tmHeight*/);
 		//if (m_tm->tmMaxCharWidth && m_tm->tmAveCharWidth && m_tm->tmHeight)
 		//{
 		//	int nRelativeDelta = (m_tm->tmMaxCharWidth - m_tm->tmAveCharWidth) * 100 / m_tm->tmHeight;
@@ -10275,86 +10274,6 @@ CEFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
 
 	return hFont;
 }
-
-LPOUTLINETEXTMETRIC CSettings::LoadOutline(HDC hDC, HFONT hFont)
-{
-	BOOL lbSelfDC = FALSE;
-
-	if (!hDC)
-	{
-		HDC hScreenDC = GetDC(0);
-		hDC = CreateCompatibleDC(hScreenDC);
-		lbSelfDC = TRUE;
-		ReleaseDC(0, hScreenDC);
-	}
-
-	HFONT hOldF = NULL;
-
-	if (hFont)
-	{
-		hOldF = (HFONT)SelectObject(hDC, hFont);
-	}
-
-	LPOUTLINETEXTMETRIC pOut = NULL;
-	UINT nSize = GetOutlineTextMetrics(hDC, 0, NULL);
-
-	if (nSize)
-	{
-		pOut = (LPOUTLINETEXTMETRIC)calloc(nSize,1);
-
-		if (pOut)
-		{
-			pOut->otmSize = nSize;
-
-			if (!GetOutlineTextMetricsW(hDC, nSize, pOut))
-			{
-				free(pOut); pOut = NULL;
-			}
-			else
-			{
-				pOut->otmpFamilyName = (PSTR)(((LPBYTE)pOut) + (DWORD_PTR)pOut->otmpFamilyName);
-				pOut->otmpFaceName = (PSTR)(((LPBYTE)pOut) + (DWORD_PTR)pOut->otmpFaceName);
-				pOut->otmpStyleName = (PSTR)(((LPBYTE)pOut) + (DWORD_PTR)pOut->otmpStyleName);
-				pOut->otmpFullName = (PSTR)(((LPBYTE)pOut) + (DWORD_PTR)pOut->otmpFullName);
-			}
-		}
-	}
-
-	if (hFont)
-	{
-		SelectObject(hDC, hOldF);
-	}
-
-	if (lbSelfDC)
-	{
-		DeleteDC(hDC);
-	}
-
-	return pOut;
-}
-
-void CSettings::DumpFontMetrics(LPCWSTR szType, HDC hDC, HFONT hFont, LPOUTLINETEXTMETRIC lpOutl)
-{
-	wchar_t szFontFace[32], szFontDump[255];
-	TEXTMETRIC ltm;
-
-	if (!hFont)
-	{
-		_wsprintf(szFontDump, SKIPLEN(countof(szFontDump)) L"*** gpSet->%s: WAS NOT CREATED!\n", szType);
-	}
-	else
-	{
-		SelectObject(hDC, hFont); // вернуть шрифт должна вызывающая функция!
-		GetTextMetrics(hDC, &ltm);
-		GetTextFace(hDC, countof(szFontFace), szFontFace);
-		_wsprintf(szFontDump, SKIPLEN(countof(szFontDump)) L"*** gpSet->%s: '%s', Height=%i, Ave=%i, Max=%i, Over=%i, Angle*10=%i\n",
-		          szType, szFontFace, ltm.tmHeight, ltm.tmAveCharWidth, ltm.tmMaxCharWidth, ltm.tmOverhang,
-		          lpOutl ? lpOutl->otmItalicAngle : 0);
-	}
-
-	DEBUGSTRFONT(szFontDump);
-}
-
 
 void CSettings::EnableDlgItem(HWND hParent, WORD nCtrlId, BOOL bEnabled)
 {
@@ -11975,7 +11894,7 @@ bool CSettings::CheckConsoleFontFast(LPCWSTR asCheckName /*= NULL*/)
 
 			// Интересуют только TrueType (вроде только для TTF доступен lpOutl - проверить
 			if (pszFamilyName[0] != L'@'
-			        && (gbIsDBCS || IsAlmostMonospace(pszFamilyName, lpOutl->otmTextMetrics.tmMaxCharWidth, lpOutl->otmTextMetrics.tmAveCharWidth, lpOutl->otmTextMetrics.tmHeight))
+			        && (gbIsDBCS || IsAlmostMonospace(pszFamilyName, &lpOutl->otmTextMetrics, lpOutl /*lpOutl->otmTextMetrics.tmMaxCharWidth, lpOutl->otmTextMetrics.tmAveCharWidth, lpOutl->otmTextMetrics.tmHeight*/))
 			        && lpOutl->otmPanoseNumber.bProportion == PAN_PROP_MONOSPACED
 			        && lstrcmpi(pszFamilyName, LF.lfFaceName) == 0
 			  )
@@ -12625,7 +12544,7 @@ int CSettings::EnumConFamCallBack(LPLOGFONT lplf, LPNEWTEXTMETRIC lpntm, DWORD F
 	// PAN_PROP_MONOSPACED - не дает правильного результата. Например 'MS Mincho' заявлен как моноширинный,
 	// но совсем таковым не является. Кириллица у него дофига какая...
 	// И только моноширинные!
-	DWORD bAlmostMonospace = IsAlmostMonospace(lplf->lfFaceName, lpntm->tmMaxCharWidth, lpntm->tmAveCharWidth, lpntm->tmHeight) ? 1 : 0;
+	DWORD bAlmostMonospace = IsAlmostMonospace(lplf->lfFaceName, (LPTEXTMETRIC)lpntm /*lpntm->tmMaxCharWidth, lpntm->tmAveCharWidth, lpntm->tmHeight*/) ? 1 : 0;
 
 	if (!bAlmostMonospace)
 		return TRUE;

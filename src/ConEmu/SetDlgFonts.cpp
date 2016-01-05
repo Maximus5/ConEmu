@@ -37,6 +37,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "../common/WThreads.h"
 
+#define DEBUGSTRFONT(s) DEBUGSTR(s)
+
 const wchar_t CSetDlgFonts::RASTER_FONTS_NAME[] = L"Raster Fonts";
 const wchar_t CSetDlgFonts::szRasterAutoError[] = L"Font auto size is not allowed for a fixed raster font size. Select 'Terminal' instead of '[Raster Fonts ...]'";
 SIZE CSetDlgFonts::szRasterSizes[100] = {{0,0}}; // {{16,8},{6,9},{8,9},{5,12},{7,12},{8,12},{16,12},{12,16},{10,18}};
@@ -80,7 +82,7 @@ int CSetDlgFonts::EnumFamCallBack(LPLOGFONT lplf, LPNEWTEXTMETRIC lpntm, DWORD F
 		aiFontCount[1]++;
 	}
 
-	DWORD bAlmostMonospace = IsAlmostMonospace(lplf->lfFaceName, lpntm->tmMaxCharWidth, lpntm->tmAveCharWidth, lpntm->tmHeight) ? 1 : 0;
+	DWORD bAlmostMonospace = IsAlmostMonospace(lplf->lfFaceName, (LPTEXTMETRIC)lpntm /*lpntm->tmMaxCharWidth, lpntm->tmAveCharWidth, lpntm->tmHeight*/) ? 1 : 0;
 
 	HWND hMainPg = gpSetCls->GetPage(CSettings::thi_Main);
 	if (SendDlgItemMessage(hMainPg, tFontFace, CB_FINDSTRINGEXACT, -1, (LPARAM) lplf->lfFaceName)==-1)
@@ -218,12 +220,49 @@ bool CSetDlgFonts::EnumFontsFinished()
 	return mb_EnumThreadFinished;
 }
 
-bool CSetDlgFonts::IsAlmostMonospace(LPCWSTR asFaceName, int tmMaxCharWidth, int tmAveCharWidth, int tmHeight)
+bool CSetDlgFonts::IsAlmostMonospace(LPCWSTR asFaceName, LPTEXTMETRIC lptm, LPOUTLINETEXTMETRIC lpotm)
 {
+	if (!lptm && lpotm)
+		lptm = &lpotm->otmTextMetrics;
+	if (!lptm)
+	{
+		_ASSERTE(lptm || lpotm);
+		return false;
+	}
+
+	bool bPanMono = false, bSelfOtm = false;
+
+	if (!lpotm && (lptm->tmPitchAndFamily & (TMPF_TRUETYPE)))
+	{
+		HFONT hFont = CreateFont(-lptm->tmHeight, 0, 0, 0, lptm->tmWeight, lptm->tmItalic, 0, 0, lptm->tmCharSet, 0, 0, 0,
+			0, asFaceName);
+		if (hFont)
+		{
+			lpotm = LoadOutline(NULL, hFont);
+			bSelfOtm = (lpotm != NULL);
+			DeleteObject(hFont);
+		}
+	}
+
+	if (lpotm)
+	{
+		if (lpotm->otmPanoseNumber.bProportion == PAN_PROP_MONOSPACED)
+			bPanMono = true;
+		if (bSelfOtm)
+			SafeFree(lpotm);
+	}
+
+	if (bPanMono)
+	{
+		return true;
+	}
+
 	// Некоторые шрифты (Consolas) достаточно странные. Заявлены как моноширинные (PAN_PROP_MONOSPACED),
 	// похожи на моноширинные, но tmMaxCharWidth у них очень широкий (иероглифы что-ли?)
 	if (lstrcmp(asFaceName, L"Consolas") == 0)
 		return true;
+
+	int tmMaxCharWidth = lptm->tmMaxCharWidth, tmAveCharWidth = lptm->tmAveCharWidth, tmHeight = lptm->tmHeight;
 
 	// у Arial'а например MaxWidth слишком большой (в два и более раз больше ВЫСОТЫ шрифта)
 	bool bAlmostMonospace = false;
@@ -258,4 +297,83 @@ bool CSetDlgFonts::IsAlmostMonospace(LPCWSTR asFaceName, int tmMaxCharWidth, int
 	}
 
 	return bAlmostMonospace;
+}
+
+LPOUTLINETEXTMETRIC CSetDlgFonts::LoadOutline(HDC hDC, HFONT hFont)
+{
+	BOOL lbSelfDC = FALSE;
+
+	if (!hDC)
+	{
+		HDC hScreenDC = GetDC(0);
+		hDC = CreateCompatibleDC(hScreenDC);
+		lbSelfDC = TRUE;
+		ReleaseDC(0, hScreenDC);
+	}
+
+	HFONT hOldF = NULL;
+
+	if (hFont)
+	{
+		hOldF = (HFONT)SelectObject(hDC, hFont);
+	}
+
+	LPOUTLINETEXTMETRIC pOut = NULL;
+	UINT nSize = GetOutlineTextMetrics(hDC, 0, NULL);
+
+	if (nSize)
+	{
+		pOut = (LPOUTLINETEXTMETRIC)calloc(nSize,1);
+
+		if (pOut)
+		{
+			pOut->otmSize = nSize;
+
+			if (!GetOutlineTextMetricsW(hDC, nSize, pOut))
+			{
+				free(pOut); pOut = NULL;
+			}
+			else
+			{
+				pOut->otmpFamilyName = (PSTR)(((LPBYTE)pOut) + (DWORD_PTR)pOut->otmpFamilyName);
+				pOut->otmpFaceName = (PSTR)(((LPBYTE)pOut) + (DWORD_PTR)pOut->otmpFaceName);
+				pOut->otmpStyleName = (PSTR)(((LPBYTE)pOut) + (DWORD_PTR)pOut->otmpStyleName);
+				pOut->otmpFullName = (PSTR)(((LPBYTE)pOut) + (DWORD_PTR)pOut->otmpFullName);
+			}
+		}
+	}
+
+	if (hFont)
+	{
+		SelectObject(hDC, hOldF);
+	}
+
+	if (lbSelfDC)
+	{
+		DeleteDC(hDC);
+	}
+
+	return pOut;
+}
+
+void CSetDlgFonts::DumpFontMetrics(LPCWSTR szType, HDC hDC, HFONT hFont, LPOUTLINETEXTMETRIC lpOutl)
+{
+	wchar_t szFontFace[32], szFontDump[255];
+	TEXTMETRIC ltm;
+
+	if (!hFont)
+	{
+		_wsprintf(szFontDump, SKIPLEN(countof(szFontDump)) L"*** gpSet->%s: WAS NOT CREATED!\n", szType);
+	}
+	else
+	{
+		SelectObject(hDC, hFont); // вернуть шрифт должна вызывающая функция!
+		GetTextMetrics(hDC, &ltm);
+		GetTextFace(hDC, countof(szFontFace), szFontFace);
+		_wsprintf(szFontDump, SKIPLEN(countof(szFontDump)) L"*** gpSet->%s: '%s', Height=%i, Ave=%i, Max=%i, Over=%i, Angle*10=%i\n",
+		          szType, szFontFace, ltm.tmHeight, ltm.tmAveCharWidth, ltm.tmMaxCharWidth, ltm.tmOverhang,
+		          lpOutl ? lpOutl->otmItalicAngle : 0);
+	}
+
+	DEBUGSTRFONT(szFontDump);
 }
