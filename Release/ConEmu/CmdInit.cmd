@@ -5,7 +5,7 @@
 
 rem Simple "ver" prints empty line before Windows version
 rem Use this construction to print just a version info
-FOR /F "delims=#" %%v IN ('ver') DO @echo %%v
+cmd /d /c ver | "%windir%\system32\find.exe" "Windows"
 
 rem Now we form the command prompt
 
