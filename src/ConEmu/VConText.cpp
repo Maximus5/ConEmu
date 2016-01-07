@@ -109,9 +109,11 @@ bool isCharPseudoFree(wchar_t inChar)
 // * or Up/Down arrows (scrollers)
 bool isCharBorderVertical(wchar_t inChar)
 {
-	bool isVert = ((inChar >= ucBoxSinglVert && inChar <= ucBoxSinglVertLeft)
-		|| (inChar == ucBoxDblVertHorz)
-		|| (inChar == ucArrowUp || inChar == ucArrowDown));
+	bool isVert = ((inChar >= ucBoxSinglVert)
+		&& ((inChar <= ucBoxSinglUpHorz)
+			|| ((inChar >= ucBoxDblVert) && (inChar <= ucBoxDblVertHorz))
+			|| ((inChar == ucArrowUp) || (inChar == ucArrowDown))
+			));
 	return isVert;
 }
 
@@ -537,6 +539,7 @@ bool CVConLine::ParseLine(bool abForce, uint anTextWidth, uint anFontWidth, uint
 				wchar_t wc2;
 				while ((j2 < TextWidth) && (ConAttrLine[j2] == attr)
 					&& isCharPseudographics((wc2=ConCharLine[j2]))
+					&& !isCharBorderVertical(wc2)
 					&& isCharAltFont(wc2))
 					j2++;
 			}
