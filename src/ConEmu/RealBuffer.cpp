@@ -6,7 +6,7 @@
 //TODO: ChangeXXX - послать в консоль и установить значение переменной
 
 /*
-Copyright (c) 2009-2015 Maximus5
+Copyright (c) 2009-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -5157,7 +5157,9 @@ void CRealBuffer::OnKeysSending()
 		return;
 
 	bool bReset = false;
-	COORD crTopLeft = {con.TopLeft.x>=0 ? con.TopLeft.x : 0, con.TopLeft.y>=0 ? con.TopLeft.y : 0};
+	// Console API uses SHORT
+	_ASSERTE(!HIWORD(con.TopLeft.x) && !HIWORD(con.TopLeft.y));
+	COORD crTopLeft = {(SHORT)(con.TopLeft.x>=0 ? con.TopLeft.x : 0), (SHORT)(con.TopLeft.y>=0 ? con.TopLeft.y : 0)};
 
 	if (con.TopLeft.y == con.m_sbi.srWindow.Top)
 		bReset = true;
