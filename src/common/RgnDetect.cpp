@@ -1330,7 +1330,9 @@ int CRgnDetect::MarkDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHei
 		if ((!nY1 || ((m_DetectedDialogs.AllFlags & FR_MENUBAR) && (nY1 == 1)))  // условие для верхней границы панелей
 		        && (nY2 >= (nY1 + 3))) // и минимальная высота панелей
 		{
-			SMALL_RECT sr = {nX1,nY1,nX2,nY2};
+			// Console API uses SHORT
+			_ASSERTE(!HIWORD(nX1) && !HIWORD(nY1) && !HIWORD(nX2) && !HIWORD(nY2));
+			SMALL_RECT sr = {(SHORT)nX1, (SHORT)nY1, (SHORT)nX2, (SHORT)nY2};
 			DWORD nPossible = 0;
 
 			if (!nX1)
@@ -1900,7 +1902,9 @@ BOOL CRgnDetect::InitializeSBI(const COLORREF *apColors)
 
 	// Теперь нужно перекинуть данные в mpsz_Chars & mp_Attrs
 	COORD crNul = {0,0};
-	COORD crSize = {nTextWidth,nTextHeight};
+	// Console API uses SHORT
+	_ASSERTE(!HIWORD(nTextWidth) && !HIWORD(nTextHeight));
+	COORD crSize = {(SHORT)nTextWidth, (SHORT)nTextHeight};
 	OnWriteConsoleOutput(pCharInfo, crSize, crNul, &m_sbi.srWindow, mp_Colors);
 	// Буфер CHAR_INFO больше не нужен
 	free(pCharInfo);
