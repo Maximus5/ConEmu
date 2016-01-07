@@ -158,6 +158,7 @@ extern bool     gbIsCmdProcess;
 //extern wchar_t *gpszLastWriteConsole;
 extern int      gnCmdInitialized; // 0 - Not already, 1 - OK, -1 - Fail
 extern bool     gbAllowClinkUsage;
+extern bool     gbClinkInjectRequested;
 extern bool     gbAllowUncPaths;
 /* ************ Globals for cmd.exe/clink ************ */
 

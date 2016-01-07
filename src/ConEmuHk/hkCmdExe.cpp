@@ -215,14 +215,19 @@ LONG WINAPI OnRegQueryValueExW(HKEY hKey, LPCWSTR lpValueName, LPDWORD lpReserve
 			goto wrap;
 		}
 
-		if (InitializeClink())
+		if (gbIsCmdProcess && hKey && lpValueName
+			&& (lstrcmpi(lpValueName, L"AutoRun") == 0)
+			&& InitializeClink())
 		{
-			if (gbAllowClinkUsage && gszClinkCmdLine && (lstrcmpi(lpValueName, L"AutoRun") == 0)
+			if (gbAllowClinkUsage && gszClinkCmdLine
 				&& IsInteractive())
 			{
 				// Is already loaded?
-				if (!IsClinkLoaded())
+				if (!IsClinkLoaded()
+					&& !gbClinkInjectRequested)
 				{
+					// Do this once, to avoid multiple initializations
+					gbClinkInjectRequested = true;
 					// May be it is set up itself?
 					typedef LONG (WINAPI* RegOpenKeyEx_t)(HKEY hKey, LPCWSTR lpSubKey, DWORD ulOptions, REGSAM samDesired, PHKEY phkResult);
 					typedef LONG (WINAPI* RegCloseKey_t)(HKEY hKey);

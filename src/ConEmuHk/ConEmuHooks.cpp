@@ -166,6 +166,7 @@ static bool IsInteractive();
 //call_readline_t gpfnClinkReadLine = NULL;
 int      gnCmdInitialized = 0; // 0 - Not already, 1 - OK, -1 - Fail
 bool     gbAllowClinkUsage = false;
+bool     gbClinkInjectRequested = false;
 bool     gbAllowUncPaths = false;
 bool     gbCurDirChanged = false;
 /* ************ Globals for cmd.exe/clink ************ */
