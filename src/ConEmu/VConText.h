@@ -38,6 +38,10 @@ const TextPartFlags
 	TRF_PosFixed         = 0x0001,
 	TRF_PosRecommended   = 0x0002,
 	TRF_SizeFree         = 0x0004,
+	TRF_ExpandGraphics   = 0x0008, // set for parts, where caller must draw additional
+								   // pseudographic/space parts (like '═' or '─' or ' ')
+								   // to avoid dashed frames or broken dialog borders,
+								   // especially with proportional fonts
 	// Text properties
 	TRF_TextNormal       = 0x0010,
 	TRF_TextAlternative  = 0x0020, // Alternative font (frames or CJK)
