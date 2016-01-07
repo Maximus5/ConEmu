@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2015 Maximus5
+Copyright (c) 2009-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -1263,7 +1263,7 @@ done:
 
 #endif
 	// Забить атрибуты
-	MarkDialog(pChar, pAttr, nWidth, nHeight, nFromX, nFromY, nMostRight, nMostBottom, bMarkBorder);
+	MarkDialog(pChar, pAttr, nWidth, nHeight, nFromX, nFromY, nMostRight, nMostBottom, (bMarkBorder ? CharAttr_DialogRect : 0));
 	lbDlgFound = true;
 
 	// Вернуть размеры, если просили
@@ -1277,7 +1277,7 @@ fin:
 	return lbDlgFound;
 }
 
-int CRgnDetect::MarkDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int nX1, int nY1, int nX2, int nY2, bool bMarkBorder, bool bFindExterior /*= TRUE*/, DWORD nFlags /*= -1*/)
+int CRgnDetect::MarkDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int nX1, int nY1, int nX2, int nY2, UINT bMarkBorder /*= 0*/, bool bFindExterior /*= TRUE*/, DWORD nFlags /*= -1*/)
 {
 	if (nX1<0 || nX1>=nWidth || nX2<nX1 || nX2>=nWidth
 	        || nY1<0 || nY1>=nHeight || nY2<nY1 || nY2>=nHeight)
@@ -1486,32 +1486,27 @@ int CRgnDetect::MarkDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHei
 
 	if (bMarkBorder)
 	{
-		#if 0
-		pAttr[nY1 * nWidth + nX1].bDialogCorner = TRUE;
-		pAttr[nY1 * nWidth + nX2].bDialogCorner = TRUE;
-		pAttr[nY2 * nWidth + nX1].bDialogCorner = TRUE;
-		pAttr[nY2 * nWidth + nX2].bDialogCorner = TRUE;
-		#else
-		pAttr[nY1 * nWidth + nX1].Flags |= CharAttr_DialogCorner;
-		pAttr[nY1 * nWidth + nX2].Flags |= CharAttr_DialogCorner;
-		pAttr[nY2 * nWidth + nX1].Flags |= CharAttr_DialogCorner;
-		pAttr[nY2 * nWidth + nX2].Flags |= CharAttr_DialogCorner;
-		#endif
+		pAttr[nY1 * nWidth + nX1].Flags2 |= CharAttr2_DialogCorner;
+		pAttr[nY1 * nWidth + nX2].Flags2 |= CharAttr2_DialogCorner;
+		pAttr[nY2 * nWidth + nX1].Flags2 |= CharAttr2_DialogCorner;
+		pAttr[nY2 * nWidth + nX2].Flags2 |= CharAttr2_DialogCorner;
 	}
+
+	_ASSERTE(!bMarkBorder || bMarkBorder==CharAttr_DialogPanel || bMarkBorder==CharAttr_DialogRect);
 
 	for (int nY = nY1; nY <= nY2; nY++)
 	{
 		CharAttr* pAttrShift = pAttr + nY * nWidth + nX1;
 
-		if (bMarkBorder)
+		if (bMarkBorder & CharAttr_DialogRect)
 		{
-			#if 0
-			pAttr[nShift].bDialogVBorder = TRUE;
-			pAttr[nShift+nX2-nX1].bDialogVBorder = TRUE;
-			#else
-			pAttrShift->Flags |= CharAttr_DialogVBorder;
-			pAttrShift[nX2-nX1].Flags |= CharAttr_DialogVBorder;
-			#endif
+			// Mark vertical borders only if region was not marked as dialog yet
+			// Otherwise we may harm nice text flow if one dialog is displayed
+			// over Far panels, and font is proportional...
+			if (!(pAttrShift->Flags & CharAttr_DialogRect))
+				pAttrShift->Flags |= CharAttr_DialogVBorder;
+			if (!(pAttrShift[nX2-nX1].Flags & CharAttr_DialogRect))
+				pAttrShift[nX2-nX1].Flags |= CharAttr_DialogVBorder;
 		}
 
 		for(int nX = nX2 - nX1 + 1; nX > 0; nX--, pAttrShift++)
@@ -1523,19 +1518,11 @@ int CRgnDetect::MarkDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHei
 			}
 			*/
 
-			#if 0
-			pAttr[nShift].bDialog = TRUE;
-			pAttr[nShift].bTransparent = FALSE;
-			#else
-			pAttrShift->Flags = (pAttrShift->Flags | CharAttr_Dialog) & ~CharAttr_Transparent;
-			#endif
+			pAttrShift->Flags = (pAttrShift->Flags | bMarkBorder) & ~CharAttr_Transparent;
 		}
-
-		//if (bMarkBorder)
-		//	pAttr[nShift].bDialogVBorder = TRUE;
 	}
 
-	// Если помечается диалог по рамке - попытаться определить окантовку
+	// If dialog was marked by Pseudographic frame, try to detect dialog rim (spaces and shadow)
 	if (bFindExterior && bMarkBorder)
 	{
 		int nMostRight = nX2, nMostBottom = nY2;
@@ -1552,13 +1539,13 @@ int CRgnDetect::MarkDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHei
 				m_DetectedDialogs.DlgFlags[nDlgIdx] = DlgFlags;
 
 			//Optimize: помечать можно только окантовку - сам диалог уже помечен
-			MarkDialog(pChar, pAttr, nWidth, nHeight, nNewX1, nNewY1, nMostRight, nMostBottom, true, false);
+			MarkDialog(pChar, pAttr, nWidth, nHeight, nNewX1, nNewY1, nMostRight, nMostBottom, CharAttr_DialogRect, false);
 			// Еще нужно "пометить" тень под диалогом
 			if (((nMostBottom+1) < nHeight) && ((nNewX1+2) < nWidth))
-				MarkDialog(pChar, pAttr, nWidth, nHeight, nNewX1+2, nMostBottom+1, min(nMostRight+2,nWidth-1), nMostBottom+1, true, false);
+				MarkDialog(pChar, pAttr, nWidth, nHeight, nNewX1+2, nMostBottom+1, min(nMostRight+2,nWidth-1), nMostBottom+1, CharAttr_DialogRect, false);
 			// И справа от диалога
 			if (((nMostRight+1) < nWidth) && ((nNewY1+1) < nHeight))
-				MarkDialog(pChar, pAttr, nWidth, nHeight, nMostRight+1, nNewY1+1, min(nMostRight+2,nWidth-1), nMostBottom, true, false);
+				MarkDialog(pChar, pAttr, nWidth, nHeight, nMostRight+1, nNewY1+1, min(nMostRight+2,nWidth-1), nMostBottom, CharAttr_DialogRect, false);
 		}
 	}
 
@@ -2134,17 +2121,7 @@ void CRgnDetect::PrepareTransparent(const CEFAR_INFO_MAPPING *apFarInfo, const C
 			if (r.bottom >= nHeight) r.bottom = nHeight - 1;
 		}
 
-		MarkDialog(pChar, pAttr, nWidth, nHeight, r.left, r.top, r.right, r.bottom, true);
-		//// Для детекта наличия PanelTabs
-		//if (nHeight > (nBottomLines+r.bottom+1)) {
-		//	int nIdx = nWidth*(r.bottom+1)+r.right-1;
-		//	if (pChar[nIdx-1] == 9616 && pChar[nIdx] == L'+' && pChar[nIdx+1] == 9616
-		//		&& pAttr[nIdx].nBackIdx == nPanelTabsBackIdx
-		//		&& pAttr[nIdx].nForeIdx == nPanelTabsForeIdx)
-		//	{
-		//		MarkDialog(pChar, pAttr, nWidth, nHeight, r.left, r.bottom+1, r.right, r.bottom+1, false, false, FR_PANELTABS|FR_LEFTPANEL);
-		//	}
-		//}
+		MarkDialog(pChar, pAttr, nWidth, nHeight, r.left, r.top, r.right, r.bottom, CharAttr_DialogPanel);
 	}
 
 	if (!lbFullPanel)
@@ -2155,14 +2132,7 @@ void CRgnDetect::PrepareTransparent(const CEFAR_INFO_MAPPING *apFarInfo, const C
 			lbRightVisible = true;
 			r = mp_FarInfo->FarRightPanel.PanelRect; // mr_RightPanelFull;
 		}
-		// -- Ветка никогда не активировалась
 		_ASSERTE(mp_FarInfo->bFarRightPanel || !mp_FarInfo->FarRightPanel.Visible);
-		//// Но если часть панели скрыта диалогами - наш детект панели мог не сработать
-		//else if (mp_FarInfo->bFarRightPanel && mp_FarInfo->FarRightPanel.Visible)
-		//{
-		//	// В "буферном" режиме размер панелей намного больше экрана
-		//	lbRightVisible = ConsoleRect2ScreenRect(mp_FarInfo->FarRightPanel.PanelRect, &r);
-		//}
 
 		if (lbRightVisible)
 		{
@@ -2173,17 +2143,7 @@ void CRgnDetect::PrepareTransparent(const CEFAR_INFO_MAPPING *apFarInfo, const C
 				if (r.bottom >= nHeight) r.bottom = nHeight - 1;
 			}
 
-			MarkDialog(pChar, pAttr, nWidth, nHeight, r.left, r.top, r.right, r.bottom, true);
-			//// Для детекта наличия PanelTabs
-			//if (nHeight > (nBottomLines+r.bottom+1)) {
-			//	int nIdx = nWidth*(r.bottom+1)+r.right-1;
-			//	if (pChar[nIdx-1] == 9616 && pChar[nIdx] == L'+' && pChar[nIdx+1] == 9616
-			//		&& pAttr[nIdx].nBackIdx == nPanelTabsBackIdx
-			//		&& pAttr[nIdx].nForeIdx == nPanelTabsForeIdx)
-			//	{
-			//		MarkDialog(pChar, pAttr, nWidth, nHeight, r.left, r.bottom+1, r.right, r.bottom+1, false, false, FR_PANELTABS|FR_RIGHTPANEL);
-			//	}
-			//}
+			MarkDialog(pChar, pAttr, nWidth, nHeight, r.left, r.top, r.right, r.bottom, CharAttr_DialogPanel);
 		}
 	}
 
@@ -2302,11 +2262,7 @@ void CRgnDetect::PrepareTransparent(const CEFAR_INFO_MAPPING *apFarInfo, const C
 				int nX = (int)(pszCorner - pszDst);
 
 				if (
-						#if 0
-						!pnDst[nX].bDialogCorner
-						#else
-						!(pnDst[nX].Flags/*DstFlags*/ & CharAttr_DialogCorner)
-						#endif
+						!(pnDst[nX].Flags2/*DstFlags*/ & CharAttr2_DialogCorner)
 					)
 				{
 					switch (pszDst[nX])
@@ -2394,7 +2350,7 @@ void CRgnDetect::PrepareTransparent(const CEFAR_INFO_MAPPING *apFarInfo, const C
 				while (pnDstShift < pnDstEnd)
 				{
 					// If it was not marked as "Dialog"
-					if (!(pnDstShift->Flags & CharAttr_Dialog))
+					if (!(pnDstShift->Flags & (CharAttr_DialogPanel|CharAttr_DialogRect)))
 					{
 						if (pnDstShift->crBackColor == crUserBack)
 						{

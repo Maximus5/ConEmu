@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2015 Maximus5
+Copyright (c) 2009-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -43,16 +43,16 @@ typedef struct tag_CharAttr
 			unsigned int crForeColor : 24; // чтобы в ui64 поместился и nFontIndex
 			unsigned int nFontIndex : 8; // 0=normal, or combination {1=bold,2=italic,4=underline}, or 8=UCharMap
 			unsigned int crBackColor : 24; // чтобы в ui64 поместился и Flags
-			#define CharAttr_Dialog         1
-			#define CharAttr_DialogVBorder  2
-			#define CharAttr_DialogCorner   4
-			#define CharAttr_SomeFilled     8
-			#define CharAttr_Transparent   16
+			#define CharAttr_DialogPanel    1 // Far Manager panels
+			#define CharAttr_DialogRect     2 // Flying dialog (over Panels or Editor/Viewer)
+			#define CharAttr_DialogVBorder  4 // Left or Right dialog edge
+			#define CharAttr_Transparent   16 // This cell may be marked as transparent (User Screen Transparency)
 			unsigned int Flags : 8; // Warning! These flags are used in "All" comparison
 			// *** End of All comparison
 			#define CharAttr2_NonSpacing    1 // low-surrogate pair
 			#define CharAttr2_Combining     2 // combining characters, drawn over previous one
 			#define CharAttr2_DoubleSpaced  4 // DBCS glyphs used full (double) space
+			#define CharAttr2_DialogCorner  8
 			unsigned int Flags2 : 8; // вспомогательные флаги CharAttr_XXX
 			unsigned int nForeIdx : 8; // Only 5 bits are used at the moment (0..15 base colors + 15..31 extended colors)
 			unsigned int nBackIdx : 8; // Used to ExtendColors and ExtendFonts
@@ -178,7 +178,7 @@ class CRgnDetect
 		bool FindByBackground(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostRight, int &nMostBottom, bool &bMarkBorder);
 		// Сервисная
 		bool ExpandDialogFrame(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int nFrameX, int nFrameY, int &nMostRight, int &nMostBottom);
-		int  MarkDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int nX1, int nY1, int nX2, int nY2, bool bMarkBorder = false, bool bFindExterior = true, DWORD nFlags = -1);
+		int  MarkDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int nX1, int nY1, int nX2, int nY2, UINT bMarkBorder = 0, bool bFindExterior = true, DWORD nFlags = -1);
 		bool ConsoleRect2ScreenRect(const RECT &rcCon, RECT *prcScr);
 
 
