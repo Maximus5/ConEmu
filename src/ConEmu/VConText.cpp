@@ -1113,25 +1113,26 @@ TextPartFlags CVConLine::isDialogBorderCoord(uint j)
 		NextDialogX = CurDialogX2 = TextWidth;
 		CurDialogI = -1; CurDialogFlags = 0;
 		int nMax = TextWidth-1;
+		_ASSERTE((int)row >= 0 && (int)j >= 0);
 		// Process dialogs in reverse order, to ensure tops (Z-order) dialogs would be first
 		for (int i = mn_DialogsCount-1; i >= 0; i--)
 		{
-			if (mrc_Dialogs[i].Top <= row && row <= mrc_Dialogs[i].Bottom)
+			if (mrc_Dialogs[i].Top <= (int)row && (int)row <= mrc_Dialogs[i].Bottom)
 			{
 				int border1 = mrc_Dialogs[i].Left;
 				int border2 = mrc_Dialogs[i].Right;
 
 				// Looking for a dialog edge, on the current row, nearest to the current X-coord (j)
-				if (j <= border1 && border1 < NextDialogX)
+				if ((int)j <= border1 && border1 < NextDialogX)
 					NextDialogX = border1;
-				else if (border2 < nMax && j <= border2 && border2 < NextDialogX)
+				else if (border2 < nMax && (int)j <= border2 && border2 < NextDialogX)
 					NextDialogX = border2;
 
 				// Looking for a dialog (not a Far Manager Panels), covering current coord
 				// TODO: It would be nice to process Far's column separators too, but there is no nice API
 				if (!(mn_DialogFlags[i] & (FR_LEFTPANEL|FR_RIGHTPANEL|FR_FULLPANEL|FR_VIEWEREDITOR)))
 				{
-					if ((border1 <= j && j <= border2)
+					if ((border1 <= (int)j && (int)j <= border2)
 						&& (CurDialogX1 <= border1 && border2 <= CurDialogX2))
 					{
 						CurDialogX1 = border1;
