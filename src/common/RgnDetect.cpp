@@ -794,6 +794,7 @@ bool CRgnDetect::FindDialog_Any(wchar_t* pChar, CharAttr* pAttr, int nWidth, int
 	return false;
 }
 
+// Function marks Far Panel vertical single lines (column separators)
 bool CRgnDetect::FindDialog_Inner(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY)
 {
 	// наткнулись на вертикальную линию на панели
@@ -842,11 +843,7 @@ bool CRgnDetect::FindDialog_Inner(wchar_t* pChar, CharAttr* pAttr, int nWidth, i
 					{
 						//_ASSERTE(p->bDialog);
 						_ASSERTE(p >= pAttr);
-						#if 0
-						p->bDialogVBorder = true;
-						#else
 						p->Flags |= CharAttr_DialogVBorder;
-						#endif
 						p -= nWidth;
 					}
 
@@ -863,11 +860,7 @@ bool CRgnDetect::FindDialog_Inner(wchar_t* pChar, CharAttr* pAttr, int nWidth, i
 
 						//_ASSERTE(p->bDialog);
 						_ASSERTE(p >= pAttr);
-						#if 0
-						p->bDialogVBorder = true;
-						#else
 						p->Flags |= CharAttr_DialogVBorder;
-						#endif
 						p -= nWidth;
 						nY --;
 					}
@@ -1508,11 +1501,7 @@ int CRgnDetect::MarkDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHei
 
 	for (int nY = nY1; nY <= nY2; nY++)
 	{
-		#if 0
-		int nShift = nY * nWidth + nX1;
-		#else
 		CharAttr* pAttrShift = pAttr + nY * nWidth + nX1;
-		#endif
 
 		if (bMarkBorder)
 		{
@@ -1525,11 +1514,7 @@ int CRgnDetect::MarkDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHei
 			#endif
 		}
 
-		#if 0
-		for(int nX = nX1; nX <= nX2; nX++, nShift++)
-		#else
 		for(int nX = nX2 - nX1 + 1; nX > 0; nX--, pAttrShift++)
-		#endif
 		{
 			/*
 			if (nY > 0 && nX >= 58)
@@ -2401,51 +2386,23 @@ void CRgnDetect::PrepareTransparent(const CEFAR_INFO_MAPPING *apFarInfo, const C
 				//	//Внимание! Панели могут быть, но они могут быть перекрыты PlugMenu!
 				//}
 				
-				WARNING("Во время запуска неприятно мелькает - пока не появятся панели - становится прозрачным");
-				#if 0
-				int nShift = nY*nWidth+nX1;
-				int nX = nX1;
-				#else
+				//TODO: Far Manager: blinking on startup? until panels don't appear? become transparent?
+
 				CharAttr* pnDstShift = pnDst + /*nY*nWidth +*/ nX1;
 				CharAttr* pnDstEnd = pnDst + nX2 + 1;
-				#endif
 
-				#if 0
-				while (nX <= nX2)
-				#else
 				while (pnDstShift < pnDstEnd)
-				#endif
 				{
-					// Если еще не определен как поле диалога
-					#if 0
-					if (!pnDst[nX].bDialog)
-					#else
+					// If it was not marked as "Dialog"
 					if (!(pnDstShift->Flags & CharAttr_Dialog))
-					#endif
 					{
-						#if 0
-						if (pnDst[nX].crBackColor == crUserBack)
-						#else
 						if (pnDstShift->crBackColor == crUserBack)
-						#endif
 						{
-							// помечаем прозрачным
-							#if 0
-							pnDst[nX].bTransparent = TRUE;
-							//pnDst[nX].crBackColor = crColorKey;
-							#else
 							pnDstShift->Flags |= CharAttr_Transparent;
-							//pnDstShift->crBackColor = crColorKey;
-							#endif
-							//pszDst[nX] = L' ';
 						}
 					}
 
-					#if 0
-					nX++; nShift++;
-					#else
 					pnDstShift++;
-					#endif
 				}
 			}
 
