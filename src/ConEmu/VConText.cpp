@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2015 Maximus5
+Copyright (c) 2015-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -493,7 +493,16 @@ bool CVConLine::ParseLine(bool abForce, uint anTextWidth, uint anFontWidth, uint
 
 		_ASSERTE(p->Flags == TRF_None);
 
-		if (isCharSpaceSingle(wc))
+		if (dlgBorder)
+		{
+			p->Flags = dlgBorder | TRF_SizeFixed
+				| (isCharBorderVertical(wc) ? TRF_TextPseudograph : TRF_None)
+				//| (isCharSpaceSingle(wc) ? TRF_TextSpacing : TRF_None)
+				| ((bUseAlternativeFont && isCharAltFont(wc)) ? TRF_TextAlternative : TRF_None)
+				| ((bEnhanceGraphics && isCharProgress(wc)) ? TRF_TextProgress : TRF_None)
+				;
+		}
+		else if (isCharSpaceSingle(wc))
 		{
 			// CJK Double-width space will be processed under isCharCJK
 			p->Flags = TRF_TextSpacing;
@@ -521,13 +530,6 @@ bool CVConLine::ParseLine(bool abForce, uint anTextWidth, uint anFontWidth, uint
 				;
 			while ((j2 < TextWidth) && (ConAttrLine[j2] == attr) && isCharScroll(ConCharLine[j2]))
 				j2++;
-		}
-		else if (dlgBorder)
-		{
-			p->Flags = dlgBorder
-				| (isCharBorderVertical(wc) ? TRF_TextPseudograph : TRF_None)
-				| ((bUseAlternativeFont && isCharAltFont(wc)) ? TRF_TextAlternative : TRF_None)
-				;
 		}
 		else if (isCharPseudographics(wc))
 		{
@@ -637,6 +639,18 @@ void CVConLine::PolishParts(DWORD* pnXCoords)
 
 		if (part.Flags & (TRF_PosFixed|TRF_PosRecommended))
 		{
+			if (part.Flags & TRF_SizeFixed)
+			{
+				for (uint i = 0; i < part.Length; i++)
+				{
+					#define CellWidth FontWidth
+					if (part.CharWidth[i] != CellWidth)
+					{
+						part.TotalWidth += (int)((int)CellWidth - (int)part.CharWidth[i]);
+						part.CharWidth[i] = CellWidth;
+					}
+				}
+			}
 			// Overlaps?
 			if (k && (part.PositionX != PosX))
 			{
@@ -1171,8 +1185,10 @@ TextPartFlags CVConLine::isDialogBorderCoord(uint j)
 	{
 		wchar_t c = ConCharLine[j];
 
+		// Already marked as dialog VBorder?
+		if ((ConAttrLine[j].Flags & CharAttr_DialogVBorder)
 			// Frames (vertical parts, pseudographics)
-		if (isCharBorderVertical(c)
+			|| isCharBorderVertical(c)
 			// Far Manager Panel scrollers
 			|| isCharScroll(c)
 			// Far marks with '}' symbols file names, gone out of column width (too long name)

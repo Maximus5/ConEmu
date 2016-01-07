@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2015 Maximus5
+Copyright (c) 2015-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -38,6 +38,7 @@ const TextPartFlags
 	TRF_PosFixed         = 0x0001,
 	TRF_PosRecommended   = 0x0002,
 	TRF_SizeFree         = 0x0004,
+	TRF_SizeFixed        = 0x0008,
 	// Text properties
 	TRF_TextNormal       = 0x0010,
 	TRF_TextAlternative  = 0x0020, // Alternative font (frames or CJK)
