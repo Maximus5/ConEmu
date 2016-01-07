@@ -190,7 +190,33 @@ static INT_PTR Fast_OnInitDialog(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lP
 	// Index of the default location (relative to listbox, but not a pszSettingsPlaces)
 	// By default - suggest %APPDATA% or, if possible, %ConEmuDir%
 	// Win2k does not have 'msxml3.dll'/'msxml3r.dll' libraries
-	int iDefault = ((iAllowed == 0) && !IsWin2kEql()) ? (CConEmuUpdate::NeedRunElevation() ? 1 : 3) : 0;
+	int iDefault = -1;
+	// If registry was detected?
+	if (iAllowed == 0)
+	{
+		if (lstrcmp(Storage.szType, CONEMU_CONFIGTYPE_REG) == 0)
+		{
+			SettingsBase* reg = gpSet->CreateSettings(&Storage);
+			if (reg)
+			{
+				if (reg->OpenKey(gpSetCls->GetConfigPath(), KEY_READ))
+				{
+					iDefault = 0;
+					reg->CloseKey();
+				}
+				delete reg;
+			}
+		}
+		else
+		{
+			_ASSERTE(lstrcmp(Storage.szType, CONEMU_CONFIGTYPE_REG) == 0);
+		}
+	}
+	// If still not decided - use xml if possible
+	if (iDefault == -1)
+	{
+		iDefault = ((iAllowed == 0) && !IsWin2kEql()) ? (CConEmuUpdate::NeedRunElevation() ? 1 : 3) : 0;
+	}
 
 	// Populate lbStorageLocation
 	while (pszSettingsPlaces[iAllowed])
