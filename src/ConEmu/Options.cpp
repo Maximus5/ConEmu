@@ -2331,6 +2331,11 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 			{
 				rbNeedCreateVanilla = true;
 			}
+			else
+			{
+				lbOpened = false;
+				reg->CloseKey();
+			}
 		}
 	}
 
