@@ -2656,11 +2656,14 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 		reg->Load(L"Anti-aliasing2", isAntiAlias2);
 
 		//TODO: Extend ranges for arbitrary font groups
+		{
 		wchar_t* pszCharRanges = NULL; wchar_t szDefaultRanges[] = L"2013-25C4";
 		if (!reg->Load(L"FixFarBordersRanges", &pszCharRanges))
 			pszCharRanges = szDefaultRanges;
 		ParseCharRanges(pszCharRanges, mpc_CharAltFontRanges);
-		SafeFree(pszCharRanges);
+		if (pszCharRanges && (pszCharRanges != szDefaultRanges))
+			free(pszCharRanges);
+		}
 
 		reg->Load(L"ExtendUCharMap", isExtendUCharMap);
 		reg->Load(L"PartBrush75", isPartBrush75); if (isPartBrush75<5) isPartBrush75=5; else if (isPartBrush75>250) isPartBrush75=250;
