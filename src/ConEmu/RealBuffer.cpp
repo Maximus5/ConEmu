@@ -5681,7 +5681,7 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 							lca.Flags2 |= CharAttr2_Combining;
 							break;
 						case 2:
-							lca.Flags |= CharAttr_DoubleSpaced;
+							lca.Flags2 |= CharAttr2_DoubleSpaced;
 							break;
 						}
 

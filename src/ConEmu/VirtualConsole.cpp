@@ -1304,7 +1304,7 @@ WORD CVirtualConsole::CharWidth(wchar_t ch, const CharAttr& attr)
 	{
 		return 0;
 	}
-	else if (attr.Flags & CharAttr_DoubleSpaced)
+	else if (attr.Flags2 & CharAttr2_DoubleSpaced)
 	{
 		return 2*nFontWidth;
 	}

@@ -48,11 +48,11 @@ typedef struct tag_CharAttr
 			#define CharAttr_DialogCorner   4
 			#define CharAttr_SomeFilled     8
 			#define CharAttr_Transparent   16
-			#define CharAttr_DoubleSpaced  32 // DBCS glyphs used full (double) space
 			unsigned int Flags : 8; // Warning! These flags are used in "All" comparison
 			// *** End of All comparison
 			#define CharAttr2_NonSpacing    1 // low-surrogate pair
 			#define CharAttr2_Combining     2 // combining characters, drawn over previous one
+			#define CharAttr2_DoubleSpaced  4 // DBCS glyphs used full (double) space
 			unsigned int Flags2 : 8; // вспомогательные флаги CharAttr_XXX
 			unsigned int nForeIdx : 8; // Only 5 bits are used at the moment (0..15 base colors + 15..31 extended colors)
 			unsigned int nBackIdx : 8; // Used to ExtendColors and ExtendFonts

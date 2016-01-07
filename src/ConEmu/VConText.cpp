@@ -339,7 +339,7 @@ void VConTextPart::Done(uint anLen, uint FontWidth)
 		VConTextPartWidth& aw = AllWidths[TCF_WidthFree];
 		for (uint left = anLen; left--; pch++, pca++, pcf++, pcw++)
 		{
-			_ASSERTE(!(pca->Flags2 & (CharAttr2_NonSpacing|CharAttr2_Combining|CharAttr_DoubleSpaced)));
+			_ASSERTE(!(pca->Flags2 & (CharAttr2_NonSpacing|CharAttr2_Combining|CharAttr2_DoubleSpaced)));
 			*pcw = FontWidth; // if non-shrinked
 			*pcf = TCF_WidthFree;
 			TotalWidth += FontWidth;
@@ -360,7 +360,7 @@ void VConTextPart::Done(uint anLen, uint FontWidth)
 				VConTextPartWidth& aw = AllWidths[TCF_WidthZero];
 				aw.Count++; // Informational
 			}
-			else if (pca->Flags & CharAttr_DoubleSpaced)
+			else if (pca->Flags2 & CharAttr2_DoubleSpaced)
 			{
 				*pcw = FontWidth2;
 				*pcf = TCF_WidthDouble;
@@ -2001,7 +2001,7 @@ void CVirtualConsole::UpdateText()
 									LONG nCharWidth = CharWidth(ch, pDrawAttr ? pDrawAttr[idx] : attr);
 
 									if (isCharSpace(ch)
-										|| (attr.Flags & CharAttr_DoubleSpaced)
+										|| (attr.Flags2 & CharAttr2_DoubleSpaced)
 										|| isCharAltFont(ch)
 										|| isCharProgress(ch))
 									{
