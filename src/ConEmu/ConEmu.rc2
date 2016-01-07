@@ -93,7 +93,7 @@ BEGIN
 	cbLongOutput            "Autoexpand bufferheight to specified\r\nnumber of lines, while Far executes\r\nconsole commands. Full console output\r\n(up to specified count of lines) will be\r\navailable via Far macro (CtrlO.reg)"
 	cbMinToTray             "Auto minimize to Taskbar Status Area (TSA)\r\nRight click on ‘Close window button’\r\nin ConEmu title for minimize to TSA,\r\nwhen this checkbox is OFF"
 	cbMonitorConsoleLang    "Monitor input language change in real\r\nconsole (e.g. Far Manager XLat switching support)"
-	cbMonospace             "Check it for non proportional (monospaced) fonts,\r\n3rd-state - center symbols in the cells"
+	cbMonospace             "Check it for non proportional (monospaced) fonts"
 	cbMultiCon              "Turn on MultiConsole\r\n(several consoles in one ConEmu)\r\nConEmu restart required"
 	cbMultiIterate          "Iterate opened Far windows with ‘Host-key’+Number"
 	cbNewConfirm            "Confirm new console creation.\r\nYou may change cmd line for it, or turn on ""Run as..."" feature.\r\nEven if unchecked, You may hold ""Shift"" to display dialog."

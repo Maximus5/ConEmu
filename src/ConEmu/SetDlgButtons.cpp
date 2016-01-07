@@ -2725,8 +2725,6 @@ void CSetDlgButtons::OnBtn_Monospace(HWND hDlg, WORD CB, BYTE uCheck)
 
 	gpSet->isMonospace = uCheck;
 
-	if (gpSet->isMonospace) gpSetCls->isMonospaceSelected = gpSet->isMonospace;
-
 	gpSetCls->mb_IgnoreEditChanged = TRUE;
 	gpSetCls->ResetFontWidth();
 	gpConEmu->Update(true);

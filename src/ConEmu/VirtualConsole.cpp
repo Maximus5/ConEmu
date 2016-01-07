@@ -2817,8 +2817,6 @@ void CVirtualConsole::UpdateText()
 	int *nDX = (int*)malloc((TextWidth+1)*sizeof(int));
 
 	bool bEnhanceGraphics = gpSet->isEnhanceGraphics;
-	bool bProportional = gpSet->isMonospace == 0;
-	bool bForceMonospace = gpSet->isMonospace == 2;
 	bool bFixFarBorders = gpSet->isFixFarBorders;
 	bool bFontProportional = !gpSetCls->FontMonospaced();
 	CEFONT hFont = gpSetCls->mh_Font[0];

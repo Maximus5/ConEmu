@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2015 Maximus5
+Copyright (c) 2009-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -182,9 +182,6 @@ class CSettings
 		};
 		MArray<FontHeightInfo> m_FontHeights;
 
-	protected:
-
-		BYTE isMonospaceSelected; // 0 - proportional, 1 - monospace, 2 - forcemonospace
 	public:
 		char isAllowDetach;
 
@@ -304,7 +301,6 @@ class CSettings
 		void UpdatePosSizeEnabled(HWND hWnd2);
 		void UpdatePos(int x, int y, bool bGetRect = false);
 		void UpdateSize(const CESize w, const CESize h);
-		void UpdateTTF(BOOL bNewTTF);
 		void UpdateFontInfo();
 		void Performance(UINT nID, BOOL bEnd);
 		void PostUpdateCounters(bool bPosted);
@@ -448,7 +444,6 @@ class CSettings
 		void ChangeCurrentPalette(const ColorPalette* pPal, bool bChangeDropDown);
 	private:
 		BOOL mb_IgnoreEditChanged;
-		BOOL mb_IgnoreTtfChange;
 		//BOOL mb_CharSetWasSet;
 		i64 mn_Freq;
 		i64 mn_FPS[256]; int mn_FPS_CUR_FRAME;

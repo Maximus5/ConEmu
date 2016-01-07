@@ -469,8 +469,6 @@ bool CVConLine::ParseLine(bool abForce, uint anTextWidth, uint anFontWidth, uint
 		return false;
 
 	const bool bEnhanceGraphics = gpSet->isEnhanceGraphics;
-	const bool bProportional = gpSet->isMonospace == 0;
-	const bool bForceMonospace = gpSet->isMonospace == 2;
 	const bool bUseAlternativeFont = gpSet->isFixFarBorders;
 
 	for (uint j = 0; j < TextWidth;)

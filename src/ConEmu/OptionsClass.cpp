@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2015 Maximus5
+Copyright (c) 2009-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -165,7 +165,6 @@ CSettings::CSettings()
 	isAllowDetach = 0;
 	mb_ThemingEnabled = (gOSVer.dwMajorVersion >= 6 || (gOSVer.dwMajorVersion == 5 && gOSVer.dwMinorVersion >= 1));
 	//isFullScreen = false;
-	isMonospaceSelected = 0;
 	//ZeroStruct(m_QuakePrevSize);
 
 	szSelectionModError[0] = 0;
@@ -195,7 +194,6 @@ CSettings::CSettings()
 	SingleInstanceShowHide = sih_None;
 	mb_StopRegisterFonts = FALSE;
 	mb_IgnoreEditChanged = FALSE;
-	mb_IgnoreTtfChange = TRUE;
 	gpSet->mb_CharSetWasSet = FALSE;
 	mb_TabHotKeyRegistered = FALSE;
 	//hMain = hExt = hFar = hTabs = hKeys = hColors = hCmdTasks = hViews = hInfo = hDebug = hUpdate = hSelection = NULL;
@@ -901,8 +899,6 @@ void CSettings::SettingsLoaded(SettingsLoadedFlags slfFlags, LPCWSTR pszCmdLine 
 	LogFont.lfWeight = gpSet->isBold ? FW_BOLD : FW_NORMAL;
 	LogFont.lfCharSet = (BYTE)gpSet->mn_LoadFontCharSet;
 	LogFont.lfItalic = gpSet->isItalic;
-
-	isMonospaceSelected = gpSet->isMonospace ? gpSet->isMonospace : 1; // запомнить, чтобы выбирать то что нужно при смене шрифта
 
 	if (slfFlags & slf_OnResetReload)
 	{
@@ -8881,26 +8877,6 @@ void CSettings::UpdateSize(const CESize w, const CESize h)
 	gpConEmu->LogWindowPos(szLabel);
 }
 
-// Пожалуй, не будем автоматически менять флажок "Monospace"
-// Был вроде Issue, да и не всегда моноширинность правильно определяется (DejaVu Sans Mono)
-void CSettings::UpdateTTF(BOOL bNewTTF)
-{
-	if (mb_IgnoreTtfChange)
-		return;
-
-	if (GetSystemMetrics(SM_DBCSENABLED) != 0)
-		return;
-
-	if (!bNewTTF)
-	{
-		gpSet->isMonospace = bNewTTF ? 0 : isMonospaceSelected;
-
-		HWND hMainPg = GetPage(thi_Main);
-		if (hMainPg)
-			checkDlgButton(hMainPg, cbMonospace, gpSet->isMonospace); // 3state
-	}
-}
-
 void CSettings::UpdateFontInfo()
 {
 	HWND hInfoPg = GetPage(thi_Info);
@@ -9353,22 +9329,6 @@ void CSettings::MacroFontSetName(LPCWSTR pszFontName, WORD anHeight /*= 0*/, WOR
 // Вызывается из диалога настроек
 void CSettings::RecreateFont(WORD wFromID)
 {
-	if (wFromID == tFontFace
-	        || wFromID == tFontSizeY
-	        || wFromID == tFontSizeX
-	        || wFromID == tFontCharset
-	        || wFromID == cbBold
-	        || wFromID == cbItalic
-	        || wFromID == cbFontMonitorDpi
-	        || wFromID == cbFontAsDeviceUnits
-	        || wFromID == rNoneAA
-	        || wFromID == rStandardAA
-	        || wFromID == rCTAA
-	  )
-	{
-		mb_IgnoreTtfChange = FALSE;
-	}
-
 	LOGFONT LF = {0};
 
 	HWND hMainPg = GetPage(thi_Main);
@@ -9474,8 +9434,6 @@ void CSettings::RecreateFont(WORD wFromID)
 	{
 		gpConEmu->OnPanelViewSettingsChanged(TRUE);
 	}
-
-	mb_IgnoreTtfChange = TRUE;
 }
 
 void CSettings::ShowFontErrorTip(LPCTSTR asInfo)
@@ -10013,8 +9971,6 @@ CEFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
 		// Получить реальные размеры шрифта (обновить inFont)
 		pFont->GetBoundingBox(&inFont->lfWidth, &inFont->lfHeight);
 		ResetFontWidth();
-		if (ghOpWnd)
-			UpdateTTF(!pFont->IsMonospace());
 
 		CEFONT ceFont;
 		ceFont.iType = CEFONT_CUSTOM;
@@ -10243,14 +10199,6 @@ CEFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
 					break;
 				}
 			}
-		}
-
-		if (ghOpWnd)
-		{
-			// устанавливать только при листании шрифта в настройке
-			TODO("Или через GuiMacro?");
-			// при кликах по самому флажку "Monospace" шрифт не пересоздается (CreateFont... не вызывается)
-			UpdateTTF(!bAlmostMonospace);    //(m_tm->tmMaxCharWidth - m_tm->tmAveCharWidth)>2
 		}
 
 		for (int s = 1; s < MAX_FONT_STYLES; s++)

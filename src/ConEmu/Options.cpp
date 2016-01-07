@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2015 Maximus5
+Copyright (c) 2009-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -2463,7 +2463,7 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 		reg->Load(L"FontBold", isBold);
 		reg->Load(L"FontItalic", isItalic);
 
-		if (!reg->Load(L"Monospace", isMonospace) && !GetSystemMetrics(SM_DBCSENABLED))
+		if (!reg->Load(L"Monospace", isMonospace))
 		{
 			// Compatibility. Пережитки прошлого, загрузить по "старым" именам параметров
 			bool bForceMonospace = false, bProportional = false;
@@ -2472,8 +2472,6 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 			isMonospace = bForceMonospace ? 2 : bProportional ? 0 : 1;
 		}
 		if (isMonospace > 2) isMonospace = 2;
-
-		//isMonospaceSelected = isMonospace ? isMonospace : 1; // запомнить, чтобы выбирать то что нужно при смене шрифта
 
 		reg->Load(L"StoreTaskbarkTasks", isStoreTaskbarkTasks);
 		reg->Load(L"StoreTaskbarCommands", isStoreTaskbarCommands);
