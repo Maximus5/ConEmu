@@ -2908,11 +2908,14 @@ void CVirtualConsole::UpdateText()
 			partIndex = 0;
 			while (lp.GetNextPart(partIndex, part, nextPart))
 			{
+				part->TotalWidth = 0;
 				for (uint i = 0; i < part->Length; i++)
 				{
 					if (part->CharFlags[i] >= TCF_WidthFree)
 					{
-						part->CharWidth[i] = CharWidth(part->Chars[i], part->Attrs[i]);
+						WORD cw = CharWidth(part->Chars[i], part->Attrs[i]);
+						part->CharWidth[i] = cw;
+						part->TotalWidth += cw;
 					}
 				}
 			}
