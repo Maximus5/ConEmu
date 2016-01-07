@@ -38,10 +38,6 @@ const TextPartFlags
 	TRF_PosFixed         = 0x0001,
 	TRF_PosRecommended   = 0x0002,
 	TRF_SizeFree         = 0x0004,
-	TRF_ExpandGraphics   = 0x0008, // set for parts, where caller must draw additional
-								   // pseudographic/space parts (like '═' or '─' or ' ')
-								   // to avoid dashed frames or broken dialog borders,
-								   // especially with proportional fonts
 	// Text properties
 	TRF_TextNormal       = 0x0010,
 	TRF_TextAlternative  = 0x0020, // Alternative font (frames or CJK)
@@ -54,6 +50,10 @@ const TextPartFlags
 	TRF_TextSeparate     = 0x0400, // May not be combined with other parts
 	TRF_TextProgress     = 0x0800, // Progress (boxes with 25%, 50%, etc)
 	TRF_TextScroll       = 0x1000, // Far Manager scroll bars (vertical especially)
+	TRF_ExpandGraphics   = 0x2000, // set for parts, where caller must draw additional
+								   // pseudographic/space parts (like '═' or '─' or ' ')
+								   // to avoid dashed frames or broken dialog borders,
+								   // especially with proportional fonts
 	// TODO: Ligatures
 	// End of flags
 	TRF_None = 0;
