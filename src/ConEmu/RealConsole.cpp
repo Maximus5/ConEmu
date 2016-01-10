@@ -15078,6 +15078,8 @@ BOOL CRealConsole::OpenMapHeader(BOOL abFromAttach)
 	m_ConsoleMap.InitName(CECONMAPNAME, LODWORD(hConWnd));
 	if (!m_ConsoleMap.Open())
 	{
+		//TODO: Fails, if server was started under "System" account
+		//TODO: ..\160110-Run-As-System\ConEmu-System.xml
 		lstrcpyn(szErr, m_ConsoleMap.GetErrorText(), countof(szErr));
 		goto wrap;
 	}
