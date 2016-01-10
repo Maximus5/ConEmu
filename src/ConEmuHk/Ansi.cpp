@@ -920,6 +920,23 @@ BOOL CEAnsi::WriteText(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, 
 		write.Region.left = write.Region.right = 0; // not used yet
 	}
 
+	if (gbWasXTermOutput)
+	{
+		// top - writes all lines using full console width
+		// and thereafter some ANSI-s and "\r\n"
+		int iDontWrap = 0;
+		for (DWORD n = 0; (n < nNumberOfCharsToWrite) && (iDontWrap < 3); n++)
+		{
+			iDontWrap |= (lpBuffer[n] == L'\r' || lpBuffer[n] == L'\n') ? 1 : 2;
+		}
+		// If only printable chars are written
+		if (iDontWrap == 2)
+		{
+			// ExtWriteText will check (AI) if it must not wrap&scroll
+			write.Flags |= ewtf_DontWrap;
+		}
+	}
+
 	//lbRc = _WriteConsoleW(hConsoleOutput, lpBuffer, nNumberOfCharsToWrite, &nTotalWritten, NULL);
 	write.Buffer = lpBuffer;
 	write.NumberOfCharsToWrite = nNumberOfCharsToWrite;
@@ -2016,17 +2033,9 @@ BOOL CEAnsi::WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOut
 					lbApply = FALSE;
 				}
 
-				EXTREADWRITEFLAGS AddFlags = ewtf_None;
-				if (gbWasXTermOutput)
-				{
-					// tmux/screen, status line?
-					// ExtWriteText will check (AI) if it must not wrap&scroll
-					AddFlags = ewtf_DontWrap;
-				}
-
 				DWORD nWrite = (DWORD)(lpStart - lpBuffer);
 				//lbRc = WriteText(_WriteConsoleW, hConsoleOutput, lpBuffer, nWrite, lpNumberOfCharsWritten);
-				lbRc = WriteText(_WriteConsoleW, hConsoleOutput, lpBuffer, nWrite, lpNumberOfCharsWritten, FALSE, AddFlags);
+				lbRc = WriteText(_WriteConsoleW, hConsoleOutput, lpBuffer, nWrite, lpNumberOfCharsWritten, FALSE);
 				if (!lbRc)
 					goto wrap;
 				//write.Buffer = lpBuffer;

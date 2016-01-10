@@ -1080,11 +1080,12 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 	const wchar_t *pEnd = pFrom + Info->NumberOfCharsToWrite;
 
 	// tmux, status line
+	// top (from ssh-ed UNIX) - writes all lines using full console width and thereafter some ANSI-s and "\r\n"
 	if ((Info->Flags & ewtf_DontWrap))
 	{
-		// Rather optimistic, but status line is written mostly separately
+		//TODO: These are assumptions, it'll be better to reimplement console interface from scratch...
 		if (bWrap
-			&& (csbi.dwCursorPosition.Y == csbi.srWindow.Bottom)
+			//&& (csbi.dwCursorPosition.Y == csbi.srWindow.Bottom)
 			&& ((csbi.dwCursorPosition.X + Info->NumberOfCharsToWrite) == csbi.dwSize.X))
 		{
 			bRevertMode = true;
@@ -1103,6 +1104,12 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 			}
 		}
 	}
+	#ifdef _DEBUG
+	else
+	{
+		int iDbg = 0; // ewtf_DontWrap was not set
+	}
+	#endif
 
 	const wchar_t *pCur = pFrom;
 	SHORT x = csbi.dwCursorPosition.X, y = csbi.dwCursorPosition.Y; // 0-based
