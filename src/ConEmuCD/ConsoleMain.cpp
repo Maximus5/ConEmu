@@ -1168,6 +1168,9 @@ int __stdcall ConsoleMain3(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 	}
 	else if ((iRc = ParseCommandLine(pszFullCmdLine)) != 0)
 	{
+		wchar_t szLog[80];
+		_wsprintf(szLog, SKIPCOUNT(szLog) L"ParseCommandLine returns %i, exiting", iRc);
+		LogFunction(szLog);
 		goto wrap;
 	}
 
@@ -5680,11 +5683,18 @@ int ParseCommandLine(LPCWSTR asCmdLine)
 			|| !(lbIsWindowVisible = IsAutoAttachAllowed())
 			|| isTerminalMode())
 		{
+			if (gpLogSize)
+			{
+				if (!ghConWnd) { LogFunction(L"!ghConWnd"); }
+				else if (!lbIsWindowVisible) { LogFunction(L"!IsAutoAttachAllowed"); }
+				else { LogFunction(L"isTerminalMode"); }
+			}
 			// Но это может быть все-таки наше окошко. Как проверить...
 			// Найдем первый параметр
 			LPCWSTR pszSlash = lsCmdLine ? wcschr(lsCmdLine, L'/') : NULL;
 			if (pszSlash)
 			{
+				LogFunction(pszSlash);
 				// И сравним с используемыми у нас. Возможно потом еще что-то добавить придется
 				if (wmemcmp(pszSlash, L"/DEBUGPID=", 10) != 0)
 					pszSlash = NULL;
