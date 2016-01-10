@@ -356,6 +356,9 @@ bool IsAutoAttachAllowed()
 	if (!ghConWnd)
 		return false;
 
+	if (gbAttachMode & am_Admin)
+		return true;
+
 	if (!IsWindowVisible(ghConWnd))
 		return (gbDefTermCall || gbAttachFromFar);
 
