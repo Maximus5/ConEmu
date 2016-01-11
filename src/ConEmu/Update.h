@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2011-2015 Maximus5
+Copyright (c) 2011-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -49,8 +49,6 @@ class MSection;
 struct MSectionSimple;
 
 extern CConEmuUpdate* gpUpd;
-
-class CWinInet;
 
 class CConEmuUpdate
 {

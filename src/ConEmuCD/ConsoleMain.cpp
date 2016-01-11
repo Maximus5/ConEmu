@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2015 Maximus5
+Copyright (c) 2009-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -96,7 +96,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConProcess.h"
 #include "ConsoleHelp.h"
 #include "Debugger.h"
-#include "DownloaderCall.h"
 #include "UnicodeTest.h"
 
 
@@ -234,7 +233,6 @@ OSVERSIONINFO gOSVer;
 WORD gnOsVer = 0x500;
 bool gbIsWine = false;
 bool gbIsDBCS = false;
-bool gbIsDownloading = false;
 
 
 SrvInfo* gpSrv = NULL;
@@ -1882,8 +1880,7 @@ wrap:
 	xf_validate(NULL);
 	#endif
 
-	if ((iRc == CERR_GUIMACRO_SUCCEEDED)
-		|| (iRc == CERR_DOWNLOAD_SUCCEEDED))
+	if (iRc == CERR_GUIMACRO_SUCCEEDED)
 	{
 		iRc = 0;
 	}
@@ -2951,7 +2948,6 @@ enum ConEmuExecAction
 	ea_ExportTab,  // ea_ExportCon + ConEmu window
 	ea_ExportGui,  // export env.vars to ConEmu window
 	ea_ExportAll,  // export env.vars to all opened tabs of current ConEmu window
-	ea_Download,   // after "/download" switch may be unlimited pairs of {"url","file"},{"url","file"},...
 	ea_ParseArgs,  // debug test of NextArg function... print args to STDOUT
 	ea_ErrorLevel, // return specified errorlevel
 	ea_OutEcho,    // echo "string" with ANSI processing
@@ -3499,179 +3495,6 @@ wrap:
 	return iRc;
 }
 
-static void PrintTime(LPCWSTR asLabel)
-{
-	SYSTEMTIME st = {}; GetLocalTime(&st);
-	wchar_t szTime[80];
-	_wsprintf(szTime, SKIPLEN(countof(szTime)) L"%i:%02i:%02i.%03i{%u} %s",
-	           st.wHour, st.wMinute, st.wSecond, st.wMilliseconds, GetCurrentThreadId(), asLabel);
-	_wprintf(szTime);
-	#if defined(_DEBUG)
-	OutputDebugString(szTime);
-	#endif
-}
-static void WINAPI DownloadCallback(const CEDownloadInfo* pInfo)
-{
-	wchar_t* pszInfo = pInfo->GetFormatted(true);
-	PrintTime(pInfo->lParam==(dc_ErrCallback+1) ? L"Error: " : pInfo->lParam==(dc_LogCallback+1) ? L"Info:  " : pInfo->lParam==(dc_ProgressCallback+1) ? L"Progr: " : L"");
-	_wprintf(pszInfo ? pszInfo : L"<NULL>\n");
-	#if defined(_DEBUG)
-	OutputDebugString(pszInfo);
-	#endif
-	SafeFree(pszInfo);
-}
-
-int DoDownload(LPCWSTR asCmdLine)
-{
-	int iRc = CERR_CARGUMENT;
-	DWORD_PTR drc;
-	CEStr szArg;
-	wchar_t* pszUrl = NULL;
-	size_t iFiles = 0;
-	CEDownloadErrorArg args[4];
-	wchar_t* pszExpanded = NULL;
-	wchar_t szFullPath[MAX_PATH*2];
-	DWORD nFullRc;
-	wchar_t *pszProxy = NULL, *pszProxyLogin = NULL, *pszProxyPassword = NULL;
-	wchar_t *pszLogin = NULL, *pszPassword = NULL;
-	wchar_t *pszOTimeout = NULL, *pszTimeout = NULL;
-	wchar_t *pszAsync = NULL;
-
-	DownloadCommand(dc_Init, 0, NULL);
-
-	args[0].uintArg = (DWORD_PTR)DownloadCallback; args[0].argType = at_Uint;
-	args[1].argType = at_Uint;
-	_ASSERTE(dc_ErrCallback==0 && dc_LogCallback==2);
-	for (int i = dc_ErrCallback; i <= dc_LogCallback; i++)
-	{
-		args[1].uintArg = (i+1);
-		DownloadCommand((CEDownloadCommand)i, 2, args);
-	}
-
-	struct {
-		LPCWSTR   pszArgName;
-		wchar_t** ppszValue;
-	} KnownArgs[] = {
-		{L"login", &pszLogin},
-		{L"password", &pszPassword},
-		{L"proxy", &pszProxy},
-		{L"proxylogin", &pszProxyLogin},
-		{L"proxypassword", &pszProxyPassword},
-		{L"otimeout", &pszOTimeout},
-		{L"timeout", &pszTimeout},
-		{L"async", &pszAsync},
-		{NULL}
-	};
-
-	while (NextArg(&asCmdLine, szArg) == 0)
-	{
-		LPCWSTR psz = szArg;
-		if ((psz[0] == L'-') || (psz[0] == L'/'))
-		{
-			psz++;
-			bool bKnown = false;
-			for (size_t i = 0; KnownArgs[i].pszArgName; i++)
-			{
-				if (lstrcmpi(psz, KnownArgs[i].pszArgName) == 0)
-				{
-					SafeFree(*KnownArgs[i].ppszValue);
-					if (NextArg(&asCmdLine, szArg) == 0)
-						*KnownArgs[i].ppszValue = szArg.Detach();
-					bKnown = true;
-					break;
-				}
-			}
-			if (!bKnown)
-			{
-				_printf("Unknown argument '");
-				_wprintf(psz);
-				_printf("'\n");
-				iRc = CERR_CARGUMENT;
-				goto wrap;
-			}
-			continue;
-		}
-
-		SafeFree(pszUrl);
-		pszUrl = szArg.Detach();
-		if (NextArg(&asCmdLine, szArg) != 0)
-		{
-			iRc = CERR_CARGUMENT;
-			goto wrap;
-		}
-
-		// Proxy?
-		if (pszProxy || pszProxyLogin)
-		{
-			args[0].strArg = pszProxy;         args[0].argType = at_Str;
-			args[1].strArg = pszProxyLogin;    args[1].argType = at_Str;
-			args[2].strArg = pszProxyPassword; args[2].argType = at_Str;
-			DownloadCommand(dc_SetProxy, 3, args);
-		}
-		// Server login
-		if (pszLogin)
-		{
-			args[0].strArg = pszLogin;    args[0].argType = at_Str;
-			args[1].strArg = pszPassword; args[1].argType = at_Str;
-			DownloadCommand(dc_SetLogin, 2, args);
-		}
-		// Sync or Ansync mode?
-		if (pszAsync)
-		{
-			args[0].uintArg = *pszAsync && (pszAsync[0] != L'0') && (pszAsync[0] != L'N') && (pszAsync[0] != L'n'); args[0].argType = at_Uint;
-			DownloadCommand(dc_SetAsync, 1, args);
-		}
-		// Timeouts?
-		if (pszOTimeout)
-		{
-			wchar_t* pszEnd;
-			args[0].uintArg = 0; args[0].argType = at_Uint;
-			args[1].uintArg = wcstol(pszOTimeout, &pszEnd, 10); args[1].argType = at_Uint;
-			DownloadCommand(dc_SetTimeout, 2, args);
-		}
-		if (pszTimeout)
-		{
-			wchar_t* pszEnd;
-			args[0].uintArg = 1; args[0].argType = at_Uint;
-			args[1].uintArg = wcstol(pszTimeout, &pszEnd, 10); args[1].argType = at_Uint;
-			DownloadCommand(dc_SetTimeout, 2, args);
-		}
-
-		args[0].strArg = pszUrl; args[0].argType = at_Str;
-		args[1].strArg = szArg;  args[1].argType = at_Str;
-		args[2].uintArg = TRUE;  args[2].argType = at_Uint;
-
-		// May be file name was specified relatively or even with env.vars?
-		SafeFree(pszExpanded);
-		pszExpanded = ExpandEnvStr(szArg);
-		nFullRc = GetFullPathName((pszExpanded && *pszExpanded) ? pszExpanded : (LPCWSTR)szArg, countof(szFullPath), szFullPath, NULL);
-		if (nFullRc && nFullRc < countof(szFullPath))
-			args[1].strArg = szFullPath;
-
-		gbIsDownloading = true;
-		drc = DownloadCommand(dc_DownloadFile, 3, args);
-		gbIsDownloading = false;
-		if (drc == 0)
-		{
-			iRc = CERR_DOWNLOAD_FAILED;
-			_printf("Download failed\n");
-			goto wrap;
-		}
-
-		iFiles++;
-		_printf("File downloaded, size=%u, crc32=x%08X\n", (DWORD)args[0].uintArg, (DWORD)args[1].uintArg, NULL);
-	}
-
-	iRc = iFiles ? CERR_DOWNLOAD_SUCCEEDED : CERR_CARGUMENT;
-wrap:
-	DownloadCommand(dc_Deinit, 0, NULL);
-	SafeFree(pszExpanded);
-	for (size_t i = 0; KnownArgs[i].pszArgName; i++)
-	{
-		SafeFree(*KnownArgs[i].ppszValue);
-	}
-	return iRc;
-}
 
 int DoParseArgs(LPCWSTR asCmdLine)
 {
@@ -4357,11 +4180,6 @@ int DoExecAction(ConEmuExecAction eExecAction, LPCWSTR asCmdArg /* rest of cmdli
 			iRc = DoExportEnv(asCmdArg, eExecAction, gbPrefereSilentMode);
 			break;
 		}
-	case ea_Download:
-		{
-			iRc = DoDownload(asCmdArg);
-			break;
-		}
 	case ea_ParseArgs:
 		{
 			iRc = DoParseArgs(asCmdArg);
@@ -4910,11 +4728,6 @@ int ParseCommandLine(LPCWSTR asCmdLine)
 				eExecAction = ea_ExportGui;
 			else
 				eExecAction = ea_ExportTab;
-			break;
-		}
-		else if (lstrcmpi(szArg, L"/Download")==0)
-		{
-			eExecAction = ea_Download;
 			break;
 		}
 		else if (lstrcmpi(szArg, L"/IsConEmu")==0)
@@ -10804,12 +10617,6 @@ BOOL WINAPI HandlerRoutine(DWORD dwCtrlType)
 	LogString(szLog);
 
 	// Continue processing
-	if (gbIsDownloading
-		&& ((dwCtrlType == CTRL_CLOSE_EVENT) || (dwCtrlType == CTRL_LOGOFF_EVENT) || (dwCtrlType == CTRL_SHUTDOWN_EVENT)
-			|| (dwCtrlType == CTRL_C_EVENT) || (dwCtrlType == CTRL_BREAK_EVENT)))
-	{
-		DownloadCommand(dc_RequestTerminate, 0, NULL);
-	}
 
 	//PRINT_COMSPEC(L"HandlerRoutine triggered. Event type=%i\n", dwCtrlType);
 	if ((dwCtrlType == CTRL_CLOSE_EVENT)

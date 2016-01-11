@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2013-2015 Maximus5
+Copyright (c) 2013-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -131,17 +131,7 @@ protected:
 		wchar_t* szProxyPassword;
 	} m_Proxy;
 
-	struct {
-		wchar_t* szUser;
-		wchar_t* szPassword;
-	} m_Server;
-
 	wchar_t* szCmdStringFormat; // "curl -L %1 -o %2", "wget %1 -O %2"
-
-	bool  mb_OTimeout;
-	DWORD mn_OTimeout; // [-otimeout <ms>]
-	bool  mb_Timeout;
-	DWORD mn_Timeout;  // [-timeout <ms>]
 
 	FDownloadCallback mfn_Callback[dc_LogCallback+1];
 	LPARAM m_CallbackLParam[dc_LogCallback+1];
@@ -172,19 +162,6 @@ public:
 			m_Proxy.szProxyPassword = lstrdup(asProxyPassword);
 	};
 
-	void SetLogin(LPCWSTR asUser, LPCWSTR asPassword)
-	{
-		SafeFree(m_Server.szUser);
-		if (m_Server.szPassword)
-			SecureZeroMemory(m_Server.szPassword, lstrlen(m_Server.szPassword)*sizeof(*m_Server.szPassword));
-		SafeFree(m_Server.szPassword);
-
-		if (asUser)
-			m_Server.szUser = lstrdup(asUser);
-		if (asPassword)
-			m_Server.szPassword = lstrdup(asPassword);
-	};
-
 	// Logging, errors, download progress
 	void SetCallback(CEDownloadCommand cb, FDownloadCallback afnErrCallback, LPARAM lParam)
 	{
@@ -195,25 +172,6 @@ public:
 		}
 		mfn_Callback[cb] = afnErrCallback;
 		m_CallbackLParam[cb] = lParam;
-	};
-
-	void SetAsync(bool bAsync)
-	{
-		//ReportMessage(dc_LogCallback, L"Change mode to %s was requested", at_Str, bAsync?L"Async":L"Sync", at_None);
-		mb_AsyncMode = bAsync;
-	};
-
-	void SetTimeout(bool bOperation, DWORD nTimeout)
-	{
-		//ReportMessage(dc_LogCallback, L"Set %s timeout to %u was requested", at_Str, bOperation?L"operation":L"receive", at_Uint, nTimeout, at_None);
-		if (bOperation)
-		{
-			mn_OTimeout = nTimeout;
-		}
-		else
-		{
-			mn_Timeout = nTimeout;
-		}
 	};
 
 	void SetCmdStringFormat(LPCWSTR asFormat)
@@ -521,24 +479,14 @@ protected:
 		if (!szCmdStringFormat || !*szCmdStringFormat)
 		{
 			wchar_t szConEmuC[MAX_PATH] = L"", *psz;
-			wchar_t szOTimeout[20] = L"", szTimeout[20] = L"";
-
-			if (mb_OTimeout)
-				_wsprintf(szOTimeout, SKIPCOUNT(szOTimeout) L"%u", mn_OTimeout);
-			if (mb_Timeout)
-				_wsprintf(szTimeout, SKIPCOUNT(szTimeout) L"%u", mn_Timeout);
 
 			struct _Switches {
 				LPCWSTR pszName, pszValue;
 			} Switches[] = {
-				{L"-login", m_Server.szUser},
-				{L"-password", m_Server.szPassword},
 				{L"-proxy", m_Proxy.szProxy},
 				{L"-proxylogin", m_Proxy.szProxyUser},
 				{L"-proxypassword", m_Proxy.szProxyPassword},
 				{L"-async", mb_AsyncMode ? L"Y" : L"N"},
-				{L"-otimeout", szOTimeout},
-				{L"-timeout", szTimeout},
 			};
 
 			if (!asSource || !*asSource || !asTarget || !*asTarget)
@@ -557,9 +505,8 @@ protected:
 			wcscat_c(szConEmuC, WIN3264TEST(L"ConEmuC.exe",L"ConEmuC64.exe"));
 
 			/*
-			ConEmuC /download [-login <name> -password <pwd>]
+			ConEmuC -download [-debug]
 			        [-proxy <address:port> [-proxylogin <name> -proxypassword <pwd>]]
-			        [-async Y|N] [-otimeout <ms>] [-timeout <ms>]
 			        "full_url_to_file" "local_path_name"
 			*/
 
@@ -681,13 +628,10 @@ public:
 	{
 		DEBUGTEST(gbAllowChkHeap = true);
 		mb_AsyncMode = true;
-		ZeroStruct(m_Server);
 		ZeroStruct(m_Proxy);
 		szCmdStringFormat = NULL;
 		ZeroStruct(mfn_Callback);
 		ZeroStruct(m_CallbackLParam);
-		mb_Timeout = false; mn_Timeout = DOWNLOADTIMEOUT;
-		mb_OTimeout = false; mn_OTimeout = 0;
 		mb_RequestTerminate = false;
 		ZeroStruct(m_SI); m_SI.cb = sizeof(m_SI);
 		ZeroStruct(m_PI);
@@ -700,7 +644,6 @@ public:
 	{
 		CloseInternet(true);
 		SetProxy(NULL, NULL, NULL);
-		SetLogin(NULL, NULL);
 		SafeFree(szCmdStringFormat);
 	};
 };
@@ -742,15 +685,6 @@ DWORD_PTR WINAPI DownloadCommand(CEDownloadCommand cmd, int argc, CEDownloadErro
 			nResult = TRUE;
 		}
 		break;
-	case dc_SetLogin: // [0]="User", [1]="Password"
-		if (gpInet)
-		{
-			gpInet->SetLogin(
-				(argc > 0 && argv[0].argType == at_Str) ? argv[0].strArg : NULL,
-				(argc > 1 && argv[1].argType == at_Str) ? argv[1].strArg : NULL);
-			nResult = TRUE;
-		}
-		break;
 	case dc_ErrCallback: // [0]=FDownloadCallback, [1]=lParam
 	case dc_ProgressCallback: // [0]=FDownloadCallback, [1]=lParam
 	case dc_LogCallback: // [0]=FDownloadCallback, [1]=lParam
@@ -786,27 +720,10 @@ DWORD_PTR WINAPI DownloadCommand(CEDownloadCommand cmd, int argc, CEDownloadErro
 			}
 		}
 		break;
-	case dc_DownloadData: // [0]="http" -- not implemented yet
-		_ASSERTE(FALSE && "dc_DownloadData not implemented yet");
-		break;
 	case dc_RequestTerminate:
 		if (gpInet)
 		{
 			gpInet->RequestTerminate();
-			nResult = TRUE;
-		}
-		break;
-	case dc_SetAsync:
-		if (gpInet && (argc > 0) && (argv[0].argType == at_Uint))
-		{
-			gpInet->SetAsync(argv[0].uintArg != 0);
-			nResult = TRUE;
-		}
-		break;
-	case dc_SetTimeout:
-		if (gpInet && (argc > 1) && (argv[0].argType == at_Uint) && (argv[1].argType == at_Uint))
-		{
-			gpInet->SetTimeout(argv[0].uintArg == 0, argv[1].uintArg);
 			nResult = TRUE;
 		}
 		break;
