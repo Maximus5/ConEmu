@@ -93,7 +93,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRCON(s) //DEBUGSTR(s)
 #define DEBUGSTRLANG(s) //DEBUGSTR(s)// ; Sleep(2000)
 #define DEBUGSTRSENDMSG(s) //DEBUGSTR(s)
-#define DEBUGSTRLOG(s) //OutputDebugStringA(s)
+#define DEBUGSTRLOGA(s) //OutputDebugStringA(s)
+#define DEBUGSTRLOGW(s) //DEBUGSTR(s)
 #define DEBUGSTRALIVE(s) //DEBUGSTR(s)
 #define DEBUGSTRTABS(s) DEBUGSTR(s)
 #define DEBUGSTRMACRO(s) //DEBUGSTR(s)
@@ -1155,7 +1156,7 @@ void CRealConsole::SyncConsole2Window(BOOL abNtvdmOff/*=FALSE*/, LPRECT prcNewWn
 
 	if (abNtvdmOff && isNtvdm())
 	{
-		LogString(L"NTVDM was stopped (SyncConsole2Window), clearing CES_NTVDM", true);
+		LogString(L"NTVDM was stopped (SyncConsole2Window), clearing CES_NTVDM");
 		SetProgramStatus(CES_NTVDM, 0);
 	}
 
@@ -3750,7 +3751,7 @@ void CRealConsole::ConHostSearchPrepare()
 		return;
 	}
 
-	LogString(L"Prepare searching for conhost", TRUE);
+	LogString(L"Prepare searching for conhost");
 
 	mp_ConHostSearch->Reset();
 
@@ -3769,7 +3770,7 @@ void CRealConsole::ConHostSearchPrepare()
 		CloseHandle(h);
 	}
 
-	LogString(L"Prepare searching for conhost - Done", TRUE);
+	LogString(L"Prepare searching for conhost - Done");
 }
 
 DWORD CRealConsole::ConHostSearch(bool bFinal)
@@ -3786,7 +3787,7 @@ DWORD CRealConsole::ConHostSearch(bool bFinal)
 		mn_ConHost_PID = 0;
 	}
 
-	LogString(L"Searching for conhost", TRUE);
+	LogString(L"Searching for conhost");
 
 	for (int s = 0; s <= 1; s++)
 	{
@@ -3837,7 +3838,7 @@ wrap:
 	{
 		wchar_t szInfo[100];
 		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"ConHostPID=%u", mn_ConHost_PID);
-		LogString(szInfo, TRUE);
+		LogString(szInfo);
 	}
 
 	if (mn_ConHost_PID)
@@ -5060,7 +5061,7 @@ bool CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y, bool abForce
 				wchar_t szInfo[100];
 				_wsprintf(szInfo, SKIPCOUNT(szInfo) L"Changing prompt position by LClick: {%i,%i} Force=%u Margin=%u", pIn->Prompt.xPos, pIn->Prompt.yPos, pIn->Prompt.Force, pIn->Prompt.BashMargin);
 				if (mp_Log)
-					mp_Log->LogString(szInfo, true);
+					LogString(szInfo);
 				else
 					DEBUGSTRCLICKPOS(szInfo);
 				}
@@ -5896,7 +5897,7 @@ void CRealConsole::StopSignal()
 {
 	DEBUGSTRCON(L"CRealConsole::StopSignal()\n");
 
-	LogString(L"CRealConsole::StopSignal()", TRUE);
+	LogString(L"CRealConsole::StopSignal()");
 
 	if (!this)
 		return;
@@ -6912,7 +6913,7 @@ void CRealConsole::OnDosAppStartStop(enum StartStopType sst, DWORD anPID)
 
 		if (!(mn_ProgramStatus & CES_NTVDM))
 		{
-			LogString(L"NTVDM was detected (sst_App16Start), setting CES_NTVDM", true);
+			LogString(L"NTVDM was detected (sst_App16Start), setting CES_NTVDM");
 			mn_ProgramStatus |= CES_NTVDM;
 		}
 
@@ -6931,12 +6932,12 @@ void CRealConsole::OnDosAppStartStop(enum StartStopType sst, DWORD anPID)
 		// Еще не отработал возврат размера консоли!
 		if (mn_Comspec4Ntvdm == 0)
 		{
-			LogString(L"NTVDM was stopped (sst_App16Stop), clearing CES_NTVDM", true);
+			LogString(L"NTVDM was stopped (sst_App16Stop), clearing CES_NTVDM");
 			SetProgramStatus(CES_NTVDM, 0/*Flags*/);
 		}
 		else
 		{
-			LogString(L"NTVDM was stopped (sst_App16Stop), CES_NTVDM was left", true);
+			LogString(L"NTVDM was stopped (sst_App16Stop), CES_NTVDM was left");
 		}
 
 		//2010-02-26 убрал. может прийти с задержкой и только создать проблемы
@@ -7635,7 +7636,7 @@ void CRealConsole::SetFarPluginPID(DWORD nFarPluginPID)
 	if (bNeedUpdate)
 	{
 		if (mp_Log)
-			LogString(szLog, true);
+			LogString(szLog);
 		else
 			DEBUGSTRFARPID(szLog);
 
@@ -8136,7 +8137,7 @@ void CRealConsole::SetAppDistinctPID(const ConProcess* apProcess)
 			_wsprintf(szLog, SKIPCOUNT(szLog) L"AppSettingsID changed %i >> %i for PID=%u", iLastId, iAppId, (apProcess ? apProcess->ProcessID : 0));
 		else
 			_wsprintf(szLog, SKIPCOUNT(szLog) L"AppSettingsID %i for PID=%u", iAppId, (apProcess ? apProcess->ProcessID : 0));
-		LogString(szLog, true);
+		LogString(szLog);
 	}
 }
 
@@ -8266,12 +8267,12 @@ BOOL CRealConsole::ProcessUpdateFlags(BOOL abProcessChanged)
 	if (bIsNtvdm)  // определяется выше как "(mn_ProgramStatus & CES_NTVDM) == CES_NTVDM"
 	{
 		if (!(mn_ProgramStatus & CES_NTVDM))
-			LogString(L"NTVDM.EXE was detected, setting CES_NTVDM", true);
+			LogString(L"NTVDM.EXE was detected, setting CES_NTVDM");
 		nNewProgramStatus |= CES_NTVDM;
 	}
 	else if (mn_ProgramStatus & CES_NTVDM)
 	{
-		LogString(L"NTVDM.EXE was terminated, clearing CES_NTVDM", true);
+		LogString(L"NTVDM.EXE was terminated, clearing CES_NTVDM");
 	}
 
 	if (mn_ProgramStatus != nNewProgramStatus)
@@ -9250,77 +9251,11 @@ void CRealConsole::CreateLogFiles()
 	}
 
 	_wsprintf(szInfo, SKIPCOUNT(szInfo) L"RCon ID=%i started", mp_VCon->ID());
-	mp_Log->LogString(szInfo);
+	LogString(szInfo);
 
-	//mp_Log->LogStartEnv(gpStartEnv);
-
-	//DWORD dwErr = 0;
-	//wchar_t szFile[MAX_PATH+64], *pszDot;
-	//_ASSERTE(mp_ConEmu->ms_ConEmuExe[0]);
-	//lstrcpyW(szFile, mp_ConEmu->ms_ConEmuExe);
-	//
-	//if ((pszDot = wcsrchr(szFile, L'\\')) == NULL)
-	//{
-	//	DisplayLastError(L"wcsrchr failed!");
-	//	return; // ошибка
-	//}
-	//
-	//*pszDot = 0;
-	////mpsz_LogPackets = (wchar_t*)calloc(pszDot - szFile + 64, 2);
-	////lstrcpyW(mpsz_LogPackets, szFile);
-	////swprintf_c(mpsz_LogPackets+(pszDot-szFile), L"\\ConEmu-recv-%i-%%i.con", mn_MainSrv_PID); // ConEmu-recv-<ConEmuC_PID>-<index>.con
-	//_wsprintf(pszDot, SKIPLEN(countof(szFile)-(pszDot-szFile)) L"\\ConEmu-input-%i.log", mn_MainSrv_PID);
-	//mh_LogInput = CreateFileW(szFile, GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-	//
-	//if (mh_LogInput == INVALID_HANDLE_VALUE)
-	//{
-	//	mh_LogInput = NULL;
-	//	dwErr = GetLastError();
-	//	wchar_t szError[MAX_PATH*2];
-	//	_wsprintf(szError, SKIPLEN(countof(szError)) L"Create log file failed! ErrCode=0x%08X\n%s\n", dwErr, szFile);
-	//	MBoxA(szError);
-	//	return;
-	//}
-	//
-	//mpsz_LogInputFile = lstrdup(szFile);
-	//// OK, лог создали
-	//
-	//// Пишем инфу
-	//wchar_t szSI[MAX_PATH*4];
-	//_wsprintf(szSI, SKIPLEN(countof(szSI)) L"ConEmu startup info\n\tDesktop: %s\n\tTitle: %s\n\tSize: {%u,%u},{%u,%u}\n"
-	//	"\tFlags: 0x%08X, ShowWindow: %u\n\tHandles: 0x%08X, 0x%08X, 0x%08X",
-	//	gpStartEnv->si.lpDesktop ? gpStartEnv->si.lpDesktop : L"",
-	//	gpStartEnv->si.lpTitle ? gpStartEnv->si.lpTitle : L"",
-	//	gpStartEnv->si.dwX, gpStartEnv->si.Y, gpStartEnv->si.dwXSize, gpStartEnv->si.dwYSize,
-	//	gpStartEnv->si.dwFlags, (DWORD)gpStartEnv->si.wShowWindow,
-	//	(DWORD)gpStartEnv->si.hStdInput, (DWORD)gpStartEnv->si.hStdOutput, (DWORD)gpStartEnv->si.hStdError);
-	//LogString(szSI, TRUE);
-	//
-	//LogString("CmdLine:");
-	//LogString(gpStartEnv->pszCmdLine ? gpStartEnv->pszCmdLine : L"<NULL>");
-	//LogString("ExecMod:");
-	//LogString(gpStartEnv->pszExecMod ? gpStartEnv->pszExecMod : L"<NULL>");
-	//LogString("WorkDir:");
-	//LogString(gpStartEnv->pszWorkDir ? gpStartEnv->pszWorkDir : L"<NULL>");
-	//LogString("PathEnv:");
-	//LogString(gpStartEnv->pszPathEnv ? gpStartEnv->pszPathEnv : L"<NULL>");
 }
 
-void CRealConsole::LogString(LPCWSTR asText, BOOL abShowTime /*= FALSE*/)
-{
-	if (!this) return;
-
-	if (!asText || !mp_Log) return;
-
-	mp_Log->LogString(asText, abShowTime!=0);
-
-	//char chAnsi[512];
-	//WideCharToMultiByte(CP_UTF8, 0, asText, -1, chAnsi, countof(chAnsi)-1, 0,0);
-	//chAnsi[countof(chAnsi)-1] = 0;
-	//LogString(chAnsi, abShowTime);
-}
-
-void CRealConsole::LogString(LPCSTR asText, BOOL abShowTime /*= FALSE*/)
+void CRealConsole::LogString(LPCWSTR asText)
 {
 	if (!this) return;
 
@@ -9328,29 +9263,30 @@ void CRealConsole::LogString(LPCSTR asText, BOOL abShowTime /*= FALSE*/)
 
 	if (mp_Log)
 	{
-		mp_Log->LogString(asText, abShowTime!=0);
-
-		//DWORD dwLen;
-		//
-		//if (abShowTime)
-		//{
-		//	SYSTEMTIME st; GetLocalTime(&st);
-		//	char szTime[32];
-		//	_wsprintfA(szTime, SKIPLEN(countof(szTime)) "%i:%02i:%02i.%03i ", st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
-		//	dwLen = strlen(szTime);
-		//	WriteFile(mh_LogInput, szTime, dwLen, &dwLen, 0);
-		//}
-		//
-		//if ((dwLen = strlen(asText))>0)
-		//	WriteFile(mh_LogInput, asText, dwLen, &dwLen, 0);
-		//
-		//WriteFile(mh_LogInput, "\r\n", 2, &dwLen, 0);
-		//FlushFileBuffers(mh_LogInput);
+		mp_Log->LogString(asText, true);
 	}
 	else
 	{
 		#ifdef _DEBUG
-		DEBUGSTRLOG(asText); DEBUGSTRLOG("\n");
+		DEBUGSTRLOGW(asText);
+		#endif
+	}
+}
+
+void CRealConsole::LogString(LPCSTR asText)
+{
+	if (!this) return;
+
+	if (!asText) return;
+
+	if (mp_Log)
+	{
+		mp_Log->LogString(asText, true);
+	}
+	else
+	{
+		#ifdef _DEBUG
+		DEBUGSTRLOGA(asText); DEBUGSTRLOGA("\n");
 		#endif
 	}
 }
@@ -13450,7 +13386,7 @@ void CRealConsole::logProgress(LPCWSTR asFormat, int V1, int V2)
 		return;
 	}
 	#endif
-	LogString(szInfo, TRUE);
+	LogString(szInfo);
 }
 
 void CRealConsole::setProgress(short value)
@@ -15214,7 +15150,7 @@ void CRealConsole::SetConStatus(LPCWSTR asStatus, DWORD/*enum ConStatusOption*/ 
 	if (gpSetCls->isAdvLogging)
 	{
 		if (mp_Log)
-			LogString(pszInfo, TRUE);
+			LogString(pszInfo);
 		else
 			mp_ConEmu->LogString(pszInfo);
 	}
@@ -15397,19 +15333,19 @@ DWORD CRealConsole::PostMacroThread(LPVOID lpParameter)
 		if (pipe.Init(_T("CRealConsole::PostMacroThread"), TRUE))
 		{
 			pArg->pRCon->mp_ConEmu->DebugStep(_T("PostMacroThread: Waiting for result (10 sec)"));
-			pArg->pRCon->LogString("... executing PipeCommand (thread)", true);
+			pArg->pRCon->LogString("... executing PipeCommand (thread)");
 			BOOL lbSent = pipe.Execute(pArg->nCmdID, pArg->Data, pArg->nCmdSize);
-			pArg->pRCon->LogString(lbSent ? L"... PipeCommand was sent (thread)" : L"... PipeCommand sending was failed (thread)", true);
+			pArg->pRCon->LogString(lbSent ? L"... PipeCommand was sent (thread)" : L"... PipeCommand sending was failed (thread)");
 			pArg->pRCon->mp_ConEmu->DebugStep(NULL);
 		}
 		else
 		{
-			pArg->pRCon->LogString("Far pipe was not opened, Macro was skipped (thread)", true);
+			pArg->pRCon->LogString("Far pipe was not opened, Macro was skipped (thread)");
 		}
 	}
 	else
 	{
-		pArg->pRCon->LogString("... reentering PostMacro (thread)", true);
+		pArg->pRCon->LogString("... reentering PostMacro (thread)");
 		pArg->pRCon->PostMacro(pArg->szMacro, FALSE/*теперь - точно Sync*/);
 	}
 	free(pArg);
@@ -15530,7 +15466,7 @@ void CRealConsole::PostMacro(LPCWSTR asMacro, BOOL abAsync /*= FALSE*/)
 {
 	if (!this || !asMacro || !*asMacro)
 	{
-		mp_ConEmu->LogString(L"Null Far macro was skipped", true);
+		mp_ConEmu->LogString(L"Null Far macro was skipped");
 		return;
 	}
 
@@ -15543,10 +15479,10 @@ void CRealConsole::PostMacro(LPCWSTR asMacro, BOOL abAsync /*= FALSE*/)
 			if (m_UseLogs)
 			{
 				CEStr lsLog(lstrmerge(L"CRealConsole::PostMacro: ", asMacro));
-				LogString(lsLog, true);
+				LogString(lsLog);
 			}
 			LPWSTR pszRc = ConEmuMacro::ExecuteMacro(pszGui, this);
-			LogString(pszRc ? pszRc : L"<NULL>", true);
+			LogString(pszRc ? pszRc : L"<NULL>");
 			TODO("Показать результат в статусной строке?");
 			SafeFree(pszGui);
 			SafeFree(pszRc);
@@ -15559,7 +15495,7 @@ void CRealConsole::PostMacro(LPCWSTR asMacro, BOOL abAsync /*= FALSE*/)
 	if (!nPID)
 	{
 		_ASSERTE(FALSE && "Far with plugin was not found, Macro was skipped");
-		LogString("Far with plugin was not found, Macro was skipped", true);
+		LogString("Far with plugin was not found, Macro was skipped");
 		return;
 	}
 
@@ -15567,7 +15503,7 @@ void CRealConsole::PostMacro(LPCWSTR asMacro, BOOL abAsync /*= FALSE*/)
 	if (!pInfo)
 	{
 		_ASSERTE(pInfo!=NULL);
-		LogString("Far mapping info was not found, Macro was skipped", true);
+		LogString("Far mapping info was not found, Macro was skipped");
 		return;
 	}
 
@@ -15591,7 +15527,7 @@ void CRealConsole::PostMacro(LPCWSTR asMacro, BOOL abAsync /*= FALSE*/)
 	{
 		wchar_t szPID[32]; _wsprintf(szPID, SKIPCOUNT(szPID) L"(FarPID=%u): ", nPID);
 		CEStr lsLog(lstrmerge(L"CRealConsole::PostMacro", szPID, asMacro));
-		LogString(lsLog, true);
+		LogString(lsLog);
 	}
 
 	if (abAsync)
@@ -15611,7 +15547,7 @@ void CRealConsole::PostMacro(LPCWSTR asMacro, BOOL abAsync /*= FALSE*/)
 			{
 				// Должен быть NULL, если нет - значит завис предыдущий макрос
 				_ASSERTE(mh_PostMacroThread==NULL && "Terminating mh_PostMacroThread");
-				LogString(L"Terminating mh_PostMacroThread (hung)", true);
+				LogString(L"Terminating mh_PostMacroThread (hung)");
 				apiTerminateThread(mh_PostMacroThread, 100);
 				CloseHandle(mh_PostMacroThread);
 			}
@@ -15623,7 +15559,7 @@ void CRealConsole::PostMacro(LPCWSTR asMacro, BOOL abAsync /*= FALSE*/)
 		pArg->pRCon = this;
 		pArg->bPipeCommand = FALSE;
 		_wcscpy_c(pArg->szMacro, nLen+1, asMacro);
-		LogString("... executing macro asynchronously", true);
+		LogString("... executing macro asynchronously");
 		mh_PostMacroThread = apiCreateThread(PostMacroThread, pArg, &mn_PostMacroThreadID, "RCon::PostMacroThread#2 ID=%i", mp_VCon->ID());
 		if (mh_PostMacroThread == NULL)
 		{
@@ -15646,15 +15582,15 @@ void CRealConsole::PostMacro(LPCWSTR asMacro, BOOL abAsync /*= FALSE*/)
 
 	if (pipe.Init(_T("CRealConsole::PostMacro"), TRUE))
 	{
-		LogString("... executing Macro synchronously", true);
+		LogString("... executing Macro synchronously");
 		mp_ConEmu->DebugStep(_T("Macro: Waiting for result (10 sec)"));
 		BOOL lbSent = pipe.Execute(CMD_POSTMACRO, asMacro, (_tcslen(asMacro)+1)*2);
-		LogString(lbSent ? L"... Macro was sent" : L"... Macro sending was failed", true);
+		LogString(lbSent ? L"... Macro was sent" : L"... Macro sending was failed");
 		mp_ConEmu->DebugStep(NULL);
 	}
 	else
 	{
-		LogString("Far pipe was not opened, Macro was skipped", true);
+		LogString("Far pipe was not opened, Macro was skipped");
 	}
 
 	if (mb_InCloseConsole)
@@ -15715,7 +15651,7 @@ bool CRealConsole::Detach(bool bPosted /*= false*/, bool bSendCloseConsole /*= f
 
 	bool bDetached = false;
 
-	LogString(L"CRealConsole::Detach", TRUE);
+	LogString(L"CRealConsole::Detach");
 
 	if (m_ChildGui.hGuiWnd)
 	{

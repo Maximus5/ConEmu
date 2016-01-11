@@ -582,7 +582,7 @@ INT_PTR CAttachDlg::AttachDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM l
 
 			pDlg->mp_ProcessData = new CProcessData;
 
-			CVConGroup::LogString(L"CAttachDlg::AttachDlgEnumWin::Begin", TRUE);
+			CVConGroup::LogString(L"CAttachDlg::AttachDlgEnumWin::Begin");
 
 			HWND hTaskBar = FindWindowEx(NULL, NULL, L"Shell_TrayWnd", NULL);
 			if (hTaskBar)
@@ -592,7 +592,7 @@ INT_PTR CAttachDlg::AttachDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM l
 
 			EnumWindows(AttachDlgEnumWin, (LPARAM)pDlg);
 
-			CVConGroup::LogString(L"CAttachDlg::AttachDlgEnumWin::End", TRUE);
+			CVConGroup::LogString(L"CAttachDlg::AttachDlgEnumWin::End");
 
 			delete pDlg->mp_ProcessData;
 			pDlg->mp_ProcessData = NULL;

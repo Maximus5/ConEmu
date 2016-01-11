@@ -1154,7 +1154,7 @@ LRESULT CConEmuChild::OnPaint()
 	mb_PostFullPaint = FALSE;
 
 	if (gpSetCls->isAdvLogging>2)
-		VCon->RCon()->LogString("CConEmuChild::OnPaint", TRUE);
+		VCon->RCon()->LogString("CConEmuChild::OnPaint");
 
 	gpSetCls->Performance(tPerfBlt, FALSE);
 

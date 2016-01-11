@@ -683,16 +683,16 @@ void CVConGroup::GetAllTextSize(SIZE& sz, SIZE& Splits, bool abMinimal /*= false
 //	return nSize;
 //}
 
-void CVConGroup::LogString(LPCSTR asText, BOOL abShowTime /*= FALSE*/)
+void CVConGroup::LogString(LPCSTR asText)
 {
 	if (gpSetCls->isAdvLogging && gp_VActive)
-		gp_VActive->RCon()->LogString(asText, abShowTime);
+		gp_VActive->RCon()->LogString(asText);
 }
 
-void CVConGroup::LogString(LPCWSTR asText, BOOL abShowTime /*= FALSE*/)
+void CVConGroup::LogString(LPCWSTR asText)
 {
 	if (gpSetCls->isAdvLogging && gp_VActive)
-		gp_VActive->RCon()->LogString(asText, abShowTime);
+		gp_VActive->RCon()->LogString(asText);
 }
 
 void CVConGroup::LogInput(UINT uMsg, WPARAM wParam, LPARAM lParam, LPCWSTR pszTranslatedChars /*= NULL*/)
@@ -5009,7 +5009,7 @@ void CVConGroup::SyncWindowToConsole()
 	if (gpSetCls->isAdvLogging)
 	{
 		char szInfo[128]; wsprintfA(szInfo, "SyncWindowToConsole(Cols=%i, Rows=%i)", gp_VActive->TextWidth, gp_VActive->TextHeight);
-		CVConGroup::LogString(szInfo, TRUE);
+		CVConGroup::LogString(szInfo);
 	}
 
 	gpSetCls->UpdateSize(gp_VActive->TextWidth, gp_VActive->TextHeight);
@@ -5707,7 +5707,7 @@ void CVConGroup::OnConsoleResize(bool abSizingToDo)
 			char szInfo[160]; wsprintfA(szInfo, "OnConsoleResize: lbSizeChanged=%i, client={{%i,%i},{%i,%i}}, CalcCon={%i,%i}, CurCon={%i,%i}",
 			                            lbSizeChanged, client.left, client.top, client.right, client.bottom,
 			                            c.right, c.bottom, nCurConWidth, nCurConHeight);
-			CVConGroup::LogString(szInfo, TRUE);
+			CVConGroup::LogString(szInfo);
 		}
 
 		if (!gpConEmu->isSizing() &&

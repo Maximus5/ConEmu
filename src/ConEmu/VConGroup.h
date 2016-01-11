@@ -225,8 +225,8 @@ public:
 	static bool GetVConByHWND(HWND hConWnd, HWND hDcWnd, CVConGuard* pVCon = NULL);
 	static bool GetVConByName(LPCWSTR asName, CVConGuard* rpVCon = NULL);
 
-	static void LogString(LPCSTR asText, BOOL abShowTime = FALSE);
-	static void LogString(LPCWSTR asText, BOOL abShowTime = FALSE);
+	static void LogString(LPCSTR asText);
+	static void LogString(LPCWSTR asText);
 	static void LogInput(UINT uMsg, WPARAM wParam, LPARAM lParam, LPCWSTR pszTranslatedChars = NULL);
 
 	static RECT CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFrom, CVirtualConsole* pVCon, enum ConEmuMargins tTabAction=CEM_TAB);

@@ -79,7 +79,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // ANSI, without "\r\n"
 #define IFLOGCONSOLECHANGE gpSetCls->isAdvLogging>=2
-#define LOGCONSOLECHANGE(s) if (IFLOGCONSOLECHANGE) mp_RCon->LogString(s, TRUE)
+#define LOGCONSOLECHANGE(s) if (IFLOGCONSOLECHANGE) mp_RCon->LogString(s)
 
 #ifndef CONSOLE_MOUSE_DOWN
 #define CONSOLE_MOUSE_DOWN 8
@@ -650,14 +650,14 @@ wrap:
 	nDurationTick = GetTickCount() - nStartTick;
 	if (!lbRc)
 	{
-		mp_RCon->LogString(L"!!! CRealBuffer::LoadAlternativeConsole FAILED !!!", TRUE);
+		mp_RCon->LogString(L"!!! CRealBuffer::LoadAlternativeConsole FAILED !!!");
 	}
 	else if (nDurationTick > 1000)
 	{
 		wchar_t szLog[80];
 		_wsprintf(szLog, SKIPCOUNT(szLog) L"!!! CRealBuffer::LoadAlternativeConsole takes %u ms !!!", nDurationTick);
 		_ASSERTE(!lbRc || (nDurationTick < 1000));
-		mp_RCon->LogString(szLog, TRUE);
+		mp_RCon->LogString(szLog);
 	}
 	return lbRc;
 }
@@ -801,7 +801,7 @@ BOOL CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 		}
 		_wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "%s(Cols=%i, Rows=%i, Buf=%i, TopLeft={%i,%i})",
 		           szSizeCmd, sizeX, sizeY, sizeBuffer, con.TopLeft.y, con.TopLeft.x);
-		mp_RCon->LogString(szInfo, TRUE);
+		mp_RCon->LogString(szInfo);
 	}
 
 	dwTickStart = timeGetTime();
@@ -997,7 +997,7 @@ BOOL CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 				if (gpSetCls->isAdvLogging)
 				{
 					char szInfo[128]; _wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "Current size: {%i,%i} Buf={%i,%i}", sbi.srWindow.Right-sbi.srWindow.Left+1, sbi.srWindow.Bottom-sbi.srWindow.Top+1, sbi.dwSize.X, sbi.dwSize.Y);
-					mp_RCon->LogString(szInfo, TRUE);
+					mp_RCon->LogString(szInfo);
 				}
 
 				if (sbi.dwSize.X == sizeX && sbi.dwSize.Y == nBufHeight)
@@ -1029,7 +1029,7 @@ BOOL CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 				if (gpSetCls->isAdvLogging)
 				{
 					char szInfo[128]; _wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "Current size: Cols=%i, Rows=%i", sbi.dwSize.X, sbi.dwSize.Y);
-					mp_RCon->LogString(szInfo, TRUE);
+					mp_RCon->LogString(szInfo);
 				}
 
 				if (sbi.dwSize.X == sizeX && sbi.dwSize.Y == sizeY)
@@ -5502,7 +5502,7 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 								nShiftRows, nWidth, nHeight,
 								con.m_sbi.srWindow.Left, con.m_sbi.srWindow.Top, con.m_sbi.srWindow.Right, con.m_sbi.srWindow.Bottom,
 								con.m_sbi.dwSize.X, con.m_sbi.dwSize.Y);
-							mp_RCon->LogString(szLog, TRUE);
+							mp_RCon->LogString(szLog);
 						}
 						#endif
 					}

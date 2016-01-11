@@ -597,8 +597,8 @@ class CRealConsole
 		bool isConsoleReady();
 		void OnServerClosing(DWORD anSrvPID, int* pnShellExitCode);
 		void Paste(CEPasteMode PasteMode = pm_Standard, LPCWSTR asText = NULL, bool abNoConfirm = false, bool abCygWin = false);
-		void LogString(LPCSTR asText, BOOL abShowTime = FALSE);
-		void LogString(LPCWSTR asText, BOOL abShowTime = FALSE);
+		void LogString(LPCSTR asText);
+		void LogString(LPCWSTR asText);
 		bool isActive(bool abAllowGroup);
 		bool isInFocus();
 		bool isFarPanelAllowed();
