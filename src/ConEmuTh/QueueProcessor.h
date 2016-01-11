@@ -758,7 +758,7 @@ class CQueueProcessor
 						OnItemFailed(p->Item, p->lParam);
 
 					// И сброс нашей внутренней ячейки
-					memset(p->Item, 0, sizeof(*p->Item));
+					memset(&p->Item, 0, sizeof(p->Item));
 					p->Status = eItemPassed;
 				}
 
