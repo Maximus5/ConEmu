@@ -2454,6 +2454,8 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 	bool bDetached = (pRCon->m_Args.Detached == crb_On) && !pRCon->mb_ProcessRestarted && !pRCon->mn_InRecreate;
 	bool lbChildProcessCreated = FALSE;
 
+	pRCon->LogString("MonitorThread started");
+
 	pRCon->SetConStatus(bDetached ? L"Detached" : L"Initializing RealConsole...", cso_ResetOnConsoleReady|cso_Critical);
 
 	//pRCon->mb_WaitingRootStartup = TRUE;
@@ -9263,7 +9265,8 @@ void CRealConsole::LogString(LPCWSTR asText)
 
 	if (mp_Log)
 	{
-		mp_Log->LogString(asText, true);
+		wchar_t szTID[32]; _wsprintf(szTID, SKIPCOUNT(szTID) L"[%u]", GetCurrentThreadId());
+		mp_Log->LogString(asText, true, szTID);
 	}
 	else
 	{
@@ -9281,7 +9284,8 @@ void CRealConsole::LogString(LPCSTR asText)
 
 	if (mp_Log)
 	{
-		mp_Log->LogString(asText, true);
+		char szTID[32]; _wsprintfA(szTID, SKIPCOUNT(szTID) "[%u]", GetCurrentThreadId());
+		mp_Log->LogString(asText, true, szTID);
 	}
 	else
 	{
@@ -15327,6 +15331,7 @@ bool CRealConsole::ConsoleRect2ScreenRect(const RECT &rcCon, RECT *prcScr)
 DWORD CRealConsole::PostMacroThread(LPVOID lpParameter)
 {
 	PostMacroAnyncArg* pArg = (PostMacroAnyncArg*)lpParameter;
+	pArg->pRCon->LogString("PostMacroThread started");
 	if (pArg->bPipeCommand)
 	{
 		CConEmuPipe pipe(pArg->pRCon->GetFarPID(TRUE), CONEMUREADYTIMEOUT);
