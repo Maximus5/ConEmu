@@ -3756,6 +3756,12 @@ DWORD CRealConsole::ConHostSearch(bool bFinal)
 
 wrap:
 
+	if (bFinal && mp_ConHostSearch)
+	{
+		mp_ConHostSearch->Release();
+		SafeFree(mp_ConHostSearch);
+	}
+
 	if (gpSetCls->isAdvLogging)
 	{
 		wchar_t szInfo[100];
