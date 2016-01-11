@@ -19,6 +19,29 @@ http://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2016.1.11
+* Fix bad XML format for GuiMacro GetInfo Root.
+* gh#491: Example Far Macro `ConEmu.CtrlShiftT.lua` had wrong hotkey.
+* Add ‘Anti-aliasing’ option for alternative font.
+* Far Manager was not resized after splitting with Ctrl-Shift-O/E.
+  Implement helper ForceFarResize and utilize it in both sync and async modes.
+* gh#502, gh#446, gh#447: The algorithm of text drawing has changed significantly.
+* Prevent double execution of script specified in "AutoRun" cmd's registry key.
+  For example, when "cmd /k CmdInit.cmd" was started (default for {cmd} task)
+  triggering `ver` command caused execution of `test.cmd` again.
+
+  [HKEY_CURRENT_USER\Software\Microsoft\Command Processor]
+  "AutoRun"="test.cmd"
+
+* gh#494: Fix clink double initialization.
+* connector#3: Let Left/Right/Up/Down/Home/End post sequences `ESC[X`.
+* connector#8: Fix `top` output lines.
+* Update `terminals` module to v0.7.3.
+* Updating progress was not changed during downloading (10% till 99%).
+* gh#297: Fix keyboard delay (Windows 7).
+* gh#471: Far plugin ‘ConEmu Panel Views’ was broken (da926ba regression).
+
+
 2015.12.24
 * All 64-bit binaries are built with VS14.
   32-bit binaries are still built with VS9 (WinSDK7) to be compatible with old systems.
