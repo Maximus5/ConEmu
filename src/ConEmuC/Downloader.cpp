@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2013-2015 Maximus5
+Copyright (c) 2013-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -43,7 +43,7 @@ static bool gbVerbose = false;
 static bool gbVerboseInitialized = false;
 
 #ifdef _DEBUG
-#define SLOW_CONNECTION_SIMULATE
+//#define SLOW_CONNECTION_SIMULATE
 #endif
 
 #undef WAIT_FOR_DEBUGGER_MSG
@@ -98,7 +98,7 @@ protected:
 	wchar_t* msz_AgentName;
 
 	DWORD mn_Timeout;     // DOWNLOADTIMEOUT by default
-	DWORD mn_ConnTimeout; // INTERNET_OPTION_RECEIVE_TIMEOUT
+	DWORD mn_RecvTimeout; // INTERNET_OPTION_RECEIVE_TIMEOUT
 	DWORD mn_DataTimeout; // INTERNET_OPTION_DATA_RECEIVE_TIMEOUT
 	bool  SetupTimeouts();
 
@@ -140,7 +140,7 @@ public:
 	void SetLogin(LPCWSTR asUser, LPCWSTR asPassword);
 	void SetCallback(CEDownloadCommand cb, FDownloadCallback afnErrCallback, LPARAM lParam);
 	void SetAsync(bool bAsync);
-	void SetTimeout(bool bOperation, DWORD nTimeout);
+	void SetTimeout(UINT nWhat, DWORD nTimeout);
 	void SetAgent(LPCWSTR aszAgentName);
 
 	BOOL DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, DWORD& crc, DWORD& size, BOOL abShowAllErrors = FALSE);
@@ -284,7 +284,7 @@ CDownloader::CDownloader()
 
 	mb_AsyncMode = true;
 	mn_Timeout = DOWNLOADTIMEOUT;
-	mn_ConnTimeout = mn_DataTimeout = 0;
+	mn_RecvTimeout = mn_DataTimeout = 0; // 0 --> use max as mn_Timeout
 	//mh_StopThread = NULL;
 	mb_RequestTerminate = false;
 	mb_InetMode = false;
@@ -743,7 +743,7 @@ bool CDownloader::SetupTimeouts()
 		DWORD   dwOption;
 		LPCWSTR pszName;
 	} TimeOuts[] = {
-		{&mn_ConnTimeout, INTERNET_OPTION_RECEIVE_TIMEOUT, L"receive"},
+		{&mn_RecvTimeout, INTERNET_OPTION_RECEIVE_TIMEOUT, L"receive"},
 		{&mn_DataTimeout, INTERNET_OPTION_DATA_RECEIVE_TIMEOUT, L"data receive"},
 	};
 
@@ -1358,17 +1358,26 @@ void CDownloader::SetAsync(bool bAsync)
 	mb_AsyncMode = bAsync;
 }
 
-void CDownloader::SetTimeout(bool bOperation, DWORD nTimeout)
+void CDownloader::SetTimeout(UINT nWhat, DWORD nTimeout)
 {
-	ReportMessage(dc_LogCallback, L"Set %s timeout to %u was requested", at_Str, bOperation?L"operation":L"receive", at_Uint, nTimeout, at_None);
-	if (bOperation)
+	LPCWSTR pszName = L"unknown";
+	switch (nWhat)
 	{
+	case 0:
+		// Default is DOWNLOADTIMEOUT (30000 ms)
+		pszName = L"operation";
 		mn_Timeout = nTimeout;
+		break;
+	case 1:
+		pszName = L"receive";
+		mn_RecvTimeout = nTimeout; // INTERNET_OPTION_RECEIVE_TIMEOUT
+	    break;
+	case 2:
+		pszName = L"data receive";
+		mn_DataTimeout = nTimeout; // INTERNET_OPTION_DATA_RECEIVE_TIMEOUT
+		break;
 	}
-	else
-	{
-		mn_ConnTimeout = mn_DataTimeout = nTimeout;
-	}
+	ReportMessage(dc_LogCallback, L"Set %s timeout to %u was requested", at_Str, pszName, at_Uint, nTimeout, at_None);
 }
 
 void CDownloader::SetAgent(LPCWSTR aszAgentName)
@@ -1591,7 +1600,7 @@ DWORD_PTR WINAPI DownloadCommand(CEDownloadCommand cmd, int argc, CEDownloadErro
 	case dc_SetTimeout:
 		if (gpInet && (argc > 1) && (argv[0].argType == at_Uint) && (argv[1].argType == at_Uint))
 		{
-			gpInet->SetTimeout(argv[0].uintArg == 0, argv[1].uintArg);
+			gpInet->SetTimeout(argv[0].uintArg, argv[1].uintArg);
 			nResult = TRUE;
 		}
 		break;
@@ -1798,7 +1807,7 @@ int DoDownload(LPCWSTR asCmdLine)
 	DWORD nFullRc;
 	wchar_t *pszProxy = NULL, *pszProxyLogin = NULL, *pszProxyPassword = NULL;
 	wchar_t *pszLogin = NULL, *pszPassword = NULL;
-	wchar_t *pszOTimeout = NULL, *pszTimeout = NULL;
+	wchar_t *pszTimeout = NULL, *pszTimeout1 = NULL, *pszTimeout2 = NULL;
 	wchar_t *pszAsync = NULL;
 	wchar_t *pszAgent = NULL;
 
@@ -1826,10 +1835,17 @@ int DoDownload(LPCWSTR asCmdLine)
 		{L"proxy", &pszProxy},
 		{L"proxylogin", &pszProxyLogin},
 		{L"proxypassword", &pszProxyPassword},
-		{L"otimeout", &pszOTimeout},
+		// -timeout <ms> - default min timeout for all operations (30000 ms)
 		{L"timeout", &pszTimeout},
+		// -timeout1 <ms> - INTERNET_OPTION_RECEIVE_TIMEOUT
+		{L"timeout1", &pszTimeout1},
+		// -timeout2 <ms> - INTERNET_OPTION_DATA_RECEIVE_TIMEOUT
+		{L"timeout2", &pszTimeout2},
+		// -async Y|N - change internal mode, how ConEmuC interact with WinInet
 		{L"async", &pszAsync},
+		// -agent "AgentName" - to change from default agent name "ConEmu Update"
 		{L"agent", &pszAgent},
+		// -debug - may be used to show console and print progress even if output is redirected
 		{L"debug", NULL, &gbVerbose}, {L"verbose", NULL, &gbVerbose},
 		{NULL}
 	};
@@ -1913,6 +1929,7 @@ int DoDownload(LPCWSTR asCmdLine)
 			args[2].strArg = pszProxyPassword; args[2].argType = at_Str;
 			DownloadCommand(dc_SetProxy, 3, args);
 		}
+
 		// Server login
 		if (pszLogin)
 		{
@@ -1920,34 +1937,39 @@ int DoDownload(LPCWSTR asCmdLine)
 			args[1].strArg = pszPassword; args[1].argType = at_Str;
 			DownloadCommand(dc_SetLogin, 2, args);
 		}
+
 		// Sync or Ansync mode?
 		if (pszAsync)
 		{
 			args[0].uintArg = *pszAsync && (pszAsync[0] != L'0') && (pszAsync[0] != L'N') && (pszAsync[0] != L'n'); args[0].argType = at_Uint;
 			DownloadCommand(dc_SetAsync, 1, args);
 		}
-		// Timeouts?
-		if (pszOTimeout)
+
+		// Timeouts: all, INTERNET_OPTION_RECEIVE_TIMEOUT, INTERNET_OPTION_DATA_RECEIVE_TIMEOUT
+		for (UINT i = 0; i <= 2; i++)
 		{
-			wchar_t* pszEnd;
-			args[0].uintArg = 0; args[0].argType = at_Uint;
-			args[1].uintArg = wcstol(pszOTimeout, &pszEnd, 10); args[1].argType = at_Uint;
-			DownloadCommand(dc_SetTimeout, 2, args);
-		}
-		if (pszTimeout)
-		{
-			wchar_t* pszEnd;
-			args[0].uintArg = 1; args[0].argType = at_Uint;
-			args[1].uintArg = wcstol(pszTimeout, &pszEnd, 10); args[1].argType = at_Uint;
+			LPCWSTR pszValue = NULL; wchar_t* pszEnd;
+			switch (i)
+			{
+			case 0: pszValue = pszTimeout; break;
+			case 1: pszValue = pszTimeout1; break;
+			case 2: pszValue = pszTimeout2; break;
+			}
+			if (!pszValue || !*pszValue)
+				continue;
+			args[0].uintArg = i; args[0].argType = at_Uint;
+			args[1].uintArg = wcstol(pszValue, &pszEnd, 10); args[1].argType = at_Uint;
 			DownloadCommand(dc_SetTimeout, 2, args);
 		}
 
+		// Default is "ConEmu Update", user may override it
 		if (pszAgent)
 		{
 			args[0].strArg = pszAgent; args[0].argType = at_Str;
 			DownloadCommand(dc_SetAgent, 1, args);
 		}
 
+		// Done, now set URL and target file
 		args[0].strArg = pszUrl; args[0].argType = at_Str;
 		args[1].strArg = szArg;  args[1].argType = at_Str;
 		args[2].uintArg = TRUE;  args[2].argType = at_Uint;
