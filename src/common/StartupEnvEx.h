@@ -325,6 +325,10 @@ public:
 			dumpEnvStr(szSI, true);
 		}
 
+		// PID & TID
+		_wsprintf(szSI, SKIPLEN(countof(szSI)) L"Current PID: %u, TID: %u", GetCurrentProcessId(), GetCurrentThreadId());
+		dumpEnvStr(szSI, true);
+
 		// Текущий HKL (он может отличаться от GetConsoleKeyboardLayoutNameW
 		HKL hkl[32] = {NULL};
 		hkl[0] = GetKeyboardLayout(0);
