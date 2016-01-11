@@ -353,7 +353,8 @@ protected:
 					{
 						// 09:01:20.811{1234} Progr: Bytes downloaded 1656
 						wchar_t* ptrEnd = NULL;
-						nValue = wcstoul(ptr, &ptrEnd, 10);
+						LPCWSTR pszFrom = wcspbrk(ptr+wcslen(sProgressMark), L"0123456789");
+						nValue = pszFrom ? wcstoul(pszFrom, &ptrEnd, 10) : 0;
 
 						if (nValue)
 						{
