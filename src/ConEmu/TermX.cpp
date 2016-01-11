@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2014-2015 Maximus5
+Copyright (c) 2014-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -53,12 +53,12 @@ bool TermX::GetSubstitute(const KEY_EVENT_RECORD& k, wchar_t (&szSubst)[16])
 	{
 		XTermCtrls Mods;
 
-		void SetKey(wchar_t (&szSubst)[16], wchar_t c)
+		void SetKey(wchar_t (&szSubst)[16], wchar_t c, wchar_t prefix=L'O')
 		{
 			if (!Mods)
 			{
 				//wcscpy_c(szSubst, L"\033O*A");
-				msprintf(szSubst, countof(szSubst), L"\033O%c", c);
+				msprintf(szSubst, countof(szSubst), L"\033%c%c", prefix, c);
 			}
 			else
 			{
@@ -101,22 +101,22 @@ bool TermX::GetSubstitute(const KEY_EVENT_RECORD& k, wchar_t (&szSubst)[16])
 	switch (k.wVirtualKeyCode)
 	{
 	case VK_UP:
-		Processor.SetKey(szSubst, L'A');
+		Processor.SetKey(szSubst, L'A', L'[');
 		return true;
 	case VK_DOWN:
-		Processor.SetKey(szSubst, L'B');
+		Processor.SetKey(szSubst, L'B', L'[');
 		return true;
 	case VK_RIGHT:
-		Processor.SetKey(szSubst, L'C');
+		Processor.SetKey(szSubst, L'C', L'[');
 		return true;
 	case VK_LEFT:
-		Processor.SetKey(szSubst, L'D');
+		Processor.SetKey(szSubst, L'D', L'[');
 		return true;
 	case VK_HOME:
-		Processor.SetKey(szSubst, L'H');
+		Processor.SetKey(szSubst, L'H', L'[');
 		return true;
 	case VK_END:
-		Processor.SetKey(szSubst, L'F');
+		Processor.SetKey(szSubst, L'F', L'[');
 		return true;
 
 	case VK_F1: case VK_F2: case VK_F3: case VK_F4:
