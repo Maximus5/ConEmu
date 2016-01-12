@@ -3824,6 +3824,9 @@ DWORD CRealConsole::ConHostSearch(bool bFinal)
 			//_ASSERTE(FALSE && "More than one created conhost.exe was found!");
 			LogString(L"More than one created conhost.exe was found!");
 			Sleep(250); // Попробовать еще раз? Может кто-то левый проехал...
+			// We may try to determine ‘proper’ conhost via duplicating console process handle,
+			// example is here: https://github.com/Maximus5/getconkbl (Elfy's fork)
+			// However, the very conhost.exe PID is not required for ConEmu.
 			continue;
 		}
 		else
