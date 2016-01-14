@@ -2463,15 +2463,21 @@ void CConEmuMain::UpdateGuiInfoMapping()
 			{
 				szFull[0] = 0;
 			}
-			wcscpy_c(m_GuiInfo.ComSpec.ComspecExplicit, szFull);
-			if (!*szFull && (csType == cst_Explicit))
+			// Validate and save in mapping
+			if (*szFull)
 			{
-				csType = cst_AutoTccCmd;
+				wcscpy_c(m_GuiInfo.ComSpec.ComspecExplicit, szFull);
+			}
+			else
+			{
+				if (csType == cst_Explicit)
+					csType = cst_AutoTccCmd;
+				m_GuiInfo.ComSpec.ComspecExplicit[0] = 0;
 			}
 		}
 		else
 		{
-			m_GuiInfo.ComSpec.ComspecExplicit[0] = 0; // избавимся от возможного мусора
+			m_GuiInfo.ComSpec.ComspecExplicit[0] = 0; // clean from possible rubbish
 		}
 
 		//
