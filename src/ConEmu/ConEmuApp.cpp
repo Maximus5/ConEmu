@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2015 Maximus5
+Copyright (c) 2009-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -3756,6 +3756,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	gnOsVer = ((gOSVer.dwMajorVersion & 0xFF) << 8) | (gOSVer.dwMinorVersion & 0xFF);
 	HeapInitialize();
 	AssertMsgBox = MsgBox;
+	gfnHooksUnlockerProc = HooksUnlockerProc;
 	gn_MainThreadId = GetCurrentThreadId();
 	gfnSearchAppPaths = SearchAppPaths;
 

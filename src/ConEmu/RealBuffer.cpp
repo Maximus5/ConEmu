@@ -5158,7 +5158,8 @@ void CRealBuffer::OnKeysSending()
 
 	bool bReset = false;
 	// Console API uses SHORT
-	_ASSERTE(!HIWORD(con.TopLeft.x) && !HIWORD(con.TopLeft.y));
+	_ASSERTE((con.TopLeft.x==-1) || !HIWORD(con.TopLeft.x));
+	_ASSERTE((con.TopLeft.y==-1) || !HIWORD(con.TopLeft.y));
 	COORD crTopLeft = {(SHORT)(con.TopLeft.x>=0 ? con.TopLeft.x : 0), (SHORT)(con.TopLeft.y>=0 ? con.TopLeft.y : 0)};
 
 	if (con.TopLeft.y == con.m_sbi.srWindow.Top)

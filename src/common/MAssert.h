@@ -39,6 +39,26 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 typedef int (*AppMsgBox_t)(LPCTSTR lpText, UINT uType, LPCTSTR lpCaption /*= NULL*/, HWND hParent /*= NULL*/, bool abLock /*= true*/);
 extern AppMsgBox_t AssertMsgBox;
 
+typedef bool (*HooksUnlockerProc_t)(bool bUnlock);
+extern HooksUnlockerProc_t gfnHooksUnlockerProc /* = NULL*/;
+
+#ifdef _DEBUG
+class CHooksUnlocker
+{
+protected:
+	// Members
+	static LONG mn_LockCount;
+	static bool mb_Processed;
+
+public:
+	CHooksUnlocker();
+	~CHooksUnlocker();
+};
+#define HooksUnlocker CHooksUnlocker HkUnlck
+#else
+#define HooksUnlocker
+#endif
+
 #if defined(_DEBUG)
 	#if !defined(__GNUC__)
 	#include <crtdbg.h>

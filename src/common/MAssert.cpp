@@ -29,9 +29,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define HIDE_USE_EXCEPTION_INFO
 #include <windows.h>
 #include <tchar.h>
-#if defined(AssertHooksUnlocker)
-#include "../ConEmu/HooksUnlocker.h"
-#endif
 #include "defines.h"
 #include "MAssert.h"
 #include "MStrSafe.h"
@@ -59,8 +56,42 @@ AppMsgBox_t AssertMsgBox = NULL;
 bool gbAllowChkHeap = false;
 #endif
 
+//typedef bool(*HooksUnlockerProc_t)(bool bUnlock);
+HooksUnlockerProc_t gfnHooksUnlockerProc = NULL;
+
 #ifdef _DEBUG
+
+LONG CHooksUnlocker::mn_LockCount = 0;
+bool CHooksUnlocker::mb_Processed = false;
+
+CHooksUnlocker::CHooksUnlocker()
+{
+	if (InterlockedIncrement(&mn_LockCount) > 0)
+	{
+		if (gfnHooksUnlockerProc && !mb_Processed)
+		{
+			mb_Processed = gfnHooksUnlockerProc(true);
+		}
+	}
+};
+
+CHooksUnlocker::~CHooksUnlocker()
+{
+	if (InterlockedDecrement(&mn_LockCount) <= 0)
+	{
+		if (mb_Processed)
+		{
+			mb_Processed = false;
+			if (gfnHooksUnlockerProc)
+			{
+				gfnHooksUnlockerProc(false);
+			}
+		}
+	}
+};
+
 #include "WThreads.h"
+
 LONG gnInMyAssertTrap = 0;
 LONG gnInMyAssertPipe = 0;
 //bool gbAllowAssertThread = false;
@@ -70,6 +101,7 @@ DWORD gnInMyAssertThread = 0;
 #ifdef ASSERT_PIPE_ALLOWED
 extern HWND ghConEmuWnd;
 #endif
+
 DWORD WINAPI MyAssertThread(LPVOID p)
 {
 	if (gnInMyAssertTrap > 0)
@@ -107,6 +139,7 @@ DWORD WINAPI MyAssertThread(LPVOID p)
 }
 void MyAssertTrap()
 {
+	HooksUnlocker;
 	_CrtDbgBreak();
 }
 void MyAssertDumpToFile(const wchar_t* pszFile, int nLine, const wchar_t* pszTest)
@@ -172,9 +205,7 @@ void MyAssertDumpToFile(const wchar_t* pszFile, int nLine, const wchar_t* pszTes
 }
 int MyAssertProc(const wchar_t* pszFile, int nLine, const wchar_t* pszTest, bool abNoPipe)
 {
-	#if defined(AssertHooksUnlocker)
-	AssertHooksUnlocker;
-	#endif
+	HooksUnlocker;
 
 	#ifdef _DEBUG
 	if (MyAssertSkip(pszFile, nLine, pszTest, abNoPipe))

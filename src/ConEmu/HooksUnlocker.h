@@ -33,23 +33,4 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // This is used to temporarily disable low-level keyboard hooks
 // Useful while debugging only
-#ifdef _DEBUG
-#define HooksUnlocker CHooksUnlocker HkUnlck;
-#else
-#define HooksUnlocker
-#endif
-
-class CHooksUnlocker
-{
-public:
-	CHooksUnlocker();
-	~CHooksUnlocker();
-
-public:
-	// Methods
-
-protected:
-	// Members
-	static LONG mn_LockCount;
-	bool mb_Processed;
-};
+bool HooksUnlockerProc(bool bUnlock);

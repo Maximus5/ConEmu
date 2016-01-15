@@ -34,28 +34,27 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmu.h"
 #include "HooksUnlocker.h"
 
-LONG CHooksUnlocker::mn_LockCount = 0;
-
-CHooksUnlocker::CHooksUnlocker()
-	: mb_Processed(false)
+bool HooksUnlockerProc(bool bUnlock)
 {
-	if (!IsDebuggerPresent())
-		return;
-	if (!gpConEmu || (gpConEmu->mn_StartupFinished == CConEmuMain::ss_Starting))
-		return;
-	mb_Processed = true;
-	if (InterlockedIncrement(&mn_LockCount) > 0)
-	{
-		if (gpConEmu) gpConEmu->UnRegisterHooks();
-	}
-}
+	bool lbUnlocked = false;
 
-CHooksUnlocker::~CHooksUnlocker()
-{
-	if (!mb_Processed)
-		return;
-	if (InterlockedDecrement(&mn_LockCount) <= 0)
+	if (bUnlock)
 	{
-		if (gpConEmu) gpConEmu->RegisterHooks();
+		// Unlock keyboard hooks to avoid problem with debuggers
+		if (gpConEmu && (gpConEmu->mn_StartupFinished > CConEmuMain::ss_Starting))
+		{
+			gpConEmu->UnRegisterHooks();
+			lbUnlocked = true;
+		}
 	}
+	else
+	{
+		// Return normal behavior
+		if (gpConEmu)
+		{
+			gpConEmu->RegisterHooks();
+		}
+	}
+
+	return lbUnlocked;
 }
