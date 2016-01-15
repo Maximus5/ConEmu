@@ -1107,6 +1107,7 @@ public:
 		FarVersion FarVer; // ConvertVersionToFarVersion
 		int  iStep;
 		bool bNeedQuot;
+		bool bPrimary; // Do not rename this task while unifying
 		void Free()
 		{
 			SafeFree(szFullPath);
@@ -1252,7 +1253,7 @@ public:
 
 	virtual void MakeUnique()
 	{
-		if (Installed.size() <= 0)
+		if (Installed.size() <= 1)
 			return;
 
 		// Ensure task names are unique
@@ -1261,9 +1262,22 @@ public:
 		struct impl {
 			static int SortRoutine(AppInfo &e1, AppInfo &e2)
 			{
+				// Compare task base name
 				int iNameCmp = lstrcmpi(e1.szTaskBaseName, e2.szTaskBaseName);
 				if (iNameCmp)
 					return (iNameCmp < 0) ? -1 : 1;
+
+				// Primary task - to top
+				if (e1.bPrimary && !e2.bPrimary)
+					return -1;
+				else if (e2.bPrimary && !e1.bPrimary)
+					return 1;
+				#ifdef _DEBUG
+				else if (e1.bPrimary && e2.bPrimary)
+					_ASSERTE(!e1.bPrimary || !e2.bPrimary); // Two primary tasks are not allowed!
+				#endif
+
+				// Compare exe version
 				if (e1.Ver.dwFileVersionMS < e2.Ver.dwFileVersionMS)
 					return 1;
 				if (e1.Ver.dwFileVersionMS > e2.Ver.dwFileVersionMS)
@@ -1272,10 +1286,13 @@ public:
 					return 1;
 				if (e1.Ver.dwFileVersionLS > e2.Ver.dwFileVersionLS)
 					return -1;
+				// And bitness
 				if (e1.dwBits < e2.dwBits)
 					return 1;
 				if (e1.dwBits > e2.dwBits)
 					return -1;
+
+				// Equal?
 				return 0;
 			};
 		};
@@ -1323,6 +1340,11 @@ public:
 					AppInfo& FJ = Installed[j];
 					if (FJ.iStep == u)
 						continue; // Already processed
+					if (FJ.bPrimary)
+					{
+						// Don't change primary task name
+						continue;
+					}
 
 					// Check only tasks with the same base names
 					if (lstrcmpi(FI.szTaskBaseName, FJ.szTaskBaseName) != 0)
@@ -1527,6 +1549,14 @@ public:
 				AddAppPath(L"Far", szFound, NULL, true);
 		}
 
+		// If Far was copied inside our (ConEmu) folder,
+		// just leave far.exe found in our subdir as {Far}
+		// Let portable installation (probably for testing) be friendly
+		if (Installed.size() > 0)
+		{
+			Installed[0].bPrimary = true;
+		}
+
 		// Check registry
 		ScanRegistry();
 
@@ -1563,6 +1593,17 @@ public:
 			struct impl {
 				static int SortRoutine(AppInfo &e1, AppInfo &e2)
 				{
+					// Primary task - to top
+					if (e1.bPrimary && !e2.bPrimary)
+						return -1;
+					else if (e2.bPrimary && !e1.bPrimary)
+						return 1;
+					#ifdef _DEBUG
+					else if (e1.bPrimary && e2.bPrimary)
+						_ASSERTE(!e1.bPrimary || !e2.bPrimary); // Two primary tasks are not allowed!
+					#endif
+
+					// Compare exe version
 					if (e1.FarVer.dwVer < e2.FarVer.dwVer)
 						return 1;
 					if (e1.FarVer.dwVer > e2.FarVer.dwVer)
@@ -1575,6 +1616,8 @@ public:
 						return 1;
 					if (e1.dwBits > e2.dwBits)
 						return -1;
+
+					// Equal?
 					return 0;
 				};
 			};
@@ -1588,6 +1631,14 @@ public:
 				for (i = 0; i < Installed.size(); i++)
 				{
 					AppInfo& FI = Installed[i];
+					if (FI.bPrimary)
+					{
+						// Don't change name of primary task, add prefix only
+						wcscpy_c(FI.szTaskName, pszPrefix);
+						wcscat_c(FI.szTaskName, L"Far");
+						continue;
+					}
+
 					wchar_t szPlatform[6]; wcscpy_c(szPlatform, (FI.dwBits == 64) ? L" x64" : (FI.dwBits == 32) ? L" x86" : L"");
 
 					switch (u)
