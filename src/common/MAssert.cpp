@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2015 Maximus5
+Copyright (c) 2009-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -43,6 +43,14 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifdef _DEBUG
 #include <ShlObj.h>
 #include "../ConEmu/version.h"
+#endif
+
+#ifdef _DEBUG
+static bool gbMyAssertSkip = false;
+static bool MyAssertSkip(const wchar_t* pszFile, int nLine, const wchar_t* pszTest, bool abNoPipe)
+{
+	return gbMyAssertSkip; // just for breakpoints
+}
 #endif
 
 AppMsgBox_t AssertMsgBox = NULL;
@@ -169,8 +177,7 @@ int MyAssertProc(const wchar_t* pszFile, int nLine, const wchar_t* pszTest, bool
 	#endif
 
 	#ifdef _DEBUG
-	static bool lbSkip = false;
-	if (lbSkip)
+	if (MyAssertSkip(pszFile, nLine, pszTest, abNoPipe))
 		return 1;
 	#endif
 
