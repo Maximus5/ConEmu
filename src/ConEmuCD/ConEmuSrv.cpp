@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2015 Maximus5
+Copyright (c) 2009-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -2600,7 +2600,9 @@ bool TryConnect2Gui(HWND hGui, DWORD anGuiPID, CESERVER_REQ* pIn)
 			CESERVER_REQ *pSizeIn = NULL, *pSizeOut = NULL;
 			if (gpSrv->dwAltServerPID && ((pSizeIn = ExecuteNewCmd(CECMD_SETSIZESYNC, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_SETSIZE))) != NULL))
 			{
-				pSizeIn->SetSize.nBufferHeight = pStartStopRet->Info.nBufferHeight;
+				// conhost uses only SHORT, SetSize.nBufferHeight is defines as USHORT
+				_ASSERTE(!HIWORD(pStartStopRet->Info.nBufferHeight));
+				pSizeIn->SetSize.nBufferHeight = LOWORD(pStartStopRet->Info.nBufferHeight);
 				pSizeIn->SetSize.size = crNewSize;
 				//pSizeIn->SetSize.nSendTopLine = -1;
 				//pSizeIn->SetSize.rcWindow = rcWnd;
