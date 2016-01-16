@@ -2021,9 +2021,7 @@ wrap:
 			#endif
 		}
 
-		gbInExitWaitForKey = TRUE;
-		WORD vkKeys[3]; vkKeys[0] = VK_RETURN; vkKeys[1] = VK_ESCAPE; vkKeys[2] = 0;
-		ExitWaitForKey(vkKeys, pszMsg, lbLineFeedAfter, lbDontShowConsole);
+		ExitWaitForKey(VK_RETURN|(VK_ESCAPE<<8), pszMsg, lbLineFeedAfter, lbDontShowConsole);
 
 		UNREFERENCED_PARAMETER(nProcCount);
 		UNREFERENCED_PARAMETER(nProcesses[0]);
@@ -5945,9 +5943,13 @@ bool IsMainServerPID(DWORD nPID)
 	return false;
 }
 
-int ExitWaitForKey(WORD* pvkKeys, LPCWSTR asConfirm, BOOL abNewLine, BOOL abDontShowConsole)
+int ExitWaitForKey(DWORD vkKeys, LPCWSTR asConfirm, BOOL abNewLine, BOOL abDontShowConsole, DWORD anMaxTimeout /*= 0*/)
 {
+	gbInExitWaitForKey = TRUE;
+
 	int nKeyPressed = -1;
+
+	if (!vkKeys) vkKeys = VK_ESCAPE;
 
 	// Чтобы ошибку было нормально видно
 	if (!abDontShowConsole)
@@ -6016,22 +6018,24 @@ int ExitWaitForKey(WORD* pvkKeys, LPCWSTR asConfirm, BOOL abNewLine, BOOL abDont
 		_wprintf(asConfirm);
 	}
 
-	//if (lbNeedVisible)
-	// Если окошко опять было скрыто - значит GUI часть жива, и опять отображаться не нужно
-	//while (PeekConsoleInput(GetStdHandle(STD_INPUT_HANDLE), &r, 1, &dwCount)) {
-	//    if (dwCount)
-	//        ReadConsoleInput(GetStdHandle(STD_INPUT_HANDLE), &r, 1, &dwCount);
-	//    else
-	//        Sleep(100);
-	//    if (lbNeedVisible && !IsWindowVisible(ghConWnd)) {
-	//        apiShowWindow(ghConWnd, SW_SHOWNORMAL); // и покажем окошко
-	//    }
+	DWORD nStartTick = GetTickCount(), nDelta = 0;
+
 	while (TRUE)
 	{
 		if (gbStopExitWaitForKey)
 		{
 			// Был вызван HandlerRoutine(CLOSE)
 			break;
+		}
+
+		// Allow exit by timeout
+		if (anMaxTimeout)
+		{
+			nDelta = GetTickCount() - nStartTick;
+			if (nDelta >= anMaxTimeout)
+			{
+				break;
+			}
 		}
 
 		if (!PeekConsoleInput(GetStdHandle(STD_INPUT_HANDLE), &r, 1, &dwCount))
@@ -6068,16 +6072,9 @@ int ExitWaitForKey(WORD* pvkKeys, LPCWSTR asConfirm, BOOL abNewLine, BOOL abDont
 
 				if (r.EventType == KEY_EVENT && r.Event.KeyEvent.bKeyDown)
 				{
-					if (pvkKeys)
+					for (DWORD vk = vkKeys; !lbMatch && LOBYTE(vk); vk=vk>>8)
 					{
-						for (int i = 0; !lbMatch && pvkKeys[i]; i++)
-						{
-							lbMatch = (r.Event.KeyEvent.wVirtualKeyCode == pvkKeys[i]);
-						}
-					}
-					else
-					{
-						lbMatch = (r.Event.KeyEvent.wVirtualKeyCode == VK_ESCAPE);
+						lbMatch = (r.Event.KeyEvent.wVirtualKeyCode == LOBYTE(vk));
 					}
 				}
 

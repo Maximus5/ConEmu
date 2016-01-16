@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2015 Maximus5
+Copyright (c) 2009-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -340,7 +340,7 @@ void UpdateConsoleTitle();
 BOOL SetTitle(LPCWSTR lsTitle);
 void Help();
 void DosBoxHelp();
-int  ExitWaitForKey(WORD* pvkKeys, LPCWSTR asConfirm, BOOL abNewLine, BOOL abDontShowConsole);
+int  ExitWaitForKey(DWORD vkKeys, LPCWSTR asConfirm, BOOL abNewLine, BOOL abDontShowConsole, DWORD anMaxTimeout = 0);
 bool IsMainServerPID(DWORD nPID);
 
 extern wchar_t gsSelfExe[MAX_PATH];  // Full path+exe to our executable
