@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2015 Maximus5
+Copyright (c) 2009-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -834,4 +834,24 @@ COORD MyGetLargestConsoleWindowSize(HANDLE hConsoleOutput)
 	#endif
 
 	return crMax;
+}
+
+MSetConTextAttr::MSetConTextAttr(HANDLE hConOut, WORD wAttributes)
+	: mh_ConOut(NULL)
+	, m_csbi()
+{
+	if (GetConsoleScreenBufferInfo(hConOut, &m_csbi))
+	{
+		_ASSERTE(m_csbi.wAttributes);
+		mh_ConOut = hConOut;
+		SetConsoleTextAttribute(mh_ConOut, wAttributes);
+	}
+}
+
+MSetConTextAttr::~MSetConTextAttr()
+{
+	if (mh_ConOut && m_csbi.wAttributes)
+	{
+		SetConsoleTextAttribute(mh_ConOut, m_csbi.wAttributes);
+	}
 }

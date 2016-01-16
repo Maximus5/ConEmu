@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2015 Maximus5
+Copyright (c) 2009-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -85,3 +85,13 @@ BOOL apiPauseConsoleOutput(HWND hConWnd, bool bPause);
 BOOL apiGetConsoleSelectionInfo(PCONSOLE_SELECTION_INFO lpConsoleSelectionInfo);
 
 COORD MyGetLargestConsoleWindowSize(HANDLE hConsoleOutput);
+
+class MSetConTextAttr
+{
+protected:
+	HANDLE mh_ConOut;
+	CONSOLE_SCREEN_BUFFER_INFO m_csbi;
+public:
+	MSetConTextAttr(HANDLE hConOut, WORD wAttributes);
+	~MSetConTextAttr();
+};
