@@ -2560,16 +2560,32 @@ int CheckAttachProcess()
 
 	if (liArgsFailed)
 	{
+		DWORD nSelfPID = GetCurrentProcessId();
+		PROCESSENTRY32 self = {sizeof(self)}, parent = {sizeof(parent)};
+		// Not optimal, needs refactoring
+		if (GetProcessInfo(nSelfPID, &self))
+			GetProcessInfo(self.th32ParentProcessID, &parent);
+
 		LPCWSTR pszCmdLine = GetCommandLineW(); if (!pszCmdLine) pszCmdLine = L"";
 
-		int nCmdLen = lstrlen(szFailMsg) + lstrlen(pszCmdLine) + 16;
-		wchar_t* pszMsg = (wchar_t*)malloc(nCmdLen*2);
-		_wcscpy_c(pszMsg, nCmdLen, szFailMsg);
-		_wcscat_c(pszMsg, nCmdLen, L"\n\n");
-		_wcscat_c(pszMsg, nCmdLen, pszCmdLine);
-		wchar_t szTitle[64]; _wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuC, PID=%u", GetCurrentProcessId());
-		MessageBox(NULL, pszMsg, szTitle, MB_ICONSTOP|MB_SYSTEMMODAL);
-		free(pszMsg);
+		wchar_t szTitle[MAX_PATH*2];
+		_wsprintf(szTitle, SKIPLEN(countof(szTitle))
+			L"ConEmuC %s [%u], PID=%u, Code=%i" L"\r\n"
+			L"ParentPID=%u: %s" L"\r\n"
+			L"  ", // szFailMsg follows this
+			gsVersion, WIN3264TEST(32,64), nSelfPID, liArgsFailed,
+			self.th32ParentProcessID, parent.szExeFile[0] ? parent.szExeFile : L"<terminated>");
+
+		CEStr lsMsg = lstrmerge(szTitle, szFailMsg, L"\r\nCommand line:\r\n  ", pszCmdLine);
+
+		// Avoid automatic termination of ExitWaitForKey
+		gbInShutdown = FALSE;
+
+		// Force light-red on black for error message
+		MSetConTextAttr setAttr(ghConOut, 12);
+
+		const DWORD nAttachErrorTimeoutMessage = 15*1000; // 15 sec
+		ExitWaitForKey(VK_RETURN|(VK_ESCAPE<<8), lsMsg, true, true, nAttachErrorTimeoutMessage);
 
 		gbInShutdown = TRUE;
 		return CERR_CARGUMENT;
