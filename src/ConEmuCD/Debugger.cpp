@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2013-2015 Maximus5
+Copyright (c) 2013-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -729,7 +729,7 @@ bool GetSaveDumpName(DWORD dwProcessId, bool bFull, wchar_t* dmpfile, DWORD cchM
 
 			INT_PTR nLen = lstrlen(dmpfile);
 			dmpfile[nLen++] = L'\\'; dmpfile[nLen] = 0;
-			FormatDumpName(dmpfile+nLen, cchMaxDmpFile-nLen, dwProcessId, gpSrv->DbgInfo.bDebuggerRequestDump, bFull);
+			FormatDumpName(dmpfile+nLen, cchMaxDmpFile-nLen, dwProcessId, (gpSrv->DbgInfo.bDebuggerRequestDump!=FALSE), bFull);
 
 			bRc = true;
 		}
@@ -1252,7 +1252,7 @@ void ProcessDebugEvent()
 				wchar_t* pwszDbg = wszDbgText + iPidTidLen;
 
 				if (evt.u.DebugString.nDebugStringLength > iReadMax)
-					evt.u.DebugString.nDebugStringLength = iReadMax;
+					evt.u.DebugString.nDebugStringLength = LOWORD(iReadMax);
 
 				DWORD_PTR nRead = 0;
 
