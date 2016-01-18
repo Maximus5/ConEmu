@@ -75,7 +75,10 @@ void CDrawObjectBase::FinalRelease()
 
 CDrawObjectBase::~CDrawObjectBase()
 {
-	InternalFree();
+	// InternalFree must not be called at this point!
+	// Object must be already released, because CDrawObjectBase
+	// must not be destroyed via simple `delete`, but by ->Release() only!
+	_ASSERTE(mh_Object == NULL);
 }
 
 HANDLE CDrawObjectBase::Set(HANDLE Obj)

@@ -336,6 +336,11 @@ void CDrawCanvasGdi::SetBkColor(COLORREF clr)
 	::SetBkColor(operator HDC(), clr);
 }
 
+void CDrawCanvasGdi::SetBkMode(int iBkMode)
+{
+	::SetBkMode(operator HDC(), iBkMode);
+}
+
 bool CDrawCanvasGdi::TextDraw(LPCWSTR pszString, int iLen, int x, int y, const RECT *lprc, UINT Flags, const INT *lpDx)
 {
 	bool bRc = false;

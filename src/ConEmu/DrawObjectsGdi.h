@@ -108,7 +108,7 @@ public:
 	bool InitBrush(COLORREF Color);
 
 protected:
-	virtual void InternalFree();
+	virtual void InternalFree() override;
 
 public:
 	// Operators
