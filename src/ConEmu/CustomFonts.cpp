@@ -1,7 +1,7 @@
 ﻿
 /*
 Copyright (c) 2012 thecybershadow
-Copyright (c) 2012 Maximus5
+Copyright (c) 2012-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -38,6 +38,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	#undef DEBUG_BDF_DRAW
 #endif
 
+// used in CSettings::RecreateFont
 bool operator== (const CEFONT &a, const CEFONT &b)
 {
 	if (a.iType != b.iType)
@@ -53,6 +54,7 @@ bool operator== (const CEFONT &a, const CEFONT &b)
 	return FALSE;
 }
 
+// used in CSettings::RecreateFont
 bool operator!= (const CEFONT &a, const CEFONT &b)
 {
 	return !(a == b);
@@ -452,16 +454,24 @@ wrap:
 		*pY = m_Height;
 	}
 
+	// Used if Display has less than 32-bit color (CEDC::Create)
 	virtual void TextDraw(HDC hDC, int X, int Y, LPCWSTR lpString, UINT cbCount)
 	{
 		for (; cbCount; cbCount--, lpString++)
 		{
 			wchar_t ch = *lpString;
-			BitBlt(hDC, X, Y, m_Width, m_Height, this->hDC, (ch%256)*m_Width, (ch/256)*m_Height, 0x00E20746);
+			// If this BitBlt(DSPDxax) fails with colour (160118-custom-bdf\2016-01-18_21-23-12.png)
+			// we may switch to MaskBlt below, but MaskBlt is slower (somewhat about 25%)
+			// Note!
+			//   Our hBitmap MUST be created with palette of two RGB colors {0x000000, 0xFFFFFF}
+			//   to achieve proper trinaty raster operations on our pixels and foreground color (selected brush)
+			BitBlt(hDC, X, Y, m_Width, m_Height, this->hDC, (ch%256)*m_Width, (ch/256)*m_Height, 0x00E20746/*DSPDxax*/);
+			//MaskBlt(hDC, X, Y, m_Width, m_Height, hDC/*NULL?*/, X, Y, this->hBitmap, (ch%256)*m_Width, (ch/256)*m_Height, MAKEROP4(PATCOPY/*text/foreground*/, 0x00AA0029/*D:background*/));
 			X += m_Width;
 		}
 	}
 
+	// Normal (?) behavior for TrueColor displays
 	virtual void TextDraw(COLORREF* pDstPixels, size_t iDstStride, COLORREF cFG, COLORREF cBG, LPCWSTR lpString, UINT cbCount)
 	{
 		size_t iSrcSlack = m_Width * 255;
@@ -722,11 +732,16 @@ BOOL CEDC::TextDraw(int X, int Y, UINT fuOptions, const RECT *lprc, LPCWSTR lpSt
 	case CEFONT_CUSTOM:
 		if (pPixels)
 		{
+			// We get here when our display has 32bit color depth (OK and fast)
 			m_Font.pCustomFont->TextDraw(pPixels + X + Y*iWidth, iWidth,
 				FlipChannels(m_TextColor), fuOptions & ETO_OPAQUE ? FlipChannels(m_BkColor) : CLR_INVALID, lpString, cbCount);
 		}
 		else
 		{
+			// We get here for non-true-color displays (compatibility, slower)
+
+			//TODO: Opaque is not used at the moment, background is painted separately
+			_ASSERTE(!(fuOptions & ETO_OPAQUE));
 			if (fuOptions & ETO_OPAQUE)
 			{
 				//hOldBrush = ::SelectObject(hDC, m_BgBrush.Get(m_BkColor));
@@ -736,10 +751,12 @@ BOOL CEDC::TextDraw(int X, int Y, UINT fuOptions, const RECT *lprc, LPCWSTR lpSt
 				FillRect(hDC, &r, m_BgBrush.Get(m_BkColor));
 			}
 
+			//TODO: Optimize: no need to switch brush if it was already selected
 			HBRUSH hOldBrush = (HBRUSH)::SelectObject(hDC, m_FgBrush.Get(m_TextColor));
 
 			m_Font.pCustomFont->TextDraw(hDC, X, Y, lpString, cbCount);
 
+			//TODO: Optimize: no need to revert brush if we paint transparent text now...
 			::SelectObject(hDC, hOldBrush);
 		}
 

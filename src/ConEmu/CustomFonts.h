@@ -1,6 +1,7 @@
 ﻿
 /*
 Copyright (c) 2012 thecybershadow
+Copyright (c) 2012-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -126,6 +127,7 @@ struct CEFONT
 	}
 };
 
+// used in CSettings::RecreateFont
 bool operator== (const CEFONT &a, const CEFONT &b);
 bool operator!= (const CEFONT &a, const CEFONT &b);
 
