@@ -10540,6 +10540,11 @@ BYTE CSettings::FontQuality()
 
 bool CSettings::FontMonospaced()
 {
+	if (mh_Font[0].iType == CEFONT_CUSTOM)
+	{
+		// BDF fonts are always treated as monospaced
+		return true;
+	}
 	return IsAlmostMonospace(LogFont.lfFaceName, m_tm, m_otm[0]);
 }
 
@@ -10551,6 +10556,10 @@ LPCWSTR CSettings::BorderFontFaceName()
 // Returns real pixels
 LONG CSettings::BorderFontWidth()
 {
+	if (!gpSet->isFixFarBorders)
+	{
+		return FontCellWidth();
+	}
 	_ASSERTE(LogFont2.lfWidth);
 	_ASSERTE(gpSetCls->mn_BorderFontWidth==LogFont2.lfWidth);
 	return gpSetCls->mn_BorderFontWidth;
