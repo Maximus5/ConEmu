@@ -480,6 +480,12 @@
     <ClCompile Include="SetPgViews.cpp">
       <Filter>SettingPages</Filter>
     </ClCompile>
+    <ClCompile Include="DrawObjects.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DrawObjectsGdi.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Attach.h">
@@ -1031,6 +1037,12 @@
     </ClInclude>
     <ClInclude Include="SetPgViews.h">
       <Filter>SettingPages</Filter>
+    </ClInclude>
+    <ClInclude Include="DrawObjects.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DrawObjectsGdi.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
