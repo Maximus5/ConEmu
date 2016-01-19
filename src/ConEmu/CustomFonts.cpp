@@ -816,7 +816,12 @@ BOOL CEDC::TextExtentPoint(LPCTSTR ch, int c, LPSIZE sz)
 	case CEFONT_NONE:
 		return ::GetTextExtentPoint32(hDC, ch, c, sz);
 	case CEFONT_CUSTOM:
+		_ASSERTE(c>=1);
 		m_Font.pCustomFont->GetBoundingBox(&sz->cx, &sz->cy);
+		// All glyphs in bdf are painted in their own cells,
+		// non-printable, composites and double-width glyphs
+		// are not supported at the moment (in bdf)
+		sz->cx *= c;
 		return TRUE;
 	default:
 		_ASSERTE(0);
