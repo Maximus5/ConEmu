@@ -147,7 +147,9 @@ private:
 		struct MyBitmap
 		{
 			BITMAPINFO bmi;
-			RGBQUAD white;
+			// bmi contains bmiColors[1], which is initialized to {0,0,0}
+			// but we need space for `white` color, because (biBitCount == 1)
+			RGBQUAD space_for_white;
 		};
 
 		MyBitmap b = {};
@@ -157,8 +159,11 @@ private:
 		b.bmi.bmiHeader.biPlanes      = 1;
 		b.bmi.bmiHeader.biBitCount    = 1;
 		b.bmi.bmiHeader.biCompression = BI_RGB;
+		//TODO: Alpha channel?
 		RGBQUAD white = {0xFF,0xFF,0xFF};
-		b.white = white;
+		// biBitCount==1: The bitmap is monochrome, and the bmiColors member
+		//                of BITMAPINFO must contain two entries.
+		b.bmi.bmiColors[1] = white;
 		void* pvBits = NULL;
 		hBitmap = CreateDIBSection(hDC, &b.bmi, DIB_RGB_COLORS, &pvBits, NULL, 0);
 		if (hBitmap)
