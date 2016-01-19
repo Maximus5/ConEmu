@@ -3956,6 +3956,8 @@ void CVirtualConsole::PaintVConNormal(HDC hPaintDc, RECT rcClient)
 		// Обычный режим
 		if (gpSetCls->isAdvLogging>=3) mp_RCon->LogString("Blitting to Display");
 
+		gpSetCls->Performance(tPerfBlt, FALSE);
+
 		BOOL lbBltRc;
 		if (!m_LockDc.bLocked)
 		{
@@ -3998,6 +4000,8 @@ void CVirtualConsole::PaintVConNormal(HDC hPaintDc, RECT rcClient)
 		//#endif
 
 		CheckTransparent();
+
+		gpSetCls->Performance(tPerfBlt, TRUE);
 	}
 	else
 	{

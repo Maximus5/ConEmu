@@ -1156,7 +1156,7 @@ LRESULT CConEmuChild::OnPaint()
 	if (gpSetCls->isAdvLogging>2)
 		VCon->RCon()->LogString("CConEmuChild::OnPaint");
 
-	gpSetCls->Performance(tPerfBlt, FALSE);
+	//gpSetCls->Performance(tPerfBlt, FALSE);
 
 	if (gpConEmu->isPictureView())
 	{
@@ -1231,7 +1231,7 @@ LRESULT CConEmuChild::OnPaint()
 	}
 
 	//Validate();
-	gpSetCls->Performance(tPerfBlt, TRUE);
+	//gpSetCls->Performance(tPerfBlt, TRUE);
 	// Если открыто окно настроек - обновить системную информацию о размерах
 	gpConEmu->UpdateSizes();
 
