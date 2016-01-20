@@ -48,9 +48,9 @@
     <!-- Global Installer Properties -->
     <Icon Id="SetupIcon.ico" SourceFile="..\..\src\ConEmu\ConEmu.ico"/>
     <Property Id="ARPPRODUCTICON" Value="SetupIcon.ico" />
-    <Property Id="ARPHELPLINK" Value="http://conemu.github.io/" />
-    <Property Id="ARPURLINFOABOUT" Value="http://conemu.github.io/en/Issues.html" />
-    <Property Id="ARPURLUPDATEINFO" Value="http://conemu.github.io/en/Downloads.html" />
+    <Property Id="ARPHELPLINK" Value="https://conemu.github.io/" />
+    <Property Id="ARPURLINFOABOUT" Value="https://conemu.github.io/en/Issues.html" />
+    <Property Id="ARPURLUPDATEINFO" Value="https://conemu.github.io/en/Downloads.html" />
     <Property Id="REINSTALLMODE" Value="amus" />
     <!--<Property Id="ALLUSERS" Value="1" />-->
 

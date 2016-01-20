@@ -28,7 +28,7 @@ wchar_t gsTempFolder[MAX_PATH-24];
 wchar_t gsMsiFile[MAX_PATH];
 wchar_t gsCabFile[MAX_PATH];
 wchar_t gsExeFile[MAX_PATH];
-const wchar_t gsWWW[] = L"Project page: <a href=\"http://conemu.github.io/\">http://conemu.github.io/</a>";
+const wchar_t gsWWW[] = L"Project page: <a href=\"https://conemu.github.io/\">https://conemu.github.io/</a>";
 bool gbExtractOnly = false;
 bool gbUseElevation = false;
 bool gbAlreadyAdmin = false;

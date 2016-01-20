@@ -2,7 +2,7 @@
 
 call %~d0\gcc\gccsetvars.cmd
 
-if "%ConEmuHttp%" == "" set ConEmuHttp=http://conemu.github.io/
+if "%ConEmuHttp%" == "" set ConEmuHttp=https://conemu.github.io/
 
 cd /d "%~dp0"
 
