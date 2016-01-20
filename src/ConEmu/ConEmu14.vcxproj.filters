@@ -204,9 +204,6 @@
     <ClCompile Include="SearchCtrl.cpp">
       <Filter>0 - Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\common\CmdArg.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\common\MEvent.cpp">
       <Filter>0 - Source Files</Filter>
     </ClCompile>
@@ -334,6 +331,15 @@
       <Filter>0 - Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\common\wcwidth.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\CEStr.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AltNumpad.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="VConText.cpp">
       <Filter>0 - Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -570,9 +576,6 @@
     <ClInclude Include="SearchCtrl.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\common\CmdArg.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\common\ConEmuColors.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -736,6 +739,15 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\common\wcwidth.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\CEStr.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="AltNumpad.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="VConText.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
