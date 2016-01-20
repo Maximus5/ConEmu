@@ -55,6 +55,12 @@ const TextPartFlags
 								   // pseudographic/space parts (like '═' or '─' or ' ')
 								   // to avoid dashed frames or broken dialog borders,
 								   // especially with proportional fonts
+	TRF_CompareMask = (
+		TRF_PosFixed|TRF_PosRecommended
+		|TRF_TextAlternative|TRF_TextPseudograph
+		|TRF_TextSeparate|TRF_TextProgress|TRF_TextScroll
+		|TRF_ExpandGraphics
+		),
 	// TODO: Ligatures
 	// End of flags
 	TRF_None = 0;

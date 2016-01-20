@@ -724,30 +724,18 @@ void CVConLine::PolishParts(DWORD* pnXCoords)
 
 		const CharAttr attr = ConAttrLine[part.Index];
 
-		if (part.Flags & TRF_TextAlternative)
+		if (!(part.Flags & TRF_TextSpacing))
 		{
+			_ASSERTE(TRF_CompareMask & TRF_TextAlternative);
 			for (uint k2 = k+1; k2 < PartsCount; k2++)
 			{
 				VConTextPart& part2 = TextParts[k2];
-				if ((part2.Flags & (TRF_PosFixed|TRF_PosRecommended))
-					|| !(part2.Flags & TRF_TextAlternative))
+				if (part2.Flags & (TRF_PosFixed|TRF_PosRecommended))
 					break;
-				if (!(attr == ConAttrLine[part2.Index]))
-					break;
-				part.Length += part2.Length;
-				part.TotalWidth += part2.TotalWidth;
-				part.MinWidth += part2.MinWidth;
-				// "Hide" this part from list
-				part2.Flags = TRF_None;
-				k = k2;
-			}
-		}
-		else if (!(part.Flags & TRF_TextSpacing))
-		{
-			for (uint k2 = k+1; k2 < PartsCount; k2++)
-			{
-				VConTextPart& part2 = TextParts[k2];
-				if ((part2.Flags & (TRF_PosFixed|TRF_PosRecommended|TRF_TextAlternative)))
+				WARNING("At the moment we do not care about CJK and RTL differences, unless TRF_TextAlternative is specified");
+				// Let GDI deal with them, seems like it successfully
+				// process strings, containing all types of characters
+				if ((part.Flags & TRF_CompareMask) != (part2.Flags & TRF_CompareMask))
 					break;
 				if (!(attr == ConAttrLine[part2.Index]))
 					break;
