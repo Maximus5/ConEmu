@@ -3,7 +3,7 @@
 // DPI resize.
 
 /*
-Copyright (c) 2014 Maximus5
+Copyright (c) 2014-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -57,7 +57,7 @@ namespace ConEmuAbout
 	bool mb_CommCtrlsInitialized = false;
 	HWND mh_AboutDlg = NULL;
 	DWORD nLastCrashReported = 0;
-	CDpiForDialog* mp_DpiAware;
+	CDpiForDialog* mp_DpiAware = NULL;
 
 	INT_PTR WINAPI aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam);
 	void searchProc(HWND hDlg, HWND hSearch, bool bReentr);
