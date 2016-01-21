@@ -97,5 +97,5 @@ public:
 public:
 	bool CreateDonateButton();
 	bool CreateFlattrButton();
-	bool CreateSearchButton();
+	static CToolImg* CreateSearchButton();
 };

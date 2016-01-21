@@ -125,11 +125,7 @@ static int EditIconHintCreateHandles(HWND hEditCtrl, CToolImg** pIcon = NULL, HF
 	if (!gpIconHandles->Get(lf.lfHeight, &dh))
 	{
 		// Need to be created
-		dh.pIcon = new CToolImg();
-		if (dh.pIcon && !dh.pIcon->CreateSearchButton())
-		{
-			SafeDelete(dh.pIcon);
-		}
+		dh.pIcon = CToolImg::CreateSearchButton();
 
 		dh.hFont = CreateFontIndirect(&lf);
 		if (!dh.hFont)

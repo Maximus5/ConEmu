@@ -210,7 +210,7 @@ bool CToolImg::CreateFlattrButton()
 	return CreateButtonField(MAKEINTRESOURCE(IDB_FLATTR), 0, Btns, (int)countof(Btns), true);
 }
 
-bool CToolImg::CreateSearchButton()
+CToolImg* CToolImg::CreateSearchButton()
 {
 	ButtonRowInfo Btns[] = {
 		{11,  11},
@@ -226,7 +226,16 @@ bool CToolImg::CreateSearchButton()
 		nY += 1 + Btns[i].nHeight;
 	}
 
-	return CreateButtonField(MAKEINTRESOURCE(IDB_SEARCH), 0, Btns, (int)countof(Btns), true);
+	CToolImg* p = new CToolImg();
+	if (p && !p->CreateButtonField(MAKEINTRESOURCE(IDB_SEARCH), 0, Btns, (int)countof(Btns), true))
+	{
+		#ifdef _DEBUG
+		DWORD nErr = GetLastError();
+		_ASSERTE(FALSE && "Resource loading failed?");
+		#endif
+		SafeDelete(p);
+	}
+	return p;
 }
 
 #if 0
