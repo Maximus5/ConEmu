@@ -45,6 +45,7 @@ class CBackground;
 class CBackgroundInfo;
 class CDpiForDialog;
 class CDynDialog;
+class CImgButtons;
 struct CEHelpPopup;
 struct DebugLogShellActivity;
 struct DpiValue;
@@ -210,6 +211,7 @@ class CSettings
 		CBackgroundInfo* mp_BgInfo;
 		#endif
 		CDpiForDialog* mp_DpiAware;
+		CImgButtons* mp_ImgBtn;
 	protected:
 		enum ColorShowFormat { eRgbDec = 0, eRgbHex, eBgrHex } m_ColorFormat;
 	public:

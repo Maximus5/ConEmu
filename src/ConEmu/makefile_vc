@@ -70,6 +70,7 @@ $(INTDIR)\HotkeyDlg.obj \
 $(INTDIR)\HotkeyList.obj \
 $(INTDIR)\Hotkeys.obj \
 $(INTDIR)\IconList.obj \
+$(INTDIR)\ImgButton.obj \
 $(INTDIR)\Inside.obj \
 $(INTDIR)\LoadImg.obj \
 $(INTDIR)\Macro.obj \
@@ -358,6 +359,8 @@ $(INTDIR)\HotkeyList.obj: HotkeyList.cpp HotkeyDlg.h HotkeyList.h
 $(INTDIR)\Hotkeys.obj: Hotkeys.cpp Hotkeys.h
 
 $(INTDIR)\IconList.obj: IconList.cpp IconList.h
+
+$(INTDIR)\ImgButton.obj: ImgButton.cpp ImgButton.h
 
 $(INTDIR)\Inside.obj: Inside.cpp Inside.h
 

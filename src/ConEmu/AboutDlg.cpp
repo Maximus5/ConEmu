@@ -39,11 +39,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmu.h"
 #include "DpiAware.h"
 #include "DynDialog.h"
+#include "ImgButton.h"
 #include "OptionsClass.h"
 #include "PushInfo.h"
 #include "RealConsole.h"
 #include "SearchCtrl.h"
-#include "ToolImg.h"
 #include "Update.h"
 #include "VirtualConsole.h"
 #include "VConChild.h"
@@ -65,21 +65,7 @@ namespace ConEmuAbout
 	void OnInfo_DonateLink();
 	void OnInfo_FlattrLink();
 
-	struct BtnInfo
-	{
-		LPCWSTR ResId;
-		CToolImg* pImg;
-		LPWSTR pszUrl;
-		UINT nCtrlId;
-	} m_Btns[2] = {};
-
-	void LoadResources();
-
-	wchar_t gsDonatePage[] = CEDONATEPAGE;
-	wchar_t gsFlattrPage[] = CEFLATTRPAGE;
-
-	HWND hwndTip = NULL;
-	void RegisterTip(HWND hDlg);
+	CImgButtons* mp_ImgBtn = NULL;
 
 	static struct {LPCWSTR Title; LPCWSTR Text;} Pages[] =
 	{
@@ -109,7 +95,7 @@ namespace ConEmuAbout
 INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam)
 {
 	INT_PTR lRc = 0;
-	if (DonateBtns_Process(hDlg, messg, wParam, lParam, lRc)
+	if ((mp_ImgBtn && mp_ImgBtn->Process(hDlg, messg, wParam, lParam, lRc))
 		|| EditIconHint_Process(hDlg, messg, wParam, lParam, lRc))
 	{
 		SetWindowLongPtr(hDlg, DWLP_MSGRESULT, lRc);
@@ -125,7 +111,10 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 			gpConEmu->OnOurDialogOpened();
 			mh_AboutDlg = hDlg;
 
-			DonateBtns_Add(hDlg, pIconCtrl, IDOK);
+			_ASSERTE(mp_ImgBtn==NULL);
+			SafeDelete(mp_ImgBtn);
+			mp_ImgBtn = new CImgButtons(hDlg, pIconCtrl, IDOK);
+			mp_ImgBtn->AddDonateButtons();
 
 			if (mp_DpiAware)
 			{
@@ -314,13 +303,7 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 			if (mp_DpiAware)
 				mp_DpiAware->Detach();
 			EndDialog(hDlg, IDOK);
-
-			for (size_t i = 0; i < countof(m_Btns); i++)
-			{
-				SafeDelete(m_Btns[i].pImg);
-			}
-			//else
-			//	DestroyWindow(hDlg);
+			SafeDelete(mp_ImgBtn);
 			break;
 
 		case WM_DESTROY:
@@ -703,198 +686,5 @@ void ConEmuAbout::OnInfo_ThrowTrapException(bool bMainThread)
 			if ((gpConEmu->GetActiveVCon(&VCon) >= 0) && VCon->RCon())
 				VCon->RCon()->MonitorAssertTrap();
 		}
-	}
-}
-
-void ConEmuAbout::LoadResources()
-{
-	for (size_t i = 0; i < countof(m_Btns); i++)
-	{
-		if (m_Btns[i].pImg)
-			continue; // Already loaded
-
-		switch (i)
-		{
-		case 0:
-			m_Btns[i].ResId = L"DONATE";
-			SafeDelete(m_Btns[i].pImg);
-			m_Btns[i].pImg = new CToolImg();
-			if (m_Btns[i].pImg && !m_Btns[i].pImg->CreateDonateButton())
-				SafeDelete(m_Btns[i].pImg);
-			m_Btns[i].nCtrlId = pLinkDonate;
-			m_Btns[i].pszUrl = gsDonatePage;
-			break;
-		case 1:
-			m_Btns[i].ResId = L"FLATTR";
-			SafeDelete(m_Btns[i].pImg);
-			m_Btns[i].pImg = new CToolImg();
-			if (m_Btns[i].pImg && !m_Btns[i].pImg->CreateFlattrButton())
-				SafeDelete(m_Btns[i].pImg);
-			m_Btns[i].nCtrlId = pLinkFlattr;
-			m_Btns[i].pszUrl = gsFlattrPage;
-			break;
-		}
-
-		#ifdef _DEBUG
-		if (m_Btns[i].pImg == NULL)
-		{
-			DWORD nErr = GetLastError();
-			DisplayLastError(L"Failed to load button image!", nErr);
-		}
-		#endif
-	}
-}
-
-void ConEmuAbout::DonateBtns_Add(HWND hDlg, int AlignLeftId, int AlignVCenterId)
-{
-	if (!m_Btns[0].pImg)
-		LoadResources();
-
-	RECT rcLeft = {}, rcTop = {};
-	HWND hCtrl;
-
-	hCtrl = GetDlgItem(hDlg, AlignLeftId);
-	GetWindowRect(hCtrl, &rcLeft);
-	MapWindowPoints(NULL, hDlg, (LPPOINT)&rcLeft, 2);
-	hCtrl = GetDlgItem(hDlg, AlignVCenterId);
-	GetWindowRect(hCtrl, &rcTop);
-	int nPreferHeight = rcTop.bottom - rcTop.top;
-	MapWindowPoints(NULL, hDlg, (LPPOINT)&rcTop, 2);
-
-	#ifdef _DEBUG
-	DpiValue dpi;
-	CDpiAware::QueryDpiForWindow(hDlg, &dpi);
-	#endif
-
-	int X = rcLeft.left;
-
-	for (size_t i = 0; i < countof(m_Btns); i++)
-	{
-		if (!m_Btns[i].pImg)
-			continue; // Image was failed
-
-		TODO("Вертикальное центрирование по объекту AlignVCenterId");
-
-		int nDispW = 0, nDispH = 0;
-		if (!m_Btns[i].pImg->GetSizeForHeight(nPreferHeight, nDispW, nDispH))
-		{
-			_ASSERTE(FALSE && "Image not available for dpi?");
-			continue; // Image was failed?
-		}
-		_ASSERTE(nDispW>0 && nDispH>0);
-		int nY = rcTop.top + ((rcTop.bottom - rcTop.top - nDispH + 1) / 2);
-
-		hCtrl = CreateWindow(L"STATIC", m_Btns[i].ResId,
-			WS_CHILD|WS_VISIBLE|SS_NOTIFY|SS_OWNERDRAW,
-			X, nY, nDispW, nDispH,
-			hDlg, (HMENU)(DWORD_PTR)m_Btns[i].nCtrlId, g_hInstance, NULL);
-
-		#ifdef _DEBUG
-		if (!hCtrl)
-			DisplayLastError(L"Failed to create image button control");
-		#endif
-
-		//X += nDispW + (10 * dpi.Ydpi / 96);
-		X += nDispW + (nDispH / 3);
-	}
-
-	RegisterTip(hDlg);
-
-	UNREFERENCED_PARAMETER(hCtrl);
-}
-
-bool ConEmuAbout::DonateBtns_Process(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam, INT_PTR& lResult)
-{
-	switch (messg)
-	{
-	case WM_SETCURSOR:
-		{
-			LONG_PTR lID = GetWindowLongPtr((HWND)wParam, GWLP_ID);
-			if (lID == pLinkDonate || lID == pLinkFlattr)
-			{
-				SetCursor(LoadCursor(NULL, IDC_HAND));
-				lResult = TRUE;
-				return true;
-			}
-			return false;
-		}
-		break;
-
-	case WM_COMMAND:
-		if (HIWORD(wParam) == BN_CLICKED)
-		{
-			switch (LOWORD(wParam))
-			{
-			case pLinkDonate:
-				ConEmuAbout::OnInfo_DonateLink();
-				return true;
-			case pLinkFlattr:
-				ConEmuAbout::OnInfo_FlattrLink();
-				return true;
-			}
-		}
-		break;
-
-	case WM_DRAWITEM:
-		switch (LOWORD(wParam))
-		{
-		case pLinkDonate:
-		case pLinkFlattr:
-			for (int iBtnIdx = 0; iBtnIdx < countof(m_Btns); iBtnIdx++)
-			{
-				if (m_Btns[iBtnIdx].nCtrlId == LOWORD(wParam))
-				{
-					if (m_Btns[iBtnIdx].pImg)
-					{
-						DRAWITEMSTRUCT* p = (DRAWITEMSTRUCT*)lParam;
-						bool bRc = m_Btns[iBtnIdx].pImg->PaintButton(-1, p->hDC, p->rcItem.left, p->rcItem.top, p->rcItem.right-p->rcItem.left, p->rcItem.bottom-p->rcItem.top);
-						if (bRc)
-						{
-							lResult = TRUE;
-							return true;
-						}
-					}
-					break;
-				}
-			}
-			break;
-		}
-		break;
-	}
-
-	return false;
-}
-
-void ConEmuAbout::RegisterTip(HWND hDlg)
-{
-	// Create the ToolTip.
-	if (!hwndTip || !IsWindow(hwndTip))
-	{
-		hwndTip = CreateWindowEx(WS_EX_TOPMOST, TOOLTIPS_CLASS, NULL,
-		                         /* BalloonStyle() | */ WS_POPUP | TTS_ALWAYSTIP | TTS_NOPREFIX,
-		                         CW_USEDEFAULT, CW_USEDEFAULT,
-		                         CW_USEDEFAULT, CW_USEDEFAULT,
-		                         ghOpWnd, NULL,
-		                         g_hInstance, NULL);
-		if (!hwndTip)
-			return;
-		SetWindowPos(hwndTip, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE|SWP_NOSIZE|SWP_NOACTIVATE);
-		//SendMessage(hwndTip, TTM_SETDELAYTIME, TTDT_AUTOPOP, 30000);
-	}
-
-	for (size_t i = 0; i < countof(m_Btns); i++)
-	{
-		HWND hChild = GetDlgItem(hDlg, m_Btns[i].nCtrlId);
-		if (!hChild)
-			continue;
-
-		TOOLINFO toolInfo = {44}; //sizeof(toolInfo); -- need to work on Win2k and compile with Vista+
-
-		toolInfo.hwnd = hChild;
-		toolInfo.uFlags = TTF_IDISHWND | TTF_SUBCLASS;
-		toolInfo.uId = (UINT_PTR)hChild;
-		toolInfo.lpszText = m_Btns[i].pszUrl;
-
-		SendMessage(hwndTip, TTM_ADDTOOL, 0, (LPARAM)&toolInfo);
 	}
 }

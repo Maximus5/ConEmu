@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2014-2016 Maximus5
+Copyright (c) 2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -26,24 +26,50 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+
 #pragma once
 
-namespace ConEmuAbout
+#include <windows.h>
+#include "../common/MArray.h"
+
+class CToolImg;
+
+typedef void (*OnImgBtnClick_t)();
+typedef CToolImg* (*ToolImgCreate_t)();
+
+struct BtnInfo
 {
-	void OnInfo_Donate();
-	void OnInfo_About(LPCWSTR asPageName = NULL);
-	void OnInfo_OnlineWiki(LPCWSTR asPageName = NULL);
-	void OnInfo_WhatsNew(bool bLocal);
-	void OnInfo_Help();
-	void OnInfo_HomePage();
-	void OnInfo_DownloadPage();
-	void OnInfo_FirstStartPage();
-	void OnInfo_ReportBug();
-	void OnInfo_ReportCrash(LPCWSTR asDumpWasCreatedMsg);
-	void OnInfo_ThrowTrapException(bool bMainThread);
+	wchar_t   ResId[32];
+	CToolImg* pImg;
+	wchar_t*  pszHint;
+	UINT      nCtrlId;
 
-	void InitCommCtrls();
+	// Calls ShellExecute
+	OnImgBtnClick_t OnClick;
+};
 
-	void OnInfo_DonateLink();
-	void OnInfo_FlattrLink();
+extern wchar_t gsDonatePage[]; // = CEDONATEPAGE;
+extern wchar_t gsFlattrPage[]; // = CEFLATTRPAGE;
+
+class CImgButtons
+{
+protected:
+	HWND hDlg;
+	HWND hwndTip;
+	int AlignLeftId, AlignVCenterId;
+	MArray<BtnInfo> m_Btns;
+
+public:
+	CImgButtons(HWND ahDlg, int aAlignLeftId, int aAlignVCenterId);
+	~CImgButtons();
+
+	void AddDonateButtons();
+
+	bool Process(HWND ahDlg, UINT messg, WPARAM wParam, LPARAM lParam, INT_PTR& lResult);
+
+protected:
+	void Add(LPCWSTR asText, ToolImgCreate_t fnCreate, UINT nCtrlId, LPCWSTR asHint, OnImgBtnClick_t fnClick);
+	void ImplementButtons();
+	void RegisterTip();
+	bool GetBtnInfo(UINT nCtrlId, BtnInfo** ppBtn);
 };

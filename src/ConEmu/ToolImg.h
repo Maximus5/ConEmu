@@ -95,7 +95,7 @@ public:
 	int  AddButtonsMapped(HINSTANCE hinst, INT_PTR resId, int iNumBtns, int iNumMaps, COLORREF from, COLORREF to, ...);
 
 public:
-	bool CreateDonateButton();
-	bool CreateFlattrButton();
+	static CToolImg* CreateDonateButton();
+	static CToolImg* CreateFlattrButton();
 	static CToolImg* CreateSearchButton();
 };

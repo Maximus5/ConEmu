@@ -174,7 +174,7 @@ bool CToolImg::CreateField(int nImgWidth, int nImgHeight, COLORREF clrBackground
 	return true;
 }
 
-bool CToolImg::CreateDonateButton()
+CToolImg* CToolImg::CreateDonateButton()
 {
 	ButtonRowInfo Btns[] = {
 		{74,  21},
@@ -189,10 +189,19 @@ bool CToolImg::CreateDonateButton()
 		nY += 1 + Btns[i].nHeight;
 	}
 
-	return CreateButtonField(MAKEINTRESOURCE(IDB_DONATE), 0, Btns, (int)countof(Btns), true);
+	CToolImg* p = new CToolImg();
+	if (p && !p->CreateButtonField(MAKEINTRESOURCE(IDB_DONATE), 0, Btns, (int)countof(Btns), true))
+	{
+		#ifdef _DEBUG
+		DWORD nErr = GetLastError();
+		_ASSERTE(FALSE && "Resource loading failed?");
+		#endif
+		SafeDelete(p);
+	}
+	return p;
 }
 
-bool CToolImg::CreateFlattrButton()
+CToolImg* CToolImg::CreateFlattrButton()
 {
 	ButtonRowInfo Btns[] = {
 		{55,  19},
@@ -207,7 +216,16 @@ bool CToolImg::CreateFlattrButton()
 		nY += 1 + Btns[i].nHeight;
 	}
 
-	return CreateButtonField(MAKEINTRESOURCE(IDB_FLATTR), 0, Btns, (int)countof(Btns), true);
+	CToolImg* p = new CToolImg();
+	if (p && !p->CreateButtonField(MAKEINTRESOURCE(IDB_FLATTR), 0, Btns, (int)countof(Btns), true))
+	{
+		#ifdef _DEBUG
+		DWORD nErr = GetLastError();
+		_ASSERTE(FALSE && "Resource loading failed?");
+		#endif
+		SafeDelete(p);
+	}
+	return p;
 }
 
 CToolImg* CToolImg::CreateSearchButton()

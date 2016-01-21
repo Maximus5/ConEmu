@@ -584,6 +584,7 @@
     <ClCompile Include="HotkeyList.cpp" />
     <ClCompile Include="Hotkeys.cpp" />
     <ClCompile Include="IconList.cpp" />
+    <ClCompile Include="ImgButton.cpp" />
     <ClCompile Include="Inside.cpp" />
     <ClCompile Include="LoadImg.cpp" />
     <ClCompile Include="Macro.cpp" />
@@ -716,6 +717,7 @@
     <ClInclude Include="Hotkeys.h" />
     <ClInclude Include="HtmlCopy.h" />
     <ClInclude Include="IconList.h" />
+    <ClInclude Include="ImgButton.h" />
     <ClInclude Include="Inside.h" />
     <ClInclude Include="kl_parts.h" />
     <ClInclude Include="LoadImg.h" />

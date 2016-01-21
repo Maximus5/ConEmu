@@ -58,6 +58,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "DpiAware.h"
 #include "DynDialog.h"
 #include "HotkeyDlg.h"
+#include "ImgButton.h"
 #include "Inside.h"
 #include "LoadImg.h"
 #include "Options.h"
@@ -229,6 +230,7 @@ CSettings::CSettings()
 	#endif
 	m_ColorFormat = eRgbDec; // RRR GGG BBB (как показывать цвета на вкладке Colors)
 	mp_DpiAware = NULL;
+	mp_ImgBtn = NULL;
 	mp_DlgDistinct2 = NULL;
 	mp_DpiDistinct2 = NULL;
 	ZeroStruct(mh_Font);
@@ -1543,7 +1545,10 @@ LRESULT CSettings::OnInitDialog()
 	_ASSERTE(m_Pages && (m_Pages[0].PageIndex==thi_Main) && !m_Pages[0].hPage /*...*/);
 	ClearPages();
 
-	ConEmuAbout::DonateBtns_Add(ghOpWnd, tOptionSearch, bSaveSettings);
+	_ASSERTE(mp_ImgBtn==NULL);
+	SafeDelete(mp_ImgBtn);
+	mp_ImgBtn = new CImgButtons(ghOpWnd, tOptionSearch, bSaveSettings);
+	mp_ImgBtn->AddDonateButtons();
 
 	if (mp_DpiAware)
 	{
@@ -6547,7 +6552,7 @@ INT_PTR CSettings::ProcessTipHelp(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM 
 INT_PTR CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
 {
 	INT_PTR lRc = 0;
-	if (ConEmuAbout::DonateBtns_Process(hWnd2, messg, wParam, lParam, lRc)
+	if ((gpSetCls->mp_ImgBtn && gpSetCls->mp_ImgBtn->Process(hWnd2, messg, wParam, lParam, lRc))
 		|| EditIconHint_Process(hWnd2, messg, wParam, lParam, lRc))
 	{
 		SetWindowLongPtr(hWnd2, DWLP_MSGRESULT, lRc);
@@ -12725,6 +12730,8 @@ void CSettings::ClearPages()
 
 	if (mp_DpiAware)
 		mp_DpiAware->Detach();
+
+	SafeDelete(mp_ImgBtn);
 }
 
 int CSettings::GetDialogDpi()

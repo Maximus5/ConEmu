@@ -87,6 +87,7 @@ SRCS = \
 		HotkeyList.cpp     \
 		Hotkeys.cpp        \
 		IconList.cpp       \
+		ImgButton.cpp      \
 		Inside.cpp         \
 		LoadImg.cpp        \
 		Macro.cpp          \

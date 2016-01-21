@@ -455,6 +455,7 @@
       <File RelativePath=".\HotkeyList.cpp" />
       <File RelativePath=".\Hotkeys.cpp" />
       <File RelativePath=".\IconList.cpp" />
+      <File RelativePath=".\ImgButton.cpp" />
       <File RelativePath=".\Inside.cpp" />
       <File RelativePath=".\LoadImg.cpp" />
       <File RelativePath=".\Macro.cpp" />
@@ -585,6 +586,7 @@
       <File RelativePath=".\HotkeyList.h" />
       <File RelativePath=".\Hotkeys.h" />
       <File RelativePath=".\IconList.h" />
+      <File RelativePath=".\ImgButton.h" />
       <File RelativePath=".\Inside.h" />
       <File RelativePath=".\kl_parts.h" />
       <File RelativePath=".\LoadImg.h" />
