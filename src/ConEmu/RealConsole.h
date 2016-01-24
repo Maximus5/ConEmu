@@ -379,7 +379,6 @@ class CRealConsole
 	private:
 		bool SetActiveBuffer(CRealBuffer* aBuffer, bool abTouchMonitorEvent = true);
 		bool LoadAlternativeConsole(LoadAltMode iMode = lam_Default);
-		BOOL SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffer, DWORD anCmdID=CECMD_SETSIZESYNC);
 	private:
 		//void SendConsoleEvent(INPUT_RECORD* piRec);
 		DWORD mn_FlushIn, mn_FlushOut;
