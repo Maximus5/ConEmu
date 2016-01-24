@@ -84,7 +84,7 @@ bool CImgButtons::GetBtnInfo(UINT nCtrlId, BtnInfo** ppBtn)
 {
 	if (!nCtrlId || (nCtrlId > 0xFFFF))
 	{
-		_ASSERTE(nCtrlId && (nCtrlId <= 0xFFFF));
+		_ASSERTE(nCtrlId <= 0xFFFF);
 		return false;
 	}
 
