@@ -31,6 +31,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef MEMORY_HEADER_DEFINED
 #define MEMORY_HEADER_DEFINED
 
+#include "defines.h"
+
 extern HANDLE ghHeap;
 
 #ifdef _DEBUG
@@ -101,6 +103,23 @@ void __cdecl xf_free(void * _Memory XF_PLACE_ARGS_DEF);
 	#define xf_dump_chk()
 
 #endif
+
+template <class T>
+T* xf_interlocked_new(T*& pv, T* RVAL_REF pNew XF_PLACE_ARGS_DEF)
+{
+	if (!pNew) return NULL;
+	#ifdef TRACK_MEMORY_ALLOCATIONS
+	xf_set_tag(pNew, lpszFileName, nLine);
+	#endif
+	T* pOld = (T*)InterlockedCompareExchangePointer((PVOID*)&pv, pNew, NULL);
+	if (pOld)
+	{
+		_ASSERTE(pOld!=pNew && pv!=pNew);
+		delete pNew;
+	}
+	return pv;
+};
+#define inew(pv,pn) xf_interlocked_new(pv, pn XF_PLACE_ARGS_VAL)
 
 bool __cdecl xf_validate(void * _Memory = NULL);
 
