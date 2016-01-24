@@ -100,13 +100,7 @@ void HeapDeinitialize()
 }
 
 
-void * __cdecl xf_malloc
-(
-    size_t _Size
-#ifdef TRACK_MEMORY_ALLOCATIONS
-    , LPCSTR lpszFileName, int nLine
-#endif
-)
+void * __cdecl xf_malloc(size_t _Size XF_PLACE_ARGS_DEF)
 {
 	_ASSERTE(ghHeap);
 	_ASSERTE(_Size>0);
@@ -142,13 +136,7 @@ void * __cdecl xf_malloc
 }
 
 
-void * __cdecl xf_calloc
-(
-    size_t _Count, size_t _Size
-#ifdef TRACK_MEMORY_ALLOCATIONS
-    , LPCSTR lpszFileName, int nLine
-#endif
-)
+void * __cdecl xf_calloc(size_t _Count, size_t _Size XF_PLACE_ARGS_DEF)
 {
 	_ASSERTE(ghHeap);
 	_ASSERTE((_Count*_Size)>0);
@@ -180,13 +168,7 @@ void * __cdecl xf_calloc
 }
 
 
-void* __cdecl xf_realloc
-(
-    void * _Memory, size_t _Size
-#ifdef TRACK_MEMORY_ALLOCATIONS
-    , LPCSTR lpszFileName, int nLine
-#endif
-)
+void* __cdecl xf_realloc(void * _Memory, size_t _Size XF_PLACE_ARGS_DEF)
 {
 	_ASSERTE(ghHeap);
 	_ASSERTE(_Size>0);
@@ -246,13 +228,7 @@ void* __cdecl xf_realloc
 }
 
 
-void __cdecl xf_free
-(
-    void * _Memory
-#ifdef TRACK_MEMORY_ALLOCATIONS
-    , LPCSTR lpszFileName, int nLine
-#endif
-)
+void __cdecl xf_free(void * _Memory XF_PLACE_ARGS_DEF)
 {
 	if (!_Memory)
 	{

@@ -59,18 +59,32 @@ void __cdecl operator delete[](void *ptr);
 		char   sCreatedFrom[32];
 	} xf_mem_block;
 
-	//#define DEBUG_NEW new(THIS_FILE, __LINE__)
+	#define XF_PLACE_ARGS_DEF , LPCSTR lpszFileName, int nLine
+	#define XF_PLACE_ARGS_VAL , __FILE__, __LINE__
+#else
+	#define XF_PLACE_ARGS_DEF
+	#define XF_PLACE_ARGS_VAL
+#endif
 
-	#if defined(__CYGWIN__)
-	extern "C" {
-	#endif
-	void * __cdecl xf_malloc(size_t _Size, LPCSTR lpszFileName, int nLine);
-	void * __cdecl xf_calloc(size_t _Count, size_t _Size, LPCSTR lpszFileName, int nLine);
-	void * __cdecl xf_realloc(void * _Memory, size_t _Size, LPCSTR lpszFileName, int nLine);
-	void __cdecl xf_free(void * _Memory, LPCSTR lpszFileName, int nLine);
-	#if defined(__CYGWIN__)
-	}
-	#endif
+#if defined(__CYGWIN__)
+extern "C" {
+#endif
+void * __cdecl xf_malloc(size_t _Size XF_PLACE_ARGS_DEF);
+void * __cdecl xf_calloc(size_t _Count, size_t _Size XF_PLACE_ARGS_DEF);
+void * __cdecl xf_realloc(void * _Memory, size_t _Size XF_PLACE_ARGS_DEF);
+void __cdecl xf_free(void * _Memory XF_PLACE_ARGS_DEF);
+#if defined(__CYGWIN__)
+}
+#endif
+
+#define malloc(s) xf_malloc(s XF_PLACE_ARGS_VAL)
+#define calloc(c,s) xf_calloc(c,s XF_PLACE_ARGS_VAL)
+#define realloc(p,s) xf_realloc(p,s XF_PLACE_ARGS_VAL)
+#define free(p) xf_free(p XF_PLACE_ARGS_VAL)
+
+
+
+#ifdef TRACK_MEMORY_ALLOCATIONS
 
 	void __cdecl xf_dump();
 	#ifdef FORCE_HEAP_CHECK
@@ -79,28 +93,7 @@ void __cdecl operator delete[](void *ptr);
 	#define xf_dump_chk()
 	#endif
 
-	#define malloc(s) xf_malloc(s,__FILE__,__LINE__)
-	#define calloc(c,s) xf_calloc(c,s,__FILE__,__LINE__)
-	#define realloc(p,s) xf_realloc(p,s,__FILE__,__LINE__)
-	#define free(p) xf_free(p,__FILE__,__LINE__)
-
 #else
-
-	#if defined(__CYGWIN__)
-	extern "C" {
-	#endif
-	void * __cdecl xf_malloc(size_t _Size);
-	void * __cdecl xf_calloc(size_t _Count, size_t _Size);
-	void * __cdecl xf_realloc(void * _Memory, size_t _Size);
-	void __cdecl xf_free(void * _Memory);
-	#if defined(__CYGWIN__)
-	}
-	#endif
-
-	#define malloc xf_malloc
-	#define calloc xf_calloc
-	#define realloc xf_realloc
-	#define free xf_free
 
 	#define xf_dump()
 	#define xf_dump_chk()
