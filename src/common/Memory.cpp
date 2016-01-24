@@ -100,6 +100,17 @@ void HeapDeinitialize()
 }
 
 
+#ifdef TRACK_MEMORY_ALLOCATIONS
+void xf_set_tag(void* _Memory, LPCSTR lpszFileName, int nLine)
+{
+	xf_mem_block* p = ((xf_mem_block*)_Memory)-1;
+
+	_ASSERTE(_Memory && p && p->bBlockUsed && p->nBlockSize);
+
+	msprintf(p->sCreatedFrom, countof(p->sCreatedFrom), "%s:%i", _PointToName(lpszFileName), nLine);
+}
+#endif
+
 void * __cdecl xf_malloc(size_t _Size XF_PLACE_ARGS_DEF)
 {
 	_ASSERTE(ghHeap);

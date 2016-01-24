@@ -93,6 +93,8 @@ void __cdecl xf_free(void * _Memory XF_PLACE_ARGS_DEF);
 	#define xf_dump_chk()
 	#endif
 
+	void xf_set_tag(void* _Memory, LPCSTR lpszFileName, int nLine);
+
 #else
 
 	#define xf_dump()
