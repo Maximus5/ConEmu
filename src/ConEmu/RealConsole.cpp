@@ -198,6 +198,7 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 	mp_VCon = apVCon;
 	mp_Log = NULL;
 	mp_Files = NULL;
+	mp_XTerm = NULL;
 
 	MCHKHEAP;
 	SetConStatus(L"Initializing ConEmu (2)", cso_ResetOnConsoleReady|cso_DontUpdate|cso_Critical);
@@ -539,6 +540,7 @@ CRealConsole::~CRealConsole()
 	SafeCloseHandle(mh_UpdateServerActiveEvent);
 	SafeCloseHandle(mh_MonitorThreadEvent);
 	SafeDelete(mp_Files);
+	SafeDelete(mp_XTerm);
 	MCHKHEAP;
 }
 
@@ -4098,6 +4100,9 @@ void CRealConsole::ResetVarsOnStart()
 
 	mn_FarNoPanelsCheck = 0;
 
+	if (mp_XTerm)
+		mp_XTerm->Reset();
+
 	// setXXX для удобства
 	setGuiWndPID(NULL, 0, 0, NULL); // set m_ChildGui.Process.ProcessID to 0
 	// ZeroStruct для четкости
@@ -6677,6 +6682,11 @@ TermEmulationType CRealConsole::GetTermType()
 		StartStopXTerm(0, false/*te_win32*/);
 	}
 
+	if (m_Term.Term)
+	{
+		inew(mp_XTerm, new TermX);
+	}
+
 	return m_Term.Term;
 }
 
@@ -6692,6 +6702,7 @@ bool CRealConsole::ProcessXtermSubst(const INPUT_RECORD& r)
 
 	// Till now, this may be ‘te_xterm’ or ‘te_win32’ only
 	_ASSERTE(m_Term.Term == te_xterm);
+	_ASSERTE(mp_XTerm != NULL);
 
 	// Processed xterm keys?
 	{
@@ -6699,14 +6710,14 @@ bool CRealConsole::ProcessXtermSubst(const INPUT_RECORD& r)
 		{
 		case KEY_EVENT:
 			// Key need to be translated?
-			bProcessed = TermX::GetSubstitute(r.Event.KeyEvent, szSubstKeys);
+			bProcessed = mp_XTerm->GetSubstitute(r.Event.KeyEvent, szSubstKeys);
 			// But only key presses are sent to terminal
 			bSend = (bProcessed && r.Event.KeyEvent.bKeyDown && szSubstKeys[0]);
 			break; // KEY_EVENT
 
 		case MOUSE_EVENT:
 			// Mouse event need to be translated?
-			bProcessed = TermX::GetSubstitute(r.Event.MouseEvent, szSubstKeys);
+			bProcessed = mp_XTerm->GetSubstitute(r.Event.MouseEvent, szSubstKeys);
 			bSend = (bProcessed && szSubstKeys[0]);
 			break; // MOUSE_EVENT
 		}

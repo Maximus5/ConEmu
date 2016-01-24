@@ -232,6 +232,7 @@ class MFileLog;
 class CRConFiles;
 class CAltNumpad;
 struct AppSettings;
+struct TermX;
 
 enum RealBufferType
 {
@@ -999,6 +1000,9 @@ class CRealConsole
 
 		// Searching for files on the console surface (hyperlinking)
 		CRConFiles* mp_Files;
+
+		// XTerm keyboard substitutions
+		TermX* mp_XTerm;
 };
 
 //#define Assert(V) if ((V)==FALSE) { wchar_t szAMsg[MAX_PATH*2]; _wsprintf(szAMsg, SKIPLEN(countof(szAMsg)) L"Assertion (%s) at\n%s:%i\n\nPress <Retry> to report a bug (web page)", _T(#V), _T(__FILE__), __LINE__); CRealConsole::Box(szAMsg, MB_RETRYCANCEL); }
