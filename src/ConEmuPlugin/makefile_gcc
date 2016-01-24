@@ -13,6 +13,7 @@ SRCS = \
 		../common/MSectionSimple.cpp \
 		../common/MSecurity.cpp      \
 		../common/MSetter.cpp        \
+		../common/MStrDup.cpp        \
 		../common/MStrSafe.cpp       \
 		../common/SetEnvVar.cpp      \
 		../common/WConsole.cpp     \

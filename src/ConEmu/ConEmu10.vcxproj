@@ -950,6 +950,7 @@
     <ClCompile Include="..\common\MSectionSimple.cpp" />
     <ClCompile Include="..\common\MSecurity.cpp" />
     <ClCompile Include="..\common\MSetter.cpp" />
+    <ClCompile Include="..\common\MStrDup.cpp" />
     <ClCompile Include="..\common\MStrSafe.cpp" />
     <ClCompile Include="..\common\MTimer.cpp" />
     <ClCompile Include="..\common\MToolTip.cpp" />
@@ -1067,6 +1068,7 @@
     <ClInclude Include="..\common\MSectionSimple.h" />
     <ClInclude Include="..\common\MSecurity.h" />
     <ClInclude Include="..\common\MSetter.h" />
+    <ClInclude Include="..\common\MStrDup.h" />
     <ClInclude Include="..\common\MStrSafe.h" />
     <ClInclude Include="..\common\MTimer.h" />
     <ClInclude Include="..\common\MToolTip.h" />

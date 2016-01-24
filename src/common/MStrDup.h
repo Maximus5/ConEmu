@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2014-2016 Maximus5
+Copyright (c) 2013-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -28,30 +28,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include "CmdLine.h"
+#include "defines.h"
 
-bool FilesExists(LPCWSTR asDirectory, LPCWSTR asFileList, bool abAll = false, int anListCount = -1);
-bool FileExistSubDir(LPCWSTR asDirectory, LPCWSTR asFile, int iDepth, CEStr& rsFound);
-bool DirectoryExists(LPCWSTR asPath);
-bool MyCreateDirectory(wchar_t* asPath);
-
-bool IsDotsName(LPCWSTR asName);
-
-bool SearchAppPaths(LPCWSTR asFilePath, CEStr& rsFound, bool abSetPath, CEStr* rpsPathRestore = NULL);
-
-wchar_t* GetFullPathNameEx(LPCWSTR asPath);
-bool FindFileName(LPCWSTR asPath, CEStr& rsName);
-bool MakePathProperCase(CEStr& rsPath);
-
-int ReadTextFile(LPCWSTR asPath, DWORD cchMax, wchar_t*& rsBuffer, DWORD& rnChars, DWORD& rnErrCode, DWORD DefaultCP = 0);
-int WriteTextFile(LPCWSTR asPath, const wchar_t* asBuffer, int anSrcLen = -1, DWORD OutCP = CP_UTF8, bool WriteBOM = true, LPDWORD rnErrCode = NULL);
-
-bool FileCompare(LPCWSTR asFilePath1, LPCWSTR asFilePath2);
-
-#if 0
-int apiCancelIoEx(HANDLE hFile, LPOVERLAPPED lpOverlapped);
-#endif
-int apiCancelSynchronousIo(HANDLE hThread);
-
-bool HasZoneIdentifier(LPCWSTR asFile, int& nZoneID);
-bool DropZoneIdentifier(LPCWSTR asFile, DWORD& nErrCode);
+char* lstrdup(const char* asText);
+wchar_t* lstrdup(const wchar_t* asText, size_t cchExtraSizeAdd = 0);
+wchar_t* lstrdupW(const char* asText, UINT cp = CP_ACP);
+char* lstrdupA(const wchar_t* asText, UINT cp = CP_ACP, int* pnLen = NULL);
+wchar_t* lstrmerge(const wchar_t* asStr1, const wchar_t* asStr2, const wchar_t* asStr3 = NULL, const wchar_t* asStr4 = NULL, const wchar_t* asStr5 = NULL, const wchar_t* asStr6 = NULL, const wchar_t* asStr7 = NULL, const wchar_t* asStr8 = NULL, const wchar_t* asStr9 = NULL);
+bool lstrmerge(wchar_t** apsStr1, const wchar_t* asStr2, const wchar_t* asStr3 = NULL, const wchar_t* asStr4 = NULL, const wchar_t* asStr5 = NULL, const wchar_t* asStr6 = NULL, const wchar_t* asStr7 = NULL, const wchar_t* asStr8 = NULL, const wchar_t* asStr9 = NULL);

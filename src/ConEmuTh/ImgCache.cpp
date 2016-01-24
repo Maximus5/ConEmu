@@ -3,6 +3,7 @@
 
 #include "../common/Common.h"
 #include "../common/CmdLine.h"
+#include "../common/MStrDup.h"
 #include "ConEmuTh.h"
 #include "resource.h"
 

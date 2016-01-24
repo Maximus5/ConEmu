@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2011-2015 Maximus5
+Copyright (c) 2011-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -47,6 +47,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/ConEmuCheck.h"
 #include "../common/execute.h"
 #include "../common/HandleKeeper.h"
+#include "../common/MStrDup.h"
 #include "../common/WErrGuard.h"
 #include "../common/WObjects.h"
 #if defined(__GNUC__) && !defined(__MINGW32__)

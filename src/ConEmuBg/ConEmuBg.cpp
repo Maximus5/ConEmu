@@ -2,7 +2,7 @@
 //TODO: И аналогично для цвета фона градусника/картинок/текста и самого градусника
 
 /*
-Copyright (c) 2010-2015 Maximus5
+Copyright (c) 2010-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -39,6 +39,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <windows.h>
 
 #include "../common/Common.h"
+#include "../common/CEStr.h"
 #ifdef _DEBUG
 #pragma warning( disable : 4995 )
 #endif

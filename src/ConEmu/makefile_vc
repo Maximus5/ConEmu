@@ -87,6 +87,7 @@ $(INTDIR)\MSectionSimple.obj \
 $(INTDIR)\MSection.obj \
 $(INTDIR)\MSecurity.obj \
 $(INTDIR)\MSetter.obj \
+$(INTDIR)\MStrDup.obj \
 $(INTDIR)\MStrSafe.obj \
 $(INTDIR)\MTimer.obj \
 $(INTDIR)\MToolTip.obj \
@@ -393,6 +394,8 @@ $(INTDIR)\MSection.obj: ../common/MSection.cpp ../common/MSectionSimple.h ../com
 $(INTDIR)\MSecurity.obj: ../common/MSecurity.cpp
 
 $(INTDIR)\MSetter.obj: ../common/MSetter.cpp ../common/MSetter.h
+
+$(INTDIR)\MStrDup.obj: ../common/MStrDup.cpp ../common/MStrDup.h
 
 $(INTDIR)\MStrSafe.obj: ../common/MStrSafe.cpp
 

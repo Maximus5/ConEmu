@@ -37,6 +37,7 @@ $(INTDIR)\HkFunc.obj \
 $(INTDIR)\MAssert.obj \
 $(INTDIR)\Memory.obj \
 $(INTDIR)\MSectionSimple.obj \
+$(INTDIR)\MStrDup.obj \
 $(INTDIR)\MStrSafe.obj \
 $(INTDIR)\WObjects.obj \
 $(INTDIR)\WThreads.obj
@@ -202,6 +203,8 @@ $(INTDIR)\MAssert.obj: ../common/MAssert.cpp
 $(INTDIR)\Memory.obj: ../common/Memory.cpp
 
 $(INTDIR)\MSectionSimple.obj: ../common/MSectionSimple.cpp ../common/MSectionSimple.h
+
+$(INTDIR)\MStrDup.obj: ../common/MStrDup.cpp ../common/MStrDup.h
 
 $(INTDIR)\MStrSafe.obj: ../common/MStrSafe.cpp
 

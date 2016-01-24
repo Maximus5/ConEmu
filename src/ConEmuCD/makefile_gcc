@@ -40,6 +40,7 @@ SRCS = \
 		../common/MSection.cpp       \
 		../common/MSectionSimple.cpp \
 		../common/MSecurity.cpp      \
+		../common/MStrDup.cpp        \
 		../common/MStrSafe.cpp       \
 		../common/ProcessSetEnv.cpp  \
 		../common/RConStartArgs.cpp  \

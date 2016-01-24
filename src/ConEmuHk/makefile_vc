@@ -96,6 +96,7 @@ $(INTDIR)\MFileLog.obj \
 $(INTDIR)\MSectionSimple.obj \
 $(INTDIR)\MSection.obj \
 $(INTDIR)\MSecurity.obj \
+$(INTDIR)\MStrDup.obj \
 $(INTDIR)\MStrSafe.obj \
 $(INTDIR)\RConStartArgs.obj \
 $(INTDIR)\SetHook.obj \
@@ -396,6 +397,8 @@ $(INTDIR)\MSectionSimple.obj: ../common/MSectionSimple.cpp ../common/MSectionSim
 $(INTDIR)\MSection.obj: ../common/MSection.cpp ../common/MSectionSimple.h ../common/MSection.h
 
 $(INTDIR)\MSecurity.obj: ../common/MSecurity.cpp
+
+$(INTDIR)\MStrDup.obj: ../common/MStrDup.cpp ../common/MStrDup.h
 
 $(INTDIR)\MStrSafe.obj: ../common/MStrSafe.cpp
 

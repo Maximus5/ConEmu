@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2015 Maximus5
+Copyright (c) 2009-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -39,6 +39,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "MAssert.h"
 #include "MFileLog.h"
 #include "MSectionSimple.h"
+#include "MStrDup.h"
 #include "WObjects.h"
 #include "../ConEmu/version.h"
 #pragma warning(disable: 4091)

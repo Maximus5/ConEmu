@@ -38,6 +38,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../ConEmu/version.h"
 #include "../common/CEStr.h"
 #include "../common/MMap.h"
+#include "../common/MStrDup.h"
 #include "../common/TokenHelper.h"
 #include "../common/WFiles.h"
 #include "../common/WThreads.h"

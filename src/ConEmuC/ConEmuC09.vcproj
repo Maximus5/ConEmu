@@ -398,6 +398,7 @@
       <File RelativePath="..\common\MAssert.cpp" />
       <File RelativePath="..\common\Memory.cpp" />
       <File RelativePath="..\common\MSectionSimple.cpp" />
+      <File RelativePath="..\common\MStrDup.cpp" />
       <File RelativePath="..\common\MStrSafe.cpp" />
       <File RelativePath="..\common\WObjects.cpp" />
       <File RelativePath="..\common\WThreads.cpp" />
@@ -410,6 +411,7 @@
       <File RelativePath="..\common\HkFunc.h" />
       <File RelativePath="..\common\Memory.h" />
       <File RelativePath="..\common\MSectionSimple.h" />
+      <File RelativePath="..\common\MStrDup.h" />
       <File RelativePath="..\common\MStrSafe.h" />
       <File RelativePath="..\common\WObjects.h" />
       <File RelativePath="..\common\WThreads.h" />

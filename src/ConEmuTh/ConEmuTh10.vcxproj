@@ -898,6 +898,7 @@ if exist C:\Utils\FAR170\Plugins\ConEmu\Thumbs\ConEmuTh.dll copy "$(TargetDir)Co
     <ClCompile Include="..\common\MSection.cpp" />
     <ClCompile Include="..\common\MSectionSimple.cpp" />
     <ClCompile Include="..\common\MSecurity.cpp" />
+    <ClCompile Include="..\common\MStrDup.cpp" />
     <ClCompile Include="..\common\MStrSafe.cpp" />
     <ClCompile Include="..\common\RgnDetect.cpp" />
     <ClCompile Include="..\common\WFiles.cpp" />
@@ -998,6 +999,7 @@ if exist C:\Utils\FAR170\Plugins\ConEmu\Thumbs\ConEmuTh.dll copy "$(TargetDir)Co
     <ClInclude Include="..\common\MSection.h" />
     <ClInclude Include="..\common\MSectionSimple.h" />
     <ClInclude Include="..\common\MSecurity.h" />
+    <ClInclude Include="..\common\MStrDup.h" />
     <ClInclude Include="..\common\MStrSafe.h" />
     <ClInclude Include="..\common\plugin_helper.h" />
     <ClInclude Include="..\common\pluginA.hpp" />

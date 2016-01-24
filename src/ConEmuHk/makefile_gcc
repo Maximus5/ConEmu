@@ -43,6 +43,7 @@ SRCS = \
 		../common/MSectionSimple.cpp \
 		../common/MSection.cpp       \
 		../common/MSecurity.cpp      \
+		../common/MStrDup.cpp        \
 		../common/MStrSafe.cpp       \
 		../common/RConStartArgs.cpp  \
 		../common/WCodePage.cpp      \

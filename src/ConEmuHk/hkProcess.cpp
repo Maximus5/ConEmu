@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2015 Maximus5
+Copyright (c) 2015-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -37,6 +37,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/Common.h"
 #include "../common/execute.h"
 #include "../common/MMap.h"
+#include "../common/MStrDup.h"
 
 #include "Ansi.h"
 #include "DefTermHk.h"

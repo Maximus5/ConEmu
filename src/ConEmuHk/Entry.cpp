@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2015 Maximus5
+Copyright (c) 2009-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -85,6 +85,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/CmdLine.h"
 #include "../common/ConsoleAnnotation.h"
 #include "../common/HkFunc.h"
+#include "../common/MStrDup.h"
 #include "../common/RConStartArgs.h"
 #include "../common/WConsole.h"
 #include "../common/WObjects.h"

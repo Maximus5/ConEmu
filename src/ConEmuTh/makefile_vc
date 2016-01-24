@@ -43,6 +43,7 @@ $(INTDIR)\Memory.obj \
 $(INTDIR)\MSection.obj \
 $(INTDIR)\MSectionSimple.obj \
 $(INTDIR)\MSecurity.obj \
+$(INTDIR)\MStrDup.obj \
 $(INTDIR)\MStrSafe.obj \
 $(INTDIR)\RgnDetect.obj \
 $(INTDIR)\WFiles.obj \
@@ -234,6 +235,8 @@ $(INTDIR)\MSection.obj: ../common/MSection.cpp ../common/MSection.h
 $(INTDIR)\MSectionSimple.obj: ../common/MSectionSimple.cpp ../common/MSectionSimple.h
 
 $(INTDIR)\MSecurity.obj: ../common/MSecurity.cpp
+
+$(INTDIR)\MStrDup.obj: ../common/MStrDup.cpp ../common/MStrDup.h
 
 $(INTDIR)\MStrSafe.obj: ../common/MStrSafe.cpp
 

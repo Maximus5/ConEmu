@@ -32,6 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/Common.h"
 #include "../common/CmdLine.h"
 #include "../common/MSectionSimple.h"
+#include "../common/MStrDup.h"
 #include "../common/WObjects.h"
 #include "../ConEmuCD/crc32.h"
 #include "../ConEmuCD/ExitCodes.h"

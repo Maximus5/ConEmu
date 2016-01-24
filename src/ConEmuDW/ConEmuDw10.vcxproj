@@ -960,6 +960,7 @@
     <ClInclude Include="..\common\MAssert.h" />
     <ClInclude Include="..\common\Memory.h" />
     <ClInclude Include="..\common\MSecurity.h" />
+    <ClInclude Include="..\common\MStrDup.h" />
     <ClInclude Include="..\common\MStrSafe.h" />
     <ClInclude Include="..\common\pluginW1900.hpp" />
     <ClInclude Include="..\common\WObjects.h" />
@@ -1007,6 +1008,7 @@
     <ClCompile Include="..\common\MAssert.cpp" />
     <ClCompile Include="..\common\Memory.cpp" />
     <ClCompile Include="..\common\MSecurity.cpp" />
+    <ClCompile Include="..\common\MStrDup.cpp" />
     <ClCompile Include="..\common\MStrSafe.cpp" />
     <ClCompile Include="..\common\WObjects.cpp" />
     <ClCompile Include="..\common\WThreads.cpp" />

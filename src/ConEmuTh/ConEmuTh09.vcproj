@@ -402,6 +402,7 @@
       <File RelativePath="..\common\MSection.cpp" />
       <File RelativePath="..\common\MSectionSimple.cpp" />
       <File RelativePath="..\common\MSecurity.cpp" />
+      <File RelativePath="..\common\MStrDup.cpp" />
       <File RelativePath="..\common\MStrSafe.cpp" />
       <File RelativePath="..\common\RgnDetect.cpp" />
       <File RelativePath="..\common\WFiles.cpp" />
@@ -427,6 +428,7 @@
       <File RelativePath="..\common\MSection.h" />
       <File RelativePath="..\common\MSectionSimple.h" />
       <File RelativePath="..\common\MSecurity.h" />
+      <File RelativePath="..\common\MStrDup.h" />
       <File RelativePath="..\common\MStrSafe.h" />
       <File RelativePath="..\common\RgnDetect.h" />
       <File RelativePath="..\common\WFiles.h" />

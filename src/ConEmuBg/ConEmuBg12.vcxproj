@@ -911,6 +911,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\common\MSectionSimple.cpp" />
+    <ClCompile Include="..\common\MStrDup.cpp" />
     <ClCompile Include="..\common\WThreads.cpp" />
     <ClCompile Include="ConEmuBg.cpp" />
     <ClCompile Include="ConEmuBg1900.cpp" />
@@ -984,6 +985,7 @@
   <ItemGroup>
     <ClInclude Include="..\common\Common.h" />
     <ClInclude Include="..\common\MSectionSimple.h" />
+    <ClInclude Include="..\common\MStrDup.h" />
     <ClInclude Include="..\common\WThreads.h" />
     <ClInclude Include="ConEmuBg.h" />
     <ClInclude Include="ConEmuBg_Lang.h" />

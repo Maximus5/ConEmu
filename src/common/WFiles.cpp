@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2014-2015 Maximus5
+Copyright (c) 2014-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -28,6 +28,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define HIDE_USE_EXCEPTION_INFO
 #include "Common.h"
+#include "MStrDup.h"
 #include "WFiles.h"
 #include "WObjects.h"
 

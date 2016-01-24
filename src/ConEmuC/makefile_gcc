@@ -28,6 +28,7 @@ SRCS = \
 		../common/MAssert.cpp        \
 		../common/Memory.cpp         \
 		../common/MSectionSimple.cpp \
+		../common/MStrDup.cpp        \
 		../common/MStrSafe.cpp       \
 		../common/WObjects.cpp       \
 		../common/WThreads.cpp       \

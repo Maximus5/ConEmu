@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2015 Maximus5
+Copyright (c) 2009-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -49,6 +49,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "../common/Memory.h"
 #include "../common/MAssert.h"
+#include "../common/MStrDup.h"
 
 #if defined(__GNUC__) && !defined(__MINGW64_VERSION_MAJOR)
 #define wmemmove_s(d,ds,s,ss) wmemmove(d,s,ss)
