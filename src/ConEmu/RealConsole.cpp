@@ -5996,6 +5996,18 @@ void CRealConsole::StartStopBracketedPaste(DWORD nPID, bool bUseBracketedPaste)
 		gpSetCls->UpdateConsoleMode(this);
 }
 
+// Generally for XTerm emulation: ESC [ ? 1 h/l
+void CRealConsole::StartStopAppCursorKeys(DWORD nPID, bool bAppCursorKeys)
+{
+	if (!mp_XTerm)
+	{
+		inew(mp_XTerm, new TermX);
+	}
+	_ASSERTE(mp_XTerm != NULL);
+
+	mp_XTerm->AppCursorKeys = bAppCursorKeys;
+}
+
 BOOL CRealConsole::GetBracketedPaste()
 {
 	return m_Term.bBracketedPaste;

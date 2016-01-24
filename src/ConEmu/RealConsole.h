@@ -460,6 +460,7 @@ class CRealConsole
 		void StopThread(BOOL abRecreating=FALSE);
 		void StartStopXTerm(DWORD nPID, bool xTerm);
 		void StartStopBracketedPaste(DWORD nPID, bool bUseBracketedPaste);
+		void StartStopAppCursorKeys(DWORD nPID, bool bAppCursorKeys);
 		void PortableStarted(CESERVER_REQ_PORTABLESTARTED* pStarted);
 		bool InScroll();
 		BOOL isBufferHeight();

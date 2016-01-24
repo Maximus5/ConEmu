@@ -33,6 +33,16 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Header.h"
 #include "TermX.h"
 
+TermX::TermX()
+{
+	Reset();
+}
+
+void TermX::Reset()
+{
+	AppCursorKeys = false;
+}
+
 bool TermX::GetSubstitute(const KEY_EVENT_RECORD& k, wchar_t (&szSubst)[16])
 {
 	_ASSERTE(szSubst[0] == 0);
@@ -42,6 +52,8 @@ bool TermX::GetSubstitute(const KEY_EVENT_RECORD& k, wchar_t (&szSubst)[16])
 		25, 26, 28, 29, 31, 32, 33, 34, 42, 43, 44, 45
 	};
 	static wchar_t F1F4Codes[] = {L'P', L'Q', L'R', L'S'};
+
+	static wchar_t ArrowCodes[] = {L'F', L'H', L'D', L'A', L'C', L'B'};
 
 	typedef DWORD XTermCtrls;
 	const XTermCtrls
@@ -100,23 +112,9 @@ bool TermX::GetSubstitute(const KEY_EVENT_RECORD& k, wchar_t (&szSubst)[16])
 
 	switch (k.wVirtualKeyCode)
 	{
-	case VK_UP:
-		Processor.SetKey(szSubst, L'A', L'[');
-		return true;
-	case VK_DOWN:
-		Processor.SetKey(szSubst, L'B', L'[');
-		return true;
-	case VK_RIGHT:
-		Processor.SetKey(szSubst, L'C', L'[');
-		return true;
-	case VK_LEFT:
-		Processor.SetKey(szSubst, L'D', L'[');
-		return true;
-	case VK_HOME:
-		Processor.SetKey(szSubst, L'H', L'[');
-		return true;
-	case VK_END:
-		Processor.SetKey(szSubst, L'F', L'[');
+	case VK_END:  case VK_HOME:  case VK_LEFT:
+	case VK_UP:   case VK_RIGHT: case VK_DOWN:
+		Processor.SetKey(szSubst, ArrowCodes[(k.wVirtualKeyCode-VK_END)], AppCursorKeys ? L'O' : L'[');
 		return true;
 
 	case VK_F1: case VK_F2: case VK_F3: case VK_F4:

@@ -33,9 +33,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 struct TermX
 {
+	bool AppCursorKeys;
+
 	bool GetSubstitute(const KEY_EVENT_RECORD& k, wchar_t (&szSubst)[16]);
 	bool GetSubstitute(const MOUSE_EVENT_RECORD& m, wchar_t (&szSubst)[16]);
 
-	TermX() {};
-	void Reset() {};
+	TermX();
+	void Reset();
 };

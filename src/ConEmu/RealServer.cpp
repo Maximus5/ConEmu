@@ -1421,6 +1421,9 @@ CESERVER_REQ* CRealServer::cmdStartXTerm(LPVOID pInst, CESERVER_REQ* pIn, UINT n
 	case tmc_BracketedPaste:
 		mp_RCon->StartStopBracketedPaste(pIn->hdr.nSrcPID, (pIn->dwData[1] != 0));
 		break;
+	case tmc_AppCursorKeys:
+		mp_RCon->StartStopAppCursorKeys(pIn->hdr.nSrcPID, (pIn->dwData[1] != 0));
+		break;
 	default:
 		bProcessed = FALSE;
 	}

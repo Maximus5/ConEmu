@@ -2517,21 +2517,27 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 			switch (Code.ArgV[0])
 			{
 			case 1:
-				_ASSERTEX(Code.PvtLen==1 && Code.Pvt[0]==L'?');
-				gDisplayCursor.CursorKeysApp = (Code.Action == L'h');
-				TODO("What need to send to APP input instead of VK_xxx? (vim.exe)");
-				if (gbIsVimProcess)
+				if ((Code.PvtLen == 1) && (Code.Pvt[0] == L'?'))
 				{
-					TODO("Need to find proper way for activation alternative buffer from ViM?");
-					if (Code.Action == L'h')
+					gDisplayCursor.CursorKeysApp = (Code.Action == L'h');
+
+					if (gbIsVimProcess)
 					{
-						StartVimTerm(false);
+						TODO("Need to find proper way for activation alternative buffer from ViM?");
+						if (Code.Action == L'h')
+						{
+							StartVimTerm(false);
+						}
+						else
+						{
+							StopVimTerm();
+						}
 					}
-					else
-					{
-						StopVimTerm();
-					}
+
+					ChangeTermMode(tmc_AppCursorKeys, (Code.Action == L'h'));
 				}
+				else
+					DumpUnknownEscape(Code.pszEscStart, Code.nTotalLen);
 				break;
 			case 3:
 				gDisplayOpt.ShowRawAnsi = (Code.Action == L'h');
