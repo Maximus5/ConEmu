@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2015 Maximus5
+Copyright (c) 2015-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -416,9 +416,9 @@ bool CConEmuStart::FindBashLocation(CEStr& lsBash)
 	wcscpy_c(szRoot, gpConEmu->ms_ConEmuExeDir);
 
 	LPCWSTR pszPlaces[] = {
-		L"\\msys\\1.0\\bin\\sh.exe",  // Msys/MinGW
-		L"\\bin\\sh.exe",             // Git-Bash
-		L"\\usr\\bin\\sh.exe",        // Git-For-Windows
+		L"\\msys\\1.0\\bin\\bash.exe",  // Msys/MinGW
+		L"\\bin\\bash.exe",             // Git-Bash
+		L"\\usr\\bin\\bash.exe",        // Git-For-Windows
 		NULL
 	};
 
@@ -442,7 +442,7 @@ bool CConEmuStart::FindBashLocation(CEStr& lsBash)
 	}
 
 	// Last chance, without path
-	lsBash = L"sh.exe";
+	lsBash = L"bash.exe";
 	return false;
 }
 

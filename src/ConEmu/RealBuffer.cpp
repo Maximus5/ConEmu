@@ -4692,7 +4692,7 @@ bool CRealBuffer::DoSelectionCopyInt(CECopyMode CopyMode, bool bStreamMode, int 
 					// Пытаемся определить, новая это строка или просто перенос в Prompt?
 					if ((*(pch - 1) != L' ')
 						|| (((pch - 1) > pchStart) && (*(pch - 2) != L' '))
-						// sh.exe - one cell space pad on right edge
+						// bash.exe - one cell space pad on right edge
 						|| (bBash && ((pch - 2) > pchStart) && (*(pch - 2) == L' ') && (*(pch - 3) != L' ')))
 					{
 						bContinue = true;

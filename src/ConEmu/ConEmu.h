@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2015 Maximus5
+Copyright (c) 2009-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -123,7 +123,7 @@ const ConEmuInstallMode
 	cm_MinGW        = 0x0001, // ConEmu was installed as MinGW package
 	cm_PortableApps = 0x0002, // ConEmu was installed as PortableApps.com package
 	cm_GitForWin    = 0x0004, // ConEmu was installed as ‘Git-For-Windows’ package (implies cm_MinGW)
-	cm_MSysStartup  = 0x1000  // the bash from msys was found: "%ConEmuDir%\..\msys\1.0\bin\sh.exe" (MinGW mode)
+	cm_MSysStartup  = 0x1000  // the bash from msys was found: "%ConEmuDir%\..\msys\1.0\bin\bash.exe" (MinGW mode)
 	;
 
 

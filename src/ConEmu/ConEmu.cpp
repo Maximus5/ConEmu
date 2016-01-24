@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2015 Maximus5
+Copyright (c) 2009-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -578,7 +578,7 @@ CConEmuMain::CConEmuMain()
 	if (isMingwMode() && isMSysStartup())
 	{
 		// This is example. Will be replaced with full path.
-		SetDefaultCmd(NULL /*L"sh.exe --login -i"*/);
+		SetDefaultCmd(NULL /*L"bash.exe --login -i"*/);
 	}
 
 	if (!isMingwMode())

@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2015 Maximus5
+Copyright (c) 2009-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -769,7 +769,7 @@ static void CreateDefaultTask(LPCWSTR asName, LPCWSTR asGuiArg, LPCWSTR asComman
 
 // Search on asFirstDrive and all (other) fixed drive letters
 // asFirstDrive may be letter ("C:") or network (\\server\share)
-// asSearchPath is path to executable (\cygwin\bin\sh.exe)
+// asSearchPath is path to executable (\cygwin\bin\bash.exe)
 static bool FindOnDrives(LPCWSTR asFirstDrive, LPCWSTR asSearchPath, CEStr& rsFound, bool& bNeedQuot, CEStr& rsOptionalFull)
 {
 	bool bFound = false;
@@ -787,7 +787,7 @@ static bool FindOnDrives(LPCWSTR asFirstDrive, LPCWSTR asSearchPath, CEStr& rsFo
 	// Using registry path?
 	if ((asSearchPath[0] == L'[') && wcschr(asSearchPath+1, L']'))
 	{
-		// L"[SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Git_is1:InstallLocation]\\bin\\sh.exe",
+		// L"[SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Git_is1:InstallLocation]\\bin\\bash.exe",
 		//   "InstallLocation"="C:\\Utils\\Lans\\GIT\\"
 		CEStr lsBuf, lsVal;
 		lsBuf.Set(asSearchPath+1);
@@ -1867,7 +1867,7 @@ void CreateDefaultTasks(SettingsLoadedFlags slfFlags)
 	// *** Bash ***
 
 	// From Git-for-Windows (aka msysGit v2)
-	bool bGitBashExist = // No sense to add both `git-cmd.exe` and `bin/sh.exe`
+	bool bGitBashExist = // No sense to add both `git-cmd.exe` and `bin/bash.exe`
 	App.Add(L"Bash::Git bash",
 		L" --no-cd --command=usr/bin/bash.exe -l -i", NULL, NULL,
 		L"[SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Git_is1:InstallLocation]\\git-cmd.exe",
@@ -1884,10 +1884,10 @@ void CreateDefaultTasks(SettingsLoadedFlags slfFlags)
 	if (!bGitBashExist) // Skip if `git-cmd.exe` was already found
 	App.Add(L"Bash::Git bash",
 		L" --login -i -new_console:C:\"" FOUND_APP_PATH_STR L"\\..\\etc\\git.ico\"", NULL, NULL,
-		L"[SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Git_is1:InstallLocation]\\bin\\sh.exe",
-		L"%ProgramFiles%\\Git\\bin\\sh.exe", L"%ProgramW6432%\\Git\\bin\\sh.exe",
+		L"[SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Git_is1:InstallLocation]\\bin\\bash.exe",
+		L"%ProgramFiles%\\Git\\bin\\bash.exe", L"%ProgramW6432%\\Git\\bin\\bash.exe",
 		#ifdef _WIN64
-		L"%ProgramFiles(x86)%\\Git\\bin\\sh.exe",
+		L"%ProgramFiles(x86)%\\Git\\bin\\bash.exe",
 		#endif
 		NULL);
 	// For cygwin we can check registry keys
@@ -1896,26 +1896,26 @@ void CreateDefaultTasks(SettingsLoadedFlags slfFlags)
 	// HKCU\Software\Cygwin\setup\rootdir
 	App.Add(L"Bash::CygWin bash",
 		L" --login -i -new_console:C:\"" FOUND_APP_PATH_STR L"\\..\\Cygwin.ico\"", L"set CHERE_INVOKING=1 & ", NULL,
-		L"[SOFTWARE\\Cygwin\\setup:rootdir]\\bin\\sh.exe",
-		L"\\CygWin\\bin\\sh.exe", NULL);
+		L"[SOFTWARE\\Cygwin\\setup:rootdir]\\bin\\bash.exe",
+		L"\\CygWin\\bin\\bash.exe", NULL);
 	//{L"CygWin mintty", L"\\CygWin\\bin\\mintty.exe", L" -"},
 	App.Add(L"Bash::MinGW bash",
 		L" --login -i -new_console:C:\"" FOUND_APP_PATH_STR L"\\..\\msys.ico\"", L"set CHERE_INVOKING=1 & ", NULL,
-		L"\\MinGW\\msys\\1.0\\bin\\sh.exe", NULL);
+		L"\\MinGW\\msys\\1.0\\bin\\bash.exe", NULL);
 	//{L"MinGW mintty", L"\\MinGW\\msys\\1.0\\bin\\mintty.exe", L" -"},
 	// MSys2 project: 'HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\MSYS2 32bit'
 	App.Add(L"Bash::Msys2-64",
 		L" --login -i -new_console:C:\"" FOUND_APP_PATH_STR L"\\..\\..\\msys2.ico\"", L"set CHERE_INVOKING=1 & ", NULL,
-		L"[SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\MSYS2 64bit:InstallLocation]\\usr\\bin\\sh.exe",
-		L"msys64\\usr\\bin\\sh.exe",
+		L"[SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\MSYS2 64bit:InstallLocation]\\usr\\bin\\bash.exe",
+		L"msys64\\usr\\bin\\bash.exe",
 		NULL);
 	App.Add(L"Bash::Msys2-32",
 		L" --login -i -new_console:C:\"" FOUND_APP_PATH_STR L"\\..\\..\\msys2.ico\"", L"set CHERE_INVOKING=1 & ", NULL,
-		L"[SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\MSYS2 32bit:InstallLocation]\\usr\\bin\\sh.exe",
-		L"msys32\\usr\\bin\\sh.exe",
+		L"[SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\MSYS2 32bit:InstallLocation]\\usr\\bin\\bash.exe",
+		L"msys32\\usr\\bin\\bash.exe",
 		NULL);
 	// Last chance for bash
-	App.Add(L"Bash::bash", L" --login -i", L"set CHERE_INVOKING=1 & ", NULL, L"sh.exe", NULL);
+	App.Add(L"Bash::bash", L" --login -i", L"set CHERE_INVOKING=1 & ", NULL, L"bash.exe", NULL);
 	// Create all bash tasks
 	App.Commit();
 

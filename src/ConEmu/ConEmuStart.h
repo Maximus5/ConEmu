@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2015 Maximus5
+Copyright (c) 2015-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -141,7 +141,7 @@ public:
 	LPCTSTR GetDefaultCmd();
 	void    SetDefaultCmd(LPCWSTR asCmd);
 
-	/* Find bash (sh.exe) location. Different installations supported: MinGW, Git-For-Windows, Cygwin, ... */
+	/* Find bash (bash.exe) location. Different installations supported: MinGW, Git-For-Windows, Cygwin, ... */
 	bool    FindBashLocation(CEStr& lsBash);
 
 	void ResetCmdArg();
