@@ -50,6 +50,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define GDIPVER 0x0110
 #include "../common/GdiPlusLt.h"
 #include "../common/xmllite.h"
+#include "../common/MStrDup.h"
 #include "../common/MStream.h"
 #include "../common/UnicodeChars.h"
 #include "../common/FarVersion.h"

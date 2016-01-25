@@ -19,6 +19,21 @@ http://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2016.1.24
+* gh#509: Fix crash when checking ‘Explicit executable’.
+* Use bare {Far} task name for first `Far.exe` found in our folder.
+  To simplify portable and testing installations, if Far Manager
+  is copied into our program folder, don't change its task name
+  (don't add version/bitness suffixes).
+* gh#507: Get rid of MsgBox on attach errors, print info to Console instead.
+* gh#514: Fix broken pseudographics representation if ‘Alternative font’ was off.
+* Prefer `bash.exe` over `sh.exe` when creating default tasks.
+* gd#516: Support ‘Application Cursor Keys (DECCKM)’.
+* Update `terminals` module to v0.7.4
+* Let characters 0x1F300..0x1F5FF be double-width.
+* gh#517: Radio-buttons Maximized and Fullscreen were not working (Apply is required though).
+
+
 2016.1.11
 * Fix bad XML format for GuiMacro GetInfo Root.
 * gh#491: Example Far Macro `ConEmu.CtrlShiftT.lua` had wrong hotkey.
