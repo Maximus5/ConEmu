@@ -211,6 +211,7 @@ bool is_char_cjk(ucs32 ucs)
 			(ucs >= 0xfe30 && ucs <= 0xfe6f) || /* CJK Compatibility Forms */
 			(ucs >= 0xff00 && ucs <= 0xff60) || /* Fullwidth Forms */
 			(ucs >= 0xffe0 && ucs <= 0xffe6) ||
+			(ucs >= 0x1F300 && ucs <= 0x1F5FF) || /* Miscellaneous Symbols and Pictographs */
 			(ucs >= 0x20000 && ucs <= 0x2fffd) ||
 			(ucs >= 0x30000 && ucs <= 0x3fffd))
 			);

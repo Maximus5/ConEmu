@@ -299,7 +299,7 @@ void VConTextPart::Init(uint anIndex, uint anCell, CVConLine* pLine)
 
 void VConTextPart::Done(uint anLen, uint FontWidth)
 {
-	_ASSERTE(anLen>0 && FontWidth>0);
+	_ASSERTE(anLen>0 && anLen<=0xFFFF && FontWidth>0 && FontWidth<=0xFFFF);
 	Length = anLen;
 	TotalWidth = MinWidth = 0;
 
@@ -352,6 +352,7 @@ void VConTextPart::Done(uint anLen, uint FontWidth)
 	}
 	else
 	{
+		//WARNING: We rely here on pca->Flags2, but not on self evaluated data?
 		for (uint left = anLen; left--; pch++, pca++, pcf++, pcw++)
 		{
 			if (pca->Flags2 & (CharAttr2_NonSpacing|CharAttr2_Combining))
@@ -473,13 +474,13 @@ bool CVConLine::ParseLine(bool abForce, uint anTextWidth, uint anFontWidth, uint
 
 	for (uint j = 0; j < TextWidth;)
 	{
-		//TODO: HI/LO SURROGATES
-		wchar_t wc = ConCharLine[j];
+		bool bPair = ((j+1) < TextWidth);
+		ucs32 wc = ucs32_from_wchar(ConCharLine+j, bPair);
+		uint j2 = j + (bPair ? 2 : 1);
+
 		const CharAttr attr = ConAttrLine[j];
 
 		VConTextPart* p = TextParts+(PartsCount++);
-
-		uint j2 = j+1;
 
 		//TODO: DBCS cell number, it may differs from j
 		p->Init(j, j, this);
@@ -504,12 +505,14 @@ bool CVConLine::ParseLine(bool abForce, uint anTextWidth, uint anFontWidth, uint
 		{
 			// CJK Double-width space will be processed under isCharCJK
 			p->Flags = TRF_TextSpacing;
+			if (!bPair)
 			while ((j2 < TextWidth) && (ConAttrLine[j2] == attr) && isCharSpaceSingle(ConCharLine[j2]))
 				j2++;
 		}
 		else if (isCharSeparate(wc))
 		{
 			p->Flags = TRF_TextSeparate;
+			if (!bPair)
 			while ((j2 < TextWidth) && (ConAttrLine[j2] == attr) && isCharSeparate(ConCharLine[j2]))
 				j2++;
 		}
@@ -518,6 +521,7 @@ bool CVConLine::ParseLine(bool abForce, uint anTextWidth, uint anFontWidth, uint
 			p->Flags = TRF_TextProgress
 				| ((bUseAlternativeFont && isCharAltFont(wc)) ? TRF_TextAlternative : TRF_None)
 				;
+			if (!bPair)
 			while ((j2 < TextWidth) && (ConAttrLine[j2] == attr) && isCharProgress(ConCharLine[j2]))
 				j2++;
 		}
@@ -526,6 +530,7 @@ bool CVConLine::ParseLine(bool abForce, uint anTextWidth, uint anFontWidth, uint
 			p->Flags = TRF_TextScroll
 				| ((bUseAlternativeFont && isCharAltFont(wc)) ? TRF_TextAlternative : TRF_None)
 				;
+			if (!bPair)
 			while ((j2 < TextWidth) && (ConAttrLine[j2] == attr) && isCharScroll(ConCharLine[j2]))
 				j2++;
 		}
@@ -537,6 +542,7 @@ bool CVConLine::ParseLine(bool abForce, uint anTextWidth, uint anFontWidth, uint
 			{
 				p->Flags |= TRF_TextAlternative;
 				wchar_t wc2;
+				if (!bPair)
 				while ((j2 < TextWidth) && (ConAttrLine[j2] == attr)
 					&& isCharPseudographics((wc2=ConCharLine[j2]))
 					&& !isCharBorderVertical(wc2)
@@ -545,6 +551,7 @@ bool CVConLine::ParseLine(bool abForce, uint anTextWidth, uint anFontWidth, uint
 			}
 			else
 			{
+				if (!bPair)
 				while ((j2 < TextWidth) && (ConAttrLine[j2] == attr) && isCharPseudographics(ConCharLine[j2]))
 					j2++;
 			}
@@ -557,6 +564,7 @@ bool CVConLine::ParseLine(bool abForce, uint anTextWidth, uint anFontWidth, uint
 			{
 				p->Flags |= TRF_TextAlternative;
 				wchar_t wc2;
+				if (!bPair)
 				while ((j2 < TextWidth) && (ConAttrLine[j2] == attr)
 					&& isCharCJK((wc2=ConCharLine[j2]))
 					&& isCharAltFont(wc2))
@@ -564,6 +572,7 @@ bool CVConLine::ParseLine(bool abForce, uint anTextWidth, uint anFontWidth, uint
 			}
 			else
 			{
+				if (!bPair)
 				while ((j2 < TextWidth) && (ConAttrLine[j2] == attr) && isCharCJK(ConCharLine[j2]))
 					j2++;
 			}
@@ -571,6 +580,7 @@ bool CVConLine::ParseLine(bool abForce, uint anTextWidth, uint anFontWidth, uint
 		else if (bUseAlternativeFont && isCharAltFont(wc))
 		{
 			p->Flags = TRF_TextAlternative;
+			if (!bPair)
 			while ((j2 < TextWidth) && (ConAttrLine[j2] == attr) && isCharScroll(ConCharLine[j2]))
 				j2++;
 		}
@@ -580,6 +590,7 @@ bool CVConLine::ParseLine(bool abForce, uint anTextWidth, uint anFontWidth, uint
 			wchar_t wc2;
 			// That's more complicated as previous branches,
 			// we must break on all chars mentioned above
+			if (!bPair)
 			while ((j2 < TextWidth) && (ConAttrLine[j2] == attr)
 				&& !isCharSpaceSingle((wc2=ConCharLine[j2]))
 				&& !isCharSeparate(wc2)
@@ -594,6 +605,7 @@ bool CVConLine::ParseLine(bool abForce, uint anTextWidth, uint anFontWidth, uint
 		}
 
 		/* *** We shall prepare this token (default/initial widths must be set) *** */
+		_ASSERTE(j2>j);
 		p->Done(j2-j, FontWidth);
 		TotalLineWidth += p->TotalWidth;
 		MinLineWidth += p->MinWidth;

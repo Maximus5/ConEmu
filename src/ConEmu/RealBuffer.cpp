@@ -5611,7 +5611,7 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 						TODO("OPTIMIZE: вынести проверку bExtendColors за циклы");
 
 						bool bPair = (iTail > 0);
-						int wwch = ucs32_from_wchar(pch, bPair);
+						ucs32 wwch = ucs32_from_wchar(pch, bPair);
 						_ASSERTE(wwch >= 0);
 
 						// Colorer & Far - TrueMod
