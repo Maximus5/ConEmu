@@ -31,8 +31,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma warning(disable: 4091)
 #include <shlobj.h>
 #pragma warning(default: 4091)
+
 #if !defined(__GNUC__) || defined(__MINGW32__)
+#pragma warning(disable: 4091)
 #include <dbghelp.h>
+#pragma warning(default: 4091)
 #else
 #include "../common/DbgHlpGcc.h"
 #endif
