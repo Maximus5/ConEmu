@@ -37,9 +37,9 @@ ucs32 ucs32_from_wchar(wchar_t* pch, bool& has_trail)
 	_ASSERTE(sizeof(int) == 4);
 
 	// constants
-	const int SURROGATE_OFFSET = 0x10000 - (0xD800 << 10) - 0xDC00; // -0x35FDC00
+	const ucs32 SURROGATE_OFFSET = 0x10000 - (0xD800 << 10) - 0xDC00; // -0x35FDC00
 	// computation
-	int codepoint = (pch[0] << 10) + pch[1] + SURROGATE_OFFSET;
+	ucs32 codepoint = (pch[0] << 10) + pch[1] + SURROGATE_OFFSET;
 
 	// example: "𝔸" is pair of {0xD835 0xDD38} ==> 0x1D538 : MATHEMATICAL DOUBLE-STRUCK CAPITAL A
 

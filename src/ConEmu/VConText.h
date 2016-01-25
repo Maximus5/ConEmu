@@ -31,6 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <windows.h>
 #include "../common/RgnDetect.h"
+#include "../common/wcwidth.h"
 
 typedef DWORD TextPartFlags;
 const TextPartFlags
@@ -203,16 +204,15 @@ protected:
 extern const wchar_t gszAnalogues[32];
 //wchar_t getUnicodeAnalogue(uint inChar);
 
-//TODO: all functions have to be converted to ucs32 instead of BMP
-bool isCharAltFont(wchar_t inChar);
-bool isCharPseudographics(wchar_t inChar);
-bool isCharPseudoFree(wchar_t inChar);
-bool isCharBorderVertical(wchar_t inChar);
-bool isCharProgress(wchar_t inChar);
-bool isCharScroll(wchar_t inChar);
-bool isCharSeparate(wchar_t inChar);
-bool isCharSpace(wchar_t inChar);
-bool isCharSpaceSingle(wchar_t inChar);
-bool isCharRTL(wchar_t inChar);
-bool isCharCJK(wchar_t inChar);
-bool isCharComining(wchar_t inChar);
+bool isCharAltFont(ucs32 inChar);
+bool isCharPseudographics(ucs32 inChar);
+bool isCharPseudoFree(ucs32 inChar);
+bool isCharBorderVertical(ucs32 inChar);
+bool isCharProgress(ucs32 inChar);
+bool isCharScroll(ucs32 inChar);
+bool isCharSeparate(ucs32 inChar);
+bool isCharSpace(ucs32 inChar);
+bool isCharSpaceSingle(ucs32 inChar);
+bool isCharRTL(ucs32 inChar);
+bool isCharCJK(ucs32 inChar);
+bool isCharComining(ucs32 inChar);

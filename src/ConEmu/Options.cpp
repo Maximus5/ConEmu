@@ -4257,9 +4257,10 @@ wchar_t* Settings::CreateCharRanges(BYTE (&Chars)[0x10000])
 	return pszRanges;
 }
 
-bool Settings::CheckCharAltFont(wchar_t inChar)
+bool Settings::CheckCharAltFont(ucs32 inChar)
 {
-	return isFixFarBorders ? mpc_CharAltFontRanges[(WORD)inChar] : false;
+	//TODO: Support character codebases >=0xFFFF
+	return (isFixFarBorders && !(inChar & ~0xFFFF)) ? mpc_CharAltFontRanges[LOWORD(inChar)] : false;
 }
 
 void Settings::CheckConsoleSettings()

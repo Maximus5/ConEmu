@@ -53,7 +53,7 @@ const wchar_t gszAnalogues[32] =
 
 // Это символы рамок и др. спец. символы
 //#define isCharBorder(inChar) (inChar>=0x2013 && inChar<=0x266B)
-bool isCharAltFont(wchar_t inChar)
+bool isCharAltFont(ucs32 inChar)
 {
 	// Низя - нужно учитывать gpSet->isFixFarBorders там где это требуется, иначе пролетает gpSet->isEnhanceGraphics
 	//if (!gpSet->isFixFarBorders)
@@ -91,14 +91,14 @@ bool isCharAltFont(wchar_t inChar)
 	//}
 }
 
-bool isCharPseudographics(wchar_t inChar)
+bool isCharPseudographics(ucs32 inChar)
 {
 	bool isPseudo = ((inChar >= 0x2013) && (inChar <= 0x25C4));
 	return isPseudo;
 }
 
 // Some pseudographics characters may be shrinked freely
-bool isCharPseudoFree(wchar_t inChar)
+bool isCharPseudoFree(ucs32 inChar)
 {
 	bool isFree = (inChar == ucBoxSinglHorz) || (inChar == ucBoxDblHorz);
 	return isFree;
@@ -107,7 +107,7 @@ bool isCharPseudoFree(wchar_t inChar)
 // These are "frame" characters, which has either
 // * any vertical (even partial) line
 // * or Up/Down arrows (scrollers)
-bool isCharBorderVertical(wchar_t inChar)
+bool isCharBorderVertical(ucs32 inChar)
 {
 	bool isVert = ((inChar >= ucBoxSinglVert)
 		&& ((inChar <= ucBoxSinglUpHorz)
@@ -117,20 +117,20 @@ bool isCharBorderVertical(wchar_t inChar)
 	return isVert;
 }
 
-bool isCharProgress(wchar_t inChar)
+bool isCharProgress(ucs32 inChar)
 {
 	bool isProgress = (inChar == ucBox25 || inChar == ucBox50 || inChar == ucBox75 || inChar == ucBox100);
 	return isProgress;
 }
 
-bool isCharScroll(wchar_t inChar)
+bool isCharScroll(ucs32 inChar)
 {
 	bool isScrollbar = (inChar == ucBox25 || inChar == ucBox50 || inChar == ucBox75 || inChar == ucBox100
 	                    || inChar == ucUpScroll || inChar == ucDnScroll);
 	return isScrollbar;
 }
 
-bool isCharSeparate(wchar_t inChar)
+bool isCharSeparate(ucs32 inChar)
 {
 	// Здесь возвращаем те символы, которые нельзя рисовать вместе с обычными буквами.
 	// Например, 0xFEFF на некоторых шрифтах вообще переключает GDI на какой-то левый шрифт O_O
@@ -191,7 +191,7 @@ bool isCharSeparate(wchar_t inChar)
 
 // All symbols, which may be displayed as "space"
 // And we don't care (here) about Zero-Width spaces!
-bool isCharSpace(wchar_t inChar)
+bool isCharSpace(ucs32 inChar)
 {
 	bool isSpace = (inChar == ucSpace || inChar == ucNoBreakSpace
 		|| (((inChar >= 0x2000) && (inChar <= 0x3000))
@@ -207,7 +207,7 @@ bool isCharSpace(wchar_t inChar)
 }
 
 // Same as isCharSpace, but without ‘CJK Wide Space’
-bool isCharSpaceSingle(wchar_t inChar)
+bool isCharSpaceSingle(ucs32 inChar)
 {
 	bool isSpace = (inChar == ucSpace || inChar == ucNoBreakSpace
 		|| (((inChar >= 0x2000) && (inChar <= 0x3000))
@@ -222,7 +222,7 @@ bool isCharSpaceSingle(wchar_t inChar)
 	return isSpace;
 }
 
-bool isCharRTL(wchar_t inChar)
+bool isCharRTL(ucs32 inChar)
 {
 	bool isRtl = (inChar >= 0x05BE)
 		&& (((inChar <= 0x08AC)
@@ -264,12 +264,12 @@ bool isCharRTL(wchar_t inChar)
 	return isRtl;
 }
 
-bool isCharCJK(wchar_t inChar)
+bool isCharCJK(ucs32 inChar)
 {
 	return is_char_cjk(inChar);
 }
 
-bool isCharComining(wchar_t inChar)
+bool isCharComining(ucs32 inChar)
 {
 	return is_char_combining(inChar);
 }

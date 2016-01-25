@@ -101,6 +101,7 @@ enum FarMacroVersion
 #include "SetAppSettings.h"
 #include "SetCmdTask.h"
 #include "UpdateSet.h"
+#include "../common/wcwidth.h"
 
 class CSettings;
 class CSetDlgButtons;
@@ -440,7 +441,7 @@ struct Settings
 		BYTE mpc_CharAltFontRanges[0x10000];
 		int ParseCharRanges(LPCWSTR asRanges, BYTE (&Chars)[0x10000], BYTE abValue = TRUE);
 		wchar_t* CreateCharRanges(BYTE (&Chars)[0x10000]); // caller must free(result)
-		bool CheckCharAltFont(wchar_t inChar);
+		bool CheckCharAltFont(ucs32 inChar);
 
 
 		//reg->Load(L"HideCaption", isHideCaption);
