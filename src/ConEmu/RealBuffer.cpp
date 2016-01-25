@@ -5390,14 +5390,44 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 
 			// Иначе детектор глючит
 			TODO("Избавиться от поля Flags. Вообще.");
-			for (int i = 0; i < nXMax; i++)
+			int iTail = nXMax;
+			for (int i = 0; (i < nXMax) && (iTail-- > 0); i++) {
 				pcaDst[i].Flags = 0;
+				bool bPair = (iTail > 0);
+				int wwch = ucs32_from_wchar(pszDst + i, bPair);
+				_ASSERTE(wwch >= 0);
+
+				switch (get_wcwidth(wwch))
+				{
+				case 0:
+					pcaDst[i].Flags2 |= CharAttr2_Combining;
+					break;
+				case 2:
+					pcaDst[i].Flags2 |= CharAttr2_DoubleSpaced;
+					break;
+				}
+			}
 
 			if (nWidth > nXMax)
 			{
 				wmemset(pszDst+nXMax, wSetChar, nWidth-nXMax);
-				for (int i = nXMax; i < nWidth; i++)
+				int iTail = nWidth;
+				for (int i = nXMax; (i < nWidth) && (iTail-- > 0); i++) {
 					pcaDst[i] = lcaDef;
+					bool bPair = (iTail > 0);
+					int wwch = ucs32_from_wchar(pszDst + i, bPair);
+					_ASSERTE(wwch >= 0);
+
+					switch (get_wcwidth(wwch))
+					{
+					case 0:
+						pcaDst[i].Flags2 |= CharAttr2_Combining;
+						break;
+					case 2:
+						pcaDst[i].Flags2 |= CharAttr2_DoubleSpaced;
+						break;
+					}
+				}
 			}
 
 			pszDst += nWidth;
