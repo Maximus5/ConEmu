@@ -151,9 +151,14 @@ template <class T>
 struct PipeServer
 {
 	protected:
+		#define PipeInstMagic 0xE9B6376A
+
 		struct PipeInst
 		{
-			DWORD  nIndex; // Index in m_Pipes
+			// Index in m_Pipes
+			DWORD  nIndex;
+			// Padding and magic check (PipeInstMagic)
+			DWORD  nMagic;
 
 			// Common
 			HANDLE hPipeInst; // Pipe Handle
@@ -250,7 +255,7 @@ struct PipeServer
 		int mn_MaxCount;
 		int mn_PipesToCreate;
 		int mn_DummyAnswerSize;
-		PipeInst *m_Pipes/*[MaxCount]*/;
+		PipeInst *m_Pipes/*[mn_MaxCount]*/;
 		PipeInst *mp_ActivePipe;
 		
 		LPSECURITY_ATTRIBUTES mlp_Sec;
@@ -311,6 +316,8 @@ struct PipeServer
 
 		void _Disconnect(PipeInst* pPipe, bool bDisconnect, bool bClose, bool bDelayBeforeClose = true)
 		{
+			_ASSERTEX(pPipe && (pPipe->nMagic == PipeInstMagic) && (pPipe->nIndex < (DWORD)mn_MaxCount) && (pPipe == (m_Pipes+pPipe->nIndex)));
+
 			if (!pPipe->hPipeInst || (pPipe->hPipeInst == INVALID_HANDLE_VALUE))
 			{
 				return;
@@ -412,7 +419,7 @@ struct PipeServer
 						{
 							// 120603. В принципе, это штатная ситуация, если ни одного запроса на
 							// подключение не было. Но было зафиксировано странное зависание клиента
-							// при попытке подключения к пайпу с MaxCount=1. Пайп вроде был живой
+							// при попытке подключения к пайпу с mn_MaxCount=1. Пайп вроде был живой
 							// и свободный, но тем не менее, на клиенте все время возвращалась
 							// ошибка ERROR_PIPE_BUSY.
 							//
@@ -725,7 +732,7 @@ struct PipeServer
 				// Пайп уже может быть создан
 				if ((pPipe->hPipeInst == NULL) || (pPipe->hPipeInst == INVALID_HANDLE_VALUE))
 				{
-					// На WinXP наблюдался странный глючок при MaxCount==1, возможно из-за того, что не вызывался DisconnectNamedPipe
+					// На WinXP наблюдался странный глючок при mn_MaxCount==1, возможно из-за того, что не вызывался DisconnectNamedPipe
 					int InstanceCount = RELEASEDEBUGTEST(PIPE_UNLIMITED_INSTANCES,mn_MaxCount);
 					DWORD nOutSize = PIPEBUFSIZE;
 					DWORD nInSize = PIPEBUFSIZE;
@@ -1182,6 +1189,10 @@ struct PipeServer
 			_ASSERTEX(pPipe->hThread == NULL);
 			//_ASSERTEX(pPipe->hThreadEnd == NULL);
 
+			_ASSERTEX((DWORD_PTR)(pPipe - m_Pipes) < mn_MaxCount);
+			pPipe->nIndex = LODWORD(pPipe - m_Pipes);
+			pPipe->nMagic = PipeInstMagic;
+
 			pPipe->pServer = this;
 			pPipe->nThreadId = 0;
 			pPipe->dwState = STARTING_STATE;
@@ -1220,7 +1231,7 @@ struct PipeServer
 		{
 			DWORD nResult = 101;
 			PipeInst* pPipe = (PipeInst*)lpvParam;
-			_ASSERTEX(pPipe!=NULL && pPipe->pServer!=NULL);
+			_ASSERTEX(pPipe!=NULL && pPipe->pServer!=NULL && pPipe->nMagic==PipeInstMagic);
 
 			pPipe->nStartedTick = GetTickCount();
 			pPipe->dwState = STARTED_STATE;
