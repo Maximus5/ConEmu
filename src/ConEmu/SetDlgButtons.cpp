@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2014-2015 Maximus5
+Copyright (c) 2014-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -1608,19 +1608,9 @@ void CSetDlgButtons::OnBtn_NormalFullscreenMaximized(HWND hDlg, WORD CB, BYTE uC
 {
 	_ASSERTE(CB==rNormal || CB==rFullScreen || CB==rMaximized);
 
-	if (gpSet->isQuakeStyle)
-	{
-		gpSet->_WindowMode = CB;
-		RECT rcWnd = gpConEmu->GetDefaultRect();
-		//gpConEmu->SetWindowMode((ConEmuWindowMode)CB);
-		SetWindowPos(ghWnd, NULL, rcWnd.left, rcWnd.top, rcWnd.right-rcWnd.left, rcWnd.bottom-rcWnd.top, SWP_NOZORDER);
-		apiSetForegroundWindow(ghOpWnd);
-	}
-	else
-	{
-		EnableWindow(GetDlgItem(hDlg, cbApplyPos), TRUE);
-		CSetDlgLists::EnableDlgItems(hDlg, CSetDlgLists::eSizeCtrlId, CB == rNormal);
-	}
+	EnableWindow(GetDlgItem(hDlg, cbApplyPos), TRUE);
+	CSetDlgLists::EnableDlgItems(hDlg, CSetDlgLists::eSizeCtrlId, CB == rNormal);
+
 } // rNormal || rFullScreen || rMaximized
 
 
@@ -1633,9 +1623,27 @@ void CSetDlgButtons::OnBtn_ApplyPos(HWND hDlg, WORD CB, BYTE uCheck)
 	{
 		bool bStored = false;
 		DWORD Mode = gpSet->_WindowMode;
+		if (hDlg)
+		{
+			if (IsChecked(hDlg, rNormal))
+				Mode = rNormal;
+			else if (IsChecked(hDlg, rMaximized))
+				Mode = rMaximized;
+			else if (IsChecked(hDlg, rFullScreen))
+				Mode = rFullScreen;
+		}
 
-		if (gpSet->isQuakeStyle
-			|| (Mode == rNormal))
+		#if 0
+		if (gpSet->isQuakeStyle)
+		{
+			RECT rcWnd = gpConEmu->GetDefaultRect();
+			//gpConEmu->SetWindowMode((ConEmuWindowMode)CB);
+			SetWindowPos(ghWnd, NULL, rcWnd.left, rcWnd.top, rcWnd.right-rcWnd.left, rcWnd.bottom-rcWnd.top, SWP_NOZORDER);
+			apiSetForegroundWindow(ghOpWnd);
+		}
+		#endif
+
+		if (Mode == rNormal)
 		{
 			CEStr psX(GetDlgItemTextPtr(hDlg, tWndX));
 			CEStr psY(GetDlgItemTextPtr(hDlg, tWndY));
