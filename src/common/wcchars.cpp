@@ -29,7 +29,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "defines.h"
 #include "wcchars.h"
 
-ucs32 ucs32_from_wchar(wchar_t* pch, bool& has_trail)
+ucs32 ucs32_from_wchar(const wchar_t* pch, bool& has_trail)
 {
 	if (!has_trail || !(has_trail = IS_SURROGATE_PAIR(pch[0], pch[1])))
 		return *pch;

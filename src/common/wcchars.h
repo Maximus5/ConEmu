@@ -30,4 +30,4 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "wcwidth.h"
 
-ucs32 ucs32_from_wchar(wchar_t* pch, bool& has_trail);
+ucs32 ucs32_from_wchar(const wchar_t* pch, bool& has_trail);
