@@ -4559,28 +4559,73 @@ bool CRealBuffer::DoSelectionCopyInt(CECopyMode CopyMode, bool bStreamMode, int 
 		// Блоковое выделение
 		for (int Y = 0; Y <= nSelHeight; Y++)
 		{
+			int iStart = 0; //DBCS start index
+			int iEnd = 0;   //DBCS end index
+			int X; //selected position
+
 			LPCWSTR pszCon = NULL;
 
 			if (m_Type == rbt_Primary)
 			{
-				pszCon = pszDataStart + con.nTextWidth*(Y+srSelection_Y1) + srSelection_X1;
+				for (X = 0; true;) {
+					bool bPair = true;
+					int wwch = ucs32_from_wchar(const_cast<wchar_t *>(pszDataStart) + con.nTextWidth*(Y + srSelection_Y1) + iStart, bPair);
+					if (get_wcwidth(wwch) == 2)
+						X++;
+					if (X >= srSelection_X1)
+						break;
+					iStart++;
+					X++;
+				}
+				for (X = 0; true;) {
+					bool bPair = true;
+					int wwch = ucs32_from_wchar(const_cast<wchar_t *>(pszDataStart) + con.nTextWidth*(Y + srSelection_Y1) + iEnd, bPair);
+					if (get_wcwidth(wwch) == 2)
+						X++;
+					if (X >= srSelection_X2)
+						break;
+					iEnd++;
+					X++;
+				}
+				pszCon = pszDataStart + con.nTextWidth*(Y+srSelection_Y1) + iStart;
 			}
 			else if (pszDataStart && (Y < nTextHeight))
 			{
+				for (X = 0; true;) {
+					bool bPair = true;
+					int wwch = ucs32_from_wchar(const_cast<wchar_t *>(pszDataStart) + dump.crSize.X*(Y + srSelection_Y1) + iStart, bPair);
+					if (get_wcwidth(wwch) == 2)
+						X++;
+					if (X >= srSelection_X1)
+						break;
+					iStart++;
+					X++;
+				}
+				for (X = 0; true;) {
+					bool bPair = true;
+					int wwch = ucs32_from_wchar(const_cast<wchar_t *>(pszDataStart) + dump.crSize.X*(Y + srSelection_Y1) + iEnd, bPair);
+					if (get_wcwidth(wwch) == 2)
+						X++;
+					if (X >= srSelection_X2)
+						break;
+					iEnd++;
+					X++;
+				}
 				WARNING("Проверить для режима с прокруткой!");
-				pszCon = pszDataStart + dump.crSize.X*(Y+srSelection_Y1) + srSelection_X1;
+				pszCon = pszDataStart + dump.crSize.X*(Y+srSelection_Y1) + iStart;
 			}
 
 			//LPCWSTR pszDstStart = pch;
 			LPCWSTR pszSrcStart = pszCon;
 
+			nSelWidth = iEnd - iStart + 1;
 			int nMaxX = nSelWidth - 1;
 
 			if (pszCon)
 			{
 				wchar_t* pchStart = pch;
 
-				for (int X = 0; X <= nMaxX; X++)
+				for (int i = 0; i < iEnd - iStart + 1; i++)
 				{
 					*(pch++) = *(pszCon++);
 				}
