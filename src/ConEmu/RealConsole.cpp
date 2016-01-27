@@ -15597,17 +15597,15 @@ void CRealConsole::PostMacro(LPCWSTR asMacro, BOOL abAsync /*= FALSE*/)
 		// This is GuiMacro, but not a Far Manager macros
 		if (asMacro[1])
 		{
-			LPWSTR pszGui = lstrdup(asMacro+1);
+			CEStr pszGui = lstrdup(asMacro+1);
 			if (m_UseLogs)
 			{
 				CEStr lsLog(lstrmerge(L"CRealConsole::PostMacro: ", asMacro));
 				LogString(lsLog);
 			}
-			LPWSTR pszRc = ConEmuMacro::ExecuteMacro(pszGui, this);
+			CEStr pszRc = ConEmuMacro::ExecuteMacro(pszGui.ms_Val, this);
 			LogString(pszRc ? pszRc : L"<NULL>");
-			TODO("Показать результат в статусной строке?");
-			SafeFree(pszGui);
-			SafeFree(pszRc);
+			TODO("Show result in the status line?");
 		}
 		return;
 	}
