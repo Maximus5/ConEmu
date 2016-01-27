@@ -12736,7 +12736,7 @@ void CRealConsole::CloseConsole(bool abForceTerminate, bool abConfirm, bool abAl
 			mp_VCon->SetBackgroundImageData(&BackClear);
 		}
 
-		CloseConsoleWindow(false/*NoConfirm - уже*/);
+		CloseConsoleWindow(false/*NoConfirm - already confirmed*/);
 	}
 	else
 	{
@@ -15590,7 +15590,7 @@ void CRealConsole::PostMacro(LPCWSTR asMacro, BOOL abAsync /*= FALSE*/)
 
 	if (*asMacro == GUI_MACRO_PREFIX/*L'#'*/)
 	{
-		// Значит это GuiMacro, а не FarMacro.
+		// This is GuiMacro, but not a Far Manager macros
 		if (asMacro[1])
 		{
 			LPWSTR pszGui = lstrdup(asMacro+1);

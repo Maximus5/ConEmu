@@ -1006,7 +1006,7 @@ void CConEmuMenu::ExecPopupMenuCmd(TrackMenuPlace place, CVirtualConsole* apVCon
 			break;
 		case IDM_TERMINATECON:
 			// Active console/pane: Do normal close
-			apVCon->RCon()->CloseConsole(false, true);
+			apVCon->RCon()->CloseConsole(false, true/*confimation may be disabled in settings*/);
 			break;
 
 		case IDM_TERMINATEGROUP:
