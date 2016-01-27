@@ -995,24 +995,33 @@ void CConEmuMenu::ExecPopupMenuCmd(TrackMenuPlace place, CVirtualConsole* apVCon
 		case IDM_CHILDSYSMENU:
 			apVCon->RCon()->ChildSystemMenu();
 			break;
+
 		case IDM_TERMINATEPRC:
+			// Active console/pane: Terminate active process
 			apVCon->RCon()->CloseConsole(true, false);
 			break;
 		case IDM_TERMINATEBUTSHELL:
+			// Active console/pane: Terminate all except root process
 			apVCon->RCon()->TerminateAllButShell(false);
 			break;
 		case IDM_TERMINATECON:
-			//apVCon->RCon()->CloseConsoleWindow();
+			// Active console/pane: Do normal close
 			apVCon->RCon()->CloseConsole(false, true);
 			break;
+
 		case IDM_TERMINATEGROUP:
+			// Active group: Do normal close of each pane
 		case IDM_TERMINATEPRCGROUP:
-			//apVCon->RCon()->CloseConsoleWindow();
+			// Active group: Terminate active process in each pane
 			CVConGroup::CloseGroup(apVCon, (nCmd==IDM_TERMINATEPRCGROUP));
 			break;
+
 		case IDM_TERMINATEALLCON:
+			// Do normal close of all consoles (tabs and panes)
 		case IDM_TERMINATECONEXPT:
+			// Close all tabs and panes except active console/pane
 		case IDM_TERMINATEZOMBIES:
+			// Close ‘zombies’ (where ‘Press Esc to close console’ is displayed)
 			CVConGroup::CloseAllButActive((nCmd == IDM_TERMINATECONEXPT) ? apVCon : NULL, (nCmd == IDM_TERMINATEZOMBIES), false);
 			break;
 

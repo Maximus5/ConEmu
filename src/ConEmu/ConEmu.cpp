@@ -4433,6 +4433,8 @@ bool CConEmuMain::RecreateAction(RecreateActionParm aRecreate, BOOL abConfirm, R
 				//int nRc = DialogBoxParam(g_hInstance, MAKEINTRESOURCE(IDD_RESTART), ghWnd, Recreate DlgProc, (LPARAM)&args);
 				if (nRc == IDC_TERMINATE)
 				{
+					// "Terminate" button in the "Recreate" dialog
+					// it intended to close active console forcedly
 					VCon->RCon()->CloseConsole(true, false);
 					return true;
 				}
