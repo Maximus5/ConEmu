@@ -589,6 +589,8 @@ class CRealConsole
 		void CloseConsole(bool abForceTerminate, bool abConfirm, bool abAllowMacro = true);
 		void CloseConsoleWindow(bool abConfirm);
 		bool TerminateAllButShell(bool abConfirm);
+		bool TerminateActiveProcess(bool abConfirm, DWORD nPID);
+		bool TerminateActiveProcessConfirm(DWORD nPID);
 		bool ChangeAffinityPriority(LPCWSTR asAffinity = NULL, LPCWSTR asPriority = NULL);
 		bool isCloseTabConfirmed(CEFarWindowType TabType, LPCWSTR asConfirmation, bool bForceAsk = false);
 		void CloseConfirmReset();

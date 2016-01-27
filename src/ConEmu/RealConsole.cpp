@@ -12470,6 +12470,86 @@ bool CRealConsole::TerminateAllButShell(bool abConfirm)
 	return bOk;
 }
 
+bool CRealConsole::TerminateActiveProcessConfirm(DWORD nPID)
+{
+	int nBtn;
+	wchar_t szActive[64] = {};
+
+	DWORD nActivePID = nPID ? nPID : GetActivePID();
+
+	ConProcess prc = {};
+	if (!GetProcessInformation(nActivePID, &prc) || !(prc.Name[0]))
+		wcscpy_c(prc.Name, L"<Not found>");
+
+	// Confirm termination
+	wchar_t szMsg[255];
+	_wsprintf(szMsg, SKIPLEN(countof(szMsg))
+		L"Kill active process '%s' PID=%u?",
+		prc.Name, nActivePID);
+
+	{
+		DontEnable de;
+		nBtn = MsgBox(szMsg, MB_ICONEXCLAMATION | MB_OKCANCEL, Title, gbMessagingStarted ? ghWnd : NULL, false);
+	}
+
+	return (nBtn == IDOK);
+}
+
+bool CRealConsole::TerminateActiveProcess(bool abConfirm, DWORD nPID)
+{
+	DWORD dwServerPID = GetServerPID(true);
+	if (!dwServerPID)
+	{
+		// No server
+		return false;
+	}
+
+	DWORD nActivePID = nPID ? nPID : GetActivePID();
+
+	if (abConfirm)
+	{
+		if (!TerminateActiveProcessConfirm(nActivePID))
+		{
+			return false;
+		}
+	}
+
+	bool lbTerminateSucceeded = false;
+	wchar_t szMsg[128];
+
+	//Terminate
+	CESERVER_REQ *pIn = ExecuteNewCmd(CECMD_TERMINATEPID, sizeof(CESERVER_REQ_HDR) + 2 * sizeof(DWORD));
+	if (pIn)
+	{
+		pIn->dwData[0] = 1; // Count
+		pIn->dwData[1] = nActivePID;
+		DWORD dwTickStart = timeGetTime();
+
+		CESERVER_REQ *pOut = ExecuteSrvCmd(dwServerPID, pIn, ghWnd);
+
+		gpSetCls->debugLogCommand(pIn, FALSE, dwTickStart, timeGetTime() - dwTickStart, L"ExecuteSrvCmd", pOut);
+
+		if (pOut)
+		{
+			if (pOut->hdr.cbSize == sizeof(CESERVER_REQ_HDR) + 2 * sizeof(DWORD))
+			{
+				lbTerminateSucceeded = true;
+
+				// Show error message if failed?
+				if (pOut->dwData[0] == FALSE)
+				{
+					_wsprintf(szMsg, SKIPLEN(countof(szMsg)) L"TerminateProcess(%u) failed", nPID);
+					DisplayLastError(szMsg, pOut->dwData[1]);
+				}
+			}
+			ExecuteFreeResult(pOut);
+		}
+		ExecuteFreeResult(pIn);
+	}
+
+	return lbTerminateSucceeded;
+}
+
 void CRealConsole::CloseConsole(bool abForceTerminate, bool abConfirm, bool abAllowMacro /*= true*/)
 {
 	if (!this) return;
