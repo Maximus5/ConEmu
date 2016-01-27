@@ -3477,116 +3477,6 @@ void CConEmuMain::SetTitleTemplate(LPCWSTR asTemplate)
 	lstrcpyn(TitleTemplate, asTemplate ? asTemplate : L"", countof(TitleTemplate));
 }
 
-//LRESULT CConEmuMain::GuiShellExecuteEx(SHELLEXECUTEINFO* lpShellExecute, CVirtualConsole* apVCon)
-//{
-//	LRESULT lRc = 0;
-//
-//	if (!isMainThread())
-//	{
-//		GuiShellExecuteExArg* pArg = (GuiShellExecuteExArg*)calloc(1,sizeof(*pArg));
-//		pArg->pVCon = apVCon;
-//		pArg->lpShellExecute = lpShellExecute;
-//		pArg->hReadyEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
-//
-//		Enter Critical Section(&mcs_ShellExecuteEx);
-//		m_ShellExecuteQueue.push_back(pArg);
-//		Leave Critical Section(&mcs_ShellExecuteEx);
-//
-//		PostMessage(ghWnd, mn_ShellExecuteEx, 0, 0);
-//
-//		if (ghWnd && IsWindow(ghWnd))
-//		{
-//			WaitForSingleObject(pArg->hReadyEvent, INFINITE);
-//
-//			lRc = pArg->bResult;
-//		}
-//
-//		SafeCloseHandle(pArg->hReadyEvent);
-//	}
-//	else
-//	{
-//		_ASSERTE(FALSE && "GuiShellExecuteEx must not be called in Main thread!");
-//	}
-//
-//	return lRc;
-//}
-
-//void CConEmuMain::GuiShellExecuteExQueue()
-//{
-//	if (mb_InShellExecuteQueue)
-//	{
-//		// Очередь уже обрабатывается!
-//		return;
-//	}
-//
-//	_ASSERTE(isMainThread()); // Должно выполняться в основном потоке!
-//
-//	mb_InShellExecuteQueue = true;
-//
-//	while (m_ShellExecuteQueue.size() != 0)
-//	{
-//		GuiShellExecuteExArg* pArg = NULL;
-//
-//		Enter Critical Section(&mcs_ShellExecuteEx);
-//		for (INT_PTR i = 0; i < m_ShellExecuteQueue.size(); i++)
-//		{
-//			if (m_ShellExecuteQueue[i]->bInProcess)
-//			{
-//				_ASSERTE(m_ShellExecuteQueue[i]->bInProcess == FALSE); // TRUE - должен быть убран из очереди!
-//			}
-//			else
-//			{
-//				m_ShellExecuteQueue[i]->bInProcess = TRUE;
-//				pArg = m_ShellExecuteQueue[i];
-//				m_ShellExecuteQueue.erase(i);
-//				break;
-//			}
-//		}
-//		Leave Critical Section(&mcs_ShellExecuteEx);
-//
-//		if (!pArg)
-//		{
-//			break; // очередь обработана?
-//		}
-//
-//		SHELLEXECUTEINFO seiPre = *pArg->lpShellExecute;
-//
-//		BOOL lRc = ::ShellExecuteEx(pArg->lpShellExecute);
-//
-//		SHELLEXECUTEINFO seiPst = *pArg->lpShellExecute;
-//		DWORD dwErr = (lRc == FALSE) ? GetLastError() : 0;
-//
-//		pArg->bResult = lRc;
-//		pArg->dwErrCode = dwErr;
-//
-//		if (lRc != FALSE)
-//		{
-//			if (pArg->lpShellExecute->fMask & SEE_MASK_NOCLOSEPROCESS)
-//			{
-//				// OK, но нам нужен хэндл запущенного процесса
-//				_ASSERTE(seiPst.hProcess != NULL);
-//				_ASSERTE(pArg->lpShellExecute->hProcess != NULL);
-//			}
-//		}
-//		else // Ошибка
-//		{
-//			//120429 - если мы были в Recreate - то наверное не закрывать, пусть болванка висит?
-//			if ((isValid(pArg->pVCon) && !pArg->pVCon->RCon()->InRecreate()))
-//			{
-//				pArg->pVCon->RCon()->CloseConsole(false, false);
-//			}
-//		}
-//
-//		SetEvent(pArg->hReadyEvent);
-//
-//		UNREFERENCED_PARAMETER(seiPre.cbSize);
-//		UNREFERENCED_PARAMETER(seiPst.cbSize);
-//		UNREFERENCED_PARAMETER(dwErr);
-//	}
-//
-//	mb_InShellExecuteQueue = false;
-//}
-
 bool CConEmuMain::ExecuteProcessPrepare()
 {
 	TODO("Disable all global hooks for execution time?");
@@ -3600,11 +3490,6 @@ void CConEmuMain::ExecuteProcessFinished(bool bOpt)
 		TODO("Return all global hooks for execution time?");
 	}
 }
-
-//BOOL CConEmuMain::HandlerRoutine(DWORD dwCtrlType)
-//{
-//    return (dwCtrlType == CTRL_C_EVENT || dwCtrlType == CTRL_BREAK_EVENT ? true : false);
-//}
 
 void CConEmuMain::SetPostGuiMacro(LPCWSTR asGuiMacro)
 {
