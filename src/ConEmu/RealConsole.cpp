@@ -12784,7 +12784,8 @@ void CRealConsole::CloseTab()
 	{
 		if (!isCloseTabConfirmed(fwt_Panels, gsCloseGui))
 			return;
-		PostConsoleMessage(GuiWnd(), WM_CLOSE, 0, 0);
+		// It will send WM_CLOSE to ChildGui main window
+		CloseConsoleWindow(false/*NoConfirm - already confirmed*/);
 	}
 	else
 	{
