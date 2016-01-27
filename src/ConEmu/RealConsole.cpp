@@ -12594,28 +12594,27 @@ void CRealConsole::CloseConsole(bool abForceTerminate, bool abConfirm, bool abAl
 
 		if (gpSet->isSafeFarClose && !abForceTerminate && abAllowMacro)
 		{
-			DWORD nFarPID = GetFarPID(TRUE/*abPluginRequired*/);
+			bool lbExecuted = false;
 
-			if (nFarPID)
+			LPCWSTR pszMacro = gpSet->SafeFarCloseMacro(fmv_Default);
+			_ASSERTE(pszMacro && *pszMacro);
+
+			// GuiMacro выполняется безотносительно "фар/не фар"
+			if (*pszMacro == GUI_MACRO_PREFIX/*L'#'*/)
+			{
+				mb_InPostCloseMacro = true;
+				// Для удобства. Она сама позовет CConEmuMacro::ExecuteMacro
+				PostMacro(pszMacro, TRUE);
+				lbExecuted = true;
+			}
+
+			DWORD nFarPID;
+			if (!lbExecuted && ((nFarPID = GetFarPID(TRUE/*abPluginRequired*/)) != 0))
 			{
 				// Set flag immediately
 				mb_InPostCloseMacro = true;
 
-				LPCWSTR pszMacro = gpSet->SafeFarCloseMacro(fmv_Default);
-				_ASSERTE(pszMacro && *pszMacro);
-
-				BOOL lbExecuted = FALSE;
-
-				// GuiMacro выполняется безотносительно "фар/не фар"
-				if (*pszMacro == GUI_MACRO_PREFIX/*L'#'*/)
-				{
-					// Для удобства. Она сама позовет CConEmuMacro::ExecuteMacro
-					PostMacro(pszMacro, TRUE);
-					lbExecuted = TRUE;
-				}
-
 				// FarMacro выполняется асинхронно, так что не будем смотреть на "isAlive"
-				if (!lbExecuted && nFarPID /*&& isAlive()*/)
 				{
 					mb_InCloseConsole = TRUE;
 					mp_ConEmu->DebugStep(_T("ConEmu: Execute SafeFarCloseMacro"));
@@ -12629,7 +12628,7 @@ void CRealConsole::CloseConsole(bool abForceTerminate, bool abConfirm, bool abAl
 					// Async, иначе ConEmu зависнуть может
 					PostMacro(pszMacro, TRUE);
 
-					lbExecuted = TRUE;
+					lbExecuted = true;
 
 					mp_ConEmu->DebugStep(NULL);
 				}
@@ -12642,92 +12641,23 @@ void CRealConsole::CloseConsole(bool abForceTerminate, bool abConfirm, bool abAl
 				if (lbExecuted)
 					return;
 			}
-		}
+		} // if (gpSet->isSafeFarClose && !abForceTerminate && abAllowMacro)
 
-		if (abForceTerminate && GetActivePID() && !mn_InRecreate)
+		DWORD nActivePID;
+		if (abForceTerminate && !mn_InRecreate
+			&& ((nActivePID = GetActivePID()) != 0))
 		{
-			// Спросить, чего хотим:
-			// a) Нажать крестик в окне консоли
-			// b) кильнуть активный процесс
-			BOOL lbTerminateSucceeded = FALSE;
-			ConProcess* pPrc = NULL;
-			int nPrcCount = GetProcesses(&pPrc);
-			if ((nPrcCount > 0) && pPrc)
+			if (abConfirm)
 			{
-				DWORD nActivePID = GetActivePID();
-				// Пусть TerminateProcess зовет главный сервер (ConEmuC.exe),
-				// альтернативный может закрываться, или не отвечать...
-				DWORD dwServerPID = GetServerPID(true);
-				if (nActivePID && dwServerPID)
+				if (!TerminateActiveProcessConfirm(nActivePID))
 				{
-					wchar_t szActive[64] = {};
-					for (int i = 0; i < nPrcCount; i++)
-					{
-						if (pPrc[i].ProcessID == nActivePID)
-						{
-							lstrcpyn(szActive, pPrc[i].Name, countof(szActive));
-							break;
-						}
-					}
-					if (!*szActive)
-						wcscpy_c(szActive, L"<Not found>");
-
-					// Спросим
-					wchar_t szMsg[255];
-					_wsprintf(szMsg, SKIPLEN(countof(szMsg))
-						L"Kill active process '%s' PID=%u?",
-						szActive, nActivePID);
-					int nBtn = abConfirm ? 0 : IDOK;
-					if (abConfirm)
-					{
-						DontEnable de;
-						nBtn = MsgBox(szMsg, MB_ICONEXCLAMATION|MB_OKCANCEL, Title, gbMessagingStarted ? ghWnd : NULL, false);
-					}
-
-					if (nBtn == IDOK)
-					{
-						//Terminate
-						CESERVER_REQ *pIn = ExecuteNewCmd(CECMD_TERMINATEPID, sizeof(CESERVER_REQ_HDR)+2*sizeof(DWORD));
-						if (pIn)
-						{
-							pIn->dwData[0] = 1; // Count
-							pIn->dwData[1] = nActivePID;
-							DWORD dwTickStart = timeGetTime();
-
-							CESERVER_REQ *pOut = ExecuteSrvCmd(dwServerPID, pIn, ghWnd);
-
-							gpSetCls->debugLogCommand(pIn, FALSE, dwTickStart, timeGetTime()-dwTickStart, L"ExecuteSrvCmd", pOut);
-
-							if (pOut)
-							{
-								if (pOut->hdr.cbSize == sizeof(CESERVER_REQ_HDR) + 2*sizeof(DWORD))
-								{
-									// Сразу, чтобы не пытаться еще и крестик нажать
-									lbTerminateSucceeded = TRUE;
-									// Если ошибка - покажем
-									if (pOut->dwData[0] == FALSE)
-									{
-										_wsprintf(szMsg, SKIPLEN(countof(szMsg))
-											L"TerminateProcess(%u) failed, code=0x%08X",
-											nActivePID, pOut->dwData[1]);
-										MBox(szMsg);
-									}
-								}
-								ExecuteFreeResult(pOut);
-							}
-							ExecuteFreeResult(pIn);
-						}
-					}
-					else
-					{
-						return;
-					}
+					return;
 				}
 			}
-			if (pPrc)
-				free(pPrc);
-			if (lbTerminateSucceeded)
-				return;
+
+			// Doesn't matter, if we succeeded with termination,
+			// continue to close console *window* to finalize our pane
+			TerminateActiveProcess(false, nActivePID);
 		}
 
 		if (!lbCleared)
@@ -12793,9 +12723,10 @@ void CRealConsole::CloseTab()
 	}
 	else
 	{
+		bool bForceTerminate = false;
 		CEFarWindowType tabtype = fwt_Panels;
 		// Check, if we may send Macro to close Far (is it Far tab?) with Far macros
-		BOOL bCanCloseMacro = CanCloseTab(TRUE);
+		bool bCanCloseMacro = CanCloseTab(gpSet->isSafeFarClose);
 		if (bCanCloseMacro && !isAlive())
 		{
 			wchar_t szInfo[255];
@@ -12810,7 +12741,7 @@ void CRealConsole::CloseTab()
 				// Отмена
 				return;
 			case IDYES:
-				bCanCloseMacro = FALSE;
+				bCanCloseMacro = false;
 				break;
 			}
 
@@ -12856,17 +12787,8 @@ void CRealConsole::CloseTab()
 			}
 		}
 
-
-		if (bCanCloseMacro)
-		{
-			// Это для закрытия редакторов и прочая
-			PostMacro(gpSet->TabCloseMacro(fmv_Default), TRUE/*async*/);
-		}
-		else
-		{
-			//PostConsoleMessage(hConWnd, WM_CLOSE, 0, 0);
-			CloseConsole(false,false);
-		}
+		// Use common function to terminate console
+		CloseConsole(bForceTerminate, false);
 	}
 }
 
