@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2015 Maximus5
+Copyright (c) 2009-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -594,7 +594,7 @@ class CRealConsole
 		bool ChangeAffinityPriority(LPCWSTR asAffinity = NULL, LPCWSTR asPriority = NULL);
 		bool isCloseTabConfirmed(CEFarWindowType TabType, LPCWSTR asConfirmation, bool bForceAsk = false);
 		void CloseConfirmReset();
-		BOOL CanCloseTab(BOOL abPluginRequired = FALSE);
+		bool CanCloseTab(bool abPluginRequired = false);
 		void CloseTab();
 		bool isConsoleClosing();
 		bool isConsoleReady();

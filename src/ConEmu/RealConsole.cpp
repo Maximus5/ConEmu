@@ -12747,15 +12747,19 @@ void CRealConsole::CloseConsole(bool abForceTerminate, bool abConfirm, bool abAl
 	}
 }
 
-// Разрешено только в фаре
-BOOL CRealConsole::CanCloseTab(BOOL abPluginRequired /*= FALSE*/)
+// Check if tab (active console) may be closed with Macro?
+bool CRealConsole::CanCloseTab(bool abPluginRequired /*= false*/)
 {
+	// Far Manager plugin is required?
 	if (abPluginRequired)
 	{
-		if (!isFar(TRUE/* abPluginRequired */) /*&& !GuiWnd()*/)
-			return FALSE;
+		// No plugin -> no macro -> we can't close tab
+		if (!isFar(true/* abPluginRequired */))
+			return false;
 	}
-	return TRUE;
+
+	// Tab may be closed as usual (by closing real console window)
+	return true;
 }
 
 // для фара - Мягко (с подтверждением) закрыть текущий таб.
@@ -12790,7 +12794,7 @@ void CRealConsole::CloseTab()
 	else
 	{
 		CEFarWindowType tabtype = fwt_Panels;
-		// Проверить, можно ли послать макрос, чтобы закрыть таб (фар/не фар)?
+		// Check, if we may send Macro to close Far (is it Far tab?) with Far macros
 		BOOL bCanCloseMacro = CanCloseTab(TRUE);
 		if (bCanCloseMacro && !isAlive())
 		{
