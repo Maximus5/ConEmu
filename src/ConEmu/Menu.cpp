@@ -998,11 +998,11 @@ void CConEmuMenu::ExecPopupMenuCmd(TrackMenuPlace place, CVirtualConsole* apVCon
 
 		case IDM_TERMINATEPRC:
 			// Active console/pane: Terminate active process
-			apVCon->RCon()->CloseConsole(true, false);
+			apVCon->RCon()->TerminateActiveProcess(isPressed(VK_SHIFT), 0);
 			break;
 		case IDM_TERMINATEBUTSHELL:
 			// Active console/pane: Terminate all except root process
-			apVCon->RCon()->TerminateAllButShell(false);
+			apVCon->RCon()->TerminateAllButShell(isPressed(VK_SHIFT));
 			break;
 		case IDM_TERMINATECON:
 			// Active console/pane: Do normal close
