@@ -5015,11 +5015,11 @@ bool Settings::isRClickTouchInvert()
 	return gpConEmu->IsGesturesEnabled() && (isRClickSendKey == 2);
 }
 
-#define IsLuaMacroOk(psz,def) ((fmv != fmv_Lua) || (lstrcmpi(psz,def) != 0))
+#define IsLuaMacroOk(fmv,psz,def) ((fmv != fmv_Lua) || (lstrcmpi(psz,def) != 0))
 
 LPCWSTR Settings::RClickMacro(FarMacroVersion fmv)
 {
-	if (sRClickMacro && *sRClickMacro && IsLuaMacroOk(sRClickMacro,FarRClickMacroDefault2))
+	if (sRClickMacro && *sRClickMacro && IsLuaMacroOk(fmv, sRClickMacro, FarRClickMacroDefault2))
 		return sRClickMacro;
 	return RClickMacroDefault(fmv);
 }
@@ -5034,7 +5034,7 @@ LPCWSTR Settings::RClickMacroDefault(FarMacroVersion fmv)
 
 LPCWSTR Settings::SafeFarCloseMacro(FarMacroVersion fmv)
 {
-	if (sSafeFarCloseMacro && *sSafeFarCloseMacro && IsLuaMacroOk(sSafeFarCloseMacro,FarSafeCloseMacroDefault2))
+	if (sSafeFarCloseMacro && *sSafeFarCloseMacro && IsLuaMacroOk(fmv, sSafeFarCloseMacro, FarSafeCloseMacroDefault2))
 		return sSafeFarCloseMacro;
 	return SafeFarCloseMacroDefault(fmv);
 }
@@ -5049,7 +5049,7 @@ LPCWSTR Settings::SafeFarCloseMacroDefault(FarMacroVersion fmv)
 
 LPCWSTR Settings::TabCloseMacro(FarMacroVersion fmv)
 {
-	if (sTabCloseMacro && *sTabCloseMacro && IsLuaMacroOk(sTabCloseMacro,FarTabCloseMacroDefault2))
+	if (sTabCloseMacro && *sTabCloseMacro && IsLuaMacroOk(fmv, sTabCloseMacro, FarTabCloseMacroDefault2))
 		return sTabCloseMacro;
 	return TabCloseMacroDefault(fmv);
 }
@@ -5064,7 +5064,7 @@ LPCWSTR Settings::TabCloseMacroDefault(FarMacroVersion fmv)
 
 LPCWSTR Settings::SaveAllMacro(FarMacroVersion fmv)
 {
-	if (sSaveAllMacro && *sSaveAllMacro && IsLuaMacroOk(sSaveAllMacro,FarSaveAllMacroDefault2))
+	if (sSaveAllMacro && *sSaveAllMacro && IsLuaMacroOk(fmv, sSaveAllMacro, FarSaveAllMacroDefault2))
 		return sSaveAllMacro;
 	return SaveAllMacroDefault(fmv);
 }
