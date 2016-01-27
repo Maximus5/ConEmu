@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2012-2015 Maximus5
+Copyright (c) 2012-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -565,7 +565,7 @@ bool CConEmuCtrl::key_TerminateProcess(const ConEmuChord& VkState, bool TestOnly
 	if (TestOnly)
 		return true;
 
-	pRCon->CloseConsole(true, true);
+	pRCon->TerminateActiveProcess(true, 0);
 	return true;
 }
 

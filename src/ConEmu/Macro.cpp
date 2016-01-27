@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2011-2015 Maximus5
+Copyright (c) 2011-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -1504,11 +1504,17 @@ LPWSTR ConEmuMacro::Close(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 	switch (nCmd)
 	{
 	case 0: // close current console (0), without confirmation (0,1)
+		if (apRCon)
+		{
+			apRCon->CloseConsole(false, (nFlags & 1)==0);
+			pszResult = lstrdup(L"OK");
+		}
+		break;
 	case 1: // terminate active process (1), no confirm (1,1)
 		if (apRCon)
 		{
-			apRCon->CloseConsole(nCmd==1, (nFlags & 1)==0);
-			pszResult = lstrdup(L"OK");
+			bool bTerminated = apRCon->TerminateActiveProcess(((nFlags & 1) == 0), 0);
+			pszResult = lstrdup(bTerminated ? L"OK" : L"FAIL");
 		}
 		break;
 	case 2: // close ConEmu window (2), no confirm (2,1)
