@@ -481,8 +481,12 @@ bool CVConLine::ParseLine(bool abForce, uint anTextWidth, uint anFontWidth, uint
 
 		uint j2 = j+1;
 
+		int offset = 0; //DBCS offset
+
 		//TODO: DBCS cell number, it may differs from j
-		p->Init(j, j, this);
+		p->Init(j, j + offset, this);
+		if (isCharCJK(wc))
+			offset++;
 
 		// Process Far Dialogs to justify rectangles and frames
 		TextPartFlags dlgBorder = isDialogBorderCoord(j);

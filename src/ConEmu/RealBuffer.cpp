@@ -3644,7 +3644,7 @@ bool CRealBuffer::OnMouseSelection(UINT messg, WPARAM wParam, int x, int y)
 	bool bWasSelection = isSelectionPresent();
 
 	// Получить известные координаты символов
-	COORD crScreen = mp_RCon->mp_VCon->ClientToConsole(x,y);
+	COORD crScreen = mp_RCon->mp_VCon->ClientToConsole(x,y, true);
 	MinMax(crScreen.X, 0, TextWidth()-1);
 	MinMax(crScreen.Y, 0, TextHeight()-1);
 
@@ -5891,13 +5891,32 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 			COLORREF crBackColor = mp_RCon->mp_VCon->mp_Colors[nBackIdx];
 			int nX1, nX2;
 
-
+			wchar_t *pszData = NULL;
 			for (nY = rc.Top; nY <= rc.Bottom; nY++)
 			{
 				if (!lbStreamMode)
 				{
 					// Block mode
-					nX1 = rc.Left; nX2 = rc.Right;
+					int iStart = 0; //DBCS start index
+					int iEnd = 0;   //DBCS end index
+					pszData = pChar + nWidth*nY;
+					for (int X = 0; X < nWidth;) {
+						if (isCharCJK(*(pszData + iStart)))
+							X++;
+						if (X >= rc.Left)
+							break;
+						iStart++;
+						X++;
+					}
+					for (int X = 0; X < nWidth;) {
+						if (isCharCJK(*(pszData + iEnd)))
+							X++;
+						if (X >= rc.Right)
+							break;
+						iEnd++;
+						X++;
+					}
+					nX1 = iStart; nX2 = iEnd;
 				}
 				else
 				{
