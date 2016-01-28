@@ -29,6 +29,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define HIDE_USE_EXCEPTION_INFO
 #include "Header.h"
 #include "AboutDlg.h"
+#include "ConEmu.h"
 #include "DynDialog.h"
 #include "HotkeyDlg.h"
 #include "Options.h"
@@ -46,6 +47,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/execute.h"
 #include "../common/FarVersion.h"
 #include "../common/MSetter.h"
+#include "../common/MStrDup.h"
 #include "../common/StartupEnvDef.h"
 #include "../common/WFiles.h"
 #include "../common/WRegistry.h"
@@ -728,6 +730,24 @@ void CheckOptionsFast(LPCWSTR asTitle, SettingsLoadedFlags slfFlags)
 	{
 		// First ShowWindow forced to use nCmdShow. This may be weird...
 		SkipOneShowWindow();
+
+		if (gpSet->IsConfigNew && gpConEmu->opt.ExitAfterActionPrm.Exists)
+		{
+			CEStr lsMsg = lstrmerge(
+				L"Something is going wrong...\n\n"
+				L"Automatic action is pending, but settings weren't initialized!\n"
+				L"\n"
+				L"To avoid this problem without need to create\n"
+				L"settings file you may use \"-basic\" switch.\n"
+				L"\n"
+				L"Current command line:\n",
+				(LPCWSTR)gpConEmu->opt.cmdLine,
+				L"\n\n"
+				L"Do you want to continue anyway?");
+			int iBtn = FastMsgBox(lsMsg, MB_ICONEXCLAMATION|MB_YESNO, NULL, NULL);
+			if (iBtn == IDNO)
+				TerminateProcess(GetCurrentProcess(), CERR_FASTCONFIG_QUIT);
+		}
 
 		gp_DpiAware = new CDpiForDialog();
 		gp_FastHelp = new CEHelpPopup;
