@@ -41,8 +41,10 @@ MSetter::MSetter(LONG* st)
 	DEBUGTEST(ZeroStruct(DataPtr));
 	type = st_LONG;
 	mp_longVal = st;
-
-	if (mp_longVal) InterlockedIncrement(mp_longVal);
+	if (mp_longVal)
+	{
+		InterlockedIncrement(mp_longVal);
+	}
 }
 MSetter::MSetter(bool* st)
 {
@@ -74,12 +76,14 @@ void MSetter::Unlock()
 {
 	if (type==st_LONG)
 	{
-		if (mp_longVal) InterlockedDecrement(mp_longVal);
+		if (mp_longVal)
+			InterlockedDecrement(mp_longVal);
 		mp_longVal = NULL;
 	}
 	else if (type==st_bool)
 	{
-		if (mp_boolVal) *mp_boolVal = false;
+		if (mp_boolVal)
+			*mp_boolVal = mb_OldBoolValue;
 		mp_boolVal = NULL;
 	}
 	else if (type==st_DWORD)
