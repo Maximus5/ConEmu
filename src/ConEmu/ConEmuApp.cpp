@@ -101,7 +101,8 @@ BOOL gbNoDblBuffer = false;
 #else
 BOOL gbNoDblBuffer = false;
 #endif
-BOOL gbMessagingStarted = FALSE;
+
+bool gbMessagingStarted = false;
 
 
 #if defined(__CYGWIN__)
@@ -2493,7 +2494,7 @@ HICON CreateNullIcon()
 void MessageLoop()
 {
 	MSG Msg = {NULL};
-	gbMessagingStarted = TRUE;
+	gbMessagingStarted = true;
 
 	#ifdef _DEBUG
 	wchar_t szDbg[128];
@@ -2513,7 +2514,7 @@ void MessageLoop()
 			break;
 	}
 
-	gbMessagingStarted = FALSE;
+	gbMessagingStarted = false;
 }
 
 bool PtDiffTest(int x1, int y1, int x2, int y2, UINT maxDx, UINT maxDy)

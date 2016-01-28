@@ -59,7 +59,8 @@ extern HWND ghOpWnd;
 #ifdef _DEBUG
 extern HWND ghConWnd;
 #endif
-extern BOOL gbMessagingStarted;
+
+extern bool gbMessagingStarted;
 
 class DontEnable
 {
