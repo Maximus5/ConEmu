@@ -186,30 +186,27 @@ for /F %%l in (conemu_git_%ConEmuServerPID%_1.log) do call :calc "%%l"
 popd
 rem echo done ':calc', br='%gitbranch%', ad='%gitbranch_add%', ch='%gitbranch_chg%', dl='%gitbranch_del%'
 
+call %ConEmuGitPath% rev-parse --abbrev-ref HEAD 1>"%git_out%" 2>"%git_err%"
+if errorlevel 1 (
+  set gitbranch=
+) else (
+  set /P gitbranch=<"%git_out%"
+)
+
 del "%git_out%">nul
 del "%git_err%">nul
 
-if NOT "%gitbranch:~0,3%" == "## " (
-rem call "%~dp0cecho" "Not `## `?"
-echo [1;31;40m%~n0 failed to detect current branch, "## " expected but found:
-echo "%gitbranch%"[0m
-set gitbranch=
-goto prepare
-)
-
-rem "set" does not like brackets
-if "%gitbranch%" == "## HEAD (no branch)" (
-set gitbranch=## HEAD.no_branch
-) else (
-rem Drop external branch name (alpha...origin/alpha)
-call :drop_ext
+if NOT DEFINED gitbranch (
+  set "gitbranch=-unknown-"
+) else if "%gitbranch%" == "" (
+  set "gitbranch=-unknown-"
 )
 
 rem Are there changes? Or we need to display branch name only?
 if "%gitbranch_add% %gitbranch_chg% %gitbranch_del%" == "0 0 0" (
-  set "gitbranch= [%gitbranch:~3%]"
+  set "gitbranch= [%gitbranch%]"
 ) else (
-  set "gitbranch= [%gitbranch:~3% +%gitbranch_add% ~%gitbranch_chg% -%gitbranch_del%]"
+  set "gitbranch= [%gitbranch% +%gitbranch_add% ~%gitbranch_chg% -%gitbranch_del%]"
 )
 rem echo "%gitbranch%"
 
