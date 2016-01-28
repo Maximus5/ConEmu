@@ -45,6 +45,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/CEStr.h"
 #include "../common/execute.h"
 #include "../common/FarVersion.h"
+#include "../common/MSetter.h"
 #include "../common/StartupEnvDef.h"
 #include "../common/WFiles.h"
 #include "../common/WRegistry.h"
@@ -67,6 +68,15 @@ static CEStr szConEmuDrive;
 
 void Fast_FindStartupTask(SettingsLoadedFlags slfFlags);
 LPCWSTR Fast_GetStartupCommand(const CommandTasks*& pTask);
+
+// Special wrapper for FastConfiguration dialog,
+// we can't use here standard MsgBox, because messaging was not started yet.
+int FastMsgBox(LPCTSTR lpText, UINT uType, LPCTSTR lpCaption = NULL, HWND ahParent = (HWND)-1, bool abModal = true)
+{
+	MSetter lSet(&gbMessagingStarted);
+	int iBtn = MsgBox(lpText, uType, lpCaption, ahParent, abModal);
+	return iBtn;
+}
 
 static const ColorPalette* gp_DefaultPalette = NULL;
 static WNDPROC gpfn_DefaultColorBoxProc = NULL;
@@ -615,9 +625,7 @@ static INT_PTR CALLBACK CheckOptionsFastProc(HWND hDlg, UINT messg, WPARAM wPara
 	case WM_SYSCOMMAND:
 		if (wParam == SC_CLOSE)
 		{
-			BOOL b = gbMessagingStarted; gbMessagingStarted = TRUE;
-			int iQuitBtn = MsgBox(L"Close dialog and terminate ConEmu?", MB_ICONQUESTION|MB_YESNO, NULL, hDlg);
-			gbMessagingStarted = b;
+			int iQuitBtn = FastMsgBox(L"Close dialog and terminate ConEmu?", MB_ICONQUESTION|MB_YESNO, NULL, hDlg);
 			if (iQuitBtn == IDYES)
 				TerminateProcess(GetCurrentProcess(), CERR_FASTCONFIG_QUIT);
 			return TRUE;
