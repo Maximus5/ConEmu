@@ -56,7 +56,7 @@ class MSetter
 			struct
 			{
 				// st_DWORD
-				DWORD *mdw_DwordVal; DWORD mdw_OldDwordValue, mdw_NewDwordValue;
+				DWORD *mpdw_DwordVal; DWORD mdw_OldDwordValue;
 			};
 			DWORD DataPtr[4];
 		};

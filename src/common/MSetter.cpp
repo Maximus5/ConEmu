@@ -58,8 +58,13 @@ MSetter::MSetter(bool* st)
 MSetter::MSetter(DWORD* st, DWORD setValue)
 {
 	DEBUGTEST(ZeroStruct(DataPtr));
-	type = st_DWORD; mdw_OldDwordValue = *st; *st = setValue;
-	mdw_DwordVal = st;
+	type = st_DWORD;
+	mpdw_DwordVal = st;
+	if (mpdw_DwordVal)
+	{
+		mdw_OldDwordValue = *mpdw_DwordVal;
+		*mpdw_DwordVal = setValue;
+	}
 }
 MSetter::~MSetter()
 {
@@ -79,7 +84,8 @@ void MSetter::Unlock()
 	}
 	else if (type==st_DWORD)
 	{
-		if (mdw_DwordVal) *mdw_DwordVal = mdw_OldDwordValue;
-		mdw_DwordVal = NULL;
+		if (mpdw_DwordVal)
+			*mpdw_DwordVal = mdw_OldDwordValue;
+		mpdw_DwordVal = NULL;
 	}
 }
