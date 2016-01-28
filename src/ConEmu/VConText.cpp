@@ -486,7 +486,7 @@ bool CVConLine::ParseLine(bool abForce, uint anTextWidth, uint anFontWidth, uint
 		p->Init(j, j, this);
 
 		// Process Far Dialogs to justify rectangles and frames
-		TextPartFlags dlgBorder = isDialogBorderCoord(j);
+		TextPartFlags dlgBorder = j ? isDialogBorderCoord(j) : TRF_None;
 
 		/* *** Now we split our text line into parts with characters one "family" *** */
 
