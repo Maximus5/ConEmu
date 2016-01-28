@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2014 Maximus5
+Copyright (c) 2009-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -51,7 +51,7 @@ class MSetter
 			struct
 			{
 				// st_bool
-				bool *mp_boolVal;
+				bool *mp_boolVal; bool mb_OldBoolValue;
 			};
 			struct
 			{
