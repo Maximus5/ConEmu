@@ -2303,9 +2303,6 @@ BOOL UnpackInputRecord(const MSG64::MsgStr* piMsg, INPUT_RECORD* pRec);
 void TranslateKeyPress(WORD vkKey, DWORD dwControlState, wchar_t wch, int ScanCode, INPUT_RECORD* rDown, INPUT_RECORD* rUp);
 void CommonShutdown();
 
-typedef void(WINAPI* ShutdownConsole_t)();
-extern ShutdownConsole_t OnShutdownConsole;
-
 bool IsEnvBlockVariableValid(LPCWSTR asName, LPCWSTR& rszEqnSign);
 bool IsEnvBlockVariableValid(LPCWSTR asName);
 

@@ -82,9 +82,71 @@ typedef struct _CONSOLE_INFO
 } CONSOLE_INFO;
 
 #ifndef CONEMU_MINIMAL
-CONSOLE_INFO* gpConsoleInfoStr = NULL;
-HANDLE ghConsoleSection = NULL;
-const UINT gnConsoleSectionSize = sizeof(CONSOLE_INFO)+1024;
+// Do not use any heap functions in this object!
+// Its dtor called when heap is already deinitialized!
+struct ConsoleSectionHelper
+{
+	CONSOLE_INFO* pConsoleInfo;
+	HANDLE hSection;
+	const UINT ConsoleSectionSize = sizeof(CONSOLE_INFO)+1024;
+
+	ConsoleSectionHelper()
+		: pConsoleInfo(NULL)
+		, hSection(NULL)
+	{
+	};
+
+	CONSOLE_INFO* CreateConsoleData()
+	{
+		// Must not be used in Vista+, these OS have appropriate console API,
+		// hacking is required in Win2k and WinXP only!
+		_ASSERTE(!IsWinVerOrHigher(0x600));
+		// Must be statically initialized by compiler
+		_ASSERTE(ConsoleSectionSize == (sizeof(CONSOLE_INFO)+1024));
+		// Allocate buffer
+		if (!pConsoleInfo)
+		{
+			pConsoleInfo = (CONSOLE_INFO*)LocalAlloc(LPTR, sizeof(CONSOLE_INFO));
+			if (pConsoleInfo)
+			{
+				pConsoleInfo->Length = sizeof(CONSOLE_INFO);
+			}
+		}
+		return pConsoleInfo;
+	}
+
+	HANDLE CreateConsoleSection()
+	{
+		// Must not be used in Vista+, these OS have appropriate console API,
+		// hacking is required in Win2k and WinXP only!
+		_ASSERTE(!IsWinVerOrHigher(0x600));
+		// Must be statically initialized by compiler
+		_ASSERTE(ConsoleSectionSize == (sizeof(CONSOLE_INFO)+1024));
+		// Create memory object, if it was not created yet
+		if (!hSection)
+		{
+			hSection = CreateFileMapping(INVALID_HANDLE_VALUE, 0, PAGE_READWRITE, 0, ConsoleSectionSize, 0);
+		}
+		return hSection;
+	}
+
+	~ConsoleSectionHelper()
+	{
+		if (hSection)
+		{
+			CloseHandle(hSection);
+			hSection = NULL;
+		}
+
+		if (pConsoleInfo)
+		{
+			LocalFree(pConsoleInfo);
+			pConsoleInfo = NULL;
+		}
+	};
+};
+// gh-515 noted a crash, from OnShutdownConsole, so it was changed to ctor/dtor
+ConsoleSectionHelper gsMapHelper;
 #endif
 
 //#pragma pack(pop)
@@ -92,22 +154,6 @@ const UINT gnConsoleSectionSize = sizeof(CONSOLE_INFO)+1024;
 
 MY_CONSOLE_FONT_INFOEX g_LastSetConsoleFont = {};
 
-#ifndef CONEMU_MINIMAL
-void WINAPI ShutdownConsole()
-{
-	if (ghConsoleSection)
-	{
-		CloseHandle(ghConsoleSection);
-		ghConsoleSection = NULL;
-	}
-
-	if (gpConsoleInfoStr)
-	{
-		LocalFree(gpConsoleInfoStr);
-		gpConsoleInfoStr = NULL;
-	}
-}
-#endif
 
 
 //
@@ -137,7 +183,7 @@ BOOL SetConsoleInfo(HWND hwndConsole, CONSOLE_INFO *pci)
 	//	Retrieve the process which "owns" the console
 	//
 	dwCurProcId = GetCurrentProcessId();
-	
+
 	DEBUGTEST(DWORD dwConsoleThreadId =)
 	GetWindowThreadProcessId(hwndConsole, &dwConsoleOwnerPid);
 
@@ -170,26 +216,18 @@ BOOL SetConsoleInfo(HWND hwndConsole, CONSOLE_INFO *pci)
 	// this section into the owner process so we can write the contents
 	// of the CONSOLE_INFO buffer into it
 	//
-	if (!ghConsoleSection)
+	if (!gsMapHelper.CreateConsoleSection())
 	{
-		ghConsoleSection = CreateFileMapping(INVALID_HANDLE_VALUE, 0, PAGE_READWRITE, 0, gnConsoleSectionSize, 0);
-
-		if (!ghConsoleSection)
-		{
-			dwLastError = GetLastError();
-			_wsprintf(ErrText, SKIPLEN(countof(ErrText)) L"Can't CreateFileMapping(ghConsoleSection). ErrCode=%i", dwLastError);
-			MessageBox(NULL, ErrText, L"ConEmu", MB_OK|MB_ICONSTOP|MB_SETFOREGROUND);
-			return FALSE;
-		}
-
-		_ASSERTE(OnShutdownConsole==NULL || OnShutdownConsole==ShutdownConsole);
-		OnShutdownConsole = ShutdownConsole;
+		dwLastError = GetLastError();
+		_wsprintf(ErrText, SKIPLEN(countof(ErrText)) L"Can't CreateFileMapping(hSection). ErrCode=%i", dwLastError);
+		MessageBox(NULL, ErrText, L"ConEmu", MB_OK|MB_ICONSTOP|MB_SETFOREGROUND);
+		return FALSE;
 	}
 
 	//
 	//	Copy our console structure into the section-object
 	//
-	ptrView = MapViewOfFile(ghConsoleSection, FILE_MAP_WRITE|FILE_MAP_READ, 0, 0, gnConsoleSectionSize);
+	ptrView = MapViewOfFile(gsMapHelper.hSection, FILE_MAP_WRITE|FILE_MAP_READ, 0, 0, gsMapHelper.ConsoleSectionSize);
 
 	if (!ptrView)
 	{
@@ -220,7 +258,7 @@ BOOL SetConsoleInfo(HWND hwndConsole, CONSOLE_INFO *pci)
 
 		//  Send console window the "update" message
 		DEBUGTEST(LRESULT dwConInfoRc =)
-		SendMessage(hwndConsole, WM_SETCONSOLEINFO, (WPARAM)ghConsoleSection, 0);
+		SendMessage(hwndConsole, WM_SETCONSOLEINFO, (WPARAM)gsMapHelper.hSection, 0);
 
 		DEBUGTEST(DWORD dwConInfoErr = GetLastError());
 
@@ -532,7 +570,7 @@ BOOL apiFixFontSizeForBufferSize(HANDLE hOutput, COORD dwSize, char* pszUtfLog /
 		int nDbgFontX = crLargest.X ? (nMaxX / crLargest.X) : -1;
 		int nDbgFontY = crLargest.Y ? (nMaxY / crLargest.Y) : -1;
 		#endif
-		
+
 		int curSizeY, curSizeX, newSizeY, newSizeX, calcSizeY, calcSizeX;
 		wchar_t sFontName[LF_FACESIZE];
 		if (apiGetConsoleFontSize(hOutput, curSizeY, curSizeX, sFontName) && curSizeY && curSizeX)
@@ -606,7 +644,7 @@ void SetConsoleFontSizeTo(HWND inConWnd, int inSizeY, int inSizeX, const wchar_t
 		// We have Vista
 		apiSetConsoleFontSize(GetStdHandle(STD_OUTPUT_HANDLE), inSizeY, inSizeX, asFontName);
 	}
-	else 
+	else
 	{
 		// We have older NT (Win2k, WinXP)
 		// So... using undocumented hack
@@ -619,17 +657,10 @@ void SetConsoleFontSizeTo(HWND inConWnd, int inSizeY, int inSizeX, const wchar_t
 			0x000000ff, 0x00ff00ff,	0x0000ffff, 0x00ffffff
 		};
 
-		if (!gpConsoleInfoStr)
+		if (!gsMapHelper.CreateConsoleData())
 		{
-			gpConsoleInfoStr = (CONSOLE_INFO*)LocalAlloc(LPTR, sizeof(CONSOLE_INFO));
-
-			if (!gpConsoleInfoStr)
-			{
-				_ASSERTE(gpConsoleInfoStr!=NULL);
-				return; // memory allocation failed
-			}
-
-			gpConsoleInfoStr->Length = sizeof(CONSOLE_INFO);
+			_ASSERTE(gsMapHelper.pConsoleInfo!=NULL);
+			return; // memory allocation failed
 		}
 
 		if (!anTextColors)
@@ -644,27 +675,26 @@ void SetConsoleFontSizeTo(HWND inConWnd, int inSizeY, int inSizeX, const wchar_t
 		}
 
 		// get current size/position settings rather than using defaults..
-		GetConsoleSizeInfo(gpConsoleInfoStr);
+		GetConsoleSizeInfo(gsMapHelper.pConsoleInfo);
 		// set these to zero to keep current settings
-		gpConsoleInfoStr->FontSize.X				= inSizeX;
-		gpConsoleInfoStr->FontSize.Y				= inSizeY;
-		gpConsoleInfoStr->FontFamily				= 0;//0x30;//FF_MODERN|FIXED_PITCH;//0x30;
-		gpConsoleInfoStr->FontWeight				= 0;//0x400;
-		lstrcpynW(gpConsoleInfoStr->FaceName, asFontName ? asFontName : L"Lucida Console", countof(gpConsoleInfoStr->FaceName)); //-V303
-		gpConsoleInfoStr->CursorSize				= 25;
-		gpConsoleInfoStr->FullScreen				= FALSE;
-		gpConsoleInfoStr->QuickEdit					= FALSE;
-		//gpConsoleInfoStr->AutoPosition			= 0x10000;
-		gpConsoleInfoStr->AutoPosition				= FALSE;
+		gsMapHelper.pConsoleInfo->FontSize.X				= inSizeX;
+		gsMapHelper.pConsoleInfo->FontSize.Y				= inSizeY;
+		gsMapHelper.pConsoleInfo->FontFamily				= 0;//0x30;//FF_MODERN|FIXED_PITCH;//0x30;
+		gsMapHelper.pConsoleInfo->FontWeight				= 0;//0x400;
+		lstrcpynW(gsMapHelper.pConsoleInfo->FaceName, asFontName ? asFontName : L"Lucida Console", countof(gsMapHelper.pConsoleInfo->FaceName)); //-V303
+		gsMapHelper.pConsoleInfo->CursorSize				= 25;
+		gsMapHelper.pConsoleInfo->FullScreen				= FALSE;
+		gsMapHelper.pConsoleInfo->QuickEdit					= FALSE;
+		gsMapHelper.pConsoleInfo->AutoPosition				= FALSE; // 0x10000;
 		RECT rcCon; GetWindowRect(inConWnd, &rcCon);
-		gpConsoleInfoStr->WindowPosX = rcCon.left;
-		gpConsoleInfoStr->WindowPosY = rcCon.top;
-		gpConsoleInfoStr->InsertMode				= TRUE;
-		gpConsoleInfoStr->ScreenColors				= anTextColors; //MAKEWORD(0x7, 0x0);
-		gpConsoleInfoStr->PopupColors				= anPopupColors; //MAKEWORD(0x5, 0xf);
-		gpConsoleInfoStr->HistoryNoDup				= FALSE;
-		gpConsoleInfoStr->HistoryBufferSize			= 50;
-		gpConsoleInfoStr->NumberOfHistoryBuffers	= 32; //-V112
+		gsMapHelper.pConsoleInfo->WindowPosX = rcCon.left;
+		gsMapHelper.pConsoleInfo->WindowPosY = rcCon.top;
+		gsMapHelper.pConsoleInfo->InsertMode				= TRUE;
+		gsMapHelper.pConsoleInfo->ScreenColors				= anTextColors; //MAKEWORD(0x7, 0x0);
+		gsMapHelper.pConsoleInfo->PopupColors				= anPopupColors; //MAKEWORD(0x5, 0xf);
+		gsMapHelper.pConsoleInfo->HistoryNoDup				= FALSE;
+		gsMapHelper.pConsoleInfo->HistoryBufferSize			= 50;
+		gsMapHelper.pConsoleInfo->NumberOfHistoryBuffers	= 32; //-V112
 
 		// Issue 700: Default history buffers count too small.
 		HKEY hkConsole = NULL;
@@ -677,8 +707,8 @@ void SetConsoleFontSizeTo(HWND inConWnd, int inSizeY, int inSizeX, const wchar_t
 				DWORD nMin, nMax;
 				ULONG *pnVal;
 			} BufferValues[] = {
-				{L"HistoryBufferSize", 16, 999, &gpConsoleInfoStr->HistoryBufferSize},
-				{L"NumberOfHistoryBuffers", 16, 999, &gpConsoleInfoStr->NumberOfHistoryBuffers}
+				{L"HistoryBufferSize", 16, 999, &gsMapHelper.pConsoleInfo->HistoryBufferSize},
+				{L"NumberOfHistoryBuffers", 16, 999, &gsMapHelper.pConsoleInfo->NumberOfHistoryBuffers}
 			};
 			for (size_t i = 0; i < countof(BufferValues); ++i)
 			{
@@ -698,14 +728,14 @@ void SetConsoleFontSizeTo(HWND inConWnd, int inSizeY, int inSizeX, const wchar_t
 
 		// color table
 		for(size_t i = 0; i < 16; i++)
-			gpConsoleInfoStr->ColorTable[i] = DefaultColors[i];
+			gsMapHelper.pConsoleInfo->ColorTable[i] = DefaultColors[i];
 
-		gpConsoleInfoStr->CodePage					= GetConsoleOutputCP();//0;//0x352;
-		gpConsoleInfoStr->Hwnd						= inConWnd;
-		gpConsoleInfoStr->ConsoleTitle[0] = 0;
+		gsMapHelper.pConsoleInfo->CodePage					= GetConsoleOutputCP();//0;//0x352;
+		gsMapHelper.pConsoleInfo->Hwnd						= inConWnd;
+		gsMapHelper.pConsoleInfo->ConsoleTitle[0] = 0;
 
 		// Send data to console window
-		SetConsoleInfo(inConWnd, gpConsoleInfoStr);
+		SetConsoleInfo(inConWnd, gsMapHelper.pConsoleInfo);
 	}
 }
 #endif

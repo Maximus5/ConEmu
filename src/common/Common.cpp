@@ -359,18 +359,12 @@ extern HANDLE ghInMyAssertTrap;
 extern DWORD gnInMyAssertThread;
 #endif
 
-ShutdownConsole_t OnShutdownConsole = NULL;
 
 void CommonShutdown()
 {
 	gbInCommonShutdown = TRUE;
 
 	ShutdownSecurity();
-
-	// Clean memory
-	if (OnShutdownConsole)
-		OnShutdownConsole();
-
 
 #ifdef _DEBUG
 	MyAssertShutdown();
