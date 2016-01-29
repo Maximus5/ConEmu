@@ -527,16 +527,23 @@ public:
 	{
 		bool lbFound = false;
 
-		DEBUGTEST(DWORD nErr = 0);
+		#if defined(_DEBUG)
+		DWORD nErr = 0, nErr1 = (DWORD)-1, nErr2 = (DWORD)-1, nErr3 = (DWORD)-1;
+		#endif
+
 		HANDLE h = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, anPID);
 		if (h == NULL)
 		{
-			DEBUGTEST(nErr = GetLastError());
+			#if defined(_DEBUG)
+			nErr = nErr1 = GetLastError();
+			#endif
 
 			h = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, anPID);
 			if (h == NULL)
 			{
-				DEBUGTEST(nErr = GetLastError());
+				#if defined(_DEBUG)
+				nErr = nErr2 = GetLastError();
+				#endif
 
 				// Last chance for Vista+
 				// May be we can get full path by this handle, but IsWow64Process would be successful
@@ -544,6 +551,11 @@ public:
 				{
 					// PROCESS_QUERY_LIMITED_INFORMATION not defined in GCC
 					h = OpenProcess(0x1000/*PROCESS_QUERY_LIMITED_INFORMATION*/, FALSE, anPID);
+
+					#ifdef _DEBUG
+					if (h == NULL)
+						nErr = nErr3 = GetLastError();
+					#endif
 				}
 			}
 		}
@@ -551,7 +563,6 @@ public:
 		#ifdef _DEBUG
 		if (h == NULL)
 		{
-			nErr = GetLastError();
 			// Most usually this will be "Access denied", check others?
 			_ASSERTE(nErr == ERROR_ACCESS_DENIED);
 		}
