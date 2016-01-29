@@ -1424,12 +1424,20 @@ public:
 		}
 	}
 
-	virtual bool Commit()
+	virtual bool Commit(int anMaxTasks = -1)
 	{
 		if (Installed.size() <= 0)
 			return false;
 
 		bool bCreated = false;
+
+		if ((anMaxTasks > 0) && (Installed.size() > anMaxTasks))
+		{
+			for (INT_PTR j = Installed.size()-1; j >= anMaxTasks; j--)
+			{
+				Installed.erase(j);
+			}
+		}
 
 		// All task names MUST be unique
 		MakeUnique();
