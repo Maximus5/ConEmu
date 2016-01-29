@@ -1946,8 +1946,8 @@ void CreateDefaultTasks(SettingsLoadedFlags slfFlags)
 	+ VCTasks
 	*/
 
-	CEStr szFound, szOptFull;
-	wchar_t *pszFull; bool bNeedQuot = false;
+	CEStr szFound, szOptFull, szFull;
+	bool bNeedQuot = false;
 
 	// Far Manager
 	CreateFarTasks();
@@ -2066,13 +2066,12 @@ void CreateDefaultTasks(SettingsLoadedFlags slfFlags)
 	// Chocolatey gallery
 	//-- Placing ANSI in Task commands will be too long and unfriendly
 	//-- Also, automatic run of Chocolatey installation may harm user environment in some cases
-	pszFull = ExpandEnvStr(L"%ConEmuBaseDir%\\Addons\\ChocolateyAbout.cmd");
-	if (pszFull && FileExists(pszFull))
+	szFull = ExpandEnvStr(L"%ConEmuBaseDir%\\Addons\\ChocolateyAbout.cmd");
+	if (szFull && FileExists(szFull))
 	{
 		// Don't use 'App.Add' here, we are creating "cmd.exe" tasks directly
 		CreateDefaultTask(L"Scripts::Chocolatey (Admin)", L"", L"*cmd.exe /k Title Chocolatey & \"%ConEmuBaseDir%\\Addons\\ChocolateyAbout.cmd\"");
 	}
-	SafeFree(pszFull);
 
 	// Windows SDK: HKLM\SOFTWARE\Microsoft\Microsoft SDKs\Windows
 	RegEnumKeys(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\Microsoft SDKs\\Windows", CreateWinSdkTasks, 0);
