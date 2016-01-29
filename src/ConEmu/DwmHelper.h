@@ -100,7 +100,6 @@ public:
 	HRESULT DwmSetIconicLivePreviewBitmap(HWND hwnd, HBITMAP hbmp, POINT *pptClient);
 	HRESULT DwmInvalidateIconicBitmaps(HWND hwnd);
 private:
-	//OSVERSIONINFO m_OSVer;
 	// Vista+
 	HMODULE mh_User32;
 	typedef BOOL (WINAPI* ChangeWindowMessageFilter_t)(UINT message, DWORD dwFlag);
