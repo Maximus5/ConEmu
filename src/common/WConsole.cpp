@@ -709,26 +709,7 @@ void SetConsoleFontSizeTo(HWND inConWnd, int inSizeY, int inSizeX, const wchar_t
 	}
 }
 #endif
-/*
--- пробовал в Win7 это не работает
-void SetConsoleBufferSize(HWND inConWnd, int anWidth, int anHeight, int anBufferHeight)
-{
-	if (!gpConsoleInfoStr) {
-		_ASSERTE(gpConsoleInfoStr!=NULL);
-		return; // memory allocation failed
-	}
 
-	TODO("Заполнить и другие текущие значения!");
-	gpConsoleInfoStr->CodePage					= GetConsoleOutputCP();//0;//0x352;
-
-	// Теперь собственно, что хотим поменять
-	gpConsoleInfoStr->ScreenBufferSize.X = gpConsoleInfoStr->WindowSize.X = anWidth;
-	gpConsoleInfoStr->WindowSize.Y = anHeight;
-	gpConsoleInfoStr->ScreenBufferSize.Y = anBufferHeight;
-
-	SetConsoleInfo(inConWnd, gpConsoleInfoStr);
-}
-*/
 
 static bool gbPauseConsoleWasRequested = false;
 
