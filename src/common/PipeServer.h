@@ -1189,7 +1189,7 @@ struct PipeServer
 			_ASSERTEX(pPipe->hThread == NULL);
 			//_ASSERTEX(pPipe->hThreadEnd == NULL);
 
-			_ASSERTEX((DWORD_PTR)(pPipe - m_Pipes) < mn_MaxCount);
+			_ASSERTEX(((DWORD_PTR)(pPipe - m_Pipes) < (DWORD_PTR)mn_MaxCount) && (mn_MaxCount > 0));
 			pPipe->nIndex = LODWORD(pPipe - m_Pipes);
 			pPipe->nMagic = PipeInstMagic;
 
