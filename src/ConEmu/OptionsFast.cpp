@@ -67,9 +67,11 @@ static int gn_FirstFarTask = -1;
 static ConEmuHotKey ghk_MinMaxKey = {};
 static int iCreatIdx = 0;
 static CEStr szConEmuDrive;
+static SettingsLoadedFlags sAppendMode = slf_None;
 
-void Fast_FindStartupTask(SettingsLoadedFlags slfFlags);
-LPCWSTR Fast_GetStartupCommand(const CommandTasks*& pTask);
+/* **************************************** */
+/*             Helper functions             */
+/* **************************************** */
 
 // Special wrapper for FastConfiguration dialog,
 // we can't use here standard MsgBox, because messaging was not started yet.
@@ -79,6 +81,92 @@ int FastMsgBox(LPCTSTR lpText, UINT uType, LPCTSTR lpCaption = NULL, HWND ahPare
 	int iBtn = MsgBox(lpText, uType, lpCaption, ahParent, abModal);
 	return iBtn;
 }
+
+void Fast_FindStartupTask(SettingsLoadedFlags slfFlags)
+{
+	const CommandTasks* pTask = NULL;
+
+	// The idea is if user runs "ConEmu.exe -cmd {cmd}"
+	// and this is new config - we must set {cmd} as default task
+	// Same here with plain commands, at least show them in FastConfig dlg,
+	// don't store in settings if command was passed with "-cmdlist ..."
+
+	bool bIsCmdList = false;
+	LPCWSTR pszCmdLine = gpConEmu->GetCurCmd(&bIsCmdList);
+	if (pszCmdLine)
+	{
+		wchar_t cType = bIsCmdList ? CmdFilePrefix /*just for simplicity*/
+			: gpConEmu->IsConsoleBatchOrTask(pszCmdLine);
+		if (cType == TaskBracketLeft)
+		{
+			pTask = gpSet->CmdTaskGetByName(pszCmdLine);
+		}
+		else if (!cType)
+		{
+			// Don't set default task, use exact command specified by user
+			if ((gpSet->nStartType == 0) && !gpSet->psStartSingleApp)
+			{
+				gpSet->psStartSingleApp = lstrdup(pszCmdLine);
+			}
+			return;
+		}
+	}
+
+	if (!pTask && (gn_FirstFarTask != -1))
+	{
+		pTask = gpSet->CmdTaskGet(gn_FirstFarTask);
+	}
+
+	LPCWSTR DefaultNames[] = {
+		//L"Far", -- no need to find "Far" it must be processed already with gn_FirstFarTask
+		L"{TCC}",
+		L"{NYAOS}",
+		L"{cmd}",
+		NULL
+	};
+
+	for (INT_PTR i = 0; !pTask && DefaultNames[i]; i++)
+	{
+		pTask = gpSet->CmdTaskGetByName(DefaultNames[i]);
+	}
+
+	if (pTask)
+	{
+		gpSet->nStartType = 2;
+		SafeFree(gpSet->psStartTasksName);
+		gpSet->psStartTasksName = lstrdup(pTask->pszName);
+	}
+}
+
+LPCWSTR Fast_GetStartupCommand(const CommandTasks*& pTask)
+{
+	pTask = NULL;
+	// Show startup task or shell command line
+	LPCWSTR pszStartup = (gpSet->nStartType == 2) ? gpSet->psStartTasksName : (gpSet->nStartType == 0) ? gpSet->psStartSingleApp : NULL;
+	// Check if that task exists
+	if ((gpSet->nStartType == 2) && pszStartup)
+	{
+		pTask = gpSet->CmdTaskGetByName(gpSet->psStartTasksName);
+		if (pTask && pTask->pszName && (lstrcmp(pTask->pszName, pszStartup) != 0))
+		{
+			// Return pTask name because it may not match exactly with gpSet->psStartTasksName
+			// because CmdTaskGetByName uses some fuzzy logic to find tasks
+			pszStartup = pTask->pszName;
+		}
+		else if (!pTask)
+		{
+			pszStartup = NULL;
+		}
+	}
+	return pszStartup;
+}
+
+
+
+
+/* **************************************** */
+/*        Fast Configuration Dialog         */
+/* **************************************** */
 
 static const ColorPalette* gp_DefaultPalette = NULL;
 static WNDPROC gpfn_DefaultColorBoxProc = NULL;
@@ -138,6 +226,8 @@ static LRESULT CALLBACK Fast_ColorBoxProc(HWND hwnd, UINT uMsg, WPARAM wParam, L
 wrap:
 	return lRc;
 }
+
+
 
 static INT_PTR Fast_OnInitDialog(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam)
 {
@@ -646,6 +736,11 @@ static INT_PTR CALLBACK CheckOptionsFastProc(HWND hDlg, UINT messg, WPARAM wPara
 }
 
 
+
+/* **************************************** */
+/*    Main Entry for Fast Config routine    */
+/* **************************************** */
+
 void CheckOptionsFast(LPCWSTR asTitle, SettingsLoadedFlags slfFlags)
 {
 	bool bFastSetupDisabled = false;
@@ -768,8 +863,6 @@ void CheckOptionsFast(LPCWSTR asTitle, SettingsLoadedFlags slfFlags)
 /* **************************************** */
 /*         Creating default tasks           */
 /* **************************************** */
-
-static SettingsLoadedFlags sAppendMode = slf_None;
 
 static void CreateDefaultTask(LPCWSTR asName, LPCWSTR asGuiArg, LPCWSTR asCommands, CETASKFLAGS aFlags = CETF_DONT_CHANGE)
 {
@@ -915,94 +1008,6 @@ static bool FindOnDrives(LPCWSTR asFirstDrive, LPCWSTR asSearchPath, CEStr& rsFo
 wrap:
 	SafeFree(pszExpanded);
 	return bFound;
-}
-
-// Windows SDK
-static bool WINAPI CreateWinSdkTasks(HKEY hkVer, LPCWSTR pszVer, LPARAM lParam)
-{
-	CEStr pszVerPath;
-
-	if (RegGetStringValue(hkVer, NULL, L"InstallationFolder", pszVerPath) > 0)
-	{
-		CEStr szCmd(JoinPath(pszVerPath, L"Bin\\SetEnv.Cmd"));
-		if (szCmd && FileExists(szCmd))
-		{
-			CEStr szIcon(JoinPath(pszVerPath, L"Setup\\setup.ico"));
-			CEStr szArgs(lstrmerge(L"-new_console:t:\"WinSDK ", pszVer, L"\":C:\"", szIcon, L"\""));
-			CEStr szFull(lstrmerge(L"cmd /V /K ", szArgs, L" \"", szCmd, L"\""));
-			// Create task
-			if (szFull)
-			{
-				CEStr szName(lstrmerge(L"SDK::WinSDK ", pszVer));
-				if (szName)
-				{
-					CreateDefaultTask(szName, L"", szFull);
-				}
-			}
-		}
-	}
-
-	return true; // continue reg enum
-}
-
-// Visual Studio C++
-static bool WINAPI CreateVCTasks(HKEY hkVer, LPCWSTR pszVer, LPARAM lParam)
-{
-	//[HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\VisualStudio\11.0\Setup\VC]
-	//"ProductDir"="C:\\Program Files (x86)\\Microsoft Visual Studio 11.0\\VC\\"
-	//[HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\VisualStudio\12.0\Setup\VC]
-	//"ProductDir"="C:\\Program Files (x86)\\Microsoft Visual Studio 12.0\\VC\\"
-	// %comspec% /k ""C:\Program Files (x86)\Microsoft Visual Studio 11.0\VC\vcvarsall.bat"" x86
-
-	CEStr pszDir;
-	if (wcschr(pszVer, L'.'))
-	{
-		int iVer = wcstol(pszVer, NULL, 10);
-
-		if (RegGetStringValue(hkVer, L"Setup\\VC", L"ProductDir", pszDir) > 0)
-		{
-			CEStr pszVcVarsBat = JoinPath(pszDir, L"vcvarsall.bat");
-			if (FileExists(pszVcVarsBat))
-			{
-				CEStr pszName = lstrmerge(L"SDK::VS ", pszVer, L" x86 tools prompt");
-				CEStr pszFull = lstrmerge(L"cmd /k \"\"", pszVcVarsBat, L"\"\" x86 -new_console:t:\"VS ", pszVer, L"\"");
-
-				CEStr lsIcon; LPCWSTR pszIconSource = NULL;
-				LPCWSTR pszIconSources[] = {
-					L"%CommonProgramFiles(x86)%\\microsoft shared\\MSEnv\\VSFileHandler.dll",
-					L"%CommonProgramFiles%\\microsoft shared\\MSEnv\\VSFileHandler.dll",
-					NULL};
-				for (int i = 0; pszIconSources[i]; i++)
-				{
-					if (lsIcon.Attach(ExpandEnvStr(pszIconSources[i]))
-						&& FileExists(lsIcon))
-					{
-						pszIconSource = pszIconSources[i];
-						break;
-					}
-				}
-
-				if (iVer && pszIconSource)
-				{
-					LPCWSTR pszIconSfx;
-					switch (iVer)
-					{
-					case 14: pszIconSfx = L",33\""; break;
-					case 12: pszIconSfx = L",28\""; break;
-					case 11: pszIconSfx = L",23\""; break;
-					case 10: pszIconSfx = L",16\""; break;
-					case 9:  pszIconSfx = L",10\""; break;
-					default: pszIconSfx = L"\"";
-					}
-					lstrmerge(&pszFull.ms_Val, L" -new_console:C:\"", pszIconSource, pszIconSfx);
-				}
-
-				CreateDefaultTask(pszName, L"", pszFull);
-			}
-		}
-	}
-
-	return true; // continue reg enum
 }
 
 class CVarDefs
@@ -1718,7 +1723,7 @@ public:
 	~FarVerList() {};
 };
 
-void CreateFarTasks()
+static void CreateFarTasks()
 {
 	FarVerList Vers;
 	Vers.FindInstalledVersions();
@@ -1762,7 +1767,7 @@ void CreateFarTasks()
 	Vers.Installed.clear();
 }
 
-void CreateTccTasks()
+static void CreateTccTasks()
 {
 	ConEmuComspec tcc = {}; tcc.csType = cst_AutoTccCmd;
 	FindComspec(&tcc, false/*bCmdAlso*/);
@@ -1802,6 +1807,95 @@ void CreateTccTasks()
 	}
 }
 
+// Windows SDK
+static bool WINAPI CreateWinSdkTasks(HKEY hkVer, LPCWSTR pszVer, LPARAM lParam)
+{
+	CEStr pszVerPath;
+
+	if (RegGetStringValue(hkVer, NULL, L"InstallationFolder", pszVerPath) > 0)
+	{
+		CEStr szCmd(JoinPath(pszVerPath, L"Bin\\SetEnv.Cmd"));
+		if (szCmd && FileExists(szCmd))
+		{
+			CEStr szIcon(JoinPath(pszVerPath, L"Setup\\setup.ico"));
+			CEStr szArgs(lstrmerge(L"-new_console:t:\"WinSDK ", pszVer, L"\":C:\"", szIcon, L"\""));
+			CEStr szFull(lstrmerge(L"cmd /V /K ", szArgs, L" \"", szCmd, L"\""));
+			// Create task
+			if (szFull)
+			{
+				CEStr szName(lstrmerge(L"SDK::WinSDK ", pszVer));
+				if (szName)
+				{
+					CreateDefaultTask(szName, L"", szFull);
+				}
+			}
+		}
+	}
+
+	return true; // continue reg enum
+}
+
+// Visual Studio C++
+static bool WINAPI CreateVCTasks(HKEY hkVer, LPCWSTR pszVer, LPARAM lParam)
+{
+	//[HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\VisualStudio\11.0\Setup\VC]
+	//"ProductDir"="C:\\Program Files (x86)\\Microsoft Visual Studio 11.0\\VC\\"
+	//[HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\VisualStudio\12.0\Setup\VC]
+	//"ProductDir"="C:\\Program Files (x86)\\Microsoft Visual Studio 12.0\\VC\\"
+	// %comspec% /k ""C:\Program Files (x86)\Microsoft Visual Studio 11.0\VC\vcvarsall.bat"" x86
+
+	CEStr pszDir;
+	if (wcschr(pszVer, L'.'))
+	{
+		int iVer = wcstol(pszVer, NULL, 10);
+
+		if (RegGetStringValue(hkVer, L"Setup\\VC", L"ProductDir", pszDir) > 0)
+		{
+			CEStr pszVcVarsBat = JoinPath(pszDir, L"vcvarsall.bat");
+			if (FileExists(pszVcVarsBat))
+			{
+				CEStr pszName = lstrmerge(L"SDK::VS ", pszVer, L" x86 tools prompt");
+				CEStr pszFull = lstrmerge(L"cmd /k \"\"", pszVcVarsBat, L"\"\" x86 -new_console:t:\"VS ", pszVer, L"\"");
+
+				CEStr lsIcon; LPCWSTR pszIconSource = NULL;
+				LPCWSTR pszIconSources[] = {
+					L"%CommonProgramFiles(x86)%\\microsoft shared\\MSEnv\\VSFileHandler.dll",
+					L"%CommonProgramFiles%\\microsoft shared\\MSEnv\\VSFileHandler.dll",
+					NULL};
+				for (int i = 0; pszIconSources[i]; i++)
+				{
+					if (lsIcon.Attach(ExpandEnvStr(pszIconSources[i]))
+						&& FileExists(lsIcon))
+					{
+						pszIconSource = pszIconSources[i];
+						break;
+					}
+				}
+
+				if (iVer && pszIconSource)
+				{
+					LPCWSTR pszIconSfx;
+					switch (iVer)
+					{
+					case 14: pszIconSfx = L",33\""; break;
+					case 12: pszIconSfx = L",28\""; break;
+					case 11: pszIconSfx = L",23\""; break;
+					case 10: pszIconSfx = L",16\""; break;
+					case 9:  pszIconSfx = L",10\""; break;
+					default: pszIconSfx = L"\"";
+					}
+					lstrmerge(&pszFull.ms_Val, L" -new_console:C:\"", pszIconSource, pszIconSfx);
+				}
+
+				CreateDefaultTask(pszName, L"", pszFull);
+			}
+		}
+	}
+
+	return true; // continue reg enum
+}
+
+// *Create new* or *add absent* default tasks
 void CreateDefaultTasks(SettingsLoadedFlags slfFlags)
 {
 	iCreatIdx = 0;
@@ -1837,14 +1931,19 @@ void CreateDefaultTasks(SettingsLoadedFlags slfFlags)
 	szConEmuDrive.Set(szTemp);
 
 	/*
-		Far Manager
-		cmd.exe
-		powershell.exe
-		MinGW/GIT/CygWin bash (and GOW?)
-		C:\cygwin\bin\bash.exe --login -i
-		TCC/LE
-		Visual C++ environment (2008/2010/2012) x86 platform
-		PuTTY?
+	+ Far Manager
+	+ TCC/LE (Take Command)
+	+ NYAOS
+	? NYAGOS
+	+ cmd/Admin/x64 (/k CmdInit.cmd)
+	? cmd+git (have to define/reload default %ConEmuGitPath%)
+	+ PowerShell/Admin
+	+ MinGW/GIT/CygWin bash (and GOW?)
+	+ PuTTY
+	+ Show ANSI colors
+	+ ChocolateyAbout.cmd
+	+ WinSdkTasks
+	+ VCTasks
 	*/
 
 	CEStr szFound, szOptFull;
@@ -1988,83 +2087,4 @@ void CreateDefaultTasks(SettingsLoadedFlags slfFlags)
 	{
 		Fast_FindStartupTask(slfFlags);
 	}
-}
-
-void Fast_FindStartupTask(SettingsLoadedFlags slfFlags)
-{
-	const CommandTasks* pTask = NULL;
-
-	// The idea is if user runs "ConEmu.exe -cmd {cmd}"
-	// and this is new config - we must set {cmd} as default task
-	// Same here with plain commands, at least show them in FastConfig dlg,
-	// don't store in settings if command was passed with "-cmdlist ..."
-
-	bool bIsCmdList = false;
-	LPCWSTR pszCmdLine = gpConEmu->GetCurCmd(&bIsCmdList);
-	if (pszCmdLine)
-	{
-		wchar_t cType = bIsCmdList ? CmdFilePrefix /*just for simplicity*/
-			: gpConEmu->IsConsoleBatchOrTask(pszCmdLine);
-		if (cType == TaskBracketLeft)
-		{
-			pTask = gpSet->CmdTaskGetByName(pszCmdLine);
-		}
-		else if (!cType)
-		{
-			// Don't set default task, use exact command specified by user
-			if ((gpSet->nStartType == 0) && !gpSet->psStartSingleApp)
-			{
-				gpSet->psStartSingleApp = lstrdup(pszCmdLine);
-			}
-			return;
-		}
-	}
-
-	if (!pTask && (gn_FirstFarTask != -1))
-	{
-		pTask = gpSet->CmdTaskGet(gn_FirstFarTask);
-	}
-
-	LPCWSTR DefaultNames[] = {
-		//L"Far", -- no need to find "Far" it must be processed already with gn_FirstFarTask
-		L"{TCC}",
-		L"{NYAOS}",
-		L"{cmd}",
-		NULL
-	};
-
-	for (INT_PTR i = 0; !pTask && DefaultNames[i]; i++)
-	{
-		pTask = gpSet->CmdTaskGetByName(DefaultNames[i]);
-	}
-
-	if (pTask)
-	{
-		gpSet->nStartType = 2;
-		SafeFree(gpSet->psStartTasksName);
-		gpSet->psStartTasksName = lstrdup(pTask->pszName);
-	}
-}
-
-LPCWSTR Fast_GetStartupCommand(const CommandTasks*& pTask)
-{
-	pTask = NULL;
-	// Show startup task or shell command line
-	LPCWSTR pszStartup = (gpSet->nStartType == 2) ? gpSet->psStartTasksName : (gpSet->nStartType == 0) ? gpSet->psStartSingleApp : NULL;
-	// Check if that task exists
-	if ((gpSet->nStartType == 2) && pszStartup)
-	{
-		pTask = gpSet->CmdTaskGetByName(gpSet->psStartTasksName);
-		if (pTask && pTask->pszName && (lstrcmp(pTask->pszName, pszStartup) != 0))
-		{
-			// Return pTask name because it may not match exactly with gpSet->psStartTasksName
-			// because CmdTaskGetByName uses some fuzzy logic to find tasks
-			pszStartup = pTask->pszName;
-		}
-		else if (!pTask)
-		{
-			pszStartup = NULL;
-		}
-	}
-	return pszStartup;
 }
