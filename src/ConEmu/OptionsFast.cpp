@@ -1903,6 +1903,33 @@ static bool WINAPI CreateVCTasks(HKEY hkVer, LPCWSTR pszVer, LPARAM lParam)
 	return true; // continue reg enum
 }
 
+// Docker Toolbox
+static void CreateDockerTask()
+{
+	CEStr szFull = ExpandEnvStr(L"%DOCKER_TOOLBOX_INSTALL_PATH%\\docker.exe");
+	if (szFull && FileExists(szFull))
+	{
+		AppFoundList App;
+		App.Add(L"Tools::Docker",
+			L"-l -i \"%DOCKER_TOOLBOX_INSTALL_PATH%\\start.sh\" -new_console:t:\"Docker\"", NULL,
+			// There is a special icon file
+			// "%DOCKER_TOOLBOX_INSTALL_PATH%\\docker-quickstart-terminal.ico"
+			// but it's displayed badly in our tabs at the moment
+			L"/dir \"%DOCKER_TOOLBOX_INSTALL_PATH%\" /icon \"%DOCKER_TOOLBOX_INSTALL_PATH%\\docker.exe\"",
+			L"bash.exe",
+			L"[SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Git_is1:InstallLocation]\\usr\\bin\\bash.exe",
+			L"%ProgramFiles%\\Git\\usr\\bin\\bash.exe", L"%ProgramW6432%\\Git\\usr\\bin\\bash.exe",
+			#ifdef _WIN64
+			L"%ProgramFiles(x86)%\\Git\\usr\\bin\\bash.exe",
+			#endif
+			L"[SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\MSYS2 64bit:InstallLocation]\\usr\\bin\\bash.exe",
+			L"[SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\MSYS2 32bit:InstallLocation]\\usr\\bin\\bash.exe",
+			L"[SOFTWARE\\Cygwin\\setup:rootdir]\\bin\\bash.exe",
+			NULL);
+		App.Commit(1);
+	}
+}
+
 // *Create new* or *add absent* default tasks
 void CreateDefaultTasks(SettingsLoadedFlags slfFlags)
 {
@@ -1952,6 +1979,7 @@ void CreateDefaultTasks(SettingsLoadedFlags slfFlags)
 	+ ChocolateyAbout.cmd
 	+ WinSdkTasks
 	+ VCTasks
+	+ Tools::Docker
 	*/
 
 	CEStr szFound, szOptFull, szFull;
@@ -2086,6 +2114,9 @@ void CreateDefaultTasks(SettingsLoadedFlags slfFlags)
 
 	// Visual Studio prompt: HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\VisualStudio
 	RegEnumKeys(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\VisualStudio", CreateVCTasks, 0);
+
+	// Docker Toolbox
+	CreateDockerTask();
 
 	SafeFree(szConEmuDrive.ms_Val);
 
