@@ -172,7 +172,7 @@ void CDefaultTerminal::StartGuiDefTerm(bool bManual, bool bNoThreading /*= false
 	if (!bManual)
 	{
 		// Refresh settings in the registry
-		_ASSERTE(gpConEmu->mn_StartupFinished == gpConEmu->ss_PostCreate2Called);
+		_ASSERTE(gpConEmu->mn_StartupFinished == gpConEmu->ss_VConAreCreated);
 		ApplyAndSave(true, true);
 	}
 
