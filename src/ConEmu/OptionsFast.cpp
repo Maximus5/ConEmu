@@ -1936,8 +1936,15 @@ static void CreateChocolateyTask()
 static void CreateNyagosTask()
 {
 	AppFoundList App;
+
+	// NYAOS
 	App.Add(L"Shells::NYAOS", NULL, NULL, NULL, L"nyaos.exe", NULL);
-	App.Add(L"NYAOS (Admin)", L" -new_console:a", NULL, NULL, L"nyaos.exe", NULL);
+	App.Add(L"Shells::NYAOS (Admin)", L" -new_console:a", NULL, NULL, L"nyaos.exe", NULL);
+
+	// NYAGOS
+	App.Add(L"Shells::NYAGOS", NULL, NULL, NULL, L"nyagos.exe", NULL);
+	App.Add(L"Shells::NYAGOS (Admin)", L" -new_console:a", NULL, NULL, L"nyagos.exe", NULL);
+
 	App.Commit();
 }
 
