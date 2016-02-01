@@ -3095,7 +3095,7 @@ void Settings::SaveSizeSettings(SettingsBase* reg)
 {
 	DWORD saveMode = (isUseCurrentSizePos == false) ? _WindowMode // save what user's specified explicitly
 		: ((ghWnd == NULL)  // otherwise - save current state
-			? gpConEmu->WindowMode
+			? gpConEmu->GetWindowMode()
 			: (gpConEmu->isFullScreen() ? rFullScreen : gpConEmu->isZoomed() ? rMaximized : rNormal));
 
 	reg->Save(L"UseCurrentSizePos", isUseCurrentSizePos);

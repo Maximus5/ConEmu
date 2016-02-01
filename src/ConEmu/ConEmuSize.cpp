@@ -4745,7 +4745,7 @@ bool CConEmuSize::isZoomed()
 	_ASSERTE((WindowMode == wmNormal) || bZoomed || bIconic || bInTransition);
 	#endif
 
-	if (WindowMode != wmMaximized)
+	if (GetWindowMode() != wmMaximized)
 		return false;
 	if (::IsIconic(ghWnd))
 		return false;
@@ -4764,7 +4764,7 @@ bool CConEmuSize::isFullScreen()
 	_ASSERTE((WindowMode == wmNormal) || bZoomed || bIconic || bInTransition);
 	#endif
 
-	if (WindowMode != wmFullScreen)
+	if (GetWindowMode() != wmFullScreen)
 		return false;
 	if (::IsIconic(ghWnd))
 		return false;
