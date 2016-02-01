@@ -3051,7 +3051,7 @@ void Settings::SaveSettingsOnExit()
 			reg->Save(L"UseCurrentSizePos", isUseCurrentSizePos);
 			DWORD saveMode = (isUseCurrentSizePos==false) ? _WindowMode // сохранять будем то, что задано пользователем явно
 					: ( (ghWnd == NULL)  // иначе - текущее состояние
-							? gpConEmu->WindowMode
+							? gpConEmu->GetWindowMode()
 							: (gpConEmu->isFullScreen() ? rFullScreen : gpConEmu->isZoomed() ? rMaximized : rNormal));
 			reg->Save(L"WindowMode", saveMode);
 			reg->Save(L"ConWnd Width", isUseCurrentSizePos ? gpConEmu->WndWidth.Raw : wndWidth.Raw);
