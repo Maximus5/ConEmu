@@ -777,7 +777,7 @@ struct Settings
 		int _wndY; // в пикселях
 		// Monitor information
 		RECT LastMonRect;
-		//reg->Load(L"WindowMode", WindowMode); if (WindowMode!=rFullScreen && WindowMode!=rMaximized && WindowMode!=rNormal) WindowMode = rNormal;
+		//reg->Load(L"WindowMode", WindowMode); if (WindowMode!=wmFullScreen && WindowMode!=wmMaximized && WindowMode!=wmNormal) WindowMode = wmNormal;
 		DWORD _WindowMode;
 		//reg->Load(L"Cascaded", wndCascade);
 		bool wndCascade;

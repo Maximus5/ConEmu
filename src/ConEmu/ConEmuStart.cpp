@@ -923,11 +923,11 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 				}
 				else if (!klstricmp(curCommand, _T("/fs")))
 				{
-					gpConEmu->opt.WindowModeVal = rFullScreen;
+					gpConEmu->opt.WindowModeVal = wmFullScreen;
 				}
 				else if (!klstricmp(curCommand, _T("/max")))
 				{
-					gpConEmu->opt.WindowModeVal = rMaximized;
+					gpConEmu->opt.WindowModeVal = wmMaximized;
 				}
 				else if (!klstricmp(curCommand, _T("/min"))
 					|| !klstricmp(curCommand, _T("/mintsa"))

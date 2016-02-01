@@ -624,7 +624,7 @@ void Settings::InitSettings()
 
 	ntvdmHeight = 0; // Подбирать автоматически
 	mb_IntegralSize = false;
-	_WindowMode = rNormal;
+	_WindowMode = wmNormal;
 	isUseCurrentSizePos = true; // Show in settings dialog and save current window size/pos
 	//isFullScreen = false;
 	isHideCaption = false; mb_HideCaptionAlways = false; isQuakeStyle = false; nQuakeAnimation = QUAKEANIMATION_DEF;
@@ -2995,7 +2995,7 @@ void Settings::PatchSizeSettings()
 		MONITORINFO miLast = {sizeof(miLast)};
 		if (GetMonitorInfo(hCurMon, &miLast))
 		{
-			LastMonRect = (_WindowMode == rFullScreen) ? miLast.rcMonitor : miLast.rcWork;
+			LastMonRect = (_WindowMode == wmFullScreen) ? miLast.rcMonitor : miLast.rcWork;
 		}
 	}
 
@@ -3029,7 +3029,7 @@ void Settings::PatchSizeSettings()
 		LogString(PSS_SKIP_PREFIX L"GetMonitorInfo failed");
 		return;
 	}
-	RECT rcNewMon = (_WindowMode == rFullScreen) ? mi.rcMonitor : mi.rcWork;
+	RECT rcNewMon = (_WindowMode == wmFullScreen) ? mi.rcMonitor : mi.rcWork;
 	if (IsRectEmpty(&rcNewMon))
 	{
 		LogString(PSS_SKIP_PREFIX L"GetMonitorInfo failed (NULL RECT)");
@@ -3049,7 +3049,25 @@ void Settings::LoadSizeSettings(SettingsBase* reg)
 	reg->Load(L"Cascaded", wndCascade);
 	reg->Load(L"IntegralSize", mb_IntegralSize);
 
-	reg->Load(L"WindowMode", _WindowMode); if (_WindowMode != rFullScreen && _WindowMode != rMaximized && _WindowMode != rNormal) _WindowMode = rNormal;
+	reg->Load(L"WindowMode", _WindowMode);
+	switch (_WindowMode)
+	{
+	case wmNormal:
+	case wmMaximized:
+	case wmFullScreen:
+		break; // OK
+	default:
+		// Legacy support (if wmFullScreen!=rFullScreen and so on)?
+		switch (_WindowMode)
+		{
+		case rFullScreen:
+			_WindowMode = wmFullScreen; break;
+		case rMaximized:
+			_WindowMode = wmMaximized; break;
+		default:
+			_WindowMode = wmNormal;
+		}
+	}
 
 	reg->Load(L"ConWnd X", _wndX);
 	reg->Load(L"ConWnd Y", _wndY);
@@ -3066,7 +3084,7 @@ void Settings::LoadSizeSettings(SettingsBase* reg)
 		if (((hLastMon = MonitorFromRect(&rcDef, MONITOR_DEFAULTTONULL)) != NULL)
 			&& GetMonitorInfo(hLastMon, &mi))
 		{
-			if (_WindowMode == rFullScreen)
+			if (_WindowMode == wmFullScreen)
 				LastMonRect = mi.rcMonitor;
 			else
 				LastMonRect = mi.rcWork;
@@ -3096,7 +3114,7 @@ void Settings::SaveSizeSettings(SettingsBase* reg)
 	DWORD saveMode = (isUseCurrentSizePos == false) ? _WindowMode // save what user's specified explicitly
 		: ((ghWnd == NULL)  // otherwise - save current state
 			? gpConEmu->GetWindowMode()
-			: (gpConEmu->isFullScreen() ? rFullScreen : gpConEmu->isZoomed() ? rMaximized : rNormal));
+			: (gpConEmu->isFullScreen() ? wmFullScreen : gpConEmu->isZoomed() ? wmMaximized : wmNormal));
 
 	reg->Save(L"UseCurrentSizePos", isUseCurrentSizePos);
 	reg->Save(L"AutoSaveSizePos", isAutoSaveSizePos);
@@ -3112,7 +3130,7 @@ void Settings::SaveSizeSettings(SettingsBase* reg)
 	MONITORINFO mi = {sizeof(mi)};
 	if (!hMon || !GetMonitorInfoSafe(hMon, mi))
 		ZeroStruct(mi);
-	if (saveMode == rFullScreen)
+	if (saveMode == wmFullScreen)
 		LastMonRect = mi.rcMonitor;
 	else
 		LastMonRect = mi.rcWork;

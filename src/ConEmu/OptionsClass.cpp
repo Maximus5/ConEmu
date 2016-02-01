@@ -849,11 +849,13 @@ void CSettings::SettingsLoaded(SettingsLoadedFlags slfFlags, LPCWSTR pszCmdLine 
 
 
 	// Стили окна
-	if ((gpSet->_WindowMode!=rNormal) && (gpSet->_WindowMode!=rMaximized) && (gpSet->_WindowMode!=rFullScreen))
+	if ((gpSet->_WindowMode != wmNormal)
+		&& (gpSet->_WindowMode != wmMaximized)
+		&& (gpSet->_WindowMode != wmFullScreen))
 	{
 		// Иначе окно вообще не отображается
 		_ASSERTE(gpSet->_WindowMode!=0);
-		gpSet->_WindowMode = rNormal;
+		gpSet->_WindowMode = wmNormal;
 	}
 
 	//if (rcTabMargins.top > 100) rcTabMargins.top = 100;
@@ -914,7 +916,7 @@ void CSettings::SettingsLoaded(SettingsLoadedFlags slfFlags, LPCWSTR pszCmdLine 
 
 	// Стили окна
 	// Т.к. вызывается из Settings::LoadSettings() то проверка на валидность уже не нужно, оставим только ассерт
-	_ASSERTE(gpSet->_WindowMode == rNormal || gpSet->_WindowMode == rMaximized || gpSet->_WindowMode == rFullScreen);
+	_ASSERTE(gpSet->_WindowMode == wmNormal || gpSet->_WindowMode == wmMaximized || gpSet->_WindowMode == wmFullScreen);
 
 	if (ghWnd == NULL)
 	{
@@ -1952,14 +1954,19 @@ LRESULT CSettings::OnInitDialog_WndSizePos(HWND hWnd2, bool abInitial)
 
 	checkDlgButton(hWnd2, cbUseCurrentSizePos, gpSet->isUseCurrentSizePos);
 
+	ConEmuWindowMode wMode;
 	if (gpSet->isQuakeStyle || !gpSet->isUseCurrentSizePos)
-		checkRadioButton(hWnd2, rNormal, rFullScreen, gpSet->_WindowMode);
+		wMode = (ConEmuWindowMode)gpSet->_WindowMode;
 	else if (gpConEmu->isFullScreen())
-		checkRadioButton(hWnd2, rNormal, rFullScreen, rFullScreen);
+		wMode = wmFullScreen;
 	else if (gpConEmu->isZoomed())
-		checkRadioButton(hWnd2, rNormal, rFullScreen, rMaximized);
+		wMode = wmMaximized;
 	else
-		checkRadioButton(hWnd2, rNormal, rFullScreen, rNormal);
+		wMode = wmNormal;
+	checkRadioButton(hWnd2, rNormal, rFullScreen,
+		(wMode == wmFullScreen) ? rFullScreen
+		: (wMode == wmMaximized) ? rMaximized
+		: rNormal);
 
 	SendDlgItemMessage(hWnd2, tWndWidth, EM_SETLIMITTEXT, 6, 0);
 	SendDlgItemMessage(hWnd2, tWndHeight, EM_SETLIMITTEXT, 6, 0);
@@ -8764,9 +8771,9 @@ void CSettings::OnSaveActivityLogFile(HWND hListView)
 	CloseHandle(hFile);
 }
 
-void CSettings::UpdateWindowMode(WORD WndMode)
+void CSettings::UpdateWindowMode(ConEmuWindowMode WndMode)
 {
-	_ASSERTE(WndMode==rNormal || WndMode==rMaximized || WndMode==rFullScreen);
+	_ASSERTE(WndMode==wmNormal || WndMode==wmMaximized || WndMode==wmFullScreen);
 
 	if (gpSet->isQuakeStyle)
 	{
@@ -8781,7 +8788,11 @@ void CSettings::UpdateWindowMode(WORD WndMode)
 	HWND hSizePosPg = GetPage(thi_SizePos);
 	if (hSizePosPg && gpSet->isUseCurrentSizePos)
 	{
-		checkRadioButton(hSizePosPg, rNormal, rFullScreen, WndMode);
+		checkRadioButton(hSizePosPg, rNormal, rFullScreen,
+			(WndMode == wmFullScreen) ? rFullScreen
+			: (WndMode == wmMaximized) ? rMaximized
+			: rNormal);
+
 	}
 }
 

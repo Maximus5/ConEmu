@@ -1622,15 +1622,15 @@ void CSetDlgButtons::OnBtn_ApplyPos(HWND hDlg, WORD CB, BYTE uCheck)
 	if (!gpConEmu->mp_Inside)
 	{
 		bool bStored = false;
-		DWORD Mode = gpSet->_WindowMode;
+		ConEmuWindowMode Mode = (ConEmuWindowMode)gpSet->_WindowMode;
 		if (hDlg)
 		{
 			if (IsChecked(hDlg, rNormal))
-				Mode = rNormal;
+				Mode = wmNormal;
 			else if (IsChecked(hDlg, rMaximized))
-				Mode = rMaximized;
+				Mode = wmMaximized;
 			else if (IsChecked(hDlg, rFullScreen))
-				Mode = rFullScreen;
+				Mode = wmFullScreen;
 		}
 
 		#if 0
@@ -1643,7 +1643,7 @@ void CSetDlgButtons::OnBtn_ApplyPos(HWND hDlg, WORD CB, BYTE uCheck)
 		}
 		#endif
 
-		if (Mode == rNormal)
+		if (Mode == wmNormal)
 		{
 			CEStr psX(GetDlgItemTextPtr(hDlg, tWndX));
 			CEStr psY(GetDlgItemTextPtr(hDlg, tWndY));
@@ -1652,14 +1652,14 @@ void CSetDlgButtons::OnBtn_ApplyPos(HWND hDlg, WORD CB, BYTE uCheck)
 
 			bStored = gpConEmu->SetWindowPosSize(psX, psY, psW, psH);
 		}
-		else if (Mode == rMaximized)
+		else if (Mode == wmMaximized)
 		{
 			SetFocus(GetDlgItem(hDlg, rMaximized));
 
 			if (!gpConEmu->isZoomed())
 				gpConEmu->SetWindowMode(wmMaximized);
 		}
-		else if (Mode == rFullScreen)
+		else if (Mode == wmFullScreen)
 		{
 			SetFocus(GetDlgItem(hDlg, rFullScreen));
 
