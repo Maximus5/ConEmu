@@ -1152,6 +1152,8 @@ public:
 	};
 	MArray<AppInfo> Installed;
 
+	int mn_MaxFoundInstances;
+
 protected:
 	// This will load App version and check if it was already added
 	virtual INT_PTR AddAppPath(LPCWSTR asName, LPCWSTR szPath, LPCWSTR pszOptFull, bool bNeedQuot,
@@ -1222,6 +1224,19 @@ protected:
 		Installed.clear();
 	}
 
+	bool Trim()
+	{
+		bool bLimit = ((mn_MaxFoundInstances > 0) && (Installed.size() >= mn_MaxFoundInstances));
+		if (bLimit)
+		{
+			for (INT_PTR j = Installed.size()-1; j >= mn_MaxFoundInstances; j--)
+			{
+				Installed.erase(j);
+			}
+		}
+		return bLimit;
+	}
+
 public:
 	bool Add(LPCWSTR asName, LPCWSTR asArgs, LPCWSTR asPrefix, LPCWSTR asGuiArg, LPCWSTR asExePath, ...)
 	{
@@ -1252,6 +1267,11 @@ public:
 			if (AddAppPath(asName, pszFound, szOptFull.IsEmpty() ? szFound : szOptFull, bNeedQuot, asArgs, asPrefix, asGuiArg) >= 0)
 			{
 				bCreated = true;
+
+				if (Trim())
+				{
+					break;
+				}
 			}
 		}
 
@@ -1424,20 +1444,15 @@ public:
 		}
 	}
 
-	virtual bool Commit(int anMaxTasks = -1)
+	virtual bool Commit()
 	{
 		if (Installed.size() <= 0)
 			return false;
 
 		bool bCreated = false;
 
-		if ((anMaxTasks > 0) && (Installed.size() > anMaxTasks))
-		{
-			for (INT_PTR j = Installed.size()-1; j >= anMaxTasks; j--)
-			{
-				Installed.erase(j);
-			}
-		}
+		// If limit for instance count was set
+		Trim();
 
 		// All task names MUST be unique
 		MakeUnique();
@@ -1506,7 +1521,8 @@ public:
 	};
 
 public:
-	AppFoundList()
+	AppFoundList(int anMaxFoundInstances = -1)
+		: mn_MaxFoundInstances(anMaxFoundInstances)
 	{
 	};
 
@@ -1909,13 +1925,14 @@ static void CreateDockerTask()
 	CEStr szFull = ExpandEnvStr(L"%DOCKER_TOOLBOX_INSTALL_PATH%\\docker.exe");
 	if (szFull && FileExists(szFull))
 	{
-		AppFoundList App;
+		AppFoundList App(1);
 		App.Add(L"Tools::Docker",
 			L"-l -i \"%DOCKER_TOOLBOX_INSTALL_PATH%\\start.sh\" -new_console:t:\"Docker\"", NULL,
 			// There is a special icon file
 			// "%DOCKER_TOOLBOX_INSTALL_PATH%\\docker-quickstart-terminal.ico"
 			// but it's displayed badly in our tabs at the moment
 			L"/dir \"%DOCKER_TOOLBOX_INSTALL_PATH%\" /icon \"%DOCKER_TOOLBOX_INSTALL_PATH%\\docker.exe\"",
+			L"%DOCKER_TOOLBOX_INSTALL_PATH%\\..\\Git\\usr\\bin\\bash.exe",
 			L"bash.exe",
 			L"[SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Git_is1:InstallLocation]\\usr\\bin\\bash.exe",
 			L"%ProgramFiles%\\Git\\usr\\bin\\bash.exe", L"%ProgramW6432%\\Git\\usr\\bin\\bash.exe",
@@ -1926,7 +1943,7 @@ static void CreateDockerTask()
 			L"[SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\MSYS2 32bit:InstallLocation]\\usr\\bin\\bash.exe",
 			L"[SOFTWARE\\Cygwin\\setup:rootdir]\\bin\\bash.exe",
 			NULL);
-		App.Commit(1);
+		App.Commit();
 	}
 }
 
