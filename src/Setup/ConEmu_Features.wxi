@@ -222,7 +222,7 @@
   </Feature>
   <!-- ConEmu Far Plugins -->
   <Feature Id="FConEmuFarPlugins" AllowAdvertise="no" Title="Far Manager plugins" Level="1"
-           Description="Far Manager Plugins: ConEmu, PanelViews, Underlines. Default path: &quot;%FARHOME%\Plugins\ConEmu&quot;.">
+           Description="Far Manager Plugins: ConEmu, PanelViews, Underlines. Default path: &quot;%ConEmuDir%\Plugins\ConEmu&quot;.">
     <ComponentRef Id="PluginReadme.txt"/>
     <ComponentRef Id="ConEmu.dll"/>
     <ComponentRef Id="ConEmu.map"/>
