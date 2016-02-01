@@ -66,6 +66,8 @@ bool CHooksUnlocker::mb_Processed = false;
 
 CHooksUnlocker::CHooksUnlocker()
 {
+	mb_WasDebugger = (IsDebuggerPresent() != FALSE);
+
 	if (InterlockedIncrement(&mn_LockCount) > 0)
 	{
 		if (gfnHooksUnlockerProc && !mb_Processed)
@@ -79,7 +81,13 @@ CHooksUnlocker::~CHooksUnlocker()
 {
 	if (InterlockedDecrement(&mn_LockCount) <= 0)
 	{
-		if (mb_Processed)
+		if (mb_Processed && !mb_WasDebugger
+			&& IsDebuggerPresent())
+		{
+			// To avoid keyboard lags under VS debugger
+			mb_Processed = false;
+		}
+		else if (mb_Processed)
 		{
 			mb_Processed = false;
 			if (gfnHooksUnlockerProc)

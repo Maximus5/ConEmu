@@ -49,6 +49,7 @@ protected:
 	// Members
 	static LONG mn_LockCount;
 	static bool mb_Processed;
+	bool mb_WasDebugger;
 
 public:
 	CHooksUnlocker();
