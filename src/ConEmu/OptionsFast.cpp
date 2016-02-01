@@ -1919,6 +1919,150 @@ static bool WINAPI CreateVCTasks(HKEY hkVer, LPCWSTR pszVer, LPARAM lParam)
 	return true; // continue reg enum
 }
 
+static void CreateChocolateyTask()
+{
+	// Chocolatey gallery
+	//-- Placing ANSI in Task commands will be too long and unfriendly
+	//-- Also, automatic run of Chocolatey installation may harm user environment in some cases
+	CEStr szFull = ExpandEnvStr(L"%ConEmuBaseDir%\\Addons\\ChocolateyAbout.cmd");
+	if (szFull && FileExists(szFull))
+	{
+		// Don't use 'App.Add' here, we are creating "cmd.exe" tasks directly
+		CreateDefaultTask(L"Tools::Chocolatey (Admin)", L"", L"*cmd.exe /k Title Chocolatey & \"%ConEmuBaseDir%\\Addons\\ChocolateyAbout.cmd\"");
+	}
+}
+
+// NYAOS & NYAGOS
+static void CreateNyagosTask()
+{
+	AppFoundList App;
+	App.Add(L"Shells::NYAOS", NULL, NULL, NULL, L"nyaos.exe", NULL);
+	App.Add(L"NYAOS (Admin)", L" -new_console:a", NULL, NULL, L"nyaos.exe", NULL);
+	App.Commit();
+}
+
+// cmd.exe
+static void CreateCmdTask()
+{
+	AppFoundList App;
+	// Windows internal: cmd
+	// Don't use 'App.Add' here, we are creating "cmd.exe" tasks directly
+	CreateDefaultTask(L"Shells::cmd", L"",
+		L"cmd.exe /k \"%ConEmuBaseDir%\\CmdInit.cmd\"", CETF_CMD_DEFAULT);
+#if 0
+	// Need to "set" ConEmuGitPath to full path to the git.exe
+	CreateDefaultTask(L"Shells::cmd+git", L"",
+		L"cmd.exe /k \"%ConEmuBaseDir%\\CmdInit.cmd\" /git");
+#endif
+	CreateDefaultTask(L"Shells::cmd (Admin)", L"",
+		L"cmd.exe /k \"%ConEmuBaseDir%\\CmdInit.cmd\" -new_console:a");
+	// On 64-bit OS we suggest more options
+	if (IsWindows64())
+	{
+		// Add {cmd-32} task to run 32-bit cmd.exe
+		CreateDefaultTask(L"Shells::cmd-32", L"",
+			L"\"%windir%\\syswow64\\cmd.exe\" /k \"%ConEmuBaseDir%\\CmdInit.cmd\"");
+		// Windows internal: For 64bit Windows create task with splitted cmd 64/32 (Example)
+		CreateDefaultTask(L"Shells::cmd 64/32", L"",
+			L"> \"%windir%\\system32\\cmd.exe\" /k \"\"%ConEmuBaseDir%\\CmdInit.cmd\" & echo This is Native cmd.exe\""
+			L"\r\n\r\n"
+			L"\"%windir%\\syswow64\\cmd.exe\" /k \"\"%ConEmuBaseDir%\\CmdInit.cmd\" & echo This is 32 bit cmd.exe -new_console:s50V\"");
+	}
+}
+
+// powershell.exe
+static void CreatePowerShellTask()
+{
+	AppFoundList App;
+	// Windows internal: PowerShell
+	// Don't use 'App.Add' here, we are creating "powershell.exe" tasks directly
+	CreateDefaultTask(L"Shells::PowerShell", L"",
+		L"powershell.exe");
+	CreateDefaultTask(L"Shells::PowerShell (Admin)", L"",
+		L"powershell.exe -new_console:a");
+}
+
+static void CreatePuttyTask()
+{
+	AppFoundList App;
+	App.Add(L"Putty", NULL, NULL, NULL, L"Putty.exe", NULL);
+	App.Commit();
+}
+
+// AnsiColors16t.ans
+static void CreateHelperTasks()
+{
+	CEStr szFound, szOptFull;
+	bool bNeedQuot = false;
+
+	// Type ANSI color codes
+	// cmd /k type "%ConEmuBaseDir%\Addons\AnsiColors16t.ans" -cur_console:n
+	if (FindOnDrives(NULL, L"%ConEmuBaseDir%\\Addons\\AnsiColors16t.ans", szFound, bNeedQuot, szOptFull))
+	{
+		// Don't use 'App.Add' here, we are creating "cmd.exe" tasks directly
+		CreateDefaultTask(L"Helper::Show ANSI colors", L"", L"cmd.exe /k type \"%ConEmuBaseDir%\\Addons\\AnsiColors16t.ans\" -cur_console:n");
+	}
+}
+
+// Miscellaneous BASH tasks (Git, Cygwin, Msys, whatever)
+static void CreateBashTask()
+{
+	AppFoundList App;
+
+	// From Git-for-Windows (aka msysGit v2)
+	bool bGitBashExist = // No sense to add both `git-cmd.exe` and `bin/bash.exe`
+		App.Add(L"Bash::Git bash",
+			L" --no-cd --command=usr/bin/bash.exe -l -i", NULL, NULL,
+			L"[SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Git_is1:InstallLocation]\\git-cmd.exe",
+			L"%ProgramFiles%\\Git\\git-cmd.exe", L"%ProgramW6432%\\Git\\git-cmd.exe",
+#ifdef _WIN64
+			L"%ProgramFiles(x86)%\\Git\\git-cmd.exe",
+#endif
+			NULL);
+	App.Add(L"Bash::GitSDK bash",
+		L" --no-cd --command=usr/bin/bash.exe -l -i", NULL, NULL,
+		L"\\GitSDK\\git-cmd.exe",
+		NULL);
+	// From msysGit
+	if (!bGitBashExist) // Skip if `git-cmd.exe` was already found
+		App.Add(L"Bash::Git bash",
+			L" --login -i -new_console:C:\"" FOUND_APP_PATH_STR L"\\..\\etc\\git.ico\"", NULL, NULL,
+			L"[SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Git_is1:InstallLocation]\\bin\\bash.exe",
+			L"%ProgramFiles%\\Git\\bin\\bash.exe", L"%ProgramW6432%\\Git\\bin\\bash.exe",
+#ifdef _WIN64
+			L"%ProgramFiles(x86)%\\Git\\bin\\bash.exe",
+#endif
+			NULL);
+	// For cygwin we can check registry keys
+	// HKLM\SOFTWARE\Wow6432Node\Cygwin\setup\rootdir
+	// HKLM\SOFTWARE\Cygwin\setup\rootdir
+	// HKCU\Software\Cygwin\setup\rootdir
+	App.Add(L"Bash::CygWin bash",
+		L" --login -i -new_console:C:\"" FOUND_APP_PATH_STR L"\\..\\Cygwin.ico\"", L"set CHERE_INVOKING=1 & ", NULL,
+		L"[SOFTWARE\\Cygwin\\setup:rootdir]\\bin\\bash.exe",
+		L"\\CygWin\\bin\\bash.exe", NULL);
+	//{L"CygWin mintty", L"\\CygWin\\bin\\mintty.exe", L" -"},
+	App.Add(L"Bash::MinGW bash",
+		L" --login -i -new_console:C:\"" FOUND_APP_PATH_STR L"\\..\\msys.ico\"", L"set CHERE_INVOKING=1 & ", NULL,
+		L"\\MinGW\\msys\\1.0\\bin\\bash.exe", NULL);
+	//{L"MinGW mintty", L"\\MinGW\\msys\\1.0\\bin\\mintty.exe", L" -"},
+	// MSys2 project: 'HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\MSYS2 32bit'
+	App.Add(L"Bash::Msys2-64",
+		L" --login -i -new_console:C:\"" FOUND_APP_PATH_STR L"\\..\\..\\msys2.ico\"", L"set CHERE_INVOKING=1 & ", NULL,
+		L"[SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\MSYS2 64bit:InstallLocation]\\usr\\bin\\bash.exe",
+		L"msys64\\usr\\bin\\bash.exe",
+		NULL);
+	App.Add(L"Bash::Msys2-32",
+		L" --login -i -new_console:C:\"" FOUND_APP_PATH_STR L"\\..\\..\\msys2.ico\"", L"set CHERE_INVOKING=1 & ", NULL,
+		L"[SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\MSYS2 32bit:InstallLocation]\\usr\\bin\\bash.exe",
+		L"msys32\\usr\\bin\\bash.exe",
+		NULL);
+	// Last chance for bash
+	App.Add(L"Bash::bash", L" --login -i", L"set CHERE_INVOKING=1 & ", NULL, L"bash.exe", NULL);
+	// Create all bash tasks
+	App.Commit();
+}
+
 // Docker Toolbox
 static void CreateDockerTask()
 {
@@ -1993,14 +2137,11 @@ void CreateDefaultTasks(SettingsLoadedFlags slfFlags)
 	+ MinGW/GIT/CygWin bash (and GOW?)
 	+ PuTTY
 	+ Show ANSI colors
-	+ ChocolateyAbout.cmd
 	+ WinSdkTasks
 	+ VCTasks
 	+ Tools::Docker
+	+ ChocolateyAbout.cmd
 	*/
-
-	CEStr szFound, szOptFull, szFull;
-	bool bNeedQuot = false;
 
 	// Far Manager
 	CreateFarTasks();
@@ -2009,122 +2150,27 @@ void CreateDefaultTasks(SettingsLoadedFlags slfFlags)
 	CreateTccTasks();
 
 	// NYAOS - !!!Registry TODO!!!
-	App.Add(L"Shells::NYAOS", NULL, NULL, NULL, L"nyaos.exe", NULL);
-	App.Add(L"NYAOS (Admin)", L" -new_console:a", NULL, NULL, L"nyaos.exe", NULL);
-	App.Commit();
+	CreateNyagosTask();
 
 	// Windows internal: cmd
-	// Don't use 'App.Add' here, we are creating "cmd.exe" tasks directly
-	CreateDefaultTask(L"Shells::cmd", L"",
-		L"cmd.exe /k \"%ConEmuBaseDir%\\CmdInit.cmd\"", CETF_CMD_DEFAULT);
-	#if 0
-	// Need to "set" ConEmuGitPath to full path to the git.exe
-	CreateDefaultTask(L"Shells::cmd+git", L"",
-		L"cmd.exe /k \"%ConEmuBaseDir%\\CmdInit.cmd\" /git");
-	#endif
-	CreateDefaultTask(L"Shells::cmd (Admin)", L"",
-		L"cmd.exe /k \"%ConEmuBaseDir%\\CmdInit.cmd\" -new_console:a");
-	// On 64-bit OS we suggest more options
-	if (IsWindows64())
-	{
-		// Add {cmd-32} task to run 32-bit cmd.exe
-		CreateDefaultTask(L"Shells::cmd-32", L"",
-			L"\"%windir%\\syswow64\\cmd.exe\" /k \"%ConEmuBaseDir%\\CmdInit.cmd\"");
-		// Windows internal: For 64bit Windows create task with splitted cmd 64/32 (Example)
-		CreateDefaultTask(L"Shells::cmd 64/32", L"",
-			L"> \"%windir%\\system32\\cmd.exe\" /k \"\"%ConEmuBaseDir%\\CmdInit.cmd\" & echo This is Native cmd.exe\""
-			L"\r\n\r\n"
-			L"\"%windir%\\syswow64\\cmd.exe\" /k \"\"%ConEmuBaseDir%\\CmdInit.cmd\" & echo This is 32 bit cmd.exe -new_console:s50V\"");
-	}
+	CreateCmdTask();
 
 	// Windows internal: PowerShell
-	// Don't use 'App.Add' here, we are creating "powershell.exe" tasks directly
-	CreateDefaultTask(L"Shells::PowerShell", L"",
-		L"powershell.exe");
-	CreateDefaultTask(L"Shells::PowerShell (Admin)", L"",
-		L"powershell.exe -new_console:a");
+	CreatePowerShellTask();
 
-	// *** Bash ***
+	// Miscellaneous BASH tasks (Git, Cygwin, Msys, whatever)
+	CreateBashTask();
 
-	// From Git-for-Windows (aka msysGit v2)
-	bool bGitBashExist = // No sense to add both `git-cmd.exe` and `bin/bash.exe`
-	App.Add(L"Bash::Git bash",
-		L" --no-cd --command=usr/bin/bash.exe -l -i", NULL, NULL,
-		L"[SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Git_is1:InstallLocation]\\git-cmd.exe",
-		L"%ProgramFiles%\\Git\\git-cmd.exe", L"%ProgramW6432%\\Git\\git-cmd.exe",
-		#ifdef _WIN64
-		L"%ProgramFiles(x86)%\\Git\\git-cmd.exe",
-		#endif
-		NULL);
-	App.Add(L"Bash::GitSDK bash",
-		L" --no-cd --command=usr/bin/bash.exe -l -i", NULL, NULL,
-		L"\\GitSDK\\git-cmd.exe",
-		NULL);
-	// From msysGit
-	if (!bGitBashExist) // Skip if `git-cmd.exe` was already found
-	App.Add(L"Bash::Git bash",
-		L" --login -i -new_console:C:\"" FOUND_APP_PATH_STR L"\\..\\etc\\git.ico\"", NULL, NULL,
-		L"[SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Git_is1:InstallLocation]\\bin\\bash.exe",
-		L"%ProgramFiles%\\Git\\bin\\bash.exe", L"%ProgramW6432%\\Git\\bin\\bash.exe",
-		#ifdef _WIN64
-		L"%ProgramFiles(x86)%\\Git\\bin\\bash.exe",
-		#endif
-		NULL);
-	// For cygwin we can check registry keys
-	// HKLM\SOFTWARE\Wow6432Node\Cygwin\setup\rootdir
-	// HKLM\SOFTWARE\Cygwin\setup\rootdir
-	// HKCU\Software\Cygwin\setup\rootdir
-	App.Add(L"Bash::CygWin bash",
-		L" --login -i -new_console:C:\"" FOUND_APP_PATH_STR L"\\..\\Cygwin.ico\"", L"set CHERE_INVOKING=1 & ", NULL,
-		L"[SOFTWARE\\Cygwin\\setup:rootdir]\\bin\\bash.exe",
-		L"\\CygWin\\bin\\bash.exe", NULL);
-	//{L"CygWin mintty", L"\\CygWin\\bin\\mintty.exe", L" -"},
-	App.Add(L"Bash::MinGW bash",
-		L" --login -i -new_console:C:\"" FOUND_APP_PATH_STR L"\\..\\msys.ico\"", L"set CHERE_INVOKING=1 & ", NULL,
-		L"\\MinGW\\msys\\1.0\\bin\\bash.exe", NULL);
-	//{L"MinGW mintty", L"\\MinGW\\msys\\1.0\\bin\\mintty.exe", L" -"},
-	// MSys2 project: 'HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\MSYS2 32bit'
-	App.Add(L"Bash::Msys2-64",
-		L" --login -i -new_console:C:\"" FOUND_APP_PATH_STR L"\\..\\..\\msys2.ico\"", L"set CHERE_INVOKING=1 & ", NULL,
-		L"[SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\MSYS2 64bit:InstallLocation]\\usr\\bin\\bash.exe",
-		L"msys64\\usr\\bin\\bash.exe",
-		NULL);
-	App.Add(L"Bash::Msys2-32",
-		L" --login -i -new_console:C:\"" FOUND_APP_PATH_STR L"\\..\\..\\msys2.ico\"", L"set CHERE_INVOKING=1 & ", NULL,
-		L"[SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\MSYS2 32bit:InstallLocation]\\usr\\bin\\bash.exe",
-		L"msys32\\usr\\bin\\bash.exe",
-		NULL);
-	// Last chance for bash
-	App.Add(L"Bash::bash", L" --login -i", L"set CHERE_INVOKING=1 & ", NULL, L"bash.exe", NULL);
-	// Create all bash tasks
-	App.Commit();
-
-	// Putty?
-	App.Add(L"Putty", NULL, NULL, NULL, L"Putty.exe", NULL);
-	App.Commit();
+	// Putty
+	CreatePuttyTask();
 
 	// IRSSI
 	// L"\"set PATH=C:\\irssi\\bin;%PATH%\" & set PERL5LIB=lib/perl5/5.8 & set TERMINFO_DIRS=terminfo & "
 	// L"C:\\irssi\\bin\\irssi.exe"
 	// L" -cur_console:d:\"C:\\irssi\""
 
-	// Type ANSI color codes
-	// cmd /k type "%ConEmuBaseDir%\Addons\AnsiColors16t.ans" -cur_console:n
-	if (FindOnDrives(NULL, L"%ConEmuBaseDir%\\Addons\\AnsiColors16t.ans", szFound, bNeedQuot, szOptFull))
-	{
-		// Don't use 'App.Add' here, we are creating "cmd.exe" tasks directly
-		CreateDefaultTask(L"Tests::Show ANSI colors", L"", L"cmd.exe /k type \"%ConEmuBaseDir%\\Addons\\AnsiColors16t.ans\" -cur_console:n");
-	}
-
-	// Chocolatey gallery
-	//-- Placing ANSI in Task commands will be too long and unfriendly
-	//-- Also, automatic run of Chocolatey installation may harm user environment in some cases
-	szFull = ExpandEnvStr(L"%ConEmuBaseDir%\\Addons\\ChocolateyAbout.cmd");
-	if (szFull && FileExists(szFull))
-	{
-		// Don't use 'App.Add' here, we are creating "cmd.exe" tasks directly
-		CreateDefaultTask(L"Scripts::Chocolatey (Admin)", L"", L"*cmd.exe /k Title Chocolatey & \"%ConEmuBaseDir%\\Addons\\ChocolateyAbout.cmd\"");
-	}
+	// Some helpers (AnsiColors16t.ans)
+	CreateHelperTasks();
 
 	// Windows SDK: HKLM\SOFTWARE\Microsoft\Microsoft SDKs\Windows
 	RegEnumKeys(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\Microsoft SDKs\\Windows", CreateWinSdkTasks, 0);
@@ -2134,6 +2180,9 @@ void CreateDefaultTasks(SettingsLoadedFlags slfFlags)
 
 	// Docker Toolbox
 	CreateDockerTask();
+
+	// About Chocolatey
+	CreateChocolateyTask();
 
 	SafeFree(szConEmuDrive.ms_Val);
 
