@@ -2006,8 +2006,12 @@ BOOL CConEmuMain::CreateMainWindow()
 
 	if (!ghWnd)
 	{
-		//if (!ghWnd DC)
-		MBoxA(_T("Can't create main window!"));
+		DWORD nErrCode = GetLastError();
+
+		// Don't warn, if "Inside" mode was requested and parent was closed
+		_ASSERTE(!mp_Inside || (hParent == mp_Inside->mh_InsideParentWND));
+
+		WarnCreateWindowFail(L"main window", hParent, nErrCode);
 
 		return FALSE;
 	}
@@ -3325,7 +3329,14 @@ CVirtualConsole* CConEmuMain::CreateConGroup(LPCWSTR apszScript, bool abForceAsA
 
 				if (!pVCon)
 				{
-					DisplayLastError(L"Can't create new virtual console!");
+					if ((mn_StartupFinished == ss_Started) || !isInsideInvalid())
+					{
+						DisplayLastError(L"Can't create new virtual console!", -1);
+					}
+					else
+					{
+						LogString(L"Can't create new virtual console!");
+					}
 
 					if (!lbOneCreated)
 					{

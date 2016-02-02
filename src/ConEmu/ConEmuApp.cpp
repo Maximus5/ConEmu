@@ -2092,9 +2092,7 @@ BOOL CheckCreateAppWindow()
 
 	if (!ghWndApp)
 	{
-		LPCWSTR pszMsg = _T("Can't create application window!");
-		gpConEmu->LogString(pszMsg, false);
-		MBoxA(pszMsg);
+		WarnCreateWindowFail(L"application window", NULL, GetLastError());
 		return FALSE;
 	}
 
@@ -2429,6 +2427,37 @@ int DisplayLastError(LPCTSTR asLabel, DWORD dwError /* =0 */, DWORD dwMsgFlags /
 		delete [] out;
 	MCHKHEAP
 	return nBtn;
+}
+
+void WarnCreateWindowFail(LPCWSTR pszDescription, HWND hParent, DWORD nErrCode)
+{
+	wchar_t szCreateFail[256];
+
+	if (gpConEmu && gpConEmu->mp_Inside)
+	{
+		_wsprintf(szCreateFail, SKIPCOUNT(szCreateFail)
+			L"Inside mode: Parent (%s): PID=%u ParentPID=%u HWND=x%p EXE=",
+			(::IsWindow(gpConEmu->mp_Inside->mh_InsideParentWND) ? L"Valid" : L"Invalid"),
+			gpConEmu->mp_Inside->m_InsideParentInfo.ParentPID,
+			gpConEmu->mp_Inside->m_InsideParentInfo.ParentParentPID,
+			(LPVOID)gpConEmu->mp_Inside->mh_InsideParentWND);
+		CEStr lsLog = lstrmerge(szCreateFail, gpConEmu->mp_Inside->m_InsideParentInfo.ExeName);
+		LogString(lsLog);
+	}
+
+	_wsprintf(szCreateFail, SKIPCOUNT(szCreateFail)
+		L"Create %s FAILED (code=%u)! Parent=x%p%s%s",
+		pszDescription ? pszDescription : L"window", nErrCode, (LPVOID)hParent,
+		(hParent ? (::IsWindow(hParent) ? L" Valid" : L" Invalid") : L""),
+		(hParent ? (::IsWindowVisible(hParent) ? L" Visible" : L" Hidden") : L"")
+		);
+	LogString(szCreateFail);
+
+	// Don't warn, if "Inside" mode was requested and parent was closed
+	if (!gpConEmu || !gpConEmu->isInsideInvalid())
+	{
+		DisplayLastError(szCreateFail, nErrCode);
+	}
 }
 
 RECT CenterInParent(RECT rcDlg, HWND hParent)

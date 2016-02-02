@@ -229,6 +229,7 @@ void LogString(LPCWSTR asInfo, bool abWriteTime = true, bool abWriteLine = true)
 
 extern BOOL gbInDisplayLastError;
 int DisplayLastError(LPCTSTR asLabel, DWORD dwError = 0, DWORD dwMsgFlags = 0, LPCWSTR asTitle = NULL, HWND hParent = NULL);
+void WarnCreateWindowFail(LPCWSTR pszDescription, HWND hParent, DWORD nErrCode);
 RECT CenterInParent(RECT rcDlg, HWND hParent);
 BOOL MoveWindowRect(HWND hWnd, const RECT& rcWnd, BOOL bRepaint = FALSE);
 HICON CreateNullIcon();

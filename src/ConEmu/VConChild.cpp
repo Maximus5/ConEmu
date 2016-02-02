@@ -246,7 +246,7 @@ HWND CConEmuChild::CreateView()
 
 	if (!mh_WndDC || !mh_WndBack)
 	{
-		DisplayLastError(L"Can't create DC window!");
+		WarnCreateWindowFail(L"DC window", hParent, GetLastError());
 		return NULL; //
 	}
 
