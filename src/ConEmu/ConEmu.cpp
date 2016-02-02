@@ -6815,9 +6815,12 @@ bool CConEmuMain::CreateStartupConsoles()
 
 void CConEmuMain::OnMainCreateFinished()
 {
-	if (mn_StartupFinished < ss_VConAreCreated)
+	if (mn_StartupFinished < ss_CreateQueueReady)
 	{
-		mn_StartupFinished = ss_VConAreCreated;
+		_ASSERTE(mn_StartupFinished == ss_PostCreate2Called || mn_StartupFinished == ss_VConAreCreated);
+
+		// Allow to run CRunQueue::AdvanceQueue()
+		mn_StartupFinished = ss_CreateQueueReady;
 	}
 
 	// This flags has only "startup" effect
@@ -7059,7 +7062,12 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 		OnMainCreateFinished();
 	}
 
-	mn_StartupFinished = abReceived ? ss_PostCreate2Finished : ss_PostCreate1Finished;
+	if (!abReceived)
+		mn_StartupFinished = ss_PostCreate1Finished;
+	else if (isVConExists(0) || (mn_StartupFinished == ss_VConAreCreated))
+		mn_StartupFinished = ss_VConStarted;
+	else
+		mn_StartupFinished = ss_PostCreate2Finished /* == ss_Started */;
 
 	if (gpSetCls->isAdvLogging)
 	{
@@ -12389,6 +12397,15 @@ LRESULT CConEmuMain::OnUpdateScrollInfo(BOOL abPosted/* = FALSE*/)
 // Чтобы при создании ПЕРВОЙ консоли на экране сразу можно было что-то нарисовать
 void CConEmuMain::OnVConCreated(CVirtualConsole* apVCon, const RConStartArgs *args)
 {
+	if (mn_StartupFinished == ss_PostCreate2Called)
+		mn_StartupFinished = ss_VConAreCreated;
+	else if (mn_StartupFinished == ss_Started)
+		mn_StartupFinished = ss_VConStarted;
+	#ifdef _DEBUG
+	else // VCon creation is NOT expected at the moment
+		_ASSERTE((mn_StartupFinished == ss_PostCreate2Called) || (mn_StartupFinished == ss_Started));
+	#endif
+
 	SetScClosePending(false); // сброс
 
 	// Если ConEmu не был закрыт после закрытия всех табов, и запущен новый таб...

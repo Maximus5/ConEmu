@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2013-2015 Maximus5
+Copyright (c) 2013-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -69,6 +69,8 @@ CRunQueue::~CRunQueue()
 
 void CRunQueue::StartQueue()
 {
+	_ASSERTE(gpConEmu->mn_StartupFinished >= CConEmuMain::ss_CreateQueueReady);
+
 	if (mh_Thread)
 	{
 		_ASSERTE(mh_Thread == NULL);
@@ -245,7 +247,7 @@ void CRunQueue::ProcessRunQueue()
 void CRunQueue::AdvanceQueue()
 {
 	// If Startup was not completed yet - just do nothing
-	if (gpConEmu->mn_StartupFinished < CConEmuMain::ss_VConAreCreated)
+	if (gpConEmu->mn_StartupFinished < CConEmuMain::ss_CreateQueueReady)
 		return;
 
 	// Nothing to do?

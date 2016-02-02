@@ -265,8 +265,10 @@ class CConEmuMain
 			ss_PostCreate1Finished,
 			ss_PostCreate2Called,
 			ss_VConAreCreated,
+			ss_CreateQueueReady,
 			ss_PostCreate2Finished,
 			ss_Started = ss_PostCreate2Finished,
+			ss_VConStarted,
 			ss_Destroying,
 			ss_Destroyed,
 		} mn_StartupFinished;
