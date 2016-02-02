@@ -12955,7 +12955,7 @@ LRESULT CConEmuMain::OnActivateByMouse(HWND hWnd, UINT messg, WPARAM wParam, LPA
 		|| bSkipActivation
 		|| (gpSet->isMouseSkipActivation
 			&& (LOWORD(lParam) == HTCLIENT)
-			&& (bTouchActivation || !(m_Foreground.ForegroundState & fgf_ConEmuMain)))
+			&& (bTouchActivation || !(m_Foreground.ForegroundState & (fgf_ConEmuMain|fgf_InsideParent))))
 		)
 	{
 		this->mouse.bForceSkipActivation = FALSE; // Однократно
