@@ -5952,6 +5952,35 @@ bool CConEmuMain::RecheckForegroundWindow(LPCWSTR asFrom, HWND* phFore/*=NULL*/)
 	return ((m_Foreground.ForegroundState & fgf_ConEmuMain) != fgf_Background);
 }
 
+bool CConEmuMain::isInside()
+{
+	if (!this)
+		return false;
+
+	if (!mp_Inside)
+		return false;
+
+	_ASSERTE(mp_Inside->m_InsideIntegration != CConEmuInside::ii_None);
+	return (mp_Inside->m_InsideIntegration != CConEmuInside::ii_None);
+}
+
+// Returns true if we were started in "Inside" mode
+// *AND* parent window was terminated
+bool CConEmuMain::isInsideInvalid()
+{
+	// Validate pointers and mode
+	if (!isInside())
+		return false;
+	// If we failed to or not yet determined the parent window HWND
+	if (!mp_Inside->mh_InsideParentWND)
+		return false;
+	// Check parent descriptor
+	if (::IsWindow(mp_Inside->mh_InsideParentWND))
+		return false;
+	// Abnormal termination of parent window?
+	return true;
+}
+
 bool CConEmuMain::isMeForeground(bool abRealAlso/*=false*/, bool abDialogsAlso/*=true*/, HWND* phFore/*=NULL*/)
 {
 	if (!this) return false;

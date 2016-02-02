@@ -618,6 +618,10 @@ class CConEmuMain
 		void DeinitOnDestroy(HWND hWnd, bool abForce = false);
 
 	public:
+		bool isInside();
+		bool isInsideInvalid();
+
+	public:
 		enum {
 			fgf_Background   = 0x0000,
 			fgf_ConEmuMain   = 0x0001,
