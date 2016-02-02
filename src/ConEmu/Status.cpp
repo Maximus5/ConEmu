@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2015 Maximus5
+Copyright (c) 2009-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -369,7 +369,8 @@ bool CStatus::LoadActiveProcess(CRealConsole* pRCon, wchar_t* pszText, int cchMa
 
 	if (!pRCon || ((nPID = pRCon->GetActivePID(&Process)) == 0))
 	{
-		//lstrcpyn(pszText, gsReady, cchMax);
+		// Clean possible rubbish
+		*pszText = 0;
 	}
 	else
 	{
