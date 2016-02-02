@@ -65,6 +65,7 @@ CConEmuInside::CConEmuInside()
 	//mh_InsideSysMenu = NULL;
 	ZeroStruct(mrc_InsideParent);
 	ZeroStruct(mrc_InsideParentRel);
+	ZeroStruct(m_InsideParentInfo);
 }
 
 bool CConEmuInside::InitInside(bool bRunAsAdmin, bool bSyncDir, LPCWSTR pszSyncDirCmdFmt, DWORD nParentPID, HWND hParentWnd)
@@ -280,6 +281,21 @@ void CConEmuInside::SetInsideParentWND(HWND hParent)
 	}
 	else
 	{
+		// Store basic information about parent process (reporting purposes)
+		DWORD nPID; PROCESSENTRY32W PInfo = {};
+		if (GetWindowThreadProcessId(hParent, &nPID)
+			&& GetProcessInfo(nPID, &PInfo))
+		{
+			m_InsideParentInfo.ParentPID = PInfo.th32ProcessID;
+			m_InsideParentInfo.ParentParentPID = PInfo.th32ParentProcessID;
+			wcscpy_c(m_InsideParentInfo.ExeName, PInfo.szExeFile);
+		}
+		else
+		{
+			ZeroStruct(m_InsideParentInfo);
+		}
+
+		// Detect top parent window, to call isMeForeground
 		HWND hRootParent = hParent;
 		while ((GetWindowLong(hRootParent, GWL_STYLE) & WS_CHILD) != 0)
 		{

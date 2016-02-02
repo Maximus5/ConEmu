@@ -52,6 +52,13 @@ public:
 	// Режим интеграции. Запуститься как дочернее окно, например, в области проводника.
 	InsideIntegration m_InsideIntegration;
 
+	struct
+	{
+		DWORD ParentPID;           // ID of mh_InsideParentWND
+		DWORD ParentParentPID;     // Parent of mn_InsideParentPID
+		wchar_t ExeName[MAX_PATH]; // ParentPID executable
+	} m_InsideParentInfo;
+
 	bool  mb_InsideIntegrationAdmin; // Run first started console "As Admin"
 	bool  mb_InsideSynchronizeCurDir;
 	wchar_t* ms_InsideSynchronizeCurDir; // \ecd /d \1\n - \e - ESC, \b - BS, \n - ENTER, \1 - "dir", \2 - "bash dir"
