@@ -12967,21 +12967,15 @@ LRESULT CConEmuMain::OnActivateByMouse(HWND hWnd, UINT messg, WPARAM wParam, LPA
 			DEBUGSTRFOCUS(L"!Skipping mouse activation message!");
 			if (HIWORD(lParam) == WM_LBUTTONDOWN)
 			{
-				this->mouse.nSkipEvents[0] = WM_LBUTTONDOWN;
-				this->mouse.nSkipEvents[1] = WM_LBUTTONUP;
-				this->mouse.nReplaceDblClk = WM_LBUTTONDBLCLK;
+				SetSkipMouseEvent(WM_LBUTTONDOWN, WM_LBUTTONUP, WM_LBUTTONDBLCLK);
 			}
 			else if (HIWORD(lParam) == WM_RBUTTONDOWN)
 			{
-				this->mouse.nSkipEvents[0] = WM_RBUTTONDOWN;
-				this->mouse.nSkipEvents[1] = WM_RBUTTONUP;
-				this->mouse.nReplaceDblClk = WM_RBUTTONDBLCLK;
+				SetSkipMouseEvent(WM_RBUTTONDOWN, WM_RBUTTONUP, WM_RBUTTONDBLCLK);
 			}
 			else if (HIWORD(lParam) == WM_MBUTTONDOWN)
 			{
-				this->mouse.nSkipEvents[0] = WM_MBUTTONDOWN;
-				this->mouse.nSkipEvents[1] = WM_MBUTTONUP;
-				this->mouse.nReplaceDblClk = WM_MBUTTONDBLCLK;
+				SetSkipMouseEvent(WM_MBUTTONDOWN, WM_MBUTTONUP, WM_MBUTTONDBLCLK);
 			}
 			else if (HIWORD(lParam) == 0x0246/*WM_POINTERDOWN*/)
 			{
