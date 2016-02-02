@@ -1397,7 +1397,12 @@ bool CRealBuffer::PreInit()
 	// Even if our window was minimized, CalcRect will use proper sizes (mrc_StoredNormalRect for example)
 	rcCon = gpConEmu->CalcRect(CER_CONSOLE_CUR, mp_RCon->mp_VCon);
 
-	_ASSERTE(rcCon.right!=0 && rcCon.bottom!=0);
+	if (IsRectEmpty(&rcCon))
+	{
+		_ASSERTE(FALSE && "CER_CONSOLE_CUR is empty");
+		LogString(L"Evaluated CER_CONSOLE_CUR is empty!");
+		return false;
+	}
 
 	if (con.bBufferHeight)
 	{

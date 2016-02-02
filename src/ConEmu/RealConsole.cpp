@@ -420,7 +420,9 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 		return false;
 	}
 
-	PreInit(); // просто инициализировать переменные размеров...
+	// Initialize buffer sizes
+	if (!PreInit())
+		return false;
 
 	if (!PreCreate(args))
 		return false;
