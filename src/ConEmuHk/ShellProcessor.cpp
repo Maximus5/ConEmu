@@ -2550,6 +2550,13 @@ BOOL CShellProc::OnShellExecuteW(LPCWSTR* asAction, LPCWSTR* asFile, LPCWSTR* as
 		return TRUE; // Перехватывать только под ConEmu
 	}
 
+	// We do not hook lpIDList
+	if (anFlags && (*anFlags & SEE_MASK_IDLIST))
+	{
+		LogShellString(L"SEE_MASK_IDLIST skipped");
+		return TRUE;
+	}
+
 	mb_InShellExecuteEx = TRUE;
 	gnInShellExecuteEx ++;
 
