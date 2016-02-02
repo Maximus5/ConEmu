@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2015 Maximus5
+Copyright (c) 2009-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -343,10 +343,11 @@ INT_PTR CRecreateDlg::OnInitDialog(HWND hDlg, UINT messg, WPARAM wParam, LPARAM 
 		//GCC hack. иначе не собирается
 		SetDlgItemTextA(hDlg, IDC_RESTART_MSG,  "Create new console");
 
-		// Если ВЫКЛЮЧЕН "Multi consoles in one window"
+		// If we disallowed to create "Multiple consoles in one window"
 		// - Check & Disable "New window" checkbox
-		CheckDlgButton(hDlg, cbRunInNewWindow, (pArgs->aRecreate == cra_CreateWindow || !gpSetCls->IsMulti()) ? BST_CHECKED : BST_UNCHECKED);
-		EnableWindow(GetDlgItem(hDlg, cbRunInNewWindow), gpSetCls->IsMulti());
+		bool bForceNewWindow = (!gpSetCls->IsMulti() && gpConEmu->isVConExists(0));
+		CheckDlgButton(hDlg, cbRunInNewWindow, (pArgs->aRecreate == cra_CreateWindow || bForceNewWindow) ? BST_CHECKED : BST_UNCHECKED);
+		EnableWindow(GetDlgItem(hDlg, cbRunInNewWindow), bForceNewWindow);
 
 		//
 		SendDlgItemMessage(hDlg, IDC_RESTART_ICON, STM_SETICON, (WPARAM)LoadIcon(NULL,IDI_QUESTION), 0);

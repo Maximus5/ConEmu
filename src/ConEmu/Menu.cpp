@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2012-2015 Maximus5
+Copyright (c) 2012-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -616,10 +616,15 @@ void CConEmuMenu::OnNewConPopupMenu(POINT* ptWhere /*= NULL*/, DWORD nFlags /*= 
 			}
 
 			//Собственно, запуск
-			if (gpSetCls->IsMulti() && (con.aRecreate != cra_CreateWindow))
+			if ((gpSetCls->IsMulti() || !gpConEmu->isVConExists(0))
+					&& (con.aRecreate != cra_CreateWindow))
+			{
 				gpConEmu->CreateCon(&con, true);
+			}
 			else
+			{
 				gpConEmu->CreateWnd(&con);
+			}
 		}
 	}
 
