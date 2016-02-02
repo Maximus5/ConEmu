@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2015 Maximus5
+Copyright (c) 2009-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -4290,9 +4290,11 @@ CVirtualConsole* CVConGroup::CreateCon(RConStartArgs *args, bool abAllowScripts 
 		args->ProcessNewConArg(abForceCurConsole);
 	}
 
-	if (gpConEmu->mp_Inside && gpConEmu->mp_Inside->m_InsideIntegration && gpConEmu->mp_Inside->mb_InsideIntegrationShift)
+	if (gpConEmu->isInside()
+		&& gpConEmu->mp_Inside->mb_InsideIntegrationAdmin)
 	{
-		gpConEmu->mp_Inside->mb_InsideIntegrationShift = false;
+		LogString(L"!!! Forcing first console to run as Admin (mb_InsideIntegrationAdmin) !!!");
+		gpConEmu->mp_Inside->mb_InsideIntegrationAdmin = false;
 		args->RunAsAdministrator = crb_On;
 	}
 

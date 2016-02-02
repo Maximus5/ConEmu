@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2012-2015 Maximus5
+Copyright (c) 2012-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -52,7 +52,7 @@ public:
 	// Режим интеграции. Запуститься как дочернее окно, например, в области проводника.
 	InsideIntegration m_InsideIntegration;
 
-	bool  mb_InsideIntegrationShift; // Run first started console "As Admin"
+	bool  mb_InsideIntegrationAdmin; // Run first started console "As Admin"
 	bool  mb_InsideSynchronizeCurDir;
 	wchar_t* ms_InsideSynchronizeCurDir; // \ecd /d \1\n - \e - ESC, \b - BS, \n - ENTER, \1 - "dir", \2 - "bash dir"
 	bool  mb_InsidePaneWasForced;

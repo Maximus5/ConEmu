@@ -3337,7 +3337,7 @@ bool CRealConsole::PreInit()
 {
 	TODO("Инициализация остальных буферов?");
 
-	_ASSERTE(mp_RBuf==mp_ABuf);
+	_ASSERTE(mp_RBuf && mp_RBuf==mp_ABuf);
 	MCHKHEAP;
 
 	return mp_RBuf->PreInit();

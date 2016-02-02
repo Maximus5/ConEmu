@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2012-2015 Maximus5
+Copyright (c) 2012-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -53,7 +53,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 CConEmuInside::CConEmuInside()
 {
-	m_InsideIntegration = ii_None; mb_InsideIntegrationShift = false; mn_InsideParentPID = 0;
+	m_InsideIntegration = ii_None;
+	mb_InsideIntegrationAdmin = false;
+	mn_InsideParentPID = 0;
 	mb_InsideSynchronizeCurDir = false;
 	ms_InsideSynchronizeCurDir = NULL;
 	mb_InsidePaneWasForced = false;
@@ -83,7 +85,15 @@ bool CConEmuInside::InitInside(bool bRunAsAdmin, bool bSyncDir, LPCWSTR pszSyncD
 
 	pInside->m_InsideIntegration = (hParentWnd == NULL) ? ii_Auto : ii_Simple;
 
-	pInside->mb_InsideIntegrationShift = bRunAsAdmin /*isPressed(VK_SHIFT)*/;
+	if (bRunAsAdmin)
+	{
+		LogString(L"!!! InsideIntegration will run first console as Admin !!!");
+		pInside->mb_InsideIntegrationAdmin = true;
+	}
+	else
+	{
+		pInside->mb_InsideIntegrationAdmin = false;
+	}
 
 	if (bSyncDir)
 	{
