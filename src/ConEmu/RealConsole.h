@@ -366,7 +366,7 @@ class CRealConsole
 		BYTE GetDefaultTextColorIdx() { return this ? (mn_TextColorIdx & 0xF) : 7; };
 		BYTE GetDefaultBackColorIdx() { return this ? (mn_BackColorIdx & 0xF) : 0; };
 
-		BOOL PreInit();
+		bool PreInit();
 		void DumpConsole(HANDLE ahFile);
 		bool LoadDumpConsole(LPCWSTR asDumpFile);
 

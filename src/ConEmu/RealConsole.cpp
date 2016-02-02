@@ -3333,7 +3333,7 @@ DWORD CRealConsole::MonitorThreadWorker(bool bDetached, bool& rbChildProcessCrea
 	return nWait;
 }
 
-BOOL CRealConsole::PreInit()
+bool CRealConsole::PreInit()
 {
 	TODO("Инициализация остальных буферов?");
 
