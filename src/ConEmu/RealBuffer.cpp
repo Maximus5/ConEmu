@@ -1372,7 +1372,7 @@ BOOL CRealBuffer::isConsoleDataChanged()
 	return con.bConsoleDataChanged;
 }
 
-BOOL CRealBuffer::PreInit()
+bool CRealBuffer::PreInit()
 {
 	HEAPVAL;
 	// Инициализировать переменные m_sbi, m_ci, m_sel
@@ -1420,9 +1420,9 @@ BOOL CRealBuffer::PreInit()
 	con.m_ci.dwSize = 15; con.m_ci.bVisible = TRUE;
 
 	if (!InitBuffers())
-		return FALSE;
+		return false;
 
-	return TRUE;
+	return true;
 }
 
 BOOL CRealBuffer::InitBuffers(DWORD anCellCount, int anWidth, int anHeight)

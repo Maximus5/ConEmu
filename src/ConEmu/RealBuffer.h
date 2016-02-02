@@ -84,7 +84,7 @@ public:
 	bool isInitialized();
 	bool isFarMenuOrMacro();
 
-	BOOL PreInit();
+	bool PreInit();
 	void ResetBuffer();
 
 	int BufferHeight(uint nNewBufferHeight=0);
