@@ -4222,7 +4222,7 @@ CVirtualConsole* CVConGroup::CreateCon(RConStartArgs *args, bool abAllowScripts 
 		// We must get here (with empty creation command line) only in certain cases, for example:
 		// a) User presses Win+W (or `[+]` button);
 		// b) User runs something like "ConEmu -detached GuiMacro Create"
-		_ASSERTE((gpConEmu->mn_StartupFinished == CConEmuMain::ss_Started) || (gpConEmu->m_StartDetached != crb_Undefined));
+		_ASSERTE((gpConEmu->mn_StartupFinished == CConEmuMain::ss_Started || gpConEmu->mn_StartupFinished == CConEmuMain::ss_VConStarted) || (gpConEmu->m_StartDetached != crb_Undefined));
 		_ASSERTE(args->pszSpecialCmd==NULL);
 
 		// Сюда мы попадаем, если юзер жмет Win+W (создание без подтверждения)

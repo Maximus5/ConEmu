@@ -12443,7 +12443,7 @@ void CConEmuMain::OnVConCreated(CVirtualConsole* apVCon, const RConStartArgs *ar
 		mn_StartupFinished = ss_VConStarted;
 	#ifdef _DEBUG
 	else // VCon creation is NOT expected at the moment
-		_ASSERTE((mn_StartupFinished == ss_PostCreate2Called) || (mn_StartupFinished == ss_Started));
+		_ASSERTE((mn_StartupFinished >= ss_PostCreate2Called) && (mn_StartupFinished <= ss_VConStarted));
 	#endif
 
 	SetScClosePending(false); // сброс
