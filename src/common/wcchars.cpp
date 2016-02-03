@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2015 Maximus5
+Copyright (c) 2015-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -29,6 +29,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "defines.h"
 #include "wcchars.h"
 
+// Convert surrogate pair into 32-bit unicode codepoint
 ucs32 ucs32_from_wchar(const wchar_t* pch, bool& has_trail)
 {
 	if (!has_trail || !(has_trail = IS_SURROGATE_PAIR(pch[0], pch[1])))
@@ -44,4 +45,13 @@ ucs32 ucs32_from_wchar(const wchar_t* pch, bool& has_trail)
 	// example: "𝔸" is pair of {0xD835 0xDD38} ==> 0x1D538 : MATHEMATICAL DOUBLE-STRUCK CAPITAL A
 
 	return codepoint;
+}
+
+// Convert 32-bit unicode codepoint into two surrogate pair
+const wchar_t* wchar_from_ucs32(const ucs32 codepoint, wchar_t (&buffer)[3])
+{
+	buffer[0] = (wchar_t)((codepoint >> 10) + 0xD7C0);
+	buffer[1] = (wchar_t)((codepoint & 0x3FF) | 0xDC00);
+	buffer[2] = 0;
+	return buffer;
 }

@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2015 Maximus5
+Copyright (c) 2015-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -30,4 +30,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "wcwidth.h"
 
+// Convert surrogate pair into 32-bit unicode codepoint
 ucs32 ucs32_from_wchar(const wchar_t* pch, bool& has_trail);
+
+// Convert 32-bit unicode codepoint to two surrogate pair
+const wchar_t* wchar_from_ucs32(const ucs32 codepoint, wchar_t (&buffer)[3]);
