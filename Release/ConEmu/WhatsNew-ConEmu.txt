@@ -19,6 +19,46 @@ http://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2016.2.2
+* New TabMenu items hints (shown in StatusBar when hovering menu with mouse).
+* Show confirmation if Shift is pressed when selecting menu items:
+  * Kill active process
+  * Kill all bat shell
+* gh-241: Close consoles refactoring (close Far tabs with single click).
+  If Far Manager was started from other shell (from `cmd.exe`, for example)
+  than using ‘Safe Far Close’ macro leads to return to the shell prompt,
+  instead of termination of this console.
+  Also, unchecked option ‘Safe Far Close’ was ignored for `far.exe`.
+  In progress actually. We have to simplify close/terminate calls.
+* Warn user if automatic action was called without initialized settings.
+  The example of command: `ConEmu.exe -SetDefTerm -Detached -MinTSA -Exit`.
+  If there is no settings file, user will see FastConfiguration dialog,
+  which is unexpected for automatic action (`-SetDefTerm` and `-Exit`).
+  If one needs to run ConEmu without settings, they may use `-basic` switch.
+* Double-width glyph in the col 1 was cropped in Far editor/viewer.
+  For example, if the following text
+  中英文Block mode复制初步修复。
+  was started from the leftmost console cell,
+  than glyph `中` was cropped to one cell.
+* GitShowBranch.cmd: Support git branches with dots in branch name.
+* gh-515: Internal changes of OnShutdownConsole.
+* Add default task {Tools::Docker}.
+  Docker is detected by environment variable `%DOCKER_TOOLBOX_INSTALL_PATH%`.
+  Also, `bash.exe` (Git, Cygwin or MSys) have to be installed to run `start.sh`.
+* Add default task for NYAGOS (if found in %PATH%).
+* gh-517: In Quake mode Maximized/Fullscreen was dropped after ConEmu restart.
+* conemu-inside/gh-1: Mouse text selection does not work in the Inside mode.
+* conemu-inside/gh-4: Avoid crashes when parent process is terminated during startup.
+* conemu-inside/gh-4: Correct warning messages and don't show them if parent was terminated during startup.
+* Allow to start new tab in current detached instance in one-console mode.
+  If option ‘Multiple consoles in one ConEmu window’ is disabled,
+  than new console is started in new ConEmu window, but this is impractical
+  if there is no consoles in current instance.
+  For example: "ConEmu -detached" or existing console was closed.
+* Protect from possible ‘locks’ during startup.
+* StatusBar column ‘Create new console’ was not updated in some cases.
+
+
 2016.1.24
 * gh#509: Fix crash when checking ‘Explicit executable’.
 * Use bare {Far} task name for first `Far.exe` found in our folder.
