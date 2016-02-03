@@ -509,7 +509,7 @@ class CRealConsole
 		DWORD GetMonitorThreadID();
 		bool isServerCreated(bool bFullRequired = false);
 		bool isServerAvailable();
-		bool isServerClosing();
+		bool isServerClosing(bool bStrict = false);
 		void ResetTopLeft();
 		LRESULT DoScroll(int nDirection, UINT nCount = 1);
 		bool GetConsoleSelectionInfo(CONSOLE_SELECTION_INFO *sel);
@@ -819,6 +819,7 @@ class CRealConsole
 			DWORD  nServerPID;     // PID закрывающегося сервера
 			DWORD  nRecieveTick;   // Tick, когда получено сообщение о закрытии
 			HANDLE hServerProcess; // Handle процесса сервера
+			BOOL   bBackActivated; // Main server was activated back, when AltServer was closed
 		} m_ServerClosing;
 		int mn_ShellExitCode;
 		//

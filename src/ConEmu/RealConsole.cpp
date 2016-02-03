@@ -3060,7 +3060,16 @@ DWORD CRealConsole::MonitorThreadWorker(bool bDetached, bool& rbChildProcessCrea
 						// Основной сервер закрылся (консоль закрыта), идем на выход
 						break;
 					}
-					else if (mp_RBuf->ApplyConsoleInfo())
+
+					if (mb_InCloseConsole && !isServerClosing(true) && m_ServerClosing.bBackActivated)
+					{
+						// Revive console after switching back to MainServer from AltServer
+						// (console was not actually closed on request)
+						mb_InCloseConsole = false;
+						m_ServerClosing.bBackActivated = FALSE;
+					}
+
+					if (mp_RBuf->ApplyConsoleInfo())
 					{
 						lbForceUpdate = true;
 					}
@@ -7310,7 +7319,7 @@ bool CRealConsole::isServerAvailable()
 	return true;
 }
 
-bool CRealConsole::isServerClosing()
+bool CRealConsole::isServerClosing(bool bStrict /*= false*/)
 {
 	if (!this)
 	{
@@ -7323,7 +7332,7 @@ bool CRealConsole::isServerClosing()
 
 	// Otherwise we can get weird errors 'Maximum real console size was reached'
 	// when closing a tab with several splits in it...
-	if (mb_InCloseConsole)
+	if (!bStrict && mb_InCloseConsole)
 		return true;
 
 	return false;
@@ -7440,7 +7449,7 @@ bool CRealConsole::InitAltServer(DWORD nAltServerPID/*, HANDLE hAltServer*/)
 	////mh_AltSrv = hAltServer;
 	SetAltSrvPID(nAltServerPID/*, hAltServer*/);
 
-	if (!nAltServerPID && isServerClosing())
+	if (!nAltServerPID && isServerClosing(true))
 	{
 		// Переоткрывать пайпы смысла нет, консоль закрывается
 		SetSwitchActiveServer(false, eResetEvent, eDontChange);
@@ -7495,9 +7504,13 @@ bool CRealConsole::ReopenServerPipes()
 	#endif
 	HANDLE hSrvHandle = mh_MainSrv; // (nSrvPID == mn_MainSrv_PID) ? mh_MainSrv : mh_AltSrv;
 
-	if (isServerClosing())
+	if (isServerClosing(true))
 	{
 		_ASSERTE(FALSE && "ReopenServerPipes was called in MainServerClosing");
+	}
+	else if (mb_InCloseConsole)
+	{
+		m_ServerClosing.bBackActivated = TRUE;
 	}
 
 	InitNames();
