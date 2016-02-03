@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2015 Maximus5
+Copyright (c) 2015-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -34,13 +34,21 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 class CConEmuMain;
 class CRealConsole;
 
+enum AltCharAction
+{
+	eAltCharNone = 0, // We are not in Alt+Number sequence
+	eAltCharAccept,   // Rely on OS
+	eAltCharSkip,     // Processed internally
+};
+
 class CAltNumpad
 {
 protected:
 	CConEmuMain* mp_ConEmu;
-	bool mb_WaitingForAltChar;
+	AltCharAction m_WaitingForAltChar;
 	bool mb_InAltNumber;
-	u64 mn_AltNumber;
+	UINT mn_NumberBase; // 10 or 16
+	u64  mn_AltNumber;
 
 public:
 	CAltNumpad(CConEmuMain* apConEmu);
@@ -52,6 +60,6 @@ public:
 
 protected:
 	void DumpChars(wchar_t* asChars);
-	void DumpAltNumber();
+	AltCharAction DumpAltNumber();
 	bool isAltNumpad();
 };
