@@ -88,7 +88,7 @@ struct ConsoleSectionHelper
 {
 	CONSOLE_INFO* pConsoleInfo;
 	HANDLE hSection;
-	const UINT ConsoleSectionSize = sizeof(CONSOLE_INFO)+1024;
+	static const UINT ConsoleSectionSize = sizeof(CONSOLE_INFO)+1024;
 
 	ConsoleSectionHelper()
 		: pConsoleInfo(NULL)
