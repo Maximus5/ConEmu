@@ -19,6 +19,19 @@ http://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2016.2.4
+* Support `Alt`-`+`-`HexNumber` input internally, including surrogate pair generation.
+  ConEmu is able to convert entered codepoints to surrogate pairs,
+  so you may enter uncommon symbols outside from BMP. Examples below.
+  * Double-struck ‘𝔸’: press `Alt`-`+`-`1D538`.
+  * Sushi emoticon ‘🍣’: press `Alt`-`+`-`1F363`
+  More information: https://conemu.github.io/en/AltNumpad.html
+* Screen was not updated if shell (cmd for example) was activated back
+  from closed Far Manager, if close has been done by cross-click
+  and ‘Safe Far Close’ macro.
+* gh-524: Deal with entangled window list returned by Far API.
+
+
 2016.2.2
 * New TabMenu items hints (shown in StatusBar when hovering menu with mouse).
 * Show confirmation if Shift is pressed when selecting menu items:
