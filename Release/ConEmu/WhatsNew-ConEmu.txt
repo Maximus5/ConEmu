@@ -19,6 +19,25 @@ http://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2015.8.13g
+* Don't try to inject hooks into ConEmuC processes.
+* Allow AutoUpdates to ‘Stable’ builds.
+* Renew portable and xml notes.
+* gh-491: Example Far Macro `ConEmu.CtrlShiftT.lua` had wrong hotkey.
+* Prevent double execution of script specified in "AutoRun" cmd's registry key.
+  For example, when "cmd /k CmdInit.cmd" was started (default for {cmd} task)
+  triggering `ver` command caused execution of `test.cmd` again.
+
+  [HKEY_CURRENT_USER\Software\Microsoft\Command Processor]
+  "AutoRun"="test.cmd"
+
+* gh-470: Double click word selection was broken.
+* gh-517: In Quake mode Maximized/Fullscreen was dropped after ConEmu restart.
+* gh-297: Fix keyboard delay (Windows 7).
+* gh-486: Use https for github links.
+* gh-524: Deal with entangled window list returned by Far API.
+
+
 2015.8.13f
 * gh#467: Startup crash if startup task was renamed.
 * Arbitrary shells (not a Task) were not accepted in FastConfiguration dialog.
