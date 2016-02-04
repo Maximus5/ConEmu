@@ -507,6 +507,38 @@ static INT_PTR WExists(const WindowInfo& C, const MArray<WindowInfo>& wList)
 	return -1;
 }
 
+static INT_PTR WLoadWindows(MArray<WindowInfo>& wCurrent, int windowCount)
+{
+	WindowInfo WInfo;
+	wCurrent.clear();
+
+	// Load window list
+	for (int i = 0; i < windowCount; i++)
+	{
+		ZeroStruct(WInfo);
+		WInfo.StructSize = sizeof(WInfo);
+		WInfo.Pos = i;
+		if (!InfoW2800->AdvControl(&guid_ConEmu, ACTL_GETWINDOWINFO, 0, &WInfo))
+			continue;
+		if (WInfo.Type != WTYPE_EDITOR && WInfo.Type != WTYPE_VIEWER && WInfo.Type != WTYPE_PANELS)
+			continue;
+
+		if (WInfo.Type == WTYPE_PANELS)
+		{
+			if ((wCurrent.size() > 0) && (wCurrent[0].Type == WTYPE_PANELS))
+				wCurrent[0] = WInfo;
+			else
+				wCurrent.insert(0, WInfo);
+		}
+		else
+		{
+			wCurrent.push_back(WInfo);
+		}
+	}
+
+	return wCurrent.size();
+}
+
 bool CPluginW2800::UpdateConEmuTabsApi(int windowCount)
 {
 	if (!InfoW2800 || !InfoW2800->AdvControl || gbIgnoreUpdateTabs)
@@ -534,28 +566,8 @@ bool CPluginW2800::UpdateConEmuTabsApi(int windowCount)
 	// Another weird Far API breaking change. How more?..
 	MArray<WindowInfo> wCurrent;
 	// Load window list
-	for (int i = 0; i < windowCount; i++)
-	{
-		ZeroStruct(WInfo);
-		WInfo.StructSize = sizeof(WInfo);
-		WInfo.Pos = i;
-		if (!InfoW2800->AdvControl(&guid_ConEmu, ACTL_GETWINDOWINFO, 0, &WInfo))
-			continue;
-		if (WInfo.Type != WTYPE_EDITOR && WInfo.Type != WTYPE_VIEWER && WInfo.Type != WTYPE_PANELS)
-			continue;
+	WLoadWindows(wCurrent, windowCount);
 
-		if (WInfo.Type == WTYPE_PANELS)
-		{
-			if ((wCurrent.size() > 0) && (wCurrent[0].Type == WTYPE_PANELS))
-				wCurrent[0] = WInfo;
-			else
-				wCurrent.insert(0, WInfo);
-		}
-		else
-		{
-			wCurrent.push_back(WInfo);
-		}
-	}
 	// Clear closed windows
 	for (INT_PTR i = 0; i < pwList->size();)
 	{
@@ -673,7 +685,7 @@ bool CPluginW2800::UpdateConEmuTabsApi(int windowCount)
 				}
 
 				TODO("Определение ИД редактора/вьювера");
-				lbCh |= AddTab(tabCount, WInfo.Pos, false/*losingFocus*/, false/*editorSave*/,
+				lbCh |= AddTab(tabCount, i, false/*losingFocus*/, false/*editorSave*/,
 				               WInfo.Type, WInfo.Name, /*editorSave ? ei.FileName :*/ NULL,
 				               (WInfo.Flags & WIF_CURRENT), (WInfo.Flags & WIF_MODIFIED), (WInfo.Flags & WIF_MODAL),
 							   WInfo.Id);
@@ -771,7 +783,20 @@ void CPluginW2800::SetWindow(int nTab)
 	if (!InfoW2800 || !InfoW2800->AdvControl)
 		return;
 
-	if (InfoW2800->AdvControl(&guid_ConEmu, ACTL_SETCURRENTWINDOW, nTab, NULL))
+	// We have to find **current** window ID because Far entangles them constantly
+	INT_PTR iNewPos = -1;
+	if (pwList && (nTab >= 0) && (nTab < pwList->size()))
+	{
+		MArray<WindowInfo> wCurrent;
+		// Load window list
+		WLoadWindows(wCurrent, GetWindowCount());
+		INT_PTR i = WExists((*pwList)[nTab], wCurrent);
+		if (i >= 0)
+			iNewPos = wCurrent[i].Pos;
+	}
+
+	if ((iNewPos >= 0)
+		&& InfoW2800->AdvControl(&guid_ConEmu, ACTL_SETCURRENTWINDOW, iNewPos, NULL))
 		InfoW2800->AdvControl(&guid_ConEmu, ACTL_COMMIT, 0, 0);
 }
 
