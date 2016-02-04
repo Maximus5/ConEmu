@@ -43,3 +43,5 @@ help
 x64
 
 /CreateRelease.cmd
+
+/nuget

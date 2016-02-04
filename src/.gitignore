@@ -38,3 +38,5 @@ Test/
 
 /.idea
 /CMakeLists.txt
+
+/modules
