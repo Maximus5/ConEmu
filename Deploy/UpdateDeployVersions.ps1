@@ -168,7 +168,7 @@ $txt = Get-Content -Raw $WhatsNew -Encoding Utf8
 if ($txt.Contains($build_year3)) {
   Write-Host "Whats-New already has $build_year3 label"
 } else {
-  $m = ([regex]"\b20\d\d\.\d+\.\d+\b").Match($txt)
+  $m = ([regex]"\b20\d\d\.\d+\.\d+\w*\b").Match($txt)
   if (($m -eq $null) -Or (-Not $m.Success)) {
     Write-Host -ForegroundColor Red "Whats-New.txt parsing failed!"
     $host.SetShouldExit(101)
