@@ -1086,6 +1086,7 @@
     <ClInclude Include="..\common\ConEmuCheck.h" />
     <ClInclude Include="..\common\ConEmuCheckEx.h" />
     <ClInclude Include="..\common\ConEmuColors.h" />
+    <ClInclude Include="..\common\kl_parts.h" />
     <ClInclude Include="..\common\MSectionSimple.h" />
     <ClInclude Include="..\common\MStrDup.h" />
     <ClInclude Include="..\common\UnicodeChars.h" />

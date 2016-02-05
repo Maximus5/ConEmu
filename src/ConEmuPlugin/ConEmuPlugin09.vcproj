@@ -452,6 +452,7 @@
       <File RelativePath="..\common\EmergencyShow.h" />
       <File RelativePath="..\common\farcolor1.hpp" />
       <File RelativePath="..\common\HkFunc.h" />
+      <File RelativePath="..\common\kl_parts.h" />
       <File RelativePath="..\common\Memory.h" />
       <File RelativePath="..\common\Monitors.h" />
       <File RelativePath="..\common\MSection.h" />

@@ -943,6 +943,7 @@ if exist C:\Utils\FAR170\Plugins\ConEmu\Lines\ConEmuLn.dll copy "$(TargetDir)Con
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\common\Common.h" />
+    <ClInclude Include="..\common\kl_parts.h" />
     <ClInclude Include="..\common\Memory.h" />
     <ClInclude Include="..\common\MStrSafe.h" />
     <ClInclude Include="..\common\plugin_helper.h" />

@@ -424,6 +424,7 @@
       <File RelativePath="..\common\Common.h" />
       <File RelativePath="..\common\ConEmuCheck.h" />
       <File RelativePath="..\common\HkFunc.h" />
+      <File RelativePath="..\common\kl_parts.h" />
       <File RelativePath="..\common\Memory.h" />
       <File RelativePath="..\common\MSection.h" />
       <File RelativePath="..\common\MSectionSimple.h" />

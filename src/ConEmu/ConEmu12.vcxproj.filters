@@ -377,9 +377,6 @@
     <ClInclude Include="Header.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="kl_parts.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="LoadImg.h">
       <Filter>Header Files</Filter>
     </ClInclude>

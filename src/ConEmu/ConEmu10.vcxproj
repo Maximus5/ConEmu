@@ -1055,6 +1055,7 @@
     <ClInclude Include="..\common\defines.h" />
     <ClInclude Include="..\common\execute.h" />
     <ClInclude Include="..\common\HkFunc.h" />
+    <ClInclude Include="..\common\kl_parts.h" />
     <ClInclude Include="..\common\MArray.h" />
     <ClInclude Include="..\common\MCircular.h" />
     <ClInclude Include="..\common\md5.h" />
@@ -1127,7 +1128,6 @@
     <ClInclude Include="IconList.h" />
     <ClInclude Include="ImgButton.h" />
     <ClInclude Include="Inside.h" />
-    <ClInclude Include="kl_parts.h" />
     <ClInclude Include="LoadImg.h" />
     <ClInclude Include="Macro.h" />
     <ClInclude Include="Match.h" />

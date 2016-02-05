@@ -516,6 +516,7 @@
       <File RelativePath="..\common\Dump.h" />
       <File RelativePath="..\common\execute.h" />
       <File RelativePath="..\common\HkFunc.h" />
+      <File RelativePath="..\common\kl_parts.h" />
       <File RelativePath="..\common\MArray.h" />
       <File RelativePath="..\common\MCircular.h" />
       <File RelativePath="..\common\md5.h" />
@@ -590,7 +591,6 @@
       <File RelativePath=".\IconList.h" />
       <File RelativePath=".\ImgButton.h" />
       <File RelativePath=".\Inside.h" />
-      <File RelativePath=".\kl_parts.h" />
       <File RelativePath=".\LoadImg.h" />
       <File RelativePath=".\Macro.h" />
       <File RelativePath=".\Match.h" />

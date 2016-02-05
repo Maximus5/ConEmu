@@ -399,6 +399,7 @@
       <File RelativePath="..\common\ConsoleAnnotation.h" />
       <File RelativePath="..\common\ConsoleRead.h" />
       <File RelativePath="..\common\HkFunc.h" />
+      <File RelativePath="..\common\kl_parts.h" />
       <File RelativePath="..\common\MAssert.h" />
       <File RelativePath="..\common\Memory.h" />
       <File RelativePath="..\common\MSecurity.h" />

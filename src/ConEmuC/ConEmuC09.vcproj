@@ -409,6 +409,7 @@
       <File RelativePath="..\common\CEStr.h" />
       <File RelativePath="..\common\CmdLine.h" />
       <File RelativePath="..\common\HkFunc.h" />
+      <File RelativePath="..\common\kl_parts.h" />
       <File RelativePath="..\common\Memory.h" />
       <File RelativePath="..\common\MSectionSimple.h" />
       <File RelativePath="..\common\MStrDup.h" />

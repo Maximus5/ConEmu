@@ -405,6 +405,7 @@
       <File RelativePath="..\common\HandleKeeper.h" />
       <File RelativePath="..\common\HkFunc.h" />
       <File RelativePath="..\common\InQueue.h" />
+      <File RelativePath="..\common\kl_parts.h" />
       <File RelativePath="..\common\MCircular.h" />
       <File RelativePath="..\common\MConHandle.h" />
       <File RelativePath="..\common\Memory.h" />

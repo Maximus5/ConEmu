@@ -902,6 +902,7 @@
     <ClInclude Include="..\common\Execute.h" />
     <ClInclude Include="..\common\HkFunc.h" />
     <ClInclude Include="..\common\InQueue.h" />
+    <ClInclude Include="..\common\kl_parts.h" />
     <ClInclude Include="..\common\MArray.h" />
     <ClInclude Include="..\common\MCircular.h" />
     <ClInclude Include="..\common\MConHandle.h" />

@@ -984,6 +984,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\common\Common.h" />
+    <ClInclude Include="..\common\kl_parts.h" />
     <ClInclude Include="..\common\MSectionSimple.h" />
     <ClInclude Include="..\common\MStrDup.h" />
     <ClInclude Include="..\common\WThreads.h" />

@@ -917,6 +917,7 @@
     <ClInclude Include="..\common\ConsoleRead.h" />
     <ClInclude Include="..\common\FarVersion.h" />
     <ClInclude Include="..\common\HkFunc.h" />
+    <ClInclude Include="..\common\kl_parts.h" />
     <ClInclude Include="..\common\MAssert.h" />
     <ClInclude Include="..\common\Memory.h" />
     <ClInclude Include="..\common\MSecurity.h" />

@@ -963,6 +963,7 @@
     <ClInclude Include="..\common\EmergencyShow.h" />
     <ClInclude Include="..\common\farcolor1.hpp" />
     <ClInclude Include="..\common\HkFunc.h" />
+    <ClInclude Include="..\common\kl_parts.h" />
     <ClInclude Include="..\common\Memory.h" />
     <ClInclude Include="..\common\Monitors.h" />
     <ClInclude Include="..\common\MSection.h" />
