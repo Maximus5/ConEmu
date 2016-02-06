@@ -153,7 +153,7 @@ LRESULT CALLBACK LLKeybHook(int nCode,WPARAM wParam,LPARAM lParam)
 		{
 			WPARAM lMods = 0; BOOL bModsLoaded = FALSE;
 			BOOL lbHooked = FALSE, lbConsoleKey = FALSE;
-			if ((wParam == WM_KEYDOWN))
+			if (wParam == WM_KEYDOWN)
 			{
 				//if (pKB->vkCode >= (UINT)'0' && pKB->vkCode <= (UINT)'9') /*|| pKB->vkCode == (int)' '*/
 				//	lbHooked = TRUE;
