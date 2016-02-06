@@ -12488,7 +12488,6 @@ bool CRealConsole::TerminateAllButShell(bool abConfirm)
 bool CRealConsole::TerminateActiveProcessConfirm(DWORD nPID)
 {
 	int nBtn;
-	wchar_t szActive[64] = {};
 
 	DWORD nActivePID = nPID ? nPID : GetActivePID();
 
