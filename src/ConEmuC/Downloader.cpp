@@ -1624,7 +1624,7 @@ DWORD_PTR WINAPI DownloadCommand(CEDownloadCommand cmd, int argc, CEDownloadErro
 
 bool PrintToConsole(HANDLE hCon, LPCWSTR asData, int anLen)
 {
-	bool bSuccess;
+	bool bSuccess = false;
 	bool bNeedClose = false;
 	DWORD nWritten;
 
