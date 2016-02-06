@@ -8323,8 +8323,6 @@ BOOL cmd_TerminatePid(CESERVER_REQ& in, CESERVER_REQ** out)
 		return FALSE;
 
 	BOOL lbRc = FALSE;
-	HANDLE hProcess = NULL;
-	BOOL bNeedClose = FALSE;
 	DWORD nErrCode = 0;
 	DWORD nCount = in.dwData[0];
 	LPDWORD pPID = in.dwData+1;
@@ -8362,7 +8360,6 @@ BOOL cmd_AffinityPriority(CESERVER_REQ& in, CESERVER_REQ** out)
 
 	BOOL lbRc = FALSE;
 	HANDLE hProcess = NULL;
-	BOOL bNeedClose = FALSE;
 	DWORD nErrCode = 0;
 
 	DWORD_PTR nAffinity = (DWORD_PTR)in.qwData[0];

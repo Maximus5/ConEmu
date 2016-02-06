@@ -1614,7 +1614,7 @@ void DoDllStop(bool bFinal, ConEmuHkDllState bFromTerminate)
 	wchar_t szDoneInfo[128];
 	{
 	FILETIME ftStart = {}, ft1 = {}, ft2 = {}, ft3 = {}, ftCur = {};
-	SYSTEMTIME stCur = {}, stRun = {};
+	SYSTEMTIME stCur = {};
 	GetProcessTimes(GetCurrentProcess(), &ftStart, &ft1, &ft2, &ft3);
 	GetSystemTime(&stCur); SystemTimeToFileTime(&stCur, &ftCur);
 	int iDuration = (int)(((*(__int64*)&ftCur) - (*(__int64*)&ftStart)) / 10000);

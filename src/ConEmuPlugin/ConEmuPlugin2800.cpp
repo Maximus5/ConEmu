@@ -544,7 +544,7 @@ bool CPluginW2800::UpdateConEmuTabsApi(int windowCount)
 	if (!InfoW2800 || !InfoW2800->AdvControl || gbIgnoreUpdateTabs)
 		return false;
 
-	bool lbCh = false, lbDummy = false;
+	bool lbCh = false;
 	WindowInfo WInfo = {sizeof(WindowInfo)};
 	wchar_t szWNameBuffer[CONEMUTABMAX];
 	int tabCount = 0;
