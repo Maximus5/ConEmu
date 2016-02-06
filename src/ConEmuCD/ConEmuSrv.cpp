@@ -4495,7 +4495,7 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 			if ((nAltWait == (WAIT_OBJECT_0+0)) || (nAltWait == (WAIT_OBJECT_0+1)))
 			{
 				// Если это закрылся AltServer
-				if ((nAltWait == (WAIT_OBJECT_0+0)))
+				if (nAltWait == (WAIT_OBJECT_0+0))
 				{
 					MSectionLock CsAlt; CsAlt.Lock(gpSrv->csAltSrv, TRUE, 10000);
 
