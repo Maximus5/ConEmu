@@ -3469,7 +3469,7 @@ HKEY CRealConsole::PrepareConsoleRegistryKey()
 			case REG_DWORD:
 				lRegRc = RegQueryValueEx(hkConsole, BufferValues[i].pszName, NULL, &nType, (LPBYTE)&nValue, &nSize);
 				if ((lRegRc != 0) || (nType != REG_DWORD) || (nSize != sizeof(DWORD))
-					|| (bHasMinMax && (nValue < BufferValues[i].nMin) || (nValue > BufferValues[i].nMax))
+					|| (bHasMinMax && ((nValue < BufferValues[i].nMin) || (nValue > BufferValues[i].nMax)))
 					|| (!bHasMinMax && (nValue != BufferValues[i].nDef))
 					)
 				{
