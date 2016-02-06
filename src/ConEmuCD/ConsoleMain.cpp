@@ -7145,7 +7145,7 @@ BOOL cmd_SetSizeXXX_CmdStartedFinished(CESERVER_REQ& in, CESERVER_REQ** out)
 		//memmove(&nBufferHeight, in.Data, sizeof(USHORT));
 		nBufferHeight = in.SetSize.nBufferHeight;
 
-		if (nBufferHeight == -1)
+		if (nBufferHeight == (USHORT)-1)
 		{
 			// Для 'far /w' нужно оставить высоту буфера!
 			if (in.SetSize.size.Y < gpSrv->sbi.dwSize.Y
