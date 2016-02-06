@@ -1121,9 +1121,9 @@ LPWSTR ConEmuMacro::ExecuteMacro(LPWSTR asMacro, CRealConsole* apRCon, bool abFr
 
 LRESULT ConEmuMacro::ExecuteMacroSync(WPARAM wParam, LPARAM lParam)
 {
-	if (wParam < 0 || wParam >= countof(Functions))
+	if ((INT_PTR)wParam < 0 || wParam >= countof(Functions))
 	{
-		_ASSERTE(wParam >= 0 && wParam < countof(Functions));
+		_ASSERTE((INT_PTR)wParam >= 0 && wParam < countof(Functions));
 		return 0;
 	}
 
