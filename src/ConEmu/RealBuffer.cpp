@@ -3237,7 +3237,7 @@ bool CRealBuffer::PatchMouseCoords(int& x, int& y, COORD& crMouse)
 	int nVConHeight = mp_RCon->VCon()->Height;
 
 	if (bMouse
-		&& ((crMouse.Y == con.m_sbi.srWindow.Top) && (y >= SELMOUSEAUTOSCROLLPIX))
+		&& (((crMouse.Y == con.m_sbi.srWindow.Top) && (y >= SELMOUSEAUTOSCROLLPIX)))
 			|| ((crMouse.Y == con.m_sbi.srWindow.Bottom) && (y <= (nVConHeight-SELMOUSEAUTOSCROLLPIX))))
 	{
 		DEBUGSTRMOUSE(L"Nothing need to be patched, coordinates are OK (2)\n");
