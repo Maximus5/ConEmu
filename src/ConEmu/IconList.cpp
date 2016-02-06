@@ -226,6 +226,7 @@ int CIconList::CreateTabIconInt(LPCWSTR asIconDescr, bool bAdmin, LPCWSTR asWork
 	LPCWSTR lpszExt = NULL;
 	LPCWSTR lpszIndex = NULL;
 	int nIndex = 0;
+	bool bDirChanged = false;
 
 	if (!szLoadFile.Set(pszExpanded ? pszExpanded : asIconDescr))
 	{
@@ -245,7 +246,6 @@ int CIconList::CreateTabIconInt(LPCWSTR asIconDescr, bool bAdmin, LPCWSTR asWork
 		}
 	}
 
-	bool bDirChanged = false;
 	if (asWorkDir && *asWorkDir)
 	{
 		// Executable (or icon) file may be not availbale by %PATH%, let "cd" to it...
