@@ -400,7 +400,7 @@ bool CAttachDlg::CanAttachWindow(HWND hFind, DWORD nSkipPID, CProcessData* apPro
 	if (gpSetCls->isAdvLogging)
 	{
 		wchar_t szLogInfo[MAX_PATH*3];
-		_wsprintf(szLogInfo, SKIPLEN(countof(szLogInfo)) L"Attach:%s x%08X/x%08X/x%08X {%s} \"%s\"", LODWORD(hFind), nStyle, nStyleEx, Info.szClass, Info.szTitle);
+		_wsprintf(szLogInfo, SKIPLEN(countof(szLogInfo)) L"Attach:%s x%08X/x%08X/x%08X {%s} \"%s\"", Info.szExeName, LODWORD(hFind), nStyle, nStyleEx, Info.szClass, Info.szTitle);
 		CVConGroup::LogString(szLogInfo);
 	}
 
