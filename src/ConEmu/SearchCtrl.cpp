@@ -371,8 +371,10 @@ static LRESULT WINAPI EditIconHintProc(HWND hEditCtrl, UINT Msg, WPARAM wParam, 
 					hCtrlOver = hSubItem;
 				}
 				if (hCtrlOver)
+				{
 					SendMessage(hCtrlOver, Msg, wParam, lParam);
-				break;
+					break;
+				}
 			}
 		}
 		break;
