@@ -64,12 +64,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	#endif
 #endif
 
-#ifdef KL_MEM
-#include "c:\\lang\\kl.h"
-#else
-#include "kl_parts.h"
-#endif
-
 
 #include "globals.h"
 #include "resource.h"
