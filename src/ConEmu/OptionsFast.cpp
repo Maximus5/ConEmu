@@ -1850,7 +1850,13 @@ static bool WINAPI CreateWinSdkTasks(HKEY hkVer, LPCWSTR pszVer, LPARAM lParam)
 				CEStr szName(lstrmerge(L"SDK::WinSDK ", pszVer));
 				if (szName)
 				{
+					SettingsLoadedFlags old = sAppendMode;
+					if (!(sAppendMode & slf_AppendTasks))
+						sAppendMode = (slf_AppendTasks|slf_RewriteExisting);
+
 					CreateDefaultTask(szName, L"", szFull);
+
+					sAppendMode = old;
 				}
 			}
 		}
@@ -1911,7 +1917,13 @@ static bool WINAPI CreateVCTasks(HKEY hkVer, LPCWSTR pszVer, LPARAM lParam)
 					lstrmerge(&pszFull.ms_Val, L" -new_console:C:\"", pszIconSource, pszIconSfx);
 				}
 
+				SettingsLoadedFlags old = sAppendMode;
+				if (!(sAppendMode & slf_AppendTasks))
+					sAppendMode = (slf_AppendTasks | slf_RewriteExisting);
+
 				CreateDefaultTask(pszName, L"", pszFull);
+
+				sAppendMode = old;
 			}
 		}
 	}

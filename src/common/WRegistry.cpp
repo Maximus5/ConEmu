@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2014 Maximus5
+Copyright (c) 2014-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -34,35 +34,50 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "WObjects.h"
 #include "WRegistry.h"
 
+// typedef bool (WINAPI* RegEnumKeysCallback)(HKEY hk, LPCWSTR pszSubkeyName, LPARAM lParam);
+
 int RegEnumKeys(HKEY hkRoot, LPCWSTR pszParentPath, RegEnumKeysCallback fn, LPARAM lParam)
 {
 	int iRc = -1;
 	HKEY hk = NULL, hkChild = NULL;
 	bool bContinue = true;
 	LONG lrc;
+	bool ib64 = IsWindows64();
 
-	if (0 == (lrc = RegOpenKeyEx(hkRoot, pszParentPath, 0, KEY_READ, &hk)))
+	for (int s = 0; s < (ib64 ? 2 : 1); s++)
 	{
-		iRc = 0;
-		UINT n = 0;
-		wchar_t szSubKey[MAX_PATH] = L""; DWORD cchMax = countof(szSubKey) - 1;
-
-		while (0 == (lrc = RegEnumKeyEx(hk, n++, szSubKey, &cchMax, NULL, NULL, NULL, NULL)))
+		DWORD samDesired = KEY_READ;
+		if (ib64)
 		{
-			if (0 == (lrc = RegOpenKeyEx(hk, szSubKey, 0, KEY_READ, &hkChild)))
-			{
-				if (fn != NULL)
-				{
-					if (!fn(hkChild, szSubKey, lParam))
-						break;
-				}
-				iRc++;
-				RegCloseKey(hkChild);
-			}
-			cchMax = countof(szSubKey) - 1;
+			if (s == 0)
+				samDesired |= WIN3264TEST(KEY_WOW64_32KEY,KEY_WOW64_64KEY);
+			else
+				samDesired |= WIN3264TEST(KEY_WOW64_64KEY,KEY_WOW64_32KEY);
 		}
 
-		RegCloseKey(hk);
+		if (0 == (lrc = RegOpenKeyEx(hkRoot, pszParentPath, 0, samDesired, &hk)))
+		{
+			iRc = 0;
+			UINT n = 0;
+			wchar_t szSubKey[MAX_PATH] = L""; DWORD cchMax = countof(szSubKey) - 1;
+
+			while (0 == (lrc = RegEnumKeyEx(hk, n++, szSubKey, &cchMax, NULL, NULL, NULL, NULL)))
+			{
+				if (0 == (lrc = RegOpenKeyEx(hk, szSubKey, 0, samDesired, &hkChild)))
+				{
+					if (fn != NULL)
+					{
+						if (!fn(hkChild, szSubKey, lParam))
+							break;
+					}
+					iRc++;
+					RegCloseKey(hkChild);
+				}
+				cchMax = countof(szSubKey) - 1;
+			}
+
+			RegCloseKey(hk);
+		}
 	}
 
 	return iRc;
