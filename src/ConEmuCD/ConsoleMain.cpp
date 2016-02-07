@@ -3663,7 +3663,7 @@ void ArgGuiMacro(CEStr& szArg, MacroInstance& Inst)
 							Sleep(100);
 						}
 						// Recheck
-						if (Inst.hConEmuWnd = GetConEmuExeHWND(Inst.nPID))
+						if ((Inst.hConEmuWnd = GetConEmuExeHWND(Inst.nPID)) != NULL)
 							break; // Found
 					} while ((GetTickCount() - nStartTick) <= nDelay);
 					// Stop checking
