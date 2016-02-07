@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2014-2015 Maximus5
+Copyright (c) 2014-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -318,6 +318,22 @@ void DebugStrUnitTest()
 		_ASSERTE(iCmp == 0 && str5.ms_Val && str3.ms_Val != str1.ms_Val);
 	}
 	#endif
+
+	{
+		CEStr strSelf;
+		const wchar_t szTest1[] = L"Just a test";
+		const wchar_t szTest2[] = L"Just a";
+		const wchar_t szTest3[] = L"a";
+		strSelf.Set(szTest1, 64); // Try to assign larger length, must accept ASCIIZ string length
+		iCmp = lstrcmp(strSelf, szTest1);
+		_ASSERTE(iCmp == 0);
+		strSelf.Set((LPCTSTR)strSelf, 6);
+		iCmp = lstrcmp(strSelf, szTest2);
+		_ASSERTE(iCmp == 0);
+		strSelf.Set(((LPCTSTR)strSelf) + 5, 1);
+		iCmp = lstrcmp(strSelf, szTest3);
+		_ASSERTE(iCmp == 0);
+	}
 
 	iCmp = lstrcmp(str1, pszTest);
 	_ASSERTE(iCmp == 0);
