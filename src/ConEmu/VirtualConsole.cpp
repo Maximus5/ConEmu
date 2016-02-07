@@ -2940,7 +2940,10 @@ void CVirtualConsole::UpdateText()
 			rect.bottom = rect.top + nFontHeight;
 			rect.right = part->PositionX + part->TotalWidth;
 
-			while (nextPart && (nextPart->Attrs[0].crBackColor == attr.crBackColor))
+			while (nextPart
+				&& (nextPart->Attrs[0].crBackColor == attr.crBackColor)
+				&& (nextPart->Attrs[0].nBackIdx == attr.nBackIdx)
+				)
 			{
 				if (!lp.GetNextPart(partIndex, part, nextPart))
 				{
