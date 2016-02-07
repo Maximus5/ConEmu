@@ -64,6 +64,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "SetCmdTask.h"
 #include "Recreate.h"
 #include "DefaultTerm.h"
+#include "IconList.h"
 #include "UnitTests.h"
 #include "MyClipboard.h"
 #include "version.h"
@@ -2864,9 +2865,12 @@ static HRESULT _CreateShellLink(PCWSTR pszArguments, PCWSTR pszPrefix, PCWSTR ps
 
 			// Иконка
 			CEStr szTmp;
-			CEStr szIcon;
-			LPCWSTR pszTemp = pszArguments, pszIcon = NULL;
-			wchar_t* pszBatch = NULL;
+			CEStr szIcon; int iIcon = 0;
+			CEStr szBatch;
+			LPCWSTR pszTemp = pszArguments;
+			LPCWSTR pszIcon = NULL;
+			RConStartArgs args;
+
 			while (NextArg(&pszTemp, szTmp) == 0)
 			{
 				if (lstrcmpi(szTmp, L"/icon") == 0)
@@ -2880,35 +2884,55 @@ static HRESULT _CreateShellLink(PCWSTR pszArguments, PCWSTR pszPrefix, PCWSTR ps
 					if ((*pszTemp == CmdFilePrefix)
 						|| (*pszTemp == TaskBracketLeft) || (lstrcmp(pszTemp, AutoStartTaskName) == 0))
 					{
-						pszBatch = gpConEmu->LoadConsoleBatch(pszTemp);
+						szBatch = gpConEmu->LoadConsoleBatch(pszTemp);
 					}
 
-					if (pszBatch)
+					if (!szBatch.IsEmpty())
 					{
-						pszTemp = gpConEmu->ParseScriptLineOptions(pszBatch, NULL, NULL);
+						pszTemp = gpConEmu->ParseScriptLineOptions(szBatch, NULL, NULL);
+
+						// Icon may be defined in -new_console:C:...
+						if (!pszIcon)
+						{
+							_ASSERTE(args.pszSpecialCmd == NULL);
+							args.pszSpecialCmd = lstrdup(pszTemp);
+							args.ProcessNewConArg();
+							if (args.pszIconFile)
+								pszIcon = args.pszIconFile;
+						}
 					}
 
-					szTmp.Empty();
-					if (NextArg(&pszTemp, szTmp) == 0)
-						pszIcon = szTmp;
+					if (!pszIcon)
+					{
+						szTmp.Empty();
+						if (NextArg(&pszTemp, szTmp) == 0)
+							pszIcon = szTmp;
+					}
 					break;
 				}
 			}
+
+			szIcon.Empty();
 			if (pszIcon && *pszIcon)
 			{
-				wchar_t* pszIconEx = ExpandEnvStr(pszIcon);
-				if (pszIconEx) pszIcon = pszIconEx;
-				if ((!apiGetFullPathName(pszIcon, szIcon)
+				CEStr lsTempIcon;
+				lsTempIcon.Set(pszIcon);
+				CIconList::ParseIconFileIndex(lsTempIcon, iIcon);
+
+				CEStr szIconExp = ExpandEnvStr(lsTempIcon);
+				LPCWSTR pszSearch = szIconExp.IsEmpty() ? lsTempIcon.ms_Val : szIconExp.ms_Val;
+
+				if ((!apiGetFullPathName(pszSearch, szIcon)
 						|| !FileExists(szIcon))
-					&& !apiSearchPath(NULL, pszIcon, NULL, szIcon)
-					&& !apiSearchPath(NULL, pszIcon, L".exe", szIcon))
+					&& !apiSearchPath(NULL, pszSearch, NULL, szIcon)
+					&& !apiSearchPath(NULL, pszSearch, L".exe", szIcon))
 				{
 					szIcon.Empty();
+					iIcon = 0;
 				}
-				SafeFree(pszIconEx);
 			}
-			SafeFree(pszBatch);
-			psl->SetIconLocation(!szIcon.IsEmpty() ? (LPCWSTR)szIcon : szAppPath, 0);
+
+			psl->SetIconLocation(szIcon.IsEmpty() ? szAppPath : szIcon.ms_Val, iIcon);
 
 			DWORD n = GetCurrentDirectory(countof(szAppPath), szAppPath);
 			if (n && (n < countof(szAppPath)))
