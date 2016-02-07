@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2013-2015 Maximus5
+Copyright (c) 2013-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -61,6 +61,7 @@ public:
 	HICON GetTabIconByIndex(int IconIndex);
 
 	static LPCWSTR GetIconInfoStr(HICON h, wchar_t (&szInfo)[80]);
+	static LPCWSTR ParseIconFileIndex(CEStr& lsIconFileIndex, int& nIndex);
 
 	operator HIMAGELIST() const
 	{

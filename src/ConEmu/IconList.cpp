@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2015 Maximus5
+Copyright (c) 2009-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -224,7 +224,6 @@ int CIconList::CreateTabIconInt(LPCWSTR asIconDescr, bool bAdmin, LPCWSTR asWork
 	HICON hFileIcon = NULL;
 	CEStr szLoadFile;
 	LPCWSTR lpszExt = NULL;
-	LPCWSTR lpszIndex = NULL;
 	int nIndex = 0;
 
 	if (!szLoadFile.Set(pszExpanded ? pszExpanded : asIconDescr))
@@ -232,18 +231,7 @@ int CIconList::CreateTabIconInt(LPCWSTR asIconDescr, bool bAdmin, LPCWSTR asWork
 		goto wrap;
 	}
 
-	lpszExt = PointToExt(szLoadFile);
-	lpszIndex = wcsrchr(lpszExt ? lpszExt : szLoadFile, L',');
-	if (lpszIndex)
-	{
-		szLoadFile.ms_Val[lpszIndex - szLoadFile.ms_Val] = 0;
-
-		nIndex = wcstol(lpszIndex + 1, NULL, 10);
-		if (nIndex == LONG_MAX || nIndex == LONG_MIN)
-		{
-			nIndex = 0;
-		}
-	}
+	lpszExt = ParseIconFileIndex(szLoadFile, nIndex);
 
 	bool bDirChanged = false;
 	if (asWorkDir && *asWorkDir)
@@ -359,6 +347,27 @@ LPCWSTR CIconList::GetIconInfoStr(HICON h, wchar_t (&szInfo)[80])
 	SafeDeleteObject(ii.hbmColor);
 	SafeDeleteObject(ii.hbmMask);
 	return szInfo;
+}
+
+LPCWSTR CIconList::ParseIconFileIndex(CEStr& lsIconFileIndex, int& nIndex)
+{
+	LPCWSTR lpszExt = PointToExt(lsIconFileIndex);
+	LPCWSTR lpszIndex = wcsrchr(lpszExt ? lpszExt : lsIconFileIndex, L',');
+	if (lpszIndex)
+	{
+		lsIconFileIndex.ms_Val[lpszIndex - lsIconFileIndex.ms_Val] = 0;
+
+		nIndex = wcstol(lpszIndex + 1, NULL, 10);
+		if (nIndex == LONG_MAX || nIndex == LONG_MIN)
+		{
+			nIndex = 0;
+		}
+	}
+	else
+	{
+		nIndex = 0;
+	}
+	return lpszExt;
 }
 
 HICON CIconList::GetTabIconByIndex(int IconIndex)
