@@ -1252,6 +1252,9 @@ wchar_t* SelectFile(LPCWSTR asTitle, LPCWSTR asDefFile /*= NULL*/, LPCWSTR asDef
 	ofn.lpstrTitle = asTitle ? asTitle : L"Choose file";
 	ofn.Flags = OFN_ENABLESIZING|OFN_NOCHANGEDIR
 		| OFN_PATHMUSTEXIST|OFN_EXPLORER|OFN_HIDEREADONLY|((nFlags & sff_SaveNewFile) ? OFN_OVERWRITEPROMPT : OFN_FILEMUSTEXIST);
+	// Append extension if user fails to type it
+	if (asDefFile && (asDefFile[0] == L'*' && asDefFile[1] == L'.' && asDefFile[2]))
+		ofn.lpstrDefExt = (asDefFile+2);
 
 	BOOL bRc = (nFlags & sff_SaveNewFile)
 		? GetSaveFileName(&ofn)
