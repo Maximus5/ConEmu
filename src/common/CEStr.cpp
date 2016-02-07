@@ -199,13 +199,28 @@ LPCWSTR CEStr::Set(LPCWSTR asNewValue, INT_PTR anChars /*= -1*/)
 {
 	if (asNewValue)
 	{
-		INT_PTR nNewLen = (anChars == -1) ? lstrlen(asNewValue) : anChars;
+		ssize_t nNewLen = (anChars < 0) ? (ssize_t)wcslen(asNewValue) : klMin(anChars, (ssize_t)wcslen(asNewValue));
+
+		// Assign empty but NOT NULL string
 		if (nNewLen <= 0)
 		{
 			//_ASSERTE(FALSE && "Check, if caller really need to set empty string???");
 			if (GetBuffer(1))
 				ms_Val[0] = 0;
+
 		}
+		// Self pointer assign?
+		else if (ms_Val && (asNewValue >= ms_Val) && (asNewValue < (ms_Val + mn_MaxCount)))
+		{
+			_ASSERTE((asNewValue + nNewLen) < (ms_Val + mn_MaxCount));
+			_ASSERTE(nNewLen < mn_MaxCount);
+
+			if (asNewValue > ms_Val)
+				wmemmove(ms_Val, asNewValue, nNewLen);
+			ms_Val[nNewLen] = 0;
+
+		}
+		// New value
 		else if (GetBuffer(nNewLen))
 		{
 			_ASSERTE(mn_MaxCount > nNewLen); // Must be set in GetBuffer
@@ -214,6 +229,7 @@ LPCWSTR CEStr::Set(LPCWSTR asNewValue, INT_PTR anChars /*= -1*/)
 	}
 	else
 	{
+		// Make it NULL
 		Empty();
 	}
 
