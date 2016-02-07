@@ -4725,7 +4725,7 @@ bool CConEmuSize::isWindowNormal()
 	_ASSERTE((WindowMode == wmNormal) || bZoomed || bIconic || bInTransition);
 	#endif
 
-	if ((WindowMode != wmNormal) || !IsSizeFree())
+	if ((GetWindowMode() != wmNormal) || !IsSizeFree())
 		return false;
 
 	if (::IsIconic(ghWnd))

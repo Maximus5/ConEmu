@@ -1650,6 +1650,9 @@ void CSetDlgButtons::OnBtn_ApplyPos(HWND hDlg, WORD CB, BYTE uCheck)
 			CEStr psW(GetDlgItemTextPtr(hDlg, tWndWidth));
 			CEStr psH(GetDlgItemTextPtr(hDlg, tWndHeight));
 
+			if (!gpConEmu->isWindowNormal())
+				gpConEmu->SetWindowMode(wmNormal);
+
 			bStored = gpConEmu->SetWindowPosSize(psX, psY, psW, psH);
 		}
 		else if (Mode == wmMaximized)
