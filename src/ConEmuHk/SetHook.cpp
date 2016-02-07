@@ -298,7 +298,7 @@ HkModuleInfo* IsHookedModule(HMODULE hModule, LPWSTR pszName = NULL, size_t cchN
 	if (!gpHookedModules)
 	{
 		_ASSERTE(gpHookedModules!=NULL);
-		return false;
+		return NULL;
 	}
 
 	//bool lbHooked = false;

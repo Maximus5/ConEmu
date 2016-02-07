@@ -3663,7 +3663,7 @@ void ArgGuiMacro(CEStr& szArg, MacroInstance& Inst)
 							Sleep(100);
 						}
 						// Recheck
-						if (Inst.hConEmuWnd = GetConEmuExeHWND(Inst.nPID))
+						if (Inst.hConEmuWnd == GetConEmuExeHWND(Inst.nPID))
 							break; // Found
 					} while ((GetTickCount() - nStartTick) <= nDelay);
 					// Stop checking
@@ -7145,7 +7145,7 @@ BOOL cmd_SetSizeXXX_CmdStartedFinished(CESERVER_REQ& in, CESERVER_REQ** out)
 		//memmove(&nBufferHeight, in.Data, sizeof(USHORT));
 		nBufferHeight = in.SetSize.nBufferHeight;
 
-		if (nBufferHeight == -1)
+		if (nBufferHeight == (USHORT)-1)
 		{
 			// Для 'far /w' нужно оставить высоту буфера!
 			if (in.SetSize.size.Y < gpSrv->sbi.dwSize.Y
@@ -8323,8 +8323,6 @@ BOOL cmd_TerminatePid(CESERVER_REQ& in, CESERVER_REQ** out)
 		return FALSE;
 
 	BOOL lbRc = FALSE;
-	HANDLE hProcess = NULL;
-	BOOL bNeedClose = FALSE;
 	DWORD nErrCode = 0;
 	DWORD nCount = in.dwData[0];
 	LPDWORD pPID = in.dwData+1;
@@ -8362,7 +8360,6 @@ BOOL cmd_AffinityPriority(CESERVER_REQ& in, CESERVER_REQ** out)
 
 	BOOL lbRc = FALSE;
 	HANDLE hProcess = NULL;
-	BOOL bNeedClose = FALSE;
 	DWORD nErrCode = 0;
 
 	DWORD_PTR nAffinity = (DWORD_PTR)in.qwData[0];

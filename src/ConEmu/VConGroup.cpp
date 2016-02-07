@@ -1215,7 +1215,7 @@ LRESULT CVConGroup::OnMouseEvent(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 	LRESULT lRc = 0;
 	CVConGroup* pGrp = NULL;
 	POINT pt;
-	HCURSOR hCur;
+	HCURSOR hCur = NULL;
 	UINT nPrevSplit;
 	UINT nNewSplit;
 	RECT rcNewSplit;

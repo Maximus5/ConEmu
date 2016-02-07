@@ -8201,7 +8201,7 @@ UINT CConEmuMain::IsQuakeVisible()
 				_ASSERTE(nVisiblePart <= 100);
 				nVisiblePart = 100;
 			}
-			else if (nVisiblePart < 0)
+			else if ((int)nVisiblePart < 0)
 			{
 				_ASSERTE(nVisiblePart >= 0);
 				nVisiblePart = 0;

@@ -296,7 +296,7 @@ void CEAnsi::WriteAnsiLogA(LPCSTR lpBuffer, DWORD nChars)
 		int iEnterShift = 0;
 		if (gbAnsiLogNewLine)
 		{
-			if ((lpBuffer[0] == '\n') || ((nChars > 1) && (lpBuffer[0] == '\r') && (lpBuffer[0] == '\n')))
+			if ((lpBuffer[0] == '\n') || ((nChars > 1) && (lpBuffer[0] == '\r') && (lpBuffer[1] == '\n')))
 				gbAnsiLogNewLine = false;
 			else if ((pszBuf = (char*)malloc(nChars+1)) != NULL)
 			{
@@ -345,7 +345,7 @@ void CEAnsi::WriteAnsiLogW(LPCWSTR lpBuffer, DWORD nChars)
 	int iEnterShift = 0;
 	if (gbAnsiLogNewLine)
 	{
-		if ((lpBuffer[0] == '\n') || ((nChars > 1) && (lpBuffer[0] == '\r') && (lpBuffer[0] == '\n')))
+		if ((lpBuffer[0] == '\n') || ((nChars > 1) && (lpBuffer[0] == '\r') && (lpBuffer[1] == '\n')))
 			gbAnsiLogNewLine = false;
 		else
 			iEnterShift = 1;

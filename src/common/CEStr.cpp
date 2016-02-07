@@ -48,6 +48,11 @@ CEStr::CEStr(wchar_t* RVAL_REF asPtr)
 	AttachInt(asPtr);
 }
 
+CEStr::CEStr(const CEStr& arg)
+{
+	operator=(arg.operator LPCWSTR());
+}
+
 CEStr::operator LPCWSTR() const
 {
 	return ms_Val;
