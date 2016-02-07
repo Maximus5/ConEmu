@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2012-2015 Maximus5
+Copyright (c) 2012-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -172,7 +172,7 @@ void CDefaultTerminal::StartGuiDefTerm(bool bManual, bool bNoThreading /*= false
 	if (!bManual)
 	{
 		// Refresh settings in the registry
-		_ASSERTE(gpConEmu->mn_StartupFinished == gpConEmu->ss_VConAreCreated);
+		_ASSERTE(gpConEmu->mn_StartupFinished == CConEmuMain::ss_VConAreCreated || gpConEmu->mn_StartupFinished == CConEmuMain::ss_CreateQueueReady);
 		ApplyAndSave(true, true);
 	}
 
