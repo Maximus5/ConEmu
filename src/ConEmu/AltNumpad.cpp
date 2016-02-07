@@ -69,6 +69,10 @@ bool CAltNumpad::isAltNumpad()
 
 bool CAltNumpad::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 {
+	//messg == WM_SYSKEYDOWN(UP), wParam == VK_NUMPAD0..VK_NUMPAD9, lParam == (ex. 0x20490001)
+
+	bool bSkip = false;
+
 	if (m_WaitingForAltChar && (messg == WM_CHAR))
 	{
 		AltCharAction action = m_WaitingForAltChar;
@@ -84,30 +88,10 @@ bool CAltNumpad::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 		// we need to use wider mask to include all codebases in range.
 		ucs32 wc32 = (ucs32)(DWORD)(mn_AltNumber & 0x1FFFFF);
 
-		wchar_t wszChars[3] = {wc, 0};
+		// Reset internal buffer
+		ClearAltNumber(true);
 
-		#if 0
-		// If hexadecimal mode was selected, process codebase internally
-		if (mn_NumberBase == 16)
-		{
-			// Drop invalid codebases
-			if (wc32 > 0x10FFFF)
-			{
-				wszChars[0] = 0;
-			}
-			// To avoid ambiguous surrogates processing, convert
-			// codebases which get into high-surrogate range
-			else if ((wc32 > 0xFFFF /* (1<<16)-1 */) || IS_HIGH_SURROGATE(wc32))
-			{
-				wchar_from_ucs32((ucs32)LODWORD(mn_AltNumber), wszChars);
-			}
-			else
-			{
-				wszChars[0] = (wchar_t)LOWORD(wc32);
-				_ASSERTE(wszChars[1] == 0);
-			}
-		}
-		#endif
+		wchar_t wszChars[3] = {wc, 0};
 
 		// Log received and to be posted data
 		wchar_t szLog[80];
@@ -121,70 +105,95 @@ bool CAltNumpad::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 		// Send chars to console
 		if (wszChars[0] && (action == eAltCharAccept))
 			DumpChars(wszChars);
-		return true;
+
+		bSkip = true; // Don't pass to console
 	}
-
-	//messg == WM_SYSKEYDOWN(UP), wParam == VK_NUMPAD0..VK_NUMPAD9, lParam == (ex. 0x20490001)
-
-	if (!mb_InAltNumber)
+	else if (!mb_InAltNumber)
 	{
 		// Reset flag first
 		m_WaitingForAltChar = eAltCharNone;
 
 		// The context code. The value is 1 if the ALT key is held down while the key is pressed
 		if ((messg != WM_SYSKEYDOWN) || !(lParam & (1 << 29)))
-			return false;
-
-		// No sense to start checks if the key is not keypad number
-		if (!((wParam >= VK_NUMPAD0 && wParam <= VK_NUMPAD9)
-				|| (wParam == VK_ADD) /* enables hexadecimal mode */
-			))
-			return false;
-
-		// No other modifiers are down
-		if (!isAltNumpad())
-			return false;
-
-		// What mode user wants to use?
-		if (wParam != VK_ADD)
 		{
-			// Standard, decimal, we rely on OS
-			mn_AltNumber = (wParam - VK_NUMPAD0);
-			mn_NumberBase = 10;
+			_ASSERTE(bSkip == false); // bypass to console
+		}
+		// No sense to start checks if the key is not keypad number
+		else if (!(
+					(wParam >= VK_NUMPAD0 && wParam <= VK_NUMPAD9)
+					|| (wParam == VK_ADD) /* enables hexadecimal mode */
+				))
+		{
+			_ASSERTE(bSkip == false); // bypass to console
+		}
+		// No other modifiers are down
+		else if (!isAltNumpad())
+		{
+			_ASSERTE(bSkip == false); // bypass to console
 		}
 		else
 		{
-			// Hexadecimal, we'll process it internally
-			// to implement surrogates support
-			mn_AltNumber = 0;
-			mn_NumberBase = 16;
-		}
+			// What mode user wants to use?
 
-		// Ready to continut
-		mb_InAltNumber = true;
-		return true; // Don't pass to console
+			if (wParam != VK_ADD)
+			{
+				// Standard, decimal, we rely on OS
+				StartCapture(10, (wParam - VK_NUMPAD0));
+			}
+			else
+			{
+				// Hexadecimal, we'll process it internally
+				// to implement surrogates support
+				StartCapture(16, 0);
+			}
+
+			bSkip = true; // Don't pass to console
+		}
 	}
+	// Finalize mode by releasing Alt key
 	else if ((messg == WM_KEYUP) && (wParam == VK_MENU || wParam == VK_LMENU/*JIC*/))
 	{
 		//_ASSERTE(mb_InAltNumber && mn_AltNumber);
 		m_WaitingForAltChar = DumpAltNumber();
+
+		bSkip = true; // Don't pass to console
 	}
-	else if (messg == WM_SYSKEYDOWN)
+	// We may miss Alt KeyUp event if we loose keyboard focus
+	else if (!isAltNumpad())
+	{
+		DumpAltNumber();
+	}
+	else if ((messg == WM_SYSKEYDOWN)
+		//|| (messg == WM_KEYDOWN) // Reserved, if we start capture by some user-defined hotkey
+		)
 	{
 		if (((wParam >= VK_NUMPAD0) && (wParam <= VK_NUMPAD9))
+			|| ((mn_NumberBase == 16) && (wParam >= '0' && wParam <= '9'))
 			|| ((wParam >= 'A') && (wParam <= 'F'))
 			|| ((wParam >= 'a') && (wParam <= 'f'))
 			)
 		{
 			UINT nDigit = 0;
 			if ((wParam >= VK_NUMPAD0) && (wParam <= VK_NUMPAD9))
-				nDigit = (wParam - VK_NUMPAD0);
+				nDigit = LOBYTE(wParam - VK_NUMPAD0);
 			else if ((wParam >= 'A') && (wParam <= 'F'))
-				nDigit = (10 + (wParam - 'A'));
+				nDigit = LOBYTE(10 + (wParam - 'A'));
 			else if ((wParam >= 'a') && (wParam <= 'f'))
-				nDigit = (10 + (wParam - 'a'));
+				nDigit = LOBYTE(10 + (wParam - 'a'));
+			else if (wParam >= '0' && wParam <= '9')
+				nDigit = LOBYTE(wParam - '0');
 			mn_AltNumber = mn_AltNumber * mn_NumberBase + nDigit;
-			return true; // Don't pass to console
+
+			bSkip = true; // Don't pass to console
+		}
+		else if (wParam == VK_ADD)
+		{
+			// Push to console, if that was our internal mode
+			m_WaitingForAltChar = DumpAltNumber();
+			// And start new capture sequence
+			StartCapture(16, 0);
+
+			bSkip = true; // Don't pass to console
 		}
 		else
 		{
@@ -197,8 +206,35 @@ bool CAltNumpad::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 			mn_AltNumber = 0;
 		}
 	}
+	else
+	{
+		bSkip = true; // Don't pass to console
+	}
 
-	return false;
+	return bSkip;
+}
+
+void CAltNumpad::StartCapture(UINT NumberBase, UINT Initial)
+{
+	mn_AltNumber = Initial;
+	mn_NumberBase = NumberBase;
+
+	// Ready to continue
+	// mb_InAltNumber will be cleared by DumpAltNumber or ClearAltNumber
+	mb_InAltNumber = true;
+}
+
+void CAltNumpad::ClearAltNumber(bool bFull)
+{
+	// DO NOT RESET m_WaitingForAltChar HERE!
+
+	mb_InAltNumber = false;
+
+	if (bFull)
+	{
+		mn_AltNumber = 0;
+		mn_NumberBase = 10;
+	}
 }
 
 AltCharAction CAltNumpad::DumpAltNumber()
@@ -206,9 +242,16 @@ AltCharAction CAltNumpad::DumpAltNumber()
 	if (!mb_InAltNumber)
 		return eAltCharNone;
 
-	// Reset it immediately
-	mb_InAltNumber = false;
-	if (!mn_AltNumber)
+	// Store collected data in local vars
+	UINT NumberBase = mn_NumberBase;
+	// 32-bit codebase
+	// UCS defines 16 ‘planes’, so maximum codebase is 0x10FFFF, but
+	// we need to use wider mask to include all codebases in range.
+	ucs32 wc32 = (ucs32)(DWORD)(mn_AltNumber & 0x1FFFFF);
+	// And reset mb_InAltNumber immediately (leave mn_AltNumber for debugging purposes)
+	ClearAltNumber(false);
+
+	if (!wc32)
 		return eAltCharNone;
 
 	// Default action - accept input from OS
@@ -218,14 +261,8 @@ AltCharAction CAltNumpad::DumpAltNumber()
 	wchar_t wszChars[3] = L"";
 
 
-	// 32-bit codebase
-	// UCS defines 16 ‘planes’, so maximum codebase is 0x10FFFF, but
-	// we need to use wider mask to include all codebases in range.
-	ucs32 wc32 = (ucs32)(DWORD)(mn_AltNumber & 0x1FFFFF);
-
-
 	// If hexadecimal mode was selected, process codebase internally
-	if (mn_NumberBase == 16)
+	if (NumberBase == 16)
 	{
 		rc = eAltCharSkip;
 
@@ -238,7 +275,7 @@ AltCharAction CAltNumpad::DumpAltNumber()
 		// codebases which get into high-surrogate range
 		else if ((wc32 > 0xFFFF /* (1<<16)-1 */) || IS_HIGH_SURROGATE(wc32))
 		{
-			wchar_from_ucs32((ucs32)LODWORD(mn_AltNumber), wszChars);
+			wchar_from_ucs32(wc32, wszChars);
 		}
 		else
 		{
@@ -251,7 +288,7 @@ AltCharAction CAltNumpad::DumpAltNumber()
 		// Let use OEM codepage for beginning?
 		// Actually, CP does not matter, because here we rely on OS
 		// More info: https://conemu.github.io/en/AltNumpad.html
-		char szChars[2] = {LOBYTE(wc32), 0};
+		char szChars[2] = {(char)LOBYTE(wc32), 0};
 		MultiByteToWideChar(CP_OEMCP, 0, szChars, -1, wszChars, countof(wszChars));
 		_ASSERTE(rc == eAltCharAccept);
 	}

@@ -57,8 +57,10 @@ public:
 public:
 	// Methods
 	bool OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
+	void StartCapture(UINT NumberBase, UINT Initial);
 
 protected:
+	void ClearAltNumber(bool bFull);
 	void DumpChars(wchar_t* asChars);
 	AltCharAction DumpAltNumber();
 	bool isAltNumpad();
