@@ -4855,7 +4855,7 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		DWORD newV;
 		TCHAR tmp[10];
 		GetDlgItemText(hWnd2, tDarker, tmp, countof(tmp));
-		newV = klatoi(tmp);
+		newV = _wtoi(tmp);
 
 		if (newV < 256 && newV != gpSet->bgImageDarker)
 		{
@@ -10287,7 +10287,7 @@ int CSettings::GetNumber(HWND hParent, WORD nCtrlId, int nMin /*= 0*/, int nMax 
 		if (!wcscmp(szNumber, L"None"))
 			nValue = 255; // 0xFF для gpSet->AppStd.nFontNormalColor, gpSet->AppStd.nFontBoldColor, gpSet->AppStd.nFontItalicColor;
 		else
-			nValue = klatoi((szNumber[0]==L' ') ? (szNumber+1) : szNumber);
+			nValue = _wtoi((szNumber[0]==L' ') ? (szNumber+1) : szNumber);
 		// Validation?
 		if (nMin < nMax)
 			nValue = min(nMax,max(nMin,nValue));
