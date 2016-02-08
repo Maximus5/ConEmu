@@ -7918,6 +7918,7 @@ void CConEmuMain::OnHideCaption()
 
 	if (IsWindowVisible(ghWnd))
 	{
+		MSetter lSet2(&mn_IgnoreSizeChange);
 		// Refresh JIC
 		RedrawFrame();
 		// Status bar and others
