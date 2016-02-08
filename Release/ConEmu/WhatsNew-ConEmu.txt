@@ -19,6 +19,19 @@ http://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2016.2.7
+* Alt+HexNumbers: Dump collected codebase to console on ‘invalid’ input or GrayPlus.
+* gh-534: Fix wrong background drawing in Far (TrueColor).
+* gh-532: ‘Apply’ button failed to return ‘Normal’ mode in ‘Quake’ style.
+* gh-78: Rename <Always> to <No-Mod> (modifier for ‘Highlight and goto’ and some others).
+  Purpose of this option - process when no modifier (Ctrl, Alt, Shift, ...) is pressed.
+* gh-489: Fix TaskBar jump-list problems.
+  * Default Tasks for `SDK::VS *` were not created by ConEmu64.exe.
+  * Wrong icon was set for tasks `SDK::VS *` in jump-list.
+* Default extension (`xml` for example) was not appended if user fails to print it in the ‘Export settings’ dialog.
+* Warning fixes (from Michael Lukashov).
+
+
 2016.2.4
 * Support `Alt`-`+`-`HexNumber` input internally, including surrogate pair generation.
   ConEmu is able to convert entered codepoints to surrogate pairs,
