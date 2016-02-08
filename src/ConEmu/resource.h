@@ -548,7 +548,6 @@
 #define cbFindFreezeConsole             2176
 #define cbFindNext                      2177
 #define cbFindPrev                      2178
-#define cbFindClose                     2179
 #define cbCloseConsoleConfirm           2179
 #define gbKeyModifiers                  2180
 #define vkPicViewSlide                  2181
@@ -610,7 +609,6 @@
 #define lbStartNamedTask                2240
 #define stExtendFontBoldIdx             2241
 #define stExtendFontItalicIdx           2242
-#define st1ExtendFontNormalIdx          2243
 #define stExtendFontNormalIdx           2243
 #define cbCmdLine                       2244
 #define cbStartTasksFile                2245
@@ -626,7 +624,6 @@
 #define lbGotoEditorCmd                 2255
 #define stGotoEditorCmd                 2256
 #define cbCTSFreezeBeforeSelect         2257
-#define bGotoEditor                     2259
 #define bGotoEditorCmd                  2259
 #define vkForceFullScreen               2260
 #define vkTerminateApp                  2261
@@ -749,7 +746,6 @@
 #define bHereRegister                   2392
 #define bHereUnregister                 2393
 #define tCmdAutoAttach                  2394
-#define bInsideUnregister2              2394
 #define bCmdAutoRegister                2395
 #define bCmdAutoUnregister              2396
 #define cbInsideSyncDir                 2397
@@ -831,7 +827,6 @@
 #define stHideCaptionAlwaysFrame        2490
 #define cbTaskbarShield                 2491
 #define vkPasteCygwin                   2492
-#define stCmdTaskAdd                    2492
 #define cbCmdTasksActive                2493
 #define vkTabMenu2                      2494
 #define vkSystemMenu2                   2495
@@ -999,7 +994,6 @@
 #define gbAntiAliasing                  2677
 #define gbMainConFont                   2678
 #define cbAnsiLog                       2679
-#define sAnsiLogPath                    2680
 #define tAnsiLogPath                    2680
 #define stGotoEditorCmdHelp             2681
 #define tAboutSearch                    2682
@@ -1170,7 +1164,6 @@
 #define cbUpdateInetTool                2856
 #define tUpdateInetTool                 2857
 #define cbUpdateInetToolPath            2858
-#define tUpdateCommand                  2859
 #define stUpdateCommand                 2859
 #define stUpdatePostCommand             2860
 #define stUpdateVerLocation             2861
@@ -1192,6 +1185,7 @@
 #define cbUpdateCheck                   2877
 #define cbProcessCtrlZ                  2878
 #define cbFont2AA                       2883
+#define stCmdTaskAdd                    2884
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
@@ -1200,7 +1194,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        230
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2884
+#define _APS_NEXT_CONTROL_VALUE         2885
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif
