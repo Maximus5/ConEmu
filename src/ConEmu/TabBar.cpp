@@ -46,6 +46,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <windows.h>
 #include <commctrl.h>
 #include "header.h"
+#include "../common/MSetter.h"
 #include "TabBar.h"
 #include "TabCtrlBase.h"
 #include "TabCtrlWin.h"
@@ -1966,6 +1967,14 @@ bool CTabBarClass::CheckStack()
 	bool bStackChanged = false;
 	_ASSERTE(isMainThread());
 	INT_PTR i, j;
+
+	static LONG clInCall = 0;
+	MSetter lInCall(&clInCall);
+	if (clInCall > 1)
+	{
+		// Unexpected, we are already in Assert?
+		return false;
+	}
 
 	bool lbExist = false;
 	j = 0;
