@@ -12691,7 +12691,7 @@ void CRealConsole::CloseConsole(bool abForceTerminate, bool abConfirm, bool abAl
 	}
 }
 
-// Check if tab (active console) may be closed with Macro?
+// Check if tab (active console/Far Editor or Viewer) may be closed with Macro?
 bool CRealConsole::CanCloseTab(bool abPluginRequired /*= false*/)
 {
 	// Far Manager plugin is required?
@@ -12738,9 +12738,16 @@ void CRealConsole::CloseTab()
 	else
 	{
 		bool bForceTerminate = false;
-		CEFarWindowType tabtype = fwt_Panels;
+		CEFarWindowType tabtype = GetActiveTabType();
 		// Check, if we may send Macro to close Far (is it Far tab?) with Far macros
-		bool bCanCloseMacro = CanCloseTab(gpSet->isSafeFarClose);
+		bool bCanCloseMacro = false;
+		if (((tabtype & fwt_TypeMask) == fwt_Editor)
+			|| ((tabtype & fwt_TypeMask) == fwt_Viewer)
+			)
+		{
+			bCanCloseMacro = CanCloseTab(true);
+		}
+
 		if (bCanCloseMacro && !isAlive())
 		{
 			wchar_t szInfo[255];
@@ -12761,7 +12768,6 @@ void CRealConsole::CloseTab()
 
 			if (bCanCloseMacro)
 			{
-				tabtype = GetActiveTabType();
 				LPCWSTR pszConfirmText =
 					((tabtype & fwt_TypeMask) == fwt_Editor) ? gsCloseEditor :
 					((tabtype & fwt_TypeMask) == fwt_Viewer) ? gsCloseViewer :
@@ -12780,7 +12786,6 @@ void CRealConsole::CloseTab()
 			LPCWSTR pszConfirmText = gsCloseCon;
 			if (bCanCloseMacro)
 			{
-				tabtype = GetActiveTabType();
 				pszConfirmText =
 					((tabtype & fwt_TypeMask) == fwt_Editor) ? gsCloseEditor :
 					((tabtype & fwt_TypeMask) == fwt_Viewer) ? gsCloseViewer :
@@ -12801,8 +12806,16 @@ void CRealConsole::CloseTab()
 			}
 		}
 
-		// Use common function to terminate console
-		CloseConsole(bForceTerminate, false);
+		if (bCanCloseMacro)
+		{
+			// Close Far Manager Editors and Viewers
+			PostMacro(gpSet->TabCloseMacro(fmv_Default), TRUE/*async*/);
+		}
+		else
+		{
+			// Use common function to terminate console
+			CloseConsole(bForceTerminate, false);
+		}
 	}
 }
 
