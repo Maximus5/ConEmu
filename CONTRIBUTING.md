@@ -4,20 +4,20 @@ Want to contribute to ConEmu? Awesome, appreciated!
 
 But please, be sure you are following some easy rules described below.
 
-* [Reporting issues  ](#issue)
-  * [Crash reports  ](#issue-crash)
-  * [Issue attachments  ](#issue-files)
-  * [Issue template  ](#issue-template)
-* [Requesting features  ](#request)
-* [Contributing with code  ](#code)
-  * [Use latest branch  ](#code-branch)
-  * [Use separate commits  ](#code-commits)
-  * [Use descriptive commit messages  ](#code-message)
-  * [Don't use C++11 and C++14 features  ](#core-cpp)
+* [Reporting issues](#reporting-issues)
+  * [Crash reports](#crash-reports)
+  * [Issue attachments](#issue-attachments)
+  * [Issue template](#issue-template)
+* [Requesting features](#requesting-features)
+* [Contributing with code](#contributing-with-code)
+  * [Use latest branch](#use-latest-branch)
+  * [Use separate commits](#use-separate-commits)
+  * [Use descriptive commit messages](#use-descriptive-commit-messages)
+  * [Don't use C++11 and C++14 features](#dont-use-c11-and-c14-features)
 
 
 
-## Reporting issues  {#issue}
+## Reporting issues
 
 Appreciated, without proper users' feedback authors can't know about software problem.
 But if you want to be helpful, if you want the problem to be fixed, you have to supply
@@ -26,12 +26,18 @@ authors with proper information.
 Please read the [article on the official site](https://conemu.github.io/en/BadIssue.html)
 how to report issues properly. Brief excerpts below.
 
-Share your [Settings](https://conemu.github.io/en/Settings.html),
-and [screenshots](https://conemu.github.io/en/BadIssue.html#Screenshot).
+* Attach [descriptive screenshots](https://conemu.github.io/en/BadIssue.html#Screenshot)
+  demonstating all steps you are doing. And it would be better, if you comment or highlight
+  points of problems on screenshots.
 
-Also, additional infomation may be requsted from you **later**,
-such as [LogFiles](https://conemu.github.io/en/LogFiles.html)
-or [MemoryDumps](https://conemu.github.io/en/MemoryDump.html).
+* Share your [Settings](https://conemu.github.io/en/Settings.html).
+  ConEmu has huge amount of options and, obviously, there are thousands of possible
+  combinations! We can't guess, what you have configured to arise the problem!
+
+* Also, additional infomation may be requsted from you **later**,
+  such as [LogFiles](https://conemu.github.io/en/LogFiles.html)
+  or [MemoryDumps](https://conemu.github.io/en/MemoryDump.html).
+
 
 #### Crash reports  {#issue-crash}
 
@@ -78,7 +84,7 @@ Settings, screenshots, logs, etc.
 
 
 
-## Requesting features  {#request}
+## Requesting features
 
 * Update your installation first!
   [https://conemu.github.io/en/BadIssue.html#Update_your_installation]
@@ -93,7 +99,7 @@ Settings, screenshots, logs, etc.
 
 
 
-## Contributing with code  {#code}
+## Contributing with code
 
 You may read article [Source](https://conemu.github.io/en/Source.html)
 in the ConEmu documentation. It contains latest actual information!
