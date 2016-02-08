@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2015 Maximus5
+Copyright (c) 2009-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -1982,9 +1982,15 @@ bool CTabBarClass::CheckStack()
 	// Remove all absent items
 	while (j < m_TabStack.size())
 	{
+		if (m_TabStack[j] == NULL)
+		{
+			_ASSERTE(FALSE && "m_TabStack[j] != NULL");
+			m_TabStack.erase(j);
+			bStackChanged = true;
+		}
 		// If refcount was decreased to 1, that means that CTabID is left only in m_TabStack
 		// All other references was eliminated
-		if (m_TabStack[j]->Info.Status == tisInvalid)
+		else if (m_TabStack[j]->Info.Status == tisInvalid)
 		{
 			#ifdef TAB_REF_PLACE
 			m_TabStack[j]->DelPlace("TabBar.cpp:m_TabStack",0);
