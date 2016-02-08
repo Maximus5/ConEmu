@@ -39,14 +39,14 @@ how to report issues properly. Brief excerpts below.
   or [MemoryDumps](https://conemu.github.io/en/MemoryDump.html).
 
 
-#### Crash reports  {#issue-crash}
+#### Crash reports
 
 If you are reporting a crash, ConEmu shows you a thorough message
 with information where [CrashDump](https://conemu.github.io/en/CrashDump.html)
 was saved. Please, zip the file and upload it to
 [DropBox](https://conemu.github.io/en/DropBox.html) or any other hosting.
 
-#### Issue attachments  {#issue-files}
+#### Issue attachments
 
 GitHub accepts only screenshots as direct attachments.
 Please, don't try to cheat GitHub by changing file extensions,
@@ -57,7 +57,7 @@ Zip your files, upload them to
 or any other hosting (even to gist.github.com),
 and post link in the issue.
 
-#### Issue template  {#issue-template}
+#### Issue template
 
 Don't omit required information! Versions are significant information!
 
@@ -108,7 +108,7 @@ Also, before hacking on ConEmu you have to be sure you are using **newest** ConE
 You problem or suggestion may be already fixed or implemented, so
 [update your installation](https://conemu.github.io/en/BadIssue.html#Update_your_installation).
 
-#### Use latest branch  {#code-branch}
+#### Use latest branch
 
 Please, do not try to submit patches for old branches!
 Patches for versions, which were obsolete months ago,
@@ -133,7 +133,7 @@ git checkout master
 git pull origin master
 ~~~
 
-#### Use separate commits  {#code-commits}
+#### Use separate commits
 
 Please, use separate commits for separate features or bugfixes!
 Do not merge all your changes in one large commit, split them
@@ -146,7 +146,7 @@ Look at proper example below.
 * 0408700 fix warning: there is possible null pointer dereference: pszValue.
 ~~~
 
-#### Use descriptive commit messages  {#code-message}
+#### Use descriptive commit messages
 
 Please do not submit series of patches with same commit messages!
 Describe either purpose of patch, or add affected file name at least.
@@ -161,7 +161,7 @@ Look at proper example below.
 * 0408700 fix warning: there is possible null pointer dereference: pszValue.
 ~~~
 
-#### Don't use C++11 and C++14 features  {#core-cpp}
+#### Don't use C++11 and C++14 features
 
 ConEmu is supposed to be easily compiled with Visual Studio 2008,
 to support OS Windows 2000 and ‘legacy’ computers.
