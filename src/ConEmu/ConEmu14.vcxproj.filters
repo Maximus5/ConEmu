@@ -759,6 +759,9 @@
     <ClInclude Include="ImgButton.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\common\kl_parts.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="ConEmu.rc2">
