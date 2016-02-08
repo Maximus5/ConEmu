@@ -5,6 +5,8 @@
 #define IDI_ICON1                       1
 #define IDI_ICON2                       2
 #define IDI_ICON3                       3
+#define ID_GO                           20
+#define ID_ATTACH                       21
 #define IDB_MAIN_TOOLBAR                101
 #define IDB_SHIELD                      102
 #define IDB_RIGHTCLICKING               103

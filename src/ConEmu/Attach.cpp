@@ -54,7 +54,7 @@ EXSTYLE WS_EX_TOPMOST
 CAPTION "Choose window or console application for attach"
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    DEFPUSHBUTTON   "Attach",IDOK,205,165,50,14
+    DEFPUSHBUTTON   "Attach",ID_ATTACH,205,165,50,14
     //PUSHBUTTON      "Cancel",IDCANCEL,260,165,50,14
     CONTROL         "",IDC_ATTACHLIST,"SysListView32",LVS_REPORT | LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_ALIGNLEFT | WS_BORDER | WS_TABSTOP,7,7,303,152
     PUSHBUTTON      "&New",IDC_NEWCONSOLE,7,165,50,14
@@ -617,7 +617,7 @@ INT_PTR CAttachDlg::AttachDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM l
 			::GetClientRect(hDlg, &rcDlg);
 			HWND h = GetDlgItem(hDlg, IDC_ATTACHLIST);
 			GetWindowRect(h, &rcList); MapWindowPoints(NULL, hDlg, (LPPOINT)&rcList, 2);
-			HWND hb = GetDlgItem(hDlg, IDOK);
+			HWND hb = GetDlgItem(hDlg, ID_ATTACH);
 			GetWindowRect(hb, &rcBtn); MapWindowPoints(NULL, hb, (LPPOINT)&rcBtn, 2);
 			HWND hc = GetDlgItem(hDlg, IDC_ATTACH_ALT);
 			GetWindowRect(hc, &rcMode); MapWindowPoints(NULL, hc, (LPPOINT)&rcMode, 2);
@@ -630,7 +630,7 @@ INT_PTR CAttachDlg::AttachDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM l
 				rcList.left*2 + rcBtn.right, rcDlg.bottom - rcList.top - rcBtn.bottom, rcBtn.right, rcBtn.bottom, lbRedraw);
 			MoveWindow(GetDlgItem(hDlg, IDCANCEL),
 				rcDlg.right - rcList.left - rcBtn.right, rcDlg.bottom - rcList.top - rcBtn.bottom, rcBtn.right, rcBtn.bottom, lbRedraw);
-			MoveWindow(GetDlgItem(hDlg, IDOK),
+			MoveWindow(GetDlgItem(hDlg, ID_ATTACH),
 				rcDlg.right - 2*rcList.left - 2*rcBtn.right, rcDlg.bottom - rcList.top - rcBtn.bottom, rcBtn.right, rcBtn.bottom, lbRedraw);
 			MoveWindow(hc,
 				rcDlg.right - 3*rcList.left - 2*rcBtn.right - rcMode.right, rcDlg.bottom - rcList.top - rcBtn.bottom + ((rcBtn.bottom - rcMode.bottom) / 2), rcMode.right, rcMode.bottom, lbRedraw);
@@ -643,7 +643,7 @@ INT_PTR CAttachDlg::AttachDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM l
 			MINMAXINFO* p = (MINMAXINFO*)lParam;
 			HWND h;
 			RECT rcBtn = {}, rcList = {}, rcMode = {};
-			GetWindowRect((h = GetDlgItem(hDlg, IDOK)), &rcBtn); MapWindowPoints(NULL, h, (LPPOINT)&rcBtn, 2);
+			GetWindowRect((h = GetDlgItem(hDlg, ID_ATTACH)), &rcBtn); MapWindowPoints(NULL, h, (LPPOINT)&rcBtn, 2);
 			GetWindowRect((h = GetDlgItem(hDlg, IDC_ATTACH_ALT)), &rcMode); MapWindowPoints(NULL, h, (LPPOINT)&rcMode, 2);
 			GetWindowRect((h = GetDlgItem(hDlg, IDC_ATTACHLIST)), &rcList); MapWindowPoints(NULL, hDlg, (LPPOINT)&rcList, 2);
 			RECT rcWnd = {}, rcClient = {};
@@ -662,7 +662,7 @@ INT_PTR CAttachDlg::AttachDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM l
 			{
 				if (lpnmitem->hdr.code == (UINT)NM_DBLCLK)
 				{
-					PostMessage(hDlg, WM_COMMAND, IDOK, 0);
+					PostMessage(hDlg, WM_COMMAND, ID_ATTACH, 0);
 
 					// Если мышка над консолью - то клик (LBtnUp) может в нее провалиться, а не должен
 					POINT ptCur; GetCursorPos(&ptCur);
@@ -693,7 +693,8 @@ INT_PTR CAttachDlg::AttachDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM l
 			{
 				switch (LOWORD(wParam))
 				{
-					case IDOK:
+					case IDOK: // JIC
+					case ID_ATTACH:
 						// Тут нужно получить инфу из списка и дернуть собственно аттач
 						pDlg->OnStartAttach();
 						return 1;

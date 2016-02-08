@@ -66,7 +66,7 @@ STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSM
 CAPTION "Commands history and execution"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    DEFPUSHBUTTON   "GO",IDOK,287,143,31,43
+    DEFPUSHBUTTON   "GO",ID_GO,287,143,31,43
     LTEXT           "Commands history:",stHistoryList,7,7,311,8
     LISTBOX         lbHistoryList,7,16,311,116,LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
     LTEXT           "Edit command:",stHistoryEdit,7,133,311,8
@@ -99,7 +99,7 @@ EXSTYLE WS_EX_TOPMOST
 CAPTION "Choose window or console application for attach"
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    DEFPUSHBUTTON   "Attach",IDOK,211,167,50,14
+    DEFPUSHBUTTON   "Attach",ID_ATTACH,211,167,50,14
     PUSHBUTTON      "Cancel",IDCANCEL,264,167,50,14
     CONTROL         "",IDC_ATTACHLIST,"SysListView32",LVS_REPORT | LVS_SHOWSELALWAYS | LVS_ALIGNLEFT | WS_BORDER | WS_TABSTOP,4,4,310,159
     PUSHBUTTON      "&New",IDC_NEWCONSOLE,4,167,50,14
