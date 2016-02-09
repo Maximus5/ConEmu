@@ -1476,7 +1476,7 @@ CAPTION "Choose hotkey"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
     DEFPUSHBUTTON   "OK",IDOK,116,49,50,14
-    LTEXT           "Key:",stHotKeySelect,7,9,37,8
+    LTEXT           "Key:",stKeySelect,7,9,37,8
     CONTROL         "",hkHotKeySelect,"msctls_hotkey32",WS_BORDER | WS_TABSTOP,45,7,54,13
     COMBOBOX        lbHotKeyList,104,7,61,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     COMBOBOX        lbHotKeyMod1,45,28,38,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
