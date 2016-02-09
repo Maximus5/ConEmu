@@ -1266,7 +1266,7 @@ BEGIN
     LTEXT           "Choose preferred color scheme:",stColorSchemeFast,11,67,190,8
     COMBOBOX        lbColorSchemeFast,11,78,187,59,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     LTEXT           "You can change following on 'Appearance' page of Settings dialog later",stSingleInstance,11,98,302,8
-    CONTROL         "Single instance mode (force using existing window)",cbSingleInstance,
+    CONTROL         "Single instance mode (use existing window instead of running new instance)",cbSingleInstance,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,109,295,8
     CONTROL         "Quake-style slide down from the top of the screen",cbQuakeFast,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,122,207,10
@@ -1385,10 +1385,10 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,155,123,8
     CONTROL         "All lines (default Shift+Ins)",cbClipShiftIns,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,231,102,8
     CONTROL         "First line (default Ctrl+V)",cbClipCtrlV,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,124,231,95,8
-    CONTROL         "Change prompt (cmd, powershell, bash) text cursor position with Left Click",cbCTSClickPromptPosition,
+    CONTROL         "Change prompt (cmd, powershell) text cursor position with Left Click",cbCTSClickPromptPosition,
                     "Button",BS_AUTO3STATE | WS_TABSTOP,13,258,268,8
     CTEXT           "End of scroll area",stAppDistinctBottom,25,322,171,8
-    CONTROL         "Detect text line ends",cbCTSDetectLineEnd,"Button",BS_AUTO3STATE | WS_TABSTOP,13,177,88,8
+    CONTROL         "Detect line ends",cbCTSDetectLineEnd,"Button",BS_AUTO3STATE | WS_TABSTOP,13,177,88,8
     CONTROL         "Bash",cbCTSBashMargin,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,101,177,30,8
     CONTROL         "Trim trailing spaces",cbCTSTrimTrailing,"Button",BS_AUTO3STATE | WS_TABSTOP,136,177,77,8
     RTEXT           "EOL:",stCTSEOL,221,177,16,8
@@ -1402,9 +1402,9 @@ BEGIN
     LTEXT           "(5-100) %",stCursorFixedSize,164,59,38,8
     RTEXT           "Min size (pix):",stCursorMinSize,203,59,54,8
     EDITTEXT        tCursorMinSize,259,57,25,12,ES_AUTOHSCROLL
-    CONTROL         "Delete word leftward to the cursor (default Ctrl+BackSpace)",cbCTSDeleteLeftWord,
+    CONTROL         "Ctrl+BackSpace - delete word leftward to the text cursor",cbCTSDeleteLeftWord,
                     "Button",BS_AUTO3STATE | WS_TABSTOP,13,271,270,8
-    CONTROL         "Start selection with Shift+Arrow (Text = Left/Right, Block = Up/Down)",cbCTSShiftArrowStartSel,
+    CONTROL         "Start selection with Shift+Arrow (Text = Left/Right/Home/End, Block = Up/Down)",cbCTSShiftArrowStartSel,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,204,269,8
     CONTROL         "Inactive console Text Cursor",cbInactiveCursor,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,73,120,8
     CONTROL         "Horizontal (as console)",rInactiveCursorH,"Button",BS_AUTORADIOBUTTON | WS_GROUP,7,87,91,8
