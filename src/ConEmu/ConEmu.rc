@@ -71,7 +71,7 @@ BEGIN
     LISTBOX         lbHistoryList,7,16,311,116,LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
     LTEXT           "Edit command:",stHistoryEdit,7,133,311,8
     EDITTEXT        tHistoryEdit,7,143,276,43,ES_MULTILINE | ES_AUTOVSCROLL | WS_VSCROLL
-    CONTROL         " Close after paste (hold Ctrl to revertse)",cbHistoryDontClose,
+    CONTROL         " Close after paste (hold Ctrl to reverse)",cbHistoryDontClose,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,190,153,8
     CONTROL         " Execute after paste (Hold Shift to reverse)",cbHistoryAutoExecute,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,165,190,160,8
