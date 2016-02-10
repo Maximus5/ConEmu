@@ -958,6 +958,7 @@
     <ClCompile Include="IconList.cpp" />
     <ClCompile Include="ImgButton.cpp" />
     <ClCompile Include="Inside.cpp" />
+    <ClCompile Include="LngRc.cpp" />
     <ClCompile Include="LoadImg.cpp" />
     <ClCompile Include="Macro.cpp" />
     <ClCompile Include="Match.cpp" />
@@ -1094,6 +1095,7 @@
     <ClInclude Include="IconList.h" />
     <ClInclude Include="ImgButton.h" />
     <ClInclude Include="Inside.h" />
+    <ClInclude Include="LngRc.h" />
     <ClInclude Include="LoadImg.h" />
     <ClInclude Include="Macro.h" />
     <ClInclude Include="Match.h" />

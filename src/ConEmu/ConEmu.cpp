@@ -76,6 +76,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "GestureEngine.h"
 #include "HooksUnlocker.h"
 #include "Inside.h"
+#include "LngRc.h"
 #include "LoadImg.h"
 #include "Macro.h"
 #include "Menu.h"
@@ -3868,7 +3869,7 @@ void CConEmuMain::RegisterMinRestore(bool abRegister)
 						// -- кроме того, isFirstInstance() не работает, если копия ConEmu.exe запущена под другим юзером
 						wchar_t szName[128];
 
-						if (!LoadString(g_hInstance, gRegisteredHotKeys[i].DescrID, szName, countof(szName)))
+						if (!CLngRc::getHint(gRegisteredHotKeys[i].DescrID, szName, countof(szName)))
 							_wsprintf(szName, SKIPLEN(countof(szName)) L"DescrID=%i", gRegisteredHotKeys[i].DescrID);
 
 						_wsprintf(szErr, SKIPLEN(countof(szErr))

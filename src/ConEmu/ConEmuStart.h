@@ -165,6 +165,8 @@ public:
 		bool  isScript;
 		int   params;
 		// The options
+		CESwitch Language; // sw_Str: en/ru/...
+		CESwitch LanguageFile; // sw_Str: "...\ConEmu.l10n"
 		CESwitch ClearTypeVal; // sw_Int: CLEARTYPE_NATURAL_QUALITY
 		CESwitch FontVal; // sw_Str
 		CESwitch IconPrm; // sw_Simple

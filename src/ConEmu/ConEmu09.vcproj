@@ -459,6 +459,7 @@
       <File RelativePath=".\IconList.cpp" />
       <File RelativePath=".\ImgButton.cpp" />
       <File RelativePath=".\Inside.cpp" />
+      <File RelativePath=".\LngRc.cpp" />
       <File RelativePath=".\LoadImg.cpp" />
       <File RelativePath=".\Macro.cpp" />
       <File RelativePath=".\Match.cpp" />
@@ -593,6 +594,7 @@
       <File RelativePath=".\IconList.h" />
       <File RelativePath=".\ImgButton.h" />
       <File RelativePath=".\Inside.h" />
+      <File RelativePath=".\LngRc.h" />
       <File RelativePath=".\LoadImg.h" />
       <File RelativePath=".\Macro.h" />
       <File RelativePath=".\Match.h" />

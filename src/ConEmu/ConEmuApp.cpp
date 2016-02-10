@@ -57,6 +57,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "DpiAware.h"
 #include "HooksUnlocker.h"
 #include "Inside.h"
+#include "LngRc.h"
 #include "TaskBar.h"
 #include "DwmHelper.h"
 #include "ConEmuApp.h"
@@ -3888,6 +3889,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	gpSetCls = new CSettings;
 	gpConEmu = new CConEmuMain;
+	CLngRc::Initialize();
 	gVConDcMap.Init(MAX_CONSOLE_COUNT,true);
 	gVConBkMap.Init(MAX_CONSOLE_COUNT,true);
 	/*int nCmp;
@@ -4526,6 +4528,12 @@ done:
 	{
 		delete gpUpd;
 		gpUpd = NULL;
+	}
+
+	if (gpLng)
+	{
+		delete gpLng;
+		gpLng = NULL;
 	}
 
 	ShutdownGuiStep(L"Gui terminated");

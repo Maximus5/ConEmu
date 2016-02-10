@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2013 Maximus5
+Copyright (c) 2013-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -33,6 +33,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Header.h"
 #include "DpiAware.h"
 #include "DynDialog.h"
+#include "LngRc.h"
 #include "OptionsHelp.h"
 
 //#define DEBUGSTRFONT(s) DEBUGSTR(s)
@@ -89,7 +90,7 @@ bool CEHelpPopup::GetItemHelp(int wID /* = 0*/, HWND hCtrl, wchar_t* rsHelp, DWO
 	if (wID && (wID != -1))
 	{
 		// Is there hint for this control?
-		if (!LoadString(g_hInstance, wID, rsHelp, cchHelpMax))
+		if (!CLngRc::getHint(wID, rsHelp, cchHelpMax))
 		{
 			*rsHelp = 0;
 

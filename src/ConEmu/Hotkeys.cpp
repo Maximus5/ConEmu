@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2013-2014 Maximus5
+Copyright (c) 2013-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -31,6 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Header.h"
 #include "Hotkeys.h"
 #include "ConEmu.h"
+#include "LngRc.h"
 #include "Options.h"
 #include "OptionsClass.h"
 #include "SetCmdTask.h"
@@ -207,7 +208,7 @@ LPCWSTR ConEmuHotKey::GetDescription(wchar_t* pszDescr, int cchMaxLen, bool bAdd
 		if (pCmd)
 			lstrcpyn(pszDescr, pCmd->pszName ? pCmd->pszName : L"", cchMaxLen);
 	}
-	else if ((HkType != chk_Macro) && !LoadString(g_hInstance, DescrLangID, pszDescr, cchMaxLen))
+	else if ((HkType != chk_Macro) && !CLngRc::getHint(DescrLangID, pszDescr, cchMaxLen))
 	{
 		if ((HkType == chk_User) && GuiMacro && *GuiMacro)
 			lstrcpyn(pszDescr, GuiMacro, cchMaxLen);

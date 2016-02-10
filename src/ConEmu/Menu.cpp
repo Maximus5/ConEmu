@@ -42,6 +42,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Attach.h"
 #include "ConEmu.h"
 #include "FindDlg.h"
+#include "LngRc.h"
 #include "Macro.h"
 #include "Menu.h"
 #include "Menu.h"
@@ -1610,7 +1611,7 @@ void CConEmuMenu::ShowMenuHint(HMENU hMenu, WORD nID, WORD nFlags)
 			//pt.x = rcMenuItem.left; //(rcMenuItem.left + rcMenuItem.right) >> 1;
 			//pt.y = rcMenuItem.bottom;
 			TCHAR szText[0x200];
-			if (LoadString(g_hInstance, nMenuID, szText, countof(szText)))
+			if (CLngRc::getHint(nMenuID, szText, countof(szText)))
 			{
 				ShowMenuHint(szText, &pt);
 				return;

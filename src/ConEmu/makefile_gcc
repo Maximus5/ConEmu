@@ -91,6 +91,7 @@ SRCS = \
 		IconList.cpp       \
 		ImgButton.cpp      \
 		Inside.cpp         \
+		LngRc.cpp          \
 		LoadImg.cpp        \
 		Macro.cpp          \
 		Match.cpp          \

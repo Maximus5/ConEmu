@@ -878,6 +878,28 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 						gpConEmu->opt.ClearTypeVal = CLEARTYPE_NATURAL_QUALITY;
 					}
 				}
+				// Interface language
+				else if (!klstricmp(curCommand, _T("/lng")))
+				{
+					NeedNextArg();
+
+					if (!gpConEmu->opt.Language.Exists)
+					{
+						gpConEmu->opt.Language = curCommand;
+						gpConEmu->AppendExtraArgs(L"/lng", curCommand);
+					}
+				}
+				// Optional specific "ConEmu.l10n"
+				else if (!klstricmp(curCommand, _T("/lngfile")))
+				{
+					NeedNextArg();
+
+					if (!gpConEmu->opt.LanguageFile.Exists)
+					{
+						gpConEmu->opt.LanguageFile = curCommand;
+						gpConEmu->AppendExtraArgs(L"/lngfile", curCommand);
+					}
+				}
 				// имя шрифта
 				else if (!klstricmp(curCommand, _T("/font")))
 				{

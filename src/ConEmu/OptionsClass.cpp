@@ -60,6 +60,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "HotkeyDlg.h"
 #include "ImgButton.h"
 #include "Inside.h"
+#include "LngRc.h"
 #include "LoadImg.h"
 #include "Options.h"
 #include "OptionsClass.h"
@@ -729,6 +730,10 @@ bool CSettings::SetOption(LPCWSTR asName, LPCWSTR asValue)
 
 void CSettings::SettingsLoaded(SettingsLoadedFlags slfFlags, LPCWSTR pszCmdLine /*= NULL*/)
 {
+	_ASSERTE(gpLng != NULL);
+	if (gpLng)
+		gpLng->Reload();
+
 	gpSet->PatchSizeSettings();
 
 	if ((ghWnd == NULL) || (slfFlags & slf_OnResetReload))
@@ -1480,7 +1485,7 @@ void CSettings::SearchForControls()
 		if (wID != -1)
 		{
 			// Is there hint for this control?
-			if (!LoadString(g_hInstance, wID, szHint, countof(szHint)))
+			if (!CLngRc::getHint(wID, szHint, countof(szHint)))
 				szHint[0] = 0;
 		}
 
@@ -2888,7 +2893,7 @@ LRESULT CSettings::OnHotkeysNotify(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 				//}
 				//else
 				//{
-				//	if (!LoadString(g_hInstance, pk->DescrLangID, szDescTemp, countof(szDescTemp)))
+				//	if (!CLngRc::getHint(pk->DescrLangID, szDescTemp, countof(szDescTemp)))
 				//		szDescTemp[0] = 0;
 				//	pszDescription = szDescTemp;
 				//}
@@ -3026,7 +3031,7 @@ int CSettings::HotkeysCompare(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort)
 				}
 				else
 				{
-					if (!LoadString(g_hInstance, pHk1->DescrLangID, szBuf1, countof(szBuf1)))
+					if (!CLngRc::getHint(pHk1->DescrLangID, szBuf1, countof(szBuf1)))
 						_wsprintf(szBuf1, SKIPLEN(countof(szBuf1)) L"%i", pHk1->DescrLangID);
 					pszDescr1 = szBuf1;
 				}
@@ -3037,7 +3042,7 @@ int CSettings::HotkeysCompare(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort)
 				}
 				else
 				{
-					if (!LoadString(g_hInstance, pHk2->DescrLangID, szBuf2, countof(szBuf2)))
+					if (!CLngRc::getHint(pHk2->DescrLangID, szBuf2, countof(szBuf2)))
 						_wsprintf(szBuf2, SKIPLEN(countof(szBuf2)) L"%i", pHk2->DescrLangID);
 					pszDescr2 = szBuf2;
 				}
@@ -9248,7 +9253,7 @@ void CSettings::RegisterTipsFor(HWND hChildDlg)
 
 			//if (wID == -1) continue;
 
-			//if (LoadString(g_hInstance, wID, szText, countof(szText)))
+			//if (CLngRc::getHint(wID, szText, countof(szText)))
 			{
 				// Associate the ToolTip with the tool.
 				TOOLINFO toolInfo = { 0 };
