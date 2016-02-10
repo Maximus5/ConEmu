@@ -82,6 +82,7 @@ $(INTDIR)\Menu.obj \
 $(INTDIR)\MEvent.obj \
 $(INTDIR)\MFileLog.obj \
 $(INTDIR)\MGlobal.obj \
+$(INTDIR)\MJsonReader.obj \
 $(INTDIR)\Monitors.obj \
 $(INTDIR)\MSectionSimple.obj \
 $(INTDIR)\MSection.obj \
@@ -384,6 +385,8 @@ $(INTDIR)\MEvent.obj: ../common/MEvent.cpp ../common/MEvent.h
 $(INTDIR)\MFileLog.obj: ../common/MFileLog.cpp ../common/MFileLog.h
 
 $(INTDIR)\MGlobal.obj: ../common/MGlobal.cpp ../common/MGlobal.h
+
+$(INTDIR)\MJsonReader.obj: ../common/MJsonReader.cpp ../common/MJsonReader.h
 
 $(INTDIR)\Monitors.obj: ../common/Monitors.cpp
 

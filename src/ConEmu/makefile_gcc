@@ -36,6 +36,7 @@ SRCS = \
 		../common/MEvent.cpp         \
 		../common/MFileLog.cpp       \
 		../common/MGlobal.cpp        \
+		../common/MJsonReader.cpp    \
 		../common/Monitors.cpp       \
 		../common/MSectionSimple.cpp \
 		../common/MSection.cpp       \

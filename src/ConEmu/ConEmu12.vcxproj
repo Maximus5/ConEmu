@@ -970,6 +970,7 @@ copy "$(TargetPath)" Z:\</Command>
     <ClCompile Include="..\common\MEvent.cpp" />
     <ClCompile Include="..\common\MFileLog.cpp" />
     <ClCompile Include="..\common\MGlobal.cpp" />
+    <ClCompile Include="..\common\MJsonReader.cpp" />
     <ClCompile Include="..\common\Monitors.cpp" />
     <ClCompile Include="..\common\MSection.cpp" />
     <ClCompile Include="..\common\MSectionSimple.cpp" />
@@ -1091,6 +1092,7 @@ copy "$(TargetPath)" Z:\</Command>
     <ClInclude Include="..\common\MEvent.h" />
     <ClInclude Include="..\common\MFileLog.h" />
     <ClInclude Include="..\common\MGlobal.h" />
+    <ClInclude Include="..\common\MJsonReader.h" />
     <ClInclude Include="..\common\Monitors.h" />
     <ClInclude Include="..\common\MPipe.h" />
     <ClInclude Include="..\common\MSection.h" />

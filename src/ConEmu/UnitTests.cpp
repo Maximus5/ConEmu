@@ -55,6 +55,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 #ifdef _DEBUG
+#include "../common/MJsonReader.h"
+#endif
+
+#ifdef _DEBUG
 void UnitMaskTests()
 {
 	struct {
@@ -409,6 +413,26 @@ void DebugMapsTests()
 	_ASSERTE(circ.HasValue(116));
 }
 
+void DebugJsonTest()
+{
+	MJsonValue value, v1, v2, v3, v4;
+	bool b;
+
+	b = value.ParseJson(L"{ \"languages\": [ {\"id\": \"en\", \"name\": \"English\" } , {\"id\": \"ru\", \"name\": \"Русский\" } ] }");
+	_ASSERTE(b);
+
+	b = value.ParseJson(L"{ \"hints\": { \"bSaveSettings\": {"
+		L"\"en\": [\"Save settings to registry/xml\\r\\n\""
+		L", \"Don't close dialog if Shift pressed\"],"
+		L"\"id\" : 1610"
+		L"} } }");
+	_ASSERTE(b);
+	b = value.getItem(L"hints", v1);
+	b = v1.getItem(L"bSaveSettings", v2);
+	b = v2.getItem(L"id", v3);
+	b = v2.getItem(L"en", v4);
+}
+
 void DebugUnitTests()
 {
 	RConStartArgs::RunArgTests();
@@ -431,6 +455,7 @@ void DebugUnitTests()
 	DebugProcessNameTest();
 	DebugTestSetParser();
 	DebugMapsTests();
+	DebugJsonTest();
 }
 #endif
 
