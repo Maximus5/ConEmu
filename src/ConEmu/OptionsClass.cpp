@@ -9165,6 +9165,8 @@ DWORD CSettings::BalloonStyle()
 
 void CSettings::RegisterTipsFor(HWND hChildDlg)
 {
+	//TODO: Actually, all dialogs have to be localized
+
 	if (gpSetCls->hConFontDlg == hChildDlg)
 	{
 		if (!hwndConFontBalloon || !IsWindow(hwndConFontBalloon))
@@ -9239,17 +9241,43 @@ void CSettings::RegisterTipsFor(HWND hChildDlg)
 
 		HWND hChild = NULL, hEdit = NULL;
 		BOOL lbRc = FALSE;
+		CEStr lsLoc;
+		wchar_t szClass[64];
 		//TCHAR szText[0x200];
 
 		while ((hChild = FindWindowEx(hChildDlg, hChild, NULL, NULL)) != NULL)
 		{
-			#ifdef _DEBUG
 			LONG wID = GetWindowLong(hChild, GWL_ID);
+
+			#ifdef _DEBUG
 			if (wID == stCmdGroupCommands)
 			{
 				wID = wID;
 			}
 			#endif
+
+			if (wID != -1)
+			{
+				if (CLngRc::getControl(wID, lsLoc)
+					&& !lsLoc.IsEmpty())
+				{
+					// BUTTON, STATICTEXT, ...?
+					if (GetClassName(hChild, szClass, countof(szClass)))
+					{
+						if ((lstrcmpi(szClass, L"Button") == 0)
+							|| (lstrcmpi(szClass, L"Static") == 0))
+						{
+							SetWindowText(hChild, lsLoc.ms_Val);
+						}
+						#ifdef _DEBUG
+						else
+						{
+							int w = wID;
+						}
+						#endif
+					}
+				}
+			}
 
 			//if (wID == -1) continue;
 

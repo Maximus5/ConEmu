@@ -409,6 +409,45 @@ bool CLngRc::SetResource(MArray<LngRcItem>& arr, int idx, MJsonValue* pJson)
 	return SetResource(arr, idx, lsValue.ms_Val, true);
 }
 
+bool CLngRc::getControl(LONG id, CEStr& lsText)
+{
+	if (!gpLng)
+	{
+		_ASSERTE(gpLng != NULL);
+		return false;
+	}
+	if (!id || (id > (u16)-1))
+	{
+		_ASSERTE(FALSE && "Control ID out of range");
+		return false;
+	}
+
+	if (gpLng->GetResource(gpLng->m_Controls, id, lsText))
+	{
+		return true;
+	}
+
+	return false;
+}
+
+bool CLngRc::GetResource(MArray<LngRcItem>& arr, int idx, CEStr& lsText)
+{
+	bool bFound = false;
+
+	if ((idx >= 0) && (idx < arr.size()))
+	{
+		const LngRcItem& item = arr[idx];
+
+		if (item.Processed && (item.Str && *item.Str))
+		{
+			lsText.Set(item.Str);
+			bFound = true;
+		}
+	}
+
+	return bFound;
+}
+
 bool CLngRc::getHint(UINT id, LPWSTR lpBuffer, size_t nBufferMax)
 {
 	if (!gpLng)
