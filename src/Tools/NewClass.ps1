@@ -1,6 +1,6 @@
 ﻿param([string]$filename,[string]$classname)
 
-$year = 2014
+$year = 2016
 $licence = "
 /*
 Copyright (c) $year Maximus5
