@@ -1,11 +1,14 @@
 ﻿{
   "languages": [
     {"id": "en", "name": "English" }
+    ,
+    {"id": "ru", "name": "Русский" }
   ]
   ,
   "cmnhints": {
     "bRealConsoleSettings": {
       "en": "You may change font face and size in the Real console. Console restart required.",
+      "ru": "Вы можете изменить имя шрифта и размер для RealConsole. Требуется перезапуск консоли.",
       "id": 1608 }
     ,
     "bReloadSettings": {
@@ -47,6 +50,9 @@
       "en": [ "Log console output to text files\r\n"
             , "ConEmu-YYYY-MM-DD-pNNNN.log\r\n"
             , "(affect new consoles only)" ],
+      "ru": [ "Логировать консольный вывод в текстовые файлы\r\n"
+            , "ConEmu-YYYY-MM-DD-pNNNN.log\r\n"
+            , "(влияет только на новые консоли)" ],
       "id": 2679 }
     ,
     "cbAutoRegFonts": {
@@ -842,6 +848,7 @@
     ,
     "tFontFace": {
       "en": "Face name for main font",
+      "ru": "Имя основного шрифта консоли",
       "id": 1511 }
     ,
     "tFontFace2": {
@@ -1835,6 +1842,7 @@
     ,
     "bConFontCancel": {
       "en": "Cancel",
+      "ru": "Отмена",
       "id": 1726 }
     ,
     "bConFontOK": {
@@ -1863,14 +1871,17 @@
     ,
     "bReloadSettings": {
       "en": "Reload...",
+      "ru": "Перечитать...",
       "id": 1596 }
     ,
     "bResetSettings": {
       "en": "Reset...",
+      "ru": "Сброс...",
       "id": 1595 }
     ,
     "bSaveSettings": {
       "en": "Save settings",
+      "ru": "Сохранить настройки",
       "id": 1610 }
     ,
     "cbActivateSplitMouseOver": {
@@ -2895,6 +2906,7 @@
     ,
     "gbMainConFont": {
       "en": "Main console font",
+      "ru": "Основной шрифт консоли",
       "id": 2678 }
     ,
     "gbPastingOverride": {
@@ -2979,6 +2991,7 @@
     ,
     "IDCANCEL": {
       "en": "Cancel",
+      "ru": "Отмена",
       "id": 2 }
     ,
     "IDOK": {
@@ -3395,14 +3408,17 @@
     ,
     "stConEmuAbout": {
       "en": "Console Emulation program (local terminal)",
+      "ru": "Эмулятор консоли (локальный терминал)",
       "id": 2250 }
     ,
     "stConEmuVersion": {
       "en": "Version status:",
+      "ru": "Версия программы:",
       "id": 2683 }
     ,
     "stCopyFormat": {
       "en": "Copying format:",
+      "ru": "Формат копирования:",
       "id": 2872 }
     ,
     "stCTSEOL": {
@@ -3411,6 +3427,7 @@
     ,
     "stCTSIntelligentExceptions": {
       "en": "Exceptions (\"|\"-separated):",
+      "ru": "Исключения (разделитель-\"|\"):",
       "id": 2659 }
     ,
     "stCursorMinSize": {
@@ -3419,10 +3436,12 @@
     ,
     "stDarker": {
       "en": "Darkening:",
+      "ru": "Затемнение:",
       "id": 2672 }
     ,
     "stDarkerPlugin": {
       "en": "Darkening:",
+      "ru": "Затемнение:",
       "id": 2673 }
     ,
     "stDefaultTerminal": {
