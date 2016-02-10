@@ -30,6 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // without any need to change caller routines, if we decide to switch parser.
 
 #include "MJsonReader.h"
+#include "MStrDup.h"
 
 // Use json-parser by James McLaughlin
 #define json_char wchar_t
@@ -37,6 +38,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 MJsonValue::MJsonValue()
 	: mp_data(NULL)
+	, ms_Error(NULL)
 	, mb_Root(false)
 {
 }
@@ -59,6 +61,7 @@ void MJsonValue::FreeData()
 		mp_data = NULL;
 	}
 	mb_Root = false;
+	SafeFree(ms_Error);
 }
 
 MJsonValue::JSON_TYPE MJsonValue::getType()
@@ -169,6 +172,11 @@ bool MJsonValue::getItem(const wchar_t* name, MJsonValue& value)
 	return false;
 }
 
+const wchar_t* MJsonValue::GetParseError()
+{
+	return ms_Error;
+}
+
 bool MJsonValue::ParseJson(const wchar_t* buffer)
 {
 	if (mp_data)
@@ -178,11 +186,19 @@ bool MJsonValue::ParseJson(const wchar_t* buffer)
 
 	json_settings setting = {};
 	setting.settings = json_enable_comments;
-	char errMsg[json_error_max];
+	char errMsg[json_error_max] = "";
 
 	json_value* p = json_parse_ex(&setting, buffer, wcslen(buffer), errMsg);
 	if (p == NULL)
 	{
+		SafeFree(ms_Error);
+		size_t eLen = strlen(errMsg);
+		if (eLen)
+		{
+			ms_Error = (wchar_t*)malloc((eLen+1)*sizeof(*ms_Error));
+			if (ms_Error)
+				MultiByteToWideChar(CP_ACP, 0, errMsg, -1, ms_Error, eLen+1);
+		}
 		return false;
 	}
 

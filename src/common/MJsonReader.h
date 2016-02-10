@@ -38,6 +38,8 @@ class MJsonValue
 private:
 	void* mp_data;
 
+	wchar_t* ms_Error;
+
 	bool mb_Root;
 	void FreeData();
 public:
@@ -69,4 +71,5 @@ public:
 
 public:
 	bool ParseJson(const wchar_t* buffer);
+	const wchar_t* GetParseError();
 };
