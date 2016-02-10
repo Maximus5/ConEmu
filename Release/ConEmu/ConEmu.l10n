@@ -1829,6 +1829,50 @@
       "en": "Unregister",
       "id": 2396 }
     ,
+    "bConFontAdd2HKLM": {
+      "en": "Add font to ‘...\\Console\\TrueTypeFont’",
+      "id": 1730 }
+    ,
+    "bConFontCancel": {
+      "en": "Cancel",
+      "id": 1726 }
+    ,
+    "bConFontOK": {
+      "en": "OK&",
+      "id": 1716 }
+    ,
+    "bHereRegister": {
+      "en": "Register",
+      "id": 2392 }
+    ,
+    "bHereUnregister": {
+      "en": "Unregister",
+      "id": 2393 }
+    ,
+    "bImportSettings": {
+      "en": "Import...",
+      "id": 2664 }
+    ,
+    "bInsideRegister": {
+      "en": "Register",
+      "id": 2387 }
+    ,
+    "bInsideUnregister": {
+      "en": "Unregister",
+      "id": 2388 }
+    ,
+    "bReloadSettings": {
+      "en": "Reload...",
+      "id": 1596 }
+    ,
+    "bResetSettings": {
+      "en": "Reset...",
+      "id": 1595 }
+    ,
+    "bSaveSettings": {
+      "en": "Save settings",
+      "id": 1610 }
+    ,
     "cbActivateSplitMouseOver": {
       "en": "Activate split/pane on mouse hover",
       "id": 2601 }
@@ -1840,6 +1884,14 @@
     "cbActivitySaveAs": {
       "en": "Save &as...",
       "id": 1746 }
+    ,
+    "cbAddConEmu2Path": {
+      "en": "Add %ConEmuDir% to %PATH%",
+      "id": 2423 }
+    ,
+    "cbAddConEmuBase2Path": {
+      "en": "Add %ConEmuBaseDir% to %PATH%",
+      "id": 2584 }
     ,
     "cbAddDefaults": {
       "en": "Add default tasks...",
@@ -1901,9 +1953,17 @@
       "en": "Back&ground image (bmp, jpg, png, tif):",
       "id": 1699 }
     ,
+    "cbBgImageOverride": {
+      "en": "Background image override",
+      "id": 2350 }
+    ,
     "cbBold": {
       "en": "&Bold",
       "id": 2278 }
+    ,
+    "cbClipboardOverride": {
+      "en": "Clipboard (Copy/Paste) override",
+      "id": 2172 }
     ,
     "cbClipConfirmEnter": {
       "en": "Confirm <Enter> keypress",
@@ -2001,6 +2061,10 @@
       "en": "&Up",
       "id": 2126 }
     ,
+    "cbColorKeyTransparent": {
+      "en": "‘Color key’ transparency",
+      "id": 2312 }
+    ,
     "cbColorResetExt": {
       "en": "Default...",
       "id": 2716 }
@@ -2012,6 +2076,10 @@
     "cbColorSchemeSave": {
       "en": "Save",
       "id": 2123 }
+    ,
+    "cbColorsOverride": {
+      "en": "Color palette override",
+      "id": 2146 }
     ,
     "cbComspecTest": {
       "en": "Test",
@@ -2109,6 +2177,10 @@
       "en": "Fixed cursor size",
       "id": 1655 }
     ,
+    "cbCursorOverride": {
+      "en": "Cursor override",
+      "id": 2145 }
+    ,
     "cbDebugSteps": {
       "en": "Debug steps in caption",
       "id": 1551 }
@@ -2144,6 +2216,10 @@
     "cbDisableAllFlashing": {
       "en": "Disable all flashing",
       "id": 1719 }
+    ,
+    "cbDisableConImeFast": {
+      "en": " Disable ConIme.exe autorun (Vista only)",
+      "id": 2090 }
     ,
     "cbDisableFarFlashing": {
       "en": "Disable Far flashing",
@@ -2193,6 +2269,10 @@
       "en": "Confirm tab duplicating (Duplicate root menu item)",
       "id": 2688 }
     ,
+    "cbEnableAutoUpdateFast": {
+      "en": "Enable automatic updates",
+      "id": 2087 }
+    ,
     "cbEnableMouse": {
       "en": "Send mouse events to console",
       "id": 2313 }
@@ -2201,6 +2281,10 @@
       "en": "Enhance progressbars and scrollbars",
       "id": 2289 }
     ,
+    "cbExportConfig": {
+      "en": "Export...",
+      "id": 2572 }
+    ,
     "cbExtendColors": {
       "en": "Extend foreground colors with background",
       "id": 1515 }
@@ -2208,6 +2292,10 @@
     "cbExtendFonts": {
       "en": "Extend fonts",
       "id": 1576 }
+    ,
+    "cbExtendFontsOverride": {
+      "en": "Extend fonts override",
+      "id": 2144 }
     ,
     "cbExtendUCharMap": {
       "en": "Extend Unicode CharMap",
@@ -2228,6 +2316,34 @@
     "cbFARuseASCIIsort": {
       "en": "ASCII sort function in Far",
       "id": 1561 }
+    ,
+    "cbFindFreezeConsole": {
+      "en": "&Freeze console",
+      "id": 2176 }
+    ,
+    "cbFindHighlightAll": {
+      "en": "&Highlight all matches",
+      "id": 2228 }
+    ,
+    "cbFindMatchCase": {
+      "en": "Match &case",
+      "id": 2175 }
+    ,
+    "cbFindNext": {
+      "en": "&Next",
+      "id": 2177 }
+    ,
+    "cbFindPrev": {
+      "en": "&Previous",
+      "id": 2178 }
+    ,
+    "cbFindTransparent": {
+      "en": "&Transparent",
+      "id": 2232 }
+    ,
+    "cbFindWholeWords": {
+      "en": "Match &whole words",
+      "id": 2174 }
     ,
     "cbFixAltOnAltTab": {
       "en": "Fix Alt on AltTab/AltF9 (to avoid execution of Far Manager macro, linked to Alt-release)",
@@ -2316,6 +2432,14 @@
     "cbInactiveCursorIgnoreSize": {
       "en": "Fixed cursor size",
       "id": 2539 }
+    ,
+    "cbInjectConEmuHkFast": {
+      "en": "Inject ConEmuHk.dll into all processes started in ConEmu tabs",
+      "id": 2098 }
+    ,
+    "cbInsideSyncDir": {
+      "en": "Sync dir",
+      "id": 2397 }
     ,
     "cbInstallKeybHooks": {
       "en": "Install keyboard hooks",
@@ -2409,6 +2533,10 @@
       "en": "Auto-hide on focus lose",
       "id": 2466 }
     ,
+    "cbQuakeFast": {
+      "en": "Quake-style slide down from the top of the screen",
+      "id": 2846 }
+    ,
     "cbQuakeStyle": {
       "en": "Quake style slide down",
       "id": 2333 }
@@ -2428,6 +2556,18 @@
     "cbRSelectionFix": {
       "en": "Right selection fix",
       "id": 1536 }
+    ,
+    "cbRunAsAdmin": {
+      "en": "&Run as administrator",
+      "id": 1547 }
+    ,
+    "cbRunAsRestricted": {
+      "en": "Restricte&d current user",
+      "id": 1650 }
+    ,
+    "cbRunInNewWindow": {
+      "en": "New &window",
+      "id": 2330 }
     ,
     "cbSafeFarClose": {
       "en": "Safe Far close",
@@ -2585,6 +2725,14 @@
       "en": "Use PicView2 for previews",
       "id": 1680 }
     ,
+    "cbTransparent": {
+      "en": "Active window transparency",
+      "id": 1574 }
+    ,
+    "cbTransparentSeparate": {
+      "en": "Use separate transparency value for inactive window",
+      "id": 2381 }
+    ,
     "cbTrueColorer": {
       "en": "TrueMod (24bit color) support",
       "id": 1578 }
@@ -2636,6 +2784,14 @@
     "cbUseInjects": {
       "en": "Inject ConEmuHk",
       "id": 1752 }
+    ,
+    "cbUseKeyboardHooksFast": {
+      "en": "Install keyboard hooks (required for Win+Number, Win+Tab, PrntScrn and so on)",
+      "id": 2086 }
+    ,
+    "cbUserScreenTransparent": {
+      "en": "‘User screen’ transparency (Far Manager feature)",
+      "id": 1573 }
     ,
     "cbUseWinArrows": {
       "en": "Win+Arrows - resize window",
@@ -2697,6 +2853,10 @@
       "en": "Miscellaneous",
       "id": 2687 }
     ,
+    "gbCopyingOverride": {
+      "en": "Copying text override",
+      "id": 2348 }
+    ,
     "gbDefaultTermConfClose": {
       "en": "Confirm close (Press Enter or Esc to close console)",
       "id": 2660 }
@@ -2729,17 +2889,41 @@
       "en": "CPU consuming",
       "id": 2748 }
     ,
+    "gbFindText": {
+      "en": "&Find options",
+      "id": 2229 }
+    ,
     "gbMainConFont": {
       "en": "Main console font",
       "id": 2678 }
+    ,
+    "gbPastingOverride": {
+      "en": "Pasting text override (with exception of Far Manager)",
+      "id": 2349 }
     ,
     "gbPerformance": {
       "en": "Performance counters",
       "id": 1400 }
     ,
+    "gbPromptOverride": {
+      "en": "Prompt override",
+      "id": 2347 }
+    ,
     "gbQuakeAnimation": {
       "en": "Animation time",
       "id": 2690 }
+    ,
+    "gbRecreateSplit": {
+      "en": "New console split",
+      "id": 2440 }
+    ,
+    "gbSelectingOverride": {
+      "en": "Starting selection with arrows",
+      "id": 2558 }
+    ,
+    "gbSetAlias": {
+      "en": "Set up environment variables, cmd.exe aliases, codepage",
+      "id": 2850 }
     ,
     "gbStandardColors": {
       "en": "Standard colors:",
@@ -2757,17 +2941,49 @@
       "en": "Update settings",
       "id": 2864 }
     ,
+    "ID_ATTACH": {
+      "en": "Attach",
+      "id": 21 }
+    ,
+    "IDC_ATTACH_ALT": {
+      "en": "&Alternative mode",
+      "id": 2405 }
+    ,
     "IDC_CONSOLE_STATES": {
       "en": "Console states",
       "id": 1560 }
     ,
-    "lbActivityLog": {
-      "en": "List1",
-      "id": 1742 }
+    "IDC_NEWCONSOLE": {
+      "en": "&New",
+      "id": 1775 }
     ,
-    "lbConEmuHotKeys": {
-      "en": "List1",
-      "id": 1771 }
+    "IDC_REFRESH": {
+      "en": "&Refresh",
+      "id": 1776 }
+    ,
+    "IDC_RESTART_MSG": {
+      "en": "About to restart console",
+      "id": 1529 }
+    ,
+    "IDC_START": {
+      "en": "Re&start",
+      "id": 1524 }
+    ,
+    "IDC_TERMINATE": {
+      "en": "&Terminate",
+      "id": 1525 }
+    ,
+    "IDC_WARNING": {
+      "en": "Warning, unsaved work may be lost!",
+      "id": 1530 }
+    ,
+    "IDCANCEL": {
+      "en": "Cancel",
+      "id": 2 }
+    ,
+    "IDOK": {
+      "en": "OK",
+      "id": 1 }
     ,
     "rbActivityAnsi": {
       "en": "Ansi",
@@ -2793,6 +3009,10 @@
       "en": "Sh&ell",
       "id": 1748 }
     ,
+    "rbAnotherUser": {
+      "en": "&Another user",
+      "id": 1657 }
+    ,
     "rbAppDistinctElevatedIgnore": {
       "en": "Elevation don't matter",
       "id": 2143 }
@@ -2804,6 +3024,18 @@
     "rbAppDistinctElevatedOn": {
       "en": "Elevated",
       "id": 2141 }
+    ,
+    "rbAutoUpdateDeveloperFast": {
+      "en": "‘Developer’ builds",
+      "id": 2591 }
+    ,
+    "rbAutoUpdatePreviewFast": {
+      "en": "‘Preview’",
+      "id": 2590 }
+    ,
+    "rbAutoUpdateStableFast": {
+      "en": "‘Stable’",
+      "id": 2589 }
     ,
     "rbBgReplaceIndexes": {
       "en": "Replace color indexes",
@@ -2857,6 +3089,10 @@
       "en": "Buffer only (e.g. cmd.exe)",
       "id": 1738 }
     ,
+    "rbCurrentUser": {
+      "en": "Run as current &user <UserName>",
+      "id": 1656 }
+    ,
     "rbDefaultTerminalConfAlways": {
       "en": "Always",
       "id": 2520 }
@@ -2896,6 +3132,42 @@
     "rbMinByEscNever": {
       "en": "Never",
       "id": 2561 }
+    ,
+    "rbPriorityAbove": {
+      "en": "&Above normal",
+      "id": 2765 }
+    ,
+    "rbPriorityBelow": {
+      "en": "&Below normal",
+      "id": 2767 }
+    ,
+    "rbPriorityHigh": {
+      "en": "&High",
+      "id": 2764 }
+    ,
+    "rbPriorityIdle": {
+      "en": "&Idle",
+      "id": 2768 }
+    ,
+    "rbPriorityNormal": {
+      "en": "&Normal",
+      "id": 2766 }
+    ,
+    "rbPriorityRealtime": {
+      "en": "&Realtime",
+      "id": 2763 }
+    ,
+    "rbRecreateSplit2Bottom": {
+      "en": "To &bottom",
+      "id": 2443 }
+    ,
+    "rbRecreateSplit2Right": {
+      "en": "To ri&ght",
+      "id": 2442 }
+    ,
+    "rbRecreateSplitNone": {
+      "en": "&Layered",
+      "id": 2441 }
     ,
     "rbScrollbarAuto": {
       "en": "Auto",
@@ -3077,6 +3349,14 @@
       "en": "&Standard",
       "id": 1203 }
     ,
+    "stAffinityBox": {
+      "en": "Affinity",
+      "id": 2769 }
+    ,
+    "stAppDistinctBottom": {
+      "en": "End of scroll area",
+      "id": 2357 }
+    ,
     "stAppDistinctName": {
       "en": "Executables, delimited by \"|\", e.g. \"tcc.exe|cmd.exe\":",
       "id": 2319 }
@@ -3108,6 +3388,18 @@
     "stCmdTaskAdd": {
       "en": "Add:",
       "id": 2884 }
+    ,
+    "stColorSchemeFast": {
+      "en": "Choose preferred color scheme:",
+      "id": 2845 }
+    ,
+    "stConEmuAbout": {
+      "en": "Console Emulation program (local terminal)",
+      "id": 2250 }
+    ,
+    "stConEmuVersion": {
+      "en": "Version status:",
+      "id": 2683 }
     ,
     "stCopyFormat": {
       "en": "Copying format:",
@@ -3142,6 +3434,26 @@
       "en": [ "If you want to start some command in the Windows standard console window from hooked executable when 'Default terminal' is enabled, just use \"-new_console:z\" switch.\r\n"
             , "Example: \"cmd.exe -new_console:z\"" ],
       "id": 2662 }
+    ,
+    "stDisableConImeFast1": {
+      "en": "Unwanted value of ‘LoadConIme’ registry parameter! This may cause hanging of other console applications! ConEmu may disable ConIme.exe via registry:",
+      "id": 2094 }
+    ,
+    "stEnableAutoUpdateFast": {
+      "en": "You can change following on 'Update' page of Settings dialog later",
+      "id": 2093 }
+    ,
+    "stExtendFontBoldIdx": {
+      "en": "Bold:",
+      "id": 2241 }
+    ,
+    "stExtendFontItalicIdx": {
+      "en": "Italic:",
+      "id": 2242 }
+    ,
+    "stExtendFontNormalIdx": {
+      "en": "Replace:",
+      "id": 2243 }
     ,
     "stExtendFonts": {
       "en": "By the cost of background colors you may change the used font to bold or italic",
@@ -3189,13 +3501,48 @@
       "en": "Min size (pix):",
       "id": 2542 }
     ,
+    "stInjectConEmuHkFast": {
+      "en": "You can change following on 'Features' page of Settings dialog later",
+      "id": 2744 }
+    ,
+    "stKeySelect": {
+      "en": "Key:",
+      "id": 2885 }
+    ,
+    "stNewTabName": {
+      "en": "&New tab name (clear to revert):",
+      "id": 2336 }
+    ,
+    "stPalettePreviewFast": {
+      "en": [ "\n"
+            , "colors\n"
+            , "preview" ],
+      "id": 2849 }
+    ,
+    "stPriorityBox": {
+      "en": "Priority",
+      "id": 2762 }
+    ,
     "stQuakeAnimation": {
       "en": "ms:",
       "id": 2565 }
     ,
+    "stSetCommands": {
+      "en": [ "Here you may set up your environment variables, default code page, and so on...\r\n"
+            , "One line may have only one command! You may comment lines with # sign." ],
+      "id": 2852 }
+    ,
+    "stSingleInstance": {
+      "en": "You can change following on 'Appearance' page of Settings dialog later",
+      "id": 2742 }
+    ,
     "stStartCreateDelay": {
       "en": "Delay between consoles initialization (ms):",
       "id": 2870 }
+    ,
+    "stStartupShellFast": {
+      "en": "Choose your startup task or even a shell with arguments:",
+      "id": 2843 }
     ,
     "stStatusColorBack": {
       "en": "Back:",
@@ -3208,6 +3555,14 @@
     "stStatusColorLight": {
       "en": "Light:",
       "id": 2498 }
+    ,
+    "stStorage": {
+      "en": "Storage:",
+      "id": 2573 }
+    ,
+    "stStorageLocation": {
+      "en": "Choose ConEmu settings storage location (You may turn on/off portable mode here)",
+      "id": 2741 }
     ,
     "stTabBarDblClickAction": {
       "en": "Tab bar:",
@@ -3241,6 +3596,14 @@
     "stTabTemplateGroup": {
       "en": "Tab templates (Far Manager ones are located on 'Far Manager' page)",
       "id": 2736 }
+    ,
+    "stTransparentInactive1": {
+      "en": "Transparent",
+      "id": 2382 }
+    ,
+    "stTransparentInactive2": {
+      "en": "Opaque",
+      "id": 2383 }
     ,
     "stUnicodeRanges": {
       "en": "Unicode ranges, the default is \"2013-25C4;\"",
@@ -3278,6 +3641,10 @@
       "en": "ConEmu latest version location info",
       "id": 2861 }
     ,
+    "stUseKeyboardHooksFast": {
+      "en": "You can change following on 'Controls' page of Settings dialog later",
+      "id": 2743 }
+    ,
     "stWndHeight": {
       "en": "Height:",
       "id": 2439 }
@@ -3285,5 +3652,13 @@
     "stWndWidth": {
       "en": "Width:",
       "id": 2438 }
+    ,
+    "tConsoleFontConsoleNote": {
+      "en": "Console restart may be required",
+      "id": 1732 }
+    ,
+    "tConsoleFontHklmNote": {
+      "en": "NOTE!!! Computer restart may be required to apply registry changes",
+      "id": 1731 }
   }
 }
