@@ -1,4 +1,7 @@
 ﻿
+// For language resources
+#define IDM__MIN_MNU_ITEM_ID 0xAB00
+
 #define ID_CON_SETPALETTE_FIRST 0xAB40
 #define ID_CON_SETPALETTE_LAST  0xABA0
 // (0xABA1 .. 0xABA4) are free yet
