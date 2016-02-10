@@ -3,7 +3,7 @@
     {"id": "en", "name": "English" }
   ]
   ,
-  "hints": [
+  "cmnhints": {
     "bRealConsoleSettings": {
       "en": "You may change font face and size in the Real console. Console restart required.",
       "id": 1608 }
@@ -1745,7 +1745,9 @@
     "vkWndDragKey": {
       "en": "Move ConEmu window by dragging client area",
       "id": 2404 }
-    ,
+  }
+  ,
+  "mnuhints": {
     "ID_HOMEPAGE": {
       "en": "Visit https://conemu.github.io/",
       "id": 43962 }
@@ -1808,9 +1810,9 @@
     "IDM_UNFASTEN": {
       "en": "Open active console/pane in the new ConEmu window",
       "id": 44004 }
-  ]
+  }
   ,
-  "controls": [
+  "controls": {
     "bApplyViewSettings": {
       "en": "&Apply",
       "id": 1715 }
@@ -3283,5 +3285,5 @@
     "stWndWidth": {
       "en": "Width:",
       "id": 2438 }
-  ]
+  }
 }
