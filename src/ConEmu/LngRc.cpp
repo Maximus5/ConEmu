@@ -151,8 +151,9 @@ bool CLngRc::LoadResouces(LPCWSTR asLanguage, LPCWSTR asFile)
 	bool  bOk = false;
 	CEStr lsJsonData;
 	DWORD jsonDataSize = 0, nErrCode = 0;
-	MJsonValue jsonFile, jsonSection;
-	DWORD nStartTick, nLoadTick, nFinTick, nDuration;
+	MJsonValue* jsonFile = NULL;
+	MJsonValue jsonSection;
+	DWORD nStartTick = 0, nLoadTick = 0, nFinTick = 0, nDelTick = 0;
 	int iRc;
 	wchar_t szLog[120];
 
@@ -171,13 +172,14 @@ bool CLngRc::LoadResouces(LPCWSTR asLanguage, LPCWSTR asFile)
 	}
 	
 	nStartTick = GetTickCount();
-	if (!jsonFile.ParseJson(lsJsonData))
+	jsonFile = new MJsonValue();
+	if (!jsonFile->ParseJson(lsJsonData))
 	{
 		// TODO: Log error
 		CEStr lsErrMsg = lstrmerge(
 			L"Language resources loading failed!\r\n"
 			L"File: ", asFile, L"\r\n"
-			L"Error: ", jsonFile.GetParseError());
+			L"Error: ", jsonFile->GetParseError());
 		gpConEmu->LogString(lsErrMsg.ms_Val);
 		DisplayLastError(lsErrMsg.ms_Val, (DWORD)-1, MB_ICONSTOP);
 		goto wrap;
@@ -190,17 +192,22 @@ bool CLngRc::LoadResouces(LPCWSTR asLanguage, LPCWSTR asFile)
 	// Process sections
 	for (size_t i = 0; i < countof(sections); i++)
 	{
-		if (jsonFile.getItem(sections[i].pszSection, jsonSection) && (jsonSection.getType() == MJsonValue::json_Object))
+		if (jsonFile->getItem(sections[i].pszSection, jsonSection) && (jsonSection.getType() == MJsonValue::json_Object))
 			bOk |= LoadSection(&jsonSection, *(sections[i].arr), sections[i].idDiff);
 		else
 			Clean(*(sections[i].arr));
 	}
 
 	nFinTick = GetTickCount();
-	_wsprintf(szLog, SKIPCOUNT(szLog) L"Language resources duration: JSON: %u ms; Internal: %u ms", (nLoadTick - nStartTick), (nFinTick - nLoadTick));
-	gpConEmu->LogString(szLog);
 
 wrap:
+	SafeDelete(jsonFile);
+	nDelTick = GetTickCount();
+	if (bOk)
+	{
+		_wsprintf(szLog, SKIPCOUNT(szLog) L"Language resources duration (ms): Parse: %u; Internal: %u; Delete: %u", (nLoadTick - nStartTick), (nFinTick - nLoadTick), (nDelTick - nFinTick));
+		gpConEmu->LogString(szLog);
+	}
 	return bOk;
 }
 
