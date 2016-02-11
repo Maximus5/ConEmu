@@ -269,6 +269,8 @@ function ParseDialog($rcln, $hints, $dlgid, $name)
     }
   }
 
+  #Write-Progress -Activity "Dialog Controls" -Completed -Id 2
+
   return
 }
 
@@ -398,19 +400,36 @@ function AddValue($lng,$value)
   return $lines
 }
 
-function AppendExistingTranslations([string]$section,[string]$name)
+function AppendExistingTranslations([string]$section,[string]$name,[string]$en_value)
 {
   $js = $script:json."$section"
   if ($js -ne $null) {
     $jres = $js."$name"
     if ($jres -ne $null) {
+      # If English resource was changed - mark other translations as deprecated
+      $depr = ""; $old_en = "";
+      $jlng = $jres."en"
+      if ($jlng -ne $null) {
+        $old_en = [System.String]::Join("",$jlng).Replace("`r","\r").Replace("`n","\n").Replace("`t","\t").Replace("`"","\`"")
+      }
+      if ($old_en -ne $en_value) {
+        $depr = "_"
+      }
+
+      # Append existing translations"
       $json.languages | ? { $_.id -ne "en" } | % {
         $jlng = $jres."$($_.id)"
+        # Perhaps resource was already deprecated?
+        if ($jlng -eq $null) {
+          $jlng = $jres."_$($_.id)"
+          $depr = "_"
+        }
+        # Append translation if found
         if ($jlng -ne $null) {
           # Write-Host -ForegroundColor Yellow "    [$($jlng.GetType())] ``$jlng``"
           $str = [System.String]::Join("",$jlng).Replace("`r","\r").Replace("`n","\n").Replace("`t","\t").Replace("`"","\`"")
           if ($str -ne "") {
-            $script:l10n += (AddValue $_.id $str)
+            $script:l10n += (AddValue "$depr$($_.id)" $str)
           }
         }
       }
@@ -429,7 +448,7 @@ function WriteResources($ids,[string]$section)
       $script:l10n += "    `"$name`": {"
       $script:l10n += (AddValue "en" $value)
       if ($script:json -ne $NULL) {
-        AppendExistingTranslations $section $name
+        AppendExistingTranslations $section $name $value
       }
       $script:l10n += "      `"id`": $id }"
     }
@@ -446,7 +465,7 @@ function WriteControls($ctrls,$ids)
     $script:l10n += "    `"$name`": {"
     $script:l10n += (AddValue "en" $value)
     if ($script:json -ne $NULL) {
-      AppendExistingTranslations "controls" $name
+      AppendExistingTranslations "controls" $name $value
     }
     $script:l10n += "      `"id`": $id }"
   }
@@ -545,6 +564,7 @@ $dialogs | % {
   ParseDialog $rcln $script:hints $_.id $_.name.Trim()
   $iDlgNo++
 }
+Write-Progress -Activity "Dialog Controls" -Completed -Id 2
 Write-Progress -Activity "Dialogs" -PercentComplete 100 -Completed -Id 1
 
 $script:l10n += "  ,"
