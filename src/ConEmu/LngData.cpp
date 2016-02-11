@@ -26,14 +26,26 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#define HIDE_USE_EXCEPTION_INFO
+#define SHOWDEBUGSTR
+
+#include "Header.h"
 #include "LngData.h"
 #include "MenuIds.h"
 #include "resource.h"
 
+#include <stdlib.h>
+
 struct LngPredefined
 {
-	UINT    id;
-	LPCWSTR str;
+	UINT_PTR id;
+	LPCWSTR  str;
+
+	static int compare(const void* p1, const void* p2)
+	{
+		int iDiff = (int)((INT_PTR)((LngPredefined*)p1)->id - (INT_PTR)((LngPredefined*)p2)->id);
+		return iDiff;
+	};
 };
 
 static LngPredefined gsPredefined[] = {
@@ -459,21 +471,21 @@ static LngPredefined gsPredefined[] = {
 };
 
 
+// sort gsPredefined (except last item) to further binary search for id
 void CLngPredefined::Initialize()
 {
-	// TODO: sort gsPredefined (except last item) to binary search for id
+	qsort(gsPredefined, countof(gsPredefined)-1, sizeof(gsPredefined[0]), LngPredefined::compare);
 }
 
+// Search in gsPredefined for id
 LPCWSTR CLngPredefined::getHint(UINT id)
 {
-	// TODO: Optimize
-	for (LngPredefined* p = gsPredefined; p->id; ++p)
-	{
-		if (p->id == id)
-		{
-			return p->str;
-		}
-	}
+	LngPredefined key = {id};
+
+	LngPredefined* p = (LngPredefined*)bsearch(&key, gsPredefined, countof(gsPredefined)-1, sizeof(gsPredefined[0]), LngPredefined::compare);
+
+	if (p)
+		return p->str;
 
 	return NULL;
 }
