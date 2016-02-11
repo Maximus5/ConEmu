@@ -143,8 +143,8 @@ BEGIN
     COMBOBOX        tFontSizeX2,163,111,30,66,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
     CONTROL         "Anti-aliasing",cbFont2AA,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,205,112,109,10
     LTEXT           "Unicode ranges, the default is ""2013-25C4;""",stUnicodeRanges,11,126,308,8
-    COMBOBOX        tUnicodeRanges,10,136,265,72,CBS_DROPDOWN | CBS_AUTOHSCROLL | CBS_HASSTRINGS | WS_VSCROLL | WS_TABSTOP
-    PUSHBUTTON      "Apply",cbUnicodeRangesApply,280,136,37,12
+    COMBOBOX        tUnicodeRanges,10,136,243,72,CBS_DROPDOWN | CBS_AUTOHSCROLL | CBS_HASSTRINGS | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "Apply",cbUnicodeRangesApply,258,136,59,12
     LTEXT           "By the cost of background colors you may change the used font to bold or italic",stExtendFonts,12,171,305,8
     GROUPBOX        "",gbExtendFonts,4,160,319,44
     CONTROL         "Extend fonts",cbExtendFonts,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,160,77,8
@@ -167,7 +167,7 @@ BEGIN
     CONTROL         "Normal",rNormal,"Button",BS_AUTORADIOBUTTON | WS_GROUP,17,50,38,8
     CONTROL         "Maximized",rMaximized,"Button",BS_AUTORADIOBUTTON,60,50,48,8
     CONTROL         "Full screen",rFullScreen,"Button",BS_AUTORADIOBUTTON,113,50,49,8
-    PUSHBUTTON      "Apply",cbApplyPos,275,21,39,12
+    PUSHBUTTON      "Apply",cbApplyPos,255,21,59,12
     RTEXT           "X:",IDC_STATIC,192,65,9,8
     EDITTEXT        tWndX,206,63,43,12,ES_AUTOHSCROLL | ES_NUMBER
     EDITTEXT        tWndY,265,63,43,12,ES_AUTOHSCROLL | ES_NUMBER
@@ -415,7 +415,8 @@ BEGIN
     CONTROL         "Force ConEmu as default terminal for console applications",cbDefaultTerminal,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,9,14,309,8
     LTEXT           "List of hooked executables or window class names delimited with ‘|’\r\nExample: explorer.exe|devenv.exe|wdexpress.exe|totalcmd.exe|TaskManagerWindow",stDefaultTerminal,10,44,306,17
-    EDITTEXT        tDefaultTerminal,9,64,264,13,ES_AUTOHSCROLL
+    EDITTEXT        tDefaultTerminal,9,64,244,13,ES_AUTOHSCROLL
+    PUSHBUTTON      "Apply",cbApplyDefTerm,258,64,59,12
     CONTROL         "Don't use ConEmuHk.dll in started console",cbDefaultTerminalNoInjects,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,9,86,308,8
     CONTROL         "Automatic",rbDefaultTerminalConfAuto,"Button",BS_AUTORADIOBUTTON,17,145,57,8
@@ -429,7 +430,6 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,9,101,305,8
     LTEXT           "If you want to start some command in the Windows standard console window from hooked executable when 'Default terminal' is enabled, just use ""-new_console:z"" switch.\r\nExample: ""cmd.exe -new_console:z""",stDefaultTerminalSwitchInfo,10,168,306,26
     LTEXT           "https://conemu.github.io/en/DefaultTerminal.html",tDefTermWikiLink,10,217,306,8
-    PUSHBUTTON      "Apply",cbApplyDefTerm,278,64,39,12
     CONTROL         "Enable logging of hooked processes (debug purposes)",cbDefaultTerminalDebugLog,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,9,115,305,8
 END
@@ -622,13 +622,13 @@ BEGIN
     CONTROL         "List1",tvSetupCategories,"SysTreeView32",TVS_HASBUTTONS | TVS_HASLINES | TVS_LINESATROOT | TVS_SHOWSELALWAYS | WS_BORDER | WS_HSCROLL | WS_TABSTOP,4,19,90,232
     EDITTEXT        tOptionSearch,4,3,90,13,ES_AUTOHSCROLL | ES_WANTRETURN
     LTEXT           " ",tSetupPagePlace,95,19,326,234,WS_BORDER
-    DEFPUSHBUTTON   "Save settings",bSaveSettings,351,258,70,14
-    PUSHBUTTON      "Reset...",bResetSettings,164,258,51,14
-    PUSHBUTTON      "Reload...",bReloadSettings,222,258,51,14
+    DEFPUSHBUTTON   "Save settings",bSaveSettings,330,258,91,14
+    PUSHBUTTON      "Reset...",bResetSettings,126,258,60,14
+    PUSHBUTTON      "Reload...",bReloadSettings,192,258,60,14
+    PUSHBUTTON      "Import...",bImportSettings,258,258,60,14
     LTEXT           "Storage:",stStorage,106,5,29,8
-    EDITTEXT        tStorage,141,3,227,13,ES_AUTOHSCROLL | ES_READONLY
-    PUSHBUTTON      "Export...",cbExportConfig,371,2,50,14
-    PUSHBUTTON      "Import...",bImportSettings,279,258,50,14
+    EDITTEXT        tStorage,141,3,217,13,ES_AUTOHSCROLL | ES_READONLY
+    PUSHBUTTON      "Export...",cbExportConfig,361,2,60,14
 END
 
 IDD_SPG_INFO DIALOGEX 0, 0, 328, 224
@@ -1098,7 +1098,7 @@ BEGIN
     LTEXT           "Supported extensions:",IDC_STATIC,8,236,78,8,NOT WS_VISIBLE | WS_DISABLED
     CONTROL         "Preview frame",cbThumbPreviewBox,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,118,147,62,10
     CONTROL         "Current item frame",cbThumbSelectionBox,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,221,147,77,10
-    PUSHBUTTON      "&Apply",bApplyViewSettings,9,195,50,14
+    PUSHBUTTON      "&Apply",bApplyViewSettings,9,197,59,12
     CONTROL         "Restore on Far startup",cbThumbRestoreOnStartup,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,214,134,101,10
 END
 
