@@ -3798,8 +3798,8 @@ void CSetDlgButtons::OnBtn_TransparentSeparate(HWND hDlg, WORD CB, BYTE uCheck)
 	{
 		//EnableWindow(GetDlgItem(hDlg, cbTransparentInactive), gpSet->isTransparentSeparate);
 		EnableWindow(GetDlgItem(hDlg, slTransparentInactive), gpSet->isTransparentSeparate);
-		EnableWindow(GetDlgItem(hDlg, stTransparentInactive1), gpSet->isTransparentSeparate);
-		EnableWindow(GetDlgItem(hDlg, stTransparentInactive2), gpSet->isTransparentSeparate);
+		EnableWindow(GetDlgItem(hDlg, stTransparentInactive), gpSet->isTransparentSeparate);
+		EnableWindow(GetDlgItem(hDlg, stOpaqueInactive), gpSet->isTransparentSeparate);
 		//checkDlgButton(hDlg, cbTransparentInactive, (gpSet->nTransparentInactive!=MAX_ALPHA_VALUE) ? BST_CHECKED : BST_UNCHECKED);
 		SendDlgItemMessage(hDlg, slTransparentInactive, TBM_SETPOS, (WPARAM) true, (LPARAM) gpSet->isTransparentSeparate ? gpSet->nTransparentInactive : gpSet->nTransparent);
 	}
