@@ -4,8 +4,8 @@ $path = split-path -parent $MyInvocation.MyCommand.Definition
 
 # https://github.com/Maximus5/ConEmu/raw/alpha/src/ConEmu/ConEmu.rc
 $conemu_rc_file = ($path + "\..\src\ConEmu\ConEmu.rc")
-# https://github.com/Maximus5/ConEmu/raw/alpha/src/ConEmu/ConEmu.rc2
-$conemu_rc2_file = ($path + "\..\src\ConEmu\ConEmu.rc2")
+# https://github.com/Maximus5/ConEmu/raw/alpha/src/ConEmu/LngData.cpp
+$conemu_rc2_file = ($path + "\..\src\ConEmu\LngData.cpp")
 # https://github.com/Maximus5/ConEmu/raw/alpha/src/ConEmu/resource.h
 $resource_h_file = ($path + "\..\src\ConEmu\resource.h")
 # https://github.com/Maximus5/ConEmu/raw/alpha/src/ConEmu/MenuIds.h
@@ -66,7 +66,7 @@ function FindLine($l, $rcln, $cmp)
     $l++
   }
   if ($l -ge $rcln.length) {
-    Write-Host -ForegroundColor Red ("Was not found: С" + $cmp + "Т")
+    Write-Host -ForegroundColor Red ("Was not found: ``" + $cmp + "``")
     return -1
   }
   return $l
@@ -330,11 +330,9 @@ function ParseResIdsHex($resh)
 
 function ParseHints($rc2ln)
 {
-  $l = FindLine 0 $rc2ln "STRINGTABLE"
-  if ($l -le 0) { return }
-  $b = FindLine $l $rc2ln "BEGIN"
+  $b = FindLine 0 $rc2ln "static LngPredefined"
   if ($b -le 0) { return }
-  $e = FindLine $b $rc2ln "END"
+  $e = FindLine $b $rc2ln "void CLngPredefined"
   if ($e -le 0) { return }
 
   $hints = @{}
@@ -344,32 +342,13 @@ function ParseHints($rc2ln)
     if ($ln.StartsWith("//")) {
       continue
     }
-    $s = $ln.IndexOf(" ")
-    if ($s -gt 1) {
-      $name = $ln.SubString(0, $s)
-      $text = $ln.SubString($s).Trim()
-      $text = $text.SubString(1,$text.Length-2)
-
-      #$s = $text.IndexOf("\")
-      #while ($s -ge 0) {
-      #  $v = $text.SubString($s,2)
-      #  if ($v -eq "\r") { $r = "`r" }
-      #  elseif ($v -eq "\n") { $r = "`n" }
-      #  elseif ($v -eq "\t") { $r = "`t" }
-      #  elseif ($v -eq "\\") { $r = "\" }
-      #  else { $r = $e }
-
-      #  $text = $text.Remove($s,2).Insert($s,$r)
-      #  $s = $text.IndexOf("\",$s+$r.length)
-      #}
+    $m = ([regex]'\{\s*(\w+)\,\s*L\"(.+)\"\s*\}').Match($ln)
+    if ($m -ne $null) {
+      $name = $m.Groups[1].Value
+      $text = $m.Groups[2].Value
 
       if ($text -ne "") {
-        #$vi = @([int]$script:ids[$name])
-        #$vi += [string]$name;
-        #$vv = @{ id = $vi; "en" = $text; }
-        #$vv = @{ iden = [int]$script:ids[$name]; name = $name; "en" = $text; }
-        #$script:l10n["rsrc"] += $vv;
-        $hints.Add($name,$text.Replace("`"`"","\`""))
+        $hints.Add($name,$text)
       }
     }
   }
