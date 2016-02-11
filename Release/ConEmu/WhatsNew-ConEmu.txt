@@ -19,6 +19,15 @@ http://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2016.2.11
+* Initial steps for localization.
+  More information in docs: https://conemu.github.io/en/l10n.html
+* gh-539, gh-535: Option ‘Default task for new console’ was ignored (d93b5d9 regression).
+* gh-540: In some cases ‘Enhance preudographics’ was skipped.
+* Avoid spare RealConsole resize on HideCaption changes.
+* Fix broken Far's Editor/Viewer close from TabMenu (7631ffd regression).
+
+
 2016.2.7
 * Alt+HexNumbers: Dump collected codebase to console on ‘invalid’ input or GrayPlus.
 * gh-534: Fix wrong background drawing in Far (TrueColor).
