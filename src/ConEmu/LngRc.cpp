@@ -189,8 +189,14 @@ bool CLngRc::LoadResouces(LPCWSTR asLanguage, LPCWSTR asFile)
 	}
 	nLoadTick = GetTickCount();
 
+	// Remember language parameters
 	ms_Lng.Set(asLanguage);
 	ms_l10n.Set(asFile);
+
+	// Allocate intial array size
+	m_CmnHints.alloc(4096);
+	m_MnuHints.alloc(512);
+	m_Controls.alloc(4096);
 
 	// Process sections
 	for (size_t i = 0; i < countof(sections); i++)
