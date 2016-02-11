@@ -24,7 +24,6 @@ if ([System.IO.File]::Exists($target_l10n)) {
 
 function AppendExistingLanguages()
 {
-  $lng = $script:json["languages"]
   $json.languages | ? { $_.id -ne "en" } | % {
     $script:l10n += "    ,"
     $script:l10n += "    {`"id`": `"$($_.id)`", `"name`": `"$($_.name)`" }"
@@ -399,7 +398,27 @@ function AddValue($lng,$value)
   return $lines
 }
 
-function WriteResources($ids)
+function AppendExistingTranslations([string]$section,[string]$name)
+{
+  $js = $script:json."$section"
+  if ($js -ne $null) {
+    $jres = $js."$name"
+    if ($jres -ne $null) {
+      $json.languages | ? { $_.id -ne "en" } | % {
+        $jlng = $jres."$($_.id)"
+        if ($jlng -ne $null) {
+          # Write-Host -ForegroundColor Yellow "    [$($jlng.GetType())] ``$jlng``"
+          $str = [System.String]::Join("",$jlng).Replace("`r","\r").Replace("`n","\n").Replace("`t","\t").Replace("`"","\`"")
+          if ($str -ne "") {
+            $script:l10n += (AddValue $_.id $str)
+          }
+        }
+      }
+    }
+  }
+}
+
+function WriteResources($ids,[string]$section)
 {
   $ids.Keys | sort | % {
     $id = $ids[$_]
@@ -409,6 +428,9 @@ function WriteResources($ids)
       if ($script:first) { $script:first = $FALSE } else { $script:l10n += "    ," }
       $script:l10n += "    `"$name`": {"
       $script:l10n += (AddValue "en" $value)
+      if ($script:json -ne $NULL) {
+        AppendExistingTranslations $section $name
+      }
       $script:l10n += "      `"id`": $id }"
     }
   }
@@ -423,6 +445,9 @@ function WriteControls($ctrls,$ids)
     if ($script:first) { $script:first = $FALSE } else { $script:l10n += "    ," }
     $script:l10n += "    `"$name`": {"
     $script:l10n += (AddValue "en" $value)
+    if ($script:json -ne $NULL) {
+      AppendExistingTranslations "controls" $name
+    }
     $script:l10n += "      `"id`": $id }"
   }
 }
@@ -502,13 +527,13 @@ $script:hints   = ParseHints   $rc2ln
 $script:l10n += "  ,"
 $script:l10n += "  `"cmnhints`": {"
 $script:first = $TRUE
-WriteResources $script:res_id
+WriteResources $script:res_id "cmnhints"
 $script:l10n += "  }"
 
 $script:l10n += "  ,"
 $script:l10n += "  `"mnuhints`": {"
 $script:first = $TRUE
-WriteResources $script:mnu_id
+WriteResources $script:mnu_id "mnuhints"
 $script:l10n += "  }"
 
 #$script:l10n += "    { }"
