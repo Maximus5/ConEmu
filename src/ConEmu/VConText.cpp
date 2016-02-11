@@ -548,14 +548,20 @@ bool CVConLine::ParseLine(bool abForce, uint anTextWidth, uint anFontWidth, uint
 				if (!bPair)
 				while ((j2 < TextWidth) && (ConAttrLine[j2] == attr)
 					&& isCharPseudographics((wc2=ConCharLine[j2]))
+					&& (!bEnhanceGraphics || !isCharScroll(wc2))
 					&& !isCharBorderVertical(wc2)
 					&& isCharAltFont(wc2))
 					j2++;
 			}
 			else
 			{
+				wchar_t wc2;
 				if (!bPair)
-				while ((j2 < TextWidth) && (ConAttrLine[j2] == attr) && isCharPseudographics(ConCharLine[j2]))
+				while ((j2 < TextWidth) && (ConAttrLine[j2] == attr)
+					&& isCharPseudographics((wc2=ConCharLine[j2]))
+					&& (!bEnhanceGraphics || !isCharScroll(wc2))
+					&& !isCharBorderVertical(wc2)
+					)
 					j2++;
 			}
 		}
