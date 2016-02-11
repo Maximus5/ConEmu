@@ -1859,6 +1859,7 @@
     ,
     "bImportSettings": {
       "en": "Import...",
+      "ru": "Импорт...",
       "id": 2664 }
     ,
     "bInsideRegister": {
@@ -1942,10 +1943,12 @@
     ,
     "cbApplyDefTerm": {
       "en": "Apply",
+      "ru": "Применить",
       "id": 2865 }
     ,
     "cbApplyPos": {
       "en": "Apply",
+      "ru": "Apply",
       "id": 1520 }
     ,
     "cbAutoRegFonts": {
@@ -2294,6 +2297,7 @@
     ,
     "cbExportConfig": {
       "en": "Export...",
+      "ru": "Экспорт...",
       "id": 2572 }
     ,
     "cbExtendColors": {
@@ -3577,6 +3581,7 @@
     ,
     "stStorage": {
       "en": "Storage:",
+      "ru": "Настройки:",
       "id": 2573 }
     ,
     "stStorageLocation": {
