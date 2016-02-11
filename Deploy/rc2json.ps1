@@ -27,7 +27,7 @@ $script:ctrls = @{}
 $script:ignore_ctrls = @(
   "tAppDistinctHolder", "tDefTermWikiLink",
   "stConEmuUrl", "tvSetupCategories", "stSetCommands2", "stHomePage", "stDisableConImeFast3", "stDisableConImeFast2",
-  "lbActivityLog", "lbConEmuHotKeys"
+  "lbActivityLog", "lbConEmuHotKeys", "IDI_ICON1", "IDI_ICON2", "IDI_ICON3"
 )
 
 function FindLine($l, $rcln, $cmp)
@@ -271,7 +271,9 @@ function ParseResIds($resh)
     $ln = $resh[$l].Trim()
     if ($ln -match "#define\s+(\w+)\s+(\-?\d+)") {
       $id = [int]$matches[2]
-      if ($script:res_id.ContainsValue($id)) {
+      if ($script:ignore_ctrls.Contains($matches[1])) {
+        ## Just skip this resource ID
+      } elseif ($script:res_id.ContainsValue($id)) {
         $dup = ""; $script:res_id.Keys | % { if ($script:res_id[$_] -eq $id) { $dup = $_ } }
         Write-Host -ForegroundColor Red "res_id duplicate: $($id): '$($matches[1])' & '$($dup)'"
       } else {
@@ -478,9 +480,14 @@ $script:hints   = ParseHints   $rc2ln
 #Write-Host -ForegroundColor Red "`n`nHints list"
 
 $script:l10n += "  ,"
-$script:l10n += "  `"hints`": {"
+$script:l10n += "  `"cmnhints`": {"
 $script:first = $TRUE
 WriteResources $script:res_id
+$script:l10n += "  }"
+
+$script:l10n += "  ,"
+$script:l10n += "  `"mnuhints`": {"
+$script:first = $TRUE
 WriteResources $script:mnu_id
 $script:l10n += "  }"
 
