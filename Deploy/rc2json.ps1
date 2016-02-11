@@ -15,9 +15,29 @@ $target_l10n = ($path + "\..\Release\ConEmu\ConEmu.l10n")
 
 $linedelta = 7
 
+# Does the l10n file exist already?
+if ([System.IO.File]::Exists($target_l10n)) {
+  $script:json = Get-Content $target_l10n -Raw | ConvertFrom-JSON
+} else {
+  $script:json = $NULL
+}
+
+function AppendExistingLanguages()
+{
+  $lng = $script:json["languages"]
+  $json.languages | ? { $_.id -ne "en" } | % {
+    $script:l10n += "    ,"
+    $script:l10n += "    {`"id`": `"$($_.id)`", `"name`": `"$($_.name)`" }"
+  }
+}
+
+
 $script:l10n = @("{")
 $script:l10n += "  `"languages`": ["
 $script:l10n += "    {`"id`": `"en`", `"name`": `"English`" }"
+if ($script:json -ne $null) {
+  AppendExistingLanguages
+}
 $script:l10n += "  ]"
 
 $script:res_id = @{}
@@ -508,7 +528,5 @@ $script:first = $TRUE
 WriteControls $script:ctrls $script:res_id
 $script:l10n += "  }"
 
-#$json = ConvertTo-JSON $script:l10n
 $script:l10n += "}"
 Set-Content $target_l10n $script:l10n -Encoding UTF8
-#$json
