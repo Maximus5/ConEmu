@@ -4,3 +4,6 @@
 [submodule "src/modules/terminals"]
 	path = src/modules/terminals
 	url = https://github.com/Maximus5/cygwin-connector.git
+[submodule "src/modules/json-parser"]
+	path = src/modules/json-parser
+	url = https://github.com/Maximus5/json-parser.git
