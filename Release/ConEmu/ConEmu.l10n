@@ -2828,6 +2828,14 @@
       "en": "Shell activity",
       "id": 1744 }
     ,
+    "gbAddToPath": {
+      "en": "Add to %PATH% environment variable",
+      "id": 2974 }
+    ,
+    "gbAlphaTransparency": {
+      "en": "Alpha transparency",
+      "id": 2936 }
+    ,
     "gbAntiAliasing": {
       "en": "Anti-aliasing",
       "id": 2677 }
@@ -2836,6 +2844,10 @@
       "en": "Application distinct settings",
       "id": 2317 }
     ,
+    "gbCmdAutoAttach": {
+      "en": "Automatic attach of cmd && Tcc/Le to ConEmu (new window will be started if not found)",
+      "id": 2955 }
+    ,
     "gbCmdTasks": {
       "en": "&Predefined tasks (command groups)",
       "id": 2115 }
@@ -2843,6 +2855,10 @@
     "gbCmdTasks7": {
       "en": "Windows 7 taskbar (Jump list)",
       "id": 2134 }
+    ,
+    "gbColorEnhancement": {
+      "en": "Graphic enhancement",
+      "id": 2928 }
     ,
     "gbComspec": {
       "en": "Used command processor",
@@ -2868,13 +2884,85 @@
       "en": "Miscellaneous",
       "id": 2687 }
     ,
+    "gbConsoleBuffer": {
+      "en": "Console buffer height",
+      "id": 2894 }
+    ,
     "gbCopyingOverride": {
       "en": "Copying text override",
       "id": 2348 }
     ,
+    "gbCtrlIntercept": {
+      "en": "Intercept keys",
+      "id": 3017 }
+    ,
+    "gbCtrlMisc": {
+      "en": "Miscellaneous",
+      "id": 3019 }
+    ,
+    "gbCtrlMouse": {
+      "en": "Mouse options",
+      "id": 3016 }
+    ,
+    "gbCtrlMouseBtns": {
+      "en": "Mouse button actions",
+      "id": 3021 }
+    ,
+    "gbCtrlPrompt": {
+      "en": "Read line enhancements (command prompt, ReadConsoleW)",
+      "id": 3020 }
+    ,
+    "gbCtrlSeizeKeys": {
+      "en": "Seize keys / Send to console",
+      "id": 3018 }
+    ,
+    "gbCursorActive": {
+      "en": "Active console Text Cursor",
+      "id": 2913 }
+    ,
     "gbDefaultTermConfClose": {
       "en": "Confirm close (Press Enter or Esc to close console)",
       "id": 2660 }
+    ,
+    "gbDefTerm": {
+      "en": "WARNING!!! Enabling this option may cause false alarms in antiviral programs!!!",
+      "id": 2926 }
+    ,
+    "gbExtendColors": {
+      "en": "Extended foreground colors (same format as Standard colors)",
+      "id": 2927 }
+    ,
+    "gbFarDragDrop": {
+      "en": "Shell style Drag and Drop (Far Manager only)",
+      "id": 2957 }
+    ,
+    "gbFarMacros": {
+      "en": "Far Manager macros",
+      "id": 2965 }
+    ,
+    "gbFarOptions": {
+      "en": "Far Manager options",
+      "id": 2958 }
+    ,
+    "gbFarPanelViews": {
+      "en": "Far Panel Views",
+      "id": 2992 }
+    ,
+    "gbFarPreviewBg": {
+      "en": "Preview background",
+      "id": 3005 }
+    ,
+    "gbFarTabTemplates": {
+      "en": "Tab templates",
+      "id": 2959 }
+    ,
+    "gbFarThumbnails": {
+      "en": "Thumbnails mode",
+      "id": 2993 }
+    ,
+    "gbFarTiles": {
+      "en": "Tiles mode",
+      "id": 2994 }
     ,
     "gbFeatureAppear": {
       "en": "Appearance",
@@ -2908,10 +2996,54 @@
       "en": "&Find options",
       "id": 2229 }
     ,
+    "gbHighlightRowCol": {
+      "en": "Highlight rows/columns",
+      "id": 2973 }
+    ,
+    "gbHotkeys": {
+      "en": "Hotkeys, modifiers, macros",
+      "id": 3014 }
+    ,
+    "gbHyperlinks": {
+      "en": "Hyperlinks and compiler errors (goto editor)",
+      "id": 2972 }
+    ,
+    "gbInfoCmdLine": {
+      "en": "Current command line",
+      "id": 2944 }
+    ,
+    "gbInfoProcesses": {
+      "en": "Processes",
+      "id": 2942 }
+    ,
+    "gbInfoSizes": {
+      "en": "Sizes",
+      "id": 2943 }
+    ,
+    "gbIntgrHere": {
+      "en": "ConEmu Here - Explorer context menu integration",
+      "id": 2915 }
+    ,
+    "gbIntgrInside": {
+      "en": "ConEmu Inside - Explorer context menu integration",
+      "id": 2916 }
+    ,
     "gbMainConFont": {
       "en": "Main console font",
       "ru": "Основной шрифт консоли",
       "id": 2678 }
+    ,
+    "gbMinimizeAction": {
+      "en": "Minimize ConEmu automatically",
+      "id": 2911 }
+    ,
+    "gbMinimizeOnEsc": {
+      "en": "Minimize when Esc pressed",
+      "id": 2912 }
+    ,
+    "gbNtvdm": {
+      "en": "DOS applications (ntvdm)",
+      "id": 2895 }
     ,
     "gbPastingOverride": {
       "en": "Pasting text override (with exception of Far Manager)",
@@ -2929,17 +3061,41 @@
       "en": "Animation time",
       "id": 2690 }
     ,
+    "gbQuakeStyle": {
+      "en": "Quake style",
+      "id": 2907 }
+    ,
     "gbRecreateSplit": {
       "en": "New console split",
       "id": 2440 }
+    ,
+    "gbSelectColorIdx": {
+      "en": "Color indexes",
+      "id": 2976 }
     ,
     "gbSelectingOverride": {
       "en": "Starting selection with arrows",
       "id": 2558 }
     ,
+    "gbSelectKeyboard": {
+      "en": "Select text with keyboard (Also there are two hotkeys on Keys&Macro page)",
+      "id": 2980 }
+    ,
+    "gbSelectMouse": {
+      "en": "Select text with mouse (LeftClick+Drag)",
+      "id": 2979 }
+    ,
     "gbSetAlias": {
       "en": "Set up environment variables, cmd.exe aliases, codepage",
       "id": 2850 }
+    ,
+    "gbShowGeneric": {
+      "en": "Generic",
+      "id": 2900 }
+    ,
+    "gbShowScrollBar": {
+      "en": "Scrollbar",
+      "id": 2901 }
     ,
     "gbStandardColors": {
       "en": "Standard colors:",
@@ -2953,9 +3109,57 @@
       "en": "Startup options (may be overriden with \"/cmd\" or \"/cmdlist\" argument of ConEmu.exe)",
       "id": 2868 }
     ,
+    "gbStaticTransparency": {
+      "en": "Static transparency",
+      "id": 2939 }
+    ,
+    "gbStatusFontColor": {
+      "en": "Font and color",
+      "id": 2986 }
+    ,
+    "gbTabs": {
+      "en": "Tabs (consoles, Far Manager panels/editors/viewers)",
+      "id": 2981 }
+    ,
+    "gbTaskBarButton": {
+      "en": "Taskbar buttons",
+      "id": 2909 }
+    ,
+    "gbTaskBarNotify": {
+      "en": "Taskbar status area (TSA)",
+      "id": 2908 }
+    ,
+    "gbTextSelection": {
+      "en": "Text selection",
+      "id": 2975 }
+    ,
     "gbUpdate": {
       "en": "Update settings",
       "id": 2864 }
+    ,
+    "gbVConAlignment": {
+      "en": "Alignment",
+      "id": 2897 }
+    ,
+    "gbVConFont": {
+      "en": "Font",
+      "id": 2951 }
+    ,
+    "gbWindowPos": {
+      "en": "Window position (pixels)",
+      "id": 2890 }
+    ,
+    "gbWindowSize": {
+      "en": "Window size (cells, pixels or percents)",
+      "id": 2893 }
+    ,
+    "gbWindowSizePos": {
+      "en": "Console size and Window position",
+      "id": 2889 }
+    ,
+    "gbWndCloseAction": {
+      "en": "Action on closing last console (tab) and 'cross clicking'",
+      "id": 2910 }
     ,
     "ID_ATTACH": {
       "en": "Attach",
@@ -3390,6 +3594,15 @@
       "en": "chars",
       "id": 2227 }
     ,
+    "stCloseTabMacro": {
+      "en": "Close tab (Panel, Editor, Viewer):",
+      "id": 2966 }
+    ,
+    "stCmdAutoAttach": {
+      "en": [ "[HKEY_CURRENT_USER\\Software\\Microsoft\\Command Processor]\n"
+            , "Current command stored in registry ‘AutoRun’ (HKLM value is not processed here):" ],
+      "id": 2956 }
+    ,
     "stCmdGroupCommands": {
       "en": [ "&Commands (application, arguments, \"-new_console\" params)\n"
             , "Delimit commands with empty lines\n"
@@ -3402,13 +3615,49 @@
       "en": "Task parameters. Example: /dir \"C:\\\" /icon \"cmd.exe\" /single",
       "id": 2323 }
     ,
+    "stCmdGroupKey": {
+      "en": "&Hotkey:",
+      "id": 3024 }
+    ,
+    "stCmdOutputCP": {
+      "en": "Cmd.exe output codepage:",
+      "id": 2954 }
+    ,
     "stCmdTaskAdd": {
       "en": "Add:",
       "id": 2884 }
     ,
+    "stColorBack": {
+      "en": "Back:",
+      "id": 2933 }
+    ,
+    "stColorFadeHigh": {
+      "en": "High:",
+      "id": 2930 }
+    ,
+    "stColorFadeLow": {
+      "en": "Low:",
+      "id": 2929 }
+    ,
+    "stColorPopupBack": {
+      "en": "Back:",
+      "id": 2935 }
+    ,
+    "stColorPopupText": {
+      "en": "Popup:",
+      "id": 2934 }
+    ,
     "stColorSchemeFast": {
       "en": "Choose preferred color scheme:",
       "id": 2845 }
+    ,
+    "stColorSchemes": {
+      "en": "Schemes:",
+      "id": 2931 }
+    ,
+    "stColorText": {
+      "en": "Text:",
+      "id": 2932 }
     ,
     "stConEmuAbout": {
       "en": "Console Emulation program (local terminal)",
@@ -3420,10 +3669,22 @@
       "ru": "Версия программы:",
       "id": 2683 }
     ,
+    "stConsoleSizeChars": {
+      "en": "Console (chars):",
+      "id": 2945 }
+    ,
+    "stConsoleSizePixels": {
+      "en": "(pixels):",
+      "id": 2946 }
+    ,
     "stCopyFormat": {
       "en": "Copying format:",
       "ru": "Формат копирования:",
       "id": 2872 }
+    ,
+    "stCTSBackColor": {
+      "en": "Back:",
+      "id": 2978 }
     ,
     "stCTSEOL": {
       "en": "EOL:",
@@ -3433,6 +3694,18 @@
       "en": "Exceptions (\"|\"-separated):",
       "ru": "Исключения (разделитель-\"|\"):",
       "id": 2659 }
+    ,
+    "stCTSMBtnAction": {
+      "en": "Middle:",
+      "id": 3023 }
+    ,
+    "stCTSRBtnAction": {
+      "en": "Right:",
+      "id": 3022 }
+    ,
+    "stCTSTextColor": {
+      "en": "Text:",
+      "id": 2977 }
     ,
     "stCursorMinSize": {
       "en": "Min size (pix):",
@@ -3447,6 +3720,10 @@
       "en": "Darkening:",
       "ru": "Затемнение:",
       "id": 2673 }
+    ,
+    "stDcWndSize": {
+      "en": "DC window:",
+      "id": 2947 }
     ,
     "stDefaultTerminal": {
       "en": [ "List of hooked executables or window class names delimited with ‘|’\r\n"
@@ -3482,6 +3759,35 @@
       "en": "By the cost of background colors you may change the used font to bold or italic",
       "id": 2836 }
     ,
+    "stExtendFontsBold": {
+      "en": "Bold:",
+      "id": 2886 }
+    ,
+    "stExtendFontsItalic": {
+      "en": "Italic:",
+      "id": 2887 }
+    ,
+    "stExtendFontsNormal": {
+      "en": "Normal:",
+      "id": 2888 }
+    ,
+    "stFarPanelLeft": {
+      "en": "Left:",
+      "id": 2949 }
+    ,
+    "stFarPanelRight": {
+      "en": "Right:",
+      "id": 2950 }
+    ,
+    "stFarPID": {
+      "en": "Far PID:",
+      "id": 2940 }
+    ,
+    "stFarTabTemplates": {
+      "en": [ "%s - Title, %c - Console #, %n - Active process name, %p - PID, %a - ‘Admin’, %% - %,\n"
+            , "%i - Far window number (you can see it in standard F12 menu)" ],
+      "id": 2960 }
+    ,
     "stFontCharset": {
       "en": "Font charset:",
       "id": 2666 }
@@ -3502,6 +3808,18 @@
       "en": "Size:",
       "id": 2667 }
     ,
+    "stFrameAppear": {
+      "en": "Appear delay:",
+      "id": 2905 }
+    ,
+    "stFrameDisappear": {
+      "en": "Disappear:",
+      "id": 2906 }
+    ,
+    "stFrameWidth": {
+      "en": "Frame width:",
+      "id": 2904 }
+    ,
     "stGotoEditorCmd": {
       "en": "External editor, when Far not started:",
       "id": 2256 }
@@ -3516,6 +3834,10 @@
       "en": "Description:",
       "id": 2189 }
     ,
+    "stHotkeys": {
+      "en": "Show:",
+      "id": 3015 }
+    ,
     "stHotKeySelect": {
       "en": "Choose hotkey:",
       "id": 1769 }
@@ -3528,13 +3850,89 @@
       "en": "You can change following on 'Features' page of Settings dialog later",
       "id": 2744 }
     ,
+    "stIntgrHereCfg": {
+      "en": "Configuration:",
+      "id": 2918 }
+    ,
+    "stIntgrHereCmd": {
+      "en": "Command:",
+      "id": 2919 }
+    ,
+    "stIntgrHereIcon": {
+      "en": "Icon file:",
+      "id": 2920 }
+    ,
+    "stIntgrHereItem": {
+      "en": "Menu item:",
+      "id": 2917 }
+    ,
+    "stIntgrInsideCfg": {
+      "en": "Configuration:",
+      "id": 2923 }
+    ,
+    "stIntgrInsideCmd": {
+      "en": "Command:",
+      "id": 2924 }
+    ,
+    "stIntgrInsideIcon": {
+      "en": "Icon file:",
+      "id": 2925 }
+    ,
+    "stIntgrInsideItem": {
+      "en": "Menu item:",
+      "id": 2922 }
+    ,
+    "stIntgrInsideNote": {
+      "en": "Use this if you want ConEmu act as a page of Windows Explorer window",
+      "id": 2921 }
+    ,
     "stKeySelect": {
       "en": "Key:",
       "id": 2885 }
     ,
+    "stKeySelectMod": {
+      "en": "Modifiers:",
+      "id": 3025 }
+    ,
+    "stMoreConfont1": {
+      "en": "WARNING!!!",
+      "id": 3006 }
+    ,
+    "stMoreConfont2": {
+      "en": "Change these settings very carefully!!!",
+      "id": 3007 }
+    ,
+    "stMoreConfont3": {
+      "en": "Font must be Unicode and must be smaller than main font!!!",
+      "id": 3008 }
+    ,
+    "stMoreConfont4": {
+      "en": "For example: True Type font ‘Lucida Console’ 5x3",
+      "id": 3009 }
+    ,
+    "stMoreConfont5": {
+      "en": "Font must be declared in: HKLM\\Software\\Microsoft\\",
+      "id": 3010 }
+    ,
+    "stMoreConfont6": {
+      "en": "\\Windows NT\\CurrentVersion\\Console\\TrueTypeFont",
+      "id": 3011 }
+    ,
     "stNewTabName": {
       "en": "&New tab name (clear to revert):",
       "id": 2336 }
+    ,
+    "stNtvdmHeight": {
+      "en": "16bit height:",
+      "id": 2896 }
+    ,
+    "stOpaqueActive": {
+      "en": "Opaque",
+      "id": 2938 }
+    ,
+    "stOpaqueInactive": {
+      "en": "Opaque",
+      "id": 2383 }
     ,
     "stPalettePreviewFast": {
       "en": [ "\n"
@@ -3550,6 +3948,34 @@
       "en": "ms:",
       "id": 2565 }
     ,
+    "stRConCursorInfo": {
+      "en": "Cursor (x,y,h):",
+      "id": 2948 }
+    ,
+    "stRConStates": {
+      "en": "States:",
+      "id": 2941 }
+    ,
+    "stRunAsPassword": {
+      "en": "&Password:",
+      "id": 2970 }
+    ,
+    "stRunAsUser": {
+      "en": "User &name:",
+      "id": 2969 }
+    ,
+    "stSaveAllMacro": {
+      "en": "Save all editors:",
+      "id": 2967 }
+    ,
+    "stScrollAppear": {
+      "en": "Appear delay:",
+      "id": 2902 }
+    ,
+    "stScrollDisappear": {
+      "en": "Disappear:",
+      "id": 2903 }
+    ,
     "stSetCommands": {
       "en": [ "Here you may set up your environment variables, default code page, and so on...\r\n"
             , "One line may have only one command! You may comment lines with # sign." ],
@@ -3563,9 +3989,17 @@
       "en": "Delay between consoles initialization (ms):",
       "id": 2870 }
     ,
+    "stStartupDir": {
+      "en": "Startup &directory for new process:",
+      "id": 2968 }
+    ,
     "stStartupShellFast": {
       "en": "Choose your startup task or even a shell with arguments:",
       "id": 2843 }
+    ,
+    "stStatusAvailCol": {
+      "en": "Available columns:",
+      "id": 2990 }
     ,
     "stStatusColorBack": {
       "en": "Back:",
@@ -3578,6 +4012,22 @@
     "stStatusColorLight": {
       "en": "Light:",
       "id": 2498 }
+    ,
+    "stStatusFontCharset": {
+      "en": "Charset:",
+      "id": 2988 }
+    ,
+    "stStatusFontFace": {
+      "en": "Name:",
+      "id": 2987 }
+    ,
+    "stStatusLines": {
+      "en": "Lines:",
+      "id": 2989 }
+    ,
+    "stStatusSelCol": {
+      "en": "Selected columns:",
+      "id": 2991 }
     ,
     "stStorage": {
       "en": "Storage:",
@@ -3604,6 +4054,18 @@
       "en": "Tab double click actions",
       "id": 2734 }
     ,
+    "stTabEditor": {
+      "en": "Editor:",
+      "id": 2962 }
+    ,
+    "stTabEditorMod": {
+      "en": "Modified:",
+      "id": 2964 }
+    ,
+    "stTabFlashCounter": {
+      "en": "Invisible tab activity flash count:",
+      "id": 2983 }
+    ,
     "stTabFontCharset": {
       "en": "Charset:",
       "id": 2731 }
@@ -3611,6 +4073,22 @@
     "stTabFontFace": {
       "en": "Tab font:",
       "id": 2730 }
+    ,
+    "stTabLenMax": {
+      "en": "Maximum tab width (in chars):",
+      "id": 2985 }
+    ,
+    "stTabModifiedSuffix": {
+      "en": "Modified suffix:",
+      "id": 2982 }
+    ,
+    "stTabPanels": {
+      "en": "Panels:",
+      "id": 2961 }
+    ,
+    "stTabSkipWords": {
+      "en": "Skip words from title:",
+      "id": 2984 }
     ,
     "stTabTemplateDescr": {
       "en": [ "%s - Title, %c - Console #, %n - Active process name, %p - PID,\n"
@@ -3621,13 +4099,57 @@
       "en": "Tab templates (Far Manager ones are located on 'Far Manager' page)",
       "id": 2736 }
     ,
-    "stTransparentInactive1": {
+    "stTabViewer": {
+      "en": "Viewer:",
+      "id": 2963 }
+    ,
+    "stThumbLoadingTimeout": {
+      "en": "Loading timeout (sec.):",
+      "id": 3004 }
+    ,
+    "stThumbMaxZoom": {
+      "en": "Max. zoom:",
+      "id": 3003 }
+    ,
+    "stThumbsFontName": {
+      "en": "Label font:",
+      "id": 2995 }
+    ,
+    "stThumbsImgSize": {
+      "en": "Image size:",
+      "id": 2996 }
+    ,
+    "stThumbsPadding": {
+      "en": "Horz.pad:",
+      "id": 2998 }
+    ,
+    "stThumbsSpacing": {
+      "en": "Vert.pad:",
+      "id": 2997 }
+    ,
+    "stTilesFontName": {
+      "en": "Label font:",
+      "id": 2999 }
+    ,
+    "stTilesImgSize": {
+      "en": "Image size:",
+      "id": 3000 }
+    ,
+    "stTilesPadding": {
+      "en": "Right pad:",
+      "id": 3002 }
+    ,
+    "stTilesSpacing": {
+      "en": "Left pad:",
+      "id": 3001 }
+    ,
+    "stTransparentActive": {
+      "en": "Transparent",
+      "id": 2937 }
+    ,
+    "stTransparentInactive": {
       "en": "Transparent",
       "id": 2382 }
-    ,
-    "stTransparentInactive2": {
-      "en": "Opaque",
-      "id": 2383 }
     ,
     "stUnicodeRanges": {
       "en": "Unicode ranges, the default is \"2013-25C4;\"",
@@ -3668,6 +4190,22 @@
     "stUseKeyboardHooksFast": {
       "en": "You can change following on 'Controls' page of Settings dialog later",
       "id": 2743 }
+    ,
+    "stVConFontFix": {
+      "en": "Fix:",
+      "id": 2953 }
+    ,
+    "stVConFontMain": {
+      "en": "Main:",
+      "id": 2952 }
+    ,
+    "stVConPadSize": {
+      "en": "Pad size:",
+      "id": 2898 }
+    ,
+    "stVConPadSizePix": {
+      "en": "pixels",
+      "id": 2899 }
     ,
     "stWndHeight": {
       "en": "Height:",
