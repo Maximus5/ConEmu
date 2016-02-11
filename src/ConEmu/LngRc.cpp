@@ -34,6 +34,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ConEmu.h"
 #include "ConEmuStart.h"
+#include "LngData.h"
 #include "LngRc.h"
 #include "../common/MJsonReader.h"
 #include "../common/WFiles.h"
@@ -59,6 +60,8 @@ void CLngRc::Initialize()
 {
 	if (!gpLng)
 		gpLng = new CLngRc();
+
+	CLngPredefined::Initialize();
 	
 	// No sense to load resources now,
 	// options were not initialized yet
@@ -500,6 +503,9 @@ wrap:
 // static
 bool CLngRc::loadString(UINT id, LPWSTR lpBuffer, size_t nBufferMax)
 {
-	int iRc = LoadString(g_hInstance, id, lpBuffer, nBufferMax);
-	return (iRc > 0);
+	LPCWSTR pszPredefined = CLngPredefined::getHint(id);
+	if (pszPredefined == NULL)
+		return false;
+	lstrcpyn(lpBuffer, pszPredefined, nBufferMax);
+	return true;
 }

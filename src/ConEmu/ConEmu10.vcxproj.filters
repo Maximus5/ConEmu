@@ -434,9 +434,6 @@
     <None Include="Circles.bmp">
       <Filter>Resource Files</Filter>
     </None>
-    <None Include="ConEmu.rc2">
-      <Filter>Resource Files</Filter>
-    </None>
     <None Include="Copy.bmp">
       <Filter>Resource Files</Filter>
     </None>

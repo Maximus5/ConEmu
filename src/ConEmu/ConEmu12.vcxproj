@@ -1025,6 +1025,7 @@ copy "$(TargetPath)" Z:\</Command>
     <ClCompile Include="IconList.cpp" />
     <ClCompile Include="ImgButton.cpp" />
     <ClCompile Include="Inside.cpp" />
+    <ClCompile Include="LngData.cpp" />
     <ClCompile Include="LngRc.cpp" />
     <ClCompile Include="LoadImg.cpp" />
     <ClCompile Include="Macro.cpp" />
@@ -1162,6 +1163,7 @@ copy "$(TargetPath)" Z:\</Command>
     <ClInclude Include="IconList.h" />
     <ClInclude Include="ImgButton.h" />
     <ClInclude Include="Inside.h" />
+    <ClInclude Include="LngData.h" />
     <ClInclude Include="LngRc.h" />
     <ClInclude Include="LoadImg.h" />
     <ClInclude Include="Macro.h" />
@@ -1221,7 +1223,6 @@ copy "$(TargetPath)" Z:\</Command>
     <None Include="..\..\Release\ConEmu\Settings-ConEmu.reg" />
     <None Include="..\..\Release\ConEmu\WhatsNew-ConEmu.txt" />
     <None Include="ConEmu.ico" />
-    <None Include="ConEmu.rc2" />
     <None Include="Copy.bmp" />
     <None Include="CursorDragCopy.cur" />
     <None Include="CursorDragLink.cur" />

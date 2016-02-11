@@ -46,7 +46,6 @@ BEGIN
     "#define CERC_IMAGES\r\n"
     "#endif\r\n"
     "\r\n"
-    "#include ""ConEmu.rc2""\r\n"
     "#include ""Externals.rc2""\r\n"
     "#include ""Version.rc2""\r\n"
     "\r\n"
@@ -1806,16 +1805,6 @@ END
 #endif    // APSTUDIO_INVOKED
 
 
-/////////////////////////////////////////////////////////////////////////////
-//
-// AFX_DIALOG_LAYOUT
-//
-
-IDD_SPG_FEATURE AFX_DIALOG_LAYOUT
-BEGIN
-    0
-END
-
 #endif    // English (United States) resources
 /////////////////////////////////////////////////////////////////////////////
 
@@ -1832,7 +1821,6 @@ END
 #define CERC_IMAGES
 #endif
 
-#include "ConEmu.rc2"
 #include "Externals.rc2"
 #include "Version.rc2"
 

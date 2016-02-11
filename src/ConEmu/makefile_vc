@@ -72,6 +72,7 @@ $(INTDIR)\Hotkeys.obj \
 $(INTDIR)\IconList.obj \
 $(INTDIR)\ImgButton.obj \
 $(INTDIR)\Inside.obj \
+$(INTDIR)\LngData.obj \
 $(INTDIR)\LngRc.obj \
 $(INTDIR)\LoadImg.obj \
 $(INTDIR)\Macro.obj \
@@ -366,6 +367,8 @@ $(INTDIR)\IconList.obj: IconList.cpp IconList.h
 $(INTDIR)\ImgButton.obj: ImgButton.cpp ImgButton.h
 
 $(INTDIR)\Inside.obj: Inside.cpp Inside.h
+
+$(INTDIR)\LngData.obj: LngData.cpp LngData.h
 
 $(INTDIR)\LngRc.obj: LngRc.cpp LngRc.h
 

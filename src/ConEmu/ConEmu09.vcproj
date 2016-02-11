@@ -459,6 +459,7 @@
       <File RelativePath=".\IconList.cpp" />
       <File RelativePath=".\ImgButton.cpp" />
       <File RelativePath=".\Inside.cpp" />
+      <File RelativePath=".\LngData.cpp" />
       <File RelativePath=".\LngRc.cpp" />
       <File RelativePath=".\LoadImg.cpp" />
       <File RelativePath=".\Macro.cpp" />
@@ -594,6 +595,7 @@
       <File RelativePath=".\IconList.h" />
       <File RelativePath=".\ImgButton.h" />
       <File RelativePath=".\Inside.h" />
+      <File RelativePath=".\LngData.h" />
       <File RelativePath=".\LngRc.h" />
       <File RelativePath=".\LoadImg.h" />
       <File RelativePath=".\Macro.h" />
@@ -646,7 +648,6 @@
       <File RelativePath=".\Circles.bmp" />
       <File RelativePath=".\ConEmu.ico" />
       <File RelativePath=".\ConEmu.rc" />
-      <File RelativePath=".\ConEmu.rc2" />
       <File RelativePath=".\Copy.bmp" />
       <File RelativePath=".\Copy24.bmp" />
       <File RelativePath=".\Copy4.bmp" />
