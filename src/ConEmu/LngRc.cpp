@@ -489,10 +489,9 @@ bool CLngRc::getHint(UINT id, LPWSTR lpBuffer, size_t nBufferMax)
 		}
 	}
 
+	// Use binary search to find resource
 	if (loadString(id, lpBuffer, nBufferMax))
 	{
-		// Cache this value
-		gpLng->SetResource(arr, idx, lpBuffer, false);
 		// Succeeded
 		return true;
 	}
