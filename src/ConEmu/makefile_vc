@@ -264,7 +264,7 @@ AllDirs:
 #	$(CPPFLAGS) $<
 # <<
 
-$(RES_FILE): ConEmu.rc ConEmu.rc2 Externals.rc2 Version.h Version.rc2
+$(RES_FILE): ConEmu.rc Externals.rc2 Version.h Version.rc2
 	echo compiling resource file
 	$(RC) $(RFLAGS) /fo"$(RES_FILE)" ConEmu.rc
 
