@@ -13,7 +13,7 @@ $resource_h_file = ($path + "\..\src\ConEmu\resource.h")
 # ID-s for menu items
 $menuids_h_file = ($path + "\..\src\ConEmu\MenuIds.h")
 # ID-s for gsDataRsrcs
-$rsrsids_h_file = ($path + "\..\src\ConEmu\LngData.h")
+$rsrsids_h_file = ($path + "\..\src\ConEmu\LngDataEnum.h")
 
 $target_l10n = ($path + "\..\Release\ConEmu\ConEmu.l10n")
 
