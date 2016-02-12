@@ -1820,6 +1820,43 @@
       "id": 44004 }
   }
   ,
+  "strings": {
+    "lng_DlgAbout": {
+      "en": "About",
+      "ru": "О программе",
+      "id": 6 }
+    ,
+    "lng_DlgAffinity": {
+      "en": "Set active console processes affinity and priority",
+      "ru": "Задать процессов активной консоли сходство и приоритет",
+      "id": 4 }
+    ,
+    "lng_DlgAttach": {
+      "en": "Attach: Choose window or console application",
+      "ru": "Attach: Выберите окно или консольное приложение",
+      "id": 5 }
+    ,
+    "lng_DlgFastCfg": {
+      "en": "fast configuration",
+      "ru": "быстрая настройка",
+      "id": 1 }
+    ,
+    "lng_DlgHotkey": {
+      "en": "Choose hotkey",
+      "ru": "Выберите хоткей",
+      "id": 7 }
+    ,
+    "lng_DlgRenameTab": {
+      "en": "Rename tab",
+      "ru": "Переименовать таб",
+      "id": 3 }
+    ,
+    "lng_DlgSettings": {
+      "en": "Settings",
+      "ru": "Настройки",
+      "id": 2 }
+  }
+  ,
   "controls": {
     "bApplyViewSettings": {
       "en": "&Apply",
