@@ -180,9 +180,7 @@ _DBGHLP(L"/ZoneId - Try to drop :Zone.Identifier without confirmation.\r\n") \
 	L"\r\n" \
 	L"Online documentation: " CEWIKIBASE L"TableOfContents.html\r\n" \
 	L"\r\n" \
-	L"You can show your appreciation and support future development by donating. " \
-	L"Donate button located on project website " \
-	L"under ConEmu sketch (upper right of page)."
+	L"You can show your appreciation and support future development by donating."
 
 
 #define pConsoleHelpFull \
