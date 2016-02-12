@@ -686,7 +686,7 @@ function NewLngResource([string]$id,[string]$str)
 
   #$script:dst_str
 
-  Write-Host -ForegroundColor Green "$id = $iNextId"
+  Write-Host -ForegroundColor Green "Created $id = $iNextId. Don't forget to update ConEmu.l10n!"
 
   Set-Content $rsrsids_h_file $script:dst_ids -Encoding UTF8
   Set-Content $rsrcs_h_file   $script:dst_str -Encoding UTF8
