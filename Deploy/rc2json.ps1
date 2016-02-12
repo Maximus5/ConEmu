@@ -1,26 +1,26 @@
-﻿param([string]$mode="all")
+param([string]$mode="auto")
 
 $path = split-path -parent $MyInvocation.MyCommand.Definition
 
-# https://github.com/Maximus5/ConEmu/raw/alpha/src/ConEmu/ConEmu.rc
+# Dialog resources
 $conemu_rc_file = ($path + "\..\src\ConEmu\ConEmu.rc")
-# https://github.com/Maximus5/ConEmu/raw/alpha/src/ConEmu/LngData.cpp
-$conemu_rc2_file = ($path + "\..\src\ConEmu\LngData.cpp")
-# https://github.com/Maximus5/ConEmu/raw/alpha/src/ConEmu/resource.h
+# gsDataHints: dialog hints, menu hints, hotkey descriptions
+$conemu_rc2_file = ($path + "\..\src\ConEmu\LngDataHints.h")
+# ID-s for dialogs and hotkeys
 $resource_h_file = ($path + "\..\src\ConEmu\resource.h")
-# https://github.com/Maximus5/ConEmu/raw/alpha/src/ConEmu/MenuIds.h
+# ID-s for menu items
 $menuids_h_file = ($path + "\..\src\ConEmu\MenuIds.h")
 
 $target_l10n = ($path + "\..\Release\ConEmu\ConEmu.l10n")
 
-$linedelta = 7
+$script:ignore_ctrls = @(
+  "tAppDistinctHolder", "tDefTermWikiLink",
+  "stConEmuUrl", "tvSetupCategories", "stSetCommands2", "stHomePage", "stDisableConImeFast3", "stDisableConImeFast2",
+  "lbActivityLog", "lbConEmuHotKeys", "IDI_ICON1", "IDI_ICON2", "IDI_ICON3"
+)
 
-# Does the l10n file exist already?
-if ([System.IO.File]::Exists($target_l10n)) {
-  $script:json = Get-Content $target_l10n -Raw | ConvertFrom-JSON
-} else {
-  $script:json = $NULL
-}
+
+
 
 function AppendExistingLanguages()
 {
@@ -31,23 +31,27 @@ function AppendExistingLanguages()
 }
 
 
-$script:l10n = @("{")
-$script:l10n += "  `"languages`": ["
-$script:l10n += "    {`"id`": `"en`", `"name`": `"English`" }"
-if ($script:json -ne $null) {
-  AppendExistingLanguages
+function InitializeJsonData()
+{
+  # Does the l10n file exist already?
+  if ([System.IO.File]::Exists($target_l10n)) {
+    $script:json = Get-Content $target_l10n -Raw | ConvertFrom-JSON
+  } else {
+    $script:json = $NULL
+  }
+
+  $script:l10n = @("{")
+  $script:l10n += "  `"languages`": ["
+  $script:l10n += "    {`"id`": `"en`", `"name`": `"English`" }"
+  if ($script:json -ne $null) {
+    AppendExistingLanguages
+  }
+  $script:l10n += "  ]"
+
+  $script:res_id = @{}
+  $script:mnu_id = @{}
+  $script:ctrls = @{}
 }
-$script:l10n += "  ]"
-
-$script:res_id = @{}
-$script:mnu_id = @{}
-$script:ctrls = @{}
-
-$script:ignore_ctrls = @(
-  "tAppDistinctHolder", "tDefTermWikiLink",
-  "stConEmuUrl", "tvSetupCategories", "stSetCommands2", "stHomePage", "stDisableConImeFast3", "stDisableConImeFast2",
-  "lbActivityLog", "lbConEmuHotKeys", "IDI_ICON1", "IDI_ICON2", "IDI_ICON3"
-)
 
 function FindLine($l, $rcln, $cmp)
 {
@@ -196,7 +200,7 @@ function WriteFileContent($file,$text)
 
 
 
-function ParseDialog($rcln, $hints, $dlgid, $name)
+function ParseDialog($rcln, $dlgid, $name)
 {
   $l = FindLine 0 $rcln ($dlgid + " ")
   if ($l -le 0) { return }
@@ -328,17 +332,17 @@ function ParseResIdsHex($resh)
   return
 }
 
-function ParseHints($rc2ln)
+function ParseLngData($LngData)
 {
-  $b = FindLine 0 $rc2ln "static LngPredefined"
+  $b = FindLine 0 $LngData "static LngPredefined"
   if ($b -le 0) { return }
-  $e = FindLine $b $rc2ln "void CLngPredefined"
+  $e = $LngData.Count
   if ($e -le 0) { return }
 
   $hints = @{}
 
   for ($l = ($b+1); $l -lt $e; $l++) {
-    $ln = $rc2ln[$l].Trim()
+    $ln = $LngData[$l].Trim()
     if ($ln.StartsWith("//")) {
       continue
     }
@@ -416,8 +420,12 @@ function AppendExistingTranslations([string]$section,[string]$name,[string]$en_v
   }
 }
 
-function WriteResources($ids,[string]$section)
+function WriteResources([string]$section,$ids,$hints)
 {
+  $script:l10n += "  ,"
+  $script:l10n += "  `"$section`": {"
+  $script:first = $TRUE
+
   $ids.Keys | sort | % {
     $id = $ids[$_]
     $name = $_
@@ -432,10 +440,16 @@ function WriteResources($ids,[string]$section)
       $script:l10n += "      `"id`": $id }"
     }
   }
+
+  $script:l10n += "  }"
 }
 
-function WriteControls($ctrls,$ids)
+function WriteControls([string]$section,$ctrls,$ids)
 {
+  $script:l10n += "  ,"
+  $script:l10n += "  `"$section`": {"
+  $script:first = $TRUE
+
   $ctrls.Keys | sort | % {
     $name = $_
     $value = $ctrls[$_]
@@ -448,109 +462,126 @@ function WriteControls($ctrls,$ids)
     }
     $script:l10n += "      `"id`": $id }"
   }
+
+  $script:l10n += "  }"
 }
 
-$dialogs = @()
+function InitDialogList()
+{
+  $script:dialogs = @()
 
-# $dialogs += @{ id = "IDD_CMDPROMPT";     name = "Commands history and execution"; } ### is not used yet
-$dialogs += @{ id = "IDD_FIND";            name = "Find text"; }
-$dialogs += @{ id = "IDD_ATTACHDLG";       name = "Choose window or console application for attach"; }
-$dialogs += @{ id = "IDD_SETTINGS";        name = "Settings"; }
-$dialogs += @{ id = "IDD_RESTART";         name = "ConEmu"; }
-$dialogs += @{ id = "IDD_MORE_CONFONT";    name = "Real console font"; }
-# $dialogs += @{ id = "IDD_MORE_DOSBOX";   name = "DosBox settings"; }  ### is not used yet
-$dialogs += @{ id = "IDD_FAST_CONFIG";     name = "ConEmu fast configuration"; }
-$dialogs += @{ id = "IDD_ABOUT";           name = "About"; }
-# $dialogs += @{ id = "IDD_ACTION";        name = "Choose action"; }    ### is not used yet
-$dialogs += @{ id = "IDD_RENAMETAB";       name = "Rename tab"; }
-$dialogs += @{ id = "IDD_HELP";            name = "Item description"; }
-$dialogs += @{ id = "IDD_HOTKEY";          name = "Choose hotkey"; }
-$dialogs += @{ id = "IDD_AFFINITY";        name = "Set active console processes affinity and priority"; }
+  # $script:dialogs += @{ id = "IDD_CMDPROMPT";     name = "Commands history and execution"; } ### is not used yet
+  $script:dialogs += @{ id = "IDD_FIND";            name = "Find text"; }
+  $script:dialogs += @{ id = "IDD_ATTACHDLG";       name = "Choose window or console application for attach"; }
+  $script:dialogs += @{ id = "IDD_SETTINGS";        name = "Settings"; }
+  $script:dialogs += @{ id = "IDD_RESTART";         name = "ConEmu"; }
+  $script:dialogs += @{ id = "IDD_MORE_CONFONT";    name = "Real console font"; }
+  # $script:dialogs += @{ id = "IDD_MORE_DOSBOX";   name = "DosBox settings"; }  ### is not used yet
+  $script:dialogs += @{ id = "IDD_FAST_CONFIG";     name = "ConEmu fast configuration"; }
+  $script:dialogs += @{ id = "IDD_ABOUT";           name = "About"; }
+  # $script:dialogs += @{ id = "IDD_ACTION";        name = "Choose action"; }    ### is not used yet
+  $script:dialogs += @{ id = "IDD_RENAMETAB";       name = "Rename tab"; }
+  $script:dialogs += @{ id = "IDD_HELP";            name = "Item description"; }
+  $script:dialogs += @{ id = "IDD_HOTKEY";          name = "Choose hotkey"; }
+  $script:dialogs += @{ id = "IDD_AFFINITY";        name = "Set active console processes affinity and priority"; }
 
-$dialogs += @{ id = "IDD_SPG_MAIN";        name = "Main"; }
-$dialogs += @{ id = "IDD_SPG_WNDSIZEPOS";  name = " Size & Pos"; }
-$dialogs += @{ id = "IDD_SPG_SHOW";        name = " Appearance"; }
-$dialogs += @{ id = "IDD_SPG_BACK";        name = " Background"; }
-$dialogs += @{ id = "IDD_SPG_TABS";        name = " Tab bar"; }
-$dialogs += @{ id = "IDD_SPG_CONFIRM";     name = " Confirm"; }
-$dialogs += @{ id = "IDD_SPG_TASKBAR";     name = " Task bar"; }
-$dialogs += @{ id = "IDD_SPG_UPDATE";      name = " Update"; }
-$dialogs += @{ id = "IDD_SPG_STARTUP";     name = "Startup"; }
-$dialogs += @{ id = "IDD_SPG_CMDTASKS";    name = " Tasks"; }
-$dialogs += @{ id = "IDD_SPG_COMSPEC";     name = " ComSpec"; }
-$dialogs += @{ id = "IDD_SPG_ENVIRONMENT"; name = " Environment"; }
-$dialogs += @{ id = "IDD_SPG_FEATURE";     name = "Features"; }
-$dialogs += @{ id = "IDD_SPG_CURSOR";      name = " Text cursor"; }
-$dialogs += @{ id = "IDD_SPG_COLORS";      name = " Colors"; }
-$dialogs += @{ id = "IDD_SPG_TRANSPARENT"; name = " Transparency"; }
-$dialogs += @{ id = "IDD_SPG_STATUSBAR";   name = " Status bar"; }
-$dialogs += @{ id = "IDD_SPG_APPDISTINCT"; name = " App distinct"; }
-$dialogs += @{ id = "IDD_SPG_INTEGRATION"; name = "Integration"; }
-$dialogs += @{ id = "IDD_SPG_DEFTERM";     name = " Default term"; }
-$dialogs += @{ id = "IDD_SPG_KEYS";        name = "Keys & Macro"; }
-$dialogs += @{ id = "IDD_SPG_CONTROL";     name = " Controls"; }
-$dialogs += @{ id = "IDD_SPG_MARKCOPY";    name = " Mark/Copy"; }
-$dialogs += @{ id = "IDD_SPG_PASTE";       name = " Paste"; }
-$dialogs += @{ id = "IDD_SPG_HIGHLIGHT";   name = " Highlight"; }
-$dialogs += @{ id = "IDD_SPG_FEATURE_FAR"; name = "Far Manager"; }
-$dialogs += @{ id = "IDD_SPG_FARMACRO";    name = " Far macros"; }
-$dialogs += @{ id = "IDD_SPG_VIEWS";       name = " Views"; }
-$dialogs += @{ id = "IDD_SPG_INFO";        name = "Info"; }
-$dialogs += @{ id = "IDD_SPG_DEBUG";       name = " Debug"; }
-$dialogs += @{ id = "IDD_SPG_APPDISTINCT2";name = " <App distinct>"; }
-
-
-# Query source files
-Write-Host -NoNewLine ("Reading: " + $conemu_rc_file)
-$rcln  = Get-Content $conemu_rc_file
-Write-Host (" Lines: " + $rcln.Length)
-Write-Host -NoNewLine ("Reading: " + $conemu_rc2_file)
-$rc2ln = Get-Content $conemu_rc2_file
-Write-Host (" Lines: " + $rc2ln.Length)
-
-Write-Host -NoNewLine ("Reading: " + $resource_h_file)
-$resh  = Get-Content $resource_h_file
-Write-Host (" Lines: " + $resh.Length)
-ParseResIds $resh
-
-Write-Host -NoNewLine ("Reading: " + $menuids_h_file)
-$menuh  = Get-Content $menuids_h_file
-Write-Host (" Lines: " + $menuh.Length)
-ParseResIdsHex $menuh
-
-# Preparse hints and hotkeys
-$script:hints   = ParseHints   $rc2ln
-#Write-Host -ForegroundColor Red "`n`nHints list"
-
-$script:l10n += "  ,"
-$script:l10n += "  `"cmnhints`": {"
-$script:first = $TRUE
-WriteResources $script:res_id "cmnhints"
-$script:l10n += "  }"
-
-$script:l10n += "  ,"
-$script:l10n += "  `"mnuhints`": {"
-$script:first = $TRUE
-WriteResources $script:mnu_id "mnuhints"
-$script:l10n += "  }"
-
-#$script:l10n += "    { }"
-
-# Parse sources and write wiki/md pages
-$iDlgNo = 0
-$dialogs | % {
-  Write-Progress -Activity "Dialogs" -PercentComplete ($i * 100 / $dialogs.Count) -Status "$($_.id): $($_.name.Trim())" -Id 1
-  ParseDialog $rcln $script:hints $_.id $_.name.Trim()
-  $iDlgNo++
+  $script:dialogs += @{ id = "IDD_SPG_MAIN";        name = "Main"; }
+  $script:dialogs += @{ id = "IDD_SPG_WNDSIZEPOS";  name = " Size & Pos"; }
+  $script:dialogs += @{ id = "IDD_SPG_SHOW";        name = " Appearance"; }
+  $script:dialogs += @{ id = "IDD_SPG_BACK";        name = " Background"; }
+  $script:dialogs += @{ id = "IDD_SPG_TABS";        name = " Tab bar"; }
+  $script:dialogs += @{ id = "IDD_SPG_CONFIRM";     name = " Confirm"; }
+  $script:dialogs += @{ id = "IDD_SPG_TASKBAR";     name = " Task bar"; }
+  $script:dialogs += @{ id = "IDD_SPG_UPDATE";      name = " Update"; }
+  $script:dialogs += @{ id = "IDD_SPG_STARTUP";     name = "Startup"; }
+  $script:dialogs += @{ id = "IDD_SPG_CMDTASKS";    name = " Tasks"; }
+  $script:dialogs += @{ id = "IDD_SPG_COMSPEC";     name = " ComSpec"; }
+  $script:dialogs += @{ id = "IDD_SPG_ENVIRONMENT"; name = " Environment"; }
+  $script:dialogs += @{ id = "IDD_SPG_FEATURE";     name = "Features"; }
+  $script:dialogs += @{ id = "IDD_SPG_CURSOR";      name = " Text cursor"; }
+  $script:dialogs += @{ id = "IDD_SPG_COLORS";      name = " Colors"; }
+  $script:dialogs += @{ id = "IDD_SPG_TRANSPARENT"; name = " Transparency"; }
+  $script:dialogs += @{ id = "IDD_SPG_STATUSBAR";   name = " Status bar"; }
+  $script:dialogs += @{ id = "IDD_SPG_APPDISTINCT"; name = " App distinct"; }
+  $script:dialogs += @{ id = "IDD_SPG_INTEGRATION"; name = "Integration"; }
+  $script:dialogs += @{ id = "IDD_SPG_DEFTERM";     name = " Default term"; }
+  $script:dialogs += @{ id = "IDD_SPG_KEYS";        name = "Keys & Macro"; }
+  $script:dialogs += @{ id = "IDD_SPG_CONTROL";     name = " Controls"; }
+  $script:dialogs += @{ id = "IDD_SPG_MARKCOPY";    name = " Mark/Copy"; }
+  $script:dialogs += @{ id = "IDD_SPG_PASTE";       name = " Paste"; }
+  $script:dialogs += @{ id = "IDD_SPG_HIGHLIGHT";   name = " Highlight"; }
+  $script:dialogs += @{ id = "IDD_SPG_FEATURE_FAR"; name = "Far Manager"; }
+  $script:dialogs += @{ id = "IDD_SPG_FARMACRO";    name = " Far macros"; }
+  $script:dialogs += @{ id = "IDD_SPG_VIEWS";       name = " Views"; }
+  $script:dialogs += @{ id = "IDD_SPG_INFO";        name = "Info"; }
+  $script:dialogs += @{ id = "IDD_SPG_DEBUG";       name = " Debug"; }
+  $script:dialogs += @{ id = "IDD_SPG_APPDISTINCT2";name = " <App distinct>"; }
 }
-Write-Progress -Activity "Dialog Controls" -Completed -Id 2
-Write-Progress -Activity "Dialogs" -PercentComplete 100 -Completed -Id 1
 
-$script:l10n += "  ,"
-$script:l10n += "  `"controls`": {"
-$script:first = $TRUE
-WriteControls $script:ctrls $script:res_id
-$script:l10n += "  }"
 
-$script:l10n += "}"
-Set-Content $target_l10n $script:l10n -Encoding UTF8
+function UpdateConEmuL10N()
+{
+  # $script:json & $script:l10n
+  InitializeJsonData
+
+  # Query source files
+
+  Write-Host -NoNewLine ("Reading: " + $conemu_rc_file)
+  $rcln  = Get-Content $conemu_rc_file
+  Write-Host (" Lines: " + $rcln.Length)
+
+  Write-Host -NoNewLine ("Reading: " + $conemu_rc2_file)
+  $rchints = Get-Content $conemu_rc2_file
+  Write-Host (" Lines: " + $rchints.Length)
+
+  Write-Host -NoNewLine ("Reading: " + $resource_h_file)
+  $resh  = Get-Content $resource_h_file
+  Write-Host (" Lines: " + $resh.Length)
+  ParseResIds $resh
+
+  Write-Host -NoNewLine ("Reading: " + $menuids_h_file)
+  $menuh  = Get-Content $menuids_h_file
+  Write-Host (" Lines: " + $menuh.Length)
+  ParseResIdsHex $menuh
+
+
+  # Preparse hints and hotkeys
+  $script:hints = ParseLngData $rchints
+  #Write-Host -ForegroundColor Red "`n`nHints list"
+
+  #######################################################
+
+  WriteResources "cmnhints" $script:res_id $script:hints
+
+  WriteResources "mnuhints" $script:mnu_id $script:hints
+
+  ####### Parse sources and write wiki/md pages #########
+
+  InitDialogList
+  $iDlgNo = 0
+  $script:dialogs | % {
+    Write-Progress -Activity "Dialogs" -PercentComplete ($iDlgNo * 100 / $script:dialogs.Count) -Status "$($_.id): $($_.name.Trim())" -Id 1
+    ParseDialog $rcln $_.id $_.name.Trim()
+    $iDlgNo++
+  }
+  Write-Progress -Activity "Dialog Controls" -Completed -Id 2
+  Write-Progress -Activity "Dialogs" -PercentComplete 100 -Completed -Id 1
+
+  #######################################################
+
+  WriteControls "controls" $script:ctrls $script:res_id
+
+  #######################################################
+
+  $script:l10n += "}"
+  Set-Content $target_l10n $script:l10n -Encoding UTF8
+}
+
+
+
+#################################################
+##############  Main entry point  ###############
+#################################################
+if ($mode -eq "auto") {
+  UpdateConEmuL10N
+}
