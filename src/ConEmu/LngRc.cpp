@@ -56,6 +56,16 @@ CLngRc::~CLngRc()
 }
 
 // static
+bool CLngRc::isLocalized()
+{
+	if (!gpLng)
+		return false;
+	if (gpLng->ms_Lng.IsEmpty() || gpLng->ms_l10n.IsEmpty())
+		return false;
+	return true;
+}
+
+// static
 void CLngRc::Initialize()
 {
 	if (!gpLng)

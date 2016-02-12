@@ -42,6 +42,7 @@ public:
 	CLngRc();
 	~CLngRc();
 
+	static bool isLocalized();
 	static void Initialize();
 	void Reload(bool bForce = false);
 
