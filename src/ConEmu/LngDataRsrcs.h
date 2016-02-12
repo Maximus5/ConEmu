@@ -29,12 +29,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 static LngPredefined gsDataRsrcs[] = {
-	{ lng_DlgFastCfg,               L"fast configuration" },
-	{ lng_DlgSettings,              L"Settings" },
-	{ lng_DlgRenameTab,             L"Rename tab" },
+	{ lng_DlgAbout,                 L"About" },
 	{ lng_DlgAffinity,              L"Set active console processes affinity and priority" },
 	{ lng_DlgAttach,                L"Attach: Choose window or console application" },
-	{ lng_DlgAbout,                 L"About" },
+	{ lng_DlgFastCfg,               L"fast configuration" },
 	{ lng_DlgHotkey,                L"Choose hotkey" },
+	{ lng_DlgRenameTab,             L"Rename tab" },
+	{ lng_DlgSettings,              L"Settings" },
 	{ /* empty trailing item for patch convenience */ }
 };
