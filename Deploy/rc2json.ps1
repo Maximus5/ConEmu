@@ -1,4 +1,4 @@
-param([string]$mode="auto")
+param([string]$mode="auto",[string]$id="",[string]$str="")
 
 $path = split-path -parent $MyInvocation.MyCommand.Definition
 
@@ -22,6 +22,9 @@ $script:ignore_ctrls = @(
   "stConEmuUrl", "tvSetupCategories", "stSetCommands2", "stHomePage", "stDisableConImeFast3", "stDisableConImeFast2",
   "lbActivityLog", "lbConEmuHotKeys", "IDI_ICON1", "IDI_ICON2", "IDI_ICON3"
 )
+
+$last_gen_ids_note = "// last auto-gen identifier"
+$last_gen_str_note = "{ /* empty trailing item for patch convenience */ }"
 
 
 
@@ -341,7 +344,8 @@ function ParseResIdsEnum($resh)
 {
   for ($l = 0; $l -lt $resh.Length; $l++) {
     $ln = $resh[$l].Trim()
-    if ($ln -match "\s*(lng_\w+)\s*\=\s*(\d+)\,") {
+    if ($ln -match "\s*(lng_\w+)\s*\=\s*(\d+)\,*") {
+      #Write-Host "m1=$($matches[1]); m2=$($matches[2]);"
       $id = [int]$matches[2]
       if ($script:str_id.ContainsValue($id)) {
         $dup = ""; $script:str_id.Keys | % { if ($script:str_id[$_] -eq $id) { $dup = $_ } }
@@ -617,6 +621,79 @@ function UpdateConEmuL10N()
   Set-Content $target_l10n $script:l10n -Encoding UTF8
 }
 
+function NewLngResource([string]$id,[string]$str)
+{
+  $script:str_id = @{}
+
+  Write-Host -NoNewLine ("Reading: " + $rsrsids_h_file)
+  $rsrch  = Get-Content $rsrsids_h_file
+  Write-Host (" Lines: " + $rsrch.Length)
+  ParseResIdsEnum $rsrch
+
+  Write-Host -NoNewLine ("Reading: " + $rsrcs_h_file)
+  $strdata = Get-Content $rsrcs_h_file
+  Write-Host (" Lines: " + $strdata.Length)
+
+  # Prepare string resources
+  $script:rsrcs = ParseLngData $strdata
+
+  if ($script:rsrcs.ContainsKey($id)) {
+    Write-Host -ForegroundColor Red "Key '$id' already exists: $($script:rsrcs[$id])"
+    $host.SetShouldExit(101)
+    exit 
+    return
+  }
+
+  #############
+  $script:dst_ids = @()
+  $script:dst_str = @()
+
+  # enum LngResources
+  for ($i = 0; $i -lt $rsrch.Count; $i++) {
+    if ($rsrch[$i].Trim() -eq $last_gen_ids_note) {
+      break
+    }
+    $script:dst_ids += $rsrch[$i]
+  }
+  $iNextId = [int]$script:str_id["lng_NextId"]
+  if (($iNextId -eq $null) -Or ($iNextId -eq 0)) {
+    Write-Host -ForegroundColor "lng_NextId was not found!"
+    $host.SetShouldExit(101)
+    exit 
+    return
+  }
+  $script:dst_ids += ("`t" + $id.PadRight(30) + "= " + [string]$iNextId + ",")
+  $script:dst_ids += "`t$last_gen_ids_note"
+  $script:dst_ids += ("`t" + "lng_NextId".PadRight(30) + "= " + [string]($iNextId+1))
+  $script:dst_ids += "};"
+
+  #$script:dst_ids
+
+  # static LngPredefined gsDataRsrcs[]
+  for ($i = 0; $i -lt $strdata.Count; $i++) {
+    $script:dst_str += $strdata[$i]
+    if ($strdata[$i].StartsWith("static LngPredefined")) {
+      break
+    }
+  }
+  #
+  $script:rsrcs.Add($id, $str)
+  $script:rsrcs.Keys | sort | % {
+    $script:dst_str += ("`t{ " + ($_+",").PadRight(30) + "L`"" + $script:rsrcs[$_] + "`" },")
+  }
+  $script:dst_str += "`t$last_gen_str_note"
+  $script:dst_str += "};"
+
+  #$script:dst_str
+
+  Write-Host -ForegroundColor Green "$id = $iNextId"
+
+  Set-Content $rsrsids_h_file $script:dst_ids -Encoding UTF8
+  Set-Content $rsrcs_h_file   $script:dst_str -Encoding UTF8
+
+  return
+}
+
 
 
 #################################################
@@ -624,6 +701,9 @@ function UpdateConEmuL10N()
 #################################################
 if ($mode -eq "auto") {
   UpdateConEmuL10N
+} elseif ($mode -eq "add") {
+  if ($str -eq "") { $str = $env:ce_add_str }
+  NewLngResource $id $str
 }
 
 Write-Host "All done"
