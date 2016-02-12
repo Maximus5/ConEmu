@@ -458,6 +458,7 @@ class CSettings
 		static void ShowFontErrorTip(LPCTSTR asInfo);
 		TOOLINFO tiBalloon;
 		void RegisterTipsFor(HWND hChildDlg);
+		static BOOL CALLBACK RegisterTipsForChild(HWND hChild, LPARAM lParam);
 		CEFONT CreateFontIndirectMy(LOGFONT *inFont);
 		bool FindCustomFont(LPCWSTR lfFaceName, int iSize, BOOL bBold, BOOL bItalic, BOOL bUnderline, CustomFontFamily** ppCustom, CustomFont** ppFont);
 		void RecreateBorderFont(const LOGFONT *inFont);

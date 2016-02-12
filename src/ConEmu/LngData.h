@@ -31,10 +31,14 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <windows.h>
 
+// enum LngResources
+#include "LngDataEnum.h"
+
 class CLngPredefined
 {
 public:
 	static void Initialize();
 
 	static LPCWSTR getHint(UINT id);
+	static LPCWSTR getRsrc(UINT id);
 };

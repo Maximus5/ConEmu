@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2013-2016 Maximus5
+Copyright (c) 2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -26,29 +26,15 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-
 #pragma once
 
-#include "Hotkeys.h"
-
-class CDpiForDialog;
-
-// IDD_HOTKEY { hkHotKeySelect, lbHotKeyList, lbHotKeyMod1, lbHotKeyMod2, lbHotKeyMod3 }
-class CHotKeyDialog
-{
-private:
-	HWND mh_Dlg;
-	HWND mh_Parent;
-	ConEmuHotKey m_HK;
-	CDpiForDialog* mp_DpiAware;
-public:
-	static bool EditHotKey(HWND hParent, DWORD& VkMod);
-	DWORD GetVkMod();
-public:
-	static DWORD dlgGetHotkey(HWND hDlg, UINT iEditCtrl = hkHotKeySelect, UINT iListCtrl = lbHotKeyList);
-public:
-	CHotKeyDialog(HWND hParent, DWORD aVkMod);
-	~CHotKeyDialog();
-
-	static INT_PTR CALLBACK hkDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam);
+static LngPredefined gsDataRsrcs[] = {
+	{ lng_DlgFastCfg,               L"fast configuration" },
+	{ lng_DlgSettings,              L"Settings" },
+	{ lng_DlgRenameTab,             L"Rename tab" },
+	{ lng_DlgAffinity,              L"Set active console processes affinity and priority" },
+	{ lng_DlgAttach,                L"Attach: Choose window or console application" },
+	{ lng_DlgAbout,                 L"About" },
+	{ lng_DlgHotkey,                L"Choose hotkey" },
+	{ /* empty trailing item for patch convenience */ }
 };

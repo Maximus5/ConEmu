@@ -156,6 +156,8 @@ INT_PTR CRecreateDlg::OnInitDialog(HWND hDlg, UINT messg, WPARAM wParam, LPARAM 
 
 	gpConEmu->OnOurDialogOpened();
 
+	CDynDialog::LocalizeDialog(hDlg);
+
 	// Visual
 	SendMessage(hDlg, WM_SETICON, ICON_BIG, (LPARAM)hClassIcon);
 	SendMessage(hDlg, WM_SETICON, ICON_SMALL, (LPARAM)hClassIconSm);

@@ -368,7 +368,7 @@ $(INTDIR)\ImgButton.obj: ImgButton.cpp ImgButton.h
 
 $(INTDIR)\Inside.obj: Inside.cpp Inside.h
 
-$(INTDIR)\LngData.obj: LngData.cpp LngData.h
+$(INTDIR)\LngData.obj: LngData.cpp LngData.h LngDataEnum.h LngDataHints.h LngDataRsrcs.h
 
 $(INTDIR)\LngRc.obj: LngRc.cpp LngRc.h
 

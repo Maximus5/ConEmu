@@ -50,12 +50,15 @@ struct LngPredefined
 
 // LngPredefined gsDataHints
 #include "LngDataHints.h"
+// LngPredefined gsDataRsrcs
+#include "LngDataRsrcs.h"
 
 
 // sort gsDataHints (except last item) to further binary search for id
 void CLngPredefined::Initialize()
 {
 	qsort(gsDataHints, countof(gsDataHints)-1, sizeof(gsDataHints[0]), LngPredefined::compare);
+	qsort(gsDataRsrcs, countof(gsDataRsrcs)-1, sizeof(gsDataRsrcs[0]), LngPredefined::compare);
 }
 
 // Search in gsDataHints for id
@@ -63,7 +66,26 @@ LPCWSTR CLngPredefined::getHint(UINT id)
 {
 	LngPredefined key = {id};
 
+	// Last item of gsDataHints must be empty
+	_ASSERTE(gsDataHints[0].id && !gsDataHints[countof(gsDataHints)-1].id);
+
 	LngPredefined* p = (LngPredefined*)bsearch(&key, gsDataHints, countof(gsDataHints)-1, sizeof(gsDataHints[0]), LngPredefined::compare);
+
+	if (p)
+		return p->str;
+
+	return NULL;
+}
+
+// Search in gsDataRsrcs for id
+LPCWSTR CLngPredefined::getRsrc(UINT id)
+{
+	LngPredefined key = {id};
+
+	// Last item of gsDataRsrcs must be empty
+	_ASSERTE(gsDataRsrcs[0].id && !gsDataRsrcs[countof(gsDataRsrcs)-1].id);
+
+	LngPredefined* p = (LngPredefined*)bsearch(&key, gsDataRsrcs, countof(gsDataRsrcs)-1, sizeof(gsDataRsrcs[0]), LngPredefined::compare);
 
 	if (p)
 		return p->str;

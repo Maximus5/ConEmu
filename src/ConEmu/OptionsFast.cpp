@@ -234,6 +234,8 @@ static INT_PTR Fast_OnInitDialog(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lP
 	SendMessage(hDlg, WM_SETICON, ICON_BIG, (LPARAM)hClassIcon);
 	SendMessage(hDlg, WM_SETICON, ICON_SMALL, (LPARAM)hClassIconSm);
 
+	CDynDialog::LocalizeDialog(hDlg);
+
 	if (gp_DpiAware)
 	{
 		gp_DpiAware->Attach(hDlg, NULL, CDynDialog::GetDlgClass(hDlg));

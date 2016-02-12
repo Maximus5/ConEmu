@@ -596,6 +596,9 @@
       <File RelativePath=".\ImgButton.h" />
       <File RelativePath=".\Inside.h" />
       <File RelativePath=".\LngData.h" />
+      <File RelativePath=".\LngDataEnum.h" />
+      <File RelativePath=".\LngDataHints.h" />
+      <File RelativePath=".\LngDataRsrcs.h" />
       <File RelativePath=".\LngRc.h" />
       <File RelativePath=".\LoadImg.h" />
       <File RelativePath=".\Macro.h" />

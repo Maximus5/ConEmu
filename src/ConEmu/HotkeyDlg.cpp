@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2013-2014 Maximus5
+Copyright (c) 2013-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -32,6 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "HotkeyDlg.h"
 #include "DpiAware.h"
 #include "DynDialog.h"
+#include "LngRc.h"
 #include "OptionsClass.h"
 #include "SetDlgLists.h"
 
@@ -116,8 +117,13 @@ INT_PTR CHotKeyDialog::hkDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lP
 	{
 		case WM_INITDIALOG:
 		{
+			// OnOurDialogOpened is not called because this dialog is intended
+			// to be opened as modal dialog with settings dialog as a parent
+
 			SendMessage(hDlg, WM_SETICON, ICON_BIG, (LPARAM)hClassIcon);
 			SendMessage(hDlg, WM_SETICON, ICON_SMALL, (LPARAM)hClassIconSm);
+
+			CDynDialog::LocalizeDialog(hDlg, lng_DlgHotkey);
 
 			if (pDlg->mp_DpiAware)
 			{

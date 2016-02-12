@@ -63,6 +63,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConfirmDlg.h"
 #include "DynDialog.h"
 #include "Inside.h"
+#include "LngDataEnum.h"
 #include "Macro.h"
 #include "Menu.h"
 #include "MyClipboard.h"
@@ -700,6 +701,8 @@ INT_PTR CRealConsole::priorityProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM 
 			pRCon->mp_ConEmu->OnOurDialogOpened();
 			_ASSERTE(pRCon!=NULL);
 			SetWindowLongPtr(hDlg, DWLP_USER, (LONG_PTR)pRCon);
+
+			CDynDialog::LocalizeDialog(hDlg, lng_DlgAffinity);
 
 			if (pRCon->mp_PriorityDpiAware)
 				pRCon->mp_PriorityDpiAware->Attach(hDlg, ghWnd, CDynDialog::GetDlgClass(hDlg));
@@ -10802,6 +10805,8 @@ INT_PTR CRealConsole::renameProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lP
 			pRCon->mp_ConEmu->OnOurDialogOpened();
 			_ASSERTE(pRCon!=NULL);
 			SetWindowLongPtr(hDlg, DWLP_USER, (LONG_PTR)pRCon);
+
+			CDynDialog::LocalizeDialog(hDlg, lng_DlgRenameTab);
 
 			if (pRCon->mp_RenameDpiAware)
 				pRCon->mp_RenameDpiAware->Attach(hDlg, ghWnd, CDynDialog::GetDlgClass(hDlg));

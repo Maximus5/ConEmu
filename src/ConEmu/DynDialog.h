@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2014 Maximus5
+Copyright (c) 2014-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -51,6 +51,9 @@ public:
 	static CDynDialog* GetDlgClass(HWND hwndDlg);
 
 	static bool DrawButton(WPARAM wID, DRAWITEMSTRUCT* pDraw);
+
+	static void LocalizeDialog(HWND hDlg, UINT nTitleRsrcId = 0);
+	static BOOL CALLBACK LocalizeControl(HWND hChild, LPARAM lParam);
 
 public:
 	// Methods

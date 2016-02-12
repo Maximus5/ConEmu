@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2015 Maximus5
+Copyright (c) 2009-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -144,8 +144,9 @@ _DBGHLP(L"/ZoneId - Try to drop :Zone.Identifier without confirmation.\r\n") \
 	L"Mors: loading font from file\r\n" \
 	L"Grzegorz Kozub: new toolbar images"
 
-#define pAboutTitle \
-	L"Console Emulation program (local terminal)"
+// --> lng_AboutTitle
+//#define pAboutTitle \
+//	L"Console Emulation program (local terminal)"
 
 #define pAboutLicense \
 	L"\x00A9 2006-2008 Zoin (based on console emulator by SEt)\r\n" \

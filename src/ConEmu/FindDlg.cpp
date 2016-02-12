@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2013 Maximus5
+Copyright (c) 2013-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -129,6 +129,8 @@ INT_PTR CEFindDlg::findTextProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lP
 
 			SendMessage(hWnd2, WM_SETICON, ICON_BIG, (LPARAM)hClassIcon);
 			SendMessage(hWnd2, WM_SETICON, ICON_SMALL, (LPARAM)hClassIconSm);
+
+			CDynDialog::LocalizeDialog(hWnd2);
 
 			if (gpConEmu->mp_Find->mp_DpiAware)
 			{

@@ -40,6 +40,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "DpiAware.h"
 #include "DynDialog.h"
 #include "ImgButton.h"
+#include "LngRc.h"
 #include "OptionsClass.h"
 #include "PushInfo.h"
 #include "RealConsole.h"
@@ -111,6 +112,8 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 			gpConEmu->OnOurDialogOpened();
 			mh_AboutDlg = hDlg;
 
+			CDynDialog::LocalizeDialog(hDlg);
+
 			_ASSERTE(mp_ImgBtn==NULL);
 			SafeDelete(mp_ImgBtn);
 			mp_ImgBtn = new CImgButtons(hDlg, pIconCtrl, IDOK);
@@ -130,7 +133,7 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 
 			LPCWSTR pszActivePage = (LPCWSTR)lParam;
 
-			wchar_t* pszTitle = lstrmerge(gpConEmu->GetDefaultTitle(), L" About");
+			wchar_t* pszTitle = lstrmerge(gpConEmu->GetDefaultTitle(), L" ", CLngRc::getRsrc(lng_DlgAbout/*"About"*/));
 			if (pszTitle)
 			{
 				SetWindowText(hDlg, pszTitle);
@@ -144,6 +147,7 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 				SetClassLongPtr(hDlg, GCLP_HICON, (LONG_PTR)hClassIcon);
 			}
 
+			//TODO: --> lng_AboutAppName
 			SetDlgItemText(hDlg, stConEmuAbout, pAboutTitle);
 			SetDlgItemText(hDlg, stConEmuUrl, gsHomePage);
 
@@ -524,7 +528,7 @@ void ConEmuAbout::OnInfo_About(LPCWSTR asPageName /*= NULL*/)
 
 	if (!bOk)
 	{
-		CEStr szTitle = lstrmerge(gpConEmu->GetDefaultTitle(), L" About");
+		CEStr szTitle = lstrmerge(gpConEmu->GetDefaultTitle(), L" ", CLngRc::getRsrc(lng_DlgAbout/*"About"*/));
 		DontEnable de;
 		MSGBOXPARAMS mb = {sizeof(MSGBOXPARAMS), ghWnd, g_hInstance,
 			pAbout,

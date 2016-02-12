@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2013-2016 Maximus5
+Copyright (c) 2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -29,26 +29,15 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include "Hotkeys.h"
-
-class CDpiForDialog;
-
-// IDD_HOTKEY { hkHotKeySelect, lbHotKeyList, lbHotKeyMod1, lbHotKeyMod2, lbHotKeyMod3 }
-class CHotKeyDialog
+enum LngResources
 {
-private:
-	HWND mh_Dlg;
-	HWND mh_Parent;
-	ConEmuHotKey m_HK;
-	CDpiForDialog* mp_DpiAware;
-public:
-	static bool EditHotKey(HWND hParent, DWORD& VkMod);
-	DWORD GetVkMod();
-public:
-	static DWORD dlgGetHotkey(HWND hDlg, UINT iEditCtrl = hkHotKeySelect, UINT iListCtrl = lbHotKeyList);
-public:
-	CHotKeyDialog(HWND hParent, DWORD aVkMod);
-	~CHotKeyDialog();
-
-	static INT_PTR CALLBACK hkDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam);
+	lng_DlgFastCfg                = 1,
+	lng_DlgSettings               = 2,
+	lng_DlgRenameTab              = 3,
+	lng_DlgAffinity               = 4,
+	lng_DlgAttach                 = 5,
+	lng_DlgAbout                  = 6,
+	lng_DlgHotkey                 = 7,
+	// last auto-gen identifier
+	lng_NextId                    = 8
 };

@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2015 Maximus5
+Copyright (c) 2009-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -34,6 +34,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Attach.h"
 #include "DynDialog.h"
 #include "Inside.h"
+#include "LngDataEnum.h"
 #include "OptionsClass.h"
 #include "VConGroup.h"
 #include "../common/ConEmuCheck.h"
@@ -538,6 +539,8 @@ INT_PTR CAttachDlg::AttachDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM l
 		case WM_INITDIALOG:
 		{
 			gpConEmu->OnOurDialogOpened();
+
+			CDynDialog::LocalizeDialog(hDlg, lng_DlgAttach);
 
 			if (pDlg->mp_DpiAware)
 			{

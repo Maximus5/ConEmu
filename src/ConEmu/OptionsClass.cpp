@@ -791,11 +791,13 @@ void CSettings::SettingsLoaded(SettingsLoadedFlags slfFlags, LPCWSTR pszCmdLine 
 		SettingsStorage Storage = {};
 		gpSet->GetSettingsType(Storage, ReadOnly);
 		LPCWSTR pszConfig = gpSetCls->GetConfigName();
-		wchar_t szTitle[1024];
+
+		CEStr szTitle;
+		LPCWSTR pszFastCfgTitle = CLngRc::getRsrc(lng_DlgFastCfg/*"fast configuration"*/);
 		if (pszConfig && *pszConfig)
-			_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"%s fast configuration (%s)", pszDef, pszConfig);
+			szTitle = lstrmerge(pszDef, L" ", pszFastCfgTitle, L" (", pszConfig, L")");
 		else
-			_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"%s fast configuration", pszDef);
+			szTitle = lstrmerge(pszDef, L" ", pszFastCfgTitle);
 
 		// Run "Fast configuration dialog" and apply some final defaults (if was Reset of new settings)
 		CheckOptionsFast(szTitle, slfFlags);
@@ -1636,12 +1638,11 @@ LRESULT CSettings::OnInitDialog()
 		SetDlgItemText(ghOpWnd, tStorage, gpConEmu->ConEmuXml());
 	}
 
-	//if (nConfLen>(nStdLen+1))
-	//	_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"%s Settings (%s) %s", gpConEmu->GetDefaultTitle(), (Config+nStdLen+1), szType);
+	LPCWSTR pszDlgTitle = CLngRc::getRsrc(lng_DlgSettings/*"Settings"*/);
 	if (ConfigName[0])
-		_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"%s Settings (%s) %s", gpConEmu->GetDefaultTitle(), ConfigName, Storage.szType);
+		_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"%s %s (%s) %s", gpConEmu->GetDefaultTitle(), pszDlgTitle, ConfigName, Storage.szType);
 	else
-		_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"%s Settings %s", gpConEmu->GetDefaultTitle(), Storage.szType);
+		_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"%s %s %s", gpConEmu->GetDefaultTitle(), pszDlgTitle, Storage.szType);
 
 	SetWindowText(ghOpWnd, szTitle);
 	MCHKHEAP
@@ -9193,9 +9194,13 @@ void CSettings::RegisterTipsFor(HWND hChildDlg)
 			// Allow multiline
 			SendMessage(hwndConFontBalloon, TTM_SETMAXTIPWIDTH, 0, (LPARAM)300);
 		}
+
+		CDynDialog::LocalizeDialog(hChildDlg);
+
 	}
 	else
 	{
+		// Used for highlight found control, for example
 		if (!hwndBalloon || !IsWindow(hwndBalloon))
 		{
 			hwndBalloon = CreateWindowEx(WS_EX_TOPMOST, TOOLTIPS_CLASS, NULL,
@@ -9234,88 +9239,68 @@ void CSettings::RegisterTipsFor(HWND hChildDlg)
 			SendMessage(hwndTip, TTM_SETDELAYTIME, TTDT_AUTOPOP, 30000);
 		}
 
-		if (!hwndTip) return;  // не смогли создать
+		// Register tips, if succeeded
+		if (hwndTip)
+			EnumChildWindows(hChildDlg, RegisterTipsForChild, (LPARAM)hChildDlg);
+		else
+			CDynDialog::LocalizeDialog(hChildDlg);
 
-		//if (!gpSet->isShowHelpTooltips)
-		//	return;
+		// Final tooltip polishing
+		if (hwndTip)
+			SendMessage(hwndTip, TTM_SETMAXTIPWIDTH, 0, (LPARAM)EvalSize(300, esf_CanUseDpi|esf_Horizontal));
+	}
+}
 
-		HWND hChild = NULL, hEdit = NULL;
+BOOL CSettings::RegisterTipsForChild(HWND hChild, LPARAM lParam)
+{
+	HWND hChildDlg = (HWND)lParam;
+
+	#if defined(_DEBUG)
+	LONG wID = GetWindowLong(hChild, GWL_ID);
+	if (wID == stCmdGroupCommands)
+		wID = wID;
+	#endif
+
+	// Localize Control text
+	CDynDialog::LocalizeControl(hChild, 0);
+
+	// Register tooltip by child HWND
+	if (gpSetCls->hwndTip)
+	{
 		BOOL lbRc = FALSE;
-		CEStr lsLoc;
-		wchar_t szClass[64];
-		//TCHAR szText[0x200];
+		HWND hEdit = NULL;
 
-		while ((hChild = FindWindowEx(hChildDlg, hChild, NULL, NULL)) != NULL)
+		// Associate the ToolTip with the tool.
+		TOOLINFO toolInfo = { 0 };
+		toolInfo.cbSize = 44; //sizeof(toolInfo); -- need to work on Win2k and compile with Vista+
+		GetWindowRect(hChild, &toolInfo.rect);
+		MapWindowPoints(NULL, hChildDlg, (LPPOINT)&toolInfo.rect, 2);
+		toolInfo.hwnd = hChildDlg;
+		toolInfo.uFlags = TTF_IDISHWND | TTF_SUBCLASS;
+		toolInfo.uId = (UINT_PTR)hChild;
+
+		// Use CSettings::ProcessTipHelp dynamically
+		toolInfo.lpszText = LPSTR_TEXTCALLBACK;
+
+		lbRc = SendMessage(gpSetCls->hwndTip, TTM_ADDTOOL, 0, (LPARAM)&toolInfo);
+		hEdit = FindWindowEx(hChild, NULL, L"Edit", NULL);
+
+		if (hEdit)
 		{
-			LONG wID = GetWindowLong(hChild, GWL_ID);
+			toolInfo.lpszText = LPSTR_TEXTCALLBACK;
+			toolInfo.uId = (UINT_PTR)hEdit;
 
-			#ifdef _DEBUG
-			if (wID == stCmdGroupCommands)
-			{
-				wID = wID;
-			}
-			#endif
+			GetWindowRect(hEdit, &toolInfo.rect);
+			MapWindowPoints(NULL, hChildDlg, (LPPOINT)&toolInfo.rect, 2);
+			toolInfo.hwnd = hChildDlg;
 
-			if (wID != -1)
-			{
-				if (CLngRc::getControl(wID, lsLoc)
-					&& !lsLoc.IsEmpty())
-				{
-					// BUTTON, STATICTEXT, ...?
-					if (GetClassName(hChild, szClass, countof(szClass)))
-					{
-						if ((lstrcmpi(szClass, L"Button") == 0)
-							|| (lstrcmpi(szClass, L"Static") == 0))
-						{
-							SetWindowText(hChild, lsLoc.ms_Val);
-						}
-						#ifdef _DEBUG
-						else
-						{
-							int w = wID;
-						}
-						#endif
-					}
-				}
-			}
-
-			//if (wID == -1) continue;
-
-			//if (CLngRc::getHint(wID, szText, countof(szText)))
-			{
-				// Associate the ToolTip with the tool.
-				TOOLINFO toolInfo = { 0 };
-				toolInfo.cbSize = 44; //sizeof(toolInfo); -- need to work on Win2k and compile with Vista+
-				GetWindowRect(hChild, &toolInfo.rect);
-				MapWindowPoints(NULL, hChildDlg, (LPPOINT)&toolInfo.rect, 2);
-				toolInfo.hwnd = hChildDlg;
-				toolInfo.uFlags = TTF_IDISHWND | TTF_SUBCLASS;
-				toolInfo.uId = (UINT_PTR)hChild;
-
-				// Use CSettings::ProcessTipHelp dynamically
-				toolInfo.lpszText = LPSTR_TEXTCALLBACK;
-
-				lbRc = SendMessage(hwndTip, TTM_ADDTOOL, 0, (LPARAM)&toolInfo);
-				hEdit = FindWindowEx(hChild, NULL, L"Edit", NULL);
-
-				if (hEdit)
-				{
-					toolInfo.lpszText = LPSTR_TEXTCALLBACK;
-					toolInfo.uId = (UINT_PTR)hEdit;
-
-					GetWindowRect(hEdit, &toolInfo.rect);
-					MapWindowPoints(NULL, hChildDlg, (LPPOINT)&toolInfo.rect, 2);
-					toolInfo.hwnd = hChildDlg;
-
-					lbRc = SendMessage(hwndTip, TTM_ADDTOOL, 0, (LPARAM)&toolInfo);
-				}
-			}
+			lbRc = SendMessage(gpSetCls->hwndTip, TTM_ADDTOOL, 0, (LPARAM)&toolInfo);
 		}
 
 		UNREFERENCED_PARAMETER(lbRc);
-
-		SendMessage(hwndTip, TTM_SETMAXTIPWIDTH, 0, (LPARAM)300);
 	}
+
+	return TRUE; // Continue enumeration
 }
 
 void CSettings::MacroFontSetName(LPCWSTR pszFontName, WORD anHeight /*= 0*/, WORD anWidth /*= 0*/)

@@ -175,6 +175,7 @@ bool CLngRc::LoadResouces(LPCWSTR asLanguage, LPCWSTR asFile)
 		{ L"cmnhints", &m_CmnHints, 0 },
 		{ L"mnuhints", &m_MnuHints, IDM__MIN_MNU_ITEM_ID },
 		{ L"controls", &m_Controls, 0 },
+		{ L"strings",  &m_Strings, 0 },
 	};
 
 	iRc = ReadTextFile(asFile, 1<<24 /*16Mb max*/, lsJsonData.ms_Val, jsonDataSize, nErrCode);
@@ -513,6 +514,45 @@ wrap:
 	if (lpBuffer && nBufferMax)
 		lpBuffer[0] = 0;
 	return false;
+}
+
+LPCWSTR CLngRc::getRsrc(UINT id, CEStr* lpText /*= NULL*/)
+{
+	LPCWSTR pszRsrc = NULL;
+	if (!gpLng)
+	{
+		pszRsrc = CLngPredefined::getRsrc(id);
+	}
+	else
+	{
+		INT_PTR idx = (INT_PTR)id;
+		MArray<LngRcItem>& arr = gpLng->m_Strings;
+
+		if ((idx >= 0) && (arr.size() > idx))
+		{
+			const LngRcItem& item = arr[idx];
+
+			if (item.Processed)
+			{
+				if (item.Str && *item.Str)
+				{
+					// Succeeded
+					pszRsrc = item.Str;
+					goto wrap;
+				}
+				// No such resource
+				goto wrap;
+			}
+		}
+
+		// Use binary search to find resource
+		pszRsrc = CLngPredefined::getRsrc(id);
+	}
+
+wrap:
+	if (lpText)
+		lpText->Set(pszRsrc);
+	return pszRsrc;
 }
 
 // static

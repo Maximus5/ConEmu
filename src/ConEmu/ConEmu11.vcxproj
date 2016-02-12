@@ -1097,6 +1097,9 @@
     <ClInclude Include="ImgButton.h" />
     <ClInclude Include="Inside.h" />
     <ClInclude Include="LngData.h" />
+    <ClInclude Include="LngDataEnum.h" />
+    <ClInclude Include="LngDataHints.h" />
+    <ClInclude Include="LngDataRsrcs.h" />
     <ClInclude Include="LngRc.h" />
     <ClInclude Include="LoadImg.h" />
     <ClInclude Include="Macro.h" />

@@ -33,6 +33,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/CEStr.h"
 #include "../common/MArray.h"
 
+// enum LngResources
+#include "LngDataEnum.h"
+
 //struct MSectionSimple;
 class MJsonValue;
 
@@ -50,6 +53,7 @@ public:
 	// Methods
 	static bool getControl(LONG id, CEStr& lsText);
 	static bool getHint(UINT id, LPWSTR lpBuffer, size_t nBufferMax);
+	static LPCWSTR getRsrc(UINT id, CEStr* lpText = NULL);
 
 protected:
 	// Definitions
@@ -83,6 +87,7 @@ protected:
 	MArray<LngRcItem> m_CmnHints; // ID_GO ... _APS_NEXT_CONTROL_VALUE
 	MArray<LngRcItem> m_MnuHints; // IDM__MIN_MNU_ITEM_ID ...
 	MArray<LngRcItem> m_Controls; // ID_GO ... _APS_NEXT_CONTROL_VALUE
+	MArray<LngRcItem> m_Strings; // lng_DlgFastCfg ... lng_NextId
 };
 
 extern CLngRc* gpLng;

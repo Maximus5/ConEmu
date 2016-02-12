@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2014 Maximus5
+Copyright (c) 2014-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "Header.h"
 
+#include "../common/CEStr.h"
 #include "DynDialog.h"
+#include "LngRc.h"
 
 wchar_t CDynDialog::Button[] = L"Button";
 wchar_t CDynDialog::Edit[] = L"Edit";
@@ -634,4 +636,74 @@ bool CDynDialog::DrawButton(ItemInfo* pItem, DRAWITEMSTRUCT* pDraw)
 	//HBRUSH hbr = (HBRUSH)GetStockObject(BLACK_BRUSH);
 	//FillRect(pDraw->hDC, &pDraw->rcItem, hbr);
 	//return true;
+}
+
+// static
+void CDynDialog::LocalizeDialog(HWND hDlg, UINT nTitleRsrcId /*= 0*/)
+{
+	#if defined(_DEBUG)
+	static HWND hLastDlg = NULL;
+	if (hLastDlg != hDlg)
+		hLastDlg = hDlg;
+	else
+		_ASSERTE(hLastDlg != hDlg); // avoid re-localization
+	#endif
+
+	// Call it before CLngRc::isLocalized, title may be changed via LngDataRsrcs.h
+	if (nTitleRsrcId != 0)
+	{
+		LPCWSTR pszTitle = CLngRc::getRsrc(nTitleRsrcId);
+		if (pszTitle && *pszTitle)
+			SetWindowText(hDlg, pszTitle);
+	}
+
+	// Control text may be overriden only by ConEmu.l10n
+	if (!CLngRc::isLocalized())
+		return;
+	EnumChildWindows(hDlg, CDynDialog::LocalizeControl, (LPARAM)hDlg);
+}
+
+// static, CALLBACK
+// Intended to be called from EnumChildWindows
+BOOL CDynDialog::LocalizeControl(HWND hChild, LPARAM lParam)
+{
+	// Nothing to do
+	if (!CLngRc::isLocalized())
+		return TRUE;
+
+	LONG wID = GetWindowLong(hChild, GWL_ID);
+
+	#if 0
+	if (wID == stCmdGroupCommands)
+		wID = wID; // for debugger breakpoint
+	#endif
+
+	_ASSERTE(IDC_STATIC == -1);
+	if (wID != IDC_STATIC)   // IDC_STATIC
+	{
+		CEStr lsLoc;
+		wchar_t szClass[64];
+
+		if (CLngRc::getControl(wID, lsLoc)
+			&& !lsLoc.IsEmpty())
+		{
+			// BUTTON, STATICTEXT, ...?
+			if (GetClassName(hChild, szClass, countof(szClass)))
+			{
+				if ((lstrcmpi(szClass, L"Button") == 0)
+					|| (lstrcmpi(szClass, L"Static") == 0))
+				{
+					SetWindowText(hChild, lsLoc.ms_Val);
+				}
+				#ifdef _DEBUG
+				else
+				{
+					int w = wID; // control class is not available for l10n
+				}
+				#endif
+			}
+		}
+	}
+
+	return TRUE; // continue enumeration
 }
