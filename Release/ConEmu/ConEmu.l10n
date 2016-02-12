@@ -1578,7 +1578,8 @@
       "id": 2012 }
     ,
     "vkRenameTab": {
-      "en": "Rename active tab (for Far Manager only first tab may be renamed)",
+      "en": "Rename active tab",
+      "ru": "Переименовать текущий таб",
       "id": 2335 }
     ,
     "vkScreenshot": {
@@ -3920,6 +3921,7 @@
     ,
     "stNewTabName": {
       "en": "&New tab name (clear to revert):",
+      "ru": "&Новое имя (оставьте пустым для сброса):",
       "id": 2336 }
     ,
     "stNtvdmHeight": {
@@ -3938,6 +3940,9 @@
       "en": [ "\n"
             , "colors\n"
             , "preview" ],
+      "ru": [ "\n"
+            , "консольная\n"
+            , "палитра" ],
       "id": 2849 }
     ,
     "stPriorityBox": {
