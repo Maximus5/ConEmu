@@ -5,11 +5,15 @@ $path = split-path -parent $MyInvocation.MyCommand.Definition
 # Dialog resources
 $conemu_rc_file = ($path + "\..\src\ConEmu\ConEmu.rc")
 # gsDataHints: dialog hints, menu hints, hotkey descriptions
-$conemu_rc2_file = ($path + "\..\src\ConEmu\LngDataHints.h")
+$hints_h_file = ($path + "\..\src\ConEmu\LngDataHints.h")
+# gsDataRsrcs: just string resources (lng_XXXX)
+$rsrcs_h_file = ($path + "\..\src\ConEmu\LngDataRsrcs.h")
 # ID-s for dialogs and hotkeys
 $resource_h_file = ($path + "\..\src\ConEmu\resource.h")
 # ID-s for menu items
 $menuids_h_file = ($path + "\..\src\ConEmu\MenuIds.h")
+# ID-s for gsDataRsrcs
+$rsrsids_h_file = ($path + "\..\src\ConEmu\LngData.h")
 
 $target_l10n = ($path + "\..\Release\ConEmu\ConEmu.l10n")
 
@@ -50,6 +54,7 @@ function InitializeJsonData()
 
   $script:res_id = @{}
   $script:mnu_id = @{}
+  $script:str_id = @{}
   $script:ctrls = @{}
 }
 
@@ -332,6 +337,23 @@ function ParseResIdsHex($resh)
   return
 }
 
+function ParseResIdsEnum($resh)
+{
+  for ($l = 0; $l -lt $resh.Length; $l++) {
+    $ln = $resh[$l].Trim()
+    if ($ln -match "\s*(lng_\w+)\s*\=\s*(\d+)\,") {
+      $id = [int]$matches[2]
+      if ($script:str_id.ContainsValue($id)) {
+        $dup = ""; $script:str_id.Keys | % { if ($script:str_id[$_] -eq $id) { $dup = $_ } }
+        Write-Host -ForegroundColor Red "res_id duplicate: $($id): '$($matches[1])' & '$($dup)'"
+      } else {
+        $script:str_id.Add($matches[1],$id)
+      }
+    }
+  }
+  return
+}
+
 function ParseLngData($LngData)
 {
   $b = FindLine 0 $LngData "static LngPredefined"
@@ -530,9 +552,13 @@ function UpdateConEmuL10N()
   $rcln  = Get-Content $conemu_rc_file
   Write-Host (" Lines: " + $rcln.Length)
 
-  Write-Host -NoNewLine ("Reading: " + $conemu_rc2_file)
-  $rchints = Get-Content $conemu_rc2_file
+  Write-Host -NoNewLine ("Reading: " + $hints_h_file)
+  $rchints = Get-Content $hints_h_file
   Write-Host (" Lines: " + $rchints.Length)
+
+  Write-Host -NoNewLine ("Reading: " + $rsrcs_h_file)
+  $strdata = Get-Content $rsrcs_h_file
+  Write-Host (" Lines: " + $strdata.Length)
 
   Write-Host -NoNewLine ("Reading: " + $resource_h_file)
   $resh  = Get-Content $resource_h_file
@@ -544,9 +570,16 @@ function UpdateConEmuL10N()
   Write-Host (" Lines: " + $menuh.Length)
   ParseResIdsHex $menuh
 
+  Write-Host -NoNewLine ("Reading: " + $rsrsids_h_file)
+  $rsrch  = Get-Content $rsrsids_h_file
+  Write-Host (" Lines: " + $rsrch.Length)
+  ParseResIdsEnum $rsrch
+
 
   # Preparse hints and hotkeys
   $script:hints = ParseLngData $rchints
+  # Prepare string resources
+  $script:rsrcs = ParseLngData $strdata
   #Write-Host -ForegroundColor Red "`n`nHints list"
 
   #######################################################
@@ -554,6 +587,8 @@ function UpdateConEmuL10N()
   WriteResources "cmnhints" $script:res_id $script:hints
 
   WriteResources "mnuhints" $script:mnu_id $script:hints
+
+  WriteResources "strings"  $script:str_id $script:rsrcs
 
   ####### Parse sources and write wiki/md pages #########
 
