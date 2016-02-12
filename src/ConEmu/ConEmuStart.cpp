@@ -36,6 +36,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmu.h"
 #include "ConEmuStart.h"
 #include "Inside.h"
+#include "LngRc.h"
 #include "Options.h"
 #include "OptionsClass.h"
 #include "SetCmdTask.h"
@@ -1329,6 +1330,7 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 				else if (!klstricmp(curCommand, _T("/?")) || !klstricmp(curCommand, _T("/h")) || !klstricmp(curCommand, _T("/help")))
 				{
 					//MessageBox(NULL, pHelp, L"About ConEmu...", MB_ICONQUESTION);
+					if (gpLng) gpLng->Reload();
 					ConEmuAbout::OnInfo_About();
 					iResult = -1;
 					goto wrap;
