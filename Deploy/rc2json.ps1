@@ -444,6 +444,7 @@ function AppendExistingTranslations([string]$section,[string]$name,[string]$en_v
 
 function WriteResources([string]$section,$ids,$hints)
 {
+  Write-Host "Section: $section"
   $script:l10n += "  ,"
   $script:l10n += "  `"$section`": {"
   $script:first = $TRUE
@@ -468,6 +469,7 @@ function WriteResources([string]$section,$ids,$hints)
 
 function WriteControls([string]$section,$ctrls,$ids)
 {
+  Write-Host "Section: $section"
   $script:l10n += "  ,"
   $script:l10n += "  `"$section`": {"
   $script:first = $TRUE
@@ -592,6 +594,7 @@ function UpdateConEmuL10N()
 
   ####### Parse sources and write wiki/md pages #########
 
+  Write-Host "Parsing dialog resources"
   InitDialogList
   $iDlgNo = 0
   $script:dialogs | % {
@@ -609,6 +612,8 @@ function UpdateConEmuL10N()
   #######################################################
 
   $script:l10n += "}"
+
+  Write-Host "Updating: $target_l10n"
   Set-Content $target_l10n $script:l10n -Encoding UTF8
 }
 
@@ -620,3 +625,5 @@ function UpdateConEmuL10N()
 if ($mode -eq "auto") {
   UpdateConEmuL10N
 }
+
+Write-Host "All done"
