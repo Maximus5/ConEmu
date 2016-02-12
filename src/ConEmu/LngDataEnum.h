@@ -38,6 +38,7 @@ enum LngResources
 	lng_DlgAttach                 = 5,
 	lng_DlgAbout                  = 6,
 	lng_DlgHotkey                 = 7,
+	lng_AboutAppName              = 8,
 	// last auto-gen identifier
-	lng_NextId                    = 8
+	lng_NextId                    = 9
 };

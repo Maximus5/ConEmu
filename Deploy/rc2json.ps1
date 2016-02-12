@@ -20,7 +20,7 @@ $target_l10n = ($path + "\..\Release\ConEmu\ConEmu.l10n")
 $script:ignore_ctrls = @(
   "tAppDistinctHolder", "tDefTermWikiLink",
   "stConEmuUrl", "tvSetupCategories", "stSetCommands2", "stHomePage", "stDisableConImeFast3", "stDisableConImeFast2",
-  "lbActivityLog", "lbConEmuHotKeys", "IDI_ICON1", "IDI_ICON2", "IDI_ICON3"
+  "lbActivityLog", "lbConEmuHotKeys", "IDI_ICON1", "IDI_ICON2", "IDI_ICON3", "stConEmuAbout"
 )
 
 $last_gen_ids_note = "// last auto-gen identifier"

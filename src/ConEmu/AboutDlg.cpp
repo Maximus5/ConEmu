@@ -147,8 +147,9 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 				SetClassLongPtr(hDlg, GCLP_HICON, (LONG_PTR)hClassIcon);
 			}
 
-			//TODO: --> lng_AboutAppName
-			SetDlgItemText(hDlg, stConEmuAbout, pAboutTitle);
+			// "Console Emulation program (local terminal)"
+			SetDlgItemText(hDlg, stConEmuAbout, CLngRc::getRsrc(lng_AboutAppName));
+
 			SetDlgItemText(hDlg, stConEmuUrl, gsHomePage);
 
 			EditIconHint_Set(hDlg, GetDlgItem(hDlg, tAboutSearch), true, L"Search", false, UM_SEARCH, IDOK);

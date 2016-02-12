@@ -1821,6 +1821,11 @@
   }
   ,
   "strings": {
+    "lng_AboutAppName": {
+      "en": "Console Emulation program (local terminal)",
+      "ru": "Эмулятор консоли (локальный терминал)",
+      "id": 8 }
+    ,
     "lng_DlgAbout": {
       "en": "About",
       "ru": "О программе",
@@ -3696,11 +3701,6 @@
     "stColorText": {
       "en": "Text:",
       "id": 2932 }
-    ,
-    "stConEmuAbout": {
-      "en": "Console Emulation program (local terminal)",
-      "ru": "Эмулятор консоли (локальный терминал)",
-      "id": 2250 }
     ,
     "stConEmuVersion": {
       "en": "Version status:",

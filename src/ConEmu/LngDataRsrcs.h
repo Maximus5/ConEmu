@@ -29,6 +29,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 static LngPredefined gsDataRsrcs[] = {
+	{ lng_AboutAppName,             L"Console Emulation program (local terminal)" },
 	{ lng_DlgAbout,                 L"About" },
 	{ lng_DlgAffinity,              L"Set active console processes affinity and priority" },
 	{ lng_DlgAttach,                L"Attach: Choose window or console application" },
