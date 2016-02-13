@@ -46,7 +46,7 @@
     "cbAdminSuffix": {
       "en": [ "When this is checked - specified suffix will be appended in tabs titles, started ‘As administrator’.\r\n"
             , "You may choose insertion place with ‘%a’ var, otherwise suffix will be at the tab end." ],
-     "zh": [ "如果选中此处 - 指定的后缀会被追加在Tab页的标题上，以管理员权限“As administrator”启动.\r\n"
+      "zh": [ "如果选中此处 - 指定的后缀会被追加在Tab页的标题上，以管理员权限“As administrator”启动.\r\n"
             , "你可以使用变量‘%a’选择插入位置，否则后缀会插入在Tab最后面" ],
       "id": 2110 }
     ,
