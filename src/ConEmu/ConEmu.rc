@@ -1240,7 +1240,7 @@ BEGIN
     CONTROL         "Installer (ConEmuSetup.exe /p:%s)",rbUpdateUseExe,
                     "Button",BS_AUTORADIOBUTTON | WS_DISABLED,21,112,151,10
     EDITTEXT        tUpdateExeCmdLine,21,124,295,14,ES_AUTOHSCROLL
-    CONTROL         "7-Zip archieve (ConEmu.7z), WinRar or 7-Zip required",rbUpdateUseArc,
+    CONTROL         "7-Zip archive (ConEmu.7z), WinRar or 7-Zip required",rbUpdateUseArc,
                     "Button",BS_AUTORADIOBUTTON | WS_DISABLED,21,141,226,10
     EDITTEXT        tUpdateArcCmdLine,21,153,276,13,ES_AUTOHSCROLL
     PUSHBUTTON      "...",cbUpdateArcCmdLine,301,153,15,13

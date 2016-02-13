@@ -84,7 +84,7 @@ void ConEmuUpdateSettings::ResetToDefaults()
 	isUpdateUseProxy = false;
 	szUpdateProxy = szUpdateProxyUser = szUpdateProxyPassword = NULL; // "Server:port"
 	// Проверяем, была ли программа установлена через ConEmuSetup.exe?
-	isUpdateDownloadSetup = 0; // 0-Auto, 1-Installer (ConEmuSetup.exe), 2-7z archieve (ConEmu.7z), WinRar or 7z required
+	isUpdateDownloadSetup = 0; // 0-Auto, 1-Installer (ConEmuSetup.exe), 2-7z archive (ConEmu.7z), WinRar or 7z required
 	isSetupDetected = 0; // 0-пока не проверялся, 1-установлено через Installer, пути совпали, 2-Installer не запускался
 	isSetup64 = WIN3264TEST(false,true); // определяется вместе с isSetupDetected
 
@@ -216,7 +216,7 @@ void ConEmuUpdateSettings::LoadFrom(ConEmuUpdateSettings* apFrom)
 	szUpdateProxy = lstrdup(apFrom->szUpdateProxy); // "Server:port"
 	szUpdateProxyUser = lstrdup(apFrom->szUpdateProxyUser);
 	szUpdateProxyPassword = lstrdup(apFrom->szUpdateProxyPassword);
-	isUpdateDownloadSetup = apFrom->isUpdateDownloadSetup; // 0-Auto, 1-Installer (ConEmuSetup.exe), 2-7z archieve (ConEmu.7z), WinRar or 7z required
+	isUpdateDownloadSetup = apFrom->isUpdateDownloadSetup; // 0-Auto, 1-Installer (ConEmuSetup.exe), 2-7z archive (ConEmu.7z), WinRar or 7z required
 	isSetupDetected = apFrom->isSetupDetected;
 	// "%1"-archive or setup file, "%2"-ConEmu base dir, "%3"-x86/x64, "%4"-ConEmu PID
 	szUpdateExeCmdLine = lstrdup(apFrom->szUpdateExeCmdLine);

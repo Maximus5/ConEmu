@@ -276,7 +276,7 @@
       "id": 1753 }
     ,
     "cbDragIcons": {
-      "en": "Show icons of dragged iterms",
+      "en": "Show icons of dragged items",
       "zh": "显示拖放项目的图标",
       "id": 1553 }
     ,
@@ -879,12 +879,12 @@
       "id": 1554 }
     ,
     "lbExtendFontBoldIdx": {
-      "en": "Choose background color index for which ‘Bold’ font properties whill be inverted (default is Red #12)",
+      "en": "Choose background color index for which ‘Bold’ font properties will be inverted (default is Red #12)",
       "zh": "选择背景颜色索引，“粗体”字体属性会被倒置，(默认为红色 #12)",
       "id": 1577 }
     ,
     "lbExtendFontItalicIdx": {
-      "en": "Choose background color index for which ‘Italic’ font properties whill be inverted (default is Magenta #13)",
+      "en": "Choose background color index for which ‘Italic’ font properties will be inverted (default is Magenta #13)",
       "zh": "选择背景颜色索引，‘斜体’ 字体属性会被倒置，(默认为品红色 #13)",
       "id": 2300 }
     ,
@@ -909,7 +909,7 @@
       "id": 1501 }
     ,
     "lbNtvdmHeight": {
-      "en": [ "Old DOS programs may be runned under console sizes: 80x25, 80x28, 80x43 or 80x50. You may force window size selection, or left the automatic selection.\r\n"
+      "en": [ "Old DOS programs may be run under console sizes: 80x25, 80x28, 80x43 or 80x50. You may force window size selection, or left the automatic selection.\r\n"
             , "This feature is not available in x64 OS." ],
       "zh": [ "老的DOS程序可能运行在控制台大小： 80x25, 80x28, 80x43 or 80x50。你可以强制选择大小，或让自动选择。\r\n"
             , "此功能在x64 OS上不可用。" ],
@@ -1091,7 +1091,7 @@
       "id": 2628 }
     ,
     "tCmdGroupName": {
-      "en": "Task name (alias), surrounded by {...}, used in ‘[+] menu’, ‘Recreate dialog’ or ‘/cmd’ agrument of ConEmu.exe",
+      "en": "Task name (alias), surrounded by {...}, used in ‘[+] menu’, ‘Recreate dialog’ or ‘/cmd’ argument of ConEmu.exe",
       "zh": "任务名 (别名), 包括在{...}里, 在‘[+] menu’里使用, ‘重新吵架对话框’ 或 ‘/cmd’ ConEmu.exe的参数",
       "id": 2117 }
     ,
@@ -1839,7 +1839,7 @@
       "id": 2503 }
     ,
     "vkDuplicateRootAs": {
-      "en": "Duplicate tab with current state of root process, run ‘As Administator’",
+      "en": "Duplicate tab with current state of root process, run ‘As Administrator’",
       "zh": "复制标签页及根进程的当前状态, “以管理员身份”运行",
       "id": 2504 }
     ,
@@ -4019,7 +4019,7 @@
       "id": 2754 }
     ,
     "gbStartupOptions": {
-      "en": "Startup options (may be overriden with \"/cmd\" or \"/cmdlist\" argument of ConEmu.exe)",
+      "en": "Startup options (may be overridden with \"/cmd\" or \"/cmdlist\" argument of ConEmu.exe)",
       "zh": "启动选项 (可能在下面情况下被覆盖： \"/cmd\" 或 \"/cmdlist\" ConEmu.exe的参数)",
       "id": 2868 }
     ,
@@ -4509,7 +4509,7 @@
       "id": 2054 }
     ,
     "rbUpdateUseArc": {
-      "en": "7-Zip archieve (ConEmu.7z), WinRar or 7-Zip required",
+      "en": "7-Zip archive (ConEmu.7z), WinRar or 7-Zip required",
       "zh": "7-Zip文档(ConEmu.7z)，需要WinRar或者7-Zip",
       "id": 2071 }
     ,
